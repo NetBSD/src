@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1870 2013/12/11 01:24:08 joerg Exp $
+#	$NetBSD: mi,v 1.1871 2013/12/18 20:14:02 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3049,6 +3049,7 @@
 ./usr/include/rump/rump_syscalls.h		comp-c-include	rump
 ./usr/include/rump/rump_syscalls_compat.h	comp-c-include	rump
 ./usr/include/rump/rumpclient.h			comp-c-include	rump
+./usr/include/rump/rumperr.h			comp-c-include	rump
 ./usr/include/rump/rumpdefs.h			comp-c-include	rump
 ./usr/include/rump/rumpkern_if_pub.h		comp-c-include	rump
 ./usr/include/rump/rumpnet_if_pub.h		comp-c-include	rump
