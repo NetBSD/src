@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
+/*	$NetBSD: if_cpsw.c,v 1.4 2013/12/18 12:53:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $");
+__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.4 2013/12/18 12:53:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -494,7 +494,6 @@ cpsw_start(struct ifnet *ifp)
 	uint32_t * const dw = bd.word;
 	struct mbuf *m;
 	bus_dmamap_t dm;
-	u_int sopi;	/* Start of Packet Index */
 	u_int eopi = ~0;
 	u_int seg;
 	u_int txfree;
@@ -556,7 +555,7 @@ cpsw_start(struct ifnet *ifp)
 
 		if (txstart == -1)
 			txstart = sc->sc_txnext;
-		sopi = eopi = sc->sc_txnext;
+		eopi = sc->sc_txnext;
 		for (seg = 0; seg < dm->dm_nsegs; seg++) {
 			dw[0] = cpsw_txdesc_paddr(sc,
 			    TXDESC_NEXT(sc->sc_txnext));
