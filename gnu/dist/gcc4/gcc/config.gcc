@@ -668,7 +668,13 @@ arm*-*-netbsdelf*)
 	tm_file="dbxelf.h elfos.h netbsd.h netbsd-elf.h arm/elf.h arm/aout.h arm/arm.h arm/netbsd-elf.h"
 	tmake_file="${tmake_file} arm/t-arm arm/t-netbsd"
 	case ${target} in
-	armeb*) tm_defines="${tm_defines} TARGET_ENDIAN_DEFAULT=MASK_BIG_END" ;;
+	arm*eb-*) tm_defines="${tm_defines} TARGET_ENDIAN_DEFAULT=MASK_BIG_END" ;;
+	esac
+	case ${target} in
+	armv4*) with_cpu=${with_cpu:-strongarm};;
+	armv5*) with_cpu=${with_cpu:-arm9e};;
+	armv6*) with_cpu=${with_cpu:-arm1176jzf-s};;
+	armv7*) with_cpu=${with_cpu:-cortex-a8};;
 	esac
 	;;
 arm*-*-netbsd*)
@@ -2569,7 +2575,7 @@ case "${target}" in
 		case "$with_arch" in
 		"" \
 		| armv[23456] | armv2a | armv3m | armv4t | armv5t \
-		| armv5te | armv6j |armv6k | armv6z | armv6zk \
+		| armv5te | armv6j |armv6k | armv6z | armv6zk | armv7a \
 		| iwmmxt | ep9312)
 			# OK
 			;;

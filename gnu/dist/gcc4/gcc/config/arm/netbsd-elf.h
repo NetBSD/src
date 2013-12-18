@@ -61,10 +61,19 @@
   "%{mhard-float:{!mfpu=*:-mfpu=vfp}}   \
    %{mfloat-abi=hard:{!mfpu=*:-mfpu=vfp}}"
 
+#define TARGET_FIX_V4BX_SPEC " %{mcpu=arm8|mcpu=arm810|mcpu=strongarm*|march=armv4:--fix-v4bx}"
+#if TARGET_ENDIAN_DEFAULT == MASK_BIG_END
+#define BE8_LINK_SPEC " %{!mlittle-endian:%{march=armv7*|mcpu=cortex*:%{!r:--be8}}}"
+#else
+#define BE8_LINK_SPEC " %{mbig-endian:%{march=armv7*|mcpu=cortex*:%{!r:--be8}}}"
+#endif
+
 #undef SUBTARGET_EXTRA_SPECS
 #define SUBTARGET_EXTRA_SPECS				\
   { "subtarget_extra_asm_spec",	SUBTARGET_EXTRA_ASM_SPEC }, \
   { "subtarget_asm_float_spec", SUBTARGET_ASM_FLOAT_SPEC }, \
+  { "be8_link_spec",		BE8_LINK_SPEC }, \
+  { "target_fix_v4bx_spec",	TARGET_FIX_V4BX_SPEC }, \
   { "netbsd_link_spec",		NETBSD_LINK_SPEC_ELF },	\
   { "netbsd_entry_point",	NETBSD_ENTRY_POINT },
 
@@ -73,6 +82,7 @@
 #undef LINK_SPEC
 #define LINK_SPEC \
   "-X %{mbig-endian:-EB} %{mlittle-endian:-EL} \
+   %(be8_link_spec) %(target_fix_v4bx_spec) \
    %(netbsd_link_spec)"
 
 /* Make GCC agree with <machine/ansi.h>.  */
