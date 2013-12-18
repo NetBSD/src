@@ -1,11 +1,12 @@
-#	$NetBSD: Makefile,v 1.1 2006/05/10 22:53:50 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.32.1 2013/12/18 18:41:39 matt Exp $
 
 SUBDIR=		backward ext bits debug tr1
 #SUBDIR+=	pb_assoc
 
 .include <bsd.own.mk>
 
-.include "${.CURDIR}/../arch/${MACHINE_ARCH}/defs.mk"
+.include "${.CURDIR}/../../Makefile.inc"
+.include "${.CURDIR}/../arch/${GCC_MACHINE_ARCH}/defs.mk"
 
 .cc: # disable .cc->NULL transform
 

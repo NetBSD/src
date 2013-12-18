@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.1 2006/05/10 22:53:50 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.32.1 2013/12/18 18:41:39 matt Exp $
 
 .include <bsd.own.mk>
 
-.include "${.CURDIR}/../../arch/${MACHINE_ARCH}/defs.mk"
+.include "${.CURDIR}/../../../Makefile.inc"
+.include "${.CURDIR}/../../arch/${GCC_MACHINE_ARCH}/defs.mk"
 
 .cc: # disable .cc->NULL transform
 
@@ -25,9 +26,9 @@ c++locale.h: ${CONF}/locale/generic/c_locale.h
 # mknative?
 BITS_CPUDIR.sparc64=sparc
 
-_DIR=${BITS_CPUDIR.${MACHINE_ARCH}}
+_DIR=${BITS_CPUDIR.${GCC_MACHINE_ARCH}}
 .if ${_DIR} != ""
-BITS_CPUDIR=${BITS_CPUDIR.${MACHINE_ARCH}}
+BITS_CPUDIR=${BITS_CPUDIR.${GCC_MACHINE_ARCH}}
 .else
 BITS_CPUDIR=${MACHINE_GNU_ARCH}
 .endif
@@ -39,7 +40,7 @@ BITS_CPUDIR=${MACHINE_GNU_ARCH}
 	${CONF}/cpu/${BITS_CPUDIR} \
 	${CONF}/cpu/generic \
 	${CONF}/locale/generic \
-	${.CURDIR}/../../arch/${MACHINE_ARCH}
+	${.CURDIR}/../../arch/${GCC_MACHINE_ARCH}
 
 # Get default targets including <bsd.inc.mk>.
 .include <bsd.prog.mk>

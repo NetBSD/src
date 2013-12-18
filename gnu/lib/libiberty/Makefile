@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2006/11/09 20:07:14 christos Exp $
+#	$NetBSD: Makefile,v 1.10.30.1 2013/12/18 18:41:39 matt Exp $
 
 NOLINT=		# defined
 NOPROFILE=	# defined
@@ -9,7 +9,7 @@ NOLINKLIB=	# defined
 
 LIB=		iberty
 
-.include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
+.include "${.CURDIR}/arch/${MACHINE_ARCH:S/armv7/arm/}/defs.mk"
 
 COPTS.argv.c = -Wno-stack-protector
 COPTS.cp-demangle.c = -Wno-stack-protector

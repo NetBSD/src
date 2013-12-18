@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.3.10.1 2009/12/22 04:51:26 mrg Exp $
+#	$NetBSD: Makefile,v 1.3.10.2 2013/12/18 18:41:39 matt Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
 
 .include <bsd.own.mk>
+
+CRT_MACHINE_ARCH?=${MACHINE_ARCH:S/armv7/arm/}
 
 # If using an external toolchain, we expect crtbegin/crtend to be
 # supplied by that toolchain's run-time support.
@@ -11,7 +13,7 @@ NOLINT=		# defined
 
 DIST=		${NETBSDSRCDIR}/gnu/dist/gcc4
 GNUHOSTDIST=	${DIST}
-GCCARCH=	${NETBSDSRCDIR}/gnu/usr.bin/gcc4/arch/${MACHINE_ARCH}
+GCCARCH=	${NETBSDSRCDIR}/gnu/usr.bin/gcc4/arch/${CRT_MACHINE_ARCH}
 
 GALLCFLAGS=	${G_CRTSTUFF_CFLAGS} ${G_CRTSTUFF_T_CFLAGS}
 
@@ -20,10 +22,10 @@ CPPFLAGS+=	-I.
 
 GCFLAGS=	${GALLCFLAGS:N-D*:N-I*:N-i*:N./*}
 
-DPSRCS+=	${.CURDIR}/arch/${MACHINE_ARCH}.mk tconfig.h
+DPSRCS+=	${.CURDIR}/arch/${CRT_MACHINE_ARCH}.mk tconfig.h
 CLEANFILES+=	cs-tconfig.h tconfig.h
 
-.include "${.CURDIR}/arch/${MACHINE_ARCH}.mk"
+.include "${.CURDIR}/arch/${CRT_MACHINE_ARCH}.mk"
 
 SRCS+=		crtbegin.c crtend.c
 OBJS+=		crtbegin.o crtend.o
@@ -66,7 +68,7 @@ ${OBJS}: ${DPSRCS}
 	${CC} ${CPPFLAGS} ${GCFLAGS} ${CPUFLAGS} -c ${.IMPSRC} -o ${.TARGET}.o
 	mv ${.TARGET}.o ${.TARGET}
 
-.if (${MACHINE_ARCH} == "mips64eb") || (${MACHINE_ARCH} == "mips64el")
+.if (${CRT_MACHINE_ARCH} == "mips64eb") || (${CRT_MACHINE_ARCH} == "mips64el")
 # Turn off as(1) warnings on MIPS, since warnings are fatal with WARNS>0
 # and GCC configury passes -finhibit-size-directive which causes mips-gas
 # to barf.  Don't know what the real fix for this is...

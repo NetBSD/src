@@ -1,14 +1,15 @@
-#	$NetBSD: Makefile.inc,v 1.13.10.1 2009/09/05 03:51:16 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.13.10.2 2013/12/18 18:41:39 matt Exp $
 
-.if exists(${.CURDIR}/../arch/${MACHINE_ARCH}.mk) && ${MKGCC} != "no"
-.include "${.CURDIR}/../arch/${MACHINE_ARCH}.mk"
+.include "${.CURDIR}/../../Makefile.inc"
+.if exists(${.CURDIR}/../arch/${GCC_MACHINE_ARCH}.mk) && ${MKGCC} != "no"
+.include "${.CURDIR}/../arch/${GCC_MACHINE_ARCH}.mk"
 .endif
 
 DIST=		${NETBSDSRCDIR}/gnu/dist/gcc4
 GNUHOSTDIST=	${DIST}
-GCCARCH=	${NETBSDSRCDIR}/gnu/usr.bin/gcc4/arch/${MACHINE_ARCH}
-GCCARCHLIBGCC=	${NETBSDSRCDIR}/gnu/lib/libgcc4/arch/${MACHINE_ARCH}
-GCCARCHXX=	${NETBSDSRCDIR}/gnu/lib/libstdc++-v3_4/arch/${MACHINE_ARCH}
+GCCARCH=	${NETBSDSRCDIR}/gnu/usr.bin/gcc4/arch/${GCC_MACHINE_ARCH}
+GCCARCHLIBGCC=	${NETBSDSRCDIR}/gnu/lib/libgcc4/arch/${GCC_MACHINE_ARCH}
+GCCARCHXX=	${NETBSDSRCDIR}/gnu/lib/libstdc++-v3_4/arch/${GCC_MACHINE_ARCH}
 
 GCPPFLAGS=	${G_LIBGCC2_CFLAGS} ${G_USE_COLLECT2} ${G_INCLUDES}
 CPPFLAGS+=	-I${.CURDIR} -I${GCCARCHLIBGCC}
@@ -31,7 +32,7 @@ LIB2FUNCS_ALL=	_muldi3 _negdi2 _lshrdi3 _ashldi3 _ashrdi3 \
 LIB2FUNCS_ALL+=	_fixunssfsi _fixunsdfsi
 .endif
 
-.if ${MACHINE_ARCH} != "vax"
+.if ${GCC_MACHINE_ARCH} != "vax"
 LIB2FUNCS_ALL+=	\
 	_mulsc3 _muldc3 _mulxc3 _multc3 _divsc3 _divdc3 _divxc3 _divtc3
 .endif
@@ -51,7 +52,7 @@ LIB2_EH=	${G_LIB2ADDEH:M*.c:T}
 LIB1ASMFUNCS=	${G_LIB1ASMFUNCS:=.S}
 .endif
 
-DPSRCS+=	${.CURDIR}/../arch/${MACHINE_ARCH}.mk tconfig.h
+DPSRCS+=	${.CURDIR}/../arch/${GCC_MACHINE_ARCH}.mk tconfig.h
 CLEANFILES+=	${LIB2FUNCS} ${LIB2FUNCS_ST} ${LIB2DIVMOD} cs-tconfig.h \
 		tconfig.h
 .if !empty(G_LIB1ASMFUNCS)
@@ -63,7 +64,7 @@ BUILDSYMLINKS+=	${file} ${file:T:S/.asm$/.S/}
 .endfor
 
 # XXX
-.if ${MACHINE_ARCH} == "m68000"
+.if ${GCC_MACHINE_ARCH} == "m68000"
 CPICFLAGS:=
 COMPILE.S=	${CC} ${AFLAGS} ${CPPFLAGS} -c
 _TRADITIONAL_CPP=
@@ -72,14 +73,14 @@ BUILDSYMLINKS+=	${DIST}/gcc/config/m68k/fpgnulib.c xfgnulib.c
 CPPFLAGS.xfgnulib.c+=-DEXTFLOAT=1
 .endif
 
-.if ${MACHINE_ARCH} == "powerpc" || \
-    ${MACHINE_ARCH} == "sh3el" || \
-    ${MACHINE_ARCH} == "sh3eb"
+.if ${GCC_MACHINE_ARCH} == "powerpc" || \
+    ${GCC_MACHINE_ARCH} == "sh3el" || \
+    ${GCC_MACHINE_ARCH} == "sh3eb"
 _TRADITIONAL_CPP=
 COMPILE.S=	${CC} ${AFLAGS} ${CPPFLAGS} -c
 .endif
 
-.if ${MACHINE_ARCH} == "powerpc64"
+.if ${GCC_MACHINE_ARCH} == "powerpc64"
 COPTS+=	-mlong-double-128
 .endif
 
