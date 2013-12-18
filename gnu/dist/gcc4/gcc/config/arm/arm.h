@@ -77,7 +77,12 @@ extern char arm_arch_name[];
 	if (arm_arch_iwmmxt)				\
 	  builtin_define ("__IWMMXT__");		\
 	if (TARGET_AAPCS_BASED)				\
-	  builtin_define ("__ARM_EABI__");		\
+	  {						\
+	    builtin_define ("__ARM_EABI__");		\
+	    builtin_define ("__ARM_PCS");		\
+	    if (TARGET_HARD_FLOAT && TARGET_VFP)	\
+	      builtin_define ("__ARM_PCS_VFP");		\
+	  }						\
     } while (0)
 
 /* The various ARM cores.  */
