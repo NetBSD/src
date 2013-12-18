@@ -1,15 +1,15 @@
-#	$NetBSD: Makefile,v 1.5 2003/11/28 05:14:18 simonb Exp $
+#	$NetBSD: Makefile,v 1.5.44.1 2013/12/18 18:43:29 matt Exp $
 
 .include <bsd.own.mk>
 
 TOP=		${NETBSDSRCDIR}/gnu
 
 .include "${.CURDIR}/../common/Makefile.inc"
-.include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
+.include "${.CURDIR}/arch/${BFD_MACHINE_ARCH}/defs.mk"
 
 PROG=		gprof
 SRCS=		${G_gprof_OBJECTS:.o=.c}
-CPPFLAGS+=	-I${.CURDIR}/arch/${MACHINE_ARCH}
+CPPFLAGS+=	-I${.CURDIR}/arch/${BFD_MACHINE_ARCH}
 
 LDADD=		-lintl
 DPADD=		${LIBINTL}

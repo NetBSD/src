@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2008/05/03 14:48:31 lukem Exp $
+#	$NetBSD: Makefile,v 1.8.12.1 2013/12/18 18:43:30 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -7,19 +7,19 @@
 LIBISPRIVATE=	yes
 LIB=		gdb
 
-.include "${.CURDIR}/../arch/${MACHINE_ARCH}/defs.mk"
+.include "${.CURDIR}/../arch/${GDB_MACHINE_ARCH}/defs.mk"
 
 DIST=		${NETBSDSRCDIR}/gnu/dist/gdb6
 
 SRCS=		${G_LIBGDB_OBS:.o=.c}
 GCPPFLAGS=	${G_INTERNAL_CFLAGS}
 CPPFLAGS=	-I${.CURDIR} \
-		-I${.CURDIR}/../arch/${MACHINE_ARCH} \
+		-I${.CURDIR}/../arch/${GDB_MACHINE_ARCH} \
 		-I${DIST}/gdb \
 		-I${DIST}/gdb/config \
 		-I${DIST}/include/opcode \
 		-I${DIST} \
-		-I${.CURDIR}/../bfd/arch/${MACHINE_ARCH} \
+		-I${.CURDIR}/../bfd/arch/${GDB_MACHINE_ARCH} \
 		-I${DIST}/bfd \
 		-I${DIST}/include \
 		${GCPPFLAGS:M-D*}
@@ -32,7 +32,7 @@ CPPFLAGS.inf-ptrace.c=	-Wno-error
 .include <bsd.lib.mk>
 
 .PATH: ${DIST}/gdb ${DIST}/gdb/mi ${DIST}/gdb/cli ${DIST}/gdb/tui \
-    ${DIST}/gdb/signals ${DIST}/gdb/doc ${.CURDIR}/../arch/${MACHINE_ARCH}
+    ${DIST}/gdb/signals ${DIST}/gdb/doc ${.CURDIR}/../arch/${GDB_MACHINE_ARCH}
 
 #
 COPTS+=	-Wno-stack-protector
