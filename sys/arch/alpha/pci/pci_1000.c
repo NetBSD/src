@@ -1,4 +1,4 @@
-/* $NetBSD: pci_1000.c,v 1.24 2012/02/06 02:14:14 matt Exp $ */
+/* $NetBSD: pci_1000.c,v 1.25 2013/12/18 12:43:59 skrll Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_1000.c,v 1.24 2012/02/06 02:14:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_1000.c,v 1.25 2013/12/18 12:43:59 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -149,7 +149,7 @@ dec_1000_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	pcitag_t bustag = pa->pa_intrtag;
 	int buspin = pa->pa_intrpin;
 	pci_chipset_tag_t pc = pa->pa_pc;
-	int	device;
+	int	device = 0;	/* XXX gcc */
 
 	if (buspin == 0)	/* No IRQ used. */
 		return 1;
