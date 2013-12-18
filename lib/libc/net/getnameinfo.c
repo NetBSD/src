@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.45 2006/10/15 16:14:46 christos Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.45.24.1 2013/12/18 20:23:36 bouyer Exp $	*/
 /*	$KAME: getnameinfo.c,v 1.45 2000/09/25 22:43:56 itojun Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnameinfo.c,v 1.45 2006/10/15 16:14:46 christos Exp $");
+__RCSID("$NetBSD: getnameinfo.c,v 1.45.24.1 2013/12/18 20:23:36 bouyer Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -68,6 +68,7 @@ __RCSID("$NetBSD: getnameinfo.c,v 1.45 2006/10/15 16:14:46 christos Exp $");
 #include <string.h>
 
 #include "servent.h"
+#include "hostent.h"
 
 #ifdef __weak_alias
 __weak_alias(getnameinfo,_getnameinfo)
@@ -290,7 +291,11 @@ getnameinfo_inet(sa, salen, host, hostlen, serv, servlen, flags)
 			break;
 		}
 	} else {
-		hp = gethostbyaddr(addr, afd->a_addrlen, afd->a_af);
+		struct hostent hent;
+		char hbuf[4096];
+		int he;
+		hp = gethostbyaddr_r(addr, afd->a_addrlen, afd->a_af, &hent,
+		    hbuf, sizeof(hbuf), &he);
 
 		if (hp) {
 #if 0
