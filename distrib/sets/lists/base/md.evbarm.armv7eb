@@ -1,0 +1,2 @@
+# $NetBSD: md.evbarm.armv7eb,v 1.1.2.1 2013/12/19 01:14:11 matt Exp $
+./usr/mdec/gzboot_ADI_BRH_0x00140000.bin	base-sysutil-bin
