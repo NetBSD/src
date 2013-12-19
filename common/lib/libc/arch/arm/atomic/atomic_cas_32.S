@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_32.S,v 1.2 2008/08/16 07:12:39 matt Exp $	*/
+/*	$NetBSD: atomic_cas_32.S,v 1.2.12.1 2013/12/19 01:12:39 matt Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -48,11 +48,20 @@ ENTRY_NP(_atomic_cas_32)
 	END(_atomic_cas_32)
 
 ATOMIC_OP_ALIAS(atomic_cas_32,_atomic_cas_32)
+ATOMIC_OP_ALIAS(atomic_cas_32_ni,_atomic_cas_32)
 ATOMIC_OP_ALIAS(atomic_cas_uint,_atomic_cas_32)
+ATOMIC_OP_ALIAS(atomic_cas_uint_ni,_atomic_cas_32)
 ATOMIC_OP_ALIAS(atomic_cas_ulong,_atomic_cas_32)
+ATOMIC_OP_ALIAS(atomic_cas_ulong_ni,_atomic_cas_32)
 ATOMIC_OP_ALIAS(atomic_cas_ptr,_atomic_cas_32)
+ATOMIC_OP_ALIAS(atomic_cas_ptr_ni,_atomic_cas_32)
+STRONG_ALIAS(__sync_val_compare_and_swap_4,_atomic_cas_32)
+STRONG_ALIAS(_atomic_cas_32_ni,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_uint,_atomic_cas_32)
+STRONG_ALIAS(_atomic_cas_uint_ni,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_ulong,_atomic_cas_32)
+STRONG_ALIAS(_atomic_cas_ulong_ni,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_ptr,_atomic_cas_32)
+STRONG_ALIAS(_atomic_cas_ptr_ni,_atomic_cas_32)
 
 #endif /* _ARCH_ARM_6 */
