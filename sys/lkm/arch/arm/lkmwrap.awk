@@ -1,10 +1,10 @@
-#	$NetBSD: lkmwrap.awk,v 1.2 2005/12/11 12:24:46 christos Exp $
+#	$NetBSD: lkmwrap.awk,v 1.2.90.1 2013/12/19 01:19:26 matt Exp $
 
 $2 == "R_ARM_PC24" {
 	if (x[$3] != "")
 		next;
-	if ($3 == "\.text")
+	if ($3 == ".text")
 		next
-	printf " --wrap "$3;
+	printf " -Wl,--wrap,"$3;
 	x[$3]=".";
 }
