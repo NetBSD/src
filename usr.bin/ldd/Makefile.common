@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.common,v 1.1.2.2.4.1 2012/02/17 07:43:45 matt Exp $
+#	$NetBSD: Makefile.common,v 1.1.2.2.4.2 2013/12/19 01:26:37 matt Exp $
 
 LDELFSO=${NETBSDSRCDIR}/libexec/ld.elf_so
 CPPFLAGS+= -I${LDELFSO} -DLIBDIR=\"${LIBDIR}\"
@@ -7,7 +7,7 @@ CPPFLAGS+= -D_RTLD_SOURCE
 .PATH: ${LDELFSO}
 
 .if (${MACHINE_ARCH} == "sparc") || (${MACHINE_ARCH} == "sparc64") || \
-    (${MACHINE_ARCH} == "arm") || (${MACHINE_ARCH} == "m68k") || \
+    (${MACHINE_ARCH:M*arm*} != "") || (${MACHINE_ARCH} == "m68k") || \
     (${MACHINE_ARCH} == "powerpc") || (${MACHINE_ARCH:Mmips*} != "")
 CPPFLAGS+= -DVARPSZ
 .endif
