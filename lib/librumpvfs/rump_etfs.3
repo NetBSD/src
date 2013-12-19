@@ -1,4 +1,4 @@
-.\"     $NetBSD: rump_etfs.3,v 1.5 2011/02/03 10:21:58 pooka Exp $
+.\"     $NetBSD: rump_etfs.3,v 1.6 2013/12/19 15:51:39 pooka Exp $
 .\"
 .\" Copyright (c) 2010 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd February 3, 2011
+.Dd December 19, 2013
 .Dt RUMP_ETFS 3
 .Os
 .Sh NAME
@@ -69,6 +69,12 @@ The
 .Fa hostpath
 is interpreted in host system context for the current working directory
 and can be either absolute or relative.
+.Pp
+The
+.Fa key
+is accessible from all rump kernel clients, both local and remote.
+Note, the keys are not be visible via readdir, so you will not see
+them in directory listings.
 .Pp
 The
 .Fa ftype
