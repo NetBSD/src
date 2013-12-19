@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.h,v 1.7.16.5 2012/02/16 04:20:46 matt Exp $	*/
+/*	$NetBSD: uvm_pglist.h,v 1.7.16.6 2013/12/19 01:22:02 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -34,6 +34,9 @@
 
 #ifndef VM_NFREELIST
 #include <machine/vmparam.h>
+#ifndef VM_NFREELIST
+#error <machine/vmparam.h> did not define VM_NFREELIST
+#endif
 #endif
 
 /*
