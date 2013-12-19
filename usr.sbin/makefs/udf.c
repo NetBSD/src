@@ -1,4 +1,4 @@
-/* $NetBSD: udf.c,v 1.14 2013/10/19 17:16:37 christos Exp $ */
+/* $NetBSD: udf.c,v 1.15 2013/12/19 22:10:03 christos Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf.c,v 1.14 2013/10/19 17:16:37 christos Exp $");
+__RCSID("$NetBSD: udf.c,v 1.15 2013/12/19 22:10:03 christos Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -842,7 +842,7 @@ udf_estimate_walk(fsinfo_t *fsopts,
 		fsnode *root, char *dir, struct udf_stats *stats)
 {
 	struct fileid_desc *fid;
-	struct long_ad dummy_ref;
+	struct long_ad dummy_ref = { 0 };
 	fsnode *cur;
 	fsinode *fnode;
 	size_t pathlen = strlen(dir);
