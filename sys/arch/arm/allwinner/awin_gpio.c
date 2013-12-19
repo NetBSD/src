@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_gpio.c,v 1.6 2013/09/08 00:55:25 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_gpio.c,v 1.7 2013/12/19 22:13:38 joerg Exp $");
 
 #include <sys/bus.h>
 #include <sys/device.h>
@@ -54,6 +54,7 @@ static int awin_gpio_pin_read(void *, int);
 static void awin_gpio_pin_write(void *, int, int);
 static void awin_gpio_pin_ctl(void *, int, int);
 
+#if 0
 static const int ist_maps[] = {
 	[IST_LEVEL_LOW] =	AWIN_PIO_EINT_LOW_LEVEL,
 	[IST_LEVEL_HIGH] =	AWIN_PIO_EINT_HIGH_LEVEL,
@@ -61,6 +62,7 @@ static const int ist_maps[] = {
 	[IST_EDGE_RISING] =	AWIN_PIO_EINT_NEGATIVE_EDGE,
 	[IST_EDGE_BOTH] =	AWIN_PIO_EINT_DOUBLE_EDGE,
 };
+#endif
 
 struct awin_gpio_pin_cfg {
 	uint32_t cfg[4];
