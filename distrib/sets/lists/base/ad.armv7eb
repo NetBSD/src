@@ -1,0 +1,11 @@
+# $NetBSD: ad.armv7eb,v 1.1.2.1 2013/12/19 01:14:11 matt Exp $
+#
+# The armeb MACHINE_ARCH never existed in NetBSD as a.out, so we
+#	skip the old a.out compatibility tools.
+#
+./usr/lib/libarm.so				base-sys-shlib
+./usr/lib/libarm.so.0				base-sys-shlib
+./usr/lib/libarm.so.0.0				base-sys-shlib
+./usr/lib/libpmc.so				base-sys-shlib
+./usr/lib/libpmc.so.0				base-sys-shlib
+./usr/lib/libpmc.so.0.0				base-sys-shlib
