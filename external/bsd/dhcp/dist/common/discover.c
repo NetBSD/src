@@ -1,4 +1,4 @@
-/*	$NetBSD: discover.c,v 1.2 2013/03/24 15:53:58 christos Exp $	*/
+/*	$NetBSD: discover.c,v 1.3 2013/12/19 22:05:58 christos Exp $	*/
 
 /* discover.c
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: discover.c,v 1.2 2013/03/24 15:53:58 christos Exp $");
+__RCSID("$NetBSD: discover.c,v 1.3 2013/12/19 22:05:58 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -1580,7 +1580,7 @@ isc_result_t dhcp_interface_destroy (omapi_object_t *h,
 		interface -> client = (struct client_state *)0;
 
 	if (interface -> shared_network)
-		omapi_object_dereference ((omapi_object_t **)
+		omapi_object_dereference ((void *)
 					  &interface -> shared_network, MDL);
 
 	return ISC_R_SUCCESS;
