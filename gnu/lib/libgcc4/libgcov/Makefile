@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/10/06 14:20:12 tron Exp $
+#	$NetBSD: Makefile,v 1.3.8.1 2013/12/19 01:16:13 matt Exp $
 
 REQUIRETOOLS=	yes
 NOPIC=		# defined
@@ -8,17 +8,18 @@ NOLINT=		# defined
 LIB=		gcov
 
 .include <bsd.own.mk>
+.include "../../Makefile.inc"
 
-.if exists(${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk) && ${MKGCC} != "no"
+.if exists(${.CURDIR}/arch/${GCC_MACHINE_ARCH}/defs.mk) && ${MKGCC} != "no"
 
-.include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
+.include "${.CURDIR}/arch/${GCC_MACHINE_ARCH}/defs.mk"
 
 LIBGCOVSRCS=	${G_LIBGCOV:=.c}
 
-CPPFLAGS+=	-I${.CURDIR}/arch/${MACHINE_ARCH}
+CPPFLAGS+=	-I${.CURDIR}/arch/${GCC_MACHINE_ARCH}
 CPPFLAGS+=	-Wno-stack-protector
 
-DPSRCS+=	${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk
+DPSRCS+=	${.CURDIR}/arch/${GCC_MACHINE_ARCH}/defs.mk
 SRCS+=		${LIBGCOVSRCS}
 
 CLEANFILES+=	${LIBGCOVSRCS}

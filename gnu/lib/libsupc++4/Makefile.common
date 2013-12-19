@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.common,v 1.1 2006/05/10 22:53:51 mrg Exp $
+#	$NetBSD: Makefile.common,v 1.1.32.1 2013/12/19 01:16:13 matt Exp $
 
 DIST=		${NETBSDSRCDIR}/gnu/dist/gcc4
 GNUHOSTDIST=	${DIST}
@@ -10,7 +10,7 @@ LIBSUPCXXSRCS=	${G_LIBSUPCXX_SOURCES} ${G_LIBSUPCXX_C_SOURCES}
 CPPFLAGS+=	-I${DIST}/gcc
 CPPFLAGS+=	-I${DIST}/include
 CPPFLAGS+=	-I${DIST}/libstdc++-v3/libsupc++
-CPPFLAGS+=	-I${.CURDIR}/../libstdc++-v3_4/arch/${MACHINE_ARCH} -I.
+CPPFLAGS+=	-I${.CURDIR}/../libstdc++-v3_4/arch/${GCC_MACHINE_ARCH} -I.
 CPPFLAGS+=	-DHAVE_STDLIB_H -DHAVE_STRING_H
 
 CPPFLAGS.cp-demangle.c=-DIN_GLIBCPP_V3
