@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.9 2008/10/30 15:33:42 cliff Exp $
+#	$NetBSD: Makefile,v 1.9.10.1 2013/12/19 01:18:44 matt Exp $
 
-.if ${MACHINE_ARCH} == "arm"
+.if ${MACHINE_ARCH:Marm*eb} == ""
 # Little endian platforms
 SUBDIR=  ADI_BRH_flash_0x00140000
 SUBDIR+=  GEMINI_dram_0x01600000
