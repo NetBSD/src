@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2012/03/21 05:37:43 matt Exp $
+#	$NetBSD: Makefile,v 1.17 2013/12/19 19:11:50 rmind Exp $
 #
 
 .include <bsd.own.mk>
@@ -6,8 +6,8 @@
 WARNS?=	5
 
 LIB=	rt
-SRCS=	sem.c
-SRCS+=	pset.c
+
+SRCS=	sem.c shm.c pset.c
 
 MAN+=	aio.3 aio_cancel.3 aio_error.3 aio_fsync.3 aio_read.3 aio_return.3 \
 	aio_suspend.3 aio_write.3 lio_listio.3 \
