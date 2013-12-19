@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_in_cksum.S,v 1.6 2013/08/18 15:58:19 matt Exp $	*/
+/*	$NetBSD: cpu_in_cksum.S,v 1.7 2013/12/19 23:48:44 joerg Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <machine/asm.h>
-RCSID("$NetBSD: cpu_in_cksum.S,v 1.6 2013/08/18 15:58:19 matt Exp $")
+RCSID("$NetBSD: cpu_in_cksum.S,v 1.7 2013/12/19 23:48:44 joerg Exp $")
 	
 #include "assym.h"
 
@@ -227,37 +227,37 @@ ASENTRY_NP(.L_cksumdata)
 	 * setting r6 to zero to avoid stalling for results in the
 	 * loop. (r7 is live, from above).
 	 */
-	ldrd	r4, [r0], #0x08
+	ldrd	r4, r5, [r0], #0x08
 	mov	r6, #0x00
 .Lcksumdata_bigloop:
 	pld	[r0, #0x18]
 	adds	r2, r2, r6
 	adcs	r2, r2, r7
-	ldrd	r6, [r0], #0x08
+	ldrd	r6, r7, [r0], #0x08
 	adcs	r2, r2, r4
 	adcs	r2, r2, r5
-	ldrd	r4, [r0], #0x08
+	ldrd	r4, r5, [r0], #0x08
 	adcs	r2, r2, r6
 	adcs	r2, r2, r7
-	ldrd	r6, [r0], #0x08
+	ldrd	r6, r7, [r0], #0x08
 	adcs	r2, r2, r4
 	adcs	r2, r2, r5
-	ldrd	r4, [r0], #0x08
+	ldrd	r4, r5, [r0], #0x08
 	adcs	r2, r2, r6
 	adcs	r2, r2, r7
 	pld	[r0, #0x18]
-	ldrd	r6, [r0], #0x08
+	ldrd	r6, r7, [r0], #0x08
 	adcs	r2, r2, r4
 	adcs	r2, r2, r5
-	ldrd	r4, [r0], #0x08
+	ldrd	r4, r5, [r0], #0x08
 	adcs	r2, r2, r6
 	adcs	r2, r2, r7
-	ldrd	r6, [r0], #0x08
+	ldrd	r6, r7, [r0], #0x08
 	adcs	r2, r2, r4
 	adcs	r2, r2, r5
 	adcs	r2, r2, #0x00
 	subs	r1, r1, #0x40
-	ldrdge	r4, [r0], #0x08
+	ldrdge	r4, r5, [r0], #0x08
 	bge	.Lcksumdata_bigloop
 
 	adds	r2, r2, r6		/* r6/r7 still need summing */
@@ -306,16 +306,16 @@ ASENTRY_NP(.L_cksumdata)
 	cmp	r1, #0x20
 
 #ifdef __XSCALE__
-	ldrdge	r4, [r0], #0x08		/* Avoid stalling pld and result */
+	ldrdge	r4, r5, [r0], #0x08	/* Avoid stalling pld and result */
 	blt	.Lcksumdata_less_than_32
 	pld	[r0, #0x18]
-	ldrd	r6, [r0], #0x08
+	ldrd	r6, r7, [r0], #0x08
 	adds	r2, r2, r4
 	adcs	r2, r2, r5
-	ldrd	r4, [r0], #0x08
+	ldrd	r4, r5, [r0], #0x08
 	adcs	r2, r2, r6
 	adcs	r2, r2, r7
-	ldrd	r6, [r0], #0x08
+	ldrd	r6, r7, [r0], #0x08
 	adcs	r2, r2, r4
 	adcs	r2, r2, r5
 	adcs	r2, r2, r6		/* XXX: Unavoidable result stall */
