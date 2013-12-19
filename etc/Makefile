@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.359.2.3.4.2 2010/04/21 05:21:22 matt Exp $
+#	$NetBSD: Makefile,v 1.359.2.3.4.3 2013/12/19 01:15:09 matt Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -401,12 +401,21 @@ distrib-dirs: .PHONY check_DESTDIR
 # XXX: It would be nice if a single mtree invocation could both
 # append to the metalog and do real work.  Instead, we have to
 # repeat the command twice in slightly different ways.
-	${TOOL_MTREE} -def ${.CURDIR}/mtree/NetBSD.dist -N ${.CURDIR} \
-	    -p ${DESTDIR}/ -U ${TOOL_MTREE.unpriv}
+	${TOOL_MTREE} -def ${.CURDIR}/mtree/NetBSD.dist \
+	    -N ${.CURDIR} -p ${DESTDIR}/ -U ${TOOL_MTREE.unpriv}
+.if exists(${.CURDIR}/mtree/NetBSD.dist.${MACHINE_ARCH})
+	${TOOL_MTREE} -def ${.CURDIR}/mtree/NetBSD.dist.${MACHINE_ARCH} \
+	    -N ${.CURDIR} -p ${DESTDIR}/ -U ${TOOL_MTREE.unpriv}
+.endif
 .if ${MKUNPRIVED} != "no"						# {
-	${TOOL_MTREE} -def ${.CURDIR}/mtree/NetBSD.dist -N ${.CURDIR} \
-	    -p ${DESTDIR}/ -C -k all | \
+	${TOOL_MTREE} -def ${.CURDIR}/mtree/NetBSD.dist \
+	    -N ${.CURDIR} -p ${DESTDIR}/ -C -k all | \
 	    ${TOOL_AWK} '/ optional/ {next} // {print}' | ${METALOG.add}
+.if exists(${.CURDIR}/mtree/NetBSD.dist.${MACHINE_ARCH})
+	${TOOL_MTREE} -def ${.CURDIR}/mtree/NetBSD.dist.${MACHINE_ARCH} \
+	    -N ${.CURDIR} -p ${DESTDIR}/ -C -k all | \
+	    ${TOOL_AWK} '/ optional/ {next} // {print}' | ${METALOG.add}
+.endif
 .endif	# MKUNPRIVED							# }
 .endif	# DISTRIBUTION_DONE						# }
 
