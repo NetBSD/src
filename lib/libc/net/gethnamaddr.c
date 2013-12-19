@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.73.18.1 2013/12/18 20:23:35 bouyer Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.73.18.2 2013/12/19 08:11:45 bouyer Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -57,7 +57,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.73.18.1 2013/12/18 20:23:35 bouyer Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.73.18.2 2013/12/19 08:11:45 bouyer Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1298,7 +1298,7 @@ static struct hostent h_ent;
 static char h_buf[16384];
 
 struct hostent *
-gethostbyaddr(const char *addr, size_t len, int af) {
+gethostbyaddr(const char *addr, socklen_t len, int af) {
 	return gethostbyaddr_r(addr, len, af, &h_ent, h_buf, sizeof(h_buf),
 	    &h_errno);
 }
