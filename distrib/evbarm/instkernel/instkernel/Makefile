@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13.26.1 2008/11/01 19:44:25 snj Exp $
+#	$NetBSD: Makefile,v 1.13.26.1.4.1 2013/12/19 01:13:27 matt Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -17,6 +17,9 @@ MDSETTARGETS=		ADI_BRH_INSTALL		${RAMDISK}	-	\
 			IQ80321_INSTALL		${RAMDISK}	-	\
 			TS7200_INSTALL		${RAMDISK}	- 	\
 			TEAMASA_NPWR_INSTALL	${RAMDISK}	-
+.elif ${MACHINE_ARCH:Marmv7*} != ""
+MDSETTARGETS=		BCM5301X_INSTALL	${RAMDISK}	- 	\
+			BCM56340_INSTALL	${RAMDISK}	-
 .else
 # Big endian platforms.
 MDSETTARGETS=		ADI_BRH_INSTALL		${RAMDISK}	-
