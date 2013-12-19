@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.26 2013/12/09 09:22:44 wiz Exp $
+.\" $NetBSD: gpt.8,v 1.27 2013/12/19 06:46:51 jnemeth Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -151,6 +151,16 @@ accepts
 and
 .Cm windows
 as aliases for the most commonly used partition types.
+.\" ==== backup ====
+.It Nm Ic backup Ar device ...
+The
+.Ic backup
+command dumps the MBR or (PMBR) and GPT partition tables to standard
+output in a format to be used by the
+.Ic restore
+command.
+The format is a plist.
+It should not be modified.
 .\" ==== biosboot ====
 .It Nm Ic biosboot Oo Fl c Ar bootcode Oc Oo Fl i Ar index Oc Ar device ...
 The
