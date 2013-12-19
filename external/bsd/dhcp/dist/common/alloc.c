@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.1.1.2 2013/03/24 22:50:29 christos Exp $	*/
+/*	$NetBSD: alloc.c,v 1.2 2013/12/19 22:05:58 christos Exp $	*/
 
 /* alloc.c
 
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: alloc.c,v 1.1.1.2 2013/03/24 22:50:29 christos Exp $");
+__RCSID("$NetBSD: alloc.c,v 1.2 2013/12/19 22:05:58 christos Exp $");
 
 #include "dhcpd.h"
 #include <omapip/omapip_p.h>
@@ -146,7 +146,7 @@ int option_chain_head_dereference (ptr, file, line)
 		cdr = car -> cdr;
 		if (car -> car)
 			option_cache_dereference ((struct option_cache **)
-						  (&car -> car), MDL);
+						  (void *)(&car -> car), MDL);
 		dfree (car, MDL);
 		car = cdr;
 	}
