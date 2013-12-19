@@ -519,7 +519,8 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
 }
 
 void
-uvm_estimatepageable(u_int *active, u_int *inactive)
+uvm_estimatepageable(const struct uvm_pggroup *pg,
+    u_int *active, u_int *inactive)
 {
 
 	/* XXX: guessing game */
