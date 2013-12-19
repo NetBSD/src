@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10.30.1 2013/12/18 18:41:39 matt Exp $
+#	$NetBSD: Makefile,v 1.10.30.2 2013/12/19 01:16:13 matt Exp $
 
 NOLINT=		# defined
 NOPROFILE=	# defined
@@ -6,10 +6,11 @@ NOPIC=		# defined
 NOLINKLIB=	# defined
 
 .include <bsd.own.mk>
+.include "../Makefile.inc"
 
 LIB=		iberty
 
-.include "${.CURDIR}/arch/${MACHINE_ARCH:S/armv7/arm/}/defs.mk"
+.include "${.CURDIR}/arch/${GCC_MACHINE_ARCH}/defs.mk"
 
 COPTS.argv.c = -Wno-stack-protector
 COPTS.cp-demangle.c = -Wno-stack-protector
@@ -21,7 +22,7 @@ DIST=		${NETBSDSRCDIR}/gnu/dist/binutils
 SRCS=		${G_REQUIRED_OFILES:.o=.c} ${G_EXTRA_OFILES:.o=.c} \
 		${G_LIBOBJS:.o=.c} ${G_ALLOCA:.o=.c}
 
-CPPFLAGS+=	-DHAVE_CONFIG_H -I${.CURDIR}/arch/${MACHINE_ARCH} \
+CPPFLAGS+=	-DHAVE_CONFIG_H -I${.CURDIR}/arch/${GCC_MACHINE_ARCH} \
 		-I${DIST}/include
 
 .PATH: ${DIST}/libiberty
