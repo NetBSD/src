@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1871 2013/12/18 20:14:02 pooka Exp $
+#	$NetBSD: mi,v 1.1872 2013/12/19 19:40:08 rmind Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8760,6 +8760,8 @@
 ./usr/share/man/cat3/sha.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/sha1.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sha2.0			comp-c-catman		.cat
+./usr/share/man/cat3/shm_open.0			comp-c-catman		.cat
+./usr/share/man/cat3/shm_unlink.0		comp-c-catman		.cat
 ./usr/share/man/cat3/shquote.0			comp-c-catman		.cat
 ./usr/share/man/cat3/shquotev.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sigaddset.0		comp-c-catman		.cat
@@ -15288,6 +15290,8 @@
 ./usr/share/man/html3/setvbuf.html		comp-c-htmlman		html
 ./usr/share/man/html3/sha1.html			comp-c-htmlman		html
 ./usr/share/man/html3/sha2.html			comp-c-htmlman		html
+./usr/share/man/html3/shm_open.html		comp-c-htmlman		html
+./usr/share/man/html3/shm_unlink.html		comp-c-htmlman		html
 ./usr/share/man/html3/shquote.html		comp-c-htmlman		html
 ./usr/share/man/html3/shquotev.html		comp-c-htmlman		html
 ./usr/share/man/html3/sigaddset.html		comp-c-htmlman		html
@@ -21830,6 +21834,8 @@
 ./usr/share/man/man3/sha.3			comp-obsolete		obsolete
 ./usr/share/man/man3/sha1.3			comp-c-man		.man
 ./usr/share/man/man3/sha2.3			comp-c-man		.man
+./usr/share/man/man3/shm_open.3			comp-c-man		.man
+./usr/share/man/man3/shm_unlink.3		comp-c-man		.man
 ./usr/share/man/man3/shquote.3			comp-c-man		.man
 ./usr/share/man/man3/shquotev.3			comp-c-man		.man
 ./usr/share/man/man3/sigaddset.3		comp-c-man		.man
