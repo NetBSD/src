@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2013/10/14 01:14:57 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2013/12/20 12:46:42 joerg Exp $
 
 .PATH:	${NETBSDSRCDIR}/sys/lib/libunwind
 
@@ -7,4 +7,4 @@ SRCS+=	libunwind.cxx \
 
 INCS+=	unwind.h
 
-COPTS.libuwind.cxx+=	-funwind-tables -fno-rtti -fno-exceptions -fvisibility=hidden -Wno-old-style-cast
+COPTS.libunwind.cxx+=	-funwind-tables -fno-rtti -fno-exceptions -fvisibility=hidden -Wno-old-style-cast
