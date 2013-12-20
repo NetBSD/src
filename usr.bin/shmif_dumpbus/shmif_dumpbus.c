@@ -1,4 +1,4 @@
-/*	$NetBSD: shmif_dumpbus.c,v 1.9 2013/12/20 09:32:13 pooka Exp $	*/
+/*	$NetBSD: shmif_dumpbus.c,v 1.10 2013/12/20 09:36:03 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -29,6 +29,10 @@
  * Convert shmif bus traffic to a pcap file which can be then
  * examined with tcpdump -r, wireshark, etc.
  */
+
+#ifndef lint
+__RCSID("$NetBSD: shmif_dumpbus.c,v 1.10 2013/12/20 09:36:03 pooka Exp $");
+#endif /* !lint */
 
 #include <sys/types.h>
 #include <sys/mman.h>
