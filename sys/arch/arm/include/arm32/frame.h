@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.37 2013/12/02 18:36:10 joerg Exp $	*/
+/*	$NetBSD: frame.h,v 1.38 2013/12/20 07:01:06 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -411,7 +411,7 @@ LOCK_CAS_DEBUG_LOCALS
 
 #define PULLFRAME							   \
 	ldr     r0, [sp], #TF_R0;	/* Pop the SPSR from stack */	   \
-	msr     spsr_all, r0;						   \
+	msr     spsr_fsxc, r0;						   \
 	ldmia   sp, {r0-r14}^;		/* Restore registers (usr mode) */ \
 	mov     r0, r0;                 /* NOP for previous instruction */ \
 	add	sp, sp, #(TF_PC-TF_R0);	/* Adjust the stack pointer */	   \
@@ -464,7 +464,7 @@ LOCK_CAS_DEBUG_LOCALS
 	str	r0, [r2, #-4]!;		/* Push return address */	   \
 	stmdb	r2!, {sp, lr};		/* Push SVC sp, lr */		   \
 	mov	sp, r2;			/* Keep stack aligned */	   \
-	msr     spsr_all, r3;		/* Restore correct spsr */	   \
+	msr     spsr_fsxc, r3;		/* Restore correct spsr */	   \
 	ldmdb	r1, {r0-r3};		/* Restore 4 regs from xxx mode */ \
 	sub	sp, sp, #(TF_SVC_SP-TF_R0); /* Adjust the stack pointer */ \
 	PUSHUSERREGS;			/* Push the user mode registers */ \
@@ -481,7 +481,7 @@ LOCK_CAS_DEBUG_LOCALS
 
 #define PULLFRAMEFROMSVCANDEXIT						   \
 	ldr     r0, [sp], #0x0008;	/* Pop the SPSR from stack */	   \
-	msr     spsr_all, r0;		/* restore SPSR */		   \
+	msr     spsr_fsxc, r0;		/* restore SPSR */		   \
 	ldmia   sp, {r0-r14}^;		/* Restore registers (usr mode) */ \
 	mov     r0, r0;	  		/* NOP for previous instruction */ \
 	add	sp, sp, #(TF_SVC_SP-TF_R0); /* Adjust the stack pointer */ \
