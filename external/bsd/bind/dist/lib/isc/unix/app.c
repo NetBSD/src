@@ -1,4 +1,4 @@
-/*	$NetBSD: app.c,v 1.6 2013/03/24 18:42:01 christos Exp $	*/
+/*	$NetBSD: app.c,v 1.7 2013/12/20 16:58:34 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -534,11 +534,6 @@ isc__app_ctxrun(isc_appctx_t *ctx0) {
 	int result;
 	isc_event_t *event, *next_event;
 	isc_task_t *task;
-	sigset_t sset;
-	char strbuf[ISC_STRERRORSIZE];
-#ifdef HAVE_SIGWAIT
-	int sig;
-#endif
 
 	REQUIRE(VALID_APPCTX(ctx));
 
@@ -582,10 +577,16 @@ isc__app_ctxrun(isc_appctx_t *ctx0) {
 	}
 #endif
 
+#ifdef ISC_PLATFORM_USETHREADS
 	/*
 	 * When we are using multiple contexts, we don't rely on signals.
 	 */
 	if (ctx == &isc_g_appctx) {
+	sigset_t sset;
+	char strbuf[ISC_STRERRORSIZE];
+#ifdef HAVE_SIGWAIT
+	int sig;
+#endif
 
 	/*
 	 * There is no danger if isc_app_shutdown() is called before we wait
@@ -649,7 +650,9 @@ isc__app_ctxrun(isc_appctx_t *ctx0) {
 		if (ctx->want_shutdown && ctx->blocked)
 			exit(1);
 	}
-	} else {
+	} else
+#endif
+	{
 
 	(void)isc__taskmgr_dispatch(ctx->taskmgr);
 #ifndef ISC_PLATFORM_USETHREADS
