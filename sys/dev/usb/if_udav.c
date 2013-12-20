@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.41 2013/01/22 12:40:43 jmcneill Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.42 2013/12/20 01:17:54 jakllsch Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.41 2013/01/22 12:40:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.42 2013/12/20 01:17:54 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -148,6 +148,7 @@ static const struct udav_type {
 	struct usb_devno udav_dev;
 	u_int16_t udav_flags;
 #define UDAV_EXT_PHY	0x0001
+#define UDAV_NO_PHY	0x0002
 } udav_devs [] = {
 	/* Corega USB-TXC */
 	{{ USB_VENDOR_COREGA, USB_PRODUCT_COREGA_FETHER_USB_TXC }, 0},
@@ -157,6 +158,8 @@ static const struct udav_type {
 	{{ USB_VENDOR_SHANTOU, USB_PRODUCT_SHANTOU_ADM8515 }, 0},
 	/* SUNRISING SR9600 */
 	{{ USB_VENDOR_SUNRISING, USB_PRODUCT_SUNRISING_SR9600 }, 0 },
+	/* SUNRISING QF9700 */
+	{{ USB_VENDOR_SUNRISING, USB_PRODUCT_SUNRISING_QF9700 }, UDAV_NO_PHY },
 	/* QUAN DM9601 */
 	{{USB_VENDOR_QUAN, USB_PRODUCT_QUAN_DM9601 }, 0},
 #if 0
@@ -286,6 +289,11 @@ udav_attach(device_t parent, device_t self, void *aux)
 
 	IFQ_SET_READY(&ifp->if_snd);
 
+	if (ISSET(sc->sc_flags, UDAV_NO_PHY)) {
+		sc->sc_link = 1;
+		goto skipmii;
+	}
+
 	/*
 	 * Do ifmedia setup.
 	 */
@@ -305,6 +313,7 @@ udav_attach(device_t parent, device_t self, void *aux)
 	} else
 		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 
+skipmii:
 	/* attach the interface */
 	if_attach(ifp);
 	ether_ifattach(ifp, eaddr);
@@ -771,6 +780,12 @@ udav_setmulti(struct udav_softc *sc)
 		return;
 
 	ifp = GET_IFP(sc);
+
+	if (ISSET(sc->sc_flags, UDAV_NO_PHY)) {
+		UDAV_SETBIT(sc, UDAV_RCR, UDAV_RCR_ALL);
+		UDAV_SETBIT(sc, UDAV_RCR, UDAV_RCR_PRMSC);
+		return;
+	}
 
 	if (ifp->if_flags & IFF_PROMISC) {
 		UDAV_SETBIT(sc, UDAV_RCR, UDAV_RCR_ALL|UDAV_RCR_PRMSC);
@@ -1349,7 +1364,8 @@ udav_stop(struct ifnet *ifp, int disable)
 		}
 	}
 
-	sc->sc_link = 0;
+	if (!ISSET(sc->sc_flags, UDAV_NO_PHY))
+		sc->sc_link = 0;
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 }
 
