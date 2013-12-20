@@ -1,4 +1,4 @@
-/*	$NetBSD: shmif_dumpbus.c,v 1.8 2011/09/16 15:39:29 joerg Exp $	*/
+/*	$NetBSD: shmif_dumpbus.c,v 1.9 2013/12/20 09:32:13 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -71,8 +71,9 @@ main(int argc, char *argv[])
 	int fd, i, ch;
 	int bonus;
 	char *buf;
-	bool hflag = false, doswap = false, isstdout;
+	bool hflag = false, doswap = false;
 	pcap_dumper_t *pdump;
+	FILE *dumploc = stdout;
 
 	setprogname(argv[0]);
 	while ((ch = getopt(argc, argv, "hp:")) != -1) {
@@ -118,7 +119,11 @@ main(int argc, char *argv[])
 	if (SWAPME(bmem->shm_version) != SHMIF_VERSION)
 		errx(1, "bus vesrsion %d, program %d",
 		    SWAPME(bmem->shm_version), SHMIF_VERSION);
-	printf("bus version %d, lock: %d, generation: %" PRIu64
+
+	if (pcapfile && strcmp(pcapfile, "-") == 0)
+		dumploc = stderr;
+
+	fprintf(dumploc, "bus version %d, lock: %d, generation: %" PRIu64
 	    ", firstoff: 0x%04x, lastoff: 0x%04x\n",
 	    SWAPME(bmem->shm_version), SWAPME(bmem->shm_lock),
 	    SWAPME64(bmem->shm_gen),
@@ -128,14 +133,12 @@ main(int argc, char *argv[])
 		exit(0);
 
 	if (pcapfile) {
-		isstdout = strcmp(pcapfile, "-") == 0;
 		pcap_t *pcap = pcap_open_dead(DLT_EN10MB, 1518);
 		pdump = pcap_dump_open(pcap, pcapfile);
 		if (pdump == NULL)
 			err(1, "cannot open pcap dump file");
 	} else {
 		/* XXXgcc */
-		isstdout = false;
 		pdump = NULL;
 	}
 
@@ -171,8 +174,7 @@ main(int argc, char *argv[])
 			continue;
 		}
 
-		if (!(pcapfile && isstdout))
-			printf("packet %d, offset 0x%04x, length 0x%04x, "
+		fprintf(dumploc, "packet %d, offset 0x%04x, length 0x%04x, "
 			    "ts %d/%06d\n", i++, curbus,
 			    curlen, SWAPME(sp.sp_sec), SWAPME(sp.sp_usec));
 
