@@ -1,4 +1,4 @@
-/*	$NetBSD: shmif_busops.c,v 1.10 2013/12/20 09:06:35 pooka Exp $	*/
+/*	$NetBSD: shmif_busops.c,v 1.11 2013/12/20 10:00:59 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -27,8 +27,13 @@
  * SUCH DAMAGE.
  */
 
+#ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shmif_busops.c,v 1.10 2013/12/20 09:06:35 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shmif_busops.c,v 1.11 2013/12/20 10:00:59 pooka Exp $");
+#else
+#include <rump/rumpuser_port.h>
+__RCSID("$NetBSD: shmif_busops.c,v 1.11 2013/12/20 10:00:59 pooka Exp $");
+#endif
 
 #include <sys/param.h>
 
