@@ -160,6 +160,15 @@ extern bool cpu_armv7_p;
 #else
 #define	CPU_IS_ARMV7_P()		true
 #endif
+#if !defined(CPU_ARMV6)
+#define	CPU_IS_ARMV6_P()		false
+#elif defined(CPU_ARMV7) || defined(CPU_PRE_ARMV6)
+extern bool cpu_armv6_p;
+#define	CPU_IS_ARMV6_P()		(cpu_armv6_p)
+#else
+#define	CPU_IS_ARMV6_P()		true
+#endif
+
 
 /*
  * Random cruft

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.131 2013/12/18 12:52:47 skrll Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.132 2013/12/20 06:48:09 matt Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.131 2013/12/18 12:52:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.132 2013/12/20 06:48:09 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -95,6 +95,11 @@ struct arm_pmc_funcs *arm_pmc;
 #if defined(CPU_ARMV7) && (defined(CPU_ARMV6) || defined(CPU_PRE_ARMV6))
 bool cpu_armv7_p;
 #endif
+
+#if defined(CPU_ARMV6) && (defined(CPU_ARMV7) || defined(CPU_PRE_ARMV6))
+bool cpu_armv6_p;
+#endif
+
 
 /* PRIMARY CACHE VARIABLES */
 #if (ARM_MMU_V6 + ARM_MMU_V7) != 0
@@ -1839,6 +1844,9 @@ set_cpufuncs(void)
 #if defined(CPU_ARM11MPCORE)
 	if (cputype == CPU_ID_ARM11MPCORE) {
 		cpufuncs = arm11mpcore_cpufuncs;
+#if defined(CPU_ARMV7) || defined(CPU_PRE_ARMV6)
+		cpu_armv6_p = true;
+#endif
 		get_cachetype_cp15();
 		armv5_dcache_sets_inc = 1U << arm_dcache_log2_linesize;
 		armv5_dcache_sets_max = (1U << (arm_dcache_log2_linesize +
@@ -1872,6 +1880,9 @@ set_cpufuncs(void)
 		if (cputype == CPU_ID_ARM1176JZS) {
 			cpufuncs = arm1176_cpufuncs;
 		}
+#endif
+#if defined(CPU_ARMV7) || defined(CPU_PRE_ARMV6)
+		cpu_armv6_p = true;
 #endif
 		cpu_do_powersave = 1;			/* Enable powersave */
 		get_cachetype_cp15();
