@@ -1,4 +1,4 @@
-/*	$NetBSD: shmif_dumpbus.c,v 1.10 2013/12/20 09:36:03 pooka Exp $	*/
+/*	$NetBSD: shmif_dumpbus.c,v 1.11 2013/12/20 10:04:33 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -30,15 +30,18 @@
  * examined with tcpdump -r, wireshark, etc.
  */
 
+#include <rump/rumpuser_port.h>
+
 #ifndef lint
-__RCSID("$NetBSD: shmif_dumpbus.c,v 1.10 2013/12/20 09:36:03 pooka Exp $");
+__RCSID("$NetBSD: shmif_dumpbus.c,v 1.11 2013/12/20 10:04:33 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
-
-#include <machine/bswap.h>
+#ifdef __NetBSD__
+#include <sys/bswap.h>
+#endif
 
 #include <assert.h>
 #include <err.h>
@@ -57,13 +60,24 @@ __dead static void
 usage(void)
 {
 
+#ifndef PLATFORM_HAS_SETGETPROGNAME
+#define getprogname() "shmif_dumpbus"
+#endif
+
 	fprintf(stderr, "usage: %s [-h] [-p pcapfile] buspath\n",getprogname());
 	exit(1);
 }
 
 #define BUFSIZE 64*1024
+#ifdef __NetBSD__
 #define SWAPME(a) (doswap ? bswap32(a) : (a))
 #define SWAPME64(a) (doswap ? bswap64(a) : (a))
+#else
+/* lazy, but let's assume everyone uses shmif_dumpbus only locally */
+#define SWAPME(a) (a)
+#define SWAPME64(a) (a)
+#define bswap32(a) (a)
+#endif
 int
 main(int argc, char *argv[])
 {
@@ -79,7 +93,10 @@ main(int argc, char *argv[])
 	pcap_dumper_t *pdump;
 	FILE *dumploc = stdout;
 
+#ifdef PLATFORM_HAS_SETGETPROGNAME
 	setprogname(argv[0]);
+#endif
+
 	while ((ch = getopt(argc, argv, "hp:")) != -1) {
 		switch (ch) {
 		case 'h':
