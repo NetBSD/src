@@ -1,4 +1,4 @@
-.\" $NetBSD: shm_open.3,v 1.1 2013/12/19 19:40:08 rmind Exp $
+.\" $NetBSD: shm_open.3,v 1.2 2013/12/20 13:48:45 wiz Exp $
 .\"
 .\" Copyright 2000 Massachusetts Institute of Technology
 .\"
@@ -161,6 +161,17 @@ contents, persist across reboots.
 The following errors are defined for
 .Fn shm_open :
 .Bl -tag -width Er
+.It Bq Er EACCES
+The required permissions (for reading or reading and writing) are denied.
+.It Bq Er EEXIST
+.Dv O_CREAT
+and
+.Dv O_EXCL
+are specified and the named shared memory object does exist.
+.It Bq Er EFAULT
+The
+.Fa path
+argument points outside the process' allocated address space.
 .It Bq Er EINVAL
 A flag other than
 .Dv O_RDONLY ,
@@ -170,25 +181,20 @@ A flag other than
 or
 .Dv O_TRUNC
 was included in
-.Fa flags .
-.It Bq Er EMFILE
-The process has already reached its limit for open file descriptors.
-.It Bq Er ENFILE
-The system file table is full.
-.It Bq Er EFAULT
-The
-.Fa path
-argument points outside the process' allocated address space.
-.It Bq Er ENAMETOOLONG
-The entire pathname exceeded
-.Brq Dv PATH_MAX
-characters.
-.It Bq Er EINVAL
-The
+.Fa flags ;
+or the
 .Fa path
 does not begin with a slash
 .Pq Ql \&/
 character.
+.It Bq Er EMFILE
+The process has already reached its limit for open file descriptors.
+.It Bq Er ENAMETOOLONG
+The entire pathname exceeded
+.Brq Dv PATH_MAX
+characters.
+.It Bq Er ENFILE
+The system file table is full.
 .It Bq Er ENOENT
 .Dv O_CREAT
 is specified and the named shared memory object does not exist.
@@ -196,18 +202,15 @@ is specified and the named shared memory object does not exist.
 Not supported, most likely due to missing or incorrect
 .Pa /var/shm
 mount.
-.It Bq Er EEXIST
-.Dv O_CREAT
-and
-.Dv O_EXCL
-are specified and the named shared memory object does exist.
-.It Bq Er EACCES
-The required permissions (for reading or reading and writing) are denied.
 .El
 .Pp
 The following errors are defined for
 .Fn shm_unlink :
 .Bl -tag -width Er
+.It Bq Er EACCES
+The required permissions are denied.
+.Fn shm_unlink
+requires write permission to the shared memory object.
 .It Bq Er EFAULT
 The
 .Fa path
@@ -218,10 +221,6 @@ The entire pathname exceeded
 characters.
 .It Bq Er ENOENT
 The named shared memory object does not exist.
-.It Bq Er EACCES
-The required permissions are denied.
-.Fn shm_unlink
-requires write permission to the shared memory object.
 .El
 .Sh SEE ALSO
 .Xr close 2 ,
