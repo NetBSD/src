@@ -1,4 +1,4 @@
-.\"	$NetBSD: newsyslog.8,v 1.37 2012/06/17 03:52:32 christos Exp $
+.\"	$NetBSD: newsyslog.8,v 1.38 2013/12/20 10:14:25 wiz Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .\"
 .\" from FreeBSD: newsyslog.8,v 1.14.2.1 1999/02/25 18:38:33 wollman Exp
 .\"
-.Dd June 16, 2012
+.Dd December 20, 2014
 .Dt NEWSYSLOG 8
 .Os
 .Sh NAME
@@ -134,6 +134,8 @@ Specify the mode of the log file and archives.
 .It Ar ngen
 Specify the number of archive files to be kept
 besides the log file itself.
+A value of 0 disables the deletion of any archive files during log
+rotation.
 .It Ar size
 When the size of the log file reaches
 .Ar size
