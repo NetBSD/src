@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.6 2013/07/27 19:23:13 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.7 2013/12/20 16:58:34 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2010, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -310,8 +310,6 @@ ISC_MEMFUNC_SCOPE unsigned int
 isc__mempool_getfillcount(isc_mempool_t *mpctx);
 ISC_MEMFUNC_SCOPE void
 isc__mem_printactive(isc_mem_t *ctx0, FILE *file);
-ISC_MEMFUNC_SCOPE void
-isc__mem_printallactive(FILE *file);
 
 unsigned int
 isc__mem_references(isc_mem_t *ctx0);
@@ -351,7 +349,7 @@ static struct isc__memmethods {
 	(void *)isc__mem_getquota, (void *)isc__mem_setname,
 	(void *)isc__mem_getname, (void *)isc__mem_gettag,
 	(void *)isc__mem_printactive,
-	(void *)isc__mem_printallactive,
+	(void *)isc_mem_printallactive,
 
 };
 
@@ -2265,8 +2263,8 @@ isc__mem_printactive(isc_mem_t *ctx0, FILE *file) {
 #endif
 }
 
-ISC_MEMFUNC_SCOPE void
-isc__mem_printallactive(FILE *file) {
+void
+isc_mem_printallactive(FILE *file) {
 #if !ISC_MEM_TRACKLINES
 	UNUSED(file);
 #else
