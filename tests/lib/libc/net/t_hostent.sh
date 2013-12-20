@@ -1,4 +1,4 @@
-# $NetBSD: t_hostent.sh,v 1.2 2013/10/20 17:22:49 christos Exp $
+# $NetBSD: t_hostent.sh,v 1.3 2013/12/20 20:22:26 christos Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -26,11 +26,11 @@
 #
 
 n6="sixthavenue.astron.com"
-a6="2620:106:3003:1f00:2e0:81ff:fe2f:e5d7"
+a6="2620:106:3003:1f00:3e4a:92ff:fef4:e180"
 ans6="name=$n6, length=16, addrtype=24, aliases=[] addr_list=[$a6]\n"
 
 n4="sixthavenue.astron.com"
-a4="38.117.134.6"
+a4="38.117.134.16"
 ans4="name=$n4, length=4, addrtype=2, aliases=[] addr_list=[$a4]\n"
 
 l6="localhost"
