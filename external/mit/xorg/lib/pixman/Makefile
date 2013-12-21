@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2013/09/07 09:22:37 skrll Exp $
+#	$NetBSD: Makefile,v 1.26 2013/12/21 08:58:07 skrll Exp $
 
 NOLINT=	1	# defined
 
@@ -65,12 +65,13 @@ CPPFLAGS+=		-DUSE_VMX
 MKDEPFLAGS+=		-maltivec
 .endif
 
-.if ${MACHINE_ARCH} == "earm" || ${MACHINE_ARCH} == "earmhf"
+
+.if !empty(MACHINE_ARCH:Mearm*)
 # ARM SIMD
-#SRCS+=		pixman-arm-simd.c 		\
-#		pixman-arm-simd-asm.S		\
-#		pixman-arm-simd-asm-scaled.S
-#CPPFLAGS+=	-DUSE_ARM_SIMD
+SRCS+=		pixman-arm-simd.c 		\
+		pixman-arm-simd-asm.S		\
+		pixman-arm-simd-asm-scaled.S
+CPPFLAGS+=	-DUSE_ARM_SIMD
 # ARM NEON
 SRCS+=		pixman-arm-neon.c		\
 		pixman-arm-neon-asm.S		\
