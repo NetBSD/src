@@ -1,4 +1,4 @@
-/*	$NetBSD: gethost.c,v 1.11 2013/08/27 09:53:33 christos Exp $	*/
+/*	$NetBSD: gethost.c,v 1.12 2013/12/21 20:10:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1988, 1993
@@ -73,7 +73,7 @@ __weak_alias(gethostbyaddr,_gethostbyaddr);
 __weak_alias(gethostbyname,_gethostbyname);
 #endif
 
-extern int h_errno;
+int h_errno;
 FILE *_h_file;
 static struct hostent h_ent;
 static char h_buf[4096]; 
