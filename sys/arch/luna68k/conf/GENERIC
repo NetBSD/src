@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.108 2013/06/30 21:38:57 rmind Exp $
+# $NetBSD: GENERIC,v 1.109 2013/12/21 17:12:36 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/luna68k/conf/std.luna68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.108 $"
+#ident 		"GENERIC-$Revision: 1.109 $"
 
 maxusers	8
 
@@ -156,8 +156,8 @@ fb0	at mainbus0		# 16 or 256 pseudo color
 
 # Workstation Console attachments
 wsdisplay*	at fb?
-wskbd*		at ws? console ?
-wsmouse*	at ws?
+wskbd*		at ws? console ? mux 1
+wsmouse*	at ws? mux 0
 
 # SCSI bus support
 scsibus* at spc?
@@ -201,6 +201,8 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
+
+pseudo-device	wsmux			# mouse & keyboard multiplexsor
 
 # Veriexec
 #
