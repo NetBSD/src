@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.119 2013/06/12 02:51:43 msaitoh Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.120 2013/12/21 15:18:21 kiyohara Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.116 2013/06/12 02:51:16 msaitoh Exp
+ *	NetBSD: miidevs,v 1.117 2013/12/21 15:16:23 kiyohara Exp
  */
 
 /*-
@@ -378,6 +378,8 @@
 #define	MII_STR_xxMARVELL_E1116R	"Marvell 88E1116R Gigabit PHY"
 #define	MII_MODEL_xxMARVELL_E1116R_29	0x0029
 #define	MII_STR_xxMARVELL_E1116R_29	"Marvell 88E1116R Gigabit PHY"
+#define	MII_MODEL_xxMARVELL_E1543	0x002a
+#define	MII_STR_xxMARVELL_E1543	"Marvell 88E1543 Alaska Quad Port Gb PHY"
 
 /* Myson Technology PHYs */
 #define	MII_MODEL_xxMYSON_MTD972	0x0000
