@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.116 2013/06/12 02:51:16 msaitoh Exp $
+$NetBSD: miidevs,v 1.117 2013/12/21 15:16:23 kiyohara Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -258,6 +258,7 @@ model xxMARVELL E1145		0x000d Marvell 88E1145 Quad Gigabit PHY
 model xxMARVELL E1116		0x0021 Marvell 88E1116 Gigabit PHY
 model xxMARVELL E1116R		0x0024 Marvell 88E1116R Gigabit PHY
 model xxMARVELL E1116R_29	0x0029 Marvell 88E1116R Gigabit PHY
+model xxMARVELL E1543		0x002a Marvell 88E1543 Alaska Quad Port Gb PHY
 
 /* Myson Technology PHYs */
 model xxMYSON MTD972		0x0000 MTD972 10/100 media interface
