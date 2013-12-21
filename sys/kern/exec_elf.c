@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.52 2013/12/21 14:41:02 christos Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.53 2013/12/21 17:44:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.52 2013/12/21 14:41:02 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.53 2013/12/21 17:44:33 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -709,14 +709,14 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 				goto bad;
 			}
 			interp = PNBUF_GET();
+			if ((error = exec_read_from(l, epp->ep_vp,
+			    pp->p_offset, interp, pp->p_filesz)) != 0)
+				goto bad;
 			/* Ensure interp is NUL-terminated and of the expected length */
 			if (strnlen(interp, pp->p_filesz) != pp->p_filesz - 1) {
 				error = ENOEXEC;
 				goto bad;
 			}
-			if ((error = exec_read_from(l, epp->ep_vp,
-			    pp->p_offset, interp, pp->p_filesz)) != 0)
-				goto bad;
 			break;
 		}
 	}
