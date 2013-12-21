@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1162 2013/12/15 04:24:53 pgoyette Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1163 2013/12/21 09:24:11 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1169 2013/12/15 04:21:52 pgoyette Exp
+ *	NetBSD: pcidevs,v 1.1170 2013/12/21 09:23:36 msaitoh Exp
  */
 
 /*
@@ -3449,6 +3449,7 @@
 #define	PCI_PRODUCT_INTEL_5400_IOAPIC	0x4032		/* 5400 IOAPIC */
 #define	PCI_PRODUCT_INTEL_5400_RAS_0	0x4035		/* 5400 RAS */
 #define	PCI_PRODUCT_INTEL_5400_RAS_1	0x4036		/* 5400 RAS */
+#define	PCI_PRODUCT_INTEL_E600_VGA	0x4108		/* E600 Integrated VGA */
 #define	PCI_PRODUCT_INTEL_E600_HB	0x4114		/* E600 Host */
 #define	PCI_PRODUCT_INTEL_PRO_WL_2200BG	0x4220		/* PRO/Wireless LAN 2200BG Mini-PCI Adapter */
 #define	PCI_PRODUCT_INTEL_PRO_WL_2225BG	0x4221		/* PRO/Wireless LAN 2225BG Mini-PCI Adapter */
@@ -3504,6 +3505,12 @@
 #define	PCI_PRODUCT_INTEL_82443GX_NOAGP	0x71a2		/* 82443GX Host Bridge/Controller (AGP disabled) */
 #define	PCI_PRODUCT_INTEL_I740	0x7800		/* i740 Graphics Accelerator */
 #define	PCI_PRODUCT_INTEL_SCH_IDE	0x811a		/* SCH IDE Controller */
+#define	PCI_PRODUCT_INTEL_E600_HDA	0x811b		/* E600 HD Audio */
+#define	PCI_PRODUCT_INTEL_E600_PCIB_0	0x8180		/* E600 Virtual PCI-PCI Bridge */
+#define	PCI_PRODUCT_INTEL_E600_PCIB_1	0x8181		/* E600 Virtual PCI-PCI Bridge */
+#define	PCI_PRODUCT_INTEL_E600_GVD	0x8182		/* E600 Integrated Graphic Video Display */
+#define	PCI_PRODUCT_INTEL_E600_PCIB_2	0x8184		/* E600 Virtual PCI-PCI Bridge */
+#define	PCI_PRODUCT_INTEL_E600_PCIB_3	0x8185		/* E600 Virtual PCI-PCI Bridge */
 #define	PCI_PRODUCT_INTEL_E600_LPC	0x8186		/* Atom Processor E6xx LPC Bridge */
 #define	PCI_PRODUCT_INTEL_PCI450_PB	0x84c4		/* 82454KX/GX PCI Bridge (PB) */
 #define	PCI_PRODUCT_INTEL_PCI450_MC	0x84c5		/* 82451KX/GX Memory Controller (MC) */
