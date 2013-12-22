@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.120 2013/10/04 15:13:51 rkujawa Exp $
+# $NetBSD: GENERIC.in,v 1.121 2013/12/22 02:21:51 rkujawa Exp $
 #
 ##
 # GENERIC machine description file
@@ -52,7 +52,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.120 $"
+#ident 		"GENERIC-$Revision: 1.121 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -514,6 +514,10 @@ cbiiisc0 	at p5bus0		# Cyberstorm mk.III/Cyberstorm PPC SCSI
 scsibus*	at cbiiisc0
 empsc0		at zbus0		# Emplant scsi
 scsibus*	at empsc0
+
+#acafh0		at mainbus0		# Individual Computers ACA500
+#options	ACA500_SUPPORT
+#wdc*		at acafhbus?
 
 wdc0		at mainbus0		# A4000 & A1200 IDE bus
 wdc*		at zbus0		# Buddha / Catweasel
