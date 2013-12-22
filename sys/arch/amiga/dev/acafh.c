@@ -1,4 +1,4 @@
-/*	$NetBSD: acafh.c,v 1.1 2013/12/22 02:21:51 rkujawa Exp $ */
+/*	$NetBSD: acafh.c,v 1.2 2013/12/22 23:02:38 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acafh.c,v 1.1 2013/12/22 02:21:51 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acafh.c,v 1.2 2013/12/22 23:02:38 rkujawa Exp $");
 
 /*
  * Individual Computers ACA500 driver. 
@@ -78,6 +78,7 @@ acafh_attach(device_t parent, device_t self, void *aux)
 	vaddr_t aca_vbase;
 	int i;
 	struct acafhbus_attach_args aaa_wdc;
+	struct acafhbus_attach_args aaa_cp;
 
 	sc = device_private(self);
 	sc->sc_dev = self;
@@ -127,9 +128,13 @@ acafh_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal("\n");
 
-	aaa_wdc.aaa_base = (bus_addr_t) 0xDA0000 + 2;
+	aaa_wdc.aaa_pbase = (bus_addr_t) GAYLE_IDE_BASE + 2;
 	strcpy(aaa_wdc.aaa_name, "wdc_acafh");
 	config_found_ia(sc->sc_dev, "acafhbus", &aaa_wdc, acafh_print);
+
+	aaa_cp.aaa_pbase = (bus_addr_t) ACAFH_CLOCKPORT_BASE;
+	strcpy(aaa_cp.aaa_name, "gencp_acafh");
+	config_found_ia(sc->sc_dev, "acafhbus", &aaa_cp, acafh_print);
 }
 
 uint8_t

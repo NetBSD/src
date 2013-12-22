@@ -1,4 +1,4 @@
-/*	$NetBSD: acafhreg.h,v 1.2 2013/12/22 23:02:38 rkujawa Exp $ */
+/*      $NetBSD: gencp_acafh.c,v 1.1 2013/12/22 23:02:38 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -29,35 +29,70 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _AMIGA_ACAFHREG_H_
+/* Clockport on ACA500. */
 
-#define GAYLE_IDE_BASE		0xDA0000 /* ACA500 has Gayle-compatible IDE */
-#define ACAFH_CLOCKPORT_BASE	0xD80001
+#include <sys/cdefs.h>
 
-#define ACAFH_MSB_SHIFT		0xF
-#define ACAFH_MSB_MASK		0x8000
+#include <sys/systm.h>
+#include <sys/types.h>
+#include <sys/device.h>
+#include <sys/bus.h>
+#include <sys/conf.h>
+#include <sys/kmem.h>
 
-#define ACAFH_BASE		0xB00000
-#define ACAFH_FIRST_REG_OFF	0x3000
-#define ACAFH_END		0xB3B002
-/* registers have stride of 16kB */
-#define ACAFH_CF_DETECT_BOOT		0x0
-#define ACAFH_CF_DETECT_AUX		0x1
-#define ACAFH_CF_IRQ_BOOT		0x2
-#define ACAFH_CF_IRQ_AUX		0x3
+#include <machine/cpu.h>
 
-#define ACAFH_VERSION_BIT3		0x4
-#define ACAFH_VERSION_BIT2		0x5
-#define ACAFH_VERSION_BIT1		0x6
-#define ACAFH_VERSION_BIT0		0x7
+#include <amiga/amiga/device.h>
 
-#define ACAFH_MAPROM			0x8
-#define ACAFH_CHIPMAP			0x9
-#define ACAFH_FLASH_WRITE		0xA
-#define ACAFH_VBR_MOVE			0xB
-#define ACAFH_MEMPROBE_AUXIRQ		0xC
-#define ACAFH_POWERUP			0xD
-#define ACAFH_C0WIPE			0xE
+#include <amiga/dev/acafhvar.h>
+#include <amiga/dev/zbusvar.h>
 
-#endif /* _AMIGA_ACAFHREG_H_ */
+#include <amiga/clockport/clockportvar.h>
+
+static int	gencp_acafh_match(device_t, cfdata_t, void *);
+static void	gencp_acafh_attach(device_t, device_t, void *);
+
+CFATTACH_DECL_NEW(gencp_acafh, sizeof(struct gencp_softc),
+    gencp_acafh_match, gencp_acafh_attach, NULL, NULL);
+
+static int
+gencp_acafh_match(device_t parent, cfdata_t cf, void *aux)
+{
+	struct acafhbus_attach_args *aaa_aa;
+	static int attach_count = 0;
+
+	aaa_aa = aux;
+
+	if (strcmp(aaa_aa->aaa_name, "gencp_acafh") != 0) 
+		return 0;
+
+	if (attach_count >= 1)
+		return 0;	
+
+	attach_count++;
+
+	return 1;
+}
+
+static void
+gencp_acafh_attach(device_t parent, device_t self, void *aux)
+{
+	struct gencp_softc *sc;
+	struct bus_space_tag cpb_bst;
+	struct clockportbus_attach_args cpb_aa;
+	struct acafhbus_attach_args *aaa_aa;
+
+	aaa_aa = aux;
+	sc = device_private(self);
+	sc->sc_dev = self;
+	sc->cpb_aa = &cpb_aa;
+
+	/* Set the address and bus access methods. */
+	cpb_bst.base = (bus_addr_t) __UNVOLATILE(ztwomap(aaa_aa->aaa_pbase));
+	cpb_bst.absm = &amiga_bus_stride_4;
+
+	sc->cpb_aa->cp_iot = &cpb_bst;
+
+	gencp_attach(sc);
+}
 

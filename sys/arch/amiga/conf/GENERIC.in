@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.121 2013/12/22 02:21:51 rkujawa Exp $
+# $NetBSD: GENERIC.in,v 1.122 2013/12/22 23:02:38 rkujawa Exp $
 #
 ##
 # GENERIC machine description file
@@ -52,7 +52,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.121 $"
+#ident 		"GENERIC-$Revision: 1.122 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -462,6 +462,7 @@ xsurf*		at zbus0		# X-Surf
 ne*		at xsurfbus?		# NE2000 chip on X-Surf
 gencp*		at xsurfbus?		# clockports on X-Surf
 wdc*		at xsurfbus?		# IDE on X-Surf
+
 clockport*	at gencp?
 
 # Arcnet
@@ -517,7 +518,8 @@ scsibus*	at empsc0
 
 #acafh0		at mainbus0		# Individual Computers ACA500
 #options	ACA500_SUPPORT
-#wdc*		at acafhbus?
+#wdc*		at acafhbus?		# CF slots on ACA500
+#gencp*		at acafhbus?		# clockport on ACA500
 
 wdc0		at mainbus0		# A4000 & A1200 IDE bus
 wdc*		at zbus0		# Buddha / Catweasel
