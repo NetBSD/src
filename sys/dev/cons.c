@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.69 2012/03/13 18:40:29 elad Exp $	*/
+/*	$NetBSD: cons.c,v 1.70 2013/12/22 18:05:40 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.69 2012/03/13 18:40:29 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.70 2013/12/22 18:05:40 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -239,7 +239,15 @@ cngetc(void)
 {
 	if (cn_tab == NULL)
 		return (0);
-	return ((*cn_tab->cn_getc)(cn_tab->cn_dev));
+	int s = splhigh();
+	for (;;) {
+		const int rv = (*cn_tab->cn_getc)(cn_tab->cn_dev);
+		if (rv >= 0) {
+			splx(s);
+			return rv;
+		}
+		docritpollhooks();
+	}
 }
 
 int
@@ -297,8 +305,10 @@ cnputc(int c)
 
 	if (c) {
 		(*cn_tab->cn_putc)(cn_tab->cn_dev, c);
-		if (c == '\n')
+		if (c == '\n') {
+			docritpollhooks();
 			(*cn_tab->cn_putc)(cn_tab->cn_dev, '\r');
+		}
 	}
 }
 
