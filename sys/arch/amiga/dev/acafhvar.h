@@ -1,4 +1,4 @@
-/*	$NetBSD: acafhvar.h,v 1.1 2013/12/22 02:21:51 rkujawa Exp $ */
+/*	$NetBSD: acafhvar.h,v 1.2 2013/12/22 23:02:38 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ struct acafh_softc {
 
 struct acafhbus_attach_args {
 	char		aaa_name[32];	
-	bus_addr_t	aaa_base;
+	bus_addr_t	aaa_pbase; /* physical base address */
 };
 
 uint8_t acafh_cf_intr_status(struct acafh_softc *, uint8_t);
