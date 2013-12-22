@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_acafh.c,v 1.1 2013/12/22 02:21:51 rkujawa Exp $ */
+/*	$NetBSD: wdc_acafh.c,v 1.2 2013/12/22 23:02:38 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2000, 2003, 2013 The NetBSD Foundation, Inc.
@@ -32,8 +32,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * ACA500 CF (IDE) controller driver. 
+ *
+ * The hardware emulates original A600/A1200 Gayle interface. However, it has
+ * two channels, second channel placed instead of ctl registers (so software
+ * reset of the bus is not possible, duh). There are no slave devices.
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_acafh.c,v 1.1 2013/12/22 02:21:51 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_acafh.c,v 1.2 2013/12/22 23:02:38 rkujawa Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -52,26 +60,39 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_acafh.c,v 1.1 2013/12/22 02:21:51 rkujawa Exp $"
 #include <amiga/amiga/gayle.h>
 #include <amiga/dev/zbusvar.h>
 #include <amiga/dev/acafhvar.h>
+#include <amiga/dev/acafhreg.h>
 
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcvar.h>
 
-struct wdc_acafh_softc {
-	struct wdc_softc sc_wdcdev;
-	struct	ata_channel *sc_chanlist[1];
-	struct  ata_channel sc_channel;
-	struct	ata_queue sc_chqueue;
-	struct wdc_regs sc_wdc_regs;
-	struct isr sc_isr;
-	volatile u_char *sc_intreg;
-	struct bus_space_tag cmd_iot;
-	struct bus_space_tag ctl_iot;
-	struct acafh_softc *aca_sc;
+#define WDC_ACAFH_SLOTS 2
+
+struct wdc_acafh_slot {
+	struct ata_channel	channel;
+	struct ata_queue	chqueue;
+	struct wdc_regs		wdr;
 };
 
-int	wdc_acafh_match(device_t, cfdata_t, void *);
-void	wdc_acafh_attach(device_t, device_t, void *);
-int	wdc_acafh_intr(void *);
+struct wdc_acafh_softc {
+	device_t		sc_dev;
+
+	struct wdc_softc	sc_wdcdev;
+	struct ata_channel	*sc_chanlist[WDC_ACAFH_SLOTS];
+	struct wdc_acafh_slot	sc_slots[WDC_ACAFH_SLOTS];
+
+	struct isr		sc_isr;
+	volatile u_char		*sc_intreg;
+
+	struct bus_space_tag	cmd_iot;
+
+	struct acafh_softc	*aca_sc;
+};
+
+int		wdc_acafh_match(device_t, cfdata_t, void *);
+void		wdc_acafh_attach(device_t, device_t, void *);
+int		wdc_acafh_intr(void *);
+static void	wdc_acafh_attach_channel(struct wdc_acafh_softc *, int);
+static void	wdc_acafh_map_channel(struct wdc_acafh_softc *, int);
 
 CFATTACH_DECL_NEW(wdc_acafh, sizeof(struct wdc_acafh_softc),
     wdc_acafh_match, wdc_acafh_attach, NULL, NULL);
@@ -90,28 +111,80 @@ void
 wdc_acafh_attach(device_t parent, device_t self, void *aux)
 {
 	struct wdc_acafh_softc *sc = device_private(self);
-	struct wdc_regs *wdr;
 	int i;
 
-	aprint_normal("\n");
-	gayle_init();
+	aprint_normal(": ACA500 CompactFlash interface\n");
 
+	sc->sc_dev = device_private(self);
 	sc->aca_sc = device_private(parent);
 
-	sc->sc_wdcdev.sc_atac.atac_dev = self;
-	sc->sc_wdcdev.regs = wdr = &sc->sc_wdc_regs;
-
-	sc->cmd_iot.base = (u_long) ztwomap(0xda0000 + 2);
 	gayle_init();
 	sc->sc_intreg = &gayle.intreq;
 
-	sc->cmd_iot.absm = sc->ctl_iot.absm = &amiga_bus_stride_4swap;
-	wdr->cmd_iot = &sc->cmd_iot;
-	wdr->ctl_iot = &sc->ctl_iot;
+	/* XXX: take addr from attach args? */
+	sc->cmd_iot.base = (u_long) ztwomap(GAYLE_IDE_BASE + 2);
+	sc->cmd_iot.absm = &amiga_bus_stride_4swap;
 
-	if (bus_space_map(wdr->cmd_iot, 0, 0x40, 0,
+	sc->sc_wdcdev.sc_atac.atac_dev = self;
+	sc->sc_wdcdev.sc_atac.atac_cap = ATAC_CAP_DATA16;
+	sc->sc_wdcdev.sc_atac.atac_pio_cap = 0;
+	sc->sc_wdcdev.sc_atac.atac_channels = sc->sc_chanlist;
+	sc->sc_wdcdev.sc_atac.atac_nchannels = WDC_ACAFH_SLOTS;
+	sc->sc_wdcdev.wdc_maxdrives = 2;
+	sc->sc_wdcdev.cap = WDC_CAPABILITY_NO_AUXCTL;
+
+	wdc_allocate_regs(&sc->sc_wdcdev);
+	for (i = 0; i < WDC_ACAFH_SLOTS; i++) {
+		wdc_acafh_attach_channel(sc, i);
+	}
+
+	sc->sc_isr.isr_intr = wdc_acafh_intr;
+	sc->sc_isr.isr_arg = sc;
+	sc->sc_isr.isr_ipl = 2;
+	add_isr (&sc->sc_isr);
+
+	gayle.intena |= GAYLE_INT_IDE;
+
+}
+
+void
+wdc_acafh_attach_channel(struct wdc_acafh_softc *sc, int chnum)
+{
+	sc->sc_chanlist[chnum] = &sc->sc_slots[chnum].channel;
+	memset(&sc->sc_slots[chnum],0,sizeof(struct wdc_acafh_slot));
+	sc->sc_slots[chnum].channel.ch_channel = chnum;
+	sc->sc_slots[chnum].channel.ch_atac = &sc->sc_wdcdev.sc_atac;
+	sc->sc_slots[chnum].channel.ch_queue = &sc->sc_slots[chnum].chqueue;
+
+	wdc_acafh_map_channel(sc, chnum);
+
+	wdc_init_shadow_regs(&sc->sc_slots[chnum].channel);
+	wdcattach(&sc->sc_slots[chnum].channel);
+
+#ifdef WDC_ACAFH_DEBUG
+	aprint_normal_dev(sc->sc_dev, "done init for channel %d\n", chnum);
+#endif /* WDC_ACAFH_DEBUG */
+
+}
+
+void
+wdc_acafh_map_channel(struct wdc_acafh_softc *sc, int chnum)
+{
+	struct wdc_regs *wdr;
+	int i;
+	bus_addr_t off;
+
+	wdr = CHAN_TO_WDC_REGS(&sc->sc_slots[chnum].channel);
+	wdr->cmd_iot = &sc->cmd_iot;
+
+	if (chnum == 0)
+		off = 0;
+	else
+		off = 0x400;
+
+	if (bus_space_map(wdr->cmd_iot, off, 0x40, 0,
 			  &wdr->cmd_baseioh)) {
-		aprint_error_dev(self, "couldn't map registers\n");
+		aprint_error_dev(sc->sc_dev, "couldn't map regs\n");
 		return;
 	}
 
@@ -122,35 +195,11 @@ wdc_acafh_attach(device_t parent, device_t self, void *aux)
 
 			bus_space_unmap(wdr->cmd_iot,
 			    wdr->cmd_baseioh, 0x40);
-			aprint_error_dev(self, "couldn't map registers\n");
+			aprint_error_dev(sc->sc_dev, "couldn't map regs\n");
 			return;
 		}
 	}
 
-	if (bus_space_subregion(wdr->cmd_iot,
-	    wdr->cmd_baseioh, 0x406, 1, &wdr->ctl_ioh))
-		return;
-
-	sc->sc_wdcdev.sc_atac.atac_cap = ATAC_CAP_DATA16;
-	sc->sc_wdcdev.sc_atac.atac_pio_cap = 0;
-	sc->sc_chanlist[0] = &sc->sc_channel;
-	sc->sc_wdcdev.sc_atac.atac_channels = sc->sc_chanlist;
-	sc->sc_wdcdev.sc_atac.atac_nchannels = 1;
-	sc->sc_wdcdev.wdc_maxdrives = 2;
-	sc->sc_channel.ch_channel = 0;
-	sc->sc_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
-	sc->sc_channel.ch_queue = &sc->sc_chqueue;
-
-	wdc_init_shadow_regs(&sc->sc_channel);
-
-	sc->sc_isr.isr_intr = wdc_acafh_intr;
-	sc->sc_isr.isr_arg = sc;
-	sc->sc_isr.isr_ipl = 2;
-	add_isr (&sc->sc_isr);
-
-	gayle.intena |= GAYLE_INT_IDE;
-
-	wdcattach(&sc->sc_channel);
 }
 
 int
@@ -161,13 +210,12 @@ wdc_acafh_intr(void *arg)
 	u_char intreq = *sc->sc_intreg;
 
 	if (intreq & GAYLE_INT_IDE) {
-/*
-		if (acafh_cf_intr_status(sc->aca_sc, 1) == 1) 
-			aprint_normal_dev(sc->aca_sc->sc_dev, "intr at slot 1\n");
-		if (acafh_cf_intr_status(sc->aca_sc, 0) == 1)
-			aprint_normal_dev(sc->aca_sc->sc_dev, "intr at slot 0\n"); 
-*/
-		ret = wdcintr(&sc->sc_channel);
+		if (acafh_cf_intr_status(sc->aca_sc, 1) == 1) {
+			ret = wdcintr(&sc->sc_slots[1].channel);
+		}
+		if (acafh_cf_intr_status(sc->aca_sc, 0) == 1) {
+			ret = wdcintr(&sc->sc_slots[0].channel);
+		}
 		gayle.intreq = 0x7c | (intreq & 0x03);
 	}
 
