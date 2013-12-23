@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsocreg.h,v 1.6 2013/11/20 12:36:16 kiyohara Exp $	*/
+/*	$NetBSD: mvsocreg.h,v 1.7 2013/12/23 03:19:43 kiyohara Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -76,16 +76,6 @@
 				/* NS16550 compatible */
 #define MVSOC_COM0_BASE		(MVSOC_DEVBUS_BASE + 0x2000)
 #define MVSOC_COM1_BASE		(MVSOC_DEVBUS_BASE + 0x2100)
-
-/*
- * Miscellanseous Register
- */
-#define MVSOC_MISC_BASE		(MVSOC_DEVBUS_BASE + 0x8200) /* For Armada XP */
-
-#define MVSOC_MISC_RSTOUTNMASKR		  0x60 /* RSTOUTn Mask Register */
-#define MVSOC_MISC_RSTOUTNMASKR_GLOBALSOFTRSTOUTEN (1 << 0)
-#define MVSOC_MISC_SSRR			  0x64	/* System Soft Reset Register */
-#define MVSOC_MISC_SSRR_GLOBALSOFTRST           (1 << 0)
 
 /*
  * Mbus-L to Mbus Bridge Registers
