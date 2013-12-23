@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.52 2013/12/23 11:17:20 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.53 2013/12/23 12:35:33 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.52 2013/12/23 11:17:20 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.53 2013/12/23 12:35:33 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1432,6 +1432,17 @@ cpu_probe_base_features(struct cpu_info *ci, const char *cpuname)
 	ci->ci_vendor[2] = descs[2];
 	ci->ci_vendor[1] = descs[3];
 	ci->ci_vendor[3] = 0;
+	if (verbose) {
+		int bf;
+		
+		printf("%s: cpuid basic function max = %08x\n", cpuname,
+		    descs[0]);
+		for (bf = 0; bf <= ci->ci_cpuid_level; bf++) {
+			x86_cpuid(bf, descs);
+			printf("%s: %08x: %08x %08x %08x %08x\n", cpuname,
+			    bf, descs[0], descs[1], descs[2], descs[3]);
+		}
+	}
 
 	/*
 	 * Fn8000_0000:
@@ -1443,6 +1454,17 @@ cpu_probe_base_features(struct cpu_info *ci, const char *cpuname)
 	else {
 		/* Set lower value than 0x80000000 */
 		ci->ci_cpuid_extlevel = 0;
+	}
+	if (verbose) {
+		unsigned int ef;
+
+		printf("%s: cpuid extended function max = %08x\n", cpuname,
+		    descs[0]);
+		for (ef = 0x80000000; ef <= ci->ci_cpuid_extlevel; ef++) {
+			x86_cpuid(ef, descs);
+			printf("%s: %08x: %08x %08x %08x %08x\n", cpuname,
+			    ef, descs[0], descs[1], descs[2], descs[3]);
+		}
 	}
 
 	/*
