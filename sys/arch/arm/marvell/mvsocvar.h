@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsocvar.h,v 1.5 2013/09/30 13:12:56 kiyohara Exp $	*/
+/*	$NetBSD: mvsocvar.h,v 1.6 2013/12/23 03:19:43 kiyohara Exp $	*/
 /*
  * Copyright (c) 2007, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -42,15 +42,11 @@ struct mvsoc_softc {
 typedef int (*mvsoc_irq_handler_t)(void *);
 
 extern uint32_t mvPclk, mvSysclk, mvTclk;
-extern vaddr_t misc_base;
 extern vaddr_t mlmb_base;
 extern int nwindow, nremap;
 extern int gpp_npins, gpp_irqbase;
 extern struct bus_space mvsoc_bs_tag;
 extern struct arm32_bus_dma_tag mvsoc_bus_dma_tag;
-
-#define read_miscreg(o)		(*(volatile uint32_t *)(misc_base + (o)))
-#define write_miscreg(o, v)	(*(volatile uint32_t *)(misc_base + (o)) = (v))
 
 #define read_mlmbreg(o)		(*(volatile uint32_t *)(mlmb_base + (o)))
 #define write_mlmbreg(o, v)	(*(volatile uint32_t *)(mlmb_base + (o)) = (v))
