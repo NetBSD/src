@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsocreg.h,v 1.7 2013/12/23 03:19:43 kiyohara Exp $	*/
+/*	$NetBSD: mvsocreg.h,v 1.8 2013/12/23 04:12:09 kiyohara Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -112,6 +112,10 @@
 #define MVSOC_MLMB_MLMBIMR		  0x114	/*Mb-L to Mb Bridge Intr Mask */
 
 #define MVSOC_MLMB_CLKGATING		  0x11c	/* Clock Gating Control */
+#define MVSOC_MLMB_CLKGATING_LNR	  (1 << 13) /* Load New Ratio */
+#define MVSOC_MLMB_CLKGATING_GPH	  (1 << 12) /* Go To Power Half */
+#define MVSOC_MLMB_CLKGATING_GPS	  (1 << 11) /* Go To Power Save */
+#define MVSOC_MLMB_CLKGATING_CR		  (1 << 10) /* Production Realignment */
 #define MVSOC_MLMB_CLKGATING_BIT(n)	  (1 << (n))
 
 #define MVSOC_MLMB_L2CFG		  0x128	/* L2 Cache Config */

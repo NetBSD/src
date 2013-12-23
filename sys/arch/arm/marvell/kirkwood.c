@@ -1,4 +1,4 @@
-/*	$NetBSD: kirkwood.c,v 1.7 2012/09/06 03:05:41 msaitoh Exp $	*/
+/*	$NetBSD: kirkwood.c,v 1.8 2013/12/23 04:12:09 kiyohara Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kirkwood.c,v 1.7 2012/09/06 03:05:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kirkwood.c,v 1.8 2013/12/23 04:12:09 kiyohara Exp $");
 
 #define _INTR_PRIVATE
 
@@ -86,6 +86,27 @@ static struct pic_softc kirkwood_pic = {
 	.pic_ops = &kirkwood_picops,
 	.pic_maxsources = 64,
 	.pic_name = "kirkwood",
+};
+
+static struct {
+	bus_size_t offset;
+	uint32_t bits;
+} clkgatings[]= {
+	{ KIRKWOOD_GBE0_BASE,	(1 << 0) },
+	{ MVSOC_PEX_BASE,	(1 << 2) },
+	{ KIRKWOOD_USB_BASE,	(1 << 3) },
+	{ KIRKWOOD_SDIO_BASE,	(1 << 4) },
+	{ KIRKWOOD_MTS_BASE,	(1 << 5) },
+#if 0
+	{ Dunit, (1 << 6) },	/* SDRAM Unit Clock */
+	{ Runit, (1 << 7) },	/* Runit Clock */
+#endif
+	{ KIRKWOOD_IDMAC_BASE,	(1 << 8) | (1 << 16) },
+	{ KIRKWOOD_AUDIO_BASE,	(1 << 9) },
+	{ KIRKWOOD_SATAHC_BASE, (1 << 14) | (1 << 15) },
+	{ KIRKWOOD_CESA_BASE,	(1 << 17) },
+	{ KIRKWOOD_GBE1_BASE,	(1 << 19) },
+	{ KIRKWOOD_TDM_BASE,	(1 << 20) },
 };
 
 
@@ -259,4 +280,23 @@ kirkwood_getclks(bus_addr_t iobase)
 
 #undef MHz
 
+}
+
+int
+kirkwood_clkgating(struct marvell_attach_args *mva)
+{
+	uint32_t val;
+	int i;
+
+	for (i = 0; i < __arraycount(clkgatings); i++) {
+		if (clkgatings[i].offset == mva->mva_offset) {
+			val = read_mlmbreg(MVSOC_MLMB_CLKGATING);
+			if ((val & clkgatings[i].bits) == clkgatings[i].bits)
+				/* Clock enabled */
+				return 0;
+			return 1;
+		}
+	}
+	/* Clock Gating not support */
+	return 0;
 }

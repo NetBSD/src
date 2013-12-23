@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_machdep.c,v 1.25 2013/12/23 03:19:43 kiyohara Exp $ */
+/*	$NetBSD: marvell_machdep.c,v 1.26 2013/12/23 04:12:09 kiyohara Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.25 2013/12/23 03:19:43 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.26 2013/12/23 04:12:09 kiyohara Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
@@ -314,6 +314,7 @@ initarm(void *arg)
 		nremap = KIRKWOOD_MLMB_NREMAP;
 
 		kirkwood_getclks(MARVELL_INTERREGS_VBASE);
+		mvsoc_clkgating = kirkwood_clkgating;
 		break;
 #endif	/* KIRKWOOD */
 
@@ -351,6 +352,7 @@ initarm(void *arg)
 		extern vaddr_t misc_base;
 	        misc_base = MARVELL_INTERREGS_VBASE + ARMADAXP_MISC_BASE;
 		armadaxp_getclks();
+		mvsoc_clkgating = armadaxp_clkgating;
 
 #ifdef L2CACHE_ENABLE
 		/* Initialize L2 Cache */

@@ -1,4 +1,4 @@
-/*	$NetBSD: armadaxp_machdep.c,v 1.5 2013/12/23 03:19:43 kiyohara Exp $	*/
+/*	$NetBSD: armadaxp_machdep.c,v 1.6 2013/12/23 04:12:09 kiyohara Exp $	*/
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
 
@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadaxp_machdep.c,v 1.5 2013/12/23 03:19:43 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadaxp_machdep.c,v 1.6 2013/12/23 04:12:09 kiyohara Exp $");
 
 #include "opt_machdep.h"
 #include "opt_mvsoc.h"
@@ -356,6 +356,7 @@ initarm(void *arg)
 	extern vaddr_t misc_base;
 	misc_base = MARVELL_INTERREGS_VBASE + ARMADAXP_MISC_BASE;
 	armadaxp_getclks();
+	mvsoc_clkgating = armadaxp_clkgating;
 
 	/* Preconfigure interrupts */
 	armadaxp_intr_bootstrap(MARVELL_INTERREGS_PBASE);
