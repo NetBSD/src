@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.51 2013/12/23 10:13:59 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.52 2013/12/23 11:17:20 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.51 2013/12/23 10:13:59 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.52 2013/12/23 11:17:20 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -94,6 +94,7 @@ struct cpu_info {
 	const char	*ci_dev;
 	int32_t		ci_cpu_type;     /* for cpu's without cpuid */
 	int32_t		ci_cpuid_level;	 /* highest cpuid supported */
+	uint32_t	ci_cpuid_extlevel; /* highest cpuid extended func lv */
 	uint32_t	ci_signature;	 /* X86 cpuid type */
 	uint32_t	ci_family;	 /* from ci_signature */
 	uint32_t	ci_model;	 /* from ci_signature */
@@ -212,6 +213,7 @@ static void	powernow_probe(struct cpu_info *);
 static void	intel_family_new_probe(struct cpu_info *);
 static void	via_cpu_probe(struct cpu_info *);
 /* (Cache) Info functions */
+static void 	intel_cpu_cacheinfo(struct cpu_info *);
 static void 	amd_cpu_cacheinfo(struct cpu_info *);
 static void	via_cpu_cacheinfo(struct cpu_info *);
 static void	tmx86_get_longrun_status(u_int *, u_int *, u_int *);
@@ -285,7 +287,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			"486",		/* Default */
 			NULL,
 			NULL,
-			NULL,
+			intel_cpu_cacheinfo,
 		},
 		/* Family 5 */
 		{
@@ -300,7 +302,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			"Pentium",	/* Default */
 			NULL,
 			NULL,
-			NULL,
+			intel_cpu_cacheinfo,
 		},
 		/* Family 6 */
 		{
@@ -363,7 +365,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			"Pentium Pro, II or III",	/* Default */
 			NULL,
 			intel_family_new_probe,
-			NULL,
+			intel_cpu_cacheinfo,
 		},
 		/* Family > 6 */
 		{
@@ -375,7 +377,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			"Pentium 4",	/* Default */
 			NULL,
 			intel_family_new_probe,
-			NULL,
+			intel_cpu_cacheinfo,
 		} }
 	},
 	{
@@ -956,6 +958,103 @@ amd_family6_probe(struct cpu_info *ci)
 		}
 }
 
+static void
+intel_cpu_cacheinfo(struct cpu_info *ci)
+{
+	const struct x86_cache_info *cai;
+	u_int descs[4];
+	int iterations, i, j;
+	int type, level;
+	int ways, partitions, linesize, sets;
+	int caitype = -1;
+	int totalsize;
+	uint8_t desc;
+
+	/* Return if the cpu is old pre-cpuid instruction cpu */
+	if (ci->ci_cpu_type >= 0)
+		return;
+
+	if (ci->ci_cpuid_level < 2)
+		return;
+
+	/*
+	 * Parse the cache info from `cpuid leaf 2', if we have it.
+	 * XXX This is kinda ugly, but hey, so is the architecture...
+	 */
+	x86_cpuid(2, descs);
+	iterations = descs[0] & 0xff;
+	while (iterations-- > 0) {
+		for (i = 0; i < 4; i++) {
+			if (descs[i] & 0x80000000)
+				continue;
+			for (j = 0; j < 4; j++) {
+				if (i == 0 && j == 0)
+					continue;
+				desc = (descs[i] >> (j * 8)) & 0xff;
+				if (desc == 0)
+					continue;
+				cai = cache_info_lookup(intel_cpuid_cache_info,
+				    desc);
+				if (cai != NULL)
+					ci->ci_cinfo[cai->cai_index] = *cai;
+			}
+		}
+		x86_cpuid(2, descs);
+	}
+
+	if (ci->ci_cpuid_level < 4)
+		return;
+
+	/* Parse the cache info from `cpuid leaf 4', if we have it. */
+	for (i = 0; ; i++) {
+		x86_cpuid2(4, i, descs);
+		type = __SHIFTOUT(descs[0], CPUID_DCP_CACHETYPE);
+		if (type == CPUID_DCP_CACHETYPE_N)
+			break;
+		level = __SHIFTOUT(descs[0], CPUID_DCP_CACHELEVEL);
+		switch (level) {
+		case 1:
+			if (type == CPUID_DCP_CACHETYPE_I)
+				caitype = CAI_ICACHE;
+			else if (type == CPUID_DCP_CACHETYPE_D)
+				caitype = CAI_DCACHE;
+			else
+				caitype = -1;
+			break;
+		case 2:
+			if (type == CPUID_DCP_CACHETYPE_U)
+				caitype = CAI_L2CACHE;
+			else
+				caitype = -1;
+			break;
+		case 3:
+			if (type == CPUID_DCP_CACHETYPE_U)
+				caitype = CAI_L3CACHE;
+			else
+				caitype = -1;
+			break;
+		default:
+			caitype = -1;
+			break;
+		}
+		if (caitype == -1) {
+			printf("unknown cache level&type (%d & %d)\n",
+			    level, type);
+			continue;
+		}
+		ways = __SHIFTOUT(descs[1], CPUID_DCP_WAYS) + 1;
+		partitions =__SHIFTOUT(descs[1], CPUID_DCP_PARTITIONS)
+		    + 1;
+		linesize = __SHIFTOUT(descs[1], CPUID_DCP_LINESIZE)
+		    + 1;
+		sets = descs[2] + 1;
+		totalsize = ways * partitions * linesize * sets;
+		ci->ci_cinfo[caitype].cai_totalsize = totalsize;
+		ci->ci_cinfo[caitype].cai_associativity = ways;
+		ci->ci_cinfo[caitype].cai_linesize = linesize;
+	}
+}
+
 static const struct x86_cache_info amd_cpuid_l2cache_assoc_info[] = 
     AMD_L2CACHE_INFO;
 
@@ -1302,14 +1401,8 @@ transmeta_cpu_info(struct cpu_info *ci)
 static void
 cpu_probe_base_features(struct cpu_info *ci, const char *cpuname)
 {
-	const struct x86_cache_info *cai;
 	u_int descs[4];
-	int iterations, i, j;
-	int type, level;
-	int ways, partitions, linesize, sets;
-	int caitype = -1;
-	int totalsize;
-	uint8_t desc;
+	int i;
 	uint32_t brand[12];
 
 	memset(ci, 0, sizeof(*ci));
@@ -1341,11 +1434,22 @@ cpu_probe_base_features(struct cpu_info *ci, const char *cpuname)
 	ci->ci_vendor[3] = 0;
 
 	/*
+	 * Fn8000_0000:
+	 * - Get cpuid extended function's max level.
+	 */
+	x86_cpuid(0x80000000, descs);
+	if (descs[0] >=  0x80000000)
+		ci->ci_cpuid_extlevel = descs[0];
+	else {
+		/* Set lower value than 0x80000000 */
+		ci->ci_cpuid_extlevel = 0;
+	}
+
+	/*
 	 * Fn8000_000[2-4]:
 	 * - Save brand string.
 	 */
-	x86_cpuid(0x80000000, brand);
-	if (brand[0] >= 0x80000004) {
+	if (ci->ci_cpuid_extlevel >= 0x80000004) {
 		x86_cpuid(0x80000002, brand);
 		x86_cpuid(0x80000003, brand + 4);
 		x86_cpuid(0x80000004, brand + 8);
@@ -1362,6 +1466,8 @@ cpu_probe_base_features(struct cpu_info *ci, const char *cpuname)
 	 * Fn0000_0001:
 	 * - Get CPU family, model and stepping (from eax).
 	 * - Initial local APIC ID and brand ID (from ebx)
+	 * - CPUID2 (from ecx)
+	 * - CPUID (from edx)
 	 */
 	x86_cpuid(1, descs);
 	ci->ci_signature = descs[0];
@@ -1378,36 +1484,6 @@ cpu_probe_base_features(struct cpu_info *ci, const char *cpuname)
 	ci->ci_feat_val[1] = descs[2];
 	ci->ci_feat_val[0] = descs[3];
 
-	if (ci->ci_cpuid_level < 2)
-		return;
-
-	/*
-	 * Parse the cache info from `cpuid leaf 2', if we have it.
-	 * XXX This is kinda ugly, but hey, so is the architecture...
-	 */
-
-	x86_cpuid(2, descs);
-
-	iterations = descs[0] & 0xff;
-	while (iterations-- > 0) {
-		for (i = 0; i < 4; i++) {
-			if (descs[i] & 0x80000000)
-				continue;
-			for (j = 0; j < 4; j++) {
-				if (i == 0 && j == 0)
-					continue;
-				desc = (descs[i] >> (j * 8)) & 0xff;
-				if (desc == 0)
-					continue;
-				cai = cache_info_lookup(intel_cpuid_cache_info,
-				    desc);
-				if (cai != NULL)
-					ci->ci_cinfo[cai->cai_index] = *cai;
-			}
-		}
-		x86_cpuid(2, descs);
-	}
-
 	if (ci->ci_cpuid_level < 3)
 		return;
 
@@ -1420,58 +1496,6 @@ cpu_probe_base_features(struct cpu_info *ci, const char *cpuname)
 		x86_cpuid(3, descs);
 		ci->ci_cpu_serial[2] = descs[2];
 		ci->ci_cpu_serial[1] = descs[3];
-	}
-
-	if (ci->ci_cpuid_level < 4)
-		return;
-
-	/* Parse the cache info from `cpuid leaf 4', if we have it. */
-	for (i = 0; ; i++) {
-		x86_cpuid2(4, i, descs);
-		type = __SHIFTOUT(descs[0], CPUID_DCP_CACHETYPE);
-		if (type == CPUID_DCP_CACHETYPE_N)
-			break;
-		level = __SHIFTOUT(descs[0], CPUID_DCP_CACHELEVEL);
-		switch (level) {
-		case 1:
-			if (type == CPUID_DCP_CACHETYPE_I)
-				caitype = CAI_ICACHE;
-			else if (type == CPUID_DCP_CACHETYPE_D)
-				caitype = CAI_DCACHE;
-			else
-				caitype = -1;
-			break;
-		case 2:
-			if (type == CPUID_DCP_CACHETYPE_U)
-				caitype = CAI_L2CACHE;
-			else
-				caitype = -1;
-			break;
-		case 3:
-			if (type == CPUID_DCP_CACHETYPE_U)
-				caitype = CAI_L3CACHE;
-			else
-				caitype = -1;
-			break;
-		default:
-			caitype = -1;
-			break;
-		}
-		if (caitype == -1) {
-			printf("unknown cache level&type (%d & %d)\n",
-			    level, type);
-			continue;
-		}
-		ways = __SHIFTOUT(descs[1], CPUID_DCP_WAYS) + 1;
-		partitions =__SHIFTOUT(descs[1], CPUID_DCP_PARTITIONS)
-		    + 1;
-		linesize = __SHIFTOUT(descs[1], CPUID_DCP_LINESIZE)
-		    + 1;
-		sets = descs[2] + 1;
-		totalsize = ways * partitions * linesize * sets;
-		ci->ci_cinfo[caitype].cai_totalsize = totalsize;
-		ci->ci_cinfo[caitype].cai_associativity = ways;
-		ci->ci_cinfo[caitype].cai_linesize = linesize;
 	}
 
 	if (ci->ci_cpuid_level < 0xd)
