@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1164 2013/12/22 07:25:01 nonaka Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1165 2013/12/23 10:05:09 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1171 2013/12/22 07:24:33 nonaka Exp
+ *	NetBSD: pcidevs,v 1.1172 2013/12/23 10:04:49 msaitoh Exp
  */
 
 /*
@@ -2950,6 +2950,43 @@
 #define	PCI_PRODUCT_INTEL_MOBILE_HM75_LPC	0x1e5d		/* Mobile HM75 LPC */
 #define	PCI_PRODUCT_INTEL_MOBILE_HM70_LPC	0x1e5e		/* Mobile HM70 LPC */
 #define	PCI_PRODUCT_INTEL_NM70_LPC	0x1e5f		/* NM70 LPC */
+#define	PCI_PRODUCT_INTEL_C2000_TROUTER_0	0x1f00		/* C2000 Transaction Router */
+#define	PCI_PRODUCT_INTEL_C2000_TROUTER_1	0x1f01		/* C2000 Transaction Router */
+#define	PCI_PRODUCT_INTEL_C2000_TROUTER_2	0x1f02		/* C2000 Transaction Router */
+#define	PCI_PRODUCT_INTEL_C2000_TROUTER_3	0x1f03		/* C2000 Transaction Router */
+#define	PCI_PRODUCT_INTEL_C2000_TROUTER_4	0x1f04		/* C2000 Transaction Router */
+#define	PCI_PRODUCT_INTEL_C2000_TROUTER_5	0x1f05		/* C2000 Transaction Router */
+#define	PCI_PRODUCT_INTEL_C2000_TROUTER_6	0x1f06		/* C2000 Transaction Router */
+#define	PCI_PRODUCT_INTEL_C2000_TROUTER_7	0x1f07		/* C2000 Transaction Router */
+#define	PCI_PRODUCT_INTEL_C2000_TROUTER_8	0x1f08		/* C2000 Transaction Router */
+#define	PCI_PRODUCT_INTEL_C2000_TROUTER_9	0x1f09		/* C2000 Transaction Router */
+#define	PCI_PRODUCT_INTEL_C2000_TROUTER_A	0x1f0a		/* C2000 Transaction Router */
+#define	PCI_PRODUCT_INTEL_C2000_TROUTER_B	0x1f0b		/* C2000 Transaction Router */
+#define	PCI_PRODUCT_INTEL_C2000_TROUTER_C	0x1f0c		/* C2000 Transaction Router */
+#define	PCI_PRODUCT_INTEL_C2000_TROUTER_D	0x1f0d		/* C2000 Transaction Router */
+#define	PCI_PRODUCT_INTEL_C2000_TROUTER_E	0x1f0e		/* C2000 Transaction Router */
+#define	PCI_PRODUCT_INTEL_C2000_TROUTER_F	0x1f0f		/* C2000 Transaction Router */
+#define	PCI_PRODUCT_INTEL_C2000_PCIE_1	0x1f10		/* C2000 PCIe Root Port */
+#define	PCI_PRODUCT_INTEL_C2000_PCIE_2	0x1f11		/* C2000 PCIe Root Port */
+#define	PCI_PRODUCT_INTEL_C2000_PCIE_3	0x1f12		/* C2000 PCIe Root Port */
+#define	PCI_PRODUCT_INTEL_C2000_PCIE_4	0x1f13		/* C2000 PCIe Root Port */
+#define	PCI_PRODUCT_INTEL_C2000_RAS	0x1f14		/* C2000 RAS */
+#define	PCI_PRODUCT_INTEL_C2000_SMBUS	0x1f15		/* C2000 SMBus 2.0 */
+#define	PCI_PRODUCT_INTEL_C2000_RCEC	0x1f16		/* C2000 RCEC */
+#define	PCI_PRODUCT_INTEL_C2000_IQIA_PHYS	0x1f18		/* C2000 IQIA Physical Function */
+#define	PCI_PRODUCT_INTEL_C2000_IQIA	0x1f19		/* C2000 IQIA */
+#define	PCI_PRODUCT_INTEL_C2000_SATA2	0x1f22		/* C2000 SATA2 */
+#define	PCI_PRODUCT_INTEL_C2000_USB	0x1f2c		/* C2000 USB 2.0 */
+#define	PCI_PRODUCT_INTEL_C2000_SATA3	0x1f32		/* C2000 SATA3 */
+#define	PCI_PRODUCT_INTEL_C2000_PCU_1	0x1f38		/* C2000 PCU */
+#define	PCI_PRODUCT_INTEL_C2000_PCU_2	0x1f39		/* C2000 PCU */
+#define	PCI_PRODUCT_INTEL_C2000_PCU_3	0x1f3a		/* C2000 PCU */
+#define	PCI_PRODUCT_INTEL_C2000_PCU_4	0x1f3b		/* C2000 PCU */
+#define	PCI_PRODUCT_INTEL_C2000_PCU_SMBUS	0x1f3c		/* C2000 PCU SMBus */
+#define	PCI_PRODUCT_INTEL_C2000_1000KX	0x1f40		/* C2000 Ethernet(1000BASE-KX) */
+#define	PCI_PRODUCT_INTEL_C2000_SGMII	0x1f41		/* C2000 Ethernet(SGMII) */
+#define	PCI_PRODUCT_INTEL_C2000_DUMMYGBE	0x1f42		/* C2000 Ethernet(Dummy function) */
+#define	PCI_PRODUCT_INTEL_C2000_25GBE	0x1f45		/* C2000 Ethernet(2.5Gbe) */
 #define	PCI_PRODUCT_INTEL_82801AA_LPC	0x2410		/* 82801AA LPC Interface Bridge */
 #define	PCI_PRODUCT_INTEL_82801AA_IDE	0x2411		/* 82801AA IDE Controller */
 #define	PCI_PRODUCT_INTEL_82801AA_USB	0x2412		/* 82801AA USB Controller */
