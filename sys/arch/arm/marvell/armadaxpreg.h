@@ -180,10 +180,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ARMADAXP_PMU_BASE	(MVSOC_DEVBUS_BASE + 0xc000)
 
 /*
- * SoC MISC Registers
+ * Miscellanseous Register
  */
+#define	ARMADAXP_MISC_BASE	(MVSOC_DEVBUS_BASE + 0x8200)
+
+#define	ARMADAXP_MISC_PMCGC		0x20	/* PM Clock Gating Control */
 #define	ARMADAXP_MISC_SAR_LO		0x30	/* Sample At Reset Low */
 #define	ARMADAXP_MISC_SAR_HI		0x34	/* Sample At Reset High */
+#define	ARMADAXP_MISC_RSTOUTNMASKR	0x60	/* RSTOUTn Mask Register */
+#define	ARMADAXP_MISC_RSTOUTNMASKR_GLOBALSOFTRSTOUTEN (1 << 0)
+#define	ARMADAXP_MISC_SSRR		0x64	/* System Soft Reset Register */
+#define	ARMADAXP_MISC_SSRR_GLOBALSOFTRST	(1 << 0)
 
 /* Multiprocessor Interrupt Controller Registers */
 #define	ARMADAXP_MLMB_MPIC_BASE			0x20a00

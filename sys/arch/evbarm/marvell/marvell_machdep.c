@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_machdep.c,v 1.24 2013/11/20 12:59:21 kiyohara Exp $ */
+/*	$NetBSD: marvell_machdep.c,v 1.25 2013/12/23 03:19:43 kiyohara Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.24 2013/11/20 12:59:21 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.25 2013/12/23 03:19:43 kiyohara Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
@@ -134,7 +134,7 @@ static void marvell_startend_by_tag(int, uint64_t *, uint64_t *);
 
 #if defined(ORION) || defined(KIRKWOOD) || defined(MV78XX0)
 static void
-marvell_system_reset_old(void)
+marvell_system_reset(void)
 {
 	/* unmask soft reset */
 	write_mlmbreg(MVSOC_MLMB_RSTOUTNMASKR,
@@ -152,14 +152,17 @@ marvell_system_reset_old(void)
 
 #if defined(ARMADAXP)
 static void
-marvell_system_reset(void)
+armadaxp_system_reset(void)
 {
+	extern vaddr_t misc_base;
+
+#define write_miscreg(r, v)	(*(volatile uint32_t *)(misc_base + (r)) = (v))
 
 	/* Unmask soft reset */
-	write_miscreg(MVSOC_MISC_RSTOUTNMASKR,
-	    MVSOC_MISC_RSTOUTNMASKR_GLOBALSOFTRSTOUTEN);
+	write_miscreg(ARMADAXP_MISC_RSTOUTNMASKR,
+	    ARMADAXP_MISC_RSTOUTNMASKR_GLOBALSOFTRSTOUTEN);
 	/* Assert soft reset */
-	write_miscreg(MVSOC_MISC_SSRR, MVSOC_MISC_SSRR_GLOBALSOFTRST);
+	write_miscreg(ARMADAXP_MISC_SSRR, ARMADAXP_MISC_SSRR_GLOBALSOFTRST);
 
 	while (1);
 
@@ -283,7 +286,7 @@ initarm(void *arg)
 	case MARVELL_ORION_1_88W8660:
 	case MARVELL_ORION_2_88F1281:
 	case MARVELL_ORION_2_88F5281:
-		cpu_reset_address = marvell_system_reset_old;
+		cpu_reset_address = marvell_system_reset;
 
 		orion_intr_bootstrap();
 
@@ -301,7 +304,7 @@ initarm(void *arg)
 	case MARVELL_KIRKWOOD_88F6192:
 	case MARVELL_KIRKWOOD_88F6281:
 	case MARVELL_KIRKWOOD_88F6282:
-		cpu_reset_address = marvell_system_reset_old;
+		cpu_reset_address = marvell_system_reset;
 
 		kirkwood_intr_bootstrap();
 
@@ -317,7 +320,7 @@ initarm(void *arg)
 #ifdef MV78XX0
 	case MARVELL_MV78XX0_MV78100:
 	case MARVELL_MV78XX0_MV78200:
-		cpu_reset_address = marvell_system_reset_old;
+		cpu_reset_address = marvell_system_reset;
 
 		mv78xx0_intr_bootstrap();
 
@@ -336,7 +339,7 @@ initarm(void *arg)
 	case MARVELL_ARMADAXP_MV78230:
 	case MARVELL_ARMADAXP_MV78260:
 	case MARVELL_ARMADAXP_MV78460:
-		cpu_reset_address = marvell_system_reset;
+		cpu_reset_address = armadaxp_system_reset;
 
 		armadaxp_intr_bootstrap(MARVELL_INTERREGS_PBASE);
 
@@ -345,6 +348,8 @@ initarm(void *arg)
 		nwindow = ARMADAXP_MLMB_NWINDOW;
 		nremap = ARMADAXP_MLMB_NREMAP;
 
+		extern vaddr_t misc_base;
+	        misc_base = MARVELL_INTERREGS_VBASE + ARMADAXP_MISC_BASE;
 		armadaxp_getclks();
 
 #ifdef L2CACHE_ENABLE
@@ -355,7 +360,7 @@ initarm(void *arg)
 			(void)armadaxp_l2_init(MARVELL_INTERREGS_PBASE);
 		}
 #endif
-		     
+
 #ifdef AURORA_IO_CACHE_COHERENCY
 		/* Initialize cache coherency */
 		armadaxp_io_coherency_init();
@@ -469,7 +474,7 @@ consinit(void)
 		extern int mvuart_cnattach(bus_space_tag_t, bus_addr_t, int,
 					   uint32_t, int);
 
-		if (mvuart_cnattach(&mvsoc_bs_tag, 
+		if (mvuart_cnattach(&mvsoc_bs_tag,
 		    MARVELL_INTERREGS_PBASE + MVSOC_COM0_BASE,
 		    comcnspeed, mvTclk, comcnmode))
 			panic("can't init serial console");

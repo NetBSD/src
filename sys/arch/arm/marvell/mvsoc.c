@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoc.c,v 1.14 2013/12/23 02:52:47 kiyohara Exp $	*/
+/*	$NetBSD: mvsoc.c,v 1.15 2013/12/23 03:19:43 kiyohara Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoc.c,v 1.14 2013/12/23 02:52:47 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoc.c,v 1.15 2013/12/23 03:19:43 kiyohara Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_mvsoc.h"
@@ -67,7 +67,6 @@ static int mvsoc_search(device_t, cfdata_t, const int *, void *);
 uint32_t mvPclk, mvSysclk, mvTclk = 0;
 int nwindow = 0, nremap = 0;
 static vaddr_t regbase = 0xffffffff, dsc_base, pex_base;
-vaddr_t misc_base;
 vaddr_t mlmb_base;
 
 void (*mvsoc_intr_init)(void);
@@ -846,7 +845,6 @@ mvsoc_bootstrap(bus_addr_t iobase)
 
 	regbase = iobase;
 	dsc_base = iobase + MVSOC_DSC_BASE;
-	misc_base = iobase + MVSOC_MISC_BASE;
 	mlmb_base = iobase + MVSOC_MLMB_BASE;
 	pex_base = iobase + MVSOC_PEX_BASE;
 #ifdef MVSOC_CONSOLE_EARLY

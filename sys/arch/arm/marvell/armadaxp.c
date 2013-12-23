@@ -1,4 +1,4 @@
-/*	$NetBSD: armadaxp.c,v 1.4 2013/11/20 12:16:47 kiyohara Exp $	*/
+/*	$NetBSD: armadaxp.c,v 1.5 2013/12/23 03:19:43 kiyohara Exp $	*/
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
 
@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadaxp.c,v 1.4 2013/11/20 12:16:47 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadaxp.c,v 1.5 2013/12/23 03:19:43 kiyohara Exp $");
 
 #define _INTR_PRIVATE
 
@@ -84,6 +84,8 @@ bus_space_handle_t mpic_cpu_handle;
 static bus_space_handle_t mpic_handle, l2_handle;
 int l2cache_state = 0;
 int iocc_state = 0;
+#define read_miscreg(r)		(*(volatile uint32_t *)(misc_base + (r)))
+vaddr_t misc_base;
 
 extern void (*mvsoc_intr_init)(void);
 static void armadaxp_intr_init(void);
