@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.38 2013/11/15 08:47:55 msaitoh Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.39 2013/12/23 11:40:57 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.38 2013/11/15 08:47:55 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.39 2013/12/23 11:40:57 msaitoh Exp $");
 
 #include "opt_xen.h"
 
@@ -97,6 +97,103 @@ cache_info_lookup(const struct x86_cache_info *cai, uint8_t desc)
 	return (NULL);
 }
 
+static void
+cpu_probe_intel_cache(struct cpu_info *ci)
+{
+	const struct x86_cache_info *cai;
+	u_int descs[4];
+	int iterations, i, j;
+	uint8_t desc;
+
+	if (cpuid_level >= 2) { 
+		/* Parse the cache info from `cpuid leaf 2', if we have it. */
+		x86_cpuid(2, descs);
+		iterations = descs[0] & 0xff;
+		while (iterations-- > 0) {
+			for (i = 0; i < 4; i++) {
+				if (descs[i] & 0x80000000)
+					continue;
+				for (j = 0; j < 4; j++) {
+					if (i == 0 && j == 0)
+						continue;
+					desc = (descs[i] >> (j * 8)) & 0xff;
+					if (desc == 0)
+						continue;
+					cai = cache_info_lookup(
+					    intel_cpuid_cache_info, desc);
+					if (cai != NULL) {
+						ci->ci_cinfo[cai->cai_index] =
+						    *cai;
+					}
+				}
+			}
+		}
+	}
+
+	if (cpuid_level >= 4) {
+		int type, level;
+		int ways, partitions, linesize, sets;
+		int caitype = -1;
+		int totalsize;
+		
+		/* Parse the cache info from `cpuid leaf 4', if we have it. */
+		for (i = 0; ; i++) {
+			x86_cpuid2(4, i, descs);
+			type = __SHIFTOUT(descs[0], CPUID_DCP_CACHETYPE);
+			if (type == CPUID_DCP_CACHETYPE_N)
+				break;
+			level = __SHIFTOUT(descs[0], CPUID_DCP_CACHELEVEL);
+			switch (level) {
+			case 1:
+				if (type == CPUID_DCP_CACHETYPE_I)
+					caitype = CAI_ICACHE;
+				else if (type == CPUID_DCP_CACHETYPE_D)
+					caitype = CAI_DCACHE;
+				else
+					caitype = -1;
+				break;
+			case 2:
+				if (type == CPUID_DCP_CACHETYPE_U)
+					caitype = CAI_L2CACHE;
+				else
+					caitype = -1;
+				break;
+			case 3:
+				if (type == CPUID_DCP_CACHETYPE_U)
+					caitype = CAI_L3CACHE;
+				else
+					caitype = -1;
+				break;
+			default:
+				caitype = -1;
+				break;
+			}
+			if (caitype == -1)
+				continue;
+
+			ways = __SHIFTOUT(descs[1], CPUID_DCP_WAYS) + 1;
+			partitions =__SHIFTOUT(descs[1], CPUID_DCP_PARTITIONS)
+			    + 1;
+			linesize = __SHIFTOUT(descs[1], CPUID_DCP_LINESIZE)
+			    + 1;
+			sets = descs[2] + 1;
+			totalsize = ways * partitions * linesize * sets;
+			ci->ci_cinfo[caitype].cai_totalsize = totalsize;
+			ci->ci_cinfo[caitype].cai_associativity = ways;
+			ci->ci_cinfo[caitype].cai_linesize = linesize;
+		}
+	}
+}
+
+static void
+cpu_probe_intel(struct cpu_info *ci)
+{
+
+	if (cpu_vendor != CPUVENDOR_INTEL)
+		return;
+
+	cpu_probe_intel_cache(ci);
+}
 
 static void
 cpu_probe_amd_cache(struct cpu_info *ci)
@@ -598,10 +695,8 @@ cpu_probe_vortex86(struct cpu_info *ci)
 void
 cpu_probe(struct cpu_info *ci)
 {
-	const struct x86_cache_info *cai;
 	u_int descs[4];
-	int iterations, i, j;
-	uint8_t desc;
+	int i;
 	uint32_t miscbytes;
 	uint32_t brand[12];
 
@@ -670,85 +765,7 @@ cpu_probe(struct cpu_info *ci)
 		ci->ci_initapicid = (miscbytes >> 24) & 0xff;
 	}
 
-	if (cpuid_level >= 2) { 
-		/* Parse the cache info from `cpuid leaf 2', if we have it. */
-		x86_cpuid(2, descs);
-		iterations = descs[0] & 0xff;
-		while (iterations-- > 0) {
-			for (i = 0; i < 4; i++) {
-				if (descs[i] & 0x80000000)
-					continue;
-				for (j = 0; j < 4; j++) {
-					if (i == 0 && j == 0)
-						continue;
-					desc = (descs[i] >> (j * 8)) & 0xff;
-					if (desc == 0)
-						continue;
-					cai = cache_info_lookup(
-					    intel_cpuid_cache_info, desc);
-					if (cai != NULL) {
-						ci->ci_cinfo[cai->cai_index] =
-						    *cai;
-					}
-				}
-			}
-		}
-	}
-
-	if (cpuid_level >= 4) {
-		int type, level;
-		int ways, partitions, linesize, sets;
-		int caitype = -1;
-		int totalsize;
-		
-		/* Parse the cache info from `cpuid leaf 4', if we have it. */
-		for (i = 0; ; i++) {
-			x86_cpuid2(4, i, descs);
-			type = __SHIFTOUT(descs[0], CPUID_DCP_CACHETYPE);
-			if (type == CPUID_DCP_CACHETYPE_N)
-				break;
-			level = __SHIFTOUT(descs[0], CPUID_DCP_CACHELEVEL);
-			switch (level) {
-			case 1:
-				if (type == CPUID_DCP_CACHETYPE_I)
-					caitype = CAI_ICACHE;
-				else if (type == CPUID_DCP_CACHETYPE_D)
-					caitype = CAI_DCACHE;
-				else
-					caitype = -1;
-				break;
-			case 2:
-				if (type == CPUID_DCP_CACHETYPE_U)
-					caitype = CAI_L2CACHE;
-				else
-					caitype = -1;
-				break;
-			case 3:
-				if (type == CPUID_DCP_CACHETYPE_U)
-					caitype = CAI_L3CACHE;
-				else
-					caitype = -1;
-				break;
-			default:
-				caitype = -1;
-				break;
-			}
-			if (caitype == -1)
-				continue;
-
-			ways = __SHIFTOUT(descs[1], CPUID_DCP_WAYS) + 1;
-			partitions =__SHIFTOUT(descs[1], CPUID_DCP_PARTITIONS)
-			    + 1;
-			linesize = __SHIFTOUT(descs[1], CPUID_DCP_LINESIZE)
-			    + 1;
-			sets = descs[2] + 1;
-			totalsize = ways * partitions * linesize * sets;
-			ci->ci_cinfo[caitype].cai_totalsize = totalsize;
-			ci->ci_cinfo[caitype].cai_associativity = ways;
-			ci->ci_cinfo[caitype].cai_linesize = linesize;
-		}
-	}
-		
+	cpu_probe_intel(ci);
 	cpu_probe_k5(ci);
 	cpu_probe_k678(ci);
 	cpu_probe_cyrix(ci);
