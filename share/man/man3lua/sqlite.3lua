@@ -1,4 +1,4 @@
-.\"	$NetBSD: sqlite.3lua,v 1.1 2013/10/27 12:47:54 mbalmer Exp $
+.\"	$NetBSD: sqlite.3lua,v 1.2 2013/12/23 12:50:56 njoly Exp $
 .\"
 .\" Copyright (c) 2013 Marc Balmer <mbalmer@NetBSD.org>. All rights reserved.
 .\"
@@ -78,7 +78,6 @@ SQLite3 files from Lua
 The
 .Nm
 Lua binding provides access to SQLite3 files.
-.Pp
 .Sh GENERAL FUNCTIONS
 .Bl -tag -width XXXX -compact
 .It Dv err = sqlite.initialize()
@@ -119,8 +118,8 @@ Return the SQLite3 library version number as a string.
 Return the SQLite3 library version number as a number.
 .Pp
 .It Dv id = sqlite.sourceid()
-Return teh SQLite3 library source id as a string.
-.EL
+Return the SQLite3 library source id as a string.
+.El
 .Sh DATABASE FUNCTIONS
 Database functions operate on database objects returned by
 .Em sqlite.open() .
@@ -157,23 +156,23 @@ or deleted by the most recently completed SQL statement on the database.
 .It Dv err = sqlite.bind(stmt, pidx, value)
 Bind
 .Ar value
-to the paramter
+to the parameter
 .Ar pidx
-in the prepared statment
+in the prepared statement
 .Ar stmt .
 .Pp
 .It Dv count = sqlite.bind_parameter_count(stmt)
-Return the number of paramaters in the prepared statement
+Return the number of parameters in the prepared statement
 .Ar stmt .
 .Pp
 .It Dv pidx = sqlite.bind_parameter_index(stmt, name)
-Return the paramter index for
+Return the parameter index for
 .Ar name
 in the prepared statement
 .Ar stmt .
 .Pp
 .It Dv name = sqlite.bind_parameter_name(stmt, pidx)
-Return the parameter name for the paramater index
+Return the parameter name for the parameter index
 .Ar pidx
 in the prepared statement
 .Ar stmt .
@@ -212,11 +211,11 @@ This routine returns 0 if
 .Ar stmt
 is an SQL statement that does not return data (for example an UPDATE).
 .El
-.Sh EROROR CODES
+.Sh ERROR CODES
 Most functions return an error code, the following error codes
 are defined:
 .Pp
-.Bl -tag -widht XXXX -compact
+.Bl -tag -width XXXX -compact
 .It Dv sqlite.OK
 Successful result.
 .Pp
@@ -304,11 +303,10 @@ sqlite.step() has another row ready.
 .It Dv sqlite.DONE
 sqlite.step() has finished executing.
 .El
-.Pp
 .Sh SEE ALSO
 .Xr lua 1 ,
 .Xr luac 1 ,
-.Xr sqlite3 1,
+.Xr sqlite3 1 ,
 .Xr intro 3lua
 .Sh HISTORY
 An
