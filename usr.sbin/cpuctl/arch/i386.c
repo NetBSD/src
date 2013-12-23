@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.50 2013/11/15 08:47:55 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.51 2013/12/23 10:13:59 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.50 2013/11/15 08:47:55 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.51 2013/12/23 10:13:59 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -200,7 +200,7 @@ static int use_pae, largepagesize;
 
 /* Setup functions */
 static void	disable_tsc(struct cpu_info *);
-static void	amd_family5_setup(struct cpu_info *); /* alike cpu_probe_k5 */
+static void	amd_family5_setup(struct cpu_info *);
 static void	cyrix6x86_cpu_setup(struct cpu_info *);
 static void	winchip_cpu_setup(struct cpu_info *);
 /* Brand/Model name functions */
@@ -212,22 +212,20 @@ static void	powernow_probe(struct cpu_info *);
 static void	intel_family_new_probe(struct cpu_info *);
 static void	via_cpu_probe(struct cpu_info *);
 /* (Cache) Info functions */
-static void 	amd_cpu_cacheinfo(struct cpu_info *); /* alike */
+static void 	amd_cpu_cacheinfo(struct cpu_info *);
 static void	via_cpu_cacheinfo(struct cpu_info *);
 static void	tmx86_get_longrun_status(u_int *, u_int *, u_int *);
 static void	transmeta_cpu_info(struct cpu_info *);
 /* Common functions */
 static void	cpu_probe_base_features(struct cpu_info *, const char *);
-	/* alike cpu_probe() */
 static void	cpu_probe_features(struct cpu_info *);
 static void	print_bits(const char *, const char *, const char *, uint32_t);
-/* XXX identifycpu alike cpu_identify */
 static void	identifycpu_cpuids(struct cpu_info *);
 static const char *print_cache_config(struct cpu_info *, int, const char *,
     const char *);
 static const char *print_tlb_config(struct cpu_info *, int, const char *,
     const char *);
-static const struct x86_cache_info *cache_info_lookup( /* XXX same */
+static const struct x86_cache_info *cache_info_lookup(
     const struct x86_cache_info *, uint8_t);
 static void	x86_print_cacheinfo(struct cpu_info *);
 
@@ -1324,13 +1322,28 @@ cpu_probe_base_features(struct cpu_info *ci, const char *cpuname)
 		return;
 	}
 
+	/*
+	 * This CPU supports cpuid instruction, so we can call x86_cpuid()
+	 * function.
+	 */
+
+	/*
+	 * Fn0000_0000:
+	 * - Save cpuid max level.
+	 * - Save vendor string.
+	 */
 	x86_cpuid(0, descs);
 	ci->ci_cpuid_level = descs[0];
+	/* Save vendor string */
 	ci->ci_vendor[0] = descs[1];
 	ci->ci_vendor[2] = descs[2];
 	ci->ci_vendor[1] = descs[3];
 	ci->ci_vendor[3] = 0;
 
+	/*
+	 * Fn8000_000[2-4]:
+	 * - Save brand string.
+	 */
 	x86_cpuid(0x80000000, brand);
 	if (brand[0] >= 0x80000004) {
 		x86_cpuid(0x80000002, brand);
@@ -1345,6 +1358,11 @@ cpu_probe_base_features(struct cpu_info *ci, const char *cpuname)
 	if (ci->ci_cpuid_level < 1)
 		return;
 
+	/*
+	 * Fn0000_0001:
+	 * - Get CPU family, model and stepping (from eax).
+	 * - Initial local APIC ID and brand ID (from ebx)
+	 */
 	x86_cpuid(1, descs);
 	ci->ci_signature = descs[0];
 
@@ -1354,6 +1372,7 @@ cpu_probe_base_features(struct cpu_info *ci, const char *cpuname)
 
 	/* Brand is low order 8 bits of ebx */
 	ci->ci_brand_id = descs[1] & 0xff;
+	/* Initial local APIC ID */
 	ci->ci_initapicid = (descs[1] >> 24) & 0xff;
 
 	ci->ci_feat_val[1] = descs[2];
@@ -1599,6 +1618,7 @@ identifycpu(int fd, const char *cpuname)
 	cpu_probe_features(ci);
 
 	if (ci->ci_cpu_type >= 0) {
+		/* Old pre-cpuid instruction cpu */
 		if (ci->ci_cpu_type >= (int)__arraycount(i386_nocpuid_cpus))
 			errx(1, "unknown cpu type %d", ci->ci_cpu_type);
 		name = i386_nocpuid_cpus[ci->ci_cpu_type].cpu_name;
@@ -1608,6 +1628,7 @@ identifycpu(int fd, const char *cpuname)
 		ci->ci_info = i386_nocpuid_cpus[ci->ci_cpu_type].cpu_info;
 		modifier = "";
 	} else {
+		/* CPU which support cpuid instruction */
 		modif = (ci->ci_signature >> 12) & 0x3;
 		family = ci->ci_family;
 		if (family < CPU_MINFAMILY)
