@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoc.c,v 1.13 2013/09/30 13:19:28 kiyohara Exp $	*/
+/*	$NetBSD: mvsoc.c,v 1.14 2013/12/23 02:52:47 kiyohara Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoc.c,v 1.13 2013/09/30 13:19:28 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoc.c,v 1.14 2013/12/23 02:52:47 kiyohara Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_mvsoc.h"
@@ -879,6 +879,14 @@ mvsoc_model(void)
 		    ORION_PMI_SAMPLE_AT_RESET);
 		if ((reg & ORION_PMISMPL_TCLK_MASK) == 0)
 			model = PCI_PRODUCT_MARVELL_88F5082;
+	}
+#endif
+#if defined(KIRKWOOD)
+	if (model == PCI_PRODUCT_MARVELL_88F6281) {
+		reg = *(volatile uint32_t *)(regbase + KIRKWOOD_MISC_BASE +
+		    KIRKWOOD_MISC_DEVICEID);
+		if (reg == 1)	/* 88F6192 is 1 */
+			model = MARVELL_KIRKWOOD_88F6192;
 	}
 #endif
 
