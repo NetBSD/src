@@ -1,4 +1,4 @@
-.\"	$NetBSD: hier.7,v 1.105 2013/09/10 00:41:51 jnemeth Exp $
+.\"	$NetBSD: hier.7,v 1.106 2013/12/23 17:44:05 dholland Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -348,6 +348,12 @@ and
 that cannot rely upon
 .Pa /usr/lib/
 being available.
+.It Sy /libdata/
+non-executable files
+.Pq such as device firmware
+required at boot time, when
+.Pa /usr/libdata
+may not be available.
 .It Sy /libexec/
 system utilities (such as the dynamic linker) required by programs
 and libraries that cannot rely upon
