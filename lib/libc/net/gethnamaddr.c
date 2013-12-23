@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.77.4.1 2013/12/18 22:39:32 bouyer Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.77.4.2 2013/12/23 22:56:48 riz Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -57,7 +57,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.77.4.1 2013/12/18 22:39:32 bouyer Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.77.4.2 2013/12/23 22:56:48 riz Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -514,11 +514,11 @@ gethostbyname_r(const char *name, struct hostent *hp, char *buf, size_t buflen,
 	_DIAGASSERT(name != NULL);
 
 	if (res->options & RES_USE_INET6) {
-		hp = gethostbyname_internal(name, AF_INET6, res, hp, buf,
-		    buflen, he);
-		if (hp) {
+		struct hostent *nhp = gethostbyname_internal(name, AF_INET6,
+		    res, hp, buf, buflen, he);
+		if (nhp) {
 			__res_put_state(res);
-			return hp;
+			return nhp;
 		}
 	}
 	hp = gethostbyname_internal(name, AF_INET, res, hp, buf, buflen, he);
@@ -547,6 +547,7 @@ gethostbyname_internal(const char *name, int af, res_state res,
 {
 	const char *cp;
 	struct getnamaddr info;
+	char hbuf[MAXHOSTNAMELEN];
 	size_t size;
 	static const ns_dtab dtab[] = {
 		NS_FILES_CB(_hf_gethtbyname, NULL)
@@ -580,7 +581,8 @@ gethostbyname_internal(const char *name, int af, res_state res,
 	 * this is also done in res_nquery() since we are not the only
 	 * function that looks up host names.
 	 */
-	if (!strchr(name, '.') && (cp = __hostalias(name)))
+	if (!strchr(name, '.') && (cp = res_hostalias(res, name,
+	    hbuf, sizeof(hbuf))))
 		name = cp;
 
 	/*
@@ -1128,6 +1130,7 @@ nextline:
 		}
 		goto done;
 	}
+	naddrs++;
 
 	while (*cp == ' ' || *cp == '\t')
 		cp++;
