@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS_AX3,v 1.4 2013/10/05 06:15:51 kiyohara Exp $
+#	$NetBSD: OPENBLOCKS_AX3,v 1.5 2013/12/23 02:37:35 kiyohara Exp $
 #
 #	OPENBLOCKS_AX3 -- Plat'Home. OpenBlockS AX3 kernel
 #
@@ -171,9 +171,9 @@ options 	MVSOC_FIXUP_DEVID=0x7826
 mvsata* at mvsoc? offset ? irq ?
 
 # On-chip Gigabit Ethernet Controller Interface
-#mvgbec* at mvsoc? offset ?
-#mvgbe*	at mvgbec? port ? irq ?
-#makphy* at mii? phy ?
+mvgbec* at mvsoc? offset ?
+mvgbe*	at mvgbec? port ? irq ?
+makphy* at mii? phy ?
 
 # On-chip USB 2.0 Interface
 ehci0	at mvsoc? offset ? irq ?
