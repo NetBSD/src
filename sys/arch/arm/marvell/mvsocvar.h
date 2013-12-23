@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsocvar.h,v 1.6 2013/12/23 03:19:43 kiyohara Exp $	*/
+/*	$NetBSD: mvsocvar.h,v 1.7 2013/12/23 04:12:09 kiyohara Exp $	*/
 /*
  * Copyright (c) 2007, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -122,16 +122,20 @@ enum mvsoc_tags {
 };
 int mvsoc_target(int, uint32_t *, uint32_t *, uint32_t *, uint32_t *);
 
+extern int (*mvsoc_clkgating)(struct marvell_attach_args *);
+
 void orion_intr_bootstrap(void);
 void orion_getclks(bus_addr_t);
 
 void kirkwood_intr_bootstrap(void);
 void kirkwood_getclks(bus_addr_t);
+int kirkwood_clkgating(struct marvell_attach_args *);
 
 void mv78xx0_intr_bootstrap(void);
 void mv78xx0_getclks(bus_addr_t);
 
 void armadaxp_intr_bootstrap(bus_addr_t);
 void armadaxp_getclks(void);
+int armadaxp_clkgating(struct marvell_attach_args *);
 
 #endif	/* _MVSOCVAR_H_ */
