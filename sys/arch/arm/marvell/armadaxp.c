@@ -1,4 +1,4 @@
-/*	$NetBSD: armadaxp.c,v 1.5 2013/12/23 03:19:43 kiyohara Exp $	*/
+/*	$NetBSD: armadaxp.c,v 1.6 2013/12/23 04:12:09 kiyohara Exp $	*/
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
 
@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadaxp.c,v 1.5 2013/12/23 03:19:43 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadaxp.c,v 1.6 2013/12/23 04:12:09 kiyohara Exp $");
 
 #define _INTR_PRIVATE
 
@@ -147,6 +147,37 @@ static struct pic_ops armadaxp_picops = {
 static struct pic_softc armadaxp_pic = {
 	.pic_ops = &armadaxp_picops,
 	.pic_name = "armadaxp",
+};
+
+static struct {
+	bus_size_t offset;
+	uint32_t bits;
+} clkgatings[]= {
+	{ ARMADAXP_GBE3_BASE,	(1 << 1) },
+	{ ARMADAXP_GBE2_BASE,	(1 << 2) },
+	{ ARMADAXP_GBE1_BASE,	(1 << 3) },
+	{ ARMADAXP_GBE0_BASE,	(1 << 4) },
+	{ MVSOC_PEX_BASE,	(1 << 5) },
+	{ ARMADAXP_PEX01_BASE,	(1 << 6) },
+	{ ARMADAXP_PEX02_BASE,	(1 << 7) },
+	{ ARMADAXP_PEX03_BASE,	(1 << 8) },
+	{ ARMADAXP_PEX10_BASE,	(1 << 9) },
+	{ ARMADAXP_PEX11_BASE,	(1 << 10) },
+	{ ARMADAXP_PEX12_BASE,	(1 << 11) },
+	{ ARMADAXP_PEX13_BASE,	(1 << 12) },
+#if 0
+	{ NetA, (1 << 13) },
+#endif
+	{ ARMADAXP_SATAHC_BASE,	(1 << 14) | (1 << 15) | (1 << 29) | (1 << 30) },
+	{ ARMADAXP_LCD_BASE,	(1 << 16) },
+	{ ARMADAXP_SDIO_BASE,	(1 << 17) },
+	{ ARMADAXP_USB1_BASE,	(1 << 19) },
+	{ ARMADAXP_USB2_BASE,	(1 << 20) },
+	{ ARMADAXP_PEX2_BASE,	(1 << 26) },
+	{ ARMADAXP_PEX3_BASE,	(1 << 27) },
+#if 0
+	{ DDR, (1 << 28) },
+#endif
 };
 
 /*
@@ -419,4 +450,23 @@ armadaxp_io_coherency_init(void)
 
 	/* Mark as enabled */
 	iocc_state = 1;
+}
+
+int     
+armadaxp_clkgating(struct marvell_attach_args *mva)
+{
+	uint32_t val;
+	int i;
+
+	for (i = 0; i < __arraycount(clkgatings); i++) {
+		if (clkgatings[i].offset == mva->mva_offset) {
+			val = read_miscreg(ARMADAXP_MISC_PMCGC);
+			if ((val & clkgatings[i].bits) == clkgatings[i].bits)
+				/* Clock enabled */
+				return 0; 
+			return 1;
+		}
+	} 
+	/* Clock Gating not support */
+	return 0;
 }
