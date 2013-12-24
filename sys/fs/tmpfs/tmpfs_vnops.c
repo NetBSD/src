@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.109 2013/11/24 17:16:29 rmind Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.110 2013/12/24 09:23:33 hannken Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.109 2013/11/24 17:16:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.110 2013/12/24 09:23:33 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -173,6 +173,15 @@ tmpfs_lookup(void *v)
 		goto out;
 	} else if (cachefound) {
 		error = 0;
+		goto out;
+	}
+
+	/*
+	 * Treat an unlinked directory as empty (no "." or "..")
+	 */
+	if (dnode->tn_links == 0) {
+		KASSERT(dnode->tn_size == 0);
+		error = ENOENT;
 		goto out;
 	}
 
@@ -352,14 +361,6 @@ tmpfs_open(void *v)
 	KASSERT(VOP_ISLOCKED(vp));
 
 	node = VP_TO_TMPFS_NODE(vp);
-	if (node->tn_links < 1) {
-		/*
-		 * The file is still active, but all its names have been
-		 * removed (e.g. by a "rmdir $(pwd)").  It cannot be opened
-		 * any more, as it is about to be destroyed.
-		 */
-		return ENOENT;
-	}
 
 	/* If the file is marked append-only, deny write requests. */
 	if ((node->tn_flags & APPEND) != 0 &&
