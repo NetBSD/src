@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.79 2013/12/08 15:55:10 njoly Exp $
+	$NetBSD: syscalls.master,v 1.80 2013/12/24 13:41:25 njoly Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -426,7 +426,7 @@
 236	UNIMPL		sendfile64
 237	UNIMPL		mincore
 238	UNIMPL		madvise
-239	UNIMPL		fcntl64
+239	STD		{ int|linux_sys||fcntl64(int fd, int cmd, void *arg); }
 240	UNIMPL		readahead
 241	UNIMPL		io_setup
 242	UNIMPL		io_destroy
