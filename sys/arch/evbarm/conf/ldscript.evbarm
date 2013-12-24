@@ -1,4 +1,4 @@
-/*	$NetBSD: ldscript.evbarm,v 1.6 2011/03/06 02:22:27 jakllsch Exp $	*/
+/*	$NetBSD: ldscript.evbarm,v 1.7 2013/12/24 17:00:39 matt Exp $	*/
 
 OUTPUT_ARCH(arm)
 ENTRY(KERNEL_BASE_phys)
@@ -42,6 +42,7 @@ SECTIONS
     *(.sdata)
     *(.sdata.*)
   }
+  . = ALIGN(8);
   _edata = .;
   PROVIDE (edata = .);
   __bss_start = .;
