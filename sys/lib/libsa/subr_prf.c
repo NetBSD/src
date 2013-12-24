@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.22 2013/12/24 21:41:49 jakllsch Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.23 2013/12/24 22:26:21 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -214,6 +214,11 @@ reswitch:
 				lflag |= LONG;
 			goto reswitch;
 		case 'j':
+#ifdef LIBSA_PRINTF_LONGLONG_SUPPORT
+			if (sizeof(intmax_t) == sizeof(long long))
+				lflag |= LLONG;
+			else
+#endif
 			if (sizeof(intmax_t) == sizeof(long))
 				lflag |= LONG;
 			goto reswitch;
