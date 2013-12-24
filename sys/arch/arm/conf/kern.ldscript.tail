@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.ldscript.tail,v 1.2 2005/12/11 12:16:45 christos Exp $	*/
+/*	$NetBSD: kern.ldscript.tail,v 1.3 2013/12/24 17:03:07 matt Exp $	*/
 
   } =0
   PROVIDE (__etext = .);
@@ -13,6 +13,7 @@
     *(.sdata)
     *(.sdata.*)
   }
+  . = ALIGN(8);
   _edata = .;
   PROVIDE (edata = .);
   __bss_start = .;
