@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.21 2011/07/17 20:54:52 joerg Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.22 2013/12/24 21:41:49 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -211,6 +211,10 @@ reswitch:
 				lflag |= LLONG;
 			} else
 #endif
+				lflag |= LONG;
+			goto reswitch;
+		case 'j':
+			if (sizeof(intmax_t) == sizeof(long))
 				lflag |= LONG;
 			goto reswitch;
 		case 't':
