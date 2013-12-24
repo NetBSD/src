@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.29 2013/01/26 16:51:51 christos Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.30 2013/12/24 16:51:24 mlelstv Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -52,7 +52,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.29 2013/01/26 16:51:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.30 2013/12/24 16:51:24 mlelstv Exp $");
 
 #include <sys/param.h>
 
@@ -300,8 +300,10 @@ msdosfs_lookup(void *v)
 				 * Check for a checksum or name match
 				 */
 				chksum_ok = (chksum == winChksum(dep->deName));
-				if (!chksum_ok
-				    && (!olddos || memcmp(dosfilename, dep->deName, 11))) {
+				if (!chksum_ok && (
+					!olddos ||
+					memcmp(&dosfilename[0],dep->deName,8) ||
+					memcmp(&dosfilename[8],dep->deExtension,3))) {
 					chksum = -1;
 					continue;
 				}
