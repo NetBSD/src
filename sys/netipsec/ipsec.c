@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.60 2013/06/08 13:50:22 rmind Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.61 2013/12/24 13:57:06 degroote Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.60 2013/06/08 13:50:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.61 2013/12/24 13:57:06 degroote Exp $");
 
 /*
  * IPsec controller part.
@@ -1611,7 +1611,7 @@ ipsec4_get_policy(struct inpcb *inp, const void *request, size_t len,
 		policy = inp->inp_sp->sp_out;
 		break;
 	default:
-		ipseclog((LOG_ERR, "ipsec4_set_policy: invalid direction=%u\n",
+		ipseclog((LOG_ERR, "ipsec4_get_policy: invalid direction=%u\n",
 			xpl->sadb_x_policy_dir));
 		return EINVAL;
 	}
