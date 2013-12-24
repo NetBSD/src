@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_start.S,v 1.8 2013/10/28 22:35:07 matt Exp $	*/
+/*	$NetBSD: bcm53xx_start.S,v 1.9 2013/12/24 21:59:59 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,7 +45,7 @@
 #define	CONADDR		0x18000300
 #endif
 
-RCSID("$NetBSD: bcm53xx_start.S,v 1.8 2013/10/28 22:35:07 matt Exp $")
+RCSID("$NetBSD: bcm53xx_start.S,v 1.9 2013/12/24 21:59:59 matt Exp $")
 
 #undef VERBOSE_INIT_ARM
 #define VERBOSE_INIT_ARM
@@ -176,7 +176,7 @@ mmu_init_table:
 #ifdef BCM5301X
 	MMU_INIT(KERNEL_BASE, 0x80000000, 128,
 	    L1_S_PROTO | L1_S_APv7_KRW | L1_S_B | L1_S_C | L1_S_V6_S)
-#elif defined(BCM56340)
+#elif defined(BCM563XX)
 	MMU_INIT(KERNEL_BASE, 0x60000000, 128,
 	    L1_S_PROTO | L1_S_APv7_KRW | L1_S_B | L1_S_C | L1_S_V6_S)
 #endif
