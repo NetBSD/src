@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.48 2013/05/15 16:44:03 pooka Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.49 2013/12/24 09:56:18 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.48 2013/05/15 16:44:03 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.49 2013/12/24 09:56:18 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -185,14 +185,10 @@ sysvbfs_open(void *arg)
 	struct vnode *v = a->a_vp;
 	struct sysvbfs_node *bnode = v->v_data;
 	struct bfs_inode *inode = bnode->inode;
-	struct bfs *bfs = bnode->bmp->bfs;
-	struct bfs_dirent *dirent;
 
 	DPRINTF("%s:\n", __func__);
 	KDASSERT(v->v_type == VREG || v->v_type == VDIR);
 
-	if (!bfs_dirent_lookup_by_inode(bfs, inode->number, &dirent))
-		return ENOENT;
 	bnode->update_atime = true;
 	if ((a->a_mode & FWRITE) && !(a->a_mode & O_APPEND)) {
 		bnode->size = 0;
