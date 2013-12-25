@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.88 2013/12/25 15:17:56 msaitoh Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.89 2013/12/25 16:05:59 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.88 2013/12/25 15:17:56 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.89 2013/12/25 16:05:59 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -377,6 +377,22 @@ const struct puc_device_description puc_devices[] = {
 	/* Digi International Digi Neo 8 Serial */
 	{   "Digi International Digi Neo 8 Serial",
 	    {	PCI_VENDOR_DIGI, PCI_PRODUCT_DIGI_NEO8,		0, 0  },
+	    {	0xffff, 0xffff,					0, 0  },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0000, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0200, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0400, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0600, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0800, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0a00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0c00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0e00, COM_FREQ * 8 },
+	    },
+	},
+
+	/* Digi International Digi Neo 8 Serial (PCIe) */
+	{   "Digi International Digi Neo 8 Serial (PCIe)",
+	    {	PCI_VENDOR_DIGI, PCI_PRODUCT_DIGI_NEO8_PCIE,	0, 0  },
 	    {	0xffff, 0xffff,					0, 0  },
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x0000, COM_FREQ * 8 },
@@ -992,6 +1008,16 @@ const struct puc_device_description puc_devices[] = {
 	 * As sold by Kouwell <URL:http://www.kouwell.com/>.
 	 * I/O Flex PCI I/O Card Model-223 with 4 serial and 1 parallel ports.
 	 */
+
+	/* Oxford Semiconductor OXPCIe952 PCIe 1P */
+	{   "Oxford Semiconductor OXPCIe952 LPT",
+	    {	PCI_VENDOR_OXFORDSEMI, PCI_PRODUCT_OXFORDSEMI_OXPCIE952P,
+		0, 0},
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_LPT, 0x10, 0x00, 0x00 },
+	    },
+	},
 
 	/* Oxford Semiconductor OXPCIe952 PCIe UARTs */
 	{   "Oxford Semiconductor OXPCIe952 UARTs",
