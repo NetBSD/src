@@ -70,16 +70,16 @@
 #ifdef __arm__
 // ARM ABI - 32-bit guards.
 typedef uint32_t guard_t;
-static const uint32_t LOCKED = ((guard_t)1) << 31;
+static const uint32_t LOCKED = static_cast<guard_t>(1) << 31;
 static const uint32_t INITIALISED = 1;
 #else
 typedef uint64_t guard_t;
 #	if defined(__LITTLE_ENDIAN__)
-static const guard_t LOCKED = ((guard_t)1) << 63;
+static const guard_t LOCKED = static_cast<guard_t>(1) << 63;
 static const guard_t INITIALISED = 1;
 #	else
 static const guard_t LOCKED = 1;
-static const guard_t INITIALISED = ((guard_t)1) << 56;
+static const guard_t INITIALISED = static_cast<guard_t>(1) << 56;
 #	endif
 #endif
 
