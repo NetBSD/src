@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1051 2013/12/01 09:13:55 martin Exp $
+# $NetBSD: mi,v 1.1052 2013/12/25 22:08:24 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -697,6 +697,7 @@
 ./usr/bin/skeyinfo				base-util-bin		skey
 ./usr/bin/skeyinit				base-util-bin		skey
 ./usr/bin/slogin				base-secsh-bin		crypto
+./usr/bin/smbutil				base-util-bin
 ./usr/bin/sockstat				base-util-bin
 ./usr/bin/sort					base-util-bin
 ./usr/bin/spell					base-util-bin

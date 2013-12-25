@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.43 2013/11/16 13:01:38 alnsn Exp $
+# $NetBSD: mi,v 1.44 2013/12/25 22:08:24 christos Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -722,6 +722,7 @@
 ./usr/libdata/debug/usr/bin/skey.debug		comp-util-debug		skey,debug
 ./usr/libdata/debug/usr/bin/skeyinfo.debug	comp-util-debug		skey,debug
 ./usr/libdata/debug/usr/bin/skeyinit.debug	comp-util-debug		skey,debug
+./usr/libdata/debug/usr/bin/smbutil.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/sockstat.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/soelim.debug	comp-groff-debug	debug
 ./usr/libdata/debug/usr/bin/sort.debug		comp-util-debug		debug
