@@ -1,4 +1,4 @@
-.\"	$NetBSD: nanosleep.2,v 1.13 2012/10/08 18:08:40 njoly Exp $
+.\"	$NetBSD: nanosleep.2,v 1.14 2013/12/25 00:58:50 dholland Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -112,7 +112,7 @@ If the
 or the
 .Fn nanosleep
 functions return due to the delivery of a signal, the value returned
-will be the \-1, and the global variable
+will be \-1, and the global variable
 .Va errno
 will be set to indicate the interruption.
 If
