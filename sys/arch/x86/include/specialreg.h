@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.74 2013/12/08 18:00:51 dsl Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.75 2013/12/25 13:14:36 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -87,6 +87,16 @@
 #define CR4_PCIDE	0x00020000 /* enable Process Context IDentifiers */
 #define CR4_OSXSAVE	0x00040000 /* enable xsave and xrestore */
 #define CR4_SMEP	0x00100000 /* enable SMEP support */
+
+/*
+ * Extended Control Register XCR0
+ */
+#define	XCR0_X87	0x00000001	/* x87 FPU/MMX state */
+#define	XCR0_SSE	0x00000002	/* SSE state */
+#define	XCR0_AVX	0x00000004	/* AVX state (ymmn registers) */
+
+#define XCR0_FLAGS1	"\20" \
+	"\1" "x87"	"\2" "SSE"	"\3" "AVX"	"\4" "B03"
 
 
 /*
@@ -216,16 +226,6 @@
 	    | ((CPUID_TO_BASEFAMILY(cpuid) != 0x0f)		\
 		&& (CPUID_TO_BASEFAMILY(cpuid) != 0x06)		\
 		? 0 : (CPUID_TO_EXTMODEL(cpuid) << 4)))
-
-/*
- * Extended Control Register XCR0
- */
-#define	XCR0_X87	0x00000001	/* x87 FPU/MMX state */
-#define	XCR0_SSE	0x00000002	/* SSE state */
-#define	XCR0_AVX	0x00000004	/* AVX state (ymmn registers) */
-
-#define XCR0_FLAGS1	"\20" \
-	"\1" "x87"	"\2" "SSE"	"\3" "AVX"	"\4" "B03"
 
 /*
  * CPUID Processor extended state Enumeration Fn0000000d
