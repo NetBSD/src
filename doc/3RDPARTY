@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1075 2013/12/04 22:53:55 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1076 2013/12/25 22:14:28 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1469,3 +1469,18 @@ Location:	sys/external/bsd/libdwarf/dist
 Notes:
 		Run prepare-import.sh; next time use svn id.
 		Ask jkoshy who the upstream will be.
+
+Package:	smbfs
+Version:	smbfs-1.4.1.tar.gz + FreeBSD-2003-02-16
+Current Vers:	FreeBSD-XXXX-YY-ZZ
+Maintainer:	Boris Popov <bp@FreeBSD.org>
+Archive Site:	none
+Home Page:	http://people.freebsd.org/~bp/pub/smbfs/smbfs-1.4.1.tar.gz
+Mailing List:	?
+Responsible:	christos
+License:	BSD-like (4-clause)
+Location:	external/bsd/smbfs
+Notes:
+		The kernel portion has been removed from the tar file.
+		Our kernel smbfs and netsmb directories could move to
+		external, but this is just make-work.
