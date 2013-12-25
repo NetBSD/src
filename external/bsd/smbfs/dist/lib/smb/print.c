@@ -31,6 +31,10 @@
  *
  * Id: print.c,v 1.4 2001/04/16 04:33:01 bp Exp 
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: print.c,v 1.2 2013/12/25 22:03:15 christos Exp $");
+
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <sys/ioctl.h>

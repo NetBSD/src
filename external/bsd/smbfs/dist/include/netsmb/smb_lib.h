@@ -37,7 +37,9 @@
 #include <netsmb/smb.h>
 #include <netsmb/smb_dev.h>
 
-#define	SMB_CFG_FILE	"/usr/local/etc/nsmb.conf"
+#ifndef SMB_CFG_FILE
+#define	SMB_CFG_FILE	"/etc/nsmb.conf"
+#endif
 
 #define	STDPARAM_ARGS	'A':case 'B':case 'C':case 'E':case 'I': \
 		   case 'L':case 'M': \
@@ -77,20 +79,16 @@
 #define setdbe(buf,ofs,val) getdle(buf,ofs)=htonl(val)
 
 #else	/* (BYTE_ORDER == LITTLE_ENDIAN) */
-#error "Macros for Big-Endians are incomplete"
-#define getwle(buf,ofs) ((u_int16_t)(getb(buf, ofs) | (getb(buf, ofs + 1) << 8)))
-#define getdle(buf,ofs) ((u_int32_t)(getb(buf, ofs) | \
-				    (getb(buf, ofs + 1) << 8) | \
-				    (getb(buf, ofs + 2) << 16) | \
-				    (getb(buf, ofs + 3) << 24)))
-#define getwbe(buf,ofs) (*((u_int16_t*)(&((u_int8_t*)(buf))[ofs])))
-#define getdbe(buf,ofs) (*((u_int32_t*)(&((u_int8_t*)(buf))[ofs])))
-/*
-#define setwle(buf,ofs,val) getwle(buf,ofs)=val
-#define setdle(buf,ofs,val) getdle(buf,ofs)=val
-*/
-#define setwbe(buf,ofs,val) getwle(buf,ofs)=val
-#define setdbe(buf,ofs,val) getdle(buf,ofs)=val
+
+#define getwbe(buf,ofs)	(*((u_int16_t*)(&((u_int8_t*)(buf))[ofs])))
+#define getdbe(buf,ofs)	(*((u_int32_t*)(&((u_int8_t*)(buf))[ofs])))
+#define getwle(buf,ofs)	(bswap16(getwbe(buf,ofs)))
+#define getdle(buf,ofs)	(bswap32(getdbe(buf,ofs)))
+
+#define setwbe(buf,ofs,val) getwbe(buf,ofs)=val
+#define setwle(buf,ofs,val) getwbe(buf,ofs)=bswap16(val)
+#define setdbe(buf,ofs,val) getdbe(buf,ofs)=val
+#define setdle(buf,ofs,val) getdbe(buf,ofs)=bswap32(val)
 
 #endif	/* (BYTE_ORDER == LITTLE_ENDIAN) */
 
@@ -153,7 +151,7 @@ struct smb_rq {
 
 struct smb_bitname {
 	u_int	bn_bit;
-	char	*bn_name;
+	const char *bn_name;
 };
 
 extern struct rcfile *smb_rc;
@@ -208,7 +206,7 @@ int  smb_rq_dstring(struct mbdata *, const char *);
 int  smb_t2_request(struct smb_ctx *, int, int, const char *,
 	int, void *, int, void *, int *, void *, int *, void *);
 
-void smb_simplecrypt(char *dst, const char *src);
+char *smb_simplecrypt(char *dst, const char *src);
 int  smb_simpledecrypt(char *dst, const char *src);
 
 int  m_getm(struct mbuf *, size_t, struct mbuf **);
@@ -216,7 +214,7 @@ int  m_lineup(struct mbuf *, struct mbuf **);
 int  mb_init(struct mbdata *, size_t);
 int  mb_initm(struct mbdata *, struct mbuf *);
 int  mb_done(struct mbdata *);
-int  mb_fit(struct mbdata *mbp, size_t size, char **pp);
+int  mb_fit(struct mbdata *mbp, size_t size, void **pp);
 int  mb_put_uint8(struct mbdata *, u_int8_t);
 int  mb_put_uint16be(struct mbdata *, u_int16_t);
 int  mb_put_uint16le(struct mbdata *, u_int16_t);
@@ -246,8 +244,8 @@ int   nls_setrecode(const char *, const char *);
 int   nls_setlocale(const char *);
 char* nls_str_toext(char *, const char *);
 char* nls_str_toloc(char *, const char *);
-void* nls_mem_toext(void *, const void *, int);
-void* nls_mem_toloc(void *, const void *, int);
+void* nls_mem_toext(void *, const void *, size_t);
+void* nls_mem_toloc(void *, const void *, size_t);
 char* nls_str_upper(char *, const char *);
 char* nls_str_lower(char *, const char *);
 

@@ -31,9 +31,12 @@
  *
  * Id: nb_net.c,v 1.4 2001/02/16 02:46:12 bp Exp 
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: nb_net.c,v 1.2 2013/12/25 22:03:15 christos Exp $");
+
 #include <sys/param.h>
 #include <sys/socket.h>
-#include <sys/ioctl.h>
 
 #include <net/if.h>
 
@@ -45,6 +48,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <ifaddrs.h>
 
 #include <netsmb/netbios.h>
 #include <netsmb/smb_lib.h>
@@ -67,33 +71,30 @@ nb_getlocalname(char *name)
 int
 nb_resolvehost_in(const char *name, struct sockaddr **dest)
 {
-	struct hostent* h;
+	struct addrinfo *res, hints;
 	struct sockaddr_in *sinp;
-	int len;
+	int error;
+	char port[6];
 
-	h = gethostbyname(name);
-	if (!h) {
-		warnx("can't get server address `%s': ", name);
-		herror(NULL);
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = PF_INET;
+	hints.ai_socktype = SOCK_STREAM;
+	snprintf(port, sizeof(port), "%d", SMB_TCP_PORT);
+
+	error = getaddrinfo(name, port, &hints, &res);
+	if (error) {
+		warnx("server address `%s': %s", name, gai_strerror(error));
 		return ENETDOWN;
 	}
-	if (h->h_addrtype != AF_INET) {
-		warnx("address for `%s' is not in the AF_INET family", name);
-		return EAFNOSUPPORT;
-	}
-	if (h->h_length != 4) {
-		warnx("address for `%s' has invalid length", name);
-		return EAFNOSUPPORT;
-	}
-	len = sizeof(struct sockaddr_in);
-	sinp = malloc(len);
+
+	/* Use first address as the address to connect to */
+	sinp = malloc(res[0].ai_addrlen);
 	if (sinp == NULL)
 		return ENOMEM;
-	bzero(sinp, len);
-	sinp->sin_len = len;
-	sinp->sin_family = h->h_addrtype;
-	memcpy(&sinp->sin_addr.s_addr, h->h_addr, 4);
-	sinp->sin_port = htons(SMB_TCP_PORT);
+	memcpy(sinp, res[0].ai_addr, res[0].ai_addrlen);
+
+	freeaddrinfo(res);
+
 	*dest = (struct sockaddr*)sinp;
 	return 0;
 }
@@ -101,101 +102,43 @@ nb_resolvehost_in(const char *name, struct sockaddr **dest)
 int
 nb_enum_if(struct nb_ifdesc **iflist, int maxif)
 {  
-	struct ifconf ifc;
-	struct ifreq *ifrqp;
 	struct nb_ifdesc *ifd;
-	struct in_addr iaddr, imask;
-	char *ifrdata, *iname;
-	int s, rdlen, ifcnt, error, iflags, i;
+	struct ifaddrs *ifp, *p;
+	int i;
 
-	*iflist = NULL;
-	s = socket(AF_INET, SOCK_DGRAM, 0);
-	if (s == -1)
+	if (getifaddrs(&ifp) < 0)
 		return errno;
 
-	rdlen = maxif * sizeof(struct ifreq);
-	ifrdata = malloc(rdlen);
-	if (ifrdata == NULL) {
-		error = ENOMEM;
-		goto bad;
-	}
-	ifc.ifc_len = rdlen;
-	ifc.ifc_buf = ifrdata;
-	if (ioctl(s, SIOCGIFCONF, &ifc) != 0) {
-		error = errno;
-		goto bad;
-	} 
-	ifrqp = ifc.ifc_req;
-	ifcnt = ifc.ifc_len / sizeof(struct ifreq);
-	error = 0;
-	for (i = 0; i < ifcnt; i++, ifrqp++) {
-		if (ioctl(s, SIOCGIFFLAGS, ifrqp) != 0)
-			continue;
-		iflags = ifrqp->ifr_flags;
-		if ((iflags & IFF_UP) == 0 || (iflags & IFF_BROADCAST) == 0)
-			continue;
+	*iflist = NULL;
+	i = 0;
+	for (p = ifp; p; p = p->ifa_next) {
 
-		if (ioctl(s, SIOCGIFADDR, ifrqp) != 0 ||
-		    ifrqp->ifr_addr.sa_family != AF_INET)
-			continue;
-		iname = ifrqp->ifr_name;
-		if (strlen(iname) >= sizeof(ifd->id_name))
-			continue;
-		iaddr = (*(struct sockaddr_in *)&ifrqp->ifr_addr).sin_addr;
+		if (i >= maxif)
+			break;
 
-		if (ioctl(s, SIOCGIFNETMASK, ifrqp) != 0)
+		if ((p->ifa_addr->sa_family != AF_INET) ||
+		    ((p->ifa_flags & (IFF_UP|IFF_BROADCAST))
+		     != (IFF_UP|IFF_BROADCAST)))
 			continue;
-		imask = ((struct sockaddr_in *)&ifrqp->ifr_addr)->sin_addr;
+		if (strlen(p->ifa_name) >= sizeof(ifd->id_name))
+			continue;
 
 		ifd = malloc(sizeof(struct nb_ifdesc));
-		if (ifd == NULL)
+		if (ifd == NULL) {
+			freeifaddrs(ifp);
+			/* XXX should free stuff already in *iflist */
 			return ENOMEM;
+		}
 		bzero(ifd, sizeof(struct nb_ifdesc));
-		strcpy(ifd->id_name, iname);
-		ifd->id_flags = iflags;
-		ifd->id_addr = iaddr;
-		ifd->id_mask = imask;
+		strcpy(ifd->id_name, p->ifa_name);
+		ifd->id_flags = p->ifa_flags;
+		ifd->id_addr = ((struct sockaddr_in *)p->ifa_addr)->sin_addr;
+		ifd->id_mask = ((struct sockaddr_in *)p->ifa_netmask)->sin_addr;
 		ifd->id_next = *iflist;
 		*iflist = ifd;
+		i++;
 	}
-bad:
-	free(ifrdata);
-	close(s);
-	return error;
-}  
 
-/*ARGSUSED*/
-/*int
-nbns_resolvename(const char *name, struct sockaddr **dest)
-{
-	printf("NetBIOS name resolver is not included in this distribution.\n");
-	printf("Please use '-I' option to specify an IP address of server.\n");
-	return EHOSTUNREACH;
-}*/
-/*
-int
-nb_hostlookup(struct nb_name *np, const char *server, const char *hint,
-	struct sockaddr_nb **dst)
-{
-	struct sockaddr_nb *snb;
-	int error;
-
-	error = nb_sockaddr(NULL, np, &snb);
-	if (error)
-		return error;
-	do {
-		if (hint) {
-			error = nb_resolvehost_in(host, snb);
-			if (error)
-				break;
-		} else {
-			error = nb_resolvename(server);
-		}
-	} while(0);
-	if (!error) {
-		*dst = snb;
-	} else
-		nb_snbfree(snb);
-	return error;
+	freeifaddrs(ifp);
+	return 0;
 }
-*/

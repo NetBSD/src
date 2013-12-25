@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, Boris Popov
+ * Copyright (c) 2000-2002, Boris Popov
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,8 +29,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: ctx.c,v 1.21 2001/04/06 15:47:14 bp Exp 
+ * Id: ctx.c,v 1.24 2002/04/13 14:35:28 bp Exp 
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: ctx.c,v 1.2 2013/12/25 22:03:15 christos Exp $");
+
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <sys/ioctl.h>
@@ -45,7 +49,7 @@
 #include <pwd.h>
 #include <grp.h>
 #include <unistd.h>
-#include <sys/iconv.h>
+#include <netsmb/iconv.h>
 
 #define NB_NEEDRESOLVER
 
@@ -54,6 +58,8 @@
 #include <netsmb/nb_lib.h>
 #include <netsmb/smb_conn.h>
 #include <cflib.h>
+
+#include "smb_kernelops.h"
 
 /*
  * Prescan command line for [-U user] argument
@@ -64,7 +70,9 @@ smb_ctx_init(struct smb_ctx *ctx, int argc, char *argv[],
 	int minlevel, int maxlevel, int sharetype)
 {
 	int  opt, error = 0;
+	uid_t euid;
 	const char *arg, *cp;
+	struct passwd *pwd;
 
 	bzero(ctx,sizeof(*ctx));
 	error = nb_ctx_create(&ctx->ct_nb);
@@ -92,8 +100,14 @@ smb_ctx_init(struct smb_ctx *ctx, int argc, char *argv[],
 	ctx->ct_sh.ioc_group = SMBM_ANY_GROUP;
 
 	nb_ctx_setscope(ctx->ct_nb, "");
-	smb_ctx_setuser(ctx, getpwuid(geteuid())->pw_name);
-	endpwent();
+	euid = geteuid();
+	if ((pwd = getpwuid(euid)) != NULL) {
+		smb_ctx_setuser(ctx, pwd->pw_name);
+		endpwent();
+	} else if (euid == 0)
+		smb_ctx_setuser(ctx, "root");
+	else
+		return 0;
 	if (argv == NULL)
 		return 0;
 	for (opt = 1; opt < argc; opt++) {
@@ -266,7 +280,30 @@ smb_ctx_setcharset(struct smb_ctx *ctx, const char *arg)
 int
 smb_ctx_setserver(struct smb_ctx *ctx, const char *name)
 {
-	if (strlen(name) >= SMB_MAXSRVNAMELEN) {
+	char *d;
+
+	/*
+	 * If the name contains dot, it's likely a IP address
+	 * or a name. Update srvaddr in that case, and use
+	 * first part of the name (up to the dot) as NetBIOS name.
+	 */
+	if ((d = strchr(name, '.'))) {
+		static char nm[sizeof(ctx->ct_ssn.ioc_srvname)];
+		int error;
+
+		error = smb_ctx_setsrvaddr(ctx, name);
+		if (error)
+			return (error);
+		
+		/* cut name to MAXSRVNAMELEN */
+		if (strlen(name) >= sizeof(ctx->ct_ssn.ioc_srvname)) {
+			snprintf(nm, sizeof(nm), "%.*s",
+			    (int)(sizeof(ctx->ct_ssn.ioc_srvname) - 1), name);
+			name = nm;
+		}
+	}
+
+	if (strlen(name) >= sizeof(ctx->ct_ssn.ioc_srvname)) {
 		smb_error("server name '%s' too long", 0, name);
 		return ENAMETOOLONG;
 	}
@@ -277,7 +314,7 @@ smb_ctx_setserver(struct smb_ctx *ctx, const char *name)
 int
 smb_ctx_setuser(struct smb_ctx *ctx, const char *name)
 {
-	if (strlen(name) >= SMB_MAXUSERNAMELEN) {
+	if (strlen(name) >= sizeof(ctx->ct_ssn.ioc_user)) {
 		smb_error("user name '%s' too long", 0, name);
 		return ENAMETOOLONG;
 	}
@@ -354,7 +391,7 @@ smb_parse_owner(char *pair, uid_t *uid, gid_t *gid)
 			if (gr) {
 				*gid = gr->gr_gid;
 			} else
-				smb_error("Invalid group name %s, ignored",
+				smb_error("Invalid group name '%s', ignored",
 				    0, cp);
 		}
 	}
@@ -363,7 +400,7 @@ smb_parse_owner(char *pair, uid_t *uid, gid_t *gid)
 		if (pw) {
 			*uid = pw->pw_uid;
 		} else
-			smb_error("Invalid user name %s, ignored", 0, pair);
+			smb_error("Invalid user name '%s', ignored", 0, pair);
 	}
 	endpwent();
 	return 0;
@@ -400,7 +437,7 @@ smb_ctx_opt(struct smb_ctx *ctx, int opt, const char *arg)
 			    &ctx->ct_sh.ioc_group);
 		}
 		if (*p && error == 0) {
-			error = smb_parse_owner(cp, &ctx->ct_ssn.ioc_owner,
+			error = smb_parse_owner(p, &ctx->ct_ssn.ioc_owner,
 			    &ctx->ct_ssn.ioc_group);
 		}
 		free(p);
@@ -564,31 +601,21 @@ smb_ctx_gethandle(struct smb_ctx *ctx)
 	char buf[20];
 
 	/*
-	 * First try to open as clone
+	 * First, try to open as cloned device
 	 */
-	fd = open("/dev/"NSMB_NAME, O_RDWR);
+	fd = smb_kops.ko_open("/dev/"NSMB_NAME, O_RDWR, 0);
 	if (fd >= 0) {
 		ctx->ct_fd = fd;
 		return 0;
 	}
+
 	/*
 	 * well, no clone capabilities available - we have to scan
 	 * all devices in order to get free one
 	 */
 	 for (i = 0; i < 1024; i++) {
-	         snprintf(buf, sizeof(buf), "/dev/%s%d", NSMB_NAME, i);
-		 fd = open(buf, O_RDWR);
-		 if (fd >= 0) {
-			ctx->ct_fd = fd;
-			return 0;
-		 }
-	 }
-	 /*
-	  * This is a compatibility with old /dev/net/nsmb device
-	  */
-	 for (i = 0; i < 1024; i++) {
-	         snprintf(buf, sizeof(buf), "/dev/net/%s%d", NSMB_NAME, i);
-		 fd = open(buf, O_RDWR);
+	         snprintf(buf, sizeof(buf), "/dev/"NSMB_NAME"%d", i);
+		 fd = smb_kops.ko_open(buf, O_RDWR, 0);
 		 if (fd >= 0) {
 			ctx->ct_fd = fd;
 			return 0;
@@ -596,6 +623,7 @@ smb_ctx_gethandle(struct smb_ctx *ctx)
 		 if (errno == ENOENT)
 		         return ENOENT;
 	 }
+
 	 return ENOENT;
 }
 
@@ -610,12 +638,12 @@ smb_ctx_lookup(struct smb_ctx *ctx, int level, int flags)
 		return EINVAL;
 	}
 	if (ctx->ct_fd != -1) {
-		close(ctx->ct_fd);
+		smb_kops.ko_close(ctx->ct_fd);
 		ctx->ct_fd = -1;
 	}
 	error = smb_ctx_gethandle(ctx);
 	if (error) {
-		smb_error("can't get handle to requester (no /dev/net/nsmb* device)", 0);
+		smb_error("can't get handle to requester (no /dev/"NSMB_NAME"* device available)", 0);
 		return EINVAL;
 	}
 	bzero(&rq, sizeof(rq));
@@ -623,12 +651,41 @@ smb_ctx_lookup(struct smb_ctx *ctx, int level, int flags)
 	bcopy(&ctx->ct_sh, &rq.ioc_sh, sizeof(struct smbioc_oshare));
 	rq.ioc_flags = flags;
 	rq.ioc_level = level;
-	if (ioctl(ctx->ct_fd, SMBIOC_LOOKUP, &rq) == -1) {
+	if (smb_kops.ko_ioctl(ctx->ct_fd, SMBIOC_LOOKUP, &rq) == -1) {
 		error = errno;
+
+		smb_kops.ko_close(ctx->ct_fd);
+		ctx->ct_fd = -1;
+
+		/*
+		 * Fallback to *SMBSERVER as NetBIOS name. At least
+		 * Windows NT and Windows XP require this (or valid
+		 * NetBIOS server name), otherwise they refuse connection.
+		 */
+		if (smb_ctx_setserver(ctx, "*SMBSERVER") != 0)
+			goto fail;
+
+		error = smb_ctx_resolve(ctx);
+		if (error)
+			goto fail;
+
+		error = smb_ctx_gethandle(ctx);
+		if (error)
+			goto fail;
+
+		bcopy(&ctx->ct_ssn, &rq.ioc_ssn, sizeof(struct smbioc_ossn));
+
+		if (smb_kops.ko_ioctl(ctx->ct_fd, SMBIOC_LOOKUP, &rq) != -1)
+			goto success;
+		error = errno;
+
+	    fail:
 		if (flags & SMBLK_CREATE)
 			smb_error("unable to open connection", error);
 		return error;
 	}
+
+    success:
 	return 0;
 }
 
@@ -644,7 +701,7 @@ smb_ctx_login(struct smb_ctx *ctx)
 		return EINVAL;
 	}
 	if (ctx->ct_fd != -1) {
-		close(ctx->ct_fd);
+		smb_kops.ko_close(ctx->ct_fd);
 		ctx->ct_fd = -1;
 	}
 	error = smb_ctx_gethandle(ctx);
@@ -652,14 +709,14 @@ smb_ctx_login(struct smb_ctx *ctx)
 		smb_error("can't get handle to requester", 0);
 		return EINVAL;
 	}
-	if (ioctl(ctx->ct_fd, SMBIOC_OPENSESSION, ssn) == -1) {
+	if (smb_kops.ko_ioctl(ctx->ct_fd, SMBIOC_OPENSESSION, ssn) == -1) {
 		error = errno;
 		smb_error("can't open session to server %s", error, ssn->ioc_srvname);
 		return error;
 	}
 	if (sh->ioc_share[0] == 0)
 		return 0;
-	if (ioctl(ctx->ct_fd, SMBIOC_OPENSHARE, sh) == -1) {
+	if (smb_kops.ko_ioctl(ctx->ct_fd, SMBIOC_OPENSHARE, sh) == -1) {
 		error = errno;
 		smb_error("can't connect to share //%s/%s", error,
 		    ssn->ioc_srvname, sh->ioc_share);
@@ -678,7 +735,7 @@ smb_ctx_setflags(struct smb_ctx *ctx, int level, int mask, int flags)
 	fl.ioc_level = level;
 	fl.ioc_mask = mask;
 	fl.ioc_flags = flags;
-	if (ioctl(ctx->ct_fd, SMBIOC_SETFLAGS, &fl) == -1)
+	if (smb_kops.ko_ioctl(ctx->ct_fd, SMBIOC_SETFLAGS, &fl) == -1)
 		return errno;
 	return 0;
 }
@@ -696,7 +753,7 @@ smb_ctx_readrcsection(struct smb_ctx *ctx, const char *sname, int level)
 	char *p;
 	int error;
 
-	if (level > 0) {
+	if (level >= 0) {
 		rc_getstringptr(smb_rc, sname, "charsets", &p);
 		if (p) {
 			error = smb_ctx_setcharset(ctx, p);

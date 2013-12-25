@@ -1,5 +1,7 @@
+/* $NetBSD: mount_smbfs.c,v 1.2 2013/12/25 22:03:15 christos Exp $ */
+
 /*
- * Copyright (c) 2000-2001, Boris Popov
+ * Copyright (c) 2000-2002, Boris Popov
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,8 +31,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: mount_smbfs.c,v 1.13 2001/04/16 12:46:46 bp Exp 
+ * Id: mount_smbfs.c,v 1.17 2002/04/10 04:17:51 bp Exp 
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: mount_smbfs.c,v 1.2 2013/12/25 22:03:15 christos Exp $");
+
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/errno.h>
@@ -45,6 +51,7 @@
 #include <stdlib.h>
 #include <err.h>
 #include <sysexits.h>
+#include <errno.h>
 
 #include <cflib.h>
 
@@ -54,26 +61,36 @@
 
 #include <fs/smbfs/smbfs.h>
 
+#include "mount_smbfs.h"
+
 #include "mntopts.h"
 
-static char mount_point[MAXPATHLEN + 1];
 static void usage(void);
 
-static struct mntopt mopts[] = {
+static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
-	{ NULL }
+	{ NULL, 0, 0, 0 }
 };
 
-
+#ifndef MOUNT_NOMAIN
 int
 main(int argc, char *argv[])
 {
-	struct smb_ctx sctx, *ctx = &sctx;
-	struct smbfs_args mdata;
+
+	setprogname(argv[0]);
+	return mount_smbfs(argc, argv);
+}
+#endif
+
+struct smb_ctx sctx;
+void
+mount_smbfs_parseargs(int argc, char *argv[], struct smbfs_args *mdatap,
+    int *mntflagsp, char *canon_dev, char *mount_point)
+{
+	struct smb_ctx *ctx = &sctx;
 	struct stat st;
-	struct vfsconf vfc;
 	char *next;
-	int opt, error, mntflags, caseopt;
+	int opt, error, caseopt;
 
 	if (argc == 2) {
 		if (strcmp(argv[1], "-h") == 0) {
@@ -87,22 +104,12 @@ main(int argc, char *argv[])
 	if (argc < 3)
 		usage();
 
-	error = getvfsbyname(SMBFS_VFSNAME, &vfc);
-	if (error && vfsisloadable(SMBFS_VFSNAME)) {
-		if(vfsload(SMBFS_VFSNAME))
-			err(EX_OSERR, "vfsload("SMBFS_VFSNAME")");
-		endvfsent();
-		error = getvfsbyname(SMBFS_VFSNAME, &vfc);
-	}
-	if (error)
-		errx(EX_OSERR, "SMB filesystem is not available");
-
 	if (smb_lib_init() != 0)
 		exit(1);
 
-	mntflags = error = 0;
-	bzero(&mdata, sizeof(mdata));
-	mdata.uid = mdata.gid = -1;
+	*mntflagsp = error = 0;
+	memset(mdatap, 0, sizeof(*mdatap));
+	mdatap->uid = mdatap->gid = -1;
 	caseopt = SMB_CS_NONE;
 
 	if (smb_ctx_init(ctx, argc, argv, SMBL_SHARE, SMBL_SHARE, SMB_ST_DISK) != 0)
@@ -122,32 +129,32 @@ main(int argc, char *argv[])
 		    case 'u': {
 			struct passwd *pwd;
 
-			pwd = isdigit(optarg[0]) ?
+			pwd = isdigit((unsigned char)optarg[0]) ?
 			    getpwuid(atoi(optarg)) : getpwnam(optarg);
 			if (pwd == NULL)
 				errx(EX_NOUSER, "unknown user '%s'", optarg);
-			mdata.uid = pwd->pw_uid;
+			mdatap->uid = pwd->pw_uid;
 			break;
 		    }
 		    case 'g': {
 			struct group *grp;
 
-			grp = isdigit(optarg[0]) ?
+			grp = isdigit((unsigned char)optarg[0]) ?
 			    getgrgid(atoi(optarg)) : getgrnam(optarg);
 			if (grp == NULL)
 				errx(EX_NOUSER, "unknown group '%s'", optarg);
-			mdata.gid = grp->gr_gid;
+			mdatap->gid = grp->gr_gid;
 			break;
 		    }
 		    case 'd':
 			errno = 0;
-			mdata.dir_mode = strtol(optarg, &next, 8);
+			mdatap->dir_mode = strtol(optarg, &next, 8);
 			if (errno || *next != 0)
 				errx(EX_DATAERR, "invalid value for directory mode");
 			break;
 		    case 'f':
 			errno = 0;
-			mdata.file_mode = strtol(optarg, &next, 8);
+			mdatap->file_mode = strtol(optarg, &next, 8);
 			if (errno || *next != 0)
 				errx(EX_DATAERR, "invalid value for file mode");
 			break;
@@ -160,14 +167,14 @@ main(int argc, char *argv[])
 			nsp = inp = optarg;
 			while ((nsp = strsep(&inp, ",;:")) != NULL) {
 				if (strcasecmp(nsp, "LONG") == 0)
-					mdata.flags |= SMBFS_MOUNT_NO_LONG;
+					mdatap->flags |= SMBFS_MOUNT_NO_LONG;
 				else
 					errx(EX_DATAERR, "unknown suboption '%s'", nsp);
 			}
 			break;
 		    };
 		    case 'o':
-			getmntopts(optarg, mopts, &mntflags, 0);
+			getmntopts(optarg, mopts, mntflagsp, 0);
 			break;
 		    case 'c':
 			switch (optarg[0]) {
@@ -189,7 +196,7 @@ main(int argc, char *argv[])
 
 	if (optind == argc - 2)
 		optind++;
-	
+
 	if (optind != argc - 1)
 		usage();
 	realpath(argv[optind], mount_point);
@@ -200,53 +207,74 @@ main(int argc, char *argv[])
 		errno = ENOTDIR;
 		err(EX_OSERR, "can't mount on %s", mount_point);
 	}
-/*
+#ifdef notyet
 	if (smb_getextattr(mount_point, &einfo) == 0)
 		errx(EX_OSERR, "can't mount on %s twice", mount_point);
-*/
-	if (mdata.uid == -1)
-		mdata.uid = st.st_uid;
-	if (mdata.gid == -1)
-		mdata.gid = st.st_gid;
-	if (mdata.file_mode == 0 )
-		mdata.file_mode = st.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
-	if (mdata.dir_mode == 0) {
-		mdata.dir_mode = mdata.file_mode;
-		if (mdata.dir_mode & S_IRUSR)
-			mdata.dir_mode |= S_IXUSR;
-		if (mdata.dir_mode & S_IRGRP)
-			mdata.dir_mode |= S_IXGRP;
-		if (mdata.dir_mode & S_IROTH)
-			mdata.dir_mode |= S_IXOTH;
+#endif
+	if (mdatap->uid == (uid_t)-1)
+		mdatap->uid = st.st_uid;
+	if (mdatap->gid == (gid_t)-1)
+		mdatap->gid = st.st_gid;
+	if (mdatap->file_mode == 0 )
+		mdatap->file_mode = st.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
+	if (mdatap->dir_mode == 0) {
+		mdatap->dir_mode = mdatap->file_mode;
+		if (mdatap->dir_mode & S_IRUSR)
+			mdatap->dir_mode |= S_IXUSR;
+		if (mdatap->dir_mode & S_IRGRP)
+			mdatap->dir_mode |= S_IXGRP;
+		if (mdatap->dir_mode & S_IROTH)
+			mdatap->dir_mode |= S_IXOTH;
 	}
 	/*
 	 * For now, let connection be private for this mount
 	 */
 	ctx->ct_ssn.ioc_opt |= SMBVOPT_PRIVATE;
-	ctx->ct_ssn.ioc_owner = ctx->ct_sh.ioc_owner = 0; /* root */
-	ctx->ct_ssn.ioc_group = ctx->ct_sh.ioc_group = mdata.gid;
+	if (getuid() == 0)
+		ctx->ct_ssn.ioc_owner = ctx->ct_sh.ioc_owner = 0; /* root */
+	else
+		ctx->ct_ssn.ioc_owner = ctx->ct_sh.ioc_owner = mdatap->uid;
+	ctx->ct_ssn.ioc_group = ctx->ct_sh.ioc_group = mdatap->gid;
 	opt = 0;
-	if (mdata.dir_mode & S_IXGRP)
+	if (mdatap->dir_mode & S_IXGRP)
 		opt |= SMBM_EXECGRP;
-	if (mdata.dir_mode & S_IXOTH)
+	if (mdatap->dir_mode & S_IXOTH)
 		opt |= SMBM_EXECOTH;
 	ctx->ct_ssn.ioc_rights |= opt;
 	ctx->ct_sh.ioc_rights |= opt;
 	error = smb_ctx_resolve(ctx);
 	if (error)
-		exit(1);
+		err(1, "resolve %d", error);
 	error = smb_ctx_lookup(ctx, SMBL_SHARE, SMBLK_CREATE);
+	if (error)
+		err(1, "lookup %d", error);
+
+	mdatap->version = SMBFS_VERSION;
+	mdatap->dev_fd = ctx->ct_fd;
+	mdatap->caseopt = caseopt;
+
+	snprintf(canon_dev, MAXPATHLEN, "//%s@%s/%s",
+	    ctx->ct_ssn.ioc_user[0] ? ctx->ct_ssn.ioc_user : "guest",
+	    ctx->ct_ssn.ioc_srvname, ctx->ct_sh.ioc_share);
+}
+
+int
+mount_smbfs(int argc, char *argv[])
+{
+	char canon_dev[MAXPATHLEN], canon_dir[MAXPATHLEN];
+	struct smbfs_args mdata;
+	int mntflags, error;
+
+	mount_smbfs_parseargs(argc, argv, &mdata, &mntflags,
+	    canon_dev, canon_dir);
+
+	error = mount(SMBFS_VFSNAME, canon_dir, mntflags,
+	    &mdata, sizeof mdata);
+	smb_ctx_done(&sctx); /* XXX */
+
 	if (error) {
-		exit(1);
-	}
-	strcpy(mdata.mount_point,mount_point);
-	mdata.version = SMBFS_VERSION;
-	mdata.dev = ctx->ct_fd;
-	mdata.caseopt = caseopt;
-	error = mount(SMBFS_VFSNAME, mdata.mount_point, mntflags, (void*)&mdata);
-	smb_ctx_done(ctx);
-	if (error) {
-		smb_error("mount error: %s", error, mdata.mount_point);
+		smb_error("mount error for %s: %s", error, canon_dir,
+			strerror(errno));
 		exit(1);
 	}
 	return 0;
@@ -255,11 +283,12 @@ main(int argc, char *argv[])
 static void
 usage(void)
 {
-	fprintf(stderr, "%s\n%s\n%s\n%s\n",
-	"usage: mount_smbfs [-Chv] [-U user] [-connection options]",
-	"                   [-M mode] [-c case] [-d mode] [-f mode]",
-	"                   [-g gid] [-l locale] [-n os2] [-u uid] [-w scheme]",
-	"                   /user@server/share node");
+	fprintf(stderr, "Usage: %s %s\n%s\n%s\n%s\n",
+	    "[-E cs1:cs2] [-I host] [-L locale] [-M crights:srights]",
+	    "\t[-N] [-O cowner:cgroup/sowner:sgroup] [-R retrycount]",
+	    "\t[-T timeout] [-W workgroup] [-c case] [-d mode] [-f mode]",
+	    "\t[-g gid] [-n opt] [-u uid] //user@server/share node",
+	    getprogname());
 
 	exit (1);
 }

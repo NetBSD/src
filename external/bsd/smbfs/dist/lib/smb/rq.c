@@ -31,11 +31,15 @@
  *
  * Id: rq.c,v 1.7 2001/04/16 04:33:01 bp Exp 
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: rq.c,v 1.2 2013/12/25 22:03:15 christos Exp $");
+
 #include <sys/param.h>
 #include <sys/ioctl.h>
-#include <sys/errno.h>
 #include <sys/stat.h>
 #include <ctype.h>
+#include <errno.h>
 #include <err.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -43,12 +47,11 @@
 #include <stdlib.h>
 #include <sysexits.h>
 
-#include <sys/mchain.h>
-
 #include <netsmb/smb_lib.h>
 #include <netsmb/smb_conn.h>
 #include <netsmb/smb_rap.h>
 
+#include "smb_kernelops.h"
 
 int
 smb_rq_init(struct smb_ctx *ctx, u_char cmd, size_t rpbufsz, struct smb_rq **rqpp)
@@ -141,7 +144,7 @@ smb_rq_simple(struct smb_rq *rqp)
 	mbp = smb_rq_getreply(rqp);
 	krq.ioc_rpbufsz = mbp->mb_top->m_maxlen;
 	krq.ioc_rpbuf = mtod(mbp->mb_top, char *);
-	if (ioctl(rqp->rq_ctx->ct_fd, SMBIOC_REQUEST, &krq) == -1)
+	if (smb_kops.ko_ioctl(rqp->rq_ctx->ct_fd, SMBIOC_REQUEST, &krq) == -1)
 		return errno;
 	mbp->mb_top->m_len = krq.ioc_rwc * 2 + krq.ioc_rbc;
 	rqp->rq_wcount = krq.ioc_rwc;
@@ -162,7 +165,7 @@ smb_t2_request(struct smb_ctx *ctx, int setup, int setupcount,
 	bzero(&krq, sizeof(krq));
 	krq.ioc_setup[0] = setup;
 	krq.ioc_setupcnt = setupcount;
-	(const char*)krq.ioc_name = name;
+	krq.ioc_name = __UNCONST(name);
 	krq.ioc_tparamcnt = tparamcnt;
 	krq.ioc_tparam = tparam;
 	krq.ioc_tdatacnt = tdatacnt;
@@ -171,7 +174,7 @@ smb_t2_request(struct smb_ctx *ctx, int setup, int setupcount,
 	krq.ioc_rparam = rparam;
 	krq.ioc_rdatacnt = *rdatacnt;
 	krq.ioc_rdata = rdata;
-	if (ioctl(ctx->ct_fd, SMBIOC_T2RQ, &krq) == -1)
+	if (smb_kops.ko_ioctl(ctx->ct_fd, SMBIOC_T2RQ, &krq) == -1)
 		return errno;
 	*rparamcnt = krq.ioc_rparamcnt;
 	*rdatacnt = krq.ioc_rdatacnt;

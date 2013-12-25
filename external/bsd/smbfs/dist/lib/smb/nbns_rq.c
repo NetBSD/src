@@ -31,6 +31,10 @@
  *
  * Id: nbns_rq.c,v 1.5 2001/02/17 03:07:24 bp Exp 
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: nbns_rq.c,v 1.2 2013/12/25 22:03:15 christos Exp $");
+
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -49,6 +53,7 @@
 #include <netsmb/smb_lib.h>
 #include <netsmb/nb_lib.h>
 
+#include "smb_kernelops.h"
 
 static int  nbns_rq_create(int opcode, struct nb_ctx *ctx, struct nbns_rq **rqpp);
 static void nbns_rq_done(struct nbns_rq *rqp);
@@ -169,7 +174,7 @@ nbns_rq_done(struct nbns_rq *rqp)
 	if (rqp == NULL)
 		return;
 	if (rqp->nr_fd >= 0)
-		close(rqp->nr_fd);
+		smb_kops.ko_close(rqp->nr_fd);
 	mb_done(&rqp->nr_rq);
 	mb_done(&rqp->nr_rp);
 	free(rqp);
@@ -237,7 +242,7 @@ nbns_rq_prepare(struct nbns_rq *rqp)
 		if (rqp->nr_qdcount > 1)
 			return EINVAL;
 		len = nb_name_len(rqp->nr_qdname);
-		error = mb_fit(mbp, len, (char**)&cp);
+		error = mb_fit(mbp, len, (void **)(void *)&cp);
 		if (error)
 			return error;
 		nb_name_encode(rqp->nr_qdname, cp);
@@ -255,32 +260,18 @@ nbns_rq_recv(struct nbns_rq *rqp)
 {
 	struct mbdata *mbp = &rqp->nr_rp;
 	void *rpdata = mtod(mbp->mb_top, void *);
-	fd_set rd, wr, ex;
-	struct timeval tv;
 	struct sockaddr_in sender;
 	int s = rqp->nr_fd;
 	int n, len;
 
-	FD_ZERO(&rd);
-	FD_ZERO(&wr);
-	FD_ZERO(&ex);
-	FD_SET(s, &rd);
-
-	tv.tv_sec = rqp->nr_nbd->nb_timo;
-	tv.tv_usec = 0;
-
-	n = select(s + 1, &rd, &wr, &ex, &tv);
-	if (n == -1)
-		return -1;
-	if (n == 0)
-		return ETIMEDOUT;
-	if (FD_ISSET(s, &rd) == 0)
-		return ETIMEDOUT;
 	len = sizeof(sender);
-	n = recvfrom(s, rpdata, mbp->mb_top->m_maxlen, 0,
+	n = smb_kops.ko_recvfrom(s, rpdata, mbp->mb_top->m_maxlen, 0,
 	    (struct sockaddr*)&sender, &len);
-	if (n < 0)
+	if (n < 0) {
+		if (errno == EAGAIN)
+			return ETIMEDOUT;
 		return errno;
+	}
 	mbp->mb_top->m_len = mbp->mb_count = n;
 	rqp->nr_sender = sender;
 	return 0;
@@ -290,14 +281,21 @@ static int
 nbns_rq_opensocket(struct nbns_rq *rqp)
 {
 	struct sockaddr_in locaddr;
+	struct timeval tv;
 	int opt, s;
 
-	s = rqp->nr_fd = socket(AF_INET, SOCK_DGRAM, 0);
+	s = rqp->nr_fd = smb_kops.ko_socket(AF_INET, SOCK_DGRAM, 0);
 	if (s < 0)
 		return errno;
 	if (rqp->nr_flags & NBRQF_BROADCAST) {
 		opt = 1;
-		if (setsockopt(s, SOL_SOCKET, SO_BROADCAST, &opt, sizeof(opt)) < 0)
+		if (smb_kops.ko_setsockopt(s, SOL_SOCKET, SO_BROADCAST,
+		    &opt, sizeof(opt)) < 0)
+			return errno;
+		tv.tv_sec = rqp->nr_nbd->nb_timo;
+		tv.tv_usec = 0;
+		if (smb_kops.ko_setsockopt(s, SOL_SOCKET, SO_RCVTIMEO,
+		    &tv, sizeof(tv)) < 0)
 			return errno;
 		if (rqp->nr_if == NULL)
 			return NBERROR(NBERR_NOBCASTIFS);
@@ -306,7 +304,7 @@ nbns_rq_opensocket(struct nbns_rq *rqp)
 		locaddr.sin_len = sizeof(locaddr);
 		locaddr.sin_addr = rqp->nr_if->id_addr;
 		rqp->nr_dest.sin_addr.s_addr = rqp->nr_if->id_addr.s_addr | ~rqp->nr_if->id_mask.s_addr;
-		if (bind(s, (struct sockaddr*)&locaddr, sizeof(locaddr)) < 0)
+		if (smb_kops.ko_bind(s, (struct sockaddr*)&locaddr, sizeof(locaddr)) < 0)
 			return errno;
 	}
 	return 0;
@@ -318,7 +316,7 @@ nbns_rq_send(struct nbns_rq *rqp)
 	struct mbdata *mbp = &rqp->nr_rq;
 	int s = rqp->nr_fd;
 
-	if (sendto(s, mtod(mbp->mb_top, char *), mbp->mb_count, 0,
+	if (smb_kops.ko_sendto(s, mtod(mbp->mb_top, char *), mbp->mb_count, 0,
 	      (struct sockaddr*)&rqp->nr_dest, sizeof(rqp->nr_dest)) < 0)
 		return errno;
 	return 0;
@@ -349,7 +347,7 @@ again:
 				    rqp->nr_if != NULL &&
 				    rqp->nr_if->id_next != NULL) {
 					rqp->nr_if = rqp->nr_if->id_next;
-					close(rqp->nr_fd);
+					smb_kops.ko_close(rqp->nr_fd);
 					goto again;
 				} else
 					return error;
