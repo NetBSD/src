@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.62 2013/10/17 21:12:24 christos Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.63 2013/12/25 17:24:39 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.62 2013/10/17 21:12:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.63 2013/12/25 17:24:39 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -970,7 +970,7 @@ cpu_comcnprobe(struct consdev *cn, struct pci_attach_args *pa)
 	pci_mode_detect();
 	pa->pa_iot = x86_bus_space_io;
 	pa->pa_pc = 0;
-	pa->pa_tag = pci_make_tag(0, 0, 31, 0);
+	pa->pa_tag = pci_make_tag(0, 0, pci_bus_maxdevs(NULL, 0) - 1, 0);
 	return 0;
 }
 #endif
