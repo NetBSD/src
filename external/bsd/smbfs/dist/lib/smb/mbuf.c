@@ -32,8 +32,11 @@
  * Id: mbuf.c,v 1.6 2001/02/24 15:56:04 bp Exp 
  */
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: mbuf.c,v 1.2 2013/12/25 22:03:15 christos Exp $");
+
 #include <sys/types.h>
-#include <sys/mchain.h>
+#include <sys/endian.h>
 #include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
@@ -42,8 +45,7 @@
 
 #include <netsmb/smb_lib.h>
 
-#define MBERROR(format, args...) printf("%s(%d): "format, __FUNCTION__ , \
-				    __LINE__ ,## args)
+#define MBERROR(x)	printf x
 
 static int
 m_get(size_t len, struct mbuf **mpp)
@@ -191,7 +193,8 @@ m_getm(struct mbuf *top, size_t len, struct mbuf **mpp)
  * Routines to put data in a buffer
  */
 #define	MB_PUT(t)	int error; t *p; \
-			if ((error = mb_fit(mbp, sizeof(t), (char**)&p)) != 0) \
+			if ((error = mb_fit(mbp, sizeof(t), \
+			    (void **)(void *)&p)) != 0) \
 				return error
 
 /*
@@ -200,7 +203,7 @@ m_getm(struct mbuf *top, size_t len, struct mbuf **mpp)
  * Return pointer to the object placeholder or NULL if any error occured.
  */
 int
-mb_fit(struct mbdata *mbp, size_t size, char **pp)
+mb_fit(struct mbdata *mbp, size_t size, void **pp)
 {
 	struct mbuf *m, *mn;
 	int error;
@@ -264,7 +267,7 @@ int
 mb_put_int64be(struct mbdata *mbp, int64_t x)
 {
 	MB_PUT(int64_t);
-	*p = htobeq(x);
+	*p = htobe64(x);
 	return 0;
 }
 
@@ -272,7 +275,7 @@ int
 mb_put_int64le(struct mbdata *mbp, int64_t x)
 {
 	MB_PUT(int64_t);
-	*p = htoleq(x);
+	*p = htole64(x);
 	return 0;
 }
 
@@ -363,7 +366,7 @@ mb_get_uint16le(struct mbdata *mbp, u_int16_t *x)
 	u_int16_t v;
 	int error = mb_get_uint16(mbp, &v);
 
-	*x = letohs(v);
+	*x = le16toh(v);
 	return error;
 }
 
@@ -372,7 +375,7 @@ mb_get_uint16be(struct mbdata *mbp, u_int16_t *x) {
 	u_int16_t v;
 	int error = mb_get_uint16(mbp, &v);
 
-	*x = betohs(v);
+	*x = be16toh(v);
 	return error;
 }
 
@@ -389,7 +392,7 @@ mb_get_uint32be(struct mbdata *mbp, u_int32_t *x)
 	int error;
 
 	error = mb_get_uint32(mbp, &v);
-	*x = betohl(v);
+	*x = be32toh(v);
 	return error;
 }
 
@@ -400,7 +403,7 @@ mb_get_uint32le(struct mbdata *mbp, u_int32_t *x)
 	int error;
 
 	error = mb_get_uint32(mbp, &v);
-	*x = letohl(v);
+	*x = le32toh(v);
 	return error;
 }
 
@@ -417,7 +420,7 @@ mb_get_int64be(struct mbdata *mbp, int64_t *x)
 	int error;
 
 	error = mb_get_int64(mbp, &v);
-	*x = betohq(v);
+	*x = be64toh(v);
 	return error;
 }
 
@@ -428,7 +431,7 @@ mb_get_int64le(struct mbdata *mbp, int64_t *x)
 	int error;
 
 	error = mb_get_int64(mbp, &v);
-	*x = letohq(v);
+	*x = le64toh(v);
 	return error;
 }
 
@@ -440,7 +443,7 @@ mb_get_mem(struct mbdata *mbp, char * target, size_t size)
 	
 	while (size > 0) {
 		if (m == NULL) {
-			MBERROR("incomplete copy\n");
+			MBERROR(("incomplete copy\n"));
 			return EBADRPC;
 		}
 		count = mb_left(m, mbp->mb_pos);
