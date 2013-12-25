@@ -31,6 +31,10 @@
  *
  * Id: rcfile.c,v 1.5 2001/04/16 12:46:46 bp Exp 
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: rcfile.c,v 1.2 2013/12/25 22:03:15 christos Exp $");
+
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <ctype.h>
@@ -344,7 +348,7 @@ rc_getstring(struct rcfile *rcp, const char *section, const char *key,
 	if (error)
 		return error;
 	if (strlen(value) >= maxlen) {
-		warnx("line too long for key '%s' in section '%s', max = %d\n", key, section, maxlen);
+		warnx("line too long for key '%s' in section '%s', max = %lu\n", key, section, (unsigned long)maxlen);
 		return EINVAL;
 	}
 	strcpy(dest, value);
@@ -388,7 +392,7 @@ rc_getbool(struct rcfile *rcp, const char *section, const char *key, int *value)
 	rkp = rc_sect_findkey(rsp,key);
 	if (!rkp) return ENOENT;
 	p = rkp->rk_value;
-	while (*p && isspace(*p)) p++;
+	while (*p && isspace((unsigned char)*p)) p++;
 	if (*p == '0' || strcasecmp(p,"no") == 0 || strcasecmp(p,"false") == 0) {
 		*value = 0;
 		return 0;

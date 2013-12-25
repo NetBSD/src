@@ -31,6 +31,10 @@
  *
  * Id: cfopt.c,v 1.3 2000/07/11 01:51:49 bp Exp 
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: cfopt.c,v 1.2 2013/12/25 22:03:15 christos Exp $");
+
 #include <sys/param.h>
 
 #include <stdio.h>

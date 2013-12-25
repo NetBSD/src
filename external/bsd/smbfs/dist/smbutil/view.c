@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, Boris Popov
+ * Copyright (c) 2000-2002, Boris Popov
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,12 +29,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: view.c,v 1.7 2001/01/28 07:35:01 bp Exp 
+ * Id: view.c,v 1.9 2002/02/20 09:26:42 bp Exp 
  */
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/stat.h>
-#include <sys/iconv.h>
+#include <sys/endian.h>
+#include <iconv.h>
 #include <err.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -50,11 +51,11 @@
 
 #include "common.h"
 
-static char *shtype[] = {
+static const char *shtype[] = {
 	"disk",
 	"printer",
-	"pipe",
-	"comm",
+	"comm",		/* Communications device */
+	"pipe",		/* IPC Inter process communication */
 	"unknown"
 };
 
@@ -64,7 +65,9 @@ cmd_view(int argc, char *argv[])
 	struct smb_ctx sctx, *ctx = &sctx;
 	struct smb_share_info_1 *rpbuf, *ep;
 	char *cp;
+	u_int16_t type;
 	int error, opt, bufsize, i, entries, total;
+	
 
 	if (argc < 2)
 		view_usage();
@@ -86,6 +89,10 @@ cmd_view(int argc, char *argv[])
 			/*NOTREACHED*/
 		}
 	}
+#ifdef APPLE
+	if (loadsmbvfs())
+		errx(EX_OSERR, "SMB filesystem is not available");
+#endif
 	smb_ctx_setshare(ctx, "IPC$", SMB_ST_ANY);
 	if (smb_ctx_resolve(ctx) != 0)
 		exit(1);
@@ -96,7 +103,7 @@ cmd_view(int argc, char *argv[])
 	}
 	printf("Share        Type       Comment\n");
 	printf("-------------------------------\n");
-	bufsize = 65535;
+	bufsize = 0xffe0; /* samba notes win2k bug with 65535 */
 	rpbuf = malloc(bufsize);
 	error = smb_rap_NetShareEnum(ctx, 1, rpbuf, bufsize, &entries, &total);
 	if (error &&
@@ -105,9 +112,11 @@ cmd_view(int argc, char *argv[])
 		exit(1);
 	}
 	for (ep = rpbuf, i = 0; i < entries; i++, ep++) {
+		type = le16toh(ep->shi1_type);
+
 		cp = (char*)rpbuf + ep->shi1_remark;
 		printf("%-12s %-10s %s\n", ep->shi1_netname,
-		    shtype[ep->shi1_type],
+		    shtype[min(type, sizeof shtype / sizeof(char *) - 1)],
 		    ep->shi1_remark ? nls_str_toloc(cp, cp) : "");
 	}
 	printf("\n%d shares listed from %d available\n", entries, total);

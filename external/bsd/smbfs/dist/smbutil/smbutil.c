@@ -32,15 +32,15 @@ static struct commands {
 	cmd_usage_t *	usage;
 	int 		flags;
 } commands[] = {
-	{"crypt",	cmd_crypt,	NULL, CMDFL_NO_KMOD},
-	{"help",	cmd_help,	help_usage, CMDFL_NO_KMOD},
-	{"lc",		cmd_dumptree,	NULL},
-	{"login",	cmd_login,	login_usage},
-	{"logout",	cmd_logout,	logout_usage},
-	{"lookup",	cmd_lookup,	lookup_usage, CMDFL_NO_KMOD},
-	{"print",	cmd_print,	print_usage},
-	{"view",	cmd_view,	view_usage},
-	{NULL, NULL}
+	{ "crypt",	cmd_crypt,	NULL,		CMDFL_NO_KMOD	},
+	{ "help",	cmd_help,	help_usage,	CMDFL_NO_KMOD	},
+	{ "lc",		cmd_dumptree,	NULL,		0		},
+	{ "login",	cmd_login,	login_usage,	0		},
+	{ "logout",	cmd_logout,	logout_usage,	0		},
+	{ "lookup",	cmd_lookup,	lookup_usage,	CMDFL_NO_KMOD	},
+	{ "print",	cmd_print,	print_usage,	0		},
+	{ "view",	cmd_view,	view_usage,	0		},
+	{ NULL,		NULL,		NULL,		0		},
 };
 
 static struct commands *
@@ -64,10 +64,9 @@ cmd_crypt(int argc, char *argv[])
 		psw = getpass("Password:");
 	else
 		psw = argv[1];
-	cp = malloc(strlen(psw + 4));
+	cp = smb_simplecrypt(NULL, psw);
 	if (cp == NULL)
 		errx(EX_DATAERR, "out of memory");
-	smb_simplecrypt(cp, psw);
 	printf("%s\n", cp);
 	free(cp);
 	exit(0);
@@ -97,6 +96,11 @@ main(int argc, char *argv[])
 	struct commands *cmd;
 	char *cp;
 	int opt;
+#ifdef APPLE
+        extern void dropsuid();
+
+	dropsuid();
+#endif /* APPLE */
 
 	if (argc < 2)
 		help();

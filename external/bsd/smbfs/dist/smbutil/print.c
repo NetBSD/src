@@ -35,6 +35,7 @@
 #include <sys/errno.h>
 #include <sys/stat.h>
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -56,7 +57,7 @@ cmd_print(int argc, char *argv[])
 	smbfh fh;
 	off_t offset;
 	char buf[8192];
-	char *filename;
+	const char *filename;
 	char fnamebuf[256];
 	int error, opt, i, file, count;
 
