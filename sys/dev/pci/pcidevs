@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1172 2013/12/23 10:04:49 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1173 2013/12/25 16:04:54 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2061,6 +2061,7 @@ product DIAMOND VIPER	0x9001	Viper/PCI
 product DIGI ACCELEPORT8R920	0x0027	AccelePort 8r 920 8-port serial
 product DIGI NEO4	0x00b0	Neo 4-port
 product DIGI NEO8	0x00b1	Neo 8-port
+product DIGI NEO8_PCIE	0x00f0	Neo 8-port (PCIe)
 
 /* D-Link Systems products */
 product DLINK DL1002		0x1002	DL-1002 10/100 Ethernet
@@ -4559,6 +4560,7 @@ product OXFORDSEMI OX16PCI954P	0x9513	OX16PCI954 Parallel
 product OXFORDSEMI OX16PCI952	0x9521	OX16PCI952
 product OXFORDSEMI OX16PCI952P	0x9523	OX16PCI952 Parallel
 product OXFORDSEMI OX16PCI958	0x9538	OX16PCI958
+product OXFORDSEMI OXPCIE952P	0xc110	OXPCIe952 Parallel
 product OXFORDSEMI OXPCIE952	0xc120	OXPCIe952
 
 /* Packet Engines products */
