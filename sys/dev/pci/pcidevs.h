@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1165 2013/12/23 10:05:09 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1166 2013/12/25 16:05:18 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1172 2013/12/23 10:04:49 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1173 2013/12/25 16:04:54 msaitoh Exp
  */
 
 /*
@@ -2068,6 +2068,7 @@
 #define	PCI_PRODUCT_DIGI_ACCELEPORT8R920	0x0027		/* AccelePort 8r 920 8-port serial */
 #define	PCI_PRODUCT_DIGI_NEO4	0x00b0		/* Neo 4-port */
 #define	PCI_PRODUCT_DIGI_NEO8	0x00b1		/* Neo 8-port */
+#define	PCI_PRODUCT_DIGI_NEO8_PCIE	0x00f0		/* Neo 8-port (PCIe) */
 
 /* D-Link Systems products */
 #define	PCI_PRODUCT_DLINK_DL1002	0x1002		/* DL-1002 10/100 Ethernet */
@@ -4566,6 +4567,7 @@
 #define	PCI_PRODUCT_OXFORDSEMI_OX16PCI952	0x9521		/* OX16PCI952 */
 #define	PCI_PRODUCT_OXFORDSEMI_OX16PCI952P	0x9523		/* OX16PCI952 Parallel */
 #define	PCI_PRODUCT_OXFORDSEMI_OX16PCI958	0x9538		/* OX16PCI958 */
+#define	PCI_PRODUCT_OXFORDSEMI_OXPCIE952P	0xc110		/* OXPCIe952 Parallel */
 #define	PCI_PRODUCT_OXFORDSEMI_OXPCIE952	0xc120		/* OXPCIe952 */
 
 /* Packet Engines products */
