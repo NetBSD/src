@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.25 2013/08/21 03:09:39 matt Exp $
+# $NetBSD: Makefile.inc,v 1.26 2013/12/25 22:05:12 joerg Exp $
 
 SRCS+=	alloca.S byte_swap_2.S byte_swap_4.S bswap64.c divide.S divsi3.S \
 	fabs.c flt_rounds.c udivsi3.S
@@ -19,6 +19,9 @@ SRCS+=	__aeabi_idiv0.c __aeabi_ldiv0.c
 .else
 SRCS+=	modsi3.S umodsi3.S
 .endif
+
+AFLAGS._setjmp.S=	-mfpu=vfp
+AFLAGS.setjmp.S=	-mfpu=vfp
 
 SRCS+=	nanf.c
 
