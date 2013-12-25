@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 2013/12/25 22:06:11 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2013/12/25 22:54:24 joerg Exp $
 
 SRCS+= \
 	random.c \
@@ -194,8 +194,8 @@ GMP_LIMB_BITS=32
 M4FLAGS= -DPIC
 COPTS+= -fPIC
 
-AFLAGS.addmul_1.s=	-march=armv5
-AFLAGS.invert_limb.s=	-march=armv5
-AFLAGS.mode1o.s=	-march=armv5
-AFLAGS.mul_1.s=		-march=armv5
-AFLAGS.submul_1.s=	-march=armv5
+AFLAGS.addmul_1.s=	-march=armv6
+AFLAGS.invert_limb.s=	-march=armv6
+AFLAGS.mode1o.s=	-march=armv6
+AFLAGS.mul_1.s=		-march=armv6
+AFLAGS.submul_1.s=	-march=armv6
