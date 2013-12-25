@@ -31,8 +31,13 @@
  *
  * Id: nb_name.c,v 1.1 2000/07/16 01:52:07 bp Exp 
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: nb_name.c,v 1.2 2013/12/25 22:03:15 christos Exp $");
+
 #include <sys/param.h>
 #include <sys/socket.h>
+#include <sys/endian.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -138,16 +143,14 @@ nb_encname_len(const char *str)
 	return len;
 }
 
-#define	NBENCODE(c)	((u_short)(((u_char)(c) >> 4) | \
-			 (((u_char)(c) & 0xf) << 8)) + 0x4141)
+#define	NBENCODE(c)	(htole16((u_short)(((u_char)(c) >> 4) | \
+			 (((u_char)(c) & 0xf) << 8)) + 0x4141))
 
 static void
 memsetw(char *dst, int n, u_short word)
 {
-	while (n--) {
-		*(u_short*)dst = word;
-		dst += 2;
-	}
+	for(; n > 0; n--, dst += 2)
+		memcpy(dst, &word, 2);
 }
 
 int
@@ -156,26 +159,31 @@ nb_name_encode(struct nb_name *np, u_char *dst)
 	u_char *name, *plen;
 	u_char *cp = dst;
 	int i, lblen;
+	u_int16_t ch;
 
 	*cp++ = NB_ENCNAMELEN;
 	name = np->nn_name;
 	if (name[0] == '*' && name[1] == 0) {
-		*(u_short*)cp = NBENCODE('*');
+		ch = NBENCODE('*');
+		memcpy(cp, &ch, 2);
 		memsetw(cp + 2, NB_NAMELEN - 1, NBENCODE(' '));
 		cp += NB_ENCNAMELEN;
 	} else {
-		for (i = 0; *name && i < NB_NAMELEN; i++, cp += 2, name++)
-			*(u_short*)cp = NBENCODE(toupper(*name));
+		for (i = 0; *name && i < NB_NAMELEN - 1; i++, cp += 2, name++) {
+			ch = NBENCODE(toupper(*name));
+			memcpy(cp, &ch, 2);
+		}
 		i = NB_NAMELEN - i - 1;
 		if (i > 0) {
 			memsetw(cp, i, NBENCODE(' '));
 			cp += i * 2;
 		}
-		*(u_short*)cp = NBENCODE(np->nn_type);
+		ch = NBENCODE(np->nn_type);
+		memcpy(cp, &ch, 2);
 		cp += 2;
 	}
 	*cp = 0;
-	if (np->nn_scope == NULL)
+	if (np->nn_scope == NULL || *np->nn_scope == 0)
 		return nb_encname_len(dst);
 	plen = cp++;
 	lblen = 0;

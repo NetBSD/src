@@ -4,6 +4,12 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <pwd.h>
+#include <grp.h>
+#ifdef APPLE
+#include <err.h>
+#include <sysexits.h>
+#endif
 
 #include <netsmb/smb_lib.h>
 #include <netsmb/smb_conn.h>
@@ -38,7 +44,7 @@ static struct smb_bitname ss_flags[] = {
 	{0, NULL}
 };
 
-static char *conn_proto[] = {
+static const char *conn_proto[] = {
 	"unknown",
 	"PC NETWORK PROGRAM 1.0, PCLAN1.0",
 	"MICROSOFT NETWORKS 1.03",
@@ -48,7 +54,7 @@ static char *conn_proto[] = {
 	"NT LM 0.12, Windows for Workgroups 3.1a, NT LANMAN 1.0"
 };
 
-static char *iod_state[] = {
+static const char *iod_state[] = {
 	"Not connected",
 	"Reconnecting",
 	"Transport activated",
@@ -102,6 +108,10 @@ cmd_dumptree(int argc, char *argv[])
 	int *itype;
 
 	printf("SMB connections:\n");
+#ifdef APPLE
+	if (loadsmbvfs())
+		errx(EX_OSERR, "SMB filesystem is not available");
+#endif
 	p = smb_dumptree();
 	if (p == NULL) {
 		printf("None\n");
