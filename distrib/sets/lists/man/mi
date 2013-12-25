@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1453 2013/12/24 12:09:19 rkujawa Exp $
+# $NetBSD: mi,v 1.1454 2013/12/25 22:08:24 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -512,6 +512,7 @@
 ./usr/share/man/cat1/skeyinit.0			man-util-catman		skey,.cat
 ./usr/share/man/cat1/sleep.0			man-util-catman		.cat
 ./usr/share/man/cat1/slogin.0			man-secsh-catman	crypto,.cat
+./usr/share/man/cat1/smbutil.0			man-util-catman		.cat
 ./usr/share/man/cat1/sntp.0			man-ntp-catman		.cat
 ./usr/share/man/cat1/sockstat.0			man-util-catman		.cat
 ./usr/share/man/cat1/sort.0			man-util-catman		.cat
@@ -3575,6 +3576,7 @@
 ./usr/share/man/html1/skeyinit.html		man-util-htmlman	skey,html
 ./usr/share/man/html1/sleep.html		man-util-htmlman	html
 ./usr/share/man/html1/slogin.html		man-secsh-htmlman	crypto,html
+./usr/share/man/html1/smbutil.html		man-util-htmlman	html
 ./usr/share/man/html1/sntp.html			man-ntp-htmlman		html
 ./usr/share/man/html1/sockstat.html		man-util-htmlman	html
 ./usr/share/man/html1/sort.html			man-util-htmlman	html
@@ -6288,6 +6290,7 @@
 ./usr/share/man/man1/skeyinit.1			man-util-man		skey,.man
 ./usr/share/man/man1/sleep.1			man-util-man		.man
 ./usr/share/man/man1/slogin.1			man-secsh-man		crypto,.man
+./usr/share/man/man1/smbutil.1			man-util-man		.man
 ./usr/share/man/man1/sntp.1			man-ntp-man		.man
 ./usr/share/man/man1/sockstat.1			man-util-man		.man
 ./usr/share/man/man1/sort.1			man-util-man		.man
