@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.1164 2013/12/23 10:05:09 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.1165 2013/12/25 16:05:18 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1172 2013/12/23 10:04:49 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1173 2013/12/25 16:04:54 msaitoh Exp
  */
 
 /*
@@ -3072,6 +3072,8 @@ static const uint16_t pci_products[] = {
 	    13931, 13639, 0,
 	    PCI_VENDOR_DIGI, PCI_PRODUCT_DIGI_NEO8, 
 	    13931, 10557, 0,
+	    PCI_VENDOR_DIGI, PCI_PRODUCT_DIGI_NEO8_PCIE, 
+	    13931, 10557, 5209, 0,
 	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DL1002, 
 	    13935, 5596, 5494, 0,
 	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DFE530TXPLUS, 
@@ -7636,6 +7638,8 @@ static const uint16_t pci_products[] = {
 	    24485, 17017, 0,
 	    PCI_VENDOR_OXFORDSEMI, PCI_PRODUCT_OXFORDSEMI_OX16PCI958, 
 	    24496, 0,
+	    PCI_VENDOR_OXFORDSEMI, PCI_PRODUCT_OXFORDSEMI_OXPCIE952P, 
+	    24507, 17017, 0,
 	    PCI_VENDOR_OXFORDSEMI, PCI_PRODUCT_OXFORDSEMI_OXPCIE952, 
 	    24507, 0,
 	    PCI_VENDOR_PACKETENGINES, PCI_PRODUCT_PACKETENGINES_GNICII, 
@@ -10144,7 +10148,7 @@ static const char pci_words[] = { "."
 	    "Fresco\0" /* 1 refs @ 5186 */
 	    "Nanjing\0" /* 2 refs @ 5193 */
 	    "QinHeng\0" /* 2 refs @ 5201 */
-	    "(PCIe)\0" /* 1 refs @ 5209 */
+	    "(PCIe)\0" /* 2 refs @ 5209 */
 	    "Co\0" /* 1 refs @ 5216 */
 	    "HiNT\0" /* 1 refs @ 5219 */
 	    "3D\0" /* 19 refs @ 5224 */
@@ -10951,7 +10955,7 @@ static const char pci_words[] = { "."
 	    "Module\0" /* 3 refs @ 10530 */
 	    "ADDI-DATA\0" /* 1 refs @ 10537 */
 	    "APCI-7800\0" /* 1 refs @ 10547 */
-	    "8-port\0" /* 4 refs @ 10557 */
+	    "8-port\0" /* 5 refs @ 10557 */
 	    "Serial\0" /* 92 refs @ 10564 */
 	    "S5920\0" /* 1 refs @ 10571 */
 	    "Target\0" /* 1 refs @ 10577 */
@@ -11397,7 +11401,7 @@ static const char pci_words[] = { "."
 	    "AccelePort\0" /* 1 refs @ 13913 */
 	    "8r\0" /* 1 refs @ 13924 */
 	    "920\0" /* 1 refs @ 13927 */
-	    "Neo\0" /* 2 refs @ 13931 */
+	    "Neo\0" /* 3 refs @ 13931 */
 	    "DL-1002\0" /* 1 refs @ 13935 */
 	    "DFE-530TXPLUS\0" /* 1 refs @ 13943 */
 	    "DFE-690TXD\0" /* 1 refs @ 13957 */
@@ -11799,7 +11803,7 @@ static const char pci_words[] = { "."
 	    "#0\0" /* 10 refs @ 17003 */
 	    "#1\0" /* 15 refs @ 17006 */
 	    "Lindsay\0" /* 1 refs @ 17009 */
-	    "Parallel\0" /* 12 refs @ 17017 */
+	    "Parallel\0" /* 13 refs @ 17017 */
 	    "IOP333\0" /* 2 refs @ 17026 */
 	    "Haswell\0" /* 7 refs @ 17033 */
 	    "I347-AT4\0" /* 1 refs @ 17041 */
@@ -12819,7 +12823,7 @@ static const char pci_words[] = { "."
 	    "EX-41098\0" /* 1 refs @ 24476 */
 	    "OX16PCI952\0" /* 2 refs @ 24485 */
 	    "OX16PCI958\0" /* 1 refs @ 24496 */
-	    "OXPCIe952\0" /* 1 refs @ 24507 */
+	    "OXPCIe952\0" /* 2 refs @ 24507 */
 	    "HD-2000\0" /* 1 refs @ 24517 */
 	    "HDTV\0" /* 2 refs @ 24525 */
 	    "HD-5500\0" /* 1 refs @ 24530 */
