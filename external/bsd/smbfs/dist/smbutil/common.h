@@ -1,6 +1,9 @@
 
-#define iprintf(ident,args...)	do { printf("%-" # ident "s", ""); \
-				printf(## args);}while(0)
+#define iprintf(ident,...)	do { 		\
+	for (size_t i = 0; i < ident; i++)	\
+		putc(' ', stdout);		\
+	printf(__VA_ARGS__);			\
+} while (/*CONSTCOND*/0)
 
 extern int verbose;
 
@@ -15,3 +18,6 @@ void logout_usage(void);
 void lookup_usage(void);
 void print_usage(void);
 void view_usage(void);
+#ifdef APPLE
+extern int loadsmbvfs();
+#endif
