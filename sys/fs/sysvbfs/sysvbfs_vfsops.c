@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.41 2012/06/14 01:08:22 agc Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.42 2013/12/25 11:15:49 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.41 2012/06/14 01:08:22 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.42 2013/12/25 11:15:49 mlelstv Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -81,7 +81,7 @@ sysvbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		return EINVAL;
 
 	if (mp->mnt_flag & MNT_GETARGS) {
-		if ((bmp = (void *)mp->mnt_data) == NULL)
+		if ((bmp = (struct sysvbfs_mount *)mp->mnt_data) == NULL)
 			return EIO;
 		args->fspec = NULL;
 		*data_len = sizeof *args;
@@ -116,6 +116,7 @@ sysvbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			 * Be sure we're still naming the same device
 			 * used for our initial mount
 			 */
+			bmp = (struct sysvbfs_mount *)mp->mnt_data;
 			if (devvp != bmp->devvp)
 				error = EINVAL;
 		}
