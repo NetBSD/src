@@ -33,9 +33,14 @@
  *
  * This is very simple implementation of RAP protocol.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: rap.c,v 1.2 2013/12/25 22:03:15 christos Exp $");
+
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/stat.h>
+#include <sys/endian.h>
 #include <ctype.h>
 #include <err.h>
 #include <stdio.h>
@@ -44,21 +49,16 @@
 #include <stdlib.h>
 #include <sysexits.h>
 
-#include <sys/mchain.h>
-
 #include <netsmb/smb_lib.h>
 #include <netsmb/smb_conn.h>
 #include <netsmb/smb_rap.h>
-
-/*#include <sys/ioctl.h>*/
 
 static int
 smb_rap_parserqparam(const char *s, char **next, int *rlen)
 {
 	char *np;
-	int len, m;
+	int len;
 
-	m = 1;
 	switch (*s++) {
 	    case 'L':
 	    case 'T':
@@ -80,12 +80,12 @@ smb_rap_parserqparam(const char *s, char **next, int *rlen)
 	    default:
 		return EINVAL;
 	}
-	if (isdigit(*s)) {
+	if (isdigit((unsigned char)*s)) {
 		len *= strtoul(s, &np, 10);
 		s = np;
 	}
 	*rlen = len;
-	*(const char**)next = s;
+	memcpy(next, &s, sizeof(s));
 	return 0;
 }
 
@@ -93,9 +93,8 @@ static int
 smb_rap_parserpparam(const char *s, char **next, int *rlen)
 {
 	char *np;
-	int len, m;
+	int len;
 
-	m = 1;
 	switch (*s++) {
 	    case 'e':
 	    case 'h':
@@ -110,12 +109,12 @@ smb_rap_parserpparam(const char *s, char **next, int *rlen)
 	    default:
 		return EINVAL;
 	}
-	if (isdigit(*s)) {
+	if (isdigit((unsigned char)*s)) {
 		len *= strtoul(s, &np, 10);
 		s = np;
 	}
 	*rlen = len;
-	*(const char**)next = s;
+	memcpy(next, &s, sizeof(s));
 	return 0;
 }
 
@@ -123,9 +122,8 @@ static int
 smb_rap_parserpdata(const char *s, char **next, int *rlen)
 {
 	char *np;
-	int len, m;
+	int len;
 
-	m = 1;
 	switch (*s++) {
 	    case 'B':
 		len = 1;
@@ -141,12 +139,12 @@ smb_rap_parserpdata(const char *s, char **next, int *rlen)
 	    default:
 		return EINVAL;
 	}
-	if (isdigit(*s)) {
+	if (isdigit((unsigned char)*s)) {
 		len *= strtoul(s, &np, 10);
 		s = np;
 	}
 	*rlen = len;
-	*(const char**)next = s;
+	memcpy(next, &s, sizeof(s));
 	return 0;
 }
 
@@ -198,7 +196,7 @@ smb_rap_create(int fn, const char *param, const char *data,
 
 	rap = malloc(sizeof(*rap));
 	if (rap == NULL)
-		return NULL;
+		return 0;
 	bzero(rap, sizeof(*rap));
 	p = rap->r_sparam = rap->r_nparam = strdup(param);
 	rap->r_sdata = rap->r_ndata = strdup(data);
@@ -282,14 +280,14 @@ smb_rap_getNparam(struct smb_rap *rap, long *value)
 {
 	char *p = rap->r_nparam;
 	char ptype = *p;
-	int error, plen;
+	int error, plen = 0;	/* XXX: gcc */
 
 	error = smb_rap_parserpparam(p, &p, &plen);
 	if (error)
 		return error;
 	switch (ptype) {
 	    case 'h':
-		*value = letohs(*(u_int16_t*)rap->r_npbuf);
+		*value = ntohs(*(u_int16_t*)rap->r_npbuf);
 		break;
 	    default:
 		return EINVAL;
@@ -319,8 +317,8 @@ smb_rap_request(struct smb_rap *rap, struct smb_ctx *ctx)
 	if (error)
 		return error;
 	rp = (u_int16_t*)rap->r_pbuf;
-	rap->r_result = letohs(*rp++);
-	conv = letohs(*rp++);
+	rap->r_result = le16toh(*rp++);
+	conv = le16toh(*rp++);
 	rap->r_npbuf = (char*)rp;
 	rap->r_entries = entries = 0;
 	done = 0;
@@ -328,7 +326,7 @@ smb_rap_request(struct smb_rap *rap, struct smb_ctx *ctx)
 		ptype = *p;
 		switch (ptype) {
 		    case 'e':
-			rap->r_entries = entries = letohs(*(u_int16_t*)rap->r_npbuf);
+			rap->r_entries = entries = le16toh(*(u_int16_t*)rap->r_npbuf);
 			rap->r_npbuf += 2;
 			p++;
 			break;
@@ -386,6 +384,7 @@ smb_rap_NetShareEnum(struct smb_ctx *ctx, int sLevel, void *pbBuffer,
 	long lval;
 	int error;
 
+	lval = -1;	/* XXX gcc */
 	error = smb_rap_create(0, "WrLeh", "B13BWz", &rap);
 	if (error)
 		return error;

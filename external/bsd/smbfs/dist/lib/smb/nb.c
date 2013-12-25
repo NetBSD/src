@@ -31,6 +31,10 @@
  *
  * Id: nb.c,v 1.4 2001/04/16 04:33:01 bp Exp 
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: nb.c,v 1.2 2013/12/25 22:03:15 christos Exp $");
+
 #include <sys/param.h>
 #include <sys/socket.h>
 
@@ -117,7 +121,9 @@ nb_ctx_resolve(struct nb_ctx *ctx)
 			return error;
 		}
 		if (sap->sa_family != AF_INET) {
-			smb_error("unsupported address family %d", 0, sap->sa_family);
+			smb_error("unsupported address family %d", 0,
+			    sap->sa_family);
+			free(sap);
 			return EINVAL;
 		}
 		bcopy(sap, &ctx->nb_ns, sizeof(ctx->nb_ns));
@@ -159,7 +165,7 @@ nb_ctx_readrcsection(struct rcfile *rcfile, struct nb_ctx *ctx,
 	return 0;
 }
 
-static const char *nb_err_rcode[] = {
+static const char * const nb_err_rcode[] = {
 	"bad request/response format",
 	"NBNS server failure",
 	"no such name",
@@ -168,7 +174,7 @@ static const char *nb_err_rcode[] = {
 	"name already registered"
 };
 
-static const char *nb_err[] = {
+static const char * const nb_err[] = {
 	"host not found",
 	"too many redirects",
 	"invalid response",
