@@ -1,8 +1,8 @@
-.\" $NetBSD: ctime.3,v 1.48 2013/09/20 19:06:54 christos Exp $
+.\" $NetBSD: ctime.3,v 1.49 2013/12/26 18:34:28 christos Exp $
 .\"
 .\" XXX: License missing?
 .\"
-.Dd September 20, 2013
+.Dd December 26, 2013
 .Dt CTIME 3
 .Os
 .Sh NAME
@@ -551,10 +551,6 @@ restricted to years in the range 1900 through 2099.
 To avoid this portability mess, new programs should use
 .Fn strftime
 instead.
-.Pp
-Avoid using out-of-range values with
-.Fn mktime
-when setting up lunch with promptness sticklers in Riyadh.
 .\" @(#)newctime.3	8.3
 .\" This file is in the public domain, so clarified as of
 .\" 2009-05-17 by Arthur David Olson.
