@@ -1,4 +1,4 @@
-/*	$NetBSD: strftime.c,v 1.29 2013/09/20 19:06:54 christos Exp $	*/
+/*	$NetBSD: strftime.c,v 1.30 2013/12/26 18:34:28 christos Exp $	*/
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
@@ -6,13 +6,14 @@
 static char	elsieid[] = "@(#)strftime.c	7.64";
 static char	elsieid[] = "@(#)strftime.c	8.3";
 #else
-__RCSID("$NetBSD: strftime.c,v 1.29 2013/09/20 19:06:54 christos Exp $");
+__RCSID("$NetBSD: strftime.c,v 1.30 2013/12/26 18:34:28 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 
 #include <stddef.h>
+#include <assert.h>
 #include <locale.h>
 #include "setlocale_local.h"
 
@@ -495,7 +496,7 @@ label:
 				continue;
 			case 'z':
 				{
-				int		diff;
+				long		diff;
 				char const *	sign;
 
 				if (t->tm_isdst < 0)
@@ -573,7 +574,8 @@ label:
 				diff /= SECSPERMIN;
 				diff = (diff / MINSPERHOUR) * 100 +
 					(diff % MINSPERHOUR);
-				pt = _conv(diff, "%04d", pt, ptlim);
+				_DIAGASSERT(__type_fit(int, diff));
+				pt = _conv((int)diff, "%04d", pt, ptlim);
 				}
 				continue;
 #if 0

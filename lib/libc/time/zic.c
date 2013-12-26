@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.43 2013/09/20 19:06:54 christos Exp $	*/
+/*	$NetBSD: zic.c,v 1.44 2013/12/26 18:34:28 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -10,7 +10,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zic.c,v 1.43 2013/09/20 19:06:54 christos Exp $");
+__RCSID("$NetBSD: zic.c,v 1.44 2013/12/26 18:34:28 christos Exp $");
 #endif /* !defined lint */
 
 #include "version.h"
@@ -117,6 +117,13 @@ extern int	getopt(int argc, char * const argv[],
 extern int	link(const char * fromname, const char * toname);
 extern char *	optarg;
 extern int	optind;
+
+#if ! HAVE_LINK
+# define link(from, to) (-1)
+#endif
+#if ! HAVE_SYMLINK
+# define symlink(from, to) (-1)
+#endif
 
 static void	addtt(zic_t starttime, int type);
 static int	addtype(zic_t gmtoff, const char * abbr, int isdst,
@@ -626,41 +633,71 @@ dolink(const char *const fromfield, const char *const tofield)
 	*/
 	if (!itsdir(toname))
 		(void) remove(toname);
-	if (link(fromname, toname) != 0) {
+	if (link(fromname, toname) != 0
+	    && access(fromname, F_OK) == 0 && !itsdir(fromname)) {
 		int	result;
 
 		if (mkdirs(toname) != 0)
 			exit(EXIT_FAILURE);
 
 		result = link(fromname, toname);
-#if HAVE_SYMLINK
-		if (result != 0 &&
-			access(fromname, F_OK) == 0 &&
-			!itsdir(fromname)) {
-				const char *s = tofield;
+		if (result != 0) {
+				const char *s = fromfield;
+				const char *t;
 				char * symlinkcontents = NULL;
 
-				while ((s = strchr(s+1, '/')) != NULL)
+				do
+					 t = s;
+				while ((s = strchr(s, '/'))
+				       && ! strncmp (fromfield, tofield,
+						     ++s - fromfield));
+
+				for (s = tofield + (t - fromfield);
+				     (s = strchr(s, '/'));
+				     s++)
 					symlinkcontents =
 						ecatalloc(symlinkcontents,
 						"../");
-				symlinkcontents =
-					ecatalloc(symlinkcontents,
-					fromname);
-				result = symlink(symlinkcontents,
-					toname);
+				symlinkcontents = ecatalloc(symlinkcontents, t);
+				result = symlink(symlinkcontents, toname);
 				if (result == 0)
 warning(_("hard link failed, symbolic link used"));
 				free(symlinkcontents);
 		}
-#endif /* HAVE_SYMLINK */
 		if (result != 0) {
-			const char *e = strerror(errno);
-
-			(void) fprintf(stderr,
-				_("%s: Can't link from %s to %s: %s\n"),
-				progname, fromname, toname, e);
-			exit(EXIT_FAILURE);
+			FILE *fp, *tp;
+			int c;
+			fp = fopen(fromname, "rb");
+			if (!fp) {
+				const char *e = strerror(errno);
+				(void) fprintf(stderr,
+					       _("%s: Can't read %s: %s\n"),
+					       progname, fromname, e);
+				exit(EXIT_FAILURE);
+			}
+			tp = fopen(toname, "wb");
+			if (!tp) {
+				const char *e = strerror(errno);
+				(void) fprintf(stderr,
+					       _("%s: Can't create %s: %s\n"),
+					       progname, toname, e);
+				exit(EXIT_FAILURE);
+			}
+			while ((c = getc(fp)) != EOF)
+				putc(c, tp);
+			if (ferror(fp) || fclose(fp)) {
+				(void) fprintf(stderr,
+					       _("%s: Error reading %s\n"),
+					       progname, fromname);
+				exit(EXIT_FAILURE);
+			}
+			if (ferror(tp) || fclose(tp)) {
+				(void) fprintf(stderr,
+					       _("%s: Error writing %s\n"),
+					       progname, toname);
+				exit(EXIT_FAILURE);
+			}
+			warning(_("link failed, copy used"));
 		}
 	}
 	free(fromname);
@@ -2079,12 +2116,12 @@ outzone(const struct zone *const zpfirst, const int zonecount)
 	compat = stringzone(envvar, max_envvar_len + 1, zpfirst, zonecount);
 	version = compat < 2013 ? ZIC_VERSION_PRE_2013 : ZIC_VERSION;
 	do_extend = compat < 0 || compat == YEAR_BY_YEAR_ZONE;
-	if (noise && compat != 0 && compat != YEAR_BY_YEAR_ZONE) {
-		if (compat < 0)
+	if (noise) {
+		if (!*envvar)
 			warning("%s %s",
 				_("no POSIX environment variable for zone"),
 				zpfirst->z_name);
-		else {
+		else if (compat != 0 && compat != YEAR_BY_YEAR_ZONE) {
 			/* Circa-COMPAT clients, and earlier clients, might
 			   not work for this zone when given dates before
 			   1970 or after 2038.  */
