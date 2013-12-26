@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.58 2013/10/05 07:05:01 skrll Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.59 2013/12/26 15:32:48 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.58 2013/10/05 07:05:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.59 2013/12/26 15:32:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -604,6 +604,7 @@ out1:
 	free(sc->sc_ibuf, M_USBDEV);
 	mutex_enter(&sc->sc_lock);
 	scd->sc_state &= ~UHIDEV_OPEN;
+	sc->sc_ibuf = NULL;
 	sc->sc_ipipe = NULL;
 	sc->sc_opipe = NULL;
 	sc->sc_oxfer = NULL;
@@ -626,8 +627,10 @@ uhidev_close(struct uhidev *scd)
 
 	DPRINTF(("uhidev_close: close pipe\n"));
 
-	if (sc->sc_oxfer != NULL)
+	if (sc->sc_oxfer != NULL) {
 		usbd_free_xfer(sc->sc_oxfer);
+		sc->sc_oxfer = NULL;
+	}
 
 	/* Disable interrupts. */
 	if (sc->sc_opipe != NULL) {
