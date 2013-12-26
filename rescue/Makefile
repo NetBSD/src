@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2013/03/24 17:05:27 christos Exp $
+#	$NetBSD: Makefile,v 1.30 2013/12/26 02:25:57 christos Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -46,6 +46,9 @@ LISTS+=		${.CURDIR}/list.ldd
 LDD_ELF32DIR!=	cd ${NETBSDSRCDIR}/usr.bin/ldd/elf32 && ${PRINTOBJDIR}
 LDD_ELF64DIR!=	cd ${NETBSDSRCDIR}/usr.bin/ldd/elf64 && ${PRINTOBJDIR}
 PARSELISTENV+=	LDD_ELF32DIR=${LDD_ELF32DIR} LDD_ELF64DIR=${LDD_ELF64DIR}
+
+SMB_LIBDIR!=	cd ${NETBSDSRCDIR}/external/bsd/smbfs/lib/libsmb && ${PRINTOBJDIR}
+PARSELISTENV+=	SMB_LIBDIR=${SMB_LIBDIR}
 
 #	Specially built objects to override the behaviour of
 #	various library functions
