@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.34 2013/11/17 23:20:18 bad Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.35 2013/12/26 00:51:23 bad Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.127 2003/06/04 14:04:58 jason Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.34 2013/11/17 23:20:18 bad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.35 2013/12/26 00:51:23 bad Exp $");
 
 #undef UBSEC_DEBUG
 
@@ -544,11 +544,17 @@ ubsec_detach(device_t self, int flags)
 {
 	struct ubsec_softc *sc = device_private(self);
 	struct ubsec_q *q, *qtmp;
+	volatile u_int32_t ctrl;
 
 	/* disable interrupts */
 	/* XXX wait/abort current ops? where is DMAERR enabled? */
-	WRITE_REG(sc, BS_CTRL, READ_REG(sc, BS_CTRL) &~
-	    (BS_CTRL_MCR2INT | BS_CTRL_MCR1INT | BS_CTRL_DMAERR));
+	ctrl = READ_REG(sc, BS_CTRL);
+
+	ctrl &= ~(BS_CTRL_MCR2INT | BS_CTRL_MCR1INT | BS_CTRL_DMAERR);
+	if (sc->sc_flags & UBS_FLAGS_MULTIMCR)
+		ctrl &= ~BS_CTRL_MCR4INT;
+
+	WRITE_REG(sc, BS_CTRL, ctrl);
 
 #ifndef UBSEC_NO_RNG
 	if (sc->sc_flags & UBS_FLAGS_RNG) {
