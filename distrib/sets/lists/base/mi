@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1053 2013/12/26 17:12:55 apb Exp $
+# $NetBSD: mi,v 1.1054 2013/12/26 20:14:38 apb Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -5354,7 +5354,7 @@
 ./usr/share/zoneinfo/Mexico/BajaNorte		base-sys-share		share
 ./usr/share/zoneinfo/Mexico/BajaSur		base-sys-share		share
 ./usr/share/zoneinfo/Mexico/General		base-sys-share		share
-./usr/share/zoneinfo/Mideast			base-sys-share
+./usr/share/zoneinfo/Mideast			base-obsolete		obsolete
 ./usr/share/zoneinfo/Mideast/Riyadh87		base-obsolete		obsolete
 ./usr/share/zoneinfo/Mideast/Riyadh88		base-obsolete		obsolete
 ./usr/share/zoneinfo/Mideast/Riyadh89		base-obsolete		obsolete
