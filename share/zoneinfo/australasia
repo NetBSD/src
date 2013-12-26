@@ -496,6 +496,7 @@ Zone Pacific/Auckland	11:39:04 -	LMT	1868 Nov  2
 Zone Pacific/Chatham	12:13:48 -	LMT	1957 Jan  1
 			12:45	Chatham	CHA%sT
 
+Link Pacific/Auckland Antarctica/McMurdo
 
 # Auckland Is
 # uninhabited; Maori and Moriori, colonial settlers, pastoralists, sealers,
@@ -745,7 +746,7 @@ Zone Pacific/Funafuti	11:56:52 -	LMT	1901
 # 1886-1891; Baker was similar but exact dates are not known.
 # Inhabited by civilians 1935-1942; U.S. military bases 1943-1944;
 # uninhabited thereafter.
-# Howland observed Hawaii Standard Time (UTC-10:30) in 1937;
+# Howland observed Hawaii Standard Time (UT-10:30) in 1937;
 # see page 206 of Elgen M. Long and Marie K. Long,
 # Amelia Earhart: the Mystery Solved, Simon & Schuster (2000).
 # So most likely Howland and Baker observed Hawaii Time from 1935
@@ -758,8 +759,17 @@ Zone Pacific/Funafuti	11:56:52 -	LMT	1901
 # no information; was probably like Pacific/Kiritimati
 
 # Johnston
-# Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
-Zone Pacific/Johnston	-10:00	-	HST
+#
+# From Paul Eggert (2013-09-03):
+# In his memoirs of June 6th to October 4, 1945
+# <http://www.315bw.org/Herb_Bach.htm> (2005), Herbert C. Bach writes,
+# "We started our letdown to Kwajalein Atoll and landed there at 5:00 AM
+# Johnston time, 1:30 AM Kwajalein time."  This was in June 1945, and
+# confirms that Johnston kept the same time as Honolulu in summer 1945.
+# We have no better information, so for now, assume this has been true
+# indefinitely into the past.
+#
+# See 'northamerica' for Pacific/Johnston.
 
 # Kingman
 # uninhabited
