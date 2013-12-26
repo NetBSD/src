@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.130 2013/12/01 09:13:54 martin Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.131 2013/12/26 20:14:38 apb Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -1254,7 +1254,6 @@
 ./usr/share/zoneinfo/Europe
 ./usr/share/zoneinfo/Indian
 ./usr/share/zoneinfo/Mexico
-./usr/share/zoneinfo/Mideast
 ./usr/share/zoneinfo/Pacific
 ./usr/share/zoneinfo/US
 ./var
