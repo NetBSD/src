@@ -41,6 +41,7 @@
 #include <strings.h>
 #include <stdlib.h>
 #include <sysexits.h>
+#include <util.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -105,6 +106,6 @@ cmd_lookup(int argc, char *argv[])
 void
 lookup_usage(void)
 {
-	printf("usage: smbutil lookup [-w host] name\n");
+	fprintf(stderr, "Usage: %s lookup [-w host] name\n", getprogname());
 	exit(1);
 }
