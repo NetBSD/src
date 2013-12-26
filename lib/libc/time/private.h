@@ -1,4 +1,4 @@
-/*	$NetBSD: private.h,v 1.31 2013/12/13 10:37:24 christos Exp $	*/
+/*	$NetBSD: private.h,v 1.32 2013/12/26 18:34:28 christos Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
@@ -45,6 +45,10 @@
 #ifndef HAVE_INCOMPATIBLE_CTIME_R
 #define HAVE_INCOMPATIBLE_CTIME_R	0
 #endif /* !defined INCOMPATIBLE_CTIME_R */
+
+#ifndef HAVE_LINK
+#define HAVE_LINK		1
+#endif /* !defined HAVE_LINK */
 
 #ifndef HAVE_SETTIMEOFDAY
 #define HAVE_SETTIMEOFDAY	3

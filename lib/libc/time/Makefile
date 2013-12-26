@@ -6,7 +6,7 @@
 PACKAGE=	tzcode
 
 # Version numbers of the code and data distributions.
-VERSION=	2013e
+VERSION=	2013i
 
 # Email address for bug reports.
 BUGEMAIL=	tz@iana.org
@@ -72,7 +72,6 @@ MANDIR=		$(TOPDIR)/man
 # Library functions are put in an archive in LIBDIR.
 
 LIBDIR=		$(TOPDIR)/lib
-TZLIB=		$(LIBDIR)/libtz.a
 
 # If you always want time values interpreted as "seconds since the epoch
 # (not counting leap seconds)", use
@@ -107,6 +106,7 @@ LDLIBS=
 #  -DHAVE_INCOMPATIBLE_CTIME_R=1 if your system's time.h declares
 #	ctime_r and asctime_r incompatibly with the POSIX standard (Solaris 8).
 #  -DHAVE_INTTYPES_H=1 if you have a pre-C99 compiler with "inttypes.h"
+#  -DHAVE_LINK=0 if your system lacks a link function
 #  -DHAVE_SETTIMEOFDAY=0 if settimeofday does not exist (SVR0?)
 #  -DHAVE_SETTIMEOFDAY=1 if settimeofday has just 1 arg (SVR4)
 #  -DHAVE_SETTIMEOFDAY=2 if settimeofday uses 2nd arg (4.3BSD)
@@ -197,14 +197,6 @@ GCC_DEBUG_FLAGS = -Dlint -g3 -O3 -fno-common -fstrict-aliasing \
 # These functions may well disappear in future releases of the time
 # conversion package.
 #
-# If you'll never want to handle solar-time-based time zones, add
-#	-DNOSOLAR
-# to the end of the "CFLAGS=" line
-# (and comment out the "SDATA=" line below).
-# This reduces (slightly) the run-time data-space requirements of
-# the time conversion functions; it may reduce the acceptability of your system
-# to folks in oil- and cash-rich places.
-#
 # If you want to allocate state structures in localtime, add
 #	-DALL_STATE
 # to the end of the "CFLAGS=" line.  Storage is obtained by calling malloc.
@@ -247,8 +239,12 @@ ZFLAGS=
 # The name of a Posix-compliant `awk' on your system.
 AWK=		awk
 
-# The full path name of a Posix-compliant shell that supports the Korn shell's
-# 'select' statement, as an extension.  These days, Bash is the most popular.
+# The full path name of a Posix-compliant shell, preferably one that supports
+# the Korn shell's 'select' statement as an extension.
+# These days, Bash is the most popular.
+# It should be OK to set this to /bin/sh, on platforms where /bin/sh
+# lacks 'select' or doesn't completely conform to Posix, but /bin/bash
+# is typically nicer if it works.
 KSHELL=		/bin/bash
 
 # The path where SGML DTDs are kept.
@@ -298,11 +294,13 @@ GZIPFLAGS=	-9n
 cc=		cc
 CC=		$(cc) -DTZDIR=\"$(TZDIR)\"
 
-TZCSRCS=	zic.c localtime.c asctime.c scheck.c ialloc.c
+AR=		ar
+
+# ':' on typical hosts; 'ranlib' on the ancient hosts that still need ranlib.
+RANLIB=		:
+
 TZCOBJS=	zic.o localtime.o asctime.o scheck.o ialloc.o
-TZDSRCS=	zdump.c localtime.c ialloc.c
-TZDOBJS=	zdump.o localtime.o ialloc.o
-DATESRCS=	date.c localtime.c strftime.c asctime.c
+TZDOBJS=	zdump.o localtime.o ialloc.o asctime.o
 DATEOBJS=	date.o localtime.o strftime.o asctime.o
 LIBSRCS=	localtime.c asctime.c difftime.c
 LIBOBJS=	localtime.o asctime.o difftime.o
@@ -312,17 +310,21 @@ NEWUCBSRCS=	date.c strftime.c
 SOURCES=	$(HEADERS) $(LIBSRCS) $(NONLIBSRCS) $(NEWUCBSRCS) tzselect.ksh
 MANS=		newctime.3 newstrftime.3 newtzset.3 time2posix.3 \
 			tzfile.5 tzselect.8 zic.8 zdump.8
-COMMON=		Makefile
-DOCS=		README Theory $(MANS) date.1
+MANTXTS=	newctime.3.txt newstrftime.3.txt newtzset.3.txt \
+			time2posix.3.txt \
+			tzfile.5.txt tzselect.8.txt zic.8.txt zdump.8.txt \
+			date.1.txt
+COMMON=		Makefile README
+DOCS=		NEWS Theory $(MANS) date.1 $(MANTXTS)
 PRIMARY_YDATA=	africa antarctica asia australasia \
 		europe northamerica southamerica
 YDATA=		$(PRIMARY_YDATA) pacificnew etcetera backward
 NDATA=		systemv factory
-SDATA=		solar87 solar88 solar89
-TDATA=		$(YDATA) $(NDATA) $(SDATA)
-TABDATA=	iso3166.tab zone.tab
-DATA=		$(YDATA) $(NDATA) $(SDATA) $(TABDATA) \
-			leap-seconds.list yearistype.sh
+TDATA=		$(YDATA) $(NDATA)
+TABDATA=	iso3166.tab zone.tab leapseconds
+LEAP_DEPS=	leapseconds.awk leap-seconds.list
+DATA=		$(YDATA) $(NDATA) $(TABDATA) \
+			$(LEAP_DEPS) yearistype.sh
 WEB_PAGES=	tz-art.htm tz-link.htm
 AWK_SCRIPTS=	checktab.awk leapseconds.awk
 MISC=		usno1988 usno1989 usno1989a usno1995 usno1997 usno1998 \
@@ -335,38 +337,29 @@ ENCHILADA=	$(COMMON) $(DOCS) $(SOURCES) $(DATA) $(MISC)
 
 SHELL=		/bin/sh
 
-all:		tzselect zic zdump $(LIBOBJS) $(TABDATA)
+all:		tzselect zic zdump libtz.a $(TABDATA)
 
 ALL:		all date
 
-install:	all $(DATA) $(REDO) $(DESTDIR)$(TZLIB) $(MANS)
-		$(ZIC) -y $(YEARISTYPE) \
-			-d $(DESTDIR)$(TZDIR) -l $(LOCALTIME) -p $(POSIXRULES)
-		-rm -f $(DESTDIR)$(TZDIR)/iso3166.tab \
-			$(DESTDIR)$(TZDIR)/zone.tab
-		cp iso3166.tab zone.tab $(DESTDIR)$(TZDIR)/.
-		-mkdir $(DESTDIR)$(TOPDIR) $(DESTDIR)$(ETCDIR)
-		cp tzselect zic zdump $(DESTDIR)$(ETCDIR)/.
-		-mkdir $(DESTDIR)$(TOPDIR) $(DESTDIR)$(MANDIR) \
+install:	all $(DATA) $(REDO) $(MANS)
+		mkdir -p $(DESTDIR)$(ETCDIR) $(DESTDIR)$(TZDIR) \
+			$(DESTDIR)$(LIBDIR) \
 			$(DESTDIR)$(MANDIR)/man3 $(DESTDIR)$(MANDIR)/man5 \
 			$(DESTDIR)$(MANDIR)/man8
-		-rm -f $(DESTDIR)$(MANDIR)/man3/newctime.3 \
-			$(DESTDIR)$(MANDIR)/man3/newtzset.3 \
-			$(DESTDIR)$(MANDIR)/man5/tzfile.5 \
-			$(DESTDIR)$(MANDIR)/man8/tzselect.8 \
-			$(DESTDIR)$(MANDIR)/man8/zdump.8 \
-			$(DESTDIR)$(MANDIR)/man8/zic.8
-		cp newctime.3 newtzset.3 $(DESTDIR)$(MANDIR)/man3/.
-		cp tzfile.5 $(DESTDIR)$(MANDIR)/man5/.
-		cp tzselect.8 zdump.8 zic.8 $(DESTDIR)$(MANDIR)/man8/.
+		$(ZIC) -y $(YEARISTYPE) \
+			-d $(DESTDIR)$(TZDIR) -l $(LOCALTIME) -p $(POSIXRULES)
+		cp -f iso3166.tab zone.tab $(DESTDIR)$(TZDIR)/.
+		cp tzselect zic zdump $(DESTDIR)$(ETCDIR)/.
+		cp libtz.a $(DESTDIR)$(LIBDIR)/.
+		$(RANLIB) $(DESTDIR)$(LIBDIR)/libtz.a
+		cp -f newctime.3 newtzset.3 $(DESTDIR)$(MANDIR)/man3/.
+		cp -f tzfile.5 $(DESTDIR)$(MANDIR)/man5/.
+		cp -f tzselect.8 zdump.8 zic.8 $(DESTDIR)$(MANDIR)/man8/.
 
 INSTALL:	ALL install date.1
-		-mkdir $(DESTDIR)$(TOPDIR) $(DESTDIR)$(BINDIR)
+		mkdir -p $(DESTDIR)$(BINDIR) $(DESTDIR)$(MANDIR)/man1
 		cp date $(DESTDIR)$(BINDIR)/.
-		-mkdir $(DESTDIR)$(TOPDIR) $(DESTDIR)$(MANDIR) \
-			$(DESTDIR)$(MANDIR)/man1
-		-rm -f $(DESTDIR)$(MANDIR)/man1/date.1
-		cp date.1 $(DESTDIR)$(MANDIR)/man1/.
+		cp -f date.1 $(DESTDIR)$(MANDIR)/man1/.
 
 version.h:
 		(echo 'static char const PKGVERSION[]="($(PACKAGE)) ";' && \
@@ -383,7 +376,7 @@ yearistype:	yearistype.sh
 		cp yearistype.sh yearistype
 		chmod +x yearistype
 
-leapseconds:	leapseconds.awk leap-seconds.list
+leapseconds:	$(LEAP_DEPS)
 		$(AWK) -f leapseconds.awk leap-seconds.list >$@
 
 posix_only:	zic $(TDATA)
@@ -421,11 +414,9 @@ posix_right:	posix_only leapseconds
 
 zones:		$(REDO)
 
-$(DESTDIR)$(TZLIB): $(LIBOBJS)
-		-mkdir -p $(DESTDIR)$(TOPDIR) $(DESTDIR)$(LIBDIR)
-		ar ru $@ $(LIBOBJS)
-		if [ -x /usr/ucb/ranlib ] || [ -x /usr/bin/ranlib ]; \
-			then ranlib $@ ; fi
+libtz.a:	$(LIBOBJS)
+		$(AR) ru $@ $(LIBOBJS)
+		$(RANLIB) $@
 
 date:		$(DATEOBJS)
 		$(CC) -o $@ $(CFLAGS) $(LDFLAGS) $(DATEOBJS) $(LDLIBS)
@@ -454,57 +445,81 @@ check_web:	$(WEB_PAGES)
 
 clean_misc:
 		rm -f core *.o *.out \
-		  date leapseconds tzselect version.h zdump zic yearistype
+		  date tzselect version.h zdump zic yearistype
 clean:		clean_misc
-		rm -f -r tzpublic
+		rm -fr tzpublic
 
 maintainer-clean: clean
 		@echo 'This command is intended for maintainers to use; it'
 		@echo 'deletes files that may need special tools to rebuild.'
-		rm -f *.[1-8].txt *.asc *.tar.gz
+		rm -f leapseconds $(MANTXTS) *.asc *.tar.gz
 
 names:
 		@echo $(ENCHILADA)
 
 public:		check check_public check_time_t_alternatives \
-		set-timestamps tarballs signatures
+		tarballs signatures
+
+date.1.txt:	date.1
+newctime.3.txt:	newctime.3
+newstrftime.3.txt: newstrftime.3
+newtzset.3.txt:	newtzset.3
+time2posix.3.txt: time2posix.3
+tzfile.5.txt:	tzfile.5
+tzselect.8.txt:	tzselect.8
+zdump.8.txt:	zdump.8
+zic.8.txt:	zic.8
+
+$(MANTXTS):	workman.sh
+		LC_ALL=C sh workman.sh `expr $@ : '\(.*\)\.txt$$'` >$@
 
 # Set the time stamps to those of the git repository, if available,
 # and if the files have not changed since then.
 # This uses GNU 'touch' syntax 'touch -d@N FILE',
 # where N is the number of seconds since 1970.
-# If git or GNU 'touch' is absent, do nothing.
-set-timestamps:
-		-TZ=UTC0 && export TZ && files=`git ls-files` && \
-		touch -d @1 test.out && rm -f test.out && \
-		for file in $$files; do \
-		  test -z "`git diff --name-only $$file`" || continue; \
-		  cmd="touch -d @`git log -1 --format='format:%ct' $$file \
-			` $$file" && \
-		  echo "$$cmd" && \
-		  $$cmd || exit; \
+# If git or GNU 'touch' is absent, don't bother to sync with git timestamps.
+# Also, set the timestamp of each prebuilt file like 'leapseconds'
+# to be the maximum of the files it depends on.
+set-timestamps.out: $(ENCHILADA)
+		rm -f $@
+		if files=`git ls-files $(ENCHILADA)` && \
+		   touch -md @1 test.out; then \
+		  rm -f test.out && \
+		  for file in $$files; do \
+		    if git diff --quiet $$file; then \
+		      time=`git log -1 --format='tformat:%ct' $$file` && \
+		      touch -cmd @$$time $$file; \
+		    else \
+		      echo >&2 "$$file: warning: does not match repository"; \
+		    fi || exit; \
+		  done; \
+		fi
+		touch -cmr `ls -t $(LEAP_DEPS) | sed 1q` leapseconds
+		for file in `ls $(MANTXTS) | sed 's/\.txt$$//'`; do \
+		  touch -cmr `ls -t $$file workman.sh | sed 1q` $$file.txt || \
+		    exit; \
 		done
+		touch $@
 
 # The zics below ensure that each data file can stand on its own.
 # We also do an all-files run to catch links to links.
 
 check_public:	$(ENCHILADA)
 		make maintainer-clean
-		make "CFLAGS=$(GCC_DEBUG_FLAGS)"
+		make "CFLAGS=$(GCC_DEBUG_FLAGS)" $(ENCHILADA) all
 		mkdir tzpublic
 		for i in $(TDATA) ; do \
 		  $(zic) -v -d tzpublic $$i 2>&1 || exit; \
 		done
 		$(zic) -v -d tzpublic $(TDATA)
-		rm -f -r tzpublic
+		rm -fr tzpublic
 
 # Check that the code works under various alternative
 # implementations of time_t.
 check_time_t_alternatives:
-		mkdir tzpublic
 		zones=`$(AWK) '/^[^#]/ { print $$3 }' <zone.tab` && \
 		for type in $(TIME_T_ALTERNATIVES); do \
-		  mkdir tzpublic/$$type && \
+		  mkdir -p tzpublic/$$type && \
 		  make clean_misc && \
 		  make TOPDIR=`pwd`/tzpublic/$$type \
 		    CFLAGS='$(CFLAGS) -Dtime_tz='"'$$type'" \
@@ -525,21 +540,17 @@ check_time_t_alternatives:
 		  diff -u tzpublic/int64_t.out tzpublic/$$type.out \
 		    || exit; \
 		done
-		rm -f -r tzpublic
+		rm -fr tzpublic
 
 tarballs:	tzcode$(VERSION).tar.gz tzdata$(VERSION).tar.gz
 
-tzcode$(VERSION).tar.gz: $(COMMON) $(DOCS) $(SOURCES) $(MISC)
-		for i in *.[1-8] ; do \
-		  LC_ALL=C sh workman.sh $$i > $$i.txt && \
-		  touch -r $$i $$i.txt || exit; \
-		done
+tzcode$(VERSION).tar.gz: set-timestamps.out
 		LC_ALL=C && export LC_ALL && \
 		tar $(TARFLAGS) -cf - \
-		    $(COMMON) $(DOCS) $(SOURCES) $(MISC) *.[1-8].txt | \
+		    $(COMMON) $(DOCS) $(SOURCES) $(MISC) | \
 		  gzip $(GZIPFLAGS) > $@
 
-tzdata$(VERSION).tar.gz: $(COMMON) $(DATA)
+tzdata$(VERSION).tar.gz: set-timestamps.out
 		LC_ALL=C && export LC_ALL && \
 		tar $(TARFLAGS) -cf - $(COMMON) $(DATA) | \
 		  gzip $(GZIPFLAGS) > $@
