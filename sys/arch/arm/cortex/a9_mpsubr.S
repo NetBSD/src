@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.10 2013/11/12 17:10:39 matt Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.11 2013/12/26 00:19:07 joerg Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -150,7 +150,7 @@ arm_cpuinit:
 
 	XPUTC(#70)
 	mov	r1, #0
-	mcr	p15, 0, r1, c7, c10, 4	/* Drain the write buffers. */
+	dsb				/* Drain the write buffers. */
 
 	XPUTC(#71)
 	mrc	p15, 0, r2, c0, c0, 5	/* get MPIDR */
