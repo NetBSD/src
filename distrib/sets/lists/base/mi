@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1052 2013/12/25 22:08:24 christos Exp $
+# $NetBSD: mi,v 1.1053 2013/12/26 17:12:55 apb Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -5092,9 +5092,9 @@
 ./usr/share/zoneinfo/Asia/Qyzylorda		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Rangoon		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Riyadh		base-sys-share		share
-./usr/share/zoneinfo/Asia/Riyadh87		base-sys-share		share
-./usr/share/zoneinfo/Asia/Riyadh88		base-sys-share		share
-./usr/share/zoneinfo/Asia/Riyadh89		base-sys-share		share
+./usr/share/zoneinfo/Asia/Riyadh87		base-obsolete		obsolete
+./usr/share/zoneinfo/Asia/Riyadh88		base-obsolete		obsolete
+./usr/share/zoneinfo/Asia/Riyadh89		base-obsolete		obsolete
 ./usr/share/zoneinfo/Asia/Saigon		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Sakhalin		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Samarkand		base-sys-share		share
@@ -5355,9 +5355,9 @@
 ./usr/share/zoneinfo/Mexico/BajaSur		base-sys-share		share
 ./usr/share/zoneinfo/Mexico/General		base-sys-share		share
 ./usr/share/zoneinfo/Mideast			base-sys-share
-./usr/share/zoneinfo/Mideast/Riyadh87		base-sys-share		share
-./usr/share/zoneinfo/Mideast/Riyadh88		base-sys-share		share
-./usr/share/zoneinfo/Mideast/Riyadh89		base-sys-share		share
+./usr/share/zoneinfo/Mideast/Riyadh87		base-obsolete		obsolete
+./usr/share/zoneinfo/Mideast/Riyadh88		base-obsolete		obsolete
+./usr/share/zoneinfo/Mideast/Riyadh89		base-obsolete		obsolete
 ./usr/share/zoneinfo/Moscow			base-obsolete		obsolete
 ./usr/share/zoneinfo/NZ				base-sys-share		share
 ./usr/share/zoneinfo/NZ-CHAT			base-sys-share		share
