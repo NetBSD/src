@@ -40,6 +40,7 @@
 #include <strings.h>
 #include <stdlib.h>
 #include <sysexits.h>
+#include <util.h>
 
 #include <cflib.h>
 
@@ -195,17 +196,17 @@ cmd_logout(int argc, char *argv[])
 void
 login_usage(void)
 {
-	printf(
-	"usage: smbutil login [-E cs1:cs2] [-I host] [-L locale] [-M crights:srights]\n"
-	"               [-N cowner:cgroup/sowner:sgroup] [-P]\n"
-	"               [-R retrycount] [-T timeout]\n"
-	"               [-W workgroup] //user@server\n");
+	fprintf(stderr, "Usage: %s login [-E cs1:cs2] [-I host] [-L locale] "
+	    "[-M crights:srights]\n"
+	"\t[-N cowner:cgroup/sowner:sgroup] [-P]\n"
+	"\t[-R retrycount] [-T timeout]\n"
+	"\t[-W workgroup] //user@server\n", getprogname());
 	exit(1);
 }
 
 void
 logout_usage(void)
 {
-	printf("usage: smbutil logout [user@server]\n");
+	fprintf(stderr, "Usage: %s logout [user@server]\n", getprogname());
 	exit(1);
 }

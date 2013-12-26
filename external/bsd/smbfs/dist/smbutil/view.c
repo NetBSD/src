@@ -42,6 +42,7 @@
 #include <strings.h>
 #include <stdlib.h>
 #include <sysexits.h>
+#include <util.h>
 
 #include <cflib.h>
 
@@ -128,9 +129,8 @@ cmd_view(int argc, char *argv[])
 void
 view_usage(void)
 {
-	printf(
-	"usage: smbutil view [connection optinons] //[user@]server\n"
-	);
+	fprintf(stderr, "Usage: %s view [connection options] //[user@]server\n",
+	    getprogname());
 	exit(1);
 }
 
