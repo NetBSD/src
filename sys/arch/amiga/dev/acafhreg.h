@@ -1,4 +1,4 @@
-/*	$NetBSD: acafhreg.h,v 1.2 2013/12/22 23:02:38 rkujawa Exp $ */
+/*	$NetBSD: acafhreg.h,v 1.3 2013/12/26 20:38:11 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -58,6 +58,10 @@
 #define ACAFH_MEMPROBE_AUXIRQ		0xC
 #define ACAFH_POWERUP			0xD
 #define ACAFH_C0WIPE			0xE
+
+#define ACAFH_ROM_BASE		0xA00000
+#define ACAFH_ROM_ID_OFFSET		0xDC
+#define ACAFH_ROM_ID_VALUE		0x0ACA0500
 
 #endif /* _AMIGA_ACAFHREG_H_ */
 
