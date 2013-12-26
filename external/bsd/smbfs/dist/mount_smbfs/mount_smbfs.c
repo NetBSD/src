@@ -1,4 +1,4 @@
-/* $NetBSD: mount_smbfs.c,v 1.2 2013/12/25 22:03:15 christos Exp $ */
+/* $NetBSD: mount_smbfs.c,v 1.3 2013/12/26 16:42:28 christos Exp $ */
 
 /*
  * Copyright (c) 2000-2002, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mount_smbfs.c,v 1.2 2013/12/25 22:03:15 christos Exp $");
+__RCSID("$NetBSD: mount_smbfs.c,v 1.3 2013/12/26 16:42:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -65,7 +65,7 @@ __RCSID("$NetBSD: mount_smbfs.c,v 1.2 2013/12/25 22:03:15 christos Exp $");
 
 #include "mntopts.h"
 
-static void usage(void);
+static void usage(void) __noreturn;
 
 static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
@@ -290,5 +290,5 @@ usage(void)
 	    "\t[-g gid] [-n opt] [-u uid] //user@server/share node",
 	    getprogname());
 
-	exit (1);
+	exit(1);
 }
