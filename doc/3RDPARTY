@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1076 2013/12/25 22:14:28 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1077 2013/12/26 18:38:21 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -41,15 +41,16 @@
 
 Package:	acpica
 Version:	20110623
-Current Vers:	20131115
+Current Vers:	20131218
 Maintainer:	Intel
-Archive Site:	http://www.acpica.org/downloads/unix2_source_code.php
+Archive Site:	http://www.acpica.org/downloads/
 Home Page:	http://www.acpica.org/
 Mailing List:	devel@acpica.org
 License:	BSD-like
 Responsible:	jruoho
 Location:	sys/external/bsd/acpica/dist
 Notes:
+You want the unix2 (dual-licensed) tar file.
 Please read src/sys/dev/acpi/acpica/README before any modification.
 
 Package:	am-utils [amd]
@@ -1256,8 +1257,8 @@ Notes:
 Added changes from a5 -> a12 manually.
 
 Package:	tz
-Version:	tzcode2013e / tzdata2013d
-Current Vers:	tzcode2013e / tzdata2013e
+Version:	tzcode2013i / tzdata2013d
+Current Vers:	tzcode2013i / tzdata2013i
 Maintainer:	Paul Eggert <eggert@cs.ucla.edu>
 Archive Site:	ftp://ftp.iana.org/tz/releases/
 Archive Site:	ftp://munnari.oz.au/pub/oldtz/
@@ -1268,11 +1269,10 @@ Responsible:	kleink, christos, apb
 License:	Public domain
 Location:	lib/libc/time,share/zoneinfo
 Notes:
-Use src/lib/libc/time/tzcode2netbsd to prepare the source tree for import.
-The tzcode2012f -> 2012g patch was applied by hand, since we have too
-many diffs (re-entrant tzcode) to apply. The diffs have been submitted
-upstream but there is too much inertia to apply them. Check for .gitignore
-files.
+Don't use src/lib/libc/time/tzcode2netbsd to prepare the source tree for import.
+Diffs are now applied by hand, since we have too many diffs (re-entrant tzcode,
+register removal) to apply. The diffs have been submitted upstream but there
+is too much inertia to apply them. Check for .gitignore files.
 
 Package:	wpa_supplicant/hostapd
 Version:	1.1
