@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.44 2013/03/06 17:32:51 christos Exp $
+#	$NetBSD: Makefile,v 1.45 2013/12/26 17:09:39 apb Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +11,10 @@
 # for handling POSIX-style time zone environment variables,
 # change the line below (after finding the zone you want in the
 # time zone files, or adding it to a time zone file).
+# (When a POSIX-style environment variable is handled, the rules in the
+# template file are used to determine "spring forward" and "fall back" days and
+# times; the environment variable itself specifies UT offsets of standard and
+# summer time.)
 # Alternately, if you discover you've got the wrong time zone, you can just
 #	zic -p rightzone
 
@@ -44,11 +48,9 @@ YDATA=		africa antarctica asia australasia \
 		europe northamerica southamerica pacificnew etcetera factory \
 		backward
 NDATA=		systemv
-SDATA=		solar87 solar88 solar89
-TDATA=		$(YDATA) $(NDATA) $(SDATA)
+TDATA=		$(YDATA) $(NDATA)
 TABDATA=	iso3166.tab zone.tab
-DATA=		$(YDATA) $(NDATA) $(SDATA) leapseconds # yearistype.sh
-USNO=		usno1988 usno1989
+DATA=		$(YDATA) $(NDATA) leapseconds # yearistype.sh
 
 TZBUILDDIR=	${.OBJDIR}/builddir
 
