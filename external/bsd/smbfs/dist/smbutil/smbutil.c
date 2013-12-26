@@ -6,30 +6,29 @@
 #include <stdlib.h>
 #include <err.h>
 #include <sysexits.h>
+#include <util.h>
 
 #include <netsmb/smb_lib.h>
 #include <netsmb/smb_conn.h>
 
 #include "common.h"
 
-extern char *__progname;
-
-static void help(void);
-static void help_usage(void);
-static int  cmd_crypt(int argc, char *argv[]);
-static int  cmd_help(int argc, char *argv[]);
+static void help(void) __dead;
+static void help_usage(void) __dead;
+static int  cmd_crypt(int, char *[]);
+static int  cmd_help(int, char *[]);
 
 int verbose;
 
-typedef int cmd_fn_t (int argc, char *argv[]);
-typedef void cmd_usage_t (void);
+typedef int (*cmd_fn_t)(int, char *[]);
+typedef void (*cmd_usage_t)(void) __dead;
 
 #define	CMDFL_NO_KMOD	0x0001
 
 static struct commands {
 	const char *	name;
-	cmd_fn_t*	fn;
-	cmd_usage_t *	usage;
+	cmd_fn_t	fn;
+	cmd_usage_t	usage;
 	int 		flags;
 } commands[] = {
 	{ "crypt",	cmd_crypt,	NULL,		CMDFL_NO_KMOD	},
@@ -139,7 +138,7 @@ main(int argc, char *argv[])
 static void
 help(void) {
 	printf("\n");
-	printf("usage: %s [-hv] command [args]\n", __progname);
+	printf("Usage: %s [-hv] command [args]\n", getprogname());
 	printf("where commands are:\n"
 	" crypt [password]		slightly encrypt password\n"
 	" help command			display help on \"command\"\n"
@@ -154,6 +153,6 @@ help(void) {
 
 static void
 help_usage(void) {
-	printf("usage: smbutil help command\n");
+	fprintf(stderr, "Usage: %s help command\n", getprogname());
 	exit(1);
 }
