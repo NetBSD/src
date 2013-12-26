@@ -1,11 +1,6 @@
-#	$NetBSD: Makefile,v 1.45 2013/12/26 17:09:39 apb Exp $
+#	$NetBSD: Makefile,v 1.46 2013/12/26 20:19:17 apb Exp $
 
 .include <bsd.own.mk>
-
-# Change the line below for your time zone (after finding the zone you want in
-# the time zone files, or adding it to a time zone file).
-# Alternately, if you discover you've got the wrong time zone, you can just
-#	zic -l rightzone
 
 # If you want something other than Eastern United States time as a template
 # for handling POSIX-style time zone environment variables,
@@ -17,9 +12,16 @@
 # summer time.)
 # Alternately, if you discover you've got the wrong time zone, you can just
 #	zic -p rightzone
+# to correct things.
+# Use the command
+#	make zonenames
+# to get a list of the values you can use for POSIXRULES.
+# If you want POSIX compatibility, use "America/New_York".
 
-POSIXRULES=	US/Pacific
+POSIXRULES=	America/New_York
 
+# "Compiled" time zone information is placed in the "TZDIR" directory
+# (and subdirectories).
 # Use an absolute path name for TZDIR unless you're just testing the software.
 # Note: ${DESTDIR} is prepended to this for the actual copy.
 
@@ -27,7 +29,7 @@ TZDIR=	/usr/share/zoneinfo
 
 # If you always want time values interpreted as "seconds since the epoch
 # (not counting leap seconds)", use
-# 	REDO=		posix_only
+#	REDO=		posix_only
 # below.  If you always want right time values interpreted as "seconds since
 # the epoch" (counting leap seconds)", use
 #	REDO=		right_only
@@ -44,10 +46,10 @@ REDO=		posix_only
 # Since "." may not be in PATH...
 YEARISTYPE=	"${HOST_SH} ${.CURDIR}/yearistype.sh"
 
-YDATA=		africa antarctica asia australasia \
-		europe northamerica southamerica pacificnew etcetera factory \
-		backward
-NDATA=		systemv
+PRIMARY_YDATA=	africa antarctica asia australasia \
+		europe northamerica southamerica
+YDATA=		$(PRIMARY_YDATA) pacificnew etcetera backward
+NDATA=		systemv factory
 TDATA=		$(YDATA) $(NDATA)
 TABDATA=	iso3166.tab zone.tab
 DATA=		$(YDATA) $(NDATA) leapseconds # yearistype.sh
