@@ -1,4 +1,4 @@
-/*	$NetBSD: acafh.c,v 1.2 2013/12/22 23:02:38 rkujawa Exp $ */
+/*	$NetBSD: acafh.c,v 1.3 2013/12/26 20:38:11 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acafh.c,v 1.2 2013/12/22 23:02:38 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acafh.c,v 1.3 2013/12/26 20:38:11 rkujawa Exp $");
 
 /*
  * Individual Computers ACA500 driver. 
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: acafh.c,v 1.2 2013/12/22 23:02:38 rkujawa Exp $");
 #include <sys/socket.h>
 #include <sys/systm.h>
 #include <sys/bus.h>
+#include <sys/types.h>
 
 #include <uvm/uvm.h>
 
@@ -63,6 +64,69 @@ static uint8_t acafh_revision(struct acafh_softc *);
 CFATTACH_DECL_NEW(acafh, sizeof(struct acafh_softc),
     acafh_match, acafh_attach, NULL, NULL);
 
+/*
+ * Since ACA500 is not an AutoConfig board and current amiga port infrastructure
+ * does not have typical obio attachment, we need to hack in the probe procedure
+ * into mbattach(). This is supposed to be a temporary solution.
+ */
+bool
+acafh_mbattach_probe(void)
+{
+	vaddr_t aca_rom_vbase;
+	struct bus_space_tag aca_rom_bst;
+	bus_space_tag_t aca_rom_t;
+	bus_space_handle_t aca_rom_h;
+	uint32_t aca_id;
+	bool rv;
+
+	rv = false;
+
+#ifdef ACAFH_DEBUG
+	aprint_normal("acafh: probing for ACA500\n");
+#endif /* ACAFH_DEBUG */
+
+	/* 
+	 * Allocate VA to hold one mapped page, which we will use
+	 * to access the beginning of ACA500 flash. 
+	 */
+	aca_rom_vbase = uvm_km_alloc(kernel_map,
+	    PAGE_SIZE, 0, UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
+
+	/* Create the physical to virtual mapping. */
+	pmap_enter(vm_map_pmap(kernel_map), aca_rom_vbase, ACAFH_ROM_BASE,
+	    VM_PROT_READ, PMAP_NOCACHE);
+	pmap_update(vm_map_pmap(kernel_map));
+
+	aca_rom_bst.base = (bus_addr_t) aca_rom_vbase;
+        aca_rom_bst.absm = &amiga_bus_stride_1;
+	aca_rom_t = &aca_rom_bst;
+	bus_space_map(aca_rom_t, 0, PAGE_SIZE, 0, &aca_rom_h);
+
+	/* Read out the ID. */
+	aca_id = bus_space_read_4(aca_rom_t, aca_rom_h, ACAFH_ROM_ID_OFFSET);
+#ifdef ACAFH_DEBUG
+	aprint_normal("acafh: probe read %x from ACA ROM offset %x\n", aca_id, 
+	    ACAFH_ROM_ID_OFFSET);
+#endif /* ACAFH_DEBUG */
+
+	if (aca_id == ACAFH_ROM_ID_VALUE)
+		rv = true;
+	else
+		rv = false;
+
+#ifdef ACAFH_DEBUG
+	aprint_normal("acafh: clean up after probe\n");
+#endif /* ACAFH_DEBUG */
+
+	pmap_remove(vm_map_pmap(kernel_map), aca_rom_vbase, aca_rom_vbase + PAGE_SIZE);
+        pmap_update(vm_map_pmap(kernel_map));
+
+	uvm_km_free(kernel_map, aca_rom_vbase, PAGE_SIZE, 
+	    UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
+
+	return rv;
+}
+
 int
 acafh_match(device_t parent, cfdata_t cf, void *aux)
 {
@@ -83,7 +147,10 @@ acafh_attach(device_t parent, device_t self, void *aux)
 	sc = device_private(self);
 	sc->sc_dev = self;
 
-	/* XXX: we should be sure to prepare enough kva during early init... */
+	/* 
+	 * Allocate enough kernel memory.
+	 * XXX: we should be sure to prepare enough kva during early init... 
+	 */
 	aca_vbase = uvm_km_alloc(kernel_map,
 	    ACAFH_END - ACAFH_BASE, 0, UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
 
@@ -93,6 +160,9 @@ acafh_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	/* 
+	 * Map the ACA500 registers into kernel virutal space.
+	 */
 	for (i = ACAFH_BASE; i < ACAFH_END; i += PAGE_SIZE)
 		pmap_enter(vm_map_pmap(kernel_map),
 			i - ACAFH_BASE + aca_vbase, i,

@@ -1,4 +1,4 @@
-/*	$NetBSD: acafhvar.h,v 1.2 2013/12/22 23:02:38 rkujawa Exp $ */
+/*	$NetBSD: acafhvar.h,v 1.3 2013/12/26 20:38:11 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 #ifndef _AMIGA_ACAFHVAR_H_
 
 #include <sys/bus.h>
+#include <sys/types.h>
 
 struct acafh_softc {
 	device_t sc_dev;
@@ -46,6 +47,7 @@ struct acafhbus_attach_args {
 	bus_addr_t	aaa_pbase; /* physical base address */
 };
 
+bool acafh_mbattach_probe(void);
 uint8_t acafh_cf_intr_status(struct acafh_softc *, uint8_t);
 
 #endif /* _AMIGA_ACAFHVAR_H_ */
