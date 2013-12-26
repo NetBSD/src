@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.80 2013/12/01 02:54:33 joerg Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.81 2013/12/26 18:49:23 joerg Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -87,7 +87,7 @@
 #include <arm/asm.h>
 #include <arm/locore.h>
 
-	RCSID("$NetBSD: cpuswitch.S,v 1.80 2013/12/01 02:54:33 joerg Exp $")
+	RCSID("$NetBSD: cpuswitch.S,v 1.81 2013/12/26 18:49:23 joerg Exp $")
 
 /* LINTSTUB: include <sys/param.h> */
 	
@@ -258,7 +258,7 @@ ENTRY(cpu_switchto)
 	ldr	r0, [r3, #(CI_VFP_ID)]
 	cmp	r0, #0
 	ldrne	r0, [r7, #(PCB_VFP_FPEXC)]
-	mcrne	p10, 7, r0, c8, c0, 0
+	vmsrne	fpexc, r0
 #endif
 
 	ldr	r5, [r6, #(L_PROC)]	/* fetch the proc for below */
