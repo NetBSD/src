@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.172 2013/12/22 02:21:51 rkujawa Exp $
+#	$NetBSD: files.amiga,v 1.173 2013/12/26 20:38:11 rkujawa Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -33,8 +33,6 @@ defflag				LEV6_DEFER
 defflag				DEVRELOAD
 
 defflag opt_p5pb.h		P5PB_DEBUG P5PB_CONSOLE
-
-defflag opt_acafh.h		ACA500_SUPPORT
 
 defparam			IOBZCLOCK
 
@@ -588,7 +586,7 @@ define	acafhbus {}
 
 device	acafh: acafhbus, amibus_b4000
 attach	acafh at mainbus 
-file	arch/amiga/dev/acafh.c		acafh needs-flag
+file	arch/amiga/dev/acafh.c		acafh needs-count 
 
 attach	wdc at acafhbus with wdc_acafh
 file	arch/amiga/dev/wdc_acafh.c	wdc_acafh & acafh 
