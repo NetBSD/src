@@ -7,17 +7,17 @@
 
 extern int verbose;
 
-int  cmd_dumptree(int argc, char *argv[]);
-int  cmd_login(int argc, char *argv[]);
-int  cmd_logout(int argc, char *argv[]);
-int  cmd_lookup(int argc, char *argv[]);
-int  cmd_print(int argc, char *argv[]);
-int  cmd_view(int argc, char *argv[]);
-void login_usage(void);
-void logout_usage(void);
-void lookup_usage(void);
-void print_usage(void);
-void view_usage(void);
+int  cmd_dumptree(int, char *[]);
+int  cmd_login(int, char *[]);
+int  cmd_logout(int, char *[]);
+int  cmd_lookup(int, char *[]);
+int  cmd_print(int, char *[]);
+int  cmd_view(int, char *[]);
+void login_usage(void) __dead;
+void logout_usage(void) __dead;
+void lookup_usage(void) __dead;
+void print_usage(void) __dead;
+void view_usage(void) __dead;
 #ifdef APPLE
-extern int loadsmbvfs();
+extern int loadsmbvfs(void);
 #endif
