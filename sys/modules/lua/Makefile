@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2013/12/02 06:07:22 lneto Exp $
+#	$NetBSD: Makefile,v 1.6 2013/12/27 22:09:43 christos Exp $
 
 .include "../Makefile.inc"
 
@@ -42,7 +42,6 @@ SRCS+=		lbaselib.c \
 
 # Compatability code
 SRCS+=		strcspn.c \
-		strncat.c \
 		strpbrk.c \
 		strspn.c
 
