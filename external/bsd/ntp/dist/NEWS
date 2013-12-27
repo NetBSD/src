@@ -1,3 +1,56 @@
+---
+NTP 4.2.8-
+
+Important Changes
+
+* Internal NTP Era counters
+
+The internal counters that track which "era" (range of years) we are in
+rolls over every 136 years'.  The current "era" started at the stroke of
+midnight on 1 Jan 1900, and ends just before the stroke of midnight on
+1 Jan 2036.
+In the past, we have used the "midpoint" of the  range to decide which
+era we were in.  Given the longevity of some products, it became clear
+that it would be more functional to "look back" less, and "look forward"
+more.  We now compile a timestamp into the ntpd executable and when we
+get a timestamp we us the "built-on" to tell us what era we are in.
+This check "looks back" 10 years, and "looks forward" 126 years.
+
+So if you have a system that ...
+
+* ntpdc responses disabled by default
+
+Dave Hart writes:
+
+For a long time, ntpq and its mostly text-based mode 6 (control) 
+protocol have been preferred over ntpdc and its mode 7 (private 
+request) protocol for runtime queries and configuration.  There has 
+been a goal of deprecating ntpdc, previously held back by numerous 
+capabilities exposed by ntpdc with no ntpq equivalent.  I have been 
+adding commands to ntpq to cover these cases, and I believe I've 
+covered them all, though I've not compared command-by-command 
+recently. 
+
+As I've said previously, the binary mode 7 protocol involves a lot of 
+hand-rolled structure layout and byte-swapping code in both ntpd and 
+ntpdc which is hard to get right.  As ntpd grows and changes, the 
+changes are difficult to expose via ntpdc while maintaining forward 
+and backward compatibility between ntpdc and ntpd.  In contrast, 
+ntpq's text-based, label=value approach involves more code reuse and 
+allows compatible changes without extra work in most cases. 
+
+Mode 7 has always been defined as vendor/implementation-specific while 
+mode 6 is described in RFC 1305 and intended to be open to interop 
+with other implementations.  There is an early draft of an updated 
+mode 6 description that likely will join the other NTPv4 RFCs 
+eventually. (http://tools.ietf.org/html/draft-odonoghue-ntpv4-control-01)
+
+For these reasons, ntpd 4.2.7p230 by default disables processing of 
+ntpdc queries, reducing ntpd's attack surface and functionally 
+deprecating ntpdc.  If you are in the habit of using ntpdc for certain 
+operations, please try the ntpq equivalent.  If there's no equivalent, 
+please open a bug report at http://bugs.ntp.org./
+
 --- 
 NTP 4.2.6p5 (Harlan Stenn <stenn@ntp.org>, 2011/12/24) 
  

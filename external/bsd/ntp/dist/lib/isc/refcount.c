@@ -1,4 +1,4 @@
-/*	$NetBSD: refcount.c,v 1.1.1.1 2009/12/13 16:54:17 kardel Exp $	*/
+/*	$NetBSD: refcount.c,v 1.1.1.2 2013/12/27 23:30:38 christos Exp $	*/
 
 /*
  * Copyright (C) 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: refcount.c,v 1.5 2007/06/19 23:47:17 tbox Exp */
+/* Id: refcount.c,v 1.5 2007/06/19 23:47:17 tbox Exp  */
 
 #include <config.h>
 
