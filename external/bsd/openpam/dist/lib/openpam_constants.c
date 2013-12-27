@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_constants.c,v 1.1.1.2 2013/04/06 01:23:30 christos Exp $	*/
+/*	$NetBSD: openpam_constants.c,v 1.1.1.3 2013/12/27 19:27:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001-2003 Networks Associates Technology, Inc.
@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: openpam_constants.c 491 2011-11-12 00:12:32Z des 
+ * Id: openpam_constants.c 690 2013-08-15 13:22:51Z des 
  */
 
 #ifdef HAVE_CONFIG_H
@@ -126,4 +126,22 @@ const char *pam_sm_func_name[PAM_NUM_PRIMITIVES] = {
 	"pam_sm_open_session",
 	"pam_sm_close_session",
 	"pam_sm_chauthtok"
+};
+
+const char *openpam_policy_path[] = {
+	"/etc/pam.d/",
+	"/etc/pam.conf",
+	"/usr/local/etc/pam.d/",
+	"/usr/local/etc/pam.conf",
+	NULL
+};
+
+const char *openpam_module_path[] = {
+#ifdef OPENPAM_MODULES_DIRECTORY
+	OPENPAM_MODULES_DIRECTORY,
+#else
+	"/usr/lib",
+	"/usr/local/lib",
+#endif
+	NULL
 };

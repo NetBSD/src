@@ -1,7 +1,7 @@
-/*	$NetBSD: pam_open_session.c,v 1.1.1.3 2013/12/27 19:27:42 christos Exp $	*/
+/*	$NetBSD: openpam_cred.h,v 1.1.1.1 2013/12/27 19:27:41 christos Exp $	*/
 
 /*-
- * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
+ * Copyright (c) 2001-2003 Networks Associates Technology, Inc.
  * Copyright (c) 2004-2011 Dag-Erling Smørgrav
  * All rights reserved.
  *
@@ -34,59 +34,21 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: pam_open_session.c 648 2013-03-05 17:54:27Z des 
+ * Id: openpam_cred.h 648 2013-03-05 17:54:27Z des 
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
+#ifndef OPENPAM_CRED_H_INCLUDED
+#define OPENPAM_CRED_H_INCLUDED
+
+/*
+ * Saved credentials
+ */
+#define PAM_SAVED_CRED "pam_saved_cred"
+struct pam_saved_cred {
+	uid_t	 euid;
+	gid_t	 egid;
+	gid_t	 groups[NGROUPS_MAX];
+	int	 ngroups;
+};
+
 #endif
-
-#include <sys/param.h>
-
-#include <security/pam_appl.h>
-
-#include "openpam_impl.h"
-
-/*
- * XSSO 4.2.1
- * XSSO 6 page 54
- *
- * Open a user session
- */
-
-int
-pam_open_session(pam_handle_t *pamh,
-	int flags)
-{
-	int r;
-
-	ENTER();
-	if (flags & ~(PAM_SILENT))
-		RETURNC(PAM_SYMBOL_ERR);
-	r = openpam_dispatch(pamh, PAM_SM_OPEN_SESSION, flags);
-	RETURNC(r);
-}
-
-/*
- * Error codes:
- *
- *	=openpam_dispatch
- *	=pam_sm_open_session
- *	!PAM_IGNORE
- *	PAM_SYMBOL_ERR
- */
-
-/**
- * The =pam_open_session sets up a user session for a previously
- * authenticated user.
- * The session should later be torn down by a call to =pam_close_session.
- *
- * The =flags argument is the binary or of zero or more of the following
- * values:
- *
- *	=PAM_SILENT:
- *		Do not emit any messages.
- *
- * If any other bits are set, =pam_open_session will return
- * =PAM_SYMBOL_ERR.
- */

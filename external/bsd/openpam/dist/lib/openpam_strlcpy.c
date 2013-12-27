@@ -1,14 +1,8 @@
-/*	$NetBSD: pam_open_session.c,v 1.1.1.3 2013/12/27 19:27:42 christos Exp $	*/
+/*	$NetBSD: openpam_strlcpy.c,v 1.1.1.1 2013/12/27 19:27:42 christos Exp $	*/
 
 /*-
- * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
- * Copyright (c) 2004-2011 Dag-Erling Smørgrav
+ * Copyright (c) 2011-2012 Dag-Erling Smørgrav
  * All rights reserved.
- *
- * This software was developed for the FreeBSD Project by ThinkSec AS and
- * Network Associates Laboratories, the Security Research Division of
- * Network Associates, Inc.  under DARPA/SPAWAR contract N66001-01-C-8035
- * ("CBOSS"), as part of the DARPA CHATS research program.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,59 +28,31 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: pam_open_session.c 648 2013-03-05 17:54:27Z des 
+ * Id: openpam_strlcpy.c 648 2013-03-05 17:54:27Z des 
  */
 
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
 
-#include <sys/param.h>
+#ifndef HAVE_STRLCPY
 
-#include <security/pam_appl.h>
+#include <stddef.h>
 
-#include "openpam_impl.h"
+#include "openpam_strlcpy.h"
 
-/*
- * XSSO 4.2.1
- * XSSO 6 page 54
- *
- * Open a user session
- */
-
-int
-pam_open_session(pam_handle_t *pamh,
-	int flags)
+/* like strcpy(3), but always NUL-terminates; returns strlen(src) */
+size_t
+openpam_strlcpy(char *dst, const char *src, size_t size)
 {
-	int r;
+	size_t len;
 
-	ENTER();
-	if (flags & ~(PAM_SILENT))
-		RETURNC(PAM_SYMBOL_ERR);
-	r = openpam_dispatch(pamh, PAM_SM_OPEN_SESSION, flags);
-	RETURNC(r);
+	for (len = 0; *src && size > 1; ++len, --size)
+		*dst++ = *src++;
+	*dst = '\0';
+	while (*src)
+		++len, ++src;
+	return (len);
 }
 
-/*
- * Error codes:
- *
- *	=openpam_dispatch
- *	=pam_sm_open_session
- *	!PAM_IGNORE
- *	PAM_SYMBOL_ERR
- */
-
-/**
- * The =pam_open_session sets up a user session for a previously
- * authenticated user.
- * The session should later be torn down by a call to =pam_close_session.
- *
- * The =flags argument is the binary or of zero or more of the following
- * values:
- *
- *	=PAM_SILENT:
- *		Do not emit any messages.
- *
- * If any other bits are set, =pam_open_session will return
- * =PAM_SYMBOL_ERR.
- */
+#endif
