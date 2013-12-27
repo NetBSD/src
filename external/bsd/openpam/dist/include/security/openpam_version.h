@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_version.h,v 1.1.1.2 2013/04/06 01:23:32 christos Exp $	*/
+/*	$NetBSD: openpam_version.h,v 1.1.1.3 2013/12/27 19:16:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -34,14 +34,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: openpam_version.h 609 2012-05-26 13:57:45Z des 
+ * Id: openpam_version.h 737 2013-09-07 12:53:55Z des 
  */
 
 #ifndef SECURITY_OPENPAM_VERSION_H_INCLUDED
 #define SECURITY_OPENPAM_VERSION_H_INCLUDED
 
 #define OPENPAM
-#define OPENPAM_VERSION	20120526
-#define OPENPAM_RELEASE	"Micrampelis"
+#define OPENPAM_VERSION	20130907
+#define OPENPAM_RELEASE	"Nummularia"
 
 #endif /* !SECURITY_OPENPAM_VERSION_H_INCLUDED */

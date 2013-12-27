@@ -1,11 +1,11 @@
-/*	$NetBSD: openpam_attr.h,v 1.1.1.2 2013/04/06 01:23:32 christos Exp $	*/
+/*	$NetBSD: openpam_attr.h,v 1.1.1.3 2013/12/27 19:16:12 christos Exp $	*/
 
 /*
- * Id: openpam_attr.h 405 2007-12-19 11:38:27Z des 
+ * Id: openpam_attr.h 656 2013-03-06 22:58:45Z des 
  */
 
-#ifndef SECURITY_PAM_ATTRIBUTES_H_INCLUDED
-#define SECURITY_PAM_ATTRIBUTES_H_INCLUDED
+#ifndef SECURITY_OPENPAM_ATTR_H_INCLUDED
+#define SECURITY_OPENPAM_ATTR_H_INCLUDED
 
 /* GCC attributes */
 #if defined(__GNUC__) && defined(__GNUC_MINOR__) && !defined(__STRICT_ANSI__)
@@ -27,4 +27,10 @@
 # define OPENPAM_NONNULL(params)
 #endif
 
-#endif /* !SECURITY_PAM_ATTRIBUTES_H_INCLUDED */
+#if OPENPAM_GNUC_PREREQ(2,7)
+# define OPENPAM_UNUSED(var) var __attribute__((__unused__))
+#else
+# define OPENPAM_UNUSED(var) var
+#endif
+
+#endif /* !SECURITY_OPENPAM_ATTR_H_INCLUDED */
