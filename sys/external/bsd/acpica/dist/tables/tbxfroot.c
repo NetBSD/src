@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2011, Intel Corp.
+ * Copyright (C) 2000 - 2013, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -51,17 +51,6 @@
 #define _COMPONENT          ACPI_TABLES
         ACPI_MODULE_NAME    ("tbxfroot")
 
-/* Local prototypes */
-
-static UINT8 *
-AcpiTbScanMemoryForRsdp (
-    UINT8                   *StartAddress,
-    UINT32                  Length);
-
-static ACPI_STATUS
-AcpiTbValidateRsdp (
-    ACPI_TABLE_RSDP         *Rsdp);
-
 
 /*******************************************************************************
  *
@@ -75,12 +64,10 @@ AcpiTbValidateRsdp (
  *
  ******************************************************************************/
 
-static ACPI_STATUS
+ACPI_STATUS
 AcpiTbValidateRsdp (
     ACPI_TABLE_RSDP         *Rsdp)
 {
-    ACPI_FUNCTION_ENTRY ();
-
 
     /*
      * The signature and checksum must both be correct
@@ -88,8 +75,7 @@ AcpiTbValidateRsdp (
      * Note: Sometimes there exists more than one RSDP in memory; the valid
      * RSDP has a valid checksum, all others have an invalid checksum.
      */
-    if (ACPI_STRNCMP ((char *) Rsdp, ACPI_SIG_RSDP,
-            sizeof (ACPI_SIG_RSDP)-1) != 0)
+    if (!ACPI_VALIDATE_RSDP_SIG (Rsdp->Signature))
     {
         /* Nope, BAD Signature */
 
@@ -124,7 +110,7 @@ AcpiTbValidateRsdp (
  * RETURN:      Status, RSDP physical address
  *
  * DESCRIPTION: Search lower 1Mbyte of memory for the root system descriptor
- *              pointer structure.  If it is found, set *RSDP to point to it.
+ *              pointer structure. If it is found, set *RSDP to point to it.
  *
  * NOTE1:       The RSDP must be either in the first 1K of the Extended
  *              BIOS Data Area or between E0000 and FFFFF (From ACPI Spec.)
@@ -234,7 +220,7 @@ AcpiFindRootPointer (
 
     /* A valid RSDP was not found */
 
-    ACPI_DEBUG_PRINT ((ACPI_DB_INFO, "A valid RSDP was not found"));
+    ACPI_BIOS_ERROR ((AE_INFO, "A valid RSDP was not found"));
     return_ACPI_STATUS (AE_NOT_FOUND);
 }
 
@@ -254,7 +240,7 @@ ACPI_EXPORT_SYMBOL (AcpiFindRootPointer)
  *
  ******************************************************************************/
 
-static UINT8 *
+UINT8 *
 AcpiTbScanMemoryForRsdp (
     UINT8                   *StartAddress,
     UINT32                  Length)
@@ -296,4 +282,3 @@ AcpiTbScanMemoryForRsdp (
         StartAddress));
     return_PTR (NULL);
 }
-
