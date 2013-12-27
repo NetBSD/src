@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.111 2013/12/15 21:15:41 pooka Exp $	*/
+/*	$NetBSD: libkern.h,v 1.112 2013/12/27 20:25:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -292,6 +292,7 @@ char	*strsep(char **, const char *);
 /* These exist in GCC 3.x, but we don't bother. */
 char	*strcat(char *, const char *);
 char	*strncpy(char *, const char *, size_t);
+char	*strncat(char *, const char *, size_t);
 int	 strncmp(const char *, const char *, size_t);
 char	*strchr(const char *, int);
 char	*strrchr(const char *, int);
