@@ -195,7 +195,7 @@ AcpiDbSetScope (
     }
 
     if (AcpiUtSafeStrcat (AcpiGbl_DbScopeBuf, sizeof (AcpiGbl_DbScopeBuf),
-        "\\"))
+        __UNCONST("\\")))
     {
         Status = AE_BUFFER_OVERFLOW;
         goto ErrorExit;
