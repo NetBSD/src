@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2011, Intel Corp.
+ * Copyright (C) 2000 - 2013, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -64,6 +64,12 @@ static void
 AcpiDmIsEisaIdElement (
     ACPI_PARSE_OBJECT       *Op);
 
+static void
+AcpiDmPldBuffer (
+    UINT32                  Level,
+    UINT8                   *ByteData,
+    UINT32                  ByteCount);
+
 
 /*******************************************************************************
  *
@@ -108,19 +114,19 @@ AcpiDmDisasmByteList (
             }
 
             AcpiDmIndent (Level);
-            if (ByteCount > 7)
+            if (ByteCount > 8)
             {
-                AcpiOsPrintf ("/* %04X */    ", i);
+                AcpiOsPrintf ("/* %04X */  ", i);
             }
         }
 
-        AcpiOsPrintf ("0x%2.2X", (UINT32) ByteData[i]);
+        AcpiOsPrintf (" 0x%2.2X", (UINT32) ByteData[i]);
 
         /* Add comma if there are more bytes to display */
 
         if (i < (ByteCount -1))
         {
-            AcpiOsPrintf (", ");
+            AcpiOsPrintf (",");
         }
     }
 
@@ -171,7 +177,7 @@ AcpiDmByteList (
     case ACPI_DASM_STRING:
 
         AcpiDmIndent (Info->Level);
-        AcpiUtPrintString ((char *) ByteData, ACPI_UINT8_MAX);
+        AcpiUtPrintString ((char *) ByteData, ACPI_UINT16_MAX);
         AcpiOsPrintf ("\n");
         break;
 
@@ -180,9 +186,14 @@ AcpiDmByteList (
         AcpiDmUnicode (Op);
         break;
 
+    case ACPI_DASM_PLD_METHOD:
+
+        AcpiDmDisasmByteList (Info->Level, ByteData, ByteCount);
+        AcpiDmPldBuffer (Info->Level, ByteData, ByteCount);
+        break;
+
     case ACPI_DASM_BUFFER:
     default:
-
         /*
          * Not a resource, string, or unicode string.
          * Just dump the buffer
@@ -332,13 +343,168 @@ AcpiDmIsStringBuffer (
 
 /*******************************************************************************
  *
+ * FUNCTION:    AcpiDmIsPldBuffer
+ *
+ * PARAMETERS:  Op                  - Buffer Object to be examined
+ *
+ * RETURN:      TRUE if buffer contains a ASCII string, FALSE otherwise
+ *
+ * DESCRIPTION: Determine if a buffer Op contains a _PLD structure
+ *
+ ******************************************************************************/
+
+BOOLEAN
+AcpiDmIsPldBuffer (
+    ACPI_PARSE_OBJECT       *Op)
+{
+    ACPI_NAMESPACE_NODE     *Node;
+    ACPI_PARSE_OBJECT       *ParentOp;
+
+
+    ParentOp = Op->Common.Parent;
+    if (!ParentOp)
+    {
+        return (FALSE);
+    }
+
+    /* Check for form: Name(_PLD, Buffer() {}). Not legal, however */
+
+    if (ParentOp->Common.AmlOpcode == AML_NAME_OP)
+    {
+        Node = ParentOp->Common.Node;
+
+        if (ACPI_COMPARE_NAME (Node->Name.Ascii, METHOD_NAME__PLD))
+        {
+            return (TRUE);
+        }
+
+        return (FALSE);
+    }
+
+    /* Check for proper form: Name(_PLD, Package() {Buffer() {}}) */
+
+    if (ParentOp->Common.AmlOpcode == AML_PACKAGE_OP)
+    {
+        ParentOp = ParentOp->Common.Parent;
+        if (!ParentOp)
+        {
+            return (FALSE);
+        }
+
+        if (ParentOp->Common.AmlOpcode == AML_NAME_OP)
+        {
+            Node = ParentOp->Common.Node;
+
+            if (ACPI_COMPARE_NAME (Node->Name.Ascii, METHOD_NAME__PLD))
+            {
+                return (TRUE);
+            }
+        }
+    }
+
+    return (FALSE);
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiDmPldBuffer
+ *
+ * PARAMETERS:  Level               - Current source code indentation level
+ *              ByteData            - Pointer to the byte list
+ *              ByteCount           - Length of the byte list
+ *
+ * RETURN:      None
+ *
+ * DESCRIPTION: Dump and format the contents of a _PLD buffer object
+ *
+ ******************************************************************************/
+
+#define ACPI_PLD_OUTPUT08     "%*.s/* %18s : %-6.2X */\n", ACPI_MUL_4 (Level), " "
+#define ACPI_PLD_OUTPUT16   "%*.s/* %18s : %-6.4X */\n", ACPI_MUL_4 (Level), " "
+#define ACPI_PLD_OUTPUT24   "%*.s/* %18s : %-6.6X */\n", ACPI_MUL_4 (Level), " "
+
+static void
+AcpiDmPldBuffer (
+    UINT32                  Level,
+    UINT8                   *ByteData,
+    UINT32                  ByteCount)
+{
+    ACPI_PLD_INFO           *PldInfo;
+    ACPI_STATUS             Status;
+
+
+    /* Check for valid byte count */
+
+    if (ByteCount < ACPI_PLD_REV1_BUFFER_SIZE)
+    {
+        return;
+    }
+
+    /* Convert _PLD buffer to local _PLD struct */
+
+    Status = AcpiDecodePldBuffer (ByteData, ByteCount, &PldInfo);
+    if (ACPI_FAILURE (Status))
+    {
+        return;
+    }
+
+    /* First 32-bit dword */
+
+    AcpiOsPrintf (ACPI_PLD_OUTPUT08,  "Revision", PldInfo->Revision);
+    AcpiOsPrintf (ACPI_PLD_OUTPUT08,  "IgnoreColor", PldInfo->IgnoreColor);
+    AcpiOsPrintf (ACPI_PLD_OUTPUT24,"Color", PldInfo->Color);
+
+    /* Second 32-bit dword */
+
+    AcpiOsPrintf (ACPI_PLD_OUTPUT16,"Width", PldInfo->Width);
+    AcpiOsPrintf (ACPI_PLD_OUTPUT16,"Height", PldInfo->Height);
+
+    /* Third 32-bit dword */
+
+    AcpiOsPrintf (ACPI_PLD_OUTPUT08,  "UserVisible", PldInfo->UserVisible);
+    AcpiOsPrintf (ACPI_PLD_OUTPUT08,  "Dock", PldInfo->Dock);
+    AcpiOsPrintf (ACPI_PLD_OUTPUT08,  "Lid", PldInfo->Lid);
+    AcpiOsPrintf (ACPI_PLD_OUTPUT08,  "Panel", PldInfo->Panel);
+    AcpiOsPrintf (ACPI_PLD_OUTPUT08,  "VerticalPosition", PldInfo->VerticalPosition);
+    AcpiOsPrintf (ACPI_PLD_OUTPUT08,  "HorizontalPosition", PldInfo->HorizontalPosition);
+    AcpiOsPrintf (ACPI_PLD_OUTPUT08,  "Shape", PldInfo->Shape);
+    AcpiOsPrintf (ACPI_PLD_OUTPUT08,  "GroupOrientation", PldInfo->GroupOrientation);
+    AcpiOsPrintf (ACPI_PLD_OUTPUT08,  "GroupToken", PldInfo->GroupToken);
+    AcpiOsPrintf (ACPI_PLD_OUTPUT08,  "GroupPosition", PldInfo->GroupPosition);
+    AcpiOsPrintf (ACPI_PLD_OUTPUT08,  "Bay", PldInfo->Bay);
+
+    /* Fourth 32-bit dword */
+
+    AcpiOsPrintf (ACPI_PLD_OUTPUT08,  "Ejectable", PldInfo->Ejectable);
+    AcpiOsPrintf (ACPI_PLD_OUTPUT08,  "OspmEjectRequired", PldInfo->OspmEjectRequired);
+    AcpiOsPrintf (ACPI_PLD_OUTPUT08,  "CabinetNumber", PldInfo->CabinetNumber);
+    AcpiOsPrintf (ACPI_PLD_OUTPUT08,  "CardCageNumber", PldInfo->CardCageNumber);
+    AcpiOsPrintf (ACPI_PLD_OUTPUT08,  "Reference", PldInfo->Reference);
+    AcpiOsPrintf (ACPI_PLD_OUTPUT08,  "Rotation", PldInfo->Rotation);
+    AcpiOsPrintf (ACPI_PLD_OUTPUT08,  "Order", PldInfo->Order);
+
+    /* Fifth 32-bit dword */
+
+    if (ByteCount >= ACPI_PLD_REV1_BUFFER_SIZE)
+    {
+        AcpiOsPrintf (ACPI_PLD_OUTPUT16,"VerticalOffset", PldInfo->VerticalOffset);
+        AcpiOsPrintf (ACPI_PLD_OUTPUT16,"HorizontalOffset", PldInfo->HorizontalOffset);
+    }
+
+    ACPI_FREE (PldInfo);
+}
+
+
+/*******************************************************************************
+ *
  * FUNCTION:    AcpiDmUnicode
  *
  * PARAMETERS:  Op              - Byte List op containing Unicode string
  *
  * RETURN:      None
  *
- * DESCRIPTION: Dump Unicode string as a standard ASCII string.  (Remove
+ * DESCRIPTION: Dump Unicode string as a standard ASCII string. (Remove
  *              the extra zero bytes).
  *
  ******************************************************************************/
@@ -357,11 +523,9 @@ AcpiDmUnicode (
     WordData = ACPI_CAST_PTR (UINT16, Op->Named.Data);
     WordCount = ACPI_DIV_2 (((UINT32) Op->Common.Value.Integer));
 
-
-    AcpiOsPrintf ("\"");
-
     /* Write every other byte as an ASCII character */
 
+    AcpiOsPrintf ("\"");
     for (i = 0; i < (WordCount - 1); i++)
     {
         AcpiOsPrintf ("%c", (int) WordData[i]);
