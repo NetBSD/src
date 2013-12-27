@@ -301,7 +301,7 @@ AcpiHwLegacyWake (
     /* Ensure EnterSleepStatePrep -> EnterSleepState ordering */
 
     AcpiGbl_SleepTypeA = ACPI_SLEEP_TYPE_INVALID;
-    AcpiHwExecuteSleepMethod (METHOD_PATHNAME__SST, ACPI_SST_WAKING);
+    AcpiHwExecuteSleepMethod (__UNCONST(METHOD_PATHNAME__SST), ACPI_SST_WAKING);
 
     /*
      * GPEs must be enabled before _WAK is called as GPEs
@@ -327,7 +327,7 @@ AcpiHwLegacyWake (
      * Now we can execute _WAK, etc. Some machines require that the GPEs
      * are enabled before the wake methods are executed.
      */
-    AcpiHwExecuteSleepMethod (METHOD_PATHNAME__WAK, SleepState);
+    AcpiHwExecuteSleepMethod (__UNCONST(METHOD_PATHNAME__WAK), SleepState);
 
     /*
      * Some BIOS code assumes that WAK_STS will be cleared on resume
@@ -347,7 +347,7 @@ AcpiHwLegacyWake (
             AcpiGbl_FixedEventInfo[ACPI_EVENT_POWER_BUTTON].StatusRegisterId,
             ACPI_CLEAR_STATUS);
 
-    AcpiHwExecuteSleepMethod (METHOD_PATHNAME__SST, ACPI_SST_WORKING);
+    AcpiHwExecuteSleepMethod (__UNCONST(METHOD_PATHNAME__SST), ACPI_SST_WORKING);
     return_ACPI_STATUS (Status);
 }
 

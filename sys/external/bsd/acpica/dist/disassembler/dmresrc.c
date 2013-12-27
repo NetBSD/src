@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2011, Intel Corp.
+ * Copyright (C) 2000 - 2013, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -55,12 +55,6 @@
 
 /* Dispatch tables for Resource disassembly functions */
 
-typedef
-void (*ACPI_RESOURCE_HANDLER) (
-    AML_RESOURCE            *Resource,
-    UINT32                  Length,
-    UINT32                  Level);
-
 static ACPI_RESOURCE_HANDLER    AcpiGbl_DmResourceDispatch [] =
 {
     /* Small descriptors */
@@ -75,7 +69,7 @@ static ACPI_RESOURCE_HANDLER    AcpiGbl_DmResourceDispatch [] =
     AcpiDmEndDependentDescriptor,   /* 0x07, ACPI_RESOURCE_NAME_END_DEPENDENT */
     AcpiDmIoDescriptor,             /* 0x08, ACPI_RESOURCE_NAME_IO_PORT */
     AcpiDmFixedIoDescriptor,        /* 0x09, ACPI_RESOURCE_NAME_FIXED_IO_PORT */
-    NULL,                           /* 0x0A, Reserved */
+    AcpiDmFixedDmaDescriptor,       /* 0x0A, ACPI_RESOURCE_NAME_FIXED_DMA */
     NULL,                           /* 0x0B, Reserved */
     NULL,                           /* 0x0C, Reserved */
     NULL,                           /* 0x0D, Reserved */
@@ -95,7 +89,10 @@ static ACPI_RESOURCE_HANDLER    AcpiGbl_DmResourceDispatch [] =
     AcpiDmWordDescriptor,           /* 0x08, ACPI_RESOURCE_NAME_WORD_ADDRESS_SPACE */
     AcpiDmInterruptDescriptor,      /* 0x09, ACPI_RESOURCE_NAME_EXTENDED_XRUPT */
     AcpiDmQwordDescriptor,          /* 0x0A, ACPI_RESOURCE_NAME_QWORD_ADDRESS_SPACE */
-    AcpiDmExtendedDescriptor        /* 0x0B, ACPI_RESOURCE_NAME_EXTENDED_ADDRESS_SPACE */
+    AcpiDmExtendedDescriptor,       /* 0x0B, ACPI_RESOURCE_NAME_EXTENDED_ADDRESS_SPACE */
+    AcpiDmGpioDescriptor,           /* 0x0C, ACPI_RESOURCE_NAME_GPIO */
+    NULL,                           /* 0x0D, Reserved */
+    AcpiDmSerialBusDescriptor       /* 0x0E, ACPI_RESOURCE_NAME_SERIAL_BUS */
 };
 
 
@@ -282,7 +279,7 @@ AcpiDmResourceTemplate (
 
         /* Validate the Resource Type and Resource Length */
 
-        Status = AcpiUtValidateResource (Aml, &ResourceIndex);
+        Status = AcpiUtValidateResource (NULL, Aml, &ResourceIndex);
         if (ACPI_FAILURE (Status))
         {
             AcpiOsPrintf ("/*** Could not validate Resource, type (%X) %s***/\n",
@@ -340,6 +337,7 @@ AcpiDmResourceTemplate (
             return;
 
         default:
+
             break;
         }
 
@@ -369,17 +367,19 @@ AcpiDmResourceTemplate (
  *
  * FUNCTION:    AcpiDmIsResourceTemplate
  *
- * PARAMETERS:  Op          - Buffer Op to be examined
+ * PARAMETERS:  WalkState           - Current walk info
+ *              Op                  - Buffer Op to be examined
  *
  * RETURN:      Status. AE_OK if valid template
  *
  * DESCRIPTION: Walk a byte list to determine if it consists of a valid set
- *              of resource descriptors.  Nothing is output.
+ *              of resource descriptors. Nothing is output.
  *
  ******************************************************************************/
 
 ACPI_STATUS
 AcpiDmIsResourceTemplate (
+    ACPI_WALK_STATE         *WalkState,
     ACPI_PARSE_OBJECT       *Op)
 {
     ACPI_STATUS             Status;
@@ -399,6 +399,12 @@ AcpiDmIsResourceTemplate (
     /* Get the ByteData list and length */
 
     NextOp = Op->Common.Value.Arg;
+    if (!NextOp)
+    {
+        AcpiOsPrintf ("NULL byte list in buffer\n");
+        return (AE_TYPE);
+    }
+
     NextOp = NextOp->Common.Next;
     if (!NextOp)
     {
@@ -410,7 +416,8 @@ AcpiDmIsResourceTemplate (
 
     /* Walk the byte list, abort on any invalid descriptor type or length */
 
-    Status = AcpiUtWalkAmlResources (Aml, Length, NULL, &EndAml);
+    Status = AcpiUtWalkAmlResources (WalkState, Aml, Length,
+        NULL, ACPI_CAST_INDIRECT_PTR (void, &EndAml));
     if (ACPI_FAILURE (Status))
     {
         return (AE_TYPE);
