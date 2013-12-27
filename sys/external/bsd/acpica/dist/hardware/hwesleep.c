@@ -242,8 +242,8 @@ AcpiHwExtendedWake (
 
     /* Execute the wake methods */
 
-    AcpiHwExecuteSleepMethod (METHOD_PATHNAME__SST, ACPI_SST_WAKING);
-    AcpiHwExecuteSleepMethod (METHOD_PATHNAME__WAK, SleepState);
+    AcpiHwExecuteSleepMethod (__UNCONST(METHOD_PATHNAME__SST), ACPI_SST_WAKING);
+    AcpiHwExecuteSleepMethod (__UNCONST(METHOD_PATHNAME__WAK), SleepState);
 
     /*
      * Some BIOS code assumes that WAK_STS will be cleared on resume
@@ -253,6 +253,6 @@ AcpiHwExtendedWake (
     (void) AcpiWrite ((UINT64) ACPI_X_WAKE_STATUS, &AcpiGbl_FADT.SleepStatus);
     AcpiGbl_SystemAwakeAndRunning = TRUE;
 
-    AcpiHwExecuteSleepMethod (METHOD_PATHNAME__SST, ACPI_SST_WORKING);
+    AcpiHwExecuteSleepMethod (__UNCONST(METHOD_PATHNAME__SST), ACPI_SST_WORKING);
     return_ACPI_STATUS (AE_OK);
 }

@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2011, Intel Corp.
+ * Copyright (C) 2000 - 2013, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -66,35 +66,35 @@ static ACPI_INTERFACE_INFO    AcpiDefaultSupportedInterfaces[] =
 {
 	/* Operating System Vendor Strings */
 
-	{__UNCONST("Windows 2000"),        NULL, 0, ACPI_OSI_WIN_2000},         /* Windows 2000 */
-	{__UNCONST("Windows 2001"),        NULL, 0, ACPI_OSI_WIN_XP},           /* Windows XP */
-	{__UNCONST("Windows 2001 SP1"),    NULL, 0, ACPI_OSI_WIN_XP_SP1},       /* Windows XP SP1 */
-	{__UNCONST("Windows 2001.1"),      NULL, 0, ACPI_OSI_WINSRV_2003},      /* Windows Server 2003 */
-	{__UNCONST("Windows 2001 SP2"),    NULL, 0, ACPI_OSI_WIN_XP_SP2},       /* Windows XP SP2 */
-	{__UNCONST("Windows 2001.1 SP1"),  NULL, 0, ACPI_OSI_WINSRV_2003_SP1},  /* Windows Server 2003 SP1 - Added 03/2006 */
-	{__UNCONST("Windows 2006"),        NULL, 0, ACPI_OSI_WIN_VISTA},        /* Windows Vista - Added 03/2006 */
-	{__UNCONST("Windows 2006.1"),      NULL, 0, ACPI_OSI_WINSRV_2008},      /* Windows Server 2008 - Added 09/2009 */
-	{__UNCONST("Windows 2006 SP1"),    NULL, 0, ACPI_OSI_WIN_VISTA_SP1},    /* Windows Vista SP1 - Added 09/2009 */
-	{__UNCONST("Windows 2006 SP2"),    NULL, 0, ACPI_OSI_WIN_VISTA_SP2},    /* Windows Vista SP2 - Added 09/2010 */
-	{__UNCONST("Windows 2009"),        NULL, 0, ACPI_OSI_WIN_7},            /* Windows 7 and Server 2008 R2 - Added 09/2009 */
+    {__UNCONST("Windows 2000"),        NULL, 0, ACPI_OSI_WIN_2000},         /* Windows 2000 */
+    {__UNCONST("Windows 2001"),        NULL, 0, ACPI_OSI_WIN_XP},           /* Windows XP */
+    {__UNCONST("Windows 2001 SP1"),    NULL, 0, ACPI_OSI_WIN_XP_SP1},       /* Windows XP SP1 */
+    {__UNCONST("Windows 2001.1"),      NULL, 0, ACPI_OSI_WINSRV_2003},      /* Windows Server 2003 */
+    {__UNCONST("Windows 2001 SP2"),    NULL, 0, ACPI_OSI_WIN_XP_SP2},       /* Windows XP SP2 */
+    {__UNCONST("Windows 2001.1 SP1"),  NULL, 0, ACPI_OSI_WINSRV_2003_SP1},  /* Windows Server 2003 SP1 - Added 03/2006 */
+    {__UNCONST("Windows 2006"),        NULL, 0, ACPI_OSI_WIN_VISTA},        /* Windows Vista - Added 03/2006 */
+    {__UNCONST("Windows 2006.1"),      NULL, 0, ACPI_OSI_WINSRV_2008},      /* Windows Server 2008 - Added 09/2009 */
+    {__UNCONST("Windows 2006 SP1"),    NULL, 0, ACPI_OSI_WIN_VISTA_SP1},    /* Windows Vista SP1 - Added 09/2009 */
+    {__UNCONST("Windows 2006 SP2"),    NULL, 0, ACPI_OSI_WIN_VISTA_SP2},    /* Windows Vista SP2 - Added 09/2010 */
+    {__UNCONST("Windows 2009"),        NULL, 0, ACPI_OSI_WIN_7},            /* Windows 7 and Server 2008 R2 - Added 09/2009 */
+    {__UNCONST("Windows 2012"),        NULL, 0, ACPI_OSI_WIN_8},            /* Windows 8 and Server 2012 - Added 08/2012 */
 
 	/* Feature Group Strings */
 
-	{__UNCONST("Extended Address Space Descriptor"), NULL, 0, 0}
+    {__UNCONST("Extended Address Space Descriptor"), NULL, ACPI_OSI_FEATURE, 0},
 
     /*
      * All "optional" feature group strings (features that are implemented
-     * by the host) should be dynamically added by the host via
-     * AcpiInstallInterface and should not be manually added here.
-     *
-     * Examples of optional feature group strings:
-     *
-     * "Module Device"
-     * "Processor Device"
-     * "3.0 Thermal Model"
-     * "3.0 _SCP Extensions"
-     * "Processor Aggregator Device"
+     * by the host) should be dynamically modified to VALID by the host via
+     * AcpiInstallInterface or AcpiUpdateInterfaces. Such optional feature
+     * group strings are set as INVALID by default here.
      */
+
+    {__UNCONST("Module Device"),               NULL, ACPI_OSI_OPTIONAL_FEATURE, 0},
+    {__UNCONST("Processor Device"),            NULL, ACPI_OSI_OPTIONAL_FEATURE, 0},
+    {__UNCONST("3.0 Thermal Model"),           NULL, ACPI_OSI_OPTIONAL_FEATURE, 0},
+    {__UNCONST("3.0 _SCP Extensions"),         NULL, ACPI_OSI_OPTIONAL_FEATURE, 0},
+    {__UNCONST("Processor Aggregator Device"), NULL, ACPI_OSI_OPTIONAL_FEATURE, 0}
 };
 
 
@@ -114,10 +114,16 @@ ACPI_STATUS
 AcpiUtInitializeInterfaces (
     void)
 {
+    ACPI_STATUS             Status;
     UINT32                  i;
 
 
-    (void) AcpiOsAcquireMutex (AcpiGbl_OsiMutex, ACPI_WAIT_FOREVER);
+    Status = AcpiOsAcquireMutex (AcpiGbl_OsiMutex, ACPI_WAIT_FOREVER);
+    if (ACPI_FAILURE (Status))
+    {
+        return (Status);
+    }
+
     AcpiGbl_SupportedInterfaces = AcpiDefaultSupportedInterfaces;
 
     /* Link the static list of supported interfaces */
@@ -139,39 +145,58 @@ AcpiUtInitializeInterfaces (
  *
  * PARAMETERS:  None
  *
- * RETURN:      None
+ * RETURN:      Status
  *
  * DESCRIPTION: Delete all interfaces in the global list. Sets
  *              AcpiGbl_SupportedInterfaces to NULL.
  *
  ******************************************************************************/
 
-void
+ACPI_STATUS
 AcpiUtInterfaceTerminate (
     void)
 {
+    ACPI_STATUS             Status;
     ACPI_INTERFACE_INFO     *NextInterface;
 
 
-    (void) AcpiOsAcquireMutex (AcpiGbl_OsiMutex, ACPI_WAIT_FOREVER);
-    NextInterface = AcpiGbl_SupportedInterfaces;
+    Status = AcpiOsAcquireMutex (AcpiGbl_OsiMutex, ACPI_WAIT_FOREVER);
+    if (ACPI_FAILURE (Status))
+    {
+        return (Status);
+    }
 
+    NextInterface = AcpiGbl_SupportedInterfaces;
     while (NextInterface)
     {
         AcpiGbl_SupportedInterfaces = NextInterface->Next;
 
-        /* Only interfaces added at runtime can be freed */
-
         if (NextInterface->Flags & ACPI_OSI_DYNAMIC)
         {
+            /* Only interfaces added at runtime can be freed */
+
             ACPI_FREE (NextInterface->Name);
             ACPI_FREE (NextInterface);
+        }
+        else
+        {
+            /* Interface is in static list. Reset it to invalid or valid. */
+
+            if (NextInterface->Flags & ACPI_OSI_DEFAULT_INVALID)
+            {
+                NextInterface->Flags |= ACPI_OSI_INVALID;
+            }
+            else
+            {
+                NextInterface->Flags &= ~ACPI_OSI_INVALID;
+            }
         }
 
         NextInterface = AcpiGbl_SupportedInterfaces;
     }
 
     AcpiOsReleaseMutex (AcpiGbl_OsiMutex);
+    return (AE_OK);
 }
 
 
@@ -294,6 +319,57 @@ AcpiUtRemoveInterface (
 
 /*******************************************************************************
  *
+ * FUNCTION:    AcpiUtUpdateInterfaces
+ *
+ * PARAMETERS:  Action              - Actions to be performed during the
+ *                                    update
+ *
+ * RETURN:      Status
+ *
+ * DESCRIPTION: Update _OSI interface strings, disabling or enabling OS vendor
+ *              strings or/and feature group strings.
+ *              Caller MUST hold AcpiGbl_OsiMutex
+ *
+ ******************************************************************************/
+
+ACPI_STATUS
+AcpiUtUpdateInterfaces (
+    UINT8                   Action)
+{
+    ACPI_INTERFACE_INFO     *NextInterface;
+
+
+    NextInterface = AcpiGbl_SupportedInterfaces;
+    while (NextInterface)
+    {
+        if (((NextInterface->Flags & ACPI_OSI_FEATURE) &&
+             (Action & ACPI_FEATURE_STRINGS)) ||
+            (!(NextInterface->Flags & ACPI_OSI_FEATURE) &&
+             (Action & ACPI_VENDOR_STRINGS)))
+        {
+            if (Action & ACPI_DISABLE_INTERFACES)
+            {
+                /* Mark the interfaces as invalid */
+
+                NextInterface->Flags |= ACPI_OSI_INVALID;
+            }
+            else
+            {
+                /* Mark the interfaces as valid */
+
+                NextInterface->Flags &= ~ACPI_OSI_INVALID;
+            }
+        }
+
+        NextInterface = NextInterface->Next;
+    }
+
+    return (AE_OK);
+}
+
+
+/*******************************************************************************
+ *
  * FUNCTION:    AcpiUtGetInterface
  *
  * PARAMETERS:  InterfaceName       - The interface to find
@@ -349,6 +425,7 @@ AcpiUtOsiImplementation (
     ACPI_OPERAND_OBJECT     *ReturnDesc;
     ACPI_INTERFACE_INFO     *InterfaceInfo;
     ACPI_INTERFACE_HANDLER  InterfaceHandler;
+    ACPI_STATUS             Status;
     UINT32                  ReturnValue;
 
 
@@ -375,7 +452,12 @@ AcpiUtOsiImplementation (
     /* Default return value is 0, NOT SUPPORTED */
 
     ReturnValue = 0;
-    (void) AcpiOsAcquireMutex (AcpiGbl_OsiMutex, ACPI_WAIT_FOREVER);
+    Status = AcpiOsAcquireMutex (AcpiGbl_OsiMutex, ACPI_WAIT_FOREVER);
+    if (ACPI_FAILURE (Status))
+    {
+        AcpiUtRemoveReference (ReturnDesc);
+        return_ACPI_STATUS (Status);
+    }
 
     /* Lookup the interface in the global _OSI list */
 
