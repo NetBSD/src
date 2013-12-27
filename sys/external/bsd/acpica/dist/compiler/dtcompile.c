@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2011, Intel Corp.
+ * Copyright (C) 2000 - 2013, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -101,6 +101,17 @@ DtDoCompile (
         return (Status);
     }
 
+    /* Preprocessor */
+
+    Event = UtBeginEvent ("Preprocess input file");
+    PrDoPreprocess ();
+    UtEndEvent (Event);
+
+    if (Gbl_PreprocessOnly)
+    {
+        return (AE_OK);
+    }
+
     /*
      * Scan the input file (file is already open) and
      * build the parse tree
@@ -154,7 +165,7 @@ DtDoCompile (
     /* Write the binary, then the optional hex file */
 
     DtOutputBinary (Gbl_RootTable);
-    LsDoHexOutput ();
+    HxDoHexOutput ();
     DtWriteTableToListing ();
 
 CleanupAndExit:
@@ -273,6 +284,7 @@ DtCompileDataTable (
     char                    *Signature;
     ACPI_TABLE_HEADER       *AcpiTableHeader;
     ACPI_STATUS             Status;
+    DT_FIELD                *RootField = *FieldList;
 
 
     /* Verify that we at least have a table signature and save it */
@@ -305,9 +317,20 @@ DtCompileDataTable (
         DtSetTableLength ();
         return (Status);
     }
-    else if (ACPI_COMPARE_NAME (Signature, ACPI_SIG_RSDP))
+    else if (ACPI_VALIDATE_RSDP_SIG (Signature))
     {
         Status = DtCompileRsdp (FieldList);
+        return (Status);
+    }
+    else if (ACPI_COMPARE_NAME (Signature, ACPI_SIG_S3PT))
+    {
+        Status = DtCompileS3pt (FieldList);
+        if (ACPI_FAILURE (Status))
+        {
+            return (Status);
+        }
+
+        DtSetTableLength ();
         return (Status);
     }
 
@@ -329,10 +352,10 @@ DtCompileDataTable (
     /* Validate the signature via the ACPI table list */
 
     TableData = AcpiDmGetTableData (Signature);
-    if (!TableData)
+    if (!TableData || Gbl_CompileGeneric)
     {
         DtCompileGeneric ((void **) FieldList);
-        goto Out;
+        goto FinishHeader;
     }
 
     /* Dispatch to per-table compile */
@@ -369,7 +392,8 @@ DtCompileDataTable (
         return (AE_ERROR);
     }
 
-Out:
+FinishHeader:
+
     /* Set the final table length and then the checksum */
 
     DtSetTableLength ();
@@ -377,6 +401,8 @@ Out:
         ACPI_TABLE_HEADER, Gbl_RootTable->Buffer);
     DtSetTableChecksum (&AcpiTableHeader->Checksum);
 
+    DtDumpFieldList (RootField);
+    DtDumpSubtableList ();
     return (AE_OK);
 }
 
@@ -411,12 +437,22 @@ DtCompileTable (
     UINT8                   FieldType;
     UINT8                   *Buffer;
     UINT8                   *FlagBuffer = NULL;
+    UINT32                  CurrentFlagByteOffset = 0;
     ACPI_STATUS             Status;
 
 
     if (!Field || !*Field)
     {
         return (AE_BAD_PARAMETER);
+    }
+
+    /* Ignore optional subtable if name does not match */
+
+    if ((Info->Flags & DT_OPTIONAL) &&
+        ACPI_STRCMP ((*Field)->Name, Info->Name))
+    {
+        *RetSubtable = NULL;
+        return (AE_OK);
     }
 
     Length = DtGetSubtableLength (*Field, Info);
@@ -442,6 +478,11 @@ DtCompileTable (
      */
     for (; Info->Name; Info++)
     {
+        if (Info->Opcode == ACPI_DMT_EXTRA_TEXT)
+        {
+            continue;
+        }
+
         if (!LocalField)
         {
             sprintf (MsgBuffer, "Found NULL field - Field name \"%s\" needed",
@@ -472,6 +513,7 @@ DtCompileTable (
             *Field = LocalField;
 
             FlagBuffer = Buffer;
+            CurrentFlagByteOffset = Info->Offset;
             break;
 
         case DT_FIELD_TYPE_FLAG:
@@ -480,6 +522,14 @@ DtCompileTable (
 
             if (FlagBuffer)
             {
+                /*
+                 * We must increment the FlagBuffer when we have crossed
+                 * into the next flags byte within the flags field
+                 * of type DT_FIELD_TYPE_FLAGS_INTEGER.
+                 */
+                FlagBuffer += (Info->Offset - CurrentFlagByteOffset);
+                CurrentFlagByteOffset = Info->Offset;
+
                 DtCompileFlag (FlagBuffer, LocalField, Info);
             }
             else

@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2011, Intel Corp.
+ * Copyright (C) 2000 - 2013, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,21 +41,59 @@
  * POSSIBILITY OF SUCH DAMAGES.
  */
 
-#include "acpihelp.h"
-
 #define ACPI_CREATE_PREDEFINED_TABLE
+#define ACPI_CREATE_RESOURCE_TABLE
+
+#include "acpihelp.h"
 #include "acpredef.h"
 
-static char         Gbl_Buffer[64];
-static const char   *AcpiRtypeNames[] =
+
+/* Device IDs defined in the ACPI specification */
+
+static const AH_DEVICE_ID  AhDeviceIds[] =
 {
-    "/Integer",
-    "/String",
-    "/Buffer",
-    "/Package",
-    "/Reference",
+    {"PNP0A05",     "Generic Container Device"},
+    {"PNP0A06",     "Generic Container Device"},
+    {"PNP0C08",     "ACPI core hardware"},
+    {"PNP0C09",     "Embedded Controller Device"},
+    {"PNP0C0A",     "Control Method Battery"},
+    {"PNP0C0B",     "Fan"},
+    {"PNP0C0C",     "Power Button Device"},
+    {"PNP0C0D",     "Lid Device"},
+    {"PNP0C0E",     "Sleep Button Device"},
+    {"PNP0C0F",     "PCI Interrupt Link Device"},
+    {"PNP0C80",     "Memory Device"},
+
+    {"ACPI0001",    "SMBus 1.0 Host Controller"},
+    {"ACPI0002",    "Smart Battery Subsystem"},
+    {"ACPI0003",    "Power Source Device"},
+    {"ACPI0004",    "Module Device"},
+    {"ACPI0005",    "SMBus 2.0 Host Controller"},
+    {"ACPI0006",    "GPE Block Device"},
+    {"ACPI0007",    "Processor Device"},
+    {"ACPI0008",    "Ambient Light Sensor Device"},
+    {"ACPI0009",    "I/O xAPIC Device"},
+    {"ACPI000A",    "I/O APIC Device"},
+    {"ACPI000B",    "I/O SAPIC Device"},
+    {"ACPI000C",    "Processor Aggregator Device"},
+    {"ACPI000D",    "Power Meter Device"},
+    {"ACPI000E",    "Time/Alarm Device"},
+    {"ACPI000F",    "User Presence Detection Device"},
+
+    {NULL, NULL}
 };
 
+#define AH_DISPLAY_EXCEPTION(Status, Name) \
+    printf ("%.4X: %s\n", Status, Name)
+
+#define AH_DISPLAY_EXCEPTION_TEXT(Status, Exception) \
+    printf ("%.4X: %-28s (%s)\n", Status, Exception->Name, Exception->Description)
+
+#define BUFFER_LENGTH           128
+#define LINE_BUFFER_LENGTH      512
+
+static char         Gbl_Buffer[BUFFER_LENGTH];
+static char         Gbl_LineBuffer[LINE_BUFFER_LENGTH];
 
 /* Local prototypes */
 
@@ -69,9 +107,8 @@ AhDisplayPredefinedInfo (
     char                    *Name);
 
 static void
-AhGetExpectedTypes (
-    char                    *Buffer,
-    UINT32                  ExpectedBtypes);
+AhDisplayResourceName (
+    const ACPI_PREDEFINED_INFO  *ThisName);
 
 static void
 AhDisplayAmlOpcode (
@@ -79,6 +116,10 @@ AhDisplayAmlOpcode (
 
 static void
 AhDisplayAslOperator (
+    const AH_ASL_OPERATOR   *Op);
+
+static void
+AhDisplayOperatorKeywords (
     const AH_ASL_OPERATOR   *Op);
 
 static void
@@ -229,83 +270,57 @@ AhDisplayPredefinedName (
 
 static void
 AhDisplayPredefinedInfo (
-    char                    *Name)
+    char                        *Name)
 {
     const ACPI_PREDEFINED_INFO  *ThisName;
-    BOOLEAN                     Matched;
-    UINT32                      i;
 
 
-    /* Find/display only the exact input name */
+    /* NOTE: we check both tables always because there are some dupes */
 
-    for (ThisName = PredefinedNames; ThisName->Info.Name[0]; ThisName++)
+    /* Check against the predefine methods first */
+
+    ThisName = AcpiUtMatchPredefinedMethod (Name);
+    if (ThisName)
     {
-        Matched = TRUE;
-        for (i = 0; i < ACPI_NAME_SIZE; i++)
-        {
-            if (ThisName->Info.Name[i] != Name[i])
-            {
-                Matched = FALSE;
-                break;
-            }
-        }
+        AcpiUtDisplayPredefinedMethod (Gbl_Buffer, ThisName, TRUE);
+    }
 
-        if (Matched)
-        {
-            AhGetExpectedTypes (Gbl_Buffer, ThisName->Info.ExpectedBtypes);
+    /* Check against the predefined resource descriptor names */
 
-            printf ("%*s%4.4s has %u arguments, returns: %s\n",
-                6, " ", ThisName->Info.Name, ThisName->Info.ParamCount,
-                ThisName->Info.ExpectedBtypes ? Gbl_Buffer : "-Nothing-");
-            return;
-        }
-
-        if (ThisName->Info.ExpectedBtypes & ACPI_RTYPE_PACKAGE)
-        {
-            ThisName++;
-        }
+    ThisName = AcpiUtMatchResourceName (Name);
+    if (ThisName)
+    {
+        AhDisplayResourceName (ThisName);
     }
 }
 
 
 /*******************************************************************************
  *
- * FUNCTION:    AhGetExpectedTypes
+ * FUNCTION:    AhDisplayResourceName
  *
- * PARAMETERS:  Buffer              - Where the formatted string is returned
- *              ExpectedBTypes      - Bitfield of expected data types
+ * PARAMETERS:  ThisName            - Entry in the predefined method/name table
  *
- * RETURN:      Formatted string in Buffer.
+ * RETURN:      None
  *
- * DESCRIPTION: Format the expected object types into a printable string.
+ * DESCRIPTION: Display information about a resource descriptor name.
  *
  ******************************************************************************/
 
 static void
-AhGetExpectedTypes (
-    char                    *Buffer,
-    UINT32                  ExpectedBtypes)
+AhDisplayResourceName (
+    const ACPI_PREDEFINED_INFO  *ThisName)
 {
-    UINT32                  ThisRtype;
-    UINT32                  i;
-    UINT32                  j;
+    UINT32                      NumTypes;
 
 
-    j = 1;
-    Buffer[0] = 0;
-    ThisRtype = ACPI_RTYPE_INTEGER;
+    NumTypes = AcpiUtGetResourceBitWidth (Gbl_Buffer,
+        ThisName->Info.ArgumentList);
 
-    for (i = 0; i < ACPI_NUM_RTYPES; i++)
-    {
-        /* If one of the expected types, concatenate the name of this type */
-
-        if (ExpectedBtypes & ThisRtype)
-        {
-            strcat (Buffer, &AcpiRtypeNames[i][j]);
-            j = 0;              /* Use name separator from now on */
-        }
-        ThisRtype <<= 1;    /* Next Rtype */
-    }
+    printf ("      %4.4s resource descriptor field is %s bits wide%s\n",
+        ThisName->Info.Name,
+        Gbl_Buffer,
+        (NumTypes > 1) ? " (depending on descriptor type)" : "");
 }
 
 
@@ -386,7 +401,6 @@ AhDecodeAmlOpcode (
 {
     const AH_AML_OPCODE     *Op;
     UINT32                  Opcode;
-    BOOLEAN                 Found = FALSE;
     UINT8                   Prefix;
 
 
@@ -421,7 +435,6 @@ AhDecodeAmlOpcode (
             (Opcode <= Op->OpcodeRangeEnd))
         {
             AhDisplayAmlOpcode (Op);
-            Found = TRUE;
         }
     }
 }
@@ -561,7 +574,7 @@ AhDisplayAslKeyword (
 
     /* ASL keyword name and description */
 
-    printf ("%20s: %s\n", Op->Name, Op->Description);
+    printf ("%22s: %s\n", Op->Name, Op->Description);
     if (!Op->KeywordList)
     {
         return;
@@ -569,7 +582,7 @@ AhDisplayAslKeyword (
 
     /* List of actual keywords */
 
-    AhPrintOneField (22, 0, AH_MAX_ASL_LINE_LENGTH, Op->KeywordList);
+    AhPrintOneField (24, 0, AH_MAX_ASL_LINE_LENGTH, Op->KeywordList);
     printf ("\n");
 }
 
@@ -658,6 +671,62 @@ AhDisplayAslOperator (
 
     AhPrintOneField (18, 0, AH_MAX_ASL_LINE_LENGTH, Op->Syntax);
     printf ("\n");
+
+    AhDisplayOperatorKeywords (Op);
+    printf ("\n");
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AhDisplayOperatorKeywords
+ *
+ * PARAMETERS:  Op                  - Pointer to ASL keyword with syntax info
+ *
+ * RETURN:      None
+ *
+ * DESCRIPTION: Display any/all keywords that are associated with the ASL
+ *              operator.
+ *
+ ******************************************************************************/
+
+static void
+AhDisplayOperatorKeywords (
+    const AH_ASL_OPERATOR   *Op)
+{
+    char                    *Token;
+    char                    *Separators = "(){}, ";
+    BOOLEAN                 FirstKeyword = TRUE;
+
+
+    if (!Op || !Op->Syntax)
+    {
+        return;
+    }
+
+    /*
+     * Find all parameters that have the word "keyword" within, and then
+     * display the info about that keyword
+     */
+    strcpy (Gbl_LineBuffer, Op->Syntax);
+    Token = strtok (Gbl_LineBuffer, Separators);
+    while (Token)
+    {
+        if (strstr (Token, "Keyword"))
+        {
+            if (FirstKeyword)
+            {
+                printf ("\n");
+                FirstKeyword = FALSE;
+            }
+
+            /* Found a keyword, display keyword information */
+
+            AhFindAslKeywords (Token);
+        }
+
+        Token = strtok (NULL, Separators);
+    }
 }
 
 
@@ -729,4 +798,108 @@ AhPrintOneField (
         }
         printf ("%s", This);
     }
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AhDisplayDeviceIds
+ *
+ * PARAMETERS:  None
+ *
+ * RETURN:      None
+ *
+ * DESCRIPTION: Display all PNP* and ACPI* device IDs defined in the ACPI spec.
+ *
+ ******************************************************************************/
+
+void
+AhDisplayDeviceIds (
+    void)
+{
+    const AH_DEVICE_ID      *DeviceId = AhDeviceIds;
+
+
+    printf ("ACPI and PNP Device IDs defined in the ACPI specification:\n\n");
+    while (DeviceId->Name)
+    {
+        printf ("%8s   %s\n", DeviceId->Name, DeviceId->Description);
+        DeviceId++;
+    }
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AhDecodeException
+ *
+ * PARAMETERS:  HexString           - ACPI status string from command line, in
+ *                                    hex. If null, display all exceptions.
+ *
+ * RETURN:      None
+ *
+ * DESCRIPTION: Decode and display an ACPI_STATUS exception code.
+ *
+ ******************************************************************************/
+
+void
+AhDecodeException (
+    char                    *HexString)
+{
+    const ACPI_EXCEPTION_INFO   *ExceptionInfo;
+    UINT32                      Status;
+    UINT32                      i;
+
+
+    /*
+     * A null input string means to decode and display all known
+     * exception codes.
+     */
+    if (!HexString)
+    {
+        printf ("All defined ACPICA exception codes:\n\n");
+        AH_DISPLAY_EXCEPTION (0, "AE_OK                        (No error occurred)");
+
+        /* Display codes in each block of exception types */
+
+        for (i = 1; (i & AE_CODE_MASK) <= AE_CODE_MAX; i += 0x1000)
+        {
+            Status = i;
+            do
+            {
+                ExceptionInfo = AcpiUtValidateException ((ACPI_STATUS) Status);
+                if (ExceptionInfo)
+                {
+                    AH_DISPLAY_EXCEPTION_TEXT (Status, ExceptionInfo);
+                }
+                Status++;
+
+            } while (ExceptionInfo);
+        }
+        return;
+    }
+
+    /* Decode a single user-supplied exception code */
+
+    Status = ACPI_STRTOUL (HexString, NULL, 16);
+    if (!Status)
+    {
+        printf ("%s: Invalid hexadecimal exception code value\n", HexString);
+        return;
+    }
+
+    if (Status > ACPI_UINT16_MAX)
+    {
+        AH_DISPLAY_EXCEPTION (Status, "Invalid exception code (more than 16 bits)");
+        return;
+    }
+
+    ExceptionInfo = AcpiUtValidateException ((ACPI_STATUS) Status);
+    if (!ExceptionInfo)
+    {
+        AH_DISPLAY_EXCEPTION (Status, "Unknown exception code");
+        return;
+    }
+
+    AH_DISPLAY_EXCEPTION_TEXT (Status, ExceptionInfo);
 }
