@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.350 2013/12/06 21:11:06 nakayama Exp $	*/
+/*	$NetBSD: locore.s,v 1.351 2013/12/27 21:11:19 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -4041,25 +4041,29 @@ dostart:
 
 
 ENTRY_NOPROFILE(cpu_initialize)	/* for cosmetic reasons - nicer backtrace */
+
+	/* Cache the cputyp in %l6 for later user below */
+	sethi	%hi(_C_LABEL(cputyp)), %l6
+	ld	[%l6 + %lo(_C_LABEL(cputyp))], %l6
+
 	/*
 	 * Step 5: is no more.
 	 */
 	
 	/*
-	 * Step 6: hunt through cpus list and find the one that
-	 * matches our UPAID.
+	 * Step 6: hunt through cpus list and find the one that matches our cpuid
 	 */
+
+	call	_C_LABEL(cpu_myid)	! Retrieve cpuid in %o0
+	 mov	%g0, %o0
+	
 	sethi	%hi(_C_LABEL(cpus)), %l1
-	ldxa	[%g0] ASI_MID_REG, %l2
 	LDPTR	[%l1 + %lo(_C_LABEL(cpus))], %l1
-	srax	%l2, 17, %l2			! Isolate UPAID from CPU reg
-	and	%l2, 0x1f, %l2
 0:
-	ld	[%l1 + CI_UPAID], %l3		! Load UPAID
-	cmp	%l3, %l2			! Does it match?
+	ld	[%l1 + CI_CPUID], %l3		! Load CPUID
+	cmp	%l3, %o0			! Does it match?
 	bne,a,pt	%icc, 0b		! no
 	 LDPTR	[%l1 + CI_NEXT], %l1		! Load next cpu_info pointer
-
 
 	/*
 	 * Get pointer to our cpu_info struct
@@ -4067,6 +4071,11 @@ ENTRY_NOPROFILE(cpu_initialize)	/* for cosmetic reasons - nicer backtrace */
 	mov	%l1, %l7			! save cpu_info pointer
 	ldx	[%l1 + CI_PADDR], %l1		! Load the interrupt stack's PA
 
+	cmp	%l6, CPU_SUN4V
+	be,pn	%icc, 3f
+	 nop
+
+	/* sun4u */	
 	sethi	%hi(0xa0000000), %l2		! V=1|SZ=01|NFO=0|IE=0
 	sllx	%l2, 32, %l2			! Shift it into place
 
@@ -4087,7 +4096,14 @@ ENTRY_NOPROFILE(cpu_initialize)	/* for cosmetic reasons - nicer backtrace */
 	stxa	%l0, [%l5] ASI_DMMU		! Make DMMU point to it
 	stxa	%l2, [%g0] ASI_DMMU_DATA_IN	! Store it
 	membar	#Sync
-
+	
+	ba	4f
+	 nop
+3:
+	/* sun4v */
+	call	_C_LABEL(pmap_setup_intstack_sun4v)	! Call nice C function for mapping INTSTACK
+	 mov	%l1, %o0
+4:		
 	!! Setup kernel stack (we rely on curlwp on this cpu
 	!! being lwp0 here and it's uarea is mapped special
 	!! and already accessible here)
@@ -4125,6 +4141,12 @@ ENTRY_NOPROFILE(cpu_initialize)	/* for cosmetic reasons - nicer backtrace */
 	/*
 	 * install our TSB pointers
 	 */
+
+	cmp	%l6, CPU_SUN4V
+	be,pn	%icc, 5f
+	 nop
+
+	/* sun4u */	
 	sethi	%hi(_C_LABEL(tsbsize)), %l2
 	sethi	%hi(0x1fff), %l3
 	sethi	%hi(TSB), %l4
@@ -4145,7 +4167,14 @@ ENTRY_NOPROFILE(cpu_initialize)	/* for cosmetic reasons - nicer backtrace */
 	set	1f, %l1
 	flush	%l1
 1:
+	ba	6f
+	 nop
 
+5:	/* sun4v */
+	call	_C_LABEL(pmap_setup_tsb_sun4v)
+	 nop
+
+6:		
 	/* set trap table */
 	set	_C_LABEL(trapbase), %l1
 	call	_C_LABEL(prom_set_trap_table)	! Now we should be running 100% from our handlers

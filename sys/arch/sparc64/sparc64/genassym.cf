@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.66 2011/07/20 12:06:00 macallan Exp $
+#	$NetBSD: genassym.cf,v 1.67 2013/12/27 21:11:19 palle Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -150,6 +150,7 @@ define	CI_UPAID	offsetof(struct cpu_info, ci_cpuid)
 define	CI_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
 define	CI_SPINUP	offsetof(struct cpu_info, ci_spinup)
 define	CI_PADDR	offsetof(struct cpu_info, ci_paddr)
+define	CI_CPUID	offsetof(struct cpu_info, ci_cpuid)
 define	CI_WANT_AST	offsetof(struct cpu_info, ci_want_ast)
 define	CI_WANT_RESCHED	offsetof(struct cpu_info, ci_want_resched)
 define	CI_EINTSTACK	offsetof(struct cpu_info, ci_eintstack)

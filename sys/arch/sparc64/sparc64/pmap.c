@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.282 2013/12/16 20:17:35 palle Exp $	*/
+/*	$NetBSD: pmap.c,v 1.283 2013/12/27 21:11:20 palle Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.282 2013/12/16 20:17:35 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.283 2013/12/27 21:11:20 palle Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -3779,4 +3779,54 @@ sparc64_mmap_range_test(vaddr_t addr, vaddr_t eaddr)
 
 	return EINVAL;
 }
+#endif
+
+#ifdef SUN4V
+void
+pmap_setup_intstack_sun4v(paddr_t pa)
+{
+	int64_t hv_rc;
+	int64_t data;
+	data = SUN4V_TSB_DATA(
+	    0 /* global */,
+	    PGSZ_64K,
+	    pa,
+	    1 /* priv */,
+	    1 /* Write */,
+	    1 /* Cacheable */,
+	    FORCE_ALIAS /* ALIAS -- Disable D$ */,
+	    1 /* valid */,
+	    0 /* IE */);
+	hv_rc = hv_mmu_map_perm_addr(INTSTACK, data, MAP_DTLB);
+	if ( hv_rc != H_EOK ) {
+		panic("hv_mmu_map_perm_addr() failed - rc = %ld\n", hv_rc);
+	}
+	else {
+		memset((void *)INTSTACK, 0, 64 * KB);
+	}
+}
+
+void
+pmap_setup_tsb_sun4v(void)
+{
+	int err;
+	extern struct tsb_desc *tsb_desc;
+	extern paddr_t pmap_kextract(vaddr_t va);
+	paddr_t tsb_desc_p;
+	tsb_desc_p = pmap_kextract((vaddr_t)tsb_desc);
+	if ( !tsb_desc_p ) {
+		panic("pmap_setup_tsb_sun4v() pmap_kextract() failed");
+	}
+	err = hv_mmu_tsb_ctx0(1, tsb_desc_p);
+	if (err != H_EOK) {
+		prom_printf("hv_mmu_tsb_ctx0() err: %d\n", err);
+		panic("pmap_setup_tsb_sun4v() hv_mmu_tsb_ctx0() failed");
+	}
+	err = hv_mmu_tsb_ctxnon0(1, tsb_desc_p);
+	if (err != H_EOK) {
+		prom_printf("hv_mmu_tsb_ctxnon0() err: %d\n", err);
+		panic("pmap_setup_tsb_sun4v() hv_mmu_tsb_ctxnon0() failed");
+	}
+}
+
 #endif
