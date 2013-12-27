@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_readline.c,v 1.3 2013/04/06 02:20:32 christos Exp $	*/
+/*	$NetBSD: openpam_readline.c,v 1.4 2013/12/27 20:10:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 Networks Associates Technology, Inc.
@@ -34,14 +34,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: openpam_readline.c 596 2012-04-14 14:52:40Z des 
+ * Id: openpam_readline.c 703 2013-08-16 11:57:54Z des 
  */
 
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
 
-#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -64,12 +63,9 @@ openpam_readline(FILE *f, int *lineno, size_t *lenp)
 	size_t len, size;
 	int ch;
 
-	if ((line = malloc(size = MIN_LINE_LENGTH)) == NULL) {
-		openpam_log(PAM_LOG_ERROR, "malloc(): %m");
+	line = NULL;
+	if (openpam_straddch(&line, &size, &len, 0) != 0)
 		return (NULL);
-	}
-	len = 0;
-
 	for (;;) {
 		ch = fgetc(f);
 		/* strip comment */
@@ -106,7 +102,6 @@ openpam_readline(FILE *f, int *lineno, size_t *lenp)
 		goto fail;
 	if (lenp != NULL)
 		*lenp = len;
-	openpam_log(PAM_LOG_LIBDEBUG, "returning '%s'", line);
 	return (line);
 fail:
 	FREE(line);
