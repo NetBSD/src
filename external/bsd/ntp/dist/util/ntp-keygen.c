@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp-keygen.c,v 1.1.1.2 2012/01/31 21:28:02 kardel Exp $	*/
+/*	$NetBSD: ntp-keygen.c,v 1.1.1.3 2013/12/27 23:31:41 christos Exp $	*/
 
 /*
  * Program to generate cryptographic keys for ntp clients and servers
@@ -90,12 +90,13 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#include "ntp_types.h"
+
+#include "ntp.h"
 #include "ntp_random.h"
 #include "ntp_stdlib.h"
 #include "ntp_assert.h"
-
 #include "ntp_libopts.h"
+#include "ntp_unixtime.h"
 #include "ntp-keygen-opts.h"
 
 #ifdef OPENSSL
@@ -106,7 +107,7 @@
 #include "openssl/pem.h"
 #include "openssl/x509v3.h"
 #include <openssl/objects.h>
-#endif /* OPENSSL */
+#endif	/* OPENSSL */
 #include <ssl_applink.c>
 
 /*
@@ -114,11 +115,7 @@
  */
 #define	MD5KEYS		10	/* number of keys generated of each type */
 #define	MD5SIZE		20	/* maximum key size */
-#define	JAN_1970	2208988800UL /* NTP seconds */
-#define YEAR		((long)60*60*24*365) /* one year in seconds */
-#define MAXFILENAME	256	/* max file name length */
-#define MAXHOSTNAME	256	/* max host name length */
-#ifdef OPENSSL
+#ifdef AUTOKEY
 #define	PLEN		512	/* default prime modulus size (bits) */
 #define	ILEN		256	/* default identity modulus size (bits) */
 #define	MVMAX		100	/* max MV parameters */
@@ -130,14 +127,15 @@
 #define BASIC_CONSTRAINTS	"critical,CA:TRUE"
 #define EXT_KEY_PRIVATE		"private"
 #define EXT_KEY_TRUST		"trustRoot"
-#endif /* OPENSSL */
+#endif	/* AUTOKEY */
 
 /*
  * Prototypes
  */
 FILE	*fheader	(const char *, const char *, const char *);
 int	gen_md5		(char *);
-#ifdef OPENSSL
+void	followlink	(char *, size_t);
+#ifdef AUTOKEY
 EVP_PKEY *gen_rsa	(char *);
 EVP_PKEY *gen_dsa	(char *);
 EVP_PKEY *gen_iffkey	(char *);
@@ -151,52 +149,98 @@ EVP_PKEY *genkey	(char *, char *);
 EVP_PKEY *readkey	(char *, char *, u_int *, EVP_PKEY **);
 void	writekey	(char *, char *, u_int *, EVP_PKEY **);
 u_long	asn2ntp		(ASN1_TIME *);
-#endif /* OPENSSL */
+#endif	/* AUTOKEY */
 
 /*
  * Program variables
  */
 extern char *optarg;		/* command line argument */
 char	*progname;
-volatile int	debug = 0;		/* debug, not de bug */
-#ifdef OPENSSL
-u_int	modulus = PLEN;		/* prime modulus size (bits) */
-u_int	modulus2 = ILEN;	/* identity modulus size (bits) */
-#endif
+u_int	lifetime = DAYSPERYEAR;	/* certificate lifetime (days) */
 int	nkeys;			/* MV keys */
 time_t	epoch;			/* Unix epoch (seconds) since 1970 */
 u_int	fstamp;			/* NTP filestamp */
-char	*hostname = NULL;	/* host name (subject name) */
-char	*groupname = NULL;	/* trusted host name (issuer name) */
-char	filename[MAXFILENAME + 1]; /* file name */
+char	hostbuf[MAXHOSTNAME + 1];
+char	*hostname = NULL;	/* host, used in cert filenames */
+char	*groupname = NULL;	/* group name */
+char	certnamebuf[2 * sizeof(hostbuf)];
+char	*certname = NULL;	/* certificate subject/issuer name */
 char	*passwd1 = NULL;	/* input private key password */
 char	*passwd2 = NULL;	/* output private key password */
-#ifdef OPENSSL
+char	filename[MAXFILENAME + 1]; /* file name */
+#ifdef AUTOKEY
+u_int	modulus = PLEN;		/* prime modulus size (bits) */
+u_int	modulus2 = ILEN;	/* identity modulus size (bits) */
 long	d0, d1, d2, d3;		/* callback counters */
-#endif /* OPENSSL */
+const EVP_CIPHER * cipher = NULL;
+#endif	/* AUTOKEY */
 
 #ifdef SYS_WINNT
 BOOL init_randfile();
 
 /*
- * Don't try to follow symbolic links
+ * Don't try to follow symbolic links on Windows.  Assume link == file.
  */
 int
-readlink(char *link, char *file, int len)
+readlink(
+	char *	link,
+	char *	file,
+	int	len
+	)
 {
-	return (-1);
+	return strlen(file);
 }
 
 /*
- * Don't try to create a symbolic link for now.
- * Just move the file to the name you need.
+ * Don't try to create symbolic links on Windows, that is supported on
+ * Vista and later only.  Instead, if CreateHardLink is available (XP
+ * and later), hardlink the linkname to the original filename.  On
+ * earlier systems, user must rename file to match expected link for
+ * ntpd to find it.  To allow building a ntp-keygen.exe which loads on
+ * Windows pre-XP, runtime link to CreateHardLinkA().
  */
 int
-symlink(char *filename, char *linkname) {
-	DeleteFile(linkname);
-	MoveFile(filename, linkname);
-	return (0);
+symlink(
+	char *	filename,
+	char*	linkname
+	)
+{
+	typedef BOOL (WINAPI *PCREATEHARDLINKA)(
+		__in LPCSTR	lpFileName,
+		__in LPCSTR	lpExistingFileName,
+		__reserved LPSECURITY_ATTRIBUTES lpSA
+		);
+	static PCREATEHARDLINKA pCreateHardLinkA;
+	static int		tried;
+	HMODULE			hDll;
+	FARPROC			pfn;
+	int			link_created;
+	int			saved_errno;
+
+	if (!tried) {
+		tried = TRUE;
+		hDll = LoadLibrary("kernel32");
+		pfn = GetProcAddress(hDll, "CreateHardLinkA");
+		pCreateHardLinkA = (PCREATEHARDLINKA)pfn;
+	}
+
+	if (NULL == pCreateHardLinkA) {
+		errno = ENOSYS;
+		return -1;
+	}
+
+	link_created = (*pCreateHardLinkA)(linkname, filename, NULL);
+	
+	if (link_created)
+		return 0;
+
+	saved_errno = GetLastError();	/* yes we play loose */
+	mfprintf(stderr, "Create hard link %s to %s failed: %m\n",
+		 linkname, filename);
+	errno = saved_errno;
+	return -1;
 }
+
 void
 InitWin32Sockets() {
 	WORD wVersionRequested;
@@ -210,6 +254,33 @@ InitWin32Sockets() {
 }
 #endif /* SYS_WINNT */
 
+
+/*
+ * followlink() - replace filename with its target if symlink.
+ *
+ * Some readlink() implementations do not null-terminate the result.
+ */
+void
+followlink(
+	char *	fname,
+	size_t	bufsiz
+	)
+{
+	int len;
+
+	REQUIRE(bufsiz > 0);
+
+	len = readlink(fname, fname, (int)bufsiz);
+	if (len < 0 ) {
+		fname[0] = '\0';
+		return;
+	}
+	if (len > (int)bufsiz - 1)
+		len = (int)bufsiz - 1;
+	fname[len] = '\0';
+}
+
+
 /*
  * Main program
  */
@@ -221,7 +292,8 @@ main(
 {
 	struct timeval tv;	/* initialization vector */
 	int	md5key = 0;	/* generate MD5 keys */
-#ifdef OPENSSL
+	int	optct;		/* option count */
+#ifdef AUTOKEY
 	X509	*cert = NULL;	/* X509 certificate */
 	X509_EXTENSION *ext;	/* X509v3 extension */
 	EVP_PKEY *pkey_host = NULL; /* host key */
@@ -240,14 +312,17 @@ main(
 	const EVP_MD *ectx;	/* EVP digest */
 	char	pathbuf[MAXFILENAME + 1];
 	const char *scheme = NULL; /* digest/signature scheme */
+	const char *ciphername = NULL; /* to encrypt priv. key */
 	char	*exten = NULL;	/* private extension */
 	char	*grpkey = NULL;	/* identity extension */
 	int	nid;		/* X509 digest/signature scheme */
 	FILE	*fstr = NULL;	/* file handle */
-#define iffsw   HAVE_OPT(ID_KEY)
-#endif /* OPENSSL */
-	char	hostbuf[MAXHOSTNAME + 1];
 	char	groupbuf[MAXHOSTNAME + 1];
+	u_int	temp;
+	BIO *	bp;
+	int	i, cnt;
+	char *	ptr;
+#endif	/* AUTOKEY */
 
 	progname = argv[0];
 
@@ -261,23 +336,27 @@ main(
 
 #ifdef OPENSSL
 	ssl_check_version();
-#endif /* OPENSSL */
+#endif	/* OPENSSL */
 
 	/*
 	 * Process options, initialize host name and timestamp.
+	 * gethostname() won't null-terminate if hostname is exactly the
+	 * length provided for the buffer.
 	 */
-	gethostname(hostbuf, MAXHOSTNAME);
+	gethostname(hostbuf, sizeof(hostbuf) - 1);
+	hostbuf[COUNTOF(hostbuf) - 1] = '\0';
 	hostname = hostbuf;
-	gettimeofday(&tv, 0);
-
+	groupname = hostbuf;
+	passwd1 = hostbuf;
+	passwd2 = NULL;
+	GETTIMEOFDAY(&tv, NULL);
+	ntp_srandom((u_long)(tv.tv_sec + tv.tv_usec));
 	epoch = tv.tv_sec;
+	fstamp = (u_int)(epoch + JAN_1970);
 
-	{
-		int optct = ntpOptionProcess(&ntp_keygenOptions,
-					     argc, argv);
-		argc -= optct;
-		argv += optct;
-	}
+	optct = ntpOptionProcess(&ntp_keygenOptions, argc, argv);
+	argc -= optct;
+	argv += optct;
 
 #ifdef OPENSSL
 	if (SSLeay() == SSLEAY_VERSION_NUMBER)
@@ -288,23 +367,22 @@ main(
 			OPENSSL_VERSION_TEXT, SSLeay_version(SSLEAY_VERSION));
 #endif /* OPENSSL */
 
-	debug = DESC(DEBUG_LEVEL).optOccCt;
+	debug = OPT_VALUE_SET_DEBUG_LEVEL;
+
 	if (HAVE_OPT( MD5KEY ))
 		md5key++;
-
-#ifdef OPENSSL
-	passwd1 = hostbuf;
+#ifdef AUTOKEY
 	if (HAVE_OPT( PVT_PASSWD ))
-		passwd1 = strdup(OPT_ARG( PVT_PASSWD ));
+		passwd1 = estrdup(OPT_ARG( PVT_PASSWD ));
 
 	if (HAVE_OPT( GET_PVT_PASSWD ))
-		passwd2 = strdup(OPT_ARG( GET_PVT_PASSWD ));
+		passwd2 = estrdup(OPT_ARG( GET_PVT_PASSWD ));
 
 	if (HAVE_OPT( HOST_KEY ))
 		hostkey++;
 
 	if (HAVE_OPT( SIGN_KEY ))
-		sign = strdup(OPT_ARG( SIGN_KEY ));
+		sign = estrdup(OPT_ARG( SIGN_KEY ));
 
 	if (HAVE_OPT( GQ_PARAMS ))
 		gqkey++;
@@ -320,17 +398,27 @@ main(
 		mvpar++;
 		nkeys = OPT_VALUE_MV_KEYS;
 	}
+
+	if (HAVE_OPT( IMBITS ))
+		modulus2 = OPT_VALUE_IMBITS;
+
 	if (HAVE_OPT( MODULUS ))
 		modulus = OPT_VALUE_MODULUS;
 
 	if (HAVE_OPT( CERTIFICATE ))
 		scheme = OPT_ARG( CERTIFICATE );
 
-	if (HAVE_OPT( SUBJECT_NAME ))
-		hostname = strdup(OPT_ARG( SUBJECT_NAME ));
+	if (HAVE_OPT( CIPHER ))
+		ciphername = OPT_ARG( CIPHER );
 
-	if (HAVE_OPT( ISSUER_NAME ))
-		groupname = strdup(OPT_ARG( ISSUER_NAME ));
+	if (HAVE_OPT( SUBJECT_NAME ))
+		hostname = estrdup(OPT_ARG( SUBJECT_NAME ));
+
+	if (HAVE_OPT( IDENT ))
+		groupname = estrdup(OPT_ARG( IDENT ));
+
+	if (HAVE_OPT( LIFETIME ))
+		lifetime = OPT_VALUE_LIFETIME;
 
 	if (HAVE_OPT( PVT_CERT ))
 		exten = EXT_KEY_PRIVATE;
@@ -339,14 +427,43 @@ main(
 		exten = EXT_KEY_TRUST;
 
 	/*
+	 * Remove the group name from the hostname variable used
+	 * in host and sign certificate file names.
+	 */
+	if (hostname != hostbuf)
+		ptr = strchr(hostname, '@');
+	else
+		ptr = NULL;
+	if (ptr != NULL) {
+		*ptr = '\0';
+		groupname = estrdup(ptr + 1);
+		/* -s @group is equivalent to -i group, host unch. */
+		if (ptr == hostname)
+			hostname = hostbuf;
+	}
+
+	/*
+	 * Derive host certificate issuer/subject names from host name
+	 * and optional group.  If no groupname is provided, the issuer
+	 * and subject is the hostname with no '@group', and the
+	 * groupname variable is pointed to hostname for use in IFF, GQ,
+	 * and MV parameters file names.
+	 */
+	if (groupname == hostbuf) {
+		certname = hostname;
+	} else {
+		snprintf(certnamebuf, sizeof(certnamebuf), "%s@%s",
+			 hostname, groupname);
+		certname = certnamebuf;
+	}
+
+	/*
 	 * Seed random number generator and grow weeds.
 	 */
 	ERR_load_crypto_strings();
 	OpenSSL_add_all_algorithms();
 	if (!RAND_status()) {
-		u_int	temp;
-
-		if (RAND_file_name(pathbuf, MAXFILENAME) == NULL) {
+		if (RAND_file_name(pathbuf, sizeof(pathbuf)) == NULL) {
 			fprintf(stderr, "RAND_file_name %s\n",
 			    ERR_error_string(ERR_get_error(), NULL));
 			exit (-1);
@@ -362,11 +479,22 @@ main(
 		    "Random seed file %s %u bytes\n", pathbuf, temp);
 		RAND_add(&epoch, sizeof(epoch), 4.0);
 	}
+#endif	/* AUTOKEY */
 
+	/*
+	 * Create new unencrypted MD5 keys file if requested. If this
+	 * option is selected, ignore all other options.
+	 */
+	if (md5key) {
+		gen_md5("md5");
+		exit (0);
+	}
+
+#ifdef AUTOKEY
 	/*
 	 * Load previous certificate if available.
 	 */
-	sprintf(filename, "ntpkey_cert_%s", hostname);
+	snprintf(filename, sizeof(filename), "ntpkey_cert_%s", hostname);
 	if ((fstr = fopen(filename, "r")) != NULL) {
 		cert = PEM_read_X509(fstr, NULL, NULL, NULL);
 		fclose(fstr);
@@ -393,10 +521,6 @@ main(
 		 * whether this is a trusted or private certificate.
 		 */
 		if (exten == NULL) {
-			BIO	*bp;
-			int	i, cnt;
-			char	*ptr;
-
 			ptr = strstr(groupbuf, "CN=");
 			cnt = X509_get_ext_count(cert);
 			for (i = 0; i < cnt; i++) {
@@ -414,33 +538,23 @@ main(
 					else if (strcmp(pathbuf,
 					    "Private") == 0)
 						exten = EXT_KEY_PRIVATE;
-					if (groupname == NULL)
-						groupname = ptr + 3;
+					certname = estrdup(ptr + 3);
 				}
 			}
 		}
 	}
 	if (scheme == NULL)
 		scheme = "RSA-MD5";
-	if (groupname == NULL)
-		groupname = hostname;
+	if (ciphername == NULL)
+		ciphername = "des-ede3-cbc";
+	cipher = EVP_get_cipherbyname(ciphername);
+	if (cipher == NULL) {
+		fprintf(stderr, "Unknown cipher %s\n", ciphername);
+		exit(-1);
+	}
 	fprintf(stderr, "Using host %s group %s\n", hostname,
 	    groupname);
-	if ((iffkey || gqkey || mvkey) && exten == NULL)
-		fprintf(stderr,
-		    "Warning: identity files may not be useful with a nontrusted certificate.\n");
-#endif /* OPENSSL */
 
-	/*
-	 * Create new unencrypted MD5 keys file if requested. If this
-	 * option is selected, ignore all other options.
-	 */
-	if (md5key) {
-		gen_md5("md5");
-		exit (0);
-	}
-
-#ifdef OPENSSL
 	/*
 	 * Create a new encrypted RSA host key file if requested;
 	 * otherwise, look for an existing host key file. If not found,
@@ -450,10 +564,10 @@ main(
 	if (hostkey)
 		pkey_host = genkey("RSA", "host");
 	if (pkey_host == NULL) {
-		sprintf(filename, "ntpkey_host_%s", hostname);
+		snprintf(filename, sizeof(filename), "ntpkey_host_%s", hostname);
 		pkey_host = readkey(filename, passwd1, &fstamp, NULL);
 		if (pkey_host != NULL) {
-			readlink(filename, filename, sizeof(filename));
+			followlink(filename, sizeof(filename));
 			fprintf(stderr, "Using host key %s\n",
 			    filename);
 		} else {
@@ -462,7 +576,7 @@ main(
 	}
 	if (pkey_host == NULL) {
 		fprintf(stderr, "Generating host key fails\n");
-		exit (-1);
+		exit(-1);
 	}
 
 	/*
@@ -473,13 +587,14 @@ main(
 	if (sign != NULL)
 		pkey_sign = genkey(sign, "sign");
 	if (pkey_sign == NULL) {
-		sprintf(filename, "ntpkey_sign_%s", hostname);
+		snprintf(filename, sizeof(filename), "ntpkey_sign_%s",
+			 hostname);
 		pkey_sign = readkey(filename, passwd1, &fstamp, NULL);
 		if (pkey_sign != NULL) {
-			readlink(filename, filename, sizeof(filename));
+			followlink(filename, sizeof(filename));
 			fprintf(stderr, "Using sign key %s\n",
 			    filename);
-		} else if (pkey_host != NULL) {
+		} else {
 			pkey_sign = pkey_host;
 			fprintf(stderr, "Using host key as sign key\n");
 		}
@@ -493,10 +608,11 @@ main(
 	if (gqkey)
 		pkey_gqkey = gen_gqkey("gqkey");
 	if (pkey_gqkey == NULL) {
-		sprintf(filename, "ntpkey_gqkey_%s", groupname);
+		snprintf(filename, sizeof(filename), "ntpkey_gqkey_%s",
+		    groupname);
 		pkey_gqkey = readkey(filename, passwd1, &fstamp, NULL);
 		if (pkey_gqkey != NULL) {
-			readlink(filename, filename, sizeof(filename));
+			followlink(filename, sizeof(filename));
 			fprintf(stderr, "Using GQ parameters %s\n",
 			    filename);
 		}
@@ -512,9 +628,8 @@ main(
 	if (pkey_gqkey != NULL && HAVE_OPT(ID_KEY)) {
 		RSA	*rsa;
 
-		epoch = fstamp - JAN_1970;
-		sprintf(filename, "ntpkey_gqpar_%s.%u", groupname,
-		    fstamp);
+		snprintf(filename, sizeof(filename),
+		    "ntpkey_gqpar_%s.%u", groupname, fstamp);
 		fprintf(stderr, "Writing GQ parameters %s to stdout\n",
 		    filename);
 		fprintf(stdout, "# %s\n# %s\n", filename,
@@ -524,9 +639,9 @@ main(
 		BN_copy(rsa->q, BN_value_one());
 		pkey = EVP_PKEY_new();
 		EVP_PKEY_assign_RSA(pkey, rsa);
-		PEM_write_PrivateKey(stdout, pkey, NULL, NULL, 0, NULL,
-		    NULL);
-		fclose(stdout);
+		PEM_write_PKCS8PrivateKey(stdout, pkey, NULL, NULL, 0,
+		    NULL, NULL);
+		fflush(stdout);
 		if (debug)
 			RSA_print_fp(stderr, rsa, 0);
 	}
@@ -537,8 +652,8 @@ main(
 	if (pkey_gqkey != NULL && passwd2 != NULL) {
 		RSA	*rsa;
 
-		sprintf(filename, "ntpkey_gqkey_%s.%u", groupname,
-		    fstamp);
+		snprintf(filename, sizeof(filename),
+		    "ntpkey_gqkey_%s.%u", groupname, fstamp);
 		fprintf(stderr, "Writing GQ keys %s to stdout\n",
 		    filename);
 		fprintf(stdout, "# %s\n# %s\n", filename,
@@ -546,9 +661,9 @@ main(
 		rsa = pkey_gqkey->pkey.rsa;
 		pkey = EVP_PKEY_new();
 		EVP_PKEY_assign_RSA(pkey, rsa);
-		PEM_write_PrivateKey(stdout, pkey,
-		    EVP_des_cbc(), NULL, 0, NULL, passwd2);
-		fclose(stdout);
+		PEM_write_PKCS8PrivateKey(stdout, pkey, cipher, NULL, 0,
+		    NULL, passwd2);
+		fflush(stdout);
 		if (debug)
 			RSA_print_fp(stderr, rsa, 0);
 	}
@@ -560,10 +675,11 @@ main(
 	if (iffkey)
 		pkey_iffkey = gen_iffkey("iffkey");
 	if (pkey_iffkey == NULL) {
-		sprintf(filename, "ntpkey_iffkey_%s", groupname);
+		snprintf(filename, sizeof(filename), "ntpkey_iffkey_%s",
+		    groupname);
 		pkey_iffkey = readkey(filename, passwd1, &fstamp, NULL);
 		if (pkey_iffkey != NULL) {
-			readlink(filename, filename, sizeof(filename));
+			followlink(filename, sizeof(filename));
 			fprintf(stderr, "Using IFF keys %s\n",
 			    filename);
 		}
@@ -577,9 +693,8 @@ main(
 	if (pkey_iffkey != NULL && HAVE_OPT(ID_KEY)) {
 		DSA	*dsa;
 
-		epoch = fstamp - JAN_1970;
-		sprintf(filename, "ntpkey_iffpar_%s.%u", groupname,
-		    fstamp);
+		snprintf(filename, sizeof(filename),
+		    "ntpkey_iffpar_%s.%u", groupname, fstamp);
 		fprintf(stderr, "Writing IFF parameters %s to stdout\n",
 		    filename);
 		fprintf(stdout, "# %s\n# %s\n", filename,
@@ -588,9 +703,9 @@ main(
 		BN_copy(dsa->priv_key, BN_value_one());
 		pkey = EVP_PKEY_new();
 		EVP_PKEY_assign_DSA(pkey, dsa);
-		PEM_write_PrivateKey(stdout, pkey, NULL, NULL, 0, NULL,
-		    NULL);
-		fclose(stdout);
+		PEM_write_PKCS8PrivateKey(stdout, pkey, NULL, NULL, 0,
+		    NULL, NULL);
+		fflush(stdout);
 		if (debug)
 			DSA_print_fp(stderr, dsa, 0);
 	}
@@ -601,9 +716,8 @@ main(
 	if (pkey_iffkey != NULL && passwd2 != NULL) {
 		DSA	*dsa;
 
-		epoch = fstamp - JAN_1970;
-		sprintf(filename, "ntpkey_iffkey_%s.%u", groupname,
-		    fstamp);
+		snprintf(filename, sizeof(filename),
+		    "ntpkey_iffkey_%s.%u", groupname, fstamp);
 		fprintf(stderr, "Writing IFF keys %s to stdout\n",
 		    filename);
 		fprintf(stdout, "# %s\n# %s\n", filename,
@@ -611,9 +725,9 @@ main(
 		dsa = pkey_iffkey->pkey.dsa;
 		pkey = EVP_PKEY_new();
 		EVP_PKEY_assign_DSA(pkey, dsa);
-		PEM_write_PrivateKey(stdout, pkey, EVP_des_cbc(), NULL,
-		    0, NULL, passwd2);
-		fclose(stdout);
+		PEM_write_PKCS8PrivateKey(stdout, pkey, cipher, NULL, 0,
+		    NULL, passwd2);
+		fflush(stdout);
 		if (debug)
 			DSA_print_fp(stderr, dsa, 0);
 	}
@@ -625,11 +739,12 @@ main(
 	if (mvkey)
 		pkey_mvkey = gen_mvkey("mv", pkey_mvpar);
 	if (pkey_mvkey == NULL) {
-		sprintf(filename, "ntpkey_mvta_%s", groupname);
+		snprintf(filename, sizeof(filename), "ntpkey_mvta_%s",
+		    groupname);
 		pkey_mvkey = readkey(filename, passwd1, &fstamp,
-		   pkey_mvpar);
+		    pkey_mvpar);
 		if (pkey_mvkey != NULL) {
-			readlink(filename, filename, sizeof(filename));
+			followlink(filename, sizeof(filename));
 			fprintf(stderr, "Using MV keys %s\n",
 			    filename);
 		}
@@ -641,17 +756,16 @@ main(
 	 * associated with client key 1.
 	 */
 	if (pkey_mvkey != NULL && HAVE_OPT(ID_KEY)) {
-		epoch = fstamp - JAN_1970;
-		sprintf(filename, "ntpkey_mvpar_%s.%u", groupname,
-		    fstamp);
+		snprintf(filename, sizeof(filename),
+		    "ntpkey_mvpar_%s.%u", groupname, fstamp);
 		fprintf(stderr, "Writing MV parameters %s to stdout\n",
 		    filename);
 		fprintf(stdout, "# %s\n# %s\n", filename,
 		    ctime(&epoch));
 		pkey = pkey_mvpar[2];
-		PEM_write_PrivateKey(stdout, pkey, NULL, NULL, 0, NULL,
-		    NULL);
-		fclose(stdout);
+		PEM_write_PKCS8PrivateKey(stdout, pkey, NULL, NULL, 0,
+		    NULL, NULL);
+		fflush(stdout);
 		if (debug)
 			DSA_print_fp(stderr, pkey->pkey.dsa, 0);
 	}
@@ -660,32 +774,23 @@ main(
 	 * Write the encrypted MV server keys to the stdout stream.
 	 */
 	if (pkey_mvkey != NULL && passwd2 != NULL) {
-		epoch = fstamp - JAN_1970;
-		sprintf(filename, "ntpkey_mvkey_%s.%u", groupname,
-		    fstamp);
+		snprintf(filename, sizeof(filename),
+		    "ntpkey_mvkey_%s.%u", groupname, fstamp);
 		fprintf(stderr, "Writing MV keys %s to stdout\n",
 		    filename);
 		fprintf(stdout, "# %s\n# %s\n", filename,
 		    ctime(&epoch));
 		pkey = pkey_mvpar[1];
-		PEM_write_PrivateKey(stdout, pkey, EVP_des_cbc(), NULL,
-		    0, NULL, passwd2);
-		fclose(stdout);
+		PEM_write_PKCS8PrivateKey(stdout, pkey, cipher, NULL, 0,
+		    NULL, passwd2);
+		fflush(stdout);
 		if (debug)
 			DSA_print_fp(stderr, pkey->pkey.dsa, 0);
 	}
 
 	/*
-	 * Don't generate a certificate if no host keys or extracting
-	 * encrypted or nonencrypted keys to the standard output stream.
-	 */
-	if (pkey_host == NULL || HAVE_OPT(ID_KEY) || passwd2 != NULL)
-		exit (0);
-
-	/*
-	 * Decode the digest/signature scheme. If trusted, set the
-	 * subject and issuer names to the group name; if not set both
-	 * to the host name.
+	 * Decode the digest/signature scheme and create the
+	 * certificate. Do this every time we run the program.
 	 */
 	ectx = EVP_get_digestbyname(scheme);
 	if (ectx == NULL) {
@@ -694,12 +799,9 @@ main(
 		    scheme);
 			exit (-1);
 	}
-	if (exten == NULL)
-		x509(pkey_sign, ectx, grpkey, exten, hostname);
-	else
-		x509(pkey_sign, ectx, grpkey, exten, groupname);
-#endif /* OPENSSL */
-	exit (0);
+	x509(pkey_sign, ectx, grpkey, exten, certname);
+#endif	/* AUTOKEY */
+	exit(0);
 }
 
 
@@ -720,10 +822,9 @@ gen_md5(
 	u_char	keystr[MD5SIZE];
 	u_char	hexstr[2 * MD5SIZE + 1];
 	u_char	hex[] = "0123456789abcdef";
-#endif /* OPENSSL */
+#endif	/* OPENSSL */
 
 	str = fheader("MD5key", id, groupname);
-	ntp_srandom((u_long)epoch);
 	for (i = 1; i <= MD5KEYS; i++) {
 		for (j = 0; j < MD5SIZE; j++) {
 			int temp;
@@ -753,13 +854,13 @@ gen_md5(
 		fprintf(str, "%2d SHA1 %s  # SHA1 key\n", i + MD5KEYS,
 		    hexstr);
 	}
-#endif /* OPENSSL */
+#endif	/* OPENSSL */
 	fclose(str);
 	return (1);
 }
 
 
-#ifdef OPENSSL
+#ifdef AUTOKEY
 /*
  * readkey - load cryptographic parameters and keys
  *
@@ -890,7 +991,7 @@ gen_rsa(
 		str = fheader("RSAhost", id, hostname);
 	pkey = EVP_PKEY_new();
 	EVP_PKEY_assign_RSA(pkey, rsa);
-	PEM_write_PrivateKey(str, pkey, EVP_des_cbc(), NULL, 0, NULL,
+	PEM_write_PKCS8PrivateKey(str, pkey, cipher, NULL, 0, NULL,
 	    passwd1);
 	fclose(str);
 	if (debug)
@@ -945,7 +1046,7 @@ gen_dsa(
 	str = fheader("DSAsign", id, hostname);
 	pkey = EVP_PKEY_new();
 	EVP_PKEY_assign_DSA(pkey, dsa);
-	PEM_write_PrivateKey(str, pkey, EVP_des_cbc(), NULL, 0, NULL,
+	PEM_write_PKCS8PrivateKey(str, pkey, cipher, NULL, 0, NULL,
 	    passwd1);
 	fclose(str);
 	if (debug)
@@ -1112,7 +1213,7 @@ gen_iffkey(
 	str = fheader("IFFkey", id, groupname);
 	pkey = EVP_PKEY_new();
 	EVP_PKEY_assign_DSA(pkey, dsa);
-	PEM_write_PrivateKey(str, pkey, EVP_des_cbc(), NULL, 0, NULL,
+	PEM_write_PKCS8PrivateKey(str, pkey, cipher, NULL, 0, NULL,
 	    passwd1);
 	fclose(str);
 	if (debug)
@@ -1207,8 +1308,8 @@ gen_gqkey(
 		    ERR_error_string(ERR_get_error(), NULL));
 		return (NULL);
 	}
-	ctx = BN_CTX_new(); u = BN_new(); v = BN_new();
-	g = BN_new(); k = BN_new(); r = BN_new(); y = BN_new();
+	u = BN_new(); v = BN_new(); g = BN_new();
+	k = BN_new(); r = BN_new(); y = BN_new();
 
 	/*
 	 * Generate the group key b, which is saved in the e member of
@@ -1309,7 +1410,7 @@ gen_gqkey(
 	str = fheader("GQkey", id, groupname);
 	pkey = EVP_PKEY_new();
 	EVP_PKEY_assign_RSA(pkey, rsa);
-	PEM_write_PrivateKey(str, pkey, EVP_des_cbc(), NULL, 0, NULL,
+	PEM_write_PKCS8PrivateKey(str, pkey, cipher, NULL, 0, NULL,
 	    passwd1);
 	fclose(str);
 	if (debug)
@@ -1378,8 +1479,8 @@ gen_gqkey(
  *
  * How it works
  *
- * The scheme goes like this. Bob has the server values (p, E, q, gbar,
- * ghat) and Alice has the client values (p, xbar, xhat).
+ * The scheme goes like this. Bob has the server values (p, E, q,
+ * gbar, ghat) and Alice has the client values (p, xbar, xhat).
  *
  * Alice rolls new random nonce r mod p and sends to Bob in the MV
  * request message. Bob rolls random nonce k mod q, encrypts y = r E^k
@@ -1542,7 +1643,6 @@ gen_mvkey(
 	 */
 	for (i = 0; i <= n; i++) {
 		a[i] = BN_new();
-
 		BN_one(a[i]);
 	}
 	for (j = 1; j <= n; j++) {
@@ -1562,7 +1662,6 @@ gen_mvkey(
 	 */
 	for (i = 0; i <= n; i++) {
 		g[i] = BN_new();
-
 		BN_mod_exp(g[i], dsa->g, a[i], dsa->p, ctx);
 	}
 
@@ -1641,6 +1740,7 @@ gen_mvkey(
 		for (i = 1; i <= n; i++) {
 			if (i == j)
 				continue;
+
 			BN_mod_exp(u, x[i], v, dsa->q, ctx);
 			BN_add(xbar[j], xbar[j], u);
 		}
@@ -1657,7 +1757,6 @@ gen_mvkey(
 	 * additional keys, so we sail on with only token revocations.
 	 */
 	s = BN_new();
-
 	BN_copy(s, dsa->q);
 	BN_div(s, u, s, s1[n], ctx);
 
@@ -1670,7 +1769,6 @@ gen_mvkey(
 	 * changed.
 	 */
 	bige = BN_new(); gbar = BN_new(); ghat = BN_new();
-
 	BN_mod_exp(bige, biga, s, dsa->p, ctx);
 	BN_mod_exp(gbar, dsa->g, s, dsa->p, ctx);
 	BN_mod_mul(v, s, b, dsa->q, ctx);
@@ -1714,7 +1812,7 @@ gen_mvkey(
 	BN_copy(dsa->pub_key, b);
 	pkey = EVP_PKEY_new();
 	EVP_PKEY_assign_DSA(pkey, dsa);
-	PEM_write_PrivateKey(str, pkey, EVP_des_cbc(), NULL, 0, NULL,
+	PEM_write_PKCS8PrivateKey(str, pkey, cipher, NULL, 0, NULL,
 	    passwd1);
 	evpars[i++] = pkey;
 	if (debug)
@@ -1740,7 +1838,7 @@ gen_mvkey(
 	dsa2->pub_key = BN_dup(ghat);
 	pkey1 = EVP_PKEY_new();
 	EVP_PKEY_assign_DSA(pkey1, dsa2);
-	PEM_write_PrivateKey(str, pkey1, EVP_des_cbc(), NULL, 0, NULL,
+	PEM_write_PKCS8PrivateKey(str, pkey1, cipher, NULL, 0, NULL,
 	    passwd1);
 	evpars[i++] = pkey1;
 	if (debug)
@@ -1758,7 +1856,6 @@ gen_mvkey(
 	fprintf(stderr, "Generating %d MV client keys\n", n);
 	for (j = 1; j <= n; j++) {
 		sdsa = DSA_new();
-
 		sdsa->p = BN_dup(dsa->p);
 		sdsa->q = BN_dup(BN_value_one()); 
 		sdsa->g = BN_dup(BN_value_one()); 
@@ -1766,7 +1863,7 @@ gen_mvkey(
 		sdsa->pub_key = BN_dup(xhat[j]);
 		pkey1 = EVP_PKEY_new();
 		EVP_PKEY_set1_DSA(pkey1, sdsa);
-		PEM_write_PrivateKey(str, pkey1, EVP_des_cbc(), NULL, 0,
+		PEM_write_PKCS8PrivateKey(str, pkey1, cipher, NULL, 0,
 		    NULL, passwd1);
 		evpars[i++] = pkey1;
 		if (debug)
@@ -1819,11 +1916,11 @@ gen_mvkey(
  */
 int
 x509	(
-	EVP_PKEY *pkey,		/* generic signature algorithm */
-	const EVP_MD *md,	/* generic digest algorithm */
+	EVP_PKEY *pkey,		/* signing key */
+	const EVP_MD *md,	/* signature/digest scheme */
 	char	*gqpub,		/* identity extension (hex string) */
 	char	*exten,		/* private cert extension */
-	char	*name		/* subject/issuer namd */
+	char	*name		/* subject/issuer name */
 	)
 {
 	X509	*cert;		/* X509 certificate */
@@ -1850,15 +1947,15 @@ x509	(
 	X509_set_serialNumber(cert, serial);
 	ASN1_INTEGER_free(serial);
 	X509_time_adj(X509_get_notBefore(cert), 0L, &epoch);
-	X509_time_adj(X509_get_notAfter(cert), YEAR, &epoch);
+	X509_time_adj(X509_get_notAfter(cert), lifetime * SECSPERDAY, &epoch);
 	subj = X509_get_subject_name(cert);
 	X509_NAME_add_entry_by_txt(subj, "commonName", MBSTRING_ASC,
-	    (unsigned char *) name, strlen(name), -1, 0);
+	    (u_char *)name, strlen(name), -1, 0);
 	subj = X509_get_issuer_name(cert);
 	X509_NAME_add_entry_by_txt(subj, "commonName", MBSTRING_ASC,
-	    (unsigned char *) name, strlen(name), -1, 0);
+	    (u_char *)name, strlen(name), -1, 0);
 	if (!X509_set_pubkey(cert, pkey)) {
-		fprintf(stderr, "Assign key fails\n%s\n",
+		fprintf(stderr, "Assign certificate signing key fails\n%s\n",
 		    ERR_error_string(ERR_get_error(), NULL));
 		X509_free(cert);
 		return (0);
@@ -1948,7 +2045,7 @@ x509	(
 	/*
 	 * Write the certificate encoded in PEM.
 	 */
-	sprintf(pathbuf, "%scert", id);
+	snprintf(pathbuf, sizeof(pathbuf), "%scert", id);
 	str = fheader(pathbuf, "cert", hostname);
 	PEM_write_X509(str, cert);
 	fclose(str);
@@ -2050,7 +2147,7 @@ genkey(
 	fprintf(stderr, "Invalid %s key type %s\n", id, type);
 	return (NULL);
 }
-#endif /* OPENSSL */
+#endif	/* AUTOKEY */
 
 
 /*
@@ -2067,14 +2164,15 @@ fheader	(
 	char	linkname[MAXFILENAME]; /* link name */
 	int	temp;
 
-	sprintf(filename, "ntpkey_%s_%s.%lu", file, owner, epoch +
-	    JAN_1970);
+	snprintf(filename, sizeof(filename), "ntpkey_%s_%s.%u", file,
+	    owner, fstamp); 
 	if ((str = fopen(filename, "w")) == NULL) {
 		perror("Write");
 		exit (-1);
 	}
-	sprintf(linkname, "ntpkey_%s_%s", ulink, owner);
-	remove(linkname);
+	snprintf(linkname, sizeof(linkname), "ntpkey_%s_%s", ulink,
+	    hostname);
+	(void)remove(linkname);		/* The symlink() line below matters */
 	temp = symlink(filename, linkname);
 	if (temp < 0)
 		perror(file);

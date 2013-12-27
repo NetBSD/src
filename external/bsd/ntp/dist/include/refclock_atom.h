@@ -1,10 +1,10 @@
-/*	$NetBSD: refclock_atom.h,v 1.1.1.1 2009/12/13 16:54:54 kardel Exp $	*/
+/*	$NetBSD: refclock_atom.h,v 1.1.1.2 2013/12/27 23:30:46 christos Exp $	*/
 
 /*
  * Definitions for the atom driver and its friends
  */
+#undef NANOSECOND	/* some systems define it differently */
 #define NANOSECOND	1000000000 /* one second (ns) */
-#define RANGEGATE	500000  /* range gate (ns) */
 
 struct refclock_atom {
 	pps_handle_t handle;
