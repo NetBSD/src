@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.81 2013/12/08 15:55:10 njoly Exp $
+	$NetBSD: syscalls.master,v 1.82 2013/12/27 14:17:11 njoly Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -675,9 +675,12 @@
 			    struct linux_timespec *rmtp); }
 423	UNIMPL		semtimedop
 424	STD		{ int|linux_sys||tgkill(int tgid, int tid, int sig); }
-425	UNIMPL		stat64
-426	UNIMPL		lstat64
-427	UNIMPL		fstat64
+425	STD		{ int|linux_sys||stat64(const char *path, \
+			    struct linux_stat64 *sp); }
+426	STD		{ int|linux_sys||lstat64(const char *path, \
+			    struct linux_stat64 *sp); }
+427	STD		{ int|linux_sys||fstat64(int fd, \
+			    struct linux_stat64 *sp); }
 428	UNIMPL		vserver
 429	UNIMPL		mbind
 430	UNIMPL		get_mempolicy
@@ -709,7 +712,7 @@
 453	STD		{ int|linux_sys||fchownat(int fd, const char *path, \
 			    uid_t owner, gid_t group, int flag); }
 454	UNIMPL		futimesat
-455	UNIMPL		{ int|linux_sys||fstatat64(int fd, const char *path, \
+455	STD		{ int|linux_sys||fstatat64(int fd, const char *path, \
 			    struct linux_stat64 *sp, int flag); }
 456	STD		{ int|linux_sys||unlinkat(int fd, const char *path, \
 			    int flag); }
