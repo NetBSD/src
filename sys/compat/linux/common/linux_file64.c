@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.54 2013/11/18 01:32:52 chs Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.55 2013/12/27 14:17:11 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.54 2013/11/18 01:32:52 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.55 2013/12/27 14:17:11 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,8 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.54 2013/11/18 01:32:52 chs Exp $"
 #include <compat/linux/common/linux_sem.h>
 
 #include <compat/linux/linux_syscallargs.h>
-
-#ifndef alpha
 
 static void bsd_to_linux_stat(struct stat *, struct linux_stat64 *);
 
@@ -197,6 +195,7 @@ linux_sys_fstatat64(struct lwp *l, const struct linux_sys_fstatat64_args *uap, r
 	return copyout(&tmplst, SCARG(uap, sp), sizeof tmplst);
 }
 
+#ifndef __alpha__
 int
 linux_sys_truncate64(struct lwp *l, const struct linux_sys_truncate64_args *uap, register_t *retval)
 {
@@ -230,7 +229,7 @@ linux_sys_ftruncate64(struct lwp *l, const struct linux_sys_ftruncate64_args *ua
 
 	return sys_ftruncate(l, &ta, retval);
 }
-#endif /* !alpha */
+#endif /* __alpha__ */
 
 /*
  * Linux 'readdir' call. This code is mostly taken from the
