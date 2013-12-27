@@ -1,4 +1,3 @@
-
 /******************************************************************************
  *
  * Module Name: abmain - Main module for the acpi binary utility
@@ -6,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2011, Intel Corp.
+ * Copyright (C) 2000 - 2013, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -54,6 +53,10 @@ AbDisplayUsage (
     UINT8                   OptionCount);
 
 
+#define AB_UTILITY_NAME             "ACPI Binary Table Dump Utility"
+#define AB_SUPPORTED_OPTIONS        "c:d:e:h:s:tv"
+
+
 /******************************************************************************
  *
  * FUNCTION:    AbDisplayUsage
@@ -72,18 +75,15 @@ AbDisplayUsage (
         printf ("Option requires %u arguments\n\n", OptionCount);
     }
 
-    printf ("Usage: acpibin [options]\n\n");
-    printf ("Options:\n\n");
-    printf (" -c <File1> <File2>           Compare two AML files\n");
-    printf (" -d <InFile> <OutFile>        Dump AML binary to text file\n");
-    printf (" -e <Sig> <InFile> <OutFile>  Extract binary AML table from AcpiDmp file\n\n");
+    ACPI_USAGE_HEADER ("acpibin [options]");
 
-    printf (" -h <File>                    Display table header for binary AML file\n");
-    printf (" -s <File>                    Update checksum for binary AML file\n");
-    printf (" -t                           Terse mode\n");
-
-    printf ("\n");
-    return;
+    ACPI_OPTION ("-c <File1><File2>",       "Compare two binary AML files");
+    ACPI_OPTION ("-d <In><Out>",            "Dump AML binary to text file");
+    ACPI_OPTION ("-e <Sig><In><Out>",       "Extract binary AML table from AcpiDump file");
+    ACPI_OPTION ("-h <File>",               "Display table header for binary AML file");
+    ACPI_OPTION ("-s <File>",               "Update checksum for binary AML file");
+    ACPI_OPTION ("-t",                      "Terse mode");
+    ACPI_OPTION ("-v",                      "Display version information");
 }
 
 
@@ -104,28 +104,30 @@ main (
     int                     Status = AE_OK;
 
 
+    ACPI_DEBUG_INITIALIZE (); /* For debug version only */
+
     AcpiGbl_DebugFile = NULL;
-    AcpiGbl_DbOutputFlags = DB_CONSOLE_OUTPUT ;
+    AcpiGbl_DbOutputFlags = DB_CONSOLE_OUTPUT;
 
     AcpiOsInitialize ();
-    printf (ACPI_COMMON_SIGNON ("ACPI Binary AML File Utility"));
+    printf (ACPI_COMMON_SIGNON (AB_UTILITY_NAME));
 
     if (argc < 2)
     {
         AbDisplayUsage (0);
-        return 0;
+        return (0);
     }
 
     /* Command line options */
 
-    while ((j = AcpiGetopt (argc, argv, "c:d:e:h:s:t")) != EOF) switch(j)
+    while ((j = AcpiGetopt (argc, argv, AB_SUPPORTED_OPTIONS)) != EOF) switch(j)
     {
     case 'c':   /* Compare Files */
 
         if (argc < 4)
         {
             AbDisplayUsage (2);
-            return -1;
+            return (-1);
         }
 
         Status = AbCompareAmlFiles (AcpiGbl_Optarg, argv[AcpiGbl_Optind]);
@@ -136,7 +138,7 @@ main (
         if (argc < 4)
         {
             AbDisplayUsage (2);
-            return -1;
+            return (-1);
         }
 
         Status = AbDumpAmlFile (AcpiGbl_Optarg, argv[AcpiGbl_Optind]);
@@ -147,7 +149,7 @@ main (
         if (argc < 5)
         {
             AbDisplayUsage (3);
-            return -1;
+            return (-1);
         }
 
         Status = AbExtractAmlFile (AcpiGbl_Optarg, argv[AcpiGbl_Optind],
@@ -159,7 +161,7 @@ main (
         if (argc < 3)
         {
             AbDisplayUsage (1);
-            return -1;
+            return (-1);
         }
 
         AbDisplayHeader (AcpiGbl_Optarg);
@@ -170,7 +172,7 @@ main (
         if (argc < 3)
         {
             AbDisplayUsage (1);
-            return -1;
+            return (-1);
         }
 
         AbComputeChecksum (AcpiGbl_Optarg);
@@ -181,10 +183,15 @@ main (
         Gbl_TerseMode = TRUE;
         break;
 
+    case 'v': /* -v: (Version): signon already emitted, just exit */
+
+        return (0);
+
     default:
+
         AbDisplayUsage (0);
-        return -1;
+        return (-1);
     }
 
-    return Status;
+    return (Status);
 }

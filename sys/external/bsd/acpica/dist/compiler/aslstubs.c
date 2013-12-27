@@ -1,4 +1,3 @@
-
 /******************************************************************************
  *
  * Module Name: aslstubs - Stubs used to link to Aml interpreter
@@ -6,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2011, Intel Corp.
+ * Copyright (C) 2000 - 2013, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -62,7 +61,7 @@ ACPI_PHYSICAL_ADDRESS
 AeLocalGetRootPointer (
     void)
 {
-    return 0;
+    return (0);
 }
 
 void
@@ -128,13 +127,6 @@ AcpiDsStoreObjectToLocal (
 }
 
 ACPI_STATUS
-AcpiEvDeleteGpeBlock (
-    ACPI_GPE_BLOCK_INFO     *GpeBlock)
-{
-    return (AE_OK);
-}
-
-ACPI_STATUS
 AcpiEvQueueNotifyRequest (
     ACPI_NAMESPACE_NODE     *Node,
     UINT32                  NotifyValue)
@@ -147,6 +139,14 @@ AcpiEvIsNotifyObject (
     ACPI_NAMESPACE_NODE     *Node)
 {
     return (FALSE);
+}
+
+#if (!ACPI_REDUCED_HARDWARE)
+ACPI_STATUS
+AcpiEvDeleteGpeBlock (
+    ACPI_GPE_BLOCK_INFO     *GpeBlock)
+{
+    return (AE_OK);
 }
 
 ACPI_STATUS
@@ -162,6 +162,7 @@ AcpiEvReleaseGlobalLock (
 {
     return (AE_OK);
 }
+#endif /* !ACPI_REDUCED_HARDWARE */
 
 ACPI_STATUS
 AcpiEvInitializeRegion (
@@ -238,7 +239,7 @@ ACPI_THREAD_ID
 AcpiOsGetThreadId (
     void)
 {
-    return (0xFFFF);
+    return (1);
 }
 
 ACPI_STATUS

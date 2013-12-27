@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2011, Intel Corp.
+ * Copyright (C) 2000 - 2013, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -49,6 +49,8 @@
 #define _COMPONENT          ACPI_EVENTS
         ACPI_MODULE_NAME    ("evgpe")
 
+#if (!ACPI_REDUCED_HARDWARE) /* Entire module */
+
 /* Local prototypes */
 
 static void ACPI_SYSTEM_XFACE
@@ -90,7 +92,7 @@ AcpiEvUpdateGpeEnableMask (
         return_ACPI_STATUS (AE_NOT_EXIST);
     }
 
-    RegisterBit = AcpiHwGetGpeRegisterBit (GpeEventInfo, GpeRegisterInfo);
+    RegisterBit = AcpiHwGetGpeRegisterBit (GpeEventInfo);
 
     /* Clear the run bit up front */
 
@@ -429,6 +431,13 @@ AcpiEvGpeDetect (
             if (!(GpeRegisterInfo->EnableForRun |
                   GpeRegisterInfo->EnableForWake))
             {
+                ACPI_DEBUG_PRINT ((ACPI_DB_INTERRUPTS,
+                    "Ignore disabled registers for GPE%02X-GPE%02X: "
+                    "RunEnable=%02X, WakeEnable=%02X\n",
+                    GpeRegisterInfo->BaseGpeNumber,
+                    GpeRegisterInfo->BaseGpeNumber + (ACPI_GPE_REGISTER_WIDTH - 1),
+                    GpeRegisterInfo->EnableForRun,
+                    GpeRegisterInfo->EnableForWake));
                 continue;
             }
 
@@ -449,8 +458,13 @@ AcpiEvGpeDetect (
             }
 
             ACPI_DEBUG_PRINT ((ACPI_DB_INTERRUPTS,
-                "Read GPE Register at GPE%02X: Status=%02X, Enable=%02X\n",
-                GpeRegisterInfo->BaseGpeNumber, StatusReg, EnableReg));
+                "Read registers for GPE%02X-GPE%02X: Status=%02X, Enable=%02X, "
+                "RunEnable=%02X, WakeEnable=%02X\n",
+                GpeRegisterInfo->BaseGpeNumber,
+                GpeRegisterInfo->BaseGpeNumber + (ACPI_GPE_REGISTER_WIDTH - 1),
+                StatusReg, EnableReg,
+                GpeRegisterInfo->EnableForRun,
+                GpeRegisterInfo->EnableForWake));
 
             /* Check if there is anything active at all in this register */
 
@@ -516,6 +530,7 @@ AcpiEvAsynchExecuteGpeMethod (
     ACPI_STATUS             Status;
     ACPI_GPE_EVENT_INFO     *LocalGpeEventInfo;
     ACPI_EVALUATE_INFO      *Info;
+    ACPI_GPE_NOTIFY_INFO    *Notify;
 
 
     ACPI_FUNCTION_TRACE (EvAsynchExecuteGpeMethod);
@@ -534,6 +549,7 @@ AcpiEvAsynchExecuteGpeMethod (
     Status = AcpiUtAcquireMutex (ACPI_MTX_EVENTS);
     if (ACPI_FAILURE (Status))
     {
+        ACPI_FREE (LocalGpeEventInfo);
         return_VOID;
     }
 
@@ -542,6 +558,7 @@ AcpiEvAsynchExecuteGpeMethod (
     if (!AcpiEvValidGpeEvent (GpeEventInfo))
     {
         Status = AcpiUtReleaseMutex (ACPI_MTX_EVENTS);
+        ACPI_FREE (LocalGpeEventInfo);
         return_VOID;
     }
 
@@ -555,6 +572,7 @@ AcpiEvAsynchExecuteGpeMethod (
     Status = AcpiUtReleaseMutex (ACPI_MTX_EVENTS);
     if (ACPI_FAILURE (Status))
     {
+        ACPI_FREE (LocalGpeEventInfo);
         return_VOID;
     }
 
@@ -563,7 +581,6 @@ AcpiEvAsynchExecuteGpeMethod (
     switch (LocalGpeEventInfo->Flags & ACPI_GPE_DISPATCH_MASK)
     {
     case ACPI_GPE_DISPATCH_NOTIFY:
-
         /*
          * Implicit notify.
          * Dispatch a DEVICE_WAKE notify to the appropriate handler.
@@ -571,10 +588,18 @@ AcpiEvAsynchExecuteGpeMethod (
          * completes. The notify handlers are NOT invoked synchronously
          * from this thread -- because handlers may in turn run other
          * control methods.
+         *
+         * June 2012: Expand implicit notify mechanism to support
+         * notifies on multiple device objects.
          */
-        Status = AcpiEvQueueNotifyRequest (
-                    LocalGpeEventInfo->Dispatch.DeviceNode,
-                    ACPI_NOTIFY_DEVICE_WAKE);
+        Notify = LocalGpeEventInfo->Dispatch.NotifyList;
+        while (ACPI_SUCCESS (Status) && Notify)
+        {
+            Status = AcpiEvQueueNotifyRequest (Notify->DeviceNode,
+                        ACPI_NOTIFY_DEVICE_WAKE);
+
+            Notify = Notify->Next;
+        }
         break;
 
     case ACPI_GPE_DISPATCH_METHOD:
@@ -605,10 +630,10 @@ AcpiEvAsynchExecuteGpeMethod (
                 "while evaluating GPE method [%4.4s]",
                 AcpiUtGetNodeName (LocalGpeEventInfo->Dispatch.MethodNode)));
         }
-
         break;
 
     default:
+
         return_VOID; /* Should never happen */
     }
 
@@ -795,7 +820,6 @@ AcpiEvGpeDispatch (
 
     case ACPI_GPE_DISPATCH_METHOD:
     case ACPI_GPE_DISPATCH_NOTIFY:
-
         /*
          * Execute the method associated with the GPE
          * NOTE: Level-triggered GPEs are cleared after the method completes.
@@ -811,7 +835,6 @@ AcpiEvGpeDispatch (
         break;
 
     default:
-
         /*
          * No handler or method to run!
          * 03/2010: This case should no longer be possible. We will not allow
@@ -826,3 +849,4 @@ AcpiEvGpeDispatch (
     return_UINT32 (ACPI_INTERRUPT_HANDLED);
 }
 
+#endif /* !ACPI_REDUCED_HARDWARE */
