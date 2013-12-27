@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2011, Intel Corp.
+ * Copyright (C) 2000 - 2013, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -65,6 +65,8 @@
  */
 #define ACPI_SIG_ASF            "ASF!"      /* Alert Standard Format table */
 #define ACPI_SIG_BOOT           "BOOT"      /* Simple Boot Flag Table */
+#define ACPI_SIG_CSRT           "CSRT"      /* Core System Resource Table */
+#define ACPI_SIG_DBG2           "DBG2"      /* Debug Port table type 2 */
 #define ACPI_SIG_DBGP           "DBGP"      /* Debug Port table */
 #define ACPI_SIG_DMAR           "DMAR"      /* DMA Remapping table */
 #define ACPI_SIG_HPET           "HPET"      /* High Precision Event Timer table */
@@ -72,11 +74,13 @@
 #define ACPI_SIG_IVRS           "IVRS"      /* I/O Virtualization Reporting Structure */
 #define ACPI_SIG_MCFG           "MCFG"      /* PCI Memory Mapped Configuration table */
 #define ACPI_SIG_MCHI           "MCHI"      /* Management Controller Host Interface table */
+#define ACPI_SIG_MTMR           "MTMR"      /* MID Timer table */
 #define ACPI_SIG_SLIC           "SLIC"      /* Software Licensing Description Table */
 #define ACPI_SIG_SPCR           "SPCR"      /* Serial Port Console Redirection table */
 #define ACPI_SIG_SPMI           "SPMI"      /* Server Platform Management Interface table */
 #define ACPI_SIG_TCPA           "TCPA"      /* Trusted Computing Platform Alliance table */
 #define ACPI_SIG_UEFI           "UEFI"      /* Uefi Boot Optimization Table */
+#define ACPI_SIG_VRTC           "VRTC"      /* Virtual Real Time Clock Table */
 #define ACPI_SIG_WAET           "WAET"      /* Windows ACPI Emulated devices Table */
 #define ACPI_SIG_WDAT           "WDAT"      /* Watchdog Action Table */
 #define ACPI_SIG_WDDT           "WDDT"      /* Watchdog Timer Description Table */
@@ -98,9 +102,15 @@
 #pragma pack(1)
 
 /*
- * Note about bitfields: The UINT8 type is used for bitfields in ACPI tables.
- * This is the only type that is even remotely portable. Anything else is not
- * portable, so do not use any other bitfield types.
+ * Note: C bitfields are not used for this reason:
+ *
+ * "Bitfields are great and easy to read, but unfortunately the C language
+ * does not specify the layout of bitfields in memory, which means they are
+ * essentially useless for dealing with packed data in on-disk formats or
+ * binary wire protocols." (Or ACPI tables and buffers.) "If you ask me,
+ * this decision was a design error in C. Ritchie could have picked an order
+ * and stuck with it." Norman Ramsey.
+ * See http://stackoverflow.com/a/1053662/41661
  */
 
 
@@ -260,6 +270,158 @@ typedef struct acpi_table_boot
     UINT8                   Reserved[3];
 
 } ACPI_TABLE_BOOT;
+
+
+/*******************************************************************************
+ *
+ * CSRT - Core System Resource Table
+ *        Version 0
+ *
+ * Conforms to the "Core System Resource Table (CSRT)", November 14, 2011
+ *
+ ******************************************************************************/
+
+typedef struct acpi_table_csrt
+{
+    ACPI_TABLE_HEADER       Header;             /* Common ACPI table header */
+
+} ACPI_TABLE_CSRT;
+
+
+/* Resource Group subtable */
+
+typedef struct acpi_csrt_group
+{
+    UINT32                  Length;
+    UINT32                  VendorId;
+    UINT32                  SubvendorId;
+    UINT16                  DeviceId;
+    UINT16                  SubdeviceId;
+    UINT16                  Revision;
+    UINT16                  Reserved;
+    UINT32                  SharedInfoLength;
+
+    /* Shared data immediately follows (Length = SharedInfoLength) */
+
+} ACPI_CSRT_GROUP;
+
+/* Shared Info subtable */
+
+typedef struct acpi_csrt_shared_info
+{
+    UINT16                  MajorVersion;
+    UINT16                  MinorVersion;
+    UINT32                  MmioBaseLow;
+    UINT32                  MmioBaseHigh;
+    UINT32                  GsiInterrupt;
+    UINT8                   InterruptPolarity;
+    UINT8                   InterruptMode;
+    UINT8                   NumChannels;
+    UINT8                   DmaAddressWidth;
+    UINT16                  BaseRequestLine;
+    UINT16                  NumHandshakeSignals;
+    UINT32                  MaxBlockSize;
+
+    /* Resource descriptors immediately follow (Length = Group Length - SharedInfoLength) */
+
+} ACPI_CSRT_SHARED_INFO;
+
+/* Resource Descriptor subtable */
+
+typedef struct acpi_csrt_descriptor
+{
+    UINT32                  Length;
+    UINT16                  Type;
+    UINT16                  Subtype;
+    UINT32                  Uid;
+
+    /* Resource-specific information immediately follows */
+
+} ACPI_CSRT_DESCRIPTOR;
+
+
+/* Resource Types */
+
+#define ACPI_CSRT_TYPE_INTERRUPT    0x0001
+#define ACPI_CSRT_TYPE_TIMER        0x0002
+#define ACPI_CSRT_TYPE_DMA          0x0003
+
+/* Resource Subtypes */
+
+#define ACPI_CSRT_XRUPT_LINE        0x0000
+#define ACPI_CSRT_XRUPT_CONTROLLER  0x0001
+#define ACPI_CSRT_TIMER             0x0000
+#define ACPI_CSRT_DMA_CHANNEL       0x0000
+#define ACPI_CSRT_DMA_CONTROLLER    0x0001
+
+
+/*******************************************************************************
+ *
+ * DBG2 - Debug Port Table 2
+ *        Version 0 (Both main table and subtables)
+ *
+ * Conforms to "Microsoft Debug Port Table 2 (DBG2)", May 22 2012.
+ *
+ ******************************************************************************/
+
+typedef struct acpi_table_dbg2
+{
+    ACPI_TABLE_HEADER       Header;             /* Common ACPI table header */
+    UINT32                  InfoOffset;
+    UINT32                  InfoCount;
+
+} ACPI_TABLE_DBG2;
+
+
+typedef struct acpi_dbg2_header
+{
+    UINT32                  InfoOffset;
+    UINT32                  InfoCount;
+
+} ACPI_DBG2_HEADER;
+
+
+/* Debug Device Information Subtable */
+
+typedef struct acpi_dbg2_device
+{
+    UINT8                   Revision;
+    UINT16                  Length;
+    UINT8                   RegisterCount;      /* Number of BaseAddress registers */
+    UINT16                  NamepathLength;
+    UINT16                  NamepathOffset;
+    UINT16                  OemDataLength;
+    UINT16                  OemDataOffset;
+    UINT16                  PortType;
+    UINT16                  PortSubtype;
+    UINT16                  Reserved;
+    UINT16                  BaseAddressOffset;
+    UINT16                  AddressSizeOffset;
+    /*
+     * Data that follows:
+     *    BaseAddress (required) - Each in 12-byte Generic Address Structure format.
+     *    AddressSize (required) - Array of UINT32 sizes corresponding to each BaseAddress register.
+     *    Namepath    (required) - Null terminated string. Single dot if not supported.
+     *    OemData     (optional) - Length is OemDataLength.
+     */
+} ACPI_DBG2_DEVICE;
+
+/* Types for PortType field above */
+
+#define ACPI_DBG2_SERIAL_PORT       0x8000
+#define ACPI_DBG2_1394_PORT         0x8001
+#define ACPI_DBG2_USB_PORT          0x8002
+#define ACPI_DBG2_NET_PORT          0x8003
+
+/* Subtypes for PortSubtype field above */
+
+#define ACPI_DBG2_16550_COMPATIBLE  0x0000
+#define ACPI_DBG2_16550_SUBSET      0x0001
+
+#define ACPI_DBG2_1394_STANDARD     0x0000
+
+#define ACPI_DBG2_USB_XHCI          0x0000
+#define ACPI_DBG2_USB_EHCI          0x0001
 
 
 /*******************************************************************************
@@ -831,6 +993,34 @@ typedef struct acpi_table_mchi
 
 /*******************************************************************************
  *
+ * MTMR - MID Timer Table
+ *        Version 1
+ *
+ * Conforms to "Simple Firmware Interface Specification",
+ * Draft 0.8.2, Oct 19, 2010
+ * NOTE: The ACPI MTMR is equivalent to the SFI MTMR table.
+ *
+ ******************************************************************************/
+
+typedef struct acpi_table_mtmr
+{
+    ACPI_TABLE_HEADER       Header;             /* Common ACPI table header */
+
+} ACPI_TABLE_MTMR;
+
+/* MTMR entry */
+
+typedef struct acpi_mtmr_entry
+{
+    ACPI_GENERIC_ADDRESS    PhysicalAddress;
+    UINT32                  Frequency;
+    UINT32                  Irq;
+
+} ACPI_MTMR_ENTRY;
+
+
+/*******************************************************************************
+ *
  * SLIC - Software Licensing Description Table
  *        Version 1
  *
@@ -1030,6 +1220,33 @@ typedef struct acpi_table_uefi
 
 /*******************************************************************************
  *
+ * VRTC - Virtual Real Time Clock Table
+ *        Version 1
+ *
+ * Conforms to "Simple Firmware Interface Specification",
+ * Draft 0.8.2, Oct 19, 2010
+ * NOTE: The ACPI VRTC is equivalent to The SFI MRTC table.
+ *
+ ******************************************************************************/
+
+typedef struct acpi_table_vrtc
+{
+    ACPI_TABLE_HEADER       Header;             /* Common ACPI table header */
+
+} ACPI_TABLE_VRTC;
+
+/* VRTC entry */
+
+typedef struct acpi_vrtc_entry
+{
+    ACPI_GENERIC_ADDRESS    PhysicalAddress;
+    UINT32                  Irq;
+
+} ACPI_VRTC_ENTRY;
+
+
+/*******************************************************************************
+ *
  * WAET - Windows ACPI Emulated devices Table
  *        Version 1
  *
@@ -1204,4 +1421,3 @@ typedef struct acpi_table_wdrt
 #pragma pack()
 
 #endif /* __ACTBL2_H__ */
-

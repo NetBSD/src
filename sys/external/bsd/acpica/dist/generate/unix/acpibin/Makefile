@@ -11,99 +11,48 @@
 # compile options, and prevents pollution of the source code.
 #
 include ../Makefile.config
-PROG = acpibin
+FINAL_PROG = ../$(BINDIR)/acpibin
+PROG = $(OBJDIR)/acpibin
+
+#
+# Search paths for source files
+#
+vpath %.c \
+    $(ACPIBIN)\
+    $(ACPICA_UTILITIES)\
+    $(ACPICA_COMMON)\
+    $(ACPICA_OSL)
+
+HEADERS = \
+    $(wildcard $(ACPIBIN)/*.h)
+
+OBJECTS = \
+	$(OBJDIR)/abcompare.o\
+	$(OBJDIR)/abmain.o\
+	$(OBJDIR)/utalloc.o\
+	$(OBJDIR)/utbuffer.o\
+	$(OBJDIR)/utcache.o\
+	$(OBJDIR)/utdecode.o\
+	$(OBJDIR)/utexcep.o\
+	$(OBJDIR)/utglobal.o\
+	$(OBJDIR)/utlock.o\
+	$(OBJDIR)/utmath.o\
+	$(OBJDIR)/utmisc.o\
+	$(OBJDIR)/utmutex.o\
+	$(OBJDIR)/utstate.o\
+	$(OBJDIR)/utstring.o\
+	$(OBJDIR)/utxferror.o\
+	$(OBJDIR)/osunixxf.o\
+	$(OBJDIR)/getopt.o
 
 #
 # Flags specific to acpibin
 #
-CFLAGS+= \
-    -DACPI_BIN_APP \
-    -I$(ACPICA_TOOLS)/acpibin
-
-OBJS = \
-    abcompare.o \
-    abmain.o \
-	utalloc.o \
-	utcache.o \
-	utdebug.o \
-	utdecode.o \
-	utglobal.o \
-	utlock.o \
-	utmath.o \
-	utmisc.o \
-	utmutex.o \
-	utstate.o \
-	utxferror.o \
-	osunixxf.o \
-    getopt.o
+CFLAGS += \
+    -DACPI_BIN_APP\
+    -I$(ACPIBIN)
 
 #
-# Root rule
+# Common Rules
 #
-$(PROG) : $(OBJS)
-	$(CC) $(LDFLAGS) $(OBJS) -o $(PROG)
-	$(COPYPROG)
-
-#
-# acpibin source
-#
-abcompare.o :       $(ACPICA_TOOLS)/acpibin/abcompare.c
-	$(COMPILE)
-
-abmain.o :          $(ACPICA_TOOLS)/acpibin/abmain.c
-	$(COMPILE)
-
-#
-# ACPICA core source - common
-#
-getopt.o :          $(ACPICA_COMMON)/getopt.c
-	$(COMPILE)
-
-#
-# ACPICA core source
-#
-utalloc.o :         $(ACPICA_CORE)/utilities/utalloc.c
-	$(COMPILE)
-
-utcache.o :         $(ACPICA_CORE)/utilities/utcache.c
-	$(COMPILE)
-
-utdebug.o :         $(ACPICA_CORE)/utilities/utdebug.c
-	$(COMPILE)
-
-utdecode.o :        $(ACPICA_CORE)/utilities/utdecode.c
-	$(COMPILE)
-
-utglobal.o :        $(ACPICA_CORE)/utilities/utglobal.c
-	$(COMPILE)
-
-utlock.o :          $(ACPICA_CORE)/utilities/utlock.c
-	$(COMPILE)
-
-utmath.o :          $(ACPICA_CORE)/utilities/utmath.c
-	$(COMPILE)
-
-utmisc.o :          $(ACPICA_CORE)/utilities/utmisc.c
-	$(COMPILE)
-
-utmutex.o :         $(ACPICA_CORE)/utilities/utmutex.c
-	$(COMPILE)
-
-utstate.o :         $(ACPICA_CORE)/utilities/utstate.c
-	$(COMPILE)
-
-utxferror.o :       $(ACPICA_CORE)/utilities/utxferror.c
-	$(COMPILE)
-
-#
-# Unix OS services layer (OSL)
-#
-osunixxf.o :        $(ACPICA_OSL)/osunixxf.c
-	$(COMPILE)
-
-
-clean :
-	rm -f $(PROG) $(PROG).exe $(OBJS)
-
-install :
-	$(INSTALLPROG)
+include ../Makefile.rules

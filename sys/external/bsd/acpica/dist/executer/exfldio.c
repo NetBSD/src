@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2011, Intel Corp.
+ * Copyright (C) 2000 - 2013, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -86,7 +86,7 @@ AcpiExSetupRegion (
  * RETURN:      Status
  *
  * DESCRIPTION: Common processing for AcpiExExtractFromField and
- *              AcpiExInsertIntoField.  Initialize the Region if necessary and
+ *              AcpiExInsertIntoField. Initialize the Region if necessary and
  *              validate the request.
  *
  ******************************************************************************/
@@ -98,6 +98,7 @@ AcpiExSetupRegion (
 {
     ACPI_STATUS             Status = AE_OK;
     ACPI_OPERAND_OBJECT     *RgnDesc;
+    UINT8                   SpaceId;
 
 
     ACPI_FUNCTION_TRACE_U32 (ExSetupRegion, FieldDatumByteOffset);
@@ -116,6 +117,16 @@ AcpiExSetupRegion (
         return_ACPI_STATUS (AE_AML_OPERAND_TYPE);
     }
 
+    SpaceId = RgnDesc->Region.SpaceId;
+
+    /* Validate the Space ID */
+
+    if (!AcpiIsValidSpaceId (SpaceId))
+    {
+        ACPI_ERROR ((AE_INFO, "Invalid/unknown Address Space ID: 0x%2.2X", SpaceId));
+        return_ACPI_STATUS (AE_AML_INVALID_SPACE_ID);
+    }
+
     /*
      * If the Region Address and Length have not been previously evaluated,
      * evaluate them now and save the results.
@@ -130,11 +141,12 @@ AcpiExSetupRegion (
     }
 
     /*
-     * Exit now for SMBus or IPMI address space, it has a non-linear
+     * Exit now for SMBus, GSBus or IPMI address space, it has a non-linear
      * address space and the request cannot be directly validated
      */
-    if (RgnDesc->Region.SpaceId == ACPI_ADR_SPACE_SMBUS ||
-        RgnDesc->Region.SpaceId == ACPI_ADR_SPACE_IPMI)
+    if (SpaceId == ACPI_ADR_SPACE_SMBUS ||
+        SpaceId == ACPI_ADR_SPACE_GSBUS ||
+        SpaceId == ACPI_ADR_SPACE_IPMI)
     {
         /* SMBus or IPMI has a non-linear address space */
 
@@ -156,7 +168,7 @@ AcpiExSetupRegion (
 #endif
 
     /*
-     * Validate the request.  The entire request from the byte offset for a
+     * Validate the request. The entire request from the byte offset for a
      * length of one field datum (access width) must fit within the region.
      * (Region length is specified in bytes)
      */
@@ -185,7 +197,7 @@ AcpiExSetupRegion (
         {
             /*
              * This is the case where the AccessType (AccWord, etc.) is wider
-             * than the region itself.  For example, a region of length one
+             * than the region itself. For example, a region of length one
              * byte, and a field with Dword access specified.
              */
             ACPI_ERROR ((AE_INFO,
@@ -290,7 +302,8 @@ AcpiExAccessRegion (
 
     /* Invoke the appropriate AddressSpace/OpRegion handler */
 
-    Status = AcpiEvAddressSpaceDispatch (RgnDesc, Function, RegionOffset,
+    Status = AcpiEvAddressSpaceDispatch (RgnDesc, ObjDesc,
+                Function, RegionOffset,
                 ACPI_MUL_8 (ObjDesc->CommonField.AccessByteWidth), Value);
 
     if (ACPI_FAILURE (Status))
@@ -326,7 +339,7 @@ AcpiExAccessRegion (
  *
  * DESCRIPTION: Check if a value is out of range of the field being written.
  *              Used to check if the values written to Index and Bank registers
- *              are out of range.  Normally, the value is simply truncated
+ *              are out of range. Normally, the value is simply truncated
  *              to fit the field, but this case is most likely a serious
  *              coding error in the ASL.
  *
@@ -353,6 +366,11 @@ AcpiExRegisterOverflow (
          * The Value is larger than the maximum value that can fit into
          * the register.
          */
+        ACPI_ERROR ((AE_INFO,
+            "Index value 0x%8.8X%8.8X overflows field width 0x%X",
+            ACPI_FORMAT_UINT64 (Value),
+            ObjDesc->CommonField.BitLength));
+
         return (TRUE);
     }
 
@@ -374,7 +392,7 @@ AcpiExRegisterOverflow (
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Read or Write a single datum of a field.  The FieldType is
+ * DESCRIPTION: Read or Write a single datum of a field. The FieldType is
  *              demultiplexed here to handle the different types of fields
  *              (BufferField, RegionField, IndexField, BankField)
  *
@@ -462,9 +480,7 @@ AcpiExFieldDatumIo (
         Status = AE_OK;
         break;
 
-
     case ACPI_TYPE_LOCAL_BANK_FIELD:
-
         /*
          * Ensure that the BankValue is not beyond the capacity of
          * the register
@@ -494,7 +510,6 @@ AcpiExFieldDatumIo (
 
         /*lint -fallthrough */
 
-
     case ACPI_TYPE_LOCAL_REGION_FIELD:
         /*
          * For simple RegionFields, we just directly access the owning
@@ -504,10 +519,7 @@ AcpiExFieldDatumIo (
                     ReadWrite);
         break;
 
-
     case ACPI_TYPE_LOCAL_INDEX_FIELD:
-
-
         /*
          * Ensure that the IndexValue is not beyond the capacity of
          * the register
@@ -556,7 +568,6 @@ AcpiExFieldDatumIo (
                         Value, sizeof (UINT64));
         }
         break;
-
 
     default:
 
@@ -748,7 +759,18 @@ AcpiExExtractFromField (
     if ((ObjDesc->CommonField.StartFieldBitOffset == 0) &&
         (ObjDesc->CommonField.BitLength == AccessBitWidth))
     {
-        Status = AcpiExFieldDatumIo (ObjDesc, 0, Buffer, ACPI_READ);
+        if (BufferLength >= sizeof (UINT64))
+        {
+            Status = AcpiExFieldDatumIo (ObjDesc, 0, Buffer, ACPI_READ);
+        }
+        else
+        {
+            /* Use RawDatum (UINT64) to handle buffers < 64 bits */
+
+            Status = AcpiExFieldDatumIo (ObjDesc, 0, &RawDatum, ACPI_READ);
+            ACPI_MEMCPY (Buffer, &RawDatum, BufferLength);
+        }
+
         return_ACPI_STATUS (Status);
     }
 
@@ -888,7 +910,7 @@ AcpiExInsertIntoField (
                         ObjDesc->CommonField.BitLength);
     /*
      * We must have a buffer that is at least as long as the field
-     * we are writing to.  This is because individual fields are
+     * we are writing to. This is because individual fields are
      * indivisible and partial writes are not supported -- as per
      * the ACPI specification.
      */
@@ -904,7 +926,7 @@ AcpiExInsertIntoField (
 
         /*
          * Copy the original data to the new buffer, starting
-         * at Byte zero.  All unused (upper) bytes of the
+         * at Byte zero. All unused (upper) bytes of the
          * buffer will be 0.
          */
         ACPI_MEMCPY ((char *) NewBuffer, (char *) Buffer, BufferLength);
@@ -1033,5 +1055,3 @@ Exit:
     }
     return_ACPI_STATUS (Status);
 }
-
-
