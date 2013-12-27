@@ -1,0 +1,522 @@
+@node ntpq Invocation
+@section Invoking ntpq
+@pindex ntpq
+@cindex standard NTP query program
+@ignore
+#
+# EDIT THIS FILE WITH CAUTION  (invoke-ntpq.texi)
+#
+# It has been AutoGen-ed  December 24, 2013 at 11:39:01 AM by AutoGen 5.18.3pre5
+# From the definitions    ntpq-opts.def
+# and the template file   agtexi-cmd.tpl
+@end ignore
+
+
+The
+@code{ntpq}
+utility program is used to query NTP servers which
+implement the standard NTP mode 6 control message formats defined
+in Appendix B of the NTPv3 specification RFC1305, requesting
+information about current state and/or changes in that state.
+The same formats are used in NTPv4, although some of the
+variables have changed and new ones added. The description on this
+page is for the NTPv4 variables.
+The program may be run either in interactive mode or controlled using
+command line arguments.
+Requests to read and write arbitrary
+variables can be assembled, with raw and pretty-printed output
+options being available.
+The
+@code{ntpq}
+utility can also obtain and print a
+list of peers in a common format by sending multiple queries to the
+server.
+
+If one or more request options is included on the command line
+when
+@code{ntpq}
+is executed, each of the requests will be sent
+to the NTP servers running on each of the hosts given as command
+line arguments, or on localhost by default.
+If no request options
+are given,
+@code{ntpq}
+will attempt to read commands from the
+standard input and execute these on the NTP server running on the
+first host given on the command line, again defaulting to localhost
+when no other host is specified.
+The
+@code{ntpq}
+utility will prompt for
+commands if the standard input is a terminal device.
+
+@code{ntpq}
+uses NTP mode 6 packets to communicate with the
+NTP server, and hence can be used to query any compatible server on
+the network which permits it.
+Note that since NTP is a UDP protocol
+this communication will be somewhat unreliable, especially over
+large distances in terms of network topology.
+The
+@code{ntpq}
+utility makes
+one attempt to retransmit requests, and will time requests out if
+the remote host is not heard from within a suitable timeout
+time.
+
+Specifying a
+command line option other than
+@code{-i}
+or
+@code{-n}
+will
+cause the specified query (queries) to be sent to the indicated
+host(s) immediately.
+Otherwise,
+@code{ntpq}
+will attempt to read
+interactive format commands from the standard input.
+@subsubsection Internal Commands
+Interactive format commands consist of a keyword followed by zero
+to four arguments.
+Only enough characters of the full keyword to
+uniquely identify the command need be typed.
+
+A
+number of interactive format commands are executed entirely within
+the
+@code{ntpq}
+utility itself and do not result in NTP mode 6
+requests being sent to a server.
+These are described following.
+@table @asis
+@item @code{?} @code{[@kbd{command_keyword}]}
+@item @code{help} @code{[@kbd{command_keyword}]}
+A
+@quoteleft{}?@quoteright{}
+by itself will print a list of all the command
+keywords known to this incarnation of
+@code{ntpq}
+A
+@quoteleft{}?@quoteright{}
+followed by a command keyword will print function and usage
+information about the command.
+This command is probably a better
+source of information about
+@code{ntpq}
+than this manual
+page.
+@item @code{addvars} @kbd{variable_name} @code{[@code{=value}]} @code{...}
+@item @code{rmvars} @kbd{variable_name} @code{...}
+@item @code{clearvars}
+The data carried by NTP mode 6 messages consists of a list of
+items of the form
+@quoteleft{}variable_name=value@quoteright{},
+where the
+@quoteleft{}=value@quoteright{}
+is ignored, and can be omitted,
+in requests to the server to read variables.
+The
+@code{ntpq}
+utility maintains an internal list in which data to be included in control
+messages can be assembled, and sent using the
+@code{readlist}
+and
+@code{writelist}
+commands described below.
+The
+@code{addvars}
+command allows variables and their optional values to be added to
+the list.
+If more than one variable is to be added, the list should
+be comma-separated and not contain white space.
+The
+@code{rmvars}
+command can be used to remove individual variables from the list,
+while the
+@code{clearlist}
+command removes all variables from the
+list.
+@item @code{authenticate} @code{[yes | no]}
+Normally
+@code{ntpq}
+does not authenticate requests unless
+they are write requests.
+The command
+@quoteleft{}authenticate yes@quoteright{}
+causes
+@code{ntpq}
+to send authentication with all requests it
+makes.
+Authenticated requests causes some servers to handle
+requests slightly differently, and can occasionally melt the CPU in
+fuzzballs if you turn authentication on before doing a
+@code{peer}
+display.
+The command
+@quoteleft{}authenticate@quoteright{}
+causes
+@code{ntpq}
+to display whether or not
+@code{ntpq}
+is currently autheinticating requests.
+@item @code{cooked}
+Causes output from query commands to be "cooked", so that
+variables which are recognized by
+@code{ntpq}
+will have their
+values reformatted for human consumption.
+Variables which
+@code{ntpq}
+thinks should have a decodable value but didn't are
+marked with a trailing
+@quoteleft{}?@quoteright{}.
+@item @code{debug} @code{[@code{more} | @code{less} | @code{off}]}
+With no argument, displays the current debug level.
+Otherwise, the debug level is changed to the indicated level.
+@item @code{delay} @kbd{milliseconds}
+Specify a time interval to be added to timestamps included in
+requests which require authentication.
+This is used to enable
+(unreliable) server reconfiguration over long delay network paths
+or between machines whose clocks are unsynchronized.
+Actually the
+server does not now require timestamps in authenticated requests,
+so this command may be obsolete.
+@item @code{host} @kbd{hostname}
+Set the host to which future queries will be sent.
+@kbd{hostname}
+may be either a host name or a numeric address.
+@item @code{hostnames} @code{[@code{yes} | @code{no}]}
+If
+@code{yes}
+is specified, host names are printed in
+information displays.
+If
+@code{no}
+is specified, numeric
+addresses are printed instead.
+The default is
+@code{yes},
+unless
+modified using the command line
+@code{-n}
+switch.
+@item @code{keyid} @kbd{keyid}
+This command allows the specification of a key number to be
+used to authenticate configuration requests.
+This must correspond
+to a key number the server has been configured to use for this
+purpose.
+@item @code{ntpversion} @code{[@code{1} | @code{2} | @code{3} | @code{4}]}
+Sets the NTP version number which
+@code{ntpq}
+claims in
+packets.
+Defaults to 3, and note that mode 6 control messages (and
+modes, for that matter) didn't exist in NTP version 1.
+There appear
+to be no servers left which demand version 1.
+With no argument, displays the current NTP version that will be used
+when communicating with servers.
+@item @code{quit}
+Exit
+@code{ntpq}
+@item @code{passwd}
+This command prompts you to type in a password (which will not
+be echoed) which will be used to authenticate configuration
+requests.
+The password must correspond to the key configured for
+use by the NTP server for this purpose if such requests are to be
+successful.
+@item @code{raw}
+Causes all output from query commands is printed as received
+from the remote server.
+The only formating/interpretation done on
+the data is to transform nonascii data into a printable (but barely
+understandable) form.
+@item @code{timeout} @kbd{milliseconds}
+Specify a timeout period for responses to server queries.
+The
+default is about 5000 milliseconds.
+Note that since
+@code{ntpq}
+retries each query once after a timeout, the total waiting time for
+a timeout will be twice the timeout value set.
+@end table
+
+This section was generated by @strong{AutoGen},
+using the @code{agtexi-cmd} template and the option descriptions for the @code{ntpq} program.
+This software is released under the NTP license, <http://ntp.org/license>.
+
+@menu
+* ntpq usage::                  ntpq help/usage (@option{--help})
+* ntpq ipv4::                   ipv4 option (-4)
+* ntpq ipv6::                   ipv6 option (-6)
+* ntpq command::                command option (-c)
+* ntpq peers::                  peers option (-p)
+* ntpq interactive::            interactive option (-i)
+* ntpq numeric::                numeric option (-n)
+* ntpq old-rv::                 old-rv option
+* ntpq config::                 presetting/configuring ntpq
+* ntpq exit status::            exit status
+@end menu
+
+@node ntpq usage
+@subsection ntpq help/usage (@option{--help})
+@cindex ntpq help
+
+This is the automatically generated usage text for ntpq.
+
+The text printed is the same whether selected with the @code{help} option
+(@option{--help}) or the @code{more-help} option (@option{--more-help}).  @code{more-help} will print
+the usage text by passing it through a pager program.
+@code{more-help} is disabled on platforms without a working
+@code{fork(2)} function.  The @code{PAGER} environment variable is
+used to select the program, defaulting to @file{more}.  Both will exit
+with a status code of 0.
+
+@exampleindent 0
+@example
+ntpq - standard NTP query program - Ver. 4.2.7p404
+Usage:  ntpq [ -<flag> [<val>] | --<name>[@{=| @}<val>] ]... [ host ...]
+  Flg Arg Option-Name    Description
+   -4 no  ipv4           Force IPv4 DNS name resolution
+                                - prohibits the option 'ipv6'
+   -6 no  ipv6           Force IPv6 DNS name resolution
+                                - prohibits the option 'ipv4'
+   -c Str command        run a command and exit
+                                - may appear multiple times
+   -d no  debug-level    Increase debug verbosity level
+                                - may appear multiple times
+   -D Num set-debug-level Set the debug verbosity level
+                                - may appear multiple times
+   -p no  peers          Print a list of the peers
+                                - prohibits the option 'interactive'
+   -i no  interactive    Force ntpq to operate in interactive mode
+                                - prohibits these options:
+                                command
+                                peers
+   -n no  numeric        numeric host addresses
+      no  old-rv         Always output status line with readvar
+      opt version        output version information and exit
+   -? no  help           display extended usage information and exit
+   -! no  more-help      extended usage information passed thru pager
+   -> opt save-opts      save the option state to a config file
+   -< Str load-opts      load options from a config file
+                                - disabled as '--no-load-opts'
+                                - may appear multiple times
+
+Options are specified by doubled hyphens and their name or by a single
+hyphen and the flag character.
+
+The following option preset mechanisms are supported:
+ - reading file $HOME/.ntprc
+ - reading file ./.ntprc
+ - examining environment variables named NTPQ_*
+
+Please send bug reports to:  <http://bugs.ntp.org, bugs@@ntp.org>
+
+exit 0
+@end example
+@exampleindent 4
+
+@node ntpq ipv4
+@subsection ipv4 option (-4)
+@cindex ntpq-ipv4
+
+This is the ``force ipv4 dns name resolution'' option.
+
+@noindent
+This option has some usage constraints.  It:
+@itemize @bullet
+@item
+must not appear in combination with any of the following options:
+ipv6.
+@end itemize
+
+Force DNS resolution of following host names on the command line
+to the IPv4 namespace.
+@node ntpq ipv6
+@subsection ipv6 option (-6)
+@cindex ntpq-ipv6
+
+This is the ``force ipv6 dns name resolution'' option.
+
+@noindent
+This option has some usage constraints.  It:
+@itemize @bullet
+@item
+must not appear in combination with any of the following options:
+ipv4.
+@end itemize
+
+Force DNS resolution of following host names on the command line
+to the IPv6 namespace.
+@node ntpq command
+@subsection command option (-c)
+@cindex ntpq-command
+
+This is the ``run a command and exit'' option.
+This option takes a string argument @file{cmd}.
+
+@noindent
+This option has some usage constraints.  It:
+@itemize @bullet
+@item
+may appear an unlimited number of times.
+@end itemize
+
+The following argument is interpreted as an interactive format command
+and is added to the list of commands to be executed on the specified
+host(s).
+@node ntpq peers
+@subsection peers option (-p)
+@cindex ntpq-peers
+
+This is the ``print a list of the peers'' option.
+
+@noindent
+This option has some usage constraints.  It:
+@itemize @bullet
+@item
+must not appear in combination with any of the following options:
+interactive.
+@end itemize
+
+Print a list of the peers known to the server as well as a summary
+of their state. This is equivalent to the 'peers' interactive command.
+@node ntpq interactive
+@subsection interactive option (-i)
+@cindex ntpq-interactive
+
+This is the ``force ntpq to operate in interactive mode'' option.
+
+@noindent
+This option has some usage constraints.  It:
+@itemize @bullet
+@item
+must not appear in combination with any of the following options:
+command, peers.
+@end itemize
+
+Force @code{ntpq} to operate in interactive mode.
+Prompts will be written to the standard output and
+commands read from the standard input.
+@node ntpq numeric
+@subsection numeric option (-n)
+@cindex ntpq-numeric
+
+This is the ``numeric host addresses'' option.
+Output all host addresses in dotted-quad numeric format rather than
+converting to the canonical host names. 
+@node ntpq old-rv
+@subsection old-rv option
+@cindex ntpq-old-rv
+
+This is the ``always output status line with readvar'' option.
+By default, @code{ntpq} now suppresses the @code{associd=...}
+line that precedes the output of @code{readvar}
+(alias @code{rv}) when a single variable is requested, such as
+@code{ntpq -c "rv 0 offset"}.
+This option causes @code{ntpq} to include both lines of output
+for a single-variable @code{readvar}.
+Using an environment variable to
+preset this option in a script will enable both older and
+newer @code{ntpq} to behave identically in this regard.
+
+
+@node ntpq config
+@subsection presetting/configuring ntpq
+
+Any option that is not marked as @i{not presettable} may be preset by
+loading values from configuration ("rc" or "ini") files, and values from environment variables named @code{NTPQ} and @code{NTPQ_<OPTION_NAME>}.  @code{<OPTION_NAME>} must be one of
+the options listed above in upper case and segmented with underscores.
+The @code{NTPQ} variable will be tokenized and parsed like
+the command line.  The remaining variables are tested for existence and their
+values are treated like option arguments.
+
+
+@noindent
+@code{libopts} will search in 2 places for configuration files:
+@itemize @bullet
+@item
+$HOME
+@item
+$PWD
+@end itemize
+The environment variables @code{HOME}, and @code{PWD}
+are expanded and replaced when @file{ntpq} runs.
+For any of these that are plain files, they are simply processed.
+For any that are directories, then a file named @file{.ntprc} is searched for
+within that directory and processed.
+
+Configuration files may be in a wide variety of formats.
+The basic format is an option name followed by a value (argument) on the
+same line.  Values may be separated from the option name with a colon,
+equal sign or simply white space.  Values may be continued across multiple
+lines by escaping the newline with a backslash.
+
+Multiple programs may also share the same initialization file.
+Common options are collected at the top, followed by program specific
+segments.  The segments are separated by lines like:
+@example
+[NTPQ]
+@end example
+@noindent
+or by
+@example
+<?program ntpq>
+@end example
+@noindent
+Do not mix these styles within one configuration file.
+
+Compound values and carefully constructed string values may also be
+specified using XML syntax:
+@example
+<option-name>
+   <sub-opt>...&lt;...&gt;...</sub-opt>
+</option-name>
+@end example
+@noindent
+yielding an @code{option-name.sub-opt} string value of
+@example
+"...<...>..."
+@end example
+@code{AutoOpts} does not track suboptions.  You simply note that it is a
+hierarchicly valued option.  @code{AutoOpts} does provide a means for searching
+the associated name/value pair list (see: optionFindValue).
+
+The command line options relating to configuration and/or usage help are:
+
+@subsubheading version (-)
+
+Print the program version to standard out, optionally with licensing
+information, then exit 0.  The optional argument specifies how much licensing
+detail to provide.  The default is to print just the version.  The licensing infomation may be selected with an option argument.
+Only the first letter of the argument is examined:
+
+@table @samp
+@item version
+Only print the version.  This is the default.
+@item copyright
+Name the copyright usage licensing terms.
+@item verbose
+Print the full copyright usage licensing terms.
+@end table
+
+@node ntpq exit status
+@subsection ntpq exit status
+
+One of the following exit values will be returned:
+@table @samp
+@item 0 (EXIT_SUCCESS)
+Successful program execution.
+@item 1 (EXIT_FAILURE)
+The operation failed or the command syntax was not valid.
+@item 66 (EX_NOINPUT)
+A specified configuration file could not be loaded.
+@item 70 (EX_SOFTWARE)
+libopts had an internal operational error.  Please report
+it to autogen-users@@lists.sourceforge.net.  Thank you.
+@end table

@@ -34,8 +34,7 @@
 # To skip over -stable beta1 directly to -RC1, set prerelease=rc.
 #
 # To skip all -stable prereleases and move from one primary or point 
-#   release directly to the next point release, or to go from RC to
-#   release, set rcpoint=GO.
+#   release directly to the next point release, set rcpoint=GO.
 #
 ##
 #
@@ -46,14 +45,14 @@
 #
 
 # repotype must be stable or dev
-repotype=stable
+repotype=dev
 
 # version=Protocol.Major.Minor
 # odd minor numbers are for -dev, even minor numbers are for -stable
 # UpdatePoint will fail if repotype is inconsistent with minor.
 proto=4
 major=2
-minor=6
+minor=7
 version=${proto}.${major}.${minor}
 
 # Special.  Normally unused.  A suffix.
@@ -71,7 +70,7 @@ CLTAG=NTP_4_2_0
 # - Numeric values increment
 # - empty 'increments' to 1
 # - NEW 'increments' to empty
-point=5
+point=404
 
 ### betapoint is normally modified by script.
 # ntp-stable Beta number (betapoint)

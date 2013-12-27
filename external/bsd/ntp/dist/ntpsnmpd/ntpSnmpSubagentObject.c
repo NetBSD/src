@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpSnmpSubagentObject.c,v 1.1.1.2 2012/01/31 21:27:06 kardel Exp $	*/
+/*	$NetBSD: ntpSnmpSubagentObject.c,v 1.1.1.3 2013/12/27 23:31:07 christos Exp $	*/
 
 /*****************************************************************************
  *
@@ -123,7 +123,7 @@ ntpsnmpd_parse_string(
 
 	if (value[0] == '"') {
 		val_cnt--;
-		strncpy(value, &value[1], valuesize);
+		strlcpy(value, &value[1], valuesize);
 		if (val_cnt > 0 && value[val_cnt - 1] == '"') {
 			val_cnt--;
 			value[val_cnt] = '\0';

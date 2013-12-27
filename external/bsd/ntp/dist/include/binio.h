@@ -1,11 +1,11 @@
-/*	$NetBSD: binio.h,v 1.1.1.1 2009/12/13 16:54:48 kardel Exp $	*/
+/*	$NetBSD: binio.h,v 1.1.1.2 2013/12/27 23:30:45 christos Exp $	*/
 
 /*
  * /src/NTP/ntp4-dev/include/binio.h,v 4.5 2005/04/16 17:32:10 kardel RELEASE_20050508_A
  *
  * binio.h,v 4.5 2005/04/16 17:32:10 kardel RELEASE_20050508_A
  *
- * Created: Sun Jul 20 13:03:05 1997
+ * $Created: Sun Jul 20 13:03:05 1997 $
  *
  * Copyright (c) 1997-2005 by Frank Kardel <kardel <AT> ntp.org>
  *
