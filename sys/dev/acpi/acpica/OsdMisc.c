@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdMisc.c,v 1.13 2013/12/27 18:53:25 christos Exp $	*/
+/*	$NetBSD: OsdMisc.c,v 1.14 2013/12/27 20:55:59 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.13 2013/12/27 18:53:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.14 2013/12/27 20:55:59 christos Exp $");
 
 #include "opt_acpi.h"
 #include "opt_ddb.h"
@@ -197,7 +197,7 @@ AcpiOsPhysicalTableOverride (
 void
 acpi_osd_debugger(void)
 {
-#ifdef ACPI_DEBUGGER
+#ifdef ACPI_DEBUG
 	static int beenhere;
 	ACPI_PARSE_OBJECT obj;
 	label_t	acpi_jmpbuf;
