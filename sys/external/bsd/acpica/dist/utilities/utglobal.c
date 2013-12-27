@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2011, Intel Corp.
+ * Copyright (C) 2000 - 2013, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,6 +42,7 @@
  */
 
 #define __UTGLOBAL_C__
+#define EXPORT_ACPI_INTERFACES
 #define DEFINE_ACPI_GLOBALS
 
 #include "acpi.h"
@@ -155,6 +156,7 @@ const ACPI_PREDEFINED_NAMES     AcpiGbl_PreDefinedNames[] =
 };
 
 
+#if (!ACPI_REDUCED_HARDWARE)
 /******************************************************************************
  *
  * Event and Hardware globals
@@ -199,6 +201,7 @@ ACPI_FIXED_EVENT_INFO       AcpiGbl_FixedEventInfo[ACPI_NUM_FIXED_EVENTS] =
     /* ACPI_EVENT_SLEEP_BUTTON  */  {ACPI_BITREG_SLEEP_BUTTON_STATUS,   ACPI_BITREG_SLEEP_BUTTON_ENABLE, ACPI_BITMASK_SLEEP_BUTTON_STATUS,   ACPI_BITMASK_SLEEP_BUTTON_ENABLE},
     /* ACPI_EVENT_RTC           */  {ACPI_BITREG_RT_CLOCK_STATUS,       ACPI_BITREG_RT_CLOCK_ENABLE,     ACPI_BITMASK_RT_CLOCK_STATUS,       ACPI_BITMASK_RT_CLOCK_ENABLE},
 };
+#endif /* !ACPI_REDUCED_HARDWARE */
 
 /*******************************************************************************
  *
@@ -208,8 +211,9 @@ ACPI_FIXED_EVENT_INFO       AcpiGbl_FixedEventInfo[ACPI_NUM_FIXED_EVENTS] =
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Init ACPICA globals.  All globals that require specific
- *              initialization should be initialized here!
+ * DESCRIPTION: Initialize ACPICA globals. All globals that require specific
+ *              initialization should be initialized here. This allows for
+ *              a warm restart.
  *
  ******************************************************************************/
 
@@ -230,6 +234,13 @@ AcpiUtInitGlobals (
     if (ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
+    }
+
+    /* Address Range lists */
+
+    for (i = 0; i < ACPI_ADDRESS_RANGE_MAX; i++)
+    {
+        AcpiGbl_AddressRangeList[i] = NULL;
     }
 
     /* Mutex locked flags */
@@ -261,7 +272,9 @@ AcpiUtInitGlobals (
         AcpiFixedEventCount[i]              = 0;
     }
 
-    /* GPE support */
+#if (!ACPI_REDUCED_HARDWARE)
+
+    /* GPE/SCI support */
 
     AcpiGbl_AllGpesInitialized          = FALSE;
     AcpiGbl_GpeXruptListHead            = NULL;
@@ -269,15 +282,19 @@ AcpiUtInitGlobals (
     AcpiGbl_GpeFadtBlocks[1]            = NULL;
     AcpiCurrentGpeCount                 = 0;
 
+    AcpiGbl_GlobalEventHandler          = NULL;
+    AcpiGbl_SciHandlerList              = NULL;
+
+#endif /* !ACPI_REDUCED_HARDWARE */
+
     /* Global handlers */
 
-    AcpiGbl_SystemNotify.Handler        = NULL;
-    AcpiGbl_DeviceNotify.Handler        = NULL;
+    AcpiGbl_GlobalNotify[0].Handler     = NULL;
+    AcpiGbl_GlobalNotify[1].Handler     = NULL;
     AcpiGbl_ExceptionHandler            = NULL;
     AcpiGbl_InitHandler                 = NULL;
     AcpiGbl_TableHandler                = NULL;
     AcpiGbl_InterfaceHandler            = NULL;
-    AcpiGbl_GlobalEventHandler          = NULL;
 
     /* Global Lock support */
 
@@ -303,7 +320,6 @@ AcpiUtInitGlobals (
     AcpiGbl_TraceDbgLayer               = 0;
     AcpiGbl_DebuggerConfiguration       = DEBUGGER_THREADING;
     AcpiGbl_DbOutputFlags               = ACPI_DB_CONSOLE_OUTPUT;
-    AcpiGbl_OsiData                     = 0;
     AcpiGbl_OsiMutex                    = NULL;
     AcpiGbl_RegMethodsExecuted          = FALSE;
 
@@ -327,6 +343,8 @@ AcpiUtInitGlobals (
 
 #ifdef ACPI_DISASSEMBLER
     AcpiGbl_ExternalList                = NULL;
+    AcpiGbl_NumExternalMethods          = 0;
+    AcpiGbl_ResolvedExternalMethods     = 0;
 #endif
 
 #ifdef ACPI_DEBUG_OUTPUT
