@@ -1,10 +1,11 @@
-# $NetBSD: files.acpica,v 1.5 2013/12/27 18:51:08 christos Exp $
+# $NetBSD: files.acpica,v 1.6 2013/12/27 20:55:03 christos Exp $
 
 define		acpica
 makeoptions	acpi	CPPFLAGS+="-I$S/external/bsd/acpica/dist/include"
 
 # debugger/
 file	external/bsd/acpica/dist/debugger/dbcmds.c		acpica & acpi_debug & ddb
+file	external/bsd/acpica/dist/debugger/dbconvert.c		acpica & acpi_debug & ddb
 file	external/bsd/acpica/dist/debugger/dbdisply.c		acpica & acpi_debug & ddb
 file	external/bsd/acpica/dist/debugger/dbexec.c		acpica & acpi_debug & ddb
 file	external/bsd/acpica/dist/debugger/dbfileio.c		acpica & acpi_debug & ddb
@@ -18,11 +19,13 @@ file	external/bsd/acpica/dist/debugger/dbxface.c		acpica & acpi_debug & ddb
 
 # disassembler/
 file	external/bsd/acpica/dist/disassembler/dmbuffer.c	acpica & acpi_debug & ddb
+file	external/bsd/acpica/dist/disassembler/dmdeferred.c	acpica & acpi_debug & ddb
 file	external/bsd/acpica/dist/disassembler/dmnames.c		acpica & acpi_debug & ddb
 file	external/bsd/acpica/dist/disassembler/dmobject.c	acpica & acpi_debug & ddb
 file	external/bsd/acpica/dist/disassembler/dmopcode.c	acpica & acpi_debug & ddb
 file	external/bsd/acpica/dist/disassembler/dmresrc.c		acpica & acpi_debug & ddb
 file	external/bsd/acpica/dist/disassembler/dmresrcl.c	acpica & acpi_debug & ddb
+file	external/bsd/acpica/dist/disassembler/dmresrcl2.c	acpica & acpi_debug & ddb
 file	external/bsd/acpica/dist/disassembler/dmresrcs.c	acpica & acpi_debug & ddb
 file	external/bsd/acpica/dist/disassembler/dmutils.c		acpica & acpi_debug & ddb
 file	external/bsd/acpica/dist/disassembler/dmwalk.c		acpica & acpi_debug & ddb
@@ -140,6 +143,7 @@ file	external/bsd/acpica/dist/resources/rsaddr.c		acpica
 file	external/bsd/acpica/dist/resources/rscalc.c		acpica
 file	external/bsd/acpica/dist/resources/rscreate.c		acpica
 file	external/bsd/acpica/dist/resources/rsdump.c		acpica
+file	external/bsd/acpica/dist/resources/rsdumpinfo.c		acpica & acpi_debug & ddb
 file	external/bsd/acpica/dist/resources/rsinfo.c		acpica
 file	external/bsd/acpica/dist/resources/rsio.c		acpica
 file	external/bsd/acpica/dist/resources/rsirq.c		acpica
