@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.83 2013/09/07 00:32:33 matt Exp $	*/
+/*	$NetBSD: armreg.h,v 1.84 2013/12/27 12:16:01 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -650,6 +650,20 @@ static inline void armreg_##name##_write(uint32_t __val)	\
 	__asm __volatile("mcr " __insnstring :: "r"(__val));	\
 }
 
+#define	ARMREG_READ_INLINE2(name, __insnstring)			\
+static inline uint32_t armreg_##name##_read(void)		\
+{								\
+	uint32_t __rv;						\
+	__asm __volatile(__insnstring : "=r"(__rv));	\
+	return __rv;						\
+}
+
+#define	ARMREG_WRITE_INLINE2(name, __insnstring)		\
+static inline void armreg_##name##_write(uint32_t __val)	\
+{								\
+	__asm __volatile(__insnstring :: "r"(__val));		\
+}
+
 #define	ARMREG_READ64_INLINE(name, __insnstring)		\
 static inline uint64_t armreg_##name##_read(void)		\
 {								\
@@ -665,17 +679,17 @@ static inline void armreg_##name##_write(uint64_t __val)	\
 }
 
 /* cp10 registers */
-ARMREG_READ_INLINE(fpsid, "p10,7,%0,c0,c0,0") /* VFP System ID */
-ARMREG_READ_INLINE(fpscr, "p10,7,%0,c1,c0,0") /* VFP Status/Control Register */
-ARMREG_WRITE_INLINE(fpscr, "p10,7,%0,c1,c0,0") /* VFP Status/Control Register */
-ARMREG_READ_INLINE(mvfr1, "p10,7,%0,c6,c0,0") /* Media and VFP Feature Register 1 */
-ARMREG_READ_INLINE(mvfr0, "p10,7,%0,c7,c0,0") /* Media and VFP Feature Register 0 */
-ARMREG_READ_INLINE(fpexc, "p10,7,%0,c8,c0,0") /* VFP Exception Register */
-ARMREG_WRITE_INLINE(fpexc, "p10,7,%0,c8,c0,0") /* VFP Exception Register */
-ARMREG_READ_INLINE(fpinst, "p10,7,%0,c9,c0,0") /* VFP Exception Instruction */
-ARMREG_WRITE_INLINE(fpinst, "p10,7,%0,c9,c0,0") /* VFP Exception Instruction */
-ARMREG_READ_INLINE(fpinst2, "p10,7,%0,c10,c0,0") /* VFP Exception Instruction 2 */
-ARMREG_WRITE_INLINE(fpinst2, "p10,7,%0,c10,c0,0") /* VFP Exception Instruction 2 */
+ARMREG_READ_INLINE2(fpsid, "vmrs\t%0, fpsid") /* VFP System ID */
+ARMREG_READ_INLINE2(fpscr, "vmrs\t%0, fpscr") /* VFP Status/Control Register */
+ARMREG_WRITE_INLINE2(fpscr, "vmsr\tfpscr, %0") /* VFP Status/Control Register */
+ARMREG_READ_INLINE2(mvfr1, "vmrs\t%0, mvfr1") /* Media and VFP Feature Register 1 */
+ARMREG_READ_INLINE2(mvfr0, "vmrs\t%0, mvfr0") /* Media and VFP Feature Register 0 */
+ARMREG_READ_INLINE2(fpexc, "vmrs\t%0, fpexc") /* VFP Exception Register */
+ARMREG_WRITE_INLINE2(fpexc, "vmsr\tfpexc, %0") /* VFP Exception Register */
+ARMREG_READ_INLINE2(fpinst, "fmrx\t%0, fpinst") /* VFP Exception Instruction */
+ARMREG_WRITE_INLINE2(fpinst, "fmxr\tfpinst, %0") /* VFP Exception Instruction */
+ARMREG_READ_INLINE2(fpinst2, "fmrx\t%0, fpinst2") /* VFP Exception Instruction 2 */
+ARMREG_WRITE_INLINE2(fpinst2, "fmxr\tfpinst2, %0") /* VFP Exception Instruction 2 */
 
 /* cp15 c0 registers */
 ARMREG_READ_INLINE(midr, "p15,0,%0,c0,c0,0") /* Main ID Register */

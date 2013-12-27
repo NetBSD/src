@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.28 2013/12/14 15:47:18 matt Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.29 2013/12/27 12:16:01 matt Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -49,19 +49,24 @@ extern int cpu_neon_present;
 
 #ifdef FPU_VFP
 
+#ifdef CPU_CORTEX
+__asm(".fpu\tvfpv4");
+#else
+__asm(".fpu\tvfp");
+#endif
+
 /* FLDMD <X>, {d0-d15} */
 static inline void
 load_vfpregs_lo(const uint64_t *p)
 {
-	/* vldmia rN, {d0-d15} */
-	__asm __volatile("ldc\tp11, c0, [%0], {32}" :: "r" (p) : "memory");
+	__asm __volatile("vldmia %0, {d0-d15}" :: "r" (p) : "memory");
 }
 
 /* FSTMD <X>, {d0-d15} */
 static inline void
 save_vfpregs_lo(uint64_t *p)
 {
-	__asm __volatile("stc\tp11, c0, [%0], {32}" :: "r" (p) : "memory");
+	__asm __volatile("vstmia %0, {d0-d15}" :: "r" (p) : "memory");
 }
 
 #ifdef CPU_CORTEX
@@ -69,14 +74,14 @@ save_vfpregs_lo(uint64_t *p)
 static inline void
 load_vfpregs_hi(const uint64_t *p)
 {
-	__asm __volatile("ldcl\tp11, c0, [%0], {32}" :: "r" (&p[16]) : "memory");
+	__asm __volatile("vldmia\t%0, {d16-d31}" :: "r" (&p[16]) : "memory");
 }
 
 /* FLDMD <X>, {d16-d31} */
 static inline void
 save_vfpregs_hi(uint64_t *p)
 {
-	__asm __volatile("stcl\tp11, c0, [%0], {32}" :: "r" (&p[16]) : "memory");
+	__asm __volatile("vstmia\t%0, {d16-d31}" :: "r" (&p[16]) : "memory");
 }
 #endif
 
