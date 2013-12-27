@@ -1027,7 +1027,7 @@ GetCrs:
          * tests both the AML->Resource conversion and the Resource->AML
          * conversion.
          */
-        (void) AcpiDmTestResourceConversion (Node, METHOD_NAME__CRS);
+        (void) AcpiDmTestResourceConversion (Node, __UNCONST(METHOD_NAME__CRS));
 
         /* Execute _SRS with the resource list */
 
