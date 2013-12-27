@@ -1,7 +1,7 @@
-/*	$NetBSD: openpam_set_feature.c,v 1.1.1.2 2013/12/27 19:27:40 christos Exp $	*/
+/*	$NetBSD: openpam_vasprintf.c,v 1.1.1.1 2013/12/27 19:27:42 christos Exp $	*/
 
 /*-
- * Copyright (c) 2012 Dag-Erling Smørgrav
+ * Copyright (c) 2011-2012 Dag-Erling Smørgrav
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,49 +28,35 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: openpam_set_feature.c 648 2013-03-05 17:54:27Z des 
+ * Id: openpam_vasprintf.c 648 2013-03-05 17:54:27Z des 
  */
 
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
 
-#include <security/pam_appl.h>
-#include <security/openpam.h>
+#ifndef HAVE_VASPRINTF
 
-#include "openpam_impl.h"
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-/*
- * OpenPAM extension
- *
- * Enable or disable an optional feature.
- */
+#include "openpam_vasprintf.h"
 
+/* like vsprintf(3), but allocates memory for the result. */
 int
-openpam_set_feature(int feature, int onoff)
+openpam_vasprintf(char **str, const char *fmt, va_list ap)
 {
+        va_list apcopy;
+        int len, ret;
 
-	ENTERF(feature);
-	if (feature < 0 || feature >= OPENPAM_NUM_FEATURES)
-		RETURNC(PAM_SYMBOL_ERR);
-	openpam_features[feature].onoff = onoff;
-	RETURNC(PAM_SUCCESS);
+        va_copy(apcopy, ap);
+        len = vsnprintf(NULL, 0, fmt, ap);
+        if ((*str = malloc(len + 1)) == NULL)
+                return (-1);
+        ret = vsnprintf(*str, len + 1, fmt, apcopy);
+        va_end(apcopy);
+        return (ret);
 }
 
-/*
- * Error codes:
- *
- *	PAM_SYMBOL_ERR
- */
-
-/**
- * EXPERIMENTAL
- *
- * The =openpam_set_feature function sets the state of the specified
- * feature to the value specified by the =onoff argument.
- * See =openpam_get_feature for a list of recognized features.
- *
- * >openpam_get_feature
- *
- * AUTHOR DES
- */
+#endif

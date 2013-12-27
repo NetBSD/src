@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_set_feature.c,v 1.1.1.2 2013/12/27 19:27:40 christos Exp $	*/
+/*	$NetBSD: openpam_vasprintf.h,v 1.1.1.1 2013/12/27 19:27:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 Dag-Erling Smørgrav
@@ -28,49 +28,16 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: openpam_set_feature.c 648 2013-03-05 17:54:27Z des 
+ * Id: openpam_vasprintf.h 648 2013-03-05 17:54:27Z des 
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
+#ifndef OPENPAM_VASPRINTF_H_INCLUDED
+#define OPENPAM_VASPRINTF_H_INCLUDED
+
+#ifndef HAVE_VASPRINTF
+int openpam_vasprintf(char **, const char *, va_list);
+#undef vasprintf
+#define vasprintf(arg, ...) openpam_vasprintf(arg, __VA_ARGS__)
 #endif
 
-#include <security/pam_appl.h>
-#include <security/openpam.h>
-
-#include "openpam_impl.h"
-
-/*
- * OpenPAM extension
- *
- * Enable or disable an optional feature.
- */
-
-int
-openpam_set_feature(int feature, int onoff)
-{
-
-	ENTERF(feature);
-	if (feature < 0 || feature >= OPENPAM_NUM_FEATURES)
-		RETURNC(PAM_SYMBOL_ERR);
-	openpam_features[feature].onoff = onoff;
-	RETURNC(PAM_SUCCESS);
-}
-
-/*
- * Error codes:
- *
- *	PAM_SYMBOL_ERR
- */
-
-/**
- * EXPERIMENTAL
- *
- * The =openpam_set_feature function sets the state of the specified
- * feature to the value specified by the =onoff argument.
- * See =openpam_get_feature for a list of recognized features.
- *
- * >openpam_get_feature
- *
- * AUTHOR DES
- */
+#endif
