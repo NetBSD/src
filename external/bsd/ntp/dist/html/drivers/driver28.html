@@ -5,7 +5,7 @@
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
         <meta name="GENERATOR" content="Mozilla/4.01 [en] (Win95; I) [Netscape]">
-        <title>Shared memoy Driver</title>
+        <title>Shared Memory Driver</title>
         <link href="scripts/style.css" type="text/css" rel="stylesheet">
     </head>
 
@@ -22,35 +22,36 @@
 
         <h4>Structure of shared memory-segment</h4>
         <pre>struct shmTime {
-&nbsp; int&nbsp;&nbsp;&nbsp; mode; /* 0 - if valid set
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; *&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; use values,&nbsp;
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; *&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; clear valid
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; * 1 - if valid set&nbsp;
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; *&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if count before and after read of&nbsp;
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; *&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; values is equal,
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; *&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; use values&nbsp;
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; *&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; clear valid
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; */
-&nbsp; int&nbsp;&nbsp;&nbsp; count;
-&nbsp; time_t clockTimeStampSec;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /* external clock */
-&nbsp; int&nbsp;&nbsp;&nbsp; clockTimeStampUSec;&nbsp;&nbsp;&nbsp;&nbsp; /* external clock */
-&nbsp; time_t receiveTimeStampSec;&nbsp;&nbsp;&nbsp; /* internal clock, when external value was received */
-&nbsp; int&nbsp;&nbsp;&nbsp; receiveTimeStampUSec;&nbsp;&nbsp; /* internal clock, when external value was received */
-&nbsp; int&nbsp;&nbsp;&nbsp; leap;
-&nbsp; int&nbsp;&nbsp;&nbsp; precision;
-&nbsp; int&nbsp;&nbsp;&nbsp; nsamples;
-&nbsp; int&nbsp;&nbsp;&nbsp; valid;
-&nbsp; int&nbsp;&nbsp;&nbsp; dummy[10];&nbsp;
+        int    mode; /* 0 - if valid is set:
+                      *       use values,
+                      *       clear valid
+                      * 1 - if valid is set:
+                      *       if count before and after read of data is equal:
+                      *         use values
+                      *       clear valid
+                      */
+        volatile int    count;
+        time_t          clockTimeStampSec;
+        int             clockTimeStampUSec;
+        time_t          receiveTimeStampSec;
+        int             receiveTimeStampUSec;
+        int             leap;
+        int             precision;
+        int             nsamples;
+        volatile int    valid;
+        unsigned        clockTimeStampNSec;     /* Unsigned ns timestamps */
+        unsigned        receiveTimeStampNSec;   /* Unsigned ns timestamps */
+        int             dummy[8];
 };</pre>
 
         <h4>Operation mode=0</h4>
-        <p>Each second, the valid-flag of the shared memory-segment is checked:</p>
-        <p>If set, the values in the record (clockTimeStampSec, clockTimeStampUSec, receiveTimeStampSec, receiveTimeStampUSec, leap, precision) are passed to ntp, and the valid-flag is cleared and a counter is bumped.</p>
-        <p>If not set, a counter is bumped</p>
+        <p>Each second, the value of <code>valid</code> of the shared memory-segment is checked:</p>
+        <p>If set, the values in the record (clockTimeStampSec, clockTimeStampUSec, receiveTimeStampSec, receiveTimeStampUSec, leap, precision) are passed to ntp, and <code>valid</code> is cleared and <code>count</code> is bumped.</p>
+        <p>If not set, <code>count</code> is bumped.</p>
         <h4>Operation mode=1</h4>
-        <p>Each second, the valid-flag of the shared memory-segment is checked:</p>
-        <p>If set, the count-field of the record is remembered, and the values in the record (clockTimeStampSec, clockTimeStampUSec, receiveTimeStampSec, receiveTimeStampUSec, leap, precision) are read. Then, the remembered count is compared to the count now in the record. If both are equal, the values read from the record are passed to ntp. If they differ, another process has modified the record while it was read out (was not able to produce this case), and failure is reported to ntp. The valid flag is cleared and a counter is bumped.</p>
-        <p>If not set, a counter is bumped</p>
+        <p>Each second, <code>valid</code> in the shared memory-segment is checked:</p>
+        <p>If set, the <code>count</code> field of the record is remembered, and the values in the record (clockTimeStampSec, clockTimeStampUSec, receiveTimeStampSec, receiveTimeStampUSec, leap, precision) are read. Then, the remembered <code>count</code> is compared to current value of <code>count</code> now in the record. If both are equal, the values read from the record are passed to ntp. If they differ, another process has modified the record while it was read out (was not able to produce this case), and failure is reported to ntp. The <code>valid</code> flag is cleared and <code>count</code> is bumped.</p>
+        <p>If not set, <code>count</code> is bumped</p>
 
 
 <h4>gpsd</h4>
