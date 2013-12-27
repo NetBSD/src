@@ -1,16 +1,14 @@
-/*	$NetBSD: sntp.c,v 1.1.1.1 2012/01/31 21:27:34 kardel Exp $	*/
+/*	$NetBSD: sntp.c,v 1.1.1.2 2013/12/27 23:31:10 christos Exp $	*/
 
 #include <config.h>
 
 #include "main.h"
 
-volatile int debug;
-
 int 
 main (
-	int argc,
-	char **argv
+	int	argc,
+	char **	argv
 	) 
 {
-	return sntp_main(argc, argv);
+	return sntp_main(argc, argv, Version);
 }
