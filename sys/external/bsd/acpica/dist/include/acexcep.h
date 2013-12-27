@@ -74,10 +74,10 @@
  */
 typedef struct acpi_exception_info
 {
-    char                *Name;
+    const char                *Name;
 
 #ifdef ACPI_HELP_APP
-    char                *Description;
+    const char                *Description;
 #endif
 } ACPI_EXCEPTION_INFO;
 

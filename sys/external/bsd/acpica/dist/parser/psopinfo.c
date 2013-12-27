@@ -185,7 +185,7 @@ AcpiPsGetOpcodeName (
     return (Op->Name);
 
 #else
-    return ("OpcodeName unavailable");
+    return __UNCONST("OpcodeName unavailable");
 
 #endif
 }
