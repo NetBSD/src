@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_putenv.c,v 1.3 2013/04/06 02:20:36 christos Exp $	*/
+/*	$NetBSD: pam_putenv.c,v 1.4 2013/12/27 20:10:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: pam_putenv.c 539 2012-03-31 20:53:22Z des 
+ * Id: pam_putenv.c 648 2013-03-05 17:54:27Z des 
  */
 
 #ifdef HAVE_CONFIG_H
