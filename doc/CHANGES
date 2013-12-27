@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1869 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1870 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -318,3 +318,4 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 		on an Amiga 500.  [rkujawa 20131222] 
 	libc: Update to tzcode2013i. [christos 20131226]
 	zoneinfo: Import tzdata2013i. [apb 20131226]
+	acpi(4): Updated ACPICA to 20131218. [christos 20131227]
