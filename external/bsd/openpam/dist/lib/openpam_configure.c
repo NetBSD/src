@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_configure.c,v 1.5 2013/04/06 02:20:31 christos Exp $	*/
+/*	$NetBSD: openpam_configure.c,v 1.6 2013/12/27 20:10:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001-2003 Networks Associates Technology, Inc.
@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: openpam_configure.c 612 2012-05-26 23:02:55Z des 
+ * Id: openpam_configure.c 667 2013-03-17 14:24:00Z des 
  */
 
 #ifdef HAVE_CONFIG_H
@@ -43,7 +43,6 @@
 
 #include <sys/param.h>
 
-#include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -309,18 +308,6 @@ fail:
 	errno = serrno;
 	return (-1);
 }
-
-static const char *openpam_policy_path[] = {
-	"/etc/pam.d/",
-	"/etc/pam.conf",
-#ifndef __NetBSD__
-	"/usr/local/etc/pam.d/",
-	"/usr/local/etc/pam.conf",
-#else
-	/* Possibly /usr/pkg? */
-#endif
-	NULL
-};
 
 /*
  * Read the specified chains from the specified file.
