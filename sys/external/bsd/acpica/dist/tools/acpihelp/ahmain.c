@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2011, Intel Corp.
+ * Copyright (C) 2000 - 2013, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -50,6 +50,9 @@ static void
 AhDisplayUsage (
     void);
 
+#define AH_UTILITY_NAME             "ACPI Help Utility"
+#define AH_SUPPORTED_OPTIONS        "ehikmopsv"
+
 
 /******************************************************************************
  *
@@ -64,18 +67,25 @@ AhDisplayUsage (
     void)
 {
 
-    printf ("\n");
-    printf ("Usage: acpihelp <options> [NamePrefix | HexValue]\n\n");
-    printf ("Where: -k [NamePrefix]     Find/Display ASL non-operator keyword(s)\n");
-    printf ("       -m [NamePrefix]     Find/Display AML opcode name(s)\n");
-    printf ("       -o [HexValue]       Decode hex AML opcode\n");
-    printf ("       -p [NamePrefix]     Find/Display ASL predefined method name(s)\n");
-    printf ("       -s [NamePrefix]     Find/Display ASL operator name(s)\n");
+    ACPI_USAGE_HEADER ("acpihelp <options> [NamePrefix | HexValue]");
+    ACPI_OPTION ("-h",                      "Display help");
+    ACPI_OPTION ("-v",                      "Display version information");
+
+    printf ("\nACPI Names and Symbols:\n");
+    ACPI_OPTION ("-k [NamePrefix]",         "Find/Display ASL non-operator keyword(s)");
+    ACPI_OPTION ("-m [NamePrefix]",         "Find/Display AML opcode name(s)");
+    ACPI_OPTION ("-p [NamePrefix]",         "Find/Display ASL predefined method name(s)");
+    ACPI_OPTION ("-s [NamePrefix]",         "Find/Display ASL operator name(s)");
+
+    printf ("\nACPI Values:\n");
+    ACPI_OPTION ("-e [HexValue]",           "Decode ACPICA exception code");
+    ACPI_OPTION ("-i",                      "Display known ACPI Device IDs (_HID)");
+    ACPI_OPTION ("-o [HexValue]",           "Decode hex AML opcode");
+
     printf ("\nNamePrefix/HexValue not specified means \"Display All\"\n");
     printf ("\nDefault search with NamePrefix and no options:\n");
     printf ("    Find ASL operator names - if NamePrefix does not start with underscore\n");
     printf ("    Find ASL predefined method names - if NamePrefix starts with underscore\n");
-    printf ("\n");
 }
 
 
@@ -97,7 +107,8 @@ main (
     int                     j;
 
 
-    printf (ACPI_COMMON_SIGNON ("ACPI Help Utility"));
+    ACPI_DEBUG_INITIALIZE (); /* For debug version only */
+    printf (ACPI_COMMON_SIGNON (AH_UTILITY_NAME));
     DecodeType = AH_DECODE_DEFAULT;
 
     if (argc < 2)
@@ -108,30 +119,50 @@ main (
 
     /* Command line options */
 
-    while ((j = AcpiGetopt (argc, argv, "hkmops")) != EOF) switch (j)
+    while ((j = AcpiGetopt (argc, argv, AH_SUPPORTED_OPTIONS)) != EOF) switch (j)
     {
+    case 'e':
+
+        DecodeType = AH_DECODE_EXCEPTION;
+        break;
+
+    case 'i':
+
+        DecodeType = AH_DISPLAY_DEVICE_IDS;
+        break;
+
     case 'k':
+
         DecodeType = AH_DECODE_ASL_KEYWORD;
         break;
 
     case 'm':
+
         DecodeType = AH_DECODE_AML;
         break;
 
     case 'o':
+
         DecodeType = AH_DECODE_AML_OPCODE;
         break;
 
     case 'p':
+
         DecodeType = AH_DECODE_PREDEFINED_NAME;
         break;
 
     case 's':
+
         DecodeType = AH_DECODE_ASL;
         break;
 
+    case 'v': /* -v: (Version): signon already emitted, just exit */
+
+        return (0);
+
     case 'h':
     default:
+
         AhDisplayUsage ();
         return (-1);
     }
@@ -143,26 +174,42 @@ main (
     switch (DecodeType)
     {
     case AH_DECODE_AML:
+
         AhFindAmlOpcode (Name);
         break;
 
     case AH_DECODE_AML_OPCODE:
+
         AhDecodeAmlOpcode (Name);
         break;
 
     case AH_DECODE_PREDEFINED_NAME:
+
         AhFindPredefinedNames (Name);
         break;
 
     case AH_DECODE_ASL:
+
         AhFindAslOperators (Name);
         break;
 
     case AH_DECODE_ASL_KEYWORD:
+
         AhFindAslKeywords (Name);
         break;
 
+    case AH_DISPLAY_DEVICE_IDS:
+
+        AhDisplayDeviceIds ();
+        break;
+
+    case AH_DECODE_EXCEPTION:
+
+        AhDecodeException (Name);
+        break;
+
     default:
+
         if (!Name)
         {
             AhFindAslOperators (Name);
