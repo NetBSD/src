@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.56 2013/09/11 18:27:44 martin Exp $	*/
+/*	$NetBSD: pmap.h,v 1.57 2013/12/27 21:11:19 palle Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -211,6 +211,12 @@ void		pmap_kprotect(vaddr_t, vm_prot_t);
 /* SPARC64 specific */
 void		pmap_copy_page_phys(paddr_t, paddr_t);
 void		pmap_zero_page_phys(paddr_t);
+
+#ifdef SUN4V
+/* sun4v specific */
+void		pmap_setup_intstack_sun4v(paddr_t);
+void		pmap_setup_tsb_sun4v(void);
+#endif
 
 /* Installed physical memory, as discovered during bootstrap. */
 extern int phys_installed_size;
