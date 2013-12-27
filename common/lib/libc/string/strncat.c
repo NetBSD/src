@@ -1,4 +1,4 @@
-/*	$NetBSD: strncat.c,v 1.1 2013/12/27 20:24:45 christos Exp $	*/
+/*	$NetBSD: strncat.c,v 1.2 2013/12/27 20:26:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,12 +37,16 @@
 #if 0
 static char sccsid[] = "@(#)strncat.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strncat.c,v 1.1 2013/12/27 20:24:45 christos Exp $");
+__RCSID("$NetBSD: strncat.c,v 1.2 2013/12/27 20:26:53 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <assert.h>
 #include <string.h>
+#else
+#include <lib/libkern/libkern.h>
+#endif
 
 #ifdef _FORTIFY_SOURCE
 #undef strncat
