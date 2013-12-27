@@ -105,7 +105,7 @@ AcpiUtEvaluateObject (
         if (Status == AE_NOT_FOUND)
         {
             ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "[%4.4s.%s] was not found\n",
-                AcpiUtGetNodeName (PrefixNode), UPath));
+                AcpiUtGetNodeName (PrefixNode), Path));
         }
         else
         {
