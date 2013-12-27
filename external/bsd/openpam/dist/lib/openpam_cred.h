@@ -1,8 +1,14 @@
-/*	$NetBSD: openpam_set_feature.c,v 1.1.1.2 2013/12/27 19:27:40 christos Exp $	*/
+/*	$NetBSD: openpam_cred.h,v 1.1.1.1 2013/12/27 19:27:41 christos Exp $	*/
 
 /*-
- * Copyright (c) 2012 Dag-Erling Smørgrav
+ * Copyright (c) 2001-2003 Networks Associates Technology, Inc.
+ * Copyright (c) 2004-2011 Dag-Erling Smørgrav
  * All rights reserved.
+ *
+ * This software was developed for the FreeBSD Project by ThinkSec AS and
+ * Network Associates Laboratories, the Security Research Division of
+ * Network Associates, Inc.  under DARPA/SPAWAR contract N66001-01-C-8035
+ * ("CBOSS"), as part of the DARPA CHATS research program.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,49 +34,21 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: openpam_set_feature.c 648 2013-03-05 17:54:27Z des 
+ * Id: openpam_cred.h 648 2013-03-05 17:54:27Z des 
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
+#ifndef OPENPAM_CRED_H_INCLUDED
+#define OPENPAM_CRED_H_INCLUDED
+
+/*
+ * Saved credentials
+ */
+#define PAM_SAVED_CRED "pam_saved_cred"
+struct pam_saved_cred {
+	uid_t	 euid;
+	gid_t	 egid;
+	gid_t	 groups[NGROUPS_MAX];
+	int	 ngroups;
+};
+
 #endif
-
-#include <security/pam_appl.h>
-#include <security/openpam.h>
-
-#include "openpam_impl.h"
-
-/*
- * OpenPAM extension
- *
- * Enable or disable an optional feature.
- */
-
-int
-openpam_set_feature(int feature, int onoff)
-{
-
-	ENTERF(feature);
-	if (feature < 0 || feature >= OPENPAM_NUM_FEATURES)
-		RETURNC(PAM_SYMBOL_ERR);
-	openpam_features[feature].onoff = onoff;
-	RETURNC(PAM_SUCCESS);
-}
-
-/*
- * Error codes:
- *
- *	PAM_SYMBOL_ERR
- */
-
-/**
- * EXPERIMENTAL
- *
- * The =openpam_set_feature function sets the state of the specified
- * feature to the value specified by the =onoff argument.
- * See =openpam_get_feature for a list of recognized features.
- *
- * >openpam_get_feature
- *
- * AUTHOR DES
- */
