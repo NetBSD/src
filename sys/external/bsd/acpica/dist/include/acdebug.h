@@ -57,8 +57,8 @@ typedef struct acpi_db_command_info
 typedef struct acpi_db_command_help
 {
     UINT8                   LineCount;      /* Number of help lines */
-    char                    *Invocation;    /* Command Invocation */
-    char                    *Description;   /* Command Description */
+    const char              *Invocation;    /* Command Invocation */
+    const char              *Description;   /* Command Description */
 
 } ACPI_DB_COMMAND_HELP;
 
