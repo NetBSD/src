@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2011, Intel Corp.
+ * Copyright (C) 2000 - 2013, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -127,32 +127,37 @@ DtDoOperator (
     switch (Operator)
     {
     case EXPOP_ONES_COMPLIMENT:
+
         Result = ~RightValue;
         break;
 
     case EXPOP_LOGICAL_NOT:
+
         Result = !RightValue;
         break;
 
     case EXPOP_MULTIPLY:
+
         Result = LeftValue * RightValue;
         break;
 
     case EXPOP_DIVIDE:
+
         if (!RightValue)
         {
             DtError (ASL_ERROR, ASL_MSG_DIVIDE_BY_ZERO,
-                Gbl_CurrentField, Gbl_CurrentField->Value);
+                Gbl_CurrentField, NULL);
             return (0);
         }
         Result = LeftValue / RightValue;
         break;
 
     case EXPOP_MODULO:
+
         if (!RightValue)
         {
             DtError (ASL_ERROR, ASL_MSG_DIVIDE_BY_ZERO,
-                Gbl_CurrentField, Gbl_CurrentField->Value);
+                Gbl_CurrentField, NULL);
             return (0);
         }
         Result = LeftValue % RightValue;
@@ -163,58 +168,72 @@ DtDoOperator (
         break;
 
     case EXPOP_SUBTRACT:
+
         Result = LeftValue - RightValue;
         break;
 
     case EXPOP_SHIFT_RIGHT:
+
         Result = LeftValue >> RightValue;
         break;
 
     case EXPOP_SHIFT_LEFT:
+
         Result = LeftValue << RightValue;
         break;
 
     case EXPOP_LESS:
+
         Result = LeftValue < RightValue;
         break;
 
     case EXPOP_GREATER:
+
         Result = LeftValue > RightValue;
         break;
 
     case EXPOP_LESS_EQUAL:
+
         Result = LeftValue <= RightValue;
         break;
 
     case EXPOP_GREATER_EQUAL:
+
         Result = LeftValue >= RightValue;
         break;
 
     case EXPOP_EQUAL:
-        Result = LeftValue = RightValue;
+
+        Result = LeftValue == RightValue;
         break;
 
     case EXPOP_NOT_EQUAL:
+
         Result = LeftValue != RightValue;
         break;
 
     case EXPOP_AND:
+
         Result = LeftValue & RightValue;
         break;
 
     case EXPOP_XOR:
+
         Result = LeftValue ^ RightValue;
         break;
 
     case EXPOP_OR:
+
         Result = LeftValue | RightValue;
         break;
 
     case EXPOP_LOGICAL_AND:
+
         Result = LeftValue && RightValue;
         break;
 
     case EXPOP_LOGICAL_OR:
+
         Result = LeftValue || RightValue;
         break;
 
@@ -223,13 +242,12 @@ DtDoOperator (
         /* Unknown operator */
 
         DtFatal (ASL_MSG_INVALID_EXPRESSION,
-            Gbl_CurrentField, Gbl_CurrentField->Value);
+            Gbl_CurrentField, NULL);
         return (0);
     }
 
     DbgPrint (ASL_DEBUG_OUTPUT,
-        "IntegerEval: %s (%8.8X%8.8X %s %8.8X%8.8X) = %8.8X%8.8X\n",
-        Gbl_CurrentField->Value,
+        "IntegerEval: (%8.8X%8.8X %s %8.8X%8.8X) = %8.8X%8.8X\n",
         ACPI_FORMAT_UINT64 (LeftValue),
         DtGetOpName (Operator),
         ACPI_FORMAT_UINT64 (RightValue),

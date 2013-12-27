@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2011, Intel Corp.
+ * Copyright (C) 2000 - 2013, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,7 +52,7 @@
 /* Common info for tool signons */
 
 #define ACPICA_NAME                 "Intel ACPI Component Architecture"
-#define ACPICA_COPYRIGHT            "Copyright (c) 2000 - 2011 Intel Corporation"
+#define ACPICA_COPYRIGHT            "Copyright (c) 2000 - 2013 Intel Corporation"
 
 #if ACPI_MACHINE_WIDTH == 64
 #define ACPI_WIDTH          "-64"
@@ -81,6 +81,15 @@
     Prefix, ACPICA_COPYRIGHT, \
     Prefix
 
+/* Macros for usage messages */
+
+#define ACPI_USAGE_HEADER(Usage) \
+    printf ("Usage: %s\nOptions:\n", Usage);
+
+#define ACPI_OPTION(Name, Description) \
+    printf ("  %-18s%s\n", Name, Description);
+
+
 #define FILE_SUFFIX_DISASSEMBLY     "dsl"
 #define ACPI_TABLE_FILE_SUFFIX      ".dat"
 
@@ -94,11 +103,18 @@ AcpiGetopt(
     char                    **argv,
     char                    *opts);
 
+int
+AcpiGetoptArgument (
+    int                     argc,
+    char                    **argv);
+
 extern int                  AcpiGbl_Optind;
 extern int                  AcpiGbl_Opterr;
+extern int                  AcpiGbl_SubOptChar;
 extern char                 *AcpiGbl_Optarg;
 
 
+#ifndef ACPI_DUMP_APP
 /*
  * adisasm
  */
@@ -203,6 +219,6 @@ AdWriteTable (
     UINT32                  Length,
     char                    *TableName,
     char                    *OemTableId);
+#endif
 
 #endif /* _ACAPPS */
-
