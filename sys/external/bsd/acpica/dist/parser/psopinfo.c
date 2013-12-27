@@ -182,7 +182,7 @@ AcpiPsGetOpcodeName (
 
     /* Always guaranteed to return a valid pointer */
 
-    return (Op->Name);
+    return __UNCONST(Op->Name);
 
 #else
     return __UNCONST("OpcodeName unavailable");
