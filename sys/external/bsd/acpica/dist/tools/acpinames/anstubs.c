@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2011, Intel Corp.
+ * Copyright (C) 2000 - 2013, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -77,7 +77,7 @@ AcpiUtExecute_STA (
 ACPI_STATUS
 AcpiUtExecute_HID (
     ACPI_NAMESPACE_NODE     *DeviceNode,
-    ACPI_DEVICE_ID          **ReturnId)
+    ACPI_PNP_DEVICE_ID      **ReturnId)
 {
     return (AE_NOT_IMPLEMENTED);
 }
@@ -85,7 +85,7 @@ AcpiUtExecute_HID (
 ACPI_STATUS
 AcpiUtExecute_CID (
     ACPI_NAMESPACE_NODE     *DeviceNode,
-    ACPI_DEVICE_ID_LIST     **ReturnCidList)
+    ACPI_PNP_DEVICE_ID_LIST **ReturnCidList)
 {
     return (AE_NOT_IMPLEMENTED);
 }
@@ -93,7 +93,15 @@ AcpiUtExecute_CID (
 ACPI_STATUS
 AcpiUtExecute_UID (
     ACPI_NAMESPACE_NODE     *DeviceNode,
-    ACPI_DEVICE_ID          **ReturnId)
+    ACPI_PNP_DEVICE_ID      **ReturnId)
+{
+    return (AE_NOT_IMPLEMENTED);
+}
+
+ACPI_STATUS
+AcpiUtExecute_SUB (
+    ACPI_NAMESPACE_NODE     *DeviceNode,
+    ACPI_PNP_DEVICE_ID      **ReturnId)
 {
     return (AE_NOT_IMPLEMENTED);
 }
@@ -184,16 +192,17 @@ AcpiEvInitializeOpRegions (
 }
 
 ACPI_STATUS
-AcpiEvDeleteGpeBlock (
-    ACPI_GPE_BLOCK_INFO     *GpeBlock)
+AcpiEvInitializeRegion (
+    ACPI_OPERAND_OBJECT     *RegionObj,
+    BOOLEAN                 AcpiNsLocked)
 {
     return (AE_OK);
 }
 
+#if (!ACPI_REDUCED_HARDWARE)
 ACPI_STATUS
-AcpiEvInitializeRegion (
-    ACPI_OPERAND_OBJECT     *RegionObj,
-    BOOLEAN                 AcpiNsLocked)
+AcpiEvDeleteGpeBlock (
+    ACPI_GPE_BLOCK_INFO     *GpeBlock)
 {
     return (AE_OK);
 }
@@ -204,6 +213,7 @@ AcpiEnable (
 {
     return (AE_OK);
 }
+#endif /* !ACPI_REDUCED_HARDWARE */
 
 
 /* AML Interpreter */

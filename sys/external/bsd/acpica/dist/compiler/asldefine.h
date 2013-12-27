@@ -1,4 +1,3 @@
-
 /******************************************************************************
  *
  * Module Name: asldefine.h - Common defines for the iASL compiler
@@ -6,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2011, Intel Corp.
+ * Copyright (C) 2000 - 2013, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,7 +55,7 @@
 #define ASL_INVOCATION_NAME         "iasl"
 #define ASL_CREATOR_ID              "INTL"
 
-#define ASL_COMPLIANCE              "Supports ACPI Specification Revision 4.0a"
+#define ASL_COMPLIANCE              "Supports ACPI Specification Revision 5.0A"
 
 
 /* Configuration constants */
@@ -121,13 +120,15 @@
 #define FILE_SUFFIX_ASM_INCLUDE     "inc"
 #define FILE_SUFFIX_C_INCLUDE       "h"
 #define FILE_SUFFIX_ASL_CODE        "asl"
+#define FILE_SUFFIX_C_OFFSET        "offset.h"
 
 
 /* Types for input files */
 
 #define ASL_INPUT_TYPE_BINARY       0
-#define ASL_INPUT_TYPE_ASCII_ASL    1
-#define ASL_INPUT_TYPE_ASCII_DATA   2
+#define ASL_INPUT_TYPE_ACPI_TABLE   1
+#define ASL_INPUT_TYPE_ASCII_ASL    2
+#define ASL_INPUT_TYPE_ASCII_DATA   3
 
 
 /* Misc */
@@ -136,6 +137,11 @@
 #define ASL_ABORT                   TRUE
 #define ASL_NO_ABORT                FALSE
 #define ASL_EOF                     ACPI_UINT32_MAX
+
+
+/* Listings */
+
+#define ASL_LISTING_LINE_PREFIX         ":  "
 
 
 /* Support for reserved method names */
@@ -153,5 +159,24 @@
 #define POSITIVE                    0
 
 
-#endif /* ASLDEFINE.H */
+/* Helper macros for resource tag creation */
 
+#define RsCreateMultiBitField \
+    RsCreateResourceField
+
+#define RsCreateBitField(Op, Name, ByteOffset, BitOffset) \
+    RsCreateResourceField (Op, Name, ByteOffset, BitOffset, 1)
+
+#define RsCreateByteField(Op, Name, ByteOffset) \
+    RsCreateResourceField (Op, Name, ByteOffset, 0, 8);
+
+#define RsCreateWordField(Op, Name, ByteOffset) \
+    RsCreateResourceField (Op, Name, ByteOffset, 0, 16);
+
+#define RsCreateDwordField(Op, Name, ByteOffset) \
+    RsCreateResourceField (Op, Name, ByteOffset, 0, 32);
+
+#define RsCreateQwordField(Op, Name, ByteOffset) \
+    RsCreateResourceField (Op, Name, ByteOffset, 0, 64);
+
+#endif /* ASLDEFINE.H */
