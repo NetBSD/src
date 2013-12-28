@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_ksu.c,v 1.6 2011/04/25 22:03:20 christos Exp $	*/
+/*	$NetBSD: pam_ksu.c,v 1.7 2013/12/28 18:04:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 Jacques A. Vidrine <nectar@FreeBSD.org>
@@ -29,7 +29,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_ksu/pam_ksu.c,v 1.5 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_ksu.c,v 1.6 2011/04/25 22:03:20 christos Exp $");
+__RCSID("$NetBSD: pam_ksu.c,v 1.7 2013/12/28 18:04:03 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -177,12 +177,12 @@ log_krb5(krb5_context ctx, krb5_error_code err, const char *fmt, ...)
 	else
 		errtxt = NULL;
 	if (errtxt != NULL) {
+		snprintf(b2, sizeof(b2), "%s", errtxt);
 		krb5_free_error_message(ctx, errtxt);
-		snprintf(b2, sizeof(b2), "%s (%s)", b1, errtxt);
 	} else {
-		snprintf(b2, sizeof(b2), "%s (unknown %d)", b1, (int)err);
+		snprintf(b2, sizeof(b2), "unknown %d", (int)err);
 	}
-	PAM_LOG(b2);
+	PAM_LOG("%s (%s)", b1, b2);
 }
 
 /* Determine the target principal given the current user and the target user.
