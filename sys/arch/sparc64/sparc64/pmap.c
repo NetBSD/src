@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.283 2013/12/27 21:11:20 palle Exp $	*/
+/*	$NetBSD: pmap.c,v 1.284 2013/12/28 11:08:56 nakayama Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.283 2013/12/27 21:11:20 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.284 2013/12/28 11:08:56 nakayama Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -3799,7 +3799,8 @@ pmap_setup_intstack_sun4v(paddr_t pa)
 	    0 /* IE */);
 	hv_rc = hv_mmu_map_perm_addr(INTSTACK, data, MAP_DTLB);
 	if ( hv_rc != H_EOK ) {
-		panic("hv_mmu_map_perm_addr() failed - rc = %ld\n", hv_rc);
+		panic("hv_mmu_map_perm_addr() failed - rc = %" PRId64 "\n",
+		    hv_rc);
 	}
 	else {
 		memset((void *)INTSTACK, 0, 64 * KB);
