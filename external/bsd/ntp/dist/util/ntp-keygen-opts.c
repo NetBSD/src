@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp-keygen-opts.c,v 1.5 2013/12/28 03:20:15 christos Exp $	*/
+/*	$NetBSD: ntp-keygen-opts.c,v 1.6 2013/12/28 13:27:39 mrg Exp $	*/
 
 /*
  *  EDIT THIS FILE WITH CAUTION  (ntp-keygen-opts.c)
@@ -1076,7 +1076,7 @@ doOptImbits(tOptions* pOptions, tOptDesc* pOptDesc)
     option_usage_fp = stderr;
 
  emit_ranges:
-    optionShowRange(pOptions, pOptDesc, (void *)rng, 1);
+    optionShowRange(pOptions, pOptDesc, rng, 1);
 }
 #endif /* defined AUTOKEY */
 
@@ -1138,7 +1138,7 @@ doOptModulus(tOptions* pOptions, tOptDesc* pOptDesc)
     option_usage_fp = stderr;
 
  emit_ranges:
-    optionShowRange(pOptions, pOptDesc, (void *)rng, 1);
+    optionShowRange(pOptions, pOptDesc, rng, 1);
 }
 #endif /* defined AUTOKEY */
 /* extracted from optmain.tlib near line 46 */
