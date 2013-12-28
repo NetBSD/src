@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.249 2013/12/04 14:47:41 mrg Exp $
+$NetBSD: UPDATING,v 1.250 2013/12/28 03:39:07 christos Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,14 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20131227:
+	1. The new ntpd runs in a restricted mode to prevent amplification
+	   attacks. If you need ntpdc to work you need to explicitly enable
+	   mode7 in your config file. Make sure you put the necessary restrict
+	   statements to avoid being exposed.
+	2. strncat has moved from lib/libc to common/lib/libc; you might need
+	   to make clean in libc
 
 20131129:
 	The GMP sources were updated, and builds will likely fail without
