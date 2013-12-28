@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2013/12/27 21:33:46 christos Exp $
+# $NetBSD: Makefile,v 1.7 2013/12/28 16:03:51 christos Exp $
 
 .if (${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64")
 PROG=	iasl
@@ -217,32 +217,38 @@ SRCS+= \
 .PATH: ${TOPDIR}/../os_specific/service_layers
 SRCS+=	osunixxf.c
 
-aslcompilerparse.c: ${TOPDIR}/aslcompiler.y
+aslcompiler.y.h aslcompilerparse.c: ${TOPDIR}/aslcompiler.y
 	${YACC} -v -d -o${.TARGET} -pAslCompiler ${.ALLSRC}
 	mv -f ${.PREFIX}.h aslcompiler.y.h
 
 aslcompilerlex.c: ${TOPDIR}/aslcompiler.l
 	${LEX} -i -PAslCompiler -o${.TARGET} ${.ALLSRC}
 
-dtparserparse.c: ${TOPDIR}/dtparser.y
+aslcompilerlex.o: aslcompiler.y.h
+
+dtparser.y.h dtparserparse.c: ${TOPDIR}/dtparser.y
 	${YACC} -v -d -o${.TARGET} -pDtParser ${.ALLSRC}
 	mv -f ${.PREFIX}.h dtparser.y.h
 
 dtparserlex.c: ${TOPDIR}/dtparser.l
 	${LEX} -i -PDtParser -o${.TARGET} ${.ALLSRC}
 
-prparserparse.c: ${TOPDIR}/prparser.y
+dtparserlex.o: dtparser.y.h
+
+prparser.y.h prparserparse.c: ${TOPDIR}/prparser.y
 	${YACC} -v -d -o${.TARGET} -pPrParser ${.ALLSRC}
 	mv -f ${.PREFIX}.h prparser.y.h
 
 prparserlex.c: ${TOPDIR}/prparser.l
 	${LEX} -i -PPrParser -o${.TARGET} ${.ALLSRC}
 
+prparserlex.o: prparser.y.h
+
 CLEANFILES+=	aslcompilerlex.c aslcompilerparse.c	\
 		aslcompiler.y.h aslcompilerparse.output \
 		dtparserlex.c dtparserparse.c		\
 		dtparser.y.h dtparserparse.output	\
-		prparserlex.c dtparserparse.c		\
-		prparser.y.h dtparserparse.output	\
+		prparserlex.c prparserparse.c		\
+		prparser.y.h prparserparse.output	\
 
 .include <bsd.prog.mk>
