@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.15 2013/04/06 02:20:49 christos Exp $
+# $NetBSD: Makefile,v 1.16 2013/12/28 18:04:18 christos Exp $
 #-
 # Copyright (c) 1998 Juniper Networks, Inc.
 # All rights reserved.
@@ -44,7 +44,7 @@ DIST=   ${NETBSDSRCDIR}/external/bsd/openpam/dist
 LIB=	pam
 NOPROFILE=
 
-WARNS=	4
+WARNS=	6
 # 233: Struct/union never defined
 LINTFLAGS+= -Sw -X 233
 
