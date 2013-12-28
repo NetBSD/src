@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.145 2013/09/12 12:22:40 martin Exp $	*/
+/*	$NetBSD: ccd.c,v 1.146 2013/12/28 19:44:41 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.145 2013/09/12 12:22:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.146 2013/12/28 19:44:41 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1555,7 +1555,7 @@ printiinfo(struct ccdiinfo *ii)
 }
 #endif
 
-MODULE(MODULE_CLASS_DRIVER, ccd, NULL);
+MODULE(MODULE_CLASS_DRIVER, ccd, "dk_subr");
 
 static int
 ccd_modcmd(modcmd_t cmd, void *arg)
