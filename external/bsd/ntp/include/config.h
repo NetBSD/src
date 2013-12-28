@@ -1458,19 +1458,31 @@
 /* #undef SCO5_CLOCK */
 
 /* The size of `char*', as computed by sizeof. */
+#ifdef _LP64
 #define SIZEOF_CHARP 8
+#else
+#define SIZEOF_CHARP 4
+#endif
 
 /* The size of `int', as computed by sizeof. */
 #define SIZEOF_INT 4
 
 /* The size of `long', as computed by sizeof. */
+#ifdef _LP64
 #define SIZEOF_LONG 8
+#else
+#define SIZEOF_LONG 4
+#endif
 
 /* The size of `long long', as computed by sizeof. */
 #define SIZEOF_LONG_LONG 8
 
 /* The size of `pthread_t', as computed by sizeof. */
+#ifdef _LP64
 #define SIZEOF_PTHREAD_T 8
+#else
+#define SIZEOF_PTHREAD_T 4
+#endif
 
 /* The size of `short', as computed by sizeof. */
 #define SIZEOF_SHORT 2
@@ -1505,7 +1517,7 @@
 /* #undef STRERROR_R_CHAR_P */
 
 /* canonical system (cpu-vendor-os) of where we should run */
-#define STR_SYSTEM "x86_64-unknown-netbsd6.99.28"
+#define STR_SYSTEM  "NetBSD"
 
 /* Does Xettimeofday take 1 arg? */
 /* #undef SYSV_TIMEOFDAY */
@@ -1564,6 +1576,7 @@ typedef unsigned int	uintptr_t;
 #define WANT_IPV6 1
 #endif
 
+#ifndef __NetBSD__
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */
 #if defined AC_APPLE_UNIVERSAL_BUILD
@@ -1573,6 +1586,12 @@ typedef unsigned int	uintptr_t;
 #else
 # ifndef WORDS_BIGENDIAN
 /* #  undef WORDS_BIGENDIAN */
+# endif
+#endif
+#else
+# include <sys/endian.h>
+# if _BYTE_ORDER == _BIG_ENDIAN
+#  define WORDS_BIGENDIAN 1
 # endif
 #endif
 
