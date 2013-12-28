@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.143 2013/12/16 20:17:34 palle Exp $
+#	$NetBSD: files.sparc64,v 1.144 2013/12/28 11:09:33 nakayama Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -8,7 +8,7 @@ maxpartitions 8
 
 maxusers 2 8 1024
 
-defflag	opt_sparc_arch.h	SUN4U
+defflag	opt_sparc_arch.h	SUN4U SUN4V
 
 define mainbus {}
 device mainbus: mainbus
