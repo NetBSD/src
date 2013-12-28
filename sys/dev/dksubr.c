@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.48 2013/05/29 23:37:10 christos Exp $ */
+/* $NetBSD: dksubr.c,v 1.49 2013/12/28 19:25:07 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.48 2013/05/29 23:37:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.49 2013/12/28 19:25:07 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.48 2013/05/29 23:37:10 christos Exp $")
 #include <sys/vnode.h>
 #include <sys/fcntl.h>
 #include <sys/namei.h>
+#include <sys/module.h>
 
 #include <dev/dkvar.h>
 
@@ -63,6 +64,8 @@ int	dkdebug = 0;
 #define DPRINTF(x,y)
 #define DPRINTF_FOLLOW(y)
 #endif
+
+static int dk_subr_modcmd(modcmd_t, void *);
 
 #define DKLABELDEV(dev)	\
 	(MAKEDISKDEV(major((dev)), DISKUNIT((dev)), RAW_PART))
@@ -679,4 +682,20 @@ out:
 	VOP_UNLOCK(vp);
 	(void) vn_close(vp, FREAD | FWRITE, l->l_cred);
 	return error;
+}
+
+MODULE(MODULE_CLASS_MISC, dk_subr, NULL);
+
+static int
+dk_subr_modcmd(modcmd_t cmd, void *arg)
+{
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+	case MODULE_CMD_FINI:
+		return 0;
+	case MODULE_CMD_STAT:
+	case MODULE_CMD_AUTOUNLOAD:
+	default:
+		return ENOTTY;
+	}
 }
