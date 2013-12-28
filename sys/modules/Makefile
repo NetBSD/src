@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.129 2013/12/28 19:25:07 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.130 2013/12/28 19:45:13 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -10,6 +10,7 @@ SUBDIR+=	adosfs
 SUBDIR+=	aio
 SUBDIR+=	bpf
 SUBDIR+=	cd9660
+SUBDIR+=	ccd
 SUBDIR+=	cgd
 SUBDIR+=	coda
 SUBDIR+=	coda5
