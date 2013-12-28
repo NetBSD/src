@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2012/02/01 07:46:21 kardel Exp $
-
-# NOGCCERROR=yes
+#	$NetBSD: Makefile,v 1.7 2013/12/28 03:19:43 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -22,11 +20,5 @@ DIST=${IDIST}/ntpq
 CPPFLAGS+=-I${IDIST}/include -I${IDIST}/sntp/libopts
 
 .PATH: ${DIST}
-
-ntpq.8:	ntpq.1
-	${_MKTARGET_BUILD}
-	${TOOL_SED} -e "s,NTPQ 1,NTPQ 8," $? > $@
-
-CLEANFILES+=ntpq.8
 
 .include <bsd.prog.mk>

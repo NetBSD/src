@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2011/08/25 16:29:39 joerg Exp $
+#	$NetBSD: Makefile,v 1.5 2013/12/28 03:19:43 christos Exp $
 
 LIBISPRIVATE=yes
 
@@ -13,6 +13,8 @@ DIST=	${IDIST}/lib/isc
 .PATH.c::  ${DIST} ${DIST}/nls ${DIST}/unix ${DIST}/nothreads
 
 SRCS=   assertions.c               \
+	backtrace.c		   \
+	backtrace-emptytbl.c	   \
         buffer.c                   \
         condition.c                \
         dir.c                      \
