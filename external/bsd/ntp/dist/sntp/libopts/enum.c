@@ -1,4 +1,4 @@
-/*	$NetBSD: enum.c,v 1.1.1.1 2013/12/27 23:31:35 christos Exp $	*/
+/*	$NetBSD: enum.c,v 1.2 2013/12/28 03:20:15 christos Exp $	*/
 
 
 /**
@@ -191,11 +191,11 @@ find_name(char const * name, tOptions * pOpts, tOptDesc * pOD,
      *  The result gets stashed in a char* pointer.
      */
     uintptr_t   res = name_ct;
-    size_t      len = strlen((char*)name);
+    size_t      len = strlen((const char*)name);
     uintptr_t   idx;
 
     if (IS_DEC_DIGIT_CHAR(*name)) {
-        char * pz = (char *)(void *)name;
+        char * pz = (char *)(void *)(intptr_t)name;
         unsigned long val = strtoul(pz, &pz, 0);
         if ((*pz == NUL) && (val < name_ct))
             return (uintptr_t)val;
@@ -217,7 +217,7 @@ find_name(char const * name, tOptions * pOpts, tOptDesc * pOD,
      *  Multiple partial matches means we have an ambiguous match.
      */
     for (idx = 0; idx < name_ct; idx++) {
-        if (strncmp((char*)paz_names[idx], (char*)name, len) == 0) {
+        if (strncmp((char*)(intptr_t)paz_names[idx], (char*)(intptr_t)name, len) == 0) {
             if (paz_names[idx][len] == NUL)
                 return idx;  /* full match */
 
@@ -255,7 +255,7 @@ find_name(char const * name, tOptions * pOpts, tOptDesc * pOD,
 char const *
 optionKeywordName(tOptDesc * pOD, unsigned int enum_val)
 {
-    tOptDesc od = { 0 };
+    tOptDesc od = { .optIndex = 0 };
     od.optArg.argEnum = enum_val;
 
     (*(pOD->pOptProc))(OPTPROC_RETURN_VALNAME, &od );
@@ -523,7 +523,7 @@ optionMemberList(tOptDesc * od)
     uintptr_t    sv = od->optArg.argIntptr;
     char * res;
     (*(od->pOptProc))(OPTPROC_RETURN_VALNAME, od);
-    res = (void *)od->optArg.argString;
+    res = (void *)(intptr_t)od->optArg.argString;
     od->optArg.argIntptr = sv;
     return res;
 }
