@@ -1,4 +1,4 @@
-/*	$NetBSD: sntp-opts.c,v 1.1.1.3 2013/12/27 23:31:10 christos Exp $	*/
+/*	$NetBSD: sntp-opts.c,v 1.2 2013/12/28 03:20:15 christos Exp $	*/
 
 /*
  *  EDIT THIS FILE WITH CAUTION  (sntp-opts.c)
@@ -965,7 +965,7 @@ doOptSteplimit(tOptions* pOptions, tOptDesc* pOptDesc)
     option_usage_fp = stderr;
 
  emit_ranges:
-    optionShowRange(pOptions, pOptDesc, (void *)rng, 1);
+    optionShowRange(pOptions, pOptDesc, (void *)(intptr_t)rng, 1);
 }
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
@@ -1001,7 +1001,7 @@ doOptNtpversion(tOptions* pOptions, tOptDesc* pOptDesc)
     option_usage_fp = stderr;
 
  emit_ranges:
-    optionShowRange(pOptions, pOptDesc, (void *)rng, 1);
+    optionShowRange(pOptions, pOptDesc, (void *)(intptr_t)rng, 1);
 }
 /* extracted from optmain.tlib near line 46 */
 

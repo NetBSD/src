@@ -1,4 +1,4 @@
-/*	$NetBSD: pgusage.c,v 1.1.1.3 2013/12/27 23:31:36 christos Exp $	*/
+/*	$NetBSD: pgusage.c,v 1.2 2013/12/28 03:20:15 christos Exp $	*/
 
 
 /**
@@ -90,7 +90,7 @@ mk_pager_cmd(char const * fname)
         bfsz = strlen(fname) + strlen(pager) + PAGE_USAGE_FMT_LEN;
         res  = AGALOC(bfsz, "more cmd");
         snprintf(res, bfsz, PAGE_USAGE_FMT, pager, fname);
-        AGFREE((void*)fname);
+        AGFREE((void*)(intptr_t)fname);
         return res;
     }
 }

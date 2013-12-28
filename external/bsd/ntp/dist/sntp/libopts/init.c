@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.1.1.1 2013/12/27 23:31:35 christos Exp $	*/
+/*	$NetBSD: init.c,v 1.2 2013/12/28 03:20:15 christos Exp $	*/
 
 /**
  * \file initialize.c
@@ -104,18 +104,18 @@ validate_struct(tOptions * opts, char const * pname)
     if (opts->pzProgName == NULL) {
         char const *  pz = strrchr(pname, DIRCH);
         char const ** pp =
-            (char const **)(void **)&(opts->pzProgName);
+            (char const **)(void **)(intptr_t)&(opts->pzProgName);
 
         if (pz != NULL)
             *pp = pz+1;
         else
             *pp = pname;
 
-        pz = pathfind(getenv("PATH"), (char *)pname, "rx");
+        pz = pathfind(getenv("PATH"), (char *)(intptr_t)pname, "rx");
         if (pz != NULL)
-            pname = (void *)pz;
+            pname = (void *)(intptr_t)pz;
 
-        pp  = (char const **)(void **)&(opts->pzProgPath);
+        pp  = (char const **)(void **)(intptr_t)&(opts->pzProgPath);
         *pp = pname;
 
         /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: prettydate.c,v 1.1.1.3 2013/12/27 23:30:48 christos Exp $	*/
+/*	$NetBSD: prettydate.c,v 1.2 2013/12/28 03:20:13 christos Exp $	*/
 
 /*
  * prettydate - convert a time stamp to something readable
@@ -135,7 +135,7 @@ get_struct_tm(
 			if (--folds < MINFOLD)
 				return NULL;
 			ts += SOLAR_CYCLE_SECS;
-		} else if (ts >= SOLAR_CYCLE_SECS) {
+		} else if (ts >= (time_t)SOLAR_CYCLE_SECS) {
 			if (++folds > MAXFOLD)
 				return NULL;
 			ts -= SOLAR_CYCLE_SECS;

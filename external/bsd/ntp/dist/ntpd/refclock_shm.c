@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_shm.c,v 1.1.1.3 2013/12/27 23:31:02 christos Exp $	*/
+/*	$NetBSD: refclock_shm.c,v 1.2 2013/12/28 03:20:14 christos Exp $	*/
 
 /*
  * refclock_shm - clock driver for utc via shared memory
@@ -405,7 +405,7 @@ int shm_peek(
 		strftime(timestr, sizeof(timestr), "%Y-%m-%dT%H:%M:%S", t);
 		c = snprintf(pp->a_lastcode, sizeof(pp->a_lastcode),
 			     "%s.%09ldZ", timestr, (long)tvt.tv_nsec);
-		pp->lencode = (c < sizeof(pp->a_lastcode))
+		pp->lencode = ((size_t)c < sizeof(pp->a_lastcode))
 				 ? c
 				 : 0;
 

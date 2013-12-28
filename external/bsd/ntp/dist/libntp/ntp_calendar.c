@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_calendar.c,v 1.1.1.1 2013/12/27 23:30:48 christos Exp $	*/
+/*	$NetBSD: ntp_calendar.c,v 1.2 2013/12/28 03:20:13 christos Exp $	*/
 
 /*
  * ntp_calendar.c - calendar and helper functions
@@ -1527,7 +1527,7 @@ isocal_ntp_to_date(
 	id->year = (uint16_t)ds.hi + 1;		/* shift to current  */
 	id->week = (uint8_t )ds.lo + 1;
 
-	return (ds.hi >= 0 && ds.hi < 0xFFFFU);
+	return (ds.hi >= 0 && ds.hi < 0x0000FFFF);
 }
 
 /*
