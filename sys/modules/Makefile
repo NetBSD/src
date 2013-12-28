@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.128 2013/12/16 23:54:26 lneto Exp $
+#	$NetBSD: Makefile,v 1.129 2013/12/28 19:25:07 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -10,6 +10,7 @@ SUBDIR+=	adosfs
 SUBDIR+=	aio
 SUBDIR+=	bpf
 SUBDIR+=	cd9660
+SUBDIR+=	cgd
 SUBDIR+=	coda
 SUBDIR+=	coda5
 SUBDIR+=	compat
@@ -17,6 +18,7 @@ SUBDIR+=	compat_ossaudio
 SUBDIR+=	coredump
 SUBDIR+=	chfs
 SUBDIR+=	dbcool
+SUBDIR+=	dk_subr
 SUBDIR+=	efs
 SUBDIR+=	ext2fs
 SUBDIR+=	exec_script

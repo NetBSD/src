@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.31 2013/10/18 19:56:30 christos Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.32 2013/12/28 19:25:07 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -147,7 +147,7 @@ static const struct cmd_function cmd_fn[] = {
 /* Autoconf defines */
 CFDRIVER_DECL(dm, DV_DISK, NULL);
 
-MODULE(MODULE_CLASS_DRIVER, dm, NULL);
+MODULE(MODULE_CLASS_DRIVER, dm, "dk_subr");
 
 /* New module handle routine */
 static int
