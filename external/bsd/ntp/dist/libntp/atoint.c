@@ -1,8 +1,9 @@
-/*	$NetBSD: atoint.c,v 1.2 2009/12/14 00:38:48 christos Exp $	*/
+/*	$NetBSD: atoint.c,v 1.3 2013/12/28 03:20:13 christos Exp $	*/
 
 /*
  * atoint - convert an ascii string to a signed long, with error checking
  */
+#include <config.h>
 #include <sys/types.h>
 #include <ctype.h>
 
