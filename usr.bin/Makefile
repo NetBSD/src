@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.214 2013/11/22 16:10:25 christos Exp $
+#	$NetBSD: Makefile,v 1.215 2013/12/28 02:32:01 rjs Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
@@ -23,7 +23,7 @@ SUBDIR= apply asa at audio audiocfg \
 	printenv printf progress pwhash qsubst quota radioctl rdist \
 	renice rev revoke rfcomm_sppd rlogin rpcgen rpcinfo rs rsh \
 	rup ruptime rusers rwall rwho \
-	script sdiff sdpquery sed seq shar shlock shmif_dumpbus \
+	script sdiff sdpquery sed seq shar shlock \
 	showmount shuffle sockstat sort spell split stat su systat \
 	tabs tail talk tcopy tee telnet tftp tic time tip touch tpfmt tput \
 	tr true tset tsort tty ul uname unexpand unifdef \
@@ -44,7 +44,7 @@ SUBDIR+= apropos whatis
 .endif
 
 .if (${MKRUMP} != "no")
-SUBDIR+= rump_allserver rump_dhcpclient rump_halt rump_server
+SUBDIR+= rump_allserver rump_dhcpclient rump_halt rump_server shmif_dumpbus
 .endif
 
 .if (${MKBSDGREP} != "no")

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.44 2013/12/25 22:08:24 christos Exp $
+# $NetBSD: mi,v 1.45 2013/12/28 02:32:01 rjs Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -715,7 +715,7 @@
 ./usr/libdata/debug/usr/bin/seq.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/sftp.debug		comp-secsh-debug	crypto,debug
 ./usr/libdata/debug/usr/bin/shlock.debug	comp-util-debug		debug
-./usr/libdata/debug/usr/bin/shmif_dumpbus.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/bin/shmif_dumpbus.debug	comp-util-debug		debug,rump
 ./usr/libdata/debug/usr/bin/showmount.debug	comp-nfsclient-debug	debug
 ./usr/libdata/debug/usr/bin/shuffle.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/size.debug		comp-util-debug		binutils,debug
