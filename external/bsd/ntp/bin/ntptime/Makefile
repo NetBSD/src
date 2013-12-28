@@ -1,9 +1,6 @@
-#	$NetBSD: Makefile,v 1.3 2012/02/01 07:46:21 kardel Exp $
-
-NOGCCERROR=yes
+#	$NetBSD: Makefile,v 1.4 2013/12/28 03:19:43 christos Exp $
 
 .include <bsd.own.mk>
-
 
 PROG=	ntptime
 MAN=	ntptime.8
