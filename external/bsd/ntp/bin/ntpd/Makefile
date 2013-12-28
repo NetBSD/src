@@ -1,26 +1,23 @@
-#	$NetBSD: Makefile,v 1.12 2012/08/09 14:40:52 joerg Exp $
-
-#NOGCCERROR=yes
+#	$NetBSD: Makefile,v 1.13 2013/12/28 03:19:43 christos Exp $
 
 .include <bsd.own.mk>
 
-
 PROG=	ntpd
-MAN=	ntpd.8
+MAN=	ntpd.8 ntp.conf.5 ntp.keys.5
 BINDIR=	/usr/sbin
 
 SRCS=	cmd_args.c				\
 	ntp_config.c				\
 	ntp_control.c				\
 	ntp_crypto.c				\
-	ntp_data_structures.c			\
 	ntp_filegen.c				\
-	ntp_intres.c				\
 	ntp_io.c				\
+	ntp_leapsec.c				\
 	ntp_loopfilter.c			\
 	ntp_monitor.c				\
 	ntp_parser.c				\
 	ntp_peer.c				\
+	ntp_prio_q.c				\
 	ntp_proto.c				\
 	ntp_refclock.c				\
 	ntp_request.c				\
@@ -66,7 +63,6 @@ SRCS=	cmd_args.c				\
 	refclock_ripencc.c			\
 	refclock_shm.c				\
 	refclock_tpro.c				\
-	refclock_trak.c				\
 	refclock_true.c				\
 	refclock_tt560.c			\
 	refclock_ulink.c			\
@@ -87,11 +83,6 @@ CPPFLAGS+=-I${IDIST}/include -I${IDIST}/sntp/libopts
 
 .PATH: ${DIST}
 
-ntpd.8: ntpd.1
-	${_MKTARGET_BUILD}
-	${TOOL_SED} -e "s,NTPD 1,NTPD 8," $? > $@
-
-CLEANFILES+=ntpd.8
 COPTS.ntp_control.c+= -Wno-format-nonliteral
 
 .include <bsd.prog.mk>
