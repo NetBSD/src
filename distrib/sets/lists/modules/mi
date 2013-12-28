@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.62 2013/12/28 19:25:46 pgoyette Exp $
+# $NetBSD: mi,v 1.63 2013/12/28 19:46:00 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -22,6 +22,8 @@
 ./@MODULEDIR@/cd9660/cd9660.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/chfs				base-kernel-modules	kmod
 ./@MODULEDIR@/chfs/chfs.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/ccd				base-kernel-modules	kmod
+./@MODULEDIR@/ccd/ccd.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/cgd				base-kernel-modules	kmod
 ./@MODULEDIR@/cgd/cgd.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/coda				base-kernel-modules	kmod
