@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_start.c,v 1.5 2013/12/27 20:10:21 christos Exp $	*/
+/*	$NetBSD: pam_start.c,v 1.6 2013/12/29 22:55:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -75,7 +75,7 @@ pam_start(const char *service,
 #else
 	h = -1;
 #endif
-	hostname_size = (h < 10 ? 1024 : h) + 1;
+	hostname_size = (size_t)(h < 10 ? 1024 : h) + 1;
 
 	ENTER();
 	if ((ph = calloc((size_t)1, sizeof *ph)) == NULL)

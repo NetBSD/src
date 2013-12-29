@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_subst.c,v 1.4 2013/12/27 20:10:21 christos Exp $	*/
+/*	$NetBSD: openpam_subst.c,v 1.5 2013/12/29 22:55:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 Dag-Erling Smørgrav
@@ -40,7 +40,7 @@
 #include "openpam_impl.h"
 
 #define subst_char(ch) do {			\
-	int ch_ = (ch);				\
+	char ch_ = (ch);			\
 	if (buf && len < *bufsize)		\
 		*buf++ = ch_;			\
 	++len;					\
