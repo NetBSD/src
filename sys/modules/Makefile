@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.131 2013/12/29 08:09:44 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.132 2013/12/29 16:32:32 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -9,15 +9,15 @@ SUBDIR+=	accf_httpready
 SUBDIR+=	adosfs
 SUBDIR+=	aio
 SUBDIR+=	bpf
-SUBDIR+=	cd9660
 SUBDIR+=	ccd
+SUBDIR+=	cd9660
 SUBDIR+=	cgd
+SUBDIR+=	chfs
 SUBDIR+=	coda
 SUBDIR+=	coda5
 SUBDIR+=	compat
 SUBDIR+=	compat_ossaudio
 SUBDIR+=	coredump
-SUBDIR+=	chfs
 SUBDIR+=	dbcool
 SUBDIR+=	dk_subr
 SUBDIR+=	efs
