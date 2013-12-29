@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_set_option.c,v 1.4 2013/12/27 20:10:21 christos Exp $	*/
+/*	$NetBSD: openpam_set_option.c,v 1.5 2013/12/29 22:55:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -93,7 +93,8 @@ openpam_set_option(pam_handle_t *pamh,
 		RETURNC(PAM_BUF_ERR);
 	if (i == cur->optc) {
 		/* add */
-		optv = realloc(cur->optv, sizeof(char *) * (cur->optc + 2));
+		optv = realloc(cur->optv,
+		    sizeof(*optv) * ((size_t)cur->optc + 2));
 		if (optv == NULL) {
 			FREE(opt);
 			RETURNC(PAM_BUF_ERR);
