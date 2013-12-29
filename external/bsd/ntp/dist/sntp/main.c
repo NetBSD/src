@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.8 2013/12/28 03:20:15 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.9 2013/12/29 03:26:07 christos Exp $	*/
 
 #include <config.h>
 
@@ -1398,7 +1398,7 @@ set_li_vn_mode (
 		leap = 3;
 	}
 
-	if (version < 0 || version > 7) {
+	if ((unsigned char)version > 7) {
 		msyslog(LOG_DEBUG, "set_li_vn_mode: version < 0 or > 7, using 4");
 		version = 4;
 	}
