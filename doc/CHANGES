@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1874 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1875 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -323,3 +323,5 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	ntp: import ntp 4.2.7p404.  [christos 20131227]
 	luna68k: Add preleminary support of 4bpp framebuffer.
 		[tsutsui 20131227]
+	wm(4): Add support for I354 (C2000 Internal) Ethernet
+		[msaitoh 20131230]
