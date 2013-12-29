@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_putenv.c,v 1.4 2013/12/27 20:10:21 christos Exp $	*/
+/*	$NetBSD: pam_putenv.c,v 1.5 2013/12/29 22:55:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -83,7 +83,7 @@ pam_putenv(pam_handle_t *pamh,
 	/* grow the environment list if necessary */
 	if (pamh->env_count == pamh->env_size) {
 		env = realloc(pamh->env,
-		    sizeof(char *) * (pamh->env_size * 2 + 1));
+		    sizeof(*env) * ((size_t)pamh->env_size * 2 + 1));
 		if (env == NULL)
 			RETURNC(PAM_BUF_ERR);
 		pamh->env = env;
