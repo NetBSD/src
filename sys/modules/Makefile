@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.130 2013/12/28 19:45:13 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.131 2013/12/29 08:09:44 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -92,6 +92,7 @@ SUBDIR+=	usbverbose
 SUBDIR+=	vcoda
 SUBDIR+=	v7fs
 SUBDIR+=	vnd
+SUBDIR+=	zlib
 SUBDIR+=	tprof
 .if (defined(NOTYET))
 SUBDIR+=	unionfs
