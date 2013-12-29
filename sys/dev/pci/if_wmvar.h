@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmvar.h,v 1.16 2013/06/02 09:36:22 msaitoh Exp $	*/
+/*	$NetBSD: if_wmvar.h,v 1.17 2013/12/29 21:28:41 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -121,6 +121,7 @@ typedef enum {
 	WM_T_82580,			/* i82580 */
 	WM_T_82580ER,			/* i82580ER */
 	WM_T_I350,			/* I350 */
+	WM_T_I354,			/* I354 */
 	WM_T_I210,			/* I210 */
 	WM_T_I211,			/* I211 */
 	WM_T_80003,			/* i80003 */

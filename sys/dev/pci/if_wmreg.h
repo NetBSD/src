@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.54 2013/06/25 17:38:38 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.55 2013/12/29 21:28:41 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -417,12 +417,15 @@ struct livengood_tcpip_ctxdesc {
 #define	WMREG_MDIC	0x0020	/* MDI Control Register */
 #define	MDIC_DATA(x)	((x) & 0xffff)
 #define	MDIC_REGADD(x)	((x) << 16)
+#define	MDIC_PHY_SHIFT	21
+#define	MDIC_PHY_MASK	__BITS(25, 21)
 #define	MDIC_PHYADD(x)	((x) << 21)
 #define	MDIC_OP_WRITE	(1U << 26)
 #define	MDIC_OP_READ	(2U << 26)
 #define	MDIC_READY	(1U << 28)
 #define	MDIC_I		(1U << 29)	/* interrupt on MDI complete */
 #define	MDIC_E		(1U << 30)	/* MDI error */
+#define	MDIC_DEST	(1U << 31)	/* Destination */
 
 #define WMREG_SCTL	0x0024	/* SerDes Control - RW */
 /*
@@ -704,6 +707,12 @@ struct livengood_tcpip_ctxdesc {
 #define	WMREG_AIT	0x0458	/* Adaptive IFS Throttle */
 
 #define	WMREG_VFTA	0x0600
+
+#define	WMREG_MDICNFG	0x0e04	/* MDC/MDIO Configuration Register */
+#define MDICNFG_PHY_SHIFT	21
+#define MDICNFG_PHY_MASK	__BITS(25, 21)
+#define MDICNFG_COM_MDIO	__BIT(30)
+#define MDICNFG_DEST		__BIT(31)
 
 #define	WM_MC_TABSIZE	128
 #define	WM_ICH8_MC_TABSIZE 32
