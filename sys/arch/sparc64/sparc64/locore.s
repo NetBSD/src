@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.351 2013/12/27 21:11:19 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.352 2013/12/29 12:36:30 nakayama Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -4071,11 +4071,19 @@ ENTRY_NOPROFILE(cpu_initialize)	/* for cosmetic reasons - nicer backtrace */
 	mov	%l1, %l7			! save cpu_info pointer
 	ldx	[%l1 + CI_PADDR], %l1		! Load the interrupt stack's PA
 
+#ifdef SUN4V
 	cmp	%l6, CPU_SUN4V
-	be,pn	%icc, 3f
+	bne,pt	%icc, 3f
 	 nop
 
-	/* sun4u */	
+	/* sun4v */
+	call	_C_LABEL(pmap_setup_intstack_sun4v)	! Call nice C function for mapping INTSTACK
+	 mov	%l1, %o0
+	ba	4f
+	 nop
+3:
+#endif
+	/* sun4u */
 	sethi	%hi(0xa0000000), %l2		! V=1|SZ=01|NFO=0|IE=0
 	sllx	%l2, 32, %l2			! Shift it into place
 
@@ -4096,14 +4104,8 @@ ENTRY_NOPROFILE(cpu_initialize)	/* for cosmetic reasons - nicer backtrace */
 	stxa	%l0, [%l5] ASI_DMMU		! Make DMMU point to it
 	stxa	%l2, [%g0] ASI_DMMU_DATA_IN	! Store it
 	membar	#Sync
-	
-	ba	4f
-	 nop
-3:
-	/* sun4v */
-	call	_C_LABEL(pmap_setup_intstack_sun4v)	! Call nice C function for mapping INTSTACK
-	 mov	%l1, %o0
-4:		
+4:
+
 	!! Setup kernel stack (we rely on curlwp on this cpu
 	!! being lwp0 here and it's uarea is mapped special
 	!! and already accessible here)
@@ -4142,11 +4144,19 @@ ENTRY_NOPROFILE(cpu_initialize)	/* for cosmetic reasons - nicer backtrace */
 	 * install our TSB pointers
 	 */
 
+#ifdef SUN4V
 	cmp	%l6, CPU_SUN4V
-	be,pn	%icc, 5f
+	bne,pt	%icc, 5f
 	 nop
 
-	/* sun4u */	
+	/* sun4v */
+	call	_C_LABEL(pmap_setup_tsb_sun4v)
+	 nop
+	ba	1f
+	 nop
+5:
+#endif
+	/* sun4u */
 	sethi	%hi(_C_LABEL(tsbsize)), %l2
 	sethi	%hi(0x1fff), %l3
 	sethi	%hi(TSB), %l4
@@ -4167,14 +4177,7 @@ ENTRY_NOPROFILE(cpu_initialize)	/* for cosmetic reasons - nicer backtrace */
 	set	1f, %l1
 	flush	%l1
 1:
-	ba	6f
-	 nop
 
-5:	/* sun4v */
-	call	_C_LABEL(pmap_setup_tsb_sun4v)
-	 nop
-
-6:		
 	/* set trap table */
 	set	_C_LABEL(trapbase), %l1
 	call	_C_LABEL(prom_set_trap_table)	! Now we should be running 100% from our handlers
