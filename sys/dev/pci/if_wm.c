@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.264 2013/09/13 21:22:10 martin Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.265 2013/12/29 21:28:41 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.264 2013/09/13 21:22:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.265 2013/12/29 21:28:41 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -543,11 +543,13 @@ static int	wm_gmii_hv_readreg(device_t, int, int);
 static void	wm_gmii_hv_writereg(device_t, int, int, int);
 static int	wm_gmii_82580_readreg(device_t, int, int);
 static void	wm_gmii_82580_writereg(device_t, int, int, int);
+static bool	wm_sgmii_uses_mdio(struct wm_softc *);
 static int	wm_sgmii_readreg(device_t, int, int);
 static void	wm_sgmii_writereg(device_t, int, int, int);
 
 static void	wm_gmii_statchg(struct ifnet *);
 
+static int	wm_get_phy_id_82575(struct wm_softc *);
 static void	wm_gmii_mediainit(struct wm_softc *, pci_product_id_t);
 static int	wm_gmii_mediachange(struct ifnet *);
 static void	wm_gmii_mediastatus(struct ifnet *, struct ifmediareq *);
@@ -1024,6 +1026,9 @@ static const struct wm_product {
 	  "I350 Gigabit Connection",
 	  WM_T_I350,		WMP_F_1000T },
 #endif
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_C2000_SGMII,
+	  "I354 Gigabit Connection",
+	  WM_T_I354,		WMP_F_1000T },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I210_T1,
 	  "I210-T1 Ethernet Server Adapter",
 	  WM_T_I210,		WMP_F_1000T },
@@ -1210,8 +1215,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 
 	if ((sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576)
 	    || (sc->sc_type == WM_T_82580) || (sc->sc_type == WM_T_82580ER)
-	    || (sc->sc_type == WM_T_I350) || (sc->sc_type == WM_T_I210)
-	    || (sc->sc_type == WM_T_I211))
+	    || (sc->sc_type == WM_T_I350) || (sc->sc_type == WM_T_I354)
+	    || (sc->sc_type == WM_T_I210) || (sc->sc_type == WM_T_I211))
 		sc->sc_flags |= WM_F_NEWQUEUE;
 
 	/* Set device properties (mactype) */
@@ -1326,7 +1331,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	    || (sc->sc_type ==  WM_T_82571) || (sc->sc_type == WM_T_80003)
 	    || (sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576)
 	    || (sc->sc_type == WM_T_82580) || (sc->sc_type == WM_T_82580ER)
-	    || (sc->sc_type == WM_T_I350))
+	    || (sc->sc_type == WM_T_I350) || (sc->sc_type == WM_T_I354))
 		sc->sc_funcid = (CSR_READ(sc, WMREG_STATUS)
 		    >> STATUS_FUNCID_SHIFT) & STATUS_FUNCID_MASK;
 	else
@@ -1597,6 +1602,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	case WM_T_82580:
 	case WM_T_82580ER:
 	case WM_T_I350:
+	case WM_T_I354: /* XXXX ok? */
 	case WM_T_80003:
 		/* SPI */
 		wm_set_spiaddrbits(sc);
@@ -1771,6 +1777,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	case WM_T_82580:
 	case WM_T_82580ER:
 	case WM_T_I350:
+	case WM_T_I354: /* XXX ok? */
 	case WM_T_ICH8:
 	case WM_T_ICH9:
 	case WM_T_ICH10:
@@ -1897,20 +1904,30 @@ wm_attach(device_t parent, device_t self, void *aux)
 		case WM_T_82580:
 		case WM_T_82580ER:
 		case WM_T_I350:
+		case WM_T_I354:
 		case WM_T_I210:
 		case WM_T_I211:
 			reg = CSR_READ(sc, WMREG_CTRL_EXT);
 			switch (reg & CTRL_EXT_LINK_MODE_MASK) {
-			case CTRL_EXT_LINK_MODE_SGMII:
-				aprint_verbose_dev(sc->sc_dev, "SGMII\n");
-				sc->sc_flags |= WM_F_SGMII;
+			case CTRL_EXT_LINK_MODE_1000KX:
+				aprint_verbose_dev(sc->sc_dev, "1000KX\n");
 				CSR_WRITE(sc, WMREG_CTRL_EXT,
 				    reg | CTRL_EXT_I2C_ENA);
-				wm_gmii_mediainit(sc, wmp->wmp_product);
+				panic("not supported yet\n");
 				break;
-			case CTRL_EXT_LINK_MODE_1000KX:
+			case CTRL_EXT_LINK_MODE_SGMII:
+				if (wm_sgmii_uses_mdio(sc)) {
+					aprint_verbose_dev(sc->sc_dev,
+					    "SGMII(MDIO)\n");
+					sc->sc_flags |= WM_F_SGMII;
+					wm_gmii_mediainit(sc,
+					    wmp->wmp_product);
+					break;
+				}
+				aprint_verbose_dev(sc->sc_dev, "SGMII(I2C)\n");
+				/*FALLTHROUGH*/
 			case CTRL_EXT_LINK_MODE_PCIE_SERDES:
-				aprint_verbose_dev(sc->sc_dev, "1000KX or SERDES\n");
+				aprint_verbose_dev(sc->sc_dev, "SERDES\n");
 				CSR_WRITE(sc, WMREG_CTRL_EXT,
 				    reg | CTRL_EXT_I2C_ENA);
 				panic("not supported yet\n");
@@ -1963,6 +1980,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	case WM_T_82580:
 	case WM_T_82580ER:
 	case WM_T_I350:
+	case WM_T_I354: /* XXXX ok? */
 	case WM_T_I210:
 	case WM_T_I211:
 	case WM_T_80003:
@@ -3706,7 +3724,8 @@ wm_rxintr(struct wm_softc *sc)
 		 * For an eratta, the RCTL_SECRC bit in RCTL register
 		 * is always set in I350, so we don't trim it.
 		 */
-		if ((sc->sc_type != WM_T_I350) && (sc->sc_type != WM_T_I210)
+		if ((sc->sc_type != WM_T_I350) && (sc->sc_type != WM_T_I354)
+		    && (sc->sc_type != WM_T_I210)
 		    && (sc->sc_type != WM_T_I211)) {
 			if (m->m_len < ETHER_CRC_LEN) {
 				sc->sc_rxtail->m_len
@@ -3757,6 +3776,7 @@ wm_rxintr(struct wm_softc *sc)
 		 * If VLANs are enabled, VLAN packets have been unwrapped
 		 * for us.  Associate the tag with the packet.
 		 */
+		/* XXXX should check for i350 and i354 */
 		if ((status & WRX_ST_VP) != 0) {
 			VLAN_INPUT_TAG(ifp, m,
 			    le16toh(vlantag),
@@ -4039,6 +4059,7 @@ wm_reset(struct wm_softc *sc)
 	case WM_T_82572:
 	case WM_T_82575:	/* XXX need special handing for jumbo frames */
 	case WM_T_I350:
+	case WM_T_I354:
 	case WM_T_80003:
 		sc->sc_pba = PBA_32K;
 		break;
@@ -4097,7 +4118,7 @@ wm_reset(struct wm_softc *sc)
 
 	/* Set the completion timeout for interface */
 	if ((sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576)
-	    || (sc->sc_type == WM_T_I350))
+	    || (sc->sc_type == WM_T_I350) || (sc->sc_type == WM_T_I354))
 		wm_set_pcie_completion_timeout(sc);
 
 	/* Clear interrupt */
@@ -4210,6 +4231,7 @@ wm_reset(struct wm_softc *sc)
 	case WM_T_82580ER:
 	case WM_T_82583:
 	case WM_T_I350:
+	case WM_T_I354:
 	case WM_T_I210:
 	case WM_T_I211:
 	default:
@@ -4282,6 +4304,7 @@ wm_reset(struct wm_softc *sc)
 	case WM_T_82580:
 	case WM_T_82580ER:
 	case WM_T_I350:
+	case WM_T_I354:
 	case WM_T_I210:
 	case WM_T_I211:
 	case WM_T_80003:
@@ -4308,6 +4331,7 @@ wm_reset(struct wm_softc *sc)
 	case WM_T_82580ER:
 #endif
 	case WM_T_I350:
+	case WM_T_I354:
 	case WM_T_ICH8:
 	case WM_T_ICH9:
 		if ((CSR_READ(sc, WMREG_EECD) & EECD_EE_PRES) == 0) {
@@ -4317,7 +4341,8 @@ wm_reset(struct wm_softc *sc)
 			    || (sc->sc_type == WM_T_82576)
 			    || (sc->sc_type == WM_T_82580)
 			    || (sc->sc_type == WM_T_82580ER)
-			    || (sc->sc_type == WM_T_I350))
+			    || (sc->sc_type == WM_T_I350)
+			    || (sc->sc_type == WM_T_I354))
 				wm_reset_init_script_82575(sc);
 		}
 		break;
@@ -4326,7 +4351,7 @@ wm_reset(struct wm_softc *sc)
 	}
 
 	if ((sc->sc_type == WM_T_82580) || (sc->sc_type == WM_T_82580ER)
-	    || (sc->sc_type == WM_T_I350)) {
+	    || (sc->sc_type == WM_T_I350) || (sc->sc_type == WM_T_I354)) {
 		/* clear global device reset status bit */
 		CSR_WRITE(sc, WMREG_STATUS, STATUS_DEV_RST_SET);
 	}
@@ -4562,7 +4587,7 @@ wm_init(struct ifnet *ifp)
 	 * Clear out the VLAN table -- we don't use it (yet).
 	 */
 	CSR_WRITE(sc, WMREG_VET, 0);
-	if (sc->sc_type == WM_T_I350)
+	if ((sc->sc_type == WM_T_I350) || (sc->sc_type == WM_T_I354))
 		trynum = 10; /* Due to hw errata */
 	else
 		trynum = 1;
@@ -4761,7 +4786,8 @@ wm_init(struct ifnet *ifp)
 	 * The I350 has a bug where it always strips the CRC whether
 	 * asked to or not. So ask for stripped CRC here and cope in rxeof
 	 */
-	if ((sc->sc_type == WM_T_I350) || (sc->sc_type == WM_T_I210))
+	if ((sc->sc_type == WM_T_I350) || (sc->sc_type == WM_T_I354)
+	    || (sc->sc_type == WM_T_I210))
 		sc->sc_rctl |= RCTL_SECRC;
 
 	if (((sc->sc_ethercom.ec_capabilities & ETHERCAP_JUMBO_MTU) != 0)
@@ -4940,6 +4966,7 @@ wm_get_auto_rd_done(struct wm_softc *sc)
 	case WM_T_82580:
 	case WM_T_82580ER:
 	case WM_T_I350:
+	case WM_T_I354:
 	case WM_T_I210:
 	case WM_T_I211:
 	case WM_T_80003:
@@ -5031,6 +5058,7 @@ wm_get_cfg_done(struct wm_softc *sc)
 	case WM_T_82580:
 	case WM_T_82580ER:
 	case WM_T_I350:
+	case WM_T_I354:
 	case WM_T_I210:
 	case WM_T_I211:
 		if (sc->sc_type == WM_T_82571) {
@@ -5532,6 +5560,7 @@ wm_read_mac_addr(struct wm_softc *sc, uint8_t *enaddr)
 	case WM_T_82580:
 	case WM_T_82580ER:
 	case WM_T_I350:
+	case WM_T_I354:
 		switch (sc->sc_funcid) {
 		case 0:
 			/* default value (== EEPROM_OFF_MACADDR) */
@@ -5773,7 +5802,7 @@ wm_set_filter(struct wm_softc *sc)
 		size = WM_RAL_TABSIZE_82575;
 	else if ((sc->sc_type == WM_T_82576) || (sc->sc_type == WM_T_82580))
 		size = WM_RAL_TABSIZE_82576;
-	else if (sc->sc_type == WM_T_I350)
+	else if ((sc->sc_type == WM_T_I350) || (sc->sc_type == WM_T_I354))
 		size = WM_RAL_TABSIZE_I350;
 	else
 		size = WM_RAL_TABSIZE;
@@ -6155,6 +6184,7 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_82580:
 	case WM_T_82580ER:
 	case WM_T_I350:
+	case WM_T_I354:
 	case WM_T_I210:
 	case WM_T_I211:
 	case WM_T_80003:
@@ -6229,6 +6259,7 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_82580:
 	case WM_T_82580ER:
 	case WM_T_I350:
+	case WM_T_I354:
 	case WM_T_I210:
 	case WM_T_I211:
 	case WM_T_82583:
@@ -6280,6 +6311,7 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_82580:
 	case WM_T_82580ER:
 	case WM_T_I350:
+	case WM_T_I354:
 	case WM_T_I210:
 	case WM_T_I211:
 	case WM_T_80003:
@@ -6324,6 +6356,7 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_82580:
 	case WM_T_82580ER:
 	case WM_T_I350:
+	case WM_T_I354:
 	case WM_T_I210:
 	case WM_T_I211:
 	case WM_T_82583:
@@ -6380,6 +6413,45 @@ wm_gmii_reset(struct wm_softc *sc)
 		break;
 	}
 }
+
+/*
+ * wm_get_phy_id_82575:
+ *
+ * Return PHY ID. Return -1 if it failed.
+ */
+static int
+wm_get_phy_id_82575(struct wm_softc *sc)
+{
+	uint32_t reg;
+	int phyid = -1;
+
+	/* XXX */
+	if ((sc->sc_flags & WM_F_SGMII) == 0)
+		return -1;
+
+	if (wm_sgmii_uses_mdio(sc)) {
+		switch (sc->sc_type) {
+		case WM_T_82575:
+		case WM_T_82576:
+			reg = CSR_READ(sc, WMREG_MDIC);
+			phyid = (reg & MDIC_PHY_MASK) >> MDIC_PHY_SHIFT;
+			break;
+		case WM_T_82580:
+		case WM_T_I350:
+		case WM_T_I354:
+		case WM_T_I210:
+		case WM_T_I211:
+			reg = CSR_READ(sc, WMREG_MDICNFG);
+			phyid = (reg & MDICNFG_PHY_MASK) >> MDICNFG_PHY_SHIFT;
+			break;
+		default:
+			return -1;
+		}
+	}
+
+	return phyid;
+}
+
 
 /*
  * wm_gmii_mediainit:
@@ -6467,7 +6539,8 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 		mii->mii_writereg = wm_gmii_bm_writereg;
 		break;
 	default:
-		if ((sc->sc_flags & WM_F_SGMII) != 0) {
+		if (((sc->sc_flags & WM_F_SGMII) != 0)
+		    && !wm_sgmii_uses_mdio(sc)){
 			mii->mii_readreg = wm_sgmii_readreg;
 			mii->mii_writereg = wm_sgmii_writereg;
 		} else if (sc->sc_type >= WM_T_80003) {
@@ -6499,30 +6572,39 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 
 	if ((sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576)
 	    || (sc->sc_type == WM_T_82580) || (sc->sc_type == WM_T_82580ER)
-	    || (sc->sc_type == WM_T_I350) || (sc->sc_type == WM_T_I210)
-	    || (sc->sc_type == WM_T_I211)) {
+	    || (sc->sc_type == WM_T_I350) || (sc->sc_type == WM_T_I354)
+	    || (sc->sc_type == WM_T_I210) || (sc->sc_type == WM_T_I211)) {
 		if ((sc->sc_flags & WM_F_SGMII) == 0) {
 			/* Attach only one port */
 			mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, 1,
 			    MII_OFFSET_ANY, MIIF_DOPAUSE);
 		} else {
-			int i;
+			int i, id;
 			uint32_t ctrl_ext;
 
-			/* Power on sgmii phy if it is disabled */
-			ctrl_ext = CSR_READ(sc, WMREG_CTRL_EXT);
-			CSR_WRITE(sc, WMREG_CTRL_EXT,
-			    ctrl_ext &~ CTRL_EXT_SWDPIN(3));
-			CSR_WRITE_FLUSH(sc);
-			delay(300*1000); /* XXX too long */
-
-			/* from 1 to 8 */
-			for (i = 1; i < 8; i++)
+			id = wm_get_phy_id_82575(sc);
+			if (id != -1) {
 				mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff,
-				    i, MII_OFFSET_ANY, MIIF_DOPAUSE);
+				    id, MII_OFFSET_ANY, MIIF_DOPAUSE);
+			}
+			if ((id == -1)
+			    || (LIST_FIRST(&mii->mii_phys) == NULL)) {
+				/* Power on sgmii phy if it is disabled */
+				ctrl_ext = CSR_READ(sc, WMREG_CTRL_EXT);
+				CSR_WRITE(sc, WMREG_CTRL_EXT,
+				    ctrl_ext &~ CTRL_EXT_SWDPIN(3));
+				CSR_WRITE_FLUSH(sc);
+				delay(300*1000); /* XXX too long */
 
-			/* restore previous sfp cage power state */
-			CSR_WRITE(sc, WMREG_CTRL_EXT, ctrl_ext);
+				/* from 1 to 8 */
+				for (i = 1; i < 8; i++)
+					mii_attach(sc->sc_dev, &sc->sc_mii,
+					    0xffffffff, i, MII_OFFSET_ANY,
+					    MIIF_DOPAUSE);
+
+				/* restore previous sfp cage power state */
+				CSR_WRITE(sc, WMREG_CTRL_EXT, ctrl_ext);
+			}
 		}
 	} else {
 		mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
@@ -7111,6 +7193,40 @@ wm_gmii_hv_writereg(device_t self, int phy, int reg, int val)
 
 	wm_gmii_i82544_writereg(self, phy, regnum & IGPHY_MAXREGADDR, val);
 	wm_put_swfwhw_semaphore(sc);
+}
+
+/*
+ * wm_sgmii_uses_mdio
+ *
+ * Check whether the transaction is to the internal PHY or the external
+ * MDIO interface. Return true if it's MDIO.
+ */
+static bool
+wm_sgmii_uses_mdio(struct wm_softc *sc)
+{
+	uint32_t reg;
+	bool ismdio = false;
+
+	switch (sc->sc_type) {
+	case WM_T_82575:
+	case WM_T_82576:
+		reg = CSR_READ(sc, WMREG_MDIC);
+		ismdio = ((reg & MDIC_DEST) != 0);
+		break;
+	case WM_T_82580:
+	case WM_T_82580ER:
+	case WM_T_I350:
+	case WM_T_I354:
+	case WM_T_I210:
+	case WM_T_I211:
+		reg = CSR_READ(sc, WMREG_MDICNFG);
+		ismdio = ((reg & MDICNFG_DEST) != 0);
+		break;
+	default:
+		break;
+	}
+
+	return ismdio;
 }
 
 /*
@@ -8512,6 +8628,7 @@ wm_get_wakeup(struct wm_softc *sc)
 	case WM_T_82580:
 	case WM_T_82580ER:
 	case WM_T_I350:
+	case WM_T_I354:
 		if ((CSR_READ(sc, WMREG_FWSM) & FWSM_MODE_MASK) != 0)
 			sc->sc_flags |= WM_F_ARC_SUBSYS_VALID;
 		sc->sc_flags |= WM_F_ASF_FIRMWARE_PRES;
