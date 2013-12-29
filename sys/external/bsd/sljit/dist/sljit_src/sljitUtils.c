@@ -298,16 +298,13 @@ SLJIT_API_FUNC_ATTRIBUTE void SLJIT_CALL sljit_free_stack(struct sljit_stack* st
 
 SLJIT_API_FUNC_ATTRIBUTE sljit_w SLJIT_CALL sljit_stack_resize(struct sljit_stack* stack, sljit_uw new_limit)
 {
-#ifdef _WIN32
-	sljit_uw aligned_old_limit;
-	sljit_uw aligned_new_limit;
-#endif
-
 	if ((new_limit > stack->max_limit) || (new_limit < stack->base))
 		return -1;
 #ifdef _WIN32
-	aligned_new_limit = (new_limit + sljit_page_align) & ~sljit_page_align;
-	aligned_old_limit = (stack->limit + sljit_page_align) & ~sljit_page_align;
+	sljit_uw aligned_new_limit =
+	    (new_limit + sljit_page_align) & ~sljit_page_align;
+	sljit_uw aligned_old_limit =
+	    (stack->limit + sljit_page_align) & ~sljit_page_align;
 	if (aligned_new_limit != aligned_old_limit) {
 		if (aligned_new_limit > aligned_old_limit) {
 			if (!VirtualAlloc((void*)aligned_old_limit, aligned_new_limit - aligned_old_limit, MEM_COMMIT, PAGE_READWRITE))
@@ -325,15 +322,20 @@ SLJIT_API_FUNC_ATTRIBUTE sljit_w SLJIT_CALL sljit_stack_resize(struct sljit_stac
 		stack->limit = new_limit;
 		return 0;
 	}
-	aligned_new_limit = (new_limit + sljit_page_align) & ~sljit_page_align;
-	aligned_old_limit = (stack->limit + sljit_page_align) & ~sljit_page_align;
-	/* If madvise is available, we release the unnecessary space. */
 #if defined(POSIX_MADV_DONTNEED)
-	if (aligned_new_limit < aligned_old_limit)
-		posix_madvise((void*)aligned_new_limit, aligned_old_limit - aligned_new_limit, POSIX_MADV_DONTNEED);
+# define MADVISE(new, old) posix_madvise((new), (old), POSIX_MADV_DONTNEED)
 #elif defined(MADV_DONTNEED)
+# define MADVISE(new, old) madvise((new), (old), MADV_DONTNEED)
+#endif
+#ifdef MADVISE
+	sljit_uw aligned_new_limit =
+	    (new_limit + sljit_page_align) & ~sljit_page_align;
+	sljit_uw aligned_old_limit =
+	    (stack->limit + sljit_page_align) & ~sljit_page_align;
+	/* If madvise is available, we release the unnecessary space. */
 	if (aligned_new_limit < aligned_old_limit)
-		madvise((void*)aligned_new_limit, aligned_old_limit - aligned_new_limit, MADV_DONTNEED);
+		MADVISE((void*)aligned_new_limit,
+		    aligned_old_limit - aligned_new_limit);
 #endif
 	stack->limit = new_limit;
 	return 0;
