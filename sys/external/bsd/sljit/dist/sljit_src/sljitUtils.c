@@ -298,8 +298,10 @@ SLJIT_API_FUNC_ATTRIBUTE void SLJIT_CALL sljit_free_stack(struct sljit_stack* st
 
 SLJIT_API_FUNC_ATTRIBUTE sljit_w SLJIT_CALL sljit_stack_resize(struct sljit_stack* stack, sljit_uw new_limit)
 {
+#ifdef _WIN32
 	sljit_uw aligned_old_limit;
 	sljit_uw aligned_new_limit;
+#endif
 
 	if ((new_limit > stack->max_limit) || (new_limit < stack->base))
 		return -1;
