@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_straddch.c,v 1.1.1.2 2013/12/27 19:27:42 christos Exp $	*/
+/*	$NetBSD: openpam_straddch.c,v 1.2 2013/12/29 22:55:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 Dag-Erling Smørgrav
@@ -79,7 +79,7 @@ openpam_straddch(char **str, size_t *size, size_t *len, int ch)
 		*str = tmpstr;
 	}
 	if (ch != 0) {
-		(*str)[*len] = ch;
+		(*str)[*len] = (char)ch;
 		++*len;
 	}
 	(*str)[*len] = '\0';
