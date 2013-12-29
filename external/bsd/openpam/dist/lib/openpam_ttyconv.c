@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_ttyconv.c,v 1.8 2013/12/27 20:10:21 christos Exp $	*/
+/*	$NetBSD: openpam_ttyconv.c,v 1.9 2013/12/29 22:55:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -409,7 +409,7 @@ fail:
 	}
 	if (infp != stdin)
 		(void)fclose(infp);
-	memset(aresp, 0, n * sizeof *aresp);
+	memset(aresp, 0, (size_t)n * sizeof *aresp);
 	FREE(aresp);
 	*resp = NULL;
 	memset(respbuf, 0, sizeof respbuf);

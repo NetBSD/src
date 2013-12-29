@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_getenvlist.c,v 1.4 2013/12/27 20:10:21 christos Exp $	*/
+/*	$NetBSD: pam_getenvlist.c,v 1.5 2013/12/29 22:55:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -64,7 +64,7 @@ pam_getenvlist(pam_handle_t *pamh)
 	ENTER();
 	if (pamh == NULL)
 		RETURNP(NULL);
-	envlist = malloc(sizeof(char *) * (pamh->env_count + 1));
+	envlist = malloc(sizeof(*envlist) * ((size_t)pamh->env_count + 1));
 	if (envlist == NULL) {
 		openpam_log(PAM_LOG_ERROR, "%s",
 			pam_strerror(pamh, PAM_BUF_ERR));
