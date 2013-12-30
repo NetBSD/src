@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2013/12/28 03:19:43 christos Exp $
+#	$NetBSD: Makefile,v 1.14 2013/12/30 17:48:13 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -79,7 +79,7 @@ CWARNFLAGS.clang+=	-Wno-strncat-size
 
 DIST=${IDIST}/ntpd
 
-CPPFLAGS+=-I${IDIST}/include -I${IDIST}/sntp/libopts
+CPPFLAGS+=-I${IDIST}/include -I${IDIST}/sntp/libopts -I${IDIST}/ntpd
 
 .PATH: ${DIST}
 
