@@ -1,4 +1,4 @@
-/*	$NetBSD: idr.h,v 1.1.2.6 2013/07/24 03:13:59 riastradh Exp $	*/
+/*	$NetBSD: idr.h,v 1.1.2.7 2013/12/30 04:52:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -33,15 +33,16 @@
 #define _LINUX_IDR_H_
 
 #include <sys/types.h>
-#include <sys/rwlock.h>
-#include <sys/rbtree.h>
+#include <sys/mutex.h>
+#include <sys/pserialize.h>
 
 /* XXX Stupid expedient algorithm should be replaced by something better.  */
 
 struct idr {
-	krwlock_t idr_lock;
-	rb_tree_t idr_tree;
-	struct idr_node *idr_temp;
+	kmutex_t		idr_lock;
+	pserialize_t		idr_psz;
+	struct idr_state	*idr_state;
+	struct idr_state	*volatile idr_temp;
 };
 
 /* XXX Make the nm output a little more greppable...  */
