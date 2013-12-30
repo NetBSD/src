@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_pci.c,v 1.1.2.4 2013/09/08 16:41:07 riastradh Exp $	*/
+/*	$NetBSD: i915_pci.c,v 1.1.2.5 2013/12/30 04:51:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.1.2.4 2013/09/08 16:41:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.1.2.5 2013/12/30 04:51:43 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -165,12 +165,17 @@ i915drm_detach(device_t self, int flags)
 	struct i915drm_softc *const sc = device_private(self);
 	int error;
 
-	/* Detach the drm driver first.  */
-	error = config_detach_children(self, flags);
+	/*
+	 * XXX OK to do this first?  Detaching the drm driver runs
+	 * i915_driver_unload, which frees all the i915 private data
+	 * structures.
+	 */
+	error = i915drm_detach_framebuffer(self, flags);
 	if (error)
 		return error;
 
-	error = i915drm_detach_framebuffer(self, flags);
+	/* Detach the drm driver first.  */
+	error = config_detach_children(self, flags);
 	if (error)
 		return error;
 
