@@ -54,7 +54,7 @@ int
 cmd_login(int argc, char *argv[])
 {
 	struct smb_ctx sctx, *ctx = &sctx;
-	int error, opt, setprimary = 0, level;
+	int error, opt, level;
 
 	if (argc < 2)
 		login_usage();
@@ -72,7 +72,6 @@ cmd_login(int argc, char *argv[])
 				exit(1);
 			break;
 		    case 'D':
-			setprimary = 1;
 			break;
 		    default:
 			login_usage();
