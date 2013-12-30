@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.9 2013/12/29 03:26:07 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.10 2013/12/30 01:34:23 christos Exp $	*/
 
 #include <config.h>
 
@@ -297,9 +297,7 @@ open_sockets(
 	)
 {
 	sockaddr_u	name;
-	int		one_fam_works;
 
-	one_fam_works = FALSE;
 	if (-1 == sock4) {
 		sock4 = socket(PF_INET, SOCK_DGRAM, 0);
 		if (-1 == sock4) {
@@ -330,7 +328,6 @@ open_sockets(
 			msyslog(LOG_ERR,
 				"open_sockets: event_new(base, sock4) failed!");
 		} else {
-			one_fam_works = TRUE;
 			event_add(ev_sock4, &wakeup_tv);
 		}
 	}
@@ -365,7 +362,6 @@ open_sockets(
 			msyslog(LOG_ERR,
 				"open_sockets: event_new(base, sock6) failed!");
 		} else {
-			one_fam_works = TRUE;
 			event_add(ev_sock6, &wakeup_tv);
 		}
 	}
