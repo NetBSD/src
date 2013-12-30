@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1174 2013/12/27 08:39:56 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1175 2013/12/30 07:08:24 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -629,6 +629,7 @@ vendor RENESAS		0x1912	Renesas Technologies
 vendor FREESCALE	0x1957	Freescale Semiconductor
 vendor ATTANSIC		0x1969	Attansic Technologies
 vendor JMICRON		0x197b	JMicron Technology
+vendor ASPEED		0x1a03	ASPEED Technology
 vendor EVE		0x1adb	EVE
 vendor QUMRANET		0x1af4	Qumranet
 vendor ASMEDIA		0x1b21  ASMedia
@@ -1532,6 +1533,9 @@ product AMCIRCUITS VICBUS	0x812e	FZJ/ZEL VICBUS Interface
 product AMCIRCUITS PCISYNC	0x812f	FZJ/ZEL Synchronisation Module
 product AMCIRCUITS ADDI7800	0x818e	ADDI-DATA APCI-7800 8-port Serial
 product AMCIRCUITS S5920	0x5920	S5920 PCI Target
+
+/* ASPEED Technology products */
+product ASPEED AST2000		0x2000	AST2000
 
 /* Atheros Communications products */
 product ATHEROS AR5201		0x0007 AR5201 Wireless LAN
