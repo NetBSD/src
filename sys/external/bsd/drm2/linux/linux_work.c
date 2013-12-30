@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.1.2.4 2013/12/30 04:50:39 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.1.2.5 2013/12/30 04:50:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.1.2.4 2013/12/30 04:50:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.1.2.5 2013/12/30 04:50:48 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -116,7 +116,7 @@ alloc_ordered_workqueue(const char *name, int linux_flags)
 
 	wq = kmem_alloc(sizeof(*wq), KM_SLEEP);
 	error = workqueue_create(&wq->wq_workqueue, name, &linux_worker,
-	    NULL, PRI_NONE, IPL_NONE, flags);
+	    wq, PRI_NONE, IPL_NONE, flags);
 	if (error) {
 		kmem_free(wq, sizeof(*wq));
 		return NULL;
@@ -440,6 +440,8 @@ linux_worker(struct work *wk, void *arg)
 		break;
 
 	case WORK_PENDING:
+		KASSERT(work->w_wq == wq);
+
 		/* Get ready to invoke this one.  */
 		mutex_enter(&wq->wq_lock);
 		work->w_state = WORK_INVOKED;
@@ -464,6 +466,8 @@ linux_worker(struct work *wk, void *arg)
 		break;
 
 	case WORK_CANCELLED:
+		KASSERT(work->w_wq == wq);
+
 		/* Return to idle; notify anyone waiting for cancellation.  */
 		mutex_enter(&wq->wq_lock);
 		work->w_state = WORK_IDLE;
