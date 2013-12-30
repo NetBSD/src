@@ -1,4 +1,4 @@
-/*	$NetBSD: slab.h,v 1.1.2.8 2013/07/24 04:01:51 riastradh Exp $	*/
+/*	$NetBSD: slab.h,v 1.1.2.9 2013/12/30 04:51:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -76,7 +76,8 @@ kzalloc(size_t size, gfp_t gfp)
 static inline void *
 kcalloc(size_t n, size_t size, gfp_t gfp)
 {
-	KASSERT(size <= (SIZE_MAX / n));
+	KASSERT(size != 0);
+	KASSERT(n <= (SIZE_MAX / size));
 	return malloc((n * size), M_TEMP, (linux_gfp_to_malloc(gfp) | M_ZERO));
 }
 
