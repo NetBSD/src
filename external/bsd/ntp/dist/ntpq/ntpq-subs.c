@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq-subs.c,v 1.5 2013/12/28 03:20:14 christos Exp $	*/
+/*	$NetBSD: ntpq-subs.c,v 1.6 2013/12/30 01:34:22 christos Exp $	*/
 
 /*
  * ntpq-subs.c - subroutines which are called to perform ntpq commands.
@@ -3174,7 +3174,6 @@ ifstats(
 	char *		tag;
 	char *		val;
 	int		fields;
-	u_int		ifnum;
 	u_int		ui;
 	ifstats_row	row;
 	int		comprende;
@@ -3193,7 +3192,6 @@ ifstats(
 
 	ZERO(row);
 	fields = 0;
-	ifnum = 0;
 	ui = 0;
 	while (nextvar(&dsize, &datap, &tag, &val)) {
 		if (debug > 1)
@@ -3391,7 +3389,6 @@ reslist(
 	char *		tag;
 	char *		val;
 	int		fields;
-	u_int		idx;
 	u_int		ui;
 	reslist_row	row;
 	int		comprende;
@@ -3410,7 +3407,6 @@ reslist(
 
 	ZERO(row);
 	fields = 0;
-	idx = 0;
 	ui = 0;
 	while (nextvar(&dsize, &datap, &tag, &val)) {
 		if (debug > 1)
