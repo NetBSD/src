@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1167 2013/12/27 08:40:28 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1168 2013/12/30 07:08:47 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1174 2013/12/27 08:39:56 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1175 2013/12/30 07:08:24 msaitoh Exp
  */
 
 /*
@@ -636,6 +636,7 @@
 #define	PCI_VENDOR_FREESCALE	0x1957		/* Freescale Semiconductor */
 #define	PCI_VENDOR_ATTANSIC	0x1969		/* Attansic Technologies */
 #define	PCI_VENDOR_JMICRON	0x197b		/* JMicron Technology */
+#define	PCI_VENDOR_ASPEED	0x1a03		/* ASPEED Technology */
 #define	PCI_VENDOR_EVE	0x1adb		/* EVE */
 #define	PCI_VENDOR_QUMRANET	0x1af4		/* Qumranet */
 #define	PCI_VENDOR_ASMEDIA	0x1b21		/* ASMedia */
@@ -1539,6 +1540,9 @@
 #define	PCI_PRODUCT_AMCIRCUITS_PCISYNC	0x812f		/* FZJ/ZEL Synchronisation Module */
 #define	PCI_PRODUCT_AMCIRCUITS_ADDI7800	0x818e		/* ADDI-DATA APCI-7800 8-port Serial */
 #define	PCI_PRODUCT_AMCIRCUITS_S5920	0x5920		/* S5920 PCI Target */
+
+/* ASPEED Technology products */
+#define	PCI_PRODUCT_ASPEED_AST2000	0x2000		/* AST2000 */
 
 /* Atheros Communications products */
 #define	PCI_PRODUCT_ATHEROS_AR5201	0x0007		/* AR5201 Wireless LAN */
