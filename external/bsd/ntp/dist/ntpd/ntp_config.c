@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_config.c,v 1.6 2013/12/28 03:20:14 christos Exp $	*/
+/*	$NetBSD: ntp_config.c,v 1.7 2013/12/30 01:34:22 christos Exp $	*/
 
 /* ntp_config.c
  *
@@ -2595,9 +2595,7 @@ config_rlimit(
 	)
 {
 	attr_val *	rlimit_av;
-	int		item;
 
-	item = -1;	/* quiet warning */
 	rlimit_av = HEAD_PFIFO(ptree->rlimit);
 	for (; rlimit_av != NULL; rlimit_av = rlimit_av->link) {
 		switch (rlimit_av->attr) {
