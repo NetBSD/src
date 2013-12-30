@@ -855,6 +855,12 @@ int drm_fb_helper_single_fb_probe(struct drm_fb_helper *fb_helper,
 		dev_info(fb_helper->dev->dev, "fb%d: %s frame buffer device\n",
 				info->node, info->fix.id);
 
+#else
+		/*
+		 * XXX Not sure this is right, but this logic will get
+		 * cleaned up in a newer import of drm2.
+		 */
+		drm_fb_helper_set_config(fb_helper);
 #endif
 	} else {
 #ifdef __NetBSD__		/* XXX fb info */
