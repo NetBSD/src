@@ -1853,18 +1853,7 @@ int i915_driver_unload(struct drm_device *dev)
 
 	if (drm_core_check_feature(dev, DRIVER_MODESET)) {
 		/* Flush any outstanding unpin_work. */
-#ifdef __NetBSD__
-		/*
-		 * XXX Keep this updated!  (XXX How?)
-		 * (XXX Well, do work queues for real...)
-		 */
-		cancel_work_sync(&dev_priv->l3_parity.error_work);
-#  if 0				/* XXX How do we get the CRTCs? */
-		cancel_work_sync(&...intel_crtc->unpin_work);
-#  endif
-#else
 		flush_workqueue(dev_priv->wq);
-#endif
 
 		mutex_lock(&dev->struct_mutex);
 		i915_gem_free_all_phys_object(dev);
