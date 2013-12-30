@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1.2.42 2013/09/08 16:38:51 riastradh Exp $
+# $NetBSD: Makefile,v 1.1.2.43 2013/12/30 04:50:12 riastradh Exp $
 
 .include "../Makefile.inc"
 .include "Makefile.inc"
@@ -57,6 +57,7 @@ SRCS+=	linux_kmap.c
 SRCS+=	linux_i2c.c
 SRCS+=	linux_idr.c
 SRCS+=	linux_list_sort.c
+SRCS+=	linux_work.c
 
 COPTS.drm_crtc.c+=	-Wno-shadow
 COPTS.drm_edid.c+=	-Wno-shadow
