@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.1.2.2 2013/12/30 04:50:21 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.1.2.3 2013/12/30 04:50:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.1.2.2 2013/12/30 04:50:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.1.2.3 2013/12/30 04:50:30 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -114,10 +114,13 @@ alloc_ordered_workqueue(const char *name, int linux_flags)
 
 	KASSERT(linux_flags == 0);
 
+	wq = kmem_alloc(sizeof(*wq), KM_SLEEP);
 	error = workqueue_create(&wq->wq_workqueue, name, &linux_worker,
 	    NULL, PRI_NONE, IPL_NONE, flags);
-	if (error)
+	if (error) {
+		kmem_free(wq, sizeof(*wq));
 		return NULL;
+	}
 
 	mutex_init(&wq->wq_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&wq->wq_cv, name);
@@ -163,6 +166,8 @@ destroy_workqueue(struct workqueue_struct *wq)
 
 	cv_destroy(&wq->wq_cv);
 	mutex_destroy(&wq->wq_lock);
+
+	kmem_free(wq, sizeof(*wq));
 }
 
 /*
