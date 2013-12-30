@@ -4633,6 +4633,7 @@ i915_gem_load(struct drm_device *dev)
 	i915_gem_detect_bit_6_swizzle(dev);
 #ifdef __NetBSD__
 	DRM_INIT_WAITQUEUE(&dev_priv->pending_flip_queue, "i915flip");
+	linux_mutex_init(&dev_priv->pending_flip_lock);
 #else
 	init_waitqueue_head(&dev_priv->pending_flip_queue);
 #endif
