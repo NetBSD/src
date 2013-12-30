@@ -1,11 +1,11 @@
-/*	$NetBSD: reader.c,v 1.8 2013/04/06 14:52:24 christos Exp $	*/
+/*	$NetBSD: reader.c,v 1.9 2013/12/30 19:08:55 christos Exp $	*/
 
 /* Id: reader.c,v 1.36 2012/05/26 16:05:41 tom Exp  */
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: reader.c,v 1.8 2013/04/06 14:52:24 christos Exp $");
+__RCSID("$NetBSD: reader.c,v 1.9 2013/12/30 19:08:55 christos Exp $");
 
 /*  The line size must be a positive integer.  One hundred was chosen	*/
 /*  because few lines in Yacc input grammars exceed 100 characters.	*/
@@ -322,6 +322,8 @@ keyword(void)
 	    return (PARSE_PARAM);
 	if (matchec("lex-param"))
 	    return (LEX_PARAM);
+	if (matchec("token-table"))
+	    return (TOKEN_TABLE);
 	if (matchec("yacc"))
 	    return (POSIX_YACC);
     }
@@ -1305,6 +1307,10 @@ read_declarations(void)
 	case PARSE_PARAM:
 	case LEX_PARAM:
 	    copy_param(k);
+	    break;
+
+	case TOKEN_TABLE:
+	    token_table = 1;
 	    break;
 
 	case POSIX_YACC:
