@@ -1983,7 +1983,6 @@ void i915_driver_postclose(struct drm_device *dev, struct drm_file *file)
 	struct drm_i915_file_private *file_priv = file->driver_priv;
 
 #ifdef __NetBSD__
-	idr_destroy(&file_priv->context_idr);
 	spin_lock_destroy(&file_priv->mm.lock);
 #endif
 
