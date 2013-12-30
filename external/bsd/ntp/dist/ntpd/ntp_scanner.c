@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_scanner.c,v 1.5 2013/12/28 03:20:14 christos Exp $	*/
+/*	$NetBSD: ntp_scanner.c,v 1.6 2013/12/30 17:41:57 christos Exp $	*/
 
 
 /* ntp_scanner.c
@@ -504,7 +504,7 @@ yylex(
 
 		if (EOF == ch) {
 
-			if (!input_from_file || !curr_include_level) 
+			if (!input_from_file || curr_include_level <= 0) 
 				return 0;
 
 			FCLOSE(fp[curr_include_level]);
