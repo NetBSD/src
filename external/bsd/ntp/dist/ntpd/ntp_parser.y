@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_parser.y,v 1.6 2013/12/28 03:20:14 christos Exp $	*/
+/*	$NetBSD: ntp_parser.y,v 1.7 2013/12/30 17:42:19 christos Exp $	*/
 
 /* ntp_parser.y
  *
@@ -156,6 +156,7 @@
 %token	<Integer>	T_Maxdist
 %token	<Integer>	T_Maxmem
 %token	<Integer>	T_Maxpoll
+%token	<Integer>	T_Mdnstries
 %token	<Integer>	T_Mem
 %token	<Integer>	T_Memlock
 %token	<Integer>	T_Minclock
@@ -523,6 +524,8 @@ other_mode_command
 			{ CONCAT_G_FIFOS(cfgt.manycastserver, $2); }
 	|	T_Multicastclient address_list
 			{ CONCAT_G_FIFOS(cfgt.multicastclient, $2); }
+	|	T_Mdnstries T_Integer
+			{ cfgt.mdnstries = $2; }
 	;
 
 

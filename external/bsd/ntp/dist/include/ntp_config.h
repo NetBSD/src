@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_config.h,v 1.4 2013/12/28 03:20:13 christos Exp $	*/
+/*	$NetBSD: ntp_config.h,v 1.5 2013/12/30 17:42:19 christos Exp $	*/
 
 #ifndef NTP_CONFIG_H
 #define NTP_CONFIG_H
@@ -241,6 +241,7 @@ struct config_tree_tag {
 	int_fifo *	reset_counters;
 
 	sim_fifo *	sim_details;
+	int		mdnstries;
 };
 
 
