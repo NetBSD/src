@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.1.2.6 2013/12/30 04:50:57 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.1.2.7 2013/12/30 04:51:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.1.2.6 2013/12/30 04:50:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.1.2.7 2013/12/30 04:51:06 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -208,6 +208,7 @@ flush_workqueue(struct workqueue_struct *wq)
 		struct wq_flush_work wqfw = zero_wqfw;
 
 		wqf.wqf_n = 1;
+		wqfw.wqfw_flush = &wqf;
 		INIT_WORK(&wqfw.wqfw_work, &linux_wq_barrier);
 		wqfw.wqfw_work.w_wq = wq;
 		wqfw.wqfw_work.w_state = WORK_PENDING;
@@ -226,6 +227,7 @@ flush_workqueue(struct workqueue_struct *wq)
 			mutex_enter(&wqf.wqf_lock);
 			wqf.wqf_n++;
 			mutex_exit(&wqf.wqf_lock);
+			wqfw->wqfw_flush = &wqf;
 			INIT_WORK(&wqfw->wqfw_work, &linux_wq_barrier);
 			wqfw->wqfw_work.w_state = WORK_PENDING;
 			wqfw->wqfw_work.w_wq = wq;
