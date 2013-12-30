@@ -57,7 +57,9 @@ UINT64                      PrParserResult; /* Expression return value */
 
 /* Bison/yacc configuration */
 
+#ifndef yytname
 #define yytname             PrParsername
+#endif
 #define YYDEBUG             1               /* Enable debug output */
 #define YYERROR_VERBOSE     1               /* Verbose error messages */
 #define YYFLAG              -32768
