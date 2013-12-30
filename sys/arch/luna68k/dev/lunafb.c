@@ -1,4 +1,4 @@
-/* $NetBSD: lunafb.c,v 1.29 2013/12/28 09:17:23 tsutsui Exp $ */
+/* $NetBSD: lunafb.c,v 1.30 2013/12/30 13:14:48 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.29 2013/12/28 09:17:23 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.30 2013/12/30 13:14:48 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -431,11 +431,16 @@ omfb_getdevconfig(paddr_t paddr, struct om_hwdevconfig *dc)
 	} else if (hwplanemask == 0xff) {
 		struct bt458 *ndac = (struct bt458 *)OMFB_RAMDAC;
 
+		/* Initialize the Bt458 */
 		ndac->bt_addr = 0x04;
 		ndac->bt_ctrl = 0xff; /* all planes will be read */
+		ndac->bt_addr = 0x05;
 		ndac->bt_ctrl = 0x00; /* all planes have non-blink */
-		ndac->bt_ctrl = 0x43; /* pallete enabled, ovly plane */
+		ndac->bt_addr = 0x06;
+		ndac->bt_ctrl = 0x40; /* pallete enabled, ovly plane disabled */
+		ndac->bt_addr = 0x07;
 		ndac->bt_ctrl = 0x00; /* no test mode */
+
 		ndac->bt_addr = 0;
 		ndac->bt_cmap = dc->dc_cmap.r[0] = 0;
 		ndac->bt_cmap = dc->dc_cmap.g[0] = 0;
