@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.1.2.7 2013/12/30 04:51:06 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.1.2.8 2013/12/30 04:52:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.1.2.7 2013/12/30 04:51:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.1.2.8 2013/12/30 04:52:21 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -204,15 +204,15 @@ flush_workqueue(struct workqueue_struct *wq)
 	cv_init(&wqf.wqf_cv, "lnxwflsh");
 
 	if (1) {
-		static const struct wq_flush_work zero_wqfw;
-		struct wq_flush_work wqfw = zero_wqfw;
+		struct wq_flush_work *const wqfw = kmem_zalloc(sizeof(*wqfw),
+		    KM_SLEEP);
 
 		wqf.wqf_n = 1;
-		wqfw.wqfw_flush = &wqf;
-		INIT_WORK(&wqfw.wqfw_work, &linux_wq_barrier);
-		wqfw.wqfw_work.w_wq = wq;
-		wqfw.wqfw_work.w_state = WORK_PENDING;
-		workqueue_enqueue(wq->wq_workqueue, &wqfw.wqfw_work.w_wk,
+		wqfw->wqfw_flush = &wqf;
+		INIT_WORK(&wqfw->wqfw_work, &linux_wq_barrier);
+		wqfw->wqfw_work.w_wq = wq;
+		wqfw->wqfw_work.w_state = WORK_PENDING;
+		workqueue_enqueue(wq->wq_workqueue, &wqfw->wqfw_work.w_wk,
 		    NULL);
 	} else {
 		struct cpu_info *ci;
