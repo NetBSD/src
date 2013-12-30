@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.1.2.5 2013/12/30 04:50:48 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.1.2.6 2013/12/30 04:50:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.1.2.5 2013/12/30 04:50:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.1.2.6 2013/12/30 04:50:57 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -116,7 +116,7 @@ alloc_ordered_workqueue(const char *name, int linux_flags)
 
 	wq = kmem_alloc(sizeof(*wq), KM_SLEEP);
 	error = workqueue_create(&wq->wq_workqueue, name, &linux_worker,
-	    wq, PRI_NONE, IPL_NONE, flags);
+	    wq, PRI_NONE, IPL_VM, flags);
 	if (error) {
 		kmem_free(wq, sizeof(*wq));
 		return NULL;
