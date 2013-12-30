@@ -1,4 +1,4 @@
-/*	$NetBSD: workqueue.h,v 1.1.2.11 2013/12/30 04:50:12 riastradh Exp $	*/
+/*	$NetBSD: workqueue.h,v 1.1.2.12 2013/12/30 04:50:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -94,6 +94,7 @@ struct workqueue_struct *
 	alloc_ordered_workqueue(const char *, int);
 void	destroy_workqueue(struct workqueue_struct *);
 void	flush_workqueue(struct workqueue_struct *);
+void	flush_scheduled_work(void);
 
 void	INIT_WORK(struct work_struct *, void (*)(struct work_struct *));
 void	schedule_work(struct work_struct *);

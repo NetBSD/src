@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.1.2.1 2013/12/30 04:50:12 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.1.2.2 2013/12/30 04:50:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.1.2.1 2013/12/30 04:50:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.1.2.2 2013/12/30 04:50:21 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -171,6 +171,12 @@ destroy_workqueue(struct workqueue_struct *wq)
  * Note:  This doesn't cancel or wait for delayed work.  This seems to
  * match what Linux does (or, doesn't do).
  */
+
+void
+flush_scheduled_work(void)
+{
+	flush_workqueue(system_wq);
+}
 
 struct wq_flush_work {
 	struct work_struct	wqfw_work;
