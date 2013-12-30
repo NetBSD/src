@@ -1750,6 +1750,7 @@ out_gem_unload:
 	spin_lock_destroy(&dev_priv->dpio_lock);
 	linux_mutex_destroy(&dev_priv->rps.hw_lock);
 	DRM_DESTROY_WAITQUEUE(&dev_priv->pending_flip_queue);
+	linux_mutex_destroy(&dev_priv->pending_flip_lock);
 	destroy_completion(&dev_priv->error_completion);
 #endif
 
@@ -1884,6 +1885,7 @@ int i915_driver_unload(struct drm_device *dev)
 #ifdef __NetBSD__
 	/* XXX Not sure this is the right place, but it looks safe.  */
 	DRM_DESTROY_WAITQUEUE(&dev_priv->pending_flip_queue);
+	linux_mutex_destroy(&dev_priv->pending_flip_lock);
 	destroy_completion(&dev_priv->error_completion);
 #endif
 
