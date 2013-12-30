@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.1.2.3 2013/12/30 04:50:30 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.1.2.4 2013/12/30 04:50:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.1.2.3 2013/12/30 04:50:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.1.2.4 2013/12/30 04:50:39 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -520,6 +520,7 @@ queue_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
 		callout_reset(&dw->dw_callout, ticks, &linux_worker_intr, dw);
 		dw->work.w_state = WORK_DELAYED;
 		dw->work.w_wq = wq;
+		TAILQ_INSERT_HEAD(&wq->wq_delayed, dw, dw_entry);
 		break;
 
 	case WORK_DELAYED:
