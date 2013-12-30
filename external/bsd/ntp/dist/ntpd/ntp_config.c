@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_config.c,v 1.7 2013/12/30 01:34:22 christos Exp $	*/
+/*	$NetBSD: ntp_config.c,v 1.8 2013/12/30 17:42:19 christos Exp $	*/
 
 /* ntp_config.c
  *
@@ -316,6 +316,7 @@ static void config_ntpd(config_tree *);
 static void config_other_modes(config_tree *);
 static void config_auth(config_tree *);
 static void config_access(config_tree *);
+static void config_mdnstries(config_tree *);
 static void config_phone(config_tree *);
 static void config_setvar(config_tree *);
 static void config_ttl(config_tree *);
@@ -393,6 +394,7 @@ init_syntax_tree(
 	)
 {
 	ZERO(*ptree);
+	ptree->mdnstries = 5;
 }
 
 
@@ -3040,6 +3042,16 @@ config_phone(
 }
 #endif	/* !SIM */
 
+static void
+config_mdnstries(
+	config_tree *ptree
+	)
+{
+#ifdef HAVE_DNSREGISTRATION
+	extern int mdnstries;
+	mdnstries = ptree->mdnstries;
+#endif  /* HAVE_DNSREGISTRATION */
+}
 
 #ifdef FREE_CFG_T
 static void
@@ -4268,6 +4280,7 @@ config_ntpd(
 	config_system_opts(ptree);
 	config_logconfig(ptree);
 	config_phone(ptree);
+	config_mdnstries(ptree);
 	config_setvar(ptree);
 	config_ttl(ptree);
 	config_trap(ptree);
