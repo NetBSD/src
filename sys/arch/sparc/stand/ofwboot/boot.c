@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.29 2012/05/28 19:24:30 martin Exp $	*/
+/*	$NetBSD: boot.c,v 1.30 2013/12/30 08:47:50 martin Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -478,7 +478,10 @@ check_boot_config(void)
 	if (!root_fs_quickseekable) return;
 	DPRINTF(("checking for /boot.cfg...\n"));
 	fd = open("/boot.cfg", 0);
-	if (fd < 0) return;
+	if (fd < 0) {
+		DPRINTF(("no /boot.cfg found\n"));
+		return;
+	}
 	DPRINTF(("found /boot.cfg\n"));
 	if (fstat(fd, &st) == -1 || st.st_size > 32*1024) {
 		close(fd);
