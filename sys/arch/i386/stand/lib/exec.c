@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.55 2013/11/27 18:29:45 jakllsch Exp $	 */
+/*	$NetBSD: exec.c,v 1.56 2013/12/30 21:45:51 jakllsch Exp $	 */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -361,6 +361,8 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy,
 	BI_ADD(&btinfo_console, BTINFO_CONSOLE, sizeof(struct btinfo_console));
 
 	howto = boothowto;
+
+	memset(marks, 0, sizeof(marks));
 
 	if (common_load_kernel(file, &basemem, &extmem, loadaddr, floppy, marks))
 		goto out;
