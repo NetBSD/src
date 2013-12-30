@@ -1,11 +1,11 @@
-/*	$NetBSD: skeleton.c,v 1.13 2013/09/13 18:53:29 joerg Exp $	*/
+/*	$NetBSD: skeleton.c,v 1.14 2013/12/30 19:08:55 christos Exp $	*/
 
 /* Id: skeleton.c,v 1.32 2013/03/04 23:19:39 tom Exp  */
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: skeleton.c,v 1.13 2013/09/13 18:53:29 joerg Exp $");
+__RCSID("$NetBSD: skeleton.c,v 1.14 2013/12/30 19:08:55 christos Exp $");
 
 /*  The definition of yysccsid in the banner should be replaced with	*/
 /*  a #pragma ident directive if the target C compiler supports		*/
@@ -73,7 +73,7 @@ const char *const tables[] =
     "extern short yycheck[];",
     "",
     "#if YYDEBUG",
-    "extern char *yyname[];",
+    "extern char *yytname[];",
     "extern char *yyrule[];",
     "#endif",
     0
@@ -249,9 +249,7 @@ const char *const body_2[] =
     "#if YYDEBUG",
     "        if (yydebug)",
     "        {",
-    "            yys = 0;",
-    "            if (yychar <= YYMAXTOKEN) yys = yyname[yychar];",
-    "            if (!yys) yys = \"illegal-symbol\";",
+    "            yys = yytname[YYTRANSLATE(yychar)];",
     "            printf(\"%sdebug: state %d, reading %d (%s)\\n\",",
     "                    YYPREFIX, yystate, yychar, yys);",
     "        }",
@@ -338,9 +336,7 @@ const char *const body_3[] =
     "#if YYDEBUG",
     "        if (yydebug)",
     "        {",
-    "            yys = 0;",
-    "            if (yychar <= YYMAXTOKEN) yys = yyname[yychar];",
-    "            if (!yys) yys = \"illegal-symbol\";",
+    "            yys = yytname[YYTRANSLATE(yychar)];",
     "            printf(\"%sdebug: state %d, error recovery discards token %d\
  (%s)\\n\",",
     "                    YYPREFIX, yystate, yychar, yys);",
@@ -389,9 +385,7 @@ const char *const trailer[] =
     "#if YYDEBUG",
     "            if (yydebug)",
     "            {",
-    "                yys = 0;",
-    "                if (yychar <= YYMAXTOKEN) yys = yyname[yychar];",
-    "                if (!yys) yys = \"illegal-symbol\";",
+    "                yys = yytname[YYTRANSLATE(yychar)];",
     "                printf(\"%sdebug: state %d, reading %d (%s)\\n\",",
     "                        YYPREFIX, YYFINAL, yychar, yys);",
     "            }",

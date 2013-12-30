@@ -1,11 +1,11 @@
-/*	$NetBSD: output.c,v 1.9 2013/04/06 14:52:24 christos Exp $	*/
+/*	$NetBSD: output.c,v 1.10 2013/12/30 19:08:55 christos Exp $	*/
 
 /* Id: output.c,v 1.45 2013/03/05 00:29:17 tom Exp  */
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: output.c,v 1.9 2013/04/06 14:52:24 christos Exp $");
+__RCSID("$NetBSD: output.c,v 1.10 2013/12/30 19:08:55 christos Exp $");
 
 #define StaticOrR	(rflag ? "" : "static ")
 #define CountLine(fp)   (!rflag || ((fp) == code_file))
@@ -116,7 +116,7 @@ output_prefix(FILE * fp)
 	define_prefixed(fp, "yygindex");
 	define_prefixed(fp, "yytable");
 	define_prefixed(fp, "yycheck");
-	define_prefixed(fp, "yyname");
+	define_prefixed(fp, "yytname");
 	define_prefixed(fp, "yyrule");
     }
     if (CountLine(fp))
@@ -926,23 +926,27 @@ output_debug(void)
 
     ++outline;
     fprintf(code_file, "#define YYMAXTOKEN %d\n", max);
+    fprintf(code_file, "#define YYTRANSLATE(a) ((a) > YYMAXTOKEN ? "
+	"(YYMAXTOKEN + 1) : (a))\n");
 
-    symnam = TMALLOC(const char *, max + 1);
+    symnam = TMALLOC(const char *, max + 2);
     NO_SPACE(symnam);
 
     /* Note that it is  not necessary to initialize the element         */
     /* symnam[max].                                                     */
-    for (i = 0; i < max; ++i)
+    for (i = 0; i <= max; ++i)
 	symnam[i] = 0;
     for (i = ntokens - 1; i >= 2; --i)
 	symnam[symbol_value[i]] = symbol_name[i];
     symnam[0] = "end-of-file";
+    symnam[max + 1] = "illegal-token";
 
-    output_line("#if YYDEBUG");
+    if (!token_table)
+	output_line("#if YYDEBUG");
 
-    start_str_table("name");
+    start_str_table("tname");
     j = 80;
-    for (i = 0; i <= max; ++i)
+    for (i = 0; i <= max + 1; ++i)
     {
 	if ((s = symnam[i]) != 0)
 	{
@@ -1063,6 +1067,8 @@ output_debug(void)
     end_table();
     FREE(symnam);
 
+    if (token_table)
+	output_line("#if YYDEBUG");
     start_str_table("rule");
     for (i = 2; i < nrules; ++i)
     {
