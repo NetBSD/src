@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
+// Copyright (c) 2007 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,7 @@
 
 extern "C" {
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -67,6 +68,12 @@ extern "C" {
 
 namespace impl = atf::atf_run;
 
+#if defined(MAXCOMLEN)
+static const std::string::size_type max_core_name_length = MAXCOMLEN;
+#else
+static const std::string::size_type max_core_name_length = std::string::npos;
+#endif
+
 class atf_run : public atf::application::app {
     static const char* m_description;
 
@@ -98,6 +105,59 @@ public:
 
     int main(void);
 };
+
+static void
+sanitize_gdb_env(void)
+{
+    try {
+        atf::env::unset("TERM");
+    } catch (...) {
+        // Just swallow exceptions here; they cannot propagate into C, which
+        // is where this function is called from, and even if these exceptions
+        // appear they are benign.
+    }
+}
+
+static void
+dump_stacktrace(const atf::fs::path& tp, const atf::process::status& s,
+                const atf::fs::path& workdir, impl::atf_tps_writer& w)
+{
+    PRE(s.signaled() && s.coredump());
+
+    w.stderr_tc("Test program crashed; attempting to get stack trace");
+
+    const atf::fs::path corename = workdir /
+        (tp.leaf_name().substr(0, max_core_name_length) + ".core");
+    if (!atf::fs::exists(corename)) {
+        w.stderr_tc("Expected file " + corename.str() + " not found");
+        return;
+    }
+
+    const atf::fs::path gdb(GDB);
+    const atf::fs::path gdbout = workdir / "gdb.out";
+    const atf::process::argv_array args(gdb.leaf_name().c_str(), "-batch",
+                                        "-q", "-ex", "bt", tp.c_str(),
+                                        corename.c_str(), NULL);
+    atf::process::status status = atf::process::exec(
+        gdb, args,
+        atf::process::stream_redirect_path(gdbout),
+        atf::process::stream_redirect_path(atf::fs::path("/dev/null")),
+        sanitize_gdb_env);
+    if (!status.exited() || status.exitstatus() != EXIT_SUCCESS) {
+        w.stderr_tc("Execution of " GDB " failed");
+        return;
+    }
+
+    std::ifstream input(gdbout.c_str());
+    if (input) {
+        std::string line;
+        while (std::getline(input, line).good())
+            w.stderr_tc(line);
+        input.close();
+    }
+
+    w.stderr_tc("Stack trace complete");
+}
 
 const char* atf_run::m_description =
     "atf-run is a tool that runs tests programs and collects their "
@@ -370,8 +430,8 @@ atf_run::run_test_program(const atf::fs::path& tp,
                 if (user.first != -1 && user.second != -1) {
                     if (::chown(workdir.get_path().c_str(), user.first,
                                 user.second) == -1) {
-                        throw atf::system_error("chmod(" +
-                            workdir.get_path().str() + ")", "chmod(2) failed",
+                        throw atf::system_error("chown(" +
+                            workdir.get_path().str() + ")", "chown(2) failed",
                             errno);
                     }
                     resfile = workdir.get_path() / "tcr";
@@ -380,6 +440,8 @@ atf_run::run_test_program(const atf::fs::path& tp,
                 std::pair< std::string, const atf::process::status > s =
                     impl::run_test_case(tp, tcname, "body", tcmd, config,
                                             resfile, workdir.get_path(), w);
+                if (s.second.signaled() && s.second.coredump())
+                    dump_stacktrace(tp, s.second, workdir.get_path(), w);
                 if (has_cleanup)
                     (void)impl::run_test_case(tp, tcname, "cleanup", tcmd,
                             config, resfile, workdir.get_path(), w);

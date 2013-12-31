@@ -1,7 +1,7 @@
 dnl
 dnl Automated Testing Framework (atf)
 dnl
-dnl Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+dnl Copyright (c) 2007 The NetBSD Foundation, Inc.
 dnl All rights reserved.
 dnl
 dnl Redistribution and use in source and binary forms, with or without
@@ -50,17 +50,22 @@ AC_DEFUN([ATF_MODULE_FS], [
                   [Define to 1 if dirname takes a constant pointer]),
         AC_MSG_RESULT(no))
 
-    AC_MSG_CHECKING(whether getcwd(NULL, 0) works)
-    AC_RUN_IFELSE(
-        [AC_LANG_PROGRAM([#include <stdlib.h>
+    AC_CACHE_CHECK(
+        [whether getcwd(NULL, 0) works],
+        [kyua_cv_getcwd_works], [
+        AC_RUN_IFELSE(
+            [AC_LANG_PROGRAM([#include <stdlib.h>
 #include <unistd.h>], [
          char *cwd = getcwd(NULL, 0);
          return (cwd != NULL) ? EXIT_SUCCESS : EXIT_FAILURE;
          ])],
-        AC_MSG_RESULT(yes)
+         [kyua_cv_getcwd_works=yes],
+         [kyua_cv_getcwd_works=no])
+    ])
+    if test x"${kyua_cv_getcwd_works}" = xyes; then
         AC_DEFINE([HAVE_GETCWD_DYN], [1],
-                  [Define to 1 if getcwd(NULL, 0) works]),
-        AC_MSG_RESULT(no))
+                  [Define to 1 if getcwd(NULL, 0) works])
+    fi
 
     AC_CHECK_FUNCS([unmount])
 ])
