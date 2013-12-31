@@ -1,7 +1,7 @@
-/*	$NetBSD: master.h,v 1.3 2012/06/05 00:41:49 christos Exp $	*/
+/*	$NetBSD: master.h,v 1.4 2013/12/31 20:24:41 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -59,6 +59,7 @@
 
 #define DNS_MASTER_RESIGN	0x00002000
 #define DNS_MASTER_KEY	 	0x00004000	/*%< Loading a key zone master file. */
+#define DNS_MASTER_NOTTL	0x00008000	/*%< Don't require ttl. */
 
 ISC_LANG_BEGINDECLS
 

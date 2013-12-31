@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.5 2013/07/27 19:23:13 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.6 2013/12/31 20:24:42 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
@@ -769,7 +769,7 @@ isc_log_createchannel(isc_logconfig_t *lcfg, const char *name,
 		break;
 
 	default:
-		isc_mem_put(mctx, channel->name, strlen(channel->name) + 1);
+		isc_mem_free(mctx, channel->name);
 		isc_mem_put(mctx, channel, sizeof(*channel));
 		return (ISC_R_UNEXPECTED);
 	}
@@ -1148,7 +1148,7 @@ greatest_version(isc_logchannel_t *channel, int *greatestp) {
 	char *basename, *digit_end;
 	const char *dirname;
 	int version, greatest = -1;
-	unsigned int basenamelen;
+	size_t basenamelen;
 	isc_dir_t dir;
 	isc_result_t result;
 	char sep = '/';
