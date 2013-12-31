@@ -1,4 +1,4 @@
-/*	$NetBSD: zone.h,v 1.1.1.10 2013/07/27 15:23:16 christos Exp $	*/
+/*	$NetBSD: zone.h,v 1.1.1.11 2013/12/31 20:11:22 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
@@ -2086,6 +2086,12 @@ isc_result_t
 dns_zone_rpz_enable(dns_zone_t *zone);
 /*%
  * Set the response policy associated with a zone.
+ */
+
+isc_result_t
+dns_zone_rpz_enable_db(dns_zone_t *zone, dns_db_t *db);
+/*%
+ * If a zone is a response policy zone, mark its new database.
  */
 
 isc_boolean_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-keygen.c,v 1.1.1.10 2013/07/27 15:22:43 christos Exp $	*/
+/*	$NetBSD: dnssec-keygen.c,v 1.1.1.11 2013/12/31 20:09:51 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
@@ -657,9 +657,9 @@ main(int argc, char **argv) {
 					    mctx, &prevkey);
 		if (ret != ISC_R_SUCCESS)
 			fatal("Invalid keyfile %s: %s",
-			      filename, isc_result_totext(ret));
+			      predecessor, isc_result_totext(ret));
 		if (!dst_key_isprivate(prevkey))
-			fatal("%s is not a private key", filename);
+			fatal("%s is not a private key", predecessor);
 
 		name = dst_key_name(prevkey);
 		alg = dst_key_alg(prevkey);

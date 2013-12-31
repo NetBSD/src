@@ -1,7 +1,7 @@
-/*	$NetBSD: wks_11.c,v 1.1.1.5 2012/06/04 17:56:39 christos Exp $	*/
+/*	$NetBSD: wks_11.c,v 1.1.1.6 2013/12/31 20:11:25 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -280,7 +280,7 @@ fromstruct_in_wks(ARGS_FROMSTRUCT) {
 
 	a = ntohl(wks->in_addr.s_addr);
 	RETERR(uint32_tobuffer(a, target));
-	RETERR(uint16_tobuffer(wks->protocol, target));
+	RETERR(uint8_tobuffer(wks->protocol, target));
 	return (mem_tobuffer(target, wks->map, wks->map_len));
 }
 
@@ -302,8 +302,8 @@ tostruct_in_wks(ARGS_TOSTRUCT) {
 	n = uint32_fromregion(&region);
 	wks->in_addr.s_addr = htonl(n);
 	isc_region_consume(&region, 4);
-	wks->protocol = uint16_fromregion(&region);
-	isc_region_consume(&region, 2);
+	wks->protocol = uint8_fromregion(&region);
+	isc_region_consume(&region, 1);
 	wks->map_len = region.length;
 	wks->map = mem_maybedup(mctx, region.base, region.length);
 	if (wks->map == NULL)

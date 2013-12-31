@@ -1,7 +1,7 @@
-/*	$NetBSD: base64.c,v 1.1.1.4 2012/06/04 17:56:43 christos Exp $	*/
+/*	$NetBSD: base64.c,v 1.1.1.5 2013/12/31 20:11:28 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -126,7 +126,7 @@ base64_decode_char(base64_decode_ctx_t *ctx, int c) {
 		return (ISC_R_BADBASE64);
 	if ((s = strchr(base64, c)) == NULL)
 		return (ISC_R_BADBASE64);
-	ctx->val[ctx->digits++] = s - base64;
+	ctx->val[ctx->digits++] = (int)(s - base64);
 	if (ctx->digits == 4) {
 		int n;
 		unsigned char buf[3];

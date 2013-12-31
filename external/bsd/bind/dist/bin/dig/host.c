@@ -1,7 +1,7 @@
-/*	$NetBSD: host.c,v 1.1.1.7 2013/07/27 15:22:43 christos Exp $	*/
+/*	$NetBSD: host.c,v 1.1.1.8 2013/12/31 20:09:49 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -640,6 +640,8 @@ pre_parse_args(int argc, char **argv) {
 		case 'w': break;
 		case 'C': break;
 		case 'D':
+			if (debugging)
+				debugtiming = ISC_TRUE;
 			debugging = ISC_TRUE;
 			break;
 		case 'N': break;

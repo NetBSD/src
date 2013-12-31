@@ -1,7 +1,7 @@
-/*	$NetBSD: thread.h,v 1.1.1.4 2012/06/04 17:56:59 christos Exp $	*/
+/*	$NetBSD: thread.h,v 1.1.1.5 2013/12/31 20:11:36 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -96,6 +96,8 @@ isc_thread_key_getspecific(isc_thread_key_t);
 
 int
 isc_thread_key_setspecific(isc_thread_key_t key, void *value);
+
+#define isc_thread_yield() Sleep(0)
 
 ISC_LANG_ENDDECLS
 

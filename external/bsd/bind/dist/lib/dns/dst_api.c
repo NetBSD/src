@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_api.c,v 1.1.1.9 2013/07/27 15:23:11 christos Exp $	*/
+/*	$NetBSD: dst_api.c,v 1.1.1.10 2013/12/31 20:11:07 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
@@ -443,6 +443,16 @@ dst_key_tofile(const dst_key_t *key, int type, const char *directory) {
 		return (key->func->tofile(key, directory));
 	else
 		return (ISC_R_SUCCESS);
+}
+
+void
+dst_key_setexternal(dst_key_t *key, isc_boolean_t value) {
+	key->external = value;
+}
+
+isc_boolean_t
+dst_key_isexternal(dst_key_t *key) {
+	return (key->external);
 }
 
 isc_result_t
@@ -1351,8 +1361,25 @@ get_key_struct(dns_name_t *name, unsigned int alg,
 		key->times[i] = 0;
 		key->timeset[i] = ISC_FALSE;
 	}
+	key->inactive = ISC_FALSE;
 	key->magic = KEY_MAGIC;
 	return (key);
+}
+
+isc_boolean_t
+dst_key_inactive(const dst_key_t *key) {
+
+	REQUIRE(VALID_KEY(key));
+
+	return (key->inactive);
+}
+
+void
+dst_key_setinactive(dst_key_t *key, isc_boolean_t inactive) {
+
+	REQUIRE(VALID_KEY(key));
+
+	key->inactive = inactive;
 }
 
 /*%

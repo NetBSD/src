@@ -1,7 +1,7 @@
-/*	$NetBSD: base32.c,v 1.1.1.5 2012/06/04 17:56:43 christos Exp $	*/
+/*	$NetBSD: base32.c,v 1.1.1.6 2013/12/31 20:11:28 christos Exp $	*/
 
 /*
- * Copyright (C) 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2008, 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -168,7 +168,7 @@ base32_decode_char(base32_decode_ctx_t *ctx, int c) {
 		return (ISC_R_BADBASE32);
 	if ((s = strchr(ctx->base, c)) == NULL)
 		return (ISC_R_BADBASE32);
-	last = s - ctx->base;
+	last = (unsigned int)(s - ctx->base);
 	/*
 	 * Handle lower case.
 	 */

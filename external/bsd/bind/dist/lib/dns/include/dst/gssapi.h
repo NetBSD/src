@@ -1,7 +1,7 @@
-/*	$NetBSD: gssapi.h,v 1.1.1.4 2012/06/04 17:56:34 christos Exp $	*/
+/*	$NetBSD: gssapi.h,v 1.1.1.5 2013/12/31 20:11:22 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009-2011, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -31,7 +31,7 @@
 #include <dns/types.h>
 
 #ifdef GSSAPI
-#ifdef _WINDOWS
+#ifdef WIN32
 /*
  * MSVC does not like macros in #include lines.
  */

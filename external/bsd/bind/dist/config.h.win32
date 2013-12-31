@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004, 2006-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006-2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -30,7 +30,7 @@
 /* Define as __inline if that's what the C compiler calls it.  */
 #define inline __inline
 
-/* Define to `unsigned' if <sys/types.h> doesn't define.  */
+/* Define to `unsigned int/__int64' if <sys/types.h> doesn't define.  */
 /* #undef size_t */
 
 /*
@@ -46,12 +46,25 @@
 /*
  * Use 32 bit time.
  */
+#ifndef _WIN64
 #define _USE_32BIT_TIME_T 1
+#endif
 
 /*
  * Minimum version is Windows XP
  */
+#ifndef _WIN32_WINNT
 #define _WIN32_WINNT 0x0501
+#endif
+#if _WIN32_WINNT < 0x0501
+#error Minimum Target environment is Windows XP and Windows Server 2003
+#endif
+#ifndef NTDDI_VERSION
+#define NTDDI_VERSION 0x05010100
+#endif
+#if NTDDI_VERSION < 0x05010100
+#error Minimum Target environment is Windows XP SP1 and Windows Server 2003
+#endif
 
 /* Define if you have the ANSI C header files.  */
 #define STDC_HEADERS 1
@@ -176,15 +189,26 @@
 #define strdup _strdup
 #define sopen _sopen
 #define isascii __isascii
+#ifndef _WIN64
 #define stat _stat
 #define fstat _fstat
+#else
+#define stat _stat64
+#define fstat _fstat64
+#endif
 #define fileno _fileno
 #define unlink _unlink
 #define chdir _chdir
 #define mkdir _mkdir
+#define rmdir _rmdir
 #define getcwd _getcwd
 #define utime _utime
 #define utimbuf _utimbuf
+#ifndef _WIN64
+#define lseek _lseek
+#else
+#define lseek _lseeki64
+#endif
 
 /* #define EAFNOSUPPORT EINVAL */
 #define chmod _chmod
@@ -196,8 +220,16 @@
 typedef unsigned int    uid_t;          /* user id */
 typedef unsigned int    gid_t;          /* group id */
 typedef long pid_t;			/* PID */
+#ifndef _WIN64
 typedef int ssize_t;
 typedef long off_t;
+#else
+typedef __int64 ssize_t;
+#ifndef _AFX
+/* BINDInstall defines it with another type but doesn't use it */
+typedef __int64 off_t;
+#endif
+#endif
 
 /*
  * Set up the Version Information
@@ -237,29 +269,31 @@ typedef long off_t;
  * macro is used there.
  */
 
+#ifndef FD_SETSIZE
 #define FD_SETSIZE 16384
+#endif
 #include <windows.h>
 
 /*
- * Windows doesn't use configure so just set "default" here.
+ * main() is hooked
  */
-#define CONFIGARGS "default"
+#define ISC_MAIN_HOOK 1
+
+/*
+ * Configure sensible arguments
+ */
+@CONFIGARGS@
 
 /*
  * Define if libxml2 is present
  */
-#define HAVE_LIBXML2 1
+@HAVE_LIBXML2@
 
 /*
  * Define when building BIND9.  When building exportable versions
  * of libisc, libdns, etc, this must be removed.
  */
 #define BIND9 1
-
-/*
- * Define if PKCS11 is to be used.
- */
-/* #undef USE_PKCS11 */
 
 /** define if struct addrinfo exists */
 #define HAVE_ADDRINFO
@@ -270,14 +304,62 @@ typedef long off_t;
 /** define if gai_strerror() exists */
 #define HAVE_GAISTRERROR
 
+/* Define to enable the "filter-aaaa-on-v4" and "filter-aaaa-on-v6" options.
+   */
+@ALLOW_FILTER_AAAA@
+
+/* Define to enable "rrset-order fixed" syntax. */
+@DNS_RDATASET_FIXED@
+
+/* Define to 1 if you have the `EVP_sha256' function. */
+@HAVE_EVP_SHA256@
+
+/* Define to 1 if you have the `EVP_sha384' function. */
+@HAVE_EVP_SHA384@
+
+/* Define to 1 if you have the `EVP_sha512' function. */
+@HAVE_EVP_SHA512@
+
+/* Define if OpenSSL includes DSA support */
+@HAVE_OPENSSL_DSA@
+
+/* Define if OpenSSL includes ECDSA support */
+@HAVE_OPENSSL_ECDSA@
+
 /* Define if your OpenSSL version supports GOST. */
-#define HAVE_OPENSSL_GOST
+@HAVE_OPENSSL_GOST@
+
+/* Define to 1 if you have the `readline' function. */
+@HAVE_READLINE@
+
+/* Build with GeoIP support */
+@HAVE_GEOIP@
+
+/* define if idnkit support is to be included. */
+@WITH_IDN@
+
+/* Build with GeoIP City IPv6 support */
+@HAVE_GEOIP_CITY_V6@
+
+/* Build with GeoIP Country IPv6 support */
+@HAVE_GEOIP_V6@
 
 /* Define to enable rpz-nsdname rules. */
-#define ENABLE_RPZ_NSDNAME
+@ENABLE_RPZ_NSDNAME@
 
 /* Define to enable rpz-nsip rules. */
-#define ENABLE_RPZ_NSIP
+@ENABLE_RPZ_NSIP@
+
+/* From enable developer */
+@ISC_LIST_CHECKINIT@
+
+/* Avoid warnings with strlen() */
+#ifdef _WIN64
+#define strlen(x)	(unsigned int) strlen(x)
+#endif
+
+/* Define to enable response rate limiting. */
+#define USE_RRL
 
 /* Get SRCID */
 #include "srcid.h"

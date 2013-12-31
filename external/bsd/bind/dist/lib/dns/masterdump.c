@@ -1,7 +1,7 @@
-/*	$NetBSD: masterdump.c,v 1.1.1.8 2012/12/04 19:24:59 spz Exp $	*/
+/*	$NetBSD: masterdump.c,v 1.1.1.9 2013/12/31 20:11:09 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -101,6 +101,21 @@ typedef struct dns_totext_ctx {
 	isc_uint32_t 		current_ttl;
 	isc_boolean_t 		current_ttl_valid;
 } dns_totext_ctx_t;
+
+LIBDNS_EXTERNAL_DATA const dns_master_style_t
+dns_master_style_keyzone = {
+	DNS_STYLEFLAG_OMIT_OWNER |
+	DNS_STYLEFLAG_OMIT_CLASS |
+	DNS_STYLEFLAG_REL_OWNER |
+	DNS_STYLEFLAG_REL_DATA |
+	DNS_STYLEFLAG_OMIT_TTL |
+	DNS_STYLEFLAG_TTL |
+	DNS_STYLEFLAG_COMMENT |
+	DNS_STYLEFLAG_RRCOMMENT |
+	DNS_STYLEFLAG_MULTILINE |
+	DNS_STYLEFLAG_KEYDATA,
+	24, 24, 24, 32, 80, 8, UINT_MAX
+};
 
 LIBDNS_EXTERNAL_DATA const dns_master_style_t
 dns_master_style_default = {
@@ -507,9 +522,22 @@ rdataset_totext(dns_rdataset_t *rdataset,
 		type_start = target->used;
 		if ((rdataset->attributes & DNS_RDATASETATTR_NEGATIVE) != 0)
 			RETERR(str_totext("\\-", target));
-		result = dns_rdatatype_totext(type, target);
-		if (result != ISC_R_SUCCESS)
-			return (result);
+		switch (type) {
+		case dns_rdatatype_keydata:
+#define KEYDATA "KEYDATA"
+			if ((ctx->style.flags & DNS_STYLEFLAG_KEYDATA) != 0) {
+				if (isc_buffer_availablelength(target) <
+				    (sizeof(KEYDATA) - 1))
+					return (ISC_R_NOSPACE);
+				isc_buffer_putstr(target, KEYDATA);
+				break;
+			}
+			/* FALLTHROUGH */
+		default:
+			result = dns_rdatatype_totext(type, target);
+			if (result != ISC_R_SUCCESS)
+				return (result);
+		}
 		column += (target->used - type_start);
 
 		/*

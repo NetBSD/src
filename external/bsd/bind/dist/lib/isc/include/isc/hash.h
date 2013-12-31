@@ -1,7 +1,7 @@
-/*	$NetBSD: hash.h,v 1.1.1.4 2012/06/04 17:56:49 christos Exp $	*/
+/*	$NetBSD: hash.h,v 1.1.1.5 2013/12/31 20:11:30 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -84,7 +84,7 @@
 ISC_LANG_BEGINDECLS
 
 isc_result_t
-isc_hash_ctxcreate(isc_mem_t *mctx, isc_entropy_t *entropy, unsigned int limit,
+isc_hash_ctxcreate(isc_mem_t *mctx, isc_entropy_t *entropy, size_t limit,
 		   isc_hash_t **hctx);
 isc_result_t
 isc_hash_create(isc_mem_t *mctx, isc_entropy_t *entropy, size_t limit);

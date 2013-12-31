@@ -1,4 +1,4 @@
-/*	$NetBSD: globals.h,v 1.1.1.8 2013/07/27 15:22:46 christos Exp $	*/
+/*	$NetBSD: globals.h,v 1.1.1.9 2013/12/31 20:09:59 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
@@ -73,6 +73,7 @@ EXTERN const char *		ns_g_product		INIT(PRODUCT);
 EXTERN const char *		ns_g_description	INIT(DESCRIPTION);
 EXTERN const char *		ns_g_srcid		INIT(SRCID);
 EXTERN const char *		ns_g_configargs		INIT(CONFIGARGS);
+EXTERN const char *		ns_g_builder		INIT(BUILDER);
 EXTERN in_port_t		ns_g_port		INIT(0);
 EXTERN in_port_t		lwresd_g_listenport	INIT(0);
 

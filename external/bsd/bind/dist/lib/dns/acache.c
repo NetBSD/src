@@ -1,4 +1,4 @@
-/*	$NetBSD: acache.c,v 1.1.1.4 2013/07/27 15:23:10 christos Exp $	*/
+/*	$NetBSD: acache.c,v 1.1.1.5 2013/12/31 20:11:05 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2008, 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
@@ -1671,12 +1671,13 @@ dns_acache_cancelentry(dns_acacheentry_t *entry) {
 	REQUIRE(DNS_ACACHEENTRY_VALID(entry));
 
 	acache = entry->acache;
-	callback_active = ISC_TF(entry->cbarg != NULL);
 
 	INSIST(DNS_ACACHE_VALID(entry->acache));
 
 	LOCK(&acache->lock);
 	ACACHE_LOCK(&acache->entrylocks[entry->locknum], isc_rwlocktype_write);
+
+	callback_active = ISC_TF(entry->cbarg != NULL);
 
 	/*
 	 * Release dependencies stored in this entry as much as possible.

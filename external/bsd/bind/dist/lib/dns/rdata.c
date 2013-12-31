@@ -1,4 +1,4 @@
-/*	$NetBSD: rdata.c,v 1.1.1.8 2013/07/27 15:23:13 christos Exp $	*/
+/*	$NetBSD: rdata.c,v 1.1.1.9 2013/12/31 20:11:12 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
@@ -504,7 +504,7 @@ dns_rdata_fromwire(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
 	isc_buffer_t st;
 	isc_boolean_t use_default = ISC_FALSE;
 	isc_uint32_t activelength;
-	size_t length;
+	unsigned int length;
 
 	REQUIRE(dctx != NULL);
 	if (rdata != NULL) {
@@ -685,7 +685,7 @@ dns_rdata_fromtext(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
 	unsigned long line;
 	void (*callback)(dns_rdatacallbacks_t *, const char *, ...);
 	isc_result_t tresult;
-	size_t length;
+	unsigned int length;
 	isc_boolean_t unknown;
 
 	REQUIRE(origin == NULL || dns_name_isabsolute(origin) == ISC_TRUE);
@@ -918,7 +918,7 @@ dns_rdata_fromstruct(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
 	isc_buffer_t st;
 	isc_region_t region;
 	isc_boolean_t use_default = ISC_FALSE;
-	size_t length;
+	unsigned int length;
 
 	REQUIRE(source != NULL);
 	if (rdata != NULL) {
@@ -1181,7 +1181,7 @@ txt_totext(isc_region_t *source, isc_buffer_t *target) {
 		return (ISC_R_NOSPACE);
 	*tp++ = '"';
 	tl--;
-	isc_buffer_add(target, tp - (char *)region.base);
+	isc_buffer_add(target, (unsigned int)(tp - (char *)region.base));
 	isc_region_consume(source, *source->base + 1);
 	return (ISC_R_SUCCESS);
 }
@@ -1247,7 +1247,7 @@ txt_fromtext(isc_textregion_t *source, isc_buffer_t *target) {
 	}
 	if (escape)
 		return (DNS_R_SYNTAX);
-	*tregion.base = t - tregion.base - 1;
+	*tregion.base = (unsigned char)(t - tregion.base - 1);
 	isc_buffer_add(target, *tregion.base + 1);
 	return (ISC_R_SUCCESS);
 }
@@ -1328,7 +1328,7 @@ multitxt_totext(isc_region_t *source, isc_buffer_t *target) {
 		return (ISC_R_NOSPACE);
 	*tp++ = '"';
 	tl--;
-	isc_buffer_add(target, tp - (char *)region.base);
+	isc_buffer_add(target, (unsigned int)(tp - (char *)region.base));
 	return (ISC_R_SUCCESS);
 }
 
@@ -1392,7 +1392,7 @@ multitxt_fromtext(isc_textregion_t *source, isc_buffer_t *target) {
 		}
 		if (escape)
 			return (DNS_R_SYNTAX);
-		*t0 = t - t0 - 1;
+		*t0 = (unsigned char)(t - t0 - 1);
 		isc_buffer_add(target, *t0 + 1);
 	} while (n != 0);
 	return (ISC_R_SUCCESS);
@@ -1615,7 +1615,7 @@ hexvalue(char value) {
 		c = tolower(c);
 	if ((s = strchr(hexdigits, c)) == NULL)
 		return (-1);
-	return (s - hexdigits);
+	return (int)(s - hexdigits);
 }
 
 static int
@@ -1630,7 +1630,7 @@ decvalue(char value) {
 		return (-1);
 	if ((s = strchr(decdigits, value)) == NULL)
 		return (-1);
-	return (s - decdigits);
+	return (int)(s - decdigits);
 }
 
 static const char atob_digits[86] =
@@ -1690,15 +1690,15 @@ byte_atob(int c, isc_buffer_t *target, struct state *state) {
 		}
 	} else if ((s = strchr(atob_digits, c)) != NULL) {
 		if (bcount == 0) {
-			word = s - atob_digits;
+			word = (isc_int32_t)(s - atob_digits);
 			++bcount;
 		} else if (bcount < 4) {
 			word = times85(word);
-			word += s - atob_digits;
+			word += (isc_int32_t)(s - atob_digits);
 			++bcount;
 		} else {
 			word = times85(word);
-			word += s - atob_digits;
+			word += (isc_int32_t)(s - atob_digits);
 			RETERR(putbyte((word >> 24) & 0xff, target, state));
 			RETERR(putbyte((word >> 16) & 0xff, target, state));
 			RETERR(putbyte((word >> 8) & 0xff, target, state));

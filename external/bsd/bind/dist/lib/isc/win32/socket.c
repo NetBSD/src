@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.1.1.8 2013/07/27 15:23:21 christos Exp $	*/
+/*	$NetBSD: socket.c,v 1.1.1.9 2013/12/31 20:11:35 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
@@ -209,7 +209,7 @@ struct msghdr {
 	u_int   msg_iovlen;             /* # elements in msg_iov */
 	void	*msg_control;           /* ancillary data, see below */
 	u_int   msg_controllen;         /* ancillary data buffer len */
-	int	msg_totallen;		/* total length of this message */
+	u_int	msg_totallen;		/* total length of this message */
 } msghdr;
 
 /*
@@ -980,10 +980,10 @@ build_msghdr_send(isc_socket_t *sock, isc_socketevent_t *dev,
 		   cpbuffer->buf, write_count);
 
 		memcpy(cpbuffer->buf,(dev->region.base + dev->n), write_count);
-		cpbuffer->buflen = write_count;
+		cpbuffer->buflen = (unsigned int)write_count;
 		ISC_LIST_ENQUEUE(lpo->bufferlist, cpbuffer, link);
 		iov[0].buf = cpbuffer->buf;
-		iov[0].len = write_count;
+		iov[0].len = (u_long)write_count;
 		iovcount = 1;
 
 		goto config;
@@ -1008,7 +1008,7 @@ build_msghdr_send(isc_socket_t *sock, isc_socketevent_t *dev,
 		isc_buffer_usedregion(buffer, &used);
 
 		if (used.length > 0) {
-			int uselen = used.length - skip_count;
+			int uselen = (int)(used.length - skip_count);
 			cpbuffer = HeapAlloc(hHeapHandle, HEAP_ZERO_MEMORY, sizeof(buflist_t));
 			RUNTIME_CHECK(cpbuffer != NULL);
 			cpbuffer->buf = HeapAlloc(hHeapHandle, HEAP_ZERO_MEMORY, uselen);
@@ -1022,7 +1022,7 @@ build_msghdr_send(isc_socket_t *sock, isc_socketevent_t *dev,
 			memcpy(cpbuffer->buf,(used.base + skip_count), uselen);
 			cpbuffer->buflen = uselen;
 			iov[iovcount].buf = cpbuffer->buf;
-			iov[iovcount].len = used.length - skip_count;
+			iov[iovcount].len = (u_long)(used.length - skip_count);
 			write_count += uselen;
 			skip_count = 0;
 			iovcount++;
@@ -1035,7 +1035,7 @@ build_msghdr_send(isc_socket_t *sock, isc_socketevent_t *dev,
  config:
 	msg->msg_iov = iov;
 	msg->msg_iovlen = iovcount;
-	msg->msg_totallen = write_count;
+	msg->msg_totallen = (u_int)write_count;
 }
 
 static void
@@ -2464,7 +2464,8 @@ SocketIoThread(LPVOID ThreadContext) {
 	while (TRUE) {
 		wait_again:
 		bSuccess = GetQueuedCompletionStatus(manager->hIoCompletionPort,
-						     &nbytes, (LPDWORD)&sock,
+						     &nbytes,
+						     (PULONG_PTR)&sock,
 						     (LPWSAOVERLAPPED *)&lpo,
 						     INFINITE);
 		if (lpo == NULL) /* Received request to exit */
@@ -3082,14 +3083,24 @@ isc_result_t
 isc__socket_sendv(isc_socket_t *sock, isc_bufferlist_t *buflist,
 		  isc_task_t *task, isc_taskaction_t action, const void *arg)
 {
-	return (isc_socket_sendtov(sock, buflist, task, action, arg, NULL,
-				   NULL));
+	return (isc_socket_sendtov2(sock, buflist, task, action, arg, NULL,
+				    NULL, 0));
 }
 
 isc_result_t
 isc__socket_sendtov(isc_socket_t *sock, isc_bufferlist_t *buflist,
 		    isc_task_t *task, isc_taskaction_t action, const void *arg,
 		    isc_sockaddr_t *address, struct in6_pktinfo *pktinfo)
+{
+	return (isc_socket_sendtov2(sock, buflist, task, action, arg, address,
+				    pktinfo, 0));
+}
+
+isc_result_t
+isc__socket_sendtov2(isc_socket_t *sock, isc_bufferlist_t *buflist,
+		     isc_task_t *task, isc_taskaction_t action, const void *arg,
+		     isc_sockaddr_t *address, struct in6_pktinfo *pktinfo,
+		     unsigned int flags)
 {
 	isc_socketevent_t *dev;
 	isc_socketmgr_t *manager;
@@ -3136,7 +3147,7 @@ isc__socket_sendtov(isc_socket_t *sock, isc_bufferlist_t *buflist,
 		buffer = ISC_LIST_HEAD(*buflist);
 	}
 
-	ret = socket_send(sock, dev, task, address, pktinfo, 0);
+	ret = socket_send(sock, dev, task, address, pktinfo, flags);
 	UNLOCK(&sock->lock);
 	return (ret);
 }

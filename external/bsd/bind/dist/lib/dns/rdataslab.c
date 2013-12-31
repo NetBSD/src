@@ -1,7 +1,7 @@
-/*	$NetBSD: rdataslab.c,v 1.1.1.8 2012/12/04 19:25:07 spz Exp $	*/
+/*	$NetBSD: rdataslab.c,v 1.1.1.9 2013/12/31 20:11:13 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -915,7 +915,7 @@ dns_rdataslab_subtract(unsigned char *mslab, unsigned char *sslab,
 			 * This rdata isn't in the sslab, and thus isn't
 			 * being subtracted.
 			 */
-			tlength += mcurrent - mrdatabegin;
+			tlength += (unsigned int)(mcurrent - mrdatabegin);
 			tcount++;
 		} else
 			rcount++;
@@ -1002,7 +1002,8 @@ dns_rdataslab_subtract(unsigned char *mslab, unsigned char *sslab,
 			 * This rdata isn't in the sslab, and thus should be
 			 * copied to the tslab.
 			 */
-			unsigned int length = mcurrent - mrdatabegin;
+			unsigned int length;
+			length = (unsigned int)(mcurrent - mrdatabegin);
 #if DNS_RDATASET_FIXED
 			offsettable[order] = tcurrent - offsetbase;
 #endif

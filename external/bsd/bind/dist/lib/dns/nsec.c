@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec.c,v 1.1.1.7 2013/07/27 15:23:11 christos Exp $	*/
+/*	$NetBSD: nsec.c,v 1.1.1.8 2013/12/31 20:11:07 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
@@ -98,7 +98,7 @@ dns_nsec_compressbitmap(unsigned char *map, const unsigned char *raw,
 		map += octet + 1;
 		raw += 32;
 	}
-	return (map - start);
+	return (unsigned int)(map - start);
 }
 
 isc_result_t
@@ -166,7 +166,7 @@ dns_nsec_buildrdata(dns_db_t *db, dns_dbversion_t *version,
 
 	nsec_bits += dns_nsec_compressbitmap(nsec_bits, bm, max_type);
 
-	r.length = nsec_bits - r.base;
+	r.length = (unsigned int)(nsec_bits - r.base);
 	INSIST(r.length <= DNS_NSEC_BUFFERSIZE);
 	dns_rdata_fromregion(rdata,
 			     dns_db_class(db),

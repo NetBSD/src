@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.1.1.12 2013/07/27 15:22:44 christos Exp $	*/
+/*	$NetBSD: config.c,v 1.1.1.13 2013/12/31 20:09:55 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
@@ -100,7 +100,7 @@ options {\n\
 	statistics-file \"named.stats\";\n\
 	statistics-interval 60;\n\
 	tcp-clients 100;\n\
-	tcp-listen-queue 3;\n\
+	tcp-listen-queue 10;\n\
 #	tkey-dhkey <none>\n\
 #	tkey-gssapi-credential <none>\n\
 #	tkey-domain <none>\n\
@@ -229,8 +229,17 @@ view \"_bind\" chaos {\n\
 	recursion no;\n\
 	notify no;\n\
 	allow-new-zones no;\n\
-\n\
-	zone \"version.bind\" chaos {\n\
+"
+#ifdef USE_RRL
+"	# Prevent use of this zone in DNS amplified reflection DoS attacks\n\
+	rate-limit {\n\
+		responses-per-second 3;\n\
+		slip 0;\n\
+		min-table-size 10;\n\
+	};\n\
+"
+#endif /* USE_RRL */
+"	zone \"version.bind\" chaos {\n\
 		type master;\n\
 		database \"_builtin version\";\n\
 	};\n\

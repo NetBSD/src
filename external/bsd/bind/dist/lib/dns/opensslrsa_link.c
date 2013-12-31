@@ -1,7 +1,7 @@
-/*	$NetBSD: opensslrsa_link.c,v 1.1.1.8 2013/07/27 15:23:12 christos Exp $	*/
+/*	$NetBSD: opensslrsa_link.c,v 1.1.1.9 2013/12/31 20:11:11 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -1050,8 +1050,14 @@ opensslrsa_tofile(const dst_key_t *key, const char *directory) {
 		return (DST_R_NULLKEY);
 	rsa = key->keydata.rsa;
 #endif
-
 	memset(bufs, 0, sizeof(bufs));
+
+	if (key->external) {
+		priv.nelements = 0;
+		result = dst__privstruct_writefile(key, &priv, directory);
+		goto fail;
+	}
+
 	for (i = 0; i < 8; i++) {
 		bufs[i] = isc_mem_get(key->mctx, BN_num_bytes(rsa->n));
 		if (bufs[i] == NULL) {
@@ -1207,6 +1213,9 @@ opensslrsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 	if (ret != ISC_R_SUCCESS)
 		goto err;
 
+	if (key->external && priv.nelements != 0)
+		DST_RET(DST_R_INVALIDPRIVATEKEY);
+
 	for (i = 0; i < priv.nelements; i++) {
 		switch (priv.elements[i].tag) {
 		case TAG_RSA_ENGINE:
@@ -1219,6 +1228,7 @@ opensslrsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 			break;
 		}
 	}
+
 	/*
 	 * Is this key is stored in a HSM?
 	 * See if we can fetch it.
@@ -1330,8 +1340,10 @@ opensslrsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 
 	if (rsa_check(rsa, pubrsa) != ISC_R_SUCCESS)
 		DST_RET(DST_R_INVALIDPRIVATEKEY);
-	if (BN_num_bits(rsa->e) > RSA_MAX_PUBEXP_BITS)
-		DST_RET(ISC_R_RANGE);
+	if (!key->external) {
+		if (BN_num_bits(rsa->e) > RSA_MAX_PUBEXP_BITS)
+			DST_RET(ISC_R_RANGE);
+	}
 	key->key_size = BN_num_bits(rsa->n);
 	if (pubrsa != NULL)
 		RSA_free(pubrsa);

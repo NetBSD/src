@@ -1,4 +1,4 @@
-/*	$NetBSD: thread.c,v 1.1.1.4 2013/07/27 15:23:19 christos Exp $	*/
+/*	$NetBSD: thread.c,v 1.1.1.5 2013/12/31 20:11:32 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2013  Internet Systems Consortium, Inc. ("ISC")
@@ -22,6 +22,10 @@
 /*! \file */
 
 #include <config.h>
+
+#if defined(HAVE_SCHED_H)
+#include <sched.h>
+#endif
 
 #include <isc/thread.h>
 #include <isc/util.h>
@@ -74,5 +78,16 @@ isc_thread_setconcurrency(unsigned int level) {
 	(void)pthread_setconcurrency(level);
 #else
 	UNUSED(level);
+#endif
+}
+
+void
+isc_thread_yield(void) {
+#if defined(HAVE_SCHED_YIELD)
+	sched_yield();
+#elif defined( HAVE_PTHREAD_YIELD)
+	pthread_yield();
+#elif defined( HAVE_PTHREAD_YIELD_NP)
+	pthread_yield_np();
 #endif
 }

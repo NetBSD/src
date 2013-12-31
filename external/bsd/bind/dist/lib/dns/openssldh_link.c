@@ -1,7 +1,7 @@
-/*	$NetBSD: openssldh_link.c,v 1.1.1.6 2012/12/04 19:25:02 spz Exp $	*/
+/*	$NetBSD: openssldh_link.c,v 1.1.1.7 2013/12/31 20:11:10 christos Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -610,11 +610,11 @@ BN_fromhex(BIGNUM *b, const char *str) {
 
 		s = strchr(hexdigits, tolower((unsigned char)str[i]));
 		RUNTIME_CHECK(s != NULL);
-		high = s - hexdigits;
+		high = (unsigned int)(s - hexdigits);
 
 		s = strchr(hexdigits, tolower((unsigned char)str[i + 1]));
 		RUNTIME_CHECK(s != NULL);
-		low = s - hexdigits;
+		low = (unsigned int)(s - hexdigits);
 
 		data[i/2] = (unsigned char)((high << 4) + low);
 	}

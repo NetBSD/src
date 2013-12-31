@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.1.1.11 2013/07/27 15:23:10 christos Exp $	*/
+/*	$NetBSD: check.c,v 1.1.1.12 2013/12/31 20:11:05 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
@@ -1803,8 +1803,9 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 		obj = NULL;
 		res1 = cfg_map_get(zoptions, "inline-signing", &obj);
 		if ((tresult != ISC_R_SUCCESS &&
-		    (ztype == MASTERZONE || ztype == HINTZONE)) ||
-		    (ztype == SLAVEZONE && res1 == ISC_R_SUCCESS)) {
+		    (ztype == MASTERZONE || ztype == HINTZONE ||
+		     (ztype == SLAVEZONE && res1 == ISC_R_SUCCESS &&
+		      cfg_obj_asboolean(obj))))) {
 			cfg_obj_log(zconfig, logctx, ISC_LOG_ERROR,
 			    "zone '%s': missing 'file' entry",
 			    znamestr);

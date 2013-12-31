@@ -1,7 +1,7 @@
-/*	$NetBSD: ssu_external.c,v 1.1.1.4 2013/07/27 15:23:13 christos Exp $	*/
+/*	$NetBSD: ssu_external.c,v 1.1.1.5 2013/12/31 20:11:15 christos Exp $	*/
 
 /*
- * Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -133,7 +133,7 @@ dns_ssu_external_match(dns_name_t *identity,
 	isc_buffer_t *tkey_token = NULL;
 	int fd;
 	const char *sock_path;
-	size_t req_len;
+	unsigned int req_len;
 	isc_region_t token_region;
 	unsigned char *data;
 	isc_buffer_t buf;

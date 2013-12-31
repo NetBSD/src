@@ -1,4 +1,4 @@
-/*	$NetBSD: message.h,v 1.1.1.6 2013/07/27 15:23:15 christos Exp $	*/
+/*	$NetBSD: message.h,v 1.1.1.7 2013/12/31 20:11:20 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2010, 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
@@ -107,6 +107,7 @@
 
 /*%< EDNS0 extended OPT codes */
 #define DNS_OPT_NSID		0x0003		/*%< NSID opt code */
+#define DNS_OPT_CLIENT_SUBNET	0x0008		/*%< client subnet opt code */
 
 #define DNS_MESSAGE_REPLYPRESERVE	(DNS_MESSAGEFLAG_RD|DNS_MESSAGEFLAG_CD)
 #define DNS_MESSAGEEXTFLAG_REPLYPRESERVE (DNS_MESSAGEEXTFLAG_DO)

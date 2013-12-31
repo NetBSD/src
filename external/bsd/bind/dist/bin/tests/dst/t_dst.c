@@ -1,7 +1,7 @@
-/*	$NetBSD: t_dst.c,v 1.1.1.7 2013/07/27 15:22:50 christos Exp $	*/
+/*	$NetBSD: t_dst.c,v 1.1.1.8 2013/12/31 20:10:12 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -21,16 +21,16 @@
 
 #include <config.h>
 
-#include <sys/types.h>		/* Required for dirent.h */
-#include <sys/stat.h>
-
-#include <dirent.h>		/* XXX */
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <stdlib.h>
 
+#ifndef WIN32
 #include <unistd.h>		/* XXX */
+#else
+#include <direct.h>
+#endif
 
 #include <isc/buffer.h>
 #include <isc/dir.h>
@@ -38,6 +38,7 @@
 #include <isc/file.h>
 #include <isc/mem.h>
 #include <isc/region.h>
+#include <isc/stdio.h>
 #include <isc/string.h>
 #include <isc/util.h>
 
@@ -55,40 +56,41 @@
 
 /*
  * Adapted from the original dst_test.c program.
- * XXXDCL should use isc_dir_*.
  */
 
 static void
 cleandir(char *path) {
-	DIR		*dirp;
-	struct dirent	*pe;
+	isc_dir_t	dir;
 	char		fullname[PATH_MAX + 1];
 	size_t		l;
+	isc_result_t	ret;
 
-	dirp = opendir(path);
-	if (dirp == NULL) {
-		t_info("opendir(%s) failed %d\n", path, errno);
+	isc_dir_init(&dir);
+	ret = isc_dir_open(&dir, path);
+	if (ret != ISC_R_SUCCESS) {
+		t_info("isc_dir_open(%s) failed %s\n",
+		       path, isc_result_totext(ret));
 		return;
 	}
 
-	while ((pe = readdir(dirp)) != NULL) {
-		if (! strcmp(pe->d_name, "."))
+	while (isc_dir_read(&dir) == ISC_R_SUCCESS) {
+		if (!strcmp(dir.entry.name, "."))
 			continue;
-		if (! strcmp(pe->d_name, ".."))
+		if (!strcmp(dir.entry.name, ".."))
 			continue;
 		(void)strlcpy(fullname, path, sizeof(fullname));
 		(void)strlcat(fullname, "/", sizeof(fullname));
-		l = strlcat(fullname, pe->d_name, sizeof(fullname));
+		l = strlcat(fullname, dir.entry.name, sizeof(fullname));
 		if (l < sizeof(fullname)) {
 			if (remove(fullname))
 				t_info("remove(%s) failed %d\n", fullname,
 				       errno);
 		} else
 		       t_info("unable to remove '%s/%s': path too long\n",
-			      path, pe->d_name);
+			      path, dir.entry.name);
 
 	}
-	(void)closedir(dirp);
+	isc_dir_close(&dir);
 	if (rmdir(path))
 		t_info("rmdir(%s) failed %d\n", path, errno);
 
@@ -206,7 +208,11 @@ dh(dns_name_t *name1, int id1, dns_name_t *name2, int id2, isc_mem_t *mctx,
 		goto cleanup;
 	}
 
+#ifndef WIN32
 	ret = isc_file_mktemplate("/tmp/", tmp, sizeof(tmp));
+#else
+	ret = isc_file_mktemplate(getenv("TEMP"), tmp, sizeof(tmp));
+#endif
 	if (ret != ISC_R_SUCCESS) {
 		t_info("isc_file_mktemplate failed %s\n",
 		       isc_result_totext(ret));
@@ -317,7 +323,11 @@ io(dns_name_t *name, isc_uint16_t id, isc_uint16_t alg, int type,
 		goto failure;
 	}
 
+#ifndef WIN32
 	ret = isc_file_mktemplate("/tmp/", tmp, sizeof(tmp));
+#else
+	ret = isc_file_mktemplate(getenv("TEMP"), tmp, sizeof(tmp));
+#endif
 	if (ret != ISC_R_SUCCESS) {
 		t_info("isc_file_mktemplate failed %s\n",
 		       isc_result_totext(ret));
@@ -612,56 +622,59 @@ sig_tofile(char *path, isc_buffer_t *buf) {
  */
 static int
 sig_fromfile(char *path, isc_buffer_t *iscbuf) {
-	int		rval;
-	int		len;
-	int		fd;
+	size_t		rval;
+	size_t		len;
+	FILE		*fp;
 	unsigned char	val;
-	struct stat	sb;
 	char		*p;
 	char		*buf;
+	isc_result_t	isc_result;
+	off_t		size;
 
-	fd = open(path, O_RDONLY);
-	if (fd < 0) {
-		t_info("open failed, errno == %d\n", errno);
+	isc_result = isc_stdio_open(path, "rb", &fp);
+	if (isc_result != ISC_R_SUCCESS) {
+		t_info("open failed, result: %s\n",
+		       isc_result_totext(isc_result));
 		return(1);
 	}
 
-	rval = fstat(fd, &sb);
-	if (rval != 0) {
-		t_info("stat %s failed, errno == %d\n", path, errno);
-		close(fd);
+	isc_result = isc_file_getsizefd(fileno(fp), &size);
+	if (isc_result != ISC_R_SUCCESS) {
+		t_info("stat %s failed, result: %s\n",
+		       path, isc_result_totext(isc_result));
+		isc_stdio_close(fp);
 		return(1);
 	}
 
-	buf = (char *) malloc((sb.st_size + 1) * sizeof(char));
+	buf = (char *) malloc((size + 1) * sizeof(char));
 	if (buf == NULL) {
 		t_info("malloc failed, errno == %d\n", errno);
-		close(fd);
+		isc_stdio_close(fp);
 		return(1);
 	}
 
-
-	len = sb.st_size;
+	len = (size_t)size;
 	p = buf;
 	while (len) {
-		rval = read(fd, p, len);
-		if (rval > 0) {
+		isc_result = isc_stdio_read(p, 1, len, fp, &rval);
+		if (isc_result == ISC_R_SUCCESS) {
 			len -= rval;
 			p += rval;
 		}
 		else {
-			t_info("read failed %d, errno == %d\n", rval, errno);
+			t_info("read failed %d, result: %s\n",
+			       (int)rval, isc_result_totext(isc_result));
 			(void) free(buf);
-			(void) close(fd);
+			(void) isc_stdio_close(fp);
 			return(1);
 		}
 	}
-	close(fd);
+	isc_stdio_close(fp);
 
 	p = buf;
-	len = sb.st_size;
+	len = size;
 	while(len) {
-		if (*p == '\n') {
+		if ((*p == '\r') || (*p == '\n')) {
 			++p;
 			--len;
 			continue;
@@ -691,15 +704,15 @@ t2_sigchk(char *datapath, char *sigpath, char *keyname,
 		isc_mem_t *mctx, char *expected_result,
 		int *nfails, int *nprobs)
 {
-	int		rval;
-	int		len;
-	int		fd;
+	size_t		rval;
+	size_t		len;
+	FILE		*fp;
 	int		exp_res;
 	dst_key_t	*key = NULL;
 	unsigned char	sig[T_SIGMAX];
 	unsigned char	*p;
 	unsigned char	*data;
-	struct stat	sb;
+	off_t		size;
 	isc_result_t	isc_result;
 	isc_buffer_t	databuf;
 	isc_buffer_t	sigbuf;
@@ -713,39 +726,41 @@ t2_sigchk(char *datapath, char *sigpath, char *keyname,
 	/*
 	 * Read data from file in a form usable by dst_verify.
 	 */
-	fd = open(datapath, O_RDONLY);
-	if (fd < 0) {
-		t_info("t2_sigchk: open failed %d\n", errno);
+	isc_result = isc_stdio_open(datapath, "rb", &fp);
+	if (isc_result != ISC_R_SUCCESS) {
+		t_info("t2_sigchk: open failed %s\n",
+		       isc_result_totext(isc_result));
 		++*nprobs;
 		return;
 	}
 
-	rval = fstat(fd, &sb);
-	if (rval != 0) {
-		t_info("t2_sigchk: stat (%s) failed %d\n", datapath, errno);
+	isc_result = isc_file_getsizefd(fileno(fp), &size);
+	if (isc_result != ISC_R_SUCCESS) {
+		t_info("t2_sigchk: stat (%s) failed %s\n",
+		       datapath, isc_result_totext(isc_result));
 		++*nprobs;
-		close(fd);
+		isc_stdio_close(fp);
 		return;
 	}
 
-	data = (unsigned char *) malloc(sb.st_size * sizeof(unsigned char));
+	data = (unsigned char *) malloc(size * sizeof(unsigned char));
 	if (data == NULL) {
 		t_info("t2_sigchk: malloc failed %d\n", errno);
 		++*nprobs;
-		close(fd);
+		isc_stdio_close(fp);
 		return;
 	}
 
 	p = data;
-	len = sb.st_size;
+	len = (size_t)size;
 	do {
-		rval = read(fd, p, len);
-		if (rval > 0) {
+		isc_result = isc_stdio_read(p, 1, len, fp, &rval);
+		if (isc_result == ISC_R_SUCCESS) {
 			len -= rval;
 			p += rval;
 		}
 	} while (len);
-	(void) close(fd);
+	(void) isc_stdio_close(fp);
 
 	/*
 	 * Read key from file in a form usable by dst_verify.
@@ -771,8 +786,8 @@ t2_sigchk(char *datapath, char *sigpath, char *keyname,
 		return;
 	}
 
-	isc_buffer_init(&databuf, data, sb.st_size);
-	isc_buffer_add(&databuf, sb.st_size);
+	isc_buffer_init(&databuf, data, (unsigned int)size);
+	isc_buffer_add(&databuf, (unsigned int)size);
 	isc_buffer_usedregion(&databuf, &datareg);
 
 #ifdef	NEWSIG
@@ -834,7 +849,7 @@ t2_sigchk(char *datapath, char *sigpath, char *keyname,
 	 * Read precomputed signature from file in a form usable by dst_verify.
 	 */
 	rval = sig_fromfile(sigpath, &sigbuf);
-	if (rval != 0) {
+	if (rval != 0U) {
 		t_info("sig_fromfile failed\n");
 		(void) free(data);
 		dst_key_free(&key);
@@ -999,8 +1014,15 @@ t2(void) {
 }
 
 testspec_t	T_testlist[] = {
-	{	t1,	"basic dst module verification"	},
-	{	t2,	"signature ineffability"	},
-	{	NULL,	NULL				}
+	{	(PFV) t1,	"basic dst module verification"	},
+	{	(PFV) t2,	"signature ineffability"	},
+	{	(PFV) 0,	NULL				}
 };
 
+#ifdef WIN32
+int
+main(int argc, char **argv) {
+	t_settests(T_testlist);
+	return (t_main(argc, argv));
+}
+#endif
