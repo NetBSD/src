@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-canusb-linux.h,v 1.1.1.1 2013/04/06 15:57:44 christos Exp $	*/
+/*	$NetBSD: pcap-canusb-linux.h,v 1.1.1.2 2013/12/31 16:57:21 christos Exp $	*/
 
 /*
  * Copyright (c) 2009 Felix Obenhuber
@@ -34,6 +34,6 @@
 /*
  * Prototypes for SocketCAN related functions
  */
-pcap_t* canusb_create(const char *device, char *ebuf);
-int canusb_listdevices(pcap_if_t **pdevlist, char* errbuf);
+pcap_t* canusb_create(const char *device, char *ebuf, int *is_ours);
+int canusb_findalldevs(pcap_if_t **pdevlist, char* errbuf);
 
