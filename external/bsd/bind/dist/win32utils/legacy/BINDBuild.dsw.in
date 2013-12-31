@@ -1113,8 +1113,6 @@ Package=<4>
 
 ###############################################################################
 
-<<<<<<< HEAD:win32utils/BINDBuild.dsw
-=======
 Project: "timer_test"="..\..\bin\tests\win32\timer_test.dsp" - Package Owner=<4>
 
 Package=<5>
@@ -1131,7 +1129,6 @@ Package=<4>
 @END XTESTS
 ###############################################################################
 
->>>>>>> c3c8823... 3681.   [port]          Update the Windows build system to support feature:win32utils/legacy/BINDBuild.dsw.in
 Global:
 
 Package=<5>

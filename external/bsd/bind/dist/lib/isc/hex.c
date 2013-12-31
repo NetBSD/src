@@ -1,7 +1,7 @@
-/*	$NetBSD: hex.c,v 1.3 2012/06/05 00:42:27 christos Exp $	*/
+/*	$NetBSD: hex.c,v 1.4 2013/12/31 20:24:42 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -101,7 +101,7 @@ hex_decode_char(hex_decode_ctx_t *ctx, int c) {
 
 	if ((s = strchr(hex, toupper(c))) == NULL)
 		return (ISC_R_BADHEX);
-	ctx->val[ctx->digits++] = s - hex;
+	ctx->val[ctx->digits++] = (int)(s - hex);
 	if (ctx->digits == 2) {
 		unsigned char num;
 

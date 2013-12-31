@@ -1,7 +1,7 @@
-/*	$NetBSD: file.h,v 1.6 2013/07/27 19:23:13 christos Exp $	*/
+/*	$NetBSD: file.h,v 1.7 2013/12/31 20:24:42 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -326,6 +326,16 @@ isc_file_splitpath(isc_mem_t *mctx, char *path,
  * - ISC_R_SUCCESS on success
  * - ISC_R_INVALIDFILE if 'path' is empty or ends with '/'
  * - ISC_R_NOMEMORY if unable to allocate memory
+ */
+
+isc_result_t
+isc_file_getsizefd(int fd, off_t *size);
+/*%<
+ * Return the size of the file (stored in the parameter pointed
+ * to by 'size') in bytes.
+ *
+ * Returns:
+ * - ISC_R_SUCCESS on success
  */
 
 ISC_LANG_ENDDECLS

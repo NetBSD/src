@@ -1,7 +1,7 @@
-/*	$NetBSD: version.c,v 1.3 2012/06/05 00:42:22 christos Exp $	*/
+/*	$NetBSD: version.c,v 1.4 2013/12/31 20:24:42 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any

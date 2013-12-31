@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.6 2013/07/27 19:23:13 christos Exp $	*/
+/*	$NetBSD: file.c,v 1.7 2013/12/31 20:24:42 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
@@ -280,7 +280,7 @@ isc_file_template(const char *path, const char *templet, char *buf,
 	s = strrchr(path, '\\');
 
 	if (s != NULL) {
-		if ((s - path + 1 + strlen(templet) + 1) > buflen)
+	  if ((s - path + 1 + strlen(templet) + 1) > (ssize_t)buflen)
 			return (ISC_R_NOSPACE);
 
 		strncpy(buf, path, s - path + 1);
@@ -557,7 +557,7 @@ isc_file_absolutepath(const char *filename, char *path, size_t pathlen) {
 	REQUIRE(filename != NULL);
 	REQUIRE(path != NULL);
 
-	retval = GetFullPathName(filename, pathlen, path, &ptrname);
+	retval = GetFullPathName(filename, (DWORD) pathlen, path, &ptrname);
 
 	/* Something went wrong in getting the path */
 	if (retval == 0)

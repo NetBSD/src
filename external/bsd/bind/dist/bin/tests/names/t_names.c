@@ -1,7 +1,7 @@
-/*	$NetBSD: t_names.c,v 1.6 2013/07/27 19:23:10 christos Exp $	*/
+/*	$NetBSD: t_names.c,v 1.7 2013/12/31 20:24:40 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -170,13 +170,13 @@ chkdata(unsigned char *buf, size_t buflen, char *exp_data,
 			t_info("bad data at position %lu, "
 			       "got 0x%.2x, expected 0x%.2x\n",
 			       (unsigned long)cnt, *p, *v);
-			result = cnt + 1;
+			result = (int)cnt + 1;
 		}
 		(void)free(data);
 	} else {
 		t_info("data length error, expected %lu, got %lu\n",
 			(unsigned long)exp_data_len, (unsigned long)buflen);
-		result = exp_data_len - buflen;
+		result = (int)(exp_data_len - buflen);
 	}
 	return (result);
 }
@@ -2025,7 +2025,7 @@ test_dns_name_fromwire(char *datafile_name, int testname_offset, int downcase,
 	isc_buffer_setactive(&iscbuf1, len);
 	iscbuf1.current = testname_offset;
 
-	isc_buffer_init(&iscbuf2, buf2, buflen);
+	isc_buffer_init(&iscbuf2, buf2, (unsigned int)buflen);
 	dns_name_init(&dns_name1, NULL);
 	dns_decompress_init(&dctx, -1, DNS_DECOMPRESS_STRICT);
 	dns_decompress_setmethods(&dctx, dc_method);
@@ -2232,7 +2232,7 @@ test_dns_name_towire(char *testname, unsigned int dc_method, char *exp_data,
 	isc_buffer_init(&iscbuf2, buf2, BUFLEN);
 	dns_result = dns_name_fromtext(&dns_name, &iscbuf1, NULL, 0, &iscbuf2);
 	if (dns_result == ISC_R_SUCCESS) {
-		isc_buffer_init(&iscbuf3, buf3, buflen);
+	  isc_buffer_init(&iscbuf3, buf3, (unsigned int)buflen);
 		dns_result = dns_name_towire(&dns_name, &cctx, &iscbuf3);
 		if (dns_result == exp_result) {
 			if (exp_result == ISC_R_SUCCESS) {
@@ -2353,29 +2353,35 @@ t_dns_name_concatenate(void) {
 #endif
 
 testspec_t T_testlist[] = {
-	{	t_dns_name_init,		"dns_name_init"		},
-	{	t_dns_name_invalidate,		"dns_name_invalidate"	},
-	{	t_dns_name_setbuffer,		"dns_name_setbuffer"	},
-	{	t_dns_name_hasbuffer,		"dns_name_hasbuffer"	},
-	{	t_dns_name_isabsolute,		"dns_name_isabsolute"	},
-	{	t_dns_name_hash,		"dns_name_hash"		},
-	{	t_dns_name_fullcompare,		"dns_name_fullcompare"	},
-	{	t_dns_name_compare,		"dns_name_compare"	},
-	{	t_dns_name_rdatacompare,	"dns_name_rdatacompare"	},
-	{	t_dns_name_issubdomain,		"dns_name_issubdomain"	},
-	{	t_dns_name_countlabels,		"dns_name_countlabels"	},
-	{	t_dns_name_getlabel,		"dns_name_getlabel"	},
-	{	t_dns_name_getlabelsequence,	"dns_name_getlabelsequence" },
-	{	t_dns_name_fromregion,		"dns_name_fromregion"	},
-	{	t_dns_name_toregion,		"dns_name_toregion"	},
-	{	t_dns_name_fromwire,		"dns_name_fromwire"	},
-	{	t_dns_name_towire,		"dns_name_towire"	},
-	{	t_dns_name_fromtext,		"dns_name_fromtext"	},
-	{	t_dns_name_totext,		"dns_name_totext"	},
+	{	(PFV) t_dns_name_init,		"dns_name_init"		},
+	{	(PFV) t_dns_name_invalidate,	"dns_name_invalidate"	},
+	{	(PFV) t_dns_name_setbuffer,	"dns_name_setbuffer"	},
+	{	(PFV) t_dns_name_hasbuffer,	"dns_name_hasbuffer"	},
+	{	(PFV) t_dns_name_isabsolute,	"dns_name_isabsolute"	},
+	{	(PFV) t_dns_name_hash,		"dns_name_hash"		},
+	{	(PFV) t_dns_name_fullcompare,	"dns_name_fullcompare"	},
+	{	(PFV) t_dns_name_compare,	"dns_name_compare"	},
+	{	(PFV) t_dns_name_rdatacompare,	"dns_name_rdatacompare"	},
+	{	(PFV) t_dns_name_issubdomain,	"dns_name_issubdomain"	},
+	{	(PFV) t_dns_name_countlabels,	"dns_name_countlabels"	},
+	{	(PFV) t_dns_name_getlabel,	"dns_name_getlabel"	},
+	{	(PFV) t_dns_name_getlabelsequence, "dns_name_getlabelsequence" },
+	{	(PFV) t_dns_name_fromregion,	"dns_name_fromregion"	},
+	{	(PFV) t_dns_name_toregion,	"dns_name_toregion"	},
+	{	(PFV) t_dns_name_fromwire,	"dns_name_fromwire"	},
+	{	(PFV) t_dns_name_towire,	"dns_name_towire"	},
+	{	(PFV) t_dns_name_fromtext,	"dns_name_fromtext"	},
+	{	(PFV) t_dns_name_totext,	"dns_name_totext"	},
 #if 0
-	{	t_dns_name_concatenate,		"dns_name_concatenate"	},
+	{	(PFV) t_dns_name_concatenate,	"dns_name_concatenate"	},
 #endif
-	{	NULL,				NULL			}
-
+	{	(PFV) 0,			NULL			}
 };
 
+#ifdef WIN32
+int
+main(int argc, char **argv) {
+	t_settests(T_testlist);
+	return (t_main(argc, argv));
+}
+#endif

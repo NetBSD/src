@@ -1,7 +1,7 @@
-/*	$NetBSD: thread.h,v 1.3 2012/06/05 00:42:43 christos Exp $	*/
+/*	$NetBSD: thread.h,v 1.4 2013/12/31 20:24:42 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -31,6 +31,7 @@ void
 isc_thread_setconcurrency(unsigned int level);
 
 #define isc_thread_self() ((unsigned long)0)
+#define isc_thread_yield() ((void)0)
 
 ISC_LANG_ENDDECLS
 

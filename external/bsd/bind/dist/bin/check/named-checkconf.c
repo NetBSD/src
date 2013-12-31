@@ -1,4 +1,4 @@
-/*	$NetBSD: named-checkconf.c,v 1.6 2013/07/27 19:23:09 christos Exp $	*/
+/*	$NetBSD: named-checkconf.c,v 1.7 2013/12/31 20:24:38 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009-2013  Internet Systems Consortium, Inc. ("ISC")
@@ -41,10 +41,13 @@
 
 #include <bind9/check.h>
 
+#include <dns/db.h>
 #include <dns/fixedname.h>
 #include <dns/log.h>
 #include <dns/name.h>
+#include <dns/rdataclass.h>
 #include <dns/result.h>
+#include <dns/rootns.h>
 #include <dns/zone.h>
 
 #include "check-tool.h"
@@ -153,6 +156,30 @@ config_get(const cfg_obj_t **maps, const char *name, const cfg_obj_t **obj) {
 	}
 }
 
+static isc_result_t
+configure_hint(const char *zfile, const char *zclass, isc_mem_t *mctx) {
+	isc_result_t result;
+	dns_db_t *db = NULL;
+	dns_rdataclass_t rdclass;
+	isc_textregion_t r;
+
+	if (zfile == NULL)
+		return (ISC_R_FAILURE);
+
+	DE_CONST(zclass, r.base);
+	r.length = strlen(zclass);
+	result = dns_rdataclass_fromtext(&rdclass, &r);
+	if (result != ISC_R_SUCCESS)
+		return (result);
+
+	result = dns_rootns_create(mctx, rdclass, zfile, &db);
+	if (result != ISC_R_SUCCESS)
+		return (result);
+
+	dns_db_detach(&db);
+	return (ISC_R_SUCCESS);
+}
+
 /*% configure the zone */
 static isc_result_t
 configure_zone(const char *vclass, const char *view,
@@ -163,7 +190,7 @@ configure_zone(const char *vclass, const char *view,
 	isc_result_t result;
 	const char *zclass;
 	const char *zname;
-	const char *zfile;
+	const char *zfile = NULL;
 	const cfg_obj_t *maps[4];
 	const cfg_obj_t *zoptions = NULL;
 	const cfg_obj_t *classobj = NULL;
@@ -197,15 +224,28 @@ configure_zone(const char *vclass, const char *view,
 	cfg_map_get(zoptions, "type", &typeobj);
 	if (typeobj == NULL)
 		return (ISC_R_FAILURE);
-	if (strcasecmp(cfg_obj_asstring(typeobj), "master") != 0)
+
+	cfg_map_get(zoptions, "file", &fileobj);
+	if (fileobj != NULL)
+		zfile = cfg_obj_asstring(fileobj);
+
+	/*
+	 * Check hints files for hint zones.
+	 * Skip loading checks for any type other than
+	 * master and redirect
+	 */
+	if (strcasecmp(cfg_obj_asstring(typeobj), "hint") == 0)
+		return (configure_hint(zfile, zclass, mctx));
+	else if ((strcasecmp(cfg_obj_asstring(typeobj), "master") != 0) &&
+		  (strcasecmp(cfg_obj_asstring(typeobj), "redirect") != 0))
 		return (ISC_R_SUCCESS);
+
+	if (zfile == NULL)
+		return (ISC_R_FAILURE);
+
 	cfg_map_get(zoptions, "database", &dbobj);
 	if (dbobj != NULL)
 		return (ISC_R_SUCCESS);
-	cfg_map_get(zoptions, "file", &fileobj);
-	if (fileobj == NULL)
-		return (ISC_R_FAILURE);
-	zfile = cfg_obj_asstring(fileobj);
 
 	obj = NULL;
 	if (get_maps(maps, "check-dup-records", &obj)) {
@@ -343,7 +383,7 @@ configure_zone(const char *vclass, const char *view,
 	if (result != ISC_R_SUCCESS)
 		fprintf(stderr, "%s/%s/%s: %s\n", view, zname, zclass,
 			dns_result_totext(result));
-	return(result);
+	return (result);
 }
 
 /*% configure a view */

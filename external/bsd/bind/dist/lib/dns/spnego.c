@@ -1,4 +1,4 @@
-/*	$NetBSD: spnego.c,v 1.5 2013/07/27 19:23:12 christos Exp $	*/
+/*	$NetBSD: spnego.c,v 1.6 2013/12/31 20:24:41 christos Exp $	*/
 
 /*
  * Copyright (C) 2006-2013  Internet Systems Consortium, Inc. ("ISC")
@@ -1109,7 +1109,7 @@ length_len(size_t len)
 	if (len < 128U)
 		return (1);
 	else
-		return (len_unsigned(len) + 1);
+		return (len_unsigned((unsigned int)len) + 1);
 }
 
 
@@ -1193,18 +1193,18 @@ der_put_length(unsigned char *p, size_t len, size_t val, size_t *size)
 	if (len < 1U)
 		return (ASN1_OVERFLOW);
 	if (val < 128U) {
-		*p = val;
+		*p = (unsigned char)val;
 		*size = 1;
 		return (0);
 	} else {
 		size_t l;
 		int e;
 
-		e = der_put_unsigned(p, len - 1, val, &l);
+		e = der_put_unsigned(p, len - 1, (unsigned int)val, &l);
 		if (e)
 			return (e);
 		p -= l;
-		*p = 0x80 | l;
+		*p = 0x80 | (unsigned char)l;
 		*size = l + 1;
 		return (0);
 	}
@@ -1229,10 +1229,10 @@ der_put_oid(unsigned char *p, size_t len,
 	    const oid *data, size_t *size)
 {
 	unsigned char *base = p;
-	int n;
+	size_t n;
 
-	for (n = data->length - 1; n >= 2; --n) {
-		unsigned	u = data->components[n];
+	for (n = data->length; n >= 3u; --n) {
+		unsigned	u = data->components[n - 1];
 
 		if (len < 1U)
 			return (ASN1_OVERFLOW);

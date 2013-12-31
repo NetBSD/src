@@ -1,7 +1,7 @@
-/*	$NetBSD: cc.c,v 1.5 2013/07/27 19:23:13 christos Exp $	*/
+/*	$NetBSD: cc.c,v 1.6 2013/12/31 20:24:42 christos Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2007, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2007, 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 2001-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -44,6 +44,7 @@
 #include <isc/assertions.h>
 #include <isc/hmacmd5.h>
 #include <isc/print.h>
+#include <isc/safe.h>
 #include <isc/stdlib.h>
 
 #include <isccc/alist.h>
@@ -88,7 +89,7 @@ list_towire(isccc_sexpr_t *alist, isccc_region_t *target);
 static isc_result_t
 value_towire(isccc_sexpr_t *elt, isccc_region_t *target)
 {
-	size_t len;
+	unsigned int len;
 	unsigned char *lenp;
 	isccc_region_t *vr;
 	isc_result_t result;
@@ -118,7 +119,7 @@ value_towire(isccc_sexpr_t *elt, isccc_region_t *target)
 		result = table_towire(elt, target);
 		if (result != ISC_R_SUCCESS)
 			return (result);
-		len = (size_t)(target->rstart - lenp);
+		len = (unsigned int)(target->rstart - lenp);
 		/*
 		 * 'len' is 4 bytes too big, since it counts
 		 * the placeholder length too.  Adjust and
@@ -142,7 +143,7 @@ value_towire(isccc_sexpr_t *elt, isccc_region_t *target)
 		result = list_towire(elt, target);
 		if (result != ISC_R_SUCCESS)
 			return (result);
-		len = (size_t)(target->rstart - lenp);
+		len = (unsigned int)(target->rstart - lenp);
 		/*
 		 * 'len' is 4 bytes too big, since it counts
 		 * the placeholder length.  Adjust and emit.
@@ -266,7 +267,8 @@ isccc_cc_towire(isccc_sexpr_t *alist, isccc_region_t *target,
 	if (result != ISC_R_SUCCESS)
 		return (result);
 	if (secret != NULL)
-		return (sign(signed_rstart, (target->rstart - signed_rstart),
+		return (sign(signed_rstart,
+			     (unsigned int)(target->rstart - signed_rstart),
 			     hmd5_rstart, secret));
 	return (ISC_R_SUCCESS);
 }
@@ -313,7 +315,8 @@ verify(isccc_sexpr_t *alist, unsigned char *data, unsigned int length,
 	/*
 	 * Verify.
 	 */
-	if (strcmp((char *)digestb64, isccc_sexpr_tostring(hmd5)) != 0)
+	if (!isc_safe_memcmp((unsigned char *) isccc_sexpr_tostring(hmd5),
+			     digestb64, HMD5_LENGTH))
 		return (ISCCC_R_BADAUTH);
 
 	return (ISC_R_SUCCESS);
@@ -404,6 +407,7 @@ table_fromwire(isccc_region_t *source, isccc_region_t *secret,
 	if (secret != NULL) {
 		if (checksum_rstart != NULL)
 			result = verify(alist, checksum_rstart,
+					(unsigned int)
 					(source->rend - checksum_rstart),
 					secret);
 		else

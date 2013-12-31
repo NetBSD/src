@@ -1,4 +1,4 @@
-/*	$NetBSD: message.c,v 1.10 2013/07/27 19:23:12 christos Exp $	*/
+/*	$NetBSD: message.c,v 1.11 2013/12/31 20:24:41 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
@@ -3470,7 +3470,7 @@ dns_message_buildopt(dns_message_t *message, dns_rdataset_t **rdatasetp,
 	dns_rdatalist_t *rdatalist = NULL;
 	dns_rdata_t *rdata = NULL;
 	isc_result_t result;
-	size_t len = 0, i;
+	unsigned int len = 0, i;
 
 	REQUIRE(DNS_MESSAGE_VALID(message));
 	REQUIRE(rdatasetp != NULL && *rdatasetp == NULL);

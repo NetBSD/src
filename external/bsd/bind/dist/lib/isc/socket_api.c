@@ -1,4 +1,4 @@
-/*	$NetBSD: socket_api.c,v 1.6 2013/07/27 19:23:13 christos Exp $	*/
+/*	$NetBSD: socket_api.c,v 1.7 2013/12/31 20:24:42 christos Exp $	*/
 
 /*
  * Copyright (C) 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -347,6 +347,16 @@ isc_socket_sendtov(isc_socket_t *sock, isc_bufferlist_t *buflist,
 				      address, pktinfo));
 }
 
+isc_result_t
+isc_socket_sendtov2(isc_socket_t *sock, isc_bufferlist_t *buflist,
+		    isc_task_t *task, isc_taskaction_t action, const void *arg,
+		    isc_sockaddr_t *address, struct in6_pktinfo *pktinfo,
+		    unsigned int flags) {
+	REQUIRE(ISCAPI_SOCKET_VALID(sock));
+
+	return(sock->methods->sendtov2(sock, buflist, task, action, arg,
+				       address, pktinfo, flags));
+}
 isc_result_t
 isc_socket_recvv(isc_socket_t *sock, isc_bufferlist_t *buflist,
 		 unsigned int minimum,

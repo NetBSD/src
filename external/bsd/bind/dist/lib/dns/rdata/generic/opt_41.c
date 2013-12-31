@@ -1,7 +1,7 @@
-/*	$NetBSD: opt_41.c,v 1.4 2012/06/05 00:42:13 christos Exp $	*/
+/*	$NetBSD: opt_41.c,v 1.5 2013/12/31 20:24:41 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -99,6 +99,7 @@ static inline isc_result_t
 fromwire_opt(ARGS_FROMWIRE) {
 	isc_region_t sregion;
 	isc_region_t tregion;
+	isc_uint16_t opt;
 	isc_uint16_t length;
 	unsigned int total;
 
@@ -114,17 +115,48 @@ fromwire_opt(ARGS_FROMWIRE) {
 	while (sregion.length != 0) {
 		if (sregion.length < 4)
 			return (ISC_R_UNEXPECTEDEND);
-		/*
-		 * Eat the 16bit option code.  There is nothing to
-		 * be done with it currently.
-		 */
+		opt = uint16_fromregion(&sregion);
 		isc_region_consume(&sregion, 2);
 		length = uint16_fromregion(&sregion);
 		isc_region_consume(&sregion, 2);
 		total += 4;
 		if (sregion.length < length)
 			return (ISC_R_UNEXPECTEDEND);
-		isc_region_consume(&sregion, length);
+		switch (opt) {
+		case DNS_OPT_CLIENT_SUBNET: {
+			isc_uint16_t family;
+			isc_uint8_t addrlen;
+			isc_uint8_t scope;
+			isc_uint8_t addrbytes;
+
+			if (length < 4)
+				return (DNS_R_FORMERR);
+			family = uint16_fromregion(&sregion);
+			isc_region_consume(&sregion, 2);
+			addrlen = uint8_fromregion(&sregion);
+			isc_region_consume(&sregion, 1);
+			scope = uint8_fromregion(&sregion);
+			isc_region_consume(&sregion, 1);
+			switch (family) {
+			case 1:
+				if (addrlen > 32U || scope > 32U)
+					return (DNS_R_FORMERR);
+				break;
+			case 2:
+				if (addrlen > 128U || scope > 128U)
+					return (DNS_R_FORMERR);
+				break;
+			}
+			addrbytes = (addrlen + 7) / 8;
+			if (addrbytes + 4 != length)
+				return (DNS_R_FORMERR);
+			isc_region_consume(&sregion, addrbytes);
+			break;
+		}
+		default:
+			isc_region_consume(&sregion, length);
+			break;
+		}
 		total += length;
 	}
 

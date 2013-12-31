@@ -1,4 +1,4 @@
-/*	$NetBSD: sock_test.c,v 1.5 2013/07/27 19:23:10 christos Exp $	*/
+/*	$NetBSD: sock_test.c,v 1.6 2013/12/31 20:24:40 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2008, 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
@@ -376,7 +376,11 @@ main(int argc, char *argv[]) {
 	/*
 	 * Wait a short while.
 	 */
+#ifndef WIN32
 	sleep(10);
+#else
+	Sleep(10000);
+#endif
 
 	fprintf(stderr, "Destroying socket manager\n");
 	isc_socketmgr_destroy(&socketmgr);

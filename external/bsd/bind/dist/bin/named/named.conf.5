@@ -1,4 +1,4 @@
-.\"	$NetBSD: named.conf.5,v 1.9 2013/07/27 19:23:10 christos Exp $
+.\"	$NetBSD: named.conf.5,v 1.10 2013/12/31 20:24:39 christos Exp $
 .\"
 .\" Copyright (C) 2004-2011, 2013 Internet Systems Consortium, Inc. ("ISC")
 .\" 
@@ -189,7 +189,7 @@ options {
 	random\-device \fIquoted_string\fR;
 	recursive\-clients \fIinteger\fR;
 	serial\-query\-rate \fIinteger\fR;
-	server\-id ( \fIquoted_string\fR | none );
+	server\-id ( \fIquoted_string\fR | hostname | none );
 	stacksize \fIsize\fR;
 	statistics\-file \fIquoted_string\fR;
 	statistics\-interval \fIinteger\fR; // not yet implemented

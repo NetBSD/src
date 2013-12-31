@@ -1,7 +1,7 @@
-/*	$NetBSD: masterdump.h,v 1.5 2012/06/05 00:41:50 christos Exp $	*/
+/*	$NetBSD: masterdump.h,v 1.6 2013/12/31 20:24:41 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2008, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2011, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -149,6 +149,11 @@ LIBDNS_EXTERNAL_DATA extern const dns_master_style_t dns_master_style_simple;
  * The style used for debugging, "dig" output, etc.
  */
 LIBDNS_EXTERNAL_DATA extern const dns_master_style_t dns_master_style_debug;
+
+/*%
+ * The style used for dumping "key" zones.
+ */
+LIBDNS_EXTERNAL_DATA extern const dns_master_style_t dns_master_style_keyzone;
 
 /***
  ***	Functions

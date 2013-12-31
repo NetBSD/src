@@ -1,4 +1,4 @@
-/*	$NetBSD: rootns.c,v 1.4 2013/07/27 19:23:12 christos Exp $	*/
+/*	$NetBSD: rootns.c,v 1.5 2013/12/31 20:24:41 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2008, 2010, 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
@@ -203,7 +203,7 @@ dns_rootns_create(isc_mem_t *mctx, dns_rdataclass_t rdclass,
 {
 	isc_result_t result, eresult;
 	isc_buffer_t source;
-	size_t len;
+	unsigned int len;
 	dns_rdatacallbacks_t callbacks;
 	dns_db_t *db = NULL;
 

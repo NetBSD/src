@@ -184,7 +184,7 @@ options {<br>
 	random-device <em class="replaceable"><code>quoted_string</code></em>;<br>
 	recursive-clients <em class="replaceable"><code>integer</code></em>;<br>
 	serial-query-rate <em class="replaceable"><code>integer</code></em>;<br>
-	server-id ( <em class="replaceable"><code>quoted_string</code></em> | none );<br>
+	server-id ( <em class="replaceable"><code>quoted_string</code></em> | hostname | none );<br>
 	stacksize <em class="replaceable"><code>size</code></em>;<br>
 	statistics-file <em class="replaceable"><code>quoted_string</code></em>;<br>
 	statistics-interval <em class="replaceable"><code>integer</code></em>; // not yet implemented<br>
@@ -361,7 +361,7 @@ options {<br>
 </p></div>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2544585"></a><h2>VIEW</h2>
+<a name="id2544586"></a><h2>VIEW</h2>
 <div class="literallayout"><p><br>
 view <em class="replaceable"><code>string</code></em> <em class="replaceable"><code>optional_class</code></em> {<br>
 	match-clients { <em class="replaceable"><code>address_match_element</code></em>; ... };<br>
@@ -525,7 +525,7 @@ view <em class="replaceable"><code>string</code></em> <em class="replaceable"><c
 </p></div>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2545301"></a><h2>ZONE</h2>
+<a name="id2545302"></a><h2>ZONE</h2>
 <div class="literallayout"><p><br>
 zone <em class="replaceable"><code>string</code></em> <em class="replaceable"><code>optional_class</code></em> {<br>
 	type ( master | slave | stub | hint | redirect |<br>
@@ -622,12 +622,12 @@ zone <em class="replaceable"><code>string</code></em> <em class="replaceable"><c
 </p></div>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2545690"></a><h2>FILES</h2>
+<a name="id2545691"></a><h2>FILES</h2>
 <p><code class="filename">/etc/named.conf</code>
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2545702"></a><h2>SEE ALSO</h2>
+<a name="id2545703"></a><h2>SEE ALSO</h2>
 <p><span class="citerefentry"><span class="refentrytitle">named</span>(8)</span>,
       <span class="citerefentry"><span class="refentrytitle">named-checkconf</span>(8)</span>,
       <span class="citerefentry"><span class="refentrytitle">rndc</span>(8)</span>,

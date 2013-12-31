@@ -1,4 +1,4 @@
-/*	$NetBSD: interfacemgr.c,v 1.5 2013/07/27 19:23:10 christos Exp $	*/
+/*	$NetBSD: interfacemgr.c,v 1.6 2013/12/31 20:24:39 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
@@ -555,12 +555,19 @@ setup_locals(ns_interfacemgr_t *mgr, isc_interface_t *interface) {
 		return (result);
 
 	if (result != ISC_R_SUCCESS) {
-		isc_log_write(IFMGR_COMMON_LOGARGS,
-			      ISC_LOG_WARNING,
+		isc_log_write(IFMGR_COMMON_LOGARGS, ISC_LOG_WARNING,
 			      "omitting IPv4 interface %s from "
-			      "localnets ACL: %s",
-			      interface->name,
+			      "localnets ACL: %s", interface->name,
 			      isc_result_totext(result));
+		return (ISC_R_SUCCESS);
+	}
+
+	if (prefixlen == 0U) {
+		isc_log_write(IFMGR_COMMON_LOGARGS, ISC_LOG_WARNING,
+			      "omitting %s interface %s from localnets ACL: "
+			      "zero prefix length detected",
+			      (netaddr->family == AF_INET) ? "IPv4" : "IPv6",
+			      interface->name);
 		return (ISC_R_SUCCESS);
 	}
 

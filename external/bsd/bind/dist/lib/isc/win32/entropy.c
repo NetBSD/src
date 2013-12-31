@@ -1,4 +1,4 @@
-/*	$NetBSD: entropy.c,v 1.4 2013/07/27 19:23:13 christos Exp $	*/
+/*	$NetBSD: entropy.c,v 1.5 2013/12/31 20:24:42 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
@@ -63,15 +63,17 @@ get_from_filesource(isc_entropysource_t *source, isc_uint32_t desired) {
 	added = 0;
 	while (desired > 0) {
 		ndesired = ISC_MIN(desired, sizeof(buf));
-		if (!CryptGenRandom(hcryptprov, ndesired, buf)) {
+		if (!CryptGenRandom(hcryptprov, (DWORD)ndesired, buf)) {
 			CryptReleaseContext(hcryptprov, 0);
 			source->bad = ISC_TRUE;
 			goto out;
 		}
 
-		entropypool_adddata(ent, buf, ndesired, ndesired * 8);
-		added += ndesired * 8;
-		desired -= ndesired;
+		entropypool_adddata(ent, buf,
+				    (unsigned int)ndesired,
+				    (unsigned int)ndesired * 8);
+		added += (unsigned int)ndesired * 8;
+		desired -= (isc_uint32_t)ndesired;
 	}
 
  out:

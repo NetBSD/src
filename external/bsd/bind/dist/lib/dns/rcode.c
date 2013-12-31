@@ -1,7 +1,7 @@
-/*	$NetBSD: rcode.c,v 1.5 2012/12/04 23:38:42 spz Exp $	*/
+/*	$NetBSD: rcode.c,v 1.6 2013/12/31 20:24:41 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -383,9 +383,9 @@ dns_keyflags_fromtext(dns_keyflags_t *flagsp, isc_textregion_t *source)
 		unsigned int len;
 		char *delim = memchr(text, '|', end - text);
 		if (delim != NULL)
-			len = delim - text;
+			len = (unsigned int)(delim - text);
 		else
-			len = end - text;
+			len = (unsigned int)(end - text);
 		for (p = keyflags; p->name != NULL; p++) {
 			if (strncasecmp(p->name, text, len) == 0)
 				break;

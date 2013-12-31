@@ -1,7 +1,7 @@
-/*	$NetBSD: dst_parse.c,v 1.5 2012/12/04 23:38:42 spz Exp $	*/
+/*	$NetBSD: dst_parse.c,v 1.6 2013/12/31 20:24:41 christos Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -180,14 +180,18 @@ find_numericdata(const char *s) {
 }
 
 static int
-check_rsa(const dst_private_t *priv) {
+check_rsa(const dst_private_t *priv, isc_boolean_t external) {
 	int i, j;
 	isc_boolean_t have[RSA_NTAGS];
 	isc_boolean_t ok;
 	unsigned int mask;
 
+	if (external)
+		return ((priv->nelements == 0) ? 0 : -1);
+
 	for (i = 0; i < RSA_NTAGS; i++)
 		have[i] = ISC_FALSE;
+
 	for (j = 0; j < priv->nelements; j++) {
 		for (i = 0; i < RSA_NTAGS; i++)
 			if (priv->elements[j].tag == TAG(DST_ALG_RSAMD5, i))
@@ -233,10 +237,15 @@ check_dh(const dst_private_t *priv) {
 }
 
 static int
-check_dsa(const dst_private_t *priv) {
+check_dsa(const dst_private_t *priv, isc_boolean_t external) {
 	int i, j;
+
+	if (external)
+		return ((priv->nelements == 0)? 0 : -1);
+
 	if (priv->nelements != DSA_NTAGS)
 		return (-1);
+
 	for (i = 0; i < DSA_NTAGS; i++) {
 		for (j = 0; j < priv->nelements; j++)
 			if (priv->elements[j].tag == TAG(DST_ALG_DSA, i))
@@ -248,7 +257,11 @@ check_dsa(const dst_private_t *priv) {
 }
 
 static int
-check_gost(const dst_private_t *priv) {
+check_gost(const dst_private_t *priv, isc_boolean_t external) {
+
+	if (external)
+		return ((priv->nelements == 0)? 0 : -1);
+
 	if (priv->nelements != GOST_NTAGS)
 		return (-1);
 	if (priv->elements[0].tag != TAG(DST_ALG_ECCGOST, 0))
@@ -257,7 +270,11 @@ check_gost(const dst_private_t *priv) {
 }
 
 static int
-check_ecdsa(const dst_private_t *priv) {
+check_ecdsa(const dst_private_t *priv, isc_boolean_t external) {
+
+	if (external)
+		return ((priv->nelements == 0) ? 0 : -1);
+
 	if (priv->nelements != ECDSA_NTAGS)
 		return (-1);
 	if (priv->elements[0].tag != TAG(DST_ALG_ECDSA256, 0))
@@ -311,7 +328,7 @@ check_hmac_sha(const dst_private_t *priv, unsigned int ntags,
 
 static int
 check_data(const dst_private_t *priv, const unsigned int alg,
-	   isc_boolean_t old)
+	   isc_boolean_t old, isc_boolean_t external)
 {
 	/* XXXVIX this switch statement is too sparse to gen a jump table. */
 	switch (alg) {
@@ -320,17 +337,17 @@ check_data(const dst_private_t *priv, const unsigned int alg,
 	case DST_ALG_NSEC3RSASHA1:
 	case DST_ALG_RSASHA256:
 	case DST_ALG_RSASHA512:
-		return (check_rsa(priv));
+		return (check_rsa(priv, external));
 	case DST_ALG_DH:
 		return (check_dh(priv));
 	case DST_ALG_DSA:
 	case DST_ALG_NSEC3DSA:
-		return (check_dsa(priv));
+		return (check_dsa(priv, external));
 	case DST_ALG_ECCGOST:
-		return (check_gost(priv));
+		return (check_gost(priv, external));
 	case DST_ALG_ECDSA256:
 	case DST_ALG_ECDSA384:
-		return (check_ecdsa(priv));
+		return (check_ecdsa(priv, external));
 	case DST_ALG_HMACMD5:
 		return (check_hmac_md5(priv, old));
 	case DST_ALG_HMACSHA1:
@@ -374,6 +391,7 @@ dst__privstruct_parse(dst_key_t *key, unsigned int alg, isc_lex_t *lex,
 	unsigned int opt = ISC_LEXOPT_EOL;
 	isc_stdtime_t when;
 	isc_result_t ret;
+	isc_boolean_t external = ISC_FALSE;
 
 	REQUIRE(priv != NULL);
 
@@ -472,6 +490,11 @@ dst__privstruct_parse(dst_key_t *key, unsigned int alg, isc_lex_t *lex,
 			goto fail;
 		}
 
+		if (strcmp(DST_AS_STR(token), "External:") == 0) {
+			external = ISC_TRUE;
+			goto next;
+		}
+
 		/* Numeric metadata */
 		tag = find_numericdata(DST_AS_STR(token));
 		if (tag >= 0) {
@@ -536,8 +559,14 @@ dst__privstruct_parse(dst_key_t *key, unsigned int alg, isc_lex_t *lex,
 		READLINE(lex, opt, &token);
 		data = NULL;
 	}
+
  done:
-	check = check_data(priv, alg, ISC_TRUE);
+	if (external && priv->nelements != 0) {
+		ret = DST_R_INVALIDPRIVATEKEY;
+		goto fail;
+	}
+
+	check = check_data(priv, alg, ISC_TRUE, external);
 	if (check < 0) {
 		ret = DST_R_INVALIDPRIVATEKEY;
 		goto fail;
@@ -545,6 +574,8 @@ dst__privstruct_parse(dst_key_t *key, unsigned int alg, isc_lex_t *lex,
 		ret = check;
 		goto fail;
 	}
+
+	key->external = external;
 
 	return (ISC_R_SUCCESS);
 
@@ -575,7 +606,7 @@ dst__privstruct_writefile(const dst_key_t *key, const dst_private_t *priv,
 
 	REQUIRE(priv != NULL);
 
-	ret = check_data(priv, dst_key_alg(key), ISC_FALSE);
+	ret = check_data(priv, dst_key_alg(key), ISC_FALSE, key->external);
 	if (ret < 0)
 		return (DST_R_INVALIDPRIVATEKEY);
 	else if (ret != ISC_R_SUCCESS)
@@ -693,6 +724,9 @@ dst__privstruct_writefile(const dst_key_t *key, const dst_private_t *priv,
 	       fprintf(fp, "%s %.*s\n", s, (int)r.length, r.base);
 	}
 
+	if (key->external)
+	       fprintf(fp, "External:\n");
+
 	/* Add the metadata tags */
 	if (major > 1 || (major == 1 && minor >= 3)) {
 		for (i = 0; i < NUMERIC_NTAGS; i++) {
@@ -708,14 +742,14 @@ dst__privstruct_writefile(const dst_key_t *key, const dst_private_t *priv,
 
 			isc_buffer_init(&b, buffer, sizeof(buffer));
 			result = dns_time32_totext(when, &b);
-		       if (result != ISC_R_SUCCESS) {
+			if (result != ISC_R_SUCCESS) {
 			       fclose(fp);
 			       return (DST_R_INVALIDPRIVATEKEY);
-		       }
+			}
 
 			isc_buffer_usedregion(&b, &r);
 
-		       fprintf(fp, "%s %.*s\n", timetags[i], (int)r.length,
+			fprintf(fp, "%s %.*s\n", timetags[i], (int)r.length,
 				r.base);
 		}
 	}
