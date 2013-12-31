@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-settime.c,v 1.7 2013/07/27 19:23:09 christos Exp $	*/
+/*	$NetBSD: dnssec-settime.c,v 1.8 2013/12/31 20:24:39 christos Exp $	*/
 
 /*
  * Copyright (C) 2009-2013  Internet Systems Consortium, Inc. ("ISC")
@@ -373,7 +373,7 @@ main(int argc, char **argv) {
 		if (result != ISC_R_SUCCESS)
 			fatal("Invalid keyfile %s: %s",
 			      filename, isc_result_totext(result));
-		if (!dst_key_isprivate(prevkey))
+		if (!dst_key_isprivate(prevkey) && !dst_key_isexternal(prevkey))
 			fatal("%s is not a private key", filename);
 
 		name = dst_key_name(prevkey);
@@ -465,7 +465,7 @@ main(int argc, char **argv) {
 		fatal("Invalid keyfile %s: %s",
 		      filename, isc_result_totext(result));
 
-	if (!dst_key_isprivate(key))
+	if (!dst_key_isprivate(key) && !dst_key_isexternal(key))
 		fatal("%s is not a private key", filename);
 
 	dst_key_format(key, keystr, sizeof(keystr));

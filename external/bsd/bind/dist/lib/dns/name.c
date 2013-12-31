@@ -1,7 +1,7 @@
-/*	$NetBSD: name.c,v 1.6 2013/07/27 19:23:12 christos Exp $	*/
+/*	$NetBSD: name.c,v 1.7 2013/12/31 20:24:41 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -580,6 +580,11 @@ dns_name_fullcompare(const dns_name_t *name1, const dns_name_t *name2,
 	REQUIRE((name1->attributes & DNS_NAMEATTR_ABSOLUTE) ==
 		(name2->attributes & DNS_NAMEATTR_ABSOLUTE));
 
+	if (name1 == name2) {
+		*orderp = 0;
+		return (dns_namereln_equal);
+	}
+
 	SETUP_OFFSETS(name1, offsets1, odata1);
 	SETUP_OFFSETS(name2, offsets2, odata2);
 
@@ -692,6 +697,9 @@ dns_name_equal(const dns_name_t *name1, const dns_name_t *name2) {
 	 */
 	REQUIRE((name1->attributes & DNS_NAMEATTR_ABSOLUTE) ==
 		(name2->attributes & DNS_NAMEATTR_ABSOLUTE));
+
+	if (name1 == name2)
+		return (ISC_TRUE);
 
 	if (name1->length != name2->length)
 		return (ISC_FALSE);
