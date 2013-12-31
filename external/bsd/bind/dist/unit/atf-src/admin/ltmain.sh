@@ -4522,7 +4522,7 @@ func_mode_link ()
       -l*)
 	if test "X$arg" = "X-lc" || test "X$arg" = "X-lm"; then
 	  case $host in
-	  *-*-cygwin* | *-*-mingw* | *-*-pw32* | *-*-beos* | *-cegcc*)
+	  *-*-cygwin* | *-*-mingw* | *-*-pw32* | *-*-beos* | *-cegcc* | *-*-haiku*)
 	    # These systems don't actually have a C or math library (as such)
 	    continue
 	    ;;
@@ -6308,6 +6308,7 @@ func_mode_link ()
 	  func_arith $current - $age
 	  major=.$func_arith_result
 	  versuffix="$major.$age.$revision"
+	  versuffix2="$major.$age"
 	  ;;
 
 	osf)
@@ -6368,8 +6369,10 @@ func_mode_link ()
 	  esac
 	  if test "$need_version" = no; then
 	    versuffix=
+	    versuffix2=
 	  else
 	    versuffix=".0.0"
+	    versuffix2=".0.0"
 	  fi
 	fi
 
@@ -6377,6 +6380,7 @@ func_mode_link ()
 	if test "$avoid_version" = yes && test "$need_version" = no; then
 	  major=
 	  versuffix=
+	  versuffix2=
 	  verstring=""
 	fi
 
@@ -6476,7 +6480,7 @@ func_mode_link ()
       if test "$build_libtool_libs" = yes; then
 	if test -n "$rpath"; then
 	  case $host in
-	  *-*-cygwin* | *-*-mingw* | *-*-pw32* | *-*-os2* | *-*-beos* | *-cegcc*)
+	  *-*-cygwin* | *-*-mingw* | *-*-pw32* | *-*-os2* | *-*-beos* | *-cegcc* | *-*-haiku*)
 	    # these systems don't actually have a c library (as such)!
 	    ;;
 	  *-*-rhapsody* | *-*-darwin1.[012])

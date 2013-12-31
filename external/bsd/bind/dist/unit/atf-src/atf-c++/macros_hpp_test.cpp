@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
+// Copyright (c) 2008 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -106,6 +106,7 @@ ATF_TEST_CASE(TEST_MACRO_1);
 ATF_TEST_CASE_HEAD(TEST_MACRO_1) { }
 ATF_TEST_CASE_BODY(TEST_MACRO_1) { }
 void instantiate_1(void) {
+    ATF_TEST_CASE_USE(TEST_MACRO_1);
     atf::tests::tc* the_test = new ATF_TEST_CASE_NAME(TEST_MACRO_1)();
     delete the_test;
 }
@@ -114,12 +115,16 @@ ATF_TEST_CASE_HEAD(TEST_MACRO_2) { }
 ATF_TEST_CASE_BODY(TEST_MACRO_2) { }
 ATF_TEST_CASE_CLEANUP(TEST_MACRO_2) { }
 void instatiate_2(void) {
+    ATF_TEST_CASE_USE(TEST_MACRO_2);
     atf::tests::tc* the_test = new ATF_TEST_CASE_NAME(TEST_MACRO_2)();
     delete the_test;
 }
 ATF_TEST_CASE_WITH_CLEANUP(TEST_MACRO_3);
+ATF_TEST_CASE_HEAD(TEST_MACRO_3) { }
 ATF_TEST_CASE_BODY(TEST_MACRO_3) { }
+ATF_TEST_CASE_CLEANUP(TEST_MACRO_3) { }
 void instatiate_3(void) {
+    ATF_TEST_CASE_USE(TEST_MACRO_3);
     atf::tests::tc* the_test = new ATF_TEST_CASE_NAME(TEST_MACRO_3)();
     delete the_test;
 }

@@ -1366,6 +1366,36 @@ n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
+echo "I:checking dnssec-signzone keeps valid signatures from inactive keys ($n)"
+ret=0
+zone=example
+(
+cd signer
+cp -f example.db.in example.db
+$SIGNER -SD -o example example.db > /dev/null 2>&1
+echo '$INCLUDE "example.db.signed"' >> example.db
+# now retire key2 and resign the zone
+$SETTIME -I now $key2 > /dev/null 2>&1
+$SIGNER -SD -o example example.db > /dev/null 2>&1
+) || ret=1
+grep " $keyid2 " signer/example.db.signed > /dev/null 2>&1 || ret=1
+grep " $keyid3 " signer/example.db.signed > /dev/null 2>&1 || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking dnssec-signzone -Q purges signatures from inactive keys ($n)"
+ret=0
+(
+cd signer
+$SIGNER -SDQ -o example example.db > /dev/null 2>&1
+) || ret=1
+grep " $keyid2 " signer/example.db.signed > /dev/null 2>&1 && ret=1
+grep " $keyid3 " signer/example.db.signed > /dev/null 2>&1 || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
 echo "I:checking dnssec-signzone retains unexpired signatures ($n)"
 ret=0
 (
@@ -2258,6 +2288,52 @@ grep "status: NOERROR" dig.out.ns4.test$n > /dev/null || ret=1
 grep "flags:.*ad.*QUERY" dig.out.ns4.test$n > /dev/null && ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:check KEYDATA records are printed in human readable form in key zone ($n)"
+# force the zone to be written out
+$PERL $SYSTEMTESTTOP/stop.pl --use-rndc . ns4
+ret=0
+grep KEYDATA ns4/managed-keys.bind > /dev/null || ret=1
+# restart the server
+$PERL $SYSTEMTESTTOP/start.pl --noclean --restart . ns4
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:check simultaneous inactivation and publishing of dnskeys removes inactive signature ($n)"
+ret=0
+cnt=0
+while :
+do
+$DIG $DIGOPTS publish-inactive.example @10.53.0.3 dnskey > dig.out.ns3.test$n
+keys=`awk '$5 == 257 { print; }' dig.out.ns3.test$n | wc -l`
+test $keys -gt 2 && break
+cnt=`expr $cnt + 1`
+test $cnt -gt 120 && break
+sleep 1
+done
+test $keys -gt 2 || ret=1
+sigs=`grep RRSIG dig.out.ns3.test$n | wc -l`
+sigs=`expr $sigs + 0`
+n=`expr $n + 1`
+test $sigs -eq 2 || ret=1
+if test $ret != 0 ; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:check that increasing the sig-validity-interval resigning triggers re-signing"
+ret=0
+before=`$DIG axfr siginterval.example -p 5300 @10.53.0.3 | grep RRSIG.SOA`
+cp ns3/siginterval2.conf ns3/siginterval.conf
+$RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 reconfig 2>&1 | sed 's/^/I:ns3 /'
+for i in 1 2 3 4 5 6 7 8 9 0
+do
+after=`$DIG axfr siginterval.example -p 5300 @10.53.0.3 | grep RRSIG.SOA`
+test "$before" != "$after" && break
+sleep 1
+done
+n=`expr $n + 1`
+if test "$before" = "$after" ; then echo "I:failed"; ret=1; fi
 status=`expr $status + $ret`
 
 echo "I:exit status: $status"
