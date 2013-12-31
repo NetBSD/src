@@ -27,7 +27,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-igrp.c,v 1.21 2005-04-20 21:01:56 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-igrp.c,v 1.3 2013/04/06 19:33:08 christos Exp $");
+__RCSID("$NetBSD: print-igrp.c,v 1.4 2013/12/31 17:33:31 christos Exp $");
 #endif
 #endif
 
@@ -75,7 +75,7 @@ igrp_entry_print(register struct igrprte *igr, register int is_interior,
 	    mtu, igr->igr_hct);
 }
 
-static struct tok op2str[] = {
+static const struct tok op2str[] = {
 	{ IGRP_UPDATE,		"update" },
 	{ IGRP_REQUEST,		"request" },
 	{ 0,			NULL }

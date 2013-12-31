@@ -19,7 +19,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/nlpid.c,v 1.4 2004-10-19 15:27:55 hannes Exp  (LBL)";
 #else
-__RCSID("$NetBSD: nlpid.c,v 1.3 2013/04/06 19:33:07 christos Exp $");
+__RCSID("$NetBSD: nlpid.c,v 1.4 2013/12/31 17:33:31 christos Exp $");
 #endif
 #endif
 
@@ -41,6 +41,7 @@ const struct tok nlpid_values[] = {
     { NLPID_ISIS, "IS-IS" },
     { NLPID_CONS, "CONS" },
     { NLPID_IDRP, "IDRP" },
+    { NLPID_SPB, "ISIS_SPB" },
     { NLPID_MFR, "FRF.15" },
     { NLPID_IP, "IPv4" },
     { NLPID_PPP, "PPP" },

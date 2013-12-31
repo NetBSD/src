@@ -21,7 +21,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/signature.c,v 1.2 2008-09-22 20:22:10 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: signature.c,v 1.3 2013/04/06 19:33:08 christos Exp $");
+__RCSID("$NetBSD: signature.c,v 1.4 2013/12/31 17:33:31 christos Exp $");
 #endif
 #endif
 
@@ -53,6 +53,7 @@ const struct tok signature_check_values[] = {
  * Compute a HMAC MD5 sum.
  * Taken from rfc2104, Appendix.
  */
+USES_APPLE_DEPRECATED_API
 static void
 signature_compute_hmac_md5(const u_int8_t *text, int text_len, unsigned char *key,
                            unsigned int key_len, u_int8_t *digest)
@@ -115,6 +116,7 @@ signature_compute_hmac_md5(const u_int8_t *text, int text_len, unsigned char *ke
     MD5_Update(&context, digest, 16);     /* then results of 1st hash */
     MD5_Final(digest, &context);          /* finish up 2nd pass */
 }
+USES_APPLE_RST
 #endif
 
 #ifdef HAVE_LIBCRYPTO
