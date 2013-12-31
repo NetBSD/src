@@ -1,9 +1,9 @@
-/*	$NetBSD: env_test.c,v 1.1.1.1 2011/09/11 17:20:30 christos Exp $	*/
+/*	$NetBSD: env_test.c,v 1.1.1.2 2013/12/31 20:11:51 christos Exp $	*/
 
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

@@ -31,10 +31,6 @@ MANOBJS =	${MANPAGES} ${HTMLPAGES}
 
 @BIND9_MAKE_RULES@
 
-dnssec-checkds: dnssec-checkds.py
-
-dnssec-coverage: dnssec-coverage.py
-
 doc man:: ${MANOBJS}
 
 docclean manclean maintainer-clean::

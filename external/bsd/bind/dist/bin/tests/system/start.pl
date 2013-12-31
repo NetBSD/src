@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# Copyright (C) 2004-2008, 2010-2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2008, 2010-2013  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -161,7 +161,7 @@ sub start_server {
 				if (-e "$testdir/$server/named.nosoa");
 			$command .= "-T noaa " 
 				if (-e "$testdir/$server/named.noaa");
-			$command .= "-c named.conf -d 99 -g -U 4 ";
+			$command .= "-c named.conf -d 99 -g -U 4";
 		}
 		if ($restart) {
 			$command .= " >>named.run 2>&1 &";
