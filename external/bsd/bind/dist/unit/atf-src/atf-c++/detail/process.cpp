@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
+// Copyright (c) 2008 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -50,10 +50,10 @@ namespace impl = atf::process;
 // ------------------------------------------------------------------------
 
 template< class C >
-atf::utils::auto_array< const char* >
+atf::auto_array< const char* >
 collection_to_argv(const C& c)
 {
-    atf::utils::auto_array< const char* > argv(new const char*[c.size() + 1]);
+    atf::auto_array< const char* > argv(new const char*[c.size() + 1]);
 
     std::size_t pos = 0;
     for (typename C::const_iterator iter = c.begin(); iter != c.end();

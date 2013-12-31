@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
+# Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -164,36 +164,6 @@ override_env_body()
     done
 }
 
-# XXX: This does not seem to belong here...
-atf_test_case arch
-arch_head()
-{
-    atf_set "descr" "Tests that the current value of atf_arch is correct" \
-                    "for the corresponding atf_machine"
-}
-arch_body()
-{
-    atf_check -s eq:0 -o save:stdout -e empty atf-config -t atf_arch
-    arch=$(cat stdout)
-    atf_check -s eq:0 -o save:stdout -e empty atf-config -t atf_machine
-    machine=$(cat stdout)
-    echo "Machine type ${machine}, architecture ${arch}"
-
-    case ${machine} in
-        i386|i486|i586|i686)
-            exp_arch=i386
-            ;;
-        x86_64)
-            exp_arch=amd64
-            ;;
-        *)
-            exp_arch=${machine}
-    esac
-    echo "Expected architecture ${exp_arch}"
-
-    atf_check_equal ${arch} ${exp_arch}
-}
-
 atf_init_test_cases()
 {
     atf_add_test_case list_all
@@ -205,8 +175,6 @@ atf_init_test_cases()
     atf_add_test_case query_mixture
 
     atf_add_test_case override_env
-
-    atf_add_test_case arch
 }
 
 # vim: syntax=sh:expandtab:shiftwidth=4:softtabstop=4
