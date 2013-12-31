@@ -39,7 +39,7 @@
 static const char rcsid[] _U_ =
 "@(#) Header: /tcpdump/master/tcpdump/print-sctp.c,v 1.21 2007-09-13 18:03:49 guy Exp  (NETLAB/PEL)";
 #else
-__RCSID("$NetBSD: print-sctp.c,v 1.4 2013/10/20 02:58:34 christos Exp $");
+__RCSID("$NetBSD: print-sctp.c,v 1.5 2013/12/31 17:33:31 christos Exp $");
 #endif
 #endif
 
@@ -68,7 +68,7 @@ __RCSID("$NetBSD: print-sctp.c,v 1.4 2013/10/20 02:58:34 christos Exp $");
 #define CHAN_MP 6705
 #define CHAN_LP 6706
 
-struct tok ForCES_channels[] = {
+static const struct tok ForCES_channels[] = {
 	{ CHAN_HP, "ForCES HP" },
 	{ CHAN_MP, "ForCES MP" },
 	{ CHAN_LP, "ForCES LP" },
@@ -348,11 +348,8 @@ void sctp_print(const u_char *bp,        /* beginning of sctp packet */
 	    break;
 	  }
 	case SCTP_HEARTBEAT_REQUEST :
-	  {
-	    printf("[HB REQ] ");
-
-	    break;
-	  }
+	  printf("[HB REQ] ");
+	  break;
 	case SCTP_HEARTBEAT_ACK :
 	  printf("[HB ACK] ");
 	  break;

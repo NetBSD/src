@@ -34,13 +34,20 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-isakmp.c,v 1.61 2008-02-05 19:34:25 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-isakmp.c,v 1.5 2013/10/20 02:58:34 christos Exp $");
+__RCSID("$NetBSD: print-isakmp.c,v 1.6 2013/12/31 17:33:31 christos Exp $");
 #endif
 #endif
 
 #define NETDISSECT_REWORKED
 #ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
+
+/* The functions from print-esp.c used in this file are only defined when both
+ * OpenSSL and evp.h are detected. Employ the same preprocessor device here.
+ */
+#ifndef HAVE_OPENSSL_EVP_H
+#undef HAVE_LIBCRYPTO
 #endif
 
 #include <tcpdump-stdinc.h>
