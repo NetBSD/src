@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_test.c,v 1.5 2013/07/27 19:23:10 christos Exp $	*/
+/*	$NetBSD: timer_test.c,v 1.6 2013/12/31 20:24:40 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2013  Internet Systems Consortium, Inc. ("ISC")
@@ -165,12 +165,20 @@ main(int argc, char *argv[]) {
 	isc_task_detach(&t2);
 	isc_task_detach(&t3);
 
+#ifndef WIN32
 	sleep(15);
+#else
+	Sleep(15000);
+#endif
 	printf("destroy\n");
 	isc_timer_detach(&ti1);
 	isc_timer_detach(&ti2);
 	isc_timer_detach(&ti3);
+#ifndef WIN32
 	sleep(2);
+#else
+	Sleep(2000);
+#endif
 	isc_timermgr_destroy(&timgr);
 	isc_taskmgr_destroy(&manager);
 	printf("destroyed\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: sanity.h,v 1.2 2012/12/04 23:38:56 spz Exp $	*/
+/*	$NetBSD: sanity.h,v 1.3 2013/12/31 20:24:43 christos Exp $	*/
 
 /*
  * Automated Testing Framework (atf)
@@ -58,14 +58,17 @@ void atf_sanity_post(const char *, int, const char *);
 
 #define INV(x) \
     do { \
+	(void)(x); \
     } while (/*CONSTCOND*/0)
 
 #define PRE(x) \
     do { \
+	(void)(x); \
     } while (/*CONSTCOND*/0)
 
 #define POST(x) \
     do { \
+	(void)(x); \
     } while (/*CONSTCOND*/0)
 
 #endif /* !defined(NDEBUG) */
