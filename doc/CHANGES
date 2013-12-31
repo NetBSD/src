@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1875 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1876 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -325,3 +325,5 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 		[tsutsui 20131227]
 	wm(4): Add support for I354 (C2000 Internal) Ethernet
 		[msaitoh 20131230]
+	tcpdump(8): Import 4.5.1 [christos 2013131231]
+	libpcap: Import 1.5.2 [christos 20131231]
