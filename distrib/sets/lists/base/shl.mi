@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.681 2013/11/16 13:01:38 alnsn Exp $
+# $NetBSD: shl.mi,v 1.682 2013/12/31 20:26:17 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -308,7 +308,7 @@
 ./usr/lib/libipsec.so.3.0			base-net-shlib
 ./usr/lib/libisc.so				base-bind-shlib
 ./usr/lib/libisc.so.7				base-bind-shlib
-./usr/lib/libisc.so.7.0				base-bind-shlib
+./usr/lib/libisc.so.7.1				base-bind-shlib
 ./usr/lib/libisccc.so				base-bind-shlib
 ./usr/lib/libisccc.so.7				base-bind-shlib
 ./usr/lib/libisccc.so.7.0			base-bind-shlib
