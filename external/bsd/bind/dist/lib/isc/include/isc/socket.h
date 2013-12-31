@@ -1,7 +1,7 @@
-/*	$NetBSD: socket.h,v 1.6 2013/07/27 19:23:13 christos Exp $	*/
+/*	$NetBSD: socket.h,v 1.7 2013/12/31 20:24:42 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -333,6 +333,12 @@ typedef struct isc_socketmethods {
 				   struct in6_pktinfo *pktinfo,
 				   isc_socketevent_t *event,
 				   unsigned int flags);
+	isc_result_t    (*sendtov2)(isc_socket_t *sock,
+				    isc_bufferlist_t *buflist, isc_task_t *task,
+				    isc_taskaction_t action, const void *arg,
+				    isc_sockaddr_t *address,
+				    struct in6_pktinfo *pktinfo,
+				    unsigned int flags);
 } isc_socketmethods_t;
 
 /*%
@@ -891,6 +897,11 @@ isc_result_t
 isc_socket_sendtov(isc_socket_t *sock, isc_bufferlist_t *buflist,
 		   isc_task_t *task, isc_taskaction_t action, const void *arg,
 		   isc_sockaddr_t *address, struct in6_pktinfo *pktinfo);
+isc_result_t
+isc_socket_sendtov2(isc_socket_t *sock, isc_bufferlist_t *buflist,
+		    isc_task_t *task, isc_taskaction_t action, const void *arg,
+		    isc_sockaddr_t *address, struct in6_pktinfo *pktinfo,
+		    unsigned int flags);
 isc_result_t
 isc_socket_sendto2(isc_socket_t *sock, isc_region_t *region,
 		   isc_task_t *task,

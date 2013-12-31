@@ -1,9 +1,9 @@
-/*	$NetBSD: text_test.c,v 1.2 2012/12/04 23:38:56 spz Exp $	*/
+/*	$NetBSD: text_test.c,v 1.3 2013/12/31 20:24:43 christos Exp $	*/
 
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -99,7 +99,7 @@ word_acum(const char *word, void *data)
 
 static
 atf_error_t
-word_count(const char *word, void *data)
+word_count(const char *word ATF_DEFS_ATTRIBUTE_UNUSED, void *data)
 {
     size_t *counter = data;
 
@@ -115,7 +115,7 @@ struct fail_at {
 
 static
 atf_error_t
-word_fail_at(const char *word, void *data)
+word_fail_at(const char *word ATF_DEFS_ATTRIBUTE_UNUSED, void *data)
 {
     struct fail_at *fa = data;
     atf_error_t err;

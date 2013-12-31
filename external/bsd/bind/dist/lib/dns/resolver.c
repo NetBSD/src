@@ -1,4 +1,4 @@
-/*	$NetBSD: resolver.c,v 1.16 2013/07/27 19:23:12 christos Exp $	*/
+/*	$NetBSD: resolver.c,v 1.17 2013/12/31 20:24:41 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
@@ -107,6 +107,7 @@
 #define RTRACE(m)
 #define RRTRACE(r, m)
 #define FCTXTRACE(m)
+#define FCTXTRACE2(m1, m2)
 #define FTRACE(m)
 #define QTRACE(m)
 #endif
@@ -1134,8 +1135,10 @@ log_edns(fetchctx_t *fctx) {
 	if (fctx->reason == NULL)
 		return;
 
-	if (!isc_log_wouldlog(dns_lctx, ISC_LOG_DEBUG(3)))
-		return;
+	/*
+	 * We do not know if fctx->domain is the actual domain the record
+	 * lives in or a parent domain so we have a '?' after it.
+	 */
 	dns_name_format(&fctx->domain, domainbuf, sizeof(domainbuf));
 	isc_log_write(dns_lctx, DNS_LOGCATEGORY_EDNS_DISABLED,
 		      DNS_LOGMODULE_RESOLVER, ISC_LOG_INFO,
@@ -6659,7 +6662,7 @@ log_nsid(isc_buffer_t *opt, size_t nsid_len, resquery_t *query,
 	unsigned char *p, *buf, *nsid;
 
 	/* Allocate buffer for storing hex version of the NSID */
-	buflen = nsid_len * 2 + 1;
+	buflen = (isc_uint16_t)nsid_len * 2 + 1;
 	buf = isc_mem_get(mctx, buflen);
 	if (buf == NULL)
 		return;
