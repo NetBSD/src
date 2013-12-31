@@ -1,4 +1,4 @@
-/* $NetBSD: siovar.h,v 1.6 2011/07/27 14:17:55 tsutsui Exp $ */
+/* $NetBSD: siovar.h,v 1.7 2013/12/31 14:24:09 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -48,5 +48,5 @@ struct sioreg {
 #define sio_stat sio_cmd
 };
 
-int  getsiocsr(struct sioreg *);
+uint16_t getsiocsr(struct sioreg *);
 void setsioreg(struct sioreg *, int, int);

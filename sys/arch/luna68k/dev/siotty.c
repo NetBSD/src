@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.36 2013/09/23 17:27:09 tsutsui Exp $ */
+/* $NetBSD: siotty.c,v 1.37 2013/12/31 14:24:09 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.36 2013/09/23 17:27:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.37 2013/12/31 14:24:09 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.36 2013/09/23 17:27:09 tsutsui Exp $");
 #include <sys/fcntl.h>
 #include <dev/cons.h>
 #include <sys/kauth.h>
+#include <sys/kmem.h>
 
 #include <machine/cpu.h>
 
@@ -79,12 +80,36 @@ struct siotty_softc {
 	struct sioreg	*sc_ctl;
 	u_int		sc_flags;
 	uint8_t		sc_wr[6];
+	void		*sc_si;		/* software interrupt handler */
+	u_int		sc_hwflags;
+#define	SIOTTY_HW_CONSOLE	0x0001
+
+	uint8_t		*sc_rbuf;
+	uint8_t		*sc_rbufend;
+	uint8_t	* volatile sc_rbget;
+	uint8_t	* volatile sc_rbput;
+	volatile u_int	sc_rbavail;
+
+	uint8_t		*sc_tba;
+	u_int		sc_tbc;
+
+	bool		sc_rx_ready;
+	bool		sc_tx_busy;
+	bool		sc_tx_done;
 };
+
+#define	SIOTTY_RING_SIZE	2048
+u_int siotty_rbuf_size = SIOTTY_RING_SIZE;
+
+static struct cnm_state	siotty_cnm_state;
 
 #include "siotty.h"
 static void siostart(struct tty *);
 static int  sioparam(struct tty *, struct termios *);
 static void siottyintr(int);
+static void siottysoft(void *);
+static void siotty_rxsoft(struct siotty_softc *, struct tty *);
+static void siotty_txsoft(struct siotty_softc *, struct tty *);
 static int  siomctl(struct siotty_softc *, int, int);
 
 static int  siotty_match(device_t, cfdata_t, void *);
@@ -123,13 +148,16 @@ siotty_attach(device_t parent, device_t self, void *aux)
 	struct sio_softc *scp = device_private(parent);
 	struct siotty_softc *sc = device_private(self);
 	struct sio_attach_args *args = aux;
+	struct tty *tp;
 
 	sc->sc_dev = self;
 	sc->sc_ctl = (struct sioreg *)scp->scp_ctl + args->channel;
 	memcpy(sc->sc_wr, ch0_regs, sizeof(ch0_regs));
 	scp->scp_intr[args->channel] = siottyintr;
+	if (args->hwflags == 1)
+		sc->sc_hwflags |= SIOTTY_HW_CONSOLE;
 
-	if (args->hwflags == 1) {
+	if ((sc->sc_hwflags & SIOTTY_HW_CONSOLE) != 0) {
 		aprint_normal(" (console)");
 		sc->sc_flags = TIOCFLAG_SOFTCAR;
 	} else {
@@ -145,6 +173,28 @@ siotty_attach(device_t parent, device_t self, void *aux)
 	setsioreg(sc->sc_ctl, WR1, sc->sc_wr[WR1]); /* now interrupt driven */
 
 	aprint_normal("\n");
+
+	sc->sc_rbuf = kmem_alloc(siotty_rbuf_size * 2, KM_NOSLEEP);
+	if (sc->sc_rbuf == NULL) {
+		aprint_error_dev(self, "unable to allocate ring buffer\n");
+		return;
+	}
+	sc->sc_rbufend = sc->sc_rbuf + (siotty_rbuf_size * 2);
+	sc->sc_rbput = sc->sc_rbget = sc->sc_rbuf;
+	sc->sc_rbavail = siotty_rbuf_size;
+
+	tp = tty_alloc();
+	tp->t_oproc = siostart;
+	tp->t_param = sioparam;
+	tp->t_hwiflow = NULL /* XXX siohwiflow XXX */;
+	tp->t_softc = sc;
+	if ((sc->sc_hwflags & SIOTTY_HW_CONSOLE) != 0)
+		tp->t_dev = cn_tab->cn_dev;
+	sc->sc_tty = tp;
+
+	tty_attach(tp);
+
+	sc->sc_si = softint_establish(SOFTINT_SERIAL, siottysoft, sc);
 }
 
 /*--------------------  low level routine --------------------*/
@@ -154,52 +204,140 @@ siottyintr(int chan)
 {
 	struct siotty_softc *sc;
 	struct sioreg *sio;
-	struct tty *tp;
-	unsigned int code;
-	int rr;
+	uint8_t *put, *end;
+	uint8_t c;
+	uint16_t rr;
+	int cc;
 
 	sc = device_lookup_private(&siotty_cd, chan);
 	if (sc == NULL)
 		return;
 
-	tp = sc->sc_tty;
+	end = sc->sc_rbufend;
+	put = sc->sc_rbput;
+	cc = sc->sc_rbavail;
+
 	sio = sc->sc_ctl;
 	rr = getsiocsr(sio);
+	if ((rr & RR_BREAK) != 0) {
+		sio->sio_cmd = WR0_RSTINT;
+		cn_check_magic(sc->sc_tty->t_dev, CNC_BREAK, siotty_cnm_state);
+	}
 	if (rr & RR_RXRDY) {
 		do {
-			code = sio->sio_data;
-			if (rr & (RR_FRAMING | RR_OVERRUN | RR_PARITY)) {
+			if (cc > 0) {
+				c = sio->sio_data;
+				cn_check_magic(sc->sc_tty->t_dev, c,
+				    siotty_cnm_state);
+				put[0] = c;
+				put[1] = rr & 0xff;
+				put += 2;
+				if (put >= end)
+					put = sc->sc_rbuf;
+				cc--;
+			}
+			if ((rr & (RR_FRAMING | RR_OVERRUN | RR_PARITY)) != 0)
 				sio->sio_cmd = WR0_ERRRST;
-				if (sio->sio_stat & RR_FRAMING)
-					code |= TTY_FE;
-				else if (sio->sio_stat & RR_PARITY)
-					code |= TTY_PE;
-			}
-			if (tp == NULL || (tp->t_state & TS_ISOPEN) == 0)
-				continue;
-#if 0 && defined(DDB) /* ?!?! fails to resume ?!?! */
-			if ((rr & RR_BREAK) && tp->t_dev == cn_tab->cn_dev) {
-				cpu_Debugger();
-				return;
-			}
-#endif
-			(*tp->t_linesw->l_rint)(code, tp);
+
+			sc->sc_rbput = put;
+			sc->sc_rbavail = cc;
+			sc->sc_rx_ready = true;
 		} while ((rr = getsiocsr(sio)) & RR_RXRDY);
 	}
 	if (rr & RR_TXRDY) {
 		sio->sio_cmd = WR0_RSTPEND;
-		if (tp != NULL) {
-			tp->t_state &= ~(TS_BUSY|TS_FLUSH);
-			(*tp->t_linesw->l_start)(tp);
+		if (sc->sc_tbc > 0) {
+			sio->sio_data = *sc->sc_tba;
+			sc->sc_tba++;
+			sc->sc_tbc--;
+		} else {
+			if (sc->sc_tx_busy) {
+				sc->sc_tx_busy = false;
+				sc->sc_tx_done = true;
+			}
 		}
 	}
+	softint_schedule(sc->sc_si);
+}
+
+static void
+siottysoft(void *arg)
+{
+	struct siotty_softc *sc;
+	struct tty *tp;
+
+	sc = arg;
+	tp = sc->sc_tty;
+
+	if (sc->sc_rx_ready) {
+		sc->sc_rx_ready = false;
+		siotty_rxsoft(sc, tp);
+	}
+	if (sc->sc_tx_done) {
+		sc->sc_tx_done = false;
+		siotty_txsoft(sc, tp);
+	}
+}
+
+static void
+siotty_rxsoft(struct siotty_softc *sc, struct tty *tp)
+{
+	uint8_t *get, *end;
+	u_int cc, scc;
+	unsigned int code;
+	uint8_t stat;
+	int s;
+
+	end = sc->sc_rbufend;
+	get = sc->sc_rbget;
+	scc = cc = siotty_rbuf_size - sc->sc_rbavail;
+
+	if (cc == siotty_rbuf_size) {
+		printf("%s: rx buffer overflow\n", device_xname(sc->sc_dev));
+	}
+
+	while (cc > 0) {
+		code = get[0];
+		stat = get[1];
+		if ((stat & RR_FRAMING) != 0)
+			code |= TTY_FE;
+		else if ((stat & RR_PARITY) != 0)
+			code |= TTY_PE;
+
+		(*tp->t_linesw->l_rint)(code, tp);
+		get += 2;
+		if (get >= end)
+			get = sc->sc_rbuf;
+		cc--;
+	}
+
+	if (cc != scc) {
+		s = splserial();
+		sc->sc_rbget = get;
+		sc->sc_rbavail += scc - cc;
+		splx(s);
+	}
+}
+
+static void
+siotty_txsoft(struct siotty_softc *sc, struct tty *tp)
+{
+
+	tp->t_state &= ~TS_BUSY;
+	if ((tp->t_state & TS_FLUSH) != 0)
+		tp->t_state &= ~TS_FLUSH;
+	else
+		ndflush(&tp->t_outq, (int)(sc->sc_tba - tp->t_outq.c_cf));
+	(*tp->t_linesw->l_start)(tp);
 }
 
 static void
 siostart(struct tty *tp)
 {
 	struct siotty_softc *sc;
-	int s, c;
+	int s;
+	uint8_t *tba;
+	int tbc;
 
 	sc = device_lookup_private(&siotty_cd, minor(tp->t_dev));
 	s = splserial();
@@ -208,11 +346,17 @@ siostart(struct tty *tp)
 	if (!ttypull(tp))
 		goto out;
 	tp->t_state |= TS_BUSY;
-	while (getsiocsr(sc->sc_ctl) & RR_TXRDY) {
-		if ((c = getc(&tp->t_outq)) == -1)
-			break;
-		sc->sc_ctl->sio_data = c;
-	}
+
+	tba = tp->t_outq.c_cf;
+	tbc = ndqb(&tp->t_outq, 0);
+
+	sc->sc_tba = tba;
+	sc->sc_tbc = tbc;
+	sc->sc_tx_busy = true;
+
+	sc->sc_ctl->sio_data = *sc->sc_tba;
+	sc->sc_tba++;
+	sc->sc_tbc--;
 out:
 	splx(s);
 }
@@ -294,7 +438,9 @@ sioparam(struct tty *tp, struct termios *t)
 static int
 siomctl(struct siotty_softc *sc, int control, int op)
 {
-	int val, s, wr5, rr;
+	int val, s;
+	uint8_t wr5;
+	uint16_t rr;
 
 	val = 0;
 	if (control & TIOCM_BREAK)
@@ -344,19 +490,13 @@ sioopen(dev_t dev, int flag, int mode, struct lwp *l)
 	struct siotty_softc *sc;
 	struct tty *tp;
 	int error;
+	int s;
 
 	sc = device_lookup_private(&siotty_cd, minor(dev));
 	if (sc == NULL)
 		return ENXIO;
-	if ((tp = sc->sc_tty) == NULL) {
-		tp = sc->sc_tty = tty_alloc();
-		tty_attach(tp);
-	}
 
-	tp->t_oproc = siostart;
-	tp->t_param = sioparam;
-	tp->t_hwiflow = NULL /* XXX siohwiflow XXX */;
-	tp->t_dev = dev;
+	tp = sc->sc_tty;
 
 	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return EBUSY;
@@ -364,6 +504,7 @@ sioopen(dev_t dev, int flag, int mode, struct lwp *l)
 	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
 		struct termios t;
 
+		tp->t_dev = dev;
 		t.c_ispeed = t.c_ospeed = TTYDEF_SPEED;
 		t.c_cflag = TTYDEF_CFLAG;
 		tp->t_ospeed = 0; /* force register update */
@@ -375,7 +516,6 @@ sioopen(dev_t dev, int flag, int mode, struct lwp *l)
 		ttsetwater(tp);
 		/* raise RTS and DTR here; but, DTR lead is not wired */
 		/* then check DCD condition; but, DCD lead is not wired */
-		tp->t_state |= TS_CARR_ON; /* assume detected all the time */
 #if 0
 		if ((sc->sc_flags & TIOCFLAG_SOFTCAR)
 		    || (tp->t_cflag & MDMBUF)
@@ -383,7 +523,14 @@ sioopen(dev_t dev, int flag, int mode, struct lwp *l)
 			tp->t_state |= TS_CARR_ON;
 		else
 			tp->t_state &= ~TS_CARR_ON;
+#else
+		tp->t_state |= TS_CARR_ON; /* assume detected all the time */
 #endif
+
+		s = splserial();
+		sc->sc_rbput = sc->sc_rbget = sc->sc_rbuf;
+		sc->sc_rbavail = siotty_rbuf_size;
+		splx(s);
 	}
 
 	error = ttyopen(tp, 0, (flag & O_NONBLOCK));
@@ -524,7 +671,7 @@ setsioreg(struct sioreg *sio, int regno, int val)
 	sio->sio_cmd = val;		/* DELAY(); */
 }
 
-/* EXPORT */ int
+/* EXPORT */ uint16_t
 getsiocsr(struct sioreg *sio)
 {
 	int val;
@@ -567,6 +714,8 @@ syscnattach(int channel)
 	syscons.cn_dev = makedev(cdevsw_lookup_major(&siotty_cdevsw),
 				 channel);
 	cn_tab = &syscons;
+	cn_init_magic(&siotty_cnm_state);
+	cn_set_magic("\047\001");
 
 	setsioreg(sio, WR0, WR0_CHANRST);
 	setsioreg(sio, WR2A, WR2_VEC86 | WR2_INTR_1);
