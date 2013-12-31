@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2013/09/21 22:28:12 joerg Exp $	
+#	$NetBSD: Makefile,v 1.10 2013/12/31 17:33:11 christos Exp $	
 
 WARNS?=	1	# XXX: need to cleanup later
 
@@ -39,6 +39,7 @@ print-bfd.c \
 print-bgp.c \
 print-bootp.c \
 print-bt.c \
+print-calm-fast.c \
 print-carp.c \
 print-cdp.c \
 print-cfm.c \
@@ -60,6 +61,7 @@ print-fddi.c \
 print-forces.c \
 print-fr.c \
 print-frag6.c \
+print-geonet.c \
 print-gre.c \
 print-hsrp.c \
 print-icmp.c \
@@ -87,12 +89,18 @@ print-mobile.c \
 print-mobility.c \
 print-mpcp.c \
 print-mpls.c \
+print-mptcp.c \
 print-msdp.c \
+print-msnlb.c \
+print-nflog.c \
 print-nfs.c \
 print-ntp.c \
 print-null.c \
 print-olsr.c \
+print-openflow.c \
+print-openflow-1.0.c \
 print-ospf.c \
+print-otv.c \
 print-pflog.c \
 print-pfsync.c \
 print-pgm.c \
@@ -135,8 +143,10 @@ print-vjc.c \
 print-vqp.c \
 print-vrrp.c \
 print-vtp.c \
+print-vxlan.c \
 print-wb.c \
-print-zephyr.c 
+print-zephyr.c \
+print-zeromq.c
 
 version.c: VERSION
 	${_MKTARGET_CREATE}
