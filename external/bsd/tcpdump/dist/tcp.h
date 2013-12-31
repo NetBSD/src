@@ -81,7 +81,8 @@ struct tcphdr {
 #define TCPOPT_AUTH             20      /* Enhanced AUTH option */
 #define	TCPOPT_UTO		28	/* tcp user timeout (rfc5482) */
 #define	   TCPOLEN_UTO			4
-
+#define	TCPOPT_MPTCP		30	/* MPTCP options */
+#define TCPOPT_EXPERIMENT2	254	/* experimental headers (rfc4727) */
 
 #define TCPOPT_TSTAMP_HDR	\
     (TCPOPT_NOP<<24|TCPOPT_NOP<<16|TCPOPT_TIMESTAMP<<8|TCPOLEN_TIMESTAMP)
@@ -93,6 +94,9 @@ struct tcphdr {
 #define BGP_PORT                179
 #endif
 #define NETBIOS_SSN_PORT        139
+#ifndef OPENFLOW_PORT
+#define OPENFLOW_PORT           6633
+#endif
 #ifndef PPTP_PORT
 #define PPTP_PORT	        1723
 #endif
@@ -101,7 +105,7 @@ struct tcphdr {
 #define NFS_PORT	        2049
 #endif
 #define MSDP_PORT	        639
-#define RPKI_RTR_PORT	        2222 /* experimental up until sidr-wg registers a well-known port */
+#define RPKI_RTR_PORT	        323
 #define LDP_PORT                646
 #ifndef SMB_PORT
 #define SMB_PORT                445

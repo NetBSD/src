@@ -27,7 +27,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-krb.c,v 1.23 2003-11-16 09:36:26 guy Exp ";
 #else
-__RCSID("$NetBSD: print-krb.c,v 1.3 2013/04/06 19:33:08 christos Exp $");
+__RCSID("$NetBSD: print-krb.c,v 1.4 2013/12/31 17:33:31 christos Exp $");
 #endif
 #endif
 
@@ -76,7 +76,7 @@ struct krb {
 
 static char tstr[] = " [|kerberos]";
 
-static struct tok type2str[] = {
+static const struct tok type2str[] = {
 	{ AUTH_MSG_KDC_REQUEST,		"KDC_REQUEST" },
 	{ AUTH_MSG_KDC_REPLY,		"KDC_REPLY" },
 	{ AUTH_MSG_APPL_REQUEST,	"APPL_REQUEST" },
@@ -89,7 +89,7 @@ static struct tok type2str[] = {
 	{ 0,				NULL }
 };
 
-static struct tok kerr2str[] = {
+static const struct tok kerr2str[] = {
 	{ KERB_ERR_OK,			"OK" },
 	{ KERB_ERR_NAME_EXP,		"NAME_EXP" },
 	{ KERB_ERR_SERVICE_EXP,		"SERVICE_EXP" },

@@ -15,19 +15,23 @@ dnl
 # config.sub.
 #
 
-AC_REVISION(Revision: 1.204 )
-AC_PREREQ(2.50)
+AC_PREREQ(2.61)
 AC_INIT(tcpdump.c)
 
 AC_CANONICAL_HOST
 
-AC_LBL_C_INIT_BEFORE_CC(V_CCOPT, V_INCLS)
+AC_LBL_C_INIT_BEFORE_CC(V_INCLS)
 AC_PROG_CC
 AC_LBL_C_INIT(V_CCOPT, V_INCLS)
 AC_LBL_C_INLINE
 AC_C___ATTRIBUTE__
 if test "$ac_cv___attribute__" = "yes"; then
-	AC_C___ATTRIBUTE___FORMAT_FUNCTION_POINTER
+	AC_C___ATTRIBUTE___UNUSED
+	AC_C___ATTRIBUTE___NORETURN_FUNCTION_POINTER
+	AC_C___ATTRIBUTE___FORMAT
+	if test "$ac_cv___attribute___format" = "yes"; then
+		AC_C___ATTRIBUTE___FORMAT_FUNCTION_POINTER
+	fi
 fi
 AC_CHECK_HEADERS(fcntl.h rpc/rpc.h rpc/rpcent.h netdnet/dnetdb.h)
 AC_CHECK_HEADERS(net/pfvar.h, , , [#include <sys/types.h>
@@ -141,7 +145,7 @@ main()
 }
 ],
 [ AC_MSG_RESULT(yes)
-  AC_DEFINE(LIBSMI)
+  AC_DEFINE(LIBSMI, 1, [Define if you enable support for libsmi])
   libsmi=yes],
 dnl autoconf documentation says that $? contains the exit value.
 dnl reality is that it does not.  We leave this in just in case
@@ -168,7 +172,8 @@ AC_ARG_ENABLE(smb,
 case "$enableval" in
 yes)	AC_MSG_RESULT(yes)
 	AC_WARN([The SMB printer may have exploitable buffer overflows!!!])
-	AC_DEFINE(TCPDUMP_DO_SMB)
+	AC_DEFINE(TCPDUMP_DO_SMB, 1,
+	    [define if you want to build the possibly-buggy SMB printer])
 	LOCALSRC="print-smb.c smbutil.c $LOCALSRC"
 	;;
 *)	AC_MSG_RESULT(no)
@@ -178,7 +183,8 @@ esac
 AC_ARG_WITH(user, [  --with-user=USERNAME    drop privileges by default to USERNAME])
 AC_MSG_CHECKING([whether to drop root privileges by default])
 if test ! -z "$with_user" ; then
-        AC_DEFINE_UNQUOTED(WITH_USER, "$withval")
+       AC_DEFINE_UNQUOTED(WITH_USER, "$withval",
+           [define if should drop privileges by default])
        AC_MSG_RESULT(to \"$withval\")
 else
        AC_MSG_RESULT(no)
@@ -187,11 +193,19 @@ fi
 AC_ARG_WITH(chroot, [  --with-chroot=DIRECTORY when dropping privileges, chroot to DIRECTORY])
 AC_MSG_CHECKING([whether to chroot])
 if test ! -z "$with_chroot" && test "$with_chroot" != "no" ; then
-        AC_DEFINE_UNQUOTED(WITH_CHROOT, "$withval")
+       AC_DEFINE_UNQUOTED(WITH_CHROOT, "$withval",
+           [define if should chroot when dropping privileges])
        AC_MSG_RESULT(to \"$withval\")
 else
        AC_MSG_RESULT(no)
 fi
+
+#
+# We must check this before checking whether to enable IPv6, because,
+# on some platforms (such as SunOS 5.x), the test program requires
+# the extra networking libraries.
+#
+AC_LBL_LIBRARY_NET
 
 AC_MSG_CHECKING([whether to enable ipv6])
 AC_ARG_ENABLE(ipv6,
@@ -200,7 +214,7 @@ AC_ARG_ENABLE(ipv6,
 [ case "$enableval" in
 yes)   AC_MSG_RESULT(yes)
        LOCALSRC="print-ip6.c print-ip6opts.c print-mobility.c print-ripng.c print-icmp6.c print-frag6.c print-rt6.c print-ospf6.c print-dhcp6.c print-babel.c $LOCALSRC"
-       AC_DEFINE(INET6)
+       AC_DEFINE(INET6, 1, [Define if you enable IPv6 support])
        ipv6=yes
        ;;
 *)
@@ -222,7 +236,7 @@ main()
 ],
 [ AC_MSG_RESULT(yes)
   LOCALSRC="print-ip6.c print-ip6opts.c print-mobility.c print-ripng.c print-icmp6.c print-frag6.c print-rt6.c print-ospf6.c print-dhcp6.c print-babel.c $LOCALSRC"
-  AC_DEFINE(INET6)
+  AC_DEFINE(INET6, 1, [Define if you enable IPv6 support])
   ipv6=yes],
 [ AC_MSG_RESULT(no)
   ipv6=no],
@@ -491,7 +505,8 @@ AC_CACHE_CHECK([for dnet_htoa declaration in netdnet/dnetdb.h],
 	td_cv_decl_netdnet_dnetdb_h_dnet_htoa=yes,
 	td_cv_decl_netdnet_dnetdb_h_dnet_htoa=no)])
 if test "$td_cv_decl_netdnet_dnetdb_h_dnet_htoa" = yes; then
-	AC_DEFINE(HAVE_NETDNET_DNETDB_H_DNET_HTOA)
+	AC_DEFINE(HAVE_NETDNET_DNETDB_H_DNET_HTOA, 1,
+	    [define if you have a dnet_htoa declaration in <netdnet/dnetdb.h>])
 fi
 
 dnl
@@ -535,12 +550,14 @@ fi
 
 AC_LBL_TYPE_SIGNAL
 
-AC_SEARCH_LIBS(dnet_htoa, dnet, AC_DEFINE(HAVE_DNET_HTOA))
+AC_SEARCH_LIBS(dnet_htoa, dnet,
+    AC_DEFINE(HAVE_DNET_HTOA, 1, [define if you have the dnet_htoa function]))
 
 AC_CHECK_LIB(rpc, main)		dnl It's unclear why we might need -lrpc
 
 dnl Some platforms may need -lnsl for getrpcbynumber.
-AC_SEARCH_LIBS(getrpcbynumber, nsl, AC_DEFINE(HAVE_GETRPCBYNUMBER))
+AC_SEARCH_LIBS(getrpcbynumber, nsl,
+    AC_DEFINE(HAVE_GETRPCBYNUMBER, 1, [define if you have getrpcbynumber()]))
 
 dnl AC_CHECK_LIB(z, uncompress)
 dnl AC_CHECK_HEADERS(zlib.h)
@@ -619,7 +636,8 @@ AC_CHECK_FUNCS(ether_ntohost, [
 	   [ac_cv_buggy_ether_ntohost=yes],
 	   [ac_cv_buggy_ether_ntohost="not while cross-compiling"])])
     if test "$ac_cv_buggy_ether_ntohost" = "no"; then
-	AC_DEFINE(USE_ETHER_NTOHOST)
+	AC_DEFINE(USE_ETHER_NTOHOST, 1,
+	    [define if you have ether_ntohost() and it works])
     fi
 ])
 if test "$ac_cv_func_ether_ntohost" = yes -a \
@@ -727,7 +745,7 @@ if test $ac_cv_func_pcap_create = "yes" ; then
 	AC_CHECK_FUNCS(pcap_set_tstamp_type)
 fi
 
-AC_CHECK_FUNCS(pcap_findalldevs pcap_dump_flush pcap_lib_version)
+AC_CHECK_FUNCS(pcap_findalldevs pcap_dump_flush pcap_lib_version pcap_setdirection)
 if test $ac_cv_func_pcap_findalldevs = "yes" ; then
 dnl Check for Mac OS X, which may ship pcap.h from 0.6 but libpcap may
 dnl be 0.8; this means that lib has pcap_findalldevs but header doesn't
@@ -750,7 +768,7 @@ if test $ac_cv_func_pcap_lib_version = "no" ; then
        ac_lbl_cv_pcap_version_defined=no)
     if test "$ac_lbl_cv_pcap_version_defined" = yes ; then
     	AC_MSG_RESULT(yes)
-	AC_DEFINE(HAVE_PCAP_VERSION)
+	AC_DEFINE(HAVE_PCAP_VERSION, 1, [define if libpcap has pcap_version])
     else
 	AC_MSG_RESULT(no)
     fi
@@ -766,7 +784,7 @@ AC_TRY_LINK([],
    ac_lbl_cv_pcap_debug_defined=no)
 if test "$ac_lbl_cv_pcap_debug_defined" = yes ; then
 	AC_MSG_RESULT(yes)
-	AC_DEFINE(HAVE_PCAP_DEBUG)
+	AC_DEFINE(HAVE_PCAP_DEBUG, 1, [define if libpcap has pcap_debug])
 else
 	AC_MSG_RESULT(no)
 	#
@@ -783,7 +801,7 @@ else
 	   ac_lbl_cv_yydebug_defined=no)
 	if test "$ac_lbl_cv_yydebug_defined" = yes ; then
 		AC_MSG_RESULT(yes)
-		AC_DEFINE(HAVE_YYDEBUG)
+		AC_DEFINE(HAVE_YYDEBUG, 1, [define if libpcap has yydebug])
 	else
 		AC_MSG_RESULT(no)
 	fi
@@ -850,25 +868,29 @@ if test -f /dev/bpf -o -f /dev/bpf0; then
 	V_GROUP=bpf
 fi
 
+#
+# Make sure we have definitions for all the C99 specified-width types
+# (regardless of whether the environment is a C99 environment or not).
+AC_TYPE_INT8_T
+AC_TYPE_INT16_T
+AC_TYPE_INT32_T
+AC_TYPE_INT64_T
+AC_TYPE_UINT8_T
+AC_TYPE_UINT16_T
+AC_TYPE_UINT32_T
+AC_TYPE_UINT64_T
+
+#
+# For now, we're using the old BSD-style u_intXX_t types, so check for
+# them.
+#
+# We should probably migrate to the standard C uintXX_t types.
+#
 AC_CHECK_HEADERS(sys/bitypes.h)
 
-AC_CHECK_TYPE([int8_t], ,
-	[AC_DEFINE([int8_t], [signed char],
-	[Define to `signed char' if int8_t not defined.])],
-	[AC_INCLUDES_DEFAULT
-#ifdef HAVE_SYS_BITYPES_H
-#include <sys/bitypes.h>
-#endif])
 AC_CHECK_TYPE([u_int8_t], ,
 	[AC_DEFINE([u_int8_t], [unsigned char],
 	[Define to `unsigned char' if u_int8_t not defined.])],
-	[AC_INCLUDES_DEFAULT
-#ifdef HAVE_SYS_BITYPES_H
-#include <sys/bitypes.h>
-#endif])
-AC_CHECK_TYPE([int16_t], ,
-	[AC_DEFINE([int16_t], [short],
-	[Define to `short' if int16_t not defined.])]
 	[AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_BITYPES_H
 #include <sys/bitypes.h>
@@ -880,23 +902,9 @@ AC_CHECK_TYPE([u_int16_t], ,
 #ifdef HAVE_SYS_BITYPES_H
 #include <sys/bitypes.h>
 #endif])
-AC_CHECK_TYPE([int32_t], ,
-	[AC_DEFINE([int32_t], [int],
-	[Define to `int' if int32_t not defined.])],
-	[AC_INCLUDES_DEFAULT
-#ifdef HAVE_SYS_BITYPES_H
-#include <sys/bitypes.h>
-#endif])
 AC_CHECK_TYPE([u_int32_t], ,
 	[AC_DEFINE([u_int32_t], [unsigned int],
 	[Define to `unsigned int' if u_int32_t not defined.])],
-	[AC_INCLUDES_DEFAULT
-#ifdef HAVE_SYS_BITYPES_H
-#include <sys/bitypes.h>
-#endif])
-AC_CHECK_TYPE([int64_t], ,
-	[AC_DEFINE([int64_t], [long long],
-	[Define to `long long' if int64_t not defined.])],
 	[AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_BITYPES_H
 #include <sys/bitypes.h>
@@ -910,13 +918,13 @@ AC_CHECK_TYPE([u_int64_t], ,
 #endif])
 
 #
-# We can't just check for <inttypes.h> - some systems have one that
-# doesn't define all the PRI[doxu]64 macros.
+# Check for <inttypes.h>
 #
 AC_CHECK_HEADERS(inttypes.h,
   [
     #
-    # OK, we have inttypes.h, but does it define those macros?
+    # OK, we have inttypes.h, but does it define all the PRI[doxu]64 macros?
+    # Some systems have an inttypes.h that doesn't define all of them.
     #
     AC_MSG_CHECKING([[whether inttypes.h defines the PRI[doxu]64 macros]])
     AC_COMPILE_IFELSE(
@@ -994,13 +1002,13 @@ AC_LBL_UNALIGNED_ACCESS
 
 AC_VAR_H_ERRNO
 
-# Check for SSLeay
-AC_MSG_CHECKING(whether to use SSLeay libcrypto)
+# Check for OpenSSL libcrypto
+AC_MSG_CHECKING(whether to use OpenSSL libcrypto)
 # Specify location for both includes and libraries.
-want_libcrypto=youmama
+want_libcrypto=ifavailable
 AC_ARG_WITH(crypto,
-    AS_HELP_STRING([--with-crypto@<:@=PATH@:>@],
-		   [use SSLeay libcrypto (located in directory PATH, if supplied).  @<:@default=yes, if available@:>@]),
+    AS_HELP_STRING([--with-crypto],
+		   [use OpenSSL libcrypto @<:@default=yes, if available@:>@]),
 [
 	if test $withval = no
 	then
@@ -1010,10 +1018,6 @@ AC_ARG_WITH(crypto,
 	then
 		want_libcrypto=yes
 		AC_MSG_RESULT(yes)
-	else
-		want_libcrypto=yes
-		AC_MSG_RESULT(yes)
-		crypto_dir=$withval
 	fi
 ],[
 	#
@@ -1023,63 +1027,8 @@ AC_ARG_WITH(crypto,
 	AC_MSG_RESULT([yes, if available])
 ])
 if test "$want_libcrypto" != "no"; then
-	ac_cv_ssleay_path=no
-	incdir=no
-	if test "x$crypto_dir" = x; then
-		#
-		# Location not specified; check the default locations.
-		#
-		AC_MSG_CHECKING(where SSLeay is located)
-		dirs="/usr /usr/local /usr/local/ssl /usr/pkg"
-		if test "x${host_alias}" != x; then
-			dirs="/usr/${host_alias} $dirs"
-		fi
-		for dir in $dirs; do
-			AC_LBL_SSLEAY($dir)
-
-			if test "$ac_cv_ssleay_path" != "no" -a "$incdir" != "no"; then
-				break;
-			else
-				ac_cv_ssleay_path=no
-				incdir=no
-			fi
-		done
-		if test "$ac_cv_ssleay_path" != no; then
-			AC_MSG_RESULT($ac_cv_ssleay_path)
-		fi
-	else
-		AC_MSG_CHECKING(for SSLeay in $crypto_dir)
-		AC_LBL_SSLEAY($crypto_dir)
-		if test "$ac_cv_ssleay_path" != no; then
-			AC_MSG_RESULT(found)
-		fi
-	fi
-	if test "$ac_cv_ssleay_path" != no; then
-		V_INCLS="$V_INCLS $incdir"
-		if test "$dir" != "/usr"; then
-			LDFLAGS="-L$dir/lib $LDFLAGS"
-		fi
-		if test -f $ac_cv_ssleay_path/lib/libRSAglue.a; then
-			LIBS="$LIBS -lRSAglue"
-		fi
-		if test -f $ac_cv_ssleay_path/lib/librsaref.a; then
-			LIBS="$LIBS -lrsaref"
-		fi
-		AC_CHECK_LIB(crypto, DES_cbc_encrypt)
-
-		savedcppflags="$CPPFLAGS"
-		CPPFLAGS="$CPPFLAGS $V_INCLS"
-		AC_CHECK_HEADERS(openssl/evp.h)
-		CPPFLAGS="$savedcppflags"
-	else
-		#
-		# Not found.  Did the user explicitly ask for it?
-		#
-		AC_MSG_RESULT(not found)
-		if test "$want_libcrypto" = yes; then
-			AC_MSG_ERROR(SSLeay not found)
-		fi
-	fi
+	AC_CHECK_LIB(crypto, DES_cbc_encrypt)
+	AC_CHECK_HEADERS(openssl/evp.h)
 fi
 
 dnl

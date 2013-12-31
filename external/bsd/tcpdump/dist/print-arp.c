@@ -25,7 +25,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-arp.c,v 1.66 2006-03-03 22:53:21 hannes Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-arp.c,v 1.3 2013/04/06 19:33:08 christos Exp $");
+__RCSID("$NetBSD: print-arp.c,v 1.4 2013/12/31 17:33:31 christos Exp $");
 #endif
 #endif
 
@@ -104,7 +104,7 @@ struct  arp_pkthdr {
 #define TPA(ap) (ar_tpa(ap))
 
 
-struct tok arpop_values[] = {
+static const struct tok arpop_values[] = {
     { ARPOP_REQUEST, "Request" },
     { ARPOP_REPLY, "Reply" },
     { ARPOP_REVREQUEST, "Reverse Request" },
@@ -115,7 +115,7 @@ struct tok arpop_values[] = {
     { 0, NULL }
 };
 
-struct tok arphrd_values[] = {
+static const struct tok arphrd_values[] = {
     { ARPHRD_ETHER, "Ethernet" },
     { ARPHRD_IEEE802, "TokenRing" },
     { ARPHRD_ARCNET, "ArcNet" },

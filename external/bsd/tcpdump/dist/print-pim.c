@@ -25,7 +25,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-pim.c,v 1.49 2006-02-13 01:31:35 hannes Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-pim.c,v 1.4 2013/10/20 02:58:34 christos Exp $");
+__RCSID("$NetBSD: print-pim.c,v 1.5 2013/12/31 17:33:31 christos Exp $");
 #endif
 #endif
 
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: print-pim.c,v 1.4 2013/10/20 02:58:34 christos Exp $");
 #define PIMV2_TYPE_CANDIDATE_RP  8
 #define PIMV2_TYPE_PRUNE_REFRESH 9
 
-static struct tok pimv2_type_values[] = {
+static const struct tok pimv2_type_values[] = {
     { PIMV2_TYPE_HELLO,         "Hello" },
     { PIMV2_TYPE_REGISTER,      "Register" },
     { PIMV2_TYPE_REGISTER_STOP, "Register Stop" },
@@ -79,7 +79,7 @@ static struct tok pimv2_type_values[] = {
 #define PIMV2_HELLO_OPTION_ADDRESS_LIST        24
 #define PIMV2_HELLO_OPTION_ADDRESS_LIST_OLD 65001
 
-static struct tok pimv2_hello_option_values[] = {
+static const struct tok pimv2_hello_option_values[] = {
     { PIMV2_HELLO_OPTION_HOLDTIME,         "Hold Time" },
     { PIMV2_HELLO_OPTION_LANPRUNEDELAY,    "LAN Prune Delay" },
     { PIMV2_HELLO_OPTION_DR_PRIORITY_OLD,  "DR Priority (Old)" },
@@ -96,7 +96,7 @@ static struct tok pimv2_hello_option_values[] = {
 #define PIMV2_REGISTER_FLAG_BORDER 0x80000000
 #define PIMV2_REGISTER_FLAG_NULL   0x40000000
 
-static struct tok pimv2_register_flag_values[] = {
+static const struct tok pimv2_register_flag_values[] = {
     { PIMV2_REGISTER_FLAG_BORDER, "Border" },
     { PIMV2_REGISTER_FLAG_NULL, "Null" },
     { 0, NULL}

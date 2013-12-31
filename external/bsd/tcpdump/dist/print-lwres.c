@@ -33,7 +33,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-lwres.c,v 1.13 2004-03-24 01:54:29 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-lwres.c,v 1.3 2013/04/06 19:33:08 christos Exp $");
+__RCSID("$NetBSD: print-lwres.c,v 1.4 2013/12/31 17:33:31 christos Exp $");
 #endif
 #endif
 
@@ -180,7 +180,7 @@ typedef struct {
 #define LWRES_MAX_ALIASES		16		/* max # of aliases */
 #define LWRES_MAX_ADDRS			64		/* max # of addrs */
 
-struct tok opcode[] = {
+static const struct tok opcode[] = {
 	{ LWRES_OPCODE_NOOP,		"noop", },
 	{ LWRES_OPCODE_GETADDRSBYNAME,	"getaddrsbyname", },
 	{ LWRES_OPCODE_GETNAMEBYADDR,	"getnamebyaddr", },
@@ -189,8 +189,8 @@ struct tok opcode[] = {
 };
 
 /* print-domain.c */
-extern struct tok ns_type2str[];
-extern struct tok ns_class2str[];
+extern const struct tok ns_type2str[];
+extern const struct tok ns_class2str[];
 
 static int lwres_printname(size_t, const char *);
 static int lwres_printnamelen(const char *);

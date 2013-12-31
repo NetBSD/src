@@ -19,7 +19,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-pgm.c,v 1.5 2005-06-07 22:05:58 guy Exp ";
 #else
-__RCSID("$NetBSD: print-pgm.c,v 1.4 2013/10/20 02:58:34 christos Exp $");
+__RCSID("$NetBSD: print-pgm.c,v 1.5 2013/12/31 17:33:31 christos Exp $");
 #endif
 #endif
 
@@ -242,13 +242,10 @@ pgm_print(register const u_char *bp, register u_int length,
 
 	TCHECK(*pgm);
 
-        (void)printf("PGM, length %u", pgm->pgm_length);
+        (void)printf("PGM, length %u", EXTRACT_16BITS(&pgm->pgm_length));
 
         if (!vflag)
             return;
-
-        if (length > pgm->pgm_length)
-            length = pgm->pgm_length;
 
 	(void)printf(" 0x%02x%02x%02x%02x%02x%02x ",
 		     pgm->pgm_gsid[0],
@@ -476,7 +473,7 @@ pgm_print(register const u_char *bp, register u_int length,
 	    break;
 
 	default:
-	    (void)printf("UNKNOWN type %0x02x", pgm->pgm_type);
+	    (void)printf("UNKNOWN type 0x%02x", pgm->pgm_type);
 	    break;
 
 	}
@@ -825,7 +822,10 @@ pgm_print(register const u_char *bp, register u_int length,
 	     }
 	}
 
-	(void)printf(" [%u]", EXTRACT_16BITS(&pgm->pgm_length));
+	(void)printf(" [%u]", length);
+	if (packettype == PT_PGM_ZMTP1 &&
+	    (pgm->pgm_type == PGM_ODATA || pgm->pgm_type == PGM_RDATA))
+		zmtp1_print_datagram(bp, EXTRACT_16BITS(&pgm->pgm_length));
 
 	return;
 

@@ -24,7 +24,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-sll.c,v 1.19 2005-11-13 12:12:43 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-sll.c,v 1.3 2013/04/06 19:33:08 christos Exp $");
+__RCSID("$NetBSD: print-sll.c,v 1.4 2013/12/31 17:33:31 christos Exp $");
 #endif
 #endif
 
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: print-sll.c,v 1.3 2013/04/06 19:33:08 christos Exp $");
 #include "ether.h"
 #include "sll.h"
 
-const struct tok sll_pkttype_values[] = {
+static const struct tok sll_pkttype_values[] = {
     { LINUX_SLL_HOST, "In" },
     { LINUX_SLL_BROADCAST, "B" },
     { LINUX_SLL_MULTICAST, "M" },

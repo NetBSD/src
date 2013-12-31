@@ -28,7 +28,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-llc.c,v 1.75 2007-04-13 09:43:11 hannes Exp ";
 #else
-__RCSID("$NetBSD: print-llc.c,v 1.3 2013/04/06 19:33:08 christos Exp $");
+__RCSID("$NetBSD: print-llc.c,v 1.4 2013/12/31 17:33:31 christos Exp $");
 #endif
 #endif
 
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: print-llc.c,v 1.3 2013/04/06 19:33:08 christos Exp $");
 #include "ethertype.h"
 #include "oui.h"
 
-static struct tok llc_values[] = {
+static const struct tok llc_values[] = {
         { LLCSAP_NULL,     "Null" },
         { LLCSAP_GLOBAL,   "Global" },
         { LLCSAP_8021B_I,  "802.1B I" },
@@ -68,7 +68,7 @@ static struct tok llc_values[] = {
         { 0,               NULL },
 };
 
-static struct tok llc_cmd_values[] = {
+static const struct tok llc_cmd_values[] = {
 	{ LLC_UI,	"ui" },
 	{ LLC_TEST,	"test" },
 	{ LLC_XID,	"xid" },
@@ -112,6 +112,7 @@ static const struct tok cisco_values[] = {
 	{ PID_CISCO_DTP, "DTP" },
 	{ PID_CISCO_UDLD, "UDLD" },
 	{ PID_CISCO_PVST, "PVST" },
+	{ PID_CISCO_VLANBRIDGE, "VLAN Bridge" },
 	{ 0,             NULL }
 };
 
@@ -458,6 +459,7 @@ snap_print(const u_char *p, u_int length, u_int caplen, u_int bridge_pad)
                         vtp_print(p, length);
                         return (1);
                 case PID_CISCO_PVST:
+                case PID_CISCO_VLANBRIDGE:
                         stp_print(p, length);
                         return (1);
                 default:

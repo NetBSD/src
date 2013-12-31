@@ -27,7 +27,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-esp.c,v 1.58 2007-12-07 00:03:07 mcr Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-esp.c,v 1.4 2013/10/20 02:58:34 christos Exp $");
+__RCSID("$NetBSD: print-esp.c,v 1.5 2013/12/31 17:33:31 christos Exp $");
 #endif
 #endif
 
@@ -41,9 +41,15 @@ __RCSID("$NetBSD: print-esp.c,v 1.4 2013/10/20 02:58:34 christos Exp $");
 
 #include <stdlib.h>
 
+/* Any code in this file that depends on HAVE_LIBCRYPTO depends on
+ * HAVE_OPENSSL_EVP_H too. Undefining the former when the latter isn't defined
+ * is the simplest way of handling the dependency.
+ */
 #ifdef HAVE_LIBCRYPTO
 #ifdef HAVE_OPENSSL_EVP_H
 #include <openssl/evp.h>
+#else
+#undef HAVE_LIBCRYPTO
 #endif
 #endif
 
@@ -92,6 +98,7 @@ struct sa_list {
 /*
  * this will adjust ndo_packetp and ndo_snapend to new buffer!
  */
+USES_APPLE_DEPRECATED_API
 int esp_print_decrypt_buffer_by_ikev2(netdissect_options *ndo,
 				      int initiator,
 				      u_char spii[8], u_char spir[8],
@@ -141,6 +148,7 @@ int esp_print_decrypt_buffer_by_ikev2(netdissect_options *ndo,
 	return 1;
 	
 }
+USES_APPLE_RST
 
 static void esp_print_addsa(netdissect_options *ndo,
 			    struct sa_list *sa, int sa_def)
@@ -217,6 +225,7 @@ int espprint_decode_hex(netdissect_options *ndo,
  * decode the form:    SPINUM@IP <tab> ALGONAME:0xsecret
  */
 
+USES_APPLE_DEPRECATED_API
 static int
 espprint_decode_encalgo(netdissect_options *ndo,
 			char *decode, struct sa_list *sa)
@@ -280,6 +289,7 @@ espprint_decode_encalgo(netdissect_options *ndo,
 
 	return 1;
 }
+USES_APPLE_RST
 
 /*
  * for the moment, ignore the auth algorith, just hard code the authenticator
@@ -480,12 +490,14 @@ static void esp_print_decode_onesecret(netdissect_options *ndo, char *line,
 	esp_print_addsa(ndo, &sa1, sa_def);
 }
 
+USES_APPLE_DEPRECATED_API
 static void esp_init(netdissect_options *ndo _U_)
 {
 
 	OpenSSL_add_all_algorithms();
 	EVP_add_cipher_alias(SN_des_ede3_cbc, "3des");
 }
+USES_APPLE_RST
 
 void esp_print_decodesecret(netdissect_options *ndo)
 {
@@ -515,6 +527,9 @@ void esp_print_decodesecret(netdissect_options *ndo)
 
 #endif
 
+#ifdef HAVE_LIBCRYPTO
+USES_APPLE_DEPRECATED_API
+#endif
 int
 esp_print(netdissect_options *ndo,
 	  const u_char *bp, const int length, const u_char *bp2
@@ -685,6 +700,9 @@ esp_print(netdissect_options *ndo,
 fail:
 	return -1;
 }
+#ifdef HAVE_LIBCRYPTO
+USES_APPLE_RST
+#endif
 
 /*
  * Local Variables:

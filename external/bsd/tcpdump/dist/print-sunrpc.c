@@ -25,7 +25,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-sunrpc.c,v 1.47 2005-04-27 21:43:48 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-sunrpc.c,v 1.3 2013/04/06 19:33:08 christos Exp $");
+__RCSID("$NetBSD: print-sunrpc.c,v 1.4 2013/12/31 17:33:31 christos Exp $");
 #endif
 #endif
 
@@ -73,7 +73,7 @@ __RCSID("$NetBSD: print-sunrpc.c,v 1.3 2013/04/06 19:33:08 christos Exp $");
 #include "rpc_msg.h"
 #include "pmap_prot.h"
 
-static struct tok proc2str[] = {
+static const struct tok proc2str[] = {
 	{ SUNRPC_PMAPPROC_NULL,		"null" },
 	{ SUNRPC_PMAPPROC_SET,		"set" },
 	{ SUNRPC_PMAPPROC_UNSET,	"unset" },
