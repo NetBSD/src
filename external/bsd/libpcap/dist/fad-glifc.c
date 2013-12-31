@@ -1,4 +1,4 @@
-/*	$NetBSD: fad-glifc.c,v 1.1.1.3 2013/04/06 15:57:49 christos Exp $	*/
+/*	$NetBSD: fad-glifc.c,v 1.1.1.4 2013/12/31 16:57:18 christos Exp $	*/
 
 /* -*- Mode: c; tab-width: 8; indent-tabs-mode: 1; c-basic-offset: 8; -*- */
 /*
@@ -82,7 +82,7 @@ struct rtentry;		/* declarations in <net/if.h> */
  * SIOCGLIFCONF rather than SIOCGIFCONF in order to get IPv6 addresses.)
  */
 int
-pcap_findalldevs(pcap_if_t **alldevsp, char *errbuf)
+pcap_findalldevs_interfaces(pcap_if_t **alldevsp, char *errbuf)
 {
 	pcap_if_t *devlist = NULL;
 	register int fd4, fd6, fd;
@@ -363,15 +363,6 @@ pcap_findalldevs(pcap_if_t **alldevsp, char *errbuf)
 	free(buf);
 	(void)close(fd6);
 	(void)close(fd4);
-
-	if (ret != -1) {
-		/*
-		 * We haven't had any errors yet; do any platform-specific
-		 * operations to add devices.
-		 */
-		if (pcap_platform_finddevs(&devlist, errbuf) < 0)
-			ret = -1;
-	}
 
 	if (ret == -1) {
 		/*

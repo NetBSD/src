@@ -1,4 +1,3 @@
-.\" @(#) Header: /tcpdump/master/libpcap/pcap_is_swapped.3pcap,v 1.3 2008-04-06 02:53:22 guy Exp 
 .\"
 .\" Copyright (c) 1994, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -19,35 +18,30 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.TH PCAP_IS_SWAPPED 3PCAP "5 April 2008"
+.TH PCAP_SET_IMMEDIATE_MODE 3PCAP "8 May 20013"
 .SH NAME
-pcap_is_swapped \- find out whether a savefile has the native byte order
+pcap_set_immediate_mode \- set immediate mode for a not-yet-activated capture
+handle
 .SH SYNOPSIS
 .nf
 .ft B
 #include <pcap/pcap.h>
-.ft
 .LP
 .ft B
-int pcap_is_swapped(pcap_t *p);
+int pcap_set_immediate_mode(pcap_t *p, int immediate_mode);
 .ft
 .fi
 .SH DESCRIPTION
-.B pcap_is_swapped()
-returns true (1) if
-.I p
-refers to a ``savefile'' that uses a different byte order
-than the current system.  For a live capture, it always returns false
-(0).
-.PP
-It must not be called on a pcap descriptor created by
-.B pcap_create()
-that has not yet been activated by
-.BR pcap_activate() .
+.B pcap_set_immediate_mode()
+sets whether immediate mode should be set on a capture handle when
+the handle is activated.
+If
+.I immediate_mode
+is non-zero, immediate mode will be set, otherwise it will not be set.
 .SH RETURN VALUE
-.B pcap_datalink()
-returns true (1) or false (0) on success and
-.B PCAP_ERROR_NOT_ACTIVATED
-if called on a capture handle that has been created but not activated.
+.B pcap_set_immediate_mode()
+returns 0 on success or
+.B PCAP_ERROR_ACTIVATED
+if called on a capture handle that has been activated.
 .SH SEE ALSO
-pcap(3PCAP)
+pcap(3PCAP), pcap_create(3PCAP), pcap_activate(3PCAP)

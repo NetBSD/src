@@ -1,4 +1,4 @@
-/*	$NetBSD: sf-pcap.h,v 1.1.1.2 2013/04/06 15:57:46 christos Exp $	*/
+/*	$NetBSD: sf-pcap.h,v 1.1.1.3 2013/12/31 16:57:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -33,6 +33,7 @@
 #ifndef sf_pcap_h
 #define	sf_pcap_h
 
-extern int pcap_check_header(pcap_t *, bpf_u_int32, FILE *, char *);
+extern pcap_t *pcap_check_header(bpf_u_int32 magic, FILE *fp,
+    u_int precision, char *errbuf, int *err);
 
 #endif
