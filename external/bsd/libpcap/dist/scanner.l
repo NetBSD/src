@@ -1,4 +1,4 @@
-/*	$NetBSD: scanner.l,v 1.4 2013/04/06 17:29:53 christos Exp $	*/
+/*	$NetBSD: scanner.l,v 1.5 2013/12/31 17:08:23 christos Exp $	*/
 
 %{
 /*
@@ -210,20 +210,8 @@ vrrp		return VRRP;
 carp		return CARP;
 radio		return RADIO;
 
-ip6		{
-#ifdef INET6
-		return IPV6;
-#else
-		bpf_error("%s not supported", yytext);
-#endif
-		}
-icmp6		{
-#ifdef INET6
-		return ICMPV6;
-#else
-		bpf_error("%s not supported", yytext);
-#endif
-		}
+ip6		return IPV6;
+icmp6		return ICMPV6;
 ah		return AH;
 esp		return ESP;
 
@@ -327,10 +315,17 @@ fisu		return FISU;
 lssu		return LSSU;
 lsu		return LSSU;
 msu		return MSU;
+hfisu		return HFISU;
+hlssu		return HLSSU;
+hmsu		return HMSU;
 sio		return SIO;
 opc		return OPC;
 dpc		return DPC;
 sls		return SLS;
+hsio		return HSIO;
+hopc		return HOPC;
+hdpc		return HDPC;
+hsls		return HSLS;
 
 [ \r\n\t]		;
 [+\-*/:\[\]!<>()&|=]	return yytext[0];
@@ -341,8 +336,12 @@ sls		return SLS;
 "<<"			return LSH;
 ">>"			return RSH;
 ${B}			{ yylval.e = pcap_ether_aton(((char *)yytext)+1);
+			  if (yylval.e == NULL)
+				bpf_error("malloc");
 			  return AID; }
 {MAC}			{ yylval.e = pcap_ether_aton((char *)yytext);
+			  if (yylval.e == NULL)
+				bpf_error("malloc");
 			  return EID; }
 {N}			{ yylval.i = stoi((char *)yytext); return NUM; }
 ({N}\.{N})|({N}\.{N}\.{N})|({N}\.{N}\.{N}\.{N})	{
