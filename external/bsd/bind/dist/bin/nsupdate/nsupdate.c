@@ -1,4 +1,4 @@
-/*	$NetBSD: nsupdate.c,v 1.7 2013/07/27 19:23:10 christos Exp $	*/
+/*	$NetBSD: nsupdate.c,v 1.8 2013/12/31 20:24:39 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
@@ -83,7 +83,11 @@
 
 #ifdef GSSAPI
 #include <dst/gssapi.h>
+#ifdef WIN32
+#include <krb5/krb5.h>
+#else
 #include ISC_PLATFORM_KRB5HEADER
+#endif
 #endif
 #include <bind9/getaddresses.h>
 
@@ -545,8 +549,8 @@ setup_keystr(void) {
 		n = s;
 	}
 
-	isc_buffer_init(&keynamesrc, name, n - name);
-	isc_buffer_add(&keynamesrc, n - name);
+	isc_buffer_init(&keynamesrc, name, (unsigned int)(n - name));
+	isc_buffer_add(&keynamesrc, (unsigned int)(n - name));
 
 	debug("namefromtext");
 	result = dns_name_fromtext(keyname, &keynamesrc, dns_rootname, 0, NULL);
@@ -1541,16 +1545,20 @@ evaluate_realm(char *cmdline) {
 #ifdef GSSAPI
 	char *word;
 	char buf[1024];
+	int n;
 
-	word = nsu_strsep(&cmdline, " \t\r\n");
-	if (word == NULL || *word == 0) {
-		if (realm != NULL)
-			isc_mem_free(mctx, realm);
+	if (realm != NULL) {
+		isc_mem_free(mctx, realm);
 		realm = NULL;
-		return (STATUS_MORE);
 	}
 
-	snprintf(buf, sizeof(buf), "@%s", word);
+	word = nsu_strsep(&cmdline, " \t\r\n");
+	if (word == NULL || *word == 0)
+		return (STATUS_MORE);
+
+	n = snprintf(buf, sizeof(buf), "@%s", word);
+	if (n < 0 || (size_t)n >= sizeof(buf))
+		fatal("realm is too long");
 	realm = isc_mem_strdup(mctx, buf);
 	if (realm == NULL)
 		fatal("out of memory");
@@ -2010,7 +2018,8 @@ get_next_command(void) {
 	if (interactive) {
 #ifdef HAVE_READLINE
 		cmdline = readline("> ");
-		add_history(cmdline);
+		if (cmdline != NULL)
+			add_history(cmdline);
 #else
 		fprintf(stdout, "> ");
 		fflush(stdout);
