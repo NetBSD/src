@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.19 2013/11/08 19:21:01 christos Exp $
+# $NetBSD: ad.arm,v 1.20 2013/12/31 20:26:18 christos Exp $
 ./usr/lib/libarm_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libc_vfp_g.a				comp-c-debuglib		debuglib,softfloat
 ./usr/lib/libpmc_g.a				comp-c-debuglib		debuglib
@@ -106,7 +106,7 @@
 ./usr/libdata/debug/usr/lib/oabi/libintl.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libipsec.so.3.0.debug	comp-net-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libisc.so.6.0.debug		comp-bind-debug	debug,compat,obsolete
-./usr/libdata/debug/usr/lib/oabi/libisc.so.7.0.debug		comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/oabi/libisc.so.7.1.debug		comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libisccc.so.6.0.debug	comp-bind-debug	debug,compat,obsolete
 ./usr/libdata/debug/usr/lib/oabi/libisccc.so.7.0.debug	comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libisccfg.so.6.0.debug	comp-bind-debug	debug,compat,obsolete
