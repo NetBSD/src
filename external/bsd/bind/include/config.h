@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: acconfig.h,v 1.53 2008/12/01 23:47:44 tbox Exp */
+/* Id: acconfig.h,v 1.53 2008/12/01 23:47:44 tbox Exp  */
 
 /*! \file */
 
@@ -87,7 +87,8 @@
  */
 /* #undef CALL_PTHREAD_SETCONCURRENCY */
 
-#if 0  /* We'll define this in each Makefile as necessary */
+#ifndef __NetBSD__
+/* defined by the build process */
 /** define if IPv6 is not disabled */
 #define WANT_IPV6 1
 #endif
@@ -147,6 +148,9 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define if OpenSSL includes DSA support */
 #define HAVE_OPENSSL_DSA 1
+
+/* Define if OpenSSL includes ECDSA support */
+#define HAVE_OPENSSL_ECDSA 1
 
 /* Define to the length type used by the socket API (socklen_t, size_t, int). */
 #define ISC_SOCKADDR_LEN_T socklen_t
@@ -263,6 +267,9 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the `pthread' library (-lpthread). */
 #define HAVE_LIBPTHREAD 1
 
+/* Define to 1 if you have the `rt' library (-lrt). */
+#define HAVE_LIBRT 1
+
 /* Define to 1 if you have the `scf' library (-lscf). */
 /* #undef HAVE_LIBSCF */
 
@@ -273,10 +280,13 @@ int sigwait(const unsigned int *set, int *sig);
 /* #undef HAVE_LIBTHR */
 
 /* Define if libxml2 was found */
-/* #undef HAVE_LIBXML2 */
+/* #undef HAVE_LIBXML2 1 */
 
 /* Define to 1 if you have the <linux/capability.h> header file. */
 /* #undef HAVE_LINUX_CAPABILITY_H */
+
+/* Define to 1 if you have the <linux/types.h> header file. */
+/* #undef HAVE_LINUX_TYPES_H */
 
 /* Define to 1 if you have the <locale.h> header file. */
 #define HAVE_LOCALE_H 1
@@ -290,17 +300,29 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the <net/if6.h> header file. */
 /* #undef HAVE_NET_IF6_H */
 
-/* Define if OpenSSL includes ECDSA support */
+/* Define if your OpenSSL version supports ECDSA. */
 #define HAVE_OPENSSL_ECDSA 1
 
 /* Define if your OpenSSL version supports GOST. */
 #define HAVE_OPENSSL_GOST 1
 
+/* Define to 1 if you have the `pthread_yield' function. */
+/* #undef HAVE_PTHREAD_YIELD */
+
+/* Define to 1 if you have the `pthread_yield_np' function. */
+/* #undef HAVE_PTHREAD_YIELD_NP */
+
 /* Define to 1 if you have the `readline' function. */
-#define HAVE_READLINE 1
+/* #undef HAVE_READLINE */
 
 /* Define to 1 if you have the <regex.h> header file. */
 #define HAVE_REGEX_H 1
+
+/* Define to 1 if you have the <sched.h> header file. */
+#define HAVE_SCHED_H 1
+
+/* Define to 1 if you have the `sched_yield' function. */
+#define HAVE_SCHED_YIELD 1
 
 /* Define to 1 if you have the `setegid' function. */
 #define HAVE_SETEGID 1
@@ -386,6 +408,10 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to allow building of objects for dlopen(). */
 #define ISC_DLZ_DLOPEN 1
 
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#define LT_OBJDIR ".libs/"
+
 /* Defined if extern char *optarg is not declared. */
 /* #undef NEED_OPTARG */
 
@@ -431,15 +457,16 @@ int sigwait(const unsigned int *set, int *sig);
    non-blocking. */
 /* #undef USE_FIONBIO_IOCTL */
 
+/* Enable DNS Response Rate Limiting */
+/* #undef USE_RRL */
+
 /* define if idnkit support is to be included. */
 /* #undef WITH_IDN */
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */
-#include <sys/endian.h>
-#if _BYTE_ORDER == _BIG_ENDIAN
-#define WORDS_BIGENDIAN
-#endif
+#ifndef __NetBSD__
+/* Defined by the build process */
 #if defined AC_APPLE_UNIVERSAL_BUILD
 # if defined __BIG_ENDIAN__
 #  define WORDS_BIGENDIAN 1
@@ -447,6 +474,12 @@ int sigwait(const unsigned int *set, int *sig);
 #else
 # ifndef WORDS_BIGENDIAN
 /* #  undef WORDS_BIGENDIAN */
+# endif
+#endif
+#else
+# include <sys/endian.h>
+# if _BYTE_ORDER == _BIG_ENDIAN
+#  define WORDS_BIGENDIAN 1
 # endif
 #endif
 

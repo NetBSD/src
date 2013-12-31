@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2013/07/27 19:23:09 christos Exp $
+#	$NetBSD: Makefile,v 1.8 2013/12/31 20:23:12 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -13,6 +13,7 @@ DIST=${IDIST}/bin/named
 CPPFLAGS+=-I${DIST}/include -I${DIST}/unix/include -DCONFIGARGS=\"defaults\"
 CPPFLAGS+=-DNO_VERSION_DATE -DPRODUCT=\"BIND\" -DSRCID=\"${SRCID}\"
 CPPFLAGS+=-DDESCRIPTION=\"\(Extended\ Support\ Version\)\"
+CPPFLAGS+=-DBUILDER=\"make\"	# I am tempted to say Bob
 
 .include "${IDIST}/srcid"
 

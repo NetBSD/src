@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2013/07/27 19:23:14 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2013/12/31 20:23:12 christos Exp $
 
 LIB=isc
 #USE_SHLIBDIR=   yes
@@ -31,9 +31,10 @@ SRCS=		assertions.c base32.c base64.c bitstring.c buffer.c \
 		mutexblock.c netaddr.c netscope.c ondestroy.c parseint.c \
 		pool.c portset.c quota.c radix.c random.c ratelimiter.c \
 		refcount.c regex.c \
-		region.c result.c rwlock.c serial.c sha1.c sha2.c sockaddr.c \
-		stats.c string.c strtoul.c symtab.c task.c taskpool.c timer.c \
-		version.c ${UNIX_SRCS} ${NLS_SRCS} ${PTHREAD_SRCS} ${API_SRCS}
+		region.c result.c rwlock.c safe.c serial.c sha1.c sha2.c \
+		sockaddr.c stats.c string.c strtoul.c symtab.c task.c \
+		taskpool.c timer.c version.c \
+		${UNIX_SRCS} ${NLS_SRCS} ${PTHREAD_SRCS} ${API_SRCS}
 
 
 .if (${USE_INET6} == "no")
