@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.37 2013/11/08 19:21:01 christos Exp $
+# $NetBSD: md.sparc64,v 1.38 2013/12/31 20:26:18 christos Exp $
 ./usr/lib/sparc/i18n/libBIG5_g.a		comp-obsolete		obsolete
 ./usr/lib/sparc/i18n/libDECHanyu_g.a		comp-obsolete		obsolete
 ./usr/lib/sparc/i18n/libEUCTW_g.a		comp-obsolete		obsolete
@@ -232,7 +232,7 @@
 ./usr/libdata/debug/usr/lib/sparc/libintl.so.1.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libipsec.so.3.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libisc.so.6.0.debug			comp-compat-shlib	compat,pic,debug,obsolete
-./usr/libdata/debug/usr/lib/sparc/libisc.so.7.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libisc.so.7.1.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libisccc.so.6.0.debug			comp-compat-shlib	compat,pic,debug,obsolete
 ./usr/libdata/debug/usr/lib/sparc/libisccc.so.7.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libisccfg.so.6.0.debug		comp-compat-shlib	compat,pic,debug,obsolete
