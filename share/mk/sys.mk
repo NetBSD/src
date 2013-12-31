@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.118 2013/11/01 17:07:37 christos Exp $
+#	$NetBSD: sys.mk,v 1.119 2013/12/31 18:46:09 christos Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 #
 # This file contains the basic rules for make(1) and is read first
@@ -46,9 +46,12 @@ LINK.c?=	${CC} ${CFLAGS} ${CPPFLAGS} ${LDFLAGS}
 CTFFLAGS	?=	-g -L VERSION
 CTFMFLAGS	?=	-g -t -L VERSION
 
-# We don't define these here, we let the bsd.own.mk to do it
-#CTFCONVERT	?=	ctfconvert
-#CTFMERGE	?=	ctfmerge
+# We have to define these here, because if we don't the rules below will
+# not work
+.if exists(/usr/bin/ctfconvert) && exists(/usr/bin/ctfmerge)
+CTFCONVERT	?=	ctfconvert
+CTFMERGE	?=	ctfmerge
+.endif
 
 CXX?=		c++
 CXXFLAGS?=	${CFLAGS:N-Wno-traditional:N-Wstrict-prototypes:N-Wmissing-prototypes:N-Wno-pointer-sign:N-ffreestanding:N-std=gnu[0-9][0-9]:N-Wold-style-definition:N-Wno-format-zero-length}
