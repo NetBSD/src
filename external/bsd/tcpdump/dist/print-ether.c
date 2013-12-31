@@ -76,6 +76,7 @@ const struct tok ethertype_values[] = {
     { ETHERTYPE_PPPOES,         "PPPoE S" },
     { ETHERTYPE_EAPOL,          "EAPOL" },
     { ETHERTYPE_RRCP,           "RRCP" },
+    { ETHERTYPE_MS_NLB_HB,      "MS NLB heartbeat" },
     { ETHERTYPE_JUMBO,          "Jumbo" },
     { ETHERTYPE_LOOPBACK,       "Loopback" },
     { ETHERTYPE_ISO,            "OSI" },
@@ -84,6 +85,9 @@ const struct tok ethertype_values[] = {
     { ETHERTYPE_CFM,            "CFM" },
     { ETHERTYPE_LLDP,           "LLDP" },
     { ETHERTYPE_TIPC,           "TIPC"},    	
+    { ETHERTYPE_GEONET_OLD,     "GeoNet (old)"},
+    { ETHERTYPE_GEONET,         "GeoNet"},
+    { ETHERTYPE_CALM_FAST,      "CALM FAST"},
     { 0, NULL}
 };
 
@@ -411,6 +415,19 @@ ethertype_print(netdissect_options *ndo,
 	case ETHERTYPE_TIPC:
 		tipc_print(ndo, p, length, caplen);
 		return (1);
+
+	case ETHERTYPE_MS_NLB_HB:
+		msnlb_print(ndo, p);
+		return (1);
+
+        case ETHERTYPE_GEONET_OLD:
+        case ETHERTYPE_GEONET:
+                geonet_print(ndo, p-14, p, length);
+                return (1);
+
+        case ETHERTYPE_CALM_FAST:
+                calm_fast_print(ndo, p-14, p, length);
+                return (1);
 
 	case ETHERTYPE_LAT:
 	case ETHERTYPE_SCA:

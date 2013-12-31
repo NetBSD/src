@@ -273,18 +273,24 @@ const char *
 getname6(const u_char *ap)
 {
 	register struct hostent *hp;
-	struct in6_addr addr;
+	union {
+		struct in6_addr addr;
+		struct for_hash_addr {
+			char fill[14];
+			u_int16_t d;
+		} addra;
+	} addr;
 	static struct h6namemem *p;		/* static for longjmp() */
 	register const char *cp;
 	char ntop_buf[INET6_ADDRSTRLEN];
 
 	memcpy(&addr, ap, sizeof(addr));
-	p = &h6nametable[*(u_int16_t *)&addr.s6_addr[14] & (HASHNAMESIZE-1)];
+	p = &h6nametable[addr.addra.d & (HASHNAMESIZE-1)];
 	for (; p->nxt; p = p->nxt) {
 		if (memcmp(&p->addr, &addr, sizeof(addr)) == 0)
 			return (p->name);
 	}
-	p->addr = addr;
+	p->addr = addr.addr;
 	p->nxt = newh6namemem();
 
 	/*
@@ -381,6 +387,9 @@ lookup_bytestring(register const u_char *bs, const unsigned int nlen)
 	tp->e_addr2 = k;
 
 	tp->e_bs = (u_char *) calloc(1, nlen + 1);
+	if (tp->e_bs == NULL)
+		error("lookup_bytestring: calloc");
+
 	memcpy(tp->e_bs, bs, nlen);
 	tp->e_nxt = (struct enamemem *)calloc(1, sizeof(*tp));
 	if (tp->e_nxt == NULL)

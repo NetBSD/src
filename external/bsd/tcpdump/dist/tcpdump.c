@@ -74,6 +74,10 @@ extern int SIZE_BUF;
 #include <errno.h>
 #endif /* WIN32 */
 
+/* capabilities convinience library */
+#ifdef HAVE_CAP_NG_H
+#include <cap-ng.h>
+#endif /* HAVE_CAP_NG_H */
 
 #include "netdissect.h"
 #include "interface.h"
@@ -83,8 +87,8 @@ extern int SIZE_BUF;
 #include "gmt2local.h"
 #include "pcap-missing.h"
 
-#ifndef NAME_MAX
-#define NAME_MAX 255
+#ifndef PATH_MAX
+#define PATH_MAX 1024
 #endif
 
 #ifdef SIGINFO
@@ -100,6 +104,9 @@ static int dflag;			/* print filter code */
 static int Lflag;			/* list available data link types and exit */
 #ifdef HAVE_PCAP_SET_TSTAMP_TYPE
 static int Jflag;			/* list available time stamp types */
+#endif
+#ifdef HAVE_PCAP_SETDIRECTION
+int Pflag = -1;	/* Restrict captured packet by sent/receive direction */
 #endif
 static char *zflag = NULL;		/* compress each savefile using a specified command (like gzip or bzip2) */
 
@@ -327,6 +334,9 @@ static struct ndo_printer ndo_printers[] = {
 #ifdef DLT_NETANALYZER_TRANSPARENT
 	{ netanalyzer_transparent_if_print, DLT_NETANALYZER_TRANSPARENT },
 #endif
+#ifdef DLT_NFLOG
+	{ nflog_if_print,	DLT_NFLOG},
+#endif
 	{ NULL,			0 },
 };
 
@@ -461,7 +471,9 @@ show_dlts_and_exit(const char *device, pcap_t *pd)
 			    dlts[n_dlts]);
 		}
 	}
+#ifdef HAVE_PCAP_FREE_DATALINKS
 	pcap_free_datalinks(dlts);
+#endif
 	exit(0);
 }
 
@@ -511,6 +523,12 @@ show_dlts_and_exit(const char *device, pcap_t *pd)
 #define U_FLAG
 #endif
 
+#ifdef HAVE_PCAP_SETDIRECTION
+#define P_FLAG "P:"
+#else
+#define P_FLAG
+#endif
+
 #ifndef WIN32
 /* Drop root privileges and chroot if necessary */
 static void
@@ -532,6 +550,19 @@ droproot(const char *username, const char *chroot_dir)
 				exit(1);
 			}
 		}
+#ifdef HAVE_CAP_NG_H
+		int ret = capng_change_id(pw->pw_uid, pw->pw_gid, CAPNG_NO_FLAG);
+		if (ret < 0) {
+			printf("error : ret %d\n", ret);
+		}
+		/* We don't need CAP_SETUID and CAP_SETGID */
+		capng_update(CAPNG_DROP, CAPNG_EFFECTIVE, CAP_SETUID);
+		capng_update(CAPNG_DROP, CAPNG_EFFECTIVE, CAP_SETUID);
+		capng_update(CAPNG_DROP, CAPNG_PERMITTED, CAP_SETUID);
+		capng_update(CAPNG_DROP, CAPNG_PERMITTED, CAP_SETUID);
+		capng_apply(CAPNG_SELECT_BOTH);
+
+#else
 		if (initgroups(pw->pw_name, pw->pw_gid) != 0 ||
 		    setgid(pw->pw_gid) != 0 || setuid(pw->pw_uid) != 0) {
 			fprintf(stderr, "tcpdump: Couldn't change to '%.32s' uid=%lu gid=%lu: %s\n",
@@ -541,6 +572,7 @@ droproot(const char *username, const char *chroot_dir)
 			    pcap_strerror(errno));
 			exit(1);
 		}
+#endif /* HAVE_CAP_NG_H */
 	}
 	else {
 		fprintf(stderr, "tcpdump: Couldn't find user '%.32s'\n",
@@ -568,7 +600,9 @@ getWflagChars(int x)
 static void
 MakeFilename(char *buffer, char *orig_name, int cnt, int max_chars)
 {
-        char *filename = malloc(NAME_MAX + 1);
+        char *filename = malloc(PATH_MAX + 1);
+        if (filename == NULL)
+            error("Makefilename: malloc");
 
         /* Process with strftime if Gflag is set. */
         if (Gflag != 0) {
@@ -582,17 +616,17 @@ MakeFilename(char *buffer, char *orig_name, int cnt, int max_chars)
           /* There's no good way to detect an error in strftime since a return
            * value of 0 isn't necessarily failure.
            */
-          strftime(filename, NAME_MAX, orig_name, local_tm);
+          strftime(filename, PATH_MAX, orig_name, local_tm);
         } else {
-          strncpy(filename, orig_name, NAME_MAX);
+          strncpy(filename, orig_name, PATH_MAX);
         }
 
 	if (cnt == 0 && max_chars == 0)
-		strncpy(buffer, filename, NAME_MAX + 1);
+		strncpy(buffer, filename, PATH_MAX + 1);
 	else
-		if (snprintf(buffer, NAME_MAX + 1, "%s%0*d", filename, max_chars, cnt) > NAME_MAX)
+		if (snprintf(buffer, PATH_MAX + 1, "%s%0*d", filename, max_chars, cnt) > PATH_MAX)
                   /* Report an error if the filename is too large */
-                  error("too many output files or filename is too long (> %d)", NAME_MAX);
+                  error("too many output files or filename is too long (> %d)", PATH_MAX);
         free(filename);
 }
 
@@ -610,14 +644,55 @@ static int tcpdump_printf(netdissect_options *ndo _U_,
   return ret;
 }
 
+static struct print_info
+get_print_info(int type)
+{
+	struct print_info printinfo;
+
+	printinfo.ndo_type = 1;
+	printinfo.ndo = gndo;
+	printinfo.p.ndo_printer = lookup_ndo_printer(type);
+	if (printinfo.p.ndo_printer == NULL) {
+		printinfo.p.printer = lookup_printer(type);
+		printinfo.ndo_type = 0;
+		if (printinfo.p.printer == NULL) {
+			gndo->ndo_dltname = pcap_datalink_val_to_name(type);
+			if (gndo->ndo_dltname != NULL)
+				error("packet printing is not supported for link type %s: use -w",
+				      gndo->ndo_dltname);
+			else
+				error("packet printing is not supported for link type %d: use -w", type);
+		}
+	}
+	return (printinfo);
+}
+
+static char *
+get_next_file(FILE *VFile, char *ptr)
+{
+	char *ret;
+
+	ret = fgets(ptr, PATH_MAX, VFile);
+	if (!ret)
+		return NULL;
+
+	if (ptr[strlen(ptr) - 1] == '\n')
+		ptr[strlen(ptr) - 1] = '\0';
+
+	return ret;
+}
+
 int
 main(int argc, char **argv)
 {
 	register int cnt, op, i;
 	bpf_u_int32 localnet, netmask;
-	register char *cp, *infile, *cmdbuf, *device, *RFileName, *WFileName;
+	register char *cp, *infile, *cmdbuf, *device, *RFileName, *VFileName, *WFileName;
 	pcap_handler callback;
 	int type;
+	int dlt;
+	int new_dlt;
+	const char *dlt_name;
 	struct bpf_program fcode;
 #ifndef WIN32
 	RETSIGTYPE (*oldhandler)(int);
@@ -626,13 +701,17 @@ main(int argc, char **argv)
 	struct dump_info dumpinfo;
 	u_char *pcap_userdata;
 	char ebuf[PCAP_ERRBUF_SIZE];
+	char VFileLine[PATH_MAX + 1];
 	char *username = NULL;
 	char *chroot_dir = NULL;
+	char *ret = NULL;
+	char *end;
 #ifdef HAVE_PCAP_FINDALLDEVS
 	pcap_if_t *devpointer;
 	int devnum;
 #endif
 	int status;
+	FILE *VFile;
 #ifdef WIN32
 	if(wsockinit() != 0) return 1;
 #endif /* WIN32 */
@@ -651,7 +730,10 @@ main(int argc, char **argv)
 	device = NULL;
 	infile = NULL;
 	RFileName = NULL;
+	VFileName = NULL;
+	VFile = NULL;
 	WFileName = NULL;
+	dlt = -1;
 	if ((cp = strrchr(argv[0], '/')) != NULL)
 		program_name = cp + 1;
 	else
@@ -665,7 +747,7 @@ main(int argc, char **argv)
 #endif
 
 	while (
-	    (op = getopt(argc, argv, "aAb" B_FLAG "c:C:d" D_FLAG "eE:fF:G:hHi:" I_FLAG j_FLAG J_FLAG "KlLm:M:nNOpqr:Rs:StT:u" U_FLAG "vw:W:xXy:Yz:Z:")) != -1)
+	    (op = getopt(argc, argv, "aAb" B_FLAG "c:C:d" D_FLAG "eE:fF:G:hHi:" I_FLAG j_FLAG J_FLAG "KlLm:M:nNOp" P_FLAG "qr:Rs:StT:u" U_FLAG "vV:w:W:xXy:Yz:Z:")) != -1)
 		switch (op) {
 
 		case 'a':
@@ -781,7 +863,8 @@ main(int argc, char **argv)
 			 * It can be useful on Windows, where more than
 			 * one interface can have the same name.
 			 */
-			if ((devnum = atoi(optarg)) != 0) {
+			devnum = strtol(optarg, &end, 10);
+			if (optarg != end && *end == '\0') {
 				if (devnum < 0)
 					error("Invalid adapter index");
 
@@ -886,7 +969,18 @@ main(int argc, char **argv)
 		case 'p':
 			++pflag;
 			break;
-
+#ifdef HAVE_PCAP_SETDIRECTION
+		case 'P':
+			if (strcasecmp(optarg, "in") == 0)
+				Pflag = PCAP_D_IN;
+			else if (strcasecmp(optarg, "out") == 0)
+				Pflag = PCAP_D_OUT;
+			else if (strcasecmp(optarg, "inout") == 0)
+				Pflag = PCAP_D_INOUT;
+			else
+				error("unknown capture direction `%s'", optarg);
+			break;
+#endif /* HAVE_PCAP_SETDIRECTION */
 		case 'q':
 			++qflag;
 			++suppress_default_print;
@@ -900,9 +994,7 @@ main(int argc, char **argv)
 			Rflag = 0;
 			break;
 
-		case 's': {
-			char *end;
-
+		case 's':
 			snaplen = strtol(optarg, &end, 0);
 			if (optarg == end || *end != '\0'
 			    || snaplen < 0 || snaplen > MAXIMUM_SNAPLEN)
@@ -910,7 +1002,6 @@ main(int argc, char **argv)
 			else if (snaplen == 0)
 				snaplen = MAXIMUM_SNAPLEN;
 			break;
-		}
 
 		case 'S':
 			++Sflag;
@@ -941,6 +1032,18 @@ main(int argc, char **argv)
 				packettype = PT_AODV;
 			else if (strcasecmp(optarg, "carp") == 0)
 				packettype = PT_CARP;
+			else if (strcasecmp(optarg, "radius") == 0)
+				packettype = PT_RADIUS;
+			else if (strcasecmp(optarg, "zmtp1") == 0)
+				packettype = PT_ZMTP1;
+			else if (strcasecmp(optarg, "vxlan") == 0)
+				packettype = PT_VXLAN;
+			else if (strcasecmp(optarg, "pgm") == 0)
+				packettype = PT_PGM;
+			else if (strcasecmp(optarg, "pgm_zmtp1") == 0)
+				packettype = PT_PGM_ZMTP1;
+			else if (strcasecmp(optarg, "lmp") == 0)
+				packettype = PT_LMP;
 			else
 				error("unknown packet type `%s'", optarg);
 			break;
@@ -957,6 +1060,10 @@ main(int argc, char **argv)
 
 		case 'v':
 			++vflag;
+			break;
+
+		case 'V':
+			VFileName = optarg;
 			break;
 
 		case 'w':
@@ -1044,6 +1151,12 @@ main(int argc, char **argv)
 		break;
 	}
 
+	if (fflag != 0 && (VFileName != NULL || RFileName != NULL))
+		error("-f can not be used with -V or -r");
+
+	if (VFileName != NULL && RFileName != NULL)
+		error("-V and -r are mutually exclusive.");
+
 #ifdef WITH_CHROOT
 	/* if run as root, prepare for chrooting */
 	if (getuid() == 0 || geteuid() == 0) {
@@ -1062,10 +1175,16 @@ main(int argc, char **argv)
 	}
 #endif
 
-	if (RFileName != NULL) {
-		int dlt;
-		const char *dlt_name;
-
+	if (RFileName != NULL || VFileName != NULL) {
+		/*
+		 * If RFileName is non-null, it's the pathname of a
+		 * savefile to read.  If VFileName is non-null, it's
+		 * the pathname of a file containing a list of pathnames
+		 * (one per line) of savefiles to read.
+		 *
+		 * In either case, we're reading a savefile, not doing
+		 * a live capture.
+		 */
 #ifndef WIN32
 		/*
 		 * We don't need network access, so relinquish any set-UID
@@ -1079,6 +1198,21 @@ main(int argc, char **argv)
 		if (setgid(getgid()) != 0 || setuid(getuid()) != 0 )
 			fprintf(stderr, "Warning: setgid/setuid failed !\n");
 #endif /* WIN32 */
+		if (VFileName != NULL) {
+			if (VFileName[0] == '-' && VFileName[1] == '\0')
+				VFile = stdin;
+			else
+				VFile = fopen(VFileName, "r");
+
+			if (VFile == NULL)
+				error("Unable to open file: %s\n", strerror(errno));
+
+			ret = get_next_file(VFile, VFileLine);
+			if (!ret)
+				error("Nothing in %s\n", VFileName);
+			RFileName = VFileLine;
+		}
+
 		pd = pcap_open_offline(RFileName, ebuf);
 		if (pd == NULL)
 			error("%s", ebuf);
@@ -1095,17 +1229,22 @@ main(int argc, char **argv)
 		}
 		localnet = 0;
 		netmask = 0;
-		if (fflag != 0)
-			error("-f and -r options are incompatible");
 	} else {
+		/*
+		 * We're doing a live capture.
+		 */
 		if (device == NULL) {
 			device = pcap_lookupdev(ebuf);
 			if (device == NULL)
 				error("%s", ebuf);
 		}
 #ifdef WIN32
-		if(strlen(device) == 1)	//we assume that an ASCII string is always longer than 1 char
-		{						//a Unicode string has a \0 as second byte (so strlen() is 1)
+		/*
+		 * Print a message to the standard error on Windows.
+		 * XXX - why do it here, with a different message?
+		 */
+		if(strlen(device) == 1)	/* we assume that an ASCII string is always longer than 1 char */
+		{						/* a Unicode string has a \0 as second byte (so strlen() is 1) */
 			fprintf(stderr, "%s: listening on %ws\n", program_name, device);
 		}
 		else
@@ -1194,6 +1333,14 @@ main(int argc, char **argv)
 				warning("%s: %s", device,
 				    pcap_statustostr(status));
 		}
+#ifdef HAVE_PCAP_SETDIRECTION
+		if (Pflag != -1) {
+			status = pcap_setdirection(pd, Pflag);
+			if (status != 0)
+				error("%s: pcap_setdirection() failed: %s",
+				      device,  pcap_geterr(pd));
+		}
+#endif
 #else
 		*ebuf = '\0';
 		pd = pcap_open_live(device, snaplen, !pflag, 1000, ebuf);
@@ -1254,10 +1401,10 @@ main(int argc, char **argv)
 
 	if (pcap_compile(pd, &fcode, cmdbuf, Oflag, netmask) < 0)
 		error("%s", pcap_geterr(pd));
-	free(cmdbuf);
 	if (dflag) {
 		bpf_dump(&fcode, dflag);
 		pcap_close(pd);
+		free(cmdbuf);
 		exit(0);
 	}
 	init_addrtoname(localnet, netmask);
@@ -1295,9 +1442,31 @@ main(int argc, char **argv)
 	 * Switching to the -Z user ID only after opening the first
 	 * savefile doesn't handle the general case.
 	 */
+
+#ifdef HAVE_CAP_NG_H
+	/* We are running as root and we will be writing to savefile */
+	if ((getuid() == 0 || geteuid() == 0) && WFileName) {
+		if (username) {
+			/* Drop all capabilities from effective set */
+			capng_clear(CAPNG_EFFECTIVE);
+			/* Add capabilities we will need*/
+			capng_update(CAPNG_ADD, CAPNG_PERMITTED, CAP_SETUID);
+			capng_update(CAPNG_ADD, CAPNG_PERMITTED, CAP_SETGID);
+			capng_update(CAPNG_ADD, CAPNG_PERMITTED, CAP_DAC_OVERRIDE);
+
+			capng_update(CAPNG_ADD, CAPNG_EFFECTIVE, CAP_SETUID);
+			capng_update(CAPNG_ADD, CAPNG_EFFECTIVE, CAP_SETGID);
+			capng_update(CAPNG_ADD, CAPNG_EFFECTIVE, CAP_DAC_OVERRIDE);
+
+			capng_apply(CAPNG_SELECT_BOTH);
+		}
+	}
+#endif /* HAVE_CAP_NG_H */
+
 	if (getuid() == 0 || geteuid() == 0) {
 		if (username || chroot_dir)
 			droproot(username, chroot_dir);
+
 	}
 #endif /* WIN32 */
 
@@ -1305,8 +1474,8 @@ main(int argc, char **argv)
 		error("%s", pcap_geterr(pd));
 	if (WFileName) {
 		pcap_dumper_t *p;
-		/* Do not exceed the default NAME_MAX for files. */
-		dumpinfo.CurrentFileName = (char *)malloc(NAME_MAX + 1);
+		/* Do not exceed the default PATH_MAX for files. */
+		dumpinfo.CurrentFileName = (char *)malloc(PATH_MAX + 1);
 
 		if (dumpinfo.CurrentFileName == NULL)
 			error("malloc of dumpinfo.CurrentFileName");
@@ -1318,6 +1487,10 @@ main(int argc, char **argv)
 		  MakeFilename(dumpinfo.CurrentFileName, WFileName, 0, 0);
 
 		p = pcap_dump_open(pd, dumpinfo.CurrentFileName);
+#ifdef HAVE_CAP_NG_H
+        /* Give up capabilities, clear Effective set */
+        capng_clear(CAPNG_EFFECTIVE);
+#endif
 		if (p == NULL)
 			error("%s", pcap_geterr(pd));
 		if (Cflag != 0 || Gflag != 0) {
@@ -1336,21 +1509,7 @@ main(int argc, char **argv)
 #endif
 	} else {
 		type = pcap_datalink(pd);
-                printinfo.ndo_type = 1;
-                printinfo.ndo = gndo;
-		printinfo.p.ndo_printer = lookup_ndo_printer(type);
-                if (printinfo.p.ndo_printer == NULL) {
-                        printinfo.p.printer = lookup_printer(type);
-                        printinfo.ndo_type = 0;
-                        if (printinfo.p.printer == NULL) {
-                                gndo->ndo_dltname = pcap_datalink_val_to_name(type);
-                                if (gndo->ndo_dltname != NULL)
-                                        error("packet printing is not supported for link type %s: use -w",
-                                              gndo->ndo_dltname);
-                                else
-                                        error("packet printing is not supported for link type %d: use -w", type);
-                        }
-                }
+		printinfo = get_print_info(type);
 		callback = print_packet;
 		pcap_userdata = (u_char *)&printinfo;
 	}
@@ -1382,9 +1541,11 @@ main(int argc, char **argv)
 
 #ifndef WIN32
 	if (RFileName == NULL) {
-		int dlt;
-		const char *dlt_name;
-
+		/*
+		 * Live capture (if -V was specified, we set RFileName
+		 * to a file from the -V file).  Print a message to
+		 * the standard error on UN*X.
+		 */
 		if (!vflag && !WFileName) {
 			(void)fprintf(stderr,
 			    "%s: verbose output suppressed, use -v or -vv for full protocol decode\n",
@@ -1404,37 +1565,77 @@ main(int argc, char **argv)
 		(void)fflush(stderr);
 	}
 #endif /* WIN32 */
-	status = pcap_loop(pd, cnt, callback, pcap_userdata);
-	if (WFileName == NULL) {
-		/*
-		 * We're printing packets.  Flush the printed output,
-		 * so it doesn't get intermingled with error output.
-		 */
-		if (status == -2) {
+	do {
+		status = pcap_loop(pd, cnt, callback, pcap_userdata);
+		if (WFileName == NULL) {
 			/*
-			 * We got interrupted, so perhaps we didn't
-			 * manage to finish a line we were printing.
-			 * Print an extra newline, just in case.
+			 * We're printing packets.  Flush the printed output,
+			 * so it doesn't get intermingled with error output.
 			 */
-			putchar('\n');
+			if (status == -2) {
+				/*
+				 * We got interrupted, so perhaps we didn't
+				 * manage to finish a line we were printing.
+				 * Print an extra newline, just in case.
+				 */
+				putchar('\n');
+			}
+			(void)fflush(stdout);
 		}
-		(void)fflush(stdout);
+                if (status == -2) {
+			/*
+			 * We got interrupted. If we are reading multiple
+			 * files (via -V) set these so that we stop.
+			 */
+			VFileName = NULL;
+			ret = NULL;
+		}
+		if (status == -1) {
+			/*
+			 * Error.  Report it.
+			 */
+			(void)fprintf(stderr, "%s: pcap_loop: %s\n",
+			    program_name, pcap_geterr(pd));
+		}
+		if (RFileName == NULL) {
+			/*
+			 * We're doing a live capture.  Report the capture
+			 * statistics.
+			 */
+			info(1);
+		}
+		pcap_close(pd);
+		if (VFileName != NULL) {
+			ret = get_next_file(VFile, VFileLine);
+			if (ret) {
+				RFileName = VFileLine;
+				pd = pcap_open_offline(RFileName, ebuf);
+				if (pd == NULL)
+					error("%s", ebuf);
+				new_dlt = pcap_datalink(pd);
+				if (WFileName && new_dlt != dlt)
+					error("%s: new dlt does not match original", RFileName);
+				printinfo = get_print_info(new_dlt);
+				dlt_name = pcap_datalink_val_to_name(new_dlt);
+				if (dlt_name == NULL) {
+					fprintf(stderr, "reading from file %s, link-type %u\n",
+					RFileName, new_dlt);
+				} else {
+					fprintf(stderr,
+					"reading from file %s, link-type %s (%s)\n",
+					RFileName, dlt_name,
+					pcap_datalink_val_to_description(new_dlt));
+				}
+				if (pcap_compile(pd, &fcode, cmdbuf, Oflag, netmask) < 0)
+					error("%s", pcap_geterr(pd));
+				if (pcap_setfilter(pd, &fcode) < 0)
+					error("%s", pcap_geterr(pd));
+			}
+		}
 	}
-	if (status == -1) {
-		/*
-		 * Error.  Report it.
-		 */
-		(void)fprintf(stderr, "%s: pcap_loop: %s\n",
-		    program_name, pcap_geterr(pd));
-	}
-	if (RFileName == NULL) {
-		/*
-		 * We're doing a live capture.  Report the capture
-		 * statistics.
-		 */
-		info(1);
-	}
-	pcap_close(pd);
+	while (ret != NULL);
+
+	free(cmdbuf);
 	exit(status == -1 ? 1 : 0);
 }
 
@@ -1635,7 +1836,7 @@ dump_packet_and_trunc(u_char *user, const struct pcap_pkthdr *h, const u_char *s
 			if (dump_info->CurrentFileName != NULL)
 				free(dump_info->CurrentFileName);
 			/* Allocate space for max filename + \0. */
-			dump_info->CurrentFileName = (char *)malloc(NAME_MAX + 1);
+			dump_info->CurrentFileName = (char *)malloc(PATH_MAX + 1);
 			if (dump_info->CurrentFileName == NULL)
 				error("dump_packet_and_trunc: malloc");
 			/*
@@ -1649,7 +1850,15 @@ dump_packet_and_trunc(u_char *user, const struct pcap_pkthdr *h, const u_char *s
 			else
 				MakeFilename(dump_info->CurrentFileName, dump_info->WFileName, 0, 0);
 
+#ifdef HAVE_CAP_NG_H
+			capng_update(CAPNG_ADD, CAPNG_EFFECTIVE, CAP_DAC_OVERRIDE);
+			capng_apply(CAPNG_EFFECTIVE);
+#endif /* HAVE_CAP_NG_H */
 			dump_info->p = pcap_dump_open(dump_info->pd, dump_info->CurrentFileName);
+#ifdef HAVE_CAP_NG_H
+			capng_update(CAPNG_DROP, CAPNG_EFFECTIVE, CAP_DAC_OVERRIDE);
+			capng_apply(CAPNG_EFFECTIVE);
+#endif /* HAVE_CAP_NG_H */
 			if (dump_info->p == NULL)
 				error("%s", pcap_geterr(pd));
 		}
@@ -1679,7 +1888,7 @@ dump_packet_and_trunc(u_char *user, const struct pcap_pkthdr *h, const u_char *s
 		}
 		if (dump_info->CurrentFileName != NULL)
 			free(dump_info->CurrentFileName);
-		dump_info->CurrentFileName = (char *)malloc(NAME_MAX + 1);
+		dump_info->CurrentFileName = (char *)malloc(PATH_MAX + 1);
 		if (dump_info->CurrentFileName == NULL)
 			error("dump_packet_and_trunc: malloc");
 		MakeFilename(dump_info->CurrentFileName, dump_info->WFileName, Cflag_count, WflagChars);
@@ -1917,8 +2126,12 @@ usage(void)
 "\t\t[ -C file_size ] [ -E algo:secret ] [ -F file ] [ -G seconds ]\n");
 	(void)fprintf(stderr,
 "\t\t[ -i interface ]" j_FLAG_USAGE " [ -M secret ]\n");
+#ifdef HAVE_PCAP_SETDIRECTION
 	(void)fprintf(stderr,
-"\t\t[ -r file ] [ -s snaplen ] [ -T type ] [ -w file ]\n");
+"\t\t[ -P in|out|inout ]\n");
+#endif
+	(void)fprintf(stderr,
+"\t\t[ -r file ] [ -s snaplen ] [ -T type ] [ -V file ] [ -w file ]\n");
 	(void)fprintf(stderr,
 "\t\t[ -W filecount ] [ -y datalinktype ] [ -z command ]\n");
 	(void)fprintf(stderr,
