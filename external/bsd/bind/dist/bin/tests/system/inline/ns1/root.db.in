@@ -1,4 +1,4 @@
-; Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+; Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
 ;
 ; Permission to use, copy, modify, and/or distribute this software for any
 ; purpose with or without fee is hereby granted, provided that the above
@@ -12,7 +12,7 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id
+; Id: root.db.in,v 1.8 2012/02/23 06:53:15 marka Exp 
 
 $TTL 300
 . 			IN SOA	gson.nominum.com. a.root.servers.nil. (
@@ -47,3 +47,12 @@ ns3.expired.		A	10.53.0.3
 
 retransfer.			NS	ns3.retransfer.
 ns3.retransfer.		A	10.53.0.3
+
+nsec3.			NS	ns3.nsec3.
+ns3.nsec3.		A	10.53.0.3
+
+externalkey.		NS	ns3.externalkey.
+ns3.externalkey.	A	10.53.0.3
+
+retransfer3.		NS	ns3.retransfer.
+ns3.retransfer3.	A	10.53.0.3
