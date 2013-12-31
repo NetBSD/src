@@ -35,7 +35,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-hsrp.c,v 1.10 2005-05-06 07:56:52 guy Exp ";
 #else
-__RCSID("$NetBSD: print-hsrp.c,v 1.3 2013/04/06 19:33:08 christos Exp $");
+__RCSID("$NetBSD: print-hsrp.c,v 1.4 2013/12/31 17:33:31 christos Exp $");
 #endif
 #endif
 
@@ -58,7 +58,7 @@ static const char *op_code_str[] = {
 };
 
 /* HSRP states and associated names. */
-static struct tok states[] = {
+static const struct tok states[] = {
 	{  0, "initial" },
 	{  1, "learn" },
 	{  2, "listen" },
