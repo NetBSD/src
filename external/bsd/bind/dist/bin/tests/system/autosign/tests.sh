@@ -44,14 +44,18 @@ showprivate () {
 
 # check that signing records are marked as complete
 checkprivate () {
-    ret=0
+    _ret=0
+    expected="${3:-0}"
     x=`showprivate "$@"`
-    echo $x | grep incomplete >&- 2>&- && ret=1
-    [ $ret = 1 ] && {
-        echo "$x"
-        echo "I:failed"
-    }
-    return $ret
+    echo $x | grep incomplete > /dev/null && _ret=1
+
+    if [ $_ret = $expected ]; then
+        return 0
+    fi
+
+    echo "$x"
+    echo "I:failed"
+    return 1
 }
 
 #
@@ -208,6 +212,7 @@ ret=0
 missing=`sed 's/^K.*+007+0*\([0-9]\)/\1/' < missingzsk.key`
 $JOURNALPRINT ns3/nozsk.example.db.jnl | \
    awk '{if ($1 == "del" && $5 == "RRSIG" && $12 == id) {exit 1}} END {exit 0}' id=$missing || ret=1
+n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
@@ -216,24 +221,23 @@ ret=0
 inactive=`sed 's/^K.*+007+0*\([0-9]\)/\1/' < inactivezsk.key`
 $JOURNALPRINT ns3/inaczsk.example.db.jnl | \
    awk '{if ($1 == "del" && $5 == "RRSIG" && $12 == id) {exit 1}} END {exit 0}' id=$inactive || ret=1
+n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
-echo "I:checking that non-replaceable RRSIGs are logged only once ($n)"
+echo "I:checking that non-replaceable RRSIGs are logged only once (missing private key) ($n)"
 ret=0
 loglines=`grep "Key nozsk.example/NSEC3RSASHA1/$missing .* retaining signatures" ns3/named.run | wc -l`
 [ "$loglines" -eq 1 ] || ret=1
-loglines=`grep "Key inaczsk.example/NSEC3RSASHA1/$inactive .* retaining signatures" ns3/named.run | wc -l`
-[ "$loglines" -eq 1 ] || ret=1
+n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
-echo "I:checking serial is not incremented when signatures are unchanged ($n)"
+echo "I:checking that non-replaceable RRSIGs are logged only once (inactive private key) ($n)"
 ret=0
-newserial=`$DIG $DIGOPTS +short soa nozsk.example @10.53.0.3 | awk '$0 !~ /SOA/ {print $3}'`
-[ "$newserial" -eq 2 ] || ret=1
-newserial=`$DIG $DIGOPTS +short soa inaczsk.example @10.53.0.3 | awk '$0 !~ /SOA/ {print $3}'`
-[ "$newserial" -eq 2 ] || ret=1
+loglines=`grep "Key inaczsk.example/NSEC3RSASHA1/$inactive .* retaining signatures" ns3/named.run | wc -l`
+[ "$loglines" -eq 1 ] || ret=1
+n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
@@ -943,7 +947,7 @@ checkprivate oldsigs.example 10.53.0.3 || ret=1
 checkprivate optout.example 10.53.0.3 || ret=1
 checkprivate optout.nsec3.example 10.53.0.3 || ret=1
 checkprivate optout.optout.example 10.53.0.3 || ret=1
-checkprivate prepub.example 10.53.0.3 || ret=1
+checkprivate prepub.example 10.53.0.3 1 || ret=1
 checkprivate rsasha256.example 10.53.0.3 || ret=1
 checkprivate rsasha512.example 10.53.0.3 || ret=1
 checkprivate secure.example 10.53.0.3 || ret=1

@@ -110,3 +110,5 @@ $PERL -e 'for ($cnt = $val = 1; $cnt <= 3000; ++$cnt) {
 	printf("host-%05d.example.tld5 A\n", $val);
 	$val = ($val * 9 + 32771) % 65536;
 	}' >ns5/requests
+
+cp ns2/bl.tld2.db.in ns2/bl.tld2.db

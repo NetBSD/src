@@ -42,6 +42,7 @@ SIGNER=$TOP/bin/dnssec/dnssec-signzone
 REVOKE=$TOP/bin/dnssec/dnssec-revoke
 SETTIME=$TOP/bin/dnssec/dnssec-settime
 DSFROMKEY=$TOP/bin/dnssec/dnssec-dsfromkey
+IMPORTKEY=$TOP/bin/dnssec/dnssec-importkey
 CHECKDS=$TOP/bin/python/dnssec-checkds
 COVERAGE=$TOP/bin/python/dnssec-coverage
 CHECKZONE=$TOP/bin/check/named-checkzone
@@ -58,13 +59,13 @@ SAMPLE=$TOP/lib/export/samples/sample
 # load on the machine to make it unusable to other users.
 # v6synth
 SUBDIRS="acl additional allow_query addzone autosign builtin
-	 cacheclean checkconf @CHECKDS@ checknames checkzone @COVERAGE@
+	 cacheclean case checkconf @CHECKDS@ checknames checkzone @COVERAGE@
          database dlv dlvauto dlz dlzexternal dname dns64 dnssec ecdsa
          formerr forward glue gost ixfr inline limits logfileconfig
          lwresd masterfile masterformat metadata notify nsupdate pending
-	 pkcs11 redirect resolver rndc rpz rrsetorder rsabigexponent
+	 pkcs11 redirect resolver rndc rpz rrl rrsetorder rsabigexponent
 	 smartsign sortlist spf staticstub stub tkey tsig tsiggss unknown
-	 upforwd verify views wildcard xfer xferquota zonechecks"
+	 upforwd verify views wildcard xfer xferquota zero zonechecks"
 
 # PERL will be an empty string if no perl interpreter was found.
 PERL=@PERL@

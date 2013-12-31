@@ -22,6 +22,8 @@ import pprint
 import os
 
 def shellquote(s):
+    if os.name == 'nt':
+        return s
     return "'" + s.replace("'", "'\\''") + "'"
 
 ############################################################################
@@ -255,6 +257,11 @@ def checkdlv(zone, lookaside, masterfile = None):
 ############################################################################
 def parse_args():
     global args
+    bindir = 'bin'
+    if os.name != 'nt':
+        sbindir = 'sbin'
+    else:
+        sbindir = 'bin'
     parser = argparse.ArgumentParser(description='checkds: checks DS coverage')
 
     parser.add_argument('zone', type=str, help='zone to check')
@@ -263,11 +270,12 @@ def parse_args():
     parser.add_argument('-l', '--lookaside', dest='lookaside', type=str,
                         help='DLV lookaside zone')
     parser.add_argument('-d', '--dig', dest='dig',
-                        default='@prefix@/bin/dig', type=str,
-                        help='path to \'dig\'')
+                        default=os.path.join('@prefix@', bindir, 'dig'),
+                        type=str, help='path to \'dig\'')
     parser.add_argument('-D', '--dsfromkey', dest='dsfromkey',
-                        default='@prefix@/sbin/dnssec-dsfromkey', type=str,
-                        help='path to \'dig\'')
+                        default=os.path.join('@prefix@', sbindir,
+                                             'dnssec-dsfromkey'),
+                        type=str, help='path to \'dig\'')
     parser.add_argument('-v', '--version', action='version', version='9.9.1')
     args = parser.parse_args()
 

@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
+# Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -47,7 +47,8 @@ libatf_c_la_SOURCES += atf-c/detail/dynstr.c \
                        atf-c/detail/user.c \
                        atf-c/detail/user.h
 
-tests_atf_c_detail_DATA = atf-c/detail/Atffile
+tests_atf_c_detail_DATA = atf-c/detail/Atffile \
+                          atf-c/detail/Kyuafile
 tests_atf_c_detaildir = $(pkgtestsdir)/atf-c/detail
 EXTRA_DIST += $(tests_atf_c_detail_DATA)
 
@@ -67,11 +68,6 @@ atf_c_detail_env_test_LDADD = atf-c/detail/libtest_helpers.la libatf-c.la
 tests_atf_c_detail_PROGRAMS += atf-c/detail/fs_test
 atf_c_detail_fs_test_SOURCES = atf-c/detail/fs_test.c
 atf_c_detail_fs_test_LDADD = atf-c/detail/libtest_helpers.la libatf-c.la
-
-tests_atf_c_detail_PROGRAMS += atf-c/detail/test_helpers_test
-atf_c_detail_test_helpers_test_SOURCES = atf-c/detail/test_helpers_test.c
-atf_c_detail_test_helpers_test_LDADD = atf-c/detail/libtest_helpers.la \
-                                       libatf-c.la
 
 tests_atf_c_detail_PROGRAMS += atf-c/detail/list_test
 atf_c_detail_list_test_SOURCES = atf-c/detail/list_test.c

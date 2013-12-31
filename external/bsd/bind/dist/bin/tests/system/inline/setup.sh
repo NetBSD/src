@@ -1,4 +1,4 @@
-# Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -12,7 +12,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id
+# Id: setup.sh,v 1.11 2012/02/23 06:53:15 marka Exp 
 
 sh clean.sh
 
@@ -28,6 +28,8 @@ cp ns3/master.db.in ns3/master.db
 cp ns3/master.db.in ns3/dynamic.db
 cp ns3/master.db.in ns3/updated.db
 cp ns3/master.db.in ns3/expired.db
+cp ns3/master.db.in ns3/nsec3.db
+cp ns3/master.db.in ns3/externalkey.db
 
 touch ns4/trusted.conf
 cp ns4/noixfr.db.in ns4/noixfr.db

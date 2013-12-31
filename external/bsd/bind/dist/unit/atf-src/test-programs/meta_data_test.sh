@@ -35,8 +35,8 @@ no_descr_head()
 no_descr_body()
 {
     for h in $(get_helpers); do
-        atf_check -s eq:0 -o ignore -e empty ${h} -s $(atf_get_srcdir) -l
-        atf_check -s eq:0 -o match:passed -e empty ${h} -s $(atf_get_srcdir) \
+        atf_check -s eq:0 -o ignore -e ignore ${h} -s $(atf_get_srcdir) -l
+        atf_check -s eq:0 -o match:passed -e ignore ${h} -s $(atf_get_srcdir) \
             metadata_no_descr
     done
 }
@@ -49,8 +49,8 @@ no_head_head()
 no_head_body()
 {
     for h in $(get_helpers); do
-        atf_check -s eq:0 -o ignore -e empty ${h} -s $(atf_get_srcdir) -l
-        atf_check -s eq:0 -o match:passed -e empty ${h} -s $(atf_get_srcdir) \
+        atf_check -s eq:0 -o ignore -e ignore ${h} -s $(atf_get_srcdir) -l
+        atf_check -s eq:0 -o match:passed -e ignore ${h} -s $(atf_get_srcdir) \
             metadata_no_head
     done
 }

@@ -1,6 +1,6 @@
 #!/bin/sh -e
 #
-# Copyright (C) 2004, 2006-2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2006-2013  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -437,3 +437,27 @@ $CHECKZONE -D nosign.example nosign.example.db.signed 2>&- | \
 zone=inline.example.
 kskname=`$KEYGEN -q -3 -r $RANDFILE -fk $zone`
 zskname=`$KEYGEN -q -3 -r $RANDFILE $zone`
+
+#
+# publish a new key while deactivating another key at the same time.
+#
+zone=publish-inactive.example
+infile=publish-inactive.example.db.in
+zonefile=publish-inactive.example.db
+now=`date -u +%Y%m%d%H%M%S`
+kskname=`$KEYGEN -q -r $RANDFILE -f KSK $zone`
+kskname=`$KEYGEN -P $now+90s -A $now+3600s -q -r $RANDFILE -f KSK $zone`
+kskname=`$KEYGEN -I $now+90s -q -r $RANDFILE -f KSK $zone`
+zskname=`$KEYGEN -q -r $RANDFILE $zone`
+cp $infile $zonefile
+$SIGNER -S -r $RANDFILE -o $zone $zonefile > /dev/null 2>&1
+
+#
+# A zone which will change its sig-validity-interval
+#
+zone=siginterval.example
+infile=siginterval.example.db.in
+zonefile=siginterval.example.db
+kskname=`$KEYGEN -q -3 -r $RANDFILE -fk $zone`
+zskname=`$KEYGEN -q -3 -r $RANDFILE $zone`
+cp $infile $zonefile

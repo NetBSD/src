@@ -51,6 +51,26 @@ n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
+echo "I:adding a zone that requires quotes ($n)"
+ret=0
+$RNDC -c ../common/rndc.conf -s 10.53.0.2 -p 9953 addzone '"32/1.0.0.127-in-addr.added.example" { check-names ignore; type master; file "added.db"; };' 2>&1 | sed 's/^/I:ns2 /'
+$DIG $DIGOPTS @10.53.0.2 "a.32/1.0.0.127-in-addr.added.example" a > dig.out.ns2.$n || ret=1
+grep 'status: NOERROR' dig.out.ns2.$n > /dev/null || ret=1
+grep '^a.32/1.0.0.127-in-addr.added.example' dig.out.ns2.$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:adding a zone with a quote in the name ($n)"
+ret=0
+$RNDC -c ../common/rndc.conf -s 10.53.0.2 -p 9953 addzone '"foo\"bar.example" { check-names ignore; type master; file "added.db"; };' 2>&1 | sed 's/^/I:ns2 /'
+$DIG $DIGOPTS @10.53.0.2 "a.foo\"bar.example" a > dig.out.ns2.$n || ret=1
+grep 'status: NOERROR' dig.out.ns2.$n > /dev/null || ret=1
+grep '^a.foo\\"bar.example' dig.out.ns2.$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
 echo "I:adding new zone with missing master file ($n)"
 ret=0
 $DIG $DIGOPTS +all @10.53.0.2 a.missing.example a > dig.out.ns2.pre.$n || ret=1
@@ -60,6 +80,14 @@ grep "file not found" rndc.out.ns2.$n > /dev/null || ret=1
 $DIG $DIGOPTS +all @10.53.0.2 a.missing.example a > dig.out.ns2.post.$n || ret=1
 grep "status: REFUSED" dig.out.ns2.post.$n > /dev/null || ret=1
 $PERL ../digcomp.pl dig.out.ns2.pre.$n dig.out.ns2.post.$n || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:verifying no comments in nzf file ($n)"
+ret=0
+hcount=`grep "^# New zone file for view: _default" ns2/3bf305731dd26307.nzf | wc -l`
+[ $hcount -eq 0 ] || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
@@ -74,12 +102,30 @@ n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
+echo "I:checking nzf file now has comment ($n)"
+ret=0
+hcount=`grep "^# New zone file for view: _default" ns2/3bf305731dd26307.nzf | wc -l`
+[ $hcount -eq 1 ] || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
 echo "I:deleting newly added zone ($n)"
 ret=0
 $RNDC -c ../common/rndc.conf -s 10.53.0.2 -p 9953 delzone added.example 2>&1 | sed 's/^/I:ns2 /'
 $DIG $DIGOPTS @10.53.0.2 a.added.example a > dig.out.ns2.$n
 grep 'status: REFUSED' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.added.example' dig.out.ns2.$n > /dev/null && ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:deleting newly added zone with escaped quote ($n)"
+ret=0
+$RNDC -c ../common/rndc.conf -s 10.53.0.2 -p 9953 delzone "foo\\\"bar.example" 2>&1 | sed 's/^/I:ns2 /'
+$DIG $DIGOPTS @10.53.0.2 "a.foo\"bar.example" a > dig.out.ns2.$n
+grep 'status: REFUSED' dig.out.ns2.$n > /dev/null || ret=1
+grep "^a.foo\"bar.example" dig.out.ns2.$n > /dev/null && ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
@@ -160,6 +206,15 @@ grep '^a.added.example' dig.out.ns2.ext.$n > /dev/null || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
+
+echo "I:checking new nzf file has comment ($n)"
+ret=0
+hcount=`grep "^# New zone file for view: external" ns2/3c4623849a49a539.nzf | wc -l`
+[ $hcount -eq 1 ] || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
 
 echo "I:deleting newly added zone ($n)"
 ret=0

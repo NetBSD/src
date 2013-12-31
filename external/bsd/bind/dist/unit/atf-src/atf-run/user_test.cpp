@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
+// Copyright (c) 2007 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -80,6 +80,14 @@ ATF_TEST_CASE_BODY(is_member_of_group)
         }
         std::cout << "User belongs to " << ngids << " groups\n";
         std::cout << "Last GID is " << maxgid << "\n";
+    }
+
+    const gid_t maxgid_limit = 1 << 16;
+    if (maxgid > maxgid_limit) {
+        std::cout << "Test truncated from " << maxgid << " groups to "
+                  << maxgid_limit << " to keep the run time reasonable "
+            "enough\n";
+        maxgid = maxgid_limit;
     }
 
     for (gid_t g = 0; g <= maxgid; g++) {

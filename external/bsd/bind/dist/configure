@@ -1331,6 +1331,8 @@ ISC_PLATFORM_NEEDSYSSELECTH
 ISC_PLATFORM_HAVEDEVPOLL
 ISC_PLATFORM_HAVEEPOLL
 ISC_PLATFORM_HAVEKQUEUE
+RRLLINKSRCS
+RRLLINKOBJS
 ISC_PLATFORM_HAVELIFCONF
 ISC_PLATFORM_NORETURN_POST
 ISC_PLATFORM_NORETURN_PRE
@@ -1344,6 +1346,7 @@ PERL
 ETAGS
 LN
 ARFLAGS
+CCNOOPT
 CCOPT
 STD_CWARNINGS
 STD_CDEFINES
@@ -1452,6 +1455,7 @@ enable_libbind
 enable_developer
 with_python
 enable_newstats
+enable_rrl
 enable_kqueue
 enable_epoll
 enable_devpoll
@@ -1501,6 +1505,7 @@ with_dlz_ldap
 with_dlz_odbc
 with_dlz_stub
 with_make_clean
+enable_full_report
 '
       ac_precious_vars='build_alias
 host_alias
@@ -2129,7 +2134,8 @@ Optional Features:
   --disable-libtool-lock  avoid locking (might break parallel builds)
   --enable-libbind	  deprecated
   --enable-developer      enable developer build settings
-  --enable-newstats         use the new statistics
+  --enable-newstats       use the new statistics
+  --enable-rrl            use DNS Response Rate Limiting
   --enable-kqueue         use BSD kqueue when available [default=yes]
   --enable-epoll          use Linux epoll when available [default=auto]
   --enable-devpoll        use /dev/poll when available [default=yes]
@@ -2156,6 +2162,7 @@ Optional Features:
   --disable-rpz-nsdname	  disable rpz-nsdname rules [default=enabled]
   --enable-filter-aaaa    enable filtering of AAAA records over IPv4
 			  [default=no]
+  --enable-full-report	  report values of all configure options
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -11838,6 +11845,7 @@ fi
 
 
 
+
 # Warn if the user specified libbind, which is now deprecated
 # Check whether --enable-libbind was given.
 if test "${enable_libbind+set}" = set; then :
@@ -11865,6 +11873,7 @@ yes)
 	test "${enable_fixed_rrset+set}" = set || enable_fixed_rrset=yes
 	test "${with_atf+set}" = set || with_atf=yes
 	test "${enable_filter_aaaa+set}" = set || enable_filter_aaaa=yes
+	test "${enable_rrl+set}" = set || enable_rrl=yes
 	test "${with_dlz_filesystem+set}" = set || with_dlz_filesystem=yes
 	case "$host" in
 	*-darwin*)
@@ -11874,6 +11883,7 @@ yes)
 		test "${enable_exportlib+set}" = set || enable_exportlib=yes
 		;;
 	esac
+	test "${enable_symtable+set}" = set || enable_symtable=all
 	;;
 esac
 #
@@ -12926,6 +12936,13 @@ case "$host" in
 	  ;;
 esac
 
+#
+# CCNOOPT defaults to -O0 on gcc and disables optimization when is last
+#
+if test "X$CCNOOPT" = "X" -a "X$GCC" = "Xyes"; then
+	CCNOOPT="-O0"
+fi
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ANSI C header files" >&5
 $as_echo_n "checking for ANSI C header files... " >&6; }
 if ${ac_cv_header_stdc+:} false; then :
@@ -13543,6 +13560,30 @@ $as_echo "#define NEWSTATS 1" >>confdefs.h
 *)
 	;;
 esac
+
+#
+# check if we want DNS RRL
+#
+# Check whether --enable-rrl was given.
+if test "${enable_rrl+set}" = set; then :
+  enableval=$enable_rrl;
+fi
+
+case "$enable_rrl" in
+yes)
+
+$as_echo "#define USE_RRL 1" >>confdefs.h
+
+        RRLLINKOBJS='${RRLOBJS}'
+        RRLLINKSRCS='${RRLSRCS}'
+	;;
+*)
+        RRLLINKOBJS=""
+        RRLLINKSRCS=""
+	;;
+esac
+
+
 
 #
 # check if we have kqueue
@@ -14622,6 +14663,7 @@ done
 		    "-lgssapi" \
 		    "-lgssapi -lkrb5 -ldes -lcrypt -lasn1 -lroken -lcom_err" \
 		    "-lgssapi -lkrb5 -lcrypto -lcrypt -lasn1 -lroken -lcom_err" \
+		    "-lgssapi -lkrb5 -lhx509 -lcrypto -lcrypt -lasn1 -lroken -lcom_err" \
 		    "-lgss -lkrb5"
 		do
 		    # Note that this does not include $saved_libs, because
@@ -15388,11 +15430,13 @@ then
 		*-freebsd*)
 			CC="$CC -pthread"
 			CCOPT="$CCOPT -pthread"
+			CCNOOPT="$CCNOOPT -pthread"
 			STD_CDEFINES="$STD_CDEFINES -D_THREAD_SAFE"
 			;;
 		*-openbsd*)
 			CC="$CC -pthread"
 			CCOPT="$CCOPT -pthread"
+			CCNOOPT="$CCNOOPT -pthread"
 			;;
 		*-solaris*)
 			LIBS="$LIBS -lthread"
@@ -15406,10 +15450,12 @@ then
 		*-dec-osf*)
 			CC="$CC -pthread"
 			CCOPT="$CCOPT -pthread"
+			CCNOOPT="$CCNOOPT -pthread"
 			;;
 		*-solaris*)
 			CC="$CC -mt"
 			CCOPT="$CCOPT -mt"
+			CCNOOPT="$CCNOOPT -mt"
 			;;
 		*-ibm-aix*)
 			STD_CDEFINES="$STD_CDEFINES -D_THREAD_SAFE"
@@ -15417,10 +15463,12 @@ then
 		*-sco-sysv*uw*|*-*-sysv*UnixWare*)
 			CC="$CC -Kthread"
 			CCOPT="$CCOPT -Kthread"
+			CCNOOPT="$CCNOOPT -Kthread"
 			;;
 		*-*-sysv*OpenUNIX*)
 			CC="$CC -Kpthread"
 			CCOPT="$CCOPT -Kpthread"
+			CCNOOPT="$CCNOOPT -Kpthread"
 			;;
 		esac
 	fi
@@ -15577,6 +15625,82 @@ if test "x$ac_cv_func_pthread_attr_setstacksize" = xyes; then :
   $as_echo "#define HAVE_PTHREAD_ATTR_SETSTACKSIZE 1" >>confdefs.h
 
 fi
+
+
+	for ac_header in sched.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "sched.h" "ac_cv_header_sched_h" "$ac_includes_default"
+if test "x$ac_cv_header_sched_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_SCHED_H 1
+_ACEOF
+
+fi
+
+done
+
+
+	case "$host" in
+	*solaris-*)
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sched_yield in -lrt" >&5
+$as_echo_n "checking for sched_yield in -lrt... " >&6; }
+if ${ac_cv_lib_rt_sched_yield+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lrt  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char sched_yield ();
+int
+main ()
+{
+return sched_yield ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_rt_sched_yield=yes
+else
+  ac_cv_lib_rt_sched_yield=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_rt_sched_yield" >&5
+$as_echo "$ac_cv_lib_rt_sched_yield" >&6; }
+if test "x$ac_cv_lib_rt_sched_yield" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBRT 1
+_ACEOF
+
+  LIBS="-lrt $LIBS"
+
+fi
+
+		;;
+	esac
+
+	for ac_func in sched_yield pthread_yield pthread_yield_np
+do :
+  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
+ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
+if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+done
 
 
 	#
@@ -15908,6 +16032,7 @@ else
 	*-dec-osf*)
 		CC="$CC -std"
 		CCOPT="$CCOPT -std"
+		CCNOOPT="$CCNOOPT -std"
 		MKDEPCC="$CC"
 		;;
 	*-hp-hpux*)
@@ -15926,6 +16051,7 @@ else
 			;;
 		esac
 		CCOPT="$CCOPT -Ae -z"
+		CCNOOPT="$CCNOOPT -Ae -z"
 		LDFLAGS="-Wl,+vnocompatwarnings $LDFLAGS"
 		MKDEPPROG='cc -Ae -E -Wp,-M >/dev/null 2>>$TMP'
 		;;
@@ -17703,13 +17829,40 @@ fi
 
 case "$enable_linux_caps" in
 	yes|'')
-		for ac_header in linux/capability.h sys/capability.h
+		for ac_header in linux/types.h
 do :
-  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
-ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
-if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
+  ac_fn_c_check_header_mongrel "$LINENO" "linux/types.h" "ac_cv_header_linux_types_h" "$ac_includes_default"
+if test "x$ac_cv_header_linux_types_h" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
+#define HAVE_LINUX_TYPES_H 1
+_ACEOF
+
+fi
+
+done
+
+		for ac_header in sys/capability.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "sys/capability.h" "ac_cv_header_sys_capability_h" "$ac_includes_default"
+if test "x$ac_cv_header_sys_capability_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_SYS_CAPABILITY_H 1
+_ACEOF
+
+fi
+
+done
+
+		for ac_header in linux/capability.h
+do :
+  ac_fn_c_check_header_compile "$LINENO" "linux/capability.h" "ac_cv_header_linux_capability_h" "#ifdef HAVE_LINUX_TYPES_H
+				  #include <linux/types.h>
+				  #endif
+
+"
+if test "x$ac_cv_header_linux_capability_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LINUX_CAPABILITY_H 1
 _ACEOF
 
 fi
@@ -19515,19 +19668,22 @@ BIND9_MAKE_INCLUDES=$BIND9_TOP_BUILDDIR/make/includes
 
 BIND9_MAKE_RULES=$BIND9_TOP_BUILDDIR/make/rules
 
-. $srcdir/version
+. "$srcdir/version"
 BIND9_PRODUCT="PRODUCT=\"${PRODUCT}\""
 
 BIND9_DESCRIPTION="DESCRIPTION=\"${DESCRIPTION}\""
 
-BIND9_VERSION="VERSION=${MAJORVER}.${MINORVER}${PATCHVER:+.}${PATCHVER}${RELEASETYPE}${RELEASEVER}"
+BIND9_VERSION="VERSION=${MAJORVER}.${MINORVER}${PATCHVER:+.}${PATCHVER}${RELEASETYPE}${RELEASEVER}${EXTENSIONS}"
 
 
 BIND9_SRCID="SRCID=unset"
-if test -f $srcdir/srcid; then
-	. $srcdir/srcid
+if test -f "${srcdir}/srcid"; then
+	. "${srcdir}/srcid"
 	BIND9_SRCID="SRCID=$SRCID"
+elif test -d "${srcdir}/.git"; then
+	BIND9_SRCID="SRCID="`(cd "${srcdir}";git log -n 1 --format=%h)`
 fi
+
 
 
 if test -z "$ac_configure_args"; then
@@ -19543,25 +19699,25 @@ BIND9_CONFIGARGS="CONFIGARGS=${BIND9_CONFIGARGS}"
 
 
 
-LIBISC_API=$srcdir/lib/isc/api
+LIBISC_API="$srcdir/lib/isc/api"
 
 
-LIBISCCC_API=$srcdir/lib/isccc/api
+LIBISCCC_API="$srcdir/lib/isccc/api"
 
 
-LIBISCCFG_API=$srcdir/lib/isccfg/api
+LIBISCCFG_API="$srcdir/lib/isccfg/api"
 
 
-LIBDNS_API=$srcdir/lib/dns/api
+LIBDNS_API="$srcdir/lib/dns/api"
 
 
-LIBBIND9_API=$srcdir/lib/bind9/api
+LIBBIND9_API="$srcdir/lib/bind9/api"
 
 
-LIBLWRES_API=$srcdir/lib/lwres/api
+LIBLWRES_API="$srcdir/lib/lwres/api"
 
 
-LIBIRS_API=$srcdir/lib/irs/api
+LIBIRS_API="$srcdir/lib/irs/api"
 
 #
 # Configure any DLZ drivers.
@@ -20526,7 +20682,7 @@ ac_config_commands="$ac_config_commands chmod"
 # elsewhere if there's a good reason for doing so.
 #
 
-ac_config_files="$ac_config_files make/Makefile make/mkdep Makefile bin/Makefile bin/check/Makefile bin/confgen/Makefile bin/confgen/unix/Makefile bin/dig/Makefile bin/dnssec/Makefile bin/named/Makefile bin/named/unix/Makefile bin/nsupdate/Makefile bin/pkcs11/Makefile bin/python/Makefile bin/python/dnssec-checkds.py bin/python/dnssec-coverage.py bin/rndc/Makefile bin/tests/Makefile bin/tests/atomic/Makefile bin/tests/db/Makefile bin/tests/dst/Makefile bin/tests/dst/Kdh.+002+18602.key bin/tests/dst/Kdh.+002+18602.private bin/tests/dst/Kdh.+002+48957.key bin/tests/dst/Kdh.+002+48957.private bin/tests/dst/Ktest.+001+00002.key bin/tests/dst/Ktest.+001+54622.key bin/tests/dst/Ktest.+001+54622.private bin/tests/dst/Ktest.+003+23616.key bin/tests/dst/Ktest.+003+23616.private bin/tests/dst/Ktest.+003+49667.key bin/tests/dst/dst_2_data bin/tests/dst/t2_data_1 bin/tests/dst/t2_data_2 bin/tests/dst/t2_dsasig bin/tests/dst/t2_rsasig bin/tests/hashes/Makefile bin/tests/headerdep_test.sh bin/tests/master/Makefile bin/tests/mem/Makefile bin/tests/names/Makefile bin/tests/net/Makefile bin/tests/rbt/Makefile bin/tests/resolver/Makefile bin/tests/sockaddr/Makefile bin/tests/system/Makefile bin/tests/system/conf.sh bin/tests/system/dlz/prereq.sh bin/tests/system/dlzexternal/Makefile bin/tests/system/dlzexternal/ns1/named.conf bin/tests/system/ecdsa/prereq.sh bin/tests/system/filter-aaaa/Makefile bin/tests/system/gost/prereq.sh bin/tests/system/lwresd/Makefile bin/tests/system/rpz/Makefile bin/tests/system/rsabigexponent/Makefile bin/tests/system/tkey/Makefile bin/tests/system/tsiggss/Makefile bin/tests/tasks/Makefile bin/tests/timers/Makefile bin/tests/virtual-time/Makefile bin/tests/virtual-time/conf.sh bin/tools/Makefile contrib/check-secure-delegation.pl contrib/zone-edit.sh doc/Makefile doc/arm/Makefile doc/doxygen/Doxyfile doc/doxygen/Makefile doc/doxygen/doxygen-input-filter doc/misc/Makefile doc/xsl/Makefile doc/xsl/isc-docbook-chunk.xsl doc/xsl/isc-docbook-html.xsl doc/xsl/isc-docbook-latex.xsl doc/xsl/isc-manpage.xsl isc-config.sh lib/Makefile lib/bind9/Makefile lib/bind9/include/Makefile lib/bind9/include/bind9/Makefile lib/dns/Makefile lib/dns/include/Makefile lib/dns/include/dns/Makefile lib/dns/include/dst/Makefile lib/dns/tests/Makefile lib/export/Makefile lib/export/dns/Makefile lib/export/dns/include/Makefile lib/export/dns/include/dns/Makefile lib/export/dns/include/dst/Makefile lib/export/irs/Makefile lib/export/irs/include/Makefile lib/export/irs/include/irs/Makefile lib/export/isc/$thread_dir/Makefile lib/export/isc/$thread_dir/include/Makefile lib/export/isc/$thread_dir/include/isc/Makefile lib/export/isc/Makefile lib/export/isc/include/Makefile lib/export/isc/include/isc/Makefile lib/export/isc/nls/Makefile lib/export/isc/unix/Makefile lib/export/isc/unix/include/Makefile lib/export/isc/unix/include/isc/Makefile lib/export/isccfg/Makefile lib/export/isccfg/include/Makefile lib/export/isccfg/include/isccfg/Makefile lib/export/samples/Makefile lib/export/samples/Makefile-postinstall lib/irs/Makefile lib/irs/include/Makefile lib/irs/include/irs/Makefile lib/irs/include/irs/netdb.h lib/irs/include/irs/platform.h lib/isc/$arch/Makefile lib/isc/$arch/include/Makefile lib/isc/$arch/include/isc/Makefile lib/isc/$thread_dir/Makefile lib/isc/$thread_dir/include/Makefile lib/isc/$thread_dir/include/isc/Makefile lib/isc/Makefile lib/isc/include/Makefile lib/isc/include/isc/Makefile lib/isc/include/isc/platform.h lib/isc/tests/Makefile lib/isc/nls/Makefile lib/isc/unix/Makefile lib/isc/unix/include/Makefile lib/isc/unix/include/isc/Makefile lib/isccc/Makefile lib/isccc/include/Makefile lib/isccc/include/isccc/Makefile lib/isccfg/Makefile lib/isccfg/include/Makefile lib/isccfg/include/isccfg/Makefile lib/lwres/Makefile lib/lwres/include/Makefile lib/lwres/include/lwres/Makefile lib/lwres/include/lwres/netdb.h lib/lwres/include/lwres/platform.h lib/lwres/man/Makefile lib/lwres/unix/Makefile lib/lwres/unix/include/Makefile lib/lwres/unix/include/lwres/Makefile lib/tests/Makefile lib/tests/include/Makefile lib/tests/include/tests/Makefile unit/Makefile unit/unittest.sh"
+ac_config_files="$ac_config_files make/Makefile make/mkdep Makefile bin/Makefile bin/check/Makefile bin/confgen/Makefile bin/confgen/unix/Makefile bin/dig/Makefile bin/dnssec/Makefile bin/named/Makefile bin/named/unix/Makefile bin/nsupdate/Makefile bin/pkcs11/Makefile bin/python/Makefile bin/python/dnssec-checkds.py bin/python/dnssec-coverage.py bin/rndc/Makefile bin/tests/Makefile bin/tests/atomic/Makefile bin/tests/db/Makefile bin/tests/dst/Makefile bin/tests/dst/Kdh.+002+18602.key bin/tests/dst/Kdh.+002+18602.private bin/tests/dst/Kdh.+002+48957.key bin/tests/dst/Kdh.+002+48957.private bin/tests/dst/Ktest.+001+00002.key bin/tests/dst/Ktest.+001+54622.key bin/tests/dst/Ktest.+001+54622.private bin/tests/dst/Ktest.+003+23616.key bin/tests/dst/Ktest.+003+23616.private bin/tests/dst/Ktest.+003+49667.key bin/tests/dst/dst_2_data bin/tests/dst/t2_data_1 bin/tests/dst/t2_data_2 bin/tests/dst/t2_dsasig bin/tests/dst/t2_rsasig bin/tests/hashes/Makefile bin/tests/headerdep_test.sh bin/tests/master/Makefile bin/tests/mem/Makefile bin/tests/names/Makefile bin/tests/net/Makefile bin/tests/rbt/Makefile bin/tests/resolver/Makefile bin/tests/sockaddr/Makefile bin/tests/system/Makefile bin/tests/system/conf.sh bin/tests/system/dlz/prereq.sh bin/tests/system/dlzexternal/Makefile bin/tests/system/dlzexternal/ns1/named.conf bin/tests/system/ecdsa/prereq.sh bin/tests/system/filter-aaaa/Makefile bin/tests/system/gost/prereq.sh bin/tests/system/inline/checkdsa.sh bin/tests/system/lwresd/Makefile bin/tests/system/rpz/Makefile bin/tests/system/rrl/Makefile bin/tests/system/rsabigexponent/Makefile bin/tests/system/tkey/Makefile bin/tests/system/tsiggss/Makefile bin/tests/tasks/Makefile bin/tests/timers/Makefile bin/tests/virtual-time/Makefile bin/tests/virtual-time/conf.sh bin/tools/Makefile contrib/check-secure-delegation.pl contrib/zone-edit.sh doc/Makefile doc/arm/Makefile doc/doxygen/Doxyfile doc/doxygen/Makefile doc/doxygen/doxygen-input-filter doc/misc/Makefile doc/xsl/Makefile doc/xsl/isc-docbook-chunk.xsl doc/xsl/isc-docbook-html.xsl doc/xsl/isc-docbook-latex.xsl doc/xsl/isc-manpage.xsl isc-config.sh lib/Makefile lib/bind9/Makefile lib/bind9/include/Makefile lib/bind9/include/bind9/Makefile lib/dns/Makefile lib/dns/include/Makefile lib/dns/include/dns/Makefile lib/dns/include/dst/Makefile lib/dns/tests/Makefile lib/export/Makefile lib/export/dns/Makefile lib/export/dns/include/Makefile lib/export/dns/include/dns/Makefile lib/export/dns/include/dst/Makefile lib/export/irs/Makefile lib/export/irs/include/Makefile lib/export/irs/include/irs/Makefile lib/export/isc/$thread_dir/Makefile lib/export/isc/$thread_dir/include/Makefile lib/export/isc/$thread_dir/include/isc/Makefile lib/export/isc/Makefile lib/export/isc/include/Makefile lib/export/isc/include/isc/Makefile lib/export/isc/nls/Makefile lib/export/isc/unix/Makefile lib/export/isc/unix/include/Makefile lib/export/isc/unix/include/isc/Makefile lib/export/isccfg/Makefile lib/export/isccfg/include/Makefile lib/export/isccfg/include/isccfg/Makefile lib/export/samples/Makefile lib/export/samples/Makefile-postinstall lib/irs/Makefile lib/irs/include/Makefile lib/irs/include/irs/Makefile lib/irs/include/irs/netdb.h lib/irs/include/irs/platform.h lib/isc/$arch/Makefile lib/isc/$arch/include/Makefile lib/isc/$arch/include/isc/Makefile lib/isc/$thread_dir/Makefile lib/isc/$thread_dir/include/Makefile lib/isc/$thread_dir/include/isc/Makefile lib/isc/Makefile lib/isc/include/Makefile lib/isc/include/isc/Makefile lib/isc/include/isc/platform.h lib/isc/tests/Makefile lib/isc/nls/Makefile lib/isc/unix/Makefile lib/isc/unix/include/Makefile lib/isc/unix/include/isc/Makefile lib/isccc/Makefile lib/isccc/include/Makefile lib/isccc/include/isccc/Makefile lib/isccfg/Makefile lib/isccfg/include/Makefile lib/isccfg/include/isccfg/Makefile lib/lwres/Makefile lib/lwres/include/Makefile lib/lwres/include/lwres/Makefile lib/lwres/include/lwres/netdb.h lib/lwres/include/lwres/platform.h lib/lwres/man/Makefile lib/lwres/unix/Makefile lib/lwres/unix/include/Makefile lib/lwres/unix/include/lwres/Makefile lib/tests/Makefile lib/tests/include/Makefile lib/tests/include/tests/Makefile unit/Makefile unit/unittest.sh"
 
 
 #
@@ -21572,8 +21728,10 @@ do
     "bin/tests/system/ecdsa/prereq.sh") CONFIG_FILES="$CONFIG_FILES bin/tests/system/ecdsa/prereq.sh" ;;
     "bin/tests/system/filter-aaaa/Makefile") CONFIG_FILES="$CONFIG_FILES bin/tests/system/filter-aaaa/Makefile" ;;
     "bin/tests/system/gost/prereq.sh") CONFIG_FILES="$CONFIG_FILES bin/tests/system/gost/prereq.sh" ;;
+    "bin/tests/system/inline/checkdsa.sh") CONFIG_FILES="$CONFIG_FILES bin/tests/system/inline/checkdsa.sh" ;;
     "bin/tests/system/lwresd/Makefile") CONFIG_FILES="$CONFIG_FILES bin/tests/system/lwresd/Makefile" ;;
     "bin/tests/system/rpz/Makefile") CONFIG_FILES="$CONFIG_FILES bin/tests/system/rpz/Makefile" ;;
+    "bin/tests/system/rrl/Makefile") CONFIG_FILES="$CONFIG_FILES bin/tests/system/rrl/Makefile" ;;
     "bin/tests/system/rsabigexponent/Makefile") CONFIG_FILES="$CONFIG_FILES bin/tests/system/rsabigexponent/Makefile" ;;
     "bin/tests/system/tkey/Makefile") CONFIG_FILES="$CONFIG_FILES bin/tests/system/tkey/Makefile" ;;
     "bin/tests/system/tsiggss/Makefile") CONFIG_FILES="$CONFIG_FILES bin/tests/system/tsiggss/Makefile" ;;
@@ -22899,7 +23057,7 @@ fi
 		 /*) ;;
 		 *) srcdir="../../$srcdir";;
 		 esac
-		 ${SHELL} ${srcdir}${srcdir:+/unit/atf-src/}./configure MISSING=: --prefix $atfdir;
+		 ${SHELL} "${srcdir}${srcdir:+/unit/atf-src/}./configure" --enable-tools --disable-shared MISSING=: --prefix $atfdir;
 		)  ;;
     "chmod":C) chmod a+x isc-config.sh doc/doxygen/doxygen-input-filter ;;
 
@@ -22957,6 +23115,93 @@ yes)
 	make clean
 	;;
 esac
+
+# Check whether --enable-full-report was given.
+if test "${enable_full_report+set}" = set; then :
+  enableval=$enable_full_report;
+fi
+
+
+echo "========================================================================"
+echo "Configuration summary:"
+echo "------------------------------------------------------------------------"
+echo "Optional features enabled:"
+$use_threads && echo "    Multiprocessing support (--enable-threads)"
+
+test "$enable_rrl" = "yes" && \
+    echo "    Response Rate Limiting (--enable-rrl)"
+test "$use_gssapi" = "no" || echo "    GSS-API (--with-gssapi)"
+test "$use_pkcs11" = "no" || echo "    PKCS#11/Cryptoki support (--with-pkcs11)"
+test "$enable_newstats" = "yes" && \
+    echo "    New statistics (--enable-newstats)"
+test "$enable_fixed" = "yes" && \
+    echo "    Allow 'fixed' rrset-order (--enable-fixed-rrset)"
+test "$enable_filter" = "yes" && \
+    echo "    AAAA filtering (--enable-filter-aaaa)"
+test "$want_backtrace" = "yes" && \
+    echo "    Print backtrace on crash (--enable-backtrace)"
+test "$want_symtable" = "minimal" && \
+    echo "    Use symbol table for backtrace, named only (--enable-symtable)"
+test "$want_symtable" = "yes" -o "$want_symtable" = "all" && \
+    echo "    Use symbol table for backtrace, all binaries (--enable-symtable=all)"
+test "$atf" = "no" || echo "    Automated Testing Framework (--with-atf)"
+
+# these lines are only printed if run with --enable-full-report
+if test "$enable_full_report" = "yes"; then
+    test "$enable_ipv6" = "no" -o "$found_ipv6" = "no" || \
+        echo "    IPv6 support (--enable-ipv6)"
+    test "X$USE_OPENSSL" = "X" || \
+            echo "    OpenSSL cryptography/DNSSEC (--with-openssl)"
+    test "$OPENSSL_GOST" != "yes" || \
+            echo "    GOST algorithm support (--with-gost)"
+    test "$OPENSSL_ECDSA" != "yes" || \
+            echo "    ECDSA algorithm support (--with-ecdsa)"
+    test "X$PYTHON" = "X" || echo "    Python tools (--with-python)"
+    test "X$libxml2_libs" = "X" || echo "    XML statistics (--with-libxml2)"
+fi
+
+echo "    Dynamically loadable zone (DLZ) drivers:"
+test "$use_dlz_bdb" = "no" || \
+    echo "        Berkeley DB (--with-dlz-bdb)"
+test "$use_dlz_ldap" = "no" || \
+    echo "        LDAP (--with-dlz-ldap)"
+test "$use_dlz_mysql" = "no" || \
+    echo "        MySQL (--with-dlz-mysql)"
+test "$use_dlz_odbc" = "no" || \
+    echo "        ODBC (--with-dlz-bdb)"
+test "$use_dlz_postgres" = "no" || \
+    echo "        Postgres (--with-dlz-postgres)"
+test "$use_dlz_filesystem" = "no" || \
+    echo "        Filesystem (--with-dlz-filesystem)"
+test "$use_dlz_stub" = "no" || \
+    echo "        Stub (--with-dlz-stub)"
+test "$use_dlz_bdb $use_dlz_ldap $use_dlz_mysql $use_dlz_odbc $use_dlz_postgres $use_dlz_filesystem $use_dlz_stub" = "no no no no no no no" && echo "        None"
+echo
+
+echo "Features disabled or unavailable on this platform:"
+$use_threads || echo "    Multiprocessing support (--enable-threads)"
+test "$enable_ipv6" = "no" -o "$found_ipv6" = "no" && \
+        echo "    IPv6 support (--enable-ipv6)"
+test "$enable_rrl" = "yes" || \
+    echo "    Response Rate Limiting (--enable-rrl)"
+test "$use_gssapi" = "no" && echo "    GSS-API (--with-gssapi)"
+test "$use_pkcs11" = "no" && echo "    PKCS#11/Cryptoki support (--with-pkcs11)"
+test "X$enable_newstats" = "X" && echo "    New statistics (--enable-newstats)"
+test "$enable_fixed" = "yes" || \
+    echo "    Allow 'fixed' rrset-order (--enable-fixed-rrset)"
+test "$want_backtrace" = "yes" || \
+    echo "    Print backtrace on crash (--enable-backtrace)"
+test "$atf" = "no" && echo "    Automated Testing Framework (--with-atf)"
+test "X$USE_OPENSSL" = "X" && \
+        echo "    OpenSSL cryptography/DNSSEC (--with-openssl)"
+test "X$USE_OPENSSL" != "X" -a "$OPENSSL_GOST" != "yes" && \
+    echo "    GOST algorithm support (--with-gost)"
+test "X$USE_OPENSSL" != "X" -a "$OPENSSL_ECDSA" != "yes" && \
+    echo "    ECDSA algorithm support (--with-ecdsa)"
+test "X$PYTHON" = "X" && echo "    Python tools (--with-python)"
+test "X$libxml2_libs" = "X" && echo "    XML statistics (--with-libxml2)"
+
+echo "========================================================================"
 
 if test "X$USE_OPENSSL" = "X"; then
 cat << \EOF

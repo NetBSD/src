@@ -1,4 +1,4 @@
-# Copyright (C) 2004, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -98,6 +98,15 @@ $PERL ../stop.pl . ns4 || ret=1
 $DIG nonexist. txt @10.53.0.5 -p 5300 > dig.out.f2 || ret=1
 grep "status: NXDOMAIN" dig.out.f2 > /dev/null || ret=1
 $PERL ../start.pl --restart --noclean . ns4 || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking that forward only zone overrides empty zone"
+ret=0
+$DIG 1.0.10.in-addr.arpa TXT @10.53.0.4 -p 5300 > dig.out.f2
+grep "status: NOERROR" dig.out.f2 > /dev/null || ret=1
+$DIG 2.0.10.in-addr.arpa TXT @10.53.0.4 -p 5300 > dig.out.f2
+grep "status: NXDOMAIN" dig.out.f2 > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 

@@ -31,13 +31,12 @@
 #define _ATF_RUN_ALARM_HPP_
 
 extern "C" {
-#include <sys/time.h>
 #include <sys/types.h>
 }
 
 #include <memory>
 
-#include "atf-c++/utils.hpp"
+#include "atf-c++/noncopyable.hpp"
 
 namespace atf {
 namespace atf_run {
@@ -48,15 +47,16 @@ class signal_programmer;
 // The "timer" class.
 // ------------------------------------------------------------------------
 
-class timer : utils::noncopyable {
-    ::itimerval m_old_timeval;
-    std::auto_ptr< signal_programmer > m_sigalrm;
+class timer : noncopyable {
+    struct impl;
+    std::auto_ptr< impl > m_pimpl;
 
 public:
     timer(const unsigned int);
     virtual ~timer(void);
 
     bool fired(void) const;
+    void set_fired(void);
     virtual void timeout_callback(void) = 0;
 };
 

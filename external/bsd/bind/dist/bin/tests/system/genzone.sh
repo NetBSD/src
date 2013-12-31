@@ -294,4 +294,8 @@ eui64			EUI64	01-23-45-67-89-ab-cd-ef
 uri01			URI	10 20 "https://www.isc.org/"
 uri02			URI	30 40 "https://www.isc.org/HolyCowThisSureIsAVeryLongURIRecordIDontEvenKnowWhatSomeoneWouldEverWantWithSuchAThingButTheSpecificationRequiresThatWesupportItSoHereWeGoTestingItLaLaLaLaLaLaLaSeriouslyThoughWhyWouldYouEvenConsiderUsingAURIThisLongItSeemsLikeASillyIdeaButEnhWhatAreYouGonnaDo/"
 
+keydata			TYPE65533	\# 0
+keydata			TYPE65533	\# 6 010203040506 
+keydata			TYPE65533	\# 18 010203040506010203040506010203040506
+
 EOF

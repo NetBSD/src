@@ -1,5 +1,5 @@
 /*
- * Portions Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2010, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -133,9 +133,27 @@ const FileData installFiles[] =
 	{"libisccc.dll", FileData::BinDir, FileData::Critical, FALSE, TRUE},
 	{"libdns.dll", FileData::BinDir, FileData::Critical, FALSE, TRUE},
 	{"liblwres.dll", FileData::BinDir, FileData::Critical, FALSE, TRUE},
+#ifdef OPENSSL
 	{"libeay32.dll", FileData::BinDir, FileData::Critical, FALSE, TRUE},
+#endif
 #ifdef HAVE_LIBXML2
 	{"libxml2.dll", FileData::BinDir, FileData::Critical, FALSE, TRUE},
+#endif
+#ifdef USE_GSSAPI
+#ifndef _WIN64
+	{"gssapi32.dll", FileData::BinDir, FileData::Critical, FALSE, TRUE},
+	{"krb5_32.dll", FileData::BinDir, FileData::Critical, FALSE, TRUE},
+#else
+	{"gssapi64.dll", FileData::BinDir, FileData::Critical, FALSE, TRUE},
+	{"krb5_64.dll", FileData::BinDir, FileData::Critical, FALSE, TRUE},
+#endif
+#endif
+#ifdef HAVE_GEOIP
+	{"libgeoip.dll", FileData::BinDir, FileData::Critical, FALSE, TRUE},
+#endif
+#ifdef WITH_IDN
+	{"idnkit.dll", FileData::BinDir, FileData::Critical, FALSE, TRUE},
+	{"iconv.dll", FileData::BinDir, FileData::Critical, FALSE, TRUE},
 #endif
 	{"named.exe", FileData::BinDir, FileData::Critical, FALSE, FALSE},
 	{"nsupdate.exe", FileData::BinDir, FileData::Normal, FALSE, TRUE},
@@ -154,6 +172,8 @@ const FileData installFiles[] =
 	{"dnssec-dsfromkey.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 	{"dnssec-keyfromlabel.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 	{"dnssec-revoke.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
+	{"dnssec-settime.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
+	{"dnssec-verify.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 	{"named-checkconf.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 	{"named-checkzone.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 	{"named-compilezone.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
@@ -162,6 +182,10 @@ const FileData installFiles[] =
 	{"pkcs11-destroy.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 	{"pkcs11-keygen.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 	{"pkcs11-list.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
+#ifdef USE_PYTHON
+	{"dnssec-checkds.py", FileData::BinDir, FileData::Normal, FALSE, FALSE},
+	{"dnssec-coverage.py", FileData::BinDir, FileData::Normal, FALSE, FALSE},
+#endif
 	{"readme1st.txt", FileData::BinDir, FileData::Trivial, FALSE, TRUE},
 	{NULL, -1, -1}
 };

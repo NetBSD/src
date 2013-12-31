@@ -1,9 +1,9 @@
-/*	$NetBSD: tc_test.c,v 1.1.1.1 2011/09/11 17:20:28 christos Exp $	*/
+/*	$NetBSD: tc_test.c,v 1.1.1.2 2013/12/31 20:11:51 christos Exp $	*/
 
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,15 +42,15 @@
 
 ATF_TC_HEAD(empty, tc)
 {
+    if (tc != NULL) {}
+}
+ATF_TC_BODY(empty, tc)
+{
 }
 
 ATF_TC_HEAD(test_var, tc)
 {
     atf_tc_set_md_var(tc, "test-var", "Test text");
-}
-
-ATF_TC_BODY(empty, tc)
-{
 }
 
 /* ---------------------------------------------------------------------

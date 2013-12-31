@@ -124,6 +124,7 @@ main.@O@: main.c
 		-DDESCRIPTION=\"${DESCRIPTION}\" \
 		-DSRCID=\"${SRCID}\" \
 		-DCONFIGARGS="\"${CONFIGARGS}\"" \
+		-DBUILDER="\"make\"" \
 		-DNS_LOCALSTATEDIR=\"${localstatedir}\" \
 		-DNS_SYSCONFDIR=\"${sysconfdir}\" -c ${srcdir}/main.c
 

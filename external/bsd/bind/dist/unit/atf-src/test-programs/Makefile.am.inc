@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
+# Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,8 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-tests_test_programs_DATA = test-programs/Atffile
+tests_test_programs_DATA = test-programs/Atffile \
+                           test-programs/Kyuafile
 tests_test_programsdir = $(pkgtestsdir)/test-programs
 EXTRA_DIST += $(tests_test_programs_DATA)
 
@@ -37,7 +38,7 @@ test_programs_c_helpers_LDADD = libatf-c.la
 
 tests_test_programs_PROGRAMS += test-programs/cpp_helpers
 test_programs_cpp_helpers_SOURCES = test-programs/cpp_helpers.cpp
-test_programs_cpp_helpers_LDADD = libatf-c++.la
+test_programs_cpp_helpers_LDADD = $(ATF_CXX_LIBS)
 
 common_sh = $(srcdir)/test-programs/common.sh
 EXTRA_DIST += test-programs/common.sh
@@ -65,14 +66,6 @@ test-programs/expect_test: $(srcdir)/test-programs/expect_test.sh
 	test -d test-programs || mkdir -p test-programs
 	@src="$(srcdir)/test-programs/expect_test.sh $(common_sh)"; \
 	dst="test-programs/expect_test"; $(BUILD_SH_TP)
-
-tests_test_programs_SCRIPTS += test-programs/fork_test
-CLEANFILES += test-programs/fork_test
-EXTRA_DIST += test-programs/fork_test.sh
-test-programs/fork_test: $(srcdir)/test-programs/fork_test.sh
-	test -d test-programs || mkdir -p test-programs
-	@src="$(srcdir)/test-programs/fork_test.sh $(common_sh)"; \
-	dst="test-programs/fork_test"; $(BUILD_SH_TP)
 
 tests_test_programs_SCRIPTS += test-programs/meta_data_test
 CLEANFILES += test-programs/meta_data_test
