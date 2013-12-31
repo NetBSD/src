@@ -25,7 +25,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/setsignal.c,v 1.11 2003-11-16 09:36:42 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: setsignal.c,v 1.3 2013/04/06 19:33:08 christos Exp $");
+__RCSID("$NetBSD: setsignal.c,v 1.4 2013/12/31 17:33:31 christos Exp $");
 #endif
 #endif
 
@@ -83,6 +83,8 @@ RETSIGTYPE
 
 	memset(&new, 0, sizeof(new));
 	new.sa_handler = func;
+	if (sig == SIGCHLD)
+		new.sa_flags = SA_RESTART;
 	if (sigaction(sig, &new, &old) < 0)
 		return (SIG_ERR);
 	return (old.sa_handler);

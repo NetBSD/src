@@ -25,7 +25,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-igmp.c,v 1.15 2004-03-24 00:59:16 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-igmp.c,v 1.3 2013/04/06 19:33:08 christos Exp $");
+__RCSID("$NetBSD: print-igmp.c,v 1.4 2013/12/31 17:33:31 christos Exp $");
 #endif
 #endif
 
@@ -101,7 +101,7 @@ struct tr_resp {
 #define TR_PROTO_CBT    4
 
 /* igmpv3 report types */
-static struct tok igmpv3report2str[] = {
+static const struct tok igmpv3report2str[] = {
 	{ 1,	"is_in" },
 	{ 2,	"is_ex" },
 	{ 3,	"to_in" },
