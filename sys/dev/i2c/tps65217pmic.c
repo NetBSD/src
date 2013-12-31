@@ -1,4 +1,4 @@
-/*	$NetBSD: tps65217pmic.c,v 1.6 2013/08/04 00:24:28 rkujawa Exp $ */
+/*	$NetBSD: tps65217pmic.c,v 1.7 2013/12/31 14:51:46 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tps65217pmic.c,v 1.6 2013/08/04 00:24:28 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tps65217pmic.c,v 1.7 2013/12/31 14:51:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -554,11 +554,10 @@ tps65217pmic_print_ldos(struct tps65217pmic_softc *sc)
 static void
 tps65217pmic_print_ppath(struct tps65217pmic_softc *sc)
 {
-	uint8_t status, ppath, regenable;
+	uint8_t status, ppath;
 
 	ppath = tps65217pmic_reg_read(sc, TPS65217PMIC_PPATH);
 	status = tps65217pmic_reg_read(sc, TPS65217PMIC_STATUS);
-	regenable = tps65217pmic_reg_read(sc, TPS65217PMIC_ENABLE);
 
 	aprint_normal_dev(sc->sc_dev, "power sources ");
 
