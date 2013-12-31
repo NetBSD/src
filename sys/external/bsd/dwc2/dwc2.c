@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.21 2013/11/28 06:56:36 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.22 2013/12/31 09:10:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.21 2013/11/28 06:56:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.22 2013/12/31 09:10:43 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -342,6 +342,9 @@ dwc2_softintr(void *v)
 
 	mutex_spin_enter(&hsotg->lock);
 	while ((dxfer = TAILQ_FIRST(&sc->sc_complete)) != NULL) {
+
+    		KASSERT(!callout_pending(&dxfer->xfer.timeout_handle));
+
 		/*
 		 * dwc2_abort_xfer will remove this transfer from the
 		 * sc_complete queue
@@ -353,8 +356,6 @@ dwc2_softintr(void *v)
 		}
 
 		TAILQ_REMOVE(&sc->sc_complete, dxfer, xnext);
-		/* XXXNH Already done - can I assert this? */
-		callout_stop(&dxfer->xfer.timeout_handle);
 
 		mutex_spin_exit(&hsotg->lock);
 		usb_transfer_complete(&dxfer->xfer);
