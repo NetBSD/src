@@ -1,7 +1,7 @@
-/*	$NetBSD: t_db.c,v 1.5 2013/07/27 19:23:10 christos Exp $	*/
+/*	$NetBSD: t_db.c,v 1.6 2013/12/31 20:24:40 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -3120,30 +3120,38 @@ t25(void) {
 }
 
 testspec_t	T_testlist[] = {
-	{	t1,		"dns_db_load"		},
-	{	t2,		"dns_db_iscache"	},
-	{	t3,		"dns_db_iscache"	},
-	{	t4,		"dns_db_iszone"		},
-	{	t5,		"dns_db_iszone"		},
-	{	t6,		"dns_db_origin"		},
-	{	t7,		"dns_db_class"		},
-	{	t8,		"dns_db_currentversion"	},
-	{	t9,		"dns_db_newversion"	},
-	{	t10,		"dns_db_closeversion"	},
-	{	t11,		"dns_db_closeversion"	},
-	{	t12,		"dns_db_expirenode"	},
-	{	t13,		"dns_db_findnode"	},
-	{	t14,		"dns_db_findnode"	},
-	{	t15,		"dns_db_find"		},
-	{	t16,		"dns_db_find"		},
-	{	t17,		"dns_db_find"		},
-	{	t18,		"dns_db_find"		},
-	{	t19,		"dns_db_find"		},
-	{	t20,		"dns_db_find"		},
-	{	t21,		"dns_db_find"		},
-	{	t22,		"dns_db_find"		},
-	{	t23,		"dns_db_find"		},
-	{	t24,		"dns_db_find"		},
-	{	t25,		"dns_db_load"		},
-	{	NULL,		NULL			}
+	{	(PFV) t1,		"dns_db_load"		},
+	{	(PFV) t2,		"dns_db_iscache"	},
+	{	(PFV) t3,		"dns_db_iscache"	},
+	{	(PFV) t4,		"dns_db_iszone"		},
+	{	(PFV) t5,		"dns_db_iszone"		},
+	{	(PFV) t6,		"dns_db_origin"		},
+	{	(PFV) t7,		"dns_db_class"		},
+	{	(PFV) t8,		"dns_db_currentversion"	},
+	{	(PFV) t9,		"dns_db_newversion"	},
+	{	(PFV) t10,		"dns_db_closeversion"	},
+	{	(PFV) t11,		"dns_db_closeversion"	},
+	{	(PFV) t12,		"dns_db_expirenode"	},
+	{	(PFV) t13,		"dns_db_findnode"	},
+	{	(PFV) t14,		"dns_db_findnode"	},
+	{	(PFV) t15,		"dns_db_find"		},
+	{	(PFV) t16,		"dns_db_find"		},
+	{	(PFV) t17,		"dns_db_find"		},
+	{	(PFV) t18,		"dns_db_find"		},
+	{	(PFV) t19,		"dns_db_find"		},
+	{	(PFV) t20,		"dns_db_find"		},
+	{	(PFV) t21,		"dns_db_find"		},
+	{	(PFV) t22,		"dns_db_find"		},
+	{	(PFV) t23,		"dns_db_find"		},
+	{	(PFV) t24,		"dns_db_find"		},
+	{	(PFV) t25,		"dns_db_load"		},
+	{	(PFV) 0,		NULL			}
 };
+
+#ifdef WIN32
+int
+main(int argc, char **argv) {
+	t_settests(T_testlist);
+	return (t_main(argc, argv));
+}
+#endif
