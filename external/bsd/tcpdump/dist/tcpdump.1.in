@@ -22,7 +22,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.TH TCPDUMP 8  "17 December 2010"
+.TH TCPDUMP 8  "12 July 2012"
 .SH NAME
 tcpdump \- dump traffic on a network
 .SH SYNOPSIS
@@ -70,7 +70,16 @@ tcpdump \- dump traffic on a network
 .br
 .ti +8
 [
+.B \-P
+.I in|out|inout
+]
+.ti +8
+[
 .B \-r
+.I file
+]
+[
+.B \-V
 .I file
 ]
 [
@@ -127,8 +136,10 @@ flag, which causes it to save the packet data to a file for later
 analysis, and/or with the
 .B \-r
 flag, which causes it to read from a saved packet file rather than to
-read packets from a network interface.  In all cases, only packets that
-match
+read packets from a network interface.  It can also be run with the
+.B \-V
+flag, which causes it to read a list of saved packet files. In all cases,
+only packets that match
 .I expression
 will be processed by
 .IR tcpdump .
@@ -260,7 +271,9 @@ that lacks the
 function.
 .TP
 .B \-e
-Print the link-level header on each dump line.
+Print the link-level header on each dump line.  This can be used, for
+example, to print MAC layer addresses for protocols such as Ethernet and
+IEEE 802.11.
 .TP
 .B \-E
 Use \fIspi@ipaddr algo:secret\fP for decrypting IPsec ESP packets that
@@ -280,7 +293,7 @@ The default is \fBdes-cbc\fP.
 The ability to decrypt packets is only present if \fItcpdump\fP was compiled
 with cryptography enabled.
 .IP
-\fIsecret\fP is the ASCII text for ESP secret key. 
+\fIsecret\fP is the ASCII text for ESP secret key.
 If preceded by 0x, then a hex value will be read.
 .IP
 The option assumes RFC2406 ESP, not RFC1827 ESP.
@@ -292,7 +305,7 @@ you make it visible to others, via
 and other occasions.
 .IP
 In addition to the above syntax, the syntax \fIfile name\fP may be used
-to have tcpdump read the provided file in. The file is opened upon 
+to have tcpdump read the provided file in. The file is opened upon
 receiving the first ESP packet, so any special permissions that tcpdump
 may have been given should already have been given up.
 .TP
@@ -340,7 +353,8 @@ Listen on \fIinterface\fP.
 If unspecified, \fItcpdump\fP searches the system interface list for the
 lowest numbered, configured up interface (excluding loopback).
 Ties are broken by choosing the earliest match.
-.\" .IP
+.\" which may turn out to be, for example, ``eth0''.
+.IP
 .\" On Linux systems with 2.2 or later kernels, an
 .\" .I interface
 .\" argument of ``any'' can be used to capture packets from all interfaces.
@@ -470,6 +484,11 @@ Note that the interface might be in promiscuous
 mode for some other reason; hence, `-p' cannot be used as an abbreviation for
 `ether host {local-hw-addr} or ether broadcast'.
 .TP
+.B \-P
+Choose send/receive direction \fIdirection\fR for which packets should be
+captured. Possible values are `in', `out' and `inout'. Not available
+on all platforms.
+.TP
 .B \-q
 Quick (quiet?) output.
 Print less protocol information so output
@@ -513,15 +532,32 @@ Force packets selected by "\fIexpression\fP" to be interpreted the
 specified \fItype\fR.
 Currently known types are
 \fBaodv\fR (Ad-hoc On-demand Distance Vector protocol),
+\fBcarp\fR (Common Address Redundancy Protocol),
 \fBcnfp\fR (Cisco NetFlow protocol),
+\fBlmp\fR (Link Management Protocol),
+\fBpgm\fR (Pragmatic General Multicast),
+\fBpgm_zmtp1\fR (ZMTP/1.0 inside PGM/EPGM),
+\fBradius\fR (RADIUS),
 \fBrpc\fR (Remote Procedure Call),
 \fBrtp\fR (Real-Time Applications protocol),
 \fBrtcp\fR (Real-Time Applications control protocol),
 \fBsnmp\fR (Simple Network Management Protocol),
 \fBtftp\fR (Trivial File Transfer Protocol),
 \fBvat\fR (Visual Audio Tool),
+\fBwb\fR (distributed White Board),
+\fBzmtp1\fR (ZeroMQ Message Transport Protocol 1.0)
 and
-\fBwb\fR (distributed White Board).
+\fBvxlan\fR (Virtual eXtensible Local Area Network).
+.IP
+Note that the \fBpgm\fR type above affects UDP interpretation only, the native
+PGM is always recognised as IP protocol 113 regardless. UDP-encapsulated PGM is
+often called "EPGM" or "PGM/UDP".
+.IP
+Note that the \fBpgm_zmtp1\fR type above affects interpretation of both native
+PGM and UDP at once. During the native PGM decoding the application data of an
+ODATA/RDATA packet would be decoded as a ZeroMQ datagram with ZMTP/1.0 frames.
+During the UDP decoding in addition to that any UDP packet would be treated as
+an encapsulated PGM packet.
 .TP
 .B \-t
 \fIDon't\fP print a timestamp on each dump line.
@@ -594,6 +630,10 @@ With
 .B \-X
 Telnet options are printed in hex as well.
 .TP
+.B \-V
+Read a list of filenames from \fIfile\fR. Standard input is used
+if \fIfile\fR is ``-''.
+.TP
 .B \-w
 Write the raw packets to \fIfile\fR rather than parsing and printing
 them out.
@@ -606,21 +646,30 @@ amount of time after they are received.  Use the
 .B \-U
 flag to cause packets to be written as soon as they are received.
 .IP
+The MIME type \fIapplication/vnd.tcpdump.pcap\fP has been registered
+with IANA for \fIpcap\fP files. The filename extension \fI.pcap\fP
+appears to be the most commonly used along with \fI.cap\fP and
+\fI.dmp\fP. \fITcpdump\fP itself doesn't check the extension when
+reading capture files and doesn't add an extension when writing them
+(it uses magic numbers in the file header instead). However, many
+operating systems and applications will use the extension if it is
+present and adding one (e.g. .pcap) is recommended.
+.IP
 See
 .BR pcap-savefile (5)
 for a description of the file format.
 .TP
 .B \-W
-Used in conjunction with the 
-.B \-C 
+Used in conjunction with the
+.B \-C
 option, this will limit the number
 of files created to the specified number, and begin overwriting files
-from the beginning, thus creating a 'rotating' buffer. 
+from the beginning, thus creating a 'rotating' buffer.
 In addition, it will name
 the files with enough leading 0s to support the maximum number of
 files, allowing them to sort correctly.
 .IP
-Used in conjunction with the 
+Used in conjunction with the
 .B \-G
 option, this will limit the number of rotated dump files that get
 created, exiting with status 0 when reaching the limit. If used with
@@ -630,7 +679,7 @@ as well, the behavior will result in cyclical files per timeslice.
 .B \-x
 When parsing and printing,
 in addition to printing the headers of each packet, print the data of
-each packet (minus its link level header) in hex. 
+each packet (minus its link level header) in hex.
 The smaller of the entire packet or
 .I snaplen
 bytes will be printed.  Note that this is the entire link-layer
@@ -710,10 +759,12 @@ only packets for which \fIexpression\fP is `true' will be dumped.
 For the \fIexpression\fP syntax, see
 .BR pcap-filter (7).
 .LP
-Expression arguments can be passed to \fItcpdump\fP as either a single
-argument or as multiple arguments, whichever is more convenient.
-Generally, if the expression contains Shell metacharacters, it is
-easier to pass it as a single, quoted argument.
+The \fIexpression\fP argument can be passed to \fItcpdump\fP as either a single
+Shell argument, or as multiple Shell arguments, whichever is more convenient.
+Generally, if the expression contains Shell metacharacters, such as
+backslashes used to escape protocol names, it is easier to pass it as
+a single, quoted argument rather than to escape the Shell
+metacharacters.
 Multiple arguments are concatenated with spaces before being parsed.
 .SH EXAMPLES
 .LP
@@ -1232,7 +1283,7 @@ tcp-push, tcp-act, tcp-urg.
 .PP
 This can be demonstrated as:
 .RS
-.B 
+.B
      tcpdump -i xl0 'tcp[tcpflags] & tcp-push != 0'
 .RE
 .PP
@@ -1487,11 +1538,11 @@ not be useful to people who are not familiar with the workings of
 AFS and RX.
 .LP
 If the -v (verbose) flag is given twice, acknowledgement packets and
-additional header information is printed, such as the the RX call ID,
+additional header information is printed, such as the RX call ID,
 call number, sequence number, serial number, and the RX packet flags.
 .LP
 If the -v flag is given twice, additional information is printed,
-such as the the RX call ID, serial number, and the RX packet flags.
+such as the RX call ID, serial number, and the RX packet flags.
 The MTU negotiation information is also printed from RX ack packets.
 .LP
 If the -v flag is given three times, the security index and service id
@@ -1714,6 +1765,11 @@ Ethernet interface removed the packet from the wire and when the kernel
 serviced the `new packet' interrupt.
 .SH "SEE ALSO"
 stty(1), pcap(3), bpf(4), pcap-savefile(5), pcap-filter(7), pcap-tstamp-type(7)
+.LP
+.RS
+.I http://www.iana.org/assignments/media-types/application/vnd.tcpdump.pcap
+.RE
+.LP
 .SH AUTHORS
 The original authors are:
 .LP
@@ -1733,7 +1789,7 @@ The current version is available via http:
 The original distribution is available via anonymous ftp:
 .LP
 .RS
-.I ftp://ftp.ee.lbl.gov/tcpdump.tar.Z
+.I ftp://ftp.ee.lbl.gov/old/tcpdump.tar.Z
 .RE
 .LP
 IPv6/IPsec support is added by WIDE/KAME project.
