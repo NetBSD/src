@@ -620,9 +620,11 @@ def set_path(command, default=None):
 def parse_args():
     """Read command line arguments, set global 'args' structure"""
     global args
+    bindir = 'bin';
 
     compilezone = set_path('named-compilezone',
-                           '@prefix@/sbin/named-compilezone')
+                           os.path.join('@prefix@', bindir,
+                                        'named-compilezone'))
 
     parser = argparse.ArgumentParser(description=prog + ': checks future ' +
                                      'DNSKEY coverage for a zone')

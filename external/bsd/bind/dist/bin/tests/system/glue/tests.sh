@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -28,7 +28,7 @@ status=0
 
 echo "I:testing that a ccTLD referral gets a full glue set from the root zone"
 $DIG +norec @10.53.0.1 -p 5300 foo.bar.fi. A >dig.out || status=1
-$PERL ../digcomp.pl fi.good dig.out || status=1
+$PERL ../digcomp.pl --lc fi.good dig.out || status=1
 
 echo "I:testing that we find glue A RRs we are authoritative for"
 $DIG +norec @10.53.0.1 -p 5300 foo.bar.xx. a >dig.out || status=1
