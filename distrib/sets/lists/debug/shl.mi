@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.42 2013/11/16 13:01:38 alnsn Exp $
+# $NetBSD: shl.mi,v 1.43 2013/12/31 20:26:18 christos Exp $
 ./usr/libdata/debug/lib/libc.so.12.187.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypt.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypto.so.8.1.debug		comp-sys-debug	debug
@@ -98,7 +98,7 @@
 ./usr/libdata/debug/usr/lib/libintl.so.1.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libipsec.so.3.0.debug	comp-net-debug	debug
 ./usr/libdata/debug/usr/lib/libisc.so.6.0.debug		comp-bind-debug	debug,obsolete
-./usr/libdata/debug/usr/lib/libisc.so.7.0.debug		comp-bind-debug	debug
+./usr/libdata/debug/usr/lib/libisc.so.7.1.debug		comp-bind-debug	debug
 ./usr/libdata/debug/usr/lib/libisccc.so.6.0.debug	comp-bind-debug	debug,obsolete
 ./usr/libdata/debug/usr/lib/libisccc.so.7.0.debug	comp-bind-debug	debug
 ./usr/libdata/debug/usr/lib/libisccfg.so.6.0.debug	comp-bind-debug	debug,obsolete
