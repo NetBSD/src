@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.133 2014/01/01 15:18:57 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.134 2014/01/01 16:06:00 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -16,6 +16,7 @@ SUBDIR+=	ccd
 SUBDIR+=	cd9660
 SUBDIR+=	cgd
 SUBDIR+=	chfs
+SUBDIR+=	crypto
 SUBDIR+=	coda
 SUBDIR+=	coda5
 SUBDIR+=	compat
@@ -67,6 +68,7 @@ SUBDIR+=	npf_ext_rndblock
 SUBDIR+=	ntfs
 SUBDIR+=	null
 SUBDIR+=	onewire
+SUBDIR+=	opencrypto
 SUBDIR+=	overlay
 SUBDIR+=	pciverbose
 SUBDIR+=	pf
@@ -87,6 +89,7 @@ SUBDIR+=	smbfs
 SUBDIR+=	spdmem
 SUBDIR+=	sysvbfs
 SUBDIR+=	suser
+SUBDIR+=	swcrypto
 SUBDIR+=	swsensor
 SUBDIR+=	tmpfs
 SUBDIR+=	uatp
