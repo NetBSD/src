@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.96 2012/10/12 19:45:47 christos Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.97 2014/01/01 18:57:16 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -993,7 +993,8 @@ int	netbsd32_kevent(struct lwp *, void *, register_t *);
 
 #define	SCARG_P32(uap, name) NETBSD32PTR64(SCARG(uap, name))
 
-int	coredump_netbsd32(struct lwp *, void *);
+struct coredump_iostate;
+int	coredump_netbsd32(struct lwp *, struct coredump_iostate *);
 
 /*
  * random other stuff
