@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.89 2014/01/01 19:06:45 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.90 2014/01/01 19:50:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.89 2014/01/01 19:06:45 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.90 2014/01/01 19:50:44 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -688,7 +688,8 @@ parsefname(void)
 		if (heredoclist == NULL)
 			heredoclist = here;
 		else {
-			for (p = heredoclist ; p->next ; p = p->next);
+			for (p = heredoclist ; p->next ; p = p->next)
+				continue;
 			p->next = here;
 		}
 	} else if (n->type == NTOFD || n->type == NFROMFD) {
@@ -772,13 +773,13 @@ readtoken(void)
 			for (pp = parsekwd; *pp; pp++) {
 				if (**pp == *wordtext && equal(*pp, wordtext))
 				{
-					lasttoken = t = pp - 
+					lasttoken = t = pp -
 					    parsekwd + KWDOFFSET;
 					TRACE(("keyword %s recognized\n", tokname[t]));
 					goto out;
 				}
 			}
-			if(!noalias &&
+			if (!noalias &&
 			    (ap = lookupalias(wordtext, 1)) != NULL) {
 				pushstring(ap->val, strlen(ap->val), ap);
 				checkkwd = savecheckkwd;
@@ -833,7 +834,8 @@ xxreadtoken(void)
 		case ' ': case '\t':
 			continue;
 		case '#':
-			while ((c = pgetc()) != '\n' && c != PEOF);
+			while ((c = pgetc()) != '\n' && c != PEOF)
+				continue;
 			pungetc();
 			continue;
 		case '\\':
@@ -1183,7 +1185,8 @@ checkend: {
 				char *p, *q;
 
 				p = line;
-				for (q = eofmark + 1 ; *q && *p == *q ; p++, q++);
+				for (q = eofmark + 1 ; *q && *p == *q ; p++, q++)
+					continue;
 				if ((*p == '\0' || *p == '\n') && *q == '\0') {
 					c = PEOF;
 					plinno++;
