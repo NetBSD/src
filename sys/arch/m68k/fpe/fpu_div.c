@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_div.c,v 1.9 2014/01/01 05:22:22 isaki Exp $ */
+/*	$NetBSD: fpu_div.c,v 1.10 2014/01/01 05:23:40 isaki Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_div.c,v 1.9 2014/01/01 05:22:22 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_div.c,v 1.10 2014/01/01 05:23:40 isaki Exp $");
 
 #include <sys/types.h>
 
@@ -168,9 +168,9 @@ fpu_div(struct fpemu *fe)
 	 *	Inf / Inf = NaN, plus NV exception
 	 *	Inf / num = Inf
 	 *	Inf / 0   = Inf
-	 *	0 / Inf = 0
-	 *	0 / num = 0
-	 *	0 / 0   = NaN, plus NV exception
+	 *	0   / Inf = 0
+	 *	0   / num = 0
+	 *	0   / 0   = NaN, plus NV exception
 	 *	num / Inf = 0
 	 *	num / num = num (do the divide)
 	 *	num / 0   = Inf, plus DZ exception
