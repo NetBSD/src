@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.132 2013/12/29 16:32:32 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.133 2014/01/01 15:18:57 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,10 @@ SUBDIR=		accf_dataready
 SUBDIR+=	accf_httpready
 SUBDIR+=	adosfs
 SUBDIR+=	aio
+SUBDIR+=	blowfish
 SUBDIR+=	bpf
+SUBDIR+=	camellia
+SUBDIR+=	cast128
 SUBDIR+=	ccd
 SUBDIR+=	cd9660
 SUBDIR+=	cgd
@@ -19,6 +22,7 @@ SUBDIR+=	compat
 SUBDIR+=	compat_ossaudio
 SUBDIR+=	coredump
 SUBDIR+=	dbcool
+SUBDIR+=	des
 SUBDIR+=	dk_subr
 SUBDIR+=	efs
 SUBDIR+=	ext2fs
@@ -78,6 +82,7 @@ SUBDIR+=	secmodel_bsd44
 SUBDIR+=	secmodel_extensions
 SUBDIR+=	secmodel_overlay
 SUBDIR+=	securelevel
+SUBDIR+=	skipjack
 SUBDIR+=	smbfs
 SUBDIR+=	spdmem
 SUBDIR+=	sysvbfs
