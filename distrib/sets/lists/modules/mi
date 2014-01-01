@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.65 2014/01/01 15:22:33 pgoyette Exp $
+# $NetBSD: mi,v 1.66 2014/01/01 16:06:35 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -42,6 +42,8 @@
 ./@MODULEDIR@/compat_ossaudio/compat_ossaudio.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/coredump				base-kernel-modules	kmod
 ./@MODULEDIR@/coredump/coredump.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/crypto				base-kernel-modules	kmod
+./@MODULEDIR@/crypto/crypto.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/cyclic				base-kernel-modules	kmod,dtrace
 ./@MODULEDIR@/cyclic/cyclic.kmod		base-kernel-modules	kmod,dtrace
 ./@MODULEDIR@/dbcool				base-kernel-modules	kmod
@@ -156,6 +158,8 @@
 ./@MODULEDIR@/null/null.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/onewire				base-kernel-modules	kmod
 ./@MODULEDIR@/onewire/onewire.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/opencrypto			base-kernel-modules	kmod
+./@MODULEDIR@/opencrypto/opencrypto.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/overlay				base-kernel-modules	kmod
 ./@MODULEDIR@/overlay/overlay.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/pciverbose			base-kernel-modules	kmod
@@ -202,6 +206,8 @@
 ./@MODULEDIR@/spdmem/spdmem.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/suser				base-kernel-modules	kmod
 ./@MODULEDIR@/suser/suser.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/swcrypto				base-kernel-modules	kmod
+./@MODULEDIR@/swcrypto/swcrypto.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/swsensor				base-kernel-modules	kmod
 ./@MODULEDIR@/swsensor/swsensor.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/sysvbfs				base-kernel-modules	kmod
