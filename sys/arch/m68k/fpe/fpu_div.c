@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_div.c,v 1.8 2013/03/26 11:30:20 isaki Exp $ */
+/*	$NetBSD: fpu_div.c,v 1.9 2014/01/01 05:22:22 isaki Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_div.c,v 1.8 2013/03/26 11:30:20 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_div.c,v 1.9 2014/01/01 05:22:22 isaki Exp $");
 
 #include <sys/types.h>
 
@@ -166,10 +166,10 @@ fpu_div(struct fpemu *fe)
 	 * return it.  Otherwise we have the following cases:
 	 *
 	 *	Inf / Inf = NaN, plus NV exception
-	 *	Inf / num = Inf [i.e., return x]
-	 *	Inf / 0   = Inf [i.e., return x]
-	 *	0 / Inf = 0 [i.e., return x]
-	 *	0 / num = 0 [i.e., return x]
+	 *	Inf / num = Inf
+	 *	Inf / 0   = Inf
+	 *	0 / Inf = 0
+	 *	0 / num = 0
 	 *	0 / 0   = NaN, plus NV exception
 	 *	num / Inf = 0
 	 *	num / num = num (do the divide)
@@ -182,6 +182,8 @@ fpu_div(struct fpemu *fe)
 	if (ISINF(x) || ISZERO(x)) {
 		if (x->fp_class == y->fp_class)
 			return (fpu_newnan(fe));
+		/* all results at this point use XOR of operand signs */
+		x->fp_sign ^= y->fp_sign;
 		return (x);
 	}
 
