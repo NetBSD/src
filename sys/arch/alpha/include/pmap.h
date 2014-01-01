@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.78 2013/11/04 19:57:29 christos Exp $ */
+/* $NetBSD: pmap.h,v 1.79 2014/01/01 16:09:04 matt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -146,12 +146,10 @@ struct pmap {
 };
 
 /*
- * Compute the sizeof of a pmap structure.  Subtract one because one
- * ASN info structure is already included in the pmap structure itself.
+ * Compute the sizeof of a pmap structure.
  */
 #define	PMAP_SIZEOF(x)							\
-	(ALIGN(sizeof(struct pmap) +					\
-	       (sizeof(struct pmap_asn_info) * ((x) - 1))))
+	(ALIGN(offsetof(struct pmap, pm_asni[(x)])))
 
 #define	PMAP_ASN_RESERVED	0	/* reserved for Lev1map users */
 
