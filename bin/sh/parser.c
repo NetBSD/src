@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.87 2014/01/01 16:55:28 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.88 2014/01/01 18:29:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.87 2014/01/01 16:55:28 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.88 2014/01/01 18:29:39 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -433,11 +433,14 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 		noalias = 1;
 		checkkwd = 2, readtoken();
 		/*
-		 * This should be a do {} while loop as it was originally
-		 * since POSIX mandates at least one case statement, but
-		 * unfortunately both ksh and bash accept 'case x in esac'
+		 * Both ksh and bash accept 'case x in esac'
 		 * so configure scripts started taking advantage of this.
-		 * so do we.
+		 * The page: http://pubs.opengroup.org/onlinepubs/\
+		 * 009695399/utilities/xcu_chap02.html contradicts itself,
+		 * as to if this is legal; the "Case Conditional Format"
+		 * paragraph shows one case is required, but the "Grammar"
+		 * section shows a grammar that explicitly allows the no
+		 * case option.
 		 */
 		while (lasttoken != TESAC) {
 			*cpp = cp = (union node *)stalloc(sizeof (struct nclist));
