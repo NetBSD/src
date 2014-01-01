@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.64 2013/12/29 08:10:14 pgoyette Exp $
+# $NetBSD: mi,v 1.65 2014/01/01 15:22:33 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -18,6 +18,12 @@
 ./@MODULEDIR@/aio/aio.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/bpf				base-kernel-modules	kmod
 ./@MODULEDIR@/bpf/bpf.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/blowfish				base-kernel-modules	kmod
+./@MODULEDIR@/blowfish/blowfish.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/camellia				base-kernel-modules	kmod
+./@MODULEDIR@/camellia/camellia.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/cast128				base-kernel-modules	kmod
+./@MODULEDIR@/cast128/cast128.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/cd9660				base-kernel-modules	kmod
 ./@MODULEDIR@/cd9660/cd9660.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/chfs				base-kernel-modules	kmod
@@ -40,6 +46,8 @@
 ./@MODULEDIR@/cyclic/cyclic.kmod		base-kernel-modules	kmod,dtrace
 ./@MODULEDIR@/dbcool				base-kernel-modules	kmod
 ./@MODULEDIR@/dbcool/dbcool.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/des				base-kernel-modules	kmod
+./@MODULEDIR@/des/des.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/dirhash				base-obsolete	obsolete
 ./@MODULEDIR@/dirhash/dirhash.kmod		base-obsolete	obsolete
 ./@MODULEDIR@/dk_subr				base-kernel-modules	kmod
@@ -184,6 +192,8 @@
 ./@MODULEDIR@/secmodel_overlay/secmodel_overlay.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/securelevel			base-kernel-modules	kmod
 ./@MODULEDIR@/securelevel/securelevel.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/skipjack				base-kernel-modules	kmod
+./@MODULEDIR@/skipjack/skipjack.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/smbfs				base-kernel-modules	kmod
 ./@MODULEDIR@/smbfs/smbfs.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/solaris				base-kernel-modules     kmod,solaris
