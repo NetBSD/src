@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.43 2013/09/12 13:12:35 martin Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.44 2014/01/01 16:06:01 pgoyette Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.43 2013/09/12 13:12:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.44 2014/01/01 16:06:01 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -33,8 +33,13 @@ __KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.43 2013/09/12 13:12:35 martin Exp $
 #include <sys/sysctl.h>
 #include <sys/errno.h>
 #include <sys/cprng.h>
+#include <sys/module.h>
+#include <sys/device.h>
 
+#ifdef _KERNEL_OPT
 #include "opt_ocf.h"
+#endif
+
 #include <opencrypto/cryptodev.h>
 #include <opencrypto/cryptosoft.h>
 #include <opencrypto/xform.h>
@@ -1319,4 +1324,106 @@ swcryptoattach(int num)
 {
 
 	swcr_init();
+}
+
+void	swcrypto_attach(device_t, device_t, void *);
+
+void
+swcrypto_attach(device_t parent, device_t self, void *opaque)
+{
+
+	swcr_init();
+}
+
+int	swcrypto_detach(device_t, int);
+
+int
+swcrypto_detach(device_t self, int flag)
+{
+	if (swcr_id >= 0)
+		crypto_unregister_all(swcr_id);
+	return 0;
+}
+
+int	swcrypto_match(device_t, cfdata_t, void *);
+
+int
+swcrypto_match(device_t parent, cfdata_t data, void *opaque)
+{
+
+        return 1;
+}
+
+MODULE(MODULE_CLASS_DRIVER, swcrypto,
+	"opencrypto,zlib,blowfish,des,cast128,camellia,skipjack");
+
+CFDRIVER_DECL(swcrypto, DV_DULL, NULL);
+
+CFATTACH_DECL2_NEW(swcrypto, 0, swcrypto_match, swcrypto_attach,
+    swcrypto_detach, NULL, NULL, NULL);
+
+static int swcryptoloc[] = { -1, -1 };
+
+static struct cfdata swcrypto_cfdata[] = {
+	{
+		.cf_name = "swcrypto",
+		.cf_atname = "swcrypto",
+		.cf_unit = 0,
+		.cf_fstate = 0,
+		.cf_loc = swcryptoloc,
+		.cf_flags = 0,
+		.cf_pspec = NULL,
+	},
+	{ NULL, NULL, 0, 0, NULL, 0, NULL }
+};
+
+static int
+swcrypto_modcmd(modcmd_t cmd, void *arg)
+{
+	int error;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		error = config_cfdriver_attach(&swcrypto_cd);
+		if (error) {
+			return error;
+		}
+
+		error = config_cfattach_attach(swcrypto_cd.cd_name,
+		    &swcrypto_ca);
+		if (error) {
+			config_cfdriver_detach(&swcrypto_cd);
+			aprint_error("%s: unable to register cfattach\n",
+				swcrypto_cd.cd_name);
+
+			return error;
+		}
+
+		error = config_cfdata_attach(swcrypto_cfdata, 1);
+		if (error) {
+			config_cfattach_detach(swcrypto_cd.cd_name,
+			    &swcrypto_ca);
+			config_cfdriver_detach(&swcrypto_cd);
+			aprint_error("%s: unable to register cfdata\n",
+				swcrypto_cd.cd_name);
+
+			return error;
+		}
+
+		(void)config_attach_pseudo(swcrypto_cfdata);
+
+		return 0;
+	case MODULE_CMD_FINI:
+		error = config_cfdata_detach(swcrypto_cfdata);
+		if (error) {
+			return error;
+		}
+
+		config_cfattach_detach(swcrypto_cd.cd_name, &swcrypto_ca);
+		config_cfdriver_detach(&swcrypto_cd);
+
+		return 0;
+	default:
+		return ENOTTY;
+	}
 }
