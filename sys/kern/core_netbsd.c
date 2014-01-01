@@ -1,4 +1,4 @@
-/*	$NetBSD: core_netbsd.c,v 1.18 2011/02/02 20:10:09 chuck Exp $	*/
+/*	$NetBSD: core_netbsd.c,v 1.19 2014/01/01 18:57:16 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: core_netbsd.c,v 1.18 2011/02/02 20:10:09 chuck Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_netbsd.c,v 1.19 2014/01/01 18:57:16 dsl Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_coredump.h"
@@ -73,13 +73,13 @@ struct coredump_state {
 	struct CORENAME(core) core;
 };
 
-static int	CORENAME(coredump_countsegs_netbsd)(struct proc *, void *,
-		    struct uvm_coredump_state *);
-static int	CORENAME(coredump_writesegs_netbsd)(struct proc *, void *,
-		    struct uvm_coredump_state *);
+static int	CORENAME(coredump_countsegs_netbsd)(struct proc *,
+		    struct coredump_iostate *, struct uvm_coredump_state *);
+static int	CORENAME(coredump_writesegs_netbsd)(struct proc *,
+		    struct coredump_iostate *, struct uvm_coredump_state *);
 
 int
-CORENAME(coredump_netbsd)(struct lwp *l, void *iocookie)
+CORENAME(coredump_netbsd)(struct lwp *l, struct coredump_iostate *iocookie)
 {
 	struct coredump_state cs;
 	struct proc *p = l->l_proc;
@@ -121,8 +121,8 @@ CORENAME(coredump_netbsd)(struct lwp *l, void *iocookie)
 }
 
 static int
-CORENAME(coredump_countsegs_netbsd)(struct proc *p, void *iocookie,
-    struct uvm_coredump_state *us)
+CORENAME(coredump_countsegs_netbsd)(struct proc *p,
+    struct coredump_iostate *iocookie, struct uvm_coredump_state *us)
 {
 	struct coredump_state *cs = us->cookie;
 
@@ -133,8 +133,8 @@ CORENAME(coredump_countsegs_netbsd)(struct proc *p, void *iocookie,
 }
 
 static int
-CORENAME(coredump_writesegs_netbsd)(struct proc *p, void *iocookie,
-    struct uvm_coredump_state *us)
+CORENAME(coredump_writesegs_netbsd)(struct proc *p,
+    struct coredump_iostate *iocookie, struct uvm_coredump_state *us)
 {
 	struct coredump_state *cs = us->cookie;
 	struct CORENAME(coreseg) cseg;
@@ -167,7 +167,7 @@ CORENAME(coredump_writesegs_netbsd)(struct proc *p, void *iocookie,
 #else	/* COREDUMP */
 
 int
-CORENAME(coredump_netbsd)(struct lwp *l, void *cookie)
+CORENAME(coredump_netbsd)(struct lwp *l, struct coredump_iostate *cookie)
 {
 
 	return ENOSYS;

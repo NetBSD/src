@@ -1,4 +1,4 @@
-/* $NetBSD: core_machdep.c,v 1.7 2012/02/06 02:14:10 matt Exp $ */
+/* $NetBSD: core_machdep.c,v 1.8 2014/01/01 18:57:15 dsl Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.7 2012/02/06 02:14:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.8 2014/01/01 18:57:15 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.7 2012/02/06 02:14:10 matt Exp $"
  * Dump the machine specific header information at the start of a core dump.
  */
 int
-cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
+cpu_coredump(struct lwp *l, struct coredump_iostate *iocookie,
+    struct core *chdr)
 {
 	int error;
 	struct md_coredump cpustate;
