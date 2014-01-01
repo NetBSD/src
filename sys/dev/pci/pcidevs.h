@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1168 2013/12/30 07:08:47 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1169 2014/01/01 08:33:31 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1175 2013/12/30 07:08:24 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1176 2014/01/01 08:33:00 msaitoh Exp
  */
 
 /*
@@ -1542,7 +1542,7 @@
 #define	PCI_PRODUCT_AMCIRCUITS_S5920	0x5920		/* S5920 PCI Target */
 
 /* ASPEED Technology products */
-#define	PCI_PRODUCT_ASPEED_AST2000	0x2000		/* AST2000 */
+#define	PCI_PRODUCT_ASPEED_AST2000	0x2000		/* ASPEED Graphics Family */
 
 /* Atheros Communications products */
 #define	PCI_PRODUCT_ATHEROS_AR5201	0x0007		/* AR5201 Wireless LAN */
