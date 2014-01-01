@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1175 2013/12/30 07:08:24 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1176 2014/01/01 08:33:00 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1535,7 +1535,7 @@ product AMCIRCUITS ADDI7800	0x818e	ADDI-DATA APCI-7800 8-port Serial
 product AMCIRCUITS S5920	0x5920	S5920 PCI Target
 
 /* ASPEED Technology products */
-product ASPEED AST2000		0x2000	AST2000
+product ASPEED AST2000		0x2000	ASPEED Graphics Family
 
 /* Atheros Communications products */
 product ATHEROS AR5201		0x0007 AR5201 Wireless LAN
