@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.61 2014/01/01 22:06:13 christos Exp $
+# $NetBSD: Makefile.boot,v 1.62 2014/01/01 22:07:54 christos Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -51,7 +51,7 @@ CPUFLAGS=  -march=i386 -mtune=i386
 
 CFLAGS+=   -mno-sse -mno-sse2 -mno-sse3
 
-COPTS+=    -ffreestanding #-fno-reorder-functions
+COPTS+=    -ffreestanding
 CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes
 CPPFLAGS+= -nostdinc -D_STANDALONE
 CPPFLAGS+= -I$S
