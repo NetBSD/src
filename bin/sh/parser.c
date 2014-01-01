@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.88 2014/01/01 18:29:39 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.89 2014/01/01 19:06:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.88 2014/01/01 18:29:39 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.89 2014/01/01 19:06:45 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1000,6 +1000,7 @@ readtoken1(int firstc, char const *syn, char *eofmark, int striptabs)
 					break;
 				}
 				if (c == '\n') {
+					plinno++;
 					if (doprompt)
 						setprompt(2);
 					else
