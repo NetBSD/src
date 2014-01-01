@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: netbsd32_machdep.c,v 1.1 2012/08/03 07:59:22 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: netbsd32_machdep.c,v 1.2 2014/01/01 18:57:15 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/core.h>
@@ -48,7 +48,8 @@ const char machine32[] = MACHINE;
 const char machine_arch32[] = MACHINE_ARCH;
 
 int
-cpu_coredump32(struct lwp *l, void *iocookie, struct core32 *chdr)
+cpu_coredump32(struct lwp *l, struct coredump_iostate *iocookie,
+    struct core32 *chdr)
 {
 	return cpu_coredump(l, iocookie, (struct core *)chdr);
 }
