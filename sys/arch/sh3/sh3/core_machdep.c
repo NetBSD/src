@@ -1,4 +1,4 @@
-/*	$NetBSD: core_machdep.c,v 1.4 2011/01/27 00:19:27 uwe Exp $	*/
+/*	$NetBSD: core_machdep.c,v 1.5 2014/01/01 18:57:16 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.4 2011/01/27 00:19:27 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.5 2014/01/01 18:57:16 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,8 @@ struct md_core {
 };
 
 int
-cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
+cpu_coredump(struct lwp *l, struct coredump_iostate *iocookie,
+    struct core *chdr)
 {
 	struct md_core md_core;
 	struct coreseg cseg;

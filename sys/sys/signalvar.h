@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.84 2013/11/22 21:04:11 christos Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.85 2014/01/01 18:57:16 dsl Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -114,11 +114,12 @@ struct sigctx {
 extern sigset_t contsigmask, sigcantmask;
 
 struct vnode;
+struct coredump_iostate;
 
 /*
  * Machine-independent functions:
  */
-int	coredump_netbsd(struct lwp *, void *);
+int	coredump_netbsd(struct lwp *, struct coredump_iostate *);
 void	execsigs(struct proc *);
 int	issignal(struct lwp *);
 void	pgsignal(struct pgrp *, int, int);

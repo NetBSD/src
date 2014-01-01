@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_coredump.c,v 1.2 2011/02/02 15:25:27 chuck Exp $	*/
+/*	$NetBSD: uvm_coredump.c,v 1.3 2014/01/01 18:57:16 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_coredump.c,v 1.2 2011/02/02 15:25:27 chuck Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_coredump.c,v 1.3 2014/01/01 18:57:16 dsl Exp $");
 
 /*
  * uvm_coredump.c: glue functions for coredump
@@ -80,8 +80,9 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_coredump.c,v 1.2 2011/02/02 15:25:27 chuck Exp $
  */
 
 int
-uvm_coredump_walkmap(struct proc *p, void *iocookie,
-    int (*func)(struct proc *, void *, struct uvm_coredump_state *),
+uvm_coredump_walkmap(struct proc *p, struct coredump_iostate *iocookie,
+    int (*func)(struct proc *, struct coredump_iostate *,
+	struct uvm_coredump_state *),
     void *cookie)
 {
 	struct uvm_coredump_state state;

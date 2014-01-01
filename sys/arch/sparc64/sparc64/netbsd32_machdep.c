@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.100 2013/09/14 21:09:56 martin Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.101 2014/01/01 18:57:16 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.100 2013/09/14 21:09:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.101 2014/01/01 18:57:16 dsl Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -679,7 +679,8 @@ netbsd32_process_write_fpregs(struct lwp *l, const struct fpreg32 *regs)
  * 32-bit version of cpu_coredump.
  */
 int
-cpu_coredump32(struct lwp *l, void *iocookie, struct core32 *chdr)
+cpu_coredump32(struct lwp *l, struct coredump_iostate *iocookie,
+    struct core32 *chdr)
 {
 	int i, error;
 	struct md_coredump32 md_core;

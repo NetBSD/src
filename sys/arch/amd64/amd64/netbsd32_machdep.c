@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.85 2013/12/01 01:05:16 christos Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.86 2014/01/01 18:57:15 dsl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.85 2013/12/01 01:05:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.86 2014/01/01 18:57:15 dsl Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -464,7 +464,8 @@ struct md_core32 {
 };
 
 int
-cpu_coredump32(struct lwp *l, void *iocookie, struct core32 *chdr)
+cpu_coredump32(struct lwp *l, struct coredump_iostate *iocookie,
+    struct core32 *chdr)
 {
 	struct md_core32 md_core;
 	struct coreseg cseg;
