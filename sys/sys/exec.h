@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.142 2013/11/14 12:07:11 martin Exp $	*/
+/*	$NetBSD: exec.h,v 1.143 2014/01/01 18:57:16 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -143,6 +143,7 @@ struct lwp;
 struct proc;
 struct exec_package;
 struct vnode;
+struct coredump_iostate;
 
 typedef int (*exec_makecmds_fcn)(struct lwp *, struct exec_package *);
 
@@ -164,7 +165,7 @@ struct execsw {
 					/* Set registers before execution */
 	void	(*es_setregs)(struct lwp *, struct exec_package *, vaddr_t);
 					/* Dump core */
-	int	(*es_coredump)(struct lwp *, void *);
+	int	(*es_coredump)(struct lwp *, struct coredump_iostate *);
 	int	(*es_setup_stack)(struct lwp *, struct exec_package *);
 };
 
@@ -272,7 +273,8 @@ int	exec_read_from		(struct lwp *, struct vnode *, u_long off,
 				    void *, size_t);
 int	exec_setup_stack	(struct lwp *, struct exec_package *);
 
-int	coredump_write		(void *, enum uio_seg, const void *, size_t);
+int	coredump_write		(struct coredump_iostate *, enum uio_seg,
+				    const void *, size_t);
 
 void	exec_free_emul_arg	(struct exec_package *);
 
@@ -282,8 +284,8 @@ void	exec_free_emul_arg	(struct exec_package *);
  */
 struct core;
 struct core32;
-int	cpu_coredump(struct lwp *, void *, struct core *);
-int	cpu_coredump32(struct lwp *, void *, struct core32 *);
+int	cpu_coredump(struct lwp *, struct coredump_iostate *, struct core *);
+int	cpu_coredump32(struct lwp *, struct coredump_iostate *, struct core32 *);
 
 int	exec_add(struct execsw *, int);
 int	exec_remove(struct execsw *, int);
