@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.66 2014/01/01 16:06:35 pgoyette Exp $
+# $NetBSD: mi,v 1.67 2014/01/01 16:27:10 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -16,10 +16,10 @@
 ./@MODULEDIR@/adosfs/adosfs.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/aio				base-kernel-modules	kmod
 ./@MODULEDIR@/aio/aio.kmod			base-kernel-modules	kmod
-./@MODULEDIR@/bpf				base-kernel-modules	kmod
-./@MODULEDIR@/bpf/bpf.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/blowfish				base-kernel-modules	kmod
 ./@MODULEDIR@/blowfish/blowfish.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/bpf				base-kernel-modules	kmod
+./@MODULEDIR@/bpf/bpf.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/camellia				base-kernel-modules	kmod
 ./@MODULEDIR@/camellia/camellia.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/cast128				base-kernel-modules	kmod
