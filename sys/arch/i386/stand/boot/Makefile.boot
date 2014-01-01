@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.60 2013/08/21 17:15:26 matt Exp $
+# $NetBSD: Makefile.boot,v 1.61 2014/01/01 22:06:13 christos Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -33,7 +33,7 @@ BINMODE=444
 
 .PATH:	${.CURDIR}/.. ${.CURDIR}/../../lib
 
-LDFLAGS+= -nostdlib -Wl,-N -Wl,-e,boot_start
+LDFLAGS+= -nostdlib -Wl,-N -Wl,-e,boot_start -T${.CURDIR}/../boot.ldscript
 CPPFLAGS+= -I ${.CURDIR}/..  -I ${.CURDIR}/../../lib -I ${S}/lib/libsa
 CPPFLAGS+= -I ${.OBJDIR}
 # Make sure we override any optimization options specified by the user
@@ -51,7 +51,7 @@ CPUFLAGS=  -march=i386 -mtune=i386
 
 CFLAGS+=   -mno-sse -mno-sse2 -mno-sse3
 
-COPTS+=    -ffreestanding
+COPTS+=    -ffreestanding #-fno-reorder-functions
 CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes
 CPPFLAGS+= -nostdinc -D_STANDALONE
 CPPFLAGS+= -I$S
