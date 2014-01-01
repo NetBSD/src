@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.9 2012/05/21 14:15:18 martin Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.10 2014/01/01 18:57:15 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.9 2012/05/21 14:15:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.10 2014/01/01 18:57:15 dsl Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
@@ -301,7 +301,8 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mc32, unsigned int flags)
  * Dump the machine specific segment at the start of a core dump.
  */
 int
-cpu_coredump32(struct lwp *l, void *iocookie, struct core32 *chdr)
+cpu_coredump32(struct lwp *l, struct coredump_iostate *iocookie,
+    struct core32 *chdr)
 {
 	int error;
 	struct coreseg cseg;
