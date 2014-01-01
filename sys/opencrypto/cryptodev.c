@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.69 2013/09/12 13:02:37 martin Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.70 2014/01/01 16:06:01 pgoyette Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.69 2013/09/12 13:02:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.70 2014/01/01 16:06:01 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,9 +85,13 @@ __KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.69 2013/09/12 13:02:37 martin Exp $"
 #include <sys/poll.h>
 #include <sys/atomic.h>
 #include <sys/stat.h>
+#include <sys/module.h>
 
+#ifdef _KERNEL_OPT
 #include "opt_ocf.h"
 #include "opt_compat_netbsd.h"
+#endif
+
 #include <opencrypto/cryptodev.h>
 #include <opencrypto/cryptodev_internal.h>
 #include <opencrypto/xform.h>
@@ -2089,4 +2093,121 @@ cryptoattach(int num)
 	 */
 	pool_prime(&fcrpl, 64);
 	pool_prime(&csepl, 64 * 5);
+}
+
+void	crypto_attach(device_t, device_t, void *);
+
+void
+crypto_attach(device_t parent, device_t self, void * opaque)
+{
+
+	cryptoattach(0);
+}
+
+int	crypto_detach(device_t, int);
+
+int
+crypto_detach(device_t self, int num)
+{
+	pool_destroy(&fcrpl);
+	pool_destroy(&csepl);
+
+	return 0;
+}
+
+int crypto_match(device_t, cfdata_t, void *);
+ 
+int
+crypto_match(device_t parent, cfdata_t data, void *opaque) 
+{   
+ 
+	return 1;
+}
+
+MODULE(MODULE_CLASS_DRIVER, crypto, NULL);
+
+CFDRIVER_DECL(crypto, DV_DULL, NULL);
+
+CFATTACH_DECL2_NEW(crypto, 0, crypto_match, crypto_attach, crypto_detach,
+    NULL, NULL, NULL);
+
+static int cryptoloc[] = { -1, -1 };
+
+static struct cfdata crypto_cfdata[] = {
+	{
+		.cf_name = "crypto",
+		.cf_atname = "crypto",
+		.cf_unit = 0,
+		.cf_fstate = 0,
+		.cf_loc = cryptoloc,
+		.cf_flags = 0,
+		.cf_pspec = NULL,
+	},
+	{ NULL, NULL, 0, 0, NULL, 0, NULL }
+};
+
+static int
+crypto_modcmd(modcmd_t cmd, void *arg)
+{
+	devmajor_t cmajor = NODEVMAJOR, bmajor = NODEVMAJOR;
+	int error;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		error = config_cfdriver_attach(&crypto_cd);
+		if (error) {
+			return error;
+		}
+
+		error = config_cfattach_attach(crypto_cd.cd_name, &crypto_ca);
+		if (error) {
+			config_cfdriver_detach(&crypto_cd);
+			aprint_error("%s: unable to register cfattach\n",
+				crypto_cd.cd_name);
+
+			return error;
+		}
+
+		error = config_cfdata_attach(crypto_cfdata, 1);
+		if (error) {
+			config_cfattach_detach(crypto_cd.cd_name, &crypto_ca);
+			config_cfdriver_detach(&crypto_cd);
+			aprint_error("%s: unable to register cfdata\n",
+				crypto_cd.cd_name);
+
+			return error;
+		}
+
+		error = devsw_attach(crypto_cd.cd_name, NULL, &bmajor,
+		    &crypto_cdevsw, &cmajor);
+		if (error) {
+			error = config_cfdata_detach(crypto_cfdata);
+			if (error) {
+				return error;
+			}
+			config_cfattach_detach(crypto_cd.cd_name, &crypto_ca);
+			config_cfdriver_detach(&crypto_cd);
+			aprint_error("%s: unable to register devsw\n",
+				crypto_cd.cd_name);
+
+			return error;
+		}
+
+		(void)config_attach_pseudo(crypto_cfdata);
+
+		return 0;
+	case MODULE_CMD_FINI:
+		error = config_cfdata_detach(crypto_cfdata);
+		if (error) {
+			return error;
+		}
+
+		config_cfattach_detach(crypto_cd.cd_name, &crypto_ca);
+		config_cfdriver_detach(&crypto_cd);
+		devsw_detach(NULL, &crypto_cdevsw);
+
+		return 0;
+	default:
+		return ENOTTY;
+	}
 }

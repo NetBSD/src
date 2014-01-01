@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.41 2011/06/09 14:41:24 drochner Exp $ */
+/*	$NetBSD: crypto.c,v 1.42 2014/01/01 16:06:01 pgoyette Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.41 2011/06/09 14:41:24 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.42 2014/01/01 16:06:01 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -65,8 +65,13 @@ __KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.41 2011/06/09 14:41:24 drochner Exp $")
 #include <sys/once.h>
 #include <sys/sysctl.h>
 #include <sys/intr.h>
+#include <sys/errno.h>
+#include <sys/module.h>
 
+#if defined(_KERNEL_OPT)
 #include "opt_ocf.h"
+#endif
+
 #include <opencrypto/cryptodev.h>
 #include <opencrypto/xform.h>			/* XXX for M_XDATA */
 
@@ -1327,5 +1332,23 @@ cryptoret(void)
 			krp->krp_callback(krp);
 
 		mutex_spin_enter(&crypto_ret_q_mtx);
+	}
+}
+
+/* NetBSD module interface */
+
+MODULE(MODULE_CLASS_MISC, opencrypto, NULL);
+
+static int
+opencrypto_modcmd(modcmd_t cmd, void *opaque)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return 0;
+	case MODULE_CMD_FINI:
+		return 0;
+	default:
+		return ENOTTY;
 	}
 }
