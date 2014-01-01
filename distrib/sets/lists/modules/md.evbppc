@@ -1,4 +1,4 @@
-# $NetBSD: md.evbppc,v 1.40 2013/12/30 14:17:54 kiyohara Exp $
+# $NetBSD: md.evbppc,v 1.41 2014/01/01 16:27:10 pgoyette Exp $
 ./stand/powerpc-4xx							base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@						base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules					base-kernel-modules	kmod,compatmodules
@@ -10,10 +10,16 @@
 ./stand/powerpc-4xx/@OSRELEASE@/modules/adosfs/adosfs.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/aio				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/aio/aio.kmod			base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/blowfish			base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/blowfish/blowfish.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/bpf				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/bpf/bpf.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/ccd				base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/ccd/ccd.kmod			base-kernel-modules	kmod
+./stand/powerpc-4xx/@OSRELEASE@/modules/camellia			base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/camellia/camellia.kmod		base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/cast128				base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/cast128/cast128.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/cd9660				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/cd9660/cd9660.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/cgd				base-kernel-modules	kmod
@@ -30,8 +36,12 @@
 ./stand/powerpc-4xx/@OSRELEASE@/modules/compat_ossaudio/compat_ossaudio.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/coredump			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/coredump/coredump.kmod		base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/crypto				base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/crypto/crypto.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/dbcool				base-kernel-modules     kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/dbcool/dbcool.kmod		base-kernel-modules     kmod
+./stand/powerpc-4xx/@OSRELEASE@/modules/des				base-kernel-modules     kmod
+./stand/powerpc-4xx/@OSRELEASE@/modules/des/des.kmod			base-kernel-modules     kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/dirhash				base-obsolete		obsolete
 ./stand/powerpc-4xx/@OSRELEASE@/modules/dirhash/dirhash.kmod		base-obsolete		obsolete
 ./stand/powerpc-4xx/@OSRELEASE@/modules/dk_subr				base-kernel-modules	kmod
@@ -146,6 +156,8 @@
 ./stand/powerpc-4xx/@OSRELEASE@/modules/null/null.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/onewire				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/onewire/onewire.kmod		base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/opencrypto				base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/opencrypto/opencrypto.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/overlay				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/overlay/overlay.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/pciverbose			base-kernel-modules	kmod,compatmodules
@@ -180,6 +192,8 @@
 ./stand/powerpc-4xx/@OSRELEASE@/modules/secmodel_overlay/secmodel_overlay.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/securelevel			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/securelevel/securelevel.kmod	base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/skipjack			base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/skipjack/skipjack.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/smbfs				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/smbfs/smbfs.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/solaris				base-kernel-modules     kmod,solaris
@@ -188,6 +202,8 @@
 ./stand/powerpc-4xx/@OSRELEASE@/modules/spdmem/spdmem.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/suser				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/suser/suser.kmod			base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/swcrypto				base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/swcrypto/swcrypto.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/swsensor				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/swsensor/swsensor.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/sysvbfs				base-kernel-modules	kmod,compatmodules
@@ -227,6 +243,12 @@
 ./stand/powerpc-booke/@OSRELEASE@/modules/adosfs/adosfs.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/aio				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/aio/aio.kmod			base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/blowfish			base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/blowfish/blowfish.kmod	base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/camellia			base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/camellia/camellia.kmod	base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/cast128			base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/cast128/cast128.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/bpf				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/bpf/bpf.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/ccd				base-kernel-modules	kmod
@@ -247,8 +269,12 @@
 ./stand/powerpc-booke/@OSRELEASE@/modules/compat_ossaudio/compat_ossaudio.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/coredump				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/coredump/coredump.kmod		base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/crypto			base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/crypto/crypto.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/dbcool			base-kernel-modules     kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/dbcool/dbcool.kmod		base-kernel-modules     kmod
+./stand/powerpc-booke/@OSRELEASE@/modules/des				base-kernel-modules	kmod
+./stand/powerpc-booke/@OSRELEASE@/modules/des/des.kmod			base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/dirhash				base-obsolete	obsolete
 ./stand/powerpc-booke/@OSRELEASE@/modules/dirhash/dirhash.kmod		base-obsolete	obsolete
 ./stand/powerpc-booke/@OSRELEASE@/modules/dk_subr			base-kernel-modules	kmod
@@ -363,6 +389,8 @@
 ./stand/powerpc-booke/@OSRELEASE@/modules/null/null.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/onewire			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/onewire/onewire.kmod		base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/opencrypto			base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/opencrypto/opencrypto.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/overlay			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/overlay/overlay.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/pciverbose			base-kernel-modules	kmod,compatmodules
@@ -397,6 +425,8 @@
 ./stand/powerpc-booke/@OSRELEASE@/modules/secmodel_overlay/secmodel_overlay.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/securelevel			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/securelevel/securelevel.kmod	base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/skipjack			base-kernel-modules     kmod,solaris
+./stand/powerpc-booke/@OSRELEASE@/modules/skipjack/skipjack.kmod	base-kernel-modules     kmod,solaris
 ./stand/powerpc-booke/@OSRELEASE@/modules/smbfs				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/smbfs/smbfs.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/solaris			base-kernel-modules     kmod,solaris
@@ -405,6 +435,8 @@
 ./stand/powerpc-booke/@OSRELEASE@/modules/spdmem/spdmem.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/suser				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/suser/suser.kmod		base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/swcrypto			base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/swcrypto/swcrypto.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/swsensor			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/swsensor/swsensor.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/sysvbfs			base-kernel-modules	kmod,compatmodules
