@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.139 2013/10/09 09:38:21 njoly Exp $	*/
+/*	$NetBSD: unistd.h,v 1.140 2014/01/02 23:33:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -159,6 +159,16 @@ extern	 int optopt;
 #endif
 
 /*
+ * The Open Group Base Specifications, Issue 5; IEEE Std 1003.1-2001 (POSIX)
+ */
+#if (_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 500 || \
+    defined(_NETBSD_SOURCE)
+#if __SSP_FORTIFY_LEVEL == 0
+ssize_t	 readlink(const char * __restrict, char * __restrict, size_t);
+#endif
+#endif
+
+/*
  * The Open Group Base Specifications, Issue 6; IEEE Std 1003.1-2001 (POSIX)
  */
 #if (_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 600 || \
@@ -260,9 +270,6 @@ int	 lchown(const char *, uid_t, gid_t) __RENAME(__posix_lchown);
 int	 lchown(const char *, uid_t, gid_t);
 #endif
 int	 lockf(int, int, off_t);
-#if __SSP_FORTIFY_LEVEL == 0
-ssize_t	 readlink(const char * __restrict, char * __restrict, size_t);
-#endif
 void	*sbrk(intptr_t);
 /* XXX prototype wrong! */
 int	 setpgrp(pid_t, pid_t);			/* obsoleted by setpgid() */
