@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1055 2013/12/28 02:32:01 rjs Exp $
+# $NetBSD: mi,v 1.1056 2014/01/02 18:04:28 tho Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1764,18 +1764,18 @@
 ./usr/share/examples/ipf			base-netutil-examples
 ./usr/share/examples/isdn			base-isdn-examples
 ./usr/share/examples/kerberos			base-krb5-examples
-./usr/share/examples/lua			base-sys-examples	share
+./usr/share/examples/lua			base-sys-examples
 ./usr/share/examples/lua/README			base-sys-examples	share
 ./usr/share/examples/lua/gpio.lua		base-sys-examples	share
 ./usr/share/examples/lua/sqlite.lua		base-sys-examples	share
 ./usr/share/examples/mount_portal		base-miscfs-examples
 ./usr/share/examples/named			base-obsolete	obsolete
 ./usr/share/examples/npf			base-netutil-examples
-./usr/share/examples/npf/hashtablefile		base-netutil-examples
-./usr/share/examples/npf/host-npf.conf		base-netutil-examples
-./usr/share/examples/npf/l2tp_gw-npf.conf	base-netutil-examples
-./usr/share/examples/npf/soho_gw-npf.conf	base-netutil-examples
-./usr/share/examples/npf/treetablefile		base-netutil-examples
+./usr/share/examples/npf/hashtablefile		base-netutil-examples   share
+./usr/share/examples/npf/host-npf.conf		base-netutil-examples   share
+./usr/share/examples/npf/l2tp_gw-npf.conf	base-netutil-examples   share
+./usr/share/examples/npf/soho_gw-npf.conf	base-netutil-examples   share
+./usr/share/examples/npf/treetablefile		base-netutil-examples   share
 ./usr/share/examples/openssl			base-crypto-examples
 ./usr/share/examples/pf				base-netutil-examples
 ./usr/share/examples/postfix			base-postfix-examples
