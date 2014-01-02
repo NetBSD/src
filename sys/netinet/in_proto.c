@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.106 2013/06/05 19:01:26 christos Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.107 2014/01/02 18:29:01 pooka Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.106 2013/06/05 19:01:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.107 2014/01/02 18:29:01 pooka Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_inet.h"
@@ -200,7 +200,6 @@ const struct protosw inetsw[] = {
 	.pr_usrreq = tcp_usrreq,
 	.pr_init = tcp_init,
 	.pr_fasttimo = tcp_fasttimo,
-	.pr_slowtimo = tcp_slowtimo,
 	.pr_drain = tcp_drainstub,
 },
 {	.pr_type = SOCK_RAW,
