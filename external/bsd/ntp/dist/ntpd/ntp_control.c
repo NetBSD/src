@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_control.c,v 1.7 2013/12/28 03:20:14 christos Exp $	*/
+/*	$NetBSD: ntp_control.c,v 1.8 2014/01/02 21:37:00 joerg Exp $	*/
 
 /*
  * ntp_control.c - respond to mode 6 control messages and send async
@@ -60,13 +60,10 @@ static	u_short ctlclkstatus	(struct refclockstat *);
 static	void	ctl_flushpkt	(u_char);
 static	void	ctl_putdata	(const char *, unsigned int, int);
 static	void	ctl_putstr	(const char *, const char *, size_t);
-static	void	ctl_putdblf	(const char *, const char *, double);
-const char ctl_def_dbl_fmt[] = "%.3f";
-#define	ctl_putdbl(tag, d)	ctl_putdblf(tag, ctl_def_dbl_fmt, d)
-const char ctl_def_dbl6_fmt[] = "%.6f";
-#define	ctl_putdbl6(tag, d)	ctl_putdblf(tag, ctl_def_dbl6_fmt, d)
-const char ctl_def_sfp_fmt[] = "%g";
-#define	ctl_putsfp(tag, sfp)	ctl_putdblf(tag, ctl_def_sfp_fmt, \
+static	void	ctl_putdblf	(const char *, int, int, double);
+#define	ctl_putdbl(tag, d)	ctl_putdblf(tag, 1, 3, d)
+#define	ctl_putdbl6(tag, d)	ctl_putdblf(tag, 1, 6, d)
+#define	ctl_putsfp(tag, sfp)	ctl_putdblf(tag, 0, -1, \
 					    FPTOD(sfp))
 static	void	ctl_putuint	(const char *, u_long);
 static	void	ctl_puthex	(const char *, u_long);
@@ -1426,7 +1423,8 @@ ctl_putunqstr(
 static void
 ctl_putdblf(
 	const char *	tag,
-	const char *	fmt,
+	int		use_f,
+	int		precision,
 	double		d
 	)
 {
@@ -1440,7 +1438,8 @@ ctl_putdblf(
 		*cp++ = *cq++;
 	*cp++ = '=';
 	NTP_INSIST((size_t)(cp - buffer) < sizeof(buffer));
-	snprintf(cp, sizeof(buffer) - (cp - buffer), fmt, d);
+	snprintf(cp, sizeof(buffer) - (cp - buffer), use_f ? "%.*f" : "%.*g",
+	    precision, d);
 	cp += strlen(cp);
 	ctl_putdata(buffer, (unsigned)(cp - buffer), 0);
 }
@@ -2097,7 +2096,7 @@ ctl_putsys(
 	case CS_K_OFFSET:
 		CTL_IF_KERNLOOP(
 			ctl_putdblf, 
-			(sys_var[varid].text, "%g", to_ms * ntx.offset)
+			(sys_var[varid].text, 0, -1, to_ms * ntx.offset)
 		);
 		break;
 
@@ -2111,7 +2110,7 @@ ctl_putsys(
 	case CS_K_MAXERR:
 		CTL_IF_KERNLOOP(
 			ctl_putdblf,
-			(sys_var[varid].text, "%.6g",
+			(sys_var[varid].text, 0, 6,
 			 to_ms * ntx.maxerror)
 		);
 		break;
@@ -2119,7 +2118,7 @@ ctl_putsys(
 	case CS_K_ESTERR:
 		CTL_IF_KERNLOOP(
 			ctl_putdblf,
-			(sys_var[varid].text, "%.6g",
+			(sys_var[varid].text, 0, 6,
 			 to_ms * ntx.esterror)
 		);
 		break;
@@ -2143,7 +2142,7 @@ ctl_putsys(
 	case CS_K_PRECISION:
 		CTL_IF_KERNLOOP(
 			ctl_putdblf,
-			(sys_var[varid].text, "%.6g",
+			(sys_var[varid].text, 0, 6,
 			    to_ms * ntx.precision)
 		);
 		break;
