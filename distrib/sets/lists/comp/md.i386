@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.140 2013/11/08 03:13:29 christos Exp $
+# $NetBSD: md.i386,v 1.141 2014/01/02 12:54:36 tho Exp $
 ./usr/include/clang-3.0/avx2intrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.0/avxintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.0/bmi2intrin.h		comp-obsolete		obsolete
@@ -299,12 +299,12 @@
 ./usr/include/xmmintrin.h			comp-obsolete		obsolete
 ./usr/lib/libi386.a				comp-c-lib
 ./usr/lib/libi386_p.a				comp-c-proflib		profile
-./usr/lib/libi386_pic.a				comp-c-piclib		pic
+./usr/lib/libi386_pic.a				comp-c-piclib		pic,picinstall
 ./usr/lib/libm387.a				comp-c-lib
 ./usr/lib/libm387_p.a				comp-c-proflib		profile
-./usr/lib/libm387_pic.a				comp-c-piclib		pic
+./usr/lib/libm387_pic.a				comp-c-piclib		pic,picinstall
 ./usr/lib/libpmc.a				comp-c-lib
 ./usr/lib/libpmc_p.a				comp-c-proflib		profile
-./usr/lib/libpmc_pic.a				comp-c-piclib		pic
+./usr/lib/libpmc_pic.a				comp-c-piclib		pic,picinstall
 ./usr/libdata/lint/llib-li386.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lpmc.ln			comp-c-lintlib		lint

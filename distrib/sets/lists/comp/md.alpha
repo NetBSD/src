@@ -1,4 +1,4 @@
-# $NetBSD: md.alpha,v 1.65 2013/11/01 07:48:31 mrg Exp $
+# $NetBSD: md.alpha,v 1.66 2014/01/02 12:54:36 tho Exp $
 ./usr/include/alpha				comp-c-include
 ./usr/include/alpha/_G_config.h			comp-obsolete		obsolete
 ./usr/include/alpha/alpha_cpu.h			comp-c-include
@@ -75,5 +75,5 @@
 ./usr/lib/crtfm.o				comp-c-lib
 ./usr/lib/libalpha.a				comp-c-lib
 ./usr/lib/libalpha_p.a				comp-c-proflib		profile
-./usr/lib/libalpha_pic.a			comp-c-piclib
+./usr/lib/libalpha_pic.a			comp-c-piclib	picinstall
 ./usr/libdata/lint/llib-lalpha.ln		comp-c-lintlib		lint
