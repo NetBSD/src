@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.552 2014/01/02 12:54:36 tho Exp $
+# $NetBSD: mi,v 1.553 2014/01/02 16:46:40 tho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3246,7 +3246,7 @@
 ./usr/tests/util/id				tests-obsolete		obsolete
 ./usr/tests/util/id/Atffile			tests-obsolete		obsolete
 ./usr/tests/util/id/h_id			tests-obsolete		obsolete
-./usr/tests/util/id/libfake_pic.a		tests-obsolete		obsolete,picinstall
+./usr/tests/util/id/libfake_pic.a		tests-obsolete		obsolete
 ./usr/tests/util/id/t_groups			tests-obsolete		obsolete
 ./usr/tests/util/id/t_id			tests-obsolete		obsolete
 ./usr/tests/util/id/t_whoami			tests-obsolete		obsolete

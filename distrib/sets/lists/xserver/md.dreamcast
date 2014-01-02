@@ -1,4 +1,4 @@
-#	$NetBSD: md.dreamcast,v 1.18 2014/01/02 12:54:36 tho Exp $
+#	$NetBSD: md.dreamcast,v 1.19 2014/01/02 16:46:40 tho Exp $
 ./etc/X11/xorg.conf.jpkbd				-unknown-	xorg
 ./etc/X11/xorg.conf.uskbd				-unknown-	xorg
 ./usr/X11R6/bin/X					-unknown-	x11
@@ -80,7 +80,7 @@
 ./usr/X11R7/lib/modules/libxf8_16bpp.a			-unknown-	obsolete
 ./usr/X11R7/lib/modules/libxf8_16bpp.so			-unknown-	obsolete
 ./usr/X11R7/lib/modules/libxf8_16bpp.so.0		-unknown-	obsolete
-./usr/X11R7/lib/modules/libxf8_16bpp_pic.a		-unknown-	obsolete,picinstall
+./usr/X11R7/lib/modules/libxf8_16bpp_pic.a		-unknown-	obsolete
 ./usr/X11R7/man/cat1/Xorg.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/cvt.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/gtf.0				-unknown-	.cat,xorg
