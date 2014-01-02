@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.119 2013/12/31 18:46:09 christos Exp $
+#	$NetBSD: sys.mk,v 1.120 2014/01/02 19:25:08 christos Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 #
 # This file contains the basic rules for make(1) and is read first
@@ -118,9 +118,10 @@ YACC.y?=	${YACC} ${YFLAGS}
 # C
 .c:
 	${LINK.c} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
-.if defined(CTFCONVERT)
-	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
-.endif
+# XXX: disable for now
+#.if defined(CTFCONVERT)
+#	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+#.endif
 .c.o:
 	${COMPILE.c} ${.IMPSRC}
 .if defined(CTFCONVERT)
