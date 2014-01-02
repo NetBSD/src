@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.269 2013/10/19 21:39:12 mrg Exp $	*/
+/*	$NetBSD: if.c,v 1.270 2014/01/02 18:29:01 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.269 2013/10/19 21:39:12 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.270 2014/01/02 18:29:01 pooka Exp $");
 
 #include "opt_inet.h"
 
@@ -1358,7 +1358,7 @@ if_link_state_change(struct ifnet *ifp, int link_state)
 	 * listeners would have an address and expect it to work right
 	 * away.
 	 */
-	if (link_state == LINK_STATE_UP &&
+	if (in6_present && link_state == LINK_STATE_UP &&
 	    old_link_state == LINK_STATE_UNKNOWN)
 		in6_if_link_down(ifp);
 #endif
@@ -1372,10 +1372,12 @@ if_link_state_change(struct ifnet *ifp, int link_state)
 #endif
 
 #ifdef INET6
-	if (link_state == LINK_STATE_DOWN)
-		in6_if_link_down(ifp);
-	else if (link_state == LINK_STATE_UP)
-		in6_if_link_up(ifp);
+	if (in6_present) {
+		if (link_state == LINK_STATE_DOWN)
+			in6_if_link_down(ifp);
+		else if (link_state == LINK_STATE_UP)
+			in6_if_link_up(ifp);
+	}
 #endif
 
 	splx(s);
@@ -1402,7 +1404,8 @@ if_down(struct ifnet *ifp)
 #endif
 	rt_ifmsg(ifp);
 #ifdef INET6
-	in6_if_down(ifp);
+	if (in6_present)
+		in6_if_down(ifp);
 #endif
 }
 
@@ -1431,7 +1434,8 @@ if_up(struct ifnet *ifp)
 #endif
 	rt_ifmsg(ifp);
 #ifdef INET6
-	in6_if_up(ifp);
+	if (in6_present)
+		in6_if_up(ifp);
 #endif
 }
 
@@ -1906,7 +1910,7 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 
 	if (((oif_flags ^ ifp->if_flags) & IFF_UP) != 0) {
 #ifdef INET6
-		if ((ifp->if_flags & IFF_UP) != 0) {
+		if (in6_present && (ifp->if_flags & IFF_UP) != 0) {
 			int s = splnet();
 			in6_if_up(ifp);
 			splx(s);

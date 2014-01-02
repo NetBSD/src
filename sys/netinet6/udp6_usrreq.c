@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.91 2012/06/22 14:54:35 christos Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.92 2014/01/02 18:29:01 pooka Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.91 2012/06/22 14:54:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.92 2014/01/02 18:29:01 pooka Exp $");
 
 #include "opt_inet.h"
 
@@ -123,6 +123,9 @@ udp6_init(void)
 {
 
 	sysctl_net_inet6_udp6_setup(NULL);
+	udp6stat_percpu = percpu_alloc(sizeof(uint64_t) * UDP6_NSTATS);
+
+	udp_init_common();
 }
 
 /*

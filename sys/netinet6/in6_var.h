@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.66 2012/10/11 20:05:50 christos Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.67 2014/01/02 18:29:01 pooka Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -493,6 +493,7 @@ extern struct ifqueue ip6intrq;		/* IP6 packet input queue */
 extern const struct in6_addr zeroin6_addr;
 extern const u_char inet6ctlerrmap[];
 extern unsigned long in6_maxmtu;
+extern bool in6_present;
 
 /*
  * Macro for finding the internet address structure (in6_ifaddr) corresponding

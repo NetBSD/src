@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.252 2013/11/23 14:20:21 christos Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.253 2014/01/02 18:29:01 pooka Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.252 2013/11/23 14:20:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.253 2014/01/02 18:29:01 pooka Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -104,6 +104,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.252 2013/11/23 14:20:21 christos Exp 
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
+#include <sys/once.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/protosw.h>
@@ -241,10 +242,7 @@ struct	syn_cache_head tcp_syn_cache[TCP_SYN_HASH_SIZE];
 int	tcp_freeq(struct tcpcb *);
 
 #ifdef INET
-void	tcp_mtudisc_callback(struct in_addr);
-#endif
-#ifdef INET6
-void	tcp6_mtudisc_callback(struct in6_addr *);
+static void	tcp_mtudisc_callback(struct in_addr);
 #endif
 
 #ifdef INET6
@@ -387,34 +385,15 @@ struct mowner tcp_sock_rx_mowner = MOWNER_INIT("tcp", "sock rx");
 struct mowner tcp_sock_tx_mowner = MOWNER_INIT("tcp", "sock tx");
 #endif
 
-/*
- * Tcp initialization
- */
-void
-tcp_init(void)
+callout_t tcp_slowtimo_ch;
+
+static int
+do_tcpinit(void)
 {
-	int hlen;
 
 	in_pcbinit(&tcbtable, tcbhashsize, tcbhashsize);
 	pool_init(&tcpcb_pool, sizeof(struct tcpcb), 0, 0, 0, "tcpcbpl",
 	    NULL, IPL_SOFTNET);
-
-	hlen = sizeof(struct ip) + sizeof(struct tcphdr);
-#ifdef INET6
-	if (sizeof(struct ip) < sizeof(struct ip6_hdr))
-		hlen = sizeof(struct ip6_hdr) + sizeof(struct tcphdr);
-#endif
-	if (max_protohdr < hlen)
-		max_protohdr = hlen;
-	if (max_linkhdr + hlen > MHLEN)
-		panic("tcp_init");
-
-#ifdef INET
-	icmp_mtudisc_callback_register(tcp_mtudisc_callback);
-#endif
-#ifdef INET6
-	icmp6_mtudisc_callback_register(tcp6_mtudisc_callback);
-#endif
 
 	tcp_usrreq_init();
 
@@ -447,6 +426,38 @@ tcp_init(void)
 	tcpstat_percpu = percpu_alloc(sizeof(uint64_t) * TCP_NSTATS);
 
 	vtw_earlyinit();
+
+	callout_init(&tcp_slowtimo_ch, CALLOUT_MPSAFE);
+	callout_reset(&tcp_slowtimo_ch, 1, tcp_slowtimo, NULL);
+
+	return 0;
+}
+
+void
+tcp_init_common(unsigned basehlen)
+{
+	static ONCE_DECL(dotcpinit);
+	unsigned hlen = basehlen + sizeof(struct tcphdr);
+	unsigned oldhlen;
+
+	if (max_linkhdr + hlen > MHLEN)
+		panic("tcp_init");
+	while ((oldhlen = max_protohdr) < hlen)
+		atomic_cas_uint(&max_protohdr, oldhlen, hlen);
+
+	RUN_ONCE(&dotcpinit, do_tcpinit);
+}
+
+/*
+ * Tcp initialization
+ */
+void
+tcp_init(void)
+{
+
+	icmp_mtudisc_callback_register(tcp_mtudisc_callback);
+
+	tcp_init_common(sizeof(struct ip));
 }
 
 /*

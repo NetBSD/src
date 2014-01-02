@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.99 2013/06/05 19:01:26 christos Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.100 2014/01/02 18:29:01 pooka Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.99 2013/06/05 19:01:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.100 2014/01/02 18:29:01 pooka Exp $");
 
 #include "opt_gateway.h"
 #include "opt_inet.h"
@@ -175,6 +175,15 @@ PR_WRAP_CTLINPUT(esp6_ctlinput)
 #define	esp6_ctlinput	esp6_ctlinput_wrapper
 #endif
 
+static void
+tcp6_init(void)
+{
+
+	icmp6_mtudisc_callback_register(tcp6_mtudisc_callback);
+
+	tcp_init_common(sizeof(struct ip6_hdr));
+}
+
 const struct ip6protosw inet6sw[] = {
 {	.pr_domain = &inet6domain,
 	.pr_protocol = IPPROTO_IPV6,
@@ -201,12 +210,9 @@ const struct ip6protosw inet6sw[] = {
 	.pr_ctlinput = tcp6_ctlinput,
 	.pr_ctloutput = tcp_ctloutput,
 	.pr_usrreq = tcp_usrreq,
-#ifndef INET	/* don't call initialization and timeout routines twice */
-	.pr_init = tcp_init,
+	.pr_init = tcp6_init,
 	.pr_fasttimo = tcp_fasttimo,
-	.pr_slowtimo = tcp_slowtimo,
 	.pr_drain = tcp_drainstub,
-#endif
 },
 {	.pr_type = SOCK_RAW,
 	.pr_domain = &inet6domain,
@@ -354,9 +360,17 @@ static const struct sockaddr_in6 in6_any = {
 	, .sin6_scope_id = 0
 };
 
+bool in6_present = false;
+static void
+in6_init(void)
+{
+
+	in6_present = true;
+}
+
 struct domain inet6domain = {
 	.dom_family = AF_INET6, .dom_name = "internet6",
-	.dom_init = NULL, .dom_externalize = NULL, .dom_dispose = NULL,
+	.dom_init = in6_init, .dom_externalize = NULL, .dom_dispose = NULL,
 	.dom_protosw = (const struct protosw *)inet6sw,
 	.dom_protoswNPROTOSW = (const struct protosw *)&inet6sw[sizeof(inet6sw)/sizeof(inet6sw[0])],
 	.dom_rtattach = rt_inithead,
