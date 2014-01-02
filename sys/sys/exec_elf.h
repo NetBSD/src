@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.133 2014/01/01 18:57:16 dsl Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.134 2014/01/02 19:15:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -418,7 +418,10 @@ typedef struct {
 #define SHT_NUM		     19
 
 #define SHT_LOOS	     0x60000000 /* Operating system specific range */
+#define SHT_GNU_INCREMENTAL_INPUTS 0x6fff4700   /* GNU incremental build data */
+#define	SHT_GNU_ATTRIBUTES   0x6ffffff5	/* GNU object attributes */
 #define SHT_GNU_HASH	     0x6ffffff6 /* GNU style symbol hash table */
+#define SHT_GNU_LIBLIST	     0x6ffffff7 /* GNU list of prelink dependencies */
 #define SHT_SUNW_move	     0x6ffffffa
 #define SHT_SUNW_syminfo     0x6ffffffc
 #define SHT_SUNW_verdef	     0x6ffffffd /* Versions defined by file */
