@@ -1,4 +1,4 @@
-# $NetBSD: md.prep,v 1.13 2014/01/02 12:54:36 tho Exp $
+# $NetBSD: md.prep,v 1.14 2014/01/02 16:46:40 tho Exp $
 ./usr/X11R7/bin/X					-unknown-	xorg
 ./usr/X11R7/bin/Xorg					-unknown-	xorg
 ./usr/X11R7/bin/cvt					-unknown-	xorg
@@ -87,7 +87,7 @@
 ./usr/X11R7/lib/modules/libxf8_16bpp.a			-unknown-	obsolete
 ./usr/X11R7/lib/modules/libxf8_16bpp.so			-unknown-	obsolete
 ./usr/X11R7/lib/modules/libxf8_16bpp.so.0		-unknown-	obsolete
-./usr/X11R7/lib/modules/libxf8_16bpp_pic.a		-unknown-	obsolete,picinstall
+./usr/X11R7/lib/modules/libxf8_16bpp_pic.a		-unknown-	obsolete
 ./usr/X11R7/man/cat1/Xorg.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/cvt.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/gtf.0				-unknown-	.cat,xorg

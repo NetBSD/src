@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.46 2014/01/02 12:54:36 tho Exp $
+# $NetBSD: md.cats,v 1.47 2014/01/02 16:46:40 tho Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -432,8 +432,8 @@
 ./usr/X11R7/lib/modules/extensions/libcfb32.a		-unknown-	obsolete
 ./usr/X11R7/lib/modules/extensions/libcfb32.so		-unknown-	obsolete
 ./usr/X11R7/lib/modules/extensions/libcfb32.so.0	-unknown-	obsolete
-./usr/X11R7/lib/modules/extensions/libcfb32_pic.a	-unknown-	obsolete,picinstall
-./usr/X11R7/lib/modules/extensions/libcfb_pic.a		-unknown-	obsolete,picinstall
+./usr/X11R7/lib/modules/extensions/libcfb32_pic.a	-unknown-	obsolete
+./usr/X11R7/lib/modules/extensions/libcfb_pic.a		-unknown-	obsolete
 ./usr/X11R7/lib/modules/extensions/libdbe.a		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libdbe.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libdbe.so.0		-unknown-	xorg
@@ -457,7 +457,7 @@
 ./usr/X11R7/lib/modules/extensions/libmfb.a		-unknown-	obsolete
 ./usr/X11R7/lib/modules/extensions/libmfb.so		-unknown-	obsolete
 ./usr/X11R7/lib/modules/extensions/libmfb.so.0		-unknown-	obsolete
-./usr/X11R7/lib/modules/extensions/libmfb_pic.a		-unknown-	obsolete,picinstall
+./usr/X11R7/lib/modules/extensions/libmfb_pic.a		-unknown-	obsolete
 ./usr/X11R7/lib/modules/extensions/librecord.a		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/librecord.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/librecord.so.0	-unknown-	xorg
@@ -469,15 +469,15 @@
 ./usr/X11R7/lib/modules/extensions/libxtrap.a		-unknown-	obsolete
 ./usr/X11R7/lib/modules/extensions/libxtrap.so		-unknown-	obsolete
 ./usr/X11R7/lib/modules/extensions/libxtrap.so.0	-unknown-	obsolete
-./usr/X11R7/lib/modules/extensions/libxtrap_pic.a	-unknown-	obsolete,picinstall
+./usr/X11R7/lib/modules/extensions/libxtrap_pic.a	-unknown-	obsolete
 ./usr/X11R7/lib/modules/fonts/libfreetype.a		-unknown-	obsolete
 ./usr/X11R7/lib/modules/fonts/libfreetype.so		-unknown-	obsolete
 ./usr/X11R7/lib/modules/fonts/libfreetype.so.0		-unknown-	obsolete
-./usr/X11R7/lib/modules/fonts/libfreetype_pic.a		-unknown-	obsolete,picinstall
+./usr/X11R7/lib/modules/fonts/libfreetype_pic.a		-unknown-	obsolete
 ./usr/X11R7/lib/modules/fonts/libtype1.a		-unknown-	obsolete
 ./usr/X11R7/lib/modules/fonts/libtype1.so		-unknown-	obsolete
 ./usr/X11R7/lib/modules/fonts/libtype1.so.0		-unknown-	obsolete
-./usr/X11R7/lib/modules/fonts/libtype1_pic.a		-unknown-	obsolete,picinstall
+./usr/X11R7/lib/modules/fonts/libtype1_pic.a		-unknown-	obsolete
 ./usr/X11R7/lib/modules/libexa.a			-unknown-	xorg
 ./usr/X11R7/lib/modules/libexa.so			-unknown-	xorg
 ./usr/X11R7/lib/modules/libexa.so.0			-unknown-	xorg
@@ -493,15 +493,15 @@
 ./usr/X11R7/lib/modules/libint10.a			-unknown-	obsolete
 ./usr/X11R7/lib/modules/libint10.so			-unknown-	obsolete
 ./usr/X11R7/lib/modules/libint10.so.0			-unknown-	obsolete
-./usr/X11R7/lib/modules/libint10_pic.a			-unknown-	obsolete,picinstall
+./usr/X11R7/lib/modules/libint10_pic.a			-unknown-	obsolete
 ./usr/X11R7/lib/modules/libpcidata.a			-unknown-	obsolete
 ./usr/X11R7/lib/modules/libpcidata.so			-unknown-	obsolete
 ./usr/X11R7/lib/modules/libpcidata.so.0			-unknown-	obsolete
-./usr/X11R7/lib/modules/libpcidata_pic.a		-unknown-	obsolete,picinstall
+./usr/X11R7/lib/modules/libpcidata_pic.a		-unknown-	obsolete
 ./usr/X11R7/lib/modules/libscanpci.a			-unknown-	obsolete
 ./usr/X11R7/lib/modules/libscanpci.so			-unknown-	obsolete
 ./usr/X11R7/lib/modules/libscanpci.so.0			-unknown-	obsolete
-./usr/X11R7/lib/modules/libscanpci_pic.a		-unknown-	obsolete,picinstall
+./usr/X11R7/lib/modules/libscanpci_pic.a		-unknown-	obsolete
 ./usr/X11R7/lib/modules/libshadowfb.a			-unknown-	xorg
 ./usr/X11R7/lib/modules/libshadowfb.so			-unknown-	xorg
 ./usr/X11R7/lib/modules/libshadowfb.so.0		-unknown-	xorg
@@ -521,19 +521,19 @@
 ./usr/X11R7/lib/modules/libxf1bpp.a			-unknown-	obsolete
 ./usr/X11R7/lib/modules/libxf1bpp.so			-unknown-	obsolete
 ./usr/X11R7/lib/modules/libxf1bpp.so.0			-unknown-	obsolete
-./usr/X11R7/lib/modules/libxf1bpp_pic.a			-unknown-	obsolete,picinstall
+./usr/X11R7/lib/modules/libxf1bpp_pic.a			-unknown-	obsolete
 ./usr/X11R7/lib/modules/libxf4bpp.a			-unknown-	obsolete
 ./usr/X11R7/lib/modules/libxf4bpp.so			-unknown-	obsolete
 ./usr/X11R7/lib/modules/libxf4bpp.so.0			-unknown-	obsolete
-./usr/X11R7/lib/modules/libxf4bpp_pic.a			-unknown-	obsolete,picinstall
+./usr/X11R7/lib/modules/libxf4bpp_pic.a			-unknown-	obsolete
 ./usr/X11R7/lib/modules/libxf8_16bpp.a			-unknown-	obsolete
 ./usr/X11R7/lib/modules/libxf8_16bpp.so			-unknown-	obsolete
 ./usr/X11R7/lib/modules/libxf8_16bpp.so.0		-unknown-	obsolete
-./usr/X11R7/lib/modules/libxf8_16bpp_pic.a		-unknown-	obsolete,picinstall
+./usr/X11R7/lib/modules/libxf8_16bpp_pic.a		-unknown-	obsolete
 ./usr/X11R7/lib/modules/libxf8_32bpp.a			-unknown-	obsolete
 ./usr/X11R7/lib/modules/libxf8_32bpp.so			-unknown-	obsolete
 ./usr/X11R7/lib/modules/libxf8_32bpp.so.0		-unknown-	obsolete
-./usr/X11R7/lib/modules/libxf8_32bpp_pic.a		-unknown-	obsolete,picinstall
+./usr/X11R7/lib/modules/libxf8_32bpp_pic.a		-unknown-	obsolete
 ./usr/X11R7/man/cat1/Xorg.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/cvt.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/gtf.0				-unknown-	.cat,xorg
