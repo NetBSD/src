@@ -1,4 +1,4 @@
-/*	$NetBSD: sc.c,v 1.6 2014/01/02 18:45:24 tsutsui Exp $	*/
+/*	$NetBSD: sc.c,v 1.7 2014/01/02 19:50:03 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -419,13 +419,13 @@ scsi_request_sense(int ctlr, int slave, int unit, u_char *buf, unsigned int len)
 	printf("scsi_request_sense: Start\n");
 #endif
 
-	/* Request Sense$N>l9g!"E>Aw$5$l$k%G!<%?D9$O%?!<%2368H$K0MB8$7!"        */
-	/* %;%s%9%G!<%?$N#8/usr/src/sys/luna68k/stand/SCCS/s.sc.c$%HL\$NAddtional Sens Length$K$h$jF0E*$K7hDj$9$k!#*/
-	/* $3$3$G$O%G!<%?!<E>Aw?t$rcdb$NAllocation Length$K:GDcD9$G$"$k#8/usr/src/sys/luna68k/stand/SCCS/s.sc.c$%H */
-	/* $r8GDj$7$F!"#S#P#C$N=hM}%7!<%1%s%9$rJx$5$J$$$h$&$K$7$F$$$k!#         */
+	/* Request Senseの場合、転送されるデータ長はターゲットに依存し、        */
+	/* センスデータの８バイト目のAdditional Sens Lengthにより動的に決定する。*/
+	/* ここではデーター転送数をcdbのAllocation Lengthに最低長である８バイト */
+	/* を固定して、ＳＰＣの処理シーケンスを崩さないようにしている。         */
 
-	/* %F!<@(#)sc.c	8.1f%K373H$N>uBV$rD4$Y$k$?$a!"Addtional Sens Field$r%"%/%;%9$9$k */
-	/* I,MW$,$"$k$N$G6/10/93P%$%98.1i%$%PB&$Glen$r7hDj$9$k$3$H$K$9$k            */
+	/* テープユニットの状態を調べるため、Addtional Sens Fieldをアクセスする */
+	/* 必要があるのでデバイスドライバ側でlenを決定することにする            */
 
 	cdb.lun = unit;
 	cdb.len = len;
