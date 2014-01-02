@@ -1,4 +1,4 @@
-.\"	$NetBSD: bozohttpd.8,v 1.42 2014/01/02 08:22:59 mrg Exp $
+.\"	$NetBSD: bozohttpd.8,v 1.43 2014/01/02 08:47:38 mrg Exp $
 .\"
 .\"	$eterna: bozohttpd.8,v 1.101 2011/11/18 01:25:11 mrg Exp $
 .\"
@@ -368,11 +368,15 @@ Support for these protocols is very minimal and many optional features are
 not supported.
 .Pp
 .Nm
-can be compiled without CGI support (NO_CGIBIN_SUPPORT), user
-transformations (NO_USER_SUPPORT), directory index support (NO_DIRINDEX_SUPPORT),
-daemon mode support (NO_DAEMON_MODE), and dynamic MIME content
-(NO_DYNAMIC_CONTENT), and SSL support (NO_SSL_SUPPORT) by defining the listed
-macros when building
+can be compiled without
+CGI support (NO_CGIBIN_SUPPORT),
+user transformations (NO_USER_SUPPORT),
+directory index support (NO_DIRINDEX_SUPPORT),
+daemon mode support (NO_DAEMON_MODE),
+dynamic MIME content (NO_DYNAMIC_CONTENT),
+Lua suport (NO_LUA_SUPPORT),
+and SSL support (NO_SSL_SUPPORT)
+by defining the listed macros when building
 .Nm .
 .Ss HTTP BASIC AUTHORISATION
 .Nm
@@ -522,10 +526,6 @@ The large list of contributors includes:
 .Aq Mt mbalmer@NetBSD.org
 added Lua support for dynamic content creation
 .It
-.An Arnaud Lacombe
-.Aq Mt alc@NetBSD.org
-provided some clean up for memory leaks
-.It
 .An Christoph Badura
 .Aq Mt bad@bsd.de
 provided Range: header support
@@ -542,6 +542,11 @@ provided an IPv6 bugfix
 .Aq Mt chuck@research.att.com
 provided cgi-bin support fixes, and more
 .It
+.An Alistair G. Crooks
+.Aq Mt agc@NetBSD.org
+cleaned up many internal interfaces, made bozohttpd linkable as a
+library and provided the Lua binding.
+.It
 .An DEGROOTE Arnaud
 .Aq Mt degroote@NetBSD.org
 provided a fix for daemon mode
@@ -553,11 +558,6 @@ provided directory indexing support
 .An Per Ekman
 .Aq Mt pek@pdc.kth.se
 provided a fix for a minor (non-security) buffer overflow condition
-.It
-.An Alistair G. Crooks
-.Aq Mt agc@NetBSD.org
-cleaned up many internal interfaces, made bozohttpd linkable as a
-library and provided the Lua binding.
 .It
 .An Roland Dowdeswell
 .Aq Mt elric@NetBSD.org
@@ -594,6 +594,10 @@ provided fixes for HTTP basic authorisation support
 .An Thomas Klausner
 .Aq Mt wiz@NetBSD.org
 provided many fixes and enhancements for the man page
+.It
+.An Arnaud Lacombe
+.Aq Mt alc@NetBSD.org
+provided some clean up for memory leaks
 .It
 .An Johnny Lam
 .Aq Mt jlam@NetBSD.org
