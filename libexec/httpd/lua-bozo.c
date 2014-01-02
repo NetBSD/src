@@ -1,4 +1,4 @@
-/*	$NetBSD: lua-bozo.c,v 1.8 2013/11/19 07:51:56 mbalmer Exp $	*/
+/*	$NetBSD: lua-bozo.c,v 1.9 2014/01/02 08:21:38 mrg Exp $	*/
 
 /*
  * Copyright (c) 2013 Marc Balmer <marc@msys.ch>
@@ -31,6 +31,8 @@
 /* this code implements dynamic content generation using Lua for bozohttpd */
 
 #ifndef NO_LUA_SUPPORT
+
+#include <sys/param.h>
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -180,17 +182,17 @@ void
 bozo_add_lua_map(bozohttpd_t *httpd, const char *prefix, const char *script)
 {
 	lua_state_map_t *map;
-	char *cwd, *path;
 
 	map = bozomalloc(httpd, sizeof(lua_state_map_t));
 	map->prefix = bozostrdup(httpd, prefix);
 	if (*script == '/')
 		map->script = bozostrdup(httpd, script);
 	else {
-		cwd = getwd(NULL);
+		char cwd[MAXPATHLEN], *path;
+
+		getcwd(cwd, sizeof(cwd) - 1);
 		asprintf(&path, "%s/%s", cwd, script);
 		map->script = path;
-		free(cwd);
 	}
 	map->L = luaL_newstate();
 	if (map->L == NULL)
