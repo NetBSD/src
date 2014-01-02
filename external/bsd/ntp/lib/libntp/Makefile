@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2013/12/28 03:19:43 christos Exp $
+#	$NetBSD: Makefile,v 1.7 2014/01/02 21:38:38 joerg Exp $
 
 LIBISPRIVATE=yes
 
@@ -75,10 +75,8 @@ work_fork.c \
 work_thread.c \
 ymd2yd.c
 
-COPTS.msyslog.c+= -Wno-format-nonliteral
-COPTS.prettydate.c=-Wno-format-nonliteral
-COPTS.timetoa.c=-Wno-format-nonliteral
 CPPFLAGS+= -I${IDIST}/sntp/libopts
 
+COPTS.msyslog.c+=	-Wno-error=format-nonliteral
 
 .include <bsd.lib.mk>
