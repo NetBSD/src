@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.187 2013/12/28 14:13:40 mrg Exp $
+# $NetBSD: mi,v 1.188 2014/01/02 18:04:28 tho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -766,9 +766,9 @@
 ./usr/share/examples/kyua-cli			misc-kyua-examples
 ./usr/share/examples/kyua-cli/Kyuafile.top	misc-kyua-examples	share,kyua
 ./usr/share/examples/kyua-cli/kyua.conf		misc-kyua-examples	share,kyua
-./usr/share/examples/libsaslc			misc-libsaslc-examples	share
+./usr/share/examples/libsaslc			misc-libsaslc-examples
 ./usr/share/examples/libsaslc/README		misc-libsaslc-examples	share
-./usr/share/examples/libsaslc/mech		misc-libsaslc-examples	share
+./usr/share/examples/libsaslc/mech		misc-libsaslc-examples
 ./usr/share/examples/libsaslc/mech/ANONYMOUS.conf	misc-libsaslc-examples	share
 ./usr/share/examples/libsaslc/mech/CRAM-MD5.conf	misc-libsaslc-examples	share
 ./usr/share/examples/libsaslc/mech/DIGEST-MD5.conf	misc-libsaslc-examples	share
@@ -943,7 +943,7 @@
 ./usr/share/examples/supfiles/sup2.fr.netbsd.org	misc-sup-examples	share
 ./usr/share/examples/syslogd/all.debug		misc-sysutil-examples	share
 ./usr/share/examples/syslogd/all.newsyslog.conf	misc-sysutil-examples	share
-./usr/share/examples/tmux			misc-tmux-examples	share
+./usr/share/examples/tmux			misc-tmux-examples
 ./usr/share/examples/tmux/screen-keys.conf	misc-tmux-examples	share
 ./usr/share/examples/usermgmt			misc-obsolete		obsolete
 ./usr/share/examples/usermgmt/.cshrc		misc-obsolete		obsolete
