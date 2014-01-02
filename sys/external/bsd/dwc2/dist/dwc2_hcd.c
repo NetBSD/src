@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcd.c,v 1.9 2013/11/24 12:25:19 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcd.c,v 1.10 2014/01/02 15:54:10 skrll Exp $	*/
 
 /*
  * hcd.c - DesignWare HS OTG Controller host-mode routines
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcd.c,v 1.9 2013/11/24 12:25:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcd.c,v 1.10 2014/01/02 15:54:10 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -367,7 +367,6 @@ dwc2_hcd_urb_enqueue(struct dwc2_hsotg *hsotg, struct dwc2_hcd_urb *urb,
 {
 	struct dwc2_softc *sc = hsotg->hsotg_sc;
 	struct dwc2_qtd *qtd;
-	unsigned long flags;
 	u32 intr_mask;
 	int retval;
 	int dev_speed;
@@ -421,11 +420,9 @@ dwc2_hcd_urb_enqueue(struct dwc2_hsotg *hsotg, struct dwc2_hcd_urb *urb,
 			 */
 			return 0;
 
-		spin_lock_irqsave(&hsotg->lock, flags);
 		tr_type = dwc2_hcd_select_transactions(hsotg);
 		if (tr_type != DWC2_TRANSACTION_NONE)
 			dwc2_hcd_queue_transactions(hsotg, tr_type);
-		spin_unlock_irqrestore(&hsotg->lock, flags);
 	}
 
 	return retval;

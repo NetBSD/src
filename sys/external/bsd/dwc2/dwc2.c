@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.22 2013/12/31 09:10:43 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.23 2014/01/02 15:54:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.22 2013/12/31 09:10:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.23 2014/01/02 15:54:10 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1298,7 +1298,6 @@ dwc2_device_start(usbd_xfer_handle xfer)
 	memset(dwc2_urb, 0, sizeof(*dwc2_urb) +
 	    sizeof(dwc2_urb->iso_descs[0]) * DWC2_MAXISOCPACKETS);
 
-	dwc2_urb->priv = xfer;
 	dwc2_hcd_urb_set_pipeinfo(hsotg, dwc2_urb, addr, epnum, xfertype, dir,
 				  mps);
 
@@ -1379,6 +1378,9 @@ dwc2_device_start(usbd_xfer_handle xfer)
 	}
 
 	/* might need to check cpu_intr_p */
+	mutex_spin_enter(&hsotg->lock);
+
+	dwc2_urb->priv = xfer;
 	retval = dwc2_hcd_urb_enqueue(hsotg, dwc2_urb, &dpipe->priv, 0);
 	if (retval)
 		goto fail;
@@ -1389,14 +1391,14 @@ dwc2_device_start(usbd_xfer_handle xfer)
 	}
 
 	if (alloc_bandwidth) {
-		mutex_spin_enter(&hsotg->lock);
 		dwc2_allocate_bus_bandwidth(hsotg,
 				dwc2_hcd_get_ep_bandwidth(hsotg, dpipe),
 				xfer);
-		mutex_spin_exit(&hsotg->lock);
 	}
 
 fail:
+	mutex_spin_exit(&hsotg->lock);
+
 // 	mutex_exit(&sc->sc_lock);
 
 	switch (retval) {
