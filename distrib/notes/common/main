@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.498 2013/10/17 02:58:56 elad Exp $
+.\"	$NetBSD: main,v 1.499 2014/01/02 22:22:18 tho Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1282,6 +1282,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Brett Lymn Ta Mt blymn@NetBSD.org
 .It Ta MAEKAWA Masahide Ta Mt gehenna@NetBSD.org
 .It Ta Anders Magnusson Ta Mt ragge@NetBSD.org
+.It Ta Anthony Mallet Ta Mt tho@NetBSD.org
 .It Ta John Marino Ta Mt marino@NetBSD.org
 .It Ta Roy Marples Ta Mt roy@NetBSD.org
 .It Ta Cherry G. Mathew Ta Mt cherry@NetBSD.org
