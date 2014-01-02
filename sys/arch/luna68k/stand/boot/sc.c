@@ -1,4 +1,4 @@
-/*	$NetBSD: sc.c,v 1.4 2013/01/22 15:48:40 tsutsui Exp $	*/
+/*	$NetBSD: sc.c,v 1.5 2014/01/02 17:47:23 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -191,10 +191,10 @@ issue_select(struct scsidevice *hd, u_char target)
 	hd->scsi_pctl = 0;
 	hd->scsi_temp = (1 << SCSI_ID) | (1 << target);
 
-	/* select timeout is hardcoded to 2ms */
-	hd->scsi_tch = 0;
-	hd->scsi_tcm = 32;
-	hd->scsi_tcl = 4;
+	/* select timeout is hardcoded to 250ms */
+	hd->scsi_tch = 2;
+	hd->scsi_tcm = 113;
+	hd->scsi_tcl = 3;
 
 	hd->scsi_scmd = SCMD_SELECT;
 
