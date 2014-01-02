@@ -1,10 +1,10 @@
-/*	$NetBSD: main.c,v 1.6 2013/10/12 17:24:07 mbalmer Exp $	*/
+/*	$NetBSD: main.c,v 1.7 2014/01/02 08:21:38 mrg Exp $	*/
 
 /*	$eterna: main.c,v 1.6 2011/11/18 09:21:15 mrg Exp $	*/
 /* from: eterna: bozohttpd.c,v 1.159 2009/05/23 02:14:30 mrg Exp 	*/
 
 /*
- * Copyright (c) 1997-2011 Matthew R. Green
+ * Copyright (c) 1997-2014 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
