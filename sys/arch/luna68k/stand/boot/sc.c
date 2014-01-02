@@ -1,4 +1,4 @@
-/*	$NetBSD: sc.c,v 1.5 2014/01/02 17:47:23 tsutsui Exp $	*/
+/*	$NetBSD: sc.c,v 1.6 2014/01/02 18:45:24 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -254,8 +254,14 @@ int
 scrun(int ctlr, int slave, u_char *cdb, int cdblen, u_char *buf, int len,
     volatile int *lock)
 {
-	struct scsi_softc *hs = &scsi_softc[ctlr];
-	struct scsidevice *hd = (struct scsidevice *) hs->sc_hc->hp_addr;
+	struct scsi_softc *hs;
+	struct scsidevice *hd;
+
+	if (ctlr < 0 || ctlr >= NSC)
+		return 0;
+
+	hs = &scsi_softc[ctlr];
+	hd = (struct scsidevice *)hs->sc_hc->hp_addr;
 
 	if (hd->scsi_ssts & (SSTS_INITIATOR|SSTS_TARGET|SSTS_BUSY))
 		return(0);
