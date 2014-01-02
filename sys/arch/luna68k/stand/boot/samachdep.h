@@ -1,4 +1,4 @@
-/*	$NetBSD: samachdep.h,v 1.10 2013/03/05 15:34:53 tsutsui Exp $	*/
+/*	$NetBSD: samachdep.h,v 1.11 2014/01/02 20:02:00 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -98,7 +98,7 @@ int disklabel(int, char **);
 void exec_hp300(char *, u_long, int);
 
 /* font.c */
-extern u_short bmdfont[][20];
+extern const uint16_t bmdfont[][20];
 
 /* fsdump.c */
 int fsdump(int, char **);
