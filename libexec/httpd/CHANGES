@@ -1,6 +1,9 @@
 $eterna: CHANGES,v 1.78 2011/11/18 01:25:11 mrg Exp $
 
 changes since bozohttpd 20111118:
+	o  update a few content types
+	o  add support for directly calling lua scripts to handle
+	   processes, from mbalmer@netbsd.org
 	o  properly escape generated HTML
 	o  add authentication for redirections, from martin@netbsd.org
 	o  handle chained ssl certifications, from elric@netbsd.org
