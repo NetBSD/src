@@ -1,4 +1,4 @@
-/*	$NetBSD: timetoa.c,v 1.1.1.1 2013/12/27 23:30:48 christos Exp $	*/
+/*	$NetBSD: timetoa.c,v 1.2 2014/01/02 21:35:19 joerg Exp $	*/
 
 /*
  * timetoa.c -- time_t related string formatting
@@ -59,14 +59,12 @@ format_time_fraction(
 	u_int		u;
 	long		fraclimit;
 	int		notneg;	/* flag for non-negative value	*/
-	const char *	fmt;
 	ldiv_t		qr;
 
 	DEBUG_REQUIRE(prec != 0);
 
 	LIB_GETBUF(cp);
 	secs_u = (u_time)secs;
-	fmt = "-%" UTIME_FORMAT ".%0*ld";
 	
 	/* check if we need signed or unsigned mode */
 	notneg = (prec < 0);
@@ -94,9 +92,7 @@ format_time_fraction(
 
 	/* Get the absolute value of the split representation time. */
 	notneg = notneg || ((time_t)secs_u >= 0);
-	if (notneg) {
-		fmt++;		/* skip '-' */
-	} else {
+	if (!notneg) {
 		secs_u = ~secs_u;
 		if (0 == frac)
 			secs_u++;
@@ -105,7 +101,8 @@ format_time_fraction(
 	}
 
 	/* finally format the data and return the result */
-	snprintf(cp, LIB_BUFLENGTH, fmt, secs_u, prec_u, frac);
+	snprintf(cp, LIB_BUFLENGTH, "%s%" UTIME_FORMAT ".%0*ld",
+	    notneg? "" : "-", secs_u, prec_u, frac);
 	
 	return cp;
 }
