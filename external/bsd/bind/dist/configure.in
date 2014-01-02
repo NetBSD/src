@@ -24,7 +24,7 @@ AC_INIT(lib/dns/name.c)
 AC_PREREQ(2.59)
 
 AC_CONFIG_HEADER(config.h)
-AC_CONFIG_MACRO_DIR([libtool.m4])
+AC_CONFIG_MACRO_DIR([m4])
 
 AC_CANONICAL_HOST
 
