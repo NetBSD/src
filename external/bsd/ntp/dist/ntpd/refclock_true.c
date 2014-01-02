@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_true.c,v 1.1.1.3 2013/12/27 23:31:00 christos Exp $	*/
+/*	$NetBSD: refclock_true.c,v 1.2 2014/01/02 21:35:50 joerg Exp $	*/
 
 /*
  * refclock_true - clock driver for the Kinemetrics Truetime receivers
@@ -203,6 +203,7 @@ struct	refclock refclock_true = {
 #if !defined(__STDC__)
 # define true_debug (void)
 #else
+NTP_PRINTF(2, 3)
 static void
 true_debug(struct peer *peer, const char *fmt, ...)
 {
