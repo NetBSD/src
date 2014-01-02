@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.682 2013/12/31 20:26:17 christos Exp $
+# $NetBSD: shl.mi,v 1.683 2014/01/02 12:54:36 tho Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -215,7 +215,7 @@
 ./usr/lib/libcrypto_rc5.so			base-crypto-shlib	crypto,crypto_rc5
 ./usr/lib/libcrypto_rc5.so.7			base-crypto-shlib	crypto,crypto_rc5
 ./usr/lib/libcrypto_rc5.so.7.0			base-crypto-shlib	crypto,crypto_rc5
-./usr/lib/libcrypto_rc5_pic.a			base-crypto-shlib	crypto,crypto_rc5
+./usr/lib/libcrypto_rc5_pic.a			base-crypto-shlib	crypto,crypto_rc5,picinstall
 ./usr/lib/libctf.so				base-sys-shlib		dtrace
 ./usr/lib/libctf.so.2				base-sys-shlib		dtrace
 ./usr/lib/libctf.so.2.0				base-sys-shlib		dtrace
@@ -784,7 +784,7 @@
 ./usr/lib/libzpool.so				base-zfs-shlib		dynamicroot,zfs
 ./usr/lib/libzpool.so.0				base-zfs-shlib		dynamicroot,zfs
 ./usr/lib/libzpool.so.0.0			base-zfs-shlib		zfs,dynamicroot
-./usr/lib/libzpool_pic.a			base-zfs-shlib		zfs,dynamicroot
+./usr/lib/libzpool_pic.a			base-zfs-shlib		zfs,dynamicroot,picinstall
 ./usr/lib/lua/5.1/gpio.so                    	base-sys-shlib
 ./usr/lib/lua/5.1/sqlite.so                    	base-sys-shlib
 ./usr/lib/lua/5.1/syslog.so                    	base-sys-shlib

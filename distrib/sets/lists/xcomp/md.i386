@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.42 2013/08/11 22:29:03 joerg Exp $
+# $NetBSD: md.i386,v 1.43 2014/01/02 12:54:36 tho Exp $
 ./usr/X11R6/include/xf86Optrec.h			-unknown-	x11
 ./usr/X11R6/include/xf86Parser.h			-unknown-	x11
 ./usr/X11R6/man/cat3/XF86VidMode.0			-unknown-	.cat,x11
@@ -73,19 +73,19 @@
 ./usr/X11R7/include/intel_bufmgr.h			-unknown-	obsolete
 ./usr/X11R7/lib/libI810XvMC.a				-unknown-	xorg
 ./usr/X11R7/lib/libI810XvMC_p.a				-unknown-	profile,xorg
-./usr/X11R7/lib/libI810XvMC_pic.a			-unknown-	xorg
+./usr/X11R7/lib/libI810XvMC_pic.a			-unknown-	xorg,picinstall
 ./usr/X11R7/lib/libIntelXvMC.a				-unknown-	xorg
 ./usr/X11R7/lib/libIntelXvMC_p.a			-unknown-	profile,xorg
-./usr/X11R7/lib/libIntelXvMC_pic.a			-unknown-	xorg
+./usr/X11R7/lib/libIntelXvMC_pic.a			-unknown-	xorg,picinstall
 ./usr/X11R7/lib/libchromeXvMC.a				-unknown-	xorg
 ./usr/X11R7/lib/libchromeXvMCPro.a			-unknown-	xorg
 ./usr/X11R7/lib/libchromeXvMCPro_p.a			-unknown-	profile,xorg
-./usr/X11R7/lib/libchromeXvMCPro_pic.a			-unknown-	xorg
+./usr/X11R7/lib/libchromeXvMCPro_pic.a			-unknown-	xorg,picinstall
 ./usr/X11R7/lib/libchromeXvMC_p.a			-unknown-	profile,xorg
-./usr/X11R7/lib/libchromeXvMC_pic.a			-unknown-	xorg
+./usr/X11R7/lib/libchromeXvMC_pic.a			-unknown-	xorg,picinstall
 ./usr/X11R7/lib/libdrm_intel.a				-unknown-	xorg
 ./usr/X11R7/lib/libdrm_intel_p.a			-unknown-	profile,xorg
-./usr/X11R7/lib/libdrm_intel_pic.a			-unknown-	xorg
+./usr/X11R7/lib/libdrm_intel_pic.a			-unknown-	xorg,picinstall
 ./usr/X11R7/lib/pkgconfig/libdrm_intel.pc		-unknown-	xorg
 ./usr/libdata/lint/llib-lI810XvMC.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lIntelXvMC.ln			-unknown-	lint,xorg
