@@ -1,4 +1,4 @@
-/* $NetBSD: if_le.c,v 1.3 2013/01/22 15:48:40 tsutsui Exp $ */
+/* $NetBSD: if_le.c,v 1.4 2014/01/03 03:25:25 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2013 Izumi Tsutsui.  All rights reserved.
@@ -121,19 +121,19 @@ leinit(void *arg)
 	void *reg, *mem;
 	uint8_t eaddr[6];
 
-	reg = hd->hp_addr;
+	reg = hd->hpd_addr;
 	mem = (void *)0x71010000;	/* XXX */
 
 	myetheraddr(eaddr);
 
-	cookie = lance_attach(hd->hp_unit, reg, mem, eaddr);
+	cookie = lance_attach(hd->hpd_unit, reg, mem, eaddr);
 	if (cookie == NULL)
 		return 0;
 
 	printf("%s%d: Am7990 LANCE Ethernet, mem at 0x%x\n",
-	    hd->hp_driver->d_name, hd->hp_unit, (uint32_t)mem);
+	    hd->hpd_driver->d_name, hd->hpd_unit, (uint32_t)mem);
 	printf("%s%d: Ethernet address = %s\n",
-	    hd->hp_driver->d_name, hd->hp_unit,
+	    hd->hpd_driver->d_name, hd->hpd_unit,
 	    ether_sprintf(eaddr));
 
 	return 1;
