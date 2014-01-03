@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS_A6,v 1.17 2013/10/05 06:14:48 kiyohara Exp $
+#	$NetBSD: OPENBLOCKS_A6,v 1.18 2014/01/03 14:40:54 kiyohara Exp $
 #
 #	OPENBLOCKS_A6 -- Plat'Home. OpenBlockS A6 kernel
 #
@@ -171,10 +171,8 @@ mvsoc0	at mainbus?
 mvsata* at mvsoc? offset ? irq ?
 
 # On-chip Gigabit Ethernet Controller Interface
-mvgbec0 at mvsoc? offset 0x70000
-mvgbe*	at mvgbec0 port 0 irq ?
-#mvgbec1 at mvsoc? offset 0x74000
-#mvgbe*	at mvgbec1 port 0 irq ?
+mvgbec* at mvsoc? offset ?
+mvgbe*	at mvgbec? port ? irq ?
 makphy* at mii? phy ?
 
 # On-chip USB 2.0 Interface
