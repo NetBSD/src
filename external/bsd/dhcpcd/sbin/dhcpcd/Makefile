@@ -1,10 +1,10 @@
-# $NetBSD: Makefile,v 1.16 2013/09/20 10:58:16 roy Exp $
+# $NetBSD: Makefile,v 1.17 2014/01/03 22:27:31 roy Exp $
 #
 
 PROG=		dhcpcd
 SRCS=		common.c control.c dhcpcd.c duid.c eloop.c
 SRCS+=		if-options.c if-pref.c net.c script.c
-SRCS+=		dhcp-common.c
+SRCS+=		dhcp-common.c dhcpcd-embedded.c
 SRCS+=		bpf.c if-bsd.c platform-bsd.c
 
 .include <bsd.own.mk>
