@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.25 2014/01/03 12:20:26 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.26 2014/01/03 14:41:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.25 2014/01/03 12:20:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.26 2014/01/03 14:41:57 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1313,14 +1313,15 @@ dwc2_device_start(usbd_xfer_handle xfer)
 	}
 	flags |= URB_GIVEBACK_ASAP;
 
-	/* XXXNH this shouldn't be required */
-	if (xfertype == UE_CONTROL && len == 0) {
-		dwc2_urb->usbdma = &dpipe->req_dma;
-	} else {
-		dwc2_urb->usbdma = &xfer->dmabuf;
-	}
-	dwc2_urb->buf = KERNADDR(dwc2_urb->usbdma, 0);
-	dwc2_urb->dma = DMAADDR(dwc2_urb->usbdma, 0);
+	/*
+	 * control transfers with no data phase don't touch usbdma, but
+	 * everything else does.
+	 */
+	if (!(xfertype == UE_CONTROL && len == 0)) {
+    		dwc2_urb->usbdma = &xfer->dmabuf;
+		dwc2_urb->buf = KERNADDR(dwc2_urb->usbdma, 0);
+		dwc2_urb->dma = DMAADDR(dwc2_urb->usbdma, 0);
+ 	}
 	dwc2_urb->length = len;
  	dwc2_urb->flags = flags;
 	dwc2_urb->status = -EINPROGRESS;
