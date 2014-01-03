@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.6 2014/01/03 02:03:12 tsutsui Exp $	*/
+/*	$NetBSD: sd.c,v 1.7 2014/01/03 03:25:25 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -139,8 +139,8 @@ sdident(struct sd_softc *sc, struct hp_device *hd)
 	int i;
 	int tries = 10;
 
-	ctlr = hd->hp_ctlr;
-	slave = hd->hp_slave;
+	ctlr = hd->hpd_ctlr;
+	slave = hd->hpd_slave;
 	unit = sc->sc_punit;
 
 	/*
@@ -192,7 +192,7 @@ sdident(struct sd_softc *sc, struct hp_device *hd)
 		if (idstr[i] != ' ')
 			break;
 	idstr[i+1] = 0;
-	printf("sd%d: %s %s rev %s", hd->hp_unit, idstr, &idstr[8],
+	printf("sd%d: %s %s rev %s", hd->hpd_unit, idstr, &idstr[8],
 	       &idstr[24]);
 
 	printf(", %d bytes/sect x %d sectors\n", sc->sc_blksize, sc->sc_blks);
@@ -213,14 +213,14 @@ int
 sdinit(void *arg)
 {
 	struct hp_device *hd = arg;
-	struct sd_softc *sc = &sd_softc[hd->hp_unit];
+	struct sd_softc *sc = &sd_softc[hd->hpd_unit];
 	struct disklabel *lp;
 	char *msg;
 
 #ifdef DEBUG
-	printf("sdinit: hd->hp_unit = %d\n", hd->hp_unit);
-	printf("sdinit: hd->hp_ctlr = %d, hd->hp_slave = %d\n",
-	       hd->hp_ctlr, hd->hp_slave);
+	printf("sdinit: hd->hpd_unit = %d\n", hd->hpd_unit);
+	printf("sdinit: hd->hpd_ctlr = %d, hd->hpd_slave = %d\n",
+	       hd->hpd_ctlr, hd->hpd_slave);
 #endif
 	sc->sc_hd = hd;
 	sc->sc_punit = 0;	/* XXX no LUN support yet */
@@ -232,7 +232,7 @@ sdinit(void *arg)
 	 * Use the default sizes until we've read the label,
 	 * or longer if there isn't one there.
 	 */
-	lp = &sdlabel[hd->hp_unit];
+	lp = &sdlabel[hd->hpd_unit];
 
 	if (lp->d_secpercyl == 0) {
 		lp->d_secsize = DEV_BSIZE;
@@ -247,9 +247,9 @@ sdinit(void *arg)
 	/*
 	 * read disklabel
 	 */
-	msg = readdisklabel(hd->hp_ctlr, hd->hp_slave, lp);
+	msg = readdisklabel(hd->hpd_ctlr, hd->hpd_slave, lp);
 	if (msg != NULL)
-		printf("sd%d: %s\n", hd->hp_unit, msg);
+		printf("sd%d: %s\n", hd->hpd_unit, msg);
 
 	sc->sc_flags = SDF_ALIVE;
 	return(1);
@@ -323,8 +323,8 @@ sdstrategy(void *devdata, int func, daddr_t dblk, size_t size, void *v_buf,
 	if (unit < 0 || unit >= NSD)
 		return(-1);
 
-	ctlr  = sc->sc_hd->hp_ctlr;
-	slave = sc->sc_hd->hp_slave;
+	ctlr  = sc->sc_hd->hpd_ctlr;
+	slave = sc->sc_hd->hpd_slave;
 
 	lp = &sdlabel[unit];
 	blk = dblk + (lp->d_partitions[part].p_offset >> sc->sc_bshift);
@@ -355,55 +355,3 @@ sdstrategy(void *devdata, int func, daddr_t dblk, size_t size, void *v_buf,
 
 	return 0;
 }
-
-#if 0
-int
-sdread(dev_t dev, u_int blk, u_int nblk, u_char *buff, u_int len)
-{
-	int unit = sdunit(dev);
-	int part = sdpart(dev);
-	struct sd_softc *sc = &sd_softc[unit];
-	struct scsi_fmt_cdb *cdb;
-	int stat, ctlr, slave;
-
-	ctlr  = sc->sc_hd->hp_ctlr;
-	slave = sc->sc_hd->hp_slave;
-
-	cdb = &cdb_read;
-
-	cdb->cdb[2] = (blk & 0xff000000) >> 24;
-	cdb->cdb[3] = (blk & 0x00ff0000) >> 16;
-	cdb->cdb[4] = (blk & 0x0000ff00) >>  8;
-	cdb->cdb[5] = (blk & 0x000000ff);
-
-	cdb->cdb[7] = (nblk & 0xff00) >> 8;
-	cdb->cdb[8] = (nblk & 0x00ff);
-
-	stat = scsi_immed_command(ctlr, slave, sc->sc_punit, cdb,  buff, len);
-
-	if (stat == 0)
-		return(1);
-	else
-		return(0);
-}
-
-int
-sdioctl(dev_t dev, u_long data[])
-{
-	int unit = sdunit(dev);
-	int part = sdpart(dev);
-	struct disklabel *lp;
-
-	if (unit < 0 || unit >= NSD)
-		return(0);
-
-	if (part < 0 || part >= MAXPARTITIONS)
-		return(0);
-
-	lp = &sdlabel[unit];
-	data[0] = lp->d_partitions[part].p_offset;
-	data[1] = lp->d_partitions[part].p_size;
-
-	return(1);
-}
-#endif
