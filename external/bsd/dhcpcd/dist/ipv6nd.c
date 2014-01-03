@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv6nd.c,v 1.2 2013/11/14 01:28:16 christos Exp $");
+ __RCSID("$NetBSD: ipv6nd.c,v 1.3 2014/01/03 22:24:41 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -56,6 +56,11 @@
 #include "ipv6.h"
 #include "ipv6nd.h"
 #include "script.h"
+
+#if defined(LISTEN_DAD) && defined(INET6)
+#  warning kernel does not report DAD results to userland
+#  warning listening to duplicated addresses on the wire
+#endif
 
 /* Debugging Router Solicitations is a lot of spam, so disable it */
 //#define DEBUG_RS
@@ -149,6 +154,34 @@ static struct icmp6_filter filt;
 struct rahead ipv6_routers = TAILQ_HEAD_INITIALIZER(ipv6_routers);
 
 static void ipv6nd_handledata(void *arg);
+
+/*
+ * Android ships buggy ICMP6 filter headers.
+ * Supply our own until they fix their shit.
+ * References:
+ *     https://android-review.googlesource.com/#/c/58438/
+ *     http://code.google.com/p/android/issues/original?id=32621&seq=24
+ */
+#ifdef __ANDROID__
+#undef ICMP6_FILTER_WILLPASS
+#undef ICMP6_FILTER_WILLBLOCK
+#undef ICMP6_FILTER_SETPASS
+#undef ICMP6_FILTER_SETBLOCK
+#undef ICMP6_FILTER_SETPASSALL
+#undef ICMP6_FILTER_SETBLOCKALL
+#define ICMP6_FILTER_WILLPASS(type, filterp) \
+	((((filterp)->icmp6_filt[(type) >> 5]) & (1 << ((type) & 31))) == 0)
+#define ICMP6_FILTER_WILLBLOCK(type, filterp) \
+	((((filterp)->icmp6_filt[(type) >> 5]) & (1 << ((type) & 31))) != 0)
+#define ICMP6_FILTER_SETPASS(type, filterp) \
+	((((filterp)->icmp6_filt[(type) >> 5]) &= ~(1 << ((type) & 31))))
+#define ICMP6_FILTER_SETBLOCK(type, filterp) \
+	((((filterp)->icmp6_filt[(type) >> 5]) |=  (1 << ((type) & 31))))
+#define ICMP6_FILTER_SETPASSALL(filterp) \
+	memset(filterp, 0, sizeof(struct icmp6_filter));
+#define ICMP6_FILTER_SETBLOCKALL(filterp) \
+	memset(filterp, 0xff, sizeof(struct icmp6_filter));
+#endif
 
 #if DEBUG_MEMORY
 static void
@@ -1464,9 +1497,7 @@ ipv6nd_probeaddrs(struct ipv6_addrhead *addrs)
 				eloop_q_timeout_delete(0, NULL,
 				    ap->dadcallback);
 			free(ap);
-		} else if (!IN6_IS_ADDR_UNSPECIFIED(&ap->addr) &&
-		    !(ap->flags & IPV6_AF_DELEGATED))
-		{
+		} else if (!IN6_IS_ADDR_UNSPECIFIED(&ap->addr)) {
 			ipv6nd_probeaddr(ap);
 			if (ap->flags & IPV6_AF_NEW)
 				i++;
