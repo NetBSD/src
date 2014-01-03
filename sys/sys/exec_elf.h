@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.134 2014/01/02 19:15:07 christos Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.135 2014/01/03 16:54:48 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -73,8 +73,6 @@ typedef uint64_t	Elf64_Addr;
 typedef uint64_t	Elf64_Off;
 typedef int64_t		Elf64_SOff;
 #define ELF64_FSZ_OFF	8
-typedef int32_t		Elf64_Shalf;
-#define ELF64_FSZ_SHALF 4
 
 typedef int32_t		Elf64_Sword;
 #define ELF64_FSZ_SWORD 4
