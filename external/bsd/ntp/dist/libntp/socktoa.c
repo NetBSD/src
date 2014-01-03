@@ -1,4 +1,4 @@
-/*	$NetBSD: socktoa.c,v 1.1.1.3 2013/12/27 23:30:48 christos Exp $	*/
+/*	$NetBSD: socktoa.c,v 1.2 2014/01/03 20:26:45 joerg Exp $	*/
 
 /*
  * socktoa.c	socktoa(), sockporttoa(), and sock_hash()
@@ -93,8 +93,8 @@ sockporttoa(
 	LIB_GETBUF(buf);
 	snprintf(buf, LIB_BUFLENGTH,
 		 (IS_IPV6(sock))
-		     ? "[%s]:%hu"
-		     : "%s:%hu",
+		     ? "[%s]:%u"
+		     : "%s:%u",
 		 atext, SRCPORT(sock));
 	errno = saved_errno;
 
