@@ -3,14 +3,8 @@
  * Copyright (c) 2009, Atheros Communications
  * Copyright (c) 2011, Qualcomm Atheros
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "includes.h"
@@ -25,9 +19,13 @@
 #include "gas_query.h"
 
 
-#define GAS_QUERY_TIMEOUT 5
+/** GAS query timeout in seconds */
+#define GAS_QUERY_TIMEOUT_PERIOD 5
 
 
+/**
+ * struct gas_query_pending - Pending GAS query
+ */
 struct gas_query_pending {
 	struct dl_list list;
 	u8 addr[ETH_ALEN];
@@ -46,6 +44,9 @@ struct gas_query_pending {
 	void *ctx;
 };
 
+/**
+ * struct gas_query - Internal GAS query data
+ */
 struct gas_query {
 	struct wpa_supplicant *wpa_s;
 	struct dl_list pending; /* struct gas_query_pending */
@@ -56,6 +57,11 @@ static void gas_query_tx_comeback_timeout(void *eloop_data, void *user_ctx);
 static void gas_query_timeout(void *eloop_data, void *user_ctx);
 
 
+/**
+ * gas_query_init - Initialize GAS query component
+ * @wpa_s: Pointer to wpa_supplicant data
+ * Returns: Pointer to GAS query data or %NULL on failure
+ */
 struct gas_query * gas_query_init(struct wpa_supplicant *wpa_s)
 {
 	struct gas_query *gas;
@@ -88,6 +94,10 @@ static void gas_query_done(struct gas_query *gas,
 }
 
 
+/**
+ * gas_query_deinit - Deinitialize GAS query component
+ * @gas: GAS query data from gas_query_init()
+ */
 void gas_query_deinit(struct gas_query *gas)
 {
 	struct gas_query_pending *query, *next;
@@ -280,6 +290,17 @@ static void gas_query_rx_comeback(struct gas_query *gas,
 }
 
 
+/**
+ * gas_query_rx - Indicate reception of a Public Action frame
+ * @gas: GAS query data from gas_query_init()
+ * @da: Destination MAC address of the Action frame
+ * @sa: Source MAC address of the Action frame
+ * @bssid: BSSID of the Action frame
+ * @data: Payload of the Action frame
+ * @len: Length of @data
+ * @freq: Frequency (in MHz) on which the frame was received
+ * Returns: 0 if the Public Action frame was a GAS frame or -1 if not
+ */
 int gas_query_rx(struct gas_query *gas, const u8 *da, const u8 *sa,
 		 const u8 *bssid, const u8 *data, size_t len, int freq)
 {
@@ -420,6 +441,16 @@ static int gas_query_dialog_token_available(struct gas_query *gas,
 }
 
 
+/**
+ * gas_query_req - Request a GAS query
+ * @gas: GAS query data from gas_query_init()
+ * @dst: Destination MAC address for the query
+ * @freq: Frequency (in MHz) for the channel on which to send the query
+ * @req: GAS query payload
+ * @cb: Callback function for reporting GAS query result and response
+ * @ctx: Context pointer to use with the @cb call
+ * Returns: dialog token (>= 0) on success or -1 on failure
+ */
 int gas_query_req(struct gas_query *gas, const u8 *dst, int freq,
 		  struct wpabuf *req,
 		  void (*cb)(void *ctx, const u8 *dst, u8 dialog_token,
@@ -459,17 +490,24 @@ int gas_query_req(struct gas_query *gas, const u8 *dst, int freq,
 	if (gas_query_tx(gas, query, req) < 0) {
 		wpa_printf(MSG_DEBUG, "GAS: Failed to send Action frame to "
 			   MACSTR, MAC2STR(query->addr));
+		dl_list_del(&query->list);
 		os_free(query);
 		return -1;
 	}
 
-	eloop_register_timeout(GAS_QUERY_TIMEOUT, 0, gas_query_timeout,
+	eloop_register_timeout(GAS_QUERY_TIMEOUT_PERIOD, 0, gas_query_timeout,
 			       gas, query);
 
 	return dialog_token;
 }
 
 
+/**
+ * gas_query_cancel - Cancel a pending GAS query
+ * @gas: GAS query data from gas_query_init()
+ * @dst: Destination MAC address for the query
+ * @dialog_token: Dialog token from gas_query_req()
+ */
 void gas_query_cancel(struct gas_query *gas, const u8 *dst, u8 dialog_token)
 {
 	struct gas_query_pending *query;

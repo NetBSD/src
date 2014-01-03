@@ -2,14 +2,8 @@
  * wpa_supplicant/hostapd control interface library
  * Copyright (c) 2004-2007, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "includes.h"
@@ -18,7 +12,12 @@
 
 #ifdef CONFIG_CTRL_IFACE_UNIX
 #include <sys/un.h>
+#include <unistd.h>
+#include <fcntl.h>
 #endif /* CONFIG_CTRL_IFACE_UNIX */
+#ifdef CONFIG_CTRL_IFACE_UDP_REMOTE
+#include <netdb.h>
+#endif /* CONFIG_CTRL_IFACE_UDP_REMOTE */
 
 #ifdef ANDROID
 #include <dirent.h>
@@ -50,6 +49,8 @@ struct wpa_ctrl {
 	struct sockaddr_in local;
 	struct sockaddr_in dest;
 	char *cookie;
+	char *remote_ifname;
+	char *remote_ip;
 #endif /* CONFIG_CTRL_IFACE_UDP */
 #ifdef CONFIG_CTRL_IFACE_UNIX
 	int s;
@@ -79,6 +80,7 @@ struct wpa_ctrl * wpa_ctrl_open(const char *ctrl_path)
 	int ret;
 	size_t res;
 	int tries = 0;
+	int flags;
 
 	ctrl = os_malloc(sizeof(*ctrl));
 	if (ctrl == NULL)
@@ -162,6 +164,19 @@ try_again:
 		return NULL;
 	}
 
+	/*
+	 * Make socket non-blocking so that we don't hang forever if
+	 * target dies unexpectedly.
+	 */
+	flags = fcntl(ctrl->s, F_GETFL);
+	if (flags >= 0) {
+		flags |= O_NONBLOCK;
+		if (fcntl(ctrl->s, F_SETFL, flags) < 0) {
+			perror("fcntl(ctrl->s, O_NONBLOCK)");
+			/* Not fatal, continue on.*/
+		}
+	}
+
 	return ctrl;
 }
 
@@ -236,6 +251,9 @@ struct wpa_ctrl * wpa_ctrl_open(const char *ctrl_path)
 	struct wpa_ctrl *ctrl;
 	char buf[128];
 	size_t len;
+#ifdef CONFIG_CTRL_IFACE_UDP_REMOTE
+	struct hostent *h;
+#endif /* CONFIG_CTRL_IFACE_UDP_REMOTE */
 
 	ctrl = os_malloc(sizeof(*ctrl));
 	if (ctrl == NULL)
@@ -250,7 +268,11 @@ struct wpa_ctrl * wpa_ctrl_open(const char *ctrl_path)
 	}
 
 	ctrl->local.sin_family = AF_INET;
+#ifdef CONFIG_CTRL_IFACE_UDP_REMOTE
+	ctrl->local.sin_addr.s_addr = INADDR_ANY;
+#else /* CONFIG_CTRL_IFACE_UDP_REMOTE */
 	ctrl->local.sin_addr.s_addr = htonl((127 << 24) | 1);
+#endif /* CONFIG_CTRL_IFACE_UDP_REMOTE */
 	if (bind(ctrl->s, (struct sockaddr *) &ctrl->local,
 		 sizeof(ctrl->local)) < 0) {
 		close(ctrl->s);
@@ -261,10 +283,48 @@ struct wpa_ctrl * wpa_ctrl_open(const char *ctrl_path)
 	ctrl->dest.sin_family = AF_INET;
 	ctrl->dest.sin_addr.s_addr = htonl((127 << 24) | 1);
 	ctrl->dest.sin_port = htons(WPA_CTRL_IFACE_PORT);
+
+#ifdef CONFIG_CTRL_IFACE_UDP_REMOTE
+	if (ctrl_path) {
+		char *port, *name;
+		int port_id;
+
+		name = os_strdup(ctrl_path);
+		if (name == NULL) {
+			close(ctrl->s);
+			os_free(ctrl);
+			return NULL;
+		}
+		port = os_strchr(name, ':');
+
+		if (port) {
+			port_id = atoi(&port[1]);
+			port[0] = '\0';
+		} else
+			port_id = WPA_CTRL_IFACE_PORT;
+
+		h = gethostbyname(name);
+		ctrl->remote_ip = os_strdup(name);
+		os_free(name);
+		if (h == NULL) {
+			perror("gethostbyname");
+			close(ctrl->s);
+			os_free(ctrl->remote_ip);
+			os_free(ctrl);
+			return NULL;
+		}
+		ctrl->dest.sin_port = htons(port_id);
+		os_memcpy(h->h_addr, (char *) &ctrl->dest.sin_addr.s_addr,
+			  h->h_length);
+	} else
+		ctrl->remote_ip = os_strdup("localhost");
+#endif /* CONFIG_CTRL_IFACE_UDP_REMOTE */
+
 	if (connect(ctrl->s, (struct sockaddr *) &ctrl->dest,
 		    sizeof(ctrl->dest)) < 0) {
 		perror("connect");
 		close(ctrl->s);
+		os_free(ctrl->remote_ip);
 		os_free(ctrl);
 		return NULL;
 	}
@@ -275,7 +335,22 @@ struct wpa_ctrl * wpa_ctrl_open(const char *ctrl_path)
 		ctrl->cookie = os_strdup(buf);
 	}
 
+	if (wpa_ctrl_request(ctrl, "IFNAME", 6, buf, &len, NULL) == 0) {
+		buf[len] = '\0';
+		ctrl->remote_ifname = os_strdup(buf);
+	}
+
 	return ctrl;
+}
+
+
+char * wpa_ctrl_get_remote_ifname(struct wpa_ctrl *ctrl)
+{
+#define WPA_CTRL_MAX_PS_NAME 100
+	static char ps[WPA_CTRL_MAX_PS_NAME] = {};
+	os_snprintf(ps, WPA_CTRL_MAX_PS_NAME, "%s/%s",
+		    ctrl->remote_ip, ctrl->remote_ifname);
+	return ps;
 }
 
 
@@ -283,6 +358,8 @@ void wpa_ctrl_close(struct wpa_ctrl *ctrl)
 {
 	close(ctrl->s);
 	os_free(ctrl->cookie);
+	os_free(ctrl->remote_ifname);
+	os_free(ctrl->remote_ip);
 	os_free(ctrl);
 }
 
@@ -295,6 +372,7 @@ int wpa_ctrl_request(struct wpa_ctrl *ctrl, const char *cmd, size_t cmd_len,
 		     void (*msg_cb)(char *msg, size_t len))
 {
 	struct timeval tv;
+	struct os_time started_at;
 	int res;
 	fd_set rfds;
 	const char *_cmd;
@@ -321,7 +399,30 @@ int wpa_ctrl_request(struct wpa_ctrl *ctrl, const char *cmd, size_t cmd_len,
 		_cmd_len = cmd_len;
 	}
 
+	errno = 0;
+	started_at.sec = 0;
+	started_at.usec = 0;
+retry_send:
 	if (send(ctrl->s, _cmd, _cmd_len, 0) < 0) {
+		if (errno == EAGAIN || errno == EBUSY || errno == EWOULDBLOCK)
+		{
+			/*
+			 * Must be a non-blocking socket... Try for a bit
+			 * longer before giving up.
+			 */
+			if (started_at.sec == 0)
+				os_get_time(&started_at);
+			else {
+				struct os_time n;
+				os_get_time(&n);
+				/* Try for a few seconds. */
+				if (n.sec > started_at.sec + 5)
+					goto send_err;
+			}
+			os_sleep(1, 0);
+			goto retry_send;
+		}
+	send_err:
 		os_free(cmd_buf);
 		return -1;
 	}

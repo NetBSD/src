@@ -2,14 +2,8 @@
  * WPA Supplicant - Windows/NDIS driver interface
  * Copyright (c) 2004-2007, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #ifdef __CYGWIN__
@@ -731,14 +725,6 @@ static int wpa_driver_ndis_deauthenticate(void *priv, const u8 *addr,
 }
 
 
-static int wpa_driver_ndis_disassociate(void *priv, const u8 *addr,
-					int reason_code)
-{
-	struct wpa_driver_ndis_data *drv = priv;
-	return wpa_driver_ndis_disconnect(drv);
-}
-
-
 static void wpa_driver_ndis_scan_timeout(void *eloop_ctx, void *timeout_ctx)
 {
 	wpa_printf(MSG_DEBUG, "Scan timeout - try to get results");
@@ -864,7 +850,7 @@ static struct wpa_scan_results * wpa_driver_ndis_get_scan_results(void *priv)
 		os_free(b);
 		return NULL;
 	}
-	results->res = os_zalloc(count * sizeof(struct wpa_scan_res *));
+	results->res = os_calloc(count, sizeof(struct wpa_scan_res *));
 	if (results->res == NULL) {
 		os_free(results);
 		os_free(b);
@@ -3229,7 +3215,6 @@ void driver_ndis_init_ops(void)
 	wpa_driver_ndis_ops.init = wpa_driver_ndis_init;
 	wpa_driver_ndis_ops.deinit = wpa_driver_ndis_deinit;
 	wpa_driver_ndis_ops.deauthenticate = wpa_driver_ndis_deauthenticate;
-	wpa_driver_ndis_ops.disassociate = wpa_driver_ndis_disassociate;
 	wpa_driver_ndis_ops.associate = wpa_driver_ndis_associate;
 	wpa_driver_ndis_ops.add_pmkid = wpa_driver_ndis_add_pmkid;
 	wpa_driver_ndis_ops.remove_pmkid = wpa_driver_ndis_remove_pmkid;

@@ -2,14 +2,8 @@
  * wpa_supplicant/hostapd / Debug prints
  * Copyright (c) 2002-2007, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #ifndef WPA_DEBUG_H
@@ -23,32 +17,6 @@
 enum {
 	MSG_EXCESSIVE, MSG_MSGDUMP, MSG_DEBUG, MSG_INFO, MSG_WARNING, MSG_ERROR
 };
-
-#ifdef CONFIG_ANDROID_LOG
-
-#define wpa_debug_print_timestamp() do {} while (0)
-#define wpa_hexdump(...)            do {} while (0)
-#define wpa_hexdump_key(...)        do {} while (0)
-#define wpa_hexdump_buf(l,t,b)      do {} while (0)
-#define wpa_hexdump_buf_key(l,t,b)  do {} while (0)
-#define wpa_hexdump_ascii(...)      do {} while (0)
-#define wpa_hexdump_ascii_key(...)  do {} while (0)
-#define wpa_debug_open_file(...)    do {} while (0)
-#define wpa_debug_close_file()      do {} while (0)
-#define wpa_dbg(...)                do {} while (0)
-
-static inline int wpa_debug_reopen_file(void)
-{
-	return 0;
-}
-
-
-void android_printf(int level, char *format, ...)
-PRINTF_FORMAT(2, 3);
-
-#define wpa_printf android_printf
-
-#else /* CONFIG_ANDROID_LOG */
 
 #ifdef CONFIG_NO_STDOUT_DEBUG
 
@@ -136,7 +104,7 @@ void wpa_hexdump_key(int level, const char *title, const u8 *buf, size_t len);
 static inline void wpa_hexdump_buf_key(int level, const char *title,
 				       const struct wpabuf *buf)
 {
-	wpa_hexdump_key(level, title, buf ? wpabuf_head(buf) : 0,
+	wpa_hexdump_key(level, title, buf ? wpabuf_head(buf) : NULL,
 			buf ? wpabuf_len(buf) : 0);
 }
 
@@ -182,8 +150,6 @@ void wpa_hexdump_ascii_key(int level, const char *title, const u8 *buf,
 #define wpa_dbg(args...) wpa_msg(args)
 
 #endif /* CONFIG_NO_STDOUT_DEBUG */
-
-#endif /* CONFIG_ANDROID_LOG */
 
 
 #ifdef CONFIG_NO_WPA_MSG
@@ -288,6 +254,24 @@ static inline void wpa_debug_close_syslog(void)
 }
 
 #endif /* CONFIG_DEBUG_SYSLOG */
+
+#ifdef CONFIG_DEBUG_LINUX_TRACING
+
+int wpa_debug_open_linux_tracing(void);
+void wpa_debug_close_linux_tracing(void);
+
+#else /* CONFIG_DEBUG_LINUX_TRACING */
+
+static inline int wpa_debug_open_linux_tracing(void)
+{
+	return 0;
+}
+
+static inline void wpa_debug_close_linux_tracing(void)
+{
+}
+
+#endif /* CONFIG_DEBUG_LINUX_TRACING */
 
 
 #ifdef EAPOL_TEST

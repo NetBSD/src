@@ -2,14 +2,8 @@
  * Minimal command line editing
  * Copyright (c) 2010, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "includes.h"
@@ -22,6 +16,7 @@
 #define CMD_BUF_LEN 256
 static char cmdbuf[CMD_BUF_LEN];
 static int cmdbuf_pos = 0;
+static const char *ps2 = NULL;
 
 static void *edit_cb_ctx;
 static void (*edit_cmd_cb)(void *ctx, char *cmd);
@@ -47,7 +42,7 @@ static void edit_read_char(int sock, void *eloop_ctx, void *sock_ctx)
 		cmdbuf[cmdbuf_pos] = '\0';
 		cmdbuf_pos = 0;
 		edit_cmd_cb(edit_cb_ctx, cmdbuf);
-		printf("> ");
+		printf("%s> ", ps2 ? ps2 : "");
 		fflush(stdout);
 		return;
 	}
@@ -63,14 +58,15 @@ static void edit_read_char(int sock, void *eloop_ctx, void *sock_ctx)
 int edit_init(void (*cmd_cb)(void *ctx, char *cmd),
 	      void (*eof_cb)(void *ctx),
 	      char ** (*completion_cb)(void *ctx, const char *cmd, int pos),
-	      void *ctx, const char *history_file)
+	      void *ctx, const char *history_file, const char *ps)
 {
 	edit_cb_ctx = ctx;
 	edit_cmd_cb = cmd_cb;
 	edit_eof_cb = eof_cb;
 	eloop_register_read_sock(STDIN_FILENO, edit_read_char, NULL, NULL);
+	ps2 = ps;
 
-	printf("> ");
+	printf("%s> ", ps2 ? ps2 : "");
 	fflush(stdout);
 
 	return 0;

@@ -2,19 +2,14 @@
  * hostapd / EAP-pwd (RFC 5931) server
  * Copyright (c) 2010, Dan Harkins <dharkins@lounge.org>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the BSD license.
- *
- * Alternatively, this software may be distributed under the terms of the
- * GNU General Public License version 2 as published by the Free Software
- * Foundation.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "includes.h"
 
 #include "common.h"
+#include "crypto/sha256.h"
 #include "eap_server/eap_i.h"
 #include "eap_common/eap_pwd_common.h"
 
@@ -33,6 +28,12 @@ struct eap_pwd_data {
 	u16 group_num;
 	EAP_PWD_group *grp;
 
+	struct wpabuf *inbuf;
+	size_t in_frag_pos;
+	struct wpabuf *outbuf;
+	size_t out_frag_pos;
+	size_t mtu;
+
 	BIGNUM *k;
 	BIGNUM *private_value;
 	BIGNUM *peer_scalar;
@@ -40,7 +41,7 @@ struct eap_pwd_data {
 	EC_POINT *my_element;
 	EC_POINT *peer_element;
 
-	u8 my_confirm[SHA256_DIGEST_LENGTH];
+	u8 my_confirm[SHA256_MAC_LEN];
 
 	u8 msk[EAP_MSK_LEN];
 	u8 emsk[EAP_EMSK_LEN];
@@ -120,6 +121,10 @@ static void * eap_pwd_init(struct eap_sm *sm)
 		return NULL;
 	}
 
+	data->in_frag_pos = data->out_frag_pos = 0;
+	data->inbuf = data->outbuf = NULL;
+	data->mtu = 1020; /* default from RFC 5931, make it configurable! */
+
 	return data;
 }
 
@@ -149,44 +154,48 @@ static void eap_pwd_reset(struct eap_sm *sm, void *priv)
 }
 
 
-static struct wpabuf *
-eap_pwd_build_id_req(struct eap_sm *sm, struct eap_pwd_data *data, u8 id)
+static void eap_pwd_build_id_req(struct eap_sm *sm, struct eap_pwd_data *data,
+				 u8 id)
 {
-	struct wpabuf *req;
-
 	wpa_printf(MSG_DEBUG, "EAP-pwd: ID/Request");
-	req = eap_msg_alloc(EAP_VENDOR_IETF, EAP_TYPE_PWD,
-			    sizeof(struct eap_pwd_hdr) +
-			    sizeof(struct eap_pwd_id) + data->id_server_len,
-			    EAP_CODE_REQUEST, id);
-	if (req == NULL) {
+	/*
+	 * if we're fragmenting then we already have an id request, just return
+	 */
+	if (data->out_frag_pos)
+		return;
+
+	data->outbuf = wpabuf_alloc(sizeof(struct eap_pwd_id) +
+				    data->id_server_len);
+	if (data->outbuf == NULL) {
 		eap_pwd_state(data, FAILURE);
-		return NULL;
+		return;
 	}
 
 	/* an lfsr is good enough to generate unpredictable tokens */
 	data->token = os_random();
-	wpabuf_put_u8(req, EAP_PWD_OPCODE_ID_EXCH);
-	wpabuf_put_be16(req, data->group_num);
-	wpabuf_put_u8(req, EAP_PWD_DEFAULT_RAND_FUNC);
-	wpabuf_put_u8(req, EAP_PWD_DEFAULT_PRF);
-	wpabuf_put_data(req, &data->token, sizeof(data->token));
-	wpabuf_put_u8(req, EAP_PWD_PREP_NONE);
-	wpabuf_put_data(req, data->id_server, data->id_server_len);
-
-	return req;
+	wpabuf_put_be16(data->outbuf, data->group_num);
+	wpabuf_put_u8(data->outbuf, EAP_PWD_DEFAULT_RAND_FUNC);
+	wpabuf_put_u8(data->outbuf, EAP_PWD_DEFAULT_PRF);
+	wpabuf_put_data(data->outbuf, &data->token, sizeof(data->token));
+	wpabuf_put_u8(data->outbuf, EAP_PWD_PREP_NONE);
+	wpabuf_put_data(data->outbuf, data->id_server, data->id_server_len);
 }
 
 
-static struct wpabuf *
-eap_pwd_build_commit_req(struct eap_sm *sm, struct eap_pwd_data *data, u8 id)
+static void eap_pwd_build_commit_req(struct eap_sm *sm,
+				     struct eap_pwd_data *data, u8 id)
 {
-	struct wpabuf *req = NULL;
 	BIGNUM *mask = NULL, *x = NULL, *y = NULL;
 	u8 *scalar = NULL, *element = NULL;
 	u16 offset;
 
 	wpa_printf(MSG_DEBUG, "EAP-pwd: Commit/Request");
+	/*
+	 * if we're fragmenting then we already have an commit request, just
+	 * return
+	 */
+	if (data->out_frag_pos)
+		return;
 
 	if (((data->private_value = BN_new()) == NULL) ||
 	    ((data->my_element = EC_POINT_new(data->grp->group)) == NULL) ||
@@ -256,42 +265,42 @@ eap_pwd_build_commit_req(struct eap_sm *sm, struct eap_pwd_data *data, u8 id)
 	offset = BN_num_bytes(data->grp->prime) - BN_num_bytes(y);
 	BN_bn2bin(y, element + BN_num_bytes(data->grp->prime) + offset);
 
-	req = eap_msg_alloc(EAP_VENDOR_IETF, EAP_TYPE_PWD,
-			    sizeof(struct eap_pwd_hdr) +
-			    (2 * BN_num_bytes(data->grp->prime)) +
-			    BN_num_bytes(data->grp->order),
-			    EAP_CODE_REQUEST, id);
-	if (req == NULL)
+	data->outbuf = wpabuf_alloc(2 * BN_num_bytes(data->grp->prime) +
+				    BN_num_bytes(data->grp->order));
+	if (data->outbuf == NULL)
 		goto fin;
-	wpabuf_put_u8(req, EAP_PWD_OPCODE_COMMIT_EXCH);
 
 	/* We send the element as (x,y) followed by the scalar */
-	wpabuf_put_data(req, element, (2 * BN_num_bytes(data->grp->prime)));
-	wpabuf_put_data(req, scalar, BN_num_bytes(data->grp->order));
+	wpabuf_put_data(data->outbuf, element,
+			2 * BN_num_bytes(data->grp->prime));
+	wpabuf_put_data(data->outbuf, scalar, BN_num_bytes(data->grp->order));
 
 fin:
 	os_free(scalar);
 	os_free(element);
 	BN_free(x);
 	BN_free(y);
-	if (req == NULL)
+	if (data->outbuf == NULL)
 		eap_pwd_state(data, FAILURE);
-
-	return req;
 }
 
 
-static struct wpabuf *
-eap_pwd_build_confirm_req(struct eap_sm *sm, struct eap_pwd_data *data, u8 id)
+static void eap_pwd_build_confirm_req(struct eap_sm *sm,
+				      struct eap_pwd_data *data, u8 id)
 {
-	struct wpabuf *req = NULL;
 	BIGNUM *x = NULL, *y = NULL;
-	HMAC_CTX ctx;
-	u8 conf[SHA256_DIGEST_LENGTH], *cruft = NULL, *ptr;
+	struct crypto_hash *hash;
+	u8 conf[SHA256_MAC_LEN], *cruft = NULL, *ptr;
 	u16 grp;
 	int offset;
 
 	wpa_printf(MSG_DEBUG, "EAP-pwd: Confirm/Request");
+	/*
+	 * if we're fragmenting then we already have an confirm request, just
+	 * return
+	 */
+	if (data->out_frag_pos)
+		return;
 
 	/* Each component of the cruft will be at most as big as the prime */
 	if (((cruft = os_malloc(BN_num_bytes(data->grp->prime))) == NULL) ||
@@ -305,7 +314,9 @@ eap_pwd_build_confirm_req(struct eap_sm *sm, struct eap_pwd_data *data, u8 id)
 	 * commit is H(k | server_element | server_scalar | peer_element |
 	 *	       peer_scalar | ciphersuite)
 	 */
-	H_Init(&ctx);
+	hash = eap_pwd_h_init();
+	if (hash == NULL)
+		goto fin;
 
 	/*
 	 * Zero the memory each time because this is mod prime math and some
@@ -316,7 +327,7 @@ eap_pwd_build_confirm_req(struct eap_sm *sm, struct eap_pwd_data *data, u8 id)
 	os_memset(cruft, 0, BN_num_bytes(data->grp->prime));
 	offset = BN_num_bytes(data->grp->prime) - BN_num_bytes(data->k);
 	BN_bn2bin(data->k, cruft + offset);
-	H_Update(&ctx, cruft, BN_num_bytes(data->grp->prime));
+	eap_pwd_h_update(hash, cruft, BN_num_bytes(data->grp->prime));
 
 	/* server element: x, y */
 	if (!EC_POINT_get_affine_coordinates_GFp(data->grp->group,
@@ -330,18 +341,18 @@ eap_pwd_build_confirm_req(struct eap_sm *sm, struct eap_pwd_data *data, u8 id)
 	os_memset(cruft, 0, BN_num_bytes(data->grp->prime));
 	offset = BN_num_bytes(data->grp->prime) - BN_num_bytes(x);
 	BN_bn2bin(x, cruft + offset);
-	H_Update(&ctx, cruft, BN_num_bytes(data->grp->prime));
+	eap_pwd_h_update(hash, cruft, BN_num_bytes(data->grp->prime));
 	os_memset(cruft, 0, BN_num_bytes(data->grp->prime));
 	offset = BN_num_bytes(data->grp->prime) - BN_num_bytes(y);
 	BN_bn2bin(y, cruft + offset);
-	H_Update(&ctx, cruft, BN_num_bytes(data->grp->prime));
+	eap_pwd_h_update(hash, cruft, BN_num_bytes(data->grp->prime));
 
 	/* server scalar */
 	os_memset(cruft, 0, BN_num_bytes(data->grp->prime));
 	offset = BN_num_bytes(data->grp->order) -
 		BN_num_bytes(data->my_scalar);
 	BN_bn2bin(data->my_scalar, cruft + offset);
-	H_Update(&ctx, cruft, BN_num_bytes(data->grp->order));
+	eap_pwd_h_update(hash, cruft, BN_num_bytes(data->grp->order));
 
 	/* peer element: x, y */
 	if (!EC_POINT_get_affine_coordinates_GFp(data->grp->group,
@@ -355,18 +366,18 @@ eap_pwd_build_confirm_req(struct eap_sm *sm, struct eap_pwd_data *data, u8 id)
 	os_memset(cruft, 0, BN_num_bytes(data->grp->prime));
 	offset = BN_num_bytes(data->grp->prime) - BN_num_bytes(x);
 	BN_bn2bin(x, cruft + offset);
-	H_Update(&ctx, cruft, BN_num_bytes(data->grp->prime));
+	eap_pwd_h_update(hash, cruft, BN_num_bytes(data->grp->prime));
 	os_memset(cruft, 0, BN_num_bytes(data->grp->prime));
 	offset = BN_num_bytes(data->grp->prime) - BN_num_bytes(y);
 	BN_bn2bin(y, cruft + offset);
-	H_Update(&ctx, cruft, BN_num_bytes(data->grp->prime));
+	eap_pwd_h_update(hash, cruft, BN_num_bytes(data->grp->prime));
 
 	/* peer scalar */
 	os_memset(cruft, 0, BN_num_bytes(data->grp->prime));
 	offset = BN_num_bytes(data->grp->order) -
 		BN_num_bytes(data->peer_scalar);
 	BN_bn2bin(data->peer_scalar, cruft + offset);
-	H_Update(&ctx, cruft, BN_num_bytes(data->grp->order));
+	eap_pwd_h_update(hash, cruft, BN_num_bytes(data->grp->order));
 
 	/* ciphersuite */
 	grp = htons(data->group_num);
@@ -378,29 +389,24 @@ eap_pwd_build_confirm_req(struct eap_sm *sm, struct eap_pwd_data *data, u8 id)
 	ptr += sizeof(u8);
 	*ptr = EAP_PWD_DEFAULT_PRF;
 	ptr += sizeof(u8);
-	H_Update(&ctx, cruft, ptr-cruft);
+	eap_pwd_h_update(hash, cruft, ptr - cruft);
 
 	/* all done with the random function */
-	H_Final(&ctx, conf);
-	os_memcpy(data->my_confirm, conf, SHA256_DIGEST_LENGTH);
+	eap_pwd_h_final(hash, conf);
+	os_memcpy(data->my_confirm, conf, SHA256_MAC_LEN);
 
-	req = eap_msg_alloc(EAP_VENDOR_IETF, EAP_TYPE_PWD,
-			    sizeof(struct eap_pwd_hdr) + SHA256_DIGEST_LENGTH,
-			    EAP_CODE_REQUEST, id);
-	if (req == NULL)
+	data->outbuf = wpabuf_alloc(SHA256_MAC_LEN);
+	if (data->outbuf == NULL)
 		goto fin;
 
-	wpabuf_put_u8(req, EAP_PWD_OPCODE_CONFIRM_EXCH);
-	wpabuf_put_data(req, conf, SHA256_DIGEST_LENGTH);
+	wpabuf_put_data(data->outbuf, conf, SHA256_MAC_LEN);
 
 fin:
 	os_free(cruft);
 	BN_free(x);
 	BN_free(y);
-	if (req == NULL)
+	if (data->outbuf == NULL)
 		eap_pwd_state(data, FAILURE);
-
-	return req;
 }
 
 
@@ -408,21 +414,119 @@ static struct wpabuf *
 eap_pwd_build_req(struct eap_sm *sm, void *priv, u8 id)
 {
 	struct eap_pwd_data *data = priv;
+	struct wpabuf *req;
+	u8 lm_exch;
+	const u8 *buf;
+	u16 totlen = 0;
+	size_t len;
 
+	/*
+	 * if we're buffering response fragments then just ACK
+	 */
+	if (data->in_frag_pos) {
+		wpa_printf(MSG_DEBUG, "EAP-pwd: ACKing a fragment!!");
+		req = eap_msg_alloc(EAP_VENDOR_IETF, EAP_TYPE_PWD,
+				    EAP_PWD_HDR_SIZE, EAP_CODE_REQUEST, id);
+		if (req == NULL) {
+			eap_pwd_state(data, FAILURE);
+			return NULL;
+		}
+		switch (data->state) {
+		case PWD_ID_Req:
+			wpabuf_put_u8(req, EAP_PWD_OPCODE_ID_EXCH);
+			break;
+		case PWD_Commit_Req:
+			wpabuf_put_u8(req, EAP_PWD_OPCODE_COMMIT_EXCH);
+			break;
+		case PWD_Confirm_Req:
+			wpabuf_put_u8(req, EAP_PWD_OPCODE_CONFIRM_EXCH);
+			break;
+		default:
+			eap_pwd_state(data, FAILURE);   /* just to be sure */
+			wpabuf_free(req);
+			return NULL;
+		}
+		return req;
+	}
+
+	/*
+	 * build the data portion of a request
+	 */
 	switch (data->state) {
-        case PWD_ID_Req:
-		return eap_pwd_build_id_req(sm, data, id);
-        case PWD_Commit_Req:
-		return eap_pwd_build_commit_req(sm, data, id);
-        case PWD_Confirm_Req:
-		return eap_pwd_build_confirm_req(sm, data, id);
-        default:
+	case PWD_ID_Req:
+		eap_pwd_build_id_req(sm, data, id);
+		lm_exch = EAP_PWD_OPCODE_ID_EXCH;
+		break;
+	case PWD_Commit_Req:
+		eap_pwd_build_commit_req(sm, data, id);
+		lm_exch = EAP_PWD_OPCODE_COMMIT_EXCH;
+		break;
+	case PWD_Confirm_Req:
+		eap_pwd_build_confirm_req(sm, data, id);
+		lm_exch = EAP_PWD_OPCODE_CONFIRM_EXCH;
+		break;
+	default:
 		wpa_printf(MSG_INFO, "EAP-pwd: Unknown state %d in build_req",
 			   data->state);
+		eap_pwd_state(data, FAILURE);
+		lm_exch = 0;    /* hush now, sweet compiler */
 		break;
 	}
 
-	return NULL;
+	if (data->state == FAILURE)
+		return NULL;
+
+	/*
+	 * determine whether that data needs to be fragmented
+	 */
+	len = wpabuf_len(data->outbuf) - data->out_frag_pos;
+	if ((len + EAP_PWD_HDR_SIZE) > data->mtu) {
+		len = data->mtu - EAP_PWD_HDR_SIZE;
+		EAP_PWD_SET_MORE_BIT(lm_exch);
+		/*
+		 * if this is the first fragment, need to set the M bit
+		 * and add the total length to the eap_pwd_hdr
+		 */
+		if (data->out_frag_pos == 0) {
+			EAP_PWD_SET_LENGTH_BIT(lm_exch);
+			totlen = wpabuf_len(data->outbuf) +
+				EAP_PWD_HDR_SIZE + sizeof(u16);
+			len -= sizeof(u16);
+			wpa_printf(MSG_DEBUG, "EAP-pwd: Fragmenting output, "
+				   "total length = %d", totlen);
+		}
+		wpa_printf(MSG_DEBUG, "EAP-pwd: Send a %d byte fragment",
+			   (int) len);
+	}
+
+	/*
+	 * alloc an eap request and populate it with the data
+	 */
+	req = eap_msg_alloc(EAP_VENDOR_IETF, EAP_TYPE_PWD,
+			    EAP_PWD_HDR_SIZE + len +
+			    (totlen ? sizeof(u16) : 0),
+			    EAP_CODE_REQUEST, id);
+	if (req == NULL) {
+		eap_pwd_state(data, FAILURE);
+		return NULL;
+	}
+
+	wpabuf_put_u8(req, lm_exch);
+	if (EAP_PWD_GET_LENGTH_BIT(lm_exch))
+		wpabuf_put_be16(req, totlen);
+
+	buf = wpabuf_head_u8(data->outbuf);
+	wpabuf_put_data(req, buf + data->out_frag_pos, len);
+	data->out_frag_pos += len;
+	/*
+	 * either not fragged or last fragment, either way free up the data
+	 */
+	if (data->out_frag_pos >= wpabuf_len(data->outbuf)) {
+		wpabuf_free(data->outbuf);
+		data->out_frag_pos = 0;
+	}
+
+	return req;
 }
 
 
@@ -439,17 +543,19 @@ static Boolean eap_pwd_check(struct eap_sm *sm, void *priv,
 		return TRUE;
 	}
 
-	wpa_printf(MSG_DEBUG, "EAP-pwd: Received frame: opcode=%d", *pos);
+	wpa_printf(MSG_DEBUG, "EAP-pwd: Received frame: exch = %d, len = %d",
+		   EAP_PWD_GET_EXCHANGE(*pos), (int) len);
 
-	if (data->state == PWD_ID_Req && *pos == EAP_PWD_OPCODE_ID_EXCH)
+	if (data->state == PWD_ID_Req &&
+	    ((EAP_PWD_GET_EXCHANGE(*pos)) == EAP_PWD_OPCODE_ID_EXCH))
 		return FALSE;
 
 	if (data->state == PWD_Commit_Req &&
-	    *pos == EAP_PWD_OPCODE_COMMIT_EXCH)
+	    ((EAP_PWD_GET_EXCHANGE(*pos)) == EAP_PWD_OPCODE_COMMIT_EXCH))
 		return FALSE;
 
 	if (data->state == PWD_Confirm_Req &&
-	    *pos == EAP_PWD_OPCODE_CONFIRM_EXCH)
+	    ((EAP_PWD_GET_EXCHANGE(*pos)) == EAP_PWD_OPCODE_CONFIRM_EXCH))
 		return FALSE;
 
 	wpa_printf(MSG_INFO, "EAP-pwd: Unexpected opcode=%d in state=%d",
@@ -630,10 +736,10 @@ eap_pwd_process_confirm_resp(struct eap_sm *sm, struct eap_pwd_data *data,
 			     const u8 *payload, size_t payload_len)
 {
 	BIGNUM *x = NULL, *y = NULL;
-	HMAC_CTX ctx;
+	struct crypto_hash *hash;
 	u32 cs;
 	u16 grp;
-	u8 conf[SHA256_DIGEST_LENGTH], *cruft = NULL, *ptr;
+	u8 conf[SHA256_MAC_LEN], *cruft = NULL, *ptr;
 	int offset;
 
 	/* build up the ciphersuite: group | random_function | prf */
@@ -656,13 +762,15 @@ eap_pwd_process_confirm_resp(struct eap_sm *sm, struct eap_pwd_data *data,
 	 * commit is H(k | peer_element | peer_scalar | server_element |
 	 *	       server_scalar | ciphersuite)
 	 */
-	H_Init(&ctx);
+	hash = eap_pwd_h_init();
+	if (hash == NULL)
+		goto fin;
 
 	/* k */
 	os_memset(cruft, 0, BN_num_bytes(data->grp->prime));
 	offset = BN_num_bytes(data->grp->prime) - BN_num_bytes(data->k);
 	BN_bn2bin(data->k, cruft + offset);
-	H_Update(&ctx, cruft, BN_num_bytes(data->grp->prime));
+	eap_pwd_h_update(hash, cruft, BN_num_bytes(data->grp->prime));
 
 	/* peer element: x, y */
 	if (!EC_POINT_get_affine_coordinates_GFp(data->grp->group,
@@ -675,18 +783,18 @@ eap_pwd_process_confirm_resp(struct eap_sm *sm, struct eap_pwd_data *data,
 	os_memset(cruft, 0, BN_num_bytes(data->grp->prime));
 	offset = BN_num_bytes(data->grp->prime) - BN_num_bytes(x);
 	BN_bn2bin(x, cruft + offset);
-	H_Update(&ctx, cruft, BN_num_bytes(data->grp->prime));
+	eap_pwd_h_update(hash, cruft, BN_num_bytes(data->grp->prime));
 	os_memset(cruft, 0, BN_num_bytes(data->grp->prime));
 	offset = BN_num_bytes(data->grp->prime) - BN_num_bytes(y);
 	BN_bn2bin(y, cruft + offset);
-	H_Update(&ctx, cruft, BN_num_bytes(data->grp->prime));
+	eap_pwd_h_update(hash, cruft, BN_num_bytes(data->grp->prime));
 
 	/* peer scalar */
 	os_memset(cruft, 0, BN_num_bytes(data->grp->prime));
 	offset = BN_num_bytes(data->grp->order) -
 		BN_num_bytes(data->peer_scalar);
 	BN_bn2bin(data->peer_scalar, cruft + offset);
-	H_Update(&ctx, cruft, BN_num_bytes(data->grp->order));
+	eap_pwd_h_update(hash, cruft, BN_num_bytes(data->grp->order));
 
 	/* server element: x, y */
 	if (!EC_POINT_get_affine_coordinates_GFp(data->grp->group,
@@ -700,28 +808,28 @@ eap_pwd_process_confirm_resp(struct eap_sm *sm, struct eap_pwd_data *data,
 	os_memset(cruft, 0, BN_num_bytes(data->grp->prime));
 	offset = BN_num_bytes(data->grp->prime) - BN_num_bytes(x);
 	BN_bn2bin(x, cruft + offset);
-	H_Update(&ctx, cruft, BN_num_bytes(data->grp->prime));
+	eap_pwd_h_update(hash, cruft, BN_num_bytes(data->grp->prime));
 	os_memset(cruft, 0, BN_num_bytes(data->grp->prime));
 	offset = BN_num_bytes(data->grp->prime) - BN_num_bytes(y);
 	BN_bn2bin(y, cruft + offset);
-	H_Update(&ctx, cruft, BN_num_bytes(data->grp->prime));
+	eap_pwd_h_update(hash, cruft, BN_num_bytes(data->grp->prime));
 
 	/* server scalar */
 	os_memset(cruft, 0, BN_num_bytes(data->grp->prime));
 	offset = BN_num_bytes(data->grp->order) -
 		BN_num_bytes(data->my_scalar);
 	BN_bn2bin(data->my_scalar, cruft + offset);
-	H_Update(&ctx, cruft, BN_num_bytes(data->grp->order));
+	eap_pwd_h_update(hash, cruft, BN_num_bytes(data->grp->order));
 
 	/* ciphersuite */
 	os_memset(cruft, 0, BN_num_bytes(data->grp->prime));
-	H_Update(&ctx, (u8 *)&cs, sizeof(u32));
+	eap_pwd_h_update(hash, (u8 *) &cs, sizeof(u32));
 
 	/* all done */
-	H_Final(&ctx, conf);
+	eap_pwd_h_final(hash, conf);
 
 	ptr = (u8 *) payload;
-	if (os_memcmp(conf, ptr, SHA256_DIGEST_LENGTH)) {
+	if (os_memcmp(conf, ptr, SHA256_MAC_LEN)) {
 		wpa_printf(MSG_INFO, "EAP-PWD (server): confirm did not "
 			   "verify");
 		goto fin;
@@ -748,7 +856,8 @@ static void eap_pwd_process(struct eap_sm *sm, void *priv,
 	struct eap_pwd_data *data = priv;
 	const u8 *pos;
 	size_t len;
-	u8 exch;
+	u8 lm_exch;
+	u16 tot_len;
 
 	pos = eap_hdr_validate(EAP_VENDOR_IETF, EAP_TYPE_PWD, respData, &len);
 	if ((pos == NULL) || (len < 1)) {
@@ -758,17 +867,89 @@ static void eap_pwd_process(struct eap_sm *sm, void *priv,
 		return;
 	}
 
-	exch = *pos & 0x3f;
-	switch (exch) {
+	lm_exch = *pos;
+	pos++;            /* skip over the bits and the exch */
+	len--;
+
+	/*
+	 * if we're fragmenting then this should be an ACK with no data,
+	 * just return and continue fragmenting in the "build" section above
+	 */
+	if (data->out_frag_pos) {
+		if (len > 1)
+			wpa_printf(MSG_INFO, "EAP-pwd: Bad response! "
+				   "Fragmenting but not an ACK");
+		else
+			wpa_printf(MSG_DEBUG, "EAP-pwd: received ACK from "
+				   "peer");
+		return;
+	}
+	/*
+	 * if we're receiving fragmented packets then we need to buffer...
+	 *
+	 * the first fragment has a total length
+	 */
+	if (EAP_PWD_GET_LENGTH_BIT(lm_exch)) {
+		tot_len = WPA_GET_BE16(pos);
+		wpa_printf(MSG_DEBUG, "EAP-pwd: Incoming fragments, total "
+			   "length = %d", tot_len);
+		data->inbuf = wpabuf_alloc(tot_len);
+		if (data->inbuf == NULL) {
+			wpa_printf(MSG_INFO, "EAP-pwd: Out of memory to "
+				   "buffer fragments!");
+			return;
+		}
+		pos += sizeof(u16);
+		len -= sizeof(u16);
+	}
+	/*
+	 * the first and all intermediate fragments have the M bit set
+	 */
+	if (EAP_PWD_GET_MORE_BIT(lm_exch)) {
+		if ((data->in_frag_pos + len) > wpabuf_size(data->inbuf)) {
+			wpa_printf(MSG_DEBUG, "EAP-pwd: Buffer overflow "
+				   "attack detected! (%d+%d > %d)",
+				   (int) data->in_frag_pos, (int) len,
+				   (int) wpabuf_size(data->inbuf));
+			eap_pwd_state(data, FAILURE);
+			return;
+		}
+		wpabuf_put_data(data->inbuf, pos, len);
+		data->in_frag_pos += len;
+		wpa_printf(MSG_DEBUG, "EAP-pwd: Got a %d byte fragment",
+			   (int) len);
+		return;
+	}
+	/*
+	 * last fragment won't have the M bit set (but we're obviously
+	 * buffering fragments so that's how we know it's the last)
+	 */
+	if (data->in_frag_pos) {
+		wpabuf_put_data(data->inbuf, pos, len);
+		data->in_frag_pos += len;
+		pos = wpabuf_head_u8(data->inbuf);
+		len = data->in_frag_pos;
+		wpa_printf(MSG_DEBUG, "EAP-pwd: Last fragment, %d bytes",
+			   (int) len);
+	}
+	switch (EAP_PWD_GET_EXCHANGE(lm_exch)) {
 	case EAP_PWD_OPCODE_ID_EXCH:
-		eap_pwd_process_id_resp(sm, data, pos + 1, len - 1);
+		eap_pwd_process_id_resp(sm, data, pos, len);
 		break;
 	case EAP_PWD_OPCODE_COMMIT_EXCH:
-		eap_pwd_process_commit_resp(sm, data, pos + 1, len - 1);
+		eap_pwd_process_commit_resp(sm, data, pos, len);
 		break;
-        case EAP_PWD_OPCODE_CONFIRM_EXCH:
-		eap_pwd_process_confirm_resp(sm, data, pos + 1, len - 1);
+	case EAP_PWD_OPCODE_CONFIRM_EXCH:
+		eap_pwd_process_confirm_resp(sm, data, pos, len);
 		break;
+	}
+	/*
+	 * if we had been buffering fragments, here's a great place
+	 * to clean up
+	 */
+	if (data->in_frag_pos) {
+		wpabuf_free(data->inbuf);
+		data->in_frag_pos = 0;
 	}
 }
 

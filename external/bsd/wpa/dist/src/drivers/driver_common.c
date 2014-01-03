@@ -2,14 +2,8 @@
  * Common driver-related functions
  * Copyright (c) 2003-2011, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "includes.h"
@@ -82,6 +76,9 @@ const char * event_to_string(enum wpa_event_type event)
 	E2S(DRIVER_GTK_REKEY);
 	E2S(SCHED_SCAN_STOPPED);
 	E2S(DRIVER_CLIENT_POLL_OK);
+	E2S(EAPOL_TX_STATUS);
+	E2S(CH_SWITCH);
+	E2S(WNM);
 	}
 
 	return "UNKNOWN";
