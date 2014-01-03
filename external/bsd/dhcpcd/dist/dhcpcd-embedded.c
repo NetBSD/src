@@ -1,0 +1,210 @@
+#include <sys/cdefs.h>
+ __RCSID("$NetBSD: dhcpcd-embedded.c,v 1.1.1.1 2014/01/03 22:10:42 roy Exp $");
+
+/*
+ * DO NOT EDIT
+ * Automatically generated from dhcpcd-embedded.conf
+ * Ths allows us to simply generate DHCP structure without any C programming
+ */
+
+/*
+ * dhcpcd - DHCP client daemon
+ * Copyright (c) 2006-2013 Roy Marples <roy@marples.name>
+ * All rights reserved
+
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
+#include <unistd.h>
+
+const char *dhcpcd_embedded_conf[] = {
+"define 1 request ipaddress subnet_mask",
+"define 121 rfc3442 classless_static_routes",
+"define 249 rfc3442 ms_classless_static_routes",
+"define 33 request array ipaddress static_routes",
+"define 3 request array ipaddress routers",
+"define 2 uint32 time_offset",
+"define 4 array ipaddress time_servers",
+"define 5 array ipaddress ien116_name_servers",
+"define 6 array ipaddress domain_name_servers",
+"define 7 array ipaddress log_servers",
+"define 8 array ipaddress cookie_servers",
+"define 9 array ipaddress lpr_servers",
+"define 10 array ipaddress impress_servers",
+"define 11 array ipaddress resource_location_servers",
+"define 12 string host_name",
+"define 13 uint16 boot_size",
+"define 14 string merit_dump",
+"define 15 string domain_name",
+"define 16 ipaddress swap_server",
+"define 17 string root_path",
+"define 18 string extensions_path",
+"define 19 byte ip_forwarding",
+"define 20 byte non_local_source_routing",
+"define 21 array ipaddress policy_filter",
+"define 22 int16 max_dgram_reassembly",
+"define 23 uint16 default_ip_ttl",
+"define 24 uint32 path_mtu_aging_timeout",
+"define 25 array uint16 path_mtu_plateau_table",
+"define 26 uint16 interface_mtu",
+"define 27 byte all_subnets_local",
+"define 28 request ipaddress broadcast_address",
+"define 29 byte perform_mask_discovery",
+"define 30 byte mask_supplier",
+"define 31 byte router_discovery",
+"define 32 ipaddress router_solicitation_address",
+"define 34 byte trailer_encapsulation",
+"define 35 uint32 arp_cache_timeout",
+"define 36 uint16 ieee802_3_encapsulation",
+"define 37 byte default_tcp_ttl",
+"define 38 uint32 tcp_keepalive_interval",
+"define 39 byte tcp_keepalive_garbage",
+"define 40 string nis_domain",
+"define 41 array ipaddress nis_servers",
+"define 42 array ipaddress ntp_servers",
+"define 43 string vendor_encapsulated_options",
+"define 44 array ipaddress netbios_name_servers",
+"define 45 ipaddress netbios_dd_server",
+"define 46 byte netbios_node_type",
+"define 47 string netbios_scope",
+"define 48 array ipaddress font_servers",
+"define 49 array ipaddress x_display_manager",
+"define 50 ipaddress dhcp_requested_address",
+"define 51 request uint32 dhcp_lease_time",
+"define 52 byte dhcp_option_overload",
+"define 53 byte dhcp_message_type",
+"define 54 ipaddress dhcp_server_identifier",
+"define 55 array byte dhcp_parameter_request_list",
+"define 56 string dhcp_message",
+"define 57 uint16 dhcp_max_message_size",
+"define 58 request uint32 dhcp_renewal_time",
+"define 59 request uint32 dhcp_rebinding_time",
+"define 60 binhex vendor_class_identifier",
+"define 61 binhex dhcp_client_identifier",
+"define 64 string nisplus_domain",
+"define 65 array ipaddress nisplus_servers",
+"define 66 string tftp_server_name",
+"define 67 string bootfile_name",
+"define 68 array ipaddress mobile_ip_home_agent",
+"define 69 array ipaddress smtp_server",
+"define 70 array ipaddress pop_server",
+"define 71 array ipaddress nntp_server",
+"define 72 array ipaddress www_server",
+"define 73 array ipaddress finger_server",
+"define 74 array ipaddress irc_server",
+"define 75 array ipaddress streettalk_server",
+"define 76 array ipaddress streettalk_directory_assistance_server",
+"define 77 string user_class",
+"define 80 norequest flag rapid_commit",
+"define 81 embed fqdn",
+"embed byte flags",
+"embed byte rcode1",
+"embed byte rcode2",
+"embed domain fqdn",
+"define 85 array ipaddress nds_servers",
+"define 86 string nds_tree_name",
+"define 87 string nds_context",
+"define 88 domain bcms_controller_names",
+"define 89 array ipaddress bcms_controller_address",
+"define 91 uint32 client_last_transaction_time",
+"define 92 array ipaddress associated_ip",
+"define 98 string uap_servers",
+"define 100 string posix_timezone",
+"define 101 string tzdb_timezone",
+"define 118 ipaddress subnet_selection",
+"define 119 domain domain_search",
+"define 120 rfc3361 sip_server",
+"define 124 binhex vivco",
+"define 125 embed vivso",
+"embed uint32 enterprise_number",
+"define 212 rfc5969 sixrd",
+"define6 1 binhex client_id",
+"define6 2 binhex server_id",
+"define6 3 norequest index embed ia_na",
+"embed binhex:4 iaid",
+"embed uint32 t1",
+"embed uint32 t2",
+"encap 5 option",
+"encap 13 option",
+"define6 4 norequest index embed ia_ta",
+"embed uint32 iaid",
+"encap 5 option",
+"encap 13 option",
+"define6 5 norequest index embed ia_addr",
+"embed ip6address ia_addr",
+"embed uint32 pltime",
+"embed uint32 vltime",
+"encap 13 option",
+"define6 6 array uint16 option_request",
+"define6 7 byte preference",
+"define6 8 uint16 elased_time",
+"define6 9 binhex dhcp_relay_msg",
+"define6 11 embed auth",
+"embed byte protocol",
+"embed byte algorithm",
+"embed binhex:8 replay_detection",
+"embed binhex information",
+"define6 12 ip6address unicast",
+"define6 13 norequest embed status_code",
+"embed uint16 status_code",
+"embed string message",
+"define6 14 norequest flag rapid_commit",
+"define6 15 binhex user_class",
+"define6 16 binhex vivco",
+"define6 17 embed vivso",
+"embed uint32 enterprise_number",
+"define6 18 binhex interface_id",
+"define6 19 byte reconfigure_msg",
+"define6 20 flag reconfigure_accept",
+"define6 21 domain sip_servers_names",
+"define6 22 array ip6address sip_servers_addresses",
+"define6 23 array ip6address name_servers",
+"define6 24 domain domain_search",
+"define6 25 norequest index embed ia_pd",
+"embed binhex:4 iaid",
+"embed uint32 t1",
+"embed uint32 t2",
+"encap 26 option",
+"define6 26 index embed prefix",
+"embed uint32 pltime",
+"embed uint32 vltime",
+"embed ip6address prefix",
+"encap 13 option",
+"define6 27 array ip6address nis_servers",
+"define6 28 array ip6address nisp_servers",
+"define6 29 domain nis_domain_name",
+"define6 30 domain nisp_domain_name",
+"define6 31 array ip6address sntp_servers",
+"define6 32 uint32 info_refresh_time",
+"define6 33 domain bcms_server_d",
+"define6 34 array ip6address bcms_server_a",
+"define6 39 embed fqdn",
+"embed byte flags",
+"embed domain fqdn",
+"define6 41 string posix_timezone",
+"define6 42 string tzdb_timezone",
+"define6 56 encap ntp_server",
+"encap 1 ip6address addr",
+"encap 2 ip6address mcast_addr",
+"encap 3 ip6address fqdn",
+NULL
+};
