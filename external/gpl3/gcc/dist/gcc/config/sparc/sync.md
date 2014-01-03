@@ -81,7 +81,7 @@
 
 (define_insn "*sync_compare_and_swap<mode>"
   [(set (match_operand:I48MODE 0 "register_operand" "=r")
-	(match_operand:I48MODE 1 "memory_reg_operand" "+m"))
+	(match_operand:I48MODE 1 "mem_noofs_operand" "+w"))
    (set (match_dup 1)
 	(unspec_volatile:I48MODE
 	  [(match_operand:I48MODE 2 "register_operand" "r")
@@ -93,7 +93,7 @@
 
 (define_insn "*sync_compare_and_swapdi_v8plus"
   [(set (match_operand:DI 0 "register_operand" "=h")
-	(match_operand:DI 1 "memory_reg_operand" "+m"))
+	(match_operand:DI 1 "mem_noofs_operand" "+w"))
    (set (match_dup 1)
 	(unspec_volatile:DI
 	  [(match_operand:DI 2 "register_operand" "h")
