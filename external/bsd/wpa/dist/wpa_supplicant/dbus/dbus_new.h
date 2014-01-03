@@ -3,14 +3,8 @@
  * Copyright (c) 2006, Dan Williams <dcbw@redhat.com> and Red Hat, Inc.
  * Copyright (c) 2009-2010, Witold Sowa <witold.sowa@gmail.com>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #ifndef CTRL_IFACE_DBUS_NEW_H
@@ -34,6 +28,7 @@ enum wpas_dbus_prop {
 	WPAS_DBUS_PROP_CURRENT_NETWORK,
 	WPAS_DBUS_PROP_CURRENT_AUTH_MODE,
 	WPAS_DBUS_PROP_BSSS,
+	WPAS_DBUS_PROP_DISCONNECT_REASON,
 };
 
 enum wpas_dbus_bss_prop {
@@ -44,6 +39,7 @@ enum wpas_dbus_bss_prop {
 	WPAS_DBUS_BSS_PROP_RATES,
 	WPAS_DBUS_BSS_PROP_WPA,
 	WPAS_DBUS_BSS_PROP_RSN,
+	WPAS_DBUS_BSS_PROP_WPS,
 	WPAS_DBUS_BSS_PROP_IES,
 };
 
@@ -114,6 +110,17 @@ enum wpas_dbus_bss_prop {
 	WPAS_DBUS_NEW_INTERFACE ".BlobExists"
 #define WPAS_DBUS_ERROR_BLOB_UNKNOWN \
 	WPAS_DBUS_NEW_INTERFACE ".BlobUnknown"
+
+#define WPAS_DBUS_ERROR_SUBSCRIPTION_IN_USE \
+	WPAS_DBUS_NEW_INTERFACE ".SubscriptionInUse"
+#define WPAS_DBUS_ERROR_NO_SUBSCRIPTION \
+	WPAS_DBUS_NEW_INTERFACE ".NoSubscription"
+#define WPAS_DBUS_ERROR_SUBSCRIPTION_EPERM \
+	WPAS_DBUS_NEW_INTERFACE ".SubscriptionNotYou"
+
+
+void wpas_dbus_subscribe_noc(struct wpas_dbus_priv *priv);
+void wpas_dbus_unsubscribe_noc(struct wpas_dbus_priv *priv);
 
 
 #ifdef CONFIG_CTRL_IFACE_DBUS_NEW
@@ -210,6 +217,11 @@ void wpas_dbus_signal_certification(struct wpa_supplicant *wpa_s,
 				    int depth, const char *subject,
 				    const char *cert_hash,
 				    const struct wpabuf *cert);
+void wpas_dbus_signal_preq(struct wpa_supplicant *wpa_s,
+			   const u8 *addr, const u8 *dst, const u8 *bssid,
+			   const u8 *ie, size_t ie_len, u32 ssi_signal);
+void wpas_dbus_signal_eap_status(struct wpa_supplicant *wpa_s,
+				 const char *status, const char *parameter);
 
 #else /* CONFIG_CTRL_IFACE_DBUS_NEW */
 
@@ -464,6 +476,20 @@ static inline void wpas_dbus_signal_certification(struct wpa_supplicant *wpa_s,
 						  const char *subject,
 						  const char *cert_hash,
 						  const struct wpabuf *cert)
+{
+}
+
+static inline void wpas_dbus_signal_preq(struct wpa_supplicant *wpa_s,
+					 const u8 *addr, const u8 *dst,
+					 const u8 *bssid,
+					 const u8 *ie, size_t ie_len,
+					 u32 ssi_signal)
+{
+}
+
+static inline void wpas_dbus_signal_eap_status(struct wpa_supplicant *wpa_s,
+					       const char *status,
+					       const char *parameter)
 {
 }
 
