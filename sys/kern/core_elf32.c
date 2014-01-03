@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.40 2014/01/03 21:12:18 dsl Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.41 2014/01/03 21:34:40 dsl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.40 2014/01/03 21:12:18 dsl Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.41 2014/01/03 21:34:40 dsl Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_coredump.h"
@@ -197,6 +197,7 @@ ELFNAMEEND(coredump)(struct lwp *l, struct coredump_iostate *cookie)
 	ws.secoff = notestart + notesize;
 	ws.psections = psections;
 	ws.npsections = npsections - 1;
+	ws.p = l->l_proc;
 	error = uvm_coredump_walkmap(l->l_proc, ELFNAMEEND(coredump_getseghdrs),
 	    &ws);
 	if (error)
@@ -329,7 +330,6 @@ ELFNAMEEND(coredump_notes)(struct lwp *l, struct note_state *ns)
 {
 	struct proc *p;
 	struct netbsd_elfcore_procinfo cpi;
-	Elf_Nhdr nhdr;
 	int error;
 	struct lwp *l0;
 	sigset_t ss1, ss2;
@@ -378,12 +378,8 @@ ELFNAMEEND(coredump_notes)(struct lwp *l, struct note_state *ns)
 	(void)strncpy(cpi.cpi_name, p->p_comm, sizeof(cpi.cpi_name));
 	cpi.cpi_name[sizeof(cpi.cpi_name) - 1] = '\0';
 
-	nhdr.n_namesz = sizeof(ELF_NOTE_NETBSD_CORE_NAME);
-	nhdr.n_descsz = sizeof(cpi);
-	nhdr.n_type = ELF_NOTE_NETBSD_CORE_PROCINFO;
-
-	ELFNAMEEND(coredump_savenote)(ns, &nhdr, ELF_NOTE_NETBSD_CORE_NAME,
-	    &cpi);
+	ELFNAMEEND(coredump_savenote)(ns, ELF_NOTE_NETBSD_CORE_PROCINFO,
+	    ELF_NOTE_NETBSD_CORE_NAME, &cpi, sizeof(cpi));
 
 	/* XXX Add hook for machdep per-proc notes. */
 
@@ -416,9 +412,7 @@ ELFNAMEEND(coredump_notes)(struct lwp *l, struct note_state *ns)
 static int
 ELFNAMEEND(coredump_note)(struct lwp *l, struct note_state *ns)
 {
-	Elf_Nhdr nhdr;
 	int error;
-	int namesize;
 	char name[64];
 	elf_reg intreg;
 #ifdef PT_GETFPREGS
@@ -428,17 +422,13 @@ ELFNAMEEND(coredump_note)(struct lwp *l, struct note_state *ns)
 
 	snprintf(name, sizeof(name), "%s@%d",
 	    ELF_NOTE_NETBSD_CORE_NAME, l->l_lid);
-	namesize = strlen(name) + 1;
 
 	error = elf_process_read_regs(l, &intreg);
 	if (error)
 		return (error);
 
-	nhdr.n_namesz = namesize;
-	nhdr.n_descsz = sizeof(intreg);
-	nhdr.n_type = PT_GETREGS;
-
-	ELFNAMEEND(coredump_savenote)(ns, &nhdr, name, &intreg);
+	ELFNAMEEND(coredump_savenote)(ns, PT_GETREGS, name, &intreg,
+	    sizeof(intreg));
 
 #ifdef PT_GETFPREGS
 	freglen = sizeof(freg);
@@ -450,11 +440,7 @@ ELFNAMEEND(coredump_note)(struct lwp *l, struct note_state *ns)
 	if (error)
 		return (error);
 
-	nhdr.n_namesz = namesize;
-	nhdr.n_descsz = freglen;
-	nhdr.n_type = PT_GETFPREGS;
-
-	ELFNAMEEND(coredump_savenote)(ns, &nhdr, name, &freg);
+	ELFNAMEEND(coredump_savenote)(ns, PT_GETFPREGS, name, &freg, freglen);
 #endif
 	/* XXX Add hook for machdep per-LWP notes. */
 	return (0);
@@ -493,12 +479,18 @@ save_note_bytes(struct note_state *ns, const void *data, size_t len)
 }
 
 void
-ELFNAMEEND(coredump_savenote)(struct note_state *ns, Elf_Nhdr *nhdr,
-    const char *name, void *data)
+ELFNAMEEND(coredump_savenote)(struct note_state *ns, unsigned int type,
+    const char *name, void *data, size_t data_len)
 {
-	save_note_bytes(ns, nhdr, sizeof (*nhdr));
-	save_note_bytes(ns, name, nhdr->n_namesz);
-	save_note_bytes(ns, data, nhdr->n_descsz);
+	Elf_Nhdr nhdr;
+
+	nhdr.n_namesz = strlen(name) + 1;
+	nhdr.n_descsz = data_len;
+	nhdr.n_type = type;
+
+	save_note_bytes(ns, &nhdr, sizeof (nhdr));
+	save_note_bytes(ns, name, nhdr.n_namesz);
+	save_note_bytes(ns, data, data_len);
 }
 
 #else	/* COREDUMP */
