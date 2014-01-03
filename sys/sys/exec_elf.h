@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.135 2014/01/03 16:54:48 dsl Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.136 2014/01/03 20:52:47 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -1250,6 +1250,7 @@ struct elf_args {
 
 struct ps_strings;
 struct coredump_iostate;
+struct note_state;
 
 #ifdef EXEC_ELF32
 int	exec_elf32_makecmds(struct lwp *, struct exec_package *);
@@ -1257,8 +1258,8 @@ int	elf32_copyargs(struct lwp *, struct exec_package *,
     struct ps_strings *, char **, void *);
 
 int	coredump_elf32(struct lwp *, struct coredump_iostate *);
-int	coredump_writenote_elf32(struct proc *, struct coredump_iostate *,
-    Elf32_Nhdr *, const char *, void *);
+void	coredump_savenote_elf32(struct note_state *, Elf32_Nhdr *,
+	    const char *, void *);
 
 int	elf32_check_header(Elf32_Ehdr *, int);
 #endif
@@ -1269,8 +1270,8 @@ int	elf64_copyargs(struct lwp *, struct exec_package *,
     struct ps_strings *, char **, void *);
 
 int	coredump_elf64(struct lwp *, struct coredump_iostate *);
-int	coredump_writenote_elf64(struct proc *, struct coredump_iostate *,
-    Elf64_Nhdr *, const char *, void *);
+void	coredump_savenote_elf64(struct note_state *, Elf64_Nhdr *,
+	    const char *, void *);
 
 int	elf64_check_header(Elf64_Ehdr *, int);
 #endif
