@@ -1,4 +1,4 @@
-/*	$NetBSD: samachdep.h,v 1.11 2014/01/02 20:02:00 tsutsui Exp $	*/
+/*	$NetBSD: samachdep.h,v 1.12 2014/01/03 06:15:10 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -44,8 +44,6 @@
 #define MHZ_25		3
 #define MHZ_33		4
 #define MHZ_50		6
-
-#define MAXDEVNAME	16
 
 struct consdev;
 struct frame;
