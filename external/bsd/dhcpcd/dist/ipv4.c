@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv4.c,v 1.1.1.2 2013/09/20 10:51:29 roy Exp $");
+ __RCSID("$NetBSD: ipv4.c,v 1.1.1.3 2014/01/03 22:10:43 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -57,6 +57,12 @@
 #include "ipv4.h"
 #include "net.h"
 #include "script.h"
+
+#define IPV4_LOOPBACK_ROUTE
+#ifdef __linux__
+/* Linux has had loopback routes in the local table since 2.2 */
+#undef IPV4_LOOPBACK_ROUTE
+#endif
 
 static struct rt_head *routes;
 
@@ -338,6 +344,7 @@ add_subnet_route(struct rt_head *rt, const struct interface *ifp)
 	return rt;
 }
 
+#ifdef IPV4_LOOPBACK_ROUTE
 static struct rt_head *
 add_loopback_route(struct rt_head *rt, const struct interface *ifp)
 {
@@ -363,6 +370,7 @@ add_loopback_route(struct rt_head *rt, const struct interface *ifp)
 	TAILQ_INSERT_HEAD(rt, r, next);
 	return rt;
 }
+#endif
 
 static struct rt_head *
 get_routes(struct interface *ifp)
@@ -511,7 +519,9 @@ ipv4_buildroutes(void)
 		dnr = get_routes(ifp);
 		dnr = massage_host_routes(dnr, ifp);
 		dnr = add_subnet_route(dnr, ifp);
+#ifdef IPV4_LOOPBACK_ROUTE
 		dnr = add_loopback_route(dnr, ifp);
+#endif
 		if (ifp->options->options & DHCPCD_GATEWAY) {
 			dnr = add_router_host_route(dnr, ifp);
 			dnr = add_destination_route(dnr, ifp);
