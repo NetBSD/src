@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.134 2014/01/01 16:06:00 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.135 2014/01/03 16:16:10 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -103,6 +103,8 @@ SUBDIR+=	vnd
 SUBDIR+=	zlib
 SUBDIR+=	tprof
 .if (defined(NOTYET))
+SUBDIR+=	hifn		# Builds on architectures with PCI bus
+SUBDIR+=	ubsec		# Builds on architectures with PCI bus
 SUBDIR+=	unionfs
 .endif
 .if ${MKBINUTILS} != "no"
