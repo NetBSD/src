@@ -2,14 +2,8 @@
  * TLSv1 credentials
  * Copyright (c) 2006-2009, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "includes.h"
@@ -244,10 +238,17 @@ static struct crypto_private_key * tlsv1_set_key_pem(const u8 *key, size_t len)
 		if (!end)
 			return NULL;
 	} else {
+		const u8 *pos2;
 		pos += os_strlen(pem_key_begin);
 		end = search_tag(pem_key_end, pos, key + len - pos);
 		if (!end)
 			return NULL;
+		pos2 = search_tag("Proc-Type: 4,ENCRYPTED", pos, end - pos);
+		if (pos2) {
+			wpa_printf(MSG_DEBUG, "TLSv1: Unsupported private key "
+				   "format (Proc-Type/DEK-Info)");
+			return NULL;
+		}
 	}
 
 	der = base64_decode(pos, end - pos, &der_len);
