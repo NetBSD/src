@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.7 2014/01/03 03:25:25 tsutsui Exp $	*/
+/*	$NetBSD: sd.c,v 1.8 2014/01/03 07:17:19 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -119,13 +119,13 @@ struct sd_devdata sd_devdata[NSD];
 #define sdpart(x)	(minor(x) & 0x7)
 
 static struct scsi_inquiry inqbuf;
-static struct scsi_fmt_cdb inq = {
+static struct scsi_generic_cdb inq = {
 	6,
 	{ CMD_INQUIRY, 0, 0, 0, sizeof(inqbuf), 0 }
 };
 
 static u_long capbuf[2];
-struct scsi_fmt_cdb cap = {
+struct scsi_generic_cdb cap = {
 	10,
 	{ CMD_READ_CAPACITY, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 };
@@ -292,12 +292,12 @@ sdclose(struct open_file *f)
 	return 0;
 }
 
-static struct scsi_fmt_cdb cdb_read = {
+static struct scsi_generic_cdb cdb_read = {
 	10,
 	{ CMD_READ_EXT,  0, 0, 0, 0, 0, 0, 0, 0, 0 }
 };
 
-static struct scsi_fmt_cdb cdb_write = {
+static struct scsi_generic_cdb cdb_write = {
 	6,
 	{ CMD_WRITE_EXT, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 };
@@ -312,7 +312,7 @@ sdstrategy(void *devdata, int func, daddr_t dblk, size_t size, void *v_buf,
 	int unit = sd->unit;
 	int part = sd->part;
 	struct sd_softc *sc = &sd_softc[unit];
-	struct scsi_fmt_cdb *cdb;
+	struct scsi_generic_cdb *cdb;
 	daddr_t blk;
 	u_int nblk  = size >> sc->sc_bshift;
 	int stat, ctlr, slave;

@@ -1,4 +1,4 @@
-/*	$NetBSD: samachdep.h,v 1.13 2014/01/03 06:37:13 tsutsui Exp $	*/
+/*	$NetBSD: samachdep.h,v 1.14 2014/01/03 07:17:19 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -84,10 +84,6 @@ void cninit(void);
 int cngetc(void);
 void cnputc(int);
 
-/* devopen.c */
-extern	u_int opendev;
-int atoi(char *);
-
 /* disklabel.c */
 extern u_char lbl_buff[];
 int disklabel(int, char **);
@@ -171,8 +167,8 @@ int  romcngetc(dev_t);
 void romcnputc(dev_t, int);
 
 /* sc.c */
-struct scsi_fmt_cdb;
-int scsi_immed_command(int, int, int, struct scsi_fmt_cdb *, u_char *,
+struct scsi_generic_cdb;
+int scsi_immed_command(int, int, int, struct scsi_generic_cdb *, u_char *,
     unsigned int);
 int scsi_request_sense(int, int, int, u_char *, unsigned int);
 int scsi_test_unit_rdy(int, int, int);

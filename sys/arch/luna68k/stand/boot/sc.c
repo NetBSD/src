@@ -1,4 +1,4 @@
-/*	$NetBSD: sc.c,v 1.7 2014/01/02 19:50:03 tsutsui Exp $	*/
+/*	$NetBSD: sc.c,v 1.8 2014/01/03 07:17:19 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -453,7 +453,7 @@ scsi_request_sense(int ctlr, int slave, int unit, u_char *buf, unsigned int len)
 }
 
 int
-scsi_immed_command(int ctlr, int slave, int unit, struct scsi_fmt_cdb *cdb,
+scsi_immed_command(int ctlr, int slave, int unit, struct scsi_generic_cdb *cdb,
     u_char *buf, unsigned int len)
 {
 	int status;
