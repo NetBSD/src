@@ -1,11 +1,11 @@
-/*	$NetBSD: efareg.h,v 1.3 2014/01/03 00:33:06 rkujawa Exp $ */
+/* $NetBSD: amiga_bus_simple_0x1000.c,v 1.1 2014/01/03 00:33:06 rkujawa Exp $ */
 
 /*-
- * Copyright (c) 2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Radoslaw Kujawa.
+ * by Ignatios Souvatzis.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,45 +29,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _AMIGA_EFAREG_H_
+#include <sys/cdefs.h>
+__KERNEL_RCSID(1, "$NetBSD: amiga_bus_simple_0x1000.c,v 1.1 2014/01/03 00:33:06 rkujawa Exp $");
 
-#define FATA1_BASE		0xDA2000
+#define AMIGA_SIMPLE_BUS_STRIDE 0x1000		/* 1 byte per 0x1000 bytes */
+#define AMIGA_SIMPLE_BUS_WORD_METHODS
 
-/* Offsets. Stride of 4 is used, so multiply any offset by 4. */
-#define FATA1_PIO0_OFF		0x0 
-#define FATA1_PIO3_OFF		0x4000
-#define FATA1_PIO4_OFF		0x5000
-#define FATA1_PIO5_OFF		0x4800
-
-#define FATA1_CHAN_SIZE		0x400
-#define FATA1_REGS_SIZE		0x4BC0
-
-/* PIO0 */
-#define FATA1_PIO0_OFF_DATA	0x0
-#define FATA1_PIO0_OFF_ERROR	0x1
-#define FATA1_PIO0_OFF_SECCNT	0x2
-#define FATA1_PIO0_OFF_SECTOR	0x3
-#define FATA1_PIO0_OFF_CYL_LO	0x4
-#define FATA1_PIO0_OFF_CYL_HI	0x5
-#define FATA1_PIO0_OFF_SDH	0x6
-#define FATA1_PIO0_OFF_COMMAND	0x7
-
-/* PIO3-5 */
-#define FATA1_PION_OFF_DATA	0x82	/* 16-bit data port */
-#define FATA1_PION_OFF_DATA32	0x0	/* 32-bit data port, 2 cycles to HD */
-#define FATA1_PION_OFF_ERROR	0x80
-#define FATA1_PION_OFF_SECCNT	0x100
-#define FATA1_PION_OFF_SECTOR	0x180
-#define FATA1_PION_OFF_CYL_LO	0x200
-#define FATA1_PION_OFF_CYL_HI	0x280
-#define FATA1_PION_OFF_SDH	0x300
-#define FATA1_PION_OFF_COMMAND	0x380
-
-#define FATA1_PION_OFF_INTST	0x140	/* FastATA interrupt status */
-
-#define FATA1_INT_ANY		0x80
-#define FATA1_INT_DRIVE0	0x40
-#define FATA1_INT_DRIVE1	0x20
-
-#endif /* _AMIGA_EFAREG_H_ */
-
+#include "simple_busfuncs.c"
