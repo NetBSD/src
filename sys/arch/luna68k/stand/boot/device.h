@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.6 2014/01/03 02:03:12 tsutsui Exp $	*/
+/*	$NetBSD: device.h,v 1.7 2014/01/03 03:25:25 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -86,16 +86,13 @@ struct hp_ctlr {
 };
 
 struct hp_device {
-	struct driver	*hp_driver;
-	struct driver	*hp_cdriver;
-	int		hp_unit;
-	int		hp_ctlr;
-	int		hp_slave;
-	uint8_t		*hp_addr;
-	int		hp_dk;
-	int		hp_flags;
-	int		hp_alive;
-	int		hp_ipl;
+	struct driver	*hpd_driver;
+	struct driver	*hpd_cdriver;
+	int		hpd_unit;
+	int		hpd_ctlr;
+	int		hpd_slave;
+	uint8_t		*hpd_addr;
+	int		hpd_alive;
 };
 
 struct hp_hw {
