@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_coredump.c,v 1.4 2014/01/03 15:15:02 dsl Exp $	*/
+/*	$NetBSD: uvm_coredump.c,v 1.5 2014/01/03 21:12:18 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_coredump.c,v 1.4 2014/01/03 15:15:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_coredump.c,v 1.5 2014/01/03 21:12:18 dsl Exp $");
 
 /*
  * uvm_coredump.c: glue functions for coredump
@@ -84,8 +84,8 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_coredump.c,v 1.4 2014/01/03 15:15:02 dsl Exp $")
  */
 
 int
-uvm_coredump_walkmap(struct proc *p, int (*func)(struct proc *,
-    struct uvm_coredump_state *), void *cookie)
+uvm_coredump_walkmap(struct proc *p, int (*func)(struct uvm_coredump_state *),
+    void *cookie)
 {
 	struct uvm_coredump_state state;
 	struct vmspace *vm = p->p_vmspace;
@@ -191,7 +191,7 @@ uvm_coredump_walkmap(struct proc *p, int (*func)(struct proc *,
 			continue;
 		
 		vm_map_unlock_read(map);
-		error = (*func)(p, &state);
+		error = (*func)(&state);
 		if (error)
 			return (error);
 		vm_map_lock_read(map);
@@ -202,7 +202,7 @@ uvm_coredump_walkmap(struct proc *p, int (*func)(struct proc *,
 }
 
 static int
-count_segs(struct proc *p, struct uvm_coredump_state *s)
+count_segs(struct uvm_coredump_state *s)
 {
     (*(int *)s->cookie)++;
 
