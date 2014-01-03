@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.3 2013/03/05 15:34:53 tsutsui Exp $	*/
+/*	$NetBSD: boot.c,v 1.4 2014/01/03 03:44:41 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -85,7 +85,9 @@
 
 int howto;
 
+#if 0
 static int get_boot_device(const char *, int *, int *, int *);
+#endif
 
 struct exec header;
 
@@ -123,11 +125,15 @@ how_to_boot(int argc, char *argv[])
 	return ST_NORMAL;
 }
 
+#if 0
 int
 get_boot_device(const char *s, int *devp, int *unitp, int *partp)
 {
 	const char *p = s;
 	int unit, part;
+
+	uint = 0;
+	part = 0;
 
 	while (*p != '(') {
 		if (*p == '\0')
@@ -135,14 +141,17 @@ get_boot_device(const char *s, int *devp, int *unitp, int *partp)
 		p++;
 	}
 
-	while (*++p != ',') {
+	p++;
+	for (; *p != ',' && *p != ')') {
 		if (*p == '\0')
 			goto error;
 		if (*p >= '0' && *p <= '9')
 			unit = (unit * 10) + (*p - '0');
 	}
 
-	while (*++p != ')') {
+	if (*p == ',')
+		p++;
+	for (; *p != ')'; p++) {
 		if (*p == '\0')
 			goto error;
 		if (*p >= '0' && *p <= '9')
@@ -158,6 +167,7 @@ get_boot_device(const char *s, int *devp, int *unitp, int *partp)
 error:
 	return -1;
 }
+#endif
 
 int
 boot(int argc, char *argv[])
@@ -178,14 +188,18 @@ int
 bootnetbsd(char *line)
 {
 	int io;
+#if 0
 	int dev, unit, part;
+#endif
 	u_long marks[MARK_MAX];
 	void (*entry)(void);
 
+#if 0
 	if (get_boot_device(line, &dev, &unit, &part) != 0) {
 		printf("Bad file name %s\n", line);
 		return ST_ERROR;
 	}
+#endif
 
 	/* Note marks[MARK_START] is passed as an load address offset */
 	memset(marks, 0, sizeof(marks));
