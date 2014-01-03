@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.270 2014/01/02 18:29:01 pooka Exp $	*/
+/*	$NetBSD: if.c,v 1.271 2014/01/03 12:49:59 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.270 2014/01/02 18:29:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.271 2014/01/03 12:49:59 pooka Exp $");
 
 #include "opt_inet.h"
 
@@ -1685,7 +1685,8 @@ ifioctl_common(struct ifnet *ifp, u_long cmd, void *data)
 		 * If the link MTU changed, do network layer specific procedure.
 		 */
 #ifdef INET6
-		nd6_setmtu(ifp);
+		if (in6_present)
+			nd6_setmtu(ifp);
 #endif
 		return ENETRESET;
 	default:
