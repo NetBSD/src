@@ -1,9 +1,9 @@
-/*	$NetBSD: gayle_pcmcia.c,v 1.27 2013/09/23 08:39:28 jandberg Exp $ */
+/*	$NetBSD: gayle_pcmcia.c,v 1.28 2014/01/03 00:33:06 rkujawa Exp $ */
 
 /* public domain */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gayle_pcmcia.c,v 1.27 2013/09/23 08:39:28 jandberg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gayle_pcmcia.c,v 1.28 2014/01/03 00:33:06 rkujawa Exp $");
 
 /* PCMCIA front-end driver for A1200's and A600's. */
 
@@ -165,10 +165,10 @@ pccard_attach(device_t parent, device_t self, void *aux)
 	sc->devs[0].intr_arg = NULL;
 	sc->devs[0].flags = 0;
 
-	gayle.pcc_status = 0;
-	gayle.intreq = 0;
-	gayle.pcc_config = 0;
-	gayle.intena &= GAYLE_INT_IDE;
+	gayle_pcmcia_status_write(0);
+	gayle_intr_ack(0);
+	gayle_pcmcia_config_write(0);
+	gayle_intr_enable_set(GAYLE_INT_IDE);
 
 	paa.paa_busname = "pcmcia";
 	paa.pct = &chip_functions;
@@ -201,15 +201,15 @@ pccard_attach(device_t parent, device_t self, void *aux)
 		panic("pccard kthread_create() failed");
 	}
 
-	gayle.intena |= GAYLE_INT_DETECT | GAYLE_INT_IREQ;
+	gayle_intr_enable_set(GAYLE_INT_DETECT | GAYLE_INT_IREQ);
 
 	/* reset the card if it's already there */
-	if (gayle.pcc_status & GAYLE_CCMEM_DETECT) {
+	if (gayle_pcmcia_status_read() & GAYLE_CCMEM_DETECT) {
 		volatile u_int8_t x;
 		*reset_card_reg = 0x0;
 		delay(1000);
 		x = *reset_card_reg;
-		gayle.pcc_status = GAYLE_CCMEM_WP | GAYLE_CCIO_SPKR;
+		gayle_pcmcia_status_write(GAYLE_CCMEM_WP | GAYLE_CCIO_SPKR);
 	}
 
 	pccard_attach_slot(&sc->devs[0]);
@@ -220,9 +220,9 @@ pccard_intr6(void *arg)
 {
 	struct pccard_softc *sc = arg;
 
-	if (gayle.intreq & GAYLE_INT_DETECT) {
-		gayle.intreq = GAYLE_INT_IDE | GAYLE_INT_STSCHG |
-		    GAYLE_INT_SPKR | GAYLE_INT_WP | GAYLE_INT_IREQ;
+	if (gayle_intr_status() & GAYLE_INT_DETECT) {
+		gayle_intr_ack(GAYLE_INT_IDE | GAYLE_INT_STSCHG |
+		    GAYLE_INT_SPKR | GAYLE_INT_WP | GAYLE_INT_IREQ);
 		sc->devs[0].flags |= SLOT_NEW_CARD_EVENT;
 		return 1;
 	}
@@ -239,15 +239,15 @@ pccard_intr2(void *arg)
 		slot->flags &= ~SLOT_NEW_CARD_EVENT;
 
 		/* reset the registers */
-		gayle.intreq = GAYLE_INT_IDE | GAYLE_INT_DETECT;
-		gayle.pcc_status = GAYLE_CCMEM_WP | GAYLE_CCIO_SPKR;
-		gayle.pcc_config = 0;
+		gayle_intr_ack(GAYLE_INT_IDE | GAYLE_INT_DETECT);
+		gayle_pcmcia_status_write(GAYLE_CCMEM_WP | GAYLE_CCIO_SPKR);
+		gayle_pcmcia_config_write(0);
 		pccard_attach_slot(&sc->devs[0]);
 	} else {
-		int intreq = gayle.intreq &
+		int intreq = gayle_intr_status() &
 		    (GAYLE_INT_STSCHG | GAYLE_INT_WP | GAYLE_INT_IREQ);
 		if (intreq) {
-			gayle.intreq = (intreq ^ 0x2c) | 0xc0;
+			gayle_intr_ack((intreq ^ 0x2c) | 0xc0);
 
 			return slot->flags & SLOT_OCCUPIED &&
 		   		slot->intr_func != NULL &&
@@ -268,12 +268,12 @@ pccard_kthread(void *arg)
 
 		if (slot->flags & SLOT_NEW_CARD_EVENT) {
 			slot->flags &= ~SLOT_NEW_CARD_EVENT;
-			gayle.intreq = 0xc0;
+			gayle_intr_ack(0xc0);
 
 			/* reset the registers */
-			gayle.intreq = GAYLE_INT_IDE | GAYLE_INT_DETECT;
-			gayle.pcc_status = GAYLE_CCMEM_WP | GAYLE_CCIO_SPKR;
-			gayle.pcc_config = 0;
+			gayle_intr_ack(GAYLE_INT_IDE | GAYLE_INT_DETECT);
+			gayle_pcmcia_status_write(GAYLE_CCMEM_WP | GAYLE_CCIO_SPKR);
+			gayle_pcmcia_config_write(0);
 			pccard_attach_slot(&sc->devs[0]);
 		}
 		splx(s);
@@ -287,7 +287,7 @@ pccard_attach_slot(struct pccard_slot *slot)
 {
 
 	if (!(slot->flags & SLOT_OCCUPIED) &&
-			gayle.pcc_status & GAYLE_CCMEM_DETECT) {
+			gayle_pcmcia_status_read() & GAYLE_CCMEM_DETECT) {
 		if (pcmcia_card_attach(slot->card) == 0)
 			slot->flags |= SLOT_OCCUPIED;
 	}

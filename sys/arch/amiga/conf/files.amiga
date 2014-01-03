@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.173 2013/12/26 20:38:11 rkujawa Exp $
+#	$NetBSD: files.amiga,v 1.174 2014/01/03 00:33:06 rkujawa Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -57,6 +57,9 @@ file	arch/amiga/amiga/amiga_bus_simple_16.c	amibus_b16
 
 define	amibus_b800
 file	arch/amiga/amiga/amiga_bus_simple_0x800.c	amibus_b800
+
+define	amibus_b1000
+file	arch/amiga/amiga/amiga_bus_simple_0x1000.c	amibus_b1000
 
 define	amibus_b4000
 file	arch/amiga/amiga/amiga_bus_simple_0x4000.c	amibus_b4000
@@ -588,7 +591,7 @@ device	acafh: acafhbus, amibus_b4000
 attach	acafh at mainbus 
 file	arch/amiga/dev/acafh.c		acafh needs-count 
 
-attach	wdc at acafhbus with wdc_acafh
+attach	wdc at acafhbus with wdc_acafh: gayle, amibus_b1000
 file	arch/amiga/dev/wdc_acafh.c	wdc_acafh & acafh 
 
 include "arch/amiga/clockport/files.clockport"
