@@ -2,14 +2,8 @@
  * EAP server/peer: Shared EAP definitions
  * Copyright (c) 2004-2007, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #ifndef EAP_DEFS_H
@@ -77,8 +71,12 @@ typedef enum {
 enum {
 	EAP_VENDOR_IETF = 0,
 	EAP_VENDOR_MICROSOFT = 0x000137 /* Microsoft */,
-	EAP_VENDOR_WFA = 0x00372A /* Wi-Fi Alliance */
+	EAP_VENDOR_WFA = 0x00372A /* Wi-Fi Alliance */,
+	EAP_VENDOR_HOSTAP = 39068 /* hostapd/wpa_supplicant project */
 };
+
+#define EAP_VENDOR_UNAUTH_TLS EAP_VENDOR_HOSTAP
+#define EAP_VENDOR_TYPE_UNAUTH_TLS 1
 
 #define EAP_MSK_LEN 64
 #define EAP_EMSK_LEN 64
