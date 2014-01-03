@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2012/10/08 00:03:20 christos Exp $
+# $NetBSD: Makefile,v 1.3 2014/01/03 02:07:31 christos Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -32,7 +32,6 @@ pmksa_cache.c \
 preauth.c \
 random.c \
 scan.c \
-sha1.c \
 wpa.c \
 wpa_common.c \
 wpa_debug.c \
@@ -98,8 +97,8 @@ eap_tls_common.c \
 eap_ttls.c \
 ms_funcs.c \
 mschapv2.c \
-sha1-pbkdf2.c \
 sha1-tlsprf.c \
+sha1-prf.c \
 tls_openssl.c
 
 SRCS+=aes-ctr.c \
