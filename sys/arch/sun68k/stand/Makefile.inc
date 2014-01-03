@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.21 2013/11/07 19:52:56 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.22 2014/01/03 21:21:17 christos Exp $
 
 # Must have S=/usr/src/sys (or equivalent)
 # But note: this is w.r.t. a subdirectory
@@ -39,8 +39,9 @@ ${SA_PROG}.bin : ${SA_PROG}
 	${OBJCOPY} --output-target=binary ${SA_PROG} $@
 
 ${SA_PROG} : ${OBJS} ${DPADD} ${SRTLIB}
-	${LD} -N -Ttext ${RELOC} -e start ${SA_LDFLAGS} -o $@ \
-	  ${SRTOBJ} ${OBJS} ${LDADD} ${SRTLIB}
+	${LD} -N -Ttext ${RELOC} -e start ${SA_LDFLAGS} \
+	    -T${.CURDIR}/../boot.ldscript -o $@ \
+	    ${SRTOBJ} ${OBJS} ${LDADD} ${SRTLIB}
 	@${SIZE} $@
 
 .if !target(proginstall)
