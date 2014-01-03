@@ -1,4 +1,4 @@
-/*	$NetBSD: stalloc.c,v 1.15 2013/11/27 17:24:43 christos Exp $	*/
+/*	$NetBSD: stalloc.c,v 1.16 2014/01/03 07:14:20 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman (Atari modifications)
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stalloc.c,v 1.15 2013/11/27 17:24:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stalloc.c,v 1.16 2014/01/03 07:14:20 mlelstv Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -117,7 +117,7 @@ alloc_stmem(u_long size, void **phys_addr)
 		 * for a new node in between.
 		 */
 		TAILQ_REMOVE(&free_list, mn, free_link);
-		TAILQ_NEXT(mn, free_link) = NULL;
+		mn->type = MNODE_USED;
 		size = mn->size;	 /* increase size. (or same) */
 		stmem_total -= mn->size;
 		splx(s);
@@ -138,7 +138,7 @@ alloc_stmem(u_long size, void **phys_addr)
 	 * and mark as not on free list
 	 */
 	TAILQ_INSERT_AFTER(&st_list, new, mn, link);
-	TAILQ_NEXT(mn, free_link) = NULL;
+	mn->type = MNODE_USED;
 
 	stmem_total -= size + sizeof(struct mem_node);
 	splx(s);
@@ -150,7 +150,7 @@ void
 free_stmem(void *mem)
 {
 	struct mem_node *mn, *next, *prev;
-	int		s;
+	int s;
 
 	if (mem == NULL)
 		return;
@@ -163,48 +163,52 @@ free_stmem(void *mem)
 	/*
 	 * check ahead of us.
 	 */
-	if (next != NULL && TAILQ_NEXT(next, free_link) != NULL) {
+	if (next->type == MNODE_FREE) {
 		/*
 		 * if next is: a valid node and a free node. ==> merge
 		 */
 		TAILQ_INSERT_BEFORE(next, mn, free_link);
+		mn->type = MNODE_FREE;
 		TAILQ_REMOVE(&st_list, next, link);
-		TAILQ_REMOVE(&st_list, next, free_link);
+		TAILQ_REMOVE(&free_list, next, free_link);
 		stmem_total += mn->size + sizeof(struct mem_node);
 		mn->size += next->size + sizeof(struct mem_node);
 	}
-	if (prev != NULL && TAILQ_PREV(prev, freelist, free_link) != NULL) {
+	if (prev->type == MNODE_FREE) {
 		/*
 		 * if prev is: a valid node and a free node. ==> merge
 		 */
-		if (TAILQ_NEXT(mn, free_link) == NULL)
+		if (mn->type != MNODE_FREE)
 			stmem_total += mn->size + sizeof(struct mem_node);
 		else {
 			/* already on free list */
 			TAILQ_REMOVE(&free_list, mn, free_link);
+			mn->type = MNODE_USED;
 			stmem_total += sizeof(struct mem_node);
 		}
 		TAILQ_REMOVE(&st_list, mn, link);
 		prev->size += mn->size + sizeof(struct mem_node);
-	} else if (TAILQ_NEXT(mn, free_link) == NULL) {
+	} else if (mn->type != MNODE_FREE) {
 		/*
 		 * we still are not on free list and we need to be.
 		 * <-- | -->
 		 */
 		while (next != NULL && prev != NULL) {
-			if (TAILQ_NEXT(next, free_link) != NULL) {
+			if (next->type == MNODE_FREE) {
 				TAILQ_INSERT_BEFORE(next, mn, free_link);
+				mn->type = MNODE_FREE;
 				break;
 			}
-			if (TAILQ_NEXT(prev, free_link) != NULL) {
+			if (prev->type == MNODE_FREE) {
 				TAILQ_INSERT_AFTER(&free_list, prev, mn,
 				    free_link);
+				mn->type = MNODE_FREE;
 				break;
 			}
 			prev = TAILQ_PREV(prev, stlist, link);
 			next = TAILQ_NEXT(next, link);
 		}
-		if (TAILQ_NEXT(mn, free_link) == NULL) {
+		if (mn->type != MNODE_FREE) {
 			if (next == NULL) {
 				/*
 				 * we are not on list so we can add
@@ -214,6 +218,7 @@ free_stmem(void *mem)
 			} else {
 				TAILQ_INSERT_HEAD(&free_list,mn,free_link);
 			}
+				mn->type = MNODE_FREE;
 		}
 		stmem_total += mn->size;/* add our helpings to the pool. */
 	}
