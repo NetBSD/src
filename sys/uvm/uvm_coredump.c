@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_coredump.c,v 1.3 2014/01/01 18:57:16 dsl Exp $	*/
+/*	$NetBSD: uvm_coredump.c,v 1.4 2014/01/03 15:15:02 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_coredump.c,v 1.3 2014/01/01 18:57:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_coredump.c,v 1.4 2014/01/03 15:15:02 dsl Exp $");
 
 /*
  * uvm_coredump.c: glue functions for coredump
@@ -77,13 +77,15 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_coredump.c,v 1.3 2014/01/01 18:57:16 dsl Exp $")
 /*
  * uvm_coredump_walkmap: walk a process's map for the purpose of dumping
  * a core file.
+ * XXX: I'm not entirely sure the locking is this function is in anyway
+ * correct.  If the process isn't actually stopped then the data passed
+ * to func() is at best stale, and horrid things might happen if the
+ * entry being processed is deleted (dsl).
  */
 
 int
-uvm_coredump_walkmap(struct proc *p, struct coredump_iostate *iocookie,
-    int (*func)(struct proc *, struct coredump_iostate *,
-	struct uvm_coredump_state *),
-    void *cookie)
+uvm_coredump_walkmap(struct proc *p, int (*func)(struct proc *,
+    struct uvm_coredump_state *), void *cookie)
 {
 	struct uvm_coredump_state state;
 	struct vmspace *vm = p->p_vmspace;
@@ -183,10 +185,13 @@ uvm_coredump_walkmap(struct proc *p, struct coredump_iostate *iocookie,
 				amap_unlock(entry->aref.ar_amap);
 			}
 		}
-		
 
+		/* Ignore empty sections */
+		if (state.start == state.realend)
+			continue;
+		
 		vm_map_unlock_read(map);
-		error = (*func)(p, iocookie, &state);
+		error = (*func)(p, &state);
 		if (error)
 			return (error);
 		vm_map_lock_read(map);
@@ -194,4 +199,21 @@ uvm_coredump_walkmap(struct proc *p, struct coredump_iostate *iocookie,
 	vm_map_unlock_read(map);
 
 	return (0);
+}
+
+static int
+count_segs(struct proc *p, struct uvm_coredump_state *s)
+{
+    (*(int *)s->cookie)++;
+
+    return 0;
+}
+
+int
+uvm_coredump_count_segs(struct proc *p)
+{
+	int count = 0;
+
+	uvm_coredump_walkmap(p, count_segs, &count);
+	return count;
 }
