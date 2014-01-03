@@ -2,14 +2,8 @@
  * wpa_supplicant/hostapd / common helper functions, etc.
  * Copyright (c) 2002-2007, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #ifndef COMMON_H
@@ -68,12 +62,6 @@ static inline unsigned int bswap_32(unsigned int v)
 #define __BYTE_ORDER __LITTLE_ENDIAN
 #endif
 #endif /* CONFIG_TI_COMPILER */
-
-#ifdef __SYMBIAN32__
-#define __BIG_ENDIAN 4321
-#define __LITTLE_ENDIAN 1234
-#define __BYTE_ORDER __LITTLE_ENDIAN
-#endif /* __SYMBIAN32__ */
 
 #ifdef CONFIG_NATIVE_WINDOWS
 #include <winsock.h>
@@ -137,16 +125,6 @@ typedef unsigned short u16;
 typedef unsigned char u8;
 #define WPA_TYPES_DEFINED
 #endif /* CONFIG_TI_COMPILER */
-
-#ifdef __SYMBIAN32__
-#define __REMOVE_PLATSEC_DIAGNOSTICS__
-#include <e32def.h>
-typedef TUint64 u64;
-typedef TUint32 u32;
-typedef TUint16 u16;
-typedef TUint8 u8;
-#define WPA_TYPES_DEFINED
-#endif /* __SYMBIAN32__ */
 
 #ifndef WPA_TYPES_DEFINED
 #ifdef CONFIG_USE_INTTYPES_H
@@ -463,7 +441,16 @@ TCHAR * wpa_strdup_tchar(const char *str);
 #define wpa_strdup_tchar(s) strdup((s))
 #endif /* CONFIG_NATIVE_WINDOWS */
 
+void printf_encode(char *txt, size_t maxlen, const u8 *data, size_t len);
+size_t printf_decode(u8 *buf, size_t maxlen, const char *str);
+
 const char * wpa_ssid_txt(const u8 *ssid, size_t ssid_len);
+
+char * wpa_config_parse_string(const char *value, size_t *len);
+int is_hex(const u8 *data, size_t len);
+size_t merge_byte_arrays(u8 *res, size_t res_len,
+			 const u8 *src1, size_t src1_len,
+			 const u8 *src2, size_t src2_len);
 
 static inline int is_zero_ether_addr(const u8 *a)
 {
