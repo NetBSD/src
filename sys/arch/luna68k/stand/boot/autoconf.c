@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.7 2013/01/22 15:48:40 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.8 2014/01/03 02:03:12 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -469,9 +469,6 @@ same_hw_device(struct hp_hw *hw, struct hp_device *hd)
 		break;
 	case SCSI:
 		found = dr_type(hd->hp_driver, "scsi");
-		break;
-	case VME:
-	case MISC:
 		break;
 	}
 	return(found);
