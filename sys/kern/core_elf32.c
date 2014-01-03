@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.37 2014/01/01 18:57:16 dsl Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.38 2014/01/03 15:15:02 dsl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.37 2014/01/01 18:57:16 dsl Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.38 2014/01/03 15:15:02 dsl Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_coredump.h"
@@ -66,20 +66,13 @@ __KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.37 2014/01/01 18:57:16 dsl Exp $");
 
 #ifdef COREDUMP
 
-struct countsegs_state {
-	int	npsections;
-};
-
-static int	ELFNAMEEND(coredump_countsegs)(struct proc *,
-		    struct coredump_iostate *, struct uvm_coredump_state *);
-
 struct writesegs_state {
 	Elf_Phdr *psections;
 	off_t	secoff;
 };
 
-static int	ELFNAMEEND(coredump_writeseghdrs)(struct proc *,
-		    struct coredump_iostate *, struct uvm_coredump_state *);
+static int	ELFNAMEEND(coredump_getseghdrs)(struct proc *,
+		    struct uvm_coredump_state *);
 
 static int	ELFNAMEEND(coredump_notes)(struct proc *, struct lwp *,
 		    struct coredump_iostate *, size_t *);
@@ -105,7 +98,7 @@ ELFNAMEEND(coredump)(struct lwp *l, struct coredump_iostate *cookie)
 	Elf_Ehdr ehdr;
 	Elf_Phdr phdr, *psections;
 	size_t psectionssize;
-	struct countsegs_state cs;
+	int npsections;
 	struct writesegs_state ws;
 	off_t notestart, secstart, offset;
 	size_t notesize;
@@ -117,7 +110,7 @@ ELFNAMEEND(coredump)(struct lwp *l, struct coredump_iostate *cookie)
 	 * We have to make a total of 3 passes across the map:
 	 *
 	 *	1. Count the number of map entries (the number of
-	 *	   PT_LOAD sections).
+	 *	   PT_LOAD sections in the dump).
 	 *
 	 *	2. Write the P-section headers.
 	 *
@@ -125,16 +118,11 @@ ELFNAMEEND(coredump)(struct lwp *l, struct coredump_iostate *cookie)
 	 */
 
 	/* Pass 1: count the entries. */
-	cs.npsections = 0;
-	error = uvm_coredump_walkmap(p, NULL,
-	    ELFNAMEEND(coredump_countsegs), &cs);
-	if (error)
-		goto out;
-
+	npsections = uvm_coredump_count_segs(p);
 	/* Count the PT_NOTE section. */
-	cs.npsections++;
+	npsections++;
 
-	/* Get the size of the notes. */
+	/* Get the size of the notes (mostly all the registers). */
 	error = ELFNAMEEND(coredump_notes)(p, l, NULL, &notesize);
 	if (error)
 		goto out;
@@ -162,7 +150,7 @@ ELFNAMEEND(coredump)(struct lwp *l, struct coredump_iostate *cookie)
 	ehdr.e_flags = 0;
 	ehdr.e_ehsize = sizeof(ehdr);
 	ehdr.e_phentsize = sizeof(Elf_Phdr);
-	ehdr.e_phnum = cs.npsections;
+	ehdr.e_phnum = npsections;
 	ehdr.e_shentsize = 0;
 	ehdr.e_shnum = 0;
 	ehdr.e_shstrndx = 0;
@@ -178,21 +166,20 @@ ELFNAMEEND(coredump)(struct lwp *l, struct coredump_iostate *cookie)
 
 	offset = sizeof(ehdr);
 
-	notestart = offset + sizeof(phdr) * cs.npsections;
+	notestart = offset + sizeof(phdr) * npsections;
 	secstart = notestart + notesize;
 
-	psectionssize = cs.npsections * sizeof(Elf_Phdr);
+	psectionssize = npsections * sizeof(Elf_Phdr);
 	psections = kmem_zalloc(psectionssize, KM_SLEEP);
 
-	/* Pass 2: now write the P-section headers. */
+	/* Pass 2: now find the P-section headers. */
 	ws.secoff = secstart;
 	ws.psections = psections;
-	error = uvm_coredump_walkmap(p, cookie,
-	    ELFNAMEEND(coredump_writeseghdrs), &ws);
+	error = uvm_coredump_walkmap(p, ELFNAMEEND(coredump_getseghdrs), &ws);
 	if (error)
 		goto out;
 
-	/* Write out the PT_NOTE header. */
+	/* Add the PT_NOTE header after the P-section headers. */
 	ws.psections->p_type = PT_NOTE;
 	ws.psections->p_offset = notestart;
 	ws.psections->p_vaddr = 0;
@@ -202,13 +189,14 @@ ELFNAMEEND(coredump)(struct lwp *l, struct coredump_iostate *cookie)
 	ws.psections->p_flags = PF_R;
 	ws.psections->p_align = ELFROUNDSIZE;
 
+	/* Write the P-section headers followed by the PT_NOTR header */
 	error = coredump_write(cookie, UIO_SYSSPACE, psections,
-	    cs.npsections * sizeof(Elf_Phdr));
+	    npsections * sizeof(Elf_Phdr));
 	if (error)
 		goto out;
 
 #ifdef DIAGNOSTIC
-	offset += cs.npsections * sizeof(Elf_Phdr);
+	offset += npsections * sizeof(Elf_Phdr);
 	if (offset != notestart)
 		panic("coredump: offset %lld != notestart %lld",
 		    (long long) offset, (long long) notestart);
@@ -227,7 +215,7 @@ ELFNAMEEND(coredump)(struct lwp *l, struct coredump_iostate *cookie)
 #endif
 
 	/* Pass 3: finally, write the sections themselves. */
-	for (i = 0; i < cs.npsections - 1; i++) {
+	for (i = 0; i < npsections - 1; i++) {
 		if (psections[i].p_filesz == 0)
 			continue;
 
@@ -256,18 +244,7 @@ ELFNAMEEND(coredump)(struct lwp *l, struct coredump_iostate *cookie)
 }
 
 static int
-ELFNAMEEND(coredump_countsegs)(struct proc *p,
-    struct coredump_iostate *iocookie, struct uvm_coredump_state *us)
-{
-	struct countsegs_state *cs = us->cookie;
-
-	cs->npsections++;
-	return (0);
-}
-
-static int
-ELFNAMEEND(coredump_writeseghdrs)(struct proc *p,
-    struct coredump_iostate *iocookie, struct uvm_coredump_state *us)
+ELFNAMEEND(coredump_getseghdrs)(struct proc *p, struct uvm_coredump_state *us)
 {
 	struct writesegs_state *ws = us->cookie;
 	Elf_Phdr phdr;
@@ -279,6 +256,7 @@ ELFNAMEEND(coredump_writeseghdrs)(struct proc *p,
 	realsize = us->realend - us->start;
 	end = us->realend;
 
+	/* Don't bother writing out trailing zeros */
 	while (realsize > 0) {
 		long buf[1024 / sizeof(long)];
 		size_t slen = realsize > sizeof(buf) ? sizeof(buf) : realsize;
