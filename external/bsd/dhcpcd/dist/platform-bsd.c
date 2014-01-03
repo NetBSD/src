@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: platform-bsd.c,v 1.1.1.9 2013/09/20 10:51:29 roy Exp $");
+ __RCSID("$NetBSD: platform-bsd.c,v 1.1.1.10 2014/01/03 22:10:42 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -124,8 +124,8 @@ ipv6_ra_flush(void)
 int
 check_ipv6(const char *ifname, int own)
 {
-	static int set_restore = 0, forward_warned = 0, global_ra = 0;
-	int ra, forward;
+	static int set_restore = 0, global_ra = 0;
+	int ra;
 
 	/* BSD doesn't support these values per iface, so just return
 	 * the global ra setting */
@@ -152,20 +152,6 @@ check_ipv6(const char *ifname, int own)
 	}
 	if (ifname == NULL)
 		global_ra = ra;
-
-	if (!forward_warned) {
-		forward = get_inet6_sysctl(IPV6CTL_FORWARDING);
-		if (forward == -1)
-			/* The sysctl probably doesn't exist, but this isn't an
-			 * error as such so just log it and continue */
-			syslog(errno == ENOENT ? LOG_DEBUG : LOG_WARNING,
-			    "IPV6CTL_FORWARDING: %m");
-		else if (forward != 0) {
-			forward_warned = 1;
-			syslog(LOG_WARNING,
-			    "Kernel is configured as a router, not a host");
-		}
-	}
 
 	/* Flush the kernel knowledge of advertised routers */
 	ipv6_ra_flush();
