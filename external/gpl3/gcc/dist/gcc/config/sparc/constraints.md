@@ -141,6 +141,10 @@
  "Memory reference for 'e' constraint floating-point register"
  (and (match_code "mem,reg")
       (match_test "memory_ok_for_ldd (op)")))
+  
+(define_memory_constraint "w"
+  "A memory with only a base register"
+  (match_operand 0 "mem_noofs_operand"))
 
 (define_constraint "Y"
  "The vector zero constant"
