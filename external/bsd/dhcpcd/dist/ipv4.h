@@ -1,4 +1,4 @@
-/* $NetBSD: ipv4.h,v 1.1.1.2 2013/09/20 10:51:30 roy Exp $ */
+/* $NetBSD: ipv4.h,v 1.1.1.3 2014/01/03 22:10:44 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -99,9 +99,11 @@ ssize_t ipv4_sendrawpacket(const struct interface *,
 ssize_t ipv4_getrawpacket(struct interface *, int, void *, ssize_t, int *);
 void ipv4_free(struct interface *);
 #else
-#define ipv4_init() -1
+#define ipv4_init() (-1)
 #define ipv4_applyaddr(a) {}
 #define ipv4_freeroutes(a) {}
+#define ipv4_free(a) {}
+#define ipv4_addrexists(a) (0)
 #endif
 
 #endif

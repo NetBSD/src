@@ -1,4 +1,4 @@
-/* $NetBSD: dhcp-common.h,v 1.1.1.1 2013/06/21 19:33:08 roy Exp $ */
+/* $NetBSD: dhcp-common.h,v 1.1.1.2 2014/01/03 22:10:44 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -49,31 +49,59 @@
 #define SINT32		(1 << 5)
 #define ADDRIPV4	(1 << 6)
 #define STRING		(1 << 7)
-#define PAIR		(1 << 8)
-#define ARRAY		(1 << 9)
-#define RFC3361		(1 << 10)
-#define RFC3397		(1 << 11)
-#define RFC3442		(1 << 12)
-#define RFC5969		(1 << 13)
-#define ADDRIPV6	(1 << 14)
-#define BINHEX		(1 << 15)
-#define SCODE		(1 << 16)
-#define FLAG		(1 << 17)
-#define NOREQ		(1 << 18)
+#define ARRAY		(1 << 8)
+#define RFC3361		(1 << 9)
+#define RFC3397		(1 << 10)
+#define RFC3442		(1 << 11)
+#define RFC5969		(1 << 12)
+#define ADDRIPV6	(1 << 13)
+#define BINHEX		(1 << 14)
+#define FLAG		(1 << 15)
+#define NOREQ		(1 << 16)
+#define EMBED		(1 << 17)
+#define ENCAP		(1 << 18)
+#define INDEX		(1 << 19)
+#define OPTION		(1 << 20)
 
 struct dhcp_opt {
-	uint16_t option;
+	uint32_t option; /* Also used for IANA Enterpise Number */
 	int type;
-	const char *var;
+	int len;
+	char *var;
+
+	int index; /* Index counter for many instances of the same option */
+
+	/* Embedded options.
+	 * The option code is irrelevant here. */
+	struct dhcp_opt *embopts;
+	size_t embopts_len;
+
+	/* Encapsulated options */
+	struct dhcp_opt *encopts;
+	size_t encopts_len;
 };
+
+/* DHCP Vendor-Identifying Vendor Options, RFC3925 */
+extern struct dhcp_opt *vivso;
+extern size_t vivso_len;
+
+struct dhcp_opt *vivso_find(uint16_t, const void *);
 
 #define add_option_mask(var, val) (var[val >> 3] |= 1 << (val & 7))
 #define del_option_mask(var, val) (var[val >> 3] &= ~(1 << (val & 7)))
-#define has_option_mask(var, val) (var[val >> 3] & (1 << (val & 7)))
-int make_option_mask(const struct dhcp_opt *,uint8_t *, const char *, int);
+#define has_option_mask(var, val) (var[val >>3] & (1 << (val & 7)))
+int make_option_mask(const struct dhcp_opt *, size_t,
+    uint8_t *, const char *, int);
+
 size_t encode_rfc1035(const char *src, uint8_t *dst);
 ssize_t decode_rfc3397(char *, ssize_t, int, const uint8_t *);
 ssize_t print_string(char *, ssize_t, int, const uint8_t *);
 ssize_t print_option(char *, ssize_t, int, int, const uint8_t *, const char *);
+
+ssize_t dhcp_envoption(char **, const char *, const char *, struct dhcp_opt *,
+    const uint8_t *(*dgetopt)(unsigned int *, unsigned int *, unsigned int *,
+    const uint8_t *, unsigned int, struct dhcp_opt **),
+    const uint8_t *od, int ol);
+void dhcp_zero_index(struct dhcp_opt *);
 
 #endif

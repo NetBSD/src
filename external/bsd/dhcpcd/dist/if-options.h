@@ -1,4 +1,4 @@
-/* $NetBSD: if-options.h,v 1.1.1.18 2013/09/20 10:51:30 roy Exp $ */
+/* $NetBSD: if-options.h,v 1.1.1.19 2014/01/03 22:10:44 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -99,6 +99,7 @@
 #define DHCPCD_WAITIP4			(1ULL << 45)
 #define DHCPCD_WAITIP6			(1ULL << 46)
 #define DHCPCD_DEV			(1ULL << 47)
+#define DHCPCD_IAID			(1ULL << 48)
 
 extern const struct option cf_options[];
 
@@ -109,13 +110,21 @@ struct if_sla {
 	int8_t sla_set;
 };
 
-struct if_iaid {
+struct if_ia {
 	uint8_t iaid[4];
+#ifdef INET6
 	size_t sla_len;
 	struct if_sla *sla;
+#endif
+};
+
+struct vivco {
+	uint16_t len;
+	uint8_t *data;
 };
 
 struct if_options {
+	uint8_t iaid[4];
 	int metric;
 	uint8_t requestmask[256 / 8];
 	uint8_t requiremask[256 / 8];
@@ -152,12 +161,22 @@ struct if_options {
 	in_addr_t *arping;
 	char *fallback;
 
-#ifdef INET6
 	uint16_t ia_type;
-	size_t iaid_len;
-	struct if_iaid *iaid;
+	struct if_ia *ia;
+	size_t ia_len;
+#ifdef INET6
 	int dadtransmits;
 #endif
+
+	struct dhcp_opt *dhcp_override;
+	size_t dhcp_override_len;
+	struct dhcp_opt *dhcp6_override;
+	size_t dhcp6_override_len;
+	uint32_t vivco_en;
+	struct vivco *vivco;
+	size_t vivco_len;
+	struct dhcp_opt *vivso_override;
+	size_t vivso_override_len;
 };
 
 extern unsigned long long options;
@@ -166,6 +185,7 @@ extern char *dev_load;
 struct if_options *read_config(const char *,
     const char *, const char *, const char *);
 int add_options(struct if_options *, int, char **);
+void free_dhcp_opt_embenc(struct dhcp_opt *);
 void free_options(struct if_options *);
 
 #endif

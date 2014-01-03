@@ -1,4 +1,4 @@
-/* $NetBSD: dhcp.h,v 1.1.1.15 2013/09/20 10:51:30 roy Exp $ */
+/* $NetBSD: dhcp.h,v 1.1.1.16 2014/01/03 22:10:44 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -107,6 +107,8 @@ enum DHO {
 	DHO_USERCLASS              = 77,  /* RFC 3004 */
 	DHO_RAPIDCOMMIT            = 80,  /* RFC 4039 */
 	DHO_FQDN                   = 81,
+	DHO_VIVCO                  = 124, /* RFC 3925 */
+	DHO_VIVSO                  = 125, /* RFC 3925 */
 	DHO_DNSSEARCH              = 119, /* RFC 3397 */
 	DHO_CSR                    = 121, /* RFC 3442 */
 	DHO_SIXRD                  = 212, /* RFC 5969 */
@@ -240,7 +242,8 @@ struct dhcp_state {
 #include "net.h"
 
 #ifdef INET
-extern const struct dhcp_opt dhcp_opts[];
+extern struct dhcp_opt *dhcp_opts;
+extern size_t dhcp_opts_len;
 
 char *decode_rfc3361(int dl, const uint8_t *data);
 ssize_t decode_rfc3442(char *out, ssize_t len, int pl, const uint8_t *p);
@@ -249,9 +252,6 @@ ssize_t decode_rfc5969(char *out, ssize_t len, int pl, const uint8_t *p);
 void dhcp_printoptions(void);
 char *get_option_string(const struct dhcp_message *, uint8_t);
 int get_option_addr(struct in_addr *, const struct dhcp_message *, uint8_t);
-int get_option_uint32(uint32_t *, const struct dhcp_message *, uint8_t);
-int get_option_uint16(uint16_t *, const struct dhcp_message *, uint8_t);
-int get_option_uint8(uint8_t *, const struct dhcp_message *, uint8_t);
 #define is_bootp(m) (m &&						\
 	    !IN_LINKLOCAL(htonl((m)->yiaddr)) &&			\
 	    get_option_uint8(NULL, m, DHO_MESSAGETYPE) == -1)

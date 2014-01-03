@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: arp.c,v 1.1.1.9 2013/06/21 19:33:07 roy Exp $");
+ __RCSID("$NetBSD: arp.c,v 1.1.1.10 2014/01/03 22:10:43 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -223,7 +223,11 @@ arp_announce(void *arg)
 	if (state->new == NULL)
 		return;
 	if (state->arp_fd == -1) {
-		ipv4_opensocket(ifp, ETHERTYPE_ARP);
+		state->arp_fd = ipv4_opensocket(ifp, ETHERTYPE_ARP);
+		if (state->arp_fd == -1) {
+			syslog(LOG_ERR, "%s: %s: %m", __func__, ifp->name);
+			return;
+		}
 		eloop_event_add(state->arp_fd, arp_packet, ifp);
 	}
 	if (++state->claims < ANNOUNCE_NUM)
@@ -270,8 +274,11 @@ arp_probe(void *arg)
 	int arping = 0;
 
 	if (state->arp_fd == -1) {
-		if (ipv4_opensocket(ifp, ETHERTYPE_ARP) == -1)
+		state->arp_fd = ipv4_opensocket(ifp, ETHERTYPE_ARP);
+		if (state->arp_fd == -1) {
+			syslog(LOG_ERR, "%s: %s: %m", __func__, ifp->name);
 			return;
+		}
 		eloop_event_add(state->arp_fd, arp_packet, ifp);
 	}
 
