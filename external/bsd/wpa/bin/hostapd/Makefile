@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2014/01/03 02:07:31 christos Exp $
+# $NetBSD: Makefile,v 1.5 2014/01/03 02:15:43 christos Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -85,7 +85,6 @@ eap_server_methods.c
 
 # crypto
 SRCS+= \
-crypto_openssl.c \
 md5.c \
 random.c \
 sha1-prf.c
@@ -146,6 +145,7 @@ aes-eax.c \
 aes-encblock.c \
 aes-omac1.c \
 aes-wrap.c \
+crypto_openssl.c \
 dh_groups.c \
 fips_prf_openssl.c \
 ms_funcs.c \
