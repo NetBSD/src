@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.368 2013/12/24 14:47:04 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.369 2014/01/03 15:49:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.368 2013/12/24 14:47:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.369 2014/01/03 15:49:49 christos Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -1823,11 +1823,11 @@ spawn_exec_data_release(struct spawn_exec_data *data)
  * A child lwp of a posix_spawn operation starts here and ends up in
  * cpu_spawn_return, dealing with all filedescriptor and scheduler
  * manipulations in between.
- * The parent waits for the child, as it is not clear wether the child
- * will be able to aquire its own exec_lock. If it can, the parent can
+ * The parent waits for the child, as it is not clear whether the child
+ * will be able to acquire its own exec_lock. If it can, the parent can
  * be released early and continue running in parallel. If not (or if the
  * magic debug flag is passed in the scheduler attribute struct), the
- * child rides on the parent's exec lock untill it is ready to return to
+ * child rides on the parent's exec lock until it is ready to return to
  * to userland - and only then releases the parent. This method loses
  * concurrency, but improves error reporting.
  */
@@ -2001,7 +2001,7 @@ spawn_return(void *arg)
 	/* release our refcount on the data */
 	spawn_exec_data_release(spawn_data);
 
-	/* and finaly: leave to userland for the first time */
+	/* and finally: leave to userland for the first time */
 	cpu_spawn_return(l);
 
 	/* NOTREACHED */
@@ -2071,15 +2071,9 @@ posix_spawn_fa_alloc(struct posix_spawn_file_actions **fap,
 
 	fa = kmem_alloc(sizeof(*fa), KM_SLEEP);
 	error = copyin(ufa, fa, sizeof(*fa));
-	if (error) {
-		fa->fae = NULL;
-		fa->len = 0;
-		goto out;
-	}
-
-	if (fa->len == 0) {
+	if (error || fa->len == 0) {
 		kmem_free(fa, sizeof(*fa));
-		return 0;
+		return error;	/* 0 if not an error, and len == 0 */
 	}
 
 	fa->size = fa->len;
