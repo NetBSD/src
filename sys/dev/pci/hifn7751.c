@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.52 2013/06/13 00:55:01 tls Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.53 2014/01/03 16:09:22 pgoyette Exp $	*/
 /*	$FreeBSD: hifn7751.c,v 1.5.2.7 2003/10/08 23:52:00 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.52 2013/06/13 00:55:01 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.53 2014/01/03 16:09:22 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.52 2013/06/13 00:55:01 tls Exp $");
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
 #include <sys/device.h>
+#include <sys/module.h>
 
 #ifdef __OpenBSD__
 #include <crypto/crypto.h>
@@ -101,9 +102,15 @@ static int hifn_probe((struct device *, void *, void *);
 static int hifn_probe(device_t, cfdata_t, void *);
 #endif
 static void hifn_attach(device_t, device_t, void *);
+#ifdef __NetBSD__
+static int hifn_detach(device_t, int);
 
 CFATTACH_DECL_NEW(hifn, sizeof(struct hifn_softc),
+    hifn_probe, hifn_attach, hifn_detach, NULL);
+#else
+CFATTACH_DECL_NEW(hifn, sizeof(struct hifn_softc),
     hifn_probe, hifn_attach, NULL, NULL);
+#endif
 
 #ifdef __OpenBSD__
 struct cfdriver hifn_cd = {
@@ -241,7 +248,12 @@ hifn_attach(device_t parent, device_t self, void *aux)
 	const char *intrstr = NULL;
 	const char *hifncap;
 	char rbase;
+#ifdef __NetBSD__
+#define iosize0 sc->sc_iosz0
+#define iosize1 sc->sc_iosz1
+#else
 	bus_size_t iosize0, iosize1;
+#endif
 	u_int32_t cmd;
 	u_int16_t ena;
 	bus_dma_segment_t seg;
@@ -452,6 +464,70 @@ fail_io1:
 fail_io0:
 	bus_space_unmap(sc->sc_st0, sc->sc_sh0, iosize0);
 }
+
+#ifdef __NetBSD__
+static int
+hifn_detach(device_t self, int flags)
+{
+	struct hifn_softc *sc = device_private(self);
+
+	hifn_abort(sc);
+
+	hifn_reset_board(sc, 1);
+
+	pci_intr_disestablish(sc->sc_pci_pc, sc->sc_ih);
+
+	crypto_unregister_all(sc->sc_cid);
+
+	rnd_detach_source(&sc->sc_rnd_source);
+
+	mutex_enter(&sc->sc_mtx);
+	callout_halt(&sc->sc_tickto, NULL);
+	if (sc->sc_flags & (HIFN_HAS_PUBLIC | HIFN_HAS_RNG))
+		callout_halt(&sc->sc_rngto, NULL);
+	mutex_exit(&sc->sc_mtx);
+
+	bus_space_unmap(sc->sc_st1, sc->sc_sh1, sc->sc_iosz1);
+	bus_space_unmap(sc->sc_st0, sc->sc_sh0, sc->sc_iosz0);
+
+	/*
+	 * XXX It's not clear if any additional buffers have been
+	 * XXX allocated and require free()ing
+	 */
+
+	return 0;
+}
+
+MODULE(MODULE_CLASS_DRIVER, hifn, "pci,opencrypto");
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+hifn_modcmd(modcmd_t cmd, void *data)
+{
+	int error = 0;
+
+	switch(cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		error = config_init_component(cfdriver_ioconf_hifn,
+		    cfattach_ioconf_hifn, cfdata_ioconf_hifn);
+#endif
+		return error;
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		error = config_fini_component(cfdriver_ioconf_hifn,
+		    cfattach_ioconf_hifn, cfdata_ioconf_hifn);
+#endif
+		return error;
+	default:
+		return ENOTTY;
+	}
+}
+
+#endif /* ifdef __NetBSD__ */
 
 static void
 hifn_rng_get(size_t bytes, void *priv)
