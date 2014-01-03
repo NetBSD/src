@@ -1,4 +1,4 @@
-/*	$NetBSD: getline.c,v 1.2 2013/01/20 07:32:45 tsutsui Exp $	*/
+/*	$NetBSD: getline.c,v 1.3 2014/01/03 06:37:13 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -79,40 +79,54 @@
 #include <luna68k/stand/boot/samachdep.h>
 
 int
-getline(char *prompt, char *buff)
+getline(const char *prompt, char *buff)
 {
 	int c;
-	char *p = buff;
+	char *p, *lp = buff;
 
 	printf("%s", prompt);
 
-	for(;;) {
-		c = getchar() & 0x7F;
+	for (;;) {
+		c = getchar() & 0x7f;
 
 		switch (c) {
-		case 0x0a:
-		case 0x0d:
+		case '\n':
+		case '\r':
+			*lp = '\0';
 			putchar('\n');
-			*p = '\0';
 			goto outloop;
 
-		case 0x08:
+		case '\b':
 		case 0x7f:
-			if (p > buff) {
-				putchar(0x08);
+			if (lp > buff) {
+				lp--;
+				putchar('\b');
 				putchar(' ');
-				putchar(0x08);
-				p--;
+				putchar('\b');
 			}
 			break;
 
+		case 'r' & 0x1f:
+			putchar('\n');
+			printf("%s", prompt);
+			for (p = buff; p < lp; ++p)
+				putchar(*p);
+			break;
+
+		case 'u' & 0x1f:
+		case 'w' & 0x1f:
+			lp = buff;
+			printf("\n%s", prompt);
+			break;
+
 		default:
-			*p++ = c;
+			*lp++ = c;
 			putchar(c);
 			break;
 		}
 	}
 
  outloop:
-	return(strlen(buff));
+	*lp = '\0';
+	return lp - buff;
 }
