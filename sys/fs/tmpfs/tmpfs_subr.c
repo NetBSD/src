@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.92 2013/11/24 17:16:29 rmind Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.93 2014/01/03 09:53:12 hannken Exp $	*/
 
 /*
  * Copyright (c) 2005-2013 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.92 2013/11/24 17:16:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.93 2014/01/03 09:53:12 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -127,7 +127,13 @@ tmpfs_alloc_node(tmpfs_mount_t *tmp, enum vtype type, uid_t uid, gid_t gid,
 	 * for applications that do not understand 64-bit ino_t.
 	 */
 	nnode->tn_id = (ino_t)((uintptr_t)nnode / sizeof(*nnode));
-	nnode->tn_gen = TMPFS_NODE_GEN_MASK & cprng_fast32();
+	/*
+	 * Make sure the generation number is not zero.
+	 * tmpfs_inactive() uses generation zero to mark dead nodes.
+	 */
+	do {
+		nnode->tn_gen = TMPFS_NODE_GEN_MASK & cprng_fast32();
+	} while (nnode->tn_gen == 0);
 
 	/* Generic initialization. */
 	nnode->tn_type = type;
@@ -252,6 +258,7 @@ tmpfs_free_node(tmpfs_mount_t *tmp, tmpfs_node_t *node)
 	default:
 		break;
 	}
+	KASSERT(node->tn_vnode == NULL);
 	KASSERT(node->tn_links == 0);
 
 	mutex_destroy(&node->tn_vlock);
