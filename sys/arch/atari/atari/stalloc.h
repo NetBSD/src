@@ -1,4 +1,4 @@
-/*	$NetBSD: stalloc.h,v 1.5 2013/11/23 22:52:40 christos Exp $	*/
+/*	$NetBSD: stalloc.h,v 1.6 2014/01/03 07:14:20 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps (allocator stuff)
@@ -42,7 +42,10 @@ struct mem_node {
 	TAILQ_ENTRY(mem_node) link; 	
 	TAILQ_ENTRY(mem_node) free_link;
 	u_long size;		/* size of memory following node. */
+	u_char type;		/* free, used */
 };
+#define MNODE_FREE 0
+#define MNODE_USED 1
 
 #define ST_BLOCKSIZE	(sizeof(long))
 #define ST_BLOCKMASK	(~(ST_BLOCKSIZE - 1))
