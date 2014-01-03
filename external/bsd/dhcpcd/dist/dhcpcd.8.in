@@ -1,4 +1,4 @@
-.\"     $NetBSD: dhcpcd.8.in,v 1.23 2013/09/20 21:40:56 wiz Exp $
+.\"     $NetBSD: dhcpcd.8.in,v 1.24 2014/01/03 22:24:41 roy Exp $
 .\" Copyright (c) 2006-2013 Roy Marples
 .\" All rights reserved
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd September 12, 2013
+.Dd December 6, 2013
 .Dt DHCPCD 8
 .Os
 .Sh NAME
@@ -126,6 +126,8 @@ is also an implemenation of the DHCPv6 client as specified in
 By default,
 .Nm
 only starts DHCPv6 when instructed to do so by an IPV6 Router Advertisement.
+If no Identity Association is configured,
+then a Non-temporary Address is requested.
 .Ss Local Link configuration
 If
 .Nm
@@ -408,6 +410,17 @@ A setting of 0
 causes
 .Nm
 to wait forever to get a lease.
+If
+.Nm
+is working on a single interface then
+.Nm
+will exit when a timeout occurs, otherwise
+.Nm
+will fork into the background.
+If using IPv4LL then
+.Nm
+start the IPv4LL process after the timeout and then wait a little longer
+before really timing out.
 .It Fl u , Fl Fl userclass Ar class
 Tags the DHCP message with the userclass
 .Ar class .
@@ -636,9 +649,9 @@ running on the
 .Xr resolvconf 8
 .Sh STANDARDS
 RFC\ 951 RFC\ 1534 RFC\ 2131, RFC\ 2132, RFC\ 2855, RFC\ 3004, RFC\ 3315,
-RFC\ 3361, RFC\ 3633, RFC\ 3396, RFC\ 3397, RFC\ 3442, RFC\ 3927, RFC\ 4039
-RFC\ 4075, RFC\ 4361, RFC\ 4390, RFC\ 4702, RFC\ 4704, RFC\ 4861, RFC\ 4833,
-RFC\ 5227, RFC\ 5942, RFC\ 5969, RFC\ 6106.
+RFC\ 3361, RFC\ 3633, RFC\ 3396, RFC\ 3397, RFC\ 3442, RFC\ 3925, RFC\ 3927,
+RFC\ 4039, RFC\ 4075, RFC\ 4242, RFC\ 4361, RFC\ 4390, RFC\ 4702, RFC\ 4704,
+RFC\ 4861, RFC\ 4833, RFC\ 5227, RFC\ 5942, RFC\ 5969, RFC\ 6106.
 .Sh AUTHORS
 .An Roy Marples Aq Mt roy@marples.name
 .Sh BUGS
