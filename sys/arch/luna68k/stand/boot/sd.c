@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.5 2013/01/22 15:48:40 tsutsui Exp $	*/
+/*	$NetBSD: sd.c,v 1.6 2014/01/03 02:03:12 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -89,15 +89,12 @@ struct	disklabel sdlabel[NSD];
 
 struct	sd_softc {
 	struct	hp_device *sc_hd;
-	struct	devqueue sc_dq;
-	int	sc_format_pid;	/* process using "format" mode */
 	short	sc_flags;
 	short	sc_type;	/* drive type */
 	short	sc_punit;	/* physical unit (scsi lun) */
 	u_short	sc_bshift;	/* convert device blocks to DEV_BSIZE blks */
 	u_int	sc_blks;	/* number of blocks on device */
 	int	sc_blksize;	/* device block size in bytes */
-	u_int	sc_wpms;	/* average xfer rate in 16 bit wds/sec. */
 };
 
 struct sd_devdata {
@@ -120,7 +117,6 @@ struct sd_devdata sd_devdata[NSD];
 
 #define	sdunit(x)	((minor(x) >> 3) & 0x7)
 #define sdpart(x)	(minor(x) & 0x7)
-#define	sdpunit(x)	((x) & 7)
 
 static struct scsi_inquiry inqbuf;
 static struct scsi_fmt_cdb inq = {
@@ -210,7 +206,6 @@ sdident(struct sd_softc *sc, struct hp_device *hd)
 			++sc->sc_bshift;
 		sc->sc_blks <<= sc->sc_bshift;
 	}
-	sc->sc_wpms = 32 * (60 * DEV_BSIZE / 2);	/* XXX */
 	return(inqbuf.type);
 }
 
@@ -228,7 +223,7 @@ sdinit(void *arg)
 	       hd->hp_ctlr, hd->hp_slave);
 #endif
 	sc->sc_hd = hd;
-	sc->sc_punit = sdpunit(hd->hp_flags);
+	sc->sc_punit = 0;	/* XXX no LUN support yet */
 	sc->sc_type = sdident(sc, hd);
 	if (sc->sc_type < 0)
 		return(0);

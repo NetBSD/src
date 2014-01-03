@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.5 2013/01/14 12:28:11 tsutsui Exp $	*/
+/*	$NetBSD: device.h,v 1.6 2014/01/03 02:03:12 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -98,49 +98,25 @@ struct hp_device {
 	int		hp_ipl;
 };
 
-struct	devqueue {
-	struct	devqueue *dq_forw;
-	struct	devqueue *dq_back;
-	int	dq_ctlr;
-	int	dq_unit;
-	int	dq_slave;
-	struct	driver *dq_driver;
-};
-
 struct hp_hw {
 	uint8_t	*hw_addr;	/* physical address of registers */
 	short	hw_type;	/* type (defined below) */
 	char	*hw_name;	/* HP product name */
 };
 
-#define	MAX_CTLR	16	/* Totally arbitrary */
-#define	MAXSLAVES	8	/* Currently the HPIB limit */
+#define	MAX_CTLR	8	/* Totally arbitrary */
+#define	MAXSLAVES	8	/* Currently the SCSI limit */
 
 #define	WILD_CARD_CTLR	0
 
 /* A controller is a card which can have one or more slaves attached */
 #define	CONTROLLER	0x10
-#define	HPIB		0x16
-#define	SCSI		0x17
-#define	VME		0x18
-#define	FLINK		0x19
+#define	SCSI		(CONTROLLER | 0)
 
-/* Slaves are devices which attach to controllers, e.g. disks, tapes */
-#define	RD		0x2a
-#define	PPI		0x2b
-#define	CT		0x2c
-
-/* These are not controllers, but may have their own HPIB address */
-#define	BITMAP		1
-#define	NET		2
-#define	FPA		4
-#define	MISC		5
-#define	KEYBOARD	6
-#define	COMMDCA		7
-#define	COMMDCM		8
-#define	COMMDCL		9
-#define	PPORT		10
-#define	SIO		11
+/* Non-disk device types */
+#define	NET		1
+#define	KEYBOARD	2
+#define	SIO		3
 
 extern struct hp_ctlr	hp_cinit[];
 extern struct hp_device	hp_dinit[];
