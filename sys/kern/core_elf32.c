@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.39 2014/01/03 20:52:47 dsl Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.40 2014/01/03 21:12:18 dsl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.39 2014/01/03 20:52:47 dsl Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.40 2014/01/03 21:12:18 dsl Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_coredump.h"
@@ -68,8 +68,9 @@ __KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.39 2014/01/03 20:52:47 dsl Exp $");
 
 struct writesegs_state {
 	Elf_Phdr *psections;
-	off_t	secoff;
-	size_t  npsections;
+	proc_t   *p;
+	off_t	 secoff;
+	size_t   npsections;
 };
 
 /*
@@ -88,8 +89,7 @@ struct note_state {
 	unsigned int     ns_offset;      /* Write point in last buffer */
 };
 
-static int	ELFNAMEEND(coredump_getseghdrs)(struct proc *,
-		    struct uvm_coredump_state *);
+static int	ELFNAMEEND(coredump_getseghdrs)(struct uvm_coredump_state *);
 
 static int	ELFNAMEEND(coredump_notes)(struct lwp *, struct note_state *);
 static int	ELFNAMEEND(coredump_note)(struct lwp *, struct note_state *);
@@ -265,7 +265,7 @@ ELFNAMEEND(coredump)(struct lwp *l, struct coredump_iostate *cookie)
 }
 
 static int
-ELFNAMEEND(coredump_getseghdrs)(struct proc *p, struct uvm_coredump_state *us)
+ELFNAMEEND(coredump_getseghdrs)(struct uvm_coredump_state *us)
 {
 	struct writesegs_state *ws = us->cookie;
 	Elf_Phdr phdr;
@@ -290,7 +290,7 @@ ELFNAMEEND(coredump_getseghdrs)(struct proc *p, struct uvm_coredump_state *us)
 		int i;
 
 		end -= slen;
-		if ((error = copyin_proc(p, (void *)end, buf, slen)) != 0)
+		if ((error = copyin_proc(ws->p, (void *)end, buf, slen)) != 0)
 			return error;
 
 		ep = (const long *) &buf[slen / sizeof(buf[0])];
@@ -397,18 +397,20 @@ ELFNAMEEND(coredump_notes)(struct lwp *l, struct note_state *ns)
 
 	/*
 	 * Now, for each LWP, write the register info and any other
-	 * per-LWP notes.  Since we're dumping core, we don't bother
-	 * locking.
+	 * per-LWP notes.
+	 * Lock in case this is a gcore requested dump.
 	 */
+	mutex_enter(p->p_lock);
 	LIST_FOREACH(l0, &p->p_lwps, l_sibling) {
 		if (l0 == l)		/* we've taken care of this thread */
 			continue;
 		error = ELFNAMEEND(coredump_note)(l0, ns);
 		if (error)
-			return (error);
+			break;
 	}
+	mutex_exit(p->p_lock);
 
-	return (0);
+	return error;
 }
 
 static int
