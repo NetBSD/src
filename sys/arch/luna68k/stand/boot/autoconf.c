@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.8 2014/01/03 02:03:12 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.9 2014/01/03 03:25:25 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -195,10 +195,7 @@ find_controller(struct hp_hw *hw)
 		hc->hp_alive = 1;
 		printf("%s%d", hc->hp_driver->d_name, hc->hp_unit);
 		printf(" at %p,", hc->hp_addr);
-		printf(" ipl %d", hc->hp_ipl);
-		if (hc->hp_flags)
-			printf(" flags 0x%x", hc->hp_flags);
-		printf("\n");
+		printf(" ipl %d\n", hc->hp_ipl);
 		find_slaves(hc);
 	} else
 		hc->hp_addr = oaddr;
@@ -218,13 +215,13 @@ find_device(struct hp_hw *hw)
 		       hw->hw_name, hw->hw_sc, (u_int)hw->hw_addr, hw->hw_type);
 #endif
 	match_d = NULL;
-	for (hd = hp_dinit; hd->hp_driver; hd++) {
-		if (hd->hp_alive)
+	for (hd = hp_dinit; hd->hpd_driver; hd++) {
+		if (hd->hpd_alive)
 			continue;
 		/* Must not be a slave */
-		if (hd->hp_cdriver)
+		if (hd->hpd_cdriver)
 			continue;
-		addr = hd->hp_addr;
+		addr = hd->hpd_addr;
 		/*
 		 * Exact match; all done.
 		 */
@@ -243,8 +240,8 @@ find_device(struct hp_hw *hw)
 	if (acdebug) {
 		if (match_d)
 			printf("found %s%d\n",
-			       match_d->hp_driver->d_name,
-			       match_d->hp_unit);
+			       match_d->hpd_driver->d_name,
+			       match_d->hpd_unit);
 		else
 			printf("not found\n");
 	}
@@ -260,19 +257,14 @@ find_device(struct hp_hw *hw)
 	 * Note, we can still fail if HW won't initialize.
 	 */
 	hd = match_d;
-	oaddr = hd->hp_addr;
-	hd->hp_addr = hw->hw_addr;
-	if ((*hd->hp_driver->d_init)(hd)) {
-		hd->hp_alive = 1;
-		printf("%s%d", hd->hp_driver->d_name, hd->hp_unit);
-		printf(" at %p", hd->hp_addr);
-		if (hd->hp_ipl)
-			printf(", ipl %d", hd->hp_ipl);
-		if (hd->hp_flags)
-			printf(", flags 0x%x", hd->hp_flags);
-		printf("\n");
+	oaddr = hd->hpd_addr;
+	hd->hpd_addr = hw->hw_addr;
+	if ((*hd->hpd_driver->d_init)(hd)) {
+		hd->hpd_alive = 1;
+		printf("%s%d", hd->hpd_driver->d_name, hd->hpd_unit);
+		printf(" at %p\n", hd->hpd_addr);
 	} else
-		hd->hp_addr = oaddr;
+		hd->hpd_addr = oaddr;
 	return(1);
 }
 
@@ -303,7 +295,7 @@ find_slaves(struct hp_ctlr *hc)
 	for (s = 0; s < maxslaves; s++) {
 		rescan = 1;
 		match_s = NULL;
-		for (hd = hp_dinit; hd->hp_driver; hd++) {
+		for (hd = hp_dinit; hd->hpd_driver; hd++) {
 			/*
 			 * Rule out the easy ones:
 			 * 1. slave already assigned or not a slave
@@ -311,13 +303,13 @@ find_slaves(struct hp_ctlr *hc)
 			 * 3. controller specified but not this one
 			 * 4. slave specified but not this one
 			 */
-			if (hd->hp_alive || hd->hp_cdriver == NULL)
+			if (hd->hpd_alive || hd->hpd_cdriver == NULL)
 				continue;
-			if (!dr_type(hc->hp_driver, hd->hp_cdriver->d_name))
+			if (!dr_type(hc->hp_driver, hd->hpd_cdriver->d_name))
 				continue;
-			if (hd->hp_ctlr >= 0 && hd->hp_ctlr != hc->hp_unit)
+			if (hd->hpd_ctlr >= 0 && hd->hpd_ctlr != hc->hp_unit)
 				continue;
-			if (hd->hp_slave >= 0 && hd->hp_slave != s)
+			if (hd->hpd_slave >= 0 && hd->hpd_slave != s)
 				continue;
 			/*
 			 * Case 0: first possible match.
@@ -336,7 +328,7 @@ find_slaves(struct hp_ctlr *hc)
 			 * "reserve" locations for dynamic addition of
 			 * disk/tape drives by fully qualifing the location.
 			 */
-			if (hd->hp_slave == s && hd->hp_ctlr == hc->hp_unit) {
+			if (hd->hpd_slave == s && hd->hpd_ctlr == hc->hp_unit) {
 				match_s = hd;
 				rescan = 0;
 				break;
@@ -345,8 +337,8 @@ find_slaves(struct hp_ctlr *hc)
 			 * Case 2: right controller, wildcarded slave.
 			 * Remember first and keep looking for an exact match.
 			 */
-			if (hd->hp_ctlr == hc->hp_unit &&
-			    match_s->hp_ctlr < 0) {
+			if (hd->hpd_ctlr == hc->hp_unit &&
+			    match_s->hpd_ctlr < 0) {
 				match_s = hd;
 				new_s = s;
 				continue;
@@ -355,8 +347,8 @@ find_slaves(struct hp_ctlr *hc)
 			 * Case 3: right slave, wildcarded controller.
 			 * Remember and keep looking for a better match.
 			 */
-			if (hd->hp_slave == s &&
-			    match_s->hp_ctlr < 0 && match_s->hp_slave < 0) {
+			if (hd->hpd_slave == s &&
+			    match_s->hpd_ctlr < 0 && match_s->hpd_slave < 0) {
 				match_s = hd;
 				new_c = hc->hp_unit;
 				continue;
@@ -376,85 +368,39 @@ find_slaves(struct hp_ctlr *hc)
 		 */
 		if (match_s) {
 			hd = match_s;
-			old_c = hd->hp_ctlr;
-			old_s = hd->hp_slave;
-			if (hd->hp_ctlr < 0)
-				hd->hp_ctlr = new_c;
-			if (hd->hp_slave < 0)
-				hd->hp_slave = new_s;
+			old_c = hd->hpd_ctlr;
+			old_s = hd->hpd_slave;
+			if (hd->hpd_ctlr < 0)
+				hd->hpd_ctlr = new_c;
+			if (hd->hpd_slave < 0)
+				hd->hpd_slave = new_s;
 #ifdef DEBUG
 			if (acdebug)
 				printf("looking for %s%d at slave %d...",
-				       hd->hp_driver->d_name,
-				       hd->hp_unit, hd->hp_slave);
+				       hd->hpd_driver->d_name,
+				       hd->hpd_unit, hd->hpd_slave);
 #endif
 
-			if ((*hd->hp_driver->d_init)(hd)) {
+			if ((*hd->hpd_driver->d_init)(hd)) {
 #ifdef DEBUG
 				if (acdebug)
 					printf("found\n");
 #endif
-				printf("%s%d at %s%d, slave %d",
-				       hd->hp_driver->d_name, hd->hp_unit,
-				       hc->hp_driver->d_name, hd->hp_ctlr,
-				       hd->hp_slave);
-				if (hd->hp_flags)
-					printf(" flags 0x%x", hd->hp_flags);
-				printf("\n");
-				hd->hp_alive = 1;
-				if (hd->hp_dk && dkn < DK_NDRIVE)
-					hd->hp_dk = dkn++;
-				else
-					hd->hp_dk = -1;
+				printf("%s%d at %s%d, slave %d\n",
+				       hd->hpd_driver->d_name, hd->hpd_unit,
+				       hc->hp_driver->d_name, hd->hpd_ctlr,
+				       hd->hpd_slave);
+				hd->hpd_alive = 1;
 				rescan = 1;
 			} else {
 #ifdef DEBUG
 				if (acdebug)
 					printf("not found\n");
 #endif
-				hd->hp_ctlr = old_c;
-				hd->hp_slave = old_s;
-			}
-			/*
-			 * XXX: This should be handled better.
-			 * Re-scan a slave.  There are two reasons to do this.
-			 * 1. It is possible to have both a tape and disk
-			 *    (e.g. 7946) or two disks (e.g. 9122) at the
-			 *    same slave address.  Here we need to rescan
-			 *    looking only at entries with a different
-			 *    physical unit number (hp_flags).
-			 * 2. It is possible that an init failed because the
-			 *    slave was there but of the wrong type.  In this
-			 *    case it may still be possible to match the slave
-			 *    to another ioconf entry of a different type.
-			 *    Here we need to rescan looking only at entries
-			 *    of different types.
-			 * In both cases we avoid looking at undesirable
-			 * ioconf entries of the same type by setting their
-			 * alive fields to -1.
-			 */
-			if (rescan) {
-				for (hd = hp_dinit; hd->hp_driver; hd++) {
-					if (hd->hp_alive)
-						continue;
-					if (match_s->hp_alive == 1) {	/* 1 */
-						if (hd->hp_flags == match_s->hp_flags)
-							hd->hp_alive = -1;
-					} else {			/* 2 */
-						if (hd->hp_driver == match_s->hp_driver)
-							hd->hp_alive = -1;
-					}
-				}
-				s--;
-				continue;
+				hd->hpd_ctlr = old_c;
+				hd->hpd_slave = old_s;
 			}
 		}
-		/*
-		 * Reset bogon alive fields prior to attempting next slave
-		 */
-		for (hd = hp_dinit; hd->hp_driver; hd++)
-			if (hd->hp_alive == -1)
-				hd->hp_alive = 0;
 	}
 }
 
@@ -465,10 +411,10 @@ same_hw_device(struct hp_hw *hw, struct hp_device *hd)
 
 	switch (hw->hw_type) {
 	case NET:
-		found = dr_type(hd->hp_driver, "le");
+		found = dr_type(hd->hpd_driver, "le");
 		break;
 	case SCSI:
-		found = dr_type(hd->hp_driver, "scsi");
+		found = dr_type(hd->hpd_driver, "scsi");
 		break;
 	}
 	return(found);
