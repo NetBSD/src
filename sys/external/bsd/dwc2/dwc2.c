@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.24 2014/01/03 12:07:37 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.25 2014/01/03 12:20:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.24 2014/01/03 12:07:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.25 2014/01/03 12:20:26 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1381,15 +1381,15 @@ dwc2_device_start(usbd_xfer_handle xfer)
 	/* might need to check cpu_intr_p */
 	mutex_spin_enter(&hsotg->lock);
 
-	dwc2_urb->priv = xfer;
-	retval = dwc2_hcd_urb_enqueue(hsotg, dwc2_urb, &dpipe->priv, 0);
-	if (retval)
-		goto fail;
-
 	if (xfer->timeout && !sc->sc_bus.use_polling) {
 		callout_reset(&xfer->timeout_handle, mstohz(xfer->timeout),
 		    dwc2_timeout, xfer);
 	}
+
+	dwc2_urb->priv = xfer;
+	retval = dwc2_hcd_urb_enqueue(hsotg, dwc2_urb, &dpipe->priv, 0);
+	if (retval)
+		goto fail;
 
 	if (alloc_bandwidth) {
 		dwc2_allocate_bus_bandwidth(hsotg,
