@@ -1,4 +1,4 @@
-/* $NetBSD: duid.h,v 1.1.1.4 2014/01/03 22:10:44 roy Exp $ */
+/* $NetBSD: dhcpcd-embedded.h,v 1.1.1.1 2014/01/03 22:10:44 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -27,14 +27,7 @@
  * SUCH DAMAGE.
  */
 
-#ifndef DUID_H
-#define DUID_H
+#define INITDEFINES	      95
+#define INITDEFINE6S	      37
 
-#include "net.h"
-
-extern unsigned char *duid;
-extern size_t duid_len;
-
-size_t duid_init(const struct interface *);
-
-#endif
+extern const char *dhcpcd_embedded_conf[];

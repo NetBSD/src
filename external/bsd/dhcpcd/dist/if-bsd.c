@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if-bsd.c,v 1.1.1.21 2013/09/20 10:51:29 roy Exp $");
+ __RCSID("$NetBSD: if-bsd.c,v 1.1.1.22 2014/01/03 22:10:42 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -383,8 +383,9 @@ if_route6(const struct rt6 *rt, int action)
 #ifdef __KAME__
 #define SCOPE {								      \
 		if (IN6_IS_ADDR_LINKLOCAL(&su.sin.sin6_addr)) {		      \
-			*(uint16_t *)(void *)&su.sin.sin6_addr.s6_addr[2] =   \
-			    htons(su.sin.sin6_scope_id);		      \
+			uint16_t scope = htons(su.sin.sin6_scope_id);	      \
+			memcpy(&su.sin.sin6_addr.s6_addr[2], &scope,	      \
+			    sizeof(scope));				      \
 			su.sin.sin6_scope_id = 0;			      \
 		}							      \
 	}

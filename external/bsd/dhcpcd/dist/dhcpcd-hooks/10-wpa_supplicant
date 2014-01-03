@@ -1,10 +1,21 @@
-# $NetBSD: 10-wpa_supplicant,v 1.1.1.1 2013/06/21 19:33:08 roy Exp $
+# $NetBSD: 10-wpa_supplicant,v 1.1.1.2 2014/01/03 22:10:44 roy Exp $
 
 # Start, reconfigure and stop wpa_supplicant per wireless interface.
 # This is needed because wpa_supplicant lacks hotplugging of any kind
 # and the user should not be expected to have to wire it into their system
 # if the base system doesn't do this itself.
 
+if [ -z "$wpa_supplicant_conf" ]; then
+	for x in \
+		/etc/wpa_supplicant.conf \
+		/etc/wpa_supplicant/wpa_supplicant.conf \
+	; do
+		if [ -s "$x" ]; then
+			wpa_supplicant_conf="$x"
+			break
+		fi
+	done
+fi
 : ${wpa_supplicant_conf:=/etc/wpa_supplicant.conf}
 
 wpa_supplicant_start()

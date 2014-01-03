@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: net.c,v 1.1.1.23 2013/09/20 10:51:29 roy Exp $");
+ __RCSID("$NetBSD: net.c,v 1.1.1.24 2014/01/03 22:10:42 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -233,6 +233,7 @@ discover_interfaces(int argc, char * const *argv)
 	const struct sockaddr_in *addr;
 	const struct sockaddr_in *net;
 	const struct sockaddr_in *dst;
+#endif
 #ifdef INET6
 	const struct sockaddr_in6 *sin6;
 	int ifa_flags;
@@ -490,7 +491,6 @@ discover_interfaces(int argc, char * const *argv)
 #endif
 		}
 	}
-#endif
 
 	freeifaddrs(ifaddrs);
 
