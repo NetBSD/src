@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.3 2014/01/02 19:50:03 tsutsui Exp $	*/
+/*	$NetBSD: scsi.c,v 1.4 2014/01/03 07:17:19 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -89,13 +89,13 @@ int scsi_device = 6;
 u_char	sensbuff[SENSBUFF];				/* ８以上は無意味である。         */
 
 static struct scsi_inquiry inquirybuf;
-static struct scsi_fmt_cdb inquiry = {
+static struct scsi_generic_cdb inquiry = {
 	6,
 	{ CMD_INQUIRY, 0, 0, 0, sizeof(inquirybuf), 0 }
 };
 
 static u_long capacitybuf[2];
-struct scsi_fmt_cdb capacity = {
+struct scsi_generic_cdb capacity = {
 	10,
 	{ CMD_READ_CAPACITY, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 };
@@ -187,7 +187,7 @@ scsi(int argc, char *argv[])
 	return(ST_NORMAL);
 }
 
-static struct scsi_fmt_cdb scsi_cdb = {
+static struct scsi_generic_cdb scsi_cdb = {
 	10,
 	{ 0,  0, 0, 0, 0, 0, 0, 0, 0, 0 }
 };
@@ -195,7 +195,7 @@ static struct scsi_fmt_cdb scsi_cdb = {
 int
 scsi_read_raw(u_int target, u_int blk, u_int nblk, u_char *buff, u_int len)
 {
-	struct scsi_fmt_cdb *cdb = &scsi_cdb;
+	struct scsi_generic_cdb *cdb = &scsi_cdb;
 
 	cdb->cdb[0] = CMD_READ_EXT;
 	
@@ -224,7 +224,7 @@ scsi_read(u_int blk, u_char *buff, u_int len)
 int
 scsi_write(u_int blk, u_char *buff, u_int len)
 {
-	struct scsi_fmt_cdb *cdb = &scsi_cdb;
+	struct scsi_generic_cdb *cdb = &scsi_cdb;
 
 	cdb->cdb[0] = CMD_WRITE_EXT;
 	
