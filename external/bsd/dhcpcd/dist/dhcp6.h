@@ -1,4 +1,4 @@
-/* $NetBSD: dhcp6.h,v 1.1.1.3 2013/09/20 10:51:30 roy Exp $ */
+/* $NetBSD: dhcp6.h,v 1.1.1.4 2014/01/03 22:10:44 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -66,7 +66,8 @@
 #define D6_OPTION_UNICAST		12
 #define D6_OPTION_STATUS_CODE		13
 #define D6_OPTION_RAPID_COMMIT		14
-#define D6_OPTION_VENDOR		16
+#define D6_OPTION_VENDOR_CLASS		16
+#define D6_OPTION_VENDOR_OPTS		17
 #define D6_OPTION_SIP_SERVERS_NAME	21
 #define D6_OPTION_SIP_SERVERS_ADDRESS	22
 #define D6_OPTION_DNS_SERVERS		23
@@ -91,7 +92,6 @@
 
 #include "dhcp.h"
 #include "ipv6.h"
-extern const struct dhcp_opt dhcp6_opts[];
 
 struct dhcp6_message {
 	uint8_t type;
@@ -143,6 +143,10 @@ struct dhcp6_status {
 #define REC_TIMEOUT		2
 #define REC_MAX_RC		8
 #define HOP_COUNT_LIMIT		32
+
+/* RFC4242 3.1 */
+#define IRT_DEFAULT		86400
+#define IRT_MINIMUM		600
 
 #define DHCP6_RAND_MIN		-100
 #define DHCP6_RAND_MAX		100
@@ -220,6 +224,9 @@ struct dhcp6_state {
     ((const uint8_t *)(o) + sizeof(struct dhcp6_option))
 
 #ifdef INET6
+extern struct dhcp_opt *dhcp6_opts;
+extern size_t dhcp6_opts_len;
+
 void dhcp6_printoptions(void);
 int dhcp6_addrexists(const struct ipv6_addr *);
 int dhcp6_find_delegates(struct interface *);
