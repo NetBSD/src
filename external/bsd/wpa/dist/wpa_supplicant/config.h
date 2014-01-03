@@ -1,15 +1,9 @@
 /*
  * WPA Supplicant / Configuration file structures
- * Copyright (c) 2003-2005, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2003-2012, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #ifndef CONFIG_H
@@ -24,6 +18,7 @@
 #define DEFAULT_FAST_REAUTH 1
 #define DEFAULT_P2P_GO_INTENT 7
 #define DEFAULT_P2P_INTRA_BSS 1
+#define DEFAULT_P2P_GO_MAX_INACTIVITY (5 * 60)
 #define DEFAULT_BSS_MAX_COUNT 200
 #define DEFAULT_BSS_EXPIRATION_AGE 180
 #define DEFAULT_BSS_EXPIRATION_SCAN_COUNT 2
@@ -32,6 +27,182 @@
 
 #include "config_ssid.h"
 #include "wps/wps.h"
+#include "common/ieee802_11_common.h"
+
+
+struct wpa_cred {
+	/**
+	 * next - Next credential in the list
+	 *
+	 * This pointer can be used to iterate over all credentials. The head
+	 * of this list is stored in the cred field of struct wpa_config.
+	 */
+	struct wpa_cred *next;
+
+	/**
+	 * id - Unique id for the credential
+	 *
+	 * This identifier is used as a unique identifier for each credential
+	 * block when using the control interface. Each credential is allocated
+	 * an id when it is being created, either when reading the
+	 * configuration file or when a new credential is added through the
+	 * control interface.
+	 */
+	int id;
+
+	/**
+	 * priority - Priority group
+	 *
+	 * By default, all networks and credentials get the same priority group
+	 * (0). This field can be used to give higher priority for credentials
+	 * (and similarly in struct wpa_ssid for network blocks) to change the
+	 * Interworking automatic networking selection behavior. The matching
+	 * network (based on either an enabled network block or a credential)
+	 * with the highest priority value will be selected.
+	 */
+	int priority;
+
+	/**
+	 * pcsc - Use PC/SC and SIM/USIM card
+	 */
+	int pcsc;
+
+	/**
+	 * realm - Home Realm for Interworking
+	 */
+	char *realm;
+
+	/**
+	 * username - Username for Interworking network selection
+	 */
+	char *username;
+
+	/**
+	 * password - Password for Interworking network selection
+	 */
+	char *password;
+
+	/**
+	 * ext_password - Whether password is a name for external storage
+	 */
+	int ext_password;
+
+	/**
+	 * ca_cert - CA certificate for Interworking network selection
+	 */
+	char *ca_cert;
+
+	/**
+	 * client_cert - File path to client certificate file (PEM/DER)
+	 *
+	 * This field is used with Interworking networking selection for a case
+	 * where client certificate/private key is used for authentication
+	 * (EAP-TLS). Full path to the file should be used since working
+	 * directory may change when wpa_supplicant is run in the background.
+	 *
+	 * Alternatively, a named configuration blob can be used by setting
+	 * this to blob://blob_name.
+	 */
+	char *client_cert;
+
+	/**
+	 * private_key - File path to client private key file (PEM/DER/PFX)
+	 *
+	 * When PKCS#12/PFX file (.p12/.pfx) is used, client_cert should be
+	 * commented out. Both the private key and certificate will be read
+	 * from the PKCS#12 file in this case. Full path to the file should be
+	 * used since working directory may change when wpa_supplicant is run
+	 * in the background.
+	 *
+	 * Windows certificate store can be used by leaving client_cert out and
+	 * configuring private_key in one of the following formats:
+	 *
+	 * cert://substring_to_match
+	 *
+	 * hash://certificate_thumbprint_in_hex
+	 *
+	 * For example: private_key="hash://63093aa9c47f56ae88334c7b65a4"
+	 *
+	 * Note that when running wpa_supplicant as an application, the user
+	 * certificate store (My user account) is used, whereas computer store
+	 * (Computer account) is used when running wpasvc as a service.
+	 *
+	 * Alternatively, a named configuration blob can be used by setting
+	 * this to blob://blob_name.
+	 */
+	char *private_key;
+
+	/**
+	 * private_key_passwd - Password for private key file
+	 */
+	char *private_key_passwd;
+
+	/**
+	 * imsi - IMSI in <MCC> | <MNC> | '-' | <MSIN> format
+	 */
+	char *imsi;
+
+	/**
+	 * milenage - Milenage parameters for SIM/USIM simulator in
+	 *	<Ki>:<OPc>:<SQN> format
+	 */
+	char *milenage;
+
+	/**
+	 * domain - Home service provider FQDN
+	 *
+	 * This is used to compare against the Domain Name List to figure out
+	 * whether the AP is operated by the Home SP.
+	 */
+	char *domain;
+
+	/**
+	 * roaming_consortium - Roaming Consortium OI
+	 *
+	 * If roaming_consortium_len is non-zero, this field contains the
+	 * Roaming Consortium OI that can be used to determine which access
+	 * points support authentication with this credential. This is an
+	 * alternative to the use of the realm parameter. When using Roaming
+	 * Consortium to match the network, the EAP parameters need to be
+	 * pre-configured with the credential since the NAI Realm information
+	 * may not be available or fetched.
+	 */
+	u8 roaming_consortium[15];
+
+	/**
+	 * roaming_consortium_len - Length of roaming_consortium
+	 */
+	size_t roaming_consortium_len;
+
+	/**
+	 * eap_method - EAP method to use
+	 *
+	 * Pre-configured EAP method to use with this credential or %NULL to
+	 * indicate no EAP method is selected, i.e., the method will be
+	 * selected automatically based on ANQP information.
+	 */
+	struct eap_method_type *eap_method;
+
+	/**
+	 * phase1 - Phase 1 (outer authentication) parameters
+	 *
+	 * Pre-configured EAP parameters or %NULL.
+	 */
+	char *phase1;
+
+	/**
+	 * phase2 - Phase 2 (inner authentication) parameters
+	 *
+	 * Pre-configured EAP parameters or %NULL.
+	 */
+	char *phase2;
+
+	struct excluded_ssid {
+		u8 ssid[MAX_SSID_LEN];
+		size_t ssid_len;
+	} *excluded_ssid;
+	size_t num_excluded_ssid;
+};
 
 
 #define CFG_CHANGED_DEVICE_NAME BIT(0)
@@ -48,6 +219,7 @@
 #define CFG_CHANGED_P2P_LISTEN_CHANNEL BIT(11)
 #define CFG_CHANGED_P2P_OPER_CHANNEL BIT(12)
 #define CFG_CHANGED_P2P_PREF_CHAN BIT(13)
+#define CFG_CHANGED_EXT_PW_BACKEND BIT(14)
 
 /**
  * struct wpa_config - wpa_supplicant configuration data
@@ -77,6 +249,13 @@ struct wpa_config {
 	 * pssid.
 	 */
 	int num_prio;
+
+	/**
+	 * cred - Head of the credential list
+	 *
+	 * This is the head for the list of all the configured credentials.
+	 */
+	struct wpa_cred *cred;
 
 	/**
 	 * eapol_version - IEEE 802.1X/EAPOL version number
@@ -118,6 +297,15 @@ struct wpa_config {
 	 * option in the lists) for key_mgmt, pairwise, group, proto variables.
 	 */
 	int ap_scan;
+
+	/**
+	 * disable_scan_offload - Disable automatic offloading of scan requests
+	 *
+	 * By default, %wpa_supplicant tries to offload scanning if the driver
+	 * indicates support for this (sched_scan). This configuration
+	 * parameter can be used to disable this offloading mechanism.
+	 */
+	int disable_scan_offload;
 
 	/**
 	 * ctrl_interface - Parameters for the control interface
@@ -216,6 +404,23 @@ struct wpa_config {
 	 * module is not loaded.
 	 */
 	char *pkcs11_module_path;
+
+	/**
+	 * pcsc_reader - PC/SC reader name prefix
+	 *
+	 * If not %NULL, PC/SC reader with a name that matches this prefix is
+	 * initialized for SIM/USIM access. Empty string can be used to match
+	 * the first available reader.
+	 */
+	char *pcsc_reader;
+
+	/**
+	 * pcsc_pin - PIN for USIM, GSM SIM, and smartcards
+	 *
+	 * This field is used to configure PIN for SIM/USIM for EAP-SIM and
+	 * EAP-AKA. If left out, this will be asked through control interface.
+	 */
+	char *pcsc_pin;
 
 	/**
 	 * driver_param - Driver interface parameters
@@ -366,6 +571,8 @@ struct wpa_config {
 	unsigned int num_p2p_pref_chan;
 	struct p2p_channel *p2p_pref_chan;
 
+	struct wpabuf *wps_vendor_ext_m1;
+
 #define MAX_WPS_VENDOR_EXT 10
 	/**
 	 * wps_vendor_ext - Vendor extension attributes in WPS
@@ -383,9 +590,12 @@ struct wpa_config {
 	 * state indefinitely until explicitly removed. As a P2P client, the
 	 * maximum idle time of P2P_MAX_CLIENT_IDLE seconds is enforced, i.e.,
 	 * this parameter is mainly meant for GO use and for P2P client, it can
-	 * only be used to reduce the default timeout to smaller value.
+	 * only be used to reduce the default timeout to smaller value. A
+	 * special value -1 can be used to configure immediate removal of the
+	 * group for P2P client role on any disconnection after the data
+	 * connection has been established.
 	 */
-	unsigned int p2p_group_idle;
+	int p2p_group_idle;
 
 	/**
 	 * bss_max_count - Maximum number of BSS entries to keep in memory
@@ -418,6 +628,14 @@ struct wpa_config {
 	 *   1 = only include configured SSIDs in scan results/BSS table
 	 */
 	int filter_ssids;
+
+	/**
+	 * filter_rssi - RSSI-based scan result filtering
+	 *
+	 * 0 = do not filter scan results
+	 * -n = filter scan results below -n dBm
+	 */
+	int filter_rssi;
 
 	/**
 	 * max_num_sta - Maximum number of STAs in an AP/P2P GO
@@ -458,35 +676,127 @@ struct wpa_config {
 	u8 hessid[ETH_ALEN];
 
 	/**
-	 * home_realm - Home Realm for Interworking
+	 * hs20 - Hotspot 2.0
 	 */
-	char *home_realm;
+	int hs20;
 
 	/**
-	 * home_username - Username for Interworking network selection
+	 * pbc_in_m1 - AP mode WPS probing workaround for PBC with Windows 7
+	 *
+	 * Windows 7 uses incorrect way of figuring out AP's WPS capabilities
+	 * by acting as a Registrar and using M1 from the AP. The config
+	 * methods attribute in that message is supposed to indicate only the
+	 * configuration method supported by the AP in Enrollee role, i.e., to
+	 * add an external Registrar. For that case, PBC shall not be used and
+	 * as such, the PushButton config method is removed from M1 by default.
+	 * If pbc_in_m1=1 is included in the configuration file, the PushButton
+	 * config method is left in M1 (if included in config_methods
+	 * parameter) to allow Windows 7 to use PBC instead of PIN (e.g., from
+	 * a label in the AP).
 	 */
-	char *home_username;
+	int pbc_in_m1;
 
 	/**
-	 * home_password - Password for Interworking network selection
+	 * autoscan - Automatic scan parameters or %NULL if none
+	 *
+	 * This is an optional set of parameters for automatic scanning
+	 * within an interface in following format:
+	 * <autoscan module name>:<module parameters>
 	 */
-	char *home_password;
+	char *autoscan;
 
 	/**
-	 * home_ca_cert - CA certificate for Interworking network selection
+	 * wps_nfc_dev_pw_id - NFC Device Password ID for password token
 	 */
-	char *home_ca_cert;
+	int wps_nfc_dev_pw_id;
 
 	/**
-	 * home_imsi - IMSI in <MCC> | <MNC> | '-' | <MSIN> format
+	 * wps_nfc_dh_pubkey - NFC DH Public Key for password token
 	 */
-	char *home_imsi;
+	struct wpabuf *wps_nfc_dh_pubkey;
 
 	/**
-	 * home_milenage - Milenage parameters for SIM/USIM simulator in
-	 *	<Ki>:<OPc>:<SQN> format
+	 * wps_nfc_dh_privkey - NFC DH Private Key for password token
 	 */
-	char *home_milenage;
+	struct wpabuf *wps_nfc_dh_privkey;
+
+	/**
+	 * wps_nfc_dev_pw - NFC Device Password for password token
+	 */
+	struct wpabuf *wps_nfc_dev_pw;
+
+	/**
+	 * ext_password_backend - External password backend or %NULL if none
+	 *
+	 * format: <backend name>[:<optional backend parameters>]
+	 */
+	char *ext_password_backend;
+
+	/*
+	 * p2p_go_max_inactivity - Timeout in seconds to detect STA inactivity
+	 *
+	 * This timeout value is used in P2P GO mode to clean up
+	 * inactive stations.
+	 * By default: 300 seconds.
+	 */
+	int p2p_go_max_inactivity;
+
+	struct hostapd_wmm_ac_params wmm_ac_params[4];
+
+	/**
+	 * auto_interworking - Whether to use network selection automatically
+	 *
+	 * 0 = do not automatically go through Interworking network selection
+	 *     (i.e., require explicit interworking_select command for this)
+	 * 1 = perform Interworking network selection if one or more
+	 *     credentials have been configured and scan did not find a
+	 *     matching network block
+	 */
+	int auto_interworking;
+
+	/**
+	 * p2p_go_ht40 - Default mode for HT40 enable when operating as GO.
+	 *
+	 * This will take effect for p2p_group_add, p2p_connect, and p2p_invite.
+	 * Note that regulatory constraints and driver capabilities are
+	 * consulted anyway, so setting it to 1 can't do real harm.
+	 * By default: 0 (disabled)
+	 */
+	int p2p_go_ht40;
+
+	/**
+	 * p2p_disabled - Whether P2P operations are disabled for this interface
+	 */
+	int p2p_disabled;
+
+	/**
+	 * p2p_no_group_iface - Whether group interfaces can be used
+	 *
+	 * By default, wpa_supplicant will create a separate interface for P2P
+	 * group operations if the driver supports this. This functionality can
+	 * be disabled by setting this parameter to 1. In that case, the same
+	 * interface that was used for the P2P management operations is used
+	 * also for the group operation.
+	 */
+	int p2p_no_group_iface;
+
+	/**
+	 * okc - Whether to enable opportunistic key caching by default
+	 *
+	 * By default, OKC is disabled unless enabled by the per-network
+	 * proactive_key_caching=1 parameter. okc=1 can be used to change this
+	 * default behavior.
+	 */
+	int okc;
+
+	/**
+	 * pmf - Whether to enable/require PMF by default
+	 *
+	 * By default, PMF is disabled unless enabled by the per-network
+	 * ieee80211w=1 or ieee80211w=2 parameter. pmf=1/2 can be used to change
+	 * this default behavior.
+	 */
+	enum mfp_options pmf;
 };
 
 
@@ -518,6 +828,13 @@ void wpa_config_set_blob(struct wpa_config *config,
 			 struct wpa_config_blob *blob);
 void wpa_config_free_blob(struct wpa_config_blob *blob);
 int wpa_config_remove_blob(struct wpa_config *config, const char *name);
+
+struct wpa_cred * wpa_config_get_cred(struct wpa_config *config, int id);
+struct wpa_cred * wpa_config_add_cred(struct wpa_config *config);
+int wpa_config_remove_cred(struct wpa_config *config, int id);
+void wpa_config_free_cred(struct wpa_cred *cred);
+int wpa_config_set_cred(struct wpa_cred *cred, const char *var,
+			const char *value, int line);
 
 struct wpa_config * wpa_config_alloc_empty(const char *ctrl_interface,
 					   const char *driver_param);
