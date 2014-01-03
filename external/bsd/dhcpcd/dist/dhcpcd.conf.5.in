@@ -1,4 +1,4 @@
-.\"     $NetBSD: dhcpcd.conf.5.in,v 1.5 2013/09/20 21:39:59 wiz Exp $
+.\"     $NetBSD: dhcpcd.conf.5.in,v 1.6 2014/01/03 22:24:41 roy Exp $
 .\" Copyright (c) 2006-2013 Roy Marples
 .\" All rights reserved
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd September 12, 2013
+.Dd December 6, 2013
 .Dt DHCPCD.CONF 5
 .Os
 .Sh NAME
@@ -136,12 +136,24 @@ Generate an
 .Rs
 .%T "RFC 4361"
 .Re
-compliant clientid.
+compliant DHCP Unique Identifier.
 If persistent storage is available then a DUID-LLT (link local address + time)
 is generated, otherwise DUID-LL is generated (link local address).
+This, plus the IAID will be used as the
+.Ic clientid .
 The DUID-LLT generated will be held in
 .Pa @SYSCONFDIR@/dhcpcd.duid
 and should not be copied to other hosts.
+.It Ic iaid Ar iaid
+Set the Interface Association Identifier to
+.Ar iaid .
+This defaults to the last 4 bytes of the hardware address assigned to the
+interface.
+Each instance of this should be unique within the scope of the client and
+.Nm dhcpcd
+warns if a conflict is detected.
+If there is a conflict, it is only a problem if the conflicted IAIDs are
+used on the same network.
 .It Ic persistent
 .Nm dhcpcd
 normally de-configures the interface and configuration when it exits.
@@ -173,16 +185,19 @@ option above to control how the hostname is set on the host.
 .It Ic ia_na Op Ar iaid
 Request a DHCPv6 Normal Address for
 .Ar iaid .
-If none is specified, a default
 .Ar iaid
-is used.
-If the interface name is 4 characters or less then that is used,
-otherwise the interface index is used.
-You can request more than one ia_na by specifying a unique iaid for each one.
+defaults to the
+.Ic iaid
+option as described above.
+You can request more than one ia_na by specifying a unique
+.Ar iaid
+for each one.
 .It Ic ia_ta Op Ar iaid
 Request a DHCPv6 Temporary Address for
 .Ar iaid .
-You can request more than one ia_ta by specifying a unique iaid for each one.
+You can request more than one ia_ta by specifying a unique
+.Ar iaid
+for each one.
 .It Ic ia_pd Op Ar iaid Op Ar interface Op / Ar sla_id Op / Ar prefix_len
 Request a DHCPv6 Delegated Prefix for
 .Ar iaid .
@@ -286,12 +301,16 @@ So to stop
 .Nm dhcpcd
 from touching your DNS or MTU settings you would do:-
 .D1 nohook resolv.conf, mtu
+.It Ic noipv4
+Don't attempt to configure an IPv4 address.
 .It Ic noipv4ll
 Don't attempt to obtain an IPv4LL address if we failed to get one via DHCP.
 See
 .Rs
 .%T "RFC 3927"
 .Re
+.It Ic noipv6
+Don't attmept to configure an IPv6 address.
 .It Ic noipv6rs
 Disable solicitation and receipt of IPv6 Router Advertisements.
 .It Ic nolink
@@ -389,13 +408,25 @@ into the value.
 .D1 static ip_address=
 .D1 destination routers
 .It Ic timeout Ar seconds
-The default timeout for waiting for a DHCP response is 30 seconds which may
-be too long or too short and can be changed here.
+Timeout after
+.Ar seconds ,
+instead of the default 30.
 A setting of 0
 .Ar seconds
 causes
 .Nm dhcpcd
 to wait forever to get a lease.
+If
+.Nm dhcpcd
+is working on a single interface then
+.Nm dhcpcd
+will exit when a timeout occurs, otherwise
+.Nm dhcpcd
+will fork into the background.
+If using IPv4LL then
+.Nm dhcpcd
+start the IPv4LL process after the timeout and then wait a little longer
+before really timing out.
 .It Ic userclass Ar string
 Tag the DHCP messages with the userclass.
 You can specify more than one.
@@ -424,6 +455,16 @@ For example
 If not set then none is sent.
 Some badly configured DHCP servers reject unknown vendorclassids.
 To work around it, try and impersonate Windows by using the MSFT vendorclassid.
+.It Ic vendclass Ar en Ar data
+Add the Vendor Indetifying Vendor Class with the IANA assigned Enterprise
+Number
+.Ar en
+with the
+.Ar data .
+This option can be set more than once to add more data, but the behaviour,
+as per
+.Xr RFC 3925
+is undefined if the Enterprise Number differs.
 .It Ic waitip Op 4 | 6
 Wait for an address to be assigned before forking to the background.
 4 means wait for an IPv4 address to be assigned.
@@ -438,6 +479,138 @@ will only fork to the background when all waiting conditions are satisfied.
 Use the last four bytes of the hardware address as the DHCP xid instead
 of a randomly generated number.
 .El
+.Ss Defining new options
+DHCP allows for the use of custom options.
+Each option needs to be started with the
+.Ic define
+or
+.Ic define6
+directive.
+This can optionally be followed by both
+.Ic embed
+or
+.Ic encap
+options.
+Both can be specified more than once and
+.Ic embed
+must come before
+.Ic encap .
+.Bl -tag -width indent
+.It Ic define Ar code Ar type Ar variable
+Defines the DHCP option
+.Ar code
+of
+.Ar type
+with a name of
+.Ar variable
+exported to
+.Xr dhcpcd-run-hooks 8 .
+.It Ic define6 Ar code Ar type Ar variable
+Defines the DHCPv6 option
+.Ar code
+of
+.Ar type
+with a name of
+.Ar variable
+exported to
+.Xr dhcpcd-run-hooks 8 ,
+with a prefix of
+.Va _dhcp6 .
+.It Ic vendopt Ar code Ar type Ar variable
+Defines the Vendor-Identifying Vendor Options.
+The
+.Ar code
+is the IANA Enterprise Number which will unqiuely describe the encapsulated
+options.
+.Ar type
+is normally
+.Ar encap .
+.Ar variable
+names the Vendor option to be exported.
+.It Ic embed Ar type Ar variable
+Defines an embedded variable within the defined option.
+The length is determined by the
+.Ar type .
+If the
+.Ar variable
+is not the same as defined in the parent option,
+it is prefixed with the parent
+.Ar variable
+first with an underscore.
+.It Ic encap Ar code Ar type Ar variable
+Defines an encapsulated variable within the defined option.
+The length is determined by the
+.Ar type .
+If the
+.Ar variable
+is not the same as defined in the parent option,
+it is prefixed with the parent
+.Ar variable
+first with an underscore.
+.El
+.Ss Type prefix
+These keywords come before the type itself, to describe it more fully.
+You can use more than one, but they must appear in the order listed below.
+.Bl -tag -width -indent
+.It Ic request
+Requests the option by default without having to be specified in user
+configuration
+.It Ic norequest
+This option cannot be requested, regardless of user configuration
+.It Ic index
+The option can appear more than once and will be indexed.
+.It Ic array
+The option data is split into a space seperated array, each element being
+the same type.
+.El
+.Ss Types to define
+The type directly affects the length of data consumed inside the option.
+Any remaining data is normally discarded.
+Lengths can be specified for string and binhex types, but this is generally
+with other data embedded afterwards in the same option.
+.Bl -tag -width indent
+.It Ic ipaddress
+An IPv4 address, 4 bytes
+.It Ic ip6address
+An IPv6 address, 16 bytes
+.It Ic string Op : Ic length
+A shell escaped string (binary data escaped as octal)
+.It Ic byte
+A byte
+.It Ic int16
+A signed 16bit integer, 2 bytes
+.It Ic uint16
+An unsigned 16bit integer, 2 bytes
+.It Ic int32
+A signed 32bit integer, 4 bytes
+.It Ic uint32
+An unsigned 32bit integer, 4 bytes
+.It Ic flag 
+A fixed value (1) to indicate that the option is present, 0 bytes
+.It Ic domain
+A RFC 3397 encoded string
+.It Ic binhex Op : Ic length
+Binary data expressed as hexadecimal
+.It Ic embed
+Contains embedded options (implies encap as well)
+.It Ic encap
+Contains encapsulated options (implies embed as well)
+.It Ic option
+References an option from the global definition
+.El
+.Ss Example definition
+.D1 # DHCP option 81, Fully Qualified Domain Name, RFC4702
+.D1 define 81 embed fqdn
+.D1 embed byte flags
+.D1 embed byte rcode1
+.D1 embed byte rcode2
+.D1 embed domain fqdn
+.Pp
+.D1 # DHCP option 125, Vendor Specific Information Option, RFC3925
+.D1 define 125 encap vsio
+.D1 embed uint32 enterprise_number
+.D1 # Options defined for the enterprise number
+.D1 encap 1 ipaddress ipaddress
 .Sh SEE ALSO
 .Xr fnmatch 3 ,
 .Xr if_nametoindex 3 ,
@@ -446,5 +619,11 @@ of a randomly generated number.
 .Sh AUTHORS
 .An Roy Marples Aq Mt roy@marples.name
 .Sh BUGS
+When configuring DHCPv6 you can only select one IA type.
+I can't think of a use case where you would want different types,
+so if you have one then please bring it up for discussion on the
+.Aq Mt  dhcpcd-discuss@marples.name
+mailing list.
+.Pp
 Please report them to
 .Lk http://roy.marples.name/projects/dhcpcd
