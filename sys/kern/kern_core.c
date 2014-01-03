@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_core.c,v 1.21 2014/01/01 18:57:16 dsl Exp $	*/
+/*	$NetBSD: kern_core.c,v 1.22 2014/01/03 20:52:47 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.21 2014/01/01 18:57:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.22 2014/01/03 20:52:47 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -303,10 +303,9 @@ coredump_buildname(struct proc *p, char *dst, const char *src, size_t len)
 }
 
 int
-coredump_write(struct coredump_iostate *cookie, enum uio_seg segflg,
+coredump_write(struct coredump_iostate *io, enum uio_seg segflg,
     const void *data, size_t len)
 {
-	struct coredump_iostate *io = cookie;
 	int error;
 
 	error = vn_rdwr(UIO_WRITE, io->io_vp, __UNCONST(data), len,
@@ -323,4 +322,10 @@ coredump_write(struct coredump_iostate *cookie, enum uio_seg segflg,
 
 	io->io_offset += len;
 	return (0);
+}
+
+off_t
+coredump_offset(struct coredump_iostate *io)
+{
+	return io->io_offset; 
 }

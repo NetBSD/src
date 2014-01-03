@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.143 2014/01/01 18:57:16 dsl Exp $	*/
+/*	$NetBSD: exec.h,v 1.144 2014/01/03 20:52:47 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -275,6 +275,7 @@ int	exec_setup_stack	(struct lwp *, struct exec_package *);
 
 int	coredump_write		(struct coredump_iostate *, enum uio_seg,
 				    const void *, size_t);
+off_t	coredump_offset		(struct coredump_iostate *);
 
 void	exec_free_emul_arg	(struct exec_package *);
 
