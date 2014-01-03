@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.23 2014/01/02 15:54:10 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.24 2014/01/03 12:07:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.23 2014/01/02 15:54:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.24 2014/01/03 12:07:37 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -343,7 +343,8 @@ dwc2_softintr(void *v)
 	mutex_spin_enter(&hsotg->lock);
 	while ((dxfer = TAILQ_FIRST(&sc->sc_complete)) != NULL) {
 
-    		KASSERT(!callout_pending(&dxfer->xfer.timeout_handle));
+    		KASSERTMSG(!callout_pending(&dxfer->xfer.timeout_handle), 
+		    "xfer %p pipe %p\n", dxfer, dxfer->xfer.pipe);
 
 		/*
 		 * dwc2_abort_xfer will remove this transfer from the
@@ -1701,6 +1702,8 @@ void dwc2_host_complete(struct dwc2_hsotg *hsotg, struct dwc2_qtd *qtd,
 	xfertype = UE_GET_XFERTYPE(ed->bmAttributes);
 
 	xfer->actlen = dwc2_hcd_urb_get_actual_length(qtd->urb);
+
+	DPRINTFN(3, "xfer=%p actlen=%d\n", xfer, xfer->actlen);
 
 	if (xfertype == UE_ISOCHRONOUS && dbg_perio()) {
 		int i;
