@@ -1,4 +1,4 @@
-/*	$NetBSD: ct65550.c,v 1.9 2014/01/03 15:57:12 macallan Exp $	*/
+/*	$NetBSD: ct65550.c,v 1.10 2014/01/04 16:37:05 macallan Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct65550.c,v 1.9 2014/01/03 15:57:12 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct65550.c,v 1.10 2014/01/04 16:37:05 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,7 @@ chipsfb_read_vga(struct chipsfb_softc *sc, uint32_t reg)
 	return bus_space_read_1(sc->sc_iot, sc->sc_ioregh, reg);
 }
 
-__unused static inline uint8_t
+static inline uint8_t
 chipsfb_read_indexed(struct chipsfb_softc *sc, uint32_t reg, uint8_t index)
 {
 
@@ -159,7 +159,7 @@ chipsfb_read_indexed(struct chipsfb_softc *sc, uint32_t reg, uint8_t index)
 	return chipsfb_read_vga(sc, reg | 0x0001);
 }
 
-static inline void
+__unused static inline void
 chipsfb_write_indexed(struct chipsfb_softc *sc, uint32_t reg, uint8_t index,
     uint8_t val)
 {
