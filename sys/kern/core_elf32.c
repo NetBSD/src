@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.41 2014/01/03 21:34:40 dsl Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.42 2014/01/04 00:10:03 dsl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.41 2014/01/03 21:34:40 dsl Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.42 2014/01/04 00:10:03 dsl Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_coredump.h"
@@ -98,11 +98,7 @@ static int	ELFNAMEEND(coredump_note)(struct lwp *, struct note_state *);
 #define	ELFROUNDSIZE	4	/* XXX Should it be sizeof(Elf_Word)? */
 
 #define elf_process_read_regs	CONCAT(process_read_regs, ELFSIZE)
-#ifdef __HAVE_PROCESS_XFPREGS
-#define elf_process_read_xfpregs CONCAT(process_read_xfpregs, ELFSIZE)
-#else
 #define elf_process_read_fpregs	CONCAT(process_read_fpregs, ELFSIZE)
-#endif
 #define elf_reg			CONCAT(process_reg, ELFSIZE)
 #define elf_fpreg		CONCAT(process_fpreg, ELFSIZE)
 
@@ -432,11 +428,7 @@ ELFNAMEEND(coredump_note)(struct lwp *l, struct note_state *ns)
 
 #ifdef PT_GETFPREGS
 	freglen = sizeof(freg);
-#ifdef __HAVE_PROCESS_XFPREGS
-	error = elf_process_read_xfpregs(l, &freg, &freglen);
-#else
-	error = elf_process_read_fpregs(l, &freg);
-#endif
+	error = elf_process_read_fpregs(l, &freg, &freglen);
 	if (error)
 		return (error);
 

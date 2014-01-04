@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.17 2012/02/19 21:06:02 rmind Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.18 2014/01/04 00:10:02 dsl Exp $	*/
 
 #ifndef _MACHINE_NETBSD32_H_
 #define _MACHINE_NETBSD32_H_
@@ -151,6 +151,10 @@ struct fpacc87 {
 struct save87 {
 	struct env87	sv_env;
 	struct fpacc87	sv_ac[8];
+	/*
+	 * The fields below are not in the 'struct fpreg32' that is
+	 * otherwise the same as this structure (for coredumps).
+	 */
 	int32_t		sv_ex_sw;
 	int32_t		sv_ex_tw;
 	uint8_t		sv_pad[8 * 2 - 2 * 4];
@@ -159,6 +163,6 @@ struct save87 {
 #define NETBSD32_MID_MACHINE MID_I386
 
 int netbsd32_process_read_regs(struct lwp *, struct reg32 *);
-int netbsd32_process_read_fpregs(struct lwp *, struct fpreg32 *);
+int netbsd32_process_read_fpregs(struct lwp *, struct fpreg32 *, size_t *);
 
 #endif /* _MACHINE_NETBSD32_H_ */

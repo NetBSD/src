@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.24 2013/12/12 22:41:03 dsl Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.25 2014/01/04 00:10:02 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.24 2013/12/12 22:41:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.25 2014/01/04 00:10:02 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ process_read_regs(struct lwp *l, struct reg *regs)
 }
 
 int
-process_read_fpregs(struct lwp *l, struct fpreg *regs)
+process_read_fpregs(struct lwp *l, struct fpreg *regs,size_t *sz)
 {
 	struct fxsave64 *frame = process_fpframe(l);
 
@@ -158,7 +158,7 @@ process_write_regs(struct lwp *l, const struct reg *regp)
 }
 
 int
-process_write_fpregs(struct lwp *l, const struct fpreg *regs)
+process_write_fpregs(struct lwp *l, const struct fpreg *regs, size_t sz)
 {
 	struct fxsave64 *frame = process_fpframe(l);
 

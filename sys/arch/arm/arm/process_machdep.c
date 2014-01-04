@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.28 2013/10/14 18:14:08 skrll Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.29 2014/01/04 00:10:02 dsl Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -133,7 +133,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.28 2013/10/14 18:14:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.29 2014/01/04 00:10:02 dsl Exp $");
 
 #include <sys/proc.h>
 #include <sys/ptrace.h>
@@ -172,7 +172,7 @@ process_read_regs(struct lwp *l, struct reg *regs)
 }
 
 int
-process_read_fpregs(struct lwp *l, struct fpreg *regs)
+process_read_fpregs(struct lwp *l, struct fpreg *regs, size_t *sz)
 {
 #ifdef FPU_VFP
 	if (curcpu()->ci_vfp_id == 0) {
@@ -220,7 +220,7 @@ process_write_regs(struct lwp *l, const struct reg *regs)
 }
 
 int
-process_write_fpregs(struct lwp *l, const struct fpreg *regs)
+process_write_fpregs(struct lwp *l, const struct fpreg *regs, size_t sz)
 {
 #ifdef FPU_VFP
 	if (curcpu()->ci_vfp_id == 0) {

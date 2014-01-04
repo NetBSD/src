@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.43 2013/12/01 01:05:16 christos Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.44 2014/01/04 00:10:03 dsl Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.43 2013/12/01 01:05:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.44 2014/01/04 00:10:03 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -229,7 +229,8 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * Save FPU state, if any 
 	 */
 	if (fpsp != NULL) {
-		(void)process_read_fpregs(l, &fpregs);
+		size_t fp_size = sizeof fpregs;
+		(void)process_read_fpregs(l, &fpregs, &fp_size);
 		memset(&fpstate, 0, sizeof(fpstate));
 		fpstate.cwd = fpregs.fp_fcw;
 		fpstate.swd = fpregs.fp_fsw;

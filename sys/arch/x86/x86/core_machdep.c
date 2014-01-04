@@ -1,4 +1,4 @@
-/*	$NetBSD: core_machdep.c,v 1.4 2014/01/01 18:57:16 dsl Exp $	*/
+/*	$NetBSD: core_machdep.c,v 1.5 2014/01/04 00:10:03 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.4 2014/01/01 18:57:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.5 2014/01/04 00:10:03 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,6 +115,7 @@ cpu_coredump(struct lwp *l, struct coredump_iostate *iocookie,
 {
 	struct md_core md_core;
 	struct coreseg cseg;
+	size_t fp_size;
 	int error;
 
 	if (iocookie == NULL) {
@@ -132,7 +133,8 @@ cpu_coredump(struct lwp *l, struct coredump_iostate *iocookie,
 		return error;
 
 	/* Save floating point registers. */
-	error = process_read_fpregs(l, &md_core.freg);
+	fp_size = sizeof md_core.freg;
+	error = process_read_fpregs(l, &md_core.freg, &fp_size);
 	if (error)
 		return error;
 

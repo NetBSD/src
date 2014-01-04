@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.26 2010/07/07 01:30:34 chs Exp $	*/
+/*	$NetBSD: linux_ptrace.c,v 1.27 2014/01/04 00:10:03 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.26 2010/07/07 01:30:34 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.27 2014/01/04 00:10:03 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -137,6 +137,7 @@ linux_sys_ptrace_arch(struct lwp *l, const struct linux_sys_ptrace_args *uap,
 	struct linux_fpctx *linux_fpregs = NULL;
 	struct linux_emuldata *led;
 	int request, error, addr;
+	size_t fp_size;
 
 	if (linux_ptrace_disabled)
 		return ENOSYS;
@@ -264,17 +265,18 @@ linux_sys_ptrace_arch(struct lwp *l, const struct linux_sys_ptrace_args *uap,
 		break;
 
 	case LINUX_PTRACE_GETFPREGS:
-		error = process_read_fpregs(lt, fpregs);
+		fp_size = sizeof fpregs;
+		error = process_read_fpregs(lt, fpregs, &fp_size);
 		mutex_exit(t->p_lock);
 		if (error) {
 			break;
 		}
 		/* Zero the contents if NetBSD fpreg structure is smaller */
-		if (sizeof(struct fpreg) < sizeof(struct linux_fpctx)) {
+		if (fp_size < sizeof(struct linux_fpctx)) {
 			memset(linux_fpregs, '\0', sizeof(struct linux_fpctx));
 		}
 		memcpy(linux_fpregs, fpregs,
-		    min(sizeof(struct linux_fpctx), sizeof(struct fpreg)));
+		    min(sizeof(struct linux_fpctx), fp_size));
 		error = copyout(linux_fpregs, (void *)SCARG(uap, data),
 		    sizeof(struct linux_fpctx));
 		break;
