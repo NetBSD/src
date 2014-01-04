@@ -1,4 +1,4 @@
-/*	$NetBSD: core_machdep.c,v 1.3 2014/01/01 18:57:15 dsl Exp $	*/
+/*	$NetBSD: core_machdep.c,v 1.4 2014/01/04 00:10:02 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -37,7 +37,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.3 2014/01/01 18:57:15 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.4 2014/01/04 00:10:02 dsl Exp $");
 
 #include <sys/core.h>
 #include <sys/exec.h>
@@ -80,7 +80,7 @@ cpu_coredump(struct lwp *l, struct coredump_iostate *iocookie,
 	if (error)
 		return error;
 	/* Save floating point registers. */
-	error = process_read_fpregs(l, &cpustate.fpregs);
+	error = process_read_fpregs(l, &cpustate.fpregs, NULL);
 	if (error)
 		return error;
 
