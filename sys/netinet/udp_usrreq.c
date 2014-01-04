@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.192 2014/01/02 18:29:01 pooka Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.193 2014/01/04 14:18:12 pooka Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.192 2014/01/02 18:29:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.193 2014/01/04 14:18:12 pooka Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -231,6 +231,7 @@ do_udpinit(void)
 {
 
 	in_pcbinit(&udbtable, udbhashsize, udbhashsize);
+	udpstat_percpu = percpu_alloc(sizeof(uint64_t) * UDP_NSTATS);
 
 	MOWNER_ATTACH(&udp_tx_mowner);
 	MOWNER_ATTACH(&udp_rx_mowner);
@@ -252,7 +253,6 @@ udp_init(void)
 {
 
 	sysctl_net_inet_udp_setup(NULL);
-	udpstat_percpu = percpu_alloc(sizeof(uint64_t) * UDP_NSTATS);
 
 	udp_init_common();
 }
