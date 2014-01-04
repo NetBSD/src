@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.70 2014/01/01 16:06:01 pgoyette Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.71 2014/01/04 21:42:42 pgoyette Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.70 2014/01/01 16:06:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.71 2014/01/04 21:42:42 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2124,13 +2124,14 @@ crypto_match(device_t parent, cfdata_t data, void *opaque)
 	return 1;
 }
 
-MODULE(MODULE_CLASS_DRIVER, crypto, NULL);
+MODULE(MODULE_CLASS_DRIVER, crypto, "opencrypto");
 
 CFDRIVER_DECL(crypto, DV_DULL, NULL);
 
 CFATTACH_DECL2_NEW(crypto, 0, crypto_match, crypto_attach, crypto_detach,
     NULL, NULL, NULL);
 
+#ifdef _MODULE
 static int cryptoloc[] = { -1, -1 };
 
 static struct cfdata crypto_cfdata[] = {
@@ -2145,15 +2146,20 @@ static struct cfdata crypto_cfdata[] = {
 	},
 	{ NULL, NULL, 0, 0, NULL, 0, NULL }
 };
+#endif
 
 static int
 crypto_modcmd(modcmd_t cmd, void *arg)
 {
+	int error = 0;
+#ifdef _MODULE
 	devmajor_t cmajor = NODEVMAJOR, bmajor = NODEVMAJOR;
-	int error;
+#endif
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
+#ifdef _MODULE
+
 		error = config_cfdriver_attach(&crypto_cd);
 		if (error) {
 			return error;
@@ -2194,9 +2200,11 @@ crypto_modcmd(modcmd_t cmd, void *arg)
 		}
 
 		(void)config_attach_pseudo(crypto_cfdata);
+#endif
 
-		return 0;
+		return error;
 	case MODULE_CMD_FINI:
+#ifdef _MODULE
 		error = config_cfdata_detach(crypto_cfdata);
 		if (error) {
 			return error;
@@ -2205,8 +2213,9 @@ crypto_modcmd(modcmd_t cmd, void *arg)
 		config_cfattach_detach(crypto_cd.cd_name, &crypto_ca);
 		config_cfdriver_detach(&crypto_cd);
 		devsw_detach(NULL, &crypto_cdevsw);
+#endif
 
-		return 0;
+		return error;
 	default:
 		return ENOTTY;
 	}
