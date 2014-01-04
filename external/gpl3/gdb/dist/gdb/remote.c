@@ -5480,7 +5480,7 @@ remote_parse_stop_reply (char *buf, struct stop_reply *event)
 	     as a register number.  */
 
 	  if (strncmp (p, "awatch", strlen("awatch")) != 0
-	      && strncmp (p, "core", strlen ("core") != 0))
+	      && strncmp (p, "core", strlen ("core")) != 0)
 	    {
 	      /* Read the ``P'' register number.  */
 	      pnum = strtol (p, &p_temp, 16);
