@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.86 2014/01/01 18:57:15 dsl Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.87 2014/01/04 00:10:02 dsl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.86 2014/01/01 18:57:15 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.87 2014/01/04 00:10:02 dsl Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -486,7 +486,7 @@ cpu_coredump32(struct lwp *l, struct coredump_iostate *iocookie,
 		return error;
 
 	/* Save floating point registers. */
-	error = netbsd32_process_read_fpregs(l, &md_core.freg);
+	error = netbsd32_process_read_fpregs(l, &md_core.freg, NULL);
 	if (error)
 		return error;
 
@@ -569,10 +569,11 @@ xmm_to_s87_tag(const uint8_t *fpac, int regno, uint8_t tw)
 }
 
 int
-netbsd32_process_read_fpregs(struct lwp *l, struct fpreg32 *regs)
+netbsd32_process_read_fpregs(struct lwp *l, struct fpreg32 *regs, size_t *sz)
 {
 	struct fpreg regs64;
 	struct save87 *s87 = (struct save87 *)regs;
+	size_t fp_size;
 	int error, i;
 
 	union fp_addr {
@@ -596,7 +597,8 @@ netbsd32_process_read_fpregs(struct lwp *l, struct fpreg32 *regs)
 	 * All that stuff makes no sense in i386 code :(
 	 */
 
-	error = process_read_fpregs(l, &regs64);
+	fp_size = sizeof regs64;
+	error = process_read_fpregs(l, &regs64, &fp_size);
 	if (error)
 		return error;
 
