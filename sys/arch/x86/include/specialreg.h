@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.76 2014/01/04 19:08:43 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.77 2014/01/04 21:09:39 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -276,8 +276,9 @@
  * Power Management, Fn0000_0006 - %ecx.
  */
 #define CPUID_DSPM_HWF	0x00000001	/* MSR_APERF/MSR_MPERF available */
+#define CPUID_DSPM_EPB	0x00000008	/* Energy Performance Bias */
 
-#define CPUID_DSPM_FLAGS1	"\20" "\1" "HWF"
+#define CPUID_DSPM_FLAGS1	"\20" "\1" "HWF" "\4" "EPB"
 
 /*
  * Intel Structured Extended Feature leaf
