@@ -1,4 +1,4 @@
-.\"	$NetBSD: edid.9,v 1.8 2013/07/25 21:29:00 wiz Exp $
+.\"	$NetBSD: edid.9,v 1.9 2014/01/04 15:40:55 wiz Exp $
 .\"
 .\" Copyright 2006 Itronix Inc.
 .\" All rights reserved.
@@ -95,15 +95,6 @@ The
 .Fn edid_parse
 function returns zero if the data was successfully parsed, and
 non-zero otherwise.
-.Sh CODE REFERENCES
-The EDID subsystem is implemented within the file
-.Pa sys/dev/videomode/edid.c .
-.Pp
-The EDID subsystem also makes use of VESA Generalized Timing Formula located
-located in
-.Pa sys/dev/videomode/vesagtf.c
-and the generic videomode database located in
-.Pa sys/dev/videomode/videomode.c .
 .Sh EXAMPLES
 The following code uses these functions
 to retrieve and print information about a monitor:
@@ -121,6 +112,15 @@ to retrieve and print information about a monitor:
 		edid_print(&info);
 	...
 .Ed
+.Sh CODE REFERENCES
+The EDID subsystem is implemented within the file
+.Pa sys/dev/videomode/edid.c .
+.Pp
+The EDID subsystem also makes use of VESA Generalized Timing Formula located
+located in
+.Pa sys/dev/videomode/vesagtf.c
+and the generic videomode database located in
+.Pa sys/dev/videomode/videomode.c .
 .Sh SEE ALSO
 .Xr ddc 9 ,
 .Xr iic 9
