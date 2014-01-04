@@ -194,7 +194,7 @@
 #endif
 
 #ifndef _LIBCPP_EXCEPTION_ABI
-#define _LIBCPP_EXCEPTION_ABI _LIBCPP_TYPE_VIS
+#define _LIBCPP_EXCEPTION_ABI __attribute__ ((__visibility__("default")))
 #endif
 
 #ifndef _LIBCPP_ALWAYS_INLINE
@@ -326,9 +326,11 @@ typedef __char32_t char32_t;
 #if (__has_feature(cxx_noexcept))
 #  define _NOEXCEPT noexcept
 #  define _NOEXCEPT_(x) noexcept(x)
+#  define _NOEXCEPT_OR_FALSE(x) noexcept(x)
 #else
 #  define _NOEXCEPT throw()
 #  define _NOEXCEPT_(x)
+#  define _NOEXCEPT_OR_FALSE(x) false
 #endif
 
 #if __has_feature(underlying_type)
@@ -361,6 +363,7 @@ namespace std {
 
 #define _NOEXCEPT throw()
 #define _NOEXCEPT_(x)
+#define _NOEXCEPT_OR_FALSE(x) false
 
 #ifndef __GXX_EXPERIMENTAL_CXX0X__
 
@@ -374,6 +377,7 @@ namespace std {
 #define _LIBCPP_HAS_NO_VARIADICS
 #define _LIBCPP_HAS_NO_RVALUE_REFERENCES
 #define _LIBCPP_HAS_NO_ALWAYS_INLINE_VARIADICS
+#define _LIBCPP_HAS_NO_STRONG_ENUMS
 
 #else  // __GXX_EXPERIMENTAL_CXX0X__
 
@@ -432,6 +436,7 @@ using namespace _LIBCPP_NAMESPACE __attribute__((__strong__));
 
 #define _NOEXCEPT throw()
 #define _NOEXCEPT_(x)
+#define _NOEXCEPT_OR_FALSE(x) false
 
 #define _LIBCPP_BEGIN_NAMESPACE_STD namespace std {
 #define _LIBCPP_END_NAMESPACE_STD  }
@@ -450,6 +455,7 @@ namespace std {
 
 #define _NOEXCEPT throw()
 #define _NOEXCEPT_(x)
+#define _NOEXCEPT_OR_FALSE(x) false
 
 #define _LIBCPP_HAS_NO_TEMPLATE_ALIASES
 #define _LIBCPP_HAS_NO_ADVANCED_SFINAE
@@ -557,6 +563,7 @@ template <unsigned> struct __static_assert_check {};
 #if defined(__APPLE__) || defined(__FreeBSD__) || defined(_WIN32) || defined(__sun__) || defined(__NetBSD__)
 #define _LIBCPP_LOCALE__L_EXTENSIONS 1
 #endif
+
 #ifdef __FreeBSD__
 #define _DECLARE_C99_LDBL_MATH 1
 #endif
@@ -567,12 +574,6 @@ template <unsigned> struct __static_assert_check {};
 
 #if defined(__APPLE__) || defined(__FreeBSD__) || defined(__sun__)
 #define _LIBCPP_WCTYPE_IS_MASK
-#endif
-
-#if defined(__APPLE__)
-#ifndef _LIBCPP_TRIVIAL_PAIR_COPY_CTOR
-#  define _LIBCPP_TRIVIAL_PAIR_COPY_CTOR 0
-#endif
 #endif
 
 #ifndef _LIBCPP_TRIVIAL_PAIR_COPY_CTOR
