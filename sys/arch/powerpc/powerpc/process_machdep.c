@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.35 2011/09/27 01:02:36 jym Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.36 2014/01/04 00:10:03 dsl Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.35 2011/09/27 01:02:36 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.36 2014/01/04 00:10:03 dsl Exp $");
 
 #include "opt_altivec.h"
 
@@ -82,7 +82,7 @@ process_write_regs(struct lwp *l, const struct reg *regs)
 }
 
 int
-process_read_fpregs(struct lwp *l, struct fpreg *fpregs)
+process_read_fpregs(struct lwp *l, struct fpreg *fpregs, size_t *sz)
 {
 	struct pcb * const pcb = lwp_getpcb(l);
 
@@ -105,7 +105,7 @@ process_read_fpregs(struct lwp *l, struct fpreg *fpregs)
 }
 
 int
-process_write_fpregs(struct lwp *l, const struct fpreg *fpregs)
+process_write_fpregs(struct lwp *l, const struct fpreg *fpregs, size_t sz)
 {
 	struct pcb * const pcb = lwp_getpcb(l);
 
