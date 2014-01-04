@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_buffer.c,v 1.2 2013/04/11 16:56:42 christos Exp $	*/
+/*	$NetBSD: regress_buffer.c,v 1.3 2014/01/04 02:56:31 joerg Exp $	*/
 /*
  * Copyright (c) 2003-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -33,7 +33,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: regress_buffer.c,v 1.2 2013/04/11 16:56:42 christos Exp $");
+__RCSID("$NetBSD: regress_buffer.c,v 1.3 2014/01/04 02:56:31 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -247,7 +247,7 @@ test_evbuffer(void *ptr)
 	if (memcmp(evbuffer_pullup(
 			   evb, -1), buffer, sizeof(buffer) / 2) != 0 ||
 	    memcmp(evbuffer_pullup(
-			   evb_two, -1), buffer, sizeof(buffer) != 0))
+			   evb_two, -1), buffer, sizeof(buffer)) != 0)
 		tt_abort_msg("Pullup did not preserve content");
 
 	evbuffer_validate(evb);
