@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.101 2014/01/01 18:57:16 dsl Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.102 2014/01/04 00:10:03 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.101 2014/01/01 18:57:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.102 2014/01/04 00:10:03 dsl Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -641,7 +641,7 @@ netbsd32_process_write_regs(struct lwp *l, const struct reg32 *regs)
 #endif
 
 int
-netbsd32_process_read_fpregs(struct lwp *l, struct fpreg32 *regs)
+netbsd32_process_read_fpregs(struct lwp *l, struct fpreg32 *regs, size_t *sz)
 {
 	extern const struct fpstate64 initfpstate;
 	const struct fpstate64	*statep = &initfpstate;
