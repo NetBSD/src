@@ -1,4 +1,4 @@
-/*	$NetBSD: core_machdep.c,v 1.5 2014/01/01 18:57:15 dsl Exp $	*/
+/*	$NetBSD: core_machdep.c,v 1.6 2014/01/04 00:10:02 dsl Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.25 2001/09/19 20:50:56 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.5 2014/01/01 18:57:15 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.6 2014/01/04 00:10:02 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ cpu_coredump(struct lwp *l, struct coredump_iostate *iocookie,
 		return error;
 
 	/* Save floating point registers. */
-	error = process_read_fpregs(l, &md_core.md_fpreg);
+	error = process_read_fpregs(l, &md_core.md_fpreg, NULL);
 	if (error)
 		return error;
 
