@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.53 2013/12/23 12:35:33 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.54 2014/01/04 18:13:48 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.53 2013/12/23 12:35:33 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.54 2014/01/04 18:13:48 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -223,13 +223,13 @@ static void	cpu_probe_base_features(struct cpu_info *, const char *);
 static void	cpu_probe_features(struct cpu_info *);
 static void	print_bits(const char *, const char *, const char *, uint32_t);
 static void	identifycpu_cpuids(struct cpu_info *);
+static const struct x86_cache_info *cache_info_lookup(
+    const struct x86_cache_info *, uint8_t);
 static const char *print_cache_config(struct cpu_info *, int, const char *,
     const char *);
 static const char *print_tlb_config(struct cpu_info *, int, const char *,
     const char *);
-static const struct x86_cache_info *cache_info_lookup(
-    const struct x86_cache_info *, uint8_t);
-static void	x86_print_cacheinfo(struct cpu_info *);
+static void	x86_print_cache_and_tlb_info(struct cpu_info *);
 
 /*
  * Note: these are just the ones that may not have a cpuid instruction.
@@ -1432,11 +1432,12 @@ cpu_probe_base_features(struct cpu_info *ci, const char *cpuname)
 	ci->ci_vendor[2] = descs[2];
 	ci->ci_vendor[1] = descs[3];
 	ci->ci_vendor[3] = 0;
+
+	aprint_verbose("%s: highest basic info %08x\n", cpuname,
+	    ci->ci_cpuid_level);
 	if (verbose) {
 		int bf;
 		
-		printf("%s: cpuid basic function max = %08x\n", cpuname,
-		    descs[0]);
 		for (bf = 0; bf <= ci->ci_cpuid_level; bf++) {
 			x86_cpuid(bf, descs);
 			printf("%s: %08x: %08x %08x %08x %08x\n", cpuname,
@@ -1449,17 +1450,17 @@ cpu_probe_base_features(struct cpu_info *ci, const char *cpuname)
 	 * - Get cpuid extended function's max level.
 	 */
 	x86_cpuid(0x80000000, descs);
-	if (descs[0] >=  0x80000000)
+	if (descs[0] >=  0x80000000) {
 		ci->ci_cpuid_extlevel = descs[0];
-	else {
+		aprint_verbose("%s: highest extended info %08x\n", cpuname,
+		    ci->ci_cpuid_extlevel);
+	} else {
 		/* Set lower value than 0x80000000 */
 		ci->ci_cpuid_extlevel = 0;
 	}
 	if (verbose) {
 		unsigned int ef;
 
-		printf("%s: cpuid extended function max = %08x\n", cpuname,
-		    descs[0]);
 		for (ef = 0x80000000; ef <= ci->ci_cpuid_extlevel; ef++) {
 			x86_cpuid(ef, descs);
 			printf("%s: %08x: %08x %08x %08x %08x\n", cpuname,
@@ -1594,7 +1595,6 @@ identifycpu_cpuids(struct cpu_info *ci)
 	u_int core_max = 1;	/* core per package */
 	u_int smt_bits, core_bits;
 	uint32_t descs[4];
-	uint32_t highest_basic_info;
 
 	aprint_verbose("%s: Initial APIC ID %u\n", cpuname, ci->ci_initapicid);
 	ci->ci_packageid = ci->ci_initapicid;
@@ -1612,9 +1612,7 @@ identifycpu_cpuids(struct cpu_info *ci)
 		x86_cpuid(1, descs);
 		lp_max = (descs[1] >> 16) & 0xff;
 	}
-	x86_cpuid(0, descs);
-	highest_basic_info = descs[0];
-	if (highest_basic_info >= 4) {
+	if (ci->ci_cpuid_level >= 4) {
 		x86_cpuid2(4, 0, descs);
 		core_max = (descs[0] >> 26) + 1;
 	}
@@ -1824,7 +1822,7 @@ identifycpu(int fd, const char *cpuname)
 			    x86_xgetbv());
 	}
 
-	x86_print_cacheinfo(ci);
+	x86_print_cache_and_tlb_info(ci);
 
 	if (ci->ci_cpuid_level >= 3 && (ci->ci_feat_val[0] & CPUID_PN)) {
 		aprint_verbose("%s: serial number %04X-%04X-%04X-%04X-%04X-%04X\n",
@@ -1881,14 +1879,9 @@ identifycpu(int fd, const char *cpuname)
 		}
 	} else if (cpu_vendor == CPUVENDOR_INTEL) {
 		uint32_t data[4];
-		uint32_t highest_basic_info;
-		uint32_t bi_index;
+		int32_t bi_index;
 
-		x86_cpuid(0x00000000, data);
-		highest_basic_info = data[0];
-		aprint_verbose("%s: highest basic info %08x\n", cpuname,
-		    highest_basic_info);
-		for (bi_index = 1; bi_index <= highest_basic_info; bi_index++) {
+		for (bi_index = 1; bi_index <= ci->ci_cpuid_level; bi_index++) {
 			x86_cpuid(bi_index, data);
 			switch (bi_index) {
 			case 6:
@@ -1950,6 +1943,19 @@ identifycpu(int fd, const char *cpuname)
 	else if (cpu_vendor == CPUVENDOR_INTEL)
 		printf("%s: microcode version 0x%x, platform ID %d\n", cpuname,
 		       ucvers.intel1.ucodeversion, ucvers.intel1.platformid);
+}
+
+static const struct x86_cache_info *
+cache_info_lookup(const struct x86_cache_info *cai, uint8_t desc)
+{
+	int i;
+
+	for (i = 0; cai[i].cai_desc != 0; i++) {
+		if (cai[i].cai_desc == desc)
+			return (&cai[i]);
+	}
+
+	return (NULL);
 }
 
 static const char *
@@ -2035,21 +2041,8 @@ print_tlb_config(struct cpu_info *ci, int cache_tag, const char *name,
 	return ", ";
 }
 
-static const struct x86_cache_info *
-cache_info_lookup(const struct x86_cache_info *cai, uint8_t desc)
-{
-	int i;
-
-	for (i = 0; cai[i].cai_desc != 0; i++) {
-		if (cai[i].cai_desc == desc)
-			return (&cai[i]);
-	}
-
-	return (NULL);
-}
-
 static void
-x86_print_cacheinfo(struct cpu_info *ci)
+x86_print_cache_and_tlb_info(struct cpu_info *ci)
 {
 	const char *sep = NULL;
 
