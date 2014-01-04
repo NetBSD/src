@@ -15,8 +15,8 @@
 #include <forward_list>
 #include <cassert>
 
-#include "../../../DefaultOnly.h"
-#include "../../../min_allocator.h"
+#include "DefaultOnly.h"
+#include "min_allocator.h"
 
 template <class T, class Allocator>
 void check_allocator(unsigned n, Allocator const &alloc = Allocator())
