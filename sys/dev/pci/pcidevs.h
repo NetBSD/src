@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1169 2014/01/01 08:33:31 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1170 2014/01/04 02:57:50 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1176 2014/01/01 08:33:00 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1177 2014/01/04 02:57:27 msaitoh Exp
  */
 
 /*
@@ -2863,6 +2863,7 @@
 #define	PCI_PRODUCT_INTEL_6SERIES_EHCI_2	0x1c2d		/* 6 Series USB */
 #define	PCI_PRODUCT_INTEL_6SERIES_MEI	0x1c3a		/* 6 Series MEI */
 #define	PCI_PRODUCT_INTEL_6SERIES_KT	0x1c3d		/* 6 Series KT */
+#define	PCI_PRODUCT_INTEL_Z68_LPC	0x1c44		/* Z68 LPC */
 #define	PCI_PRODUCT_INTEL_P67_LPC	0x1c46		/* P67 LPC */
 #define	PCI_PRODUCT_INTEL_UM67_LPC	0x1c47		/* UM67 LPC */
 #define	PCI_PRODUCT_INTEL_HM65_LPC	0x1c49		/* HM65 LPC */
