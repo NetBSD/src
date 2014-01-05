@@ -2,7 +2,7 @@
 
 set -e
 
-rm -rf ChangeLog.xsl style.css index.css *.sgml
+rm -rf CVS ChangeLog.xsl style.css index.css *.sgml regress
 
 uuencode external.png < external.png > external.png.uu
 rm external.png
