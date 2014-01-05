@@ -22,6 +22,7 @@ USEDLIBS = clangIndex.a clangFrontend.a clangDriver.a \
 	   clangSerialization.a \
 	   clangParse.a clangSema.a \
 	   clangARCMigrate.a clangRewriteFrontend.a clangRewriteCore.a \
+	   clangStaticAnalyzerCheckers.a clangStaticAnalyzerCore.a \
 	   clangAnalysis.a clangEdit.a \
 	   clangAST.a clangLex.a clangBasic.a \
 	   clangFormat.a
@@ -45,9 +46,6 @@ ifeq ($(HOST_OS),Darwin)
         LLVMLibsOptions += -Wl,-current_version \
                            -Wl,$(LLVM_SUBMIT_VERSION).$(LLVM_SUBMIT_SUBVERSION)
     endif
-
-    # Extra options to override libtool defaults.
-    LLVMLibsOptions += -Wl,-dead_strip
 
     # Mac OS X 10.4 and earlier tools do not allow a second -install_name on command line
     DARWIN_VERS := $(shell echo $(TARGET_TRIPLE) | sed 's/.*darwin\([0-9]*\).*/\1/')

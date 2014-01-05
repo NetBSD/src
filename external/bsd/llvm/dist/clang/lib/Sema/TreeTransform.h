@@ -2135,29 +2135,6 @@ public:
                                     Operand);
   }
 
-  /// \brief Build a new unary type trait expression.
-  ///
-  /// By default, performs semantic analysis to build the new expression.
-  /// Subclasses may override this routine to provide different behavior.
-  ExprResult RebuildUnaryTypeTrait(UnaryTypeTrait Trait,
-                                   SourceLocation StartLoc,
-                                   TypeSourceInfo *T,
-                                   SourceLocation RParenLoc) {
-    return getSema().BuildUnaryTypeTrait(Trait, StartLoc, T, RParenLoc);
-  }
-
-  /// \brief Build a new binary type trait expression.
-  ///
-  /// By default, performs semantic analysis to build the new expression.
-  /// Subclasses may override this routine to provide different behavior.
-  ExprResult RebuildBinaryTypeTrait(BinaryTypeTrait Trait,
-                                    SourceLocation StartLoc,
-                                    TypeSourceInfo *LhsT,
-                                    TypeSourceInfo *RhsT,
-                                    SourceLocation RParenLoc) {
-    return getSema().BuildBinaryTypeTrait(Trait, StartLoc, LhsT, RhsT, RParenLoc);
-  }
-
   /// \brief Build a new type trait expression.
   ///
   /// By default, performs semantic analysis to build the new expression.
@@ -2657,6 +2634,10 @@ private:
                                              QualType ObjectType,
                                              NamedDecl *FirstQualifierInScope,
                                              CXXScopeSpec &SS);
+
+  TypeSourceInfo *TransformTSIInObjectScope(TypeLoc TL, QualType ObjectType,
+                                            NamedDecl *FirstQualifierInScope,
+                                            CXXScopeSpec &SS);
 };
 
 template<typename Derived>
@@ -3564,52 +3545,14 @@ TreeTransform<Derived>::TransformTypeInObjectScope(TypeLoc TL,
                                                    QualType ObjectType,
                                                    NamedDecl *UnqualLookup,
                                                    CXXScopeSpec &SS) {
-  QualType T = TL.getType();
-  if (getDerived().AlreadyTransformed(T))
+  if (getDerived().AlreadyTransformed(TL.getType()))
     return TL;
 
-  TypeLocBuilder TLB;
-  QualType Result;
-
-  if (isa<TemplateSpecializationType>(T)) {
-    TemplateSpecializationTypeLoc SpecTL =
-        TL.castAs<TemplateSpecializationTypeLoc>();
-
-    TemplateName Template =
-      getDerived().TransformTemplateName(SS,
-                                         SpecTL.getTypePtr()->getTemplateName(),
-                                         SpecTL.getTemplateNameLoc(),
-                                         ObjectType, UnqualLookup);
-    if (Template.isNull())
-      return TypeLoc();
-
-    Result = getDerived().TransformTemplateSpecializationType(TLB, SpecTL,
-                                                              Template);
-  } else if (isa<DependentTemplateSpecializationType>(T)) {
-    DependentTemplateSpecializationTypeLoc SpecTL =
-        TL.castAs<DependentTemplateSpecializationTypeLoc>();
-
-    TemplateName Template
-      = getDerived().RebuildTemplateName(SS,
-                                         *SpecTL.getTypePtr()->getIdentifier(),
-                                         SpecTL.getTemplateNameLoc(),
-                                         ObjectType, UnqualLookup);
-    if (Template.isNull())
-      return TypeLoc();
-
-    Result = getDerived().TransformDependentTemplateSpecializationType(TLB,
-                                                                       SpecTL,
-                                                                     Template,
-                                                                       SS);
-  } else {
-    // Nothing special needs to be done for these.
-    Result = getDerived().TransformType(TLB, TL);
-  }
-
-  if (Result.isNull())
-    return TypeLoc();
-
-  return TLB.getTypeSourceInfo(SemaRef.Context, Result)->getTypeLoc();
+  TypeSourceInfo *TSI =
+      TransformTSIInObjectScope(TL, ObjectType, UnqualLookup, SS);
+  if (TSI)
+    return TSI->getTypeLoc();
+  return TypeLoc();
 }
 
 template<typename Derived>
@@ -3618,16 +3561,23 @@ TreeTransform<Derived>::TransformTypeInObjectScope(TypeSourceInfo *TSInfo,
                                                    QualType ObjectType,
                                                    NamedDecl *UnqualLookup,
                                                    CXXScopeSpec &SS) {
-  // FIXME: Painfully copy-paste from the above!
-
-  QualType T = TSInfo->getType();
-  if (getDerived().AlreadyTransformed(T))
+  if (getDerived().AlreadyTransformed(TSInfo->getType()))
     return TSInfo;
+
+  return TransformTSIInObjectScope(TSInfo->getTypeLoc(), ObjectType,
+                                   UnqualLookup, SS);
+}
+
+template <typename Derived>
+TypeSourceInfo *TreeTransform<Derived>::TransformTSIInObjectScope(
+    TypeLoc TL, QualType ObjectType, NamedDecl *UnqualLookup,
+    CXXScopeSpec &SS) {
+  QualType T = TL.getType();
+  assert(!getDerived().AlreadyTransformed(T));
 
   TypeLocBuilder TLB;
   QualType Result;
 
-  TypeLoc TL = TSInfo->getTypeLoc();
   if (isa<TemplateSpecializationType>(T)) {
     TemplateSpecializationTypeLoc SpecTL =
         TL.castAs<TemplateSpecializationTypeLoc>();
@@ -3691,6 +3641,13 @@ QualType TreeTransform<Derived>::TransformComplexType(TypeLocBuilder &TLB,
                                                       ComplexTypeLoc T) {
   // FIXME: recurse?
   return TransformTypeSpecType(TLB, T);
+}
+
+template <typename Derived>
+QualType TreeTransform<Derived>::TransformAdjustedType(TypeLocBuilder &TLB,
+                                                       AdjustedTypeLoc TL) {
+  // Adjustments applied during transformation are handled elsewhere.
+  return getDerived().TransformType(TLB, TL.getOriginalLoc());
 }
 
 template<typename Derived>
@@ -3859,6 +3816,14 @@ TreeTransform<Derived>::TransformMemberPointerType(TypeLocBuilder &TLB,
                                                    TL.getStarLoc());
     if (Result.isNull())
       return QualType();
+  }
+
+  // If we had to adjust the pointee type when building a member pointer, make
+  // sure to push TypeLoc info for it.
+  const MemberPointerType *MPT = Result->getAs<MemberPointerType>();
+  if (MPT && PointeeType != MPT->getPointeeType()) {
+    assert(isa<AdjustedType>(MPT->getPointeeType()));
+    TLB.push<AdjustedTypeLoc>(MPT->getPointeeType());
   }
 
   MemberPointerTypeLoc NewTL = TLB.push<MemberPointerTypeLoc>(Result);
@@ -7890,44 +7855,6 @@ TreeTransform<Derived>::TransformUnresolvedLookupExpr(
 
 template<typename Derived>
 ExprResult
-TreeTransform<Derived>::TransformUnaryTypeTraitExpr(UnaryTypeTraitExpr *E) {
-  TypeSourceInfo *T = getDerived().TransformType(E->getQueriedTypeSourceInfo());
-  if (!T)
-    return ExprError();
-
-  if (!getDerived().AlwaysRebuild() &&
-      T == E->getQueriedTypeSourceInfo())
-    return SemaRef.Owned(E);
-
-  return getDerived().RebuildUnaryTypeTrait(E->getTrait(),
-                                            E->getLocStart(),
-                                            T,
-                                            E->getLocEnd());
-}
-
-template<typename Derived>
-ExprResult
-TreeTransform<Derived>::TransformBinaryTypeTraitExpr(BinaryTypeTraitExpr *E) {
-  TypeSourceInfo *LhsT = getDerived().TransformType(E->getLhsTypeSourceInfo());
-  if (!LhsT)
-    return ExprError();
-
-  TypeSourceInfo *RhsT = getDerived().TransformType(E->getRhsTypeSourceInfo());
-  if (!RhsT)
-    return ExprError();
-
-  if (!getDerived().AlwaysRebuild() &&
-      LhsT == E->getLhsTypeSourceInfo() && RhsT == E->getRhsTypeSourceInfo())
-    return SemaRef.Owned(E);
-
-  return getDerived().RebuildBinaryTypeTrait(E->getTrait(),
-                                            E->getLocStart(),
-                                            LhsT, RhsT,
-                                            E->getLocEnd());
-}
-
-template<typename Derived>
-ExprResult
 TreeTransform<Derived>::TransformTypeTraitExpr(TypeTraitExpr *E) {
   bool ArgChanged = false;
   SmallVector<TypeSourceInfo *, 4> Args;
@@ -9443,8 +9370,8 @@ QualType
 TreeTransform<Derived>::RebuildMemberPointerType(QualType PointeeType,
                                                  QualType ClassType,
                                                  SourceLocation Sigil) {
-  return SemaRef.BuildMemberPointerType(PointeeType, ClassType,
-                                        Sigil, getDerived().getBaseEntity());
+  return SemaRef.BuildMemberPointerType(PointeeType, ClassType, Sigil,
+                                        getDerived().getBaseEntity());
 }
 
 template<typename Derived>
