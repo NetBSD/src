@@ -1,4 +1,4 @@
-// REQUIRES: x86-64-registered-target
+// REQUIRES: x86-registered-target
 // RUN: %clang_cc1 %s -triple x86_64-apple-darwin10 -fasm-blocks -Wno-microsoft -verify -fsyntax-only
 
 void t1(void) { 
@@ -30,5 +30,23 @@ void f() {
   f();
   __asm {
     mov eax, TYPE bar // expected-error {{unable to lookup expression}}
+  }
+}
+
+void rdar15318432(void) {
+  // We used to crash on this.  When LLVM called back to Clang to parse a name
+  // and do name lookup, if parsing failed, we did not restore the lexer state
+  // properly.
+
+  // expected-error@+2 {{expected identifier}}
+  __asm {
+    and ecx, ~15
+  }
+
+  int x = 0;
+  // expected-error@+3 {{expected identifier}}
+  __asm {
+    and ecx, x
+    and ecx, ~15
   }
 }

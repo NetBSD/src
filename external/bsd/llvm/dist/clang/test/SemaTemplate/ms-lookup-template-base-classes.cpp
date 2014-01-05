@@ -176,7 +176,7 @@ class B {};
 template <class T>
 class Base {
  public:
-  bool base_fun(void* p) { return false; }  // expected-note {{must qualify identifier to find this declaration in dependent base clas}}
+  bool base_fun(void* p) { return false; }  // expected-note {{must qualify identifier to find this declaration in dependent base class}}
   operator T*() const { return 0; }
 };
 
@@ -222,7 +222,7 @@ template <typename T> struct C : T {
 };
 
 template struct B<A>;
-template struct C<A>;  // expected-note-re 1+ {{in instantiation of member function 'PR16014::C<PR16014::A>::.*' requested here}}
+template struct C<A>;  // expected-note-re 1+ {{in instantiation of member function 'PR16014::C<PR16014::A>::{{.*}}' requested here}}
 
 template <typename T> struct D : T {
   struct Inner {
