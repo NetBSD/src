@@ -11,7 +11,7 @@ set(CMAKE_MODULE_PATH
   )
 
 set(LLVM_VERSION_MAJOR 3)
-set(LLVM_VERSION_MINOR 4)
+set(LLVM_VERSION_MINOR 5)
 
 if (NOT PACKAGE_VERSION)
   set(PACKAGE_VERSION "${LLVM_VERSION_MAJOR}.${LLVM_VERSION_MINOR}svn")
@@ -94,7 +94,11 @@ set(LLVM_MAIN_INCLUDE_DIR ${LLVM_MAIN_SRC_DIR}/include)
 set(LLVM_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 set(LLVM_TOOLS_BINARY_DIR ${LLVM_BINARY_DIR}/bin)
 set(LLVM_EXAMPLES_BINARY_DIR ${LLVM_BINARY_DIR}/examples)
+set(LLVM_INCLUDE_DIR ${CMAKE_CURRENT_BINARY_DIR}/include)
 set(LLVM_LIBDIR_SUFFIX "" CACHE STRING "Define suffix of library directory name (32/64)" )
+
+set(LLVM_RUNTIME_OUTPUT_INTDIR ${LLVM_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bin)
+set(LLVM_LIBRARY_OUTPUT_INTDIR ${LLVM_BINARY_DIR}/${CMAKE_CFG_INTDIR}/lib)
 
 set(LLVM_ALL_TARGETS
   AArch64
@@ -166,8 +170,6 @@ set(LLVM_TARGETS_TO_BUILD
    ${LLVM_EXPERIMENTAL_TARGETS_TO_BUILD})
 list(REMOVE_DUPLICATES LLVM_TARGETS_TO_BUILD)
 
-set(llvm_builded_incs_dir ${LLVM_BINARY_DIR}/include/llvm)
-
 include(AddLLVMDefinitions)
 
 option(LLVM_ENABLE_PIC "Build Position-Independent Code" ON)
@@ -179,6 +181,7 @@ else( MSVC )
   option(LLVM_ENABLE_WARNINGS "Enable compiler warnings." ON)
 endif()
 
+option(LLVM_ENABLE_CXX11 "Compile with C++11 enabled." OFF)
 option(LLVM_ENABLE_PEDANTIC "Compile with pedantic enabled." ON)
 option(LLVM_ENABLE_WERROR "Fail and stop if a warning is triggered." OFF)
 
@@ -378,39 +381,43 @@ endforeach(t)
 # include various classes of targets.
 configure_file(
   ${LLVM_MAIN_INCLUDE_DIR}/llvm/Config/AsmPrinters.def.in
-  ${LLVM_BINARY_DIR}/include/llvm/Config/AsmPrinters.def
+  ${LLVM_INCLUDE_DIR}/llvm/Config/AsmPrinters.def
   )
 configure_file(
   ${LLVM_MAIN_INCLUDE_DIR}/llvm/Config/AsmParsers.def.in
-  ${LLVM_BINARY_DIR}/include/llvm/Config/AsmParsers.def
+  ${LLVM_INCLUDE_DIR}/llvm/Config/AsmParsers.def
   )
 configure_file(
   ${LLVM_MAIN_INCLUDE_DIR}/llvm/Config/Disassemblers.def.in
-  ${LLVM_BINARY_DIR}/include/llvm/Config/Disassemblers.def
+  ${LLVM_INCLUDE_DIR}/llvm/Config/Disassemblers.def
   )
 configure_file(
   ${LLVM_MAIN_INCLUDE_DIR}/llvm/Config/Targets.def.in
-  ${LLVM_BINARY_DIR}/include/llvm/Config/Targets.def
+  ${LLVM_INCLUDE_DIR}/llvm/Config/Targets.def
   )
 
 # Configure the three LLVM configuration header files.
 configure_file(
   ${LLVM_MAIN_INCLUDE_DIR}/llvm/Config/config.h.cmake
-  ${LLVM_BINARY_DIR}/include/llvm/Config/config.h)
+  ${LLVM_INCLUDE_DIR}/llvm/Config/config.h)
 configure_file(
   ${LLVM_MAIN_INCLUDE_DIR}/llvm/Config/llvm-config.h.cmake
-  ${LLVM_BINARY_DIR}/include/llvm/Config/llvm-config.h)
+  ${LLVM_INCLUDE_DIR}/llvm/Config/llvm-config.h)
 configure_file(
   ${LLVM_MAIN_INCLUDE_DIR}/llvm/Support/DataTypes.h.cmake
-  ${LLVM_BINARY_DIR}/include/llvm/Support/DataTypes.h)
+  ${LLVM_INCLUDE_DIR}/llvm/Support/DataTypes.h)
 
 set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${LLVM_TOOLS_BINARY_DIR} )
 set( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${LLVM_BINARY_DIR}/lib )
 set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${LLVM_BINARY_DIR}/lib )
 
+if( NOT DEFINED CMAKE_INSTALL_RPATH )
+  set( CMAKE_INSTALL_RPATH "\$ORIGIN/../lib")
+endif( NOT DEFINED CMAKE_INSTALL_RPATH )
+
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-include_directories( ${LLVM_BINARY_DIR}/include ${LLVM_MAIN_INCLUDE_DIR})
+include_directories( ${LLVM_INCLUDE_DIR} ${LLVM_MAIN_INCLUDE_DIR})
 
 if( ${CMAKE_SYSTEM_NAME} MATCHES FreeBSD )
   # On FreeBSD, /usr/local/* is not used by default. In order to build LLVM
@@ -506,7 +513,7 @@ if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
     PATTERN ".svn" EXCLUDE
     )
 
-  install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include/
+  install(DIRECTORY ${LLVM_INCLUDE_DIR}/
     DESTINATION include
     FILES_MATCHING
     PATTERN "*.def"

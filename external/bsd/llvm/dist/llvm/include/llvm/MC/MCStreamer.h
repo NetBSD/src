@@ -93,7 +93,9 @@ public:
   virtual void emitAttribute(unsigned Attribute, unsigned Value) = 0;
   virtual void emitTextAttribute(unsigned Attribute, StringRef String) = 0;
   virtual void emitFPU(unsigned FPU) = 0;
+  virtual void emitArch(unsigned Arch) = 0;
   virtual void finishAttributeSection() = 0;
+  virtual void emitInst(uint32_t Inst, char Suffix = '\0') = 0;
 };
 
 /// MCStreamer - Streaming machine code generation interface.  This interface
@@ -334,6 +336,8 @@ public:
   /// @param Symbol - The symbol to emit. A given symbol should only be
   /// emitted as a label once, and symbols emitted as a label should never be
   /// used in an assignment.
+  // FIXME: These emission are non-const because we mutate the symbol to
+  // add the section we're emitting it to later.
   virtual void EmitLabel(MCSymbol *Symbol);
 
   virtual void EmitDebugLabel(MCSymbol *Symbol);
@@ -407,9 +411,14 @@ public:
   /// EndCOFFSymbolDef - Marks the end of the symbol definition.
   virtual void EndCOFFSymbolDef() = 0;
 
+  /// EmitCOFFSectionIndex - Emits a COFF section index.
+  ///
+  /// @param Symbol - Symbol the section number relocation should point to.
+  virtual void EmitCOFFSectionIndex(MCSymbol const *Symbol);
+
   /// EmitCOFFSecRel32 - Emits a COFF section relative relocation.
   ///
-  /// @param Symbol - Symbol the section relative realocation should point to.
+  /// @param Symbol - Symbol the section relative relocation should point to.
   virtual void EmitCOFFSecRel32(MCSymbol const *Symbol);
 
   /// EmitELFSize - Emit an ELF .size directive.
