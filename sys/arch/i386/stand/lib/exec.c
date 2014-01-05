@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.56 2013/12/30 21:45:51 jakllsch Exp $	 */
+/*	$NetBSD: exec.c,v 1.57 2014/01/05 21:36:50 jakllsch Exp $	 */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -144,7 +144,7 @@ static struct btinfo_userconfcommands *btinfo_userconfcommands = NULL;
 static size_t btinfo_userconfcommands_size = 0;
 
 static void	module_init(const char *);
-static void	module_add_common(char *, uint8_t);
+static void	module_add_common(const char *, uint8_t);
 
 static void	userconf_init(void);
 
@@ -184,7 +184,7 @@ fs_add(char *name)
 }
 
 static void
-module_add_common(char *name, uint8_t type)
+module_add_common(const char *name, uint8_t type)
 {
 	boot_module_t *bm, *bmp;
 	size_t len;
@@ -305,7 +305,7 @@ common_load_kernel(const char *file, u_long *basemem, u_long *extmem,
 
 	/* If the root fs type is unusual, load its module. */
 	if (fsmod != NULL)
-		module_add(fsmod);
+		module_add_common(fsmod, BM_TYPE_KMOD);
 
 	/*
 	 * Gather some information for the kernel. Do this after the
