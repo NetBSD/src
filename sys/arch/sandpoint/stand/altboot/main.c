@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.22 2012/12/25 17:02:35 phx Exp $ */
+/* $NetBSD: main.c,v 1.23 2014/01/05 21:10:50 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -88,8 +88,8 @@ char module_base[80];
 uint32_t kmodloadp;
 int modules_enabled = 0;
 
-void module_add(char *);
-void module_load(char *);
+void module_add(const char *);
+void module_load(const char *);
 int module_open(struct boot_module *);
 
 void main(int, char **, char *, char *);
@@ -421,7 +421,7 @@ bi_add(void *new, int type, int size)
 }
 
 void
-module_add(char *name)
+module_add(const char *name)
 {
 	struct boot_module *bm, *bmp;
 
@@ -451,7 +451,7 @@ module_add(char *name)
 #define alignpg(x)	(((x)+PAGE_SIZE-1) & ~(PAGE_SIZE-1))
 
 void
-module_load(char *kernel_path) 
+module_load(const char *kernel_path) 
 {
 	struct boot_module *bm;
 	struct bi_modulelist_entry *bi;
