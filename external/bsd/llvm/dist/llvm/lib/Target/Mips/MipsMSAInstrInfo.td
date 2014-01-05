@@ -1261,20 +1261,22 @@ class MSA_COPY_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
   InstrItinClass Itinerary = itin;
 }
 
-class MSA_ELM_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
-                        RegisterOperand ROWD, RegisterOperand ROWS = ROWD,
-                        InstrItinClass itin = NoItinerary> {
+class MSA_ELM_SLD_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
+                            RegisterOperand ROWD, RegisterOperand ROWS = ROWD,
+                            InstrItinClass itin = NoItinerary> {
   dag OutOperandList = (outs ROWD:$wd);
-  dag InOperandList = (ins ROWS:$ws, uimm4:$n);
+  dag InOperandList = (ins ROWD:$wd_in, ROWS:$ws, uimm4:$n);
   string AsmString = !strconcat(instr_asm, "\t$wd, $ws[$n]");
-  list<dag> Pattern = [(set ROWD:$wd, (OpNode ROWS:$ws, immZExt4:$n))];
+  list<dag> Pattern = [(set ROWD:$wd, (OpNode ROWD:$wd_in, ROWS:$ws,
+                                              immZExt4:$n))];
+  string Constraints = "$wd = $wd_in";
   InstrItinClass Itinerary = itin;
 }
 
 class MSA_COPY_PSEUDO_BASE<SDPatternOperator OpNode, ValueType VecTy,
                            RegisterClass RCD, RegisterClass RCWS> :
-      MipsPseudo<(outs RCD:$wd), (ins RCWS:$ws, uimm4:$n),
-                 [(set RCD:$wd, (OpNode (VecTy RCWS:$ws), immZExt4:$n))]> {
+      MSAPseudo<(outs RCD:$wd), (ins RCWS:$ws, uimm4:$n),
+                [(set RCD:$wd, (OpNode (VecTy RCWS:$ws), immZExt4:$n))]> {
   bit usesCustomInserter = 1;
 }
 
@@ -1297,17 +1299,6 @@ class MSA_I8_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
   dag InOperandList = (ins ROWS:$ws, SplatImm.OpClass:$u8);
   string AsmString = !strconcat(instr_asm, "\t$wd, $ws, $u8");
   list<dag> Pattern = [(set ROWD:$wd, (OpNode ROWS:$ws, SplatImm:$u8))];
-  InstrItinClass Itinerary = itin;
-}
-
-// This class is deprecated and will be removed in the next few patches
-class MSA_I8_X_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
-                         RegisterOperand ROWD, RegisterOperand ROWS = ROWD,
-                         InstrItinClass itin = NoItinerary> {
-  dag OutOperandList = (outs ROWD:$wd);
-  dag InOperandList = (ins ROWS:$ws, uimm8:$u8);
-  string AsmString = !strconcat(instr_asm, "\t$wd, $ws, $u8");
-  list<dag> Pattern = [(set ROWD:$wd, (OpNode ROWS:$ws, immZExt8:$u8))];
   InstrItinClass Itinerary = itin;
 }
 
@@ -1355,8 +1346,8 @@ class MSA_2R_FILL_DESC_BASE<string instr_asm, ValueType VT,
 
 class MSA_2R_FILL_PSEUDO_BASE<ValueType VT, SDPatternOperator OpNode,
                               RegisterClass RCWD, RegisterClass RCWS = RCWD> :
-      MipsPseudo<(outs RCWD:$wd), (ins RCWS:$fs),
-                 [(set RCWD:$wd, (OpNode RCWS:$fs))]> {
+      MSAPseudo<(outs RCWD:$wd), (ins RCWS:$fs),
+                [(set RCWD:$wd, (OpNode RCWS:$fs))]> {
   let usesCustomInserter = 1;
 }
 
@@ -1421,10 +1412,12 @@ class MSA_3R_SLD_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
                            RegisterOperand ROWD, RegisterOperand ROWS = ROWD,
                            InstrItinClass itin = NoItinerary> {
   dag OutOperandList = (outs ROWD:$wd);
-  dag InOperandList = (ins ROWS:$ws, GPR32:$rt);
+  dag InOperandList = (ins ROWD:$wd_in, ROWS:$ws, GPR32:$rt);
   string AsmString = !strconcat(instr_asm, "\t$wd, $ws[$rt]");
-  list<dag> Pattern = [(set ROWD:$wd, (OpNode ROWS:$ws, GPR32:$rt))];
+  list<dag> Pattern = [(set ROWD:$wd, (OpNode ROWD:$wd_in, ROWS:$ws,
+                                              GPR32:$rt))];
   InstrItinClass Itinerary = itin;
+  string Constraints = "$wd = $wd_in";
 }
 
 class MSA_3R_4R_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
@@ -1434,8 +1427,8 @@ class MSA_3R_4R_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
   dag OutOperandList = (outs ROWD:$wd);
   dag InOperandList = (ins ROWD:$wd_in, ROWS:$ws, ROWT:$wt);
   string AsmString = !strconcat(instr_asm, "\t$wd, $ws, $wt");
-  list<dag> Pattern = [(set ROWD:$wd,
-                       (OpNode ROWD:$wd_in, ROWS:$ws, ROWT:$wt))];
+  list<dag> Pattern = [(set ROWD:$wd, (OpNode ROWD:$wd_in, ROWS:$ws,
+                                              ROWT:$wt))];
   InstrItinClass Itinerary = itin;
   string Constraints = "$wd = $wd_in";
 }
@@ -1479,8 +1472,8 @@ class MSA_INSERT_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
 
 class MSA_INSERT_PSEUDO_BASE<SDPatternOperator OpNode, ValueType Ty,
                              RegisterOperand ROWD, RegisterOperand ROFS> :
-      MipsPseudo<(outs ROWD:$wd), (ins ROWD:$wd_in, uimm6:$n, ROFS:$fs),
-                 [(set ROWD:$wd, (OpNode (Ty ROWD:$wd_in), ROFS:$fs,
+      MSAPseudo<(outs ROWD:$wd), (ins ROWD:$wd_in, uimm6:$n, ROFS:$fs),
+                [(set ROWD:$wd, (OpNode (Ty ROWD:$wd_in), ROFS:$fs,
                                         immZExt6:$n))]> {
   bit usesCustomInserter = 1;
   string Constraints = "$wd = $wd_in";
@@ -1525,8 +1518,8 @@ class MSA_ELM_SPLAT_DESC_BASE<string instr_asm, SplatComplexPattern SplatImm,
 class MSA_VEC_PSEUDO_BASE<SDPatternOperator OpNode, RegisterOperand ROWD,
                           RegisterOperand ROWS = ROWD,
                           RegisterOperand ROWT = ROWD> :
-      MipsPseudo<(outs ROWD:$wd), (ins ROWS:$ws, ROWT:$wt),
-                 [(set ROWD:$wd, (OpNode ROWS:$ws, ROWT:$wt))]>;
+      MSAPseudo<(outs ROWD:$wd), (ins ROWS:$ws, ROWT:$wt),
+                [(set ROWD:$wd, (OpNode ROWS:$ws, ROWT:$wt))]>;
 
 class ADD_A_B_DESC : MSA_3R_DESC_BASE<"add_a.b", int_mips_add_a_b, MSA128BOpnd>,
                      IsCommutable;
@@ -1735,10 +1728,14 @@ class BNEG_H_DESC : MSA_3R_DESC_BASE<"bneg.h", vbneg_h, MSA128HOpnd>;
 class BNEG_W_DESC : MSA_3R_DESC_BASE<"bneg.w", vbneg_w, MSA128WOpnd>;
 class BNEG_D_DESC : MSA_3R_DESC_BASE<"bneg.d", vbneg_d, MSA128DOpnd>;
 
-class BNEGI_B_DESC : MSA_BIT_B_DESC_BASE<"bnegi.b", xor, vsplat_uimm_pow2, MSA128BOpnd>;
-class BNEGI_H_DESC : MSA_BIT_H_DESC_BASE<"bnegi.h", xor, vsplat_uimm_pow2, MSA128HOpnd>;
-class BNEGI_W_DESC : MSA_BIT_W_DESC_BASE<"bnegi.w", xor, vsplat_uimm_pow2, MSA128WOpnd>;
-class BNEGI_D_DESC : MSA_BIT_D_DESC_BASE<"bnegi.d", xor, vsplat_uimm_pow2, MSA128DOpnd>;
+class BNEGI_B_DESC : MSA_BIT_B_DESC_BASE<"bnegi.b", xor, vsplat_uimm_pow2,
+                                         MSA128BOpnd>;
+class BNEGI_H_DESC : MSA_BIT_H_DESC_BASE<"bnegi.h", xor, vsplat_uimm_pow2,
+                                         MSA128HOpnd>;
+class BNEGI_W_DESC : MSA_BIT_W_DESC_BASE<"bnegi.w", xor, vsplat_uimm_pow2,
+                                         MSA128WOpnd>;
+class BNEGI_D_DESC : MSA_BIT_D_DESC_BASE<"bnegi.d", xor, vsplat_uimm_pow2,
+                                         MSA128DOpnd>;
 
 class BNZ_B_DESC : MSA_CBRANCH_DESC_BASE<"bnz.b", MSA128BOpnd>;
 class BNZ_H_DESC : MSA_CBRANCH_DESC_BASE<"bnz.h", MSA128HOpnd>;
@@ -2047,11 +2044,11 @@ class FEXP2_W_DESC : MSA_3RF_DESC_BASE<"fexp2.w", mul_fexp2, MSA128WOpnd>;
 class FEXP2_D_DESC : MSA_3RF_DESC_BASE<"fexp2.d", mul_fexp2, MSA128DOpnd>;
 let usesCustomInserter = 1 in {
   class FEXP2_W_1_PSEUDO_DESC :
-      MipsPseudo<(outs MSA128W:$wd), (ins MSA128W:$ws),
-                 [(set MSA128W:$wd, (fexp2 MSA128W:$ws))]>;
+      MSAPseudo<(outs MSA128W:$wd), (ins MSA128W:$ws),
+                [(set MSA128W:$wd, (fexp2 MSA128W:$ws))]>;
   class FEXP2_D_1_PSEUDO_DESC :
-      MipsPseudo<(outs MSA128D:$wd), (ins MSA128D:$ws),
-                 [(set MSA128D:$wd, (fexp2 MSA128D:$ws))]>;
+      MSAPseudo<(outs MSA128D:$wd), (ins MSA128D:$ws),
+                [(set MSA128D:$wd, (fexp2 MSA128D:$ws))]>;
 }
 
 class FEXUPL_W_DESC : MSA_2RF_DESC_BASE<"fexupl.w", int_mips_fexupl_w,
@@ -2276,7 +2273,7 @@ class INSVE_D_DESC : MSA_INSVE_DESC_BASE<"insve.d", int_mips_insve_d,
 
 class LD_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
                    ValueType TyNode, RegisterOperand ROWD,
-                   Operand MemOpnd = mem, ComplexPattern Addr = addrRegImm,
+                   Operand MemOpnd = mem_msa, ComplexPattern Addr = addrRegImm,
                    InstrItinClass itin = NoItinerary> {
   dag OutOperandList = (outs ROWD:$wd);
   dag InOperandList = (ins MemOpnd:$addr);
@@ -2502,10 +2499,14 @@ class SLD_H_DESC : MSA_3R_SLD_DESC_BASE<"sld.h", int_mips_sld_h, MSA128HOpnd>;
 class SLD_W_DESC : MSA_3R_SLD_DESC_BASE<"sld.w", int_mips_sld_w, MSA128WOpnd>;
 class SLD_D_DESC : MSA_3R_SLD_DESC_BASE<"sld.d", int_mips_sld_d, MSA128DOpnd>;
 
-class SLDI_B_DESC : MSA_ELM_DESC_BASE<"sldi.b", int_mips_sldi_b, MSA128BOpnd>;
-class SLDI_H_DESC : MSA_ELM_DESC_BASE<"sldi.h", int_mips_sldi_h, MSA128HOpnd>;
-class SLDI_W_DESC : MSA_ELM_DESC_BASE<"sldi.w", int_mips_sldi_w, MSA128WOpnd>;
-class SLDI_D_DESC : MSA_ELM_DESC_BASE<"sldi.d", int_mips_sldi_d, MSA128DOpnd>;
+class SLDI_B_DESC : MSA_ELM_SLD_DESC_BASE<"sldi.b", int_mips_sldi_b,
+                                          MSA128BOpnd>;
+class SLDI_H_DESC : MSA_ELM_SLD_DESC_BASE<"sldi.h", int_mips_sldi_h,
+                                          MSA128HOpnd>;
+class SLDI_W_DESC : MSA_ELM_SLD_DESC_BASE<"sldi.w", int_mips_sldi_w,
+                                          MSA128WOpnd>;
+class SLDI_D_DESC : MSA_ELM_SLD_DESC_BASE<"sldi.d", int_mips_sldi_d,
+                                          MSA128DOpnd>;
 
 class SLL_B_DESC : MSA_3R_DESC_BASE<"sll.b", shl, MSA128BOpnd>;
 class SLL_H_DESC : MSA_3R_DESC_BASE<"sll.h", shl, MSA128HOpnd>;
@@ -2597,7 +2598,7 @@ class SRLRI_D_DESC : MSA_BIT_D_X_DESC_BASE<"srlri.d", int_mips_srlri_d,
 
 class ST_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
                    ValueType TyNode, RegisterOperand ROWD,
-                   Operand MemOpnd = mem, ComplexPattern Addr = addrRegImm,
+                   Operand MemOpnd = mem_msa, ComplexPattern Addr = addrRegImm,
                    InstrItinClass itin = NoItinerary> {
   dag OutOperandList = (outs);
   dag InOperandList = (ins ROWD:$wd, MemOpnd:$addr);
@@ -2810,8 +2811,8 @@ def BNZ_V : BNZ_V_ENC, BNZ_V_DESC;
 def BSEL_V : BSEL_V_ENC, BSEL_V_DESC;
 
 class MSA_BSEL_PSEUDO_BASE<RegisterOperand RO, ValueType Ty> :
-  MipsPseudo<(outs RO:$wd), (ins RO:$wd_in, RO:$ws, RO:$wt),
-             [(set RO:$wd, (Ty (vselect RO:$wd_in, RO:$ws, RO:$wt)))]>,
+  MSAPseudo<(outs RO:$wd), (ins RO:$wd_in, RO:$ws, RO:$wt),
+            [(set RO:$wd, (Ty (vselect RO:$wd_in, RO:$ws, RO:$wt)))]>,
   PseudoInstExpansion<(BSEL_V MSA128BOpnd:$wd, MSA128BOpnd:$wd_in,
                               MSA128BOpnd:$ws, MSA128BOpnd:$wt)> {
   let Constraints = "$wd_in = $wd";
@@ -3501,9 +3502,9 @@ def ST_FD : MSAPat<(store (v2f64 MSA128D:$ws), addrRegImm:$addr),
 class MSA_FABS_PSEUDO_DESC_BASE<RegisterOperand ROWD,
                                 RegisterOperand ROWS = ROWD,
                                 InstrItinClass itin = NoItinerary> :
-  MipsPseudo<(outs ROWD:$wd),
-             (ins ROWS:$ws),
-             [(set ROWD:$wd, (fabs ROWS:$ws))]> {
+  MSAPseudo<(outs ROWD:$wd),
+            (ins ROWS:$ws),
+            [(set ROWD:$wd, (fabs ROWS:$ws))]> {
   InstrItinClass Itinerary = itin;
 }
 def FABS_W : MSA_FABS_PSEUDO_DESC_BASE<MSA128WOpnd>,

@@ -55,6 +55,7 @@ TargetMachine::TargetMachine(const Target &T,
     MCUseLoc(true),
     MCUseCFI(true),
     MCUseDwarfDirectory(false),
+    RequireStructuredCFG(false),
     Options(Options) {
 }
 
@@ -67,7 +68,7 @@ TargetMachine::~TargetMachine() {
 void TargetMachine::resetTargetOptions(const MachineFunction *MF) const {
   const Function *F = MF->getFunction();
   TargetOptions &TO = MF->getTarget().Options;
-  
+
 #define RESET_OPTION(X, Y)                                              \
   do {                                                                  \
     if (F->hasFnAttribute(Y))                                           \

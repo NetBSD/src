@@ -392,6 +392,8 @@ MipsTargetLowering(MipsTargetMachine &TM)
   setExceptionSelectorRegister(IsN64 ? Mips::A1_64 : Mips::A1);
 
   MaxStoresPerMemcpy = 16;
+
+  isMicroMips = Subtarget->inMicroMipsMode();
 }
 
 const MipsTargetLowering *MipsTargetLowering::create(MipsTargetMachine &TM) {
@@ -535,19 +537,65 @@ static SDValue performSELECTCombine(SDNode *N, SelectionDAG &DAG,
   if (!FalseTy.isInteger())
     return SDValue();
 
-  ConstantSDNode *CN = dyn_cast<ConstantSDNode>(False);
+  ConstantSDNode *FalseC = dyn_cast<ConstantSDNode>(False);
 
-  if (!CN || CN->getZExtValue())
+  // If the RHS (False) is 0, we swap the order of the operands
+  // of ISD::SELECT (obviously also inverting the condition) so that we can
+  // take advantage of conditional moves using the $0 register.
+  // Example:
+  //   return (a != 0) ? x : 0;
+  //     load $reg, x
+  //     movz $reg, $0, a
+  if (!FalseC)
     return SDValue();
 
   const SDLoc DL(N);
-  ISD::CondCode CC = cast<CondCodeSDNode>(SetCC.getOperand(2))->get();
+
+  if (!FalseC->getZExtValue()) {
+    ISD::CondCode CC = cast<CondCodeSDNode>(SetCC.getOperand(2))->get();
+    SDValue True = N->getOperand(1);
+
+    SetCC = DAG.getSetCC(DL, SetCC.getValueType(), SetCC.getOperand(0),
+                         SetCC.getOperand(1), ISD::getSetCCInverse(CC, true));
+
+    return DAG.getNode(ISD::SELECT, DL, FalseTy, SetCC, False, True);
+  }
+
+  // If both operands are integer constants there's a possibility that we
+  // can do some interesting optimizations.
   SDValue True = N->getOperand(1);
+  ConstantSDNode *TrueC = dyn_cast<ConstantSDNode>(True);
 
-  SetCC = DAG.getSetCC(DL, SetCC.getValueType(), SetCC.getOperand(0),
-                       SetCC.getOperand(1), ISD::getSetCCInverse(CC, true));
+  if (!TrueC || !True.getValueType().isInteger())
+    return SDValue();
 
-  return DAG.getNode(ISD::SELECT, DL, FalseTy, SetCC, False, True);
+  // We'll also ignore MVT::i64 operands as this optimizations proves
+  // to be ineffective because of the required sign extensions as the result
+  // of a SETCC operator is always MVT::i32 for non-vector types.
+  if (True.getValueType() == MVT::i64)
+    return SDValue();
+
+  int64_t Diff = TrueC->getSExtValue() - FalseC->getSExtValue();
+
+  // 1)  (a < x) ? y : y-1
+  //  slti $reg1, a, x
+  //  addiu $reg2, $reg1, y-1
+  if (Diff == 1)
+    return DAG.getNode(ISD::ADD, DL, SetCC.getValueType(), SetCC, False);
+
+  // 2)  (a < x) ? y-1 : y
+  //  slti $reg1, a, x
+  //  xor $reg1, $reg1, 1
+  //  addiu $reg2, $reg1, y-1
+  if (Diff == -1) {
+    ISD::CondCode CC = cast<CondCodeSDNode>(SetCC.getOperand(2))->get();
+    SetCC = DAG.getSetCC(DL, SetCC.getValueType(), SetCC.getOperand(0),
+                         SetCC.getOperand(1), ISD::getSetCCInverse(CC, true));
+    return DAG.getNode(ISD::ADD, DL, SetCC.getValueType(), SetCC, True);
+  }
+
+  // Couldn't optimize.
+  return SDValue();
 }
 
 static SDValue performANDCombine(SDNode *N, SelectionDAG &DAG,
@@ -885,8 +933,8 @@ MipsTargetLowering::emitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
   unsigned LL, SC, AND, NOR, ZERO, BEQ;
 
   if (Size == 4) {
-    LL = Mips::LL;
-    SC = Mips::SC;
+    LL = isMicroMips ? Mips::LL_MM : Mips::LL;
+    SC = isMicroMips ? Mips::SC_MM : Mips::SC;
     AND = Mips::AND;
     NOR = Mips::NOR;
     ZERO = Mips::ZERO;
@@ -1128,8 +1176,8 @@ MachineBasicBlock * MipsTargetLowering::emitAtomicCmpSwap(MachineInstr *MI,
   unsigned LL, SC, ZERO, BNE, BEQ;
 
   if (Size == 4) {
-    LL = Mips::LL;
-    SC = Mips::SC;
+    LL = isMicroMips ? Mips::LL_MM : Mips::LL;
+    SC = isMicroMips ? Mips::SC_MM : Mips::SC;
     ZERO = Mips::ZERO;
     BNE = Mips::BNE;
     BEQ = Mips::BEQ;
@@ -2285,7 +2333,7 @@ getOpndList(SmallVectorImpl<SDValue> &Ops,
     if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(CLI.Callee)) {
       llvm::StringRef Sym = G->getGlobal()->getName();
       Function *F = G->getGlobal()->getParent()->getFunction(Sym);
-      if (F->hasFnAttribute("__Mips16RetHelper")) {
+      if (F && F->hasFnAttribute("__Mips16RetHelper")) {
         Mask = MipsRegisterInfo::getMips16RetHelperMask();
       }
     }
@@ -3216,7 +3264,7 @@ MipsTargetLowering::MipsCC::SpecialCallingConvType
     if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
       llvm::StringRef Sym = G->getGlobal()->getName();
       Function *F = G->getGlobal()->getParent()->getFunction(Sym);
-      if (F->hasFnAttribute("__Mips16RetHelper")) {
+      if (F && F->hasFnAttribute("__Mips16RetHelper")) {
         SpecialCallingConv = MipsCC::Mips16RetHelperConv;
       }
     }

@@ -35,8 +35,6 @@ namespace llvm {
 
       Wrapper,      // Wrapper - A wrapper node for TargetConstantPool,
                     // TargetExternalSymbol, and TargetGlobalAddress.
-      WrapperDYN,   // WrapperDYN - A wrapper node for TargetGlobalAddress in
-                    // DYN mode.
       WrapperPIC,   // WrapperPIC - A wrapper node for TargetGlobalAddress in
                     // PIC mode.
       WrapperJT,    // WrapperJT - A wrapper node for TargetJumpTable
@@ -362,6 +360,12 @@ namespace llvm {
     /// getMaximalGlobalOffset - Returns the maximal possible offset which can
     /// be used for loads / stores from the global.
     virtual unsigned getMaximalGlobalOffset() const;
+
+    /// Returns true if a cast between SrcAS and DestAS is a noop.
+    virtual bool isNoopAddrSpaceCast(unsigned SrcAS, unsigned DestAS) const {
+      // Addrspacecasts are always noops.
+      return true;
+    }
 
     /// createFastISel - This method returns a target specific FastISel object,
     /// or null if the target does not support "fast" ISel.

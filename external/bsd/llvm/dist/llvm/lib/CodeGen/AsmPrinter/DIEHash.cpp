@@ -16,7 +16,6 @@
 #include "DIEHash.h"
 
 #include "DIE.h"
-#include "DwarfCompileUnit.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Debug.h"
@@ -92,10 +91,12 @@ void DIEHash::addParentContext(const DIE &Parent) {
   // outermost such construct...
   SmallVector<const DIE *, 1> Parents;
   const DIE *Cur = &Parent;
-  while (Cur->getTag() != dwarf::DW_TAG_compile_unit) {
+  while (Cur->getParent()) {
     Parents.push_back(Cur);
     Cur = Cur->getParent();
   }
+  assert(Cur->getTag() == dwarf::DW_TAG_compile_unit ||
+         Cur->getTag() == dwarf::DW_TAG_type_unit);
 
   // Reverse iterate over our list to go from the outermost construct to the
   // innermost.
