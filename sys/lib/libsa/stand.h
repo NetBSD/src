@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.76 2012/05/21 21:34:16 dsl Exp $	*/
+/*	$NetBSD: stand.h,v 1.77 2014/01/05 21:38:25 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -110,7 +110,7 @@ struct open_file;
  * This structure is used to define file system operations in a file system
  * independent way.
  */
-extern char *fsmod;
+extern const char *fsmod;
 
 #if !defined(LIBSA_SINGLE_FILESYSTEM)
 struct fs_ops {
