@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.7 2014/01/03 06:37:13 tsutsui Exp $	*/
+/*	$NetBSD: init_main.c,v 1.8 2014/01/05 06:56:22 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -114,14 +114,71 @@ int boot_timeout = BOOT_TIMEOUT;
 
 static const char prompt[] = "boot> ";
 
+/*
+ * PROM monitor's boot device info
+ */
+
+/* LUNA-I monitor's bootinfo structure */
+/* This bootinfo data address is investigated on ROM Ver4.22 and Ver4.25 */
+#define	LUNA1_BOOTINFOADDR	0x000008c0
+struct luna1_bootinfo {
+	uint8_t	bi_xxx1[3];	/* 0x08c0: ??? */
+	uint8_t	bi_device;	/* 0x08c3: boot device */
+#define	LUNA1_BTDEV_DK	0		/* Hard-Disk */
+#define	LUNA1_BTDEV_FB	1		/* Floppy-Disk */
+#define	LUNA1_BTDEV_SD	2		/* Streamer-Tape */
+#define	LUNA1_BTDEV_P0	3		/* RS232c */
+#define	LUNA1_BTDEV_ET	4		/* Ether-net */
+#define	LUNA1_NBTDEV	5
+
+	struct {
+		uint8_t	bd_xxx1;	/*  0: ??? */
+		uint8_t	bd_boot;	/*  1: 1 == booted */
+		char	bd_name[2];	/*  2: device name (dk, fb, sd ... ) */
+		uint8_t	bd_unit;	/*  4: unit number (not ID) */
+		uint8_t	bd_xxx2;	/*  5: ??? */
+		uint8_t	bd_xxx3;	/*  6: ??? */
+		uint8_t	bd_part;	/*  7: dk partition / st record # */
+		uint8_t	bd_xxx4[4];	/*  8: ??? */
+		uint8_t	bd_xxx5[4];	/* 12: ??? */
+	} bi_devinfo[LUNA1_NBTDEV];
+} __packed;
+
+/* LUNA-II monitor's bootinfo structure */
+/* This bootinfo data address is investigated on ROM Version 1.11 */
+#define	LUNA2_BOOTINFOADDR	0x00001d80
+struct luna2_bootinfo {
+	uint8_t	bi_xxx1[13];	/* 0x1d80: ??? */
+	uint8_t	bi_device;	/* 0x1d8d: boot device */
+#define	LUNA2_BTDEV_DK	0		/* Hard-Disk */
+#define	LUNA2_BTDEV_FT	1		/* Floppy-Disk */
+#define	LUNA2_BTDEV_SD	2		/* Streamer-Tape */
+#define	LUNA2_BTDEV_P0	3		/* RS232c */
+#define	LUNA2_NBTDEV	4
+
+	struct {
+		uint8_t	bd_xxx1;	/*  0: ??? */
+		uint8_t	bd_boot;	/*  1: 1 == booted */
+		char	bd_name[4];	/*  2: device name (dk, ft, sd ... ) */
+		uint8_t	bd_xxx2;	/*  6: ??? */
+		uint8_t	bd_ctlr;	/*  7: SCSI controller number */
+		uint8_t	bd_unit;	/*  8: SCSI ID number */
+		uint8_t	bd_xxx3;	/*  9: device number index? */
+		uint8_t	bd_xxx4;	/* 10: ??? */
+		uint8_t	bd_part;	/* 11: dk partition / st record # */
+		uint8_t	bd_xxx5[4];	/* 12: ??? */
+		uint8_t	bd_xxx6[4];	/* 16: ??? */
+	} bi_devinfo[LUNA2_NBTDEV];
+} __packed;
+
+/* #define BTINFO_DEBUG */
+
 void
 main(void)
 {
 	int i, status = 0;
 	const char *machstr;
-	const char *cp;
-	char bootarg[64];
-	bool netboot = false;
+	const char *bootdev;
 	int unit, part;
 
 	/*
@@ -132,25 +189,11 @@ main(void)
 		machstr  = "LUNA-I";
 		cpuspeed = MHZ_25;
 		hz = 60;
-		memcpy(bootarg, (char *)*RVPtr->vec53, sizeof(bootarg));
-
-		/* check netboot */
-		for (i = 0, cp = bootarg; i < sizeof(bootarg); i++, cp++) {
-			if (*cp == '\0')
-				break;
-			if (*cp == 'E' && memcmp("ENADDR=", cp, 7) == 0) {
-				netboot = true;
-				break;
-			}
-		}
 	} else {
 		machtype = LUNA_II;
 		machstr  = "LUNA-II";
 		cpuspeed = MHZ_25 * 2;	/* XXX */
 		hz = 100;
-		memcpy(bootarg, (char *)*RVPtr->vec02, sizeof(bootarg));
-
-		/* LUNA-II's boot monitor doesn't support netboot */
 	}
 
 	nplane   = get_plane_numbers();
@@ -185,10 +228,78 @@ main(void)
 	configure();
 	printf("\n");
 
-	unit = 0;	/* XXX should parse monitor's Boot-file constant */
+	/* use sd(0,0) for the default boot device */
+	bootdev = "sd";
+	unit = 0;
 	part = 0;
+
+	if (machtype == LUNA_I) {
+		const struct luna1_bootinfo *bi1 = (void *)LUNA1_BOOTINFOADDR;
+		int dev = bi1->bi_device;
+
+		switch (dev) {
+		case LUNA1_BTDEV_DK:
+			/* XXX: should check hp_dinfo in ioconf.c */
+			/* note: bd_unit is not SCSI ID */
+			unit = bi1->bi_devinfo[dev].bd_unit;
+			break;
+		case LUNA1_BTDEV_ET:
+			bootdev = "le";
+			unit = 0;
+			break;
+		default:
+			/* not supported */
+			break;
+		}
+#ifdef BTINFO_DEBUG
+		printf("bi1->bi_device = 0x%02x\n", bi1->bi_device);
+		printf("bi1->bi_devinfo[dev].bd_boot = 0x%02x\n",
+		    bi1->bi_devinfo[dev].bd_boot);
+		printf("bi1->bi_devinfo[dev].bd_name = %c%c\n",
+		    bi1->bi_devinfo[dev].bd_name[0],
+		    bi1->bi_devinfo[dev].bd_name[1]);
+		printf("bi1->bi_devinfo[dev].bd_unit = 0x%02x\n",
+		    bi1->bi_devinfo[dev].bd_unit);
+		printf("bi1->bi_devinfo[dev].bd_part = 0x%02x\n",
+		    bi1->bi_devinfo[dev].bd_part);
+#endif
+	} else {
+		const struct luna2_bootinfo *bi2 = (void *)LUNA2_BOOTINFOADDR;
+		int dev = bi2->bi_device;
+		int ctlr, id;
+
+		switch (dev) {
+		case LUNA2_BTDEV_DK:
+			ctlr = bi2->bi_devinfo[dev].bd_ctlr;
+			id = bi2->bi_devinfo[dev].bd_unit;
+			/* XXX: should check hp_dinfo in ioconf.c */
+			unit = 6 - id;
+			if (ctlr == 1) {
+				/* XXX: should check hp_dinfo in ioconf.c */
+				unit += 2;
+			}
+			break;
+		default:
+			/* not supported */
+			break;
+		}
+#ifdef BTINFO_DEBUG
+		printf("bi2->bi_device = 0x%02x\n", bi2->bi_device);
+		printf("bi2->bi_devinfo[dev].bd_boot = 0x%02x\n",
+		    bi2->bi_devinfo[dev].bd_boot);
+		printf("bi2->bi_devinfo[dev].bd_name = %s\n",
+		    bi2->bi_devinfo[dev].bd_name);
+		printf("bi2->bi_devinfo[dev].bd_ctlr = 0x%02x\n",
+		    bi2->bi_devinfo[dev].bd_ctlr);
+		printf("bi2->bi_devinfo[dev].bd_unit = 0x%02x\n",
+		    bi2->bi_devinfo[dev].bd_unit);
+		printf("bi2->bi_devinfo[dev].bd_part = 0x%02x\n",
+		    bi2->bi_devinfo[dev].bd_part);
+#endif
+	}
+
 	snprintf(default_file, sizeof(default_file),
-	    "%s(%d,%d)%s", netboot ? "le" : "sd", unit, part, "netbsd");
+	    "%s(%d,%d)%s", bootdev, unit, part, "netbsd");
 
 	howto = reorder_dipsw(dipsw2);
 
