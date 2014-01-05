@@ -62,6 +62,12 @@ static cl::opt<std::string>
     Style("style",
           cl::desc(clang::format::StyleOptionHelpDescription),
           cl::init("file"), cl::cat(ClangFormatCategory));
+static cl::opt<std::string>
+FallbackStyle("fallback-style",
+              cl::desc("The name of the predefined style used as a fallback in "
+                       "case clang-format is invoked with -style=file, but can "
+                       "not find the .clang-format file to use."),
+              cl::init("LLVM"), cl::cat(ClangFormatCategory));
 
 static cl::opt<std::string>
 AssumeFilename("assume-filename",
@@ -173,6 +179,26 @@ static bool fillRanges(SourceManager &Sources, FileID ID,
   return false;
 }
 
+static void outputReplacementXML(StringRef Text) {
+  size_t From = 0;
+  size_t Index;
+  while ((Index = Text.find_first_of("\n\r", From)) != StringRef::npos) {
+    llvm::outs() << Text.substr(From, Index - From);
+    switch (Text[Index]) {
+    case '\n':
+      llvm::outs() << "&#10;";
+      break;
+    case '\r':
+      llvm::outs() << "&#13;";
+      break;
+    default:
+      llvm_unreachable("Unexpected character encountered!");
+    }
+    From = Index + 1;
+  }
+  llvm::outs() << Text.substr(From);
+}
+
 // Returns true on error.
 static bool format(StringRef FileName) {
   FileManager Files((FileSystemOptions()));
@@ -192,8 +218,8 @@ static bool format(StringRef FileName) {
   if (fillRanges(Sources, ID, Code.get(), Ranges))
     return true;
 
-  FormatStyle FormatStyle =
-      getStyle(Style, (FileName == "-") ? AssumeFilename : FileName);
+  FormatStyle FormatStyle = getStyle(
+      Style, (FileName == "-") ? AssumeFilename : FileName, FallbackStyle);
   Lexer Lex(ID, Sources.getBuffer(ID), Sources,
             getFormattingLangOpts(FormatStyle.Standard));
   tooling::Replacements Replaces = reformat(FormatStyle, Lex, Sources, Ranges);
@@ -205,8 +231,9 @@ static bool format(StringRef FileName) {
          I != E; ++I) {
       llvm::outs() << "<replacement "
                    << "offset='" << I->getOffset() << "' "
-                   << "length='" << I->getLength() << "'>"
-                   << I->getReplacementText() << "</replacement>\n";
+                   << "length='" << I->getLength() << "'>";
+      outputReplacementXML(I->getReplacementText());
+      llvm::outs() << "</replacement>\n";
     }
     llvm::outs() << "</replacements>\n";
   } else {
@@ -256,7 +283,8 @@ int main(int argc, const char **argv) {
   if (DumpConfig) {
     std::string Config =
         clang::format::configurationAsText(clang::format::getStyle(
-            Style, FileNames.empty() ? AssumeFilename : FileNames[0]));
+            Style, FileNames.empty() ? AssumeFilename : FileNames[0],
+            FallbackStyle));
     llvm::outs() << Config << "\n";
     return 0;
   }

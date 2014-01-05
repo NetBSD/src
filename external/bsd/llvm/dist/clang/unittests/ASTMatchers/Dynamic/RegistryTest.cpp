@@ -36,12 +36,24 @@ public:
     return Out;
   }
 
+  llvm::Optional<MatcherCtor> lookupMatcherCtor(StringRef MatcherName,
+                                                Diagnostics *Error = 0) {
+    Diagnostics DummyError;
+    if (!Error) Error = &DummyError;
+    llvm::Optional<MatcherCtor> Ctor =
+        Registry::lookupMatcherCtor(MatcherName, SourceRange(), Error);
+    EXPECT_EQ("", DummyError.toStringFull());
+    return Ctor;
+  }
+
   VariantMatcher constructMatcher(StringRef MatcherName,
                                   Diagnostics *Error = NULL) {
     Diagnostics DummyError;
     if (!Error) Error = &DummyError;
-    const VariantMatcher Out =
-        Registry::constructMatcher(MatcherName, SourceRange(), Args(), Error);
+    llvm::Optional<MatcherCtor> Ctor = lookupMatcherCtor(MatcherName, Error);
+    VariantMatcher Out;
+    if (Ctor)
+      Out = Registry::constructMatcher(*Ctor, SourceRange(), Args(), Error);
     EXPECT_EQ("", DummyError.toStringFull());
     return Out;
   }
@@ -51,8 +63,10 @@ public:
                                   Diagnostics *Error = NULL) {
     Diagnostics DummyError;
     if (!Error) Error = &DummyError;
-    const VariantMatcher Out = Registry::constructMatcher(
-        MatcherName, SourceRange(), Args(Arg1), Error);
+    llvm::Optional<MatcherCtor> Ctor = lookupMatcherCtor(MatcherName, Error);
+    VariantMatcher Out;
+    if (Ctor)
+      Out = Registry::constructMatcher(*Ctor, SourceRange(), Args(Arg1), Error);
     EXPECT_EQ("", DummyError.toStringFull());
     return Out;
   }
@@ -63,8 +77,11 @@ public:
                                   Diagnostics *Error = NULL) {
     Diagnostics DummyError;
     if (!Error) Error = &DummyError;
-    const VariantMatcher Out = Registry::constructMatcher(
-        MatcherName, SourceRange(), Args(Arg1, Arg2), Error);
+    llvm::Optional<MatcherCtor> Ctor = lookupMatcherCtor(MatcherName, Error);
+    VariantMatcher Out;
+    if (Ctor)
+      Out = Registry::constructMatcher(*Ctor, SourceRange(), Args(Arg1, Arg2),
+                                       Error);
     EXPECT_EQ("", DummyError.toStringFull());
     return Out;
   }
@@ -295,6 +312,17 @@ TEST_F(RegistryTest, VariadicOp) {
   EXPECT_FALSE(matches("int i = 0;", D));
   EXPECT_TRUE(matches("class Bar{};", D));
   EXPECT_FALSE(matches("class OtherBar{};", D));
+
+  D = recordDecl(
+      has(fieldDecl(hasName("Foo"))),
+      constructMatcher(
+          "unless",
+          constructMatcher("namedDecl",
+                           constructMatcher("hasName", std::string("Bar"))))
+          .getTypedMatcher<Decl>());
+
+  EXPECT_FALSE(matches("class Bar{ int Foo; };", D));
+  EXPECT_TRUE(matches("class OtherBar{ int Foo; };", D));
 }
 
 TEST_F(RegistryTest, Errors) {
@@ -306,6 +334,15 @@ TEST_F(RegistryTest, Errors) {
   Error.reset(new Diagnostics());
   EXPECT_TRUE(constructMatcher("isArrow", std::string(), Error.get()).isNull());
   EXPECT_EQ("Incorrect argument count. (Expected = 0) != (Actual = 1)",
+            Error->toString());
+  Error.reset(new Diagnostics());
+  EXPECT_TRUE(constructMatcher("anyOf", Error.get()).isNull());
+  EXPECT_EQ("Incorrect argument count. (Expected = (2, )) != (Actual = 0)",
+            Error->toString());
+  Error.reset(new Diagnostics());
+  EXPECT_TRUE(constructMatcher("unless", std::string(), std::string(),
+                               Error.get()).isNull());
+  EXPECT_EQ("Incorrect argument count. (Expected = (1, 1)) != (Actual = 2)",
             Error->toString());
 
   // Bad argument type
@@ -324,7 +361,8 @@ TEST_F(RegistryTest, Errors) {
 
   // Bad argument type with variadic.
   Error.reset(new Diagnostics());
-  EXPECT_TRUE(constructMatcher("anyOf", std::string(), Error.get()).isNull());
+  EXPECT_TRUE(constructMatcher("anyOf", std::string(), std::string(),
+                               Error.get()).isNull());
   EXPECT_EQ(
       "Incorrect type for arg 1. (Expected = Matcher<>) != (Actual = String)",
       Error->toString());

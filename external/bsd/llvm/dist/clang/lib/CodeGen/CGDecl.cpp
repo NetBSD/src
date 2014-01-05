@@ -823,7 +823,7 @@ void CodeGenFunction::EmitAutoVarDecl(const VarDecl &D) {
 }
 
 /// EmitAutoVarAlloca - Emit the alloca and debug information for a
-/// local variable.  Does not emit initalization or destruction.
+/// local variable.  Does not emit initialization or destruction.
 CodeGenFunction::AutoVarEmission
 CodeGenFunction::EmitAutoVarAlloca(const VarDecl &D) {
   QualType Ty = D.getType();
@@ -1647,7 +1647,7 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg,
     DeclPtr = Arg;
     // Push a destructor cleanup for this parameter if the ABI requires it.
     if (HasNonScalarEvalKind &&
-        getTarget().getCXXABI().isArgumentDestroyedByCallee()) {
+        getTarget().getCXXABI().areArgsDestroyedLeftToRightInCallee()) {
       if (const CXXRecordDecl *RD = Ty->getAsCXXRecordDecl()) {
         if (RD->hasNonTrivialDestructor())
           pushDestroy(QualType::DK_cxx_destructor, DeclPtr, Ty);

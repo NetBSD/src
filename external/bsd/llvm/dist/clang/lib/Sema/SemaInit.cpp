@@ -1005,9 +1005,11 @@ void InitListChecker::CheckScalarType(const InitializedEntity &Entity,
 
   Expr *expr = IList->getInit(Index);
   if (InitListExpr *SubIList = dyn_cast<InitListExpr>(expr)) {
+    // FIXME: This is invalid, and accepting it causes overload resolution
+    // to pick the wrong overload in some corner cases.
     if (!VerifyOnly)
       SemaRef.Diag(SubIList->getLocStart(),
-                   diag::warn_many_braces_around_scalar_init)
+                   diag::ext_many_braces_around_scalar_init)
         << SubIList->getSourceRange();
 
     CheckScalarType(Entity, SubIList, DeclType, Index, StructuredList,
@@ -1538,7 +1540,7 @@ void InitListChecker::CheckStructUnionTypes(const InitializedEntity &Entity,
          it != end; ++it) {
       if (!it->isUnnamedBitfield() && !it->hasInClassInitializer()) {
         SemaRef.Diag(IList->getSourceRange().getEnd(),
-                     diag::warn_missing_field_initializers) << it->getName();
+                     diag::warn_missing_field_initializers) << *it;
         break;
       }
     }
@@ -3520,10 +3522,13 @@ static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
         if (ConvTemplate)
           S.AddTemplateConversionCandidate(ConvTemplate, I.getPair(),
                                            ActingDC, Initializer,
-                                           DestType, CandidateSet);
+                                           DestType, CandidateSet,
+                                           /*AllowObjCConversionOnExplicit=*/
+                                             false);
         else
           S.AddConversionCandidate(Conv, I.getPair(), ActingDC,
-                                   Initializer, DestType, CandidateSet);
+                                   Initializer, DestType, CandidateSet,
+                                   /*AllowObjCConversionOnExplicit=*/false);
       }
     }
   }
@@ -4143,10 +4148,11 @@ static void TryUserDefinedConversion(Sema &S,
           if (ConvTemplate)
             S.AddTemplateConversionCandidate(ConvTemplate, I.getPair(),
                                              ActingDC, Initializer, DestType,
-                                             CandidateSet);
+                                             CandidateSet, AllowExplicit);
           else
             S.AddConversionCandidate(Conv, I.getPair(), ActingDC,
-                                     Initializer, DestType, CandidateSet);
+                                     Initializer, DestType, CandidateSet,
+                                     AllowExplicit);
         }
       }
     }
@@ -4460,6 +4466,14 @@ void InitializationSequence::InitializeFrom(Sema &S,
   Expr *Initializer = 0;
   if (Args.size() == 1) {
     Initializer = Args[0];
+    if (S.getLangOpts().ObjC1) {
+      if (S.CheckObjCBridgeRelatedConversions(Initializer->getLocStart(),
+                                              DestType, Initializer->getType(),
+                                              Initializer) ||
+          S.ConversionToObjCStringLiteralCheck(DestType, Initializer))
+        Args[0] = Initializer;
+        
+    }
     if (!isa<InitListExpr>(Initializer))
       SourceType = Initializer->getType();
   }
@@ -6196,7 +6210,7 @@ InitializationSequence::Perform(Sema &S,
 
     case SK_OCLSamplerInit: {
       assert(Step->Type->isSamplerT() && 
-             "Sampler initialization on non sampler type.");
+             "Sampler initialization on non-sampler type.");
 
       QualType SourceType = CurInit.get()->getType();
 
@@ -6212,7 +6226,7 @@ InitializationSequence::Perform(Sema &S,
     }
     case SK_OCLZeroEvent: {
       assert(Step->Type->isEventT() && 
-             "Event initialization on non event type.");
+             "Event initialization on non-event type.");
 
       CurInit = S.ImpCastExprToType(CurInit.take(), Step->Type,
                                     CK_ZeroToOCLEvent,

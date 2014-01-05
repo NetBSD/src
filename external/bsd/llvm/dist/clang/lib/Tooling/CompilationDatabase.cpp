@@ -204,8 +204,8 @@ private:
 ///          \li true if successful.
 ///          \li false if \c Args cannot be used for compilation jobs (e.g.
 ///          contains an option like -E or -version).
-bool stripPositionalArgs(std::vector<const char *> Args,
-                         std::vector<std::string> &Result) {
+static bool stripPositionalArgs(std::vector<const char *> Args,
+                                std::vector<std::string> &Result) {
   IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts = new DiagnosticOptions();
   UnusedInputDiagConsumer DiagClient;
   DiagnosticsEngine Diagnostics(
@@ -236,6 +236,11 @@ bool stripPositionalArgs(std::vector<const char *> Args,
   // prevents compilation, e.g. -E or something like -version, we may still end
   // up with no jobs but then this is the user's fault.
   Args.push_back("placeholder.cpp");
+
+  // Remove -no-integrated-as; it's not used for syntax checking,
+  // and it confuses targets which don't support this option.
+  std::remove_if(Args.begin(), Args.end(),
+                 MatchesAny(std::string("-no-integrated-as")));
 
   const OwningPtr<driver::Compilation> Compilation(
       NewDriver->BuildCompilation(Args));
@@ -271,6 +276,7 @@ bool stripPositionalArgs(std::vector<const char *> Args,
   End = std::remove_if(Args.begin(), End, MatchesAny(DiagClient.UnusedInputs));
 
   // Remove the -c add above as well. It will be at the end right now.
+  assert(strcmp(*(End - 1), "-c") == 0);
   --End;
 
   Result = std::vector<std::string>(Args.begin() + 1, End);

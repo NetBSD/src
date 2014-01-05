@@ -17,8 +17,8 @@
 
 namespace clang {
 
-  /// \brief Names for the unary type traits.
-  enum UnaryTypeTrait {
+  /// \brief Names for traits that operate specifically on types.
+  enum TypeTrait {
     UTT_HasNothrowAssign,
     UTT_HasNothrowMoveAssign,
     UTT_HasNothrowCopy,
@@ -65,17 +65,16 @@ namespace clang {
     UTT_IsUnion,
     UTT_IsUnsigned,
     UTT_IsVoid,
-    UTT_IsVolatile
-  };
-
-  /// \brief Names for the binary type traits.
-  enum BinaryTypeTrait {
+    UTT_IsVolatile,
+    UTT_Last = UTT_IsVolatile,
     BTT_IsBaseOf,
     BTT_IsConvertible,
     BTT_IsConvertibleTo,
     BTT_IsSame,
     BTT_TypeCompatible,
-    BTT_IsTriviallyAssignable
+    BTT_IsTriviallyAssignable,
+    BTT_Last = BTT_IsTriviallyAssignable,
+    TT_IsTriviallyConstructible
   };
 
   /// \brief Names for the array type traits.
@@ -90,12 +89,6 @@ namespace clang {
     UETT_AlignOf,
     UETT_VecStep
   };
-  
-  /// \brief Names for type traits that operate specifically on types.
-  enum TypeTrait {
-    TT_IsTriviallyConstructible
-  };
-  
 }
 
 #endif

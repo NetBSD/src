@@ -857,45 +857,47 @@ void ASTContext::PrintStats() const {
   BumpAlloc.PrintStats();
 }
 
+RecordDecl *ASTContext::buildImplicitRecord(StringRef Name,
+                                            RecordDecl::TagKind TK) const {
+  SourceLocation Loc;
+  RecordDecl *NewDecl;
+  if (getLangOpts().CPlusPlus)
+    NewDecl = CXXRecordDecl::Create(*this, TK, getTranslationUnitDecl(), Loc,
+                                    Loc, &Idents.get(Name));
+  else
+    NewDecl = RecordDecl::Create(*this, TK, getTranslationUnitDecl(), Loc, Loc,
+                                 &Idents.get(Name));
+  NewDecl->setImplicit();
+  return NewDecl;
+}
+
+TypedefDecl *ASTContext::buildImplicitTypedef(QualType T,
+                                              StringRef Name) const {
+  TypeSourceInfo *TInfo = getTrivialTypeSourceInfo(T);
+  TypedefDecl *NewDecl = TypedefDecl::Create(
+      const_cast<ASTContext &>(*this), getTranslationUnitDecl(),
+      SourceLocation(), SourceLocation(), &Idents.get(Name), TInfo);
+  NewDecl->setImplicit();
+  return NewDecl;
+}
+
 TypedefDecl *ASTContext::getInt128Decl() const {
-  if (!Int128Decl) {
-    TypeSourceInfo *TInfo = getTrivialTypeSourceInfo(Int128Ty);
-    Int128Decl = TypedefDecl::Create(const_cast<ASTContext &>(*this), 
-                                     getTranslationUnitDecl(),
-                                     SourceLocation(),
-                                     SourceLocation(),
-                                     &Idents.get("__int128_t"),
-                                     TInfo);
-  }
-  
+  if (!Int128Decl)
+    Int128Decl = buildImplicitTypedef(Int128Ty, "__int128_t");
   return Int128Decl;
 }
 
 TypedefDecl *ASTContext::getUInt128Decl() const {
-  if (!UInt128Decl) {
-    TypeSourceInfo *TInfo = getTrivialTypeSourceInfo(UnsignedInt128Ty);
-    UInt128Decl = TypedefDecl::Create(const_cast<ASTContext &>(*this), 
-                                     getTranslationUnitDecl(),
-                                     SourceLocation(),
-                                     SourceLocation(),
-                                     &Idents.get("__uint128_t"),
-                                     TInfo);
-  }
-  
+  if (!UInt128Decl)
+    UInt128Decl = buildImplicitTypedef(UnsignedInt128Ty, "__uint128_t");
   return UInt128Decl;
 }
 
 TypeDecl *ASTContext::getFloat128StubType() const {
   assert(LangOpts.CPlusPlus && "should only be called for c++");
-  if (!Float128StubDecl) {
-    Float128StubDecl = CXXRecordDecl::Create(const_cast<ASTContext &>(*this), 
-                                             TTK_Struct,
-                                             getTranslationUnitDecl(),
-                                             SourceLocation(),
-                                             SourceLocation(),
-                                             &Idents.get("__float128"));
-  }
-  
+  if (!Float128StubDecl)
+    Float128StubDecl = buildImplicitRecord("__float128");
+
   return Float128StubDecl;
 }
 
@@ -1632,8 +1634,9 @@ ASTContext::getTypeInfoImpl(const Type *T) const {
   }
   case Type::ObjCObject:
     return getTypeInfo(cast<ObjCObjectType>(T)->getBaseType().getTypePtr());
+  case Type::Adjusted:
   case Type::Decayed:
-    return getTypeInfo(cast<DecayedType>(T)->getDecayedType().getTypePtr());
+    return getTypeInfo(cast<AdjustedType>(T)->getAdjustedType().getTypePtr());
   case Type::ObjCInterface: {
     const ObjCInterfaceType *ObjCI = cast<ObjCInterfaceType>(T);
     const ASTRecordLayout &Layout = getASTObjCInterfaceLayout(ObjCI->getDecl());
@@ -2163,14 +2166,29 @@ QualType ASTContext::getPointerType(QualType T) const {
   return QualType(New, 0);
 }
 
+QualType ASTContext::getAdjustedType(QualType Orig, QualType New) const {
+  llvm::FoldingSetNodeID ID;
+  AdjustedType::Profile(ID, Orig, New);
+  void *InsertPos = 0;
+  AdjustedType *AT = AdjustedTypes.FindNodeOrInsertPos(ID, InsertPos);
+  if (AT)
+    return QualType(AT, 0);
+
+  QualType Canonical = getCanonicalType(New);
+
+  // Get the new insert position for the node we care about.
+  AT = AdjustedTypes.FindNodeOrInsertPos(ID, InsertPos);
+  assert(AT == 0 && "Shouldn't be in the map!");
+
+  AT = new (*this, TypeAlignment)
+      AdjustedType(Type::Adjusted, Orig, New, Canonical);
+  Types.push_back(AT);
+  AdjustedTypes.InsertNode(AT, InsertPos);
+  return QualType(AT, 0);
+}
+
 QualType ASTContext::getDecayedType(QualType T) const {
   assert((T->isArrayType() || T->isFunctionType()) && "T does not decay");
-
-  llvm::FoldingSetNodeID ID;
-  DecayedType::Profile(ID, T);
-  void *InsertPos = 0;
-  if (DecayedType *DT = DecayedTypes.FindNodeOrInsertPos(ID, InsertPos))
-    return QualType(DT, 0);
 
   QualType Decayed;
 
@@ -2189,17 +2207,23 @@ QualType ASTContext::getDecayedType(QualType T) const {
   if (T->isFunctionType())
     Decayed = getPointerType(T);
 
+  llvm::FoldingSetNodeID ID;
+  AdjustedType::Profile(ID, T, Decayed);
+  void *InsertPos = 0;
+  AdjustedType *AT = AdjustedTypes.FindNodeOrInsertPos(ID, InsertPos);
+  if (AT)
+    return QualType(AT, 0);
+
   QualType Canonical = getCanonicalType(Decayed);
 
   // Get the new insert position for the node we care about.
-  DecayedType *NewIP = DecayedTypes.FindNodeOrInsertPos(ID, InsertPos);
-  assert(NewIP == 0 && "Shouldn't be in the map!"); (void)NewIP;
+  AT = AdjustedTypes.FindNodeOrInsertPos(ID, InsertPos);
+  assert(AT == 0 && "Shouldn't be in the map!");
 
-  DecayedType *New =
-      new (*this, TypeAlignment) DecayedType(T, Decayed, Canonical);
-  Types.push_back(New);
-  DecayedTypes.InsertNode(New, InsertPos);
-  return QualType(New, 0);
+  AT = new (*this, TypeAlignment) DecayedType(T, Decayed, Canonical);
+  Types.push_back(AT);
+  AdjustedTypes.InsertNode(AT, InsertPos);
+  return QualType(AT, 0);
 }
 
 /// getBlockPointerType - Return the uniqued reference to the type for
@@ -3507,6 +3531,62 @@ QualType ASTContext::getObjCObjectType(QualType BaseType,
   return QualType(T, 0);
 }
 
+/// ObjCObjectAdoptsQTypeProtocols - Checks that protocols in IC's
+/// protocol list adopt all protocols in QT's qualified-id protocol
+/// list.
+bool ASTContext::ObjCObjectAdoptsQTypeProtocols(QualType QT,
+                                                ObjCInterfaceDecl *IC) {
+  if (!QT->isObjCQualifiedIdType())
+    return false;
+  
+  if (const ObjCObjectPointerType *OPT = QT->getAs<ObjCObjectPointerType>()) {
+    // If both the right and left sides have qualifiers.
+    for (ObjCObjectPointerType::qual_iterator I = OPT->qual_begin(),
+         E = OPT->qual_end(); I != E; ++I) {
+      ObjCProtocolDecl *Proto = *I;
+      if (!IC->ClassImplementsProtocol(Proto, false))
+        return false;
+    }
+    return true;
+  }
+  return false;
+}
+
+/// QIdProtocolsAdoptObjCObjectProtocols - Checks that protocols in
+/// QT's qualified-id protocol list adopt all protocols in IDecl's list
+/// of protocols.
+bool ASTContext::QIdProtocolsAdoptObjCObjectProtocols(QualType QT,
+                                                ObjCInterfaceDecl *IDecl) {
+  if (!QT->isObjCQualifiedIdType())
+    return false;
+  const ObjCObjectPointerType *OPT = QT->getAs<ObjCObjectPointerType>();
+  if (!OPT)
+    return false;
+  if (!IDecl->hasDefinition())
+    return false;
+  llvm::SmallPtrSet<ObjCProtocolDecl *, 8> InheritedProtocols;
+  CollectInheritedProtocols(IDecl, InheritedProtocols);
+  if (InheritedProtocols.empty())
+    return false;
+      
+  for (llvm::SmallPtrSet<ObjCProtocolDecl*,8>::iterator PI =
+       InheritedProtocols.begin(),
+       E = InheritedProtocols.end(); PI != E; ++PI) {
+    // If both the right and left sides have qualifiers.
+    bool Adopts = false;
+    for (ObjCObjectPointerType::qual_iterator I = OPT->qual_begin(),
+         E = OPT->qual_end(); I != E; ++I) {
+      ObjCProtocolDecl *Proto = *I;
+      // return 'true' if '*PI' is in the inheritance hierarchy of Proto
+      if ((Adopts = ProtocolCompatibleWithProtocol(*PI, Proto)))
+        break;
+    }
+    if (!Adopts)
+      return false;
+  }
+  return true;
+}
+
 /// getObjCObjectPointerType - Return a ObjCObjectPointerType type for
 /// the given object type.
 QualType ASTContext::getObjCObjectPointerType(QualType ObjectT) const {
@@ -4479,22 +4559,10 @@ int ASTContext::getIntegerTypeOrder(QualType LHS, QualType RHS) const {
   return 1;
 }
 
-static RecordDecl *
-CreateRecordDecl(const ASTContext &Ctx, RecordDecl::TagKind TK,
-                 DeclContext *DC, IdentifierInfo *Id) {
-  SourceLocation Loc;
-  if (Ctx.getLangOpts().CPlusPlus)
-    return CXXRecordDecl::Create(Ctx, TK, DC, Loc, Loc, Id);
-  else
-    return RecordDecl::Create(Ctx, TK, DC, Loc, Loc, Id);
-}
-
 // getCFConstantStringType - Return the type used for constant CFStrings.
 QualType ASTContext::getCFConstantStringType() const {
   if (!CFConstantStringTypeDecl) {
-    CFConstantStringTypeDecl =
-      CreateRecordDecl(*this, TTK_Struct, TUDecl,
-                       &Idents.get("NSConstantString"));
+    CFConstantStringTypeDecl = buildImplicitRecord("NSConstantString");
     CFConstantStringTypeDecl->startDefinition();
 
     QualType FieldTypes[4];
@@ -4529,8 +4597,7 @@ QualType ASTContext::getCFConstantStringType() const {
 
 QualType ASTContext::getObjCSuperType() const {
   if (ObjCSuperType.isNull()) {
-    RecordDecl *ObjCSuperTypeDecl  =
-      CreateRecordDecl(*this, TTK_Struct, TUDecl, &Idents.get("objc_super"));
+    RecordDecl *ObjCSuperTypeDecl = buildImplicitRecord("objc_super");
     TUDecl->addDecl(ObjCSuperTypeDecl);
     ObjCSuperType = getTagDeclType(ObjCSuperTypeDecl);
   }
@@ -4547,12 +4614,11 @@ QualType ASTContext::getBlockDescriptorType() const {
   if (BlockDescriptorType)
     return getTagDeclType(BlockDescriptorType);
 
-  RecordDecl *T;
+  RecordDecl *RD;
   // FIXME: Needs the FlagAppleBlock bit.
-  T = CreateRecordDecl(*this, TTK_Struct, TUDecl,
-                       &Idents.get("__block_descriptor"));
-  T->startDefinition();
-  
+  RD = buildImplicitRecord("__block_descriptor");
+  RD->startDefinition();
+
   QualType FieldTypes[] = {
     UnsignedLongTy,
     UnsignedLongTy,
@@ -4564,20 +4630,17 @@ QualType ASTContext::getBlockDescriptorType() const {
   };
 
   for (size_t i = 0; i < 2; ++i) {
-    FieldDecl *Field = FieldDecl::Create(*this, T, SourceLocation(),
-                                         SourceLocation(),
-                                         &Idents.get(FieldNames[i]),
-                                         FieldTypes[i], /*TInfo=*/0,
-                                         /*BitWidth=*/0,
-                                         /*Mutable=*/false,
-                                         ICIS_NoInit);
+    FieldDecl *Field = FieldDecl::Create(
+        *this, RD, SourceLocation(), SourceLocation(),
+        &Idents.get(FieldNames[i]), FieldTypes[i], /*TInfo=*/0,
+        /*BitWidth=*/0, /*Mutable=*/false, ICIS_NoInit);
     Field->setAccess(AS_public);
-    T->addDecl(Field);
+    RD->addDecl(Field);
   }
 
-  T->completeDefinition();
+  RD->completeDefinition();
 
-  BlockDescriptorType = T;
+  BlockDescriptorType = RD;
 
   return getTagDeclType(BlockDescriptorType);
 }
@@ -4586,12 +4649,11 @@ QualType ASTContext::getBlockDescriptorExtendedType() const {
   if (BlockDescriptorExtendedType)
     return getTagDeclType(BlockDescriptorExtendedType);
 
-  RecordDecl *T;
+  RecordDecl *RD;
   // FIXME: Needs the FlagAppleBlock bit.
-  T = CreateRecordDecl(*this, TTK_Struct, TUDecl,
-                       &Idents.get("__block_descriptor_withcopydispose"));
-  T->startDefinition();
-  
+  RD = buildImplicitRecord("__block_descriptor_withcopydispose");
+  RD->startDefinition();
+
   QualType FieldTypes[] = {
     UnsignedLongTy,
     UnsignedLongTy,
@@ -4607,21 +4669,18 @@ QualType ASTContext::getBlockDescriptorExtendedType() const {
   };
 
   for (size_t i = 0; i < 4; ++i) {
-    FieldDecl *Field = FieldDecl::Create(*this, T, SourceLocation(),
-                                         SourceLocation(),
-                                         &Idents.get(FieldNames[i]),
-                                         FieldTypes[i], /*TInfo=*/0,
-                                         /*BitWidth=*/0,
-                                         /*Mutable=*/false,
-                                         ICIS_NoInit);
+    FieldDecl *Field = FieldDecl::Create(
+        *this, RD, SourceLocation(), SourceLocation(),
+        &Idents.get(FieldNames[i]), FieldTypes[i], /*TInfo=*/0,
+        /*BitWidth=*/0,
+        /*Mutable=*/false, ICIS_NoInit);
     Field->setAccess(AS_public);
-    T->addDecl(Field);
+    RD->addDecl(Field);
   }
 
-  T->completeDefinition();
+  RD->completeDefinition();
 
-  BlockDescriptorExtendedType = T;
-
+  BlockDescriptorExtendedType = RD;
   return getTagDeclType(BlockDescriptorExtendedType);
 }
 
@@ -4691,12 +4750,8 @@ bool ASTContext::getByrefLifetime(QualType Ty,
 
 TypedefDecl *ASTContext::getObjCInstanceTypeDecl() {
   if (!ObjCInstanceTypeDecl)
-    ObjCInstanceTypeDecl = TypedefDecl::Create(*this, 
-                                               getTranslationUnitDecl(),
-                                               SourceLocation(), 
-                                               SourceLocation(),
-                                               &Idents.get("instancetype"), 
-                                     getTrivialTypeSourceInfo(getObjCIdType()));
+    ObjCInstanceTypeDecl =
+        buildImplicitTypedef(getObjCIdType(), "instancetype");
   return ObjCInstanceTypeDecl;
 }
 
@@ -5682,24 +5737,15 @@ TypedefDecl *ASTContext::getObjCIdDecl() const {
   if (!ObjCIdDecl) {
     QualType T = getObjCObjectType(ObjCBuiltinIdTy, 0, 0);
     T = getObjCObjectPointerType(T);
-    TypeSourceInfo *IdInfo = getTrivialTypeSourceInfo(T);
-    ObjCIdDecl = TypedefDecl::Create(const_cast<ASTContext &>(*this),
-                                     getTranslationUnitDecl(),
-                                     SourceLocation(), SourceLocation(),
-                                     &Idents.get("id"), IdInfo);
+    ObjCIdDecl = buildImplicitTypedef(T, "id");
   }
-  
   return ObjCIdDecl;
 }
 
 TypedefDecl *ASTContext::getObjCSelDecl() const {
   if (!ObjCSelDecl) {
-    QualType SelT = getPointerType(ObjCBuiltinSelTy);
-    TypeSourceInfo *SelInfo = getTrivialTypeSourceInfo(SelT);
-    ObjCSelDecl = TypedefDecl::Create(const_cast<ASTContext &>(*this),
-                                      getTranslationUnitDecl(),
-                                      SourceLocation(), SourceLocation(),
-                                      &Idents.get("SEL"), SelInfo);
+    QualType T = getPointerType(ObjCBuiltinSelTy);
+    ObjCSelDecl = buildImplicitTypedef(T, "SEL");
   }
   return ObjCSelDecl;
 }
@@ -5708,13 +5754,8 @@ TypedefDecl *ASTContext::getObjCClassDecl() const {
   if (!ObjCClassDecl) {
     QualType T = getObjCObjectType(ObjCBuiltinClassTy, 0, 0);
     T = getObjCObjectPointerType(T);
-    TypeSourceInfo *ClassInfo = getTrivialTypeSourceInfo(T);
-    ObjCClassDecl = TypedefDecl::Create(const_cast<ASTContext &>(*this),
-                                        getTranslationUnitDecl(),
-                                        SourceLocation(), SourceLocation(),
-                                        &Idents.get("Class"), ClassInfo);
+    ObjCClassDecl = buildImplicitTypedef(T, "Class");
   }
-  
   return ObjCClassDecl;
 }
 
@@ -5737,37 +5778,20 @@ ObjCInterfaceDecl *ASTContext::getObjCProtocolDecl() const {
 
 static TypedefDecl *CreateCharPtrBuiltinVaListDecl(const ASTContext *Context) {
   // typedef char* __builtin_va_list;
-  QualType CharPtrType = Context->getPointerType(Context->CharTy);
-  TypeSourceInfo *TInfo
-    = Context->getTrivialTypeSourceInfo(CharPtrType);
-
-  TypedefDecl *VaListTypeDecl
-    = TypedefDecl::Create(const_cast<ASTContext &>(*Context),
-                          Context->getTranslationUnitDecl(),
-                          SourceLocation(), SourceLocation(),
-                          &Context->Idents.get("__builtin_va_list"),
-                          TInfo);
-  return VaListTypeDecl;
+  QualType T = Context->getPointerType(Context->CharTy);
+  return Context->buildImplicitTypedef(T, "__builtin_va_list");
 }
 
 static TypedefDecl *CreateVoidPtrBuiltinVaListDecl(const ASTContext *Context) {
   // typedef void* __builtin_va_list;
-  QualType VoidPtrType = Context->getPointerType(Context->VoidTy);
-  TypeSourceInfo *TInfo
-    = Context->getTrivialTypeSourceInfo(VoidPtrType);
-
-  TypedefDecl *VaListTypeDecl
-    = TypedefDecl::Create(const_cast<ASTContext &>(*Context),
-                          Context->getTranslationUnitDecl(),
-                          SourceLocation(), SourceLocation(),
-                          &Context->Idents.get("__builtin_va_list"),
-                          TInfo);
-  return VaListTypeDecl;
+  QualType T = Context->getPointerType(Context->VoidTy);
+  return Context->buildImplicitTypedef(T, "__builtin_va_list");
 }
 
 static TypedefDecl *
 CreateAArch64ABIBuiltinVaListDecl(const ASTContext *Context) {
-  RecordDecl *VaListTagDecl;
+  // struct __va_list
+  RecordDecl *VaListTagDecl = Context->buildImplicitRecord("__va_list");
   if (Context->getLangOpts().CPlusPlus) {
     // namespace std { struct __va_list {
     NamespaceDecl *NS;
@@ -5776,17 +5800,8 @@ CreateAArch64ABIBuiltinVaListDecl(const ASTContext *Context) {
                                /*Inline*/false, SourceLocation(),
                                SourceLocation(), &Context->Idents.get("std"),
                                /*PrevDecl*/0);
-
-    VaListTagDecl = CXXRecordDecl::Create(*Context, TTK_Struct,
-                                          Context->getTranslationUnitDecl(),
-                                          SourceLocation(), SourceLocation(),
-                                          &Context->Idents.get("__va_list"));
+    NS->setImplicit();
     VaListTagDecl->setDeclContext(NS);
-  } else {
-    // struct __va_list
-    VaListTagDecl = CreateRecordDecl(*Context, TTK_Struct,
-                                   Context->getTranslationUnitDecl(),
-                                   &Context->Idents.get("__va_list"));
   }
 
   VaListTagDecl->startDefinition();
@@ -5834,23 +5849,14 @@ CreateAArch64ABIBuiltinVaListDecl(const ASTContext *Context) {
   Context->VaListTagTy = VaListTagType;
 
   // } __builtin_va_list;
-  TypedefDecl *VaListTypedefDecl
-    = TypedefDecl::Create(const_cast<ASTContext &>(*Context),
-                          Context->getTranslationUnitDecl(),
-                          SourceLocation(), SourceLocation(),
-                          &Context->Idents.get("__builtin_va_list"),
-                          Context->getTrivialTypeSourceInfo(VaListTagType));
-
-  return VaListTypedefDecl;
+  return Context->buildImplicitTypedef(VaListTagType, "__builtin_va_list");
 }
 
 static TypedefDecl *CreatePowerABIBuiltinVaListDecl(const ASTContext *Context) {
   // typedef struct __va_list_tag {
   RecordDecl *VaListTagDecl;
 
-  VaListTagDecl = CreateRecordDecl(*Context, TTK_Struct,
-                                   Context->getTranslationUnitDecl(),
-                                   &Context->Idents.get("__va_list_tag"));
+  VaListTagDecl = Context->buildImplicitRecord("__va_list_tag");
   VaListTagDecl->startDefinition();
 
   const size_t NumFields = 5;
@@ -5895,12 +5901,9 @@ static TypedefDecl *CreatePowerABIBuiltinVaListDecl(const ASTContext *Context) {
   Context->VaListTagTy = VaListTagType;
 
   // } __va_list_tag;
-  TypedefDecl *VaListTagTypedefDecl
-    = TypedefDecl::Create(const_cast<ASTContext &>(*Context),
-                          Context->getTranslationUnitDecl(),
-                          SourceLocation(), SourceLocation(),
-                          &Context->Idents.get("__va_list_tag"),
-                          Context->getTrivialTypeSourceInfo(VaListTagType));
+  TypedefDecl *VaListTagTypedefDecl =
+      Context->buildImplicitTypedef(VaListTagType, "__va_list_tag");
+
   QualType VaListTagTypedefType =
     Context->getTypedefType(VaListTagTypedefDecl);
 
@@ -5909,25 +5912,14 @@ static TypedefDecl *CreatePowerABIBuiltinVaListDecl(const ASTContext *Context) {
   QualType VaListTagArrayType
     = Context->getConstantArrayType(VaListTagTypedefType,
                                     Size, ArrayType::Normal, 0);
-  TypeSourceInfo *TInfo
-    = Context->getTrivialTypeSourceInfo(VaListTagArrayType);
-  TypedefDecl *VaListTypedefDecl
-    = TypedefDecl::Create(const_cast<ASTContext &>(*Context),
-                          Context->getTranslationUnitDecl(),
-                          SourceLocation(), SourceLocation(),
-                          &Context->Idents.get("__builtin_va_list"),
-                          TInfo);
-
-  return VaListTypedefDecl;
+  return Context->buildImplicitTypedef(VaListTagArrayType, "__builtin_va_list");
 }
 
 static TypedefDecl *
 CreateX86_64ABIBuiltinVaListDecl(const ASTContext *Context) {
   // typedef struct __va_list_tag {
   RecordDecl *VaListTagDecl;
-  VaListTagDecl = CreateRecordDecl(*Context, TTK_Struct,
-                                   Context->getTranslationUnitDecl(),
-                                   &Context->Idents.get("__va_list_tag"));
+  VaListTagDecl = Context->buildImplicitRecord("__va_list_tag");
   VaListTagDecl->startDefinition();
 
   const size_t NumFields = 4;
@@ -5969,12 +5961,9 @@ CreateX86_64ABIBuiltinVaListDecl(const ASTContext *Context) {
   Context->VaListTagTy = VaListTagType;
 
   // } __va_list_tag;
-  TypedefDecl *VaListTagTypedefDecl
-    = TypedefDecl::Create(const_cast<ASTContext &>(*Context),
-                          Context->getTranslationUnitDecl(),
-                          SourceLocation(), SourceLocation(),
-                          &Context->Idents.get("__va_list_tag"),
-                          Context->getTrivialTypeSourceInfo(VaListTagType));
+  TypedefDecl *VaListTagTypedefDecl =
+      Context->buildImplicitTypedef(VaListTagType, "__va_list_tag");
+
   QualType VaListTagTypedefType =
     Context->getTypedefType(VaListTagTypedefDecl);
 
@@ -5983,16 +5972,7 @@ CreateX86_64ABIBuiltinVaListDecl(const ASTContext *Context) {
   QualType VaListTagArrayType
     = Context->getConstantArrayType(VaListTagTypedefType,
                                       Size, ArrayType::Normal,0);
-  TypeSourceInfo *TInfo
-    = Context->getTrivialTypeSourceInfo(VaListTagArrayType);
-  TypedefDecl *VaListTypedefDecl
-    = TypedefDecl::Create(const_cast<ASTContext &>(*Context),
-                          Context->getTranslationUnitDecl(),
-                          SourceLocation(), SourceLocation(),
-                          &Context->Idents.get("__builtin_va_list"),
-                          TInfo);
-
-  return VaListTypedefDecl;
+  return Context->buildImplicitTypedef(VaListTagArrayType, "__builtin_va_list");
 }
 
 static TypedefDecl *CreatePNaClABIBuiltinVaListDecl(const ASTContext *Context) {
@@ -6001,19 +5981,13 @@ static TypedefDecl *CreatePNaClABIBuiltinVaListDecl(const ASTContext *Context) {
   QualType IntArrayType
     = Context->getConstantArrayType(Context->IntTy,
 				    Size, ArrayType::Normal, 0);
-  TypedefDecl *VaListTypedefDecl
-    = TypedefDecl::Create(const_cast<ASTContext &>(*Context),
-                          Context->getTranslationUnitDecl(),
-                          SourceLocation(), SourceLocation(),
-                          &Context->Idents.get("__builtin_va_list"),
-                          Context->getTrivialTypeSourceInfo(IntArrayType));
-
-  return VaListTypedefDecl;
+  return Context->buildImplicitTypedef(IntArrayType, "__builtin_va_list");
 }
 
 static TypedefDecl *
 CreateAAPCSABIBuiltinVaListDecl(const ASTContext *Context) {
-  RecordDecl *VaListDecl;
+  // struct __va_list
+  RecordDecl *VaListDecl = Context->buildImplicitRecord("__va_list");
   if (Context->getLangOpts().CPlusPlus) {
     // namespace std { struct __va_list {
     NamespaceDecl *NS;
@@ -6022,19 +5996,8 @@ CreateAAPCSABIBuiltinVaListDecl(const ASTContext *Context) {
                                /*Inline*/false, SourceLocation(),
                                SourceLocation(), &Context->Idents.get("std"),
                                /*PrevDecl*/0);
-
-    VaListDecl = CXXRecordDecl::Create(*Context, TTK_Struct,
-                                       Context->getTranslationUnitDecl(),
-                                       SourceLocation(), SourceLocation(),
-                                       &Context->Idents.get("__va_list"));
-
+    NS->setImplicit();
     VaListDecl->setDeclContext(NS);
-
-  } else {
-    // struct __va_list {
-    VaListDecl = CreateRecordDecl(*Context, TTK_Struct,
-                                  Context->getTranslationUnitDecl(),
-                                  &Context->Idents.get("__va_list"));
   }
 
   VaListDecl->startDefinition();
@@ -6057,26 +6020,15 @@ CreateAAPCSABIBuiltinVaListDecl(const ASTContext *Context) {
   VaListDecl->completeDefinition();
 
   // typedef struct __va_list __builtin_va_list;
-  TypeSourceInfo *TInfo
-    = Context->getTrivialTypeSourceInfo(Context->getRecordType(VaListDecl));
-
-  TypedefDecl *VaListTypeDecl
-    = TypedefDecl::Create(const_cast<ASTContext &>(*Context),
-                          Context->getTranslationUnitDecl(),
-                          SourceLocation(), SourceLocation(),
-                          &Context->Idents.get("__builtin_va_list"),
-                          TInfo);
-
-  return VaListTypeDecl;
+  QualType T = Context->getRecordType(VaListDecl);
+  return Context->buildImplicitTypedef(T, "__builtin_va_list");
 }
 
 static TypedefDecl *
 CreateSystemZBuiltinVaListDecl(const ASTContext *Context) {
   // typedef struct __va_list_tag {
   RecordDecl *VaListTagDecl;
-  VaListTagDecl = CreateRecordDecl(*Context, TTK_Struct,
-                                   Context->getTranslationUnitDecl(),
-                                   &Context->Idents.get("__va_list_tag"));
+  VaListTagDecl = Context->buildImplicitRecord("__va_list_tag");
   VaListTagDecl->startDefinition();
 
   const size_t NumFields = 4;
@@ -6118,12 +6070,8 @@ CreateSystemZBuiltinVaListDecl(const ASTContext *Context) {
   Context->VaListTagTy = VaListTagType;
 
   // } __va_list_tag;
-  TypedefDecl *VaListTagTypedefDecl
-    = TypedefDecl::Create(const_cast<ASTContext &>(*Context),
-                          Context->getTranslationUnitDecl(),
-                          SourceLocation(), SourceLocation(),
-                          &Context->Idents.get("__va_list_tag"),
-                          Context->getTrivialTypeSourceInfo(VaListTagType));
+  TypedefDecl *VaListTagTypedefDecl =
+      Context->buildImplicitTypedef(VaListTagType, "__va_list_tag");
   QualType VaListTagTypedefType =
     Context->getTypedefType(VaListTagTypedefDecl);
 
@@ -6132,16 +6080,8 @@ CreateSystemZBuiltinVaListDecl(const ASTContext *Context) {
   QualType VaListTagArrayType
     = Context->getConstantArrayType(VaListTagTypedefType,
                                       Size, ArrayType::Normal,0);
-  TypeSourceInfo *TInfo
-    = Context->getTrivialTypeSourceInfo(VaListTagArrayType);
-  TypedefDecl *VaListTypedefDecl
-    = TypedefDecl::Create(const_cast<ASTContext &>(*Context),
-                          Context->getTranslationUnitDecl(),
-                          SourceLocation(), SourceLocation(),
-                          &Context->Idents.get("__builtin_va_list"),
-                          TInfo);
 
-  return VaListTypedefDecl;
+  return Context->buildImplicitTypedef(VaListTagArrayType, "__builtin_va_list");
 }
 
 static TypedefDecl *CreateVaListDecl(const ASTContext *Context,
@@ -6169,8 +6109,10 @@ static TypedefDecl *CreateVaListDecl(const ASTContext *Context,
 }
 
 TypedefDecl *ASTContext::getBuiltinVaListDecl() const {
-  if (!BuiltinVaListDecl)
+  if (!BuiltinVaListDecl) {
     BuiltinVaListDecl = CreateVaListDecl(this, Target->getBuiltinVaListKind());
+    assert(BuiltinVaListDecl->isImplicit());
+  }
 
   return BuiltinVaListDecl;
 }

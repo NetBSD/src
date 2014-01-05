@@ -113,6 +113,12 @@ void ASTTypeWriter::VisitDecayedType(const DecayedType *T) {
   Code = TYPE_DECAYED;
 }
 
+void ASTTypeWriter::VisitAdjustedType(const AdjustedType *T) {
+  Writer.AddTypeRef(T->getOriginalType(), Record);
+  Writer.AddTypeRef(T->getAdjustedType(), Record);
+  Code = TYPE_ADJUSTED;
+}
+
 void ASTTypeWriter::VisitBlockPointerType(const BlockPointerType *T) {
   Writer.AddTypeRef(T->getPointeeType(), Record);
   Code = TYPE_BLOCK_POINTER;
@@ -455,6 +461,9 @@ void TypeLocWriter::VisitPointerTypeLoc(PointerTypeLoc TL) {
 void TypeLocWriter::VisitDecayedTypeLoc(DecayedTypeLoc TL) {
   // nothing to do
 }
+void TypeLocWriter::VisitAdjustedTypeLoc(AdjustedTypeLoc TL) {
+  // nothing to do
+}
 void TypeLocWriter::VisitBlockPointerTypeLoc(BlockPointerTypeLoc TL) {
   Writer.AddSourceLocation(TL.getCaretLoc(), Record);
 }
@@ -764,10 +773,8 @@ static void AddStmtsExprs(llvm::BitstreamWriter &Stream,
   RECORD(EXPR_CXX_UNRESOLVED_CONSTRUCT);
   RECORD(EXPR_CXX_UNRESOLVED_MEMBER);
   RECORD(EXPR_CXX_UNRESOLVED_LOOKUP);
-  RECORD(EXPR_CXX_UNARY_TYPE_TRAIT);
   RECORD(EXPR_CXX_NOEXCEPT);
   RECORD(EXPR_OPAQUE_VALUE);
-  RECORD(EXPR_BINARY_TYPE_TRAIT);
   RECORD(EXPR_PACK_EXPANSION);
   RECORD(EXPR_SIZEOF_PACK);
   RECORD(EXPR_SUBST_NON_TYPE_TEMPLATE_PARM_PACK);
@@ -1040,7 +1047,6 @@ void ASTWriter::WriteControlBlock(Preprocessor &PP, ASTContext &Context,
   // Imports
   if (Chain) {
     serialization::ModuleManager &Mgr = Chain->getModuleManager();
-    SmallVector<char, 128> ModulePaths;
     Record.clear();
 
     for (ModuleManager::ModuleIterator M = Mgr.begin(), MEnd = Mgr.end();
@@ -5084,6 +5090,7 @@ void ASTWriter::AddCXXDefinitionData(const CXXRecordDecl *D, RecordDataImpl &Rec
   Record.push_back(Data.HasProtectedFields);
   Record.push_back(Data.HasPublicFields);
   Record.push_back(Data.HasMutableFields);
+  Record.push_back(Data.HasVariantMembers);
   Record.push_back(Data.HasOnlyCMembers);
   Record.push_back(Data.HasInClassInitializer);
   Record.push_back(Data.HasUninitializedReferenceMember);
