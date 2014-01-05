@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.7 2014/01/03 06:15:10 tsutsui Exp $
+$NetBSD: version,v 1.8 2014/01/05 06:56:22 tsutsui Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -11,3 +11,4 @@ is taken as the current.
 1.4:	Add support for "awaiting key" to abort autoboot and get boot menu.
 1.5:	Check netboot and set proper default boot device.
 1.6:	Accept empty unit, partition, and filename. (defaults: 0, 0, "netbsd")
+1.7:	Check boot device on PROM and set proper default boot device and unit.
