@@ -88,6 +88,7 @@ protected: // Can only create subclasses.
   unsigned MCUseLoc : 1;
   unsigned MCUseCFI : 1;
   unsigned MCUseDwarfDirectory : 1;
+  unsigned RequireStructuredCFG : 1;
 
 public:
   virtual ~TargetMachine();
@@ -108,7 +109,7 @@ public:
   void resetTargetOptions(const MachineFunction *MF) const;
 
   // Interfaces to the major aspects of target machine information:
-  // 
+  //
   // -- Instruction opcode and operand information
   // -- Pipelines and scheduling information
   // -- Stack frame information
@@ -155,6 +156,9 @@ public:
   virtual const InstrItineraryData *getInstrItineraryData() const {
     return 0;
   }
+
+  bool requiresStructuredCFG() const { return RequireStructuredCFG; }
+  void setRequiresStructuredCFG(bool Value) { RequireStructuredCFG = Value; }
 
   /// hasMCRelaxAll - Check whether all machine code instructions should be
   /// relaxed.

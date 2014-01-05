@@ -764,9 +764,22 @@ bool SystemZDAGToDAGISel::expandRxSBG(RxSBGOperands &RxSBG) const {
     return true;
   }
       
-  case ISD::SIGN_EXTEND:
-  case ISD::ZERO_EXTEND:
-  case ISD::ANY_EXTEND: {
+  case ISD::ANY_EXTEND:
+    // Bits above the extended operand are don't-care.
+    RxSBG.Input = N.getOperand(0);
+    return true;
+
+  case ISD::ZERO_EXTEND: {
+    // Restrict the mask to the extended operand.
+    unsigned InnerBitSize = N.getOperand(0).getValueType().getSizeInBits();
+    if (!refineRxSBGMask(RxSBG, allOnes(InnerBitSize)))
+      return false;
+
+    RxSBG.Input = N.getOperand(0);
+    return true;
+  }
+    
+  case ISD::SIGN_EXTEND: {
     // Check that the extension bits are don't-care (i.e. are masked out
     // by the final mask).
     unsigned InnerBitSize = N.getOperand(0).getValueType().getSizeInBits();
@@ -1064,6 +1077,7 @@ SDNode *SystemZDAGToDAGISel::Select(SDNode *Node) {
   case ISD::ROTL:
   case ISD::SHL:
   case ISD::SRL:
+  case ISD::ZERO_EXTEND:
     if (!ResNode)
       ResNode = tryRISBGZero(Node);
     break;
@@ -1076,20 +1090,6 @@ SDNode *SystemZDAGToDAGISel::Select(SDNode *Node) {
       if (!SystemZ::isImmLF(Val) && !SystemZ::isImmHF(Val) && !isInt<32>(Val))
         Node = splitLargeImmediate(ISD::OR, Node, SDValue(),
                                    Val - uint32_t(Val), uint32_t(Val));
-    }
-    break;
-
-  case ISD::ATOMIC_LOAD_SUB:
-    // Try to convert subtractions of constants to additions.
-    if (ConstantSDNode *Op2 = dyn_cast<ConstantSDNode>(Node->getOperand(2))) {
-      uint64_t Value = -Op2->getZExtValue();
-      EVT VT = Node->getValueType(0);
-      if (VT == MVT::i32 || isInt<32>(Value)) {
-        SDValue Ops[] = { Node->getOperand(0), Node->getOperand(1),
-                          CurDAG->getConstant(int32_t(Value), VT) };
-        Node = CurDAG->MorphNodeTo(Node, ISD::ATOMIC_LOAD_ADD,
-                                   Node->getVTList(), Ops, array_lengthof(Ops));
-      }
     }
     break;
 

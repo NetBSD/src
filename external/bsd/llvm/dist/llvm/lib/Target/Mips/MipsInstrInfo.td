@@ -302,13 +302,20 @@ def InvertedImOperand : Operand<i32> {
   let ParserMatchClass = MipsInvertedImmoperand;
 }
 
-// Address operand
-def mem : Operand<iPTR> {
+class mem_generic : Operand<iPTR> {
   let PrintMethod = "printMemOperand";
   let MIOperandInfo = (ops ptr_rc, simm16);
   let EncoderMethod = "getMemEncoding";
   let ParserMatchClass = MipsMemAsmOperand;
   let OperandType = "OPERAND_MEMORY";
+}
+
+// Address operand
+def mem : mem_generic;
+
+// MSA specific address operand
+def mem_msa : mem_generic {
+  let EncoderMethod = "getMSAMemEncoding";
 }
 
 def mem_ea : Operand<iPTR> {
@@ -611,6 +618,18 @@ let isCall=1, hasDelaySlot=1, Defs = [RA] in {
 
 }
 
+let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1, hasDelaySlot = 1,
+    hasExtraSrcRegAllocReq = 1, Defs = [AT] in {
+  class TailCall<Instruction JumpInst> :
+    PseudoSE<(outs), (ins calltarget:$target), [], IIBranch>,
+    PseudoInstExpansion<(JumpInst jmptarget:$target)>;
+
+  class TailCallReg<RegisterOperand RO, Instruction JRInst,
+                    RegisterOperand ResRO = RO> :
+    PseudoSE<(outs), (ins RO:$rs), [(MipsTailCall RO:$rs)], IIBranch>,
+    PseudoInstExpansion<(JRInst ResRO:$rs)>;
+}
+
 class BAL_BR_Pseudo<Instruction RealInst> :
   PseudoSE<(outs), (ins brtarget:$offset), [], IIBranch>,
   PseudoInstExpansion<(RealInst ZERO, brtarget:$offset)> {
@@ -624,36 +643,32 @@ class BAL_BR_Pseudo<Instruction RealInst> :
 // Syscall
 class SYS_FT<string opstr> :
   InstSE<(outs), (ins uimm20:$code_),
-         !strconcat(opstr, "\t$code_"), [], NoItinerary, FrmI>;
+         !strconcat(opstr, "\t$code_"), [], NoItinerary, FrmI, opstr>;
 // Break
 class BRK_FT<string opstr> :
   InstSE<(outs), (ins uimm10:$code_1, uimm10:$code_2),
-         !strconcat(opstr, "\t$code_1, $code_2"), [], NoItinerary, FrmOther>;
+         !strconcat(opstr, "\t$code_1, $code_2"), [], NoItinerary,
+         FrmOther, opstr>;
 
 // (D)Eret
 class ER_FT<string opstr> :
   InstSE<(outs), (ins),
-         opstr, [], NoItinerary, FrmOther>;
+         opstr, [], NoItinerary, FrmOther, opstr>;
 
 // Interrupts
 class DEI_FT<string opstr, RegisterOperand RO> :
   InstSE<(outs RO:$rt), (ins),
-         !strconcat(opstr, "\t$rt"), [], NoItinerary, FrmOther>;
+         !strconcat(opstr, "\t$rt"), [], NoItinerary, FrmOther, opstr>;
 
 // Wait
 class WAIT_FT<string opstr> :
-  InstSE<(outs), (ins), opstr, [], NoItinerary, FrmOther> {
-  let Inst{31-26} = 0x10;
-  let Inst{25}    = 1;
-  let Inst{24-6}  = 0;
-  let Inst{5-0}   = 0x20;
-}
+  InstSE<(outs), (ins), opstr, [], NoItinerary, FrmOther, opstr>;
 
 // Sync
 let hasSideEffects = 1 in
-class SYNC_FT :
+class SYNC_FT<string opstr> :
   InstSE<(outs), (ins i32imm:$stype), "sync $stype", [(MipsSync imm:$stype)],
-         NoItinerary, FrmOther>;
+         NoItinerary, FrmOther, opstr>;
 
 let hasSideEffects = 1 in
 class TEQ_FT<string opstr, RegisterOperand RO> :
@@ -732,7 +747,8 @@ class MoveToLOHI<string opstr, RegisterOperand RO, list<Register> DefRegs>:
 
 class EffectiveAddress<string opstr, RegisterOperand RO> :
   InstSE<(outs RO:$rt), (ins mem_ea:$addr), !strconcat(opstr, "\t$rt, $addr"),
-         [(set RO:$rt, addr:$addr)], NoItinerary, FrmI> {
+         [(set RO:$rt, addr:$addr)], NoItinerary, FrmI,
+         !strconcat(opstr, "_lea")> {
   let isCodeGenOnly = 1;
   let DecoderMethod = "DecodeMem";
 }
@@ -965,7 +981,7 @@ def SWL : StoreLeftRight<"swl", MipsSWL, GPR32Opnd, IIStore>, LW_FM<0x2a>;
 def SWR : StoreLeftRight<"swr", MipsSWR, GPR32Opnd, IIStore>, LW_FM<0x2e>;
 }
 
-def SYNC : SYNC_FT, SYNC_FM;
+def SYNC : MMRel, SYNC_FT<"sync">, SYNC_FM;
 def TEQ : MMRel, TEQ_FT<"teq", GPR32Opnd>, TEQ_FM<0x34>;
 def TGE : MMRel, TEQ_FT<"tge", GPR32Opnd>, TEQ_FM<0x30>;
 def TGEU : MMRel, TEQ_FT<"tgeu", GPR32Opnd>, TEQ_FM<0x31>;
@@ -980,21 +996,23 @@ def TLTI : MMRel, TEQI_FT<"tlti", GPR32Opnd>, TEQI_FM<0xa>;
 def TTLTIU : MMRel, TEQI_FT<"tltiu", GPR32Opnd>, TEQI_FM<0xb>;
 def TNEI : MMRel, TEQI_FT<"tnei", GPR32Opnd>, TEQI_FM<0xe>;
 
-def BREAK : BRK_FT<"break">, BRK_FM<0xd>;
-def SYSCALL : SYS_FT<"syscall">, SYS_FM<0xc>;
+def BREAK : MMRel, BRK_FT<"break">, BRK_FM<0xd>;
+def SYSCALL : MMRel, SYS_FT<"syscall">, SYS_FM<0xc>;
 def TRAP : TrapBase<BREAK>;
 
-def ERET : ER_FT<"eret">, ER_FM<0x18>;
-def DERET : ER_FT<"deret">, ER_FM<0x1f>;
+def ERET : MMRel, ER_FT<"eret">, ER_FM<0x18>;
+def DERET : MMRel, ER_FT<"deret">, ER_FM<0x1f>;
 
-def EI : DEI_FT<"ei", GPR32Opnd>, EI_FM<1>;
-def DI : DEI_FT<"di", GPR32Opnd>, EI_FM<0>;
+def EI : MMRel, DEI_FT<"ei", GPR32Opnd>, EI_FM<1>;
+def DI : MMRel, DEI_FT<"di", GPR32Opnd>, EI_FM<0>;
 
-def WAIT : WAIT_FT<"wait">;
+def WAIT : MMRel, WAIT_FT<"wait">, WAIT_FM;
 
 /// Load-linked, Store-conditional
+let Predicates = [NotInMicroMips] in {
 def LL : LLBase<"ll", GPR32Opnd>, LW_FM<0x30>;
 def SC : SCBase<"sc", GPR32Opnd>, LW_FM<0x38>;
+}
 
 /// Jump and Branch Instructions
 def J       : MMRel, JumpFJ<jmptarget, "j", br, bb, "j">, FJ<2>,
@@ -1018,10 +1036,8 @@ def JALRPseudo : JumpLinkRegPseudo<GPR32Opnd, JALR, RA>;
 def BGEZAL : MMRel, BGEZAL_FT<"bgezal", brtarget, GPR32Opnd>, BGEZAL_FM<0x11>;
 def BLTZAL : MMRel, BGEZAL_FT<"bltzal", brtarget, GPR32Opnd>, BGEZAL_FM<0x10>;
 def BAL_BR : BAL_BR_Pseudo<BGEZAL>;
-def TAILCALL : MMRel, JumpFJ<calltarget, "j", MipsTailCall, imm, "tcall">,
-               FJ<2>, IsTailCall;
-def TAILCALL_R : MMRel, JumpFR<"tcallr", GPR32Opnd, MipsTailCall>, MTLO_FM<8>,
-                 IsTailCall;
+def TAILCALL : TailCall<J>;
+def TAILCALL_R : TailCallReg<GPR32Opnd, JR>;
 
 def RET : MMRel, RetBase<"ret", GPR32Opnd>, MTLO_FM<8>;
 
@@ -1079,7 +1095,7 @@ def NOP : PseudoSE<(outs), (ins), []>, PseudoInstExpansion<(SLL ZERO, ZERO, 0)>;
 // instructions. The same not happens for stack address copies, so an
 // add op with mem ComplexPattern is used and the stack address copy
 // can be matched. It's similar to Sparc LEA_ADDRi
-def LEA_ADDiu : EffectiveAddress<"addiu", GPR32Opnd>, LW_FM<9>;
+def LEA_ADDiu : MMRel, EffectiveAddress<"addiu", GPR32Opnd>, LW_FM<9>;
 
 // MADD*/MSUB*
 def MADD  : MMRel, MArithR<"madd", 1>, MULT_FM<0x1c, 0>;
@@ -1419,3 +1435,4 @@ include "MipsMSAInstrInfo.td"
 // Micromips
 include "MicroMipsInstrFormats.td"
 include "MicroMipsInstrInfo.td"
+include "MicroMipsInstrFPU.td"

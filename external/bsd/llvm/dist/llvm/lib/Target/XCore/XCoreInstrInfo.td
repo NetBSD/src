@@ -1286,3 +1286,9 @@ def : Pat<(setgt GRRegs:$lhs, -1),
 
 def : Pat<(sra (shl GRRegs:$src, immBpwSubBitp:$imm), immBpwSubBitp:$imm),
           (SEXT_rus GRRegs:$src, (bpwsub_xform immBpwSubBitp:$imm))>;
+
+def : Pat<(load (cprelwrapper tconstpool:$b)),
+          (LDWCP_lru6 tconstpool:$b)>;
+
+def : Pat<(cprelwrapper tconstpool:$b),
+          (LDAWCP_lu6 tconstpool:$b)>;

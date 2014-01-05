@@ -13,7 +13,6 @@
 using namespace llvm;
 AMDGPUMCAsmInfo::AMDGPUMCAsmInfo(StringRef &TT) : MCAsmInfo() {
   HasSingleParameterDotFile = false;
-  WeakDefDirective = 0;
   //===------------------------------------------------------------------===//
   HasSubsectionsViaSymbols = true;
   HasMachoZeroFillDirective = false;
@@ -25,9 +24,6 @@ AMDGPUMCAsmInfo::AMDGPUMCAsmInfo(StringRef &TT) : MCAsmInfo() {
   CommentColumn = 40;
   CommentString = ";";
   LabelSuffix = ":";
-  GlobalPrefix = "@";
-  PrivateGlobalPrefix = ";.";
-  LinkerPrivateGlobalPrefix = "!";
   InlineAsmStart = ";#ASMSTART";
   InlineAsmEnd = ";#ASMEND";
   AssemblerDialect = 0;
@@ -43,7 +39,6 @@ AMDGPUMCAsmInfo::AMDGPUMCAsmInfo(StringRef &TT) : MCAsmInfo() {
   GPRel32Directive = 0;
   SunStyleELFSectionSwitchSyntax = true;
   UsesELFSectionDirectiveForBSS = true;
-  HasMicrosoftFastStdCallMangling = false;
 
   //===--- Alignment Information ----------------------------------------===//
   AlignDirective = ".align\t";
@@ -58,7 +53,6 @@ AMDGPUMCAsmInfo::AMDGPUMCAsmInfo(StringRef &TT) : MCAsmInfo() {
   HasDotTypeDotSizeDirective = false;
   HasNoDeadStrip = true;
   WeakRefDirective = ".weakref\t";
-  LinkOnceDirective = 0;
   //===--- Dwarf Emission Directives -----------------------------------===//
   HasLEB128 = true;
   SupportsDebugInformation = true;

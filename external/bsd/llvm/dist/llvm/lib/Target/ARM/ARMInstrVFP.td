@@ -200,12 +200,33 @@ let mayLoad = 1, hasExtraDefRegAllocReq = 1 in
 defm VLDM : vfp_ldst_mult<"vldm", 1, IIC_fpLoad_m, IIC_fpLoad_mu>;
 
 let mayStore = 1, hasExtraSrcRegAllocReq = 1 in
-defm VSTM : vfp_ldst_mult<"vstm", 0, IIC_fpLoad_m, IIC_fpLoad_mu>;
+defm VSTM : vfp_ldst_mult<"vstm", 0, IIC_fpStore_m, IIC_fpStore_mu>;
 
 } // neverHasSideEffects
 
 def : MnemonicAlias<"vldm", "vldmia">;
 def : MnemonicAlias<"vstm", "vstmia">;
+
+// FLDM/FSTM - Load / Store multiple single / double precision registers for
+// pre-ARMv6 cores.
+// These instructions are deprecated!
+def : VFP2MnemonicAlias<"fldmias", "vldmia">;
+def : VFP2MnemonicAlias<"fldmdbs", "vldmdb">;
+def : VFP2MnemonicAlias<"fldmeas", "vldmdb">;
+def : VFP2MnemonicAlias<"fldmfds", "vldmia">;
+def : VFP2MnemonicAlias<"fldmiad", "vldmia">;
+def : VFP2MnemonicAlias<"fldmdbd", "vldmdb">;
+def : VFP2MnemonicAlias<"fldmead", "vldmdb">;
+def : VFP2MnemonicAlias<"fldmfdd", "vldmia">;
+
+def : VFP2MnemonicAlias<"fstmias", "vstmia">;
+def : VFP2MnemonicAlias<"fstmdbs", "vstmdb">;
+def : VFP2MnemonicAlias<"fstmeas", "vstmia">;
+def : VFP2MnemonicAlias<"fstmfds", "vstmdb">;
+def : VFP2MnemonicAlias<"fstmiad", "vstmia">;
+def : VFP2MnemonicAlias<"fstmdbd", "vstmdb">;
+def : VFP2MnemonicAlias<"fstmead", "vstmia">;
+def : VFP2MnemonicAlias<"fstmfdd", "vstmdb">;
 
 def : InstAlias<"vpush${p} $r", (VSTMDDB_UPD SP, pred:$p, dpr_reglist:$r)>,
                 Requires<[HasVFP2]>;
@@ -247,13 +268,19 @@ multiclass vfp_ldstx_mult<string asm, bit L_bit> {
     AXXI4<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, dpr_reglist:$regs, variable_ops),
           IndexModeUpd, !strconcat(asm, "dbx${p}\t$Rn!, $regs"), "$Rn = $wb", []> {
     let Inst{24-23} = 0b10;         // Decrement Before
-    let Inst{21}    = 1;
+    let Inst{21}    = 1;            // Writeback
     let Inst{20}    = L_bit;
   }
 }
 
 defm FLDM : vfp_ldstx_mult<"fldm", 1>;
 defm FSTM : vfp_ldstx_mult<"fstm", 0>;
+
+def : VFP2MnemonicAlias<"fldmeax", "fldmdbx">;
+def : VFP2MnemonicAlias<"fldmfdx", "fldmiax">;
+
+def : VFP2MnemonicAlias<"fstmeax", "fstmiax">;
+def : VFP2MnemonicAlias<"fstmfdx", "fstmdbx">;
 
 //===----------------------------------------------------------------------===//
 // FP Binary Operations.
@@ -1639,7 +1666,7 @@ def FCONSTS : VFPAI<(outs SPR:$Sd), (ins vfp_f32imm:$imm),
 //===----------------------------------------------------------------------===//
 // Assembler aliases.
 //
-// A few mnemnoic aliases for pre-unifixed syntax. We don't guarantee to
+// A few mnemonic aliases for pre-unifixed syntax. We don't guarantee to
 // support them all, but supporting at least some of the basics is
 // good to be friendly.
 def : VFP2MnemonicAlias<"flds", "vldr">;

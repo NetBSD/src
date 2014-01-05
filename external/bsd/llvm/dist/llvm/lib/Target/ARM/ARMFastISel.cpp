@@ -78,6 +78,7 @@ class ARMFastISel : public FastISel {
   /// Subtarget - Keep a pointer to the ARMSubtarget around so that we can
   /// make the right decision when generating code for different targets.
   const ARMSubtarget *Subtarget;
+  Module &M;
   const TargetMachine &TM;
   const TargetInstrInfo &TII;
   const TargetLowering &TLI;
@@ -91,6 +92,7 @@ class ARMFastISel : public FastISel {
     explicit ARMFastISel(FunctionLoweringInfo &funcInfo,
                          const TargetLibraryInfo *libInfo)
     : FastISel(funcInfo, libInfo),
+      M(const_cast<Module&>(*funcInfo.Fn->getParent())),
       TM(funcInfo.MF->getTarget()),
       TII(*TM.getInstrInfo()),
       TLI(*TM.getTargetLowering()) {
@@ -679,25 +681,24 @@ unsigned ARMFastISel::ARMMaterializeGV(const GlobalValue *GV, MVT VT) {
   if (!Subtarget->isTargetDarwin() && IsThreadLocal) return 0;
 
   // Use movw+movt when possible, it avoids constant pool entries.
-  // Darwin targets don't support movt with Reloc::Static, see
-  // ARMTargetLowering::LowerGlobalAddressDarwin.  Other targets only support
-  // static movt relocations.
+  // Non-darwin targets only support static movt relocations in FastISel.
   if (Subtarget->useMovt() &&
-      Subtarget->isTargetDarwin() == (RelocM != Reloc::Static)) {
+      (Subtarget->isTargetDarwin() || RelocM == Reloc::Static)) {
     unsigned Opc;
+    unsigned char TF = 0;
+    if (Subtarget->isTargetDarwin())
+      TF = ARMII::MO_NONLAZY;
+
     switch (RelocM) {
     case Reloc::PIC_:
       Opc = isThumb2 ? ARM::t2MOV_ga_pcrel : ARM::MOV_ga_pcrel;
-      break;
-    case Reloc::DynamicNoPIC:
-      Opc = isThumb2 ? ARM::t2MOV_ga_dyn : ARM::MOV_ga_dyn;
       break;
     default:
       Opc = isThumb2 ? ARM::t2MOVi32imm : ARM::MOVi32imm;
       break;
     }
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc),
-                            DestReg).addGlobalAddress(GV));
+                            DestReg).addGlobalAddress(GV, 0, TF));
   } else {
     // MachineConstantPool wants an explicit alignment.
     unsigned Align = TD.getPrefTypeAlignment(GV->getType());
@@ -802,9 +803,11 @@ unsigned ARMFastISel::TargetMaterializeAlloca(const AllocaInst *AI) {
   // This will get lowered later into the correct offsets and registers
   // via rewriteXFrameIndex.
   if (SI != FuncInfo.StaticAllocaMap.end()) {
+    unsigned Opc = isThumb2 ? ARM::t2ADDri : ARM::ADDri;
     const TargetRegisterClass* RC = TLI.getRegClassFor(VT);
     unsigned ResultReg = createResultReg(RC);
-    unsigned Opc = isThumb2 ? ARM::t2ADDri : ARM::ADDri;
+    ResultReg = constrainOperandRegClass(TII.get(Opc), ResultReg, 0);
+
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                             TII.get(Opc), ResultReg)
                             .addFrameIndex(SI->second)
@@ -2243,7 +2246,7 @@ unsigned ARMFastISel::getLibcallReg(const Twine &Name) {
   EVT LCREVT = TLI.getValueType(GVTy);
   if (!LCREVT.isSimple()) return 0;
 
-  GlobalValue *GV = new GlobalVariable(Type::getInt32Ty(*Context), false,
+  GlobalValue *GV = new GlobalVariable(M, Type::getInt32Ty(*Context), false,
                                        GlobalValue::ExternalLinkage, 0, Name);
   assert(GV->getType() == GVTy && "We miscomputed the type for the global!");
   return ARMMaterializeGV(GV, LCREVT.getSimpleVT());

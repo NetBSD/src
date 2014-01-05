@@ -80,11 +80,14 @@ static bool CC_Sparc_Assign_f64(unsigned &ValNo, MVT &ValVT,
 static bool CC_Sparc64_Full(unsigned &ValNo, MVT &ValVT,
                             MVT &LocVT, CCValAssign::LocInfo &LocInfo,
                             ISD::ArgFlagsTy &ArgFlags, CCState &State) {
-  assert((LocVT == MVT::f32 || LocVT.getSizeInBits() == 64) &&
+  assert((LocVT == MVT::f32 || LocVT == MVT::f128
+          || LocVT.getSizeInBits() == 64) &&
          "Can't handle non-64 bits locations");
 
   // Stack space is allocated for all arguments starting from [%fp+BIAS+128].
-  unsigned Offset = State.AllocateStack(8, 8);
+  unsigned size      = (LocVT == MVT::f128) ? 16 : 8;
+  unsigned alignment = (LocVT == MVT::f128) ? 16 : 8;
+  unsigned Offset = State.AllocateStack(size, alignment);
   unsigned Reg = 0;
 
   if (LocVT == MVT::i64 && Offset < 6*8)
@@ -96,6 +99,9 @@ static bool CC_Sparc64_Full(unsigned &ValNo, MVT &ValVT,
   else if (LocVT == MVT::f32 && Offset < 16*8)
     // Promote floats to %f1, %f3, ...
     Reg = SP::F1 + Offset/4;
+  else if (LocVT == MVT::f128 && Offset < 16*8)
+    // Promote long doubles to %q0-%q28. (Which LLVM calls Q0-Q7).
+    Reg = SP::Q0 + Offset/16;
 
   // Promote to register when possible, otherwise use the stack slot.
   if (Reg) {
@@ -998,9 +1004,10 @@ static void fixupVariableFloatArgs(SmallVectorImpl<CCValAssign> &ArgLocs,
                                    ArrayRef<ISD::OutputArg> Outs) {
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
     const CCValAssign &VA = ArgLocs[i];
+    MVT ValTy = VA.getLocVT();
     // FIXME: What about f32 arguments? C promotes them to f64 when calling
     // varargs functions.
-    if (!VA.isRegLoc() || VA.getLocVT() != MVT::f64)
+    if (!VA.isRegLoc() || (ValTy != MVT::f64 && ValTy != MVT::f128))
       continue;
     // The fixed arguments to a varargs function still go in FP registers.
     if (Outs[VA.getValNo()].IsFixed)
@@ -1010,15 +1017,25 @@ static void fixupVariableFloatArgs(SmallVectorImpl<CCValAssign> &ArgLocs,
     CCValAssign NewVA;
 
     // Determine the offset into the argument array.
-    unsigned Offset = 8 * (VA.getLocReg() - SP::D0);
+    unsigned firstReg = (ValTy == MVT::f64) ? SP::D0 : SP::Q0;
+    unsigned argSize  = (ValTy == MVT::f64) ? 8 : 16;
+    unsigned Offset = argSize * (VA.getLocReg() - firstReg);
     assert(Offset < 16*8 && "Offset out of range, bad register enum?");
 
     if (Offset < 6*8) {
       // This argument should go in %i0-%i5.
       unsigned IReg = SP::I0 + Offset/8;
-      // Full register, just bitconvert into i64.
-      NewVA = CCValAssign::getReg(VA.getValNo(), VA.getValVT(),
-                                  IReg, MVT::i64, CCValAssign::BCvt);
+      if (ValTy == MVT::f64)
+        // Full register, just bitconvert into i64.
+        NewVA = CCValAssign::getReg(VA.getValNo(), VA.getValVT(),
+                                    IReg, MVT::i64, CCValAssign::BCvt);
+      else {
+        assert(ValTy == MVT::f128 && "Unexpected type!");
+        // Full register, just bitconvert into i128 -- We will lower this into
+        // two i64s in LowerCall_64.
+        NewVA = CCValAssign::getCustomReg(VA.getValNo(), VA.getValVT(),
+                                          IReg, MVT::i128, CCValAssign::BCvt);
+      }
     } else {
       // This needs to go to memory, we're out of integer registers.
       NewVA = CCValAssign::getMem(VA.getValNo(), VA.getValVT(),
@@ -1094,11 +1111,46 @@ SparcTargetLowering::LowerCall_64(TargetLowering::CallLoweringInfo &CLI,
       Arg = DAG.getNode(ISD::ANY_EXTEND, DL, VA.getLocVT(), Arg);
       break;
     case CCValAssign::BCvt:
-      Arg = DAG.getNode(ISD::BITCAST, DL, VA.getLocVT(), Arg);
+      // fixupVariableFloatArgs() may create bitcasts from f128 to i128. But
+      // SPARC does not support i128 natively. Lower it into two i64, see below.
+      if (!VA.needsCustom() || VA.getValVT() != MVT::f128
+          || VA.getLocVT() != MVT::i128)
+        Arg = DAG.getNode(ISD::BITCAST, DL, VA.getLocVT(), Arg);
       break;
     }
 
     if (VA.isRegLoc()) {
+      if (VA.needsCustom() && VA.getValVT() == MVT::f128
+          && VA.getLocVT() == MVT::i128) {
+        // Store and reload into the interger register reg and reg+1.
+        unsigned Offset = 8 * (VA.getLocReg() - SP::I0);
+        unsigned StackOffset = Offset + Subtarget->getStackPointerBias() + 128;
+        SDValue StackPtr = DAG.getRegister(SP::O6, getPointerTy());
+        SDValue HiPtrOff = DAG.getIntPtrConstant(StackOffset);
+        HiPtrOff         = DAG.getNode(ISD::ADD, DL, getPointerTy(), StackPtr,
+                                       HiPtrOff);
+        SDValue LoPtrOff = DAG.getIntPtrConstant(StackOffset + 8);
+        LoPtrOff         = DAG.getNode(ISD::ADD, DL, getPointerTy(), StackPtr,
+                                       LoPtrOff);
+
+        // Store to %sp+BIAS+128+Offset
+        SDValue Store = DAG.getStore(Chain, DL, Arg, HiPtrOff,
+                                     MachinePointerInfo(),
+                                     false, false, 0);
+        // Load into Reg and Reg+1
+        SDValue Hi64 = DAG.getLoad(MVT::i64, DL, Store, HiPtrOff,
+                                   MachinePointerInfo(),
+                                   false, false, false, 0);
+        SDValue Lo64 = DAG.getLoad(MVT::i64, DL, Store, LoPtrOff,
+                                   MachinePointerInfo(),
+                                   false, false, false, 0);
+        RegsToPass.push_back(std::make_pair(toCallerWindow(VA.getLocReg()),
+                                            Hi64));
+        RegsToPass.push_back(std::make_pair(toCallerWindow(VA.getLocReg()+1),
+                                            Lo64));
+        continue;
+      }
+
       // The custom bit on an i32 return value indicates that it should be
       // passed in the high bits of the register.
       if (VA.getValVT() == MVT::i32 && VA.needsCustom()) {
@@ -1200,6 +1252,12 @@ SparcTargetLowering::LowerCall_64(TargetLowering::CallLoweringInfo &CLI,
   SmallVector<CCValAssign, 16> RVLocs;
   CCState RVInfo(CLI.CallConv, CLI.IsVarArg, DAG.getMachineFunction(),
                  DAG.getTarget(), RVLocs, *DAG.getContext());
+
+  // Set inreg flag manually for codegen generated library calls that
+  // return float.
+  if (CLI.Ins.size() == 1 && CLI.Ins[0].VT == MVT::f32 && CLI.CS == 0)
+    CLI.Ins[0].Flags.setInReg();
+
   RVInfo.AnalyzeCallResult(CLI.Ins, CC_Sparc64);
 
   // Copy all of the result registers out of their specified physreg.
@@ -1414,9 +1472,29 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
     setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i64, Custom);
   }
 
-  // FIXME: There are instructions available for ATOMIC_FENCE
-  // on SparcV8 and later.
-  setOperationAction(ISD::ATOMIC_FENCE, MVT::Other, Expand);
+  // ATOMICs.
+  // FIXME: We insert fences for each atomics and generate sub-optimal code
+  // for PSO/TSO. Also, implement other atomicrmw operations.
+
+  setInsertFencesForAtomic(true);
+
+  setOperationAction(ISD::ATOMIC_SWAP, MVT::i32, Legal);
+  setOperationAction(ISD::ATOMIC_CMP_SWAP, MVT::i32,
+                     (Subtarget->isV9() ? Legal: Expand));
+
+
+  setOperationAction(ISD::ATOMIC_FENCE, MVT::Other, Legal);
+
+  // Custom Lower Atomic LOAD/STORE
+  setOperationAction(ISD::ATOMIC_LOAD, MVT::i32, Custom);
+  setOperationAction(ISD::ATOMIC_STORE, MVT::i32, Custom);
+
+  if (Subtarget->is64Bit()) {
+    setOperationAction(ISD::ATOMIC_CMP_SWAP, MVT::i64, Legal);
+    setOperationAction(ISD::ATOMIC_SWAP, MVT::i64, Expand);
+    setOperationAction(ISD::ATOMIC_LOAD, MVT::i64, Custom);
+    setOperationAction(ISD::ATOMIC_STORE, MVT::i64, Custom);
+  }
 
   if (!Subtarget->isV9()) {
     // SparcV8 does not have FNEGD and FABSD.
@@ -1461,6 +1539,16 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
   // FIXME: Sparc provides these multiplies, but we don't have them yet.
   setOperationAction(ISD::UMUL_LOHI, MVT::i32, Expand);
   setOperationAction(ISD::SMUL_LOHI, MVT::i32, Expand);
+
+  if (Subtarget->is64Bit()) {
+    setOperationAction(ISD::UMUL_LOHI, MVT::i64, Expand);
+    setOperationAction(ISD::SMUL_LOHI, MVT::i64, Expand);
+    setOperationAction(ISD::MULHU,     MVT::i64, Expand);
+    setOperationAction(ISD::MULHS,     MVT::i64, Expand);
+
+    setOperationAction(ISD::UMULO,     MVT::i64, Custom);
+    setOperationAction(ISD::SMULO,     MVT::i64, Custom);
+  }
 
   // VASTART needs to be custom lowered to use the VarArgsFrameIndex.
   setOperationAction(ISD::VASTART           , MVT::Other, Custom);
@@ -1598,6 +1686,12 @@ const char *SparcTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case SPISD::TLS_LD:     return "SPISD::TLS_LD";
   case SPISD::TLS_CALL:   return "SPISD::TLS_CALL";
   }
+}
+
+EVT SparcTargetLowering::getSetCCResultType(LLVMContext &, EVT VT) const {
+  if (!VT.isVector())
+    return MVT::i32;
+  return VT.changeVectorElementTypeToInteger();
 }
 
 /// isMaskedValueZeroForTargetNode - Return true if 'Op & Mask' is known to
@@ -2291,7 +2385,7 @@ static SDValue LowerVAARG(SDValue Op, SelectionDAG &DAG) {
 }
 
 static SDValue LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG,
-                                       bool is64Bit) {
+                                       const SparcSubtarget *Subtarget) {
   SDValue Chain = Op.getOperand(0);  // Legalize the chain.
   SDValue Size  = Op.getOperand(1);  // Legalize the size.
   EVT VT = Size->getValueType(0);
@@ -2304,7 +2398,9 @@ static SDValue LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG,
 
   // The resultant pointer is actually 16 words from the bottom of the stack,
   // to provide a register spill area.
-  unsigned regSpillArea = (is64Bit) ? 128 : 96;
+  unsigned regSpillArea = Subtarget->is64Bit() ? 128 : 96;
+  regSpillArea += Subtarget->getStackPointerBias();
+
   SDValue NewVal = DAG.getNode(ISD::ADD, dl, VT, NewSP,
                                DAG.getConstant(regSpillArea, VT));
   SDValue Ops[2] = { NewVal, Chain };
@@ -2600,6 +2696,63 @@ static SDValue LowerADDC_ADDE_SUBC_SUBE(SDValue Op, SelectionDAG &DAG) {
   return DAG.getMergeValues(Ops, 2, dl);
 }
 
+// Custom lower UMULO/SMULO for SPARC. This code is similar to ExpandNode()
+// in LegalizeDAG.cpp except the order of arguments to the library function.
+static SDValue LowerUMULO_SMULO(SDValue Op, SelectionDAG &DAG,
+                                const SparcTargetLowering &TLI)
+{
+  unsigned opcode = Op.getOpcode();
+  assert((opcode == ISD::UMULO || opcode == ISD::SMULO) && "Invalid Opcode.");
+
+  bool isSigned = (opcode == ISD::SMULO);
+  EVT VT = MVT::i64;
+  EVT WideVT = MVT::i128;
+  SDLoc dl(Op);
+  SDValue LHS = Op.getOperand(0);
+
+  if (LHS.getValueType() != VT)
+    return Op;
+
+  SDValue ShiftAmt = DAG.getConstant(63, VT);
+
+  SDValue RHS = Op.getOperand(1);
+  SDValue HiLHS = DAG.getNode(ISD::SRA, dl, VT, LHS, ShiftAmt);
+  SDValue HiRHS = DAG.getNode(ISD::SRA, dl, MVT::i64, RHS, ShiftAmt);
+  SDValue Args[] = { HiLHS, LHS, HiRHS, RHS };
+
+  SDValue MulResult = TLI.makeLibCall(DAG,
+                                      RTLIB::MUL_I128, WideVT,
+                                      Args, 4, isSigned, dl).first;
+  SDValue BottomHalf = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, VT,
+                                   MulResult, DAG.getIntPtrConstant(0));
+  SDValue TopHalf = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, VT,
+                                MulResult, DAG.getIntPtrConstant(1));
+  if (isSigned) {
+    SDValue Tmp1 = DAG.getNode(ISD::SRA, dl, VT, BottomHalf, ShiftAmt);
+    TopHalf = DAG.getSetCC(dl, MVT::i32, TopHalf, Tmp1, ISD::SETNE);
+  } else {
+    TopHalf = DAG.getSetCC(dl, MVT::i32, TopHalf, DAG.getConstant(0, VT),
+                           ISD::SETNE);
+  }
+  // MulResult is a node with an illegal type. Because such things are not
+  // generally permitted during this phase of legalization, delete the
+  // node. The above EXTRACT_ELEMENT nodes should have been folded.
+  DAG.DeleteNode(MulResult.getNode());
+
+  SDValue Ops[2] = { BottomHalf, TopHalf } ;
+  return DAG.getMergeValues(Ops, 2, dl);
+}
+
+static SDValue LowerATOMIC_LOAD_STORE(SDValue Op, SelectionDAG &DAG) {
+  // Monotonic load/stores are legal.
+  if (cast<AtomicSDNode>(Op)->getOrdering() <= Monotonic)
+    return Op;
+
+  // Otherwise, expand with a fence.
+  return SDValue();
+}
+
+
 SDValue SparcTargetLowering::
 LowerOperation(SDValue Op, SelectionDAG &DAG) const {
 
@@ -2631,7 +2784,7 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::VASTART:            return LowerVASTART(Op, DAG, *this);
   case ISD::VAARG:              return LowerVAARG(Op, DAG);
   case ISD::DYNAMIC_STACKALLOC: return LowerDYNAMIC_STACKALLOC(Op, DAG,
-                                                               is64Bit);
+                                                               Subtarget);
 
   case ISD::LOAD:               return LowerF128Load(Op, DAG);
   case ISD::STORE:              return LowerF128Store(Op, DAG);
@@ -2653,6 +2806,10 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::ADDE:
   case ISD::SUBC:
   case ISD::SUBE:               return LowerADDC_ADDE_SUBC_SUBE(Op, DAG);
+  case ISD::UMULO:
+  case ISD::SMULO:              return LowerUMULO_SMULO(Op, DAG, *this);
+  case ISD::ATOMIC_LOAD:
+  case ISD::ATOMIC_STORE:       return LowerATOMIC_LOAD_STORE(Op, DAG);
   }
 }
 

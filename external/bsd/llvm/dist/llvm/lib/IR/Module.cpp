@@ -63,7 +63,7 @@ Module::~Module() {
 /// Target endian information.
 Module::Endianness Module::getEndianness() const {
   StringRef temp = DataLayout;
-  Module::Endianness ret = AnyEndianness;
+  Module::Endianness ret = BigEndian;
 
   while (!temp.empty()) {
     std::pair<StringRef, StringRef> P = getToken(temp, "-");
@@ -84,7 +84,7 @@ Module::Endianness Module::getEndianness() const {
 /// Target Pointer Size information.
 Module::PointerSize Module::getPointerSize() const {
   StringRef temp = DataLayout;
-  Module::PointerSize ret = AnyPointerSize;
+  Module::PointerSize ret = Pointer64;
 
   while (!temp.empty()) {
     std::pair<StringRef, StringRef> TmpP = getToken(temp, "-");
@@ -318,11 +318,16 @@ getModuleFlagsMetadata(SmallVectorImpl<ModuleFlagEntry> &Flags) const {
 
   for (unsigned i = 0, e = ModFlags->getNumOperands(); i != e; ++i) {
     MDNode *Flag = ModFlags->getOperand(i);
-    ConstantInt *Behavior = cast<ConstantInt>(Flag->getOperand(0));
-    MDString *Key = cast<MDString>(Flag->getOperand(1));
-    Value *Val = Flag->getOperand(2);
-    Flags.push_back(ModuleFlagEntry(ModFlagBehavior(Behavior->getZExtValue()),
-                                    Key, Val));
+    if (Flag->getNumOperands() >= 3 && isa<ConstantInt>(Flag->getOperand(0)) &&
+        isa<MDString>(Flag->getOperand(1))) {
+      // Check the operands of the MDNode before accessing the operands.
+      // The verifier will actually catch these failures.
+      ConstantInt *Behavior = cast<ConstantInt>(Flag->getOperand(0));
+      MDString *Key = cast<MDString>(Flag->getOperand(1));
+      Value *Val = Flag->getOperand(2);
+      Flags.push_back(ModuleFlagEntry(ModFlagBehavior(Behavior->getZExtValue()),
+                                      Key, Val));
+    }
   }
 }
 
