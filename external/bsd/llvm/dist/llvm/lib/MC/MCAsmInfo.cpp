@@ -41,9 +41,7 @@ MCAsmInfo::MCAsmInfo() {
   CommentString = "#";
   LabelSuffix = ":";
   DebugLabelSuffix = ":";
-  GlobalPrefix = "";
-  PrivateGlobalPrefix = ".";
-  LinkerPrivateGlobalPrefix = "";
+  PrivateGlobalPrefix = "L";
   InlineAsmStart = "APP";
   InlineAsmEnd = "NO_APP";
   Code16Directive = ".code16";
@@ -76,8 +74,9 @@ MCAsmInfo::MCAsmInfo() {
   HasIdentDirective = false;
   HasNoDeadStrip = false;
   WeakRefDirective = 0;
-  WeakDefDirective = 0;
-  LinkOnceDirective = 0;
+  HasWeakDefDirective = false;
+  HasWeakDefCanBeHiddenDirective = false;
+  HasLinkOnceDirective = false;
   HiddenVisibilityAttr = MCSA_Hidden;
   HiddenDeclarationVisibilityAttr = MCSA_Hidden;
   ProtectedVisibilityAttr = MCSA_Protected;
@@ -86,8 +85,8 @@ MCAsmInfo::MCAsmInfo() {
   ExceptionsType = ExceptionHandling::None;
   DwarfUsesRelocationsAcrossSections = true;
   DwarfRegNumForCFI = false;
-  HasMicrosoftFastStdCallMangling = false;
   NeedsDwarfSectionOffsetDirective = false;
+  UseParensForSymbolVariant = false;
 }
 
 MCAsmInfo::~MCAsmInfo() {

@@ -98,8 +98,9 @@ static bool GetX86CpuIDAndInfo(unsigned value, unsigned *rEAX, unsigned *rEBX,
 /// GetX86CpuIDAndInfoEx - Execute the specified cpuid with subleaf and return the
 /// 4 values in the specified arguments.  If we can't run cpuid on the host,
 /// return true.
-bool GetX86CpuIDAndInfoEx(unsigned value, unsigned subleaf, unsigned *rEAX,
-                          unsigned *rEBX, unsigned *rECX, unsigned *rEDX) {
+static bool GetX86CpuIDAndInfoEx(unsigned value, unsigned subleaf,
+                                 unsigned *rEAX, unsigned *rEBX, unsigned *rECX,
+                                 unsigned *rEDX) {
 #if defined(__x86_64__) || defined(_M_AMD64) || defined (_M_X64)
   #if defined(__GNUC__)
     // gcc doesn't know cpuid would clobber ebx/rbx. Preseve it manually.
@@ -192,7 +193,7 @@ static void DetectX86FamilyModel(unsigned EAX, unsigned &Family,
   }
 }
 
-std::string sys::getHostCPUName() {
+StringRef sys::getHostCPUName() {
   unsigned EAX = 0, EBX = 0, ECX = 0, EDX = 0;
   if (GetX86CpuIDAndInfo(0x1, &EAX, &EBX, &ECX, &EDX))
     return "generic";
@@ -448,7 +449,7 @@ std::string sys::getHostCPUName() {
   return "generic";
 }
 #elif defined(__APPLE__) && (defined(__ppc__) || defined(__powerpc__))
-std::string sys::getHostCPUName() {
+StringRef sys::getHostCPUName() {
   host_basic_info_data_t hostInfo;
   mach_msg_type_number_t infoCount;
 
@@ -477,7 +478,7 @@ std::string sys::getHostCPUName() {
   return "generic";
 }
 #elif defined(__linux__) && (defined(__ppc__) || defined(__powerpc__))
-std::string sys::getHostCPUName() {
+StringRef sys::getHostCPUName() {
   // Access to the Processor Version Register (PVR) on PowerPC is privileged,
   // and so we must use an operating-system interface to determine the current
   // processor type. On Linux, this is exposed through the /proc/cpuinfo file.
@@ -567,7 +568,7 @@ std::string sys::getHostCPUName() {
     .Default(generic);
 }
 #elif defined(__linux__) && defined(__arm__)
-std::string sys::getHostCPUName() {
+StringRef sys::getHostCPUName() {
   // The cpuid register on arm is not accessible from user space. On Linux,
   // it is exposed through the /proc/cpuinfo file.
   // Note: We cannot mmap /proc/cpuinfo here and then process the resulting
@@ -619,10 +620,21 @@ std::string sys::getHostCPUName() {
           .Case("0xc24", "cortex-m4")
           .Default("generic");
 
+  if (Implementer == "0x51") // Qualcomm Technologies, Inc.
+    // Look for the CPU part line.
+    for (unsigned I = 0, E = Lines.size(); I != E; ++I)
+      if (Lines[I].startswith("CPU part"))
+        // The CPU part is a 3 digit hexadecimal number with a 0x prefix. The
+        // values correspond to the "Part number" in the CP15/c0 register. The
+        // contents are specified in the various processor manuals.
+        return StringSwitch<const char *>(Lines[I].substr(8).ltrim("\t :"))
+          .Case("0x06f", "krait") // APQ8064
+          .Default("generic");
+
   return "generic";
 }
 #elif defined(__linux__) && defined(__s390x__)
-std::string sys::getHostCPUName() {
+StringRef sys::getHostCPUName() {
   // STIDP is a privileged operation, so use /proc/cpuinfo instead.
   // Note: We cannot mmap /proc/cpuinfo here and then process the resulting
   // memory buffer because the 'file' has 0 size (it can be read from only
@@ -664,7 +676,7 @@ std::string sys::getHostCPUName() {
   return "generic";
 }
 #else
-std::string sys::getHostCPUName() {
+StringRef sys::getHostCPUName() {
   return "generic";
 }
 #endif

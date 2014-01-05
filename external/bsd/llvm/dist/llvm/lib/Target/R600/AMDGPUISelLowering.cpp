@@ -32,8 +32,9 @@ using namespace llvm;
 static bool allocateStack(unsigned ValNo, MVT ValVT, MVT LocVT,
                       CCValAssign::LocInfo LocInfo,
                       ISD::ArgFlagsTy ArgFlags, CCState &State) {
-  unsigned Offset = State.AllocateStack(ValVT.getSizeInBits() / 8, ArgFlags.getOrigAlign());
-    State.addLoc(CCValAssign::getMem(ValNo, ValVT, Offset, LocVT, LocInfo));
+  unsigned Offset = State.AllocateStack(ValVT.getStoreSize(),
+                                        ArgFlags.getOrigAlign());
+  State.addLoc(CCValAssign::getMem(ValNo, ValVT, Offset, LocVT, LocInfo));
 
   return true;
 }
@@ -59,6 +60,7 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::FFLOOR, MVT::f32, Legal);
   setOperationAction(ISD::FRINT,  MVT::f32, Legal);
   setOperationAction(ISD::FROUND, MVT::f32, Legal);
+  setOperationAction(ISD::FTRUNC, MVT::f32, Legal);
 
   // The hardware supports ROTR, but not ROTL
   setOperationAction(ISD::ROTL, MVT::i32, Expand);
@@ -183,6 +185,7 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
     setOperationAction(ISD::FADD, VT, Expand);
     setOperationAction(ISD::FDIV, VT, Expand);
     setOperationAction(ISD::FFLOOR, VT, Expand);
+    setOperationAction(ISD::FTRUNC, VT, Expand);
     setOperationAction(ISD::FMUL, VT, Expand);
     setOperationAction(ISD::FRINT, VT, Expand);
     setOperationAction(ISD::FSQRT, VT, Expand);
@@ -254,8 +257,8 @@ SDValue AMDGPUTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
   switch (Op.getOpcode()) {
   default:
     Op.getNode()->dump();
-    assert(0 && "Custom lowering code for this"
-        "instruction is not implemented yet!");
+    llvm_unreachable("Custom lowering code for this"
+                     "instruction is not implemented yet!");
     break;
   // AMDIL DAG lowering
   case ISD::SDIV: return LowerSDIV(Op, DAG);
@@ -455,7 +458,7 @@ SDValue AMDGPUTargetLowering::LowerMinMax(SDValue Op,
   case ISD::SETTRUE2:
   case ISD::SETUO:
   case ISD::SETO:
-    assert(0 && "Operation should already be optimised !");
+    llvm_unreachable("Operation should already be optimised!");
   case ISD::SETULE:
   case ISD::SETULT:
   case ISD::SETOLE:
@@ -479,7 +482,7 @@ SDValue AMDGPUTargetLowering::LowerMinMax(SDValue Op,
       return DAG.getNode(AMDGPUISD::FMIN, DL, VT, LHS, RHS);
   }
   case ISD::SETCC_INVALID:
-    assert(0 && "Invalid setcc condcode !");
+    llvm_unreachable("Invalid setcc condcode!");
   }
   return Op;
 }
