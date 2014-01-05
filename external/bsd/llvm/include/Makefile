@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2013/11/11 23:51:36 joerg Exp $
+#	$NetBSD: Makefile,v 1.26 2014/01/05 15:15:34 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -150,9 +150,8 @@ llvm/Config/config.h: ${LLVM_TOPLEVEL}/Makefile.inc ${LLVM_TOPLEVEL}/config/llvm
 	mkdir -p ${.TARGET:H}
 	${TOOL_SED} -e /LLVM_DEFAULT_TARGET_TRIPLE/d -e /LLVM_NATIVE_/d \
 	    -e /LLVM_VERSION_/d -e /PACKAGE_VERSION/d \
-	    -e /^\#endif/d \
-	    < ${LLVM_TOPLEVEL}/config/llvm/Config/config.h.in \
-	    > ${.TARGET}.tmp
+	    < ${LLVM_TOPLEVEL}/config/llvm/Config/config.h.in | \
+	head -n -1 > ${.TARGET}.tmp
 	printf '#define LLVM_DEFAULT_TARGET_TRIPLE "${MACHINE_GNU_PLATFORM}"\n' >> ${.TARGET}.tmp
 	printf '#define PACKAGE_VERSION "${LLVM_VERSION} (trunk ${LLVM_REVISION})"\n' >> ${.TARGET}.tmp
 	printf '#define LLVM_VERSION_MAJOR ${LLVM_VERSION:C,\.[0-9]*,,}\n' >> ${.TARGET}.tmp
@@ -164,9 +163,8 @@ llvm/Config/llvm-config.h: ${LLVM_TOPLEVEL}/Makefile.inc ${LLVM_TOPLEVEL}/config
 	mkdir -p ${.TARGET:H}
 	${TOOL_SED} -e /LLVM_DEFAULT_TARGET_TRIPLE/d -e /LLVM_NATIVE_/d \
 	    -e /LLVM_VERSION_/d -e /PACKAGE_VERSION/d \
-	    -e /\#endif/d \
-	    < ${LLVM_TOPLEVEL}/config/llvm/Config/llvm-config.h.in \
-	    > ${.TARGET}.tmp
+	    < ${LLVM_TOPLEVEL}/config/llvm/Config/llvm-config.h.in | \
+	head -n -1 > ${.TARGET}.tmp
 	printf '#define LLVM_DEFAULT_TARGET_TRIPLE "${MACHINE_GNU_PLATFORM}"\n' >> ${.TARGET}.tmp
 	printf '#define LLVM_VERSION_MAJOR ${LLVM_VERSION:C,\.[0-9]*,,}\n' >> ${.TARGET}.tmp
 	printf '#define LLVM_VERSION_MINOR ${LLVM_VERSION:C,[0-9]*\.,,}\n' >> ${.TARGET}.tmp
