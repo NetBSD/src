@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.65 2014/01/05 15:17:04 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.66 2014/01/05 15:19:39 joerg Exp $
 
 .if !defined(LLVM_TOPLEVEL_MK)
 LLVM_TOPLEVEL_MK=
@@ -65,12 +65,14 @@ LDFLAGS+=	-Wl,--gc-sections
 CPPFLAGS+=	-I${LLVM_INCLUDE_OBJDIR} -I${LLVM_INCLUDE_CONFIG} \
 		-I${CLANG_INCLUDE_CONFIG} -I${MCLINKER_INCLUDE_CONFIG}
 
+LLVM_PLATFORM=${MACHINE_GNU_ARCH}--netbsd
+
 LLVM_CONFIGURE_ARGS=	\
 	--enable-targets=x86,powerpc,sparc,aarch64,arm,mips \
 	--with-c-include-dirs=/usr/include/clang-${CLANG_VERSION}:/usr/include \
 	--disable-timestamps --prefix=/usr --sysconfdir=/etc/llvm \
 	--with-clang-srcdir=${CLANG_SRCDIR} \
-	--host=${MACHINE_GNU_PLATFORM} \
+	--host=${LLVM_PLATFORM} \
 	llvm_cv_gnu_make_command=${MAKE}
 
 .for tool in circo dot dotty fdp neato twopi xdot
