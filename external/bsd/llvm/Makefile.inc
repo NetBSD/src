@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.64 2013/12/06 23:21:31 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.65 2014/01/05 15:17:04 joerg Exp $
 
 .if !defined(LLVM_TOPLEVEL_MK)
 LLVM_TOPLEVEL_MK=
@@ -42,7 +42,7 @@ MCLINKER_INCLUDE_CONFIG= ${LLVM_TOPLEVEL}/config/mclinker
 LLVM_INCLUDE_OBJDIR!=	cd ${NETBSDSRCDIR}/tools/llvm-include && ${PRINTOBJDIR}
 LLVM_TOOLCONF_OBJDIR!=	cd ${NETBSDSRCDIR}/tools/llvm && ${PRINTOBJDIR}
 HOST_CPPFLAGS+=	${CPPFLAGS}
-HOST_CXXFLAGS+=	-O2 -g -fno-rtti -fno-exceptions
+HOST_CXXFLAGS+=	-O2 -fno-rtti -fno-exceptions
 .if ${MKLLD:Uno} == "yes"
 HOST_CPPFLAGS+=	-std=c++11
 .endif
