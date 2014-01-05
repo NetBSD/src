@@ -18,11 +18,13 @@
 #include "ARM.h"
 #include "ARMBaseInstrInfo.h"
 #include "ARMBaseRegisterInfo.h"
+#include "ARMConstantPoolValue.h"
 #include "ARMMachineFunctionInfo.h"
 #include "MCTargetDesc/ARMAddressingModes.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/IR/GlobalValue.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/raw_ostream.h" // FIXME: for debug only. remove!
 #include "llvm/Target/TargetFrameLowering.h"
@@ -898,10 +900,61 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       return true;
     }
 
-    case ARM::MOV_ga_dyn:
+    case ARM::LDRLIT_ga_abs:
+    case ARM::LDRLIT_ga_pcrel:
+    case ARM::LDRLIT_ga_pcrel_ldr:
+    case ARM::tLDRLIT_ga_abs:
+    case ARM::tLDRLIT_ga_pcrel: {
+      unsigned DstReg = MI.getOperand(0).getReg();
+      bool DstIsDead = MI.getOperand(0).isDead();
+      const MachineOperand &MO1 = MI.getOperand(1);
+      const GlobalValue *GV = MO1.getGlobal();
+      bool IsARM =
+          Opcode != ARM::tLDRLIT_ga_pcrel && Opcode != ARM::tLDRLIT_ga_abs;
+      bool IsPIC =
+          Opcode != ARM::LDRLIT_ga_abs && Opcode != ARM::tLDRLIT_ga_abs;
+      unsigned LDRLITOpc = IsARM ? ARM::LDRi12 : ARM::tLDRpci;
+      unsigned PICAddOpc =
+          IsARM
+              ? (Opcode == ARM::LDRLIT_ga_pcrel_ldr ? ARM::PICADD : ARM::PICLDR)
+              : ARM::tPICADD;
+
+      // We need a new const-pool entry to load from.
+      MachineConstantPool *MCP = MBB.getParent()->getConstantPool();
+      unsigned ARMPCLabelIndex = 0;
+      MachineConstantPoolValue *CPV;
+
+      if (IsPIC) {
+        unsigned PCAdj = IsARM ? 8 : 4;
+        ARMPCLabelIndex = AFI->createPICLabelUId();
+        CPV = ARMConstantPoolConstant::Create(GV, ARMPCLabelIndex,
+                                              ARMCP::CPValue, PCAdj);
+      } else
+        CPV = ARMConstantPoolConstant::Create(GV, ARMCP::no_modifier);
+
+      MachineInstrBuilder MIB =
+          BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(LDRLITOpc), DstReg)
+            .addConstantPoolIndex(MCP->getConstantPoolIndex(CPV, 4));
+      if (IsARM)
+        MIB.addImm(0);
+      AddDefaultPred(MIB);
+
+      if (IsPIC) {
+        MachineInstrBuilder MIB =
+          BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(PICAddOpc))
+            .addReg(DstReg, RegState::Define | getDeadRegState(DstIsDead))
+            .addReg(DstReg)
+            .addImm(ARMPCLabelIndex);
+
+        if (IsARM)
+          AddDefaultPred(MIB);
+      }
+
+      MI.eraseFromParent();
+      return true;
+    }
     case ARM::MOV_ga_pcrel:
     case ARM::MOV_ga_pcrel_ldr:
-    case ARM::t2MOV_ga_dyn:
     case ARM::t2MOV_ga_pcrel: {
       // Expand into movw + movw. Also "add pc" / ldr [pc] in PIC mode.
       unsigned LabelId = AFI->createPICLabelUId();
@@ -910,14 +963,11 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       const MachineOperand &MO1 = MI.getOperand(1);
       const GlobalValue *GV = MO1.getGlobal();
       unsigned TF = MO1.getTargetFlags();
-      bool isARM = (Opcode != ARM::t2MOV_ga_pcrel && Opcode!=ARM::t2MOV_ga_dyn);
-      bool isPIC = (Opcode != ARM::MOV_ga_dyn && Opcode != ARM::t2MOV_ga_dyn);
+      bool isARM = Opcode != ARM::t2MOV_ga_pcrel;
       unsigned LO16Opc = isARM ? ARM::MOVi16_ga_pcrel : ARM::t2MOVi16_ga_pcrel;
       unsigned HI16Opc = isARM ? ARM::MOVTi16_ga_pcrel :ARM::t2MOVTi16_ga_pcrel;
-      unsigned LO16TF = isPIC
-        ? ARMII::MO_LO16_NONLAZY_PIC : ARMII::MO_LO16_NONLAZY;
-      unsigned HI16TF = isPIC
-        ? ARMII::MO_HI16_NONLAZY_PIC : ARMII::MO_HI16_NONLAZY;
+      unsigned LO16TF = TF | ARMII::MO_LO16;
+      unsigned HI16TF = TF | ARMII::MO_HI16;
       unsigned PICAddOpc = isARM
         ? (Opcode == ARM::MOV_ga_pcrel_ldr ? ARM::PICLDR : ARM::PICADD)
         : ARM::tPICADD;
@@ -925,16 +975,11 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
                                          TII->get(LO16Opc), DstReg)
         .addGlobalAddress(GV, MO1.getOffset(), TF | LO16TF)
         .addImm(LabelId);
-      MachineInstrBuilder MIB2 = BuildMI(MBB, MBBI, MI.getDebugLoc(),
-                                         TII->get(HI16Opc), DstReg)
+
+      BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(HI16Opc), DstReg)
         .addReg(DstReg)
         .addGlobalAddress(GV, MO1.getOffset(), TF | HI16TF)
         .addImm(LabelId);
-      if (!isPIC) {
-        TransferImpOps(MI, MIB1, MIB2);
-        MI.eraseFromParent();
-        return true;
-      }
 
       MachineInstrBuilder MIB3 = BuildMI(MBB, MBBI, MI.getDebugLoc(),
                                          TII->get(PICAddOpc))

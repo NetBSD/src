@@ -34,6 +34,7 @@ namespace llvm {
   
 class TargetLoweringObjectFile : public MCObjectFileInfo {
   MCContext *Ctx;
+  const DataLayout *DL;
 
   TargetLoweringObjectFile(
     const TargetLoweringObjectFile&) LLVM_DELETED_FUNCTION;
@@ -42,7 +43,7 @@ class TargetLoweringObjectFile : public MCObjectFileInfo {
 public:
   MCContext &getContext() const { return *Ctx; }
 
-  TargetLoweringObjectFile() : MCObjectFileInfo(), Ctx(0) {}
+  TargetLoweringObjectFile() : MCObjectFileInfo(), Ctx(0), DL(0) {}
   
   virtual ~TargetLoweringObjectFile();
   
@@ -120,6 +121,11 @@ public:
   /// Return the MCSymbol for the specified global value.  This symbol is the
   /// main label that is the address of the global
   MCSymbol *getSymbol(Mangler &M, const GlobalValue *GV) const;
+
+  /// Return the MCSymbol for a private symbol with global value name as its
+  /// base, with the specified suffix.
+  MCSymbol *getSymbolWithGlobalValueBase(Mangler &M, const GlobalValue *GV,
+                                         StringRef Suffix) const;
 
   // getCFIPersonalitySymbol - The symbol that gets passed to .cfi_personality.
   virtual MCSymbol *

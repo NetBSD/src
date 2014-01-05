@@ -565,8 +565,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
           Value *Cmp = IRB.CreateICmpNE(ConvertedShadow,
               getCleanShadow(ConvertedShadow), "_mscmp");
           Instruction *CheckTerm =
-            SplitBlockAndInsertIfThen(cast<Instruction>(Cmp), false,
-                                      MS.OriginStoreWeights);
+              SplitBlockAndInsertIfThen(Cmp, &I, false, MS.OriginStoreWeights);
           IRBuilder<> IRBNew(CheckTerm);
           IRBNew.CreateAlignedStore(getOrigin(Val), getOriginPtr(Addr, IRBNew),
                                     Alignment);
@@ -588,10 +587,9 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
         continue;
       Value *Cmp = IRB.CreateICmpNE(ConvertedShadow,
                                     getCleanShadow(ConvertedShadow), "_mscmp");
-      Instruction *CheckTerm =
-        SplitBlockAndInsertIfThen(cast<Instruction>(Cmp),
-                                  /* Unreachable */ !ClKeepGoing,
-                                  MS.ColdCallWeights);
+      Instruction *CheckTerm = SplitBlockAndInsertIfThen(
+          Cmp, OrigIns,
+          /* Unreachable */ !ClKeepGoing, MS.ColdCallWeights);
 
       IRB.SetInsertPoint(CheckTerm);
       if (MS.TrackOrigins) {
@@ -629,7 +627,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
             IRB.CreatePHI(Fn0->getType(), 2, "msandr.indirect_target");
 
         Instruction *CheckTerm = SplitBlockAndInsertIfThen(
-            cast<Instruction>(NotInThisModule),
+            NotInThisModule, NewFnPhi,
             /* Unreachable */ false, MS.ColdCallWeights);
 
         IRB.SetInsertPoint(CheckTerm);
@@ -2082,13 +2080,20 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
       // Origins are always i32, so any vector conditions must be flattened.
       // FIXME: consider tracking vector origins for app vectors?
       Value *Cond = I.getCondition();
+      Value *CondShadow = getShadow(Cond);
       if (Cond->getType()->isVectorTy()) {
-        Value *ConvertedShadow = convertToShadowTyNoVec(Cond, IRB);
-        Cond = IRB.CreateICmpNE(ConvertedShadow,
-                                getCleanShadow(ConvertedShadow), "_mso_select");
+        Type *FlatTy = getShadowTyNoVec(Cond->getType());
+        Cond = IRB.CreateICmpNE(IRB.CreateBitCast(Cond, FlatTy),
+                                ConstantInt::getNullValue(FlatTy));
+        CondShadow = IRB.CreateICmpNE(IRB.CreateBitCast(CondShadow, FlatTy),
+                                      ConstantInt::getNullValue(FlatTy));
       }
-      setOrigin(&I, IRB.CreateSelect(Cond,
-                getOrigin(I.getTrueValue()), getOrigin(I.getFalseValue())));
+      // a = select b, c, d
+      // Oa = Sb ? Ob : (b ? Oc : Od)
+      setOrigin(&I, IRB.CreateSelect(
+                        CondShadow, getOrigin(I.getCondition()),
+                        IRB.CreateSelect(Cond, getOrigin(I.getTrueValue()),
+                                         getOrigin(I.getFalseValue()))));
     }
   }
 

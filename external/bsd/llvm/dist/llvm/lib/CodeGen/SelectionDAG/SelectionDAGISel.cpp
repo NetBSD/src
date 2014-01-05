@@ -428,7 +428,9 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
 
   SDB->init(GFI, *AA, LibInfo);
 
-  MF->setHasMSInlineAsm(false);
+  MF->setHasInlineAsm(false);
+  MF->getFrameInfo()->setHasInlineAsmWithSPAdjust(false);
+
   SelectAllBasicBlocks(Fn);
 
   // If the first basic block in the function has live ins that need to be
@@ -448,7 +450,8 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
   for (unsigned i = 0, e = FuncInfo->ArgDbgValues.size(); i != e; ++i) {
     MachineInstr *MI = FuncInfo->ArgDbgValues[e-i-1];
     bool hasFI = MI->getOperand(0).isFI();
-    unsigned Reg = hasFI ? TRI.getFrameRegister(*MF) : MI->getOperand(0).getReg();
+    unsigned Reg =
+        hasFI ? TRI.getFrameRegister(*MF) : MI->getOperand(0).getReg();
     if (TargetRegisterInfo::isPhysicalRegister(Reg))
       EntryMBB->insert(EntryMBB->begin(), MI);
     else {
@@ -511,7 +514,7 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
   for (MachineFunction::const_iterator I = MF->begin(), E = MF->end(); I != E;
        ++I) {
 
-    if (MFI->hasCalls() && MF->hasMSInlineAsm())
+    if (MFI->hasCalls() && MF->hasInlineAsm())
       break;
 
     const MachineBasicBlock *MBB = I;
@@ -522,8 +525,8 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
           II->isStackAligningInlineAsm()) {
         MFI->setHasCalls(true);
       }
-      if (II->isMSInlineAsm()) {
-        MF->setHasMSInlineAsm(true);
+      if (II->isInlineAsm()) {
+        MF->setHasInlineAsm(true);
       }
     }
   }
@@ -562,6 +565,9 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
   // Release function-specific state. SDB and CurDAG are already cleared
   // at this point.
   FuncInfo->clear();
+
+  DEBUG(dbgs() << "*** MachineFunction at end of ISel ***\n");
+  DEBUG(MF->print(dbgs()));
 
   return true;
 }

@@ -50,6 +50,12 @@ class X86AsmParser : public MCTargetAsmParser {
   MCAsmParser &Parser;
   ParseInstructionInfo *InstInfo;
 private:
+  SMLoc consumeToken() {
+    SMLoc Result = Parser.getTok().getLoc();
+    Parser.Lex();
+    return Result;
+  }
+
   enum InfixCalculatorTok {
     IC_PLUS = 0,
     IC_MINUS,
@@ -1073,7 +1079,7 @@ bool X86AsmParser::ParseRegister(unsigned &RegNo,
     RegNo = MatchRegisterName(Tok.getString().lower());
 
   if (!is64BitMode()) {
-    // FIXME: This should be done using Requires<In32BitMode> and
+    // FIXME: This should be done using Requires<Not64BitMode> and
     // Requires<In64BitMode> so "eiz" usage in 64-bit instructions can be also
     // checked.
     // FIXME: Check AH, CH, DH, BH cannot be used in an instruction requiring a
@@ -1323,12 +1329,37 @@ bool X86AsmParser::ParseIntelExpression(IntelExprStateMachine &SM, SMLoc &End) {
       }
       return Error(Tok.getLoc(), "Unexpected identifier!");
     }
-    case AsmToken::Integer:
+    case AsmToken::Integer: {
       if (isParsingInlineAsm() && SM.getAddImmPrefix())
         InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_ImmPrefix,
                                                     Tok.getLoc()));
-      SM.onInteger(Tok.getIntVal());
+      // Look for 'b' or 'f' following an Integer as a directional label
+      SMLoc Loc = getTok().getLoc();
+      int64_t IntVal = getTok().getIntVal();
+      End = consumeToken();
+      UpdateLocLex = false;
+      if (getLexer().getKind() == AsmToken::Identifier) {
+        StringRef IDVal = getTok().getString();
+        if (IDVal == "f" || IDVal == "b") {
+          MCSymbol *Sym =
+            getContext().GetDirectionalLocalSymbol(IntVal,
+                                                   IDVal == "f" ? 1 : 0);
+          MCSymbolRefExpr::VariantKind Variant = MCSymbolRefExpr::VK_None;
+          const MCExpr *Val = 
+	    MCSymbolRefExpr::Create(Sym, Variant, getContext());
+          if (IDVal == "b" && Sym->isUndefined())
+            return Error(Loc, "invalid reference to undefined symbol");
+          StringRef Identifier = Sym->getName();
+          SM.onIdentifierExpr(Val, Identifier);
+          End = consumeToken();
+        } else {
+          SM.onInteger(IntVal);
+        }
+      } else {
+        SM.onInteger(IntVal);
+      }
       break;
+    }
     case AsmToken::Plus:    SM.onPlus(); break;
     case AsmToken::Minus:   SM.onMinus(); break;
     case AsmToken::Star:    SM.onStar(); break;
@@ -1341,10 +1372,8 @@ bool X86AsmParser::ParseIntelExpression(IntelExprStateMachine &SM, SMLoc &End) {
     if (SM.hadError())
       return Error(Tok.getLoc(), "unknown token in expression");
 
-    if (!Done && UpdateLocLex) {
-      End = Tok.getLoc();
-      Parser.Lex(); // Consume the token.
-    }
+    if (!Done && UpdateLocLex)
+      End = consumeToken();
   }
   return false;
 }
@@ -1680,6 +1709,13 @@ X86Operand *X86AsmParser::ParseIntelOperand() {
     }
 
     if (getLexer().isNot(AsmToken::LBrac)) {
+      // If a directional label (ie. 1f or 2b) was parsed above from
+      // ParseIntelExpression() then SM.getSym() was set to a pointer to
+      // to the MCExpr with the directional local symbol and this is a
+      // memory operand not an immediate operand.
+      if (SM.getSym())
+        return X86Operand::CreateMem(SM.getSym(), Start, End, Size);
+
       const MCExpr *ImmExpr = MCConstantExpr::Create(Imm, getContext());
       return X86Operand::CreateImm(ImmExpr, Start, End);
     }
@@ -1991,11 +2027,8 @@ ParseInstruction(ParseInstructionInfo &Info, StringRef Name, SMLoc NameLoc,
   if (getLexer().isNot(AsmToken::EndOfStatement) && !isPrefix) {
 
     // Parse '*' modifier.
-    if (getLexer().is(AsmToken::Star)) {
-      SMLoc Loc = Parser.getTok().getLoc();
-      Operands.push_back(X86Operand::CreateToken("*", Loc));
-      Parser.Lex(); // Eat the star.
-    }
+    if (getLexer().is(AsmToken::Star))
+      Operands.push_back(X86Operand::CreateToken("*", consumeToken()));
 
     // Read the first operand.
     if (X86Operand *Op = ParseOperand())
@@ -2020,9 +2053,7 @@ ParseInstruction(ParseInstructionInfo &Info, StringRef Name, SMLoc NameLoc,
     if (STI.getFeatureBits() & X86::FeatureAVX512) {
       // Parse mask register {%k1}
       if (getLexer().is(AsmToken::LCurly)) {
-        SMLoc Loc = Parser.getTok().getLoc();
-        Operands.push_back(X86Operand::CreateToken("{", Loc));
-        Parser.Lex();  // Eat the {
+        Operands.push_back(X86Operand::CreateToken("{", consumeToken()));
         if (X86Operand *Op = ParseOperand()) {
           Operands.push_back(Op);
           if (!getLexer().is(AsmToken::RCurly)) {
@@ -2030,19 +2061,16 @@ ParseInstruction(ParseInstructionInfo &Info, StringRef Name, SMLoc NameLoc,
             Parser.eatToEndOfStatement();
             return Error(Loc, "Expected } at this point");
           }
-          Loc = Parser.getTok().getLoc();
-          Operands.push_back(X86Operand::CreateToken("}", Loc));
-          Parser.Lex();  // Eat the }
+          Operands.push_back(X86Operand::CreateToken("}", consumeToken()));
         } else {
           Parser.eatToEndOfStatement();
           return true;
         }
       }
+      // TODO: add parsing of broadcasts {1to8}, {1to16}
       // Parse "zeroing non-masked" semantic {z}
       if (getLexer().is(AsmToken::LCurly)) {
-        SMLoc Loc = Parser.getTok().getLoc();
-        Operands.push_back(X86Operand::CreateToken("{z}", Loc));
-        Parser.Lex();  // Eat the {
+        Operands.push_back(X86Operand::CreateToken("{z}", consumeToken()));
         if (!getLexer().is(AsmToken::Identifier) || getLexer().getTok().getIdentifier() != "z") {
           SMLoc Loc = getLexer().getLoc();
           Parser.eatToEndOfStatement();

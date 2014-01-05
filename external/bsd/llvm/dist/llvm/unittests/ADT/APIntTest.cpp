@@ -597,4 +597,66 @@ TEST(APIntTest, tcDecrement) {
     EXPECT_EQ(APInt::tcCompare(test, expected, 4), 0);
   }
 }
+
+TEST(APIntTest, arrayAccess) {
+  // Single word check.
+  uint64_t E1 = 0x2CA7F46BF6569915ULL;
+  APInt A1(64, E1);
+  for (unsigned i = 0, e = 64; i < e; ++i) {    
+    EXPECT_EQ(bool(E1 & (1ULL << i)),
+              A1[i]);
+  }
+
+  // Multiword check.
+  integerPart E2[4] = {
+    0xEB6EB136591CBA21ULL,
+    0x7B9358BD6A33F10AULL,
+    0x7E7FFA5EADD8846ULL,
+    0x305F341CA00B613DULL
+  };
+  APInt A2(integerPartWidth*4, ArrayRef<integerPart>(E2, 4));
+  for (unsigned i = 0; i < 4; ++i) {
+    for (unsigned j = 0; j < integerPartWidth; ++j) {
+      EXPECT_EQ(bool(E2[i] & (1ULL << j)),
+                A2[i*integerPartWidth + j]);
+    }
+  }
+}
+
+TEST(APIntTest, nearestLogBase2) {
+  // Single word check.  
+
+  // Test round up.
+  uint64_t I1 = 0x1800001;
+  APInt A1(64, I1);
+  EXPECT_EQ(A1.nearestLogBase2(), A1.ceilLogBase2());
+
+  // Test round down.
+  uint64_t I2 = 0x1000011;
+  APInt A2(64, I2);
+  EXPECT_EQ(A2.nearestLogBase2(), A2.logBase2());
+
+  // Test ties round up.
+  uint64_t I3 = 0x1800000;
+  APInt A3(64, I3);
+  EXPECT_EQ(A3.nearestLogBase2(), A3.ceilLogBase2());
+
+  // Multiple word check.
+
+  // Test round up.
+  integerPart I4[4] = {0x0, 0xF, 0x18, 0x0};
+  APInt A4(integerPartWidth*4, ArrayRef<integerPart>(I4, 4));
+  EXPECT_EQ(A4.nearestLogBase2(), A4.ceilLogBase2());
+
+  // Test round down.
+  integerPart I5[4] = {0x0, 0xF, 0x10, 0x0};
+  APInt A5(integerPartWidth*4, ArrayRef<integerPart>(I5, 4));
+  EXPECT_EQ(A5.nearestLogBase2(), A5.logBase2());
+
+  // Test ties round up.
+  uint64_t I6[4] = {0x0, 0x0, 0x0, 0x18};
+  APInt A6(integerPartWidth*4, ArrayRef<integerPart>(I6, 4));
+  EXPECT_EQ(A6.nearestLogBase2(), A6.ceilLogBase2());
+}
+
 }

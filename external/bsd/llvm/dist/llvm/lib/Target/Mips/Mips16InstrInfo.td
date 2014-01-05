@@ -120,6 +120,15 @@ class FJAL16_ins<bits<1> _X, string asmstr,
          itin>  {
   let isCodeGenOnly=1;
 }
+
+class FJALB16_ins<bits<1> _X, string asmstr,
+                 InstrItinClass itin>:
+  FJAL16<_X, (outs), (ins simm20:$imm),
+         !strconcat(asmstr, "\t$imm\t# branch\n\tnop"),[],
+         itin>  {
+  let isCodeGenOnly=1;
+}
+
 //
 // EXT-I instruction format
 //
@@ -289,7 +298,7 @@ class FI8_MOV32R16_ins<string asmstr, InstrItinClass itin>:
 
 //
 // This are pseudo formats for multiply
-// This first one can be changed to non pseudo now.
+// This first one can be changed to non-pseudo now.
 //
 // MULT
 //
@@ -734,6 +743,13 @@ def DivuRxRy16: FRR16_div_ins<0b11011, "divu", IIAlu> {
 def Jal16 : FJAL16_ins<0b0, "jal", IIAlu> {
   let hasDelaySlot = 0;  // not true, but we add the nop for now
   let isCall=1;
+  let Defs = [RA];
+}
+
+def JalB16 : FJALB16_ins<0b0, "jal", IIAlu>, branch16 {
+  let hasDelaySlot = 0;  // not true, but we add the nop for now
+  let isBranch=1;
+  let Defs = [RA];
 }
 
 //
@@ -941,26 +957,18 @@ def OrRxRxRy16: FRxRxRy16_ins<0b01101, "or", IIAlu>, ArithLogic16Defs<1>;
 // stack
 //
 
-// fixed form for restoring RA and the frame
-// for direct object emitter, encoding needs to be adjusted for the
-// frame size
-//
-let ra=1, s=0,s0=1,s1=1 in
-def RestoreRaF16:
-  FI8_SVRS16<0b1, (outs), (ins uimm16:$frame_size),
-             "restore\t$$ra,  $$s0, $$s1, $$s2, $frame_size", [], IILoad >, MayLoad {
+def Restore16:
+  FI8_SVRS16<0b1, (outs), (ins variable_ops),
+             "", [], IILoad >, MayLoad {
   let isCodeGenOnly = 1;
-  let Defs = [S0, S1, S2, RA, SP];
+  let Defs = [SP];
   let Uses = [SP];
 }
 
-// Use Restore to increment SP since SP is not a Mip 16 register, this
-// is an easy way to do that which does not require a register.
-//
-let ra=0, s=0,s0=0,s1=0 in
-def RestoreIncSpF16:
-  FI8_SVRS16<0b1, (outs), (ins uimm16:$frame_size),
-             "restore\t$frame_size", [], IILoad >, MayLoad {
+
+def RestoreX16:
+  FI8_SVRS16<0b1, (outs), (ins variable_ops),
+             "", [], IILoad >, MayLoad {
   let isCodeGenOnly = 1;
   let Defs = [SP];
   let Uses = [SP];
@@ -973,23 +981,17 @@ def RestoreIncSpF16:
 // To set up a stack frame on entry to a subroutine,
 // saving return address and static registers, and adjusting stack
 //
-let ra=1, s=1,s0=1,s1=1 in
-def SaveRaF16:
-  FI8_SVRS16<0b1, (outs), (ins uimm16:$frame_size),
-             "save\t$$ra, $$s0, $$s1, $$s2, $frame_size", [], IIStore >, MayStore {
+def Save16: 
+  FI8_SVRS16<0b1, (outs), (ins variable_ops),
+             "", [], IIStore >, MayStore {
   let isCodeGenOnly = 1;
-  let Uses = [RA, SP, S0, S1, S2];
+  let Uses = [SP];
   let Defs = [SP];
 }
 
-//
-// Use Save to decrement the SP by a constant since SP is not
-// a Mips16 register.
-//
-let ra=0, s=0,s0=0,s1=0 in
-def SaveDecSpF16:
-  FI8_SVRS16<0b1, (outs), (ins uimm16:$frame_size),
-             "save\t$frame_size", [], IIStore >, MayStore {
+def SaveX16:
+  FI8_SVRS16<0b1, (outs), (ins variable_ops),
+             "", [], IIStore >, MayStore {
   let isCodeGenOnly = 1;
   let Uses = [SP];
   let Defs = [SP];
@@ -1374,7 +1376,9 @@ def: Mips16Pat<
 let isCall=1, hasDelaySlot=0 in
 def JumpLinkReg16:
   FRR16_JALRC<0, 0, 0, (outs), (ins CPU16Regs:$rs),
-              "jalrc \t$rs", [(MipsJmpLink CPU16Regs:$rs)], IIBranch>;
+              "jalrc \t$rs", [(MipsJmpLink CPU16Regs:$rs)], IIBranch> {
+  let Defs = [RA];
+}
 
 // Mips16 pseudos
 let isReturn=1, isTerminator=1, hasDelaySlot=1, isBarrier=1, hasCtrlDep=1,
@@ -1890,7 +1894,7 @@ def GotPrologue16:
   MipsPseudo16<
     (outs CPU16Regs:$rh, CPU16Regs:$rl),
     (ins simm16:$immHi, simm16:$immLo),
-    ".align 2\n\tli\t$rh, $immHi\n\taddiu\t$rl, $$pc, $immLo\n ",[]> ;
+    "li\t$rh, $immHi\n\taddiu\t$rl, $$pc, $immLo\n ",[]> ;
 
 // An operand for the CONSTPOOL_ENTRY pseudo-instruction.
 def cpinst_operand : Operand<i32> {

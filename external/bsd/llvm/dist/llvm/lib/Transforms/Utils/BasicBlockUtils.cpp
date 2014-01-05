@@ -630,28 +630,29 @@ ReturnInst *llvm::FoldReturnIntoUncondBranch(ReturnInst *RI, BasicBlock *BB,
 }
 
 /// SplitBlockAndInsertIfThen - Split the containing block at the
-/// specified instruction - everything before and including Cmp stays
-/// in the old basic block, and everything after Cmp is moved to a
+/// specified instruction - everything before and including SplitBefore stays
+/// in the old basic block, and everything after SplitBefore is moved to a
 /// new block. The two blocks are connected by a conditional branch
 /// (with value of Cmp being the condition).
 /// Before:
 ///   Head
-///   Cmp
+///   SplitBefore
 ///   Tail
 /// After:
 ///   Head
-///   Cmp
-///   if (Cmp)
+///   if (Cond)
 ///     ThenBlock
+///   SplitBefore
 ///   Tail
 ///
 /// If Unreachable is true, then ThenBlock ends with
 /// UnreachableInst, otherwise it branches to Tail.
 /// Returns the NewBasicBlock's terminator.
 
-TerminatorInst *llvm::SplitBlockAndInsertIfThen(Instruction *Cmp,
-    bool Unreachable, MDNode *BranchWeights) {
-  Instruction *SplitBefore = Cmp->getNextNode();
+TerminatorInst *llvm::SplitBlockAndInsertIfThen(Value *Cond,
+                                                Instruction *SplitBefore,
+                                                bool Unreachable,
+                                                MDNode *BranchWeights) {
   BasicBlock *Head = SplitBefore->getParent();
   BasicBlock *Tail = Head->splitBasicBlock(SplitBefore);
   TerminatorInst *HeadOldTerm = Head->getTerminator();
@@ -663,11 +664,44 @@ TerminatorInst *llvm::SplitBlockAndInsertIfThen(Instruction *Cmp,
   else
     CheckTerm = BranchInst::Create(Tail, ThenBlock);
   BranchInst *HeadNewTerm =
-    BranchInst::Create(/*ifTrue*/ThenBlock, /*ifFalse*/Tail, Cmp);
+    BranchInst::Create(/*ifTrue*/ThenBlock, /*ifFalse*/Tail, Cond);
   HeadNewTerm->setMetadata(LLVMContext::MD_prof, BranchWeights);
   ReplaceInstWithInst(HeadOldTerm, HeadNewTerm);
   return CheckTerm;
 }
+
+/// SplitBlockAndInsertIfThenElse is similar to SplitBlockAndInsertIfThen,
+/// but also creates the ElseBlock.
+/// Before:
+///   Head
+///   SplitBefore
+///   Tail
+/// After:
+///   Head
+///   if (Cond)
+///     ThenBlock
+///   else
+///     ElseBlock
+///   SplitBefore
+///   Tail
+void llvm::SplitBlockAndInsertIfThenElse(Value *Cond, Instruction *SplitBefore,
+                                         TerminatorInst **ThenTerm,
+                                         TerminatorInst **ElseTerm,
+                                         MDNode *BranchWeights) {
+  BasicBlock *Head = SplitBefore->getParent();
+  BasicBlock *Tail = Head->splitBasicBlock(SplitBefore);
+  TerminatorInst *HeadOldTerm = Head->getTerminator();
+  LLVMContext &C = Head->getContext();
+  BasicBlock *ThenBlock = BasicBlock::Create(C, "", Head->getParent(), Tail);
+  BasicBlock *ElseBlock = BasicBlock::Create(C, "", Head->getParent(), Tail);
+  *ThenTerm = BranchInst::Create(Tail, ThenBlock);
+  *ElseTerm = BranchInst::Create(Tail, ElseBlock);
+  BranchInst *HeadNewTerm =
+    BranchInst::Create(/*ifTrue*/ThenBlock, /*ifFalse*/ElseBlock, Cond);
+  HeadNewTerm->setMetadata(LLVMContext::MD_prof, BranchWeights);
+  ReplaceInstWithInst(HeadOldTerm, HeadNewTerm);
+}
+
 
 /// GetIfCondition - Given a basic block (BB) with two predecessors,
 /// check to see if the merge at this block is due

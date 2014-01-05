@@ -351,7 +351,7 @@ object_t *WinCOFFObjectWriter::createCOFFEntity(StringRef Name,
 /// and creates the associated COFF section staging object.
 void WinCOFFObjectWriter::DefineSection(MCSectionData const &SectionData) {
   assert(SectionData.getSection().getVariant() == MCSection::SV_COFF
-    && "Got non COFF section in the COFF backend!");
+    && "Got non-COFF section in the COFF backend!");
   // FIXME: Not sure how to verify this (at least in a debug build).
   MCSectionCOFF const &Sec =
     static_cast<MCSectionCOFF const &>(SectionData.getSection());
@@ -845,7 +845,8 @@ void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,
 
   Header.PointerToSymbolTable = offset;
 
-  Header.TimeDateStamp = sys::TimeValue::now().toEpochTime();
+  // We want a deterministic output. It looks like GNU as also writes 0 in here.
+  Header.TimeDateStamp = 0;
 
   // Write it all to disk...
   WriteFileHeader(Header);

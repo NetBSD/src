@@ -1,11 +1,18 @@
 ; RUN: llc -mtriple=x86_64-apple-darwin %s -o %t -filetype=obj
 ; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s
+; RUN: llc -mtriple=x86_64-apple-darwin %s -o %t -filetype=obj -dwarf-version=3
+; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s -check-prefix=DWARF3
 
 ; Checks that we emit debug info for the block variable declare.
 ; CHECK: DW_TAG_subprogram [3]
 ; CHECK: DW_TAG_variable [5]
 ; CHECK: DW_AT_name [DW_FORM_strp]     ( .debug_str[{{.*}}] = "block")
 ; CHECK: DW_AT_location [DW_FORM_sec_offset]        ({{.*}})
+
+; DWARF3: DW_TAG_subprogram [3]
+; DWARF3: DW_TAG_variable [5]
+; DWARF3: DW_AT_name [DW_FORM_strp]     ( .debug_str[{{.*}}] = "block")
+; DWARF3: DW_AT_location [DW_FORM_data4]        ({{.*}})
 
 %struct.__block_descriptor = type { i64, i64 }
 %struct.__block_literal_generic = type { i8*, i32, i32, i8*, %struct.__block_descriptor* }
@@ -60,7 +67,7 @@ declare void @objc_end_catch()
 declare i32 @__objc_personality_v0(...)
 
 !llvm.dbg.cu = !{!0}
-!llvm.module.flags = !{!35, !36, !37, !38}
+!llvm.module.flags = !{!35, !36, !37, !38, !64}
 
 !0 = metadata !{i32 786449, metadata !63, i32 16, metadata !"clang version 3.1 (trunk 151227)", i1 false, metadata !"", i32 2, metadata !1, metadata !1, metadata !3, metadata !1,  metadata !1, metadata !""} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{i32 0}
@@ -124,3 +131,4 @@ declare i32 @__objc_personality_v0(...)
 !61 = metadata !{i32 10, i32 21, metadata !28, null}
 !62 = metadata !{i32 9, i32 20, metadata !56, null}
 !63 = metadata !{metadata !"foo.m", metadata !"/Users/echristo"}
+!64 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}

@@ -42,13 +42,13 @@ MCContext::MCContext(const MCAsmInfo *mai, const MCRegisterInfo *mri,
   SrcMgr(mgr), MAI(mai), MRI(mri), MOFI(mofi),
   Allocator(), Symbols(Allocator), UsedNames(Allocator),
   NextUniqueID(0),
-  CurrentDwarfLoc(0,0,0,DWARF2_FLAG_IS_STMT,0,0), 
+  CurrentDwarfLoc(0,0,0,DWARF2_FLAG_IS_STMT,0,0),
   DwarfLocSeen(false), GenDwarfForAssembly(false), GenDwarfFileNumber(0),
   AllowTemporaryLabels(true), DwarfCompileUnitID(0), AutoReset(DoAutoReset) {
 
   error_code EC = llvm::sys::fs::current_path(CompilationDir);
-  assert(!EC && "Could not determine the current directory");
-  (void)EC;
+  if (EC)
+    CompilationDir.clear();
 
   MachOUniquingMap = 0;
   ELFUniquingMap = 0;
@@ -71,7 +71,7 @@ MCContext::~MCContext() {
 
   // NOTE: The symbols are all allocated out of a bump pointer allocator,
   // we don't need to free them here.
-  
+
   // If the stream for the .secure_log_unique directive was created free it.
   delete (raw_ostream*)SecureLog;
 }
@@ -138,7 +138,7 @@ MCSymbol *MCContext::CreateSymbol(StringRef Name) {
 
   StringMapEntry<bool> *NameEntry = &UsedNames.GetOrCreateValue(Name);
   if (NameEntry->getValue()) {
-    assert(isTemporary && "Cannot rename non temporary symbols");
+    assert(isTemporary && "Cannot rename non-temporary symbols");
     SmallString<128> NewName = Name;
     do {
       NewName.resize(Name.size());
@@ -157,8 +157,7 @@ MCSymbol *MCContext::CreateSymbol(StringRef Name) {
 
 MCSymbol *MCContext::GetOrCreateSymbol(const Twine &Name) {
   SmallString<128> NameSV;
-  Name.toVector(NameSV);
-  return GetOrCreateSymbol(NameSV.str());
+  return GetOrCreateSymbol(Name.toStringRef(NameSV));
 }
 
 MCSymbol *MCContext::CreateTempSymbol() {

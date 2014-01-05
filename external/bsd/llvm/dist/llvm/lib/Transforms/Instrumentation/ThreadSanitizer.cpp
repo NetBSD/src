@@ -402,8 +402,13 @@ bool ThreadSanitizer::instrumentLoadOrStore(Instruction *I) {
   if (IsWrite && isVtableAccess(I)) {
     DEBUG(dbgs() << "  VPTR : " << *I << "\n");
     Value *StoredValue = cast<StoreInst>(I)->getValueOperand();
-    // StoredValue does not necessary have a pointer type.
-    if (isa<IntegerType>(StoredValue->getType()))
+    // StoredValue may be a vector type if we are storing several vptrs at once.
+    // In this case, just take the first element of the vector since this is
+    // enough to find vptr races.
+    if (isa<VectorType>(StoredValue->getType()))
+      StoredValue = IRB.CreateExtractElement(
+          StoredValue, ConstantInt::get(IRB.getInt32Ty(), 0));
+    if (StoredValue->getType()->isIntegerTy())
       StoredValue = IRB.CreateIntToPtr(StoredValue, IRB.getInt8PtrTy());
     // Call TsanVptrUpdate.
     IRB.CreateCall2(TsanVptrUpdate,

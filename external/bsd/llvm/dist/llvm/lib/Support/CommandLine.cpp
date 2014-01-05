@@ -634,7 +634,7 @@ static bool ExpandResponseFile(const char *FName, StringSaver &Saver,
 bool cl::ExpandResponseFiles(StringSaver &Saver, TokenizerCallback Tokenizer,
                              SmallVectorImpl<const char *> &Argv) {
   unsigned RspFiles = 0;
-  bool AllExpanded = false;
+  bool AllExpanded = true;
 
   // Don't cache Argv.size() because it can change.
   for (unsigned I = 0; I != Argv.size(); ) {
@@ -655,7 +655,10 @@ bool cl::ExpandResponseFiles(StringSaver &Saver, TokenizerCallback Tokenizer,
     // the cwd of the process or the response file?
     SmallVector<const char *, 0> ExpandedArgv;
     if (!ExpandResponseFile(Arg + 1, Saver, Tokenizer, ExpandedArgv)) {
+      // We couldn't read this file, so we leave it in the argument stream and
+      // move on.
       AllExpanded = false;
+      ++I;
       continue;
     }
     Argv.erase(Argv.begin() + I);

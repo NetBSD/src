@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mattr=+sse2 | FileCheck %s
+; RUN: llc < %s -march=x86 -mattr=+sse2 -mcpu=penryn| FileCheck %s
 
 define i32 @isint_return(double %d) nounwind {
 ; CHECK-NOT: xor
@@ -9,7 +9,7 @@ define i32 @isint_return(double %d) nounwind {
 ; CHECK: cmpeqsd
   %c = fcmp oeq double %d, %e
 ; CHECK-NEXT: movd
-; CHECK-NEXT: andl
+; CHECK-NEXT: andq
   %z = zext i1 %c to i32
   ret i32 %z
 }

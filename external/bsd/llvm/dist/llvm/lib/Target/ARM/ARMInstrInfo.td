@@ -95,7 +95,6 @@ def ARMSmlal         : SDNode<"ARMISD::SMLAL", SDT_ARM64bitmlal>;
 
 // Node definitions.
 def ARMWrapper       : SDNode<"ARMISD::Wrapper",     SDTIntUnaryOp>;
-def ARMWrapperDYN    : SDNode<"ARMISD::WrapperDYN",  SDTIntUnaryOp>;
 def ARMWrapperPIC    : SDNode<"ARMISD::WrapperPIC",  SDTIntUnaryOp>;
 def ARMWrapperJT     : SDNode<"ARMISD::WrapperJT",   SDTIntBinOp>;
 
@@ -276,7 +275,8 @@ def UseMulOps        : Predicate<"Subtarget->useMulOps()">;
 // But only select them if more precision in FP computation is allowed.
 // Do not use them for Darwin platforms.
 def UseFusedMAC      : Predicate<"(TM.Options.AllowFPOpFusion =="
-                                 " FPOpFusion::Fast) && "
+                                 " FPOpFusion::Fast && "
+                                 " Subtarget->hasVFP4()) && "
                                  "!Subtarget->isTargetDarwin()">;
 def DontUseFusedMAC  : Predicate<"!(TM.Options.AllowFPOpFusion =="
                                  " FPOpFusion::Fast &&"
@@ -1725,6 +1725,8 @@ def BKPT : AInoP<(outs), (ins imm0_65535:$val), MiscFrm, NoItinerary,
   let Inst{31-28} = 0xe; // AL
   let Inst{7-4} = 0b0111;
 }
+// default immediate for breakpoint mnemonic
+def : InstAlias<"bkpt", (BKPT 0)>, Requires<[IsARM]>;
 
 def HLT : AInoP<(outs), (ins imm0_65535:$val), MiscFrm, NoItinerary,
                  "hlt", "\t$val", []>, Requires<[IsARM, HasV8]> {
@@ -5183,6 +5185,10 @@ def MOVi32imm : PseudoInst<(outs GPR:$dst), (ins i32imm:$src), IIC_iMOVix2,
                            [(set GPR:$dst, (arm_i32imm:$src))]>,
                            Requires<[IsARM]>;
 
+def LDRLIT_ga_abs : PseudoInst<(outs GPR:$dst), (ins i32imm:$src), IIC_iLoad_i,
+                               [(set GPR:$dst, (ARMWrapper tglobaladdr:$src))]>,
+                    Requires<[IsARM, DontUseMovt]>;
+
 // Pseudo instruction that combines movw + movt + add pc (if PIC).
 // It also makes it possible to rematerialize the instructions.
 // FIXME: Remove this when we can do generalized remat and when machine licm
@@ -5193,10 +5199,17 @@ def MOV_ga_pcrel : PseudoInst<(outs GPR:$dst), (ins i32imm:$addr),
                         [(set GPR:$dst, (ARMWrapperPIC tglobaladdr:$addr))]>,
                         Requires<[IsARM, UseMovt]>;
 
-def MOV_ga_dyn : PseudoInst<(outs GPR:$dst), (ins i32imm:$addr),
-                             IIC_iMOVix2,
-                        [(set GPR:$dst, (ARMWrapperDYN tglobaladdr:$addr))]>,
-                        Requires<[IsARM, UseMovt]>;
+def LDRLIT_ga_pcrel : PseudoInst<(outs GPR:$dst), (ins i32imm:$addr),
+                                 IIC_iLoadiALU,
+                                 [(set GPR:$dst,
+                                       (ARMWrapperPIC tglobaladdr:$addr))]>,
+                      Requires<[IsARM, DontUseMovt]>;
+
+def LDRLIT_ga_pcrel_ldr : PseudoInst<(outs GPR:$dst), (ins i32imm:$addr),
+                              NoItinerary,
+                              [(set GPR:$dst,
+                                    (load (ARMWrapperPIC tglobaladdr:$addr)))]>,
+                          Requires<[IsARM, DontUseMovt]>;
 
 let AddedComplexity = 10 in
 def MOV_ga_pcrel_ldr : PseudoInst<(outs GPR:$dst), (ins i32imm:$addr),
@@ -5206,8 +5219,6 @@ def MOV_ga_pcrel_ldr : PseudoInst<(outs GPR:$dst), (ins i32imm:$addr),
 } // isReMaterializable
 
 // ConstantPool, GlobalAddress, and JumpTable
-def : ARMPat<(ARMWrapper  tglobaladdr :$dst), (LEApcrel tglobaladdr :$dst)>,
-            Requires<[IsARM, DontUseMovt]>;
 def : ARMPat<(ARMWrapper  tconstpool  :$dst), (LEApcrel tconstpool  :$dst)>;
 def : ARMPat<(ARMWrapper  tglobaladdr :$dst), (MOVi32imm tglobaladdr :$dst)>,
             Requires<[IsARM, UseMovt]>;

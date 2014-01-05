@@ -99,12 +99,6 @@ void MSP430AsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
 
     return;
   }
-  case MachineOperand::MO_ExternalSymbol: {
-    bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
-    O << (isMemOp ? '&' : '#');
-    O << MAI->getGlobalPrefix() << MO.getSymbolName();
-    return;
-  }
   }
 }
 

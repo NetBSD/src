@@ -50,7 +50,7 @@ bool X86FrameLowering::hasFP(const MachineFunction &MF) const {
   return (MF.getTarget().Options.DisableFramePointerElim(MF) ||
           RegInfo->needsStackRealignment(MF) ||
           MFI->hasVarSizedObjects() ||
-          MFI->isFrameAddressTaken() || MF.hasMSInlineAsm() ||
+          MFI->isFrameAddressTaken() || MFI->hasInlineAsmWithSPAdjust() ||
           MF.getInfo<X86MachineFunctionInfo>()->getForceFramePointer() ||
           MMI.callsUnwindInit() || MMI.callsEHReturn());
 }
@@ -606,16 +606,14 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
   // responsible for adjusting the stack pointer.  Touching the stack at 4K
   // increments is necessary to ensure that the guard pages used by the OS
   // virtual memory manager are allocated in correct sequence.
-  if (NumBytes >= 4096 && STI.isOSWindows() && !STI.isTargetEnvMacho()) {
+  if (NumBytes >= 4096 && STI.isOSWindows() && !STI.isTargetMacho()) {
     const char *StackProbeSymbol;
-    bool isSPUpdateNeeded = false;
 
     if (Is64Bit) {
-      if (STI.isTargetCygMing())
-        StackProbeSymbol = "___chkstk";
-      else {
+      if (STI.isTargetCygMing()) {
+        StackProbeSymbol = "___chkstk_ms";
+      } else {
         StackProbeSymbol = "__chkstk";
-        isSPUpdateNeeded = true;
       }
     } else if (STI.isTargetCygMing())
       StackProbeSymbol = "_alloca";
@@ -657,15 +655,15 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
       .addReg(X86::EFLAGS, RegState::Define | RegState::Implicit)
       .setMIFlag(MachineInstr::FrameSetup);
 
-    // MSVC x64's __chkstk does not adjust %rsp itself.
-    // It also does not clobber %rax so we can reuse it when adjusting %rsp.
-    if (isSPUpdateNeeded) {
+    if (Is64Bit) {
+      // MSVC x64's __chkstk and cygwin/mingw's ___chkstk_ms do not adjust %rsp
+      // themself. It also does not clobber %rax so we can reuse it when
+      // adjusting %rsp.
       BuildMI(MBB, MBBI, DL, TII.get(X86::SUB64rr), StackPtr)
         .addReg(StackPtr)
         .addReg(X86::RAX)
         .setMIFlag(MachineInstr::FrameSetup);
     }
-
     if (isEAXAlive) {
         // Restore EAX
         MachineInstr *MI = addRegOffset(BuildMI(MF, DL, TII.get(X86::MOV32rm),

@@ -17,9 +17,7 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Function.h"
-#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
-#include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
@@ -27,36 +25,26 @@ using namespace llvm;
 /// and the specified name as the global variable name.  GVName must not be
 /// empty.
 void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
-                                const Twine &GVName, ManglerPrefixTy PrefixTy,
-                                bool UseGlobalPrefix) {
+                                const Twine &GVName, ManglerPrefixTy PrefixTy) {
   SmallString<256> TmpData;
   StringRef Name = GVName.toStringRef(TmpData);
   assert(!Name.empty() && "getNameWithPrefix requires non-empty name");
-  
-  const MCAsmInfo *MAI = TM->getMCAsmInfo();
-  
+
   // If the global name is not led with \1, add the appropriate prefixes.
   if (Name[0] == '\1') {
     Name = Name.substr(1);
   } else {
     if (PrefixTy == Mangler::Private) {
-      const char *Prefix = MAI->getPrivateGlobalPrefix();
+      const char *Prefix = DL->getPrivateGlobalPrefix();
       OutName.append(Prefix, Prefix+strlen(Prefix));
     } else if (PrefixTy == Mangler::LinkerPrivate) {
-      const char *Prefix = MAI->getLinkerPrivateGlobalPrefix();
+      const char *Prefix = DL->getLinkerPrivateGlobalPrefix();
       OutName.append(Prefix, Prefix+strlen(Prefix));
     }
 
-    if (UseGlobalPrefix) {
-      const char *Prefix = MAI->getGlobalPrefix();
-      if (Prefix[0] == 0)
-        ; // Common noop, no prefix.
-      else if (Prefix[1] == 0)
-        OutName.push_back(Prefix[0]);  // Common, one character prefix.
-      else
-        // Arbitrary length prefix.
-        OutName.append(Prefix, Prefix+strlen(Prefix));
-    }
+    char Prefix = DL->getGlobalPrefix();
+    if (Prefix != '\0')
+      OutName.push_back(Prefix);
   }
 
   // If this is a simple string that doesn't need escaping, just append it.
@@ -88,10 +76,9 @@ static void AddFastCallStdCallSuffix(SmallVectorImpl<char> &OutName,
 /// and the specified global variable's name.  If the global variable doesn't
 /// have a name, this fills in a unique name for the global.
 void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
-                                const GlobalValue *GV, bool isImplicitlyPrivate,
-                                bool UseGlobalPrefix) {
+                                const GlobalValue *GV) {
   ManglerPrefixTy PrefixTy = Mangler::Default;
-  if (GV->hasPrivateLinkage() || isImplicitlyPrivate)
+  if (GV->hasPrivateLinkage())
     PrefixTy = Mangler::Private;
   else if (GV->hasLinkerPrivateLinkage() || GV->hasLinkerPrivateWeakLinkage())
     PrefixTy = Mangler::LinkerPrivate;
@@ -99,7 +86,7 @@ void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
   // If this global has a name, handle it simply.
   if (GV->hasName()) {
     StringRef Name = GV->getName();
-    getNameWithPrefix(OutName, Name, PrefixTy, UseGlobalPrefix);
+    getNameWithPrefix(OutName, Name, PrefixTy);
     // No need to do anything else if the global has the special "do not mangle"
     // flag in the name.
     if (Name[0] == 1)
@@ -111,13 +98,12 @@ void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
     if (ID == 0) ID = NextAnonGlobalID++;
   
     // Must mangle the global into a unique ID.
-    getNameWithPrefix(OutName, "__unnamed_" + Twine(ID), PrefixTy,
-                      UseGlobalPrefix);
+    getNameWithPrefix(OutName, "__unnamed_" + Twine(ID), PrefixTy);
   }
-  
+
   // If we are supposed to add a microsoft-style suffix for stdcall/fastcall,
   // add it.
-  if (TM->getMCAsmInfo()->hasMicrosoftFastStdCallMangling()) {
+  if (DL->hasMicrosoftFastStdCallMangling()) {
     if (const Function *F = dyn_cast<Function>(GV)) {
       CallingConv::ID CC = F->getCallingConv();
     
@@ -137,7 +123,7 @@ void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
           // "Pure" variadic functions do not receive @0 suffix.
           (!FT->isVarArg() || FT->getNumParams() == 0 ||
            (FT->getNumParams() == 1 && F->hasStructRetAttr())))
-        AddFastCallStdCallSuffix(OutName, F, *TM->getDataLayout());
+        AddFastCallStdCallSuffix(OutName, F, *DL);
     }
   }
 }

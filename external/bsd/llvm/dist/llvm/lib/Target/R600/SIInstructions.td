@@ -876,8 +876,21 @@ def : Pat <
                      $src2), sub1)
 >;
 
-defm V_READLANE_B32 : VOP2_32 <0x00000001, "V_READLANE_B32", []>;
-defm V_WRITELANE_B32 : VOP2_32 <0x00000002, "V_WRITELANE_B32", []>;
+def V_READLANE_B32 : VOP2 <
+  0x00000001,
+  (outs SReg_32:$vdst),
+  (ins VReg_32:$src0, SSrc_32:$vsrc1),
+  "V_READLANE_B32 $vdst, $src0, $vsrc1",
+  []
+>;
+
+def V_WRITELANE_B32 : VOP2 <
+  0x00000002,
+  (outs VReg_32:$vdst),
+  (ins SReg_32:$src0, SSrc_32:$vsrc1),
+  "V_WRITELANE_B32 $vdst, $src0, $vsrc1",
+  []
+>;
 
 let isCommutable = 1 in {
 defm V_ADD_F32 : VOP2_32 <0x00000003, "V_ADD_F32",
@@ -1306,7 +1319,7 @@ def SI_END_CF : InstSI <
 def SI_KILL : InstSI <
   (outs),
   (ins VReg_32:$src),
-  "SI_KIL $src",
+  "SI_KILL $src",
   [(int_AMDGPU_kill f32:$src)]
 >;
 
@@ -1315,13 +1328,13 @@ def SI_KILL : InstSI <
 
 let Uses = [EXEC], Defs = [EXEC,VCC,M0] in {
 
-//defm SI_ : RegisterLoadStore <VReg_32, FRAMEri64, ADDRIndirect>;
+//defm SI_ : RegisterLoadStore <VReg_32, FRAMEri, ADDRIndirect>;
 
 let UseNamedOperandTable = 1 in {
 
 def SI_RegisterLoad : AMDGPUShaderInst <
   (outs VReg_32:$dst, SReg_64:$temp),
-  (ins FRAMEri64:$addr, i32imm:$chan),
+  (ins FRAMEri32:$addr, i32imm:$chan),
   "", []
 > {
   let isRegisterLoad = 1;
@@ -1330,7 +1343,7 @@ def SI_RegisterLoad : AMDGPUShaderInst <
 
 class SIRegStore<dag outs> : AMDGPUShaderInst <
   outs,
-  (ins VReg_32:$val, FRAMEri64:$addr, i32imm:$chan),
+  (ins VReg_32:$val, FRAMEri32:$addr, i32imm:$chan),
   "", []
 > {
   let isRegisterStore = 1;

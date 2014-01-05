@@ -461,14 +461,13 @@ bool DIType::Verify() const {
   // DIType is abstract, it should be a BasicType, a DerivedType or
   // a CompositeType.
   if (isBasicType())
-    DIBasicType(DbgNode).Verify();
+    return DIBasicType(DbgNode).Verify();
   else if (isCompositeType())
-    DICompositeType(DbgNode).Verify();
+    return DICompositeType(DbgNode).Verify();
   else if (isDerivedType())
-    DIDerivedType(DbgNode).Verify();
+    return DIDerivedType(DbgNode).Verify();
   else
     return false;
-  return true;
 }
 
 /// Verify - Verify that a basic type descriptor is well formed.
@@ -505,6 +504,10 @@ bool DICompositeType::Verify() const {
   if (!fieldIsMDString(DbgNode, 14))
     return false;
 
+  // A subroutine type can't be both & and &&.
+  if (isLValueReference() && isRValueReference())
+    return false;
+
   return DbgNode->getNumOperands() == 15;
 }
 
@@ -521,6 +524,11 @@ bool DISubprogram::Verify() const {
   // Containing type @ field 12.
   if (!fieldIsTypeRef(DbgNode, 12))
     return false;
+
+  // A subprogram can't be both & and &&.
+  if (isLValueReference() && isRValueReference())
+    return false;
+
   return DbgNode->getNumOperands() == 20;
 }
 
@@ -656,19 +664,6 @@ void DICompositeType::setTypeArray(DIArray Elements, DIArray TParams) {
   if (TParams)
     N->replaceOperandWith(13, TParams);
   DbgNode = N;
-}
-
-void DICompositeType::addMember(DIDescriptor D) {
-  SmallVector<llvm::Value *, 16> M;
-  DIArray OrigM = getTypeArray();
-  unsigned Elements = OrigM.getNumElements();
-  if (Elements == 1 && !OrigM.getElement(0))
-    Elements = 0;
-  M.reserve(Elements + 1);
-  for (unsigned i = 0; i != Elements; ++i)
-    M.push_back(OrigM.getElement(i));
-  M.push_back(D);
-  setTypeArray(DIArray(MDNode::get(DbgNode->getContext(), M)));
 }
 
 /// Generate a reference to this DIType. Uses the type identifier instead
@@ -1298,6 +1293,12 @@ void DIType::printInternal(raw_ostream &OS) const {
     OS << " [vector]";
   if (isStaticMember())
     OS << " [static]";
+
+  if (isLValueReference())
+    OS << " [reference]";
+
+  if (isRValueReference())
+    OS << " [rvalue reference]";
 }
 
 void DIDerivedType::printInternal(raw_ostream &OS) const {
@@ -1336,6 +1337,12 @@ void DISubprogram::printInternal(raw_ostream &OS) const {
     OS << " [private]";
   else if (isProtected())
     OS << " [protected]";
+
+  if (isLValueReference())
+    OS << " [reference]";
+
+  if (isRValueReference())
+    OS << " [rvalue reference]";
 
   StringRef Res = getName();
   if (!Res.empty())
@@ -1425,4 +1432,64 @@ DIScopeRef DIDescriptor::getFieldAs<DIScopeRef>(unsigned Elt) const {
 /// Specialize getFieldAs to handle fields that are references to DITypes.
 template <> DITypeRef DIDescriptor::getFieldAs<DITypeRef>(unsigned Elt) const {
   return DITypeRef(getField(DbgNode, Elt));
+}
+
+/// Strip debug info in the module if it exists.
+/// To do this, we remove all calls to the debugger intrinsics and any named
+/// metadata for debugging. We also remove debug locations for instructions.
+/// Return true if module is modified.
+bool llvm::StripDebugInfo(Module &M) {
+
+  bool Changed = false;
+
+  // Remove all of the calls to the debugger intrinsics, and remove them from
+  // the module.
+  if (Function *Declare = M.getFunction("llvm.dbg.declare")) {
+    while (!Declare->use_empty()) {
+      CallInst *CI = cast<CallInst>(Declare->use_back());
+      CI->eraseFromParent();
+    }
+    Declare->eraseFromParent();
+    Changed = true;
+  }
+
+  if (Function *DbgVal = M.getFunction("llvm.dbg.value")) {
+    while (!DbgVal->use_empty()) {
+      CallInst *CI = cast<CallInst>(DbgVal->use_back());
+      CI->eraseFromParent();
+    }
+    DbgVal->eraseFromParent();
+    Changed = true;
+  }
+
+  for (Module::named_metadata_iterator NMI = M.named_metadata_begin(),
+         NME = M.named_metadata_end(); NMI != NME;) {
+    NamedMDNode *NMD = NMI;
+    ++NMI;
+    if (NMD->getName().startswith("llvm.dbg.")) {
+      NMD->eraseFromParent();
+      Changed = true;
+    }
+  }
+
+  for (Module::iterator MI = M.begin(), ME = M.end(); MI != ME; ++MI)
+    for (Function::iterator FI = MI->begin(), FE = MI->end(); FI != FE;
+         ++FI)
+      for (BasicBlock::iterator BI = FI->begin(), BE = FI->end(); BI != BE;
+           ++BI) {
+        if (!BI->getDebugLoc().isUnknown()) {
+          Changed = true;
+          BI->setDebugLoc(DebugLoc());
+        }
+      }
+
+  return Changed;
+}
+
+/// Return Debug Info Metadata Version by checking module flags.
+unsigned llvm::getDebugMetadataVersionFromModule(const Module &M) {
+  Value *Val = M.getModuleFlag("Debug Info Version");
+  if (!Val)
+    return 0;
+  return cast<ConstantInt>(Val)->getZExtValue();
 }

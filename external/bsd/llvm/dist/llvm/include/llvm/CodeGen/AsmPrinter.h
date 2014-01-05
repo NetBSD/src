@@ -22,6 +22,7 @@
 #include "llvm/Support/ErrorHandling.h"
 
 namespace llvm {
+  class AsmPrinterHandler;
   class BlockAddress;
   class GCStrategy;
   class Constant;
@@ -110,12 +111,20 @@ namespace llvm {
     /// function.
     MachineLoopInfo *LI;
 
+    struct HandlerInfo {
+      AsmPrinterHandler *Handler;
+      const char *TimerName, *TimerGroupName;
+      HandlerInfo(AsmPrinterHandler *Handler, const char *TimerName,
+                  const char *TimerGroupName)
+          : Handler(Handler), TimerName(TimerName),
+            TimerGroupName(TimerGroupName) {}
+    };
+    /// Handlers - a vector of all debug/EH info emitters we should use.
+    /// This vector maintains ownership of the emitters.
+    SmallVector<HandlerInfo, 1> Handlers;
+
     /// DD - If the target supports dwarf debug info, this pointer is non-null.
     DwarfDebug *DD;
-
-    /// DE - If the target supports dwarf exception info, this pointer is
-    /// non-null.
-    DwarfException *DE;
 
   protected:
     explicit AsmPrinter(TargetMachine &TM, MCStreamer &Streamer);
@@ -199,11 +208,6 @@ namespace llvm {
     CFIMoveType needsCFIMoves();
 
     bool needsSEHMoves();
-
-    /// needsRelocationsForDwarfStringPool - Specifies whether the object format
-    /// expects to use relocations to refer to debug entries. Alternatively we
-    /// emit section offsets in bytes from the start of the string pool.
-    bool needsRelocationsForDwarfStringPool() const;
 
     /// EmitConstantPool - Print to the current output stream assembly
     /// representations of the constants in the constant pool MCP. This is
@@ -304,13 +308,10 @@ namespace llvm {
     /// stem.
     MCSymbol *GetTempSymbol(StringRef Name) const;
 
-
-    /// GetSymbolWithGlobalValueBase - Return the MCSymbol for a symbol with
-    /// global value name as its base, with the specified suffix, and where the
-    /// symbol is forced to have private linkage if ForcePrivate is true.
-    MCSymbol *GetSymbolWithGlobalValueBase(const GlobalValue *GV,
-                                           StringRef Suffix,
-                                           bool ForcePrivate = true) const;
+    /// Return the MCSymbol for a private symbol with global value name as its
+    /// base, with the specified suffix.
+    MCSymbol *getSymbolWithGlobalValueBase(const GlobalValue *GV,
+                                           StringRef Suffix) const;
 
     /// GetExternalSymbolSymbol - Return the MCSymbol for the specified
     /// ExternalSymbol.

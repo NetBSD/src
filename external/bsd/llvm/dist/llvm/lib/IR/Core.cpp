@@ -175,7 +175,6 @@ LLVMContextRef LLVMGetModuleContext(LLVMModuleRef M) {
 
 LLVMTypeKind LLVMGetTypeKind(LLVMTypeRef Ty) {
   switch (unwrap(Ty)->getTypeID()) {
-  default: llvm_unreachable("Unhandled TypeID.");
   case Type::VoidTyID:
     return LLVMVoidTypeKind;
   case Type::HalfTyID:
@@ -209,6 +208,7 @@ LLVMTypeKind LLVMGetTypeKind(LLVMTypeRef Ty) {
   case Type::X86_MMXTyID:
     return LLVMX86_MMXTypeKind;
   }
+  llvm_unreachable("Unhandled TypeID.");
 }
 
 LLVMBool LLVMTypeIsSized(LLVMTypeRef Ty)
@@ -2219,6 +2219,29 @@ LLVMValueRef LLVMBuildStore(LLVMBuilderRef B, LLVMValueRef Val,
   return wrap(unwrap(B)->CreateStore(unwrap(Val), unwrap(PointerVal)));
 }
 
+static AtomicOrdering mapFromLLVMOrdering(LLVMAtomicOrdering Ordering) {
+  switch (Ordering) {
+    case LLVMAtomicOrderingNotAtomic: return NotAtomic;
+    case LLVMAtomicOrderingUnordered: return Unordered;
+    case LLVMAtomicOrderingMonotonic: return Monotonic;
+    case LLVMAtomicOrderingAcquire: return Acquire;
+    case LLVMAtomicOrderingRelease: return Release;
+    case LLVMAtomicOrderingAcquireRelease: return AcquireRelease;
+    case LLVMAtomicOrderingSequentiallyConsistent:
+      return SequentiallyConsistent;
+  }
+  
+  llvm_unreachable("Invalid LLVMAtomicOrdering value!");
+}
+
+LLVMValueRef LLVMBuildFence(LLVMBuilderRef B, LLVMAtomicOrdering Ordering,
+                            LLVMBool isSingleThread, const char *Name) {
+  return wrap(
+    unwrap(B)->CreateFence(mapFromLLVMOrdering(Ordering),
+                           isSingleThread ? SingleThread : CrossThread,
+                           Name));
+}
+
 LLVMValueRef LLVMBuildGEP(LLVMBuilderRef B, LLVMValueRef Pointer,
                           LLVMValueRef *Indices, unsigned NumIndices,
                           const char *Name) {
@@ -2476,22 +2499,8 @@ LLVMValueRef LLVMBuildAtomicRMW(LLVMBuilderRef B,LLVMAtomicRMWBinOp op,
     case LLVMAtomicRMWBinOpUMax: intop = AtomicRMWInst::UMax; break;
     case LLVMAtomicRMWBinOpUMin: intop = AtomicRMWInst::UMin; break;
   }
-  AtomicOrdering intordering;
-  switch (ordering) {
-    case LLVMAtomicOrderingNotAtomic: intordering = NotAtomic; break;
-    case LLVMAtomicOrderingUnordered: intordering = Unordered; break;
-    case LLVMAtomicOrderingMonotonic: intordering = Monotonic; break;
-    case LLVMAtomicOrderingAcquire: intordering = Acquire; break;
-    case LLVMAtomicOrderingRelease: intordering = Release; break;
-    case LLVMAtomicOrderingAcquireRelease:
-      intordering = AcquireRelease;
-      break;
-    case LLVMAtomicOrderingSequentiallyConsistent:
-      intordering = SequentiallyConsistent;
-      break;
-  }
   return wrap(unwrap(B)->CreateAtomicRMW(intop, unwrap(PTR), unwrap(Val),
-    intordering, singleThread ? SingleThread : CrossThread));
+    mapFromLLVMOrdering(ordering), singleThread ? SingleThread : CrossThread));
 }
 
 

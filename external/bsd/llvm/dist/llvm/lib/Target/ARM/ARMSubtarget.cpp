@@ -83,7 +83,7 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
   , CPUString(CPU)
   , TargetTriple(TT)
   , Options(Options)
-  , TargetABI(ARM_ABI_APCS) {
+  , TargetABI(ARM_ABI_UNKNOWN) {
   initializeEnvironment();
   resetSubtargetFeatures(CPU, FS);
 }
@@ -102,6 +102,7 @@ void ARMSubtarget::initializeEnvironment() {
   HasVFPv4 = false;
   HasFPARMv8 = false;
   HasNEON = false;
+  MinSize = false;
   UseNEONForSinglePrecisionFP = false;
   UseMulOps = UseFusedMulOps;
   SlowFPVMLx = false;
@@ -151,6 +152,9 @@ void ARMSubtarget::resetSubtargetFeatures(const MachineFunction *MF) {
     initializeEnvironment();
     resetSubtargetFeatures(CPU, FS);
   }
+
+  MinSize =
+      FnAttrs.hasAttribute(AttributeSet::FunctionIndex, Attribute::MinSize);
 }
 
 void ARMSubtarget::resetSubtargetFeatures(StringRef CPU, StringRef FS) {
@@ -175,10 +179,9 @@ void ARMSubtarget::resetSubtargetFeatures(StringRef CPU, StringRef FS) {
   }
   ParseSubtargetFeatures(CPUString, ArchFS);
 
-  // Thumb2 implies at least V6T2. FIXME: Fix tests to explicitly specify a
-  // ARM version or CPU and then remove this.
-  if (!HasV6T2Ops && hasThumb2())
-    HasV4TOps = HasV5TOps = HasV5TEOps = HasV6Ops = HasV6MOps = HasV6T2Ops = true;
+  // FIXME: This used enable V6T2 support implicitly for Thumb2 mode.
+  // Assert this for now to make the change obvious.
+  assert(hasV6T2Ops() || !hasThumb2());
 
   // Keep a pointer to static instruction cost data for the specified CPU.
   SchedModel = getSchedModelForCPU(CPUString);
@@ -186,11 +189,23 @@ void ARMSubtarget::resetSubtargetFeatures(StringRef CPU, StringRef FS) {
   // Initialize scheduling itinerary for the specified CPU.
   InstrItins = getInstrItineraryForCPU(CPUString);
 
-  if ((TargetTriple.getTriple().find("eabi") != std::string::npos) ||
-      (isTargetIOS() && isMClass()))
-    // FIXME: We might want to separate AAPCS and EABI. Some systems, e.g.
-    // Darwin-EABI conforms to AACPS but not the rest of EABI.
-    TargetABI = ARM_ABI_AAPCS;
+  if (TargetABI == ARM_ABI_UNKNOWN) {
+    switch (TargetTriple.getEnvironment()) {
+    case Triple::Android:
+    case Triple::EABI:
+    case Triple::EABIHF:
+    case Triple::GNUEABI:
+    case Triple::GNUEABIHF:
+      TargetABI = ARM_ABI_AAPCS;
+      break;
+    default:
+      if (isTargetIOS() && isMClass())
+        TargetABI = ARM_ABI_AAPCS;
+      else
+        TargetABI = ARM_ABI_APCS;
+      break;
+    }
+  }
 
   if (isAAPCS_ABI())
     stackAlignment = 8;

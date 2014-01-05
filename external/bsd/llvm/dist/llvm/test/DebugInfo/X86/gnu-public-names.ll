@@ -1,5 +1,6 @@
 ; RUN: llc -mtriple=x86_64-pc-linux-gnu -generate-gnu-dwarf-pub-sections < %s | FileCheck -check-prefix=ASM %s
 ; RUN: llc -mtriple=x86_64-pc-linux-gnu -generate-gnu-dwarf-pub-sections -filetype=obj < %s | llvm-dwarfdump - | FileCheck %s
+; RUN: llc -mtriple=x86_64-pc-linux-gnu -generate-gnu-dwarf-pub-sections -filetype=obj -dwarf-version=3 < %s | llvm-dwarfdump - | FileCheck %s -check-prefix=DWARF3
 ; ModuleID = 'dwarf-public-names.cpp'
 ;
 ; Generated from:
@@ -45,6 +46,7 @@
 ; ASM-NEXT: .asciz  "C"                     # External Name
 
 ; CHECK: .debug_info contents:
+; CHECK: Compile Unit: length = [[UNIT_SIZE:[0-9a-f]+]]
 ; CHECK: DW_AT_GNU_pubnames [DW_FORM_sec_offset]   (0x00000000)
 ; CHECK: DW_AT_GNU_pubtypes [DW_FORM_sec_offset]   (0x00000000)
 
@@ -104,7 +106,7 @@
 ; CHECK-NEXT: DW_AT_name {{.*}} "global_function"
 
 ; CHECK-LABEL: .debug_gnu_pubnames contents:
-; CHECK-NEXT: length = 0x000000e7 version = 0x0002 unit_offset = 0x00000000 unit_size = 0x0000017b
+; CHECK-NEXT: length = 0x000000e7 version = 0x0002 unit_offset = 0x00000000 unit_size = [[UNIT_SIZE]]
 ; CHECK-NEXT: Offset     Linkage  Kind     Name
 ; CHECK-DAG:  [[GLOBAL_FUNC]] EXTERNAL FUNCTION "global_function"
 ; CHECK-DAG:  [[NS]] EXTERNAL TYPE     "ns"
@@ -122,6 +124,86 @@
 ; CHECK-DAG:  [[C]] EXTERNAL TYPE     "C"
 ; CHECK-DAG:  [[D]] EXTERNAL TYPE     "ns::D"
 ; CHECK-DAG:  [[INT]] STATIC   TYPE     "int"
+
+; DWARF3: .debug_info contents:
+; DWARF3: Compile Unit: length = [[UNIT_SIZE:[0-9a-f]+]]
+; DWARF3: DW_AT_GNU_pubnames [DW_FORM_data4]   (0x00000000)
+; DWARF3: DW_AT_GNU_pubtypes [DW_FORM_data4]   (0x00000000)
+
+; DWARF3: [[C:[0-9a-f]+]]: DW_TAG_structure_type
+; DWARF3-NEXT: DW_AT_name {{.*}} "C"
+
+; DWARF3: [[STATIC_MEM_DECL:[0-9a-f]+]]: DW_TAG_member
+; DWARF3-NEXT: DW_AT_name {{.*}} "static_member_variable"
+
+; DWARF3: [[MEM_FUNC_DECL:[0-9a-f]+]]: DW_TAG_subprogram
+; DWARF3-NEXT: DW_AT_MIPS_linkage_name
+; DWARF3-NEXT: DW_AT_name {{.*}} "member_function"
+
+; DWARF3: [[STATIC_MEM_FUNC_DECL:[0-9a-f]+]]: DW_TAG_subprogram
+; DWARF3-NEXT: DW_AT_MIPS_linkage_name
+; DWARF3-NEXT: DW_AT_name {{.*}} "static_member_function"
+
+; DWARF3: [[INT:[0-9a-f]+]]: DW_TAG_base_type
+; DWARF3-NEXT: DW_AT_name {{.*}} "int"
+
+; DWARF3: [[STATIC_MEM_VAR:[0-9a-f]+]]: DW_TAG_variable
+; DWARF3-NEXT: DW_AT_specification {{.*}}[[STATIC_MEM_DECL]]
+
+; DWARF3: [[GLOB_VAR:[0-9a-f]+]]: DW_TAG_variable
+; DWARF3-NEXT: DW_AT_name {{.*}} "global_variable"
+
+; DWARF3: [[NS:[0-9a-f]+]]: DW_TAG_namespace
+; DWARF3-NEXT: DW_AT_name {{.*}} "ns"
+
+; DWARF3: [[GLOB_NS_VAR_DECL:[0-9a-f]+]]: DW_TAG_variable
+; DWARF3-NEXT: DW_AT_name {{.*}} "global_namespace_variable"
+
+; DWARF3: [[D_VAR_DECL:[0-9a-f]+]]: DW_TAG_variable
+; DWARF3-NEXT: DW_AT_name {{.*}} "d"
+
+; DWARF3: [[D:[0-9a-f]+]]: DW_TAG_structure_type
+; DWARF3-NEXT: DW_AT_name {{.*}} "D"
+
+; DWARF3: [[GLOB_NS_FUNC:[0-9a-f]+]]: DW_TAG_subprogram
+; DWARF3-NEXT: DW_AT_MIPS_linkage_name
+; DWARF3-NEXT: DW_AT_name {{.*}} "global_namespace_function"
+
+; DWARF3: [[GLOB_NS_VAR:[0-9a-f]+]]: DW_TAG_variable
+; DWARF3-NEXT: DW_AT_specification {{.*}}[[GLOB_NS_VAR_DECL]]
+
+; DWARF3: [[D_VAR:[0-9a-f]+]]: DW_TAG_variable
+; DWARF3-NEXT: DW_AT_specification {{.*}}[[D_VAR_DECL]]
+
+; DWARF3: [[MEM_FUNC:[0-9a-f]+]]: DW_TAG_subprogram
+; DWARF3-NEXT: DW_AT_specification {{.*}}[[MEM_FUNC_DECL]]
+
+; DWARF3: [[STATIC_MEM_FUNC:[0-9a-f]+]]: DW_TAG_subprogram
+; DWARF3-NEXT: DW_AT_specification {{.*}}[[STATIC_MEM_FUNC_DECL]]
+
+; DWARF3: [[GLOBAL_FUNC:[0-9a-f]+]]: DW_TAG_subprogram
+; DWARF3-NEXT: DW_AT_MIPS_linkage_name
+; DWARF3-NEXT: DW_AT_name {{.*}} "global_function"
+
+; DWARF3-LABEL: .debug_gnu_pubnames contents:
+; DWARF3-NEXT: length = 0x000000e7 version = 0x0002 unit_offset = 0x00000000 unit_size = [[UNIT_SIZE]]
+; DWARF3-NEXT: Offset     Linkage  Kind     Name
+; DWARF3-DAG:  [[GLOBAL_FUNC]] EXTERNAL FUNCTION "global_function"
+; DWARF3-DAG:  [[NS]] EXTERNAL TYPE     "ns"
+; DWARF3-DAG:  [[MEM_FUNC]] EXTERNAL FUNCTION "C::member_function"
+; DWARF3-DAG:  [[GLOB_VAR]] EXTERNAL VARIABLE "global_variable"
+; DWARF3-DAG:  [[GLOB_NS_VAR]] EXTERNAL VARIABLE "ns::global_namespace_variable"
+; DWARF3-DAG:  [[GLOB_NS_FUNC]] EXTERNAL FUNCTION "ns::global_namespace_function"
+; DWARF3-DAG:  [[D_VAR]] EXTERNAL VARIABLE "ns::d"
+; DWARF3-DAG:  [[STATIC_MEM_VAR]] EXTERNAL VARIABLE "C::static_member_variable"
+; DWARF3-DAG:  [[STATIC_MEM_FUNC]] EXTERNAL FUNCTION "C::static_member_function"
+
+
+; DWARF3-LABEL: debug_gnu_pubtypes contents:
+; DWARF3: Offset     Linkage  Kind     Name
+; DWARF3-DAG:  [[C]] EXTERNAL TYPE     "C"
+; DWARF3-DAG:  [[D]] EXTERNAL TYPE     "ns::D"
+; DWARF3-DAG:  [[INT]] STATIC   TYPE     "int"
 
 %struct.C = type { i8 }
 %"struct.ns::D" = type { i32 }
@@ -169,7 +251,7 @@ attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointe
 attributes #1 = { nounwind readnone }
 
 !llvm.dbg.cu = !{!0}
-!llvm.module.flags = !{!34}
+!llvm.module.flags = !{!34, !43}
 !llvm.ident = !{!35}
 
 !0 = metadata !{i32 786449, metadata !1, i32 4, metadata !"clang version 3.4 (trunk 192862) (llvm/trunk 192861)", i1 false, metadata !"", i32 0, metadata !2, metadata !3, metadata !21, metadata !29, metadata !2, metadata !""} ; [ DW_TAG_compile_unit ] [/usr/local/google/home/echristo/tmp/pubnames.cpp] [DW_LANG_C_plus_plus]
@@ -216,3 +298,4 @@ attributes #1 = { nounwind readnone }
 !41 = metadata !{i32 15, i32 0, metadata !24, null}
 !42 = metadata !{i32 18, i32 0, metadata !26, null}
 
+!43 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}

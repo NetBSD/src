@@ -320,7 +320,7 @@ applyRestriction(GlobalValue &GV,
                  SmallPtrSet<GlobalValue*, 8> &AsmUsed,
                  Mangler &Mangler) {
   SmallString<64> Buffer;
-  Mangler.getNameWithPrefix(Buffer, &GV, false);
+  Mangler.getNameWithPrefix(Buffer, &GV);
 
   if (GV.isDeclaration())
     return;
@@ -387,7 +387,7 @@ void LTOCodeGenerator::applyScopeRestrictions() {
   passes.add(createVerifierPass());
 
   // mark which symbols can not be internalized
-  Mangler Mangler(TargetMach);
+  Mangler Mangler(TargetMach->getDataLayout());
   std::vector<const char*> MustPreserveList;
   SmallPtrSet<GlobalValue*, 8> AsmUsed;
   std::vector<StringRef> Libcalls;
@@ -460,6 +460,10 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
 
   // Add an appropriate DataLayout instance for this module...
   passes.add(new DataLayout(*TargetMach->getDataLayout()));
+
+  // Add appropriate TargetLibraryInfo for this module. 
+  passes.add(new TargetLibraryInfo(Triple(TargetMach->getTargetTriple())));
+
   TargetMach->addAnalysisPasses(passes);
 
   // Enabling internalize here would use its AllButMain variant. It

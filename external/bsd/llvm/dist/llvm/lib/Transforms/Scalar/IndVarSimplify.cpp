@@ -63,6 +63,9 @@ static cl::opt<bool> VerifyIndvars(
   "verify-indvars", cl::Hidden,
   cl::desc("Verify the ScalarEvolution result after running indvars"));
 
+static cl::opt<bool> ReduceLiveIVs("liv-reduce", cl::Hidden,
+  cl::desc("Reduce live induction variables."));
+
 namespace {
   class IndVarSimplify : public LoopPass {
     LoopInfo        *LI;
@@ -634,27 +637,13 @@ namespace {
 
     WideIVInfo() : NarrowIV(0), WidestNativeType(0), IsSigned(false) {}
   };
-
-  class WideIVVisitor : public IVVisitor {
-    ScalarEvolution *SE;
-    const DataLayout *TD;
-
-  public:
-    WideIVInfo WI;
-
-    WideIVVisitor(PHINode *NarrowIV, ScalarEvolution *SCEV,
-                  const DataLayout *TData) :
-      SE(SCEV), TD(TData) { WI.NarrowIV = NarrowIV; }
-
-    // Implement the interface used by simplifyUsersOfIV.
-    virtual void visitCast(CastInst *Cast);
-  };
 }
 
 /// visitCast - Update information about the induction variable that is
 /// extended by this sign or zero extend operation. This is used to determine
 /// the final width of the IV before actually widening it.
-void WideIVVisitor::visitCast(CastInst *Cast) {
+static void visitIVCast(CastInst *Cast, WideIVInfo &WI, ScalarEvolution *SE,
+                        const DataLayout *TD) {
   bool IsSigned = Cast->getOpcode() == Instruction::SExt;
   if (!IsSigned && Cast->getOpcode() != Instruction::ZExt)
     return;
@@ -891,15 +880,24 @@ const SCEVAddRecExpr *WidenIV::GetWideRecurrence(Instruction *NarrowUse) {
   return AddRec;
 }
 
+/// This IV user cannot be widen. Replace this use of the original narrow IV
+/// with a truncation of the new wide IV to isolate and eliminate the narrow IV.
+static void truncateIVUse(NarrowIVDefUse DU, DominatorTree *DT) {
+  IRBuilder<> Builder(getInsertPointForUses(DU.NarrowUse, DU.NarrowDef, DT));
+  Value *Trunc = Builder.CreateTrunc(DU.WideDef, DU.NarrowDef->getType());
+  DU.NarrowUse->replaceUsesOfWith(DU.NarrowDef, Trunc);
+}
+
 /// WidenIVUse - Determine whether an individual user of the narrow IV can be
 /// widened. If so, return the wide clone of the user.
 Instruction *WidenIV::WidenIVUse(NarrowIVDefUse DU, SCEVExpander &Rewriter) {
 
   // Stop traversing the def-use chain at inner-loop phis or post-loop phis.
   if (isa<PHINode>(DU.NarrowUse) &&
-      LI->getLoopFor(DU.NarrowUse->getParent()) != L)
+      LI->getLoopFor(DU.NarrowUse->getParent()) != L) {
+    truncateIVUse(DU, DT);
     return 0;
-
+  }
   // Our raison d'etre! Eliminate sign and zero extension.
   if (IsSigned ? isa<SExtInst>(DU.NarrowUse) : isa<ZExtInst>(DU.NarrowUse)) {
     Value *NewDef = DU.WideDef;
@@ -947,9 +945,7 @@ Instruction *WidenIV::WidenIVUse(NarrowIVDefUse DU, SCEVExpander &Rewriter) {
     // This user does not evaluate to a recurence after widening, so don't
     // follow it. Instead insert a Trunc to kill off the original use,
     // eventually isolating the original narrow IV so it can be removed.
-    IRBuilder<> Builder(getInsertPointForUses(DU.NarrowUse, DU.NarrowDef, DT));
-    Value *Trunc = Builder.CreateTrunc(DU.WideDef, DU.NarrowDef->getType());
-    DU.NarrowUse->replaceUsesOfWith(DU.NarrowDef, Trunc);
+    truncateIVUse(DU, DT);
     return 0;
   }
   // Assume block terminators cannot evaluate to a recurrence. We can't to
@@ -1080,9 +1076,36 @@ PHINode *WidenIV::CreateWideIV(SCEVExpander &Rewriter) {
 }
 
 //===----------------------------------------------------------------------===//
+//  Live IV Reduction - Minimize IVs live across the loop.
+//===----------------------------------------------------------------------===//
+
+
+//===----------------------------------------------------------------------===//
 //  Simplification of IV users based on SCEV evaluation.
 //===----------------------------------------------------------------------===//
 
+namespace {
+  class IndVarSimplifyVisitor : public IVVisitor {
+    ScalarEvolution *SE;
+    const DataLayout *TD;
+    PHINode *IVPhi;
+
+  public:
+    WideIVInfo WI;
+
+    IndVarSimplifyVisitor(PHINode *IV, ScalarEvolution *SCEV,
+                          const DataLayout *TData, const DominatorTree *DTree):
+      SE(SCEV), TD(TData), IVPhi(IV) {
+      DT = DTree;
+      WI.NarrowIV = IVPhi;
+      if (ReduceLiveIVs)
+        setSplitOverflowIntrinsics();
+    }
+
+    // Implement the interface used by simplifyUsersOfIV.
+    virtual void visitCast(CastInst *Cast) { visitIVCast(Cast, WI, SE, TD); }
+  };
+}
 
 /// SimplifyAndExtend - Iteratively perform simplification on a worklist of IV
 /// users. Each successive simplification may push more users which may
@@ -1114,12 +1137,12 @@ void IndVarSimplify::SimplifyAndExtend(Loop *L,
       PHINode *CurrIV = LoopPhis.pop_back_val();
 
       // Information about sign/zero extensions of CurrIV.
-      WideIVVisitor WIV(CurrIV, SE, TD);
+      IndVarSimplifyVisitor Visitor(CurrIV, SE, TD, DT);
 
-      Changed |= simplifyUsersOfIV(CurrIV, SE, &LPM, DeadInsts, &WIV);
+      Changed |= simplifyUsersOfIV(CurrIV, SE, &LPM, DeadInsts, &Visitor);
 
-      if (WIV.WI.WidestNativeType) {
-        WideIVs.push_back(WIV.WI);
+      if (Visitor.WI.WidestNativeType) {
+        WideIVs.push_back(Visitor.WI);
       }
     } while(!LoopPhis.empty());
 

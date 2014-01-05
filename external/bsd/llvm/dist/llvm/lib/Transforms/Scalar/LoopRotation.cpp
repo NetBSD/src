@@ -15,6 +15,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/CodeMetrics.h"
+#include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolution.h"
@@ -301,7 +302,7 @@ bool LoopRotate::rotateLoop(Loop *L, bool SimplifiedLatch) {
     CodeMetrics Metrics;
     Metrics.analyzeBasicBlock(OrigHeader, *TTI);
     if (Metrics.notDuplicatable) {
-      DEBUG(dbgs() << "LoopRotation: NOT rotating - contains non duplicatable"
+      DEBUG(dbgs() << "LoopRotation: NOT rotating - contains non-duplicatable"
             << " instructions: "; L->dump());
       return false;
     }

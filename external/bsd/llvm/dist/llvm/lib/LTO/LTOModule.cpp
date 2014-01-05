@@ -43,8 +43,12 @@ using namespace llvm;
 
 LTOModule::LTOModule(llvm::Module *m, llvm::TargetMachine *t)
   : _module(m), _target(t),
-    _context(_target->getMCAsmInfo(), _target->getRegisterInfo(), NULL),
-    _mangler(t) {}
+    _context(_target->getMCAsmInfo(), _target->getRegisterInfo(), &ObjFileInfo),
+    _mangler(t->getDataLayout()) {
+  ObjFileInfo.InitMCObjectFileInfo(t->getTargetTriple(),
+                                   t->getRelocationModel(), t->getCodeModel(),
+                                   _context);
+}
 
 /// isBitcodeFile - Returns 'true' if the file (or memory contents) is LLVM
 /// bitcode.
@@ -360,7 +364,7 @@ void LTOModule::addDefinedSymbol(const GlobalValue *def, bool isFunction) {
 
   // string is owned by _defines
   SmallString<64> Buffer;
-  _mangler.getNameWithPrefix(Buffer, def, false);
+  _mangler.getNameWithPrefix(Buffer, def);
 
   // set alignment part log2() can have rounding errors
   uint32_t align = def->getAlignment();
@@ -496,7 +500,7 @@ LTOModule::addPotentialUndefinedSymbol(const GlobalValue *decl, bool isFunc) {
     return;
 
   SmallString<64> name;
-  _mangler.getNameWithPrefix(name, decl, false);
+  _mangler.getNameWithPrefix(name, decl);
 
   StringMap<NameAndAttributes>::value_type &entry =
     _undefines.GetOrCreateValue(name);

@@ -136,7 +136,6 @@ public:
   Check::CheckType getCheckTy() const { return CheckTy; }
 
 private:
-  static void AddFixedStringToRegEx(StringRef FixedStr, std::string &TheStr);
   bool AddRegExToRegEx(StringRef RS, unsigned &CurParen, SourceMgr &SM);
   void AddBackrefToRegEx(unsigned BackrefNum);
 
@@ -155,7 +154,7 @@ private:
   /// (right after the opening sequence).
   /// \return offset of the closing sequence within Str, or npos if it was not
   /// found.
-  size_t FindRegexVarEnd(StringRef Str);
+  size_t FindRegexVarEnd(StringRef Str, SourceMgr &SM);
 };
 
 
@@ -228,7 +227,7 @@ bool Pattern::ParsePattern(StringRef PatternStr,
     if (PatternStr.startswith("[[")) {
       // Find the closing bracket pair ending the match.  End is going to be an
       // offset relative to the beginning of the match string.
-      size_t End = FindRegexVarEnd(PatternStr.substr(2));
+      size_t End = FindRegexVarEnd(PatternStr.substr(2), SM);
 
       if (End == StringRef::npos) {
         SM.PrintMessage(SMLoc::getFromPointer(PatternStr.data()),
@@ -314,38 +313,11 @@ bool Pattern::ParsePattern(StringRef PatternStr,
     // Find the end, which is the start of the next regex.
     size_t FixedMatchEnd = PatternStr.find("{{");
     FixedMatchEnd = std::min(FixedMatchEnd, PatternStr.find("[["));
-    AddFixedStringToRegEx(PatternStr.substr(0, FixedMatchEnd), RegExStr);
+    RegExStr += Regex::escape(PatternStr.substr(0, FixedMatchEnd));
     PatternStr = PatternStr.substr(FixedMatchEnd);
   }
 
   return false;
-}
-
-void Pattern::AddFixedStringToRegEx(StringRef FixedStr, std::string &TheStr) {
-  // Add the characters from FixedStr to the regex, escaping as needed.  This
-  // avoids "leaning toothpicks" in common patterns.
-  for (unsigned i = 0, e = FixedStr.size(); i != e; ++i) {
-    switch (FixedStr[i]) {
-    // These are the special characters matched in "p_ere_exp".
-    case '(':
-    case ')':
-    case '^':
-    case '$':
-    case '|':
-    case '*':
-    case '+':
-    case '?':
-    case '.':
-    case '[':
-    case '\\':
-    case '{':
-      TheStr += '\\';
-      // FALL THROUGH.
-    default:
-      TheStr += FixedStr[i];
-      break;
-    }
-  }
 }
 
 bool Pattern::AddRegExToRegEx(StringRef RS, unsigned &CurParen,
@@ -428,8 +400,8 @@ size_t Pattern::Match(StringRef Buffer, size_t &MatchLen,
         if (it == VariableTable.end())
           return StringRef::npos;
 
-        // Look up the value and escape it so that we can plop it into the regex.
-        AddFixedStringToRegEx(it->second, Value);
+        // Look up the value and escape it so that we can put it into the regex.
+        Value += Regex::escape(it->second);
       }
 
       // Plop it into the regex at the adjusted offset.
@@ -560,7 +532,7 @@ void Pattern::PrintFailureInfo(const SourceMgr &SM, StringRef Buffer,
   }
 }
 
-size_t Pattern::FindRegexVarEnd(StringRef Str) {
+size_t Pattern::FindRegexVarEnd(StringRef Str, SourceMgr &SM) {
   // Offset keeps track of the current offset within the input Str
   size_t Offset = 0;
   // [...] Nesting depth
@@ -581,7 +553,12 @@ size_t Pattern::FindRegexVarEnd(StringRef Str) {
           BracketDepth++;
           break;
         case ']':
-          assert(BracketDepth > 0 && "Invalid regex");
+          if (BracketDepth == 0) {
+            SM.PrintMessage(SMLoc::getFromPointer(Str.data()),
+                            SourceMgr::DK_Error,
+                            "missing closing \"]\" for regex variable");
+            exit(1);
+          }
           BracketDepth--;
           break;
       }
@@ -795,10 +772,11 @@ static StringRef FindFirstCandidateMatch(StringRef &Buffer,
     // it. This should also prevent matching the wrong prefix when one is a
     // substring of another.
     if (PrefixLoc != 0 && IsPartOfWord(Buffer[PrefixLoc - 1]))
-      continue;
+      FirstTy = Check::CheckNone;
+    else
+      FirstTy = FindCheckType(Rest, Prefix);
 
     FirstLoc = PrefixLoc;
-    FirstTy = FindCheckType(Rest, Prefix);
     FirstPrefix = Prefix;
   }
 

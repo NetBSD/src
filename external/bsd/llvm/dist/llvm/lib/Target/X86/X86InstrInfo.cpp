@@ -3015,6 +3015,11 @@ static unsigned CopyToFromAsymmetricReg(unsigned DestReg, unsigned SrcReg,
   return 0;
 }
 
+inline static bool MaskRegClassContains(unsigned Reg) {
+  return X86::VK8RegClass.contains(Reg) ||
+         X86::VK16RegClass.contains(Reg) ||
+         X86::VK1RegClass.contains(Reg);
+}
 static
 unsigned copyPhysRegOpcode_AVX512(unsigned& DestReg, unsigned& SrcReg) {
   if (X86::VR128XRegClass.contains(DestReg, SrcReg) ||
@@ -3024,11 +3029,23 @@ unsigned copyPhysRegOpcode_AVX512(unsigned& DestReg, unsigned& SrcReg) {
      SrcReg = get512BitSuperRegister(SrcReg);
      return X86::VMOVAPSZrr;
   }
-  if ((X86::VK8RegClass.contains(DestReg) ||
-       X86::VK16RegClass.contains(DestReg)) &&
-      (X86::VK8RegClass.contains(SrcReg) ||
-       X86::VK16RegClass.contains(SrcReg)))
+  if (MaskRegClassContains(DestReg) &&
+      MaskRegClassContains(SrcReg))
     return X86::KMOVWkk;
+  if (MaskRegClassContains(DestReg) &&
+      (X86::GR32RegClass.contains(SrcReg) ||
+       X86::GR16RegClass.contains(SrcReg) ||
+       X86::GR8RegClass.contains(SrcReg))) {
+    SrcReg = getX86SubSuperRegister(SrcReg, MVT::i32);
+    return X86::KMOVWkr;
+  }
+  if ((X86::GR32RegClass.contains(DestReg) ||
+       X86::GR16RegClass.contains(DestReg) ||
+       X86::GR8RegClass.contains(DestReg)) &&
+       MaskRegClassContains(SrcReg)) {
+    DestReg = getX86SubSuperRegister(DestReg, MVT::i32);
+    return X86::KMOVWrk;
+  }
   return 0;
 }
 
@@ -3837,6 +3854,8 @@ bool X86InstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
   bool HasAVX = TM.getSubtarget<X86Subtarget>().hasAVX();
   MachineInstrBuilder MIB(*MI->getParent()->getParent(), MI);
   switch (MI->getOpcode()) {
+  case X86::MOV32r0:
+    return Expand2AddrUndef(MIB, get(X86::XOR32rr));
   case X86::SETB_C8r:
     return Expand2AddrUndef(MIB, get(X86::SBB8rr));
   case X86::SETB_C16r:
@@ -4198,75 +4217,10 @@ breakPartialRegDependency(MachineBasicBlock::iterator MI, unsigned OpNum,
   MI->addRegisterKilled(Reg, TRI, true);
 }
 
-static MachineInstr* foldPatchpoint(MachineFunction &MF,
-                                    MachineInstr *MI,
-                                    const SmallVectorImpl<unsigned> &Ops,
-                                    int FrameIndex,
-                                    const TargetInstrInfo &TII) {
-  unsigned StartIdx = 0;
-  switch (MI->getOpcode()) {
-  case TargetOpcode::STACKMAP:
-    StartIdx = 2; // Skip ID, nShadowBytes.
-    break;
-  case TargetOpcode::PATCHPOINT: {
-    // For PatchPoint, the call args are not foldable.
-    PatchPointOpers opers(MI);
-    StartIdx = opers.getVarIdx();
-    break;
-  }
-  default:
-    llvm_unreachable("unexpected stackmap opcode");
-  }
-
-  // Return false if any operands requested for folding are not foldable (not
-  // part of the stackmap's live values).
-  for (SmallVectorImpl<unsigned>::const_iterator I = Ops.begin(), E = Ops.end();
-       I != E; ++I) {
-    if (*I < StartIdx)
-      return 0;
-  }
-
-  MachineInstr *NewMI =
-    MF.CreateMachineInstr(TII.get(MI->getOpcode()), MI->getDebugLoc(), true);
-  MachineInstrBuilder MIB(MF, NewMI);
-
-  // No need to fold return, the meta data, and function arguments
-  for (unsigned i = 0; i < StartIdx; ++i)
-    MIB.addOperand(MI->getOperand(i));
-
-  for (unsigned i = StartIdx; i < MI->getNumOperands(); ++i) {
-    MachineOperand &MO = MI->getOperand(i);
-    if (std::find(Ops.begin(), Ops.end(), i) != Ops.end()) {
-      assert(MO.getReg() && "patchpoint can only fold a vreg operand");
-      // Compute the spill slot size and offset.
-      const TargetRegisterClass *RC = MF.getRegInfo().getRegClass(MO.getReg());
-      unsigned SpillSize;
-      unsigned SpillOffset;
-      bool Valid = TII.getStackSlotRange(RC, MO.getSubReg(), SpillSize,
-                                         SpillOffset, &MF.getTarget());
-      if (!Valid)
-        report_fatal_error("cannot spill patchpoint subregister operand");
-
-      MIB.addOperand(MachineOperand::CreateImm(StackMaps::IndirectMemRefOp));
-      MIB.addOperand(MachineOperand::CreateImm(SpillSize));
-      MIB.addOperand(MachineOperand::CreateFI(FrameIndex));
-      addOffset(MIB, SpillOffset);
-    }
-    else
-      MIB.addOperand(MO);
-  }
-  return NewMI;
-}
-
 MachineInstr*
 X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
                                     const SmallVectorImpl<unsigned> &Ops,
                                     int FrameIndex) const {
-  // Special case stack map and patch point intrinsics.
-  if (MI->getOpcode() == TargetOpcode::STACKMAP
-      || MI->getOpcode() == TargetOpcode::PATCHPOINT) {
-    return foldPatchpoint(MF, MI, Ops, FrameIndex, *this);
-  }
   // Check switch flag
   if (NoFusing) return NULL;
 

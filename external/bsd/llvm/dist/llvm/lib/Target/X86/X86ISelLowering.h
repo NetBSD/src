@@ -94,6 +94,9 @@ namespace llvm {
       /// operand, usually produced by a CMP instruction.
       SETCC,
 
+      /// X86 Select
+      SELECT,
+
       // Same as SETCC except it's materialized with a sbb and the value is all
       // one's or all zero's.
       SETCC_CARRY,  // R = carry_bit ? ~0 : 0
@@ -101,7 +104,7 @@ namespace llvm {
       /// X86 FP SETCC, implemented with CMP{cc}SS/CMP{cc}SD.
       /// Operands are two FP values to compare; result is a mask of
       /// 0s or 1s.  Generally DTRT for C/C++ with NaNs.
-      FSETCCss, FSETCCsd,
+      FSETCC,
 
       /// X86 MOVMSK{pd|ps}, extracts sign bits of two or four FP values,
       /// result in an integer GPR.  Needs masking for scalar result.
@@ -314,7 +317,6 @@ namespace llvm {
 
       // OR/AND test for masks
       KORTEST,
-      KTEST,
 
       // Several flavors of instructions with vector shuffle behaviors.
       PALIGNR,
@@ -865,7 +867,6 @@ namespace llvm {
     SDValue LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerExternalSymbol(SDValue Op, SelectionDAG &DAG) const;
-    SDValue LowerShiftParts(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerSINT_TO_FP(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerUINT_TO_FP(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerUINT_TO_FP_i64(SDValue Op, SelectionDAG &DAG) const;
@@ -874,9 +875,6 @@ namespace llvm {
     SDValue LowerTRUNCATE(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerFP_TO_SINT(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerFP_TO_UINT(SDValue Op, SelectionDAG &DAG) const;
-    SDValue LowerFABS(SDValue Op, SelectionDAG &DAG) const;
-    SDValue LowerFNEG(SDValue Op, SelectionDAG &DAG) const;
-    SDValue LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerToBT(SDValue And, ISD::CondCode CC,
                       SDLoc dl, SelectionDAG &DAG) const;
     SDValue LowerSETCC(SDValue Op, SelectionDAG &DAG) const;

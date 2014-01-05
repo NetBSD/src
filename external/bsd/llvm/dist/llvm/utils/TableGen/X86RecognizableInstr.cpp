@@ -256,7 +256,6 @@ RecognizableInstr::RecognizableInstr(DisassemblerTables &tables,
 
   IsSSE            = (HasOpSizePrefix && (Name.find("16") == Name.npos)) ||
                      (Name.find("CRC32") != Name.npos);
-  HasFROperands    = hasFROperands();
   HasVEX_LPrefix   = Rec->getValueAsBit("hasVEX_L");
 
   // Check for 64-bit inst which does not require REX
@@ -265,23 +264,18 @@ RecognizableInstr::RecognizableInstr(DisassemblerTables &tables,
   // FIXME: Is there some better way to check for In64BitMode?
   std::vector<Record*> Predicates = Rec->getValueAsListOfDefs("Predicates");
   for (unsigned i = 0, e = Predicates.size(); i != e; ++i) {
-    if (Predicates[i]->getName().find("32Bit") != Name.npos) {
+    if (Predicates[i]->getName().find("Not64Bit") != Name.npos ||
+	Predicates[i]->getName().find("In32Bit") != Name.npos) {
       Is32Bit = true;
       break;
     }
-    if (Predicates[i]->getName().find("64Bit") != Name.npos) {
+    if (Predicates[i]->getName().find("In64Bit") != Name.npos) {
       Is64Bit = true;
       break;
     }
   }
   // FIXME: These instructions aren't marked as 64-bit in any way
   Is64Bit |= Rec->getName() == "JMP64pcrel32" ||
-             Rec->getName() == "MASKMOVDQU64" ||
-             Rec->getName() == "POPFS64" ||
-             Rec->getName() == "POPGS64" ||
-             Rec->getName() == "PUSHFS64" ||
-             Rec->getName() == "PUSHGS64" ||
-             Rec->getName() == "REX64_PREFIX" ||
              Rec->getName().find("MOV64") != Name.npos ||
              Rec->getName().find("PUSH64") != Name.npos ||
              Rec->getName().find("POP64") != Name.npos;
@@ -299,7 +293,7 @@ void RecognizableInstr::processInstr(DisassemblerTables &tables,
 
   RecognizableInstr recogInstr(tables, insn, uid);
 
-  recogInstr.emitInstructionSpecifier(tables);
+  recogInstr.emitInstructionSpecifier();
 
   if (recogInstr.shouldBeEmitted())
     recogInstr.emitDecodePath(tables);
@@ -502,10 +496,6 @@ RecognizableInstr::filter_ret RecognizableInstr::filter() const {
   // Filter out artificial instructions but leave in the LOCK_PREFIX so it is
   // printed as a separate "instruction".
 
-  if (Name.find("_Int") != Name.npos       ||
-      Name.find("Int_") != Name.npos)
-    return FILTER_STRONG;
-
   // Filter out instructions with segment override prefixes.
   // They're too messy to handle now and we'll special case them if needed.
 
@@ -547,19 +537,6 @@ RecognizableInstr::filter_ret RecognizableInstr::filter() const {
   return FILTER_NORMAL;
 }
 
-bool RecognizableInstr::hasFROperands() const {
-  const std::vector<CGIOperandList::OperandInfo> &OperandList = *Operands;
-  unsigned numOperands = OperandList.size();
-
-  for (unsigned operandIndex = 0; operandIndex < numOperands; ++operandIndex) {
-    const std::string &recName = OperandList[operandIndex].Rec->getName();
-
-    if (recName.find("FR") != recName.npos)
-      return true;
-  }
-  return false;
-}
-
 void RecognizableInstr::handleOperand(bool optional, unsigned &operandIndex,
                                       unsigned &physicalOperandIndex,
                                       unsigned &numPhysicalOperands,
@@ -594,7 +571,7 @@ void RecognizableInstr::handleOperand(bool optional, unsigned &operandIndex,
   ++physicalOperandIndex;
 }
 
-void RecognizableInstr::emitInstructionSpecifier(DisassemblerTables &tables) {
+void RecognizableInstr::emitInstructionSpecifier() {
   Spec->name       = Name;
 
   if (!ShouldBeEmitted)
@@ -1074,14 +1051,9 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
   case X86Local::DE:
   case X86Local::DF:
     assert(Opcode >= 0xc0 && "Unexpected opcode for an escape opcode");
+    assert(Form == X86Local::RawFrm);
     opcodeType = ONEBYTE;
-    if (Form == X86Local::AddRegFrm) {
-      Spec->modifierType = MODIFIER_MODRM;
-      Spec->modifierBase = Opcode;
-      filter = new AddRegEscapeFilter(Opcode);
-    } else {
-      filter = new EscapeFilter(true, Opcode);
-    }
+    filter = new ExactFilter(Opcode);
     opcodeToSet = 0xd8 + (Prefix - X86Local::D8);
     break;
   case X86Local::REP:
@@ -1126,7 +1098,30 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
     case 0xdd:
     case 0xde:
     case 0xdf:
-      filter = new EscapeFilter(false, Form - X86Local::MRM0m);
+      switch (Form) {
+      default:
+        llvm_unreachable("Unhandled escape opcode form");
+      case X86Local::MRM0r:
+      case X86Local::MRM1r:
+      case X86Local::MRM2r:
+      case X86Local::MRM3r:
+      case X86Local::MRM4r:
+      case X86Local::MRM5r:
+      case X86Local::MRM6r:
+      case X86Local::MRM7r:
+        filter = new ExtendedFilter(true, Form - X86Local::MRM0r);
+        break;
+      case X86Local::MRM0m:
+      case X86Local::MRM1m:
+      case X86Local::MRM2m:
+      case X86Local::MRM3m:
+      case X86Local::MRM4m:
+      case X86Local::MRM5m:
+      case X86Local::MRM6m:
+      case X86Local::MRM7m:
+        filter = new ExtendedFilter(false, Form - X86Local::MRM0m);
+        break;
+      } // switch (Form)
       break;
     default:
       if (needsModRMForDecode(Form))
@@ -1143,40 +1138,25 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
   assert(filter && "Filter not set");
 
   if (Form == X86Local::AddRegFrm) {
-    if(Spec->modifierType != MODIFIER_MODRM) {
-      assert(opcodeToSet < 0xf9 &&
-             "Not enough room for all ADDREG_FRM operands");
+    assert(((opcodeToSet & 7) == 0) &&
+           "ADDREG_FRM opcode not aligned");
 
-      uint8_t currentOpcode;
+    uint8_t currentOpcode;
 
-      for (currentOpcode = opcodeToSet;
-           currentOpcode < opcodeToSet + 8;
-           ++currentOpcode)
-        tables.setTableFields(opcodeType,
-                              insnContext(),
-                              currentOpcode,
-                              *filter,
-                              UID, Is32Bit, IgnoresVEX_L);
-
-      Spec->modifierType = MODIFIER_OPCODE;
-      Spec->modifierBase = opcodeToSet;
-    } else {
-      // modifierBase was set where MODIFIER_MODRM was set
+    for (currentOpcode = opcodeToSet;
+         currentOpcode < opcodeToSet + 8;
+         ++currentOpcode)
       tables.setTableFields(opcodeType,
                             insnContext(),
-                            opcodeToSet,
+                            currentOpcode,
                             *filter,
                             UID, Is32Bit, IgnoresVEX_L);
-    }
   } else {
     tables.setTableFields(opcodeType,
                           insnContext(),
                           opcodeToSet,
                           *filter,
                           UID, Is32Bit, IgnoresVEX_L);
-
-    Spec->modifierType = MODIFIER_NONE;
-    Spec->modifierBase = opcodeToSet;
   }
 
   delete filter;
@@ -1246,6 +1226,7 @@ OperandType RecognizableInstr::typeFromString(const std::string &s,
   TYPE("i32imm_pcrel",        TYPE_REL32)
   TYPE("SSECC",               TYPE_IMM3)
   TYPE("AVXCC",               TYPE_IMM5)
+  TYPE("AVX512RC",            TYPE_IMM32)
   TYPE("brtarget",            TYPE_RELv)
   TYPE("uncondbrtarget",      TYPE_RELv)
   TYPE("brtarget8",           TYPE_REL8)
@@ -1269,6 +1250,8 @@ OperandType RecognizableInstr::typeFromString(const std::string &s,
   TYPE("VR256",               TYPE_XMM256)
   TYPE("VR256X",              TYPE_XMM256)
   TYPE("VR512",               TYPE_XMM512)
+  TYPE("VK1",                 TYPE_VK1)
+  TYPE("VK1WM",               TYPE_VK1)
   TYPE("VK8",                 TYPE_VK8)
   TYPE("VK8WM",               TYPE_VK8)
   TYPE("VK16",                TYPE_VK16)
@@ -1301,6 +1284,7 @@ OperandEncoding RecognizableInstr::immediateEncodingFromString
   ENCODING("u32u8imm",        ENCODING_IB)
   ENCODING("SSECC",           ENCODING_IB)
   ENCODING("AVXCC",           ENCODING_IB)
+  ENCODING("AVX512RC",        ENCODING_IB)
   ENCODING("i16imm",          ENCODING_Iv)
   ENCODING("i16i8imm",        ENCODING_IB)
   ENCODING("i32imm",          ENCODING_Iv)
@@ -1325,6 +1309,7 @@ OperandEncoding RecognizableInstr::immediateEncodingFromString
 OperandEncoding RecognizableInstr::rmRegisterEncodingFromString
   (const std::string &s,
    bool hasOpSizePrefix) {
+  ENCODING("RST",             ENCODING_FP)
   ENCODING("GR16",            ENCODING_RM)
   ENCODING("GR32",            ENCODING_RM)
   ENCODING("GR32orGR64",      ENCODING_RM)
@@ -1340,6 +1325,7 @@ OperandEncoding RecognizableInstr::rmRegisterEncodingFromString
   ENCODING("VR256",           ENCODING_RM)
   ENCODING("VR256X",          ENCODING_RM)
   ENCODING("VR512",           ENCODING_RM)
+  ENCODING("VK1",             ENCODING_RM)
   ENCODING("VK8",             ENCODING_RM)
   ENCODING("VK16",            ENCODING_RM)
   errs() << "Unhandled R/M register encoding " << s << "\n";
@@ -1367,8 +1353,10 @@ OperandEncoding RecognizableInstr::roRegisterEncodingFromString
   ENCODING("FR64X",           ENCODING_REG)
   ENCODING("FR32X",           ENCODING_REG)
   ENCODING("VR512",           ENCODING_REG)
+  ENCODING("VK1",             ENCODING_REG)
   ENCODING("VK8",             ENCODING_REG)
   ENCODING("VK16",            ENCODING_REG)
+  ENCODING("VK1WM",           ENCODING_REG)
   ENCODING("VK8WM",           ENCODING_REG)
   ENCODING("VK16WM",          ENCODING_REG)
   errs() << "Unhandled reg/opcode register encoding " << s << "\n";
@@ -1389,6 +1377,7 @@ OperandEncoding RecognizableInstr::vvvvRegisterEncodingFromString
   ENCODING("VR128X",          ENCODING_VVVV)
   ENCODING("VR256X",          ENCODING_VVVV)
   ENCODING("VR512",           ENCODING_VVVV)
+  ENCODING("VK1",             ENCODING_VVVV)
   ENCODING("VK8",             ENCODING_VVVV)
   ENCODING("VK16",            ENCODING_VVVV)
   errs() << "Unhandled VEX.vvvv register encoding " << s << "\n";
@@ -1398,6 +1387,7 @@ OperandEncoding RecognizableInstr::vvvvRegisterEncodingFromString
 OperandEncoding RecognizableInstr::writemaskRegisterEncodingFromString
   (const std::string &s,
    bool hasOpSizePrefix) {
+  ENCODING("VK1WM",           ENCODING_WRITEMASK)
   ENCODING("VK8WM",           ENCODING_WRITEMASK)
   ENCODING("VK16WM",          ENCODING_WRITEMASK)
   errs() << "Unhandled mask register encoding " << s << "\n";
@@ -1472,7 +1462,6 @@ OperandEncoding RecognizableInstr::relocationEncodingFromString
 OperandEncoding RecognizableInstr::opcodeModifierEncodingFromString
   (const std::string &s,
    bool hasOpSizePrefix) {
-  ENCODING("RST",             ENCODING_I)
   ENCODING("GR32",            ENCODING_Rv)
   ENCODING("GR64",            ENCODING_RO)
   ENCODING("GR16",            ENCODING_Rv)

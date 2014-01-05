@@ -51,6 +51,7 @@ void llvm::initializeCodeGen(PassRegistry &Registry) {
   initializeOptimizePHIsPass(Registry);
   initializePHIEliminationPass(Registry);
   initializePeepholeOptimizerPass(Registry);
+  initializePostMachineSchedulerPass(Registry);
   initializePostRASchedulerPass(Registry);
   initializeProcessImplicitDefsPass(Registry);
   initializePEIPass(Registry);
@@ -69,6 +70,7 @@ void llvm::initializeCodeGen(PassRegistry &Registry) {
   initializeVirtRegRewriterPass(Registry);
   initializeLowerIntrinsicsPass(Registry);
   initializeMachineFunctionPrinterPassPass(Registry);
+  initializeStackMapLivenessPass(Registry);
 }
 
 void LLVMInitializeCodeGen(LLVMPassRegistryRef R) {

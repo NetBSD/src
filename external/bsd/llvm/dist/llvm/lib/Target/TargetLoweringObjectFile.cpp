@@ -18,6 +18,7 @@
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/GlobalVariable.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCStreamer.h"
@@ -40,6 +41,7 @@ using namespace llvm;
 void TargetLoweringObjectFile::Initialize(MCContext &ctx,
                                           const TargetMachine &TM) {
   Ctx = &ctx;
+  DL = TM.getDataLayout();
   InitMCObjectFileInfo(TM.getTargetTriple(),
                        TM.getRelocationModel(), TM.getCodeModel(), *Ctx);
 }
@@ -102,10 +104,23 @@ static bool IsNullTerminatedString(const Constant *C) {
 MCSymbol *TargetLoweringObjectFile::getSymbol(Mangler &M, 
                                               const GlobalValue *GV) const {
   SmallString<60> NameStr;
-  M.getNameWithPrefix(NameStr, GV, false);
+  M.getNameWithPrefix(NameStr, GV);
   return Ctx->GetOrCreateSymbol(NameStr.str());
 }
 
+MCSymbol *TargetLoweringObjectFile::getSymbolWithGlobalValueBase(
+    Mangler &M, const GlobalValue *GV, StringRef Suffix) const {
+  assert(!Suffix.empty());
+  assert(!GV->hasPrivateLinkage());
+  assert(!GV->hasLinkerPrivateLinkage());
+  assert(!GV->hasLinkerPrivateWeakLinkage());
+
+  SmallString<60> NameStr;
+  NameStr += DL->getPrivateGlobalPrefix();
+  M.getNameWithPrefix(NameStr, GV);
+  NameStr.append(Suffix.begin(), Suffix.end());
+  return Ctx->GetOrCreateSymbol(NameStr.str());
+}
 
 MCSymbol *TargetLoweringObjectFile::
 getCFIPersonalitySymbol(const GlobalValue *GV, Mangler *Mang,

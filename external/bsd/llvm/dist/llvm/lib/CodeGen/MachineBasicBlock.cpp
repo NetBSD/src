@@ -52,7 +52,8 @@ MCSymbol *MachineBasicBlock::getSymbol() const {
   if (!CachedMCSymbol) {
     const MachineFunction *MF = getParent();
     MCContext &Ctx = MF->getContext();
-    const char *Prefix = Ctx.getAsmInfo()->getPrivateGlobalPrefix();
+    const TargetMachine &TM = MF->getTarget();
+    const char *Prefix = TM.getDataLayout()->getPrivateGlobalPrefix();
     CachedMCSymbol = Ctx.GetOrCreateSymbol(Twine(Prefix) + "BB" +
                                            Twine(MF->getFunctionNumber()) +
                                            "_" + Twine(getNumber()));
@@ -676,6 +677,11 @@ MachineBasicBlock::SplitCriticalEdge(MachineBasicBlock *Succ, Pass *P) {
 
   MachineFunction *MF = getParent();
   DebugLoc dl;  // FIXME: this is nowhere
+
+  // Performance might be harmed on HW that implements branching using exec mask
+  // where both sides of the branches are always executed.
+  if (MF->getTarget().requiresStructuredCFG())
+    return NULL;
 
   // We may need to update this's terminator, but we can't do that if
   // AnalyzeBranch fails. If this uses a jump table, we won't touch it.

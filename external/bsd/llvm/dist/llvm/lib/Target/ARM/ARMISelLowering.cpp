@@ -1009,7 +1009,6 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {
   default: return 0;
   case ARMISD::Wrapper:       return "ARMISD::Wrapper";
-  case ARMISD::WrapperDYN:    return "ARMISD::WrapperDYN";
   case ARMISD::WrapperPIC:    return "ARMISD::WrapperPIC";
   case ARMISD::WrapperJT:     return "ARMISD::WrapperJT";
   case ARMISD::CALL:          return "ARMISD::CALL";
@@ -1701,19 +1700,10 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     // ARM call to a local ARM function is predicable.
     isLocalARMFunc = !Subtarget->isThumb() && (!isExt || !ARMInterworking);
     // tBX takes a register source operand.
-    if (isARMFunc && Subtarget->isThumb1Only() && !Subtarget->hasV5TOps()) {
-      unsigned ARMPCLabelIndex = AFI->createPICLabelUId();
-      ARMConstantPoolValue *CPV =
-        ARMConstantPoolConstant::Create(GV, ARMPCLabelIndex, ARMCP::CPValue, 4);
-      SDValue CPAddr = DAG.getTargetConstantPool(CPV, getPointerTy(), 4);
-      CPAddr = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, CPAddr);
-      Callee = DAG.getLoad(getPointerTy(), dl,
-                           DAG.getEntryNode(), CPAddr,
-                           MachinePointerInfo::getConstantPool(),
-                           false, false, false, 0);
-      SDValue PICLabel = DAG.getConstant(ARMPCLabelIndex, MVT::i32);
-      Callee = DAG.getNode(ARMISD::PIC_ADD, dl,
-                           getPointerTy(), Callee, PICLabel);
+    if (isStub && Subtarget->isThumb1Only() && !Subtarget->hasV5TOps()) {
+      assert(Subtarget->isTargetDarwin() && "WrapperPIC use on non-Darwin?");
+      Callee = DAG.getNode(ARMISD::WrapperPIC, dl, getPointerTy(),
+                           DAG.getTargetGlobalAddress(GV, dl, getPointerTy()));
     } else {
       // On ELF targets for PIC code, direct calls should go through the PLT
       unsigned OpFlags = 0;
@@ -1755,8 +1745,7 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
   // FIXME: handle tail calls differently.
   unsigned CallOpc;
-  bool HasMinSizeAttr = MF.getFunction()->getAttributes().
-    hasAttribute(AttributeSet::FunctionIndex, Attribute::MinSize);
+  bool HasMinSizeAttr = Subtarget->isMinSize();
   if (Subtarget->isThumb()) {
     if ((!isDirect || isARMFunc) && !Subtarget->hasV5TOps())
       CallOpc = ARMISD::CALL_NOLINK;
@@ -2538,56 +2527,20 @@ SDValue ARMTargetLowering::LowerGlobalAddressDarwin(SDValue Op,
   const GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
   Reloc::Model RelocM = getTargetMachine().getRelocationModel();
 
-  // FIXME: Enable this for static codegen when tool issues are fixed.  Also
-  // update ARMFastISel::ARMMaterializeGV.
-  if (Subtarget->useMovt() && RelocM != Reloc::Static) {
+  if (Subtarget->useMovt())
     ++NumMovwMovt;
-    // FIXME: Once remat is capable of dealing with instructions with register
-    // operands, expand this into two nodes.
-    if (RelocM == Reloc::Static)
-      return DAG.getNode(ARMISD::Wrapper, dl, PtrVT,
-                                 DAG.getTargetGlobalAddress(GV, dl, PtrVT));
 
-    unsigned Wrapper = (RelocM == Reloc::PIC_)
-      ? ARMISD::WrapperPIC : ARMISD::WrapperDYN;
-    SDValue Result = DAG.getNode(Wrapper, dl, PtrVT,
-                                 DAG.getTargetGlobalAddress(GV, dl, PtrVT));
-    if (Subtarget->GVIsIndirectSymbol(GV, RelocM))
-      Result = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), Result,
-                           MachinePointerInfo::getGOT(),
-                           false, false, false, 0);
-    return Result;
-  }
+  // FIXME: Once remat is capable of dealing with instructions with register
+  // operands, expand this into multiple nodes
+  unsigned Wrapper =
+      RelocM == Reloc::PIC_ ? ARMISD::WrapperPIC : ARMISD::Wrapper;
 
-  unsigned ARMPCLabelIndex = 0;
-  SDValue CPAddr;
-  if (RelocM == Reloc::Static) {
-    CPAddr = DAG.getTargetConstantPool(GV, PtrVT, 4);
-  } else {
-    ARMFunctionInfo *AFI = DAG.getMachineFunction().getInfo<ARMFunctionInfo>();
-    ARMPCLabelIndex = AFI->createPICLabelUId();
-    unsigned PCAdj = (RelocM != Reloc::PIC_) ? 0 : (Subtarget->isThumb()?4:8);
-    ARMConstantPoolValue *CPV =
-      ARMConstantPoolConstant::Create(GV, ARMPCLabelIndex, ARMCP::CPValue,
-                                      PCAdj);
-    CPAddr = DAG.getTargetConstantPool(CPV, PtrVT, 4);
-  }
-  CPAddr = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, CPAddr);
-
-  SDValue Result = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), CPAddr,
-                               MachinePointerInfo::getConstantPool(),
-                               false, false, false, 0);
-  SDValue Chain = Result.getValue(1);
-
-  if (RelocM == Reloc::PIC_) {
-    SDValue PICLabel = DAG.getConstant(ARMPCLabelIndex, MVT::i32);
-    Result = DAG.getNode(ARMISD::PIC_ADD, dl, PtrVT, Result, PICLabel);
-  }
+  SDValue G = DAG.getTargetGlobalAddress(GV, dl, PtrVT, 0, ARMII::MO_NONLAZY);
+  SDValue Result = DAG.getNode(Wrapper, dl, PtrVT, G);
 
   if (Subtarget->GVIsIndirectSymbol(GV, RelocM))
-    Result = DAG.getLoad(PtrVT, dl, Chain, Result, MachinePointerInfo::getGOT(),
-                         false, false, false, 0);
-
+    Result = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), Result,
+                         MachinePointerInfo::getGOT(), false, false, false, 0);
   return Result;
 }
 
@@ -2849,7 +2802,7 @@ ARMTargetLowering::StoreByValRegs(CCState &CCInfo, SelectionDAG &DAG,
                                   bool ForceMutable) const {
 
   // Currently, two use-cases possible:
-  // Case #1. Non var-args function, and we meet first byval parameter.
+  // Case #1. Non-var-args function, and we meet first byval parameter.
   //          Setup first unallocated register as first byval register;
   //          eat all remained registers
   //          (these two actions are performed by HandleByVal method).
@@ -3279,7 +3232,7 @@ SDValue ARMTargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
 static ISD::CondCode getInverseCCForVSEL(ISD::CondCode CC) {
   if (CC == ISD::SETNE)
     return ISD::SETEQ;
-  return ISD::getSetCCSwappedOperands(CC);
+  return ISD::getSetCCInverse(CC, true);
 }
 
 static void checkVSELConstraints(ISD::CondCode CC, ARMCC::CondCodes &CondCode,

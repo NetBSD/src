@@ -16,6 +16,7 @@
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/IR/DataLayout.h"
@@ -1528,7 +1529,7 @@ Value *SCEVExpander::expand(const SCEV *S) {
   //
   // This is independent of PostIncLoops. The mapped value simply materializes
   // the expression at this insertion point. If the mapped value happened to be
-  // a postinc expansion, it could be reused by a non postinc user, but only if
+  // a postinc expansion, it could be reused by a non-postinc user, but only if
   // its insertion point was already at the head of the loop.
   InsertedExpressions[std::make_pair(S, InsertPt)] = V;
   return V;

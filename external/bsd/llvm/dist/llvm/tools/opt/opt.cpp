@@ -139,6 +139,16 @@ static cl::opt<bool>
 DisableLoopUnrolling("disable-loop-unrolling",
                      cl::desc("Disable loop unrolling in all relevant passes"),
                      cl::init(false));
+static cl::opt<bool>
+DisableLoopVectorization("disable-loop-vectorization",
+                     cl::desc("Disable the loop vectorization pass"),
+                     cl::init(false));
+
+static cl::opt<bool>
+DisableSLPVectorization("disable-slp-vectorization",
+                        cl::desc("Disable the slp vectorization pass"),
+                        cl::init(false));
+
 
 static cl::opt<bool>
 DisableSimplifyLibCalls("disable-simplify-libcalls",
@@ -461,8 +471,16 @@ static void AddOptimizationPasses(PassManagerBase &MPM,FunctionPassManager &FPM,
   Builder.DisableUnrollLoops = (DisableLoopUnrolling.getNumOccurrences() > 0) ?
                                DisableLoopUnrolling : OptLevel == 0;
 
-  Builder.LoopVectorize = OptLevel > 1 && SizeLevel < 2;
-  Builder.SLPVectorize = true;
+  // This is final, unless there is a #pragma vectorize enable
+  if (DisableLoopVectorization)
+    Builder.LoopVectorize = false;
+  // If option wasn't forced via cmd line (-vectorize-loops, -loop-vectorize)
+  else if (!Builder.LoopVectorize)
+    Builder.LoopVectorize = OptLevel > 1 && SizeLevel < 2;
+
+  // When #pragma vectorize is on for SLP, do the same as above
+  Builder.SLPVectorize =
+      DisableSLPVectorization ? false : OptLevel > 1 && SizeLevel < 2;
 
   Builder.populateFunctionPassManager(FPM);
   Builder.populateModulePassManager(MPM);

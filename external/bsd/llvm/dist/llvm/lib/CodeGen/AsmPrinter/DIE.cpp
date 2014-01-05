@@ -13,6 +13,7 @@
 
 #include "DIE.h"
 #include "DwarfDebug.h"
+#include "DwarfUnit.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/IR/DataLayout.h"
@@ -112,27 +113,28 @@ DIE::~DIE() {
     delete Children[i];
 }
 
-/// Climb up the parent chain to get the compile unit DIE to which this DIE
+/// Climb up the parent chain to get the unit DIE to which this DIE
 /// belongs.
-const DIE *DIE::getCompileUnit() const {
-  const DIE *Cu = getCompileUnitOrNull();
+const DIE *DIE::getUnit() const {
+  const DIE *Cu = getUnitOrNull();
   assert(Cu && "We should not have orphaned DIEs.");
   return Cu;
 }
 
-/// Climb up the parent chain to get the compile unit DIE this DIE belongs
+/// Climb up the parent chain to get the unit DIE this DIE belongs
 /// to. Return NULL if DIE is not added to an owner yet.
-const DIE *DIE::getCompileUnitOrNull() const {
+const DIE *DIE::getUnitOrNull() const {
   const DIE *p = this;
   while (p) {
-    if (p->getTag() == dwarf::DW_TAG_compile_unit)
+    if (p->getTag() == dwarf::DW_TAG_compile_unit ||
+        p->getTag() == dwarf::DW_TAG_type_unit)
       return p;
     p = p->getParent();
   }
   return NULL;
 }
 
-DIEValue *DIE::findAttribute(uint16_t Attribute) {
+DIEValue *DIE::findAttribute(uint16_t Attribute) const {
   const SmallVectorImpl<DIEValue *> &Values = getValues();
   const DIEAbbrev &Abbrevs = getAbbrev();
 
@@ -227,6 +229,7 @@ void DIEInteger::EmitValue(AsmPrinter *Asm, dwarf::Form Form) const {
   case dwarf::DW_FORM_ref4:  // Fall thru
   case dwarf::DW_FORM_data4: Size = 4; break;
   case dwarf::DW_FORM_ref8:  // Fall thru
+  case dwarf::DW_FORM_ref_sig8:  // Fall thru
   case dwarf::DW_FORM_data8: Size = 8; break;
   case dwarf::DW_FORM_GNU_str_index: Asm->EmitULEB128(Integer); return;
   case dwarf::DW_FORM_GNU_addr_index: Asm->EmitULEB128(Integer); return;
@@ -253,6 +256,7 @@ unsigned DIEInteger::SizeOf(AsmPrinter *AP, dwarf::Form Form) const {
   case dwarf::DW_FORM_ref4:  // Fall thru
   case dwarf::DW_FORM_data4: return sizeof(int32_t);
   case dwarf::DW_FORM_ref8:  // Fall thru
+  case dwarf::DW_FORM_ref_sig8:  // Fall thru
   case dwarf::DW_FORM_data8: return sizeof(int64_t);
   case dwarf::DW_FORM_GNU_str_index: return MCAsmInfo::getULEB128Size(Integer);
   case dwarf::DW_FORM_GNU_addr_index: return MCAsmInfo::getULEB128Size(Integer);
@@ -338,6 +342,7 @@ void DIEDelta::EmitValue(AsmPrinter *AP, dwarf::Form Form) const {
 ///
 unsigned DIEDelta::SizeOf(AsmPrinter *AP, dwarf::Form Form) const {
   if (Form == dwarf::DW_FORM_data4) return 4;
+  if (Form == dwarf::DW_FORM_sec_offset) return 4;
   if (Form == dwarf::DW_FORM_strp) return 4;
   return AP->getDataLayout().getPointerSize();
 }
@@ -386,7 +391,9 @@ unsigned DIEEntry::getRefAddrSize(AsmPrinter *AP) {
   // specified to be four bytes in the DWARF 32-bit format and eight bytes
   // in the DWARF 64-bit format, while DWARF Version 2 specifies that such
   // references have the same size as an address on the target system.
-  if (AP->getDwarfDebug()->getDwarfVersion() == 2)
+  const DwarfDebug *DD = AP->getDwarfDebug();
+  assert(DD && "Expected Dwarf Debug info to be available");
+  if (DD->getDwarfVersion() == 2)
     return AP->getDataLayout().getPointerSize();
   return sizeof(int32_t);
 }
@@ -395,6 +402,22 @@ unsigned DIEEntry::getRefAddrSize(AsmPrinter *AP) {
 void DIEEntry::print(raw_ostream &O) const {
   O << format("Die: 0x%lx", (long)(intptr_t)Entry);
 }
+#endif
+
+//===----------------------------------------------------------------------===//
+// DIETypeSignature Implementation
+//===----------------------------------------------------------------------===//
+void DIETypeSignature::EmitValue(AsmPrinter *Asm, dwarf::Form Form) const {
+  assert(Form == dwarf::DW_FORM_ref_sig8);
+  Asm->OutStreamer.EmitIntValue(Unit.getTypeSignature(), 8);
+}
+
+#ifndef NDEBUG
+void DIETypeSignature::print(raw_ostream &O) const {
+  O << format("Type Unit: 0x%lx", Unit.getTypeSignature());
+}
+
+void DIETypeSignature::dump() const { print(dbgs()); }
 #endif
 
 //===----------------------------------------------------------------------===//

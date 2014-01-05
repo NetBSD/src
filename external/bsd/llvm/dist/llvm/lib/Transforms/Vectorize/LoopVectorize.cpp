@@ -564,7 +564,7 @@ public:
   /// pointer itself is an induction variable.
   /// This check allows us to vectorize A[idx] into a wide load/store.
   /// Returns:
-  /// 0 - Stride is unknown or non consecutive.
+  /// 0 - Stride is unknown or non-consecutive.
   /// 1 - Address is consecutive.
   /// -1 - Address is consecutive, and decreasing.
   int isConsecutivePtr(Value *Ptr);
@@ -763,10 +763,13 @@ struct LoopVectorizeHints {
   unsigned Width;
   /// Vectorization unroll factor.
   unsigned Unroll;
+  /// Vectorization forced (-1 not selected, 0 force disabled, 1 force enabled)
+  int Force;
 
   LoopVectorizeHints(const Loop *L, bool DisableUnrolling)
   : Width(VectorizationFactor)
   , Unroll(DisableUnrolling ? 1 : VectorizationUnroll)
+  , Force(-1)
   , LoopID(L->getLoopID()) {
     getHints(L);
     // The command line options override any loop metadata except for when
@@ -877,6 +880,11 @@ private:
         Unroll = Val;
       else
         DEBUG(dbgs() << "LV: ignoring invalid unroll hint metadata\n");
+    } else if (Hint == "enable") {
+      if (C->getBitWidth() == 1)
+        Force = Val;
+      else
+        DEBUG(dbgs() << "LV: ignoring invalid enable hint metadata\n");
     } else {
       DEBUG(dbgs() << "LV: ignoring unknown hint " << Hint << '\n');
     }
@@ -888,8 +896,10 @@ struct LoopVectorize : public LoopPass {
   /// Pass identification, replacement for typeid
   static char ID;
 
-  explicit LoopVectorize(bool NoUnrolling = false)
-    : LoopPass(ID), DisableUnrolling(NoUnrolling) {
+  explicit LoopVectorize(bool NoUnrolling = false, bool AlwaysVectorize = true)
+    : LoopPass(ID),
+      DisableUnrolling(NoUnrolling),
+      AlwaysVectorize(AlwaysVectorize) {
     initializeLoopVectorizePass(*PassRegistry::getPassRegistry());
   }
 
@@ -900,6 +910,7 @@ struct LoopVectorize : public LoopPass {
   DominatorTree *DT;
   TargetLibraryInfo *TLI;
   bool DisableUnrolling;
+  bool AlwaysVectorize;
 
   virtual bool runOnLoop(Loop *L, LPPassManager &LPM) {
     // We only vectorize innermost loops.
@@ -919,7 +930,7 @@ struct LoopVectorize : public LoopPass {
       return false;
 
     if (DL == NULL) {
-      DEBUG(dbgs() << "LV: Not vectorizing because of missing data layout\n");
+      DEBUG(dbgs() << "LV: Not vectorizing: Missing data layout\n");
       return false;
     }
 
@@ -928,15 +939,25 @@ struct LoopVectorize : public LoopPass {
 
     LoopVectorizeHints Hints(L, DisableUnrolling);
 
+    if (Hints.Force == 0) {
+      DEBUG(dbgs() << "LV: Not vectorizing: #pragma vectorize disable.\n");
+      return false;
+    }
+
+    if (!AlwaysVectorize && Hints.Force != 1) {
+      DEBUG(dbgs() << "LV: Not vectorizing: No #pragma vectorize enable.\n");
+      return false;
+    }
+
     if (Hints.Width == 1 && Hints.Unroll == 1) {
-      DEBUG(dbgs() << "LV: Not vectorizing.\n");
+      DEBUG(dbgs() << "LV: Not vectorizing: Disabled/already vectorized.\n");
       return false;
     }
 
     // Check if it is legal to vectorize the loop.
     LoopVectorizationLegality LVL(L, SE, DL, DT, TLI);
     if (!LVL.canVectorize()) {
-      DEBUG(dbgs() << "LV: Not vectorizing.\n");
+      DEBUG(dbgs() << "LV: Not vectorizing: Cannot prove legality.\n");
       return false;
     }
 
@@ -949,7 +970,8 @@ struct LoopVectorize : public LoopPass {
     Attribute::AttrKind SzAttr = Attribute::OptimizeForSize;
     Attribute::AttrKind FlAttr = Attribute::NoImplicitFloat;
     unsigned FnIndex = AttributeSet::FunctionIndex;
-    bool OptForSize = F->getAttributes().hasAttribute(FnIndex, SzAttr);
+    bool OptForSize = Hints.Force != 1 &&
+                      F->getAttributes().hasAttribute(FnIndex, SzAttr);
     bool NoFloat = F->getAttributes().hasAttribute(FnIndex, FlAttr);
 
     if (NoFloat) {
@@ -973,6 +995,7 @@ struct LoopVectorize : public LoopPass {
       DEBUG(dbgs() << "LV: Vectorization is possible but not beneficial.\n");
       if (UF == 1)
         return false;
+      DEBUG(dbgs() << "LV: Trying to at least unroll the loops.\n");
       // We decided not to vectorize, but we may want to unroll.
       InnerLoopUnroller Unroller(L, SE, LI, DT, DL, TLI, UF);
       Unroller.vectorize(&LVL);
@@ -1093,7 +1116,7 @@ static unsigned getGEPInductionOperand(DataLayout *DL,
 }
 
 int LoopVectorizationLegality::isConsecutivePtr(Value *Ptr) {
-  assert(Ptr->getType()->isPointerTy() && "Unexpected non ptr");
+  assert(Ptr->getType()->isPointerTy() && "Unexpected non-ptr");
   // Make sure that the pointer does not point to structs.
   if (Ptr->getType()->getPointerElementType()->isAggregateType())
     return 0;
@@ -1216,7 +1239,7 @@ void InnerLoopVectorizer::vectorizeMemoryInstruction(Instruction *Instr,
   if (ScalarAllocatedSize != VectorElementSize)
     return scalarizeInstruction(Instr);
 
-  // If the pointer is loop invariant or if it is non consecutive,
+  // If the pointer is loop invariant or if it is non-consecutive,
   // scalarize the load.
   int ConsecutiveStride = Legal->isConsecutivePtr(Ptr);
   bool Reverse = ConsecutiveStride < 0;
@@ -2430,7 +2453,7 @@ void InnerLoopVectorizer::widenPHIInstruction(Instruction *PN,
   setDebugLocFromInst(Builder, P);
   // Check for PHI nodes that are lowered to vector selects.
   if (P->getParent() != OrigLoop->getHeader()) {
-    // We know that all PHIs in non header blocks are converted into
+    // We know that all PHIs in non-header blocks are converted into
     // selects, so we don't have to worry about the insertion order and we
     // can just use the builder.
     // At this point we generate the predication tree. There may be
@@ -2781,6 +2804,23 @@ void InnerLoopVectorizer::updateAnalysis() {
   DEBUG(DT->verifyAnalysis());
 }
 
+/// \brief Check whether it is safe to if-convert this phi node.
+///
+/// Phi nodes with constant expressions that can trap are not safe to if
+/// convert.
+static bool canIfConvertPHINodes(BasicBlock *BB) {
+  for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
+    PHINode *Phi = dyn_cast<PHINode>(I);
+    if (!Phi)
+      return true;
+    for (unsigned p = 0, e = Phi->getNumIncomingValues(); p != e; ++p)
+      if (Constant *C = dyn_cast<Constant>(Phi->getIncomingValue(p)))
+        if (C->canTrap())
+          return false;
+  }
+  return true;
+}
+
 bool LoopVectorizationLegality::canVectorizeWithIfConvert() {
   if (!EnableIfConversion)
     return false;
@@ -2807,6 +2847,7 @@ bool LoopVectorizationLegality::canVectorizeWithIfConvert() {
   }
 
   // Collect the blocks that need predication.
+  BasicBlock *Header = TheLoop->getHeader();
   for (Loop::block_iterator BI = TheLoop->block_begin(),
          BE = TheLoop->block_end(); BI != BE; ++BI) {
     BasicBlock *BB = *BI;
@@ -2816,8 +2857,12 @@ bool LoopVectorizationLegality::canVectorizeWithIfConvert() {
       return false;
 
     // We must be able to predicate all blocks that need to be predicated.
-    if (blockNeedsPredication(BB) && !blockCanBePredicated(BB, SafePointes))
+    if (blockNeedsPredication(BB)) {
+      if (!blockCanBePredicated(BB, SafePointes))
+        return false;
+    } else if (BB != Header && !canIfConvertPHINodes(BB))
       return false;
+
   }
 
   // We can if-convert this loop.
@@ -2846,7 +2891,7 @@ bool LoopVectorizationLegality::canVectorize() {
   DEBUG(dbgs() << "LV: Found a loop: " <<
         TheLoop->getHeader()->getName() << '\n');
 
-  // Check if we can if-convert non single-bb loops.
+  // Check if we can if-convert non-single-bb loops.
   unsigned NumBlocks = TheLoop->getNumBlocks();
   if (NumBlocks != 1 && !canVectorizeWithIfConvert()) {
     DEBUG(dbgs() << "LV: Can't if-convert the loop.\n");
@@ -3499,7 +3544,7 @@ private:
   // We can access this many bytes in parallel safely.
   unsigned MaxSafeDepDistBytes;
 
-  /// \brief If we see a non constant dependence distance we can still try to
+  /// \brief If we see a non-constant dependence distance we can still try to
   /// vectorize this loop with runtime checks.
   bool ShouldRetryWithRuntimeCheck;
 
@@ -3535,7 +3580,7 @@ static bool isInBoundsGep(Value *Ptr) {
 static int isStridedPtr(ScalarEvolution *SE, DataLayout *DL, Value *Ptr,
                         const Loop *Lp) {
   const Type *Ty = Ptr->getType();
-  assert(Ty->isPointerTy() && "Unexpected non ptr");
+  assert(Ty->isPointerTy() && "Unexpected non-ptr");
 
   // Make sure that the pointer does not point to aggregate types.
   const PointerType *PtrTy = cast<PointerType>(Ty);
@@ -3699,7 +3744,7 @@ bool MemoryDepChecker::isDependent(const MemAccessInfo &A, unsigned AIdx,
 
   const SCEVConstant *C = dyn_cast<SCEVConstant>(Dist);
   if (!C) {
-    DEBUG(dbgs() << "LV: Dependence because of non constant distance\n");
+    DEBUG(dbgs() << "LV: Dependence because of non-constant distance\n");
     ShouldRetryWithRuntimeCheck = true;
     return true;
   }
@@ -4140,7 +4185,7 @@ bool LoopVectorizationLegality::AddReductionVar(PHINode *Phi,
     // Check  whether we found a reduction operator.
     FoundReduxOp |= !IsAPhi;
 
-    // Process users of current instruction. Push non PHI nodes after PHI nodes
+    // Process users of current instruction. Push non-PHI nodes after PHI nodes
     // onto the stack. This way we are going to have seen all inputs to PHI
     // nodes once we get to them.
     SmallVector<Instruction *, 8> NonPHIs;
@@ -4370,6 +4415,14 @@ bool LoopVectorizationLegality::blockCanBePredicated(BasicBlock *BB,
     // We don't predicate stores at the moment.
     if (it->mayWriteToMemory() || it->mayThrow())
       return false;
+
+    // Check that we don't have a constant expression that can trap as operand.
+    for (Instruction::op_iterator OI = it->op_begin(), OE = it->op_end();
+         OI != OE; ++OI) {
+      if (Constant *C = dyn_cast<Constant>(*OI))
+        if (C->canTrap())
+          return false;
+    }
 
     // The instructions below can trap.
     switch (it->getOpcode()) {
@@ -5016,8 +5069,8 @@ INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
 INITIALIZE_PASS_END(LoopVectorize, LV_NAME, lv_name, false, false)
 
 namespace llvm {
-  Pass *createLoopVectorizePass(bool NoUnrolling) {
-    return new LoopVectorize(NoUnrolling);
+  Pass *createLoopVectorizePass(bool NoUnrolling, bool AlwaysVectorize) {
+    return new LoopVectorize(NoUnrolling, AlwaysVectorize);
   }
 }
 
