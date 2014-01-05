@@ -30,6 +30,11 @@
 
 using namespace llvm;
 
+namespace llvm {
+extern cl::opt<bool> EnableStackMapLiveness;
+extern cl::opt<bool> EnablePatchPointLiveness;
+}
+
 static cl::opt<bool> DisablePostRA("disable-post-ra", cl::Hidden,
     cl::desc("Disable Post Regalloc"));
 static cl::opt<bool> DisableBranchFold("disable-branch-fold", cl::Hidden,
@@ -82,6 +87,14 @@ static cl::opt<std::string>
 PrintMachineInstrs("print-machineinstrs", cl::ValueOptional,
                    cl::desc("Print machine instrs"),
                    cl::value_desc("pass-name"), cl::init("option-unspecified"));
+
+// Temporary option to allow experimenting with MachineScheduler as a post-RA
+// scheduler. Targets can "properly" enable this with
+// substitutePass(&PostRASchedulerID, &MachineSchedulerID); Ideally it wouldn't
+// be part of the standard pass pipeline, and the target would just add a PostRA
+// scheduling pass wherever it wants.
+static cl::opt<bool> MISchedPostRA("misched-postra", cl::Hidden,
+  cl::desc("Run MachineScheduler post regalloc (independent of preRA sched)"));
 
 // Experimental option to run live interval analysis early.
 static cl::opt<bool> EarlyLiveIntervals("early-live-intervals", cl::Hidden,
@@ -422,9 +435,9 @@ void TargetPassConfig::addCodeGenPrepare() {
 /// Add common passes that perform LLVM IR to IR transforms in preparation for
 /// instruction selection.
 void TargetPassConfig::addISelPrepare() {
-  addPass(createStackProtectorPass(TM));
-
   addPreISel();
+
+  addPass(createStackProtectorPass(TM));
 
   if (PrintISelInput)
     addPass(createPrintFunctionPass("\n\n"
@@ -520,7 +533,10 @@ void TargetPassConfig::addMachinePasses() {
 
   // Second pass scheduler.
   if (getOptLevel() != CodeGenOpt::None) {
-    addPass(&PostRASchedulerID);
+    if (MISchedPostRA)
+      addPass(&PostMachineSchedulerID);
+    else
+      addPass(&PostRASchedulerID);
     printAndVerify("After PostRAScheduler");
   }
 
@@ -536,6 +552,9 @@ void TargetPassConfig::addMachinePasses() {
 
   if (addPreEmitPass())
     printAndVerify("After PreEmit passes");
+
+  if (EnableStackMapLiveness || EnablePatchPointLiveness)
+    addPass(&StackMapLivenessID);
 }
 
 /// Add passes that optimize machine instructions in SSA form.
@@ -725,7 +744,10 @@ void TargetPassConfig::addMachineLateOptimization() {
     printAndVerify("After BranchFolding");
 
   // Tail duplication.
-  if (addPass(&TailDuplicateID))
+  // Note that duplicating tail just increases code size and degrades
+  // performance for targets that require Structured Control Flow.
+  // In addition it can also make CFG irreducible. Thus we disable it.
+  if (!TM->requiresStructuredCFG() && addPass(&TailDuplicateID))
     printAndVerify("After TailDuplicate");
 
   // Copy propagation.

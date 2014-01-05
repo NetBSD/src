@@ -1083,7 +1083,7 @@ void StoreInst::AssertOK() {
                  cast<PointerType>(getOperand(1)->getType())->getElementType()
          && "Ptr must be a pointer to Val type!");
   assert(!(isAtomic() && getAlignment() == 0) &&
-         "Alignment required for atomic load");
+         "Alignment required for atomic store");
 }
 
 
@@ -2206,7 +2206,7 @@ unsigned CastInst::isEliminableCastPair(
     case 3: 
       // No-op cast in second op implies firstOp as long as the DestTy
       // is integer and we are not converting between a vector and a
-      // non vector type.
+      // non-vector type.
       if (!SrcTy->isVectorTy() && DstTy->isIntegerTy())
         return firstOp;
       return 0;
@@ -2823,7 +2823,7 @@ CastInst::castIsValid(Instruction::CastOps op, Value *S, Type *DstTy) {
     if (SrcTy->isPtrOrPtrVectorTy() != DstTy->isPtrOrPtrVectorTy())
       return false;
 
-    // For non pointer cases, the cast is okay if the source and destination bit
+    // For non-pointer cases, the cast is okay if the source and destination bit
     // widths are identical.
     if (!SrcTy->isPtrOrPtrVectorTy())
       return SrcTy->getPrimitiveSizeInBits() == DstTy->getPrimitiveSizeInBits();

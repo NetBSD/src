@@ -430,7 +430,7 @@ void NVPTXAsmPrinter::printReturnValStr(const Function *F, raw_ostream &O) {
   O << " (";
 
   if (isABI) {
-    if (Ty->isPrimitiveType() || Ty->isIntegerTy()) {
+    if (Ty->isFloatingPointTy() || Ty->isIntegerTy()) {
       unsigned size = 0;
       if (const IntegerType *ITy = dyn_cast<IntegerType>(Ty)) {
         size = ITy->getBitWidth();
@@ -895,7 +895,7 @@ bool NVPTXAsmPrinter::doInitialization(Module &M) {
   const_cast<TargetLoweringObjectFile &>(getObjFileLowering())
       .Initialize(OutContext, TM);
 
-  Mang = new Mangler(&TM);
+  Mang = new Mangler(TM.getDataLayout());
 
   // Emit header before any dwarf directives are emitted below.
   emitHeader(M, OS1);
@@ -1207,7 +1207,7 @@ void NVPTXAsmPrinter::printModuleLevelGV(const GlobalVariable *GVar,
   else
     O << " .align " << GVar->getAlignment();
 
-  if (ETy->isPrimitiveType() || ETy->isIntegerTy() || isa<PointerType>(ETy)) {
+  if (ETy->isSingleValueType()) {
     O << " .";
     // Special case: ABI requires that we use .u8 for predicates
     if (ETy->isIntegerTy(1))
@@ -1378,7 +1378,7 @@ void NVPTXAsmPrinter::emitPTXGlobalVariable(const GlobalVariable *GVar,
   else
     O << " .align " << GVar->getAlignment();
 
-  if (ETy->isPrimitiveType() || ETy->isIntegerTy() || isa<PointerType>(ETy)) {
+  if (ETy->isSingleValueType()) {
     O << " .";
     O << getPTXFundamentalTypeStr(ETy);
     O << " ";
@@ -1410,7 +1410,7 @@ void NVPTXAsmPrinter::emitPTXGlobalVariable(const GlobalVariable *GVar,
 }
 
 static unsigned int getOpenCLAlignment(const DataLayout *TD, Type *Ty) {
-  if (Ty->isPrimitiveType() || Ty->isIntegerTy() || isa<PointerType>(Ty))
+  if (Ty->isSingleValueType())
     return TD->getPrefTypeAlignment(Ty);
 
   const ArrayType *ATy = dyn_cast<ArrayType>(Ty);
@@ -1580,7 +1580,7 @@ void NVPTXAsmPrinter::emitFunctionParamList(const Function *F, raw_ostream &O) {
         continue;
       }
       // Non-kernel function, just print .param .b<size> for ABI
-      // and .reg .b<size> for non ABY
+      // and .reg .b<size> for non-ABI
       unsigned sz = 0;
       if (isa<IntegerType>(Ty)) {
         sz = cast<IntegerType>(Ty)->getBitWidth();
@@ -2086,21 +2086,6 @@ void NVPTXAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
   case MachineOperand::MO_GlobalAddress:
     O << *getSymbol(MO.getGlobal());
     break;
-
-  case MachineOperand::MO_ExternalSymbol: {
-    const char *symbname = MO.getSymbolName();
-    if (strstr(symbname, ".PARAM") == symbname) {
-      unsigned index;
-      sscanf(symbname + 6, "%u[];", &index);
-      printParamName(index, O);
-    } else if (strstr(symbname, ".HLPPARAM") == symbname) {
-      unsigned index;
-      sscanf(symbname + 9, "%u[];", &index);
-      O << *CurrentFnSym << "_param_" << index << "_offset";
-    } else
-      O << symbname;
-    break;
-  }
 
   case MachineOperand::MO_MachineBasicBlock:
     O << *MO.getMBB()->getSymbol();

@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -disable-fp-elim | FileCheck %s
 
 ; Stackmap Header: no constants - 6 callsites
 ; CHECK-LABEL: .section	__LLVM_STACKMAPS,__llvm_stackmaps
@@ -11,7 +11,6 @@
 ; CHECK-NEXT:   .long   8
 
 ; test
-; CHECK-NEXT:   .long   0
 ; CHECK-LABEL:  .long   L{{.*}}-_test
 ; CHECK-NEXT:   .short  0
 ; 3 locations
@@ -33,12 +32,11 @@
 ; CHECK-NEXT:   .long 3
 define i64 @test() nounwind ssp uwtable {
 entry:
-  call anyregcc void (i32, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.void(i32 0, i32 15, i8* null, i32 2, i32 1, i32 2, i64 3)
+  call anyregcc void (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.void(i64 0, i32 15, i8* null, i32 2, i32 1, i32 2, i64 3)
   ret i64 0
 }
 
 ; property access 1 - %obj is an anyreg call argument and should therefore be in a register
-; CHECK-NEXT:   .long   1
 ; CHECK-LABEL:  .long   L{{.*}}-_property_access1
 ; CHECK-NEXT:   .short  0
 ; 2 locations
@@ -56,12 +54,11 @@ entry:
 define i64 @property_access1(i8* %obj) nounwind ssp uwtable {
 entry:
   %f = inttoptr i64 12297829382473034410 to i8*
-  %ret = call anyregcc i64 (i32, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.i64(i32 1, i32 15, i8* %f, i32 1, i8* %obj)
+  %ret = call anyregcc i64 (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.i64(i64 1, i32 15, i8* %f, i32 1, i8* %obj)
   ret i64 %ret
 }
 
 ; property access 2 - %obj is an anyreg call argument and should therefore be in a register
-; CHECK-NEXT:   .long   2
 ; CHECK-LABEL:  .long   L{{.*}}-_property_access2
 ; CHECK-NEXT:   .short  0
 ; 2 locations
@@ -80,12 +77,11 @@ define i64 @property_access2() nounwind ssp uwtable {
 entry:
   %obj = alloca i64, align 8
   %f = inttoptr i64 12297829382473034410 to i8*
-  %ret = call anyregcc i64 (i32, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.i64(i32 2, i32 15, i8* %f, i32 1, i64* %obj)
+  %ret = call anyregcc i64 (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.i64(i64 2, i32 15, i8* %f, i32 1, i64* %obj)
   ret i64 %ret
 }
 
 ; property access 3 - %obj is a frame index
-; CHECK-NEXT:   .long   3
 ; CHECK-LABEL:  .long   L{{.*}}-_property_access3
 ; CHECK-NEXT:   .short  0
 ; 2 locations
@@ -95,21 +91,20 @@ entry:
 ; CHECK-NEXT:   .byte 8
 ; CHECK-NEXT:   .short {{[0-9]+}}
 ; CHECK-NEXT:   .long 0
-; Loc 1: Register <-- this will be folded once folding for FI is implemented
-; CHECK-NEXT:   .byte 1
+; Loc 1: Direct RBP - ofs
+; CHECK-NEXT:   .byte 2
 ; CHECK-NEXT:   .byte 8
-; CHECK-NEXT:   .short {{[0-9]+}}
-; CHECK-NEXT:   .long 0
+; CHECK-NEXT:   .short 6
+; CHECK-NEXT:   .long
 define i64 @property_access3() nounwind ssp uwtable {
 entry:
   %obj = alloca i64, align 8
   %f = inttoptr i64 12297829382473034410 to i8*
-  %ret = call anyregcc i64 (i32, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.i64(i32 3, i32 15, i8* %f, i32 0, i64* %obj)
+  %ret = call anyregcc i64 (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.i64(i64 3, i32 15, i8* %f, i32 0, i64* %obj)
   ret i64 %ret
 }
 
 ; anyreg_test1
-; CHECK-NEXT:   .long   4
 ; CHECK-LABEL:  .long   L{{.*}}-_anyreg_test1
 ; CHECK-NEXT:   .short  0
 ; 14 locations
@@ -187,12 +182,11 @@ entry:
 define i64 @anyreg_test1(i8* %a1, i8* %a2, i8* %a3, i8* %a4, i8* %a5, i8* %a6, i8* %a7, i8* %a8, i8* %a9, i8* %a10, i8* %a11, i8* %a12, i8* %a13) nounwind ssp uwtable {
 entry:
   %f = inttoptr i64 12297829382473034410 to i8*
-  %ret = call anyregcc i64 (i32, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.i64(i32 4, i32 15, i8* %f, i32 13, i8* %a1, i8* %a2, i8* %a3, i8* %a4, i8* %a5, i8* %a6, i8* %a7, i8* %a8, i8* %a9, i8* %a10, i8* %a11, i8* %a12, i8* %a13)
+  %ret = call anyregcc i64 (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.i64(i64 4, i32 15, i8* %f, i32 13, i8* %a1, i8* %a2, i8* %a3, i8* %a4, i8* %a5, i8* %a6, i8* %a7, i8* %a8, i8* %a9, i8* %a10, i8* %a11, i8* %a12, i8* %a13)
   ret i64 %ret
 }
 
 ; anyreg_test2
-; CHECK-NEXT:   .long   5
 ; CHECK-LABEL:  .long   L{{.*}}-_anyreg_test2
 ; CHECK-NEXT:   .short  0
 ; 14 locations
@@ -270,7 +264,7 @@ entry:
 define i64 @anyreg_test2(i8* %a1, i8* %a2, i8* %a3, i8* %a4, i8* %a5, i8* %a6, i8* %a7, i8* %a8, i8* %a9, i8* %a10, i8* %a11, i8* %a12, i8* %a13) nounwind ssp uwtable {
 entry:
   %f = inttoptr i64 12297829382473034410 to i8*
-  %ret = call anyregcc i64 (i32, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.i64(i32 5, i32 15, i8* %f, i32 8, i8* %a1, i8* %a2, i8* %a3, i8* %a4, i8* %a5, i8* %a6, i8* %a7, i8* %a8, i8* %a9, i8* %a10, i8* %a11, i8* %a12, i8* %a13)
+  %ret = call anyregcc i64 (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.i64(i64 5, i32 15, i8* %f, i32 8, i8* %a1, i8* %a2, i8* %a3, i8* %a4, i8* %a5, i8* %a6, i8* %a7, i8* %a8, i8* %a9, i8* %a10, i8* %a11, i8* %a12, i8* %a13)
   ret i64 %ret
 }
 
@@ -278,7 +272,6 @@ entry:
 ;
 ; <rdar://problem/15432754> [JS] Assertion: "Folded a def to a non-store!"
 ;
-; CHECK-LABEL: .long 12
 ; CHECK-LABEL: .long L{{.*}}-_patchpoint_spilldef
 ; CHECK-NEXT: .short 0
 ; CHECK-NEXT: .short 3
@@ -299,7 +292,7 @@ entry:
 ; CHECK-NEXT: .long  0
 define i64 @patchpoint_spilldef(i64 %p1, i64 %p2, i64 %p3, i64 %p4) {
 entry:
-  %result = tail call anyregcc i64 (i32, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.i64(i32 12, i32 15, i8* inttoptr (i64 0 to i8*), i32 2, i64 %p1, i64 %p2)
+  %result = tail call anyregcc i64 (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.i64(i64 12, i32 15, i8* inttoptr (i64 0 to i8*), i32 2, i64 %p1, i64 %p2)
   tail call void asm sideeffect "nop", "~{ax},~{bx},~{cx},~{dx},~{bp},~{si},~{di},~{r8},~{r9},~{r10},~{r11},~{r12},~{r13},~{r14},~{r15}"() nounwind
   ret i64 %result
 }
@@ -308,7 +301,6 @@ entry:
 ;
 ; <rdar://problem/15487687> [JS] AnyRegCC argument ends up being spilled
 ;
-; CHECK-LABEL: .long 13
 ; CHECK-LABEL: .long L{{.*}}-_patchpoint_spillargs
 ; CHECK-NEXT: .short 0
 ; CHECK-NEXT: .short 5
@@ -330,19 +322,19 @@ entry:
 ; Loc 3: Arg2 spilled to RBP +
 ; CHECK-NEXT: .byte  3
 ; CHECK-NEXT: .byte  8
-; CHECK-NEXT: .short 7
-; CHECK-NEXT: .long  {{[0-9]+}}
+; CHECK-NEXT: .short 6
+; CHECK-NEXT: .long
 ; Loc 4: Arg3 spilled to RBP +
 ; CHECK-NEXT: .byte  3
 ; CHECK-NEXT: .byte  8
-; CHECK-NEXT: .short 7
-; CHECK-NEXT: .long  {{[0-9]+}}
+; CHECK-NEXT: .short 6
+; CHECK-NEXT: .long
 define i64 @patchpoint_spillargs(i64 %p1, i64 %p2, i64 %p3, i64 %p4) {
 entry:
   tail call void asm sideeffect "nop", "~{ax},~{bx},~{cx},~{dx},~{bp},~{si},~{di},~{r8},~{r9},~{r10},~{r11},~{r12},~{r13},~{r14},~{r15}"() nounwind
-  %result = tail call anyregcc i64 (i32, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.i64(i32 13, i32 15, i8* inttoptr (i64 0 to i8*), i32 2, i64 %p1, i64 %p2, i64 %p3, i64 %p4)
+  %result = tail call anyregcc i64 (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.i64(i64 13, i32 15, i8* inttoptr (i64 0 to i8*), i32 2, i64 %p1, i64 %p2, i64 %p3, i64 %p4)
   ret i64 %result
 }
 
-declare void @llvm.experimental.patchpoint.void(i32, i32, i8*, i32, ...)
-declare i64 @llvm.experimental.patchpoint.i64(i32, i32, i8*, i32, ...)
+declare void @llvm.experimental.patchpoint.void(i64, i32, i8*, i32, ...)
+declare i64 @llvm.experimental.patchpoint.i64(i64, i32, i8*, i32, ...)

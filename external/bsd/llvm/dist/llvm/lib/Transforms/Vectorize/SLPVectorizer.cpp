@@ -23,6 +23,7 @@
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
@@ -442,7 +443,7 @@ private:
 
   /// \returns whether the VectorizableTree is fully vectoriable and will
   /// be beneficial even the tree height is tiny.
-  bool isFullyVectorizableTinyTree(); 
+  bool isFullyVectorizableTinyTree();
 
   struct TreeEntry {
     TreeEntry() : Scalars(), VectorizedValue(0), LastScalarIndex(0),
@@ -521,7 +522,7 @@ private:
   /// Holds all of the instructions that we gathered.
   SetVector<Instruction *> GatherSeq;
   /// A list of blocks that we are going to CSE.
-  SmallSet<BasicBlock *, 8> CSEBlocks;
+  SetVector<BasicBlock *> CSEBlocks;
 
   /// Numbers instructions in different blocks.
   DenseMap<BasicBlock *, BlockNumbering> BlocksNumbers;
@@ -930,7 +931,7 @@ void BoUpSLP::buildTree_rec(ArrayRef<Value *> VL, unsigned Depth) {
       for (unsigned i = 0, e = VL.size() - 1; i < e; ++i)
         if (!isConsecutiveAccess(VL[i], VL[i + 1])) {
           newTreeEntry(VL, false);
-          DEBUG(dbgs() << "SLP: Non consecutive store.\n");
+          DEBUG(dbgs() << "SLP: Non-consecutive store.\n");
           return;
         }
 
@@ -1113,15 +1114,18 @@ int BoUpSLP::getTreeCost() {
     Cost += C;
   }
 
+  SmallSet<Value *, 16> ExtractCostCalculated;
   int ExtractCost = 0;
   for (UserList::iterator I = ExternalUses.begin(), E = ExternalUses.end();
        I != E; ++I) {
+    // We only add extract cost once for the same scalar.
+    if (!ExtractCostCalculated.insert(I->Scalar))
+      continue;
 
     VectorType *VecTy = VectorType::get(I->Scalar->getType(), BundleWidth);
     ExtractCost += TTI->getVectorInstrCost(Instruction::ExtractElement, VecTy,
                                            I->Lane);
   }
-
 
   DEBUG(dbgs() << "SLP: Total Cost " << Cost + ExtractCost<< ".\n");
   return  Cost + ExtractCost;

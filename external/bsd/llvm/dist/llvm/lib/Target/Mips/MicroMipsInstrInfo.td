@@ -45,6 +45,21 @@ class StoreLeftRightMM<string opstr, SDNode OpNode, RegisterOperand RO,
   let DecoderMethod = "DecodeMemMMImm12";
 }
 
+class LLBaseMM<string opstr, RegisterOperand RO> :
+  InstSE<(outs RO:$rt), (ins mem_mm_12:$addr),
+         !strconcat(opstr, "\t$rt, $addr"), [], NoItinerary, FrmI> {
+  let DecoderMethod = "DecodeMem";
+  let mayLoad = 1;
+}
+
+class SCBaseMM<string opstr, RegisterOperand RO> :
+  InstSE<(outs RO:$dst), (ins RO:$rt, mem_mm_12:$addr),
+         !strconcat(opstr, "\t$rt, $addr"), [], NoItinerary, FrmI> {
+  let DecoderMethod = "DecodeMem";
+  let mayStore = 1;
+  let Constraints = "$rt = $dst";
+}
+
 let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
   /// Arithmetic Instructions (ALU Immediate)
   def ADDiu_MM : MMRel, ArithLogicI<"addiu", simm16, GPR32Opnd>,
@@ -62,6 +77,9 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
   def XORi_MM  : MMRel, ArithLogicI<"xori", uimm16, GPR32Opnd>,
                  ADDI_FM_MM<0x1c>;
   def LUi_MM   : MMRel, LoadUpper<"lui", GPR32Opnd, uimm16>, LUI_FM_MM;
+
+  def LEA_ADDiu_MM : MMRel, EffectiveAddress<"addiu", GPR32Opnd>,
+                     LW_FM_MM<0xc>;
 
   /// Arithmetic Instructions (3-Operand, R-Type)
   def ADDu_MM  : MMRel, ArithLogicR<"addu", GPR32Opnd>, ADD_FM_MM<0, 0x150>;
@@ -175,13 +193,9 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
     def J_MM        : MMRel, JumpFJ<jmptarget_mm, "j", br, bb, "j">,
                       J_FM_MM<0x35>;
     def JAL_MM      : MMRel, JumpLink<"jal", calltarget_mm>, J_FM_MM<0x3d>;
-    def TAILCALL_MM : MMRel, JumpFJ<calltarget_mm, "j", MipsTailCall, imm,
-                                    "tcall">, J_FM_MM<0x3d>, IsTailCall;
   }
   def JR_MM   : MMRel, IndirectBranch<"jr", GPR32Opnd>, JR_FM_MM<0x3c>;
   def JALR_MM : MMRel, JumpLinkReg<"jalr", GPR32Opnd>, JALR_FM_MM<0x03c>;
-  def TAILCALL_R_MM : MMRel, JumpFR<"tcallr", GPR32Opnd, MipsTailCall>,
-                      JR_FM_MM<0x3c>, IsTailCall;
   def RET_MM : MMRel, RetBase<"ret", GPR32Opnd>, JR_FM_MM<0x3c>;
 
   /// Branch Instructions
@@ -202,6 +216,16 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
   def BLTZAL_MM : MMRel, BGEZAL_FT<"bltzal", brtarget_mm, GPR32Opnd>,
                   BGEZAL_FM_MM<0x01>;
 
+  /// Control Instructions
+  def SYNC_MM    : MMRel, SYNC_FT<"sync">, SYNC_FM_MM;
+  def BREAK_MM   : MMRel, BRK_FT<"break">, BRK_FM_MM;
+  def SYSCALL_MM : MMRel, SYS_FT<"syscall">, SYS_FM_MM;
+  def WAIT_MM    : MMRel, WAIT_FT<"wait">, WAIT_FM_MM;
+  def ERET_MM    : MMRel, ER_FT<"eret">, ER_FM_MM<0x3cd>;
+  def DERET_MM   : MMRel, ER_FT<"deret">, ER_FM_MM<0x38d>;
+  def EI_MM      : MMRel, DEI_FT<"ei", GPR32Opnd>, EI_FM_MM<0x15d>;
+  def DI_MM      : MMRel, DEI_FT<"di", GPR32Opnd>, EI_FM_MM<0x11d>;
+
   /// Trap Instructions
   def TEQ_MM  : MMRel, TEQ_FT<"teq", GPR32Opnd>, TEQ_FM_MM<0x0>;
   def TGE_MM  : MMRel, TEQ_FT<"tge", GPR32Opnd>, TEQ_FM_MM<0x08>;
@@ -216,4 +240,8 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
   def TLTI_MM  : MMRel, TEQI_FT<"tlti", GPR32Opnd>, TEQI_FM_MM<0x08>;
   def TLTIU_MM : MMRel, TEQI_FT<"tltiu", GPR32Opnd>, TEQI_FM_MM<0x0a>;
   def TNEI_MM  : MMRel, TEQI_FT<"tnei", GPR32Opnd>, TEQI_FM_MM<0x0c>;
+
+  /// Load-linked, Store-conditional
+  def LL_MM : LLBaseMM<"ll", GPR32Opnd>, LL_FM_MM<0x3>;
+  def SC_MM : SCBaseMM<"sc", GPR32Opnd>, LL_FM_MM<0xb>;
 }

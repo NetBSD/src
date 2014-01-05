@@ -204,6 +204,7 @@ printInlineJT(const MachineInstr *MI, int opNum, raw_ostream &O,
 
 void XCoreAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
                                    raw_ostream &O) {
+  const DataLayout *DL = TM.getDataLayout();
   const MachineOperand &MO = MI->getOperand(opNum);
   switch (MO.getType()) {
   case MachineOperand::MO_Register:
@@ -218,15 +219,8 @@ void XCoreAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
   case MachineOperand::MO_GlobalAddress:
     O << *getSymbol(MO.getGlobal());
     break;
-  case MachineOperand::MO_ExternalSymbol:
-    O << MO.getSymbolName();
-    break;
   case MachineOperand::MO_ConstantPoolIndex:
-    O << MAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber()
-      << '_' << MO.getIndex();
-    break;
-  case MachineOperand::MO_JumpTableIndex:
-    O << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
+    O << DL->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber()
       << '_' << MO.getIndex();
     break;
   case MachineOperand::MO_BlockAddress:

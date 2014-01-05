@@ -167,7 +167,8 @@ typedef enum {
     LLVMAddressSafety = 1ULL << 32,
     LLVMStackProtectStrongAttribute = 1ULL<<33,
     LLVMCold = 1ULL << 34,
-    LLVMOptimizeNone = 1ULL << 35
+    LLVMOptimizeNone = 1ULL << 35,
+    LLVMInAllocaAttribute = 1ULL << 36
     */
 } LLVMAttribute;
 
@@ -2663,7 +2664,9 @@ LLVMValueRef LLVMBuildIsNotNull(LLVMBuilderRef, LLVMValueRef Val,
                                 const char *Name);
 LLVMValueRef LLVMBuildPtrDiff(LLVMBuilderRef, LLVMValueRef LHS,
                               LLVMValueRef RHS, const char *Name);
-LLVMValueRef LLVMBuildAtomicRMW(LLVMBuilderRef B,LLVMAtomicRMWBinOp op,
+LLVMValueRef LLVMBuildFence(LLVMBuilderRef B, LLVMAtomicOrdering ordering,
+                            LLVMBool singleThread, const char *Name);
+LLVMValueRef LLVMBuildAtomicRMW(LLVMBuilderRef B, LLVMAtomicRMWBinOp op,
                                 LLVMValueRef PTR, LLVMValueRef Val,
                                 LLVMAtomicOrdering ordering,
                                 LLVMBool singleThread);
