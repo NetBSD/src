@@ -618,7 +618,10 @@ AcpiNsInitOneDevice (
     ACPI_DEBUG_EXEC (AcpiUtDisplayInitPathname (
         ACPI_TYPE_METHOD, DeviceNode, METHOD_NAME__INI));
 
+#if 0
+    // https://bugs.acpica.org/show_bug.cgi?id=1016
     ACPI_MEMSET (Info, 0, sizeof (ACPI_EVALUATE_INFO));
+#endif
     Info->PrefixNode = DeviceNode;
     Info->RelativePathname = __UNCONST(METHOD_NAME__INI);
     Info->Parameters = NULL;
