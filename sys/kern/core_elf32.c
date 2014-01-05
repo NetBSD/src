@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.43 2014/01/05 00:53:53 mrg Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.44 2014/01/05 09:13:18 dsl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.43 2014/01/05 00:53:53 mrg Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.44 2014/01/05 09:13:18 dsl Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_coredump.h"
@@ -116,7 +116,6 @@ ELFNAMEEND(coredump)(struct lwp *l, struct coredump_iostate *cookie)
 
 	struct note_state ns;
 	struct note_buf *nb;
-	struct note_buf *nb_next;
 
 	psections = NULL;
 
@@ -257,8 +256,8 @@ ELFNAMEEND(coredump)(struct lwp *l, struct coredump_iostate *cookie)
   out:
 	if (psections)
 		kmem_free(psections, psectionssize);
-	for (; (nb = ns.ns_first) != NULL; ns.ns_first = nb_next) {
-		nb_next = nb->nb_next;
+	while ((nb = ns.ns_first) != NULL) {
+		ns.ns_first = nb->nb_next;
 		kmem_free(nb, sizeof *nb);
 	}
 	return (error);
