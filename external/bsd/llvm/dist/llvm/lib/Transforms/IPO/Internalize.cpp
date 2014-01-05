@@ -63,7 +63,7 @@ namespace {
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
-      AU.addPreserved<CallGraph>();
+      AU.addPreserved<CallGraphWrapperPass>();
     }
   };
 } // end anonymous namespace
@@ -115,6 +115,10 @@ static bool shouldInternalize(const GlobalValue &GV,
   if (GV.hasAvailableExternallyLinkage())
     return false;
 
+  // Assume that dllexported symbols are referenced elsewhere
+  if (GV.hasDLLExportLinkage())
+    return false;
+
   // Already has internal linkage
   if (GV.hasLocalLinkage())
     return false;
@@ -127,7 +131,8 @@ static bool shouldInternalize(const GlobalValue &GV,
 }
 
 bool InternalizePass::runOnModule(Module &M) {
-  CallGraph *CG = getAnalysisIfAvailable<CallGraph>();
+  CallGraphWrapperPass *CGPass = getAnalysisIfAvailable<CallGraphWrapperPass>();
+  CallGraph *CG = CGPass ? &CGPass->getCallGraph() : 0;
   CallGraphNode *ExternalNode = CG ? CG->getExternalCallingNode() : 0;
   bool Changed = false;
 

@@ -1,3 +1,4 @@
+
 //===-- Mips16InstrInfo.cpp - Mips16 Instruction Information --------------===//
 //
 //                     The LLVM Compiler Infrastructure
@@ -27,13 +28,6 @@
 #include <cctype>
 
 using namespace llvm;
-
-static cl::opt<bool> NeverUseSaveRestore(
-  "mips16-never-use-save-restore",
-  cl::init(false),
-  cl::desc("For testing ability to adjust stack pointer "
-           "without save/restore instruction"),
-  cl::Hidden);
 
 
 Mips16InstrInfo::Mips16InstrInfo(MipsTargetMachine &tm)
@@ -175,45 +169,56 @@ unsigned Mips16InstrInfo::getOppositeBranchOpc(unsigned Opc) const {
   return 0;
 }
 
+static void addSaveRestoreRegs(MachineInstrBuilder &MIB,
+                          const std::vector<CalleeSavedInfo> &CSI, unsigned Flags=0) {
+  for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
+    // Add the callee-saved register as live-in. Do not add if the register is
+    // RA and return address is taken, because it has already been added in
+    // method MipsTargetLowering::LowerRETURNADDR.
+    // It's killed at the spill, unless the register is RA and return address
+    // is taken.
+    unsigned Reg = CSI[e-i-1].getReg();
+    switch (Reg) {
+    case Mips::RA:
+    case Mips::S0:
+    case Mips::S1:
+      MIB.addReg(Reg, Flags);
+      break;
+    case Mips::S2:
+      break;
+    default:
+      llvm_unreachable("unexpected mips16 callee saved register");
+
+    }
+  }
+}
 // Adjust SP by FrameSize bytes. Save RA, S0, S1
 void Mips16InstrInfo::makeFrame(unsigned SP, int64_t FrameSize,
                     MachineBasicBlock &MBB,
                     MachineBasicBlock::iterator I) const {
   DebugLoc DL = I != MBB.end() ? I->getDebugLoc() : DebugLoc();
-  if (!NeverUseSaveRestore) {
-    if (isUInt<11>(FrameSize))
-      BuildMI(MBB, I, DL, get(Mips::SaveRaF16)).addImm(FrameSize);
-    else {
-      int Base = 2040; // should create template function like isUInt that
-                       // returns largest possible n bit unsigned integer
-      int64_t Remainder = FrameSize - Base;
-      BuildMI(MBB, I, DL, get(Mips::SaveRaF16)). addImm(Base);
-      if (isInt<16>(-Remainder))
-        BuildAddiuSpImm(MBB, I, -Remainder);
-      else
-        adjustStackPtrBig(SP, -Remainder, MBB, I, Mips::V0, Mips::V1);
-    }
-
-  }
+  MachineFunction &MF = *MBB.getParent();
+  MachineFrameInfo *MFI    = MF.getFrameInfo();
+  const BitVector Reserved = RI.getReservedRegs(MF);
+  bool SaveS2 = Reserved[Mips::S2];
+  MachineInstrBuilder MIB;
+  unsigned Opc = ((FrameSize <= 128) && !SaveS2)? Mips::Save16:Mips::SaveX16;
+  MIB = BuildMI(MBB, I, DL, get(Opc));
+  const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
+  addSaveRestoreRegs(MIB, CSI);
+  if (SaveS2)
+    MIB.addReg(Mips::S2);
+  if (isUInt<11>(FrameSize))
+    MIB.addImm(FrameSize);
   else {
-    //
-    // sw ra, -4[sp]
-    // sw s1, -8[sp]
-    // sw s0, -12[sp]
-
-    MachineInstrBuilder MIB1 = BuildMI(MBB, I, DL, get(Mips::SwRxSpImmX16),
-                                       Mips::RA);
-    MIB1.addReg(Mips::SP);
-    MIB1.addImm(-4);
-    MachineInstrBuilder MIB2 = BuildMI(MBB, I, DL, get(Mips::SwRxSpImmX16),
-                                       Mips::S1);
-    MIB2.addReg(Mips::SP);
-    MIB2.addImm(-8);
-    MachineInstrBuilder MIB3 = BuildMI(MBB, I, DL, get(Mips::SwRxSpImmX16),
-                                       Mips::S0);
-    MIB3.addReg(Mips::SP);
-    MIB3.addImm(-12);
-    adjustStackPtrBig(SP, -FrameSize, MBB, I, Mips::V0, Mips::V1);
+    int Base = 2040; // should create template function like isUInt that
+                     // returns largest possible n bit unsigned integer
+    int64_t Remainder = FrameSize - Base;
+    MIB.addImm(Base);
+    if (isInt<16>(-Remainder))
+      BuildAddiuSpImm(MBB, I, -Remainder);
+    else
+      adjustStackPtrBig(SP, -Remainder, MBB, I, Mips::V0, Mips::V1);
   }
 }
 
@@ -222,42 +227,31 @@ void Mips16InstrInfo::restoreFrame(unsigned SP, int64_t FrameSize,
                                    MachineBasicBlock &MBB,
                                    MachineBasicBlock::iterator I) const {
   DebugLoc DL = I != MBB.end() ? I->getDebugLoc() : DebugLoc();
-  if (!NeverUseSaveRestore) {
-    if (isUInt<11>(FrameSize))
-      BuildMI(MBB, I, DL, get(Mips::RestoreRaF16)).addImm(FrameSize);
-    else {
-      int Base = 2040; // should create template function like isUInt that
-                       // returns largest possible n bit unsigned integer
-      int64_t Remainder = FrameSize - Base;
-      if (isInt<16>(Remainder))
-        BuildAddiuSpImm(MBB, I, Remainder);
-      else
-        adjustStackPtrBig(SP, Remainder, MBB, I, Mips::A0, Mips::A1);
-      BuildMI(MBB, I, DL, get(Mips::RestoreRaF16)). addImm(Base);
-    }
-  }
-  else {
-    adjustStackPtrBig(SP, FrameSize, MBB, I, Mips::A0, Mips::A1);
-    // lw ra, -4[sp]
-    // lw s1, -8[sp]
-    // lw s0, -12[sp]
-    MachineInstrBuilder MIB1 = BuildMI(MBB, I, DL, get(Mips::LwRxSpImmX16),
-                                       Mips::A0);
-    MIB1.addReg(Mips::SP);
-    MIB1.addImm(-4);
-    MachineInstrBuilder MIB0 = BuildMI(MBB, I, DL, get(Mips::Move32R16),
-                                       Mips::RA);
-     MIB0.addReg(Mips::A0);
-    MachineInstrBuilder MIB2 = BuildMI(MBB, I, DL, get(Mips::LwRxSpImmX16),
-                                       Mips::S1);
-    MIB2.addReg(Mips::SP);
-    MIB2.addImm(-8);
-    MachineInstrBuilder MIB3 = BuildMI(MBB, I, DL, get(Mips::LwRxSpImmX16),
-                                       Mips::S0);
-    MIB3.addReg(Mips::SP);
-    MIB3.addImm(-12);
-  }
+  MachineFunction *MF = MBB.getParent();
+  MachineFrameInfo *MFI    = MF->getFrameInfo();
+  const BitVector Reserved = RI.getReservedRegs(*MF);
+  bool SaveS2 = Reserved[Mips::S2];
+  MachineInstrBuilder MIB;
+  unsigned Opc = ((FrameSize <= 128) && !SaveS2)?
+    Mips::Restore16:Mips::RestoreX16;
 
+  if (!isUInt<11>(FrameSize)) {
+    unsigned Base = 2040;
+    int64_t Remainder = FrameSize - Base;
+    FrameSize = Base; // should create template function like isUInt that
+                     // returns largest possible n bit unsigned integer
+
+    if (isInt<16>(Remainder))
+      BuildAddiuSpImm(MBB, I, Remainder);
+    else
+      adjustStackPtrBig(SP, Remainder, MBB, I, Mips::A0, Mips::A1);
+  }
+  MIB = BuildMI(MBB, I, DL, get(Opc));
+  const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
+  addSaveRestoreRegs(MIB, CSI, RegState::Define);
+  if (SaveS2)
+    MIB.addReg(Mips::S2, RegState::Define);
+  MIB.addImm(FrameSize);
 }
 
 // Adjust SP by Amount bytes where bytes can be up to 32bit number.
@@ -281,7 +275,7 @@ void Mips16InstrInfo::adjustStackPtrBig(unsigned SP, int64_t Amount,
   //
   //
   MachineInstrBuilder MIB1 = BuildMI(MBB, I, DL, get(Mips::LwConstant32), Reg1);
-  MIB1.addImm(Amount);
+  MIB1.addImm(Amount).addImm(-1);
   MachineInstrBuilder MIB2 = BuildMI(MBB, I, DL, get(Mips::MoveR3216), Reg2);
   MIB2.addReg(Mips::SP, RegState::Kill);
   MachineInstrBuilder MIB3 = BuildMI(MBB, I, DL, get(Mips::AdduRxRyRz16), Reg1);
@@ -393,7 +387,7 @@ Mips16InstrInfo::loadImmediate(unsigned FrameReg,
   }
   else
     Available.reset(Reg);
-  BuildMI(MBB, II, DL, get(Mips::LwConstant32), Reg).addImm(Imm);
+  BuildMI(MBB, II, DL, get(Mips::LwConstant32), Reg).addImm(Imm).addImm(-1);
   NewImm = 0;
   if (FrameReg == Mips::SP) {
     SpReg = Available.find_first();
@@ -423,22 +417,6 @@ Mips16InstrInfo::loadImmediate(unsigned FrameReg,
     if (SecondRegSaved)
       copyPhysReg(MBB, II, DL, SecondRegSaved, SecondRegSavedTo, true);
   }
-  return Reg;
-}
-
-/// This function generates the sequence of instructions needed to get the
-/// result of adding register REG and immediate IMM.
-unsigned
-Mips16InstrInfo::basicLoadImmediate(
-  unsigned FrameReg,
-  int64_t Imm, MachineBasicBlock &MBB,
-  MachineBasicBlock::iterator II, DebugLoc DL,
-  unsigned &NewImm) const {
-  const TargetRegisterClass *RC = &Mips::CPU16RegsRegClass;
-  MachineRegisterInfo &RegInfo = MBB.getParent()->getRegInfo();
-  unsigned Reg = RegInfo.createVirtualRegister(RC);
-  BuildMI(MBB, II, DL, get(Mips::LwConstant32), Reg).addImm(Imm);
-  NewImm = 0;
   return Reg;
 }
 

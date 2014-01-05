@@ -43,12 +43,27 @@ public:
                            unsigned DestReg, unsigned SrcReg,
                            bool KillSrc) const;
 
+  void storeRegToStackSlot(MachineBasicBlock &MBB,
+                           MachineBasicBlock::iterator MI,
+                           unsigned SrcReg, bool isKill, int FrameIndex,
+                           const TargetRegisterClass *RC,
+                           const TargetRegisterInfo *TRI) const;
+
+  void loadRegFromStackSlot(MachineBasicBlock &MBB,
+                            MachineBasicBlock::iterator MI,
+                            unsigned DestReg, int FrameIndex,
+                            const TargetRegisterClass *RC,
+                            const TargetRegisterInfo *TRI) const;
+
   unsigned commuteOpcode(unsigned Opcode) const;
 
   virtual MachineInstr *commuteInstruction(MachineInstr *MI,
                                            bool NewMI=false) const;
 
-  virtual unsigned getIEQOpcode() const { assert(!"Implement"); return 0;}
+  virtual unsigned getIEQOpcode() const {
+    llvm_unreachable("Unimplemented");
+  }
+
   MachineInstr *buildMovInstr(MachineBasicBlock *MBB,
                               MachineBasicBlock::iterator I,
                               unsigned DstReg, unsigned SrcReg) const;

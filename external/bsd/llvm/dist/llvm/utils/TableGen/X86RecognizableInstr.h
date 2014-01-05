@@ -92,9 +92,6 @@ private:
   
   /// Indicates whether the instruction is SSE
   bool IsSSE;
-  /// Indicates whether the instruction has FR operands - MOVs with FR operands
-  /// are typically ignored
-  bool HasFROperands;
   /// Indicates whether the instruction should be emitted into the decode
   /// tables; regardless, it will be emitted into the instruction info table
   bool ShouldBeEmitted;
@@ -232,9 +229,7 @@ private:
   /// emitInstructionSpecifier - Loads the instruction specifier for the current
   ///   instruction into a DisassemblerTables.
   ///
-  /// \param tables The DisassemblerTables to populate with the specifier for
-  ///               the current instruction.
-  void emitInstructionSpecifier(DisassemblerTables &tables);
+  void emitInstructionSpecifier();
   
   /// emitDecodePath - Populates the proper fields in the decode tables
   ///   corresponding to the decode paths for this instruction.

@@ -14,13 +14,16 @@
 //===----------------------------------------------------------------------===//
 
 #include "ARMBuildAttrs.h"
+#include "ARMArchName.h"
 #include "ARMFPUName.h"
 #include "ARMRegisterInfo.h"
 #include "ARMUnwindOp.h"
 #include "ARMUnwindOpAsm.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCAsmBackend.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCContext.h"
@@ -61,6 +64,45 @@ static const char *GetFPUName(unsigned ID) {
   return NULL;
 }
 
+static const char *GetArchName(unsigned ID) {
+  switch (ID) {
+  default:
+    llvm_unreachable("Unknown ARCH kind");
+    break;
+#define ARM_ARCH_NAME(NAME, ID, DEFAULT_CPU_NAME, DEFAULT_CPU_ARCH) \
+  case ARM::ID: return NAME;
+#define ARM_ARCH_ALIAS(NAME, ID) /* empty */
+#include "ARMArchName.def"
+  }
+  return NULL;
+}
+
+static const char *GetArchDefaultCPUName(unsigned ID) {
+  switch (ID) {
+  default:
+    llvm_unreachable("Unknown ARCH kind");
+    break;
+#define ARM_ARCH_NAME(NAME, ID, DEFAULT_CPU_NAME, DEFAULT_CPU_ARCH) \
+  case ARM::ID: return DEFAULT_CPU_NAME;
+#define ARM_ARCH_ALIAS(NAME, ID) /* empty */
+#include "ARMArchName.def"
+  }
+  return NULL;
+}
+
+static unsigned GetArchDefaultCPUArch(unsigned ID) {
+  switch (ID) {
+  default:
+    llvm_unreachable("Unknown ARCH kind");
+    break;
+#define ARM_ARCH_NAME(NAME, ID, DEFAULT_CPU_NAME, DEFAULT_CPU_ARCH) \
+  case ARM::ID: return ARMBuildAttrs::DEFAULT_CPU_ARCH;
+#define ARM_ARCH_ALIAS(NAME, ID) /* empty */
+#include "ARMArchName.def"
+  }
+  return 0;
+}
+
 namespace {
 
 class ARMELFStreamer;
@@ -82,7 +124,9 @@ class ARMTargetAsmStreamer : public ARMTargetStreamer {
   virtual void switchVendor(StringRef Vendor);
   virtual void emitAttribute(unsigned Attribute, unsigned Value);
   virtual void emitTextAttribute(unsigned Attribute, StringRef String);
+  virtual void emitArch(unsigned Arch);
   virtual void emitFPU(unsigned FPU);
+  virtual void emitInst(uint32_t Inst, char Suffix = '\0');
   virtual void finishAttributeSection();
 
 public:
@@ -143,10 +187,20 @@ void ARMTargetAsmStreamer::emitTextAttribute(unsigned Attribute,
     break;
   }
 }
+void ARMTargetAsmStreamer::emitArch(unsigned Arch) {
+  OS << "\t.arch\t" << GetArchName(Arch) << "\n";
+}
 void ARMTargetAsmStreamer::emitFPU(unsigned FPU) {
   OS << "\t.fpu\t" << GetFPUName(FPU) << "\n";
 }
 void ARMTargetAsmStreamer::finishAttributeSection() {
+}
+
+void ARMTargetAsmStreamer::emitInst(uint32_t Inst, char Suffix) {
+  OS << "\t.inst";
+  if (Suffix)
+    OS << "." << Suffix;
+  OS << "\t0x" << utohexstr(Inst) << "\n";
 }
 
 class ARMTargetELFStreamer : public ARMTargetStreamer {
@@ -171,6 +225,7 @@ private:
 
   StringRef CurrentVendor;
   unsigned FPU;
+  unsigned Arch;
   SmallVector<AttributeItem, 64> Contents;
 
   const MCSection *AttributeSection;
@@ -233,6 +288,7 @@ private:
     Contents.push_back(Item);
   }
 
+  void emitArchDefaultAttributes();
   void emitFPUDefaultAttributes();
 
   ARMELFStreamer &getStreamer();
@@ -250,7 +306,9 @@ private:
   virtual void switchVendor(StringRef Vendor);
   virtual void emitAttribute(unsigned Attribute, unsigned Value);
   virtual void emitTextAttribute(unsigned Attribute, StringRef String);
+  virtual void emitArch(unsigned Arch);
   virtual void emitFPU(unsigned FPU);
+  virtual void emitInst(uint32_t Inst, char Suffix = '\0');
   virtual void finishAttributeSection();
 
   size_t calculateContentSize() const;
@@ -258,7 +316,7 @@ private:
 public:
   ARMTargetELFStreamer()
     : ARMTargetStreamer(), CurrentVendor("aeabi"), FPU(ARM::INVALID_FPU),
-      AttributeSection(0) {
+      Arch(ARM::INVALID_ARCH), AttributeSection(0) {
   }
 };
 
@@ -321,6 +379,44 @@ public:
       EmitARMMappingSymbol();
 
     MCELFStreamer::EmitInstruction(Inst);
+  }
+
+  virtual void emitInst(uint32_t Inst, char Suffix) {
+    unsigned Size;
+    char Buffer[4];
+    const bool LittleEndian = getContext().getAsmInfo()->isLittleEndian();
+
+    switch (Suffix) {
+    case '\0':
+      Size = 4;
+
+      assert(!IsThumb);
+      EmitARMMappingSymbol();
+      for (unsigned II = 0, IE = Size; II != IE; II++) {
+        const unsigned I = LittleEndian ? (Size - II - 1) : II;
+        Buffer[Size - II - 1] = uint8_t(Inst >> I * CHAR_BIT);
+      }
+
+      break;
+    case 'n':
+    case 'w':
+      Size = (Suffix == 'n' ? 2 : 4);
+
+      assert(IsThumb);
+      EmitThumbMappingSymbol();
+      for (unsigned II = 0, IE = Size; II != IE; II = II + 2) {
+        const unsigned I0 = LittleEndian ? II + 0 : (Size - II - 1);
+        const unsigned I1 = LittleEndian ? II + 1 : (Size - II - 2);
+        Buffer[Size - II - 2] = uint8_t(Inst >> I0 * CHAR_BIT);
+        Buffer[Size - II - 1] = uint8_t(Inst >> I1 * CHAR_BIT);
+      }
+
+      break;
+    default:
+      llvm_unreachable("Invalid Suffix");
+    }
+
+    MCELFStreamer::EmitBytes(StringRef(Buffer, Size));
   }
 
   /// This is one of the functions used to emit data into an ELF section, so the
@@ -491,6 +587,96 @@ void ARMTargetELFStreamer::emitTextAttribute(unsigned Attribute,
                                              StringRef Value) {
   setAttributeItem(Attribute, Value, /* OverwriteExisting= */ true);
 }
+void ARMTargetELFStreamer::emitArch(unsigned Value) {
+  Arch = Value;
+}
+void ARMTargetELFStreamer::emitArchDefaultAttributes() {
+  using namespace ARMBuildAttrs;
+  setAttributeItem(CPU_name, GetArchDefaultCPUName(Arch), false);
+  setAttributeItem(CPU_arch, GetArchDefaultCPUArch(Arch), false);
+
+  switch (Arch) {
+  case ARM::ARMV2:
+  case ARM::ARMV2A:
+  case ARM::ARMV3:
+  case ARM::ARMV3M:
+  case ARM::ARMV4:
+  case ARM::ARMV5:
+    setAttributeItem(ARM_ISA_use, Allowed, false);
+    break;
+
+  case ARM::ARMV4T:
+  case ARM::ARMV5T:
+  case ARM::ARMV5TE:
+  case ARM::ARMV6:
+  case ARM::ARMV6J:
+    setAttributeItem(ARM_ISA_use, Allowed, false);
+    setAttributeItem(THUMB_ISA_use, Allowed, false);
+    break;
+
+  case ARM::ARMV6T2:
+    setAttributeItem(ARM_ISA_use, Allowed, false);
+    setAttributeItem(THUMB_ISA_use, AllowThumb32, false);
+    break;
+
+  case ARM::ARMV6Z:
+  case ARM::ARMV6ZK:
+    setAttributeItem(ARM_ISA_use, Allowed, false);
+    setAttributeItem(THUMB_ISA_use, Allowed, false);
+    setAttributeItem(Virtualization_use, AllowTZ, false);
+    break;
+
+  case ARM::ARMV6M:
+    setAttributeItem(CPU_arch_profile, MicroControllerProfile, false);
+    setAttributeItem(THUMB_ISA_use, Allowed, false);
+    break;
+
+  case ARM::ARMV7:
+    setAttributeItem(THUMB_ISA_use, AllowThumb32, false);
+    break;
+
+  case ARM::ARMV7A:
+    setAttributeItem(CPU_arch_profile, ApplicationProfile, false);
+    setAttributeItem(ARM_ISA_use, Allowed, false);
+    setAttributeItem(THUMB_ISA_use, AllowThumb32, false);
+    break;
+
+  case ARM::ARMV7R:
+    setAttributeItem(CPU_arch_profile, RealTimeProfile, false);
+    setAttributeItem(ARM_ISA_use, Allowed, false);
+    setAttributeItem(THUMB_ISA_use, AllowThumb32, false);
+    break;
+
+  case ARM::ARMV7M:
+    setAttributeItem(CPU_arch_profile, MicroControllerProfile, false);
+    setAttributeItem(THUMB_ISA_use, AllowThumb32, false);
+    break;
+
+  case ARM::ARMV8A:
+    setAttributeItem(CPU_arch_profile, ApplicationProfile, false);
+    setAttributeItem(ARM_ISA_use, Allowed, false);
+    setAttributeItem(THUMB_ISA_use, AllowThumb32, false);
+    setAttributeItem(MPextension_use, Allowed, false);
+    setAttributeItem(Virtualization_use, AllowTZVirtualization, false);
+    break;
+
+  case ARM::IWMMXT:
+    setAttributeItem(ARM_ISA_use, Allowed, false);
+    setAttributeItem(THUMB_ISA_use, Allowed, false);
+    setAttributeItem(WMMX_arch, AllowWMMXv1, false);
+    break;
+
+  case ARM::IWMMXT2:
+    setAttributeItem(ARM_ISA_use, Allowed, false);
+    setAttributeItem(THUMB_ISA_use, Allowed, false);
+    setAttributeItem(WMMX_arch, AllowWMMXv2, false);
+    break;
+
+  default:
+    report_fatal_error("Unknown Arch: " + Twine(Arch));
+    break;
+  }
+}
 void ARMTargetELFStreamer::emitFPU(unsigned Value) {
   FPU = Value;
 }
@@ -498,43 +684,43 @@ void ARMTargetELFStreamer::emitFPUDefaultAttributes() {
   switch (FPU) {
   case ARM::VFP:
   case ARM::VFPV2:
-    setAttributeItem(ARMBuildAttrs::VFP_arch,
+    setAttributeItem(ARMBuildAttrs::FP_arch,
                      ARMBuildAttrs::AllowFPv2,
                      /* OverwriteExisting= */ false);
     break;
 
   case ARM::VFPV3:
-    setAttributeItem(ARMBuildAttrs::VFP_arch,
+    setAttributeItem(ARMBuildAttrs::FP_arch,
                      ARMBuildAttrs::AllowFPv3A,
                      /* OverwriteExisting= */ false);
     break;
 
   case ARM::VFPV3_D16:
-    setAttributeItem(ARMBuildAttrs::VFP_arch,
+    setAttributeItem(ARMBuildAttrs::FP_arch,
                      ARMBuildAttrs::AllowFPv3B,
                      /* OverwriteExisting= */ false);
     break;
 
   case ARM::VFPV4:
-    setAttributeItem(ARMBuildAttrs::VFP_arch,
+    setAttributeItem(ARMBuildAttrs::FP_arch,
                      ARMBuildAttrs::AllowFPv4A,
                      /* OverwriteExisting= */ false);
     break;
 
   case ARM::VFPV4_D16:
-    setAttributeItem(ARMBuildAttrs::VFP_arch,
+    setAttributeItem(ARMBuildAttrs::FP_arch,
                      ARMBuildAttrs::AllowFPv4B,
                      /* OverwriteExisting= */ false);
     break;
 
   case ARM::FP_ARMV8:
-    setAttributeItem(ARMBuildAttrs::VFP_arch,
+    setAttributeItem(ARMBuildAttrs::FP_arch,
                      ARMBuildAttrs::AllowFPARMv8A,
                      /* OverwriteExisting= */ false);
     break;
 
   case ARM::NEON:
-    setAttributeItem(ARMBuildAttrs::VFP_arch,
+    setAttributeItem(ARMBuildAttrs::FP_arch,
                      ARMBuildAttrs::AllowFPv3A,
                      /* OverwriteExisting= */ false);
     setAttributeItem(ARMBuildAttrs::Advanced_SIMD_arch,
@@ -543,7 +729,7 @@ void ARMTargetELFStreamer::emitFPUDefaultAttributes() {
     break;
 
   case ARM::NEON_VFPV4:
-    setAttributeItem(ARMBuildAttrs::VFP_arch,
+    setAttributeItem(ARMBuildAttrs::FP_arch,
                      ARMBuildAttrs::AllowFPv4A,
                      /* OverwriteExisting= */ false);
     setAttributeItem(ARMBuildAttrs::Advanced_SIMD_arch,
@@ -553,12 +739,15 @@ void ARMTargetELFStreamer::emitFPUDefaultAttributes() {
 
   case ARM::NEON_FP_ARMV8:
   case ARM::CRYPTO_NEON_FP_ARMV8:
-    setAttributeItem(ARMBuildAttrs::VFP_arch,
+    setAttributeItem(ARMBuildAttrs::FP_arch,
                      ARMBuildAttrs::AllowFPARMv8A,
                      /* OverwriteExisting= */ false);
     setAttributeItem(ARMBuildAttrs::Advanced_SIMD_arch,
                      ARMBuildAttrs::AllowNeonARMv8,
                      /* OverwriteExisting= */ false);
+    break;
+
+  case ARM::SOFTVFP:
     break;
 
   default:
@@ -596,6 +785,9 @@ void ARMTargetELFStreamer::finishAttributeSection() {
 
   if (FPU != ARM::INVALID_FPU)
     emitFPUDefaultAttributes();
+
+  if (Arch != ARM::INVALID_ARCH)
+    emitArchDefaultAttributes();
 
   if (Contents.empty())
     return;
@@ -653,6 +845,9 @@ void ARMTargetELFStreamer::finishAttributeSection() {
 
   Contents.clear();
   FPU = ARM::INVALID_FPU;
+}
+void ARMTargetELFStreamer::emitInst(uint32_t Inst, char Suffix) {
+  getStreamer().emitInst(Inst, Suffix);
 }
 
 void ARMELFStreamer::FinishImpl() {
