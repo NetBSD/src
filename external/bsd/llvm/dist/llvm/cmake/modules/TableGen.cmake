@@ -4,7 +4,7 @@
 
 macro(tablegen project ofn)
   file(GLOB local_tds "*.td")
-  file(GLOB_RECURSE global_tds "${LLVM_MAIN_SRC_DIR}/include/llvm/*.td")
+  file(GLOB_RECURSE global_tds "${LLVM_MAIN_INCLUDE_DIR}/llvm/*.td")
 
   if (IS_ABSOLUTE ${LLVM_TARGET_DEFINITIONS})
     set(LLVM_TARGET_DEFINITIONS_ABSOLUTE ${LLVM_TARGET_DEFINITIONS})
@@ -45,7 +45,7 @@ macro(tablegen project ofn)
     PROPERTIES GENERATED 1)
 endmacro(tablegen)
 
-function(add_public_tablegen_target target)
+macro(add_public_tablegen_target target)
   # Creates a target for publicly exporting tablegen dependencies.
   if( TABLEGEN_OUTPUT )
     add_custom_target(${target}
@@ -54,8 +54,9 @@ function(add_public_tablegen_target target)
       add_dependencies(${target} ${LLVM_COMMON_DEPENDS})
     endif ()
     set_target_properties(${target} PROPERTIES FOLDER "Tablegenning")
+    list(APPEND LLVM_COMMON_DEPENDS ${target} intrinsics_gen)
   endif( TABLEGEN_OUTPUT )
-endfunction()
+endmacro()
 
 if(CMAKE_CROSSCOMPILING)
   set(CX_NATIVE_TG_DIR "${CMAKE_BINARY_DIR}/native")
@@ -78,22 +79,10 @@ if(CMAKE_CROSSCOMPILING)
 endif()
 
 macro(add_tablegen target project)
-  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${LLVM_TOOLS_BINARY_DIR})
-
   set(${target}_OLD_LLVM_LINK_COMPONENTS ${LLVM_LINK_COMPONENTS})
   set(LLVM_LINK_COMPONENTS ${LLVM_LINK_COMPONENTS} TableGen)
   add_llvm_utility(${target} ${ARGN})
   set(LLVM_LINK_COMPONENTS ${${target}_OLD_LLVM_LINK_COMPONENTS})
-
-  # For Xcode builds, symlink bin/<target> to bin/<Config>/<target> so that
-  # a separately-configured Clang project can still find llvm-tblgen.
-  if (XCODE)
-    add_custom_target(${target}-top ALL
-      ${CMAKE_COMMAND} -E create_symlink 
-        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_CFG_INTDIR}/${target}${CMAKE_EXECUTABLE_SUFFIX}
-        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${target}${CMAKE_EXECUTABLE_SUFFIX}
-      DEPENDS ${target})
-  endif ()
 
   set(${project}_TABLEGEN "${target}" CACHE
       STRING "Native TableGen executable. Saves building one when cross-compiling.")

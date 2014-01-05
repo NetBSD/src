@@ -36,6 +36,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/polymorphic_ptr.h"
 #include "llvm/Support/type_traits.h"
 #include "llvm/IR/Function.h"
@@ -48,317 +49,595 @@ namespace llvm {
 class Module;
 class Function;
 
+/// \brief An abstract set of preserved analyses following a transformation pass
+/// run.
+///
+/// When a transformation pass is run, it can return a set of analyses whose
+/// results were preserved by that transformation. The default set is "none",
+/// and preserving analyses must be done explicitly.
+///
+/// There is also an explicit all state which can be used (for example) when
+/// the IR is not mutated at all.
+class PreservedAnalyses {
+public:
+  /// \brief Convenience factory function for the empty preserved set.
+  static PreservedAnalyses none() { return PreservedAnalyses(); }
+
+  /// \brief Construct a special preserved set that preserves all passes.
+  static PreservedAnalyses all() {
+    PreservedAnalyses PA;
+    PA.PreservedPassIDs.insert((void *)AllPassesID);
+    return PA;
+  }
+
+  PreservedAnalyses &operator=(PreservedAnalyses Arg) {
+    swap(Arg);
+    return *this;
+  }
+
+  void swap(PreservedAnalyses &Arg) {
+    PreservedPassIDs.swap(Arg.PreservedPassIDs);
+  }
+
+  /// \brief Mark a particular pass as preserved, adding it to the set.
+  template <typename PassT> void preserve() {
+    if (!areAllPreserved())
+      PreservedPassIDs.insert(PassT::ID());
+  }
+
+  /// \brief Intersect this set with another in place.
+  ///
+  /// This is a mutating operation on this preserved set, removing all
+  /// preserved passes which are not also preserved in the argument.
+  void intersect(const PreservedAnalyses &Arg) {
+    if (Arg.areAllPreserved())
+      return;
+    if (areAllPreserved()) {
+      PreservedPassIDs = Arg.PreservedPassIDs;
+      return;
+    }
+    for (SmallPtrSet<void *, 2>::const_iterator I = PreservedPassIDs.begin(),
+                                                E = PreservedPassIDs.end();
+         I != E; ++I)
+      if (!Arg.PreservedPassIDs.count(*I))
+        PreservedPassIDs.erase(*I);
+  }
+
+#if LLVM_HAS_RVALUE_REFERENCES
+  /// \brief Intersect this set with a temporary other set in place.
+  ///
+  /// This is a mutating operation on this preserved set, removing all
+  /// preserved passes which are not also preserved in the argument.
+  void intersect(PreservedAnalyses &&Arg) {
+    if (Arg.areAllPreserved())
+      return;
+    if (areAllPreserved()) {
+      PreservedPassIDs = std::move(Arg.PreservedPassIDs);
+      return;
+    }
+    for (SmallPtrSet<void *, 2>::const_iterator I = PreservedPassIDs.begin(),
+                                                E = PreservedPassIDs.end();
+         I != E; ++I)
+      if (!Arg.PreservedPassIDs.count(*I))
+        PreservedPassIDs.erase(*I);
+  }
+#endif
+
+  /// \brief Query whether a pass is marked as preserved by this set.
+  template <typename PassT> bool preserved() const {
+    return preserved(PassT::ID());
+  }
+
+  /// \brief Query whether an abstract pass ID is marked as preserved by this
+  /// set.
+  bool preserved(void *PassID) const {
+    return PreservedPassIDs.count((void *)AllPassesID) ||
+           PreservedPassIDs.count(PassID);
+  }
+
+private:
+  // Note that this must not be -1 or -2 as those are already used by the
+  // SmallPtrSet.
+  static const uintptr_t AllPassesID = (intptr_t)-3;
+
+  bool areAllPreserved() const { return PreservedPassIDs.count((void *)AllPassesID); }
+
+  SmallPtrSet<void *, 2> PreservedPassIDs;
+};
+
+inline void swap(PreservedAnalyses &LHS, PreservedAnalyses &RHS) {
+  LHS.swap(RHS);
+}
+
 /// \brief Implementation details of the pass manager interfaces.
 namespace detail {
 
 /// \brief Template for the abstract base class used to dispatch
 /// polymorphically over pass objects.
-template <typename T> struct PassConcept {
+template <typename IRUnitT, typename AnalysisManagerT> struct PassConcept {
   // Boiler plate necessary for the container of derived classes.
   virtual ~PassConcept() {}
   virtual PassConcept *clone() = 0;
 
   /// \brief The polymorphic API which runs the pass over a given IR entity.
-  virtual bool run(T Arg) = 0;
+  ///
+  /// Note that actual pass object can omit the analysis manager argument if
+  /// desired. Also that the analysis manager may be null if there is no
+  /// analysis manager in the pass pipeline.
+  virtual PreservedAnalyses run(IRUnitT IR, AnalysisManagerT *AM) = 0;
+};
+
+/// \brief SFINAE metafunction for computing whether \c PassT has a run method
+/// accepting an \c AnalysisManagerT.
+template <typename IRUnitT, typename AnalysisManagerT, typename PassT,
+          typename ResultT>
+class PassRunAcceptsAnalysisManager {
+  typedef char SmallType;
+  struct BigType { char a, b; };
+
+  template <typename T, ResultT (T::*)(IRUnitT, AnalysisManagerT *)>
+  struct Checker;
+
+  template <typename T> static SmallType f(Checker<T, &T::run> *);
+  template <typename T> static BigType f(...);
+
+public:
+  enum { Value = sizeof(f<PassT>(0)) == sizeof(SmallType) };
 };
 
 /// \brief A template wrapper used to implement the polymorphic API.
 ///
-/// Can be instantiated for any object which provides a \c run method
-/// accepting a \c T. It requires the pass to be a copyable
-/// object.
-template <typename T, typename PassT> struct PassModel : PassConcept<T> {
+/// Can be instantiated for any object which provides a \c run method accepting
+/// an \c IRUnitT. It requires the pass to be a copyable object. When the
+/// \c run method also accepts an \c AnalysisManagerT*, we pass it along.
+template <typename IRUnitT, typename AnalysisManagerT, typename PassT,
+          bool AcceptsAnalysisManager = PassRunAcceptsAnalysisManager<
+              IRUnitT, AnalysisManagerT, PassT, PreservedAnalyses>::Value>
+struct PassModel;
+
+/// \brief Specialization of \c PassModel for passes that accept an analyis
+/// manager.
+template <typename IRUnitT, typename AnalysisManagerT, typename PassT>
+struct PassModel<IRUnitT, AnalysisManagerT, PassT,
+                 true> : PassConcept<IRUnitT, AnalysisManagerT> {
   PassModel(PassT Pass) : Pass(llvm_move(Pass)) {}
   virtual PassModel *clone() { return new PassModel(Pass); }
-  virtual bool run(T Arg) { return Pass.run(Arg); }
+  virtual PreservedAnalyses run(IRUnitT IR, AnalysisManagerT *AM) {
+    return Pass.run(IR, AM);
+  }
+  PassT Pass;
+};
+
+/// \brief Specialization of \c PassModel for passes that accept an analyis
+/// manager.
+template <typename IRUnitT, typename AnalysisManagerT, typename PassT>
+struct PassModel<IRUnitT, AnalysisManagerT, PassT,
+                 false> : PassConcept<IRUnitT, AnalysisManagerT> {
+  PassModel(PassT Pass) : Pass(llvm_move(Pass)) {}
+  virtual PassModel *clone() { return new PassModel(Pass); }
+  virtual PreservedAnalyses run(IRUnitT IR, AnalysisManagerT *AM) {
+    return Pass.run(IR);
+  }
+  PassT Pass;
+};
+
+/// \brief Abstract concept of an analysis result.
+///
+/// This concept is parameterized over the IR unit that this result pertains
+/// to.
+template <typename IRUnitT> struct AnalysisResultConcept {
+  virtual ~AnalysisResultConcept() {}
+  virtual AnalysisResultConcept *clone() = 0;
+
+  /// \brief Method to try and mark a result as invalid.
+  ///
+  /// When the outer analysis manager detects a change in some underlying
+  /// unit of the IR, it will call this method on all of the results cached.
+  ///
+  /// This method also receives a set of preserved analyses which can be used
+  /// to avoid invalidation because the pass which changed the underlying IR
+  /// took care to update or preserve the analysis result in some way.
+  ///
+  /// \returns true if the result is indeed invalid (the default).
+  virtual bool invalidate(IRUnitT IR, const PreservedAnalyses &PA) = 0;
+};
+
+/// \brief SFINAE metafunction for computing whether \c ResultT provides an
+/// \c invalidate member function.
+template <typename IRUnitT, typename ResultT> class ResultHasInvalidateMethod {
+  typedef char SmallType;
+  struct BigType { char a, b; };
+
+  template <typename T, bool (T::*)(IRUnitT, const PreservedAnalyses &)>
+  struct Checker;
+
+  template <typename T> static SmallType f(Checker<T, &T::invalidate> *);
+  template <typename T> static BigType f(...);
+
+public:
+  enum { Value = sizeof(f<ResultT>(0)) == sizeof(SmallType) };
+};
+
+/// \brief Wrapper to model the analysis result concept.
+///
+/// By default, this will implement the invalidate method with a trivial
+/// implementation so that the actual analysis result doesn't need to provide
+/// an invalidation handler. It is only selected when the invalidation handler
+/// is not part of the ResultT's interface.
+template <typename IRUnitT, typename PassT, typename ResultT,
+          bool HasInvalidateHandler =
+              ResultHasInvalidateMethod<IRUnitT, ResultT>::Value>
+struct AnalysisResultModel;
+
+/// \brief Specialization of \c AnalysisResultModel which provides the default
+/// invalidate functionality.
+template <typename IRUnitT, typename PassT, typename ResultT>
+struct AnalysisResultModel<IRUnitT, PassT, ResultT,
+                           false> : AnalysisResultConcept<IRUnitT> {
+  AnalysisResultModel(ResultT Result) : Result(llvm_move(Result)) {}
+  virtual AnalysisResultModel *clone() {
+    return new AnalysisResultModel(Result);
+  }
+
+  /// \brief The model bases invalidation solely on being in the preserved set.
+  //
+  // FIXME: We should actually use two different concepts for analysis results
+  // rather than two different models, and avoid the indirect function call for
+  // ones that use the trivial behavior.
+  virtual bool invalidate(IRUnitT, const PreservedAnalyses &PA) {
+    return !PA.preserved(PassT::ID());
+  }
+
+  ResultT Result;
+};
+
+/// \brief Specialization of \c AnalysisResultModel which delegates invalidate
+/// handling to \c ResultT.
+template <typename IRUnitT, typename PassT, typename ResultT>
+struct AnalysisResultModel<IRUnitT, PassT, ResultT,
+                           true> : AnalysisResultConcept<IRUnitT> {
+  AnalysisResultModel(ResultT Result) : Result(llvm_move(Result)) {}
+  virtual AnalysisResultModel *clone() {
+    return new AnalysisResultModel(Result);
+  }
+
+  /// \brief The model delegates to the \c ResultT method.
+  virtual bool invalidate(IRUnitT IR, const PreservedAnalyses &PA) {
+    return Result.invalidate(IR, PA);
+  }
+
+  ResultT Result;
+};
+
+/// \brief Abstract concept of an analysis pass.
+///
+/// This concept is parameterized over the IR unit that it can run over and
+/// produce an analysis result.
+template <typename IRUnitT, typename AnalysisManagerT>
+struct AnalysisPassConcept {
+  virtual ~AnalysisPassConcept() {}
+  virtual AnalysisPassConcept *clone() = 0;
+
+  /// \brief Method to run this analysis over a unit of IR.
+  /// \returns The analysis result object to be queried by users, the caller
+  /// takes ownership.
+  virtual AnalysisResultConcept<IRUnitT> *run(IRUnitT IR,
+                                              AnalysisManagerT *AM) = 0;
+};
+
+/// \brief Wrapper to model the analysis pass concept.
+///
+/// Can wrap any type which implements a suitable \c run method. The method
+/// must accept the IRUnitT as an argument and produce an object which can be
+/// wrapped in a \c AnalysisResultModel.
+template <typename IRUnitT, typename AnalysisManagerT, typename PassT,
+          bool AcceptsAnalysisManager = PassRunAcceptsAnalysisManager<
+              IRUnitT, AnalysisManagerT, PassT,
+              typename PassT::Result>::Value> struct AnalysisPassModel;
+
+/// \brief Specialization of \c AnalysisPassModel which passes an
+/// \c AnalysisManager to PassT's run method.
+template <typename IRUnitT, typename AnalysisManagerT, typename PassT>
+struct AnalysisPassModel<IRUnitT, AnalysisManagerT, PassT,
+                         true> : AnalysisPassConcept<IRUnitT,
+                                                     AnalysisManagerT> {
+  AnalysisPassModel(PassT Pass) : Pass(llvm_move(Pass)) {}
+  virtual AnalysisPassModel *clone() { return new AnalysisPassModel(Pass); }
+
+  // FIXME: Replace PassT::Result with type traits when we use C++11.
+  typedef AnalysisResultModel<IRUnitT, PassT, typename PassT::Result>
+      ResultModelT;
+
+  /// \brief The model delegates to the \c PassT::run method.
+  ///
+  /// The return is wrapped in an \c AnalysisResultModel.
+  virtual ResultModelT *run(IRUnitT IR, AnalysisManagerT *AM) {
+    return new ResultModelT(Pass.run(IR, AM));
+  }
+
+  PassT Pass;
+};
+
+/// \brief Specialization of \c AnalysisPassModel which does not pass an
+/// \c AnalysisManager to PassT's run method.
+template <typename IRUnitT, typename AnalysisManagerT, typename PassT>
+struct AnalysisPassModel<IRUnitT, AnalysisManagerT, PassT,
+                         false> : AnalysisPassConcept<IRUnitT,
+                                                     AnalysisManagerT> {
+  AnalysisPassModel(PassT Pass) : Pass(llvm_move(Pass)) {}
+  virtual AnalysisPassModel *clone() { return new AnalysisPassModel(Pass); }
+
+  // FIXME: Replace PassT::Result with type traits when we use C++11.
+  typedef AnalysisResultModel<IRUnitT, PassT, typename PassT::Result>
+      ResultModelT;
+
+  /// \brief The model delegates to the \c PassT::run method.
+  ///
+  /// The return is wrapped in an \c AnalysisResultModel.
+  virtual ResultModelT *run(IRUnitT IR, AnalysisManagerT *) {
+    return new ResultModelT(Pass.run(IR));
+  }
+
   PassT Pass;
 };
 
 }
 
-class AnalysisManager;
+class ModuleAnalysisManager;
 
 class ModulePassManager {
 public:
-  ModulePassManager(Module *M, AnalysisManager *AM = 0) : M(M), AM(AM) {}
+  explicit ModulePassManager() {}
+
+  /// \brief Run all of the module passes in this module pass manager over
+  /// a module.
+  ///
+  /// This method should only be called for a single module as there is the
+  /// expectation that the lifetime of a pass is bounded to that of a module.
+  PreservedAnalyses run(Module *M, ModuleAnalysisManager *AM = 0);
 
   template <typename ModulePassT> void addPass(ModulePassT Pass) {
     Passes.push_back(new ModulePassModel<ModulePassT>(llvm_move(Pass)));
   }
 
-  void run();
-
 private:
   // Pull in the concept type and model template specialized for modules.
-  typedef detail::PassConcept<Module *> ModulePassConcept;
+  typedef detail::PassConcept<Module *, ModuleAnalysisManager> ModulePassConcept;
   template <typename PassT>
-  struct ModulePassModel : detail::PassModel<Module *, PassT> {
-    ModulePassModel(PassT Pass) : detail::PassModel<Module *, PassT>(Pass) {}
+  struct ModulePassModel
+      : detail::PassModel<Module *, ModuleAnalysisManager, PassT> {
+    ModulePassModel(PassT Pass)
+        : detail::PassModel<Module *, ModuleAnalysisManager, PassT>(Pass) {}
   };
 
-  Module *M;
-  AnalysisManager *AM;
   std::vector<polymorphic_ptr<ModulePassConcept> > Passes;
 };
 
+class FunctionAnalysisManager;
+
 class FunctionPassManager {
 public:
-  FunctionPassManager(AnalysisManager *AM = 0) : AM(AM) {}
+  explicit FunctionPassManager() {}
 
   template <typename FunctionPassT> void addPass(FunctionPassT Pass) {
     Passes.push_back(new FunctionPassModel<FunctionPassT>(llvm_move(Pass)));
   }
 
-  bool run(Module *M);
+  PreservedAnalyses run(Function *F, FunctionAnalysisManager *AM = 0);
 
 private:
   // Pull in the concept type and model template specialized for functions.
-  typedef detail::PassConcept<Function *> FunctionPassConcept;
+  typedef detail::PassConcept<Function *, FunctionAnalysisManager>
+      FunctionPassConcept;
   template <typename PassT>
-  struct FunctionPassModel : detail::PassModel<Function *, PassT> {
+  struct FunctionPassModel
+      : detail::PassModel<Function *, FunctionAnalysisManager, PassT> {
     FunctionPassModel(PassT Pass)
-        : detail::PassModel<Function *, PassT>(Pass) {}
+        : detail::PassModel<Function *, FunctionAnalysisManager, PassT>(Pass) {}
   };
 
-  AnalysisManager *AM;
   std::vector<polymorphic_ptr<FunctionPassConcept> > Passes;
 };
 
+namespace detail {
 
-/// \brief An analysis manager to coordinate and cache analyses run over
-/// a module.
+/// \brief A CRTP base used to implement analysis managers.
 ///
-/// The analysis manager is typically used by passes in a pass pipeline
-/// (consisting potentially of several individual pass managers) over a module
-/// of IR. It provides registration of available analyses, declaring
-/// requirements on support for specific analyses, running of an specific
-/// analysis over a specific unit of IR to compute an analysis result, and
-/// caching of the analysis results to reuse them across multiple passes.
+/// This class template serves as the boiler plate of an analysis manager. Any
+/// analysis manager can be implemented on top of this base class. Any
+/// implementation will be required to provide specific hooks:
 ///
-/// It is the responsibility of callers to use the invalidation API to
-/// invalidate analysis results when the IR they correspond to changes. The
-/// \c ModulePassManager and \c FunctionPassManager do this automatically.
-class AnalysisManager {
+/// - getResultImpl
+/// - getCachedResultImpl
+/// - invalidateImpl
+///
+/// The details of the call pattern are within.
+template <typename DerivedT, typename IRUnitT>
+class AnalysisManagerBase {
+  DerivedT *derived_this() { return static_cast<DerivedT *>(this); }
+  const DerivedT *derived_this() const { return static_cast<const DerivedT *>(this); }
+
+protected:
+  typedef detail::AnalysisResultConcept<IRUnitT> ResultConceptT;
+  typedef detail::AnalysisPassConcept<IRUnitT, DerivedT> PassConceptT;
+
+  // FIXME: Provide template aliases for the models when we're using C++11 in
+  // a mode supporting them.
+
 public:
-  AnalysisManager(Module *M) : M(M) {}
-
   /// \brief Get the result of an analysis pass for this module.
   ///
   /// If there is not a valid cached result in the manager already, this will
   /// re-run the analysis to produce a valid result.
-  ///
-  /// The module passed in must be the same module as the analysis manager was
-  /// constructed around.
-  template <typename PassT>
-  const typename PassT::Result &getResult(Module *M) {
-    assert(ModuleAnalysisPasses.count(PassT::ID()) &&
+  template <typename PassT> const typename PassT::Result &getResult(IRUnitT IR) {
+    assert(AnalysisPasses.count(PassT::ID()) &&
            "This analysis pass was not registered prior to being queried");
 
-    const AnalysisResultConcept<Module> &ResultConcept =
-        getResultImpl(PassT::ID(), M);
-    typedef AnalysisResultModel<Module, typename PassT::Result> ResultModelT;
+    const ResultConceptT &ResultConcept =
+        derived_this()->getResultImpl(PassT::ID(), IR);
+    typedef detail::AnalysisResultModel<IRUnitT, PassT, typename PassT::Result>
+        ResultModelT;
     return static_cast<const ResultModelT &>(ResultConcept).Result;
   }
 
-  /// \brief Get the result of an analysis pass for a function.
+  /// \brief Get the cached result of an analysis pass for this module.
   ///
-  /// If there is not a valid cached result in the manager already, this will
-  /// re-run the analysis to produce a valid result.
+  /// This method never runs the analysis.
+  ///
+  /// \returns null if there is no cached result.
   template <typename PassT>
-  const typename PassT::Result &getResult(Function *F) {
-    assert(FunctionAnalysisPasses.count(PassT::ID()) &&
+  const typename PassT::Result *getCachedResult(IRUnitT IR) const {
+    assert(AnalysisPasses.count(PassT::ID()) &&
            "This analysis pass was not registered prior to being queried");
 
-    const AnalysisResultConcept<Function> &ResultConcept =
-        getResultImpl(PassT::ID(), F);
-    typedef AnalysisResultModel<Function, typename PassT::Result> ResultModelT;
-    return static_cast<const ResultModelT &>(ResultConcept).Result;
+    const ResultConceptT *ResultConcept =
+        derived_this()->getCachedResultImpl(PassT::ID(), IR);
+    if (!ResultConcept)
+      return 0;
+
+    typedef detail::AnalysisResultModel<IRUnitT, PassT, typename PassT::Result>
+        ResultModelT;
+    return &static_cast<const ResultModelT *>(ResultConcept)->Result;
   }
 
   /// \brief Register an analysis pass with the manager.
   ///
-  /// This provides an initialized and set-up analysis pass to the
-  /// analysis
-  /// manager. Whomever is setting up analysis passes must use this to
-  /// populate
+  /// This provides an initialized and set-up analysis pass to the analysis
+  /// manager. Whomever is setting up analysis passes must use this to populate
   /// the manager with all of the analysis passes available.
-  template <typename PassT> void registerAnalysisPass(PassT Pass) {
-    registerAnalysisPassImpl<PassT>(llvm_move(Pass));
+  template <typename PassT> void registerPass(PassT Pass) {
+    assert(!AnalysisPasses.count(PassT::ID()) &&
+           "Registered the same analysis pass twice!");
+    typedef detail::AnalysisPassModel<IRUnitT, DerivedT, PassT> PassModelT;
+    AnalysisPasses[PassT::ID()] = new PassModelT(llvm_move(Pass));
   }
 
   /// \brief Invalidate a specific analysis pass for an IR module.
   ///
   /// Note that the analysis result can disregard invalidation.
   template <typename PassT> void invalidate(Module *M) {
-    invalidateImpl(PassT::ID(), M);
+    assert(AnalysisPasses.count(PassT::ID()) &&
+           "This analysis pass was not registered prior to being invalidated");
+    derived_this()->invalidateImpl(PassT::ID(), M);
   }
 
-  /// \brief Invalidate a specific analysis pass for an IR function.
+  /// \brief Invalidate analyses cached for an IR unit.
   ///
-  /// Note that the analysis result can disregard invalidation.
-  template <typename PassT> void invalidate(Function *F) {
-    invalidateImpl(PassT::ID(), F);
+  /// Walk through all of the analyses pertaining to this unit of IR and
+  /// invalidate them unless they are preserved by the PreservedAnalyses set.
+  void invalidate(IRUnitT IR, const PreservedAnalyses &PA) {
+    derived_this()->invalidateImpl(IR, PA);
   }
 
-  /// \brief Invalidate analyses cached for an IR Module.
-  ///
-  /// Note that specific analysis results can disregard invalidation by
-  /// overriding their invalidate method.
-  ///
-  /// The module must be the module this analysis manager was constructed
-  /// around.
-  void invalidateAll(Module *M);
+protected:
+  /// \brief Lookup a registered analysis pass.
+  PassConceptT &lookupPass(void *PassID) {
+    typename AnalysisPassMapT::iterator PI = AnalysisPasses.find(PassID);
+    assert(PI != AnalysisPasses.end() &&
+           "Analysis passes must be registered prior to being queried!");
+    return *PI->second;
+  }
 
-  /// \brief Invalidate analyses cached for an IR Function.
-  ///
-  /// Note that specific analysis results can disregard invalidation by
-  /// overriding the invalidate method.
-  void invalidateAll(Function *F);
+  /// \brief Lookup a registered analysis pass.
+  const PassConceptT &lookupPass(void *PassID) const {
+    typename AnalysisPassMapT::const_iterator PI = AnalysisPasses.find(PassID);
+    assert(PI != AnalysisPasses.end() &&
+           "Analysis passes must be registered prior to being queried!");
+    return *PI->second;
+  }
 
 private:
-  /// \brief Abstract concept of an analysis result.
-  ///
-  /// This concept is parameterized over the IR unit that this result pertains
-  /// to.
-  template <typename IRUnitT> struct AnalysisResultConcept {
-    virtual ~AnalysisResultConcept() {}
-    virtual AnalysisResultConcept *clone() = 0;
+  /// \brief Map type from module analysis pass ID to pass concept pointer.
+  typedef DenseMap<void *, polymorphic_ptr<PassConceptT> > AnalysisPassMapT;
 
-    /// \brief Method to try and mark a result as invalid.
-    ///
-    /// When the outer \c AnalysisManager detects a change in some underlying
-    /// unit of the IR, it will call this method on all of the results cached.
-    ///
-    /// \returns true if the result should indeed be invalidated (the default).
-    virtual bool invalidate(IRUnitT *IR) = 0;
-  };
+  /// \brief Collection of module analysis passes, indexed by ID.
+  AnalysisPassMapT AnalysisPasses;
+};
 
-  /// \brief Wrapper to model the analysis result concept.
-  ///
-  /// Can wrap any type which implements a suitable invalidate member and model
-  /// the AnalysisResultConcept for the AnalysisManager.
-  template <typename IRUnitT, typename ResultT>
-  struct AnalysisResultModel : AnalysisResultConcept<IRUnitT> {
-    AnalysisResultModel(ResultT Result) : Result(llvm_move(Result)) {}
-    virtual AnalysisResultModel *clone() {
-      return new AnalysisResultModel(Result);
-    }
+}
 
-    /// \brief The model delegates to the \c ResultT method.
-    virtual bool invalidate(IRUnitT *IR) { return Result.invalidate(IR); }
+/// \brief A module analysis pass manager with lazy running and caching of
+/// results.
+class ModuleAnalysisManager
+    : public detail::AnalysisManagerBase<ModuleAnalysisManager, Module *> {
+  friend class detail::AnalysisManagerBase<ModuleAnalysisManager, Module *>;
+  typedef detail::AnalysisManagerBase<ModuleAnalysisManager, Module *> BaseT;
+  typedef BaseT::ResultConceptT ResultConceptT;
+  typedef BaseT::PassConceptT PassConceptT;
 
-    ResultT Result;
-  };
+public:
+  // Public methods provided by the base class.
 
-  /// \brief Abstract concept of an analysis pass.
-  ///
-  /// This concept is parameterized over the IR unit that it can run over and
-  /// produce an analysis result.
-  template <typename IRUnitT> struct AnalysisPassConcept {
-    virtual ~AnalysisPassConcept() {}
-    virtual AnalysisPassConcept *clone() = 0;
-
-    /// \brief Method to run this analysis over a unit of IR.
-    /// \returns The analysis result object to be queried by users, the caller
-    /// takes ownership.
-    virtual AnalysisResultConcept<IRUnitT> *run(IRUnitT *IR) = 0;
-  };
-
-  /// \brief Wrapper to model the analysis pass concept.
-  ///
-  /// Can wrap any type which implements a suitable \c run method. The method
-  /// must accept the IRUnitT as an argument and produce an object which can be
-  /// wrapped in a \c AnalysisResultModel.
-  template <typename PassT>
-  struct AnalysisPassModel : AnalysisPassConcept<typename PassT::IRUnitT> {
-    AnalysisPassModel(PassT Pass) : Pass(llvm_move(Pass)) {}
-    virtual AnalysisPassModel *clone() { return new AnalysisPassModel(Pass); }
-
-    // FIXME: Replace PassT::IRUnitT with type traits when we use C++11.
-    typedef typename PassT::IRUnitT IRUnitT;
-
-    // FIXME: Replace PassT::Result with type traits when we use C++11.
-    typedef AnalysisResultModel<IRUnitT, typename PassT::Result> ResultModelT;
-
-    /// \brief The model delegates to the \c PassT::run method.
-    ///
-    /// The return is wrapped in an \c AnalysisResultModel.
-    virtual ResultModelT *run(IRUnitT *IR) {
-      return new ResultModelT(Pass.run(IR));
-    }
-
-    PassT Pass;
-  };
-
-
+private:
   /// \brief Get a module pass result, running the pass if necessary.
-  const AnalysisResultConcept<Module> &getResultImpl(void *PassID, Module *M);
+  const ResultConceptT &getResultImpl(void *PassID, Module *M);
 
-  /// \brief Get a function pass result, running the pass if necessary.
-  const AnalysisResultConcept<Function> &getResultImpl(void *PassID,
-                                                       Function *F);
+  /// \brief Get a cached module pass result or return null.
+  const ResultConceptT *getCachedResultImpl(void *PassID, Module *M) const;
 
   /// \brief Invalidate a module pass result.
   void invalidateImpl(void *PassID, Module *M);
 
-  /// \brief Invalidate a function pass result.
-  void invalidateImpl(void *PassID, Function *F);
-
-
-  /// \brief Module pass specific implementation of registration.
-  template <typename PassT>
-  typename enable_if<is_same<typename PassT::IRUnitT, Module> >::type
-  registerAnalysisPassImpl(PassT Pass) {
-    assert(!ModuleAnalysisPasses.count(PassT::ID()) &&
-           "Registered the same analysis pass twice!");
-    ModuleAnalysisPasses[PassT::ID()] =
-        new AnalysisPassModel<PassT>(llvm_move(Pass));
-  }
-
-  /// \brief Function pass specific implementation of registration.
-  template <typename PassT>
-  typename enable_if<is_same<typename PassT::IRUnitT, Function> >::type
-  registerAnalysisPassImpl(PassT Pass) {
-    assert(!FunctionAnalysisPasses.count(PassT::ID()) &&
-           "Registered the same analysis pass twice!");
-    FunctionAnalysisPasses[PassT::ID()] =
-        new AnalysisPassModel<PassT>(llvm_move(Pass));
-  }
-
-
-  /// \brief Map type from module analysis pass ID to pass concept pointer.
-  typedef DenseMap<void *, polymorphic_ptr<AnalysisPassConcept<Module> > >
-  ModuleAnalysisPassMapT;
-
-  /// \brief Collection of module analysis passes, indexed by ID.
-  ModuleAnalysisPassMapT ModuleAnalysisPasses;
+  /// \brief Invalidate results across a module.
+  void invalidateImpl(Module *M, const PreservedAnalyses &PA);
 
   /// \brief Map type from module analysis pass ID to pass result concept pointer.
-  typedef DenseMap<void *, polymorphic_ptr<AnalysisResultConcept<Module> > >
-  ModuleAnalysisResultMapT;
+  typedef DenseMap<void *,
+                   polymorphic_ptr<detail::AnalysisResultConcept<Module *> > >
+      ModuleAnalysisResultMapT;
 
   /// \brief Cache of computed module analysis results for this module.
   ModuleAnalysisResultMapT ModuleAnalysisResults;
+};
 
+/// \brief A function analysis manager to coordinate and cache analyses run over
+/// a module.
+class FunctionAnalysisManager
+    : public detail::AnalysisManagerBase<FunctionAnalysisManager, Function *> {
+  friend class detail::AnalysisManagerBase<FunctionAnalysisManager, Function *>;
+  typedef detail::AnalysisManagerBase<FunctionAnalysisManager, Function *> BaseT;
+  typedef BaseT::ResultConceptT ResultConceptT;
+  typedef BaseT::PassConceptT PassConceptT;
 
-  /// \brief Map type from function analysis pass ID to pass concept pointer.
-  typedef DenseMap<void *, polymorphic_ptr<AnalysisPassConcept<Function> > >
-  FunctionAnalysisPassMapT;
+public:
+  // Most public APIs are inherited from the CRTP base class.
 
-  /// \brief Collection of function analysis passes, indexed by ID.
-  FunctionAnalysisPassMapT FunctionAnalysisPasses;
+  /// \brief Returns true if the analysis manager has an empty results cache.
+  bool empty() const;
+
+  /// \brief Clear the function analysis result cache.
+  ///
+  /// This routine allows cleaning up when the set of functions itself has
+  /// potentially changed, and thus we can't even look up a a result and
+  /// invalidate it directly. Notably, this does *not* call invalidate
+  /// functions as there is nothing to be done for them.
+  void clear();
+
+private:
+  /// \brief Get a function pass result, running the pass if necessary.
+  const ResultConceptT &getResultImpl(void *PassID, Function *F);
+
+  /// \brief Get a cached function pass result or return null.
+  const ResultConceptT *getCachedResultImpl(void *PassID, Function *F) const;
+
+  /// \brief Invalidate a function pass result.
+  void invalidateImpl(void *PassID, Function *F);
+
+  /// \brief Invalidate the results for a function..
+  void invalidateImpl(Function *F, const PreservedAnalyses &PA);
 
   /// \brief List of function analysis pass IDs and associated concept pointers.
   ///
   /// Requires iterators to be valid across appending new entries and arbitrary
   /// erases. Provides both the pass ID and concept pointer such that it is
   /// half of a bijection and provides storage for the actual result concept.
-  typedef std::list<
-      std::pair<void *, polymorphic_ptr<AnalysisResultConcept<Function> > > >
-  FunctionAnalysisResultListT;
+  typedef std::list<std::pair<
+      void *, polymorphic_ptr<detail::AnalysisResultConcept<Function *> > > >
+      FunctionAnalysisResultListT;
 
   /// \brief Map type from function pointer to our custom list type.
-  typedef DenseMap<Function *, FunctionAnalysisResultListT> FunctionAnalysisResultListMapT;
+  typedef DenseMap<Function *, FunctionAnalysisResultListT>
+  FunctionAnalysisResultListMapT;
 
   /// \brief Map from function to a list of function analysis results.
   ///
@@ -370,14 +649,172 @@ private:
   /// iterator into a particular result list.
   typedef DenseMap<std::pair<void *, Function *>,
                    FunctionAnalysisResultListT::iterator>
-  FunctionAnalysisResultMapT;
+      FunctionAnalysisResultMapT;
 
   /// \brief Map from an analysis ID and function to a particular cached
   /// analysis result.
   FunctionAnalysisResultMapT FunctionAnalysisResults;
-
-  /// \brief Module handle for the \c AnalysisManager.
-  Module *M;
 };
+
+/// \brief A module analysis which acts as a proxy for a function analysis
+/// manager.
+///
+/// This primarily proxies invalidation information from the module analysis
+/// manager and module pass manager to a function analysis manager. You should
+/// never use a function analysis manager from within (transitively) a module
+/// pass manager unless your parent module pass has received a proxy result
+/// object for it.
+class FunctionAnalysisManagerModuleProxy {
+public:
+  class Result;
+
+  static void *ID() { return (void *)&PassID; }
+
+  FunctionAnalysisManagerModuleProxy(FunctionAnalysisManager &FAM) : FAM(FAM) {}
+
+  /// \brief Run the analysis pass and create our proxy result object.
+  ///
+  /// This doesn't do any interesting work, it is primarily used to insert our
+  /// proxy result object into the module analysis cache so that we can proxy
+  /// invalidation to the function analysis manager.
+  ///
+  /// In debug builds, it will also assert that the analysis manager is empty
+  /// as no queries should arrive at the function analysis manager prior to
+  /// this analysis being requested.
+  Result run(Module *M);
+
+private:
+  static char PassID;
+
+  FunctionAnalysisManager &FAM;
+};
+
+/// \brief The result proxy object for the
+/// \c FunctionAnalysisManagerModuleProxy.
+///
+/// See its documentation for more information.
+class FunctionAnalysisManagerModuleProxy::Result {
+public:
+  Result(FunctionAnalysisManager &FAM) : FAM(FAM) {}
+  ~Result();
+
+  /// \brief Accessor for the \c FunctionAnalysisManager.
+  FunctionAnalysisManager &getManager() const { return FAM; }
+
+  /// \brief Handler for invalidation of the module.
+  ///
+  /// If this analysis itself is preserved, then we assume that the set of \c
+  /// Function objects in the \c Module hasn't changed and thus we don't need
+  /// to invalidate *all* cached data associated with a \c Function* in the \c
+  /// FunctionAnalysisManager.
+  ///
+  /// Regardless of whether this analysis is marked as preserved, all of the
+  /// analyses in the \c FunctionAnalysisManager are potentially invalidated
+  /// based on the set of preserved analyses.
+  bool invalidate(Module *M, const PreservedAnalyses &PA);
+
+private:
+  FunctionAnalysisManager &FAM;
+};
+
+/// \brief A function analysis which acts as a proxy for a module analysis
+/// manager.
+///
+/// This primarily provides an accessor to a parent module analysis manager to
+/// function passes. Only the const interface of the module analysis manager is
+/// provided to indicate that once inside of a function analysis pass you
+/// cannot request a module analysis to actually run. Instead, the user must
+/// rely on the \c getCachedResult API.
+///
+/// This proxy *doesn't* manage the invalidation in any way. That is handled by
+/// the recursive return path of each layer of the pass manager and the
+/// returned PreservedAnalysis set.
+class ModuleAnalysisManagerFunctionProxy {
+public:
+  /// \brief Result proxy object for \c ModuleAnalysisManagerFunctionProxy.
+  class Result {
+  public:
+    Result(const ModuleAnalysisManager &MAM) : MAM(MAM) {}
+
+    const ModuleAnalysisManager &getManager() const { return MAM; }
+
+    /// \brief Handle invalidation by ignoring it, this pass is immutable.
+    bool invalidate(Function *) { return false; }
+
+  private:
+    const ModuleAnalysisManager &MAM;
+  };
+
+  static void *ID() { return (void *)&PassID; }
+
+  ModuleAnalysisManagerFunctionProxy(const ModuleAnalysisManager &MAM)
+      : MAM(MAM) {}
+
+  /// \brief Run the analysis pass and create our proxy result object.
+  /// Nothing to see here, it just forwards the \c MAM reference into the
+  /// result.
+  Result run(Function *) { return Result(MAM); }
+
+private:
+  static char PassID;
+
+  const ModuleAnalysisManager &MAM;
+};
+
+/// \brief Trivial adaptor that maps from a module to its functions.
+///
+/// Designed to allow composition of a FunctionPass(Manager) and
+/// a ModulePassManager. Note that if this pass is constructed with a pointer
+/// to a \c ModuleAnalysisManager it will run the
+/// \c FunctionAnalysisManagerModuleProxy analysis prior to running the function
+/// pass over the module to enable a \c FunctionAnalysisManager to be used
+/// within this run safely.
+template <typename FunctionPassT>
+class ModuleToFunctionPassAdaptor {
+public:
+  explicit ModuleToFunctionPassAdaptor(FunctionPassT Pass)
+      : Pass(llvm_move(Pass)) {}
+
+  /// \brief Runs the function pass across every function in the module.
+  PreservedAnalyses run(Module *M, ModuleAnalysisManager *AM) {
+    FunctionAnalysisManager *FAM = 0;
+    if (AM)
+      // Setup the function analysis manager from its proxy.
+      FAM = &AM->getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
+
+    PreservedAnalyses PA = PreservedAnalyses::all();
+    for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I) {
+      PreservedAnalyses PassPA = Pass.run(I, FAM);
+
+      // We know that the function pass couldn't have invalidated any other
+      // function's analyses (that's the contract of a function pass), so
+      // directly handle the function analysis manager's invalidation here.
+      if (FAM)
+        FAM->invalidate(I, PassPA);
+
+      // Then intersect the preserved set so that invalidation of module
+      // analyses will eventually occur when the module pass completes.
+      PA.intersect(llvm_move(PassPA));
+    }
+
+    // By definition we preserve the proxy. This precludes *any* invalidation
+    // of function analyses by the proxy, but that's OK because we've taken
+    // care to invalidate analyses in the function analysis manager
+    // incrementally above.
+    PA.preserve<FunctionAnalysisManagerModuleProxy>();
+    return PA;
+  }
+
+private:
+  FunctionPassT Pass;
+};
+
+/// \brief A function to deduce a function pass type and wrap it in the
+/// templated adaptor.
+template <typename FunctionPassT>
+ModuleToFunctionPassAdaptor<FunctionPassT>
+createModuleToFunctionPassAdaptor(FunctionPassT Pass) {
+  return ModuleToFunctionPassAdaptor<FunctionPassT>(llvm_move(Pass));
+}
 
 }
