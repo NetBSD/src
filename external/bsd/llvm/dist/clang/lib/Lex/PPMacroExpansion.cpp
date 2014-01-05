@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the top level handling of macro expasion for the
+// This file implements the top level handling of macro expansion for the
 // preprocessor.
 //
 //===----------------------------------------------------------------------===//
@@ -1048,7 +1048,7 @@ static bool HasExtension(const Preprocessor &PP, const IdentifierInfo *II) {
 static bool HasAttribute(const IdentifierInfo *II) {
   StringRef Name = II->getName();
   // Normalize the attribute name, __foo__ becomes foo.
-  if (Name.startswith("__") && Name.endswith("__") && Name.size() >= 4)
+  if (Name.size() >= 4 && Name.startswith("__") && Name.endswith("__"))
     Name = Name.substr(2, Name.size() - 4);
 
   // FIXME: Do we need to handle namespaces here?
@@ -1080,7 +1080,7 @@ static bool EvaluateHasIncludeCommon(Token &Tok,
   if (Tok.isNot(tok::l_paren)) {
     // No '(', use end of last token.
     LParenLoc = PP.getLocForEndOfToken(LParenLoc);
-    PP.Diag(LParenLoc, diag::err_pp_missing_lparen) << II->getName();
+    PP.Diag(LParenLoc, diag::err_pp_expected_after) << II << tok::l_paren;
     // If the next token looks like a filename or the start of one,
     // assume it is and process it as such.
     if (!Tok.is(tok::angle_string_literal) && !Tok.is(tok::string_literal) &&
@@ -1142,9 +1142,9 @@ static bool EvaluateHasIncludeCommon(Token &Tok,
 
   // Ensure we have a trailing ).
   if (Tok.isNot(tok::r_paren)) {
-    PP.Diag(PP.getLocForEndOfToken(FilenameLoc), diag::err_pp_missing_rparen)
-        << II->getName();
-    PP.Diag(LParenLoc, diag::note_matching) << "(";
+    PP.Diag(PP.getLocForEndOfToken(FilenameLoc), diag::err_pp_expected_after)
+        << II << tok::r_paren;
+    PP.Diag(LParenLoc, diag::note_matching) << tok::l_paren;
     return false;
   }
 
@@ -1201,7 +1201,8 @@ static bool EvaluateBuildingModule(Token &Tok,
 
   // Ensure we have a '('.
   if (Tok.isNot(tok::l_paren)) {
-    PP.Diag(Tok.getLocation(), diag::err_pp_missing_lparen) << II->getName();
+    PP.Diag(Tok.getLocation(), diag::err_pp_expected_after) << II
+                                                            << tok::l_paren;
     return false;
   }
 
@@ -1225,8 +1226,9 @@ static bool EvaluateBuildingModule(Token &Tok,
 
   // Ensure we have a trailing ).
   if (Tok.isNot(tok::r_paren)) {
-    PP.Diag(Tok.getLocation(), diag::err_pp_missing_rparen) << II->getName();
-    PP.Diag(LParenLoc, diag::note_matching) << "(";
+    PP.Diag(Tok.getLocation(), diag::err_pp_expected_after) << II
+                                                            << tok::r_paren;
+    PP.Diag(LParenLoc, diag::note_matching) << tok::l_paren;
     return false;
   }
 

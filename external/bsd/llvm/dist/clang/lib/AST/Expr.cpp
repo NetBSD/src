@@ -105,37 +105,6 @@ const Expr *Expr::skipRValueSubobjectAdjustments(
   return E;
 }
 
-const Expr *
-Expr::findMaterializedTemporary(const MaterializeTemporaryExpr *&MTE) const {
-  const Expr *E = this;
-
-  // This might be a default initializer for a reference member. Walk over the
-  // wrapper node for that.
-  if (const CXXDefaultInitExpr *DAE = dyn_cast<CXXDefaultInitExpr>(E))
-    E = DAE->getExpr();
-
-  // Look through single-element init lists that claim to be lvalues. They're
-  // just syntactic wrappers in this case.
-  if (const InitListExpr *ILE = dyn_cast<InitListExpr>(E)) {
-    if (ILE->getNumInits() == 1 && ILE->isGLValue()) {
-      E = ILE->getInit(0);
-      if (const CXXDefaultInitExpr *DAE = dyn_cast<CXXDefaultInitExpr>(E))
-        E = DAE->getExpr();
-    }
-  }
-
-  // Look through expressions for materialized temporaries (for now).
-  if (const MaterializeTemporaryExpr *M
-      = dyn_cast<MaterializeTemporaryExpr>(E)) {
-    MTE = M;
-    E = M->GetTemporaryExpr();
-  }
-
-  if (const CXXDefaultArgExpr *DAE = dyn_cast<CXXDefaultArgExpr>(E))
-    E = DAE->getExpr();
-  return E;
-}
-
 /// isKnownToHaveBooleanValue - Return true if this is an integer expression
 /// that is known to return 0 or 1.  This happens for _Bool/bool expressions
 /// but also int expressions which are produced by things like comparisons in
@@ -658,7 +627,7 @@ std::string PredefinedExpr::ComputeName(IdentType IT, const Decl *CurrentDecl) {
       Out << '(' << *CID << ')';
 
     Out <<  ' ';
-    Out << MD->getSelector().getAsString();
+    MD->getSelector().print(Out);
     Out <<  ']';
 
     Out.flush();
@@ -1215,9 +1184,9 @@ void CallExpr::setNumArgs(const ASTContext& C, unsigned NumArgs) {
   this->NumArgs = NumArgs;
 }
 
-/// isBuiltinCall - If this is a call to a builtin, return the builtin ID.  If
+/// getBuiltinCallee - If this is a call to a builtin, return the builtin ID. If
 /// not, return 0.
-unsigned CallExpr::isBuiltinCall() const {
+unsigned CallExpr::getBuiltinCallee() const {
   // All simple function calls (e.g. func()) are implicitly cast to pointer to
   // function. As a result, we try and obtain the DeclRefExpr from the
   // ImplicitCastExpr.
@@ -1240,7 +1209,7 @@ unsigned CallExpr::isBuiltinCall() const {
 }
 
 bool CallExpr::isUnevaluatedBuiltinCall(ASTContext &Ctx) const {
-  if (unsigned BI = isBuiltinCall())
+  if (unsigned BI = getBuiltinCallee())
     return Ctx.BuiltinInfo.isUnevaluated(BI);
   return false;
 }
@@ -1421,7 +1390,7 @@ SourceLocation MemberExpr::getLocEnd() const {
   return EndLoc;
 }
 
-void CastExpr::CheckCastConsistency() const {
+bool CastExpr::CastConsistency() const {
   switch (getCastKind()) {
   case CK_DerivedToBase:
   case CK_UncheckedDerivedToBase:
@@ -1474,6 +1443,11 @@ void CastExpr::CheckCastConsistency() const {
     assert(getSubExpr()->getType()->isFunctionType());
     goto CheckNoBasePath;
 
+  case CK_AddressSpaceConversion:
+    assert(getType()->isPointerType());
+    assert(getSubExpr()->getType()->isPointerType());
+    assert(getType()->getPointeeType().getAddressSpace() !=
+           getSubExpr()->getType()->getPointeeType().getAddressSpace());
   // These should not have an inheritance path.
   case CK_Dynamic:
   case CK_ToUnion:
@@ -1524,6 +1498,7 @@ void CastExpr::CheckCastConsistency() const {
     assert(path_empty() && "Cast kind should not have a base path!");
     break;
   }
+  return true;
 }
 
 const char *CastExpr::getCastKindName() const {
@@ -1636,6 +1611,8 @@ const char *CastExpr::getCastKindName() const {
     return "BuiltinFnToFnPtr";
   case CK_ZeroToOCLEvent:
     return "ZeroToOCLEvent";
+  case CK_AddressSpaceConversion:
+    return "AddressSpaceConversion";
   }
 
   llvm_unreachable("Unhandled cast kind!");
@@ -1867,12 +1844,12 @@ void InitListExpr::resizeInits(const ASTContext &C, unsigned NumInits) {
 Expr *InitListExpr::updateInit(const ASTContext &C, unsigned Init, Expr *expr) {
   if (Init >= InitExprs.size()) {
     InitExprs.insert(C, InitExprs.end(), Init - InitExprs.size() + 1, 0);
-    InitExprs.back() = expr;
+    setInit(Init, expr);
     return 0;
   }
 
   Expr *Result = cast_or_null<Expr>(InitExprs[Init]);
-  InitExprs[Init] = expr;
+  setInit(Init, expr);
   return Result;
 }
 
@@ -2106,8 +2083,8 @@ bool Expr::isUnusedResultAWarning(const Expr *&WarnE, SourceLocation &Loc,
       //
       // Note: If new cases are added here, DiagnoseUnusedExprResult should be
       // updated to match for QoI.
-      if (FD->getAttr<WarnUnusedResultAttr>() ||
-          FD->getAttr<PureAttr>() || FD->getAttr<ConstAttr>()) {
+      if (FD->hasAttr<WarnUnusedResultAttr>() ||
+          FD->hasAttr<PureAttr>() || FD->hasAttr<ConstAttr>()) {
         WarnE = this;
         Loc = CE->getCallee()->getLocStart();
         R1 = CE->getCallee()->getSourceRange();
@@ -2152,7 +2129,7 @@ bool Expr::isUnusedResultAWarning(const Expr *&WarnE, SourceLocation &Loc,
     }
 
     const ObjCMethodDecl *MD = ME->getMethodDecl();
-    if (MD && MD->getAttr<WarnUnusedResultAttr>()) {
+    if (MD && MD->hasAttr<WarnUnusedResultAttr>()) {
       WarnE = this;
       Loc = getExprLoc();
       return true;
@@ -2821,8 +2798,6 @@ bool Expr::HasSideEffects(const ASTContext &Ctx) const {
   case CXXThisExprClass:
   case CXXScalarValueInitExprClass:
   case TypeTraitExprClass:
-  case UnaryTypeTraitExprClass:
-  case BinaryTypeTraitExprClass:
   case ArrayTypeTraitExprClass:
   case ExpressionTraitExprClass:
   case CXXNoexceptExprClass:

@@ -407,10 +407,11 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
       return false;
     break;
   
+  case Type::Adjusted:
   case Type::Decayed:
     if (!IsStructurallyEquivalent(Context,
-                                  cast<DecayedType>(T1)->getPointeeType(),
-                                  cast<DecayedType>(T2)->getPointeeType()))
+                                  cast<AdjustedType>(T1)->getOriginalType(),
+                                  cast<AdjustedType>(T2)->getOriginalType()))
       return false;
     break;
 
@@ -1946,6 +1947,7 @@ bool ASTNodeImporter::ImportDefinition(RecordDecl *From, RecordDecl *To,
     ToData.HasProtectedFields = FromData.HasProtectedFields;
     ToData.HasPublicFields = FromData.HasPublicFields;
     ToData.HasMutableFields = FromData.HasMutableFields;
+    ToData.HasVariantMembers = FromData.HasVariantMembers;
     ToData.HasOnlyCMembers = FromData.HasOnlyCMembers;
     ToData.HasInClassInitializer = FromData.HasInClassInitializer;
     ToData.HasUninitializedReferenceMember
@@ -3014,8 +3016,7 @@ Decl *ASTNodeImporter::VisitObjCIvarDecl(ObjCIvarDecl *D) {
                                        Importer.Import(D->getInnerLocStart()),
                                               Loc, Name.getAsIdentifierInfo(),
                                               T, TInfo, D->getAccessControl(),
-                                              BitWidth, D->getSynthesize(),
-                                              D->getBackingIvarReferencedInAccessor());
+                                              BitWidth, D->getSynthesize());
   ToIvar->setLexicalDeclContext(LexicalDC);
   Importer.Imported(D, ToIvar);
   LexicalDC->addDeclInternal(ToIvar);

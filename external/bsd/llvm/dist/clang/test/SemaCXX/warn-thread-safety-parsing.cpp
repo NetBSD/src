@@ -229,28 +229,28 @@ class __attribute__((lockable (1))) LTestClass_args { // \
 };
 
 void l_test_function() LOCKABLE;  // \
-  // expected-warning {{'lockable' attribute only applies to classes}}
+  // expected-warning {{'lockable' attribute only applies to struct, union or class}}
 
 int l_testfn(int y) {
   int x LOCKABLE = y; // \
-    // expected-warning {{'lockable' attribute only applies to classes}}
+    // expected-warning {{'lockable' attribute only applies to struct, union or class}}
   return x;
 }
 
 int l_test_var LOCKABLE; // \
-  // expected-warning {{'lockable' attribute only applies to classes}}
+  // expected-warning {{'lockable' attribute only applies to struct, union or class}}
 
 class LFoo {
  private:
   int test_field LOCKABLE; // \
-    // expected-warning {{'lockable' attribute only applies to classes}}
+    // expected-warning {{'lockable' attribute only applies to struct, union or class}}
   void test_method() LOCKABLE; // \
-    // expected-warning {{'lockable' attribute only applies to classes}}
+    // expected-warning {{'lockable' attribute only applies to struct, union or class}}
 };
 
 
 void l_function_params(int lvar LOCKABLE); // \
-  // expected-warning {{'lockable' attribute only applies to classes}}
+  // expected-warning {{'lockable' attribute only applies to struct, union or class}}
 
 
 //-----------------------------------------//
@@ -269,28 +269,28 @@ class __attribute__((scoped_lockable (1))) SLTestClass_args { // \
 };
 
 void sl_test_function() SCOPED_LOCKABLE;  // \
-  // expected-warning {{'scoped_lockable' attribute only applies to classes}}
+  // expected-warning {{'scoped_lockable' attribute only applies to struct, union or class}}
 
 int sl_testfn(int y) {
   int x SCOPED_LOCKABLE = y; // \
-    // expected-warning {{'scoped_lockable' attribute only applies to classes}}
+    // expected-warning {{'scoped_lockable' attribute only applies to struct, union or class}}
   return x;
 }
 
 int sl_test_var SCOPED_LOCKABLE; // \
-  // expected-warning {{'scoped_lockable' attribute only applies to classes}}
+  // expected-warning {{'scoped_lockable' attribute only applies to struct, union or class}}
 
 class SLFoo {
  private:
   int test_field SCOPED_LOCKABLE; // \
-    // expected-warning {{'scoped_lockable' attribute only applies to classes}}
+    // expected-warning {{'scoped_lockable' attribute only applies to struct, union or class}}
   void test_method() SCOPED_LOCKABLE; // \
-    // expected-warning {{'scoped_lockable' attribute only applies to classes}}
+    // expected-warning {{'scoped_lockable' attribute only applies to struct, union or class}}
 };
 
 
 void sl_function_params(int lvar SCOPED_LOCKABLE); // \
-  // expected-warning {{'scoped_lockable' attribute only applies to classes}}
+  // expected-warning {{'scoped_lockable' attribute only applies to struct, union or class}}
 
 
 //-----------------------------------------//
@@ -357,9 +357,9 @@ int gb_var_arg_bad_1 GUARDED_BY(1); // \
 int gb_var_arg_bad_2 GUARDED_BY("mu"); // \
   // expected-warning {{ignoring 'guarded_by' attribute because its argument is invalid}}
 int gb_var_arg_bad_3 GUARDED_BY(muDoublePointer); // \
-  // expected-warning {{'guarded_by' attribute requires arguments that are class type or point to class type; type here is 'class Mutex **'}}
+  // expected-warning {{'guarded_by' attribute requires arguments that are class type or point to class type; type here is 'Mutex **'}}
 int gb_var_arg_bad_4 GUARDED_BY(umu); // \
-  // expected-warning {{'guarded_by' attribute requires arguments whose type is annotated with 'lockable' attribute; type here is 'class UnlockableMu'}}
+  // expected-warning {{'guarded_by' attribute requires arguments whose type is annotated with 'lockable' attribute; type here is 'UnlockableMu'}}
 
 //3.
 // Thread Safety analysis tests
@@ -446,12 +446,12 @@ int * pgb_var_arg_bad_4 PT_GUARDED_BY(umu); // \
 Mutex mu_aa ACQUIRED_AFTER(mu1);
 
 Mutex aa_var_noargs __attribute__((acquired_after)); // \
-  // expected-error {{attribute takes at least 1 argument}}
+  // expected-error {{'acquired_after' attribute takes at least 1 argument}}
 
 class AAFoo {
  private:
   Mutex aa_field_noargs __attribute__((acquired_after)); // \
-    // expected-error {{attribute takes at least 1 argument}}
+    // expected-error {{'acquired_after' attribute takes at least 1 argument}}
   Mutex aa_field_args ACQUIRED_AFTER(mu1);
 };
 
@@ -506,12 +506,12 @@ UnlockableMu aa_var_arg_bad_5 ACQUIRED_AFTER(mu_aa); // \
 Mutex mu_ab ACQUIRED_BEFORE(mu1);
 
 Mutex ab_var_noargs __attribute__((acquired_before)); // \
-  // expected-error {{attribute takes at least 1 argument}}
+  // expected-error {{'acquired_before' attribute takes at least 1 argument}}
 
 class ABFoo {
  private:
   Mutex ab_field_noargs __attribute__((acquired_before)); // \
-    // expected-error {{attribute takes at least 1 argument}}
+    // expected-error {{'acquired_before' attribute takes at least 1 argument}}
   Mutex ab_field_args ACQUIRED_BEFORE(mu1);
 };
 
@@ -715,7 +715,7 @@ int slf_function_bad_7() SHARED_LOCK_FUNCTION(0); // \
 // plus an optional list of locks (vars/fields)
 
 void etf_function() __attribute__((exclusive_trylock_function));  // \
-  // expected-error {{attribute takes at least 1 argument}}
+  // expected-error {{'exclusive_trylock_function' attribute takes at least 1 argument}}
 
 void etf_function_args() EXCLUSIVE_TRYLOCK_FUNCTION(1, mu2);
 
@@ -788,7 +788,7 @@ int etf_function_bad_6() EXCLUSIVE_TRYLOCK_FUNCTION(1, umu); // \
 // plus an optional list of locks (vars/fields)
 
 void stf_function() __attribute__((shared_trylock_function));  // \
-  // expected-error {{attribute takes at least 1 argument}}
+  // expected-error {{'shared_trylock_function' attribute takes at least 1 argument}}
 
 void stf_function_args() SHARED_TRYLOCK_FUNCTION(1, mu2);
 
@@ -1001,7 +1001,7 @@ int lr_function_bad_4() LOCK_RETURNED(umu); // \
 // takes one or more arguments, all locks (vars/fields)
 
 void le_function() __attribute__((locks_excluded)); // \
-  // expected-error {{attribute takes at least 1 argument}}
+  // expected-error {{'locks_excluded' attribute takes at least 1 argument}}
 
 void le_function_arg() LOCKS_EXCLUDED(mu1);
 
@@ -1068,7 +1068,7 @@ int le_function_bad_4() LOCKS_EXCLUDED(umu); // \
 // takes one or more arguments, all locks (vars/fields)
 
 void elr_function() __attribute__((exclusive_locks_required)); // \
-  // expected-error {{attribute takes at least 1 argument}}
+  // expected-error {{'exclusive_locks_required' attribute takes at least 1 argument}}
 
 void elr_function_arg() EXCLUSIVE_LOCKS_REQUIRED(mu1);
 
@@ -1136,7 +1136,7 @@ int elr_function_bad_4() EXCLUSIVE_LOCKS_REQUIRED(umu); // \
 // takes one or more arguments, all locks (vars/fields)
 
 void slr_function() __attribute__((shared_locks_required)); // \
-  // expected-error {{attribute takes at least 1 argument}}
+  // expected-error {{'shared_locks_required' attribute takes at least 1 argument}}
 
 void slr_function_arg() SHARED_LOCKS_REQUIRED(mu1);
 
@@ -1430,7 +1430,7 @@ class Foo {
   int a GUARDED_BY(mu1_);
   int b GUARDED_BY(mu2_);
   int c GUARDED_BY(mu3_);  // \
-    // expected-warning {{'guarded_by' attribute requires arguments whose type is annotated with 'lockable' attribute; type here is 'class InheritanceTest::Derived3'}}
+    // expected-warning {{'guarded_by' attribute requires arguments whose type is annotated with 'lockable' attribute; type here is 'InheritanceTest::Derived3'}}
 
   void foo() EXCLUSIVE_LOCKS_REQUIRED(mu1_, mu2_) {
     a = 0;
