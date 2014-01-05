@@ -18,7 +18,6 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Twine.h"
-#include "llvm/Support/Casting.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/YAMLParser.h"
@@ -45,6 +44,8 @@ template<class T>
 struct MappingTraits {
   // Must provide:
   // static void mapping(IO &io, T &fields);
+  // Optionally may provide:
+  // static StringRef validate(IO &io, T &fields);
 };
 
 
@@ -227,6 +228,23 @@ public:
   static bool const value = (sizeof(test<MappingTraits<T> >(0)) == 1);
 };
 
+// Test if MappingTraits<T>::validate() is defined on type T.
+template <class T>
+struct has_MappingValidateTraits
+{
+  typedef StringRef (*Signature_validate)(class IO&, T&);
+
+  template <typename U>
+  static char test(SameType<Signature_validate, &U::validate>*);
+
+  template <typename U>
+  static double test(...);
+
+public:
+  static bool const value = (sizeof(test<MappingTraits<T> >(0)) == 1);
+};
+
+
 
 // Test if SequenceTraits<T> is defined on type T.
 template <class T>
@@ -310,7 +328,15 @@ struct missingTraits : public  llvm::integral_constant<bool,
                                       && !has_SequenceTraits<T>::value
                                       && !has_DocumentListTraits<T>::value >  {};
 
+template<typename T>
+struct validatedMappingTraits : public  llvm::integral_constant<bool,
+                                       has_MappingTraits<T>::value
+                                    && has_MappingValidateTraits<T>::value> {};
 
+template<typename T>
+struct unvalidatedMappingTraits : public  llvm::integral_constant<bool,
+                                        has_MappingTraits<T>::value
+                                    && !has_MappingValidateTraits<T>::value> {};
 // Base class for Input and Output.
 class IO {
 public:
@@ -318,7 +344,7 @@ public:
   IO(void *Ctxt=NULL);
   virtual ~IO();
 
-  virtual bool outputting() const = 0;
+  virtual bool outputting() = 0;
 
   virtual unsigned beginSequence() = 0;
   virtual bool preflightElement(unsigned, void *&) = 0;
@@ -484,7 +510,27 @@ yamlize(IO &io, T &Val, bool) {
 
 
 template<typename T>
-typename llvm::enable_if_c<has_MappingTraits<T>::value, void>::type
+typename llvm::enable_if_c<validatedMappingTraits<T>::value, void>::type
+yamlize(IO &io, T &Val, bool) {
+  io.beginMapping();
+  if (io.outputting()) {
+    StringRef Err = MappingTraits<T>::validate(io, Val);
+    if (!Err.empty()) {
+      llvm::errs() << Err << "\n";
+      assert(Err.empty() && "invalid struct trying to be written as yaml");
+    }
+  }
+  MappingTraits<T>::mapping(io, Val);
+  if (!io.outputting()) {
+    StringRef Err = MappingTraits<T>::validate(io, Val);
+    if (!Err.empty())
+      io.setError(Err);
+  }
+  io.endMapping();
+}
+
+template<typename T>
+typename llvm::enable_if_c<unvalidatedMappingTraits<T>::value, void>::type
 yamlize(IO &io, T &Val, bool) {
   io.beginMapping();
   MappingTraits<T>::mapping(io, Val);
@@ -537,6 +583,12 @@ template<>
 struct ScalarTraits<StringRef> {
   static void output(const StringRef &, void*, llvm::raw_ostream &);
   static StringRef input(StringRef, void*, StringRef &);
+};
+ 
+template<>
+struct ScalarTraits<std::string> {
+  static void output(const std::string &, void*, llvm::raw_ostream &);
+  static StringRef input(StringRef, void*, std::string &);
 };
 
 template<>
@@ -697,10 +749,8 @@ public:
   // Check if there was an syntax or semantic error during parsing.
   llvm::error_code error();
 
-  static bool classof(const IO *io) { return !io->outputting(); }
-
 private:
-  virtual bool outputting() const;
+  virtual bool outputting();
   virtual bool mapTag(StringRef, bool);
   virtual void beginMapping();
   virtual void endMapping();
@@ -825,9 +875,7 @@ public:
   Output(llvm::raw_ostream &, void *Ctxt=NULL);
   virtual ~Output();
 
-  static bool classof(const IO *io) { return io->outputting(); }
-  
-  virtual bool outputting() const;
+  virtual bool outputting();
   virtual bool mapTag(StringRef, bool);
   virtual void beginMapping();
   virtual void endMapping();
