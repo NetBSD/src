@@ -12,8 +12,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Sema/AttributeList.h"
+#include "clang/Sema/SemaInternal.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/DeclCXX.h"
+#include "clang/AST/DeclTemplate.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -118,21 +121,25 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name,
                                            Syntax SyntaxUsed) {
   StringRef AttrName = Name->getName();
 
-  // Normalize the attribute name, __foo__ becomes foo.
-  if (AttrName.startswith("__") && AttrName.endswith("__") &&
-      AttrName.size() >= 4)
-    AttrName = AttrName.substr(2, AttrName.size() - 4);
-
-  SmallString<64> Buf;
+  SmallString<64> FullName;
   if (ScopeName)
-    Buf += ScopeName->getName();
+    FullName += ScopeName->getName();
+
+  // Normalize the attribute name, __foo__ becomes foo. This is only allowable
+  // for GNU attributes.
+  bool IsGNU = SyntaxUsed == AS_GNU || (SyntaxUsed == AS_CXX11 &&
+                                        FullName.equals("gnu"));
+  if (IsGNU && AttrName.size() >= 4 && AttrName.startswith("__") &&
+      AttrName.endswith("__"))
+    AttrName = AttrName.slice(2, AttrName.size() - 2);
+
   // Ensure that in the case of C++11 attributes, we look for '::foo' if it is
   // unscoped.
   if (ScopeName || SyntaxUsed == AS_CXX11)
-    Buf += "::";
-  Buf += AttrName;
+    FullName += "::";
+  FullName += AttrName;
 
-  return ::getAttrKind(Buf);
+  return ::getAttrKind(FullName);
 }
 
 unsigned AttributeList::getAttributeSpellingListIndex() const {
@@ -149,6 +156,10 @@ struct ParsedAttrInfo {
   unsigned NumArgs : 4;
   unsigned OptArgs : 4;
   unsigned HasCustomParsing : 1;
+
+  bool (*DiagAppertainsToDecl)(Sema &S, const AttributeList &Attr,
+                               const Decl *);
+  bool (*DiagLangOpts)(Sema &S, const AttributeList &Attr);
 };
 
 namespace {
@@ -169,4 +180,12 @@ unsigned AttributeList::getMaxArgs() const {
 
 bool AttributeList::hasCustomParsing() const {
   return getInfo(*this).HasCustomParsing;
+}
+
+bool AttributeList::diagnoseAppertainsTo(Sema &S, const Decl *D) const {
+  return getInfo(*this).DiagAppertainsToDecl(S, *this, D);
+}
+
+bool AttributeList::diagnoseLangOpts(Sema &S) const {
+  return getInfo(*this).DiagLangOpts(S, *this);
 }
