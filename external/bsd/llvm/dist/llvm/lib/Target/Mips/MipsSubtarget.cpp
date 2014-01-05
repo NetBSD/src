@@ -55,9 +55,9 @@ Mips16HardFloat("mips16-hard-float", cl::NotHidden,
 
 static cl::opt<bool>
 Mips16ConstantIslands(
-  "mips16-constant-islands", cl::Hidden,
-  cl::desc("MIPS: mips16 constant islands enable. experimental feature"),
-  cl::init(false));
+  "mips16-constant-islands", cl::NotHidden,
+  cl::desc("MIPS: mips16 constant islands enable."),
+  cl::init(true));
 
 void MipsSubtarget::anchor() { }
 
@@ -80,6 +80,16 @@ MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
 
   // Parse features string.
   ParseSubtargetFeatures(CPUName, FS);
+
+  if (InMips16Mode && !TM->Options.UseSoftFloat) {
+    // Hard float for mips16 means essentially to compile as soft float
+    // but to use a runtime library for soft float that is written with
+    // native mips32 floating point instructions (those runtime routines
+    // run in mips32 hard float mode).
+    TM->Options.UseSoftFloat = true;
+    TM->Options.FloatABIType = FloatABI::Soft;
+    InMips16HardFloat = true;
+  }
 
   PreviousInMips16Mode = InMips16Mode;
 

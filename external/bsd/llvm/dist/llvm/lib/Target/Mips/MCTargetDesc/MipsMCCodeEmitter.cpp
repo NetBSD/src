@@ -81,8 +81,8 @@ public:
   // getBranchJumpOpValue - Return binary encoding of the jump
   // target operand. If the machine operand requires relocation,
   // record the relocation and return zero.
-   unsigned getJumpTargetOpValue(const MCInst &MI, unsigned OpNo,
-                                 SmallVectorImpl<MCFixup> &Fixups) const;
+  unsigned getJumpTargetOpValue(const MCInst &MI, unsigned OpNo,
+                                SmallVectorImpl<MCFixup> &Fixups) const;
 
   // getBranchJumpOpValueMM - Return binary encoding of the microMIPS jump
   // target operand. If the machine operand requires relocation,
@@ -105,6 +105,9 @@ public:
    // getMachineOpValue - Return binary encoding of operand. If the machin
    // operand requires relocation, record the relocation and return zero.
   unsigned getMachineOpValue(const MCInst &MI,const MCOperand &MO,
+                             SmallVectorImpl<MCFixup> &Fixups) const;
+
+  unsigned getMSAMemEncoding(const MCInst &MI, unsigned OpNo,
                              SmallVectorImpl<MCFixup> &Fixups) const;
 
   unsigned getMemEncoding(const MCInst &MI, unsigned OpNo,
@@ -363,96 +366,98 @@ getExprOpValue(const MCExpr *Expr,SmallVectorImpl<MCFixup> &Fixups) const {
     return Res;
   }
   if (Kind == MCExpr::SymbolRef) {
-  Mips::Fixups FixupKind = Mips::Fixups(0);
+    Mips::Fixups FixupKind = Mips::Fixups(0);
 
-  switch(cast<MCSymbolRefExpr>(Expr)->getKind()) {
-  default: llvm_unreachable("Unknown fixup kind!");
-    break;
-  case MCSymbolRefExpr::VK_Mips_GPOFF_HI :
-    FixupKind = Mips::fixup_Mips_GPOFF_HI;
-    break;
-  case MCSymbolRefExpr::VK_Mips_GPOFF_LO :
-    FixupKind = Mips::fixup_Mips_GPOFF_LO;
-    break;
-  case MCSymbolRefExpr::VK_Mips_GOT_PAGE :
-    FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_GOT_PAGE
-                            : Mips::fixup_Mips_GOT_PAGE;
-    break;
-  case MCSymbolRefExpr::VK_Mips_GOT_OFST :
-    FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_GOT_OFST
-                            : Mips::fixup_Mips_GOT_OFST;
-    break;
-  case MCSymbolRefExpr::VK_Mips_GOT_DISP :
-    FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_GOT_DISP
-                            : Mips::fixup_Mips_GOT_DISP;
-    break;
-  case MCSymbolRefExpr::VK_Mips_GPREL:
-    FixupKind = Mips::fixup_Mips_GPREL16;
-    break;
-  case MCSymbolRefExpr::VK_Mips_GOT_CALL:
-    FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_CALL16
-                            : Mips::fixup_Mips_CALL16;
-    break;
-  case MCSymbolRefExpr::VK_Mips_GOT16:
-    FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_GOT16
-                            : Mips::fixup_Mips_GOT_Global;
-    break;
-  case MCSymbolRefExpr::VK_Mips_GOT:
-    FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_GOT16
-                            : Mips::fixup_Mips_GOT_Local;
-    break;
-  case MCSymbolRefExpr::VK_Mips_ABS_HI:
-    FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_HI16
-                            : Mips::fixup_Mips_HI16;
-    break;
-  case MCSymbolRefExpr::VK_Mips_ABS_LO:
-    FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_LO16
-                            : Mips::fixup_Mips_LO16;
-    break;
-  case MCSymbolRefExpr::VK_Mips_TLSGD:
-    FixupKind = Mips::fixup_Mips_TLSGD;
-    break;
-  case MCSymbolRefExpr::VK_Mips_TLSLDM:
-    FixupKind = Mips::fixup_Mips_TLSLDM;
-    break;
-  case MCSymbolRefExpr::VK_Mips_DTPREL_HI:
-    FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_TLS_DTPREL_HI16
-                            : Mips::fixup_Mips_DTPREL_HI;
-    break;
-  case MCSymbolRefExpr::VK_Mips_DTPREL_LO:
-    FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_TLS_DTPREL_LO16
-                            : Mips::fixup_Mips_DTPREL_LO;
-    break;
-  case MCSymbolRefExpr::VK_Mips_GOTTPREL:
-    FixupKind = Mips::fixup_Mips_GOTTPREL;
-    break;
-  case MCSymbolRefExpr::VK_Mips_TPREL_HI:
-    FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_TLS_TPREL_HI16
-                            : Mips::fixup_Mips_TPREL_HI;
-    break;
-  case MCSymbolRefExpr::VK_Mips_TPREL_LO:
-    FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_TLS_TPREL_LO16
-                            : Mips::fixup_Mips_TPREL_LO;
-    break;
-  case MCSymbolRefExpr::VK_Mips_HIGHER:
-    FixupKind = Mips::fixup_Mips_HIGHER;
-    break;
-  case MCSymbolRefExpr::VK_Mips_HIGHEST:
-    FixupKind = Mips::fixup_Mips_HIGHEST;
-    break;
-  case MCSymbolRefExpr::VK_Mips_GOT_HI16:
-    FixupKind = Mips::fixup_Mips_GOT_HI16;
-    break;
-  case MCSymbolRefExpr::VK_Mips_GOT_LO16:
-    FixupKind = Mips::fixup_Mips_GOT_LO16;
-    break;
-  case MCSymbolRefExpr::VK_Mips_CALL_HI16:
-    FixupKind = Mips::fixup_Mips_CALL_HI16;
-    break;
-  case MCSymbolRefExpr::VK_Mips_CALL_LO16:
-    FixupKind = Mips::fixup_Mips_CALL_LO16;
-    break;
-  } // switch
+    switch(cast<MCSymbolRefExpr>(Expr)->getKind()) {
+    default: llvm_unreachable("Unknown fixup kind!");
+      break;
+    case MCSymbolRefExpr::VK_Mips_GPOFF_HI :
+      FixupKind = Mips::fixup_Mips_GPOFF_HI;
+      break;
+    case MCSymbolRefExpr::VK_Mips_GPOFF_LO :
+      FixupKind = Mips::fixup_Mips_GPOFF_LO;
+      break;
+    case MCSymbolRefExpr::VK_Mips_GOT_PAGE :
+      FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_GOT_PAGE
+                              : Mips::fixup_Mips_GOT_PAGE;
+      break;
+    case MCSymbolRefExpr::VK_Mips_GOT_OFST :
+      FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_GOT_OFST
+                              : Mips::fixup_Mips_GOT_OFST;
+      break;
+    case MCSymbolRefExpr::VK_Mips_GOT_DISP :
+      FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_GOT_DISP
+                              : Mips::fixup_Mips_GOT_DISP;
+      break;
+    case MCSymbolRefExpr::VK_Mips_GPREL:
+      FixupKind = Mips::fixup_Mips_GPREL16;
+      break;
+    case MCSymbolRefExpr::VK_Mips_GOT_CALL:
+      FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_CALL16
+                              : Mips::fixup_Mips_CALL16;
+      break;
+    case MCSymbolRefExpr::VK_Mips_GOT16:
+      FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_GOT16
+                              : Mips::fixup_Mips_GOT_Global;
+      break;
+    case MCSymbolRefExpr::VK_Mips_GOT:
+      FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_GOT16
+                              : Mips::fixup_Mips_GOT_Local;
+      break;
+    case MCSymbolRefExpr::VK_Mips_ABS_HI:
+      FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_HI16
+                              : Mips::fixup_Mips_HI16;
+      break;
+    case MCSymbolRefExpr::VK_Mips_ABS_LO:
+      FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_LO16
+                              : Mips::fixup_Mips_LO16;
+      break;
+    case MCSymbolRefExpr::VK_Mips_TLSGD:
+      FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_TLS_GD
+                              : Mips::fixup_Mips_TLSGD;
+      break;
+    case MCSymbolRefExpr::VK_Mips_TLSLDM:
+      FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_TLS_LDM
+                              : Mips::fixup_Mips_TLSLDM;
+      break;
+    case MCSymbolRefExpr::VK_Mips_DTPREL_HI:
+      FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_TLS_DTPREL_HI16
+                              : Mips::fixup_Mips_DTPREL_HI;
+      break;
+    case MCSymbolRefExpr::VK_Mips_DTPREL_LO:
+      FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_TLS_DTPREL_LO16
+                              : Mips::fixup_Mips_DTPREL_LO;
+      break;
+    case MCSymbolRefExpr::VK_Mips_GOTTPREL:
+      FixupKind = Mips::fixup_Mips_GOTTPREL;
+      break;
+    case MCSymbolRefExpr::VK_Mips_TPREL_HI:
+      FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_TLS_TPREL_HI16
+                              : Mips::fixup_Mips_TPREL_HI;
+      break;
+    case MCSymbolRefExpr::VK_Mips_TPREL_LO:
+      FixupKind = IsMicroMips ? Mips::fixup_MICROMIPS_TLS_TPREL_LO16
+                              : Mips::fixup_Mips_TPREL_LO;
+      break;
+    case MCSymbolRefExpr::VK_Mips_HIGHER:
+      FixupKind = Mips::fixup_Mips_HIGHER;
+      break;
+    case MCSymbolRefExpr::VK_Mips_HIGHEST:
+      FixupKind = Mips::fixup_Mips_HIGHEST;
+      break;
+    case MCSymbolRefExpr::VK_Mips_GOT_HI16:
+      FixupKind = Mips::fixup_Mips_GOT_HI16;
+      break;
+    case MCSymbolRefExpr::VK_Mips_GOT_LO16:
+      FixupKind = Mips::fixup_Mips_GOT_LO16;
+      break;
+    case MCSymbolRefExpr::VK_Mips_CALL_HI16:
+      FixupKind = Mips::fixup_Mips_CALL_HI16;
+      break;
+    case MCSymbolRefExpr::VK_Mips_CALL_LO16:
+      FixupKind = Mips::fixup_Mips_CALL_LO16;
+      break;
+    } // switch
 
     Fixups.push_back(MCFixup::Create(0, Expr, MCFixupKind(FixupKind)));
     return 0;
@@ -478,6 +483,49 @@ getMachineOpValue(const MCInst &MI, const MCOperand &MO,
   // MO must be an Expr.
   assert(MO.isExpr());
   return getExprOpValue(MO.getExpr(),Fixups);
+}
+
+/// getMSAMemEncoding - Return binary encoding of memory operand for LD/ST
+/// instructions.
+unsigned
+MipsMCCodeEmitter::getMSAMemEncoding(const MCInst &MI, unsigned OpNo,
+                                     SmallVectorImpl<MCFixup> &Fixups) const {
+  // Base register is encoded in bits 20-16, offset is encoded in bits 15-0.
+  assert(MI.getOperand(OpNo).isReg());
+  unsigned RegBits = getMachineOpValue(MI, MI.getOperand(OpNo),Fixups) << 16;
+  unsigned OffBits = getMachineOpValue(MI, MI.getOperand(OpNo+1), Fixups);
+
+  // The immediate field of an LD/ST instruction is scaled which means it must
+  // be divided (when encoding) by the size (in bytes) of the instructions'
+  // data format.
+  // .b - 1 byte
+  // .h - 2 bytes
+  // .w - 4 bytes
+  // .d - 8 bytes
+  switch(MI.getOpcode())
+  {
+  default:
+    assert (0 && "Unexpected instruction");
+    break;
+  case Mips::LD_B:
+  case Mips::ST_B:
+    // We don't need to scale the offset in this case
+    break;
+  case Mips::LD_H:
+  case Mips::ST_H:
+    OffBits >>= 1;
+    break;
+  case Mips::LD_W:
+  case Mips::ST_W:
+    OffBits >>= 2;
+    break;
+  case Mips::LD_D:
+  case Mips::ST_D:
+    OffBits >>= 3;
+    break;
+  }
+
+  return (OffBits & 0xFFFF) | RegBits;
 }
 
 /// getMemEncoding - Return binary encoding of memory related operand.

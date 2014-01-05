@@ -535,6 +535,7 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   bool HasVEX_4V = (TSFlags >> X86II::VEXShift) & X86II::VEX_4V;
   bool HasVEX_4VOp3 = (TSFlags >> X86II::VEXShift) & X86II::VEX_4VOp3;
   bool HasMemOp4 = (TSFlags >> X86II::VEXShift) & X86II::MemOp4;
+  bool HasEVEX_RC = false;
 
   // VEX_R: opcode externsion equivalent to REX.R in
   // 1's complement (inverted) form
@@ -610,6 +611,9 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   // EVEX_b
   unsigned char EVEX_b = 0;
 
+  // EVEX_rc
+  unsigned char EVEX_rc = 0;
+
   // EVEX_aaa
   unsigned char EVEX_aaa = 0;
 
@@ -676,6 +680,7 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
 
   // Classify VEX_B, VEX_4V, VEX_R, VEX_X
   unsigned NumOps = Desc.getNumOperands();
+  unsigned RcOperand = NumOps-1;
   unsigned CurOp = 0;
   if (NumOps > 1 && Desc.getOperandConstraint(1, MCOI::TIED_TO) == 0)
     ++CurOp;
@@ -694,7 +699,6 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
     ++CurOp;
 
   switch (TSFlags & X86II::FormMask) {
-  case X86II::MRMInitReg: llvm_unreachable("FIXME: Remove this!");
   case X86II::MRMDestMem: {
     // MRMDestMem instructions forms:
     //  MemAddr, src1(ModR/M)
@@ -835,7 +839,12 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
       VEX_X = 0x0;
     CurOp++;
     if (HasVEX_4VOp3)
-      VEX_4V = getVEXRegisterEncoding(MI, CurOp);
+      VEX_4V = getVEXRegisterEncoding(MI, CurOp++);
+    if (EVEX_b) {
+      assert(RcOperand >= CurOp);
+      EVEX_rc = MI.getOperand(RcOperand).getImm() & 0x3;
+      HasEVEX_RC = true;
+    }
     break;
   case X86II::MRMDestReg:
     // MRMDestReg instructions forms:
@@ -935,12 +944,19 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
              (VEX_4V  << 3) |
              (EVEX_U  << 2) |
              VEX_PP, CurByte, OS);
-    EmitByte((EVEX_z  << 7) |
-             (EVEX_L2 << 6) |
-             (VEX_L   << 5) |
-             (EVEX_b  << 4) |
-             (EVEX_V2 << 3) |
-             EVEX_aaa, CurByte, OS);
+    if (HasEVEX_RC)
+      EmitByte((EVEX_z  << 7) |
+              (EVEX_rc << 5) |
+              (EVEX_b  << 4) |
+              (EVEX_V2 << 3) |
+              EVEX_aaa, CurByte, OS);
+    else
+      EmitByte((EVEX_z  << 7) |
+              (EVEX_L2 << 6) |
+              (VEX_L   << 5) |
+              (EVEX_b  << 4) |
+              (EVEX_V2 << 3) |
+              EVEX_aaa, CurByte, OS);
   }
 }
 
@@ -974,7 +990,6 @@ static unsigned DetermineREXPrefix(const MCInst &MI, uint64_t TSFlags,
   }
 
   switch (TSFlags & X86II::FormMask) {
-  case X86II::MRMInitReg: llvm_unreachable("FIXME: Remove this!");
   case X86II::MRMSrcReg:
     if (MI.getOperand(0).isReg() &&
         X86II::isX86_64ExtendedReg(MI.getOperand(0).getReg()))
@@ -1124,34 +1139,28 @@ void X86MCCodeEmitter::EmitOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   case X86II::A7:  // 0F A7
     Need0FPrefix = true;
     break;
+  case X86II::XS:   // F3 0F
   case X86II::T8XS: // F3 0F 38
     EmitByte(0xF3, CurByte, OS);
     Need0FPrefix = true;
     break;
+  case X86II::XD:   // F2 0F
   case X86II::T8XD: // F2 0F 38
-    EmitByte(0xF2, CurByte, OS);
-    Need0FPrefix = true;
-    break;
   case X86II::TAXD: // F2 0F 3A
     EmitByte(0xF2, CurByte, OS);
     Need0FPrefix = true;
     break;
-  case X86II::XS:   // F3 0F
-    EmitByte(0xF3, CurByte, OS);
-    Need0FPrefix = true;
+  case X86II::D8:
+  case X86II::D9:
+  case X86II::DA:
+  case X86II::DB:
+  case X86II::DC:
+  case X86II::DD:
+  case X86II::DE:
+  case X86II::DF:
+    EmitByte(0xD8+(((TSFlags & X86II::Op0Mask) - X86II::D8) >> X86II::Op0Shift),
+             CurByte, OS);
     break;
-  case X86II::XD:   // F2 0F
-    EmitByte(0xF2, CurByte, OS);
-    Need0FPrefix = true;
-    break;
-  case X86II::D8: EmitByte(0xD8, CurByte, OS); break;
-  case X86II::D9: EmitByte(0xD9, CurByte, OS); break;
-  case X86II::DA: EmitByte(0xDA, CurByte, OS); break;
-  case X86II::DB: EmitByte(0xDB, CurByte, OS); break;
-  case X86II::DC: EmitByte(0xDC, CurByte, OS); break;
-  case X86II::DD: EmitByte(0xDD, CurByte, OS); break;
-  case X86II::DE: EmitByte(0xDE, CurByte, OS); break;
-  case X86II::DF: EmitByte(0xDF, CurByte, OS); break;
   }
 
   // Handle REX prefix.
@@ -1214,7 +1223,8 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   // It uses the EVEX.aaa field?
   bool HasEVEX = (TSFlags >> X86II::VEXShift) & X86II::EVEX;
   bool HasEVEX_K = HasEVEX && ((TSFlags >> X86II::VEXShift) & X86II::EVEX_K);
-
+  bool HasEVEX_B = HasEVEX && ((TSFlags >> X86II::VEXShift) & X86II::EVEX_B);
+  
   // Determine where the memory operand starts, if present.
   int MemoryOperand = X86II::getMemoryOperandNo(TSFlags, Opcode);
   if (MemoryOperand != -1) MemoryOperand += CurOp;
@@ -1231,8 +1241,6 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
 
   unsigned SrcRegNum = 0;
   switch (TSFlags & X86II::FormMask) {
-  case X86II::MRMInitReg:
-    llvm_unreachable("FIXME: Remove this form when the JIT moves to MCCodeEmitter!");
   default: errs() << "FORM: " << (TSFlags & X86II::FormMask) << "\n";
     llvm_unreachable("Unknown FormMask value in X86MCCodeEmitter!");
   case X86II::Pseudo:
@@ -1312,6 +1320,9 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     CurOp = HasMemOp4 ? SrcRegNum : SrcRegNum + 1;
     if (HasVEX_4VOp3)
       ++CurOp;
+    // do not count the rounding control operand
+    if (HasEVEX_B)
+      NumOps--;
     break;
 
   case X86II::MRMSrcMem: {

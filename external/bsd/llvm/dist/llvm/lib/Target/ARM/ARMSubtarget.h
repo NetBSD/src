@@ -31,7 +31,8 @@ class TargetOptions;
 class ARMSubtarget : public ARMGenSubtargetInfo {
 protected:
   enum ARMProcFamilyEnum {
-    Others, CortexA5, CortexA8, CortexA9, CortexA15, CortexR5, Swift, CortexA53, CortexA57
+    Others, CortexA5, CortexA7, CortexA8, CortexA9, CortexA12, CortexA15, 
+    CortexR5, Swift, CortexA53, CortexA57, Krait
   };
   enum ARMProcClassEnum {
     None, AClass, RClass, MClass
@@ -62,6 +63,10 @@ protected:
   bool HasVFPv4;
   bool HasFPARMv8;
   bool HasNEON;
+
+  /// MinSize - True if the function being compiled has the "minsize" attribute
+  /// and should be optimised for size at the expense of speed.
+  bool MinSize;
 
   /// UseNEONForSinglePrecisionFP - if the NEONFP attribute has been
   /// specified. Use the method useNEONForSinglePrecisionFP() to
@@ -212,6 +217,7 @@ protected:
 
  public:
   enum {
+    ARM_ABI_UNKNOWN,
     ARM_ABI_APCS,
     ARM_ABI_AAPCS // ARM EABI
   } TargetABI;
@@ -256,8 +262,9 @@ public:
   bool isCortexA15() const { return ARMProcFamily == CortexA15; }
   bool isSwift()    const { return ARMProcFamily == Swift; }
   bool isCortexM3() const { return CPUString == "cortex-m3"; }
-  bool isLikeA9() const { return isCortexA9() || isCortexA15(); }
+  bool isLikeA9() const { return isCortexA9() || isCortexA15() || isKrait(); }
   bool isCortexR5() const { return ARMProcFamily == CortexR5; }
+  bool isKrait() const { return ARMProcFamily == Krait; }
 
   bool hasARMOps() const { return !NoARM; }
 
@@ -269,6 +276,7 @@ public:
   bool hasCrypto() const { return HasCrypto; }
   bool hasCRC() const { return HasCRC; }
   bool hasVirtualization() const { return HasVirtualization; }
+  bool isMinSize() const { return MinSize; }
   bool useNEONForSinglePrecisionFP() const {
     return hasNEON() && UseNEONForSinglePrecisionFP; }
 
@@ -303,18 +311,30 @@ public:
   bool isTargetDarwin() const { return TargetTriple.isOSDarwin(); }
   bool isTargetNaCl() const { return TargetTriple.isOSNaCl(); }
   bool isTargetLinux() const { return TargetTriple.isOSLinux(); }
-  bool isTargetELF() const { return !isTargetDarwin(); }
+  bool isTargetELF() const { return TargetTriple.isOSBinFormatELF(); }
   // ARM EABI is the bare-metal EABI described in ARM ABI documents and
   // can be accessed via -target arm-none-eabi. This is NOT GNUEABI.
   // FIXME: Add a flag for bare-metal for that target and set Triple::EABI
   // even for GNUEABI, so we can make a distinction here and still conform to
   // the EABI on GNU (and Android) mode. This requires change in Clang, too.
   bool isTargetAEABI() const {
-    return TargetTriple.getEnvironment() == Triple::EABI;
+    return TargetTriple.getEnvironment() == Triple::EABI ||
+      TargetTriple.getEnvironment() == Triple::EABIHF;
   }
 
-  bool isAPCS_ABI() const { return TargetABI == ARM_ABI_APCS; }
-  bool isAAPCS_ABI() const { return TargetABI == ARM_ABI_AAPCS; }
+  bool isTargetHardFloat() const {
+    return TargetTriple.getEnvironment() == Triple::GNUEABIHF ||
+           TargetTriple.getEnvironment() == Triple::EABIHF;
+  }
+
+  bool isAPCS_ABI() const {
+    assert(TargetABI != ARM_ABI_UNKNOWN);
+    return TargetABI == ARM_ABI_APCS;
+  }
+  bool isAAPCS_ABI() const {
+    assert(TargetABI != ARM_ABI_UNKNOWN);
+    return TargetABI == ARM_ABI_AAPCS;
+  }
 
   bool isThumb() const { return InThumbMode; }
   bool isThumb1Only() const { return InThumbMode && !HasThumb2; }
@@ -326,7 +346,7 @@ public:
 
   bool isR9Reserved() const { return IsR9Reserved; }
 
-  bool useMovt() const { return UseMovt && hasV6T2Ops(); }
+  bool useMovt() const { return UseMovt && !isMinSize(); }
   bool supportsTailCall() const { return SupportsTailCall; }
 
   bool allowsUnalignedMem() const { return AllowsUnalignedMem; }

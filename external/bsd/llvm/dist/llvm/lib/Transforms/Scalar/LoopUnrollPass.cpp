@@ -15,6 +15,7 @@
 #define DEBUG_TYPE "loop-unroll"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Analysis/CodeMetrics.h"
+#include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
@@ -213,7 +214,7 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
                                             notDuplicatable, TTI);
     DEBUG(dbgs() << "  Loop Size = " << LoopSize << "\n");
     if (notDuplicatable) {
-      DEBUG(dbgs() << "  Not unrolling loop which contains non duplicatable"
+      DEBUG(dbgs() << "  Not unrolling loop which contains non-duplicatable"
             << " instructions.\n");
       return false;
     }

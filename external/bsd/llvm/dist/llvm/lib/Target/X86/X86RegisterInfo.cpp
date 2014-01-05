@@ -239,10 +239,8 @@ X86RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   case CallingConv::HiPE:
     return CSR_NoRegs_SaveList;
 
-  case CallingConv::WebKit_JS:
-    return CSR_64_SaveList;
   case CallingConv::AnyReg:
-    return CSR_MostRegs_64_SaveList;
+    return CSR_AllRegs_64_SaveList;
 
   case CallingConv::Intel_OCL_BI: {
     bool HasAVX = TM.getSubtarget<X86Subtarget>().hasAVX();
@@ -301,8 +299,8 @@ X86RegisterInfo::getCallPreservedMask(CallingConv::ID CC) const {
   }
   if (CC == CallingConv::GHC || CC == CallingConv::HiPE)
     return CSR_NoRegs_RegMask;
-  if (CC == CallingConv::WebKit_JS || CC == CallingConv::AnyReg)
-    return CSR_MostRegs_64_RegMask;
+  if (CC == CallingConv::AnyReg)
+    return CSR_AllRegs_64_RegMask;
   if (!Is64Bit)
     return CSR_32_RegMask;
   if (CC == CallingConv::Cold)
@@ -403,18 +401,15 @@ bool X86RegisterInfo::hasBasePointer(const MachineFunction &MF) const {
    if (!EnableBasePointer)
      return false;
 
-   // When we need stack realignment and there are dynamic allocas, we can't
-   // reference off of the stack pointer, so we reserve a base pointer.
-   //
-   // This is also true if the function contain MS-style inline assembly.  We
-   // do this because if any stack changes occur in the inline assembly, e.g.,
-   // "pusha", then any C local variable or C argument references in the
-   // inline assembly will be wrong because the SP is not properly tracked.
-   if ((needsStackRealignment(MF) && MFI->hasVarSizedObjects()) ||
-       MF.hasMSInlineAsm())
-     return true;
-
-   return false;
+   // When we need stack realignment, we can't address the stack from the frame
+   // pointer.  When we have dynamic allocas or stack-adjusting inline asm, we
+   // can't address variables from the stack pointer.  MS inline asm can
+   // reference locals while also adjusting the stack pointer.  When we can't
+   // use both the SP and the FP, we need a separate base pointer register.
+   bool CantUseFP = needsStackRealignment(MF);
+   bool CantUseSP =
+       MFI->hasVarSizedObjects() || MFI->hasInlineAsmWithSPAdjust();
+   return CantUseFP && CantUseSP;
 }
 
 bool X86RegisterInfo::canRealignStack(const MachineFunction &MF) const {

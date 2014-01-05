@@ -210,15 +210,16 @@ def FCC_O   : FCC_VAL<29>;  // Ordered
 //===----------------------------------------------------------------------===//
 
 /// F3_12 multiclass - Define a normal F3_1/F3_2 pattern in one shot.
-multiclass F3_12<string OpcStr, bits<6> Op3Val, SDNode OpNode> {
+multiclass F3_12<string OpcStr, bits<6> Op3Val, SDNode OpNode,
+                 RegisterClass RC, ValueType Ty, Operand immOp> {
   def rr  : F3_1<2, Op3Val,
-                 (outs IntRegs:$dst), (ins IntRegs:$b, IntRegs:$c),
+                 (outs RC:$dst), (ins RC:$b, RC:$c),
                  !strconcat(OpcStr, " $b, $c, $dst"),
-                 [(set i32:$dst, (OpNode i32:$b, i32:$c))]>;
+                 [(set Ty:$dst, (OpNode Ty:$b, Ty:$c))]>;
   def ri  : F3_2<2, Op3Val,
-                 (outs IntRegs:$dst), (ins IntRegs:$b, i32imm:$c),
+                 (outs RC:$dst), (ins RC:$b, immOp:$c),
                  !strconcat(OpcStr, " $b, $c, $dst"),
-                 [(set i32:$dst, (OpNode i32:$b, (i32 simm13:$c)))]>;
+                 [(set Ty:$dst, (OpNode Ty:$b, (Ty simm13:$c)))]>;
 }
 
 /// F3_12np multiclass - Define a normal F3_1/F3_2 pattern in one shot, with no
@@ -464,7 +465,7 @@ let rd = 0, imm22 = 0 in
   def NOP : F2_1<0b100, (outs), (ins), "nop", []>;
 
 // Section B.11 - Logical Instructions, p. 106
-defm AND    : F3_12<"and", 0b000001, and>;
+defm AND    : F3_12<"and", 0b000001, and, IntRegs, i32, i32imm>;
 
 def ANDNrr  : F3_1<2, 0b000101,
                    (outs IntRegs:$dst), (ins IntRegs:$b, IntRegs:$c),
@@ -474,7 +475,7 @@ def ANDNri  : F3_2<2, 0b000101,
                    (outs IntRegs:$dst), (ins IntRegs:$b, i32imm:$c),
                    "andn $b, $c, $dst", []>;
 
-defm OR     : F3_12<"or", 0b000010, or>;
+defm OR     : F3_12<"or", 0b000010, or, IntRegs, i32, i32imm>;
 
 def ORNrr   : F3_1<2, 0b000110,
                    (outs IntRegs:$dst), (ins IntRegs:$b, IntRegs:$c),
@@ -483,7 +484,7 @@ def ORNrr   : F3_1<2, 0b000110,
 def ORNri   : F3_2<2, 0b000110,
                    (outs IntRegs:$dst), (ins IntRegs:$b, i32imm:$c),
                    "orn $b, $c, $dst", []>;
-defm XOR    : F3_12<"xor", 0b000011, xor>;
+defm XOR    : F3_12<"xor", 0b000011, xor, IntRegs, i32, i32imm>;
 
 def XNORrr  : F3_1<2, 0b000111,
                    (outs IntRegs:$dst), (ins IntRegs:$b, IntRegs:$c),
@@ -494,12 +495,12 @@ def XNORri  : F3_2<2, 0b000111,
                    "xnor $b, $c, $dst", []>;
 
 // Section B.12 - Shift Instructions, p. 107
-defm SLL : F3_12<"sll", 0b100101, shl>;
-defm SRL : F3_12<"srl", 0b100110, srl>;
-defm SRA : F3_12<"sra", 0b100111, sra>;
+defm SLL : F3_12<"sll", 0b100101, shl, IntRegs, i32, i32imm>;
+defm SRL : F3_12<"srl", 0b100110, srl, IntRegs, i32, i32imm>;
+defm SRA : F3_12<"sra", 0b100111, sra, IntRegs, i32, i32imm>;
 
 // Section B.13 - Add Instructions, p. 108
-defm ADD   : F3_12<"add", 0b000000, add>;
+defm ADD   : F3_12<"add", 0b000000, add, IntRegs, i32, i32imm>;
 
 // "LEA" forms of add (patterns to make tblgen happy)
 let Predicates = [Is32Bit] in
@@ -509,18 +510,18 @@ let Predicates = [Is32Bit] in
                      [(set iPTR:$dst, ADDRri:$addr)]>;
 
 let Defs = [ICC] in
-  defm ADDCC  : F3_12<"addcc", 0b010000, addc>;
+  defm ADDCC  : F3_12<"addcc", 0b010000, addc, IntRegs, i32, i32imm>;
 
 let Uses = [ICC], Defs = [ICC] in
-  defm ADDX  : F3_12<"addxcc", 0b011000, adde>;
+  defm ADDE  : F3_12<"addxcc", 0b011000, adde, IntRegs, i32, i32imm>;
 
 // Section B.15 - Subtract Instructions, p. 110
-defm SUB    : F3_12  <"sub"  , 0b000100, sub>;
+defm SUB    : F3_12  <"sub"  , 0b000100, sub, IntRegs, i32, i32imm>;
 let Uses = [ICC], Defs = [ICC] in
-  defm SUBX   : F3_12  <"subxcc" , 0b011100, sube>;
+  defm SUBE   : F3_12  <"subxcc" , 0b011100, sube, IntRegs, i32, i32imm>;
 
 let Defs = [ICC] in
-  defm SUBCC  : F3_12  <"subcc", 0b010100, subc>;
+  defm SUBCC  : F3_12  <"subcc", 0b010100, subc, IntRegs, i32, i32imm>;
 
 let Defs = [ICC], rd = 0 in {
   def CMPrr   : F3_1<2, 0b010100,
@@ -542,7 +543,7 @@ let Uses = [ICC], Defs = [ICC] in
 // Section B.18 - Multiply Instructions, p. 113
 let Defs = [Y] in {
   defm UMUL : F3_12np<"umul", 0b001010>;
-  defm SMUL : F3_12  <"smul", 0b001011, mul>;
+  defm SMUL : F3_12  <"smul", 0b001011, mul, IntRegs, i32, i32imm>;
 }
 
 // Section B.19 - Divide Instructions, p. 115
@@ -966,13 +967,40 @@ let Predicates = [HasV9] in {
 }
 
 // POPCrr - This does a ctpop of a 64-bit register.  As such, we have to clear
-// the top 32-bits before using it.  To do this clearing, we use a SLLri X,0.
+// the top 32-bits before using it.  To do this clearing, we use a SRLri X,0.
 let rs1 = 0 in
   def POPCrr : F3_1<2, 0b101110,
                     (outs IntRegs:$dst), (ins IntRegs:$src),
                     "popc $src, $dst", []>, Requires<[HasV9]>;
 def : Pat<(ctpop i32:$src),
-          (POPCrr (SLLri $src, 0))>;
+          (POPCrr (SRLri $src, 0))>;
+
+// Atomic swap.
+let hasSideEffects =1, rd = 0, rs1 = 0b01111, rs2 = 0 in
+  def STBAR : F3_1<2, 0b101000, (outs), (ins), "stbar", []>;
+
+let Predicates = [HasV9], hasSideEffects = 1, rd = 0, rs1 = 0b01111 in
+ def MEMBARi : F3_2<2, 0b101000, (outs), (ins i32imm:$simm13),
+                    "membar $simm13", []>;
+
+let Constraints = "$val = $rd" in {
+  def SWAPrr : F3_1<3, 0b001111,
+                 (outs IntRegs:$rd), (ins IntRegs:$val, MEMrr:$addr),
+                 "swap [$addr], $rd",
+                 [(set i32:$rd, (atomic_swap_32 ADDRrr:$addr, i32:$val))]>;
+  def SWAPri : F3_2<3, 0b001111,
+                 (outs IntRegs:$rd), (ins IntRegs:$val, MEMri:$addr),
+                 "swap [$addr], $rd",
+                 [(set i32:$rd, (atomic_swap_32 ADDRri:$addr, i32:$val))]>;
+}
+
+let Predicates = [HasV9], Constraints = "$swap = $rd" in
+  def CASrr: F3_1<3, 0b111100,
+                (outs IntRegs:$rd), (ins IntRegs:$rs1, IntRegs:$rs2,
+                                     IntRegs:$swap),
+                 "cas [$rs1], $rs2, $rd",
+                 [(set i32:$rd,
+                     (atomic_cmp_swap iPTR:$rs1, i32:$rs2, i32:$swap))]>;
 
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
@@ -987,6 +1015,8 @@ def : Pat<(i32 imm:$val),
 
 
 // Global addresses, constant pool entries
+let Predicates = [Is32Bit] in {
+
 def : Pat<(SPhi tglobaladdr:$in), (SETHIi tglobaladdr:$in)>;
 def : Pat<(SPlo tglobaladdr:$in), (ORri (i32 G0), tglobaladdr:$in)>;
 def : Pat<(SPhi tconstpool:$in), (SETHIi tconstpool:$in)>;
@@ -1009,6 +1039,7 @@ def : Pat<(add iPTR:$r, (SPlo tglobaladdr:$in)), (ADDri $r, tglobaladdr:$in)>;
 def : Pat<(add iPTR:$r, (SPlo tconstpool:$in)),  (ADDri $r, tconstpool:$in)>;
 def : Pat<(add iPTR:$r, (SPlo tblockaddress:$in)),
                         (ADDri $r, tblockaddress:$in)>;
+}
 
 // Calls:
 def : Pat<(call tglobaladdr:$dst),
@@ -1031,5 +1062,18 @@ def : Pat<(i32 (zextloadi1 ADDRri:$src)), (LDUBri ADDRri:$src)>;
 // store 0, addr -> store %g0, addr
 def : Pat<(store (i32 0), ADDRrr:$dst), (STrr ADDRrr:$dst, (i32 G0))>;
 def : Pat<(store (i32 0), ADDRri:$dst), (STri ADDRri:$dst, (i32 G0))>;
+
+// store bar for all atomic_fence in V8.
+let Predicates = [HasNoV9] in
+  def : Pat<(atomic_fence imm, imm), (STBAR)>;
+
+// atomic_load_32 addr -> load addr
+def : Pat<(i32 (atomic_load ADDRrr:$src)), (LDrr ADDRrr:$src)>;
+def : Pat<(i32 (atomic_load ADDRri:$src)), (LDri ADDRri:$src)>;
+
+// atomic_store_32 val, addr -> store val, addr
+def : Pat<(atomic_store ADDRrr:$dst, i32:$val), (STrr ADDRrr:$dst, $val)>;
+def : Pat<(atomic_store ADDRri:$dst, i32:$val), (STri ADDRri:$dst, $val)>;
+
 
 include "SparcInstr64Bit.td"

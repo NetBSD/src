@@ -26,6 +26,7 @@ namespace llvm {
   class MCSymbol;
   class MCSymbolRefExpr;
   class raw_ostream;
+  class DwarfTypeUnit;
 
   //===--------------------------------------------------------------------===//
   /// DIEAbbrevData - Dwarf abbreviation data, describes one attribute of a
@@ -134,7 +135,7 @@ namespace llvm {
     explicit DIE(unsigned Tag)
         : Offset(0), Size(0), Abbrev((dwarf::Tag)Tag, dwarf::DW_CHILDREN_no),
           Parent(0) {}
-    virtual ~DIE();
+    ~DIE();
 
     // Accessors.
     DIEAbbrev &getAbbrev() { return Abbrev; }
@@ -146,12 +147,12 @@ namespace llvm {
     const std::vector<DIE *> &getChildren() const { return Children; }
     const SmallVectorImpl<DIEValue*> &getValues() const { return Values; }
     DIE *getParent() const { return Parent; }
-    /// Climb up the parent chain to get the compile unit DIE this DIE belongs
-    /// to.
-    const DIE *getCompileUnit() const;
-    /// Similar to getCompileUnit, returns null when DIE is not added to an
+    /// Climb up the parent chain to get the compile or type unit DIE this DIE
+    /// belongs to.
+    const DIE *getUnit() const;
+    /// Similar to getUnit, returns null when DIE is not added to an
     /// owner yet.
-    const DIE *getCompileUnitOrNull() const;
+    const DIE *getUnitOrNull() const;
     void setOffset(unsigned O) { Offset = O; }
     void setSize(unsigned S) { Size = S; }
 
@@ -172,9 +173,9 @@ namespace llvm {
       Child->Parent = this;
     }
 
-    /// findAttribute - Find a value in the DIE with the attribute given, returns NULL
-    /// if no such attribute exists.
-    DIEValue *findAttribute(uint16_t Attribute);
+    /// findAttribute - Find a value in the DIE with the attribute given,
+    /// returns NULL if no such attribute exists.
+    DIEValue *findAttribute(uint16_t Attribute) const;
 
 #ifndef NDEBUG
     void print(raw_ostream &O, unsigned IndentCount = 0) const;
@@ -195,6 +196,7 @@ namespace llvm {
       isLabel,
       isDelta,
       isEntry,
+      isTypeSignature,
       isBlock
     };
   protected:
@@ -408,6 +410,33 @@ namespace llvm {
 
 #ifndef NDEBUG
     virtual void print(raw_ostream &O) const;
+#endif
+  };
+
+  //===--------------------------------------------------------------------===//
+  /// \brief A signature reference to a type unit.
+  class DIETypeSignature : public DIEValue {
+    const DwarfTypeUnit &Unit;
+  public:
+    explicit DIETypeSignature(const DwarfTypeUnit &Unit)
+        : DIEValue(isTypeSignature), Unit(Unit) {}
+
+    /// \brief Emit type unit signature.
+    virtual void EmitValue(AsmPrinter *Asm, dwarf::Form Form) const;
+
+    /// Returns size of a ref_sig8 entry.
+    virtual unsigned SizeOf(AsmPrinter *AP, dwarf::Form Form) const {
+      assert(Form == dwarf::DW_FORM_ref_sig8);
+      return 8;
+    }
+
+    // \brief Implement isa/cast/dyncast.
+    static bool classof(const DIEValue *E) {
+      return E->getType() == isTypeSignature;
+    }
+#ifndef NDEBUG
+    virtual void print(raw_ostream &O) const;
+    void dump() const;
 #endif
   };
 
