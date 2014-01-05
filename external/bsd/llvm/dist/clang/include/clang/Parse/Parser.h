@@ -73,7 +73,7 @@ class Parser : public CodeCompletionHandler {
   SourceLocation PrevTokLocation;
 
   unsigned short ParenCount, BracketCount, BraceCount;
-  
+
   /// Actions - These are the callbacks we invoke as we parse various constructs
   /// in the file.
   Sema &Actions;
@@ -136,9 +136,10 @@ class Parser : public CodeCompletionHandler {
   mutable IdentifierInfo *Ident_final;
   mutable IdentifierInfo *Ident_override;
 
-  // C++ type trait keywords that have can be reverted to identifiers and
-  // still used as type traits.
-  llvm::SmallDenseMap<IdentifierInfo *, tok::TokenKind> RevertableTypeTraits;
+  // Some token kinds such as C++ type traits can be reverted to identifiers and
+  // still get used as keywords depending on context.
+  llvm::SmallDenseMap<const IdentifierInfo *, tok::TokenKind>
+  ContextualKeywords;
 
   OwningPtr<PragmaHandler> AlignHandler;
   OwningPtr<PragmaHandler> GCCVisibilityHandler;
@@ -192,6 +193,10 @@ class Parser : public CodeCompletionHandler {
     void operator++() {
       ++Depth;
       ++AddedLevels;
+    }
+    void addDepth(unsigned D) {
+      Depth += D;
+      AddedLevels += D;
     }
     unsigned getDepth() const { return Depth; }
   };
@@ -271,17 +276,33 @@ public:
   /// This does not work with all kinds of tokens: strings and specific other
   /// tokens must be consumed with custom methods below.  This returns the
   /// location of the consumed token.
-  SourceLocation ConsumeToken(bool ConsumeCodeCompletionTok = false) {
-    assert(!isTokenStringLiteral() && !isTokenParen() && !isTokenBracket() &&
-           !isTokenBrace() &&
+  SourceLocation ConsumeToken() {
+    assert(!isTokenSpecial() &&
            "Should consume special tokens with Consume*Token");
 
-    if (!ConsumeCodeCompletionTok && Tok.is(tok::code_completion))
+    if (LLVM_UNLIKELY(Tok.is(tok::code_completion)))
       return handleUnexpectedCodeCompletionToken();
 
     PrevTokLocation = Tok.getLocation();
     PP.Lex(Tok);
     return PrevTokLocation;
+  }
+
+  bool TryConsumeToken(tok::TokenKind Expected) {
+    if (Tok.isNot(Expected))
+      return false;
+    assert(!isTokenSpecial() &&
+           "Should consume special tokens with Consume*Token");
+    PrevTokLocation = Tok.getLocation();
+    PP.Lex(Tok);
+    return true;
+  }
+
+  bool TryConsumeToken(tok::TokenKind Expected, SourceLocation &Loc) {
+    if (!TryConsumeToken(Expected))
+      return false;
+    Loc = PrevTokLocation;
+    return true;
   }
 
 private:
@@ -301,11 +322,14 @@ private:
   bool isTokenBrace() const {
     return Tok.getKind() == tok::l_brace || Tok.getKind() == tok::r_brace;
   }
-
   /// isTokenStringLiteral - True if this token is a string-literal.
-  ///
   bool isTokenStringLiteral() const {
     return tok::isStringLiteral(Tok.getKind());
+  }
+  /// isTokenSpecial - True if this token requires special consumption methods.
+  bool isTokenSpecial() const {
+    return isTokenStringLiteral() || isTokenParen() || isTokenBracket() ||
+           isTokenBrace();
   }
 
   /// \brief Returns true if the current token is '=' or is a type of '='.
@@ -318,14 +342,16 @@ private:
   SourceLocation ConsumeAnyToken(bool ConsumeCodeCompletionTok = false) {
     if (isTokenParen())
       return ConsumeParen();
-    else if (isTokenBracket())
+    if (isTokenBracket())
       return ConsumeBracket();
-    else if (isTokenBrace())
+    if (isTokenBrace())
       return ConsumeBrace();
-    else if (isTokenStringLiteral())
+    if (isTokenStringLiteral())
       return ConsumeStringToken();
-    else
-      return ConsumeToken(ConsumeCodeCompletionTok);
+    if (Tok.is(tok::code_completion))
+      return ConsumeCodeCompletionTok ? ConsumeCodeCompletionToken()
+                                      : handleUnexpectedCodeCompletionToken();
+    return ConsumeToken();
   }
 
   /// ConsumeParen - This consume method keeps the paren count up-to-date.
@@ -406,6 +432,14 @@ private:
       PP.setCodeCompletionReached();
     // Cut off parsing by acting as if we reached the end-of-file.
     Tok.setKind(tok::eof);
+  }
+
+  /// \brief Determine if we're at the end of the file or at a transition
+  /// between modules.
+  bool isEofOrEom() {
+    tok::TokenKind Kind = Tok.getKind();
+    return Kind == tok::eof || Kind == tok::annot_module_begin ||
+           Kind == tok::annot_module_end || Kind == tok::annot_module_include;
   }
 
   /// \brief Handle the annotation token produced for #pragma unused(...)
@@ -555,6 +589,19 @@ private:
                                 const char *&PrevSpec, unsigned &DiagID,
                                 bool &isInvalid);
 
+  /// TryKeywordIdentFallback - For compatibility with system headers using
+  /// keywords as identifiers, attempt to convert the current token to an
+  /// identifier and optionally disable the keyword for the remainder of the
+  /// translation unit. This returns false if the token was not replaced,
+  /// otherwise emits a diagnostic and returns true.
+  bool TryKeywordIdentFallback(bool DisableKeyword);
+
+  /// TryIdentKeywordUpgrade - Convert the current identifier token back to
+  /// its original kind and return true if it was disabled by
+  /// TryKeywordIdentFallback(), otherwise return false. Use this to
+  /// contextually enable keywords.
+  bool TryIdentKeywordUpgrade();
+
   /// \brief Get the TemplateIdAnnotation from the token.
   TemplateIdAnnotation *takeTemplateIdAnnotation(const Token &tok);
 
@@ -634,12 +681,14 @@ private:
   /// ExpectAndConsume - The parser expects that 'ExpectedTok' is next in the
   /// input.  If so, it is consumed and false is returned.
   ///
-  /// If the input is malformed, this emits the specified diagnostic.  Next, if
-  /// SkipToTok is specified, it calls SkipUntil(SkipToTok).  Finally, true is
+  /// If a trivial punctuator misspelling is encountered, a FixIt error
+  /// diagnostic is issued and false is returned after recovery.
+  ///
+  /// If the input is malformed, this emits the specified diagnostic and true is
   /// returned.
-  bool ExpectAndConsume(tok::TokenKind ExpectedTok, unsigned Diag,
-                        const char *DiagMsg = "",
-                        tok::TokenKind SkipToTok = tok::unknown);
+  bool ExpectAndConsume(tok::TokenKind ExpectedTok,
+                        unsigned Diag = diag::err_expected,
+                        const char *DiagMsg = "");
 
   /// \brief The parser expects a semicolon and, if present, will consume it.
   ///
@@ -1984,6 +2033,11 @@ private:
                                   SourceLocation AvailabilityLoc,
                                   ParsedAttributes &attrs,
                                   SourceLocation *endLoc);
+  
+  void ParseObjCBridgeRelatedAttribute(IdentifierInfo &ObjCBridgeRelated,
+                                       SourceLocation ObjCBridgeRelatedLoc,
+                                       ParsedAttributes &attrs,
+                                       SourceLocation *endLoc);
 
   bool IsThreadSafetyAttribute(StringRef AttrName);
   void ParseThreadSafetyAttribute(IdentifierInfo &AttrName,
@@ -2288,9 +2342,7 @@ private:
   DeclGroupPtrTy ParseModuleImport(SourceLocation AtLoc);
 
   //===--------------------------------------------------------------------===//
-  // GNU G++: Type Traits [Type-Traits.html in the GCC manual]
-  ExprResult ParseUnaryTypeTrait();
-  ExprResult ParseBinaryTypeTrait();
+  // C++11/G++: Type Traits [Type-Traits.html in the GCC manual]
   ExprResult ParseTypeTrait();
   
   //===--------------------------------------------------------------------===//
