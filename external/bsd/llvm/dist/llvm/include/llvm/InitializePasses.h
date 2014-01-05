@@ -73,7 +73,7 @@ void initializeArgPromotionPass(PassRegistry&);
 void initializeSampleProfileLoaderPass(PassRegistry&);
 void initializeBarrierNoopPass(PassRegistry&);
 void initializeBasicAliasAnalysisPass(PassRegistry&);
-void initializeCallGraphPass(PassRegistry&);
+void initializeCallGraphWrapperPassPass(PassRegistry &);
 void initializeBasicTTIPass(PassRegistry&);
 void initializeBlockExtractorPassPass(PassRegistry&);
 void initializeBlockFrequencyInfoPass(PassRegistry&);
@@ -120,6 +120,7 @@ void initializeAddressSanitizerModulePass(PassRegistry&);
 void initializeMemorySanitizerPass(PassRegistry&);
 void initializeThreadSanitizerPass(PassRegistry&);
 void initializeDataFlowSanitizerPass(PassRegistry&);
+void initializeScalarizerPass(PassRegistry&);
 void initializeEarlyCSEPass(PassRegistry&);
 void initializeExpandISelPseudosPass(PassRegistry&);
 void initializeFindUsedTypesPass(PassRegistry&);
@@ -209,6 +210,7 @@ void initializePostDomPrinterPass(PassRegistry&);
 void initializePostDomViewerPass(PassRegistry&);
 void initializePostDominatorTreePass(PassRegistry&);
 void initializePostRASchedulerPass(PassRegistry&);
+void initializePostMachineSchedulerPass(PassRegistry&);
 void initializePreVerifierPass(PassRegistry&);
 void initializePrintFunctionPassPass(PassRegistry&);
 void initializePrintModulePassPass(PassRegistry&);
@@ -265,6 +267,7 @@ void initializeLoopVectorizePass(PassRegistry&);
 void initializeSLPVectorizerPass(PassRegistry&);
 void initializeBBVectorizePass(PassRegistry&);
 void initializeMachineFunctionPrinterPassPass(PassRegistry&);
+void initializeStackMapLivenessPass(PassRegistry&);
 }
 
 #endif
