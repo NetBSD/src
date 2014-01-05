@@ -42,12 +42,26 @@ extern "C" void LLVMInitializeR600Target() {
 }
 
 static ScheduleDAGInstrs *createR600MachineScheduler(MachineSchedContext *C) {
-  return new ScheduleDAGMI(C, new R600SchedStrategy());
+  return new ScheduleDAGMILive(C, new R600SchedStrategy());
 }
 
 static MachineSchedRegistry
 SchedCustomRegistry("r600", "Run R600's custom scheduler",
                     createR600MachineScheduler);
+
+static std::string computeDataLayout(const AMDGPUSubtarget &ST) {
+  std::string Ret = "e-p:32:32";
+
+  if (ST.is64bit()) {
+    // 32-bit private, local, and region pointers. 64-bit global and constant.
+    Ret += "-p1:64:64-p2:64:64-p3:32:32-p4:32:32-p5:64:64";
+  }
+
+  Ret += "-i64:64-v16:16-v24:32-v32:32-v48:64-v96:128-v192:256-v256:256"
+         "-v512:512-v1024:1024-v2048:2048-n32:64";
+
+  return Ret;
+}
 
 AMDGPUTargetMachine::AMDGPUTargetMachine(const Target &T, StringRef TT,
     StringRef CPU, StringRef FS,
@@ -58,7 +72,7 @@ AMDGPUTargetMachine::AMDGPUTargetMachine(const Target &T, StringRef TT,
 :
   LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OptLevel),
   Subtarget(TT, CPU, FS),
-  Layout(Subtarget.getDataLayout()),
+  Layout(computeDataLayout(Subtarget)),
   FrameLowering(TargetFrameLowering::StackGrowsUp,
                 64 * 16 // Maximum stack alignment (long16)
                , 0),
@@ -72,6 +86,7 @@ AMDGPUTargetMachine::AMDGPUTargetMachine(const Target &T, StringRef TT,
     InstrInfo.reset(new SIInstrInfo(*this));
     TLInfo.reset(new SITargetLowering(*this));
   }
+  setRequiresStructuredCFG(true);
   initAsmInfo();
 }
 
@@ -167,7 +182,7 @@ bool AMDGPUPassConfig::addPreSched2() {
   const AMDGPUSubtarget &ST = TM->getSubtarget<AMDGPUSubtarget>();
 
   if (ST.getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS)
-    addPass(createR600EmitClauseMarkers(*TM));
+    addPass(createR600EmitClauseMarkers());
   if (ST.isIfCvtEnabled())
     addPass(&IfConverterID);
   if (ST.getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS)
@@ -178,7 +193,7 @@ bool AMDGPUPassConfig::addPreSched2() {
 bool AMDGPUPassConfig::addPreEmitPass() {
   const AMDGPUSubtarget &ST = TM->getSubtarget<AMDGPUSubtarget>();
   if (ST.getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS) {
-    addPass(createAMDGPUCFGStructurizerPass(*TM));
+    addPass(createAMDGPUCFGStructurizerPass());
     addPass(createR600ExpandSpecialInstrsPass(*TM));
     addPass(&FinalizeMachineBundlesID);
     addPass(createR600Packetizer(*TM));

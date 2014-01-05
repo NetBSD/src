@@ -64,9 +64,8 @@ AArch64TargetLowering::AArch64TargetLowering(AArch64TargetMachine &TM)
     addRegisterClass(MVT::v1i16, &AArch64::FPR16RegClass);
     addRegisterClass(MVT::v1i32, &AArch64::FPR32RegClass);
     addRegisterClass(MVT::v1i64, &AArch64::FPR64RegClass);
-    addRegisterClass(MVT::v1f32, &AArch64::FPR32RegClass);
     addRegisterClass(MVT::v1f64, &AArch64::FPR64RegClass);
-    addRegisterClass(MVT::v8i8, &AArch64::FPR64RegClass);
+    addRegisterClass(MVT::v8i8,  &AArch64::FPR64RegClass);
     addRegisterClass(MVT::v4i16, &AArch64::FPR64RegClass);
     addRegisterClass(MVT::v2i32, &AArch64::FPR64RegClass);
     addRegisterClass(MVT::v1i64, &AArch64::FPR64RegClass);
@@ -141,6 +140,7 @@ AArch64TargetLowering::AArch64TargetLowering(AArch64TargetMachine &TM)
   setOperationAction(ISD::VAARG, MVT::Other, Expand);
 
   setOperationAction(ISD::BlockAddress, MVT::i64, Custom);
+  setOperationAction(ISD::ConstantPool, MVT::i64, Custom);
 
   setOperationAction(ISD::ROTL, MVT::i32, Expand);
   setOperationAction(ISD::ROTL, MVT::i64, Expand);
@@ -296,7 +296,6 @@ AArch64TargetLowering::AArch64TargetLowering(AArch64TargetMachine &TM)
     setOperationAction(ISD::BUILD_VECTOR, MVT::v4i32, Custom);
     setOperationAction(ISD::BUILD_VECTOR, MVT::v1i64, Custom);
     setOperationAction(ISD::BUILD_VECTOR, MVT::v2i64, Custom);
-    setOperationAction(ISD::BUILD_VECTOR, MVT::v1f32, Custom);
     setOperationAction(ISD::BUILD_VECTOR, MVT::v2f32, Custom);
     setOperationAction(ISD::BUILD_VECTOR, MVT::v4f32, Custom);
     setOperationAction(ISD::BUILD_VECTOR, MVT::v1f64, Custom);
@@ -333,7 +332,6 @@ AArch64TargetLowering::AArch64TargetLowering(AArch64TargetMachine &TM)
     setOperationAction(ISD::SETCC, MVT::v4i32, Custom);
     setOperationAction(ISD::SETCC, MVT::v1i64, Custom);
     setOperationAction(ISD::SETCC, MVT::v2i64, Custom);
-    setOperationAction(ISD::SETCC, MVT::v1f32, Custom);
     setOperationAction(ISD::SETCC, MVT::v2f32, Custom);
     setOperationAction(ISD::SETCC, MVT::v4f32, Custom);
     setOperationAction(ISD::SETCC, MVT::v1f64, Custom);
@@ -341,27 +339,64 @@ AArch64TargetLowering::AArch64TargetLowering(AArch64TargetMachine &TM)
 
     setOperationAction(ISD::FFLOOR, MVT::v2f32, Legal);
     setOperationAction(ISD::FFLOOR, MVT::v4f32, Legal);
+    setOperationAction(ISD::FFLOOR, MVT::v1f64, Legal);
     setOperationAction(ISD::FFLOOR, MVT::v2f64, Legal);
 
     setOperationAction(ISD::FCEIL, MVT::v2f32, Legal);
     setOperationAction(ISD::FCEIL, MVT::v4f32, Legal);
+    setOperationAction(ISD::FCEIL, MVT::v1f64, Legal);
     setOperationAction(ISD::FCEIL, MVT::v2f64, Legal);
 
     setOperationAction(ISD::FTRUNC, MVT::v2f32, Legal);
     setOperationAction(ISD::FTRUNC, MVT::v4f32, Legal);
+    setOperationAction(ISD::FTRUNC, MVT::v1f64, Legal);
     setOperationAction(ISD::FTRUNC, MVT::v2f64, Legal);
 
     setOperationAction(ISD::FRINT, MVT::v2f32, Legal);
     setOperationAction(ISD::FRINT, MVT::v4f32, Legal);
+    setOperationAction(ISD::FRINT, MVT::v1f64, Legal);
     setOperationAction(ISD::FRINT, MVT::v2f64, Legal);
 
     setOperationAction(ISD::FNEARBYINT, MVT::v2f32, Legal);
     setOperationAction(ISD::FNEARBYINT, MVT::v4f32, Legal);
+    setOperationAction(ISD::FNEARBYINT, MVT::v1f64, Legal);
     setOperationAction(ISD::FNEARBYINT, MVT::v2f64, Legal);
 
     setOperationAction(ISD::FROUND, MVT::v2f32, Legal);
     setOperationAction(ISD::FROUND, MVT::v4f32, Legal);
+    setOperationAction(ISD::FROUND, MVT::v1f64, Legal);
     setOperationAction(ISD::FROUND, MVT::v2f64, Legal);
+
+    // Vector ExtLoad and TruncStore are expanded.
+    for (unsigned I = MVT::FIRST_VECTOR_VALUETYPE;
+         I <= MVT::LAST_VECTOR_VALUETYPE; ++I) {
+      MVT VT = (MVT::SimpleValueType) I;
+      setLoadExtAction(ISD::SEXTLOAD, VT, Expand);
+      setLoadExtAction(ISD::ZEXTLOAD, VT, Expand);
+      setLoadExtAction(ISD::EXTLOAD, VT, Expand);
+      for (unsigned II = MVT::FIRST_VECTOR_VALUETYPE;
+           II <= MVT::LAST_VECTOR_VALUETYPE; ++II) {
+        MVT VT1 = (MVT::SimpleValueType) II;
+        // A TruncStore has two vector types of the same number of elements
+        // and different element sizes.
+        if (VT.getVectorNumElements() == VT1.getVectorNumElements() &&
+            VT.getVectorElementType().getSizeInBits()
+                > VT1.getVectorElementType().getSizeInBits())
+          setTruncStoreAction(VT, VT1, Expand);
+      }
+    }
+
+    // There is no v1i64/v2i64 multiply, expand v1i64/v2i64 to GPR i64 multiply.
+    // FIXME: For a v2i64 multiply, we copy VPR to GPR and do 2 i64 multiplies,
+    // and then copy back to VPR. This solution may be optimized by Following 3
+    // NEON instructions:
+    //        pmull  v2.1q, v0.1d, v1.1d
+    //        pmull2 v3.1q, v0.2d, v1.2d
+    //        ins    v2.d[1], v3.d[0]
+    // As currently we can't verify the correctness of such assumption, we can
+    // do such optimization in the future.
+    setOperationAction(ISD::MUL, MVT::v1i64, Expand);
+    setOperationAction(ISD::MUL, MVT::v2i64, Expand);
   }
 }
 
@@ -401,6 +436,29 @@ static void getExclusiveOperation(unsigned Size, AtomicOrdering Ord,
 
   LdrOpc = LoadOps[Log2_32(Size)];
   StrOpc = StoreOps[Log2_32(Size)];
+}
+
+// FIXME: AArch64::DTripleRegClass and AArch64::QTripleRegClass don't really
+// have value type mapped, and they are both being defined as MVT::untyped.
+// Without knowing the MVT type, MachineLICM::getRegisterClassIDAndCost
+// would fail to figure out the register pressure correctly.
+std::pair<const TargetRegisterClass*, uint8_t>
+AArch64TargetLowering::findRepresentativeClass(MVT VT) const{
+  const TargetRegisterClass *RRC = 0;
+  uint8_t Cost = 1;
+  switch (VT.SimpleTy) {
+  default:
+    return TargetLowering::findRepresentativeClass(VT);
+  case MVT::v4i64:
+    RRC = &AArch64::QPairRegClass;
+    Cost = 2;
+    break;
+  case MVT::v8i64:
+    RRC = &AArch64::QQuadRegClass;
+    Cost = 4;
+    break;
+  }
+  return std::make_pair(RRC, Cost);
 }
 
 MachineBasicBlock *
@@ -893,8 +951,6 @@ const char *AArch64TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case AArch64ISD::WrapperLarge:   return "AArch64ISD::WrapperLarge";
   case AArch64ISD::WrapperSmall:   return "AArch64ISD::WrapperSmall";
 
-  case AArch64ISD::NEON_BSL:
-    return "AArch64ISD::NEON_BSL";
   case AArch64ISD::NEON_MOVIMM:
     return "AArch64ISD::NEON_MOVIMM";
   case AArch64ISD::NEON_MVNIMM:
@@ -1288,6 +1344,12 @@ AArch64TargetLowering::LowerReturn(SDValue Chain,
 
   return DAG.getNode(AArch64ISD::Ret, dl, MVT::Other,
                      &RetOps[0], RetOps.size());
+}
+
+unsigned AArch64TargetLowering::getByValTypeAlignment(Type *Ty) const {
+  // This is a new backend. For anything more precise than this a FE should
+  // set an explicit alignment.
+  return 4;
 }
 
 SDValue
@@ -2225,6 +2287,36 @@ AArch64TargetLowering::LowerGlobalAddressELF(SDValue Op,
   }
 }
 
+SDValue
+AArch64TargetLowering::LowerConstantPool(SDValue Op,
+                                         SelectionDAG &DAG) const {
+  SDLoc DL(Op);
+  EVT PtrVT = getPointerTy();
+  ConstantPoolSDNode *CN = cast<ConstantPoolSDNode>(Op);
+  const Constant *C = CN->getConstVal();
+
+  switch(getTargetMachine().getCodeModel()) {
+  case CodeModel::Small:
+    // The most efficient code is PC-relative anyway for the small memory model,
+    // so we don't need to worry about relocation model.
+    return DAG.getNode(AArch64ISD::WrapperSmall, DL, PtrVT,
+                       DAG.getTargetConstantPool(C, PtrVT, 0, 0,
+                                                 AArch64II::MO_NO_FLAG),
+                       DAG.getTargetConstantPool(C, PtrVT, 0, 0,
+                                                 AArch64II::MO_LO12),
+                       DAG.getConstant(CN->getAlignment(), MVT::i32));
+  case CodeModel::Large:
+    return DAG.getNode(
+      AArch64ISD::WrapperLarge, DL, PtrVT,
+      DAG.getTargetConstantPool(C, PtrVT, 0, 0, AArch64II::MO_ABS_G3),
+      DAG.getTargetConstantPool(C, PtrVT, 0, 0, AArch64II::MO_ABS_G2_NC),
+      DAG.getTargetConstantPool(C, PtrVT, 0, 0, AArch64II::MO_ABS_G1_NC),
+      DAG.getTargetConstantPool(C, PtrVT, 0, 0, AArch64II::MO_ABS_G0_NC));
+  default:
+    llvm_unreachable("Only small and large code models supported now");
+  }
+}
+
 SDValue AArch64TargetLowering::LowerTLSDescCall(SDValue SymAddr,
                                                 SDValue DescAddr,
                                                 SDLoc DL,
@@ -2855,6 +2947,7 @@ AArch64TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::BRCOND: return LowerBRCOND(Op, DAG);
   case ISD::BR_CC: return LowerBR_CC(Op, DAG);
   case ISD::GlobalAddress: return LowerGlobalAddressELF(Op, DAG);
+  case ISD::ConstantPool: return LowerConstantPool(Op, DAG);
   case ISD::GlobalTLSAddress: return LowerGlobalTLSAddress(Op, DAG);
   case ISD::JumpTable: return LowerJumpTable(Op, DAG);
   case ISD::SELECT: return LowerSELECT(Op, DAG);
@@ -3386,12 +3479,9 @@ static SDValue PerformORCombine(SDNode *N,
       if (BVN1 && BVN1->isConstantSplat(SplatBits1, SplatUndef, SplatBitSize,
                                         HasAnyUndefs) &&
           !HasAnyUndefs && SplatBits0 == ~SplatBits1) {
-        // Canonicalize the vector type to make instruction selection simpler.
-        EVT CanonicalVT = VT.is128BitVector() ? MVT::v16i8 : MVT::v8i8;
-        SDValue Result = DAG.getNode(AArch64ISD::NEON_BSL, DL, CanonicalVT,
-                                     N0->getOperand(1), N0->getOperand(0),
-                                     N1->getOperand(0));
-        return DAG.getNode(ISD::BITCAST, DL, VT, Result);
+
+        return DAG.getNode(ISD::VSELECT, DL, VT, N0->getOperand(1),
+                           N0->getOperand(0), N1->getOperand(0));
       }
     }
   }
@@ -3885,7 +3975,10 @@ bool AArch64TargetLowering::isKnownShuffleVector(SDValue Op, SelectionDAG &DAG,
   if (V1.getNode() && NumElts == V0NumElts &&
       V0NumElts == V1.getValueType().getVectorNumElements()) {
     SDValue Shuffle = DAG.getVectorShuffle(VT, DL, V0, V1, Mask);
-    Res = LowerVECTOR_SHUFFLE(Shuffle, DAG);
+    if(Shuffle.getOpcode() != ISD::VECTOR_SHUFFLE)
+      Res = Shuffle;
+    else
+      Res = LowerVECTOR_SHUFFLE(Shuffle, DAG);
     return true;
   } else
     return false;
@@ -3998,14 +4091,12 @@ AArch64TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG,
   if (ValueCounts.size() == 0)
     return DAG.getUNDEF(VT);
 
-  // Loads are better lowered with insert_vector_elt.
-  // Keep going if we are hitting this case.
-  if (isOnlyLowElement && !ISD::isNormalLoad(Value.getNode()))
+  if (isOnlyLowElement)
     return DAG.getNode(ISD::SCALAR_TO_VECTOR, DL, VT, Value);
 
   unsigned EltSize = VT.getVectorElementType().getSizeInBits();
-  // Use VDUP for non-constant splats.
   if (hasDominantValue && EltSize <= 64) {
+    // Use VDUP for non-constant splats.
     if (!isConstant) {
       SDValue N;
 
@@ -4013,8 +4104,12 @@ AArch64TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG,
       // just use DUPLANE. We can only do this if the lane being extracted
       // is at a constant index, as the DUP from lane instructions only have
       // constant-index forms.
+      // FIXME: for now we have v1i8, v1i16, v1i32 legal vector types, if they
+      // are not legal any more, no need to check the type size in bits should
+      // be large than 64.
       if (Value->getOpcode() == ISD::EXTRACT_VECTOR_ELT &&
-          isa<ConstantSDNode>(Value->getOperand(1))) {
+          isa<ConstantSDNode>(Value->getOperand(1)) &&
+          Value->getOperand(0).getValueType().getSizeInBits() >= 64) {
           N = DAG.getNode(AArch64ISD::NEON_VDUPLANE, DL, VT,
                         Value->getOperand(0), Value->getOperand(1));
       } else

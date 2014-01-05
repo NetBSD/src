@@ -150,6 +150,7 @@ const char *Triple::getEnvironmentTypeName(EnvironmentType Kind) {
   case GNUEABI: return "gnueabi";
   case GNUX32: return "gnux32";
   case EABI: return "eabi";
+  case EABIHF: return "eabihf";
   case MachO: return "macho";
   case Android: return "android";
   case ELF: return "elf";
@@ -297,6 +298,7 @@ static Triple::OSType parseOS(StringRef OSName) {
 
 static Triple::EnvironmentType parseEnvironment(StringRef EnvironmentName) {
   return StringSwitch<Triple::EnvironmentType>(EnvironmentName)
+    .StartsWith("eabihf", Triple::EABIHF)
     .StartsWith("eabi", Triple::EABI)
     .StartsWith("gnueabihf", Triple::GNUEABIHF)
     .StartsWith("gnueabi", Triple::GNUEABI)
@@ -600,15 +602,15 @@ void Triple::getiOSVersion(unsigned &Major, unsigned &Minor,
     // the clang driver combines OS X and IOS support into a common Darwin
     // toolchain that wants to know the iOS version number even when targeting
     // OS X.
-    Major = 3;
+    Major = 5;
     Minor = 0;
     Micro = 0;
     break;
   case IOS:
     getOSVersion(Major, Minor, Micro);
-    // Default to 3.0.
+    // Default to 5.0.
     if (Major == 0)
-      Major = 3;
+      Major = 5;
     break;
   }
 }

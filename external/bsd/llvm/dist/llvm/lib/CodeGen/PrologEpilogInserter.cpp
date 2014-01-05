@@ -20,6 +20,7 @@
 #include "PrologEpilogInserter.h"
 #include "llvm/ADT/IndexedMap.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/MachineDominators.h"
@@ -29,7 +30,10 @@
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/RegisterScavenging.h"
+#include "llvm/IR/DiagnosticInfo.h"
+#include "llvm/CodeGen/StackProtector.h"
 #include "llvm/IR/InlineAsm.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
@@ -54,6 +58,7 @@ INITIALIZE_PASS_BEGIN(PEI, "prologepilog",
                 "Prologue/Epilogue Insertion", false, false)
 INITIALIZE_PASS_DEPENDENCY(MachineLoopInfo)
 INITIALIZE_PASS_DEPENDENCY(MachineDominatorTree)
+INITIALIZE_PASS_DEPENDENCY(StackProtector)
 INITIALIZE_PASS_DEPENDENCY(TargetPassConfig)
 INITIALIZE_PASS_END(PEI, "prologepilog",
                     "Prologue/Epilogue Insertion & Frame Finalization",
@@ -67,6 +72,7 @@ void PEI::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesCFG();
   AU.addPreserved<MachineLoopInfo>();
   AU.addPreserved<MachineDominatorTree>();
+  AU.addRequired<StackProtector>();
   AU.addRequired<TargetPassConfig>();
   MachineFunctionPass::getAnalysisUsage(AU);
 }
@@ -94,6 +100,9 @@ void PEI::calculateSets(MachineFunction &Fn) {
 
   return;
 }
+
+/// StackObjSet - A set of stack object indexes
+typedef SmallSetVector<int, 8> StackObjSet;
 
 /// runOnMachineFunction - Insert prolog/epilog code and replace abstract
 /// frame indexes with appropriate references.
@@ -160,10 +169,11 @@ bool PEI::runOnMachineFunction(MachineFunction &Fn) {
 
   // Warn on stack size when we exceeds the given limit.
   MachineFrameInfo *MFI = Fn.getFrameInfo();
-  if (WarnStackSize.getNumOccurrences() > 0 &&
-      WarnStackSize < MFI->getStackSize())
-    errs() << "warning: Stack size limit exceeded (" << MFI->getStackSize()
-           << ") in " << Fn.getName()  << ".\n";
+  uint64_t StackSize = MFI->getStackSize();
+  if (WarnStackSize.getNumOccurrences() > 0 && WarnStackSize < StackSize) {
+    DiagnosticInfoStackSize DiagStackSize(*F, StackSize);
+    F->getContext().diagnose(DiagStackSize);
+  }
 
   delete RS;
   ReturnBlocks.clear();
@@ -409,11 +419,28 @@ AdjustStackOffset(MachineFrameInfo *MFI, int FrameIdx,
   }
 }
 
+/// AssignProtectedObjSet - Helper function to assign large stack objects (i.e.,
+/// those required to be close to the Stack Protector) to stack offsets.
+static void
+AssignProtectedObjSet(const StackObjSet &UnassignedObjs,
+                      SmallSet<int, 16> &ProtectedObjs,
+                      MachineFrameInfo *MFI, bool StackGrowsDown,
+                      int64_t &Offset, unsigned &MaxAlign) {
+
+  for (StackObjSet::const_iterator I = UnassignedObjs.begin(),
+        E = UnassignedObjs.end(); I != E; ++I) {
+    int i = *I;
+    AdjustStackOffset(MFI, i, StackGrowsDown, Offset, MaxAlign);
+    ProtectedObjs.insert(i);
+  }
+}
+
 /// calculateFrameObjectOffsets - Calculate actual frame offsets for all of the
 /// abstract stack objects.
 ///
 void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
   const TargetFrameLowering &TFI = *Fn.getTarget().getFrameLowering();
+  StackProtector *SP = &getAnalysis<StackProtector>();
 
   bool StackGrowsDown =
     TFI.getStackGrowthDirection() == TargetFrameLowering::StackGrowsDown;
@@ -523,8 +550,9 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
 
   // Make sure that the stack protector comes before the local variables on the
   // stack.
-  SmallSet<int, 16> LargeStackObjs;
+  SmallSet<int, 16> ProtectedObjs;
   if (MFI->getStackProtectorIndex() >= 0) {
+    StackObjSet LargeArrayObjs;
     AdjustStackOffset(MFI, MFI->getStackProtectorIndex(), StackGrowsDown,
                       Offset, MaxAlign);
 
@@ -541,12 +569,21 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
         continue;
       if (MFI->getStackProtectorIndex() == (int)i)
         continue;
-      if (!MFI->MayNeedStackProtector(i))
-        continue;
 
-      AdjustStackOffset(MFI, i, StackGrowsDown, Offset, MaxAlign);
-      LargeStackObjs.insert(i);
+      switch (SP->getSSPLayout(MFI->getObjectAllocation(i))) {
+      case StackProtector::SSPLK_None:
+      case StackProtector::SSPLK_SmallArray:
+      case StackProtector::SSPLK_AddrOf:
+        continue;
+      case StackProtector::SSPLK_LargeArray:
+        LargeArrayObjs.insert(i);
+        continue;
+      }
+      llvm_unreachable("Unexpected SSPLayoutKind.");
     }
+
+    AssignProtectedObjSet(LargeArrayObjs, ProtectedObjs, MFI, StackGrowsDown,
+                          Offset, MaxAlign);
   }
 
   // Then assign frame offsets to stack objects that are not used to spill
@@ -563,7 +600,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
       continue;
     if (MFI->getStackProtectorIndex() == (int)i)
       continue;
-    if (LargeStackObjs.count(i))
+    if (ProtectedObjs.count(i))
       continue;
 
     AdjustStackOffset(MFI, i, StackGrowsDown, Offset, MaxAlign);
@@ -731,15 +768,18 @@ void PEI::replaceFrameIndices(MachineBasicBlock *BB, MachineFunction &Fn,
       // Frame indicies in debug values are encoded in a target independent
       // way with simply the frame index and offset rather than any
       // target-specific addressing mode.
-      if (MI->isDebugValue()) {
-        assert(i == 0 && "Frame indicies can only appear as the first "
-                         "operand of a DBG_VALUE machine instruction");
+      if (MI->isDebugValue() ||
+          MI->getOpcode() == TargetOpcode::STACKMAP ||
+          MI->getOpcode() == TargetOpcode::PATCHPOINT) {
+        assert((!MI->isDebugValue() || i == 0) &&
+               "Frame indicies can only appear as the first operand of a "
+               "DBG_VALUE machine instruction");
         unsigned Reg;
-        MachineOperand &Offset = MI->getOperand(1);
+        MachineOperand &Offset = MI->getOperand(i + 1);
         Offset.setImm(Offset.getImm() +
                       TFI->getFrameIndexReference(
-                          Fn, MI->getOperand(0).getIndex(), Reg));
-        MI->getOperand(0).ChangeToRegister(Reg, false /*isDef*/);
+                          Fn, MI->getOperand(i).getIndex(), Reg));
+        MI->getOperand(i).ChangeToRegister(Reg, false /*isDef*/);
         continue;
       }
 

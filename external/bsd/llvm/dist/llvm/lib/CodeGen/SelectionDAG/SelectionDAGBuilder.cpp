@@ -851,12 +851,20 @@ void RegsForValue::AddInlineAsmOperands(unsigned Code, bool HasMatching,
   SDValue Res = DAG.getTargetConstant(Flag, MVT::i32);
   Ops.push_back(Res);
 
+  unsigned SP = TLI.getStackPointerRegisterToSaveRestore();
   for (unsigned Value = 0, Reg = 0, e = ValueVTs.size(); Value != e; ++Value) {
     unsigned NumRegs = TLI.getNumRegisters(*DAG.getContext(), ValueVTs[Value]);
     MVT RegisterVT = RegVTs[Value];
     for (unsigned i = 0; i != NumRegs; ++i) {
       assert(Reg < Regs.size() && "Mismatch in # registers expected");
-      Ops.push_back(DAG.getRegister(Regs[Reg++], RegisterVT));
+      unsigned TheReg = Regs[Reg++];
+      Ops.push_back(DAG.getRegister(TheReg, RegisterVT));
+
+      // Notice if we clobbered the stack pointer.  Yes, inline asm can do this.
+      if (TheReg == SP && Code == InlineAsm::Kind_Clobber) {
+        MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
+        MFI->setHasInlineAsmWithSPAdjust(true);
+      }
     }
   }
 }
@@ -2351,7 +2359,7 @@ bool SelectionDAGBuilder::handleBTSplitSwitchCase(CaseRec& CR,
     volatile double RDensity =
       (double)RSize.roundToDouble() /
                            (Last - RBegin + 1ULL).roundToDouble();
-    double Metric = Range.logBase2()*(LDensity+RDensity);
+    volatile double Metric = Range.logBase2()*(LDensity+RDensity);
     // Should always split in some non-trivial place
     DEBUG(dbgs() <<"=>Step\n"
                  << "LEnd: " << LEnd << ", RBegin: " << RBegin << '\n'
@@ -3372,7 +3380,7 @@ void SelectionDAGBuilder::visitAlloca(const AllocaInst &I) {
 
   // Inform the Frame Information that we have just allocated a variable-sized
   // object.
-  FuncInfo.MF->getFrameInfo()->CreateVariableSizedObject(Align ? Align : 1);
+  FuncInfo.MF->getFrameInfo()->CreateVariableSizedObject(Align ? Align : 1, &I);
 }
 
 void SelectionDAGBuilder::visitLoad(const LoadInst &I) {
@@ -3400,7 +3408,7 @@ void SelectionDAGBuilder::visitLoad(const LoadInst &I) {
 
   SDValue Root;
   bool ConstantMemory = false;
-  if (I.isVolatile() || NumValues > MaxParallelChains)
+  if (isVolatile || NumValues > MaxParallelChains)
     // Serialize volatile loads with other side effects.
     Root = getRoot();
   else if (AA->pointsToConstantMemory(
@@ -3412,6 +3420,10 @@ void SelectionDAGBuilder::visitLoad(const LoadInst &I) {
     // Do not serialize non-volatile loads against each other.
     Root = DAG.getRoot();
   }
+
+  const TargetLowering *TLI = TM.getTargetLowering();
+  if (isVolatile)
+    Root = TLI->prepareVolatileOrAtomicLoad(Root, getCurSDLoc(), DAG);
 
   SmallVector<SDValue, 4> Values(NumValues);
   SmallVector<SDValue, 4> Chains(std::min(unsigned(MaxParallelChains),
@@ -3637,6 +3649,7 @@ void SelectionDAGBuilder::visitAtomicLoad(const LoadInst &I) {
   if (I.getAlignment() < VT.getSizeInBits() / 8)
     report_fatal_error("Cannot generate unaligned atomic load");
 
+  InChain = TLI->prepareVolatileOrAtomicLoad(InChain, dl, DAG);
   SDValue L =
     DAG.getAtomic(ISD::ATOMIC_LOAD, dl, VT, VT, InChain,
                   getValue(I.getPointerOperand()),
@@ -4290,7 +4303,7 @@ static SDValue expandExp2(SDLoc dl, SDValue Op, SelectionDAG &DAG,
 static SDValue expandPow(SDLoc dl, SDValue LHS, SDValue RHS,
                          SelectionDAG &DAG, const TargetLowering &TLI) {
   bool IsExp10 = false;
-  if (LHS.getValueType() == MVT::f32 && LHS.getValueType() == MVT::f32 &&
+  if (LHS.getValueType() == MVT::f32 && RHS.getValueType() == MVT::f32 &&
       LimitFloatPrecision > 0 && LimitFloatPrecision <= 18) {
     if (ConstantFPSDNode *LHSC = dyn_cast<ConstantFPSDNode>(LHS)) {
       APFloat Ten(10.0f);
@@ -6781,6 +6794,42 @@ SelectionDAGBuilder::LowerCallOperands(const CallInst &CI, unsigned ArgIdx,
   return TLI->LowerCallTo(CLI);
 }
 
+/// \brief Add a stack map intrinsic call's live variable operands to a stackmap
+/// or patchpoint target node's operand list.
+///
+/// Constants are converted to TargetConstants purely as an optimization to
+/// avoid constant materialization and register allocation.
+///
+/// FrameIndex operands are converted to TargetFrameIndex so that ISEL does not
+/// generate addess computation nodes, and so ExpandISelPseudo can convert the
+/// TargetFrameIndex into a DirectMemRefOp StackMap location. This avoids
+/// address materialization and register allocation, but may also be required
+/// for correctness. If a StackMap (or PatchPoint) intrinsic directly uses an
+/// alloca in the entry block, then the runtime may assume that the alloca's
+/// StackMap location can be read immediately after compilation and that the
+/// location is valid at any point during execution (this is similar to the
+/// assumption made by the llvm.gcroot intrinsic). If the alloca's location were
+/// only available in a register, then the runtime would need to trap when
+/// execution reaches the StackMap in order to read the alloca's location.
+static void addStackMapLiveVars(const CallInst &CI, unsigned StartIdx,
+                                SmallVectorImpl<SDValue> &Ops,
+                                SelectionDAGBuilder &Builder) {
+  for (unsigned i = StartIdx, e = CI.getNumArgOperands(); i != e; ++i) {
+    SDValue OpVal = Builder.getValue(CI.getArgOperand(i));
+    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(OpVal)) {
+      Ops.push_back(
+        Builder.DAG.getTargetConstant(StackMaps::ConstantOp, MVT::i64));
+      Ops.push_back(
+        Builder.DAG.getTargetConstant(C->getSExtValue(), MVT::i64));
+    } else if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(OpVal)) {
+      const TargetLowering &TLI = Builder.DAG.getTargetLoweringInfo();
+      Ops.push_back(
+        Builder.DAG.getTargetFrameIndex(FI->getIndex(), TLI.getPointerTy()));
+    } else
+      Ops.push_back(OpVal);
+  }
+}
+
 /// \brief Lower llvm.experimental.stackmap directly to its target opcode.
 void SelectionDAGBuilder::visitStackmap(const CallInst &CI) {
   // void @llvm.experimental.stackmap(i32 <id>, i32 <numShadowBytes>,
@@ -6814,8 +6863,7 @@ void SelectionDAGBuilder::visitStackmap(const CallInst &CI) {
         cast<ConstantSDNode>(tmp)->getZExtValue(), MVT::i32));
   }
   // Push live variables for the stack map.
-  for (unsigned i = 2, e = CI.getNumArgOperands(); i != e; ++i)
-    Ops.push_back(getValue(CI.getArgOperand(i)));
+  addStackMapLiveVars(CI, 2, Ops, *this);
 
   // Push the chain (this is originally the first operand of the call, but
   // becomes now the last or second to last operand).
@@ -6838,11 +6886,14 @@ void SelectionDAGBuilder::visitStackmap(const CallInst &CI) {
   DAG.ReplaceAllUsesWith(Call, MN);
 
   DAG.DeleteNode(Call);
+
+  // Inform the Frame Information that we have a stackmap in this function.
+  FuncInfo.MF->getFrameInfo()->setHasStackMap();
 }
 
 /// \brief Lower llvm.experimental.patchpoint directly to its target opcode.
 void SelectionDAGBuilder::visitPatchpoint(const CallInst &CI) {
-  // void|i64 @llvm.experimental.patchpoint.void|i64(i32 <id>,
+  // void|i64 @llvm.experimental.patchpoint.void|i64(i64 <id>,
   //                                                 i32 <numBytes>,
   //                                                 i8* <target>,
   //                                                 i32 <numArgs>,
@@ -6855,17 +6906,19 @@ void SelectionDAGBuilder::visitPatchpoint(const CallInst &CI) {
   SDValue Callee = getValue(CI.getOperand(2)); // <target>
 
   // Get the real number of arguments participating in the call <numArgs>
-  unsigned NumArgs =
-    cast<ConstantSDNode>(getValue(CI.getArgOperand(3)))->getZExtValue();
+  SDValue NArgVal = getValue(CI.getArgOperand(PatchPointOpers::NArgPos));
+  unsigned NumArgs = cast<ConstantSDNode>(NArgVal)->getZExtValue();
 
   // Skip the four meta args: <id>, <numNopBytes>, <target>, <numArgs>
-  assert(CI.getNumArgOperands() >= NumArgs + 4 &&
+  // Intrinsics include all meta-operands up to but not including CC.
+  unsigned NumMetaOpers = PatchPointOpers::CCPos;
+  assert(CI.getNumArgOperands() >= NumMetaOpers + NumArgs &&
          "Not enough arguments provided to the patchpoint intrinsic");
 
   // For AnyRegCC the arguments are lowered later on manually.
   unsigned NumCallArgs = isAnyRegCC ? 0 : NumArgs;
   std::pair<SDValue, SDValue> Result =
-    LowerCallOperands(CI, 4, NumCallArgs, Callee, isAnyRegCC);
+    LowerCallOperands(CI, NumMetaOpers, NumCallArgs, Callee, isAnyRegCC);
 
   // Set the root to the target-lowered call chain.
   SDValue Chain = Result.second;
@@ -6885,13 +6938,16 @@ void SelectionDAGBuilder::visitPatchpoint(const CallInst &CI) {
   // Replace the target specific call node with the patchable intrinsic.
   SmallVector<SDValue, 8> Ops;
 
-  // Add the <id> and <numNopBytes> constants.
-  for (unsigned i = 0; i < 2; ++i) {
-    SDValue tmp = getValue(CI.getOperand(i));
-    Ops.push_back(DAG.getTargetConstant(
-        cast<ConstantSDNode>(tmp)->getZExtValue(), MVT::i32));
-  }
+  // Add the <id> and <numBytes> constants.
+  SDValue IDVal = getValue(CI.getOperand(PatchPointOpers::IDPos));
+  Ops.push_back(DAG.getTargetConstant(
+                  cast<ConstantSDNode>(IDVal)->getZExtValue(), MVT::i64));
+  SDValue NBytesVal = getValue(CI.getOperand(PatchPointOpers::NBytesPos));
+  Ops.push_back(DAG.getTargetConstant(
+                  cast<ConstantSDNode>(NBytesVal)->getZExtValue(), MVT::i32));
+
   // Assume that the Callee is a constant address.
+  // FIXME: handle function symbols in the future.
   Ops.push_back(
     DAG.getIntPtrConstant(cast<ConstantSDNode>(Callee)->getZExtValue(),
                           /*isTarget=*/true));
@@ -6909,25 +6965,16 @@ void SelectionDAGBuilder::visitPatchpoint(const CallInst &CI) {
   // Add the arguments we omitted previously. The register allocator should
   // place these in any free register.
   if (isAnyRegCC)
-    for (unsigned i = 4, e = NumArgs + 4; i != e; ++i)
+    for (unsigned i = NumMetaOpers, e = NumMetaOpers + NumArgs; i != e; ++i)
       Ops.push_back(getValue(CI.getArgOperand(i)));
 
-  // Push the arguments from the call instruction.
+  // Push the arguments from the call instruction up to the register mask.
   SDNode::op_iterator e = hasGlue ? Call->op_end()-2 : Call->op_end()-1;
   for (SDNode::op_iterator i = Call->op_begin()+2; i != e; ++i)
     Ops.push_back(*i);
 
   // Push live variables for the stack map.
-  for (unsigned i = NumArgs + 4, e = CI.getNumArgOperands(); i != e; ++i) {
-    SDValue OpVal = getValue(CI.getArgOperand(i));
-    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(OpVal)) {
-      Ops.push_back(
-        DAG.getTargetConstant(StackMaps::ConstantOp, MVT::i64));
-      Ops.push_back(
-        DAG.getTargetConstant(C->getSExtValue(), MVT::i64));
-    } else
-      Ops.push_back(OpVal);
-  }
+  addStackMapLiveVars(CI, NumMetaOpers + NumArgs, Ops, *this);
 
   // Push the register mask info.
   if (hasGlue)
@@ -6981,6 +7028,9 @@ void SelectionDAGBuilder::visitPatchpoint(const CallInst &CI) {
   } else
     DAG.ReplaceAllUsesWith(Call, MN);
   DAG.DeleteNode(Call);
+
+  // Inform the Frame Information that we have a patchpoint in this function.
+  FuncInfo.MF->getFrameInfo()->setHasPatchPoint();
 }
 
 /// TargetLowering::LowerCallTo - This is the default LowerCallTo
