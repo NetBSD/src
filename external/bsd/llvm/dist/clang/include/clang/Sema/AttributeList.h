@@ -245,6 +245,26 @@ private:
     AttrKind = getKind(getName(), getScopeName(), syntaxUsed);
   }
 
+  /// Constructor for objc_bridge_related attributes.
+  AttributeList(IdentifierInfo *attrName, SourceRange attrRange,
+                IdentifierInfo *scopeName, SourceLocation scopeLoc,
+                IdentifierLoc *Parm1,
+                IdentifierLoc *Parm2,
+                IdentifierLoc *Parm3,
+                Syntax syntaxUsed)
+  : AttrName(attrName), ScopeName(scopeName), AttrRange(attrRange),
+    ScopeLoc(scopeLoc), EllipsisLoc(), NumArgs(3), SyntaxUsed(syntaxUsed),
+    Invalid(false), UsedAsTypeAttr(false), IsAvailability(false),
+    IsTypeTagForDatatype(false), IsProperty(false), HasParsedType(false),
+    NextInPosition(0), NextInPool(0) {
+    ArgsVector Args;
+    Args.push_back(Parm1);
+    Args.push_back(Parm2);
+    Args.push_back(Parm3);
+    memcpy(getArgsBuffer(), &Args[0], 3 * sizeof(ArgsUnion));
+    AttrKind = getKind(getName(), getScopeName(), syntaxUsed);
+  }
+  
   /// Constructor for type_tag_for_datatype attribute.
   AttributeList(IdentifierInfo *attrName, SourceRange attrRange,
                 IdentifierInfo *scopeName, SourceLocation scopeLoc,
@@ -467,6 +487,8 @@ public:
   bool hasCustomParsing() const;
   unsigned getMinArgs() const;
   unsigned getMaxArgs() const;
+  bool diagnoseAppertainsTo(class Sema &S, const Decl *D) const;
+  bool diagnoseLangOpts(class Sema &S) const;
 };
 
 /// A factory, from which one makes pools, from which one creates
@@ -604,6 +626,20 @@ public:
                                           scopeName, scopeLoc,
                                           Param, introduced, deprecated,
                                           obsoleted, unavailable, MessageExpr,
+                                          syntax));
+  }
+
+  AttributeList *create(IdentifierInfo *attrName, SourceRange attrRange,
+                        IdentifierInfo *scopeName, SourceLocation scopeLoc,
+                        IdentifierLoc *Param1,
+                        IdentifierLoc *Param2,
+                        IdentifierLoc *Param3,
+                        AttributeList::Syntax syntax) {
+    size_t size = sizeof(AttributeList) + 3 * sizeof(ArgsUnion);
+    void *memory = allocate(size);
+    return add(new (memory) AttributeList(attrName, attrRange,
+                                          scopeName, scopeLoc,
+                                          Param1, Param2, Param3,
                                           syntax));
   }
 
@@ -767,6 +803,20 @@ public:
     return attr;
   }
 
+  /// Add objc_bridge_related attribute.
+  AttributeList *addNew(IdentifierInfo *attrName, SourceRange attrRange,
+                        IdentifierInfo *scopeName, SourceLocation scopeLoc,
+                        IdentifierLoc *Param1,
+                        IdentifierLoc *Param2,
+                        IdentifierLoc *Param3,
+                        AttributeList::Syntax syntax) {
+    AttributeList *attr =
+      pool.create(attrName, attrRange, scopeName, scopeLoc,
+                  Param1, Param2, Param3, syntax);
+    add(attr);
+    return attr;
+  }
+
   /// Add type_tag_for_datatype attribute.
   AttributeList *addNewTypeTagForDatatype(
                         IdentifierInfo *attrName, SourceRange attrRange,
@@ -829,6 +879,40 @@ enum AttributeArgumentNType {
   AANT_ArgumentIntegerConstant,
   AANT_ArgumentString,
   AANT_ArgumentIdentifier
+};
+
+/// These constants match the enumerated choices of
+/// warn_attribute_wrong_decl_type and err_attribute_wrong_decl_type.
+enum AttributeDeclKind {
+  ExpectedFunction,
+  ExpectedUnion,
+  ExpectedVariableOrFunction,
+  ExpectedFunctionOrMethod,
+  ExpectedParameter,
+  ExpectedFunctionMethodOrBlock,
+  ExpectedFunctionMethodOrClass,
+  ExpectedFunctionMethodOrParameter,
+  ExpectedClass,
+  ExpectedVariable,
+  ExpectedMethod,
+  ExpectedVariableFunctionOrLabel,
+  ExpectedFieldOrGlobalVar,
+  ExpectedStruct,
+  ExpectedVariableFunctionOrTag,
+  ExpectedTLSVar,
+  ExpectedVariableOrField,
+  ExpectedVariableFieldOrTag,
+  ExpectedTypeOrNamespace,
+  ExpectedObjectiveCInterface,
+  ExpectedMethodOrProperty,
+  ExpectedStructOrUnion,
+  ExpectedStructOrUnionOrClass,
+  ExpectedType,
+  ExpectedObjCInstanceMethod,
+  ExpectedObjCInterfaceDeclInitMethod,
+  ExpectedFunctionVariableOrClass,
+  ExpectedObjectiveCProtocol,
+  ExpectedFunctionGlobalVarMethodOrProperty
 };
 
 }  // end namespace clang

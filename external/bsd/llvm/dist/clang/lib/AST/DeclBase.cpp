@@ -45,23 +45,28 @@ void Decl::updateOutOfDate(IdentifierInfo &II) const {
   getASTContext().getExternalSource()->updateOutOfDateIdentifier(II);
 }
 
-void *Decl::AllocateDeserializedDecl(const ASTContext &Context, 
-                                     unsigned ID,
-                                     unsigned Size) {
+void *Decl::operator new(std::size_t Size, const ASTContext &Context,
+                         unsigned ID, std::size_t Extra) {
   // Allocate an extra 8 bytes worth of storage, which ensures that the
   // resulting pointer will still be 8-byte aligned. 
-  void *Start = Context.Allocate(Size + 8);
+  void *Start = Context.Allocate(Size + Extra + 8);
   void *Result = (char*)Start + 8;
-  
+
   unsigned *PrefixPtr = (unsigned *)Result - 2;
-  
+
   // Zero out the first 4 bytes; this is used to store the owning module ID.
   PrefixPtr[0] = 0;
-  
+
   // Store the global declaration ID in the second 4 bytes.
   PrefixPtr[1] = ID;
-  
+
   return Result;
+}
+
+void *Decl::operator new(std::size_t Size, const ASTContext &Ctx,
+                         DeclContext *Parent, std::size_t Extra) {
+  assert(!Parent || &Parent->getParentASTContext() == &Ctx);
+  return ::operator new(Size + Extra, Ctx);
 }
 
 Module *Decl::getOwningModuleSlow() const {
@@ -80,6 +85,7 @@ const char *Decl::getDeclKindName() const {
 
 void Decl::setInvalidDecl(bool Invalid) {
   InvalidDecl = Invalid;
+  assert(!isa<TagDecl>(this) || !cast<TagDecl>(this)->isCompleteDefinition());
   if (Invalid && !isa<ParmVarDecl>(this)) {
     // Defensive maneuver for ill-formed code: we're likely not to make it to
     // a point where we set the access specifier, so default it to "public"
@@ -662,7 +668,7 @@ SourceLocation Decl::getBodyRBrace() const {
   return SourceLocation();
 }
 
-void Decl::CheckAccessDeclContext() const {
+bool Decl::AccessDeclContextSanity() const {
 #ifndef NDEBUG
   // Suppress this check if any of the following hold:
   // 1. this is the translation unit (and thus has no parent)
@@ -684,11 +690,12 @@ void Decl::CheckAccessDeclContext() const {
       // AS_none as access specifier.
       isa<CXXRecordDecl>(this) ||
       isa<ClassScopeFunctionSpecializationDecl>(this))
-    return;
+    return true;
 
   assert(Access != AS_none &&
          "Access specifier is AS_none inside a record decl");
 #endif
+  return true;
 }
 
 static Decl::Kind getKind(const Decl *D) { return D->getKind(); }

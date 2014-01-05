@@ -38,7 +38,7 @@ class ModuleMapParser;
   
 class ModuleMap {
   SourceManager &SourceMgr;
-  IntrusiveRefCntPtr<DiagnosticsEngine> Diags;
+  DiagnosticsEngine &Diags;
   const LangOptions &LangOpts;
   const TargetInfo *Target;
   HeaderSearch &HeaderInfo;
@@ -175,6 +175,13 @@ private:
   /// resolved.
   Module *resolveModuleId(const ModuleId &Id, Module *Mod, bool Complain) const;
 
+  /// \brief Looks up the modules that \p File corresponds to.
+  ///
+  /// If \p File represents a builtin header within Clang's builtin include
+  /// directory, this also loads all of the module maps to see if it will get
+  /// associated with a specific module (e.g. in /usr/include).
+  HeadersMap::iterator findKnownHeader(const FileEntry *File);
+
 public:
   /// \brief Construct a new module map.
   ///
@@ -182,13 +189,12 @@ public:
   /// This source manager should be shared with the header-search mechanism,
   /// since they will refer to the same headers.
   ///
-  /// \param DC A diagnostic consumer that will be cloned for use in generating
-  /// diagnostics.
+  /// \param Diags A diagnostic engine used for diagnostics.
   ///
   /// \param LangOpts Language options for this translation unit.
   ///
   /// \param Target The target for this translation unit.
-  ModuleMap(SourceManager &SourceMgr, DiagnosticConsumer &DC,
+  ModuleMap(SourceManager &SourceMgr, DiagnosticsEngine &Diags,
             const LangOptions &LangOpts, const TargetInfo *Target,
             HeaderSearch &HeaderInfo);
 
@@ -218,6 +224,19 @@ public:
   /// that no module owns this header file.
   KnownHeader findModuleForHeader(const FileEntry *File,
                                   Module *RequestingModule = NULL);
+
+  /// \brief Reports errors if a module must not include a specific file.
+  ///
+  /// \param RequestingModule The module including a file.
+  ///
+  /// \param FilenameLoc The location of the inclusion's filename.
+  ///
+  /// \param Filename The included filename as written.
+  ///
+  /// \param File The included file.
+  void diagnoseHeaderInclusion(Module *RequestingModule,
+                               SourceLocation FilenameLoc, StringRef Filename,
+                               const FileEntry *File);
 
   /// \brief Determine whether the given header is part of a module
   /// marked 'unavailable'.

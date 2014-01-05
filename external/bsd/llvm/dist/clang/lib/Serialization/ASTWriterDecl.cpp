@@ -489,6 +489,7 @@ void ASTDeclWriter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
     Writer.AddDeclRef(D->getSuperClass(), Record);
     Writer.AddSourceLocation(D->getSuperClassLoc(), Record);
     Writer.AddSourceLocation(D->getEndOfDefinitionLoc(), Record);
+    Record.push_back(Data.HasDesignatedInitializers);
 
     // Write out the protocols that are directly referenced by the @interface.
     Record.push_back(Data.ReferencedProtocols.size());
@@ -528,7 +529,6 @@ void ASTDeclWriter::VisitObjCIvarDecl(ObjCIvarDecl *D) {
   // FIXME: stable encoding for @public/@private/@protected/@package
   Record.push_back(D->getAccessControl());
   Record.push_back(D->getSynthesize());
-  Record.push_back(D->getBackingIvarReferencedInAccessor());
 
   if (!D->hasAttrs() &&
       !D->isImplicit() &&

@@ -4,66 +4,137 @@ if( CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR )
   project(Clang)
   cmake_minimum_required(VERSION 2.8)
 
-  set(CLANG_PATH_TO_LLVM_SOURCE "" CACHE PATH
-    "Path to LLVM source code. Not necessary if using an installed LLVM.")
-  set(CLANG_PATH_TO_LLVM_BUILD "" CACHE PATH
-    "Path to the directory where LLVM was built or installed.")
-
-  if( CLANG_PATH_TO_LLVM_SOURCE )
-    if( NOT EXISTS "${CLANG_PATH_TO_LLVM_SOURCE}/cmake/config-ix.cmake" )
-      message(FATAL_ERROR "Please set CLANG_PATH_TO_LLVM_SOURCE to the root directory of LLVM source code.")
+  # Rely on llvm-config.
+  set(CONFIG_OUTPUT)
+  find_program(LLVM_CONFIG "llvm-config")
+  if(LLVM_CONFIG)
+    message(STATUS "Found LLVM_CONFIG as ${LLVM_CONFIG}")
+    set(CONFIG_COMMAND ${LLVM_CONFIG}
+      "--assertion-mode"
+      "--bindir"
+      "--libdir"
+      "--includedir"
+      "--prefix"
+      "--src-root")
+    execute_process(
+      COMMAND ${CONFIG_COMMAND}
+      RESULT_VARIABLE HAD_ERROR
+      OUTPUT_VARIABLE CONFIG_OUTPUT
+    )
+    if(NOT HAD_ERROR)
+      string(REGEX REPLACE
+        "[ \t]*[\r\n]+[ \t]*" ";"
+        CONFIG_OUTPUT ${CONFIG_OUTPUT})
     else()
-      get_filename_component(LLVM_MAIN_SRC_DIR ${CLANG_PATH_TO_LLVM_SOURCE}
-	ABSOLUTE)
-      list(APPEND CMAKE_MODULE_PATH "${LLVM_MAIN_SRC_DIR}/cmake/modules")
+      string(REPLACE ";" " " CONFIG_COMMAND_STR "${CONFIG_COMMAND}")
+      message(STATUS "${CONFIG_COMMAND_STR}")
+      message(FATAL_ERROR "llvm-config failed with status ${HAD_ERROR}")
     endif()
-  endif()
-
-  if (EXISTS "${CLANG_PATH_TO_LLVM_BUILD}/bin/llvm-config${CMAKE_EXECUTABLE_SUFFIX}")
-    set (PATH_TO_LLVM_CONFIG "${CLANG_PATH_TO_LLVM_BUILD}/bin/llvm-config${CMAKE_EXECUTABLE_SUFFIX}")
-  elseif (EXISTS "${CLANG_PATH_TO_LLVM_BUILD}/bin/Debug/llvm-config${CMAKE_EXECUTABLE_SUFFIX}")
-    # Looking for bin/Debug/llvm-config is a complete hack. How can we get
-    # around this?
-    set (PATH_TO_LLVM_CONFIG "${CLANG_PATH_TO_LLVM_BUILD}/bin/Debug/llvm-config${CMAKE_EXECUTABLE_SUFFIX}")
   else()
-    message(FATAL_ERROR "Please set CLANG_PATH_TO_LLVM_BUILD to a directory containing a LLVM build.")
+    message(FATAL_ERROR "llvm-config not found -- ${LLVM_CONFIG}")
   endif()
 
-  list(APPEND CMAKE_MODULE_PATH "${CLANG_PATH_TO_LLVM_BUILD}/share/llvm/cmake")
+  list(GET CONFIG_OUTPUT 0 ENABLE_ASSERTIONS)
+  list(GET CONFIG_OUTPUT 1 TOOLS_BINARY_DIR)
+  list(GET CONFIG_OUTPUT 2 LIBRARY_DIR)
+  list(GET CONFIG_OUTPUT 3 INCLUDE_DIR)
+  list(GET CONFIG_OUTPUT 4 LLVM_OBJ_ROOT)
+  list(GET CONFIG_OUTPUT 5 MAIN_SRC_DIR)
 
-  get_filename_component(PATH_TO_LLVM_BUILD ${CLANG_PATH_TO_LLVM_BUILD}
-    ABSOLUTE)
+  if(NOT MSVC_IDE)
+    set(LLVM_ENABLE_ASSERTIONS ${ENABLE_ASSERTIONS}
+      CACHE BOOL "Enable assertions")
+    # Assertions should follow llvm-config's.
+    mark_as_advanced(LLVM_ENABLE_ASSERTIONS)
+  endif()
+
+  set(LLVM_TOOLS_BINARY_DIR ${TOOLS_BINARY_DIR} CACHE PATH "Path to llvm/bin")
+  set(LLVM_LIBRARY_DIR ${LIBRARY_DIR} CACHE PATH "Path to llvm/lib")
+  set(LLVM_MAIN_INCLUDE_DIR ${INCLUDE_DIR} CACHE PATH "Path to llvm/include")
+  set(LLVM_BINARY_DIR ${LLVM_OBJ_ROOT} CACHE PATH "Path to LLVM build tree")
+  set(LLVM_MAIN_SRC_DIR ${MAIN_SRC_DIR} CACHE PATH "Path to LLVM source tree")
+
+  find_program(LLVM_TABLEGEN_EXE "llvm-tblgen" ${LLVM_TOOLS_BINARY_DIR}
+    NO_DEFAULT_PATH)
+
+  set(LLVM_CMAKE_PATH "${LLVM_BINARY_DIR}/share/llvm/cmake")
+  set(LLVMCONFIG_FILE "${LLVM_CMAKE_PATH}/LLVMConfig.cmake")
+  if(EXISTS ${LLVMCONFIG_FILE})
+    list(APPEND CMAKE_MODULE_PATH "${LLVM_CMAKE_PATH}")
+    include(${LLVMCONFIG_FILE})
+  else()
+    message(FATAL_ERROR "Not found: ${LLVMCONFIG_FILE}")
+  endif()
+
+  set(LLVM_RUNTIME_OUTPUT_INTDIR ${LLVM_TOOLS_BINARY_DIR})
+  set(LLVM_LIBRARY_OUTPUT_INTDIR ${LLVM_LIBRARY_DIR})
 
   option(LLVM_INSTALL_TOOLCHAIN_ONLY "Only include toolchain files in the 'install' target." OFF)
 
   include(AddLLVM)
   include(TableGen)
-  include("${CLANG_PATH_TO_LLVM_BUILD}/share/llvm/cmake/LLVMConfig.cmake")
   include(HandleLLVMOptions)
 
   set(PACKAGE_VERSION "${LLVM_PACKAGE_VERSION}")
 
-  set(LLVM_MAIN_INCLUDE_DIR "${LLVM_MAIN_SRC_DIR}/include")
-  set(LLVM_BINARY_DIR ${CMAKE_BINARY_DIR})
+  if (NOT DEFINED LLVM_INCLUDE_TESTS)
+    set(LLVM_INCLUDE_TESTS ON)
+  endif()
 
   set(CMAKE_INCLUDE_CURRENT_DIR ON)
-  include_directories("${PATH_TO_LLVM_BUILD}/include" "${LLVM_MAIN_INCLUDE_DIR}")
-  link_directories("${PATH_TO_LLVM_BUILD}/lib")
-
-  exec_program("${PATH_TO_LLVM_CONFIG} --bindir" OUTPUT_VARIABLE LLVM_BINARY_DIR)
-  set(LLVM_TABLEGEN_EXE "${LLVM_BINARY_DIR}/llvm-tblgen${CMAKE_EXECUTABLE_SUFFIX}")
-
-  # Define the default arguments to use with 'lit', and an option for the user
-  # to override.
-  set(LIT_ARGS_DEFAULT "-sv")
-  if (MSVC OR XCODE)
-    set(LIT_ARGS_DEFAULT "${LIT_ARGS_DEFAULT} --no-progress-bar")
-  endif()
-  set(LLVM_LIT_ARGS "${LIT_ARGS_DEFAULT}" CACHE STRING "Default options for lit")
+  include_directories("${LLVM_BINARY_DIR}/include" "${LLVM_MAIN_INCLUDE_DIR}")
+  link_directories("${LLVM_LIBRARY_DIR}")
 
   set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin )
   set( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib )
   set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib )
+
+  if(LLVM_INCLUDE_TESTS)
+    # Check prebuilt llvm/utils.
+    if(EXISTS ${LLVM_TOOLS_BINARY_DIR}/FileCheck${CMAKE_EXECUTABLE_SUFFIX}
+	AND EXISTS ${LLVM_TOOLS_BINARY_DIR}/count${CMAKE_EXECUTABLE_SUFFIX}
+	AND EXISTS ${LLVM_TOOLS_BINARY_DIR}/not${CMAKE_EXECUTABLE_SUFFIX})
+      set(LLVM_UTILS_PROVIDED ON)
+    endif()
+
+    if(EXISTS ${LLVM_MAIN_SRC_DIR}/utils/lit/lit.py)
+      set(LLVM_LIT ${LLVM_MAIN_SRC_DIR}/utils/lit/lit.py)
+      if(NOT LLVM_UTILS_PROVIDED)
+	add_subdirectory(${LLVM_MAIN_SRC_DIR}/utils/FileCheck utils/FileCheck)
+	add_subdirectory(${LLVM_MAIN_SRC_DIR}/utils/count utils/count)
+	add_subdirectory(${LLVM_MAIN_SRC_DIR}/utils/not utils/not)
+	set(LLVM_UTILS_PROVIDED ON)
+	set(CLANG_TEST_DEPS FileCheck count not)
+      endif()
+      set(UNITTEST_DIR ${LLVM_MAIN_SRC_DIR}/utils/unittest)
+      if(EXISTS ${UNITTEST_DIR}/googletest/include/gtest/gtest.h
+          AND NOT EXISTS ${LLVM_LIBRARY_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}gtest${CMAKE_STATIC_LIBRARY_SUFFIX}
+	  AND EXISTS ${UNITTEST_DIR}/CMakeLists.txt)
+	add_subdirectory(${UNITTEST_DIR} utils/unittest)
+      endif()
+    else()
+      # Seek installed Lit.
+      find_program(LLVM_LIT "lit.py" ${LLVM_MAIN_SRC_DIR}/utils/lit
+	DOC "Path to lit.py")
+    endif()
+
+    if(LLVM_LIT)
+      # Define the default arguments to use with 'lit', and an option for the user
+      # to override.
+      set(LIT_ARGS_DEFAULT "-sv")
+      if (MSVC OR XCODE)
+	set(LIT_ARGS_DEFAULT "${LIT_ARGS_DEFAULT} --no-progress-bar")
+      endif()
+      set(LLVM_LIT_ARGS "${LIT_ARGS_DEFAULT}" CACHE STRING "Default options for lit")
+
+      # On Win32 hosts, provide an option to specify the path to the GnuWin32 tools.
+      if( WIN32 AND NOT CYGWIN )
+	set(LLVM_LIT_TOOLS_DIR "" CACHE PATH "Path to GnuWin32 tools")
+      endif()
+    else()
+      set(LLVM_INCLUDE_TESTS OFF)
+    endif()
+  endif()
 
   set( CLANG_BUILT_STANDALONE 1 )
 
@@ -102,6 +173,9 @@ set(CLANG_VENDOR_UTI "org.llvm.clang" CACHE STRING
 
 set(CLANG_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(CLANG_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
+
+set(CLANG_RUNTIME_OUTPUT_INTDIR ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bin)
+set(CLANG_LIBRARY_OUTPUT_INTDIR ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/lib)
 
 if( CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR AND NOT MSVC_IDE )
   message(FATAL_ERROR "In-source builds are not allowed. CMake would overwrite "
@@ -199,41 +273,6 @@ function(clang_tablegen)
   endif()
 endfunction(clang_tablegen)
 
-# FIXME: Generalize and move to llvm.
-function(add_clang_symbol_exports target_name export_file)
-  # Makefile.rules contains special cases for different platforms.
-  # We restrict ourselves to Darwin for the time being.
-  if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    add_custom_command(OUTPUT symbol.exports
-      COMMAND sed -e "s/^/_/" < ${export_file} > symbol.exports
-      DEPENDS ${export_file}
-      VERBATIM
-      COMMENT "Creating export file for ${target_name}")
-    add_custom_target(${target_name}_exports DEPENDS symbol.exports)
-    set_property(DIRECTORY APPEND
-      PROPERTY ADDITIONAL_MAKE_CLEAN_FILES symbol.exports)
-
-    get_property(srcs TARGET ${target_name} PROPERTY SOURCES)
-    foreach(src ${srcs})
-      get_filename_component(extension ${src} EXT)
-      if(extension STREQUAL ".cpp")
-        set(first_source_file ${src})
-        break()
-      endif()
-    endforeach()
-  
-    # Force re-linking when the exports file changes. Actually, it
-    # forces recompilation of the source file. The LINK_DEPENDS target
-    # property only works for makefile-based generators.
-    set_property(SOURCE ${first_source_file} APPEND PROPERTY
-      OBJECT_DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/symbol.exports)
-  
-    set_property(TARGET ${target_name} APPEND_STRING PROPERTY
-                 LINK_FLAGS " -Wl,-exported_symbols_list,${CMAKE_CURRENT_BINARY_DIR}/symbol.exports")
-    add_dependencies(${target_name} ${target_name}_exports)
-  endif()
-endfunction(add_clang_symbol_exports)
-
 macro(add_clang_library name)
   llvm_process_sources(srcs ${ARGN})
   if(MSVC_IDE OR XCODE)
@@ -266,6 +305,8 @@ macro(add_clang_library name)
     set(libkind)
   endif()
   add_library( ${name} ${libkind} ${srcs} )
+  add_dead_strip( ${name} )
+  set_output_directory(${name} ${CLANG_RUNTIME_OUTPUT_INTDIR} ${CLANG_LIBRARY_OUTPUT_INTDIR})
   if( LLVM_COMMON_DEPENDS )
     add_dependencies( ${name} ${LLVM_COMMON_DEPENDS} )
   endif( LLVM_COMMON_DEPENDS )
@@ -274,8 +315,8 @@ macro(add_clang_library name)
   target_link_libraries( ${name} ${LLVM_COMMON_LIBS} )
   link_system_libs( ${name} )
   
-  if (SHARED_LIBRARY AND EXPORTED_SYMBOL_FILE)
-    add_clang_symbol_exports( ${name} ${EXPORTED_SYMBOL_FILE} ) 
+  if ((SHARED_LIBRARY OR MODULE) AND LLVM_EXPORTED_SYMBOL_FILE)
+    add_llvm_symbol_exports( ${name} ${LLVM_EXPORTED_SYMBOL_FILE} )
   endif()
 
   if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY OR ${name} STREQUAL "libclang")
@@ -291,6 +332,7 @@ endmacro(add_clang_library)
 macro(add_clang_executable name)
   add_llvm_executable( ${name} ${ARGN} )
   set_target_properties(${name} PROPERTIES FOLDER "Clang executables")
+  set_output_directory(${name} ${CLANG_RUNTIME_OUTPUT_INTDIR} ${CLANG_LIBRARY_OUTPUT_INTDIR})
 endmacro(add_clang_executable)
 
 include_directories(BEFORE
@@ -375,8 +417,14 @@ option(CLANG_INCLUDE_TESTS
        ${LLVM_INCLUDE_TESTS})
 
 if( CLANG_INCLUDE_TESTS )
+  if(EXISTS ${LLVM_MAIN_SRC_DIR}/utils/unittest/googletest/include/gtest/gtest.h)
+    add_subdirectory(unittests)
+    list(APPEND CLANG_TEST_DEPS ClangUnitTests)
+    list(APPEND CLANG_TEST_PARAMS
+      clang_unit_site_config=${CMAKE_CURRENT_BINARY_DIR}/test/Unit/lit.site.cfg
+      )
+  endif()
   add_subdirectory(test)
-  add_subdirectory(unittests)
 endif()
 
 option(CLANG_INCLUDE_DOCS "Generate build targets for the Clang docs."
