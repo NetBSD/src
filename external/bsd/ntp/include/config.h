@@ -38,13 +38,13 @@
 #define CLOCK_CHU 1
 
 /* Diems Computime Radio Clock? */
-/* #undef CLOCK_COMPUTIME */
+#define CLOCK_COMPUTIME 1
 
 /* Datum Programmable Time System? */
 #define CLOCK_DATUM 1
 
 /* ELV/DCF7000 clock? */
-/* #undef CLOCK_DCF7000 */
+#define CLOCK_DCF7000 1
 
 /* Dumb generic hh:mm:ss local clock? */
 #define CLOCK_DUMBCLOCK 1
@@ -59,7 +59,7 @@
 #define CLOCK_HEATH 1
 
 /* HOPF 6021 clock? */
-/* #undef CLOCK_HOPF6021 */
+#define CLOCK_HOPF6021 1
 
 /* HOPF PCI clock device? */
 #define CLOCK_HOPF_PCI 1
@@ -86,7 +86,7 @@
 #define CLOCK_LOCAL 1
 
 /* Meinberg clocks */
-/* #undef CLOCK_MEINBERG */
+#define CLOCK_MEINBERG 1
 
 /* Magnavox MX4200 GPS receiver */
 /* #undef CLOCK_MX4200 */
@@ -116,19 +116,19 @@
 #define CLOCK_PST 1
 
 /* DCF77 raw time code */
-/* #undef CLOCK_RAWDCF */
+#define CLOCK_RAWDCF 1
 
 /* RCC 8000 clock */
-/* #undef CLOCK_RCC8000 */
+#define CLOCK_RCC8000 1
 
 /* RIPE NCC Trimble clock */
 /* #undef CLOCK_RIPENCC */
 
 /* Schmid DCF77 clock */
-/* #undef CLOCK_SCHMID */
+#define CLOCK_SCHMID 1
 
 /* SEL240X protocol */
-/* #undef CLOCK_SEL240X */
+#define CLOCK_SEL240X 1
 
 /* clock thru shared memory */
 #define CLOCK_SHM 1
@@ -140,10 +140,10 @@
 /* #undef CLOCK_TPRO */
 
 /* Trimble GPS receiver/TAIP protocol */
-/* #undef CLOCK_TRIMTAIP */
+#define CLOCK_TRIMTAIP 1
 
 /* Trimble GPS receiver/TSIP protocol */
-/* #undef CLOCK_TRIMTSIP */
+#define CLOCK_TRIMTSIP 1
 
 /* Kinemetrics/TrueTime receivers */
 #define CLOCK_TRUETIME 1
@@ -158,10 +158,10 @@
 #define CLOCK_ULINK 1
 
 /* VARITEXT clock */
-/* #undef CLOCK_VARITEXT */
+#define CLOCK_VARITEXT 1
 
 /* WHARTON 400A Series clock */
-/* #undef CLOCK_WHARTON_400A */
+#define CLOCK_WHARTON_400A 1
 
 /* WWV audio driver */
 #define CLOCK_WWV 1
