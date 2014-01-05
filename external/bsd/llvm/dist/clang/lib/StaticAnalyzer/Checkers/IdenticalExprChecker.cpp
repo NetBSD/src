@@ -11,7 +11,8 @@
 /// \brief This defines IdenticalExprChecker, a check that warns about
 /// unintended use of identical expressions.
 ///
-/// It checks for use of identical expressions with comparison operators.
+/// It checks for use of identical expressions with comparison operators and
+/// inside conditional expressions.
 ///
 //===----------------------------------------------------------------------===//
 
@@ -26,7 +27,7 @@ using namespace clang;
 using namespace ento;
 
 static bool isIdenticalExpr(const ASTContext &Ctx, const Expr *Expr1,
-                            const Expr *Expr2);
+                            const Expr *Expr2, bool IgnoreSideEffects = false);
 //===----------------------------------------------------------------------===//
 // FindIdenticalExprVisitor - Identify nodes using identical expressions.
 //===----------------------------------------------------------------------===//
@@ -38,8 +39,9 @@ public:
   explicit FindIdenticalExprVisitor(BugReporter &B, AnalysisDeclContext *A)
       : BR(B), AC(A) {}
   // FindIdenticalExprVisitor only visits nodes
-  // that are binary operators.
+  // that are binary operators or conditional operators.
   bool VisitBinaryOperator(const BinaryOperator *B);
+  bool VisitConditionalOperator(const ConditionalOperator *C);
 
 private:
   BugReporter &BR;
@@ -118,6 +120,34 @@ bool FindIdenticalExprVisitor::VisitBinaryOperator(const BinaryOperator *B) {
   // True is always returned to traverse ALL nodes.
   return true;
 }
+
+bool FindIdenticalExprVisitor::VisitConditionalOperator(
+    const ConditionalOperator *C) {
+
+  // Check if expressions in conditional expression are identical
+  // from a symbolic point of view.
+
+  if (isIdenticalExpr(AC->getASTContext(), C->getTrueExpr(),
+                      C->getFalseExpr(), true)) {
+    PathDiagnosticLocation ELoc =
+        PathDiagnosticLocation::createConditionalColonLoc(
+            C, BR.getSourceManager());
+
+    SourceRange Sr[2];
+    Sr[0] = C->getTrueExpr()->getSourceRange();
+    Sr[1] = C->getFalseExpr()->getSourceRange();
+    BR.EmitBasicReport(
+        AC->getDecl(), "Identical expressions in conditional expression",
+        categories::LogicError,
+        "identical expressions on both sides of ':' in conditional expression",
+        ELoc, Sr);
+  }
+  // We want to visit ALL nodes (expressions in conditional
+  // expressions too) that contains conditional operators,
+  // thus always return true to traverse ALL nodes.
+  return true;
+}
+
 /// \brief Determines whether two expression trees are identical regarding
 /// operators and symbols.
 ///
@@ -127,16 +157,16 @@ bool FindIdenticalExprVisitor::VisitBinaryOperator(const BinaryOperator *B) {
 /// t*(u + t) and t*u + t*t are not considered identical.
 ///
 static bool isIdenticalExpr(const ASTContext &Ctx, const Expr *Expr1,
-                            const Expr *Expr2) {
+                            const Expr *Expr2, bool IgnoreSideEffects) {
   // If Expr1 & Expr2 are of different class then they are not
   // identical expression.
   if (Expr1->getStmtClass() != Expr2->getStmtClass())
     return false;
   // If Expr1 has side effects then don't warn even if expressions
   // are identical.
-  if (Expr1->HasSideEffects(Ctx))
+  if (!IgnoreSideEffects && Expr1->HasSideEffects(Ctx))
     return false;
-  // Is expression is based on macro then don't warn even if
+  // If either expression comes from a macro then don't warn even if
   // the expressions are identical.
   if ((Expr1->getExprLoc().isMacroID()) || (Expr2->getExprLoc().isMacroID()))
     return false;
@@ -146,7 +176,8 @@ static bool isIdenticalExpr(const ASTContext &Ctx, const Expr *Expr1,
   while (I1 != Expr1->child_end() && I2 != Expr2->child_end()) {
     const Expr *Child1 = dyn_cast<Expr>(*I1);
     const Expr *Child2 = dyn_cast<Expr>(*I2);
-    if (!Child1 || !Child2 || !isIdenticalExpr(Ctx, Child1, Child2))
+    if (!Child1 || !Child2 || !isIdenticalExpr(Ctx, Child1, Child2,
+                                               IgnoreSideEffects))
       return false;
     ++I1;
     ++I2;
@@ -161,47 +192,46 @@ static bool isIdenticalExpr(const ASTContext &Ctx, const Expr *Expr1,
   switch (Expr1->getStmtClass()) {
   default:
     return false;
+  case Stmt::CallExprClass:
   case Stmt::ArraySubscriptExprClass:
   case Stmt::CStyleCastExprClass:
   case Stmt::ImplicitCastExprClass:
   case Stmt::ParenExprClass:
     return true;
   case Stmt::BinaryOperatorClass: {
-    const BinaryOperator *BinOp1 = dyn_cast<BinaryOperator>(Expr1);
-    const BinaryOperator *BinOp2 = dyn_cast<BinaryOperator>(Expr2);
+    const BinaryOperator *BinOp1 = cast<BinaryOperator>(Expr1);
+    const BinaryOperator *BinOp2 = cast<BinaryOperator>(Expr2);
     return BinOp1->getOpcode() == BinOp2->getOpcode();
   }
   case Stmt::CharacterLiteralClass: {
-    const CharacterLiteral *CharLit1 = dyn_cast<CharacterLiteral>(Expr1);
-    const CharacterLiteral *CharLit2 = dyn_cast<CharacterLiteral>(Expr2);
+    const CharacterLiteral *CharLit1 = cast<CharacterLiteral>(Expr1);
+    const CharacterLiteral *CharLit2 = cast<CharacterLiteral>(Expr2);
     return CharLit1->getValue() == CharLit2->getValue();
   }
   case Stmt::DeclRefExprClass: {
-    const DeclRefExpr *DeclRef1 = dyn_cast<DeclRefExpr>(Expr1);
-    const DeclRefExpr *DeclRef2 = dyn_cast<DeclRefExpr>(Expr2);
+    const DeclRefExpr *DeclRef1 = cast<DeclRefExpr>(Expr1);
+    const DeclRefExpr *DeclRef2 = cast<DeclRefExpr>(Expr2);
     return DeclRef1->getDecl() == DeclRef2->getDecl();
   }
   case Stmt::IntegerLiteralClass: {
-    const IntegerLiteral *IntLit1 = dyn_cast<IntegerLiteral>(Expr1);
-    const IntegerLiteral *IntLit2 = dyn_cast<IntegerLiteral>(Expr2);
+    const IntegerLiteral *IntLit1 = cast<IntegerLiteral>(Expr1);
+    const IntegerLiteral *IntLit2 = cast<IntegerLiteral>(Expr2);
     return IntLit1->getValue() == IntLit2->getValue();
   }
   case Stmt::FloatingLiteralClass: {
-    const FloatingLiteral *FloatLit1 = dyn_cast<FloatingLiteral>(Expr1);
-    const FloatingLiteral *FloatLit2 = dyn_cast<FloatingLiteral>(Expr2);
+    const FloatingLiteral *FloatLit1 = cast<FloatingLiteral>(Expr1);
+    const FloatingLiteral *FloatLit2 = cast<FloatingLiteral>(Expr2);
     return FloatLit1->getValue().bitwiseIsEqual(FloatLit2->getValue());
   }
   case Stmt::MemberExprClass: {
-    const MemberExpr *MemberExpr1 = dyn_cast<MemberExpr>(Expr1);
-    const MemberExpr *MemberExpr2 = dyn_cast<MemberExpr>(Expr2);
+    const MemberExpr *MemberExpr1 = cast<MemberExpr>(Expr1);
+    const MemberExpr *MemberExpr2 = cast<MemberExpr>(Expr2);
     return MemberExpr1->getMemberDecl() == MemberExpr2->getMemberDecl();
   }
   case Stmt::UnaryOperatorClass: {
-    const UnaryOperator *UnaryOp1 = dyn_cast<UnaryOperator>(Expr1);
-    const UnaryOperator *UnaryOp2 = dyn_cast<UnaryOperator>(Expr2);
-    if (UnaryOp1->getOpcode() != UnaryOp2->getOpcode())
-      return false;
-    return !UnaryOp1->isIncrementDecrementOp();
+    const UnaryOperator *UnaryOp1 = cast<UnaryOperator>(Expr1);
+    const UnaryOperator *UnaryOp2 = cast<UnaryOperator>(Expr2);
+    return UnaryOp1->getOpcode() == UnaryOp2->getOpcode();
   }
   }
 }
