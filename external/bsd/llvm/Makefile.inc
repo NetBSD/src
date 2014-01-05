@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.66 2014/01/05 15:19:39 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.67 2014/01/05 16:38:06 joerg Exp $
 
 .if !defined(LLVM_TOPLEVEL_MK)
 LLVM_TOPLEVEL_MK=
@@ -6,9 +6,9 @@ LLVM_TOPLEVEL_MK=
 .include <bsd.own.mk>
 
 SVN_ROOT=		http://llvm.org/svn/llvm-project
-SVN_BRANCH=		branches/release_34
+SVN_BRANCH=		trunk
 
-COMMON_REVISION=	196603
+COMMON_REVISION=	198450
 CLANG_REVISION=		${COMMON_REVISION}
 COMPILER_RT_REVISION=	${COMMON_REVISION}
 LLD_REVISION=		${COMMON_REVISION}
@@ -18,8 +18,8 @@ LLVM_REVISION=		${COMMON_REVISION}
 MCLINKER_REVISION=	deeb2a77b4165827316f88e0a7ba4ba6b743a080
 MCLINKER_ROOT=		https://code.google.com/p/mclinker/
 
-LLVM_VERSION=		3.4
-CLANG_VERSION=		3.4
+LLVM_VERSION=		3.5
+CLANG_VERSION=		3.5
 
 COMPILER_RT_SRCDIR:=	${.PARSEDIR}/dist/compiler-rt
 CLANG_SRCDIR:=	${.PARSEDIR}/dist/clang

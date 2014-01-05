@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2013/10/14 01:37:39 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2014/01/05 16:38:06 joerg Exp $
 
 PROG_CXX=	lld
 NOMAN=		yes
@@ -13,6 +13,7 @@ LLD_LIBS+= \
 	lldDriver \
 	lldReaderWriterELF \
 	lldReaderWriterELFHexagon \
+	lldReaderWriterELFMips \
 	lldReaderWriterELFPPC \
 	lldReaderWriterELFX86 \
 	lldReaderWriterELFX86_64 \

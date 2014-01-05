@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2013/11/28 14:19:59 joerg Exp $
+#	$NetBSD: Makefile,v 1.5 2014/01/05 16:38:06 joerg Exp $
 
 LIB=	LLVMIR
 
@@ -17,6 +17,8 @@ SRCS+=	AsmWriter.cpp \
 	DataLayout.cpp \
 	DebugInfo.cpp \
 	DebugLoc.cpp \
+	DiagnosticInfo.cpp \
+	DiagnosticPrinter.cpp \
 	Dominators.cpp \
 	Function.cpp \
 	GCOV.cpp \

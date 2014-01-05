@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.36 2013/11/28 14:19:59 joerg Exp $
+# $NetBSD: Makefile,v 1.37 2014/01/05 16:38:06 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -63,10 +63,12 @@ SUBDIR+= \
 SUBDIR+= \
 	libLLVMPowerPCAsmParser \
 	libLLVMPowerPCAsmPrinter \
+	libLLVMPowerPCDisassembler \
 	libLLVMPowerPCMCTargetDesc \
 	libLLVMPowerPCTargetInfo
 
 SUBDIR+= \
+	libLLVMSparcAsmPrinter \
 	libLLVMSparcMCTargetDesc \
 	libLLVMSparcTargetInfo
 
@@ -135,6 +137,7 @@ SUBDIR+= \
 	liblldReaderWriter \
 	liblldReaderWriterELF \
 	liblldReaderWriterELFHexagon \
+	liblldReaderWriterELFMips \
 	liblldReaderWriterELFPPC \
 	liblldReaderWriterELFX86 \
 	liblldReaderWriterELFX86_64 \
