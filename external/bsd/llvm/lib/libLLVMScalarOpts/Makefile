@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2013/11/28 14:19:59 joerg Exp $
+#	$NetBSD: Makefile,v 1.14 2014/01/05 16:38:07 joerg Exp $
 
 LIB=	LLVMScalarOpts
 
@@ -37,6 +37,7 @@ SRCS+=	ADCE.cpp \
 	SampleProfile.cpp \
 	Scalar.cpp \
 	ScalarReplAggregates.cpp \
+	Scalarizer.cpp \
 	SimplifyCFGPass.cpp \
 	Sink.cpp \
 	StructurizeCFG.cpp \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2013/07/07 21:36:42 joerg Exp $
+#	$NetBSD: Makefile,v 1.28 2014/01/05 16:38:06 joerg Exp $
 
 PROG_CXX=	clang
 NOMAN=		yes
@@ -67,6 +67,7 @@ LLVM_LIBS+= \
 	SparcCodeGen \
 	SparcTargetInfo \
 	SparcMCTargetDesc \
+	SparcAsmPrinter \
 	X86CodeGen \
 	X86MCTargetDesc \
 	X86TargetInfo \
