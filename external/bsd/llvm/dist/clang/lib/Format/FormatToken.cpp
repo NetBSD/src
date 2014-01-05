@@ -48,8 +48,11 @@ unsigned CommaSeparatedList::format(LineState &State,
 
   // Find the best ColumnFormat, i.e. the best number of columns to use.
   const ColumnFormat *Format = getColumnFormat(RemainingCodePoints);
+  // If no ColumnFormat can be used, the braced list would generally be
+  // bin-packed. Add a severe penalty to this so that column layouts are
+  // preferred if possible.
   if (!Format)
-    return 0;
+    return 10000;
 
   // Format the entire list.
   unsigned Penalty = 0;
@@ -89,7 +92,8 @@ static unsigned CodePointsBetween(const FormatToken *Begin,
 
 void CommaSeparatedList::precomputeFormattingInfos(const FormatToken *Token) {
   // FIXME: At some point we might want to do this for other lists, too.
-  if (!Token->MatchingParen || Token->isNot(tok::l_brace))
+  if (!Token->MatchingParen || Token->isNot(tok::l_brace) ||
+      Token->NestingLevel != 0)
     return;
 
   FormatToken *ItemBegin = Token->Next;

@@ -39,6 +39,7 @@ enum TokenType {
   TT_ImplicitStringLiteral,
   TT_InlineASMColon,
   TT_InheritanceColon,
+  TT_FunctionLBrace,
   TT_FunctionTypeLParen,
   TT_LambdaLSquare,
   TT_LineComment,
@@ -57,6 +58,7 @@ enum TokenType {
   TT_StartOfName,
   TT_TemplateCloser,
   TT_TemplateOpener,
+  TT_TrailingAnnotation,
   TT_TrailingReturnArrow,
   TT_TrailingUnaryOperator,
   TT_UnaryOperator,
@@ -87,7 +89,7 @@ class TokenRole;
 class AnnotatedLine;
 
 /// \brief A wrapper around a \c Token storing information about the
-/// whitespace characters preceeding it.
+/// whitespace characters preceding it.
 struct FormatToken {
   FormatToken()
       : NewlinesBefore(0), HasUnescapedNewline(false), LastNewlineOffset(0),
@@ -96,8 +98,8 @@ struct FormatToken {
         BlockKind(BK_Unknown), Type(TT_Unknown), SpacesRequiredBefore(0),
         CanBreakBefore(false), ClosesTemplateDeclaration(false),
         ParameterCount(0), PackingKind(PPK_Inconclusive), TotalLength(0),
-        UnbreakableTailLength(0), BindingStrength(0), SplitPenalty(0),
-        LongestObjCSelectorName(0), FakeRParens(0),
+        UnbreakableTailLength(0), BindingStrength(0), NestingLevel(0),
+        SplitPenalty(0), LongestObjCSelectorName(0), FakeRParens(0),
         StartsBinaryExpression(false), EndsBinaryExpression(false),
         LastInChainOfCalls(false), PartOfMultiVariableDeclStmt(false),
         MatchingParen(NULL), Previous(NULL), Next(NULL),
@@ -116,7 +118,7 @@ struct FormatToken {
   /// Token.
   bool HasUnescapedNewline;
 
-  /// \brief The range of the whitespace immediately preceeding the \c Token.
+  /// \brief The range of the whitespace immediately preceding the \c Token.
   SourceRange WhitespaceRange;
 
   /// \brief The offset just past the last '\n' in this token's leading
@@ -206,11 +208,18 @@ struct FormatToken {
   /// operator precedence, parenthesis nesting, etc.
   unsigned BindingStrength;
 
+  /// \brief The nesting level of this token, i.e. the number of surrounding (),
+  /// [], {} or <>.
+  unsigned NestingLevel;
+
   /// \brief Penalty for inserting a line break before this token.
   unsigned SplitPenalty;
 
   /// \brief If this is the first ObjC selector name in an ObjC method
   /// definition or call, this contains the length of the longest name.
+  ///
+  /// This being set to 0 means that the selectors should not be colon-aligned,
+  /// e.g. because several of them are block-type.
   unsigned LongestObjCSelectorName;
 
   /// \brief Stores the number of required fake parentheses and the
@@ -260,6 +269,7 @@ struct FormatToken {
   }
 
   bool isNot(tok::TokenKind Kind) const { return Tok.isNot(Kind); }
+  bool isStringLiteral() const { return tok::isStringLiteral(Tok.getKind()); }
 
   bool isObjCAtKeyword(tok::ObjCKeywordKind Kind) const {
     return Tok.isObjCAtKeyword(Kind);

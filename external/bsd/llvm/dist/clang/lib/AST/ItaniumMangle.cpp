@@ -11,7 +11,7 @@
 // which is used in GCC 3.2 and newer (and many compilers that are
 // ABI-compatible with GCC):
 //
-//   http://www.codesourcery.com/public/cxx-abi/abi.html
+//   http://mentorembedded.github.io/cxx-abi/abi.html#mangling
 //
 //===----------------------------------------------------------------------===//
 #include "clang/AST/Mangle.h"
@@ -833,6 +833,7 @@ void CXXNameMangler::mangleUnresolvedPrefix(NestedNameSpecifier *qualifier,
     switch (type->getTypeClass()) {
     case Type::Builtin:
     case Type::Complex:
+    case Type::Adjusted:
     case Type::Decayed:
     case Type::Pointer:
     case Type::BlockPointer:
@@ -1919,7 +1920,7 @@ void CXXNameMangler::mangleType(const BuiltinType *T) {
   //                 ::= x  # long long, __int64
   //                 ::= y  # unsigned long long, __int64
   //                 ::= n  # __int128
-  // UNSUPPORTED:    ::= o  # unsigned __int128
+  //                 ::= o  # unsigned __int128
   //                 ::= f  # float
   //                 ::= d  # double
   //                 ::= e  # long double, __float80
@@ -2581,8 +2582,6 @@ recurse:
   case Expr::ShuffleVectorExprClass:
   case Expr::ConvertVectorExprClass:
   case Expr::StmtExprClass:
-  case Expr::UnaryTypeTraitExprClass:
-  case Expr::BinaryTypeTraitExprClass:
   case Expr::TypeTraitExprClass:
   case Expr::ArrayTypeTraitExprClass:
   case Expr::ExpressionTraitExprClass:

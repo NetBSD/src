@@ -330,7 +330,8 @@ void StmtPrinter::VisitCXXForRangeStmt(CXXForRangeStmt *Node) {
   PrintExpr(Node->getRangeInit());
   OS << ") {\n";
   PrintStmt(Node->getBody());
-  Indent() << "}\n";
+  Indent() << "}";
+  if (Policy.IncludeNewlines) OS << "\n";
 }
 
 void StmtPrinter::VisitMSDependentExistsStmt(MSDependentExistsStmt *Node) {
@@ -350,21 +351,25 @@ void StmtPrinter::VisitMSDependentExistsStmt(MSDependentExistsStmt *Node) {
 }
 
 void StmtPrinter::VisitGotoStmt(GotoStmt *Node) {
-  Indent() << "goto " << Node->getLabel()->getName() << ";\n";
+  Indent() << "goto " << Node->getLabel()->getName() << ";";
+  if (Policy.IncludeNewlines) OS << "\n";
 }
 
 void StmtPrinter::VisitIndirectGotoStmt(IndirectGotoStmt *Node) {
   Indent() << "goto *";
   PrintExpr(Node->getTarget());
-  OS << ";\n";
+  OS << ";";
+  if (Policy.IncludeNewlines) OS << "\n";
 }
 
 void StmtPrinter::VisitContinueStmt(ContinueStmt *Node) {
-  Indent() << "continue;\n";
+  Indent() << "continue;";
+  if (Policy.IncludeNewlines) OS << "\n";
 }
 
 void StmtPrinter::VisitBreakStmt(BreakStmt *Node) {
-  Indent() << "break;\n";
+  Indent() << "break;";
+  if (Policy.IncludeNewlines) OS << "\n";
 }
 
 
@@ -374,7 +379,8 @@ void StmtPrinter::VisitReturnStmt(ReturnStmt *Node) {
     OS << " ";
     PrintExpr(Node->getRetValue());
   }
-  OS << ";\n";
+  OS << ";";
+  if (Policy.IncludeNewlines) OS << "\n";
 }
 
 
@@ -437,7 +443,8 @@ void StmtPrinter::VisitGCCAsmStmt(GCCAsmStmt *Node) {
     VisitStringLiteral(Node->getClobberStringLiteral(i));
   }
 
-  OS << ");\n";
+  OS << ");";
+  if (Policy.IncludeNewlines) OS << "\n";
 }
 
 void StmtPrinter::VisitMSAsmStmt(MSAsmStmt *Node) {
@@ -715,7 +722,7 @@ void StmtPrinter::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *Node) {
   }
 
   if (Node->isImplicitProperty())
-    OS << Node->getImplicitPropertyGetter()->getSelector().getAsString();
+    Node->getImplicitPropertyGetter()->getSelector().print(OS);
   else
     OS << Node->getExplicitProperty()->getName();
 }
@@ -1041,7 +1048,7 @@ void StmtPrinter::VisitCompoundLiteralExpr(CompoundLiteralExpr *Node) {
   PrintExpr(Node->getInitializer());
 }
 void StmtPrinter::VisitImplicitCastExpr(ImplicitCastExpr *Node) {
-  // No need to print anything, simply forward to the sub expression.
+  // No need to print anything, simply forward to the subexpression.
   PrintExpr(Node->getSubExpr());
 }
 void StmtPrinter::VisitBinaryOperator(BinaryOperator *Node) {
@@ -1625,7 +1632,7 @@ void StmtPrinter::VisitCXXStdInitializerListExpr(CXXStdInitializerListExpr *E) {
 }
 
 void StmtPrinter::VisitExprWithCleanups(ExprWithCleanups *E) {
-  // Just forward to the sub expression.
+  // Just forward to the subexpression.
   PrintExpr(E->getSubExpr());
 }
 
@@ -1675,74 +1682,15 @@ void StmtPrinter::VisitUnresolvedMemberExpr(UnresolvedMemberExpr *Node) {
         OS, Node->getTemplateArgs(), Node->getNumTemplateArgs(), Policy);
 }
 
-static const char *getTypeTraitName(UnaryTypeTrait UTT) {
-  switch (UTT) {
-  case UTT_HasNothrowAssign:      return "__has_nothrow_assign";
-  case UTT_HasNothrowMoveAssign:  return "__has_nothrow_move_assign";
-  case UTT_HasNothrowConstructor: return "__has_nothrow_constructor";
-  case UTT_HasNothrowCopy:          return "__has_nothrow_copy";
-  case UTT_HasTrivialAssign:      return "__has_trivial_assign";
-  case UTT_HasTrivialMoveAssign:      return "__has_trivial_move_assign";
-  case UTT_HasTrivialMoveConstructor: return "__has_trivial_move_constructor";
-  case UTT_HasTrivialDefaultConstructor: return "__has_trivial_constructor";
-  case UTT_HasTrivialCopy:          return "__has_trivial_copy";
-  case UTT_HasTrivialDestructor:  return "__has_trivial_destructor";
-  case UTT_HasVirtualDestructor:  return "__has_virtual_destructor";
-  case UTT_IsAbstract:            return "__is_abstract";
-  case UTT_IsArithmetic:            return "__is_arithmetic";
-  case UTT_IsArray:                 return "__is_array";
-  case UTT_IsClass:               return "__is_class";
-  case UTT_IsCompleteType:          return "__is_complete_type";
-  case UTT_IsCompound:              return "__is_compound";
-  case UTT_IsConst:                 return "__is_const";
-  case UTT_IsEmpty:               return "__is_empty";
-  case UTT_IsEnum:                return "__is_enum";
-  case UTT_IsFinal:                 return "__is_final";
-  case UTT_IsFloatingPoint:         return "__is_floating_point";
-  case UTT_IsFunction:              return "__is_function";
-  case UTT_IsFundamental:           return "__is_fundamental";
-  case UTT_IsIntegral:              return "__is_integral";
-  case UTT_IsInterfaceClass:        return "__is_interface_class";
-  case UTT_IsLiteral:               return "__is_literal";
-  case UTT_IsLvalueReference:       return "__is_lvalue_reference";
-  case UTT_IsMemberFunctionPointer: return "__is_member_function_pointer";
-  case UTT_IsMemberObjectPointer:   return "__is_member_object_pointer";
-  case UTT_IsMemberPointer:         return "__is_member_pointer";
-  case UTT_IsObject:                return "__is_object";
-  case UTT_IsPOD:                 return "__is_pod";
-  case UTT_IsPointer:               return "__is_pointer";
-  case UTT_IsPolymorphic:         return "__is_polymorphic";
-  case UTT_IsReference:             return "__is_reference";
-  case UTT_IsRvalueReference:       return "__is_rvalue_reference";
-  case UTT_IsScalar:                return "__is_scalar";
-  case UTT_IsSealed:                return "__is_sealed";
-  case UTT_IsSigned:                return "__is_signed";
-  case UTT_IsStandardLayout:        return "__is_standard_layout";
-  case UTT_IsTrivial:               return "__is_trivial";
-  case UTT_IsTriviallyCopyable:     return "__is_trivially_copyable";
-  case UTT_IsUnion:               return "__is_union";
-  case UTT_IsUnsigned:              return "__is_unsigned";
-  case UTT_IsVoid:                  return "__is_void";
-  case UTT_IsVolatile:              return "__is_volatile";
-  }
-  llvm_unreachable("Type trait not covered by switch statement");
-}
-
-static const char *getTypeTraitName(BinaryTypeTrait BTT) {
-  switch (BTT) {
-  case BTT_IsBaseOf:              return "__is_base_of";
-  case BTT_IsConvertible:         return "__is_convertible";
-  case BTT_IsSame:                return "__is_same";
-  case BTT_TypeCompatible:        return "__builtin_types_compatible_p";
-  case BTT_IsConvertibleTo:       return "__is_convertible_to";
-  case BTT_IsTriviallyAssignable: return "__is_trivially_assignable";
-  }
-  llvm_unreachable("Binary type trait not covered by switch");
-}
-
 static const char *getTypeTraitName(TypeTrait TT) {
   switch (TT) {
-  case clang::TT_IsTriviallyConstructible:return "__is_trivially_constructible";
+#define TYPE_TRAIT_1(Spelling, Name, Key) \
+case clang::UTT_##Name: return #Spelling;
+#define TYPE_TRAIT_2(Spelling, Name, Key) \
+case clang::BTT_##Name: return #Spelling;
+#define TYPE_TRAIT_N(Spelling, Name, Key) \
+  case clang::TT_##Name: return #Spelling;
+#include "clang/Basic/TokenKinds.def"
   }
   llvm_unreachable("Type trait not covered by switch");
 }
@@ -1761,20 +1709,6 @@ static const char *getExpressionTraitName(ExpressionTrait ET) {
   case ET_IsRValueExpr:      return "__is_rvalue_expr";
   }
   llvm_unreachable("Expression type trait not covered by switch");
-}
-
-void StmtPrinter::VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E) {
-  OS << getTypeTraitName(E->getTrait()) << '(';
-  E->getQueriedType().print(OS, Policy);
-  OS << ')';
-}
-
-void StmtPrinter::VisitBinaryTypeTraitExpr(BinaryTypeTraitExpr *E) {
-  OS << getTypeTraitName(E->getTrait()) << '(';
-  E->getLhsType().print(OS, Policy);
-  OS << ',';
-  E->getRhsType().print(OS, Policy);
-  OS << ')';
 }
 
 void StmtPrinter::VisitTypeTraitExpr(TypeTraitExpr *E) {
@@ -1881,7 +1815,9 @@ void StmtPrinter::VisitObjCEncodeExpr(ObjCEncodeExpr *Node) {
 }
 
 void StmtPrinter::VisitObjCSelectorExpr(ObjCSelectorExpr *Node) {
-  OS << "@selector(" << Node->getSelector().getAsString() << ')';
+  OS << "@selector(";
+  Node->getSelector().print(OS);
+  OS << ')';
 }
 
 void StmtPrinter::VisitObjCProtocolExpr(ObjCProtocolExpr *Node) {

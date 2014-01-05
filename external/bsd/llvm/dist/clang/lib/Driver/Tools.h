@@ -139,18 +139,6 @@ namespace gcc {
                                      llvm::opt::ArgStringList &CmdArgs) const;
   };
 
-  class LLVM_LIBRARY_VISIBILITY Precompile : public Common  {
-  public:
-    Precompile(const ToolChain &TC) : Common("gcc::Precompile",
-                                             "gcc precompile", TC) {}
-
-    virtual bool hasGoodDiagnostics() const { return true; }
-    virtual bool hasIntegratedCPP() const { return true; }
-
-    virtual void RenderExtraToolArgs(const JobAction &JA,
-                                     llvm::opt::ArgStringList &CmdArgs) const;
-  };
-
   class LLVM_LIBRARY_VISIBILITY Compile : public Common  {
   public:
     Compile(const ToolChain &TC) : Common("gcc::Compile",
@@ -158,17 +146,6 @@ namespace gcc {
 
     virtual bool hasGoodDiagnostics() const { return true; }
     virtual bool hasIntegratedCPP() const { return true; }
-
-    virtual void RenderExtraToolArgs(const JobAction &JA,
-                                     llvm::opt::ArgStringList &CmdArgs) const;
-  };
-
-  class LLVM_LIBRARY_VISIBILITY Assemble : public Common  {
-  public:
-    Assemble(const ToolChain &TC) : Common("gcc::Assemble",
-                                           "assembler (via gcc)", TC) {}
-
-    virtual bool hasIntegratedCPP() const { return false; }
 
     virtual void RenderExtraToolArgs(const JobAction &JA,
                                      llvm::opt::ArgStringList &CmdArgs) const;
@@ -224,6 +201,13 @@ namespace hexagon {
   };
 } // end namespace hexagon.
 
+namespace arm {
+  StringRef getARMTargetCPU(const llvm::opt::ArgList &Args,
+                            const llvm::Triple &Triple);
+  const char* getARMCPUForMArch(const llvm::opt::ArgList &Args,
+                                const llvm::Triple &Triple);
+  const char* getLLVMArchSuffixForARM(StringRef CPU);
+}
 
 namespace darwin {
   llvm::Triple::ArchType getArchTypeForDarwinArchName(StringRef Str);
@@ -629,6 +613,10 @@ namespace visualstudio {
   };
 } // end namespace visualstudio
 
+namespace arm {
+  StringRef getARMFloatABI(const Driver &D, const llvm::opt::ArgList &Args,
+                         const llvm::Triple &Triple);
+}
 namespace XCore {
   // For XCore, we do not need to instantiate tools for PreProcess, PreCompile and Compile.
   // We simply use "clang -cc1" for those actions.

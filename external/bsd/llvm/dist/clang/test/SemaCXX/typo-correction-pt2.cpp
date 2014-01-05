@@ -7,8 +7,8 @@
 
 namespace bogus_keyword_suggestion {
 void test() {
-   status = "OK";  // expected-error-re {{use of undeclared identifier 'status'$}}
-   return status;  // expected-error-re {{use of undeclared identifier 'status'$}}
+   status = "OK";  // expected-error-re {{use of undeclared identifier 'status'{{$}}}}
+   return status;  // expected-error-re {{use of undeclared identifier 'status'{{$}}}}
  }
 }
 
@@ -33,7 +33,7 @@ struct T {
 };
 // should be void T::f();
 void f() {
- data_struct->foo();  // expected-error-re{{use of undeclared identifier 'data_struct'$}}
+ data_struct->foo();  // expected-error-re{{use of undeclared identifier 'data_struct'{{$}}}}
 }
 
 namespace PR12287 {
@@ -116,9 +116,9 @@ public:
 void testAccess() {
   Figure obj;
   switch (obj.type()) {  // expected-warning {{enumeration values 'SQUARE', 'TRIANGLE', and 'CIRCLE' not handled in switch}}
-  case SQUARE:  // expected-error-re {{use of undeclared identifier 'SQUARE'$}}
-  case TRIANGLE:  // expected-error-re {{use of undeclared identifier 'TRIANGLE'$}}
-  case CIRCE:  // expected-error-re {{use of undeclared identifier 'CIRCE'$}}
+  case SQUARE:  // expected-error-re {{use of undeclared identifier 'SQUARE'{{$}}}}
+  case TRIANGLE:  // expected-error-re {{use of undeclared identifier 'TRIANGLE'{{$}}}}
+  case CIRCE:  // expected-error-re {{use of undeclared identifier 'CIRCE'{{$}}}}
     break;
   }
 }
@@ -126,13 +126,13 @@ void testAccess() {
 
 long readline(const char *, char *, unsigned long);
 void assign_to_unknown_var() {
-    deadline_ = 1;  // expected-error-re {{use of undeclared identifier 'deadline_'$}}
+    deadline_ = 1;  // expected-error-re {{use of undeclared identifier 'deadline_'{{$}}}}
 }
 
 namespace no_ns_before_dot {
 namespace re2 {}
 void test() {
-    req.set_check(false);  // expected-error-re {{use of undeclared identifier 'req'$}}
+    req.set_check(false);  // expected-error-re {{use of undeclared identifier 'req'{{$}}}}
 }
 }
 
@@ -180,4 +180,22 @@ void test() {
   // No, we didn't mean to call MessageHeaders::MessageHeaders.
   MessageHeaders::ParseMessageHeaders(5, 4); // expected-error {{no member named 'ParseMessageHeaders' in 'fix_class_name_qualifier::MessageHeaders'; did you mean 'MessageUtils::ParseMessageHeaders'?}}
 }
+}
+
+namespace PR18213 {  // expected-note {{'PR18213' declared here}}
+struct WrapperInfo {
+  int i;
+};
+
+template <typename T> struct Wrappable {
+  static WrapperInfo kWrapperInfo;
+};
+
+// Note the space before "::PR18213" is intended and needed, as it highlights
+// the actual typo, which is the leading "::".
+// TODO: Suggest removing the "::" from "::PR18213" (the right correction)
+// instead of incorrectly suggesting dropping "PR18213::WrapperInfo::".
+template <>
+PR18213::WrapperInfo ::PR18213::Wrappable<int>::kWrapperInfo = { 0 };  // expected-error {{no member named 'PR18213' in 'PR18213::WrapperInfo'; did you mean simply 'PR18213'?}} \
+                                                                       // expected-error {{C++ requires a type specifier for all declarations}}
 }
