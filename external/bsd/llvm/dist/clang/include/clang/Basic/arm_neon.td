@@ -30,13 +30,19 @@ def OP_MUL   : Op;
 def OP_MLA   : Op;
 def OP_MLAL  : Op;
 def OP_MULLHi : Op;
+def OP_MULLHi_P64 : Op;
+def OP_MULLHi_N : Op;
 def OP_MLALHi : Op;
+def OP_MLALHi_N : Op;
 def OP_MLS   : Op;
 def OP_MLSL  : Op;
 def OP_MLSLHi : Op;
+def OP_MLSLHi_N : Op;
 def OP_MUL_N : Op;
 def OP_MLA_N : Op;
 def OP_MLS_N : Op;
+def OP_FMLA_N : Op;
+def OP_FMLS_N : Op;
 def OP_MLAL_N : Op;
 def OP_MLSL_N : Op;
 def OP_MUL_LN: Op;
@@ -104,8 +110,11 @@ def OP_ABA   : Op;
 def OP_ABAL  : Op;
 def OP_ABALHi : Op;
 def OP_QDMULLHi : Op;
+def OP_QDMULLHi_N : Op;
 def OP_QDMLALHi : Op;
+def OP_QDMLALHi_N : Op;
 def OP_QDMLSLHi : Op;
+def OP_QDMLSLHi_N : Op;
 def OP_DIV  : Op;
 def OP_LONG_HI : Op;
 def OP_NARROW_HI : Op;
@@ -125,6 +134,8 @@ def OP_SCALAR_QDMULH_LN : Op;
 def OP_SCALAR_QDMULH_LNQ : Op;
 def OP_SCALAR_QRDMULH_LN : Op;
 def OP_SCALAR_QRDMULH_LNQ : Op;
+def OP_SCALAR_GET_LN : Op;
+def OP_SCALAR_SET_LN : Op;
 
 class Inst <string n, string p, string t, Op o> {
   string Name = n;
@@ -214,6 +225,7 @@ class NoTestOpInst<string n, string p, string t, Op o> : Inst<n, p, t, o> {}
 // s: short
 // i: int
 // l: long
+// k: 128-bit long
 // f: float
 // h: half-float
 // d: double
@@ -593,22 +605,27 @@ def LD3_DUP  : WInst<"vld3_dup", "3c",
 def LD4_DUP  : WInst<"vld4_dup", "4c",
                     "QUcQUsQUiQUlQcQsQiQlQhQfQdQPcQPsQPlUcUsUiUlcsilhfdPcPsPl">;
 
+def VLDRQ : WInst<"vldrq", "sc", "Pk">;
+def VSTRQ : WInst<"vstrq", "vps", "Pk">;
+
 ////////////////////////////////////////////////////////////////////////////////
 // Addition
-// With additional Qd type.
-def ADD : IOpInst<"vadd", "ddd", "csilfUcUsUiUlQcQsQiQlQfQUcQUsQUiQUlQd", OP_ADD>;
+// With additional d, Qd type.
+def ADD : IOpInst<"vadd", "ddd", "csilfdUcUsUiUlQcQsQiQlQfQUcQUsQUiQUlQd",
+                  OP_ADD>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Subtraction
 // With additional Qd type.
-def SUB : IOpInst<"vsub", "ddd", "csilfUcUsUiUlQcQsQiQlQfQUcQUsQUiQUlQd", OP_SUB>;
+def SUB : IOpInst<"vsub", "ddd", "csildfUcUsUiUlQcQsQiQlQfQUcQUsQUiQUlQd",
+                  OP_SUB>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Multiplication
 // With additional Qd type.
-def MUL     : IOpInst<"vmul", "ddd", "csifUcUsUiQcQsQiQfQUcQUsQUiQd", OP_MUL>;
-def MLA     : IOpInst<"vmla", "dddd", "csifUcUsUiQcQsQiQfQUcQUsQUiQd", OP_MLA>;
-def MLS     : IOpInst<"vmls", "dddd", "csifUcUsUiQcQsQiQfQUcQUsQUiQd", OP_MLS>;
+def MUL     : IOpInst<"vmul", "ddd", "csifdUcUsUiQcQsQiQfQUcQUsQUiQd", OP_MUL>;
+def MLA     : IOpInst<"vmla", "dddd", "csifdUcUsUiQcQsQiQfQUcQUsQUiQd", OP_MLA>;
+def MLS     : IOpInst<"vmls", "dddd", "csifdUcUsUiQcQsQiQfQUcQUsQUiQd", OP_MLS>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Multiplication Extended
@@ -616,13 +633,19 @@ def MULX : SInst<"vmulx", "ddd", "fdQfQd">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Division
-def FDIV : IOpInst<"vdiv", "ddd",  "fQfQd", OP_DIV>;
+def FDIV : IOpInst<"vdiv", "ddd",  "fdQfQd", OP_DIV>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Vector fused multiply-add operations
-// With additional Qd type.
-def FMLA : SInst<"vfma", "dddd", "fQfQd">;
-def FMLS : SInst<"vfms", "dddd", "fQfQd">;
+// With additional d, Qd type.
+def FMLA : SInst<"vfma", "dddd", "fdQfQd">;
+def FMLS : SInst<"vfms", "dddd", "fdQfQd">;
+
+////////////////////////////////////////////////////////////////////////////////
+// MUL, FMA, FMS definitions with scalar argument
+def VMUL_N_A64 : IOpInst<"vmul_n", "dds", "Qd", OP_MUL_N>;
+def FMLA_N : SOpInst<"vfma_n", "ddds", "fQf", OP_FMLA_N>;
+def FMLS_N : SOpInst<"vfms_n", "ddds", "fQf", OP_FMLS_N>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Logical operations
@@ -633,29 +656,29 @@ def BSL : SInst<"vbsl", "dudd",
 ////////////////////////////////////////////////////////////////////////////////
 // Absolute Difference
 // With additional Qd type.
-def ABD  : SInst<"vabd", "ddd",  "csiUcUsUifQcQsQiQUcQUsQUiQfQd">;
+def ABD  : SInst<"vabd", "ddd",  "csiUcUsUifdQcQsQiQUcQUsQUiQfQd">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // saturating absolute/negate
 // With additional Qd/Ql type.
-def ABS    : SInst<"vabs", "dd", "csifQcQsQiQfQlQd">;
-def QABS   : SInst<"vqabs", "dd", "csiQcQsQiQl">;
-def NEG    : SOpInst<"vneg", "dd", "csifQcQsQiQfQdQl", OP_NEG>;
-def QNEG   : SInst<"vqneg", "dd", "csiQcQsQiQl">;
+def ABS    : SInst<"vabs", "dd", "csilfdQcQsQiQfQlQd">;
+def QABS   : SInst<"vqabs", "dd", "csilQcQsQiQl">;
+def NEG    : SOpInst<"vneg", "dd", "csilfdQcQsQiQfQdQl", OP_NEG>;
+def QNEG   : SInst<"vqneg", "dd", "csilQcQsQiQl">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Signed Saturating Accumulated of Unsigned Value
-def SUQADD : SInst<"vuqadd", "ddd", "csiQcQsQiQl">;
+def SUQADD : SInst<"vuqadd", "ddd", "csilQcQsQiQl">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Unsigned Saturating Accumulated of Signed Value
-def USQADD : SInst<"vsqadd", "ddd", "UcUsUiQUcQUsQUiQUl">;
+def USQADD : SInst<"vsqadd", "ddd", "UcUsUiUlQUcQUsQUiQUl">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Reciprocal/Sqrt
-// With additional Qd type.
-def FRECPS  : IInst<"vrecps", "ddd", "fQfQd">;
-def FRSQRTS : IInst<"vrsqrts", "ddd", "fQfQd">;
+// With additional d, Qd type.
+def FRECPS  : IInst<"vrecps", "ddd", "fdQfQd">;
+def FRSQRTS : IInst<"vrsqrts", "ddd", "fdQfQd">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // bitwise reverse
@@ -679,76 +702,79 @@ def VCVT_HIGH_F16 : SOpInst<"vcvt_high_f16", "qhj", "f", OP_VCVT_NA_HI>;
 def VCVT_HIGH_F32_F16 : SOpInst<"vcvt_high_f32", "wk", "h", OP_VCVT_EX_HI>;
 def VCVT_F32_F64 : SInst<"vcvt_f32_f64", "fj", "d">;
 def VCVT_HIGH_F32_F64 : SOpInst<"vcvt_high_f32", "qfj", "d", OP_VCVT_NA_HI>;
-def VCVT_F64_F32 : SInst<"vcvt_f64", "wd", "f">;
-def VCVT_F64 : SInst<"vcvt_f64", "Fd",  "QlQUl">;
+def VCVT_F64_F32 : SInst<"vcvt_f64_f32", "wd", "f">;
+def VCVT_F64 : SInst<"vcvt_f64", "Fd",  "lUlQlQUl">;
 def VCVT_HIGH_F64_F32 : SOpInst<"vcvt_high_f64", "wj", "f", OP_VCVT_EX_HI>;
 def VCVTX_F32_F64 : SInst<"vcvtx_f32", "fj",  "d">;
 def VCVTX_HIGH_F32_F64 : SOpInst<"vcvtx_high_f32", "qfj", "d", OP_VCVTX_HI>;
-def FRINTN : SInst<"vrndn", "dd", "fQfQd">;
-def FRINTA : SInst<"vrnda", "dd", "fQfQd">;
-def FRINTP : SInst<"vrndp", "dd", "fQfQd">;
-def FRINTM : SInst<"vrndm", "dd", "fQfQd">;
-def FRINTX : SInst<"vrndx", "dd", "fQfQd">;
-def FRINTZ : SInst<"vrnd", "dd", "fQfQd">;
-def FRINTI : SInst<"vrndi", "dd", "fQfQd">;
-def VCVT_S64 : SInst<"vcvt_s64", "xd",  "Qd">;
-def VCVT_U64 : SInst<"vcvt_u64", "ud",  "Qd">;
+def FRINTN : SInst<"vrndn", "dd", "fdQfQd">;
+def FRINTA : SInst<"vrnda", "dd", "fdQfQd">;
+def FRINTP : SInst<"vrndp", "dd", "fdQfQd">;
+def FRINTM : SInst<"vrndm", "dd", "fdQfQd">;
+def FRINTX : SInst<"vrndx", "dd", "fdQfQd">;
+def FRINTZ : SInst<"vrnd", "dd", "fdQfQd">;
+def FRINTI : SInst<"vrndi", "dd", "fdQfQd">;
+def VCVT_S64 : SInst<"vcvt_s64", "xd",  "dQd">;
+def VCVT_U64 : SInst<"vcvt_u64", "ud",  "dQd">;
 def FCVTNS_S32 : SInst<"vcvtn_s32", "xd", "fQf">;
-def FCVTNS_S64 : SInst<"vcvtn_s64", "xd", "Qd">;
+def FCVTNS_S64 : SInst<"vcvtn_s64", "xd", "dQd">;
 def FCVTNU_S32 : SInst<"vcvtn_u32", "ud", "fQf">;
-def FCVTNU_S64 : SInst<"vcvtn_u64", "ud", "Qd">;
+def FCVTNU_S64 : SInst<"vcvtn_u64", "ud", "dQd">;
 def FCVTPS_S32 : SInst<"vcvtp_s32", "xd", "fQf">;
-def FCVTPS_S64 : SInst<"vcvtp_s64", "xd", "Qd">;
+def FCVTPS_S64 : SInst<"vcvtp_s64", "xd", "dQd">;
 def FCVTPU_S32 : SInst<"vcvtp_u32", "ud", "fQf">;
-def FCVTPU_S64 : SInst<"vcvtp_u64", "ud", "Qd">;
+def FCVTPU_S64 : SInst<"vcvtp_u64", "ud", "dQd">;
 def FCVTMS_S32 : SInst<"vcvtm_s32", "xd", "fQf">;
-def FCVTMS_S64 : SInst<"vcvtm_s64", "xd", "Qd">;
+def FCVTMS_S64 : SInst<"vcvtm_s64", "xd", "dQd">;
 def FCVTMU_S32 : SInst<"vcvtm_u32", "ud", "fQf">;
-def FCVTMU_S64 : SInst<"vcvtm_u64", "ud", "Qd">;
+def FCVTMU_S64 : SInst<"vcvtm_u64", "ud", "dQd">;
 def FCVTAS_S32 : SInst<"vcvta_s32", "xd", "fQf">;
-def FCVTAS_S64 : SInst<"vcvta_s64", "xd", "Qd">;
+def FCVTAS_S64 : SInst<"vcvta_s64", "xd", "dQd">;
 def FCVTAU_S32 : SInst<"vcvta_u32", "ud", "fQf">;
-def FCVTAU_S64 : SInst<"vcvta_u64", "ud", "Qd">;
-def FRECPE  : SInst<"vrecpe", "dd", "fUiQfQUiQd">;
-def FRSQRTE : SInst<"vrsqrte", "dd", "fUiQfQUiQd">;
-def FSQRT   : SInst<"vsqrt", "dd", "fQfQd">;
+def FCVTAU_S64 : SInst<"vcvta_u64", "ud", "dQd">;
+def FRECPE  : SInst<"vrecpe", "dd", "fdUiQfQUiQd">;
+def FRSQRTE : SInst<"vrsqrte", "dd", "fdUiQfQUiQd">;
+def FSQRT   : SInst<"vsqrt", "dd", "fdQfQd">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Comparison
 // With additional Qd, Ql, QPl type.
-def VVCEQ  : IOpInst<"vceq", "udd", "csifUcUsUiPcQcQsQiQfQUcQUsQUiQPcPlQPl",
-                     OP_EQ>;
-def FCAGE : IInst<"vcage", "udd", "fQfQd">;
-def FCAGT : IInst<"vcagt", "udd", "fQfQd">;
-def FCALE : IInst<"vcale", "udd", "fQfQd">;
-def FCALT : IInst<"vcalt", "udd", "fQfQd">;
+def FCAGE : IInst<"vcage", "udd", "fdQfQd">;
+def FCAGT : IInst<"vcagt", "udd", "fdQfQd">;
+def FCALE : IInst<"vcale", "udd", "fdQfQd">;
+def FCALT : IInst<"vcalt", "udd", "fdQfQd">;
 // With additional Ql, QUl, Qd types.
 def CMTST  : WInst<"vtst", "udd",
                    "csiUcUsUiPcPsQcQsQiQUcQUsQUiQPcQPslUlQlQUlPlQPl">;
+// With additional l, Ul,d, Qd, Ql, QUl, Qd types.
 def CFMEQ  : SOpInst<"vceq", "udd",
-                  "csifUcUsUiPcQcQsQiQlQfQUcQUsQUiQUlQPcQd", OP_EQ>;
-def CFMGE  : SOpInst<"vcge", "udd", "csifUcUsUiQcQsQiQlQfQUcQUsQUiQUlQd", OP_GE>;
-def CFMLE  : SOpInst<"vcle", "udd", "csifUcUsUiQcQsQiQlQfQUcQUsQUiQUlQd", OP_LE>;
-def CFMGT  : SOpInst<"vcgt", "udd", "csifUcUsUiQcQsQiQlQfQUcQUsQUiQUlQd", OP_GT>;
-def CFMLT  : SOpInst<"vclt", "udd", "csifUcUsUiQcQsQiQlQfQUcQUsQUiQUlQd", OP_LT>;
+                     "csilfUcUsUiUlPcQcdQdQsQiQfQUcQUsQUiQUlQlQPcPlQPl", OP_EQ>;
+def CFMGE  : SOpInst<"vcge", "udd",
+                     "csilfUcUsUiUlQcQsQiQlQfQUcQUsQUiQUldQd", OP_GE>;
+def CFMLE  : SOpInst<"vcle", "udd",
+                     "csilfUcUsUiUlQcQsQiQlQfQUcQUsQUiQUldQd", OP_LE>;
+def CFMGT  : SOpInst<"vcgt", "udd",
+                     "csilfUcUsUiUlQcQsQiQlQfQUcQUsQUiQUldQd", OP_GT>;
+def CFMLT  : SOpInst<"vclt", "udd",
+                     "csilfUcUsUiUlQcQsQiQlQfQUcQUsQUiQUldQd", OP_LT>;
 
 def CMEQ  : SInst<"vceqz", "ud",
-                  "csifUcUsUiPcPsQcQsQiQlQfQUcQUsQUiQUlQPcQPsQd">;
-def CMGE  : SInst<"vcgez", "ud", "csifdQcQsQiQlQfQd">;
-def CMLE  : SInst<"vclez", "ud", "csifdQcQsQiQlQfQd">;
-def CMGT  : SInst<"vcgtz", "ud", "csifdQcQsQiQlQfQd">;
-def CMLT  : SInst<"vcltz", "ud", "csifdQcQsQiQlQfQd">;
+                  "csilfUcUsUiUlPcPsPlQcQsQiQlQfQUcQUsQUiQUlQPcQPsdQdQPl">;
+def CMGE  : SInst<"vcgez", "ud", "csilfdQcQsQiQlQfQd">;
+def CMLE  : SInst<"vclez", "ud", "csilfdQcQsQiQlQfQd">;
+def CMGT  : SInst<"vcgtz", "ud", "csilfdQcQsQiQlQfQd">;
+def CMLT  : SInst<"vcltz", "ud", "csilfdQcQsQiQlQfQd">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Max/Min Integer
 // With additional Qd type.
-def MAX : SInst<"vmax", "ddd", "csiUcUsUifQcQsQiQUcQUsQUiQfQd">;
-def MIN : SInst<"vmin", "ddd", "csiUcUsUifQcQsQiQUcQUsQUiQfQd">;
+def MAX : SInst<"vmax", "ddd", "csiUcUsUifdQcQsQiQUcQUsQUiQfQd">;
+def MIN : SInst<"vmin", "ddd", "csiUcUsUifdQcQsQiQUcQUsQUiQfQd">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // MaxNum/MinNum Floating Point
-def FMAXNM : SInst<"vmaxnm", "ddd", "fQfQd">;
-def FMINNM : SInst<"vminnm", "ddd", "fQfQd">;
+def FMAXNM : SInst<"vmaxnm", "ddd", "fdQfQd">;
+def FMINNM : SInst<"vminnm", "ddd", "fdQfQd">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Pairwise Max/Min
@@ -764,7 +790,7 @@ def FMINNMP : SInst<"vpminnm", "ddd", "fQfQd">;
 ////////////////////////////////////////////////////////////////////////////////
 // Pairwise Addition
 // With additional Qc Qs Qi QUc QUs QUi Qf Qd types.
-def ADDP  : IInst<"vpadd", "ddd", "csiUcUsUifQcQsQiQUcQUsQUiQfQd">;
+def ADDP  : IInst<"vpadd", "ddd", "csiUcUsUifQcQsQiQlQUcQUsQUiQUlQfQd">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Shifts by constant
@@ -800,9 +826,9 @@ def QRSHRN_HIGH_N  : SOpInst<"vqrshrn_high_n", "hmdi",
 def VMOVL_HIGH   : SOpInst<"vmovl_high", "nd", "HcHsHiHUcHUsHUi", OP_MOVL_HI>;
 
 let isVCVT_N = 1 in {
-def CVTF_N_F64   : SInst<"vcvt_n_f64", "Fdi", "QlQUl">;
-def FCVTZS_N_S64 : SInst<"vcvt_n_s64", "xdi", "Qd">;
-def FCVTZS_N_U64 : SInst<"vcvt_n_u64", "udi", "Qd">;
+def CVTF_N_F64   : SInst<"vcvt_n_f64", "Fdi", "lUlQlQUl">;
+def FCVTZS_N_S64 : SInst<"vcvt_n_s64", "xdi", "dQd">;
+def FCVTZS_N_U64 : SInst<"vcvt_n_u64", "udi", "dQd">;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -816,8 +842,11 @@ def VABDL_HIGH   : SOpInst<"vabdl_high", "wkk",  "csiUcUsUi", OP_ABDLHi>;
 def VABAL_HIGH   : SOpInst<"vabal_high", "wwkk", "csiUcUsUi", OP_ABALHi>;
 
 def VMULL_HIGH   : SOpInst<"vmull_high", "wkk", "csiUcUsUiPc", OP_MULLHi>;
+def VMULL_HIGH_N : SOpInst<"vmull_high_n", "wks", "siUsUi", OP_MULLHi_N>;
 def VMLAL_HIGH   : SOpInst<"vmlal_high", "wwkk", "csiUcUsUi", OP_MLALHi>;
+def VMLAL_HIGH_N : SOpInst<"vmlal_high_n", "wwks", "siUsUi", OP_MLALHi_N>;
 def VMLSL_HIGH   : SOpInst<"vmlsl_high", "wwkk", "csiUcUsUi", OP_MLSLHi>;
+def VMLSL_HIGH_N : SOpInst<"vmlsl_high_n", "wwks", "siUsUi", OP_MLSLHi_N>;
 
 def VADDHN_HIGH  : SOpInst<"vaddhn_high", "qhkk", "silUsUiUl", OP_ADDHNHi>;
 def VRADDHN_HIGH : SOpInst<"vraddhn_high", "qhkk", "silUsUiUl", OP_RADDHNHi>;
@@ -825,8 +854,14 @@ def VSUBHN_HIGH  : SOpInst<"vsubhn_high", "qhkk", "silUsUiUl", OP_SUBHNHi>;
 def VRSUBHN_HIGH : SOpInst<"vrsubhn_high", "qhkk", "silUsUiUl", OP_RSUBHNHi>;
 
 def VQDMULL_HIGH : SOpInst<"vqdmull_high", "wkk", "si", OP_QDMULLHi>;
+def VQDMULL_HIGH_N : SOpInst<"vqdmull_high_n", "wks", "si", OP_QDMULLHi_N>;
 def VQDMLAL_HIGH : SOpInst<"vqdmlal_high", "wwkk", "si", OP_QDMLALHi>;
+def VQDMLAL_HIGH_N : SOpInst<"vqdmlal_high_n", "wwks", "si", OP_QDMLALHi_N>;
 def VQDMLSL_HIGH : SOpInst<"vqdmlsl_high", "wwkk", "si", OP_QDMLSLHi>;
+def VQDMLSL_HIGH_N : SOpInst<"vqdmlsl_high_n", "wwks", "si", OP_QDMLSLHi_N>;
+def VMULL_P64    : SInst<"vmull", "rss", "Pl">;
+def VMULL_HIGH_P64 : SOpInst<"vmull_high", "rdd", "HPl", OP_MULLHi_P64>;
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Extract or insert element from vector
@@ -930,11 +965,11 @@ def VMULX_LANEQ : IOpInst<"vmulx_laneq", "ddji", "fQfQd", OP_MULX_LN>;
 ////////////////////////////////////////////////////////////////////////////////
 // Across vectors class
 def VADDLV  : SInst<"vaddlv", "rd", "csiUcUsUiQcQsQiQUcQUsQUi">;
-def VMAXV   : SInst<"vmaxv", "sd", "csiUcUsUiQcQsQiQUcQUsQUiQf">;
-def VMINV   : SInst<"vminv", "sd", "csiUcUsUiQcQsQiQUcQUsQUiQf">;
-def VADDV   : SInst<"vaddv", "sd", "csiUcUsUiQcQsQiQUcQUsQUi">;
-def FMAXNMV : SInst<"vmaxnmv", "sd", "Qf">;
-def FMINNMV : SInst<"vminnmv", "sd", "Qf">;
+def VMAXV   : SInst<"vmaxv", "sd", "csifUcUsUiQcQsQiQUcQUsQUiQfQd">;
+def VMINV   : SInst<"vminv", "sd", "csifUcUsUiQcQsQiQUcQUsQUiQfQd">;
+def VADDV   : SInst<"vaddv", "sd", "csifUcUsUiQcQsQiQUcQUsQUiQfQdQlQUl">;
+def FMAXNMV : SInst<"vmaxnmv", "sd", "fQfQd">;
+def FMINNMV : SInst<"vminnmv", "sd", "fQfQd">;
  
 ////////////////////////////////////////////////////////////////////////////////
 // Newly added Vector Extract for f64
@@ -997,7 +1032,7 @@ def VQTBX4_A64 : WInst<"vqtbx4", "ddDt", "UccPcQUcQcQPc">;
 // With additional d, Qd, pl, Qpl types
 def REINTERPRET
   : NoTestOpInst<"vreinterpret", "dd",
-         "csilUcUsUiUlhfdPcPsPlQcQsQiQlQUcQUsQUiQUlQhQfQdQPcQPsQPl", OP_REINT>;
+         "csilUcUsUiUlhfdPcPsPlQcQsQiQlQUcQUsQUiQUlQhQfQdQPcQPsQPlQPk", OP_REINT>;
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1083,7 +1118,7 @@ def SCALAR_FCVTZU_N_U64 : SInst<"vcvt_n_u64", "bsi", "Sd">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Scalar Reduce Pairwise Addition (Scalar and Floating Point)
-def SCALAR_ADDP  : SInst<"vpadd", "sd", "SfSHlSHd">;
+def SCALAR_ADDP  : SInst<"vpadd", "sd", "SfSHlSHdSHUl">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Scalar Reduce Floating Point Pairwise Max/Min
@@ -1305,4 +1340,7 @@ def SCALAR_SQRDMULH_LANEQ : SOpInst<"vqrdmulh_laneq", "ssji", "SsSi", OP_SCALAR_
 
 def SCALAR_VDUP_LANE : IInst<"vdup_lane", "sdi", "ScSsSiSlSfSdSUcSUsSUiSUlSPcSPs">;
 def SCALAR_VDUP_LANEQ : IInst<"vdup_laneq", "sji", "ScSsSiSlSfSdSUcSUsSUiSUlSPcSPs">;
+
+def SCALAR_GET_LANE : IOpInst<"vget_lane", "sdi", "hQh", OP_SCALAR_GET_LN>;
+def SCALAR_SET_LANE : IOpInst<"vset_lane", "dsdi", "hQh", OP_SCALAR_SET_LN>;
 }

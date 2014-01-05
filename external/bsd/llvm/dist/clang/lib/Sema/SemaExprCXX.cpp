@@ -117,7 +117,7 @@ ParsedType Sema::getDestructorName(SourceLocation TildeLoc,
     SearchType = GetTypeFromParser(ObjectTypePtr);
 
   if (SS.isSet()) {
-    NestedNameSpecifier *NNS = (NestedNameSpecifier *)SS.getScopeRep();
+    NestedNameSpecifier *NNS = SS.getScopeRep();
 
     bool AlreadySearched = false;
     bool LookAtPrefix = true;
@@ -331,6 +331,34 @@ ParsedType Sema::getDestructorType(const DeclSpec& DS, ParsedType ObjectType) {
     Diag(DS.getTypeSpecTypeLoc(), diag::err_destructor_expr_type_mismatch)
       << T << SearchType;
     return ParsedType();
+}
+
+bool Sema::checkLiteralOperatorId(const CXXScopeSpec &SS,
+                                  const UnqualifiedId &Name) {
+  assert(Name.getKind() == UnqualifiedId::IK_LiteralOperatorId);
+
+  if (!SS.isValid())
+    return false;
+
+  switch (SS.getScopeRep()->getKind()) {
+  case NestedNameSpecifier::Identifier:
+  case NestedNameSpecifier::TypeSpec:
+  case NestedNameSpecifier::TypeSpecWithTemplate:
+    // Per C++11 [over.literal]p2, literal operators can only be declared at
+    // namespace scope. Therefore, this unqualified-id cannot name anything.
+    // Reject it early, because we have no AST representation for this in the
+    // case where the scope is dependent.
+    Diag(Name.getLocStart(), diag::err_literal_operator_id_outside_namespace)
+      << SS.getScopeRep();
+    return true;
+
+  case NestedNameSpecifier::Global:
+  case NestedNameSpecifier::Namespace:
+  case NestedNameSpecifier::NamespaceAlias:
+    return false;
+  }
+
+  llvm_unreachable("unknown nested name specifier kind");
 }
 
 /// \brief Build a C++ typeid expression with a type operand.
@@ -1225,9 +1253,8 @@ Sema::BuildCXXNew(SourceRange Range, bool UseGlobal,
   if (ArraySize && !ArraySize->isTypeDependent()) {
     ExprResult ConvertedSize;
     if (getLangOpts().CPlusPlus1y) {
-      unsigned IntWidth = Context.getTargetInfo().getIntWidth();
-      assert(IntWidth && "Builtin type of size 0?");
-      llvm::APSInt Value(IntWidth);
+      assert(Context.getTargetInfo().getIntWidth() && "Builtin type of size 0?");
+
       ConvertedSize = PerformImplicitConversion(ArraySize, Context.getSizeType(),
 						AA_Converting);
 
@@ -2206,8 +2233,7 @@ bool Sema::FindDeallocationFunction(SourceLocation StartLoc, CXXRecordDecl *RD,
     return true;
   }
 
-  // Look for a global declaration.
-  Operator = FindUsualDeallocationFunction(StartLoc, true, Name);
+  Operator = 0;
   return false;
 }
 
@@ -2357,7 +2383,7 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
 
         // Otherwise, the usual operator delete[] should be the
         // function we just found.
-        else if (isa<CXXMethodDecl>(OperatorDelete))
+        else if (OperatorDelete && isa<CXXMethodDecl>(OperatorDelete))
           UsualArrayDeleteWantsSize = (OperatorDelete->getNumParams() == 2);
       }
 
@@ -3056,26 +3082,13 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
   return Owned(From);
 }
 
-ExprResult Sema::ActOnUnaryTypeTrait(UnaryTypeTrait UTT,
-                                     SourceLocation KWLoc,
-                                     ParsedType Ty,
-                                     SourceLocation RParen) {
-  TypeSourceInfo *TSInfo;
-  QualType T = GetTypeFromParser(Ty, &TSInfo);
-
-  if (!TSInfo)
-    TSInfo = Context.getTrivialTypeSourceInfo(T);
-  return BuildUnaryTypeTrait(UTT, KWLoc, TSInfo, RParen);
-}
-
 /// \brief Check the completeness of a type in a unary type trait.
 ///
 /// If the particular type trait requires a complete type, tries to complete
 /// it. If completing the type fails, a diagnostic is emitted and false
 /// returned. If completing the type succeeds or no completion was required,
 /// returns true.
-static bool CheckUnaryTypeTraitTypeCompleteness(Sema &S,
-                                                UnaryTypeTrait UTT,
+static bool CheckUnaryTypeTraitTypeCompleteness(Sema &S, TypeTrait UTT,
                                                 SourceLocation Loc,
                                                 QualType ArgTy) {
   // C++0x [meta.unary.prop]p3:
@@ -3088,6 +3101,7 @@ static bool CheckUnaryTypeTraitTypeCompleteness(Sema &S,
   // these class templates. We also try to follow any GCC documented behavior
   // in these expressions to ensure portability of standard libraries.
   switch (UTT) {
+  default: llvm_unreachable("not a UTT");
     // is_complete_type somewhat obviously cannot require a complete type.
   case UTT_IsCompleteType:
     // Fall-through
@@ -3174,7 +3188,6 @@ static bool CheckUnaryTypeTraitTypeCompleteness(Sema &S,
     return !S.RequireCompleteType(
       Loc, ElTy, diag::err_incomplete_type_used_in_type_trait_expr);
   }
-  llvm_unreachable("Type trait not handled by switch");
 }
 
 static bool HasNoThrowOperator(const RecordType *RT, OverloadedOperatorKind Op,
@@ -3213,12 +3226,13 @@ static bool HasNoThrowOperator(const RecordType *RT, OverloadedOperatorKind Op,
   return false;
 }
 
-static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
+static bool EvaluateUnaryTypeTrait(Sema &Self, TypeTrait UTT,
                                    SourceLocation KeyLoc, QualType T) {
   assert(!T->isDependentType() && "Cannot evaluate traits of dependent type");
 
   ASTContext &C = Self.Context;
   switch(UTT) {
+  default: llvm_unreachable("not a UTT");
     // Type trait expressions corresponding to the primary type category
     // predicates in C++0x [meta.unary.cat].
   case UTT_IsVoid:
@@ -3550,41 +3564,6 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
     //   function call.
     return !T->isIncompleteType();
   }
-  llvm_unreachable("Type trait not covered by switch");
-}
-
-ExprResult Sema::BuildUnaryTypeTrait(UnaryTypeTrait UTT,
-                                     SourceLocation KWLoc,
-                                     TypeSourceInfo *TSInfo,
-                                     SourceLocation RParen) {
-  QualType T = TSInfo->getType();
-  if (!CheckUnaryTypeTraitTypeCompleteness(*this, UTT, KWLoc, T))
-    return ExprError();
-
-  bool Value = false;
-  if (!T->isDependentType())
-    Value = EvaluateUnaryTypeTrait(*this, UTT, KWLoc, T);
-
-  return Owned(new (Context) UnaryTypeTraitExpr(KWLoc, UTT, TSInfo, Value,
-                                                RParen, Context.BoolTy));
-}
-
-ExprResult Sema::ActOnBinaryTypeTrait(BinaryTypeTrait BTT,
-                                      SourceLocation KWLoc,
-                                      ParsedType LhsTy,
-                                      ParsedType RhsTy,
-                                      SourceLocation RParen) {
-  TypeSourceInfo *LhsTSInfo;
-  QualType LhsT = GetTypeFromParser(LhsTy, &LhsTSInfo);
-  if (!LhsTSInfo)
-    LhsTSInfo = Context.getTrivialTypeSourceInfo(LhsT);
-
-  TypeSourceInfo *RhsTSInfo;
-  QualType RhsT = GetTypeFromParser(RhsTy, &RhsTSInfo);
-  if (!RhsTSInfo)
-    RhsTSInfo = Context.getTrivialTypeSourceInfo(RhsT);
-
-  return BuildBinaryTypeTrait(BTT, KWLoc, LhsTSInfo, RhsTSInfo, RParen);
 }
 
 /// \brief Determine whether T has a non-trivial Objective-C lifetime in
@@ -3606,9 +3585,19 @@ static bool hasNontrivialObjCLifetime(QualType T) {
   llvm_unreachable("Unknown ObjC lifetime qualifier");
 }
 
+static bool EvaluateBinaryTypeTrait(Sema &Self, TypeTrait BTT, QualType LhsT,
+                                    QualType RhsT, SourceLocation KeyLoc);
+
 static bool evaluateTypeTrait(Sema &S, TypeTrait Kind, SourceLocation KWLoc,
                               ArrayRef<TypeSourceInfo *> Args,
                               SourceLocation RParenLoc) {
+  if (Kind <= UTT_Last)
+    return EvaluateUnaryTypeTrait(S, Kind, KWLoc, Args[0]->getType());
+
+  if (Kind <= BTT_Last)
+    return EvaluateBinaryTypeTrait(S, Kind, Args[0]->getType(),
+                                   Args[1]->getType(), RParenLoc);
+
   switch (Kind) {
   case clang::TT_IsTriviallyConstructible: {
     // C++11 [meta.unary.prop]:
@@ -3624,11 +3613,7 @@ static bool evaluateTypeTrait(Sema &S, TypeTrait Kind, SourceLocation KWLoc,
     //   variable t:
     //
     //     T t(create<Args>()...);
-    if (Args.empty()) {
-      S.Diag(KWLoc, diag::err_type_trait_arity)
-        << 1 << 1 << 1 << (int)Args.size();
-      return false;
-    }
+    assert(!Args.empty());
 
     // Precondition: T and all types in the parameter pack Args shall be
     // complete types, (possibly cv-qualified) void, or arrays of
@@ -3687,6 +3672,7 @@ static bool evaluateTypeTrait(Sema &S, TypeTrait Kind, SourceLocation KWLoc,
     // calls.
     return !Result.get()->hasNonTrivialCall(S.Context);
   }
+    default: llvm_unreachable("not a TT");
   }
   
   return false;
@@ -3695,6 +3681,12 @@ static bool evaluateTypeTrait(Sema &S, TypeTrait Kind, SourceLocation KWLoc,
 ExprResult Sema::BuildTypeTrait(TypeTrait Kind, SourceLocation KWLoc, 
                                 ArrayRef<TypeSourceInfo *> Args, 
                                 SourceLocation RParenLoc) {
+  QualType ResultType = Context.getLogicalOperationType();
+
+  if (Kind <= UTT_Last && !CheckUnaryTypeTraitTypeCompleteness(
+                               *this, Kind, KWLoc, Args[0]->getType()))
+    return ExprError();
+
   bool Dependent = false;
   for (unsigned I = 0, N = Args.size(); I != N; ++I) {
     if (Args[I]->getType()->isDependentType()) {
@@ -3702,17 +3694,17 @@ ExprResult Sema::BuildTypeTrait(TypeTrait Kind, SourceLocation KWLoc,
       break;
     }
   }
-  
-  bool Value = false;
+
+  bool Result = false;
   if (!Dependent)
-    Value = evaluateTypeTrait(*this, Kind, KWLoc, Args, RParenLoc);
-  
-  return TypeTraitExpr::Create(Context, Context.BoolTy, KWLoc, Kind,
-                               Args, RParenLoc, Value);
+    Result = evaluateTypeTrait(*this, Kind, KWLoc, Args, RParenLoc);
+
+  return TypeTraitExpr::Create(Context, ResultType, KWLoc, Kind, Args,
+                               RParenLoc, Result);
 }
 
-ExprResult Sema::ActOnTypeTrait(TypeTrait Kind, SourceLocation KWLoc, 
-                                ArrayRef<ParsedType> Args, 
+ExprResult Sema::ActOnTypeTrait(TypeTrait Kind, SourceLocation KWLoc,
+                                ArrayRef<ParsedType> Args,
                                 SourceLocation RParenLoc) {
   SmallVector<TypeSourceInfo *, 4> ConvertedArgs;
   ConvertedArgs.reserve(Args.size());
@@ -3725,13 +3717,12 @@ ExprResult Sema::ActOnTypeTrait(TypeTrait Kind, SourceLocation KWLoc,
     
     ConvertedArgs.push_back(TInfo);    
   }
-  
+
   return BuildTypeTrait(Kind, KWLoc, ConvertedArgs, RParenLoc);
 }
 
-static bool EvaluateBinaryTypeTrait(Sema &Self, BinaryTypeTrait BTT,
-                                    QualType LhsT, QualType RhsT,
-                                    SourceLocation KeyLoc) {
+static bool EvaluateBinaryTypeTrait(Sema &Self, TypeTrait BTT, QualType LhsT,
+                                    QualType RhsT, SourceLocation KeyLoc) {
   assert(!LhsT->isDependentType() && !RhsT->isDependentType() &&
          "Cannot evaluate traits of dependent types");
 
@@ -3888,44 +3879,9 @@ static bool EvaluateBinaryTypeTrait(Sema &Self, BinaryTypeTrait BTT,
 
     return !Result.get()->hasNonTrivialCall(Self.Context);
   }
+    default: llvm_unreachable("not a BTT");
   }
   llvm_unreachable("Unknown type trait or not implemented");
-}
-
-ExprResult Sema::BuildBinaryTypeTrait(BinaryTypeTrait BTT,
-                                      SourceLocation KWLoc,
-                                      TypeSourceInfo *LhsTSInfo,
-                                      TypeSourceInfo *RhsTSInfo,
-                                      SourceLocation RParen) {
-  QualType LhsT = LhsTSInfo->getType();
-  QualType RhsT = RhsTSInfo->getType();
-
-  if (BTT == BTT_TypeCompatible) {
-    if (getLangOpts().CPlusPlus) {
-      Diag(KWLoc, diag::err_types_compatible_p_in_cplusplus)
-        << SourceRange(KWLoc, RParen);
-      return ExprError();
-    }
-  }
-
-  bool Value = false;
-  if (!LhsT->isDependentType() && !RhsT->isDependentType())
-    Value = EvaluateBinaryTypeTrait(*this, BTT, LhsT, RhsT, KWLoc);
-
-  // Select trait result type.
-  QualType ResultType;
-  switch (BTT) {
-  case BTT_IsBaseOf:       ResultType = Context.BoolTy; break;
-  case BTT_IsConvertible:  ResultType = Context.BoolTy; break;
-  case BTT_IsSame:         ResultType = Context.BoolTy; break;
-  case BTT_TypeCompatible: ResultType = Context.IntTy; break;
-  case BTT_IsConvertibleTo: ResultType = Context.BoolTy; break;
-  case BTT_IsTriviallyAssignable: ResultType = Context.BoolTy;
-  }
-
-  return Owned(new (Context) BinaryTypeTraitExpr(KWLoc, BTT, LhsTSInfo,
-                                                 RhsTSInfo, Value, RParen,
-                                                 ResultType));
 }
 
 ExprResult Sema::ActOnArrayTypeTrait(ArrayTypeTrait ATT,
@@ -4118,22 +4074,23 @@ QualType Sema::CheckPointerToMemberOperands(ExprResult &LHS, ExprResult &RHS,
                             OpSpelling, (int)isIndirect)) {
       return QualType();
     }
-    CXXBasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/true,
-                       /*DetectVirtual=*/false);
-    // FIXME: Would it be useful to print full ambiguity paths, or is that
-    // overkill?
-    if (!IsDerivedFrom(LHSType, Class, Paths) ||
-        Paths.isAmbiguous(Context.getCanonicalType(Class))) {
+
+    if (!IsDerivedFrom(LHSType, Class)) {
       Diag(Loc, diag::err_bad_memptr_lhs) << OpSpelling
         << (int)isIndirect << LHS.get()->getType();
       return QualType();
     }
+
+    CXXCastPath BasePath;
+    if (CheckDerivedToBaseConversion(LHSType, Class, Loc,
+                                     SourceRange(LHS.get()->getLocStart(),
+                                                 RHS.get()->getLocEnd()),
+                                     &BasePath))
+      return QualType();
+
     // Cast LHS to type of use.
     QualType UseType = isIndirect ? Context.getPointerType(Class) : Class;
     ExprValueKind VK = isIndirect ? VK_RValue : LHS.get()->getValueKind();
-
-    CXXCastPath BasePath;
-    BuildBasePathArray(Paths, BasePath);
     LHS = ImpCastExprToType(LHS.take(), UseType, CK_DerivedToBase, VK,
                             &BasePath);
   }
@@ -4457,7 +4414,6 @@ QualType Sema::CXXCheckConditionalOperands(ExprResult &Cond, ExprResult &LHS,
   //   those operands to the type of the other.
   if (!Context.hasSameType(LTy, RTy) &&
       (LTy->isRecordType() || RTy->isRecordType())) {
-    ImplicitConversionSequence ICSLeftToRight, ICSRightToLeft;
     // These return true if a single direction is already ambiguous.
     QualType L2RType, R2LType;
     bool HaveL2R, HaveR2L;
@@ -5024,7 +4980,7 @@ Sema::MaybeCreateExprWithCleanups(ExprResult SubExpr) {
 }
 
 Expr *Sema::MaybeCreateExprWithCleanups(Expr *SubExpr) {
-  assert(SubExpr && "sub expression can't be null!");
+  assert(SubExpr && "subexpression can't be null!");
 
   CleanupVarDeclMarking();
 
@@ -5045,7 +5001,7 @@ Expr *Sema::MaybeCreateExprWithCleanups(Expr *SubExpr) {
 }
 
 Stmt *Sema::MaybeCreateStmtWithCleanups(Stmt *SubStmt) {
-  assert(SubStmt && "sub statement can't be null!");
+  assert(SubStmt && "sub-statement can't be null!");
 
   CleanupVarDeclMarking();
 
@@ -5851,42 +5807,58 @@ static inline bool VariableCanNeverBeAConstantExpression(VarDecl *Var,
   return !IsVariableAConstantExpression(Var, Context); 
 }
 
-/// \brief Check if the current lambda scope has any potential captures, and 
-///  whether they can be captured by any of the enclosing lambdas that are 
-///  ready to capture. If there is a lambda that can capture a nested 
-///  potential-capture, go ahead and do so.  Also, check to see if any 
-///  variables are uncaptureable or do not involve an odr-use so do not 
-///  need to be captured.
+/// \brief Check if the current lambda has any potential captures 
+/// that must be captured by any of its enclosing lambdas that are ready to 
+/// capture. If there is a lambda that can capture a nested 
+/// potential-capture, go ahead and do so.  Also, check to see if any 
+/// variables are uncaptureable or do not involve an odr-use so do not 
+/// need to be captured.
 
-static void CheckLambdaCaptures(Expr *const FE, 
-    LambdaScopeInfo *const CurrentLSI, Sema &S) {
-    
+static void CheckIfAnyEnclosingLambdasMustCaptureAnyPotentialCaptures(
+    Expr *const FE, LambdaScopeInfo *const CurrentLSI, Sema &S) {
+
   assert(!S.isUnevaluatedContext());  
   assert(S.CurContext->isDependentContext()); 
-  const bool IsFullExprInstantiationDependent = 
-      FE->isInstantiationDependent();
-  // All the potentially captureable variables in the current nested 
+  assert(CurrentLSI->CallOperator == S.CurContext && 
+      "The current call operator must be synchronized with Sema's CurContext");
+
+  const bool IsFullExprInstantiationDependent = FE->isInstantiationDependent();
+
+  ArrayRef<const FunctionScopeInfo *> FunctionScopesArrayRef(
+      S.FunctionScopes.data(), S.FunctionScopes.size());
+  
+  // All the potentially captureable variables in the current nested
   // lambda (within a generic outer lambda), must be captured by an
   // outer lambda that is enclosed within a non-dependent context.
-     
-  for (size_t I = 0, N = CurrentLSI->getNumPotentialVariableCaptures(); 
-      I != N; ++I) {
+  const unsigned NumPotentialCaptures =
+      CurrentLSI->getNumPotentialVariableCaptures();
+  for (unsigned I = 0; I != NumPotentialCaptures; ++I) {
     Expr *VarExpr = 0;
     VarDecl *Var = 0;
     CurrentLSI->getPotentialVariableCapture(I, Var, VarExpr);
-    // 
-    if (CurrentLSI->isVariableExprMarkedAsNonODRUsed(VarExpr) && 
+    // If the variable is clearly identified as non-odr-used and the full
+    // expression is not instantiation dependent, only then do we not 
+    // need to check enclosing lambda's for speculative captures.
+    // For e.g.:
+    // Even though 'x' is not odr-used, it should be captured.
+    // int test() {
+    //   const int x = 10;
+    //   auto L = [=](auto a) {
+    //     (void) +x + a;
+    //   };
+    // }
+    if (CurrentLSI->isVariableExprMarkedAsNonODRUsed(VarExpr) &&
         !IsFullExprInstantiationDependent)
-      continue; 
-    // Climb up until we find a lambda that can capture:
-    //   - a generic-or-non-generic lambda call operator that is enclosed
-    //     within a non-dependent context.
-    unsigned FunctionScopeIndexOfCapturableLambda = 0;
-    if (GetInnermostEnclosingCapturableLambda(
-            S.FunctionScopes, FunctionScopeIndexOfCapturableLambda,
-            S.CurContext, Var, S)) {
-      MarkVarDeclODRUsed(Var, VarExpr->getExprLoc(), 
-          S, &FunctionScopeIndexOfCapturableLambda);
+      continue;
+
+    // If we have a capture-capable lambda for the variable, go ahead and
+    // capture the variable in that lambda (and all its enclosing lambdas).
+    if (const Optional<unsigned> Index =
+            getStackIndexOfNearestEnclosingCaptureCapableLambda(
+                FunctionScopesArrayRef, Var, S)) {
+      const unsigned FunctionScopeIndexOfCapturableLambda = Index.getValue();
+      MarkVarDeclODRUsed(Var, VarExpr->getExprLoc(), S,
+                         &FunctionScopeIndexOfCapturableLambda);
     } 
     const bool IsVarNeverAConstantExpression = 
         VariableCanNeverBeAConstantExpression(Var, S.Context);
@@ -5913,16 +5885,21 @@ static void CheckLambdaCaptures(Expr *const FE,
     }
   }
 
+  // Check if 'this' needs to be captured.
   if (CurrentLSI->hasPotentialThisCapture()) {
-    unsigned FunctionScopeIndexOfCapturableLambda = 0;
-    if (GetInnermostEnclosingCapturableLambda(
-            S.FunctionScopes, FunctionScopeIndexOfCapturableLambda,
-            S.CurContext, /*0 is 'this'*/ 0, S)) {
-      S.CheckCXXThisCapture(CurrentLSI->PotentialThisCaptureLocation, 
-          /*Explicit*/false, /*BuildAndDiagnose*/true,  
-          &FunctionScopeIndexOfCapturableLambda);
+    // If we have a capture-capable lambda for 'this', go ahead and capture
+    // 'this' in that lambda (and all its enclosing lambdas).
+    if (const Optional<unsigned> Index =
+            getStackIndexOfNearestEnclosingCaptureCapableLambda(
+                FunctionScopesArrayRef, /*0 is 'this'*/ 0, S)) {
+      const unsigned FunctionScopeIndexOfCapturableLambda = Index.getValue();
+      S.CheckCXXThisCapture(CurrentLSI->PotentialThisCaptureLocation,
+                            /*Explicit*/ false, /*BuildAndDiagnose*/ true,
+                            &FunctionScopeIndexOfCapturableLambda);
     }
   }
+
+  // Reset all the potential captures at the end of each full-expression.
   CurrentLSI->clearPotentialCaptures();
 }
 
@@ -6019,11 +5996,12 @@ ExprResult Sema::ActOnFinishFullExpr(Expr *FE, SourceLocation CC,
   //     FunctionScopes.size() in InstantiatingTemplate's 
   //     constructor/destructor.
   //  - Teach the handful of places that iterate over FunctionScopes to 
-  //    stop at the outermost enclosing lexical scope." 
-  const bool IsInLambdaDeclContext = isLambdaCallOperator(CurContext); 
-  if (IsInLambdaDeclContext && CurrentLSI && 
+  //    stop at the outermost enclosing lexical scope."
+  const bool IsInLambdaDeclContext = isLambdaCallOperator(CurContext);
+  if (IsInLambdaDeclContext && CurrentLSI &&
       CurrentLSI->hasPotentialCaptures() && !FullExpr.isInvalid())
-    CheckLambdaCaptures(FE, CurrentLSI, *this);
+    CheckIfAnyEnclosingLambdasMustCaptureAnyPotentialCaptures(FE, CurrentLSI,
+                                                              *this);
   return MaybeCreateExprWithCleanups(FullExpr);
 }
 

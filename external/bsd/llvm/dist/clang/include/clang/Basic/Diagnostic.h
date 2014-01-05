@@ -18,6 +18,9 @@
 #include "clang/Basic/DiagnosticIDs.h"
 #include "clang/Basic/DiagnosticOptions.h"
 #include "clang/Basic/SourceLocation.h"
+#if !LLVM_HAS_STRONG_ENUMS
+#include "clang/Basic/TokenKinds.h"
+#endif
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
@@ -35,6 +38,11 @@ namespace clang {
   class Preprocessor;
   class DiagnosticErrorTrap;
   class StoredDiagnostic;
+#if LLVM_HAS_STRONG_ENUMS
+  namespace tok {
+  enum TokenKind : unsigned;
+  }
+#endif
 
 /// \brief Annotates a diagnostic with some code that should be
 /// inserted, removed, or replaced to fix the problem.
@@ -151,13 +159,15 @@ public:
     ak_c_string,        ///< const char *
     ak_sint,            ///< int
     ak_uint,            ///< unsigned
+    ak_tokenkind,       ///< enum TokenKind : unsigned
     ak_identifierinfo,  ///< IdentifierInfo
     ak_qualtype,        ///< QualType
     ak_declarationname, ///< DeclarationName
     ak_nameddecl,       ///< NamedDecl *
     ak_nestednamespec,  ///< NestedNameSpecifier *
     ak_declcontext,     ///< DeclContext *
-    ak_qualtype_pair    ///< pair<QualType, QualType>
+    ak_qualtype_pair,   ///< pair<QualType, QualType>
+    ak_attr             ///< Attr *
   };
 
   /// \brief Represents on argument value, which is a union discriminated
@@ -591,6 +601,9 @@ public:
   ///
   /// If this is the first request for this diagnostic, it is registered and
   /// created, otherwise the existing ID is returned.
+  ///
+  /// \param Message A fixed diagnostic format string that will be hashed and
+  /// mapped to a unique DiagID.
   unsigned getCustomDiagID(Level L, StringRef Message) {
     return Diags->getCustomDiagID((DiagnosticIDs::Level)L, Message);
   }
@@ -1021,6 +1034,12 @@ inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,bool I) {
 inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
                                            unsigned I) {
   DB.AddTaggedVal(I, DiagnosticsEngine::ak_uint);
+  return DB;
+}
+
+inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
+                                           tok::TokenKind I) {
+  DB.AddTaggedVal(static_cast<unsigned>(I), DiagnosticsEngine::ak_tokenkind);
   return DB;
 }
 

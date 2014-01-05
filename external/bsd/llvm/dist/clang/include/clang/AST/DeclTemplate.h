@@ -892,12 +892,9 @@ public:
 /// This class is inheritedly privately by different kinds of template
 /// parameters and is not part of the Decl hierarchy. Just a facility.
 class TemplateParmPosition {
-protected:
-  // FIXME: This should probably never be called, but it's here as
-  TemplateParmPosition()
-    : Depth(0), Position(0)
-  { /* llvm_unreachable("Cannot create positionless template parameter"); */ }
+  TemplateParmPosition() LLVM_DELETED_FUNCTION;
 
+protected:
   TemplateParmPosition(unsigned D, unsigned P)
     : Depth(D), Position(P)
   { }
@@ -2172,7 +2169,7 @@ public:
 
 /// \brief Declaration of a function specialization at template class scope.
 ///
-/// This is a non standard extension needed to support MSVC.
+/// This is a non-standard extension needed to support MSVC.
 ///
 /// For example:
 /// \code
@@ -2214,9 +2211,8 @@ public:
                                                       CXXMethodDecl *FD,
                                                    bool HasExplicitTemplateArgs,
                                         TemplateArgumentListInfo TemplateArgs) {
-    return new (C) ClassScopeFunctionSpecializationDecl(DC , Loc, FD,
-                                                        HasExplicitTemplateArgs,
-                                                        TemplateArgs);
+    return new (C, DC) ClassScopeFunctionSpecializationDecl(
+        DC, Loc, FD, HasExplicitTemplateArgs, TemplateArgs);
   }
 
   static ClassScopeFunctionSpecializationDecl *

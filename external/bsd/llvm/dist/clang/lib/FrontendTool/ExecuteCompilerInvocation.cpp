@@ -21,6 +21,7 @@
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/FrontendPluginRegistry.h"
+#include "clang/Frontend/Utils.h"
 #include "clang/Rewrite/Frontend/FrontendActions.h"
 #include "clang/StaticAnalyzer/Frontend/FrontendActions.h"
 #include "llvm/Option/OptTable.h"
@@ -33,6 +34,7 @@ using namespace llvm::opt;
 static FrontendAction *CreateFrontendBaseAction(CompilerInstance &CI) {
   using namespace clang::frontend;
   StringRef Action("unknown");
+  (void)Action;
 
   switch (CI.getFrontendOpts().ProgramAction) {
   case ASTDeclList:            return new ASTDeclListAction();
@@ -235,6 +237,6 @@ bool clang::ExecuteCompilerInvocation(CompilerInstance *Clang) {
     return false;
   bool Success = Clang->ExecuteAction(*Act);
   if (Clang->getFrontendOpts().DisableFree)
-    Act.take();
+    BuryPointer(Act.take());
   return Success;
 }

@@ -85,6 +85,7 @@ public:
   }
   
   unsigned getSpellingListIndex() const { return SpellingListIndex; }
+  virtual const char *getSpelling() const = 0;
 
   SourceLocation getLocation() const { return Range.getBegin(); }
   SourceRange getRange() const { return Range; }
@@ -136,23 +137,21 @@ public:
   }
 };
 
-class MSInheritanceAttr : public InheritableAttr {
-  virtual void anchor();
-protected:
-  MSInheritanceAttr(attr::Kind AK, SourceRange R, unsigned SpellingListIndex = 0)
-    : InheritableAttr(AK, R, SpellingListIndex) {}
-
-public:
-  // Implement isa/cast/dyncast/etc.
-  static bool classof(const Attr *A) {
-    // Relies on relative order of enum emission with respect to param attrs.
-    return (A->getKind() <= attr::LAST_MS_INHERITANCE &&
-            A->getKind() > attr::LAST_INHERITABLE_PARAM);
-  }
-};
-
 #include "clang/AST/Attrs.inc"
 
+inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
+                                           const Attr *At) {
+  DB.AddTaggedVal(reinterpret_cast<intptr_t>(At),
+                  DiagnosticsEngine::ak_attr);
+  return DB;
+}
+
+inline const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
+                                           const Attr *At) {
+  PD.AddTaggedVal(reinterpret_cast<intptr_t>(At),
+                  DiagnosticsEngine::ak_attr);
+  return PD;
+}
 }  // end namespace clang
 
 #endif

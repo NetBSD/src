@@ -30,11 +30,26 @@ namespace format {
 /// \brief The \c FormatStyle is used to configure the formatting to follow
 /// specific guidelines.
 struct FormatStyle {
+  /// \brief Supported languages. When stored in a configuration file, specifies
+  /// the language, that the configuration targets. When passed to the
+  /// reformat() function, enables syntax features specific to the language.
+  enum LanguageKind {
+    /// Do not use.
+    LK_None,
+    /// Should be used for C, C++, ObjectiveC, ObjectiveC++.
+    LK_Cpp,
+    /// Should be used for JavaScript.
+    LK_JavaScript
+  };
+
+  /// \brief Language, this format style is targeted at.
+  LanguageKind Language;
+
   /// \brief The column limit.
   ///
   /// A column limit of \c 0 means that there is no column limit. In this case,
   /// clang-format will respect the input's line breaking decisions within
-  /// statements.
+  /// statements unless they contradict other rules.
   unsigned ColumnLimit;
 
   /// \brief The maximum number of consecutive empty lines to keep.
@@ -141,6 +156,10 @@ struct FormatStyle {
   /// single line.
   bool AllowShortLoopsOnASingleLine;
 
+  /// \brief If \c true, <tt>int f() { return 0; }</tt> can be put on a single
+  /// line.
+  bool AllowShortFunctionsOnASingleLine;
+
   /// \brief Add a space in front of an Objective-C protocol list, i.e. use
   /// <tt>Foo <Protocol></tt> instead of \c Foo<Protocol>.
   bool ObjCSpaceBeforeProtocolList;
@@ -199,7 +218,11 @@ struct FormatStyle {
     /// Like \c Attach, but break before function definitions.
     BS_Stroustrup,
     /// Always break before braces.
-    BS_Allman
+    BS_Allman,
+    /// Always break before braces and add an extra level of indentation to
+    /// braces of control statements, not to those of class, function
+    /// or other definitions.
+    BS_GNU
   };
 
   /// \brief The brace breaking style to use.
@@ -237,15 +260,32 @@ struct FormatStyle {
   /// \brief If \c false, spaces may be inserted into C style casts.
   bool SpacesInCStyleCastParentheses;
 
-  /// \brief If \c true, spaces will be inserted between 'for'/'if'/'while'/...
-  /// and '('.
-  bool SpaceAfterControlStatementKeyword;
+  /// \brief Different ways to put a space before opening parentheses.
+  enum SpaceBeforeParensOptions {
+    /// Never put a space before opening parentheses.
+    SBPO_Never,
+    /// Put a space before opening parentheses only after control statement
+    /// keywords (<tt>for/if/while...</tt>).
+    SBPO_ControlStatements,
+    /// Always put a space before opening parentheses, except when it's
+    /// prohibited by the syntax rules (in function-like macro definitions) or
+    /// when determined by other style rules (after unary operators, opening
+    /// parentheses, etc.)
+    SBPO_Always
+  };
+
+  /// \brief Defines in which cases to put a space before opening parentheses.
+  SpaceBeforeParensOptions SpaceBeforeParens;
 
   /// \brief If \c false, spaces will be removed before assignment operators.
   bool SpaceBeforeAssignmentOperators;
 
   /// \brief Indent width for line continuations.
   unsigned ContinuationIndentWidth;
+
+  /// \brief A regular expression that describes comments with special meaning,
+  /// which should not be split into lines or otherwise changed.
+  std::string CommentPragmas;
 
   bool operator==(const FormatStyle &R) const {
     return AccessModifierOffset == R.AccessModifierOffset &&
@@ -255,6 +295,8 @@ struct FormatStyle {
            AlignTrailingComments == R.AlignTrailingComments &&
            AllowAllParametersOfDeclarationOnNextLine ==
                R.AllowAllParametersOfDeclarationOnNextLine &&
+           AllowShortFunctionsOnASingleLine ==
+               R.AllowShortFunctionsOnASingleLine &&
            AllowShortIfStatementsOnASingleLine ==
                R.AllowShortIfStatementsOnASingleLine &&
            AllowShortLoopsOnASingleLine == R.AllowShortLoopsOnASingleLine &&
@@ -277,7 +319,7 @@ struct FormatStyle {
            IndentCaseLabels == R.IndentCaseLabels &&
            IndentFunctionDeclarationAfterType ==
                R.IndentFunctionDeclarationAfterType &&
-           IndentWidth == R.IndentWidth &&
+           IndentWidth == R.IndentWidth && Language == R.Language &&
            MaxEmptyLinesToKeep == R.MaxEmptyLinesToKeep &&
            NamespaceIndentation == R.NamespaceIndentation &&
            ObjCSpaceBeforeProtocolList == R.ObjCSpaceBeforeProtocolList &&
@@ -294,10 +336,10 @@ struct FormatStyle {
            SpacesInAngles == R.SpacesInAngles &&
            SpaceInEmptyParentheses == R.SpaceInEmptyParentheses &&
            SpacesInCStyleCastParentheses == R.SpacesInCStyleCastParentheses &&
-           SpaceAfterControlStatementKeyword ==
-               R.SpaceAfterControlStatementKeyword &&
+           SpaceBeforeParens == R.SpaceBeforeParens &&
            SpaceBeforeAssignmentOperators == R.SpaceBeforeAssignmentOperators &&
-           ContinuationIndentWidth == R.ContinuationIndentWidth;
+           ContinuationIndentWidth == R.ContinuationIndentWidth &&
+           CommentPragmas == R.CommentPragmas;
   }
 };
 
@@ -308,6 +350,11 @@ FormatStyle getLLVMStyle();
 /// \brief Returns a format style complying with Google's C++ style guide:
 /// http://google-styleguide.googlecode.com/svn/trunk/cppguide.xml.
 FormatStyle getGoogleStyle();
+
+/// \brief Returns a format style complying with Google's JavaScript style
+/// guide:
+/// http://google-styleguide.googlecode.com/svn/trunk/javascriptguide.xml.
+FormatStyle getGoogleJSStyle();
 
 /// \brief Returns a format style complying with Chromium's style guide:
 /// http://www.chromium.org/developers/coding-style.
@@ -321,15 +368,26 @@ FormatStyle getMozillaStyle();
 /// http://www.webkit.org/coding/coding-style.html
 FormatStyle getWebKitStyle();
 
-/// \brief Gets a predefined style by name.
+/// \brief Returns a format style complying with GNU Coding Standards:
+/// http://www.gnu.org/prep/standards/standards.html
+FormatStyle getGNUStyle();
+
+/// \brief Gets a predefined style for the specified language by name.
 ///
 /// Currently supported names: LLVM, Google, Chromium, Mozilla. Names are
 /// compared case-insensitively.
 ///
 /// Returns \c true if the Style has been set.
-bool getPredefinedStyle(StringRef Name, FormatStyle *Style);
+bool getPredefinedStyle(StringRef Name, FormatStyle::LanguageKind Language,
+                        FormatStyle *Style);
 
 /// \brief Parse configuration from YAML-formatted text.
+///
+/// Style->Language is used to get the base style, if the \c BasedOnStyle
+/// option is present.
+///
+/// When \c BasedOnStyle is not present, options not present in the YAML
+/// document, are retained in \p Style.
 llvm::error_code parseConfiguration(StringRef Text, FormatStyle *Style);
 
 /// \brief Gets configuration in a YAML string.
@@ -381,10 +439,13 @@ extern const char *StyleOptionHelpDescription;
 /// above.
 /// \param[in] FileName Path to start search for .clang-format if \c StyleName
 /// == "file".
+/// \param[in] FallbackStyle The name of a predefined style used to fallback to
+/// in case the style can't be determined from \p StyleName.
 ///
 /// \returns FormatStyle as specified by \c StyleName. If no style could be
 /// determined, the default is LLVM Style (see getLLVMStyle()).
-FormatStyle getStyle(StringRef StyleName, StringRef FileName);
+FormatStyle getStyle(StringRef StyleName, StringRef FileName,
+                     StringRef FallbackStyle);
 
 } // end namespace format
 } // end namespace clang

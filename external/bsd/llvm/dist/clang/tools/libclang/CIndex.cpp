@@ -1542,6 +1542,10 @@ bool CursorVisitor::VisitDecayedTypeLoc(DecayedTypeLoc TL) {
   return Visit(TL.getOriginalLoc());
 }
 
+bool CursorVisitor::VisitAdjustedTypeLoc(AdjustedTypeLoc TL) {
+  return Visit(TL.getOriginalLoc());
+}
+
 bool CursorVisitor::VisitTemplateSpecializationTypeLoc(
                                              TemplateSpecializationTypeLoc TL) {
   // Visit the template name.
@@ -1835,8 +1839,6 @@ public:
   void VisitStmt(const Stmt *S);
   void VisitSwitchStmt(const SwitchStmt *S);
   void VisitWhileStmt(const WhileStmt *W);
-  void VisitUnaryTypeTraitExpr(const UnaryTypeTraitExpr *E);
-  void VisitBinaryTypeTraitExpr(const BinaryTypeTraitExpr *E);
   void VisitTypeTraitExpr(const TypeTraitExpr *E);
   void VisitArrayTypeTraitExpr(const ArrayTypeTraitExpr *E);
   void VisitExpressionTraitExpr(const ExpressionTraitExpr *E);
@@ -2179,15 +2181,6 @@ void EnqueueVisitor::VisitWhileStmt(const WhileStmt *W) {
   AddStmt(W->getBody());
   AddStmt(W->getCond());
   AddDecl(W->getConditionVariable());
-}
-
-void EnqueueVisitor::VisitUnaryTypeTraitExpr(const UnaryTypeTraitExpr *E) {
-  AddTypeLoc(E->getQueriedTypeSourceInfo());
-}
-
-void EnqueueVisitor::VisitBinaryTypeTraitExpr(const BinaryTypeTraitExpr *E) {
-  AddTypeLoc(E->getRhsTypeSourceInfo());
-  AddTypeLoc(E->getLhsTypeSourceInfo());
 }
 
 void EnqueueVisitor::VisitTypeTraitExpr(const TypeTraitExpr *E) {
@@ -2544,7 +2537,8 @@ CXIndex clang_createIndex(int excludeDeclarationsFromPCH,
                           int displayDiagnostics) {
   // We use crash recovery to make some of our APIs more reliable, implicitly
   // enable it.
-  llvm::CrashRecoveryContext::Enable();
+  if (!getenv("LIBCLANG_DISABLE_CRASH_RECOVERY"))
+    llvm::CrashRecoveryContext::Enable();
 
   // Enable support for multithreading in LLVM.
   {
@@ -2670,7 +2664,7 @@ static void clang_parseTranslationUnit_Impl(void *UserData) {
   // FIXME: Add a flag for modules.
   TranslationUnitKind TUKind
     = (options & CXTranslationUnit_Incomplete)? TU_Prefix : TU_Complete;
-  bool CacheCodeCompetionResults
+  bool CacheCodeCompletionResults
     = options & CXTranslationUnit_CacheCompletionResults;
   bool IncludeBriefCommentsInCodeCompletion
     = options & CXTranslationUnit_IncludeBriefCommentsInCodeCompletion;
@@ -2756,7 +2750,7 @@ static void clang_parseTranslationUnit_Impl(void *UserData) {
                                  /*RemappedFilesKeepOriginalName=*/true,
                                  PrecompilePreamble,
                                  TUKind,
-                                 CacheCodeCompetionResults,
+                                 CacheCodeCompletionResults,
                                  IncludeBriefCommentsInCodeCompletion,
                                  /*AllowPCHWithCompilerErrors=*/true,
                                  SkipFunctionBodies,
@@ -5075,18 +5069,26 @@ class AnnotateTokensWorker {
     unsigned BeforeChildrenTokenIdx;
   };
   SmallVector<PostChildrenInfo, 8> PostChildrenInfos;
-  
+
+  CXToken &getTok(unsigned Idx) {
+    assert(Idx < NumTokens);
+    return Tokens[Idx];
+  }
+  const CXToken &getTok(unsigned Idx) const {
+    assert(Idx < NumTokens);
+    return Tokens[Idx];
+  }
   bool MoreTokens() const { return TokIdx < NumTokens; }
   unsigned NextToken() const { return TokIdx; }
   void AdvanceToken() { ++TokIdx; }
   SourceLocation GetTokenLoc(unsigned tokI) {
-    return SourceLocation::getFromRawEncoding(Tokens[tokI].int_data[1]);
+    return SourceLocation::getFromRawEncoding(getTok(tokI).int_data[1]);
   }
   bool isFunctionMacroToken(unsigned tokI) const {
-    return Tokens[tokI].int_data[3] != 0;
+    return getTok(tokI).int_data[3] != 0;
   }
   SourceLocation getFunctionMacroTokenLoc(unsigned tokI) const {
-    return SourceLocation::getFromRawEncoding(Tokens[tokI].int_data[3]);
+    return SourceLocation::getFromRawEncoding(getTok(tokI).int_data[3]);
   }
 
   void annotateAndAdvanceTokens(CXCursor, RangeComparisonResult, SourceRange);
@@ -5333,7 +5335,7 @@ AnnotateTokensWorker::Visit(CXCursor cursor, CXCursor parent) {
   // This can happen for C++ constructor expressions whose range generally
   // include the variable declaration, e.g.:
   //  MyCXXClass foo; // Make sure we don't annotate 'foo' as a CallExpr cursor.
-  if (clang_isExpression(cursorK)) {
+  if (clang_isExpression(cursorK) && MoreTokens()) {
     const Expr *E = getCursorExpr(cursor);
     if (const Decl *D = getCursorParentDecl(cursor)) {
       const unsigned I = NextToken();
@@ -5455,14 +5457,23 @@ public:
   }
 
 private:
+  CXToken &getTok(unsigned Idx) {
+    assert(Idx < NumTokens);
+    return Tokens[Idx];
+  }
+  const CXToken &getTok(unsigned Idx) const {
+    assert(Idx < NumTokens);
+    return Tokens[Idx];
+  }
+
   SourceLocation getTokenLoc(unsigned tokI) {
-    return SourceLocation::getFromRawEncoding(Tokens[tokI].int_data[1]);
+    return SourceLocation::getFromRawEncoding(getTok(tokI).int_data[1]);
   }
 
   void setFunctionMacroTokenLoc(unsigned tokI, SourceLocation loc) {
     // The third field is reserved and currently not used. Use it here
     // to mark macro arg expanded tokens with their expanded locations.
-    Tokens[tokI].int_data[3] = loc.getRawEncoding();
+    getTok(tokI).int_data[3] = loc.getRawEncoding();
   }
 };
 
@@ -6470,6 +6481,47 @@ CXTUResourceUsage clang_getCXTUResourceUsage(CXTranslationUnit TU) {
 void clang_disposeCXTUResourceUsage(CXTUResourceUsage usage) {
   if (usage.data)
     delete (MemUsageEntries*) usage.data;
+}
+
+CXSourceRangeList *clang_getSkippedRanges(CXTranslationUnit TU, CXFile file) {
+  CXSourceRangeList *skipped = new CXSourceRangeList;
+  skipped->count = 0;
+  skipped->ranges = 0;
+
+  if (!file)
+    return skipped;
+
+  ASTUnit *astUnit = cxtu::getASTUnit(TU);
+  PreprocessingRecord *ppRec = astUnit->getPreprocessor().getPreprocessingRecord();
+  if (!ppRec)
+    return skipped;
+
+  ASTContext &Ctx = astUnit->getASTContext();
+  SourceManager &sm = Ctx.getSourceManager();
+  FileEntry *fileEntry = static_cast<FileEntry *>(file);
+  FileID wantedFileID = sm.translateFile(fileEntry);
+
+  const std::vector<SourceRange> &SkippedRanges = ppRec->getSkippedRanges();
+  std::vector<SourceRange> wantedRanges;
+  for (std::vector<SourceRange>::const_iterator i = SkippedRanges.begin(), ei = SkippedRanges.end();
+       i != ei; ++i) {
+    if (sm.getFileID(i->getBegin()) == wantedFileID || sm.getFileID(i->getEnd()) == wantedFileID)
+      wantedRanges.push_back(*i);
+  }
+
+  skipped->count = wantedRanges.size();
+  skipped->ranges = new CXSourceRange[skipped->count];
+  for (unsigned i = 0, ei = skipped->count; i != ei; ++i)
+    skipped->ranges[i] = cxloc::translateSourceRange(Ctx, wantedRanges[i]);
+
+  return skipped;
+}
+
+void clang_disposeSourceRangeList(CXSourceRangeList *ranges) {
+  if (ranges) {
+    delete[] ranges->ranges;
+    delete ranges;
+  }
 }
 
 } // end extern "C"

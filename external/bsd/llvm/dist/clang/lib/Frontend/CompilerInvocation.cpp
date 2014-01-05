@@ -28,6 +28,7 @@
 #include "llvm/Option/ArgList.h"
 #include "llvm/Option/OptTable.h"
 #include "llvm/Option/Option.h"
+#include "llvm/Support/Atomic.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Host.h"
@@ -820,10 +821,12 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
     Opts.ObjCMTAction |= FrontendOptions::ObjCMT_AtomicProperty;
   if (Args.hasArg(OPT_objcmt_ns_nonatomic_iosonly))
     Opts.ObjCMTAction |= FrontendOptions::ObjCMT_NsAtomicIOSOnlyProperty;
+  if (Args.hasArg(OPT_objcmt_migrate_designated_init))
+    Opts.ObjCMTAction |= FrontendOptions::ObjCMT_DesignatedInitializer;
   if (Args.hasArg(OPT_objcmt_migrate_all))
     Opts.ObjCMTAction |= FrontendOptions::ObjCMT_MigrateDecls;
 
-  Opts.ObjCMTWhiteListPath = Args.getLastArgValue(OPT_objcmt_white_list_dir_path);
+  Opts.ObjCMTWhiteListPath = Args.getLastArgValue(OPT_objcmt_whitelist_dir_path);
 
   if (Opts.ARCMTAction != FrontendOptions::ARCMT_None &&
       Opts.ObjCMTAction != FrontendOptions::ObjCMT_None) {
@@ -1139,7 +1142,8 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
       Diags.Report(diag::err_drv_invalid_value)
         << A->getAsString(Args) << A->getValue();
     else {
-      // Valid standard, check to make sure language and standard are compatable.    
+      // Valid standard, check to make sure language and standard are
+      // compatible.
       const LangStandard &Std = LangStandard::getLangStandardForKind(LangStd);
       switch (IK) {
       case IK_C:
@@ -1763,7 +1767,6 @@ std::string CompilerInvocation::getModuleHash() const {
   const HeaderSearchOptions &hsOpts = getHeaderSearchOpts();
   code = hash_combine(code, ppOpts.UsePredefines, ppOpts.DetailedRecord);
 
-  std::vector<StringRef> MacroDefs;
   for (std::vector<std::pair<std::string, bool/*isUndef*/> >::const_iterator 
             I = getPreprocessorOpts().Macros.begin(),
          IEnd = getPreprocessorOpts().Macros.end();
@@ -1824,5 +1827,20 @@ int getLastArgIntValue(const ArgList &Args, OptSpecifier Id, int Default,
     }
   }
   return Res;
+}
+
+void BuryPointer(const void *Ptr) {
+  // This function may be called only a small fixed amount of times per each
+  // invocation, otherwise we do actually have a leak which we want to report.
+  // If this function is called more than kGraveYardMaxSize times, the pointers
+  // will not be properly buried and a leak detector will report a leak, which
+  // is what we want in such case.
+  static const size_t kGraveYardMaxSize = 16;
+  LLVM_ATTRIBUTE_UNUSED static const void *GraveYard[kGraveYardMaxSize];
+  static llvm::sys::cas_flag GraveYardSize;
+  llvm::sys::cas_flag Idx = llvm::sys::AtomicIncrement(&GraveYardSize) - 1;
+  if (Idx >= kGraveYardMaxSize)
+    return;
+  GraveYard[Idx] = Ptr;
 }
 }

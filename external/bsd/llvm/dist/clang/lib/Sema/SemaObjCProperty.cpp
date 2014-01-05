@@ -321,21 +321,6 @@ static unsigned getOwnershipRule(unsigned attr) {
                  ObjCPropertyDecl::OBJC_PR_unsafe_unretained);
 }
 
-static const char *NameOfOwnershipAttribute(unsigned attr) {
-  if (attr & ObjCPropertyDecl::OBJC_PR_assign)
-    return "assign";
-  if (attr & ObjCPropertyDecl::OBJC_PR_retain )
-    return "retain";
-  if (attr & ObjCPropertyDecl::OBJC_PR_copy)
-    return "copy";
-  if (attr & ObjCPropertyDecl::OBJC_PR_weak)
-    return "weak";
-  if (attr & ObjCPropertyDecl::OBJC_PR_strong)
-    return "strong";
-  assert(attr & ObjCPropertyDecl::OBJC_PR_unsafe_unretained);
-  return "unsafe_unretained";
-}
-
 ObjCPropertyDecl *
 Sema::HandlePropertyInClassExtension(Scope *S,
                                      SourceLocation AtLoc,
@@ -891,7 +876,7 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
       
       if (!ReadWriteProperty) {
         Diag(property->getLocation(), diag::warn_auto_readonly_iboutlet_property)
-            << property->getName();
+            << property;
         SourceLocation readonlyLoc;
         if (LocPropertyAttribute(Context, "readonly", 
                                  property->getLParenLoc(), readonlyLoc)) {
@@ -1559,7 +1544,7 @@ void Sema::DefaultSynthesizeProperties(Scope *S, ObjCImplDecl* IMPDecl,
           !IMPDecl->getInstanceMethod(Prop->getSetterName()) &&
           !IDecl->HasUserDeclaredSetterMethod(Prop)) {
             Diag(Prop->getLocation(), diag::warn_no_autosynthesis_property)
-              << Prop->getIdentifier()->getName();
+              << Prop->getIdentifier();
             Diag(PropInSuperClass->getLocation(), diag::note_property_declare);
       }
       continue;
@@ -1568,16 +1553,18 @@ void Sema::DefaultSynthesizeProperties(Scope *S, ObjCImplDecl* IMPDecl,
         IMPDecl->FindPropertyImplIvarDecl(Prop->getIdentifier())) {
       if (PID->getPropertyDecl() != Prop) {
         Diag(Prop->getLocation(), diag::warn_no_autosynthesis_shared_ivar_property)
-        << Prop->getIdentifier()->getName();
+          << Prop->getIdentifier();
         if (!PID->getLocation().isInvalid())
           Diag(PID->getLocation(), diag::note_property_synthesize);
       }
       continue;
     }
-    if (isa<ObjCProtocolDecl>(Prop->getDeclContext())) {
+    if (ObjCProtocolDecl *Proto =
+          dyn_cast<ObjCProtocolDecl>(Prop->getDeclContext())) {
       // We won't auto-synthesize properties declared in protocols.
       Diag(IMPDecl->getLocation(), 
-           diag::warn_auto_synthesizing_protocol_property);
+           diag::warn_auto_synthesizing_protocol_property)
+        << Prop << Proto;
       Diag(Prop->getLocation(), diag::note_property_declare);
       continue;
     }
@@ -1830,6 +1817,34 @@ void Sema::DiagnoseOwningPropertyGetterSynthesis(const ObjCImplementationDecl *D
   }
 }
 
+void Sema::DiagnoseMissingDesignatedInitOverrides(
+                                            const ObjCImplementationDecl *ImplD,
+                                            const ObjCInterfaceDecl *IFD) {
+  assert(IFD->hasDesignatedInitializers());
+  const ObjCInterfaceDecl *SuperD = IFD->getSuperClass();
+  if (!SuperD)
+    return;
+
+  SelectorSet InitSelSet;
+  for (ObjCImplementationDecl::instmeth_iterator
+         I = ImplD->instmeth_begin(), E = ImplD->instmeth_end(); I!=E; ++I)
+    if ((*I)->getMethodFamily() == OMF_init)
+      InitSelSet.insert((*I)->getSelector());
+
+  SmallVector<const ObjCMethodDecl *, 8> DesignatedInits;
+  SuperD->getDesignatedInitializers(DesignatedInits);
+  for (SmallVector<const ObjCMethodDecl *, 8>::iterator
+         I = DesignatedInits.begin(), E = DesignatedInits.end(); I != E; ++I) {
+    const ObjCMethodDecl *MD = *I;
+    if (!InitSelSet.count(MD->getSelector())) {
+      Diag(ImplD->getLocation(),
+           diag::warn_objc_implementation_missing_designated_init_override)
+        << MD->getSelector();
+      Diag(MD->getLocation(), diag::note_objc_designated_init_marked_here);
+    }
+  }
+}
+
 /// AddPropertyAttrs - Propagates attributes from a property to the
 /// implicitly-declared getter or setter for that property.
 static void AddPropertyAttrs(Sema &S, ObjCMethodDecl *PropertyMethod,
@@ -1919,6 +1934,10 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
     if (property->hasAttr<ObjCReturnsInnerPointerAttr>())
       GetterMethod->addAttr(
         ::new (Context) ObjCReturnsInnerPointerAttr(Loc, Context));
+    
+    if (const SectionAttr *SA = property->getAttr<SectionAttr>())
+      GetterMethod->addAttr(::new (Context) SectionAttr(Loc,
+                                                        Context, SA->getName()));
 
     if (getLangOpts().ObjCAutoRefCount)
       CheckARCMethodDecl(GetterMethod);
@@ -1969,7 +1988,9 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
       // and the real context should be the same.
       if (lexicalDC)
         SetterMethod->setLexicalDeclContext(lexicalDC);
-
+      if (const SectionAttr *SA = property->getAttr<SectionAttr>())
+        SetterMethod->addAttr(::new (Context) SectionAttr(Loc,
+                                                          Context, SA->getName()));
       // It's possible for the user to have set a very odd custom
       // setter selector that causes it to have a method family.
       if (getLangOpts().ObjCAutoRefCount)
@@ -2027,27 +2048,19 @@ void Sema::CheckObjCPropertyAttributes(Decl *PDecl,
   QualType PropertyTy = PropertyDecl->getType();
   unsigned PropertyOwnership = getOwnershipRule(Attributes);
 
-  if (Attributes & ObjCDeclSpec::DQ_PR_readonly) {
-    if (getLangOpts().ObjCAutoRefCount &&
-        PropertyTy->isObjCRetainableType() &&
-        !PropertyOwnership) {
-      // 'readonly' property with no obvious lifetime.
-      // its life time will be determined by its backing ivar.
-      return;
-    }
-    else if (PropertyOwnership) {
-      if (!getSourceManager().isInSystemHeader(Loc))
-        Diag(Loc, diag::warn_objc_property_attr_mutually_exclusive)
-          << "readonly" << NameOfOwnershipAttribute(Attributes);
-      return;
-    }
-  }
+  // 'readonly' property with no obvious lifetime.
+  // its life time will be determined by its backing ivar.
+  if (getLangOpts().ObjCAutoRefCount &&
+      Attributes & ObjCDeclSpec::DQ_PR_readonly &&
+      PropertyTy->isObjCRetainableType() &&
+      !PropertyOwnership)
+    return;
 
   // Check for copy or retain on non-object types.
   if ((Attributes & (ObjCDeclSpec::DQ_PR_weak | ObjCDeclSpec::DQ_PR_copy |
                     ObjCDeclSpec::DQ_PR_retain | ObjCDeclSpec::DQ_PR_strong)) &&
       !PropertyTy->isObjCRetainableType() &&
-      !PropertyDecl->getAttr<ObjCNSObjectAttr>()) {
+      !PropertyDecl->hasAttr<ObjCNSObjectAttr>()) {
     Diag(Loc, diag::err_objc_property_requires_object)
       << (Attributes & ObjCDeclSpec::DQ_PR_weak ? "weak" :
           Attributes & ObjCDeclSpec::DQ_PR_copy ? "copy" : "retain (or strong)");
@@ -2079,7 +2092,7 @@ void Sema::CheckObjCPropertyAttributes(Decl *PDecl,
         << "assign" << "weak";
       Attributes &= ~ObjCDeclSpec::DQ_PR_weak;
     }
-    if (PropertyDecl->getAttr<IBOutletCollectionAttr>())
+    if (PropertyDecl->hasAttr<IBOutletCollectionAttr>())
       Diag(Loc, diag::warn_iboutletcollection_property_assign);
   } else if (Attributes & ObjCDeclSpec::DQ_PR_unsafe_unretained) {
     if (Attributes & ObjCDeclSpec::DQ_PR_copy) {

@@ -251,6 +251,16 @@ void DeclInfo::fill() {
         TL = PointerTL.getPointeeLoc().getUnqualifiedLoc();
         continue;
       }
+      // Look through reference types.
+      if (ReferenceTypeLoc ReferenceTL = TL.getAs<ReferenceTypeLoc>()) {
+        TL = ReferenceTL.getPointeeLoc().getUnqualifiedLoc();
+        continue;
+      }
+      // Look through adjusted types.
+      if (AdjustedTypeLoc ATL = TL.getAs<AdjustedTypeLoc>()) {
+        TL = ATL.getOriginalLoc();
+        continue;
+      }
       if (BlockPointerTypeLoc BlockPointerTL =
               TL.getAs<BlockPointerTypeLoc>()) {
         TL = BlockPointerTL.getPointeeLoc().getUnqualifiedLoc();
@@ -261,6 +271,10 @@ void DeclInfo::fill() {
         TL = MemberPointerTL.getPointeeLoc().getUnqualifiedLoc();
         continue;
       }
+      if (ElaboratedTypeLoc ETL = TL.getAs<ElaboratedTypeLoc>()) {
+        TL = ETL.getNamedTypeLoc();
+        continue;
+      }
       // Is this a typedef for a function type?
       if (FunctionTypeLoc FTL = TL.getAs<FunctionTypeLoc>()) {
         Kind = FunctionKind;
@@ -268,6 +282,28 @@ void DeclInfo::fill() {
         ParamVars = ArrayRef<const ParmVarDecl *>(Params.data(),
                                                   Params.size());
         ResultType = FTL.getResultLoc().getType();
+        break;
+      }
+      if (TemplateSpecializationTypeLoc STL =
+              TL.getAs<TemplateSpecializationTypeLoc>()) {
+        // If we have a typedef to a template specialization with exactly one
+        // template argument of a function type, this looks like std::function,
+        // boost::function, or other function wrapper.  Treat these typedefs as
+        // functions.
+        if (STL.getNumArgs() != 1)
+          break;
+        TemplateArgumentLoc MaybeFunction = STL.getArgLoc(0);
+        if (MaybeFunction.getArgument().getKind() != TemplateArgument::Type)
+          break;
+        TypeSourceInfo *MaybeFunctionTSI = MaybeFunction.getTypeSourceInfo();
+        TypeLoc TL = MaybeFunctionTSI->getTypeLoc().getUnqualifiedLoc();
+        if (FunctionTypeLoc FTL = TL.getAs<FunctionTypeLoc>()) {
+          Kind = FunctionKind;
+          ArrayRef<ParmVarDecl *> Params = FTL.getParams();
+          ParamVars = ArrayRef<const ParmVarDecl *>(Params.data(),
+                                                    Params.size());
+          ResultType = FTL.getResultLoc().getType();
+        }
         break;
       }
       break;

@@ -621,7 +621,7 @@ bool ObjCPropertyOpBuilder::findSetter(bool warn) {
         if (ObjCPropertyDecl *prop1 = IFace->FindPropertyDeclaration(AltMember))
           if (prop != prop1 && (prop1->getSetterMethodDecl() == setter)) {
             S.Diag(RefExpr->getExprLoc(), diag::error_property_setter_ambiguous_use)
-              << prop->getName() << prop1->getName() << setter->getSelector();
+              << prop << prop1 << setter->getSelector();
             S.Diag(prop->getLocation(), diag::note_property_declare);
             S.Diag(prop1->getLocation(), diag::note_property_declare);
           }
@@ -1011,8 +1011,6 @@ Sema::ObjCSubscriptKind
   
   // Look for a conversion to an integral, enumeration type, or
   // objective-C pointer type.
-  UnresolvedSet<4> ViableConversions;
-  UnresolvedSet<4> ExplicitConversions;
   std::pair<CXXRecordDecl::conversion_iterator,
             CXXRecordDecl::conversion_iterator> Conversions
     = cast<CXXRecordDecl>(RecordTy->getDecl())->getVisibleConversionFunctions();
@@ -1395,8 +1393,8 @@ Expr *MSPropertyOpBuilder::rebuildAndCaptureObject(Expr *syntacticBase) {
 
 ExprResult MSPropertyOpBuilder::buildGet() {
   if (!RefExpr->getPropertyDecl()->hasGetter()) {
-    S.Diag(RefExpr->getMemberLoc(), diag::err_no_getter_for_property)
-      << RefExpr->getPropertyDecl()->getName();
+    S.Diag(RefExpr->getMemberLoc(), diag::err_no_accessor_for_property)
+      << 0 /* getter */ << RefExpr->getPropertyDecl();
     return ExprError();
   }
 
@@ -1410,8 +1408,9 @@ ExprResult MSPropertyOpBuilder::buildGet() {
     RefExpr->isArrow() ? tok::arrow : tok::period, SS, SourceLocation(),
     GetterName, 0, true);
   if (GetterExpr.isInvalid()) {
-    S.Diag(RefExpr->getMemberLoc(), diag::error_cannot_find_suitable_getter)
-      << RefExpr->getPropertyDecl()->getName();
+    S.Diag(RefExpr->getMemberLoc(),
+           diag::error_cannot_find_suitable_accessor) << 0 /* getter */
+      << RefExpr->getPropertyDecl();
     return ExprError();
   }
 
@@ -1424,8 +1423,8 @@ ExprResult MSPropertyOpBuilder::buildGet() {
 ExprResult MSPropertyOpBuilder::buildSet(Expr *op, SourceLocation sl,
                                          bool captureSetValueAsResult) {
   if (!RefExpr->getPropertyDecl()->hasSetter()) {
-    S.Diag(RefExpr->getMemberLoc(), diag::err_no_setter_for_property)
-      << RefExpr->getPropertyDecl()->getName();
+    S.Diag(RefExpr->getMemberLoc(), diag::err_no_accessor_for_property)
+      << 1 /* setter */ << RefExpr->getPropertyDecl();
     return ExprError();
   }
 
@@ -1439,8 +1438,9 @@ ExprResult MSPropertyOpBuilder::buildSet(Expr *op, SourceLocation sl,
     RefExpr->isArrow() ? tok::arrow : tok::period, SS, SourceLocation(),
     SetterName, 0, true);
   if (SetterExpr.isInvalid()) {
-    S.Diag(RefExpr->getMemberLoc(), diag::error_cannot_find_suitable_setter)
-      << RefExpr->getPropertyDecl()->getName();
+    S.Diag(RefExpr->getMemberLoc(),
+           diag::error_cannot_find_suitable_accessor) << 1 /* setter */
+      << RefExpr->getPropertyDecl();
     return ExprError();
   }
 

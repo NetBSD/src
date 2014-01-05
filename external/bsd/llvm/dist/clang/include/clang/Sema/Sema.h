@@ -833,6 +833,7 @@ public:
 
   /// Private Helper predicate to check for 'self'.
   bool isSelfExpr(Expr *RExpr);
+  bool isSelfExpr(Expr *RExpr, const ObjCMethodDecl *Method);
 
   /// \brief Cause the active diagnostic on the DiagosticsEngine to be
   /// emitted. This is closely coupled to the SemaDiagnosticBuilder class and
@@ -855,6 +856,8 @@ public:
 
   typedef llvm::MCAsmParserSemaCallback::InlineAsmIdentifierInfo
     InlineAsmIdentifierInfo;
+
+  void addImplicitTypedef(StringRef Name, QualType T);
 
 public:
   Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
@@ -1823,11 +1826,11 @@ public:
   /// if 'D' is in Scope 'S', otherwise 'S' is ignored and isDeclInScope returns
   /// true if 'D' belongs to the given declaration context.
   ///
-  /// \param ExplicitInstantiationOrSpecialization When true, we are checking
-  /// whether the declaration is in scope for the purposes of explicit template
-  /// instantiation or specialization. The default is false.
+  /// \param AllowInlineNamespace If \c true, allow the declaration to be in the
+  ///        enclosing namespace set of the context, rather than contained
+  ///        directly within it.
   bool isDeclInScope(NamedDecl *D, DeclContext *Ctx, Scope *S = 0,
-                     bool ExplicitInstantiationOrSpecialization = false);
+                     bool AllowInlineNamespace = false);
 
   /// Finds the scope corresponding to the given decl context, if it
   /// happens to be an enclosing scope.  Otherwise return NULL.
@@ -2160,13 +2163,13 @@ public:
                               CXXRecordDecl *ActingContext,
                               Expr *From, QualType ToType,
                               OverloadCandidateSet& CandidateSet,
-                              bool AllowObjCConversionOnExplicit = false);
+                              bool AllowObjCConversionOnExplicit);
   void AddTemplateConversionCandidate(FunctionTemplateDecl *FunctionTemplate,
                                       DeclAccessPair FoundDecl,
                                       CXXRecordDecl *ActingContext,
                                       Expr *From, QualType ToType,
                                       OverloadCandidateSet &CandidateSet,
-                                    bool AllowObjCConversionOnExplicit = false);
+                                      bool AllowObjCConversionOnExplicit);
   void AddSurrogateCandidate(CXXConversionDecl *Conversion,
                              DeclAccessPair FoundDecl,
                              CXXRecordDecl *ActingContext,
@@ -2484,6 +2487,7 @@ public:
                                         bool RValueThis, unsigned ThisQuals);
   CXXDestructorDecl *LookupDestructor(CXXRecordDecl *Class);
 
+  bool checkLiteralOperatorId(const CXXScopeSpec &SS, const UnqualifiedId &Id);
   LiteralOperatorLookupResult LookupLiteralOperator(Scope *S, LookupResult &R,
                                                     ArrayRef<QualType> ArgTys,
                                                     bool AllowRaw,
@@ -2527,8 +2531,7 @@ public:
                                    AssociatedClassSet &AssociatedClasses);
 
   void FilterLookupForScope(LookupResult &R, DeclContext *Ctx, Scope *S,
-                            bool ConsiderLinkage,
-                            bool ExplicitInstantiationOrSpecialization);
+                            bool ConsiderLinkage, bool AllowInlineNamespace);
 
   void DiagnoseAmbiguousLookup(LookupResult &Result);
   //@}
@@ -2570,6 +2573,11 @@ public:
   /// function type typedefs and typename template arguments.
   void adjustMemberFunctionCC(QualType &T, bool IsStatic);
 
+  // Check if there is an explicit attribute, but only look through parens.
+  // The intent is to look for an attribute on the current declarator, but not
+  // one that came from a typedef.
+  bool hasExplicitCallingConv(QualType &T);
+
   /// Get the outermost AttributedType node that sets a calling convention.
   /// Valid types should not have multiple attributes with different CCs.
   const AttributedType *getCallingConvAttributedType(QualType T) const;
@@ -2578,8 +2586,6 @@ public:
   StmtResult ProcessStmtAttributes(Stmt *Stmt, AttributeList *Attrs,
                                    SourceRange Range);
 
-  void WarnUndefinedMethod(SourceLocation ImpLoc, ObjCMethodDecl *method,
-                           bool &IncompleteImpl, unsigned DiagID);
   void WarnConflictingTypedMethods(ObjCMethodDecl *Method,
                                    ObjCMethodDecl *MethodDecl,
                                    bool IsProtocolMethodDecl);
@@ -2596,15 +2602,6 @@ public:
 
   typedef llvm::SmallPtrSet<Selector, 8> SelectorSet;
   typedef llvm::DenseMap<Selector, ObjCMethodDecl*> ProtocolsMethodsMap;
-
-  /// CheckProtocolMethodDefs - This routine checks unimplemented
-  /// methods declared in protocol, and those referenced by it.
-  void CheckProtocolMethodDefs(SourceLocation ImpLoc,
-                               ObjCProtocolDecl *PDecl,
-                               bool& IncompleteImpl,
-                               const SelectorSet &InsMap,
-                               const SelectorSet &ClsMap,
-                               ObjCContainerDecl *CDecl);
 
   /// CheckImplementationIvars - This routine checks if the instance variables
   /// listed in the implelementation match those listed in the interface.
@@ -2643,7 +2640,8 @@ public:
   
   /// DiagnoseUnusedBackingIvarInAccessor - Issue an 'unused' warning if ivar which
   /// backs the property is not used in the property's accessor.
-  void DiagnoseUnusedBackingIvarInAccessor(Scope *S);
+  void DiagnoseUnusedBackingIvarInAccessor(Scope *S,
+                                           const ObjCImplementationDecl *ImplD);
   
   /// GetIvarBackingPropertyAccessor - If method is a property setter/getter and
   /// it property has a backing ivar, returns this ivar; otherwise, returns NULL.
@@ -2691,6 +2689,10 @@ public:
                                        ObjCContainerDecl* IDecl);
 
   void DiagnoseOwningPropertyGetterSynthesis(const ObjCImplementationDecl *D);
+
+  void DiagnoseMissingDesignatedInitOverrides(
+                                          const ObjCImplementationDecl *ImplD,
+                                          const ObjCInterfaceDecl *IFD);
 
   void DiagnoseDuplicateIvars(ObjCInterfaceDecl *ID, ObjCInterfaceDecl *SID);
 
@@ -3083,12 +3085,15 @@ public:
 
   void redelayDiagnostics(sema::DelayedDiagnosticPool &pool);
 
-  void EmitDeprecationWarning(NamedDecl *D, StringRef Message,
-                              SourceLocation Loc,
-                              const ObjCInterfaceDecl *UnknownObjCClass,
-                              const ObjCPropertyDecl  *ObjCProperty);
+  enum AvailabilityDiagnostic { AD_Deprecation, AD_Unavailable };
 
-  void HandleDelayedDeprecationCheck(sema::DelayedDiagnostic &DD, Decl *Ctx);
+  void EmitAvailabilityWarning(AvailabilityDiagnostic AD,
+                               NamedDecl *D, StringRef Message,
+                               SourceLocation Loc,
+                               const ObjCInterfaceDecl *UnknownObjCClass,
+                               const ObjCPropertyDecl  *ObjCProperty);
+
+  void HandleDelayedAvailabilityCheck(sema::DelayedDiagnostic &DD, Decl *Ctx);
 
   bool makeUnavailableInSystemHeader(SourceLocation loc,
                                      StringRef message);
@@ -4206,32 +4211,6 @@ public:
   ExprResult ActOnNoexceptExpr(SourceLocation KeyLoc, SourceLocation LParen,
                                Expr *Operand, SourceLocation RParen);
   ExprResult BuildCXXNoexceptExpr(SourceLocation KeyLoc, Expr *Operand,
-                                  SourceLocation RParen);
-
-  /// ActOnUnaryTypeTrait - Parsed one of the unary type trait support
-  /// pseudo-functions.
-  ExprResult ActOnUnaryTypeTrait(UnaryTypeTrait OTT,
-                                 SourceLocation KWLoc,
-                                 ParsedType Ty,
-                                 SourceLocation RParen);
-
-  ExprResult BuildUnaryTypeTrait(UnaryTypeTrait OTT,
-                                 SourceLocation KWLoc,
-                                 TypeSourceInfo *T,
-                                 SourceLocation RParen);
-
-  /// ActOnBinaryTypeTrait - Parsed one of the bianry type trait support
-  /// pseudo-functions.
-  ExprResult ActOnBinaryTypeTrait(BinaryTypeTrait OTT,
-                                  SourceLocation KWLoc,
-                                  ParsedType LhsTy,
-                                  ParsedType RhsTy,
-                                  SourceLocation RParen);
-
-  ExprResult BuildBinaryTypeTrait(BinaryTypeTrait BTT,
-                                  SourceLocation KWLoc,
-                                  TypeSourceInfo *LhsT,
-                                  TypeSourceInfo *RhsT,
                                   SourceLocation RParen);
 
   /// \brief Parsed one of the type trait support pseudo-functions.
@@ -6901,6 +6880,22 @@ public:
                                   ParsedType Type,
                                   SourceLocation RParenLoc,
                                   Expr *SubExpr);
+  
+  void CheckTollFreeBridgeCast(QualType castType, Expr *castExpr);
+  
+  bool checkObjCBridgeRelatedComponents(SourceLocation Loc,
+                                        QualType DestType, QualType SrcType,
+                                        ObjCInterfaceDecl *&RelatedClass,
+                                        ObjCMethodDecl *&ClassMethod,
+                                        ObjCMethodDecl *&InstanceMethod,
+                                        TypedefNameDecl *&TDNDecl,
+                                        bool CfToNs);
+  
+  bool CheckObjCBridgeRelatedConversions(SourceLocation Loc,
+                                         QualType DestType, QualType SrcType,
+                                         Expr *&SrcExpr);
+  
+  bool ConversionToObjCStringLiteralCheck(QualType DstType, Expr *&SrcExpr);
   
   bool checkInitMethod(ObjCMethodDecl *method, QualType receiverTypeIfCall);
 

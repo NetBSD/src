@@ -53,23 +53,14 @@ namespace clang {
     BackendConsumer(BackendAction action, DiagnosticsEngine &_Diags,
                     const CodeGenOptions &compopts,
                     const TargetOptions &targetopts,
-                    const LangOptions &langopts,
-                    bool TimePasses,
-                    const std::string &infile,
-                    llvm::Module *LinkModule,
-                    raw_ostream *OS,
-                    LLVMContext &C) :
-      Diags(_Diags),
-      Action(action),
-      CodeGenOpts(compopts),
-      TargetOpts(targetopts),
-      LangOpts(langopts),
-      AsmOutStream(OS),
-      Context(), 
-      LLVMIRGeneration("LLVM IR Generation Time"),
-      Gen(CreateLLVMCodeGen(Diags, infile, compopts, targetopts, C)),
-      LinkModule(LinkModule)
-    {
+                    const LangOptions &langopts, bool TimePasses,
+                    const std::string &infile, llvm::Module *LinkModule,
+                    raw_ostream *OS, LLVMContext &C)
+        : Diags(_Diags), Action(action), CodeGenOpts(compopts),
+          TargetOpts(targetopts), LangOpts(langopts), AsmOutStream(OS),
+          Context(), LLVMIRGeneration("LLVM IR Generation Time"),
+          Gen(CreateLLVMCodeGen(Diags, infile, compopts, targetopts, C)),
+          LinkModule(LinkModule) {
       llvm::TimePassesIsEnabled = TimePasses;
     }
 
@@ -159,8 +150,9 @@ namespace clang {
       Ctx.setInlineAsmDiagnosticHandler(InlineAsmDiagHandler, this);
 
       EmitBackendOutput(Diags, CodeGenOpts, TargetOpts, LangOpts,
+                        C.getTargetInfo().getTargetDescription(),
                         TheModule.get(), Action, AsmOutStream);
-      
+
       Ctx.setInlineAsmDiagnosticHandler(OldHandler, OldContext);
     }
 
@@ -408,31 +400,30 @@ void CodeGenAction::ExecuteAction() {
         SM.getFileEntryForID(SM.getMainFileID()), Err.getLineNo(),
         Err.getColumnNo() + 1);
 
-      // Get a custom diagnostic for the error. We strip off a leading
-      // diagnostic code if there is one.
+      // Strip off a leading diagnostic code if there is one.
       StringRef Msg = Err.getMessage();
       if (Msg.startswith("error: "))
         Msg = Msg.substr(7);
 
-      // Escape '%', which is interpreted as a format character.
-      SmallString<128> EscapedMessage;
-      for (unsigned i = 0, e = Msg.size(); i != e; ++i) {
-        if (Msg[i] == '%')
-          EscapedMessage += '%';
-        EscapedMessage += Msg[i];
-      }
+      unsigned DiagID =
+          CI.getDiagnostics().getCustomDiagID(DiagnosticsEngine::Error, "%0");
 
-      unsigned DiagID = CI.getDiagnostics().getCustomDiagID(
-          DiagnosticsEngine::Error, EscapedMessage);
-
-      CI.getDiagnostics().Report(Loc, DiagID);
+      CI.getDiagnostics().Report(Loc, DiagID) << Msg;
       return;
     }
+    const TargetOptions &TargetOpts = CI.getTargetOpts();
+    if (TheModule->getTargetTriple() != TargetOpts.Triple) {
+      unsigned DiagID = CI.getDiagnostics().getCustomDiagID(
+          DiagnosticsEngine::Warning,
+          "overriding the module target triple with %0");
 
-    EmitBackendOutput(CI.getDiagnostics(), CI.getCodeGenOpts(),
-                      CI.getTargetOpts(), CI.getLangOpts(),
-                      TheModule.get(),
-                      BA, OS);
+      CI.getDiagnostics().Report(SourceLocation(), DiagID) << TargetOpts.Triple;
+      TheModule->setTargetTriple(TargetOpts.Triple);
+    }
+
+    EmitBackendOutput(CI.getDiagnostics(), CI.getCodeGenOpts(), TargetOpts,
+                      CI.getLangOpts(), CI.getTarget().getTargetDescription(),
+                      TheModule.get(), BA, OS);
     return;
   }
 

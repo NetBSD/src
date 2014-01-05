@@ -55,15 +55,15 @@ using namespace CodeGen;
 
 static const char AnnotationSection[] = "llvm.metadata";
 
-static CGCXXABI &createCXXABI(CodeGenModule &CGM) {
+static CGCXXABI *createCXXABI(CodeGenModule &CGM) {
   switch (CGM.getTarget().getCXXABI().getKind()) {
   case TargetCXXABI::GenericAArch64:
   case TargetCXXABI::GenericARM:
   case TargetCXXABI::iOS:
   case TargetCXXABI::GenericItanium:
-    return *CreateItaniumCXXABI(CGM);
+    return CreateItaniumCXXABI(CGM);
   case TargetCXXABI::Microsoft:
-    return *CreateMicrosoftCXXABI(CGM);
+    return CreateMicrosoftCXXABI(CGM);
   }
 
   llvm_unreachable("invalid C++ ABI kind");
@@ -117,7 +117,7 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
   if (SanOpts.Thread ||
       (!CodeGenOpts.RelaxedAliasing && CodeGenOpts.OptimizationLevel > 0))
     TBAA = new CodeGenTBAA(Context, VMContext, CodeGenOpts, getLangOpts(),
-                           ABI.getMangleContext());
+                           getCXXABI().getMangleContext());
 
   // If debug info or coverage generation is enabled, create the CGDebugInfo
   // object.
@@ -138,7 +138,6 @@ CodeGenModule::~CodeGenModule() {
   delete OpenCLRuntime;
   delete CUDARuntime;
   delete TheTargetCodeGenInfo;
-  delete &ABI;
   delete TBAA;
   delete DebugInfo;
   delete ARCData;
@@ -233,6 +232,10 @@ void CodeGenModule::checkAliases() {
   }
 }
 
+void CodeGenModule::clear() {
+  DeferredDeclsToEmit.clear();
+}
+
 void CodeGenModule::Release() {
   EmitDeferred();
   applyReplacements();
@@ -258,6 +261,14 @@ void CodeGenModule::Release() {
     // We can change from Warning to Latest if such mode is supported.
     getModule().addModuleFlag(llvm::Module::Warning, "Dwarf Version",
                               CodeGenOpts.DwarfVersion);
+  if (DebugInfo)
+    // We support a single version in the linked module: error out when
+    // modules do not have the same version. We are going to implement dropping
+    // debug info when the version number is not up-to-date. Once that is
+    // done, the bitcode linker is not going to see modules with different
+    // version numbers.
+    getModule().addModuleFlag(llvm::Module::Error, "Debug Info Version",
+                              llvm::DEBUG_METADATA_VERSION);
 
   SimplifyPersonality();
 
@@ -397,8 +408,7 @@ void CodeGenModule::setTLSMode(llvm::GlobalVariable *GV,
   TLM = GetLLVMTLSModel(CodeGenOpts.getDefaultTLSModel());
 
   // Override the TLS model if it is explicitly specified.
-  if (D.hasAttr<TLSModelAttr>()) {
-    const TLSModelAttr *Attr = D.getAttr<TLSModelAttr>();
+  if (const TLSModelAttr *Attr = D.getAttr<TLSModelAttr>()) {
     TLM = GetLLVMTLSModel(Attr->getModel());
   }
 
@@ -573,11 +583,6 @@ llvm::GlobalValue::LinkageTypes
 CodeGenModule::getFunctionLinkage(GlobalDecl GD) {
   const FunctionDecl *D = cast<FunctionDecl>(GD.getDecl());
 
-  if (isa<CXXDestructorDecl>(D) &&
-      getCXXABI().useThunkForDtorVariant(cast<CXXDestructorDecl>(D),
-                                         GD.getDtorType()))
-    return llvm::Function::LinkOnceODRLinkage;
-
   GVALinkage Linkage = getContext().GetGVALinkageForFunction(D);
 
   if (Linkage == GVA_Internal)
@@ -618,7 +623,14 @@ CodeGenModule::getFunctionLinkage(GlobalDecl GD) {
     return !Context.getLangOpts().AppleKext
              ? llvm::Function::WeakODRLinkage
              : llvm::Function::ExternalLinkage;
-  
+
+  // Destructor variants in the Microsoft C++ ABI are always linkonce_odr thunks
+  // emitted on an as-needed basis.
+  if (isa<CXXDestructorDecl>(D) &&
+      getCXXABI().useThunkForDtorVariant(cast<CXXDestructorDecl>(D),
+                                         GD.getDtorType()))
+    return llvm::Function::LinkOnceODRLinkage;
+
   // Otherwise, we have strong external linkage.
   assert(Linkage == GVA_StrongExternal);
   return llvm::Function::ExternalLinkage;
@@ -994,31 +1006,23 @@ void CodeGenModule::EmitDeferred() {
     // Stop if we're out of both deferred v-tables and deferred declarations.
     if (DeferredDeclsToEmit.empty()) break;
 
-    GlobalDecl D = DeferredDeclsToEmit.back();
+    DeferredGlobal &G = DeferredDeclsToEmit.back();
+    GlobalDecl D = G.GD;
+    llvm::GlobalValue *GV = G.GV;
     DeferredDeclsToEmit.pop_back();
 
+    assert(GV == GetGlobalValue(getMangledName(D)));
     // Check to see if we've already emitted this.  This is necessary
     // for a couple of reasons: first, decls can end up in the
     // deferred-decls queue multiple times, and second, decls can end
     // up with definitions in unusual ways (e.g. by an extern inline
     // function acquiring a strong function redefinition).  Just
     // ignore these cases.
-    //
-    // TODO: That said, looking this up multiple times is very wasteful.
-    StringRef Name = getMangledName(D);
-    llvm::GlobalValue *CGRef = GetGlobalValue(Name);
-    assert(CGRef && "Deferred decl wasn't referenced?");
-
-    if (!CGRef->isDeclaration())
-      continue;
-
-    // GlobalAlias::isDeclaration() defers to the aliasee, but for our
-    // purposes an alias counts as a definition.
-    if (isa<llvm::GlobalAlias>(CGRef))
+    if(!GV->isDeclaration())
       continue;
 
     // Otherwise, emit the definition and move on to the next one.
-    EmitGlobalDefinition(D);
+    EmitGlobalDefinition(D, GV);
   }
 }
 
@@ -1223,8 +1227,8 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
   // If the value has already been used, add it directly to the
   // DeferredDeclsToEmit list.
   StringRef MangledName = getMangledName(GD);
-  if (GetGlobalValue(MangledName))
-    DeferredDeclsToEmit.push_back(GD);
+  if (llvm::GlobalValue *GV = GetGlobalValue(MangledName))
+    addDeferredDeclToEmit(GV, GD);
   else {
     // Otherwise, remember that we saw a deferred decl with this name.  The
     // first use of the mangled name will cause it to move into
@@ -1321,7 +1325,7 @@ void CodeGenModule::CompleteDIClassType(const CXXMethodDecl* D) {
     }
 }
 
-void CodeGenModule::EmitGlobalDefinition(GlobalDecl GD) {
+void CodeGenModule::EmitGlobalDefinition(GlobalDecl GD, llvm::GlobalValue *GV) {
   const ValueDecl *D = cast<ValueDecl>(GD.getDecl());
 
   PrettyStackTraceDecl CrashInfo(const_cast<ValueDecl *>(D), D->getLocation(), 
@@ -1343,7 +1347,7 @@ void CodeGenModule::EmitGlobalDefinition(GlobalDecl GD) {
       else if (const CXXDestructorDecl *DD =dyn_cast<CXXDestructorDecl>(Method))
         EmitCXXDestructor(DD, GD.getDtorType());
       else
-        EmitGlobalFunctionDefinition(GD);
+        EmitGlobalFunctionDefinition(GD, GV);
 
       if (Method->isVirtual())
         getVTables().EmitThunks(GD);
@@ -1351,7 +1355,7 @@ void CodeGenModule::EmitGlobalDefinition(GlobalDecl GD) {
       return;
     }
 
-    return EmitGlobalFunctionDefinition(GD);
+    return EmitGlobalFunctionDefinition(GD, GV);
   }
   
   if (const VarDecl *VD = dyn_cast<VarDecl>(D))
@@ -1371,6 +1375,7 @@ llvm::Constant *
 CodeGenModule::GetOrCreateLLVMFunction(StringRef MangledName,
                                        llvm::Type *Ty,
                                        GlobalDecl GD, bool ForVTable,
+                                       bool DontDefer,
                                        llvm::AttributeSet ExtraAttrs) {
   const Decl *D = GD.getDecl();
 
@@ -1389,14 +1394,6 @@ CodeGenModule::GetOrCreateLLVMFunction(StringRef MangledName,
     // Make sure the result is of the correct type.
     return llvm::ConstantExpr::getBitCast(Entry, Ty->getPointerTo());
   }
-
-  // All MSVC dtors other than the base dtor are linkonce_odr and delegate to
-  // each other bottoming out with the base dtor.  Therefore we emit non-base
-  // dtors on usage, even if there is no dtor definition in the TU.
-  if (D && isa<CXXDestructorDecl>(D) &&
-      getCXXABI().useThunkForDtorVariant(cast<CXXDestructorDecl>(D),
-                                         GD.getDtorType()))
-    DeferredDeclsToEmit.push_back(GD);
 
   // This function doesn't have a complete type (for example, the return
   // type is an incomplete struct). Use a fake type instead, and make
@@ -1425,50 +1422,64 @@ CodeGenModule::GetOrCreateLLVMFunction(StringRef MangledName,
                                              B));
   }
 
-  // This is the first use or definition of a mangled name.  If there is a
-  // deferred decl with this name, remember that we need to emit it at the end
-  // of the file.
-  llvm::StringMap<GlobalDecl>::iterator DDI = DeferredDecls.find(MangledName);
-  if (DDI != DeferredDecls.end()) {
-    // Move the potentially referenced deferred decl to the DeferredDeclsToEmit
-    // list, and remove it from DeferredDecls (since we don't need it anymore).
-    DeferredDeclsToEmit.push_back(DDI->second);
-    DeferredDecls.erase(DDI);
+  if (!DontDefer) {
+    // All MSVC dtors other than the base dtor are linkonce_odr and delegate to
+    // each other bottoming out with the base dtor.  Therefore we emit non-base
+    // dtors on usage, even if there is no dtor definition in the TU.
+    if (D && isa<CXXDestructorDecl>(D) &&
+        getCXXABI().useThunkForDtorVariant(cast<CXXDestructorDecl>(D),
+                                           GD.getDtorType()))
+      addDeferredDeclToEmit(F, GD);
 
-  // Otherwise, if this is a sized deallocation function, emit a weak definition
-  // for it at the end of the translation unit.
-  } else if (D && cast<FunctionDecl>(D)
-                      ->getCorrespondingUnsizedGlobalDeallocationFunction()) {
-    DeferredDeclsToEmit.push_back(GD);
+    // This is the first use or definition of a mangled name.  If there is a
+    // deferred decl with this name, remember that we need to emit it at the end
+    // of the file.
+    llvm::StringMap<GlobalDecl>::iterator DDI = DeferredDecls.find(MangledName);
+    if (DDI != DeferredDecls.end()) {
+      // Move the potentially referenced deferred decl to the
+      // DeferredDeclsToEmit list, and remove it from DeferredDecls (since we
+      // don't need it anymore).
+      addDeferredDeclToEmit(F, DDI->second);
+      DeferredDecls.erase(DDI);
 
-  // Otherwise, there are cases we have to worry about where we're
-  // using a declaration for which we must emit a definition but where
-  // we might not find a top-level definition:
-  //   - member functions defined inline in their classes
-  //   - friend functions defined inline in some class
-  //   - special member functions with implicit definitions
-  // If we ever change our AST traversal to walk into class methods,
-  // this will be unnecessary.
-  //
-  // We also don't emit a definition for a function if it's going to be an entry
-  // in a vtable, unless it's already marked as used.
-  } else if (getLangOpts().CPlusPlus && D) {
-    // Look for a declaration that's lexically in a record.
-    const FunctionDecl *FD = cast<FunctionDecl>(D);
-    FD = FD->getMostRecentDecl();
-    do {
-      if (isa<CXXRecordDecl>(FD->getLexicalDeclContext())) {
-        if (FD->isImplicit() && !ForVTable) {
-          assert(FD->isUsed() && "Sema didn't mark implicit function as used!");
-          DeferredDeclsToEmit.push_back(GD.getWithDecl(FD));
-          break;
-        } else if (FD->doesThisDeclarationHaveABody()) {
-          DeferredDeclsToEmit.push_back(GD.getWithDecl(FD));
-          break;
+      // Otherwise, if this is a sized deallocation function, emit a weak
+      // definition
+      // for it at the end of the translation unit.
+    } else if (D && cast<FunctionDecl>(D)
+                        ->getCorrespondingUnsizedGlobalDeallocationFunction()) {
+      addDeferredDeclToEmit(F, GD);
+
+      // Otherwise, there are cases we have to worry about where we're
+      // using a declaration for which we must emit a definition but where
+      // we might not find a top-level definition:
+      //   - member functions defined inline in their classes
+      //   - friend functions defined inline in some class
+      //   - special member functions with implicit definitions
+      // If we ever change our AST traversal to walk into class methods,
+      // this will be unnecessary.
+      //
+      // We also don't emit a definition for a function if it's going to be an
+      // entry
+      // in a vtable, unless it's already marked as used.
+    } else if (getLangOpts().CPlusPlus && D) {
+      // Look for a declaration that's lexically in a record.
+      const FunctionDecl *FD = cast<FunctionDecl>(D);
+      FD = FD->getMostRecentDecl();
+      do {
+        if (isa<CXXRecordDecl>(FD->getLexicalDeclContext())) {
+          if (FD->isImplicit() && !ForVTable) {
+            assert(FD->isUsed() &&
+                   "Sema didn't mark implicit function as used!");
+            addDeferredDeclToEmit(F, GD.getWithDecl(FD));
+            break;
+          } else if (FD->doesThisDeclarationHaveABody()) {
+            addDeferredDeclToEmit(F, GD.getWithDecl(FD));
+            break;
+          }
         }
-      }
-      FD = FD->getPreviousDecl();
-    } while (FD);
+        FD = FD->getPreviousDecl();
+      } while (FD);
+    }
   }
 
   // Make sure the result is of the requested type.
@@ -1486,13 +1497,14 @@ CodeGenModule::GetOrCreateLLVMFunction(StringRef MangledName,
 /// create it (this occurs when we see a definition of the function).
 llvm::Constant *CodeGenModule::GetAddrOfFunction(GlobalDecl GD,
                                                  llvm::Type *Ty,
-                                                 bool ForVTable) {
+                                                 bool ForVTable,
+                                                 bool DontDefer) {
   // If there was no specific requested type, just convert it now.
   if (!Ty)
     Ty = getTypes().ConvertType(cast<ValueDecl>(GD.getDecl())->getType());
   
   StringRef MangledName = getMangledName(GD);
-  return GetOrCreateLLVMFunction(MangledName, Ty, GD, ForVTable);
+  return GetOrCreateLLVMFunction(MangledName, Ty, GD, ForVTable, DontDefer);
 }
 
 /// CreateRuntimeFunction - Create a new runtime function with the specified
@@ -1501,9 +1513,9 @@ llvm::Constant *
 CodeGenModule::CreateRuntimeFunction(llvm::FunctionType *FTy,
                                      StringRef Name,
                                      llvm::AttributeSet ExtraAttrs) {
-  llvm::Constant *C
-    = GetOrCreateLLVMFunction(Name, FTy, GlobalDecl(), /*ForVTable=*/false,
-                              ExtraAttrs);
+  llvm::Constant *C =
+      GetOrCreateLLVMFunction(Name, FTy, GlobalDecl(), /*ForVTable=*/false,
+                              /*DontDefer=*/false, ExtraAttrs);
   if (llvm::Function *F = dyn_cast<llvm::Function>(C))
     if (F->empty())
       F->setCallingConv(getRuntimeCC());
@@ -1563,6 +1575,13 @@ CodeGenModule::GetOrCreateLLVMGlobal(StringRef MangledName,
     return llvm::ConstantExpr::getBitCast(Entry, Ty);
   }
 
+  unsigned AddrSpace = GetGlobalVarAddressSpace(D, Ty->getAddressSpace());
+  llvm::GlobalVariable *GV =
+    new llvm::GlobalVariable(getModule(), Ty->getElementType(), false,
+                             llvm::GlobalValue::ExternalLinkage,
+                             0, MangledName, 0,
+                             llvm::GlobalVariable::NotThreadLocal, AddrSpace);
+
   // This is the first use or definition of a mangled name.  If there is a
   // deferred decl with this name, remember that we need to emit it at the end
   // of the file.
@@ -1570,16 +1589,9 @@ CodeGenModule::GetOrCreateLLVMGlobal(StringRef MangledName,
   if (DDI != DeferredDecls.end()) {
     // Move the potentially referenced deferred decl to the DeferredDeclsToEmit
     // list, and remove it from DeferredDecls (since we don't need it anymore).
-    DeferredDeclsToEmit.push_back(DDI->second);
+    addDeferredDeclToEmit(GV, DDI->second);
     DeferredDecls.erase(DDI);
   }
-
-  unsigned AddrSpace = GetGlobalVarAddressSpace(D, Ty->getAddressSpace());
-  llvm::GlobalVariable *GV =
-    new llvm::GlobalVariable(getModule(), Ty->getElementType(), false,
-                             llvm::GlobalValue::ExternalLinkage,
-                             0, MangledName, 0,
-                             llvm::GlobalVariable::NotThreadLocal, AddrSpace);
 
   // Handle things which are present even on external declarations.
   if (D) {
@@ -1927,11 +1939,11 @@ CodeGenModule::GetLLVMLinkageVarDefinition(const VarDecl *D, bool isConstant) {
              Linkage == GVA_ExplicitTemplateInstantiation)
     return llvm::GlobalVariable::WeakODRLinkage;
   else if (!getLangOpts().CPlusPlus && 
-           ((!CodeGenOpts.NoCommon && !D->getAttr<NoCommonAttr>()) ||
-             D->getAttr<CommonAttr>()) &&
+           ((!CodeGenOpts.NoCommon && !D->hasAttr<NoCommonAttr>()) ||
+             D->hasAttr<CommonAttr>()) &&
            !D->hasExternalStorage() && !D->getInit() &&
-           !D->getAttr<SectionAttr>() && !D->getTLSKind() &&
-           !D->getAttr<WeakImportAttr>()) {
+           !D->hasAttr<SectionAttr>() && !D->getTLSKind() &&
+           !D->hasAttr<WeakImportAttr>()) {
     // Thread local vars aren't considered common linkage.
     return llvm::GlobalVariable::CommonLinkage;
   } else if (D->getTLSKind() == VarDecl::TLS_Dynamic &&
@@ -2079,7 +2091,8 @@ void CodeGenModule::HandleCXXStaticMemberVarInstantiation(VarDecl *VD) {
   EmitTopLevelDecl(VD);
 }
 
-void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD) {
+void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD,
+                                                 llvm::GlobalValue *GV) {
   const FunctionDecl *D = cast<FunctionDecl>(GD.getDecl());
 
   // Compute the function info and LLVM type.
@@ -2087,7 +2100,9 @@ void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD) {
   llvm::FunctionType *Ty = getTypes().GetFunctionType(FI);
 
   // Get or create the prototype for the function.
-  llvm::Constant *Entry = GetAddrOfFunction(GD, Ty);
+  llvm::Constant *Entry =
+      GV ? GV
+         : GetAddrOfFunction(GD, Ty, /*ForVTable=*/false, /*DontDefer*/ true);
 
   // Strip off a bitcast if we got one back.
   if (llvm::ConstantExpr *CE = dyn_cast<llvm::ConstantExpr>(Entry)) {
@@ -2396,16 +2411,6 @@ CodeGenModule::GetAddrOfConstantCFString(const StringLiteral *Literal) {
   return GV;
 }
 
-static RecordDecl *
-CreateRecordDecl(const ASTContext &Ctx, RecordDecl::TagKind TK,
-                 DeclContext *DC, IdentifierInfo *Id) {
-  SourceLocation Loc;
-  if (Ctx.getLangOpts().CPlusPlus)
-    return CXXRecordDecl::Create(Ctx, TK, DC, Loc, Loc, Id);
-  else
-    return RecordDecl::Create(Ctx, TK, DC, Loc, Loc, Id);
-}
-
 llvm::Constant *
 CodeGenModule::GetAddrOfConstantString(const StringLiteral *Literal) {
   unsigned StringLength = 0;
@@ -2448,9 +2453,7 @@ CodeGenModule::GetAddrOfConstantString(const StringLiteral *Literal) {
 
   if (!NSConstantStringType) {
     // Construct the type for a constant NSString.
-    RecordDecl *D = CreateRecordDecl(Context, TTK_Struct, 
-                                     Context.getTranslationUnitDecl(),
-                                   &Context.Idents.get("__builtin_NSString"));
+    RecordDecl *D = Context.buildImplicitRecord("__builtin_NSString");
     D->startDefinition();
       
     QualType FieldTypes[3];
@@ -2526,9 +2529,7 @@ CodeGenModule::GetAddrOfConstantString(const StringLiteral *Literal) {
 
 QualType CodeGenModule::getObjCFastEnumerationStateType() {
   if (ObjCFastEnumerationStateType.isNull()) {
-    RecordDecl *D = CreateRecordDecl(Context, TTK_Struct, 
-                                     Context.getTranslationUnitDecl(),
-                      &Context.Idents.get("__objcFastEnumerationState"));
+    RecordDecl *D = Context.buildImplicitRecord("__objcFastEnumerationState");
     D->startDefinition();
     
     QualType FieldTypes[] = {

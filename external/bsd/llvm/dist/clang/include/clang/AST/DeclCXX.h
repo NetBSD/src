@@ -129,7 +129,7 @@ public:
   static AccessSpecDecl *Create(ASTContext &C, AccessSpecifier AS,
                                 DeclContext *DC, SourceLocation ASLoc,
                                 SourceLocation ColonLoc) {
-    return new (C) AccessSpecDecl(AS, DC, ASLoc, ColonLoc);
+    return new (C, DC) AccessSpecDecl(AS, DC, ASLoc, ColonLoc);
   }
   static AccessSpecDecl *CreateDeserialized(ASTContext &C, unsigned ID);
 
@@ -350,10 +350,15 @@ class CXXRecordDecl : public RecordDecl {
     /// \brief True if this class (or any subobject) has mutable fields.
     bool HasMutableFields : 1;
 
+    /// \brief True if this class (or any nested anonymous struct or union)
+    /// has variant members.
+    bool HasVariantMembers : 1;
+
     /// \brief True if there no non-field members declared by the user.
     bool HasOnlyCMembers : 1;
 
-    /// \brief True if any field has an in-class initializer.
+    /// \brief True if any field has an in-class initializer, including those
+    /// within anonymous unions or structs.
     bool HasInClassInitializer : 1;
 
     /// \brief True if any field is of reference type, and does not have an
@@ -1058,7 +1063,8 @@ public:
   bool isAggregate() const { return data().Aggregate; }
 
   /// \brief Whether this class has any in-class initializers
-  /// for non-static data members.
+  /// for non-static data members (including those in anonymous unions or
+  /// structs).
   bool hasInClassInitializer() const { return data().HasInClassInitializer; }
 
   /// \brief Whether this class or any of its subobjects has any members of
@@ -1117,6 +1123,9 @@ public:
   /// contains a mutable field.
   bool hasMutableFields() const { return data().HasMutableFields; }
 
+  /// \brief Determine whether this class has any variant members.
+  bool hasVariantMembers() const { return data().HasVariantMembers; }
+
   /// \brief Determine whether this class has a trivial default constructor
   /// (C++11 [class.ctor]p5).
   bool hasTrivialDefaultConstructor() const {
@@ -1144,7 +1153,7 @@ public:
   /// would be constexpr.
   bool defaultedDefaultConstructorIsConstexpr() const {
     return data().DefaultedDefaultConstructorIsConstexpr &&
-           (!isUnion() || hasInClassInitializer());
+           (!isUnion() || hasInClassInitializer() || !hasVariantMembers());
   }
 
   /// \brief Determine whether this class has a constexpr default constructor.
@@ -1683,9 +1692,9 @@ public:
     CXXMethodDecl *CD =
       cast<CXXMethodDecl>(const_cast<CXXMethodDecl*>(this)->getCanonicalDecl());
 
-    // Methods declared in interfaces are automatically (pure) virtual.
-    if (CD->isVirtualAsWritten() ||
-          (CD->getParent()->isInterface() && CD->isUserProvided()))
+    // Member function is virtual if it is marked explicitly so, or if it is
+    // declared in __interface -- then it is automatically pure virtual.
+    if (CD->isVirtualAsWritten() || CD->isPure())
       return true;
 
     return (CD->begin_overridden_methods() != CD->end_overridden_methods());
@@ -2701,7 +2710,7 @@ public:
   static UsingShadowDecl *Create(ASTContext &C, DeclContext *DC,
                                  SourceLocation Loc, UsingDecl *Using,
                                  NamedDecl *Target) {
-    return new (C) UsingShadowDecl(DC, Loc, Using, Target);
+    return new (C, DC) UsingShadowDecl(DC, Loc, Using, Target);
   }
 
   static UsingShadowDecl *CreateDeserialized(ASTContext &C, unsigned ID);
@@ -3083,14 +3092,17 @@ public:
 class MSPropertyDecl : public DeclaratorDecl {
   IdentifierInfo *GetterId, *SetterId;
 
-public:
-  MSPropertyDecl(DeclContext *DC, SourceLocation L,
-                 DeclarationName N, QualType T, TypeSourceInfo *TInfo,
-                 SourceLocation StartL, IdentifierInfo *Getter,
-                 IdentifierInfo *Setter):
-  DeclaratorDecl(MSProperty, DC, L, N, T, TInfo, StartL), GetterId(Getter),
-  SetterId(Setter) {}
+  MSPropertyDecl(DeclContext *DC, SourceLocation L, DeclarationName N,
+                 QualType T, TypeSourceInfo *TInfo, SourceLocation StartL,
+                 IdentifierInfo *Getter, IdentifierInfo *Setter)
+      : DeclaratorDecl(MSProperty, DC, L, N, T, TInfo, StartL),
+        GetterId(Getter), SetterId(Setter) {}
 
+public:
+  static MSPropertyDecl *Create(ASTContext &C, DeclContext *DC,
+                                SourceLocation L, DeclarationName N, QualType T,
+                                TypeSourceInfo *TInfo, SourceLocation StartL,
+                                IdentifierInfo *Getter, IdentifierInfo *Setter);
   static MSPropertyDecl *CreateDeserialized(ASTContext &C, unsigned ID);
 
   static bool classof(const Decl *D) { return D->getKind() == MSProperty; }

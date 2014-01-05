@@ -880,7 +880,8 @@ static bool CheckConstexprDeclStmt(Sema &SemaRef, const FunctionDecl *Dcl,
               diag::err_constexpr_local_var_non_literal_type,
               isa<CXXConstructorDecl>(Dcl)))
           return false;
-        if (!VD->hasInit() && !VD->isCXXForRangeDecl()) {
+        if (!VD->getType()->isDependentType() &&
+            !VD->hasInit() && !VD->isCXXForRangeDecl()) {
           SemaRef.Diag(VD->getLocation(),
                        diag::err_constexpr_local_var_no_init)
             << isa<CXXConstructorDecl>(Dcl);
@@ -932,8 +933,13 @@ static void CheckConstexprCtorInitializer(Sema &SemaRef,
   if (Field->isUnnamedBitfield())
     return;
 
+  // Anonymous unions with no variant members and empty anonymous structs do not
+  // need to be explicitly initialized. FIXME: Anonymous structs that contain no
+  // indirect fields don't need initializing.
   if (Field->isAnonymousStructOrUnion() &&
-      Field->getType()->getAsCXXRecordDecl()->isEmpty())
+      (Field->getType()->isUnionType()
+           ? !Field->getType()->getAsCXXRecordDecl()->hasVariantMembers()
+           : Field->getType()->getAsCXXRecordDecl()->isEmpty()))
     return;
 
   if (!Inits.count(Field)) {
@@ -1116,11 +1122,12 @@ bool Sema::CheckConstexprFunctionBody(const FunctionDecl *Dcl, Stmt *Body) {
     // DR1359:
     // - every non-variant non-static data member and base class sub-object
     //   shall be initialized;
-    // - if the class is a non-empty union, or for each non-empty anonymous
-    //   union member of a non-union class, exactly one non-static data member
+    // DR1460:
+    // - if the class is a union having variant members, exactly one of them
     //   shall be initialized;
     if (RD->isUnion()) {
-      if (Constructor->getNumCtorInitializers() == 0 && !RD->isEmpty()) {
+      if (Constructor->getNumCtorInitializers() == 0 &&
+          RD->hasVariantMembers()) {
         Diag(Dcl->getLocation(), diag::err_constexpr_union_ctor_no_init);
         return false;
       }
@@ -1139,6 +1146,10 @@ bool Sema::CheckConstexprFunctionBody(const FunctionDecl *Dcl, Stmt *Body) {
           break;
         }
       }
+      // DR1460:
+      // - if the class is a union-like class, but is not a union, for each of
+      //   its anonymous union members having variant members, exactly one of
+      //   them shall be initialized;
       if (AnyAnonStructUnionMembers ||
           Constructor->getNumCtorInitializers() != RD->getNumBases() + Fields) {
         // Check initialization of non-static data members. Base classes are
@@ -2629,13 +2640,10 @@ Sema::BuildMemInitializer(Decl *ConstructorD,
 
     if (BaseType.isNull()) {
       BaseType = Context.getTypeDeclType(TyD);
-      if (SS.isSet()) {
-        NestedNameSpecifier *Qualifier =
-          static_cast<NestedNameSpecifier*>(SS.getScopeRep());
-
+      if (SS.isSet())
         // FIXME: preserve source range information
-        BaseType = Context.getElaboratedType(ETK_None, Qualifier, BaseType);
-      }
+        BaseType = Context.getElaboratedType(ETK_None, SS.getScopeRep(),
+                                             BaseType);
     }
   }
 
@@ -3320,6 +3328,7 @@ struct BaseAndFieldInfo {
   ImplicitInitializerKind IIK;
   llvm::DenseMap<const void *, CXXCtorInitializer*> AllBaseFields;
   SmallVector<CXXCtorInitializer*, 8> AllToInit;
+  llvm::DenseMap<TagDecl*, FieldDecl*> ActiveUnionMember;
 
   BaseAndFieldInfo(Sema &S, CXXConstructorDecl *Ctor, bool ErrorsInInits)
     : S(S), Ctor(Ctor), AnyErrorsInInits(ErrorsInInits) {
@@ -3357,20 +3366,50 @@ struct BaseAndFieldInfo {
 
     return false;
   }
-};
-}
 
-/// \brief Determine whether the given indirect field declaration is somewhere
-/// within an anonymous union.
-static bool isWithinAnonymousUnion(IndirectFieldDecl *F) {
-  for (IndirectFieldDecl::chain_iterator C = F->chain_begin(), 
-                                      CEnd = F->chain_end();
-       C != CEnd; ++C)
-    if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>((*C)->getDeclContext()))
-      if (Record->isUnion())
+  bool isInactiveUnionMember(FieldDecl *Field) {
+    RecordDecl *Record = Field->getParent();
+    if (!Record->isUnion())
+      return false;
+
+    if (FieldDecl *Active =
+            ActiveUnionMember.lookup(Record->getCanonicalDecl()))
+      return Active != Field->getCanonicalDecl();
+
+    // In an implicit copy or move constructor, ignore any in-class initializer.
+    if (isImplicitCopyOrMove())
+      return true;
+
+    // If there's no explicit initialization, the field is active only if it
+    // has an in-class initializer...
+    if (Field->hasInClassInitializer())
+      return false;
+    // ... or it's an anonymous struct or union whose class has an in-class
+    // initializer.
+    if (!Field->isAnonymousStructOrUnion())
+      return true;
+    CXXRecordDecl *FieldRD = Field->getType()->getAsCXXRecordDecl();
+    return !FieldRD->hasInClassInitializer();
+  }
+
+  /// \brief Determine whether the given field is, or is within, a union member
+  /// that is inactive (because there was an initializer given for a different
+  /// member of the union, or because the union was not initialized at all).
+  bool isWithinInactiveUnionMember(FieldDecl *Field,
+                                   IndirectFieldDecl *Indirect) {
+    if (!Indirect)
+      return isInactiveUnionMember(Field);
+
+    for (IndirectFieldDecl::chain_iterator C = Indirect->chain_begin(),
+                                           CEnd = Indirect->chain_end();
+         C != CEnd; ++C) {
+      FieldDecl *Field = dyn_cast<FieldDecl>(*C);
+      if (Field && isInactiveUnionMember(Field))
         return true;
-        
-  return false;
+    }
+    return false;
+  }
+};
 }
 
 /// \brief Determine whether the given type is an incomplete or zero-lenfgth
@@ -3399,9 +3438,21 @@ static bool CollectFieldInitializer(Sema &SemaRef, BaseAndFieldInfo &Info,
   if (CXXCtorInitializer *Init = Info.AllBaseFields.lookup(Field))
     return Info.addFieldInitializer(Init);
 
-  // C++11 [class.base.init]p8: if the entity is a non-static data member that
-  // has a brace-or-equal-initializer, the entity is initialized as specified
-  // in [dcl.init].
+  // C++11 [class.base.init]p8:
+  //   if the entity is a non-static data member that has a
+  //   brace-or-equal-initializer and either
+  //   -- the constructor's class is a union and no other variant member of that
+  //      union is designated by a mem-initializer-id or
+  //   -- the constructor's class is not a union, and, if the entity is a member
+  //      of an anonymous union, no other member of that union is designated by
+  //      a mem-initializer-id,
+  //   the entity is initialized as specified in [dcl.init].
+  //
+  // We also apply the same rules to handle anonymous structs within anonymous
+  // unions.
+  if (Info.isWithinInactiveUnionMember(Field, Indirect))
+    return false;
+
   if (Field->hasInClassInitializer() && !Info.isImplicitCopyOrMove()) {
     Expr *DIE = CXXDefaultInitExpr::Create(SemaRef.Context,
                                            Info.Ctor->getLocation(), Field);
@@ -3418,12 +3469,6 @@ static bool CollectFieldInitializer(Sema &SemaRef, BaseAndFieldInfo &Info,
                                                       SourceLocation());
     return Info.addFieldInitializer(Init);
   }
-
-  // Don't build an implicit initializer for union members if none was
-  // explicitly specified.
-  if (Field->getParent()->isUnion() ||
-      (Indirect && isWithinAnonymousUnion(Indirect)))
-    return false;
 
   // Don't initialize incomplete or zero-length arrays.
   if (isIncompleteOrZeroLengthArrayType(SemaRef.Context, Field->getType()))
@@ -3502,8 +3547,24 @@ bool Sema::SetCtorInitializers(CXXConstructorDecl *Constructor, bool AnyErrors,
 
     if (Member->isBaseInitializer())
       Info.AllBaseFields[Member->getBaseClass()->getAs<RecordType>()] = Member;
-    else
+    else {
       Info.AllBaseFields[Member->getAnyMember()] = Member;
+
+      if (IndirectFieldDecl *F = Member->getIndirectMember()) {
+        for (IndirectFieldDecl::chain_iterator C = F->chain_begin(),
+                                            CEnd = F->chain_end();
+             C != CEnd; ++C) {
+          FieldDecl *FD = dyn_cast<FieldDecl>(*C);
+          if (FD && FD->getParent()->isUnion())
+            Info.ActiveUnionMember.insert(std::make_pair(
+                FD->getParent()->getCanonicalDecl(), FD->getCanonicalDecl()));
+        }
+      } else if (FieldDecl *FD = Member->getMember()) {
+        if (FD->getParent()->isUnion())
+          Info.ActiveUnionMember.insert(std::make_pair(
+              FD->getParent()->getCanonicalDecl(), FD->getCanonicalDecl()));
+      }
+    }
   }
 
   // Keep track of the direct virtual bases.
@@ -4405,6 +4466,15 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
         }
       }
     }
+
+    if (Record->hasUserDeclaredDestructor()) {
+      // The Microsoft ABI requires that we perform the destructor body
+      // checks (i.e. operator delete() lookup) in any translataion unit, as
+      // any translation unit may need to emit a deleting destructor.
+      if (Context.getTargetInfo().getCXXABI().isMicrosoft() &&
+          !Record->getDestructor()->isDeleted())
+        CheckDestructor(Record->getDestructor());
+    }
   }
 
   // C++11 [dcl.constexpr]p8: A constexpr specifier for a non-static member
@@ -4463,14 +4533,43 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
   DeclareInheritingConstructors(Record);
 }
 
+/// Look up the special member function that would be called by a special
+/// member function for a subobject of class type.
+///
+/// \param Class The class type of the subobject.
+/// \param CSM The kind of special member function.
+/// \param FieldQuals If the subobject is a field, its cv-qualifiers.
+/// \param ConstRHS True if this is a copy operation with a const object
+///        on its RHS, that is, if the argument to the outer special member
+///        function is 'const' and this is not a field marked 'mutable'.
+static Sema::SpecialMemberOverloadResult *lookupCallFromSpecialMember(
+    Sema &S, CXXRecordDecl *Class, Sema::CXXSpecialMember CSM,
+    unsigned FieldQuals, bool ConstRHS) {
+  unsigned LHSQuals = 0;
+  if (CSM == Sema::CXXCopyAssignment || CSM == Sema::CXXMoveAssignment)
+    LHSQuals = FieldQuals;
+
+  unsigned RHSQuals = FieldQuals;
+  if (CSM == Sema::CXXDefaultConstructor || CSM == Sema::CXXDestructor)
+    RHSQuals = 0;
+  else if (ConstRHS)
+    RHSQuals |= Qualifiers::Const;
+
+  return S.LookupSpecialMember(Class, CSM,
+                               RHSQuals & Qualifiers::Const,
+                               RHSQuals & Qualifiers::Volatile,
+                               false,
+                               LHSQuals & Qualifiers::Const,
+                               LHSQuals & Qualifiers::Volatile);
+}
+
 /// Is the special member function which would be selected to perform the
 /// specified operation on the specified class type a constexpr constructor?
 static bool specialMemberIsConstexpr(Sema &S, CXXRecordDecl *ClassDecl,
                                      Sema::CXXSpecialMember CSM,
-                                     bool ConstArg) {
+                                     unsigned Quals, bool ConstRHS) {
   Sema::SpecialMemberOverloadResult *SMOR =
-      S.LookupSpecialMember(ClassDecl, CSM, ConstArg,
-                            false, false, false, false);
+      lookupCallFromSpecialMember(S, ClassDecl, CSM, Quals, ConstRHS);
   if (!SMOR || !SMOR->getMethod())
     // A constructor we wouldn't select can't be "involved in initializing"
     // anything.
@@ -4547,7 +4646,7 @@ static bool defaultedSpecialMemberIsConstexpr(Sema &S, CXXRecordDecl *ClassDecl,
     if (!BaseType) continue;
 
     CXXRecordDecl *BaseClassDecl = cast<CXXRecordDecl>(BaseType->getDecl());
-    if (!specialMemberIsConstexpr(S, BaseClassDecl, CSM, ConstArg))
+    if (!specialMemberIsConstexpr(S, BaseClassDecl, CSM, 0, ConstArg))
       return false;
   }
 
@@ -4555,7 +4654,7 @@ static bool defaultedSpecialMemberIsConstexpr(Sema &S, CXXRecordDecl *ClassDecl,
   //      [...] shall be a constexpr constructor;
   //   -- every non-static data member and base class sub-object shall be
   //      initialized
-  //   -- for each non-stastic data member of X that is of class type (or array
+  //   -- for each non-static data member of X that is of class type (or array
   //      thereof), the assignment operator selected to copy/move that member is
   //      a constexpr function
   for (RecordDecl::field_iterator F = ClassDecl->field_begin(),
@@ -4563,10 +4662,12 @@ static bool defaultedSpecialMemberIsConstexpr(Sema &S, CXXRecordDecl *ClassDecl,
        F != FEnd; ++F) {
     if (F->isInvalidDecl())
       continue;
-    if (const RecordType *RecordTy =
-            S.Context.getBaseElementType(F->getType())->getAs<RecordType>()) {
+    QualType BaseType = S.Context.getBaseElementType(F->getType());
+    if (const RecordType *RecordTy = BaseType->getAs<RecordType>()) {
       CXXRecordDecl *FieldRecDecl = cast<CXXRecordDecl>(RecordTy->getDecl());
-      if (!specialMemberIsConstexpr(S, FieldRecDecl, CSM, ConstArg))
+      if (!specialMemberIsConstexpr(S, FieldRecDecl, CSM,
+                                    BaseType.getCVRQualifiers(),
+                                    ConstArg && !F->isMutable()))
         return false;
     }
   }
@@ -4865,7 +4966,7 @@ struct SpecialMemberDeletionInfo {
   bool Diagnose;
 
   // Properties of the special member, computed for convenience.
-  bool IsConstructor, IsAssignment, IsMove, ConstArg, VolatileArg;
+  bool IsConstructor, IsAssignment, IsMove, ConstArg;
   SourceLocation Loc;
 
   bool AllFieldsAreConst;
@@ -4874,7 +4975,7 @@ struct SpecialMemberDeletionInfo {
                             Sema::CXXSpecialMember CSM, bool Diagnose)
     : S(S), MD(MD), CSM(CSM), Diagnose(Diagnose),
       IsConstructor(false), IsAssignment(false), IsMove(false),
-      ConstArg(false), VolatileArg(false), Loc(MD->getLocation()),
+      ConstArg(false), Loc(MD->getLocation()),
       AllFieldsAreConst(true) {
     switch (CSM) {
       case Sema::CXXDefaultConstructor:
@@ -4899,8 +5000,9 @@ struct SpecialMemberDeletionInfo {
     }
 
     if (MD->getNumParams()) {
-      ConstArg = MD->getParamDecl(0)->getType().isConstQualified();
-      VolatileArg = MD->getParamDecl(0)->getType().isVolatileQualified();
+      if (const ReferenceType *RT =
+              MD->getParamDecl(0)->getType()->getAs<ReferenceType>())
+        ConstArg = RT->getPointeeType().isConstQualified();
     }
   }
 
@@ -4908,21 +5010,9 @@ struct SpecialMemberDeletionInfo {
 
   /// Look up the corresponding special member in the given class.
   Sema::SpecialMemberOverloadResult *lookupIn(CXXRecordDecl *Class,
-                                              unsigned Quals) {
-    unsigned TQ = MD->getTypeQualifiers();
-    // cv-qualifiers on class members don't affect default ctor / dtor calls.
-    if (CSM == Sema::CXXDefaultConstructor || CSM == Sema::CXXDestructor)
-      Quals = 0;
-    // cv-qualifiers on class members affect the type of both '*this' and the
-    // argument for an assignment.
-    if (IsAssignment)
-      TQ |= Quals;
-    return S.LookupSpecialMember(Class, CSM,
-                                 ConstArg || (Quals & Qualifiers::Const),
-                                 VolatileArg || (Quals & Qualifiers::Volatile),
-                                 MD->getRefQualifier() == RQ_RValue,
-                                 TQ & Qualifiers::Const,
-                                 TQ & Qualifiers::Volatile);
+                                              unsigned Quals, bool IsMutable) {
+    return lookupCallFromSpecialMember(S, Class, CSM, Quals,
+                                       ConstArg && !IsMutable);
   }
 
   typedef llvm::PointerUnion<CXXBaseSpecifier*, FieldDecl*> Subobject;
@@ -5017,6 +5107,7 @@ bool SpecialMemberDeletionInfo::shouldDeleteForSubobjectCall(
 bool SpecialMemberDeletionInfo::shouldDeleteForClassSubobject(
     CXXRecordDecl *Class, Subobject Subobj, unsigned Quals) {
   FieldDecl *Field = Subobj.dyn_cast<FieldDecl*>();
+  bool IsMutable = Field && Field->isMutable();
 
   // C++11 [class.ctor]p5:
   // -- any direct or virtual base class, or non-static data member with no
@@ -5034,7 +5125,8 @@ bool SpecialMemberDeletionInfo::shouldDeleteForClassSubobject(
   //    that is deleted or inaccessible
   if (!(CSM == Sema::CXXDefaultConstructor &&
         Field && Field->hasInClassInitializer()) &&
-      shouldDeleteForSubobjectCall(Subobj, lookupIn(Class, Quals), false))
+      shouldDeleteForSubobjectCall(Subobj, lookupIn(Class, Quals, IsMutable),
+                                   false))
     return true;
 
   // C++11 [class.ctor]p5, C++11 [class.copy]p11:
@@ -5312,7 +5404,7 @@ bool Sema::ShouldDeleteSpecialMember(CXXMethodDecl *MD, CXXSpecialMember CSM,
 /// member that was most likely to be intended to be trivial, if any.
 static bool findTrivialSpecialMember(Sema &S, CXXRecordDecl *RD,
                                      Sema::CXXSpecialMember CSM, unsigned Quals,
-                                     CXXMethodDecl **Selected) {
+                                     bool ConstRHS, CXXMethodDecl **Selected) {
   if (Selected)
     *Selected = 0;
 
@@ -5403,11 +5495,7 @@ static bool findTrivialSpecialMember(Sema &S, CXXRecordDecl *RD,
   case Sema::CXXMoveAssignment:
   NeedOverloadResolution:
     Sema::SpecialMemberOverloadResult *SMOR =
-      S.LookupSpecialMember(RD, CSM,
-                            Quals & Qualifiers::Const,
-                            Quals & Qualifiers::Volatile,
-                            /*RValueThis*/false, /*ConstThis*/false,
-                            /*VolatileThis*/false);
+        lookupCallFromSpecialMember(S, RD, CSM, Quals, ConstRHS);
 
     // The standard doesn't describe how to behave if the lookup is ambiguous.
     // We treat it as not making the member non-trivial, just like the standard
@@ -5462,7 +5550,7 @@ enum TrivialSubobjectKind {
 
 /// Check whether the special member selected for a given type would be trivial.
 static bool checkTrivialSubobjectCall(Sema &S, SourceLocation SubobjLoc,
-                                      QualType SubType,
+                                      QualType SubType, bool ConstRHS,
                                       Sema::CXXSpecialMember CSM,
                                       TrivialSubobjectKind Kind,
                                       bool Diagnose) {
@@ -5472,10 +5560,13 @@ static bool checkTrivialSubobjectCall(Sema &S, SourceLocation SubobjLoc,
 
   CXXMethodDecl *Selected;
   if (findTrivialSpecialMember(S, SubRD, CSM, SubType.getCVRQualifiers(),
-                               Diagnose ? &Selected : 0))
+                               ConstRHS, Diagnose ? &Selected : 0))
     return true;
 
   if (Diagnose) {
+    if (ConstRHS)
+      SubType.addConst();
+
     if (!Selected && CSM == Sema::CXXDefaultConstructor) {
       S.Diag(SubobjLoc, diag::note_nontrivial_no_def_ctor)
         << Kind << SubType.getUnqualifiedType();
@@ -5548,10 +5639,9 @@ static bool checkTrivialClassMembers(Sema &S, CXXRecordDecl *RD,
       return false;
     }
 
-    if (ConstArg && !FI->isMutable())
-      FieldType.addConst();
-    if (!checkTrivialSubobjectCall(S, FI->getLocation(), FieldType, CSM,
-                                   TSK_Field, Diagnose))
+    bool ConstRHS = ConstArg && !FI->isMutable();
+    if (!checkTrivialSubobjectCall(S, FI->getLocation(), FieldType, ConstRHS,
+                                   CSM, TSK_Field, Diagnose))
       return false;
   }
 
@@ -5562,10 +5652,9 @@ static bool checkTrivialClassMembers(Sema &S, CXXRecordDecl *RD,
 /// the given kind.
 void Sema::DiagnoseNontrivial(const CXXRecordDecl *RD, CXXSpecialMember CSM) {
   QualType Ty = Context.getRecordType(RD);
-  if (CSM == CXXCopyConstructor || CSM == CXXCopyAssignment)
-    Ty.addConst();
 
-  checkTrivialSubobjectCall(*this, RD->getLocation(), Ty, CSM,
+  bool ConstArg = (CSM == CXXCopyConstructor || CSM == CXXCopyAssignment);
+  checkTrivialSubobjectCall(*this, RD->getLocation(), Ty, ConstArg, CSM,
                             TSK_CompleteObject, /*Diagnose*/true);
 }
 
@@ -5650,10 +5739,8 @@ bool Sema::SpecialMemberIsTrivial(CXXMethodDecl *MD, CXXSpecialMember CSM,
   //       destructors]
   for (CXXRecordDecl::base_class_iterator BI = RD->bases_begin(),
                                           BE = RD->bases_end(); BI != BE; ++BI)
-    if (!checkTrivialSubobjectCall(*this, BI->getLocStart(),
-                                   ConstArg ? BI->getType().withConst()
-                                            : BI->getType(),
-                                   CSM, TSK_BaseClass, Diagnose))
+    if (!checkTrivialSubobjectCall(*this, BI->getLocStart(), BI->getType(),
+                                   ConstArg, CSM, TSK_BaseClass, Diagnose))
       return false;
 
   // C++11 [class.ctor]p5, C++11 [class.dtor]p5:
@@ -6175,6 +6262,10 @@ bool Sema::CheckDestructor(CXXDestructorDecl *Destructor) {
     Context.DeclarationNames.getCXXOperatorName(OO_Delete);
     if (FindDeallocationFunction(Loc, RD, Name, OperatorDelete))
       return true;
+    // If there's no class-specific operator delete, look up the global
+    // non-array delete.
+    if (!OperatorDelete)
+      OperatorDelete = FindUsualDeallocationFunction(Loc, true, Name);
 
     MarkFunctionReferenced(Loc, OperatorDelete);
     
@@ -6882,7 +6973,7 @@ Decl *Sema::ActOnUsingDirective(Scope *S,
   UsingDirectiveDecl *UDir = 0;
   NestedNameSpecifier *Qualifier = 0;
   if (SS.isSet())
-    Qualifier = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
+    Qualifier = SS.getScopeRep();
   
   // Lookup namespace name.
   LookupResult R(*this, NamespcName, IdentLoc, LookupNamespaceName);
@@ -7530,8 +7621,7 @@ bool Sema::CheckUsingDeclRedeclaration(SourceLocation UsingLoc,
   if (!CurContext->getRedeclContext()->isRecord())
     return false;
 
-  NestedNameSpecifier *Qual
-    = static_cast<NestedNameSpecifier*>(SS.getScopeRep());
+  NestedNameSpecifier *Qual = SS.getScopeRep();
 
   for (LookupResult::iterator I = Prev.begin(), E = Prev.end(); I != E; ++I) {
     NamedDecl *D = *I;
@@ -7614,7 +7704,7 @@ bool Sema::CheckUsingDeclQualifier(SourceLocation UsingLoc,
     // but we don't have that level of source info.
     Diag(SS.getRange().getBegin(),
          diag::err_using_decl_nested_name_specifier_is_not_class)
-      << (NestedNameSpecifier*) SS.getScopeRep() << SS.getRange();
+      << SS.getScopeRep() << SS.getRange();
     return true;
   }
 
@@ -7639,7 +7729,7 @@ bool Sema::CheckUsingDeclQualifier(SourceLocation UsingLoc,
 
       Diag(SS.getRange().getBegin(),
            diag::err_using_decl_nested_name_specifier_is_not_base_class)
-        << (NestedNameSpecifier*) SS.getScopeRep()
+        << SS.getScopeRep()
         << cast<CXXRecordDecl>(CurContext)
         << SS.getRange();
       return true;
@@ -7699,7 +7789,7 @@ bool Sema::CheckUsingDeclQualifier(SourceLocation UsingLoc,
 
   Diag(SS.getRange().getBegin(),
        diag::err_using_decl_nested_name_specifier_is_not_base_class)
-    << (NestedNameSpecifier*) SS.getScopeRep()
+    << SS.getScopeRep()
     << cast<CXXRecordDecl>(CurContext)
     << SS.getRange();
 
@@ -10305,7 +10395,7 @@ void Sema::DefineImplicitLambdaToFunctionPointerConversion(
   SynthesizedFunctionScope Scope(*this, Conv);
   DiagnosticErrorTrap Trap(Diags);
    
-  // Retreive the static invoker...
+  // Retrieve the static invoker...
   CXXMethodDecl *Invoker = Lambda->getLambdaStaticInvoker();
   // ... and get the corresponding specialization for a generic lambda.
   if (Lambda->isGenericLambda()) {
@@ -11973,6 +12063,13 @@ bool Sema::CheckOverridingFunctionAttributes(const CXXMethodDecl *New,
   if (NewCC == OldCC)
     return false;
 
+  // If the calling conventions mismatch because the new function is static,
+  // suppress the calling convention mismatch error; the error about static
+  // function override (err_static_overrides_virtual from
+  // Sema::CheckFunctionDeclaration) is more clear.
+  if (New->getStorageClass() == SC_Static)
+    return false;
+
   Diag(New->getLocation(),
        diag::err_conflicting_overriding_cc_attributes)
     << New->getDeclName() << New->getType() << Old->getType();
@@ -12116,11 +12213,13 @@ void Sema::ActOnCXXEnterDeclInitializer(Scope *S, Decl *D) {
   // If there is no declaration, there was an error parsing it.
   if (D == 0 || D->isInvalidDecl()) return;
 
-  // We should only get called for declarations with scope specifiers, like:
-  //   int foo::bar;
-  assert(D->isOutOfLine());
-  EnterDeclaratorContext(S, D->getDeclContext());
-  
+  // We will always have a nested name specifier here, but this declaration
+  // might not be out of line if the specifier names the current namespace:
+  //   extern int n;
+  //   int ::n = 0;
+  if (D->isOutOfLine())
+    EnterDeclaratorContext(S, D->getDeclContext());
+
   // If we are parsing the initializer for a static data member, push a
   // new expression evaluation context that is associated with this static
   // data member.
@@ -12135,10 +12234,10 @@ void Sema::ActOnCXXExitDeclInitializer(Scope *S, Decl *D) {
   if (D == 0 || D->isInvalidDecl()) return;
 
   if (isStaticDataMember(D))
-    PopExpressionEvaluationContext();  
+    PopExpressionEvaluationContext();
 
-  assert(D->isOutOfLine());
-  ExitDeclaratorContext(S);
+  if (D->isOutOfLine())
+    ExitDeclaratorContext(S);
 }
 
 /// ActOnCXXConditionDeclarationExpr - Parsed a condition declaration of a
@@ -12797,11 +12896,9 @@ MSPropertyDecl *Sema::HandleMSProperty(Scope *S, RecordDecl *Record,
     PrevDecl = 0;
 
   SourceLocation TSSL = D.getLocStart();
-  MSPropertyDecl *NewPD;
   const AttributeList::PropertyData &Data = MSPropertyAttr->getPropertyData();
-  NewPD = new (Context) MSPropertyDecl(Record, Loc,
-                                       II, T, TInfo, TSSL,
-                                       Data.GetterId, Data.SetterId);
+  MSPropertyDecl *NewPD = MSPropertyDecl::Create(
+      Context, Record, Loc, II, T, TInfo, TSSL, Data.GetterId, Data.SetterId);
   ProcessDeclAttributes(TUScope, NewPD, D);
   NewPD->setAccess(AS);
 

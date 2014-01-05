@@ -161,9 +161,8 @@ public:
   void printQualifiedName(raw_ostream &OS) const;
   void printQualifiedName(raw_ostream &OS, const PrintingPolicy &Policy) const;
 
-  // FIXME: Remove string versions.
+  // FIXME: Remove string version.
   std::string getQualifiedNameAsString() const;
-  std::string getQualifiedNameAsString(const PrintingPolicy &Policy) const;
 
   /// getNameForDiagnostic - Appends a human-readable name for this
   /// declaration into the given stream.
@@ -333,8 +332,6 @@ public:
 class NamespaceDecl : public NamedDecl, public DeclContext, 
                       public Redeclarable<NamespaceDecl> 
 {
-  virtual void anchor();
-
   /// LocStart - The starting location of the source range, pointing
   /// to either the namespace or the inline keyword.
   SourceLocation LocStart;
@@ -350,18 +347,12 @@ class NamespaceDecl : public NamedDecl, public DeclContext,
   NamespaceDecl(DeclContext *DC, bool Inline, SourceLocation StartLoc,
                 SourceLocation IdLoc, IdentifierInfo *Id,
                 NamespaceDecl *PrevDecl);
-  
+
   typedef Redeclarable<NamespaceDecl> redeclarable_base;
-  virtual NamespaceDecl *getNextRedeclaration() {
-    return RedeclLink.getNext();
-  }
-  virtual NamespaceDecl *getPreviousDeclImpl() {
-    return getPreviousDecl();
-  }
-  virtual NamespaceDecl *getMostRecentDeclImpl() {
-    return getMostRecentDecl();
-  }
-  
+  virtual NamespaceDecl *getNextRedeclaration();
+  virtual NamespaceDecl *getPreviousDeclImpl();
+  virtual NamespaceDecl *getMostRecentDeclImpl();
+
 public:
   static NamespaceDecl *Create(ASTContext &C, DeclContext *DC,
                                bool Inline, SourceLocation StartLoc,

@@ -367,11 +367,8 @@ public:
     CGF.EmitCXXDeleteExpr(E);
     return 0;
   }
-  Value *VisitUnaryTypeTraitExpr(const UnaryTypeTraitExpr *E) {
-    return Builder.getInt1(E->getValue());
-  }
 
-  Value *VisitBinaryTypeTraitExpr(const BinaryTypeTraitExpr *E) {
+  Value *VisitTypeTraitExpr(const TypeTraitExpr *E) {
     return llvm::ConstantInt::get(ConvertType(E->getType()), E->getValue());
   }
 
@@ -1299,7 +1296,18 @@ Value *ScalarExprEmitter::VisitCastExpr(CastExpr *CE) {
   case CK_AnyPointerToBlockPointerCast:
   case CK_BitCast: {
     Value *Src = Visit(const_cast<Expr*>(E));
-    return Builder.CreateBitCast(Src, ConvertType(DestTy));
+    llvm::Type *SrcTy = Src->getType();
+    llvm::Type *DstTy = ConvertType(DestTy);
+    if (SrcTy->isPtrOrPtrVectorTy() && DstTy->isPtrOrPtrVectorTy() && 
+        SrcTy->getPointerAddressSpace() != DstTy->getPointerAddressSpace()) {
+      llvm::Type *MidTy = CGF.CGM.getDataLayout().getIntPtrType(SrcTy);
+      return Builder.CreateIntToPtr(Builder.CreatePtrToInt(Src, MidTy), DstTy);
+    }
+    return Builder.CreateBitCast(Src, DstTy);
+  }
+  case CK_AddressSpaceConversion: {
+    Value *Src = Visit(const_cast<Expr*>(E));
+    return Builder.CreateAddrSpaceCast(Src, ConvertType(DestTy));
   }
   case CK_AtomicToNonAtomic:
   case CK_NonAtomicToAtomic:
@@ -1360,7 +1368,7 @@ Value *ScalarExprEmitter::VisitCastExpr(CastExpr *CE) {
 
     // Make sure the array decay ends up being the right type.  This matters if
     // the array type was of an incomplete type.
-    return CGF.Builder.CreateBitCast(V, ConvertType(CE->getType()));
+    return CGF.Builder.CreatePointerCast(V, ConvertType(CE->getType()));
   }
   case CK_FunctionToPointerDecay:
     return EmitLValue(E).getAddress();
@@ -1485,7 +1493,7 @@ Value *ScalarExprEmitter::VisitCastExpr(CastExpr *CE) {
   }
 
   case CK_ZeroToOCLEvent: {
-    assert(DestTy->isEventT() && "CK_ZeroToOCLEvent cast on non event type");
+    assert(DestTy->isEventT() && "CK_ZeroToOCLEvent cast on non-event type");
     return llvm::Constant::getNullValue(ConvertType(DestTy));
   }
 

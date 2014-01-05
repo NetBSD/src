@@ -1624,6 +1624,11 @@ static llvm::VectorType *GetNeonType(CodeGenFunction *CGF,
   case NeonTypeFlags::Int64:
   case NeonTypeFlags::Poly64:
     return llvm::VectorType::get(CGF->Int64Ty, V1Ty ? 1 : (1 << IsQuad));
+  case NeonTypeFlags::Poly128:
+    // FIXME: i128 and f128 doesn't get fully support in Clang and llvm.
+    // There is a lot of i128 and f128 API missing.
+    // so we use v16i8 to represent poly128 and get pattern matched.
+    return llvm::VectorType::get(CGF->Int8Ty, 16);
   case NeonTypeFlags::Float32:
     return llvm::VectorType::get(CGF->FloatTy, V1Ty ? 1 : (2 << IsQuad));
   case NeonTypeFlags::Float64:
@@ -1753,15 +1758,18 @@ static Value *EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
                                            unsigned BuiltinID,
                                            const CallExpr *E) {
   unsigned int Int = 0;
-  // Scalar result generated across vectors
-  bool AcrossVec = false;
-  // Extend element of one-element vector
-  bool ExtendEle = false;
-  bool OverloadInt = false;
-  bool OverloadCmpInt = false;
-  bool OverloadCvtInt = false;
-  bool OverloadWideInt = false;
-  bool OverloadNarrowInt = false;
+  unsigned IntTypes = 0;
+  enum {
+    ScalarRet = (1 << 0),
+    VectorRet = (1 << 1),
+    ScalarArg0 = (1 << 2),
+    VectorGetArg0 = (1 << 3),
+    VectorCastArg0 = (1 << 4),
+    ScalarArg1 = (1 << 5),
+    VectorGetArg1 = (1 << 6),
+    VectorCastArg1 = (1 << 7),
+    ScalarFpCmpzArg1 = (1 << 8)
+  };
   const char *s = NULL;
 
   SmallVector<Value *, 4> Ops;
@@ -1893,7 +1901,7 @@ static Value *EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
   // Crypto
   case AArch64::BI__builtin_neon_vsha1h_u32:
     Int = Intrinsic::arm_neon_sha1h;
-    s = "sha1h"; OverloadInt = true; break;
+    s = "sha1h"; IntTypes = VectorRet; break;
   case AArch64::BI__builtin_neon_vsha1cq_u32:
     Int = Intrinsic::aarch64_neon_sha1c;
     s = "sha1c"; break;
@@ -1923,26 +1931,26 @@ static Value *EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
   case AArch64::BI__builtin_neon_vqadds_s32:
   case AArch64::BI__builtin_neon_vqaddd_s64:
     Int = Intrinsic::arm_neon_vqadds;
-    s = "vqadds"; OverloadInt = true; break;
+    s = "vqadds"; IntTypes = VectorRet; break;
   case AArch64::BI__builtin_neon_vqaddb_u8:
   case AArch64::BI__builtin_neon_vqaddh_u16:
   case AArch64::BI__builtin_neon_vqadds_u32:
   case AArch64::BI__builtin_neon_vqaddd_u64:
     Int = Intrinsic::arm_neon_vqaddu;
-    s = "vqaddu"; OverloadInt = true; break;
+    s = "vqaddu"; IntTypes = VectorRet; break;
   // Scalar Saturating Sub
   case AArch64::BI__builtin_neon_vqsubb_s8:
   case AArch64::BI__builtin_neon_vqsubh_s16:
   case AArch64::BI__builtin_neon_vqsubs_s32:
   case AArch64::BI__builtin_neon_vqsubd_s64:
     Int = Intrinsic::arm_neon_vqsubs;
-    s = "vqsubs"; OverloadInt = true; break;
+    s = "vqsubs"; IntTypes = VectorRet; break;
   case AArch64::BI__builtin_neon_vqsubb_u8:
   case AArch64::BI__builtin_neon_vqsubh_u16:
   case AArch64::BI__builtin_neon_vqsubs_u32:
   case AArch64::BI__builtin_neon_vqsubd_u64:
     Int = Intrinsic::arm_neon_vqsubu;
-    s = "vqsubu"; OverloadInt = true; break;
+    s = "vqsubu"; IntTypes = VectorRet; break;
   // Scalar Shift Left
   case AArch64::BI__builtin_neon_vshld_s64:
     Int = Intrinsic::aarch64_neon_vshlds;
@@ -1956,13 +1964,13 @@ static Value *EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
   case AArch64::BI__builtin_neon_vqshls_s32:
   case AArch64::BI__builtin_neon_vqshld_s64:
     Int = Intrinsic::aarch64_neon_vqshls;
-    s = "vqshls"; OverloadInt = true; break;
+    s = "vqshls"; IntTypes = VectorRet; break;
   case AArch64::BI__builtin_neon_vqshlb_u8:
   case AArch64::BI__builtin_neon_vqshlh_u16:
   case AArch64::BI__builtin_neon_vqshls_u32:
   case AArch64::BI__builtin_neon_vqshld_u64:
     Int = Intrinsic::aarch64_neon_vqshlu;
-    s = "vqshlu"; OverloadInt = true; break;
+    s = "vqshlu"; IntTypes = VectorRet; break;
   // Scalar Rouding Shift Left
   case AArch64::BI__builtin_neon_vrshld_s64:
     Int = Intrinsic::aarch64_neon_vrshlds;
@@ -1976,634 +1984,639 @@ static Value *EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
   case AArch64::BI__builtin_neon_vqrshls_s32:
   case AArch64::BI__builtin_neon_vqrshld_s64:
     Int = Intrinsic::aarch64_neon_vqrshls;
-    s = "vqrshls"; OverloadInt = true; break;
+    s = "vqrshls"; IntTypes = VectorRet; break;
   case AArch64::BI__builtin_neon_vqrshlb_u8:
   case AArch64::BI__builtin_neon_vqrshlh_u16:
   case AArch64::BI__builtin_neon_vqrshls_u32:
   case AArch64::BI__builtin_neon_vqrshld_u64:
     Int = Intrinsic::aarch64_neon_vqrshlu;
-    s = "vqrshlu"; OverloadInt = true; break;
+    s = "vqrshlu"; IntTypes = VectorRet; break;
   // Scalar Reduce Pairwise Add
   case AArch64::BI__builtin_neon_vpaddd_s64:
-    Int = Intrinsic::aarch64_neon_vpadd; s = "vpadd";
-    break;
+  case AArch64::BI__builtin_neon_vpaddd_u64:
+    Int = Intrinsic::aarch64_neon_vpadd;
+    s = "vpadd"; break;
+  case AArch64::BI__builtin_neon_vaddv_f32:
+  case AArch64::BI__builtin_neon_vaddvq_f32:
+  case AArch64::BI__builtin_neon_vaddvq_f64:
   case AArch64::BI__builtin_neon_vpadds_f32:
-    Int = Intrinsic::aarch64_neon_vpfadd; s = "vpfadd";
-    break;
   case AArch64::BI__builtin_neon_vpaddd_f64:
-    Int = Intrinsic::aarch64_neon_vpfaddq; s = "vpfaddq";
-    break;
+    Int = Intrinsic::aarch64_neon_vpfadd;
+    s = "vpfadd"; IntTypes = ScalarRet | VectorCastArg0; break;
   // Scalar Reduce Pairwise Floating Point Max
+  case AArch64::BI__builtin_neon_vmaxv_f32:
   case AArch64::BI__builtin_neon_vpmaxs_f32:
-    Int = Intrinsic::aarch64_neon_vpmax; s = "vpmax";
-    break;
+  case AArch64::BI__builtin_neon_vmaxvq_f64:
   case AArch64::BI__builtin_neon_vpmaxqd_f64:
-    Int = Intrinsic::aarch64_neon_vpmaxq; s = "vpmaxq";
-    break;
+    Int = Intrinsic::aarch64_neon_vpmax;
+    s = "vpmax"; IntTypes = ScalarRet | VectorCastArg0; break;
   // Scalar Reduce Pairwise Floating Point Min
+  case AArch64::BI__builtin_neon_vminv_f32:
   case AArch64::BI__builtin_neon_vpmins_f32:
-    Int = Intrinsic::aarch64_neon_vpmin; s = "vpmin";
-    break;
+  case AArch64::BI__builtin_neon_vminvq_f64:
   case AArch64::BI__builtin_neon_vpminqd_f64:
-    Int = Intrinsic::aarch64_neon_vpminq; s = "vpminq";
-    break;
+    Int = Intrinsic::aarch64_neon_vpmin;
+    s = "vpmin"; IntTypes = ScalarRet | VectorCastArg0; break;
   // Scalar Reduce Pairwise Floating Point Maxnm
+  case AArch64::BI__builtin_neon_vmaxnmv_f32:
   case AArch64::BI__builtin_neon_vpmaxnms_f32:
-    Int = Intrinsic::aarch64_neon_vpfmaxnm; s = "vpfmaxnm";
-    break;
+  case AArch64::BI__builtin_neon_vmaxnmvq_f64:
   case AArch64::BI__builtin_neon_vpmaxnmqd_f64:
-    Int = Intrinsic::aarch64_neon_vpfmaxnmq; s = "vpfmaxnmq";
-    break;
+    Int = Intrinsic::aarch64_neon_vpfmaxnm;
+    s = "vpfmaxnm"; IntTypes = ScalarRet | VectorCastArg0; break;
   // Scalar Reduce Pairwise Floating Point Minnm
+  case AArch64::BI__builtin_neon_vminnmv_f32:
   case AArch64::BI__builtin_neon_vpminnms_f32:
-    Int = Intrinsic::aarch64_neon_vpfminnm; s = "vpfminnm";
-    break;
+  case AArch64::BI__builtin_neon_vminnmvq_f64:
   case AArch64::BI__builtin_neon_vpminnmqd_f64:
-    Int = Intrinsic::aarch64_neon_vpfminnmq; s = "vpfminnmq";
-    break;
+    Int = Intrinsic::aarch64_neon_vpfminnm;
+    s = "vpfminnm"; IntTypes = ScalarRet | VectorCastArg0; break;
   // The followings are intrinsics with scalar results generated AcrossVec vectors
   case AArch64::BI__builtin_neon_vaddlv_s8:
   case AArch64::BI__builtin_neon_vaddlv_s16:
+  case AArch64::BI__builtin_neon_vaddlv_s32:
   case AArch64::BI__builtin_neon_vaddlvq_s8:
   case AArch64::BI__builtin_neon_vaddlvq_s16:
   case AArch64::BI__builtin_neon_vaddlvq_s32:
     Int = Intrinsic::aarch64_neon_saddlv;
-    AcrossVec = true; ExtendEle = true; s = "saddlv"; break;
+    s = "saddlv"; IntTypes = VectorRet | VectorCastArg1; break;
   case AArch64::BI__builtin_neon_vaddlv_u8:
   case AArch64::BI__builtin_neon_vaddlv_u16:
+  case AArch64::BI__builtin_neon_vaddlv_u32:
   case AArch64::BI__builtin_neon_vaddlvq_u8:
   case AArch64::BI__builtin_neon_vaddlvq_u16:
   case AArch64::BI__builtin_neon_vaddlvq_u32:
     Int = Intrinsic::aarch64_neon_uaddlv;
-    AcrossVec = true; ExtendEle = true; s = "uaddlv"; break;
+    s = "uaddlv"; IntTypes = VectorRet | VectorCastArg1; break;
   case AArch64::BI__builtin_neon_vmaxv_s8:
   case AArch64::BI__builtin_neon_vmaxv_s16:
+  case AArch64::BI__builtin_neon_vmaxv_s32:
   case AArch64::BI__builtin_neon_vmaxvq_s8:
   case AArch64::BI__builtin_neon_vmaxvq_s16:
   case AArch64::BI__builtin_neon_vmaxvq_s32:
     Int = Intrinsic::aarch64_neon_smaxv;
-    AcrossVec = true; ExtendEle = false; s = "smaxv"; break;
+    s = "smaxv"; IntTypes = VectorRet | VectorCastArg1; break;
   case AArch64::BI__builtin_neon_vmaxv_u8:
   case AArch64::BI__builtin_neon_vmaxv_u16:
+  case AArch64::BI__builtin_neon_vmaxv_u32:
   case AArch64::BI__builtin_neon_vmaxvq_u8:
   case AArch64::BI__builtin_neon_vmaxvq_u16:
   case AArch64::BI__builtin_neon_vmaxvq_u32:
     Int = Intrinsic::aarch64_neon_umaxv;
-    AcrossVec = true; ExtendEle = false; s = "umaxv"; break;
+    s = "umaxv"; IntTypes = VectorRet | VectorCastArg1; break;
   case AArch64::BI__builtin_neon_vminv_s8:
   case AArch64::BI__builtin_neon_vminv_s16:
+  case AArch64::BI__builtin_neon_vminv_s32:
   case AArch64::BI__builtin_neon_vminvq_s8:
   case AArch64::BI__builtin_neon_vminvq_s16:
   case AArch64::BI__builtin_neon_vminvq_s32:
     Int = Intrinsic::aarch64_neon_sminv;
-    AcrossVec = true; ExtendEle = false; s = "sminv"; break;
+    s = "sminv"; IntTypes = VectorRet | VectorCastArg1; break;
   case AArch64::BI__builtin_neon_vminv_u8:
   case AArch64::BI__builtin_neon_vminv_u16:
+  case AArch64::BI__builtin_neon_vminv_u32:
   case AArch64::BI__builtin_neon_vminvq_u8:
   case AArch64::BI__builtin_neon_vminvq_u16:
   case AArch64::BI__builtin_neon_vminvq_u32:
     Int = Intrinsic::aarch64_neon_uminv;
-    AcrossVec = true; ExtendEle = false; s = "uminv"; break;
+    s = "uminv"; IntTypes = VectorRet | VectorCastArg1; break;
   case AArch64::BI__builtin_neon_vaddv_s8:
   case AArch64::BI__builtin_neon_vaddv_s16:
+  case AArch64::BI__builtin_neon_vaddv_s32:
   case AArch64::BI__builtin_neon_vaddvq_s8:
   case AArch64::BI__builtin_neon_vaddvq_s16:
   case AArch64::BI__builtin_neon_vaddvq_s32:
+  case AArch64::BI__builtin_neon_vaddvq_s64:
   case AArch64::BI__builtin_neon_vaddv_u8:
   case AArch64::BI__builtin_neon_vaddv_u16:
+  case AArch64::BI__builtin_neon_vaddv_u32:
   case AArch64::BI__builtin_neon_vaddvq_u8:
   case AArch64::BI__builtin_neon_vaddvq_u16:
   case AArch64::BI__builtin_neon_vaddvq_u32:
+  case AArch64::BI__builtin_neon_vaddvq_u64:
     Int = Intrinsic::aarch64_neon_vaddv;
-    AcrossVec = true; ExtendEle = false; s = "vaddv"; break;      
+    s = "vaddv"; IntTypes = VectorRet | VectorCastArg1; break;
   case AArch64::BI__builtin_neon_vmaxvq_f32:
     Int = Intrinsic::aarch64_neon_vmaxv;
-    AcrossVec = true; ExtendEle = false; s = "vmaxv"; break;
+    s = "vmaxv"; break;
   case AArch64::BI__builtin_neon_vminvq_f32:
     Int = Intrinsic::aarch64_neon_vminv;
-    AcrossVec = true; ExtendEle = false; s = "vminv"; break;
+    s = "vminv"; break;
   case AArch64::BI__builtin_neon_vmaxnmvq_f32:
     Int = Intrinsic::aarch64_neon_vmaxnmv;
-    AcrossVec = true; ExtendEle = false; s = "vmaxnmv"; break;
+    s = "vmaxnmv"; break;
   case AArch64::BI__builtin_neon_vminnmvq_f32:
     Int = Intrinsic::aarch64_neon_vminnmv;
-    AcrossVec = true; ExtendEle = false; s = "vminnmv"; break;
+     s = "vminnmv"; break;
   // Scalar Integer Saturating Doubling Multiply Half High
   case AArch64::BI__builtin_neon_vqdmulhh_s16:
   case AArch64::BI__builtin_neon_vqdmulhs_s32:
     Int = Intrinsic::arm_neon_vqdmulh;
-    s = "vqdmulh"; OverloadInt = true; break;
+    s = "vqdmulh"; IntTypes = VectorRet; break;
   // Scalar Integer Saturating Rounding Doubling Multiply Half High
   case AArch64::BI__builtin_neon_vqrdmulhh_s16:
   case AArch64::BI__builtin_neon_vqrdmulhs_s32:
     Int = Intrinsic::arm_neon_vqrdmulh;
-    s = "vqrdmulh"; OverloadInt = true; break;
-  // Scalar Floating-point Reciprocal Step and
+    s = "vqrdmulh"; IntTypes = VectorRet; break;
+  // Scalar Floating-point Reciprocal Step
   case AArch64::BI__builtin_neon_vrecpss_f32:
   case AArch64::BI__builtin_neon_vrecpsd_f64:
-    Int = Intrinsic::arm_neon_vrecps;
-    s = "vrecps"; OverloadInt = true; break;
+    Int = Intrinsic::aarch64_neon_vrecps;
+    s = "vrecps"; IntTypes = ScalarRet; break;
   // Scalar Floating-point Reciprocal Square Root Step
   case AArch64::BI__builtin_neon_vrsqrtss_f32:
   case AArch64::BI__builtin_neon_vrsqrtsd_f64:
-    Int = Intrinsic::arm_neon_vrsqrts;
-    s = "vrsqrts"; OverloadInt = true; break;
+    Int = Intrinsic::aarch64_neon_vrsqrts;
+    s = "vrsqrts"; IntTypes = ScalarRet; break;
   // Scalar Signed Integer Convert To Floating-point
   case AArch64::BI__builtin_neon_vcvts_f32_s32:
-    Int = Intrinsic::aarch64_neon_vcvtf32_s32,
-    s = "vcvtf"; OverloadInt = false; break;
   case AArch64::BI__builtin_neon_vcvtd_f64_s64:
-    Int = Intrinsic::aarch64_neon_vcvtf64_s64,
-    s = "vcvtf"; OverloadInt = false; break;
+    Int = Intrinsic::aarch64_neon_vcvtint2fps;
+    s = "vcvtf"; IntTypes = ScalarRet | VectorGetArg0; break;
   // Scalar Unsigned Integer Convert To Floating-point
   case AArch64::BI__builtin_neon_vcvts_f32_u32:
-    Int = Intrinsic::aarch64_neon_vcvtf32_u32,
-    s = "vcvtf"; OverloadInt = false; break;
   case AArch64::BI__builtin_neon_vcvtd_f64_u64:
-    Int = Intrinsic::aarch64_neon_vcvtf64_u64,
-    s = "vcvtf"; OverloadInt = false; break;
+    Int = Intrinsic::aarch64_neon_vcvtint2fpu;
+    s = "vcvtf"; IntTypes = ScalarRet | VectorGetArg0; break;
   // Scalar Floating-point Converts
   case AArch64::BI__builtin_neon_vcvtxd_f32_f64:
     Int = Intrinsic::aarch64_neon_fcvtxn;
-    s = "vcvtxn"; OverloadCvtInt = true; break;
+    s = "vcvtxn"; break;
   case AArch64::BI__builtin_neon_vcvtas_s32_f32:
   case AArch64::BI__builtin_neon_vcvtad_s64_f64:
     Int = Intrinsic::aarch64_neon_fcvtas;
-    s = "vcvtas"; OverloadCvtInt = true; break;
+    s = "vcvtas"; IntTypes = VectorRet | ScalarArg1; break;
   case AArch64::BI__builtin_neon_vcvtas_u32_f32:
   case AArch64::BI__builtin_neon_vcvtad_u64_f64:
     Int = Intrinsic::aarch64_neon_fcvtau;
-    s = "vcvtau"; OverloadCvtInt = true; break;
+    s = "vcvtau"; IntTypes = VectorRet | ScalarArg1; break;
   case AArch64::BI__builtin_neon_vcvtms_s32_f32:
   case AArch64::BI__builtin_neon_vcvtmd_s64_f64:
     Int = Intrinsic::aarch64_neon_fcvtms;
-    s = "vcvtms"; OverloadCvtInt = true; break;
+    s = "vcvtms"; IntTypes = VectorRet | ScalarArg1; break;
   case AArch64::BI__builtin_neon_vcvtms_u32_f32:
   case AArch64::BI__builtin_neon_vcvtmd_u64_f64:
     Int = Intrinsic::aarch64_neon_fcvtmu;
-    s = "vcvtmu"; OverloadCvtInt = true; break;
+    s = "vcvtmu"; IntTypes = VectorRet | ScalarArg1; break;
   case AArch64::BI__builtin_neon_vcvtns_s32_f32:
   case AArch64::BI__builtin_neon_vcvtnd_s64_f64:
     Int = Intrinsic::aarch64_neon_fcvtns;
-    s = "vcvtns"; OverloadCvtInt = true; break;
+    s = "vcvtns"; IntTypes = VectorRet | ScalarArg1; break;
   case AArch64::BI__builtin_neon_vcvtns_u32_f32:
   case AArch64::BI__builtin_neon_vcvtnd_u64_f64:
     Int = Intrinsic::aarch64_neon_fcvtnu;
-    s = "vcvtnu"; OverloadCvtInt = true; break;
+    s = "vcvtnu"; IntTypes = VectorRet | ScalarArg1; break;
   case AArch64::BI__builtin_neon_vcvtps_s32_f32:
   case AArch64::BI__builtin_neon_vcvtpd_s64_f64:
     Int = Intrinsic::aarch64_neon_fcvtps;
-    s = "vcvtps"; OverloadCvtInt = true; break;
+    s = "vcvtps"; IntTypes = VectorRet | ScalarArg1; break;
   case AArch64::BI__builtin_neon_vcvtps_u32_f32:
   case AArch64::BI__builtin_neon_vcvtpd_u64_f64:
     Int = Intrinsic::aarch64_neon_fcvtpu;
-    s = "vcvtpu"; OverloadCvtInt = true; break;
+    s = "vcvtpu"; IntTypes = VectorRet | ScalarArg1; break;
   case AArch64::BI__builtin_neon_vcvts_s32_f32:
   case AArch64::BI__builtin_neon_vcvtd_s64_f64:
     Int = Intrinsic::aarch64_neon_fcvtzs;
-    s = "vcvtzs"; OverloadCvtInt = true; break;
+    s = "vcvtzs"; IntTypes = VectorRet | ScalarArg1; break;
   case AArch64::BI__builtin_neon_vcvts_u32_f32:
   case AArch64::BI__builtin_neon_vcvtd_u64_f64:
     Int = Intrinsic::aarch64_neon_fcvtzu;
-    s = "vcvtzu"; OverloadCvtInt = true; break;
+    s = "vcvtzu"; IntTypes = VectorRet | ScalarArg1; break;
   // Scalar Floating-point Reciprocal Estimate
   case AArch64::BI__builtin_neon_vrecpes_f32:
   case AArch64::BI__builtin_neon_vrecped_f64:
-    Int = Intrinsic::arm_neon_vrecpe;
-    s = "vrecpe"; OverloadInt = true; break;
+    Int = Intrinsic::aarch64_neon_vrecpe;
+    s = "vrecpe"; IntTypes = ScalarRet; break;
   // Scalar Floating-point Reciprocal Exponent
   case AArch64::BI__builtin_neon_vrecpxs_f32:
   case AArch64::BI__builtin_neon_vrecpxd_f64:
     Int = Intrinsic::aarch64_neon_vrecpx;
-    s = "vrecpx"; OverloadInt = true; break;
+    s = "vrecpx"; IntTypes = ScalarRet; break;
   // Scalar Floating-point Reciprocal Square Root Estimate
   case AArch64::BI__builtin_neon_vrsqrtes_f32:
   case AArch64::BI__builtin_neon_vrsqrted_f64:
-    Int = Intrinsic::arm_neon_vrsqrte;
-    s = "vrsqrte"; OverloadInt = true; break;
+    Int = Intrinsic::aarch64_neon_vrsqrte;
+    s = "vrsqrte"; IntTypes = ScalarRet; break;
   // Scalar Compare Equal
   case AArch64::BI__builtin_neon_vceqd_s64:
   case AArch64::BI__builtin_neon_vceqd_u64:
     Int = Intrinsic::aarch64_neon_vceq; s = "vceq";
-    OverloadCmpInt = true; break;
+    IntTypes = VectorRet | VectorGetArg0 | VectorGetArg1; break;
   // Scalar Compare Equal To Zero
   case AArch64::BI__builtin_neon_vceqzd_s64:
   case AArch64::BI__builtin_neon_vceqzd_u64:
     Int = Intrinsic::aarch64_neon_vceq; s = "vceq";
     // Add implicit zero operand.
     Ops.push_back(llvm::Constant::getNullValue(Ops[0]->getType()));
-    OverloadCmpInt = true; break;
+    IntTypes = VectorRet | VectorGetArg0 | VectorGetArg1; break;
   // Scalar Compare Greater Than or Equal
   case AArch64::BI__builtin_neon_vcged_s64:
     Int = Intrinsic::aarch64_neon_vcge; s = "vcge";
-    OverloadCmpInt = true; break;
+    IntTypes = VectorRet | VectorGetArg0 | VectorGetArg1; break;
   case AArch64::BI__builtin_neon_vcged_u64:
     Int = Intrinsic::aarch64_neon_vchs; s = "vcge";
-    OverloadCmpInt = true; break;
+    IntTypes = VectorRet | VectorGetArg0 | VectorGetArg1; break;
   // Scalar Compare Greater Than or Equal To Zero
   case AArch64::BI__builtin_neon_vcgezd_s64:
     Int = Intrinsic::aarch64_neon_vcge; s = "vcge";
     // Add implicit zero operand.
     Ops.push_back(llvm::Constant::getNullValue(Ops[0]->getType()));
-    OverloadCmpInt = true; break;
+    IntTypes = VectorRet | VectorGetArg0 | VectorGetArg1; break;
   // Scalar Compare Greater Than
   case AArch64::BI__builtin_neon_vcgtd_s64:
     Int = Intrinsic::aarch64_neon_vcgt; s = "vcgt";
-    OverloadCmpInt = true; break;
+    IntTypes = VectorRet | VectorGetArg0 | VectorGetArg1; break;
   case AArch64::BI__builtin_neon_vcgtd_u64:
     Int = Intrinsic::aarch64_neon_vchi; s = "vcgt";
-    OverloadCmpInt = true; break;
+    IntTypes = VectorRet | VectorGetArg0 | VectorGetArg1; break;
   // Scalar Compare Greater Than Zero
   case AArch64::BI__builtin_neon_vcgtzd_s64:
     Int = Intrinsic::aarch64_neon_vcgt; s = "vcgt";
     // Add implicit zero operand.
     Ops.push_back(llvm::Constant::getNullValue(Ops[0]->getType()));
-    OverloadCmpInt = true; break;
+    IntTypes = VectorRet | VectorGetArg0 | VectorGetArg1; break;
   // Scalar Compare Less Than or Equal
   case AArch64::BI__builtin_neon_vcled_s64:
     Int = Intrinsic::aarch64_neon_vcge; s = "vcge";
-    OverloadCmpInt = true; std::swap(Ops[0], Ops[1]); break;
+    std::swap(Ops[0], Ops[1]);
+    IntTypes = VectorRet | VectorGetArg0 | VectorGetArg1; break;
   case AArch64::BI__builtin_neon_vcled_u64:
     Int = Intrinsic::aarch64_neon_vchs; s = "vchs";
-    OverloadCmpInt = true; std::swap(Ops[0], Ops[1]); break;
+    std::swap(Ops[0], Ops[1]);
+    IntTypes = VectorRet | VectorGetArg0 | VectorGetArg1; break;
   // Scalar Compare Less Than or Equal To Zero
   case AArch64::BI__builtin_neon_vclezd_s64:
     Int = Intrinsic::aarch64_neon_vclez; s = "vcle";
     // Add implicit zero operand.
     Ops.push_back(llvm::Constant::getNullValue(Ops[0]->getType()));
-    OverloadCmpInt = true; break;
+    IntTypes = VectorRet | VectorGetArg0 | VectorGetArg1; break;
   // Scalar Compare Less Than
   case AArch64::BI__builtin_neon_vcltd_s64:
     Int = Intrinsic::aarch64_neon_vcgt; s = "vcgt";
-    OverloadCmpInt = true; std::swap(Ops[0], Ops[1]); break;
+    std::swap(Ops[0], Ops[1]);
+    IntTypes = VectorRet | VectorGetArg0 | VectorGetArg1; break;
   case AArch64::BI__builtin_neon_vcltd_u64:
     Int = Intrinsic::aarch64_neon_vchi; s = "vchi";
-    OverloadCmpInt = true; std::swap(Ops[0], Ops[1]); break;
+    std::swap(Ops[0], Ops[1]);
+    IntTypes = VectorRet | VectorGetArg0 | VectorGetArg1; break;
   // Scalar Compare Less Than Zero
   case AArch64::BI__builtin_neon_vcltzd_s64:
     Int = Intrinsic::aarch64_neon_vcltz; s = "vclt";
     // Add implicit zero operand.
     Ops.push_back(llvm::Constant::getNullValue(Ops[0]->getType()));
-    OverloadCmpInt = true; break;
+    IntTypes = VectorRet | VectorGetArg0 | VectorGetArg1; break;
   // Scalar Floating-point Compare Equal
   case AArch64::BI__builtin_neon_vceqs_f32:
   case AArch64::BI__builtin_neon_vceqd_f64:
-    Int = Intrinsic::aarch64_neon_vceq; s = "vceq";
-    OverloadCmpInt = true; break;
+    Int = Intrinsic::aarch64_neon_fceq; s = "vceq";
+    IntTypes = VectorRet | ScalarArg0 | ScalarArg1; break;
   // Scalar Floating-point Compare Equal To Zero
   case AArch64::BI__builtin_neon_vceqzs_f32:
   case AArch64::BI__builtin_neon_vceqzd_f64:
-    Int = Intrinsic::aarch64_neon_vceq; s = "vceq";
+    Int = Intrinsic::aarch64_neon_fceq; s = "vceq";
     // Add implicit zero operand.
-    Ops.push_back(llvm::Constant::getNullValue(Ops[0]->getType()));
-    OverloadCmpInt = true; break;
+    Ops.push_back(llvm::Constant::getNullValue(CGF.FloatTy));
+    IntTypes = VectorRet | ScalarArg0 | ScalarFpCmpzArg1; break;
   // Scalar Floating-point Compare Greater Than Or Equal
   case AArch64::BI__builtin_neon_vcges_f32:
   case AArch64::BI__builtin_neon_vcged_f64:
-    Int = Intrinsic::aarch64_neon_vcge; s = "vcge";
-    OverloadCmpInt = true; break;
+    Int = Intrinsic::aarch64_neon_fcge; s = "vcge";
+    IntTypes = VectorRet | ScalarArg0 | ScalarArg1; break;
   // Scalar Floating-point Compare Greater Than Or Equal To Zero
   case AArch64::BI__builtin_neon_vcgezs_f32:
   case AArch64::BI__builtin_neon_vcgezd_f64:
-    Int = Intrinsic::aarch64_neon_vcge; s = "vcge";
+    Int = Intrinsic::aarch64_neon_fcge; s = "vcge";
     // Add implicit zero operand.
-    Ops.push_back(llvm::Constant::getNullValue(Ops[0]->getType()));
-    OverloadCmpInt = true; break;
+    Ops.push_back(llvm::Constant::getNullValue(CGF.FloatTy));
+    IntTypes = VectorRet | ScalarArg0 | ScalarFpCmpzArg1; break;
   // Scalar Floating-point Compare Greather Than
   case AArch64::BI__builtin_neon_vcgts_f32:
   case AArch64::BI__builtin_neon_vcgtd_f64:
-    Int = Intrinsic::aarch64_neon_vcgt; s = "vcgt";
-    OverloadCmpInt = true; break;
+    Int = Intrinsic::aarch64_neon_fcgt; s = "vcgt";
+    IntTypes = VectorRet | ScalarArg0 | ScalarArg1; break;
   // Scalar Floating-point Compare Greather Than Zero
   case AArch64::BI__builtin_neon_vcgtzs_f32:
   case AArch64::BI__builtin_neon_vcgtzd_f64:
-    Int = Intrinsic::aarch64_neon_vcgt; s = "vcgt";
+    Int = Intrinsic::aarch64_neon_fcgt; s = "vcgt";
     // Add implicit zero operand.
-    Ops.push_back(llvm::Constant::getNullValue(Ops[0]->getType()));
-    OverloadCmpInt = true; break;
+    Ops.push_back(llvm::Constant::getNullValue(CGF.FloatTy));
+    IntTypes = VectorRet | ScalarArg0 | ScalarFpCmpzArg1; break;
   // Scalar Floating-point Compare Less Than or Equal
   case AArch64::BI__builtin_neon_vcles_f32:
   case AArch64::BI__builtin_neon_vcled_f64:
-    Int = Intrinsic::aarch64_neon_vcge; s = "vcge";
-    OverloadCmpInt = true; break;
+    Int = Intrinsic::aarch64_neon_fcge; s = "vcge";
+    IntTypes = VectorRet | ScalarArg0 | ScalarArg1; break;
   // Scalar Floating-point Compare Less Than Or Equal To Zero
   case AArch64::BI__builtin_neon_vclezs_f32:
   case AArch64::BI__builtin_neon_vclezd_f64:
-    Int = Intrinsic::aarch64_neon_vclez; s = "vcle";
+    Int = Intrinsic::aarch64_neon_fclez; s = "vcle";
     // Add implicit zero operand.
-    Ops.push_back(llvm::Constant::getNullValue(Ops[0]->getType()));
-    OverloadCmpInt = true; break;
+    Ops.push_back(llvm::Constant::getNullValue(CGF.FloatTy));
+    IntTypes = VectorRet | ScalarArg0 | ScalarFpCmpzArg1; break;
   // Scalar Floating-point Compare Less Than Zero
   case AArch64::BI__builtin_neon_vclts_f32:
   case AArch64::BI__builtin_neon_vcltd_f64:
-    Int = Intrinsic::aarch64_neon_vcgt; s = "vcgt";
-    OverloadCmpInt = true; std::swap(Ops[0], Ops[1]); break;
+    Int = Intrinsic::aarch64_neon_fcgt; s = "vcgt";
+    std::swap(Ops[0], Ops[1]);
+    IntTypes = VectorRet | ScalarArg0 | ScalarArg1; break;
   // Scalar Floating-point Compare Less Than Zero
   case AArch64::BI__builtin_neon_vcltzs_f32:
   case AArch64::BI__builtin_neon_vcltzd_f64:
-    Int = Intrinsic::aarch64_neon_vcltz; s = "vclt";
+    Int = Intrinsic::aarch64_neon_fcltz; s = "vclt";
     // Add implicit zero operand.
-    Ops.push_back(llvm::Constant::getNullValue(Ops[0]->getType()));
-    OverloadCmpInt = true; break;
+    Ops.push_back(llvm::Constant::getNullValue(CGF.FloatTy));
+    IntTypes = VectorRet | ScalarArg0 | ScalarFpCmpzArg1; break;
   // Scalar Floating-point Absolute Compare Greater Than Or Equal
   case AArch64::BI__builtin_neon_vcages_f32:
   case AArch64::BI__builtin_neon_vcaged_f64:
-    Int = Intrinsic::aarch64_neon_vcage; s = "vcage";
-    OverloadCmpInt = true; break;
+    Int = Intrinsic::aarch64_neon_fcage; s = "vcage";
+    IntTypes = VectorRet | ScalarArg0 | ScalarArg1; break;
   // Scalar Floating-point Absolute Compare Greater Than
   case AArch64::BI__builtin_neon_vcagts_f32:
   case AArch64::BI__builtin_neon_vcagtd_f64:
-    Int = Intrinsic::aarch64_neon_vcagt; s = "vcagt";
-    OverloadCmpInt = true; break;
+    Int = Intrinsic::aarch64_neon_fcagt; s = "vcagt";
+    IntTypes = VectorRet | ScalarArg0 | ScalarArg1; break;
   // Scalar Floating-point Absolute Compare Less Than Or Equal
   case AArch64::BI__builtin_neon_vcales_f32:
   case AArch64::BI__builtin_neon_vcaled_f64:
-    Int = Intrinsic::aarch64_neon_vcage; s = "vcage";
-    OverloadCmpInt = true; std::swap(Ops[0], Ops[1]); break;
+    Int = Intrinsic::aarch64_neon_fcage; s = "vcage";
+    std::swap(Ops[0], Ops[1]);
+    IntTypes = VectorRet | ScalarArg0 | ScalarArg1; break;
   // Scalar Floating-point Absolute Compare Less Than
   case AArch64::BI__builtin_neon_vcalts_f32:
   case AArch64::BI__builtin_neon_vcaltd_f64:
-    Int = Intrinsic::aarch64_neon_vcagt; s = "vcalt";
-    OverloadCmpInt = true; std::swap(Ops[0], Ops[1]); break;
+    Int = Intrinsic::aarch64_neon_fcagt; s = "vcalt";
+    std::swap(Ops[0], Ops[1]);
+    IntTypes = VectorRet | ScalarArg0 | ScalarArg1; break;
   // Scalar Compare Bitwise Test Bits
   case AArch64::BI__builtin_neon_vtstd_s64:
   case AArch64::BI__builtin_neon_vtstd_u64:
     Int = Intrinsic::aarch64_neon_vtstd; s = "vtst";
-    OverloadCmpInt = true; break;
+    IntTypes = VectorRet | VectorGetArg0 | VectorGetArg1; break;
   // Scalar Absolute Value
   case AArch64::BI__builtin_neon_vabsd_s64:
     Int = Intrinsic::aarch64_neon_vabs;
-    s = "vabs"; OverloadInt = false; break;
+    s = "vabs"; break;
   // Scalar Absolute Difference
   case AArch64::BI__builtin_neon_vabds_f32:
   case AArch64::BI__builtin_neon_vabdd_f64:
     Int = Intrinsic::aarch64_neon_vabd;
-    s = "vabd"; OverloadInt = true; break;
+    s = "vabd"; IntTypes = ScalarRet; break;
   // Scalar Signed Saturating Absolute Value
   case AArch64::BI__builtin_neon_vqabsb_s8:
   case AArch64::BI__builtin_neon_vqabsh_s16:
   case AArch64::BI__builtin_neon_vqabss_s32:
   case AArch64::BI__builtin_neon_vqabsd_s64:
     Int = Intrinsic::arm_neon_vqabs;
-    s = "vqabs"; OverloadInt = true; break;
+    s = "vqabs"; IntTypes = VectorRet; break;
   // Scalar Negate
   case AArch64::BI__builtin_neon_vnegd_s64:
     Int = Intrinsic::aarch64_neon_vneg;
-    s = "vneg"; OverloadInt = false; break;
+    s = "vneg"; break;
   // Scalar Signed Saturating Negate
   case AArch64::BI__builtin_neon_vqnegb_s8:
   case AArch64::BI__builtin_neon_vqnegh_s16:
   case AArch64::BI__builtin_neon_vqnegs_s32:
   case AArch64::BI__builtin_neon_vqnegd_s64:
     Int = Intrinsic::arm_neon_vqneg;
-    s = "vqneg"; OverloadInt = true; break;
+    s = "vqneg"; IntTypes = VectorRet; break;
   // Scalar Signed Saturating Accumulated of Unsigned Value
   case AArch64::BI__builtin_neon_vuqaddb_s8:
   case AArch64::BI__builtin_neon_vuqaddh_s16:
   case AArch64::BI__builtin_neon_vuqadds_s32:
   case AArch64::BI__builtin_neon_vuqaddd_s64:
     Int = Intrinsic::aarch64_neon_vuqadd;
-    s = "vuqadd"; OverloadInt = true; break;
+    s = "vuqadd"; IntTypes = VectorRet; break;
   // Scalar Unsigned Saturating Accumulated of Signed Value
   case AArch64::BI__builtin_neon_vsqaddb_u8:
   case AArch64::BI__builtin_neon_vsqaddh_u16:
   case AArch64::BI__builtin_neon_vsqadds_u32:
   case AArch64::BI__builtin_neon_vsqaddd_u64:
     Int = Intrinsic::aarch64_neon_vsqadd;
-    s = "vsqadd"; OverloadInt = true; break;
+    s = "vsqadd"; IntTypes = VectorRet; break;
   // Signed Saturating Doubling Multiply-Add Long
   case AArch64::BI__builtin_neon_vqdmlalh_s16:
   case AArch64::BI__builtin_neon_vqdmlals_s32:
     Int = Intrinsic::aarch64_neon_vqdmlal;
-    s = "vqdmlal"; OverloadWideInt = true; break;
+    s = "vqdmlal"; IntTypes = VectorRet; break;
   // Signed Saturating Doubling Multiply-Subtract Long
   case AArch64::BI__builtin_neon_vqdmlslh_s16:
   case AArch64::BI__builtin_neon_vqdmlsls_s32:
     Int = Intrinsic::aarch64_neon_vqdmlsl;
-    s = "vqdmlsl"; OverloadWideInt = true; break;
+    s = "vqdmlsl"; IntTypes = VectorRet; break;
   // Signed Saturating Doubling Multiply Long
   case AArch64::BI__builtin_neon_vqdmullh_s16:
   case AArch64::BI__builtin_neon_vqdmulls_s32:
     Int = Intrinsic::arm_neon_vqdmull;
-    s = "vqdmull"; OverloadWideInt = true; break;
+    s = "vqdmull"; IntTypes = VectorRet; break;
   // Scalar Signed Saturating Extract Unsigned Narrow
   case AArch64::BI__builtin_neon_vqmovunh_s16:
   case AArch64::BI__builtin_neon_vqmovuns_s32:
   case AArch64::BI__builtin_neon_vqmovund_s64:
     Int = Intrinsic::arm_neon_vqmovnsu;
-    s = "vqmovun"; OverloadNarrowInt = true; break;
+    s = "vqmovun"; IntTypes = VectorRet; break;
   // Scalar Signed Saturating Extract Narrow
   case AArch64::BI__builtin_neon_vqmovnh_s16:
   case AArch64::BI__builtin_neon_vqmovns_s32:
   case AArch64::BI__builtin_neon_vqmovnd_s64:
     Int = Intrinsic::arm_neon_vqmovns;
-    s = "vqmovn"; OverloadNarrowInt = true; break;
+    s = "vqmovn"; IntTypes = VectorRet; break;
   // Scalar Unsigned Saturating Extract Narrow
   case AArch64::BI__builtin_neon_vqmovnh_u16:
   case AArch64::BI__builtin_neon_vqmovns_u32:
   case AArch64::BI__builtin_neon_vqmovnd_u64:
     Int = Intrinsic::arm_neon_vqmovnu;
-    s = "vqmovn"; OverloadNarrowInt = true; break;
+    s = "vqmovn"; IntTypes = VectorRet; break;
   // Scalar Signed Shift Right (Immediate)
   case AArch64::BI__builtin_neon_vshrd_n_s64:
     Int = Intrinsic::aarch64_neon_vshrds_n;
-    s = "vsshr"; OverloadInt = false; break;
+    s = "vsshr"; break;
   // Scalar Unsigned Shift Right (Immediate)
   case AArch64::BI__builtin_neon_vshrd_n_u64:
     Int = Intrinsic::aarch64_neon_vshrdu_n;
-    s = "vushr"; OverloadInt = false; break;
+    s = "vushr"; break;
   // Scalar Signed Rounding Shift Right (Immediate)
   case AArch64::BI__builtin_neon_vrshrd_n_s64:
     Int = Intrinsic::aarch64_neon_vsrshr;
-    s = "vsrshr"; OverloadInt = true; break;
+    s = "vsrshr"; IntTypes = VectorRet; break;
   // Scalar Unsigned Rounding Shift Right (Immediate)
   case AArch64::BI__builtin_neon_vrshrd_n_u64:
     Int = Intrinsic::aarch64_neon_vurshr;
-    s = "vurshr"; OverloadInt = true; break;
+    s = "vurshr"; IntTypes = VectorRet; break;
   // Scalar Signed Shift Right and Accumulate (Immediate)
   case AArch64::BI__builtin_neon_vsrad_n_s64:
     Int = Intrinsic::aarch64_neon_vsrads_n;
-    s = "vssra"; OverloadInt = false; break;
+    s = "vssra"; break;
   // Scalar Unsigned Shift Right and Accumulate (Immediate)
   case AArch64::BI__builtin_neon_vsrad_n_u64:
     Int = Intrinsic::aarch64_neon_vsradu_n;
-    s = "vusra"; OverloadInt = false; break;
+    s = "vusra"; break;
   // Scalar Signed Rounding Shift Right and Accumulate (Immediate)
   case AArch64::BI__builtin_neon_vrsrad_n_s64:
     Int = Intrinsic::aarch64_neon_vrsrads_n;
-    s = "vsrsra"; OverloadInt = false; break;
+    s = "vsrsra"; break;
   // Scalar Unsigned Rounding Shift Right and Accumulate (Immediate)
   case AArch64::BI__builtin_neon_vrsrad_n_u64:
     Int = Intrinsic::aarch64_neon_vrsradu_n;
-    s = "vursra"; OverloadInt = false; break;
+    s = "vursra"; break;
   // Scalar Signed/Unsigned Shift Left (Immediate)
   case AArch64::BI__builtin_neon_vshld_n_s64:
   case AArch64::BI__builtin_neon_vshld_n_u64:
     Int = Intrinsic::aarch64_neon_vshld_n;
-    s = "vshl"; OverloadInt = false; break;
+    s = "vshl"; break;
   // Signed Saturating Shift Left (Immediate)
   case AArch64::BI__builtin_neon_vqshlb_n_s8:
   case AArch64::BI__builtin_neon_vqshlh_n_s16:
   case AArch64::BI__builtin_neon_vqshls_n_s32:
   case AArch64::BI__builtin_neon_vqshld_n_s64:
     Int = Intrinsic::aarch64_neon_vqshls_n;
-    s = "vsqshl"; OverloadInt = true; break;
+    s = "vsqshl"; IntTypes = VectorRet; break;
   // Unsigned Saturating Shift Left (Immediate)
   case AArch64::BI__builtin_neon_vqshlb_n_u8:
   case AArch64::BI__builtin_neon_vqshlh_n_u16:
   case AArch64::BI__builtin_neon_vqshls_n_u32:
   case AArch64::BI__builtin_neon_vqshld_n_u64:
     Int = Intrinsic::aarch64_neon_vqshlu_n;
-    s = "vuqshl"; OverloadInt = true; break;
+    s = "vuqshl"; IntTypes = VectorRet; break;
   // Signed Saturating Shift Left Unsigned (Immediate)
   case AArch64::BI__builtin_neon_vqshlub_n_s8:
   case AArch64::BI__builtin_neon_vqshluh_n_s16:
   case AArch64::BI__builtin_neon_vqshlus_n_s32:
   case AArch64::BI__builtin_neon_vqshlud_n_s64:
     Int = Intrinsic::aarch64_neon_vsqshlu;
-    s = "vsqshlu"; OverloadInt = true; break;
+    s = "vsqshlu"; IntTypes = VectorRet; break;
   // Shift Right And Insert (Immediate)
   case AArch64::BI__builtin_neon_vsrid_n_s64:
   case AArch64::BI__builtin_neon_vsrid_n_u64:
     Int = Intrinsic::aarch64_neon_vsri;
-    s = "vsri"; OverloadInt = true; break;
+    s = "vsri"; IntTypes = VectorRet; break;
   // Shift Left And Insert (Immediate)
   case AArch64::BI__builtin_neon_vslid_n_s64:
   case AArch64::BI__builtin_neon_vslid_n_u64:
     Int = Intrinsic::aarch64_neon_vsli;
-    s = "vsli"; OverloadInt = true; break;
+    s = "vsli"; IntTypes = VectorRet; break;
   // Signed Saturating Shift Right Narrow (Immediate)
   case AArch64::BI__builtin_neon_vqshrnh_n_s16:
   case AArch64::BI__builtin_neon_vqshrns_n_s32:
   case AArch64::BI__builtin_neon_vqshrnd_n_s64:
     Int = Intrinsic::aarch64_neon_vsqshrn;
-    s = "vsqshrn"; OverloadInt = true; break;
+    s = "vsqshrn"; IntTypes = VectorRet; break;
   // Unsigned Saturating Shift Right Narrow (Immediate)
   case AArch64::BI__builtin_neon_vqshrnh_n_u16:
   case AArch64::BI__builtin_neon_vqshrns_n_u32:
   case AArch64::BI__builtin_neon_vqshrnd_n_u64:
     Int = Intrinsic::aarch64_neon_vuqshrn;
-    s = "vuqshrn"; OverloadInt = true; break;
+    s = "vuqshrn"; IntTypes = VectorRet; break;
   // Signed Saturating Rounded Shift Right Narrow (Immediate)
   case AArch64::BI__builtin_neon_vqrshrnh_n_s16:
   case AArch64::BI__builtin_neon_vqrshrns_n_s32:
   case AArch64::BI__builtin_neon_vqrshrnd_n_s64:
     Int = Intrinsic::aarch64_neon_vsqrshrn;
-    s = "vsqrshrn"; OverloadInt = true; break;
+    s = "vsqrshrn"; IntTypes = VectorRet; break;
   // Unsigned Saturating Rounded Shift Right Narrow (Immediate)
   case AArch64::BI__builtin_neon_vqrshrnh_n_u16:
   case AArch64::BI__builtin_neon_vqrshrns_n_u32:
   case AArch64::BI__builtin_neon_vqrshrnd_n_u64:
     Int = Intrinsic::aarch64_neon_vuqrshrn;
-    s = "vuqrshrn"; OverloadInt = true; break;
+    s = "vuqrshrn"; IntTypes = VectorRet; break;
   // Signed Saturating Shift Right Unsigned Narrow (Immediate)
   case AArch64::BI__builtin_neon_vqshrunh_n_s16:
   case AArch64::BI__builtin_neon_vqshruns_n_s32:
   case AArch64::BI__builtin_neon_vqshrund_n_s64:
     Int = Intrinsic::aarch64_neon_vsqshrun;
-    s = "vsqshrun"; OverloadInt = true; break;
+    s = "vsqshrun"; IntTypes = VectorRet; break;
   // Signed Saturating Rounded Shift Right Unsigned Narrow (Immediate)
   case AArch64::BI__builtin_neon_vqrshrunh_n_s16:
   case AArch64::BI__builtin_neon_vqrshruns_n_s32:
   case AArch64::BI__builtin_neon_vqrshrund_n_s64:
     Int = Intrinsic::aarch64_neon_vsqrshrun;
-    s = "vsqrshrun"; OverloadInt = true; break;
+    s = "vsqrshrun"; IntTypes = VectorRet; break;
   // Scalar Signed Fixed-point Convert To Floating-Point (Immediate)
   case AArch64::BI__builtin_neon_vcvts_n_f32_s32:
-    Int = Intrinsic::aarch64_neon_vcvtf32_n_s32;
-    s = "vcvtf"; OverloadInt = false; break;
   case AArch64::BI__builtin_neon_vcvtd_n_f64_s64:
-    Int = Intrinsic::aarch64_neon_vcvtf64_n_s64;
-    s = "vcvtf"; OverloadInt = false; break;
+    Int = Intrinsic::aarch64_neon_vcvtfxs2fp_n;
+    s = "vcvtf"; IntTypes = ScalarRet | VectorGetArg0; break;
   // Scalar Unsigned Fixed-point Convert To Floating-Point (Immediate)
   case AArch64::BI__builtin_neon_vcvts_n_f32_u32:
-    Int = Intrinsic::aarch64_neon_vcvtf32_n_u32;
-    s = "vcvtf"; OverloadInt = false; break;
   case AArch64::BI__builtin_neon_vcvtd_n_f64_u64:
-    Int = Intrinsic::aarch64_neon_vcvtf64_n_u64;
-    s = "vcvtf"; OverloadInt = false; break;
+    Int = Intrinsic::aarch64_neon_vcvtfxu2fp_n;
+    s = "vcvtf"; IntTypes = ScalarRet | VectorGetArg0; break;
   // Scalar Floating-point Convert To Signed Fixed-point (Immediate)
   case AArch64::BI__builtin_neon_vcvts_n_s32_f32:
-    Int = Intrinsic::aarch64_neon_vcvts_n_s32_f32;
-    s = "fcvtzs"; OverloadInt = false; break;
   case AArch64::BI__builtin_neon_vcvtd_n_s64_f64:
-    Int = Intrinsic::aarch64_neon_vcvtd_n_s64_f64;
-    s = "fcvtzs"; OverloadInt = false; break;
+    Int = Intrinsic::aarch64_neon_vcvtfp2fxs_n;
+    s = "fcvtzs"; IntTypes = VectorRet | ScalarArg0; break;
   // Scalar Floating-point Convert To Unsigned Fixed-point (Immediate)
   case AArch64::BI__builtin_neon_vcvts_n_u32_f32:
-    Int = Intrinsic::aarch64_neon_vcvts_n_u32_f32;
-    s = "fcvtzu"; OverloadInt = false; break;
   case AArch64::BI__builtin_neon_vcvtd_n_u64_f64:
-    Int = Intrinsic::aarch64_neon_vcvtd_n_u64_f64;
-    s = "fcvtzu"; OverloadInt = false; break;
+    Int = Intrinsic::aarch64_neon_vcvtfp2fxu_n;
+    s = "fcvtzu"; IntTypes = VectorRet | ScalarArg0; break;
+  case AArch64::BI__builtin_neon_vmull_p64:
+    Int = Intrinsic::aarch64_neon_vmull_p64;
+    s = "vmull"; break;
   }
 
   if (!Int)
     return 0;
 
-  // AArch64 scalar builtin that returns scalar type
-  // and should be mapped to AArch64 intrinsic that returns
-  // one-element vector type.
+  // Determine the type(s) of this overloaded AArch64 intrinsic.
   Function *F = 0;
-  if (AcrossVec) {
-    // Gen arg type
-    const Expr *Arg = E->getArg(E->getNumArgs()-1);
-    llvm::Type *Ty = CGF.ConvertType(Arg->getType());
-    llvm::VectorType *VTy = cast<llvm::VectorType>(Ty);
-    llvm::Type *ETy = VTy->getElementType();
-    llvm::VectorType *RTy = llvm::VectorType::get(ETy, 1);
-  
-    if (ExtendEle) {
-      assert(!ETy->isFloatingPointTy());
-      RTy = llvm::VectorType::getExtendedElementVectorType(RTy);
+  SmallVector<llvm::Type *, 3> Tys;
+
+  // Return type.
+  if (IntTypes & (ScalarRet | VectorRet)) {
+     llvm::Type *Ty = CGF.ConvertType(E->getCallReturnType());
+    if (IntTypes & ScalarRet) {
+      // Scalar return value.
+      Tys.push_back(Ty);
+    } else if (IntTypes & VectorRet) {
+      // Convert the scalar return type to one-vector element type.
+      Tys.push_back(llvm::VectorType::get(Ty, 1));
     }
+  }
 
-    llvm::Type *Tys[2] = {RTy, VTy};
-    F = CGF.CGM.getIntrinsic(Int, Tys);
-    assert(E->getNumArgs() == 1);
-  } else if (OverloadInt) {
-    // Determine the type of this overloaded AArch64 intrinsic
-    llvm::Type *Ty = CGF.ConvertType(E->getCallReturnType());
-    llvm::VectorType *VTy = llvm::VectorType::get(Ty, 1);
-    assert(VTy);
-
-    F = CGF.CGM.getIntrinsic(Int, VTy);
-  } else if (OverloadWideInt || OverloadNarrowInt) {
-    // Determine the type of this overloaded AArch64 intrinsic
-    const Expr *Arg = E->getArg(E->getNumArgs()-1);
+  // Arguments.
+  if (IntTypes & (ScalarArg0 | VectorGetArg0 | VectorCastArg0)) {
+    const Expr *Arg = E->getArg(0);
     llvm::Type *Ty = CGF.ConvertType(Arg->getType());
-    llvm::VectorType *VTy = llvm::VectorType::get(Ty, 1);
-    llvm::VectorType *RTy = OverloadWideInt ? 
-      llvm::VectorType::getExtendedElementVectorType(VTy) :
-      llvm::VectorType::getTruncatedElementVectorType(VTy);
-    F = CGF.CGM.getIntrinsic(Int, RTy);
-  } else if (OverloadCmpInt) {
-    // Determine the types of this overloaded AArch64 intrinsic
-    SmallVector<llvm::Type *, 3> Tys;
-    const Expr *Arg = E->getArg(E->getNumArgs()-1);
-    llvm::Type *Ty = CGF.ConvertType(E->getCallReturnType());
-    llvm::VectorType *VTy = llvm::VectorType::get(Ty, 1);
-    Tys.push_back(VTy);
-    Ty = CGF.ConvertType(Arg->getType());
-    VTy = llvm::VectorType::get(Ty, 1);
-    Tys.push_back(VTy);
-    Tys.push_back(VTy);
-
-    F = CGF.CGM.getIntrinsic(Int, Tys);
-  } else if (OverloadCvtInt) {
-    // Determine the types of this overloaded AArch64 intrinsic
-    SmallVector<llvm::Type *, 2> Tys;
-    const Expr *Arg = E->getArg(E->getNumArgs()-1);
-    llvm::Type *Ty = CGF.ConvertType(E->getCallReturnType());
-    llvm::VectorType *VTy = llvm::VectorType::get(Ty, 1);
-    Tys.push_back(VTy);
-    Ty = CGF.ConvertType(Arg->getType());
-    VTy = llvm::VectorType::get(Ty, 1);
-    Tys.push_back(VTy);
-
-    F = CGF.CGM.getIntrinsic(Int, Tys);
-  } else
-    F = CGF.CGM.getIntrinsic(Int);
+    if (IntTypes & ScalarArg0) {
+      // Scalar argument.
+      Tys.push_back(Ty);
+    } else if (IntTypes & VectorGetArg0) {
+      // Convert the scalar argument to one-vector element type.
+      Tys.push_back(llvm::VectorType::get(Ty, 1));
+    } else if (IntTypes & VectorCastArg0) {
+      // Cast the argument to vector type.
+      Tys.push_back(cast<llvm::VectorType>(Ty));
+    }
+  }
+ 
+  // The only intrinsics that require a 2nd argument are the compare intrinsics.
+  // However, the builtins don't always have a 2nd argument (e.g.,
+  // floating-point compare to zero), so we inspect the first argument to
+  // determine the type.
+  if (IntTypes & (ScalarArg1 | VectorGetArg1 | VectorCastArg1)) {
+    const Expr *Arg = E->getArg(0);
+    llvm::Type *Ty = CGF.ConvertType(Arg->getType());
+    if (IntTypes & ScalarArg1) {
+      // Scalar argument.
+      Tys.push_back(Ty);
+    } else if (IntTypes & VectorGetArg1) {
+      // Convert the scalar argument to one-vector element type.
+      Tys.push_back(llvm::VectorType::get(Ty, 1));
+    } else if (IntTypes & VectorCastArg1) {
+      // Cast the argument to a vector type.
+      Tys.push_back(cast<llvm::VectorType>(Ty));
+    }
+  } else if (IntTypes & ScalarFpCmpzArg1) {
+    // Floating-point zero argument.
+    Tys.push_back(CGF.FloatTy);
+  }
+ 
+  if (IntTypes)
+     F = CGF.CGM.getIntrinsic(Int, Tys);
+  else
+     F = CGF.CGM.getIntrinsic(Int);
 
   Value *Result = CGF.EmitNeonCall(F, Ops, s);
   llvm::Type *ResultType = CGF.ConvertType(E->getType());
@@ -2624,7 +2637,7 @@ Value *CodeGenFunction::EmitAArch64CompareBuiltinExpr(
   } else {
     Op = Builder.CreateICmp(Ip, Op, ConstantAggregateZero::get(OTy));
   }
-  return Builder.CreateZExt(Op, Ty, Name);
+  return Builder.CreateSExt(Op, Ty, Name);
 }
 
 static Value *packTBLDVectorList(CodeGenFunction &CGF, ArrayRef<Value *> Ops,
@@ -2877,6 +2890,28 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
 
   SmallVector<Value *, 4> Ops;
   llvm::Value *Align = 0; // Alignment for load/store
+
+  if (BuiltinID == AArch64::BI__builtin_neon_vldrq_p128) {
+   Value *Op = EmitScalarExpr(E->getArg(0));
+   unsigned addressSpace =
+     cast<llvm::PointerType>(Op->getType())->getAddressSpace();
+   llvm::Type *Ty = llvm::Type::getFP128PtrTy(getLLVMContext(), addressSpace);
+   Op = Builder.CreateBitCast(Op, Ty);
+   Op = Builder.CreateLoad(Op);
+   Ty = llvm::Type::getIntNTy(getLLVMContext(), 128);
+   return Builder.CreateBitCast(Op, Ty);
+  }
+  if (BuiltinID == AArch64::BI__builtin_neon_vstrq_p128) {
+    Value *Op0 = EmitScalarExpr(E->getArg(0));
+    unsigned addressSpace =
+      cast<llvm::PointerType>(Op0->getType())->getAddressSpace();
+    llvm::Type *PTy = llvm::Type::getFP128PtrTy(getLLVMContext(), addressSpace);
+    Op0 = Builder.CreateBitCast(Op0, PTy);
+    Value *Op1 = EmitScalarExpr(E->getArg(1));
+    llvm::Type *Ty = llvm::Type::getFP128Ty(getLLVMContext());
+    Op1 = Builder.CreateBitCast(Op1, Ty);
+    return Builder.CreateStore(Op1, Op0);
+  }
   for (unsigned i = 0, e = E->getNumArgs() - 1; i != e; i++) {
     if (i == 0) {
       switch (BuiltinID) {
@@ -2938,6 +2973,7 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
   // Determine the type of this overloaded NEON intrinsic.
   NeonTypeFlags Type(Result.getZExtValue());
   bool usgn = Type.isUnsigned();
+  bool quad = Type.isQuad();
 
   llvm::VectorType *VTy = GetNeonType(this, Type);
   llvm::Type *Ty = VTy;
@@ -2992,10 +3028,24 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
     return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vrecps_v, E);
   case AArch64::BI__builtin_neon_vrecpsq_v:
     return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vrecpsq_v, E);
-  case AArch64::BI__builtin_neon_vcage_v:
-    return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vcage_v, E);
   case AArch64::BI__builtin_neon_vcale_v:
-    return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vcale_v, E);
+    if (VTy->getVectorNumElements() == 1) {
+      std::swap(Ops[0], Ops[1]);
+    } else {
+      return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vcale_v, E);
+    }
+  case AArch64::BI__builtin_neon_vcage_v:
+    if (VTy->getVectorNumElements() == 1) {
+      // Determine the types of this overloaded AArch64 intrinsic
+      SmallVector<llvm::Type *, 3> Tys;
+      Tys.push_back(VTy);
+      VTy = llvm::VectorType::get(DoubleTy, 1);
+      Tys.push_back(VTy);
+      Tys.push_back(VTy);
+      Function *F = CGM.getIntrinsic(Intrinsic::aarch64_neon_vcage, Tys);
+      return EmitNeonCall(F, Ops, "vcage");
+    }
+    return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vcage_v, E);
   case AArch64::BI__builtin_neon_vcaleq_v:
     std::swap(Ops[0], Ops[1]);
   case AArch64::BI__builtin_neon_vcageq_v: {
@@ -3007,8 +3057,22 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
     return EmitNeonCall(F, Ops, "vcage");
   }
   case AArch64::BI__builtin_neon_vcalt_v:
-    return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vcalt_v, E);
+    if (VTy->getVectorNumElements() == 1) {
+      std::swap(Ops[0], Ops[1]);
+    } else {
+      return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vcalt_v, E);
+    }
   case AArch64::BI__builtin_neon_vcagt_v:
+    if (VTy->getVectorNumElements() == 1) {
+      // Determine the types of this overloaded AArch64 intrinsic
+      SmallVector<llvm::Type *, 3> Tys;
+      Tys.push_back(VTy);
+      VTy = llvm::VectorType::get(DoubleTy, 1);
+      Tys.push_back(VTy);
+      Tys.push_back(VTy);
+      Function *F = CGM.getIntrinsic(Intrinsic::aarch64_neon_vcagt, Tys);
+      return EmitNeonCall(F, Ops, "vcagt");
+    }
     return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vcagt_v, E);
   case AArch64::BI__builtin_neon_vcaltq_v:
     std::swap(Ops[0], Ops[1]);
@@ -3198,9 +3262,10 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
     return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vcvt_n_f32_v, E);
   case AArch64::BI__builtin_neon_vcvtq_n_f32_v:
     return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vcvtq_n_f32_v, E);
+  case AArch64::BI__builtin_neon_vcvt_n_f64_v:
   case AArch64::BI__builtin_neon_vcvtq_n_f64_v: {
     llvm::Type *FloatTy =
-        GetNeonType(this, NeonTypeFlags(NeonTypeFlags::Float64, false, true));
+        GetNeonType(this, NeonTypeFlags(NeonTypeFlags::Float64, false, quad));
     llvm::Type *Tys[2] = { FloatTy, Ty };
     Int = usgn ? Intrinsic::arm_neon_vcvtfxu2fp
                : Intrinsic::arm_neon_vcvtfxs2fp;
@@ -3215,10 +3280,12 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
     return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vcvt_n_u32_v, E);
   case AArch64::BI__builtin_neon_vcvtq_n_u32_v:
     return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vcvtq_n_u32_v, E);
+  case AArch64::BI__builtin_neon_vcvt_n_s64_v:
+  case AArch64::BI__builtin_neon_vcvt_n_u64_v:
   case AArch64::BI__builtin_neon_vcvtq_n_s64_v:
   case AArch64::BI__builtin_neon_vcvtq_n_u64_v: {
     llvm::Type *FloatTy =
-        GetNeonType(this, NeonTypeFlags(NeonTypeFlags::Float64, false, true));
+        GetNeonType(this, NeonTypeFlags(NeonTypeFlags::Float64, false, quad));
     llvm::Type *Tys[2] = { Ty, FloatTy };
     Int = usgn ? Intrinsic::arm_neon_vcvtfp2fxu
                : Intrinsic::arm_neon_vcvtfp2fxs;
@@ -3463,7 +3530,7 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
       Quad = true;
     Ops[0] = Builder.CreateBitCast(Ops[0], DoubleTy);
     llvm::Type *VTy = GetNeonType(this,
-      NeonTypeFlags(NeonTypeFlags::Float64, false, Quad ? true : false));
+      NeonTypeFlags(NeonTypeFlags::Float64, false, Quad));
     Ops[1] = Builder.CreateBitCast(Ops[1], VTy);
     Ops[1] = Builder.CreateExtractElement(Ops[1], Ops[2], "extract");
     Value *Result = Builder.CreateFMul(Ops[0], Ops[1]);
@@ -3654,18 +3721,19 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
     llvm::Type *EltTy = FloatTy;
     llvm::Type *ResTy = llvm::VectorType::get(EltTy, 2);
     llvm::Type *Tys[2] = { ResTy, Ty };
-    Int = Intrinsic::aarch64_neon_fcvtxn;
+    Int = Intrinsic::aarch64_neon_vcvtxn;
     return EmitNeonCall(CGM.getIntrinsic(Int, Tys), Ops, "vcvtx_f32_f64");
   }
-  case AArch64::BI__builtin_neon_vcvt_f64_v: {
+  case AArch64::BI__builtin_neon_vcvt_f64_f32: {
     llvm::Type *OpTy =
         GetNeonType(this, NeonTypeFlags(NeonTypeFlags::Float32, false, false));
     Ops[0] = Builder.CreateBitCast(Ops[0], OpTy);
     return Builder.CreateFPExt(Ops[0], Ty, "vcvt");
   }
+  case AArch64::BI__builtin_neon_vcvt_f64_v:
   case AArch64::BI__builtin_neon_vcvtq_f64_v: {
     Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
-    Ty = GetNeonType(this, NeonTypeFlags(NeonTypeFlags::Float64, false, true));
+    Ty = GetNeonType(this, NeonTypeFlags(NeonTypeFlags::Float64, false, quad));
     return usgn ? Builder.CreateUIToFP(Ops[0], Ty, "vcvt")
                 : Builder.CreateSIToFP(Ops[0], Ty, "vcvt");
   }
@@ -3709,10 +3777,12 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
   case AArch64::BI__builtin_neon_vcvtq_s32_v:
   case AArch64::BI__builtin_neon_vcvtq_u32_v:
     return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vcvtq_u32_v, E);
+  case AArch64::BI__builtin_neon_vcvt_s64_v:
+  case AArch64::BI__builtin_neon_vcvt_u64_v:
   case AArch64::BI__builtin_neon_vcvtq_s64_v:
   case AArch64::BI__builtin_neon_vcvtq_u64_v: {
     llvm::Type *DoubleTy =
-        GetNeonType(this, NeonTypeFlags(NeonTypeFlags::Float64, false, true));
+        GetNeonType(this, NeonTypeFlags(NeonTypeFlags::Float64, false, quad));
     Ops[0] = Builder.CreateBitCast(Ops[0], DoubleTy);
     return usgn ? Builder.CreateFPToUI(Ops[0], Ty, "vcvt")
                 : Builder.CreateFPToSI(Ops[0], Ty, "vcvt");
@@ -3721,104 +3791,112 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
   case AArch64::BI__builtin_neon_vcvtnq_s32_v: {
     llvm::Type *OpTy = llvm::VectorType::get(FloatTy, VTy->getNumElements());
     llvm::Type *Tys[2] = { Ty, OpTy };
-    Int = Intrinsic::aarch64_neon_fcvtns;
+    Int = Intrinsic::arm_neon_vcvtns;
     return EmitNeonCall(CGM.getIntrinsic(Int, Tys), Ops, "vcvtns_f32");
   }
+  case AArch64::BI__builtin_neon_vcvtn_s64_v:
   case AArch64::BI__builtin_neon_vcvtnq_s64_v: {
     llvm::Type *OpTy = llvm::VectorType::get(DoubleTy, VTy->getNumElements());
     llvm::Type *Tys[2] = { Ty, OpTy };
-    Int = Intrinsic::aarch64_neon_fcvtns;
+    Int = Intrinsic::arm_neon_vcvtns;
     return EmitNeonCall(CGM.getIntrinsic(Int, Tys), Ops, "vcvtns_f64");
   }
   case AArch64::BI__builtin_neon_vcvtn_u32_v:
   case AArch64::BI__builtin_neon_vcvtnq_u32_v: {
     llvm::Type *OpTy = llvm::VectorType::get(FloatTy, VTy->getNumElements());
     llvm::Type *Tys[2] = { Ty, OpTy };
-    Int = Intrinsic::aarch64_neon_fcvtnu;
+    Int = Intrinsic::arm_neon_vcvtnu;
     return EmitNeonCall(CGM.getIntrinsic(Int, Tys), Ops, "vcvtnu_f32");
   }
+  case AArch64::BI__builtin_neon_vcvtn_u64_v:
   case AArch64::BI__builtin_neon_vcvtnq_u64_v: {
     llvm::Type *OpTy = llvm::VectorType::get(DoubleTy, VTy->getNumElements());
     llvm::Type *Tys[2] = { Ty, OpTy };
-    Int = Intrinsic::aarch64_neon_fcvtnu;
+    Int = Intrinsic::arm_neon_vcvtnu;
     return EmitNeonCall(CGM.getIntrinsic(Int, Tys), Ops, "vcvtnu_f64");
   }
   case AArch64::BI__builtin_neon_vcvtp_s32_v:
   case AArch64::BI__builtin_neon_vcvtpq_s32_v: {
     llvm::Type *OpTy = llvm::VectorType::get(FloatTy, VTy->getNumElements());
     llvm::Type *Tys[2] = { Ty, OpTy };
-    Int = Intrinsic::aarch64_neon_fcvtps;
+    Int = Intrinsic::arm_neon_vcvtps;
     return EmitNeonCall(CGM.getIntrinsic(Int, Tys), Ops, "vcvtps_f32");
   }
+  case AArch64::BI__builtin_neon_vcvtp_s64_v:
   case AArch64::BI__builtin_neon_vcvtpq_s64_v: {
     llvm::Type *OpTy = llvm::VectorType::get(DoubleTy, VTy->getNumElements());
     llvm::Type *Tys[2] = { Ty, OpTy };
-    Int = Intrinsic::aarch64_neon_fcvtps;
+    Int = Intrinsic::arm_neon_vcvtps;
     return EmitNeonCall(CGM.getIntrinsic(Int, Tys), Ops, "vcvtps_f64");
   }
   case AArch64::BI__builtin_neon_vcvtp_u32_v:
   case AArch64::BI__builtin_neon_vcvtpq_u32_v: {
     llvm::Type *OpTy = llvm::VectorType::get(FloatTy, VTy->getNumElements());
     llvm::Type *Tys[2] = { Ty, OpTy };
-    Int = Intrinsic::aarch64_neon_fcvtpu;
+    Int = Intrinsic::arm_neon_vcvtpu;
     return EmitNeonCall(CGM.getIntrinsic(Int, Tys), Ops, "vcvtpu_f32");
   }
+  case AArch64::BI__builtin_neon_vcvtp_u64_v:
   case AArch64::BI__builtin_neon_vcvtpq_u64_v: {
     llvm::Type *OpTy = llvm::VectorType::get(DoubleTy, VTy->getNumElements());
     llvm::Type *Tys[2] = { Ty, OpTy };
-    Int = Intrinsic::aarch64_neon_fcvtpu;
+    Int = Intrinsic::arm_neon_vcvtpu;
     return EmitNeonCall(CGM.getIntrinsic(Int, Tys), Ops, "vcvtpu_f64");
   }
   case AArch64::BI__builtin_neon_vcvtm_s32_v:
   case AArch64::BI__builtin_neon_vcvtmq_s32_v: {
     llvm::Type *OpTy = llvm::VectorType::get(FloatTy, VTy->getNumElements());
     llvm::Type *Tys[2] = { Ty, OpTy };
-    Int = Intrinsic::aarch64_neon_fcvtms;
+    Int = Intrinsic::arm_neon_vcvtms;
     return EmitNeonCall(CGM.getIntrinsic(Int, Tys), Ops, "vcvtms_f32");
   }
+  case AArch64::BI__builtin_neon_vcvtm_s64_v:
   case AArch64::BI__builtin_neon_vcvtmq_s64_v: {
     llvm::Type *OpTy = llvm::VectorType::get(DoubleTy, VTy->getNumElements());
     llvm::Type *Tys[2] = { Ty, OpTy };
-    Int = Intrinsic::aarch64_neon_fcvtms;
+    Int = Intrinsic::arm_neon_vcvtms;
     return EmitNeonCall(CGM.getIntrinsic(Int, Tys), Ops, "vcvtms_f64");
   }
   case AArch64::BI__builtin_neon_vcvtm_u32_v:
   case AArch64::BI__builtin_neon_vcvtmq_u32_v: {
     llvm::Type *OpTy = llvm::VectorType::get(FloatTy, VTy->getNumElements());
     llvm::Type *Tys[2] = { Ty, OpTy };
-    Int = Intrinsic::aarch64_neon_fcvtmu;
+    Int = Intrinsic::arm_neon_vcvtmu;
     return EmitNeonCall(CGM.getIntrinsic(Int, Tys), Ops, "vcvtmu_f32");
   }
+  case AArch64::BI__builtin_neon_vcvtm_u64_v:
   case AArch64::BI__builtin_neon_vcvtmq_u64_v: {
     llvm::Type *OpTy = llvm::VectorType::get(DoubleTy, VTy->getNumElements());
     llvm::Type *Tys[2] = { Ty, OpTy };
-    Int = Intrinsic::aarch64_neon_fcvtmu;
+    Int = Intrinsic::arm_neon_vcvtmu;
     return EmitNeonCall(CGM.getIntrinsic(Int, Tys), Ops, "vcvtmu_f64");
   }
   case AArch64::BI__builtin_neon_vcvta_s32_v:
   case AArch64::BI__builtin_neon_vcvtaq_s32_v: {
     llvm::Type *OpTy = llvm::VectorType::get(FloatTy, VTy->getNumElements());
     llvm::Type *Tys[2] = { Ty, OpTy };
-    Int = Intrinsic::aarch64_neon_fcvtas;
+    Int = Intrinsic::arm_neon_vcvtas;
     return EmitNeonCall(CGM.getIntrinsic(Int, Tys), Ops, "vcvtas_f32");
   }
+  case AArch64::BI__builtin_neon_vcvta_s64_v:
   case AArch64::BI__builtin_neon_vcvtaq_s64_v: {
     llvm::Type *OpTy = llvm::VectorType::get(DoubleTy, VTy->getNumElements());
     llvm::Type *Tys[2] = { Ty, OpTy };
-    Int = Intrinsic::aarch64_neon_fcvtas;
+    Int = Intrinsic::arm_neon_vcvtas;
     return EmitNeonCall(CGM.getIntrinsic(Int, Tys), Ops, "vcvtas_f64");
   }
   case AArch64::BI__builtin_neon_vcvta_u32_v:
   case AArch64::BI__builtin_neon_vcvtaq_u32_v: {
     llvm::Type *OpTy = llvm::VectorType::get(FloatTy, VTy->getNumElements());
     llvm::Type *Tys[2] = { Ty, OpTy };
-    Int = Intrinsic::aarch64_neon_fcvtau;
+    Int = Intrinsic::arm_neon_vcvtau;
     return EmitNeonCall(CGM.getIntrinsic(Int, Tys), Ops, "vcvtau_f32");
   }
+  case AArch64::BI__builtin_neon_vcvta_u64_v:
   case AArch64::BI__builtin_neon_vcvtaq_u64_v: {
     llvm::Type *OpTy = llvm::VectorType::get(DoubleTy, VTy->getNumElements());
     llvm::Type *Tys[2] = { Ty, OpTy };
-    Int = Intrinsic::aarch64_neon_fcvtau;
+    Int = Intrinsic::arm_neon_vcvtau;
     return EmitNeonCall(CGM.getIntrinsic(Int, Tys), Ops, "vcvtau_f64");
   }
   case AArch64::BI__builtin_neon_vrecpe_v:
@@ -3829,7 +3907,7 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
     return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vrsqrte_v, E);
   case AArch64::BI__builtin_neon_vsqrt_v:
   case AArch64::BI__builtin_neon_vsqrtq_v: {
-    Int = Intrinsic::aarch64_neon_fsqrt;
+    Int = Intrinsic::sqrt;
     return EmitNeonCall(CGM.getIntrinsic(Int, Ty), Ops, "vsqrt");
   }
   case AArch64::BI__builtin_neon_vcvt_f32_v:

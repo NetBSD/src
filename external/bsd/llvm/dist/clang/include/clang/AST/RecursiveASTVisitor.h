@@ -14,6 +14,7 @@
 #ifndef LLVM_CLANG_AST_RECURSIVEASTVISITOR_H
 #define LLVM_CLANG_AST_RECURSIVEASTVISITOR_H
 
+#include "clang/AST/Attr.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclFriend.h"
@@ -182,6 +183,13 @@ public:
   /// otherwise (including when the argument is a Null type location).
   bool TraverseTypeLoc(TypeLoc TL);
 
+  /// \brief Recursively visit an attribute, by dispatching to
+  /// Traverse*Attr() based on the argument's dynamic type.
+  ///
+  /// \returns false if the visitation was terminated early, true
+  /// otherwise (including when the argument is a Null type location).
+  bool TraverseAttr(Attr *At);
+
   /// \brief Recursively visit a declaration, by dispatching to
   /// Traverse*Decl() based on the argument's dynamic type.
   ///
@@ -253,6 +261,16 @@ public:
   ///
   /// \returns false if the visitation was terminated early, true otherwise.
   bool TraverseLambdaBody(LambdaExpr *LE);
+
+  // ---- Methods on Attrs ----
+
+  // \brief Visit an attribute.
+  bool VisitAttr(Attr *A) { return true; }
+
+  // Declare Traverse* and empty Visit* for all Attr classes.
+#define ATTR_VISITOR_DECLS_ONLY
+#include "clang/AST/AttrVisitor.inc"
+#undef ATTR_VISITOR_DECLS_ONLY
 
   // ---- Methods on Stmts ----
 
@@ -623,6 +641,12 @@ bool RecursiveASTVisitor<Derived>::TraverseTypeLoc(TypeLoc TL) {
 }
 
 
+// Define the Traverse*Attr(Attr* A) methods
+#define VISITORCLASS RecursiveASTVisitor
+#include "clang/AST/AttrVisitor.inc"
+#undef VISITORCLASS
+
+
 template<typename Derived>
 bool RecursiveASTVisitor<Derived>::TraverseDecl(Decl *D) {
   if (!D)
@@ -636,10 +660,18 @@ bool RecursiveASTVisitor<Derived>::TraverseDecl(Decl *D) {
   switch (D->getKind()) {
 #define ABSTRACT_DECL(DECL)
 #define DECL(CLASS, BASE) \
-  case Decl::CLASS: DISPATCH(CLASS##Decl, CLASS##Decl, D);
+  case Decl::CLASS: \
+    if (!getDerived().Traverse##CLASS##Decl(static_cast<CLASS##Decl*>(D))) \
+      return false; \
+    break;
 #include "clang/AST/DeclNodes.inc"
- }
+  }
 
+  // Visit any attributes attached to this declaration.
+  for (Decl::attr_iterator I=D->attr_begin(), E=D->attr_end(); I != E; ++I) {
+    if (!getDerived().TraverseAttr(*I))
+      return false;
+  }
   return true;
 }
 
@@ -874,6 +906,10 @@ DEF_TRAVERSE_TYPE(MemberPointerType, {
     TRY_TO(TraverseType(T->getPointeeType()));
   })
 
+DEF_TRAVERSE_TYPE(AdjustedType, {
+    TRY_TO(TraverseType(T->getOriginalType()));
+  })
+
 DEF_TRAVERSE_TYPE(DecayedType, {
     TRY_TO(TraverseType(T->getOriginalType()));
   })
@@ -1082,6 +1118,10 @@ DEF_TRAVERSE_TYPELOC(RValueReferenceType, {
 DEF_TRAVERSE_TYPELOC(MemberPointerType, {
     TRY_TO(TraverseType(QualType(TL.getTypePtr()->getClass(), 0)));
     TRY_TO(TraverseTypeLoc(TL.getPointeeLoc()));
+  })
+
+DEF_TRAVERSE_TYPELOC(AdjustedType, {
+    TRY_TO(TraverseTypeLoc(TL.getOriginalLoc()));
   })
 
 DEF_TRAVERSE_TYPELOC(DecayedType, {
@@ -2131,15 +2171,6 @@ DEF_TRAVERSE_STMT(CXXUuidofExpr, {
     // but not if it's a type.
     if (S->isTypeOperand())
       TRY_TO(TraverseTypeLoc(S->getTypeOperandSourceInfo()->getTypeLoc()));
-  })
-
-DEF_TRAVERSE_STMT(UnaryTypeTraitExpr, {
-    TRY_TO(TraverseTypeLoc(S->getQueriedTypeSourceInfo()->getTypeLoc()));
-  })
-
-DEF_TRAVERSE_STMT(BinaryTypeTraitExpr, {
-    TRY_TO(TraverseTypeLoc(S->getLhsTypeSourceInfo()->getTypeLoc()));
-    TRY_TO(TraverseTypeLoc(S->getRhsTypeSourceInfo()->getTypeLoc()));
   })
 
 DEF_TRAVERSE_STMT(TypeTraitExpr, {

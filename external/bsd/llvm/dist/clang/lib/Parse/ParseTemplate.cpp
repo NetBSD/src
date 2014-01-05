@@ -101,15 +101,11 @@ Parser::ParseTemplateDeclarationOrSpecialization(unsigned Context,
   do {
     // Consume the 'export', if any.
     SourceLocation ExportLoc;
-    if (Tok.is(tok::kw_export)) {
-      ExportLoc = ConsumeToken();
-    }
+    TryConsumeToken(tok::kw_export, ExportLoc);
 
     // Consume the 'template', which should be here.
     SourceLocation TemplateLoc;
-    if (Tok.is(tok::kw_template)) {
-      TemplateLoc = ConsumeToken();
-    } else {
+    if (!TryConsumeToken(tok::kw_template, TemplateLoc)) {
       Diag(Tok.getLocation(), diag::err_expected_template);
       return 0;
     }
@@ -121,8 +117,7 @@ Parser::ParseTemplateDeclarationOrSpecialization(unsigned Context,
                                 TemplateParams, LAngleLoc, RAngleLoc)) {
       // Skip until the semi-colon or a }.
       SkipUntil(tok::r_brace, StopAtSemi | StopBeforeMatch);
-      if (Tok.is(tok::semi))
-        ConsumeToken();
+      TryConsumeToken(tok::semi);
       return 0;
     }
 
@@ -302,11 +297,10 @@ bool Parser::ParseTemplateParameters(unsigned Depth,
                                      SourceLocation &LAngleLoc,
                                      SourceLocation &RAngleLoc) {
   // Get the template parameter list.
-  if (!Tok.is(tok::less)) {
+  if (!TryConsumeToken(tok::less, LAngleLoc)) {
     Diag(Tok.getLocation(), diag::err_expected_less_after) << "template";
     return true;
   }
-  LAngleLoc = ConsumeToken();
 
   // Try to parse the template parameter list.
   bool Failed = false;
@@ -322,10 +316,8 @@ bool Parser::ParseTemplateParameters(unsigned Depth,
     Tok.setKind(tok::greater);
     RAngleLoc = Tok.getLocation();
     Tok.setLocation(Tok.getLocation().getLocWithOffset(1));
-  } else if (Tok.is(tok::greater))
-    RAngleLoc = ConsumeToken();
-  else if (Failed) {
-    Diag(Tok.getLocation(), diag::err_expected_greater);
+  } else if (!TryConsumeToken(tok::greater, RAngleLoc) && Failed) {
+    Diag(Tok.getLocation(), diag::err_expected) << tok::greater;
     return true;
   }
   return false;
@@ -483,10 +475,8 @@ Decl *Parser::ParseTypeParameter(unsigned Depth, unsigned Position) {
   // Grab the ellipsis (if given).
   bool Ellipsis = false;
   SourceLocation EllipsisLoc;
-  if (Tok.is(tok::ellipsis)) {
+  if (TryConsumeToken(tok::ellipsis, EllipsisLoc)) {
     Ellipsis = true;
-    EllipsisLoc = ConsumeToken();
-
     Diag(EllipsisLoc,
          getLangOpts().CPlusPlus11
            ? diag::warn_cxx98_compat_variadic_templates
@@ -504,7 +494,7 @@ Decl *Parser::ParseTypeParameter(unsigned Depth, unsigned Position) {
     // Unnamed template parameter. Don't have to do anything here, just
     // don't consume this token.
   } else {
-    Diag(Tok.getLocation(), diag::err_expected_ident);
+    Diag(Tok.getLocation(), diag::err_expected) << tok::identifier;
     return 0;
   }
 
@@ -513,11 +503,9 @@ Decl *Parser::ParseTypeParameter(unsigned Depth, unsigned Position) {
   // we introduce the type parameter into the local scope.
   SourceLocation EqualLoc;
   ParsedType DefaultArg;
-  if (Tok.is(tok::equal)) {
-    EqualLoc = ConsumeToken();
+  if (TryConsumeToken(tok::equal, EqualLoc))
     DefaultArg = ParseTypeName(/*Range=*/0,
                                Declarator::TemplateTypeArgContext).get();
-  }
 
   return Actions.ActOnTypeParameter(getCurScope(), TypenameKeyword, Ellipsis, 
                                     EllipsisLoc, KeyLoc, ParamName, NameLoc,
@@ -552,7 +540,7 @@ Parser::ParseTemplateTemplateParameter(unsigned Depth, unsigned Position) {
   // identifier, comma, or greater. Provide a fixit if the identifier, comma,
   // or greater appear immediately or after 'typename' or 'struct'. In the
   // latter case, replace the keyword with 'class'.
-  if (!Tok.is(tok::kw_class)) {
+  if (!TryConsumeToken(tok::kw_class)) {
     bool Replace = Tok.is(tok::kw_typename) || Tok.is(tok::kw_struct);
     const Token& Next = Replace ? NextToken() : Tok;
     if (Next.is(tok::identifier) || Next.is(tok::comma) ||
@@ -566,19 +554,15 @@ Parser::ParseTemplateTemplateParameter(unsigned Depth, unsigned Position) {
 
     if (Replace)
       ConsumeToken();
-  } else
-    ConsumeToken();
+  }
 
   // Parse the ellipsis, if given.
   SourceLocation EllipsisLoc;
-  if (Tok.is(tok::ellipsis)) {
-    EllipsisLoc = ConsumeToken();
-    
+  if (TryConsumeToken(tok::ellipsis, EllipsisLoc))
     Diag(EllipsisLoc,
          getLangOpts().CPlusPlus11
            ? diag::warn_cxx98_compat_variadic_templates
            : diag::ext_variadic_templates);
-  }
       
   // Get the identifier, if given.
   SourceLocation NameLoc;
@@ -591,7 +575,7 @@ Parser::ParseTemplateTemplateParameter(unsigned Depth, unsigned Position) {
     // Unnamed template parameter. Don't have to do anything here, just
     // don't consume this token.
   } else {
-    Diag(Tok.getLocation(), diag::err_expected_ident);
+    Diag(Tok.getLocation(), diag::err_expected) << tok::identifier;
     return 0;
   }
 
@@ -607,8 +591,7 @@ Parser::ParseTemplateTemplateParameter(unsigned Depth, unsigned Position) {
   // we introduce the template parameter into the local scope.
   SourceLocation EqualLoc;
   ParsedTemplateArgument DefaultArg;
-  if (Tok.is(tok::equal)) {
-    EqualLoc = ConsumeToken();
+  if (TryConsumeToken(tok::equal, EqualLoc)) {
     DefaultArg = ParseTemplateTemplateArgument();
     if (DefaultArg.isInvalid()) {
       Diag(Tok.getLocation(), 
@@ -651,9 +634,7 @@ Parser::ParseNonTypeTemplateParameter(unsigned Depth, unsigned Position) {
   // we introduce the template parameter into the local scope.
   SourceLocation EqualLoc;
   ExprResult DefaultArg;
-  if (Tok.is(tok::equal)) {
-    EqualLoc = ConsumeToken();
-
+  if (TryConsumeToken(tok::equal, EqualLoc)) {
     // C++ [temp.param]p15:
     //   When parsing a default template-argument for a non-type
     //   template-parameter, the first non-nested > is taken as the
@@ -692,7 +673,7 @@ bool Parser::ParseGreaterThanInTemplateList(SourceLocation &RAngleLoc,
 
   switch (Tok.getKind()) {
   default:
-    Diag(Tok.getLocation(), diag::err_expected_greater);
+    Diag(Tok.getLocation(), diag::err_expected) << tok::greater;
     return true;
 
   case tok::greater:
@@ -900,8 +881,7 @@ bool Parser::AnnotateTemplateIdToken(TemplateTy Template, TemplateNameKind TNK,
   if (Invalid) {
     // If we failed to parse the template ID but skipped ahead to a >, we're not
     // going to be able to form a token annotation.  Eat the '>' if present.
-    if (Tok.is(tok::greater))
-      ConsumeToken();
+    TryConsumeToken(tok::greater);
     return true;
   }
 
@@ -916,8 +896,7 @@ bool Parser::AnnotateTemplateIdToken(TemplateTy Template, TemplateNameKind TNK,
     if (Type.isInvalid()) {
       // If we failed to parse the template ID but skipped ahead to a >, we're not
       // going to be able to form a token annotation.  Eat the '>' if present.
-      if (Tok.is(tok::greater))
-        ConsumeToken();
+      TryConsumeToken(tok::greater);
       return true;
     }
 
@@ -1067,10 +1046,8 @@ ParsedTemplateArgument Parser::ParseTemplateTemplateArgument() {
     UnqualifiedId Name;
     Name.setIdentifier(Tok.getIdentifierInfo(), Tok.getLocation());
     ConsumeToken(); // the identifier
-    
-    // Parse the ellipsis.
-    if (Tok.is(tok::ellipsis))
-      EllipsisLoc = ConsumeToken();
+
+    TryConsumeToken(tok::ellipsis, EllipsisLoc);
 
     if (isEndOfTemplateArgument(Tok)) {
       bool MemberOfUnknownSpecialization;
@@ -1161,9 +1138,8 @@ bool Parser::IsTemplateArgumentList(unsigned Skip) {
   }
   
   // '<'
-  if (!Tok.is(tok::less))
+  if (!TryConsumeToken(tok::less))
     return false;
-  ConsumeToken();
 
   // An empty template argument list.
   if (Tok.is(tok::greater))
@@ -1188,12 +1164,11 @@ Parser::ParseTemplateArgumentList(TemplateArgList &TemplateArgs) {
   // Template argument lists are constant-evaluation contexts.
   EnterExpressionEvaluationContext EvalContext(Actions,Sema::ConstantEvaluated);
 
-  while (true) {
+  do {
     ParsedTemplateArgument Arg = ParseTemplateArgument();
-    if (Tok.is(tok::ellipsis)) {
-      SourceLocation EllipsisLoc  = ConsumeToken();
+    SourceLocation EllipsisLoc;
+    if (TryConsumeToken(tok::ellipsis, EllipsisLoc))
       Arg = Actions.ActOnPackExpansion(Arg, EllipsisLoc);
-    }
 
     if (Arg.isInvalid()) {
       SkipUntil(tok::comma, tok::greater, StopAtSemi | StopBeforeMatch);
@@ -1205,11 +1180,7 @@ Parser::ParseTemplateArgumentList(TemplateArgList &TemplateArgs) {
       
     // If the next token is a comma, consume it and keep reading
     // arguments.
-    if (Tok.isNot(tok::comma)) break;
-
-    // Consume the comma.
-    ConsumeToken();
-  }
+  } while (TryConsumeToken(tok::comma));
 
   return false;
 }
@@ -1304,9 +1275,11 @@ void Parser::ParseLateTemplatedFuncDef(LateParsedTemplate &LPT) {
       new ParseScope(this, Scope::TemplateParamScope));
 
   DeclaratorDecl *Declarator = dyn_cast<DeclaratorDecl>(FunD);
-  if (Declarator && Declarator->getNumTemplateParameterLists() != 0) {
+  const unsigned DeclaratorNumTemplateParameterLists = 
+      (Declarator ? Declarator->getNumTemplateParameterLists() : 0);
+  if (Declarator && DeclaratorNumTemplateParameterLists != 0) {
     Actions.ActOnReenterDeclaratorTemplateScope(getCurScope(), Declarator);
-    ++CurTemplateDepthTracker;
+    CurTemplateDepthTracker.addDepth(DeclaratorNumTemplateParameterLists);
   }
   Actions.ActOnReenterTemplateScope(getCurScope(), LPT.D);
   ++CurTemplateDepthTracker;

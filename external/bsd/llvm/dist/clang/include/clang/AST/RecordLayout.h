@@ -66,6 +66,10 @@ private:
   // Alignment - Alignment of record in characters.
   CharUnits Alignment;
 
+  /// RequiredAlignment - The required alignment of the object.  In the MS-ABI
+  /// the __declspec(align()) trumps #pramga pack and must always be obeyed.
+  CharUnits RequiredAlignment;
+
   /// FieldOffsets - Array of field offsets in bits.
   uint64_t *FieldOffsets;
 
@@ -100,10 +104,14 @@ private:
     /// a primary base class.
     bool HasExtendableVFPtr : 1;
 
-    /// AlignAfterVBases - Force appropriate alignment after virtual bases are
-    /// laid out in MS-C++-ABI.
-    bool AlignAfterVBases : 1;
-    
+    /// HasZeroSizedSubObject - True if this class contains a zero sized member or base or a base
+    /// with a zero sized member or base.  Only used for MS-ABI.
+    bool HasZeroSizedSubObject : 1;
+
+    /// \brief True if this class is zero sized or first base is zero sized or
+    /// has this property.  Only used for MS-ABI.
+    bool LeadsWithZeroSizedBase : 1;
+
     /// PrimaryBase - The primary base info for this record.
     llvm::PointerIntPair<const CXXRecordDecl *, 1, bool> PrimaryBase;
 
@@ -127,6 +135,7 @@ private:
   friend class ASTContext;
 
   ASTRecordLayout(const ASTContext &Ctx, CharUnits size, CharUnits alignment,
+                  CharUnits requiredAlignment,
                   CharUnits datasize, const uint64_t *fieldoffsets,
                   unsigned fieldcount);
 
@@ -134,6 +143,7 @@ private:
   typedef CXXRecordLayoutInfo::BaseOffsetsMapTy BaseOffsetsMapTy;
   ASTRecordLayout(const ASTContext &Ctx,
                   CharUnits size, CharUnits alignment,
+                  CharUnits requiredAlignment,
                   bool hasOwnVFPtr, bool hasExtendableVFPtr,
                   CharUnits vbptroffset,
                   CharUnits datasize,
@@ -143,7 +153,8 @@ private:
                   const CXXRecordDecl *PrimaryBase,
                   bool IsPrimaryBaseVirtual,
                   const CXXRecordDecl *BaseSharingVBPtr,
-                  bool ForceAlign,
+                  bool HasZeroSizedSubObject,
+                  bool LeadsWithZeroSizedBase,
                   const BaseOffsetsMapTy& BaseOffsets,
                   const VBaseOffsetsMapTy& VBaseOffsets);
 
@@ -267,9 +278,17 @@ public:
     return !CXXInfo->VBPtrOffset.isNegative();
   }
 
-  bool getAlignAfterVBases() const {
+  CharUnits getRequiredAlignment() const {
+    return RequiredAlignment;
+  }
+
+  bool hasZeroSizedSubObject() const {
+    return CXXInfo && CXXInfo->HasZeroSizedSubObject;
+  }
+
+  bool leadsWithZeroSizedBase() const {
     assert(CXXInfo && "Record layout does not have C++ specific info!");
-    return CXXInfo->AlignAfterVBases;
+    return CXXInfo->LeadsWithZeroSizedBase;
   }
 
   /// getVBPtrOffset - Get the offset for virtual base table pointer.

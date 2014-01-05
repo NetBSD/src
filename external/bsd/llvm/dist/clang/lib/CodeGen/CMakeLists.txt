@@ -1,12 +1,18 @@
 set(LLVM_LINK_COMPONENTS
-  asmparser
-  bitreader
-  bitwriter
-  irreader
-  instrumentation
-  ipo
-  linker
-  vectorize
+  BitReader
+  BitWriter
+  Core
+  IPO
+  IRReader
+  InstCombine
+  Instrumentation
+  Linker
+  MC
+  ObjCARCOpts
+  ScalarOpts
+  Support
+  Target
+  TransformUtils
   )
 
 add_clang_library(clangCodeGen
@@ -49,7 +55,6 @@ add_clang_library(clangCodeGen
   CodeGenTypes.cpp
   ItaniumCXXABI.cpp
   MicrosoftCXXABI.cpp
-  MicrosoftVBTables.cpp
   ModuleBuilder.cpp
   TargetInfo.cpp
   )

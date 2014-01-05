@@ -268,7 +268,6 @@ void IndexingContext::importedModule(const ImportDecl *ImportD) {
   Module *Mod = ImportD->getImportedModule();
   if (!Mod)
     return;
-  std::string ModuleName = Mod->getFullModuleName();
 
   CXIdxImportedASTFileInfo Info = {
                                     static_cast<CXFile>(
@@ -803,9 +802,9 @@ bool IndexingContext::markEntityOccurrenceInFile(const NamedDecl *D,
   const FileEntry *FE = SM.getFileEntryForID(FID);
   if (!FE)
     return true;
-  RefFileOccurence RefOccur(FE, D);
-  std::pair<llvm::DenseSet<RefFileOccurence>::iterator, bool>
-  res = RefFileOccurences.insert(RefOccur);
+  RefFileOccurrence RefOccur(FE, D);
+  std::pair<llvm::DenseSet<RefFileOccurrence>::iterator, bool>
+  res = RefFileOccurrences.insert(RefOccur);
   if (!res.second)
     return true; // already in map.
 

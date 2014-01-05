@@ -1298,7 +1298,9 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
   bool AllowObjCWritebackConversion
     = getLangOpts().ObjCAutoRefCount && 
       (Action == AA_Passing || Action == AA_Sending);
-
+  if (getLangOpts().ObjC1)
+    CheckObjCBridgeRelatedConversions(From->getLocStart(),
+                                      ToType, From->getType(), From);
   ICS = clang::TryImplicitConversion(*this, From, ToType,
                                      /*SuppressUserConversions=*/false,
                                      AllowExplicit,
@@ -9320,7 +9322,7 @@ void TemplateSpecCandidateSet::NoteCandidates(Sema &S, SourceLocation Loc) {
   for (iterator Cand = begin(), LastCand = end(); Cand != LastCand; ++Cand) {
     if (Cand->Specialization)
       Cands.push_back(Cand);
-    // Otherwise, this is a non matching builtin candidate.  We do not,
+    // Otherwise, this is a non-matching builtin candidate.  We do not,
     // in general, want to list every possible builtin candidate.
   }
 
@@ -11893,7 +11895,7 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, DeclAccessPair Found,
         // Do nothing: static member functions aren't any different
         // from non-member functions.
       } else {
-        // Fix the sub expression, which really has to be an
+        // Fix the subexpression, which really has to be an
         // UnresolvedLookupExpr holding an overloaded member function
         // or template.
         Expr *SubExpr = FixOverloadedFunctionReference(UnOp->getSubExpr(),
