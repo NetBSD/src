@@ -7,7 +7,6 @@ _Static_assert(_Alignof(double) == 4, "alignof double is wrong");
 
 // RUN: %clang_cc1 -triple xcore-unknown-unknown -fno-signed-char -fno-common -emit-llvm -o - %s | FileCheck %s
 
-// CHECK: target datalayout = "e-p:32:32:32-a0:0:32-n32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:32-f16:16:32-f32:32:32-f64:32:32"
 // CHECK: target triple = "xcore-unknown-unknown"
 
 // CHECK: @g1 = global i32 0, align 4
@@ -66,7 +65,7 @@ void testva (int n, ...) {
   // CHECK:[[V2:%[a-z0-9]+]] = bitcast i64* [[V]] to i8*
   // CHECK: call void @f(i8* [[V2]])
 
-  struct x v5 = va_arg (ap, struct x);  // typical agregate type
+  struct x v5 = va_arg (ap, struct x);  // typical aggregate type
   f(&v5);
   // CHECK: [[I:%[a-z0-9]+]] = load i8** [[AP]]
   // CHECK: [[I2:%[a-z0-9]+]] = bitcast i8* [[I]] to %struct.x**
@@ -79,7 +78,7 @@ void testva (int n, ...) {
   // CHECK: [[V2:%[a-z0-9]+]] = bitcast %struct.x* [[V]] to i8*
   // CHECK: call void @f(i8* [[V2]])
 
-  int* v6 = va_arg (ap, int[4]);  // an unusual agregate type
+  int* v6 = va_arg (ap, int[4]);  // an unusual aggregate type
   f(v6);
   // CHECK: [[I:%[a-z0-9]+]] = load i8** [[AP]]
   // CHECK: [[I2:%[a-z0-9]+]] = bitcast i8* [[I]] to [4 x i32]**
