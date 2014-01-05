@@ -48,7 +48,7 @@ class RefState {
               Allocated,
               // Reference to released/freed memory.
               Released,
-              // The responsibility for freeing resources has transfered from
+              // The responsibility for freeing resources has transferred from
               // this reference. A relinquished symbol should not be freed.
               Relinquished,
               // We are no longer guaranteed to have observed all manipulations
@@ -234,9 +234,9 @@ private:
   bool isAllocationFunction(const FunctionDecl *FD, ASTContext &C) const;
   bool isStandardNewDelete(const FunctionDecl *FD, ASTContext &C) const;
   ///@}
-  static ProgramStateRef MallocMemReturnsAttr(CheckerContext &C,
-                                              const CallExpr *CE,
-                                              const OwnershipAttr* Att);
+  ProgramStateRef MallocMemReturnsAttr(CheckerContext &C,
+                                       const CallExpr *CE,
+                                       const OwnershipAttr* Att) const;
   static ProgramStateRef MallocMemAux(CheckerContext &C, const CallExpr *CE,
                                      const Expr *SizeEx, SVal Init,
                                      ProgramStateRef State,
@@ -729,10 +729,10 @@ void MallocChecker::checkPostObjCMessage(const ObjCMethodCall &Call,
   C.addTransition(State);
 }
 
-ProgramStateRef MallocChecker::MallocMemReturnsAttr(CheckerContext &C,
-                                                    const CallExpr *CE,
-                                                    const OwnershipAttr* Att) {
-  if (Att->getModule() != "malloc")
+ProgramStateRef
+MallocChecker::MallocMemReturnsAttr(CheckerContext &C, const CallExpr *CE,
+                                    const OwnershipAttr *Att) const {
+  if (Att->getModule() != II_malloc)
     return 0;
 
   OwnershipAttr::args_iterator I = Att->args_begin(), E = Att->args_end();
@@ -804,8 +804,8 @@ ProgramStateRef MallocChecker::MallocUpdateRefState(CheckerContext &C,
 
 ProgramStateRef MallocChecker::FreeMemAttr(CheckerContext &C,
                                            const CallExpr *CE,
-                                           const OwnershipAttr* Att) const {
-  if (Att->getModule() != "malloc")
+                                           const OwnershipAttr *Att) const {
+  if (Att->getModule() != II_malloc)
     return 0;
 
   ProgramStateRef State = C.getState();
@@ -909,7 +909,7 @@ bool MallocChecker::printAllocDeallocName(raw_ostream &os, CheckerContext &C,
       os << "-";
     else
       os << "+";
-    os << Msg->getSelector().getAsString();
+    Msg->getSelector().print(os);
     return true;
   }
 
@@ -2130,7 +2130,7 @@ MallocChecker::MallocBugVisitor::VisitNode(const ExplodedNode *N,
       StackHint = new StackHintGeneratorForSymbol(Sym,
                                              "Returning; memory was released");
     } else if (isRelinquished(RS, RSPrev, S)) {
-      Msg = "Memory ownership is transfered";
+      Msg = "Memory ownership is transferred";
       StackHint = new StackHintGeneratorForSymbol(Sym, "");
     } else if (isReallocFailedCheck(RS, RSPrev, S)) {
       Mode = ReallocationFailed;
