@@ -948,19 +948,6 @@ StmtProfiler::VisitUnresolvedLookupExpr(const UnresolvedLookupExpr *S) {
   VisitOverloadExpr(S);
 }
 
-void StmtProfiler::VisitUnaryTypeTraitExpr(const UnaryTypeTraitExpr *S) {
-  VisitExpr(S);
-  ID.AddInteger(S->getTrait());
-  VisitType(S->getQueriedType());
-}
-
-void StmtProfiler::VisitBinaryTypeTraitExpr(const BinaryTypeTraitExpr *S) {
-  VisitExpr(S);
-  ID.AddInteger(S->getTrait());
-  VisitType(S->getLhsType());
-  VisitType(S->getRhsType());
-}
-
 void StmtProfiler::VisitTypeTraitExpr(const TypeTraitExpr *S) {
   VisitExpr(S);
   ID.AddInteger(S->getTrait());

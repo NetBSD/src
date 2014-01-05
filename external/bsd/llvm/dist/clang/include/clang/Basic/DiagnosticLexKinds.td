@@ -300,6 +300,9 @@ def ext_pp_import_directive : Extension<"#import is a language extension">,
   InGroup<DiagGroup<"import-preprocessor-directive-pedantic">>;
 def err_pp_import_directive_ms : Error<
   "#import of type library is an unsupported Microsoft feature">;
+def ext_pp_include_search_ms : ExtWarn<
+  "#include resolved using non-portable MSVC search rules as: %0">,
+  InGroup<DiagGroup<"msvc-include">>;
 
 def ext_pp_ident_directive : Extension<"#ident is a language extension">;
 def ext_pp_include_next_directive : Extension<
@@ -377,8 +380,7 @@ def err_pp_expected_eol : Error<
   "expected end of line in preprocessor expression">;
 def err_pp_defined_requires_identifier : Error<
   "operator 'defined' requires an identifier">;
-def err_pp_missing_lparen : Error<"missing '(' after '%0'">;
-def err_pp_missing_rparen : Error<"missing ')' after '%0'">;
+def err_pp_expected_after : Error<"missing %1 after %0">;
 def err_pp_colon_without_question : Error<"':' without preceding '?'">;
 def err_pp_division_by_zero : Error<
   "division by zero in preprocessor expression">;
@@ -551,8 +553,6 @@ def err_mmap_expected_mmap_file : Error<"expected a module map file name">;
 def err_mmap_module_redefinition : Error<
   "redefinition of module '%0'">;
 def note_mmap_prev_definition : Note<"previously defined here">;
-def err_mmap_header_not_found : Error<
-  "%select{|umbrella }0header '%1' not found">;
 def err_mmap_umbrella_dir_not_found : Error<
   "umbrella directory '%0' not found">;
 def err_mmap_umbrella_clash : Error<
@@ -614,7 +614,7 @@ def err_expected_id_building_module : Error<
 def error_use_of_private_header_outside_module : Error<
   "use of private header from outside its module: '%0'">;
 def error_undeclared_use_of_module : Error<
-  "use of a module not declared used: '%0'">;
+  "module %0 does not depend on a module exporting '%1'">;
 
 def warn_header_guard : Warning<
   "%0 is used as a header guard here, followed by #define of a different macro">,
