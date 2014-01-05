@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_parse.c,v 1.10 2013/12/28 03:20:14 christos Exp $	*/
+/*	$NetBSD: refclock_parse.c,v 1.11 2014/01/05 15:13:36 kardel Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/ntpd/refclock_parse.c,v 4.81 2009/05/01 10:15:29 kardel RELEASE_20090105_A
@@ -2543,74 +2543,37 @@ parsestate(
 		if (flagstrings[i].bit & lstate)
 		{
 			if (s != t)
-<<<<<<< refclock_parse.c
 				t = ap(buffer, size, t, "; ");
 			t = ap(buffer, size, t, "%s", flagstrings[i].name);
-=======
-				strlcpy(t, "; ", BUFFER_SIZES(buffer, t, size));
-			if (strlcat(t, flagstrings[i].name, BUFFER_SIZES(buffer, t, size)) <
-			    BUFFER_SIZES(buffer, t, size))
-				t += strlen(t);
->>>>>>> 1.1.1.3
 		}
 		i++;
 	}
 
 	if (lstate & (PARSEB_S_LEAP|PARSEB_S_ANTENNA|PARSEB_S_PPS|PARSEB_S_POSITION))
 	{
-<<<<<<< refclock_parse.c
 		if (s != t)
 			t = ap(buffer, size, t, "; ");
 
 		t = ap(buffer, size, t, "(");
-=======
-		if (s != t &&
-		    strlcpy(t, "; ", BUFFER_SIZES(buffer, t, size)) <
-		    BUFFER_SIZES(buffer, t, size))
-			t += strlen(t);
->>>>>>> 1.1.1.3
 
-<<<<<<< refclock_parse.c
 		s = t;
-=======
-		if (strlcpy(t, "(", BUFFER_SIZES(buffer, t, size)) < 
-		    BUFFER_SIZES(buffer, t, size))
-			s = t = t + strlen(t);
->>>>>>> 1.1.1.3
 
 		i = 0;
 		while (sflagstrings[i].bit)
 		{
 			if (sflagstrings[i].bit & lstate)
 			{
-<<<<<<< refclock_parse.c
 				if (t != s)
 				{
 					t = ap(buffer, size, t, "; ");
 				}
-=======
-				if (t != s &&
-				    strlcpy(t, "; ", BUFFER_SIZES(buffer, t, size)) <
-				    BUFFER_SIZES(buffer, t, size))
-					t += 2;
->>>>>>> 1.1.1.3
 	
-<<<<<<< refclock_parse.c
 				t = ap(buffer, size, t, "%s",
 				    sflagstrings[i].name);
-=======
-				if (strlcpy(t, sflagstrings[i].name, BUFFER_SIZES(buffer, t, size)) <
-				    BUFFER_SIZES(buffer, t, size))
-					t += strlen(t);
->>>>>>> 1.1.1.3
 			}
 			i++;
 		}
-<<<<<<< refclock_parse.c
 		t = ap(buffer, size, t, ")");
-=======
-		strlcpy(t, ")", BUFFER_SIZES(buffer, t, size));
->>>>>>> 1.1.1.3
 	}
 	return buffer;
 }
@@ -2651,15 +2614,9 @@ parsestatus(
 	{
 		if (flagstrings[i].bit & lstate)
 		{
-<<<<<<< refclock_parse.c
 			if (t == buffer)
 				t = ap(buffer, size, t, "; ");
 			t = ap(buffer, size, t, "%s", flagstrings[i].name);
-=======
-			if (buffer[0])
-				strlcat(buffer, "; ", size);
-			strlcat(buffer, flagstrings[i].name, size);
->>>>>>> 1.1.1.3
 		}
 		i++;
 	}
@@ -3307,18 +3264,9 @@ parse_start(
 		parse_shutdown(CLK_UNIT(parse->peer), peer); /* let our cleaning staff do the work */
 		return 0;			/* well, ok - special initialisation broke */
 	}
-<<<<<<< refclock_parse.c
   
 	strlcpy(tmp_ctl.parseformat.parse_buffer, parse->parse_type->cl_format, sizeof(tmp_ctl.parseformat.parse_buffer));
 	tmp_ctl.parseformat.parse_count = strlen(tmp_ctl.parseformat.parse_buffer);
-=======
-
-	tmp_ctl.parseformat.parse_count = strlcpy(tmp_ctl.parseformat.parse_buffer,
-						  parse->parse_type->cl_format,
-						  sizeof(tmp_ctl.parseformat.parse_buffer));
-	if (tmp_ctl.parseformat.parse_count >= sizeof(tmp_ctl.parseformat.parse_buffer))
-		tmp_ctl.parseformat.parse_count = sizeof(tmp_ctl.parseformat.parse_buffer) - 1;
->>>>>>> 1.1.1.3
 
 	if (!PARSE_SETFMT(parse, &tmp_ctl))
 	{
@@ -3605,11 +3553,7 @@ parse_control(
 
 		if (parse->timedata.parse_time.fp.l_ui == 0)
 		{
-<<<<<<< refclock_parse.c
 			tt = ap(start, 128, tt, "<UNDEFINED>\"");
-=======
-			strlcpy(tt, "<UNDEFINED>\"", BUFFER_SIZES(start, tt, 128));
->>>>>>> 1.1.1.3
 		}
 		else
 		{
@@ -3637,11 +3581,7 @@ parse_control(
 
 			tt += strlen(tt);
 
-<<<<<<< refclock_parse.c
 			tt = ap(start, 512, tt, "\"");
-=======
-			strlcat(tt, "\"", BUFFER_SIZES(start, tt, 512));
->>>>>>> 1.1.1.3
 
 			if (tmpctl.parsegettc.parse_count)
 			    mkascii(outstatus+strlen(outstatus), (int)(sizeof(outstatus)- strlen(outstatus) - 1),
@@ -3670,12 +3610,7 @@ parse_control(
 			        	tmpctl.parseformat.parse_buffer);
 			}
 
-<<<<<<< refclock_parse.c
 			tt = ap(start, 80, tt, "\"");
-=======
-			strlcat(tt, tmpctl.parseformat.parse_buffer, 80);
-			strlcat(tt,"\"", 80);
->>>>>>> 1.1.1.3
 		}
 
 		/*
@@ -3683,12 +3618,7 @@ parse_control(
 		 */
 
 		start = tt = add_var(&out->kv_list, LEN_STATES, RO|DEF);
-<<<<<<< refclock_parse.c
 		tt = ap(start, LEN_STATES, tt, "refclock_states=\"");
-=======
-		strlcpy(tt, "refclock_states=\"", LEN_STATES);
-		tt += strlen(tt);
->>>>>>> 1.1.1.3
 
 		for (i = 0; i <= CEVNT_MAX; i++)
 		{
@@ -3722,13 +3652,8 @@ parse_control(
 					(int)(percent / 100), (int)(percent % 100));
 				if ((count = strlen(item)) < (LEN_STATES - 40 - (tt - start)))
 					{
-<<<<<<< refclock_parse.c
 						tt = ap(start, LEN_STATES, tt,
 						    "%s", item);
-=======
-						strlcpy(tt, item, BUFFER_SIZES(start, tt, LEN_STATES));
-						tt  += count;
->>>>>>> 1.1.1.3
 					}
 				sum += s_time;
 			}
@@ -4426,11 +4351,7 @@ gps16x_message(
 									p = ap(buffer, sizeof(buffer), p, ", ");
 								}
 								
-<<<<<<< refclock_parse.c
 								p = ap(buffer, sizeof(buffer), p, "%s", (const char *)s->string);
-=======
-								strlcat(p, (const char *)s->string, sizeof(buffer));
->>>>>>> 1.1.1.3
 							}
 							s++;
 						}
@@ -4438,11 +4359,7 @@ gps16x_message(
 					}
 					else
 					{
-<<<<<<< refclock_parse.c
 						p = ap(buffer, sizeof(buffer), p, "<OK>\"");
-=======
-						strlcat(buffer, "<OK>\"", sizeof(buffer));
->>>>>>> 1.1.1.3
 					}
 		
 					set_var(&parse->kv, buffer, strlen(buffer)+1, RO|DEF);
@@ -4501,22 +4418,13 @@ gps16x_message(
 					switch (antinfo.status)
 					{
 					case ANT_INVALID:
-<<<<<<< refclock_parse.c
 						p = ap(buffer, sizeof(buffer),
 						    p, "<OK>");
-=======
-						strlcat(p, "<OK>", BUFFER_SIZE(buffer, p));
-						p += strlen(p);
->>>>>>> 1.1.1.3
 						break;
 						
 					case ANT_DISCONN:
-<<<<<<< refclock_parse.c
 						q = ap(buffer, sizeof(buffer),
 						    p, "DISCONNECTED since ");
-=======
-						strlcat(p, "DISCONNECTED since ", BUFFER_SIZE(buffer, p));
->>>>>>> 1.1.1.3
 						NLOG(NLOG_CLOCKSTATUS)
 							ERR(ERR_BADSTATUS)
 							msyslog(LOG_ERR,"PARSE receiver #%d: ANTENNA FAILURE: %s",
@@ -4528,13 +4436,8 @@ gps16x_message(
 						break;
 		    
 					case ANT_RECONN:
-<<<<<<< refclock_parse.c
 						p = ap(buffer, sizeof(buffer),
 						    p, "RECONNECTED on ");
-=======
-						strlcat(p, "RECONNECTED on ", BUFFER_SIZE(buffer, p));
-						p += strlen(p);
->>>>>>> 1.1.1.3
 						mbg_tm_str(&p, &antinfo.tm_reconn, BUFFER_SIZE(buffer, p));
 						p = ap(buffer, sizeof(buffer),
 							p, ", reconnect clockoffset %c%ld.%07ld s, disconnect time ",
@@ -4552,11 +4455,7 @@ gps16x_message(
 						break;
 					}
 					
-<<<<<<< refclock_parse.c
 					p = ap(buffer, sizeof(buffer), p, "\"");
-=======
-					strlcat(p, "\"", BUFFER_SIZE(buffer, p));
->>>>>>> 1.1.1.3
 					
 					set_var(&parse->kv, buffer, sizeof(buffer), RO|DEF);
 				}
@@ -4577,58 +4476,28 @@ gps16x_message(
 						int i;
 						
 						p = buffer;
-<<<<<<< refclock_parse.c
 						p = ap(buffer, sizeof(buffer),
 						    p, "gps_tot_51=\"");
-=======
-						strlcpy(buffer, "gps_tot_51=\"", BUFFER_SIZE(buffer, p));
-						p += strlen(p);
->>>>>>> 1.1.1.3
 						mbg_tgps_str(&p, &cfgh.tot_51, BUFFER_SIZE(buffer, p));
-<<<<<<< refclock_parse.c
 						p = ap(buffer, sizeof(buffer),
 						    p, "\"");
 						set_var(&parse->kv, buffer, sizeof(buffer), RO);
-=======
-						strlcpy(p, "\"", BUFFER_SIZE(buffer, p));
-						set_var(&parse->kv, buffer, strlen(buffer)+1, RO);
->>>>>>> 1.1.1.3
 						
 						p = buffer;
-<<<<<<< refclock_parse.c
 						p = ap(buffer, sizeof(buffer),
 						    p, "gps_tot_63=\"");
-=======
-						strlcpy(buffer, "gps_tot_63=\"", BUFFER_SIZE(buffer, p));
-						p += strlen(p);
->>>>>>> 1.1.1.3
 						mbg_tgps_str(&p, &cfgh.tot_63, BUFFER_SIZE(buffer, p));
-<<<<<<< refclock_parse.c
 						p = ap(buffer, sizeof(buffer),
 						    p, "\"");
 						set_var(&parse->kv, buffer, sizeof(buffer), RO);
-=======
-						strlcpy(p, "\"", BUFFER_SIZE(buffer, p));
-						set_var(&parse->kv, buffer, strlen(buffer)+1, RO);
->>>>>>> 1.1.1.3
 						
 						p = buffer;
-<<<<<<< refclock_parse.c
 						p = ap(buffer, sizeof(buffer),
 						    p, "gps_t0a=\"");
-=======
-						strlcpy(buffer, "gps_t0a=\"", BUFFER_SIZE(buffer, p));
-						p += strlen(p);
->>>>>>> 1.1.1.3
 						mbg_tgps_str(&p, &cfgh.t0a, BUFFER_SIZE(buffer, p));
-<<<<<<< refclock_parse.c
 						p = ap(buffer, sizeof(buffer),
 						    p, "\"");
 						set_var(&parse->kv, buffer, sizeof(buffer), RO);
-=======
-						strlcpy(p, "\"", BUFFER_SIZE(buffer, p));
-						set_var(&parse->kv, buffer, strlen(buffer)+1, RO);
->>>>>>> 1.1.1.3
 						
 						for (i = MIN_SVNO; i < MAX_SVNO; i++)
 						{
@@ -4637,145 +4506,71 @@ gps16x_message(
 							switch (cfgh.cfg[i] & 0x7)
 							{
 							case 0:
-<<<<<<< refclock_parse.c
 								p = ap(buffer, sizeof(buffer), p, "BLOCK I");
-=======
-								strlcpy(p, "BLOCK I", BUFFER_SIZE(buffer, p));
->>>>>>> 1.1.1.3
 								break;
 							case 1:
-<<<<<<< refclock_parse.c
 								p = ap(buffer, sizeof(buffer), p, "BLOCK II");
-=======
-								strlcpy(p, "BLOCK II", BUFFER_SIZE(buffer, p));
->>>>>>> 1.1.1.3
 								break;
 							default:
-<<<<<<< refclock_parse.c
 								p = ap(buffer, sizeof(buffer), p, "bad CFG");
-=======
-								strlcpy(p, "bad CFG", BUFFER_SIZE(buffer, p));
->>>>>>> 1.1.1.3
 								break;
 							}
-<<<<<<< refclock_parse.c
 							p = ap(buffer, sizeof(buffer), p, "\"");
 							set_var(&parse->kv, buffer, sizeof(buffer), RO);
-=======
-							strlcat(p, "\"", BUFFER_SIZE(buffer, p));
-							set_var(&parse->kv, buffer, strlen(buffer)+1, RO);
->>>>>>> 1.1.1.3
 							
 							p = buffer;
 							p = ap(buffer, sizeof(buffer), p, "gps_health[%d]=\"[0x%x] ", i, cfgh.health[i]);
 							switch ((cfgh.health[i] >> 5) & 0x7 )
 							{
 							case 0:
-<<<<<<< refclock_parse.c
 								p = ap(buffer, sizeof(buffer), p, "OK;");
-=======
-								strlcpy(p, "OK;", BUFFER_SIZE(buffer, p));
->>>>>>> 1.1.1.3
 								break;
 							case 1:
-<<<<<<< refclock_parse.c
 								p = ap(buffer, sizeof(buffer), p, "PARITY;");
-=======
-								strlcpy(p, "PARITY;", BUFFER_SIZE(buffer, p));
->>>>>>> 1.1.1.3
 								break;
 							case 2:
-<<<<<<< refclock_parse.c
 								p = ap(buffer, sizeof(buffer), p, "TLM/HOW;");
-=======
-								strlcpy(p, "TLM/HOW;", BUFFER_SIZE(buffer, p));
->>>>>>> 1.1.1.3
 								break;
 							case 3:
-<<<<<<< refclock_parse.c
 								p = ap(buffer, sizeof(buffer), p, "Z-COUNT;");
-=======
-								strlcpy(p, "Z-COUNT;", BUFFER_SIZE(buffer, p));
->>>>>>> 1.1.1.3
 								break;
 							case 4:
-<<<<<<< refclock_parse.c
 								p = ap(buffer, sizeof(buffer), p, "SUBFRAME 1,2,3;");
-=======
-								strlcpy(p, "SUBFRAME 1,2,3;", BUFFER_SIZE(buffer, p));
->>>>>>> 1.1.1.3
 								break;
 							case 5:
-<<<<<<< refclock_parse.c
 								p = ap(buffer, sizeof(buffer), p, "SUBFRAME 4,5;");
-=======
-								strlcpy(p, "SUBFRAME 4,5;", BUFFER_SIZE(buffer, p));
->>>>>>> 1.1.1.3
 								break;
 							case 6:
-<<<<<<< refclock_parse.c
 								p = ap(buffer, sizeof(buffer), p, "UPLOAD BAD;");
-=======
-								strlcpy(p, "UPLOAD BAD;", BUFFER_SIZE(buffer, p));
->>>>>>> 1.1.1.3
 								break;
 							case 7:
-<<<<<<< refclock_parse.c
 								p = ap(buffer, sizeof(buffer), p, "DATA BAD;");
-=======
-								strlcpy(p, "DATA BAD;", BUFFER_SIZE(buffer, p));
->>>>>>> 1.1.1.3
 								break;
 							}
 							
 							switch (cfgh.health[i] & 0x1F)
 							{
 							case 0:
-<<<<<<< refclock_parse.c
 								p = ap(buffer, sizeof(buffer), p, "SIGNAL OK");
-=======
-								strlcpy(p, "SIGNAL OK", BUFFER_SIZE(buffer, p));
->>>>>>> 1.1.1.3
 								break;
 							case 0x1C:
-<<<<<<< refclock_parse.c
 								p = ap(buffer, sizeof(buffer), p, "SV TEMP OUT");
-=======
-								strlcpy(p, "SV TEMP OUT", BUFFER_SIZE(buffer, p));
->>>>>>> 1.1.1.3
 								break;
 							case 0x1D:
-<<<<<<< refclock_parse.c
 								p = ap(buffer, sizeof(buffer), p, "SV WILL BE TEMP OUT");
-=======
-								strlcpy(p, "SV WILL BE TEMP OUT", BUFFER_SIZE(buffer, p));
->>>>>>> 1.1.1.3
 								break;
 							case 0x1E:
 								break;
 							case 0x1F:
-<<<<<<< refclock_parse.c
 								p = ap(buffer, sizeof(buffer), p, "MULTIPLE ERRS");
-=======
-								strlcpy(p, "MULTIPLE ERRS", BUFFER_SIZE(buffer, p));
->>>>>>> 1.1.1.3
 								break;
 							default:
-<<<<<<< refclock_parse.c
 								p = ap(buffer, sizeof(buffer), p, "TRANSMISSION PROBLEMS");
-=======
-								strlcpy(p, "TRANSMISSION PROBLEMS", BUFFER_SIZE(buffer, p));
->>>>>>> 1.1.1.3
 								break;
 							}
 							
-<<<<<<< refclock_parse.c
 							p = ap(buffer, sizeof(buffer), p, "\"");
 							set_var(&parse->kv, buffer, sizeof(buffer), RO);
-=======
-							strlcat(p, "\"", sizeof(buffer));
-							set_var(&parse->kv, buffer, strlen(buffer)+1, RO);
->>>>>>> 1.1.1.3
 						}
 					}
 				}
@@ -4799,27 +4594,14 @@ gps16x_message(
 					
 					if (utc.valid)
 					{
-<<<<<<< refclock_parse.c
 						p = ap(buffer, sizeof(buffer), p, "gps_utc_correction=\"");
 						mk_utcinfo(p, utc.t0t.wn, utc.WNlsf, utc.DNt, utc.delta_tls, utc.delta_tlsf, BUFFER_SIZE(buffer, p));
-=======
-						strlcpy(p, "gps_utc_correction=\"", sizeof(buffer));
->>>>>>> 1.1.1.3
 						p += strlen(p);
-<<<<<<< refclock_parse.c
 						p = ap(buffer, sizeof(buffer), p, "\"");
-=======
-						mk_utcinfo(p, utc.t0t.wn, utc.WNlsf, utc.DNt, utc.delta_tls, utc.delta_tlsf, BUFFER_SIZE(buffer, p));
-						strlcat(p, "\"", BUFFER_SIZE(buffer, p));
->>>>>>> 1.1.1.3
 					}
 					else
 					{
-<<<<<<< refclock_parse.c
 						p = ap(buffer, sizeof(buffer), p, "gps_utc_correction=\"<NO UTC DATA>\"");
-=======
-						strlcpy(p, "gps_utc_correction=\"<NO UTC DATA>\"", BUFFER_SIZE(buffer, p));
->>>>>>> 1.1.1.3
 					}
 					set_var(&parse->kv, buffer, sizeof(buffer), RO|DEF);
 				}
@@ -4843,11 +4625,7 @@ gps16x_message(
 							snprintf(buffer, sizeof(buffer), "gps_message=\"%s\"", buffer1);
 						}
 					else
-<<<<<<< refclock_parse.c
 						snprintf(buffer, sizeof(buffer), "gps_message=<NONE>");
-=======
-						strlcpy(buffer, "gps_message=<NONE>", sizeof(buffer));
->>>>>>> 1.1.1.3
 					
 					set_var(&parse->kv, buffer, sizeof(buffer), RO|DEF);
 				}
@@ -5713,12 +5491,7 @@ trimbletsip_message(
 			break;
 			
 		case CMD_RBEST4:
-<<<<<<< refclock_parse.c
 			t = ap(pbuffer, sizeof(pbuffer), t, "mode: ");
-=======
-			strlcpy(t, "mode: ", BUFFER_SIZE(pbuffer, t));
-			t += strlen(t);
->>>>>>> 1.1.1.3
 			switch (mb(0) & 0xF)
 			{
 			default:
@@ -5727,42 +5500,21 @@ trimbletsip_message(
 				break;
 
 			case 1:
-<<<<<<< refclock_parse.c
 				t = ap(pbuffer, sizeof(pbuffer), t, "0D");
-=======
-				strlcpy(t, "0D", BUFFER_SIZE(pbuffer, t));
->>>>>>> 1.1.1.3
 				break;
 				
 			case 3:
-<<<<<<< refclock_parse.c
 				t = ap(pbuffer, sizeof(pbuffer), t, "2D");
-=======
-				strlcpy(t, "2D", BUFFER_SIZE(pbuffer, t));
->>>>>>> 1.1.1.3
 				break;
 				
 			case 4:
-<<<<<<< refclock_parse.c
 				t = ap(pbuffer, sizeof(pbuffer), t, "3D");
-=======
-				strlcpy(t, "3D", BUFFER_SIZE(pbuffer, t));
->>>>>>> 1.1.1.3
 				break;
 			}
 			if (mb(0) & 0x10)
-<<<<<<< refclock_parse.c
 				t = ap(pbuffer, sizeof(pbuffer), t, "-MANUAL, ");
-=======
-				strlcpy(t, "-MANUAL, ", BUFFER_SIZE(pbuffer, t));
->>>>>>> 1.1.1.3
 			else
-<<<<<<< refclock_parse.c
 				t = ap(pbuffer, sizeof(pbuffer), t, "-AUTO, ");
-=======
-				strlcpy(t, "-AUTO, ", BUFFER_SIZE(pbuffer, t));
-			t += strlen(t);
->>>>>>> 1.1.1.3
 			
 			t = ap(pbuffer, sizeof(pbuffer), t, "satellites %02d %02d %02d %02d, PDOP %.2f, HDOP %.2f, VDOP %.2f, TDOP %.2f",
 				mb(1), mb(2), mb(3), mb(4),
@@ -5800,60 +5552,28 @@ trimbletsip_message(
 				t = ap(pbuffer, sizeof(pbuffer), t, "illegal value 0x%02x", mb(0) & 0xFF);
 				break;
 			case 0x00:
-<<<<<<< refclock_parse.c
 				t = ap(pbuffer, sizeof(pbuffer), t, "doing position fixes", BUFFER_SIZE(pbuffer, t));
-=======
-				strlcpy(t, "doing position fixes", BUFFER_SIZE(pbuffer, t));
->>>>>>> 1.1.1.3
 				break;
 			case 0x01:
-<<<<<<< refclock_parse.c
 				t = ap(pbuffer, sizeof(pbuffer), t, "no GPS time yet", BUFFER_SIZE(pbuffer, t));
-=======
-				strlcpy(t, "no GPS time yet", BUFFER_SIZE(pbuffer, t));
->>>>>>> 1.1.1.3
 				break;
 			case 0x03:
-<<<<<<< refclock_parse.c
 				t = ap(pbuffer, sizeof(pbuffer), t, "PDOP too high", BUFFER_SIZE(pbuffer, t));
-=======
-				strlcpy(t, "PDOP too high", BUFFER_SIZE(pbuffer, t));
->>>>>>> 1.1.1.3
 				break;
 			case 0x08:
-<<<<<<< refclock_parse.c
 				t = ap(pbuffer, sizeof(pbuffer), t, "no usable satellites", BUFFER_SIZE(pbuffer, t));
-=======
-				strlcpy(t, "no usable satellites", BUFFER_SIZE(pbuffer, t));
->>>>>>> 1.1.1.3
 				break;
 			case 0x09:
-<<<<<<< refclock_parse.c
 				t = ap(pbuffer, sizeof(pbuffer), t, "only ONE usable satellite", BUFFER_SIZE(pbuffer, t));
-=======
-				strlcpy(t, "only ONE usable satellite", BUFFER_SIZE(pbuffer, t));
->>>>>>> 1.1.1.3
 				break;
 			case 0x0A:
-<<<<<<< refclock_parse.c
 				t = ap(pbuffer, sizeof(pbuffer), t, "only TWO usable satellites", BUFFER_SIZE(pbuffer, t));
-=======
-				strlcpy(t, "only TWO usable satellites", BUFFER_SIZE(pbuffer, t));
->>>>>>> 1.1.1.3
 				break;
 			case 0x0B:
-<<<<<<< refclock_parse.c
 				t = ap(pbuffer, sizeof(pbuffer), t, "only THREE usable satellites", BUFFER_SIZE(pbuffer, t));
-=======
-				strlcpy(t, "only THREE usable satellites", BUFFER_SIZE(pbuffer, t));
->>>>>>> 1.1.1.3
 				break;
 			case 0x0C:
-<<<<<<< refclock_parse.c
 				t = ap(pbuffer, sizeof(pbuffer), t, "the chosen satellite is unusable", BUFFER_SIZE(pbuffer, t));
-=======
-				strlcpy(t, "the chosen satellite is unusable", BUFFER_SIZE(pbuffer, t));
->>>>>>> 1.1.1.3
 				break;
 			}
 
@@ -5920,15 +5640,9 @@ trimbletsip_message(
 				mk_utcinfo(t, wnt, wnlsf, dn, dtls, dtlsf, BUFFER_SIZE(pbuffer, t));
 			}
 			else
-<<<<<<< refclock_parse.c
-			  {
-			    t = ap(pbuffer, sizeof(pbuffer), t, "<NO UTC DATA>");
-			  }
-=======
 			{
-				strlcpy(t, "<NO UTC DATA>", BUFFER_SIZE(pbuffer, t));
+			        t = ap(pbuffer, sizeof(pbuffer), t, "<NO UTC DATA>");
 			}
->>>>>>> 1.1.1.3
 		}
 		break;
 
@@ -5957,15 +5671,9 @@ trimbletsip_message(
 			double f = getflt((unsigned char *)&mb(12));
 			
 			if (f > 0.0)
-<<<<<<< refclock_parse.c
 			  t = ap(pbuffer, sizeof(pbuffer), t, "x= %.1fm, y= %.1fm, z= %.1fm, time_of_fix= %f sec",
 				  x, y, z,
 				  f);
-=======
-				snprintf(t, BUFFER_SIZE(pbuffer, t), "x= %.1fm, y= %.1fm, z= %.1fm, time_of_fix= %f sec",
-					 x, y, z,
-					 f);
->>>>>>> 1.1.1.3
 			else
 				return;
 		}
@@ -5978,17 +5686,10 @@ trimbletsip_message(
 			double f   = getflt((unsigned char *)&mb(12));
 			
 			if (f > 0.0)
-<<<<<<< refclock_parse.c
 			  t = ap(pbuffer, sizeof(pbuffer), t, "lat %f %c, long %f %c, alt %.2fm",
 				  ((lat < 0.0) ? (-lat) : (lat))*RTOD, (lat < 0.0 ? 'S' : 'N'),
 				  ((lng < 0.0) ? (-lng) : (lng))*RTOD, (lng < 0.0 ? 'W' : 'E'),
 				  getflt((unsigned char *)&mb(8)));
-=======
-				snprintf(t, BUFFER_SIZE(pbuffer, t), "lat %f %c, long %f %c, alt %.2fm",
-					 ((lat < 0.0) ? (-lat) : (lat))*RTOD, (lat < 0.0 ? 'S' : 'N'),
-					 ((lng < 0.0) ? (-lng) : (lng))*RTOD, (lng < 0.0 ? 'W' : 'E'),
-					 getflt((unsigned char *)&mb(8)));
->>>>>>> 1.1.1.3
 			else
 				return;
 		}
@@ -5999,13 +5700,8 @@ trimbletsip_message(
 			double x = getdbl((unsigned char *)&mb(0));
 			double y = getdbl((unsigned char *)&mb(8));
 			double z = getdbl((unsigned char *)&mb(16));
-<<<<<<< refclock_parse.c
 			t = ap(pbuffer, sizeof(pbuffer), t, "x= %.1fm, y= %.1fm, z= %.1fm",
 				x, y, z);
-=======
-			snprintf(t, BUFFER_SIZE(pbuffer, t), "x= %.1fm, y= %.1fm, z= %.1fm",
-				 x, y, z);
->>>>>>> 1.1.1.3
 		}
 		break;
 				
@@ -6024,12 +5720,7 @@ trimbletsip_message(
 		{
 			int i, sats;
 			
-<<<<<<< refclock_parse.c
 			t = ap(pbuffer, sizeof(pbuffer), t, "mode: ");
-=======
-			strlcpy(t, "mode: ", BUFFER_SIZE(pbuffer, t));
-			t += strlen(t);
->>>>>>> 1.1.1.3
 			switch (mb(0) & 0x7)
 			{
 			default:
@@ -6037,34 +5728,17 @@ trimbletsip_message(
 				break;
 
 			case 3:
-<<<<<<< refclock_parse.c
 				t = ap(pbuffer, sizeof(pbuffer), t, "2D");
-=======
-				strlcpy(t, "2D", BUFFER_SIZE(pbuffer, t));
->>>>>>> 1.1.1.3
 				break;
 				
 			case 4:
-<<<<<<< refclock_parse.c
 				t = ap(pbuffer, sizeof(pbuffer), t, "3D");
-=======
-				strlcpy(t, "3D", BUFFER_SIZE(pbuffer, t));
->>>>>>> 1.1.1.3
 				break;
 			}
 			if (mb(0) & 0x8)
-<<<<<<< refclock_parse.c
 				t = ap(pbuffer, sizeof(pbuffer), t, "-MANUAL, ");
-=======
-				strlcpy(t, "-MANUAL, ", BUFFER_SIZE(pbuffer, t));
->>>>>>> 1.1.1.3
 			else
-<<<<<<< refclock_parse.c
 				t = ap(pbuffer, sizeof(pbuffer), t, "-AUTO, ");
-=======
-				strlcpy(t, "-AUTO, ", BUFFER_SIZE(pbuffer, t));
-			t += strlen(t);
->>>>>>> 1.1.1.3
 			
 			sats = (mb(0)>>4) & 0xF;
 			
@@ -6094,11 +5768,7 @@ trimbletsip_message(
 			t = ap(pbuffer, sizeof(pbuffer), t-2, "[%02d]=\"", mb(0)); /* add index to var name */
 			if (getflt((unsigned char *)&mb(4)) < 0.0)
 			{
-<<<<<<< refclock_parse.c
 				t = ap(pbuffer, sizeof(pbuffer), t, "<NO MEASUREMENTS>");
-=======
-				strlcpy(t, "<NO MEASUREMENTS>", BUFFER_SIZE(pbuffer, t));
->>>>>>> 1.1.1.3
 				var_flag &= ~DEF;
 			}
 			else
@@ -6113,52 +5783,28 @@ trimbletsip_message(
 				if (mb(20))
 				{
 					var_flag &= ~DEF;
-<<<<<<< refclock_parse.c
 					t = ap(pbuffer, sizeof(pbuffer), t, ", OLD");
-=======
-					strlcpy(t, ", OLD", BUFFER_SIZE(pbuffer, t));
->>>>>>> 1.1.1.3
 				}
 				if (mb(22))
 				{
 					if (mb(22) == 1)
-<<<<<<< refclock_parse.c
 						t = ap(pbuffer, sizeof(pbuffer), t, ", BAD PARITY");
-=======
-						strlcpy(t, ", BAD PARITY", BUFFER_SIZE(pbuffer, t));
->>>>>>> 1.1.1.3
 					else
 						if (mb(22) == 2)
-<<<<<<< refclock_parse.c
 							t = ap(pbuffer, sizeof(pbuffer), t, ", BAD EPH HEALTH");
-=======
-							strlcpy(t, ", BAD EPH HEALTH", BUFFER_SIZE(pbuffer, t));
->>>>>>> 1.1.1.3
 				}
 				if (mb(23))
-<<<<<<< refclock_parse.c
 					t = ap(pbuffer, sizeof(pbuffer), t, ", collecting data");
-=======
-					strlcpy(t, ", collecting data", BUFFER_SIZE(pbuffer, t));
->>>>>>> 1.1.1.3
 			}
 		}
 		break;
 		
 		default:
-<<<<<<< refclock_parse.c
 			t = ap(pbuffer, sizeof(pbuffer), t, "<UNDECODED>");
-=======
-			strlcpy(t, "<UNDECODED>", BUFFER_SIZE(pbuffer, t));
->>>>>>> 1.1.1.3
 			break;
 		}
 
-<<<<<<< refclock_parse.c
 		t = ap(pbuffer, sizeof(pbuffer), t,"\"");
-=======
-		strlcpy(t,"\"", BUFFER_SIZE(pbuffer, t));
->>>>>>> 1.1.1.3
 		set_var(&parse->kv, pbuffer, sizeof(pbuffer), var_flag);
 	}
 }

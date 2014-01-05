@@ -104,7 +104,7 @@
 #define CLOCK_PALISADE 1
 
 /* PARSE driver interface */
-/* #undef CLOCK_PARSE */
+#define CLOCK_PARSE 1
 
 /* Conrad parallel port radio clock */
 #define CLOCK_PCF 1
