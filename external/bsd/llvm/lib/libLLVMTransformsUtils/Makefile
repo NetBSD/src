@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2013/10/30 20:27:39 joerg Exp $
+#	$NetBSD: Makefile,v 1.14 2014/01/05 16:38:07 joerg Exp $
 
 LIB=	LLVMTransformsUtils
 
@@ -6,7 +6,8 @@ LIB=	LLVMTransformsUtils
 
 .PATH: ${LLVM_SRCDIR}/lib/Transforms/Utils
 
-SRCS+=	BasicBlockUtils.cpp \
+SRCS+=	ASanStackFrameLayout.cpp \
+	BasicBlockUtils.cpp \
 	BreakCriticalEdges.cpp \
 	BuildLibCalls.cpp \
 	BypassSlowDivision.cpp \

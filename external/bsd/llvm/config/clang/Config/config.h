@@ -11,10 +11,10 @@
 #define CLANG_RESOURCE_DIR ""
 
 /* Directories clang will search for headers */
-#define C_INCLUDE_DIRS "/usr/include/clang-3.4:/usr/include"
+#define C_INCLUDE_DIRS "/usr/include/clang-3.5:/usr/include"
 
 /* Linker version detected at compile time. */
-#define HOST_LINK_VERSION "2.23.2"
+#define HOST_LINK_VERSION "2.23.52.20130913"
 
 /* Default <path> to all compiler invocations for --sysroot=<path>. */
 #define DEFAULT_SYSROOT ""
