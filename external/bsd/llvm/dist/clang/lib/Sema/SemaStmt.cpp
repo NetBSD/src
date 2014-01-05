@@ -216,17 +216,17 @@ void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
     // is written in a macro body, only warn if it has the warn_unused_result
     // attribute.
     if (const Decl *FD = CE->getCalleeDecl()) {
-      if (FD->getAttr<WarnUnusedResultAttr>()) {
+      if (FD->hasAttr<WarnUnusedResultAttr>()) {
         Diag(Loc, diag::warn_unused_result) << R1 << R2;
         return;
       }
       if (ShouldSuppress)
         return;
-      if (FD->getAttr<PureAttr>()) {
+      if (FD->hasAttr<PureAttr>()) {
         Diag(Loc, diag::warn_unused_call) << R1 << R2 << "pure";
         return;
       }
-      if (FD->getAttr<ConstAttr>()) {
+      if (FD->hasAttr<ConstAttr>()) {
         Diag(Loc, diag::warn_unused_call) << R1 << R2 << "const";
         return;
       }
@@ -240,7 +240,7 @@ void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
       return;
     }
     const ObjCMethodDecl *MD = ME->getMethodDecl();
-    if (MD && MD->getAttr<WarnUnusedResultAttr>()) {
+    if (MD && MD->hasAttr<WarnUnusedResultAttr>()) {
       Diag(Loc, diag::warn_unused_result) << R1 << R2;
       return;
     }
@@ -499,7 +499,6 @@ void Sema::ConvertIntegerToTypeWarnOnOverflow(llvm::APSInt &Val,
     // We don't diagnose this overflow, because it is implementation-defined
     // behavior.
     // FIXME: Introduce a second, default-ignored warning for this case?
-    llvm::APSInt OldVal(Val);
     Val.setIsSigned(NewSign);
   }
 }
@@ -658,6 +657,29 @@ static void AdjustAPSInt(llvm::APSInt &Val, unsigned BitWidth, bool IsSigned) {
   else if (Val.getBitWidth() > BitWidth)
     Val = Val.trunc(BitWidth);
   Val.setIsSigned(IsSigned);
+}
+
+/// Returns true if we should emit a diagnostic about this case expression not
+/// being a part of the enum used in the switch controlling expression.
+static bool ShouldDiagnoseSwitchCaseNotInEnum(const ASTContext &Ctx,
+                                              const EnumDecl *ED,
+                                              const Expr *CaseExpr) {
+  // Don't warn if the 'case' expression refers to a static const variable of
+  // the enum type.
+  CaseExpr = CaseExpr->IgnoreParenImpCasts();
+  if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(CaseExpr)) {
+    if (const VarDecl *VD = dyn_cast<VarDecl>(DRE->getDecl())) {
+      if (!VD->hasGlobalStorage())
+        return true;
+      QualType VarType = VD->getType();
+      if (!VarType.isConstQualified())
+        return true;
+      QualType EnumType = Ctx.getTypeDeclType(ED);
+      if (Ctx.hasSameUnqualifiedType(EnumType, VarType))
+        return false;
+    }
+  }
+  return true;
 }
 
 StmtResult
@@ -1009,9 +1031,12 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
            CI != CaseVals.end(); CI++) {
         while (EI != EIend && EI->first < CI->first)
           EI++;
-        if (EI == EIend || EI->first > CI->first)
-          Diag(CI->second->getLHS()->getExprLoc(), diag::warn_not_in_enum)
-            << CondTypeBeforePromotion;
+        if (EI == EIend || EI->first > CI->first) {
+          Expr *CaseExpr = CI->second->getLHS();
+          if (ShouldDiagnoseSwitchCaseNotInEnum(Context, ED, CaseExpr))
+            Diag(CaseExpr->getExprLoc(), diag::warn_not_in_enum)
+              << CondTypeBeforePromotion;
+        }
       }
       // See which of case ranges aren't in enum
       EI = EnumVals.begin();
@@ -1021,8 +1046,10 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
           EI++;
 
         if (EI == EIend || EI->first != RI->first) {
-          Diag(RI->second->getLHS()->getExprLoc(), diag::warn_not_in_enum)
-            << CondTypeBeforePromotion;
+          Expr *CaseExpr = RI->second->getLHS();
+          if (ShouldDiagnoseSwitchCaseNotInEnum(Context, ED, CaseExpr))
+            Diag(CaseExpr->getExprLoc(), diag::warn_not_in_enum)
+              << CondTypeBeforePromotion;
         }
 
         llvm::APSInt Hi =
@@ -1030,9 +1057,12 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
         AdjustAPSInt(Hi, CondWidth, CondIsSigned);
         while (EI != EIend && EI->first < Hi)
           EI++;
-        if (EI == EIend || EI->first != Hi)
-          Diag(RI->second->getRHS()->getExprLoc(), diag::warn_not_in_enum)
-            << CondTypeBeforePromotion;
+        if (EI == EIend || EI->first != Hi) {
+          Expr *CaseExpr = RI->second->getRHS();
+          if (ShouldDiagnoseSwitchCaseNotInEnum(Context, ED, CaseExpr))
+            Diag(CaseExpr->getExprLoc(), diag::warn_not_in_enum)
+              << CondTypeBeforePromotion;
+        }
       }
 
       // Check which enum vals aren't in switch
@@ -1044,7 +1074,6 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
 
       for (EI = EnumVals.begin(); EI != EIend; EI++){
         // Drop unneeded case values
-        llvm::APSInt CIVal;
         while (CI != CaseVals.end() && CI->first < EI->first)
           CI++;
 
@@ -1120,7 +1149,7 @@ Sema::DiagnoseAssignmentEnum(QualType DstType, QualType SrcType,
     return;
 
   if (const EnumType *ET = DstType->getAs<EnumType>())
-    if (!Context.hasSameType(SrcType, DstType) &&
+    if (!Context.hasSameUnqualifiedType(SrcType, DstType) &&
         SrcType->isIntegerType()) {
       if (!SrcExpr->isTypeDependent() && !SrcExpr->isValueDependent() &&
           SrcExpr->isIntegerConstantExpr(Context)) {
@@ -1155,7 +1184,7 @@ Sema::DiagnoseAssignmentEnum(QualType DstType, QualType SrcType,
           EI++;
         if (EI == EIend || EI->first != RhsVal) {
           Diag(SrcExpr->getExprLoc(), diag::warn_not_in_enum_assignment)
-          << DstType;
+              << DstType.getUnqualifiedType();
         }
       }
     }
@@ -2803,8 +2832,14 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
       } else if (!RetValExp->isTypeDependent()) {
         // C99 6.8.6.4p1 (ext_ since GCC warns)
         unsigned D = diag::ext_return_has_expr;
-        if (RetValExp->getType()->isVoidType())
-          D = diag::ext_return_has_void_expr;
+        if (RetValExp->getType()->isVoidType()) {
+          NamedDecl *CurDecl = getCurFunctionOrMethodDecl();
+          if (isa<CXXConstructorDecl>(CurDecl) ||
+              isa<CXXDestructorDecl>(CurDecl))
+            D = diag::err_ctor_dtor_returns_void;
+          else
+            D = diag::ext_return_has_void_expr;
+        }
         else {
           ExprResult Result = Owned(RetValExp);
           Result = IgnoredValueConversions(Result.take());
@@ -2814,9 +2849,15 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
           RetValExp = ImpCastExprToType(RetValExp,
                                         Context.VoidTy, CK_ToVoid).take();
         }
-
+        // return of void in constructor/destructor is illegal in C++.
+        if (D == diag::err_ctor_dtor_returns_void) {
+          NamedDecl *CurDecl = getCurFunctionOrMethodDecl();
+          Diag(ReturnLoc, D)
+            << CurDecl->getDeclName() << isa<CXXDestructorDecl>(CurDecl)
+            << RetValExp->getSourceRange();
+        }
         // return (some void expression); is legal in C++.
-        if (D != diag::ext_return_has_void_expr ||
+        else if (D != diag::ext_return_has_void_expr ||
             !getLangOpts().CPlusPlus) {
           NamedDecl *CurDecl = getCurFunctionOrMethodDecl();
 

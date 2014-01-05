@@ -2623,7 +2623,7 @@ Stmt *RewriteModernObjC::RewriteObjCStringLiteral(ObjCStringLiteral *Exp) {
   unsigned i;
   for (i=0; i < tmpName.length(); i++) {
     char c = tmpName.at(i);
-    // replace any non alphanumeric characters with '_'.
+    // replace any non-alphanumeric characters with '_'.
     if (!isAlphanumeric(c))
       tmpName[i] = '_';
   }
@@ -3733,12 +3733,9 @@ Stmt *RewriteModernObjC::RewriteObjCProtocolExpr(ObjCProtocolExpr *Exp) {
                                 SC_Extern);
   DeclRefExpr *DRE = new (Context) DeclRefExpr(VD, false, getProtocolType(),
                                                VK_LValue, SourceLocation());
-  Expr *DerefExpr = new (Context) UnaryOperator(DRE, UO_AddrOf,
-                             Context->getPointerType(DRE->getType()),
-                             VK_RValue, OK_Ordinary, SourceLocation());
-  CastExpr *castExpr = NoTypeInfoCStyleCastExpr(Context, DerefExpr->getType(),
-                                                CK_BitCast,
-                                                DerefExpr);
+  CastExpr *castExpr =
+    NoTypeInfoCStyleCastExpr(
+      Context, Context->getPointerType(DRE->getType()), CK_BitCast, DRE);
   ReplaceStmt(Exp, castExpr);
   ProtocolExprDecls.insert(Exp->getProtocol()->getCanonicalDecl());
   // delete Exp; leak for now, see RewritePropertyOrImplicitSetter() usage for more info.
@@ -6049,9 +6046,9 @@ void RewriteModernObjC::HandleTranslationUnit(ASTContext &C) {
   RewriteInclude();
 
   for (unsigned i = 0, e = FunctionDefinitionsSeen.size(); i < e; i++) {
-    // translation of function bodies were postponed untill all class and
+    // translation of function bodies were postponed until all class and
     // their extensions and implementations are seen. This is because, we
-    // cannot build grouping structs for bitfields untill they are all seen.
+    // cannot build grouping structs for bitfields until they are all seen.
     FunctionDecl *FDecl = FunctionDefinitionsSeen[i];
     HandleTopLevelSingleDecl(FDecl);
   }
