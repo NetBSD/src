@@ -119,3 +119,19 @@ void MissingSemiInFunction() {
   struct Inner4 {} // ok, no missing ';' here
   Inner5;
 }
+
+namespace NS {
+  template<typename T> struct Foo {};
+}
+struct MissingSemiThenTemplate1 {} // expected-error {{expected ';' after struct}}
+NS::Foo<int> missingSemiBeforeFunctionReturningTemplateId1();
+
+using NS::Foo;
+struct MissingSemiThenTemplate2 {} // expected-error {{expected ';' after struct}}
+Foo<int> missingSemiBeforeFunctionReturningTemplateId2();
+
+namespace PR17084 {
+enum class EnumID {};
+template <typename> struct TempID;
+template <> struct TempID<BadType> : BadType, EnumID::Garbage; // expected-error{{use of undeclared identifier 'BadType'}}
+}
