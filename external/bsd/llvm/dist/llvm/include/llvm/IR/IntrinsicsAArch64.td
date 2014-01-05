@@ -36,27 +36,11 @@ def int_aarch64_neon_xtn :
 // Vector floating-point convert
 def int_aarch64_neon_frintn : Neon_1Arg_Intrinsic;
 def int_aarch64_neon_fsqrt : Neon_1Arg_Intrinsic;
-def int_aarch64_neon_fcvtxn :
+def int_aarch64_neon_vcvtxn :
   Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
-def int_aarch64_neon_fcvtns : 
+def int_aarch64_neon_vcvtzs :
   Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
-def int_aarch64_neon_fcvtnu :
-  Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
-def int_aarch64_neon_fcvtps :
-  Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
-def int_aarch64_neon_fcvtpu :
-  Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
-def int_aarch64_neon_fcvtms :
-  Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
-def int_aarch64_neon_fcvtmu :
-  Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
-def int_aarch64_neon_fcvtas :
-  Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
-def int_aarch64_neon_fcvtau :
-  Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
-def int_aarch64_neon_fcvtzs :
-  Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
-def int_aarch64_neon_fcvtzu :
+def int_aarch64_neon_vcvtzu :
   Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
 
 // Vector maxNum (Floating Point)
@@ -107,9 +91,6 @@ def int_aarch64_neon_vuqrshrn : Neon_N2V_Narrow_Intrinsic;
 class Neon_Across_Intrinsic
   : Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
 
-class Neon_2Arg_Across_Float_Intrinsic
-  : Intrinsic<[llvm_anyvector_ty], [llvm_v4f32_ty], [IntrNoMem]>;
-
 def int_aarch64_neon_saddlv : Neon_Across_Intrinsic;
 def int_aarch64_neon_uaddlv : Neon_Across_Intrinsic;
 def int_aarch64_neon_smaxv  : Neon_Across_Intrinsic;
@@ -117,10 +98,14 @@ def int_aarch64_neon_umaxv  : Neon_Across_Intrinsic;
 def int_aarch64_neon_sminv  : Neon_Across_Intrinsic;
 def int_aarch64_neon_uminv  : Neon_Across_Intrinsic;
 def int_aarch64_neon_vaddv  : Neon_Across_Intrinsic;
-def int_aarch64_neon_vmaxv  : Neon_Across_Intrinsic;
-def int_aarch64_neon_vminv  : Neon_Across_Intrinsic;
-def int_aarch64_neon_vmaxnmv : Neon_Across_Intrinsic;
-def int_aarch64_neon_vminnmv : Neon_Across_Intrinsic;
+def int_aarch64_neon_vmaxv :
+  Intrinsic<[llvm_float_ty], [llvm_v4f32_ty], [IntrNoMem]>;
+def int_aarch64_neon_vminv :
+  Intrinsic<[llvm_float_ty], [llvm_v4f32_ty], [IntrNoMem]>;
+def int_aarch64_neon_vmaxnmv :
+  Intrinsic<[llvm_float_ty], [llvm_v4f32_ty], [IntrNoMem]>;
+def int_aarch64_neon_vminnmv :
+  Intrinsic<[llvm_float_ty], [llvm_v4f32_ty], [IntrNoMem]>;
 
 // Vector Table Lookup.
 def int_aarch64_neon_vtbl1 :
@@ -233,74 +218,118 @@ def int_aarch64_neon_vqrshlu : Neon_2Arg_Intrinsic;
 def int_aarch64_neon_vpadd :
   Intrinsic<[llvm_v1i64_ty], [llvm_v2i64_ty],[IntrNoMem]>;
 def int_aarch64_neon_vpfadd :
-  Intrinsic<[llvm_v1f32_ty], [llvm_v2f32_ty], [IntrNoMem]>;
-def int_aarch64_neon_vpfaddq :
-  Intrinsic<[llvm_v1f64_ty], [llvm_v2f64_ty], [IntrNoMem]>;
+  Intrinsic<[llvm_anyfloat_ty], [llvm_anyvector_ty], [IntrNoMem]>;
 
 // Scalar Reduce Pairwise Floating Point Max/Min.
 def int_aarch64_neon_vpmax :
-  Intrinsic<[llvm_v1f32_ty], [llvm_v2f32_ty], [IntrNoMem]>;
-def int_aarch64_neon_vpmaxq :
-  Intrinsic<[llvm_v1f64_ty], [llvm_v2f64_ty], [IntrNoMem]>;
+  Intrinsic<[llvm_anyfloat_ty], [llvm_anyvector_ty], [IntrNoMem]>;
 def int_aarch64_neon_vpmin :
-  Intrinsic<[llvm_v1f32_ty], [llvm_v2f32_ty], [IntrNoMem]>;
-def int_aarch64_neon_vpminq :
-  Intrinsic<[llvm_v1f64_ty], [llvm_v2f64_ty], [IntrNoMem]>;
+  Intrinsic<[llvm_anyfloat_ty], [llvm_anyvector_ty], [IntrNoMem]>;
 
 // Scalar Reduce Pairwise Floating Point Maxnm/Minnm.
 def int_aarch64_neon_vpfmaxnm :
-  Intrinsic<[llvm_v1f32_ty], [llvm_v2f32_ty], [IntrNoMem]>;
-def int_aarch64_neon_vpfmaxnmq :
-  Intrinsic<[llvm_v1f64_ty], [llvm_v2f64_ty], [IntrNoMem]>;
+  Intrinsic<[llvm_anyfloat_ty], [llvm_anyvector_ty], [IntrNoMem]>;
 def int_aarch64_neon_vpfminnm :
-  Intrinsic<[llvm_v1f32_ty], [llvm_v2f32_ty], [IntrNoMem]>;
-def int_aarch64_neon_vpfminnmq :
-  Intrinsic<[llvm_v1f64_ty], [llvm_v2f64_ty], [IntrNoMem]>;
+  Intrinsic<[llvm_anyfloat_ty], [llvm_anyvector_ty], [IntrNoMem]>;
 
 // Scalar Signed Integer Convert To Floating-point
-def int_aarch64_neon_vcvtf32_s32 :
-  Intrinsic<[llvm_float_ty], [llvm_v1i32_ty], [IntrNoMem]>;
-def int_aarch64_neon_vcvtf64_s64 :
-  Intrinsic<[llvm_double_ty], [llvm_v1i64_ty], [IntrNoMem]>;
+def int_aarch64_neon_vcvtint2fps :
+  Intrinsic<[llvm_anyfloat_ty], [llvm_anyvector_ty], [IntrNoMem]>;
 
 // Scalar Unsigned Integer Convert To Floating-point
-def int_aarch64_neon_vcvtf32_u32 :
-  Intrinsic<[llvm_float_ty], [llvm_v1i32_ty], [IntrNoMem]>;
-def int_aarch64_neon_vcvtf64_u64 :
-  Intrinsic<[llvm_double_ty], [llvm_v1i64_ty], [IntrNoMem]>;
+def int_aarch64_neon_vcvtint2fpu :
+  Intrinsic<[llvm_anyfloat_ty], [llvm_anyvector_ty], [IntrNoMem]>;
+
+// Scalar Floating-point Convert
+def int_aarch64_neon_fcvtxn :
+  Intrinsic<[llvm_float_ty], [llvm_double_ty], [IntrNoMem]>;
+def int_aarch64_neon_fcvtns : 
+  Intrinsic<[llvm_anyvector_ty], [llvm_anyfloat_ty], [IntrNoMem]>;
+def int_aarch64_neon_fcvtnu :
+  Intrinsic<[llvm_anyvector_ty], [llvm_anyfloat_ty], [IntrNoMem]>;
+def int_aarch64_neon_fcvtps :
+  Intrinsic<[llvm_anyvector_ty], [llvm_anyfloat_ty], [IntrNoMem]>;
+def int_aarch64_neon_fcvtpu :
+  Intrinsic<[llvm_anyvector_ty], [llvm_anyfloat_ty], [IntrNoMem]>;
+def int_aarch64_neon_fcvtms :
+  Intrinsic<[llvm_anyvector_ty], [llvm_anyfloat_ty], [IntrNoMem]>;
+def int_aarch64_neon_fcvtmu :
+  Intrinsic<[llvm_anyvector_ty], [llvm_anyfloat_ty], [IntrNoMem]>;
+def int_aarch64_neon_fcvtas :
+  Intrinsic<[llvm_anyvector_ty], [llvm_anyfloat_ty], [IntrNoMem]>;
+def int_aarch64_neon_fcvtau :
+  Intrinsic<[llvm_anyvector_ty], [llvm_anyfloat_ty], [IntrNoMem]>;
+def int_aarch64_neon_fcvtzs :
+  Intrinsic<[llvm_anyvector_ty], [llvm_anyfloat_ty], [IntrNoMem]>;
+def int_aarch64_neon_fcvtzu :
+  Intrinsic<[llvm_anyvector_ty], [llvm_anyfloat_ty], [IntrNoMem]>;
+
+// Scalar Floating-point Reciprocal Estimate.
+def int_aarch64_neon_vrecpe :
+  Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>], [IntrNoMem]>;
 
 // Scalar Floating-point Reciprocal Exponent
-def int_aarch64_neon_vrecpx : Neon_1Arg_Intrinsic;
+def int_aarch64_neon_vrecpx :
+  Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>], [IntrNoMem]>;
 
-class Neon_Cmp_Intrinsic
-  : Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty, llvm_anyvector_ty],
-              [IntrNoMem]>;
+// Scalar Floating-point Reciprocal Square Root Estimate
+def int_aarch64_neon_vrsqrte :
+  Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>], [IntrNoMem]>;
+
+// Scalar Floating-point Reciprocal Step
+def int_aarch64_neon_vrecps :
+  Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>, LLVMMatchType<0>],
+            [IntrNoMem]>;
+
+// Scalar Floating-point Reciprocal Square Root Step
+def int_aarch64_neon_vrsqrts :
+  Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>, LLVMMatchType<0>],
+            [IntrNoMem]>;
+
+// Compare with vector operands.
+class Neon_Cmp_Intrinsic :
+  Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty, llvm_anyvector_ty],
+            [IntrNoMem]>;
+
+// Floating-point compare with scalar operands.
+class Neon_Float_Cmp_Intrinsic :
+  Intrinsic<[llvm_anyvector_ty], [llvm_anyfloat_ty, llvm_anyfloat_ty],
+            [IntrNoMem]>;
 
 // Scalar Compare Equal
 def int_aarch64_neon_vceq : Neon_Cmp_Intrinsic;
+def int_aarch64_neon_fceq : Neon_Float_Cmp_Intrinsic;
 
 // Scalar Compare Greater-Than or Equal
 def int_aarch64_neon_vcge : Neon_Cmp_Intrinsic;
 def int_aarch64_neon_vchs : Neon_Cmp_Intrinsic;
+def int_aarch64_neon_fcge : Neon_Float_Cmp_Intrinsic;
+def int_aarch64_neon_fchs : Neon_Float_Cmp_Intrinsic;
 
 // Scalar Compare Less-Than or Equal
 def int_aarch64_neon_vclez : Neon_Cmp_Intrinsic;
+def int_aarch64_neon_fclez : Neon_Float_Cmp_Intrinsic;
 
 // Scalar Compare Less-Than
 def int_aarch64_neon_vcltz : Neon_Cmp_Intrinsic;
+def int_aarch64_neon_fcltz : Neon_Float_Cmp_Intrinsic;
 
 // Scalar Compare Greater-Than
 def int_aarch64_neon_vcgt : Neon_Cmp_Intrinsic;
 def int_aarch64_neon_vchi : Neon_Cmp_Intrinsic;
+def int_aarch64_neon_fcgt : Neon_Float_Cmp_Intrinsic;
+def int_aarch64_neon_fchi : Neon_Float_Cmp_Intrinsic;
 
 // Scalar Compare Bitwise Test Bits
 def int_aarch64_neon_vtstd : Neon_Cmp_Intrinsic;
 
 // Scalar Floating-point Absolute Compare Greater Than Or Equal
 def int_aarch64_neon_vcage : Neon_Cmp_Intrinsic;
- 
+def int_aarch64_neon_fcage : Neon_Float_Cmp_Intrinsic;
+
 // Scalar Floating-point Absolute Compare Greater Than
 def int_aarch64_neon_vcagt : Neon_Cmp_Intrinsic;
+def int_aarch64_neon_fcagt : Neon_Float_Cmp_Intrinsic;
 
 // Scalar Signed Saturating Accumulated of Unsigned Value
 def int_aarch64_neon_vuqadd : Neon_2Arg_Intrinsic;
@@ -313,7 +342,9 @@ def int_aarch64_neon_vabs :
   Intrinsic<[llvm_v1i64_ty], [llvm_v1i64_ty], [IntrNoMem]>;
 
 // Scalar Absolute Difference
-def int_aarch64_neon_vabd : Neon_2Arg_Intrinsic;
+def int_aarch64_neon_vabd :
+  Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>, LLVMMatchType<0>],
+            [IntrNoMem]>;
 
 // Scalar Negate Value
 def int_aarch64_neon_vneg :
@@ -324,6 +355,9 @@ def int_aarch64_neon_vqdmlal : Neon_3Arg_Long_Intrinsic;
 
 // Signed Saturating Doubling Multiply-Subtract Long
 def int_aarch64_neon_vqdmlsl : Neon_3Arg_Long_Intrinsic;
+
+def int_aarch64_neon_vmull_p64 :
+  Intrinsic<[llvm_v16i8_ty], [llvm_v1i64_ty, llvm_v1i64_ty], [IntrNoMem]>;
 
 class Neon_2Arg_ShiftImm_Intrinsic
   : Intrinsic<[llvm_v1i64_ty], [llvm_v1i64_ty, llvm_i32_ty], [IntrNoMem]>;
@@ -355,28 +389,20 @@ def int_aarch64_neon_vqshlu_n : Neon_N2V_Intrinsic;
 def int_aarch64_neon_vqshlus_n : Neon_N2V_Intrinsic;
 
 // Scalar Signed Fixed-point Convert To Floating-Point (Immediate)
-def int_aarch64_neon_vcvtf32_n_s32 :
-  Intrinsic<[llvm_float_ty], [llvm_v1i32_ty, llvm_i32_ty], [IntrNoMem]>;
-def int_aarch64_neon_vcvtf64_n_s64 :
-  Intrinsic<[llvm_double_ty], [llvm_v1i64_ty, llvm_i32_ty], [IntrNoMem]>;
+def int_aarch64_neon_vcvtfxs2fp_n :
+  Intrinsic<[llvm_anyfloat_ty], [llvm_anyvector_ty, llvm_i32_ty], [IntrNoMem]>;
 
 // Scalar Unsigned Fixed-point Convert To Floating-Point (Immediate)
-def int_aarch64_neon_vcvtf32_n_u32 :
-  Intrinsic<[llvm_float_ty], [llvm_v1i32_ty, llvm_i32_ty], [IntrNoMem]>;
-def int_aarch64_neon_vcvtf64_n_u64 :
-  Intrinsic<[llvm_double_ty], [llvm_v1i64_ty, llvm_i32_ty], [IntrNoMem]>;
+def int_aarch64_neon_vcvtfxu2fp_n :
+  Intrinsic<[llvm_anyfloat_ty], [llvm_anyvector_ty, llvm_i32_ty], [IntrNoMem]>;
 
 // Scalar Floating-point Convert To Signed Fixed-point (Immediate)
-def int_aarch64_neon_vcvts_n_s32_f32 :
-  Intrinsic<[llvm_v1i32_ty], [llvm_v1f32_ty, llvm_i32_ty], [IntrNoMem]>;
-def int_aarch64_neon_vcvtd_n_s64_f64 :
-  Intrinsic<[llvm_v1i64_ty], [llvm_v1f64_ty, llvm_i32_ty], [IntrNoMem]>;
+def int_aarch64_neon_vcvtfp2fxs_n :
+  Intrinsic<[llvm_anyvector_ty], [llvm_anyfloat_ty, llvm_i32_ty], [IntrNoMem]>;
 
 // Scalar Floating-point Convert To Unsigned Fixed-point (Immediate)
-def int_aarch64_neon_vcvts_n_u32_f32 :
-  Intrinsic<[llvm_v1i32_ty], [llvm_v1f32_ty, llvm_i32_ty], [IntrNoMem]>;
-def int_aarch64_neon_vcvtd_n_u64_f64 :
-  Intrinsic<[llvm_v1i64_ty], [llvm_v1f64_ty, llvm_i32_ty], [IntrNoMem]>;
+def int_aarch64_neon_vcvtfp2fxu_n :
+  Intrinsic<[llvm_anyvector_ty], [llvm_anyfloat_ty, llvm_i32_ty], [IntrNoMem]>;
 
 class Neon_SHA_Intrinsic
   : Intrinsic<[llvm_v4i32_ty], [llvm_v4i32_ty, llvm_v1i32_ty, llvm_v4i32_ty],

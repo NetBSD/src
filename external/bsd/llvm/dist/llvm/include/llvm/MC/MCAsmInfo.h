@@ -82,7 +82,7 @@ namespace llvm {
 
     /// LinkerRequiresNonEmptyDwarfLines - True if the linker has a bug and
     /// requires that the debug_line section be of a minimum size. In practice
-    /// such a linker requires a non empty line sequence if a file is present.
+    /// such a linker requires a non-empty line sequence if a file is present.
     bool LinkerRequiresNonEmptyDwarfLines; // Default to false.
 
     /// MaxInstLength - This is the maximum possible length of an instruction,
@@ -115,19 +115,10 @@ namespace llvm {
     /// LabelSuffix - This is appended to emitted labels.
     const char *DebugLabelSuffix;                 // Defaults to ":"
 
-    /// GlobalPrefix - If this is set to a non-empty string, it is prepended
-    /// onto all global symbols.  This is often used for "_" or ".".
-    const char *GlobalPrefix;                // Defaults to ""
-
-    /// PrivateGlobalPrefix - This prefix is used for globals like constant
-    /// pool entries that are completely private to the .s file and should not
-    /// have names in the .o file.  This is often "." or "L".
-    const char *PrivateGlobalPrefix;         // Defaults to "."
-
-    /// LinkerPrivateGlobalPrefix - This prefix is used for symbols that should
-    /// be passed through the assembler but be removed by the linker.  This
-    /// is "l" on Darwin, currently used for some ObjC metadata.
-    const char *LinkerPrivateGlobalPrefix;   // Defaults to ""
+    /// This prefix is used for globals like constant pool entries that are
+    /// completely private to the .s file and should not have names in the .o
+    /// file.
+    const char *PrivateGlobalPrefix;         // Defaults to "L"
 
     /// InlineAsmStart/End - If these are nonempty, they contain a directive to
     /// emit before and after an inline assembly statement.
@@ -198,11 +189,6 @@ namespace llvm {
     /// which doesn't support the '.bss' directive only.
     bool UsesELFSectionDirectiveForBSS;      // Defaults to false.
 
-    /// HasMicrosoftFastStdCallMangling - True if this target uses microsoft
-    /// style mangling for functions with X86_StdCall/X86_FastCall calling
-    /// convention.
-    bool HasMicrosoftFastStdCallMangling;    // Defaults to false.
-
     bool NeedsDwarfSectionOffsetDirective;
 
     //===--- Alignment Information ----------------------------------------===//
@@ -266,13 +252,16 @@ namespace llvm {
     /// global as being a weak undefined symbol.
     const char *WeakRefDirective;            // Defaults to NULL.
 
-    /// WeakDefDirective - This directive, if non-null, is used to declare a
-    /// global as being a weak defined symbol.
-    const char *WeakDefDirective;            // Defaults to NULL.
+    /// True if we have a directive to declare a global as being a weak
+    /// defined symbol.
+    bool HasWeakDefDirective;                // Defaults to false.
 
-    /// LinkOnceDirective - This directive, if non-null is used to declare a
-    /// global as being a weak defined symbol.  This is used on cygwin/mingw.
-    const char *LinkOnceDirective;           // Defaults to NULL.
+    /// True if we have a directive to declare a global as being a weak
+    /// defined symbol that can be hidden (unexported).
+    bool HasWeakDefCanBeHiddenDirective;     // Defaults to false.
+
+    /// True if we have a .linkonce directive.  This is used on cygwin/mingw.
+    bool HasLinkOnceDirective;               // Defaults to false.
 
     /// HiddenVisibilityAttr - This attribute, if not MCSA_Invalid, is used to
     /// declare a symbol as having hidden visibility.
@@ -306,6 +295,10 @@ namespace llvm {
     /// DwarfRegNumForCFI - True if dwarf register numbers are printed
     /// instead of symbolic register names in .cfi_* directives.
     bool DwarfRegNumForCFI;  // Defaults to false;
+
+    /// UseParensForSymbolVariant - True if target uses parens to indicate the
+    /// symbol variant instead of @. For example, foo(plt) instead of foo@plt.
+    bool UseParensForSymbolVariant; // Defaults to false;
 
     //===--- Prologue State ----------------------------------------------===//
 
@@ -384,10 +377,6 @@ namespace llvm {
       return UsesELFSectionDirectiveForBSS;
     }
 
-    bool hasMicrosoftFastStdCallMangling() const {
-      return HasMicrosoftFastStdCallMangling;
-    }
-
     bool needsDwarfSectionOffsetDirective() const {
       return NeedsDwarfSectionOffsetDirective;
     }
@@ -427,15 +416,8 @@ namespace llvm {
     const char *getDebugLabelSuffix() const {
       return DebugLabelSuffix;
     }
-
-    const char *getGlobalPrefix() const {
-      return GlobalPrefix;
-    }
     const char *getPrivateGlobalPrefix() const {
       return PrivateGlobalPrefix;
-    }
-    const char *getLinkerPrivateGlobalPrefix() const {
-      return LinkerPrivateGlobalPrefix;
     }
     const char *getInlineAsmStart() const {
       return InlineAsmStart;
@@ -497,8 +479,11 @@ namespace llvm {
     bool hasIdentDirective() const { return HasIdentDirective; }
     bool hasNoDeadStrip() const { return HasNoDeadStrip; }
     const char *getWeakRefDirective() const { return WeakRefDirective; }
-    const char *getWeakDefDirective() const { return WeakDefDirective; }
-    const char *getLinkOnceDirective() const { return LinkOnceDirective; }
+    bool hasWeakDefDirective() const { return HasWeakDefDirective; }
+    bool hasWeakDefCanBeHiddenDirective() const {
+      return HasWeakDefCanBeHiddenDirective;
+    }
+    bool hasLinkOnceDirective() const { return HasLinkOnceDirective; }
 
     MCSymbolAttr getHiddenVisibilityAttr() const { return HiddenVisibilityAttr;}
     MCSymbolAttr getHiddenDeclarationVisibilityAttr() const {
@@ -530,6 +515,9 @@ namespace llvm {
     }
     bool useDwarfRegNumForCFI() const {
       return DwarfRegNumForCFI;
+    }
+    bool useParensForSymbolVariant() const {
+      return UseParensForSymbolVariant;
     }
 
     void addInitialFrameState(const MCCFIInstruction &Inst) {
