@@ -1,4 +1,4 @@
-/*	$NetBSD: v_mark.c,v 1.2 2013/11/22 15:52:06 christos Exp $ */
+/*	$NetBSD: v_mark.c,v 1.3 2014/01/05 17:30:16 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -169,7 +169,7 @@ mark(SCR *sp, VICMD *vp, int getmark, enum which cmd)
 		m = vp->m_start;
 		vp->m_start = vp->m_stop;
 		vp->m_stop = m;
-	} else
+	}
 
 	/*
 	 * Yank cursor motion, when associated with marks as motion commands,
