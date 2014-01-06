@@ -63,9 +63,9 @@ unsigned   pgp_check_sig(const uint8_t *,
 
 const char     *pgp_get_info(const char *type);
 
-int pgp_asprintf(char **, const char *, ...);
+int pgp_asprintf(char **, const char *, ...) __printflike(2, 3);
 
-void netpgp_log(const char *, ...);
+void netpgp_log(const char *, ...) __printflike(1, 2);
 
 int netpgp_strcasecmp(const char *, const char *);
 char *netpgp_strdup(const char *);
