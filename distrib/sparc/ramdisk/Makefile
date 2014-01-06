@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.41 2009/06/09 11:06:09 he Exp $
+#	$NetBSD: Makefile,v 1.41.8.1 2014/01/06 18:55:51 bouyer Exp $
 #
 # ramdisk.fs is the microroot filesystem intended for use with
 # the INSTALL kernel. It provides just enough tools to extract the
@@ -24,7 +24,6 @@ IMAGEDEPENDS+=	${CRUNCHBIN} dot.profile
 
 # Use stubs to eliminate some large stuff from libc
 HACKSRC=	${DISTRIBDIR}/utils/libhack
-HACKOBJS=	gethost.o
 .include	"${HACKSRC}/Makefile.inc"
 ${CRUNCHBIN}:	libhack.o
 
