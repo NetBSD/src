@@ -1,4 +1,4 @@
-.\"	$NetBSD: sqlite.3lua,v 1.2 2013/12/23 12:50:56 njoly Exp $
+.\"	$NetBSD: sqlite.3lua,v 1.3 2014/01/06 09:23:18 wiz Exp $
 .\"
 .\" Copyright (c) 2013 Marc Balmer <mbalmer@NetBSD.org>. All rights reserved.
 .\"
@@ -244,7 +244,8 @@ Out of memory.
 Attempt to write a readonly database.
 .Pp
 .It Dv sqlite.INTERRUPT
-Operation terminated by sqlite3_interrupt().
+Operation terminated by
+.Fn sqlite3_interrupt .
 .Pp
 .It Dv sqlite.IOERR
 Some kind of disk I/O error occurred.
@@ -253,7 +254,8 @@ Some kind of disk I/O error occurred.
 The database disk image is malformed.
 .Pp
 .It Dv sqlite.NOTFOUND
-Unknown opcode in sqlite3_file_control().
+Unknown opcode in
+.Fn sqlite3_file_control .
 .Pp
 .It Dv sqlite.FULL
 Insertion failed because database is full.
