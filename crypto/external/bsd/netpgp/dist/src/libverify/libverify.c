@@ -145,7 +145,8 @@
 
 /* Forward declarations */
 static int read_all_packets(pgpv_t */*pgp*/, pgpv_mem_t */*mem*/, const char */*op*/);
-static int read_binary_file(pgpv_t */*pgp*/, const char */*op*/, const char */*fmt*/, ...);
+static int read_binary_file(pgpv_t */*pgp*/, const char */*op*/, const char */*fmt*/, ...)
+    __printflike(3, 4);
 static int read_binary_memory(pgpv_t */*pgp*/, const char */*op*/, const void */*memory*/, size_t /*size*/);
 static int pgpv_find_keyid(pgpv_t */*pgp*/, const char */*strkeyid*/, uint8_t */*keyid*/);
 
@@ -2046,7 +2047,7 @@ read_all_packets(pgpv_t *pgp, pgpv_mem_t *mem, const char *op)
 }
 
 /* create a filename, read it, and then parse according to "op" */
-__printflike(3, 4) static int
+static int
 read_binary_file(pgpv_t *pgp, const char *op, const char *fmt, ...)
 {
 	va_list	args;
@@ -2335,7 +2336,7 @@ pgpv_read_pubring(pgpv_t *pgp, const void *keyring, ssize_t size)
 	if (keyring) {
 		return (size > 0) ?
 			read_binary_memory(pgp, "pubring", keyring, (size_t)size) :
-			read_binary_file(pgp, "pubring", "%s", keyring);
+			read_binary_file(pgp, "pubring", "%s", (const char *)keyring);
 	}
 	return read_binary_file(pgp, "pubring", "%s/%s", nonnull_getenv("HOME"), ".gnupg/pubring.gpg");
 }
