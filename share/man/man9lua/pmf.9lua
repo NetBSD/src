@@ -1,4 +1,4 @@
-.\"	$NetBSD: pmf.9lua,v 1.1 2013/10/29 09:40:44 mbalmer Exp $
+.\"	$NetBSD: pmf.9lua,v 1.2 2014/01/06 13:03:33 wiz Exp $
 .\"
 .\" Copyright (c) 2013 Marc Balmer <mbalmer@NetBSD.org>. All rights reserved.
 .\"
@@ -83,9 +83,9 @@ Returns nil if the key is not present.
 .Sh SEE ALSO
 .Xr lua 1 ,
 .Xr luac 1 ,
-.Xr intro 9lua ,
 .Xr lua 4 ,
-.Xr pmf 9
+.Xr pmf 9 ,
+.Xr intro 9lua
 .Sh HISTORY
 An
 .Nm
