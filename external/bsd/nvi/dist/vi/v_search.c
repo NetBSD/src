@@ -1,4 +1,4 @@
-/*	$NetBSD: v_search.c,v 1.4 2013/12/25 17:18:39 christos Exp $ */
+/*	$NetBSD: v_search.c,v 1.5 2014/01/06 14:21:37 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -525,7 +525,7 @@ v_correct(SCR *sp, VICMD *vp, int isdelta)
 		m = vp->m_start;
 		vp->m_start = vp->m_stop;
 		vp->m_stop = m;
-	} else
+	}
 
 	/*
 	 * BACKWARD:
