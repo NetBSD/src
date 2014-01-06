@@ -2046,7 +2046,7 @@ read_all_packets(pgpv_t *pgp, pgpv_mem_t *mem, const char *op)
 }
 
 /* create a filename, read it, and then parse according to "op" */
-static int
+__printflike(3, 4) static int
 read_binary_file(pgpv_t *pgp, const char *op, const char *fmt, ...)
 {
 	va_list	args;
