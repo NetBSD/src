@@ -1,4 +1,4 @@
-.\"	$NetBSD: intro.9lua,v 1.3 2013/10/26 17:06:51 njoly Exp $
+.\"	$NetBSD: intro.9lua,v 1.4 2014/01/06 13:03:01 wiz Exp $
 .\"
 .\" Copyright (c) 2013 Marc Balmer <mbalmer@NetBSD.org>. All rights reserved.
 .\"
@@ -40,7 +40,9 @@ functions, error returns and other common definitions and concepts.
 .Xr lua 1 ,
 .Xr luac 1 ,
 .Xr intro 3lua ,
-.Xr lua 4
+.Xr lua 4 ,
+.Xr pmf 9lua ,
+.Xr systm 9lua
 .Sh HISTORY
 An
 .Nm
