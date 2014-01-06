@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.44 2013/12/23 23:13:19 riz Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.45 2014/01/06 19:29:01 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -678,4 +678,18 @@ lib/libc/net/sethostent.c				1.17-1.19 via patch
 	gethostbyaddr_r(3).
 	Implement no-check-names.
 	[bad, ticket #1887]
+
+etc/ntp.conf					1.16, 1.17, 1.18 via patch
+external/bsd/ntp/dist/ntpd/ntp_request.c	patch
+
+	Patch from ntp 4.2.7p404 to prevent an amplifier and DoS attack.
+	Add several "restrict" lines to the default ntp.conf and
+	improve comments
+	[spz, ticket #1895]
+
+distrib/ews4800mips/Makefile			1.3
+
+	Add "cdroms" to the SUBDIR list for src/distrib/ews4800mips.
+	Should prevent the iso image from being created in the source tree
+	[apb, ticket #1894]
 
