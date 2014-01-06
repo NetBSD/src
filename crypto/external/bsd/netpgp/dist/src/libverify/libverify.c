@@ -1880,7 +1880,7 @@ setup_data(pgpv_cursor_t *cursor, pgpv_t *pgp, const void *p, ssize_t size)
 		if (is_armored(buf, sizeof(buf))) {
 			read_ascii_armor_file(cursor, p);
 		} else {
-			read_binary_file(pgp, "signature", "%s", p);
+			read_binary_file(pgp, "signature", "%s", (const char *)p);
 		}
 		fclose(fp);
 	} else {
