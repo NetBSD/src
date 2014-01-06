@@ -1,4 +1,4 @@
-.\"	$NetBSD: sqlite.3lua,v 1.3 2014/01/06 09:23:18 wiz Exp $
+.\"	$NetBSD: sqlite.3lua,v 1.4 2014/01/06 09:30:26 wiz Exp $
 .\"
 .\" Copyright (c) 2013 Marc Balmer <mbalmer@NetBSD.org>. All rights reserved.
 .\"
@@ -86,7 +86,8 @@ Workstation applications using SQLite normally do not need to invoke this
 function.
 .Pp
 .It Dv sqlite.shutdown()
-Deallocate any resources that were allocated by sqlite.initialize().
+Deallocate any resources that were allocated by
+.Fn sqlite.initialize .
 Workstation applications using SQLite normally do not need to invoke this
 function.
 .Pp
@@ -122,7 +123,7 @@ Return the SQLite3 library source id as a string.
 .El
 .Sh DATABASE FUNCTIONS
 Database functions operate on database objects returned by
-.Em sqlite.open() .
+.Fn sqlite.open .
 .Pp
 .Bl -tag -width XXXX -compact
 .It Dv err = sqlite.close(db)
@@ -188,16 +189,22 @@ in the prepared statement
 .Ar stmt .
 .Pp
 .It Dv sqlite.reset(stmt)
-The sqlite.reset() function is called to reset a prepared statement object back
+The
+.Fn sqlite.reset
+function is called to reset a prepared statement object back
 to its initial state, ready to be re-executed.
 .Pp
 .It Dv sqlite.clear_bindings(stmt)
-Contrary to the intuition of many, sqlite.reset() does not reset the bindings on
-a prepared statement.
-Use this routine to reset all host parameters to NULL.
+Contrary to the intuition of many,
+.Fn sqlite.reset
+does not reset the bindings on a prepared statement.
+Use this routine to reset all host parameters to
+.Dv NULL .
 .Pp
 .It Dv sqlite.finalize(stmt)
-The sqlite.finalize() function is called to delete a prepared statement.
+The
+.Fn sqlite.finalize
+function is called to delete a prepared statement.
 .Pp
 .It Dv name = sqlite.column_name(stmt, cidx)
 Return the name assigned to a particular column in the result set of a SELECT
@@ -294,16 +301,20 @@ Authorization denied.
 Auxiliary database format error.
 .Pp
 .It Dv sqlite.RANGE
-2nd parameter to sqlite.bind() out of range.
+2nd parameter to
+.Fn sqlite.bind
+out of range.
 .Pp
 .It Dv sqlite.NOTADB
 File opened that is not a database file.
 .Pp
 .It Dv sqlite.ROW
-sqlite.step() has another row ready.
+.Fn sqlite.step
+has another row ready.
 .Pp
 .It Dv sqlite.DONE
-sqlite.step() has finished executing.
+.Fn sqlite.step
+has finished executing.
 .El
 .Sh SEE ALSO
 .Xr lua 1 ,
