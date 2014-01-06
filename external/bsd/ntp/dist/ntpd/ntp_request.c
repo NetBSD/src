@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_request.c,v 1.7 2012/02/01 22:48:15 kardel Exp $	*/
+/*	$NetBSD: ntp_request.c,v 1.7.16.1 2014/01/06 19:12:22 bouyer Exp $	*/
 
 /*
  * ntp_request.c - respond to information requests
@@ -88,8 +88,7 @@ static	void	do_resaddflags	(sockaddr_u *, struct interface *, struct req_pkt *);
 static	void	do_ressubflags	(sockaddr_u *, struct interface *, struct req_pkt *);
 static	void	do_unrestrict	(sockaddr_u *, struct interface *, struct req_pkt *);
 static	void	do_restrict	(sockaddr_u *, struct interface *, struct req_pkt *, int);
-static	void	mon_getlist_0	(sockaddr_u *, struct interface *, struct req_pkt *);
-static	void	mon_getlist_1	(sockaddr_u *, struct interface *, struct req_pkt *);
+static	void	mon_getlist	(sockaddr_u *, struct interface *, struct req_pkt *);
 static	void	reset_stats	(sockaddr_u *, struct interface *, struct req_pkt *);
 static	void	reset_peer	(sockaddr_u *, struct interface *, struct req_pkt *);
 static	void	do_key_reread	(sockaddr_u *, struct interface *, struct req_pkt *);
@@ -149,8 +148,8 @@ static	struct req_proc ntp_codes[] = {
 				sizeof(struct conf_restrict), do_ressubflags },
 	{ REQ_UNRESTRICT, AUTH, v4sizeof(struct conf_restrict),
 				sizeof(struct conf_restrict), do_unrestrict },
-	{ REQ_MON_GETLIST,	NOAUTH,	0, 0,	mon_getlist_0 },
-	{ REQ_MON_GETLIST_1,	NOAUTH,	0, 0,	mon_getlist_1 },
+	{ REQ_MON_GETLIST,	NOAUTH,	0, 0,	mon_getlist },
+	{ REQ_MON_GETLIST_1,	NOAUTH,	0, 0,	mon_getlist },
 	{ REQ_RESET_STATS, AUTH, sizeof(struct reset_flags), 0, reset_stats },
 	{ REQ_RESET_PEER,  AUTH, v4sizeof(struct conf_unpeer),
 				sizeof(struct conf_unpeer), reset_peer },
@@ -614,6 +613,9 @@ process_private(
 				"process_private: failed auth mod_okay %d\n",
 				mod_okay);
 #endif
+			if (!mod_okay) {
+				sys_restricted++;
+			}
 			req_ack(srcadr, inter, inpkt, INFO_ERR_AUTH);
 			return;
 		}
@@ -825,34 +827,42 @@ peer_info (
 	struct req_pkt *inpkt
 	)
 {
-	register struct info_peer_list *ipl;
+	struct info_peer_list ipl;
 	register struct peer *pp;
 	register struct info_peer *ip;
 	register int items;
+	size_t item_sz;
+	char * datap;
 	register int i, j;
 	sockaddr_u addr;
 	extern struct peer *sys_peer;
 	l_fp ltmp;
 
 	items = INFO_NITEMS(inpkt->err_nitems);
-	ipl = (struct info_peer_list *) inpkt->data;
-
+	item_sz = INFO_ITEMSIZE(inpkt->mbz_itemsize);
+	datap = inpkt->data;  
+	if (item_sz != sizeof(ipl)) {
+		req_ack(srcadr, inter, inpkt, INFO_ERR_FMT);
+		return; 
+	}
 	ip = (struct info_peer *)prepare_pkt(srcadr, inter, inpkt,
 	    v6sizeof(struct info_peer));
 	while (items-- > 0 && ip != 0) {
+		memset(&ipl,0,sizeof(ipl));
+		memcpy(&ipl, datap, item_sz);
 		ZERO_SOCK(&addr);
-		NSRCPORT(&addr) = ipl->port;
-		if (client_v6_capable && ipl->v6_flag) {
+		NSRCPORT(&addr) = ipl.port;
+		if (client_v6_capable && ipl.v6_flag) {
 			AF(&addr) = AF_INET6;
-			SOCK_ADDR6(&addr) = ipl->addr6;
+			SOCK_ADDR6(&addr) = ipl.addr6;
 		} else {
 			AF(&addr) = AF_INET;
-			NSRCADR(&addr) = ipl->addr;
+			NSRCADR(&addr) = ipl.addr;
 		}
 #ifdef ISC_PLATFORM_HAVESALEN
 		addr.sa.sa_len = SOCKLEN(&addr);
 #endif
-		ipl++;
+		datap += item_sz;
 		pp = findexistingpeer(&addr, NULL, -1, 0);
 		if (NULL == pp)
 			continue;
@@ -958,10 +968,12 @@ peer_stats (
 	struct req_pkt *inpkt
 	)
 {
-	register struct info_peer_list *ipl;
+	struct info_peer_list ipl;
 	register struct peer *pp;
 	register struct info_peer_stats *ip;
 	register int items;
+	size_t item_sz;
+	char * datap;
 	sockaddr_u addr;
 	extern struct peer *sys_peer;
 
@@ -970,27 +982,33 @@ peer_stats (
 	     printf("peer_stats: called\n");
 #endif
 	items = INFO_NITEMS(inpkt->err_nitems);
-	ipl = (struct info_peer_list *) inpkt->data;
+	item_sz = INFO_ITEMSIZE(inpkt->mbz_itemsize);
+	datap = inpkt->data;  
+	if (item_sz > sizeof(ipl)) {
+		req_ack(srcadr, inter, inpkt, INFO_ERR_FMT);
+		return; 
+	}
 	ip = (struct info_peer_stats *)prepare_pkt(srcadr, inter, inpkt,
 	    v6sizeof(struct info_peer_stats));
 	while (items-- > 0 && ip != 0) {
+		memset(&ipl,0,sizeof(ipl));
+		memcpy(&ipl, datap, item_sz);
 		memset((char *)&addr, 0, sizeof(addr));
-		NSRCPORT(&addr) = ipl->port;
-		if (client_v6_capable && ipl->v6_flag) {
+		NSRCPORT(&addr) = ipl.port;
+		if (client_v6_capable && ipl.v6_flag) {
 			AF(&addr) = AF_INET6;
-			SOCK_ADDR6(&addr) = ipl->addr6;
+			SOCK_ADDR6(&addr) = ipl.addr6;
 		} else {
 			AF(&addr) = AF_INET;
-			NSRCADR(&addr) = ipl->addr;
+			NSRCADR(&addr) = ipl.addr;
 		}	
 #ifdef ISC_PLATFORM_HAVESALEN
 		addr.sa.sa_len = SOCKLEN(&addr);
 #endif
 		DPRINTF(1, ("peer_stats: looking for %s, %d, %d\n",
-			    stoa(&addr), ipl->port, NSRCPORT(&addr)));
+			    stoa(&addr), ipl.port, NSRCPORT(&addr)));
 
-		ipl = (struct info_peer_list *)((char *)ipl +
-		    INFO_ITEMSIZE(inpkt->mbz_itemsize));
+		datap += item_sz;
 
 		pp = findexistingpeer(&addr, NULL, -1, 0);
 		if (NULL == pp)
@@ -1326,10 +1344,10 @@ do_conf(
 	struct req_pkt *inpkt
 	)
 {
-	static u_long soonest_ifrescan_time = 0;
 	int items;
+	size_t item_sz;
+	char * datap;
 	u_int fl;
-	struct conf_peer *cp; 
 	struct conf_peer temp_cp;
 	sockaddr_u peeraddr;
 
@@ -1339,42 +1357,16 @@ do_conf(
 	 * very picky here.
 	 */
 	items = INFO_NITEMS(inpkt->err_nitems);
-	cp = (struct conf_peer *)inpkt->data;
-	memset(&temp_cp, 0, sizeof(struct conf_peer));
-	memcpy(&temp_cp, (char *)cp, INFO_ITEMSIZE(inpkt->mbz_itemsize));
-
-#if 0 /* paranoid checking - these are done in newpeer() */
-	fl = 0;
-	while (items-- > 0 && !fl) {
-		if (((temp_cp.version) > NTP_VERSION)
-		    || ((temp_cp.version) < NTP_OLDVERSION))
-		    fl = 1;
-		if (temp_cp.hmode != MODE_ACTIVE
-		    && temp_cp.hmode != MODE_CLIENT
-		    && temp_cp.hmode != MODE_BROADCAST)
-		    fl = 1;
-		if (temp_cp.flags & ~(CONF_FLAG_PREFER | CONF_FLAG_BURST |
-		    CONF_FLAG_IBURST | CONF_FLAG_SKEY))
-			fl = 1;
-		cp = (struct conf_peer *)
-		    ((char *)cp + INFO_ITEMSIZE(inpkt->mbz_itemsize));
-	}
-
-	if (fl) {
+	item_sz = INFO_ITEMSIZE(inpkt->mbz_itemsize);
+	datap = inpkt->data;
+	if (item_sz > sizeof(temp_cp)) {
 		req_ack(srcadr, inter, inpkt, INFO_ERR_FMT);
 		return;
 	}
-#endif /* end paranoid checking */
-
-	/*
-	 * Looks okay, try it out
-	 */
-	items = INFO_NITEMS(inpkt->err_nitems);
-	cp = (struct conf_peer *)inpkt->data;  
 
 	while (items-- > 0) {
 		memset(&temp_cp, 0, sizeof(struct conf_peer));
-		memcpy(&temp_cp, (char *)cp, INFO_ITEMSIZE(inpkt->mbz_itemsize));
+		memcpy(&temp_cp, datap, item_sz);
 		ZERO_SOCK(&peeraddr);
 
 		fl = 0;
@@ -1418,24 +1410,7 @@ do_conf(
 			return;
 		}
 
-		/*
-		 * ntp_intres.c uses REQ_CONFIG/doconf() to add each
-		 * server after its name is resolved.  If we have been
-		 * disconnected from the network, it may notice the
-		 * network has returned and add the first server while
-		 * the relevant interface is still disabled, awaiting
-		 * the next interface rescan.  To get things moving
-		 * more quickly, trigger an interface scan now, except
-		 * if we have done so in the last half minute.
-		 */
-		if (soonest_ifrescan_time < current_time) {
-			soonest_ifrescan_time = current_time + 30;
-			timer_interfacetimeout(current_time);
-			DPRINTF(1, ("do_conf triggering interface rescan\n"));
-		}
-
-		cp = (struct conf_peer *)
-		    ((char *)cp + INFO_ITEMSIZE(inpkt->mbz_itemsize));
+		datap += item_sz;
 	}
 
 	req_ack(srcadr, inter, inpkt, INFO_OKAY);
@@ -1540,9 +1515,10 @@ do_unconf(
 	struct req_pkt *inpkt
 	)
 {
-	register struct conf_unpeer *cp;
 	struct conf_unpeer temp_cp;
 	register int items;
+	size_t item_sz;
+	char * datap;
 	register struct peer *peer;
 	sockaddr_u peeraddr;
 	int bad, found;
@@ -1554,13 +1530,18 @@ do_unconf(
 	 * an error.
 	 */
 	items = INFO_NITEMS(inpkt->err_nitems);
-	cp = (struct conf_unpeer *)inpkt->data;
+	item_sz = INFO_ITEMSIZE(inpkt->mbz_itemsize);
+	datap = inpkt->data;  
+	if (item_sz > sizeof(temp_cp)) {
+		req_ack(srcadr, inter, inpkt, INFO_ERR_FMT);
+		return; 
+	}
 
 	bad = 0;
 	while (items-- > 0 && !bad) {
 		memset(&temp_cp, 0, sizeof(temp_cp));
+		memcpy(&temp_cp, datap, item_sz);
 		ZERO_SOCK(&peeraddr);
-		memcpy(&temp_cp, cp, INFO_ITEMSIZE(inpkt->mbz_itemsize));
 		if (client_v6_capable && temp_cp.v6_flag) {
 			AF(&peeraddr) = AF_INET6;
 			SOCK_ADDR6(&peeraddr) = temp_cp.peeraddr6;
@@ -1586,8 +1567,7 @@ do_unconf(
 		}
 		if (!found)
 			bad = 1;
-		cp = (struct conf_unpeer *)
-			((char *)cp + INFO_ITEMSIZE(inpkt->mbz_itemsize));
+		datap += item_sz;
 	}
 
 	if (bad) {
@@ -1600,12 +1580,12 @@ do_unconf(
 	 */
 
 	items = INFO_NITEMS(inpkt->err_nitems);
-	cp = (struct conf_unpeer *)inpkt->data;
+	datap = inpkt->data;
 
 	while (items-- > 0) {
 		memset(&temp_cp, 0, sizeof(temp_cp));
+		memcpy(&temp_cp, datap, item_sz);
 		memset(&peeraddr, 0, sizeof(peeraddr));
-		memcpy(&temp_cp, cp, INFO_ITEMSIZE(inpkt->mbz_itemsize));
 		if (client_v6_capable && temp_cp.v6_flag) {
 			AF(&peeraddr) = AF_INET6;
 			SOCK_ADDR6(&peeraddr) = temp_cp.peeraddr6;
@@ -1633,8 +1613,7 @@ do_unconf(
 		peer_clear(peer, "GONE");
 		unpeer(peer);
 
-		cp = (struct conf_unpeer *)
-			((char *)cp + INFO_ITEMSIZE(inpkt->mbz_itemsize));
+		datap += item_sz;
 	}
 
 	req_ack(srcadr, inter, inpkt, INFO_OKAY);
@@ -1868,8 +1847,10 @@ do_restrict(
 	int op
 	)
 {
-	register struct conf_restrict *cr;
+	struct conf_restrict cr;
 	register int items;
+	size_t item_sz;
+	char * datap;
 	sockaddr_u matchaddr;
 	sockaddr_u matchmask;
 	int bad;
@@ -1880,26 +1861,31 @@ do_restrict(
 	 * about it.  Note we are very picky here.
 	 */
 	items = INFO_NITEMS(inpkt->err_nitems);
-	cr = (struct conf_restrict *)inpkt->data;
+	item_sz = INFO_ITEMSIZE(inpkt->mbz_itemsize);
+	datap = inpkt->data;  
+	if (item_sz > sizeof(cr)) {
+		req_ack(srcadr, inter, inpkt, INFO_ERR_FMT);
+		return; 
+	}
 
 	bad = 0;
-	cr->flags = ntohs(cr->flags);
-	cr->mflags = ntohs(cr->mflags);
 	while (items-- > 0 && !bad) {
-		if (cr->mflags & ~(RESM_NTPONLY))
+		memcpy(&cr, datap, item_sz);
+		cr.flags = ntohs(cr.flags);
+		cr.mflags = ntohs(cr.mflags);
+		if (cr.mflags & ~(RESM_NTPONLY))
 		    bad |= 1;
-		if (cr->flags & ~(RES_ALLFLAGS))
+		if (cr.flags & ~(RES_ALLFLAGS))
 		    bad |= 2;
-		if (cr->mask != htonl(INADDR_ANY)) {
-			if (client_v6_capable && cr->v6_flag != 0) {
-				if (IN6_IS_ADDR_UNSPECIFIED(&cr->addr6))
+		if (cr.mask != htonl(INADDR_ANY)) {
+			if (client_v6_capable && cr.v6_flag != 0) {
+				if (IN6_IS_ADDR_UNSPECIFIED(&cr.addr6))
 					bad |= 4;
 			} else
-				if (cr->addr == htonl(INADDR_ANY))
+				if (cr.addr == htonl(INADDR_ANY))
 					bad |= 8;
 		}
-		cr = (struct conf_restrict *)((char *)cr +
-		    INFO_ITEMSIZE(inpkt->mbz_itemsize));
+		datap += item_sz;
 	}
 
 	if (bad) {
@@ -1911,26 +1897,28 @@ do_restrict(
 	/*
 	 * Looks okay, try it out
 	 */
-	items = INFO_NITEMS(inpkt->err_nitems);
-	cr = (struct conf_restrict *)inpkt->data;
 	ZERO_SOCK(&matchaddr);
 	ZERO_SOCK(&matchmask);
+	datap = inpkt->data;
 
 	while (items-- > 0) {
-		if (client_v6_capable && cr->v6_flag) {
+		memcpy(&cr, datap, item_sz);
+		cr.flags = ntohs(cr.flags);
+		cr.mflags = ntohs(cr.mflags);
+		if (client_v6_capable && cr.v6_flag) {
 			AF(&matchaddr) = AF_INET6;
 			AF(&matchmask) = AF_INET6;
-			SOCK_ADDR6(&matchaddr) = cr->addr6;
-			SOCK_ADDR6(&matchmask) = cr->mask6;
+			SOCK_ADDR6(&matchaddr) = cr.addr6;
+			SOCK_ADDR6(&matchmask) = cr.mask6;
 		} else {
 			AF(&matchaddr) = AF_INET;
 			AF(&matchmask) = AF_INET;
-			NSRCADR(&matchaddr) = cr->addr;
-			NSRCADR(&matchmask) = cr->mask;
+			NSRCADR(&matchaddr) = cr.addr;
+			NSRCADR(&matchmask) = cr.mask;
 		}
-		hack_restrict(op, &matchaddr, &matchmask, cr->mflags,
-			 cr->flags);
-		cr++;
+		hack_restrict(op, &matchaddr, &matchmask, cr.mflags,
+			 cr.flags);
+		datap += item_sz;
 	}
 
 	req_ack(srcadr, inter, inpkt, INFO_OKAY);
@@ -1941,106 +1929,13 @@ do_restrict(
  * mon_getlist - return monitor data
  */
 static void
-mon_getlist_0(
+mon_getlist(
 	sockaddr_u *srcadr,
 	struct interface *inter,
 	struct req_pkt *inpkt
 	)
 {
-	register struct info_monitor *im;
-	register struct mon_data *md;
-	extern struct mon_data mon_mru_list;
-	extern int mon_enabled;
-
-#ifdef DEBUG
-	if (debug > 2)
-	    printf("wants monitor 0 list\n");
-#endif
-	if (!mon_enabled) {
-		req_ack(srcadr, inter, inpkt, INFO_ERR_NODATA);
-		return;
-	}
-	im = (struct info_monitor *)prepare_pkt(srcadr, inter, inpkt,
-	    v6sizeof(struct info_monitor));
-	for (md = mon_mru_list.mru_next; md != &mon_mru_list && im != 0;
-	     md = md->mru_next) {
-		im->lasttime = htonl((u_int32)((current_time -
-		    md->firsttime) / md->count));
-		im->firsttime = htonl((u_int32)(current_time - md->lasttime));
-		im->restr = htonl((u_int32)md->flags);
-		im->count = htonl((u_int32)(md->count));
-		if (IS_IPV6(&md->rmtadr)) {
-			if (!client_v6_capable)
-				continue;
-			im->addr6 = SOCK_ADDR6(&md->rmtadr);
-			im->v6_flag = 1;
-		} else {
-			im->addr = NSRCADR(&md->rmtadr);
-			if (client_v6_capable)
-				im->v6_flag = 0;
-		}
-		im->port = md->rmtport;
-		im->mode = md->mode;
-		im->version = md->version;
-		im = (struct info_monitor *)more_pkt();
-	}
-	flush_pkt();
-}
-
-/*
- * mon_getlist - return monitor data
- */
-static void
-mon_getlist_1(
-	sockaddr_u *srcadr,
-	struct interface *inter,
-	struct req_pkt *inpkt
-	)
-{
-	register struct info_monitor_1 *im;
-	register struct mon_data *md;
-	extern struct mon_data mon_mru_list;
-	extern int mon_enabled;
-
-	if (!mon_enabled) {
-		req_ack(srcadr, inter, inpkt, INFO_ERR_NODATA);
-		return;
-	}
-	im = (struct info_monitor_1 *)prepare_pkt(srcadr, inter, inpkt,
-	    v6sizeof(struct info_monitor_1));
-	for (md = mon_mru_list.mru_next; md != &mon_mru_list && im != 0;
-	     md = md->mru_next) {
-		im->lasttime = htonl((u_int32)((current_time -
-		    md->firsttime) / md->count));
-		im->firsttime = htonl((u_int32)(current_time - md->lasttime));
-		im->restr = htonl((u_int32)md->flags);
-		im->count = htonl((u_int32)md->count);
-		if (IS_IPV6(&md->rmtadr)) {
-			if (!client_v6_capable)
-				continue;
-			im->addr6 = SOCK_ADDR6(&md->rmtadr);
-			im->v6_flag = 1;
-			im->daddr6 = SOCK_ADDR6(&md->interface->sin);
-		} else {
-			im->addr = NSRCADR(&md->rmtadr);
-			if (client_v6_capable)
-				im->v6_flag = 0;
-			if (MDF_BCAST == md->cast_flags)
-				im->daddr = NSRCADR(&md->interface->bcast);
-			else if (md->cast_flags) {
-				im->daddr = NSRCADR(&md->interface->sin);
-				if (!im->daddr)
-					im->daddr = NSRCADR(&md->interface->bcast);
-			} else
-				im->daddr = 4;
-		}
-		im->flags = htonl(md->cast_flags);
-		im->port = md->rmtport;
-		im->mode = md->mode;
-		im->version = md->version;
-		im = (struct info_monitor_1 *)more_pkt();
-	}
-	flush_pkt();
+	req_ack(srcadr, inter, inpkt, INFO_ERR_NODATA);
 }
 
 /*
@@ -2110,8 +2005,10 @@ reset_peer(
 	struct req_pkt *inpkt
 	)
 {
-	struct conf_unpeer *cp;
+	struct conf_unpeer cp;
 	int items;
+	size_t item_sz;
+	char * datap;
 	struct peer *peer;
 	sockaddr_u peeraddr;
 	int bad;
@@ -2122,17 +2019,24 @@ reset_peer(
 	 */
 
 	items = INFO_NITEMS(inpkt->err_nitems);
-	cp = (struct conf_unpeer *)inpkt->data;
+	item_sz = INFO_ITEMSIZE(inpkt->mbz_itemsize);
+	datap = inpkt->data;  
+	if (item_sz > sizeof(cp)) {
+		req_ack(srcadr, inter, inpkt, INFO_ERR_FMT);
+		return; 
+	}
 
 	bad = 0;
 	while (items-- > 0 && !bad) {
+		memset(&cp,0,sizeof(cp));
+		memcpy(&cp, datap, item_sz);
 		ZERO_SOCK(&peeraddr);
-		if (client_v6_capable && cp->v6_flag) {
+		if (client_v6_capable && cp.v6_flag) {
 			AF(&peeraddr) = AF_INET6;
-			SOCK_ADDR6(&peeraddr) = cp->peeraddr6;
+			SOCK_ADDR6(&peeraddr) = cp.peeraddr6;
 		} else {
 			AF(&peeraddr) = AF_INET;
-			NSRCADR(&peeraddr) = cp->peeraddr;
+			NSRCADR(&peeraddr) = cp.peeraddr;
 		}
 
 #ifdef ISC_PLATFORM_HAVESALEN
@@ -2141,8 +2045,7 @@ reset_peer(
 		peer = findexistingpeer(&peeraddr, NULL, -1, 0);
 		if (NULL == peer)
 			bad++;
-		cp = (struct conf_unpeer *)((char *)cp +
-		    INFO_ITEMSIZE(inpkt->mbz_itemsize));
+		datap += item_sz;
 	}
 
 	if (bad) {
@@ -2154,16 +2057,17 @@ reset_peer(
 	 * Now do it in earnest.
 	 */
 
-	items = INFO_NITEMS(inpkt->err_nitems);
-	cp = (struct conf_unpeer *)inpkt->data;
+	datap = inpkt->data;
 	while (items-- > 0) {
+		memset(&cp,0,sizeof(cp));
+		memcpy(&cp, datap, item_sz);
 		ZERO_SOCK(&peeraddr);
-		if (client_v6_capable && cp->v6_flag) {
+		if (client_v6_capable && cp.v6_flag) {
 			AF(&peeraddr) = AF_INET6;
-			SOCK_ADDR6(&peeraddr) = cp->peeraddr6;
+			SOCK_ADDR6(&peeraddr) = cp.peeraddr6;
 		} else {
 			AF(&peeraddr) = AF_INET;
-			NSRCADR(&peeraddr) = cp->peeraddr;
+			NSRCADR(&peeraddr) = cp.peeraddr;
 		}
 		SET_PORT(&peeraddr, 123);
 #ifdef ISC_PLATFORM_HAVESALEN
@@ -2174,8 +2078,7 @@ reset_peer(
 			peer_reset(peer);
 			peer = findexistingpeer(&peeraddr, peer, -1, 0);
 		}
-		cp = (struct conf_unpeer *)((char *)cp +
-		    INFO_ITEMSIZE(inpkt->mbz_itemsize));
+		datap += item_sz;
 	}
 
 	req_ack(srcadr, inter, inpkt, INFO_OKAY);
@@ -2887,7 +2790,7 @@ fill_info_if_stats(void *data, interface_info_t *interface_info)
 		ifs->unmask.addr = SOCK_ADDR4(&ep->mask);
 	}
 	ifs->v6_flag = htonl(ifs->v6_flag);
-	strncpy(ifs->name, ep->name, sizeof(ifs->name));
+	strlcpy(ifs->name, ep->name, sizeof(ifs->name));
 	ifs->family = htons(ep->family);
 	ifs->flags = htonl(ep->flags);
 	ifs->last_ttl = htonl(ep->last_ttl);
