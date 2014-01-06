@@ -1,4 +1,4 @@
-/*	$NetBSD: h_dns_server.c,v 1.1 2014/01/06 14:50:32 gson Exp $	*/
+/*	$NetBSD: h_dns_server.c,v 1.2 2014/01/06 16:42:57 gson Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: h_dns_server.c,v 1.1 2014/01/06 14:50:32 gson Exp $");
+__RCSID("$NetBSD: h_dns_server.c,v 1.2 2014/01/06 16:42:57 gson Exp $");
 
 #include <ctype.h>
 #include <err.h>
@@ -133,7 +133,7 @@ name_eq(const unsigned char *a, const unsigned char *b) {
 
 /* XXX the daemon2_* functions should be in a library */
 
-int __deamon2_detach_pipe[2];
+int __daemon2_detach_pipe[2];
 
 static int
 daemon2_fork(void)
@@ -145,16 +145,16 @@ daemon2_fork(void)
 	/*
 	 * Set up the pipe, making sure the write end does not
 	 * get allocated one of the file descriptors that will
-	 * be closed in deamon2_detach().
+	 * be closed in daemon2_detach().
 	 */
 	for (i = 0; i < 3; i++) {
-	    r = pipe(__deamon2_detach_pipe);
+	    r = pipe(__daemon2_detach_pipe);
 	    if (r < 0)
 		    return -1;
-	    if (__deamon2_detach_pipe[1] <= STDERR_FILENO &&
+	    if (__daemon2_detach_pipe[1] <= STDERR_FILENO &&
 		(fd = open(_PATH_DEVNULL, O_RDWR, 0)) != -1) {
-		    (void)dup2(fd, __deamon2_detach_pipe[0]);
-		    (void)dup2(fd, __deamon2_detach_pipe[1]);
+		    (void)dup2(fd, __daemon2_detach_pipe[0]);
+		    (void)dup2(fd, __daemon2_detach_pipe[1]);
 		    if (fd > STDERR_FILENO)
 			    (void)close(fd);
 		    continue;
@@ -167,16 +167,16 @@ daemon2_fork(void)
 		return -1;
 	} else if (r == 0) {
 		/* child */
-		close(__deamon2_detach_pipe[0]);
+		close(__daemon2_detach_pipe[0]);
 		return 0;
        }
        /* Parent */
 
-       (void) close(__deamon2_detach_pipe[1]);
+       (void) close(__daemon2_detach_pipe[1]);
 
        for (;;) {
 	       char dummy;
-	       r = read(__deamon2_detach_pipe[0], &dummy, 1);
+	       r = read(__daemon2_detach_pipe[0], &dummy, 1);
 	       if (r < 0) {
 		       if (errno == EINTR)
 			       continue;
@@ -190,7 +190,7 @@ daemon2_fork(void)
 }
 
 static int
-deamon2_detach(int nochdir, int noclose)
+daemon2_detach(int nochdir, int noclose)
 {
 	int r;
 	int fd;
@@ -210,7 +210,7 @@ deamon2_detach(int nochdir, int noclose)
 	}
 
 	while (1) {
-		r = write(__deamon2_detach_pipe[1], "", 1);
+		r = write(__daemon2_detach_pipe[1], "", 1);
 		if (r < 0) {
 			if (errno == EINTR)
 				continue;
@@ -224,7 +224,7 @@ deamon2_detach(int nochdir, int noclose)
 		}
 	}
 
-	(void) close(__deamon2_detach_pipe[1]);
+	(void) close(__daemon2_detach_pipe[1]);
 
 	return 0;
 }
@@ -276,7 +276,7 @@ int main(int argc, char **argv) {
 	f = fopen(pidfile_name, "w");
 	fprintf(f, "%d", getpid());
 	fclose(f);
-	deamon2_detach(0, 0);
+	daemon2_detach(0, 0);
 
 	for (;;) {
 		unsigned char buf[512];
