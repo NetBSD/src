@@ -1,4 +1,4 @@
-.\"     $NetBSD: cardbus.9,v 1.17 2011/05/30 01:48:40 dyoung Exp $
+.\"     $NetBSD: cardbus.9,v 1.18 2014/01/06 14:57:10 njoly Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -114,7 +114,7 @@
 "int reg" "bus_space_tag_t tag" "bus_space_handle_t handle" \
 "bus_size_t size"
 .Ft pcitag_t
-.Fn Cardbus_make_tag "cardbus_devfunc_t ct "
+.Fn Cardbus_make_tag "cardbus_devfunc_t ct"
 .Ft pcireg_t
 .Fn Cardbus_conf_read "cardbus_devfunc_t ct" "pcitag_t tag" \
 "int offs"
