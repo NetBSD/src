@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslog.3lua,v 1.1 2013/11/13 20:55:08 mbalmer Exp $
+.\"	$NetBSD: syslog.3lua,v 1.2 2014/01/06 09:23:18 wiz Exp $
 .\"
 .\" Copyright (c) 2013 Marc Balmer <mbalmer@NetBSD.org>. All rights reserved.
 .\"
@@ -200,8 +200,8 @@ with a priority not set in maskpri are rejected.
 .Sh SEE ALSO
 .Xr lua 1 ,
 .Xr luac 1 ,
-.Xr intro 3lua ,
 .Xr syslog 3 ,
+.Xr intro 3lua ,
 .Xr syslogd 8
 .Sh HISTORY
 A
