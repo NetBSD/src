@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2013/08/16 15:29:45 christos Exp $
+# $NetBSD: Makefile,v 1.9 2014/01/06 14:50:32 gson Exp $
 
 .include <bsd.own.mk>
 
@@ -28,6 +28,7 @@ PROGS+=		h_nsd_recurse
 PROGS+=		h_protoent
 PROGS+=		h_servent
 PROGS+=		h_hostent
+PROGS+=		h_dns_server
 CPPFLAGS.h_hostent.c += -I${NETBSDSRCDIR}/lib/libc/net
 
 # For easy debugging, without installing libc

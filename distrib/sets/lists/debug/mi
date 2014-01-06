@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.45 2013/12/28 02:32:01 rjs Exp $
+# $NetBSD: mi,v 1.46 2014/01/06 14:50:32 gson Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -1801,6 +1801,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/locale/t_wcstod.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/locale/t_wctomb.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/net/getaddrinfo/h_gai.debug	tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/net/h_dns_server.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/net/h_hostent.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/net/h_nsd_recurse.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/net/h_protoent.debug		tests-lib-debug		debug,atf
