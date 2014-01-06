@@ -1,0 +1,338 @@
+/*	$NetBSD: h_dns_server.c,v 1.1 2014/01/06 14:50:32 gson Exp $	*/
+
+/*-
+ * Copyright (c) 2013 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Andreas Gustafsson.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * A minimal DNS server capable of providing canned answers to the
+ * specific queries issued by t_hostent.sh and nothing more.
+ */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: h_dns_server.c,v 1.1 2014/01/06 14:50:32 gson Exp $");
+
+#include <ctype.h>
+#include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <memory.h>
+#include <paths.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+#include <sys/socket.h>
+
+#include <netinet/in.h>
+#include <netinet6/in6.h>
+
+union sockaddr_either {
+	struct sockaddr s;
+	struct sockaddr_in sin;
+	struct sockaddr_in6 sin6;
+};
+
+/* A DNS question and its corresponding answer */
+
+struct dns_data {
+	size_t qname_size;
+	const char *qname; /* Wire-encode question name */
+	int qtype;
+	size_t answer_size;
+	const char *answer; /* One wire-encoded answer RDATA */
+};
+
+/* Convert C string constant to length + data pair */
+#define STR_DATA(s) sizeof(s) - 1, s
+
+/* Canned DNS queestion-answer pairs */
+struct dns_data data[] = {
+	/* Forward mappings */
+	/* localhost IN A -> 127.0.0.1 */
+	{ STR_DATA("\011localhost\000"), 1,
+	  STR_DATA("\177\000\000\001") },
+	/* localhost IN AAAA -> ::1 */
+	{ STR_DATA("\011localhost\000"), 28,
+	  STR_DATA("\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\001") },
+	/* sixthavenue.astron.com IN A -> 38.117.134.16 */
+	{ STR_DATA("\013sixthavenue\006astron\003com\000"), 1,
+	  STR_DATA("\046\165\206\020") },
+	/* sixthavenue.astron.com IN AAAA -> 2620:106:3003:1f00:3e4a:92ff:fef4:e180 */
+	{ STR_DATA("\013sixthavenue\006astron\003com\000"), 28,
+	  STR_DATA("\x26\x20\x01\x06\x30\x03\x1f\x00\x3e\x4a\x92\xff\xfe\xf4\xe1\x80") },
+	/* Reverse mappings */
+	{ STR_DATA("\0011\0010\0010\003127\007in-addr\004arpa\000"), 12,
+	  STR_DATA("\011localhost\000") },
+	{ STR_DATA("\0011\0010\0010\0010\0010\0010\0010\0010"
+		   "\0010\0010\0010\0010\0010\0010\0010\0010"
+		   "\0010\0010\0010\0010\0010\0010\0010\0010"
+		   "\0010\0010\0010\0010\0010\0010\0010\0010"
+		   "\003ip6\004arpa\000"), 12,
+	  STR_DATA("\011localhost\000") },
+	{ STR_DATA("\00216\003134\003117\00238"
+		   "\007in-addr\004arpa\000"), 12,
+	  STR_DATA("\013sixthavenue\006astron\003com\000") },
+	{ STR_DATA("\0010\0018\0011\001e\0014\001f\001e\001f"
+		   "\001f\001f\0012\0019\001a\0014\001e\0013"
+		   "\0010\0010\001f\0011\0013\0010\0010\0013"
+		   "\0016\0010\0011\0010\0010\0012\0016\0012"
+		   "\003ip6\004arpa\000"), 12,
+	  STR_DATA("\013sixthavenue\006astron\003com\000") },
+	/* End marker */
+	{ STR_DATA(""), 0, STR_DATA("") }
+};
+
+/*
+ * Compare two DNS names for equality.	If equal, return their
+ * length, and if not, return zero.  Does not handle compression.
+ */
+static int
+name_eq(const unsigned char *a, const unsigned char *b) {
+	const unsigned char *a_save = a;
+	for (;;) {
+		int i;
+		int lena = *a++;
+		int lenb = *b++;
+		if (lena != lenb)
+			return 0;
+		if (lena == 0)
+			return a - a_save;
+		for (i = 0; i < lena; i++)
+			if (tolower(a[i]) != tolower(b[i]))
+				return 0;
+		a += lena;
+		b += lena;
+	}
+}
+
+/* XXX the daemon2_* functions should be in a library */
+
+int __deamon2_detach_pipe[2];
+
+static int
+daemon2_fork(void)
+{
+	int r;
+	int fd;
+	int i;
+
+	/*
+	 * Set up the pipe, making sure the write end does not
+	 * get allocated one of the file descriptors that will
+	 * be closed in deamon2_detach().
+	 */
+	for (i = 0; i < 3; i++) {
+	    r = pipe(__deamon2_detach_pipe);
+	    if (r < 0)
+		    return -1;
+	    if (__deamon2_detach_pipe[1] <= STDERR_FILENO &&
+		(fd = open(_PATH_DEVNULL, O_RDWR, 0)) != -1) {
+		    (void)dup2(fd, __deamon2_detach_pipe[0]);
+		    (void)dup2(fd, __deamon2_detach_pipe[1]);
+		    if (fd > STDERR_FILENO)
+			    (void)close(fd);
+		    continue;
+	    }
+	    break;
+	}
+
+	r = fork();
+	if (r < 0) {
+		return -1;
+	} else if (r == 0) {
+		/* child */
+		close(__deamon2_detach_pipe[0]);
+		return 0;
+       }
+       /* Parent */
+
+       (void) close(__deamon2_detach_pipe[1]);
+
+       for (;;) {
+	       char dummy;
+	       r = read(__deamon2_detach_pipe[0], &dummy, 1);
+	       if (r < 0) {
+		       if (errno == EINTR)
+			       continue;
+		       _exit(1);
+	       } else if (r == 0) {
+		       _exit(1);
+	       } else { /* r > 0 */
+		       _exit(0);
+	       }
+       }
+}
+
+static int
+deamon2_detach(int nochdir, int noclose)
+{
+	int r;
+	int fd;
+
+	if (setsid() == -1)
+		return -1;
+
+	if (!nochdir)
+		(void)chdir("/");
+
+	if (!noclose && (fd = open(_PATH_DEVNULL, O_RDWR, 0)) != -1) {
+		(void)dup2(fd, STDIN_FILENO);
+		(void)dup2(fd, STDOUT_FILENO);
+		(void)dup2(fd, STDERR_FILENO);
+		if (fd > STDERR_FILENO)
+			(void)close(fd);
+	}
+
+	while (1) {
+		r = write(__deamon2_detach_pipe[1], "", 1);
+		if (r < 0) {
+			if (errno == EINTR)
+				continue;
+			/* May get "broken pipe" here if parent is killed */
+			return -1;
+		} else if (r == 0) {
+			/* Should not happen */
+			return -1;
+		} else {
+			break;
+		}
+	}
+
+	(void) close(__deamon2_detach_pipe[1]);
+
+	return 0;
+}
+
+int main(int argc, char **argv) {
+	int s, r, protocol;
+	union sockaddr_either saddr;
+	struct dns_data *dp;
+	unsigned char *p;
+	char pidfile_name[40];
+	FILE *f;
+	int one = 1;
+
+	daemon2_fork();
+
+	if (argc < 2 || ((protocol = argv[1][0]) != '4' && protocol != '6'))
+		errx(1, "usage: dns_server 4 | 6");
+	s = socket(protocol == '4' ? PF_INET : PF_INET6, SOCK_DGRAM, IPPROTO_UDP);
+	if (s < 0)
+		err(1, "socket");
+	if (protocol == '4') {
+		memset(&saddr.sin, 0, sizeof(saddr.sin));
+		saddr.sin.sin_family = AF_INET;
+		saddr.sin.sin_len = sizeof(saddr.sin);
+		saddr.sin.sin_port = htons(53);
+		saddr.sin.sin_addr.s_addr = INADDR_ANY;
+	} else {
+		static struct in6_addr loopback = IN6ADDR_LOOPBACK_INIT;
+		memset(&saddr.sin6, 0, sizeof(saddr.sin6));
+		saddr.sin6.sin6_family = AF_INET6;
+		saddr.sin6.sin6_len = sizeof(saddr.sin6);
+		saddr.sin6.sin6_port = htons(53);
+		saddr.sin6.sin6_addr = loopback;
+	}
+
+	r = setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &one, sizeof one);
+	if (r < 0)
+		err(1, "setsockopt");
+
+	r = bind(s,
+		 (struct sockaddr *) &saddr,
+		 protocol == '4' ? sizeof(struct sockaddr_in) :
+				   sizeof(struct sockaddr_in6));
+	if (r < 0)
+		err(1, "bind");
+
+	snprintf(pidfile_name, sizeof pidfile_name,
+		 "dns_server_%c.pid", protocol);
+	f = fopen(pidfile_name, "w");
+	fprintf(f, "%d", getpid());
+	fclose(f);
+	deamon2_detach(0, 0);
+
+	for (;;) {
+		unsigned char buf[512];
+		union sockaddr_either from;
+		ssize_t nrecv, nsent;
+		socklen_t fromlen =
+			protocol == '4' ? sizeof(struct sockaddr_in) :
+					  sizeof(struct sockaddr_in6);
+		memset(buf, 0, sizeof buf);
+		nrecv = recvfrom(s, buf, sizeof buf, 0, &from.s, &fromlen);
+		if (nrecv < 0)
+			err(1, "recvfrom");
+		if (nrecv < 12)
+			continue; /* Too short */
+		if ((buf[2] & 0x80) != 0)
+			continue; /* Not a query */
+		if (!(buf[4] == 0 && buf[5] == 1))
+		    continue; /* QDCOUNT is not 1 */
+
+		for (dp = data; dp->qname_size != 0; dp++) {
+			int qtype, qclass;
+			p = buf + 12; /* Point to QNAME */
+			int n = name_eq(p, (const unsigned char *) dp->qname);
+			if (n == 0)
+				continue; /* Name does not match */
+			p += n; /* Skip QNAME */
+			qtype = *p++ << 8;
+			qtype |= *p++;
+			if (qtype != dp->qtype)
+				continue;
+			qclass = *p++ << 8;
+			qclass |= *p++;
+			if (qclass != 1) /* IN */
+				continue;
+			goto found;
+		}
+		continue;
+	found:
+		buf[2] |= 0x80; /* QR */
+		buf[3] |= 0x80; /* RA */
+		memset(buf + 6, 0, 6); /* Clear ANCOUNT, NSCOUNT, ARCOUNT */
+		buf[7] = 1; /* ANCOUNT */
+		memcpy(p, dp->qname, dp->qname_size);
+		p += dp->qname_size;
+		*p++ = dp->qtype >> 8;
+		*p++ = dp->qtype & 0xFF;
+		*p++ = 0;
+		*p++ = 1; /* IN */
+		memset(p, 0, 4); /* TTL = 0 */
+		p += 4;
+		*p++ = 0;		/* RDLENGTH MSB */
+		*p++ = dp->answer_size;	/* RDLENGTH LSB */
+		memcpy(p, dp->answer, dp->answer_size);
+		p += dp->answer_size;
+		nsent = sendto(s, buf, p - buf, 0, &from.s, fromlen);
+		if (nsent != p - buf)
+			warn("sendto");
+	}
+}
