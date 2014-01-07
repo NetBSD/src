@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_parse.c,v 1.11 2014/01/05 15:13:36 kardel Exp $	*/
+/*	$NetBSD: refclock_parse.c,v 1.12 2014/01/07 02:10:49 joerg Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/ntpd/refclock_parse.c,v 4.81 2009/05/01 10:15:29 kardel RELEASE_20090105_A
@@ -2464,7 +2464,7 @@ init_iobinding(
  ** support routines
  **/
 
-static char *
+static __printflike(4, 5) char *
 ap(char *buffer, size_t len, char *pos, const char *fmt, ...)
 {
 	va_list va;
@@ -5552,28 +5552,28 @@ trimbletsip_message(
 				t = ap(pbuffer, sizeof(pbuffer), t, "illegal value 0x%02x", mb(0) & 0xFF);
 				break;
 			case 0x00:
-				t = ap(pbuffer, sizeof(pbuffer), t, "doing position fixes", BUFFER_SIZE(pbuffer, t));
+				t = ap(pbuffer, sizeof(pbuffer), t, "doing position fixes");
 				break;
 			case 0x01:
-				t = ap(pbuffer, sizeof(pbuffer), t, "no GPS time yet", BUFFER_SIZE(pbuffer, t));
+				t = ap(pbuffer, sizeof(pbuffer), t, "no GPS time yet");
 				break;
 			case 0x03:
-				t = ap(pbuffer, sizeof(pbuffer), t, "PDOP too high", BUFFER_SIZE(pbuffer, t));
+				t = ap(pbuffer, sizeof(pbuffer), t, "PDOP too high");
 				break;
 			case 0x08:
-				t = ap(pbuffer, sizeof(pbuffer), t, "no usable satellites", BUFFER_SIZE(pbuffer, t));
+				t = ap(pbuffer, sizeof(pbuffer), t, "no usable satellites");
 				break;
 			case 0x09:
-				t = ap(pbuffer, sizeof(pbuffer), t, "only ONE usable satellite", BUFFER_SIZE(pbuffer, t));
+				t = ap(pbuffer, sizeof(pbuffer), t, "only ONE usable satellite");
 				break;
 			case 0x0A:
-				t = ap(pbuffer, sizeof(pbuffer), t, "only TWO usable satellites", BUFFER_SIZE(pbuffer, t));
+				t = ap(pbuffer, sizeof(pbuffer), t, "only TWO usable satellites");
 				break;
 			case 0x0B:
-				t = ap(pbuffer, sizeof(pbuffer), t, "only THREE usable satellites", BUFFER_SIZE(pbuffer, t));
+				t = ap(pbuffer, sizeof(pbuffer), t, "only THREE usable satellites");
 				break;
 			case 0x0C:
-				t = ap(pbuffer, sizeof(pbuffer), t, "the chosen satellite is unusable", BUFFER_SIZE(pbuffer, t));
+				t = ap(pbuffer, sizeof(pbuffer), t, "the chosen satellite is unusable");
 				break;
 			}
 
