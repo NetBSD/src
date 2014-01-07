@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.284 2013/12/28 11:08:56 nakayama Exp $	*/
+/*	$NetBSD: pmap.c,v 1.285 2014/01/07 20:11:35 palle Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.284 2013/12/28 11:08:56 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.285 2014/01/07 20:11:35 palle Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1157,6 +1157,10 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 		cpus->ci_eintstack = NULL;
 		cpus->ci_spinup = main; /* Call main when we're running. */
 		cpus->ci_paddr = cpu0paddr;
+#ifdef SUN4V
+		if ( CPU_ISSUN4V )
+			cpus->ci_mmfsa = cpu0paddr;
+#endif
 		cpus->ci_cpcb = (struct pcb *)u0va;
 		cpus->ci_idepth = -1;
 		memset(cpus->ci_intrpending, -1, sizeof(cpus->ci_intrpending));
@@ -3801,9 +3805,6 @@ pmap_setup_intstack_sun4v(paddr_t pa)
 	if ( hv_rc != H_EOK ) {
 		panic("hv_mmu_map_perm_addr() failed - rc = %" PRId64 "\n",
 		    hv_rc);
-	}
-	else {
-		memset((void *)INTSTACK, 0, 64 * KB);
 	}
 }
 
