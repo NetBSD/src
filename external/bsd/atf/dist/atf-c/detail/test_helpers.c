@@ -131,8 +131,8 @@ run_h_tc(atf_tc_t *tc, const char *outname, const char *errname,
     atf_process_child_t child;
     atf_process_status_t status;
 
-    RE(atf_fs_path_init_fmt(&outpath, outname));
-    RE(atf_fs_path_init_fmt(&errpath, errname));
+    RE(atf_fs_path_init_fmt(&outpath, "%s", outname));
+    RE(atf_fs_path_init_fmt(&errpath, "%s", errname));
 
     struct run_h_tc_data data = { tc, resname };
 
