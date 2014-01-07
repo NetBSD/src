@@ -269,7 +269,7 @@ impl::tc::get_md_vars(void)
 void
 impl::tc::set_md_var(const std::string& var, const std::string& val)
 {
-    atf_error_t err = atf_tc_set_md_var(&pimpl->m_tc, var.c_str(), val.c_str());
+    atf_error_t err = atf_tc_set_md_var(&pimpl->m_tc, var.c_str(), "%s", val.c_str());
     if (atf_is_error(err))
         throw_atf_error(err);
 }
