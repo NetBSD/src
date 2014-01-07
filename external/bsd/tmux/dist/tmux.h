@@ -1,4 +1,4 @@
-/* $Id: tmux.h,v 1.3 2011/09/17 01:50:08 christos Exp $ */
+/* $Id: tmux.h,v 1.4 2014/01/07 02:11:29 joerg Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -80,6 +80,9 @@ extern char   **environ;
 #define unused __attribute__ ((unused))
 
 /* Attribute to make gcc check printf-like arguments. */
+#define vprintflike2 __attribute__ ((format (printf, 2, 0)))
+#define vprintflike3 __attribute__ ((format (printf, 3, 0)))
+#define vprintflike5 __attribute__ ((format (printf, 5, 0)))
 #define printflike1 __attribute__ ((format (printf, 1, 2)))
 #define printflike2 __attribute__ ((format (printf, 2, 3)))
 #define printflike3 __attribute__ ((format (printf, 3, 4)))
@@ -1803,7 +1806,7 @@ void printflike3 screen_write_puts(struct screen_write_ctx *,
 	     struct grid_cell *, const char *, ...);
 void printflike5 screen_write_nputs(struct screen_write_ctx *,
 	     ssize_t, struct grid_cell *, int, const char *, ...);
-void	 screen_write_vnputs(struct screen_write_ctx *,
+void vprintflike5 screen_write_vnputs(struct screen_write_ctx *,
 	     ssize_t, struct grid_cell *, int, const char *, va_list);
 void	 screen_write_parsestyle(
 	     struct grid_cell *, struct grid_cell *, const char *);
@@ -1980,13 +1983,13 @@ extern const struct window_mode window_clock_mode;
 extern const struct window_mode window_copy_mode;
 void		 window_copy_init_from_pane(struct window_pane *);
 void		 window_copy_init_for_output(struct window_pane *);
-void		 window_copy_add(struct window_pane *, const char *, ...);
-void		 window_copy_vadd(struct window_pane *, const char *, va_list);
+void printflike2 window_copy_add(struct window_pane *, const char *, ...);
+void vprintflike2 window_copy_vadd(struct window_pane *, const char *, va_list);
 void		 window_copy_pageup(struct window_pane *);
 
 /* window-choose.c */
 extern const struct window_mode window_choose_mode;
-void		 window_choose_vadd(
+void vprintflike3 window_choose_vadd(
 		     struct window_pane *, int, const char *, va_list);
 void printflike3 window_choose_add(
 		     struct window_pane *, int, const char *, ...);
@@ -2066,9 +2069,9 @@ void		*xmalloc(size_t);
 void		*xrealloc(void *, size_t, size_t);
 void		 xfree(void *);
 int printflike2	 xasprintf(char **, const char *, ...);
-int		 xvasprintf(char **, const char *, va_list);
+int vprintflike2 xvasprintf(char **, const char *, va_list);
 int printflike3	 xsnprintf(char *, size_t, const char *, ...);
-int		 xvsnprintf(char *, size_t, const char *, va_list);
+int vprintflike3 xvsnprintf(char *, size_t, const char *, va_list);
 
 /* utmp.c */
 struct window_utmp *utmp_create(const char *);
