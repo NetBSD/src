@@ -1,4 +1,4 @@
-/*	$NetBSD: core_netbsd.c,v 1.21 2014/01/03 21:12:18 dsl Exp $	*/
+/*	$NetBSD: core_netbsd.c,v 1.22 2014/01/07 07:59:03 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: core_netbsd.c,v 1.21 2014/01/03 21:12:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_netbsd.c,v 1.22 2014/01/07 07:59:03 dsl Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_coredump.h"
@@ -133,7 +133,12 @@ CORENAME(coredump_writesegs_netbsd)(struct uvm_coredump_state *us)
 	 */
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, CORE_GETMID(cs->core), flag);
 	cseg.c_addr = us->start;
-	cseg.c_size = us->end - us->start;
+
+	if (us->start == us->realend)
+		/* Not really wanted, but counted... */
+		cseg.c_size = 0;
+	else
+		cseg.c_size = us->end - us->start;
 
 	error = coredump_write(cs->iocookie, UIO_SYSSPACE,
 	    &cseg, cs->core.c_seghdrsize);

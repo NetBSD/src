@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_coredump.c,v 1.5 2014/01/03 21:12:18 dsl Exp $	*/
+/*	$NetBSD: uvm_coredump.c,v 1.6 2014/01/07 07:59:03 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_coredump.c,v 1.5 2014/01/03 21:12:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_coredump.c,v 1.6 2014/01/07 07:59:03 dsl Exp $");
 
 /*
  * uvm_coredump.c: glue functions for coredump
@@ -186,10 +186,6 @@ uvm_coredump_walkmap(struct proc *p, int (*func)(struct uvm_coredump_state *),
 			}
 		}
 
-		/* Ignore empty sections */
-		if (state.start == state.realend)
-			continue;
-		
 		vm_map_unlock_read(map);
 		error = (*func)(&state);
 		if (error)
