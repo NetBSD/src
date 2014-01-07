@@ -1,4 +1,4 @@
-/*	$NetBSD: regexec.c,v 1.2 2013/11/22 15:52:06 christos Exp $ */
+/*	$NetBSD: regexec.c,v 1.3 2014/01/07 21:48:12 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -158,7 +158,7 @@ static int nope = 0;		/* for use in asserts; shuts lint up */
 int				/* 0 success, REG_NOMATCH failure */
 regexec(const regex_t *preg, const RCHAR_T *string, size_t nmatch, regmatch_t *pmatch, int eflags)
 {
-	register struct re_guts *g = preg->re_g;
+	struct re_guts *g = preg->re_g;
 #ifdef REDEBUG
 #	define	GOODFLAGS(f)	(f)
 #else
