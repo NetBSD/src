@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2.2,v 1.1.2.7 2014/01/06 19:29:04 bouyer Exp $
+# $NetBSD: CHANGES-5.2.2,v 1.1.2.8 2014/01/07 18:08:18 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.2.1
 release:
@@ -53,4 +53,11 @@ distrib/ews4800mips/Makefile			1.3
 	Add "cdroms" to the SUBDIR list for src/distrib/ews4800mips.
 	Should prevent the iso image from being created in the source tree
 	[apb, ticket #1894]
+
+xsrc/external/mit/libXfont/dist/src/bitmap/bdfread.c	patch
+xsrc/xfree/xc/lib/font/bitmap/bdfread.c			patch
+
+	Fix CVE-2013-6462: scanf without field width limits can crash
+	with huge input data.
+	[wiz, ticket #1896]
 
