@@ -1,4 +1,4 @@
-/*	$NetBSD: flock.c,v 1.8 2013/10/29 16:02:15 christos Exp $	*/
+/*	$NetBSD: flock.c,v 1.9 2014/01/07 02:07:08 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: flock.c,v 1.8 2013/10/29 16:02:15 christos Exp $");
+__RCSID("$NetBSD: flock.c,v 1.9 2014/01/07 02:07:08 joerg Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -63,7 +63,7 @@ static struct option flock_longopts[] = {
 
 static sig_atomic_t timeout_expired;
 
-static __dead void
+static __dead __printflike(1, 2) void
 usage(const char *fmt, ...) 
 {
 	if (fmt) {

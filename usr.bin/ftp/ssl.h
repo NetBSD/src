@@ -1,4 +1,4 @@
-/*	$NetBSD: ssl.h,v 1.1 2012/12/21 18:07:36 christos Exp $	*/
+/*	$NetBSD: ssl.h,v 1.2 2014/01/07 02:07:08 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,8 @@
 #define FETCH struct fetch_connect
 struct fetch_connect;
 
-int fetch_printf(struct fetch_connect *, const char *fmt, ...);
+int fetch_printf(struct fetch_connect *, const char *fmt, ...)
+    __printflike(2, 3);
 int fetch_fileno(struct fetch_connect *);
 int fetch_error(struct fetch_connect *);
 int fetch_flush(struct fetch_connect *);
