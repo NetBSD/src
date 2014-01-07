@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.3,v 1.1.2.12 2014/01/06 19:13:04 bouyer Exp $
+# $NetBSD: CHANGES-6.1.3,v 1.1.2.13 2014/01/07 18:03:24 bouyer Exp $
 
 A complete list of changes from the NetBSD 6.1.1 release to the NetBSD 6.1.2
 release:
@@ -152,4 +152,11 @@ external/bsd/ntp/dist/ntpd/ntp_request.c	patch
 	Add several "restrict" lines to the default ntp.conf and
 	improve comments
 	[spz, ticket #1010]
+
+xsrc/external/mit/libXfont/dist/src/bitmap/bdfread.c	patch
+xsrc/xfree/xc/lib/font/bitmap/bdfread.c			patch
+
+	Fix CVE-2013-6462: scanf without field width limits can crash
+	with huge input data.
+	[wiz, ticket #1011]
 
