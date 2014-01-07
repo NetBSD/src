@@ -1,4 +1,4 @@
-/*	$NetBSD: log.h,v 1.6 2013/11/08 19:18:25 christos Exp $	*/
+/*	$NetBSD: log.h,v 1.7 2014/01/07 02:13:39 joerg Exp $	*/
 /* $OpenBSD: log.h,v 1.20 2013/04/07 02:10:33 dtucker Exp $ */
 
 /*
@@ -71,6 +71,7 @@ void     debug3(const char *, ...) __attribute__((format(printf, 1, 2)));
 void	 set_log_handler(log_handler_fn *, void *);
 void	 do_log2(LogLevel, const char *, ...)
     __attribute__((format(printf, 2, 3)));
-void	 do_log(LogLevel, const char *, va_list);
+void	 do_log(LogLevel, const char *, va_list)
+    __attribute__((format(printf, 2, 0)));
 void	 cleanup_exit(int) __attribute__((noreturn));
 #endif
