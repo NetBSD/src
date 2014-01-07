@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.499 2014/01/02 22:22:18 tho Exp $
+.\"	$NetBSD: main,v 1.500 2014/01/07 04:46:02 pho Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1151,6 +1151,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Thomas Cort Ta Mt tcort@NetBSD.org
 .It Ta Chuck Cranor Ta Mt chuck@NetBSD.org
 .It Ta Alistair Crooks Ta Mt agc@NetBSD.org
+.It Ta Masatake Daimon Ta Mt pho@NetBSD.org
 .It Ta Johan Danielsson Ta Mt joda@NetBSD.org
 .It Ta John Darrow Ta Mt jdarrow@NetBSD.org
 .It Ta Jed Davis Ta Mt jld@NetBSD.org
