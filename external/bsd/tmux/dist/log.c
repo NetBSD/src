@@ -1,4 +1,4 @@
-/* $Id: log.c,v 1.3 2014/01/07 02:11:29 joerg Exp $ */
+/* $Id: log.c,v 1.4 2014/01/07 09:28:57 joerg Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -105,7 +105,9 @@ log_vwrite(int pri, const char *msg, va_list ap)
 }
 
 /* Log a warning with error string. */
+#if __GNUC_PREREQ__(4, 6) || defined(__clang__)
 #pragma GCC diagnostic push
+#endif
 #pragma GCC diagnostic ignored "-Wformat-nonliteral"
 void printflike1
 log_warn(const char *msg, ...)
@@ -120,7 +122,9 @@ log_warn(const char *msg, ...)
 	free(fmt);
 	va_end(ap);
 }
+#if __GNUC_PREREQ__(4, 6) || defined(__clang__)
 #pragma GCC diagnostic push
+#endif
 
 /* Log a warning. */
 void printflike1
