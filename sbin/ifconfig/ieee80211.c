@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.25 2010/12/13 17:35:08 pooka Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.26 2014/01/07 20:25:24 degroote Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ieee80211.c,v 1.25 2010/12/13 17:35:08 pooka Exp $");
+__RCSID("$NetBSD: ieee80211.c,v 1.26 2014/01/07 20:25:24 degroote Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -463,8 +463,19 @@ setifpowersavesleep(prop_dictionary_t env, prop_dictionary_t oenv)
 static int
 scan_exec(prop_dictionary_t env, prop_dictionary_t oenv)
 {
+	struct ifreq ifr;
+
+	if (direct_ioctl(env, SIOCGIFFLAGS, &ifr) == -1) {
+		perror("ioctl(SIOCGIFFLAGS");
+		return -1;
+	}
+
+	if ((ifr.ifr_flags & IFF_UP) == 0) 
+		errx(EXIT_FAILURE, "The interface must be up before scanning.");
+
 	scan_and_wait(env);
 	list_scan(env);
+
 	return 0;
 }
 
