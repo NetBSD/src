@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.9 2013/12/01 19:32:15 christos Exp $	*/
+/*	$NetBSD: file.h,v 1.10 2014/01/07 02:12:07 joerg Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -417,7 +417,8 @@ protected int file_buffer(struct magic_set *, int, const char *, const void *,
     size_t);
 protected int file_fsmagic(struct magic_set *, const char *, struct stat *);
 protected int file_pipe2file(struct magic_set *, int, const void *, size_t);
-protected int file_vprintf(struct magic_set *, const char *, va_list);
+protected int file_vprintf(struct magic_set *, const char *, va_list)
+    __attribute__((__format__(__printf__, 2, 0)));
 protected size_t file_printedlen(const struct magic_set *);
 protected int file_replace(struct magic_set *, const char *, const char *);
 protected int file_printf(struct magic_set *, const char *, ...)
