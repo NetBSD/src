@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.265 2013/12/29 21:28:41 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.266 2014/01/07 13:14:39 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.265 2013/12/29 21:28:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.266 2014/01/07 13:14:39 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -4126,8 +4126,9 @@ wm_reset(struct wm_softc *sc)
 
 	/* Stop the transmit and receive processes. */
 	CSR_WRITE(sc, WMREG_RCTL, 0);
-	CSR_WRITE(sc, WMREG_TCTL, TCTL_PSP);
 	sc->sc_rctl &= ~RCTL_EN;
+	CSR_WRITE(sc, WMREG_TCTL, TCTL_PSP);
+	CSR_WRITE_FLUSH(sc);
 
 	/* XXX set_tbi_sbp_82543() */
 
@@ -4152,6 +4153,7 @@ wm_reset(struct wm_softc *sc)
 	if ((sc->sc_type == WM_T_82541) || (sc->sc_type == WM_T_82547)) {
 		CSR_WRITE(sc, WMREG_CTRL,
 		    CSR_READ(sc, WMREG_CTRL) | CTRL_PHY_RESET);
+		CSR_WRITE_FLUSH(sc);
 		delay(5000);
 	}
 
@@ -4212,6 +4214,7 @@ wm_reset(struct wm_softc *sc)
 		}
 		wm_get_swfwhw_semaphore(sc);
 		CSR_WRITE(sc, WMREG_CTRL, reg);
+		/* Don't insert a completion barrier when reset */
 		delay(20*1000);
 		wm_put_swfwhw_semaphore(sc);
 		break;
@@ -4262,6 +4265,7 @@ wm_reset(struct wm_softc *sc)
 		delay(10);
 		reg = CSR_READ(sc, WMREG_CTRL_EXT) | CTRL_EXT_EE_RST;
 		CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
+		CSR_WRITE_FLUSH(sc);
 		delay(2000);
 		break;
 	case WM_T_82540:
@@ -4288,6 +4292,7 @@ wm_reset(struct wm_softc *sc)
 			delay(10);
 			reg = CSR_READ(sc, WMREG_CTRL_EXT) | CTRL_EXT_EE_RST;
 			CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
+			CSR_WRITE_FLUSH(sc);
 		}
 		/* check EECD_EE_AUTORD */
 		wm_get_auto_rd_done(sc);
@@ -5209,10 +5214,13 @@ wm_eeprom_sendbits(struct wm_softc *sc, uint32_t bits, int nbits)
 		else
 			reg &= ~EECD_DI;
 		CSR_WRITE(sc, WMREG_EECD, reg);
+		CSR_WRITE_FLUSH(sc);
 		delay(2);
 		CSR_WRITE(sc, WMREG_EECD, reg | EECD_SK);
+		CSR_WRITE_FLUSH(sc);
 		delay(2);
 		CSR_WRITE(sc, WMREG_EECD, reg);
+		CSR_WRITE_FLUSH(sc);
 		delay(2);
 	}
 }
@@ -5233,10 +5241,12 @@ wm_eeprom_recvbits(struct wm_softc *sc, uint32_t *valp, int nbits)
 	val = 0;
 	for (x = nbits; x > 0; x--) {
 		CSR_WRITE(sc, WMREG_EECD, reg | EECD_SK);
+		CSR_WRITE_FLUSH(sc);
 		delay(2);
 		if (CSR_READ(sc, WMREG_EECD) & EECD_DO)
 			val |= (1U << (x - 1));
 		CSR_WRITE(sc, WMREG_EECD, reg);
+		CSR_WRITE_FLUSH(sc);
 		delay(2);
 	}
 	*valp = val;
@@ -5270,6 +5280,7 @@ wm_read_eeprom_uwire(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 			CSR_WRITE(sc, WMREG_EECD, reg);
 			reg &= ~EECD_SK;
 			CSR_WRITE(sc, WMREG_EECD, reg);
+			CSR_WRITE_FLUSH(sc);
 			delay(2);
 		}
 		/* XXX: end of workaround */
@@ -5277,6 +5288,7 @@ wm_read_eeprom_uwire(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 		/* Set CHIP SELECT. */
 		reg |= EECD_CS;
 		CSR_WRITE(sc, WMREG_EECD, reg);
+		CSR_WRITE_FLUSH(sc);
 		delay(2);
 
 		/* Shift in the READ command. */
@@ -5292,6 +5304,7 @@ wm_read_eeprom_uwire(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 		/* Clear CHIP SELECT. */
 		reg = CSR_READ(sc, WMREG_EECD) & ~EECD_CS;
 		CSR_WRITE(sc, WMREG_EECD, reg);
+		CSR_WRITE_FLUSH(sc);
 		delay(2);
 	}
 
@@ -5337,6 +5350,7 @@ wm_read_eeprom_spi(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 	/* Clear SK and CS. */
 	reg = CSR_READ(sc, WMREG_EECD) & ~(EECD_SK | EECD_CS);
 	CSR_WRITE(sc, WMREG_EECD, reg);
+	CSR_WRITE_FLUSH(sc);
 	delay(2);
 
 	if (wm_spi_eeprom_ready(sc))
@@ -5344,8 +5358,10 @@ wm_read_eeprom_spi(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 
 	/* Toggle CS to flush commands. */
 	CSR_WRITE(sc, WMREG_EECD, reg | EECD_CS);
+	CSR_WRITE_FLUSH(sc);
 	delay(2);
 	CSR_WRITE(sc, WMREG_EECD, reg);
+	CSR_WRITE_FLUSH(sc);
 	delay(2);
 
 	opc = SPI_OPC_READ;
@@ -5363,6 +5379,7 @@ wm_read_eeprom_spi(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 	/* Raise CS and clear SK. */
 	reg = (CSR_READ(sc, WMREG_EECD) & ~EECD_SK) | EECD_CS;
 	CSR_WRITE(sc, WMREG_EECD, reg);
+	CSR_WRITE_FLUSH(sc);
 	delay(2);
 
 	return 0;
@@ -5984,12 +6001,14 @@ wm_tbi_mediachange(struct ifnet *ifp)
 		sc->sc_ctrl |= CTRL_SLU | CTRL_FD;
 		sc->sc_ctrl &= ~(CTRL_TFCE | CTRL_RFCE);
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+		CSR_WRITE_FLUSH(sc);
 		delay(1000);
 	}
 
 	DPRINTF(WM_DEBUG_LINK,("%s: sc_txcw = 0x%x after autoneg check\n",
 		    device_xname(sc->sc_dev),sc->sc_txcw));
 	CSR_WRITE(sc, WMREG_TXCW, sc->sc_txcw);
+	CSR_WRITE_FLUSH(sc);
 	delay(10000);
 
 	i = CSR_READ(sc, WMREG_CTRL) & CTRL_SWDPIN(1);
@@ -6008,9 +6027,11 @@ wm_tbi_mediachange(struct ifnet *ifp)
 			 */
 			sc->sc_ctrl |= CTRL_LRST;
 			CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+			CSR_WRITE_FLUSH(sc);
 			delay(1000);
 			sc->sc_ctrl &= ~CTRL_LRST;
 			CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+			CSR_WRITE_FLUSH(sc);
 			delay(1000);
 		}
 
@@ -6144,9 +6165,11 @@ wm_tbi_check_link(struct wm_softc *sc)
 				 */
 				sc->sc_ctrl |= CTRL_LRST;
 				CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+				CSR_WRITE_FLUSH(sc);
 				delay(1000);
 				sc->sc_ctrl &= ~CTRL_LRST;
 				CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+				CSR_WRITE_FLUSH(sc);
 				delay(1000);
 				CSR_WRITE(sc, WMREG_TXCW,
 				    sc->sc_txcw & ~TXCW_ANE);
@@ -6231,9 +6254,11 @@ wm_gmii_reset(struct wm_softc *sc)
 		reg |= CTRL_EXT_SWDPIO(4);
 
 		CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
+		CSR_WRITE_FLUSH(sc);
 		delay(10*1000);
 
 		CSR_WRITE(sc, WMREG_CTRL_EXT, reg | CTRL_EXT_SWDPIN(4));
+		CSR_WRITE_FLUSH(sc);
 		delay(150);
 #if 0
 		sc->sc_ctrl_ext = reg | CTRL_EXT_SWDPIN(4);
@@ -6266,8 +6291,10 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_80003:
 		/* generic reset */
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl | CTRL_PHY_RESET);
+		CSR_WRITE_FLUSH(sc);
 		delay(20000);
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+		CSR_WRITE_FLUSH(sc);
 		delay(20000);
 
 		if ((sc->sc_type == WM_T_82541)
@@ -6286,8 +6313,10 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_PCH_LPT:
 		/* generic reset */
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl | CTRL_PHY_RESET);
+		CSR_WRITE_FLUSH(sc);
 		delay(100);
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+		CSR_WRITE_FLUSH(sc);
 		delay(150);
 		break;
 	default:
@@ -6744,10 +6773,13 @@ i82543_mii_sendbits(struct wm_softc *sc, uint32_t data, int nbits)
 		else
 			v &= ~MDI_IO;
 		CSR_WRITE(sc, WMREG_CTRL, v);
+		CSR_WRITE_FLUSH(sc);
 		delay(10);
 		CSR_WRITE(sc, WMREG_CTRL, v | MDI_CLK);
+		CSR_WRITE_FLUSH(sc);
 		delay(10);
 		CSR_WRITE(sc, WMREG_CTRL, v);
+		CSR_WRITE_FLUSH(sc);
 		delay(10);
 	}
 }
@@ -6762,25 +6794,32 @@ i82543_mii_recvbits(struct wm_softc *sc)
 	v |= CTRL_SWDPIO(3);
 
 	CSR_WRITE(sc, WMREG_CTRL, v);
+	CSR_WRITE_FLUSH(sc);
 	delay(10);
 	CSR_WRITE(sc, WMREG_CTRL, v | MDI_CLK);
+	CSR_WRITE_FLUSH(sc);
 	delay(10);
 	CSR_WRITE(sc, WMREG_CTRL, v);
+	CSR_WRITE_FLUSH(sc);
 	delay(10);
 
 	for (i = 0; i < 16; i++) {
 		data <<= 1;
 		CSR_WRITE(sc, WMREG_CTRL, v | MDI_CLK);
+		CSR_WRITE_FLUSH(sc);
 		delay(10);
 		if (CSR_READ(sc, WMREG_CTRL) & MDI_IO)
 			data |= 1;
 		CSR_WRITE(sc, WMREG_CTRL, v);
+		CSR_WRITE_FLUSH(sc);
 		delay(10);
 	}
 
 	CSR_WRITE(sc, WMREG_CTRL, v | MDI_CLK);
+	CSR_WRITE_FLUSH(sc);
 	delay(10);
 	CSR_WRITE(sc, WMREG_CTRL, v);
+	CSR_WRITE_FLUSH(sc);
 	delay(10);
 
 	return data;
@@ -7455,6 +7494,7 @@ wm_kmrn_readreg(struct wm_softc *sc, int reg)
 	CSR_WRITE(sc, WMREG_KUMCTRLSTA,
 	    ((reg << KUMCTRLSTA_OFFSET_SHIFT) & KUMCTRLSTA_OFFSET) |
 	    KUMCTRLSTA_REN);
+	CSR_WRITE_FLUSH(sc);
 	delay(2);
 
 	rv = CSR_READ(sc, WMREG_KUMCTRLSTA) & KUMCTRLSTA_MASK;
@@ -8476,10 +8516,12 @@ wm_configure_k1_ich8lan(struct wm_softc *sc, int k1_enable)
 
 	CSR_WRITE(sc, WMREG_CTRL, tmp);
 	CSR_WRITE(sc, WMREG_CTRL_EXT, ctrl_ext | CTRL_EXT_SPD_BYPS);
+	CSR_WRITE_FLUSH(sc);
 	delay(20);
 
 	CSR_WRITE(sc, WMREG_CTRL, ctrl);
 	CSR_WRITE(sc, WMREG_CTRL_EXT, ctrl_ext);
+	CSR_WRITE_FLUSH(sc);
 	delay(20);
 }
 
@@ -8494,9 +8536,11 @@ wm_smbustopci(struct wm_softc *sc)
 		sc->sc_ctrl |= CTRL_LANPHYPC_OVERRIDE;
 		sc->sc_ctrl &= ~CTRL_LANPHYPC_VALUE;
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+		CSR_WRITE_FLUSH(sc);
 		delay(10);
 		sc->sc_ctrl &= ~CTRL_LANPHYPC_OVERRIDE;
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+		CSR_WRITE_FLUSH(sc);
 		delay(50*1000);
 
 		/*
