@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.554 2014/01/06 14:50:32 gson Exp $
+# $NetBSD: mi,v 1.555 2014/01/07 16:47:13 gson Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3065,6 +3065,9 @@
 ./usr/tests/usr.bin/unifdef/d_basic.in		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/unifdef/d_basic.out		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/unifdef/t_basic		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/vmstat			tests-usr.bin-tests
+./usr/tests/usr.bin/vmstat/Atffile		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/vmstat/t_vmstat		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/xlint			tests-usr.bin-tests
 ./usr/tests/usr.bin/xlint/Atffile		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/xlint/Kyuafile		tests-usr.bin-tests	atf,kyua
