@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.231 2013/12/16 21:34:16 matt Exp $
+#	$NetBSD: bsd.sys.mk,v 1.232 2014/01/07 02:16:41 joerg Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -68,7 +68,6 @@ CFLAGS+=	-Wold-style-definition
 CFLAGS+=	-Wconversion
 .endif
 CFLAGS+=	-Wsign-compare -Wformat=2
-CFLAGS+=	${${ACTIVE_CC} == "clang":? -Wno-error=format-nonliteral :}
 CFLAGS+=	${${ACTIVE_CC} == "gcc":? -Wno-format-zero-length :}
 .endif
 .if ${WARNS} > 3 && defined(HAVE_LLVM)
