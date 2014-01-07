@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.98 2013/08/11 03:53:12 dholland Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.99 2014/01/07 16:47:13 gson Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -363,6 +363,7 @@
 ./usr/tests/usr.bin/tmux
 ./usr/tests/usr.bin/tr
 ./usr/tests/usr.bin/unifdef
+./usr/tests/usr.bin/vmstat
 ./usr/tests/usr.bin/xlint
 ./usr/tests/usr.bin/xlint/lint1
 ./usr/tests/usr.sbin
