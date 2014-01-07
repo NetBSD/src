@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.352 2013/12/29 12:36:30 nakayama Exp $	*/
+/*	$NetBSD: locore.s,v 1.353 2014/01/07 20:11:35 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -864,6 +864,27 @@ TABLE(syscall):
 	UTRAP(0x1f0); UTRAP(0x1f1); UTRAP(0x1f2); UTRAP(0x1f3); UTRAP(0x1f4); UTRAP(0x1f5); UTRAP(0x1f6); UTRAP(0x1f7)
 	UTRAP(0x1f8); UTRAP(0x1f9); UTRAP(0x1fa); UTRAP(0x1fb); UTRAP(0x1fc); UTRAP(0x1fd); UTRAP(0x1fe); UTRAP(0x1ff)
 
+#ifdef SUN4V
+
+/* Macros for sun4v traps */
+
+	.macro	sun4v_trap_entry count
+	.rept	\count
+	ba,a,pt	%xcc, slowtrap
+	 nop
+	.align	32
+	.endr
+	.endm
+	
+/* The actual trap base for sun4v */
+	.align	0x8000
+	.globl	_C_LABEL(trapbase_sun4v)
+_C_LABEL(trapbase_sun4v):
+	sun4v_trap_entry 512			! trap level 0:	 0x000-0x1ff
+	sun4v_trap_entry 512			! trap level 1:	 0x000-0x1ff
+	
+#endif
+		
 #if 0
 /*
  * If the cleanwin trap handler detects an overfow we come here.
@@ -4179,9 +4200,26 @@ ENTRY_NOPROFILE(cpu_initialize)	/* for cosmetic reasons - nicer backtrace */
 1:
 
 	/* set trap table */
+#ifdef SUN4V
+	cmp	%l6, CPU_SUN4V
+	bne,pt	%icc, 6f
+	 nop
+	/* sun4v */
+	set	_C_LABEL(trapbase_sun4v), %o0
+	sethi	%hi(CPUINFO_VA + CI_MMFSA), %o1
+	ldx	[%o1 + %lo(CPUINFO_VA + CI_MMFSA)], %o1
+	call	_C_LABEL(prom_set_trap_table_sun4v)	! Now we should be running 100% from our handlers
+	 nop
+	
+	ba	7f
+	 nop
+6:	
+#endif	
+	/* sun4u */
 	set	_C_LABEL(trapbase), %l1
-	call	_C_LABEL(prom_set_trap_table)	! Now we should be running 100% from our handlers
+	call	_C_LABEL(prom_set_trap_table_sun4u)	! Now we should be running 100% from our handlers
 	 mov	%l1, %o0
+7:	
 	wrpr	%l1, 0, %tba			! Make sure the PROM didn't foul up.
 
 	/*
@@ -4324,7 +4362,7 @@ ENTRY(cpu_mp_startup)
 
 	/* set trap table */
 	set	_C_LABEL(trapbase), %l1
-	call	_C_LABEL(prom_set_trap_table)
+	call	_C_LABEL(prom_set_trap_table_sun4u)
 	 mov	%l1, %o0
 	wrpr	%l1, 0, %tba			! Make sure the PROM didn't
 						! foul up.

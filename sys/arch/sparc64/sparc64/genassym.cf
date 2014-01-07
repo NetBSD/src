@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.68 2013/12/28 11:12:09 nakayama Exp $
+#	$NetBSD: genassym.cf,v 1.69 2014/01/07 20:11:35 palle Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -163,6 +163,9 @@ define	CI_TICK_IH	offsetof(struct cpu_info, ci_tick_ih)
 define	CI_CTXBUSY	offsetof(struct cpu_info, ci_ctxbusy)
 define	CI_TSB_DMMU	offsetof(struct cpu_info, ci_tsb_dmmu)
 define	CI_TSB_IMMU	offsetof(struct cpu_info, ci_tsb_immu)
+#ifdef SUN4V
+define  CI_MMFSA        offsetof(struct cpu_info, ci_mmfsa)
+#endif
 ifdef MULTIPROCESSOR
 define	CI_IPIEVC	offsetof(struct cpu_info, ci_ipi_evcnt[0].ev_count)
 endif
