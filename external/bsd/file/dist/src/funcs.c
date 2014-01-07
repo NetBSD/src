@@ -1,4 +1,4 @@
-/*	$NetBSD: funcs.c,v 1.6 2013/12/01 19:32:15 christos Exp $	*/
+/*	$NetBSD: funcs.c,v 1.7 2014/01/07 02:12:07 joerg Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -32,7 +32,7 @@
 #if 0
 FILE_RCSID("@(#)$File: funcs.c,v 1.64 2013/11/19 23:49:44 christos Exp $")
 #else
-__RCSID("$NetBSD: funcs.c,v 1.6 2013/12/01 19:32:15 christos Exp $");
+__RCSID("$NetBSD: funcs.c,v 1.7 2014/01/07 02:12:07 joerg Exp $");
 #endif
 #endif	/* lint */
 
@@ -101,6 +101,7 @@ file_printf(struct magic_set *ms, const char *fmt, ...)
  * error - print best error message possible
  */
 /*VARARGS*/
+__attribute__((__format__(__printf__, 3, 0)))
 private void
 file_error_core(struct magic_set *ms, int error, const char *f, va_list va,
     size_t lineno)
