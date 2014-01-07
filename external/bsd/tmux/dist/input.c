@@ -1,4 +1,4 @@
-/* $Id: input.c,v 1.4 2011/08/17 19:28:36 jmmv Exp $ */
+/* $Id: input.c,v 1.5 2014/01/07 02:11:29 joerg Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -49,7 +49,7 @@
 /* Helper functions. */
 int	input_split(struct input_ctx *);
 int	input_get(struct input_ctx *, u_int, int, int);
-void	input_reply(struct input_ctx *, const char *, ...);
+void	input_reply(struct input_ctx *, const char *, ...) __printflike(2, 3);
 
 /* Transition entry/exit handlers. */
 void	input_clear(struct input_ctx *);
