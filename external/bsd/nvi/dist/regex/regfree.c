@@ -1,4 +1,4 @@
-/*	$NetBSD: regfree.c,v 1.2 2013/11/22 15:52:06 christos Exp $ */
+/*	$NetBSD: regfree.c,v 1.3 2014/01/07 21:48:12 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -57,7 +57,7 @@ static char sccsid[] = "@(#)regfree.c	8.2 (Berkeley) 3/16/94";
 void
 regfree(regex_t *preg)
 {
-	register struct re_guts *g;
+	struct re_guts *g;
 
 	if (preg->re_magic != MAGIC1)	/* oops */
 		return;			/* nice to complain, but hard */
