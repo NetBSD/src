@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.106 2013/04/26 18:07:43 christos Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.107 2014/01/08 02:16:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -302,6 +302,7 @@ void	 cfree(void *);
 int	 heapsort(void *, size_t, size_t, int (*)(const void *, const void *));
 int	 mergesort(void *, size_t, size_t,
 	    int (*)(const void *, const void *));
+int	 ptsname_r(int, char *, size_t);
 int	 radixsort(const unsigned char **, int, const unsigned char *,
 	    unsigned);
 int	 sradixsort(const unsigned char **, int, const unsigned char *,
