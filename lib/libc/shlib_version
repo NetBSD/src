@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.245 2013/12/08 21:29:15 dholland Exp $
+#	$NetBSD: shlib_version,v 1.246 2014/01/08 12:29:49 christos Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -39,4 +39,4 @@
 # - switch to DT_INIT_ARRAY on all platforms
 # - consolidate ownership with crt0.o and avoid common symbols
 major=12
-minor=187
+minor=188
