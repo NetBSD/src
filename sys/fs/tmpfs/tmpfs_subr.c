@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.93 2014/01/03 09:53:12 hannken Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.94 2014/01/08 16:11:04 pedro Exp $	*/
 
 /*
  * Copyright (c) 2005-2013 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.93 2014/01/03 09:53:12 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.94 2014/01/08 16:11:04 pedro Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -797,26 +797,26 @@ int
 tmpfs_dir_getdents(tmpfs_node_t *node, struct uio *uio, off_t *cntp)
 {
 	tmpfs_dirent_t *de;
-	struct dirent *dentp;
+	struct dirent dent;
 	int error = 0;
 
 	KASSERT(VOP_ISLOCKED(node->tn_vnode));
 	TMPFS_VALIDATE_DIR(node);
 
 	/*
-	 * Allocate struct dirent and first check for the "." and "..".
+	 * First check for the "." and ".." cases.
 	 * Note: tmpfs_dir_getdotents() will "seek" for us.
 	 */
-	dentp = kmem_zalloc(sizeof(struct dirent), KM_SLEEP);
+	memset(&dent, 0, sizeof(dent));
 
 	if (uio->uio_offset == TMPFS_DIRSEQ_DOT) {
-		if ((error = tmpfs_dir_getdotents(node, dentp, uio)) != 0) {
+		if ((error = tmpfs_dir_getdotents(node, &dent, uio)) != 0) {
 			goto done;
 		}
 		(*cntp)++;
 	}
 	if (uio->uio_offset == TMPFS_DIRSEQ_DOTDOT) {
-		if ((error = tmpfs_dir_getdotents(node, dentp, uio)) != 0) {
+		if ((error = tmpfs_dir_getdotents(node, &dent, uio)) != 0) {
 			goto done;
 		}
 		(*cntp)++;
@@ -840,26 +840,26 @@ tmpfs_dir_getdents(tmpfs_node_t *node, struct uio *uio, off_t *cntp)
 	 */
 	do {
 		if (de->td_node == TMPFS_NODE_WHITEOUT) {
-			dentp->d_fileno = 1;
-			dentp->d_type = DT_WHT;
+			dent.d_fileno = 1;
+			dent.d_type = DT_WHT;
 		} else {
-			dentp->d_fileno = de->td_node->tn_id;
-			dentp->d_type = vtype2dt(de->td_node->tn_type);
+			dent.d_fileno = de->td_node->tn_id;
+			dent.d_type = vtype2dt(de->td_node->tn_type);
 		}
-		dentp->d_namlen = de->td_namelen;
-		KASSERT(de->td_namelen < sizeof(dentp->d_name));
-		memcpy(dentp->d_name, de->td_name, de->td_namelen);
-		dentp->d_name[de->td_namelen] = '\0';
-		dentp->d_reclen = _DIRENT_SIZE(dentp);
+		dent.d_namlen = de->td_namelen;
+		KASSERT(de->td_namelen < sizeof(dent.d_name));
+		memcpy(dent.d_name, de->td_name, de->td_namelen);
+		dent.d_name[de->td_namelen] = '\0';
+		dent.d_reclen = _DIRENT_SIZE(&dent);
 
-		if (dentp->d_reclen > uio->uio_resid) {
+		if (dent.d_reclen > uio->uio_resid) {
 			/* Exhausted UIO space. */
 			error = EJUSTRETURN;
 			break;
 		}
 
 		/* Copy out the directory entry and continue. */
-		error = uiomove(dentp, dentp->d_reclen, uio);
+		error = uiomove(&dent, dent.d_reclen, uio);
 		if (error) {
 			break;
 		}
@@ -873,7 +873,6 @@ tmpfs_dir_getdents(tmpfs_node_t *node, struct uio *uio, off_t *cntp)
 	node->tn_spec.tn_dir.tn_readdir_lastp = de;
 done:
 	tmpfs_update(node->tn_vnode, TMPFS_UPDATE_ATIME);
-	kmem_free(dentp, sizeof(struct dirent));
 
 	if (error == EJUSTRETURN) {
 		/* Exhausted UIO space - just return. */
