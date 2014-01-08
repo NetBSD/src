@@ -1,4 +1,4 @@
-/*      $NetBSD: sp_common.c,v 1.37 2013/12/31 00:25:17 pooka Exp $	*/
+/*      $NetBSD: sp_common.c,v 1.38 2014/01/08 01:45:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -36,6 +36,7 @@
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <sys/uio.h>
 
 #include <arpa/inet.h>
 #include <netinet/in.h>

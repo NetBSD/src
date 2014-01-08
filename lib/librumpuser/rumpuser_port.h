@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_port.h,v 1.23 2013/12/18 20:24:04 pooka Exp $	*/
+/*	$NetBSD: rumpuser_port.h,v 1.24 2014/01/08 01:45:29 pooka Exp $	*/
 
 /*
  * Portability header for non-NetBSD platforms.
@@ -94,7 +94,7 @@ clock_gettime(clockid_t clk, struct timespec *ts)
 
 /* maybe this should be !__NetBSD__ ? */
 #if defined(__linux__) || defined(__sun__) || defined(__FreeBSD__)	\
-    || defined(__DragonFly__) || defined(__APPLE__) || defined(__CYGWIN__)
+    || defined(__DragonFly__) || defined(__APPLE__) || defined(__OpenBSD__) || defined(__CYGWIN__)
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
