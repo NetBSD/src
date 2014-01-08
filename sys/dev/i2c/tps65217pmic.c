@@ -1,4 +1,4 @@
-/*	$NetBSD: tps65217pmic.c,v 1.7 2013/12/31 14:51:46 skrll Exp $ */
+/*	$NetBSD: tps65217pmic.c,v 1.8 2014/01/08 16:45:14 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tps65217pmic.c,v 1.7 2013/12/31 14:51:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tps65217pmic.c,v 1.8 2014/01/08 16:45:14 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,6 +131,8 @@ static int tps65217pmic_match(device_t, cfdata_t, void *);
 static void tps65217pmic_attach(device_t, device_t, void *);
 
 static uint8_t tps65217pmic_reg_read(struct tps65217pmic_softc *, uint8_t);
+static void tps65217pmic_reg_write(struct tps65217pmic_softc *, uint8_t,
+    uint8_t);
 
 static void tps65217pmic_reg_refresh(struct tps65217pmic_softc *);
 
@@ -604,6 +606,29 @@ tps65217pmic_reg_read(struct tps65217pmic_softc *sc, uint8_t reg)
 	iic_release_bus(sc->sc_tag, I2C_F_POLL);
 
 	return rv;
+}
+
+static void __unused
+tps65217pmic_reg_write(struct tps65217pmic_softc *sc, uint8_t reg, uint8_t data)
+{
+	uint8_t wbuf[2];
+
+	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL) != 0) {
+		aprint_error_dev(sc->sc_dev, "cannot acquire bus for write\n");
+		return;
+	}
+
+	wbuf[0] = reg;
+	wbuf[1] = data;
+
+	if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_addr, wbuf,
+	    2, NULL, 0, I2C_F_POLL)) {
+		aprint_error_dev(sc->sc_dev, "cannot execute I2C write\n");
+		iic_release_bus(sc->sc_tag, I2C_F_POLL);
+		return;
+	}
+
+	iic_release_bus(sc->sc_tag, I2C_F_POLL);
 }
 
 static void
