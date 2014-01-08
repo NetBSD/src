@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpcomp_user.c,v 1.13 2013/07/04 17:46:14 pooka Exp $	*/
+/*      $NetBSD: rumpcomp_user.c,v 1.14 2014/01/08 11:06:33 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -42,7 +42,8 @@
  * good chance of doing the fd->path mapping on Linux thanks to dcache,
  * so just keep the existing interfaces for now.
  */
-#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__DragonFly__)
+#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__DragonFly__) \
+    || defined(__OpenBSD__)
 #include <sys/event.h>
 
 #include <stdlib.h>
