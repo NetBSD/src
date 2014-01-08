@@ -1,4 +1,4 @@
-.\" $NetBSD: ptsname.3,v 1.7 2014/01/08 02:15:42 christos Exp $
+.\" $NetBSD: ptsname.3,v 1.8 2014/01/08 02:17:30 christos Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -115,7 +115,12 @@ In addition the
 function
 will return:
 .Bl -tag -width Er
-.It Bq Er ENOSPC
+.It Bq Er EINVAL
+the
+.Fa buf
+argument is
+.Dv NULL .
+.It Bq Er ERANGE
 the name of the pseudo-terminal is longer than
 .Fa bufsiz
 characters plus the terminating
