@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1872 2013/12/19 19:40:08 rmind Exp $
+#	$NetBSD: mi,v 1.1873 2014/01/08 02:19:12 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8360,6 +8360,7 @@
 ./usr/share/man/cat3/pthread_suspend_np.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_testcancel.0	comp-c-catman		.cat
 ./usr/share/man/cat3/ptsname.0			comp-c-catman		.cat
+./usr/share/man/cat3/ptsname_r.0		comp-c-catman		.cat
 ./usr/share/man/cat3/puffs.0			comp-puffs-catman	.cat
 ./usr/share/man/cat3/puffs_cc.0			comp-puffs-catman	.cat
 ./usr/share/man/cat3/puffs_cred.0		comp-puffs-catman	.cat
@@ -14901,6 +14902,7 @@
 ./usr/share/man/html3/pthread_suspend_np.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_testcancel.html	comp-c-htmlman		html
 ./usr/share/man/html3/ptsname.html		comp-c-htmlman		html
+./usr/share/man/html3/ptsname_r.html		comp-c-htmlman		html
 ./usr/share/man/html3/puffs.html		comp-puffs-htmlman	html
 ./usr/share/man/html3/puffs_cc.html		comp-puffs-htmlman	html
 ./usr/share/man/html3/puffs_cred.html		comp-puffs-htmlman	html
@@ -21438,6 +21440,7 @@
 ./usr/share/man/man3/pthread_suspend_np.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_testcancel.3	comp-c-man		.man
 ./usr/share/man/man3/ptsname.3			comp-c-man		.man
+./usr/share/man/man3/ptsname_r.3		comp-c-man		.man
 ./usr/share/man/man3/puffs.3			comp-puffs-man		.man
 ./usr/share/man/man3/puffs_cc.3			comp-puffs-man		.man
 ./usr/share/man/man3/puffs_cred.3		comp-puffs-man		.man
