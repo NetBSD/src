@@ -1,4 +1,4 @@
-/*	$NetBSD: tps65217pmic.c,v 1.8 2014/01/08 16:45:14 jakllsch Exp $ */
+/*	$NetBSD: tps65217pmic.c,v 1.9 2014/01/08 16:49:48 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tps65217pmic.c,v 1.8 2014/01/08 16:45:14 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tps65217pmic.c,v 1.9 2014/01/08 16:49:48 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: tps65217pmic.c,v 1.8 2014/01/08 16:45:14 jakllsch Ex
 #include <dev/i2c/tps65217pmicreg.h>
 
 #define NTPS_REG	7
-#define SNUM_REGS	NTPS_REG-1	
+#define SNUM_REGS	NTPS_REG-1
 #define SNUM_USBSTATUS	NTPS_REG
 #define SNUM_ACSTATUS	NTPS_REG+1
 
@@ -340,7 +340,7 @@ tps65217pmic_power_monitor_init(struct tps65217pmic_softc *sc)
 {
 	uint8_t intr, intrmask, status, ppath;
 
-	intrmask = TPS65217PMIC_INT_USBM | TPS65217PMIC_INT_ACM | 
+	intrmask = TPS65217PMIC_INT_USBM | TPS65217PMIC_INT_ACM |
 	    TPS65217PMIC_INT_PBM;
 
 	status = tps65217pmic_reg_read(sc, TPS65217PMIC_STATUS);
@@ -354,7 +354,7 @@ tps65217pmic_power_monitor_init(struct tps65217pmic_softc *sc)
 	sc->sc_acenabled = ppath & TPS65217PMIC_PPATH_AC_EN;
 
 	if (intr & intrmask)
-		aprint_normal_dev(sc->sc_dev, 
+		aprint_normal_dev(sc->sc_dev,
 		    "WARNING: hardware interrupt enabled but not supported");
 
 	/* set up callout to poll for power source changes */
@@ -383,10 +383,10 @@ tps65217pmic_power_monitor(void *aux)
 		sc->sc_usbstatus = usbstatus;
 		pmf_event_inject(NULL, PMFE_POWER_CHANGED);
 		if (usbstatus)
-			aprint_normal_dev(sc->sc_dev, 
+			aprint_normal_dev(sc->sc_dev,
 			    "USB power source connected\n");
 		else
-			aprint_normal_dev(sc->sc_dev, 
+			aprint_normal_dev(sc->sc_dev,
 			    "USB power source disconnected\n");
 	}
 
@@ -394,10 +394,10 @@ tps65217pmic_power_monitor(void *aux)
 		sc->sc_acstatus = acstatus;
 		pmf_event_inject(NULL, PMFE_POWER_CHANGED);
 		if (acstatus) {
-			sysmon_pswitch_event(&sc->sc_smpsw, 
+			sysmon_pswitch_event(&sc->sc_smpsw,
 			    PSWITCH_EVENT_PRESSED);
 		} else {
-			sysmon_pswitch_event(&sc->sc_smpsw, 
+			sysmon_pswitch_event(&sc->sc_smpsw,
 			    PSWITCH_EVENT_RELEASED);
 		}
 	}
@@ -655,16 +655,16 @@ tps65217pmic_envsys_register(struct tps65217pmic_softc *sc)
 	/* attach power source indicators */
 	strcpy(sc->sc_usbsensor.desc, "USB power source"); /* SNUM_USBSTATUS */
 	sc->sc_usbsensor.units = ENVSYS_INDICATOR;
-	sc->sc_usbsensor.state = ENVSYS_SINVALID; 
+	sc->sc_usbsensor.state = ENVSYS_SINVALID;
 	if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_usbsensor))
-		aprint_error_dev(sc->sc_dev, 
+		aprint_error_dev(sc->sc_dev,
 		    "error attaching USB power source sensor\n");
 	strcpy(sc->sc_acsensor.desc, "AC power source"); /* SNUM_ACSTATUS */
 	sc->sc_acsensor.units = ENVSYS_INDICATOR;
-	sc->sc_acsensor.state = ENVSYS_SINVALID; 
+	sc->sc_acsensor.state = ENVSYS_SINVALID;
 	if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_acsensor))
-		aprint_error_dev(sc->sc_dev, 
-	 	    "error attaching AC power source sensor\n");
+		aprint_error_dev(sc->sc_dev,
+		    "error attaching AC power source sensor\n");
 
 	/* register everything in sysmon */
 	sc->sc_sme->sme_name = device_xname(sc->sc_dev);
