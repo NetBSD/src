@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.27 2013/12/09 09:35:16 wiz Exp $	*/
+/*	$NetBSD: res_init.c,v 1.28 2014/01/08 22:58:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993
@@ -76,7 +76,7 @@
 static const char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static const char rcsid[] = "Id: res_init.c,v 1.26 2008/12/11 09:59:00 marka Exp";
 #else
-__RCSID("$NetBSD: res_init.c,v 1.27 2013/12/09 09:35:16 wiz Exp $");
+__RCSID("$NetBSD: res_init.c,v 1.28 2014/01/08 22:58:50 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -161,6 +161,8 @@ static uint32_t net_mask(struct in_addr);
 
 static struct timespec __res_conf_time;
 static const struct timespec ts = { 0, 0 };
+
+const char *__res_conf_name = _PATH_RESCONF;
 
 /*
  * Resolver state default settings.
@@ -346,7 +348,7 @@ __res_vinit(res_state statp, int preinit) {
 	 line[sizeof(name) - 1] == '\t'))
 
 	nserv = 0;
-	if ((fp = fopen(_PATH_RESCONF, "re")) != NULL) {
+	if ((fp = fopen(__res_conf_name, "re")) != NULL) {
 	    struct stat st;
 	    struct kevent kc;
 
