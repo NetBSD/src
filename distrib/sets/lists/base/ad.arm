@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.29 2013/12/31 20:26:17 christos Exp $
+# $NetBSD: ad.arm,v 1.30 2014/01/08 12:30:27 christos Exp $
 ./lib/oabi					base-compat-shlib	compat
 ./lib/oabi/npf					base-npf-shlib		compat
 ./lib/oabi/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -92,7 +92,7 @@
 ./usr/lib/oabi/libc++.so.1			base-compat-shlib	compat,pic,libcxx
 ./usr/lib/oabi/libc++.so.1.0			base-compat-shlib	compat,pic,libcxx
 ./usr/lib/oabi/libc.so.12			base-compat-shlib	compat,pic
-./usr/lib/oabi/libc.so.12.187			base-compat-shlib	compat,pic
+./usr/lib/oabi/libc.so.12.188			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libc_vfp.so.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libc_vfp.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libcom_err.so.7			base-compat-shlib	compat,pic,kerberos
