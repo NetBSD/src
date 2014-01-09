@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.740 2013/12/08 20:45:30 dsl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.741 2014/01/09 00:57:25 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.740 2013/12/08 20:45:30 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.741 2014/01/09 00:57:25 dholland Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -842,6 +842,7 @@ haltsys:
 		cnpollc(1);	/* for proper keyboard command handling */
 		if (cngetc() == 0) {
 			/* no console attached, so just hlt */
+			printf("No keyboard - cannot reboot after all.\n");
 			for(;;) {
 				x86_hlt();
 			}
