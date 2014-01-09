@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.107 2014/01/07 20:11:35 palle Exp $ */
+/*	$NetBSD: cpu.c,v 1.108 2014/01/09 20:13:54 palle Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.107 2014/01/07 20:11:35 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.108 2014/01/09 20:13:54 palle Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -180,7 +180,7 @@ alloc_cpuinfo(u_int cpu_node)
 	cpi->ci_paddr = pa0;
 	cpi->ci_self = cpi;
 #ifdef SUN4V
-	if ( CPU_ISSUN4V )
+	if (CPU_ISSUN4V)
 		cpi->ci_mmfsa = pa0;
 #endif
 	cpi->ci_node = cpu_node;
