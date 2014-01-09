@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.29 2013/07/10 18:55:00 reinoud Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.30 2014/01/09 13:23:57 hannken Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -93,6 +93,12 @@ renamerace(const atf_tc_t *tc, const char *mp)
 	pthread_t pt1[NWRK], pt2[NWRK];
 	int i;
 
+	/*
+	 * Sysvbfs supports only 8 inodes so this test would exhaust
+	 * the inode table and creating files would fail with ENOSPC.
+	 */
+	if (FSTYPE_SYSVBFS(tc))
+		atf_tc_skip("filesystem has not enough inodes");
 	if (FSTYPE_RUMPFS(tc))
 		atf_tc_skip("rename not supported by file system");
 
