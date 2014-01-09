@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.93 2013/10/24 13:59:47 apb Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.94 2014/01/09 11:31:12 apb Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -414,6 +414,9 @@ int pwcache_groupdb(int (*)(int), void (*)(void),
 
 #if !HAVE_DECL_STRNDUP
 char		*strndup(const char *, size_t);
+#endif
+#if !HAVE_DECL_STRNLEN
+char		*strnlen(const char *, size_t);
 #endif
 #if !HAVE_DECL_LCHFLAGS
 int		lchflags(const char *, unsigned long);
