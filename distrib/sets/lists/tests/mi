@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.555 2014/01/07 16:47:13 gson Exp $
+# $NetBSD: mi,v 1.556 2014/01/09 02:18:55 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1983,7 +1983,8 @@
 ./usr/tests/lib/libc/net/h_nsd_recurse		tests-lib-tests	atf
 ./usr/tests/lib/libc/net/h_protoent		tests-lib-tests		atf
 ./usr/tests/lib/libc/net/h_servent		tests-lib-tests		atf
-./usr/tests/lib/libc/net/hosts		tests-lib-tests	atf
+./usr/tests/lib/libc/net/hosts			tests-lib-tests	atf
+./usr/tests/lib/libc/net/resolv.conf		tests-lib-tests	atf
 ./usr/tests/lib/libc/net/t_ether_aton		tests-lib-tests		atf
 ./usr/tests/lib/libc/net/t_getprotoent		tests-lib-tests		atf
 ./usr/tests/lib/libc/net/t_hostent		tests-lib-tests		atf
