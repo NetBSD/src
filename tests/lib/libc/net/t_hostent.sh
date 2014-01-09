@@ -1,4 +1,4 @@
-# $NetBSD: t_hostent.sh,v 1.5 2014/01/09 02:18:10 christos Exp $
+# $NetBSD: t_hostent.sh,v 1.6 2014/01/09 14:07:31 christos Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -13,7 +13,7 @@
 #    documentation and/or other materials provided with the distribution.
 #
 # THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
-# ``AS IS'' AND ANY EXP{res}S OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 # TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 # PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
 # BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
@@ -51,9 +51,8 @@ res="-r ${dir}/resolv.conf"
 
 start_dns_server() {
 	export RUMP_SERVER=unix:///tmp/rumpserver
-	rump_server -lrumpdev -lrumpnet \
-	     -lrumpnet_net -lrumpnet_netinet -lrumpnet_local \
-	     $RUMP_SERVER
+	rump_server -lrumpdev -lrumpnet -lrumpnet_net -lrumpnet_netinet \
+	    -lrumpnet_netinet6 -lrumpnet_local $RUMP_SERVER
 	HIJACK_DNS="LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK='socket=inet:inet6'"
 	eval $HIJACK_DNS ${dir}/h_dns_server $1
 }
