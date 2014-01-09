@@ -1,4 +1,4 @@
-/*	$NetBSD: h_dns_server.c,v 1.2 2014/01/06 16:42:57 gson Exp $	*/
+/*	$NetBSD: h_dns_server.c,v 1.3 2014/01/09 02:18:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: h_dns_server.c,v 1.2 2014/01/06 16:42:57 gson Exp $");
+__RCSID("$NetBSD: h_dns_server.c,v 1.3 2014/01/09 02:18:10 christos Exp $");
 
 #include <ctype.h>
 #include <err.h>
@@ -57,6 +57,12 @@ union sockaddr_either {
 	struct sockaddr_in sin;
 	struct sockaddr_in6 sin6;
 };
+
+#ifdef DEBUG
+#define DPRINTF(...)	fprintf(stderr, __VA_ARGS__)
+#else
+#define DPRINTF(...)	
+#endif
 
 /* A DNS question and its corresponding answer */
 
@@ -130,6 +136,34 @@ name_eq(const unsigned char *a, const unsigned char *b) {
 		b += lena;
 	}
 }
+
+#ifdef DEBUG
+static char *
+name2str(const void *v, char *buf, size_t buflen) {
+	const unsigned char *a = v;
+	char *b = buf;
+	char *eb = buf + buflen;
+
+#define ADDC(c) do { \
+		if (b < eb) \
+			*b++ = c; \
+		else \
+			return NULL; \
+	} while (/*CONSTCOND*/0)
+	for (int did = 0;; did++) {
+		int lena = *a++;
+		if (lena == 0) {
+			ADDC('\0');
+			return buf;
+		}
+		if (did)
+			ADDC('.');
+		for (int i = 0; i < lena; i++)
+			ADDC(a[i]);
+		a += lena;
+	}
+}
+#endif
 
 /* XXX the daemon2_* functions should be in a library */
 
@@ -237,6 +271,9 @@ int main(int argc, char **argv) {
 	char pidfile_name[40];
 	FILE *f;
 	int one = 1;
+#ifdef DEBUG
+	char buf1[1024], buf2[1024];
+#endif
 
 	daemon2_fork();
 
@@ -276,7 +313,11 @@ int main(int argc, char **argv) {
 	f = fopen(pidfile_name, "w");
 	fprintf(f, "%d", getpid());
 	fclose(f);
+#ifdef DEBUG
+	daemon2_detach(0, 1);
+#else
 	daemon2_detach(0, 0);
+#endif
 
 	for (;;) {
 		unsigned char buf[512];
@@ -289,28 +330,47 @@ int main(int argc, char **argv) {
 		nrecv = recvfrom(s, buf, sizeof buf, 0, &from.s, &fromlen);
 		if (nrecv < 0)
 			err(1, "recvfrom");
-		if (nrecv < 12)
-			continue; /* Too short */
-		if ((buf[2] & 0x80) != 0)
-			continue; /* Not a query */
-		if (!(buf[4] == 0 && buf[5] == 1))
-		    continue; /* QDCOUNT is not 1 */
+		if (nrecv < 12) {
+			DPRINTF("Too short %zd\n", nrecv);
+			continue;
+		}
+		if ((buf[2] & 0x80) != 0) {
+			DPRINTF("Not a query 0x%x\n", buf[2]);
+			continue;
+		}
+		if (!(buf[4] == 0 && buf[5] == 1)) {
+			DPRINTF("QCOUNT is not 1 0x%x 0x%x\n", buf[4], buf[5]);
+			continue; /* QDCOUNT is not 1 */
+		}
 
 		for (dp = data; dp->qname_size != 0; dp++) {
 			int qtype, qclass;
 			p = buf + 12; /* Point to QNAME */
 			int n = name_eq(p, (const unsigned char *) dp->qname);
-			if (n == 0)
+			if (n == 0) {
+				DPRINTF("no match name %s != %s\n",
+				    name2str(p, buf1, sizeof(buf1)),
+				    name2str(dp->qname, buf2, sizeof(buf2)));
 				continue; /* Name does not match */
+			}
+			DPRINTF("match name %s\n",
+			    name2str(p, buf1, sizeof(buf1)));
 			p += n; /* Skip QNAME */
 			qtype = *p++ << 8;
 			qtype |= *p++;
-			if (qtype != dp->qtype)
+			if (qtype != dp->qtype) {
+				DPRINTF("no match name 0x%x != 0x%x\n",
+				    qtype, dp->qtype);
 				continue;
+			}
+			DPRINTF("match type 0x%x\n", qtype);
 			qclass = *p++ << 8;
 			qclass |= *p++;
-			if (qclass != 1) /* IN */
+			if (qclass != 1) { /* IN */
+				DPRINTF("no match class %d != 1\n", qclass);
 				continue;
+			}
+			DPRINTF("match class %d\n", qclass);
 			goto found;
 		}
 		continue;
@@ -332,6 +392,7 @@ int main(int argc, char **argv) {
 		memcpy(p, dp->answer, dp->answer_size);
 		p += dp->answer_size;
 		nsent = sendto(s, buf, p - buf, 0, &from.s, fromlen);
+		DPRINTF("sent %zd\n", nsent);
 		if (nsent != p - buf)
 			warn("sendto");
 	}
