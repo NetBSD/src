@@ -1,4 +1,4 @@
-# $NetBSD: t_hostent.sh,v 1.4 2014/01/06 14:50:32 gson Exp $
+# $NetBSD: t_hostent.sh,v 1.5 2014/01/09 02:18:10 christos Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -13,7 +13,7 @@
 #    documentation and/or other materials provided with the distribution.
 #
 # THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
-# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# ``AS IS'' AND ANY EXP{res}S OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 # TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 # PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
 # BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
@@ -41,6 +41,9 @@ l4="localhost"
 al4="127.0.0.1"
 loc4="name=$l4, length=4, addrtype=2, aliases=[localhost. localhost.localdomain.] addr_list=[$al4]\n"
 
+dir="$(atf_get_srcdir)"
+res="-r ${dir}/resolv.conf"
+
 # Hijack DNS traffic using a single rump server instance and a DNS
 # server listening on its loopback address.  Also hijack file system
 # call to /etc, mapping them to the root file system of the rump 
@@ -48,16 +51,15 @@ loc4="name=$l4, length=4, addrtype=2, aliases=[localhost. localhost.localdomain.
 
 start_dns_server() {
 	export RUMP_SERVER=unix:///tmp/rumpserver
-	rump_server -lrumpvfs -lrumpdev -lrumpnet \
+	rump_server -lrumpdev -lrumpnet \
 	     -lrumpnet_net -lrumpnet_netinet -lrumpnet_local \
 	     $RUMP_SERVER
-	HIJACK_DNS="LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK='path=/etc,socket=inet:inet6'"
-	eval $HIJACK_DNS sh -c 'echo nameserver 127.0.0.1 >/etc/resolv.conf'
-	eval $HIJACK_DNS $(atf_get_srcdir)/h_dns_server 4
+	HIJACK_DNS="LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK='socket=inet:inet6'"
+	eval $HIJACK_DNS ${dir}/h_dns_server $1
 }
 
 stop_dns_server() {
-	kill $(cat dns_server_4.pid)
+	kill $(cat dns_server_$1.pid)
 	rump.halt
 }
 
@@ -68,9 +70,9 @@ gethostbyname4_head()
 }
 gethostbyname4_body()
 {
-	start_dns_server
-	atf_check -o inline:"$ans4" -x "$HIJACK_DNS $(atf_get_srcdir)/h_hostent -t auto -4 $n4"
-	stop_dns_server
+	start_dns_server 4
+	atf_check -o inline:"$ans4" -x "$HIJACK_DNS ${dir}/h_hostent $res -t auto -4 $n4"
+	stop_dns_server 4
 }
 
 atf_test_case gethostbyname6
@@ -80,9 +82,9 @@ gethostbyname6_head()
 }
 gethostbyname6_body()
 {
-	start_dns_server
-	atf_check -o inline:"$ans6" -x "$HIJACK_DNS $(atf_get_srcdir)/h_hostent -t auto -6 $n6"
-	stop_dns_server
+	start_dns_server 4
+	atf_check -o inline:"$ans6" -x "$HIJACK_DNS ${dir}/h_hostent ${res} -t auto -6 $n6"
+	stop_dns_server 4
 }
 
 atf_test_case gethostbyaddr4
@@ -92,9 +94,9 @@ gethostbyaddr4_head()
 }
 gethostbyaddr4_body()
 {
-	start_dns_server
-        atf_check -o inline:"$ans4" -x "$HIJACK_DNS $(atf_get_srcdir)/h_hostent -t auto -a $a4"
-	stop_dns_server
+	start_dns_server 4
+        atf_check -o inline:"$ans4" -x "$HIJACK_DNS ${dir}/h_hostent ${res} -t auto -a $a4"
+	stop_dns_server 4
 }
 
 atf_test_case gethostbyaddr6
@@ -104,9 +106,9 @@ gethostbyaddr6_head()
 }
 gethostbyaddr6_body()
 {
-	start_dns_server
-	atf_check -o inline:"$ans6" -x "$HIJACK_DNS $(atf_get_srcdir)/h_hostent -t auto -a $a6"
-	stop_dns_server
+	start_dns_server 4
+	atf_check -o inline:"$ans6" -x "$HIJACK_DNS ${dir}/h_hostent -t auto -a $a6"
+	stop_dns_server 4
 }
 
 atf_test_case hostsbynamelookup4
@@ -116,8 +118,7 @@ hostsbynamelookup4_head()
 }
 hostsbynamelookup4_body()
 {
-	local dir=$(atf_get_srcdir)
-	atf_check -o inline:"$loc4" -x "$dir/h_hostent -f $dir/hosts -t file -4 $l4"
+	atf_check -o inline:"$loc4" -x "${dir}/h_hostent -f ${dir}/hosts -t file -4 $l4"
 }
 
 atf_test_case hostsbynamelookup6
@@ -127,8 +128,7 @@ hostsbynamelookup6_head()
 }
 hostsbynamelookup6_body()
 {
-	local dir=$(atf_get_srcdir)
-	atf_check -o inline:"$loc6" -x "$dir/h_hostent -f $dir/hosts -t file -6 $l6"
+	atf_check -o inline:"$loc6" -x "${dir}/h_hostent -f ${dir}/hosts -t file -6 $l6"
 }
 
 atf_test_case hostsbyaddrlookup4
@@ -138,8 +138,7 @@ hostsbyaddrlookup4_head()
 }
 hostsbyaddrlookup4_body()
 {
-	local dir=$(atf_get_srcdir)
-	atf_check -o inline:"$loc4" -x "$dir/h_hostent -f $dir/hosts -t file -4 -a $al4"
+	atf_check -o inline:"$loc4" -x "${dir}/h_hostent -f ${dir}/hosts -t file -4 -a $al4"
 }
 
 atf_test_case hostsbyaddrlookup6
@@ -149,8 +148,7 @@ hostsbyaddrlookup6_head()
 }
 hostsbyaddrlookup6_body()
 {
-	local dir=$(atf_get_srcdir)
-	atf_check -o inline:"$loc6" -x "$dir/h_hostent -f $dir/hosts -t file -6 -a $al6"
+	atf_check -o inline:"$loc6" -x "${dir}/h_hostent -f ${dir}/hosts -t file -6 -a $al6"
 }
 
 atf_test_case dnsbynamelookup4
@@ -160,10 +158,9 @@ dnsbynamelookup4_head()
 }
 dnsbynamelookup4_body()
 {
-	local dir=$(atf_get_srcdir)
-	start_dns_server
-	atf_check -o inline:"$ans4" -x "$HIJACK_DNS $dir/h_hostent -t dns -4 $n4"
-	stop_dns_server
+	start_dns_server 4
+	atf_check -o inline:"$ans4" -x "$HIJACK_DNS ${dir}/h_hostent ${res} -t dns -4 $n4"
+	stop_dns_server 4
 }
 
 atf_test_case dnsbynamelookup6
@@ -173,10 +170,9 @@ dnsbynamelookup6_head()
 }
 dnsbynamelookup6_body()
 {
-	local dir=$(atf_get_srcdir)
-	start_dns_server
-	atf_check -o inline:"$ans6" -x "$HIJACK_DNS $dir/h_hostent -t dns -6 $n6"
-	stop_dns_server
+	start_dns_server 4
+	atf_check -o inline:"$ans6" -x "$HIJACK_DNS ${dir}/h_hostent ${res} -t dns -6 $n6"
+	stop_dns_server 4
 }
 
 atf_test_case dnsbyaddrlookup4
@@ -186,10 +182,9 @@ dnsbyaddrlookup4_head()
 }
 dnsbyaddrlookup4_body()
 {
-	local dir=$(atf_get_srcdir)
-	start_dns_server
-	atf_check -o inline:"$ans4" -x "$HIJACK_DNS $dir/h_hostent -t dns -4 -a $a4"
-	stop_dns_server
+	start_dns_server 4
+	atf_check -o inline:"$ans4" -x "$HIJACK_DNS ${dir}/h_hostent ${res} -t dns -4 -a $a4"
+	stop_dns_server 4
 }
 
 atf_test_case dnsbyaddrlookup6
@@ -199,10 +194,9 @@ dnsbyaddrlookup6_head()
 }
 dnsbyaddrlookup6_body()
 {
-	local dir=$(atf_get_srcdir)
-	start_dns_server
-	atf_check -o inline:"$ans6" -x "$HIJACK_DNS $dir/h_hostent -t dns -6 -a $a6"
-	stop_dns_server
+	start_dns_server 4
+	atf_check -o inline:"$ans6" -x "$HIJACK_DNS ${dir}/h_hostent ${res} -t dns -6 -a $a6"
+	stop_dns_server 4
 }
 
 atf_init_test_cases()
