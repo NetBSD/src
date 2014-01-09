@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.107 2014/01/07 20:11:35 palle Exp $ */
+/*	$NetBSD: cpu.h,v 1.108 2014/01/09 12:51:27 macallan Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -174,11 +174,10 @@ struct cpu_info {
 	pte_t			*ci_tsb_dmmu;
 	pte_t			*ci_tsb_immu;
 
-#ifdef SUN4V
+	/* this field is used by SUN4V */
 	/* MMU Fault Status Area. Will be initialized to the physical
 	   address of the bottom of the interrupt stack */
 	paddr_t			ci_mmfsa;
-#endif
 	
 	/* probe fault in PCI config space reads */
 	bool			ci_pci_probe;
