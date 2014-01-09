@@ -1,11 +1,11 @@
-# $NetBSD: Makefile,v 1.9 2014/01/06 14:50:32 gson Exp $
+# $NetBSD: Makefile,v 1.10 2014/01/09 02:18:10 christos Exp $
 
 .include <bsd.own.mk>
 
 MKMAN=	no
 
 TESTS_SUBDIRS+=	getaddrinfo
-FILES+=hosts
+FILES+=hosts resolv.conf
 
 TESTSDIR=	${TESTSBASE}/lib/libc/net
 
