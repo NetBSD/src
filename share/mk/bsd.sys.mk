@@ -1,9 +1,14 @@
-#	$NetBSD: bsd.sys.mk,v 1.232 2014/01/07 02:16:41 joerg Exp $
+#	$NetBSD: bsd.sys.mk,v 1.233 2014/01/10 16:16:57 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
 .if !defined(_BSD_SYS_MK_)
 _BSD_SYS_MK_=1
+
+.if !empty(.INCLUDEDFROMFILE:MMakefile*)
+error:
+	@(echo "bsd.sys.mk should not be included from Makefiles" >& 2; exit 1)
+.endif
 
 .if ${MKREPRO:Uno} == "yes"
 CPPFLAGS+=	-Wp,-iremap,${NETBSDSRCDIR}:/usr/src
