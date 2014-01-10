@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.39 2013/11/06 02:34:10 christos Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.40 2014/01/10 18:03:26 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.39 2013/11/06 02:34:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.40 2014/01/10 18:03:26 matt Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -174,12 +174,21 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	tf->tf_svc_lr = 0x77777777;		/* Something we can see */
 	tf->tf_pc = pack->ep_entry;
 #ifdef __PROG32
+#if defined(__ARMEB__)
+	/*
+	 * If we are running on ARMv7, we need to set the E bit to force
+	 * programs to start as big endian.
+	 */
+	tf->tf_spsr = PSR_USR32_MODE | (CPU_IS_ARMV7_P() ? PSR_E_BIT : 0);
+#else
 	tf->tf_spsr = PSR_USR32_MODE;
+#endif /* __ARMEB__ */ 
+
 #ifdef THUMB_CODE
 	if (pack->ep_entry & 1)
 		tf->tf_spsr |= PSR_T_bit;
 #endif
-#endif
+#endif /* __PROG32 */
 
 	l->l_md.md_flags = 0;
 #ifdef EXEC_AOUT
