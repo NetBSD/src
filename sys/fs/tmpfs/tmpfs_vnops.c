@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.111 2014/01/03 09:53:12 hannken Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.112 2014/01/10 16:42:38 pedro Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.111 2014/01/03 09:53:12 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.112 2014/01/10 16:42:38 pedro Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -837,7 +837,6 @@ tmpfs_rmdir(void *v)
 
 	KASSERT(VOP_ISLOCKED(dvp));
 	KASSERT(VOP_ISLOCKED(vp));
-	KASSERT(node->tn_spec.tn_dir.tn_parent == dnode);
 
 	/*
 	 * Directories with more than two entries ('.' and '..') cannot be
@@ -860,6 +859,8 @@ tmpfs_rmdir(void *v)
 		}
 		KASSERT(error == 0);
 	}
+
+	KASSERT(node->tn_spec.tn_dir.tn_parent == dnode);
 
 	/* Lookup the directory entry (check the cached hint first). */
 	de = tmpfs_dir_cached(node);
