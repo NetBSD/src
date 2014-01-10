@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.giodevs,v 1.5 2008/10/19 22:05:21 apb Exp $
+#	$NetBSD: Makefile.giodevs,v 1.6 2014/01/10 16:36:29 christos Exp $
 
-.include <bsd.sys.mk>
+.include <bsd.own.mk>
 
 giodevs.h: giodevs devlist2h.awk
 	/bin/rm -f giodevs.h giodevs_data.h
