@@ -1,4 +1,4 @@
-# $NetBSD: t_hostent.sh,v 1.7 2014/01/10 01:43:55 christos Exp $
+# $NetBSD: t_hostent.sh,v 1.8 2014/01/10 20:38:11 gson Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -45,9 +45,7 @@ dir="$(atf_get_srcdir)"
 res="-r ${dir}/resolv.conf"
 
 # Hijack DNS traffic using a single rump server instance and a DNS
-# server listening on its loopback address.  Also hijack file system
-# call to /etc, mapping them to the root file system of the rump 
-# server, so that we can control the contents of /etc/resolv.conf.
+# server listening on its loopback address.
 
 start_dns_server() {
 	export RUMP_SERVER=unix:///tmp/rumpserver
