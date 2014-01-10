@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2013/01/22 15:48:40 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.10 2014/01/10 11:12:03 tsutsui Exp $
 #	@(#)Makefile	8.2 (Berkeley) 8/15/93
 
 NOMAN= # defined
@@ -32,7 +32,7 @@ LDSCRIPT=	${.CURDIR}/boot.ldscript
 LINKFORMAT=	-static -N -Ttext ${TEXTADDR} -T ${LDSCRIPT}
 
 SRCS=	locore.S
-SRCS+=	init_main.c autoconf.c ioconf.c
+SRCS+=	init_main.c autoconf.c
 SRCS+=	trap.c
 SRCS+=	devopen.c
 SRCS+=	conf.c
