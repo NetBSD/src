@@ -1,4 +1,4 @@
-# $NetBSD: t_hostent.sh,v 1.6 2014/01/09 14:07:31 christos Exp $
+# $NetBSD: t_hostent.sh,v 1.7 2014/01/10 01:43:55 christos Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -58,11 +58,12 @@ start_dns_server() {
 }
 
 stop_dns_server() {
+	export RUMP_SERVER=unix:///tmp/rumpserver
 	kill $(cat dns_server_$1.pid)
 	rump.halt
 }
 
-atf_test_case gethostbyname4
+atf_test_case gethostbyname4 cleanup
 gethostbyname4_head()
 {
 	atf_set "descr" "Checks gethostbyname2(3) for AF_INET (auto, as determined by nsswitch.conf(5)"
@@ -71,10 +72,13 @@ gethostbyname4_body()
 {
 	start_dns_server 4
 	atf_check -o inline:"$ans4" -x "$HIJACK_DNS ${dir}/h_hostent $res -t auto -4 $n4"
+}
+gethostbyname4_cleanup()
+{
 	stop_dns_server 4
 }
 
-atf_test_case gethostbyname6
+atf_test_case gethostbyname6 cleanup cleanup
 gethostbyname6_head()
 {
 	atf_set "descr" "Checks gethostbyname2(3) for AF_INET6 (auto, as determined by nsswitch.conf(5)"
@@ -83,10 +87,13 @@ gethostbyname6_body()
 {
 	start_dns_server 4
 	atf_check -o inline:"$ans6" -x "$HIJACK_DNS ${dir}/h_hostent ${res} -t auto -6 $n6"
+}
+gethostbyname6_cleanup()
+{
 	stop_dns_server 4
 }
 
-atf_test_case gethostbyaddr4
+atf_test_case gethostbyaddr4 cleanup
 gethostbyaddr4_head()
 {
 	atf_set "descr" "Checks gethostbyaddr(3) for AF_INET (auto, as determined by nsswitch.conf(5)"
@@ -95,10 +102,13 @@ gethostbyaddr4_body()
 {
 	start_dns_server 4
         atf_check -o inline:"$ans4" -x "$HIJACK_DNS ${dir}/h_hostent ${res} -t auto -a $a4"
+}
+gethostbyaddr4_cleanup()
+{
 	stop_dns_server 4
 }
 
-atf_test_case gethostbyaddr6
+atf_test_case gethostbyaddr6 cleanup
 gethostbyaddr6_head()
 {
 	atf_set "descr" "Checks gethostbyaddr(3) for AF_INET6 (auto, as determined by nsswitch.conf(5)"
@@ -107,6 +117,9 @@ gethostbyaddr6_body()
 {
 	start_dns_server 4
 	atf_check -o inline:"$ans6" -x "$HIJACK_DNS ${dir}/h_hostent -t auto -a $a6"
+}
+gethostbyaddr6_cleanup()
+{
 	stop_dns_server 4
 }
 
@@ -150,7 +163,7 @@ hostsbyaddrlookup6_body()
 	atf_check -o inline:"$loc6" -x "${dir}/h_hostent -f ${dir}/hosts -t file -6 -a $al6"
 }
 
-atf_test_case dnsbynamelookup4
+atf_test_case dnsbynamelookup4 cleanup
 dnsbynamelookup4_head()
 {
 	atf_set "descr" "Checks DNS name lookup for AF_INET"
@@ -159,10 +172,13 @@ dnsbynamelookup4_body()
 {
 	start_dns_server 4
 	atf_check -o inline:"$ans4" -x "$HIJACK_DNS ${dir}/h_hostent ${res} -t dns -4 $n4"
+}
+dnsbynamelookup4_cleanup()
+{
 	stop_dns_server 4
 }
 
-atf_test_case dnsbynamelookup6
+atf_test_case dnsbynamelookup6 cleanup
 dnsbynamelookup6_head()
 {
 	atf_set "descr" "Checks DNS name lookup for AF_INET6"
@@ -171,10 +187,13 @@ dnsbynamelookup6_body()
 {
 	start_dns_server 4
 	atf_check -o inline:"$ans6" -x "$HIJACK_DNS ${dir}/h_hostent ${res} -t dns -6 $n6"
+}
+dnsbynamelookup6_cleanup()
+{
 	stop_dns_server 4
 }
 
-atf_test_case dnsbyaddrlookup4
+atf_test_case dnsbyaddrlookup4 cleanup
 dnsbyaddrlookup4_head()
 {
 	atf_set "descr" "Checks DNS address lookup for AF_INET"
@@ -183,10 +202,13 @@ dnsbyaddrlookup4_body()
 {
 	start_dns_server 4
 	atf_check -o inline:"$ans4" -x "$HIJACK_DNS ${dir}/h_hostent ${res} -t dns -4 -a $a4"
+}
+dnsbyaddrlookup4_cleanup()
+{
 	stop_dns_server 4
 }
 
-atf_test_case dnsbyaddrlookup6
+atf_test_case dnsbyaddrlookup6 cleanup
 dnsbyaddrlookup6_head()
 {
 	atf_set "descr" "Checks dns address lookup for AF_INET6"
@@ -195,6 +217,9 @@ dnsbyaddrlookup6_body()
 {
 	start_dns_server 4
 	atf_check -o inline:"$ans6" -x "$HIJACK_DNS ${dir}/h_hostent ${res} -t dns -6 -a $a6"
+}
+dnsbyaddrlookup6_cleanup()
+{
 	stop_dns_server 4
 }
 
