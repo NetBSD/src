@@ -772,6 +772,7 @@ main()
             _atf_syntax_error "Cannot provide more than one test case name"
         else
             _atf_run_tc "${1}"
+            _atf_run_tc "${1}:cleanup"
         fi
     fi
 }
