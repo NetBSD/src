@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.4 2014/01/03 03:44:41 tsutsui Exp $	*/
+/*	$NetBSD: boot.c,v 1.5 2014/01/10 11:12:03 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -159,7 +159,7 @@ get_boot_device(const char *s, int *devp, int *unitp, int *partp)
 	}
 
 	*devp  = 0;	/* XXX not yet */
-	*unitp = unit;	/* XXX should pass SCSI ID, not logical unit number */
+	*unitp = unit;
 	*partp = part;
 
 	return 0;
