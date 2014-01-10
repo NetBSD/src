@@ -1,4 +1,4 @@
-# $NetBSD: t_ssp.sh,v 1.5 2011/06/12 21:12:46 plunky Exp $
+# $NetBSD: t_ssp.sh,v 1.6 2014/01/10 10:45:34 martin Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -177,7 +177,7 @@ strcat_body()
 	prog="$(atf_get_srcdir)/h_strcat"
 
 	h_pass "$prog 0123456"
-	h_fail "$prog 012345678"
+	h_fail "$prog 0123456789ABCDEF"
 }
 
 atf_test_case strncpy
