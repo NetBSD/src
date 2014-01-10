@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.146 2014/01/10 15:00:16 martin Exp $
+#	$NetBSD: Makefile,v 1.147 2014/01/10 15:54:59 christos Exp $
 
-.include <bsd.own.mk>	# prerequisite for bsd.sys.mk
-.include <bsd.sys.mk>
+.include <bsd.own.mk>
 
 INCSDIR= /usr/include/sys
 
