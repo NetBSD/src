@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile,v 1.81 2012/03/18 07:54:00 jruoho Exp $
+#	$NetBSD: Makefile,v 1.82 2014/01/10 16:35:11 christos Exp $
 
 SUBDIR+= citrus divrem
 
 .include <bsd.own.mk>
-.include <bsd.sys.mk>
 
 .if exists(arch/${MACHINE_ARCH})
 SUBDIR+= arch/${MACHINE_ARCH}
