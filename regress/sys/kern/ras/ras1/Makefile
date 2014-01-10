@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.6 2012/04/04 10:59:47 joerg Exp $
+#	$NetBSD: Makefile,v 1.7 2014/01/10 15:00:16 martin Exp $
+
+.include <bsd.own.mk>	# ACVTIVE_CC
 
 NOMAN=	#defined
 

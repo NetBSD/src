@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2013/09/10 16:53:06 pooka Exp $
+#	$NetBSD: Makefile,v 1.14 2014/01/10 15:00:16 martin Exp $
 #
 
 LIB=		rumphijack
@@ -18,6 +18,7 @@ WARNS?=		5
 # a stack frame
 COPTS.hijackdlsym.c+=	-O0
 
+.include <bsd.own.mk>	# prerequisite for bsd.sys.mk
 .include <bsd.sys.mk>
 
 CPPFLAGS+=	-U_FORTIFY_SOURCE
