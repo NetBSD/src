@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.8 2014/01/05 06:56:22 tsutsui Exp $	*/
+/*	$NetBSD: init_main.c,v 1.9 2014/01/10 11:12:03 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -135,7 +135,7 @@ struct luna1_bootinfo {
 		uint8_t	bd_xxx1;	/*  0: ??? */
 		uint8_t	bd_boot;	/*  1: 1 == booted */
 		char	bd_name[2];	/*  2: device name (dk, fb, sd ... ) */
-		uint8_t	bd_unit;	/*  4: unit number (not ID) */
+		uint8_t	bd_drv;		/*  4: drive number (not ID) */
 		uint8_t	bd_xxx2;	/*  5: ??? */
 		uint8_t	bd_xxx3;	/*  6: ??? */
 		uint8_t	bd_part;	/*  7: dk partition / st record # */
@@ -162,7 +162,7 @@ struct luna2_bootinfo {
 		char	bd_name[4];	/*  2: device name (dk, ft, sd ... ) */
 		uint8_t	bd_xxx2;	/*  6: ??? */
 		uint8_t	bd_ctlr;	/*  7: SCSI controller number */
-		uint8_t	bd_unit;	/*  8: SCSI ID number */
+		uint8_t	bd_id;		/*  8: SCSI ID number */
 		uint8_t	bd_xxx3;	/*  9: device number index? */
 		uint8_t	bd_xxx4;	/* 10: ??? */
 		uint8_t	bd_part;	/* 11: dk partition / st record # */
@@ -180,6 +180,7 @@ main(void)
 	const char *machstr;
 	const char *bootdev;
 	int unit, part;
+	int bdev, ctlr, id;
 
 	/*
 	 * Initialize the console before we print anything out.
@@ -225,7 +226,6 @@ main(void)
 #endif
 
 	find_devs();
-	configure();
 	printf("\n");
 
 	/* use sd(0,0) for the default boot device */
@@ -235,13 +235,14 @@ main(void)
 
 	if (machtype == LUNA_I) {
 		const struct luna1_bootinfo *bi1 = (void *)LUNA1_BOOTINFOADDR;
-		int dev = bi1->bi_device;
 
-		switch (dev) {
+		bdev = bi1->bi_device;
+		switch (bdev) {
 		case LUNA1_BTDEV_DK:
-			/* XXX: should check hp_dinfo in ioconf.c */
-			/* note: bd_unit is not SCSI ID */
-			unit = bi1->bi_devinfo[dev].bd_unit;
+			/* note: bd_drv is not SCSI ID */
+			ctlr = 0;
+			id   = 6 - bi1->bi_devinfo[bdev].bd_drv;
+			unit = UNIT(ctlr, id);
 			break;
 		case LUNA1_BTDEV_ET:
 			bootdev = "le";
@@ -253,31 +254,25 @@ main(void)
 		}
 #ifdef BTINFO_DEBUG
 		printf("bi1->bi_device = 0x%02x\n", bi1->bi_device);
-		printf("bi1->bi_devinfo[dev].bd_boot = 0x%02x\n",
-		    bi1->bi_devinfo[dev].bd_boot);
-		printf("bi1->bi_devinfo[dev].bd_name = %c%c\n",
-		    bi1->bi_devinfo[dev].bd_name[0],
-		    bi1->bi_devinfo[dev].bd_name[1]);
-		printf("bi1->bi_devinfo[dev].bd_unit = 0x%02x\n",
-		    bi1->bi_devinfo[dev].bd_unit);
-		printf("bi1->bi_devinfo[dev].bd_part = 0x%02x\n",
-		    bi1->bi_devinfo[dev].bd_part);
+		printf("bi1->bi_devinfo[bdev].bd_boot = 0x%02x\n",
+		    bi1->bi_devinfo[bdev].bd_boot);
+		printf("bi1->bi_devinfo[bdev].bd_name = %c%c\n",
+		    bi1->bi_devinfo[bdev].bd_name[0],
+		    bi1->bi_devinfo[bdev].bd_name[1]);
+		printf("bi1->bi_devinfo[bdev].bd_drv = 0x%02x\n",
+		    bi1->bi_devinfo[bdev].bd_drv);
+		printf("bi1->bi_devinfo[bdev].bd_part = 0x%02x\n",
+		    bi1->bi_devinfo[bdev].bd_part);
 #endif
 	} else {
 		const struct luna2_bootinfo *bi2 = (void *)LUNA2_BOOTINFOADDR;
-		int dev = bi2->bi_device;
-		int ctlr, id;
 
-		switch (dev) {
+		bdev = bi2->bi_device;
+		switch (bdev) {
 		case LUNA2_BTDEV_DK:
-			ctlr = bi2->bi_devinfo[dev].bd_ctlr;
-			id = bi2->bi_devinfo[dev].bd_unit;
-			/* XXX: should check hp_dinfo in ioconf.c */
-			unit = 6 - id;
-			if (ctlr == 1) {
-				/* XXX: should check hp_dinfo in ioconf.c */
-				unit += 2;
-			}
+			ctlr = bi2->bi_devinfo[bdev].bd_ctlr;
+			id   = bi2->bi_devinfo[bdev].bd_id;
+			unit = UNIT(ctlr, id);
 			break;
 		default:
 			/* not supported */
@@ -285,16 +280,16 @@ main(void)
 		}
 #ifdef BTINFO_DEBUG
 		printf("bi2->bi_device = 0x%02x\n", bi2->bi_device);
-		printf("bi2->bi_devinfo[dev].bd_boot = 0x%02x\n",
-		    bi2->bi_devinfo[dev].bd_boot);
-		printf("bi2->bi_devinfo[dev].bd_name = %s\n",
-		    bi2->bi_devinfo[dev].bd_name);
-		printf("bi2->bi_devinfo[dev].bd_ctlr = 0x%02x\n",
-		    bi2->bi_devinfo[dev].bd_ctlr);
-		printf("bi2->bi_devinfo[dev].bd_unit = 0x%02x\n",
-		    bi2->bi_devinfo[dev].bd_unit);
-		printf("bi2->bi_devinfo[dev].bd_part = 0x%02x\n",
-		    bi2->bi_devinfo[dev].bd_part);
+		printf("bi2->bi_devinfo[bdev].bd_boot = 0x%02x\n",
+		    bi2->bi_devinfo[bdev].bd_boot);
+		printf("bi2->bi_devinfo[bdev].bd_name = %s\n",
+		    bi2->bi_devinfo[bdev].bd_name);
+		printf("bi2->bi_devinfo[bdev].bd_ctlr = 0x%02x\n",
+		    bi2->bi_devinfo[bdev].bd_ctlr);
+		printf("bi2->bi_devinfo[bdev].bd_id = 0x%02x\n",
+		    bi2->bi_devinfo[bdev].bd_id);
+		printf("bi2->bi_devinfo[bdev].bd_part = 0x%02x\n",
+		    bi2->bi_devinfo[bdev].bd_part);
 #endif
 	}
 
