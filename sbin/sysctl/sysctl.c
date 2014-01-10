@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.149 2012/12/13 05:27:01 msaitoh Exp $ */
+/*	$NetBSD: sysctl.c,v 1.150 2014/01/10 09:38:56 pooka Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.149 2012/12/13 05:27:01 msaitoh Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.150 2014/01/10 09:38:56 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -2710,12 +2710,12 @@ bitmask_print(const bitmap *o)
 			else
 			    	rv = asprintf(&s, "%zu", i);
 			if (rv == -1)
-				err(1, "");
+				err(1, "bitmask_print 1");
 			free(os);
 			os = s;
 		}
 	if (s == NULL && (s = strdup("")) == NULL)
-		err(1, "");
+		err(1, "bitmask_print 2");
 	return s;
 }
 
@@ -2724,7 +2724,7 @@ bitmask_scan(const void *v, bitmap *o)
 {
 	char *s = strdup(v);
 	if (s == NULL)
-		err(1, "");
+		err(1, "bitmask_scan");
 
 	__BITMAP_ZERO(o);
 	for (s = strtok(s, ","); s; s = strtok(NULL, ",")) {
