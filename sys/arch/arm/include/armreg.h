@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.84 2013/12/27 12:16:01 matt Exp $	*/
+/*	$NetBSD: armreg.h,v 1.85 2014/01/10 17:48:11 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -58,13 +58,24 @@
 #define PSR_V_bit (1 << 28)	/* overflow */
 
 #define PSR_Q_bit (1 << 27)	/* saturation */
+#define PSR_IT1_bit (1 << 26)
+#define PSR_IT0_bit (1 << 25)
+#define PSR_J_bit (1 << 24)	/* Jazelle mode */
+#define PSR_GE_bits (15 << 16)	/* SIMD GE bits */
+#define PSR_IT7_bit (1 << 15)
+#define PSR_IT6_bit (1 << 14)
+#define PSR_IT5_bit (1 << 13)
+#define PSR_IT4_bit (1 << 12)
+#define PSR_IT3_bit (1 << 11)
+#define PSR_IT2_bit (1 << 10)
+#define PSR_E_BIT (1 << 9)	/* Endian state */
+#define PSR_A_BIT (1 << 8)	/* Async abort disable */
 
 #define I32_bit (1 << 7)	/* IRQ disable */
 #define F32_bit (1 << 6)	/* FIQ disable */
-#define	IF32_bits (3 << 6)	/* IRQ/FIQ disable */
+#define IF32_bits (3 << 6)	/* IRQ/FIQ disable */
 
 #define PSR_T_bit (1 << 5)	/* Thumb state */
-#define PSR_J_bit (1 << 24)	/* Java mode */
 
 #define PSR_MODE	0x0000001f	/* mode mask */
 #define PSR_USR26_MODE	0x00000000
