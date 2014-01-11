@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_disksubr.c,v 1.3 2014/01/03 07:17:19 tsutsui Exp $	*/
+/*	$NetBSD: ufs_disksubr.c,v 1.4 2014/01/11 15:51:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -112,7 +112,8 @@ readdisklabel(int ctlr, int id, struct disklabel *lp)
 		for (dlp = (struct disklabel *)bp;
 		     dlp <= (struct disklabel *)(bp + DEV_BSIZE - sizeof(*dlp));
 		     dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
-			if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
+			if (dlp->d_magic != DISKMAGIC ||
+			    dlp->d_magic2 != DISKMAGIC) {
 				if (msg == NULL)
 					msg = "no disk label";
 			} else if (dlp->d_npartitions > MAXPARTITIONS ||
@@ -126,5 +127,5 @@ readdisklabel(int ctlr, int id, struct disklabel *lp)
 		}
 	}
 
-	return (msg);
+	return msg;
 }

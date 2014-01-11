@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.9 2014/01/10 11:12:03 tsutsui Exp $	*/
+/*	$NetBSD: sd.c,v 1.10 2014/01/11 15:51:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -114,13 +114,13 @@ sdident(struct sd_softc *sc)
 
 	if (sc->sc_blksize != DEV_BSIZE) {
 		if (sc->sc_blksize < DEV_BSIZE) {
-			return (-1);
+			return -1;
 		}
 		for (i = sc->sc_blksize; i > DEV_BSIZE; i >>= 1)
 			++sc->sc_bshift;
 		sc->sc_blks <<= sc->sc_bshift;
 	}
-	return(inqbuf.type);
+	return inqbuf.type;
 }
 
 struct sd_softc *
@@ -184,9 +184,9 @@ sdopen(struct open_file *f, ...)
 	va_end(ap);
 
 	if (unit < 0 || CTLR(unit) >= 2 || TARGET(unit) >= 7)
-		return(-1);
+		return -1;
 	if (part < 0 || part >= MAXPARTITIONS)
-		return(-1);
+		return -1;
 
 	sc = sdinit(unit);
 	if (sc == NULL)
@@ -258,7 +258,8 @@ sdstrategy(void *devdata, int func, daddr_t dblk, size_t size, void *v_buf,
 
 #ifdef DEBUG
 	printf("sdstrategy: unit = %d\n", sc->sc_unit);
-	printf("sdstrategy: blk = %lu (0x%lx), nblk = %u (0x%x)\n", (u_long)blk, (long)blk, nblk, nblk);
+	printf("sdstrategy: blk = %lu (0x%lx), nblk = %u (0x%x)\n",
+	    (u_long)blk, (long)blk, nblk, nblk);
 	for (i = 0; i < 10; i++)
 		printf("sdstrategy: cdb[%d] = 0x%x\n", i, cdb->cdb[i]);
 	printf("sdstrategy: ctlr = %d, target = %d\n", sc->sc_ctlr, sc->sc_tgt);

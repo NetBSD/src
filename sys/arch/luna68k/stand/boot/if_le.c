@@ -1,4 +1,4 @@
-/* $NetBSD: if_le.c,v 1.5 2014/01/10 11:12:03 tsutsui Exp $ */
+/* $NetBSD: if_le.c,v 1.6 2014/01/11 15:51:02 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2013 Izumi Tsutsui.  All rights reserved.
@@ -205,12 +205,12 @@ le_put(struct iodesc *desc, void *pkt, size_t len)
 	struct netif_dif *dif = &nif->nif_driver->netif_ifs[nif->nif_unit];
 	void *cookie = dif->dif_private;
 #ifdef DEBUG
- 	struct ether_header *eh;
+	struct ether_header *eh;
 
- 	eh = pkt;
- 	printf("dst:  %s\n", ether_sprintf(eh->ether_dhost));
- 	printf("src:  %s\n", ether_sprintf(eh->ether_shost));
- 	printf("type: 0x%x\n", eh->ether_type & 0xffff);
+	eh = pkt;
+	printf("dst:  %s\n", ether_sprintf(eh->ether_dhost));
+	printf("src:  %s\n", ether_sprintf(eh->ether_shost));
+	printf("type: 0x%x\n", eh->ether_type & 0xffff);
 #endif
 
 	return lance_put(cookie, pkt, len) ? len : -1;

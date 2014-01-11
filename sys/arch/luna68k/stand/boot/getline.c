@@ -1,4 +1,4 @@
-/*	$NetBSD: getline.c,v 1.3 2014/01/03 06:37:13 tsutsui Exp $	*/
+/*	$NetBSD: getline.c,v 1.4 2014/01/11 15:51:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -72,7 +72,7 @@
 
 /*
  * getline -- simple getline function
- * 	by A.Fujita, Dec-11-1992
+ *	by A.Fujita, Dec-11-1992
  */
 
 #include <lib/libkern/libkern.h>

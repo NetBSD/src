@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.12 2014/01/11 14:35:15 tsutsui Exp $	*/
+/*	$NetBSD: init_main.c,v 1.13 2014/01/11 15:51:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -170,7 +170,7 @@ struct luna2_bootinfo {
 void
 main(void)
 {
-	int i, status = 0;
+	int i, status = ST_NORMAL;
 	const char *machstr;
 	const char *bootdev;
 	uint32_t howto;
@@ -192,7 +192,7 @@ main(void)
 		hz = 100;
 	}
 
-	nplane   = get_plane_numbers();
+	nplane = get_plane_numbers();
 
 	cninit();
 
@@ -311,13 +311,15 @@ main(void)
 	do {
 		memset(buffer, 0, BUFFSIZE);
 		if (getline(prompt, buffer) > 0) {
-			argc = getargs(buffer, argv, sizeof(argv)/sizeof(char *));
+			argc = getargs(buffer, argv,
+			    sizeof(argv) / sizeof(char *));
 
 			status = parse(argc, argv);
 			if (status == ST_NOTFOUND)
-				printf("Command \"%s\" is not found !!\n", argv[0]);
+				printf("Command \"%s\" is not found !!\n",
+				    argv[0]);
 		}
-	} while(status != ST_EXIT);
+	} while (status != ST_EXIT);
 
 	exit(0);
 }
@@ -332,7 +334,7 @@ get_plane_numbers(void)
 		if (r & 0x1)
 			n++;
 
-	return(n);
+	return n;
 }
 
 int
@@ -351,5 +353,5 @@ reorder_dipsw(int dipsw)
 		dipsw >>= 1;
 	}
 
-	return(sw);
+	return sw;
 }

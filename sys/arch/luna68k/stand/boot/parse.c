@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.5 2014/01/11 08:08:23 tsutsui Exp $	*/
+/*	$NetBSD: parse.c,v 1.6 2014/01/11 15:51:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -86,16 +86,17 @@ check_args(int argc, char *argv[])
 {
 	int i;
 
-	for ( i = 0; i < argc; i++)
+	for (i = 0; i < argc; i++)
 		printf("argv[%d] = \"%s\"\n", i, argv[i]);
 
-	return(ST_NORMAL);
+	return ST_NORMAL;
 }
 
 int
 exit_program(int argc, char *argv[])
 {
-	return(ST_EXIT);
+
+	return ST_EXIT;
 }
 
 static const char helpmsg[] =
@@ -148,7 +149,7 @@ struct command_entry entries[] = {
 #endif
 	{ "scsi",	scsi         },
 	{ "quit",	exit_program },
-	{ 0, 0 }
+	{ NULL, NULL }
 };
 
 
@@ -157,14 +158,14 @@ parse(int argc, char *argv[])
 {
 	int i, status = ST_NOTFOUND;
 
-	for (i = 0; entries[i].name != (char *) 0; i++) {
+	for (i = 0; entries[i].name != NULL; i++) {
 		if (!strcmp(argv[0], entries[i].name)) {
 			status = (*entries[i].func)(argc, argv);
 			break;
 		}
 	}
 
-	return(status);
+	return status;
 }
 
 
@@ -181,14 +182,14 @@ getargs(char buffer[], char *argv[], int maxargs)
 
 	argv[n++] = p;
 	while (*p != '\0') {
-		if ( *p == ' ' ) {
+		if (*p == ' ') {
 			*p = '\0';
-		} else if (p != buffer && *(p-1) == '\0') {
-			if ( n < maxargs )
+		} else if (p != buffer && *(p - 1) == '\0') {
+			if (n < maxargs)
 				argv[n++] = p;
 		}
 		p++;
 	}
 
-	return(n);
+	return n;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sc.c,v 1.9 2014/01/10 11:12:03 tsutsui Exp $	*/
+/*	$NetBSD: sc.c,v 1.10 2014/01/11 15:51:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -132,7 +132,7 @@ scinit(int ctlr, void *addr)
 	for (id = 0; id < 7; id++)
 		scprobe(hs, id, 0);
 
-	return(1);
+	return 1;
 }
 
 void
@@ -273,6 +273,7 @@ scprobe(struct scsi_softc *hs, uint target, uint lun)
 int
 issue_select(struct scsidevice *hd, u_char target)
 {
+
 	hd->scsi_pctl = 0;
 	hd->scsi_temp = (1 << SCSI_ID) | (1 << target);
 
@@ -283,7 +284,7 @@ issue_select(struct scsidevice *hd, u_char target)
 
 	hd->scsi_scmd = SCMD_SELECT;
 
-	return (1);
+	return 1;
 }
 
 
@@ -301,6 +302,7 @@ issue_select(struct scsidevice *hd, u_char target)
 void
 ixfer_start(struct scsidevice *hd, int len, u_char phase, int wait)
 {
+
 	hd->scsi_tch  = ((len & 0xff0000) >> 16);
 	hd->scsi_tcm  = ((len & 0x00ff00) >>  8);
 	hd->scsi_tcl  =  (len & 0x0000ff);
@@ -311,7 +313,8 @@ ixfer_start(struct scsidevice *hd, int len, u_char phase, int wait)
 void
 ixfer_out(struct scsidevice *hd, int len, u_char *buf)
 {
-	for(; len > 0; len--) {
+
+	for (; len > 0; len--) {
 		while (hd->scsi_ssts & SSTS_DREG_FULL) {
 			DELAY(5);
 		}
@@ -322,6 +325,7 @@ ixfer_out(struct scsidevice *hd, int len, u_char *buf)
 void
 ixfer_in(struct scsidevice *hd, int len, u_char *buf)
 {
+
 	for (; len > 0; len--) {
 		while (hd->scsi_ssts & SSTS_DREG_EMPTY) {
 			DELAY(5);
@@ -351,7 +355,7 @@ scrun(int ctlr, int target, u_char *cdb, int cdblen, u_char *buf, int len,
 		return 0;
 
 	if (hd->scsi_ssts & (SSTS_INITIATOR|SSTS_TARGET|SSTS_BUSY))
-		return(0);
+		return 0;
 
 	hs->sc_flags  = 0;
 	hs->sc_phase  = ARB_SEL_PHASE;
@@ -369,7 +373,7 @@ scrun(int ctlr, int target, u_char *cdb, int cdblen, u_char *buf, int len,
 	*(hs->sc_lock) = SC_IN_PROGRESS;
 	issue_select(hd, hs->sc_target);
 
-	return(1);
+	return 1;
 }
 
 int
@@ -391,7 +395,7 @@ scfinish(int ctlr)
 	hs->sc_stat   = 0;
 	hs->sc_msg[0] = 0;
 
-	return(status);
+	return status;
 }
 
 void
@@ -420,7 +424,7 @@ scabort(struct scsi_softc *hs)
 		hd->scsi_scmd = SCMD_SET_ATN;
 
 		while ((hd->scsi_psns & PSNS_REQ) == 0) {
-			if (! (hd->scsi_ssts & SSTS_INITIATOR))
+			if ((hd->scsi_ssts & SSTS_INITIATOR) == 0)
 				goto out;
 			DELAY(1);
 		}
@@ -478,7 +482,7 @@ scsi_test_unit_rdy(int ctlr, int target, int lun)
 #ifdef DEBUG
 		printf("scsi_test_unit_rdy: Command Transfer Failed.\n");
 #endif
-		return(-1);
+		return -1;
 	}
 
 	while ((lock == SC_IN_PROGRESS) || (lock == SC_DISCONNECTED))
@@ -490,9 +494,9 @@ scsi_test_unit_rdy(int ctlr, int target, int lun)
 #ifdef DEBUG
 		printf("scsi_test_unit_rdy: Status -- 0x%x\n", status);
 #endif
-		return(status);
+		return status;
 	} else {
-		return(lock);
+		return lock;
 	}
 }
 
@@ -522,7 +526,7 @@ scsi_request_sense(int ctlr, int target, int lun, u_char *buf, unsigned int len)
 #ifdef DEBUG
 		printf("scsi_request_sense: Command Transfer Failed.\n");
 #endif
-		return(-1);
+		return -1;
 	}
 
 	while ((lock == SC_IN_PROGRESS) || (lock == SC_DISCONNECTED))
@@ -534,9 +538,9 @@ scsi_request_sense(int ctlr, int target, int lun, u_char *buf, unsigned int len)
 #ifdef DEBUG
 		printf("scsi_request_sense: Status -- 0x%x\n", status);
 #endif
-		return(status);
+		return status;
 	} else {
-		return(lock);
+		return lock;
 	}
 }
 
@@ -554,11 +558,12 @@ scsi_immed_command(int ctlr, int target, int lun, struct scsi_generic_cdb *cdb,
 
 	cdb->cdb[1] |= lun << 5;
 
-	if (!(scrun(ctlr, target, (void *)&cdb->cdb[0], cdb->len, buf, len, &lock))) {
+	if (!(scrun(ctlr, target, (void *)&cdb->cdb[0], cdb->len, buf, len,
+	    &lock))) {
 #ifdef DEBUG
 		printf("scsi_immed_command: Command Transfer Failed.\n");
 #endif
-		return(-1);
+		return -1;
 	}
 
 	while ((lock == SC_IN_PROGRESS) || (lock == SC_DISCONNECTED))
@@ -570,9 +575,9 @@ scsi_immed_command(int ctlr, int target, int lun, struct scsi_generic_cdb *cdb,
 #ifdef DEBUG
 		printf("scsi_immed_command: Status -- 0x%x\n", status);
 #endif
-		return(status);
+		return status;
 	} else {
-		return(lock);
+		return lock;
 	}
 }
 
@@ -596,7 +601,7 @@ scsi_format_unit(int ctlr, int target, int lun)
 #ifdef DEBUG
 		printf("scsi_format_unit: Command Transfer Failed.\n");
 #endif
-		return(-1);
+		return -1;
 	}
 
 	while ((lock == SC_IN_PROGRESS) || (lock == SC_DISCONNECTED)) {
@@ -613,9 +618,9 @@ scsi_format_unit(int ctlr, int target, int lun)
 #ifdef DEBUG
 		printf("scsi_format_unit: Status -- 0x%x\n", status);
 #endif
-		return(status);
+		return status;
 	} else {
-		return(lock);
+		return lock;
 	}
 }
 
@@ -666,7 +671,8 @@ scintr(void)
 		} else
 			goto abort;
 	} else if (ints & INTS_DISCON) {
-		if ((hs->sc_msg[0] == MSG_CMD_COMPLETE) || (hs->sc_msg[0] == MSG_DISCONNECT)) {
+		if ((hs->sc_msg[0] == MSG_CMD_COMPLETE) ||
+		    (hs->sc_msg[0] == MSG_DISCONNECT)) {
 			hs->sc_phase  = BUS_FREE_PHASE;
 			hs->sc_target = SCSI_ID;
 			if (hs->sc_msg[0] == MSG_CMD_COMPLETE)
@@ -730,7 +736,8 @@ scintr(void)
 
 	hs->sc_phase = hd->scsi_psns & PHASE;
 
-	if ((hs->sc_phase == DATA_OUT_PHASE) || (hs->sc_phase == DATA_IN_PHASE)) {
+	if ((hs->sc_phase == DATA_OUT_PHASE) ||
+	    (hs->sc_phase == DATA_IN_PHASE)) {
 		len = hs->sc_len;
 		buf = hs->sc_buf;
 	} else if (hs->sc_phase == CMD_PHASE) {
