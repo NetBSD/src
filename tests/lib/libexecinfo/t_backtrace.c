@@ -1,4 +1,4 @@
-/*	$NetBSD: t_backtrace.c,v 1.10 2013/08/16 11:57:15 martin Exp $	*/
+/*	$NetBSD: t_backtrace.c,v 1.11 2014/01/11 19:13:41 martin Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,11 +29,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_backtrace.c,v 1.10 2013/08/16 11:57:15 martin Exp $");
+__RCSID("$NetBSD: t_backtrace.c,v 1.11 2014/01/11 19:13:41 martin Exp $");
 
 #include <atf-c.h>
 #include <atf-c/config.h>
 #include <string.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <execinfo.h>
 #include <unistd.h>
@@ -69,12 +70,19 @@ myfunc3(size_t ncalls)
 		++max_frames;
 	}
 	nptrs = backtrace(buffer, __arraycount(buffer));
-	ATF_REQUIRE(nptrs >= ncalls + 2 + min_frames);
-	ATF_REQUIRE(nptrs <= ncalls + 2 + max_frames);
-
 	strings = backtrace_symbols_fmt(buffer, nptrs, "%n");
 
 	ATF_CHECK(strings != NULL);
+
+	printf("got nptrs=%zu ncalls=%zu (min_frames: %zu, max_frames: %zu)\n",
+	    nptrs, ncalls, min_frames, max_frames);
+	printf("backtrace is:\n");
+	for (j = 0; j < nptrs; j++) {
+		printf("#%zu: %s\n", j, strings[j]);
+	}
+
+	ATF_REQUIRE(nptrs >= ncalls + 2 + min_frames);
+	ATF_REQUIRE(nptrs <= ncalls + 2 + max_frames);
 	ATF_CHECK_STREQ(strings[0], "myfunc3");
 	ATF_CHECK_STREQ(strings[1], "myfunc2");
 
