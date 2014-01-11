@@ -1,4 +1,4 @@
-/*	$NetBSD: bmd.c,v 1.3 2014/01/02 20:02:00 tsutsui Exp $	*/
+/*	$NetBSD: bmd.c,v 1.4 2014/01/11 15:51:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -113,8 +113,8 @@ union bmd_rfcnt {
 #define FB_HEIGHT	20			/* Font Hight    (Bit) */
 
 
-#define NEXT_LINE(addr)			( addr +  (PL_WIDTH * FB_HEIGHT) )
-#define SKIP_NEXT_LINE(addr)		( addr += (PL_WIDTH - SL_WIDTH) )
+#define NEXT_LINE(addr)			(addr +  (PL_WIDTH * FB_HEIGHT))
+#define SKIP_NEXT_LINE(addr)		(addr += (PL_WIDTH - SL_WIDTH))
 
 
 void	bmd_draw_char(char *, char *, int, int, int);
@@ -279,7 +279,7 @@ bmd_escape_1(int c)
 void
 bmdinit(void)
 {
-	volatile uint32_t *bmd_rfcnt = (uint32_t *) 0xB1000000;
+	volatile uint32_t *bmd_rfcnt = (uint32_t *)0xB1000000;
 	volatile long *bmd_bmsel = (long *)0xB1040000;
 	struct bmd_softc *bp = &bmd_softc;
 	struct bmd_linec *bq;
@@ -290,8 +290,8 @@ bmdinit(void)
 	 *  adjust plane position
 	 */
 
-	bp->bc_raddr = (char *) 0xB10C0008;	/* plane-0 hardware address */
-	bp->bc_waddr = (char *) 0xB1080008; /* common bitmap hardware address */
+	bp->bc_raddr = (char *)0xB10C0008;	/* plane-0 hardware address */
+	bp->bc_waddr = (char *)0xB1080008; /* common bitmap hardware address */
 	rfcnt.p.rfc_hcnt = 7;			/* shift left   16 dot */
 	rfcnt.p.rfc_vcnt = -27;			/* shift down    1 dot */
 	*bmd_rfcnt = rfcnt.u;
@@ -306,11 +306,11 @@ bmdinit(void)
 	bp->bc_row = bp->bc_ymin;
 
 	for (i = bp->bc_ymin; i < bp->bc_ymax; i++) {
-		bmd_linec[i].bl_next = &bmd_linec[i+1];
-		bmd_linec[i].bl_prev = &bmd_linec[i-1];
+		bmd_linec[i].bl_next = &bmd_linec[i + 1];
+		bmd_linec[i].bl_prev = &bmd_linec[i - 1];
 	}
-	bmd_linec[bp->bc_ymax-1].bl_next = &bmd_linec[bp->bc_ymin];
-	bmd_linec[bp->bc_ymin].bl_prev = &bmd_linec[bp->bc_ymax-1];
+	bmd_linec[bp->bc_ymax - 1].bl_next = &bmd_linec[bp->bc_ymin];
+	bmd_linec[bp->bc_ymin].bl_prev = &bmd_linec[bp->bc_ymax - 1];
 
 	bq = bp->bc_bl = &bmd_linec[bp->bc_ymin];
 	bq->bl_col = bq->bl_end = bp->bc_xmin;
@@ -333,7 +333,7 @@ bmdinit(void)
 void
 bmdadjust(short hcnt, short vcnt)
 {
-	volatile uint32_t *bmd_rfcnt = (uint32_t *) 0xB1000000;
+	volatile uint32_t *bmd_rfcnt = (uint32_t *)0xB1000000;
 	union bmd_rfcnt rfcnt;
 
 	printf("bmdadjust: hcnt = %d, vcnt = %d\n", hcnt, vcnt);
@@ -437,7 +437,7 @@ bmdputc(int c)
 			 bp->bc_waddr,
 			 bq->bl_col, bp->bc_row);
 
-	return(c);
+	return c;
 }
 
 void
