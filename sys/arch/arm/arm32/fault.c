@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.91 2013/11/06 02:37:58 christos Exp $	*/
+/*	$NetBSD: fault.c,v 1.92 2014/01/11 17:32:20 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.91 2013/11/06 02:37:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.92 2014/01/11 17:32:20 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -499,6 +499,20 @@ data_abort_handler(trapframe_t *tf)
 	UVMHIST_LOG(maphist, " <- error (%d)", error, 0, 0, 0);
 
 do_trapsignal:
+	if (l->l_proc->p_pid == 1 || cpu_printfataltraps) {
+		printf("%d.%d(%s): trap: signo=%d code=%d addr=%p trap=%#x\n",
+		     l->l_proc->p_pid, l->l_lid, l->l_proc->p_comm,
+		     ksi.ksi_signo, ksi.ksi_code, ksi.ksi_addr, ksi.ksi_trap);
+		printf("r0=%08x r1=%08x r2=%08x r3=%08x\n",
+		    tf->tf_r0, tf->tf_r1, tf->tf_r2, tf->tf_r3);
+		printf("r4=%08x r5=%08x r6=%08x r7=%08x\n",
+		    tf->tf_r4, tf->tf_r5, tf->tf_r6, tf->tf_r7);
+		printf("r8=%08x r9=%08x rA=%08x rB=%08x\n",
+		    tf->tf_r8, tf->tf_r9, tf->tf_r10, tf->tf_r11);
+		printf("ip=%08x sp=%08x lr=%08x pc=%08x spsr=%08x\n",
+		    tf->tf_r12, tf->tf_usr_sp, tf->tf_usr_lr, tf->tf_pc,
+		    tf->tf_spsr);
+	}
 	call_trapsignal(l, &ksi);
 out:
 	/* If returning to user mode, make sure to invoke userret() */

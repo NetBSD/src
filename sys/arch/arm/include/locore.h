@@ -148,6 +148,7 @@ void	cpu_attach(device_t, cpuid_t);
 #endif
 
 /* 1 == use cpu_sleep(), 0 == don't */
+extern int cpu_printfataltraps;
 extern int cpu_do_powersave;
 extern int cpu_fpu_present;
 extern int cpu_hwdiv_present;
