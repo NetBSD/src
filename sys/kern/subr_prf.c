@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.150 2013/02/10 11:04:19 apb Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.151 2014/01/11 17:07:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.150 2013/02/10 11:04:19 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.151 2014/01/11 17:07:45 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -281,6 +281,19 @@ vpanic(const char *fmt, va_list ap)
 #ifdef DDB
 	db_panic();
 #endif
+	printf("rebooting in");
+	for (int i = 10; i >= 0; --i) {
+		printf(" %u", i);
+		/*
+		 * sleep 10ms 100 times instead of 1s once to give a
+		 * VM hypervisor an opportunity to redraw part of the
+		 * screen during each call
+		 */
+		for (int j=0; i && j < 100; ++j) {
+			DELAY(10000);
+		}
+	}
+	printf("\n");
 	cpu_reboot(bootopt, NULL);
 }
 
