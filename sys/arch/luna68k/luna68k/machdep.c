@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.96 2014/01/11 08:07:16 tsutsui Exp $ */
+/* $NetBSD: machdep.c,v 1.97 2014/01/11 16:34:05 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.96 2014/01/11 08:07:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.97 2014/01/11 16:34:05 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -202,7 +202,7 @@ luna68k_init(void)
 		/* Valid value is set; no need to parse bootarg. */
 		return;
 	}
-		
+
 	/*
 	 * No valid bootdev value is set.
 	 * Assume we are booted by ROM monitor directly using a.out kernel
