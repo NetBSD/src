@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.108 2013/12/01 01:05:16 christos Exp $	*/
+/*	$NetBSD: locore.S,v 1.109 2014/01/11 17:05:17 christos Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -129,7 +129,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.108 2013/12/01 01:05:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.109 2014/01/11 17:05:17 christos Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -881,8 +881,9 @@ END(lgdt_finish)
  *
  * This is a trampoline function pushed onto the stack of a newly created
  * process in order to do some additional setup.  The trampoline is entered by
- * cpu_switch()ing to the process, so we abuse the callee-saved registers used
- * by cpu_switch() to store the information about the stub to call.
+ * cpu_switchto()ing to the process, so we abuse the callee-saved
+ * registers used by cpu_switchto() to store the information about the
+ * stub to call.
  * NOTE: This function does not have a normal calling sequence!
  */
 NENTRY(lwp_trampoline)
