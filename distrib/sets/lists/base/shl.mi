@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.684 2014/01/08 12:30:27 christos Exp $
+# $NetBSD: shl.mi,v 1.685 2014/01/11 18:38:00 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -21,7 +21,7 @@
 ./lib/libcrypt.so.1.0				base-sys-shlib		dynamicroot
 ./lib/libcrypto.so				base-crypto-shlib	crypto,dynamicroot
 ./lib/libcrypto.so.8				base-crypto-shlib	crypto,dynamicroot
-./lib/libcrypto.so.8.1				base-crypto-shlib	crypto,dynamicroot
+./lib/libcrypto.so.8.2				base-crypto-shlib	crypto,dynamicroot
 ./lib/libdevmapper.so				base-lvm-shlib		lvm,dynamicroot
 ./lib/libdevmapper.so.1				base-lvm-shlib		lvm,dynamicroot
 ./lib/libdevmapper.so.1.0			base-lvm-shlib		lvm,dynamicroot
@@ -207,7 +207,7 @@
 ./usr/lib/libcrypt.so.1.0			base-sys-shlib
 ./usr/lib/libcrypto.so				base-crypto-shlib	crypto
 ./usr/lib/libcrypto.so.8			base-crypto-shlib	crypto
-./usr/lib/libcrypto.so.8.1			base-crypto-shlib	crypto
+./usr/lib/libcrypto.so.8.2			base-crypto-shlib	crypto
 ./usr/lib/libcrypto_idea.so.7			base-obsolete		obsolete
 ./usr/lib/libcrypto_idea.so.7.0			base-obsolete		obsolete
 ./usr/lib/libcrypto_mdc2.so.7			base-obsolete		obsolete
@@ -224,7 +224,7 @@
 ./usr/lib/libcurses.so.7.0			base-sys-shlib
 ./usr/lib/libdes.so				base-crypto-shlib	crypto
 ./usr/lib/libdes.so.8				base-crypto-shlib	crypto
-./usr/lib/libdes.so.8.1				base-crypto-shlib	crypto
+./usr/lib/libdes.so.8.2				base-crypto-shlib	crypto
 ./usr/lib/libdevmapper.so			base-lvm-shlib		lvm
 ./usr/lib/libdevmapper.so.1			base-lvm-shlib		lvm
 ./usr/lib/libdevmapper.so.1.0			base-lvm-shlib		lvm
@@ -725,7 +725,7 @@
 ./usr/lib/libssh.so.22.0			base-secsh-shlib	crypto
 ./usr/lib/libssl.so				base-crypto-shlib	crypto
 ./usr/lib/libssl.so.10				base-crypto-shlib	crypto
-./usr/lib/libssl.so.10.1				base-crypto-shlib	crypto
+./usr/lib/libssl.so.10.2				base-crypto-shlib	crypto
 ./usr/lib/libstdc++.so				base-sys-shlib		gcc,cxx,libstdcxx
 ./usr/lib/libstdc++.so.5			base-sys-shlib		gcc=3,libstdcxx
 ./usr/lib/libstdc++.so.5.0			base-sys-shlib		gcc=3,cxx,libstdcxx
