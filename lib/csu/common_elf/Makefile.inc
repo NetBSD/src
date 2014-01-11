@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.30.10.1 2009/09/01 23:09:14 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.30.10.2 2014/01/11 00:23:41 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -33,23 +33,23 @@ realall: ${OBJS}
 crt0.o: crt0.c
 	${_MKTARGET_COMPILE}
 	${COMPILE.c} -DCRT0 ${.IMPSRC} -o ${.TARGET}
-	${OBJCOPY} -x ${.TARGET}
+	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 
 # dependant on crt0.o to pick up header dependencies
 gcrt0.o: ${.CURDIR}/crt0.c crt0.o
 	${_MKTARGET_COMPILE}
 	${COMPILE.c} -DMCRT0 ${.CURDIR}/crt0.c -o ${.TARGET}
-	${OBJCOPY} -x ${.TARGET}
+	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 
 crti.o: crti.c
 	${_MKTARGET_COMPILE}
 	${COMPILE.c} ${.IMPSRC} -o ${.TARGET}
-	${OBJCOPY} -X ${.TARGET}
+	${OBJCOPY} ${OBJCOPYLIBFLAGS} -X ${.TARGET}
 
 crtn.o: crtn.c
 	${_MKTARGET_COMPILE}
 	${COMPILE.c} ${.IMPSRC} -o ${.TARGET}
-	${OBJCOPY} -X ${.TARGET}
+	${OBJCOPY} ${OBJCOPYLIBFLAGS} -X ${.TARGET}
 
 FILES=${OBJS}
 FILESDIR=${LIBDIR}
