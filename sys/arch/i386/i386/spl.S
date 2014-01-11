@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.39 2013/06/22 06:57:30 uebayasi Exp $	*/
+/*	$NetBSD: spl.S,v 1.40 2014/01/11 17:06:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.39 2013/06/22 06:57:30 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.40 2014/01/11 17:06:15 christos Exp $");
 
 #include "opt_vm86.h"
 #include "opt_ddb.h"
@@ -226,7 +226,6 @@ IDTVEC(spllower)
 	ret
 #if defined(DEBUG)
 .Lspllower_panic:
-	addl $8, %esp
 	pushl	$1f
 	call	_C_LABEL(panic)
 1:	.asciz	"SPLLOWER: INTERRUPT ENABLED"
