@@ -1,4 +1,4 @@
-/*	$NetBSD: samachdep.h,v 1.16 2014/01/11 08:08:23 tsutsui Exp $	*/
+/*	$NetBSD: samachdep.h,v 1.17 2014/01/11 17:00:37 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -36,8 +36,6 @@
 #include <lib/libsa/stand.h>
 
 #define	NSCSI		2
-#define NSD		8
-#define DK_NDRIVE	8
 
 #define MHZ_8		1
 #define MHZ_16		2
@@ -52,7 +50,6 @@ typedef struct label_t {
 } label_t;
 
 /* autoconf.c */
-void configure(void);
 void find_devs(void);
 extern const int dev2adpt[];
 
@@ -75,9 +72,6 @@ void bmdclear(void);
 int boot(int, char **);
 int bootnetbsd(char *, int);
 
-/* clock.c */
-/* not yet */
-
 /* cons.c */
 void cninit(void);
 int cngetc(void);
@@ -89,9 +83,6 @@ int make_device(const char *, int *, int *, int *, char **);
 /* disklabel.c */
 extern u_char lbl_buff[];
 int disklabel(int, char **);
-
-/* exec.c */
-void exec_hp300(char *, u_long, int);
 
 /* font.c */
 extern const uint16_t bmdfont[][20];
@@ -127,7 +118,6 @@ bool lance_end(void *);
 int lance_intr(void);
 
 /* locore.S */
-extern	u_int bootdev;
 extern int dipsw1, dipsw2;
 extern int cputype;
 extern volatile uint32_t tick;
