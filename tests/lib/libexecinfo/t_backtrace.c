@@ -1,4 +1,4 @@
-/*	$NetBSD: t_backtrace.c,v 1.11 2014/01/11 19:13:41 martin Exp $	*/
+/*	$NetBSD: t_backtrace.c,v 1.12 2014/01/11 19:48:22 martin Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_backtrace.c,v 1.11 2014/01/11 19:13:41 martin Exp $");
+__RCSID("$NetBSD: t_backtrace.c,v 1.12 2014/01/11 19:48:22 martin Exp $");
 
 #include <atf-c.h>
 #include <atf-c/config.h>
@@ -56,7 +56,7 @@ myfunc3(size_t ncalls)
 	static const char *top[] = { "myfunc", "atfu_backtrace_fmt_basic_body",
 	    "atf_tc_run", "atf_tp_run", "atf_tp_main", "main", "___start" };
 	static bool optional_frame[] = { false, false, false, true, false,
-	    false, true };
+	    true, true };
 	size_t j, nptrs, min_frames, max_frames;
 	void *buffer[ncalls + 10];
 	char **strings;
