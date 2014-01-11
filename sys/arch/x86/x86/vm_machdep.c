@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.18 2013/12/01 01:05:16 christos Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.19 2014/01/11 17:14:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.18 2013/12/01 01:05:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.19 2014/01/11 17:14:00 christos Exp $");
 
 #include "opt_mtrr.h"
 
@@ -228,6 +228,11 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	pcb2->pcb_rsp = (uint64_t)sf;
 	pcb2->pcb_rbp = (uint64_t)l2;
 #else
+	/*
+	 * XXX Is there a reason sf->sf_edi isn't initialized here?
+	 * Could this leak potentially sensitive information to new
+	 * userspace processes?
+	 */
 	sf->sf_esi = (int)func;
 	sf->sf_ebx = (int)arg;
 	sf->sf_eip = (int)lwp_trampoline;
