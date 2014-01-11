@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.10 2014/01/11 08:08:23 tsutsui Exp $	*/
+/*	$NetBSD: init_main.c,v 1.11 2014/01/11 14:09:13 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -93,11 +93,6 @@ char default_file[64];
 #define	VERS_LOCAL	"Phase-31"
 
 int nplane;
-
-/* KIFF */
-
-struct KernInter  KIFF;
-struct KernInter *kiff = &KIFF;
 
 /* for command parser */
 
@@ -207,11 +202,7 @@ main(void)
 	printf(">> (based on Stinger ver 0.0 [%s])\n", VERS_LOCAL);
 	printf("\n");
 
-	kiff->maxaddr = (void *) (ROM_memsize -1);
-	kiff->dipsw   = ~((dipsw2 << 8) | dipsw1) & 0xFFFF;
-	kiff->plane   = nplane;
-
-	i = (int) kiff->maxaddr + 1;
+	i = ROM_memsize;
 	printf("Machine model   = %s\n", machstr);
 	printf("Physical Memory = 0x%x  ", i);
 	i >>= 20;
