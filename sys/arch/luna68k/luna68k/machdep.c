@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.95 2013/01/26 15:46:24 tsutsui Exp $ */
+/* $NetBSD: machdep.c,v 1.96 2014/01/11 08:07:16 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95 2013/01/26 15:46:24 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.96 2014/01/11 08:07:16 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95 2013/01/26 15:46:24 tsutsui Exp $")
 
 #include <sys/sysctl.h>
 
+#include <machine/bootinfo.h>
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/pcb.h>
@@ -194,8 +195,25 @@ luna68k_init(void)
 	sw1 ^= 0xff;
 	sysconsole = !(sw1 & 0x2);	/* console selection */
 
+	/*
+	 * Check if boothowto and bootdev values are passed by our bootloader.
+	 */
+	if ((bootdev & B_MAGICMASK) == B_DEVMAGIC) {
+		/* Valid value is set; no need to parse bootarg. */
+		return;
+	}
+		
+	/*
+	 * No valid bootdev value is set.
+	 * Assume we are booted by ROM monitor directly using a.out kernel
+	 * and we have to parse bootarg passed from the monitor to set
+	 * proper boothowto and check netboot.
+	 */
+
+	/* set default to "sd0a" with no howto flags */
+	bootdev = MAKEBOOTDEV(0, LUNA68K_BOOTADPT_SPC, 0, 0, 0);
 	boothowto = 0;
-	i = 0;
+
 	/*
 	 * 'bootarg' on LUNA has:
 	 *   "<args of x command> ENADDR=<addr> HOST=<host> SERVER=<name>"
@@ -207,15 +225,19 @@ luna68k_init(void)
 	 *
 	 * NetBSD/luna68k cares only the first argment; any of "sda".
 	 */
-	for (cp = bootarg; *cp != ' ' && *cp != 0; cp++) {
-		BOOT_FLAG(*cp, boothowto);
-		if (i++ >= sizeof(bootarg))
-			break;
+	bootarg[63] = '\0';
+	for (cp = bootarg; *cp != '\0'; cp++) {
+		if (*cp == '-') {
+			char c;
+			while ((c = *cp) != '\0' && c != ' ') {
+				BOOT_FLAG(c, boothowto);
+				cp++;
+			}
+		} else if (*cp == 'E' && memcmp("ENADDR=", cp, 7) == 0) {
+			bootdev =
+			    MAKEBOOTDEV(0, LUNA68K_BOOTADPT_LANCE, 0, 0, 0);
+		}
 	}
-#if 0 /* overload 1:sw1, which now means 'go ROM monitor' after poweron */
-	if (boothowto == 0)
-		boothowto = (sw1 & 0x1) ? RB_SINGLE : 0;
-#endif
 }
 
 /*
