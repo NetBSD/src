@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.4 2013/01/22 15:48:40 tsutsui Exp $	*/
+/*	$NetBSD: parse.c,v 1.5 2014/01/11 08:08:23 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -100,8 +100,9 @@ exit_program(int argc, char *argv[])
 
 static const char helpmsg[] =
 	"commands are:\n"
-	"boot [device(unit,part)filename]\n"
-	" (ex. \"boot sd(0,0)netbsd\", \"boot le(0,0)netbsd.old\" etc.)\n"
+	"boot [device(unit,part)filename] [-ads]\n"
+	" (ex. \"boot sd(6,0)netbsd\", \"boot le()netbsd.old\" etc.)\n"
+	"  Note unit number for SCSI device is (ctlr) * 10 + (id)."
 	"ls [device(unit, part)[path]]\n"
 	" (ex. \"ls sd(0,0)/bin\")\n"
 	"help\n"
@@ -139,7 +140,6 @@ struct command_entry entries[] = {
 	{ "fsrestore",	fsrestore    },
 #endif
 	{ "help",	cmd_help     },
-	{ "howto",	how_to_boot  },
 	{ "ls",		cmd_ls       },
 	{ "screen",	screen	     },
 #ifdef notyet

@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.5 2014/01/10 11:12:03 tsutsui Exp $	*/
+/*	$NetBSD: devopen.c,v 1.6 2014/01/11 08:08:23 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -76,8 +76,6 @@
 
 #define MAXDEVNAME	16
 
-static int make_device(const char *, int *, int *, int *, char **);
-
 int
 devopen(struct open_file *f, const char *fname, char **file)
 {
@@ -125,7 +123,7 @@ make_device(const char *str, int *devp, int *unitp, int *partp, char **fname)
 {
 	const char *cp;
 	struct devsw *dp;
-	int major, unit = 0, part = 0;
+	int dev, unit = 0, part = 0;
 	int i;
 	char devname[MAXDEVNAME + 1];
 
@@ -147,7 +145,7 @@ make_device(const char *str, int *devp, int *unitp, int *partp, char **fname)
 	if (dp->dv_name == NULL) {
 		return (-1);
 	}
-	major = dp - devsw;
+	dev = dp - devsw;
 	/* get mixed controller and unit number */
 	for (; *cp != ',' && *cp != ')'; cp++) {
 		if (*cp == '\0')
@@ -178,17 +176,19 @@ make_device(const char *str, int *devp, int *unitp, int *partp, char **fname)
 		return (-1);
 	}
 	/* check out end of dev spec */
-	*devp  = major;
+	*devp  = dev;
 	*unitp = unit;
 	*partp = part;
-	cp++;
-	if (*cp == '\0')
-		*fname = "netbsd";
-	else
-		*fname = __UNCONST(cp);	/* XXX */
+	if (fname != NULL) {
+		cp++;
+		if (*cp == '\0')
+			*fname = "netbsd";
+		else
+			*fname = __UNCONST(cp);	/* XXX */
+	}
 #ifdef DEBUG
-	printf("%s: major = %d, unit = %d, part = %d, fname = %s\n",
-	    __func__, major, unit, part, *fname);
+	printf("%s: dev = %d, unit = %d, part = %d, fname = %s\n",
+	    __func__, dev, unit, part, fname != NULL ? *fname : "");
 #endif
 
 	return 0;
