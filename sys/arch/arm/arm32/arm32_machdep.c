@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.98 2013/09/10 21:30:21 matt Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.99 2014/01/11 17:32:20 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.98 2013/09/10 21:30:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.99 2014/01/11 17:32:20 matt Exp $");
 
 #include "opt_modular.h"
 #include "opt_md.h"
@@ -99,6 +99,7 @@ void *	msgbufaddr;
 extern paddr_t msgbufphys;
 
 int kernel_debug = 0;
+int cpu_printfataltraps = 0;
 int cpu_fpu_present;
 int cpu_hwdiv_present;
 int cpu_neon_present;
@@ -489,6 +490,12 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTLTYPE_INT, "simdex_present", NULL,
 		       NULL, 0, &cpu_simdex_present, 0,
 		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "printfataltraps", NULL,
+		       NULL, 0, &cpu_printfataltraps, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+
 
 	/*
 	 * We need override the usual CTL_HW HW_MACHINE_ARCH so we
