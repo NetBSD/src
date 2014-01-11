@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.220 2014/01/08 12:30:27 christos Exp $
+# $NetBSD: md.amd64,v 1.221 2014/01/11 18:38:00 christos Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./lib/i386					base-compat-shlib		compat
@@ -92,7 +92,7 @@
 ./usr/lib/i386/libcrypt.so.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/libcrypt.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libcrypto.so.8			base-compat-shlib	compat,pic
-./usr/lib/i386/libcrypto.so.8.1			base-compat-shlib	compat,pic
+./usr/lib/i386/libcrypto.so.8.2			base-compat-shlib	compat,pic
 ./usr/lib/i386/libcrypto_idea.so.7		base-obsolete		obsolete
 ./usr/lib/i386/libcrypto_idea.so.7.0		base-obsolete		obsolete
 ./usr/lib/i386/libcrypto_mdc2.so.7		base-obsolete		obsolete
@@ -102,7 +102,7 @@
 ./usr/lib/i386/libcurses.so.7			base-compat-shlib	compat,pic
 ./usr/lib/i386/libcurses.so.7.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libdes.so.8			base-compat-shlib	compat,pic
-./usr/lib/i386/libdes.so.8.1			base-compat-shlib	compat,pic
+./usr/lib/i386/libdes.so.8.2			base-compat-shlib	compat,pic
 ./usr/lib/i386/libdevmapper.so.1		base-compat-shlib	compat,pic,lvm
 ./usr/lib/i386/libdevmapper.so.1.0		base-compat-shlib	compat,pic,lvm
 ./usr/lib/i386/libdm.so.0			base-compat-shlib	compat,pic
@@ -292,7 +292,7 @@
 ./usr/lib/i386/libssh.so.22			base-compat-shlib	compat,pic
 ./usr/lib/i386/libssh.so.22.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libssl.so.10			base-compat-shlib	compat,pic
-./usr/lib/i386/libssl.so.10.1			base-compat-shlib	compat,pic
+./usr/lib/i386/libssl.so.10.2			base-compat-shlib	compat,pic
 ./usr/lib/i386/libstdc++.so.7			base-compat-shlib	compat,pic,gcccmds,libstdcxx
 ./usr/lib/i386/libstdc++.so.7.0			base-compat-shlib	gcc=4,compat,pic,libstdcxx
 ./usr/lib/i386/libstdc++.so.7.1			base-compat-shlib	gcc=45,compat,pic,libstdcxx

@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.21 2014/01/08 12:30:27 christos Exp $
+# $NetBSD: ad.arm,v 1.22 2014/01/11 18:38:00 christos Exp $
 ./usr/lib/libarm_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libc_vfp_g.a				comp-c-debuglib		debuglib,softfloat
 ./usr/lib/libpmc_g.a				comp-c-debuglib		debuglib
@@ -69,11 +69,11 @@
 ./usr/libdata/debug/usr/lib/oabi/libcom_err.so.6.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/oabi/libcom_err.so.7.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/oabi/libcrypt.so.1.0.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/oabi/libcrypto.so.8.1.debug	comp-crypto-debug	crypto,debug,compat
+./usr/libdata/debug/usr/lib/oabi/libcrypto.so.8.2.debug	comp-crypto-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libcrypto_rc5.so.7.0.debug	comp-crypto-debug	crypto,crypto_rc5,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libctf.so.2.0.debug		comp-sys-debug	dtrace,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libcurses.so.7.0.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/oabi/libdes.so.8.1.debug		comp-crypto-debug	crypto,debug,compat
+./usr/libdata/debug/usr/lib/oabi/libdes.so.8.2.debug		comp-crypto-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libdevmapper.so.1.0.debug	comp-lvm-debug	lvm,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libdm.so.0.0.debug 		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libdns.so.7.0.debug		comp-bind-debug	debug,compat
@@ -183,7 +183,7 @@
 ./usr/libdata/debug/usr/lib/oabi/libsqlite3.so.1.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libss.so.6.0.debug		comp-krb5-debug	obsolete
 ./usr/libdata/debug/usr/lib/oabi/libssh.so.22.0.debug	comp-secsh-debug	crypto,debug,compat
-./usr/libdata/debug/usr/lib/oabi/libssl.so.10.1.debug		comp-crypto-debug	crypto,debug,compat
+./usr/libdata/debug/usr/lib/oabi/libssl.so.10.2.debug		comp-crypto-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libstdc++.so.5.0.debug	comp-sys-debug	gcc=3,cxx,debug,compat,libstdcxx
 ./usr/libdata/debug/usr/lib/oabi/libstdc++.so.7.0.debug	comp-sys-debug	gcc=4,cxx,debug,compat,libstdcxx
 ./usr/libdata/debug/usr/lib/oabi/libstdc++.so.7.1.debug	comp-sys-debug	gcc=45,cxx,debug,compat,libstdcxx
