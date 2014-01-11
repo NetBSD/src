@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.11 2014/01/11 14:09:13 tsutsui Exp $	*/
+/*	$NetBSD: init_main.c,v 1.12 2014/01/11 14:35:15 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -74,7 +74,6 @@
 #include <sys/boot_flag.h>
 #include <machine/cpu.h>
 #include <luna68k/stand/boot/samachdep.h>
-#include <luna68k/stand/boot/stinger.h>
 #include <luna68k/stand/boot/romvec.h>
 #include <luna68k/stand/boot/status.h>
 #include <lib/libsa/loadfile.h>
