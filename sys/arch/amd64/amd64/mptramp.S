@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.15 2013/06/22 13:09:07 uebayasi Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.16 2014/01/11 19:31:47 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -113,8 +113,6 @@
 	.global _C_LABEL(cpu_hatch)
 	.global _C_LABEL(mp_pdirpa)
 	.global _C_LABEL(local_apic)
-
-	.globl	gdt64
 
 	.text
 	.align 4,0x0
