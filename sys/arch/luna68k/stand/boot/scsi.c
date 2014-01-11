@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.4 2014/01/03 07:17:19 tsutsui Exp $	*/
+/*	$NetBSD: scsi.c,v 1.5 2014/01/11 15:51:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -109,7 +109,7 @@ scsi(int argc, char *argv[])
 
 	if (argc < 2) {
 		printf("This command is required subcommand !!\n");
-		return(ST_ERROR);
+		return ST_ERROR;
 	}
 
 	if (!strcmp(argv[1], "device")) {
@@ -131,22 +131,22 @@ scsi(int argc, char *argv[])
 		scsi_request_sense(   0, scsi_device,   0, sensbuff, SENSBUFF);
 	} else if (!strcmp(argv[1], "inquiry")) {
 		if (scsi_immed_command(   0, scsi_device,   0, &inquiry,
-				       (u_char *) &inquirybuf, sizeof(inquirybuf)) == 0) {
+		    (u_char *)&inquirybuf, sizeof(inquirybuf)) == 0) {
 			printf("Type:\t0x%x\n",		inquirybuf.type);
 			printf("Qualifier:\t0x%x\n",	inquirybuf.qual);
 			printf("Version:\t0x%x\n",	inquirybuf.version);
 			printf("RDF:\t0x%x\n",		inquirybuf.rsvd);
-			
+
 			printf("Vender ID:\t");
 			for (i = 0; i < 8; i++)
 				printf("%c", inquirybuf.vendor_id[i]);
 			printf("\n");
-			
+
 			printf("Product ID:\t");
 			for (i = 0; i < 16; i++)
 				printf("%c", inquirybuf.product_id[i]);
 			printf("\n");
-			
+
 			printf("Revision:\t");
 			for (i = 0; i < 4; i++)
 				printf("%c", inquirybuf.rev[i]);
@@ -154,7 +154,7 @@ scsi(int argc, char *argv[])
 		}
 	} else if (!strcmp(argv[1], "read_capacity")) {
 		if (scsi_immed_command(   0, scsi_device,   0, &capacity,
-				       (u_char *) &capacitybuf, sizeof(capacitybuf)) == 0) {
+		    (u_char *)&capacitybuf, sizeof(capacitybuf)) == 0) {
 			printf("Logical Block Address:\t%ld (0x%lx)\n",
 			       capacitybuf[0], capacitybuf[0]);
 			printf("Block Length:\t\t%ld (0x%lx)\n",
@@ -172,11 +172,12 @@ scsi(int argc, char *argv[])
 	} else if (!strcmp(argv[1], "format_unit")) {
 		i = 0;
 		while (i == 0) {
-			printf("Do you really want to format SCSI %d device ? [y/n]: ",
-			       scsi_device);
+			printf("Do you really want to format SCSI %d device ?"
+			    " [y/n]: ", scsi_device);
 			i = getchar();
 			printf("\n");
-			if ((i != 'y') && (i != 'Y') && (i != 'n') && (i != 'N'))
+			if ((i != 'y') && (i != 'Y') &&
+			    (i != 'n') && (i != 'N'))
 				i = 0;
 		}
 
@@ -184,7 +185,7 @@ scsi(int argc, char *argv[])
 			status = scsi_format_unit( 0, scsi_device, 0);
 	}
 
-	return(ST_NORMAL);
+	return ST_NORMAL;
 }
 
 static struct scsi_generic_cdb scsi_cdb = {
@@ -198,27 +199,27 @@ scsi_read_raw(u_int target, u_int blk, u_int nblk, u_char *buff, u_int len)
 	struct scsi_generic_cdb *cdb = &scsi_cdb;
 
 	cdb->cdb[0] = CMD_READ_EXT;
-	
+
 	cdb->cdb[2] = (blk & 0xff000000) >> 24;
 	cdb->cdb[3] = (blk & 0x00ff0000) >> 16;
 	cdb->cdb[4] = (blk & 0x0000ff00) >>  8;
 	cdb->cdb[5] = (blk & 0x000000ff);
-	
+
 	cdb->cdb[7] = (nblk & 0xff00) >> 8;
 	cdb->cdb[8] = (nblk & 0x00ff);
-	
+
 	if (scsi_immed_command(0, target, 0, cdb, buff, len) == 0)
-		return(1);
+		return 1;
 	else
-		return(0);
+		return 0;
 }
 
 int
 scsi_read(u_int blk, u_char *buff, u_int len)
 {
 	u_int   nblk = len >> DEV_BSHIFT;
-	
-	return(scsi_read_raw(scsi_device, blk, nblk, buff, len));
+
+	return scsi_read_raw(scsi_device, blk, nblk, buff, len);
 }
 
 int
@@ -227,17 +228,17 @@ scsi_write(u_int blk, u_char *buff, u_int len)
 	struct scsi_generic_cdb *cdb = &scsi_cdb;
 
 	cdb->cdb[0] = CMD_WRITE_EXT;
-	
+
 	cdb->cdb[2] = (blk & 0xff000000) >> 24;
 	cdb->cdb[3] = (blk & 0x00ff0000) >> 16;
 	cdb->cdb[4] = (blk & 0x0000ff00) >>  8;
 	cdb->cdb[5] = (blk & 0x000000ff);
-	
+
 	cdb->cdb[7] = ((len >> DEV_BSHIFT) & 0xff00) >> 8;
 	cdb->cdb[8] = ((len >> DEV_BSHIFT) & 0x00ff);
-	
+
 	if (scsi_immed_command(0, scsi_device, 0, cdb, buff, len) == 0)
-		return(1);
+		return 1;
 	else
-		return(0);
+		return 0;
 }
