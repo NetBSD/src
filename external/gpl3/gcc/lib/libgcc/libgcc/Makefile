@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2013/10/02 18:25:43 christos Exp $
+#	$NetBSD: Makefile,v 1.17 2014/01/11 00:30:23 matt Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -63,7 +63,7 @@ CLEANFILES+=	${SOBJS:=.tmp1} ${SOBJS:=.tmp2}
 .if defined(COPTS) && !empty(COPTS:M*-g*)
 	mv ${.TARGET}.tmp2 ${.TARGET}
 .else
-	${LD} -x -r ${.TARGET}.tmp2 -o ${.TARGET}
+	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}.tmp2 ${.TARGET}
 	rm -f ${.TARGET}.tmp2
 .endif
 	rm -f ${.TARGET}.tmp1
@@ -77,7 +77,7 @@ CLEANFILES+=	${SOBJS:=.tmp1} ${SOBJS:=.tmp2}
 .if defined(COPTS) && !empty(COPTS:M*-g*)
 	mv ${.TARGET}.tmp2 ${.TARGET}
 .else
-	${LD} -x -r ${.TARGET}.tmp2 -o ${.TARGET}
+	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}.tmp2 ${.TARGET}
 	rm -f ${.TARGET}.tmp2
 .endif
 	rm -f ${.TARGET}.tmp1
