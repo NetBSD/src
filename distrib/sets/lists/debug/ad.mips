@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.16 2014/01/08 12:30:27 christos Exp $
+# $NetBSD: ad.mips,v 1.17 2014/01/11 18:38:00 christos Exp $
 ./usr/lib/64/libcrypto_g.a			comp-c-debuglib		compat,crypto,debuglib,arch64
 ./usr/lib/64/libcrypto_idea_g.a			comp-obsolete		obsolete
 ./usr/lib/64/libcrypto_mdc2_g.a			comp-obsolete		obsolete
@@ -74,11 +74,11 @@
 ./usr/libdata/debug/usr/lib/64/libcom_err.so.6.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug,obsolete,arch64
 ./usr/libdata/debug/usr/lib/64/libcom_err.so.7.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug,arch64
 ./usr/libdata/debug/usr/lib/64/libcrypt.so.1.0.debug	comp-sys-debug	debug,compat,arch64
-./usr/libdata/debug/usr/lib/64/libcrypto.so.8.1.debug	comp-crypto-debug	crypto,debug,compat,arch64
+./usr/libdata/debug/usr/lib/64/libcrypto.so.8.2.debug	comp-crypto-debug	crypto,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libcrypto_rc5.so.7.0.debug	comp-crypto-debug	crypto,crypto_rc5,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libctf.so.2.0.debug		comp-sys-debug	dtrace,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libcurses.so.7.0.debug	comp-sys-debug	debug,compat,arch64
-./usr/libdata/debug/usr/lib/64/libdes.so.8.1.debug		comp-crypto-debug	crypto,debug,compat,arch64
+./usr/libdata/debug/usr/lib/64/libdes.so.8.2.debug		comp-crypto-debug	crypto,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libdevmapper.so.1.0.debug	comp-lvm-debug	lvm,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libdm.so.0.0.debug 		comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libdns.so.7.0.debug		comp-bind-debug	debug,compat,arch64
@@ -187,7 +187,7 @@
 ./usr/libdata/debug/usr/lib/64/libsqlite3.so.1.1.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libss.so.6.0.debug		comp-krb5-debug	obsolete
 ./usr/libdata/debug/usr/lib/64/libssh.so.22.0.debug	comp-secsh-debug	crypto,debug,compat,arch64
-./usr/libdata/debug/usr/lib/64/libssl.so.10.1.debug		comp-crypto-debug	crypto,debug,compat,arch64
+./usr/libdata/debug/usr/lib/64/libssl.so.10.2.debug		comp-crypto-debug	crypto,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libstdc++.so.5.0.debug	comp-sys-debug	gcc=3,cxx,debug,compat,libstdcxx,arch64
 ./usr/libdata/debug/usr/lib/64/libstdc++.so.7.0.debug	comp-sys-debug	gcc=4,cxx,debug,compat,libstdcxx,arch64
 ./usr/libdata/debug/usr/lib/64/libstdc++.so.7.1.debug	comp-sys-debug	gcc=45,cxx,debug,compat,libstdcxx,arch64
@@ -249,11 +249,11 @@
 ./usr/libdata/debug/usr/lib/o32/libcom_err.so.6.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug,obsolete,arch64
 ./usr/libdata/debug/usr/lib/o32/libcom_err.so.7.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug,arch64
 ./usr/libdata/debug/usr/lib/o32/libcrypt.so.1.0.debug	comp-sys-debug	debug,compat,arch64
-./usr/libdata/debug/usr/lib/o32/libcrypto.so.8.1.debug	comp-crypto-debug	crypto,debug,compat,arch64
+./usr/libdata/debug/usr/lib/o32/libcrypto.so.8.2.debug	comp-crypto-debug	crypto,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libcrypto_rc5.so.7.0.debug	comp-crypto-debug	crypto,crypto_rc5,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libctf.so.2.0.debug		comp-sys-debug	dtrace,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libcurses.so.7.0.debug	comp-sys-debug	debug,compat,arch64
-./usr/libdata/debug/usr/lib/o32/libdes.so.8.1.debug		comp-crypto-debug	crypto,debug,compat,arch64
+./usr/libdata/debug/usr/lib/o32/libdes.so.8.2.debug		comp-crypto-debug	crypto,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libdevmapper.so.1.0.debug	comp-lvm-debug	lvm,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libdm.so.0.0.debug 		comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libdns.so.7.0.debug		comp-bind-debug	debug,compat,arch64
@@ -362,7 +362,7 @@
 ./usr/libdata/debug/usr/lib/o32/libsqlite3.so.1.1.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libss.so.6.0.debug		comp-krb5-debug	obsolete
 ./usr/libdata/debug/usr/lib/o32/libssh.so.22.0.debug	comp-secsh-debug	crypto,debug,compat,arch64
-./usr/libdata/debug/usr/lib/o32/libssl.so.10.1.debug		comp-crypto-debug	crypto,debug,compat,arch64
+./usr/libdata/debug/usr/lib/o32/libssl.so.10.2.debug		comp-crypto-debug	crypto,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libstdc++.so.5.0.debug	comp-sys-debug	gcc=3,cxx,debug,compat,libstdcxx,arch64
 ./usr/libdata/debug/usr/lib/o32/libstdc++.so.7.0.debug	comp-sys-debug	gcc=4,cxx,debug,compat,libstdcxx,arch64
 ./usr/libdata/debug/usr/lib/o32/libstdc++.so.7.1.debug	comp-sys-debug	gcc=45,cxx,debug,compat,libstdcxx,arch64
