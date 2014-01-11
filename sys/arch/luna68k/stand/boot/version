@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.9 2014/01/10 11:12:03 tsutsui Exp $
+$NetBSD: version,v 1.10 2014/01/11 08:20:51 tsutsui Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -14,3 +14,4 @@ is taken as the current.
 1.7:	Check boot device on PROM and set proper default boot device and unit.
 1.8:	Probe SCSI devices at any IDs and change boot command to use SCSI
 	controller number and target ID to specify the boot disk.
+1.9:	Parse boot flags and pass boothowto and bootdev info to kernel.
