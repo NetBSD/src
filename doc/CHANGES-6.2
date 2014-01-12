@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.76 2014/01/12 12:26:30 bouyer Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.77 2014/01/12 12:36:13 bouyer Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -1225,4 +1225,13 @@ sys/arch/luna68k/dev/omrasopsvar.h		1.2
 	mlterm-fb with color sixel graphics and wallpaper (Xserver needs
 	much more work).
 	[tsutsui, ticket #1005]
+
+external/gpl3/gcc/dist/gcc/config/sparc/constraints.md 1.2
+external/gpl3/gcc/dist/gcc/config/sparc/predicates.md 1.2
+external/gpl3/gcc/dist/gcc/config/sparc/sync.md	1.2
+
+	Port from newer gcc, fixes compile errors (invalid asm generated
+	by gcc).
+	This fixes the build of gtk+-3.10.6 from pkgsrc on sparc64.
+	[martin, ticket #1006]
 
