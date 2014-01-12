@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.79 2013/08/21 08:30:50 matt Exp $
+#	$NetBSD: Makefile,v 1.80 2014/01/12 15:19:57 tsutsui Exp $
 
 LIB=	sa
 LIBISPRIVATE?= yes
@@ -27,10 +27,6 @@ SRCS+=	alloc.c errno.c exit.c files.c \
 	getfile.c gets.c globals.c \
 	panic.c printf.c qsort.c snprintf.c sprintf.c strerror.c \
 	subr_prf.c twiddle.c vsprintf.c checkpasswd.c
-
-.if (${MACHINE_CPU} != "mips")
-SRCS+=	exec.c
-.endif
 
 # string routines
 .if ${MACHINE_ARCH} != "i386" && ${MACHINE_ARCH} != "x86_64"
