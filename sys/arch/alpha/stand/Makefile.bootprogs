@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootprogs,v 1.32 2011/01/23 13:24:05 joerg Exp $
+# $NetBSD: Makefile.bootprogs,v 1.33 2014/01/12 15:26:28 tsutsui Exp $
 
 NOMAN=			# defined
 
@@ -15,6 +15,7 @@ STRIP?=	strip
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
+LIBCRTI=
 LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=

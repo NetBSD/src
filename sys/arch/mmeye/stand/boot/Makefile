@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/03/05 01:58:01 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2014/01/12 15:26:30 tsutsui Exp $
 
 NOMAN=		# defined
 
@@ -48,6 +48,7 @@ CPPFLAGS+=	-DNETBSD_VERS='"${NETBSD_VERS}"'
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
+LIBCRTI=
 LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=

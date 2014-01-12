@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootxx,v 1.46 2013/11/01 00:18:24 christos Exp $
+# $NetBSD: Makefile.bootxx,v 1.47 2014/01/12 15:26:29 tsutsui Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -29,6 +29,7 @@ SRCS= pbr.S label.S bootxx.S boot1.c
 STRIPFLAG=	# nothing
 
 LIBCRT0=	# nothing
+LIBCRTI=	# nothing
 LIBCRTBEGIN=	# nothing
 LIBCRTEND=	# nothing
 LIBC=		# nothing

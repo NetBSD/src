@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2013/09/12 05:54:38 joerg Exp $
+#	$NetBSD: Makefile,v 1.14 2014/01/12 15:26:29 tsutsui Exp $
 
 S=		${.CURDIR}/../../../..
 
@@ -14,6 +14,7 @@ NOMAN=		# defined
 STRIPFLAG=	# nothing
 
 LIBCRT0=	# nothing
+LIBCRTI=	# nothing
 LIBCRTBEGIN=	# nothing
 LIBCRTEND=	# nothing
 LIBC=		# nothing

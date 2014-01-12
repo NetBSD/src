@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2013/08/21 06:44:02 matt Exp $
+#	$NetBSD: Makefile,v 1.14 2014/01/12 15:26:30 tsutsui Exp $
 
 S=		${.CURDIR}/../../../..
 
@@ -23,6 +23,7 @@ DBG=		-Os
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
+LIBCRTI=
 LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=

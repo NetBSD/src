@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.12 2013/12/15 18:08:37 joerg Exp $
+# $Id: Makefile,v 1.13 2014/01/12 15:26:29 tsutsui Exp $
 
 S=		${.CURDIR}/../../../../
 PROG=		bootimx23
@@ -23,6 +23,7 @@ CPPFLAGS+=	-mno-thumb -mno-thumb-interwork
 DBG=		-g
 
 LIBCRT0=	# nothing
+LIBCRTI=	# nothing
 LIBCRTBEGIN=	# nothing
 LIBCRTEND=	# nothing
 LIBC=		# nothing

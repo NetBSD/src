@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.63 2014/01/04 20:18:50 christos Exp $
+# $NetBSD: Makefile.boot,v 1.64 2014/01/12 15:26:29 tsutsui Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -24,6 +24,7 @@ PIE_LDFLAGS=
 STRIPFLAG=	# nothing
 
 LIBCRT0=	# nothing
+LIBCRTI=	# nothing
 LIBCRTBEGIN=	# nothing
 LIBCRTEND=	# nothing
 LIBC=		# nothing

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.14 2011/01/22 19:19:17 joerg Exp $
+#	$NetBSD: Makefile.buildboot,v 1.15 2014/01/12 15:26:29 tsutsui Exp $
 
 RELOC=	120000
 HEAP_LIMIT=0x1c0000
@@ -11,6 +11,7 @@ HEAP_LIMIT=0x1c0000
 #DEBUGLIBS=	no
 
 LIBCRT0=	# nothing
+LIBCRTI=	# nothing
 LIBCRTBEGIN=	# nothing
 LIBCRTEND=	# nothing
 LIBC=		# nothing

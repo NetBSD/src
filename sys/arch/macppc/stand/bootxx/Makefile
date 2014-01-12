@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2009/03/15 08:52:46 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.13 2014/01/12 15:26:30 tsutsui Exp $
 
 S!=	cd ${.CURDIR}/../../../..; pwd
 
@@ -7,6 +7,7 @@ NOMAN=		# defined
 BINMODE=	444
 
 LIBCRT0=	# nothing
+LIBCRTI=	# nothing
 LIBCRTBEGIN=	# nothing
 LIBCRTEND=	# nothing
 LIBC=		# nothing

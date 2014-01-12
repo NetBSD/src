@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2011/12/25 06:09:08 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.16 2014/01/12 15:26:29 tsutsui Exp $
 
 WARNS		?= 1
 NOMAN		=
@@ -15,6 +15,7 @@ DEVDIR		= ${.CURDIR}/../../dev
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
+LIBCRTI=
 LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=

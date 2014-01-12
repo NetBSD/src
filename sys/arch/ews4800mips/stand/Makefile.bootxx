@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootxx,v 1.6 2013/08/12 16:34:05 joerg Exp $
+#	$NetBSD: Makefile.bootxx,v 1.7 2014/01/12 15:26:29 tsutsui Exp $
 
 NOMAN		=
 
@@ -39,6 +39,7 @@ LIBS		= ${LIBKERN}
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
+LIBCRTI=
 LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=

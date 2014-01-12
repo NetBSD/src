@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootprogs,v 1.11 2013/08/21 06:27:54 matt Exp $
+# $NetBSD: Makefile.bootprogs,v 1.12 2014/01/12 15:26:30 tsutsui Exp $
 
 .include <bsd.own.mk>
 .include <bsd.klinks.mk>
@@ -13,6 +13,7 @@ BINMODE= 444
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
+LIBCRTI=
 LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.13 2013/09/21 08:40:37 tsutsui Exp $
+#	$NetBSD: Makefile.booters,v 1.14 2014/01/12 15:26:30 tsutsui Exp $
 
 S?=		${.CURDIR}/../../../..
 MDEC_DIR?=	/usr/mdec
@@ -23,6 +23,7 @@ BINDIR= ${MDEC_DIR}
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
+LIBCRTI=
 LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=

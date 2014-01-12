@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.32 2011/02/12 05:08:40 tsutsui Exp $
+#	$NetBSD: Makefile.buildboot,v 1.33 2014/01/12 15:26:29 tsutsui Exp $
 
 # RELOC=FFF00000 allows for boot prog up to FF000 (1044480) bytes long
 RELOC=	FFF00000
@@ -27,6 +27,7 @@ CLEANFILES+=	vers.c
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
+LIBCRTI=
 LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=

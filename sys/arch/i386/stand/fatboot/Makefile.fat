@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.fat,v 1.6 2011/05/20 22:29:56 joerg Exp $
+#	$NetBSD: Makefile.fat,v 1.7 2014/01/12 15:26:29 tsutsui Exp $
 
 S=		${.CURDIR}/../../../../..
 
@@ -6,6 +6,7 @@ PROG?=		fatboot
 NOMAN=		# defined
 
 LIBCRT0=	# nothing
+LIBCRTI=	# nothing
 LIBCRTBEGIN=	# nothing
 LIBCRTEND=	# nothing
 LIBC=		# nothing

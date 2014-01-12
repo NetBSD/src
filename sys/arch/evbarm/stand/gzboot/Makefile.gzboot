@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gzboot,v 1.29 2013/12/15 18:08:37 joerg Exp $
+#	$NetBSD: Makefile.gzboot,v 1.30 2014/01/12 15:26:29 tsutsui Exp $
 
 NOMAN=  # defined
 
@@ -22,6 +22,7 @@ DBG=	-Os
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
+LIBCRTI=
 LIBC=
 LIBCRTBEGIN= 
 LIBCRTEND=      
