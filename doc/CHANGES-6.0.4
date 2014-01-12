@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.4,v 1.1.2.13 2014/01/07 18:03:20 bouyer Exp $
+# $NetBSD: CHANGES-6.0.4,v 1.1.2.14 2014/01/12 12:36:16 bouyer Exp $
 
 A complete list of changes from the NetBSD 6.0.3 release to the NetBSD 6.0.4
 release:
@@ -151,4 +151,13 @@ xsrc/xfree/xc/lib/font/bitmap/bdfread.c			patch
 	Fix CVE-2013-6462: scanf without field width limits can crash
 	with huge input data.
 	[wiz, ticket #1011]
+
+external/gpl3/gcc/dist/gcc/config/sparc/constraints.md 1.2
+external/gpl3/gcc/dist/gcc/config/sparc/predicates.md 1.2
+external/gpl3/gcc/dist/gcc/config/sparc/sync.md	1.2
+
+	Port from newer gcc, fixes compile errors (invalid asm generated
+	by gcc).
+	This fixes the build of gtk+-3.10.6 from pkgsrc on sparc64.
+	[martin, ticket #1006]
 
