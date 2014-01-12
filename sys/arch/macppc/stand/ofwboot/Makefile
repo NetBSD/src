@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.51 2011/01/22 19:19:19 joerg Exp $
+#	$NetBSD: Makefile,v 1.52 2014/01/12 15:26:30 tsutsui Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -15,6 +15,7 @@ CPPFLAGS+=	-DSUPPORT_USTARFS -DHAVE_CHANGEDISK_HOOK
 DBG=		-Os
 
 LIBCRT0=	# nothing
+LIBCRTI=	# nothing
 LIBCRTBEGIN=	# nothing
 LIBCRTEND=	# nothing
 LIBC=		# nothing

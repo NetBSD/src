@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2013/12/15 18:08:37 joerg Exp $
+#	$NetBSD: Makefile,v 1.16 2014/01/12 15:26:28 tsutsui Exp $
 
 S=		${.CURDIR}/../../../..
 
@@ -27,6 +27,7 @@ DBG=		-Os
 CWARNFLAGS.clang+=	-Wno-asm-operand-widths
 
 LIBCRT0=	# nothing
+LIBCRTI=	# nothing
 LIBCRTBEGIN=	# nothing
 LIBCRTEND=	# nothing
 LIBC=		# nothing
