@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.133 2014/01/04 02:58:38 joerg Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.134 2014/01/12 19:37:43 joerg Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.133 2014/01/04 02:58:38 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.134 2014/01/12 19:37:43 joerg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -3249,7 +3249,7 @@ sa110_setup(char *args)
 	 * enable clockswitching, note that this doesn't read or write to r0,
 	 * r0 is just to make it valid asm
 	 */
-	__asm volatile ("mcr 15, 0, r0, c15, c1, 2");
+	__asm volatile ("mcr p15, 0, r0, c15, c1, 2");
 }
 #endif	/* CPU_SA110 */
 
