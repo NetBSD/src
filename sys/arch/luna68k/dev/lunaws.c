@@ -1,4 +1,4 @@
-/* $NetBSD: lunaws.c,v 1.23.8.1 2012/07/25 21:30:35 martin Exp $ */
+/* $NetBSD: lunaws.c,v 1.23.8.2 2014/01/12 12:21:16 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.23.8.1 2012/07/25 21:30:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.23.8.2 2014/01/12 12:21:16 bouyer Exp $");
 
 #include "wsmouse.h"
 
@@ -51,6 +51,10 @@ __KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.23.8.1 2012/07/25 21:30:35 martin Exp $
 
 #include "ioconf.h"
 
+#define OMKBD_RXQ_LEN		64
+#define OMKBD_RXQ_LEN_MASK	(OMKBD_RXQ_LEN - 1)
+#define OMKBD_NEXTRXQ(x)	(((x) + 1) & OMKBD_RXQ_LEN_MASK)
+
 static const uint8_t ch1_regs[6] = {
 	WR0_RSTINT,				/* Reset E/S Interrupt */
 	WR1_RXALLS,				/* Rx per char, No Tx */
@@ -64,12 +68,16 @@ struct ws_softc {
 	device_t	sc_dev;
 	struct sioreg	*sc_ctl;
 	uint8_t		sc_wr[6];
-	struct device	*sc_wskbddev;
+	device_t	sc_wskbddev;
+	uint8_t		sc_rxq[OMKBD_RXQ_LEN];
+	u_int		sc_rxqhead;
+	u_int		sc_rxqtail;
 #if NWSMOUSE > 0
-	struct device	*sc_wsmousedev;
+	device_t	sc_wsmousedev;
 	int		sc_msreport;
-	int		buttons, dx, dy;
+	int		sc_msbuttons, sc_msdx, sc_msdy;
 #endif
+	void		*sc_si;
 };
 
 static void omkbd_input(void *, int);
@@ -111,6 +119,7 @@ static const struct wsmouse_accessops omms_accessops = {
 #endif
 
 static void wsintr(int);
+static void wssoftintr(void *);
 
 static int  wsmatch(device_t, cfdata_t, void *);
 static void wsattach(device_t, device_t, void *);
@@ -143,7 +152,7 @@ wsattach(device_t parent, device_t self, void *aux)
 	sc->sc_ctl = (struct sioreg *)scp->scp_ctl + 1;
 	memcpy(sc->sc_wr, ch1_regs, sizeof(ch1_regs));
 	scp->scp_intr[1] = wsintr;
-	
+
 	setsioreg(sc->sc_ctl, WR0, sc->sc_wr[WR0]);
 	setsioreg(sc->sc_ctl, WR4, sc->sc_wr[WR4]);
 	setsioreg(sc->sc_ctl, WR3, sc->sc_wr[WR3]);
@@ -152,6 +161,11 @@ wsattach(device_t parent, device_t self, void *aux)
 	setsioreg(sc->sc_ctl, WR1, sc->sc_wr[WR1]);
 
 	syscnputc((dev_t)1, 0x20); /* keep quiet mouse */
+
+	sc->sc_rxqhead = 0;
+	sc->sc_rxqtail = 0;
+
+	sc->sc_si = softint_establish(SOFTINT_SERIAL, wssoftintr, sc);
 
 	aprint_normal("\n");
 
@@ -165,7 +179,7 @@ wsattach(device_t parent, device_t self, void *aux)
 	{
 	struct wsmousedev_attach_args b;
 	b.accessops = &omms_accessops;
-	b.accesscookie = (void *)sc;	
+	b.accesscookie = (void *)sc;
 	sc->sc_wsmousedev =
 	    config_found_ia(self, "wsmousedev", &b, wsmousedevprint);
 	sc->sc_msreport = 0;
@@ -179,7 +193,7 @@ wsintr(int chan)
 {
 	struct ws_softc *sc = device_lookup_private(&ws_cd, 0);
 	struct sioreg *sio = sc->sc_ctl;
-	u_int code;
+	uint8_t code;
 	int rr;
 
 	rr = getsiocsr(sio);
@@ -190,47 +204,61 @@ wsintr(int chan)
 				sio->sio_cmd = WR0_ERRRST;
 				continue;
 			}
-#if NWSMOUSE > 0
-			/*
-			 * if (code >= 0x80 && code <= 0x87), then
-			 * it's the first byte of 3 byte long mouse report
-			 * 	code[0] & 07 -> LMR button condition
-			 *	code[1], [2] -> x,y delta
-			 * otherwise, key press or release event.
-			 */
-			if (sc->sc_msreport == 0) {
-				if (code < 0x80 || code > 0x87) {
-					omkbd_input(sc, code);
-					continue;
-				}
-				code = (code & 07) ^ 07;
-				/* LMR->RML: wsevent counts 0 for leftmost */
-				sc->buttons = (code & 02);
-				if (code & 01)
-					sc->buttons |= 04;
-				if (code & 04)
-					sc->buttons |= 01;
-				sc->sc_msreport = 1;
-			} else if (sc->sc_msreport == 1) {
-				sc->dx = (signed char)code;
-				sc->sc_msreport = 2;
-			} else if (sc->sc_msreport == 2) {
-				sc->dy = (signed char)code;
-				wsmouse_input(sc->sc_wsmousedev,
-						sc->buttons,
-						sc->dx, sc->dy, 0, 0,
-						WSMOUSE_INPUT_DELTA);
-
-				sc->sc_msreport = 0;
-			}
-#else
-			omkbd_input(sc, code);
-#endif
+			sc->sc_rxq[sc->sc_rxqtail] = code;
+			sc->sc_rxqtail = OMKBD_NEXTRXQ(sc->sc_rxqtail);
 		} while ((rr = getsiocsr(sio)) & RR_RXRDY);
+		softint_schedule(sc->sc_si);
 	}
 	if (rr & RR_TXRDY)
 		sio->sio_cmd = WR0_RSTPEND;
 	/* not capable of transmit, yet */
+}
+
+static void
+wssoftintr(void *arg)
+{
+	struct ws_softc *sc = arg;
+	uint8_t code;
+
+	while (sc->sc_rxqhead != sc->sc_rxqtail) {
+		code = sc->sc_rxq[sc->sc_rxqhead];
+		sc->sc_rxqhead = OMKBD_NEXTRXQ(sc->sc_rxqhead);
+#if NWSMOUSE > 0
+		/*
+		 * if (code >= 0x80 && code <= 0x87), then
+		 * it's the first byte of 3 byte long mouse report
+		 *	code[0] & 07 -> LMR button condition
+		 *	code[1], [2] -> x,y delta
+		 * otherwise, key press or release event.
+		 */
+		if (sc->sc_msreport == 0) {
+			if (code < 0x80 || code > 0x87) {
+				omkbd_input(sc, code);
+				continue;
+			}
+			code = (code & 07) ^ 07;
+			/* LMR->RML: wsevent counts 0 for leftmost */
+			sc->sc_msbuttons = (code & 02);
+			if (code & 01)
+				sc->sc_msbuttons |= 04;
+			if (code & 04)
+				sc->sc_msbuttons |= 01;
+			sc->sc_msreport = 1;
+		} else if (sc->sc_msreport == 1) {
+			sc->sc_msdx = (int8_t)code;
+			sc->sc_msreport = 2;
+		} else if (sc->sc_msreport == 2) {
+			sc->sc_msdy = (int8_t)code;
+			wsmouse_input(sc->sc_wsmousedev,
+			    sc->sc_msbuttons, sc->sc_msdx, sc->sc_msdy, 0, 0,
+			    WSMOUSE_INPUT_DELTA);
+
+			sc->sc_msreport = 0;
+		}
+#else
+		omkbd_input(sc, code);
+#endif
+	}
 }
 
 static void
@@ -241,7 +269,7 @@ omkbd_input(void *v, int data)
 	int key;
 
 	if (omkbd_decode(v, data, &type, &key))
-		wskbd_input(sc->sc_wskbddev, type, key);	
+		wskbd_input(sc->sc_wskbddev, type, key);
 }
 
 static int
@@ -257,8 +285,8 @@ omkbd_decode(void *v, int datain, u_int *type, int *dataout)
 
 static const keysym_t omkbd_keydesc_1[] = {
 /*  pos      command		normal		shifted */
-    KC(0x9), 			KS_Tab,
-    KC(0xa),  			KS_Control_L,
+    KC(0x9),			KS_Tab,
+    KC(0xa),			KS_Control_L,
     KC(0xb),			KS_Mode_switch,	/* Kana */
     KC(0xc),			KS_Shift_R,
     KC(0xd),			KS_Shift_L,
@@ -281,7 +309,7 @@ static const keysym_t omkbd_keydesc_1[] = {
     KC(0x1f),			KS_KP_Down,
  /* KC(0x20),			KS_f11, */
  /* KC(0x21),			KS_f12, */
-    KC(0x22),  			KS_1,		KS_exclam,
+    KC(0x22),			KS_1,		KS_exclam,
     KC(0x23),			KS_2,		KS_quotedbl,
     KC(0x24),			KS_3,		KS_numbersign,
     KC(0x25),			KS_4,		KS_dollar,
