@@ -404,8 +404,8 @@ dt_node_name(const dt_node_t *dnp, char *buf, size_t len)
 
 	switch (dnp->dn_kind) {
 	case DT_NODE_INT:
-		(void) snprintf(buf, len, "integer constant 0x%llx",
-		    (u_longlong_t)dnp->dn_value);
+		(void) snprintf(buf, len, "integer constant 0x%" PRIx64,
+		    dnp->dn_value);
 		break;
 	case DT_NODE_STRING:
 		s = strchr2esc(dnp->dn_string, strlen(dnp->dn_string));
@@ -1234,8 +1234,8 @@ dt_node_int(uintmax_t value)
 		}
 	}
 
-	xyerror(D_INT_OFLOW, "integer constant 0x%llx cannot be represented "
-	    "in any built-in integral type\n", (u_longlong_t)value);
+	xyerror(D_INT_OFLOW, "integer constant 0x%" PRIx64
+	    "cannot be represented in any built-in integral type\n", value);
 	/*NOTREACHED*/
 	return (NULL);		/* keep gcc happy */
 }
@@ -4572,8 +4572,8 @@ dt_node_printr(dt_node_t *dnp, FILE *fp, int depth)
 		break;
 
 	case DT_NODE_INT:
-		(void) fprintf(fp, "INT 0x%llx (%s)\n",
-		    (u_longlong_t)dnp->dn_value, buf);
+		(void) fprintf(fp, "INT 0x%" PRIx64 "(%s)\n",
+		    dnp->dn_value, buf);
 		break;
 
 	case DT_NODE_STRING:
