@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.108 2011/12/22 15:33:30 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.108.2.1 2014/01/12 12:10:47 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -806,6 +806,8 @@ Lstart1:
 #endif
 	movl	#_C_LABEL(end),%d5	| end of static kernel text/data
 Lstart2:
+	RELOC(setmemrange,%a0)		| call setmemrange()
+	jbsr	%a0@			|  to probe all memory regions
 	addl	#PAGE_SIZE-1,%d5
 	andl	#PG_FRAME,%d5		| round to a page
 	movl	%d5,%a4
