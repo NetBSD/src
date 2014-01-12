@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.77 2014/01/12 12:36:13 bouyer Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.78 2014/01/12 12:38:31 bouyer Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -1234,4 +1234,9 @@ external/gpl3/gcc/dist/gcc/config/sparc/sync.md	1.2
 	by gcc).
 	This fixes the build of gtk+-3.10.6 from pkgsrc on sparc64.
 	[martin, ticket #1006]
+
+sys/arch/evbsh3/t_sh7706lan/ssumci.c		1.3
+
+	fix CS bit, fixing card detection.
+	[nonaka, ticket #1007]
 
