@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2013/11/17 08:21:01 skrll Exp $
+#	$NetBSD: Makefile,v 1.19 2014/01/12 15:26:29 tsutsui Exp $
 
 PROG=	xxboot
 NOMAN=	# defined
@@ -27,6 +27,7 @@ BINMODE=	444
 # standalone program
 LIBCRTBEGIN=
 LIBCRT0=
+LIBCRTI=
 LIBCRTEND=
 LIBC=
 

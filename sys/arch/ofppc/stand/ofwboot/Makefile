@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2013/08/21 06:46:26 matt Exp $
+#	$NetBSD: Makefile,v 1.29 2014/01/12 15:26:30 tsutsui Exp $
 
 S!=	cd ${.CURDIR}/../../../.. ; pwd
 
@@ -29,6 +29,7 @@ BINMODE=	444
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
+LIBCRTI=
 LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=

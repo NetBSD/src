@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.23 2014/01/04 20:19:33 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.24 2014/01/12 15:26:31 tsutsui Exp $
 
 # Must have S=/usr/src/sys (or equivalent)
 # But note: this is w.r.t. a subdirectory
@@ -56,6 +56,7 @@ proginstall: ${SA_PROG}.bin
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
+LIBCRTI=
 LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=
