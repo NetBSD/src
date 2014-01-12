@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.78 2014/01/12 12:38:31 bouyer Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.79 2014/01/12 12:41:24 bouyer Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -1239,4 +1239,12 @@ sys/arch/evbsh3/t_sh7706lan/ssumci.c		1.3
 
 	fix CS bit, fixing card detection.
 	[nonaka, ticket #1007]
+
+sys/arch/next68k/next68k/pmap_bootstrap.c	1.43
+
+	Move physmem calculations before nptpage initialization.
+	Should fix next68k specific part of PR port-m68k/45915
+	(panic: pmap_enter_ptpage: can't get KPT page), and
+	this is the last possible m68k MD part of this PR.
+	[tsutsui, ticket #1008]
 
