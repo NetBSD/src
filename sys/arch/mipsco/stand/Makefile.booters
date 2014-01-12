@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.18 2013/08/21 07:13:51 matt Exp $
+#	$NetBSD: Makefile.booters,v 1.19 2014/01/12 15:26:30 tsutsui Exp $
 
 .include <bsd.sys.mk>		# for HOST_SH
 
@@ -13,6 +13,7 @@ BINMODE?= 444
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
+LIBCRTI=
 LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=
