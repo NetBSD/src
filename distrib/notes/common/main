@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.484.2.6.2.2 2013/09/26 15:42:10 riz Exp $
+.\"	$NetBSD: main,v 1.484.2.6.2.3 2014/01/12 15:11:58 bouyer Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -458,7 +458,7 @@ possible, it's likely that
 wouldn't exist.
 .
 .if \n[FOR_RELEASE] \{\
-.Ss Changes Between The NetBSD 6.1.1 and 6.1.2 Releases
+.Ss Changes Between The NetBSD 6.1.2 and 6.1.3 Releases
 .Pp
 .Nx
 \*V
@@ -467,14 +467,34 @@ It represents a selected subset of fixes deemed critical for security
 or stability reasons.
 .Pp
 The complete list of changes can be found in the
-CHANGES-6.1.2:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-6.1.2/CHANGES-6.1.2
-file in the top level directory of the NetBSD 6.1.2 release tree. An abbreviated list is as follows:
+CHANGES-6.1.3:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-6.1.3/CHANGES-6.1.3
+file in the top level directory of the NetBSD 6.1.3 release tree. An abbreviated list is as follows:
 .Ss2 Security Advisory Fixes
 .(bullet
-NetBSD-SA2013-009:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2013-009.txt.asc
-user settable small BPF buffer can cause a panic
+NetBSD-SA2013-010:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2013-010.txt.asc
+Use after free in Xserver handling of ImageText requests (CVE-2013-4396)
+.It
+NetBSD-SA2013-011:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2013-011.txt.asc
+embryonic TCP sockets local DoS
+.It
+NetBSD-SA2013-012:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2013-012.txt.asc
+Router Advertisement sysctl local Denial of Service
+.It
+NetBSD-SA2013-013:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2013-013.txt.asc
+Memory leak when trying to execute bogus ELF binaries
+.It
+NetBSD-SA2014-001:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2014-001.txt.asc
+Stack buffer overflow in libXfont (CVE-2013-6462)
+.It
+NetBSD-SA2014-002:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2014-002.txt.asc
+ntpd used as DDoS amplifier
 .bullet)
 .
 .Pp
@@ -483,57 +503,49 @@ NetBSD 6.1.2:
 .Lk http://www.NetBSD.org/support/security/patches-6.1.2.html .
 .Ss2 Kernel
 .(bullet
-.Xr virtio 4 :
-Fixed a panic during shutdown on KVM.
-(PR#48105):
-.Lk http://gnats.netbsd.org/48105
+.Xr pci 4 :
+Work around a qemu bug preventing NetBSD from booting on some versions of QEMU and KVM.
+(PR#45671):
+.Lk http://gnats.netbsd.org/45671
 .It
-.Xr uhci 4 :
-Fixed USB device enumeration in some cases, fixed some ops on big-endian machines.
-(PR#47522, :
-.Lk http://gnats.netbsd.org/47522
-PR#48237):
-.Lk http://gnats.netbsd.org/48237
+Xen: fix dom0 crash with some domUs
+.It
+Xen: remove a bogus diagostic message spamming the console.
+(PR#46313):
+.Lk http://gnats.netbsd.org/46313
 .bullet)
 .
 .Ss2 Networking
 .(bullet
-Include BRDADDR and NETMASK in the IPv4 ioctls we ban for IPv6.
+NPF: fix byteorder for port range comparison.
 .It
-.Xr npf 3 :
-Fixed panic with IPv6 when nbufs are reallocated.
-.It
-.Xr npf 3 :
-Fixed filtering with dynamic rules.
+NPF: fix a race condition.
 .bullet)
 .
 .Ss2 File Systems
 .(bullet
-udf: Fixed a problem which could result in garbage after the 4GB limit.
+ffs: Fixed a fsck_ffs internal error on UFS1.
 .bullet)
 .
 .Ss2 Miscellaneous
 .(bullet
-.Xr pthread 3 :
-Fixed error return from pthread_create() in some cases.
+.Xr Xserver 1 :
+Fixed crash on i810e.
+(PR#48315):
+.Lk http://gnats.netbsd.org/48315     
 .It
-Update tzdata to 2013e.
+.Xr sysinst 8 :
+Fixed wrong MBR partiton offset on small disks.
+(PR#48304):
+.Lk http://gnats.netbsd.org/48304     
+.Xr ld.elf_so 1 :
+Fixed memory corruption.
+(PR#48324):
+.Lk http://gnats.netbsd.org/48324     
 .It
-Update some TNF ssh keys in /etc/ssh/ssh_known_hosts.
+sparc64: fix a kernel diagnostic panic.
 .It
-Fixed an environment issue which could cause crashes in Emacs 24 and certain other applications.
-.It
-pkg_install: Fixed installation of signed packages.
-(PR#48194):
-.Lk http://gnats.netbsd.org/48194
-.It
-Fixed regression introduced in NetBSD 6.1.1 affecting certain applications running under X.
-(PR#48170):
-.Lk http://gnats.netbsd.org/48170
-.It
-mvme68k: Fixed boot panic.
-(PR#45915):
-.Lk http://gnats.netbsd.org/45915
+sparc64: fixed gcc to not generate invalid asm.
 .bullet)
 .
 .Ss "The NetBSD Foundation"
@@ -580,8 +592,10 @@ Changes between the initial 6.0 branch and final release of 6.0.
 Changes between the final release of 6.0 and final release of 6.1.
 .It Li CHANGES-6.1.1
 Changes between the final release of 6.1 and final release of 6.1.1.
-.It Li CHANGES-6.1.1
+.It Li CHANGES-6.1.2
 Changes between the final release of 6.1.1 and final release of 6.1.2.
+.It Li CHANGES-6.1.3
+Changes between the final release of 6.1.2 and final release of 6.1.3.
 .It Li CHANGES.prev
 Changes in previous
 .Nx
