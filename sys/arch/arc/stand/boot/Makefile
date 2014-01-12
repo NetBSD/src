@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 2011/07/13 14:09:36 mrg Exp $
+# $NetBSD: Makefile,v 1.14 2014/01/12 15:26:28 tsutsui Exp $
 
 .include <bsd.own.mk>
 .include <bsd.sys.mk>	# for ${HOST_SH}
@@ -21,6 +21,7 @@ SRCS+=	boot.c bootinfo.c conf.c devopen.c disk.c getchar.c getopt.c putchar.c
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
+LIBCRTI=
 LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=

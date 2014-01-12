@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.booters,v 1.58 2013/08/12 16:34:05 joerg Exp $
+# $NetBSD: Makefile.booters,v 1.59 2014/01/12 15:26:30 tsutsui Exp $
 
 NOMAN=		# defined
 
@@ -12,6 +12,7 @@ BINMODE?=	444
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
+LIBCRTI=
 LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=
