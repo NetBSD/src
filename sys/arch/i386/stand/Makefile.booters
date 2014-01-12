@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.88 2013/08/21 15:24:27 matt Exp $
+#	$NetBSD: Makefile.booters,v 1.89 2014/01/12 15:26:29 tsutsui Exp $
 
 .include <bsd.own.mk>
 
@@ -6,6 +6,7 @@ STRIPFLAG=
 BINMODE=444
 
 LIBCRT0=	# nothing
+LIBCRTI=	# nothing
 LIBCRTBEGIN=	# nothing
 LIBCRTEND=	# nothing
 LIBC=		# nothing
