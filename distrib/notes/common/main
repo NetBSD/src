@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.484.2.4.2.4 2014/01/12 15:11:17 bouyer Exp $
+.\"	$NetBSD: main,v 1.484.2.4.2.5 2014/01/12 16:06:36 bouyer Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -498,14 +498,12 @@ NetBSD 6.0.3:
 .Ss2 Kernel
 .(bullet
 .Xr pci 4 :
-Work around a qemu bug preventing NetBSD from booting on some versions of QEMU and KVM.
-(PR#45671):
+Work around a QEMU bug preventing NetBSD from booting on some versions of QEMU and KVM.  (PR#45671):
 .Lk http://gnats.netbsd.org/45671
 .It
 Xen: fix dom0 crash with some domUs
 .It
-Xen: remove a bogus diagostic message spamming the console.
-(PR#46313):
+Xen: remove a bogus diagostic message spamming the console.  (PR#46313):
 .Lk http://gnats.netbsd.org/46313
 .bullet)
 .
@@ -522,17 +520,14 @@ ffs: Fixed a fsck_ffs internal error on UFS1.
 .Ss2 Miscellaneous
 .(bullet
 .Xr Xserver 1 :
-Fixed crash on i810e.
-(PR#48315):
+Fixed crash on i810e.  (PR#48315):
 .Lk http://gnats.netbsd.org/48315
 .It
 .Xr sysinst 8 :
-Fixed wrong MBR partiton offset on small disks.
-(PR#48304):
+Fixed wrong MBR partiton offset on small disks.  (PR#48304):
 .Lk http://gnats.netbsd.org/48304
 .Xr ld.elf_so 1 :
-Fixed memory corruption.
-(PR#48324):
+Fixed memory corruption.  (PR#48324):
 .Lk http://gnats.netbsd.org/48324
 .It
 sparc64: fix a kernel diagnostic panic.
