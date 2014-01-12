@@ -1,4 +1,4 @@
-/* $NetBSD: omrasopsvar.h,v 1.1.2.2 2012/07/25 21:30:35 martin Exp $ */
+/* $NetBSD: omrasopsvar.h,v 1.1.2.3 2014/01/12 12:25:03 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -26,4 +26,5 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-int omrasops_init(struct rasops_info *, int, int);
+int omrasops1_init(struct rasops_info *, int, int);
+int omrasops4_init(struct rasops_info *, int, int);
