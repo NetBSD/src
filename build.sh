@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.273 2013/08/30 10:29:06 pooka Exp $
+#	$NetBSD: build.sh,v 1.274 2014/01/13 20:00:20 apb Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1286,7 +1286,7 @@ sanitycheck()
 	#
 	if ! ${do_expertmode} && \
 	    [ "$id_u" -ne 0 ] && \
-	    [ "${MKUNPRIVED}" = "no" ] ; then
+	    [ "${MKUNPRIVED:-no}" = "no" ] ; then
 		bomb "-U or -E must be set for build as an unprivileged user."
 	fi
 
@@ -1745,7 +1745,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.273 2013/08/30 10:29:06 pooka Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.274 2014/01/13 20:00:20 apb Exp $
 # with these arguments: ${_args}
 #
 
