@@ -1,4 +1,4 @@
-# $NetBSD: t_hostent.sh,v 1.8 2014/01/10 20:38:11 gson Exp $
+# $NetBSD: t_hostent.sh,v 1.9 2014/01/13 10:49:47 gson Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -114,7 +114,7 @@ gethostbyaddr6_head()
 gethostbyaddr6_body()
 {
 	start_dns_server 4
-	atf_check -o inline:"$ans6" -x "$HIJACK_DNS ${dir}/h_hostent -t auto -a $a6"
+	atf_check -o inline:"$ans6" -x "$HIJACK_DNS ${dir}/h_hostent ${res} -t auto -a $a6"
 }
 gethostbyaddr6_cleanup()
 {
