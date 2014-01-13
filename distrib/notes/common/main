@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.425.2.16.2.1 2013/09/22 22:43:10 riz Exp $
+.\"	$NetBSD: main,v 1.425.2.16.2.2 2014/01/13 21:51:56 bouyer Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -454,74 +454,40 @@ wouldn't exist.
 .if \n[FOR_RELEASE] \{\
 .Pp
 The complete list of changes can be found in the
-CHANGES-5.2.1:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-5.2.1/CHANGES-5.2.1
-file in the top level directory of the NetBSD 5.2.1 release tree. An abbreviated list is as follows:
+CHANGES-5.2.2:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-5.2.2/CHANGES-5.2.2
+file in the top level directory of the NetBSD 5.2.2 release tree. An abbreviated list is as follows:
 .Ss2 Security Advisory Fixes
 .(bullet
-NetBSD-SA2013-004:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2013-004.txt.asc
-Vulnerabilities in grep
+NetBSD-SA2013-010:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2013-010.txt.asc
+Use after free in Xserver handling of ImageText requests (CVE-2013-4396)
 .It
-NetBSD-SA2013-005:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2013-005.txt.asc
-bind Denial of Service (CVE-2013-4854)
+NetBSD-SA2013-011:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2013-011.txt.asc
+embryonic TCP sockets local DoS
 .It
-NetBSD-SA2013-006:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2013-006.txt.asc
-Arbitrary Kernel Read with netstat -P
+NetBSD-SA2013-012:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2013-012.txt.asc
+Router Advertisement sysctl local Denial of Service
 .It
-NetBSD-SA2013-007:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2013-007.txt.asc
-Protocol handling issues in X Window System client libraries
+NetBSD-SA2014-001:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2014-001.txt.asc
+Stack buffer overflow in libXfont (CVE-2013-6462)
 .It
-NetBSD-SA2013-009:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2013-009.txt.asc
-user settable small BPF buffer can cause a panic
+NetBSD-SA2014-002:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2014-002.txt.asc
+ntpd used as DDoS amplifier
 .bullet)
 .
 .Pp
-Advisories prior to NetBSD-SA2013-004 do not affect
+Advisories prior to NetBSD-SA2013-010 do not affect
 NetBSD 5.2.1:
 .Lk http://www.NetBSD.org/support/security/patches-5.2.1.html .
 .Ss2 Kernel
 .(bullet
-Fixed a panic triggered when killing a process waiting to start.
-(PR#44935):
-.Lk http://gnats.NetBSD.org/44935
-.It
-Fixed a LOCKDEBUG panic in sysctl path.
-(PR#45827):
-.Lk http://gnats.netbsd.org/45827
-.It
-Fixed diagnostic panic when killing a traced process.
-(PR#42309):
-.Lk http://gnats.netbsd.org/42309
-.bullet)
-.
-.Ss2 Networking
-.(bullet
-Include BRDADDR and NETMASK in the IPv4 ioctls we ban for IPv6.
-.bullet)
-.
-.Ss2 File Systems
-.(bullet
-.Xr fss 4 :
-Don't crash when running multiple "dump -X".
-(PR#47514):
-.Lk http://gnats.netbsd.org/47514
-.It
-.bullet)
-.
-.Ss2 Miscellaneous
-.(bullet
-Update tzdata to 2013e.
-.It
-Update IPv6 DNS servers in sysinst.
-.It
-MAKEDEV: the console major number is not always 0.
-.It
-Update some TNF ssh keys in /etc/ssh/ssh_known_hosts.
+Xen: remove a bogus diagostic message spamming the console.  (PR#46313):
+.Lk http://gnats.netbsd.org/46313     
 .bullet)
 .
 .\} \" \n[FOR_RELEASE]
@@ -606,6 +572,8 @@ Changes between the 5.0 and 5.1 releases.
 Changes between the 5.1 and 5.2 releases.
 .It Li CHANGES-5.2.1
 Changes between the 5.2 and 5.2.1 releases.
+.It Li CHANGES-5.2.2
+Changes between the 5.2.1 and 5.2.2 releases.
 .It Li CHANGES.prev
 Changes in previous
 .Nx
