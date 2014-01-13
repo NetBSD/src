@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.425.2.14.2.3 2013/09/22 22:12:05 riz Exp $
+.\"	$NetBSD: main,v 1.425.2.14.2.4 2014/01/13 21:52:12 bouyer Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -454,107 +454,41 @@ wouldn't exist.
 .if \n[FOR_RELEASE] \{\
 .Pp
 The complete list of changes can be found in the
-CHANGES-5.1.3:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-5.1.3/CHANGES-5.1.3
-file in the top level directory of the NetBSD 5.1.3 release tree. An abbreviated list is as follows:
+CHANGES-5.1.4:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-5.1.4/CHANGES-5.1.4
+file in the top level directory of the NetBSD 5.1.4 release tree. An abbreviated list is as follows:
 .Ss2 Security Advisory Fixes
 .(bullet
-NetBSD-SA2012-001:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2012-001.txt.asc
-OpenSSL buffer overflow in DER read function
+NetBSD-SA2013-010:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2013-010.txt.asc
+Use after free in Xserver handling of ImageText requests (CVE-2013-4396)
 .It
-NetBSD-SA2012-002:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2012-002.txt.asc
-OpenSSL Invalid TLS/DTLS record attack
+NetBSD-SA2013-011:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2013-011.txt.asc
+embryonic TCP sockets local DoS
 .It
-NetBSD-SA2012-003:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2012-003.txt.asc
-Intel processors sysret to non-canonical address behaviour
+NetBSD-SA2013-012:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2013-012.txt.asc
+Router Advertisement sysctl local Denial of Service
 .It
-NetBSD-SA2012-004:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2012-004.txt.asc
-BIND resolver DoS when using DNSSEC Validation
+NetBSD-SA2014-001:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2014-001.txt.asc
+Stack buffer overflow in libXfont (CVE-2013-6462)
 .It
-NetBSD-SA2013-004:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2013-004.txt.asc
-Vulnerabilities in grep
-.It
-NetBSD-SA2013-005:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2013-005.txt.asc
-bind Denial of Service (CVE-2013-4854)
-.It
-NetBSD-SA2013-006:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2013-006.txt.asc
-Arbitrary Kernel Read with netstat -P
-.It
-NetBSD-SA2013-007:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2013-007.txt.asc
-Protocol handling issues in X Window System client libraries
-.It
-NetBSD-SA2013-009:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2013-009.txt.asc
-user settable small BPF buffer can cause a panic
+NetBSD-SA2014-002:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2014-002.txt.asc
+ntpd used as DDoS amplifier
 .bullet)
 .
 .Pp
-Advisories prior to NetBSD-SA2012-001 do not affect
+Advisories prior to NetBSD-SA2013-010 do not affect
 NetBSD 5.1.3:
 .Lk http://www.NetBSD.org/support/security/patches-5.1.3.html .
-.Ss2 Other Security Fixes
-.(bullet
-OpenSSL: Fix CVE-2012-2110, CVE-2012-2333.
-.bullet)
 .
 .Ss2 Kernel
 .(bullet
-Fixed a panic triggered when killing a process waiting to start.
-(PR#44935):
-.Lk http://gnats.NetBSD.org/44935
-.It
-Fixed a LOCKDEBUG panic in sysctl path.
-(PR#45827):
-.Lk http://gnats.netbsd.org/45827
-.It
-Fixed diagnostic panic when killing a traced process.
-(PR#42309):
-.Lk http://gnats.netbsd.org/42309
-.bullet)
-.
-.Ss2 Networking
-.(bullet
-Fixed a regression in netsmb introduced in NetBSD 5.1.2.
-(PR#44092):
-.Lk http://gnats.netbsd.org/44092
-.It
-Disallow passing of kqueue descriptors via SCM_RIGHT anxiliary socket messages.
-(PR#46463):
-.Lk http://gnats.netbsd.org/46463
-.It
-Include BRDADDR and NETMASK in the IPv4 ioctls we ban for IPv6.
-.bullet)
-.
-.Ss2 File Systems
-.(bullet
-.Xr fss 4 :
-Don't crash when running multiple "dump -X".
-(PR#47514):
-.Lk http://gnats.netbsd.org/47514
-.It
-.bullet)
-.
-.Ss2 Miscellaneous
-.(bullet
-Update tzdata to 2013e.
-.It
-sparc64: Fixed the root cause of the hack "disable optimizations for uvm_bio.c on 32 bit kernels."
-.It
-x68k: Fix the clock when timecounter uses "mfp" (the default)
-.It
-Update IPv6 DNS servers in sysinst.
-.It
-MAKEDEV: the console major number is not always 0.
-.It
-Update some TNF ssh keys in /etc/ssh/ssh_known_hosts.
+Xen: remove a bogus diagostic message spamming the console.  (PR#46313):
+.Lk http://gnats.netbsd.org/46313
 .bullet)
 .
 .\} \" \n[FOR_RELEASE]
@@ -639,6 +573,10 @@ Changes between the 5.0 and 5.1 releases.
 Changes between the 5.1 and 5.1.1 releases.
 .It Li CHANGES-5.1.2
 Changes between the 5.1.1 and 5.1.2 releases.
+.It Li CHANGES-5.1.3
+Changes between the 5.1.2 and 5.1.3 releases.
+.It Li CHANGES-5.1.4
+Changes between the 5.1.3 and 5.1.4 releases.
 .It Li CHANGES.prev
 Changes in previous
 .Nx
