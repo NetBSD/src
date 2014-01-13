@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.167 2013/09/11 23:15:47 christos Exp $	*/
+/*	$NetBSD: in6.c,v 1.168 2014/01/13 18:57:48 roy Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.167 2013/09/11 23:15:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.168 2014/01/13 18:57:48 roy Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -1866,32 +1866,6 @@ bestia(struct in6_ifaddr *best_ia, struct in6_ifaddr *ia)
 	if (best_ia == NULL ||
 	    best_ia->ia_ifa.ifa_preference < ia->ia_ifa.ifa_preference)
 		return ia;
-	return best_ia;
-}
-
-/*
- * find the internet address on a given interface corresponding to a neighbor's
- * address.
- */
-struct in6_ifaddr *
-in6ifa_ifplocaladdr(const struct ifnet *ifp, const struct in6_addr *addr)
-{
-	struct ifaddr *ifa;
-	struct in6_ifaddr *best_ia = NULL, *ia;
-
-	IFADDR_FOREACH(ifa, ifp) {
-		if (ifa->ifa_addr == NULL)
-			continue;	/* just for safety */
-		if (ifa->ifa_addr->sa_family != AF_INET6)
-			continue;
-		ia = (struct in6_ifaddr *)ifa;
-		if (!IN6_ARE_MASKED_ADDR_EQUAL(addr,
-				&ia->ia_addr.sin6_addr,
-				&ia->ia_prefixmask.sin6_addr))
-			continue;
-		best_ia = bestia(best_ia, ia);
-	}
-
 	return best_ia;
 }
 
