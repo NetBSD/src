@@ -1,4 +1,4 @@
-# $NetBSD: t_hostent.sh,v 1.9 2014/01/13 10:49:47 gson Exp $
+# $NetBSD: t_hostent.sh,v 1.10 2014/01/13 11:08:14 gson Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -69,7 +69,7 @@ gethostbyname4_head()
 gethostbyname4_body()
 {
 	start_dns_server 4
-	atf_check -o inline:"$ans4" -x "$HIJACK_DNS ${dir}/h_hostent $res -t auto -4 $n4"
+	atf_check -o inline:"$ans4" -x "$HIJACK_DNS ${dir}/h_hostent ${res} -t auto -4 $n4"
 }
 gethostbyname4_cleanup()
 {
