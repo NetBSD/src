@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.661 2013/12/25 13:52:37 nonaka Exp $
+$NetBSD: usbdevs,v 1.662 2014/01/13 08:21:41 reinoud Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -539,6 +539,7 @@ vendor OVISLINK		0x1b75	OvisLink
 vendor MPMAN		0x1cae	MPMan
 vendor 4GSYSTEMS	0x1c9e	4G Systems
 vendor PEGATRON		0x1d4d	Pegatron
+vendor FUTUREBITS	0x1d50	Future Bits
 vendor AIRTIES		0x1eda	AirTies
 vendor DLINK		0x2001	D-Link
 vendor PLANEX2		0x2019	Planex Communications
@@ -2437,6 +2438,9 @@ product PEGATRON RT3070		0x000c	RT3070
 product PEGATRON RT3070_2	0x000e	RT3070
 product PEGATRON RT3070_3	0x0010	RT3070
 product PEGATRON RT3072		0x0011	RT3072
+
+/* Future Bits products */
+product FUTUREBITS 4PI		0x6019	4Pi reprap
 
 /* Pen Driver */
 product PEN USBDISKPRO		0x0120	USB Disk Pro
