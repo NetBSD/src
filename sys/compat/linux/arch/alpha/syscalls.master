@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.82 2013/12/27 14:17:11 njoly Exp $
+	$NetBSD: syscalls.master,v 1.83 2014/01/13 10:33:03 njoly Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -580,11 +580,10 @@
 358	STD		{ int|linux_sys||select(int nfds, fd_set *readfds, \
 			    fd_set *writefds, fd_set *exceptfds, \
 			    struct timeval50 *timeout); }
-359	NOARGS		{ int|compat_50_sys||gettimeofday( \
-			    struct timeval50 *tp, struct timezone *tzp); }
-360	NOARGS		{ int|compat_50_sys||settimeofday( \
-			    const struct timeval50 *tp, \
-			    const struct timezone *tzp); }
+359	STD		{ int|linux_sys||gettimeofday(struct timeval50 *tp, \
+			    struct timezone *tzp); }
+360	STD		{ int|linux_sys||settimeofday(struct timeval50 *tp, \
+			    struct timezone *tzp); }
 361	NOARGS		{ int|compat_50_sys||getitimer(int which, \
 			    struct itimerval50 *itv); }
 362	NOARGS		{ int|compat_50_sys||setitimer(int which, \
