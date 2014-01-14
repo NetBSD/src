@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.260 2014/01/02 16:46:40 tho Exp $
+# $NetBSD: shl.mi,v 1.261 2014/01/14 17:18:43 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -156,6 +156,7 @@
 ./usr/lib/librumpdev_fss_pic.a			comp-c-piclib		rump,picinstall
 ./usr/lib/librumpdev_md_pic.a			comp-c-piclib		rump,picinstall
 ./usr/lib/librumpdev_netsmb_pic.a		comp-c-piclib		rump,picinstall
+./usr/lib/librumpdev_opencrypto_pic.a		comp-c-piclib		rump,picinstall
 ./usr/lib/librumpdev_pad_pic.a			comp-c-piclib		rump,picinstall
 ./usr/lib/librumpdev_pic.a			comp-c-piclib		rump,picinstall
 ./usr/lib/librumpdev_pud_pic.a			comp-c-piclib		rump,picinstall
