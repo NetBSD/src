@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.323 2013/12/06 23:14:15 matt Exp $
+#	$NetBSD: bsd.README,v 1.324 2014/01/14 11:32:35 apb Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1143,7 +1143,8 @@ LIBDIR		Target directory for libraries.
 MKARZERO	Normally, ar(1) sets the timestamps, uid, gid and
 		permissions in files inside its archives to those of
 		the file it was fed. This leads to non-reproduceable
-		builds. If MKARZERO is set to "yes" (default is "no")
+		builds. If MKARZERO is set to "yes" (default is the
+		same as MKREPRO, or "no" if MKREPRO is not defined),
 		then the "D" flag is passed to ar, causing the
 		timestamp, uid and gid to be zeroed and the file
 		permissions to be set to 644. This allows .a files
