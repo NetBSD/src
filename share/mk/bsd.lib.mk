@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.344 2013/12/16 21:34:16 matt Exp $
+#	$NetBSD: bsd.lib.mk,v 1.345 2014/01/14 11:31:01 apb Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -518,7 +518,7 @@ _YLSRCS=	${SRCS:M*.[ly]:C/\..$/.c/} ${YHEADER:D${SRCS:M*.y:.y=.h}}
 
 realall: ${SRCS} ${ALLOBJS:O} ${_LIBS} ${_LIB.so.debug}
 
-MKARZERO?=no
+MKARZERO?= ${MKREPRO:Uno}
 
 .if ${MKARZERO} == "yes"
 _ARFL=crsD
