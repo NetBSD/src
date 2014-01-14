@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.324 2014/01/14 11:32:35 apb Exp $
+#	$NetBSD: bsd.README,v 1.325 2014/01/14 18:51:45 christos Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1123,6 +1123,11 @@ kernel Makefiles.  It uses similar variables to <bsd.inc.mk>.
 Please see <bsd.kinc.mk> for more details, and keep the documentation
 in that file up to date.
 
+=-=-=-=-=   bsd.syscall.mk =-=-=-=-=
+
+The include file <bsd.syscall.mk> contains the logic to create syscall
+files for various emulations. It includes <bsd.kinc.mk> to handle the
+rest of the targets.
 
 =-=-=-=-=   bsd.lib.mk   =-=-=-=-=
 
