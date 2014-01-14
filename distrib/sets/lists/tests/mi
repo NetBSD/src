@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.556 2014/01/09 02:18:55 christos Exp $
+# $NetBSD: mi,v 1.557 2014/01/14 17:53:02 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -21,6 +21,7 @@
 ./usr/libdata/debug/usr/tests/bin/df					tests-bin-debug
 ./usr/libdata/debug/usr/tests/crypto					tests-crypto-debug
 ./usr/libdata/debug/usr/tests/crypto/libcrypto				tests-crypto-debug
+./usr/libdata/debug/usr/tests/crypto/opencrypto				tests-crypto-debug
 ./usr/libdata/debug/usr/tests/dev					tests-fs-debug
 ./usr/libdata/debug/usr/tests/dev/audio					tests-fs-debug
 ./usr/libdata/debug/usr/tests/dev/cgd					tests-fs-debug
@@ -857,6 +858,23 @@
 ./usr/tests/crypto/libcrypto/t_hashes		tests-crypto-tests	crypto
 ./usr/tests/crypto/libcrypto/t_libcrypto	tests-crypto-tests	crypto
 ./usr/tests/crypto/libcrypto/t_pubkey		tests-crypto-tests	crypto
+./usr/tests/crypto/opencrypto			tests-crypto-tests
+./usr/tests/crypto/opencrypto/Atffile		tests-crypto-tests	crypto
+./usr/tests/crypto/opencrypto/Kyuafile		tests-crypto-tests	crypto,kyua
+./usr/tests/crypto/opencrypto/h_aesctr1		tests-crypto-tests	crypto
+./usr/tests/crypto/opencrypto/h_aesctr2		tests-crypto-tests	crypto
+./usr/tests/crypto/opencrypto/h_arc4		tests-crypto-tests	crypto
+./usr/tests/crypto/opencrypto/h_camellia	tests-crypto-tests	crypto
+./usr/tests/crypto/opencrypto/h_cbcdes		tests-crypto-tests	crypto
+./usr/tests/crypto/opencrypto/h_comp		tests-crypto-tests	crypto
+./usr/tests/crypto/opencrypto/h_comp_zlib	tests-crypto-tests	crypto
+./usr/tests/crypto/opencrypto/h_comp_zlib_rnd	tests-crypto-tests	crypto
+./usr/tests/crypto/opencrypto/h_gcm		tests-crypto-tests	crypto
+./usr/tests/crypto/opencrypto/h_md5		tests-crypto-tests	crypto
+./usr/tests/crypto/opencrypto/h_md5hmac		tests-crypto-tests	crypto
+./usr/tests/crypto/opencrypto/h_null		tests-crypto-tests	crypto
+./usr/tests/crypto/opencrypto/h_xcbcmac		tests-crypto-tests	crypto
+./usr/tests/crypto/opencrypto/t_opencrypto	tests-crypto-tests	crypto
 ./usr/tests/dev					tests-fs-tests
 ./usr/tests/dev/Atffile				tests-fs-tests		atf
 ./usr/tests/dev/Kyuafile			tests-fs-tests		atf,kyua
