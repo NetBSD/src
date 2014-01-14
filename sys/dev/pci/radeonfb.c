@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.80 2014/01/14 01:35:13 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.81 2014/01/14 09:46:42 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.80 2014/01/14 01:35:13 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.81 2014/01/14 09:46:42 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -627,6 +627,10 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 
 	radeonfb_set_fbloc(sc);
 
+	/* 64 MB should be enough -- more just wastes map entries */
+	if (sc->sc_memsz > (64 << 20))
+		sc->sc_memsz = (64 << 20);
+
 	for (i = 0; radeonfb_limits[i].size; i++) {
 		if (sc->sc_memsz >= radeonfb_limits[i].size) {
 			sc->sc_maxx = radeonfb_limits[i].maxx;
@@ -747,10 +751,6 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 		    XNAME(sc));
 		goto error;
 	}
-
-	/* 64 MB should be enough -- more just wastes map entries */
-	if (sc->sc_memsz > (64 << 20))
-		sc->sc_memsz = (64 << 20);
 
 	sc->sc_memt = pa->pa_memt;
 	if (bus_space_map(sc->sc_memt, sc->sc_memaddr, sc->sc_memsz,
