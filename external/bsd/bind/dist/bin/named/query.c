@@ -1,4 +1,4 @@
-/*	$NetBSD: query.c,v 1.12 2013/12/31 20:24:39 christos Exp $	*/
+/*	$NetBSD: query.c,v 1.13 2014/01/14 08:03:07 spz Exp $	*/
 
 /*
  * Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
@@ -5263,8 +5263,7 @@ query_findclosestnsec3(dns_name_t *qname, dns_db_t *db,
 	dns_fixedname_t fixed;
 	dns_hash_t hash;
 	dns_name_t name;
-	int order;
-	unsigned int count;
+	unsigned int skip = 0, labels;
 	dns_rdata_nsec3_t nsec3;
 	dns_rdata_t rdata = DNS_RDATA_INIT;
 	isc_boolean_t optout;
@@ -5279,6 +5278,7 @@ query_findclosestnsec3(dns_name_t *qname, dns_db_t *db,
 
 	dns_name_init(&name, NULL);
 	dns_name_clone(qname, &name);
+	labels = dns_name_countlabels(&name);
 	dns_clientinfomethods_init(&cm, ns_client_sourceip);
 	dns_clientinfo_init(&ci, client);
 
@@ -5312,13 +5312,14 @@ query_findclosestnsec3(dns_name_t *qname, dns_db_t *db,
 		dns_rdata_reset(&rdata);
 		optout = ISC_TF((nsec3.flags & DNS_NSEC3FLAG_OPTOUT) != 0);
 		if (found != NULL && optout &&
-		    dns_name_fullcompare(&name, dns_db_origin(db), &order,
-					 &count) == dns_namereln_subdomain) {
+		    dns_name_issubdomain(&name, dns_db_origin(db)))
+		{
 			dns_rdataset_disassociate(rdataset);
 			if (dns_rdataset_isassociated(sigrdataset))
 				dns_rdataset_disassociate(sigrdataset);
-			count = dns_name_countlabels(&name) - 1;
-			dns_name_getlabelsequence(&name, 1, count, &name);
+			skip++;
+			dns_name_getlabelsequence(qname, skip, labels - skip,
+			                          &name);
 			ns_client_log(client, DNS_LOGCATEGORY_DNSSEC,
 				      NS_LOGMODULE_QUERY, ISC_LOG_DEBUG(3),
 				      "looking for closest provable encloser");
@@ -5336,7 +5337,11 @@ query_findclosestnsec3(dns_name_t *qname, dns_db_t *db,
 		ns_client_log(client, DNS_LOGCATEGORY_DNSSEC,
 			      NS_LOGMODULE_QUERY, ISC_LOG_WARNING,
 			      "expected covering NSEC3, got an exact match");
-	if (found != NULL)
+	if (found == qname) {
+		if (skip != 0U)
+			dns_name_getlabelsequence(qname, skip, labels - skip,
+			                          found);
+	} else if (found != NULL)
 		dns_name_copy(&name, found, NULL);
 	return;
 }
