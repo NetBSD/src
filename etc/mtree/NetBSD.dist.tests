@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.99 2014/01/07 16:47:13 gson Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.100 2014/01/14 18:07:20 pgoyette Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -14,6 +14,7 @@
 ./usr/libdata/debug/usr/tests/bin/df
 ./usr/libdata/debug/usr/tests/crypto
 ./usr/libdata/debug/usr/tests/crypto/libcrypto
+./usr/libdata/debug/usr/tests/crypto/opencrypto
 ./usr/libdata/debug/usr/tests/dev
 ./usr/libdata/debug/usr/tests/dev/audio
 ./usr/libdata/debug/usr/tests/dev/cgd
@@ -170,6 +171,7 @@
 ./usr/tests/bin/tar
 ./usr/tests/crypto
 ./usr/tests/crypto/libcrypto
+./usr/tests/crypto/opencrypto
 ./usr/tests/dev
 ./usr/tests/dev/audio
 ./usr/tests/dev/cgd
