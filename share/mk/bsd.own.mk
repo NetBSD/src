@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.760 2013/12/31 18:46:09 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.761 2014/01/14 11:14:27 apb Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -973,7 +973,7 @@ X11FLAVOUR?=	Xorg
 # Which platforms build the xorg-server drivers (as opposed
 # to just Xnest and Xvfb.)
 #
-.if ${X11FLAVOUR} == "Xorg"	&& \
+.if ${X11FLAVOUR} == "Xorg"	&& ( \
     ${MACHINE} == "alpha"	|| \
     ${MACHINE} == "amd64"	|| \
     ${MACHINE} == "bebox"	|| \
@@ -998,7 +998,7 @@ X11FLAVOUR?=	Xorg
     ${MACHINE} == "sparc"	|| \
     ${MACHINE} == "sparc64"	|| \
     ${MACHINE} == "vax"		|| \
-    ${MACHINE} == "zaurus"
+    ${MACHINE} == "zaurus"	)
 MKXORG_SERVER?=yes
 .else
 MKXORG_SERVER?=no
