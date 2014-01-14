@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.246 2014/01/08 12:29:49 christos Exp $
+#	$NetBSD: shlib_version,v 1.247 2014/01/14 17:20:57 joerg Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -38,5 +38,6 @@
 # - remove alloca fallback and expect compiler to provide a builtin version.
 # - switch to DT_INIT_ARRAY on all platforms
 # - consolidate ownership with crt0.o and avoid common symbols
+# - redo stdin/stdout/stderr to not require copy relocations
 major=12
 minor=188
