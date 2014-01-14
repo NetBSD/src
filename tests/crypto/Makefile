@@ -1,8 +1,9 @@
-# $NetBSD: Makefile,v 1.3 2014/01/14 17:51:39 pgoyette Exp $
+# $NetBSD: Makefile,v 1.4 2014/01/14 18:06:27 pgoyette Exp $
 
 .include <bsd.own.mk>
 
 TESTS_SUBDIRS=		libcrypto
+TESTS_SUBDIRS+=		opencrypto
 
 TESTSDIR=	${TESTSBASE}/crypto
 TESTSDIR+=	${TESTSBASE}/opencrypto
