@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.43 2014/01/13 21:15:36 pgoyette Exp $ */
+/*	$NetBSD: crypto.c,v 1.44 2014/01/14 14:16:47 pgoyette Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.43 2014/01/13 21:15:36 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.44 2014/01/14 14:16:47 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -249,6 +249,10 @@ static struct cryptostats cryptostats;
 static	int crypto_timing = 0;
 #endif
 
+#ifdef _MODULE
+	static struct sysctllog *sysctl_opencrypto_clog;
+#endif
+
 static int
 crypto_init0(void)
 {
@@ -282,6 +286,9 @@ crypto_init0(void)
 		crypto_destroy();
 	}
 
+#ifdef _MODULE
+	sysctl_opencrypto_setup(&sysctl_opencrypto_clog);
+#endif
 	return 0;
 }
 
@@ -1342,14 +1349,11 @@ MODULE(MODULE_CLASS_MISC, opencrypto, NULL);
 static int
 opencrypto_modcmd(modcmd_t cmd, void *opaque)
 {
-#ifdef _MODULE
-	static struct sysctllog *sysctl_opencrypto_clog;
-#endif
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 #ifdef _MODULE
-		sysctl_opencrypto_setup(&sysctl_opencrypto_clog);
+		crypto_init();
 #endif
 		return 0;
 	case MODULE_CMD_FINI:
