@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2012/05/02 13:35:03 cheusov Exp $
+#	$NetBSD: Makefile,v 1.7 2014/01/14 19:58:19 christos Exp $
 
 LIBISPRIVATE=	yes
 
@@ -15,7 +15,6 @@ CPPFLAGS+=	-I${LVM2_DISTDIR}/lib -I${LVM2_DISTDIR}/include \
 		-I. 
 
 .include <bsd.own.mk>
-.include <bsd.sys.mk> # for USE_SSP
 
 # Some parts of liblvm can't be protected because if its
 # alloca() usage.
