@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.146 2013/12/17 20:25:00 martin Exp $	*/
+/*	$NetBSD: nd6.c,v 1.147 2014/01/15 10:25:04 roy Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.146 2013/12/17 20:25:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.147 2014/01/15 10:25:04 roy Exp $");
 
 #include "opt_ipsec.h"
 
@@ -818,8 +818,9 @@ nd6_purge(struct ifnet *ifp)
 	}
 }
 
-struct rtentry *
-nd6_lookup(const struct in6_addr *addr6, int create, struct ifnet *ifp)
+static struct rtentry *
+nd6_lookup1(const struct in6_addr *addr6, int create, struct ifnet *ifp,
+    int cloning)
 {
 	struct rtentry *rt;
 	struct sockaddr_in6 sin6;
@@ -883,6 +884,27 @@ nd6_lookup(const struct in6_addr *addr6, int create, struct ifnet *ifp)
 	} else
 		return NULL;
 	rt->rt_refcnt--;
+
+	/*
+	 * Check for a cloning route to match the address.
+	 * This should only be set from in6_is_addr_neighbor so we avoid
+	 * a potentially expensive second call to rtalloc1.
+	 */
+	if (cloning &&
+	    rt->rt_flags & (RTF_CLONING | RTF_CLONED) &&
+	    (rt->rt_ifp == ifp
+#if NBRIDGE > 0
+	    || SAME_BRIDGE(rt->rt_ifp->if_bridgeport, ifp->if_bridgeport)
+#endif
+#if NCARP > 0
+	    || (ifp->if_type == IFT_CARP && rt->rt_ifp == ifp->if_carpdev) ||
+	    (rt->rt_ifp->if_type == IFT_CARP && rt->rt_ifp->if_carpdev == ifp)||
+	    (ifp->if_type == IFT_CARP && rt->rt_ifp->if_type == IFT_CARP &&
+	    rt->rt_ifp->if_carpdev == ifp->if_carpdev)
+#endif
+	    ))
+		return rt;
+
 	/*
 	 * Validation for the entry.
 	 * Note that the check for rt_llinfo is necessary because a cloned
@@ -911,6 +933,13 @@ nd6_lookup(const struct in6_addr *addr6, int create, struct ifnet *ifp)
 		return NULL;
 	}
 	return rt;
+}
+
+struct rtentry *
+nd6_lookup(const struct in6_addr *addr6, int create, struct ifnet *ifp)
+{
+
+	return nd6_lookup1(addr6, create, ifp, 0);
 }
 
 /*
@@ -973,10 +1002,10 @@ nd6_is_addr_neighbor(const struct sockaddr_in6 *addr, struct ifnet *ifp)
 	}
 
 	/*
-	 * Even if the address matches none of our addresses, it might be
-	 * in the neighbor cache.
+	 * Even if the address matches none of our addresses, it might match
+	 * a cloning route or be in the neighbor cache.
 	 */
-	if (nd6_lookup(&addr->sin6_addr, 0, ifp) != NULL)
+	if (nd6_lookup1(&addr->sin6_addr, 0, ifp, 1) != NULL)
 		return 1;
 
 	return 0;
