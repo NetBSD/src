@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2014/01/05 16:38:06 joerg Exp $
+#	$NetBSD: Makefile,v 1.8 2014/01/15 22:21:34 joerg Exp $
 
 PROG_CXX=	llvm-objdump
 NOMAN=		yes
@@ -34,6 +34,8 @@ LLVM_LIBS+= \
 	PowerPCTargetInfo \
 	PowerPCMCTargetDesc \
 	PowerPCAsmPrinter \
+	SparcDisassembler \
+	SparcAsmParser \
 	SparcTargetInfo \
 	SparcMCTargetDesc \
 	SparcAsmPrinter \
