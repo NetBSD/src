@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.47 2014/01/14 17:18:43 pgoyette Exp $
+# $NetBSD: mi,v 1.48 2014/01/15 15:01:24 pgoyette Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -1490,6 +1490,19 @@
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_srptest.debug		tests-crypto-debug	debug,atf,crypto
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_threadstest.debug	tests-crypto-debug	debug,atf,crypto
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_x509v3test.debug	tests-crypto-debug	debug,atf,crypto
+./usr/libdata/debug/usr/tests/crypto/opencrypto/h_aesctr1.debug		tests-crypto-debug	debug,atf,crypto
+./usr/libdata/debug/usr/tests/crypto/opencrypto/h_aesctr2.debug		tests-crypto-debug	debug,atf,crypto
+./usr/libdata/debug/usr/tests/crypto/opencrypto/h_arc4.debug		tests-crypto-debug	debug,atf,crypto
+./usr/libdata/debug/usr/tests/crypto/opencrypto/h_camellia.debug		tests-crypto-debug	debug,atf,crypto
+./usr/libdata/debug/usr/tests/crypto/opencrypto/h_cbcdes.debug		tests-crypto-debug	debug,atf,crypto
+./usr/libdata/debug/usr/tests/crypto/opencrypto/h_comp.debug		tests-crypto-debug	debug,atf,crypto
+./usr/libdata/debug/usr/tests/crypto/opencrypto/h_comp_zlib.debug		tests-crypto-debug	debug,atf,crypto
+./usr/libdata/debug/usr/tests/crypto/opencrypto/h_comp_zlib_rnd.debug		tests-crypto-debug	debug,atf,crypto
+./usr/libdata/debug/usr/tests/crypto/opencrypto/h_gcm.debug		tests-crypto-debug	debug,atf,crypto
+./usr/libdata/debug/usr/tests/crypto/opencrypto/h_md5.debug		tests-crypto-debug	debug,atf,crypto
+./usr/libdata/debug/usr/tests/crypto/opencrypto/h_md5hmac.debug		tests-crypto-debug	debug,atf,crypto
+./usr/libdata/debug/usr/tests/crypto/opencrypto/h_null.debug		tests-crypto-debug	debug,atf,crypto
+./usr/libdata/debug/usr/tests/crypto/opencrypto/h_xcbcmac.debug		tests-crypto-debug	debug,atf,crypto
 ./usr/libdata/debug/usr/tests/dev/audio/h_pad.debug			tests-fs-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/dev/cgd/h_img2cgd/h_img2cgd.debug			tests-obsolete	obsolete
 ./usr/libdata/debug/usr/tests/dev/md/h_mdserv.debug					tests-fs-debug	debug,atf,rump
