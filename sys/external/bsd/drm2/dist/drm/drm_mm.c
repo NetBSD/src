@@ -671,10 +671,7 @@ void drm_mm_takedown(struct drm_mm * mm)
 {
 	struct drm_mm_node *entry, *next;
 
-	if (!list_empty(&mm->head_node.node_list)) {
-		DRM_ERROR("Memory manager not clean. Delaying takedown\n");
-		return;
-	}
+	BUG_ON(!list_empty(&mm->head_node.node_list));
 
 	spin_lock(&mm->unused_lock);
 	list_for_each_entry_safe(entry, next, &mm->unused_nodes, node_list) {
