@@ -1733,7 +1733,7 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
         // Give a code modification hint to insert 'this->'.
         // TODO: fixit for inserting 'Base<T>::' in the other cases.
         // Actually quite difficult!
-        if (getLangOpts().MicrosoftMode)
+        if (getLangOpts().MSVCCompat)
           diagnostic = diag::warn_found_via_dependent_bases_lookup;
         if (isInstance) {
           Diag(R.getNameLoc(), diagnostic) << Name
@@ -1799,7 +1799,7 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
     // function definition declared at class scope then we must set
     // DC to the lexical parent to be able to search into the parent
     // class.
-    if (getLangOpts().MicrosoftMode && isa<FunctionDecl>(DC) &&
+    if (getLangOpts().MSVCCompat && isa<FunctionDecl>(DC) &&
         cast<FunctionDecl>(DC)->getFriendObjectKind() &&
         DC->getLexicalParent()->isRecord())
       DC = DC->getLexicalParent();
@@ -2018,7 +2018,7 @@ ExprResult Sema::ActOnIdExpression(Scope *S,
       // unqualified name lookup.  Any name lookup during template parsing means
       // clang might find something that MSVC doesn't.  For now, we only handle
       // the common case of members of a dependent base class.
-      if (getLangOpts().MicrosoftMode) {
+      if (getLangOpts().MSVCCompat) {
         CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(CurContext);
         if (MD && MD->isInstance() && MD->getParent()->hasAnyDependentBases()) {
           assert(SS.isEmpty() && "qualifiers should be already handled");
@@ -4474,6 +4474,21 @@ Sema::ActOnCallExpr(Scope *S, Expr *Fn, SourceLocation LParenLoc,
   else if (isa<MemberExpr>(NakedFn))
     NDecl = cast<MemberExpr>(NakedFn)->getMemberDecl();
 
+  if (FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(NDecl)) {
+    if (FD->hasAttr<EnableIfAttr>()) {
+      if (const EnableIfAttr *Attr = CheckEnableIf(FD, ArgExprs, true)) {
+        Diag(Fn->getLocStart(),
+             isa<CXXMethodDecl>(FD) ?
+                 diag::err_ovl_no_viable_member_function_in_call :
+                 diag::err_ovl_no_viable_function_in_call)
+          << FD << FD->getSourceRange();
+        Diag(FD->getLocation(),
+             diag::note_ovl_candidate_disabled_by_enable_if_attr)
+            << Attr->getCond()->getSourceRange() << Attr->getMessage();
+      }
+    }
+  }
+
   return BuildResolvedCallExpr(Fn, NDecl, LParenLoc, ArgExprs, RParenLoc,
                                ExecConfig, IsExecConfig);
 }
@@ -6612,6 +6627,46 @@ QualType Sema::InvalidOperands(SourceLocation Loc, ExprResult &LHS,
   return QualType();
 }
 
+static bool areVectorOperandsLaxBitCastable(ASTContext &Ctx,
+                                            QualType LHSType, QualType RHSType){
+  if (!Ctx.getLangOpts().LaxVectorConversions)
+    return false;
+
+  if (!(LHSType->isVectorType() || LHSType->isScalarType()) ||
+      !(RHSType->isVectorType() || RHSType->isScalarType()))
+    return false;
+
+  unsigned LHSSize = Ctx.getTypeSize(LHSType);
+  unsigned RHSSize = Ctx.getTypeSize(RHSType);
+  if (LHSSize != RHSSize)
+    return false;
+
+  // For a non-power-of-2 vector ASTContext::getTypeSize returns the size
+  // rounded to the next power-of-2, but the LLVM IR type that we create
+  // is considered to have num-of-elements*width-of-element width.
+  // Make sure such width is the same between the types, otherwise we may end
+  // up with an invalid bitcast.
+  unsigned LHSIRSize, RHSIRSize;
+  if (LHSType->isVectorType()) {
+    const VectorType *Vec = LHSType->getAs<VectorType>();
+    LHSIRSize = Vec->getNumElements() *
+        Ctx.getTypeSize(Vec->getElementType());
+  } else {
+    LHSIRSize = LHSSize;
+  }
+  if (RHSType->isVectorType()) {
+    const VectorType *Vec = RHSType->getAs<VectorType>();
+    RHSIRSize = Vec->getNumElements() *
+        Ctx.getTypeSize(Vec->getElementType());
+  } else {
+    RHSIRSize = RHSSize;
+  }
+  if (LHSIRSize != RHSIRSize)
+    return false;
+
+  return true;
+}
+
 QualType Sema::CheckVectorOperands(ExprResult &LHS, ExprResult &RHS,
                                    SourceLocation Loc, bool IsCompAssign) {
   if (!IsCompAssign) {
@@ -6647,14 +6702,21 @@ QualType Sema::CheckVectorOperands(ExprResult &LHS, ExprResult &RHS,
     return RHSType;
   }
 
-  if (getLangOpts().LaxVectorConversions &&
-      Context.getTypeSize(LHSType) == Context.getTypeSize(RHSType)) {
+  if (areVectorOperandsLaxBitCastable(Context, LHSType, RHSType)) {
     // If we are allowing lax vector conversions, and LHS and RHS are both
     // vectors, the total size only needs to be the same. This is a
     // bitcast; no bits are changed but the result type is different.
     // FIXME: Should we really be allowing this?
     RHS = ImpCastExprToType(RHS.take(), LHSType, CK_BitCast);
     return LHSType;
+  }
+
+  if (!(LHSType->isVectorType() || LHSType->isScalarType()) ||
+      !(RHSType->isVectorType() || RHSType->isScalarType())) {
+    Diag(Loc, diag::err_typecheck_vector_not_convertable_non_scalar)
+    << LHS.get()->getType() << RHS.get()->getType()
+    << LHS.get()->getSourceRange() << RHS.get()->getSourceRange();
+    return QualType();
   }
 
   // Canonicalize the ExtVector to the LHS, remember if we swapped so we can

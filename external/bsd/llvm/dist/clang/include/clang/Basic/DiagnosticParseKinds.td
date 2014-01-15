@@ -487,8 +487,7 @@ def ext_abstract_pack_declarator_parens : ExtWarn<
   "ISO C++11 requires a parenthesized pack declaration to have a name">,
   InGroup<DiagGroup<"anonymous-pack-parens">>;
 def err_function_is_not_record : Error<
-  "unexpected '%select{.|->}0' in function call; perhaps remove the "
-  "'%select{.|->}0'?">;
+  "unexpected %0 in function call; perhaps remove the %0?">;
 
 // C++ derived classes
 def err_dup_virtual : Error<"duplicate 'virtual' in base specifier">;
@@ -518,7 +517,7 @@ def warn_cxx98_compat_nullptr : Warning<
 def warn_cxx98_compat_alignas : Warning<"'alignas' is incompatible with C++98">,
   InGroup<CXX98Compat>, DefaultIgnore;
 def warn_cxx98_compat_attribute : Warning<
-  "attributes are incompatible with C++98">,
+  "generalized attributes are incompatible with C++98">,
   InGroup<CXX98Compat>, DefaultIgnore;
 def err_cxx11_attribute_forbids_arguments : Error<
   "attribute '%0' cannot have an argument list">;
@@ -628,8 +627,7 @@ def err_typename_refers_to_non_type_template : Error<
 def err_expected_type_name_after_typename : Error<
   "expected an identifier or template-id after '::'">;
 def err_explicit_spec_non_template : Error<
-  "explicit %select{specialization|instantiation}0 of non-template "
-  "%select{class|struct|union|interface}1 %2">;
+  "explicit %select{specialization|instantiation}0 of non-template %1 %2">;
   
 def err_default_template_template_parameter_not_template : Error<
   "default template argument for a template template parameter must be a class "
