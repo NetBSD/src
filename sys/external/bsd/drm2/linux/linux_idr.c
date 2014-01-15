@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_idr.c,v 1.1.2.11 2014/01/15 13:51:48 riastradh Exp $	*/
+/*	$NetBSD: linux_idr.c,v 1.1.2.12 2014/01/15 13:51:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_idr.c,v 1.1.2.11 2014/01/15 13:51:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_idr.c,v 1.1.2.12 2014/01/15 13:51:58 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -88,7 +88,7 @@ void
 idr_init(struct idr *idr)
 {
 
-	rw_init(&idr->idr_lock);
+	mutex_init(&idr->idr_lock, MUTEX_DEFAULT, IPL_VM);
 	rb_tree_init(&idr->idr_tree, &idr_rb_ops);
 	idr->idr_temp = NULL;
 }
@@ -105,7 +105,7 @@ idr_destroy(struct idr *idr)
 #if 0				/* XXX No rb_tree_destroy?  */
 	rb_tree_destroy(&idr->idr_tree);
 #endif
-	rw_destroy(&idr->idr_lock);
+	mutex_destroy(&idr->idr_lock);
 }
 
 void *
@@ -114,10 +114,10 @@ idr_find(struct idr *idr, int id)
 	const struct idr_node *node;
 	void *data;
 
-	rw_enter(&idr->idr_lock, RW_READER);
+	mutex_spin_enter(&idr->idr_lock);
 	node = rb_tree_find_node(&idr->idr_tree, &id);
 	data = (node == NULL? NULL : node->in_data);
-	rw_exit(&idr->idr_lock);
+	mutex_spin_exit(&idr->idr_lock);
 
 	return data;
 }
@@ -128,7 +128,7 @@ idr_replace(struct idr *idr, void *replacement, int id)
 	struct idr_node *node;
 	void *result;
 
-	rw_enter(&idr->idr_lock, RW_WRITER);
+	mutex_spin_enter(&idr->idr_lock);
 	node = rb_tree_find_node(&idr->idr_tree, &id);
 	if (node == NULL) {
 		result = ERR_PTR(-ENOENT);
@@ -136,7 +136,7 @@ idr_replace(struct idr *idr, void *replacement, int id)
 		result = node->in_data;
 		node->in_data = replacement;
 	}
-	rw_exit(&idr->idr_lock);
+	mutex_spin_exit(&idr->idr_lock);
 
 	return result;
 }
@@ -146,11 +146,11 @@ idr_remove(struct idr *idr, int id)
 {
 	struct idr_node *node;
 
-	rw_enter(&idr->idr_lock, RW_WRITER);
+	mutex_spin_enter(&idr->idr_lock);
 	node = rb_tree_find_node(&idr->idr_tree, &id);
 	KASSERT(node != NULL);
 	rb_tree_remove_node(&idr->idr_tree, node);
-	rw_exit(&idr->idr_lock);
+	mutex_spin_exit(&idr->idr_lock);
 	kmem_free(node, sizeof(*node));
 }
 
@@ -159,14 +159,14 @@ idr_remove_all(struct idr *idr)
 {
 	struct idr_node *node;
 
-	rw_enter(&idr->idr_lock, RW_WRITER);
+	mutex_spin_enter(&idr->idr_lock);
 	while ((node = RB_TREE_MIN(&idr->idr_tree)) != NULL) {
 		rb_tree_remove_node(&idr->idr_tree, node);
-		rw_exit(&idr->idr_lock);
+		mutex_spin_exit(&idr->idr_lock);
 		kmem_free(node, sizeof(*node));
-		rw_enter(&idr->idr_lock, RW_WRITER);
+		mutex_spin_enter(&idr->idr_lock);
 	}
-	rw_exit(&idr->idr_lock);
+	mutex_spin_exit(&idr->idr_lock);
 }
 
 int
@@ -174,12 +174,12 @@ idr_pre_get(struct idr *idr, int flags __unused /* XXX */)
 {
 	struct idr_node *temp = kmem_alloc(sizeof(*temp), KM_SLEEP);
 
-	rw_enter(&idr->idr_lock, RW_WRITER);
+	mutex_spin_enter(&idr->idr_lock);
 	if (idr->idr_temp == NULL) {
 		idr->idr_temp = temp;
 		temp = NULL;
 	}
-	rw_exit(&idr->idr_lock);
+	mutex_spin_exit(&idr->idr_lock);
 
 	if (temp != NULL)
 		kmem_free(temp, sizeof(*temp));
@@ -194,7 +194,7 @@ idr_get_new_above(struct idr *idr, void *data, int min_id, int *id)
 	int want_id = min_id;
 	int error;
 
-	rw_enter(&idr->idr_lock, RW_WRITER);
+	mutex_spin_enter(&idr->idr_lock);
 
 	node = idr->idr_temp;
 	if (node == NULL) {
@@ -222,7 +222,7 @@ idr_get_new_above(struct idr *idr, void *data, int min_id, int *id)
 	*id = want_id;
 	error = 0;
 
-out:	rw_exit(&idr->idr_lock);
+out:	mutex_spin_exit(&idr->idr_lock);
 	return error;
 }
 
@@ -232,13 +232,13 @@ idr_for_each(struct idr *idr, int (*proc)(int, void *, void *), void *arg)
 	struct idr_node *node;
 	int error = 0;
 
-	rw_enter(&idr->idr_lock, RW_READER);
+	/* XXX Caller must exclude modifications.  */
+	membar_consumer();
 	RB_TREE_FOREACH(node, &idr->idr_tree) {
 		error = (*proc)(node->in_index, node->in_data, arg);
 		if (error)
 			break;
 	}
-	rw_exit(&idr->idr_lock);
 
 	return error;
 }
