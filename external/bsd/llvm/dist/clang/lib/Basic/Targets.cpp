@@ -3027,7 +3027,7 @@ public:
     TLSSupported = false;
     WCharType = UnsignedShort;
     DoubleAlign = LongLongAlign = 64;
-    DescriptionString = "e-m:c-p:32:32-i64:64-f80:32-n8:16:32-S32";
+    DescriptionString = "e-m:w-p:32:32-i64:64-f80:32-n8:16:32-S32";
   }
   virtual void getTargetDefines(const LangOptions &Opts,
                                 MacroBuilder &Builder) const {
@@ -3094,7 +3094,7 @@ public:
     TLSSupported = false;
     WCharType = UnsignedShort;
     DoubleAlign = LongLongAlign = 64;
-    DescriptionString = "e-m:c-p:32:32-i64:64-f80:32-n8:16:32-S32";
+    DescriptionString = "e-m:w-p:32:32-i64:64-f80:32-n8:16:32-S32";
   }
   virtual void getTargetDefines(const LangOptions &Opts,
                                 MacroBuilder &Builder) const {
@@ -5526,6 +5526,8 @@ static TargetInfo *AllocateTarget(const llvm::Triple &Triple) {
     switch (os) {
     case llvm::Triple::Linux:
       return new LinuxTargetInfo<AArch64TargetInfo>(Triple);
+    case llvm::Triple::NetBSD:
+      return new NetBSDTargetInfo<AArch64TargetInfo>(Triple);
     default:
       return new AArch64TargetInfo(Triple);
     }
@@ -5836,12 +5838,6 @@ TargetInfo *TargetInfo::CreateTargetInfo(DiagnosticsEngine &Diags,
   // Set the target ABI if specified.
   if (!Opts->ABI.empty() && !Target->setABI(Opts->ABI)) {
     Diags.Report(diag::err_target_unknown_abi) << Opts->ABI;
-    return 0;
-  }
-
-  // Set the target C++ ABI.
-  if (!Opts->CXXABI.empty() && !Target->setCXXABI(Opts->CXXABI)) {
-    Diags.Report(diag::err_target_unknown_cxxabi) << Opts->CXXABI;
     return 0;
   }
 
