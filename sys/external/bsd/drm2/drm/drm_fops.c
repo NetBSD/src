@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_fops.c,v 1.1.2.6 2014/01/15 13:52:39 riastradh Exp $	*/
+/*	$NetBSD: drm_fops.c,v 1.1.2.7 2014/01/15 13:53:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_fops.c,v 1.1.2.6 2014/01/15 13:52:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_fops.c,v 1.1.2.7 2014/01/15 13:53:53 riastradh Exp $");
 
 #include <drm/drmP.h>
 
@@ -243,6 +243,11 @@ static void
 drm_master_release(struct drm_file *file)
 {
 
+	/*
+	 * XXX I think this locking concept is wrong -- we need to hold
+	 * file->master->lock.spinlock across the two calls to
+	 * drm_i_have_hw_lock and drm_lock_free.
+	 */
 	if (drm_i_have_hw_lock(file->minor->dev, file))
 		drm_lock_free(&file->master->lock,
 		    _DRM_LOCKING_CONTEXT(file->master->lock.hw_lock->lock));
@@ -323,15 +328,17 @@ drm_close_file_master(struct drm_file *file)
 			other_file->authenticated = 0;
 		}
 
+		spin_lock(&master->lock.spinlock);
 		if (master->lock.hw_lock) {
 			/* XXX There is copypasta of this in drm_bufs.c.  */
 			if (dev->sigdata.lock == master->lock.hw_lock)
 				dev->sigdata.lock = NULL;
 			master->lock.hw_lock = NULL;
 			master->lock.file_priv = NULL;
-			DRM_WAKEUP_ALL(&master->lock.lock_queue,
-			    &drm_global_mutex);
+			DRM_SPIN_WAKEUP_ALL(&master->lock.lock_queue,
+			    &master->lock.spinlock);
 		}
+		spin_unlock(&master->lock.spinlock);
 
 		if (file->minor->master == file->master) {
 			if (dev->driver->master_drop)

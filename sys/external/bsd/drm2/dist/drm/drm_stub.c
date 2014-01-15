@@ -170,8 +170,7 @@ struct drm_master *drm_master_create(struct drm_minor *minor)
 	kref_init(&master->refcount);
 	spin_lock_init(&master->lock.spinlock);
 #ifdef __NetBSD__
-	DRM_INIT_WAITQUEUE(&master->lock.lock_queue, "drmulckq");
-	DRM_INIT_WAITQUEUE(&master->lock.kernel_lock_queue, "drmklckq");
+	DRM_INIT_WAITQUEUE(&master->lock.lock_queue, "drmlockq");
 #else
 	init_waitqueue_head(&master->lock.lock_queue);
 #endif
@@ -230,7 +229,6 @@ static void drm_master_destroy(struct kref *kref)
 #ifdef __NetBSD__
 	spin_lock_destroy(&master->lock.spinlock);
 	DRM_DESTROY_WAITQUEUE(&master->lock.lock_queue);
-	DRM_DESTROY_WAITQUEUE(&master->lock.kernel_lock_queue);
 #endif
 
 	kfree(master);
