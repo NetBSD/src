@@ -12,11 +12,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/FileSystem.h"
-
-#include "Windows.h"
 #include <algorithm>
 #include <stdio.h>
 #include <vector>
+
+// The Windows.h header must be after LLVM and standard headers.
+#include "Windows.h"
 
 #ifdef __MINGW32__
  #include <imagehlp.h>

@@ -532,6 +532,41 @@ void ELFObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm,
   }
 }
 
+static uint8_t mergeTypeForSet(uint8_t origType, uint8_t newType) {
+  uint8_t Type = newType;
+
+  // Propagation rules:
+  // IFUNC > FUNC > OBJECT > NOTYPE
+  // TLS_OBJECT > OBJECT > NOTYPE
+  //
+  // dont let the new type degrade the old type
+  switch (origType) {
+  default:
+    break;
+  case ELF::STT_GNU_IFUNC:
+    if (Type == ELF::STT_FUNC || Type == ELF::STT_OBJECT ||
+        Type == ELF::STT_NOTYPE || Type == ELF::STT_TLS)
+      Type = ELF::STT_GNU_IFUNC;
+    break;
+  case ELF::STT_FUNC:
+    if (Type == ELF::STT_OBJECT || Type == ELF::STT_NOTYPE ||
+        Type == ELF::STT_TLS)
+      Type = ELF::STT_FUNC;
+    break;
+  case ELF::STT_OBJECT:
+    if (Type == ELF::STT_NOTYPE)
+      Type = ELF::STT_OBJECT;
+    break;
+  case ELF::STT_TLS:
+    if (Type == ELF::STT_OBJECT || Type == ELF::STT_NOTYPE ||
+        Type == ELF::STT_GNU_IFUNC || Type == ELF::STT_FUNC)
+      Type = ELF::STT_TLS;
+    break;
+  }
+
+  return Type;
+}
+
 void ELFObjectWriter::WriteSymbol(MCDataFragment *SymtabF,
                                   MCDataFragment *ShndxF,
                                   ELFSymbolData &MSD,
@@ -545,7 +580,7 @@ void ELFObjectWriter::WriteSymbol(MCDataFragment *SymtabF,
 
   // Binding and Type share the same byte as upper and lower nibbles
   uint8_t Binding = MCELF::GetBinding(OrigData);
-  uint8_t Type = MCELF::GetType(Data);
+  uint8_t Type = mergeTypeForSet(MCELF::GetType(OrigData), MCELF::GetType(Data));
   uint8_t Info = (Binding << ELF_STB_Shift) | (Type << ELF_STT_Shift);
 
   // Other and Visibility share the same byte with Visibility using the lower
@@ -719,6 +754,12 @@ void ELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
       const MCSymbol &SymbolB = RefB->getSymbol();
       MCSymbolData &SDB = Asm.getSymbolData(SymbolB);
       IsPCRel = true;
+
+      if (!SDB.getFragment())
+        Asm.getContext().FatalError(
+            Fixup.getLoc(),
+            Twine("symbol '") + SymbolB.getName() +
+                "' can not be undefined in a subtraction expression");
 
       // Offset of the symbol in the section
       int64_t a = Layout.getSymbolOffset(&SDB);
@@ -1604,7 +1645,7 @@ ELFObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
                                                       const MCFragment &FB,
                                                       bool InSet,
                                                       bool IsPCRel) const {
-  if (DataA.getFlags() & ELF_STB_Weak)
+  if (DataA.getFlags() & ELF_STB_Weak || MCELF::GetType(DataA) == ELF::STT_GNU_IFUNC)
     return false;
   return MCObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(
                                                  Asm, DataA, FB,InSet, IsPCRel);

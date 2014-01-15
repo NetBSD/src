@@ -13,11 +13,11 @@
 
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/OwningPtr.h"
-#include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineFunctionAnalysis.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/IR/IRPrintingPasses.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCInstrInfo.h"
@@ -154,7 +154,7 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
     // machine-level pass), and whatever other information is needed to
     // deserialize the code and resume compilation.  For now, just write the
     // LLVM IR.
-    PM.add(createPrintModulePass(&Out));
+    PM.add(createPrintModulePass(Out));
     return false;
   }
 
