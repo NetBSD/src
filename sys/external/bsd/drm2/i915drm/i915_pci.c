@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_pci.c,v 1.1.2.6 2014/01/15 13:53:42 riastradh Exp $	*/
+/*	$NetBSD: i915_pci.c,v 1.1.2.7 2014/01/15 17:42:28 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.1.2.6 2014/01/15 13:53:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.1.2.7 2014/01/15 17:42:28 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -39,15 +39,8 @@ __KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.1.2.6 2014/01/15 13:53:42 riastradh E
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
-#ifndef	i915drm_genfb
-#define	i915drm_genfb	0
-#endif
-
-#if i915drm_genfb		/* XXX genfb */
-#include <dev/cons.h>		/* cn_tab */
 #include <dev/pci/wsdisplay_pci.h>
 #include <dev/wsfb/genfbvar.h>
-#endif
 
 #include <drm/drmP.h>
 
@@ -59,9 +52,7 @@ struct i915drm_softc {
 	struct pci_dev			sc_pci_dev;
 	struct drm_i915_gem_object	*sc_fb_obj;
 	bus_space_handle_t		sc_fb_bsh;
-#if i915drm_genfb		/* XXX genfb */
 	struct genfb_softc		sc_genfb;
-#endif
 	struct list_head		sc_fb_list; /* XXX Kludge!  */
 };
 
@@ -78,11 +69,9 @@ static int	i915drm_fb_create_handle(struct drm_framebuffer *,
 		    struct drm_file *, unsigned int *);
 static void	i915drm_fb_destroy(struct drm_framebuffer *);
 
-#if i915drm_genfb		/* XXX genfb */
 static int	i915drm_genfb_ioctl(void *, void *, unsigned long, void *,
 		    int, struct lwp *);
 static paddr_t	i915drm_genfb_mmap(void *, void *, off_t, int);
-#endif
 
 CFATTACH_DECL_NEW(i915drm, sizeof(struct i915drm_softc),
     i915drm_match, i915drm_attach, i915drm_detach, NULL);
@@ -284,11 +273,9 @@ i915drm_fb_probe(struct drm_fb_helper *fb_helper,
 	struct drm_i915_private *const dev_priv = dev->dev_private;
 	struct i915drm_softc *const sc = container_of(dev,
 	    struct i915drm_softc, sc_drm_dev);
-#if i915drm_genfb		/* XXX genfb */
 	const prop_dictionary_t dict = device_properties(sc->sc_dev);
 	static const struct genfb_ops zero_genfb_ops;
 	struct genfb_ops genfb_ops = zero_genfb_ops;
-#endif
 	static const struct drm_mode_fb_cmd2 zero_mode_cmd;
 	struct drm_mode_fb_cmd2 mode_cmd = zero_mode_cmd;
 	bus_size_t size;
@@ -382,7 +369,6 @@ i915drm_fb_probe(struct drm_fb_helper *fb_helper,
 		goto fail3;
 	}
 
-#if i915drm_genfb		/* XXX genfb */
 	prop_dictionary_set_bool(dict, "is_console", 0); /* XXX */
 	prop_dictionary_set_uint32(dict, "width", mode_cmd.width);
 	prop_dictionary_set_uint32(dict, "height", mode_cmd.height);
@@ -404,7 +390,6 @@ i915drm_fb_probe(struct drm_fb_helper *fb_helper,
 		    ret);
 		goto fail4;
 	}
-#endif
 
 	/* Success!  */
 	return 1;
@@ -436,7 +421,6 @@ i915drm_fb_create_handle(struct drm_framebuffer *fb, struct drm_file *file,
 	    &to_intel_framebuffer(fb)->obj->base, handle);
 }
 
-#if i915drm_genfb		/* XXX genfb */
 static int
 i915drm_genfb_ioctl(void *v, void *vs, unsigned long cmd, void *data, int flag,
     struct lwp *l)
@@ -520,4 +504,3 @@ i915drm_genfb_mmap(void *v, void *vs, off_t offset, int prot)
 	/* Failure!  */
 	return -1;
 }
-#endif
