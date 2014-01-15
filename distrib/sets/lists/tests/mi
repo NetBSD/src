@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.557 2014/01/14 17:53:02 pgoyette Exp $
+# $NetBSD: mi,v 1.558 2014/01/15 10:23:32 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2653,6 +2653,7 @@
 ./usr/tests/net/sys/t_listen			tests-obsolete		obsolete
 ./usr/tests/net/sys/t_rfc6056			tests-net-tests		atf
 ./usr/tests/net/sys/t_socketpair		tests-obsolete		obsolete
+./usr/tests/opencrypto				tests-obsolete		obsolete
 ./usr/tests/rump				tests-rump-tests
 ./usr/tests/rump/Atffile			tests-rump-tests	atf,rump
 ./usr/tests/rump/Kyuafile			tests-rump-tests	atf,rump,kyua
