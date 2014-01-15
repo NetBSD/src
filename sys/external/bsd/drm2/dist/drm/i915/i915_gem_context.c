@@ -135,6 +135,13 @@ static void do_destroy(struct i915_hw_context *ctx)
 	else
 		BUG_ON(ctx != dev_priv->ring[RCS].default_context);
 
+	/*
+	 * If we are currently switched to this context, there's an
+	 * extra reference to it, so drop that too.
+	 */
+	if (ctx->ring->last_context_obj == ctx->obj)
+		drm_gem_object_unreference(&ctx->obj->base);
+
 	drm_gem_object_unreference(&ctx->obj->base);
 	kfree(ctx);
 }
