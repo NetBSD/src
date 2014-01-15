@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_port.h,v 1.26 2014/01/08 11:04:47 pooka Exp $	*/
+/*	$NetBSD: rumpuser_port.h,v 1.27 2014/01/15 16:53:15 pooka Exp $	*/
 
 /*
  * Portability header for non-NetBSD platforms.
@@ -235,6 +235,10 @@ do {						\
 	(ts)->tv_sec  = (tv)->tv_sec;		\
 	(ts)->tv_nsec = (tv)->tv_usec * 1000;	\
 } while (/*CONSTCOND*/0)
+#endif
+
+#ifndef PLATFORM_HAS_SETGETPROGNAME
+#define setprogname(a)
 #endif
 
 #endif /* _LIB_LIBRUMPUSER_RUMPUSER_PORT_H_ */
