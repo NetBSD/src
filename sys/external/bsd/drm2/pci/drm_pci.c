@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci.c,v 1.1.2.10 2013/09/08 16:15:17 riastradh Exp $	*/
+/*	$NetBSD: drm_pci.c,v 1.1.2.11 2014/01/15 13:53:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.1.2.10 2013/09/08 16:15:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.1.2.11 2014/01/15 13:53:20 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -232,16 +232,76 @@ drm_pci_get_name(struct drm_device *dev)
 }
 
 static int
+drm_pci_format_unique(struct drm_device *dev, char *buf, size_t size)
+{
+	const unsigned int domain = 0; /* XXX PCI domains? */
+	const unsigned int bus = dev->pdev->pd_pa.pa_bus;
+	const unsigned int device = dev->pdev->pd_pa.pa_device;
+	const unsigned int function = dev->pdev->pd_pa.pa_function;
+
+	return snprintf(buf, size, "pci:%04x:%02x:%02x.%d",
+	    domain, bus, device, function);
+}
+
+static int
+drm_pci_format_devname(struct drm_device *dev, const char *unique,
+    char *buf, size_t size)
+{
+
+	return snprintf(buf, size, "%s@%s",
+	    device_xname(device_parent(dev->dev)),
+	    unique);
+}
+
+static int
 drm_pci_set_busid(struct drm_device *dev, struct drm_master *master)
 {
-	return -ENOSYS;		/* XXX PCI bus ids?  */
+	int n;
+	char *buf;
+
+	n = drm_pci_format_unique(dev, NULL, 0);
+	if (n < 0)
+		return -ENOSPC;	/* XXX */
+	if (0xff < n)
+		n = 0xff;
+
+	buf = kzalloc(n + 1, GFP_KERNEL);
+	(void)drm_pci_format_unique(dev, buf, n + 1);
+
+	if (master->unique)
+		kfree(master->unique);
+	master->unique = buf;
+	master->unique_len = n;
+	master->unique_size = n + 1;
+
+	n = drm_pci_format_devname(dev, master->unique, NULL, 0);
+	if (n < 0)
+		return -ENOSPC;	/* XXX back out? */
+	if (0xff < n)
+		n = 0xff;
+
+	buf = kzalloc(n + 1, GFP_KERNEL);
+	(void)drm_pci_format_devname(dev, master->unique, buf, n + 1);
+
+	if (dev->devname)
+		kfree(dev->devname);
+	dev->devname = buf;
+
+	return 0;
 }
 
 static int
 drm_pci_set_unique(struct drm_device *dev, struct drm_master *master,
-    struct drm_unique *unique)
+    struct drm_unique *unique __unused)
 {
-	return -ENOSYS;		/* XXX */
+
+	/*
+	 * XXX This is silly.  We're supposed to reject unique names
+	 * that don't match the ones we would generate anyway.  For
+	 * expedience, we'll just generate the one we would and ignore
+	 * whatever userland threw at us...
+	 */
+	return drm_pci_set_busid(dev, master);
 }
 
 static int
