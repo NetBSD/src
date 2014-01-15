@@ -1,4 +1,4 @@
-/*	$NetBSD: idr.h,v 1.1.2.8 2014/01/15 13:51:48 riastradh Exp $	*/
+/*	$NetBSD: idr.h,v 1.1.2.9 2014/01/15 13:51:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 /* XXX Stupid expedient algorithm should be replaced by something better.  */
 
 struct idr {
-	krwlock_t idr_lock;
+	kmutex_t idr_lock;
 	rb_tree_t idr_tree;
 	struct idr_node *idr_temp;
 };
