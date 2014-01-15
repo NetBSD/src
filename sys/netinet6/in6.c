@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.168 2014/01/13 18:57:48 roy Exp $	*/
+/*	$NetBSD: in6.c,v 1.169 2014/01/15 10:52:11 roy Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.168 2014/01/13 18:57:48 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.169 2014/01/15 10:52:11 roy Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -151,13 +151,11 @@ static void in6_unlink_ifa(struct in6_ifaddr *, struct ifnet *);
 static void
 in6_ifloop_request(int cmd, struct ifaddr *ifa)
 {
-	struct sockaddr_in6 lo_sa;
 	struct sockaddr_in6 all1_sa;
 	struct rtentry *nrt = NULL;
 	int e;
 
 	sockaddr_in6_init(&all1_sa, &in6mask128, 0, 0, 0);
-	sockaddr_in6_init(&lo_sa, &in6addr_loopback, 0, 0, 0);
 
 	/*
 	 * We specify the address itself as the gateway, and set the
