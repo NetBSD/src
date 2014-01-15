@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2013/05/28 17:37:34 joerg Exp $
+#	$NetBSD: Makefile,v 1.8 2014/01/15 22:21:34 joerg Exp $
 
 LIB=	LLVMARMMCTargetDesc
 
@@ -10,6 +10,7 @@ ARM_OBJDIR!=	cd ${.CURDIR}/../libLLVMARMCodeGen && ${PRINTOBJDIR}
 CPPFLAGS+=	-I${ARM_OBJDIR} -I${LLVM_SRCDIR}/lib/Target/ARM
 
 SRCS+=	ARMAsmBackend.cpp \
+	ARMBuildAttrs.cpp \
 	ARMELFObjectWriter.cpp \
 	ARMELFStreamer.cpp \
 	ARMMCAsmInfo.cpp \
