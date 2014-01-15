@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_calendar.c,v 1.2 2013/12/28 03:20:13 christos Exp $	*/
+/*	$NetBSD: ntp_calendar.c,v 1.3 2014/01/15 14:40:30 apb Exp $	*/
 
 /*
  * ntp_calendar.c - calendar and helper functions
@@ -155,7 +155,11 @@ ntpcal_get_build_date(
 	 * problem.
 	 *
 	 */
+#ifdef MKREPRO_DATE
+	static const char build[] = MKREPRO_TIME "/" MKREPRO_DATE;
+#else
 	static const char build[] = __TIME__ "/" __DATE__;
+#endif
 	static const char mlist[] = "JanFebMarAprMayJunJulAugSepOctNovDec";
 	char		  monstr[4];
 	const char *	  cp;
