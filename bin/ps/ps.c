@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.78 2012/05/07 13:14:31 joerg Exp $	*/
+/*	$NetBSD: ps.c,v 1.79 2014/01/15 08:09:10 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2000-2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.78 2012/05/07 13:14:31 joerg Exp $");
+__RCSID("$NetBSD: ps.c,v 1.79 2014/01/15 08:09:10 mlelstv Exp $");
 #endif
 #endif /* not lint */
 
@@ -136,7 +136,7 @@ char dfmt[] = "pid tt state time command";
 char jfmt[] = "user pid ppid pgid sess jobc state tt time command";
 char lfmt[] = "uid pid ppid cpu pri nice vsz rss wchan state tt time command";
 char sfmt[] = "uid pid ppid cpu lid nlwp pri nice vsz rss wchan lstate tt "
-		"time command";
+		"ltime command";
 char ufmt[] = "user pid %cpu %mem vsz rss tt state start time command";
 char vfmt[] = "pid state time sl re pagein vsz rss lim tsiz %cpu %mem command";
 
