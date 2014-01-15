@@ -21,8 +21,8 @@
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/PointerUnion.h"
 #include <deque>
-#include <list>
 #include <iterator>
+#include <list>
 #include <string>
 #include <vector>
 
@@ -423,7 +423,7 @@ public:
     return Result;
   }
 
-  LLVM_ATTRIBUTE_USED void dump() const;
+  void dump() const;
 };
 
 class PathDiagnosticSpotPiece : public PathDiagnosticPiece {
