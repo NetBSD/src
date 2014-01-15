@@ -1,7 +1,7 @@
 # See docs/CMake.html for instructions about how to build LLVM with CMake.
 
 project(LLVM)
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 2.8.8)
 
 # Add path for custom modules
 set(CMAKE_MODULE_PATH
@@ -36,6 +36,9 @@ endif()
 set(PACKAGE_NAME LLVM)
 set(PACKAGE_STRING "${PACKAGE_NAME} ${PACKAGE_VERSION}")
 set(PACKAGE_BUGREPORT "http://llvm.org/bugs/")
+
+set(BUG_REPORT_URL "${PACKAGE_BUGREPORT}" CACHE STRING
+  "Default URL where bug reports are to be submitted.")
 
 # Configure CPack.
 set(CPACK_PACKAGE_INSTALL_DIRECTORY "LLVM")
@@ -182,6 +185,7 @@ else( MSVC )
 endif()
 
 option(LLVM_ENABLE_CXX11 "Compile with C++11 enabled." OFF)
+option(LLVM_ENABLE_LIBCXX "Use libc++ if available." OFF)
 option(LLVM_ENABLE_PEDANTIC "Compile with pedantic enabled." ON)
 option(LLVM_ENABLE_WERROR "Fail and stop if a warning is triggered." OFF)
 
@@ -190,6 +194,9 @@ if( NOT uppercase_CMAKE_BUILD_TYPE STREQUAL "DEBUG" )
 else()
   option(LLVM_ENABLE_ASSERTIONS "Enable assertions" ON)
 endif()
+
+option(LLVM_FORCE_USE_OLD_HOST_TOOLCHAIN
+       "Set to ON to force using an old, unsupported host toolchain." OFF)
 
 option(LLVM_USE_INTEL_JITEVENTS
   "Use Intel JIT API to inform Intel(R) VTune(TM) Amplifier XE 2011 about JIT code"

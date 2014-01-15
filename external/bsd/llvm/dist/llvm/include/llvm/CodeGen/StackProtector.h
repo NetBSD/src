@@ -20,7 +20,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/ADT/ValueMap.h"
-#include "llvm/Analysis/Dominators.h"
+#include "llvm/IR/Dominators.h"
 #include "llvm/Pass.h"
 #include "llvm/Target/TargetLowering.h"
 
@@ -115,7 +115,7 @@ public:
   }
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addPreserved<DominatorTree>();
+    AU.addPreserved<DominatorTreeWrapperPass>();
   }
 
   SSPLayoutKind getSSPLayout(const AllocaInst *AI) const;

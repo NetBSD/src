@@ -66,8 +66,8 @@ dnl instead of the autoconf default (for example, '-g -O2' for CC=gcc).
 
 dnl We need to check for the compiler up here to avoid anything else
 dnl starting with a different one.
-AC_PROG_CC(clang llvm-gcc gcc)
-AC_PROG_CXX(clang++ llvm-g++ g++)
+AC_PROG_CC(clang gcc)
+AC_PROG_CXX(clang++ g++)
 AC_PROG_CPP
 
 dnl If CXX is Clang, check that it can find and parse C++ standard library
@@ -96,6 +96,75 @@ if test "$CXX" = "clang++" ; then
   AC_LANG_POP([C++])
 fi
 
+dnl Set up variables that track whether the host compiler is GCC or Clang where
+dnl we can effectively sanity check them. We don't try to sanity check all the
+dnl other possible compilers.
+AC_MSG_CHECKING([whether GCC or Clang is our host compiler])
+AC_LANG_PUSH([C++])
+llvm_cv_cxx_compiler=unknown
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#if ! __clang__
+                                     #error
+                                     #endif
+                                     ]])],
+                  llvm_cv_cxx_compiler=clang,
+                  [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#if ! __GNUC__
+                                                        #error
+                                                        #endif
+                                                        ]])],
+                                     llvm_cv_cxx_compiler=gcc, [])])
+AC_LANG_POP([C++])
+AC_MSG_RESULT([${llvm_cv_cxx_compiler}])
+
+dnl Check both GCC and Clang for sufficiently modern versions. These checks can
+dnl be bypassed by passing a flag if necessary on a platform.
+AC_ARG_ENABLE(compiler-version-checks,
+              AS_HELP_STRING([--enable-compiler-version-checks],
+                             [Check the version of the host compiler (default is YES)]),,
+                             enableval=default)
+case "$enableval" in
+  no)
+    ;;
+  yes|default)
+    AC_LANG_PUSH([C++])
+    case "$llvm_cv_cxx_compiler" in
+    clang)
+      AC_MSG_CHECKING([whether Clang is new enough])
+      AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#if __clang_major__ < 3 || (__clang_major__ == 3 && __clang_minor__ < 1)
+#error This version of Clang is too old to build LLVM
+#endif
+]])],
+          [AC_MSG_RESULT([yes])],
+          [AC_MSG_RESULT([no])
+           AC_MSG_ERROR([
+The selected Clang compiler is not new enough to build LLVM. Please upgrade to
+Clang 3.1. You may pass --disable-compiler-version-checks to configure to
+bypass these sanity checks.])])
+      ;;
+    gcc)
+      AC_MSG_CHECKING([whether GCC is new enough])
+      AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#if __GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 7)
+#error This version of GCC is too old to build LLVM
+#endif
+]])],
+          [AC_MSG_RESULT([yes])],
+          [AC_MSG_RESULT([no])
+           AC_MSG_ERROR([
+The selected GCC C++ compiler is not new enough to build LLVM. Please upgrade
+to GCC 4.7. You may pass --disable-compiler-version-checks to configure to
+bypass these sanity checks.])])
+      ;;
+    unknown)
+      ;;
+    esac
+    AC_LANG_POP([C++])
+    ;;
+  *)
+    AC_MSG_ERROR([Invalid setting for --enable-compiler-version-checks. Use "yes" or "no"])
+    ;;
+esac
+
 dnl Configure all of the projects present in our source tree. While we could
 dnl just AC_CONFIG_SUBDIRS on the set of directories in projects that have a
 dnl configure script, that usage of the AC_CONFIG_SUBDIRS macro is deprecated.
@@ -108,11 +177,6 @@ dnl We want to configure those projects first so that their object trees are
 dnl created before running the configure scripts of projects that depend upon
 dnl them.
 dnl
-
-dnl Several projects use llvm-gcc, so configure that first
-if test -d ${srcdir}/projects/llvm-gcc ; then
-  AC_CONFIG_SUBDIRS([projects/llvm-gcc])
-fi
 
 dnl Several projects use the LLVM test suite, so configure it next.
 if test -d ${srcdir}/projects/test-suite ; then
@@ -140,15 +204,8 @@ do
   if test -d ${srcdir}/projects/${i} ; then
     case ${i} in
       sample)       AC_CONFIG_SUBDIRS([projects/sample])    ;;
-      privbracket)  AC_CONFIG_SUBDIRS([projects/privbracket]) ;;
-      llvm-stacker) AC_CONFIG_SUBDIRS([projects/llvm-stacker]) ;;
-      llvm-reopt)   AC_CONFIG_SUBDIRS([projects/llvm-reopt]);;
-      llvm-java)    AC_CONFIG_SUBDIRS([projects/llvm-java]) ;;
-      llvm-tv)      AC_CONFIG_SUBDIRS([projects/llvm-tv])   ;;
       safecode)     AC_CONFIG_SUBDIRS([projects/safecode]) ;;
-      llvm-kernel)  AC_CONFIG_SUBDIRS([projects/llvm-kernel]) ;;
       compiler-rt)       ;;
-      llvm-gcc)       ;;
       test-suite)     ;;
       llvm-test)      ;;
       poolalloc)      ;;
@@ -450,9 +507,6 @@ if test "$host_arch" = "Unknown" ; then
 fi
 
 AC_SUBST(HOST_ARCH,$host_arch)
-
-dnl Check for the endianness of the target
-AC_C_BIGENDIAN(AC_SUBST([ENDIAN],[big]),AC_SUBST([ENDIAN],[little]))
 
 dnl Check for build platform executable suffix if we're cross-compiling
 if test "$cross_compiling" = yes; then

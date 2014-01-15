@@ -29,13 +29,13 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
+#include "llvm/IR/Dominators.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/LLVMContext.h"
@@ -87,7 +87,7 @@ namespace {
     virtual bool runOnLoop(Loop *L, LPPassManager &LPM);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addRequired<DominatorTree>();
+      AU.addRequired<DominatorTreeWrapperPass>();
       AU.addRequired<LoopInfo>();
       AU.addRequired<ScalarEvolution>();
       AU.addRequiredID(LoopSimplifyID);
@@ -122,7 +122,7 @@ namespace {
 char IndVarSimplify::ID = 0;
 INITIALIZE_PASS_BEGIN(IndVarSimplify, "indvars",
                 "Induction Variable Simplification", false, false)
-INITIALIZE_PASS_DEPENDENCY(DominatorTree)
+INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(LoopInfo)
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
 INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
@@ -883,6 +883,8 @@ const SCEVAddRecExpr *WidenIV::GetWideRecurrence(Instruction *NarrowUse) {
 /// This IV user cannot be widen. Replace this use of the original narrow IV
 /// with a truncation of the new wide IV to isolate and eliminate the narrow IV.
 static void truncateIVUse(NarrowIVDefUse DU, DominatorTree *DT) {
+  DEBUG(dbgs() << "INDVARS: Truncate IV " << *DU.WideDef
+        << " for user " << *DU.NarrowUse << "\n");
   IRBuilder<> Builder(getInsertPointForUses(DU.NarrowUse, DU.NarrowDef, DT));
   Value *Trunc = Builder.CreateTrunc(DU.WideDef, DU.NarrowDef->getType());
   DU.NarrowUse->replaceUsesOfWith(DU.NarrowDef, Trunc);
@@ -893,10 +895,27 @@ static void truncateIVUse(NarrowIVDefUse DU, DominatorTree *DT) {
 Instruction *WidenIV::WidenIVUse(NarrowIVDefUse DU, SCEVExpander &Rewriter) {
 
   // Stop traversing the def-use chain at inner-loop phis or post-loop phis.
-  if (isa<PHINode>(DU.NarrowUse) &&
-      LI->getLoopFor(DU.NarrowUse->getParent()) != L) {
-    truncateIVUse(DU, DT);
-    return 0;
+  if (PHINode *UsePhi = dyn_cast<PHINode>(DU.NarrowUse)) {
+    if (LI->getLoopFor(UsePhi->getParent()) != L) {
+      // For LCSSA phis, sink the truncate outside the loop.
+      // After SimplifyCFG most loop exit targets have a single predecessor.
+      // Otherwise fall back to a truncate within the loop.
+      if (UsePhi->getNumOperands() != 1)
+        truncateIVUse(DU, DT);
+      else {
+        PHINode *WidePhi =
+          PHINode::Create(DU.WideDef->getType(), 1, UsePhi->getName() + ".wide",
+                          UsePhi);
+        WidePhi->addIncoming(DU.WideDef, UsePhi->getIncomingBlock(0));
+        IRBuilder<> Builder(WidePhi->getParent()->getFirstInsertionPt());
+        Value *Trunc = Builder.CreateTrunc(WidePhi, DU.NarrowDef->getType());
+        UsePhi->replaceAllUsesWith(Trunc);
+        DeadInsts.push_back(UsePhi);
+        DEBUG(dbgs() << "INDVARS: Widen lcssa phi " << *UsePhi
+              << " to " << *WidePhi << "\n");
+      }
+      return 0;
+    }
   }
   // Our raison d'etre! Eliminate sign and zero extension.
   if (IsSigned ? isa<SExtInst>(DU.NarrowUse) : isa<ZExtInst>(DU.NarrowUse)) {
@@ -1779,7 +1798,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   LI = &getAnalysis<LoopInfo>();
   SE = &getAnalysis<ScalarEvolution>();
-  DT = &getAnalysis<DominatorTree>();
+  DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   TD = getAnalysisIfAvailable<DataLayout>();
   TLI = getAnalysisIfAvailable<TargetLibraryInfo>();
 
@@ -1827,8 +1846,8 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
       // Check preconditions for proper SCEVExpander operation. SCEV does not
       // express SCEVExpander's dependencies, such as LoopSimplify. Instead any
       // pass that uses the SCEVExpander must do it. This does not work well for
-      // loop passes because SCEVExpander makes assumptions about all loops, while
-      // LoopPassManager only forces the current loop to be simplified.
+      // loop passes because SCEVExpander makes assumptions about all loops,
+      // while LoopPassManager only forces the current loop to be simplified.
       //
       // FIXME: SCEV expansion has no way to bail out, so the caller must
       // explicitly check any assumptions made by SCEV. Brittle.
