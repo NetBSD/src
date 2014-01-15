@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2014/01/05 16:38:07 joerg Exp $
+#	$NetBSD: Makefile,v 1.7 2014/01/15 22:21:34 joerg Exp $
 
 LIB=	LLVMSparcCodeGen
 
@@ -26,10 +26,13 @@ TABLEGEN_SRC=		Sparc.td
 TABLEGEN_INCLUDES=	-I${LLVM_SRCDIR}/lib/Target/Sparc
 TABLEGEN_OUTPUT= \
 	SparcGenDAGISel.inc|-gen-dag-isel \
+	SparcGenAsmMatcher.inc|-gen-asm-matcher \
 	SparcGenAsmWriter.inc|-gen-asm-writer \
 	SparcGenCallingConv.inc|-gen-callingconv \
 	SparcGenCodeEmitter.inc|-gen-emitter \
+	SparcGenDisassemblerTables.inc|-gen-disassembler \
 	SparcGenInstrInfo.inc|-gen-instr-info \
+	SparcGenMCCodeEmitter.inc|-gen-emitter^-mc-emitter \
 	SparcGenRegisterInfo.inc|-gen-register-info \
 	SparcGenSubtargetInfo.inc|-gen-subtarget
 

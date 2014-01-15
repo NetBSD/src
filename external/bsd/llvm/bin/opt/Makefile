@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2014/01/05 16:38:06 joerg Exp $
+#	$NetBSD: Makefile,v 1.11 2014/01/15 22:21:34 joerg Exp $
 
 PROG_CXX=	opt
 NOMAN=		yes
@@ -9,6 +9,8 @@ NOMAN=		yes
 
 SRCS=	AnalysisWrappers.cpp \
 	GraphPrinters.cpp \
+	NewPMDriver.cpp \
+	Passes.cpp \
 	PrintSCC.cpp \
 	opt.cpp
 
