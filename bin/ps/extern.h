@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.33 2010/05/31 03:18:33 rmind Exp $	*/
+/*	$NetBSD: extern.h,v 1.34 2014/01/15 08:07:53 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -59,6 +59,7 @@ double	 getpmem(const struct kinfo_proc2 *);
 void	 gname(void *, VARENT *, int);
 void	 groups(void *, VARENT *, int);
 void	 groupnames(void *, VARENT *, int);
+void	 lcputime(void *, VARENT *, int);
 void	 logname(void *, VARENT *, int);
 void	 longtname(void *, VARENT *, int);
 void	 lname(void *, VARENT *, int);
