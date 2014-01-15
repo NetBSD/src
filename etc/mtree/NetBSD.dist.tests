@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.100 2014/01/14 18:07:20 pgoyette Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.101 2014/01/15 08:21:44 martin Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -310,6 +310,7 @@
 ./usr/tests/net/route
 ./usr/tests/net/sys
 ./usr/tests/rump
+./usr/tests/opencrypto
 ./usr/tests/rump/modautoload
 ./usr/tests/rump/rumpkern
 ./usr/tests/rump/rumpkern/h_client
