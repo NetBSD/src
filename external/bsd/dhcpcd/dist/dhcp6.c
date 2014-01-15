@@ -1,9 +1,9 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp6.c,v 1.1.1.5 2014/01/03 22:10:43 roy Exp $");
+ __RCSID("$NetBSD: dhcp6.c,v 1.1.1.6 2014/01/15 20:36:32 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2013 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -71,7 +71,7 @@
 //#define VENDOR_SPLIT
 
 static int sock = -1;
-static struct in6_addr in6addr_linklocal_alldhcp =
+static const struct in6_addr in6addr_linklocal_alldhcp =
     IN6ADDR_LINKLOCAL_ALLDHCP_INIT;
 static struct sockaddr_in6 from;
 static struct msghdr sndhdr;
@@ -434,6 +434,10 @@ dhcp6_makemessage(struct interface *ifp)
 			ml = state->new_len;
 		}
 		si = dhcp6_getmoption(D6_OPTION_SERVERID, m, ml);
+		if (si == NULL) {
+			errno = ESRCH;
+			return -1;
+		}
 		len += sizeof(*si) + ntohs(si->len);
 		/* FALLTHROUGH */
 	case DH6S_REBIND:

@@ -1,9 +1,9 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: platform-bsd.c,v 1.1.1.10 2014/01/03 22:10:42 roy Exp $");
+ __RCSID("$NetBSD: platform-bsd.c,v 1.1.1.11 2014/01/15 20:36:31 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2013 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -115,8 +115,8 @@ ipv6_ra_flush(void)
 	strcpy(dummy, "lo0");
 	if (ioctl(s, SIOCSRTRFLUSH_IN6, (caddr_t)&dummy) == -1)
 		syslog(LOG_ERR, "SIOSRTRFLUSH_IN6: %m");
-//	if (ioctl(s, SIOCSPFXFLUSH_IN6, (caddr_t)&dummy) == -1)
-//		syslog(LOG_ERR, "SIOSPFXFLUSH_IN6: %m");
+	if (ioctl(s, SIOCSPFXFLUSH_IN6, (caddr_t)&dummy) == -1)
+		syslog(LOG_ERR, "SIOSPFXFLUSH_IN6: %m");
 	close(s);
 	return 0;
 }
@@ -149,12 +149,14 @@ check_ipv6(const char *ifname, int own)
 			atexit(restore_kernel_ra);
 		}
 		ra = 0;
+
+		/* Flush the kernel knowledge of advertised routers
+		 * and prefixes so the kernel does not expire prefixes
+		 * and default routes we are trying to own. */
+		ipv6_ra_flush();
 	}
 	if (ifname == NULL)
 		global_ra = ra;
-
-	/* Flush the kernel knowledge of advertised routers */
-	ipv6_ra_flush();
 
 	return ra;
 }

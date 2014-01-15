@@ -1,9 +1,9 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp-common.c,v 1.1.1.2 2014/01/03 22:10:42 roy Exp $");
+ __RCSID("$NetBSD: dhcp-common.c,v 1.1.1.3 2014/01/15 20:36:31 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2013 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -355,9 +355,15 @@ dhcp_optlen(const struct dhcp_opt *opt, size_t dl)
 	return (dl < sz ? 0 : sz);
 }
 
+#ifdef INET6
+#define PO_IFNAME
+#else
+#define PO_IFNAME __unused
+#endif
+
 ssize_t
 print_option(char *s, ssize_t len, int type, int dl, const uint8_t *data,
-    const char *ifname)
+    PO_IFNAME const char *ifname)
 {
 	const uint8_t *e, *t;
 	uint16_t u16;
