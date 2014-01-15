@@ -254,10 +254,10 @@ int drm_getstats(struct drm_device *dev, void *data,
 
 	for (i = 0; i < dev->counters; i++) {
 		if (dev->types[i] == _DRM_STAT_LOCK) {
-			spin_lock(file_priv->master->lock.spinlock);
+			spin_lock(&file_priv->master->lock.spinlock);
 			stats->data[i].value =
 			    (file_priv->master->lock.hw_lock ? file_priv->master->lock.hw_lock->lock : 0);
-			spin_unlock(file_priv->master->lock.spinlock);
+			spin_unlock(&file_priv->master->lock.spinlock);
 		} else {
 			stats->data[i].value = atomic_read(&dev->counts[i]);
 		}
