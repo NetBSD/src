@@ -1,8 +1,8 @@
-/* $NetBSD: dhcpcd-embedded.h,v 1.1.1.1 2014/01/03 22:10:44 roy Exp $ */
+/* $NetBSD: dhcpcd-embedded.h,v 1.1.1.2 2014/01/15 20:36:32 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2013 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 
-#define INITDEFINES	      95
+#define INITDEFINES	      96
 #define INITDEFINE6S	      37
 
-extern const char *dhcpcd_embedded_conf[];
+extern const char * const dhcpcd_embedded_conf[];
