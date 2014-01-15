@@ -10,7 +10,6 @@
 #define DEBUG_TYPE "format-test"
 
 #include "FormatTestUtils.h"
-
 #include "clang/Format/Format.h"
 #include "llvm/Support/Debug.h"
 #include "gtest/gtest.h"
@@ -1650,18 +1649,22 @@ TEST_F(FormatTest, FormatsEnum) {
   verifyFormat("enum X f() {\n  a();\n  return 42;\n}");
   verifyFormat("enum {\n"
                "  Bar = Foo<int, int>::value\n"
-               "};");
+               "};",
+               getLLVMStyleWithColumns(30));
+
+  verifyFormat("enum ShortEnum { A, B, C };");
+  verifyGoogleFormat("enum ShortEnum { A, B, C };");
 }
 
 TEST_F(FormatTest, FormatsEnumsWithErrors) {
   verifyFormat("enum Type {\n"
-               "  One = 0;\n" // These semicolons should be commas.
+               "  One = 0; // These semicolons should be commas.\n"
                "  Two = 1;\n"
                "};");
   verifyFormat("namespace n {\n"
                "enum Type {\n"
                "  One,\n"
-               "  Two,\n" // missing };
+               "  Two, // missing };\n"
                "  int i;\n"
                "}\n"
                "void g() {}");
@@ -1703,13 +1706,11 @@ TEST_F(FormatTest, FormatsEnumClass) {
 
 TEST_F(FormatTest, FormatsEnumTypes) {
   verifyFormat("enum X : int {\n"
-               "  A,\n"
+               "  A, // Force multiple lines.\n"
                "  B\n"
                "};");
-  verifyFormat("enum X : std::uint32_t {\n"
-               "  A,\n"
-               "  B\n"
-               "};");
+  verifyFormat("enum X : int { A, B };");
+  verifyFormat("enum X : std::uint32_t { A, B };");
 }
 
 TEST_F(FormatTest, FormatsBitfields) {
@@ -1912,23 +1913,29 @@ TEST_F(FormatTest, NestedStaticInitializers) {
       " } };");
 
   verifyFormat(
-      "SomeArrayOfSomeType a = { { { 1, 2, 3 }, { 1, 2, 3 },\n"
+      "SomeArrayOfSomeType a = { { { 1, 2, 3 },\n"
+      "                            { 1, 2, 3 },\n"
       "                            { 111111111111111111111111111111,\n"
       "                              222222222222222222222222222222,\n"
       "                              333333333333333333333333333333 },\n"
-      "                            { 1, 2, 3 }, { 1, 2, 3 } } };");
+      "                            { 1, 2, 3 },\n"
+      "                            { 1, 2, 3 } } };");
   verifyFormat(
-      "SomeArrayOfSomeType a = { { { 1, 2, 3 } }, { { 1, 2, 3 } },\n"
+      "SomeArrayOfSomeType a = { { { 1, 2, 3 } },\n"
+      "                          { { 1, 2, 3 } },\n"
       "                          { { 111111111111111111111111111111,\n"
       "                              222222222222222222222222222222,\n"
       "                              333333333333333333333333333333 } },\n"
-      "                          { { 1, 2, 3 } }, { { 1, 2, 3 } } };");
+      "                          { { 1, 2, 3 } },\n"
+      "                          { { 1, 2, 3 } } };");
   verifyGoogleFormat(
       "SomeArrayOfSomeType a = {\n"
-      "    {{1, 2, 3}}, {{1, 2, 3}},\n"
+      "    {{1, 2, 3}},\n"
+      "    {{1, 2, 3}},\n"
       "    {{111111111111111111111111111111, 222222222222222222222222222222,\n"
       "      333333333333333333333333333333}},\n"
-      "    {{1, 2, 3}}, {{1, 2, 3}}};");
+      "    {{1, 2, 3}},\n"
+      "    {{1, 2, 3}}};");
 
   verifyFormat(
       "struct {\n"
@@ -2889,6 +2896,13 @@ TEST_F(FormatTest, ConstructorInitializers) {
                "    : aaaaa(aaaaaaaaaaaaaaaaaaaaaa, aaaaaaaaaaaaaaaaaaaaaa,\n"
                "            aaaaaaaaaaaaaaaaaaaaaa) {}",
                OnePerLine);
+
+  EXPECT_EQ("Constructor()\n"
+            "    : // Comment forcing unwanted break.\n"
+            "      aaaa(aaaa) {}",
+            format("Constructor() :\n"
+                   "    // Comment forcing unwanted break.\n"
+                   "    aaaa(aaaa) {}"));
 }
 
 TEST_F(FormatTest, MemoizationTests) {
@@ -3326,15 +3340,15 @@ TEST_F(FormatTest, FormatsBuilderPattern) {
       "void f() {\n"
       "  someo->Add((new util::filetools::Handler(dir))\n"
       "                 ->OnEvent1(NewPermanentCallback(\n"
-      "                       this, &HandlerHolderClass::EventHandlerCBA))\n"
+      "                     this, &HandlerHolderClass::EventHandlerCBA))\n"
       "                 ->OnEvent2(NewPermanentCallback(\n"
-      "                       this, &HandlerHolderClass::EventHandlerCBB))\n"
+      "                     this, &HandlerHolderClass::EventHandlerCBB))\n"
       "                 ->OnEvent3(NewPermanentCallback(\n"
-      "                       this, &HandlerHolderClass::EventHandlerCBC))\n"
+      "                     this, &HandlerHolderClass::EventHandlerCBC))\n"
       "                 ->OnEvent5(NewPermanentCallback(\n"
-      "                       this, &HandlerHolderClass::EventHandlerCBD))\n"
+      "                     this, &HandlerHolderClass::EventHandlerCBD))\n"
       "                 ->OnEvent6(NewPermanentCallback(\n"
-      "                       this, &HandlerHolderClass::EventHandlerCBE)));\n"
+      "                     this, &HandlerHolderClass::EventHandlerCBE)));\n"
       "}");
 
   verifyFormat(
@@ -3360,7 +3374,7 @@ TEST_F(FormatTest, FormatsBuilderPattern) {
                "    .has<bbbbbbbbbbbbbbbbbbbbb>();");
   verifyFormat("aaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaa()\n"
                "    .aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa<\n"
-               "         aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa>();");
+               "        aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa>();");
 
   // Prefer not to break after empty parentheses.
   verifyFormat("FirstToken->WhitespaceRange.getBegin().getLocWithOffset(\n"
@@ -3903,8 +3917,8 @@ TEST_F(FormatTest, WrapsAtFunctionCallsIfNecessary) {
 
   verifyFormat("EXPECT_CALL(SomeObject, SomeFunction(Parameter))\n"
                "    .WillRepeatedly(Return(SomeValue));");
-  verifyFormat("SomeMap[std::pair(aaaaaaaaaaaa, bbbbbbbbbbbbbbb)]\n"
-               "    .insert(ccccccccccccccccccccccc);");
+  verifyFormat("SomeMap[std::pair(aaaaaaaaaaaa, bbbbbbbbbbbbbbb)].insert(\n"
+               "    ccccccccccccccccccccccc);");
   verifyFormat("aaaaa(aaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
                "            aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa).aaaaa(aaaaa),\n"
                "      aaaaaaaaaaaaaaaaaaaaa);");
@@ -4825,6 +4839,7 @@ TEST_F(FormatTest, LayoutCxx11ConstructorBraceInitializers) {
                  "  aaaaaaaaaaaa, aaaaaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaaaaa,\n"
                  "  aaaaaaa,      a\n"
                  "};");
+    verifyFormat("vector<int> foo = { ::SomeGlobalFunction() };");
 
     FormatStyle NoSpaces = getLLVMStyle();
     NoSpaces.Cpp11BracedListStyle = true;
@@ -4845,6 +4860,7 @@ TEST_F(FormatTest, LayoutCxx11ConstructorBraceInitializers) {
                  "  T member = {arg1, arg2};\n"
                  "};",
                  NoSpaces);
+    verifyFormat("vector<int> foo = {::SomeGlobalFunction()};", NoSpaces);
 
     // FIXME: The alignment of these trailing comments might be bad. Then again,
     // this might be utterly useless in real code.
@@ -4935,16 +4951,23 @@ TEST_F(FormatTest, FormatsBracedListsInColumnLayout) {
                "         { aaaaaaaaaaaaaaaaa } };",
                getLLVMStyleWithColumns(60));
 
-  // No column layout for nested lists.
+  // With nested lists, we should either format one item per line or all nested
+  // lists one one line.
   // FIXME: For some nested lists, we can do better.
   verifyFormat(
       "SomeStruct my_struct_array = {\n"
       "  { aaaaaa, aaaaaaaa, aaaaaaaaaa, aaaaaaaaa, aaaaaaaaa, aaaaaaaaaa,\n"
       "    aaaaaaaaaaaaa, aaaaaaa, aaa },\n"
+      "  { aaa, aaa },\n"
+      "  { aaa, aaa },\n"
       "  { aaaa, aaaa, aaaa, aaaa, aaaa, aaaa, aaaa, aaa },\n"
       "  { aaaaaaaaaaaaaaaaa, aaaaaaaaaaaaaaaaa, aaaaaaaaaaaaaaaaaaaaaaaa,\n"
       "    aaaaaaaaaaaa, a, aaaaaaaaaa, aaaaaaaaa, aaa },\n"
       "};");
+
+  // No column layout should be used here.
+  verifyFormat("aaaaaaaaaaaaaaa = { aaaaaaaaaaaaaaaaaaaaaaaaaaa, 0, 0,\n"
+               "                    bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb };");
 }
 
 TEST_F(FormatTest, PullTrivialFunctionDefinitionsIntoSingleLine) {
@@ -5593,6 +5616,10 @@ TEST_F(FormatTest, FormatObjCProtocol) {
                "    int *looooooooooooooooooooooooooooongNumber;\n"
                "@property(nonatomic, assign, readonly)\n"
                "    NSString *looooooooooooooooooooooooooooongName;");
+
+  verifyFormat("@implementation PR18406\n"
+               "}\n"
+               "@end");
 }
 
 TEST_F(FormatTest, FormatObjCMethodDeclarations) {
@@ -5859,6 +5886,8 @@ TEST_F(FormatTest, ObjCLiterals) {
   verifyFormat("NSNumber *piOverTwo = @(M_PI / 2);");
   verifyFormat("NSNumber *favoriteColor = @(Green);");
   verifyFormat("NSString *path = @(getenv(\"PATH\"));");
+
+  verifyFormat("[dictionary setObject:@(1) forKey:@\"number\"];");
 }
 
 TEST_F(FormatTest, ObjCDictLiterals) {
@@ -6219,7 +6248,7 @@ TEST_F(FormatTest, BreakStringLiterals) {
       format("#define A \"some text other\";", AlignLeft));
 }
 
-TEST_F(FormatTest, BreaksWideStringLiterals) {
+TEST_F(FormatTest, BreaksWideAndNSStringLiterals) {
   EXPECT_EQ(
       "u8\"utf8 string \"\n"
       "u8\"literal\";",
@@ -6235,6 +6264,9 @@ TEST_F(FormatTest, BreaksWideStringLiterals) {
   EXPECT_EQ("L\"wide string \"\n"
             "L\"literal\";",
             format("L\"wide string literal\";", getGoogleStyleWithColumns(16)));
+  EXPECT_EQ("@\"NSString \"\n"
+            "@\"literal\";",
+            format("@\"NSString literal\";", getGoogleStyleWithColumns(19)));
 }
 
 TEST_F(FormatTest, BreaksRawStringLiterals) {
@@ -6605,7 +6637,7 @@ TEST_F(FormatTest, ConfigurableUseOfTab) {
                "};",
                Tab);
   verifyFormat("enum A {\n"
-               "\ta1,\n"
+               "\ta1, // Force multiple lines\n"
                "\ta2,\n"
                "\ta3\n"
                "};",
@@ -7157,6 +7189,11 @@ TEST_F(FormatTest, CatchExceptionReferenceBinding) {
 TEST_F(FormatTest, UnderstandsPragmas) {
   verifyFormat("#pragma omp reduction(| : var)");
   verifyFormat("#pragma omp reduction(+ : var)");
+
+  EXPECT_EQ("#pragma mark Any non-hyphenated or hyphenated string "
+            "(including parentheses).",
+            format("#pragma    mark   Any non-hyphenated or hyphenated string "
+                   "(including parentheses)."));
 }
 
 #define EXPECT_ALL_STYLES_EQUAL(Styles)                                        \

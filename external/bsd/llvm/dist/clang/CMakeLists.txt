@@ -2,7 +2,7 @@
 # standalone project, using LLVM as an external library:
 if( CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR )
   project(Clang)
-  cmake_minimum_required(VERSION 2.8)
+  cmake_minimum_required(VERSION 2.8.8)
 
   # Rely on llvm-config.
   set(CONFIG_OUTPUT)
@@ -70,6 +70,9 @@ if( CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR )
   set(LLVM_LIBRARY_OUTPUT_INTDIR ${LLVM_LIBRARY_DIR})
 
   option(LLVM_INSTALL_TOOLCHAIN_ONLY "Only include toolchain files in the 'install' target." OFF)
+
+  option(LLVM_FORCE_USE_OLD_HOST_TOOLCHAIN
+         "Set to ON to force using an old, unsupported host toolchain." OFF)
 
   include(AddLLVM)
   include(TableGen)
@@ -319,6 +322,10 @@ macro(add_clang_library name)
     add_llvm_symbol_exports( ${name} ${LLVM_EXPORTED_SYMBOL_FILE} )
   endif()
 
+  if (MODULE)
+    set_property(TARGET ${name} PROPERTY SUFFIX ${LLVM_PLUGIN_EXT})
+  endif ()
+
   if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY OR ${name} STREQUAL "libclang")
     install(TARGETS ${name}
       LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX}
@@ -410,6 +417,11 @@ add_subdirectory(tools)
 add_subdirectory(runtime)
 
 option(CLANG_BUILD_EXAMPLES "Build CLANG example programs by default." OFF)
+if (CLANG_BUILD_EXAMPLES)
+  set(ENABLE_CLANG_EXAMPLES "1")
+else()
+  set(ENABLE_CLANG_EXAMPLES "0")
+endif()
 add_subdirectory(examples)
 
 option(CLANG_INCLUDE_TESTS
@@ -441,9 +453,6 @@ if( CLANG_BUILT_STANDALONE AND MSVC_VERSION EQUAL 1600 )
     file(APPEND "${CLANG_SLN_FILENAME}" "\n# This should be regenerated!\n")
   endif()
 endif()
-
-set(BUG_REPORT_URL "http://llvm.org/bugs/" CACHE STRING
-  "Default URL where bug reports are to be submitted.")
 
 set(CLANG_ORDER_FILE "" CACHE FILEPATH
   "Order file to use when compiling clang in order to improve startup time.")
