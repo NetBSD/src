@@ -203,7 +203,6 @@ int drm_getmap(struct drm_device *dev, void *data,
 int drm_getclient(struct drm_device *dev, void *data,
 		  struct drm_file *file_priv)
 {
-#ifndef __NetBSD__		/* XXX Too scary to contemplate.  */
 	struct drm_client *client = data;
 	struct drm_file *pt;
 	int idx;
@@ -216,8 +215,13 @@ int drm_getclient(struct drm_device *dev, void *data,
 	list_for_each_entry(pt, &dev->filelist, lhead) {
 		if (i++ >= idx) {
 			client->auth = pt->authenticated;
+#ifdef __NetBSD__		/* XXX Too scary to contemplate.  */
+			client->pid = -1;
+			client->uid = -1;
+#else
 			client->pid = pid_vnr(pt->pid);
 			client->uid = from_kuid_munged(current_user_ns(), pt->uid);
+#endif
 			client->magic = pt->magic;
 			client->iocs = pt->ioctl_count;
 			mutex_unlock(&dev->struct_mutex);
@@ -226,7 +230,6 @@ int drm_getclient(struct drm_device *dev, void *data,
 		}
 	}
 	mutex_unlock(&dev->struct_mutex);
-#endif
 
 	return -EINVAL;
 }
