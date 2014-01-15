@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2013/12/03 22:42:55 joerg Exp $
+#	$NetBSD: Makefile,v 1.8 2014/01/15 20:53:00 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -15,8 +15,6 @@ SUBDIR+=	librt
 .include "Makefile.inc"
 
 checkout:
-	svn co -r ${COMPILER_RT_REVISION} ${SVN_ROOT}/compiler-rt/${SVN_BRANCH} \
-	    ${COMPILER_RT_SRCDIR}
 	svn co -r ${LLD_REVISION} ${SVN_ROOT}/lld/${SVN_BRANCH} ${LLD_SRCDIR}
 	svn co -r ${LLDB_REVISION} ${SVN_ROOT}/lldb/${SVN_BRANCH} ${LLDB_SRCDIR}
 
