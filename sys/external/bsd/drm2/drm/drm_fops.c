@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_fops.c,v 1.1.2.5 2013/07/24 03:22:11 riastradh Exp $	*/
+/*	$NetBSD: drm_fops.c,v 1.1.2.6 2014/01/15 13:52:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_fops.c,v 1.1.2.5 2013/07/24 03:22:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_fops.c,v 1.1.2.6 2014/01/15 13:52:39 riastradh Exp $");
 
 #include <drm/drmP.h>
 
@@ -91,6 +91,10 @@ drm_open_file(struct drm_file *file, void *fp, struct drm_minor *minor)
 	error = drm_open_file_master(file);
 	if (error)
 		goto fail2;
+
+        mutex_lock(&dev->struct_mutex);
+        list_add(&file->lhead, &dev->filelist);
+        mutex_unlock(&dev->struct_mutex);
 
 	/* Success!  */
 	return 0;
