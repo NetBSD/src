@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_module.c,v 1.1.2.7 2013/12/30 04:50:12 riastradh Exp $	*/
+/*	$NetBSD: drm_module.c,v 1.1.2.8 2014/01/15 13:54:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.1.2.7 2013/12/30 04:50:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.1.2.8 2014/01/15 13:54:03 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -74,14 +74,13 @@ drm2_modcmd(modcmd_t cmd, void *arg __unused)
 		if (error) {
 			aprint_error("drm: unable to initialize linux kmap:"
 			    " %d", error);
-			return error;
+			goto init_fail0;
 		}
 		error = linux_workqueue_init();
 		if (error) {
 			aprint_error("drm: unable to initialize workqueues:"
 			    " %d", error);
-			linux_kmap_fini();
-			return error;
+			goto init_fail1;
 		}
 #ifdef _MODULE
 		error = config_init_component(cfdriver_ioconf_drm,
@@ -89,23 +88,29 @@ drm2_modcmd(modcmd_t cmd, void *arg __unused)
 		if (error) {
 			aprint_error("drm: unable to init component: %d\n",
 			    error);
-			linux_workqueue_fini();
-			linux_kmap_fini();
-			return error;
+			goto init_fail2;
 		}
 		error = devsw_attach("drm", NULL, &bmajor,
 		    &drm_cdevsw, &cmajor);
 		if (error) {
 			aprint_error("drm: unable to attach devsw: %d\n",
 			    error);
-			(void)config_fini_component(cfdriver_ioconf_drm,
-			    cfattach_ioconf_drm, cfdata_ioconf_drm);
-			linux_workqueue_fini();
-			linux_kmap_fini();
-			return error;
+			goto init_fail3;
 		}
 #endif
 		return 0;
+
+#ifdef _MODULE
+#if 0
+init_fail4:	(void)devsw_detach(NULL, &drm_cdevsw);
+#endif
+init_fail3:	(void)config_fini_component(cfdriver_ioconf_drm,
+		    cfattach_ioconf_drm, cfdata_ioconf_drm);
+init_fail2:	linux_workqueue_fini();
+#endif	/* _MODULE */
+init_fail1:	linux_kmap_fini();
+init_fail0:	linux_mutex_destroy(&drm_global_mutex);
+		return error;
 
 	case MODULE_CMD_FINI:
 #ifdef _MODULE
