@@ -1,9 +1,8 @@
-# $NetBSD: Makefile.bootxx,v 1.47 2014/01/12 15:26:29 tsutsui Exp $
+# $NetBSD: Makefile.bootxx,v 1.48 2014/01/15 22:25:22 joerg Exp $
 
 S=	${.CURDIR}/../../../../..
 
 AFLAGS.bootxx.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
-AFLAGS.label.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 AFLAGS.pbr.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
 PIE_CFLAGS=

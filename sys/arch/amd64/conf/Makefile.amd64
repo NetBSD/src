@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.41 2012/12/14 16:37:55 christos Exp $
+#	$NetBSD: Makefile.amd64,v 1.42 2014/01/15 22:25:22 joerg Exp $
 
 # Makefile for NetBSD
 #
@@ -67,10 +67,6 @@ copy.o: ${AMD64}/amd64/copy.S assym.h
 
 spl.o: ${AMD64}/amd64/spl.S assym.h
 	${NORMAL_S}
-
-AFLAGS.locore.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
-AFLAGS.mptramp.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
-AFLAGS.spl.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
 ##
 ## (5) link settings
