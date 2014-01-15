@@ -1456,9 +1456,9 @@ i915_gem_object_get_page(struct drm_i915_gem_object *obj, int n)
 	 * prevent them from disappearing.
 	 */
 	KASSERT(obj->pages != NULL);
-	mutex_enter(obj->base.gemo_uvmobj.vmobjlock);
+	mutex_enter(obj->base.gemo_shm_uao->vmobjlock);
 	struct vm_page *const page = uvm_pagelookup(obj->base.gemo_shm_uao, n);
-	mutex_exit(obj->base.gemo_uvmobj.vmobjlock);
+	mutex_exit(obj->base.gemo_shm_uao->vmobjlock);
 
 	return container_of(page, struct page, p_vmp);
 }
