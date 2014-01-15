@@ -546,18 +546,11 @@ struct drm_lock_data {
 #else
 	wait_queue_head_t lock_queue;	/**< Queue of blocked processes */
 #endif
-#ifndef __NetBSD__		 /* XXX nothing seems to use this */
 	unsigned long lock_time;	/**< Time of last lock in jiffies */
-#endif
 	spinlock_t spinlock;
-#ifdef __NetBSD__
-	unsigned int n_kernel_waiters;
-	drm_waitqueue_t kernel_lock_queue;
-#else
 	uint32_t kernel_waiters;
 	uint32_t user_waiters;
 	int idle_has_lock;
-#endif
 };
 
 /**

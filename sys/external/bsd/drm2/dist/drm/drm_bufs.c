@@ -39,6 +39,7 @@
 #include <linux/log2.h>
 #include <linux/export.h>
 #include <linux/mm.h>
+#include <asm/bug.h>
 #include <asm/shmparam.h>
 #include <drm/drmP.h>
 
@@ -246,12 +247,15 @@ static int drm_addmap_core(struct drm_device * dev, resource_size_t offset,
 		map->offset = (unsigned long)map->handle;
 		if (map->flags & _DRM_CONTAINS_LOCK) {
 			/* Prevent a 2nd X Server from creating a 2nd lock */
+			spin_lock(&dev->primary->master->lock.spinlock);
 			if (dev->primary->master->lock.hw_lock != NULL) {
 				vfree(map->handle);
 				kfree(map);
+				spin_unlock(&dev->primary->master->lock.spinlock);
 				return -EBUSY;
 			}
 			dev->sigdata.lock = dev->primary->master->lock.hw_lock = map->handle;	/* Pointer to lock */
+			spin_unlock(&dev->primary->master->lock.spinlock);
 		}
 		break;
 	case _DRM_AGP: {
@@ -492,19 +496,36 @@ int drm_rmmap_locked(struct drm_device *dev, struct drm_local_map *map)
 		}
 		break;
 	case _DRM_SHM:
-		vfree(map->handle);
 		if (master) {
+			spin_lock(&master->lock.spinlock);
+			/*
+			 * If we successfully removed this mapping,
+			 * then the mapping must have been there in the
+			 * first place, and we must have had a
+			 * heavyweight lock, so we assert here instead
+			 * of just checking and failing.
+			 *
+			 * XXX What about the _DRM_CONTAINS_LOCK flag?
+			 * Where is that supposed to be set?  Is it
+			 * equivalent to having a master set?
+			 *
+			 * XXX There is copypasta of this in
+			 * drm_fops.c.
+			 */
+			BUG_ON(master->lock.hw_lock == NULL);
 			if (dev->sigdata.lock == master->lock.hw_lock)
 				dev->sigdata.lock = NULL;
 			master->lock.hw_lock = NULL;   /* SHM removed */
 			master->lock.file_priv = NULL;
 #ifdef __NetBSD__
-			DRM_WAKEUP_ALL(&master->lock.lock_queue,
-			    &drm_global_mutex);
+			DRM_SPIN_WAKEUP_ALL(&master->lock.lock_queue,
+			    &master->lock.spinlock);
 #else
 			wake_up_interruptible_all(&master->lock.lock_queue);
 #endif
+			spin_unlock(&master->lock.spinlock);
 		}
+		vfree(map->handle);
 		break;
 	case _DRM_AGP:
 	case _DRM_SCATTER_GATHER:
