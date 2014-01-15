@@ -24,26 +24,32 @@
 
 #define DEBUG_TYPE "sample-profile"
 
+#include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/DebugInfo/DIContext.h"
+#include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/PostDominators.h"
+#include "llvm/DebugInfo.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"
-#include "llvm/IR/Metadata.h"
 #include "llvm/IR/MDBuilder.h"
+#include "llvm/IR/Metadata.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/InstIterator.h"
+#include "llvm/Support/LineIterator.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Regex.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Transforms/Scalar.h"
 
 using namespace llvm;
 
@@ -52,11 +58,19 @@ using namespace llvm;
 static cl::opt<std::string> SampleProfileFile(
     "sample-profile-file", cl::init(""), cl::value_desc("filename"),
     cl::desc("Profile file loaded by -sample-profile"), cl::Hidden);
+static cl::opt<unsigned> SampleProfileMaxPropagateIterations(
+    "sample-profile-max-propagate-iterations", cl::init(100),
+    cl::desc("Maximum number of iterations to go through when propagating "
+             "sample block/edge weights through the CFG."));
 
 namespace {
 
 typedef DenseMap<uint32_t, uint32_t> BodySampleMap;
 typedef DenseMap<BasicBlock *, uint32_t> BlockWeightMap;
+typedef DenseMap<BasicBlock *, BasicBlock *> EquivalenceClassMap;
+typedef std::pair<BasicBlock *, BasicBlock *> Edge;
+typedef DenseMap<Edge, uint32_t> EdgeWeightMap;
+typedef DenseMap<BasicBlock *, SmallVector<BasicBlock *, 8> > BlockEdgeMap;
 
 /// \brief Representation of the runtime profile for a function.
 ///
@@ -65,19 +79,34 @@ typedef DenseMap<BasicBlock *, uint32_t> BlockWeightMap;
 /// in the function and a map of samples collected in every statement.
 class SampleFunctionProfile {
 public:
-  SampleFunctionProfile() : TotalSamples(0), TotalHeadSamples(0) {}
+  SampleFunctionProfile()
+      : TotalSamples(0), TotalHeadSamples(0), HeaderLineno(0), DT(0), PDT(0),
+        LI(0) {}
 
-  bool emitAnnotations(Function &F);
-  uint32_t getInstWeight(Instruction &I, unsigned FirstLineno,
-                         BodySampleMap &BodySamples);
-  uint32_t computeBlockWeight(BasicBlock *B, unsigned FirstLineno,
-                              BodySampleMap &BodySamples);
+  unsigned getFunctionLoc(Function &F);
+  bool emitAnnotations(Function &F, DominatorTree *DomTree,
+                       PostDominatorTree *PostDomTree, LoopInfo *Loops);
+  uint32_t getInstWeight(Instruction &I);
+  uint32_t getBlockWeight(BasicBlock *B);
   void addTotalSamples(unsigned Num) { TotalSamples += Num; }
   void addHeadSamples(unsigned Num) { TotalHeadSamples += Num; }
   void addBodySamples(unsigned LineOffset, unsigned Num) {
     BodySamples[LineOffset] += Num;
   }
   void print(raw_ostream &OS);
+  void printEdgeWeight(raw_ostream &OS, Edge E);
+  void printBlockWeight(raw_ostream &OS, BasicBlock *BB);
+  void printBlockEquivalence(raw_ostream &OS, BasicBlock *BB);
+  bool computeBlockWeights(Function &F);
+  void findEquivalenceClasses(Function &F);
+  void findEquivalencesFor(BasicBlock *BB1,
+                           SmallVector<BasicBlock *, 8> Descendants,
+                           DominatorTreeBase<BasicBlock> *DomTree);
+  void propagateWeights(Function &F);
+  uint32_t visitEdge(Edge E, unsigned *NumUnknownEdges, Edge *UnknownEdge);
+  void buildEdges(Function &F);
+  bool propagateThroughEdges(Function &F);
+  bool empty() { return BodySamples.empty(); }
 
 protected:
   /// \brief Total number of samples collected inside this function.
@@ -86,8 +115,15 @@ protected:
   /// inside this function and all its inlined callees.
   unsigned TotalSamples;
 
-  // \brief Total number of samples collected at the head of the function.
+  /// \brief Total number of samples collected at the head of the function.
+  /// FIXME: Use head samples to estimate a cold/hot attribute for the function.
   unsigned TotalHeadSamples;
+
+  /// \brief Line number for the function header. Used to compute relative
+  /// line numbers from the absolute line LOCs found in instruction locations.
+  /// The relative line numbers are needed to address the samples from the
+  /// profile file.
+  unsigned HeaderLineno;
 
   /// \brief Map line offsets to collected samples.
   ///
@@ -101,6 +137,37 @@ protected:
   /// The weight of a basic block is defined to be the maximum
   /// of all the instruction weights in that block.
   BlockWeightMap BlockWeights;
+
+  /// \brief Map edges to their computed weights.
+  ///
+  /// Edge weights are computed by propagating basic block weights in
+  /// SampleProfile::propagateWeights.
+  EdgeWeightMap EdgeWeights;
+
+  /// \brief Set of visited blocks during propagation.
+  SmallPtrSet<BasicBlock *, 128> VisitedBlocks;
+
+  /// \brief Set of visited edges during propagation.
+  SmallSet<Edge, 128> VisitedEdges;
+
+  /// \brief Equivalence classes for block weights.
+  ///
+  /// Two blocks BB1 and BB2 are in the same equivalence class if they
+  /// dominate and post-dominate each other, and they are in the same loop
+  /// nest. When this happens, the two blocks are guaranteed to execute
+  /// the same number of times.
+  EquivalenceClassMap EquivalenceClass;
+
+  /// \brief Dominance, post-dominance and loop information.
+  DominatorTree *DT;
+  PostDominatorTree *PDT;
+  LoopInfo *LI;
+
+  /// \brief Predecessors for each basic block in the CFG.
+  BlockEdgeMap Predecessors;
+
+  /// \brief Successors for each basic block in the CFG.
+  BlockEdgeMap Successors;
 };
 
 /// \brief Sample-based profile reader.
@@ -139,6 +206,11 @@ public:
     return Profiles[F.getName()];
   }
 
+  /// \brief Report a parse error message and stop compilation.
+  void reportParseError(int64_t LineNumber, Twine Msg) const {
+    report_fatal_error(Filename + ":" + Twine(LineNumber) + ": " + Msg + "\n");
+  }
+
 protected:
   /// \brief Map every function to its associated profile.
   ///
@@ -153,63 +225,6 @@ protected:
   /// independently. If possible, the profiler should have a text
   /// version of the profile format to be used in constructing test
   /// cases and debugging.
-  StringRef Filename;
-};
-
-/// \brief Loader class for text-based profiles.
-///
-/// This class defines a simple interface to read text files containing
-/// profiles. It keeps track of line number information and location of
-/// the file pointer. Users of this class are responsible for actually
-/// parsing the lines returned by the readLine function.
-///
-/// TODO - This does not really belong here. It is a generic text file
-/// reader. It should be moved to the Support library and made more general.
-class ExternalProfileTextLoader {
-public:
-  ExternalProfileTextLoader(StringRef F) : Filename(F) {
-    error_code EC;
-    EC = MemoryBuffer::getFile(Filename, Buffer);
-    if (EC)
-      report_fatal_error("Could not open profile file " + Filename + ": " +
-                         EC.message());
-    FP = Buffer->getBufferStart();
-    Lineno = 0;
-  }
-
-  /// \brief Read a line from the mapped file.
-  StringRef readLine() {
-    size_t Length = 0;
-    const char *start = FP;
-    while (FP != Buffer->getBufferEnd() && *FP != '\n') {
-      Length++;
-      FP++;
-    }
-    if (FP != Buffer->getBufferEnd())
-      FP++;
-    Lineno++;
-    return StringRef(start, Length);
-  }
-
-  /// \brief Return true, if we've reached EOF.
-  bool atEOF() const { return FP == Buffer->getBufferEnd(); }
-
-  /// \brief Report a parse error message and stop compilation.
-  void reportParseError(Twine Msg) const {
-    report_fatal_error(Filename + ":" + Twine(Lineno) + ": " + Msg + "\n");
-  }
-
-private:
-  /// \brief Memory buffer holding the text file.
-  OwningPtr<MemoryBuffer> Buffer;
-
-  /// \brief Current position into the memory buffer.
-  const char *FP;
-
-  /// \brief Current line number.
-  int64_t Lineno;
-
-  /// \brief Path name where to the profile file.
   StringRef Filename;
 };
 
@@ -238,6 +253,9 @@ public:
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesCFG();
+    AU.addRequired<LoopInfo>();
+    AU.addRequired<DominatorTreeWrapperPass>();
+    AU.addRequired<PostDominatorTree>();
   }
 
 protected:
@@ -261,6 +279,34 @@ void SampleFunctionProfile::print(raw_ostream &OS) {
     OS << "\tline offset: " << SI->first
        << ", number of samples: " << SI->second << "\n";
   OS << "\n";
+}
+
+/// \brief Print the weight of edge \p E on stream \p OS.
+///
+/// \param OS  Stream to emit the output to.
+/// \param E  Edge to print.
+void SampleFunctionProfile::printEdgeWeight(raw_ostream &OS, Edge E) {
+  OS << "weight[" << E.first->getName() << "->" << E.second->getName()
+     << "]: " << EdgeWeights[E] << "\n";
+}
+
+/// \brief Print the equivalence class of block \p BB on stream \p OS.
+///
+/// \param OS  Stream to emit the output to.
+/// \param BB  Block to print.
+void SampleFunctionProfile::printBlockEquivalence(raw_ostream &OS,
+                                                  BasicBlock *BB) {
+  BasicBlock *Equiv = EquivalenceClass[BB];
+  OS << "equivalence[" << BB->getName()
+     << "]: " << ((Equiv) ? EquivalenceClass[BB]->getName() : "NONE") << "\n";
+}
+
+/// \brief Print the weight of block \p BB on stream \p OS.
+///
+/// \param OS  Stream to emit the output to.
+/// \param BB  Block to print.
+void SampleFunctionProfile::printBlockWeight(raw_ostream &OS, BasicBlock *BB) {
+  OS << "weight[" << BB->getName() << "]: " << BlockWeights[BB] << "\n";
 }
 
 /// \brief Print the function profile for \p FName on stream \p OS.
@@ -290,88 +336,663 @@ void SampleModuleProfile::dump() {
 
 /// \brief Load samples from a text file.
 ///
-/// The file is divided in two segments:
+/// The file contains a list of samples for every function executed at
+/// runtime. Each function profile has the following format:
 ///
-/// Symbol table (represented with the string "symbol table")
-///    Number of symbols in the table
-///    symbol 1
-///    symbol 2
+///    function1:total_samples:total_head_samples
+///    offset1[.discriminator]: number_of_samples [fn1:num fn2:num ... ]
+///    offset2[.discriminator]: number_of_samples [fn3:num fn4:num ... ]
 ///    ...
-///    symbol N
-///
-/// Function body profiles
-///    function1:total_samples:total_head_samples:number_of_locations
-///    location_offset_1: number_of_samples
-///    location_offset_2: number_of_samples
-///    ...
-///    location_offset_N: number_of_samples
+///    offsetN[.discriminator]: number_of_samples [fn5:num fn6:num ... ]
 ///
 /// Function names must be mangled in order for the profile loader to
-/// match them in the current translation unit.
+/// match them in the current translation unit. The two numbers in the
+/// function header specify how many total samples were accumulated in
+/// the function (first number), and the total number of samples accumulated
+/// at the prologue of the function (second number). This head sample
+/// count provides an indicator of how frequent is the function invoked.
+///
+/// Each sampled line may contain several items. Some are optional
+/// (marked below):
+///
+/// a- Source line offset. This number represents the line number
+///    in the function where the sample was collected. The line number
+///    is always relative to the line where symbol of the function
+///    is defined. So, if the function has its header at line 280,
+///    the offset 13 is at line 293 in the file.
+///
+/// b- [OPTIONAL] Discriminator. This is used if the sampled program
+///    was compiled with DWARF discriminator support
+///    (http://wiki.dwarfstd.org/index.php?title=Path_Discriminators)
+///    This is currently only emitted by GCC and we just ignore it.
+///
+///    FIXME: Handle discriminators, since they are needed to distinguish
+///           multiple control flow within a single source LOC.
+///
+/// c- Number of samples. This is the number of samples collected by
+///    the profiler at this source location.
+///
+/// d- [OPTIONAL] Potential call targets and samples. If present, this
+///    line contains a call instruction. This models both direct and
+///    indirect calls. Each called target is listed together with the
+///    number of samples. For example,
+///
+///    130: 7  foo:3  bar:2  baz:7
+///
+///    The above means that at relative line offset 130 there is a
+///    call instruction that calls one of foo(), bar() and baz(). With
+///    baz() being the relatively more frequent call target.
+///
+///    FIXME: This is currently unhandled, but it has a lot of
+///           potential for aiding the inliner.
+///
 ///
 /// Since this is a flat profile, a function that shows up more than
 /// once gets all its samples aggregated across all its instances.
-/// TODO - flat profiles are too imprecise to provide good optimization
-/// opportunities. Convert them to context-sensitive profile.
+///
+/// FIXME: flat profiles are too imprecise to provide good optimization
+///        opportunities. Convert them to context-sensitive profile.
 ///
 /// This textual representation is useful to generate unit tests and
 /// for debugging purposes, but it should not be used to generate
 /// profiles for large programs, as the representation is extremely
 /// inefficient.
 void SampleModuleProfile::loadText() {
-  ExternalProfileTextLoader Loader(Filename);
-
-  // Read the symbol table.
-  StringRef Line = Loader.readLine();
-  if (Line != "symbol table")
-    Loader.reportParseError("Expected 'symbol table', found " + Line);
-  int NumSymbols;
-  Line = Loader.readLine();
-  if (Line.getAsInteger(10, NumSymbols))
-    Loader.reportParseError("Expected a number, found " + Line);
-  for (int I = 0; I < NumSymbols; I++)
-    Profiles[Loader.readLine()] = SampleFunctionProfile();
+  OwningPtr<MemoryBuffer> Buffer;
+  error_code EC = MemoryBuffer::getFile(Filename, Buffer);
+  if (EC)
+    report_fatal_error("Could not open file " + Filename + ": " + EC.message());
+  line_iterator LineIt(*Buffer, '#');
 
   // Read the profile of each function. Since each function may be
   // mentioned more than once, and we are collecting flat profiles,
   // accumulate samples as we parse them.
-  Regex HeadRE("^([^:]+):([0-9]+):([0-9]+):([0-9]+)$");
-  Regex LineSample("^([0-9]+): ([0-9]+)$");
-  while (!Loader.atEOF()) {
-    SmallVector<StringRef, 4> Matches;
-    Line = Loader.readLine();
-    if (!HeadRE.match(Line, &Matches))
-      Loader.reportParseError("Expected 'mangled_name:NUM:NUM:NUM', found " +
-                              Line);
-    assert(Matches.size() == 5);
+  Regex HeadRE("^([^:]+):([0-9]+):([0-9]+)$");
+  Regex LineSample("^([0-9]+)(\\.[0-9]+)?: ([0-9]+)(.*)$");
+  while (!LineIt.is_at_eof()) {
+    // Read the header of each function. The function header should
+    // have this format:
+    //
+    //        function_name:total_samples:total_head_samples
+    //
+    // See above for an explanation of each field.
+    SmallVector<StringRef, 3> Matches;
+    if (!HeadRE.match(*LineIt, &Matches))
+      reportParseError(LineIt.line_number(),
+                       "Expected 'mangled_name:NUM:NUM', found " + *LineIt);
+    assert(Matches.size() == 4);
     StringRef FName = Matches[1];
-    unsigned NumSamples, NumHeadSamples, NumSampledLines;
+    unsigned NumSamples, NumHeadSamples;
     Matches[2].getAsInteger(10, NumSamples);
     Matches[3].getAsInteger(10, NumHeadSamples);
-    Matches[4].getAsInteger(10, NumSampledLines);
+    Profiles[FName] = SampleFunctionProfile();
     SampleFunctionProfile &FProfile = Profiles[FName];
     FProfile.addTotalSamples(NumSamples);
     FProfile.addHeadSamples(NumHeadSamples);
-    unsigned I;
-    for (I = 0; I < NumSampledLines && !Loader.atEOF(); I++) {
-      Line = Loader.readLine();
-      if (!LineSample.match(Line, &Matches))
-        Loader.reportParseError("Expected 'NUM: NUM', found " + Line);
-      assert(Matches.size() == 3);
+    ++LineIt;
+
+    // Now read the body. The body of the function ends when we reach
+    // EOF or when we see the start of the next function.
+    while (!LineIt.is_at_eof() && isdigit((*LineIt)[0])) {
+      if (!LineSample.match(*LineIt, &Matches))
+        reportParseError(
+            LineIt.line_number(),
+            "Expected 'NUM[.NUM]: NUM[ mangled_name:NUM]*', found " + *LineIt);
+      assert(Matches.size() == 5);
       unsigned LineOffset, NumSamples;
       Matches[1].getAsInteger(10, LineOffset);
-      Matches[2].getAsInteger(10, NumSamples);
-      FProfile.addBodySamples(LineOffset, NumSamples);
-    }
 
-    if (I < NumSampledLines)
-      Loader.reportParseError("Unexpected end of file");
+      // FIXME: Handle discriminator information (in Matches[2]).
+
+      Matches[3].getAsInteger(10, NumSamples);
+
+      // FIXME: Handle called targets (in Matches[4]).
+
+      // When dealing with instruction weights, we use the value
+      // zero to indicate the absence of a sample. If we read an
+      // actual zero from the profile file, return it as 1 to
+      // avoid the confusion later on.
+      if (NumSamples == 0)
+        NumSamples = 1;
+      FProfile.addBodySamples(LineOffset, NumSamples);
+      ++LineIt;
+    }
   }
 }
 
+/// \brief Get the weight for an instruction.
+///
+/// The "weight" of an instruction \p Inst is the number of samples
+/// collected on that instruction at runtime. To retrieve it, we
+/// need to compute the line number of \p Inst relative to the start of its
+/// function. We use HeaderLineno to compute the offset. We then
+/// look up the samples collected for \p Inst using BodySamples.
+///
+/// \param Inst Instruction to query.
+///
+/// \returns The profiled weight of I.
+uint32_t SampleFunctionProfile::getInstWeight(Instruction &Inst) {
+  unsigned Lineno = Inst.getDebugLoc().getLine();
+  if (Lineno < HeaderLineno)
+    return 0;
+  unsigned LOffset = Lineno - HeaderLineno;
+  uint32_t Weight = BodySamples.lookup(LOffset);
+  DEBUG(dbgs() << "    " << Lineno << ":" << Inst.getDebugLoc().getCol() << ":"
+               << Inst << " (line offset: " << LOffset
+               << " - weight: " << Weight << ")\n");
+  return Weight;
+}
+
+/// \brief Compute the weight of a basic block.
+///
+/// The weight of basic block \p B is the maximum weight of all the
+/// instructions in B. The weight of \p B is computed and cached in
+/// the BlockWeights map.
+///
+/// \param B The basic block to query.
+///
+/// \returns The computed weight of B.
+uint32_t SampleFunctionProfile::getBlockWeight(BasicBlock *B) {
+  // If we've computed B's weight before, return it.
+  std::pair<BlockWeightMap::iterator, bool> Entry =
+      BlockWeights.insert(std::make_pair(B, 0));
+  if (!Entry.second)
+    return Entry.first->second;
+
+  // Otherwise, compute and cache B's weight.
+  uint32_t Weight = 0;
+  for (BasicBlock::iterator I = B->begin(), E = B->end(); I != E; ++I) {
+    uint32_t InstWeight = getInstWeight(*I);
+    if (InstWeight > Weight)
+      Weight = InstWeight;
+  }
+  Entry.first->second = Weight;
+  return Weight;
+}
+
+/// \brief Compute and store the weights of every basic block.
+///
+/// This populates the BlockWeights map by computing
+/// the weights of every basic block in the CFG.
+///
+/// \param F The function to query.
+bool SampleFunctionProfile::computeBlockWeights(Function &F) {
+  bool Changed = false;
+  DEBUG(dbgs() << "Block weights\n");
+  for (Function::iterator B = F.begin(), E = F.end(); B != E; ++B) {
+    uint32_t Weight = getBlockWeight(B);
+    Changed |= (Weight > 0);
+    DEBUG(printBlockWeight(dbgs(), B));
+  }
+
+  return Changed;
+}
+
+/// \brief Find equivalence classes for the given block.
+///
+/// This finds all the blocks that are guaranteed to execute the same
+/// number of times as \p BB1. To do this, it traverses all the the
+/// descendants of \p BB1 in the dominator or post-dominator tree.
+///
+/// A block BB2 will be in the same equivalence class as \p BB1 if
+/// the following holds:
+///
+/// 1- \p BB1 is a descendant of BB2 in the opposite tree. So, if BB2
+///    is a descendant of \p BB1 in the dominator tree, then BB2 should
+///    dominate BB1 in the post-dominator tree.
+///
+/// 2- Both BB2 and \p BB1 must be in the same loop.
+///
+/// For every block BB2 that meets those two requirements, we set BB2's
+/// equivalence class to \p BB1.
+///
+/// \param BB1  Block to check.
+/// \param Descendants  Descendants of \p BB1 in either the dom or pdom tree.
+/// \param DomTree  Opposite dominator tree. If \p Descendants is filled
+///                 with blocks from \p BB1's dominator tree, then
+///                 this is the post-dominator tree, and vice versa.
+void SampleFunctionProfile::findEquivalencesFor(
+    BasicBlock *BB1, SmallVector<BasicBlock *, 8> Descendants,
+    DominatorTreeBase<BasicBlock> *DomTree) {
+  for (SmallVectorImpl<BasicBlock *>::iterator I = Descendants.begin(),
+                                               E = Descendants.end();
+       I != E; ++I) {
+    BasicBlock *BB2 = *I;
+    bool IsDomParent = DomTree->dominates(BB2, BB1);
+    bool IsInSameLoop = LI->getLoopFor(BB1) == LI->getLoopFor(BB2);
+    if (BB1 != BB2 && VisitedBlocks.insert(BB2) && IsDomParent &&
+        IsInSameLoop) {
+      EquivalenceClass[BB2] = BB1;
+
+      // If BB2 is heavier than BB1, make BB2 have the same weight
+      // as BB1.
+      //
+      // Note that we don't worry about the opposite situation here
+      // (when BB2 is lighter than BB1). We will deal with this
+      // during the propagation phase. Right now, we just want to
+      // make sure that BB1 has the largest weight of all the
+      // members of its equivalence set.
+      uint32_t &BB1Weight = BlockWeights[BB1];
+      uint32_t &BB2Weight = BlockWeights[BB2];
+      BB1Weight = std::max(BB1Weight, BB2Weight);
+    }
+  }
+}
+
+/// \brief Find equivalence classes.
+///
+/// Since samples may be missing from blocks, we can fill in the gaps by setting
+/// the weights of all the blocks in the same equivalence class to the same
+/// weight. To compute the concept of equivalence, we use dominance and loop
+/// information. Two blocks B1 and B2 are in the same equivalence class if B1
+/// dominates B2, B2 post-dominates B1 and both are in the same loop.
+///
+/// \param F The function to query.
+void SampleFunctionProfile::findEquivalenceClasses(Function &F) {
+  SmallVector<BasicBlock *, 8> DominatedBBs;
+  DEBUG(dbgs() << "\nBlock equivalence classes\n");
+  // Find equivalence sets based on dominance and post-dominance information.
+  for (Function::iterator B = F.begin(), E = F.end(); B != E; ++B) {
+    BasicBlock *BB1 = B;
+
+    // Compute BB1's equivalence class once.
+    if (EquivalenceClass.count(BB1)) {
+      DEBUG(printBlockEquivalence(dbgs(), BB1));
+      continue;
+    }
+
+    // By default, blocks are in their own equivalence class.
+    EquivalenceClass[BB1] = BB1;
+
+    // Traverse all the blocks dominated by BB1. We are looking for
+    // every basic block BB2 such that:
+    //
+    // 1- BB1 dominates BB2.
+    // 2- BB2 post-dominates BB1.
+    // 3- BB1 and BB2 are in the same loop nest.
+    //
+    // If all those conditions hold, it means that BB2 is executed
+    // as many times as BB1, so they are placed in the same equivalence
+    // class by making BB2's equivalence class be BB1.
+    DominatedBBs.clear();
+    DT->getDescendants(BB1, DominatedBBs);
+    findEquivalencesFor(BB1, DominatedBBs, PDT->DT);
+
+    // Repeat the same logic for all the blocks post-dominated by BB1.
+    // We are looking for every basic block BB2 such that:
+    //
+    // 1- BB1 post-dominates BB2.
+    // 2- BB2 dominates BB1.
+    // 3- BB1 and BB2 are in the same loop nest.
+    //
+    // If all those conditions hold, BB2's equivalence class is BB1.
+    DominatedBBs.clear();
+    PDT->getDescendants(BB1, DominatedBBs);
+    findEquivalencesFor(BB1, DominatedBBs, DT);
+
+    DEBUG(printBlockEquivalence(dbgs(), BB1));
+  }
+
+  // Assign weights to equivalence classes.
+  //
+  // All the basic blocks in the same equivalence class will execute
+  // the same number of times. Since we know that the head block in
+  // each equivalence class has the largest weight, assign that weight
+  // to all the blocks in that equivalence class.
+  DEBUG(dbgs() << "\nAssign the same weight to all blocks in the same class\n");
+  for (Function::iterator B = F.begin(), E = F.end(); B != E; ++B) {
+    BasicBlock *BB = B;
+    BasicBlock *EquivBB = EquivalenceClass[BB];
+    if (BB != EquivBB)
+      BlockWeights[BB] = BlockWeights[EquivBB];
+    DEBUG(printBlockWeight(dbgs(), BB));
+  }
+}
+
+/// \brief Visit the given edge to decide if it has a valid weight.
+///
+/// If \p E has not been visited before, we copy to \p UnknownEdge
+/// and increment the count of unknown edges.
+///
+/// \param E  Edge to visit.
+/// \param NumUnknownEdges  Current number of unknown edges.
+/// \param UnknownEdge  Set if E has not been visited before.
+///
+/// \returns E's weight, if known. Otherwise, return 0.
+uint32_t SampleFunctionProfile::visitEdge(Edge E, unsigned *NumUnknownEdges,
+                                          Edge *UnknownEdge) {
+  if (!VisitedEdges.count(E)) {
+    (*NumUnknownEdges)++;
+    *UnknownEdge = E;
+    return 0;
+  }
+
+  return EdgeWeights[E];
+}
+
+/// \brief Propagate weights through incoming/outgoing edges.
+///
+/// If the weight of a basic block is known, and there is only one edge
+/// with an unknown weight, we can calculate the weight of that edge.
+///
+/// Similarly, if all the edges have a known count, we can calculate the
+/// count of the basic block, if needed.
+///
+/// \param F  Function to process.
+///
+/// \returns  True if new weights were assigned to edges or blocks.
+bool SampleFunctionProfile::propagateThroughEdges(Function &F) {
+  bool Changed = false;
+  DEBUG(dbgs() << "\nPropagation through edges\n");
+  for (Function::iterator BI = F.begin(), EI = F.end(); BI != EI; ++BI) {
+    BasicBlock *BB = BI;
+
+    // Visit all the predecessor and successor edges to determine
+    // which ones have a weight assigned already. Note that it doesn't
+    // matter that we only keep track of a single unknown edge. The
+    // only case we are interested in handling is when only a single
+    // edge is unknown (see setEdgeOrBlockWeight).
+    for (unsigned i = 0; i < 2; i++) {
+      uint32_t TotalWeight = 0;
+      unsigned NumUnknownEdges = 0;
+      Edge UnknownEdge, SelfReferentialEdge;
+
+      if (i == 0) {
+        // First, visit all predecessor edges.
+        for (size_t I = 0; I < Predecessors[BB].size(); I++) {
+          Edge E = std::make_pair(Predecessors[BB][I], BB);
+          TotalWeight += visitEdge(E, &NumUnknownEdges, &UnknownEdge);
+          if (E.first == E.second)
+            SelfReferentialEdge = E;
+        }
+      } else {
+        // On the second round, visit all successor edges.
+        for (size_t I = 0; I < Successors[BB].size(); I++) {
+          Edge E = std::make_pair(BB, Successors[BB][I]);
+          TotalWeight += visitEdge(E, &NumUnknownEdges, &UnknownEdge);
+        }
+      }
+
+      // After visiting all the edges, there are three cases that we
+      // can handle immediately:
+      //
+      // - All the edge weights are known (i.e., NumUnknownEdges == 0).
+      //   In this case, we simply check that the sum of all the edges
+      //   is the same as BB's weight. If not, we change BB's weight
+      //   to match. Additionally, if BB had not been visited before,
+      //   we mark it visited.
+      //
+      // - Only one edge is unknown and BB has already been visited.
+      //   In this case, we can compute the weight of the edge by
+      //   subtracting the total block weight from all the known
+      //   edge weights. If the edges weight more than BB, then the
+      //   edge of the last remaining edge is set to zero.
+      //
+      // - There exists a self-referential edge and the weight of BB is
+      //   known. In this case, this edge can be based on BB's weight.
+      //   We add up all the other known edges and set the weight on
+      //   the self-referential edge as we did in the previous case.
+      //
+      // In any other case, we must continue iterating. Eventually,
+      // all edges will get a weight, or iteration will stop when
+      // it reaches SampleProfileMaxPropagateIterations.
+      if (NumUnknownEdges <= 1) {
+        uint32_t &BBWeight = BlockWeights[BB];
+        if (NumUnknownEdges == 0) {
+          // If we already know the weight of all edges, the weight of the
+          // basic block can be computed. It should be no larger than the sum
+          // of all edge weights.
+          if (TotalWeight > BBWeight) {
+            BBWeight = TotalWeight;
+            Changed = true;
+            DEBUG(dbgs() << "All edge weights for " << BB->getName()
+                         << " known. Set weight for block: ";
+                  printBlockWeight(dbgs(), BB););
+          }
+          if (VisitedBlocks.insert(BB))
+            Changed = true;
+        } else if (NumUnknownEdges == 1 && VisitedBlocks.count(BB)) {
+          // If there is a single unknown edge and the block has been
+          // visited, then we can compute E's weight.
+          if (BBWeight >= TotalWeight)
+            EdgeWeights[UnknownEdge] = BBWeight - TotalWeight;
+          else
+            EdgeWeights[UnknownEdge] = 0;
+          VisitedEdges.insert(UnknownEdge);
+          Changed = true;
+          DEBUG(dbgs() << "Set weight for edge: ";
+                printEdgeWeight(dbgs(), UnknownEdge));
+        }
+      } else if (SelfReferentialEdge.first && VisitedBlocks.count(BB)) {
+        uint32_t &BBWeight = BlockWeights[BB];
+        // We have a self-referential edge and the weight of BB is known.
+        if (BBWeight >= TotalWeight)
+          EdgeWeights[SelfReferentialEdge] = BBWeight - TotalWeight;
+        else
+          EdgeWeights[SelfReferentialEdge] = 0;
+        VisitedEdges.insert(SelfReferentialEdge);
+        Changed = true;
+        DEBUG(dbgs() << "Set self-referential edge weight to: ";
+              printEdgeWeight(dbgs(), SelfReferentialEdge));
+      }
+    }
+  }
+
+  return Changed;
+}
+
+/// \brief Build in/out edge lists for each basic block in the CFG.
+///
+/// We are interested in unique edges. If a block B1 has multiple
+/// edges to another block B2, we only add a single B1->B2 edge.
+void SampleFunctionProfile::buildEdges(Function &F) {
+  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
+    BasicBlock *B1 = I;
+
+    // Add predecessors for B1.
+    SmallPtrSet<BasicBlock *, 16> Visited;
+    if (!Predecessors[B1].empty())
+      llvm_unreachable("Found a stale predecessors list in a basic block.");
+    for (pred_iterator PI = pred_begin(B1), PE = pred_end(B1); PI != PE; ++PI) {
+      BasicBlock *B2 = *PI;
+      if (Visited.insert(B2))
+        Predecessors[B1].push_back(B2);
+    }
+
+    // Add successors for B1.
+    Visited.clear();
+    if (!Successors[B1].empty())
+      llvm_unreachable("Found a stale successors list in a basic block.");
+    for (succ_iterator SI = succ_begin(B1), SE = succ_end(B1); SI != SE; ++SI) {
+      BasicBlock *B2 = *SI;
+      if (Visited.insert(B2))
+        Successors[B1].push_back(B2);
+    }
+  }
+}
+
+/// \brief Propagate weights into edges
+///
+/// The following rules are applied to every block B in the CFG:
+///
+/// - If B has a single predecessor/successor, then the weight
+///   of that edge is the weight of the block.
+///
+/// - If all incoming or outgoing edges are known except one, and the
+///   weight of the block is already known, the weight of the unknown
+///   edge will be the weight of the block minus the sum of all the known
+///   edges. If the sum of all the known edges is larger than B's weight,
+///   we set the unknown edge weight to zero.
+///
+/// - If there is a self-referential edge, and the weight of the block is
+///   known, the weight for that edge is set to the weight of the block
+///   minus the weight of the other incoming edges to that block (if
+///   known).
+void SampleFunctionProfile::propagateWeights(Function &F) {
+  bool Changed = true;
+  unsigned i = 0;
+
+  // Before propagation starts, build, for each block, a list of
+  // unique predecessors and successors. This is necessary to handle
+  // identical edges in multiway branches. Since we visit all blocks and all
+  // edges of the CFG, it is cleaner to build these lists once at the start
+  // of the pass.
+  buildEdges(F);
+
+  // Propagate until we converge or we go past the iteration limit.
+  while (Changed && i++ < SampleProfileMaxPropagateIterations) {
+    Changed = propagateThroughEdges(F);
+  }
+
+  // Generate MD_prof metadata for every branch instruction using the
+  // edge weights computed during propagation.
+  DEBUG(dbgs() << "\nPropagation complete. Setting branch weights\n");
+  MDBuilder MDB(F.getContext());
+  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
+    BasicBlock *B = I;
+    TerminatorInst *TI = B->getTerminator();
+    if (TI->getNumSuccessors() == 1)
+      continue;
+    if (!isa<BranchInst>(TI) && !isa<SwitchInst>(TI))
+      continue;
+
+    DEBUG(dbgs() << "\nGetting weights for branch at line "
+                 << TI->getDebugLoc().getLine() << ":"
+                 << TI->getDebugLoc().getCol() << ".\n");
+    SmallVector<uint32_t, 4> Weights;
+    bool AllWeightsZero = true;
+    for (unsigned I = 0; I < TI->getNumSuccessors(); ++I) {
+      BasicBlock *Succ = TI->getSuccessor(I);
+      Edge E = std::make_pair(B, Succ);
+      uint32_t Weight = EdgeWeights[E];
+      DEBUG(dbgs() << "\t"; printEdgeWeight(dbgs(), E));
+      Weights.push_back(Weight);
+      if (Weight != 0)
+        AllWeightsZero = false;
+    }
+
+    // Only set weights if there is at least one non-zero weight.
+    // In any other case, let the analyzer set weights.
+    if (!AllWeightsZero) {
+      DEBUG(dbgs() << "SUCCESS. Found non-zero weights.\n");
+      TI->setMetadata(llvm::LLVMContext::MD_prof,
+                      MDB.createBranchWeights(Weights));
+    } else {
+      DEBUG(dbgs() << "SKIPPED. All branch weights are zero.\n");
+    }
+  }
+}
+
+/// \brief Get the line number for the function header.
+///
+/// This looks up function \p F in the current compilation unit and
+/// retrieves the line number where the function is defined. This is
+/// line 0 for all the samples read from the profile file. Every line
+/// number is relative to this line.
+///
+/// \param F  Function object to query.
+///
+/// \returns the line number where \p F is defined.
+unsigned SampleFunctionProfile::getFunctionLoc(Function &F) {
+  NamedMDNode *CUNodes = F.getParent()->getNamedMetadata("llvm.dbg.cu");
+  if (CUNodes) {
+    for (unsigned I = 0, E1 = CUNodes->getNumOperands(); I != E1; ++I) {
+      DICompileUnit CU(CUNodes->getOperand(I));
+      DIArray Subprograms = CU.getSubprograms();
+      for (unsigned J = 0, E2 = Subprograms.getNumElements(); J != E2; ++J) {
+        DISubprogram Subprogram(Subprograms.getElement(J));
+        if (Subprogram.describes(&F))
+          return Subprogram.getLineNumber();
+      }
+    }
+  }
+
+  report_fatal_error("No debug information found in function " + F.getName() +
+                     "\n");
+}
+
+/// \brief Generate branch weight metadata for all branches in \p F.
+///
+/// Branch weights are computed out of instruction samples using a
+/// propagation heuristic. Propagation proceeds in 3 phases:
+///
+/// 1- Assignment of block weights. All the basic blocks in the function
+///    are initial assigned the same weight as their most frequently
+///    executed instruction.
+///
+/// 2- Creation of equivalence classes. Since samples may be missing from
+///    blocks, we can fill in the gaps by setting the weights of all the
+///    blocks in the same equivalence class to the same weight. To compute
+///    the concept of equivalence, we use dominance and loop information.
+///    Two blocks B1 and B2 are in the same equivalence class if B1
+///    dominates B2, B2 post-dominates B1 and both are in the same loop.
+///
+/// 3- Propagation of block weights into edges. This uses a simple
+///    propagation heuristic. The following rules are applied to every
+///    block B in the CFG:
+///
+///    - If B has a single predecessor/successor, then the weight
+///      of that edge is the weight of the block.
+///
+///    - If all the edges are known except one, and the weight of the
+///      block is already known, the weight of the unknown edge will
+///      be the weight of the block minus the sum of all the known
+///      edges. If the sum of all the known edges is larger than B's weight,
+///      we set the unknown edge weight to zero.
+///
+///    - If there is a self-referential edge, and the weight of the block is
+///      known, the weight for that edge is set to the weight of the block
+///      minus the weight of the other incoming edges to that block (if
+///      known).
+///
+/// Since this propagation is not guaranteed to finalize for every CFG, we
+/// only allow it to proceed for a limited number of iterations (controlled
+/// by -sample-profile-max-propagate-iterations).
+///
+/// FIXME: Try to replace this propagation heuristic with a scheme
+/// that is guaranteed to finalize. A work-list approach similar to
+/// the standard value propagation algorithm used by SSA-CCP might
+/// work here.
+///
+/// Once all the branch weights are computed, we emit the MD_prof
+/// metadata on B using the computed values for each of its branches.
+///
+/// \param F The function to query.
+bool SampleFunctionProfile::emitAnnotations(Function &F, DominatorTree *DomTree,
+                                            PostDominatorTree *PostDomTree,
+                                            LoopInfo *Loops) {
+  bool Changed = false;
+
+  // Initialize invariants used during computation and propagation.
+  HeaderLineno = getFunctionLoc(F);
+  DEBUG(dbgs() << "Line number for the first instruction in " << F.getName()
+               << ": " << HeaderLineno << "\n");
+  DT = DomTree;
+  PDT = PostDomTree;
+  LI = Loops;
+
+  // Compute basic block weights.
+  Changed |= computeBlockWeights(F);
+
+  if (Changed) {
+    // Find equivalence classes.
+    findEquivalenceClasses(F);
+
+    // Propagate weights to all edges.
+    propagateWeights(F);
+  }
+
+  return Changed;
+}
+
 char SampleProfileLoader::ID = 0;
-INITIALIZE_PASS(SampleProfileLoader, "sample-profile", "Sample Profile loader",
-                false, false)
+INITIALIZE_PASS_BEGIN(SampleProfileLoader, "sample-profile",
+                      "Sample Profile loader", false, false)
+INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
+INITIALIZE_PASS_DEPENDENCY(PostDominatorTree)
+INITIALIZE_PASS_DEPENDENCY(LoopInfo)
+INITIALIZE_PASS_END(SampleProfileLoader, "sample-profile",
+                    "Sample Profile loader", false, false)
 
 bool SampleProfileLoader::doInitialization(Module &M) {
   Profiler.reset(new SampleModuleProfile(Filename));
@@ -387,106 +1008,12 @@ FunctionPass *llvm::createSampleProfileLoaderPass(StringRef Name) {
   return new SampleProfileLoader(Name);
 }
 
-/// \brief Get the weight for an instruction.
-///
-/// The "weight" of an instruction \p Inst is the number of samples
-/// collected on that instruction at runtime. To retrieve it, we
-/// need to compute the line number of \p Inst relative to the start of its
-/// function. We use \p FirstLineno to compute the offset. We then
-/// look up the samples collected for \p Inst using \p BodySamples.
-///
-/// \param Inst Instruction to query.
-/// \param FirstLineno Line number of the first instruction in the function.
-/// \param BodySamples Map of relative source line locations to samples.
-///
-/// \returns The profiled weight of I.
-uint32_t SampleFunctionProfile::getInstWeight(Instruction &Inst,
-                                              unsigned FirstLineno,
-                                              BodySampleMap &BodySamples) {
-  unsigned LOffset = Inst.getDebugLoc().getLine() - FirstLineno + 1;
-  return BodySamples.lookup(LOffset);
-}
-
-/// \brief Compute the weight of a basic block.
-///
-/// The weight of basic block \p B is the maximum weight of all the
-/// instructions in B.
-///
-/// \param B The basic block to query.
-/// \param FirstLineno The line number for the first line in the
-///     function holding B.
-/// \param BodySamples The map containing all the samples collected in that
-///     function.
-///
-/// \returns The computed weight of B.
-uint32_t SampleFunctionProfile::computeBlockWeight(BasicBlock *B,
-                                                   unsigned FirstLineno,
-                                                   BodySampleMap &BodySamples) {
-  // If we've computed B's weight before, return it.
-  std::pair<BlockWeightMap::iterator, bool> Entry =
-      BlockWeights.insert(std::make_pair(B, 0));
-  if (!Entry.second)
-    return Entry.first->second;
-
-  // Otherwise, compute and cache B's weight.
-  uint32_t Weight = 0;
-  for (BasicBlock::iterator I = B->begin(), E = B->end(); I != E; ++I) {
-    uint32_t InstWeight = getInstWeight(*I, FirstLineno, BodySamples);
-    if (InstWeight > Weight)
-      Weight = InstWeight;
-  }
-  Entry.first->second = Weight;
-  return Weight;
-}
-
-/// \brief Generate branch weight metadata for all branches in \p F.
-///
-/// For every branch instruction B in \p F, we compute the weight of the
-/// target block for each of the edges out of B. This is the weight
-/// that we associate with that branch.
-///
-/// TODO - This weight assignment will most likely be wrong if the
-/// target branch has more than two predecessors. This needs to be done
-/// using some form of flow propagation.
-///
-/// Once all the branch weights are computed, we emit the MD_prof
-/// metadata on B using the computed values.
-///
-/// \param F The function to query.
-bool SampleFunctionProfile::emitAnnotations(Function &F) {
-  bool Changed = false;
-  unsigned FirstLineno = inst_begin(F)->getDebugLoc().getLine();
-  MDBuilder MDB(F.getContext());
-
-  // Clear the block weights cache.
-  BlockWeights.clear();
-
-  // When we find a branch instruction: For each edge E out of the branch,
-  // the weight of E is the weight of the target block.
-  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
-    BasicBlock *B = I;
-    TerminatorInst *TI = B->getTerminator();
-    if (TI->getNumSuccessors() == 1)
-      continue;
-    if (!isa<BranchInst>(TI) && !isa<SwitchInst>(TI))
-      continue;
-
-    SmallVector<uint32_t, 4> Weights;
-    unsigned NSuccs = TI->getNumSuccessors();
-    for (unsigned I = 0; I < NSuccs; ++I) {
-      BasicBlock *Succ = TI->getSuccessor(I);
-      uint32_t Weight = computeBlockWeight(Succ, FirstLineno, BodySamples);
-      Weights.push_back(Weight);
-    }
-
-    TI->setMetadata(llvm::LLVMContext::MD_prof,
-                    MDB.createBranchWeights(Weights));
-    Changed = true;
-  }
-
-  return Changed;
-}
-
 bool SampleProfileLoader::runOnFunction(Function &F) {
-  return Profiler->getProfile(F).emitAnnotations(F);
+  DominatorTree *DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+  PostDominatorTree *PDT = &getAnalysis<PostDominatorTree>();
+  LoopInfo *LI = &getAnalysis<LoopInfo>();
+  SampleFunctionProfile &FunctionProfile = Profiler->getProfile(F);
+  if (!FunctionProfile.empty())
+    return FunctionProfile.emitAnnotations(F, DT, PDT, LI);
+  return false;
 }

@@ -12,11 +12,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/Allocator.h"
+#include <malloc.h>
 
+// The Windows.h header must be after LLVM and standard headers.
 #include "Windows.h"
+
 #include <direct.h>
 #include <io.h>
-#include <malloc.h>
 #include <psapi.h>
 #include <shellapi.h>
 

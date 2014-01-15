@@ -697,7 +697,7 @@ bool X86FastISel::X86SelectCallAddress(const Value *V, X86AddressMode &AM) {
       return false;
 
     // Can't handle DLLImport.
-    if (GV->hasDLLImportLinkage())
+    if (GV->hasDLLImportStorageClass())
       return false;
 
     // Can't handle TLS.
@@ -888,7 +888,7 @@ bool X86FastISel::X86SelectRet(const Instruction *I) {
 
   // Now emit the RET.
   MachineInstrBuilder MIB =
-    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(X86::RET));
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Subtarget->is64Bit() ? X86::RETQ : X86::RETL));
   for (unsigned i = 0, e = RetRegs.size(); i != e; ++i)
     MIB.addReg(RetRegs[i], RegState::Implicit);
   return true;
@@ -2111,6 +2111,8 @@ bool X86FastISel::DoSelectCall(const Instruction *I, const char *MemIntName) {
       // FIXME: Indirect doesn't need extending, but fast-isel doesn't fully
       // support this.
       return false;
+    case CCValAssign::FPExt:
+      llvm_unreachable("Unexpected loc info!");
     }
 
     if (VA.isRegLoc()) {

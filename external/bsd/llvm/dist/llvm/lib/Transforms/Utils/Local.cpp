@@ -17,7 +17,6 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/Analysis/ValueTracking.h"
@@ -26,6 +25,7 @@
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Dominators.h"
 #include "llvm/IR/GlobalAlias.h"
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/IRBuilder.h"
@@ -508,11 +508,12 @@ void llvm::MergeBasicBlockIntoOnlyPred(BasicBlock *DestBB, Pass *P) {
   DestBB->getInstList().splice(DestBB->begin(), PredBB->getInstList());
 
   if (P) {
-    DominatorTree *DT = P->getAnalysisIfAvailable<DominatorTree>();
-    if (DT) {
-      BasicBlock *PredBBIDom = DT->getNode(PredBB)->getIDom()->getBlock();
-      DT->changeImmediateDominator(DestBB, PredBBIDom);
-      DT->eraseNode(PredBB);
+    if (DominatorTreeWrapperPass *DTWP =
+            P->getAnalysisIfAvailable<DominatorTreeWrapperPass>()) {
+      DominatorTree &DT = DTWP->getDomTree();
+      BasicBlock *PredBBIDom = DT.getNode(PredBB)->getIDom()->getBlock();
+      DT.changeImmediateDominator(DestBB, PredBBIDom);
+      DT.eraseNode(PredBB);
     }
   }
   // Nuke BB.

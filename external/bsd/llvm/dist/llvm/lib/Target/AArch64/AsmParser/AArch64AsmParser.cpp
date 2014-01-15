@@ -18,21 +18,21 @@
 #include "Utils/AArch64BaseInfo.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
-#include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/MC/MCContext.h"
-#include "llvm/MC/MCInst.h"
-#include "llvm/MC/MCSubtargetInfo.h"
-#include "llvm/MC/MCTargetAsmParser.h"
 #include "llvm/MC/MCExpr.h"
-#include "llvm/MC/MCRegisterInfo.h"
-#include "llvm/MC/MCStreamer.h"
+#include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
+#include "llvm/MC/MCRegisterInfo.h"
+#include "llvm/MC/MCStreamer.h"
+#include "llvm/MC/MCSubtargetInfo.h"
+#include "llvm/MC/MCTargetAsmParser.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/TargetRegistry.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
 
@@ -2291,7 +2291,7 @@ bool AArch64AsmParser::ParseDirectiveWord(unsigned Size, SMLoc L) {
     for (;;) {
       const MCExpr *Value;
       if (getParser().parseExpression(Value))
-        return true;
+        return false;
 
       getParser().getStreamer().EmitValue(Value, Size);
 
@@ -2299,8 +2299,10 @@ bool AArch64AsmParser::ParseDirectiveWord(unsigned Size, SMLoc L) {
         break;
 
       // FIXME: Improve diagnostic.
-      if (getLexer().isNot(AsmToken::Comma))
-        return Error(L, "unexpected token in directive");
+      if (getLexer().isNot(AsmToken::Comma)) {
+        Error(L, "unexpected token in directive");
+        return false;
+      }
       Parser.Lex();
     }
   }
@@ -2313,8 +2315,10 @@ bool AArch64AsmParser::ParseDirectiveWord(unsigned Size, SMLoc L) {
 //   ::= .tlsdesccall symbol
 bool AArch64AsmParser::ParseDirectiveTLSDescCall(SMLoc L) {
   StringRef Name;
-  if (getParser().parseIdentifier(Name))
-    return Error(L, "expected symbol after directive");
+  if (getParser().parseIdentifier(Name)) {
+    Error(L, "expected symbol after directive");
+    return false;
+  }
 
   MCSymbol *Sym = getContext().GetOrCreateSymbol(Name);
   const MCSymbolRefExpr *Expr = MCSymbolRefExpr::Create(Sym, getContext());
