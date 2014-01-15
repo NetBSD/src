@@ -1,4 +1,4 @@
-/*	$NetBSD: ktime.h,v 1.1.2.2 2013/07/24 02:31:08 riastradh Exp $	*/
+/*	$NetBSD: ktime.h,v 1.1.2.3 2014/01/15 21:25:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@ ktime_get(void)
 	ktime_t kt;
 
 	/* XXX nanotime or nanouptime?  */
-	nanotime(&ts);
+	nanouptime(&ts);
 
 	/* XXX Silently truncate?  */
 	kt.kt_sec_nsec.ktsn_sec = ts.tv_sec & 0xffffffffUL;
