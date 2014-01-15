@@ -50,6 +50,11 @@
 
 #include <asm/bug.h>
 
+#ifdef __NetBSD__		/* XXX hurk -- selnotify &c. */
+#include <sys/poll.h>
+#include <sys/select.h>
+#endif
+
 /* Access macro for slots in vblank timestamp ringbuffer. */
 #define vblanktimestamp(dev, crtc, count) ( \
 	(dev)->_vblank_time[(crtc) * DRM_VBLANKTIME_RBSIZE + \
@@ -887,6 +892,8 @@ static void send_vblank_event(struct drm_device *dev,
 		      &e->base.file_priv->event_list);
 #ifdef __NetBSD__
 	DRM_SPIN_WAKEUP_ONE(&e->base.file_priv->event_wait, &dev->event_lock);
+	selnotify(&e->base.file_priv->event_selq, (POLLIN | POLLRDNORM),
+	    NOTE_SUBMIT);
 #else
 	wake_up_interruptible(&e->base.file_priv->event_wait);
 #endif
@@ -1342,11 +1349,22 @@ int drm_wait_vblank(struct drm_device *dev, void *data,
 		  vblwait->request.sequence, crtc);
 	dev->last_vblank_wait[crtc] = vblwait->request.sequence;
 #ifdef __NetBSD__
+    {
+	unsigned long irqflags;
+	spin_lock_irqsave(&dev->vbl_lock, irqflags);
 	DRM_SPIN_TIMED_WAIT_UNTIL(ret, &dev->vbl_queue[crtc], &dev->vbl_lock,
 	    (3 * DRM_HZ),
 	    (((drm_vblank_count(dev, crtc) -
 		    vblwait->request.sequence) <= (1 << 23)) ||
 		!dev->irq_enabled));
+	spin_unlock_irqrestore(&dev->vbl_lock, irqflags);
+	if (0 < ret)
+		/*
+		 * ret is ticks remaining on success in this case, but
+		 * caller just wants 0 for success.
+		 */
+		ret = 0;
+    }
 #else
 	DRM_WAIT_ON(ret, dev->vbl_queue[crtc], 3 * DRM_HZ,
 		    (((drm_vblank_count(dev, crtc) -
@@ -1416,9 +1434,16 @@ bool drm_handle_vblank(struct drm_device *dev, int crtc)
 	s64 diff_ns;
 	struct timeval tvblank;
 	unsigned long irqflags;
+#ifdef __NetBSD__		/* XXX vblank locking */
+	unsigned long irqflags_vbl_lock;
+#endif
 
 	if (!dev->num_crtcs)
 		return false;
+
+#ifdef __NetBSD__		/* XXX vblank locking */
+	spin_lock_irqsave(&dev->vbl_lock, irqflags_vbl_lock);
+#endif
 
 	/* Need timestamp lock to prevent concurrent execution with
 	 * vblank enable/disable, as this would cause inconsistent
@@ -1429,6 +1454,9 @@ bool drm_handle_vblank(struct drm_device *dev, int crtc)
 	/* Vblank irq handling disabled. Nothing to do. */
 	if (!dev->vblank_enabled[crtc]) {
 		spin_unlock_irqrestore(&dev->vblank_time_lock, irqflags);
+#ifdef __NetBSD__		/* XXX vblank locking */
+		spin_unlock_irqrestore(&dev->vbl_lock, irqflags_vbl_lock);
+#endif
 		return false;
 	}
 
@@ -1476,6 +1504,9 @@ bool drm_handle_vblank(struct drm_device *dev, int crtc)
 	drm_handle_vblank_events(dev, crtc);
 
 	spin_unlock_irqrestore(&dev->vblank_time_lock, irqflags);
+#ifdef __NetBSD__		/* XXX vblank locking */
+	spin_unlock_irqrestore(&dev->vbl_lock, irqflags_vbl_lock);
+#endif
 	return true;
 }
 EXPORT_SYMBOL(drm_handle_vblank);

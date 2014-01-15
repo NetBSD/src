@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.1.2.24 2014/01/15 13:52:30 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.1.2.25 2014/01/15 21:25:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.24 2014/01/15 13:52:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.25 2014/01/15 21:25:29 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -82,7 +82,10 @@ static dev_type_open(drm_open);
 static int	drm_close(struct file *);
 static int	drm_read(struct file *, off_t *, struct uio *, kauth_cred_t,
 		    int);
+static int	drm_dequeue_event(struct drm_file *, size_t,
+		    struct drm_pending_event **, int);
 static int	drm_poll(struct file *, int);
+static int	drm_kqfilter(struct file *, struct knote *);
 static int	drm_stat(struct file *, struct stat *);
 static int	drm_ioctl(struct file *, unsigned long, void *);
 static int	drm_version_string(char *, size_t *, const char *);
@@ -238,7 +241,7 @@ static const struct fileops drm_fileops = {
 	.fo_poll = drm_poll,
 	.fo_stat = drm_stat,
 	.fo_close = drm_close,
-	.fo_kqfilter = fnullop_kqfilter,
+	.fo_kqfilter = drm_kqfilter,
 	.fo_restart = fnullop_restart,
 };
 
@@ -500,33 +503,27 @@ drm_close(struct file *fp)
 	return error;
 }
 
-/*
- * XXX According to the old drm port, doing nothing but succeeding in
- * drm_read and drm_poll is a kludge for compatibility with old X
- * servers.  However, it's not clear to me from the drm2 code that this
- * is the right thing; in fact, it looks like a load of bollocks.
- */
-
 static int
-drm_read(struct file *fp __unused, off_t *off __unused,
-    struct uio *uio __unused, kauth_cred_t cred __unused, int flags __unused)
+drm_read(struct file *fp, off_t *off, struct uio *uio, kauth_cred_t cred,
+    int flags)
 {
-#if 1				/* XXX drm event poll */
-	return 0;
-#else
-	/* XXX How do flags figure into this?  */
 	struct drm_file *const file = fp->f_data;
 	struct drm_pending_event *event;
-	int error;
+	bool first;
+	int error = 0;
 
-	if (off != 0)
-		return EINVAL;
+	for (first = true; ; first = false) {
+		int f = 0;
 
-	for (;;) {
-		error = drm_dequeue_event(file, uio->uio_resid, &event);
+		if (!first || ISSET(fp->f_flag, FNONBLOCK))
+			f |= FNONBLOCK;
+
+		/* XXX errno Linux->NetBSD */
+		error = -drm_dequeue_event(file, uio->uio_resid, &event, f);
 		if (error) {
-			/* XXX errno Linux->NetBSD */
-			return -error;
+			if ((error == EWOULDBLOCK) && !first)
+				error = 0;
+			break;
 		}
 
 		if (event == NULL)
@@ -534,44 +531,137 @@ drm_read(struct file *fp __unused, off_t *off __unused,
 
 		error = uiomove(event->event, event->event->length, uio);
 		if (error)	/* XXX Requeue the event?  */
-			return error;
+			break;
 	}
 
 	/* Success!  */
-	return 0;
-#endif
+	return error;
+}
+
+static int
+drm_dequeue_event(struct drm_file *file, size_t max_length,
+    struct drm_pending_event **eventp, int flags)
+{
+	struct drm_device *const dev = file->minor->dev;
+	struct drm_pending_event *event = NULL;
+	unsigned long irqflags;
+	int ret = 0;
+
+	spin_lock_irqsave(&dev->event_lock, irqflags);
+
+	if (ISSET(flags, FNONBLOCK)) {
+		if (list_empty(&file->event_list))
+			ret = -EWOULDBLOCK;
+	} else {
+		DRM_SPIN_WAIT_UNTIL(ret, &file->event_wait, &dev->event_lock,
+		    !list_empty(&file->event_list));
+	}
+	if (ret)
+		goto out;
+
+	event = list_first_entry(&file->event_list, struct drm_pending_event,
+	    link);
+	if (event->event->length > max_length) {
+		ret = 0;
+		goto out;
+	}
+
+	file->event_space += event->event->length;
+	list_del(&event->link);
+
+out:	spin_unlock_irqrestore(&dev->event_lock, irqflags);
+	*eventp = event;
+	return ret;
 }
 
 static int
 drm_poll(struct file *fp __unused, int events __unused)
 {
-#if 1				/* XXX drm event poll */
-	/*
-	 * XXX Let's worry about this later.  Notifiers need to be
-	 * modified to call selnotify.
-	 */
-	return 0;
-#else
 	struct drm_file *const file = fp->f_data;
+	struct drm_device *const dev = file->minor->dev;
 	int revents = 0;
-	unsigned long flags;
+	unsigned long irqflags;
 
-	spin_lock_irqsave(&file->minor->dev->event_lock, flags);
+	if (!ISSET(events, (POLLIN | POLLRDNORM)))
+		return 0;
 
-	if (events & (POLLIN | POLLRDNORM)) {
-		if (!list_empty(&file->event_list))
-			revents |= (events & (POLLIN | POLLRDNORM));
-	}
-
-	if (revents == 0) {
-		if (events & (POLLIN | POLLRDNORM))
-			selrecord(curlwp, &file->event_sel);
-	}
-
-	spin_unlock_irqrestore(&file->minor->dev->event_lock, flags);
+	spin_lock_irqsave(&dev->event_lock, irqflags);
+	if (list_empty(&file->event_list))
+		selrecord(curlwp, &file->event_selq);
+	else
+		revents |= (events & (POLLIN | POLLRDNORM));
+	spin_unlock_irqrestore(&dev->event_lock, irqflags);
 
 	return revents;
-#endif
+}
+
+static void	filt_drm_detach(struct knote *);
+static int	filt_drm_event(struct knote *, long);
+
+static const struct filterops drm_filtops =
+	{ 1, NULL, filt_drm_detach, filt_drm_event };
+
+static int
+drm_kqfilter(struct file *fp, struct knote *kn)
+{
+	struct drm_file *const file = fp->f_data;
+	struct drm_device *const dev = file->minor->dev;
+	unsigned long irqflags;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		kn->kn_fop = &drm_filtops;
+		kn->kn_hook = file;
+		spin_lock_irqsave(&dev->event_lock, irqflags);
+		SLIST_INSERT_HEAD(&file->event_selq.sel_klist, kn, kn_selnext);
+		spin_unlock_irqrestore(&dev->event_lock, irqflags);
+		return 0;
+
+	case EVFILT_WRITE:
+	default:
+		return EINVAL;
+	}
+}
+
+static void
+filt_drm_detach(struct knote *kn)
+{
+	struct drm_file *const file = kn->kn_hook;
+	struct drm_device *const dev = file->minor->dev;
+	unsigned long irqflags;
+
+	spin_lock_irqsave(&dev->event_lock, irqflags);
+	SLIST_REMOVE(&file->event_selq.sel_klist, kn, knote, kn_selnext);
+	spin_unlock_irqrestore(&dev->event_lock, irqflags);
+}
+
+static int
+filt_drm_event(struct knote *kn, long hint)
+{
+	struct drm_file *const file = kn->kn_hook;
+	struct drm_device *const dev = file->minor->dev;
+	unsigned long irqflags;
+	int ret;
+
+	if (hint == NOTE_SUBMIT)
+		KASSERT(spin_is_locked(&dev->event_lock));
+	else
+		spin_lock_irqsave(&dev->event_lock, irqflags);
+	if (list_empty(&file->event_list)) {
+		ret = 0;
+	} else {
+		struct drm_pending_event *const event =
+		    list_first_entry(&file->event_list,
+			struct drm_pending_event, link);
+		kn->kn_data = event->event->length;
+		ret = 1;
+	}
+	if (hint == NOTE_SUBMIT)
+		KASSERT(spin_is_locked(&dev->event_lock));
+	else
+		spin_unlock_irqrestore(&dev->event_lock, irqflags);
+
+	return ret;
 }
 
 static int

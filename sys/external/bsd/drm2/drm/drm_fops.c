@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_fops.c,v 1.1.2.7 2014/01/15 13:53:53 riastradh Exp $	*/
+/*	$NetBSD: drm_fops.c,v 1.1.2.8 2014/01/15 21:25:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_fops.c,v 1.1.2.7 2014/01/15 13:53:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_fops.c,v 1.1.2.8 2014/01/15 21:25:29 riastradh Exp $");
 
 #include <drm/drmP.h>
 
@@ -418,37 +418,3 @@ drm_lastclose_vma(struct drm_device *dev)
 		kfree(vma);
 	}
 }
-
-#if 0				/* XXX drm event poll */
-int
-drm_dequeue_event(struct drm_file *file, size_t max_length,
-    struct drm_pending_event **eventp)
-{
-	struct drm_device *const dev = file->minor->dev;
-	struct drm_pending_event *event = NULL;
-	unsigned long flags;
-	int error;
-
-	spin_lock_irqsave(&dev->event_lock, flags);
-
-	DRM_SPIN_WAIT_UNTIL(error, &file->event_wait, &dev->event_lock,
-	    !list_empty(&file->event_list));
-	if (error)
-		goto out;
-
-	event = list_first_entry(&file->event_list, struct drm_pending_event,
-	    link);
-	if (event->event->length > max_length) {
-		error = 0;
-		goto out;
-	}
-
-	file->event_space += event->event->length;
-	list_del(&event->link);
-
-out:
-	spin_unlock_irqrestore(&dev->event_lock, flags);
-	*eventp = event;
-	return error;
-}
-#endif

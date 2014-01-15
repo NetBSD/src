@@ -490,17 +490,12 @@ struct drm_file {
 
 #ifdef __NetBSD__
 	drm_waitqueue_t event_wait;
+	struct selinfo event_selq;
 #else
 	wait_queue_head_t event_wait;
 #endif
 	struct list_head event_list;
 	int event_space;
-
-#ifdef __NetBSD__
-#if 0				/* XXX drm event poll */
-	struct selinfo event_sel;
-#endif
-#endif
 
 	struct drm_prime_file_private prime;
 };
