@@ -182,10 +182,6 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
       State.Stack.back().ObjCSelectorNameFound &&
       State.Stack.back().BreakBeforeParameter)
     return true;
-  if (Current.Type == TT_CtorInitializerColon &&
-      (!Style.AllowShortFunctionsOnASingleLine ||
-       Style.BreakConstructorInitializersBeforeComma || Style.ColumnLimit != 0))
-    return true;
   if (Previous.ClosesTemplateDeclaration && State.ParenLevel == 0 &&
       !Current.isTrailingComment())
     return true;
@@ -199,6 +195,18 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
        (State.Stack.back().BreakBeforeParameter &&
         State.Stack.back().ContainsUnwrappedBuilder)))
     return true;
+
+  // The following could be precomputed as they do not depend on the state.
+  // However, as they should take effect only if the UnwrappedLine does not fit
+  // into the ColumnLimit, they are checked here in the ContinuationIndenter.
+  if (Previous.BlockKind == BK_Block && Previous.is(tok::l_brace) &&
+      !Current.isOneOf(tok::r_brace, tok::comment))
+    return true;
+  if (Current.Type == TT_CtorInitializerColon &&
+      (!Style.AllowShortFunctionsOnASingleLine ||
+       Style.BreakConstructorInitializersBeforeComma || Style.ColumnLimit != 0))
+    return true;
+
   return false;
 }
 
@@ -459,8 +467,6 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
 
   if (!Current.isTrailingComment())
     State.Stack.back().LastSpace = State.Column;
-  if (Current.isMemberAccess())
-    State.Stack.back().LastSpace += Current.ColumnWidth;
   State.StartOfLineLevel = State.ParenLevel;
   State.LowestLevelOnLine = State.ParenLevel;
 
@@ -713,13 +719,15 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
     Penalty += Style.PenaltyExcessCharacter * ExcessCharacters;
   }
 
+  if (Current.Role)
+    Current.Role->formatFromToken(State, this, DryRun);
   // If the previous has a special role, let it consume tokens as appropriate.
   // It is necessary to start at the previous token for the only implemented
   // role (comma separated list). That way, the decision whether or not to break
   // after the "{" is already done and both options are tried and evaluated.
   // FIXME: This is ugly, find a better way.
   if (Previous && Previous->Role)
-    Penalty += Previous->Role->format(State, this, DryRun);
+    Penalty += Previous->Role->formatAfterToken(State, this, DryRun);
 
   return Penalty;
 }
@@ -794,13 +802,20 @@ unsigned ContinuationIndenter::breakProtrudingToken(const FormatToken &Current,
     StringRef Text = Current.TokenText;
     StringRef Prefix;
     StringRef Postfix;
+    bool IsNSStringLiteral = false;
     // FIXME: Handle whitespace between '_T', '(', '"..."', and ')'.
     // FIXME: Store Prefix and Suffix (or PrefixLength and SuffixLength to
     // reduce the overhead) for each FormatToken, which is a string, so that we
     // don't run multiple checks here on the hot path.
+    if (Text.startswith("\"") && Current.Previous &&
+        Current.Previous->is(tok::at)) {
+      IsNSStringLiteral = true;
+      Prefix = "@\"";
+    }
     if ((Text.endswith(Postfix = "\"") &&
-         (Text.startswith(Prefix = "\"") || Text.startswith(Prefix = "u\"") ||
-          Text.startswith(Prefix = "U\"") || Text.startswith(Prefix = "u8\"") ||
+         (IsNSStringLiteral || Text.startswith(Prefix = "\"") ||
+          Text.startswith(Prefix = "u\"") || Text.startswith(Prefix = "U\"") ||
+          Text.startswith(Prefix = "u8\"") ||
           Text.startswith(Prefix = "L\""))) ||
         (Text.startswith(Prefix = "_T(\"") && Text.endswith(Postfix = "\")")) ||
         getRawStringLiteralPrefixPostfix(Text, Prefix, Postfix)) {

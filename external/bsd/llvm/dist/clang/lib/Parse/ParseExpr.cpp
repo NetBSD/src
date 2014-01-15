@@ -30,6 +30,7 @@
 #include "clang/Sema/TypoCorrection.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
+#include "clang/AST/ASTContext.h"
 using namespace clang;
 
 /// \brief Simple precedence-based parser for binary/ternary operators.
@@ -790,7 +791,8 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
             DS.SetRangeEnd(ILoc);
             const char *PrevSpec = 0;
             unsigned DiagID;
-            DS.SetTypeSpecType(TST_typename, ILoc, PrevSpec, DiagID, Typ);
+            DS.SetTypeSpecType(TST_typename, ILoc, PrevSpec, DiagID, Typ,
+                               Actions.getASTContext().getPrintingPolicy());
             
             Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
             TypeResult Ty = Actions.ActOnTypeName(getCurScope(), 
@@ -955,7 +957,8 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
       const char *PrevSpec = 0;
       unsigned DiagID;
       DS.SetTypeSpecType(TST_typename, Tok.getAnnotationEndLoc(),
-                         PrevSpec, DiagID, Type);
+                         PrevSpec, DiagID, Type,
+                         Actions.getASTContext().getPrintingPolicy());
 
       Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
       TypeResult Ty = Actions.ActOnTypeName(getCurScope(), DeclaratorInfo);
@@ -1370,8 +1373,8 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
             (BaseType->isFunctionType() ||
              BaseType->isSpecificPlaceholderType(BuiltinType::BoundMember))) {
           Diag(OpLoc, diag::err_function_is_not_record)
-            << (OpKind == tok::arrow) << Base->getSourceRange()
-            << FixItHint::CreateRemoval(OpLoc);
+              << OpKind << Base->getSourceRange()
+              << FixItHint::CreateRemoval(OpLoc);
           return ParsePostfixExpressionSuffix(Base);
         }
 
@@ -1492,8 +1495,7 @@ Parser::ParseExprAfterUnaryExprOrTypeTrait(const Token &OpTok,
     // pathenthesis around type name.
     if (OpTok.is(tok::kw_sizeof)  || OpTok.is(tok::kw___alignof) ||
         OpTok.is(tok::kw_alignof) || OpTok.is(tok::kw__Alignof)) {
-      bool isAmbiguousTypeId;
-      if (isTypeIdInParens(isAmbiguousTypeId)) {
+      if (isTypeIdUnambiguously()) {
         DeclSpec DS(AttrFactory);
         ParseSpecifierQualifierList(DS);
         Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
