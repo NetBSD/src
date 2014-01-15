@@ -1,4 +1,4 @@
-/*	$NetBSD: ktime.h,v 1.1.2.3 2014/01/15 21:25:39 riastradh Exp $	*/
+/*	$NetBSD: ktime.h,v 1.1.2.4 2014/01/15 21:25:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ ktime_get(void)
 
 	/* XXX Silently truncate?  */
 	kt.kt_sec_nsec.ktsn_sec = ts.tv_sec & 0xffffffffUL;
-	kt.kt_sec_nsec.ktsn_sec = ts.tv_nsec;
+	kt.kt_sec_nsec.ktsn_nsec = ts.tv_nsec;
 
 	return kt;
 }
