@@ -1976,7 +1976,8 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
       const char *PrevSpec;
       unsigned DiagID;
       if (D.getMutableDeclSpec().SetStorageClassSpec(
-          *this, DeclSpec::SCS_static, ConstexprLoc, PrevSpec, DiagID)) {
+          *this, DeclSpec::SCS_static, ConstexprLoc, PrevSpec, DiagID,
+          Context.getPrintingPolicy())) {
         assert(DS.getStorageClassSpec() == DeclSpec::SCS_mutable &&
                "This is the only DeclSpec that should fail to be applied");
         B << 1;
@@ -5310,7 +5311,7 @@ bool Sema::ShouldDeleteSpecialMember(CXXMethodDecl *MD, CXXSpecialMember CSM,
     // In Microsoft mode, a user-declared move only causes the deletion of the
     // corresponding copy operation, not both copy operations.
     if (RD->hasUserDeclaredMoveConstructor() &&
-        (!getLangOpts().MicrosoftMode || CSM == CXXCopyConstructor)) {
+        (!getLangOpts().MSVCCompat || CSM == CXXCopyConstructor)) {
       if (!Diagnose) return true;
 
       // Find any user-declared move constructor.
@@ -5323,7 +5324,7 @@ bool Sema::ShouldDeleteSpecialMember(CXXMethodDecl *MD, CXXSpecialMember CSM,
       }
       assert(UserDeclaredMove);
     } else if (RD->hasUserDeclaredMoveAssignment() &&
-               (!getLangOpts().MicrosoftMode || CSM == CXXCopyAssignment)) {
+               (!getLangOpts().MSVCCompat || CSM == CXXCopyAssignment)) {
       if (!Diagnose) return true;
 
       // Find any user-declared move assignment operator.
@@ -6077,6 +6078,18 @@ void Sema::ActOnStartDelayedMemberDeclarations(Scope *S, Decl *RecordD) {
 void Sema::ActOnFinishDelayedMemberDeclarations(Scope *S, Decl *RecordD) {
   if (!RecordD) return;
   PopDeclContext();
+}
+
+/// This is used to implement the constant expression evaluation part of the
+/// attribute enable_if extension. There is nothing in standard C++ which would
+/// require reentering parameters.
+void Sema::ActOnReenterCXXMethodParameter(Scope *S, ParmVarDecl *Param) {
+  if (!Param)
+    return;
+
+  S->AddDecl(Param);
+  if (Param->getDeclName())
+    IdResolver.AddDecl(Param);
 }
 
 /// ActOnStartDelayedCXXMethodDeclaration - We have completed
@@ -9349,7 +9362,7 @@ static void diagnoseDeprecatedCopyOperation(Sema &S, CXXMethodDecl *CopyOp,
     UserDeclaredOperation = RD->getDestructor();
   } else if (!isa<CXXConstructorDecl>(CopyOp) &&
              RD->hasUserDeclaredCopyConstructor() &&
-             !S.getLangOpts().MicrosoftMode) {
+             !S.getLangOpts().MSVCCompat) {
     // Find any user-declared copy constructor.
     for (CXXRecordDecl::ctor_iterator I = RD->ctor_begin(),
                                       E = RD->ctor_end(); I != E; ++I) {
@@ -9361,7 +9374,7 @@ static void diagnoseDeprecatedCopyOperation(Sema &S, CXXMethodDecl *CopyOp,
     assert(UserDeclaredOperation);
   } else if (isa<CXXConstructorDecl>(CopyOp) &&
              RD->hasUserDeclaredCopyAssignment() &&
-             !S.getLangOpts().MicrosoftMode) {
+             !S.getLangOpts().MSVCCompat) {
     // Find any user-declared move assignment operator.
     for (CXXRecordDecl::method_iterator I = RD->method_begin(),
                                         E = RD->method_end(); I != E; ++I) {
@@ -11460,14 +11473,15 @@ Decl *Sema::ActOnTemplatedFriendTag(Scope *S, SourceLocation FriendLoc,
       bool Owned = false;
       bool IsDependent = false;
       return ActOnTag(S, TagSpec, TUK_Friend, TagLoc, SS, Name, NameLoc,
-                      Attr, AS_public, 
+                      Attr, AS_public,
                       /*ModulePrivateLoc=*/SourceLocation(),
-                      MultiTemplateParamsArg(), Owned, IsDependent, 
+                      MultiTemplateParamsArg(), Owned, IsDependent,
                       /*ScopedEnumKWLoc=*/SourceLocation(),
                       /*ScopedEnumUsesClassTag=*/false,
-                      /*UnderlyingType=*/TypeResult());          
+                      /*UnderlyingType=*/TypeResult(),
+                      /*IsTypeSpecifier=*/false);
     }
-    
+
     NestedNameSpecifierLoc QualifierLoc = SS.getWithLocInContext(Context);
     ElaboratedTypeKeyword Keyword
       = TypeWithKeyword::getKeywordForTagTypeKind(Kind);
