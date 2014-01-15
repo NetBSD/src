@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.3 2013/12/03 16:14:50 joerg Exp $
+# $NetBSD: Makefile.inc,v 1.4 2014/01/15 21:20:53 joerg Exp $
 
 COMPILER_RT_SRCDIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
 
@@ -13,6 +13,7 @@ COMPILER_RT_ARCH_DIR=	${COMPILER_RT_SRCDIR}/lib/${MACHINE_ARCH}
 .PATH: ${COMPILER_RT_CPU_DIR}
 .PATH: ${COMPILER_RT_ARCH_DIR}
 .PATH: ${COMPILER_RT_SRCDIR}/lib
+.PATH: ${COMPILER_RT_SRCDIR}/lib/profile
 
 # Complex support needs parts of libm
 #GENERIC_SRCS+=
@@ -153,6 +154,10 @@ GENERIC_SRCS+= \
 	umoddi3.c \
 	umodsi3.c \
 	umodti3.c
+
+GENERIC_SRCS+= \
+	GCDAProfiling.c \
+	PGOProfiling.c
 
 .if ${HAVE_LIBGCC} == "no"
 .if ${MACHINE_ARCH} == "powerpc"
