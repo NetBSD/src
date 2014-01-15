@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_lock.c,v 1.1.2.3 2013/07/24 02:38:23 riastradh Exp $	*/
+/*	$NetBSD: drm_lock.c,v 1.1.2.4 2014/01/15 13:53:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,20 +30,23 @@
  */
 
 /*
- * DRM lock.  Each drm master has a lock to provide mutual exclusion
- * for access to something about the hardware (XXX what?).  The lock
- * can be held by the kernel or by a drm file (XXX not by a process!
- * and multiple processes may share a common drm file).  (XXX What
- * excludes different kthreads?)  The DRM_LOCK ioctl grants the lock to
- * the userland.  The kernel may need to steal this lock in order to
- * close a drm file; I believe drm_global_mutex excludes different
- * kernel threads from doing this simultaneously.
+ * DRM lock.  Each drm master has a heavy-weight lock to provide mutual
+ * exclusion for access to the hardware.  The lock can be held by the
+ * kernel or by a drm file; the kernel takes access only for unusual
+ * purposes, with drm_idlelock_take, mainly for idling the GPU when
+ * closing down.
  *
- * XXX This description is incoherent and incomplete.
+ * The physical memory storing the lock state is shared between
+ * userland and kernel: the pointer at dev->master->lock->hw_lock is
+ * mapped into both userland and kernel address spaces.  This way,
+ * userland can try to take the hardware lock without a system call,
+ * although if it fails then it will use the DRM_LOCK ioctl to block
+ * atomically until the lock is available.  All this means that the
+ * kernel must use atomic_ops to manage the lock state.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_lock.c,v 1.1.2.3 2013/07/24 02:38:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_lock.c,v 1.1.2.4 2014/01/15 13:53:53 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -66,14 +69,24 @@ drm_lock(struct drm_device *dev, void *data, struct drm_file *file)
 {
 	struct drm_lock *lock_request = data;
 	struct drm_master *master = file->master;
-	bool acquired;
 	int error;
 
+	/* Sanitize the drm global mutex bollocks until we get rid of it.  */
 	KASSERT(mutex_is_locked(&drm_global_mutex));
+	mutex_unlock(&drm_global_mutex);
 
 	/* Refuse to lock on behalf of the kernel.  */
-	if (lock_request->context == DRM_KERNEL_CONTEXT)
-		return -EINVAL;
+	if (lock_request->context == DRM_KERNEL_CONTEXT) {
+		error = -EINVAL;
+		goto out0;
+	}
+
+	/* Refuse to set the magic bits.  */
+	if (lock_request->context !=
+	    _DRM_LOCKING_CONTEXT(lock_request->context)) {
+		error = -EINVAL;
+		goto out0;
+	}
 
 	/* Count it in the file and device statistics (XXX why here?).  */
 	file->lock_count++;
@@ -81,13 +94,21 @@ drm_lock(struct drm_device *dev, void *data, struct drm_file *file)
 
 	/* Wait until the hardware lock is gone or we can acquire it.   */
 	spin_lock(&master->lock.spinlock);
+
+	if (master->lock.user_waiters == UINT32_MAX) {
+		error = -EBUSY;
+		goto out1;
+	}
+
+	master->lock.user_waiters++;
 	DRM_SPIN_WAIT_UNTIL(error, &master->lock.lock_queue,
 	    &master->lock.spinlock,
 	    ((master->lock.hw_lock == NULL) ||
-		(acquired = drm_lock_acquire(&master->lock,
-		    lock_request->context))));
+		drm_lock_acquire(&master->lock, lock_request->context)));
+	KASSERT(0 < master->lock.user_waiters);
+	master->lock.user_waiters--;
 	if (error)
-		goto out;
+		goto out1;
 
 	/* If the lock is gone, give up.  */
 	if (master->lock.hw_lock == NULL) {
@@ -99,36 +120,36 @@ drm_lock(struct drm_device *dev, void *data, struct drm_file *file)
 #else
 		error = -ENXIO;
 #endif
-		goto out;
+		goto out1;
 	}
 
 	/* Mark the lock as owned by file.  */
 	master->lock.file_priv = file;
-#ifndef __NetBSD__
 	master->lock.lock_time = jiffies; /* XXX Unused?  */
-#endif
 
 	/* Block signals while the lock is held.  */
 	error = drm_lock_block_signals(dev, lock_request, file);
 	if (error)
-		goto fail0;
+		goto fail2;
 
 	/* Enter the DMA quiescent state if requested and available.  */
+	/* XXX Drop the spin lock first...  */
 	if (ISSET(lock_request->flags, _DRM_LOCK_QUIESCENT) &&
 	    (dev->driver->dma_quiescent != NULL)) {
 		error = (*dev->driver->dma_quiescent)(dev);
 		if (error)
-			goto fail1;
+			goto fail3;
 	}
 
 	/* Success!  */
 	error = 0;
-	goto out;
+	goto out1;
 
-fail1:	drm_lock_unblock_signals(dev, lock_request, file);
-fail0:	drm_lock_release(&master->lock, lock_request->context);
+fail3:	drm_lock_unblock_signals(dev, lock_request, file);
+fail2:	drm_lock_release(&master->lock, lock_request->context);
 	master->lock.file_priv = NULL;
-out:	spin_unlock(&master->lock.spinlock);
+out1:	spin_unlock(&master->lock.spinlock);
+out0:	mutex_lock(&drm_global_mutex);
 	return error;
 }
 
@@ -143,11 +164,15 @@ drm_unlock(struct drm_device *dev, void *data, struct drm_file *file)
 	struct drm_master *master = file->master;
 	int error;
 
+	/* Sanitize the drm global mutex bollocks until we get rid of it.  */
 	KASSERT(mutex_is_locked(&drm_global_mutex));
+	mutex_unlock(&drm_global_mutex);
 
 	/* Refuse to unlock on behalf of the kernel.  */
-	if (lock_request->context == DRM_KERNEL_CONTEXT)
-		return -EINVAL;
+	if (lock_request->context == DRM_KERNEL_CONTEXT) {
+		error = -EINVAL;
+		goto out0;
+	}
 
 	/* Count it in the device statistics.  */
 	atomic_inc(&dev->counts[_DRM_STAT_UNLOCKS]);
@@ -158,20 +183,20 @@ drm_unlock(struct drm_device *dev, void *data, struct drm_file *file)
 	/* Make sure it's actually locked.  */
 	if (!_DRM_LOCK_IS_HELD(master->lock.hw_lock->lock)) {
 		error = -EINVAL;	/* XXX Right error?  */
-		goto out;
+		goto out1;
 	}
 
 	/* Make sure it's locked in the right context.  */
 	if (_DRM_LOCKING_CONTEXT(master->lock.hw_lock->lock) !=
 	    lock_request->context) {
 		error = -EACCES;	/* XXX Right error?  */
-		goto out;
+		goto out1;
 	}
 
 	/* Make sure it's locked by us.  */
 	if (master->lock.file_priv != file) {
 		error = -EACCES;	/* XXX Right error?  */
-		goto out;
+		goto out1;
 	}
 
 	/* Actually release the lock.  */
@@ -186,7 +211,8 @@ drm_unlock(struct drm_device *dev, void *data, struct drm_file *file)
 	/* Success!  */
 	error = 0;
 
-out:	spin_unlock(&master->lock.spinlock);
+out1:	spin_unlock(&master->lock.spinlock);
+out0:	mutex_lock(&drm_global_mutex);
 	return error;
 }
 
@@ -195,6 +221,8 @@ out:	spin_unlock(&master->lock.spinlock);
  *
  * Return value is an artefact of Linux.  Caller must guarantee
  * preconditions; failure is fatal.
+ *
+ * XXX Should we also unblock signals like drm_unlock does?
  */
 int
 drm_lock_free(struct drm_lock_data *lock_data, unsigned int context)
@@ -234,49 +262,82 @@ drm_idlelock_release(struct drm_lock_data *lock_data __unused)
 
 /*
  * Does this file hold this drm device's hardware lock?
+ *
+ * Used to decide whether to release the lock when the file is being
+ * closed.
+ *
+ * XXX I don't think this answers correctly in the case that the
+ * userland has taken the lock and it is uncontended.  But I don't
+ * think we can know what the correct answer is in that case.
  */
 int
 drm_i_have_hw_lock(struct drm_device *dev, struct drm_file *file)
 {
 	struct drm_lock_data *const lock_data = &file->master->lock;
+	int answer = 0;
 
 	/* If this file has never locked anything, then no.  */
 	if (file->lock_count == 0)
 		return 0;
 
+	spin_lock(&lock_data->spinlock);
+
 	/* If there is no lock, then this file doesn't hold it.  */
 	if (lock_data->hw_lock == NULL)
-		return 0;
+		goto out;
 
 	/* If this lock is not held, then this file doesn't hold it.   */
 	if (!_DRM_LOCK_IS_HELD(lock_data->hw_lock->lock))
-		return 0;
+		goto out;
 
 	/*
 	 * Otherwise, it boils down to whether this file is the owner
 	 * or someone else.
+	 *
+	 * XXX This is not reliable!  Userland doesn't update this when
+	 * it takes the lock...
 	 */
-	return (file == lock_data->file_priv);
+	answer = (file == lock_data->file_priv);
+
+out:	spin_unlock(&lock_data->spinlock);
+	return answer;
 }
 
 /*
  * Try to acquire the lock.  Return true if successful, false if not.
  *
- * Lock's spinlock must be held.
+ * This is hairy because it races with userland, and if userland
+ * already holds the lock, we must tell it, by marking it
+ * _DRM_LOCK_CONT (contended), that it must call ioctl(DRM_UNLOCK) to
+ * release the lock so that we can wake waiters.
+ *
+ * XXX What happens if the process is interrupted?
  */
 static bool
 drm_lock_acquire(struct drm_lock_data *lock_data, int context)
 {
+        volatile unsigned int *const lock = &lock_data->hw_lock->lock;
+	unsigned int old, new;
 
 	KASSERT(spin_is_locked(&lock_data->spinlock));
 
-	/* Test and set.  */
-	if (_DRM_LOCK_IS_HELD(lock_data->hw_lock->lock)) {
-		return false;
-	} else {
-		lock_data->hw_lock->lock = (context | _DRM_LOCK_HELD);
-		return true;
-	}
+	do {
+		old = *lock;
+		if (!_DRM_LOCK_IS_HELD(old)) {
+			new = (context | _DRM_LOCK_HELD);
+			if ((0 < lock_data->user_waiters) ||
+			    (0 < lock_data->kernel_waiters))
+				new |= _DRM_LOCK_CONT;
+		} else if (_DRM_LOCKING_CONTEXT(old) != context) {
+			new = (old | _DRM_LOCK_CONT);
+		} else {
+			DRM_ERROR("%d already holds heavyweight lock\n",
+			    context);
+			return false;
+		}
+	} while (atomic_cas_uint(lock, old, new) != old);
+
+	return !_DRM_LOCK_IS_HELD(old);
 }
 
 /*
@@ -294,20 +355,8 @@ drm_lock_release(struct drm_lock_data *lock_data, int context)
 	KASSERT(_DRM_LOCK_IS_HELD(lock_data->hw_lock->lock));
 	KASSERT(_DRM_LOCKING_CONTEXT(lock_data->hw_lock->lock) == context);
 
-	/* Are there any kernel waiters?  */
-	if (lock_data->n_kernel_waiters > 0) {
-		/* If there's a kernel waiter, grant it ownership.  */
-		lock_data->hw_lock->lock = (DRM_KERNEL_CONTEXT |
-		    _DRM_LOCK_HELD);
-		lock_data->n_kernel_waiters--;
-		DRM_SPIN_WAKEUP_ONE(&lock_data->kernel_lock_queue,
-		    &lock_data->spinlock);
-	} else {
-		/* Otherwise, free it up and wake someone else.  */
-		lock_data->hw_lock->lock = 0;
-		DRM_SPIN_WAKEUP_ONE(&lock_data->lock_queue,
-		    &lock_data->spinlock);
-	}
+	lock_data->hw_lock->lock = 0;
+	DRM_SPIN_WAKEUP_ONE(&lock_data->lock_queue, &lock_data->spinlock);
 }
 
 /*
