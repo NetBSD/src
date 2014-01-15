@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libkern,v 1.29 2013/12/27 20:25:33 christos Exp $
+#	$NetBSD: Makefile.libkern,v 1.30 2014/01/15 21:12:57 joerg Exp $
 
 # 
 # Variable definitions for libkern.  
@@ -43,6 +43,9 @@ CPPFLAGS+=	-I${KERNDIR}/../../../common/include
 .include "$M/Makefile.inc"
 .endif
 
+.if ${HAVE_LIBGCC} == "no"
+.include ".${PARSEDIR}/Makefile.compiler-rt"
+.else
 .if (${MACHINE_ARCH} != "alpha") && \
     (${MACHINE_ARCH} != "mips64eb" || !empty(CFLAGS:M-mabi=32)) && \
     (${MACHINE_ARCH} != "mips64el" || !empty(CFLAGS:M-mabi=32)) && \
@@ -53,6 +56,7 @@ CPPFLAGS+=	-I${KERNDIR}/../../../common/include
 SRCS+=	adddi3.c anddi3.c ashldi3.c ashrdi3.c cmpdi2.c divdi3.c iordi3.c \
 	lshldi3.c lshrdi3.c moddi3.c muldi3.c negdi2.c notdi2.c qdivrem.c \
 	subdi3.c  ucmpdi2.c udivdi3.c umoddi3.c xordi3.c
+.endif
 .endif
 
 # Other stuff
