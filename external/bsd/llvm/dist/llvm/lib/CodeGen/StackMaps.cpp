@@ -10,7 +10,6 @@
 #define DEBUG_TYPE "stackmaps"
 
 #include "llvm/CodeGen/StackMaps.h"
-
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/IR/DataLayout.h"
@@ -21,10 +20,9 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetOpcodes.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetOpcodes.h"
 #include "llvm/Target/TargetRegisterInfo.h"
-
 #include <iterator>
 
 using namespace llvm;
@@ -209,7 +207,10 @@ void StackMaps::recordStackMapOpers(const MachineInstr &MI, uint64_t ID,
   // Move large constants into the constant pool.
   for (LocationVec::iterator I = Locations.begin(), E = Locations.end();
        I != E; ++I) {
-    if (I->LocType == Location::Constant && (I->Offset & ~0xFFFFFFFFULL)) {
+    // Constants are encoded as sign-extended integers.
+    // -1 is directly encoded as .long 0xFFFFFFFF with no constant pool.
+    if (I->LocType == Location::Constant &&
+        ((I->Offset + (int64_t(1)<<31)) >> 32) != 0) {
       I->LocType = Location::ConstantIndex;
       I->Offset = ConstPool.getConstantIndex(I->Offset);
     }

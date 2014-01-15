@@ -13,10 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/LTO/LTOCodeGenerator.h"
-#include "llvm/LTO/LTOModule.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Analysis/Passes.h"
-#include "llvm/Analysis/Verifier.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/CodeGen/RuntimeLibcalls.h"
 #include "llvm/Config/config.h"
@@ -24,8 +22,11 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Mangler.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/Verifier.h"
 #include "llvm/InitializePasses.h"
+#include "llvm/LTO/LTOModule.h"
 #include "llvm/Linker.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
@@ -45,7 +46,6 @@
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegisterInfo.h"
-#include "llvm/Target/Mangler.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/Transforms/ObjCARC.h"
@@ -62,7 +62,8 @@ const char* LTOCodeGenerator::getVersionString() {
 LTOCodeGenerator::LTOCodeGenerator()
     : Context(getGlobalContext()), Linker(new Module("ld-temp.o", Context)),
       TargetMach(NULL), EmitDwarfDebugInfo(false), ScopeRestrictionsDone(false),
-      CodeModel(LTO_CODEGEN_PIC_MODEL_DYNAMIC), NativeObjectFile(NULL) {
+      CodeModel(LTO_CODEGEN_PIC_MODEL_DYNAMIC),
+      InternalizeStrategy(LTO_INTERNALIZE_FULL), NativeObjectFile(NULL) {
   initializeLTOPasses();
 }
 
@@ -82,8 +83,7 @@ LTOCodeGenerator::~LTOCodeGenerator() {
 
 // Initialize LTO passes. Please keep this funciton in sync with
 // PassManagerBuilder::populateLTOPassManager(), and make sure all LTO
-// passes are initialized. 
-//
+// passes are initialized.
 void LTOCodeGenerator::initializeLTOPasses() {
   PassRegistry &R = *PassRegistry::getPassRegistry();
 
@@ -165,6 +165,18 @@ void LTOCodeGenerator::setCodePICModel(lto_codegen_model model) {
   llvm_unreachable("Unknown PIC model!");
 }
 
+void
+LTOCodeGenerator::setInternalizeStrategy(lto_internalize_strategy Strategy) {
+  switch (Strategy) {
+  case LTO_INTERNALIZE_FULL:
+  case LTO_INTERNALIZE_NONE:
+  case LTO_INTERNALIZE_HIDDEN:
+    InternalizeStrategy = Strategy;
+    return;
+  }
+  llvm_unreachable("Unknown internalize strategy!");
+}
+
 bool LTOCodeGenerator::writeMergedModules(const char *path,
                                           std::string &errMsg) {
   if (!determineTarget(errMsg))
@@ -197,7 +209,7 @@ bool LTOCodeGenerator::writeMergedModules(const char *path,
   return true;
 }
 
-bool LTOCodeGenerator::compile_to_file(const char** name, 
+bool LTOCodeGenerator::compile_to_file(const char** name,
                                        bool disableOpt,
                                        bool disableInline,
                                        bool disableGVNLoadPRE,
@@ -378,7 +390,7 @@ static void accumulateAndSortLibcalls(std::vector<StringRef> &Libcalls,
 }
 
 void LTOCodeGenerator::applyScopeRestrictions() {
-  if (ScopeRestrictionsDone)
+  if (ScopeRestrictionsDone || !shouldInternalize())
     return;
   Module *mergedModule = Linker.getModule();
 
@@ -430,7 +442,8 @@ void LTOCodeGenerator::applyScopeRestrictions() {
     LLVMCompilerUsed->setSection("llvm.metadata");
   }
 
-  passes.add(createInternalizePass(MustPreserveList));
+  passes.add(
+      createInternalizePass(MustPreserveList, shouldOnlyInternalizeHidden()));
 
   // apply scope restrictions
   passes.run(*mergedModule);
@@ -461,7 +474,7 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
   // Add an appropriate DataLayout instance for this module...
   passes.add(new DataLayout(*TargetMach->getDataLayout()));
 
-  // Add appropriate TargetLibraryInfo for this module. 
+  // Add appropriate TargetLibraryInfo for this module.
   passes.add(new TargetLibraryInfo(Triple(TargetMach->getTargetTriple())));
 
   TargetMach->addAnalysisPasses(passes);

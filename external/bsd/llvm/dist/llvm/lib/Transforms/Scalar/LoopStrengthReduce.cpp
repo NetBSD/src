@@ -56,17 +56,16 @@
 #define DEBUG_TYPE "loop-reduce"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallBitVector.h"
-#include "llvm/ADT/STLExtras.h"
-#include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/IVUsers.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
-#include "llvm/Assembly/Writer.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Dominators.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/Support/CommandLine.h"
@@ -394,7 +393,7 @@ void Formula::print(raw_ostream &OS) const {
   bool First = true;
   if (BaseGV) {
     if (!First) OS << " + "; else First = false;
-    WriteAsOperand(OS, BaseGV, /*PrintType=*/false);
+    BaseGV->printAsOperand(OS, /*PrintType=*/false);
   }
   if (BaseOffset != 0) {
     if (!First) OS << " + "; else First = false;
@@ -1080,19 +1079,19 @@ void LSRFixup::print(raw_ostream &OS) const {
   // Store is common and interesting enough to be worth special-casing.
   if (StoreInst *Store = dyn_cast<StoreInst>(UserInst)) {
     OS << "store ";
-    WriteAsOperand(OS, Store->getOperand(0), /*PrintType=*/false);
+    Store->getOperand(0)->printAsOperand(OS, /*PrintType=*/false);
   } else if (UserInst->getType()->isVoidTy())
     OS << UserInst->getOpcodeName();
   else
-    WriteAsOperand(OS, UserInst, /*PrintType=*/false);
+    UserInst->printAsOperand(OS, /*PrintType=*/false);
 
   OS << ", OperandValToReplace=";
-  WriteAsOperand(OS, OperandValToReplace, /*PrintType=*/false);
+  OperandValToReplace->printAsOperand(OS, /*PrintType=*/false);
 
   for (PostIncLoopSet::const_iterator I = PostIncLoops.begin(),
        E = PostIncLoops.end(); I != E; ++I) {
     OS << ", PostIncLoop=";
-    WriteAsOperand(OS, (*I)->getHeader(), /*PrintType=*/false);
+    (*I)->getHeader()->printAsOperand(OS, /*PrintType=*/false);
   }
 
   if (LUIdx != ~size_t(0))
@@ -4695,7 +4694,8 @@ LSRInstance::ImplementSolution(const SmallVectorImpl<const Formula *> &Solution,
 
 LSRInstance::LSRInstance(Loop *L, Pass *P)
     : IU(P->getAnalysis<IVUsers>()), SE(P->getAnalysis<ScalarEvolution>()),
-      DT(P->getAnalysis<DominatorTree>()), LI(P->getAnalysis<LoopInfo>()),
+      DT(P->getAnalysis<DominatorTreeWrapperPass>().getDomTree()),
+      LI(P->getAnalysis<LoopInfo>()),
       TTI(P->getAnalysis<TargetTransformInfo>()), L(L), Changed(false),
       IVIncInsertPos(0) {
   // If LoopSimplify form is not available, stay out of trouble.
@@ -4734,7 +4734,7 @@ LSRInstance::LSRInstance(Loop *L, Pass *P)
 #endif // DEBUG
 
   DEBUG(dbgs() << "\nLSR on loop ";
-        WriteAsOperand(dbgs(), L->getHeader(), /*PrintType=*/false);
+        L->getHeader()->printAsOperand(dbgs(), /*PrintType=*/false);
         dbgs() << ":\n");
 
   // First, perform some low-level loop optimizations.
@@ -4874,7 +4874,7 @@ char LoopStrengthReduce::ID = 0;
 INITIALIZE_PASS_BEGIN(LoopStrengthReduce, "loop-reduce",
                 "Loop Strength Reduction", false, false)
 INITIALIZE_AG_DEPENDENCY(TargetTransformInfo)
-INITIALIZE_PASS_DEPENDENCY(DominatorTree)
+INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
 INITIALIZE_PASS_DEPENDENCY(IVUsers)
 INITIALIZE_PASS_DEPENDENCY(LoopInfo)
@@ -4899,8 +4899,8 @@ void LoopStrengthReduce::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<LoopInfo>();
   AU.addPreserved<LoopInfo>();
   AU.addRequiredID(LoopSimplifyID);
-  AU.addRequired<DominatorTree>();
-  AU.addPreserved<DominatorTree>();
+  AU.addRequired<DominatorTreeWrapperPass>();
+  AU.addPreserved<DominatorTreeWrapperPass>();
   AU.addRequired<ScalarEvolution>();
   AU.addPreserved<ScalarEvolution>();
   // Requiring LoopSimplify a second time here prevents IVUsers from running
@@ -4925,10 +4925,9 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager & /*LPM*/) {
 #ifndef NDEBUG
     Rewriter.setDebugType(DEBUG_TYPE);
 #endif
-    unsigned numFolded =
-        Rewriter.replaceCongruentIVs(L, &getAnalysis<DominatorTree>(),
-                                     DeadInsts,
-                                     &getAnalysis<TargetTransformInfo>());
+    unsigned numFolded = Rewriter.replaceCongruentIVs(
+        L, &getAnalysis<DominatorTreeWrapperPass>().getDomTree(), DeadInsts,
+        &getAnalysis<TargetTransformInfo>());
     if (numFolded) {
       Changed = true;
       DeleteTriviallyDeadInstructions(DeadInsts);

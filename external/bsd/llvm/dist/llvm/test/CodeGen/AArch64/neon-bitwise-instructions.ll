@@ -1,6 +1,5 @@
 ; RUN: llc < %s -verify-machineinstrs -mtriple=aarch64-none-linux-gnu -mattr=+neon | FileCheck %s
 
-
 define <8 x i8> @and8xi8(<8 x i8> %a, <8 x i8> %b) {
 ;CHECK: and {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
 	%tmp1 = and <8 x i8> %a, %b;
@@ -41,16 +40,16 @@ define <16 x i8> @xor16xi8(<16 x i8> %a, <16 x i8> %b) {
 
 define <8 x i8> @bsl8xi8_const(<8 x i8> %a, <8 x i8> %b)  {
 ;CHECK:  bsl {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
-	%tmp1 = and <8 x i8> %a, < i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1 >
-	%tmp2 = and <8 x i8> %b, < i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0 >
+	%tmp1 = and <8 x i8> %a, < i8 -1, i8 -1, i8 0, i8 0, i8 -1, i8 -1, i8 0, i8 0 >
+	%tmp2 = and <8 x i8> %b, < i8 0, i8 0, i8 -1, i8 -1, i8 0, i8 0, i8 -1, i8 -1 >
 	%tmp3 = or <8 x i8> %tmp1, %tmp2
 	ret <8 x i8> %tmp3
 }
 
 define <16 x i8> @bsl16xi8_const(<16 x i8> %a, <16 x i8> %b) {
-;CHECK:  bsl {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
-	%tmp1 = and <16 x i8> %a, < i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1 >
-	%tmp2 = and <16 x i8> %b, < i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0 >
+;CHECK: bsl {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
+	%tmp1 = and <16 x i8> %a, < i8 -1, i8 -1, i8 -1, i8 -1, i8 0, i8 0, i8 0, i8 0, i8 -1, i8 -1, i8 -1, i8 -1, i8 0, i8 0, i8 0, i8 0 >
+	%tmp2 = and <16 x i8> %b, < i8 0, i8 0, i8 0, i8 0, i8 -1, i8 -1, i8 -1, i8 -1, i8 0, i8 0, i8 0, i8 0, i8 -1, i8 -1, i8 -1, i8 -1 >
 	%tmp3 = or <16 x i8> %tmp1, %tmp2
 	ret <16 x i8> %tmp3
 }
@@ -163,19 +162,19 @@ define <2 x i32> @bicimm2s_lsl0(<2 x i32> %a) {
 
 define <2 x i32> @bicimm2s_lsl8(<2 x i32> %a) {
 ;CHECK:  bic {{v[0-9]+}}.2s, #0x10, lsl #8
-	%tmp1 = and <2 x i32> %a, < i32 18446744073709547519, i32  18446744073709547519 >
+	%tmp1 = and <2 x i32> %a, < i32 4294963199, i32  4294963199 >
 	ret <2 x i32> %tmp1
 }
 
 define <2 x i32> @bicimm2s_lsl16(<2 x i32> %a) {
 ;CHECK:  bic {{v[0-9]+}}.2s, #0x10, lsl #16
-	%tmp1 = and <2 x i32> %a, < i32 18446744073708503039, i32 18446744073708503039 >
+	%tmp1 = and <2 x i32> %a, < i32 4293918719, i32 4293918719 >
 	ret <2 x i32> %tmp1
 }
 
 define <2 x i32> @bicimm2s_lsl124(<2 x i32> %a) {
 ;CHECK:  bic {{v[0-9]+}}.2s, #0x10, lsl #24
-	%tmp1 = and <2 x i32> %a, < i32 18446744073441116159, i32  18446744073441116159>
+	%tmp1 = and <2 x i32> %a, < i32 4026531839, i32  4026531839>
 	ret <2 x i32> %tmp1
 }
 
@@ -187,68 +186,68 @@ define <4 x i32> @bicimm4s_lsl0(<4 x i32> %a) {
 
 define <4 x i32> @bicimm4s_lsl8(<4 x i32> %a) {
 ;CHECK:  bic {{v[0-9]+}}.4s, #0x10, lsl #8
-	%tmp1 = and <4 x i32> %a, < i32 18446744073709547519, i32  18446744073709547519, i32  18446744073709547519, i32  18446744073709547519 >
+	%tmp1 = and <4 x i32> %a, < i32 4294963199, i32  4294963199, i32  4294963199, i32  4294963199 >
 	ret <4 x i32> %tmp1
 }
 
 define <4 x i32> @bicimm4s_lsl16(<4 x i32> %a) {
 ;CHECK:  bic {{v[0-9]+}}.4s, #0x10, lsl #16
-	%tmp1 = and <4 x i32> %a, < i32 18446744073708503039, i32 18446744073708503039, i32 18446744073708503039, i32 18446744073708503039 >
+	%tmp1 = and <4 x i32> %a, < i32 4293918719, i32 4293918719, i32 4293918719, i32 4293918719 >
 	ret <4 x i32> %tmp1
 }
 
 define <4 x i32> @bicimm4s_lsl124(<4 x i32> %a) {
 ;CHECK:  bic {{v[0-9]+}}.4s, #0x10, lsl #24
-	%tmp1 = and <4 x i32> %a, < i32 18446744073441116159, i32  18446744073441116159, i32  18446744073441116159, i32  18446744073441116159>
+	%tmp1 = and <4 x i32> %a, < i32 4026531839, i32  4026531839, i32  4026531839, i32  4026531839>
 	ret <4 x i32> %tmp1
 }
 
 define <4 x i16> @bicimm4h_lsl0_a(<4 x i16> %a) {
 ;CHECK:  bic {{v[0-9]+}}.4h, #0x10
-	%tmp1 = and <4 x i16> %a, < i16 18446744073709551599, i16  18446744073709551599, i16  18446744073709551599, i16  18446744073709551599 >
+	%tmp1 = and <4 x i16> %a, < i16 4294967279, i16  4294967279, i16  4294967279, i16  4294967279 >
 	ret <4 x i16> %tmp1
 }
 
 define <4 x i16> @bicimm4h_lsl0_b(<4 x i16> %a) {
-;CHECK:  bic {{v[0-9]+}}.4h, #0x0
+;CHECK:  bic {{v[0-9]+}}.4h, #0xff
 	%tmp1 = and <4 x i16> %a, < i16 65280, i16  65280, i16  65280, i16 65280 >
 	ret <4 x i16> %tmp1
 }
 
 define <4 x i16> @bicimm4h_lsl8_a(<4 x i16> %a) {
 ;CHECK:  bic {{v[0-9]+}}.4h, #0x10, lsl #8
-	%tmp1 = and <4 x i16> %a, < i16 18446744073709547519, i16  18446744073709547519, i16  18446744073709547519, i16  18446744073709547519>
+	%tmp1 = and <4 x i16> %a, < i16 4294963199, i16  4294963199, i16  4294963199, i16  4294963199>
 	ret <4 x i16> %tmp1
 }
 
 define <4 x i16> @bicimm4h_lsl8_b(<4 x i16> %a) {
-;CHECK:  bic {{v[0-9]+}}.4h, #0x0, lsl #8
+;CHECK:  bic {{v[0-9]+}}.4h, #0xff, lsl #8
 	%tmp1 = and <4 x i16> %a, < i16 255, i16 255, i16 255, i16 255>
 	ret <4 x i16> %tmp1
 }
 
 define <8 x i16> @bicimm8h_lsl0_a(<8 x i16> %a) {
 ;CHECK:  bic {{v[0-9]+}}.8h, #0x10
-	%tmp1 = and <8 x i16> %a, < i16 18446744073709551599, i16  18446744073709551599, i16  18446744073709551599, i16  18446744073709551599,
-   i16  18446744073709551599, i16  18446744073709551599, i16  18446744073709551599, i16  18446744073709551599 >
+	%tmp1 = and <8 x i16> %a, < i16 4294967279, i16  4294967279, i16  4294967279, i16  4294967279,
+   i16  4294967279, i16  4294967279, i16  4294967279, i16  4294967279 >
 	ret <8 x i16> %tmp1
 }
 
 define <8 x i16> @bicimm8h_lsl0_b(<8 x i16> %a) {
-;CHECK:  bic {{v[0-9]+}}.8h, #0x0
+;CHECK:  bic {{v[0-9]+}}.8h, #0xff
 	%tmp1 = and <8 x i16> %a, < i16 65280, i16  65280, i16  65280, i16 65280, i16 65280, i16  65280, i16  65280, i16 65280 >
 	ret <8 x i16> %tmp1
 }
 
 define <8 x i16> @bicimm8h_lsl8_a(<8 x i16> %a) {
 ;CHECK:  bic {{v[0-9]+}}.8h, #0x10, lsl #8
-	%tmp1 = and <8 x i16> %a, < i16 18446744073709547519, i16  18446744073709547519, i16  18446744073709547519, i16  18446744073709547519,
-   i16  18446744073709547519, i16  18446744073709547519, i16  18446744073709547519, i16  18446744073709547519>
+	%tmp1 = and <8 x i16> %a, < i16 4294963199, i16  4294963199, i16  4294963199, i16  4294963199,
+   i16  4294963199, i16  4294963199, i16  4294963199, i16  4294963199>
 	ret <8 x i16> %tmp1
 }
 
 define <8 x i16> @bicimm8h_lsl8_b(<8 x i16> %a) {
-;CHECK:  bic {{v[0-9]+}}.8h, #0x0, lsl #8
+;CHECK:  bic {{v[0-9]+}}.8h, #0xff, lsl #8
 	%tmp1 = and <8 x i16> %a, < i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255>
 	ret <8 x i16> %tmp1
 }
@@ -445,10 +444,11 @@ define <2 x i64> @orn2xi64(<2 x i64> %a, <2 x i64> %b)  {
   %tmp2 = or <2 x i64> %a, %tmp1
   ret <2 x i64> %tmp2
 }
+
 define <2 x i32> @bsl2xi32_const(<2 x i32> %a, <2 x i32> %b)  {
 ;CHECK:  bsl {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
-	%tmp1 = and <2 x i32> %a, < i32 -1, i32 -1 >
-	%tmp2 = and <2 x i32> %b, < i32 0, i32 0 >
+	%tmp1 = and <2 x i32> %a, < i32 -1, i32 0 >
+	%tmp2 = and <2 x i32> %b, < i32 0, i32 -1 >
 	%tmp3 = or <2 x i32> %tmp1, %tmp2
 	ret <2 x i32> %tmp3
 }
@@ -456,40 +456,40 @@ define <2 x i32> @bsl2xi32_const(<2 x i32> %a, <2 x i32> %b)  {
 
 define <4 x i16> @bsl4xi16_const(<4 x i16> %a, <4 x i16> %b)  {
 ;CHECK:  bsl {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
-	%tmp1 = and <4 x i16> %a, < i16 -1, i16 -1, i16 -1,i16 -1 >
-	%tmp2 = and <4 x i16> %b, < i16 0, i16 0,i16 0, i16 0 >
+	%tmp1 = and <4 x i16> %a, < i16 -1, i16 0, i16 -1,i16 0 >
+	%tmp2 = and <4 x i16> %b, < i16 0, i16 -1,i16 0, i16 -1 >
 	%tmp3 = or <4 x i16> %tmp1, %tmp2
 	ret <4 x i16> %tmp3
 }
 
 define <1 x i64> @bsl1xi64_const(<1 x i64> %a, <1 x i64> %b)  {
 ;CHECK:  bsl {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
-	%tmp1 = and <1 x i64> %a, < i64 -1 >
-	%tmp2 = and <1 x i64> %b, < i64 0 >
+	%tmp1 = and <1 x i64> %a, < i64 -16 >
+	%tmp2 = and <1 x i64> %b, < i64 15 >
 	%tmp3 = or <1 x i64> %tmp1, %tmp2
 	ret <1 x i64> %tmp3
 }
 
 define <4 x i32> @bsl4xi32_const(<4 x i32> %a, <4 x i32> %b)  {
 ;CHECK:  bsl {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
-	%tmp1 = and <4 x i32> %a, < i32 -1, i32 -1, i32 -1, i32 -1 >
-	%tmp2 = and <4 x i32> %b, < i32 0, i32 0, i32 0, i32 0 >
+	%tmp1 = and <4 x i32> %a, < i32 -1, i32 0, i32 -1, i32 0 >
+	%tmp2 = and <4 x i32> %b, < i32 0, i32 -1, i32 0, i32 -1 >
 	%tmp3 = or <4 x i32> %tmp1, %tmp2
 	ret <4 x i32> %tmp3
 }
 
 define <8 x i16> @bsl8xi16_const(<8 x i16> %a, <8 x i16> %b)  {
 ;CHECK:  bsl {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
-	%tmp1 = and <8 x i16> %a, < i16 -1, i16 -1, i16 -1,i16 -1, i16 -1, i16 -1, i16 -1,i16 -1 >
-	%tmp2 = and <8 x i16> %b, < i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0 >
+	%tmp1 = and <8 x i16> %a, < i16 -1, i16 -1, i16 0,i16 0, i16 -1, i16 -1, i16 0,i16 0 >
+	%tmp2 = and <8 x i16> %b, < i16 0, i16 0, i16 -1, i16 -1, i16 0, i16 0, i16 -1, i16 -1 >
 	%tmp3 = or <8 x i16> %tmp1, %tmp2
 	ret <8 x i16> %tmp3
 }
 
 define <2 x i64> @bsl2xi64_const(<2 x i64> %a, <2 x i64> %b)  {
 ;CHECK:  bsl {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
-	%tmp1 = and <2 x i64> %a, < i64 -1, i64 -1 >
-	%tmp2 = and <2 x i64> %b, < i64 0, i64 0 >
+	%tmp1 = and <2 x i64> %a, < i64 -1, i64 0 >
+	%tmp2 = and <2 x i64> %b, < i64 0, i64 -1 >
 	%tmp3 = or <2 x i64> %tmp1, %tmp2
 	ret <2 x i64> %tmp3
 }
@@ -558,6 +558,63 @@ define <4 x i32> @bsl4xi32(<4 x i32> %v1, <4 x i32> %v2, <4 x i32> %v3) {
   ret <4 x i32> %4
 }
 
+define <8 x i8> @vselect_v8i8(<8 x i8> %a) {
+;CHECK:  movi	 {{d[0-9]+}}, #0xffff
+;CHECK-NEXT:  bsl {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+  %b = select <8 x i1> <i1 true, i1 true, i1 false, i1 false, i1 false, i1 false, i1 false, i1 false>, <8 x i8> %a, <8 x i8> <i8 undef, i8 undef, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0>
+  ret <8 x i8> %b
+}
+
+define <4 x i16> @vselect_v4i16(<4 x i16> %a) {
+;CHECK:  movi	 {{d[0-9]+}}, #0xffff
+;CHECK-NEXT:  bsl {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+  %b = select <4 x i1> <i1 true, i1 false, i1 false, i1 false>, <4 x i16> %a, <4 x i16> <i16 undef, i16 0, i16 0, i16 0>
+  ret <4 x i16> %b
+}
+
+define <8 x i8> @vselect_cmp_ne(<8 x i8> %a, <8 x i8> %b, <8 x i8> %c) {
+;CHECK:  cmeq {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+;CHECK-NEXT:  not {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+;CHECK-NEXT:  bsl {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+  %cmp = icmp ne <8 x i8> %a, %b
+  %d = select <8 x i1> %cmp, <8 x i8> %b, <8 x i8> %c
+  ret <8 x i8> %d
+}
+
+define <8 x i8> @vselect_cmp_eq(<8 x i8> %a, <8 x i8> %b, <8 x i8> %c) {
+;CHECK:  cmeq {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+;CHECK-NEXT:  bsl {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+  %cmp = icmp eq <8 x i8> %a, %b
+  %d = select <8 x i1> %cmp, <8 x i8> %b, <8 x i8> %c
+  ret <8 x i8> %d
+}
+
+define <8 x i8> @vselect_cmpz_ne(<8 x i8> %a, <8 x i8> %b, <8 x i8> %c) {
+;CHECK:  cmeq {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, #0
+;CHECK-NEXT:  not {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+;CHECK-NEXT:  bsl {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+  %cmp = icmp ne <8 x i8> %a, zeroinitializer
+  %d = select <8 x i1> %cmp, <8 x i8> %b, <8 x i8> %c
+  ret <8 x i8> %d
+}
+
+define <8 x i8> @vselect_cmpz_eq(<8 x i8> %a, <8 x i8> %b, <8 x i8> %c) {
+;CHECK:  cmeq {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, #0
+;CHECK-NEXT:  bsl {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+  %cmp = icmp eq <8 x i8> %a, zeroinitializer
+  %d = select <8 x i1> %cmp, <8 x i8> %b, <8 x i8> %c
+  ret <8 x i8> %d
+}
+
+define <8 x i8> @vselect_tst(<8 x i8> %a, <8 x i8> %b, <8 x i8> %c) {
+;CHECK:  cmtst {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+;CHECK-NEXT:  bsl {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+	%tmp3 = and <8 x i8> %a, %b
+	%tmp4 = icmp ne <8 x i8> %tmp3, zeroinitializer
+  %d = select <8 x i1> %tmp4, <8 x i8> %b, <8 x i8> %c
+  ret <8 x i8> %d
+}
+
 define <2 x i64> @bsl2xi64(<2 x i64> %v1, <2 x i64> %v2, <2 x i64> %v3) {
 ;CHECK:  bsl {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, {{v[0-9]+}}.16b
   %1 = and <2 x i64> %v1, %v2
@@ -591,4 +648,436 @@ define <16 x i8> @orimm16b_as_orrimm8h_lsl8(<16 x i8> %a) {
   ret <16 x i8> %val
 }
 
+define <8 x i8> @and8imm2s_lsl0(<8 x i8> %a) {
+;CHECK:  bic {{v[0-9]+}}.2s, #0xff
+	%tmp1 = and <8 x i8> %a, < i8 0, i8 255, i8 255, i8 255, i8 0, i8 255, i8 255, i8 255>
+	ret <8 x i8> %tmp1
+}
+
+define <8 x i8> @and8imm2s_lsl8(<8 x i8> %a) {
+;CHECK:  bic {{v[0-9]+}}.2s, #0xff, lsl #8
+	%tmp1 = and <8 x i8> %a, < i8 255, i8 0, i8 255, i8 255, i8 255, i8 0, i8 255, i8 255>
+	ret <8 x i8> %tmp1
+}
+
+define <8 x i8> @and8imm2s_lsl16(<8 x i8> %a) {
+;CHECK:  bic {{v[0-9]+}}.2s, #0xff, lsl #16
+	%tmp1 = and <8 x i8> %a, < i8 255, i8 255, i8 0, i8 255, i8 255, i8 255, i8 0, i8 255>
+	ret <8 x i8> %tmp1
+}
+
+define <8 x i8> @and8imm2s_lsl24(<8 x i8> %a) {
+;CHECK:  bic {{v[0-9]+}}.2s, #0xfe, lsl #24
+	%tmp1 = and <8 x i8> %a, < i8 255, i8 255, i8 255, i8 1, i8 255, i8 255, i8 255, i8 1>
+	ret <8 x i8> %tmp1
+}
+
+define <4 x i16> @and16imm2s_lsl0(<4 x i16> %a) {
+;CHECK:  bic {{v[0-9]+}}.2s, #0xff
+	%tmp1 = and <4 x i16> %a, < i16 65280, i16 65535, i16 65280, i16 65535>
+	ret <4 x i16> %tmp1
+}
+
+define <4 x i16> @and16imm2s_lsl8(<4 x i16> %a) {
+;CHECK:  bic {{v[0-9]+}}.2s, #0xff, lsl #8
+	%tmp1 = and <4 x i16> %a, < i16 255, i16 65535, i16 255, i16 65535>
+	ret <4 x i16> %tmp1
+}
+
+define <4 x i16> @and16imm2s_lsl16(<4 x i16> %a) {
+;CHECK:  bic {{v[0-9]+}}.2s, #0xff, lsl #16
+	%tmp1 = and <4 x i16> %a, < i16 65535, i16 65280, i16 65535, i16 65280>
+	ret <4 x i16> %tmp1
+}
+
+define <4 x i16> @and16imm2s_lsl24(<4 x i16> %a) {
+;CHECK:  bic {{v[0-9]+}}.2s, #0xfe, lsl #24
+	%tmp1 = and <4 x i16> %a, < i16 65535, i16 511, i16 65535, i16 511>
+	ret <4 x i16> %tmp1
+}
+
+
+define <1 x i64> @and64imm2s_lsl0(<1 x i64> %a) {
+;CHECK:  bic {{v[0-9]+}}.2s, #0xff
+	%tmp1 = and <1 x i64> %a, < i64 -1095216660736>
+	ret <1 x i64> %tmp1
+}
+
+define <1 x i64> @and64imm2s_lsl8(<1 x i64> %a) {
+;CHECK:  bic {{v[0-9]+}}.2s, #0xff, lsl #8
+	%tmp1 = and <1 x i64> %a, < i64 -280375465148161>
+	ret <1 x i64> %tmp1
+}
+
+define <1 x i64> @and64imm2s_lsl16(<1 x i64> %a) {
+;CHECK:  bic {{v[0-9]+}}.2s, #0xff, lsl #16
+	%tmp1 = and <1 x i64> %a, < i64 -71776119077928961>
+	ret <1 x i64> %tmp1
+}
+
+define <1 x i64> @and64imm2s_lsl24(<1 x i64> %a) {
+;CHECK:  bic {{v[0-9]+}}.2s, #0xfe, lsl #24
+	%tmp1 = and <1 x i64> %a, < i64 144115183814443007>
+	ret <1 x i64> %tmp1
+}
+
+define <16 x i8> @and8imm4s_lsl0(<16 x i8> %a) {
+;CHECK:  bic {{v[0-9]+}}.4s, #0xff
+	%tmp1 = and <16 x i8> %a, < i8 0, i8 255, i8 255, i8 255, i8 0, i8 255, i8 255, i8 255, i8 0, i8 255, i8 255, i8 255, i8 0, i8 255, i8 255, i8 255>
+	ret <16 x i8> %tmp1
+}
+
+define <16 x i8> @and8imm4s_lsl8(<16 x i8> %a) {
+;CHECK:  bic {{v[0-9]+}}.4s, #0xff, lsl #8
+	%tmp1 = and <16 x i8> %a, < i8 255, i8 0, i8 255, i8 255, i8 255, i8 0, i8 255, i8 255, i8 255, i8 0, i8 255, i8 255, i8 255, i8 0, i8 255, i8 255>
+	ret <16 x i8> %tmp1
+}
+
+define <16 x i8> @and8imm4s_lsl16(<16 x i8> %a) {
+;CHECK:  bic {{v[0-9]+}}.4s, #0xff, lsl #16
+	%tmp1 = and <16 x i8> %a, < i8 255, i8 255, i8 0, i8 255, i8 255, i8 255, i8 0, i8 255, i8 255, i8 255, i8 0, i8 255, i8 255, i8 255, i8 0, i8 255>
+	ret <16 x i8> %tmp1
+}
+
+define <16 x i8> @and8imm4s_lsl24(<16 x i8> %a) {
+;CHECK:  bic {{v[0-9]+}}.4s, #0xfe, lsl #24
+	%tmp1 = and <16 x i8> %a, < i8 255, i8 255, i8 255, i8 1, i8 255, i8 255, i8 255, i8 1, i8 255, i8 255, i8 255, i8 1, i8 255, i8 255, i8 255, i8 1>
+	ret <16 x i8> %tmp1
+}
+
+define <8 x i16> @and16imm4s_lsl0(<8 x i16> %a) {
+;CHECK:  bic {{v[0-9]+}}.4s, #0xff
+	%tmp1 = and <8 x i16> %a, < i16 65280, i16 65535, i16 65280, i16 65535, i16 65280, i16 65535, i16 65280, i16 65535>
+	ret <8 x i16> %tmp1
+}
+
+define <8 x i16> @and16imm4s_lsl8(<8 x i16> %a) {
+;CHECK:  bic {{v[0-9]+}}.4s, #0xff, lsl #8
+	%tmp1 = and <8 x i16> %a, < i16 255, i16 65535, i16 255, i16 65535, i16 255, i16 65535, i16 255, i16 65535>
+	ret <8 x i16> %tmp1
+}
+
+define <8 x i16> @and16imm4s_lsl16(<8 x i16> %a) {
+;CHECK:  bic {{v[0-9]+}}.4s, #0xff, lsl #16
+	%tmp1 = and <8 x i16> %a, < i16 65535, i16 65280, i16 65535, i16 65280, i16 65535, i16 65280, i16 65535, i16 65280>
+	ret <8 x i16> %tmp1
+}
+
+define <8 x i16> @and16imm4s_lsl24(<8 x i16> %a) {
+;CHECK:  bic {{v[0-9]+}}.4s, #0xfe, lsl #24
+	%tmp1 = and <8 x i16> %a, < i16 65535, i16 511, i16 65535, i16 511, i16 65535, i16 511, i16 65535, i16 511>
+	ret <8 x i16> %tmp1
+}
+
+define <2 x i64> @and64imm4s_lsl0(<2 x i64> %a) {
+;CHECK:  bic {{v[0-9]+}}.4s, #0xff
+	%tmp1 = and <2 x i64> %a, < i64 -1095216660736, i64 -1095216660736>
+	ret <2 x i64> %tmp1
+}
+
+define <2 x i64> @and64imm4s_lsl8(<2 x i64> %a) {
+;CHECK:  bic {{v[0-9]+}}.4s, #0xff, lsl #8
+	%tmp1 = and <2 x i64> %a, < i64 -280375465148161, i64 -280375465148161>
+	ret <2 x i64> %tmp1
+}
+
+define <2 x i64> @and64imm4s_lsl16(<2 x i64> %a) {
+;CHECK:  bic {{v[0-9]+}}.4s, #0xff, lsl #16
+	%tmp1 = and <2 x i64> %a, < i64 -71776119077928961, i64 -71776119077928961>
+	ret <2 x i64> %tmp1
+}
+
+define <2 x i64> @and64imm4s_lsl24(<2 x i64> %a) {
+;CHECK:  bic {{v[0-9]+}}.4s, #0xfe, lsl #24
+	%tmp1 = and <2 x i64> %a, < i64 144115183814443007, i64 144115183814443007>
+	ret <2 x i64> %tmp1
+}
+
+define <8 x i8> @and8imm4h_lsl0(<8 x i8> %a) {
+;CHECK:  bic {{v[0-9]+}}.4h, #0xff
+	%tmp1 = and <8 x i8> %a, < i8 0, i8 255, i8 0, i8 255, i8 0, i8 255, i8 0, i8 255>
+	ret <8 x i8> %tmp1
+}
+
+define <8 x i8> @and8imm4h_lsl8(<8 x i8> %a) {
+;CHECK:  bic {{v[0-9]+}}.4h, #0xff, lsl #8
+	%tmp1 = and <8 x i8> %a, < i8 255, i8 0, i8 255, i8 0, i8 255, i8 0, i8 255, i8 0>
+	ret <8 x i8> %tmp1
+}
+
+define <2 x i32> @and16imm4h_lsl0(<2 x i32> %a) {
+;CHECK:  bic {{v[0-9]+}}.4h, #0xff
+	%tmp1 = and <2 x i32> %a, < i32 4278255360, i32 4278255360>
+	ret <2 x i32> %tmp1
+}
+
+define <2 x i32> @and16imm4h_lsl8(<2 x i32> %a) {
+;CHECK:  bic {{v[0-9]+}}.4h, #0xff, lsl #8
+	%tmp1 = and <2 x i32> %a, < i32 16711935, i32 16711935>
+	ret <2 x i32> %tmp1
+}
+
+define <1 x i64> @and64imm4h_lsl0(<1 x i64> %a) {
+;CHECK:  bic {{v[0-9]+}}.4h, #0xff
+	%tmp1 = and <1 x i64> %a, < i64 -71777214294589696>
+	ret <1 x i64> %tmp1
+}
+
+define <1 x i64> @and64imm4h_lsl8(<1 x i64> %a) {
+;CHECK:  bic {{v[0-9]+}}.4h, #0xff, lsl #8
+	%tmp1 = and <1 x i64> %a, < i64 71777214294589695>
+	ret <1 x i64> %tmp1
+}
+
+define <16 x i8> @and8imm8h_lsl0(<16 x i8> %a) {
+;CHECK:  bic {{v[0-9]+}}.8h, #0xff
+	%tmp1 = and <16 x i8> %a, < i8 0, i8 255, i8 0, i8 255, i8 0, i8 255, i8 0, i8 255, i8 0, i8 255, i8 0, i8 255, i8 0, i8 255, i8 0, i8 255 >
+	ret <16 x i8> %tmp1
+}
+
+define <16 x i8> @and8imm8h_lsl8(<16 x i8> %a) {
+;CHECK:  bic {{v[0-9]+}}.8h, #0xff, lsl #8
+	%tmp1 = and <16 x i8> %a, <i8 255, i8 0, i8 255, i8 0, i8 255, i8 0, i8 255, i8 0, i8 255, i8 0, i8 255, i8 0, i8 255, i8 0, i8 255, i8 0 >
+	ret <16 x i8> %tmp1
+}
+
+define <4 x i32> @and16imm8h_lsl0(<4 x i32> %a) {
+;CHECK:  bic {{v[0-9]+}}.8h, #0xff
+	%tmp1 = and <4 x i32> %a, < i32 4278255360, i32 4278255360, i32 4278255360, i32 4278255360>
+	ret <4 x i32> %tmp1
+}
+
+define <4 x i32> @and16imm8h_lsl8(<4 x i32> %a) {
+;CHECK:  bic {{v[0-9]+}}.8h, #0xff, lsl #8
+	%tmp1 = and <4 x i32> %a, < i32 16711935, i32 16711935, i32 16711935, i32 16711935>
+	ret <4 x i32> %tmp1
+}
+
+define <2 x i64> @and64imm8h_lsl0(<2 x i64> %a) {
+;CHECK:  bic {{v[0-9]+}}.8h, #0xff
+	%tmp1 = and <2 x i64> %a, < i64 -71777214294589696, i64 -71777214294589696>
+	ret <2 x i64> %tmp1
+}
+
+define <2 x i64> @and64imm8h_lsl8(<2 x i64> %a) {
+;CHECK:  bic {{v[0-9]+}}.8h, #0xff, lsl #8
+	%tmp1 = and <2 x i64> %a, < i64 71777214294589695, i64 71777214294589695>
+	ret <2 x i64> %tmp1
+}
+
+define <8 x i8> @orr8imm2s_lsl0(<8 x i8> %a) {
+;CHECK:  orr {{v[0-9]+}}.2s, #0xff
+	%tmp1 = or <8 x i8> %a, < i8 255, i8 0, i8 0, i8 0, i8 255, i8 0, i8 0, i8 0>
+	ret <8 x i8> %tmp1
+}
+
+define <8 x i8> @orr8imm2s_lsl8(<8 x i8> %a) {
+;CHECK:  orr {{v[0-9]+}}.2s, #0xff, lsl #8
+	%tmp1 = or <8 x i8> %a, < i8 0, i8 255, i8 0, i8 0, i8 0, i8 255, i8 0, i8 0>
+	ret <8 x i8> %tmp1
+}
+
+define <8 x i8> @orr8imm2s_lsl16(<8 x i8> %a) {
+;CHECK:  orr {{v[0-9]+}}.2s, #0xff, lsl #16
+	%tmp1 = or <8 x i8> %a, < i8 0, i8 0, i8 255, i8 0, i8 0, i8 0, i8 255, i8 0>
+	ret <8 x i8> %tmp1
+}
+
+define <8 x i8> @orr8imm2s_lsl24(<8 x i8> %a) {
+;CHECK:  orr {{v[0-9]+}}.2s, #0xff, lsl #24
+	%tmp1 = or <8 x i8> %a, < i8 0, i8 0, i8 0, i8 255, i8 0, i8 0, i8 0, i8 255>
+	ret <8 x i8> %tmp1
+}
+
+define <4 x i16> @orr16imm2s_lsl0(<4 x i16> %a) {
+;CHECK:  orr {{v[0-9]+}}.2s, #0xff
+	%tmp1 = or <4 x i16> %a, < i16 255, i16 0, i16 255, i16 0>
+	ret <4 x i16> %tmp1
+}
+
+define <4 x i16> @orr16imm2s_lsl8(<4 x i16> %a) {
+;CHECK:  orr {{v[0-9]+}}.2s, #0xff, lsl #8
+	%tmp1 = or <4 x i16> %a, < i16 65280, i16 0, i16 65280, i16 0>
+	ret <4 x i16> %tmp1
+}
+
+define <4 x i16> @orr16imm2s_lsl16(<4 x i16> %a) {
+;CHECK:  orr {{v[0-9]+}}.2s, #0xff, lsl #16
+	%tmp1 = or <4 x i16> %a, < i16 0, i16 255, i16 0, i16 255>
+	ret <4 x i16> %tmp1
+}
+
+define <4 x i16> @orr16imm2s_lsl24(<4 x i16> %a) {
+;CHECK:  orr {{v[0-9]+}}.2s, #0xff, lsl #24
+	%tmp1 = or <4 x i16> %a, < i16 0, i16 65280, i16 0, i16 65280>
+	ret <4 x i16> %tmp1
+}
+
+define <1 x i64> @orr64imm2s_lsl0(<1 x i64> %a) {
+;CHECK:  orr {{v[0-9]+}}.2s, #0xff
+	%tmp1 = or <1 x i64> %a, < i64 1095216660735>
+	ret <1 x i64> %tmp1
+}
+
+define <1 x i64> @orr64imm2s_lsl8(<1 x i64> %a) {
+;CHECK:  orr {{v[0-9]+}}.2s, #0xff, lsl #8
+	%tmp1 = or <1 x i64> %a, < i64 280375465148160>
+	ret <1 x i64> %tmp1
+}
+
+define <1 x i64> @orr64imm2s_lsl16(<1 x i64> %a) {
+;CHECK:  orr {{v[0-9]+}}.2s, #0xff, lsl #16
+	%tmp1 = or <1 x i64> %a, < i64 71776119077928960>
+	ret <1 x i64> %tmp1
+}
+
+define <1 x i64> @orr64imm2s_lsl24(<1 x i64> %a) {
+;CHECK:  orr {{v[0-9]+}}.2s, #0xff, lsl #24
+	%tmp1 = or <1 x i64> %a, < i64 -72057589759737856>
+	ret <1 x i64> %tmp1
+}
+
+define <16 x i8> @orr8imm4s_lsl0(<16 x i8> %a) {
+;CHECK:  orr {{v[0-9]+}}.4s, #0xff
+	%tmp1 = or <16 x i8> %a, < i8 255, i8 0, i8 0, i8 0, i8 255, i8 0, i8 0, i8 0, i8 255, i8 0, i8 0, i8 0, i8 255, i8 0, i8 0, i8 0>
+	ret <16 x i8> %tmp1
+}
+
+define <16 x i8> @orr8imm4s_lsl8(<16 x i8> %a) {
+;CHECK:  orr {{v[0-9]+}}.4s, #0xff, lsl #8
+	%tmp1 = or <16 x i8> %a, < i8 0, i8 255, i8 0, i8 0, i8 0, i8 255, i8 0, i8 0, i8 0, i8 255, i8 0, i8 0, i8 0, i8 255, i8 0, i8 0>
+	ret <16 x i8> %tmp1
+}
+
+define <16 x i8> @orr8imm4s_lsl16(<16 x i8> %a) {
+;CHECK:  orr {{v[0-9]+}}.4s, #0xff, lsl #16
+	%tmp1 = or <16 x i8> %a, < i8 0, i8 0, i8 255, i8 0, i8 0, i8 0, i8 255, i8 0, i8 0, i8 0, i8 255, i8 0, i8 0, i8 0, i8 255, i8 0>
+	ret <16 x i8> %tmp1
+}
+
+define <16 x i8> @orr8imm4s_lsl24(<16 x i8> %a) {
+;CHECK:  orr {{v[0-9]+}}.4s, #0xff, lsl #24
+	%tmp1 = or <16 x i8> %a, < i8 0, i8 0, i8 0, i8 255, i8 0, i8 0, i8 0, i8 255, i8 0, i8 0, i8 0, i8 255, i8 0, i8 0, i8 0, i8 255>
+	ret <16 x i8> %tmp1
+}
+
+define <8 x i16> @orr16imm4s_lsl0(<8 x i16> %a) {
+;CHECK:  orr {{v[0-9]+}}.4s, #0xff
+	%tmp1 = or <8 x i16> %a, < i16 255, i16 0, i16 255, i16 0, i16 255, i16 0, i16 255, i16 0>
+	ret <8 x i16> %tmp1
+}
+
+define <8 x i16> @orr16imm4s_lsl8(<8 x i16> %a) {
+;CHECK:  orr {{v[0-9]+}}.4s, #0xff, lsl #8
+	%tmp1 = or <8 x i16> %a, < i16 65280, i16 0, i16 65280, i16 0, i16 65280, i16 0, i16 65280, i16 0>
+	ret <8 x i16> %tmp1
+}
+
+define <8 x i16> @orr16imm4s_lsl16(<8 x i16> %a) {
+;CHECK:  orr {{v[0-9]+}}.4s, #0xff, lsl #16
+	%tmp1 = or <8 x i16> %a, < i16 0, i16 255, i16 0, i16 255, i16 0, i16 255, i16 0, i16 255>
+	ret <8 x i16> %tmp1
+}
+
+define <8 x i16> @orr16imm4s_lsl24(<8 x i16> %a) {
+;CHECK:  orr {{v[0-9]+}}.4s, #0xff, lsl #24
+	%tmp1 = or <8 x i16> %a, < i16 0, i16 65280, i16 0, i16 65280, i16 0, i16 65280, i16 0, i16 65280>
+	ret <8 x i16> %tmp1
+}
+
+define <2 x i64> @orr64imm4s_lsl0(<2 x i64> %a) {
+;CHECK:  orr {{v[0-9]+}}.4s, #0xff
+	%tmp1 = or <2 x i64> %a, < i64 1095216660735, i64 1095216660735>
+	ret <2 x i64> %tmp1
+}
+
+define <2 x i64> @orr64imm4s_lsl8(<2 x i64> %a) {
+;CHECK:  orr {{v[0-9]+}}.4s, #0xff, lsl #8
+	%tmp1 = or <2 x i64> %a, < i64 280375465148160, i64 280375465148160>
+	ret <2 x i64> %tmp1
+}
+
+define <2 x i64> @orr64imm4s_lsl16(<2 x i64> %a) {
+;CHECK:  orr {{v[0-9]+}}.4s, #0xff, lsl #16
+	%tmp1 = or <2 x i64> %a, < i64 71776119077928960, i64 71776119077928960>
+	ret <2 x i64> %tmp1
+}
+
+define <2 x i64> @orr64imm4s_lsl24(<2 x i64> %a) {
+;CHECK:  orr {{v[0-9]+}}.4s, #0xff, lsl #24
+	%tmp1 = or <2 x i64> %a, < i64 -72057589759737856, i64 -72057589759737856>
+	ret <2 x i64> %tmp1
+}
+
+define <8 x i8> @orr8imm4h_lsl0(<8 x i8> %a) {
+;CHECK:  orr {{v[0-9]+}}.4h, #0xff
+	%tmp1 = or <8 x i8> %a, < i8 255, i8 0, i8 255, i8 0, i8 255, i8 0, i8 255, i8 0>
+	ret <8 x i8> %tmp1
+}
+
+define <8 x i8> @orr8imm4h_lsl8(<8 x i8> %a) {
+;CHECK:  orr {{v[0-9]+}}.4h, #0xff, lsl #8
+	%tmp1 = or <8 x i8> %a, < i8 0, i8 255, i8 0, i8 255, i8 0, i8 255, i8 0, i8 255>
+	ret <8 x i8> %tmp1
+}
+
+define <2 x i32> @orr16imm4h_lsl0(<2 x i32> %a) {
+;CHECK:  orr {{v[0-9]+}}.4h, #0xff
+	%tmp1 = or <2 x i32> %a, < i32 16711935, i32 16711935>
+	ret <2 x i32> %tmp1
+}
+
+define <2 x i32> @orr16imm4h_lsl8(<2 x i32> %a) {
+;CHECK:  orr {{v[0-9]+}}.4h, #0xff, lsl #8
+	%tmp1 = or <2 x i32> %a, < i32 4278255360, i32 4278255360>
+	ret <2 x i32> %tmp1
+}
+
+define <1 x i64> @orr64imm4h_lsl0(<1 x i64> %a) {
+;CHECK:  orr {{v[0-9]+}}.4h, #0xff
+	%tmp1 = or <1 x i64> %a, < i64 71777214294589695>
+	ret <1 x i64> %tmp1
+}
+
+define <1 x i64> @orr64imm4h_lsl8(<1 x i64> %a) {
+;CHECK:  orr {{v[0-9]+}}.4h, #0xff, lsl #8
+	%tmp1 = or <1 x i64> %a, < i64 -71777214294589696>
+	ret <1 x i64> %tmp1
+}
+
+define <16 x i8> @orr8imm8h_lsl0(<16 x i8> %a) {
+;CHECK:  orr {{v[0-9]+}}.8h, #0xff
+	%tmp1 = or <16 x i8> %a, < i8 255, i8 0, i8 255, i8 0, i8 255, i8 0, i8 255, i8 0, i8 255, i8 0, i8 255, i8 0, i8 255, i8 0, i8 255, i8 0>
+	ret <16 x i8> %tmp1
+}
+
+define <16 x i8> @orr8imm8h_lsl8(<16 x i8> %a) {
+;CHECK:  orr {{v[0-9]+}}.8h, #0xff, lsl #8
+	%tmp1 = or <16 x i8> %a, < i8 0, i8 255, i8 0, i8 255, i8 0, i8 255, i8 0, i8 255, i8 0, i8 255, i8 0, i8 255, i8 0, i8 255, i8 0, i8 255>
+	ret <16 x i8> %tmp1
+}
+
+define <4 x i32> @orr16imm8h_lsl0(<4 x i32> %a) {
+;CHECK:  orr {{v[0-9]+}}.8h, #0xff
+	%tmp1 = or <4 x i32> %a, < i32 16711935, i32 16711935, i32 16711935, i32 16711935>
+	ret <4 x i32> %tmp1
+}
+
+define <4 x i32> @orr16imm8h_lsl8(<4 x i32> %a) {
+;CHECK:  orr {{v[0-9]+}}.8h, #0xff, lsl #8
+	%tmp1 = or <4 x i32> %a, < i32 4278255360, i32 4278255360, i32 4278255360, i32 4278255360>
+	ret <4 x i32> %tmp1
+}
+
+define <2 x i64> @orr64imm8h_lsl0(<2 x i64> %a) {
+;CHECK:  orr {{v[0-9]+}}.8h, #0xff
+	%tmp1 = or <2 x i64> %a, < i64 71777214294589695, i64 71777214294589695>
+	ret <2 x i64> %tmp1
+}
+
+define <2 x i64> @orr64imm8h_lsl8(<2 x i64> %a) {
+;CHECK:  orr {{v[0-9]+}}.8h, #0xff, lsl #8
+	%tmp1 = or <2 x i64> %a, < i64 -71777214294589696, i64 -71777214294589696>
+	ret <2 x i64> %tmp1
+}
 

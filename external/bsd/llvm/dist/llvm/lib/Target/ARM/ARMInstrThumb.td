@@ -545,15 +545,15 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
                      (tBX GPR:$dst, (ops 14, zero_reg))>,
                      Requires<[IsThumb]>, Sched<[WriteBr]>;
   }
-  // tTAILJMPd: IOS version uses a Thumb2 branch (no Thumb1 tail calls
-  // on IOS), so it's in ARMInstrThumb2.td.
-  // Non-IOS version:
+  // tTAILJMPd: MachO version uses a Thumb2 branch (no Thumb1 tail calls
+  // on MachO), so it's in ARMInstrThumb2.td.
+  // Non-MachO version:
   let Uses = [SP] in {
     def tTAILJMPdND : tPseudoExpand<(outs),
                    (ins t_brtarget:$dst, pred:$p),
                    4, IIC_Br, [],
                    (tB t_brtarget:$dst, pred:$p)>,
-                 Requires<[IsThumb, IsNotIOS]>, Sched<[WriteBr]>;
+                 Requires<[IsThumb, IsNotMachO]>, Sched<[WriteBr]>;
   }
 }
 
@@ -1312,14 +1312,15 @@ def : T1Pat<(subc   tGPR:$lhs, tGPR:$rhs),
 def : T1Pat<(ARMWrapper  tconstpool  :$dst), (tLEApcrel tconstpool  :$dst)>;
 
 // GlobalAddress
-def tLDRLIT_ga_pcrel : PseudoInst<(outs GPR:$dst), (ins i32imm:$addr),
+def tLDRLIT_ga_pcrel : PseudoInst<(outs tGPR:$dst), (ins i32imm:$addr),
                                   IIC_iLoadiALU,
-                                  [(set GPR:$dst,
+                                  [(set tGPR:$dst,
                                         (ARMWrapperPIC tglobaladdr:$addr))]>,
                        Requires<[IsThumb, DontUseMovt]>;
 
-def tLDRLIT_ga_abs : PseudoInst<(outs GPR:$dst), (ins i32imm:$src), IIC_iLoad_i,
-                                [(set GPR:$dst,
+def tLDRLIT_ga_abs : PseudoInst<(outs tGPR:$dst), (ins i32imm:$src),
+                                IIC_iLoad_i,
+                                [(set tGPR:$dst,
                                       (ARMWrapper tglobaladdr:$src))]>,
                      Requires<[IsThumb, DontUseMovt]>;
 

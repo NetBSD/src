@@ -311,15 +311,21 @@ public:
   bool isTargetDarwin() const { return TargetTriple.isOSDarwin(); }
   bool isTargetNaCl() const { return TargetTriple.isOSNaCl(); }
   bool isTargetLinux() const { return TargetTriple.isOSLinux(); }
+
   bool isTargetELF() const { return TargetTriple.isOSBinFormatELF(); }
+  bool isTargetMachO() const { return TargetTriple.isOSBinFormatMachO(); }
+
   // ARM EABI is the bare-metal EABI described in ARM ABI documents and
   // can be accessed via -target arm-none-eabi. This is NOT GNUEABI.
   // FIXME: Add a flag for bare-metal for that target and set Triple::EABI
   // even for GNUEABI, so we can make a distinction here and still conform to
   // the EABI on GNU (and Android) mode. This requires change in Clang, too.
+  // FIXME: The Darwin exception is temporary, while we move users to
+  // "*-*-*-macho" triples as quickly as possible.
   bool isTargetAEABI() const {
-    return TargetTriple.getEnvironment() == Triple::EABI ||
-      TargetTriple.getEnvironment() == Triple::EABIHF;
+    return (TargetTriple.getEnvironment() == Triple::EABI ||
+            TargetTriple.getEnvironment() == Triple::EABIHF) &&
+           !isTargetDarwin();
   }
 
   bool isTargetHardFloat() const {

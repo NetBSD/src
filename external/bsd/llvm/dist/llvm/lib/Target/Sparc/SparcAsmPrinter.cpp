@@ -14,16 +14,17 @@
 
 #define DEBUG_TYPE "asm-printer"
 #include "Sparc.h"
-#include "SparcInstrInfo.h"
-#include "SparcTargetMachine.h"
-#include "SparcTargetStreamer.h"
 #include "InstPrinter/SparcInstPrinter.h"
 #include "MCTargetDesc/SparcBaseInfo.h"
 #include "MCTargetDesc/SparcMCExpr.h"
+#include "SparcInstrInfo.h"
+#include "SparcTargetMachine.h"
+#include "SparcTargetStreamer.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/IR/Mangler.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCInst.h"
@@ -31,13 +32,13 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/Mangler.h"
 using namespace llvm;
 
 namespace {
   class SparcAsmPrinter : public AsmPrinter {
     SparcTargetStreamer &getTargetStreamer() {
-      return static_cast<SparcTargetStreamer&>(OutStreamer.getTargetStreamer());
+      return static_cast<SparcTargetStreamer &>(
+          *OutStreamer.getTargetStreamer());
     }
   public:
     explicit SparcAsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
@@ -65,10 +66,6 @@ namespace {
     bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
                                unsigned AsmVariant, const char *ExtraCode,
                                raw_ostream &O);
-
-    virtual bool isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB)
-                       const;
-
   };
 } // end of anonymous namespace
 
@@ -130,8 +127,8 @@ static void EmitOR(MCStreamer &OutStreamer, MCOperand &RS1,
   OutStreamer.EmitInstruction(ORInst);
 }
 
-void EmitADD(MCStreamer &OutStreamer,
-             MCOperand &RS1, MCOperand &RS2, MCOperand &RD)
+static void EmitADD(MCStreamer &OutStreamer,
+                    MCOperand &RS1, MCOperand &RS2, MCOperand &RD)
 {
   MCInst ADDInst;
   ADDInst.setOpcode(SP::ADDrr);
@@ -184,7 +181,6 @@ static void LowerGETPCXAndEmitMCInsts(const MachineInstr *MI,
 
 void SparcAsmPrinter::EmitInstruction(const MachineInstr *MI)
 {
-  MCInst TmpInst;
 
   switch (MI->getOpcode()) {
   default: break;
@@ -195,8 +191,13 @@ void SparcAsmPrinter::EmitInstruction(const MachineInstr *MI)
     LowerGETPCXAndEmitMCInsts(MI, OutStreamer, OutContext);
     return;
   }
-  LowerSparcMachineInstrToMCInst(MI, TmpInst, *this);
-  OutStreamer.EmitInstruction(TmpInst);
+  MachineBasicBlock::const_instr_iterator I = MI;
+  MachineBasicBlock::const_instr_iterator E = MI->getParent()->instr_end();
+  do {
+    MCInst TmpInst;
+    LowerSparcMachineInstrToMCInst(I, TmpInst, *this);
+    OutStreamer.EmitInstruction(TmpInst);
+  } while ((++I != E) && I->isInsideBundle()); // Delay slot check.
 }
 
 void SparcAsmPrinter::EmitFunctionBodyStart() {
@@ -385,37 +386,6 @@ bool SparcAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
   O << ']';
 
   return false;
-}
-
-/// isBlockOnlyReachableByFallthough - Return true if the basic block has
-/// exactly one predecessor and the control transfer mechanism between
-/// the predecessor and this block is a fall-through.
-///
-/// This overrides AsmPrinter's implementation to handle delay slots.
-bool SparcAsmPrinter::
-isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB) const {
-  // If this is a landing pad, it isn't a fall through.  If it has no preds,
-  // then nothing falls through to it.
-  if (MBB->isLandingPad() || MBB->pred_empty())
-    return false;
-
-  // If there isn't exactly one predecessor, it can't be a fall through.
-  MachineBasicBlock::const_pred_iterator PI = MBB->pred_begin(), PI2 = PI;
-  ++PI2;
-  if (PI2 != MBB->pred_end())
-    return false;
-
-  // The predecessor has to be immediately before this block.
-  const MachineBasicBlock *Pred = *PI;
-
-  if (!Pred->isLayoutSuccessor(MBB))
-    return false;
-
-  // Check if the last terminator is an unconditional branch.
-  MachineBasicBlock::const_iterator I = Pred->end();
-  while (I != Pred->begin() && !(--I)->isTerminator())
-    ; // Noop
-  return I == Pred->end() || !I->isBarrier();
 }
 
 // Force static initialization.

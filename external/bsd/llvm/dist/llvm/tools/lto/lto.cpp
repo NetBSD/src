@@ -13,11 +13,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm-c/lto.h"
+#include "llvm-c/Core.h"
+#include "llvm-c/Target.h"
 #include "llvm/CodeGen/CommandFlags.h"
 #include "llvm/LTO/LTOCodeGenerator.h"
 #include "llvm/LTO/LTOModule.h"
-#include "llvm-c/Core.h"
-#include "llvm-c/Target.h"
 
 // extra command-line flags needed for LTOCodeGenerator
 static cl::opt<bool>
@@ -250,6 +250,13 @@ void lto_codegen_set_assembler_path(lto_code_gen_t cg, const char *path) {
 void lto_codegen_set_assembler_args(lto_code_gen_t cg, const char **args,
                                     int nargs) {
   // In here only for backwards compatibility. We use MC now.
+}
+
+/// lto_codegen_set_internalize_strategy - Sets the strategy to use during
+/// internalize.
+void lto_codegen_set_internalize_strategy(lto_code_gen_t cg,
+                                          lto_internalize_strategy strategy) {
+  cg->setInternalizeStrategy(strategy);
 }
 
 /// lto_codegen_add_must_preserve_symbol - Adds to a list of all global symbols

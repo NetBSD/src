@@ -57,3 +57,42 @@ define i16 @test4(i16 %a, i16 %b) {
  ret i16 %b1
 
 }
+
+; CHECK-LABEL: test5
+; CHECK: ret
+define float @test5(float %p) #0 {
+entry:
+  %cmp = fcmp oeq float %p, 0.000000e+00
+  br i1 %cmp, label %return, label %if.end
+
+if.end:                                           ; preds = %entry
+  %cmp1 = fcmp ogt float %p, 0.000000e+00
+  %cond = select i1 %cmp1, float 1.000000e+00, float -1.000000e+00
+  br label %return
+
+return:                                           ; preds = %if.end, %entry
+  %retval.0 = phi float [ %cond, %if.end ], [ %p, %entry ]
+  ret float %retval.0
+}
+
+; CHECK-LABEL: test6
+; CHECK: cmpl
+; CHECK-NOT: kmov
+; CHECK: ret
+define i32 @test6(i32 %a, i32 %b) {
+  %cmp = icmp eq i32 %a, %b
+  %res = zext i1 %cmp to i32
+  ret i32 %res
+}
+
+; CHECK-LABEL: test7
+; CHECK: vucomisd
+; CHECK-NOT: kmov
+; CHECK: ret
+define i32 @test7(double %x, double %y) #2 {
+entry:
+  %0 = fcmp one double %x, %y
+  %or = zext i1 %0 to i32
+  ret i32 %or
+}
+

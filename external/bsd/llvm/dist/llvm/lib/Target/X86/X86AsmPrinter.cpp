@@ -19,13 +19,13 @@
 #include "X86MachineFunctionInfo.h"
 #include "X86TargetMachine.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineModuleInfoImpls.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/DebugInfo.h"
 #include "llvm/IR/CallingConv.h"
 #include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Mangler.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
 #include "llvm/MC/MCAsmInfo.h"
@@ -38,7 +38,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/TargetRegistry.h"
-#include "llvm/Target/Mangler.h"
 #include "llvm/Target/TargetOptions.h"
 using namespace llvm;
 
@@ -650,20 +649,35 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
     // Necessary for dllexport support
     std::vector<const MCSymbol*> DLLExportedFns, DLLExportedGlobals;
 
-    const TargetLoweringObjectFileCOFF &TLOFCOFF =
-      static_cast<const TargetLoweringObjectFileCOFF&>(getObjFileLowering());
-
     for (Module::const_iterator I = M.begin(), E = M.end(); I != E; ++I)
-      if (I->hasDLLExportLinkage())
+      if (I->hasDLLExportStorageClass())
         DLLExportedFns.push_back(getSymbol(I));
 
     for (Module::const_global_iterator I = M.global_begin(),
            E = M.global_end(); I != E; ++I)
-      if (I->hasDLLExportLinkage())
+      if (I->hasDLLExportStorageClass())
         DLLExportedGlobals.push_back(getSymbol(I));
+
+    for (Module::const_alias_iterator I = M.alias_begin(), E = M.alias_end();
+                                      I != E; ++I) {
+      const GlobalValue *GV = I;
+      if (!GV->hasDLLExportStorageClass())
+        continue;
+
+      while (const GlobalAlias *A = dyn_cast<GlobalAlias>(GV))
+        GV = A->getAliasedGlobal();
+
+      if (isa<Function>(GV))
+        DLLExportedFns.push_back(getSymbol(I));
+      else if (isa<GlobalVariable>(GV))
+        DLLExportedGlobals.push_back(getSymbol(I));
+    }
 
     // Output linker support code for dllexported globals on windows.
     if (!DLLExportedGlobals.empty() || !DLLExportedFns.empty()) {
+      const TargetLoweringObjectFileCOFF &TLOFCOFF =
+        static_cast<const TargetLoweringObjectFileCOFF&>(getObjFileLowering());
+
       OutStreamer.SwitchSection(TLOFCOFF.getDrectveSection());
       SmallString<128> name;
       for (unsigned i = 0, e = DLLExportedGlobals.size(); i != e; ++i) {

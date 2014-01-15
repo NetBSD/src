@@ -35,12 +35,15 @@
 ///
 //===----------------------------------------------------------------------===//
 
+#ifndef LLVM_IR_PASS_MANAGER_H
+#define LLVM_IR_PASS_MANAGER_H
+
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/polymorphic_ptr.h"
-#include "llvm/Support/type_traits.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Module.h"
+#include "llvm/Support/type_traits.h"
 #include <list>
 #include <vector>
 
@@ -165,6 +168,9 @@ template <typename IRUnitT, typename AnalysisManagerT> struct PassConcept {
   /// desired. Also that the analysis manager may be null if there is no
   /// analysis manager in the pass pipeline.
   virtual PreservedAnalyses run(IRUnitT IR, AnalysisManagerT *AM) = 0;
+
+  /// \brief Polymorphic method to access the name of a pass.
+  virtual StringRef name() = 0;
 };
 
 /// \brief SFINAE metafunction for computing whether \c PassT has a run method
@@ -205,6 +211,7 @@ struct PassModel<IRUnitT, AnalysisManagerT, PassT,
   virtual PreservedAnalyses run(IRUnitT IR, AnalysisManagerT *AM) {
     return Pass.run(IR, AM);
   }
+  virtual StringRef name() { return PassT::name(); }
   PassT Pass;
 };
 
@@ -218,6 +225,7 @@ struct PassModel<IRUnitT, AnalysisManagerT, PassT,
   virtual PreservedAnalyses run(IRUnitT IR, AnalysisManagerT *AM) {
     return Pass.run(IR);
   }
+  virtual StringRef name() { return PassT::name(); }
   PassT Pass;
 };
 
@@ -400,6 +408,8 @@ public:
     Passes.push_back(new ModulePassModel<ModulePassT>(llvm_move(Pass)));
   }
 
+  static StringRef name() { return "ModulePassManager"; }
+
 private:
   // Pull in the concept type and model template specialized for modules.
   typedef detail::PassConcept<Module *, ModuleAnalysisManager> ModulePassConcept;
@@ -424,6 +434,8 @@ public:
   }
 
   PreservedAnalyses run(Function *F, FunctionAnalysisManager *AM = 0);
+
+  static StringRef name() { return "FunctionPassManager"; }
 
 private:
   // Pull in the concept type and model template specialized for functions.
@@ -805,6 +817,8 @@ public:
     return PA;
   }
 
+  static StringRef name() { return "ModuleToFunctionPassAdaptor"; }
+
 private:
   FunctionPassT Pass;
 };
@@ -818,3 +832,5 @@ createModuleToFunctionPassAdaptor(FunctionPassT Pass) {
 }
 
 }
+
+#endif

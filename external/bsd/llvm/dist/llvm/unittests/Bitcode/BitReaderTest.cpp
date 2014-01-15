@@ -8,13 +8,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/SmallString.h"
-#include "llvm/Analysis/Verifier.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/Verifier.h"
 #include "llvm/PassManager.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "gtest/gtest.h"
@@ -54,8 +54,9 @@ TEST(BitReaderTest, MaterializeFunctionsForBlockAddr) { // PR11677
   SmallString<1024> Mem;
   writeModuleToBuffer(Mem);
   MemoryBuffer *Buffer = MemoryBuffer::getMemBuffer(Mem.str(), "test", false);
-  std::string errMsg;
-  OwningPtr<Module> m(getLazyBitcodeModule(Buffer, getGlobalContext(), &errMsg));
+  ErrorOr<Module *> ModuleOrErr =
+      getLazyBitcodeModule(Buffer, getGlobalContext());
+  OwningPtr<Module> m(ModuleOrErr.get());
   PassManager passes;
   passes.add(createVerifierPass());
   passes.run(*m);

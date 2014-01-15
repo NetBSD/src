@@ -217,9 +217,9 @@ static unsigned getRelaxedOpcodeArith(unsigned Op) {
   case X86::CMP64mi8: return X86::CMP64mi32;
 
     // PUSH
-  case X86::PUSHi8: return X86::PUSHi32;
-  case X86::PUSHi16: return X86::PUSHi32;
-  case X86::PUSH64i8: return X86::PUSH64i32;
+  case X86::PUSH32i8:  return X86::PUSHi32;
+  case X86::PUSH16i8:  return X86::PUSHi16;
+  case X86::PUSH64i8:  return X86::PUSH64i32;
   case X86::PUSH64i16: return X86::PUSH64i32;
   }
 }
@@ -803,7 +803,7 @@ MCAsmBackend *llvm::createX86_32AsmBackend(const Target &T,
                                            StringRef CPU) {
   Triple TheTriple(TT);
 
-  if (TheTriple.isOSDarwin() || TheTriple.getEnvironment() == Triple::MachO)
+  if (TheTriple.isOSBinFormatMachO())
     return new DarwinX86_32AsmBackend(T, MRI, CPU,
                                       TheTriple.isMacOSX() &&
                                       !TheTriple.isMacOSXVersionLT(10, 7));
@@ -821,7 +821,7 @@ MCAsmBackend *llvm::createX86_64AsmBackend(const Target &T,
                                            StringRef CPU) {
   Triple TheTriple(TT);
 
-  if (TheTriple.isOSDarwin() || TheTriple.getEnvironment() == Triple::MachO) {
+  if (TheTriple.isOSBinFormatMachO()) {
     MachO::CPUSubTypeX86 CS =
         StringSwitch<MachO::CPUSubTypeX86>(TheTriple.getArchName())
             .Case("x86_64h", MachO::CPU_SUBTYPE_X86_64_H)

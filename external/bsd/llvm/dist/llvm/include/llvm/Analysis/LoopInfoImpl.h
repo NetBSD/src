@@ -18,8 +18,8 @@
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/IR/Dominators.h"
 
 namespace llvm {
 
@@ -324,7 +324,7 @@ void LoopBase<BlockT, LoopT>::print(raw_ostream &OS, unsigned Depth) const {
   for (unsigned i = 0; i < getBlocks().size(); ++i) {
     if (i) OS << ",";
     BlockT *BB = getBlocks()[i];
-    WriteAsOperand(OS, BB, false);
+    BB->printAsOperand(OS, false);
     if (BB == getHeader())    OS << "<header>";
     if (BB == getLoopLatch()) OS << "<latch>";
     if (isLoopExiting(BB))    OS << "<exiting>";

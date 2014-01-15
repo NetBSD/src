@@ -18,9 +18,9 @@
 #define X86BASEINFO_H
 
 #include "X86MCTargetDesc.h"
+#include "llvm/MC/MCInstrInfo.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/MC/MCInstrInfo.h"
 
 namespace llvm {
 
@@ -295,13 +295,15 @@ namespace X86II {
 
     // OpSize - Set if this instruction requires an operand size prefix (0x66),
     // which most often indicates that the instruction operates on 16 bit data
-    // instead of 32 bit data.
+    // instead of 32 bit data. OpSize16 in 16 bit mode indicates that the
+    // instruction operates on 32 bit data instead of 16 bit data.
     OpSize      = 1 << 6,
+    OpSize16    = 1 << 7,
 
     // AsSize - Set if this instruction requires an operand size prefix (0x67),
     // which most often indicates that the instruction address 16 bit address
     // instead of 32 bit address (or 32 bit address in 64 bit mode).
-    AdSize      = 1 << 7,
+    AdSize      = 1 << 8,
 
     //===------------------------------------------------------------------===//
     // Op0Mask - There are several prefix bytes that are used to form two byte
@@ -309,7 +311,7 @@ namespace X86II {
     // used to obtain the setting of this field.  If no bits in this field is
     // set, there is no prefix byte for obtaining a multibyte opcode.
     //
-    Op0Shift    = 8,
+    Op0Shift    = 9,
     Op0Mask     = 0x1F << Op0Shift,
 
     // TB - TwoByte - Set if this instruction has a two byte opcode, which
@@ -352,6 +354,16 @@ namespace X86II {
 
     // XOPA - Prefix to encode 0xA in VEX.MMMM of XOP instructions.
     XOPA = 22 << Op0Shift,
+
+    // PD - Prefix code for packed double precision vector floating point
+    // operations performed in the SSE registers.
+    PD = 23 << Op0Shift,
+
+    // T8PD - Prefix before and after 0x0F. Combination of T8 and PD.
+    T8PD = 24 << Op0Shift,
+
+    // TAPD - Prefix before and after 0x0F. Combination of TA and PD.
+    TAPD = 25 << Op0Shift,
 
     //===------------------------------------------------------------------===//
     // REX_W - REX prefixes are instruction prefixes used in 64-bit mode.
@@ -415,16 +427,9 @@ namespace X86II {
     LOCKShift = FPTypeShift + 3,
     LOCK = 1 << LOCKShift,
 
-    // Segment override prefixes. Currently we just need ability to address
-    // stuff in gs and fs segments.
-    SegOvrShift = LOCKShift + 1,
-    SegOvrMask  = 3 << SegOvrShift,
-    FS          = 1 << SegOvrShift,
-    GS          = 2 << SegOvrShift,
-
     // Execution domain for SSE instructions in bits 23, 24.
     // 0 in bits 23-24 means normal, non-SSE instruction.
-    SSEDomainShift = SegOvrShift + 2,
+    SSEDomainShift = LOCKShift + 1,
 
     OpcodeShift   = SSEDomainShift + 2,
 
@@ -508,8 +513,10 @@ namespace X86II {
     MemOp4 = 1U << 18,
 
     /// XOP - Opcode prefix used by XOP instructions.
-    XOP = 1U << 19
+    XOP = 1U << 19,
 
+    /// Explicitly specified rounding control
+    EVEX_RC = 1U << 20
   };
 
   // getBaseOpcodeFor - This function returns the "base" X86 opcode for the

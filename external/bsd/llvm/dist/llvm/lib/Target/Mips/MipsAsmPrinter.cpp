@@ -32,6 +32,7 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/InlineAsm.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/Mangler.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCELFStreamer.h"
 #include "llvm/MC/MCInst.h"
@@ -39,14 +40,13 @@
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/Mangler.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetOptions.h"
 
 using namespace llvm;
 
 MipsTargetStreamer &MipsAsmPrinter::getTargetStreamer() {
-  return static_cast<MipsTargetStreamer &>(OutStreamer.getTargetStreamer());
+  return static_cast<MipsTargetStreamer &>(*OutStreamer.getTargetStreamer());
 }
 
 bool MipsAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
@@ -265,19 +265,19 @@ const char *MipsAsmPrinter::getCurrentABIString() const {
 }
 
 void MipsAsmPrinter::EmitFunctionEntryLabel() {
-  if (OutStreamer.hasRawTextSupport()) {
-    if (Subtarget->inMips16Mode())
-      OutStreamer.EmitRawText(StringRef("\t.set\tmips16"));
-    else
-      OutStreamer.EmitRawText(StringRef("\t.set\tnomips16"));
-    // leave out until FSF available gas has micromips changes
-    // OutStreamer.EmitRawText(StringRef("\t.set\tnomicromips"));
-    OutStreamer.EmitRawText("\t.ent\t" + Twine(CurrentFnSym->getName()));
-  }
-
+  MipsTargetStreamer &TS = getTargetStreamer();
   if (Subtarget->inMicroMipsMode())
-    getTargetStreamer().emitMipsHackSTOCG(CurrentFnSym,
-                                          (unsigned)ELF::STO_MIPS_MICROMIPS);
+    TS.emitDirectiveSetMicroMips();
+  // leave out until FSF available gas has micromips changes
+  //  else
+  //    TS.emitDirectiveSetNoMicroMips();
+
+  if (Subtarget->inMips16Mode())
+    TS.emitDirectiveSetMips16();
+  else
+    TS.emitDirectiveSetNoMips16();
+
+  TS.emitDirectiveEnt(*CurrentFnSym);
   OutStreamer.EmitLabel(CurrentFnSym);
 }
 
@@ -608,12 +608,10 @@ void MipsAsmPrinter::EmitStartOfAsmFile(Module &M) {
 
   // TODO: Need to add -mabicalls and -mno-abicalls flags.
   // Currently we assume that -mabicalls is the default.
-  if (OutStreamer.hasRawTextSupport()) {
-    OutStreamer.EmitRawText(StringRef("\t.abicalls"));
-    Reloc::Model RM = Subtarget->getRelocationModel();
-    if (RM == Reloc::Static && !Subtarget->hasMips64())
-      OutStreamer.EmitRawText(StringRef("\t.option\tpic0"));
-  }
+  getTargetStreamer().emitDirectiveAbiCalls();
+  Reloc::Model RM = Subtarget->getRelocationModel();
+  if (RM == Reloc::Static && !Subtarget->hasMips64())
+    getTargetStreamer().emitDirectiveOptionPic0();
 
   // Tell the assembler which ABI we are using
   if (OutStreamer.hasRawTextSupport())

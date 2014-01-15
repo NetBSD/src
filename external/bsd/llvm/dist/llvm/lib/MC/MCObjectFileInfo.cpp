@@ -8,8 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCObjectFileInfo.h"
-#include "llvm/ADT/Triple.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCSectionCOFF.h"
@@ -726,8 +726,9 @@ const MCSection *MCObjectFileInfo::getDwarfTypesSection(uint64_t Hash) const {
 
 const MCSection *
 MCObjectFileInfo::getDwarfTypesDWOSection(uint64_t Hash) const {
-  return Ctx->getELFSection(".debug_types.dwo", ELF::SHT_GROUP, 0,
-                            SectionKind::getMetadata(), 0, utostr(Hash));
+  return Ctx->getELFSection(".debug_types.dwo", ELF::SHT_PROGBITS,
+                            ELF::SHF_GROUP, SectionKind::getMetadata(), 0,
+                            utostr(Hash));
 }
 
 void MCObjectFileInfo::InitEHFrameSection() {

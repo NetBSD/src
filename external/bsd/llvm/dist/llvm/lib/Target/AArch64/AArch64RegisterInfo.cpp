@@ -18,11 +18,11 @@
 #include "AArch64MachineFunctionInfo.h"
 #include "AArch64TargetMachine.h"
 #include "MCTargetDesc/AArch64MCTargetDesc.h"
+#include "llvm/ADT/BitVector.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/RegisterScavenging.h"
-#include "llvm/ADT/BitVector.h"
 
 #define GET_REGINFO_TARGET_DESC
 #include "AArch64GenRegisterInfo.inc"
@@ -77,7 +77,10 @@ AArch64RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 }
 
 static bool hasFrameOffset(int opcode) {
-  return opcode != AArch64::LD1x2_16B && opcode != AArch64::LD1x3_16B &&
+  return opcode != AArch64::LD1x2_8B  && opcode != AArch64::LD1x3_8B  &&
+         opcode != AArch64::LD1x4_8B  && opcode != AArch64::ST1x2_8B  &&
+         opcode != AArch64::ST1x3_8B  && opcode != AArch64::ST1x4_8B  &&
+         opcode != AArch64::LD1x2_16B && opcode != AArch64::LD1x3_16B &&
          opcode != AArch64::LD1x4_16B && opcode != AArch64::ST1x2_16B &&
          opcode != AArch64::ST1x3_16B && opcode != AArch64::ST1x4_16B;
 }

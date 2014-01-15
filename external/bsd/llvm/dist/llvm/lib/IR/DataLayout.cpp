@@ -159,7 +159,7 @@ const char *DataLayout::getManglingComponent(const Triple &T) {
   if (T.isOSBinFormatELF() || T.isArch64Bit())
     return "-m:e";
   assert(T.isOSBinFormatCOFF());
-  return "-m:c";
+  return "-m:w";
 }
 
 static const LayoutAlignElem DefaultAlignments[] = {
@@ -205,11 +205,12 @@ static std::pair<StringRef, StringRef> split(StringRef Str, char Separator) {
   return Split;
 }
 
-/// Get an unsinged integer, including error checks.
+/// Get an unsigned integer, including error checks.
 static unsigned getInt(StringRef R) {
   unsigned Result;
   bool error = R.getAsInteger(10, Result); (void)error;
-  assert(!error && "not a number, or does not fit in an unsigned int");
+  if (error)
+    report_fatal_error("not a number, or does not fit in an unsigned int");
   return Result;
 }
 
@@ -287,6 +288,9 @@ void DataLayout::parseSpecifier(StringRef Desc) {
       // Bit size.
       unsigned Size = Tok.empty() ? 0 : getInt(Tok);
 
+      assert((AlignType != AGGREGATE_ALIGN || Size == 0) &&
+             "These specifications don't have a size");
+
       // ABI alignment.
       Split = split(Rest, ':');
       unsigned ABIAlign = inBytes(getInt(Tok));
@@ -331,8 +335,8 @@ void DataLayout::parseSpecifier(StringRef Desc) {
       case 'm':
         ManglingMode = MM_Mips;
         break;
-      case 'c':
-        ManglingMode = MM_COFF;
+      case 'w':
+        ManglingMode = MM_WINCOFF;
         break;
       }
       break;
@@ -522,8 +526,8 @@ std::string DataLayout::getStringRepresentation() const {
   case MM_MachO:
     OS << "-m:o";
     break;
-  case MM_COFF:
-    OS << "-m:c";
+  case MM_WINCOFF:
+    OS << "-m:w";
     break;
   case MM_Mips:
     OS << "-m:m";

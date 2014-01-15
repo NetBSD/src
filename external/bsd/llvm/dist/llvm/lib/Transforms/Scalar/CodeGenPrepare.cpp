@@ -19,13 +19,11 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/ValueMap.h"
-#include "llvm/Analysis/DominatorInternals.h"
-#include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/InstructionSimplify.h"
-#include "llvm/Assembly/Writer.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/InlineAsm.h"
@@ -108,7 +106,7 @@ namespace {
     const char *getPassName() const { return "CodeGen Prepare"; }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addPreserved<DominatorTree>();
+      AU.addPreserved<DominatorTreeWrapperPass>();
       AU.addRequired<TargetLibraryInfo>();
     }
 
@@ -147,7 +145,9 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
   ModifiedDT = false;
   if (TM) TLI = TM->getTargetLowering();
   TLInfo = &getAnalysis<TargetLibraryInfo>();
-  DT = getAnalysisIfAvailable<DominatorTree>();
+  DominatorTreeWrapperPass *DTWP =
+      getAnalysisIfAvailable<DominatorTreeWrapperPass>();
+  DT = DTWP ? &DTWP->getDomTree() : 0;
   OptSize = F.getAttributes().hasAttribute(AttributeSet::FunctionIndex,
                                            Attribute::OptimizeForSize);
 
@@ -221,7 +221,7 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
   }
 
   if (ModifiedDT && DT)
-    DT->DT->recalculate(F);
+    DT->recalculate(F);
 
   return EverMadeChange;
 }
@@ -845,7 +845,7 @@ void ExtAddrMode::print(raw_ostream &OS) const {
   if (BaseGV) {
     OS << (NeedPlus ? " + " : "")
        << "GV:";
-    WriteAsOperand(OS, BaseGV, /*PrintType=*/false);
+    BaseGV->printAsOperand(OS, /*PrintType=*/false);
     NeedPlus = true;
   }
 
@@ -855,13 +855,13 @@ void ExtAddrMode::print(raw_ostream &OS) const {
   if (BaseReg) {
     OS << (NeedPlus ? " + " : "")
        << "Base:";
-    WriteAsOperand(OS, BaseReg, /*PrintType=*/false);
+    BaseReg->printAsOperand(OS, /*PrintType=*/false);
     NeedPlus = true;
   }
   if (Scale) {
     OS << (NeedPlus ? " + " : "")
        << Scale << "*";
-    WriteAsOperand(OS, ScaledReg, /*PrintType=*/false);
+    ScaledReg->printAsOperand(OS, /*PrintType=*/false);
   }
 
   OS << ']';
