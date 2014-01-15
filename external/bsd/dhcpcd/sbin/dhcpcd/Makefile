@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.17 2014/01/03 22:27:31 roy Exp $
+# $NetBSD: Makefile,v 1.18 2014/01/15 20:58:53 roy Exp $
 #
 
 PROG=		dhcpcd
@@ -40,18 +40,15 @@ MAN=			dhcpcd.conf.5 dhcpcd.8 dhcpcd-run-hooks.8
 CLEANFILES=		dhcpcd.conf.5 dhcpcd.8 \
 			dhcpcd-run-hooks dhcpcd-run-hooks.8
 
-SERVICEEXISTS=		[ -x /etc/rc.d/$$1 ]
-SERVICECMD=		/etc/rc.d/$$1 $$2
-SERVICESTATUS=		service_command $$1 status >/dev/null 2>\&1
 .for f in dhcpcd-run-hooks dhcpcd.conf.5 dhcpcd.8 dhcpcd-run-hooks.8
 ${f}:	${f}.in
 	${TOOL_SED} -e 's:@SYSCONFDIR@:/etc:g' -e 's:@DBDIR@:/var/db:g' \
 	    -e 's:@LIBDIR@:/lib:g' \
 	    -e 's:@HOOKDIR@:/libexec/dhcpcd-hooks:g' \
 	    -e 's:@SCRIPT@:/libexec/dhcpcd-run-hooks:g' \
-	    -e 's:@SERVICEEXISTS@:[ -x /etc/rc.d/$$1 ]:g' \
-	    -e 's:@SERVICECMD@:/etc/rc.d/$$1 $$2:g' \
-	    -e 's:@SERVICESTATUS@:service_command $$1 status >/dev/null 2>\&1:g' \
+	    -e 's:@SERVICEEXISTS@::g' \
+	    -e 's:@SERVICECMD@::g' \
+	    -e 's:@SERVICESTATUS@::g' \
 	    ${DIST}/${f}.in > $@
 .endfor
 
