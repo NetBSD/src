@@ -1,4 +1,4 @@
-#	$NetBSD: files.drm2,v 1.1.2.4 2013/07/24 03:56:49 riastradh Exp $
+#	$NetBSD: files.drm2,v 1.1.2.5 2014/01/15 13:53:42 riastradh Exp $
 
 define	drm2base
 define	drm2pci
@@ -22,7 +22,7 @@ makeoptions	drm2base	CPPFLAGS+="-DMTRR"
 
 makeoptions	i915drm		CPPFLAGS+="-I$S/external/bsd/drm2/dist/drm/i915"
 
-device	i915drm: drm2base, drm2pci, drmbus
+device	i915drm: drm2base, drm2pci, drmbus, wsemuldisplaydev
 attach	i915drm at pci
 
 #file	external/bsd/drm2/dist/drm/ati_pcigart.c	drm2base
