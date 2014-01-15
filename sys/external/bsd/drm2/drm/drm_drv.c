@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.1.2.23 2013/09/08 15:34:36 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.1.2.24 2014/01/15 13:52:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.23 2013/09/08 15:34:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.24 2014/01/15 13:52:30 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -677,7 +677,9 @@ drm_version_string(char *target, size_t *lenp, const char *source)
 
 	*lenp = len;
 	if ((trunc_len > 0) && (target != NULL))
-		return copyoutstr(source, target, trunc_len, NULL);
+		/* copyoutstr takes a buffer size, not a string length.  */
+		/* XXX errno NetBSD->Linux */
+		return -copyoutstr(source, target, trunc_len+1, NULL);
 
 	return 0;
 }
