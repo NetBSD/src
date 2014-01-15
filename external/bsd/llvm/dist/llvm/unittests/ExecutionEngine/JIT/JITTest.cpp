@@ -10,7 +10,7 @@
 #include "llvm/ExecutionEngine/JIT.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/Assembly/Parser.h"
+#include "llvm/AsmParser/Parser.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/ExecutionEngine/JITMemoryManager.h"
 #include "llvm/IR/BasicBlock.h"
@@ -631,13 +631,14 @@ ExecutionEngine *getJITFromBitcode(
   // c_str() is null-terminated like MemoryBuffer::getMemBuffer requires.
   MemoryBuffer *BitcodeBuffer =
     MemoryBuffer::getMemBuffer(Bitcode, "Bitcode for test");
-  std::string errMsg;
-  M = getLazyBitcodeModule(BitcodeBuffer, Context, &errMsg);
-  if (M == NULL) {
-    ADD_FAILURE() << errMsg;
+  ErrorOr<Module*> ModuleOrErr = getLazyBitcodeModule(BitcodeBuffer, Context);
+  if (error_code EC = ModuleOrErr.getError()) {
+    ADD_FAILURE() << EC.message();
     delete BitcodeBuffer;
     return NULL;
   }
+  M = ModuleOrErr.get();
+  std::string errMsg;
   ExecutionEngine *TheJIT = EngineBuilder(M)
     .setEngineKind(EngineKind::JIT)
     .setErrorStr(&errMsg)

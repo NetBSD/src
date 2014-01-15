@@ -17,7 +17,6 @@
 #include "ARMArchName.h"
 #include "ARMFPUName.h"
 #include "ARMRegisterInfo.h"
-#include "ARMUnwindOp.h"
 #include "ARMUnwindOpAsm.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringExtras.h"
@@ -40,6 +39,7 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCValue.h"
+#include "llvm/Support/ARMEHABI.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/FormattedStream.h"
@@ -49,7 +49,8 @@
 using namespace llvm;
 
 static std::string GetAEABIUnwindPersonalityName(unsigned Index) {
-  assert(Index < NUM_PERSONALITY_INDEX && "Invalid personality index");
+  assert(Index < ARM::EHABI::NUM_PERSONALITY_INDEX &&
+         "Invalid personality index");
   return (Twine("__aeabi_unwind_cpp_pr") + Twine(Index)).str();
 }
 
@@ -110,6 +111,7 @@ class ARMELFStreamer;
 class ARMTargetAsmStreamer : public ARMTargetStreamer {
   formatted_raw_ostream &OS;
   MCInstPrinter &InstPrinter;
+  bool IsVerboseAsm;
 
   virtual void emitFnStart();
   virtual void emitFnEnd();
@@ -124,18 +126,22 @@ class ARMTargetAsmStreamer : public ARMTargetStreamer {
   virtual void switchVendor(StringRef Vendor);
   virtual void emitAttribute(unsigned Attribute, unsigned Value);
   virtual void emitTextAttribute(unsigned Attribute, StringRef String);
+  virtual void emitIntTextAttribute(unsigned Attribute, unsigned IntValue,
+                                    StringRef StrinValue);
   virtual void emitArch(unsigned Arch);
   virtual void emitFPU(unsigned FPU);
   virtual void emitInst(uint32_t Inst, char Suffix = '\0');
   virtual void finishAttributeSection();
 
 public:
-  ARMTargetAsmStreamer(formatted_raw_ostream &OS, MCInstPrinter &InstPrinter);
+  ARMTargetAsmStreamer(formatted_raw_ostream &OS, MCInstPrinter &InstPrinter,
+                       bool VerboseAsm);
 };
 
 ARMTargetAsmStreamer::ARMTargetAsmStreamer(formatted_raw_ostream &OS,
-                                           MCInstPrinter &InstPrinter)
-    : OS(OS), InstPrinter(InstPrinter) {}
+                                           MCInstPrinter &InstPrinter,
+                                           bool VerboseAsm)
+    : OS(OS), InstPrinter(InstPrinter), IsVerboseAsm(VerboseAsm) {}
 void ARMTargetAsmStreamer::emitFnStart() { OS << "\t.fnstart\n"; }
 void ARMTargetAsmStreamer::emitFnEnd() { OS << "\t.fnend\n"; }
 void ARMTargetAsmStreamer::emitCantUnwind() { OS << "\t.cantunwind\n"; }
@@ -176,16 +182,45 @@ void ARMTargetAsmStreamer::emitRegSave(const SmallVectorImpl<unsigned> &RegList,
 void ARMTargetAsmStreamer::switchVendor(StringRef Vendor) {
 }
 void ARMTargetAsmStreamer::emitAttribute(unsigned Attribute, unsigned Value) {
-  OS << "\t.eabi_attribute\t" << Attribute << ", " << Twine(Value) << "\n";
+  OS << "\t.eabi_attribute\t" << Attribute << ", " << Twine(Value);
+  if (IsVerboseAsm) {
+    StringRef Name = ARMBuildAttrs::AttrTypeAsString(Attribute);
+    if (!Name.empty())
+      OS << "\t@ " << Name;
+  }
+  OS << "\n";
 }
 void ARMTargetAsmStreamer::emitTextAttribute(unsigned Attribute,
                                              StringRef String) {
   switch (Attribute) {
-  default: llvm_unreachable("Unsupported Text attribute in ASM Mode");
   case ARMBuildAttrs::CPU_name:
-    OS << "\t.cpu\t" << String.lower() << "\n";
+    OS << "\t.cpu\t" << String.lower();
+    break;
+  default:
+    OS << "\t.eabi_attribute\t" << Attribute << ", \"" << String << "\"";
+    if (IsVerboseAsm) {
+      StringRef Name = ARMBuildAttrs::AttrTypeAsString(Attribute);
+      if (!Name.empty())
+        OS << "\t@ " << Name;
+    }
     break;
   }
+  OS << "\n";
+}
+void ARMTargetAsmStreamer::emitIntTextAttribute(unsigned Attribute,
+                                                unsigned IntValue,
+                                                StringRef StringValue) {
+  switch (Attribute) {
+  default: llvm_unreachable("unsupported multi-value attribute in asm mode");
+  case ARMBuildAttrs::compatibility:
+    OS << "\t.eabi_attribute\t" << Attribute << ", " << IntValue;
+    if (!StringValue.empty())
+      OS << ", \"" << StringValue << "\"";
+    if (IsVerboseAsm)
+      OS << "\t@ " << ARMBuildAttrs::AttrTypeAsString(Attribute);
+    break;
+  }
+  OS << "\n";
 }
 void ARMTargetAsmStreamer::emitArch(unsigned Arch) {
   OS << "\t.arch\t" << GetArchName(Arch) << "\n";
@@ -212,7 +247,8 @@ private:
     enum {
       HiddenAttribute = 0,
       NumericAttribute,
-      TextAttribute
+      TextAttribute,
+      NumericAndTextAttributes
     } Type;
     unsigned Tag;
     unsigned IntValue;
@@ -288,6 +324,27 @@ private:
     Contents.push_back(Item);
   }
 
+  void setAttributeItems(unsigned Attribute, unsigned IntValue,
+                         StringRef StringValue, bool OverwriteExisting) {
+    // Look for existing attribute item
+    if (AttributeItem *Item = getAttributeItem(Attribute)) {
+      if (!OverwriteExisting)
+        return;
+      Item->IntValue = IntValue;
+      Item->StringValue = StringValue;
+      return;
+    }
+
+    // Create new attribute item
+    AttributeItem Item = {
+      AttributeItem::NumericAndTextAttributes,
+      Attribute,
+      IntValue,
+      StringValue
+    };
+    Contents.push_back(Item);
+  }
+
   void emitArchDefaultAttributes();
   void emitFPUDefaultAttributes();
 
@@ -306,6 +363,8 @@ private:
   virtual void switchVendor(StringRef Vendor);
   virtual void emitAttribute(unsigned Attribute, unsigned Value);
   virtual void emitTextAttribute(unsigned Attribute, StringRef String);
+  virtual void emitIntTextAttribute(unsigned Attribute, unsigned IntValue,
+                                    StringRef StringValue);
   virtual void emitArch(unsigned Arch);
   virtual void emitFPU(unsigned FPU);
   virtual void emitInst(uint32_t Inst, char Suffix = '\0');
@@ -587,6 +646,12 @@ void ARMTargetELFStreamer::emitTextAttribute(unsigned Attribute,
                                              StringRef Value) {
   setAttributeItem(Attribute, Value, /* OverwriteExisting= */ true);
 }
+void ARMTargetELFStreamer::emitIntTextAttribute(unsigned Attribute,
+                                                unsigned IntValue,
+                                                StringRef StringValue) {
+  setAttributeItems(Attribute, IntValue, StringValue,
+                    /* OverwriteExisting= */ true);
+}
 void ARMTargetELFStreamer::emitArch(unsigned Value) {
   Arch = Value;
 }
@@ -627,7 +692,6 @@ void ARMTargetELFStreamer::emitArchDefaultAttributes() {
     break;
 
   case ARM::ARMV6M:
-    setAttributeItem(CPU_arch_profile, MicroControllerProfile, false);
     setAttributeItem(THUMB_ISA_use, Allowed, false);
     break;
 
@@ -770,6 +834,11 @@ size_t ARMTargetELFStreamer::calculateContentSize() const {
       Result += getULEBSize(item.Tag);
       Result += item.StringValue.size() + 1; // string + '\0'
       break;
+    case AttributeItem::NumericAndTextAttributes:
+      Result += getULEBSize(item.Tag);
+      Result += getULEBSize(item.IntValue);
+      Result += item.StringValue.size() + 1; // string + '\0';
+      break;
     }
   }
   return Result;
@@ -840,6 +909,11 @@ void ARMTargetELFStreamer::finishAttributeSection() {
       Streamer.EmitBytes(item.StringValue.upper());
       Streamer.EmitIntValue(0, 1); // '\0'
       break;
+    case AttributeItem::NumericAndTextAttributes:
+      Streamer.EmitULEB128IntValue(item.IntValue);
+      Streamer.EmitBytes(item.StringValue.upper());
+      Streamer.EmitIntValue(0, 1); // '\0'
+      break;
     }
   }
 
@@ -851,7 +925,7 @@ void ARMTargetELFStreamer::emitInst(uint32_t Inst, char Suffix) {
 }
 
 void ARMELFStreamer::FinishImpl() {
-  MCTargetStreamer &TS = getTargetStreamer();
+  MCTargetStreamer &TS = *getTargetStreamer();
   ARMTargetStreamer &ATS = static_cast<ARMTargetStreamer &>(TS);
   ATS.finishAttributeSection();
 
@@ -909,7 +983,7 @@ void ARMELFStreamer::Reset() {
   ExTab = NULL;
   FnStart = NULL;
   Personality = NULL;
-  PersonalityIndex = NUM_PERSONALITY_INDEX;
+  PersonalityIndex = ARM::EHABI::NUM_PERSONALITY_INDEX;
   FPReg = ARM::SP;
   FPOffset = 0;
   SPOffset = 0;
@@ -937,7 +1011,7 @@ void ARMELFStreamer::emitFnEnd() {
   // Emit the exception index table entry
   SwitchToExIdxSection(*FnStart);
 
-  if (PersonalityIndex < NUM_PERSONALITY_INDEX)
+  if (PersonalityIndex < ARM::EHABI::NUM_PERSONALITY_INDEX)
     EmitPersonalityFixup(GetAEABIUnwindPersonalityName(PersonalityIndex));
 
   const MCSymbolRefExpr *FnStartRef =
@@ -948,7 +1022,7 @@ void ARMELFStreamer::emitFnEnd() {
   EmitValue(FnStartRef, 4);
 
   if (CantUnwind) {
-    EmitIntValue(EXIDX_CANTUNWIND, 4);
+    EmitIntValue(ARM::EHABI::EXIDX_CANTUNWIND, 4);
   } else if (ExTab) {
     // Emit a reference to the unwind opcodes in the ".ARM.extab" section.
     const MCSymbolRefExpr *ExTabEntryRef =
@@ -960,7 +1034,7 @@ void ARMELFStreamer::emitFnEnd() {
     // For the __aeabi_unwind_cpp_pr0, we have to emit the unwind opcodes in
     // the second word of exception index table entry.  The size of the unwind
     // opcodes should always be 4 bytes.
-    assert(PersonalityIndex == AEABI_UNWIND_CPP_PR0 &&
+    assert(PersonalityIndex == ARM::EHABI::AEABI_UNWIND_CPP_PR0 &&
            "Compact model must use __aeabi_cpp_unwind_pr0 as personality");
     assert(Opcodes.size() == 4u &&
            "Unwind opcode size for __aeabi_cpp_unwind_pr0 must be equal to 4");
@@ -1015,7 +1089,7 @@ void ARMELFStreamer::FlushUnwindOpcodes(bool NoHandlerData) {
   // For compact model 0, we have to emit the unwind opcodes in the .ARM.exidx
   // section.  Thus, we don't have to create an entry in the .ARM.extab
   // section.
-  if (NoHandlerData && PersonalityIndex == AEABI_UNWIND_CPP_PR0)
+  if (NoHandlerData && PersonalityIndex == ARM::EHABI::AEABI_UNWIND_CPP_PR0)
     return;
 
   // Switch to .ARM.extab section.
@@ -1118,7 +1192,8 @@ MCStreamer *createMCAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,
                                 bool useDwarfDirectory,
                                 MCInstPrinter *InstPrint, MCCodeEmitter *CE,
                                 MCAsmBackend *TAB, bool ShowInst) {
-  ARMTargetAsmStreamer *S = new ARMTargetAsmStreamer(OS, *InstPrint);
+  ARMTargetAsmStreamer *S = new ARMTargetAsmStreamer(OS, *InstPrint,
+                                                     isVerboseAsm);
 
   return llvm::createAsmStreamer(Ctx, S, OS, isVerboseAsm, useLoc, useCFI,
                                  useDwarfDirectory, InstPrint, CE, TAB,

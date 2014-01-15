@@ -21,7 +21,6 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
-
 #include <sstream>
 #include <stdlib.h>
 
@@ -313,10 +312,8 @@ LLVMSymbolizer::getOrCreateBinary(const std::string &Path) {
       // resource directory.
       const std::string &ResourcePath =
           getDarwinDWARFResourceForPath(Path);
-      bool ResourceFileExists = false;
-      if (!sys::fs::exists(ResourcePath, ResourceFileExists) &&
-          ResourceFileExists &&
-          !error(createBinary(ResourcePath, ParsedDbgBinary))) {
+      error_code EC = createBinary(ResourcePath, ParsedDbgBinary);
+      if (EC != errc::no_such_file_or_directory && !error(EC)) {
         DbgBin = ParsedDbgBinary.take();
         ParsedBinariesAndObjects.push_back(DbgBin);
       }

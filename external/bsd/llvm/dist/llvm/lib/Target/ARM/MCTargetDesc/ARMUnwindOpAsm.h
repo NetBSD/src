@@ -15,10 +15,9 @@
 #ifndef ARM_UNWIND_OP_ASM_H
 #define ARM_UNWIND_OP_ASM_H
 
-#include "ARMUnwindOp.h"
-
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/ARMEHABI.h"
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {
@@ -45,7 +44,7 @@ public:
     HasPersonality = 0;
   }
 
-  /// Set the personality index
+  /// Set the personality
   void setPersonality(const MCSymbol *Per) {
     HasPersonality = 1;
   }
