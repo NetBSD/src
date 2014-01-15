@@ -13,7 +13,6 @@
 #include "llvm/Analysis/Passes.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/Analysis/MemoryDependenceAnalysis.h"
-#include "llvm/Assembly/Writer.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -177,7 +176,7 @@ void MemDepPrinter::print(raw_ostream &OS, const Module *M) const {
       OS << DepTypeStr[type];
       if (DepBB) {
         OS << " in block ";
-        WriteAsOperand(OS, DepBB, /*PrintType=*/false, M);
+        DepBB->printAsOperand(OS, /*PrintType=*/false, M);
       }
       if (DepInst) {
         OS << " from: ";

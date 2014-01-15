@@ -44,10 +44,10 @@ private:
   uint8_t Opcode;
   /// The form field from the record
   uint8_t Form;
-  /// The segment override field from the record
-  uint8_t SegOvr;
   /// The hasOpSizePrefix field from the record
   bool HasOpSizePrefix;
+  /// The hasOpSize16Prefix field from the record
+  bool HasOpSize16Prefix;
   /// The hasAdSizePrefix field from the record
   bool HasAdSizePrefix;
   /// The hasREX_WPrefix field from the record
@@ -78,8 +78,10 @@ private:
   bool HasEVEX_B;
   /// The hasLockPrefix field from the record
   bool HasLockPrefix;
-  /// The isCodeGenOnly filed from the record
+  /// The isCodeGenOnly field from the record
   bool IsCodeGenOnly;
+  /// The ForceDisassemble field from the record
+  bool ForceDisassemble;
   // Whether the instruction has the predicate "In64BitMode"
   bool Is64Bit;
   // Whether the instruction has the predicate "In32BitMode"
@@ -89,9 +91,7 @@ private:
   std::string Name;
   /// The AT&T AsmString for the instruction
   std::string AsmString;
-  
-  /// Indicates whether the instruction is SSE
-  bool IsSSE;
+
   /// Indicates whether the instruction should be emitted into the decode
   /// tables; regardless, it will be emitted into the instruction info table
   bool ShouldBeEmitted;

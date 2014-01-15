@@ -170,7 +170,7 @@ void XCoreFrameLowering::emitPrologue(MachineFunction &MF) const {
   const int FrameSize = MFI->getStackSize() / 4;
   int Adjusted = 0;
 
-  bool saveLR = XFI->getUsesLR();
+  bool saveLR = XFI->hasLRSpillSlot();
   bool UseENTSP = saveLR && FrameSize
                   && (MFI->getObjectOffset(XFI->getLRSpillSlot()) == 0);
   if (UseENTSP)
@@ -182,8 +182,10 @@ void XCoreFrameLowering::emitPrologue(MachineFunction &MF) const {
     // Allocate space on the stack at the same time as saving LR.
     Adjusted = (FrameSize > MaxImmU16) ? MaxImmU16 : FrameSize;
     int Opcode = isImmU6(Adjusted) ? XCore::ENTSP_u6 : XCore::ENTSP_lu6;
-    BuildMI(MBB, MBBI, dl, TII.get(Opcode)).addImm(Adjusted);
     MBB.addLiveIn(XCore::LR);
+    MachineInstrBuilder MIB = BuildMI(MBB, MBBI, dl, TII.get(Opcode));
+    MIB.addImm(Adjusted);
+    MIB->addRegisterKilled(XCore::LR, MF.getTarget().getRegisterInfo(), true);
     if (emitFrameMoves) {
       EmitDefCfaOffset(MBB, MBBI, dl, TII, MMI, Adjusted*4);
       unsigned DRegNum = MRI->getDwarfRegNum(XCore::LR, true);
@@ -204,8 +206,9 @@ void XCoreFrameLowering::emitPrologue(MachineFunction &MF) const {
                   emitFrameMoves);
     int Offset = Adjusted - OffsetFromTop;
     int Opcode = isImmU6(Offset) ? XCore::STWSP_ru6 : XCore::STWSP_lru6;
-    BuildMI(MBB, MBBI, dl, TII.get(Opcode)).addReg(SpillReg).addImm(Offset);
     MBB.addLiveIn(SpillReg);
+    BuildMI(MBB, MBBI, dl, TII.get(Opcode)).addReg(SpillReg, RegState::Kill)
+                                           .addImm(Offset);
     if (emitFrameMoves) {
       unsigned DRegNum = MRI->getDwarfRegNum(SpillReg, true);
       EmitCfiOffset(MBB, MBBI, dl, TII, MMI, DRegNum, SpillOffset, NULL);
@@ -241,12 +244,22 @@ void XCoreFrameLowering::emitPrologue(MachineFunction &MF) const {
 
 void XCoreFrameLowering::emitEpilogue(MachineFunction &MF,
                                      MachineBasicBlock &MBB) const {
-  MachineFrameInfo *MFI            = MF.getFrameInfo();
+  MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
   const XCoreInstrInfo &TII =
     *static_cast<const XCoreInstrInfo*>(MF.getTarget().getInstrInfo());
   XCoreFunctionInfo *XFI = MF.getInfo<XCoreFunctionInfo>();
   DebugLoc dl = MBBI->getDebugLoc();
+  unsigned RetOpcode = MBBI->getOpcode();
+
+  if (RetOpcode == XCore::EH_RETURN) {
+    unsigned EhStackReg = MBBI->getOperand(0).getReg();
+    unsigned EhHandlerReg = MBBI->getOperand(1).getReg();
+    BuildMI(MBB, MBBI, dl, TII.get(XCore::SETSP_1r)).addReg(EhStackReg);
+    BuildMI(MBB, MBBI, dl, TII.get(XCore::BAU_1r)).addReg(EhHandlerReg);
+    MBB.erase(MBBI);  // Erase the previous return instruction.
+    return;
+  }
 
   // Work out frame sizes.
   // We will adjust the SP in stages towards the final FrameSize.
@@ -254,7 +267,7 @@ void XCoreFrameLowering::emitEpilogue(MachineFunction &MF,
   assert(RemainingAdj%4 == 0 && "Misaligned frame size");
   RemainingAdj /= 4;
 
-  bool restoreLR = XFI->getUsesLR();
+  bool restoreLR = XFI->hasLRSpillSlot();
   bool UseRETSP = restoreLR && RemainingAdj
                   && (MFI->getObjectOffset(XFI->getLRSpillSlot()) == 0);
   if (UseRETSP)
@@ -285,8 +298,8 @@ void XCoreFrameLowering::emitEpilogue(MachineFunction &MF,
     IfNeededLDAWSP(MBB, MBBI, dl, TII, 0, RemainingAdj);
     if (UseRETSP) {
       // Fold prologue into return instruction
-      assert(MBBI->getOpcode() == XCore::RETSP_u6
-             || MBBI->getOpcode() == XCore::RETSP_lu6);
+      assert(RetOpcode == XCore::RETSP_u6
+             || RetOpcode == XCore::RETSP_lu6);
       int Opcode = isImmU6(RemainingAdj) ? XCore::RETSP_u6 : XCore::RETSP_lu6;
       MachineInstrBuilder MIB = BuildMI(MBB, MBBI, dl, TII.get(Opcode))
                                   .addImm(RemainingAdj);
@@ -312,7 +325,6 @@ spillCalleeSavedRegisters(MachineBasicBlock &MBB,
 
   MachineFunction *MF = MBB.getParent();
   const TargetInstrInfo &TII = *MF->getTarget().getInstrInfo();
-
   XCoreFunctionInfo *XFI = MF->getInfo<XCoreFunctionInfo>();
   bool emitFrameMoves = XCoreRegisterInfo::needsFrameMoves(*MF);
 
@@ -322,13 +334,14 @@ spillCalleeSavedRegisters(MachineBasicBlock &MBB,
 
   for (std::vector<CalleeSavedInfo>::const_iterator it = CSI.begin();
                                                     it != CSI.end(); ++it) {
-    // Add the callee-saved register as live-in. It's killed at the spill.
-    MBB.addLiveIn(it->getReg());
-
     unsigned Reg = it->getReg();
+    assert(Reg != XCore::LR && !(Reg == XCore::R10 && hasFP(*MF)) &&
+           "LR & FP are always handled in emitPrologue");
+
+    // Add the callee-saved register as live-in. It's killed at the spill.
+    MBB.addLiveIn(Reg);
     const TargetRegisterClass *RC = TRI->getMinimalPhysRegClass(Reg);
-    TII.storeRegToStackSlot(MBB, MI, Reg, true,
-                            it->getFrameIdx(), RC, TRI);
+    TII.storeRegToStackSlot(MBB, MI, Reg, true, it->getFrameIdx(), RC, TRI);
     if (emitFrameMoves) {
       MCSymbol *SaveLabel = MF->getContext().CreateTempSymbol();
       BuildMI(MBB, MI, DL, TII.get(XCore::PROLOG_LABEL)).addSym(SaveLabel);
@@ -345,7 +358,6 @@ restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
                             const TargetRegisterInfo *TRI) const{
   MachineFunction *MF = MBB.getParent();
   const TargetInstrInfo &TII = *MF->getTarget().getInstrInfo();
-
   bool AtStart = MI == MBB.begin();
   MachineBasicBlock::iterator BeforeI = MI;
   if (!AtStart)
@@ -353,9 +365,11 @@ restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
   for (std::vector<CalleeSavedInfo>::const_iterator it = CSI.begin();
                                                     it != CSI.end(); ++it) {
     unsigned Reg = it->getReg();
+    assert(Reg != XCore::LR && !(Reg == XCore::R10 && hasFP(*MF)) &&
+           "LR & FP are always handled in emitEpilogue");
+
     const TargetRegisterClass *RC = TRI->getMinimalPhysRegClass(Reg);
-    TII.loadRegFromStackSlot(MBB, MI, it->getReg(), it->getFrameIdx(),
-                             RC, TRI);
+    TII.loadRegFromStackSlot(MBB, MI, Reg, it->getFrameIdx(), RC, TRI);
     assert(MI != MBB.begin() &&
            "loadRegFromStackSlot didn't insert any code!");
     // Insert in reverse order.  loadRegFromStackSlot can insert multiple
@@ -425,32 +439,29 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 void XCoreFrameLowering::
 processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                      RegScavenger *RS) const {
-  MachineFrameInfo *MFI = MF.getFrameInfo();
-  bool LRUsed = MF.getRegInfo().isPhysRegUsed(XCore::LR);
-  const TargetRegisterClass *RC = &XCore::GRRegsRegClass;
   XCoreFunctionInfo *XFI = MF.getInfo<XCoreFunctionInfo>();
+
+  bool LRUsed = MF.getRegInfo().isPhysRegUsed(XCore::LR);
+  // If we need to extend the stack it is more efficient to use entsp / retsp.
+  // We force the LR to be saved so these instructions are used.
+  if (!LRUsed && !MF.getFunction()->isVarArg() &&
+      MF.getFrameInfo()->estimateStackSize(MF))
+    LRUsed = true;
+  // We will be spilling all callee saved registers in case of unwinding.
+  if (MF.getMMI().callsUnwindInit())
+    LRUsed = true;
+
+  // We will handling LR in the prologue/epilogue
+  // and space on the stack ourselves.
   if (LRUsed) {
     MF.getRegInfo().setPhysRegUnused(XCore::LR);
-
-    bool isVarArg = MF.getFunction()->isVarArg();
-    int FrameIdx;
-    if (! isVarArg) {
-      // A fixed offset of 0 allows us to save/restore LR using entsp/retsp.
-      FrameIdx = MFI->CreateFixedObject(RC->getSize(), 0, true);
-    } else {
-      FrameIdx = MFI->CreateStackObject(RC->getSize(), RC->getAlignment(),
-                                        false);
-    }
-    XFI->setUsesLR(FrameIdx);
-    XFI->setLRSpillSlot(FrameIdx);
+    XFI->createLRSpillSlot(MF);
   }
 
   // A callee save register is used to hold the FP.
   // This needs saving / restoring in the epilogue / prologue.
   if (hasFP(MF))
-    XFI->setFPSpillSlot(MFI->CreateStackObject(RC->getSize(),
-                                               RC->getAlignment(),
-                                               false));
+    XFI->createFPSpillSlot(MF);
 }
 
 void XCoreFrameLowering::

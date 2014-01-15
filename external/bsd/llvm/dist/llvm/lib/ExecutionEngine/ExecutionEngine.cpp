@@ -14,11 +14,11 @@
 
 #define DEBUG_TYPE "jit"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
-#include "llvm/ExecutionEngine/JITMemoryManager.h"
-#include "llvm/ExecutionEngine/ObjectCache.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
+#include "llvm/ExecutionEngine/JITMemoryManager.h"
+#include "llvm/ExecutionEngine/ObjectCache.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DerivedTypes.h"
@@ -1211,9 +1211,7 @@ void ExecutionEngine::emitGlobals() {
         }
 
         // If the existing global is strong, never replace it.
-        if (GVEntry->hasExternalLinkage() ||
-            GVEntry->hasDLLImportLinkage() ||
-            GVEntry->hasDLLExportLinkage())
+        if (GVEntry->hasExternalLinkage())
           continue;
 
         // Otherwise, we know it's linkonce/weak, replace it if this is a strong

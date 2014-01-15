@@ -60,51 +60,6 @@ Module::~Module() {
   delete static_cast<StringMap<NamedMDNode *> *>(NamedMDSymTab);
 }
 
-/// Target endian information.
-Module::Endianness Module::getEndianness() const {
-  StringRef temp = DataLayout;
-  Module::Endianness ret = BigEndian;
-
-  while (!temp.empty()) {
-    std::pair<StringRef, StringRef> P = getToken(temp, "-");
-
-    StringRef token = P.first;
-    temp = P.second;
-
-    if (token[0] == 'e') {
-      ret = LittleEndian;
-    } else if (token[0] == 'E') {
-      ret = BigEndian;
-    }
-  }
-
-  return ret;
-}
-
-/// Target Pointer Size information.
-Module::PointerSize Module::getPointerSize() const {
-  StringRef temp = DataLayout;
-  Module::PointerSize ret = Pointer64;
-
-  while (!temp.empty()) {
-    std::pair<StringRef, StringRef> TmpP = getToken(temp, "-");
-    temp = TmpP.second;
-    TmpP = getToken(TmpP.first, ":");
-    StringRef token = TmpP.second, signalToken = TmpP.first;
-
-    if (signalToken[0] == 'p') {
-      int size = 0;
-      getToken(token, ":").first.getAsInteger(10, size);
-      if (size == 32)
-        ret = Pointer32;
-      else if (size == 64)
-        ret = Pointer64;
-    }
-  }
-
-  return ret;
-}
-
 /// getNamedValue - Return the first global value in the module with
 /// the specified name, of arbitrary type.  This method returns null
 /// if a global with the specified name is not found.
@@ -422,22 +377,18 @@ void Module::Dematerialize(GlobalValue *GV) {
     return Materializer->Dematerialize(GV);
 }
 
-bool Module::MaterializeAll(std::string *ErrInfo) {
+error_code Module::materializeAll() {
   if (!Materializer)
-    return false;
-  error_code EC = Materializer->MaterializeModule(this);
-  if (!EC)
-    return false;
-  if (ErrInfo)
-    *ErrInfo = EC.message();
-  return true;
+    return error_code::success();
+  return Materializer->MaterializeModule(this);
 }
 
-bool Module::MaterializeAllPermanently(std::string *ErrInfo) {
-  if (MaterializeAll(ErrInfo))
-    return true;
+error_code Module::materializeAllPermanently() {
+  if (error_code EC = materializeAll())
+    return EC;
+
   Materializer.reset();
-  return false;
+  return error_code::success();
 }
 
 //===----------------------------------------------------------------------===//

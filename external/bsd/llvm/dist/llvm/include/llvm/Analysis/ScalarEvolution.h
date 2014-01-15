@@ -253,17 +253,28 @@ namespace llvm {
     /// Mark predicate values currently being processed by isImpliedCond.
     DenseSet<Value*> PendingLoopPredicates;
 
-    /// ExitLimit - Information about the number of loop iterations for
-    /// which a loop exit's branch condition evaluates to the not-taken path.
-    /// This is a temporary pair of exact and max expressions that are
-    /// eventually summarized in ExitNotTakenInfo and BackedgeTakenInfo.
+    /// ExitLimit - Information about the number of loop iterations for which a
+    /// loop exit's branch condition evaluates to the not-taken path.  This is a
+    /// temporary pair of exact and max expressions that are eventually
+    /// summarized in ExitNotTakenInfo and BackedgeTakenInfo.
+    ///
+    /// If MustExit is true, then the exit must be taken when the BECount
+    /// reaches Exact (and before surpassing Max). If MustExit is false, then
+    /// BECount may exceed Exact or Max if the loop exits via another branch. In
+    /// either case, the loop may exit early via another branch.
+    ///
+    /// MustExit is true for most cases. However, an exit guarded by an
+    /// (in)equality on a nonunit stride may be skipped.
     struct ExitLimit {
       const SCEV *Exact;
       const SCEV *Max;
+      bool MustExit;
 
-      /*implicit*/ ExitLimit(const SCEV *E) : Exact(E), Max(E) {}
+      /*implicit*/ ExitLimit(const SCEV *E)
+        : Exact(E), Max(E), MustExit(true) {}
 
-      ExitLimit(const SCEV *E, const SCEV *M) : Exact(E), Max(M) {}
+      ExitLimit(const SCEV *E, const SCEV *M, bool MustExit)
+        : Exact(E), Max(M), MustExit(MustExit) {}
 
       /// hasAnyInfo - Test whether this ExitLimit contains any computed
       /// information, or whether it's all SCEVCouldNotCompute values.
@@ -784,6 +795,13 @@ namespace llvm {
     /// disconnect it from a def-use chain linking it to a loop.
     void forgetValue(Value *V);
 
+    /// \brief Called when the client has changed the disposition of values in
+    /// this loop.
+    ///
+    /// We don't have a way to invalidate per-loop dispositions. Clear and
+    /// recompute is simpler.
+    void forgetLoopDispositions(const Loop *L) { LoopDispositions.clear(); }
+
     /// GetMinTrailingZeros - Determine the minimum number of zero bits that S
     /// is guaranteed to end in (at every loop iteration).  It is, at the same
     /// time, the minimum number of times S is divisible by 2.  For example,
@@ -880,13 +898,13 @@ namespace llvm {
     const SCEV *computeBECount(const SCEV *Delta, const SCEV *Stride,
                                bool Equality);
 
-    /// Verify if an linear IV with positive stride can overflow when in a 
+    /// Verify if an linear IV with positive stride can overflow when in a
     /// less-than comparison, knowing the invariant term of the comparison,
     /// the stride and the knowledge of NSW/NUW flags on the recurrence.
     bool doesIVOverflowOnLT(const SCEV *RHS, const SCEV *Stride,
                             bool IsSigned, bool NoWrap);
 
-    /// Verify if an linear IV with negative stride can overflow when in a 
+    /// Verify if an linear IV with negative stride can overflow when in a
     /// greater-than comparison, knowing the invariant term of the comparison,
     /// the stride and the knowledge of NSW/NUW flags on the recurrence.
     bool doesIVOverflowOnGT(const SCEV *RHS, const SCEV *Stride,

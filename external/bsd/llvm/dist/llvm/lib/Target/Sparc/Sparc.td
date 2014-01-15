@@ -44,6 +44,10 @@ include "SparcInstrInfo.td"
 
 def SparcInstrInfo : InstrInfo;
 
+def SparcAsmParser : AsmParser {
+  bit ShouldEmitMatchRegisterName = 0;
+}
+
 //===----------------------------------------------------------------------===//
 // SPARC processors supported.
 //===----------------------------------------------------------------------===//
@@ -52,6 +56,7 @@ class Proc<string Name, list<SubtargetFeature> Features>
  : Processor<Name, NoItineraries, Features>;
 
 def : Proc<"generic",         []>;
+def : Proc<"v7",              []>;
 def : Proc<"v8",              []>;
 def : Proc<"supersparc",      []>;
 def : Proc<"sparclite",       []>;
@@ -63,7 +68,10 @@ def : Proc<"tsc701",          []>;
 def : Proc<"v9",              [FeatureV9]>;
 def : Proc<"ultrasparc",      [FeatureV9, FeatureV8Deprecated]>;
 def : Proc<"ultrasparc3",     [FeatureV9, FeatureV8Deprecated]>;
-def : Proc<"ultrasparc3-vis", [FeatureV9, FeatureV8Deprecated, FeatureVIS]>;
+def : Proc<"niagara",         [FeatureV9, FeatureV8Deprecated]>;
+def : Proc<"niagara2",        [FeatureV9, FeatureV8Deprecated]>;
+def : Proc<"niagara3",        [FeatureV9, FeatureV8Deprecated]>;
+def : Proc<"niagara4",        [FeatureV9, FeatureV8Deprecated]>;
 
 
 //===----------------------------------------------------------------------===//
@@ -73,4 +81,5 @@ def : Proc<"ultrasparc3-vis", [FeatureV9, FeatureV8Deprecated, FeatureVIS]>;
 def Sparc : Target {
   // Pull in Instruction Info:
   let InstructionSet = SparcInstrInfo;
+  let AssemblyParsers  = [SparcAsmParser];
 }
