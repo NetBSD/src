@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_pci.c,v 1.1.2.5 2013/12/30 04:51:43 riastradh Exp $	*/
+/*	$NetBSD: i915_pci.c,v 1.1.2.6 2014/01/15 13:53:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.1.2.5 2013/12/30 04:51:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.1.2.6 2014/01/15 13:53:42 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -39,7 +39,12 @@ __KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.1.2.5 2013/12/30 04:51:43 riastradh E
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
-#if 0				/* XXX genfb */
+#ifndef	i915drm_genfb
+#define	i915drm_genfb	0
+#endif
+
+#if i915drm_genfb		/* XXX genfb */
+#include <dev/cons.h>		/* cn_tab */
 #include <dev/pci/wsdisplay_pci.h>
 #include <dev/wsfb/genfbvar.h>
 #endif
@@ -54,9 +59,10 @@ struct i915drm_softc {
 	struct pci_dev			sc_pci_dev;
 	struct drm_i915_gem_object	*sc_fb_obj;
 	bus_space_handle_t		sc_fb_bsh;
-#if 0				/* XXX genfb */
+#if i915drm_genfb		/* XXX genfb */
 	struct genfb_softc		sc_genfb;
 #endif
+	struct list_head		sc_fb_list; /* XXX Kludge!  */
 };
 
 static int	i915drm_match(device_t, cfdata_t, void *);
@@ -68,8 +74,11 @@ static int	i915drm_detach_framebuffer(device_t, int);
 
 static int	i915drm_fb_probe(struct drm_fb_helper *,
 		    struct drm_fb_helper_surface_size *);
+static int	i915drm_fb_create_handle(struct drm_framebuffer *,
+		    struct drm_file *, unsigned int *);
+static void	i915drm_fb_destroy(struct drm_framebuffer *);
 
-#if 0				/* XXX genfb */
+#if i915drm_genfb		/* XXX genfb */
 static int	i915drm_genfb_ioctl(void *, void *, unsigned long, void *,
 		    int, struct lwp *);
 static paddr_t	i915drm_genfb_mmap(void *, void *, off_t, int);
@@ -201,12 +210,12 @@ i915drm_attach_framebuffer(device_t self)
 	struct drm_i915_private *const dev_priv = dev->dev_private;
 	int ret;
 
-	aprint_debug_dev(self, "attach framebuffer\n");
+	INIT_LIST_HEAD(&sc->sc_fb_list);
+
 	dev_priv->fbdev = kmem_zalloc(sizeof(*dev_priv->fbdev), KM_SLEEP);
 
 	struct drm_fb_helper *const fb_helper = &dev_priv->fbdev->helper;
 
-	aprint_debug_dev(self, "drm_fb_helper_init\n");
 	fb_helper->funcs = &i915drm_fb_helper_funcs;
 	ret = drm_fb_helper_init(dev, fb_helper, dev_priv->num_pipe,
 	    INTELFB_CONN_LIMIT);
@@ -216,9 +225,7 @@ i915drm_attach_framebuffer(device_t self)
 		goto fail0;
 	}
 
-	aprint_debug_dev(self, "drm_fb_helper_single_add_all_connectors\n");
 	drm_fb_helper_single_add_all_connectors(fb_helper);
-	aprint_debug_dev(self, "drm_fb_helper_initial_config\n");
 	drm_fb_helper_initial_config(fb_helper, 32 /* XXX ? */);
 
 	/* Success!  */
@@ -264,6 +271,11 @@ i915drm_detach_framebuffer(device_t self, int flags)
 	return 0;
 }
 
+static const struct drm_framebuffer_funcs i915drm_fb_funcs = {
+	.create_handle = &i915drm_fb_create_handle,
+	.destroy = &i915drm_fb_destroy,
+};
+
 static int
 i915drm_fb_probe(struct drm_fb_helper *fb_helper,
     struct drm_fb_helper_surface_size *sizes)
@@ -272,7 +284,7 @@ i915drm_fb_probe(struct drm_fb_helper *fb_helper,
 	struct drm_i915_private *const dev_priv = dev->dev_private;
 	struct i915drm_softc *const sc = container_of(dev,
 	    struct i915drm_softc, sc_drm_dev);
-#if 0				/* XXX genfb */
+#if i915drm_genfb		/* XXX genfb */
 	const prop_dictionary_t dict = device_properties(sc->sc_dev);
 	static const struct genfb_ops zero_genfb_ops;
 	struct genfb_ops genfb_ops = zero_genfb_ops;
@@ -283,9 +295,11 @@ i915drm_fb_probe(struct drm_fb_helper *fb_helper,
 	int ret;
 
 	aprint_debug_dev(sc->sc_dev, "probe framebuffer"
-	    ": %"PRIu32" by %"PRIu32"\n",
+	    ": %"PRIu32" by %"PRIu32", bpp %"PRIu32" depth %"PRIu32"\n",
 	    sizes->surface_width,
-	    sizes->surface_height);
+	    sizes->surface_height,
+	    sizes->surface_bpp,
+	    sizes->surface_depth);
 
 	if (fb_helper->fb != NULL) {
 		aprint_debug_dev(sc->sc_dev, "already have a framebuffer"
@@ -337,20 +351,25 @@ i915drm_fb_probe(struct drm_fb_helper *fb_helper,
 	}
 
 	/*
-	 * XXX Kludge: The intel_framebuffer abstraction `steals' a
-	 * reference to the object.  intel_framebuffer_init doesn't add
-	 * a reference, but when the drm_framebuffer inside is
-	 * destroyed, it will drop a reference.
+	 * XXX Kludge: drm_framebuffer_remove assumes that the
+	 * framebuffer has been put on a userspace list by
+	 * drm_mode_addfb and tries to list_del it.  This is not the
+	 * case, so pretend we are on a list.
 	 */
-	drm_gem_object_reference(&sc->sc_fb_obj->base);
+	list_add(&dev_priv->fbdev->ifb.base.filp_head, &sc->sc_fb_list);
+
+	/*
+	 * XXX Kludge: The intel_framebuffer abstraction sets up a
+	 * destruction routine that frees the wrong pointer, under the
+	 * assumption (which is invalid even upstream) that all
+	 * intel_framebuffer structures are allocated in
+	 * intel_framebuffer_create.
+	 */
+	dev_priv->fbdev->ifb.base.funcs = &i915drm_fb_funcs;
 
 	fb_helper->fb = &dev_priv->fbdev->ifb.base;
 	mutex_unlock(&dev->struct_mutex);
 
-	aprint_error_dev(sc->sc_dev, "GTT base 0x%"PRIxMAX
-	    ", GTT offset 0x%"PRIxMAX"\n",
-	    (uintmax_t)dev_priv->mm.gtt_base_addr,
-	    (uintmax_t)sc->sc_fb_obj->gtt_offset);
 	/* XXX errno NetBSD->Linux */
 	ret = -bus_space_map(dev->bst,
 	    (dev_priv->mm.gtt_base_addr + sc->sc_fb_obj->gtt_offset),
@@ -363,41 +382,12 @@ i915drm_fb_probe(struct drm_fb_helper *fb_helper,
 		goto fail3;
 	}
 
-	if (0)
-		goto fail4;
-
-	aprint_error_dev(sc->sc_dev, "write crap to the framebuffer\n");
-    {
-	bus_size_t i;
-
-	for (i = 0; i < size; i++)
-		bus_space_write_1(dev->bst, sc->sc_fb_bsh, i,
-		    ((i % 4) == 0? 0x53 :
-		     (i % 4) == 1? 0x00 :
-		     (i % 4) == 2? 0x35 :
-			0xff));
-    }
-#if 0
-	(void)memset(bus_space_vaddr(dev->bst, sc->sc_fb_bsh), 0x53, size/4);
-	(void)kpause("drmfbxxx", false, hz, NULL);
-	(void)memset((char *)bus_space_vaddr(dev->bst, sc->sc_fb_bsh) + size/4,
-	    0x00, size/4);
-	(void)kpause("drmfbxxx", false, hz, NULL);
-	(void)memset((char *)bus_space_vaddr(dev->bst, sc->sc_fb_bsh) + size/2,
-	    0x35, size/4);
-	(void)kpause("drmfbxxx", false, hz, NULL);
-	(void)memset((char *)bus_space_vaddr(dev->bst, sc->sc_fb_bsh) + size/2
-	    + size/4, 0xff, size/4);
-#endif
-
-#if 0				/* XXX genfb */
-	prop_dictionary_set_uint32(dict, "is_console", 1); /* XXX */
+#if i915drm_genfb		/* XXX genfb */
+	prop_dictionary_set_bool(dict, "is_console", 0); /* XXX */
 	prop_dictionary_set_uint32(dict, "width", mode_cmd.width);
 	prop_dictionary_set_uint32(dict, "height", mode_cmd.height);
-	prop_dictionary_set_uint8(dict, "depth", sizes->surface_depth);
-#if 0				/* XXX fb stride/linebytes? */
-	prop_dictionary_set_uint16(dict, "linebytes", ...);
-#endif
+	prop_dictionary_set_uint8(dict, "depth", sizes->surface_bpp);
+	prop_dictionary_set_uint16(dict, "linebytes", mode_cmd.pitches[0]);
 	prop_dictionary_set_uint32(dict, "address", 0); /* XXX >32-bit */
 	prop_dictionary_set_uint64(dict, "virtual_address",
 	    (uint64_t)bus_space_vaddr(dev->bst, sc->sc_fb_bsh));
@@ -419,7 +409,8 @@ i915drm_fb_probe(struct drm_fb_helper *fb_helper,
 	/* Success!  */
 	return 1;
 
-fail4:	bus_space_unmap(dev->bst, sc->sc_fb_bsh, size);
+fail4: __unused
+	bus_space_unmap(dev->bst, sc->sc_fb_bsh, size);
 	fb_helper->fb = NULL;
 fail3:	drm_framebuffer_unreference(&dev_priv->fbdev->ifb.base);
 fail2:	i915_gem_object_unpin(sc->sc_fb_obj);
@@ -429,7 +420,23 @@ fail0:	KASSERT(ret < 0);
 	return ret;
 }
 
-#if 0				/* XXX genfb */
+static void
+i915drm_fb_destroy(struct drm_framebuffer *fb)
+{
+
+	drm_framebuffer_cleanup(fb);
+}
+
+static int
+i915drm_fb_create_handle(struct drm_framebuffer *fb, struct drm_file *file,
+    unsigned int *handle)
+{
+
+	return drm_gem_handle_create(file,
+	    &to_intel_framebuffer(fb)->obj->base, handle);
+}
+
+#if i915drm_genfb		/* XXX genfb */
 static int
 i915drm_genfb_ioctl(void *v, void *vs, unsigned long cmd, void *data, int flag,
     struct lwp *l)
