@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakecode.S,v 1.11 2012/04/19 18:00:34 jym Exp $	*/
+/*	$NetBSD: acpi_wakecode.S,v 1.12 2014/01/15 22:24:41 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@netbsd.org>
@@ -138,7 +138,11 @@ wakeup_16:
 1:
 
 	/* Load temporary 32bit GDT */
+#ifdef __clang__
+	lgdt	tmp_gdt
+#else
 	data32 addr32 lgdt	tmp_gdt
+#endif
 
 	/* Enable protected mode w/o paging */
 	mov	%cr0,%eax
