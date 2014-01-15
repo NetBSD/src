@@ -474,6 +474,18 @@ private:
     }
   }
 
+  void parsePragma() {
+    next(); // Consume "pragma".
+    if (CurrentToken && CurrentToken->TokenText == "mark") {
+      next(); // Consume "mark".
+      next(); // Consume first token (so we fix leading whitespace).
+      while (CurrentToken != NULL) {
+        CurrentToken->Type = TT_ImplicitStringLiteral;
+        next();
+      }
+    }
+  }
+
   void parsePreprocessorDirective() {
     next();
     if (CurrentToken == NULL)
@@ -494,6 +506,9 @@ private:
     case tok::pp_error:
     case tok::pp_warning:
       parseWarningOrError();
+      break;
+    case tok::pp_pragma:
+      parsePragma();
       break;
     case tok::pp_if:
     case tok::pp_elif:
@@ -702,6 +717,7 @@ private:
         if (LeftOfParens && (LeftOfParens->Tok.getIdentifierInfo() == NULL ||
                              LeftOfParens->is(tok::kw_return)) &&
             LeftOfParens->Type != TT_OverloadedOperator &&
+            LeftOfParens->isNot(tok::at) &&
             LeftOfParens->Type != TT_TemplateCloser && Current.Next &&
             Current.Next->is(tok::identifier))
           IsCast = true;
@@ -1187,7 +1203,7 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
     return 2;
 
   if (Right.isMemberAccess()) {
-    if (Left.isOneOf(tok::r_paren, tok::r_square) && Left.MatchingParen &&
+    if (Left.is(tok::r_paren) && Left.MatchingParen &&
         Left.MatchingParen->ParameterCount > 0)
       return 20; // Should be smaller than breaking at a nested comma.
     return 150;
@@ -1278,7 +1294,7 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
     return false;
   if (Left.is(tok::coloncolon))
     return false;
-  if (Right.is(tok::coloncolon))
+  if (Right.is(tok::coloncolon) && Left.isNot(tok::l_brace))
     return (Left.is(tok::less) && Style.Standard == FormatStyle::LS_Cpp03) ||
            !Left.isOneOf(tok::identifier, tok::greater, tok::l_paren,
                          tok::r_paren, tok::less);
@@ -1335,7 +1351,9 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
     return false;
   if (Left.is(tok::l_brace) && Right.is(tok::r_brace))
     return !Left.Children.empty(); // No spaces in "{}".
-  if (Left.is(tok::l_brace) || Right.is(tok::r_brace))
+  if ((Left.is(tok::l_brace) && Left.BlockKind != BK_Block) ||
+      (Right.is(tok::r_brace) && Right.MatchingParen &&
+       Right.MatchingParen->BlockKind != BK_Block))
     return !Style.Cpp11BracedListStyle;
   if (Left.Type == TT_BlockComment && Left.TokenText.endswith("=*/"))
     return false;
@@ -1418,6 +1436,7 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
                                      const FormatToken &Right) {
   if (Right.is(tok::comment)) {
     return Right.Previous->BlockKind != BK_BracedInit &&
+           Right.Previous->Type != TT_CtorInitializerColon &&
            Right.NewlinesBefore > 0;
   } else if (Right.Previous->isTrailingComment() ||
              (Right.isStringLiteral() && Right.Previous->isStringLiteral())) {
@@ -1437,9 +1456,6 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
               Right.Type == TT_CtorInitializerColon) &&
              Style.BreakConstructorInitializersBeforeComma &&
              !Style.ConstructorInitializerAllOnOneLineOrOnePerLine) {
-    return true;
-  } else if (Right.Previous->BlockKind == BK_Block &&
-             Right.Previous->isNot(tok::r_brace) && Right.isNot(tok::r_brace)) {
     return true;
   } else if (Right.is(tok::l_brace) && (Right.BlockKind == BK_Block)) {
     return Style.BreakBeforeBraces == FormatStyle::BS_Allman ||

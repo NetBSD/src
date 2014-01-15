@@ -1,9 +1,9 @@
-// RUN: %clang_cc1 %s -fno-rtti -cxx-abi microsoft -triple=i386-pc-win32 -emit-llvm -o %t
+// RUN: %clang_cc1 %s -fno-rtti -triple=i386-pc-win32 -emit-llvm -o %t
 // RUN: FileCheck %s < %t
 // RUN: FileCheck --check-prefix=CHECK2 %s < %t
 
 // For now, just make sure x86_64 doesn't crash.
-// RUN: %clang_cc1 %s -fno-rtti -cxx-abi microsoft -triple=x86_64-pc-win32 -emit-llvm -o %t
+// RUN: %clang_cc1 %s -fno-rtti -triple=x86_64-pc-win32 -emit-llvm -o %t
 
 struct VBase {
   virtual ~VBase();
@@ -310,5 +310,32 @@ D::~D() {
   // CHECK: call x86_thiscallcc void @"\01??1B@diamond@@UAE@XZ"(%"struct.diamond::B"* %[[ARG]])
   // CHECK: ret void
 }
+
+}
+
+namespace test2 {
+struct A { A(); };
+struct B : virtual A { B() {} };
+struct C : B, A { C() {} };
+
+// PR18435: Order mattered here.  We were generating code for the delegating
+// call to B() from C().
+void callC() { C x; }
+
+// CHECK-LABEL: define linkonce_odr x86_thiscallcc %"struct.test2::C"* @"\01??0C@test2@@QAE@XZ"
+// CHECK:           (%"struct.test2::C"* returned %this, i32 %is_most_derived)
+// CHECK: br i1
+//   Virtual bases
+// CHECK: call x86_thiscallcc %"struct.test2::A"* @"\01??0A@test2@@QAE@XZ"(%"struct.test2::A"* %{{.*}})
+// CHECK: br label
+//   Non-virtual bases
+// CHECK: call x86_thiscallcc %"struct.test2::B"* @"\01??0B@test2@@QAE@XZ"(%"struct.test2::B"* %{{.*}}, i32 0)
+// CHECK: call x86_thiscallcc %"struct.test2::A"* @"\01??0A@test2@@QAE@XZ"(%"struct.test2::A"* %{{.*}})
+// CHECK: ret
+
+// CHECK2-LABEL: define linkonce_odr x86_thiscallcc %"struct.test2::B"* @"\01??0B@test2@@QAE@XZ"
+// CHECK2:           (%"struct.test2::B"* returned %this, i32 %is_most_derived)
+// CHECK2: call x86_thiscallcc %"struct.test2::A"* @"\01??0A@test2@@QAE@XZ"(%"struct.test2::A"* %{{.*}})
+// CHECK2: ret
 
 }
