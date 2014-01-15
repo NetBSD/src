@@ -614,6 +614,106 @@ define <1 x double> @test_bitcasti64tov1f64(i64 %in) {
    ret <1 x double> %res
 }
 
+define <1 x i64> @test_bitcastv8i8tov1f64(<8 x i8> %a) #0 {
+; CHECK-LABEL: test_bitcastv8i8tov1f64:
+; CHECK: neg {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+; CHECK-NEXT: fcvtzs {{d[0-9]+}}, {{d[0-9]+}}
+  %sub.i = sub <8 x i8> zeroinitializer, %a
+  %1 = bitcast <8 x i8> %sub.i to <1 x double>
+  %vcvt.i = fptosi <1 x double> %1 to <1 x i64>
+  ret <1 x i64> %vcvt.i
+}
+
+define <1 x i64> @test_bitcastv4i16tov1f64(<4 x i16> %a) #0 {
+; CHECK-LABEL: test_bitcastv4i16tov1f64:
+; CHECK: neg {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
+; CHECK-NEXT: fcvtzs {{d[0-9]+}}, {{d[0-9]+}}
+  %sub.i = sub <4 x i16> zeroinitializer, %a
+  %1 = bitcast <4 x i16> %sub.i to <1 x double>
+  %vcvt.i = fptosi <1 x double> %1 to <1 x i64>
+  ret <1 x i64> %vcvt.i
+}
+
+define <1 x i64> @test_bitcastv2i32tov1f64(<2 x i32> %a) #0 {
+; CHECK-LABEL: test_bitcastv2i32tov1f64:
+; CHECK: neg {{v[0-9]+}}.2s, {{v[0-9]+}}.2s
+; CHECK-NEXT: fcvtzs {{d[0-9]+}}, {{d[0-9]+}}
+  %sub.i = sub <2 x i32> zeroinitializer, %a
+  %1 = bitcast <2 x i32> %sub.i to <1 x double>
+  %vcvt.i = fptosi <1 x double> %1 to <1 x i64>
+  ret <1 x i64> %vcvt.i
+}
+
+define <1 x i64> @test_bitcastv1i64tov1f64(<1 x i64> %a) #0 {
+; CHECK-LABEL: test_bitcastv1i64tov1f64:
+; CHECK: neg {{d[0-9]+}}, {{d[0-9]+}}
+; CHECK-NEXT: fcvtzs {{d[0-9]+}}, {{d[0-9]+}}
+  %sub.i = sub <1 x i64> zeroinitializer, %a
+  %1 = bitcast <1 x i64> %sub.i to <1 x double>
+  %vcvt.i = fptosi <1 x double> %1 to <1 x i64>
+  ret <1 x i64> %vcvt.i
+}
+
+define <1 x i64> @test_bitcastv2f32tov1f64(<2 x float> %a) #0 {
+; CHECK-LABEL: test_bitcastv2f32tov1f64:
+; CHECK: fneg {{v[0-9]+}}.2s, {{v[0-9]+}}.2s
+; CHECK-NEXT: fcvtzs {{d[0-9]+}}, {{d[0-9]+}}
+  %sub.i = fsub <2 x float> <float -0.000000e+00, float -0.000000e+00>, %a
+  %1 = bitcast <2 x float> %sub.i to <1 x double>
+  %vcvt.i = fptosi <1 x double> %1 to <1 x i64>
+  ret <1 x i64> %vcvt.i
+}
+
+define <8 x i8> @test_bitcastv1f64tov8i8(<1 x i64> %a) #0 {
+; CHECK-LABEL: test_bitcastv1f64tov8i8:
+; CHECK: scvtf {{d[0-9]+}}, {{d[0-9]+}}
+; CHECK-NEXT: neg {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+  %vcvt.i = sitofp <1 x i64> %a to <1 x double>
+  %1 = bitcast <1 x double> %vcvt.i to <8 x i8>
+  %sub.i = sub <8 x i8> zeroinitializer, %1
+  ret <8 x i8> %sub.i
+}
+
+define <4 x i16> @test_bitcastv1f64tov4i16(<1 x i64> %a) #0 {
+; CHECK-LABEL: test_bitcastv1f64tov4i16:
+; CHECK: scvtf {{d[0-9]+}}, {{d[0-9]+}}
+; CHECK-NEXT: neg {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
+  %vcvt.i = sitofp <1 x i64> %a to <1 x double>
+  %1 = bitcast <1 x double> %vcvt.i to <4 x i16>
+  %sub.i = sub <4 x i16> zeroinitializer, %1
+  ret <4 x i16> %sub.i
+}
+
+define <2 x i32> @test_bitcastv1f64tov2i32(<1 x i64> %a) #0 {
+; CHECK-LABEL: test_bitcastv1f64tov2i32:
+; CHECK: scvtf {{d[0-9]+}}, {{d[0-9]+}}
+; CHECK-NEXT: neg {{v[0-9]+}}.2s, {{v[0-9]+}}.2s
+  %vcvt.i = sitofp <1 x i64> %a to <1 x double>
+  %1 = bitcast <1 x double> %vcvt.i to <2 x i32>
+  %sub.i = sub <2 x i32> zeroinitializer, %1
+  ret <2 x i32> %sub.i
+}
+
+define <1 x i64> @test_bitcastv1f64tov1i64(<1 x i64> %a) #0 {
+; CHECK-LABEL: test_bitcastv1f64tov1i64:
+; CHECK: scvtf {{d[0-9]+}}, {{d[0-9]+}}
+; CHECK-NEXT: neg {{d[0-9]+}}, {{d[0-9]+}}
+  %vcvt.i = sitofp <1 x i64> %a to <1 x double>
+  %1 = bitcast <1 x double> %vcvt.i to <1 x i64>
+  %sub.i = sub <1 x i64> zeroinitializer, %1
+  ret <1 x i64> %sub.i
+}
+
+define <2 x float> @test_bitcastv1f64tov2f32(<1 x i64> %a) #0 {
+; CHECK-LABEL: test_bitcastv1f64tov2f32:
+; CHECK: scvtf {{d[0-9]+}}, {{d[0-9]+}}
+; CHECK-NEXT: fneg {{v[0-9]+}}.2s, {{v[0-9]+}}.2s
+  %vcvt.i = sitofp <1 x i64> %a to <1 x double>
+  %1 = bitcast <1 x double> %vcvt.i to <2 x float>
+  %sub.i = fsub <2 x float> <float -0.000000e+00, float -0.000000e+00>, %1
+  ret <2 x float> %sub.i
+}
+
 ; Test insert element into an undef vector
 define <8 x i8> @scalar_to_vector.v8i8(i8 %a) {
 ; CHECK-LABEL: scalar_to_vector.v8i8:
@@ -726,3 +826,125 @@ define <8 x i8> @getl(<16 x i8> %x) #0 {
   %vecinit14 = insertelement <8 x i8> %vecinit12, i8 %vecext13, i32 7
   ret <8 x i8> %vecinit14
 }
+
+define <4 x i16> @test_dup_v2i32_v4i16(<2 x i32> %a) {
+; CHECK-LABEL: test_dup_v2i32_v4i16:
+; CHECK: dup v0.4h, v0.h[2]
+entry:
+  %x = extractelement <2 x i32> %a, i32 1
+  %vget_lane = trunc i32 %x to i16
+  %vecinit.i = insertelement <4 x i16> undef, i16 %vget_lane, i32 0
+  %vecinit1.i = insertelement <4 x i16> %vecinit.i, i16 %vget_lane, i32 1
+  %vecinit2.i = insertelement <4 x i16> %vecinit1.i, i16 %vget_lane, i32 2
+  %vecinit3.i = insertelement <4 x i16> %vecinit2.i, i16 %vget_lane, i32 3
+  ret <4 x i16> %vecinit3.i
+}
+
+define <8 x i16> @test_dup_v4i32_v8i16(<4 x i32> %a) {
+; CHECK-LABEL: test_dup_v4i32_v8i16:
+; CHECK: dup v0.8h, v0.h[6]
+entry:
+  %x = extractelement <4 x i32> %a, i32 3
+  %vget_lane = trunc i32 %x to i16
+  %vecinit.i = insertelement <8 x i16> undef, i16 %vget_lane, i32 0
+  %vecinit1.i = insertelement <8 x i16> %vecinit.i, i16 %vget_lane, i32 1
+  %vecinit2.i = insertelement <8 x i16> %vecinit1.i, i16 %vget_lane, i32 2
+  %vecinit3.i = insertelement <8 x i16> %vecinit2.i, i16 %vget_lane, i32 3
+  %vecinit4.i = insertelement <8 x i16> %vecinit3.i, i16 %vget_lane, i32 4
+  %vecinit5.i = insertelement <8 x i16> %vecinit4.i, i16 %vget_lane, i32 5
+  %vecinit6.i = insertelement <8 x i16> %vecinit5.i, i16 %vget_lane, i32 6
+  %vecinit7.i = insertelement <8 x i16> %vecinit6.i, i16 %vget_lane, i32 7
+  ret <8 x i16> %vecinit7.i
+}
+
+define <4 x i16> @test_dup_v1i64_v4i16(<1 x i64> %a) {
+; CHECK-LABEL: test_dup_v1i64_v4i16:
+; CHECK: dup v0.4h, v0.h[0]
+entry:
+  %x = extractelement <1 x i64> %a, i32 0
+  %vget_lane = trunc i64 %x to i16
+  %vecinit.i = insertelement <4 x i16> undef, i16 %vget_lane, i32 0
+  %vecinit1.i = insertelement <4 x i16> %vecinit.i, i16 %vget_lane, i32 1
+  %vecinit2.i = insertelement <4 x i16> %vecinit1.i, i16 %vget_lane, i32 2
+  %vecinit3.i = insertelement <4 x i16> %vecinit2.i, i16 %vget_lane, i32 3
+  ret <4 x i16> %vecinit3.i
+}
+
+define <2 x i32> @test_dup_v1i64_v2i32(<1 x i64> %a) {
+; CHECK-LABEL: test_dup_v1i64_v2i32:
+; CHECK: dup v0.2s, v0.s[0]
+entry:
+  %x = extractelement <1 x i64> %a, i32 0
+  %vget_lane = trunc i64 %x to i32
+  %vecinit.i = insertelement <2 x i32> undef, i32 %vget_lane, i32 0
+  %vecinit1.i = insertelement <2 x i32> %vecinit.i, i32 %vget_lane, i32 1
+  ret <2 x i32> %vecinit1.i
+}
+
+define <8 x i16> @test_dup_v2i64_v8i16(<2 x i64> %a) {
+; CHECK-LABEL: test_dup_v2i64_v8i16:
+; CHECK: dup v0.8h, v0.h[4]
+entry:
+  %x = extractelement <2 x i64> %a, i32 1
+  %vget_lane = trunc i64 %x to i16
+  %vecinit.i = insertelement <8 x i16> undef, i16 %vget_lane, i32 0
+  %vecinit1.i = insertelement <8 x i16> %vecinit.i, i16 %vget_lane, i32 1
+  %vecinit2.i = insertelement <8 x i16> %vecinit1.i, i16 %vget_lane, i32 2
+  %vecinit3.i = insertelement <8 x i16> %vecinit2.i, i16 %vget_lane, i32 3
+  %vecinit4.i = insertelement <8 x i16> %vecinit3.i, i16 %vget_lane, i32 4
+  %vecinit5.i = insertelement <8 x i16> %vecinit4.i, i16 %vget_lane, i32 5
+  %vecinit6.i = insertelement <8 x i16> %vecinit5.i, i16 %vget_lane, i32 6
+  %vecinit7.i = insertelement <8 x i16> %vecinit6.i, i16 %vget_lane, i32 7
+  ret <8 x i16> %vecinit7.i
+}
+
+define <4 x i32> @test_dup_v2i64_v4i32(<2 x i64> %a) {
+; CHECK-LABEL: test_dup_v2i64_v4i32:
+; CHECK: dup v0.4s, v0.s[2]
+entry:
+  %x = extractelement <2 x i64> %a, i32 1
+  %vget_lane = trunc i64 %x to i32
+  %vecinit.i = insertelement <4 x i32> undef, i32 %vget_lane, i32 0
+  %vecinit1.i = insertelement <4 x i32> %vecinit.i, i32 %vget_lane, i32 1
+  %vecinit2.i = insertelement <4 x i32> %vecinit1.i, i32 %vget_lane, i32 2
+  %vecinit3.i = insertelement <4 x i32> %vecinit2.i, i32 %vget_lane, i32 3
+  ret <4 x i32> %vecinit3.i
+}
+
+define <4 x i16> @test_dup_v4i32_v4i16(<4 x i32> %a) {
+; CHECK-LABEL: test_dup_v4i32_v4i16:
+; CHECK: dup v0.4h, v0.h[2]
+entry:
+  %x = extractelement <4 x i32> %a, i32 1
+  %vget_lane = trunc i32 %x to i16
+  %vecinit.i = insertelement <4 x i16> undef, i16 %vget_lane, i32 0
+  %vecinit1.i = insertelement <4 x i16> %vecinit.i, i16 %vget_lane, i32 1
+  %vecinit2.i = insertelement <4 x i16> %vecinit1.i, i16 %vget_lane, i32 2
+  %vecinit3.i = insertelement <4 x i16> %vecinit2.i, i16 %vget_lane, i32 3
+  ret <4 x i16> %vecinit3.i
+}
+
+define <4 x i16> @test_dup_v2i64_v4i16(<2 x i64> %a) {
+; CHECK-LABEL: test_dup_v2i64_v4i16:
+; CHECK: dup v0.4h, v0.h[0]
+entry:
+  %x = extractelement <2 x i64> %a, i32 0
+  %vget_lane = trunc i64 %x to i16
+  %vecinit.i = insertelement <4 x i16> undef, i16 %vget_lane, i32 0
+  %vecinit1.i = insertelement <4 x i16> %vecinit.i, i16 %vget_lane, i32 1
+  %vecinit2.i = insertelement <4 x i16> %vecinit1.i, i16 %vget_lane, i32 2
+  %vecinit3.i = insertelement <4 x i16> %vecinit2.i, i16 %vget_lane, i32 3
+  ret <4 x i16> %vecinit3.i
+}
+
+define <2 x i32> @test_dup_v2i64_v2i32(<2 x i64> %a) {
+; CHECK-LABEL: test_dup_v2i64_v2i32:
+; CHECK: dup v0.2s, v0.s[0]
+entry:
+  %x = extractelement <2 x i64> %a, i32 0
+  %vget_lane = trunc i64 %x to i32
+  %vecinit.i = insertelement <2 x i32> undef, i32 %vget_lane, i32 0
+  %vecinit1.i = insertelement <2 x i32> %vecinit.i, i32 %vget_lane, i32 1
+  ret <2 x i32> %vecinit1.i
+}
+

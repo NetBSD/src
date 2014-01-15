@@ -39,7 +39,6 @@
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Intrinsics.h"
-#include "llvm/IR/LLVMContext.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
@@ -190,6 +189,8 @@ static TargetLoweringObjectFile *createTLOF(X86TargetMachine &TM) {
     return new X86LinuxTargetObjectFile();
   if (Subtarget->isTargetELF())
     return new TargetLoweringObjectFileELF();
+  if (Subtarget->isTargetWindows())
+    return new X86WindowsTargetObjectFile();
   if (Subtarget->isTargetCOFF())
     return new TargetLoweringObjectFileCOFF();
   llvm_unreachable("unknown subtarget type");
@@ -1363,6 +1364,7 @@ void X86TargetLowering::resetOperationActions() {
     setOperationAction(ISD::TRUNCATE,           MVT::v8i32, Custom);
     setOperationAction(ISD::TRUNCATE,           MVT::v8i1, Custom);
     setOperationAction(ISD::TRUNCATE,           MVT::v16i1, Custom);
+    setOperationAction(ISD::TRUNCATE,           MVT::v16i16, Custom);
     setOperationAction(ISD::ZERO_EXTEND,        MVT::v16i32, Custom);
     setOperationAction(ISD::ZERO_EXTEND,        MVT::v8i64, Custom);
     setOperationAction(ISD::SIGN_EXTEND,        MVT::v16i32, Custom);
@@ -1839,6 +1841,9 @@ X86TargetLowering::LowerReturn(SDValue Chain,
       ValToCopy = DAG.getNode(ISD::ANY_EXTEND, dl, VA.getLocVT(), ValToCopy);
     else if (VA.getLocInfo() == CCValAssign::BCvt)
       ValToCopy = DAG.getNode(ISD::BITCAST, dl, VA.getLocVT(), ValToCopy);
+
+    assert(VA.getLocInfo() != CCValAssign::FPExt &&
+           "Unexpected FP-extend for return value.");  
 
     // If this is x86-64, and we disabled SSE, we can't return FP values,
     // or SSE or MMX vectors.
@@ -2796,7 +2801,7 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     // We should use extra load for direct calls to dllimported functions in
     // non-JIT mode.
     const GlobalValue *GV = G->getGlobal();
-    if (!GV->hasDLLImportLinkage()) {
+    if (!GV->hasDLLImportStorageClass()) {
       unsigned char OpFlags = 0;
       bool ExtraLoad = false;
       unsigned WrapperKind = ISD::DELETED_NODE;
@@ -10232,11 +10237,16 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
       X86::CondCode CCode = (X86::CondCode)Op0.getConstantOperandVal(0);
       bool Invert = (CC == ISD::SETNE) ^
         cast<ConstantSDNode>(Op1)->isNullValue();
-      if (!Invert) return Op0;
+      if (!Invert)
+        return Op0;
 
       CCode = X86::GetOppositeBranchCondition(CCode);
-      return DAG.getNode(X86ISD::SETCC, dl, VT,
-                         DAG.getConstant(CCode, MVT::i8), Op0.getOperand(1));
+      SDValue SetCC = DAG.getNode(X86ISD::SETCC, dl, MVT::i8,
+                                  DAG.getConstant(CCode, MVT::i8),
+                                  Op0.getOperand(1));
+      if (VT == MVT::i1)
+        return DAG.getNode(ISD::TRUNCATE, dl, MVT::i1, SetCC);
+      return SetCC;
     }
   }
 
@@ -10247,8 +10257,11 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
 
   SDValue EFLAGS = EmitCmp(Op0, Op1, X86CC, DAG);
   EFLAGS = ConvertCmpIfNecessary(EFLAGS, DAG);
-  return DAG.getNode(X86ISD::SETCC, dl, VT,
-                      DAG.getConstant(X86CC, MVT::i8), EFLAGS);
+  SDValue SetCC = DAG.getNode(X86ISD::SETCC, dl, MVT::i8,
+                              DAG.getConstant(X86CC, MVT::i8), EFLAGS);
+  if (VT == MVT::i1)
+    return DAG.getNode(ISD::TRUNCATE, dl, MVT::i1, SetCC);
+  return SetCC;
 }
 
 // isX86LogicalCmp - Return true if opcode is a X86 logical comparison.
@@ -11118,8 +11131,9 @@ static SDValue getTargetVShiftByConstNode(unsigned Opc, SDLoc dl, MVT VT,
          && "Unknown target vector shift-by-constant node");
 
   // Fold this packed vector shift into a build vector if SrcOp is a
-  // vector of ConstantSDNodes or UNDEFs.
-  if (ISD::isBuildVectorOfConstantSDNodes(SrcOp.getNode())) {
+  // vector of Constants or UNDEFs, and SrcOp valuetype is the same as VT.
+  if (VT == SrcOp.getSimpleValueType() &&
+      ISD::isBuildVectorOfConstantSDNodes(SrcOp.getNode())) {
     SmallVector<SDValue, 8> Elts;
     unsigned NumElts = SrcOp->getNumOperands();
     ConstantSDNode *ND;
@@ -11383,32 +11397,24 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
   case Intrinsic::x86_avx2_pmaxu_b:
   case Intrinsic::x86_avx2_pmaxu_w:
   case Intrinsic::x86_avx2_pmaxu_d:
-  case Intrinsic::x86_avx512_pmaxu_d:
-  case Intrinsic::x86_avx512_pmaxu_q:
   case Intrinsic::x86_sse2_pminu_b:
   case Intrinsic::x86_sse41_pminuw:
   case Intrinsic::x86_sse41_pminud:
   case Intrinsic::x86_avx2_pminu_b:
   case Intrinsic::x86_avx2_pminu_w:
   case Intrinsic::x86_avx2_pminu_d:
-  case Intrinsic::x86_avx512_pminu_d:
-  case Intrinsic::x86_avx512_pminu_q:
   case Intrinsic::x86_sse41_pmaxsb:
   case Intrinsic::x86_sse2_pmaxs_w:
   case Intrinsic::x86_sse41_pmaxsd:
   case Intrinsic::x86_avx2_pmaxs_b:
   case Intrinsic::x86_avx2_pmaxs_w:
   case Intrinsic::x86_avx2_pmaxs_d:
-  case Intrinsic::x86_avx512_pmaxs_d:
-  case Intrinsic::x86_avx512_pmaxs_q:
   case Intrinsic::x86_sse41_pminsb:
   case Intrinsic::x86_sse2_pmins_w:
   case Intrinsic::x86_sse41_pminsd:
   case Intrinsic::x86_avx2_pmins_b:
   case Intrinsic::x86_avx2_pmins_w:
-  case Intrinsic::x86_avx2_pmins_d:
-  case Intrinsic::x86_avx512_pmins_d:
-  case Intrinsic::x86_avx512_pmins_q: {
+  case Intrinsic::x86_avx2_pmins_d: {
     unsigned Opcode;
     switch (IntNo) {
     default: llvm_unreachable("Impossible intrinsic");  // Can't reach here.
@@ -11418,8 +11424,6 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
     case Intrinsic::x86_avx2_pmaxu_b:
     case Intrinsic::x86_avx2_pmaxu_w:
     case Intrinsic::x86_avx2_pmaxu_d:
-    case Intrinsic::x86_avx512_pmaxu_d:
-    case Intrinsic::x86_avx512_pmaxu_q:
       Opcode = X86ISD::UMAX;
       break;
     case Intrinsic::x86_sse2_pminu_b:
@@ -11428,8 +11432,6 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
     case Intrinsic::x86_avx2_pminu_b:
     case Intrinsic::x86_avx2_pminu_w:
     case Intrinsic::x86_avx2_pminu_d:
-    case Intrinsic::x86_avx512_pminu_d:
-    case Intrinsic::x86_avx512_pminu_q:
       Opcode = X86ISD::UMIN;
       break;
     case Intrinsic::x86_sse41_pmaxsb:
@@ -11438,8 +11440,6 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
     case Intrinsic::x86_avx2_pmaxs_b:
     case Intrinsic::x86_avx2_pmaxs_w:
     case Intrinsic::x86_avx2_pmaxs_d:
-    case Intrinsic::x86_avx512_pmaxs_d:
-    case Intrinsic::x86_avx512_pmaxs_q:
       Opcode = X86ISD::SMAX;
       break;
     case Intrinsic::x86_sse41_pminsb:
@@ -11448,8 +11448,6 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
     case Intrinsic::x86_avx2_pmins_b:
     case Intrinsic::x86_avx2_pmins_w:
     case Intrinsic::x86_avx2_pmins_d:
-    case Intrinsic::x86_avx512_pmins_d:
-    case Intrinsic::x86_avx512_pmins_q:
       Opcode = X86ISD::SMIN;
       break;
     }
@@ -11462,14 +11460,10 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
   case Intrinsic::x86_sse2_max_pd:
   case Intrinsic::x86_avx_max_ps_256:
   case Intrinsic::x86_avx_max_pd_256:
-  case Intrinsic::x86_avx512_max_ps_512:
-  case Intrinsic::x86_avx512_max_pd_512:
   case Intrinsic::x86_sse_min_ps:
   case Intrinsic::x86_sse2_min_pd:
   case Intrinsic::x86_avx_min_ps_256:
-  case Intrinsic::x86_avx_min_pd_256:
-  case Intrinsic::x86_avx512_min_ps_512:
-  case Intrinsic::x86_avx512_min_pd_512:  {
+  case Intrinsic::x86_avx_min_pd_256: {
     unsigned Opcode;
     switch (IntNo) {
     default: llvm_unreachable("Impossible intrinsic");  // Can't reach here.
@@ -11477,16 +11471,12 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
     case Intrinsic::x86_sse2_max_pd:
     case Intrinsic::x86_avx_max_ps_256:
     case Intrinsic::x86_avx_max_pd_256:
-    case Intrinsic::x86_avx512_max_ps_512:
-    case Intrinsic::x86_avx512_max_pd_512:
       Opcode = X86ISD::FMAX;
       break;
     case Intrinsic::x86_sse_min_ps:
     case Intrinsic::x86_sse2_min_pd:
     case Intrinsic::x86_avx_min_ps_256:
     case Intrinsic::x86_avx_min_pd_256:
-    case Intrinsic::x86_avx512_min_ps_512:
-    case Intrinsic::x86_avx512_min_pd_512:
       Opcode = X86ISD::FMIN;
       break;
     }
@@ -12179,6 +12169,9 @@ SDValue X86TargetLowering::LowerRETURNADDR(SDValue Op,
                                            SelectionDAG &DAG) const {
   MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
   MFI->setReturnAddressIsTaken(true);
+
+  if (verifyReturnAddressArgumentIsConstant(Op, DAG))
+    return SDValue();
 
   unsigned Depth = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
   SDLoc dl(Op);
@@ -17716,12 +17709,15 @@ static SDValue CMPEQCombine(SDNode *N, SelectionDAG &DAG,
           // See X86ATTInstPrinter.cpp:printSSECC().
           unsigned x86cc = (cc0 == X86::COND_E) ? 0 : 4;
           if (Subtarget->hasAVX512()) {
-            // SETCC type in AVX-512 is MVT::i1
-            assert(N->getValueType(0) == MVT::i1 && "Unexpected AND node type");
-            return DAG.getNode(X86ISD::FSETCC, DL, MVT::i1, CMP00, CMP01,
-                               DAG.getConstant(x86cc, MVT::i8));
+            SDValue FSetCC = DAG.getNode(X86ISD::FSETCC, DL, MVT::i1, CMP00,
+                                         CMP01, DAG.getConstant(x86cc, MVT::i8));
+            if (N->getValueType(0) != MVT::i1)
+              return DAG.getNode(ISD::ZERO_EXTEND, DL, N->getValueType(0),
+                                 FSetCC);
+            return FSetCC;
           }
-          SDValue OnesOrZeroesF = DAG.getNode(X86ISD::FSETCC, DL, CMP00.getValueType(), CMP00, CMP01,
+          SDValue OnesOrZeroesF = DAG.getNode(X86ISD::FSETCC, DL,
+                                              CMP00.getValueType(), CMP00, CMP01,
                                               DAG.getConstant(x86cc, MVT::i8));
           MVT IntVT = (is64BitFP ? MVT::i64 : MVT::i32); 
           SDValue OnesOrZeroesI = DAG.getNode(ISD::BITCAST, DL, IntVT,

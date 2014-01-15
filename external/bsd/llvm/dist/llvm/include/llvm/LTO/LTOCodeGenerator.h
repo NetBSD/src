@@ -9,7 +9,7 @@
 //
 // This file declares the LTOCodeGenerator class.
 //
-//   LTO compilation consists of three phases: Pre-IPO, IPO and Post-IPO. 
+//   LTO compilation consists of three phases: Pre-IPO, IPO and Post-IPO.
 //
 //   The Pre-IPO phase compiles source code into bitcode file. The resulting
 // bitcode files, along with object files and libraries, will be fed to the
@@ -21,12 +21,12 @@
 //   The IPO phase perform inter-procedural analyses and optimizations, and
 // the Post-IPO consists two sub-phases: intra-procedural scalar optimizations
 // (SOPT), and intra-procedural target-dependent code generator (CG).
-// 
+//
 //   As of this writing, we don't separate IPO and the Post-IPO SOPT. They
 // are intermingled together, and are driven by a single pass manager (see
 // PassManagerBuilder::populateLTOPassManager()).
-// 
-//   The "LTOCodeGenerator" is the driver for the IPO and Post-IPO stages. 
+//
+//   The "LTOCodeGenerator" is the driver for the IPO and Post-IPO stages.
 // The "CodeGenerator" here is bit confusing. Don't confuse the "CodeGenerator"
 // with the machine specific code generator.
 //
@@ -36,9 +36,9 @@
 #define LTO_CODE_GENERATOR_H
 
 #include "llvm-c/lto.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringMap.h"
-#include "llvm/ADT/ArrayRef.h"
 #include "llvm/Linker.h"
 #include "llvm/Target/TargetOptions.h"
 #include <string>
@@ -70,6 +70,7 @@ struct LTOCodeGenerator {
   void setTargetOptions(llvm::TargetOptions options);
   void setDebugInfo(lto_debug_model);
   void setCodePICModel(lto_codegen_model);
+  void setInternalizeStrategy(lto_internalize_strategy);
 
   void setCpu(const char *mCpu) { MCpu = mCpu; }
 
@@ -79,9 +80,8 @@ struct LTOCodeGenerator {
   // not necessarily for debugging purpose (The function name is misleading).
   // This function should be called before LTOCodeGenerator::compilexxx(),
   // and LTOCodeGenerator::writeMergedModules().
-  //
   void setCodeGenDebugOptions(const char *opts);
-  
+
   // Parse the options set in setCodeGenDebugOptions. Like
   // setCodeGenDebugOptions, this must be called before
   // LTOCodeGenerator::compilexxx() and LTOCodeGenerator::writeMergedModules()
@@ -98,7 +98,6 @@ struct LTOCodeGenerator {
   // NOTE that it is up to the linker to remove the intermediate object file.
   //  Do not try to remove the object file in LTOCodeGenerator's destructor
   //  as we don't who (LTOCodeGenerator or the obj file) will last longer.
-  // 
   bool compile_to_file(const char **name,
                        bool disableOpt,
                        bool disableInline,
@@ -109,13 +108,20 @@ struct LTOCodeGenerator {
   // single object file. Instead of returning the object-file-path to the caller
   // (linker), it brings the object to a buffer, and return the buffer to the
   // caller. This function should delete intermediate object file once its content
-  // is brought to memory. Return NULL if the compilation was not successful. 
-  //
+  // is brought to memory. Return NULL if the compilation was not successful.
   const void *compile(size_t *length,
                       bool disableOpt,
                       bool disableInline,
                       bool disableGVNLoadPRE,
                       std::string &errMsg);
+
+  bool shouldInternalize() const {
+    return InternalizeStrategy != LTO_INTERNALIZE_NONE;
+  }
+
+  bool shouldOnlyInternalizeHidden() const {
+    return InternalizeStrategy == LTO_INTERNALIZE_HIDDEN;
+  }
 
 private:
   void initializeLTOPasses();
@@ -141,6 +147,7 @@ private:
   bool EmitDwarfDebugInfo;
   bool ScopeRestrictionsDone;
   lto_codegen_model CodeModel;
+  lto_internalize_strategy InternalizeStrategy;
   StringSet MustPreserveSymbols;
   StringSet AsmUndefinedRefs;
   llvm::MemoryBuffer *NativeObjectFile;

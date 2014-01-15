@@ -35,6 +35,11 @@ def XCoreBranchLink     : SDNode<"XCoreISD::BL",SDT_XCoreBranchLink,
 def XCoreRetsp : SDNode<"XCoreISD::RETSP", SDTBrind,
                       [SDNPHasChain, SDNPOptInGlue, SDNPMayLoad, SDNPVariadic]>;
 
+def SDT_XCoreEhRet : SDTypeProfile<0, 2,
+                            [SDTCisSameAs<0, 1>, SDTCisPtrTy<0>]>;
+def XCoreEhRet       : SDNode<"XCoreISD::EH_RETURN", SDT_XCoreEhRet,
+                         [SDNPHasChain, SDNPOptInGlue]>;
+
 def SDT_XCoreBR_JT    : SDTypeProfile<0, 2,
                                       [SDTCisVT<0, i32>, SDTCisVT<1, i32>]>;
 
@@ -55,6 +60,9 @@ def dprelwrapper : SDNode<"XCoreISD::DPRelativeWrapper", SDT_XCoreAddress,
 
 def cprelwrapper : SDNode<"XCoreISD::CPRelativeWrapper", SDT_XCoreAddress,
                            []>;
+
+def frametoargsoffset : SDNode<"XCoreISD::FRAME_TO_ARGS_OFFSET", SDTIntLeaf,
+                               []>;
 
 def SDT_XCoreStwsp    : SDTypeProfile<0, 2, [SDTCisInt<1>]>;
 def XCoreStwsp        : SDNode<"XCoreISD::STWSP", SDT_XCoreStwsp,
@@ -325,6 +333,16 @@ def ADJCALLSTACKUP : PseudoInstXCore<(outs), (ins i32imm:$amt1, i32imm:$amt2),
                             "# ADJCALLSTACKUP $amt1",
                             [(callseq_end timm:$amt1, timm:$amt2)]>;
 }
+
+let isReMaterializable = 1 in
+def FRAME_TO_ARGS_OFFSET : PseudoInstXCore<(outs GRRegs:$dst), (ins),
+                               "# FRAME_TO_ARGS_OFFSET $dst",
+                               [(set GRRegs:$dst, (frametoargsoffset))]>;
+
+let isReturn = 1, isTerminator = 1, isBarrier = 1 in
+def EH_RETURN : PseudoInstXCore<(outs), (ins GRRegs:$s, GRRegs:$handler),
+                               "# EH_RETURN $s, $handler",
+                               [(XCoreEhRet GRRegs:$s, GRRegs:$handler)]>;
 
 def LDWFI : PseudoInstXCore<(outs GRRegs:$dst), (ins MEMii:$addr),
                              "# LDWFI $dst, $addr",

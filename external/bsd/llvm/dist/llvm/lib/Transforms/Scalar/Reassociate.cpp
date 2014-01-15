@@ -27,7 +27,6 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Assembly/Writer.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Function.h"
@@ -67,7 +66,7 @@ static void PrintOps(Instruction *I, const SmallVectorImpl<ValueEntry> &Ops) {
        << *Ops[0].Op->getType() << '\t';
   for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
     dbgs() << "[ ";
-    WriteAsOperand(dbgs(), Ops[i].Op, false, M);
+    Ops[i].Op->printAsOperand(dbgs(), false, M);
     dbgs() << ", #" << Ops[i].Rank << "] ";
   }
 }

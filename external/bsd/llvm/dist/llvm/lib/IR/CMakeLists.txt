@@ -18,6 +18,7 @@ add_llvm_library(LLVMCore
   GVMaterializer.cpp
   Globals.cpp
   IRBuilder.cpp
+  IRPrintingPasses.cpp
   InlineAsm.cpp
   Instruction.cpp
   Instructions.cpp
@@ -26,12 +27,12 @@ add_llvm_library(LLVMCore
   LLVMContextImpl.cpp
   LeakDetector.cpp
   LegacyPassManager.cpp
+  Mangler.cpp
   Metadata.cpp
   Module.cpp
   Pass.cpp
   PassManager.cpp
   PassRegistry.cpp
-  PrintModulePass.cpp
   Type.cpp
   TypeFinder.cpp
   Use.cpp
