@@ -1,9 +1,9 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if-options.c,v 1.1.1.22 2014/01/03 22:10:42 roy Exp $");
+ __RCSID("$NetBSD: if-options.c,v 1.1.1.23 2014/01/15 20:36:31 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2013 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -512,13 +512,13 @@ free_dhcp_opt_embenc(struct dhcp_opt *opt)
 	free(opt->var);
 
 	for (i = 0, o = opt->embopts; i < opt->embopts_len; i++, o++)
-		free(o->var);
+		free_dhcp_opt_embenc(o);
 	free(opt->embopts);
 	opt->embopts_len = 0;
 	opt->embopts = NULL;
 
 	for (i = 0, o = opt->encopts; i < opt->encopts_len; i++, o++)
-		free(o->var);
+		free_dhcp_opt_embenc(o);
 	free(opt->encopts);
 	opt->encopts_len = 0;
 	opt->encopts = NULL;
@@ -528,6 +528,8 @@ static char *
 strwhite(const char *s)
 {
 
+	if (s == NULL)
+		return NULL;
 	while (*s != ' ' && *s != '\t') {
 		if (*s == '\0')
 			return NULL;
@@ -540,6 +542,8 @@ static char *
 strskipwhite(const char *s)
 {
 
+	if (s == NULL)
+		return NULL;
 	while (*s == ' ' || *s == '\t') {
 		if (*s == '\0')
 			return NULL;
@@ -1056,10 +1060,7 @@ parse_option(struct if_options *ifo, int opt, const char *arg)
 			}
 			ifo->arping = naddr;
 			ifo->arping[ifo->arping_len++] = addr.s_addr;
-			if (fp)
-				arg = strskipwhite(fp);
-			else
-				arg = NULL;
+			arg = strskipwhite(fp);
 		}
 		break;
 	case O_DESTINATION:
@@ -1086,6 +1087,7 @@ parse_option(struct if_options *ifo, int opt, const char *arg)
 		if (parse_iaid(ifo->iaid, arg, sizeof(ifo->iaid)) == -1)
 			return -1;
 		ifo->options |= DHCPCD_IAID;
+		break;
 	case O_IPV6RS:
 		ifo->options |= DHCPCD_IPV6RS;
 		break;
@@ -1285,7 +1287,7 @@ parse_option(struct if_options *ifo, int opt, const char *arg)
 			u = 0;
 		else {
 			fp = strwhite(arg);
-			if (!fp) {
+			if (fp == NULL) {
 				syslog(LOG_ERR, "invalid syntax: %s", arg);
 				return -1;
 			}
@@ -1297,6 +1299,10 @@ parse_option(struct if_options *ifo, int opt, const char *arg)
 				return -1;
 			}
 			arg = strskipwhite(fp);
+			if (arg == NULL) {
+				syslog(LOG_ERR, "invalid syntax");
+				return -1;
+			}
 		}
 		/* type */
 		fp = strwhite(arg);
@@ -1551,10 +1557,11 @@ read_config(const char *file,
 	int skip = 0, have_profile = 0;
 #ifndef EMBEDDED_CONFIG
 	char *buf;
-	const char **e;
+	const char * const *e;
 	size_t buflen, ol;
 #endif
 #if !defined(INET) || !defined(INET6)
+	size_t i;
 	struct dhcp_opt *opt;
 #endif
 
@@ -1672,7 +1679,7 @@ read_config(const char *file,
 		dhcp6_opts_len = ifo->dhcp6_override_len;
 #else
 		for (i = 0, opt = ifo->dhcp6_override;
-		    i < ifo->dhcp_override6_len;
+		    i < ifo->dhcp6_override_len;
 		    i++, opt++)
 			free_dhcp_opt_embenc(opt);
 		free(ifo->dhcp6_override);

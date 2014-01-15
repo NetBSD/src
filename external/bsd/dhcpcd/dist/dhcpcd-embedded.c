@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcpcd-embedded.c,v 1.1.1.1 2014/01/03 22:10:42 roy Exp $");
+ __RCSID("$NetBSD: dhcpcd-embedded.c,v 1.1.1.2 2014/01/15 20:36:31 roy Exp $");
 
 /*
  * DO NOT EDIT
@@ -133,6 +133,23 @@ const char *dhcpcd_embedded_conf[] = {
 "define 118 ipaddress subnet_selection",
 "define 119 domain domain_search",
 "define 120 rfc3361 sip_server",
+"define 122 encap tsp",
+"encap 1 ipaddress dhcp_server",
+"encap 2 ipaddress dhcp_secondary_server",
+"encap 3 embed provisioning_server",
+"embed byte type",
+"embed domain fqdn",
+"encap 4 embed as_req_as_rep_backoff",
+"embed uint32 nominal",
+"embed uint32 maximum",
+"embed uint32 retry",
+"encap 5 embed ap_req_ap_rep_backoff",
+"embed uint32 nominal",
+"embed uint32 maximum",
+"embed uint32 retry",
+"encap 6 domain kerberos_realm",
+"encap 7 byte ticket_granting_server_utilization",
+"encap 8 byte provisioning_timer",
 "define 124 binhex vivco",
 "define 125 embed vivso",
 "embed uint32 enterprise_number",

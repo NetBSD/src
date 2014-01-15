@@ -1,9 +1,9 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv6nd.c,v 1.1.1.2 2014/01/03 22:10:43 roy Exp $");
+ __RCSID("$NetBSD: ipv6nd.c,v 1.1.1.3 2014/01/15 20:36:32 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2013 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -369,7 +369,7 @@ ipv6nd_sendrsprobe(void *arg)
 
 	if (ipv6_linklocal(ifp) == NULL) {
 		syslog(LOG_DEBUG,
-		    "%s: delaying Router Soliciation for LL address",
+		    "%s: delaying Router Solicitation for LL address",
 		    ifp->name);
 		ipv6_addlinklocalcallback(ifp, ipv6nd_sendrsprobe, ifp);
 		return;
