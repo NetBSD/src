@@ -795,9 +795,13 @@ static int i915_wait_irq(struct drm_device * dev, int irq_nr)
 
 	if (ring->irq_get(ring)) {
 #ifdef __NetBSD__
-		DRM_TIMED_WAIT_UNTIL(ret, &ring->irq_queue, &dev->struct_mutex,
+		unsigned long flags;
+		spin_lock_irqsave(&dev_priv->irq_lock, flags);
+		DRM_SPIN_TIMED_WAIT_UNTIL(ret, &ring->irq_queue,
+		    &dev_priv->irq_lock,
 		    3 * DRM_HZ,
 		    READ_BREADCRUMB(dev_priv) >= irq_nr);
+		spin_unlock_irqrestore(&dev_priv->irq_lock, flags);
 #else
 		DRM_WAIT_ON(ret, ring->irq_queue, 3 * DRM_HZ,
 			    READ_BREADCRUMB(dev_priv) >= irq_nr);
