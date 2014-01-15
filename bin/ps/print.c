@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.120 2012/03/20 18:42:28 matt Exp $	*/
+/*	$NetBSD: print.c,v 1.121 2014/01/15 08:07:53 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.120 2012/03/20 18:42:28 matt Exp $");
+__RCSID("$NetBSD: print.c,v 1.121 2014/01/15 08:07:53 mlelstv Exp $");
 #endif
 #endif /* not lint */
 
@@ -1012,29 +1012,11 @@ cpuid(void *arg, VARENT *ve, int mode)
 	intprintorsetwidth(v, l->l_cpuid, mode);
 }
 
-void
-cputime(void *arg, VARENT *ve, int mode)
+static void
+cputime1(int32_t secs, int32_t psecs, VAR *v, int mode)
 {
-	struct kinfo_proc2 *k;
-	VAR *v;
-	int32_t secs;
-	int32_t psecs;	/* "parts" of a second. first micro, then centi */
 	int fmtlen;
 
-	k = arg;
-	v = ve->var;
-
-	/*
-	 * This counts time spent handling interrupts.  We could
-	 * fix this, but it is not 100% trivial (and interrupt
-	 * time fractions only work on the sparc anyway).	XXX
-	 */
-	secs = k->p_rtime_sec;
-	psecs = k->p_rtime_usec;
-	if (sumrusage) {
-		secs += k->p_uctime_sec;
-		psecs += k->p_uctime_usec;
-	}
 	/*
 	 * round and scale to 100's
 	 */
@@ -1064,6 +1046,49 @@ cputime(void *arg, VARENT *ve, int mode)
 		    (long)(secs / SECSPERMIN), (long)(secs % SECSPERMIN),
 		    (long)psecs);
 	}
+}
+
+void
+cputime(void *arg, VARENT *ve, int mode)
+{
+	struct kinfo_proc2 *k;
+	VAR *v;
+	int32_t secs;
+	int32_t psecs;	/* "parts" of a second. first micro, then centi */
+
+	k = arg;
+	v = ve->var;
+
+	/*
+	 * This counts time spent handling interrupts.  We could
+	 * fix this, but it is not 100% trivial (and interrupt
+	 * time fractions only work on the sparc anyway).	XXX
+	 */
+	secs = k->p_rtime_sec;
+	psecs = k->p_rtime_usec;
+	if (sumrusage) {
+		secs += k->p_uctime_sec;
+		psecs += k->p_uctime_usec;
+	}
+
+	cputime1(secs, psecs, v, mode);
+}
+
+void
+lcputime(void *arg, VARENT *ve, int mode)
+{
+	struct kinfo_lwp *l;
+	VAR *v;
+	int32_t secs;
+	int32_t psecs;	/* "parts" of a second. first micro, then centi */
+
+	l = arg;
+	v = ve->var;
+
+	secs = l->l_rtime_sec;
+	psecs = l->l_rtime_usec;
+
+	cputime1(secs, psecs, v, mode);
 }
 
 double
