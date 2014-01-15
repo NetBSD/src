@@ -1,9 +1,9 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: script.c,v 1.2 2013/11/18 19:55:29 joerg Exp $");
+ __RCSID("$NetBSD: script.c,v 1.3 2014/01/15 20:43:21 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2013 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -57,7 +57,7 @@
 
 #define DEFAULT_PATH	"PATH=/usr/bin:/usr/sbin:/bin:/sbin"
 
-static const char *if_params[] = {
+static const char * const if_params[] = {
 	"interface",
 	"reason",
 	"pid",
@@ -73,7 +73,7 @@ static const char *if_params[] = {
 void
 if_printoptions(void)
 {
-	const char **p;
+	const char * const *p;
 
 	for (p = if_params; *p; p++)
 		printf(" -  %s\n", *p);
