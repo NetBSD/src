@@ -1294,6 +1294,10 @@ void intel_cleanup_ring_buffer(struct intel_ring_buffer *ring)
 		ring->cleanup(ring);
 
 	cleanup_status_page(ring);
+
+#ifdef __NetBSD__
+        DRM_DESTROY_WAITQUEUE(&ring->irq_queue);
+#endif
 }
 
 static int intel_ring_wait_seqno(struct intel_ring_buffer *ring, u32 seqno)
