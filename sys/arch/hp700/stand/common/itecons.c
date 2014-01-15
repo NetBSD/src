@@ -1,4 +1,4 @@
-/*	$NetBSD: itecons.c,v 1.10 2013/11/14 13:01:26 skrll Exp $	*/
+/*	$NetBSD: itecons.c,v 1.11 2014/01/15 21:52:13 skrll Exp $	*/
 
 /*	$OpenBSD: itecons.c,v 1.6 1999/04/20 20:01:02 mickey Exp $	*/
 
@@ -189,7 +189,7 @@ ite_getc(dev_t dev)
 		if (!i-- && (dev & 0x80) && l == 0) {
 #ifdef DEBUG
 			if (debug > 2)
-				printf("ite_getc(0x%x): no char %d(%x)\n",
+				printf("ite_getc(%llx): no char %d(%x)\n",
 				       dev, l, c);
 #endif
 			return (0);

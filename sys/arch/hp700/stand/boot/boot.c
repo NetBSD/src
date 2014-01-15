@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.12 2011/01/22 19:19:17 joerg Exp $	*/
+/*	$NetBSD: boot.c,v 1.13 2014/01/15 21:52:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -231,7 +231,7 @@ exec_hp700(char *file, u_long loadaddr, int boot_howto)
 
 	marks[MARK_START] = loadaddr;
 #ifdef EXEC_DEBUG
-	printf("file=%s loadaddr=%x howto=%x\n",
+	printf("file=%s loadaddr=%lx howto=%x\n",
 		file, loadaddr, boot_howto);
 #endif
 	if ((fd = loadfile(file, marks, LOAD_KERNEL)) == -1)
@@ -244,7 +244,7 @@ exec_hp700(char *file, u_long loadaddr, int boot_howto)
 
 #ifdef EXEC_DEBUG
 	if (debug) {
-		printf("ep=0x%x [", marks[MARK_ENTRY]);
+		printf("ep=0x%lx [", marks[MARK_ENTRY]);
 		for (i = 0; i < 10240; i++) {
 			if (!(i % 8)) {
 				printf("\b\n%p:", &((u_int *)marks[MARK_ENTRY])[i]);

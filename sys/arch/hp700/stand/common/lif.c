@@ -1,4 +1,4 @@
-/*	$NetBSD: lif.c,v 1.10 2009/11/03 05:07:26 snj Exp $	*/
+/*	$NetBSD: lif.c,v 1.11 2014/01/15 21:52:13 skrll Exp $	*/
 
 /*	$OpenBSD: lif.c,v 1.7 2001/06/09 03:54:41 mickey Exp $	*/
 
@@ -167,7 +167,7 @@ lif_read(struct open_file *f, void *buf, size_t size, size_t *resid)
 
 #ifdef LIFDEBUG
 	if (debug)
-		printf("lif_read(%p, %p, %u, %p)\n", f, buf, size, resid);
+		printf("lif_read(%p, %p, %zu, %p)\n", f, buf, size, resid);
 #endif
 
 	for (p = bbuf; size; fp->f_seek += bsize, p += bsize) {
