@@ -15,16 +15,23 @@ case "o" in
  *) ConfStr="${ConfStr}-o" ;;
 esac
 
-ConfStr="$ConfStr `LC_TIME=C TZ=UTC date`"
+ifile="`dirname $0`/../importdate"
 
-if [ ! -f .version ]; then
-  echo 0 > .version
+if [ -f "$ifile" ]; then
+  # NetBSD MKREPRO: Don't embed current date/time/run number
+  ConfStr="$ConfStr "`cat "$ifile"`
+else
+  ConfStr="$ConfStr `LC_TIME=C TZ= date`"
+
+  if [ ! -f .version ]; then
+    echo 0 > .version
+  fi
+  RUN="`cat .version`"
+  RUN="`expr $RUN + 1`"
+  echo $RUN > .version
+
+  ConfStr="$ConfStr (${RUN})"
 fi
-RUN="`cat .version`"
-RUN="`expr $RUN + 1`"
-echo $RUN > .version
-
-ConfStr="$ConfStr (${RUN})"
 
 echo "Version <${ConfStr}>";
 
