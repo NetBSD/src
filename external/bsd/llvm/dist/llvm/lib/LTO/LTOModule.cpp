@@ -29,8 +29,8 @@
 #include "llvm/MC/MCTargetAsmParser.h"
 #include "llvm/MC/SubtargetFeature.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Host.h"
 #include "llvm/Support/FileSystem.h"
+#include "llvm/Support/Host.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/SourceMgr.h"
@@ -135,12 +135,14 @@ LTOModule *LTOModule::makeLTOModule(MemoryBuffer *buffer,
                                     TargetOptions options,
                                     std::string &errMsg) {
   // parse bitcode buffer
-  OwningPtr<Module> m(getLazyBitcodeModule(buffer, getGlobalContext(),
-                                           &errMsg));
-  if (!m) {
+  ErrorOr<Module *> ModuleOrErr =
+      getLazyBitcodeModule(buffer, getGlobalContext());
+  if (error_code EC = ModuleOrErr.getError()) {
+    errMsg = EC.message();
     delete buffer;
     return NULL;
   }
+  OwningPtr<Module> m(ModuleOrErr.get());
 
   std::string TripleStr = m->getTargetTriple();
   if (TripleStr.empty())
@@ -167,7 +169,7 @@ LTOModule *LTOModule::makeLTOModule(MemoryBuffer *buffer,
 
   TargetMachine *target = march->createTargetMachine(TripleStr, CPU, FeatureStr,
                                                      options);
-  m->MaterializeAllPermanently();
+  m->materializeAllPermanently();
 
   LTOModule *Ret = new LTOModule(m.take(), target);
   if (Ret->parseSymbols(errMsg)) {

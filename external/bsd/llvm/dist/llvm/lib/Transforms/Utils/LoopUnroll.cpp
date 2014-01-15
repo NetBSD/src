@@ -19,12 +19,12 @@
 #define DEBUG_TYPE "loop-unroll"
 #include "llvm/Transforms/Utils/UnrollLoop.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/LoopIterator.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/IR/BasicBlock.h"
+#include "llvm/IR/Dominators.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
@@ -413,8 +413,9 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
   if (LPM) {
     // FIXME: Reconstruct dom info, because it is not preserved properly.
     // Incrementally updating domtree after loop unrolling would be easy.
-    if (DominatorTree *DT = LPM->getAnalysisIfAvailable<DominatorTree>())
-      DT->runOnFunction(*L->getHeader()->getParent());
+    if (DominatorTreeWrapperPass *DTWP =
+            LPM->getAnalysisIfAvailable<DominatorTreeWrapperPass>())
+      DTWP->getDomTree().recalculate(*L->getHeader()->getParent());
 
     // Simplify any new induction variables in the partially unrolled loop.
     ScalarEvolution *SE = LPM->getAnalysisIfAvailable<ScalarEvolution>();

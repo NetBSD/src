@@ -45,19 +45,18 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Analysis/Verifier.h"
+#include "llvm/IR/Verifier.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/Analysis/Dominators.h"
-#include "llvm/Assembly/Writer.h"
 #include "llvm/DebugInfo.h"
 #include "llvm/IR/CallingConv.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Dominators.h"
 #include "llvm/IR/InlineAsm.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/LLVMContext.h"
@@ -101,7 +100,7 @@ namespace {  // Anonymous namespace for class
         if (I->empty() || !I->back().isTerminator()) {
           dbgs() << "Basic Block in function '" << F.getName()
                  << "' does not have terminator!\n";
-          WriteAsOperand(dbgs(), I, true);
+          I->printAsOperand(dbgs(), true);
           dbgs() << "\n";
           Broken = true;
         }
@@ -177,7 +176,7 @@ namespace {
 
     bool runOnFunction(Function &F) {
       // Get dominator information if we are being run by PassManager
-      DT = &getAnalysis<DominatorTree>();
+      DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
 
       Mod = F.getParent();
       if (!Context) Context = &F.getContext();
@@ -234,7 +233,7 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
       AU.addRequiredID(PreVerifyID);
-      AU.addRequired<DominatorTree>();
+      AU.addRequired<DominatorTreeWrapperPass>();
     }
 
     /// abortIfBroken - If the module is broken and we are supposed to abort on
@@ -348,7 +347,7 @@ namespace {
       if (isa<Instruction>(V)) {
         MessagesStr << *V << '\n';
       } else {
-        WriteAsOperand(MessagesStr, V, true, Mod);
+        V->printAsOperand(MessagesStr, true, Mod);
         MessagesStr << '\n';
       }
     }
@@ -396,7 +395,7 @@ namespace {
 char Verifier::ID = 0;
 INITIALIZE_PASS_BEGIN(Verifier, "verify", "Module Verifier", false, false)
 INITIALIZE_PASS_DEPENDENCY(PreVerifier)
-INITIALIZE_PASS_DEPENDENCY(DominatorTree)
+INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_END(Verifier, "verify", "Module Verifier", false, false)
 
 // Assert - We know that cond should be true, if not print an error message.
@@ -422,15 +421,11 @@ void Verifier::visitGlobalValue(GlobalValue &GV) {
   Assert1(!GV.isDeclaration() ||
           GV.isMaterializable() ||
           GV.hasExternalLinkage() ||
-          GV.hasDLLImportLinkage() ||
           GV.hasExternalWeakLinkage() ||
           (isa<GlobalAlias>(GV) &&
            (GV.hasLocalLinkage() || GV.hasWeakLinkage())),
-  "Global is external, but doesn't have external or dllimport or weak linkage!",
+          "Global is external, but doesn't have external or weak linkage!",
           &GV);
-
-  Assert1(!GV.hasDLLImportLinkage() || GV.isDeclaration(),
-          "Global is marked as dllimport, but not external", &GV);
 
   Assert1(!GV.hasAppendingLinkage() || isa<GlobalVariable>(GV),
           "Only global variables can have appending linkage!", &GV);
@@ -457,8 +452,7 @@ void Verifier::visitGlobalVariable(GlobalVariable &GV) {
               &GV);
     }
   } else {
-    Assert1(GV.hasExternalLinkage() || GV.hasDLLImportLinkage() ||
-            GV.hasExternalWeakLinkage(),
+    Assert1(GV.hasExternalLinkage() || GV.hasExternalWeakLinkage(),
             "invalid linkage type for global declaration", &GV);
   }
 
@@ -502,6 +496,11 @@ void Verifier::visitGlobalVariable(GlobalVariable &GV) {
       }
     }
   }
+
+  Assert1(!GV.hasDLLImportStorageClass() ||
+          (GV.isDeclaration() && GV.hasExternalLinkage()) ||
+          GV.hasAvailableExternallyLinkage(),
+          "Global is marked as dllimport, but not external", &GV);
 
   if (!GV.hasInitializer()) {
     visitGlobalValue(GV);
@@ -1079,8 +1078,7 @@ void Verifier::visitFunction(Function &F) {
   if (F.isMaterializable()) {
     // Function has a body somewhere we can't see.
   } else if (F.isDeclaration()) {
-    Assert1(F.hasExternalLinkage() || F.hasDLLImportLinkage() ||
-            F.hasExternalWeakLinkage(),
+    Assert1(F.hasExternalLinkage() || F.hasExternalWeakLinkage(),
             "invalid linkage type for function declaration", &F);
   } else {
     // Verify that this function (which has a body) is not named "llvm.*".  It
@@ -1106,6 +1104,11 @@ void Verifier::visitFunction(Function &F) {
     if (F.hasAddressTaken(&U))
       Assert1(0, "Invalid user of intrinsic instruction!", U);
   }
+
+  Assert1(!F.hasDLLImportStorageClass() ||
+          (F.isDeclaration() && F.hasExternalLinkage()) ||
+          F.hasAvailableExternallyLinkage(),
+          "Function is marked as dllimport, but not external.", &F);
 }
 
 // verifyBasicBlock - Verify that a basic block is well formed...

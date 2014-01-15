@@ -1220,8 +1220,8 @@ multiclass NeonI_mov_imm_with_constraint_lsl_sizes<string asmop, bit op,
                  !strconcat(asmop, "\t$Rd.2s, $Imm$Simm"),
                  [(set (v2i32 VPR64:$Rd),
                     (v2i32 (opnode (v2i32 VPR64:$src),
-                      (v2i32 (bitconvert (v2i32 (neonopnode timm:$Imm,
-                        neon_mov_imm_LSL_operand:$Simm)))))))],
+                      (v2i32 (neonopnode timm:$Imm,
+                        neon_mov_imm_LSL_operand:$Simm)))))],
                  NoItinerary> {
       bits<2> Simm;
       let cmode = {0b0, Simm{1}, Simm{0}, 0b1};
@@ -1234,8 +1234,8 @@ multiclass NeonI_mov_imm_with_constraint_lsl_sizes<string asmop, bit op,
                  !strconcat(asmop, "\t$Rd.4s, $Imm$Simm"),
                  [(set (v4i32 VPR128:$Rd),
                     (v4i32 (opnode (v4i32 VPR128:$src),
-                      (v4i32 (bitconvert (v4i32 (neonopnode timm:$Imm,
-                        neon_mov_imm_LSL_operand:$Simm)))))))],
+                      (v4i32 (neonopnode timm:$Imm,
+                        neon_mov_imm_LSL_operand:$Simm)))))],
                  NoItinerary> {
       bits<2> Simm;
       let cmode = {0b0, Simm{1}, Simm{0}, 0b1};
@@ -1249,8 +1249,8 @@ multiclass NeonI_mov_imm_with_constraint_lsl_sizes<string asmop, bit op,
                  !strconcat(asmop, "\t$Rd.4h, $Imm$Simm"),
                  [(set (v4i16 VPR64:$Rd),
                     (v4i16 (opnode (v4i16 VPR64:$src),
-                       (v4i16 (bitconvert (v4i16 (neonopnode timm:$Imm,
-                          neon_mov_imm_LSL_operand:$Simm)))))))],
+                       (v4i16 (neonopnode timm:$Imm,
+                          neon_mov_imm_LSL_operand:$Simm)))))],
                  NoItinerary> {
       bit  Simm;
       let cmode = {0b1, 0b0, Simm, 0b1};
@@ -1263,8 +1263,8 @@ multiclass NeonI_mov_imm_with_constraint_lsl_sizes<string asmop, bit op,
                  !strconcat(asmop, "\t$Rd.8h, $Imm$Simm"),
                  [(set (v8i16 VPR128:$Rd),
                     (v8i16 (opnode (v8i16 VPR128:$src),
-                      (v8i16 (bitconvert (v8i16 (neonopnode timm:$Imm,
-                        neon_mov_imm_LSL_operand:$Simm)))))))],
+                      (v8i16 (neonopnode timm:$Imm,
+                        neon_mov_imm_LSL_operand:$Simm)))))],
                  NoItinerary> {
       bit Simm;
       let cmode = {0b1, 0b0, Simm, 0b1};
@@ -1350,28 +1350,68 @@ def neon_mov_imm_LSLH_transform_operand
     return (HasShift && !ShiftOnesIn); }],
   neon_mov_imm_LSLH_transform_XFORM>;
 
-// Transform (and A, (4h Neon_movi 0xff)) -> BIC 4h (A, 0x00, LSL 8)
-// Transform (and A, (4h Neon_movi 0xff LSL #8)) -> BIC 4h (A, 0x00)
+// Transform (and A, (4h Neon_movi 0xff)) -> BIC 4h (A, 0xff, LSL 8)
+// Transform (and A, (4h Neon_movi 0xff LSL #8)) -> BIC 4h (A, 0xff)
 def : Pat<(v4i16 (and VPR64:$src,
-            (v4i16 (Neon_movi 255, neon_mov_imm_LSLH_transform_operand:$Simm)))),
-          (BICvi_lsl_4H VPR64:$src, 0,
+            (v4i16 (Neon_movi 255,
+              neon_mov_imm_LSLH_transform_operand:$Simm)))),
+          (BICvi_lsl_4H VPR64:$src, 255,
             neon_mov_imm_LSLH_transform_operand:$Simm)>;
 
-// Transform (and A, (8h Neon_movi 8h 0xff)) -> BIC 8h (A, 0x00, LSL 8)
-// Transform (and A, (8h Neon_movi 0xff LSL #8)) -> BIC 8h (A, 0x00)
+// Transform (and A, (8h Neon_movi 8h 0xff)) -> BIC 8h (A, 0xff, LSL 8)
+// Transform (and A, (8h Neon_movi 0xff LSL #8)) -> BIC 8h (A, 0xff)
 def : Pat<(v8i16 (and VPR128:$src,
-            (v8i16 (Neon_movi 255, neon_mov_imm_LSLH_transform_operand:$Simm)))),
-          (BICvi_lsl_8H VPR128:$src, 0,
+            (v8i16 (Neon_movi 255,
+              neon_mov_imm_LSLH_transform_operand:$Simm)))),
+          (BICvi_lsl_8H VPR128:$src, 255,
             neon_mov_imm_LSLH_transform_operand:$Simm)>;
 
+def : Pat<(v8i8 (and VPR64:$src,
+                  (bitconvert(v4i16 (Neon_movi 255,
+                    neon_mov_imm_LSLH_transform_operand:$Simm))))),
+          (BICvi_lsl_4H VPR64:$src, 255,
+            neon_mov_imm_LSLH_transform_operand:$Simm)>;
+def : Pat<(v2i32 (and VPR64:$src,
+                 (bitconvert(v4i16 (Neon_movi 255,
+                   neon_mov_imm_LSLH_transform_operand:$Simm))))),
+          (BICvi_lsl_4H VPR64:$src, 255,
+            neon_mov_imm_LSLH_transform_operand:$Simm)>;
+def : Pat<(v1i64 (and VPR64:$src,
+                (bitconvert(v4i16 (Neon_movi 255,
+                  neon_mov_imm_LSLH_transform_operand:$Simm))))),
+        (BICvi_lsl_4H VPR64:$src, 255,
+          neon_mov_imm_LSLH_transform_operand:$Simm)>;
+
+def : Pat<(v16i8 (and VPR128:$src,
+                 (bitconvert(v8i16 (Neon_movi 255,
+                   neon_mov_imm_LSLH_transform_operand:$Simm))))),
+        (BICvi_lsl_8H VPR128:$src, 255,
+          neon_mov_imm_LSLH_transform_operand:$Simm)>;
+def : Pat<(v4i32 (and VPR128:$src,
+                 (bitconvert(v8i16 (Neon_movi 255,
+                   neon_mov_imm_LSLH_transform_operand:$Simm))))),
+        (BICvi_lsl_8H VPR128:$src, 255,
+          neon_mov_imm_LSLH_transform_operand:$Simm)>;
+def : Pat<(v2i64 (and VPR128:$src,
+                 (bitconvert(v8i16 (Neon_movi 255,
+                   neon_mov_imm_LSLH_transform_operand:$Simm))))),
+        (BICvi_lsl_8H VPR128:$src, 255,
+          neon_mov_imm_LSLH_transform_operand:$Simm)>;
 
 multiclass Neon_bitwiseVi_patterns<SDPatternOperator opnode,
                                    SDPatternOperator neonopnode,
                                    Instruction INST4H,
-                                   Instruction INST8H> {
+                                   Instruction INST8H,
+                                   Instruction INST2S,
+                                   Instruction INST4S> {
   def : Pat<(v8i8 (opnode VPR64:$src,
                     (bitconvert(v4i16 (neonopnode timm:$Imm,
                       neon_mov_imm_LSLH_operand:$Simm))))),
+            (INST4H VPR64:$src, neon_uimm8:$Imm,
+              neon_mov_imm_LSLH_operand:$Simm)>;
+  def : Pat<(v2i32 (opnode VPR64:$src,
+                   (bitconvert(v4i16 (neonopnode timm:$Imm,
+                     neon_mov_imm_LSLH_operand:$Simm))))),
             (INST4H VPR64:$src, neon_uimm8:$Imm,
               neon_mov_imm_LSLH_operand:$Simm)>;
   def : Pat<(v1i64 (opnode VPR64:$src,
@@ -1395,13 +1435,47 @@ multiclass Neon_bitwiseVi_patterns<SDPatternOperator opnode,
                      neon_mov_imm_LSLH_operand:$Simm))))),
           (INST8H VPR128:$src, neon_uimm8:$Imm,
             neon_mov_imm_LSLH_operand:$Simm)>;
+
+  def : Pat<(v8i8 (opnode VPR64:$src,
+                    (bitconvert(v2i32 (neonopnode timm:$Imm,
+                      neon_mov_imm_LSLH_operand:$Simm))))),
+            (INST2S VPR64:$src, neon_uimm8:$Imm,
+              neon_mov_imm_LSLH_operand:$Simm)>;
+  def : Pat<(v4i16 (opnode VPR64:$src,
+                   (bitconvert(v2i32 (neonopnode timm:$Imm,
+                     neon_mov_imm_LSLH_operand:$Simm))))),
+            (INST2S VPR64:$src, neon_uimm8:$Imm,
+              neon_mov_imm_LSLH_operand:$Simm)>;
+  def : Pat<(v1i64 (opnode VPR64:$src,
+                  (bitconvert(v2i32 (neonopnode timm:$Imm,
+                    neon_mov_imm_LSLH_operand:$Simm))))),
+          (INST2S VPR64:$src, neon_uimm8:$Imm,
+            neon_mov_imm_LSLH_operand:$Simm)>;
+
+  def : Pat<(v16i8 (opnode VPR128:$src,
+                   (bitconvert(v4i32 (neonopnode timm:$Imm,
+                     neon_mov_imm_LSLH_operand:$Simm))))),
+          (INST4S VPR128:$src, neon_uimm8:$Imm,
+            neon_mov_imm_LSLH_operand:$Simm)>;
+  def : Pat<(v8i16 (opnode VPR128:$src,
+                   (bitconvert(v4i32 (neonopnode timm:$Imm,
+                     neon_mov_imm_LSLH_operand:$Simm))))),
+          (INST4S VPR128:$src, neon_uimm8:$Imm,
+            neon_mov_imm_LSLH_operand:$Simm)>;
+  def : Pat<(v2i64 (opnode VPR128:$src,
+                   (bitconvert(v4i32 (neonopnode timm:$Imm,
+                     neon_mov_imm_LSLH_operand:$Simm))))),
+          (INST4S VPR128:$src, neon_uimm8:$Imm,
+            neon_mov_imm_LSLH_operand:$Simm)>;
 }
 
 // Additional patterns for Vector Vector Bitwise Bit Clear (AND NOT) - immediate
-defm : Neon_bitwiseVi_patterns<or, Neon_mvni, BICvi_lsl_4H, BICvi_lsl_8H>;
+defm : Neon_bitwiseVi_patterns<and, Neon_mvni, BICvi_lsl_4H, BICvi_lsl_8H,
+                               BICvi_lsl_2S, BICvi_lsl_4S>;
 
 // Additional patterns for Vector Bitwise OR - immedidate
-defm : Neon_bitwiseVi_patterns<or, Neon_movi, ORRvi_lsl_4H, ORRvi_lsl_8H>;
+defm : Neon_bitwiseVi_patterns<or, Neon_movi, ORRvi_lsl_4H, ORRvi_lsl_8H,
+                               ORRvi_lsl_2S, ORRvi_lsl_4S>;
 
 
 // Vector Move Immediate Masked
@@ -1775,22 +1849,37 @@ multiclass NeonI_N2VShLL<string prefix, bit u, bits<5> opcode, string asmop,
 defm SSHLLvvi : NeonI_N2VShLL<"SSHLLvvi", 0b0, 0b10100, "sshll", sext>;
 defm USHLLvvi : NeonI_N2VShLL<"USHLLvvi", 0b1, 0b10100, "ushll", zext>;
 
-// Signed integer lengthen (vector) is alias for SSHLL Vd, Vn, #0
-// Signed integer lengthen (vector, second part) is alias for SSHLL2 Vd, Vn, #0
-// FIXME: This is actually the preferred syntax but TableGen can't deal with
-// custom printing of aliases.
-class NeonI_sxtl_alias<string asmop, string lane, string laneOp,
+class NeonI_ext_len_alias<string asmop, string lane, string laneOp,
                        Instruction inst, RegisterOperand VPRC,
                        RegisterOperand VPRCOp>
   : NeonInstAlias<asmop # "\t$Rd" # lane #", $Rn" # laneOp,
                   (inst VPRC:$Rd, VPRCOp:$Rn, 0), 0b0>;
 
-def SXTLvv_8B  : NeonI_sxtl_alias<"sxtl", ".8h", ".8b",  SSHLLvvi_8B, VPR128, VPR64>;
-def SXTLvv_4H  : NeonI_sxtl_alias<"sxtl", ".4s", ".4h",  SSHLLvvi_4H, VPR128, VPR64>;
-def SXTLvv_2S  : NeonI_sxtl_alias<"sxtl", ".2d", ".2s",  SSHLLvvi_2S, VPR128, VPR64>;
-def SXTL2vv_16B : NeonI_sxtl_alias<"sxtl2", ".8h", ".16b",  SSHLLvvi_16B, VPR128, VPR128>;
-def SXTL2vv_8H  : NeonI_sxtl_alias<"sxtl2", ".4s", ".8h",  SSHLLvvi_8H, VPR128, VPR128>;
-def SXTL2vv_4S  : NeonI_sxtl_alias<"sxtl2", ".2d", ".4s",  SSHLLvvi_4S, VPR128, VPR128>;
+// Signed integer lengthen (vector) is alias for SSHLL Vd, Vn, #0
+// Signed integer lengthen (vector, second part) is alias for SSHLL2 Vd, Vn, #0
+// FIXME: This is actually the preferred syntax but TableGen can't deal with
+// custom printing of aliases.
+def SXTLvv_8B  : NeonI_ext_len_alias<"sxtl", ".8h", ".8b",  SSHLLvvi_8B, VPR128, VPR64>;
+def SXTLvv_4H  : NeonI_ext_len_alias<"sxtl", ".4s", ".4h",  SSHLLvvi_4H, VPR128, VPR64>;
+def SXTLvv_2S  : NeonI_ext_len_alias<"sxtl", ".2d", ".2s",  SSHLLvvi_2S, VPR128, VPR64>;
+def SXTL2vv_16B : NeonI_ext_len_alias<"sxtl2", ".8h", ".16b",  SSHLLvvi_16B, VPR128, VPR128>;
+def SXTL2vv_8H  : NeonI_ext_len_alias<"sxtl2", ".4s", ".8h",  SSHLLvvi_8H, VPR128, VPR128>;
+def SXTL2vv_4S  : NeonI_ext_len_alias<"sxtl2", ".2d", ".4s",  SSHLLvvi_4S, VPR128, VPR128>;
+
+// Unsigned integer lengthen (vector) is alias for USHLL Vd, Vn, #0
+// Unsigned integer lengthen (vector, second part) is alias for USHLL2 Vd, Vn, #0
+// FIXME: This is actually the preferred syntax but TableGen can't deal with
+// custom printing of aliases.
+def UXTLvv_8B  : NeonI_ext_len_alias<"uxtl", ".8h", ".8b",  USHLLvvi_8B, VPR128, VPR64>;
+def UXTLvv_4H  : NeonI_ext_len_alias<"uxtl", ".4s", ".4h",  USHLLvvi_4H, VPR128, VPR64>;
+def UXTLvv_2S  : NeonI_ext_len_alias<"uxtl", ".2d", ".2s",  USHLLvvi_2S, VPR128, VPR64>;
+def UXTL2vv_16B : NeonI_ext_len_alias<"uxtl2", ".8h", ".16b",  USHLLvvi_16B, VPR128, VPR128>;
+def UXTL2vv_8H  : NeonI_ext_len_alias<"uxtl2", ".4s", ".8h",  USHLLvvi_8H, VPR128, VPR128>;
+def UXTL2vv_4S  : NeonI_ext_len_alias<"uxtl2", ".2d", ".4s",  USHLLvvi_4S, VPR128, VPR128>;
+
+def : Pat<(v8i16 (anyext (v8i8 VPR64:$Rn))), (USHLLvvi_8B VPR64:$Rn, 0)>;
+def : Pat<(v4i32 (anyext (v4i16 VPR64:$Rn))), (USHLLvvi_4H VPR64:$Rn, 0)>;
+def : Pat<(v2i64 (anyext (v2i32 VPR64:$Rn))), (USHLLvvi_2S VPR64:$Rn, 0)>;
 
 // Rounding/Saturating shift
 class N2VShift_RQ<bit q, bit u, bits<5> opcode, string asmop, string T,
@@ -6136,6 +6225,20 @@ def : Pat<(v2f32 (bitconvert (v1i64  VPR64:$src))), (v2f32 VPR64:$src)>;
 def : Pat<(v2i32 (bitconvert (v1i64  VPR64:$src))), (v2i32 VPR64:$src)>;
 def : Pat<(v4i16 (bitconvert (v1i64  VPR64:$src))), (v4i16 VPR64:$src)>;
 def : Pat<(v8i8  (bitconvert (v1i64  VPR64:$src))), (v8i8 VPR64:$src)>;
+
+def : Pat<(v1i64 (bitconvert (v1f64  VPR64:$src))), (v1i64 VPR64:$src)>;
+def : Pat<(v2f32 (bitconvert (v1f64  VPR64:$src))), (v2f32 VPR64:$src)>;
+def : Pat<(v2i32 (bitconvert (v1f64  VPR64:$src))), (v2i32 VPR64:$src)>;
+def : Pat<(v4i16 (bitconvert (v1f64  VPR64:$src))), (v4i16 VPR64:$src)>;
+def : Pat<(v8i8 (bitconvert (v1f64  VPR64:$src))), (v8i8 VPR64:$src)>;
+def : Pat<(f64   (bitconvert (v1f64  VPR64:$src))), (f64 VPR64:$src)>;
+
+def : Pat<(v1f64 (bitconvert (v1i64  VPR64:$src))), (v1f64 VPR64:$src)>;
+def : Pat<(v1f64 (bitconvert (v2f32  VPR64:$src))), (v1f64 VPR64:$src)>;
+def : Pat<(v1f64 (bitconvert (v2i32  VPR64:$src))), (v1f64 VPR64:$src)>;
+def : Pat<(v1f64 (bitconvert (v4i16  VPR64:$src))), (v1f64 VPR64:$src)>;
+def : Pat<(v1f64 (bitconvert (v8i8  VPR64:$src))), (v1f64 VPR64:$src)>;
+def : Pat<(v1f64 (bitconvert (f64  VPR64:$src))), (v1f64 VPR64:$src)>;
 
 // ..and 128-bit vector bitcasts...
 
