@@ -110,13 +110,14 @@ public:
 // CHECK: [B2 (ENTRY)]
 // CHECK-NEXT:   Succs (1): B1
 // CHECK: [B1]
-// CHECK-NEXT:   1:  (CXXConstructExpr, class A)
-// CHECK-NEXT:   2: new A([B1.1])
-// CHECK-NEXT:   3: A *a = new A();
-// CHECK-NEXT:   4: a
-// CHECK-NEXT:   5: [B1.4] (ImplicitCastExpr, LValueToRValue, class A *)
-// CHECK-NEXT:   6: [B1.5]->~A() (Implicit destructor)
-// CHECK-NEXT:   7: delete [B1.5]
+// CHECK-NEXT:   1:  CFGNewAllocator(A *)
+// CHECK-NEXT:   2:  (CXXConstructExpr, class A)
+// CHECK-NEXT:   3: new A([B1.2])
+// CHECK-NEXT:   4: A *a = new A();
+// CHECK-NEXT:   5: a
+// CHECK-NEXT:   6: [B1.5] (ImplicitCastExpr, LValueToRValue, class A *)
+// CHECK-NEXT:   7: [B1.6]->~A() (Implicit destructor)
+// CHECK-NEXT:   8: delete [B1.6]
 // CHECK-NEXT:   Preds (1): B2
 // CHECK-NEXT:   Succs (1): B0
 // CHECK: [B0 (EXIT)]
@@ -130,13 +131,14 @@ void test_deletedtor() {
 // CHECK-NEXT:   Succs (1): B1
 // CHECK: [B1]
 // CHECK-NEXT:   1: 5
-// CHECK-NEXT:   2:  (CXXConstructExpr, class A)
-// CHECK-NEXT:   3: new A {{\[\[}}B1.1]]
-// CHECK-NEXT:   4: A *a = new A [5];
-// CHECK-NEXT:   5: a
-// CHECK-NEXT:   6: [B1.5] (ImplicitCastExpr, LValueToRValue, class A *)
-// CHECK-NEXT:   7: [B1.6]->~A() (Implicit destructor)
-// CHECK-NEXT:   8: delete [] [B1.6]
+// CHECK-NEXT:   2: CFGNewAllocator(A *)
+// CHECK-NEXT:   3:  (CXXConstructExpr, class A)
+// CHECK-NEXT:   4: new A {{\[\[}}B1.1]]
+// CHECK-NEXT:   5: A *a = new A [5];
+// CHECK-NEXT:   6: a
+// CHECK-NEXT:   7: [B1.6] (ImplicitCastExpr, LValueToRValue, class A *)
+// CHECK-NEXT:   8: [B1.7]->~A() (Implicit destructor)
+// CHECK-NEXT:   9: delete [] [B1.7]
 // CHECK-NEXT:   Preds (1): B2
 // CHECK-NEXT:   Succs (1): B0
 // CHECK: [B0 (EXIT)]
@@ -309,3 +311,93 @@ int test_enum_with_extension_default(enum MyEnum value) {
   }
   return x;
 }
+
+
+// CHECK:  [B1 (ENTRY)]
+// CHECK-NEXT:  Succs (1): B0
+// CHECK:  [B0 (EXIT)]
+// CHECK-NEXT:  Preds (1): B1
+// CHECK:  [B1 (ENTRY)]
+// CHECK-NEXT:  Succs (1): B0
+// CHECK:  [B0 (EXIT)]
+// CHECK-NEXT:  Preds (1): B1
+// CHECK:  [B2 (ENTRY)]
+// CHECK-NEXT:  Succs (1): B1
+// CHECK:  [B1]
+// CHECK-NEXT:  1: int buffer[16];
+// CHECK-NEXT:  2: buffer
+// CHECK-NEXT:  3: [B1.2] (ImplicitCastExpr, ArrayToPointerDecay, int *)
+// CHECK-NEXT:  4: [B1.3] (ImplicitCastExpr, BitCast, void *)
+// CHECK-NEXT:  5: CFGNewAllocator(MyClass *)
+// CHECK-NEXT:  6:  (CXXConstructExpr, class MyClass)
+// CHECK-NEXT:  7: new ([B1.4]) MyClass([B1.6])
+// CHECK-NEXT:  8: MyClass *obj = new (buffer) MyClass();
+// CHECK-NEXT:  Preds (1): B2
+// CHECK-NEXT:  Succs (1): B0
+// CHECK: [B0 (EXIT)]
+// CHECK-NEXT:  Preds (1): B1
+
+extern void* operator new (unsigned long sz, void* v);
+extern void* operator new[] (unsigned long sz, void* ptr);
+
+class MyClass {
+public:
+  MyClass() {}
+  ~MyClass() {}
+};
+
+void test_placement_new() {
+  int buffer[16];
+  MyClass* obj = new (buffer) MyClass();
+}
+
+// CHECK:  [B2 (ENTRY)]
+// CHECK-NEXT:  Succs (1): B1
+// CHECK: [B1]
+// CHECK-NEXT:  1: int buffer[16];
+// CHECK-NEXT:  2: buffer
+// CHECK-NEXT:  3: [B1.2] (ImplicitCastExpr, ArrayToPointerDecay, int *)
+// CHECK-NEXT:  4: [B1.3] (ImplicitCastExpr, BitCast, void *)
+// CHECK-NEXT:  5: 5
+// CHECK-NEXT:  6: CFGNewAllocator(MyClass *)
+// CHECK-NEXT:  7:  (CXXConstructExpr, class MyClass)
+// CHECK-NEXT:  8: new ([B1.4]) MyClass {{\[\[}}B1.5]]
+// CHECK-NEXT:  9: MyClass *obj = new (buffer) MyClass [5];
+// CHECK-NEXT:  Preds (1): B2
+// CHECK-NEXT:  Succs (1): B0
+// CHECK: [B0 (EXIT)]
+// CHECK-NEXT:  Preds (1): B1
+
+void test_placement_new_array() {
+  int buffer[16];
+  MyClass* obj = new (buffer) MyClass[5];
+}
+
+
+// For the helper function; see below.
+// CHECK: [B2 (ENTRY)]
+// CHECK-NEXT:   Succs (1): B1
+
+// CHECK: [B2 (ENTRY)]
+// CHECK-NEXT:   Succs (1): B1
+// CHECK: [B1]
+// CHECK-NEXT:   1: 0
+// CHECK-NEXT:   2: [B1.1] (ImplicitCastExpr, NullToPointer, PR18472_t)
+// CHECK-NEXT:   3: (PR18472_t)[B1.2] (CStyleCastExpr, NoOp, PR18472_t)
+// CHECK-NEXT:   4: CFGNewAllocator(int *)
+// CHECK-NEXT:   5: new (([B1.3])) int
+// CHECK-NEXT:   6: return [B1.5];
+// CHECK-NEXT:   Preds (1): B2
+// CHECK-NEXT:   Succs (1): B0
+// CHECK: [B0 (EXIT)]
+// CHECK-NEXT:   Preds (1): B1
+
+extern "C" typedef int *PR18472_t;
+void *operator new (unsigned long, PR18472_t);
+template <class T> T *PR18472() {
+  return new (((PR18472_t) 0)) T;
+}
+void PR18472_helper() {
+  PR18472<int>();
+}
+

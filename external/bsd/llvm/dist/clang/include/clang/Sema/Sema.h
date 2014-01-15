@@ -101,6 +101,7 @@ namespace clang {
   class DependentDiagnostic;
   class DesignatedInitExpr;
   class Designation;
+  class EnableIfAttr;
   class EnumConstantDecl;
   class Expr;
   class ExtVectorType;
@@ -152,7 +153,6 @@ namespace clang {
   class Stmt;
   class StringLiteral;
   class SwitchStmt;
-  class TargetAttributesSema;
   class TemplateArgument;
   class TemplateArgumentList;
   class TemplateArgumentLoc;
@@ -204,7 +204,6 @@ typedef std::pair<llvm::PointerUnion<const TemplateTypeParmType*, NamedDecl*>,
 class Sema {
   Sema(const Sema &) LLVM_DELETED_FUNCTION;
   void operator=(const Sema &) LLVM_DELETED_FUNCTION;
-  mutable const TargetAttributesSema* TheTargetAttributesSema;
 
   ///\brief Source of additional semantic information.
   ExternalSemaSource *ExternalSource;
@@ -875,7 +874,6 @@ public:
 
   DiagnosticsEngine &getDiagnostics() const { return Diags; }
   SourceManager &getSourceManager() const { return SourceMgr; }
-  const TargetAttributesSema &getTargetAttributesSema() const;
   Preprocessor &getPreprocessor() const { return PP; }
   ASTContext &getASTContext() const { return Context; }
   ASTConsumer &getASTConsumer() const { return Consumer; }
@@ -1643,7 +1641,8 @@ public:
 
   Decl *BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
                                     AccessSpecifier AS,
-                                    RecordDecl *Record);
+                                    RecordDecl *Record,
+                                    const PrintingPolicy &Policy);
 
   Decl *BuildMicrosoftCAnonymousStruct(Scope *S, DeclSpec &DS,
                                        RecordDecl *Record);
@@ -1668,7 +1667,8 @@ public:
                  MultiTemplateParamsArg TemplateParameterLists,
                  bool &OwnedDecl, bool &IsDependent,
                  SourceLocation ScopedEnumKWLoc,
-                 bool ScopedEnumUsesClassTag, TypeResult UnderlyingType);
+                 bool ScopedEnumUsesClassTag, TypeResult UnderlyingType,
+                 bool IsTypeSpecifier);
 
   Decl *ActOnTemplatedFriendTag(Scope *S, SourceLocation FriendLoc,
                                 unsigned TagSpec, SourceLocation TagLoc,
@@ -2201,6 +2201,11 @@ public:
   // Emit as a series of 'note's all template and non-templates
   // identified by the expression Expr
   void NoteAllOverloadCandidates(Expr* E, QualType DestType = QualType());
+
+  /// Check the enable_if expressions on the given function. Returns the first
+  /// failing attribute, or NULL if they were all successful.
+  EnableIfAttr *CheckEnableIf(FunctionDecl *Function, ArrayRef<Expr *> Args,
+                              bool MissingImplicitThis = false);
 
   // [PossiblyAFunctionType]  -->   [Return]
   // NonFunctionType --> NonFunctionType
@@ -2787,12 +2792,6 @@ public:
 
   const ObjCMethodDecl *SelectorsForTypoCorrection(Selector Sel,
                               QualType ObjectType=QualType());
-  
-  /// DiagnoseMismatchedMethodsInGlobalPool - This routine goes through list of
-  /// methods in global pool and issues diagnostic on identical selectors which
-  /// have mismathched types.
-  void DiagnoseMismatchedMethodsInGlobalPool();
-  
   /// LookupImplementedMethodInGlobalPool - Returns the method which has an
   /// implementation.
   ObjCMethodDecl *LookupImplementedMethodInGlobalPool(Selector Sel);
@@ -4778,6 +4777,7 @@ public:
                                          AttributeList *AttrList);
   void ActOnFinishCXXMemberDecls();
 
+  void ActOnReenterCXXMethodParameter(Scope *S, ParmVarDecl *Param);
   void ActOnReenterTemplateScope(Scope *S, Decl *Template);
   void ActOnReenterDeclaratorTemplateScope(Scope *S, DeclaratorDecl *D);
   void ActOnStartDelayedMemberDeclarations(Scope *S, Decl *Record);
@@ -5297,18 +5297,12 @@ public:
   /// \param Converted Will receive the converted, canonicalized template
   /// arguments.
   ///
-  ///
-  /// \param ExpansionIntoFixedList If non-NULL, will be set true to indicate
-  /// when the template arguments contain a pack expansion that is being
-  /// expanded into a fixed parameter list.
-  ///
-  /// \returns True if an error occurred, false otherwise.
+  /// \returns true if an error occurred, false otherwise.
   bool CheckTemplateArgumentList(TemplateDecl *Template,
                                  SourceLocation TemplateLoc,
                                  TemplateArgumentListInfo &TemplateArgs,
                                  bool PartialTemplateArgs,
-                           SmallVectorImpl<TemplateArgument> &Converted,
-                                 bool *ExpansionIntoFixedList = 0);
+                           SmallVectorImpl<TemplateArgument> &Converted);
 
   bool CheckTemplateTypeArgument(TemplateTypeParmDecl *Param,
                                  const TemplateArgumentLoc &Arg,

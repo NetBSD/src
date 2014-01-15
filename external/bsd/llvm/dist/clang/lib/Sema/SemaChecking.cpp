@@ -32,9 +32,9 @@
 #include "clang/Sema/Lookup.h"
 #include "clang/Sema/ScopeInfo.h"
 #include "clang/Sema/Sema.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallBitVector.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/ConvertUTF.h"
 #include "llvm/Support/raw_ostream.h"
 #include <limits>
@@ -4970,9 +4970,11 @@ static void DiagnoseOutOfRangeComparison(Sema &S, BinaryOperator *E,
   else
     OS << Value;
 
-  S.Diag(E->getOperatorLoc(), diag::warn_out_of_range_compare)
-      << OS.str() << OtherT << IsTrue
-      << E->getLHS()->getSourceRange() << E->getRHS()->getSourceRange();
+  S.DiagRuntimeBehavior(E->getOperatorLoc(), E,
+                        S.PDiag(diag::warn_out_of_range_compare)
+                          << OS.str() << OtherT << IsTrue
+                          << E->getLHS()->getSourceRange()
+                          << E->getRHS()->getSourceRange());
 }
 
 /// Analyze the operands of the given comparison.  Implements the
@@ -6239,12 +6241,23 @@ bool Sema::CheckParmsForFunctionDef(ParmVarDecl *const *P,
 
     // MSVC destroys objects passed by value in the callee.  Therefore a
     // function definition which takes such a parameter must be able to call the
-    // object's destructor.
+    // object's destructor.  However, we don't perform any direct access check
+    // on the dtor.
     if (getLangOpts().CPlusPlus && Context.getTargetInfo()
                                        .getCXXABI()
                                        .areArgsDestroyedLeftToRightInCallee()) {
-      if (const RecordType *RT = Param->getType()->getAs<RecordType>())
-        FinalizeVarWithDestructor(Param, RT);
+      if (!Param->isInvalidDecl()) {
+        if (const RecordType *RT = Param->getType()->getAs<RecordType>()) {
+          CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(RT->getDecl());
+          if (!ClassDecl->isInvalidDecl() &&
+              !ClassDecl->hasIrrelevantDestructor() &&
+              !ClassDecl->isDependentContext()) {
+            CXXDestructorDecl *Destructor = LookupDestructor(ClassDecl);
+            MarkFunctionReferenced(Param->getLocation(), Destructor);
+            DiagnoseUseOfDecl(Destructor, Param->getLocation());
+          }
+        }
+      }
     }
   }
 

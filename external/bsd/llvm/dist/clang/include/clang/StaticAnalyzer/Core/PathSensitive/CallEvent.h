@@ -379,7 +379,7 @@ public:
 
   // For debugging purposes only
   void dump(raw_ostream &Out) const;
-  LLVM_ATTRIBUTE_USED void dump() const;
+  void dump() const;
 };
 
 
@@ -884,6 +884,8 @@ public:
   }
 
   virtual RuntimeDefinition getRuntimeDefinition() const;
+
+  virtual bool argumentsMayEscape() const;
 
   virtual void getInitialStackFrameContents(const StackFrameContext *CalleeCtx,
                                             BindingsTy &Bindings) const;

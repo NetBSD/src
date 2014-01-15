@@ -12,10 +12,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "CGBlocks.h"
+#include "CGCXXABI.h"
 #include "CGDebugInfo.h"
 #include "CGRecordLayout.h"
 #include "CodeGenFunction.h"
-#include "CGCXXABI.h"
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/EvaluatedExprVisitor.h"
@@ -698,6 +698,10 @@ static bool IsConstructorDelegationValid(const CXXConstructorDecl *Ctor) {
 void CodeGenFunction::EmitConstructorBody(FunctionArgList &Args) {
   const CXXConstructorDecl *Ctor = cast<CXXConstructorDecl>(CurGD.getDecl());
   CXXCtorType CtorType = CurGD.getCtorType();
+
+  assert((CGM.getTarget().getCXXABI().hasConstructorVariants() ||
+          CtorType == Ctor_Complete) &&
+         "can only generate complete ctor for this ABI");
 
   // Before we go any further, try the complete->base constructor
   // delegation optimization.

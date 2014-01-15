@@ -571,6 +571,7 @@ getLocationForCaller(const StackFrameContext *SFC,
     return PathDiagnosticLocation::create(CallerInfo->getDecl(), SM);
   }
   case CFGElement::TemporaryDtor:
+  case CFGElement::NewAllocator:
     llvm_unreachable("not yet implemented!");
   }
 
@@ -739,8 +740,12 @@ PathDiagnosticLocation
   assert(N && "Cannot create a location with a null node.");
   const Stmt *S = getStmt(N);
 
-  if (!S)
+  if (!S) {
+    // If this is an implicit call, return the implicit call point location.
+    if (Optional<PreImplicitCall> PIE = N->getLocationAs<PreImplicitCall>())
+      return PathDiagnosticLocation(PIE->getLocation(), SM);
     S = getNextStmt(N);
+  }
 
   if (S) {
     ProgramPoint P = N->getLocation();
