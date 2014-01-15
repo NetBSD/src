@@ -1,4 +1,4 @@
-/* $NetBSD: pci_bwx_bus_mem_chipdep.c,v 1.26 2014/01/13 15:48:09 tsutsui Exp $ */
+/* $NetBSD: pci_bwx_bus_mem_chipdep.c,v 1.27 2014/01/15 14:27:49 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: pci_bwx_bus_mem_chipdep.c,v 1.26 2014/01/13 15:48:09 tsutsui Exp $");
+__KERNEL_RCSID(1, "$NetBSD: pci_bwx_bus_mem_chipdep.c,v 1.27 2014/01/15 14:27:49 tsutsui Exp $");
 
 #include <sys/extent.h>
 
@@ -499,10 +499,8 @@ __C(CHIP,_mem_mmap)(
 	int prot,
 	int flags)
 {
-	bus_addr_t memaddr;
 
-	memaddr = CHIP_MEM_SYS_START(v) + addr + off;
-	return (alpha_btop(ALPHA_K0SEG_TO_PHYS(memaddr)));
+	return (alpha_btop(CHIP_MEM_SYS_START(v) + addr + off));
 }
 
 static inline void
