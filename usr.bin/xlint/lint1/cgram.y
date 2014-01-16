@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.55 2013/04/19 17:43:05 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.56 2014/01/16 00:43:43 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.55 2013/04/19 17:43:05 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.56 2014/01/16 00:43:43 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1171,6 +1171,7 @@ init_expr:
 		mkinit($1);
 	  }
 	| init_by_name init_expr	%prec T_COMMA
+	| init_lbrace init_rbrace
 	| init_lbrace init_expr_list init_rbrace
 	| init_lbrace init_expr_list T_COMMA init_rbrace
 	| error
