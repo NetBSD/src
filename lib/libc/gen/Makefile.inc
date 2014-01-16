@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.185 2012/11/03 19:39:21 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.186 2014/01/16 17:21:38 christos Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -8,7 +8,7 @@ SRCS+= 	_errno.c alarm.c alphasort.c arc4random.c assert.c basename.c clock.c \
 	closedir.c closefrom.c \
 	confstr.c ctermid.c ctype_.c daemon.c \
 	dehumanize_number.c devname.c dirname.c disklabel.c err.c errx.c \
-	errlist.c errno.c execl.c execle.c execlp.c execv.c execvp.c \
+	errc.c errlist.c errno.c execl.c execle.c execlp.c execv.c execvp.c \
 	extattr.c fmtcheck.c fmtmsg.c fnmatch.c fstab.c ftok.c \
 	fts.c ftw.c getbsize.c getcap.c getcwd.c \
 	getdevmajor.c getdomainname.c getgrent.c \
@@ -32,11 +32,12 @@ SRCS+= 	_errno.c alarm.c alphasort.c arc4random.c assert.c basename.c clock.c \
 	times.c toascii.c tolower_.c ttyname.c ttyslot.c toupper_.c ualarm.c \
 	ulimit.c uname.c unvis.c usleep.c utime.c utimens.c utmp.c \
 	utmpx.c valloc.c vis.c wait.c wait3.c waitpid.c warn.c warnx.c \
-	vwarn.c vwarnx.c verr.c verrx.c wordexp.c
+	warnc.c vwarn.c vwarnx.c vwarnc.c verr.c verrx.c verrc.c wordexp.c
 
 # indirect reference stubs, to be removed soon.
-SRCS+=	_err.c _errx.c \
-	_sysconf.c _verr.c _verrx.c _vwarn.c _vwarnx.c _warn.c _warnx.c
+SRCS+=	_err.c _errx.c _errc.c \
+	_sysconf.c _verr.c _verrx.c _verrc.c _vwarn.c _vwarnx.c _vwarnc.c \
+	_warn.c _warnx.c _warnc.c
 
 # uses alloca
 COPTS.execvp.c = -Wno-stack-protector
@@ -96,7 +97,8 @@ MLINKS+=endutxent.3 getutxent.3 endutxent.3 getutxid.3 \
 	endutxent.3 getutxline.3 endutxent.3 pututxline.3 \
 	endutxent.3 setutxent.3
 MLINKS+=err.3 verr.3 err.3 errx.3 err.3 verrx.3 err.3 warn.3 err.3 vwarn.3 \
-        err.3 warnx.3 err.3 vwarnx.3
+        err.3 warnx.3 err.3 vwarnx.3 err.3 errc.3 err.3 verrc.3 err.3 warnc.3 \
+	err.3 vwarnc.3
 MLINKS+=exec.3 execl.3 exec.3 execle.3 exec.3 execlp.3 exec.3 execv.3 \
 	exec.3 execvp.3 exec.3 exect.3
 MLINKS+=extattr_namespace_to_string.3 extattr_string_to_namespace.3 \
