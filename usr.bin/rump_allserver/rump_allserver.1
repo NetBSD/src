@@ -1,4 +1,4 @@
-.\"	$NetBSD: rump_allserver.1,v 1.20 2014/01/16 00:31:39 pooka Exp $
+.\"	$NetBSD: rump_allserver.1,v 1.21 2014/01/16 00:32:48 pooka Exp $
 .\"
 .\" Copyright (c) 2010 Antti Kantee.  All rights reserved.
 .\"
@@ -70,7 +70,7 @@ host.
 .It Fl d Ar drivespec
 The argument
 .Ar drivespec
-maps a host file in the rump fs namespace.
+maps a host file in the rump kernel fs namespace.
 The string
 .Ar drivespec
 must be of comma-separated
@@ -78,7 +78,7 @@ must be of comma-separated
 format and must contain the following tokens:
 .Bl -tag -width hostpath1234
 .It Ar key
-Block device path in rump namespace.
+Block device path in rump kernel namespace.
 This must be specified according to the rules for a key in
 .Xr rump_etfs 3 .
 .It Ar hostpath
@@ -149,7 +149,7 @@ In case
 .Ar library
 provides a kernel module, it will appear as a builtin module in the
 rump kernel.
-Any rump component present in
+Any rump kernel component present in
 .Ar library
 will also be initialized.
 .Pp
