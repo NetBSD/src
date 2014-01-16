@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.117 2014/01/16 13:07:07 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.118 2014/01/16 13:19:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.117 2014/01/16 13:07:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.118 2014/01/16 13:19:36 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -861,6 +861,13 @@ cpu_model_cpuid(int modelno)
 	case HPPA_BOARD_HPE25:
 	case HPPA_BOARD_HPE35:
 	case HPPA_BOARD_HPE45:
+	case HPPA_BOARD_HP715_80:
+	case HPPA_BOARD_HP715_64:
+	case HPPA_BOARD_HP715_100:
+	case HPPA_BOARD_HP715_100XC:
+	case HPPA_BOARD_HP715_100L:
+	case HPPA_BOARD_HP715_120L:
+	case HPPA_BOARD_HP715_80M:
 		return hpcxl;
 
 	case HPPA_BOARD_HP735_99:
