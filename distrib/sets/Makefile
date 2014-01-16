@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.90 2013/10/30 15:17:01 apb Exp $
+#	$NetBSD: Makefile,v 1.91 2014/01/16 01:15:33 christos Exp $
 
 # Experimental RCS METALOG versioning
 # (Needs host's rcs(1) commands)
@@ -336,4 +336,4 @@ sets: .PHONY maketars .WAIT makesums
 sourcesets: .PHONY makesrctars
 	@true
 
-.include <bsd.sys.mk>
+.include <bsd.files.mk>

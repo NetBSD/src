@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.params,v 1.7 2013/11/01 11:09:05 apb Exp $
+#	$NetBSD: Makefile.params,v 1.8 2014/01/16 01:15:33 christos Exp $
 #
 # Makefile fragment for printing build parameters.
 #
@@ -36,7 +36,6 @@
 #
 
 .include <bsd.own.mk>	# for some variables
-.include <bsd.sys.mk>	# for more variables
 
 RELEASEVARS=	BSDOBJDIR BSDSRCDIR BUILDID \
 		DESTDIR DISTRIBVER EXTERNAL_TOOLCHAIN HAVE_GCC HAVE_GDB \

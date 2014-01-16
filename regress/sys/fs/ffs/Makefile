@@ -1,4 +1,4 @@
-##	$NetBSD: Makefile,v 1.6 2004/06/30 03:26:27 jmc Exp $
+##	$NetBSD: Makefile,v 1.7 2014/01/16 01:15:33 christos Exp $
 ##  Notes:
 ##    This set of tests creates a dummy directory tree in /tmp and
 ##    populates it with several files.  The test requires around 1100
@@ -15,7 +15,7 @@
 ##
 ##    This is derived from work done by Brian Grayson, submitted in PR 6706.
 
-.include <bsd.sys.mk>		# for HOST_SH
+.include <bsd.own.mk>
 
 TMPL=/tmp/ffstemplate
 TMPMP=/tmp/ffsregresstest_mount

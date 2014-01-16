@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2013/10/26 08:23:38 mbalmer Exp $
+#	$NetBSD: Makefile,v 1.32 2014/01/16 01:15:33 christos Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 4/16/94
 
 .include <bsd.own.mk>
@@ -24,4 +24,3 @@ makedb:
 .endif
 
 .include <bsd.subdir.mk>
-.include <bsd.sys.mk>

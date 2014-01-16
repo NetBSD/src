@@ -1,4 +1,4 @@
-# $NetBSD: mkvars.mk,v 1.13 2013/10/14 16:00:16 joerg Exp $
+# $NetBSD: mkvars.mk,v 1.14 2014/01/16 01:15:33 christos Exp $
 
 MKEXTRAVARS= \
 	MACHINE \
@@ -35,7 +35,6 @@ MKEXTRAVARS= \
 #####
 
 .include <bsd.own.mk>
-.include <bsd.sys.mk>
 .include <bsd.endian.mk>
 
 .if (${MKMAN} == "no" || empty(MANINSTALL:Mmaninstall))
@@ -88,3 +87,5 @@ mksolaris: .PHONY
 .else
 	@echo MKSOLARIS="no"
 .endif
+
+.include <bsd.files.mk>
