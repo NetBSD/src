@@ -1,4 +1,4 @@
-/* $NetBSD: h_xcbcmac.c,v 1.3 2014/01/16 22:06:45 pgoyette Exp $ */
+/* $NetBSD: h_xcbcmac.c,v 1.4 2014/01/16 23:56:04 joerg Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@ int
 main(void)
 {
 	int fd, res;
-	unsigned int i;
+	size_t i;
 	struct session_op cs;
 	struct crypt_op co;
 	unsigned char buf[16];
@@ -89,7 +89,7 @@ main(void)
 	if (res < 0)
 		err(1, "CIOCGSESSION");
 
-	for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++) {
+	for (i = 0; i < __arraycount(tests); i++) {
 		memset(&co, 0, sizeof(co));
 		memset(buf, 0, sizeof(buf));
 		if (tests[i].len == sizeof(plaintx))
@@ -101,9 +101,9 @@ main(void)
 		co.mac = buf;
 		res = ioctl(fd, CIOCCRYPT, &co);
 		if (res < 0)
-			err(1, "CIOCCRYPT test %d", i);
+			err(1, "CIOCCRYPT test %zu", i);
 		if (memcmp(buf, &tests[i].mac, sizeof(tests[i].mac)))
-			errx(1, "verification failed test %d", i);
+			errx(1, "verification failed test %zu", i);
 	}
 	return 0;
 }
