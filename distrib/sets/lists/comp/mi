@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1874 2014/01/14 17:18:43 pgoyette Exp $
+#	$NetBSD: mi,v 1.1875 2014/01/16 17:30:33 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6120,6 +6120,7 @@
 ./usr/share/man/cat3/erfcf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/erff.0			comp-c-catman		.cat
 ./usr/share/man/cat3/err.0			comp-c-catman		.cat
+./usr/share/man/cat3/errc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/error_message.0		comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/error_table_name.0		comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/errx.0			comp-c-catman		.cat
@@ -9162,6 +9163,7 @@
 ./usr/share/man/cat3/vasprintf.0		comp-c-catman		.cat
 ./usr/share/man/cat3/vdprintf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/verr.0			comp-c-catman		.cat
+./usr/share/man/cat3/verrc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/verrx.0			comp-c-catman		.cat
 ./usr/share/man/cat3/vfprintf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/vfscanf.0			comp-c-catman		.cat
@@ -9185,6 +9187,7 @@
 ./usr/share/man/cat3/vsyslogp_r.0		comp-c-catman		.cat
 ./usr/share/man/cat3/vtimes.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/vwarn.0			comp-c-catman		.cat
+./usr/share/man/cat3/vwarnc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/vwarnx.0			comp-c-catman		.cat
 ./usr/share/man/cat3/vwprintf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/vwscanf.0			comp-c-catman		.cat
@@ -9194,6 +9197,7 @@
 ./usr/share/man/cat3/waddnstr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/waddstr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/warn.0			comp-c-catman		.cat
+./usr/share/man/cat3/warnc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/warnx.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wattr_get.0		comp-c-catman		.cat
 ./usr/share/man/cat3/wattr_off.0		comp-c-catman		.cat
@@ -12704,6 +12708,7 @@
 ./usr/share/man/html3/erfcf.html		comp-c-htmlman		html
 ./usr/share/man/html3/erff.html			comp-c-htmlman		html
 ./usr/share/man/html3/err.html			comp-c-htmlman		html
+./usr/share/man/html3/errc.html			comp-c-htmlman		html
 ./usr/share/man/html3/error_message.html	comp-krb5-htmlman	kerberos,html
 ./usr/share/man/html3/error_table_name.html	comp-krb5-htmlman	kerberos,html
 ./usr/share/man/html3/errx.html			comp-c-htmlman		html
@@ -15665,6 +15670,7 @@
 ./usr/share/man/html3/vasprintf.html		comp-c-htmlman		html
 ./usr/share/man/html3/vdprintf.html		comp-c-htmlman		html
 ./usr/share/man/html3/verr.html			comp-c-htmlman		html
+./usr/share/man/html3/verrc.html		comp-c-htmlman		html
 ./usr/share/man/html3/verrx.html		comp-c-htmlman		html
 ./usr/share/man/html3/vfprintf.html		comp-c-htmlman		html
 ./usr/share/man/html3/vfscanf.html		comp-c-htmlman		html
@@ -15685,6 +15691,7 @@
 ./usr/share/man/html3/vsyslogp.html		comp-c-htmlman		html
 ./usr/share/man/html3/vsyslogp_r.html		comp-c-htmlman		html
 ./usr/share/man/html3/vwarn.html		comp-c-htmlman		html
+./usr/share/man/html3/vwarnc.html		comp-c-htmlman		html
 ./usr/share/man/html3/vwarnx.html		comp-c-htmlman		html
 ./usr/share/man/html3/vwprintf.html		comp-c-htmlman		html
 ./usr/share/man/html3/vwscanf.html		comp-c-htmlman		html
@@ -15694,6 +15701,7 @@
 ./usr/share/man/html3/waddnstr.html		comp-c-htmlman		html
 ./usr/share/man/html3/waddstr.html		comp-c-htmlman		html
 ./usr/share/man/html3/warn.html			comp-c-htmlman		html
+./usr/share/man/html3/warnc.html		comp-c-htmlman		html
 ./usr/share/man/html3/warnx.html		comp-c-htmlman		html
 ./usr/share/man/html3/wattr_get.html		comp-c-htmlman		html
 ./usr/share/man/html3/wattr_off.html		comp-c-htmlman		html
@@ -19200,6 +19208,7 @@
 ./usr/share/man/man3/erfcf.3			comp-c-man		.man
 ./usr/share/man/man3/erff.3			comp-c-man		.man
 ./usr/share/man/man3/err.3			comp-c-man		.man
+./usr/share/man/man3/errc.3			comp-c-man		.man
 ./usr/share/man/man3/error_message.3		comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/error_table_name.3		comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/errx.3			comp-c-man		.man
@@ -22238,6 +22247,7 @@
 ./usr/share/man/man3/vasprintf.3		comp-c-man		.man
 ./usr/share/man/man3/vdprintf.3			comp-c-man		.man
 ./usr/share/man/man3/verr.3			comp-c-man		.man
+./usr/share/man/man3/verrc.3			comp-c-man		.man
 ./usr/share/man/man3/verrx.3			comp-c-man		.man
 ./usr/share/man/man3/vfprintf.3			comp-c-man		.man
 ./usr/share/man/man3/vfscanf.3			comp-c-man		.man
@@ -22261,6 +22271,7 @@
 ./usr/share/man/man3/vsyslogp_r.3		comp-c-man		.man
 ./usr/share/man/man3/vtimes.3			comp-obsolete		obsolete
 ./usr/share/man/man3/vwarn.3			comp-c-man		.man
+./usr/share/man/man3/vwarnc.3			comp-c-man		.man
 ./usr/share/man/man3/vwarnx.3			comp-c-man		.man
 ./usr/share/man/man3/vwprintf.3			comp-c-man		.man
 ./usr/share/man/man3/vwscanf.3			comp-c-man		.man
@@ -22270,6 +22281,7 @@
 ./usr/share/man/man3/waddnstr.3			comp-c-man		.man
 ./usr/share/man/man3/waddstr.3			comp-c-man		.man
 ./usr/share/man/man3/warn.3			comp-c-man		.man
+./usr/share/man/man3/warnc.3			comp-c-man		.man
 ./usr/share/man/man3/warnx.3			comp-c-man		.man
 ./usr/share/man/man3/wattr_get.3		comp-c-man		.man
 ./usr/share/man/man3/wattr_off.3		comp-c-man		.man
