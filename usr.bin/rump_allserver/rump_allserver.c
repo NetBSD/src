@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_allserver.c,v 1.34 2014/01/16 00:31:39 pooka Exp $	*/
+/*	$NetBSD: rump_allserver.c,v 1.35 2014/01/16 02:20:50 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include <rump/rumpuser_port.h>
 
 #ifndef lint
-__RCSID("$NetBSD: rump_allserver.c,v 1.34 2014/01/16 00:31:39 pooka Exp $");
+__RCSID("$NetBSD: rump_allserver.c,v 1.35 2014/01/16 02:20:50 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -148,7 +148,8 @@ main(int argc, char *argv[])
 	int ch, sflag, onthepath;
 	unsigned i;
 	char **modarray = NULL, **libarray = NULL;
-	unsigned nmods = 0, curmod = 0, nlibs = 0, curlib = 0, libidx, liblast;
+	unsigned nmods = 0, curmod = 0, nlibs = 0, curlib = 0, libidx;
+	unsigned liblast = -1; /* XXXgcc */
 
 #ifdef PLATFORM_HAS_SETGETPROGNAME
 	setprogname(argv[0]);
