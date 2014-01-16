@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.1.1.6 2013/12/01 19:28:17 christos Exp $	*/
+/*	$NetBSD: file.c,v 1.2 2014/01/16 23:35:54 joerg Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -37,7 +37,7 @@
 #if 0
 FILE_RCSID("@(#)$File: file.c,v 1.152 2013/06/26 14:46:54 christos Exp $")
 #else
-__RCSID("$NetBSD: file.c,v 1.1.1.6 2013/12/01 19:28:17 christos Exp $");
+__RCSID("$NetBSD: file.c,v 1.2 2014/01/16 23:35:54 joerg Exp $");
 #endif
 #endif	/* lint */
 
@@ -127,9 +127,9 @@ private const struct {
 
 private char *progname;		/* used throughout 		*/
 
-private void usage(void);
+private void usage(void) __dead;
 private void docprint(const char *);
-private void help(void);
+private void help(void) __dead;
 
 private int unwrap(struct magic_set *, const char *);
 private int process(struct magic_set *ms, const char *, int);
