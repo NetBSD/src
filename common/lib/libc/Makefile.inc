@@ -1,4 +1,6 @@
-# $NetBSD: Makefile.inc,v 1.13 2014/01/15 20:58:09 joerg Exp $
+# $NetBSD: Makefile.inc,v 1.14 2014/01/16 11:43:49 joerg Exp $
+
+.include <bsd.own.mk>
 
 COMMON_DIR:=${.PARSEDIR}
 COMMON_CODEDIRS=atomic gen gmon inet md net stdlib string sys
