@@ -1,4 +1,4 @@
-.\"	$NetBSD: rump_allserver.1,v 1.19 2011/03/04 09:13:23 pooka Exp $
+.\"	$NetBSD: rump_allserver.1,v 1.20 2014/01/16 00:31:39 pooka Exp $
 .\"
 .\" Copyright (c) 2010 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd February 21, 2011
+.Dd January 15, 2014
 .Dt RUMP_SERVER 1
 .Os
 .Sh NAME
@@ -157,9 +157,13 @@ The argument
 .Ar library
 can contain a full path or a filename, in which case the standard
 dynamic library search path will be used.
-Libraries are loaded in the order they are given.
-Dependencies are not autoloaded, and the order must be specified
-correctly.
+By default, lazy resolution is used, and may result in a runtime
+error due to missing components.
+To test a configuration, run
+.Nm
+with
+.Ev LD_BIND_NOW=1
+(see examples).
 .It Fl m Ar module
 Load and link a kernel module after the rump kernel is initialized.
 For this to work, the rump kernel must include the vfs faction,
@@ -210,9 +214,14 @@ Start a server which listens on INADDR_ANY port 3755
 $ rump_server tcp://0:3755/
 .Ed
 .Pp
+Test that a configuration contains all of the necessary components:
+.Bd -literal -offset indent
+$ env LD_BIND_NOW=1 rump_server -lrumpvfs -lrumpfs_ffs unix://tsock
+.Ed
+.Pp
 Start a FFS server with a 16MB kernel memory limit.
 .Bd -literal -offset indent
-$ rump_server -lrumpvfs -lrumpfs_ffs -r 16m unix:///tmp/ffs_server
+$ rump_server -lrumpfs_ffs [...] -r 16m unix://ffs
 .Ed
 .Sh SEE ALSO
 .Xr rump.halt 1 ,
