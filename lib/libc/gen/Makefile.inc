@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.186 2014/01/16 17:21:38 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.187 2014/01/16 20:31:42 christos Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -33,11 +33,6 @@ SRCS+= 	_errno.c alarm.c alphasort.c arc4random.c assert.c basename.c clock.c \
 	ulimit.c uname.c unvis.c usleep.c utime.c utimens.c utmp.c \
 	utmpx.c valloc.c vis.c wait.c wait3.c waitpid.c warn.c warnx.c \
 	warnc.c vwarn.c vwarnx.c vwarnc.c verr.c verrx.c verrc.c wordexp.c
-
-# indirect reference stubs, to be removed soon.
-SRCS+=	_err.c _errx.c _errc.c \
-	_sysconf.c _verr.c _verrx.c _verrc.c _vwarn.c _vwarnx.c _vwarnc.c \
-	_warn.c _warnx.c _warnc.c
 
 # uses alloca
 COPTS.execvp.c = -Wno-stack-protector
