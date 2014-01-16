@@ -38,7 +38,7 @@ die ()
 usage ()
 {
 
-	die "Usage: $0 [-v] [-L libdir] -lrump_component [...]"
+	die "Usage: $0 [-hv] [-L libdir] -lrump_component [...]"
 }
 
 unset FIRSTLIB
