@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.325 2014/01/14 18:51:45 christos Exp $
+#	$NetBSD: bsd.README,v 1.326 2014/01/16 01:19:46 christos Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1750,11 +1750,81 @@ SUBDIR		For all of the directories listed in ${SUBDIR}, the
 		and other special sources.
 
 
+=-=-=-=-=   bsd.x11.mk   =-=-=-=-=
+
+The include file <bsd.x11.mk> contains parameters and targets for
+cross-building X11 from ${X11SRCDIR.xc} / ${X11MITSRCDIR.*}.
+It should be included after the general Makefile contents but before
+the include files such as <bsd.prog.mk> and <bsd.lib.mk>.
+
+It provides the following targets:
+	.man.1 .man.3 .man.4 .man.5 .man.7:
+		If ${MAN} or ${PROG} is set and ${MKMAN} != "no",
+		these rules convert from X11's manual page source
+		into an mdoc.old source file.
+
+It sets the following variables:
+
+BINDIR			Set to ${X11BINDIR}.
+			To override, define after including <bsd.x11.mk>
+
+LIBDIR			Set to ${X11USRLIBDIR}.
+			To override, define after including <bsd.x11.mk>
+
+MANDIR			Set to ${X11MANDIR}.
+			To override, define after including <bsd.x11.mk>
+
+CPPFLAGS		Appended with definitions to include from
+			${DESTDIR}${X11INCDIR}
+
+LDFLAGS			Appended with definitions to link from
+			${DESTDIR}${X11USRLIBDIR}
+
+X11FLAGS.CONNECTION	Equivalent to X11's CONNECTION_FLAGS.
+
+X11FLAGS.EXTENSION	Equivalent to X11's EXT_DEFINES.
+
+X11FLAGS.LOADABLE	Equivalent to X11's LOADABLE.
+
+X11FLAGS.OS_DEFINES	Equivalent to X11's OS_DEFINES.
+
+X11FLAGS.SERVER		Equivalent to X11's ServerDefines.
+
+X11FLAGS.THREADLIB	Equivalent to X11's THREADS_DEFINES for libraries.
+
+X11FLAGS.THREADS	Equivalent to X11's THREADS_DEFINES.
+
+X11FLAGS.VERSION	cpp(1) definitions of OSMAJORVERSION and OSMINORVERSION.
+
+X11FLAGS.DIX		Equivalent to X11's DIX_DEFINES.
+
+X11TOOL_UNXCOMM		Commandline to convert `XCOMM' comments to `#'
+
+It uses the following variables:
+
+APPDEFS			List of app-default files to install.
+
+CPPSCRIPTS		List of files/scripts to run through cpp(1)
+			and then ${X11TOOL_UNXCOMM}.  The source files
+			have a `.cpp' suffix, the generated files do not.
+
+CPPSCRIPTFLAGS		Additional flags to cpp(1) when building CPPSCRIPTS.
+
+CPPSCRIPTFLAGS_<fn>	Additional flags to cpp(1) when building CPPSCRIPT <fn>.
+
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+The following files are described here for completion, but they are not
+supposed to be included directly from other Makefiles; they are used
+internally by other system files.
+
 =-=-=-=-=   bsd.sys.mk   =-=-=-=-=
 
-The include file <bsd.sys.mk> is used by <bsd.prog.mk> and
-<bsd.lib.mk>.  It contains overrides that are used when building
-the NetBSD source tree.
+The include file <bsd.sys.mk> is used by other system mk files and
+it is not intended to be included standalone. It contains rules and
+system build variables. It requires bsd.own.mk to be included first.
+It contains overrides that are used when building the NetBSD source tree.
 
 The following variables control how various files are compiled/built.
 (Note that these may be overridden in <bsd.own.mk> if USETOOLS == "yes"):
@@ -1875,67 +1945,53 @@ WARNS		Crank up compiler warning options; the distinct levels are:
 			WARNS=4
 			WARNS=5
 
-=-=-=-=-=   bsd.x11.mk   =-=-=-=-=
+=-=-=-=-=   bsd.host.mk  =-=-=-=-=
 
-The include file <bsd.x11.mk> contains parameters and targets for
-cross-building X11 from ${X11SRCDIR.xc} / ${X11MITSRCDIR.*}.
-It should be included after the general Makefile contents but before
-the include files such as <bsd.prog.mk> and <bsd.lib.mk>.
+This file is automatically included from bsd.own.mk. It contains settings
+for all the HOST_* variables that are used in host programs and libraries.
 
-It provides the following targets:
-	.man.1 .man.3 .man.4 .man.5 .man.7:
-		If ${MAN} or ${PROG} is set and ${MKMAN} != "no",
-		these rules convert from X11's manual page source
-		into an mdoc.old source file.
+HOST_AR			The host archive processing command
 
-It sets the following variables:
+HOST_CC			The host c compiler
 
-BINDIR			Set to ${X11BINDIR}.
-			To override, define after including <bsd.x11.mk>
+HOST_CFLAGS		The host c compiler flags
 
-LIBDIR			Set to ${X11USRLIBDIR}.
-			To override, define after including <bsd.x11.mk>
+HOST_COMPILE.c		The host c compiler line with flags
 
-MANDIR			Set to ${X11MANDIR}.
-			To override, define after including <bsd.x11.mk>
+HOST_COMPILE.cc		The host c++ compiler line with flags
 
-CPPFLAGS		Appended with definitions to include from
-			${DESTDIR}${X11INCDIR}
+HOST_CPP		The host c pre-processor
 
-LDFLAGS			Appended with definitions to link from
-			${DESTDIR}${X11USRLIBDIR}
+HOST_CPPFLAGS		The cost c pre-processor flags
 
-X11FLAGS.CONNECTION	Equivalent to X11's CONNECTION_FLAGS.
+HOST_CXX		The host c++ compiler
 
-X11FLAGS.EXTENSION	Equivalent to X11's EXT_DEFINES.
+HOST_CXXFLAGS		The host c++ compiler flags
 
-X11FLAGS.LOADABLE	Equivalent to X11's LOADABLE.
+HOST_INSTALL_DIR	The host command to install a directory
 
-X11FLAGS.OS_DEFINES	Equivalent to X11's OS_DEFINES.
+HOST_INSTALL_FILE	The host command to install a file
 
-X11FLAGS.SERVER		Equivalent to X11's ServerDefines.
+HOST_INSTALL_SYMLINK	The host command to install a symlink
 
-X11FLAGS.THREADLIB	Equivalent to X11's THREADS_DEFINES for libraries.
+HOST_LD			The host linker command
 
-X11FLAGS.THREADS	Equivalent to X11's THREADS_DEFINES.
+HOST_LDFLAGS		The host linker flags
 
-X11FLAGS.VERSION	cpp(1) definitions of OSMAJORVERSION and OSMINORVERSION.
+HOST_LINK.c		The host c linker line with flags
 
-X11FLAGS.DIX		Equivalent to X11's DIX_DEFINES.
+HOST_LINK.cc		The host c++ linker line with flags
 
-X11TOOL_UNXCOMM		Commandline to convert `XCOMM' comments to `#'
+HOST_LN			The host command to link two files
 
-It uses the following variables:
+HOST_MKDEP		The host command to create dependencies for c programs
 
-APPDEFS			List of app-default files to install.
+HOST_MKDEPCXX		The host command to create dependencies for c++ programs
 
-CPPSCRIPTS		List of files/scripts to run through cpp(1)
-			and then ${X11TOOL_UNXCOMM}.  The source files
-			have a `.cpp' suffix, the generated files do not.
+HOST_OSTYPE		The host OSNAME-RELEASE-ARCH tupple
 
-CPPSCRIPTFLAGS		Additional flags to cpp(1) when building CPPSCRIPTS.
+HOST_RANLIB		The host command to create random access archives
 
-CPPSCRIPTFLAGS_<fn>	Additional flags to cpp(1) when building CPPSCRIPT <fn>.
-
+HOST_SH			The host Bourne shell interpreter name (absolute path)
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=

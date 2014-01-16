@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.761 2014/01/14 11:14:27 apb Exp $
+#	$NetBSD: bsd.own.mk,v 1.762 2014/01/16 01:19:46 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -159,19 +159,7 @@ USETOOLS?=	no
 #
 # Host platform information; may be overridden
 #
-.if !defined(HOST_OSTYPE)
-_HOST_OSNAME!=	uname -s
-_HOST_OSREL!=	uname -r
-# For _HOST_ARCH, if uname -p fails, or prints "unknown", or prints
-# something that does not look like an identifier, then use uname -m.
-_HOST_ARCH!=	uname -p 2>/dev/null
-_HOST_ARCH:=	${HOST_ARCH:tW:C/.*[^-_A-Za-z0-9].*//:S/unknown//}
-.if empty(_HOST_ARCH)
-_HOST_ARCH!=	uname -m
-.endif
-HOST_OSTYPE:=	${_HOST_OSNAME}-${_HOST_OSREL:C/\([^\)]*\)//g:[*]:C/ /_/g}-${_HOST_ARCH:C/\([^\)]*\)//g:[*]:C/ /_/g}
-.MAKEOVERRIDES+= HOST_OSTYPE
-.endif # !defined(HOST_OSTYPE)
+.include <bsd.host.mk>
 
 .if ${USETOOLS} == "yes"						# {
 
@@ -260,9 +248,6 @@ LDFLAGS+=	--sysroot=/
 .  endif
 .endif
 .endif	# EXTERNAL_TOOLCHAIN						# }
-
-HOST_MKDEP=	${TOOLDIR}/bin/${_TOOL_PREFIX}host-mkdep
-HOST_MKDEPCXX=	${TOOLDIR}/bin/${_TOOL_PREFIX}host-mkdep
 
 DBSYM=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-dbsym
 ELF2AOUT=	${TOOLDIR}/bin/${_TOOL_PREFIX}m68k-elf2aout
@@ -1085,9 +1070,6 @@ INSTALL_DIR?=		${INSTALL} ${INSTPRIV} -d
 INSTALL_FILE?=		${INSTALL} ${INSTPRIV} ${COPY} ${PRESERVE} ${RENAME}
 INSTALL_LINK?=		${INSTALL} ${INSTPRIV} ${HRDLINK} ${RENAME}
 INSTALL_SYMLINK?=	${INSTALL} ${INSTPRIV} ${SYMLINK} ${RENAME}
-HOST_INSTALL_FILE?=	${INSTALL} ${COPY} ${PRESERVE} ${RENAME}
-HOST_INSTALL_DIR?=	${INSTALL} -d
-HOST_INSTALL_SYMLINK?=	${INSTALL} ${SYMLINK} ${RENAME}
 .endif
 
 #
