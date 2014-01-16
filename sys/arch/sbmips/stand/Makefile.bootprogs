@@ -1,8 +1,7 @@
-# $NetBSD: Makefile.bootprogs,v 1.12 2014/01/12 15:26:30 tsutsui Exp $
+# $NetBSD: Makefile.bootprogs,v 1.13 2014/01/16 01:15:34 christos Exp $
 
 .include <bsd.own.mk>
 .include <bsd.klinks.mk>
-.include <bsd.sys.mk>		# for HOST_SH
 
 S=	${.CURDIR}/../../../..
 

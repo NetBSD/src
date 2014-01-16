@@ -1,9 +1,8 @@
-# $NetBSD: Makefile.bootprogs,v 1.33 2014/01/12 15:26:28 tsutsui Exp $
+# $NetBSD: Makefile.bootprogs,v 1.34 2014/01/16 01:15:33 christos Exp $
 
 NOMAN=			# defined
 
 .include <bsd.own.mk>
-.include <bsd.sys.mk>		# for HOST_SH
 
 S=	${.CURDIR}/../../../..
 
