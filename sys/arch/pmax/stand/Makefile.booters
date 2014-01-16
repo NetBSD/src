@@ -1,9 +1,8 @@
-# $NetBSD: Makefile.booters,v 1.59 2014/01/12 15:26:30 tsutsui Exp $
+# $NetBSD: Makefile.booters,v 1.60 2014/01/16 01:15:34 christos Exp $
 
 NOMAN=		# defined
 
 .include <bsd.own.mk>
-.include <bsd.sys.mk>		# for HOST_SH
 
 # $S must correspond to the top of the 'sys' tree
 S=	${.CURDIR}/../../../..
