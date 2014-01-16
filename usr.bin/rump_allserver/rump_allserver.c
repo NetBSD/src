@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_allserver.c,v 1.33 2013/12/31 00:23:56 pooka Exp $	*/
+/*	$NetBSD: rump_allserver.c,v 1.34 2014/01/16 00:31:39 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include <rump/rumpuser_port.h>
 
 #ifndef lint
-__RCSID("$NetBSD: rump_allserver.c,v 1.33 2013/12/31 00:23:56 pooka Exp $");
+__RCSID("$NetBSD: rump_allserver.c,v 1.34 2014/01/16 00:31:39 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -136,6 +136,8 @@ struct etfstype {
 
 static void processlabel(int, int, int, off_t *, off_t *);
 
+#define ALLOCCHUNK 32
+
 int
 main(int argc, char *argv[])
 {
@@ -143,10 +145,10 @@ main(int argc, char *argv[])
 	struct etfsreg *etfs = NULL;
 	unsigned netfs = 0, curetfs = 0;
 	int error;
-	int ch, sflag;
+	int ch, sflag, onthepath;
 	unsigned i;
-	char **modarray = NULL;
-	unsigned nmods = 0, curmod = 0;
+	char **modarray = NULL, **libarray = NULL;
+	unsigned nmods = 0, curmod = 0, nlibs = 0, curlib = 0, libidx, liblast;
 
 #ifdef PLATFORM_HAS_SETGETPROGNAME
 	setprogname(argv[0]);
@@ -292,10 +294,11 @@ main(int argc, char *argv[])
 				ftype = RUMP_ETFS_BLK;
 
 			if (netfs - curetfs == 0) {
-				etfs = realloc(etfs, (netfs+16)*sizeof(*etfs));
+				etfs = realloc(etfs,
+				    (netfs+ALLOCCHUNK)*sizeof(*etfs));
 				if (etfs == NULL)
 					die(1, errno, "realloc etfs");
-				netfs += 16;
+				netfs += ALLOCCHUNK;
 			}
 
 			etfs[curetfs].key = key;
@@ -309,28 +312,25 @@ main(int argc, char *argv[])
 			break;
 		}
 		case 'l':
-			if (dlopen(optarg, RTLD_LAZY|RTLD_GLOBAL) == NULL) {
-				char pb[MAXPATHLEN];
-				/* try to mimic linker -l syntax */
-
-				snprintf(pb, sizeof(pb), "lib%s.so", optarg);
-				if (dlopen(pb, RTLD_LAZY|RTLD_GLOBAL) == NULL) {
-					fprintf(stderr, "dlopen: %s", dlerror());
-					die(1, 0, NULL);
-				}
+			if (nlibs - curlib == 0) {
+				libarray = realloc(libarray,
+				    (nlibs+ALLOCCHUNK) * sizeof(char *));
+				if (libarray == NULL)
+					die(1, errno, "realloc");
+				nlibs += ALLOCCHUNK;
 			}
+			libarray[curlib++] = optarg;
 			break;
-		case 'm': {
-
+		case 'm':
 			if (nmods - curmod == 0) {
 				modarray = realloc(modarray,
-				    (nmods+16) * sizeof(char *));
+				    (nmods+ALLOCCHUNK) * sizeof(char *));
 				if (modarray == NULL)
 					die(1, errno, "realloc");
-				nmods += 16;
+				nmods += ALLOCCHUNK;
 			}
 			modarray[curmod++] = optarg;
-			break; }
+			break;
 		case 'r':
 			setenv("RUMP_MEMLIMIT", optarg, 1);
 			break;
@@ -351,6 +351,45 @@ main(int argc, char *argv[])
 
 	if (argc != 1)
 		usage();
+
+	/*
+	 * Automatically "resolve" component dependencies, i.e.
+	 * try to load libs in a loop until all are loaded or a
+	 * full loop completes with no loads (latter case is an error).
+	 */
+	for (onthepath = 1, nlibs = curlib; onthepath && nlibs > 0;) {
+		onthepath = 0;
+		for (libidx = 0; libidx < curlib; libidx++) {
+			/* loaded already? */
+			if (libarray[libidx] == NULL)
+				continue;
+
+			/* try to load */
+			liblast = libidx;
+			if (dlopen(libarray[libidx],
+			    RTLD_LAZY|RTLD_GLOBAL) == NULL) {
+				char pb[MAXPATHLEN];
+				/* try to mimic linker -l syntax */
+				snprintf(pb, sizeof(pb),
+				    "lib%s.so", libarray[libidx]);
+				if (dlopen(pb, RTLD_LAZY|RTLD_GLOBAL) == NULL)
+					continue;
+			}
+
+			/* managed to load that one */
+			libarray[libidx] = NULL;
+			nlibs--;
+			onthepath = 1;
+		}
+	}
+	if (nlibs > 0) {
+		fprintf(stderr,
+		    "failed to load -libraries, last error from \"%s\":\n",
+		    libarray[liblast]);
+		fprintf(stderr, "  %s", dlerror());
+		die(1, 0, NULL);
+	}
+	free(libarray);
 
 	serverurl = argv[0];
 
@@ -384,6 +423,7 @@ main(int argc, char *argv[])
 		rump_pub_etfs_remove(ETFSKEY);
 #undef ETFSKEY
 	}
+	free(modarray);
 
 	/* register host drives */
 	for (i = 0; i < curetfs; i++) {
