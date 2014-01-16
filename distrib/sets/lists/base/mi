@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1058 2014/01/14 18:52:19 christos Exp $
+# $NetBSD: mi,v 1.1059 2014/01/16 01:54:47 pooka Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -672,6 +672,7 @@
 ./usr/bin/rump.sockstat				base-util-bin		rump
 ./usr/bin/rump_allserver			base-util-bin		rump
 ./usr/bin/rump_server				base-util-bin		rump
+./usr/bin/rump_wmd				base-util-bin		rump
 ./usr/bin/rup					base-netutil-bin
 ./usr/bin/ruptime				base-netutil-bin
 ./usr/bin/rusers				base-netutil-bin
