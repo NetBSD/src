@@ -1,14 +1,18 @@
-#	$NetBSD: bsd.sys.mk,v 1.235 2014/01/15 14:00:09 joerg Exp $
+#	$NetBSD: bsd.sys.mk,v 1.236 2014/01/16 01:19:46 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
 .if !defined(_BSD_SYS_MK_)
 _BSD_SYS_MK_=1
 
-#.if !empty(.INCLUDEDFROMFILE:MMakefile*)
-#error:
-#	@(echo "bsd.sys.mk should not be included from Makefiles" >& 2; exit 1)
-#.endif
+.if !empty(.INCLUDEDFROMFILE:MMakefile*)
+error1:
+	@(echo "bsd.sys.mk should not be included from Makefiles" >& 2; exit 1)
+.endif
+.if !defined(_BSD_OWN_MK_)
+error2:
+	@(echo "bsd.own.mk must be included before bsd.sys.mk" >& 2; exit 1)
+.endif
 
 .if ${MKREPRO:Uno} == "yes"
 CPPFLAGS+=	-Wp,-iremap,${NETBSDSRCDIR}:/usr/src
@@ -152,35 +156,6 @@ PIE_LDFLAGS?=       -Wl,-pie ${${ACTIVE_CC} == "gcc":? -shared-libgcc :}
 PIE_AFLAGS?=	    -fPIC
 .endif
 
-# Helpers for cross-compiling
-HOST_CC?=	cc
-HOST_CFLAGS?=	-O
-HOST_COMPILE.c?=${HOST_CC} ${HOST_CFLAGS} ${HOST_CPPFLAGS} -c
-HOST_COMPILE.cc?=      ${HOST_CXX} ${HOST_CXXFLAGS} ${HOST_CPPFLAGS} -c
-HOST_LINK.cc?=  ${HOST_CXX} ${HOST_CXXFLAGS} ${HOST_CPPFLAGS} ${HOST_LDFLAGS}
-.if defined(HOSTPROG_CXX)
-HOST_LINK.c?=   ${HOST_LINK.cc}
-.else
-HOST_LINK.c?=	${HOST_CC} ${HOST_CFLAGS} ${HOST_CPPFLAGS} ${HOST_LDFLAGS}
-.endif
-
-HOST_CXX?=	c++
-HOST_CXXFLAGS?=	-O
-
-HOST_CPP?=	cpp
-HOST_CPPFLAGS?=
-
-HOST_LD?=	ld
-HOST_LDFLAGS?=
-
-HOST_AR?=	ar
-HOST_RANLIB?=	ranlib
-
-HOST_LN?=	ln
-
-# HOST_SH must be an absolute path
-HOST_SH?=	/bin/sh
-
 ELF2ECOFF?=	elf2ecoff
 MKDEP?=		mkdep
 MKDEPCXX?=	mkdep
@@ -188,8 +163,6 @@ OBJCOPY?=	objcopy
 OBJDUMP?=	objdump
 PAXCTL?=	paxctl
 STRIP?=		strip
-
-# TOOL_* variables are defined in bsd.own.mk
 
 .SUFFIXES:	.o .ln .lo .c .cc .cpp .cxx .C .m ${YHEADER:D.h}
 
