@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.12 2013/12/14 16:03:04 jakllsch Exp $	*/
+/*	$NetBSD: xhci.c,v 1.13 2014/01/16 20:55:56 dsl Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.12 2013/12/14 16:03:04 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.13 2014/01/16 20:55:56 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1629,6 +1629,11 @@ xhci_ring_put(struct xhci_softc * const sc, struct xhci_ring * const xr,
 	 * Arbitrary aligned LINK trb definitely fail on Ivy bridge.
 	 * The simple solution is not to allow a LINK trb in the middle
 	 * of anything - as here.
+	 * XXX: (dsl) There are xhci controllers out there (eg some made by
+	 * ASMedia) that seem to lock up if they process a LINK trb but
+	 * cannot process the linked-to trb yet.
+	 * The code should write the 'cycle' bit on the link trb AFTER
+	 * adding the other trb.
 	 */
 	if (ri + ntrbs >= (xr->xr_ntrb - 1)) {
 		parameter = xhci_ring_trbp(xr, 0);
@@ -2671,7 +2676,7 @@ xhci_device_bulk_start(usbd_xfer_handle xfer)
 
 	parameter = DMAADDR(dma, 0);
 	/*
-	 * XXX: The physical buffer must not cross a 64k boundary.
+	 * XXX: (dsl) The physical buffer must not cross a 64k boundary.
 	 * If the user supplied buffer crosses such a boundary then 2
 	 * (or more) TRB should be used.
 	 * If multiple TRB are used the td_size field must be set correctly.
