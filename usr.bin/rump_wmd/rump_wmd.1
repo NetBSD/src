@@ -1,4 +1,4 @@
-.\"	$NetBSD: rump_wmd.1,v 1.1 2014/01/16 01:54:47 pooka Exp $
+.\"	$NetBSD: rump_wmd.1,v 1.2 2014/01/16 09:54:05 wiz Exp $
 .\"
 .\" Copyright (c) 2014 Antti Kantee.  All rights reserved.
 .\"
@@ -31,8 +31,8 @@
 .Nd Resolve rump kernel component dependencies
 .Sh SYNOPSIS
 .Nm
+.Op Fl hv
 .Op Fl L Ar libdir
-.Op Fl v
 .Fl l Ar component
 .Sh DESCRIPTION
 The
@@ -49,6 +49,8 @@ is accepted as command line input by
 .Pp
 The command line options are:
 .Bl -tag -width indent
+.It Fl h
+Print the usage.
 .It Fl L Ar libdir
 By default, rump kernel components in
 .Pa /usr/lib
@@ -56,12 +58,12 @@ are examined.
 If this option is supplied, components in
 .Ar libdir
 are examined instead.
-.It Fl v
-Increase debug output from the utility.
-This option may be given multiple times.
 .It Fl l Ar component
 Resolve dependencies for the given component.
 This option may be given multiple time.
+.It Fl v
+Increase debug output from the utility.
+This option may be given multiple times.
 .El
 .Sh EXAMPLES
 Resolve dependencies for FFS:
@@ -80,6 +82,8 @@ DEBUG0: Searching component combinations. This may take a while ...
 DEBUG0: Found a set
 -lrumpnet -lrumpnet_net -lrumpvfs -lrumpfs_nfs -lrumpnet_netinet6 -lrumpnet_virtif
 .Ed
+.Sh SEE ALSO
+.Xr rump_server 1
 .Sh CAVEATS
 Since
 .Nm
@@ -87,8 +91,6 @@ uses trial-and-error brute force resolution, it runs somewhat slow.
 If several seconds are spent for dependency resolution, the benefit of
 a rump kernel booting in 10ms is somewhat lost.
 Caching the output is highly recommended.
-.Sh FUNFACTS
+.Sh FUN FACTS
 .Nm
 is short for "rump, where's my dependency".
-.Sh SEE ALSO
-.Xr rump_server 1
