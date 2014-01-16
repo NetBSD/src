@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.410 2013/08/19 16:34:29 matt Exp $
+#	$NetBSD: Makefile,v 1.411 2014/01/16 01:15:33 christos Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -36,7 +36,6 @@
 # For MK* vars
 .include <bsd.own.mk>
 
-.include <bsd.sys.mk>		# for HOST_SH, TOOL_AWK, ...
 .include <bsd.kernobj.mk>	# For KERNSRCDIR, KERNOBJDIR, ...
 .include <bsd.endian.mk>	# For TARGET_ENDIANNESS
 

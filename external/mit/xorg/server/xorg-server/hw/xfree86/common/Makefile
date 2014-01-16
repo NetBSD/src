@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.20 2014/01/10 15:50:34 christos Exp $
+#	$NetBSD: Makefile,v 1.21 2014/01/16 01:15:33 christos Exp $
 
-.include <bsd.own.mk> # prerequisite for bsd.sys.mk
+.include <bsd.own.mk>
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"

@@ -1,7 +1,6 @@
-# $NetBSD: Makefile,v 1.14 2014/01/12 15:26:28 tsutsui Exp $
+# $NetBSD: Makefile,v 1.15 2014/01/16 01:15:33 christos Exp $
 
 .include <bsd.own.mk>
-.include <bsd.sys.mk>	# for ${HOST_SH}
 
 S!= cd ${.CURDIR}/../../../..; pwd
 
