@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.4 2014/01/15 21:20:53 joerg Exp $
+# $NetBSD: Makefile.inc,v 1.5 2014/01/16 23:05:51 matt Exp $
 
 COMPILER_RT_SRCDIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
 
@@ -58,30 +58,20 @@ GENERIC_SRCS+= \
 .endif
 
 GENERIC_SRCS+= \
-	absvdi2.c \
 	absvsi2.c \
 	absvti2.c \
-	addvdi3.c \
 	addvsi3.c \
 	addvti3.c \
-	ashldi3.c \
 	ashlti3.c \
-	ashrdi3.c \
 	ashrti3.c \
-	clzdi2.c \
 	clzsi2.c \
 	clzti2.c \
-	cmpdi2.c \
 	cmpti2.c \
-	ctzdi2.c \
 	ctzsi2.c \
 	ctzti2.c \
-	divdi3.c \
-	divmoddi4.c \
 	divmodsi4.c \
 	divsi3.c \
 	divti3.c \
-	ffsdi2.c \
 	ffsti2.c \
 	fixunsdfdi.c \
 	fixunsdfsi.c \
@@ -109,51 +99,67 @@ GENERIC_SRCS+= \
 	floatuntisf.c \
 	floatuntixf.c \
 	int_util.c \
-	lshrdi3.c \
 	lshrti3.c \
-	moddi3.c \
 	modsi3.c \
 	modti3.c \
 	muldc3.c \
-	muldi3.c \
-	mulodi4.c \
 	mulosi4.c \
 	muloti4.c \
 	multi3.c \
-	mulvdi3.c \
 	mulvsi3.c \
 	mulvti3.c \
 	negdf2.c \
-	negdi2.c \
 	negsf2.c \
 	negti2.c \
-	negvdi2.c \
 	negvsi2.c \
 	negvti2.c \
-	paritydi2.c \
 	paritysi2.c \
 	parityti2.c \
-	popcountdi2.c \
 	popcountsi2.c \
 	popcountti2.c \
 	powidf2.c \
 	powisf2.c \
 	powitf2.c \
 	powixf2.c \
-	subvdi3.c \
 	subvsi3.c \
 	subvti3.c \
-	ucmpdi2.c \
 	ucmpti2.c \
-	udivdi3.c \
-	udivmoddi4.c \
 	udivmodsi4.c \
 	udivmodti4.c \
 	udivsi3.c \
 	udivti3.c \
-	umoddi3.c \
 	umodsi3.c \
 	umodti3.c
+
+GENERIC_SRCS+= \
+	absvdi2.c \
+	addvdi3.c \
+	clzdi2.c \
+	ctzdi2.c \
+	ffsdi2.c \
+	mulodi4.c \
+	mulvdi3.c \
+	negvdi2.c \
+	paritydi2.c \
+	popcountdi2.c \
+	subvdi3.c
+
+.if empty(MACHINE_ARCH:M*64*) && ${MACHINE_ARCH} != "alpha"
+GENERIC_SRCS+= \
+	cmpdi2.c \
+	ashldi3.c \
+	ashrdi3.c \
+	divdi3.c \
+	divmoddi4.c \
+	lshrdi3.c \
+	moddi3.c \
+	muldi3.c \
+	negdi2.c \
+	ucmpdi2.c \
+	udivdi3.c \
+	udivmoddi4.c \
+	umoddi3.c
+.endif
 
 GENERIC_SRCS+= \
 	GCDAProfiling.c \
