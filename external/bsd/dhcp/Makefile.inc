@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.9 2014/01/16 01:15:33 christos Exp $
+# $NetBSD: Makefile.inc,v 1.10 2014/01/16 13:55:46 christos Exp $
 
 WARNS?=	1	# XXX -Wshadow -Wcast-qual -Wsign-compare
 
@@ -20,7 +20,7 @@ DSTOBJDIR!=cd ${.PARSEDIR}/lib/dst && ${PRINTOBJDIR}
 .if (${USE_INET6} != "no")
 CPPFLAGS+=	-DDHCPv6
 .endif
-CPPFLAGS+= -DISC_PLATFORM_USETHREADS -DHAVE_CONFIG_H -DDEBUG
+CPPFLAGS+= -DISC_PLATFORM_USETHREADS -DHAVE_CONFIG_H
 CPPFLAGS+= -I${DIST} -I${DIST}/includes -I${DIST}/../include
 CPPFLAGS+= -I${BIND} -I${BIND}/includes -I${BIND}/../include
 .for dir in isc dns
