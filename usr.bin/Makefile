@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.215 2013/12/28 02:32:01 rjs Exp $
+#	$NetBSD: Makefile,v 1.216 2014/01/16 01:54:47 pooka Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
@@ -44,7 +44,8 @@ SUBDIR+= apropos whatis
 .endif
 
 .if (${MKRUMP} != "no")
-SUBDIR+= rump_allserver rump_dhcpclient rump_halt rump_server shmif_dumpbus
+SUBDIR+= rump_allserver rump_dhcpclient rump_halt rump_server shmif_dumpbus \
+	rump_wmd
 .endif
 
 .if (${MKBSDGREP} != "no")
