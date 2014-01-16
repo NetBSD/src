@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.85 2013/12/22 02:45:16 christos Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.86 2014/01/16 20:59:21 christos Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -57,7 +57,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.85 2013/12/22 02:45:16 christos Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.86 2014/01/16 20:59:21 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -107,6 +107,20 @@ __weak_alias(gethostent,_gethostent)
                                (ok)(nm) != 0)
 #define maybe_hnok(res, hn) maybe_ok((res), (hn), res_hnok)
 #define maybe_dnok(res, dn) maybe_ok((res), (dn), res_dnok)
+
+#define grow(arr, siz) do {			\
+	void *xptr = realloc(arr, siz + 10); 	\
+	if (xptr == NULL)			\
+		goto nospc;			\
+	arr = xptr;				\
+	siz += 10;				\
+} while (/*CONSTCOND*/0)
+
+#define setup(arr, siz) do {			\
+	arr = malloc(siz = 10); 		\
+	if (arr == NULL)			\
+		goto nospc;			\
+} while (/*CONSTCOND*/0)
 
 
 static const char AskedForGot[] =
@@ -209,7 +223,8 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 	int haveanswer, had_error;
 	int toobig = 0;
 	char tbuf[MAXDNAME];
-	char *aliases[MAXALIASES];
+	char **aliases;
+	size_t maxaliases;
 	char *addr_ptrs[MAXADDRS];
 	const char *tname;
 	int (*name_ok)(const char *);
@@ -231,6 +246,8 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 	default:
 		return NULL;	/* XXX should be abort(); */
 	}
+
+	setup(aliases, maxaliases);
 	/*
 	 * find first satisfactory answer
 	 */
@@ -290,8 +307,8 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 			continue;		/* XXX - had_error++ ? */
 		}
 		if ((qtype == T_A || qtype == T_AAAA) && type == T_CNAME) {
-			if (ap >= &aliases[MAXALIASES-1])
-				continue;
+			if (ap >= &aliases[maxaliases - 1])
+				grow(aliases, maxaliases);
 			n = dn_expand(answer->buf, eom, cp, tbuf,
 			    (int)sizeof tbuf);
 			if ((n < 0) || !maybe_ok(res, tbuf, name_ok)) {
@@ -369,10 +386,11 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 				goto no_recovery;
 			if (!haveanswer)
 				hent->h_name = bp;
-			else if (ap < &aliases[MAXALIASES-1])
+			else {
+				if (ap >= &aliases[maxaliases - 1])
+					grow(aliases, maxaliases);
 				*ap++ = bp;
-			else
-				n = -1;
+			}
 			if (n != -1) {
 				n = (int)strlen(bp) + 1;	/* for the \0 */
 				if (n >= MAXHOSTNAMELEN) {
@@ -474,6 +492,7 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 	    	goto success;
 	}
 no_recovery:
+	free(aliases);
 	*he = NO_RECOVERY;
 	return NULL;
 success:
@@ -484,6 +503,7 @@ success:
 		goto nospc;
 	hent->h_aliases = (void *)bp;
 	memcpy(bp, aliases, qlen);
+	free(aliases);
 
 	bp += qlen;
 	n = (int)(hap - addr_ptrs);
@@ -495,6 +515,7 @@ success:
 	*he = NETDB_SUCCESS;
 	return hent;
 nospc:
+	free(aliases);
 	errno = ENOSPC;
 	*he = NETDB_INTERNAL;
 	return NULL;
@@ -725,7 +746,8 @@ gethostent_r(FILE *hf, struct hostent *hent, char *buf, size_t buflen, int *he)
 	char *cp, **q;
 	int af, len;
 	size_t llen, anum;
-	char *aliases[MAXALIASES];
+	char **aliases;
+	size_t maxaliases;
 	struct in6_addr host_addr;
 
 	if (hf == NULL) {
@@ -733,8 +755,10 @@ gethostent_r(FILE *hf, struct hostent *hent, char *buf, size_t buflen, int *he)
 		errno = EINVAL;
 		return NULL;
 	}
+	setup(aliases, maxaliases);
  again:
 	if ((p = fgetln(hf, &llen)) == NULL) {
+		free(aliases);
 		*he = HOST_NOT_FOUND;
 		return NULL;
 	}
@@ -755,7 +779,7 @@ gethostent_r(FILE *hf, struct hostent *hent, char *buf, size_t buflen, int *he)
 	} else if (inet_pton(AF_INET, p, &host_addr) > 0) {
 		res_state res = __res_get_state();
 		if (res == NULL)
-			return NULL;
+			goto nospc;
 		if (res->options & RES_USE_INET6) {
 			map_v4v6_address(buf, buf);
 			af = AF_INET6;
@@ -784,8 +808,8 @@ gethostent_r(FILE *hf, struct hostent *hent, char *buf, size_t buflen, int *he)
 			cp++;
 			continue;
 		}
-		if (q >= &aliases[__arraycount(aliases)])
-			goto nospc;
+		if (q >= &aliases[maxaliases - 1])
+			grow(aliases, maxaliases);
 		*q++ = cp;
 		if ((cp = strpbrk(cp, " \t")) != NULL)
 			*cp++ = '\0';
@@ -805,8 +829,10 @@ gethostent_r(FILE *hf, struct hostent *hent, char *buf, size_t buflen, int *he)
 	hent->h_aliases[anum] = NULL;
 
 	*he = NETDB_SUCCESS;
+	free(aliases);
 	return hent;
 nospc:
+	free(aliases);
 	errno = ENOSPC;
 	*he = NETDB_INTERNAL;
 	return NULL;
@@ -1080,7 +1106,8 @@ static struct hostent *
 _yp_hostent(char *line, int af, struct getnamaddr *info)
 {
 	struct in6_addr host_addrs[MAXADDRS];
-	char *aliases[MAXALIASES];
+	char **aliases;
+	size_t maxaliases;
 	char *p = line;
 	char *cp, **q, *ptr;
 	size_t len, anum, i;
@@ -1103,6 +1130,7 @@ _yp_hostent(char *line, int af, struct getnamaddr *info)
 	default:
 		return NULL;
 	}
+	setup(aliases, maxaliases);
 	naddrs = 0;
 	q = aliases;
 
@@ -1145,8 +1173,11 @@ nextline:
 		hp->h_name = p;
 	else if (strcmp(hp->h_name, p) == 0)
 		;
-	else if (q < &aliases[MAXALIASES - 1])
+	else {
+		if (q >= &aliases[maxaliases - 1])
+			grow(aliases, maxaliases);
 		*q++ = p;
+	}
 	p = cp;
 	if (more)
 		goto nextline;
@@ -1160,16 +1191,19 @@ nextline:
 			cp++;
 			goto nextline;
 		}
-		if (q < &aliases[MAXALIASES - 1])
-			*q++ = cp;
+		if (q >= &aliases[maxaliases - 1])
+			grow(aliases, maxaliases);
+		*q++ = cp;
 		cp = strpbrk(cp, " \t");
 		if (cp != NULL)
 			*cp++ = '\0';
 	}
 
 done:
-	if (hp->h_name == NULL)
+	if (hp->h_name == NULL) {
+		free(aliases);
 		return NULL;
+	}
 
 	ptr = info->buf;
 	len = info->buflen;
@@ -1188,9 +1222,11 @@ done:
 	for (i = 0; i < anum; i++)
 		HENT_SCOPY(hp->h_aliases[i], aliases[i], ptr, len);
 	hp->h_aliases[anum] = NULL;
+	free(aliases);
 
 	return hp;
 nospc:
+	free(aliases);
 	*info->he = NETDB_INTERNAL;
 	errno = ENOSPC;
 	return NULL;
