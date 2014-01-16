@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2014/01/16 02:38:20 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.4 2014/01/16 14:12:09 pgoyette Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../opencrypto
@@ -25,10 +25,6 @@ SRCS+=	aesxcbcmac.c
 SRCS+=	cryptosoft.c
 SRCS+=	deflate.c
 SRCS+=	gmac.c
-
-# deflate.c also requires zlib, so include the appropriate library
-
-LDADD+=	-lrumpkern_z
 
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpvfs
 
