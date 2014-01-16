@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.69 2014/01/15 22:21:34 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.70 2014/01/16 19:08:11 joerg Exp $
 
 .if !defined(LLVM_TOPLEVEL_MK)
 LLVM_TOPLEVEL_MK=
@@ -70,7 +70,7 @@ LLVM_CONFIGURE_ARGS=	\
 	--with-c-include-dirs=/usr/include/clang-${CLANG_VERSION}:/usr/include \
 	--disable-timestamps --prefix=/usr --sysconfdir=/etc/llvm \
 	--with-clang-srcdir=${CLANG_SRCDIR} \
-	--host=${LLVM_PLATFORM} \
+	--host=${LLVM_PLATFORM} --disable-compiler-version-checks \
 	llvm_cv_gnu_make_command=${MAKE}
 
 .for tool in circo dot dotty fdp neato twopi xdot
