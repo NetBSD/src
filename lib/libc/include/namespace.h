@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.172 2014/01/16 20:31:18 christos Exp $	*/
+/*	$NetBSD: namespace.h,v 1.173 2014/01/16 21:02:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -44,7 +44,6 @@
 #define err		_err
 #define errc		_errc
 #define errx		_errx
-#define errc		_errc
 #ifdef _REENTRANT
 #define fileno		_fileno
 #endif /* _REENTRANT */
@@ -84,15 +83,12 @@
 #define verr		_verr
 #define verrc		_verrc
 #define verrx		_verrx
-#define verrc		_verrc
 #define vwarn		_vwarn
 #define vwarnc		_vwarnc
 #define vwarnx		_vwarnx
-#define vwarnc		_vwarnc
 #define warn		_warn
 #define warnc		_warnc
 #define warnx		_warnx
-#define warnc		_warnc
 
 #ifdef __weak_alias
 #define MD2Data			_MD2Data
