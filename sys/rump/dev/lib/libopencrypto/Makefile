@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2014/01/14 17:15:09 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.2 2014/01/16 02:21:24 pgoyette Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../opencrypto
@@ -31,7 +31,6 @@ SRCS+=	gmac.c
 SRCS+=	zlib.c
 
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpvfs
-CPPFLAGS+=	-DCOMPAT_50
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>
