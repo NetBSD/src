@@ -1,4 +1,4 @@
-/* $NetBSD: h_xcbcmac.c,v 1.2 2014/01/16 18:09:55 pgoyette Exp $ */
+/* $NetBSD: h_xcbcmac.c,v 1.3 2014/01/16 22:06:45 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -72,7 +72,8 @@ const struct {
 int
 main(void)
 {
-	int fd, res, i;
+	int fd, res;
+	unsigned int i;
 	struct session_op cs;
 	struct crypt_op co;
 	unsigned char buf[16];
