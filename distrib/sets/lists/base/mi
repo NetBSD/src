@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1059 2014/01/16 01:54:47 pooka Exp $
+# $NetBSD: mi,v 1.1060 2014/01/16 14:46:36 pgoyette Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -4313,6 +4313,7 @@
 ./usr/share/mk/bsd.endian.mk			base-mk-share		share
 ./usr/share/mk/bsd.files.mk			base-mk-share		share
 ./usr/share/mk/bsd.gcc.mk			base-mk-share		share
+./usr/share/mk/bsd.host.mk			base-mk-share		share
 ./usr/share/mk/bsd.hostlib.mk			base-mk-share		share
 ./usr/share/mk/bsd.hostprog.mk			base-mk-share		share
 ./usr/share/mk/bsd.inc.mk			base-mk-share		share
