@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2013/09/02 14:34:57 joerg Exp $
+#	$NetBSD: Makefile,v 1.18 2014/01/16 09:00:55 matt Exp $
 
 .include <bsd.init.mk>
 
@@ -16,7 +16,7 @@ config/config.status: ${LLVM_SRCDIR}/configure
 	printf '#!/bin/sh\necho 2.7.3' > config/python
 	chmod 755 config/python
 	cd config && ${LLVM_SRCDIR}/configure ${LLVM_CONFIGURE_ARGS} \
-	    --enable-optimized CC=${HOST_CC:Q} \
+	    --enable-optimized CC=${HOST_CC:Q} CXX=${HOST_CXX:Q} \
 	    --with-python=${.OBJDIR}/config/python
 # --disable-assertions
 
