@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperentropy.c,v 1.1 2014/01/17 01:32:53 pooka Exp $	*/
+/*	$NetBSD: hyperentropy.c,v 1.2 2014/01/17 14:57:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 2014 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hyperentropy.c,v 1.1 2014/01/17 01:32:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperentropy.c,v 1.2 2014/01/17 14:57:04 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -38,16 +38,18 @@ __KERNEL_RCSID(0, "$NetBSD: hyperentropy.c,v 1.1 2014/01/17 01:32:53 pooka Exp $
 
 static krndsource_t rndsrc;
 
+#define MAXGET (RND_POOLBITS/NBBY)
 static void
 feedrandom(size_t bytes, void *arg)
 {
-	uint8_t rnddata[1024];
+	uint8_t *rnddata;
 	size_t dsize;
 
-	/* stuff max 1k worth, we'll be called again if necessary */
-	if (rumpuser_getrandom(rnddata, MIN(sizeof(rnddata), bytes),
+	rnddata = kmem_intr_alloc(MAXGET, KM_SLEEP);
+	if (rumpuser_getrandom(rnddata, MIN(MAXGET, bytes),
 	    RUMPUSER_RANDOM_HARD|RUMPUSER_RANDOM_NOWAIT, &dsize) == 0)
-		rnd_add_data(&rndsrc, rnddata, dsize, 8*dsize);
+		rnd_add_data(&rndsrc, rnddata, dsize, NBBY*dsize);
+	kmem_intr_free(rnddata, MAXGET);
 }
 
 void
@@ -58,11 +60,10 @@ rump_hyperentropy_init(void)
 		rndsource_setcb(&rndsrc, feedrandom, &rndsrc);
 		rnd_attach_source(&rndsrc, "rump_hyperent", RND_TYPE_VM,
 		    RND_FLAG_NO_ESTIMATE|RND_FLAG_HASCB);
-		feedrandom(128, NULL);
 	} else {
-		/* without threads, 1024 bytes ought to be enough for anyone */
+		/* without threads, just fill the pool */
 		rnd_attach_source(&rndsrc, "rump_hyperent", RND_TYPE_VM,
 		    RND_FLAG_NO_ESTIMATE);
-		feedrandom(1024, NULL);
+		feedrandom(RND_POOLBITS/NBBY, NULL);
 	}
 }
