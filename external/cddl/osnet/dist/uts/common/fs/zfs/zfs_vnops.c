@@ -4946,7 +4946,7 @@ out:
 static int
 zfs_netbsd_create(void *v)
 {
-	struct vop_create_args /* {
+	struct vop_create_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -4995,12 +4995,6 @@ zfs_netbsd_create(void *v)
 out:
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
 	KASSERT((*vpp == NULL) || (VOP_ISLOCKED(*vpp) == LK_EXCLUSIVE));
-
-	/*
-	 * Unlock and release dvp because the VOP_CREATE protocol is insane.
-	 */
-	VOP_UNLOCK(dvp);
-	VN_RELE(dvp);
 
 	return (error);
 }
@@ -5057,7 +5051,7 @@ zfs_netbsd_remove(void *v)
 static int
 zfs_netbsd_mkdir(void *v)
 {
-	struct vop_mkdir_args /* {
+	struct vop_mkdir_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -5103,12 +5097,6 @@ zfs_netbsd_mkdir(void *v)
 out:
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
 	KASSERT((*vpp == NULL) || (VOP_ISLOCKED(*vpp) == LK_EXCLUSIVE));
-
-	/*
-	 * Unlock and release dvp because the VOP_MKDIR protocol is insane.
-	 */
-	VOP_UNLOCK(dvp);
-	VN_RELE(dvp);
 
 	return (error);
 }
@@ -5373,7 +5361,7 @@ zfs_netbsd_rename(void *v)
 static int
 zfs_netbsd_symlink(void *v)
 {
-	struct vop_symlink_args /* {
+	struct vop_symlink_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -5424,12 +5412,6 @@ zfs_netbsd_symlink(void *v)
 out:
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
 	KASSERT((*vpp == NULL) || (VOP_ISLOCKED(*vpp) == LK_EXCLUSIVE));
-
-	/*
-	 * Unlock and release dvp because the VOP_SYMLINK protocol is insane.
-	 */
-	VOP_UNLOCK(dvp);
-	VN_RELE(dvp);
 
 	return (error);
 }
