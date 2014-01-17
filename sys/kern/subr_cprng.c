@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cprng.c,v 1.22 2013/07/27 11:19:09 skrll Exp $ */
+/*	$NetBSD: subr_cprng.c,v 1.23 2014/01/17 02:12:48 pooka Exp $ */
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.22 2013/07/27 11:19:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.23 2014/01/17 02:12:48 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -42,9 +42,11 @@ __KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.22 2013/07/27 11:19:09 skrll Exp $"
 #include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/lwp.h>
+#include <sys/once.h>
 #include <sys/poll.h>		/* XXX POLLIN/POLLOUT/&c. */
 #include <sys/select.h>
 #include <sys/systm.h>
+#include <sys/sysctl.h>
 #include <sys/rnd.h>
 #include <sys/rndsink.h>
 #if DEBUG
@@ -56,6 +58,9 @@ __KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.22 2013/07/27 11:19:09 skrll Exp $"
 #if defined(__HAVE_CPU_COUNTER)
 #include <machine/cpu_counter.h>
 #endif
+
+static int sysctl_kern_urnd(SYSCTLFN_PROTO);
+static int sysctl_kern_arnd(SYSCTLFN_PROTO);
 
 static void	cprng_strong_generate(struct cprng_strong *, void *, size_t);
 static void	cprng_strong_reseed(struct cprng_strong *);
@@ -70,7 +75,22 @@ static rndsink_callback_t	cprng_strong_rndsink_callback;
 void
 cprng_init(void)
 {
+	static struct sysctllog *random_sysctllog;
+
 	nist_ctr_initialize();
+
+	sysctl_createv(&random_sysctllog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "urandom",
+		       SYSCTL_DESCR("Random integer value"),
+		       sysctl_kern_urnd, 0, NULL, 0,
+		       CTL_KERN, KERN_URND, CTL_EOL);
+	sysctl_createv(&random_sysctllog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "arandom",
+		       SYSCTL_DESCR("n bytes of random data"),
+		       sysctl_kern_arnd, 0, NULL, 0,
+		       CTL_KERN, KERN_ARND, CTL_EOL);
 }
 
 static inline uint32_t
@@ -476,4 +496,77 @@ cprng_strong_rndsink_callback(void *context, const void *seed, size_t bytes)
 	/* Assume that rndsinks provide only full-entropy output.  */
 	cprng_strong_reseed_from(cprng, seed, bytes, true);
 	mutex_exit(&cprng->cs_lock);
+}
+
+static cprng_strong_t *sysctl_prng;
+
+static int
+makeprng(void)
+{
+
+	/* can't create in cprng_init(), too early */
+	sysctl_prng = cprng_strong_create("sysctl", IPL_NONE,
+					  CPRNG_INIT_ANY|CPRNG_REKEY_ANY);
+	return 0;
+}
+
+/*
+ * sysctl helper routine for kern.urandom node. Picks a random number
+ * for you.
+ */
+static int
+sysctl_kern_urnd(SYSCTLFN_ARGS)
+{
+	static ONCE_DECL(control);
+	int v, rv;
+
+	RUN_ONCE(&control, makeprng);
+	rv = cprng_strong(sysctl_prng, &v, sizeof(v), 0);
+	if (rv == sizeof(v)) {
+		struct sysctlnode node = *rnode;
+		node.sysctl_data = &v;
+		return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+	}
+	else
+		return (EIO);	/*XXX*/
+}
+
+/*
+ * sysctl helper routine for kern.arandom node. Picks a random number
+ * for you.
+ */
+static int
+sysctl_kern_arnd(SYSCTLFN_ARGS)
+{
+	int error;
+	void *v;
+	struct sysctlnode node = *rnode;
+
+	if (*oldlenp == 0)
+		return 0;
+	/*
+	 * This code used to allow sucking 8192 bytes at a time out
+	 * of the kernel arc4random generator.  Evidently there is some
+	 * very old OpenBSD application code that may try to do this.
+	 *
+	 * Note that this node is documented as type "INT" -- 4 or 8
+	 * bytes, not 8192.
+	 *
+	 * We continue to support this abuse of the "len" pointer here
+	 * but only 256 bytes at a time, as, anecdotally, the actual
+	 * application use here was to generate RC4 keys in userspace.
+	 *
+	 * Support for such large requests will probably be removed
+	 * entirely in the future.
+	 */
+	if (*oldlenp > 256)
+		return E2BIG;
+
+	v = kmem_alloc(*oldlenp, KM_SLEEP);
+	cprng_fast(v, *oldlenp);
+	node.sysctl_data = v;
+	node.sysctl_size = *oldlenp;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	kmem_free(v, *oldlenp);
+	return error;
 }
