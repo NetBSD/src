@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.87 2014/01/17 02:03:44 christos Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.88 2014/01/17 02:08:44 christos Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -57,7 +57,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.87 2014/01/17 02:03:44 christos Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.88 2014/01/17 02:08:44 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -808,7 +808,6 @@ gethostent_r(FILE *hf, struct hostent *hent, char *buf, size_t buflen, int *he)
 			continue;
 		}
 		addalias(q, cp, aliases, maxaliases);
-		*q++ = cp;
 		if ((cp = strpbrk(cp, " \t")) != NULL)
 			*cp++ = '\0';
 	}
@@ -1187,7 +1186,6 @@ nextline:
 			goto nextline;
 		}
 		addalias(q, cp, aliases, maxaliases);
-		*q++ = cp;
 		cp = strpbrk(cp, " \t");
 		if (cp != NULL)
 			*cp++ = '\0';
