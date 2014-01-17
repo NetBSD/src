@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.48 2014/01/15 15:01:24 pgoyette Exp $
+# $NetBSD: mi,v 1.49 2014/01/17 22:34:36 pgoyette Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -1502,6 +1502,7 @@
 ./usr/libdata/debug/usr/tests/crypto/opencrypto/h_md5.debug		tests-crypto-debug	debug,atf,crypto
 ./usr/libdata/debug/usr/tests/crypto/opencrypto/h_md5hmac.debug		tests-crypto-debug	debug,atf,crypto
 ./usr/libdata/debug/usr/tests/crypto/opencrypto/h_null.debug		tests-crypto-debug	debug,atf,crypto
+./usr/libdata/debug/usr/tests/crypto/opencrypto/h_sha1hmac.debug	tests-crypto-debug	debug,atf,crypto
 ./usr/libdata/debug/usr/tests/crypto/opencrypto/h_xcbcmac.debug		tests-crypto-debug	debug,atf,crypto
 ./usr/libdata/debug/usr/tests/dev/audio/h_pad.debug			tests-fs-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/dev/cgd/h_img2cgd/h_img2cgd.debug			tests-obsolete	obsolete
