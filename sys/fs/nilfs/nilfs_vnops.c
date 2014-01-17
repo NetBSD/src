@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vnops.c,v 1.24 2013/10/18 19:57:28 christos Exp $ */
+/* $NetBSD: nilfs_vnops.c,v 1.25 2014/01/17 10:55:02 hannken Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.24 2013/10/18 19:57:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.25 2014/01/17 10:55:02 hannken Exp $");
 #endif /* not lint */
 
 
@@ -1083,7 +1083,7 @@ nilfs_access(void *v)
 int
 nilfs_create(void *v)
 {
-	struct vop_create_args /* {
+	struct vop_create_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -1098,7 +1098,6 @@ nilfs_create(void *v)
 	DPRINTF(VFSCALL, ("nilfs_create called\n"));
 	error = nilfs_create_node(dvp, vpp, vap, cnp);
 
-	vput(dvp);
 	return error;
 }
 
@@ -1107,7 +1106,7 @@ nilfs_create(void *v)
 int
 nilfs_mknod(void *v)
 {
-	struct vop_mknod_args /* {
+	struct vop_mknod_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -1122,7 +1121,6 @@ nilfs_mknod(void *v)
 	DPRINTF(VFSCALL, ("nilfs_mknod called\n"));
 	error = nilfs_create_node(dvp, vpp, vap, cnp);
 
-	vput(dvp);
 	return error;
 }
 
@@ -1131,7 +1129,7 @@ nilfs_mknod(void *v)
 int
 nilfs_mkdir(void *v)
 {
-	struct vop_mkdir_args /* {
+	struct vop_mkdir_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -1146,7 +1144,6 @@ nilfs_mkdir(void *v)
 	DPRINTF(VFSCALL, ("nilfs_mkdir called\n"));
 	error = nilfs_create_node(dvp, vpp, vap, cnp);
 
-	vput(dvp);
 	return error;
 }
 
@@ -1228,7 +1225,7 @@ nilfs_do_symlink(struct nilfs_node *nilfs_node, char *target)
 int
 nilfs_symlink(void *v)
 {
-	struct vop_symlink_args /* {
+	struct vop_symlink_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -1258,7 +1255,6 @@ nilfs_symlink(void *v)
 			nilfs_dir_detach(nilfs_node->ump, dir_node, nilfs_node, cnp);
 		}
 	}
-	vput(dvp);
 	return error;
 }
 
