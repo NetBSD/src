@@ -1,4 +1,4 @@
-/*	$NetBSD: lasi.c,v 1.24 2013/10/19 13:49:11 skrll Exp $	*/
+/*	$NetBSD: lasi.c,v 1.25 2014/01/17 07:44:16 skrll Exp $	*/
 
 /*	$OpenBSD: lasi.c,v 1.4 2001/06/09 03:57:19 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lasi.c,v 1.24 2013/10/19 13:49:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lasi.c,v 1.25 2014/01/17 07:44:16 skrll Exp $");
 
 #undef LASIDEBUG
 
@@ -200,6 +200,15 @@ lasiattach(device_t parent, device_t self, void *aux)
 
 	/* Attach the GSC bus. */
 	ga.ga_ca = *ca;	/* clone from us */
+	if (strcmp(device_xname(parent), "mainbus0") == 0) {
+		ga.ga_dp.dp_bc[0] = ga.ga_dp.dp_bc[1];
+		ga.ga_dp.dp_bc[1] = ga.ga_dp.dp_bc[2];
+		ga.ga_dp.dp_bc[2] = ga.ga_dp.dp_bc[3];
+		ga.ga_dp.dp_bc[3] = ga.ga_dp.dp_bc[4];
+		ga.ga_dp.dp_bc[4] = ga.ga_dp.dp_bc[5];
+		ga.ga_dp.dp_bc[5] = ga.ga_dp.dp_mod;
+		ga.ga_dp.dp_mod = 0;
+	}
 
 	ga.ga_name = "gsc";
 	ga.ga_ir = &sc->sc_ir;
