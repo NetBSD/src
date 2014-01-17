@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.86 2014/01/16 20:59:21 christos Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.87 2014/01/17 02:03:44 christos Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -57,7 +57,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.86 2014/01/16 20:59:21 christos Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.87 2014/01/17 02:03:44 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -108,18 +108,22 @@ __weak_alias(gethostent,_gethostent)
 #define maybe_hnok(res, hn) maybe_ok((res), (hn), res_hnok)
 #define maybe_dnok(res, dn) maybe_ok((res), (dn), res_dnok)
 
-#define grow(arr, siz) do {			\
-	void *xptr = realloc(arr, siz + 10); 	\
-	if (xptr == NULL)			\
-		goto nospc;			\
-	arr = xptr;				\
-	siz += 10;				\
+#define addalias(d, s, arr, siz) do {			\
+	if (d >= &arr[siz - 1]) {			\
+		char **xptr = realloc(arr, siz + 10); 	\
+		if (xptr == NULL)			\
+			goto nospc;			\
+		d = xptr + (d - arr);			\
+		arr = xptr;				\
+		siz += 10;				\
+	}						\
+	*d++ = s;					\
 } while (/*CONSTCOND*/0)
 
-#define setup(arr, siz) do {			\
-	arr = malloc(siz = 10); 		\
-	if (arr == NULL)			\
-		goto nospc;			\
+#define setup(arr, siz) do {				\
+	arr = malloc(siz = 10); 			\
+	if (arr == NULL)				\
+		goto nospc;				\
 } while (/*CONSTCOND*/0)
 
 
@@ -307,8 +311,6 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 			continue;		/* XXX - had_error++ ? */
 		}
 		if ((qtype == T_A || qtype == T_AAAA) && type == T_CNAME) {
-			if (ap >= &aliases[maxaliases - 1])
-				grow(aliases, maxaliases);
 			n = dn_expand(answer->buf, eom, cp, tbuf,
 			    (int)sizeof tbuf);
 			if ((n < 0) || !maybe_ok(res, tbuf, name_ok)) {
@@ -319,7 +321,7 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 			if (cp != erdata)
 				goto no_recovery;
 			/* Store alias. */
-			*ap++ = bp;
+			addalias(ap, bp, aliases, maxaliases);
 			n = (int)strlen(bp) + 1;	/* for the \0 */
 			if (n >= MAXHOSTNAMELEN) {
 				had_error++;
@@ -386,11 +388,8 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 				goto no_recovery;
 			if (!haveanswer)
 				hent->h_name = bp;
-			else {
-				if (ap >= &aliases[maxaliases - 1])
-					grow(aliases, maxaliases);
-				*ap++ = bp;
-			}
+			else
+				addalias(ap, bp, aliases, maxaliases);
 			if (n != -1) {
 				n = (int)strlen(bp) + 1;	/* for the \0 */
 				if (n >= MAXHOSTNAMELEN) {
@@ -808,8 +807,7 @@ gethostent_r(FILE *hf, struct hostent *hent, char *buf, size_t buflen, int *he)
 			cp++;
 			continue;
 		}
-		if (q >= &aliases[maxaliases - 1])
-			grow(aliases, maxaliases);
+		addalias(q, cp, aliases, maxaliases);
 		*q++ = cp;
 		if ((cp = strpbrk(cp, " \t")) != NULL)
 			*cp++ = '\0';
@@ -1173,11 +1171,8 @@ nextline:
 		hp->h_name = p;
 	else if (strcmp(hp->h_name, p) == 0)
 		;
-	else {
-		if (q >= &aliases[maxaliases - 1])
-			grow(aliases, maxaliases);
-		*q++ = p;
-	}
+	else
+		addalias(q, p, aliases, maxaliases);
 	p = cp;
 	if (more)
 		goto nextline;
@@ -1191,8 +1186,7 @@ nextline:
 			cp++;
 			goto nextline;
 		}
-		if (q >= &aliases[maxaliases - 1])
-			grow(aliases, maxaliases);
+		addalias(q, cp, aliases, maxaliases);
 		*q++ = cp;
 		cp = strpbrk(cp, " \t");
 		if (cp != NULL)
