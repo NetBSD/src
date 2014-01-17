@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.6 2014/01/17 14:03:31 joerg Exp $
+# $NetBSD: Makefile.inc,v 1.7 2014/01/17 14:06:36 joerg Exp $
 
 COMPILER_RT_SRCDIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
 
@@ -43,14 +43,14 @@ GENERIC_SRCS+= \
 	divdf3.c \
 	divsf3.c \
 	extendsfdf2.c \
-	fixdfdi.c \
-	fixdfsi.c \
 	fixdfti.c \
 	fixsfdi.c \
 	fixsfsi.c \
 	fixsfti.c \
 	floatsidf.c \
 	floatsisf.c \
+	floatunsidf.c \
+	floatunsisf.c \
 	muldf3.c \
 	mulsf3.c \
 	subdf3.c \
@@ -74,6 +74,8 @@ GENERIC_SRCS+= \
 	divsi3.c \
 	divti3.c \
 	ffsti2.c \
+	fixdfdi.c \
+	fixdfsi.c \
 	fixunsdfdi.c \
 	fixunsdfsi.c \
 	fixunsdfti.c \
@@ -94,8 +96,6 @@ GENERIC_SRCS+= \
 	floatundidf.c \
 	floatundisf.c \
 	floatundixf.c \
-	floatunsidf.c \
-	floatunsisf.c \
 	floatuntidf.c \
 	floatuntisf.c \
 	floatuntixf.c \
