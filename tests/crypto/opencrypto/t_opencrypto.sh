@@ -1,4 +1,4 @@
-#	$NetBSD: t_opencrypto.sh,v 1.1 2014/01/14 17:51:39 pgoyette Exp $
+#	$NetBSD: t_opencrypto.sh,v 1.2 2014/01/17 14:14:54 pgoyette Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -75,6 +75,7 @@ arc4_head() {
 }
 
 arc4_body() {
+	atf_skip "ARC4 not implemented by swcrypto"
 	common_body h_arc4
 }
 
@@ -214,6 +215,7 @@ md5_hmac_cleanup() {
 
 atf_test_case null cleanup
 null_head() {
+	atf_skip "NULL_CBC not implemented by swcrypto"
 	common_head "Test NULL_CBC crypto"
 }
 
