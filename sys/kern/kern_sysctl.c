@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.243 2013/04/27 20:13:16 christos Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.244 2014/01/17 02:12:48 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,12 +68,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.243 2013/04/27 20:13:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.244 2014/01/17 02:12:48 pooka Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
-
-#define SYSCTL_PRIVATE
 
 #include <sys/param.h>
 #define __COMPAT_SYSCTL
@@ -86,7 +84,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.243 2013/04/27 20:13:16 christos E
 #include <sys/syscallargs.h>
 #include <sys/kauth.h>
 #include <sys/ktrace.h>
-#include <sys/cprng.h>
 
 #define	MAXDESCLEN	1024
 MALLOC_DEFINE(M_SYSCTLNODE, "sysctlnode", "sysctl node structures");
@@ -166,8 +163,6 @@ long hostid;
 #define	DEFCORENAME	"%n.core"
 #endif
 char defcorename[MAXPATHLEN] = DEFCORENAME;
-
-cprng_strong_t *sysctl_prng;
 
 /*
  * ********************************************************************
@@ -260,8 +255,7 @@ sysctl_init(void)
 void
 sysctl_finalize(void)
 {
-        sysctl_prng = cprng_strong_create("sysctl", IPL_NONE,
-					  CPRNG_INIT_ANY|CPRNG_REKEY_ANY);
+
 	sysctl_root.sysctl_flags |= CTLFLAG_PERMANENT;
 }
 
