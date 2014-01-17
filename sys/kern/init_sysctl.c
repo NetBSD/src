@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.198 2013/09/14 13:18:02 joerg Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.199 2014/01/17 02:12:48 pooka Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,14 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.198 2013/09/14 13:18:02 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.199 2014/01/17 02:12:48 pooka Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
 #include "opt_modular.h"
 #include "pty.h"
-
-#define SYSCTL_PRIVATE
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -115,8 +113,6 @@ static int sysctl_kern_cptime(SYSCTLFN_PROTO);
 #if NPTY > 0
 static int sysctl_kern_maxptys(SYSCTLFN_PROTO);
 #endif /* NPTY > 0 */
-static int sysctl_kern_urnd(SYSCTLFN_PROTO);
-static int sysctl_kern_arnd(SYSCTLFN_PROTO);
 static int sysctl_kern_lwp(SYSCTLFN_PROTO);
 static int sysctl_kern_forkfsleep(SYSCTLFN_PROTO);
 static int sysctl_kern_root_partition(SYSCTLFN_PROTO);
@@ -490,18 +486,6 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       /* XXX _POSIX_VERSION */
 		       NULL, _POSIX_MONOTONIC_CLOCK, NULL, 0,
 		       CTL_KERN, KERN_MONOTONIC_CLOCK, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "urandom",
-		       SYSCTL_DESCR("Random integer value"),
-		       sysctl_kern_urnd, 0, NULL, 0,
-		       CTL_KERN, KERN_URND, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "arandom",
-		       SYSCTL_DESCR("n bytes of random data"),
-		       sysctl_kern_arnd, 0, NULL, 0,
-		       CTL_KERN, KERN_ARND, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "labelsector",
@@ -1297,64 +1281,6 @@ sysctl_kern_maxptys(SYSCTLFN_ARGS)
 }
 #endif /* NPTY > 0 */
 
-/*
- * sysctl helper routine for kern.urandom node. Picks a random number
- * for you.
- */
-static int
-sysctl_kern_urnd(SYSCTLFN_ARGS)
-{
-	int v, rv;
-
-	rv = cprng_strong(sysctl_prng, &v, sizeof(v), 0);
-	if (rv == sizeof(v)) {
-		struct sysctlnode node = *rnode;
-		node.sysctl_data = &v;
-		return (sysctl_lookup(SYSCTLFN_CALL(&node)));
-	}
-	else
-		return (EIO);	/*XXX*/
-}
-
-/*
- * sysctl helper routine for kern.arandom node. Picks a random number
- * for you.
- */
-static int
-sysctl_kern_arnd(SYSCTLFN_ARGS)
-{
-	int error;
-	void *v;
-	struct sysctlnode node = *rnode;
-
-	if (*oldlenp == 0)
-		return 0;
-	/*
-	 * This code used to allow sucking 8192 bytes at a time out
-	 * of the kernel arc4random generator.  Evidently there is some
-	 * very old OpenBSD application code that may try to do this.
-	 *
-	 * Note that this node is documented as type "INT" -- 4 or 8
-	 * bytes, not 8192.
-	 *
-	 * We continue to support this abuse of the "len" pointer here
-	 * but only 256 bytes at a time, as, anecdotally, the actual
-	 * application use here was to generate RC4 keys in userspace.
-	 *
-	 * Support for such large requests will probably be removed
-	 * entirely in the future.
-	 */
-	if (*oldlenp > 256)
-		return E2BIG;
-
-	v = kmem_alloc(*oldlenp, KM_SLEEP);
-	cprng_fast(v, *oldlenp);
-	node.sysctl_data = v;
-	node.sysctl_size = *oldlenp;
-	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-	kmem_free(v, *oldlenp);
-	return error;
-}
 /*
  * sysctl helper routine to do kern.lwp.* work.
  */
