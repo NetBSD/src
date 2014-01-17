@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.425.2.14.2.4 2014/01/13 21:52:12 bouyer Exp $
+.\"	$NetBSD: main,v 1.425.2.14.2.5 2014/01/17 16:44:06 bouyer Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -482,8 +482,8 @@ ntpd used as DDoS amplifier
 .
 .Pp
 Advisories prior to NetBSD-SA2013-010 do not affect
-NetBSD 5.1.3:
-.Lk http://www.NetBSD.org/support/security/patches-5.1.3.html .
+NetBSD 5.1.4:
+.Lk http://www.NetBSD.org/support/security/patches-5.1.4.html .
 .
 .Ss2 Kernel
 .(bullet
