@@ -1,4 +1,4 @@
-/* $NetBSD: h_null.c,v 1.2 2014/01/17 14:16:08 pgoyette Exp $ */
+/* $NetBSD: h_null.c,v 1.3 2014/01/17 19:35:33 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -37,12 +37,7 @@
 #include <crypto/cryptodev.h>
 
 unsigned char key[] = "abcdefgh";
-unsigned char iv[8] = {0};
 char plaintx[16] = "1234567890123456";
-const unsigned char ciphertx[16] = {
-	0x21, 0xc6, 0x0d, 0xa5, 0x34, 0x24, 0x8b, 0xce,
-	0x95, 0x86, 0x64, 0xb3, 0x66, 0x77, 0x9b, 0x4c
-};
 
 int
 main(void)
@@ -70,12 +65,11 @@ main(void)
 	co.src = plaintx;
 	co.dst = buf;
 	co.dst_len = sizeof(buf);
-	co.iv = iv;
 	res = ioctl(fd, CIOCCRYPT, &co);
 	if (res < 0)
 		err(1, "CIOCCRYPT");
 
-	if (memcmp(co.dst, ciphertx, sizeof(ciphertx)))
+	if (memcmp(co.dst, plaintx, sizeof(plaintx)))
 		errx(1, "verification failed");
 
 	return 0;

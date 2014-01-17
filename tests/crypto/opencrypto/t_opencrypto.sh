@@ -1,4 +1,4 @@
-#	$NetBSD: t_opencrypto.sh,v 1.2 2014/01/17 14:14:54 pgoyette Exp $
+#	$NetBSD: t_opencrypto.sh,v 1.3 2014/01/17 19:35:33 pgoyette Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -215,7 +215,6 @@ md5_hmac_cleanup() {
 
 atf_test_case null cleanup
 null_head() {
-	atf_skip "NULL_CBC not implemented by swcrypto"
 	common_head "Test NULL_CBC crypto"
 }
 
