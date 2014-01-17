@@ -1,4 +1,4 @@
-/* $NetBSD: h_aesctr2.c,v 1.1 2014/01/14 17:51:39 pgoyette Exp $ */
+/* $NetBSD: h_aesctr2.c,v 1.2 2014/01/17 14:16:08 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -89,16 +89,9 @@ main(void)
 	res = ioctl(fd, CIOCCRYPT, &co);
 	if (res < 0)
 		err(1, "CIOCCRYPT");
-#if 1
+
 	if (memcmp((char *)co.dst + 8, plaintx, sizeof(plaintx)))
 		warnx("verification failed");
-#else
-	{
-		int i;
-		for (i = 0; i < sizeof(ibuf); i++)
-			printf("%02x ", ibuf[i]);
-		printf("\n");
-	}
-#endif
+
 	return 0;
 }
