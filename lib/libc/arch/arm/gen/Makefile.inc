@@ -1,7 +1,7 @@
-# $NetBSD: Makefile.inc,v 1.26 2013/12/25 22:05:12 joerg Exp $
+# $NetBSD: Makefile.inc,v 1.27 2014/01/17 22:19:46 joerg Exp $
 
 SRCS+=	alloca.S byte_swap_2.S byte_swap_4.S bswap64.c divide.S divsi3.S \
-	fabs.c flt_rounds.c udivsi3.S
+	fabs_ieee754.c flt_rounds.c udivsi3.S
 
 CPUFLAGS.divide.S+=		-marm
 
