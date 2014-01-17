@@ -1,4 +1,4 @@
-/* $NetBSD: h_gcm.c,v 1.1 2014/01/14 17:51:39 pgoyette Exp $ */
+/* $NetBSD: h_gcm.c,v 1.2 2014/01/17 14:16:08 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -116,24 +116,11 @@ main(void)
 	res = ioctl(fd, CIOCCRYPT, &co);
 	if (res < 0)
 		err(1, "CIOCCRYPT");
-#if 1
+
 	if (memcmp(co.dst, plaintx, sizeof(plaintx)))
 		errx(1, "verification failed");
 	if (memcmp(macbuf, hash, sizeof(hash)))
 		errx(1, "hash failed");
-#else
-	{
-		int i;
-		for (i = 0; i < sizeof(databuf2); i++)
-			printf("%02x ", databuf2[i]);
-		printf("\n");
-	}
-	{
-		int i;
-		for (i = 0; i < sizeof(macbuf); i++)
-			printf("%02x ", macbuf[i]);
-		printf("\n");
-	}
-#endif
+
 	return 0;
 }
