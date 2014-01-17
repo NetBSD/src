@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.25 2013/09/03 00:30:19 matt Exp $
+# $NetBSD: Makefile.inc,v 1.26 2014/01/17 22:19:46 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -30,7 +30,7 @@ SOFTFLOAT_BITS=32
 .include <softfloat/Makefile.inc>
 .else
 .PATH : ${ARCHDIR}/hardfloat
-SRCS.hardfloat+=	fpgetround.c fpgetsticky.S fpgetmask.S
+SRCS.hardfloat+=	fpgetround.c fpgetsticky.S fpgetmask.S fabs_ieee754.S
 SRCS.hardfloat+=	fpsetround.c fpsetmask.S fpsetsticky.S
 .for f in ${SRCS.hardfloat}
 CPPFLAGS.${f} += -mfpu=vfp
