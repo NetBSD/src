@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.22 2013/05/12 13:50:11 macallan Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.23 2014/01/17 09:09:40 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,7 +34,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.22 2013/05/12 13:50:11 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.23 2014/01/17 09:09:40 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -615,8 +615,8 @@ OF_boot(const char *bootspec)
 	ofw_stack();
 	ofbcopy(bootspec, OF_buf, l + 1);
 	args.bootspec = OF_buf;
-	openfirmware(&args);
-	while (1);			/* just in case */
+	if (openfirmware(&args) == -1)
+		panic("OF_boot didn't");
 }
 
 void
