@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.106 2013/12/15 18:56:59 mlelstv Exp $	*/
+/*	$NetBSD: fstat.c,v 1.107 2014/01/17 03:28:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.106 2013/12/15 18:56:59 mlelstv Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.107 2014/01/17 03:28:01 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -510,8 +510,7 @@ ftrans(fdfile_t *fp, int i)
 		vtrans(file.f_data, i, file.f_flag, (long)fdfile.ff_file);
 		break;
 	case DTYPE_SOCKET:
-		if (checkfile == 0)
-			socktrans(file.f_data, i);
+		socktrans(file.f_data, i);
 		break;
 	case DTYPE_PIPE:
 		if (checkfile == 0)
@@ -598,37 +597,49 @@ vfilestat(struct vnode *vp, struct filestat *fsp)
 	return badtype;
 }
 
+static int
+checkfs(struct vnode *vp, struct vnode *vn, struct filestat *fst,
+    const char **type, const char **fname)
+{
+	*fname = NULL;
+	if (!KVM_READ(vp, vn, sizeof(*vn))) {
+		dprintf("can't read vnode at %p for pid %d", vp, Pid);
+		return 0;
+	}
+	*type = vfilestat(vn, fst);
+	if (checkfile) {
+		int fsmatch = 0;
+		DEVS *d;
+#if 0
+		if (*type && *type != dead)
+			return 0;
+#endif
+		for (d = devs; d != NULL; d = d->next) {
+			if (d->fsid == fst->fsid) {
+				fsmatch = 1;
+				if (d->ino == fst->fileid) {
+					*fname = d->name;
+					break;
+				}
+			}
+		}
+		if (fsmatch == 0 || (*fname == NULL && fsflg == 0))
+			return 0;
+	}
+	return 1;
+}
+
 static void
 vtrans(struct vnode *vp, int i, int flag, long addr)
 {
 	struct vnode vn;
-	struct filestat fst;
 	char mode[15], rw[3];
 	const char *badtype, *filename;
+	struct filestat fst;
 
-	filename = NULL;
-	if (!KVM_READ(vp, &vn, sizeof(struct vnode))) {
-		dprintf("can't read vnode at %p for pid %d", vp, Pid);
+	if (!checkfs(vp, &vn, &fst, &badtype, &filename))
 		return;
-	}
-	badtype = vfilestat(&vn, &fst);
-	if (checkfile) {
-		int fsmatch = 0;
-		DEVS *d;
 
-		if (badtype && badtype != dead)
-			return;
-		for (d = devs; d != NULL; d = d->next)
-			if (d->fsid == fst.fsid) {
-				fsmatch = 1;
-				if (d->ino == fst.fileid) {
-					filename = d->name;
-					break;
-				}
-			}
-		if (fsmatch == 0 || (filename == NULL && fsflg == 0))
-			return;
-	}
 	if (Aflg)
 		(void)printf("%*lx ", 2*(int)(sizeof(void*)), addr);
 	PREFIX(i);
@@ -999,7 +1010,6 @@ socktrans(struct socket *sock, int i)
 	int len;
 	char dname[32];
 	char lbuf[512], fbuf[512];
-	PREFIX(i);
 
 	/* fill in socket */
 	if (!KVM_READ(sock, &so, sizeof(struct socket))) {
@@ -1019,6 +1029,9 @@ socktrans(struct socket *sock, int i)
 		goto bad;
 	}
 
+	if (checkfile && dom.dom_family != AF_LOCAL)
+		return;
+
 	if ((len = kvm_read(kd, (u_long)dom.dom_name, dname,
 	    sizeof(dname) - 1)) != sizeof(dname) -1) {
 		dprintf("can't read domain name at %p", dom.dom_name);
@@ -1026,11 +1039,6 @@ socktrans(struct socket *sock, int i)
 	}
 	else
 		dname[len] = '\0';
-
-	if ((u_short)so.so_type > STYPEMAX)
-		(void)printf("* %s ?%d", dname, so.so_type);
-	else
-		(void)printf("* %s %s", dname, stypename[so.so_type]);
 
 	/* 
 	 * protocol specific formatting
@@ -1112,6 +1120,16 @@ again:
 				dprintf("can't read unpcb at %p", so.so_pcb);
 				goto bad;
 			}
+			if (checkfile) {
+				struct vnode vn;
+				struct filestat fst;
+				const char *badtype, *filename;
+				if (unpcb.unp_vnode == NULL)
+					return;
+				if (!checkfs(unpcb.unp_vnode, &vn, &fst,
+				    &badtype, &filename))
+					return;
+			}
 
 			if (unpcb.unp_addr) {
 				struct sockaddr_un *sun = 
@@ -1162,6 +1180,12 @@ again:
 		    (uintmax_t)(uintptr_t)sock);
 		break;
 	}
+	PREFIX(i);
+	if ((u_short)so.so_type > STYPEMAX)
+		(void)printf("* %s ?%d", dname, so.so_type);
+	else
+		(void)printf("* %s %s", dname, stypename[so.so_type]);
+
 	if (fbuf[0] || lbuf[0])
 		printf(" %s%s%s", fbuf, (fbuf[0] && lbuf[0]) ? " <-> " : "",
 		    lbuf);
