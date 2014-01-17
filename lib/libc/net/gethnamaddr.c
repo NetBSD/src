@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.88 2014/01/17 02:08:44 christos Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.89 2014/01/17 12:39:47 drochner Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -57,7 +57,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.88 2014/01/17 02:08:44 christos Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.89 2014/01/17 12:39:47 drochner Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -109,8 +109,8 @@ __weak_alias(gethostent,_gethostent)
 #define maybe_dnok(res, dn) maybe_ok((res), (dn), res_dnok)
 
 #define addalias(d, s, arr, siz) do {			\
-	if (d >= &arr[siz - 1]) {			\
-		char **xptr = realloc(arr, siz + 10); 	\
+	if (d >= &arr[siz]) {				\
+		char **xptr = realloc(arr, (siz + 10) * sizeof(*arr)); \
 		if (xptr == NULL)			\
 			goto nospc;			\
 		d = xptr + (d - arr);			\
@@ -121,7 +121,7 @@ __weak_alias(gethostent,_gethostent)
 } while (/*CONSTCOND*/0)
 
 #define setup(arr, siz) do {				\
-	arr = malloc(siz = 10); 			\
+	arr = malloc((siz = 10) * sizeof(*arr)); 	\
 	if (arr == NULL)				\
 		goto nospc;				\
 } while (/*CONSTCOND*/0)
