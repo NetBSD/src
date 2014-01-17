@@ -1,4 +1,4 @@
-/* $NetBSD: h_arc4.c,v 1.1 2014/01/14 17:51:39 pgoyette Exp $ */
+/* $NetBSD: h_arc4.c,v 1.2 2014/01/17 14:16:08 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -72,16 +72,9 @@ main(void)
 	res = ioctl(fd, CIOCCRYPT, &co);
 	if (res < 0)
 		err(1, "CIOCCRYPT");
-#if 1
+
 	if (memcmp(co.dst, ciphertx, sizeof(ciphertx)))
 		errx(1, "verification failed");
-#else
-	{
-		int i;
-		for (i = 0; i < sizeof(buf); i++)
-			printf("%02x ", buf[i]);
-		printf("\n");
-	}
-#endif
+
 	return 0;
 }
