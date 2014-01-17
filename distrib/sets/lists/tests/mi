@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.558 2014/01/15 10:23:32 martin Exp $
+# $NetBSD: mi,v 1.559 2014/01/17 22:34:36 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -873,6 +873,7 @@
 ./usr/tests/crypto/opencrypto/h_md5		tests-crypto-tests	crypto
 ./usr/tests/crypto/opencrypto/h_md5hmac		tests-crypto-tests	crypto
 ./usr/tests/crypto/opencrypto/h_null		tests-crypto-tests	crypto
+./usr/tests/crypto/opencrypto/h_sha1hmac	tests-crypto-tests	crypto
 ./usr/tests/crypto/opencrypto/h_xcbcmac		tests-crypto-tests	crypto
 ./usr/tests/crypto/opencrypto/t_opencrypto	tests-crypto-tests	crypto
 ./usr/tests/dev					tests-fs-tests
