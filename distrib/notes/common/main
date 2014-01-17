@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.500 2014/01/07 04:46:02 pho Exp $
+.\"	$NetBSD: main,v 1.501 2014/01/17 00:19:25 hkenken Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1208,6 +1208,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Charles M. Hannum Ta Mt mycroft@NetBSD.org
 .It Ta Yorick Hardy Ta Mt yhardy@NetBSD.org
 .It Ta Ben Harris Ta Mt bjh21@NetBSD.org
+.It Ta Kenichi Hashimoto Ta Mt hkenken@NetBSD.org
 .It Ta Eric Haszlakiewicz Ta Mt erh@NetBSD.org
 .It Ta John Hawkinson Ta Mt jhawk@NetBSD.org
 .It Ta Emile Heitor Ta Mt imil@NetBSD.org
