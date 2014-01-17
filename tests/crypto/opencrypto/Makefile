@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2014/01/14 17:51:39 pgoyette Exp $
+# $NetBSD: Makefile,v 1.2 2014/01/17 22:33:02 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -21,6 +21,7 @@ PROGS+=		h_gcm
 PROGS+=		h_md5
 PROGS+=		h_md5hmac
 PROGS+=		h_null
+PROGS+=		h_sha1hmac
 PROGS+=		h_xcbcmac
 
 LDADD.h_comp_zlib+=	-lz
