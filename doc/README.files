@@ -1,4 +1,4 @@
-#	$NetBSD: README.files,v 1.4.10.4.2.2 2013/10/13 07:22:18 jdc Exp $
+#	$NetBSD: README.files,v 1.4.10.4.2.3 2014/01/17 18:17:05 bouyer Exp $
 
 What's in this directory:
 
@@ -28,7 +28,7 @@ source/sets/	Source distribution sets; see below.
 
 In addition to the files and directories listed above, there is one
 directory per architecture, for each of the architectures for which
-NetBSD 5.1 has a binary distribution.  The contents of each
+NetBSD 5.2.2 has a binary distribution.  The contents of each
 architecture's directory are described in an "INSTALL" file found in
 that directory.
 
