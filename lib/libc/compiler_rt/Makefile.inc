@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.7 2014/01/17 14:06:36 joerg Exp $
+# $NetBSD: Makefile.inc,v 1.8 2014/01/17 14:07:33 joerg Exp $
 
 COMPILER_RT_SRCDIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
 
@@ -34,6 +34,7 @@ GENERIC_SRCS+= \
 	gcc_personality_v0.c
 .endif
 
+.if 0
 # Conflicts with soft-float
 GENERIC_SRCS+= \
 	comparedf2.c \
