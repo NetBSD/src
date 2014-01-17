@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.160 2013/12/16 15:36:29 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.161 2014/01/17 01:32:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.160 2013/12/16 15:36:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.161 2014/01/17 01:32:53 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.160 2013/12/16 15:36:29 pooka Exp $");
 #include <sys/syscallvar.h>
 #include <sys/xcall.h>
 #include <sys/sleepq.h>
+#include <sys/cprng.h>
 
 #include <dev/cons.h>
 
@@ -139,6 +140,8 @@ struct emul emul_netbsd = {
 };
 
 u_int nprocs = 1;
+
+cprng_strong_t *kern_cprng;
 
 int
 kpause(const char *wmesg, bool intr, int timeo, kmutex_t *mtx)
