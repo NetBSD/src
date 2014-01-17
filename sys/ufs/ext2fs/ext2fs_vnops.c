@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.107 2013/03/18 19:35:47 plunky Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.108 2014/01/17 10:55:03 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.107 2013/03/18 19:35:47 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.108 2014/01/17 10:55:03 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,7 +126,7 @@ union _qcvt {
 int
 ext2fs_create(void *v)
 {
-	struct vop_create_args /* {
+	struct vop_create_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -151,7 +151,7 @@ ext2fs_create(void *v)
 int
 ext2fs_mknod(void *v)
 {
-	struct vop_mknod_args /* {
+	struct vop_mknod_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -649,7 +649,7 @@ out2:
 int
 ext2fs_mkdir(void *v)
 {
-	struct vop_mkdir_args /* {
+	struct vop_mkdir_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -768,7 +768,6 @@ bad:
 		*ap->a_vpp = tvp;
 	}
 out:
-	vput(dvp);
 	return (error);
 }
 
@@ -865,7 +864,7 @@ out:
 int
 ext2fs_symlink(void *v)
 {
-	struct vop_symlink_args /* {
+	struct vop_symlink_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -1046,7 +1045,6 @@ ext2fs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 		mode |= IFREG;
 
 	if ((error = ext2fs_valloc(dvp, mode, cnp->cn_cred, &tvp)) != 0) {
-		vput(dvp);
 		return (error);
 	}
 	ip = VTOI(tvp);
@@ -1083,7 +1081,6 @@ ext2fs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	error = ext2fs_direnter(ip, dvp, ulr, cnp);
 	if (error != 0)
 		goto bad;
-	vput(dvp);
 	*vpp = tvp;
 	return (0);
 
@@ -1096,7 +1093,6 @@ bad:
 	ip->i_e2fs_nlink = 0;
 	ip->i_flag |= IN_CHANGE;
 	vput(tvp);
-	vput(dvp);
 	return (error);
 }
 

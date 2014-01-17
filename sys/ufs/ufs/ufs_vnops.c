@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.218 2013/09/15 15:32:18 martin Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.219 2014/01/17 10:55:03 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.218 2013/09/15 15:32:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.219 2014/01/17 10:55:03 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -134,7 +134,7 @@ static const struct dirtemplate mastertemplate = {
 int
 ufs_create(void *v)
 {
-	struct vop_create_args /* {
+	struct vop_create_v2_args /* {
 		struct vnode		*a_dvp;
 		struct vnode		**a_vpp;
 		struct componentname	*a_cnp;
@@ -173,7 +173,7 @@ ufs_create(void *v)
 int
 ufs_mknod(void *v)
 {
-	struct vop_mknod_args /* {
+	struct vop_mknod_v2_args /* {
 		struct vnode		*a_dvp;
 		struct vnode		**a_vpp;
 		struct componentname	*a_cnp;
@@ -969,7 +969,7 @@ ufs_whiteout(void *v)
 int
 ufs_mkdir(void *v)
 {
-	struct vop_mkdir_args /* {
+	struct vop_mkdir_v2_args /* {
 		struct vnode		*a_dvp;
 		struct vnode		**a_vpp;
 		struct componentname	*a_cnp;
@@ -1026,7 +1026,6 @@ ufs_mkdir(void *v)
 		UFS_WAPBL_END(dvp->v_mount);
 		fstrans_done(dvp->v_mount);
 		vput(tvp);
-		vput(dvp);
 		return (error);
 	}
 #endif
@@ -1121,7 +1120,6 @@ ufs_mkdir(void *v)
 	}
  out:
 	fstrans_done(dvp->v_mount);
-	vput(dvp);
 	return (error);
 }
 
@@ -1232,7 +1230,7 @@ ufs_rmdir(void *v)
 int
 ufs_symlink(void *v)
 {
-	struct vop_symlink_args /* {
+	struct vop_symlink_v2_args /* {
 		struct vnode		*a_dvp;
 		struct vnode		**a_vpp;
 		struct componentname	*a_cnp;
@@ -1829,7 +1827,6 @@ ufs_makeinode(int mode, struct vnode *dvp, const struct ufs_lookup_results *ulr,
 		mode |= IFREG;
 
 	if ((error = UFS_VALLOC(dvp, mode, cnp->cn_cred, vpp)) != 0) {
-		vput(dvp);
 		return (error);
 	}
 	tvp = *vpp;
@@ -1846,7 +1843,6 @@ ufs_makeinode(int mode, struct vnode *dvp, const struct ufs_lookup_results *ulr,
 		 * the vnode dangling from the journal.
 		 */
 		vput(tvp);
-		vput(dvp);
 		return (error);
 	}
 #if defined(QUOTA) || defined(QUOTA2)
@@ -1854,7 +1850,6 @@ ufs_makeinode(int mode, struct vnode *dvp, const struct ufs_lookup_results *ulr,
 		UFS_VFREE(tvp, ip->i_number, mode);
 		UFS_WAPBL_END1(dvp->v_mount, dvp);
 		vput(tvp);
-		vput(dvp);
 		return (error);
 	}
 #endif
@@ -1892,7 +1887,6 @@ ufs_makeinode(int mode, struct vnode *dvp, const struct ufs_lookup_results *ulr,
 	pool_cache_put(ufs_direct_cache, newdir);
 	if (error)
 		goto bad;
-	vput(dvp);
 	*vpp = tvp;
 	return (0);
 
@@ -1908,7 +1902,6 @@ ufs_makeinode(int mode, struct vnode *dvp, const struct ufs_lookup_results *ulr,
 	tvp->v_type = VNON;		/* explodes later if VBLK */
 	UFS_WAPBL_END1(dvp->v_mount, dvp);
 	vput(tvp);
-	vput(dvp);
 	return (error);
 }
 
