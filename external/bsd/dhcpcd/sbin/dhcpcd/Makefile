@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.18 2014/01/15 20:58:53 roy Exp $
+# $NetBSD: Makefile,v 1.19 2014/01/17 18:36:25 roy Exp $
 #
 
 PROG=		dhcpcd
@@ -44,6 +44,7 @@ CLEANFILES=		dhcpcd.conf.5 dhcpcd.8 \
 ${f}:	${f}.in
 	${TOOL_SED} -e 's:@SYSCONFDIR@:/etc:g' -e 's:@DBDIR@:/var/db:g' \
 	    -e 's:@LIBDIR@:/lib:g' \
+	    -e 's:@RUNDIR@:/var/run:g' \
 	    -e 's:@HOOKDIR@:/libexec/dhcpcd-hooks:g' \
 	    -e 's:@SCRIPT@:/libexec/dhcpcd-run-hooks:g' \
 	    -e 's:@SERVICEEXISTS@::g' \
