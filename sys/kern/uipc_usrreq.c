@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.148 2013/10/29 09:53:51 hannken Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.149 2014/01/17 10:55:02 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.148 2013/10/29 09:53:51 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.149 2014/01/17 10:55:02 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -962,6 +962,7 @@ unp_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 	vattr.va_mode = ACCESSPERMS & ~(p->p_cwdi->cwdi_cmask);
 	error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
 	if (error) {
+		vput(nd.ni_dvp);
 		pathbuf_destroy(pb);
 		goto bad;
 	}
@@ -976,6 +977,7 @@ unp_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 	unp->unp_connid.unp_egid = kauth_cred_getegid(l->l_cred);
 	unp->unp_flags |= UNP_EIDSBIND;
 	VOP_UNLOCK(vp);
+	vput(nd.ni_dvp);
 	unp->unp_flags &= ~UNP_BUSY;
 	pathbuf_destroy(pb);
 	return (0);

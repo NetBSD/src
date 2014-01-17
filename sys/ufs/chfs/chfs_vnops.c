@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnops.c,v 1.18 2013/10/20 17:18:38 christos Exp $	*/
+/*	$NetBSD: chfs_vnops.c,v 1.19 2014/01/17 10:55:03 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -174,7 +174,7 @@ out:
 int
 chfs_create(void *v)
 {
-	struct vop_create_args /* {
+	struct vop_create_v2_args /* {
 				  struct vnode *a_dvp;
 				  struct vnode **a_vpp;
 				  struct componentname *a_cnp;
@@ -207,10 +207,10 @@ chfs_create(void *v)
 int
 chfs_mknod(void *v)
 {
-	struct vnode *dvp = ((struct vop_mknod_args *) v)->a_dvp;
-	struct vnode **vpp = ((struct vop_mknod_args *) v)->a_vpp;
-	struct componentname *cnp = ((struct vop_mknod_args *) v)->a_cnp;
-	struct vattr *vap = ((struct vop_mknod_args *) v)->a_vap;
+	struct vnode *dvp = ((struct vop_mknod_v2_args *) v)->a_dvp;
+	struct vnode **vpp = ((struct vop_mknod_v2_args *) v)->a_vpp;
+	struct componentname *cnp = ((struct vop_mknod_v2_args *) v)->a_cnp;
+	struct vattr *vap = ((struct vop_mknod_v2_args *) v)->a_vap;
 	int mode, err = 0;
 	struct chfs_inode *ip;
 	struct vnode *vp;
@@ -1179,10 +1179,10 @@ out_unlocked:
 int
 chfs_mkdir(void *v)
 {
-	struct vnode *dvp = ((struct vop_mkdir_args *) v)->a_dvp;
-	struct vnode **vpp = ((struct vop_mkdir_args *)v)->a_vpp;
-	struct componentname *cnp = ((struct vop_mkdir_args *) v)->a_cnp;
-	struct vattr *vap = ((struct vop_mkdir_args *) v)->a_vap;
+	struct vnode *dvp = ((struct vop_mkdir_v2_args *) v)->a_dvp;
+	struct vnode **vpp = ((struct vop_mkdir_v2_args *)v)->a_vpp;
+	struct componentname *cnp = ((struct vop_mkdir_v2_args *) v)->a_cnp;
+	struct vattr *vap = ((struct vop_mkdir_v2_args *) v)->a_vap;
 	dbg("mkdir()\n");
 
 	int mode;
@@ -1244,11 +1244,11 @@ out:
 int
 chfs_symlink(void *v)
 {
-	struct vnode *dvp = ((struct vop_symlink_args *) v)->a_dvp;
-	struct vnode **vpp = ((struct vop_symlink_args *) v)->a_vpp;
-	struct componentname *cnp = ((struct vop_symlink_args *) v)->a_cnp;
-	struct vattr *vap = ((struct vop_symlink_args *) v)->a_vap;
-	char *target = ((struct vop_symlink_args *) v)->a_target;
+	struct vnode *dvp = ((struct vop_symlink_v2_args *) v)->a_dvp;
+	struct vnode **vpp = ((struct vop_symlink_v2_args *) v)->a_vpp;
+	struct componentname *cnp = ((struct vop_symlink_v2_args *) v)->a_cnp;
+	struct vattr *vap = ((struct vop_symlink_v2_args *) v)->a_vap;
+	char *target = ((struct vop_symlink_v2_args *) v)->a_target;
 
 	struct ufsmount *ump;
 	struct chfs_mount *chmp;

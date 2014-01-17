@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.91 2013/10/17 20:55:30 christos Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.92 2014/01/17 10:55:01 hannken Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.91 2013/10/17 20:55:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.92 2014/01/17 10:55:01 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1024,7 +1024,7 @@ int
 coda_create(void *v)
 {
 /* true args */
-    struct vop_create_args *ap = v;
+    struct vop_create_v2_args *ap = v;
     vnode_t *dvp = ap->a_dvp;
     struct cnode *dcp = VTOC(dvp);
     struct vattr *va = ap->a_vap;
@@ -1096,11 +1096,6 @@ coda_create(void *v)
 	    error));)
     }
 
-    /*
-     * vnodeops(9) says that we must unlock the parent and lock the child.
-     * XXX Should we lock the child first?
-     */
-    vput(dvp);
     if (!error) {
 #ifdef CODA_VERBOSE
 	if ((cnp->cn_flags & LOCKLEAF) == 0)
@@ -1357,7 +1352,7 @@ int
 coda_mkdir(void *v)
 {
 /* true args */
-    struct vop_mkdir_args *ap = v;
+    struct vop_mkdir_v2_args *ap = v;
     vnode_t *dvp = ap->a_dvp;
     struct cnode *dcp = VTOC(dvp);
     struct componentname  *cnp = ap->a_cnp;
@@ -1420,13 +1415,6 @@ coda_mkdir(void *v)
 	CODADEBUG(CODA_MKDIR, myprintf(("%s error %d\n", __func__, error));)
     }
 
-    /*
-     * Currently, all mkdirs explicitly vput their dvp's.
-     * It also appears that we *must* lock the vpp, since
-     * lockleaf isn't set, but someone down the road is going
-     * to try to unlock the new directory.
-     */
-    vput(dvp);
     if (!error) {
 	if ((error = vn_lock(*ap->a_vpp, LK_EXCLUSIVE))) {
 	    panic("%s: couldn't lock child", __func__);
@@ -1507,7 +1495,7 @@ int
 coda_symlink(void *v)
 {
 /* true args */
-    struct vop_symlink_args *ap = v;
+    struct vop_symlink_v2_args *ap = v;
     vnode_t *dvp = ap->a_dvp;
     struct cnode *dcp = VTOC(dvp);
     /* a_vpp is used in place below */
@@ -1581,9 +1569,6 @@ coda_symlink(void *v)
     }
 
  exit:
-    /* unlock and deference parent */
-    vput(dvp);
-
     CODADEBUG(CODA_SYMLINK, myprintf(("in symlink result %d\n",error)); )
     return(error);
 }

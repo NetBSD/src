@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.49 2011/11/21 18:29:22 hannken Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.50 2014/01/17 10:55:02 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.49 2011/11/21 18:29:22 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.50 2014/01/17 10:55:02 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -485,7 +485,7 @@ start:
 int
 union_create(void *v)
 {
-	struct vop_create_args /* {
+	struct vop_create_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -500,10 +500,7 @@ union_create(void *v)
 		struct vnode *vp;
 		struct mount *mp;
 
-		vref(dvp);
-		un->un_flags |= UN_KLOCK;
 		mp = ap->a_dvp->v_mount;
-		vput(ap->a_dvp);
 		error = VOP_CREATE(dvp, &vp, cnp, ap->a_vap);
 		if (error)
 			return (error);
@@ -515,7 +512,6 @@ union_create(void *v)
 		return (error);
 	}
 
-	vput(ap->a_dvp);
 	return (EROFS);
 }
 
@@ -539,7 +535,7 @@ union_whiteout(void *v)
 int
 union_mknod(void *v)
 {
-	struct vop_mknod_args /* {
+	struct vop_mknod_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -554,10 +550,7 @@ union_mknod(void *v)
 		struct vnode *vp;
 		struct mount *mp;
 
-		vref(dvp);
-		un->un_flags |= UN_KLOCK;
 		mp = ap->a_dvp->v_mount;
-		vput(ap->a_dvp);
 		error = VOP_MKNOD(dvp, &vp, cnp, ap->a_vap);
 		if (error)
 			return (error);
@@ -569,7 +562,6 @@ union_mknod(void *v)
 		return (error);
 	}
 
-	vput(ap->a_dvp);
 	return (EROFS);
 }
 
@@ -1349,7 +1341,7 @@ out:
 int
 union_mkdir(void *v)
 {
-	struct vop_mkdir_args /* {
+	struct vop_mkdir_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -1363,9 +1355,6 @@ union_mkdir(void *v)
 		int error;
 		struct vnode *vp;
 
-		vref(dvp);
-		un->un_flags |= UN_KLOCK;
-		VOP_UNLOCK(ap->a_dvp);
 		error = VOP_MKDIR(dvp, &vp, cnp, ap->a_vap);
 		if (error) {
 			vrele(ap->a_dvp);
@@ -1376,11 +1365,9 @@ union_mkdir(void *v)
 				NULLVP, cnp, vp, NULLVP, 1);
 		if (error)
 			vput(vp);
-		vrele(ap->a_dvp);
 		return (error);
 	}
 
-	vput(ap->a_dvp);
 	return (EROFS);
 }
 
@@ -1437,7 +1424,7 @@ union_rmdir(void *v)
 int
 union_symlink(void *v)
 {
-	struct vop_symlink_args /* {
+	struct vop_symlink_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -1451,15 +1438,11 @@ union_symlink(void *v)
 	if (dvp != NULLVP) {
 		int error;
 
-		vref(dvp);
-		un->un_flags |= UN_KLOCK;
-		vput(ap->a_dvp);
 		error = VOP_SYMLINK(dvp, ap->a_vpp, cnp, ap->a_vap,
 				    ap->a_target);
 		return (error);
 	}
 
-	vput(ap->a_dvp);
 	return (EROFS);
 }
 

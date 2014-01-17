@@ -321,6 +321,7 @@ zfs_replay_create_acl(zfsvfs_t *zfsvfs,
 
 	if (lr->lr_common.lrc_txtype & TX_CI)
 		vflg |= FIGNORECASE;
+	vn_lock(ZTOV(dzp), LK_EXCLUSIVE | LK_RETRY);
 	switch (txtype) {
 	case TX_CREATE_ACL:
 		aclstart = (caddr_t)(lracl + 1);
@@ -395,6 +396,7 @@ zfs_replay_create_acl(zfsvfs_t *zfsvfs,
 	default:
 		error = ENOTSUP;
 	}
+	VOP_UNLOCK(ZTOV(dzp));
 
 bail:
 	if (error == 0 && vp != NULL)

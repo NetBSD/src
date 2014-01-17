@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.168 2013/12/14 22:04:03 christos Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.169 2014/01/17 10:55:02 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.168 2013/12/14 22:04:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.169 2014/01/17 10:55:02 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1549,7 +1549,6 @@ nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 				pathbuf_destroy(nd.ni_pathbuf);
 				nd.ni_pathbuf = NULL;
 			}
-			vput(nd.ni_dvp);
 			error = ENXIO;
 			abort = 0;
 		}
@@ -1561,10 +1560,6 @@ nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 			nd.ni_pathbuf = NULL;
 		}
 		vp = nd.ni_vp;
-		if (nd.ni_dvp == vp)
-			vrele(nd.ni_dvp);
-		else
-			vput(nd.ni_dvp);
 		abort = 0;
 		if (!error && va.va_size != -1) {
 			error = nfsrv_access(vp, VWRITE, cred,
@@ -1586,6 +1581,10 @@ nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 			error = VOP_GETATTR(vp, &va, cred);
 		vput(vp);
 	}
+	if (nd.ni_dvp == vp)
+		vrele(nd.ni_dvp);
+	else
+		vput(nd.ni_dvp);
 	if (v3) {
 		if (exclusive_flag && !error) {
 			/*
@@ -1721,10 +1720,6 @@ nfsrv_mknod(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *lw
 		error = EEXIST;
 abort:
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
-		if (nd.ni_dvp == nd.ni_vp)
-			vrele(nd.ni_dvp);
-		else
-			vput(nd.ni_dvp);
 		if (nd.ni_vp)
 			vput(nd.ni_vp);
 		if (nd.ni_pathbuf != NULL) {
@@ -1758,6 +1753,10 @@ out:
 			error = VOP_GETATTR(vp, &va, cred);
 		vput(vp);
 	}
+	if (nd.ni_dvp == nd.ni_vp)
+		vrele(nd.ni_dvp);
+	else
+		vput(nd.ni_dvp);
 	if (dirp) {
 		vn_lock(dirp, LK_SHARED | LK_RETRY);
 		diraft_ret = VOP_GETATTR(dirp, &diraft, cred);
@@ -2350,6 +2349,7 @@ abortop:
 		vput(nd.ni_vp);
 	    }
 	}
+	vput(nd.ni_dvp);
 out:
 	if (pathcp)
 		free(pathcp, M_TEMP);
@@ -2475,6 +2475,7 @@ nfsrv_mkdir(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *lw
 			error = VOP_GETATTR(vp, &va, cred);
 		vput(vp);
 	}
+	vput(nd.ni_dvp);
 out:
 	if (dirp) {
 		if (v3) {

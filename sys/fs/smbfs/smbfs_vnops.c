@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.86 2013/03/18 19:35:39 plunky Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.87 2014/01/17 10:55:02 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.86 2013/03/18 19:35:39 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.87 2014/01/17 10:55:02 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -573,7 +573,7 @@ smbfs_write(void *v)
 int
 smbfs_create(void *v)
 {
-	struct vop_create_args /* {
+	struct vop_create_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -610,7 +610,6 @@ smbfs_create(void *v)
 
   out:
 	VN_KNOTE(dvp, NOTE_WRITE);
-	vput(dvp);
 	return (error);
 }
 
@@ -775,7 +774,7 @@ smbfs_symlink(void *v)
 int
 smbfs_mkdir(void *v)
 {
-	struct vop_mkdir_args /* {
+	struct vop_mkdir_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -811,7 +810,6 @@ smbfs_mkdir(void *v)
 
  out:
 	VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
-	vput(dvp);
 
 	return (error);
 }

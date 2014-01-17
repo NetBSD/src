@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.41 2013/03/18 19:35:35 plunky Exp $	*/
+/*	$NetBSD: advnops.c,v 1.42 2014/01/17 10:55:01 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.41 2013/03/18 19:35:35 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.42 2014/01/17 10:55:01 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -421,7 +421,7 @@ adosfs_link(void *v)
 int
 adosfs_symlink(void *v)
 {
-	struct vop_symlink_args /* {
+	struct vop_symlink_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -430,7 +430,6 @@ adosfs_symlink(void *v)
 	} */ *ap = v;
 
 	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
-	vput(ap->a_dvp);
 	return (EROFS);
 }
 

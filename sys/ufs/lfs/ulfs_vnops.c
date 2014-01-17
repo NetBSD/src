@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.18 2013/07/28 01:10:49 dholland Exp $	*/
+/*	$NetBSD: ulfs_vnops.c,v 1.19 2014/01/17 10:55:03 hannken Exp $	*/
 /*  from NetBSD: ufs_vnops.c,v 1.213 2013/06/08 05:47:02 kardel Exp  */
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.18 2013/07/28 01:10:49 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.19 2014/01/17 10:55:03 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -127,7 +127,7 @@ static const struct lfs_dirtemplate mastertemplate = {
 int
 ulfs_create(void *v)
 {
-	struct vop_create_args /* {
+	struct vop_create_v2_args /* {
 		struct vnode		*a_dvp;
 		struct vnode		**a_vpp;
 		struct componentname	*a_cnp;
@@ -714,7 +714,7 @@ ulfs_whiteout(void *v)
 int
 ulfs_mkdir(void *v)
 {
-	struct vop_mkdir_args /* {
+	struct vop_mkdir_v2_args /* {
 		struct vnode		*a_dvp;
 		struct vnode		**a_vpp;
 		struct componentname	*a_cnp;
@@ -765,7 +765,6 @@ ulfs_mkdir(void *v)
 		lfs_vfree(tvp, ip->i_number, dmode);
 		fstrans_done(dvp->v_mount);
 		vput(tvp);
-		vput(dvp);
 		return (error);
 	}
 #endif
@@ -858,7 +857,6 @@ ulfs_mkdir(void *v)
 	}
  out:
 	fstrans_done(dvp->v_mount);
-	vput(dvp);
 	return (error);
 }
 
@@ -959,7 +957,7 @@ ulfs_rmdir(void *v)
 int
 ulfs_symlink(void *v)
 {
-	struct vop_symlink_args /* {
+	struct vop_symlink_v2_args /* {
 		struct vnode		*a_dvp;
 		struct vnode		**a_vpp;
 		struct componentname	*a_cnp;
@@ -1429,7 +1427,6 @@ ulfs_makeinode(int mode, struct vnode *dvp, const struct ulfs_lookup_results *ul
 		mode |= LFS_IFREG;
 
 	if ((error = lfs_valloc(dvp, mode, cnp->cn_cred, vpp)) != 0) {
-		vput(dvp);
 		return (error);
 	}
 	tvp = *vpp;
@@ -1442,7 +1439,6 @@ ulfs_makeinode(int mode, struct vnode *dvp, const struct ulfs_lookup_results *ul
 	if ((error = lfs_chkiq(ip, 1, cnp->cn_cred, 0))) {
 		lfs_vfree(tvp, ip->i_number, mode);
 		vput(tvp);
-		vput(dvp);
 		return (error);
 	}
 #endif
@@ -1480,7 +1476,6 @@ ulfs_makeinode(int mode, struct vnode *dvp, const struct ulfs_lookup_results *ul
 	pool_cache_put(ulfs_direct_cache, newdir);
 	if (error)
 		goto bad;
-	vput(dvp);
 	*vpp = tvp;
 	return (0);
 
@@ -1496,7 +1491,6 @@ ulfs_makeinode(int mode, struct vnode *dvp, const struct ulfs_lookup_results *ul
 	lfs_unmark_vnode(tvp);
 	tvp->v_type = VNON;		/* explodes later if VBLK */
 	vput(tvp);
-	vput(dvp);
 	return (error);
 }
 
