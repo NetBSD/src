@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnode.c,v 1.8 2012/10/19 12:44:39 ttoth Exp $	*/
+/*	$NetBSD: chfs_vnode.c,v 1.9 2014/01/17 10:55:03 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -257,7 +257,6 @@ chfs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	if (error) {
 		mutex_exit(&chmp->chm_lock_mountfields);
 		vput(vp);
-		vput(dvp);
 		return error;
 	}
 
@@ -269,10 +268,8 @@ chfs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	if (error) {
 		mutex_exit(&chmp->chm_lock_mountfields);
 		vput(vp);
-		vput(dvp);
 		return error;
 	}
-	vput(dvp);
 
 	/* setup directory entry */
 	nfd = chfs_alloc_dirent(cnp->cn_namelen + 1);

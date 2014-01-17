@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.147 2013/03/18 19:35:44 plunky Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.148 2014/01/17 10:55:02 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.147 2013/03/18 19:35:44 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.148 2014/01/17 10:55:02 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1155,7 +1155,7 @@ kernfs_link(void *v)
 int
 kernfs_symlink(void *v)
 {
-	struct vop_symlink_args /* {
+	struct vop_symlink_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -1164,6 +1164,5 @@ kernfs_symlink(void *v)
 	} */ *ap = v;
 
 	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
-	vput(ap->a_dvp);
 	return (EROFS);
 }

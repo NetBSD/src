@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.52 2013/11/07 09:45:53 hannken Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.53 2014/01/17 10:55:02 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.52 2013/11/07 09:45:53 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.53 2014/01/17 10:55:02 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,8 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.52 2013/11/07 09:45:53 hannken Exp 
  */
 #define dead_bwrite	genfs_nullop
 int	dead_lookup(void *);
-int	dead_create(void *);
-int	dead_mknod(void *);
 int	dead_open(void *);
 #define dead_close	genfs_nullop
 int	dead_read(void *);
@@ -62,9 +60,7 @@ int	dead_poll(void *);
 int	dead_remove(void *);
 int	dead_link(void *);
 int	dead_rename(void *);
-int	dead_mkdir(void *);
 int	dead_rmdir(void *);
-int	dead_symlink(void *);
 #define dead_fsync	genfs_nullop
 #define dead_seek	genfs_nullop
 int	dead_inactive(void *);
@@ -87,8 +83,6 @@ const struct vnodeopv_entry_desc dead_vnodeop_entries[] = {
 	{ &vop_default_desc, dead_default_error },
 	{ &vop_bwrite_desc, dead_bwrite },		/* bwrite */
 	{ &vop_lookup_desc, dead_lookup },		/* lookup */
-	{ &vop_create_desc, dead_create },		/* create */
-	{ &vop_mknod_desc, dead_mknod },		/* mknod */
 	{ &vop_open_desc, dead_open },			/* open */
 	{ &vop_close_desc, dead_close },		/* close */
 	{ &vop_read_desc, dead_read },			/* read */
@@ -99,9 +93,7 @@ const struct vnodeopv_entry_desc dead_vnodeop_entries[] = {
 	{ &vop_remove_desc, dead_remove },		/* remove */
 	{ &vop_link_desc, dead_link },			/* link */
 	{ &vop_rename_desc, dead_rename },		/* rename */
-	{ &vop_mkdir_desc, dead_mkdir },		/* mkdir */
 	{ &vop_rmdir_desc, dead_rmdir },		/* rmdir */
-	{ &vop_symlink_desc, dead_symlink },		/* symlink */
 	{ &vop_fsync_desc, dead_fsync },		/* fsync */
 	{ &vop_seek_desc, dead_seek },			/* seek */
 	{ &vop_inactive_desc, dead_inactive },		/* inactive */
@@ -153,36 +145,6 @@ dead_lookup(void *v)
 	} */ *ap = v;
 
 	*(ap->a_vpp) = NULL;
-
-	return EIO;
-}
-
-int
-dead_create(void *v)
-{
-	struct vop_create_args /* {
-		struct vnode *a_dvp;
-		struct vnode **a_vpp;
-		struct componentname *a_cnp;
-		struct vattr *a_vap;
-	} */ *ap = v;
-
-	vput(ap->a_dvp);
-
-	return EIO;
-}
-
-int
-dead_mknod(void *v)
-{
-	struct vop_mknod_args /* {
-		struct vnode *a_dvp;
-		struct vnode **a_vpp;
-		struct componentname *a_cnp;
-		struct vattr *a_vap;
-	} */ *ap = v;
-
-	vput(ap->a_dvp);
 
 	return EIO;
 }
@@ -316,21 +278,6 @@ dead_rename(void *v)
 }
 
 int
-dead_mkdir(void *v)
-{
-	struct vop_mkdir_args /* {
-		struct vnode *a_dvp;
-		struct vnode **a_vpp;
-		struct componentname *a_cnp;
-		struct vattr *a_vap;
-	} */ *ap = v;
-
-	vput(ap->a_dvp);
-
-	return EIO;
-}
-
-int
 dead_rmdir(void *v)
 {
 	struct vop_rmdir_args /* {
@@ -341,22 +288,6 @@ dead_rmdir(void *v)
 
 	vput(ap->a_dvp);
 	vput(ap->a_vp);
-
-	return EIO;
-}
-
-int
-dead_symlink(void *v)
-{
-	struct vop_symlink_args /* {
-		struct vnode *a_dvp;
-		struct vnode **a_vpp;
-		struct componentname *a_cnp;
-		struct vattr *a_vap;
-		char *a_target;
-	} */ *ap = v;
-
-	vput(ap->a_dvp);
 
 	return EIO;
 }
