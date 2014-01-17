@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_io.c,v 1.12 2013/12/28 17:00:50 christos Exp $	*/
+/*	$NetBSD: ntp_io.c,v 1.13 2014/01/17 17:25:47 roy Exp $	*/
 
 /*
  * ntp_io.c - input/output routines for ntpd.	The socket-opening code
@@ -1632,16 +1632,15 @@ set_wildcard_reuse(
 
 
 static isc_boolean_t
-is_anycast(
+check_flags6(
 	sockaddr_u *psau,
-	const char *name
+	const char *name,
+	u_int32 flags6
 	)
 {
-#if defined(INCLUDE_IPV6_SUPPORT) && defined(SIOCGIFAFLAG_IN6) && \
-    defined(IN6_IFF_ANYCAST)
+#if defined(INCLUDE_IPV6_SUPPORT) && defined(SIOCGIFAFLAG_IN6)
 	struct in6_ifreq ifr6;
 	int fd;
-	u_int32 flags6;
 
 	if (psau->sa.sa_family != AF_INET6)
 		return ISC_FALSE;
@@ -1655,13 +1654,45 @@ is_anycast(
 		return ISC_FALSE;
 	}
 	close(fd);
-	flags6 = ifr6.ifr_ifru.ifru_flags6;
-	if ((flags6 & IN6_IFF_ANYCAST) != 0)
+	if ((ifr6.ifr_ifru.ifru_flags6 & flags6) != 0)
 		return ISC_TRUE;
-#endif	/* INCLUDE_IPV6_SUPPORT && SIOCGIFAFLAG_IN6 && IN6_IFF_ANYCAST */
+#endif	/* INCLUDE_IPV6_SUPPORT && SIOCGIFAFLAG_IN6 */
 	return ISC_FALSE;
 }
 
+static isc_boolean_t
+is_anycast(
+	sockaddr_u *psau,
+	const char *name
+	)
+{
+#ifdef IN6_IFF_ANYCAST
+	return check_flags6(psau, name, IN6_IFF_ANYCAST);
+#else
+	return ISC_FALSE;
+#endif
+}
+
+static isc_boolean_t
+is_valid(
+	sockaddr_u *psau,
+	const char *name
+	)
+{
+	u_int32 flags6;
+
+	flags6 = 0;
+#ifdef IN6_IFF_DEPARTED
+	flags6 |= IN6_IFF_DEPARTED;
+#endif
+#ifdef IN6_IFF_DETACHED
+	flags6 |= IN6_IFF_DETACHED;
+#endif
+#ifdef IN6_IFF_TENTATIVE
+	flags6 |= IN6_IFF_TENTATIVE;
+#endif
+	return check_flags6(psau, name, flags6) ? ISC_FALSE : ISC_TRUE;
+}
 
 /*
  * update_interface strategy
@@ -1792,6 +1823,12 @@ update_interfaces(
 			continue;
 
 		if (is_anycast(&enumep.sin, isc_if.name))
+			continue;
+
+		/*
+		 * skip any address that is an invalid state to be used
+		 */
+		if (!is_valid(&enumep.sin, isc_if.name))
 			continue;
 
 		/*
