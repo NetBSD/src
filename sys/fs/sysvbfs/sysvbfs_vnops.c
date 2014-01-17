@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.50 2014/01/09 13:23:57 hannken Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.51 2014/01/17 10:55:02 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.50 2014/01/09 13:23:57 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.51 2014/01/17 10:55:02 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -127,7 +127,7 @@ sysvbfs_lookup(void *arg)
 int
 sysvbfs_create(void *arg)
 {
-	struct vop_create_args /* {
+	struct vop_create_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -152,7 +152,7 @@ sysvbfs_create(void *arg)
 	if ((err = bfs_file_create(bfs, a->a_cnp->cn_nameptr, 0, 0, &attr))
 	    != 0) {
 		DPRINTF("%s: bfs_file_create failed.\n", __func__);
-		goto unlock_exit;
+		return err;
 	}
 
 	if (!bfs_dirent_lookup_by_name(bfs, a->a_cnp->cn_nameptr, &dirent))
@@ -160,16 +160,12 @@ sysvbfs_create(void *arg)
 
 	if ((err = sysvbfs_vget(mp, dirent->inode, a->a_vpp)) != 0) {
 		DPRINTF("%s: sysvbfs_vget failed.\n", __func__);
-		goto unlock_exit;
+		return err;
 	}
 	bnode = (*a->a_vpp)->v_data;
 	bnode->update_ctime = true;
 	bnode->update_mtime = true;
 	bnode->update_atime = true;
-
- unlock_exit:
-	/* unlock parent directory */
-	vput(a->a_dvp);	/* locked at sysvbfs_lookup(); */
 
 	return err;
 }
