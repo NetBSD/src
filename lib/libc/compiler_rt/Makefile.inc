@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.8 2014/01/17 14:07:33 joerg Exp $
+# $NetBSD: Makefile.inc,v 1.9 2014/01/17 14:08:59 joerg Exp $
 
 COMPILER_RT_SRCDIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
 
@@ -184,13 +184,14 @@ GENERIC_SRCS+= \
 .if ${MACHINE_CPU} == "arm"
 .if !empty(LIBC_MACHINE_ARCH:Mearm*)
 GENERIC_SRCS+= \
-	aeabi_dcmp.S \
-	aeabi_fcmp.S \
 	aeabi_idivmod.S \
 	aeabi_ldivmod.S \
 	aeabi_uidivmod.S \
 	aeabi_uldivmod.S
 .endif
+# Not yet, overlaps with softfloat
+#	aeabi_dcmp.S \
+#	aeabi_fcmp.S
 # Not yet, requires ARMv6
 #GENERIC_SRCS+= \
 #	bswapdi2.S \
