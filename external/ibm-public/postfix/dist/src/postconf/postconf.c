@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf.c,v 1.1.1.6 2013/09/25 19:06:33 tron Exp $	*/
+/*	$NetBSD: postconf.c,v 1.1.1.7 2014/01/18 17:04:19 tron Exp $	*/
 
 /*++
 /* NAME
@@ -476,7 +476,7 @@ int     main(int argc, char **argv)
 	    cmd_mode |= FOLD_LINE;
 	    break;
 	case '#':
-	    cmd_mode = COMMENT_OUT;
+	    cmd_mode |= COMMENT_OUT;
 	    break;
 	case 'h':
 	    cmd_mode &= ~SHOW_NAME;
