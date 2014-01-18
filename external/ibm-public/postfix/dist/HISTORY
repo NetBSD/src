@@ -18306,3 +18306,36 @@ Apologies for any names omitted.
 	encryption key for each smtpd(8) process.  The workaround
 	turns off session tickets. In 2.11 we'll enable session
 	tickets properly.  Viktor Dukhovni. File: tls/tls_server.c.
+
+20131026
+
+	Future proofing: API changes in the PCRE library.  File:
+	util/dict_pcre.c.
+
+20131127
+
+	Bugfix (introduced: 20090106): the postconf '-#' option
+	erased prior options. File: postconf/postconf.c.
+
+20131129
+
+	Bugfix: Makefile example in MULTI_INSTANCE_README. Viktor
+	Dukhovni. File: proto/MULTI_INSTANCE_README.html.
+
+20131216
+
+	OpenSSL future proofing: tolerate disappearance of named
+	bug-workaround bits without invalidating tls_disable_workarounds
+	configurations.  When support for a bug workaround is removed
+	from OpenSSL, the corresponding bit is defined as zero (i.e.
+	NOOP) instead of causing programs to break. Viktor Dukhovni.
+	File: tls/tls_misc.c.
+
+20131220
+
+	Documentation: typo in SASL_README. Patrick Ben Koetter.
+	File: proto/SASL_README.html.
+
+20140104
+
+	Bugfix: malformed error message. File: conf/post-install.
