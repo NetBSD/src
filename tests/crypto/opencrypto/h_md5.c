@@ -1,4 +1,4 @@
-/* $NetBSD: h_md5.c,v 1.2 2014/01/17 14:16:08 pgoyette Exp $ */
+/* $NetBSD: h_md5.c,v 1.3 2014/01/18 15:55:32 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,18 +36,42 @@
 
 #include <crypto/cryptodev.h>
 
-unsigned char key[] = "abcdefgh";
-unsigned char iv[8] = {0};
-char plaintx[16] = "1234567890123456";
-const unsigned char ciphertx[16] = {
-	0x21, 0xc6, 0x0d, 0xa5, 0x34, 0x24, 0x8b, 0xce,
-	0x95, 0x86, 0x64, 0xb3, 0x66, 0x77, 0x9b, 0x4c
+/* Test vectors from RFC1321 */
+
+const struct {
+	size_t len;
+	unsigned char plaintx[80];
+	unsigned char digest[16];
+} tests[] = {
+	{ 0, "",
+	  { 0xd4, 0x1d, 0x8c, 0xd9, 0x8f, 0x00, 0xb2, 0x04,
+	    0xe9, 0x80, 0x09, 0x98, 0xec, 0xf8, 0x42, 0x7e } },
+	{ 1, "a",
+	  { 0x0c, 0xc1, 0x75, 0xb9, 0xc0, 0xf1, 0xb6, 0xa8,
+	    0x31, 0xc3, 0x99, 0xe2, 0x69, 0x77, 0x26, 0x61 } },
+	{ 3, "abc",
+	  { 0x90, 0x01, 0x50, 0x98, 0x3c, 0xd2, 0x4f, 0xb0,
+	    0xd6, 0x96, 0x3f, 0x7d, 0x28, 0xe1, 0x7f, 0x72 } },
+	{ 14, "message digest",
+	  { 0xf9, 0x6b, 0x69, 0x7d, 0x7c, 0xb7, 0x93, 0x8d,
+	    0x52, 0x5a, 0x2f, 0x31, 0xaa, 0xf1, 0x61, 0xd0 } },
+	{ 26, "abcdefghijklmnopqrstuvwxyz",
+	  { 0xc3, 0xfc, 0xd3, 0xd7, 0x61, 0x92, 0xe4, 0x00,
+	    0x7d, 0xfb, 0x49, 0x6c, 0xca, 0x67, 0xe1, 0x3b } },
+	{ 62, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
+	  { 0xd1, 0x74, 0xab, 0x98, 0xd2, 0x77, 0xd9, 0xf5,
+	    0xa5, 0x61, 0x1c, 0x2c, 0x9f, 0x41, 0x9d, 0x9f } },
+	{ 80, "123456789012345678901234567890123456789012345678901234567890"
+		"12345678901234567890",
+	  { 0x57, 0xed, 0xf4, 0xa2, 0x2b, 0xe3, 0xc9, 0x55,
+	    0xac, 0x49, 0xda, 0x2e, 0x21, 0x07, 0xb6, 0x7a } },
 };
 
 int
 main(void)
 {
 	int fd, res;
+	size_t i;
 	struct session_op cs;
 	struct crypt_op co;
 	unsigned char buf[16];
@@ -57,26 +81,33 @@ main(void)
 		err(1, "open");
 	memset(&cs, 0, sizeof(cs));
 	cs.mac = CRYPTO_MD5;
-#if 0
-	cs.mackeylen = 8;
-	cs.mackey = key;
-#endif
-	res = ioctl(fd, CIOCGSESSION, &cs);
-	if (res < 0)
-		err(1, "CIOCGSESSION");
 
-	memset(&co, 0, sizeof(co));
-	co.ses = cs.ses;
-	co.op = COP_ENCRYPT;
-	co.len = sizeof(plaintx);
-	co.src = plaintx;
-	co.mac = buf;
-	res = ioctl(fd, CIOCCRYPT, &co);
-	if (res < 0)
-		err(1, "CIOCCRYPT");
+	for (i = 0; i < __arraycount(tests); i++) {
+		res = ioctl(fd, CIOCGSESSION, &cs);
+		if (res < 0)
+			err(1, "CIOCGSESSION test %zu", i);
 
-	if (memcmp(co.dst, ciphertx, sizeof(ciphertx)))
-		errx(1, "verification failed");
+		memset(&co, 0, sizeof(co));
+		memset(&buf, 0, sizeof(buf));
+		co.ses = cs.ses;
+		co.op = COP_ENCRYPT;
+		co.len = tests[i].len;
+		co.src = __UNCONST(&tests[i].plaintx);
+		co.mac = buf;
+		res = ioctl(fd, CIOCCRYPT, &co);
+		if (res < 0)
+			err(1, "CIOCCRYPT test %zu", i);
 
+		if (memcmp(co.mac, tests[i].digest,
+			   sizeof(tests[i].digest))) {
+			size_t j;
+
+			printf(" Idx  Actual  Golden\n");
+			for (j=0; j < sizeof(tests[i].digest); j++)
+				printf("0x%02zx:  0x%02x   0x%02x\n",
+				    j, buf[j], tests[i].digest[j]);
+			errx(1, "verification failed test %zu", i);
+		}
+	}
 	return 0;
 }
