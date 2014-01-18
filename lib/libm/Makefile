@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.152 2013/11/22 13:37:24 martin Exp $
+#  $NetBSD: Makefile,v 1.153 2014/01/18 17:20:36 skrll Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -52,7 +52,8 @@ USE_SHLIBDIR=	yes
 ARCH_SRCS = s_copysign.S s_copysignf.S lrint.S
 .elif (${MACHINE_CPU} == "arm")
 .PATH: ${.CURDIR}/arch/arm
-COMMON_SRCS+= fenv.c
+COMMON_SRCS+= fenv.c s_nexttowardf.c \
+	s_nearbyint.c s_rintl.c
 COPTS.e_sqrtl.c += -DHAVE_FENV_H
 .if (${MKSOFTFLOAT} == "no")
 ARCH_SRCS = e_sqrt.S e_sqrtf.S lrint.S lrintf.S s_fabsf.S s_fma.S s_fmaf.S
