@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.11 2014/01/18 03:28:28 joerg Exp $
+# $NetBSD: Makefile.inc,v 1.12 2014/01/18 21:26:46 joerg Exp $
 
 COMPILER_RT_SRCDIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
 
@@ -145,7 +145,7 @@ GENERIC_SRCS+= \
 	popcountdi2.c \
 	subvdi3.c
 
-.if empty(MACHINE_ARCH:M*64*) && ${MACHINE_ARCH} != "alpha"
+.if empty(LIBC_MACHINE_ARCH:M*64*) && ${LIBC_MACHINE_ARCH} != "alpha"
 GENERIC_SRCS+= \
 	cmpdi2.c \
 	ashldi3.c \
