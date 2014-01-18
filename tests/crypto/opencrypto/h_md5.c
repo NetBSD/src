@@ -1,4 +1,4 @@
-/* $NetBSD: h_md5.c,v 1.3 2014/01/18 15:55:32 pgoyette Exp $ */
+/* $NetBSD: h_md5.c,v 1.4 2014/01/18 19:44:41 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -108,6 +108,9 @@ main(void)
 				    j, buf[j], tests[i].digest[j]);
 			errx(1, "verification failed test %zu", i);
 		}
+		res = ioctl(fd, CIOCFSESSION, &cs.ses);
+		if (res < 0)
+			err(1, "CIOCFSESSION test %zu", i);
 	}
 	return 0;
 }
