@@ -1,4 +1,4 @@
-/* $NetBSD: h_md5.c,v 1.4 2014/01/18 19:44:41 pgoyette Exp $ */
+/* $NetBSD: h_md5.c,v 1.5 2014/01/18 20:10:34 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -98,16 +98,9 @@ main(void)
 		if (res < 0)
 			err(1, "CIOCCRYPT test %zu", i);
 
-		if (memcmp(co.mac, tests[i].digest,
-			   sizeof(tests[i].digest))) {
-			size_t j;
-
-			printf(" Idx  Actual  Golden\n");
-			for (j=0; j < sizeof(tests[i].digest); j++)
-				printf("0x%02zx:  0x%02x   0x%02x\n",
-				    j, buf[j], tests[i].digest[j]);
+		if (memcmp(co.mac, tests[i].digest, sizeof(tests[i].digest)))
 			errx(1, "verification failed test %zu", i);
-		}
+
 		res = ioctl(fd, CIOCFSESSION, &cs.ses);
 		if (res < 0)
 			err(1, "CIOCFSESSION test %zu", i);
