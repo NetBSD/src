@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.12 2014/01/18 21:26:46 joerg Exp $
+# $NetBSD: Makefile.inc,v 1.13 2014/01/18 21:27:11 joerg Exp $
 
 COMPILER_RT_SRCDIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
 
@@ -188,6 +188,8 @@ GENERIC_SRCS+= \
 	aeabi_uidivmod.S \
 	aeabi_uldivmod.S
 .endif
+GENERIC_SRCS+= \
+	clear_cache.c
 # Not yet, overlaps with softfloat
 #	aeabi_dcmp.S \
 #	aeabi_fcmp.S
