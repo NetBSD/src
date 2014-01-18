@@ -478,7 +478,7 @@ to a PostgreSQL server:
         sql_user: username
         sql_passwd: secret
         sql_database: dbname
-        sql_select: SELECT password FROM users WHERE user = '%u'@'%r'
+        sql_select: SELECT password FROM users WHERE user = '%u@%r'
 
     NNoottee
 

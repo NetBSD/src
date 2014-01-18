@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: post-install,v 1.1.1.4 2013/09/25 19:06:20 tron Exp $
+#	$NetBSD: post-install,v 1.1.1.5 2014/01/18 17:04:06 tron Exp $
 #
 
 # To view the formatted manual page of this file, type:
@@ -466,7 +466,7 @@ test -n "$create" && {
 	case $type in
 	[hl]) continue;;
 	[df]) ;;
-	   *) echo unknown type $type for $path in $daemon_directory/postfix-files1>&2; exit 1;;
+	   *) echo unknown type $type for $path in $daemon_directory/postfix-files 1>&2; exit 1;;
 	esac
 	# Expand $name, and canonicalize null fields.
 	for name in path owner group flags

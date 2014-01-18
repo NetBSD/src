@@ -177,7 +177,7 @@ database when none exists.
         generic: Makefile
     	    @echo Creating $@
     	    @rm -f $@.tmp
-    	    @printf '%s\t%s+root=%s\n' root $MTAADMIN `uname -n` > $@.tmp
+    	    @printf '%s\t%s+root=%s\n' root ${MTAADMIN} `uname -n` > $@.tmp
     	    @mv $@.tmp generic
 
         %.cdb: %

@@ -233,7 +233,7 @@ creates a "generic" database when none exists. </p>
     generic: Makefile
 	    @echo Creating $@
 	    @rm -f $@.tmp
-	    @printf '%s\t%s+root=%s\n' root $MTAADMIN `uname -n` &gt; $@.tmp
+	    @printf '%s\t%s+root=%s\n' root ${MTAADMIN} `uname -n` &gt; $@.tmp
 	    @mv $@.tmp generic
 
     %.<a href="CDB_README.html">cdb</a>: %
