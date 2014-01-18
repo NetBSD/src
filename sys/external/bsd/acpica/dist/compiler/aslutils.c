@@ -454,7 +454,7 @@ UtDisplaySummary (
         /* Compiler name and version number */
 
         FlPrintFile (FileId, "%s version %X%s [%s]\n\n",
-            ASL_COMPILER_NAME, (UINT32) ACPI_CA_VERSION, ACPI_WIDTH, __DATE__);
+            ASL_COMPILER_NAME, (UINT32) ACPI_CA_VERSION, ACPI_WIDTH, ACPI_DATE);
     }
 
     /* Summary of main input and output files */
