@@ -1,4 +1,4 @@
-/* $NetBSD: h_sha1hmac.c,v 1.1 2014/01/17 22:33:02 pgoyette Exp $ */
+/* $NetBSD: h_sha1hmac.c,v 1.2 2014/01/18 02:31:14 joerg Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -164,7 +164,7 @@ main(void)
 		memset(&cs, 0, sizeof(cs));
 		cs.mac = CRYPTO_SHA1_HMAC;
 		cs.mackeylen = tests[i].key_len;
-		cs.mackey = &tests[i].key;;
+		cs.mackey = __UNCONST(&tests[i].key);
 		res = ioctl(fd, CIOCGSESSION, &cs);
 		if (res < 0)
 			err(1, "CIOCGSESSION test %d", tests[i].num);
@@ -174,7 +174,7 @@ main(void)
 		co.ses = cs.ses;
 		co.op = COP_ENCRYPT;
 		co.len = tests[i].len;
-		co.src = &tests[i].data;
+		co.src = __UNCONST(&tests[i].data);
 		co.mac = buf;
 		res = ioctl(fd, CIOCCRYPT, &co);
 		if (res < 0)
