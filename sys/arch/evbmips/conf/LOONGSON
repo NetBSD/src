@@ -1,4 +1,4 @@
-# $NetBSD: LOONGSON,v 1.21 2013/06/30 21:38:56 rmind Exp $
+# $NetBSD: LOONGSON,v 1.22 2014/01/18 19:26:41 bouyer Exp $
 #
 # LOONGSON machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/evbmips/conf/std.loongson"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"LOONGSON-$Revision: 1.21 $"
+#ident 		"LOONGSON-$Revision: 1.22 $"
 
 maxusers	16
 
@@ -152,6 +152,7 @@ options		WSDISPLAY_SCROLLSUPPORT
 options		WS_KERNEL_FG=WSCOL_GREEN
 #options 	WSDISPLAY_DEFAULTSCREENS=4
 options 	FONT_GALLANT12x22
+options 	FONT_BOLD8x16
 # compatibility to other console drivers
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 #
