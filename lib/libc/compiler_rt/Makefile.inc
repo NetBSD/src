@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.9 2014/01/17 14:08:59 joerg Exp $
+# $NetBSD: Makefile.inc,v 1.10 2014/01/18 01:08:56 joerg Exp $
 
 COMPILER_RT_SRCDIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
 
@@ -28,8 +28,7 @@ COMPILER_RT_ARCH_DIR=	${COMPILER_RT_SRCDIR}/lib/${MACHINE_ARCH}
 GENERIC_SRCS+= atomic.c
 .endif
 
-.if ${LIBC_MACHINE_ARCH} == "i386" || ${LIBC_MACHINE_ARCH} == "amd64"
-# Requires unwind support
+.if ${HAVE_LIBGCC_EH} == "no"
 GENERIC_SRCS+= \
 	gcc_personality_v0.c
 .endif
