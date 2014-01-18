@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.484.2.6.2.6 2014/01/18 11:16:01 bouyer Exp $
+.\"	$NetBSD: main,v 1.484.2.6.2.7 2014/01/18 11:23:52 bouyer Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,7 +50,7 @@
 .as MACHINE_LIST " sgimips shark sparc sparc64 sun2 sun3 vax x68k xen zaurus .
 .so \*[.CURDIR]/../common/macros
 .
-.Dd August 15, 2013
+.Dd January 18, 2014
 .Dt INSTALL 8
 .Os NetBSD
 .Sh NAME
