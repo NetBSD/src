@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1087 2014/01/11 18:35:48 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1088 2014/01/18 17:09:04 tron Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1058,8 +1058,8 @@ and more. Vern's ping is gone. We are too different from everyone else
 now to do a new import.
 
 Package:	Postfix
-Version:	2.10.2
-Current Vers:	2.10.2
+Version:	2.10.3
+Current Vers:	2.11.0/2.10.3
 Maintainer:	Wietse Venema <wietse@porcupine.org>
 Archive Site:	ftp://postfix.cloud9.net/official/
 Home Page:	http://www.postfix.org/
