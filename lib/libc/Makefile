@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.162 2014/01/18 01:08:56 joerg Exp $
+#	$NetBSD: Makefile,v 1.163 2014/01/19 11:36:45 apb Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -130,13 +130,24 @@ LSRCS := ${LSRCS} ${unwanted_file}
 NLS=	C.msg Pig.msg ca.msg cs.msg de.msg es.msg fi.msg fr.msg nl.msg \
 	no.msg pl.msg sk.msg sv.msg
 
+.if ${MKREPRO:Uno} == "yes"
+REGEX_SPECIALS=[][)(^$$.?*\\;]
+MKREPRO_SED=   -e 's;${NETBSDSRCDIR:C/${REGEX_SPECIALS}/\\\\&/g};/usr/src;'
+.endif
+
 realall: tags
 tags: ${SRCS}
 	${_MKTARGET_CREATE}
-	-${TOOL_CTAGS} -w ${.ALLSRC:M*.c}
+	-${TOOL_CTAGS} -f ${.TARGET}.tmp -w ${.ALLSRC:M*.c}
 	-egrep "^ENTRY(.*)|^FUNC(.*)|^SYSCALL(.*)" /dev/null ${.ALLSRC:M*.S} | \
 	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
-	    >> ${.TARGET}; sort -o ${.TARGET} ${.TARGET}
+           >> ${.TARGET}.tmp
+.if ${MKREPRO:Uno} == "yes"
+	sed ${MKREPRO_SED} <${.TARGET}.tmp | sort -o ${.TARGET}
+.else
+	sort -o ${.TARGET} ${.TARGET}.tmp
+.endif
+	rm -f ${.TARGET}.tmp
 
 FILES=		tags
 FILESNAME=	libc.tags
