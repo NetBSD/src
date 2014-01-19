@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.228 2014/01/10 16:28:34 wiz Exp $
+.\"	$NetBSD: make.1,v 1.229 2014/01/19 10:23:29 apb Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd January 10, 2014
+.Dd January 19, 2014
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -1250,6 +1250,15 @@ and
 are orthogonal; the former specifies whether multiple words are
 potentially affected, the latter whether multiple substitutions can
 potentially occur within each affected word.
+.Pp
+As for the
+.Cm \&:S
+modifier, the
+.Ar pattern
+and
+.Ar replacement
+are subjected to variable expansion before being parsed as
+regular expressions.
 .It Cm \&:T
 Replaces each word in the variable with its last component.
 .It Cm \&:u
