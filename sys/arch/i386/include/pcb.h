@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.50 2013/12/01 01:05:16 christos Exp $	*/
+/*	$NetBSD: pcb.h,v 1.51 2014/01/19 10:30:19 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2009 The NetBSD Foundation, Inc.
@@ -103,13 +103,5 @@ struct pcb {
 	struct cpu_info *pcb_fpcpu;	/* cpu holding our fp state. */
 	char	*pcb_iomap;		/* I/O permission bitmap */
 };
-
-/*    
- * The pcb is augmented with machine-dependent additional data for 
- * core dumps. For the i386, there is nothing to add.
- */     
-struct md_coredump {
-	long	md_pad[8];
-};    
 
 #endif /* _I386_PCB_H_ */
