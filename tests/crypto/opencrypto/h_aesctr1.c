@@ -1,4 +1,4 @@
-/* $NetBSD: h_aesctr1.c,v 1.3 2014/01/18 20:40:27 pgoyette Exp $ */
+/* $NetBSD: h_aesctr1.c,v 1.4 2014/01/19 13:40:59 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -219,7 +219,7 @@ main(void)
 		memset(&cs, 0, sizeof(cs));
 		cs.cipher = CRYPTO_AES_CTR;
 		cs.keylen = tests[i].key_len;
-		cs.key = &tests[i].key;
+		cs.key = __UNCONST(&tests[i].key);
 		res = ioctl(fd, CIOCGSESSION, &cs);
 		if (res < 0)
 			err(1, "CIOCGSESSION %zu", i);
@@ -228,10 +228,10 @@ main(void)
 		co.ses = cs.ses;
 		co.op = COP_ENCRYPT;
 		co.len = tests[i].len;
-		co.src = &tests[i].plaintx;
+		co.src = __UNCONST(&tests[i].plaintx);
 		co.dst = buf;
 		co.dst_len = sizeof(buf);
-		co.iv = &tests[i].iv;
+		co.iv = __UNCONST(&tests[i].iv);
 		res = ioctl(fd, CIOCCRYPT, &co);
 		if (res < 0)
 			err(1, "CIOCCRYPT %zu", i);
