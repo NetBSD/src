@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.h,v 1.28 2014/01/19 14:30:37 dsl Exp $	*/
+/*	$NetBSD: npx.h,v 1.29 2014/01/19 23:27:30 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -91,6 +91,7 @@ struct save87 {
 	uint8_t		s87_pad[8 * 2 - 2 * 4];	/* bogus historical padding */
 #endif
 };
+__CTASSERT(sizeof (struct save87) == 108 + 16);
 
 /* FPU regsters in the extended save format. */
 struct fpaccxmm {
@@ -121,6 +122,8 @@ struct fxsave {
 	uint32_t sv_ex_sw;		/* saved SW from last exception */
 	uint32_t sv_ex_tw;		/* saved TW from last exception */
 } __aligned(16);
+__CTASSERT(sizeof (struct fxsave) == 512 + 16);
+
 
 union savefpu {
 	struct save87 sv_87;
