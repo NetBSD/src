@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.21 2013/12/11 22:06:51 dsl Exp $	*/
+/*	$NetBSD: pcb.h,v 1.22 2014/01/19 10:30:19 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -101,14 +101,6 @@ struct pcb {
 	uint64_t  pcb_gs;
 	int pcb_iopl;
 };
-
-/*    
- * The pcb is augmented with machine-dependent additional data for 
- * core dumps. For the i386, there is nothing to add.
- */     
-struct md_coredump {
-	long	md_pad[8];
-};    
 
 #else	/*	__x86_64__	*/
 
