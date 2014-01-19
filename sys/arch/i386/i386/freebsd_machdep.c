@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.57 2014/01/19 13:35:58 dsl Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.58 2014/01/19 14:30:37 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.57 2014/01/19 13:35:58 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.58 2014/01/19 14:30:37 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -64,9 +64,9 @@ freebsd_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 
 	setregs(l, epp, stack);
 	if (i386_use_fxsave)
-		pcb->pcb_savefpu.sv_xmm.sv_env.fx_cw = __FreeBSD_NPXCW__;
+		pcb->pcb_savefpu.sv_xmm.fx_cw = __FreeBSD_NPXCW__;
 	else
-		pcb->pcb_savefpu.sv_87.sv_env.en_cw = __FreeBSD_NPXCW__;
+		pcb->pcb_savefpu.sv_87.s87_cw = __FreeBSD_NPXCW__;
 }
 
 /*

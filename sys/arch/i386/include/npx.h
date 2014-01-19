@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.h,v 1.27 2013/12/08 20:45:30 dsl Exp $	*/
+/*	$NetBSD: npx.h,v 1.28 2014/01/19 14:30:37 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -42,29 +42,20 @@
 #ifndef	_I386_NPX_H_
 #define	_I386_NPX_H_
 
+/*
+ * Layout for code/data pointers relating to FP exceptions.
+ * Marked 'packed' because they aren't always 64bit aligned.
+ * Since the x86 cpu supports misaligned accesses it isn't
+ * worth avoiding the 'packed' attribute.
+ */
 union fp_addr {
 	uint64_t fa_64;	/* Linear address for 64bit systems */
 	struct {
-		uint32_t fa_off;	/* Linear address for 32 bit */
-		uint16_t fa_seg;	/* Code/data (etc) segment */
-		uint16_t fa_pad;
+		uint32_t fa_off;	/* linear address for 32 bit */
+		uint16_t fa_seg;	/* code/data (etc) segment */
+		uint16_t fa_opcode;	/* last opcode (sometimes) */
 	} fa_32;
 } __packed;
-
-/*
- * Environment information of floating point unit (fsave instruction).
- * Note that the 'tag word' contains 2 bits per register and is relative
- * to the stack top.
- * The fxsave version is 1 bit per register indexed by register number.
- */
-struct env87 {
-	long	 en_cw;		/* control word (16bits) */
-	long	 en_sw;		/* status word (16bits) */
-	long	 en_tw;		/* tag word (16bits) */
-	union fp_addr en_ip;	/* floating point instruction pointer */
-#define en_opcode en_ip.fa_32.fa_pad	/* opcode last executed (11bits) */
-	union fp_addr en_dp;	/* floating operand offset */
-};
 
 /* Contents of each floating point accumulator */
 struct fpacc87 {
@@ -78,28 +69,27 @@ struct fpacc87 {
 #endif
 };
 
-/* Floating point context */
+/*
+ * floating point unit registers (fsave instruction).
+ * Note that the 'tag word' contains 2 bits per register and is relative
+ * to the stack top.
+ * The fxsave version is 1 bit per register indexed by register number.
+ */
 struct save87 {
-	struct	env87 sv_env;		/* floating point control/status */
-	struct	fpacc87	sv_ac[8];	/* accumulator contents, 0-7 */
-#ifndef dontdef
-	uint32_t sv_ex_sw;	/* status word for last exception (was pad) */
-	uint32_t sv_ex_tw;	/* tag word for last exception (was pad) */
-	uint8_t	 sv_pad[8 * 2 - 2 * 4];	/* bogus historical padding */
-#endif
-};
+	uint32_t	s87_cw;		/* control word (16bits) */
+	uint32_t	s87_sw;		/* status word (16bits) */
+	uint32_t	s87_tw;		/* tag word (16bits) */
+	union fp_addr	s87_ip;		/* floating point instruction pointer */
+#define s87_opcode s87_ip.fa_32.fa_opcode	/* opcode last executed (11bits) */
+	union fp_addr	s87_dp;		/* floating operand offset */
+	struct fpacc87	s87_ac[8];	/* accumulator contents, 0-7 */
 
-/* Environment of FPU/MMX/SSE/SSE2 (fxsave instruction). */
-struct envxmm {
-/*0*/	uint16_t fx_cw;		/* FPU Control Word */
-	uint16_t fx_sw;		/* FPU Status Word */
-	uint8_t  fx_tw;		/* FPU Tag Word (abridged) */
-	uint8_t  fx_reserved1;
-	uint16_t fx_opcode;	/* FPU Opcode */
-	union fp_addr fx_ip;	/* FPU Instruction Pointer */
-/*16*/	union fp_addr fx_dp;	/* FPU Data pointer */
-	uint32_t fx_mxcsr;	/* MXCSR Register State */
-	uint32_t fx_mxcsr_mask;
+	/* Additional fields that are not part of the hardware definition */
+#ifndef dontdef
+	uint32_t	s87_ex_sw;	/* status word for last exception */
+	uint32_t	s87_ex_tw;	/* tag word for last exception */
+	uint8_t		s87_pad[8 * 2 - 2 * 4];	/* bogus historical padding */
+#endif
 };
 
 /* FPU regsters in the extended save format. */
@@ -114,8 +104,16 @@ struct xmmreg {
 };
 
 /* FPU/MMX/SSE/SSE2 context */
-struct savexmm {
-	struct envxmm sv_env;		/* control/status context */
+struct fxsave {
+/*0*/	uint16_t fx_cw;		/* FPU Control Word */
+	uint16_t fx_sw;		/* FPU Status Word */
+	uint8_t  fx_tw;		/* FPU Tag Word (abridged) */
+	uint8_t  fx_reserved1;
+	uint16_t fx_opcode;	/* FPU Opcode */
+	union fp_addr fx_ip;	/* FPU Instruction Pointer */
+/*16*/	union fp_addr fx_dp;	/* FPU Data pointer */
+	uint32_t fx_mxcsr;	/* MXCSR Register State */
+	uint32_t fx_mxcsr_mask;
 	struct fpaccxmm sv_ac[8];	/* ST/MM regs */
 	struct xmmreg sv_xmmregs[8];	/* XMM regs */
 	uint8_t sv_rsvd[16 * 14];
@@ -126,7 +124,7 @@ struct savexmm {
 
 union savefpu {
 	struct save87 sv_87;
-	struct savexmm sv_xmm;
+	struct fxsave sv_xmm;
 };
 
 /*
@@ -197,8 +195,8 @@ void	probeintr(void);
 void	probetrap(void);
 int	npx586bug1(int, int);
 void 	npxinit(struct cpu_info *);
-void	process_xmm_to_s87(const struct savexmm *, struct save87 *);
-void	process_s87_to_xmm(const struct save87 *, struct savexmm *);
+void	process_xmm_to_s87(const struct fxsave *, struct save87 *);
+void	process_s87_to_xmm(const struct save87 *, struct fxsave *);
 struct lwp;
 int	npxtrap(struct lwp *);
 

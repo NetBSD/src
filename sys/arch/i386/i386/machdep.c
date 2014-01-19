@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.741 2014/01/09 00:57:25 dholland Exp $	*/
+/*	$NetBSD: machdep.c,v 1.742 2014/01/19 14:30:37 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.741 2014/01/09 00:57:25 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.742 2014/01/19 14:30:37 dsl Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -887,10 +887,10 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 
 	l->l_md.md_flags &= ~MDL_USEDFPU;
 	if (i386_use_fxsave) {
-		pcb->pcb_savefpu.sv_xmm.sv_env.fx_cw = control;
-		pcb->pcb_savefpu.sv_xmm.sv_env.fx_mxcsr = __INITIAL_MXCSR__;
+		pcb->pcb_savefpu.sv_xmm.fx_cw = control;
+		pcb->pcb_savefpu.sv_xmm.fx_mxcsr = __INITIAL_MXCSR__;
 	} else
-		pcb->pcb_savefpu.sv_87.sv_env.en_cw = control;
+		pcb->pcb_savefpu.sv_87.s87_cw = control;
 	memcpy(&pcb->pcb_fsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_fsd));
 	memcpy(&pcb->pcb_gsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_gsd));
 
@@ -1761,7 +1761,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 					sizeof (pcb->pcb_savefpu.sv_xmm));
 			} else {
 				/* This is a weird corner case */
-				process_xmm_to_s87((struct savexmm *)
+				process_xmm_to_s87((struct fxsave *)
 				    &mcp->__fpregs.__fp_reg_set.__fp_xmm_state.__fp_xmm,
 				    &pcb->pcb_savefpu.sv_87);
 			}
