@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: gcc2netbsd,v 1.3 2013/12/13 10:01:49 mrg Exp $
+#	$NetBSD: gcc2netbsd,v 1.4 2014/01/19 00:37:30 mrg Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -39,10 +39,10 @@ then
 	echo "Usage: $PROG <directory>" 1>&2
 	exit 1
 fi
-FILE="$1"
+DIR="$1"
 
 ### Remove the $'s around RCS tags
-cleantags "$FILE"
+cleantags "$DIR"
 
 RM="
 boehm-gc
@@ -65,10 +65,11 @@ libstdc++-v3/testsuite
 zlib
 "
 
-find "$FILE" -name .cvsignore -exec rm -f {} +
-find "$FILE" -name .gitignore -exec rm -f {} +
+find "$DIR" -name .cvsignore -exec rm -f {} +
+find "$DIR" -name .gitignore -exec rm -f {} +
+find "$DIR" -name .svn -type d -exec rm -fr {} +
 for i in $RM; do
-	rm -fr "$FILE/$i"
+	rm -fr "$DIR/$i"
 done
 
 echo You can import now.  Use the following command:
