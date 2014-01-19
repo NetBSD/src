@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.154 2013/12/09 08:33:48 dsl Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.155 2014/01/19 14:30:38 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.154 2013/12/09 08:33:48 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.155 2014/01/19 14:30:38 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -142,10 +142,10 @@ linux_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 	l->l_md.md_flags &= ~MDL_USEDFPU;
 
 	if (i386_use_fxsave) {
-		pcb->pcb_savefpu.sv_xmm.sv_env.fx_cw = __Linux_NPXCW__;
-		pcb->pcb_savefpu.sv_xmm.sv_env.fx_mxcsr = __INITIAL_MXCSR__;
+		pcb->pcb_savefpu.sv_xmm.fx_cw = __Linux_NPXCW__;
+		pcb->pcb_savefpu.sv_xmm.fx_mxcsr = __INITIAL_MXCSR__;
 	} else
-		pcb->pcb_savefpu.sv_87.sv_env.en_cw = __Linux_NPXCW__;
+		pcb->pcb_savefpu.sv_87.s87_cw = __Linux_NPXCW__;
 
 	tf = l->l_md.md_regs;
 	tf->tf_gs = 0;
