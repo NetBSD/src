@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.71 2014/01/04 21:42:42 pgoyette Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.72 2014/01/19 18:16:13 christos Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.71 2014/01/04 21:42:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.72 2014/01/19 18:16:13 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2205,6 +2205,8 @@ crypto_modcmd(modcmd_t cmd, void *arg)
 		return error;
 	case MODULE_CMD_FINI:
 #ifdef _MODULE
+#ifdef notyet
+		/* We need to keep track of open instances before we do this */
 		error = config_cfdata_detach(crypto_cfdata);
 		if (error) {
 			return error;
@@ -2213,6 +2215,9 @@ crypto_modcmd(modcmd_t cmd, void *arg)
 		config_cfattach_detach(crypto_cd.cd_name, &crypto_ca);
 		config_cfdriver_detach(&crypto_cd);
 		devsw_detach(NULL, &crypto_cdevsw);
+#else
+		return EOPNOTSUPP;
+#endif
 #endif
 
 		return error;
