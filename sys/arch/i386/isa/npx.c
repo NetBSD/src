@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.147 2013/12/08 20:45:30 dsl Exp $	*/
+/*	$NetBSD: npx.c,v 1.148 2014/01/19 14:30:37 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.147 2013/12/08 20:45:30 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.148 2014/01/19 14:30:37 dsl Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -435,13 +435,13 @@ npxintr(void *arg, struct intrframe *frame)
 	fpu_save(addr);
 	fwait();
         if (i386_use_fxsave) {
-		fldcw(&addr->sv_xmm.sv_env.fx_cw);
+		fldcw(&addr->sv_xmm.fx_cw);
 		/*
 		 * FNINIT doesn't affect MXCSR or the XMM registers;
 		 * no need to re-load MXCSR here.
 		 */
         } else
-                fldcw(&addr->sv_87.sv_env.en_cw);
+                fldcw(&addr->sv_87.s87_cw);
 	fwait();
 	/*
 	 * Remember the exception status word and tag word.  The current
@@ -452,11 +452,11 @@ npxintr(void *arg, struct intrframe *frame)
 	 * words, so the complete exception state can be recovered.
 	 */
         if (i386_use_fxsave) {
-		addr->sv_xmm.sv_ex_sw = addr->sv_xmm.sv_env.fx_sw;
-		addr->sv_xmm.sv_ex_tw = addr->sv_xmm.sv_env.fx_tw;
+		addr->sv_xmm.sv_ex_sw = addr->sv_xmm.fx_sw;
+		addr->sv_xmm.sv_ex_tw = addr->sv_xmm.fx_tw;
 	} else {
-		addr->sv_87.sv_ex_sw = addr->sv_87.sv_env.en_sw;
-		addr->sv_87.sv_ex_tw = addr->sv_87.sv_env.en_tw;
+		addr->sv_87.s87_ex_sw = addr->sv_87.s87_sw;
+		addr->sv_87.s87_ex_tw = addr->sv_87.s87_tw;
 	}
 	/*
 	 * Pass exception to process.
@@ -490,8 +490,8 @@ npxintr(void *arg, struct intrframe *frame)
 			ksi.ksi_trap = (int)addr->sv_xmm.sv_ex_sw;
 		} else {
 			ksi.ksi_code =
-				x86fpflags_to_ksiginfo(addr->sv_87.sv_ex_sw);
-			ksi.ksi_trap = (int)addr->sv_87.sv_ex_sw;
+				x86fpflags_to_ksiginfo(addr->sv_87.s87_ex_sw);
+			ksi.ksi_trap = (int)addr->sv_87.s87_ex_sw;
 		}
 
 		trapsignal(l, &ksi);
@@ -609,11 +609,9 @@ npxdna(struct cpu_info *ci)
 	if ((l->l_md.md_flags & MDL_USEDFPU) == 0) {
 		fninit();
 		if (i386_use_fxsave) {
-			fldcw(&pcb->pcb_savefpu.
-			    sv_xmm.sv_env.fx_cw);
+			fldcw(&pcb->pcb_savefpu.sv_xmm.fx_cw);
 		} else {
-			fldcw(&pcb->pcb_savefpu.
-			    sv_87.sv_env.en_cw);
+			fldcw(&pcb->pcb_savefpu.sv_87.s87_cw);
 		}
 		l->l_md.md_flags |= MDL_USEDFPU;
 	} else if (i386_use_fxsave) {
@@ -914,15 +912,6 @@ static const uint8_t fpetable[128] = {
 	FPE_FLTSUB,	/* 7F - INV | DNML | DZ | OFL | UFL | IMP | STK */
 };
 
-#define GET_FPU_CW(pcb) \
-    (i386_use_fxsave ? \
-	pcb->pcb_savefpu.sv_xmm.sv_env.fx_cw : \
-	pcb->pcb_savefpu.sv_87.sv_env.en_cw)
-#define GET_FPU_SW(pcb) \
-    (i386_use_fxsave ? \
-	pcb->pcb_savefpu.sv_xmm.sv_env.fx_sw : \
-	pcb->pcb_savefpu.sv_87.sv_env.en_sw)
-
 /*
  * Preserve the FP status word, clear FP exceptions, then generate a SIGFPE.
  *
@@ -961,8 +950,13 @@ npxtrap(struct lwp *l)
 	 */
 	if (fl != l) {
 		struct pcb *pcb = lwp_getpcb(l);
-		control = GET_FPU_CW(pcb);
-		status = GET_FPU_SW(pcb);
+		if (i386_use_fxsave) {
+			control = pcb->pcb_savefpu.sv_xmm.fx_cw;
+			status = pcb->pcb_savefpu.sv_xmm.fx_sw;
+		} else {
+			control = pcb->pcb_savefpu.sv_87.s87_cw;
+			status = pcb->pcb_savefpu.sv_87.s87_sw;
+		}
 	} else {
 		fnstcw(&control);
 		fnstsw(&status);
