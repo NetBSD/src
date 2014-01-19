@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2012/06/03 02:10:46 joerg Exp $
+#	$NetBSD: Makefile,v 1.7 2014/01/19 21:50:17 apb Exp $
 #
 .include <bsd.own.mk>
 
@@ -12,8 +12,7 @@ NOMAN=	"true"
 SRCS=	testlang_parse.y testlang_conf.l director.c
 
 YHEADER=	1
-CPPFLAGS+=	-O0 -g -I${.CURDIR} -I.
-LDFLAGS+=	-g
+CPPFLAGS+=	-O0 -I${.CURDIR} -I.
 DPADD+=		${LIBL}
 LDADD+=		-ll -lutil -lc
 
