@@ -1,4 +1,4 @@
-/*	$NetBSD: work_fork.c,v 1.1.1.1 2013/12/27 23:30:48 christos Exp $	*/
+/*	$NetBSD: work_fork.c,v 1.2 2014/01/20 19:03:33 kardel Exp $	*/
 
 /*
  * work_fork.c - fork implementation for blocking worker child.
@@ -100,8 +100,10 @@ interrupt_worker_sleep(void)
 
 	for (idx = 0; idx < blocking_children_alloc; idx++) {
 		c = blocking_children[idx];
-		if (NULL == c)
+
+		if (NULL == c || c->reusable == TRUE)
 			continue;
+
 		rc = kill(c->pid, SIGHUP);
 		if (rc < 0)
 			msyslog(LOG_ERR,
