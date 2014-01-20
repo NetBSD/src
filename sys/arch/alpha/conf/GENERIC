@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.356 2013/12/23 13:08:00 skrll Exp $
+# $NetBSD: GENERIC,v 1.357 2014/01/20 15:32:23 tsutsui Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.356 $"
+ident		"GENERIC-$Revision: 1.357 $"
 
 maxusers 32
 
@@ -359,6 +359,8 @@ pcn*	at	pci? dev ? function ?		# AMD PCnet-PCI Ethernet
 pcscp*	at	pci? dev ? function ?		# AMD Am53c974 PCscsi-PCI
 ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
 puc*	at 	pci? dev ? function ?		# PCI "universal" comm. cards
+radeonfb* at	pci? dev ? function ?		# ATI/AMD Radeon Graphics
+options 	RADEONFB_DEPTH_32
 re*	at	pci? dev ? function ?		# Realtek 8169 Ethernet
 rtk*	at	pci? dev ? function ?		# Realtek 8129/8139 Ethernet
 sio*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
@@ -695,6 +697,7 @@ wsdisplay*	at	sfb?
 #wsdisplay*	at	sfbp?
 wsdisplay*	at	px?
 wsdisplay*	at	pxg?
+wsdisplay*	at	radeonfb?
 wsdisplay*	at	vga?
 wsdisplay*	at	tga?
 wskbd*		at	lkkbd? console ?
