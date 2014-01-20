@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.92 2013/10/29 09:53:51 hannken Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.93 2014/01/20 07:47:22 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.92 2013/10/29 09:53:51 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.93 2014/01/20 07:47:22 hannken Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -968,8 +968,6 @@ cache_prune(int incache, int target)
 			break;
 		items++;
 		nxtcp = TAILQ_NEXT(ncp, nc_lru);
-		if (ncp->nc_dvp == NULL)
-			continue;
 		if (ncp == sentinel) {
 			/*
 			 * If we looped back on ourself, then ignore
@@ -977,6 +975,8 @@ cache_prune(int incache, int target)
 			 */
 			tryharder = 1;
 		}
+		if (ncp->nc_dvp == NULL)
+			continue;
 		if (!tryharder && (ncp->nc_hittime - recent) > 0) {
 			if (sentinel == NULL)
 				sentinel = ncp;
