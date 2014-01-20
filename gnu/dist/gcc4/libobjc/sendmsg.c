@@ -86,7 +86,7 @@ Method_t search_for_method_in_list (MethodList_t list, SEL op);
 id nil_method (id, SEL);
 
 /* Given a selector, return the proper forwarding implementation. */
-inline
+static inline
 IMP
 __objc_get_forward_imp (SEL sel)
 {
