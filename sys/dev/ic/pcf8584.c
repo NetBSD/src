@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8584.c,v 1.10 2013/09/15 09:17:28 martin Exp $	*/
+/*	$NetBSD: pcf8584.c,v 1.11 2014/01/20 22:02:32 jdc Exp $	*/
 /*	$OpenBSD: pcf8584.c,v 1.9 2007/10/20 18:46:21 kettenis Exp $ */
 
 /*
@@ -175,9 +175,8 @@ pcfiic_i2c_exec(void *arg, i2c_op_t op, i2c_addr_t addr,
 	if (sc->sc_master)
 		pcfiic_choose_bus(sc, addr >> 7);
 
-	if (cmdlen > 0)
-		if (pcfiic_xmit(sc, addr & 0x7f, cmdbuf, cmdlen) != 0)
-			return (1);
+	if (pcfiic_xmit(sc, addr & 0x7f, cmdbuf, cmdlen) != 0)
+		return (1);
 
 	if (len > 0) {
 		if (I2C_OP_WRITE_P(op))
