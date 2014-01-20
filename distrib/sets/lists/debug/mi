@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.49 2014/01/17 22:34:36 pgoyette Exp $
+# $NetBSD: mi,v 1.50 2014/01/20 02:34:20 christos Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -145,7 +145,7 @@
 ./usr/lib/librumpdev_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpdev_md_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpdev_netsmb_g.a			comp-c-debuglib		debuglib,rump
-./usr/lib/librumpdev_opencrypto.a		comp-c-debuglib		debuglib,rump
+./usr/lib/librumpdev_opencrypto_g.a		comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpdev_pad_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpdev_pud_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpdev_putter_g.a			comp-c-debuglib		debuglib,rump
