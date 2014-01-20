@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_log.c,v 1.6 2014/01/07 02:15:02 joerg Exp $	*/
+/*	$NetBSD: openpam_log.c,v 1.7 2014/01/20 01:15:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -96,7 +96,9 @@ openpam_log(int level, const char *fmt, ...)
 
 #else
 
+#if __GNUC_PREREQ__(4, 5)
 #pragma GCC diagnostic ignored "-Wformat-nonliteral"
+#endif
 void
 _openpam_log(int level, const char *func, const char *fmt, ...)
 {
