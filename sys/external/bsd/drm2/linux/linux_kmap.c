@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_kmap.c,v 1.1.2.3 2013/09/08 16:16:37 riastradh Exp $	*/
+/*	$NetBSD: linux_kmap.c,v 1.1.2.4 2014/01/21 20:56:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_kmap.c,v 1.1.2.3 2013/09/08 16:16:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_kmap.c,v 1.1.2.4 2014/01/21 20:56:50 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -144,6 +144,7 @@ linux_kmap_fini(void)
 void *
 kmap_atomic(struct page *page)
 {
+	const paddr_t paddr = uvm_vm_page_to_phys(&page->p_vmp);
 
 	mutex_spin_enter(&linux_kmap_atomic_lock);
 
@@ -151,7 +152,6 @@ kmap_atomic(struct page *page)
 	KASSERT(!pmap_extract(pmap_kernel(), linux_kmap_atomic_vaddr, NULL));
 
 	const vaddr_t vaddr = linux_kmap_atomic_vaddr;
-	const paddr_t paddr = uvm_vm_page_to_phys(&page->p_vmp);
 	const int prot = (VM_PROT_READ | VM_PROT_WRITE);
 	const int flags = 0;
 	pmap_kenter_pa(vaddr, paddr, prot, flags);
