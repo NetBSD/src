@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1457 2014/01/16 01:54:47 pooka Exp $
+# $NetBSD: mi,v 1.1458 2014/01/21 16:12:56 mlelstv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1242,6 +1242,7 @@
 ./usr/share/man/cat4/ieee80211.0		man-sys-catman		.cat
 ./usr/share/man/cat4/ifmedia.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ifpci.0			man-sys-catman		.cat
+./usr/share/man/cat4/igmafb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/igphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/igsfb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/iha.0			man-sys-catman		.cat
@@ -4218,6 +4219,7 @@
 ./usr/share/man/html4/ieee80211.html		man-sys-htmlman		html
 ./usr/share/man/html4/ifmedia.html		man-sys-htmlman		html
 ./usr/share/man/html4/ifpci.html		man-sys-htmlman		html
+./usr/share/man/html4/igmafb.html		man-sys-htmlman		html
 ./usr/share/man/html4/igphy.html		man-sys-htmlman		html
 ./usr/share/man/html4/igsfb.html		man-sys-htmlman		html
 ./usr/share/man/html4/iha.html			man-sys-htmlman		html
@@ -7026,6 +7028,7 @@
 ./usr/share/man/man4/ieee80211.4		man-sys-man		.man
 ./usr/share/man/man4/ifmedia.4			man-sys-man		.man
 ./usr/share/man/man4/ifpci.4			man-sys-man		.man
+./usr/share/man/man4/igmafb.4			man-sys-man		.man
 ./usr/share/man/man4/igphy.4			man-sys-man		.man
 ./usr/share/man/man4/igsfb.4			man-sys-man		.man
 ./usr/share/man/man4/iha.4			man-sys-man		.man
