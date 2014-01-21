@@ -500,7 +500,7 @@ i915_gem_shmem_pread(struct drm_device *dev,
 		KASSERT(shmem_page_offset < PAGE_SIZE);
 		page_length = MIN(remain, (PAGE_SIZE - shmem_page_offset));
 		struct page *const page = i915_gem_object_get_page(obj,
-		    (offset & ~(PAGE_SIZE-1)));
+		    atop(offset));
 
 		/* Decide whether to swizzle bit 17.  */
 		page_do_bit17_swizzling = obj_do_bit17_swizzling &&
@@ -885,7 +885,7 @@ i915_gem_shmem_pwrite(struct drm_device *dev,
 		KASSERT(shmem_page_offset < PAGE_SIZE);
 		page_length = MIN(remain, (PAGE_SIZE - shmem_page_offset));
 		struct page *const page = i915_gem_object_get_page(obj,
-		    (offset & ~(PAGE_SIZE-1)));
+		    atop(offset));
 
 		/* Decide whether to flush the cache or swizzle bit 17.  */
 		const bool partial_cacheline_write = needs_clflush_before &&
