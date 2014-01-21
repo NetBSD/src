@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.1.2.29 2014/01/21 20:56:20 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.1.2.30 2014/01/21 20:56:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.29 2014/01/21 20:56:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.30 2014/01/21 20:56:30 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -318,7 +318,8 @@ drm_attach(device_t parent, device_t self, void *aux)
 	KASSERT(dev->driver == daa->daa_driver);
 
 	if (dev->driver->load != NULL) {
-		error = (*dev->driver->load)(dev, daa->daa_flags);
+		/* XXX errno Linux->NetBSD */
+		error = -(*dev->driver->load)(dev, daa->daa_flags);
 		if (error) {
 			aprint_error_dev(parent, "unable to load driver: %d\n",
 			    error);
