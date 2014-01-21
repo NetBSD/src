@@ -1,4 +1,4 @@
-/* $NetBSD: t_io.c,v 1.3 2014/01/20 14:14:56 yamt Exp $ */
+/* $NetBSD: t_io.c,v 1.4 2014/01/21 00:32:16 yamt Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2011\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_io.c,v 1.3 2014/01/20 14:14:56 yamt Exp $");
+__RCSID("$NetBSD: t_io.c,v 1.4 2014/01/21 00:32:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <errno.h>
@@ -53,7 +53,7 @@ ATF_TC_HEAD(bad_big5_wprintf, tc)
 
 ATF_TC_BODY(bad_big5_wprintf, tc)
 {
-	/* XXX implementation detail knowledge (wchat_t encoding) */
+	/* XXX implementation detail knowledge (wchar_t encoding) */
 	wchar_t ibuf[] = { 0xcf10, 0 };
 	setlocale(LC_CTYPE, "zh_TW.Big5");
 	ATF_REQUIRE_ERRNO(EILSEQ, wprintf(L"%ls\n", ibuf) < 0);
@@ -68,7 +68,7 @@ ATF_TC_HEAD(bad_big5_swprintf, tc)
 
 ATF_TC_BODY(bad_big5_swprintf, tc)
 {
-	/* XXX implementation detail knowledge (wchat_t encoding) */
+	/* XXX implementation detail knowledge (wchar_t encoding) */
 	wchar_t ibuf[] = { 0xcf10, 0 };
 	wchar_t obuf[20];
 	setlocale(LC_CTYPE, "zh_TW.Big5");
@@ -84,7 +84,7 @@ ATF_TC_HEAD(good_big5_wprintf, tc)
 
 ATF_TC_BODY(good_big5_wprintf, tc)
 {
-	/* XXX implementation detail knowledge (wchat_t encoding) */
+	/* XXX implementation detail knowledge (wchar_t encoding) */
 	wchar_t ibuf[] = { 0xcf40, 0 };
 	setlocale(LC_CTYPE, "zh_TW.Big5");
 	ATF_REQUIRE_EQ(wprintf(L"%ls\n", ibuf), 2);
@@ -98,7 +98,7 @@ ATF_TC_HEAD(good_big5_swprintf, tc)
 
 ATF_TC_BODY(good_big5_swprintf, tc)
 {
-	/* XXX implementation detail knowledge (wchat_t encoding) */
+	/* XXX implementation detail knowledge (wchar_t encoding) */
 	wchar_t ibuf[] = { 0xcf40, 0 };
 	wchar_t obuf[20];
 	setlocale(LC_CTYPE, "zh_TW.Big5");
@@ -139,7 +139,7 @@ ATF_TC_BODY(good_big5_getwc, tc)
 
 	ATF_REQUIRE(fp != NULL);
 	setlocale(LC_CTYPE, "zh_TW.Big5");
-	/* XXX implementation detail knowledge (wchat_t encoding) */
+	/* XXX implementation detail knowledge (wchar_t encoding) */
 	ATF_REQUIRE_EQ(getwc(fp), 0xcf40);
 	fclose(fp);
 }
