@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.40 2014/01/17 00:13:13 riz Exp $
+# $NetBSD: md.amd64,v 1.41 2014/01/21 16:38:29 matt Exp $
 ./usr/lib/i386/i18n/libBIG5_g.a			comp-c-debuglib		compat,debuglib
 ./usr/lib/i386/i18n/libDECHanyu_g.a		comp-c-debuglib		compat,debuglib
 ./usr/lib/i386/i18n/libEUCTW_g.a		comp-c-debuglib		compat,debuglib
@@ -198,6 +198,7 @@
 ./usr/libdata/debug/usr/lib/i386/libbsdmalloc.so.0.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libbz2.so.1.1.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libc.so.12.189.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libc++.so.1.0.debug	comp-compat-shlib	compat,pic,debug,libcxx
 ./usr/libdata/debug/usr/lib/i386/libcom_err.so.6.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/i386/libcom_err.so.7.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/i386/libcrypt.so.1.0.debug	comp-compat-shlib	compat,pic,debug
@@ -219,7 +220,7 @@
 ./usr/libdata/debug/usr/lib/i386/libexpat.so.2.1.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libfetch.so.3.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libform.so.6.0.debug	comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/i386/libgcc_s.so.1.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libgcc_s.so.1.0.debug	comp-compat-shlib	compat,pic,debug,gcc
 ./usr/libdata/debug/usr/lib/i386/libgmp.so.10.2.debug	comp-compat-shlib	obsolete
 ./usr/libdata/debug/usr/lib/i386/libgnumalloc.so.1.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libgomp.so.1.0.debug	comp-compat-shlib	compat,pic,debug,gcc=45
