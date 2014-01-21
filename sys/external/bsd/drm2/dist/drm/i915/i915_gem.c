@@ -1987,10 +1987,12 @@ i915_gem_object_truncate(struct drm_i915_gem_object *obj)
 	{
 		struct uvm_object *const uobj = obj->base.gemo_shm_uao;
 
-		if (uobj != NULL)
+		if (uobj != NULL) {
 			/* XXX Calling pgo_put like this is bogus.  */
+			mutex_enter(uobj->vmobjlock);
 			(*uobj->pgops->pgo_put)(uobj, 0, obj->base.size,
 			    (PGO_ALLPAGES | PGO_FREE));
+		}
 	}
 #else
 	if (obj->base.filp == NULL)
