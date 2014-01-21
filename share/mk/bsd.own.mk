@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.763 2014/01/18 01:08:56 joerg Exp $
+#	$NetBSD: bsd.own.mk,v 1.764 2014/01/21 16:40:24 matt Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -894,7 +894,7 @@ _MKVARS.yes= \
 	MKBINUTILS \
 	MKCRYPTO MKCOMPLEX MKCVS MKCXX \
 	MKDOC \
-	MKGCC MKGCCCMDS MKGDB MKGROFF \
+	MKGCC MKGDB MKGROFF \
 	MKHESIOD MKHTML \
 	MKIEEEFP MKINET6 MKINFO MKIPFILTER MKISCSI \
 	MKKERBEROS \
@@ -915,6 +915,11 @@ _MKVARS.yes= \
 .for var in ${_MKVARS.yes}
 ${var}?=	yes
 .endfor
+
+#
+# MKGCCCMDS is only valid if we are building GCC so make it dependent on that.
+#
+MKGCCCMDS?=	${MKGCC}
 
 #
 # Exceptions to the above:
