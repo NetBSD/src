@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.29 2013/12/27 12:16:01 matt Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.30 2014/01/21 12:47:20 skrll Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -202,7 +202,7 @@ vfp_fpscr_handler(u_int address, u_int insn, trapframe_t *frame, int fault_code)
 #endif
 
 	/*
-	 * We know know the pcb has the saved copy.
+	 * We now know the pcb has the saved copy.
 	 */
 	register_t * const regp = &frame->tf_r0 + regno;
 	if (insn & 0x00100000) {
