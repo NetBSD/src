@@ -1234,6 +1234,7 @@ static int __wait_seqno(struct intel_ring_buffer *ring, u32 seqno,
 	case -EIO:
 	case -EAGAIN: /* Wedged */
 	case -ERESTARTSYS: /* Signal */
+	case -EINTR:
 		return (int)end;
 	case 0: /* Timeout */
 		if (timeout)
