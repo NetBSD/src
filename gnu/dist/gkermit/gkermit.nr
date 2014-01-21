@@ -2,7 +2,6 @@
 .TH GKERMIT 1C "25 Dec 1999" "UNIX G-Kermit"
 .SH NAME
 gkermit \- G-Kermit (GNU Kermit) 1.00 file transfer software.
-.ll 80
 .SH SYNOPSIS
 .nf
 .sp
