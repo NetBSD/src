@@ -1,4 +1,4 @@
-/*	$NetBSD: sfas.c,v 1.22 2012/10/27 17:17:24 chs Exp $	*/
+/*	$NetBSD: sfas.c,v 1.23 2014/01/21 19:50:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfas.c,v 1.22 2012/10/27 17:17:24 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfas.c,v 1.23 2014/01/21 19:50:40 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1538,11 +1538,9 @@ sfasintr(struct sfas_softc *dev)
 void
 sfasicmd(struct sfas_softc *dev, struct sfas_pending *pendp)
 {
-	sfas_regmap_p	 rp;
 	struct nexus	*nexus;
 
 	nexus = &dev->sc_nexus[pendp->xs->xs_periph->periph_target];
-	rp = dev->sc_fas;
 
 	if (!sfasselect(dev, pendp, (char *)pendp->xs->cmd, pendp->xs->cmdlen,
 			(char *)pendp->xs->data, pendp->xs->datalen,
