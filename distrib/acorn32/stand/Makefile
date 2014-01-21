@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile,v 1.26 2008/10/19 22:05:19 apb Exp $
+#	$NetBSD: Makefile,v 1.27 2014/01/21 20:12:54 christos Exp $
 #
 
 .include <bsd.own.mk>
-.include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 .include <bsd.kernobj.mk>
 
@@ -122,5 +121,4 @@ localclean:
 	rm -f ${ARCHIVE}
 	-if [ -d tmp ]; then rm -rf tmp; fi
 
-.include <bsd.files.mk>
-.include <bsd.prog.mk>
+.include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
