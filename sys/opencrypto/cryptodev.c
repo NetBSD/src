@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.72 2014/01/19 18:16:13 christos Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.73 2014/01/21 18:54:28 pgoyette Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.72 2014/01/19 18:16:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.73 2014/01/21 18:54:28 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2109,6 +2109,7 @@ int	crypto_detach(device_t, int);
 int
 crypto_detach(device_t self, int num)
 {
+
 	pool_destroy(&fcrpl);
 	pool_destroy(&csepl);
 
