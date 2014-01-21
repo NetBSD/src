@@ -1,4 +1,4 @@
-/*	$NetBSD: slab.h,v 1.1.2.9 2013/12/30 04:51:24 riastradh Exp $	*/
+/*	$NetBSD: slab.h,v 1.1.2.10 2014/01/21 20:49:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -47,16 +47,34 @@ linux_gfp_to_malloc(gfp_t gfp)
 {
 	int flags = 0;
 
-	/* XXX Handle other cases as they arise.  */
-	KASSERT((gfp == GFP_ATOMIC) || (gfp == GFP_KERNEL));
+	/* This has no meaning to us.  */
+	gfp &= ~__GFP_NOWARN;
 
-	if (ISSET(gfp, __GFP_WAIT))
-		flags |= M_WAITOK;
-	else
-		flags |= M_NOWAIT;
+	/* Pretend this was the same as not passing __GFP_WAIT.  */
+	if (ISSET(gfp, __GFP_NORETRY)) {
+		gfp &= ~__GFP_NORETRY;
+		gfp &= ~__GFP_WAIT;
+	}
 
-	if (ISSET(gfp, __GFP_ZERO))
+	if (ISSET(gfp, __GFP_ZERO)) {
 		flags |= M_ZERO;
+		gfp &= ~__GFP_ZERO;
+	}
+
+	/*
+	 * XXX Handle other cases as they arise -- prefer to fail early
+	 * rather than allocate memory without respecting parameters we
+	 * don't understand.
+	 */
+	KASSERT((gfp == GFP_ATOMIC) ||
+	    ((gfp & ~__GFP_WAIT) == (GFP_KERNEL & ~__GFP_WAIT)));
+
+	if (ISSET(gfp, __GFP_WAIT)) {
+		flags |= M_WAITOK;
+		gfp &= ~__GFP_WAIT;
+	} else {
+		flags |= M_NOWAIT;
+	}
 
 	return flags;
 }
