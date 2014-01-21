@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.34 2014/01/10 01:43:52 msaitoh Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.35 2014/01/21 09:26:47 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.34 2014/01/10 01:43:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.35 2014/01/21 09:26:47 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -167,7 +167,7 @@ static const struct ahci_pci_quirk ahci_pci_quirks[] = {
 	    AHCI_PCI_QUIRK_FORCE | AHCI_QUIRK_BADPMP },
 	{ PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88SE6145,
 	    AHCI_QUIRK_BADPMP },
-	{ PCI_VENDOR_MARVELL2, PCI_PRODUCT_MARVELL2_88SE912Z,
+	{ PCI_VENDOR_MARVELL2, PCI_PRODUCT_MARVELL2_88SE91XX,
 	    AHCI_PCI_QUIRK_FORCE },
 	/* ATI SB600 AHCI 64-bit DMA only works on some boards/BIOSes */
 	{ PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_SATA_1,
