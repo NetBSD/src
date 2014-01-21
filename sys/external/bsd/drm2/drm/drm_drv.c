@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.1.2.25 2014/01/15 21:25:29 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.1.2.26 2014/01/21 20:49:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.25 2014/01/15 21:25:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.26 2014/01/21 20:49:38 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -676,6 +676,7 @@ drm_stat(struct file *fp, struct stat *st)
 	st->st_uid = kauth_cred_geteuid(fp->f_cred);
 	st->st_gid = kauth_cred_getegid(fp->f_cred);
 	st->st_mode = S_IFCHR;	/* XXX what? */
+	st->st_rdev = file->minor->device;
 	/* XXX what else? */
 
 	return 0;
