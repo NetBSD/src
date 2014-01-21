@@ -1,4 +1,4 @@
-/*	$NetBSD: esc.c,v 1.25 2012/10/27 17:17:23 chs Exp $	*/
+/*	$NetBSD: esc.c,v 1.26 2014/01/21 19:50:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esc.c,v 1.25 2012/10/27 17:17:23 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esc.c,v 1.26 2014/01/21 19:50:40 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1618,11 +1618,9 @@ escintr(struct esc_softc *dev)
 void
 escicmd(struct esc_softc *dev, struct esc_pending *pendp)
 {
-	esc_regmap_p	 rp;
 	struct nexus	*nexus;
 
 	nexus = &dev->sc_nexus[pendp->xs->xs_periph->periph_target];
-	rp = dev->sc_esc;
 
 	if (!escselect(dev, pendp, (char *)pendp->xs->cmd, pendp->xs->cmdlen,
 			(char *)pendp->xs->data, pendp->xs->datalen,
