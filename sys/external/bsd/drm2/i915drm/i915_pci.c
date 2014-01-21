@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_pci.c,v 1.1.2.7 2014/01/15 17:42:28 riastradh Exp $	*/
+/*	$NetBSD: i915_pci.c,v 1.1.2.8 2014/01/21 20:48:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.1.2.7 2014/01/15 17:42:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.1.2.8 2014/01/21 20:48:52 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -455,7 +455,9 @@ i915drm_genfb_mmap(void *v, void *vs, off_t offset, int prot)
 	struct genfb_softc *const genfb = v;
 	struct i915drm_softc *const sc = container_of(genfb,
 	    struct i915drm_softc, sc_genfb);
-	const struct pci_attach_args *const pa = &sc->sc_drm_dev.pdev->pd_pa;
+	struct drm_device *const dev = &sc->sc_drm_dev;
+	struct drm_i915_private *const dev_priv = dev->dev_private;
+	const struct pci_attach_args *const pa = &dev->pdev->pd_pa;
 	unsigned int i;
 
 	if (offset < 0)
@@ -463,7 +465,9 @@ i915drm_genfb_mmap(void *v, void *vs, off_t offset, int prot)
 
 	/* Treat low memory as the framebuffer itself.  */
 	if (offset < genfb->sc_fbsize)
-		return bus_space_mmap(pa->pa_memt, genfb->sc_fboffset, offset,
+		return bus_space_mmap(dev->bst,
+		    (dev_priv->mm.gtt_base_addr + sc->sc_fb_obj->gtt_offset),
+		    offset,
 		    prot, (BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE));
 
 	/* XXX Cargo-culted from genfb_pci.  */
@@ -492,8 +496,8 @@ i915drm_genfb_mmap(void *v, void *vs, off_t offset, int prot)
 
 		/* Try to map it if it's in range.  */
 		if ((addr <= offset) && (offset < (addr + size)))
-			return bus_space_mmap(pa->pa_memt, offset, 0, prot,
-			    flags);
+			return bus_space_mmap(pa->pa_memt, addr,
+			    (offset - addr), prot, flags);
 
 		/* Skip a slot if this was a 64-bit BAR.  */
 		if ((PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_MEM) &&
