@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.367 2013/09/18 14:30:45 macallan Exp $
+#	$NetBSD: files.pci,v 1.368 2014/01/21 14:52:07 mlelstv Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -1127,6 +1127,12 @@ file	dev/pci/if_vioif.c	vioif
 device	lynxfb: wsemuldisplaydev, rasops16
 attach	lynxfb at pci
 file	dev/pci/lynxfb.c	lynxfb needs-flag
+
+include "dev/pci/igma/files.igma"
+# Intel GMA
+device	igma: igmabus, i2cbus, i2c_bitbang, ddc_read_edid, edid
+attach	igma at pci
+file	dev/pci/igma.c		igma
 
 # 3Dfx Voodoo Graphics
 defflag	opt_tdvfb.h		TDVFB_CONSOLE
