@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.1.2.28 2014/01/21 20:56:00 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.1.2.29 2014/01/21 20:56:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.28 2014/01/21 20:56:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.29 2014/01/21 20:56:20 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -50,6 +50,14 @@ static int drm_minor_types[] = {
 	DRM_MINOR_CONTROL,
 #if 0				/* XXX Nothing seems to use this?  */
 	DRM_MINOR_RENDER,
+#endif
+};
+
+static int drm_type_minors[] = {
+	[DRM_MINOR_LEGACY] = 0,
+	[DRM_MINOR_CONTROL] = 1,
+#if 0
+	[DRM_MINOR_RENDER] = 2,
 #endif
 };
 
@@ -297,8 +305,9 @@ drm_attach(device_t parent, device_t self, void *aux)
 	dev->dev = self;
 
 	if (drm_core_check_feature(dev, DRIVER_MODESET))
-		dev->control = &sc->sc_minor[DRM_MINOR_CONTROL];
-	dev->primary = &sc->sc_minor[DRM_MINOR_LEGACY];
+		dev->control =
+		    &sc->sc_minor[drm_type_minors[DRM_MINOR_CONTROL]];
+	dev->primary = &sc->sc_minor[drm_type_minors[DRM_MINOR_LEGACY]];
 
 	error = drm_fill_in_dev(dev, NULL, daa->daa_driver);
 	if (error) {
