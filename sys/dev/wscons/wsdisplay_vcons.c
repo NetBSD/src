@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.30 2014/01/21 00:10:46 mlelstv Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.31 2014/01/21 00:36:11 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.30 2014/01/21 00:10:46 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.31 2014/01/21 00:36:11 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -940,7 +940,7 @@ vcons_copyrows_noread(void *cookie, int srcrow, int dstrow, int nrows)
 					vd->attrs[ppos] = scr->scr_attrs[pos];
 				}
 #else
-				scr->scr_vd->putchar(cookie, l, c, scr->scr_chars[pos],
+				vd->putchar(cookie, l, c, scr->scr_chars[pos],
 				    scr->scr_attrs[pos]);
 #endif
 				pos++;
