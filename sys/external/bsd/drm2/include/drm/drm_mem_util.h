@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_mem_util.h,v 1.1.2.2 2013/09/08 15:47:17 riastradh Exp $	*/
+/*	$NetBSD: drm_mem_util.h,v 1.1.2.3 2014/01/21 20:49:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -43,10 +43,7 @@ drm_calloc_large(size_t n, size_t size)
 static inline void *
 drm_malloc_ab(size_t n, size_t size)
 {
-	if (size > (SIZE_MAX / n))
-		return NULL;
-
-	return kmalloc((n * size), GFP_KERNEL);
+	return kcalloc(n, size, GFP_KERNEL);
 }
 
 static inline void
