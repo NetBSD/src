@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.1.2.30 2014/01/21 20:56:30 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.1.2.31 2014/01/21 20:56:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.30 2014/01/21 20:56:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.31 2014/01/21 20:56:40 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -327,12 +327,19 @@ drm_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
+	if (drm_core_check_feature(dev, DRIVER_MODESET)) {
+		/* XXX errno Linux->NetBSD */
+		error = -drm_mode_group_init_legacy_group(dev,
+		    &dev->primary->mode_group);
+		if (error)
+			goto fail2;
+	}
+
 	/* Success!  */
 	sc->sc_initialized = true;
 	return;
 
-fail2: __unused
-	if (dev->driver->unload != NULL)
+fail2:	if (dev->driver->unload != NULL)
 		(*dev->driver->unload)(dev);
 fail1:	drm_undo_fill_in_dev(dev);
 fail0:	return;
