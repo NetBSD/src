@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.1.2.26 2014/01/21 20:49:38 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.1.2.27 2014/01/21 20:50:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.26 2014/01/21 20:49:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.27 2014/01/21 20:50:21 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -40,10 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.26 2014/01/21 20:49:38 riastradh E
 #include <sys/filedesc.h>
 #include <sys/ioccom.h>
 #include <sys/kauth.h>
-#if 0				/* XXX drm event poll */
 #include <sys/poll.h>
 #include <sys/select.h>
-#endif
 
 #include <drm/drmP.h>
 
