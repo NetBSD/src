@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.109 2013/08/28 08:05:21 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.110 2014/01/21 13:51:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.109 2013/08/28 08:05:21 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.110 2014/01/21 13:51:44 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -1481,6 +1481,9 @@ void
 clear_history(void)
 {
 	HistEvent ev;
+
+	if (h == NULL || e == NULL)
+		rl_initialize();
 
 	(void)history(h, &ev, H_CLEAR);
 	history_length = 0;
