@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.108 2014/01/17 10:55:03 hannken Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.109 2014/01/21 07:53:38 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.108 2014/01/17 10:55:03 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.109 2014/01/21 07:53:38 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,8 +184,8 @@ ext2fs_mknod(void *v)
 	 * checked to see if it is an alias of an existing entry in
 	 * the inode cache.
 	 */
-	VOP_UNLOCK(*vpp);
 	(*vpp)->v_type = VNON;
+	VOP_UNLOCK(*vpp);
 	vgone(*vpp);
 	error = VFS_VGET(mp, ino, vpp);
 	if (error != 0) {
