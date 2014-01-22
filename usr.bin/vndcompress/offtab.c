@@ -1,4 +1,4 @@
-/*	$NetBSD: offtab.c,v 1.4 2014/01/22 06:16:05 riastradh Exp $	*/
+/*	$NetBSD: offtab.c,v 1.5 2014/01/22 06:16:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -156,16 +156,10 @@ offtab_maybe_read_window(struct offtab *offtab, uint32_t blkno, int read_flags)
 }
 
 static void
-offtab_write_window(struct offtab *offtab, uint32_t start, uint32_t end)
+offtab_write_window(struct offtab *offtab)
 {
 
 	assert(offtab->ot_mode == OFFTAB_MODE_WRITE);
-
-	/* Don't bother if [start, end) does not cover our window.  */
-	if (end <= offtab->ot_window_start)
-		return;
-	if (offtab_current_window_end(offtab) < start)
-		return;
 
 	const uint32_t window_size = offtab_current_window_size(offtab);
 	__CTASSERT(MAX_WINDOW_SIZE <= (SIZE_MAX / sizeof(uint64_t)));
@@ -184,6 +178,19 @@ offtab_write_window(struct offtab *offtab, uint32_t start, uint32_t end)
 		errx_ss(1, "partial write of initial offset bytes: %zu <= %zu",
 		    (size_t)n_written,
 		    (size_t)(window_size * sizeof(uint64_t)));
+}
+
+static void
+offtab_maybe_write_window(struct offtab *offtab, uint32_t start, uint32_t end)
+{
+
+	/* Don't bother if [start, end) does not cover our window.  */
+	if (end <= offtab->ot_window_start)
+		return;
+	if (offtab_current_window_end(offtab) < start)
+		return;
+
+	offtab_write_window(offtab);
 }
 
 /*
@@ -365,7 +372,7 @@ offtab_reset_write(struct offtab *offtab)
 	for (i = 1; i < n_windows; i++) {
 		/* Change the start but reuse the all-ones buffer.  */
 		offtab->ot_window_start = (i * offtab->ot_window_size);
-		offtab_write_window(offtab, 0, offtab->ot_n_offsets);
+		offtab_write_window(offtab);
 	}
 
 	offtab->ot_window_start = 0;
@@ -376,7 +383,7 @@ offtab_reset_write(struct offtab *offtab)
 	    (offtab->ot_n_offsets * sizeof(uint64_t)));
 	assert(first_offset <= OFF_MAX);
 	offtab->ot_window[0] = htobe64(first_offset);
-	offtab_write_window(offtab, 0, offtab->ot_n_offsets);
+	offtab_write_window(offtab);
 
 	/*
 	 * We could adapt offtab_write_window to use pwrite instead of
@@ -412,7 +419,7 @@ offtab_checkpoint(struct offtab *offtab, uint32_t n_offsets, int flags)
 	 * interrupted before we could move the window.
 	 */
 	if (offtab->ot_window != NULL)
-		offtab_write_window(offtab, 0, n_offsets);
+		offtab_maybe_write_window(offtab, 0, n_offsets);
 
 	if (ISSET(flags, OFFTAB_CHECKPOINT_SYNC)) {
 		__CTASSERT(MAX_N_OFFSETS <= (OFF_MAX / sizeof(uint64_t)));
@@ -452,7 +459,7 @@ offtab_prepare_put(struct offtab *offtab, uint32_t blkno)
 		goto win;
 
 	/* Otherwise, write out the current window and choose a new one.  */
-	offtab_write_window(offtab, 0, offtab->ot_n_offsets);
+	offtab_write_window(offtab);
 
 	assert(offtab->ot_window_size <= blkno);
 	assert(offtab->ot_window_start == (blkno - offtab->ot_window_size));
