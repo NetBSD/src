@@ -1,4 +1,4 @@
-/*	$NetBSD: utils.c,v 1.2 2014/01/22 06:15:04 riastradh Exp $	*/
+/*	$NetBSD: utils.c,v 1.3 2014/01/22 06:15:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: utils.c,v 1.2 2014/01/22 06:15:04 riastradh Exp $");
+__RCSID("$NetBSD: utils.c,v 1.3 2014/01/22 06:15:22 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -44,6 +44,8 @@ __RCSID("$NetBSD: utils.c,v 1.2 2014/01/22 06:15:04 riastradh Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include "common.h"
 
 /* XXX Seems to be missing from <stdio.h>...  */
 int	snprintf_ss(char *restrict, size_t, const char *restrict, ...)
@@ -64,6 +66,41 @@ read_block(int fd, void *buffer, size_t n)
 
 	while (n > 0) {
 		const ssize_t n_read = read(fd, p, n);
+		if (n_read == -1)
+			return -1;
+		assert(n_read >= 0);
+		if (n_read == 0)
+			break;
+
+		assert((size_t)n_read <= n);
+		n -= (size_t)n_read;
+
+		assert(p <= end);
+		assert(n_read <= (end - p));
+		p += (size_t)n_read;
+
+		assert((size_t)n_read <= (SIZE_MAX - total_read));
+		total_read += (size_t)n_read;
+	}
+
+	return total_read;
+}
+
+/*
+ * Read from a specified position, returning partial data only at end
+ * of file.
+ */
+ssize_t
+pread_block(int fd, void *buffer, size_t n, off_t fdpos)
+{
+	char *p = buffer, *const end __unused = (p + n);
+	size_t total_read = 0;
+
+	assert(n <= (OFF_MAX - fdpos));
+
+	while (n > 0) {
+		assert(total_read <= n);
+		const ssize_t n_read = pread(fd, p, n, (fdpos + total_read));
 		if (n_read == -1)
 			return -1;
 		assert(n_read >= 0);

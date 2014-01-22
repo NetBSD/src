@@ -1,4 +1,4 @@
-/*	$NetBSD: vnduncompress.c,v 1.6 2014/01/22 06:15:12 riastradh Exp $	*/
+/*	$NetBSD: vnduncompress.c,v 1.7 2014/01/22 06:15:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: vnduncompress.c,v 1.6 2014/01/22 06:15:12 riastradh Exp $");
+__RCSID("$NetBSD: vnduncompress.c,v 1.7 2014/01/22 06:15:22 riastradh Exp $");
 
 #include <sys/endian.h>
 
@@ -129,7 +129,8 @@ vnduncompress(int argc, char **argv, const struct options *O __unused)
 	__CTASSERT(MAX_N_BLOCKS <= (UINT32_MAX - 1));
 	__CTASSERT((MAX_N_BLOCKS + 1) == MAX_N_OFFSETS);
 	const uint32_t n_offsets = (n_blocks + 1);
-	offtab_init(&offtab, n_offsets, cloop2_fd, CLOOP2_OFFSET_TABLE_OFFSET);
+	offtab_init(&offtab, n_offsets, n_offsets, cloop2_fd,
+	    CLOOP2_OFFSET_TABLE_OFFSET);
 	offtab_reset_read(&offtab, &err1, &errx1);
 
 	/* Allocate compression buffers.  */

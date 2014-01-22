@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.1 2013/05/03 23:28:15 riastradh Exp $	*/
+/*	$NetBSD: common.h,v 1.2 2014/01/22 06:15:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -109,6 +109,7 @@
 #define	MAX_N_BLOCKS							\
 	(MIN(UINT32_MAX, (SIZE_MAX / sizeof(uint64_t))) - 1)
 #define	MAX_N_OFFSETS		(MAX_N_BLOCKS + 1)
+#define	MAX_WINDOW_SIZE		MAX_N_OFFSETS
 
 struct cloop2_header {
 	char		cl2h_magic[128];

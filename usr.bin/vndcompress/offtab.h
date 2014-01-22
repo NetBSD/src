@@ -1,4 +1,4 @@
-/*	$NetBSD: offtab.h,v 1.1 2014/01/22 06:14:46 riastradh Exp $	*/
+/*	$NetBSD: offtab.h,v 1.2 2014/01/22 06:15:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -39,7 +39,9 @@
 
 struct offtab {
 	uint32_t	ot_n_offsets;
-	uint64_t	*ot_offsets;
+	uint32_t	ot_window_size;
+	uint32_t	ot_window_start;
+	uint64_t	*ot_window;
 	uint32_t	ot_blkno;
 	int		ot_fd;
 	off_t		ot_fdpos;
@@ -52,10 +54,10 @@ struct offtab {
 	}		ot_mode;
 };
 
-void		offtab_init(struct offtab *, uint32_t, int, off_t);
+void		offtab_init(struct offtab *, uint32_t, uint32_t, int, off_t);
 void		offtab_destroy(struct offtab *);
 
-void		offtab_transmogrify_read_to_write(struct offtab *);
+bool		offtab_transmogrify_read_to_write(struct offtab *, uint32_t);
 
 bool		offtab_reset_read(struct offtab *,
 		    void (*)(const char *, ...) __printflike(1,2),

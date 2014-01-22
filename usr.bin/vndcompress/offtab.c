@@ -1,4 +1,4 @@
-/*	$NetBSD: offtab.c,v 1.1 2014/01/22 06:14:46 riastradh Exp $	*/
+/*	$NetBSD: offtab.c,v 1.2 2014/01/22 06:15:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -62,13 +62,137 @@ offtab_bugx(const char *fmt, ...)
 
 	errx(1, "bug in offtab, please report");
 }
+
+static uint32_t
+offtab_compute_window_size(struct offtab *offtab, uint32_t start,
+    uint32_t end)
+{
+
+	if (end == 0)
+		end = offtab->ot_n_offsets;
+
+	assert(end <= offtab->ot_n_offsets);
+	assert(start < end);
+	return MIN(offtab->ot_window_size, (end - start));
+}
+
+static uint32_t
+offtab_current_window_size(struct offtab *offtab)
+{
+
+	return offtab_compute_window_size(offtab, offtab->ot_window_start, 0);
+}
+
+static uint32_t
+offtab_current_window_end(struct offtab *offtab)
+{
+
+	assert(offtab->ot_window_start < offtab->ot_n_offsets);
+	assert(offtab_current_window_size(offtab) <=
+	    (offtab->ot_n_offsets - offtab->ot_window_start));
+	return (offtab->ot_window_start + offtab_current_window_size(offtab));
+}
+
+#define	OFFTAB_READ_SEEK	0x01
+#define	OFFTAB_READ_NOSEEK	0x00
+
+static bool
+offtab_read_window(struct offtab *offtab, uint32_t blkno, int read_flags)
+{
+
+	assert(offtab->ot_mode == OFFTAB_MODE_READ);
+
+	const uint32_t window_start = rounddown(blkno, offtab->ot_window_size);
+	const uint32_t window_size = offtab_compute_window_size(offtab,
+	    window_start, 0);
+
+	__CTASSERT(MAX_WINDOW_SIZE <= (SIZE_MAX / sizeof(uint64_t)));
+	__CTASSERT(MAX_N_OFFSETS <= (OFF_MAX / sizeof(uint64_t)));
+	assert(window_start < offtab->ot_n_offsets);
+	assert(offtab->ot_fdpos <=
+	    (OFF_MAX - (window_start * sizeof(uint64_t))));
+	assert(ISSET(read_flags, OFFTAB_READ_SEEK) ||
+	    (lseek(offtab->ot_fd, 0, SEEK_CUR) == offtab->ot_fdpos) ||
+	    ((lseek(offtab->ot_fd, 0, SEEK_CUR) == -1) && (errno == ESPIPE)));
+	const size_t n_req = (window_size * sizeof(uint64_t));
+	const ssize_t n_read = (ISSET(read_flags, OFFTAB_READ_SEEK)
+	    ? pread_block(offtab->ot_fd, offtab->ot_window, n_req,
+		(offtab->ot_fdpos + (window_start * sizeof(uint64_t))))
+	    : read_block(offtab->ot_fd, offtab->ot_window, n_req));
+	if (n_read == -1) {
+		(*offtab->ot_report)("read offset table at %"PRIuMAX,
+		    (uintmax_t)(offtab->ot_fdpos +
+			(window_start * sizeof(uint64_t))));
+		return false;
+	}
+	assert(n_read >= 0);
+	if ((size_t)n_read != (window_size * sizeof(uint64_t))) {
+		(*offtab->ot_reportx)("partial read of offset table"
+		    " at %"PRIuMAX": %zu != %zu",
+		    (uintmax_t)(offtab->ot_fdpos +
+			(window_start * sizeof(uint64_t))),
+		    (size_t)n_read,
+		    (size_t)(window_size * sizeof(uint64_t)));
+		return false;
+	}
+	offtab->ot_window_start = window_start;
+
+	return true;
+}
+
+static bool
+offtab_maybe_read_window(struct offtab *offtab, uint32_t blkno, int read_flags)
+{
+
+	/* Don't bother if blkno is already in the window.  */
+	if ((offtab->ot_window_start <= blkno) &&
+	    (blkno < offtab_current_window_end(offtab)))
+		return true;
+
+	if (!offtab_read_window(offtab, blkno, read_flags))
+		return false;
+
+	return true;
+}
+
+static void
+offtab_write_window(struct offtab *offtab, uint32_t start, uint32_t end)
+{
+
+	assert(offtab->ot_mode == OFFTAB_MODE_WRITE);
+
+	/* Don't bother if [start, end) does not cover our window.  */
+	if (end <= offtab->ot_window_start)
+		return;
+	if (offtab_current_window_end(offtab) < start)
+		return;
+
+	const uint32_t window_size = offtab_current_window_size(offtab);
+	__CTASSERT(MAX_WINDOW_SIZE <= (SIZE_MAX / sizeof(uint64_t)));
+	__CTASSERT(MAX_N_OFFSETS <= (OFF_MAX / sizeof(uint64_t)));
+	assert(offtab->ot_window_start < offtab->ot_n_offsets);
+	assert(offtab->ot_fdpos <=
+	    (OFF_MAX - (offtab->ot_window_start * sizeof(uint64_t))));
+	const ssize_t n_written = pwrite(offtab->ot_fd, offtab->ot_window,
+	    (window_size * sizeof(uint64_t)),
+	    (offtab->ot_fdpos +
+		(offtab->ot_window_start * sizeof(uint64_t))));
+	if (n_written == -1)
+		err_ss(1, "write initial offset table");
+	assert(n_written >= 0);
+	if ((size_t)n_written != (window_size * sizeof(uint64_t)))
+		errx_ss(1, "partial write of initial offset bytes: %zu <= %zu",
+		    (size_t)n_written,
+		    (size_t)(window_size * sizeof(uint64_t)));
+}
 
 /*
  * Initialize an offtab to support the specified number of offsets read
  * to or written from fd at byte position fdpos.
  */
 void
-offtab_init(struct offtab *offtab, uint32_t n_offsets, int fd, off_t fdpos)
+offtab_init(struct offtab *offtab, uint32_t n_offsets, uint32_t window_size,
+    int fd, off_t fdpos)
 {
 
 	assert(offtab != NULL);
@@ -77,9 +201,15 @@ offtab_init(struct offtab *offtab, uint32_t n_offsets, int fd, off_t fdpos)
 	assert(0 <= fdpos);
 
 	offtab->ot_n_offsets = n_offsets;
-	__CTASSERT(MAX_N_OFFSETS <= (SIZE_MAX / sizeof(uint64_t)));
-	offtab->ot_offsets = malloc(n_offsets * sizeof(uint64_t));
-	if (offtab->ot_offsets == NULL)
+	if ((window_size == 0) || (n_offsets < window_size))
+		offtab->ot_window_size = n_offsets;
+	else
+		offtab->ot_window_size = window_size;
+	assert(offtab->ot_window_size <= offtab->ot_n_offsets);
+	offtab->ot_window_start = (uint32_t)-1;
+	__CTASSERT(MAX_WINDOW_SIZE <= (SIZE_MAX / sizeof(uint64_t)));
+	offtab->ot_window = malloc(offtab->ot_window_size * sizeof(uint64_t));
+	if (offtab->ot_window == NULL)
 		err(1, "malloc offset table");
 	offtab->ot_blkno = (uint32_t)-1;
 	offtab->ot_fd = fd;
@@ -96,21 +226,28 @@ void
 offtab_destroy(struct offtab *offtab)
 {
 
-	free(offtab->ot_offsets);
+	free(offtab->ot_window);
 }
 
 /*
  * For an offtab that has been used to read data from disk, convert it
  * to an offtab that can be used to write subsequent data to disk.
+ * blkno is the last valid blkno read from disk.
  */
-void
-offtab_transmogrify_read_to_write(struct offtab *offtab)
+bool
+offtab_transmogrify_read_to_write(struct offtab *offtab, uint32_t blkno)
 {
 
 	assert(offtab->ot_mode == OFFTAB_MODE_READ);
-	assert(offtab->ot_offsets[0] == htobe64(offtab->ot_fdpos +
-	    (offtab->ot_n_offsets * sizeof(uint64_t))));
+	assert(0 < blkno);
+
+	if (!offtab_maybe_read_window(offtab, blkno, OFFTAB_READ_SEEK))
+		return false;
+
 	offtab->ot_mode = OFFTAB_MODE_WRITE;
+	offtab->ot_blkno = blkno;
+
+	return true;
 }
 
 /*
@@ -120,6 +257,10 @@ offtab_transmogrify_read_to_write(struct offtab *offtab)
  * will be reported by the report/reportx routines, which are called
  * like warn/warnx.  May fail; returns true on success, false on
  * failure.
+ *
+ * This almost has copypasta of offtab_prepare_get, but this uses read,
+ * rather than pread, so that it will work on nonseekable input if the
+ * window is the whole offset table.
  */
 bool
 offtab_reset_read(struct offtab *offtab,
@@ -133,21 +274,10 @@ offtab_reset_read(struct offtab *offtab,
 	offtab->ot_report = report;
 	offtab->ot_reportx = reportx;
 	offtab->ot_mode = OFFTAB_MODE_READ;
+	offtab->ot_blkno = (uint32_t)-1;
 
-	const ssize_t n_read = read_block(offtab->ot_fd, offtab->ot_offsets,
-	    (offtab->ot_n_offsets * sizeof(uint64_t)));
-	if (n_read == -1) {
-		(*offtab->ot_report)("read offset table");
+	if (!offtab_read_window(offtab, 0, OFFTAB_READ_NOSEEK))
 		return false;
-	}
-	assert(n_read >= 0);
-	if ((size_t)n_read != (offtab->ot_n_offsets * sizeof(uint64_t))) {
-		(*offtab->ot_reportx)("partial read of offset table"
-		    ": %zu != %zu",
-		    (size_t)n_read,
-		    (size_t)(offtab->ot_n_offsets * sizeof(uint64_t)));
-		return false;
-	}
 
 	return true;
 }
@@ -163,6 +293,13 @@ offtab_prepare_get(struct offtab *offtab, uint32_t blkno)
 
 	assert(offtab->ot_mode == OFFTAB_MODE_READ);
 	assert(blkno < offtab->ot_n_offsets);
+
+	if (!offtab_maybe_read_window(offtab, blkno, OFFTAB_READ_SEEK))
+		return false;
+
+	assert(offtab->ot_window_start <= blkno);
+	assert(blkno < offtab_current_window_end(offtab));
+
 	offtab->ot_blkno = blkno;
 	return true;
 }
@@ -176,9 +313,11 @@ offtab_get(struct offtab *offtab, uint32_t blkno)
 {
 
 	assert(offtab->ot_mode == OFFTAB_MODE_READ);
-	assert(blkno < offtab->ot_n_offsets);
 	assert(blkno == offtab->ot_blkno);
-	return be64toh(offtab->ot_offsets[blkno]);
+	assert(offtab->ot_window_start <= blkno);
+	assert(blkno < offtab_current_window_end(offtab));
+
+	return be64toh(offtab->ot_window[blkno - offtab->ot_window_start]);
 }
 
 /*
@@ -195,6 +334,7 @@ offtab_reset_write(struct offtab *offtab)
 	assert(lseek(offtab->ot_fd, 0, SEEK_CUR) == offtab->ot_fdpos);
 
 	offtab->ot_mode = OFFTAB_MODE_WRITE;
+	offtab->ot_blkno = (uint32_t)-1;
 
 	/*
 	 * Initialize the offset table to all ones (except for the
@@ -203,21 +343,36 @@ offtab_reset_write(struct offtab *offtab)
 	 */
 	__CTASSERT(MAX_N_OFFSETS <= UINT32_MAX);
 	assert(offtab->ot_n_offsets > 0);
-	offtab->ot_offsets[0] = htobe64(offtab->ot_fdpos +
-	    (offtab->ot_n_offsets * sizeof(uint64_t)));
-	for (i = 1; i < offtab->ot_n_offsets; i++)
-		offtab->ot_offsets[i] = ~(uint64_t)0;
 
-	/* Write the initial (empty) offset table.  */
-	const ssize_t n_written = write(offtab->ot_fd, offtab->ot_offsets,
+	for (i = 0; i < offtab->ot_window_size; i++)
+		offtab->ot_window[i] = ~(uint64_t)0;
+
+	const uint32_t n_windows =
+	    howmany(offtab->ot_n_offsets, offtab->ot_window_size);
+	for (i = 1; i < n_windows; i++) {
+		/* Change the start but reuse the all-ones buffer.  */
+		offtab->ot_window_start = (i * offtab->ot_window_size);
+		offtab_write_window(offtab, 0, offtab->ot_n_offsets);
+	}
+
+	offtab->ot_window_start = 0;
+	__CTASSERT(MAX_N_OFFSETS <= (OFF_MAX / sizeof(uint64_t)));
+	assert(offtab->ot_fdpos <=
+	    (OFF_MAX - (offtab->ot_n_offsets * sizeof(uint64_t))));
+	const off_t first_offset = (offtab->ot_fdpos +
 	    (offtab->ot_n_offsets * sizeof(uint64_t)));
-	if (n_written == -1)
-		err(1, "write initial offset table");
-	assert(n_written >= 0);
-	if ((size_t)n_written != (offtab->ot_n_offsets * sizeof(uint64_t)))
-		errx(1, "partial write of initial offset bytes: %zu <= %zu",
-		    (size_t)n_written,
-		    (size_t)(offtab->ot_n_offsets * sizeof(uint64_t)));
+	assert(first_offset <= UINT64_MAX);
+	offtab->ot_window[0] = htobe64(first_offset);
+	offtab_write_window(offtab, 0, offtab->ot_n_offsets);
+
+	/*
+	 * We could adapt offtab_write_window to use pwrite instead of
+	 * write in order to avoid this lseek, but we require lseek on
+	 * the output anyway, and this avoids conditionalization of
+	 * offtab_write_window.
+	 */
+	if (lseek(offtab->ot_fd, first_offset, SEEK_SET) == -1)
+		err(1, "lseek to first offset failed");
 }
 
 /*
@@ -228,8 +383,9 @@ offtab_reset_write(struct offtab *offtab)
  * warning.
  *
  * This routine does not write state in memory, and does not read state
- * that is not signal-safe.  The only state read is static for the
- * existence of the offset table.
+ * that is not signal-safe.  The only state read is offtab->ot_window,
+ * offtab->ot_window_start, and quantities that are static for the
+ * signal-interruptable existence of the offset table.
  */
 void
 offtab_checkpoint(struct offtab *offtab, uint32_t n_offsets, int flags)
@@ -238,20 +394,20 @@ offtab_checkpoint(struct offtab *offtab, uint32_t n_offsets, int flags)
 	assert(offtab->ot_mode == OFFTAB_MODE_WRITE);
 	assert(n_offsets <= offtab->ot_n_offsets);
 
-	const ssize_t n_written = pwrite(offtab->ot_fd, offtab->ot_offsets,
-	    (n_offsets * sizeof(uint64_t)), offtab->ot_fdpos);
-	if (n_written == -1)
-		err_ss(1, "write partial offset table");
-	assert(n_written >= 0);
-	if ((size_t)n_written != (n_offsets * sizeof(uint64_t)))
-		errx_ss(1, "partial write of partial offset table: %zu != %zu",
-		    (size_t)n_written,
-		    (size_t)(n_offsets * sizeof(uint64_t)));
+	/*
+	 * Write the window unless we just did that and were
+	 * interrupted before we could move the window.
+	 */
+	if (offtab->ot_window != NULL)
+		offtab_write_window(offtab, 0, n_offsets);
 
 	if (ISSET(flags, OFFTAB_CHECKPOINT_SYNC)) {
+		__CTASSERT(MAX_N_OFFSETS <= (OFF_MAX / sizeof(uint64_t)));
+		assert(offtab->ot_fdpos
+		    <= (OFF_MAX - (n_offsets * sizeof(uint64_t))));
 		if (fsync_range(offtab->ot_fd, (FFILESYNC | FDISKSYNC),
 			offtab->ot_fdpos,
-			(offtab->ot_fdpos + (n_offsets * (sizeof(uint64_t)))))
+			(offtab->ot_fdpos + (n_offsets * sizeof(uint64_t))))
 		    == -1)
 			warn_ss("fsync of offset table failed");
 	}
@@ -264,9 +420,59 @@ offtab_checkpoint(struct offtab *offtab, uint32_t n_offsets, int flags)
 void
 offtab_prepare_put(struct offtab *offtab, uint32_t blkno)
 {
+	uint32_t i;
 
 	assert(offtab->ot_mode == OFFTAB_MODE_WRITE);
 	assert(blkno < offtab->ot_n_offsets);
+
+	/*
+	 * Assume, for convenience, that we write blocks in order.
+	 * Thus we need not do another read -- we can just clear the
+	 * window.
+	 */
+	assert((offtab->ot_blkno == (uint32_t)-1) ||
+	    ((offtab->ot_blkno + 1) == blkno));
+
+	/* If it's already in our window, we're good to go.  */
+	if ((offtab->ot_window_start <= blkno) &&
+	    (blkno < offtab_current_window_end(offtab)))
+		goto win;
+
+	/* Otherwise, write out the current window and choose a new one.  */
+	offtab_write_window(offtab, 0, offtab->ot_n_offsets);
+
+	assert(offtab->ot_window_size <= blkno);
+	assert(offtab->ot_window_start == (blkno - offtab->ot_window_size));
+	assert((offtab->ot_window_start + offtab->ot_window_size) ==
+	    rounddown(blkno, offtab->ot_window_size));
+
+    {
+	uint64_t *window;
+	sigset_t sigmask;
+
+	/*
+	 * Mark the window as being updated so nobody tries to write it
+	 * (since we just write it) while we fill it with ones.
+	 */
+	block_signals(&sigmask);
+	window = offtab->ot_window;
+	offtab->ot_window = NULL;
+	restore_sigmask(&sigmask);
+
+	/* Fill the window with ones.  */
+	for (i = 0; i < offtab_current_window_size(offtab); i++)
+		window[i] = ~(uint64_t)0;
+
+	/* Restore the window as ready again.  */
+	block_signals(&sigmask);
+	offtab->ot_window = window;
+	offtab->ot_window_start = rounddown(blkno, offtab->ot_window_size);
+	restore_sigmask(&sigmask);
+    }
+
+win:	assert(offtab->ot_window_start <= blkno);
+	assert(blkno < offtab_current_window_end(offtab));
+
 	offtab->ot_blkno = blkno;
 }
 
@@ -278,7 +484,9 @@ offtab_put(struct offtab *offtab, uint32_t blkno, uint64_t offset)
 {
 
 	assert(offtab->ot_mode == OFFTAB_MODE_WRITE);
-	assert(blkno < offtab->ot_n_offsets);
 	assert(blkno == offtab->ot_blkno);
-	offtab->ot_offsets[blkno] = htobe64(offset);
+	assert(offtab->ot_window_start <= blkno);
+	assert(blkno < offtab_current_window_end(offtab));
+
+	offtab->ot_window[blkno - offtab->ot_window_start] = htobe64(offset);
 }
