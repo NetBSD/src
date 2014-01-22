@@ -1,4 +1,4 @@
-/*	$NetBSD: vndcompress.c,v 1.13 2013/05/06 22:53:24 riastradh Exp $	*/
+/*	$NetBSD: vndcompress.c,v 1.14 2014/01/22 06:14:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: vndcompress.c,v 1.13 2013/05/06 22:53:24 riastradh Exp $");
+__RCSID("$NetBSD: vndcompress.c,v 1.14 2014/01/22 06:14:20 riastradh Exp $");
 
 #include <sys/endian.h>
 
@@ -49,13 +49,8 @@ __RCSID("$NetBSD: vndcompress.c,v 1.13 2013/05/06 22:53:24 riastradh Exp $");
 #include <unistd.h>
 #include <zlib.h>
 
-/* XXX Seems to be missing from <stdio.h>...  */
-int	snprintf_ss(char *restrict, size_t, const char *restrict, ...)
-	    __printflike(3, 4);
-int	vsnprintf_ss(char *restrict, size_t, const char *restrict, va_list)
-	    __printflike(3, 0);
-
 #include "common.h"
+#include "utils.h"
 
 /*
  * XXX Switch to control bug-for-bug byte-for-byte compatibility with
@@ -116,12 +111,6 @@ static uint32_t	compress_block(int, int, uint32_t, uint32_t, uint32_t, void *,
 static void	compress_maybe_checkpoint(struct compress_state *);
 static void	compress_checkpoint(struct compress_state *);
 static void	compress_exit(struct compress_state *);
-static ssize_t	read_block(int, void *, size_t);
-static void	err_ss(int, const char *) __dead;
-static void	errx_ss(int, const char *, ...) __printflike(2, 3) __dead;
-static void	warn_ss(const char *);
-static void	warnx_ss(const char *, ...) __printflike(1, 2);
-static void	vwarnx_ss(const char *, va_list) __printflike(1, 0);
 
 /*
  * Compression entry point.
@@ -948,98 +937,4 @@ compress_exit(struct compress_state *S)
 		warn("close(cloop2 fd)");
 	if (close(S->image_fd) == -1)
 		warn("close(image fd)");
-}
-
-/*
- * Read, returning partial data only at end of file.
- */
-static ssize_t
-read_block(int fd, void *buffer, size_t n)
-{
-	char *p = buffer, *const end __unused = (p + n);
-	size_t total_read = 0;
-
-	while (n > 0) {
-		const ssize_t n_read = read(fd, p, n);
-		if (n_read == -1)
-			return -1;
-		assert(n_read >= 0);
-		if (n_read == 0)
-			break;
-
-		assert((size_t)n_read <= n);
-		n -= (size_t)n_read;
-
-		assert(p <= end);
-		assert(n_read <= (end - p));
-		p += (size_t)n_read;
-
-		assert((size_t)n_read <= (SIZE_MAX - total_read));
-		total_read += (size_t)n_read;
-	}
-
-	return total_read;
-}
-
-/*
- * Signal-safe err/warn utilities.  The errno varieties are limited to
- * having no format arguments for reasons of laziness.
- */
-
-static void
-err_ss(int exit_value, const char *msg)
-{
-	warn_ss(msg);
-	_Exit(exit_value);
-}
-
-static void
-errx_ss(int exit_value, const char *format, ...)
-{
-	va_list va;
-
-	va_start(va, format);
-	vwarnx_ss(format, va);
-	va_end(va);
-	_Exit(exit_value);
-}
-
-static void
-warn_ss(const char *msg)
-{
-	int error = errno;
-
-	warnx_ss("%s: %s", msg, strerror(error));
-
-	errno = error;
-}
-
-static void
-warnx_ss(const char *format, ...)
-{
-	va_list va;
-
-	va_start(va, format);
-	vwarnx_ss(format, va);
-	va_end(va);
-}
-
-static void
-vwarnx_ss(const char *format, va_list va)
-{
-	char buf[128];
-
-	(void)strlcpy(buf, getprogname(), sizeof(buf));
-	(void)strlcat(buf, ": ", sizeof(buf));
-
-	const int n = vsnprintf_ss(&buf[strlen(buf)], (sizeof(buf) -
-		strlen(buf)), format, va);
-	if (n <= 0) {
-		const char fallback[] =
-		    "vndcompress: Help!  I'm trapped in a signal handler!\n";
-		(void)write(STDERR_FILENO, fallback, __arraycount(fallback));
-	} else {
-		(void)strlcat(buf, "\n", sizeof(buf));
-		(void)write(STDERR_FILENO, buf, strlen(buf));
-	}
 }
