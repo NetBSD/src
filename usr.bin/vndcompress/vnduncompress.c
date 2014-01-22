@@ -1,4 +1,4 @@
-/*	$NetBSD: vnduncompress.c,v 1.7 2014/01/22 06:15:22 riastradh Exp $	*/
+/*	$NetBSD: vnduncompress.c,v 1.8 2014/01/22 06:15:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,12 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: vnduncompress.c,v 1.7 2014/01/22 06:15:22 riastradh Exp $");
+__RCSID("$NetBSD: vnduncompress.c,v 1.8 2014/01/22 06:15:57 riastradh Exp $");
 
 #include <sys/endian.h>
 
 #include <assert.h>
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <inttypes.h>
 #include <limits.h>
@@ -125,11 +126,23 @@ vnduncompress(int argc, char **argv, const struct options *O __unused)
 		errx(1, "too many blocks: %"PRIu32" (max %"PRIu32")",
 		    n_blocks, (uint32_t)MAX_N_BLOCKS);
 
-	/* Initialize the offset table.  */
+	/* Calculate the number of offsets we'll have to handle.  */
 	__CTASSERT(MAX_N_BLOCKS <= (UINT32_MAX - 1));
 	__CTASSERT((MAX_N_BLOCKS + 1) == MAX_N_OFFSETS);
 	const uint32_t n_offsets = (n_blocks + 1);
-	offtab_init(&offtab, n_offsets, n_offsets, cloop2_fd,
+
+	/* Make sure we can handle it with the requested window size.  */
+	if ((O->window_size != 0) && (O->window_size < n_offsets)) {
+		if (lseek(cloop2_fd, 0, SEEK_CUR) == -1) {
+			if (errno == ESPIPE)
+				errx(1, "window too small, nonseekable input");
+			else
+				err(1, "window too small and lseek failed");
+		}
+	}
+
+	/* Initialize the offset table and start reading it in.  */
+	offtab_init(&offtab, n_offsets, O->window_size, cloop2_fd,
 	    CLOOP2_OFFSET_TABLE_OFFSET);
 	offtab_reset_read(&offtab, &err1, &errx1);
 
