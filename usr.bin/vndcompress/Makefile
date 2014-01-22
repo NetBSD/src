@@ -134,23 +134,42 @@ check-pipewindow: smallwindow.cl2
 	  echo 'unexpected pass!' && exit 1; \
 	fi
 
-# These checks don't work unless RLIMIT_AS (i.e., ulimit -v) actually
-# works!  Apparently it doesn't...
+# The following two tests try to ensure a limited window size means
+# limited memory allocation.  They don't work very well.  The virtual
+# address space rlimit (ulimit -v, RLIMIT_AS) must cover the stack size
+# that is allocated automatically for the process, which varies from
+# machine architecture to machine architecture (the kernel's MAXSSIZ
+# parameter), as well as any shared libraries that get loaded in and
+# other auxiliary crud the loader or libc might allocate.
+#
+# In principle, the overhead from that and the program image should be
+# constant, and the only substantial memory allocation performed by
+# vndcompress should be w*8 bytes or (n/b)*8, where w is the window
+# size if specified, n is the size of the input, and b is the block
+# size.
+#
+# We could perhaps do an exponential growth and then binary search on
+# the virtual address space limit to determine the overhead, but that's
+# more trouble than I care to do in a makefile right now.  Currently
+# this is calibrated for NetBSD/amd64 6, where 128 MB of virtual
+# address space is allocated for the stack.  (Note `ulimit -v' takes a
+# number of kilobytes, not a number of bytes.)  Since this is not
+# reliable, however, these are commented out.
 
-# CHECKS+=	check-ulimit
-# check-ulimit:
-# 	@echo '# expecting failure...'
-# 	if head -c 1073741824 < /dev/zero \
-# 	    | (ulimit -v 20000 && \
-# 	        ./vndcompress -l 1g -s 512 /dev/stdin /dev/null); then \
-# 	  echo 'unexpected pass!' && exit 0; \
-# 	fi
-
-# CHECKS+=	check-ulimit-window
-# check-ulimit-window:
-# 	head -c 1073741824 < /dev/zero \
-# 	| (ulimit -v 20000 && \
-# 	    ./vndcompress -w 1 -l 1g -s 512 /dev/stdin /dev/null)
+#CHECKS+=	check-ulimit
+#check-ulimit:
+#	@echo '# expecting failure...'
+#	if head -c $$((64 * 1024 * 1024)) < /dev/zero \
+#	    | (ulimit -v $$((139 * 1024)) && \
+#	        ./vndcompress -l 64m -s 512 /dev/stdin /dev/null); then \
+#	  echo 'unexpected pass!' && exit 1; \
+#	fi
+#
+#CHECKS+=	check-ulimit-window
+#check-ulimit-window:
+#	head -c $$((64 * 1024 * 1024)) < /dev/zero \
+#	| (ulimit -v $$((139 * 1024)) && \
+#	    ./vndcompress -w 8192 -l 64m -s 512 /dev/stdin /dev/null)
 
 TESTSUFFIXES+=	in cl2 cl2x out outx
 
