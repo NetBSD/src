@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.5 2014/01/22 06:17:25 riastradh Exp $	*/
+/*	$NetBSD: common.h,v 1.6 2014/01/22 06:18:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -109,7 +109,16 @@
 #define	MAX_N_BLOCKS							\
 	(MIN(UINT32_MAX, (SIZE_MAX / sizeof(uint64_t))) - 1)
 #define	MAX_N_OFFSETS		(MAX_N_BLOCKS + 1)
+
+/*
+ * The window size is at most the number of offsets, so it has the same
+ * maximum bound.  The default window size is chosen so that windows
+ * fit in one 4096-byte page of memory.  We could use 64k bytes, or
+ * st_blksize, to maximize I/O transfer size, but the transfers won't
+ * be aligned without a lot of extra work.
+ */
 #define	MAX_WINDOW_SIZE		MAX_N_OFFSETS
+#define	DEF_WINDOW_SIZE		512
 
 struct cloop2_header {
 	char		cl2h_magic[128];
