@@ -1,4 +1,4 @@
-/*	$NetBSD: empsc.c,v 1.27 2012/10/27 17:17:28 chs Exp $ */
+/*	$NetBSD: empsc.c,v 1.28 2014/01/22 00:25:16 christos Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: empsc.c,v 1.27 2012/10/27 17:17:28 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: empsc.c,v 1.28 2014/01/22 00:25:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,6 +187,7 @@ empsc_intr(void *arg)
 	if ((*dev->sci_csr & SCI_CSR_INT) == 0)
 		return(0);
 	stat = *dev->sci_iack;
+	__USE(stat);
 	/* XXXX is: something is missing here, at least a: */
 	return(1);
 }
