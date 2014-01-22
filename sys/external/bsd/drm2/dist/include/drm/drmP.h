@@ -1494,6 +1494,8 @@ extern int drm_release(struct inode *inode, struct file *filp);
 
 				/* Mapping support (drm_vm.h) */
 #ifdef __NetBSD__
+extern int drm_mmap_object(struct drm_device *, off_t, size_t, int,
+    struct uvm_object **);
 extern paddr_t drm_mmap_paddr(struct drm_device *, off_t, int);
 #else
 extern int drm_mmap(struct file *filp, struct vm_area_struct *vma);
@@ -1846,7 +1848,7 @@ void drm_gem_object_handle_free(struct drm_gem_object *obj);
 #ifdef __NetBSD__
 void drm_gem_pager_reference(struct uvm_object *);
 void drm_gem_pager_detach(struct uvm_object *);
-int drm_gem_mmap_object(struct drm_device *, off_t *, size_t,
+int drm_gem_mmap_object(struct drm_device *, off_t, size_t, int,
     struct uvm_object **);
 #else
 void drm_gem_vm_open(struct vm_area_struct *vma);
