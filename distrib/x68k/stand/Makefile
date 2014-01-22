@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.8 2014/01/22 00:49:46 christos Exp $
+#	$NetBSD: Makefile,v 1.9 2014/01/22 01:03:10 christos Exp $
 
 .include <bsd.own.mk>
+.include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 ARCHIVES=	gzip rawrite
 MEMBER_gzip=	gz124x5f.lzh gzip.x
@@ -23,4 +24,4 @@ release:
 	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/misc
 .endfor
 
-.include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
+.include <bsd.files.mk>

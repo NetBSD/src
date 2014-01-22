@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.3 2014/01/22 00:51:38 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2014/01/22 01:03:10 christos Exp $
 
 .include <bsd.own.mk>
+.include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 .include <bsd.kernobj.mk>
 
@@ -27,4 +28,4 @@ release:: ${UUDECODE_FILES}
 	${INSTALL} -c -m ${NONBINMODE} \
 		${HPCBOOT_SH4} ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation
 
-.include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
+.include <bsd.files.mk>
