@@ -1,4 +1,4 @@
-/*	$NetBSD: vndcompress.c,v 1.19 2014/01/22 06:15:57 riastradh Exp $	*/
+/*	$NetBSD: vndcompress.c,v 1.20 2014/01/22 06:16:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: vndcompress.c,v 1.19 2014/01/22 06:15:57 riastradh Exp $");
+__RCSID("$NetBSD: vndcompress.c,v 1.20 2014/01/22 06:16:32 riastradh Exp $");
 
 #include <sys/endian.h>
 
@@ -478,7 +478,6 @@ compress_init(int argc, char **argv, const struct options *O,
 	S->n_offsets = (S->n_blocks + 1);
 	__CTASSERT(MAX_N_OFFSETS == (MAX_N_BLOCKS + 1));
 	__CTASSERT(MAX_N_OFFSETS <= (SIZE_MAX / sizeof(uint64_t)));
-	/* XXX Make the window size an option.  */
 	offtab_init(&S->offtab, S->n_offsets, O->window_size, S->cloop2_fd,
 	    CLOOP2_OFFSET_TABLE_OFFSET);
 
