@@ -106,10 +106,10 @@ check-part: .PHONY part.orig part.out
 	cmp part.orig part.out
 part.cl2: part.orig part.cl2part vndcompress
 	cp part.cl2part ${.TARGET}.tmp \
-	&& ./vndcompress -s 512 -rR part.orig ${.TARGET}.tmp \
+	&& ./vndcompress -b 512 -rR part.orig ${.TARGET}.tmp \
 	&& mv -f ${.TARGET}.tmp ${.TARGET}
 part.cl2part: part.orig vndcompress
-	./vndcompress -s 512 -p 10 part.orig ${.TARGET}.tmp \
+	./vndcompress -b 512 -p 10 part.orig ${.TARGET}.tmp \
 	&& mv -f ${.TARGET}.tmp ${.TARGET}
 part.orig:
 	head -c 12345 < /usr/share/dict/words > ${.TARGET}.tmp \
@@ -161,7 +161,7 @@ check-pipewindow: smallwindow.cl2
 #	@echo '# expecting failure...'
 #	if head -c $$((64 * 1024 * 1024)) < /dev/zero \
 #	    | (ulimit -v $$((139 * 1024)) && \
-#	        ./vndcompress -l 64m -s 512 /dev/stdin /dev/null); then \
+#	        ./vndcompress -l 64m -b 512 /dev/stdin /dev/null); then \
 #	  echo 'unexpected pass!' && exit 1; \
 #	fi
 #
@@ -169,7 +169,7 @@ check-pipewindow: smallwindow.cl2
 #check-ulimit-window:
 #	head -c $$((64 * 1024 * 1024)) < /dev/zero \
 #	| (ulimit -v $$((139 * 1024)) && \
-#	    ./vndcompress -w 8192 -l 64m -s 512 /dev/stdin /dev/null)
+#	    ./vndcompress -w 8192 -l 64m -b 512 /dev/stdin /dev/null)
 
 TESTSUFFIXES+=	in cl2 cl2x out outx
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2 2014/01/22 06:15:57 riastradh Exp $	*/
+/*	$NetBSD: main.c,v 1.3 2014/01/22 06:17:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.2 2014/01/22 06:15:57 riastradh Exp $");
+__RCSID("$NetBSD: main.c,v 1.3 2014/01/22 06:17:25 riastradh Exp $");
 
 #include <assert.h>
 #include <err.h>
@@ -60,8 +60,20 @@ main(int argc, char **argv)
 		warnx("unknown program name, defaulting to vndcompress: %s",
 		    getprogname());
 
-	while ((ch = getopt(argc, argv, "cdk:l:p:rRs:w:")) != -1) {
+	while ((ch = getopt(argc, argv, "b:cdk:l:p:rRw:")) != -1) {
 		switch (ch) {
+		case 'b':
+			if (ISSET(O->flags, FLAG_b)) {
+				warnx("-b may be supplied only once");
+				usage();
+			}
+			O->flags |= FLAG_b;
+			__CTASSERT(MIN_BLOCKSIZE <= MAX_BLOCKSIZE);
+			__CTASSERT(MAX_BLOCKSIZE <= LLONG_MAX);
+			O->blocksize = strsuftoll("block size", optarg,
+			    MIN_BLOCKSIZE, MAX_BLOCKSIZE);
+			break;
+
 		case 'c':
 			if (ISSET(O->flags, FLAG_d)) {
 				warnx("-c and -d are mutually exclusive");
@@ -116,18 +128,6 @@ main(int argc, char **argv)
 			O->flags |= FLAG_R;
 			break;
 
-		case 's':
-			if (ISSET(O->flags, FLAG_s)) {
-				warnx("-s may be supplied only once");
-				usage();
-			}
-			O->flags |= FLAG_s;
-			__CTASSERT(MIN_BLOCKSIZE <= MAX_BLOCKSIZE);
-			__CTASSERT(MAX_BLOCKSIZE <= LLONG_MAX);
-			O->blocksize = strsuftoll("block size", optarg,
-			    MIN_BLOCKSIZE, MAX_BLOCKSIZE);
-			break;
-
 		case 'w':
 			if (ISSET(O->flags, FLAG_w)) {
 				warnx("-w may be supplied only once");
@@ -152,8 +152,8 @@ main(int argc, char **argv)
 			usage();
 	} else {
 		assert(operation == &vndcompress);
-		if (ISSET(O->flags, ~(FLAG_c | FLAG_k | FLAG_l | FLAG_p |
-			    FLAG_r | FLAG_s | FLAG_R | FLAG_w)))
+		if (ISSET(O->flags, ~(FLAG_b | FLAG_c | FLAG_k | FLAG_l |
+			    FLAG_p | FLAG_r | FLAG_R | FLAG_w)))
 			usage();
 		if (ISSET(O->flags, FLAG_R) && !ISSET(O->flags, FLAG_r)) {
 			warnx("-R makes no sense without -r");
@@ -169,8 +169,8 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "Usage: %s -c [-rR] [-k <checkpoint-blocks>] [-l <length>]\n"
-	    "          [-p <partial-offset>] [-s <blocksize>] [-w <winsize>]\n"
+	    "Usage: %s -c [-rR] [-b <blocksize>] [-k <checkpoint-blocks>]\n"
+	    "          [-l <length>] [-p <partial-offset>] [-w <winsize>]\n"
 	    "          <image> <compressed-image> [<blocksize>]\n"
 	    "       %s -d <compressed-image> <image>\n",
 	    getprogname(), getprogname());

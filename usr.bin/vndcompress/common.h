@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.4 2014/01/22 06:15:57 riastradh Exp $	*/
+/*	$NetBSD: common.h,v 1.5 2014/01/22 06:17:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@ struct options {
 #define	FLAG_d	0x0002	/* Decompress */
 #define	FLAG_p	0x0004	/* Partial */
 #define	FLAG_r	0x0008	/* Restart */
-#define	FLAG_s	0x0010	/* block Size */
+#define	FLAG_b	0x0010	/* Block size */
 #define	FLAG_R	0x0020	/* abort on Restart failure */
 #define	FLAG_k	0x0040	/* checKpoint blocks */
 #define	FLAG_l	0x0080	/* Length of input */
