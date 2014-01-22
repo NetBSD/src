@@ -1,4 +1,4 @@
-/*	$NetBSD: offtab.c,v 1.8 2014/01/22 06:17:16 riastradh Exp $	*/
+/*	$NetBSD: offtab.c,v 1.9 2014/01/22 14:25:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD");
+__RCSID("$NetBSD: offtab.c,v 1.9 2014/01/22 14:25:07 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/endian.h>
