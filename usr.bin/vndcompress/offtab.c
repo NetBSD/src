@@ -1,4 +1,4 @@
-/*	$NetBSD: offtab.c,v 1.3 2014/01/22 06:15:31 riastradh Exp $	*/
+/*	$NetBSD: offtab.c,v 1.4 2014/01/22 06:16:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -278,6 +278,19 @@ offtab_reset_read(struct offtab *offtab,
 
 	if (!offtab_read_window(offtab, 0, OFFTAB_READ_NOSEEK))
 		return false;
+
+	if (offtab->ot_window_size < offtab->ot_n_offsets) {
+		__CTASSERT(MAX_N_OFFSETS <= (OFF_MAX / sizeof(uint64_t)));
+		assert(offtab->ot_fdpos <= (OFF_MAX -
+			(off_t)(offtab->ot_n_offsets * sizeof(uint64_t))));
+		const off_t first_offset = (offtab->ot_fdpos +
+		    (offtab->ot_n_offsets * sizeof(uint64_t)));
+		if (lseek(offtab->ot_fd, first_offset, SEEK_SET) == -1) {
+			(*offtab->ot_report)("lseek to first offset 0x%"PRIx64,
+			    first_offset);
+			return false;
+		}
+	}
 
 	return true;
 }
