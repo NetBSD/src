@@ -115,6 +115,43 @@ part.orig:
 	head -c 12345 < /usr/share/dict/words > ${.TARGET}.tmp \
 	&& mv -f ${.TARGET}.tmp ${.TARGET}
 
+TESTFILES+=	smallwindow
+smallwindow.in:
+	head -c 655360 < /usr/share/dict/words > ${.TARGET}.tmp \
+	&& mv -f ${.TARGET}.tmp ${.TARGET}
+smallwindow.cl2: smallwindow.in
+	./vndcompress -w 1 ${.IMPSRC} ${.TARGET}.tmp \
+	&& mv -f ${.TARGET}.tmp ${.TARGET}
+smallwindow.out: smallwindow.cl2
+	./vndcompress -w 1 -d ${.IMPSRC} ${.TARGET}.tmp \
+	&& mv -f ${.TARGET}.tmp ${.TARGET}
+
+CHECKS+=	check-pipewindow
+check-pipewindow: smallwindow.cl2
+	@echo '# expecting failure...'
+	if cat smallwindow.cl2 | ./vndcompress -w 1 -d /dev/stdin /dev/null; \
+	then \
+	  echo 'unexpected pass!' && exit 1; \
+	fi
+
+# These checks don't work unless RLIMIT_AS (i.e., ulimit -v) actually
+# works!  Apparently it doesn't...
+
+# CHECKS+=	check-ulimit
+# check-ulimit:
+# 	@echo '# expecting failure...'
+# 	if head -c 1073741824 < /dev/zero \
+# 	    | (ulimit -v 20000 && \
+# 	        ./vndcompress -l 1g -s 512 /dev/stdin /dev/null); then \
+# 	  echo 'unexpected pass!' && exit 0; \
+# 	fi
+
+# CHECKS+=	check-ulimit-window
+# check-ulimit-window:
+# 	head -c 1073741824 < /dev/zero \
+# 	| (ulimit -v 20000 && \
+# 	    ./vndcompress -w 1 -l 1g -s 512 /dev/stdin /dev/null)
+
 TESTSUFFIXES+=	in cl2 cl2x out outx
 
 TESTFORMS+=	cl2 cl2x
@@ -148,6 +185,9 @@ CHECKS+=	check-${testfile}
 check: .PHONY ${CHECKS}
 
 .SUFFIXES: .cl2 .cl2x .in .out .outx
+
+# XXX These tests should automatically try different window sizes, but
+# that is tricky to express in make.
 
 .in.cl2: vndcompress
 	./vndcompress ${.IMPSRC} ${.TARGET}.tmp ${BLOCKSIZE.${.PREFIX}} \
