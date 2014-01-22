@@ -1,4 +1,4 @@
-/*	$NetBSD: vnduncompress.c,v 1.5 2014/01/22 06:14:46 riastradh Exp $	*/
+/*	$NetBSD: vnduncompress.c,v 1.6 2014/01/22 06:15:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: vnduncompress.c,v 1.5 2014/01/22 06:14:46 riastradh Exp $");
+__RCSID("$NetBSD: vnduncompress.c,v 1.6 2014/01/22 06:15:12 riastradh Exp $");
 
 #include <sys/endian.h>
 
@@ -163,17 +163,19 @@ vnduncompress(int argc, char **argv, const struct options *O __unused)
 
 		/* Sanity-check the offsets.  */
 		if (start != offset)
-			errx(1, "strange offset for block %"PRIu32": %"PRIu64,
+			errx(1, "strange offset for block %"PRIu32
+			    ": 0x%"PRIx64,
 			    blkno, start);
 		/* XXX compression ratio bound */
 		__CTASSERT(MAX_BLOCKSIZE <= (SIZE_MAX / 2));
 		if ((2 * (size_t)blocksize) <= (end - start))
-			errx(1, "block %"PRIu32" too large: %"PRIu64" bytes",
-			    blkno, (end - start));
+			errx(1, "block %"PRIu32" too large"
+			    ": %"PRIu64" bytes from 0x%"PRIx64" to 0x%"PRIx64,
+			    blkno, (end - start), start, end);
 		assert(offset <= MIN(OFF_MAX, UINT64_MAX));
 		if ((MIN(OFF_MAX, UINT64_MAX) - offset) < (end - start))
 			errx(1, "block %"PRIu32" overflows offset:"
-			    " %"PRIu64" + %"PRIu64,
+			    " 0x%"PRIx64" + %"PRIu64,
 			    blkno, offset, (end - start));
 
 		/* Read the compressed block.  */
