@@ -1,4 +1,4 @@
-/*	$NetBSD: offtab.c,v 1.7 2014/01/22 06:17:07 riastradh Exp $	*/
+/*	$NetBSD: offtab.c,v 1.8 2014/01/22 06:17:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -64,23 +64,18 @@ offtab_bugx(const char *fmt, ...)
 }
 
 static uint32_t
-offtab_compute_window_size(struct offtab *offtab, uint32_t start,
-    uint32_t end)
+offtab_compute_window_size(struct offtab *offtab, uint32_t start)
 {
 
-	if (end == 0)
-		end = offtab->ot_n_offsets;
-
-	assert(end <= offtab->ot_n_offsets);
-	assert(start < end);
-	return MIN(offtab->ot_window_size, (end - start));
+	assert(start < offtab->ot_n_offsets);
+	return MIN(offtab->ot_window_size, (offtab->ot_n_offsets - start));
 }
 
 static uint32_t
 offtab_current_window_size(struct offtab *offtab)
 {
 
-	return offtab_compute_window_size(offtab, offtab->ot_window_start, 0);
+	return offtab_compute_window_size(offtab, offtab->ot_window_start);
 }
 
 static uint32_t
@@ -104,7 +99,7 @@ offtab_read_window(struct offtab *offtab, uint32_t blkno, int read_flags)
 
 	const uint32_t window_start = rounddown(blkno, offtab->ot_window_size);
 	const uint32_t window_size = offtab_compute_window_size(offtab,
-	    window_start, 0);
+	    window_start);
 
 	__CTASSERT(MAX_WINDOW_SIZE <= (SIZE_MAX / sizeof(uint64_t)));
 	__CTASSERT(MAX_N_OFFSETS <= (OFF_MAX / sizeof(uint64_t)));
