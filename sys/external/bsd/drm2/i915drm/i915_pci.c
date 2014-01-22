@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_pci.c,v 1.1.2.8 2014/01/21 20:48:52 riastradh Exp $	*/
+/*	$NetBSD: i915_pci.c,v 1.1.2.9 2014/01/22 14:58:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.1.2.8 2014/01/21 20:48:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.1.2.9 2014/01/22 14:58:39 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -394,8 +394,7 @@ i915drm_fb_probe(struct drm_fb_helper *fb_helper,
 	/* Success!  */
 	return 1;
 
-fail4: __unused
-	bus_space_unmap(dev->bst, sc->sc_fb_bsh, size);
+fail4:	bus_space_unmap(dev->bst, sc->sc_fb_bsh, size);
 	fb_helper->fb = NULL;
 fail3:	drm_framebuffer_unreference(&dev_priv->fbdev->ifb.base);
 fail2:	i915_gem_object_unpin(sc->sc_fb_obj);
