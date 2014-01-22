@@ -7,6 +7,8 @@ MLINKS=	vndcompress.1 vnduncompress.1
 DPADD+=	${LIBZ}
 LDADD+=	-lz
 
+WARNS=	5
+
 .include <bsd.prog.mk>
 
 TESTFILES+=	oneblock
