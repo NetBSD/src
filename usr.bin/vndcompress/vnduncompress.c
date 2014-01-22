@@ -1,4 +1,4 @@
-/*	$NetBSD: vnduncompress.c,v 1.8 2014/01/22 06:15:57 riastradh Exp $	*/
+/*	$NetBSD: vnduncompress.c,v 1.9 2014/01/22 06:17:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: vnduncompress.c,v 1.8 2014/01/22 06:15:57 riastradh Exp $");
+__RCSID("$NetBSD: vnduncompress.c,v 1.9 2014/01/22 06:17:34 riastradh Exp $");
 
 #include <sys/endian.h>
 
@@ -50,25 +50,8 @@ __RCSID("$NetBSD: vnduncompress.c,v 1.8 2014/01/22 06:15:57 riastradh Exp $");
 #include "offtab.h"
 #include "utils.h"
 
-static void __dead
-err1(const char *fmt, ...)
-{
-	va_list va;
-
-	va_start(va, fmt);
-	verr(1, fmt, va);
-	va_end(va);
-}
-
-static void __dead
-errx1(const char *fmt, ...)
-{
-	va_list va;
-
-	va_start(va, fmt);
-	verrx(1, fmt, va);
-	va_end(va);
-}
+static void	err1(const char *, ...) __printflike(1,2) __dead;
+static void	errx1(const char *, ...) __printflike(1,2) __dead;
 
 int
 vnduncompress(int argc, char **argv, const struct options *O __unused)
@@ -245,4 +228,24 @@ vnduncompress(int argc, char **argv, const struct options *O __unused)
 		warn("close(cloop2 fd)");
 
 	return 0;
+}
+
+static void __printflike(1,2) __dead
+err1(const char *fmt, ...)
+{
+	va_list va;
+
+	va_start(va, fmt);
+	verr(1, fmt, va);
+	va_end(va);
+}
+
+static void __printflike(1,2) __dead
+errx1(const char *fmt, ...)
+{
+	va_list va;
+
+	va_start(va, fmt);
+	verrx(1, fmt, va);
+	va_end(va);
 }
