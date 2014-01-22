@@ -89,6 +89,9 @@ piperestart.cl2restart: piperestart.cl2part vndcompress
 	&& head -c 700000 < /usr/share/dict/words \
 	| ./vndcompress -l 655360 -k 1 -rR /dev/stdin ${.TARGET}.tmp \
 	&& mv -f ${.TARGET}.tmp ${.TARGET}
+# The following rule uses ; and not && on purpose: vndcompress is
+# supposed to fail (and it is even OK to interrupt!) so we can restart
+# and fill in the rest.
 piperestart.cl2part: vndcompress
 	head -c 600000 < /usr/share/dict/words \
 	| ./vndcompress -l 655360 -k 1 /dev/stdin ${.TARGET}.tmp; \
