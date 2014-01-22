@@ -1497,8 +1497,13 @@ void i915_handle_error(struct drm_device *dev, bool wedged)
 		 */
 		for_each_ring(ring, dev_priv, i)
 #ifdef __NetBSD__
+		    {
+			unsigned long flags;
+			spin_lock_irqsave(&dev_priv->irq_lock, flags);
 			DRM_SPIN_WAKEUP_ALL(&ring->irq_queue,
 			    &dev_priv->irq_lock);
+			spin_unlock_irqrestore(&dev_priv->irq_lock, flags);
+		    }
 #else
 			wake_up_all(&ring->irq_queue);
 #endif
