@@ -1,4 +1,4 @@
-.\"	$NetBSD: vndcompress.1,v 1.12 2014/01/22 06:17:51 riastradh Exp $
+.\"	$NetBSD: vndcompress.1,v 1.13 2014/01/22 06:18:09 riastradh Exp $
 .\"
 .\" Copyright (c) 2013 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -137,8 +137,6 @@ Use an in-memory window of
 .Ar winsize
 entries into the table of compressed block offsets.
 If
-.Fl w
-is not supplied or
 .Ar winsize
 is zero,
 .Nm
@@ -160,6 +158,10 @@ once they are compressed and written, but which is a limitation for
 decompression.
 Thus, decompressing from a pipe is incompatible with a nonzero
 .Ar winsize .
+.Pp
+By default,
+.Nm
+uses a fixed window size, unless decompressing with nonseekable input.
 .El
 .Sh EXIT STATUS
 .Ex -std
