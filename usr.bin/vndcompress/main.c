@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1 2013/05/03 23:28:15 riastradh Exp $	*/
+/*	$NetBSD: main.c,v 1.2 2014/01/22 06:15:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.1 2013/05/03 23:28:15 riastradh Exp $");
+__RCSID("$NetBSD: main.c,v 1.2 2014/01/22 06:15:57 riastradh Exp $");
 
 #include <assert.h>
 #include <err.h>
@@ -60,7 +60,7 @@ main(int argc, char **argv)
 		warnx("unknown program name, defaulting to vndcompress: %s",
 		    getprogname());
 
-	while ((ch = getopt(argc, argv, "cdk:l:p:rRs:")) != -1) {
+	while ((ch = getopt(argc, argv, "cdk:l:p:rRs:w:")) != -1) {
 		switch (ch) {
 		case 'c':
 			if (ISSET(O->flags, FLAG_d)) {
@@ -128,6 +128,16 @@ main(int argc, char **argv)
 			    MIN_BLOCKSIZE, MAX_BLOCKSIZE);
 			break;
 
+		case 'w':
+			if (ISSET(O->flags, FLAG_w)) {
+				warnx("-w may be supplied only once");
+				usage();
+			}
+			O->flags |= FLAG_w;
+			O->window_size = strsuftoll("window size", optarg,
+			    0, MAX_WINDOW_SIZE);
+			break;
+
 		case '?':
 		default:
 			usage();
@@ -138,12 +148,12 @@ main(int argc, char **argv)
 	argv += optind;
 
 	if (operation == &vnduncompress) {
-		if (ISSET(O->flags, ~FLAG_d))
+		if (ISSET(O->flags, ~(FLAG_d | FLAG_w)))
 			usage();
 	} else {
 		assert(operation == &vndcompress);
 		if (ISSET(O->flags, ~(FLAG_c | FLAG_k | FLAG_l | FLAG_p |
-			    FLAG_r | FLAG_s | FLAG_R)))
+			    FLAG_r | FLAG_s | FLAG_R | FLAG_w)))
 			usage();
 		if (ISSET(O->flags, FLAG_R) && !ISSET(O->flags, FLAG_r)) {
 			warnx("-R makes no sense without -r");
@@ -160,7 +170,7 @@ usage(void)
 
 	(void)fprintf(stderr,
 	    "Usage: %s -c [-rR] [-k <checkpoint-blocks>] [-l <length>]\n"
-	    "          [-p <partial-offset>] [-s <blocksize>]\n"
+	    "          [-p <partial-offset>] [-s <blocksize>] [-w <winsize>]\n"
 	    "          <image> <compressed-image> [<blocksize>]\n"
 	    "       %s -d <compressed-image> <image>\n",
 	    getprogname(), getprogname());
