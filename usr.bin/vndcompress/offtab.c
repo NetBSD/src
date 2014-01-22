@@ -1,4 +1,4 @@
-/*	$NetBSD: offtab.c,v 1.6 2014/01/22 06:16:41 riastradh Exp $	*/
+/*	$NetBSD: offtab.c,v 1.7 2014/01/22 06:17:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -466,7 +466,7 @@ offtab_prepare_put(struct offtab *offtab, uint32_t blkno)
 
 	/*
 	 * Mark the window as being updated so nobody tries to write it
-	 * (since we just write it) while we fill it with ones.
+	 * (since we just wrote it) while we fill it with ones.
 	 */
 	block_signals(&sigmask);
 	window = offtab->ot_window;
