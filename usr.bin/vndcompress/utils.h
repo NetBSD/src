@@ -1,4 +1,4 @@
-/*	$NetBSD: utils.h,v 1.1 2014/01/22 06:14:20 riastradh Exp $	*/
+/*	$NetBSD: utils.h,v 1.2 2014/01/22 06:15:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -47,5 +47,7 @@ void	errx_ss(int, const char *, ...) __printflike(2, 3) __dead;
 void	warn_ss(const char *);
 void	warnx_ss(const char *, ...) __printflike(1, 2);
 void	vwarnx_ss(const char *, va_list) __printflike(1, 0);
+void	block_signals(sigset_t *);
+void	restore_sigmask(const sigset_t *);
 
 #endif	/* VNDCOMPRESS_UTILS_H */
