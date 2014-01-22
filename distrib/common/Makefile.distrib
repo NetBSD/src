@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.distrib,v 1.10 2014/01/16 01:15:32 christos Exp $
+#	$NetBSD: Makefile.distrib,v 1.11 2014/01/22 00:52:56 christos Exp $
 #
 # Makefile snippet to setup various make variables variables used in distrib/:
 #
@@ -28,8 +28,5 @@ DISTRIBVERDEP=	${NETBSDSRCDIR}/sys/sys/param.h \
 
 MAKESUMS=	MAKE=${MAKE:Q} CKSUM=${TOOL_CKSUM:Q} ${HOST_SH} ${DISTRIBDIR}/sets/makesums
 RELEASE_INSTALL=${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -m ${NONBINMODE}
-
-.include <bsd.files.mk>
-
 
 .endif	# _MAKEFILE_DISTRIB_
