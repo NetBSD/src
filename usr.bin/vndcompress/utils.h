@@ -1,4 +1,4 @@
-/*	$NetBSD: utils.h,v 1.2 2014/01/22 06:15:04 riastradh Exp $	*/
+/*	$NetBSD: utils.h,v 1.3 2014/01/22 06:15:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@ int	vsnprintf_ss(char *restrict, size_t, const char *restrict, va_list)
 	    __printflike(3, 0);
 
 ssize_t	read_block(int, void *, size_t);
+ssize_t	pread_block(int, void *, size_t, off_t);
 void	err_ss(int, const char *) __dead;
 void	errx_ss(int, const char *, ...) __printflike(2, 3) __dead;
 void	warn_ss(const char *);
