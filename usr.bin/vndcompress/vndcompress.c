@@ -1,4 +1,4 @@
-/*	$NetBSD: vndcompress.c,v 1.15 2014/01/22 06:14:46 riastradh Exp $	*/
+/*	$NetBSD: vndcompress.c,v 1.16 2014/01/22 06:15:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: vndcompress.c,v 1.15 2014/01/22 06:14:46 riastradh Exp $");
+__RCSID("$NetBSD: vndcompress.c,v 1.16 2014/01/22 06:15:04 riastradh Exp $");
 
 #include <sys/endian.h>
 
@@ -101,8 +101,6 @@ static void	init_signal_handler(int, const struct sigdesc *, size_t,
 		    void (*)(int));
 static void	info_signal_handler(int);
 static void	checkpoint_signal_handler(int);
-static void	block_signals(sigset_t *);
-static void	restore_sigmask(const sigset_t *);
 static void	compress_progress(struct compress_state *);
 static void	compress_init(int, char **, const struct options *,
 		    struct compress_state *);
@@ -368,22 +366,6 @@ checkpoint_signal_handler(int signo __unused)
 out:
 	/* Restore errno.  */
 	errno = error;
-}
-
-static void
-block_signals(sigset_t *old_sigmask)
-{
-	sigset_t block;
-
-	(void)sigfillset(&block);
-	(void)sigprocmask(SIG_BLOCK, &block, old_sigmask);
-}
-
-static void
-restore_sigmask(const sigset_t *sigmask)
-{
-
-	(void)sigprocmask(SIG_SETMASK, sigmask, NULL);
 }
 
 /*
