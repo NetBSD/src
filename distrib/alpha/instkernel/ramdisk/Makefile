@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2010/02/11 09:06:47 roy Exp $
+#	$NetBSD: Makefile,v 1.31 2014/01/22 11:48:59 tsutsui Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -29,6 +29,7 @@ IMAGEDEPENDS+=	${INSTALLNOTES}
 PARSELISTENV=	INSTALLNOTES=${INSTALLNOTES:Q} TOOL_PWD_MKDB=${TOOL_PWD_MKDB:Q}
 
 .include "${DISTRIBDIR}/common/Makefile.crunch"
+.include "${DISTRIBDIR}/common/Makefile.dhcpcd"
 .include "${DISTRIBDIR}/common/Makefile.makedev"
 .include "${DISTRIBDIR}/common/Makefile.image"
 
