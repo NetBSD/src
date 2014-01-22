@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.50 2011/08/24 16:01:53 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.51 2014/01/22 20:49:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,9 +74,6 @@
  */
 #define	USRSTACK	(VM_MAXUSER_ADDRESS-0x8000) /* Start of user stack */
 #define	USRSTACK32	((uint32_t)VM_MAXUSER32_ADDRESS-0x8000)
-
-/* alignment requirement for u-area space in bytes */
-#define	USPACE_ALIGN	USPACE
 
 /*
  * Virtual memory related constants, all in bytes
