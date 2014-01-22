@@ -1,4 +1,4 @@
-/*	$NetBSD: vndcompress.c,v 1.16 2014/01/22 06:15:04 riastradh Exp $	*/
+/*	$NetBSD: vndcompress.c,v 1.17 2014/01/22 06:15:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: vndcompress.c,v 1.16 2014/01/22 06:15:04 riastradh Exp $");
+__RCSID("$NetBSD: vndcompress.c,v 1.17 2014/01/22 06:15:12 riastradh Exp $");
 
 #include <sys/endian.h>
 
@@ -596,7 +596,7 @@ compress_restart(struct compress_state *S)
 	const uint64_t first_offset = offtab_get(&S->offtab, 0);
 	if (first_offset != (sizeof(struct cloop2_header) +
 		(S->n_offsets * sizeof(uint64_t)))) {
-		warnx("first offset is not %"PRIu64": %"PRIu64,
+		warnx("first offset is not 0x%"PRIx64": 0x%"PRIx64,
 		    ((uint64_t)S->n_offsets * sizeof(uint64_t)),
 		    first_offset);
 		return false;
@@ -625,8 +625,9 @@ compress_restart(struct compress_state *S)
 			__CTASSERT(MAX_BLOCKSIZE <= (SIZE_MAX / 2));
 			if ((2 * (size_t)S->blocksize) <= (end - start)) {
 				warnx("block %"PRIu32" too large:"
-				    " %"PRIu64" bytes",
-				    blkno, (end - start));
+				    " %"PRIu64" bytes"
+				    " from 0x%"PRIx64" to 0x%"PRIx64,
+				    blkno, (end - start), start, end);
 				return false;
 			}
 		}
@@ -649,7 +650,7 @@ compress_restart(struct compress_state *S)
 			const uint64_t offset = offtab_get(&S->offtab, nblkno);
 			if (offset != ~(uint64_t)0) {
 				warnx("bad partial offset table entry"
-				    " at %"PRIu32": %"PRIu64,
+				    " at %"PRIu32": 0x%"PRIx64,
 				    nblkno, offset);
 				return false;
 			}
