@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.764 2014/01/21 16:40:24 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.765 2014/01/22 15:04:19 matt Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -919,6 +919,7 @@ ${var}?=	yes
 #
 # MKGCCCMDS is only valid if we are building GCC so make it dependent on that.
 #
+_MKVARS.yes += MKGCCCMDS
 MKGCCCMDS?=	${MKGCC}
 
 #
