@@ -1,4 +1,4 @@
-/*	$NetBSD: utils.c,v 1.3 2014/01/22 06:15:22 riastradh Exp $	*/
+/*	$NetBSD: utils.c,v 1.4 2014/01/22 06:15:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: utils.c,v 1.3 2014/01/22 06:15:22 riastradh Exp $");
+__RCSID("$NetBSD: utils.c,v 1.4 2014/01/22 06:15:31 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -96,7 +96,8 @@ pread_block(int fd, void *buffer, size_t n, off_t fdpos)
 	char *p = buffer, *const end __unused = (p + n);
 	size_t total_read = 0;
 
-	assert(n <= (OFF_MAX - fdpos));
+	assert(0 <= fdpos);
+	assert(n <= (OFF_MAX - (uintmax_t)fdpos));
 
 	while (n > 0) {
 		assert(total_read <= n);
