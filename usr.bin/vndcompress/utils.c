@@ -1,4 +1,4 @@
-/*	$NetBSD: utils.c,v 1.1 2014/01/22 06:14:20 riastradh Exp $	*/
+/*	$NetBSD: utils.c,v 1.2 2014/01/22 06:15:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: utils.c,v 1.1 2014/01/22 06:14:20 riastradh Exp $");
+__RCSID("$NetBSD: utils.c,v 1.2 2014/01/22 06:15:04 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -39,6 +39,7 @@ __RCSID("$NetBSD: utils.c,v 1.1 2014/01/22 06:14:20 riastradh Exp $");
 #include <errno.h>
 #include <inttypes.h>
 #include <limits.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -144,4 +145,20 @@ vwarnx_ss(const char *format, va_list va)
 		(void)strlcat(buf, "\n", sizeof(buf));
 		(void)write(STDERR_FILENO, buf, strlen(buf));
 	}
+}
+
+void
+block_signals(sigset_t *old_sigmask)
+{
+	sigset_t block;
+
+	(void)sigfillset(&block);
+	(void)sigprocmask(SIG_BLOCK, &block, old_sigmask);
+}
+
+void
+restore_sigmask(const sigset_t *sigmask)
+{
+
+	(void)sigprocmask(SIG_SETMASK, sigmask, NULL);
 }
