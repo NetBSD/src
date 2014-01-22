@@ -1,4 +1,4 @@
-/*	$NetBSD: vndcompress.c,v 1.14 2014/01/22 06:14:20 riastradh Exp $	*/
+/*	$NetBSD: vndcompress.c,v 1.15 2014/01/22 06:14:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: vndcompress.c,v 1.14 2014/01/22 06:14:20 riastradh Exp $");
+__RCSID("$NetBSD: vndcompress.c,v 1.15 2014/01/22 06:14:46 riastradh Exp $");
 
 #include <sys/endian.h>
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: vndcompress.c,v 1.14 2014/01/22 06:14:20 riastradh Exp $");
 #include <zlib.h>
 
 #include "common.h"
+#include "offtab.h"
 #include "utils.h"
 
 /*
@@ -72,7 +73,7 @@ struct compress_state {
 	uint32_t	checkpoint_blocks;	/* blocks before checkpoint */
 	int		image_fd;
 	int		cloop2_fd;
-	uint64_t	*offset_table;
+	struct offtab	offtab;
 	uint32_t	n_checkpointed_blocks;
 	volatile sig_atomic_t
 			initialized;	/* everything above initialized?  */
@@ -133,10 +134,6 @@ vndcompress(int argc, char **argv, const struct options *O)
 	compress_init(argc, argv, O, S);
 	assert(MIN_BLOCKSIZE <= S->blocksize);
 	assert(S->blocksize <= MAX_BLOCKSIZE);
-	assert(S->offset_table != NULL);
-	assert(S->n_offsets > 0);
-	assert(S->offset_table[0] == htobe64(sizeof(struct cloop2_header) +
-		(S->n_offsets * sizeof(uint64_t))));
 
 	/*
 	 * Allocate compression buffers.
@@ -172,6 +169,7 @@ vndcompress(int argc, char **argv, const struct options *O)
 
 		/* Checkpoint if appropriate.  */
 		compress_maybe_checkpoint(S);
+		offtab_prepare_put(&S->offtab, (S->blkno + 1));
 
 		/* Choose read size: partial if last block, full if not.  */
 		const uint32_t readsize = (S->blkno == S->n_full_blocks?
@@ -208,7 +206,7 @@ vndcompress(int argc, char **argv, const struct options *O)
 		block_signals(&old_sigmask);
 		S->blkno += 1;					/* (a) */
 		S->offset += complen;				/* (b) */
-		S->offset_table[S->blkno] = htobe64(S->offset);	/* (c) */
+		offtab_put(&S->offtab, S->blkno, S->offset);	/* (c) */
 		restore_sigmask(&old_sigmask);
 	    }
 	}
@@ -244,7 +242,7 @@ vndcompress(int argc, char **argv, const struct options *O)
 	}
 
 out:
-	/* Commit the offset table.  */
+	/* One last checkpoint to commit the offset table.  */
 	assert(S->offset <= OFF_MAX);
 	assert((off_t)S->offset == lseek(S->cloop2_fd, 0, SEEK_CUR));
 	compress_checkpoint(S);
@@ -405,7 +403,6 @@ static void
 compress_init(int argc, char **argv, const struct options *O,
     struct compress_state *S)
 {
-	uint32_t i;
 
 	if (!((argc == 2) || (argc == 3)))
 		usage();
@@ -494,14 +491,13 @@ compress_init(int argc, char **argv, const struct options *O,
 		    S->blocksize, S->size);
 	assert(S->n_blocks <= MAX_N_BLOCKS);
 
-	/* Allocate an offset table for the blocks; one extra for the end.  */
+	/* Create an offset table for the blocks; one extra for the end.  */
 	__CTASSERT(MAX_N_BLOCKS <= (UINT32_MAX - 1));
 	S->n_offsets = (S->n_blocks + 1);
 	__CTASSERT(MAX_N_OFFSETS == (MAX_N_BLOCKS + 1));
 	__CTASSERT(MAX_N_OFFSETS <= (SIZE_MAX / sizeof(uint64_t)));
-	S->offset_table = malloc(S->n_offsets * sizeof(uint64_t));
-	if (S->offset_table == NULL)
-		err(1, "malloc offset table");
+	offtab_init(&S->offtab, S->n_offsets, S->cloop2_fd,
+	    CLOOP2_OFFSET_TABLE_OFFSET);
 
 	/* Attempt to restart a partial transfer if requested.  */
 	if (ISSET(O->flags, FLAG_r)) {
@@ -534,18 +530,6 @@ compress_init(int argc, char **argv, const struct options *O,
 		}
 	}
 
-	/*
-	 * Initialize the offset table to all ones (except for the
-	 * fixed first offset) so that we can easily detect where we
-	 * were interrupted if we want to restart.
-	 */
-	__CTASSERT(MAX_N_OFFSETS <= UINT32_MAX);
-	assert(S->n_offsets > 0);
-	S->offset_table[0] = htobe64(sizeof(struct cloop2_header) +
-	    (S->n_offsets * sizeof(uint64_t)));
-	for (i = 1; i < S->n_offsets; i++)
-		S->offset_table[i] = ~(uint64_t)0;
-
 	/* Write a bogus (zero) header for now, until we checkpoint.  */
 	static const struct cloop2_header zero_header;
 	const ssize_t h_written = write(S->cloop2_fd, &zero_header,
@@ -557,16 +541,8 @@ compress_init(int argc, char **argv, const struct options *O,
 		errx(1, "partial write of header: %zu != %zu",
 		    (size_t)h_written, sizeof(zero_header));
 
-	/* Write the initial (empty) offset table.  */
-	const ssize_t ot_written = write(S->cloop2_fd, S->offset_table,
-	    (S->n_offsets * sizeof(uint64_t)));
-	if (ot_written == -1)
-		err(1, "write initial offset table");
-	assert(ot_written >= 0);
-	if ((size_t)ot_written != (S->n_offsets * sizeof(uint64_t)))
-		errx(1, "partial write of initial offset bytes: %zu <= %zu",
-		    (size_t)ot_written,
-		    (size_t)(S->n_offsets * sizeof(uint64_t)));
+	/* Reset the offset table to be empty and write it.  */
+	offtab_reset_write(&S->offtab);
 
 	/* Start at the beginning of the image.  */
 	S->blkno = 0;
@@ -581,11 +557,11 @@ compress_init(int argc, char **argv, const struct options *O,
 /*
  * Try to recover state from an existing output file.
  *
- * On success, fill S->offset_table with what's in the file, set
+ * On success, fill the offset table with what's in the file, set
  * S->blkno and S->offset to reflect our position, and seek to the
  * respective positions in the input and output files.
  *
- * On failure, return false.  May clobber S->offset_table, S->blkno,
+ * On failure, return false.  May clobber the offset table, S->blkno,
  * S->offset, and the file pointers.
  */
 static bool
@@ -631,36 +607,33 @@ compress_restart(struct compress_state *S)
 	}
 
 	/* Read in the partial offset table.  */
-	const ssize_t ot_read = read_block(S->cloop2_fd, S->offset_table,
-	    (S->n_offsets * sizeof(uint64_t)));
-	if (ot_read == -1) {
-		warn("failed to read offset table");
+	if (!offtab_reset_read(&S->offtab, &warn, &warnx))
 		return false;
-	}
-	assert(ot_read >= 0);
-	if ((size_t)ot_read != (S->n_offsets * sizeof(uint64_t))) {
-		warnx("partial read of offset table");
+	if (!offtab_prepare_get(&S->offtab, 0))
 		return false;
-	}
-
-	if (be64toh(S->offset_table[0]) != (sizeof(struct cloop2_header) +
+	const uint64_t first_offset = offtab_get(&S->offtab, 0);
+	if (first_offset != (sizeof(struct cloop2_header) +
 		(S->n_offsets * sizeof(uint64_t)))) {
 		warnx("first offset is not %"PRIu64": %"PRIu64,
 		    ((uint64_t)S->n_offsets * sizeof(uint64_t)),
-		    be64toh(S->offset_table[0]));
+		    first_offset);
 		return false;
 	}
 
 	/* Find where we left off.  */
 	__CTASSERT(MAX_N_OFFSETS <= UINT32_MAX);
 	uint32_t blkno = 0;
+	uint64_t last_offset = first_offset;
 	for (blkno = 0; blkno < S->n_blocks; blkno++) {
-		if (S->offset_table[blkno] == ~(uint64_t)0)
+		if (!offtab_prepare_get(&S->offtab, blkno))
+			return false;
+		const uint64_t offset = offtab_get(&S->offtab, blkno);
+		if (offset == ~(uint64_t)0)
 			break;
+
 		if (0 < blkno) {
-			const uint64_t start =
-			    be64toh(S->offset_table[blkno - 1]);
-			const uint64_t end = be64toh(S->offset_table[blkno]);
+			const uint64_t start = last_offset;
+			const uint64_t end = offset;
 			if (end <= start) {
 				warnx("bad offset table: 0x%"PRIx64
 				    ", 0x%"PRIx64, start, end);
@@ -675,6 +648,8 @@ compress_restart(struct compress_state *S)
 				return false;
 			}
 		}
+
+		last_offset = offset;
 	}
 
 	if (blkno == 0) {
@@ -687,11 +662,13 @@ compress_restart(struct compress_state *S)
 		uint32_t nblkno;
 
 		for (nblkno = blkno; nblkno < S->n_blocks; nblkno++) {
-			if (S->offset_table[nblkno] != ~(uint64_t)0) {
+			if (!offtab_prepare_get(&S->offtab, nblkno))
+				return false;
+			const uint64_t offset = offtab_get(&S->offtab, nblkno);
+			if (offset != ~(uint64_t)0) {
 				warnx("bad partial offset table entry"
 				    " at %"PRIu32": %"PRIu64,
-				    nblkno,
-				    be64toh(S->offset_table[nblkno]));
+				    nblkno, offset);
 				return false;
 			}
 		}
@@ -745,17 +722,18 @@ compress_restart(struct compress_state *S)
 	}
 
 	/* Seek to the output position.  */
-	const uint64_t offset = be64toh(S->offset_table[blkno]);
-	assert(offset <= OFF_MAX);
-	if (lseek(S->cloop2_fd, offset, SEEK_SET) == -1) {
-		warn("lseek output cloop2 to %"PRIx64" failed",
-		    S->offset);
+	assert(last_offset <= OFF_MAX);
+	if (lseek(S->cloop2_fd, last_offset, SEEK_SET) == -1) {
+		warn("lseek output cloop2 to %"PRIx64" failed", last_offset);
 		return false;
 	}
 
+	/* Switch from reading to writing the offset table.  */
+	offtab_transmogrify_read_to_write(&S->offtab);
+
 	/* Start where we left off.  */
 	S->blkno = blkno;
-	S->offset = offset;
+	S->offset = last_offset;
 	S->n_checkpointed_blocks = blkno;
 
 	/* Good to go and ready for interruption by a signal.  */
@@ -865,35 +843,21 @@ compress_checkpoint(struct compress_state *S)
 		warn_ss("fsync of output failed");
 
 	/* Say the data blocks are ready.  */
-	const ssize_t n_written = pwrite(S->cloop2_fd, S->offset_table,
-	    (n_offsets * sizeof(uint64_t)), CLOOP2_OFFSET_TABLE_OFFSET);
-	if (n_written == -1)
-		err_ss(1, "write partial offset table");
-	assert(n_written >= 0);
-	if ((size_t)n_written != (n_offsets * sizeof(uint64_t)))
-		errx_ss(1, "partial write of partial offset table: %zu != %zu",
-		    (size_t)n_written,
-		    (size_t)(n_offsets * sizeof(uint64_t)));
+	offtab_checkpoint(&S->offtab, n_offsets,
+	    (S->n_checkpointed_blocks == 0? OFFTAB_CHECKPOINT_SYNC : 0));
 
 	/*
 	 * If this is the first checkpoint, initialize the header.
 	 * Signal handler can race with main code here, but it is
 	 * harmless -- just an extra fsync and write of the header,
 	 * which are both idempotent.
+	 *
+	 * Once we have synchronously checkpointed the offset table,
+	 * subsequent writes will preserve a valid state.
 	 */
 	if (S->n_checkpointed_blocks == 0) {
 		static const struct cloop2_header zero_header;
 		struct cloop2_header header = zero_header;
-
-		/* Force the offset table to disk before we set the header.  */
-		if (fsync_range(S->cloop2_fd, (FFILESYNC | FDISKSYNC),
-			0,
-			(CLOOP2_OFFSET_TABLE_OFFSET
-			    + (n_offsets * (sizeof(uint64_t)))))
-		    == -1)
-			warn_ss("fsync of offset table failed");
-
-		/* Subsequent writes will preserve a valid state.  */
 
 		/* Format the header.  */
 		__CTASSERT(sizeof(cloop2_magic) <= sizeof(header.cl2h_magic));
@@ -929,8 +893,8 @@ static void
 compress_exit(struct compress_state *S)
 {
 
-	/* Done with the offset table.  Free it.  */
-	free(S->offset_table);
+	/* Done with the offset table.  Destroy it.  */
+	offtab_destroy(&S->offtab);
 
 	/* Done with the files.  Close them.  */
 	if (close(S->cloop2_fd) == -1)
