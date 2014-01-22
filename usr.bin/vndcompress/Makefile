@@ -145,13 +145,17 @@ check: .PHONY ${CHECKS}
 .SUFFIXES: .cl2 .cl2x .in .out .outx
 
 .in.cl2: vndcompress
-	./vndcompress ${.IMPSRC} ${.TARGET} ${BLOCKSIZE.${.PREFIX}}
+	./vndcompress ${.IMPSRC} ${.TARGET}.tmp ${BLOCKSIZE.${.PREFIX}} \
+	&& mv -f ${.TARGET}.tmp ${.TARGET}
 
 .in.cl2x:
-	vndcompress ${.IMPSRC} ${.TARGET} ${BLOCKSIZE.${.PREFIX}}
+	vndcompress ${.IMPSRC} ${.TARGET}.tmp ${BLOCKSIZE.${.PREFIX}} \
+	&& mv -f ${.TARGET}.tmp ${.TARGET}
 
 .cl2.out: vndcompress
-	./vndcompress -d ${.IMPSRC} ${.TARGET}
+	./vndcompress -d ${.IMPSRC} ${.TARGET}.tmp \
+	&& mv -f ${.TARGET}.tmp ${.TARGET}
 
 .cl2.outx:
-	vnduncompress ${.IMPSRC} ${.TARGET}
+	vnduncompress ${.IMPSRC} ${.TARGET}.tmp \
+	&& mv -f ${.TARGET}.tmp ${.TARGET}
