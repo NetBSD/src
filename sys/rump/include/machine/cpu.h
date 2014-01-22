@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.17 2013/10/30 08:42:45 mrg Exp $	*/
+/*	$NetBSD: cpu.h,v 1.18 2014/01/22 23:38:21 christos Exp $	*/
 
 /*
  * Copyright (c) 2008-2011 Antti Kantee.  All Rights Reserved.
@@ -39,6 +39,10 @@ struct cpu_info {
 	struct lwp *ci_curlwp;
 
 	struct cpu_info *ci_next;
+
+#ifdef __alpha__
+	uint64_t ci_pcc_freq;
+#endif
 
 /*
  * XXX: horrible workaround for vax lock.h.
