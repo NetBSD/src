@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_gem_vm.c,v 1.1.2.4 2014/01/22 16:40:44 riastradh Exp $	*/
+/*	$NetBSD: drm_gem_vm.c,v 1.1.2.5 2014/01/22 16:40:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_gem_vm.c,v 1.1.2.4 2014/01/22 16:40:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_gem_vm.c,v 1.1.2.5 2014/01/22 16:40:53 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -107,7 +107,7 @@ drm_gem_mmap_object_locked(struct drm_device *dev, off_t byte_offset,
 	KASSERT(obj->dev == dev);
 
 	/* Success!  */
-	drm_gem_object_reference(obj); /* XXX Locking?  */
+	drm_gem_object_reference(obj);
 	*uobjp = &obj->gemo_uvmobj;
 	return 0;
 }
