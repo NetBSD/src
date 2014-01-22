@@ -1,4 +1,4 @@
-/* $NetBSD: toccata.c,v 1.16 2013/12/09 09:35:16 wiz Exp $ */
+/* $NetBSD: toccata.c,v 1.17 2014/01/22 00:25:16 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.16 2013/12/09 09:35:16 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.17 2014/01/22 00:25:16 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -473,11 +473,9 @@ int
 toccata_halt_input(void *addr)
 {
 	struct toccata_softc *sc;
-	struct ad1848_softc *asc;
 	unsigned reg;
 
 	sc = addr;
-	asc = &sc->sc_ad;
 
 	/* we're half_duplex; be brutal */
 	*sc->sc_boardp = TOCC_CP_TAIL;
@@ -525,11 +523,9 @@ int
 toccata_halt_output(void *addr)
 {
 	struct toccata_softc *sc;
-	struct ad1848_softc *asc;
 	unsigned int reg;
 
 	sc = addr;
-	asc = &sc->sc_ad;
 
 	/* we're half_duplex; be brutal */
 	*sc->sc_boardp = TOCC_PB_TAIL;
