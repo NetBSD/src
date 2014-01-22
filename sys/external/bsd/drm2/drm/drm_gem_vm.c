@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_gem_vm.c,v 1.1.2.3 2013/09/08 15:56:32 riastradh Exp $	*/
+/*	$NetBSD: drm_gem_vm.c,v 1.1.2.4 2014/01/22 16:40:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_gem_vm.c,v 1.1.2.3 2013/09/08 15:56:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_gem_vm.c,v 1.1.2.4 2014/01/22 16:40:44 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -38,8 +38,8 @@ __KERNEL_RCSID(0, "$NetBSD: drm_gem_vm.c,v 1.1.2.3 2013/09/08 15:56:32 riastradh
 
 #include <drm/drmP.h>
 
-static int	drm_gem_mmap_object_locked(struct drm_device *, off_t *,
-		    size_t, struct uvm_object **);
+static int	drm_gem_mmap_object_locked(struct drm_device *, off_t, size_t,
+		    int, struct uvm_object **);
 
 void
 drm_gem_pager_reference(struct uvm_object *uobj)
@@ -60,30 +60,31 @@ drm_gem_pager_detach(struct uvm_object *uobj)
 }
 
 int
-drm_gem_mmap_object(struct drm_device *dev, off_t *byte_offsetp, size_t nbytes,
-    struct uvm_object **uobjp)
+drm_gem_mmap_object(struct drm_device *dev, off_t byte_offset, size_t nbytes,
+    int prot, struct uvm_object **uobjp)
 {
-	int error;
+	int ret;
 
 	mutex_lock(&dev->struct_mutex);
-	error = drm_gem_mmap_object_locked(dev, byte_offsetp, nbytes, uobjp);
+	ret = drm_gem_mmap_object_locked(dev, byte_offset, nbytes, prot,
+	    uobjp);
 	mutex_unlock(&dev->struct_mutex);
 
-	return error;
+	return ret;
 }
 
 static int
-drm_gem_mmap_object_locked(struct drm_device *dev, off_t *byte_offsetp,
-    size_t nbytes, struct uvm_object **uobjp)
+drm_gem_mmap_object_locked(struct drm_device *dev, off_t byte_offset,
+    size_t nbytes, int prot __unused, struct uvm_object **uobjp)
 {
 	struct drm_gem_mm *const mm = dev->mm_private;
-	const off_t byte_offset = *byte_offsetp;
 	const off_t page_offset = (byte_offset >> PAGE_SHIFT);
 	struct drm_hash_item *hash;
 
 	KASSERT(mutex_is_locked(&dev->struct_mutex));
 	KASSERT(drm_core_check_feature(dev, DRIVER_GEM));
 	KASSERT(dev->driver->gem_uvm_ops != NULL);
+	KASSERT(prot == (prot & (PROT_READ | PROT_WRITE)));
 
 	if (byte_offset != (byte_offset & ~(PAGE_SIZE-1))) /* XXX kassert?  */
 		return -EINVAL;
