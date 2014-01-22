@@ -161,7 +161,7 @@ check-pipewindow: smallwindow.cl2
 #	@echo '# expecting failure...'
 #	if head -c $$((64 * 1024 * 1024)) < /dev/zero \
 #	    | (ulimit -v $$((139 * 1024)) && \
-#	        ./vndcompress -l 64m -b 512 /dev/stdin /dev/null); then \
+#	        ./vndcompress -w 0 -l 64m -b 512 /dev/stdin /dev/null); then \
 #	  echo 'unexpected pass!' && exit 1; \
 #	fi
 #

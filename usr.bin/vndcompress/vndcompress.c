@@ -1,4 +1,4 @@
-/*	$NetBSD: vndcompress.c,v 1.21 2014/01/22 06:17:25 riastradh Exp $	*/
+/*	$NetBSD: vndcompress.c,v 1.22 2014/01/22 06:18:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: vndcompress.c,v 1.21 2014/01/22 06:17:25 riastradh Exp $");
+__RCSID("$NetBSD: vndcompress.c,v 1.22 2014/01/22 06:18:00 riastradh Exp $");
 
 #include <sys/endian.h>
 
@@ -473,12 +473,16 @@ compress_init(int argc, char **argv, const struct options *O,
 		    S->blocksize, S->size);
 	assert(S->n_blocks <= MAX_N_BLOCKS);
 
+	/* Choose a window size.  */
+	const uint32_t window_size = (ISSET(O->flags, FLAG_w)? O->window_size :
+	    DEF_WINDOW_SIZE);
+
 	/* Create an offset table for the blocks; one extra for the end.  */
 	__CTASSERT(MAX_N_BLOCKS <= (UINT32_MAX - 1));
 	S->n_offsets = (S->n_blocks + 1);
 	__CTASSERT(MAX_N_OFFSETS == (MAX_N_BLOCKS + 1));
 	__CTASSERT(MAX_N_OFFSETS <= (SIZE_MAX / sizeof(uint64_t)));
-	offtab_init(&S->offtab, S->n_offsets, O->window_size, S->cloop2_fd,
+	offtab_init(&S->offtab, S->n_offsets, window_size, S->cloop2_fd,
 	    CLOOP2_OFFSET_TABLE_OFFSET);
 
 	/* Attempt to restart a partial transfer if requested.  */
