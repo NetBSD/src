@@ -1,4 +1,4 @@
-/*	$NetBSD: offtab.c,v 1.2 2014/01/22 06:15:22 riastradh Exp $	*/
+/*	$NetBSD: offtab.c,v 1.3 2014/01/22 06:15:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@ offtab_read_window(struct offtab *offtab, uint32_t blkno, int read_flags)
 	__CTASSERT(MAX_N_OFFSETS <= (OFF_MAX / sizeof(uint64_t)));
 	assert(window_start < offtab->ot_n_offsets);
 	assert(offtab->ot_fdpos <=
-	    (OFF_MAX - (window_start * sizeof(uint64_t))));
+	    (OFF_MAX - (off_t)(window_start * sizeof(uint64_t))));
 	assert(ISSET(read_flags, OFFTAB_READ_SEEK) ||
 	    (lseek(offtab->ot_fd, 0, SEEK_CUR) == offtab->ot_fdpos) ||
 	    ((lseek(offtab->ot_fd, 0, SEEK_CUR) == -1) && (errno == ESPIPE)));
@@ -172,7 +172,7 @@ offtab_write_window(struct offtab *offtab, uint32_t start, uint32_t end)
 	__CTASSERT(MAX_N_OFFSETS <= (OFF_MAX / sizeof(uint64_t)));
 	assert(offtab->ot_window_start < offtab->ot_n_offsets);
 	assert(offtab->ot_fdpos <=
-	    (OFF_MAX - (offtab->ot_window_start * sizeof(uint64_t))));
+	    (OFF_MAX - (off_t)(offtab->ot_window_start * sizeof(uint64_t))));
 	const ssize_t n_written = pwrite(offtab->ot_fd, offtab->ot_window,
 	    (window_size * sizeof(uint64_t)),
 	    (offtab->ot_fdpos +
@@ -358,10 +358,10 @@ offtab_reset_write(struct offtab *offtab)
 	offtab->ot_window_start = 0;
 	__CTASSERT(MAX_N_OFFSETS <= (OFF_MAX / sizeof(uint64_t)));
 	assert(offtab->ot_fdpos <=
-	    (OFF_MAX - (offtab->ot_n_offsets * sizeof(uint64_t))));
-	const off_t first_offset = (offtab->ot_fdpos +
+	    (OFF_MAX - (off_t)(offtab->ot_n_offsets * sizeof(uint64_t))));
+	const uint64_t first_offset = (offtab->ot_fdpos +
 	    (offtab->ot_n_offsets * sizeof(uint64_t)));
-	assert(first_offset <= UINT64_MAX);
+	assert(first_offset <= OFF_MAX);
 	offtab->ot_window[0] = htobe64(first_offset);
 	offtab_write_window(offtab, 0, offtab->ot_n_offsets);
 
@@ -404,7 +404,7 @@ offtab_checkpoint(struct offtab *offtab, uint32_t n_offsets, int flags)
 	if (ISSET(flags, OFFTAB_CHECKPOINT_SYNC)) {
 		__CTASSERT(MAX_N_OFFSETS <= (OFF_MAX / sizeof(uint64_t)));
 		assert(offtab->ot_fdpos
-		    <= (OFF_MAX - (n_offsets * sizeof(uint64_t))));
+		    <= (OFF_MAX - (off_t)(n_offsets * sizeof(uint64_t))));
 		if (fsync_range(offtab->ot_fd, (FFILESYNC | FDISKSYNC),
 			offtab->ot_fdpos,
 			(offtab->ot_fdpos + (n_offsets * sizeof(uint64_t))))
