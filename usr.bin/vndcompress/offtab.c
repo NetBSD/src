@@ -1,4 +1,4 @@
-/*	$NetBSD: offtab.c,v 1.5 2014/01/22 06:16:14 riastradh Exp $	*/
+/*	$NetBSD: offtab.c,v 1.6 2014/01/22 06:16:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -385,12 +385,6 @@ offtab_reset_write(struct offtab *offtab)
 	offtab->ot_window[0] = htobe64(first_offset);
 	offtab_write_window(offtab);
 
-	/*
-	 * We could adapt offtab_write_window to use pwrite instead of
-	 * write in order to avoid this lseek, but we require lseek on
-	 * the output anyway, and this avoids conditionalization of
-	 * offtab_write_window.
-	 */
 	if (lseek(offtab->ot_fd, first_offset, SEEK_SET) == -1)
 		err(1, "lseek to first offset failed");
 }
