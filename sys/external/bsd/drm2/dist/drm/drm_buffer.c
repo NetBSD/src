@@ -171,7 +171,6 @@ void *drm_buffer_read_object(struct drm_buffer *buf,
 	} else {
 		/* The object is split which forces copy to temporary object.*/
 		int beginsz = PAGE_SIZE - idx;
-
 		memcpy(stack_obj, &buf->data[page][idx], beginsz);
 
 		memcpy((char *)stack_obj + beginsz, &buf->data[page + 1][0],
