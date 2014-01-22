@@ -739,6 +739,20 @@ struct drm_prime_handle {
 #define DRM_IOCTL_MODE_OBJ_GETPROPERTIES	DRM_IOWR(0xB9, struct drm_mode_obj_get_properties)
 #define DRM_IOCTL_MODE_OBJ_SETPROPERTY	DRM_IOWR(0xBA, struct drm_mode_obj_set_property)
 
+#ifdef __NetBSD__
+/*
+ * Instrumenting mmap is trickier than just making an ioctl to do it.
+ */
+struct drm_mmap {
+	void		*dnm_addr;  /* in/out */
+	size_t		dnm_size;   /* in */
+	int		dnm_prot;   /* in */
+	int		dnm_flags;  /* in */
+	off_t		dnm_offset; /* in */
+};
+#define	DRM_IOCTL_MMAP	DRM_IOWR(0xff, struct drm_mmap)
+#endif
+
 /**
  * Device specific ioctls should only be in their respective headers
  * The device specific ioctl range is from 0x40 to 0x99.
