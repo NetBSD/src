@@ -1,4 +1,4 @@
-.\"	$NetBSD: vndcompress.1,v 1.10 2013/05/04 14:34:13 riastradh Exp $
+.\"	$NetBSD: vndcompress.1,v 1.11 2014/01/22 06:17:42 riastradh Exp $
 .\"
 .\" Copyright (c) 2013 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,10 +38,10 @@
 .Nm
 .Op Fl c
 .Op Fl rR
+.Op Fl b Ar blocksize
 .Op Fl k Ar checkpoint-blocks
 .Op Fl l Ar length
 .Op Fl p Ar partial-offset
-.Op Fl s Ar blocksize
 .Ar image
 .Ar compressed-image
 .Op Ar blocksize
@@ -71,6 +71,18 @@ options can control whether either utility compresses or decompresses.
 .Pp
 The following options are available for the compression operation:
 .Bl -tag -width indent
+.It Fl b Ar blocksize
+Set the compression block size to
+.Ar blocksize ,
+which must be a multiple of 512 and must be no more than 4294966784, or
+0xfffffe00.
+(On 32-bit systems, the limit may be smaller, limited by the available
+virtual address space.)
+.Pp
+For compatibility with the old version of
+.Nm ,
+the compression block size may instead be specified at the end of the
+command line.
 .It Fl k Ar checkpoint-blocks
 Write a checkpoint after every
 .Ar checkpoint-blocks
@@ -113,18 +125,6 @@ Restarting may fail for various reasons: if there have been no
 checkpoints, or if the output file has been corrupted in some easily
 recognizable ways, or if the input file's size has changed, or if the
 block size does not match, and so on.
-.It Fl s Ar blocksize
-Set the compression block size to
-.Ar blocksize ,
-which must be a multiple of 512 and must be no more than 4294966784, or
-0xfffffe00.
-(On 32-bit systems, the limit may be smaller, limited by the available
-virtual address space.)
-.Pp
-For compatibility with the old version of
-.Nm ,
-the compression block size may instead be specified at the end of the
-command line.
 .El
 .Sh EXIT STATUS
 .Ex -std
