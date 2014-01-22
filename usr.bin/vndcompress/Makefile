@@ -1,5 +1,5 @@
 PROG=	vndcompress
-SRCS=	main.c utils.c vndcompress.c vnduncompress.c
+SRCS=	main.c offtab.c utils.c vndcompress.c vnduncompress.c
 
 LINKS=	${BINDIR}/vndcompress ${BINDIR}/vnduncompress
 MLINKS=	vndcompress.1 vnduncompress.1

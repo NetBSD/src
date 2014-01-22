@@ -1,4 +1,4 @@
-/*	$NetBSD: vnduncompress.c,v 1.4 2014/01/22 06:14:28 riastradh Exp $	*/
+/*	$NetBSD: vnduncompress.c,v 1.5 2014/01/22 06:14:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: vnduncompress.c,v 1.4 2014/01/22 06:14:28 riastradh Exp $");
+__RCSID("$NetBSD: vnduncompress.c,v 1.5 2014/01/22 06:14:46 riastradh Exp $");
 
 #include <sys/endian.h>
 
@@ -46,11 +46,33 @@ __RCSID("$NetBSD: vnduncompress.c,v 1.4 2014/01/22 06:14:28 riastradh Exp $");
 #include <zlib.h>
 
 #include "common.h"
+#include "offtab.h"
 #include "utils.h"
+
+static void __dead
+err1(const char *fmt, ...)
+{
+	va_list va;
+
+	va_start(va, fmt);
+	verr(1, fmt, va);
+	va_end(va);
+}
+
+static void __dead
+errx1(const char *fmt, ...)
+{
+	va_list va;
+
+	va_start(va, fmt);
+	verrx(1, fmt, va);
+	va_end(va);
+}
 
 int
 vnduncompress(int argc, char **argv, const struct options *O __unused)
 {
+	struct offtab offtab;
 
 	if (argc != 2)
 		usage();
@@ -103,25 +125,12 @@ vnduncompress(int argc, char **argv, const struct options *O __unused)
 		errx(1, "too many blocks: %"PRIu32" (max %"PRIu32")",
 		    n_blocks, (uint32_t)MAX_N_BLOCKS);
 
-	/* Allocate an offset table.  */
+	/* Initialize the offset table.  */
 	__CTASSERT(MAX_N_BLOCKS <= (UINT32_MAX - 1));
 	__CTASSERT((MAX_N_BLOCKS + 1) == MAX_N_OFFSETS);
 	const uint32_t n_offsets = (n_blocks + 1);
-
-	__CTASSERT(MAX_N_OFFSETS <= (SIZE_MAX / sizeof(uint64_t)));
-	uint64_t *const offset_table = malloc(n_offsets * sizeof(uint64_t));
-	if (offset_table == NULL)
-		err(1, "malloc offset table");
-
-	/* Read the offset table in.  */
-	const ssize_t ot_read = read_block(cloop2_fd, offset_table,
-	    (n_offsets * sizeof(uint64_t)));
-	if (ot_read == -1)
-		err(1, "read offset table");
-	assert(ot_read >= 0);
-	if ((size_t)ot_read != (n_offsets * sizeof(uint64_t)))
-		errx(1, "partial read of offset table: %zu != %zu",
-		    (size_t)ot_read, (size_t)(n_offsets * sizeof(uint64_t)));
+	offtab_init(&offtab, n_offsets, cloop2_fd, CLOOP2_OFFSET_TABLE_OFFSET);
+	offtab_reset_read(&offtab, &err1, &errx1);
 
 	/* Allocate compression buffers.  */
 	/* XXX compression ratio bound */
@@ -144,9 +153,13 @@ vnduncompress(int argc, char **argv, const struct options *O __unused)
 	__CTASSERT(OFF_MAX <= UINT64_MAX);
 	uint64_t offset = (sizeof(header) + (n_offsets * sizeof(uint64_t)));
 	uint32_t blkno;
+	(void)offtab_prepare_get(&offtab, 0);
+	uint64_t last = offtab_get(&offtab, 0);
 	for (blkno = 0; blkno < n_blocks; blkno++) {
-		const uint64_t start = be64toh(offset_table[blkno]);
-		const uint64_t end = be64toh(offset_table[blkno + 1]);
+		(void)offtab_prepare_get(&offtab, (blkno + 1));
+
+		const uint64_t start = last;
+		const uint64_t end = offtab_get(&offtab, (blkno + 1));
 
 		/* Sanity-check the offsets.  */
 		if (start != offset)
@@ -201,10 +214,11 @@ vnduncompress(int argc, char **argv, const struct options *O __unused)
 		/* Advance our position.  */
 		assert((size_t)n_read <= (MIN(OFF_MAX, UINT64_MAX) - offset));
 		offset += (size_t)n_read;
+		last = end;
 	}
 
-	/* Free the offset table and compression buffers.  */
-	free(offset_table);
+	/* Destroy the offset table and free the compression buffers.  */
+	offtab_destroy(&offtab);
 	free(uncompbuf);
 	free(compbuf);
 
