@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.1.2.33 2014/01/22 16:40:44 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.1.2.34 2014/01/22 16:40:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.33 2014/01/22 16:40:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.34 2014/01/22 16:40:53 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -924,8 +924,10 @@ map:	vm_prot = ((ISSET(prot, PROT_READ)? VM_PROT_READ : 0) |
 	/* XXX errno NetBSD->Linux */
 	ret = -uvm_map(&curproc->p_vmspace->vm_map, &vaddr, size, uobj, offset,
 	    align, uvmflag);
-	if (ret)
+	if (ret) {
+		(*uobj->pgops->pgo_detach)(uobj);
 		return ret;
+	}
 
 	/* Success!  */
 	args->dnm_addr = (void *)vaddr;
