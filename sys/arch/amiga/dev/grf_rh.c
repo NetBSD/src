@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rh.c,v 1.56 2012/11/08 18:04:56 rkujawa Exp $ */
+/*	$NetBSD: grf_rh.c,v 1.57 2014/01/22 00:25:16 christos Exp $ */
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -34,7 +34,7 @@
 #include "opt_retina.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_rh.c,v 1.56 2012/11/08 18:04:56 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_rh.c,v 1.57 2014/01/22 00:25:16 christos Exp $");
 
 #include "grfrh.h"
 #include "ite.h"
@@ -1909,10 +1909,9 @@ rh_setspritepos (struct grf_softc *gp, struct grf_position *pos)
 int
 rh_getspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *info)
 {
-	volatile unsigned char *ba, *fb;
+	volatile unsigned char *ba;
 
 	ba = gp->g_regkva;
-	fb = gp->g_fbkva;
 	if (info->set & GRFSPRSET_ENABLE)
 		info->enable = RSeq (ba, SEQ_ID_CURSOR_CONTROL) & 0x01;
 	if (info->set & GRFSPRSET_POS)
@@ -2002,13 +2001,12 @@ rh_getspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *info)
 int
 rh_setspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *info)
 {
-	volatile unsigned char *ba, *fb;
+	volatile unsigned char *ba;
 #if 0
 	u_char control;
 #endif
 
 	ba = gp->g_regkva;
-	fb = gp->g_fbkva;
 
 	if (info->set & GRFSPRSET_SHAPE) {
 		/*

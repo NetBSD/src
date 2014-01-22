@@ -1,4 +1,4 @@
-/*	$NetBSD: cc.c,v 1.25 2014/01/03 07:14:20 mlelstv Exp $	*/
+/*	$NetBSD: cc.c,v 1.26 2014/01/22 00:25:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cc.c,v 1.25 2014/01/03 07:14:20 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cc.c,v 1.26 2014/01/22 00:25:16 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -348,11 +348,10 @@ cc_init_audio(void)
 void
 audio_handler(void)
 {
-	u_short audio_dma, disable_dma, flag, ir;
+	u_short audio_dma, flag, ir;
 	int i;
 
 	audio_dma = custom.dmaconr;
-	disable_dma = 0;
 
 	/*
 	 * only check channels who have DMA enabled.

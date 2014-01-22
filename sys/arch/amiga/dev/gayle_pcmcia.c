@@ -1,9 +1,9 @@
-/*	$NetBSD: gayle_pcmcia.c,v 1.28 2014/01/03 00:33:06 rkujawa Exp $ */
+/*	$NetBSD: gayle_pcmcia.c,v 1.29 2014/01/22 00:25:16 christos Exp $ */
 
 /* public domain */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gayle_pcmcia.c,v 1.28 2014/01/03 00:33:06 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gayle_pcmcia.c,v 1.29 2014/01/22 00:25:16 christos Exp $");
 
 /* PCMCIA front-end driver for A1200's and A600's. */
 
@@ -209,6 +209,7 @@ pccard_attach(device_t parent, device_t self, void *aux)
 		*reset_card_reg = 0x0;
 		delay(1000);
 		x = *reset_card_reg;
+		__USE(x);
 		gayle_pcmcia_status_write(GAYLE_CCMEM_WP | GAYLE_CCIO_SPKR);
 	}
 
