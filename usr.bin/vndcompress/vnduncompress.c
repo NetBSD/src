@@ -1,4 +1,4 @@
-/*	$NetBSD: vnduncompress.c,v 1.3 2014/01/22 06:14:03 riastradh Exp $	*/
+/*	$NetBSD: vnduncompress.c,v 1.4 2014/01/22 06:14:28 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: vnduncompress.c,v 1.3 2014/01/22 06:14:03 riastradh Exp $");
+__RCSID("$NetBSD: vnduncompress.c,v 1.4 2014/01/22 06:14:28 riastradh Exp $");
 
 #include <sys/endian.h>
 
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: vnduncompress.c,v 1.3 2014/01/22 06:14:03 riastradh Exp $");
 #include <zlib.h>
 
 #include "common.h"
+#include "utils.h"
 
 int
 vnduncompress(int argc, char **argv, const struct options *O __unused)
@@ -70,7 +71,7 @@ vnduncompress(int argc, char **argv, const struct options *O __unused)
 
 	/* Read the header.  */
 	struct cloop2_header header;
-	const ssize_t h_read = read(cloop2_fd, &header, sizeof(header));
+	const ssize_t h_read = read_block(cloop2_fd, &header, sizeof(header));
 	if (h_read == -1)
 		err(1, "read header");
 	assert(h_read >= 0);
@@ -113,7 +114,7 @@ vnduncompress(int argc, char **argv, const struct options *O __unused)
 		err(1, "malloc offset table");
 
 	/* Read the offset table in.  */
-	const ssize_t ot_read = read(cloop2_fd, offset_table,
+	const ssize_t ot_read = read_block(cloop2_fd, offset_table,
 	    (n_offsets * sizeof(uint64_t)));
 	if (ot_read == -1)
 		err(1, "read offset table");
@@ -163,7 +164,8 @@ vnduncompress(int argc, char **argv, const struct options *O __unused)
 			    blkno, offset, (end - start));
 
 		/* Read the compressed block.  */
-		const ssize_t n_read = read(cloop2_fd, compbuf, (end - start));
+		const ssize_t n_read = read_block(cloop2_fd, compbuf,
+		    (end - start));
 		if (n_read == -1)
 			err(1, "read block %"PRIu32, blkno);
 		assert(n_read >= 0);
