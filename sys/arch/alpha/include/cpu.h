@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.81 2014/01/21 20:18:46 christos Exp $ */
+/* $NetBSD: cpu.h,v 1.82 2014/01/22 22:52:04 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ struct cpu_info {
 	 */
 	struct lwp *ci_curlwp;		/* current owner of the processor */
 	struct cpu_data ci_data;	/* MI per-cpu data */
-#if !defined(_KMEMUSER) || defined(_RUMPKERNEL)
+#if !defined(_KMEMUSER)
 	struct cctr_state ci_cc;	/* cycle counter state */
 	struct cpu_info *ci_next;	/* next cpu_info structure */
 	int ci_mtx_count;
@@ -130,7 +130,7 @@ struct cpu_info {
 	volatile u_long ci_flags;	/* flags; see below */
 	volatile u_long ci_ipis;	/* interprocessor interrupts pending */
 #endif
-#endif /* !_KMEMUSER || _RUMPKERNEL */
+#endif /* !_KMEMUSER */
 };
 
 #endif /* _KERNEL || _KMEMUSER */
