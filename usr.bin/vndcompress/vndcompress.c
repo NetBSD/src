@@ -1,4 +1,4 @@
-/*	$NetBSD: vndcompress.c,v 1.20 2014/01/22 06:16:32 riastradh Exp $	*/
+/*	$NetBSD: vndcompress.c,v 1.21 2014/01/22 06:17:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: vndcompress.c,v 1.20 2014/01/22 06:16:32 riastradh Exp $");
+__RCSID("$NetBSD: vndcompress.c,v 1.21 2014/01/22 06:17:25 riastradh Exp $");
 
 #include <sys/endian.h>
 
@@ -392,16 +392,16 @@ compress_init(int argc, char **argv, const struct options *O,
 	const char *const image_pathname = argv[0];
 	const char *const cloop2_pathname = argv[1];
 
-	/* Grab the block size either from `-s' or from the last argument.  */
+	/* Grab the block size either from `-b' or from the last argument.  */
 	__CTASSERT(0 < DEV_BSIZE);
 	__CTASSERT((MIN_BLOCKSIZE % DEV_BSIZE) == 0);
 	__CTASSERT(MIN_BLOCKSIZE <= DEF_BLOCKSIZE);
 	__CTASSERT((DEF_BLOCKSIZE % DEV_BSIZE) == 0);
 	__CTASSERT(DEF_BLOCKSIZE <= MAX_BLOCKSIZE);
 	__CTASSERT((MAX_BLOCKSIZE % DEV_BSIZE) == 0);
-	if (ISSET(O->flags, FLAG_s)) {
+	if (ISSET(O->flags, FLAG_b)) {
 		if (argc == 3) {
-			warnx("use -s or the extra argument, not both");
+			warnx("use -b or the extra argument, not both");
 			usage();
 		}
 		S->blocksize = O->blocksize;
