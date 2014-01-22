@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_vm.c,v 1.1.2.2 2013/09/08 15:44:14 riastradh Exp $	*/
+/*	$NetBSD: drm_vm.c,v 1.1.2.3 2014/01/22 14:58:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.1.2.2 2013/09/08 15:44:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.1.2.3 2014/01/22 14:58:47 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.1.2.2 2013/09/08 15:44:14 riastradh Exp
 
 #include <drm/drmP.h>
 
+static paddr_t	drm_mmap_paddr_locked(struct drm_device *, off_t, int);
 static paddr_t	drm_mmap_dma_paddr(struct drm_device *, off_t, int);
 static paddr_t	drm_mmap_map_paddr(struct drm_device *, struct drm_local_map *,
 		    off_t, int);
@@ -45,30 +46,38 @@ static paddr_t	drm_mmap_map_paddr(struct drm_device *, struct drm_local_map *,
 paddr_t
 drm_mmap_paddr(struct drm_device *dev, off_t byte_offset, int prot)
 {
-	const off_t page_offset = (byte_offset >> PAGE_SHIFT);
-	struct drm_hash_item *hash;
-	paddr_t paddr = (paddr_t)-1;
-	int error;
-
-	if (byte_offset != (byte_offset & ~(PAGE_SIZE-1)))
-		return (paddr_t)-1;
+	paddr_t paddr;
 
 	mutex_lock(&dev->struct_mutex);
+	paddr = drm_mmap_paddr_locked(dev, byte_offset, prot);
+	mutex_unlock(&dev->struct_mutex);
+
+	return paddr;
+}
+
+static paddr_t
+drm_mmap_paddr_locked(struct drm_device *dev, off_t byte_offset, int prot)
+{
+	const off_t page_offset = (byte_offset >> PAGE_SHIFT);
+	struct drm_hash_item *hash;
+
+	KASSERT(mutex_is_locked(&dev->struct_mutex));
+
+	if (byte_offset != (byte_offset & ~(PAGE_SIZE-1)))
+		return -1;
 
 	if ((dev->dma != NULL) &&
 	    (0 <= byte_offset) &&
-	    (byte_offset <= (dev->dma->page_count << PAGE_SHIFT))) {
-		paddr = drm_mmap_dma_paddr(dev, byte_offset, prot);
-		goto out;
-	}
+	    (byte_offset <= (dev->dma->page_count << PAGE_SHIFT)))
+		return drm_mmap_dma_paddr(dev, byte_offset, prot);
 
 	if (drm_ht_find_item(&dev->map_hash, page_offset, &hash))
-		goto out;
+		return -1;
 
 	struct drm_local_map *const map = drm_hash_entry(hash,
 	    struct drm_map_list, hash)->map;
 	if (map == NULL)
-		goto out;
+		return -1;
 
 	/*
 	 * XXX FreeBSD drops the mutex at this point, which would be
@@ -77,16 +86,13 @@ drm_mmap_paddr(struct drm_device *dev, off_t byte_offset, int prot)
 	 */
 
 	if (ISSET(map->flags, _DRM_RESTRICTED) && !DRM_SUSER())
-		goto out;
+		return -1;
 
 	if (byte_offset < map->offset)
-		goto out;
+		return -1;
 
-	paddr = drm_mmap_map_paddr(dev, map, (map->offset - byte_offset),
+	return drm_mmap_map_paddr(dev, map, (map->offset - byte_offset),
 	    prot);
-
-out:	mutex_unlock(&dev->struct_mutex);
-	return error;
 }
 
 static paddr_t
@@ -94,7 +100,6 @@ drm_mmap_dma_paddr(struct drm_device *dev, off_t byte_offset, int prot)
 {
 	const off_t page_offset = (byte_offset >> PAGE_SHIFT);
 
-	/* XXX Is this the right mutex?  */
 	KASSERT(mutex_is_locked(&dev->struct_mutex));
 
 	if (dev->dma->pagelist == NULL)

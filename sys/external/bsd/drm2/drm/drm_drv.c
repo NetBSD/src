@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.1.2.31 2014/01/21 20:56:40 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.1.2.32 2014/01/22 14:58:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.31 2014/01/21 20:56:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.32 2014/01/22 14:58:47 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -42,6 +42,14 @@ __KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.31 2014/01/21 20:56:40 riastradh E
 #include <sys/kauth.h>
 #include <sys/poll.h>
 #include <sys/select.h>
+
+#include <uvm/uvm.h>
+#include <uvm/uvm_device.h>
+#include <uvm/uvm_extern.h>
+#include <uvm/uvm_fault.h>
+#include <uvm/uvm_page.h>
+#include <uvm/uvm_pmap.h>
+#include <uvm/uvm_prot.h>
 
 #include <drm/drmP.h>
 
@@ -95,8 +103,12 @@ static int	drm_kqfilter(struct file *, struct knote *);
 static int	drm_stat(struct file *, struct stat *);
 static int	drm_ioctl(struct file *, unsigned long, void *);
 static int	drm_version_string(char *, size_t *, const char *);
+static paddr_t	drm_mmap(dev_t, off_t, int);
+static int	drm_do_mmap(struct uvm_object *, vm_prot_t, voff_t, size_t,
+		    vaddr_t *);
 
 static drm_ioctl_t	drm_version;
+static drm_ioctl_t	drm_mmap_ioctl;
 
 /* XXX Can this be pushed into struct drm_device?  */
 struct mutex drm_global_mutex;
@@ -218,6 +230,10 @@ static const struct drm_ioctl_desc drm_ioctls[] = {
 	DRM_IOCTL_DEF(DRM_IOCTL_MODE_DESTROY_DUMB, drm_mode_destroy_dumb_ioctl, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
 	DRM_IOCTL_DEF(DRM_IOCTL_MODE_OBJ_GETPROPERTIES, drm_mode_obj_get_properties_ioctl, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
 	DRM_IOCTL_DEF(DRM_IOCTL_MODE_OBJ_SETPROPERTY, drm_mode_obj_set_property_ioctl, DRM_MASTER|DRM_CONTROL_ALLOW|DRM_UNLOCKED),
+
+#ifdef __NetBSD__
+	DRM_IOCTL_DEF(DRM_IOCTL_MMAP, drm_mmap_ioctl, DRM_UNLOCKED),
+#endif
 };
 
 const struct cdevsw drm_cdevsw = {
@@ -229,7 +245,7 @@ const struct cdevsw drm_cdevsw = {
 	.d_stop = nostop,
 	.d_tty = notty,
 	.d_poll = nopoll,
-	.d_mmap = nommap,
+	.d_mmap = drm_mmap,
 	.d_kqfilter = nokqfilter,
 	/* XXX was D_TTY | D_NEGOFFSAFE */
 	/* XXX Add D_MPSAFE some day... */
@@ -848,4 +864,123 @@ drm_getsarea(struct drm_device *dev)
 	}
 
 	return NULL;
+}
+
+static paddr_t
+drm_mmap(dev_t d, off_t offset, int prot)
+{
+	struct drm_minor *const dminor = drm_dev_minor(d);
+
+	if (dminor == NULL)
+		return (paddr_t)-1;
+
+	return drm_mmap_paddr(dminor->dev, offset, prot);
+}
+
+static int
+drm_mmap_ioctl(struct drm_device *dev, void *data, struct drm_file *file)
+{
+	struct drm_mmap *const args = data;
+	void *addr = args->dnm_addr;
+	const size_t size = args->dnm_size;
+	const int prot = args->dnm_prot;
+	const int flags = args->dnm_flags;
+	const off_t offset = args->dnm_offset;
+	struct drm_gem_mm *const mm = dev->mm_private;
+	struct drm_hash_item *hash;
+	vm_prot_t vm_prot;
+	dev_t devno;
+	struct uvm_object *uobj;
+	vaddr_t vaddr;
+	int ret;
+
+	/* XXX Copypasta from drm_gem_mmap.  */
+	if (drm_device_is_unplugged(dev))
+		return -ENODEV;
+
+	if (prot != (PROT_READ | PROT_WRITE))
+		return -EACCES;
+	if (flags != MAP_SHARED)
+		return -EINVAL;
+	(void)addr;		/* XXX ignore -- no MAP_FIXED for now */
+
+	KASSERT(prot == (PROT_READ | PROT_WRITE));
+	vm_prot = (VM_PROT_READ | VM_PROT_WRITE);
+
+	mutex_lock(&dev->struct_mutex);
+	if (drm_ht_find_item(&mm->offset_hash, atop(offset), &hash) == 0) {
+		/* GEM object.  Map the GEM shared-memory uobj.  */
+
+		struct drm_local_map *const map =
+		    drm_hash_entry(hash, struct drm_map_list, hash)->map;
+		if ((map == NULL) ||
+		    (ISSET(map->flags, _DRM_RESTRICTED) && !DRM_SUSER())) {
+			ret = -EPERM;
+			goto out_unlock;
+		}
+		if (map->size < size) {
+			ret = -EINVAL;
+			goto out_unlock;
+		}
+
+		struct drm_gem_object *const obj = map->handle;
+		if (obj->dev->driver->gem_uvm_ops == NULL) {
+			ret = -EINVAL;
+			goto out_unlock;
+		}
+
+		uobj = obj->gemo_shm_uao;
+		ret = drm_do_mmap(uobj, prot, offset, size, &vaddr);
+		if (ret)
+			goto out_unlock;
+		drm_gem_object_reference(obj);
+
+out_unlock:	mutex_unlock(&dev->struct_mutex);
+	} else {
+		/*
+		 * Not a GEM object.  Use the old mmap.
+		 *
+		 * XXX Unlocking is wrong here, but the uvm device mmap
+		 * API will call cdev_mmap immediately (where we can
+		 * control whether or not the device is locked) and in
+		 * the fault handler (where the device is unlocked and
+		 * we can't do a thing about it), so we have to unlock
+		 * the device first.  The good news is that this should
+		 * only enable a broken application to use paddrs that
+		 * it is allowed to use anyway but that perhaps are not
+		 * the ones it expected.
+		 */
+		mutex_unlock(&dev->struct_mutex);
+
+		devno = file->minor->device;
+		uobj = udv_attach(&devno, prot, offset, size);
+		if (uobj == NULL) {
+			ret = -EINVAL;
+			goto out;
+		}
+
+		ret = drm_do_mmap(uobj, prot, offset, size, &vaddr);
+	}
+
+out:	if (ret == 0)
+		args->dnm_addr = (void *)vaddr;
+	return ret;
+}
+
+static int
+drm_do_mmap(struct uvm_object *uobj, vm_prot_t prot, voff_t offset,
+    size_t size, vaddr_t *vaddr)
+{
+	vaddr_t align;
+	int uvmflag;
+
+	align = 0;		/* XXX */
+	uvmflag = UVM_MAPFLAG(prot, prot, UVM_INH_COPY, UVM_ADV_RANDOM,
+	    UVM_FLAG_COPYONW);
+
+	*vaddr = (*curproc->p_emul->e_vm_default_addr)(curproc,
+	    (vaddr_t)curproc->p_vmspace->vm_daddr, size);
+	/* XXX errno NetBSD->Linux */
+	return -uvm_map(&curproc->p_vmspace->vm_map, vaddr, size, uobj, offset,
+	    align, uvmflag);
 }
