@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.51 2013/10/09 17:20:54 macallan Exp $ */
+/*	$NetBSD: genfb.c,v 1.52 2014/01/22 18:47:11 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.51 2013/10/09 17:20:54 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.52 2014/01/22 18:47:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,6 +68,8 @@ __KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.51 2013/10/09 17:20:54 macallan Exp $");
 
 static int	genfb_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 static paddr_t	genfb_mmap(void *, void *, off_t, int);
+static void	genfb_pollc(void *, int);
+
 static void	genfb_init_screen(void *, struct vcons_screen *, int, long *);
 
 static int	genfb_putcmap(struct genfb_softc *, struct wsdisplay_cmap *);
@@ -234,6 +236,7 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 
 	sc->sc_accessops.ioctl = genfb_ioctl;
 	sc->sc_accessops.mmap = genfb_mmap;
+	sc->sc_accessops.pollc = genfb_pollc;
 
 #ifdef GENFB_SHADOWFB
 	sc->sc_shadowfb = kmem_alloc(sc->sc_fbsize, KM_SLEEP);
@@ -482,6 +485,21 @@ genfb_mmap(void *v, void *vs, off_t offset, int prot)
 		return sc->sc_ops.genfb_mmap(sc, vs, offset, prot);
 
 	return -1;
+}
+
+static void
+genfb_pollc(void *v, int on)
+{
+	struct vcons_data *vd = v;
+	struct genfb_softc *sc = vd->cookie;
+
+	if (sc == NULL)
+		return;
+
+	if (on)
+		genfb_enable_polling(sc->sc_dev);
+	else
+		genfb_disable_polling(sc->sc_dev);
 }
 
 static void
