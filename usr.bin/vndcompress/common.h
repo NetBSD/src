@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.2 2014/01/22 06:15:22 riastradh Exp $	*/
+/*	$NetBSD: common.h,v 1.3 2014/01/22 06:15:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -121,14 +121,14 @@ struct cloop2_header {
 
 struct options {
 	int		flags;
-#define	FLAG_c	0x01	/* Compress */
-#define	FLAG_d	0x02	/* Decompress */
-#define	FLAG_p	0x04	/* Partial */
-#define	FLAG_r	0x08	/* Restart */
-#define	FLAG_s	0x10	/* block Size */
-#define	FLAG_R	0x20	/* abort on Restart failure */
-#define	FLAG_k	0x40	/* checKpoint blocks */
-#define	FLAG_l	0x80	/* Length of input */
+#define	FLAG_c	0x0001	/* Compress */
+#define	FLAG_d	0x0002	/* Decompress */
+#define	FLAG_p	0x0004	/* Partial */
+#define	FLAG_r	0x0008	/* Restart */
+#define	FLAG_s	0x0010	/* block Size */
+#define	FLAG_R	0x0020	/* abort on Restart failure */
+#define	FLAG_k	0x0040	/* checKpoint blocks */
+#define	FLAG_l	0x0080	/* Length of input */
 	uint32_t	blocksize;
 	uint32_t	end_block;	/* end for partial transfer */
 	uint32_t	checkpoint_blocks;	/* blocks before checkpoint */
