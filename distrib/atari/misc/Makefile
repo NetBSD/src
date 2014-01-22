@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile,v 1.2 2008/06/23 02:16:53 matt Exp $
+#	$NetBSD: Makefile,v 1.3 2014/01/22 00:28:35 christos Exp $
 #
 
 .include <bsd.own.mk>
-.include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 all: ${UUDECODE_FILES}
 
@@ -14,5 +13,4 @@ release: check_RELEASEDIR .WAIT ${UUDECODE_FILES}
 UUDECODE_FILES=chg_pid.ttp gzip.ttp rawwrite.ttp aptck.ttp file2swp.ttp
 UUDECODE_FILES+=loadbsd.ttp
 
-.include <bsd.files.mk>
-.include <bsd.prog.mk>
+.include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
