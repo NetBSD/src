@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.3 2014/01/22 06:15:48 riastradh Exp $	*/
+/*	$NetBSD: common.h,v 1.4 2014/01/22 06:15:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -129,10 +129,12 @@ struct options {
 #define	FLAG_R	0x0020	/* abort on Restart failure */
 #define	FLAG_k	0x0040	/* checKpoint blocks */
 #define	FLAG_l	0x0080	/* Length of input */
+#define	FLAG_w	0x0100	/* Window size */
 	uint32_t	blocksize;
 	uint32_t	end_block;	/* end for partial transfer */
 	uint32_t	checkpoint_blocks;	/* blocks before checkpoint */
 	uint64_t	length;			/* length of image in bytes */
+	uint32_t	window_size;	/* size of window into offset table */
 };
 
 int	vndcompress(int, char **, const struct options *);
