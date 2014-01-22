@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.104 2013/04/27 18:19:22 christos Exp $
+# $NetBSD: INSTALL,v 1.105 2014/01/22 11:45:16 tsutsui Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -341,6 +341,7 @@ wsmouse*	at	vsms?
 wskbd*		at	pckbd?
 wsmouse*	at	pms?
 
+pseudo-device	bpfilter
 pseudo-device	loop
 pseudo-device	md		
 pseudo-device	ppp		
