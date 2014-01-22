@@ -1,4 +1,4 @@
-/*	$NetBSD: vnduncompress.c,v 1.2 2013/05/06 22:53:24 riastradh Exp $	*/
+/*	$NetBSD: vnduncompress.c,v 1.3 2014/01/22 06:14:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: vnduncompress.c,v 1.2 2013/05/06 22:53:24 riastradh Exp $");
+__RCSID("$NetBSD: vnduncompress.c,v 1.3 2014/01/22 06:14:03 riastradh Exp $");
 
 #include <sys/endian.h>
 
@@ -109,6 +109,8 @@ vnduncompress(int argc, char **argv, const struct options *O __unused)
 
 	__CTASSERT(MAX_N_OFFSETS <= (SIZE_MAX / sizeof(uint64_t)));
 	uint64_t *const offset_table = malloc(n_offsets * sizeof(uint64_t));
+	if (offset_table == NULL)
+		err(1, "malloc offset table");
 
 	/* Read the offset table in.  */
 	const ssize_t ot_read = read(cloop2_fd, offset_table,
