@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfbvar.h,v 1.18 2013/03/28 17:25:10 macallan Exp $ */
+/* $NetBSD: radeonfbvar.h,v 1.19 2014/01/22 07:57:33 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -196,11 +196,9 @@ struct radeonfb_display {
 	void (*rd_putchar)(void *, int, int, u_int, long);
 	glyphcache		rd_gc;
 
-#if 0
 	uint8_t			rd_cmap_red[256];
 	uint8_t			rd_cmap_green[256];
 	uint8_t			rd_cmap_blue[256];
-#endif
 
 #ifdef SPLASHSCREEN
 	struct splash_info	rd_splash;
