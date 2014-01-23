@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.30 2014/01/21 12:47:20 skrll Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.31 2014/01/23 17:44:13 skrll Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -413,7 +413,7 @@ vfp_handler(u_int address, u_int insn, trapframe_t *frame, int fault_code)
 		 * Need the clear the exception condition so any signal
 		 * can run.
 		 */
-		armreg_fpexc_write(fpexc & ~(VFP_FPEXC_EX|VFP_FPEXE_FSUM));
+		armreg_fpexc_write(fpexc & ~(VFP_FPEXC_EX|VFP_FPEXC_FSUM));
 
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGFPE;
