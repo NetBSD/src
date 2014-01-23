@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.92 2014/01/17 10:55:01 hannken Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.93 2014/01/23 10:13:56 hannken Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.92 2014/01/17 10:55:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.93 2014/01/23 10:13:56 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1024,7 +1024,7 @@ int
 coda_create(void *v)
 {
 /* true args */
-    struct vop_create_v2_args *ap = v;
+    struct vop_create_v3_args *ap = v;
     vnode_t *dvp = ap->a_dvp;
     struct cnode *dcp = VTOC(dvp);
     struct vattr *va = ap->a_vap;
@@ -1101,10 +1101,6 @@ coda_create(void *v)
 	if ((cnp->cn_flags & LOCKLEAF) == 0)
 	    /* This should not happen; flags are for lookup only. */
 	    printf("%s: LOCKLEAF not set!\n", __func__);
-
-	if ((error = vn_lock(*ap->a_vpp, LK_EXCLUSIVE)))
-	    /* XXX Perhaps avoid this panic. */
-	    panic("%s: couldn't lock child", __func__);
 #endif
     }
 
@@ -1352,7 +1348,7 @@ int
 coda_mkdir(void *v)
 {
 /* true args */
-    struct vop_mkdir_v2_args *ap = v;
+    struct vop_mkdir_v3_args *ap = v;
     vnode_t *dvp = ap->a_dvp;
     struct cnode *dcp = VTOC(dvp);
     struct componentname  *cnp = ap->a_cnp;
@@ -1413,12 +1409,6 @@ coda_mkdir(void *v)
     } else {
 	*vpp = (vnode_t *)0;
 	CODADEBUG(CODA_MKDIR, myprintf(("%s error %d\n", __func__, error));)
-    }
-
-    if (!error) {
-	if ((error = vn_lock(*ap->a_vpp, LK_EXCLUSIVE))) {
-	    panic("%s: couldn't lock child", __func__);
-	}
     }
 
     return(error);
@@ -1495,7 +1485,7 @@ int
 coda_symlink(void *v)
 {
 /* true args */
-    struct vop_symlink_v2_args *ap = v;
+    struct vop_symlink_v3_args *ap = v;
     vnode_t *dvp = ap->a_dvp;
     struct cnode *dcp = VTOC(dvp);
     /* a_vpp is used in place below */
@@ -1564,8 +1554,10 @@ coda_symlink(void *v)
 	cnp->cn_flags &= ~(MODMASK | OPMASK);
 	cnp->cn_flags |= LOOKUP;
 	error = VOP_LOOKUP(dvp, ap->a_vpp, cnp);
+	/* XXX unlock node until lookup returns unlocked nodes. */
+	if (error == 0)
+		VOP_UNLOCK(*ap->a_vpp);
 	cnp->cn_flags = saved_cn_flags;
-	/* Either an error occurs, or ap->a_vpp is locked. */
     }
 
  exit:

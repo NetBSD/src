@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.169 2014/01/17 10:55:02 hannken Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.170 2014/01/23 10:13:57 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.169 2014/01/17 10:55:02 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.170 2014/01/23 10:13:57 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1506,6 +1506,7 @@ nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 			nqsrv_getl(nd.ni_dvp, ND_WRITE);
 			error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &va);
 			if (!error) {
+				vn_lock(nd.ni_vp, LK_EXCLUSIVE | LK_RETRY);
 				if (exclusive_flag) {
 					exclusive_flag = 0;
 					vattr_null(&va);
@@ -1540,7 +1541,9 @@ nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 			nqsrv_getl(nd.ni_dvp, ND_WRITE);
 			error = VOP_MKNOD(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd,
 			    &va);
-			if (error) {
+			if (!error) {
+				vn_lock(nd.ni_vp, LK_EXCLUSIVE | LK_RETRY);
+			} else {
 				nfsm_reply(0);
 			}
 		} else {
@@ -1744,6 +1747,9 @@ abort:
 		error = VOP_MKNOD(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &va);
 		if (error)
 			goto out;
+	}
+	if (!error) {
+		vn_lock(nd.ni_vp, LK_EXCLUSIVE | LK_RETRY);
 	}
 out:
 	vp = nd.ni_vp;
@@ -2341,12 +2347,13 @@ abortop:
 	error = VOP_SYMLINK(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &va, pathcp);
 	if (!error) {
 	    if (v3) {
+		vn_lock(nd.ni_vp, LK_SHARED | LK_RETRY);
 		error = nfsrv_composefh(nd.ni_vp, &nsfh, v3);
 		if (!error)
 		    error = VOP_GETATTR(nd.ni_vp, &va, cred);
 		vput(nd.ni_vp);
 	    } else {
-		vput(nd.ni_vp);
+		vrele(nd.ni_vp);
 	    }
 	}
 	vput(nd.ni_dvp);
@@ -2470,6 +2477,7 @@ nfsrv_mkdir(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *lw
 	error = VOP_MKDIR(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &va);
 	if (!error) {
 		vp = nd.ni_vp;
+		vn_lock(vp, LK_SHARED | LK_RETRY);
 		error = nfsrv_composefh(vp, &nsfh, v3);
 		if (!error)
 			error = VOP_GETATTR(vp, &va, cred);
