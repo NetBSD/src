@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: wpa_supplicant,v 1.4 2013/02/01 13:29:33 tron Exp $
+# $NetBSD: wpa_supplicant,v 1.5 2014/01/23 07:26:51 spz Exp $
 #
 
 # PROVIDE: wpa_supplicant
@@ -22,6 +22,14 @@ rcvar=$name
 command="/usr/sbin/wpa_supplicant"
 reload_cmd="/usr/sbin/wpa_cli reconfigure"
 extra_commands="reload"
+start_precmd="wpa_supplicant_precmd"
+
+wpa_supplicant_precmd()
+{
+    if [ ! -d /var/run/wpa_supplicant ]; then
+        mkdir -p -m 755 /var/run/wpa_supplicant
+    fi
+}
 
 load_rc_config $name
 run_rc_command "$1"
