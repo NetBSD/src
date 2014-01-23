@@ -1,4 +1,4 @@
-/*	$NetBSD: netwalker_machdep.c,v 1.11 2013/08/18 15:58:21 matt Exp $	*/
+/*	$NetBSD: netwalker_machdep.c,v 1.12 2014/01/23 12:23:20 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005, 2010  Genetec Corporation. 
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.11 2013/08/18 15:58:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.12 2014/01/23 12:23:20 hkenken Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -113,6 +113,8 @@ __KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.11 2013/08/18 15:58:21 matt 
 #include "imxuart.h"
 #include "opt_imxuart.h"
 #include "opt_imx.h"
+#include "opt_imx51_ipuv3.h"
+#include "wsdisplay.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -155,6 +157,11 @@ __KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.11 2013/08/18 15:58:21 matt 
 #include <arm/imx/imxuartvar.h>
 #include <arm/imx/imx51_iomuxreg.h>
 #include <evbarm/netwalker/netwalker_reg.h>
+
+#include "ukbd.h"
+#if (NUKBD > 0)
+#include <dev/usb/ukbdvar.h>
+#endif
 
 /* Kernel text starts 1MB in from the bottom of the kernel address space. */
 #define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0x00100000)
@@ -1233,7 +1240,10 @@ consinit(void)
 
 #endif
 
-#if (NWSDISPLAY > 0) && defined(IMXLCDCONSOLE)
+#if (NWSDISPLAY > 0) && defined(IMXIPUCONSOLE)
+#if NUKBD > 0
+	ukbd_cnattach();
+#endif
 	{
 		extern void netwalker_cnattach(void);
 		netwalker_cnattach();
