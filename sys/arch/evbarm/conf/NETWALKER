@@ -1,4 +1,4 @@
-#	$NetBSD: NETWALKER,v 1.21 2013/06/30 21:38:56 rmind Exp $
+#	$NetBSD: NETWALKER,v 1.22 2014/01/23 12:23:20 hkenken Exp $
 #
 #	NETWALKER -- http://www.sharp.co.jp/netwalker/
 #
@@ -172,7 +172,7 @@ tzic0		at axi? addr 0xe0000000 size 0x4000 irqbase 0
 imxuart0	at axi? addr 0x73fbc000 irq 31		# UART1
 #imxuart1	at axi? addr 0x73fc0000 irq 32
 #imxuart2	at axi? addr 0x7000c000 irq 33
-options		IMXUARTCONSOLE
+#options	IMXUARTCONSOLE
 
 # Clock Control
 imxccm0		at axi? addr 0x73fd4000
