@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1060 2014/01/16 14:46:36 pgoyette Exp $
+# $NetBSD: mi,v 1.1061 2014/01/23 07:26:50 spz Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1797,6 +1797,8 @@
 ./usr/share/examples/verifiedexec_load		base-obsolete		obsolete
 ./usr/share/examples/verifiedexec_load/gen_md5	base-obsolete		obsolete
 ./usr/share/examples/verifiedexec_load/gen_sha1	base-obsolete		obsolete
+./usr/share/examples/wpa_supplicant		base-netutil-examples
+./usr/share/examples/wpa_supplicant/wpa_supplicant.conf		base-netutil-examples	share
 ./usr/share/examples/wsmoused			base-sysutil-examples
 ./usr/share/examples/wsmoused/wsmoused.conf	base-sysutil-examples	share
 ./usr/share/games				base-games-share

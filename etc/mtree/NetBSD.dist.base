@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.132 2014/01/05 16:38:06 joerg Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.133 2014/01/23 07:26:50 spz Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -402,6 +402,7 @@
 ./usr/share/examples/supfiles
 ./usr/share/examples/syslogd
 ./usr/share/examples/tmux
+./usr/share/examples/wpa_supplicant
 ./usr/share/examples/wsmoused
 ./usr/share/games
 ./usr/share/games/atc
