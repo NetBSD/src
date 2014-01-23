@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2014/01/20 01:32:12 christos Exp $
+#	$NetBSD: Makefile,v 1.10 2014/01/23 14:06:28 joerg Exp $
 
 LIBISPRIVATE=yes
 
@@ -77,7 +77,7 @@ ymd2yd.c
 
 CPPFLAGS+= -I${IDIST}/sntp/libopts
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} >= 45
+.if !defined(HAVE_GCC) || ${HAVE_GCC} >= 45
 COPTS.msyslog.c+=	-Wno-error=format-nonliteral
 .endif
 
