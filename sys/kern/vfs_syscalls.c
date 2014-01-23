@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.472 2014/01/17 10:55:02 hannken Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.473 2014/01/23 10:13:57 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.472 2014/01/17 10:55:02 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.473 2014/01/23 10:13:57 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -2253,7 +2253,7 @@ do_sys_mknodat(struct lwp *l, int fdat, const char *pathname, mode_t mode,
 			error = VOP_MKNOD(nd.ni_dvp, &nd.ni_vp,
 						&nd.ni_cnd, &vattr);
 			if (error == 0)
-				vput(nd.ni_vp);
+				vrele(nd.ni_vp);
 			vput(nd.ni_dvp);
 			break;
 
@@ -2261,7 +2261,7 @@ do_sys_mknodat(struct lwp *l, int fdat, const char *pathname, mode_t mode,
 			error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp,
 						&nd.ni_cnd, &vattr);
 			if (error == 0)
-				vput(nd.ni_vp);
+				vrele(nd.ni_vp);
 			vput(nd.ni_dvp);
 			break;
 		}
@@ -2343,7 +2343,7 @@ do_sys_mkfifoat(struct lwp *l, int fdat, const char *path, mode_t mode)
 	vattr.va_mode = (mode & ALLPERMS) &~ p->p_cwdi->cwdi_cmask;
 	error = VOP_MKNOD(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
 	if (error == 0)
-		vput(nd.ni_vp);
+		vrele(nd.ni_vp);
 	vput(nd.ni_dvp);
 	pathbuf_destroy(pb);
 	return (error);
@@ -2501,7 +2501,7 @@ do_sys_symlinkat(struct lwp *l, const char *patharg, int fdat,
 	vattr.va_mode = ACCESSPERMS &~ p->p_cwdi->cwdi_cmask;
 	error = VOP_SYMLINK(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr, path);
 	if (error == 0)
-		vput(nd.ni_vp);
+		vrele(nd.ni_vp);
 	vput(nd.ni_dvp);
 out2:
 	pathbuf_destroy(linkpb);
@@ -4561,7 +4561,7 @@ do_sys_mkdirat(struct lwp *l, int fdat, const char *path, mode_t mode,
 	vattr.va_mode = (mode & ACCESSPERMS) &~ p->p_cwdi->cwdi_cmask;
 	error = VOP_MKDIR(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
 	if (!error)
-		vput(nd.ni_vp);
+		vrele(nd.ni_vp);
 	vput(nd.ni_dvp);
 	pathbuf_destroy(pb);
 	return (error);

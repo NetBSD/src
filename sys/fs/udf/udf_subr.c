@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.122 2013/11/21 23:42:09 riz Exp $ */
+/* $NetBSD: udf_subr.c,v 1.123 2014/01/23 10:13:56 hannken Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.122 2013/11/21 23:42:09 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.123 2014/01/23 10:13:56 hannken Exp $");
 #endif /* not lint */
 
 
@@ -5781,17 +5781,12 @@ udf_create_node_raw(struct vnode *dvp, struct vnode **vpp, int udf_file_type,
 	if (error)
 		return error;
 
-	/* lock node */
-	error = vn_lock(nvp, LK_EXCLUSIVE | LK_RETRY);
-	if (error)
-		goto error_out_unget;
-
 	/* reserve space for one logical block */
 	vpart_num = ump->node_part;
 	error = udf_reserve_space(ump, NULL, UDF_C_NODE,
 		vpart_num, 1, /* can_fail */ true);
 	if (error)
-		goto error_out_unlock;
+		goto error_out_unget;
 
 	/* allocate node */
 	error = udf_allocate_space(ump, NULL, UDF_C_NODE,
@@ -5876,7 +5871,7 @@ udf_create_node_raw(struct vnode *dvp, struct vnode **vpp, int udf_file_type,
 
 		/* recycle udf_node */
 		udf_dispose_node(udf_node);
-		vput(nvp);
+		vrele(nvp);
 
 		*vpp = NULL;
 		return error;
@@ -5892,9 +5887,6 @@ udf_create_node_raw(struct vnode *dvp, struct vnode **vpp, int udf_file_type,
 
 error_out_unreserve:
 	udf_do_unreserve_space(ump, NULL, vpart_num, 1);
-
-error_out_unlock:
-	VOP_UNLOCK(nvp);
 
 error_out_unget:
 	nvp->v_data = NULL;

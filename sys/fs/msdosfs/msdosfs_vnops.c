@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.88 2014/01/17 10:55:02 hannken Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.89 2014/01/23 10:13:56 hannken Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.88 2014/01/17 10:55:02 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.89 2014/01/23 10:13:56 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.88 2014/01/17 10:55:02 hannken E
 int
 msdosfs_create(void *v)
 {
-	struct vop_create_v2_args /* {
+	struct vop_create_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -1166,7 +1166,7 @@ static const struct {
 int
 msdosfs_mkdir(void *v)
 {
-	struct vop_mkdir_v2_args /* {
+	struct vop_mkdir_v3_args /* {
 		struct vnode *a_dvp;
 		struvt vnode **a_vpp;
 		struvt componentname *a_cnp;

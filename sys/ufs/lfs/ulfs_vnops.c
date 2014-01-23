@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.19 2014/01/17 10:55:03 hannken Exp $	*/
+/*	$NetBSD: ulfs_vnops.c,v 1.20 2014/01/23 10:13:57 hannken Exp $	*/
 /*  from NetBSD: ufs_vnops.c,v 1.213 2013/06/08 05:47:02 kardel Exp  */
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.19 2014/01/17 10:55:03 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.20 2014/01/23 10:13:57 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -127,7 +127,7 @@ static const struct lfs_dirtemplate mastertemplate = {
 int
 ulfs_create(void *v)
 {
-	struct vop_create_v2_args /* {
+	struct vop_create_v3_args /* {
 		struct vnode		*a_dvp;
 		struct vnode		**a_vpp;
 		struct componentname	*a_cnp;
@@ -151,6 +151,7 @@ ulfs_create(void *v)
 	}
 	fstrans_done(dvp->v_mount);
 	VN_KNOTE(dvp, NOTE_WRITE);
+	VOP_UNLOCK(*ap->a_vpp);
 	return (0);
 }
 
@@ -714,7 +715,7 @@ ulfs_whiteout(void *v)
 int
 ulfs_mkdir(void *v)
 {
-	struct vop_mkdir_v2_args /* {
+	struct vop_mkdir_v3_args /* {
 		struct vnode		*a_dvp;
 		struct vnode		**a_vpp;
 		struct componentname	*a_cnp;
@@ -840,6 +841,7 @@ ulfs_mkdir(void *v)
  bad:
 	if (error == 0) {
 		VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
+		VOP_UNLOCK(tvp);
 	} else {
 		dp->i_nlink--;
 		DIP_ASSIGN(dp, nlink, dp->i_nlink);
@@ -957,7 +959,7 @@ ulfs_rmdir(void *v)
 int
 ulfs_symlink(void *v)
 {
-	struct vop_symlink_v2_args /* {
+	struct vop_symlink_v3_args /* {
 		struct vnode		*a_dvp;
 		struct vnode		**a_vpp;
 		struct componentname	*a_cnp;
@@ -996,8 +998,9 @@ ulfs_symlink(void *v)
 		error = vn_rdwr(UIO_WRITE, vp, ap->a_target, len, (off_t)0,
 		    UIO_SYSSPACE, IO_NODELOCKED | IO_JOURNALLOCKED,
 		    ap->a_cnp->cn_cred, NULL, NULL);
+	VOP_UNLOCK(vp);
 	if (error)
-		vput(vp);
+		vrele(vp);
 out:
 	fstrans_done(ap->a_dvp->v_mount);
 	return (error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnode.c,v 1.9 2014/01/17 10:55:03 hannken Exp $	*/
+/*	$NetBSD: chfs_vnode.c,v 1.10 2014/01/23 10:13:57 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -298,6 +298,7 @@ chfs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 
 	mutex_exit(&chmp->chm_lock_mountfields);
 
+	VOP_UNLOCK(vp);
 	*vpp = vp;
 	return (0);
 }

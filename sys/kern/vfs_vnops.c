@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.187 2014/01/17 10:55:02 hannken Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.188 2014/01/23 10:13:57 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.187 2014/01/17 10:55:02 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.188 2014/01/23 10:13:57 hannken Exp $");
 
 #include "veriexec.h"
 
@@ -189,6 +189,7 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 				goto out;
 			fmode &= ~O_TRUNC;
 			vp = ndp->ni_vp;
+			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		} else {
 			VOP_ABORTOP(ndp->ni_dvp, &ndp->ni_cnd);
 			if (ndp->ni_dvp == ndp->ni_vp)

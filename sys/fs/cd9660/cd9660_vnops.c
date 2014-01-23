@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.46 2014/01/17 10:55:01 hannken Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.47 2014/01/23 10:13:56 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.46 2014/01/17 10:55:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.47 2014/01/23 10:13:56 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -678,7 +678,7 @@ cd9660_link(void *v)
 int
 cd9660_symlink(void *v)
 {
-	struct vop_symlink_v2_args /* {
+	struct vop_symlink_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;

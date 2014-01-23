@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.87 2014/01/17 10:55:02 hannken Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.88 2014/01/23 10:13:56 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.87 2014/01/17 10:55:02 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.88 2014/01/23 10:13:56 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -573,7 +573,7 @@ smbfs_write(void *v)
 int
 smbfs_create(void *v)
 {
-	struct vop_create_v2_args /* {
+	struct vop_create_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -604,6 +604,7 @@ smbfs_create(void *v)
 	error = smbfs_nget(VTOVFS(dvp), dvp, name, nmlen, &fattr, ap->a_vpp);
 	if (error)
 		goto out;
+	VOP_UNLOCK(*ap->a_vpp);
 
 	cache_enter(dvp, *ap->a_vpp, cnp->cn_nameptr, cnp->cn_namelen,
 		    cnp->cn_flags);
@@ -774,7 +775,7 @@ smbfs_symlink(void *v)
 int
 smbfs_mkdir(void *v)
 {
-	struct vop_mkdir_v2_args /* {
+	struct vop_mkdir_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -806,6 +807,7 @@ smbfs_mkdir(void *v)
 	error = smbfs_nget(VTOVFS(dvp), dvp, name, len, &fattr, &vp);
 	if (error)
 		goto out;
+	VOP_UNLOCK(vp);
 	*ap->a_vpp = vp;
 
  out:

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.51 2014/01/17 10:55:02 hannken Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.52 2014/01/23 10:13:56 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.51 2014/01/17 10:55:02 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.52 2014/01/23 10:13:56 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -127,7 +127,7 @@ sysvbfs_lookup(void *arg)
 int
 sysvbfs_create(void *arg)
 {
-	struct vop_create_v2_args /* {
+	struct vop_create_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -166,6 +166,7 @@ sysvbfs_create(void *arg)
 	bnode->update_ctime = true;
 	bnode->update_mtime = true;
 	bnode->update_atime = true;
+	VOP_UNLOCK(*a->a_vpp);
 
 	return err;
 }

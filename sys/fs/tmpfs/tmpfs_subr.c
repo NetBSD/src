@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.95 2014/01/17 10:55:02 hannken Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.96 2014/01/23 10:13:56 hannken Exp $	*/
 
 /*
  * Copyright (c) 2005-2013 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.95 2014/01/17 10:55:02 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.96 2014/01/23 10:13:56 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -424,6 +424,9 @@ tmpfs_construct_node(vnode_t *dvp, vnode_t **vpp, struct vattr *vap,
 	/* Update the parent's timestamps. */
 	tmpfs_update(dvp, TMPFS_UPDATE_MTIME | TMPFS_UPDATE_CTIME);
 out:
+	if (error == 0)
+		VOP_UNLOCK(*vpp);
+
 	return error;
 }
 

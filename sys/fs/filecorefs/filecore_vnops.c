@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.40 2014/01/17 10:55:01 hannken Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.41 2014/01/23 10:13:56 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.40 2014/01/17 10:55:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.41 2014/01/23 10:13:56 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -433,7 +433,7 @@ filecore_link(void *v)
 int
 filecore_symlink(void *v)
 {
-	struct vop_symlink_v2_args /* {
+	struct vop_symlink_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;

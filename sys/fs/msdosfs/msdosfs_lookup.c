@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.30 2013/12/24 16:51:24 mlelstv Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.31 2014/01/23 10:13:56 hannken Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -52,7 +52,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.30 2013/12/24 16:51:24 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.31 2014/01/23 10:13:56 hannken Exp $");
 
 #include <sys/param.h>
 
@@ -711,7 +711,12 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp, struct c
 			else
 				diroffset = 0;
 		}
-		return deget(pmp, dirclust, diroffset, depp);
+		error = deget(pmp, dirclust, diroffset, depp);
+#ifndef MAKEFS
+		if (error == 0)
+			VOP_UNLOCK(DETOV(*depp));
+#endif
+		return error;
 	}
 
 	return 0;

@@ -4946,7 +4946,7 @@ out:
 static int
 zfs_netbsd_create(void *v)
 {
-	struct vop_create_v2_args /* {
+	struct vop_create_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -4981,20 +4981,9 @@ zfs_netbsd_create(void *v)
 	/* XXX !EXCL is wrong here...  */
 	error = zfs_create(dvp, __UNCONST(cnp->cn_nameptr), vap, !EXCL, mode,
 	    vpp, cnp->cn_cred);
-	if (error) {
-		KASSERT(*vpp == NULL);
-		goto out;
-	}
-	KASSERT(*vpp != NULL);
 
-	/*
-	 * Lock *vpp in conformance to the VOP_CREATE protocol.
-	 */
-	vn_lock(*vpp, LK_EXCLUSIVE | LK_RETRY);
-
-out:
+	KASSERT((error == 0) == (*vpp != NULL));
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
-	KASSERT((*vpp == NULL) || (VOP_ISLOCKED(*vpp) == LK_EXCLUSIVE));
 
 	return (error);
 }
@@ -5051,7 +5040,7 @@ zfs_netbsd_remove(void *v)
 static int
 zfs_netbsd_mkdir(void *v)
 {
-	struct vop_mkdir_v2_args /* {
+	struct vop_mkdir_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -5083,20 +5072,9 @@ zfs_netbsd_mkdir(void *v)
 
 	error = zfs_mkdir(dvp, __UNCONST(cnp->cn_nameptr), vap, vpp,
 	    cnp->cn_cred, NULL, 0, NULL);
-	if (error) {
-		KASSERT(*vpp == NULL);
-		goto out;
-	}
-	KASSERT(*vpp != NULL);
 
-	/*
-	 * Lock *vpp in conformance to the VOP_MKDIR protocol.
-	 */
-	vn_lock(*vpp, LK_EXCLUSIVE | LK_RETRY);
-
-out:
+	KASSERT((error == 0) == (*vpp != NULL));
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
-	KASSERT((*vpp == NULL) || (VOP_ISLOCKED(*vpp) == LK_EXCLUSIVE));
 
 	return (error);
 }
@@ -5361,7 +5339,7 @@ zfs_netbsd_rename(void *v)
 static int
 zfs_netbsd_symlink(void *v)
 {
-	struct vop_symlink_v2_args /* {
+	struct vop_symlink_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -5397,21 +5375,9 @@ zfs_netbsd_symlink(void *v)
 
 	error = zfs_symlink(dvp, vpp, __UNCONST(cnp->cn_nameptr), vap, target,
 	    cnp->cn_cred, 0);
-	if (error) {
-		KASSERT(*vpp == NULL);
-		goto out;
-	}
-	KASSERT(*vpp != NULL);
 
-
-	/*
-	 * Lock *vpp in conformance to the VOP_SYMLINK protocol.
-	 */
-	vn_lock(*vpp, LK_EXCLUSIVE | LK_RETRY);
-
-out:
+	KASSERT((error == 0) == (*vpp != NULL));
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
-	KASSERT((*vpp == NULL) || (VOP_ISLOCKED(*vpp) == LK_EXCLUSIVE));
 
 	return (error);
 }

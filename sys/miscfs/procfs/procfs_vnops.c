@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.187 2014/01/17 10:55:02 hannken Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.188 2014/01/23 10:13:57 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.187 2014/01/17 10:55:02 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.188 2014/01/23 10:13:57 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -518,7 +518,7 @@ procfs_link(void *v)
 int
 procfs_symlink(void *v)
 {
-	struct vop_symlink_v2_args /* {
+	struct vop_symlink_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.178 2014/01/17 10:55:02 hannken Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.179 2014/01/23 10:13:56 hannken Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.178 2014/01/17 10:55:02 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.179 2014/01/23 10:13:56 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -755,7 +755,7 @@ do {									\
 int
 puffs_vnop_create(void *v)
 {
-	struct vop_create_v2_args /* {
+	struct vop_create_v3_args /* {
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
@@ -817,7 +817,7 @@ puffs_vnop_create(void *v)
 int
 puffs_vnop_mknod(void *v)
 {
-	struct vop_mknod_v2_args /* {
+	struct vop_mknod_v3_args /* {
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
@@ -1813,7 +1813,7 @@ puffs_vnop_remove(void *v)
 int
 puffs_vnop_mkdir(void *v)
 {
-	struct vop_mkdir_v2_args /* {
+	struct vop_mkdir_v3_args /* {
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
@@ -1977,7 +1977,7 @@ puffs_vnop_link(void *v)
 int
 puffs_vnop_symlink(void *v)
 {
-	struct vop_symlink_v2_args /* {
+	struct vop_symlink_v3_args /* {
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;

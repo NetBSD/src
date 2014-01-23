@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.149 2014/01/17 10:55:02 hannken Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.150 2014/01/23 10:13:56 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.149 2014/01/17 10:55:02 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.150 2014/01/23 10:13:56 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -967,6 +967,7 @@ unp_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 		goto bad;
 	}
 	vp = nd.ni_vp;
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	solock(so);
 	vp->v_socket = unp->unp_socket;
 	unp->unp_vnode = vp;
