@@ -95,10 +95,14 @@
 #include <arm/allwinner/awin_reg.h>
 #include <evbarm/cubie/platform.h>  
 
-RCSID("$NetBSD: cubie_start.S,v 1.2 2013/09/07 00:30:17 matt Exp $")
+RCSID("$NetBSD: cubie_start.S,v 1.3 2014/01/23 19:26:55 matt Exp $")
 
 #if defined(VERBOSE_INIT_ARM)
+#ifdef __ARMEB__
+#define	XPUTC(n)	mov r0, n << 24; bl xputc
+#else
 #define	XPUTC(n)	mov r0, n; bl xputc
+#endif
 #define COM_MULT	4
 #define XPUTC_COM	1
 #else
@@ -117,6 +121,10 @@ RCSID("$NetBSD: cubie_start.S,v 1.2 2013/09/07 00:30:17 matt Exp $")
 
 	.global	_C_LABEL(cubie_start)
 _C_LABEL(cubie_start):
+#ifdef __ARMEB__
+	setend	be			/* force big endian */
+#endif
+
 	/* Move into supervisor mode and disable IRQs/FIQs. */
 	cpsid	if, #PSR_SVC32_MODE
 
@@ -189,6 +197,7 @@ _C_LABEL(cubie_start):
 	MMU_INIT(AWIN_CORE_PBASE, AWIN_CORE_PBASE,
 		(AWIN_CORE_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
 		L1_S_PROTO | L1_S_APv7_KRW)
+
 	/* end of table */
 	MMU_INIT(0, 0, 0, 0)
 
