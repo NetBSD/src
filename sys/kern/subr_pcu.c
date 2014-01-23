@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pcu.c,v 1.16 2013/11/26 20:29:40 rmind Exp $	*/
+/*	$NetBSD: subr_pcu.c,v 1.17 2014/01/23 17:32:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.16 2013/11/26 20:29:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.17 2014/01/23 17:32:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -352,7 +352,10 @@ pcu_load(const pcu_ops_t *pcu)
 	/* Does this CPU already have our PCU state loaded? */
 	if (ci == curci) {
 		KASSERT(curci->ci_pcu_curlwp[id] == l);
-		pcu->pcu_state_load(l, PCU_ENABLE);	/* Re-enable */
+		KASSERT(pcu_used_p(pcu));
+
+		/* Re-enable */
+		pcu->pcu_state_load(l, PCU_LOADED | PCU_ENABLE);
 		splx(s);
 		return;
 	}
