@@ -1,4 +1,4 @@
-/*	$NetBSD: offtab.c,v 1.9 2014/01/22 14:25:07 riastradh Exp $	*/
+/*	$NetBSD: offtab.c,v 1.10 2014/01/23 14:17:05 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: offtab.c,v 1.9 2014/01/22 14:25:07 riastradh Exp $");
+__RCSID("$NetBSD: offtab.c,v 1.10 2014/01/23 14:17:05 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/endian.h>
@@ -49,14 +49,14 @@ __RCSID("$NetBSD: offtab.c,v 1.9 2014/01/22 14:25:07 riastradh Exp $");
 
 #include "offtab.h"
 
-static void __printflike(1,2)
+static void __printflike(1,2) __dead
 offtab_bug(const char *fmt, ...)
 {
 
 	errx(1, "bug in offtab, please report");
 }
 
-static void __printflike(1,2)
+static void __printflike(1,2) __dead
 offtab_bugx(const char *fmt, ...)
 {
 
