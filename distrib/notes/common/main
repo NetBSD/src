@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.501 2014/01/17 00:19:25 hkenken Exp $
+.\"	$NetBSD: main,v 1.502 2014/01/23 22:52:15 szptvlfn Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1300,6 +1300,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Brook Milligan Ta Mt brook@NetBSD.org
 .It Ta Minoura Makoto Ta Mt minoura@NetBSD.org
 .It Ta Simas Mockevicius Ta Mt symka@NetBSD.org
+.It Ta Ryosuke Moro Ta Mt szptvlfn@NetBSD.org
 .It Ta der Mouse Ta Mt mouse@NetBSD.org
 .It Ta Constantine A. Murenin Ta Mt cnst@NetBSD.org
 .It Ta Joseph Myers Ta Mt jsm@NetBSD.org
