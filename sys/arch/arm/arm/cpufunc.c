@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.135 2014/01/21 19:05:10 christos Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.136 2014/01/23 19:28:47 matt Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.135 2014/01/21 19:05:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.136 2014/01/23 19:28:47 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -3051,7 +3051,12 @@ armv7_setup(char *args)
 {
 
 	int cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_IC_ENABLE
-	    | CPU_CONTROL_DC_ENABLE | CPU_CONTROL_BPRD_ENABLE ;
+	    | CPU_CONTROL_DC_ENABLE | CPU_CONTROL_BPRD_ENABLE
+#ifdef __ARMEB__
+	    | CPU_CONTROL_EX_BEND
+#endif
+	    | CPU_CONTROL_UNAL_ENABLE;
+
 #if 0
 	int cpuctrlmask = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_SYST_ENABLE
 	    | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE
@@ -3061,7 +3066,6 @@ armv7_setup(char *args)
 #endif
 
 #ifdef ARM32_DISABLE_ALIGNMENT_FAULTS
-	cpuctrl |= CPU_CONTROL_UNAL_ENABLE;
 #else
 	cpuctrl |= CPU_CONTROL_AFLT_ENABLE;
 #endif
@@ -3078,7 +3082,7 @@ armv7_setup(char *args)
 
 	/* Set the control register */
 	curcpu()->ci_ctrl = cpuctrl;
-	cpu_control(0xffffffff, cpuctrl);
+	cpu_control(cpuctrl, cpuctrl);
 }
 #endif /* CPU_CORTEX */
 
