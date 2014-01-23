@@ -1,4 +1,4 @@
-/* $Id: log.c,v 1.5 2014/01/20 02:08:27 christos Exp $ */
+/* $Id: log.c,v 1.6 2014/01/23 14:14:23 joerg Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -108,7 +108,7 @@ log_vwrite(int pri, const char *msg, va_list ap)
 #if __GNUC_PREREQ__(4, 6) || defined(__clang__)
 #pragma GCC diagnostic push
 #endif
-#if __GNUC_PREREQ__(4, 5) 
+#if __GNUC_PREREQ__(4, 5) || defined(__clang__)
 #pragma GCC diagnostic ignored "-Wformat-nonliteral"
 #endif
 void printflike1
