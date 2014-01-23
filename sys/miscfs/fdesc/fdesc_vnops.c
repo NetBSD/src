@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.115 2014/01/17 10:55:02 hannken Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.116 2014/01/23 10:13:57 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.115 2014/01/17 10:55:02 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.116 2014/01/23 10:13:57 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1035,7 +1035,7 @@ fdesc_link(void *v)
 int
 fdesc_symlink(void *v)
 {
-	struct vop_symlink_v2_args /* {
+	struct vop_symlink_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;

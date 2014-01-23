@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.50 2014/01/17 10:55:02 hannken Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.51 2014/01/23 10:13:56 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.50 2014/01/17 10:55:02 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.51 2014/01/23 10:13:56 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -450,11 +450,16 @@ start:
 				    &uppervp);
 				vn_lock(upperdvp, LK_EXCLUSIVE | LK_RETRY);
 				if (uerror == 0 && cnp->cn_nameiop != LOOKUP) {
-					vput(uppervp);
+					vrele(uppervp);
 					if (lowervp != NULLVP)
 						vput(lowervp);
 					goto start;
 				}
+				/*
+				 * XXX: lock upper node until lookup returns
+				 * unlocked nodes.
+				 */
+				vn_lock(uppervp, LK_EXCLUSIVE | LK_RETRY);
 			}
 			if (uerror) {
 				if (lowervp != NULLVP) {
@@ -485,7 +490,7 @@ start:
 int
 union_create(void *v)
 {
-	struct vop_create_v2_args /* {
+	struct vop_create_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -505,10 +510,13 @@ union_create(void *v)
 		if (error)
 			return (error);
 
+		/* XXX: lock upper node until lookup returns unlocked nodes. */
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		error = union_allocvp(ap->a_vpp, mp, NULLVP, NULLVP, cnp, vp,
 				NULLVP, 1);
+		VOP_UNLOCK(vp);
 		if (error)
-			vput(vp);
+			vrele(vp);
 		return (error);
 	}
 
@@ -535,7 +543,7 @@ union_whiteout(void *v)
 int
 union_mknod(void *v)
 {
-	struct vop_mknod_v2_args /* {
+	struct vop_mknod_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -555,10 +563,13 @@ union_mknod(void *v)
 		if (error)
 			return (error);
 
+		/* XXX: lock upper node until lookup returns unlocked nodes. */
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		error = union_allocvp(ap->a_vpp, mp, NULLVP, NULLVP,
 				      cnp, vp, NULLVP, 1);
+		VOP_UNLOCK(vp);
 		if (error)
-		    vput(vp);
+			vrele(vp);
 		return (error);
 	}
 
@@ -1341,7 +1352,7 @@ out:
 int
 union_mkdir(void *v)
 {
-	struct vop_mkdir_v2_args /* {
+	struct vop_mkdir_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -1361,10 +1372,13 @@ union_mkdir(void *v)
 			return (error);
 		}
 
+		/* XXX: lock upper node until lookup returns unlocked nodes. */
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		error = union_allocvp(ap->a_vpp, ap->a_dvp->v_mount, ap->a_dvp,
 				NULLVP, cnp, vp, NULLVP, 1);
+		VOP_UNLOCK(vp);
 		if (error)
-			vput(vp);
+			vrele(vp);
 		return (error);
 	}
 
@@ -1424,7 +1438,7 @@ union_rmdir(void *v)
 int
 union_symlink(void *v)
 {
-	struct vop_symlink_v2_args /* {
+	struct vop_symlink_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
