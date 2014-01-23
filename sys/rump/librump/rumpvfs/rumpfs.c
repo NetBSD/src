@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.122 2014/01/17 10:55:03 hannken Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.123 2014/01/23 10:13:57 hannken Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.122 2014/01/17 10:55:03 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.123 2014/01/23 10:13:57 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -593,7 +593,6 @@ makevnode(struct mount *mp, struct rumpfs_node *rn, struct vnode **vpp)
 	vp->v_data = rn;
 
 	genfs_node_init(vp, &rumpfs_genfsops);
-	vn_lock(vp, LK_RETRY | LK_EXCLUSIVE);
 	mutex_enter(&reclock);
 	rn->rn_vp = vp;
 	mutex_exit(&reclock);
@@ -812,6 +811,13 @@ rump_vop_lookup(void *v)
 	} else {
 		mutex_exit(&reclock);
 		rv = makevnode(dvp->v_mount, rn, vpp);
+		if (rv == 0) {
+			rv = vn_lock(*vpp, LK_EXCLUSIVE);
+			if (rv != 0) {
+				vrele(*vpp);
+				*vpp = NULL;
+			}
+		}
 	}
 	if (dotdot)
 		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
@@ -993,7 +999,7 @@ rump_vop_setattr(void *v)
 static int
 rump_vop_mkdir(void *v)
 {
-	struct vop_mkdir_v2_args /* {
+	struct vop_mkdir_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -1089,7 +1095,7 @@ rump_vop_remove(void *v)
 static int
 rump_vop_mknod(void *v)
 {
-	struct vop_mknod_v2_args /* {
+	struct vop_mknod_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -1118,7 +1124,7 @@ rump_vop_mknod(void *v)
 static int
 rump_vop_create(void *v)
 {
-	struct vop_create_v2_args /* {
+	struct vop_create_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -1149,7 +1155,7 @@ rump_vop_create(void *v)
 static int
 rump_vop_symlink(void *v)
 {
-	struct vop_symlink_v2_args /* {
+	struct vop_symlink_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -1761,7 +1767,6 @@ rumpfs_mountfs(struct mount *mp)
 		return error;
 
 	rfsmp->rfsmp_rvp->v_vflag |= VV_ROOT;
-	VOP_UNLOCK(rfsmp->rfsmp_rvp);
 
 	mp->mnt_data = rfsmp;
 	mp->mnt_stat.f_namemax = RUMPFS_MAXNAMLEN;

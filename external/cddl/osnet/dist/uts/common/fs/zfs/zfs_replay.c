@@ -531,10 +531,8 @@ zfs_replay_create(zfsvfs_t *zfsvfs, lr_create_t *lr, boolean_t byteswap)
 	VOP_UNLOCK(ZTOV(dzp));
 
 out:
-	if (error == 0 && vp != NULL) {
-		VOP_UNLOCK(vp);
+	if (error == 0 && vp != NULL)
 		VN_RELE(vp);
-	}
 
 	VN_RELE(ZTOV(dzp));
 
