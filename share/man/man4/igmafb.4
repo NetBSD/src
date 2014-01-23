@@ -1,4 +1,4 @@
-.\"	$NetBSD: igmafb.4,v 1.1 2014/01/21 16:12:56 mlelstv Exp $
+.\"	$NetBSD: igmafb.4,v 1.2 2014/01/23 15:17:59 wiz Exp $
 .\"
 .\" Copyright (c) 2014 Michael van Elst
 .\"
@@ -40,8 +40,9 @@ driver.
 Currently
 .Nm
 configures the display for the integrated panel in notebooks
-and can control the backlight. Automatic detection of the
-main display on desktop machines may or may not work.
+and can control the backlight.
+Automatic detection of the main display on desktop machines may or
+may not work.
 .Pp
 Supported hardware includes:
 .Bl -bullet -compact
@@ -63,19 +64,20 @@ HD (Westmere)
 HD2000/3000 (Sandy Bridge)
 .It
 HD2500/4000 (Ivy Bridge)
-.Pp
+.El
 .Sh SEE ALSO
 .Xr genfb 4 ,
 .Xr wsdisplay 4
-.Sh BUGS
-The driver conflicts with
-.Xr genfb 4 ,
-.Xr agp 4 , and thus with
-.Xr drm 4 .
-Support for a hardware cursor is missing.
 .Sh AUTHORS
 .An -nosplit
 The
 .Nm
 driver was written by
 .An Michael van Elst .
+.Sh BUGS
+The driver conflicts with
+.Xr genfb 4 ,
+.Xr agp 4 ,
+and thus with
+.Xr drm 4 .
+Support for a hardware cursor is missing.
