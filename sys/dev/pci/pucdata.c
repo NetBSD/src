@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.90 2014/01/20 01:10:38 msaitoh Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.91 2014/01/23 17:21:06 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.90 2014/01/20 01:10:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.91 2014/01/23 17:21:06 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1874,6 +1874,15 @@ const struct puc_device_description puc_devices[] = {
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* Intel Quark X1000 UART */
+	{   "Intel Quark X1000 UART",
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X1000_HS_UART, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, 44236800 },
 	    },
 	},
 
