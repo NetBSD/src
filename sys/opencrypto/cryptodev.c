@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.74 2014/01/21 20:33:01 pgoyette Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.75 2014/01/24 15:11:09 pgoyette Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.74 2014/01/21 20:33:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.75 2014/01/24 15:11:09 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2224,7 +2224,12 @@ crypto_modcmd(modcmd_t cmd, void *arg)
 		return error;
 #ifdef _MODULE
 	case MODULE_CMD_AUTOUNLOAD:
+#if 0	/*
+	 * XXX Completely disable auto-unload for now, since there is still
+	 * XXX a (small) window where in-module ref-counting doesn't help
+	 */
 		if (crypto_refcount != 0)
+#endif
 			return EBUSY;
 	/* FALLTHROUGH */
 #endif
