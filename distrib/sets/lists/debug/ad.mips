@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.18 2014/01/17 00:13:13 riz Exp $
+# $NetBSD: ad.mips,v 1.19 2014/01/24 01:09:40 christos Exp $
 ./usr/lib/64/libcrypto_g.a			comp-c-debuglib		compat,crypto,debuglib,arch64
 ./usr/lib/64/libcrypto_idea_g.a			comp-obsolete		obsolete
 ./usr/lib/64/libcrypto_mdc2_g.a			comp-obsolete		obsolete
@@ -274,7 +274,7 @@
 ./usr/libdata/debug/usr/lib/o32/libgmp.so.10.2.debug	comp-sys-debug	obsolete
 ./usr/libdata/debug/usr/lib/o32/libgnumalloc.so.1.0.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libgomp.so.1.0.debug	comp-sys-debug	debug,compat,gcc=45,arch64
-./usr/libdata/debug/usr/lib/o32/libgomp.so.1.0.debug	comp-sys-debug	debug,compat,gcc=48,arch64
+./usr/libdata/debug/usr/lib/o32/libgomp.so.1.1.debug	comp-sys-debug	debug,compat,gcc=48,arch64
 ./usr/libdata/debug/usr/lib/o32/libgssapi.so.10.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug,arch64
 ./usr/libdata/debug/usr/lib/o32/libgssapi.so.9.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug,obsolete,arch64
 ./usr/libdata/debug/usr/lib/o32/libhdb.so.13.0.debug		comp-compat-shlib	 compat,pic,kerberos,debug,obsolete,arch64
