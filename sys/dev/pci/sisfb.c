@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sisfb.c,v 1.3 2014/01/18 19:24:46 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sisfb.c,v 1.4 2014/01/24 12:11:40 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +61,8 @@ struct sisfb {
 
 	bus_space_tag_t		 fbt;
 	bus_space_handle_t	 fbh;
+	bus_addr_t	 	 fbbase;
+	bus_size_t	 	 fbsize;
 
 	bus_space_tag_t		 mmiot;
 	bus_space_handle_t	 mmioh;
@@ -88,6 +90,9 @@ struct sisfb_softc {
 	const struct wsscreen_descr	*sc_scrlist[1];
 	int			sc_nscr;
 	int			sc_mode;
+
+	pci_chipset_tag_t	sc_pc;
+	pcitag_t		sc_pt;
 };
 
 int	sisfb_match(device_t, cfdata_t, void *);
@@ -220,7 +225,7 @@ sisfb_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	struct rasops_info *ri;
 	struct wsemuldisplaydev_attach_args waa;
-	bus_size_t fbsize, mmiosize, iosize;
+	bus_size_t mmiosize, iosize;
 	struct sisfb *fb;
 	int console;
 	unsigned long defattr;
@@ -239,12 +244,16 @@ sisfb_attach(device_t parent, device_t self, void *aux)
 
 	pci_aprint_devinfo(pa, NULL);
 
+	sc->sc_pt = pa->pa_tag;
+	sc->sc_pc = pa->pa_pc;
+
 	if (!console) {
 		fb->fbt = pa->pa_memt;
 		fb->mmiot = pa->pa_memt;
 		fb->iot = pa->pa_iot;
 		if (pci_mapreg_map(pa, PCI_MAPREG_START, PCI_MAPREG_TYPE_MEM,
-		    BUS_SPACE_MAP_LINEAR, &fb->fbt, &fb->fbh, NULL, &fbsize) != 0) {
+		    BUS_SPACE_MAP_LINEAR, &fb->fbt, &fb->fbh,
+		    &fb->fbbase, &fb->fbsize) != 0) {
 			aprint_error_dev(self, ": can't map frame buffer\n");
 			return;
 		}
@@ -318,7 +327,7 @@ fail3:
 fail2:
 	bus_space_unmap(fb->mmiot, fb->mmioh, mmiosize);
 fail1:
-	bus_space_unmap(fb->fbt, fb->fbh, fbsize);
+	bus_space_unmap(fb->fbt, fb->fbh, fb->fbsize);
 }
 
 /*
@@ -368,15 +377,18 @@ sisfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flags,
 		*(uint *)data = WSDISPLAY_TYPE_PCIMISC;
 		return 0;
 	case WSDISPLAYIO_GINFO:
-		wdf = (struct wsdisplay_fbinfo *)data;
-		wdf->width = ri->ri_width;
-		wdf->height = ri->ri_height;
-		wdf->depth = ri->ri_depth;
-		wdf->cmsize = 256;
-		return 0;
+		if (vd->active != NULL) {
+			wdf = (struct wsdisplay_fbinfo *)data;
+			wdf->width = ri->ri_width;
+			wdf->height = ri->ri_height;
+			wdf->depth = ri->ri_depth;
+			wdf->cmsize = 256;
+			return 0;
+		} else
+			return ENODEV;
 	case WSDISPLAYIO_LINEBYTES:
 		*(uint *)data = ri->ri_stride;
-		break;
+		return 0;
 	case WSDISPLAYIO_GETCMAP:
 		cm = (struct wsdisplay_cmap *)data;
 		rc = sisfb_getcmap(fb->cmap, cm);
@@ -389,6 +401,14 @@ sisfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flags,
 		if (ri->ri_depth == 8)
 			sisfb_loadcmap(fb, cm->index, cm->count);
 		return 0;
+	case WSDISPLAYIO_SMODE:
+		/* XXX */ return 0;
+	case PCI_IOC_CFGREAD:
+	case PCI_IOC_CFGWRITE:
+		return pci_devioctl(sc->sc_pc, sc->sc_pt, cmd, data, flags, l);
+	case WSDISPLAYIO_GET_BUSID:
+		return wsdisplayio_busid_pci(sc->sc_dev, sc->sc_pc,
+		    sc->sc_pt, data);
 	}
 	return EPASSTHROUGH;
 }
@@ -406,23 +426,17 @@ sisfb_mmap(void *v, void *vs, off_t offset, int prot)
 	struct vcons_data *vd = v;
 	struct sisfb_softc *sc = vd->cookie;
 	struct rasops_info *ri = &sc->sc_fb->vcs.scr_ri;
+	struct sisfb *fb = sc->sc_fb;
+	const uintptr_t fb_offset =
+	  (uintptr_t)bus_space_vaddr(fb->fbt, fb->fbh) - (uintptr_t)fb->fb_addr;
+	paddr_t pa;
 
-	if ((offset & PAGE_MASK) != 0)
-		return -1;
-
-	if (offset < 0 || offset >= ri->ri_stride * ri->ri_height)
-		return -1;
-
-	/*
-	 * Don't allow mmap if the frame buffer area is not page aligned.
-	 * XXX we should reprogram it to a page aligned boundary at attach
-	 * XXX time if this isn't the case.
-	 */
-	if (((paddr_t)ri->ri_bits & PAGE_MASK) != 0)
-		return -1;
-
-	/* return XKPHYS_TO_PHYS((paddr_t)ri->ri_bits) + offset; */
-	/* XXX */ return -1;
+	if (offset >= 0 && offset < ri->ri_stride * ri->ri_height) {
+		pa = bus_space_mmap(fb->fbt, fb->fbbase, fb_offset + offset,
+		prot, BUS_SPACE_MAP_LINEAR);
+		return pa;
+	}
+	return -1;
 }
 
 void
