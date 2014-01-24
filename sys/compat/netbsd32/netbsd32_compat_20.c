@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_20.c,v 1.32 2014/01/24 22:10:09 christos Exp $	*/
+/*	$NetBSD: netbsd32_compat_20.c,v 1.33 2014/01/24 23:20:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.32 2014/01/24 22:10:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.33 2014/01/24 23:20:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,6 @@ compat_20_netbsd32_getfsstat(struct lwp *l, const struct compat_20_netbsd32_getf
 				error = 0;
 				continue;
 			}
-			sb->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 			compat_20_netbsd32_from_statvfs(sb, &sb32);
 			error = copyout(&sb32, sfsp, sizeof(sb32));
 			if (error) {
@@ -132,7 +131,6 @@ compat_20_netbsd32_getfsstat(struct lwp *l, const struct compat_20_netbsd32_getf
 		if (error != 0)
 			goto out;
 		if (sfsp) {
-			sb->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 			compat_20_netbsd32_from_statvfs(sb, &sb32);
 			error = copyout(&sb32, sfsp, sizeof(sb32));
 			if (error != 0)
@@ -172,7 +170,6 @@ compat_20_netbsd32_statfs(struct lwp *l, const struct compat_20_netbsd32_statfs_
 	vrele(vp);
 	if ((error = dostatvfs(mp, sb, l, 0, 0)) != 0)
 		return (error);
-	sb->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	compat_20_netbsd32_from_statvfs(sb, &s32);
 	return copyout(&s32, SCARG_P32(uap, buf), sizeof(s32));
 }
@@ -197,7 +194,6 @@ compat_20_netbsd32_fstatfs(struct lwp *l, const struct compat_20_netbsd32_fstatf
 	sb = &mp->mnt_stat;
 	if ((error = dostatvfs(mp, sb, l, 0, 0)) != 0)
 		goto out;
-	sb->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	compat_20_netbsd32_from_statvfs(sb, &s32);
 	error = copyout(&s32, SCARG_P32(uap, buf), sizeof(s32));
  out:
