@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.67 2012/08/06 08:27:49 skrll Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.68 2014/01/24 10:41:07 manu Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.67 2012/08/06 08:27:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.68 2014/01/24 10:41:07 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.67 2012/08/06 08:27:49 skrll Ex
 #include <sys/audioio.h>
 #include <sys/disklabel.h>
 #include <sys/dkio.h>
+#include <sys/ataio.h>
 #include <sys/sockio.h>
 #include <sys/socket.h>
 #include <sys/ttycom.h>
@@ -184,6 +185,23 @@ netbsd32_to_sioc_sg_req(struct netbsd32_sioc_sg_req *s32p, struct sioc_sg_req *p
 	p->pktcnt = (u_long)s32p->pktcnt;
 	p->bytecnt = (u_long)s32p->bytecnt;
 	p->wrong_if = (u_long)s32p->wrong_if;
+}
+
+static inline void
+netbsd32_to_atareq(struct netbsd32_atareq *s32p, struct atareq *p, u_long cmd)
+{
+	p->flags = (u_long)s32p->flags;
+	p->command = s32p->command;
+	p->features = s32p->features;
+	p->sec_count = s32p->sec_count;
+	p->sec_num = s32p->sec_num;
+	p->head = s32p->head;
+	p->cylinder = s32p->cylinder;
+	p->databuf =  (char *)NETBSD32PTR64(s32p->databuf);
+	p->datalen = (u_long)s32p->datalen;
+	p->timeout = s32p->timeout;
+	p->retsts = s32p->retsts;
+	p->error = s32p->error;
 }
 
 static inline void
@@ -478,6 +496,23 @@ netbsd32_from_sioc_sg_req(struct sioc_sg_req *p, struct netbsd32_sioc_sg_req *s3
 	s32p->pktcnt = (netbsd32_u_long)p->pktcnt;
 	s32p->bytecnt = (netbsd32_u_long)p->bytecnt;
 	s32p->wrong_if = (netbsd32_u_long)p->wrong_if;
+}
+
+static inline void
+netbsd32_from_atareq(struct atareq *p, struct netbsd32_atareq *s32p, u_long cmd)
+{
+	s32p->flags = (netbsd32_u_long)p->flags;
+	s32p->command = p->command;
+	s32p->features = p->features;
+	s32p->sec_count = p->sec_count;
+	s32p->sec_num = p->sec_num;
+	s32p->head = p->head;
+	s32p->cylinder = p->cylinder;
+	NETBSD32PTR32(s32p->databuf, p->databuf);
+	s32p->datalen = (netbsd32_u_long)p->datalen;
+	s32p->timeout = p->timeout;
+	s32p->retsts = p->retsts;
+	s32p->error = p->error;
 }
 
 static inline void
@@ -836,6 +871,9 @@ netbsd32_ioctl(struct lwp *l, const struct netbsd32_ioctl_args *uap, register_t 
 	case DIOCWFORMAT32:
 		IOCTL_STRUCT_CONV_TO(DIOCWFORMAT, format_op);
 #endif
+
+	case ATAIOCCOMMAND32:
+		IOCTL_STRUCT_CONV_TO(ATAIOCCOMMAND, atareq);
 
 /*
  * only a few ifreq syscalls need conversion and those are
