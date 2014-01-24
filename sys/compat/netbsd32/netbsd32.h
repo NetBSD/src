@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.97 2014/01/01 18:57:16 dsl Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.98 2014/01/24 22:10:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -48,6 +48,7 @@
 #include <sys/ucred.h>
 #include <compat/sys/ucontext.h>
 #include <compat/sys/mount.h>
+#include <compat/sys/signal.h>
 
 /*
  * first, define the basic types we need.
@@ -586,6 +587,12 @@ struct netbsd32_shmid_ds14 {
 /* from <sys/signal.h> */
 typedef netbsd32_pointer_t netbsd32_sigsetp_t;
 typedef netbsd32_pointer_t netbsd32_sigactionp_t;
+struct	netbsd32_sigaction13 {
+	netbsd32_voidp netbsd32_sa_handler;	/* signal handler */
+	sigset13_t netbsd32_sa_mask;		/* signal mask to apply */
+	int	netbsd32_sa_flags;		/* see signal options below */
+};
+
 struct	netbsd32_sigaction {
 	netbsd32_voidp netbsd32_sa_handler;	/* signal handler */
 	sigset_t netbsd32_sa_mask;		/* signal mask to apply */
