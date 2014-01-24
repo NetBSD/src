@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_start.S,v 1.9 2013/12/24 21:59:59 matt Exp $	*/
+/*	$NetBSD: bcm53xx_start.S,v 1.10 2014/01/24 04:15:33 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,7 +45,7 @@
 #define	CONADDR		0x18000300
 #endif
 
-RCSID("$NetBSD: bcm53xx_start.S,v 1.9 2013/12/24 21:59:59 matt Exp $")
+RCSID("$NetBSD: bcm53xx_start.S,v 1.10 2014/01/24 04:15:33 matt Exp $")
 
 #undef VERBOSE_INIT_ARM
 #define VERBOSE_INIT_ARM
@@ -76,6 +76,7 @@ _C_LABEL(bcm53xx_start):
 	 */
 	movw	r4, #:lower16:(uboot_args-.LPIC0)
 	movt	r4, #:upper16:(uboot_args-.LPIC0)
+	bic	r4, r4, #0xf0000000
 	add	r4, r4, pc
 	stmia	r4, {r0-r3}
 .LPIC0:
