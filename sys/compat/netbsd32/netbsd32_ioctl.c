@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.68 2014/01/24 10:41:07 manu Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.69 2014/01/24 12:16:10 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.68 2014/01/24 10:41:07 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.69 2014/01/24 12:16:10 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -335,6 +335,18 @@ netbsd32_to_wsdisplay_cursor(struct netbsd32_wsdisplay_cursor *c32,
 }
 
 static inline void
+netbsd32_to_wsdisplay_cmap(struct netbsd32_wsdisplay_cmap *c32,
+					       struct wsdisplay_cmap *c,
+					       u_long cmd)
+{
+	c->index = c32->index;
+	c->count = c32->count;
+	c->red   = NETBSD32PTR64(c32->red);
+	c->green = NETBSD32PTR64(c32->green);
+	c->blue  = NETBSD32PTR64(c32->blue);
+}
+
+static inline void
 netbsd32_to_clockctl_settimeofday(
     const struct netbsd32_clockctl_settimeofday *s32p,
     struct clockctl_settimeofday *p,
@@ -590,6 +602,18 @@ netbsd32_from_wsdisplay_cursor(struct wsdisplay_cursor *c,
 	NETBSD32PTR32(c32->cmap.blue, c->cmap.blue);
 	NETBSD32PTR32(c32->image, c->image);
 	NETBSD32PTR32(c32->mask, c->mask);
+}
+
+static inline void
+netbsd32_from_wsdisplay_cmap(struct wsdisplay_cmap *c,
+					   struct netbsd32_wsdisplay_cmap *c32,
+					   u_long cmd)
+{
+	c32->index = c->index;
+	c32->count = c->count;
+	NETBSD32PTR32(c32->red, c->red);
+	NETBSD32PTR32(c32->green, c->green);
+	NETBSD32PTR32(c32->blue, c->blue);
 }
 
 static inline void
@@ -1010,6 +1034,11 @@ netbsd32_ioctl(struct lwp *l, const struct netbsd32_ioctl_args *uap, register_t 
 		IOCTL_STRUCT_CONV_TO(WSDISPLAYIO_GCURSOR, wsdisplay_cursor);
 	case WSDISPLAYIO_SCURSOR32:
 		IOCTL_STRUCT_CONV_TO(WSDISPLAYIO_SCURSOR, wsdisplay_cursor);
+
+	case WSDISPLAYIO_GETCMAP32:
+		IOCTL_STRUCT_CONV_TO(WSDISPLAYIO_GETCMAP, wsdisplay_cmap);
+	case WSDISPLAYIO_PUTCMAP32:
+		IOCTL_STRUCT_CONV_TO(WSDISPLAYIO_PUTCMAP, wsdisplay_cmap);
 
 	case SIOCS8021132:
 		IOCTL_STRUCT_CONV_TO(SIOCS80211, ieee80211req);
