@@ -1,4 +1,4 @@
-/*	$NetBSD: vndcompress.c,v 1.22 2014/01/22 06:18:00 riastradh Exp $	*/
+/*	$NetBSD: vndcompress.c,v 1.23 2014/01/24 17:30:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: vndcompress.c,v 1.22 2014/01/22 06:18:00 riastradh Exp $");
+__RCSID("$NetBSD: vndcompress.c,v 1.23 2014/01/24 17:30:18 christos Exp $");
 
 #include <sys/endian.h>
 
@@ -598,11 +598,11 @@ compress_restart(struct compress_state *S)
 	if (!offtab_prepare_get(&S->offtab, 0))
 		return false;
 	const uint64_t first_offset = offtab_get(&S->offtab, 0);
-	if (first_offset != (sizeof(struct cloop2_header) +
-		(S->n_offsets * sizeof(uint64_t)))) {
+	const uint64_t expected = sizeof(struct cloop2_header) + 
+	    ((uint64_t)S->n_offsets * sizeof(uint64_t));
+	if (first_offset != expected) {
 		warnx("first offset is not 0x%"PRIx64": 0x%"PRIx64,
-		    ((uint64_t)S->n_offsets * sizeof(uint64_t)),
-		    first_offset);
+		    expected, first_offset);
 		return false;
 	}
 
