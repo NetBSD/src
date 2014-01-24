@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.11 2013/12/26 00:19:07 joerg Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.12 2014/01/24 05:14:11 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -227,16 +227,51 @@ xputc:
 
 	mov	r2, #TIMO
 	ldr	r3, .Luart0
-1:	ldrb	r1, [r3, #(COM_LSR*COM_MULT)]
+1:
+#if COM_MULT == 1
+	ldrb	r1, [r3, #(COM_LSR*COM_MULT)]
+#else
+#if COM_MULT == 2
+	ldrh	r1, [r3, #(COM_LSR*COM_MULT)]
+#elif COM_MULT == 4
+	ldr	r1, [r3, #(COM_LSR*COM_MULT)]
+#endif
+#ifdef COM_BSWAP
+	lsr	r1, r1, #(COM_MULT-1)*8
+#endif
+#endif
 	tst	r1, #LSR_TXRDY
 	bne	2f
 	subs	r2, r2, #1
 	bne	1b
 2:
+#if COM_MULT == 1
 	strb	r0, [r3, #COM_DATA]
+#else
+#ifdef COM_BSWAP
+	lsl	r0, r0, #(COM_MULT-1)*8
+#endif
+#if COM_MULT == 2
+	strh	r0, [r3, #COM_DATA]
+#else
+	str	r0, [r3, #COM_DATA]
+#endif
+#endif
 
 	mov	r2, #TIMO
-3:	ldrb	r1, [r3, #(COM_LSR*COM_MULT)]
+3:	
+#if COM_MULT == 1
+	ldrb	r1, [r3, #(COM_LSR*COM_MULT)]
+#else
+#if COM_MULT == 2
+	ldrh	r1, [r3, #(COM_LSR*COM_MULT)]
+#elif COM_MULT == 4
+	ldr	r1, [r3, #(COM_LSR*COM_MULT)]
+#endif
+#ifdef COM_BSWAP
+	lsr	r1, r1, #(COM_MULT-1)*8
+#endif
+#endif
 	tst	r1, #LSR_TSRE
 	bne	4f
 	subs	r2, r2, #1
