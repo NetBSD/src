@@ -1,7 +1,11 @@
-#	$NetBSD: files.netwalker,v 1.3 2012/04/17 10:19:57 bsh Exp $
+#	$NetBSD: files.netwalker,v 1.4 2014/01/24 02:06:03 hkenken Exp $
 #
 # Sharp Netwalker
 #
+
+file   arch/arm/arm32/arm32_boot.c
+file   arch/arm/arm32/arm32_kvminit.c
+file   arch/arm/arm32/arm32_reboot.c
 
 file	arch/evbarm/netwalker/netwalker_machdep.c
 
