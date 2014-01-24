@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.31 2014/01/23 17:44:13 skrll Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.32 2014/01/24 08:26:39 skrll Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -197,7 +197,7 @@ vfp_fpscr_handler(u_int address, u_int insn, trapframe_t *frame, int fault_code)
 
 	if (__predict_false(!vfp_used_p())) {
 		pcb->pcb_vfp.vfp_fpscr =
-		    (VFP_FPSCR_DN | VFP_FPSCR_FZ);	/* Runfast */
+		    (VFP_FPSCR_DN | VFP_FPSCR_FZ | VFP_FPSCR_RN); /* Runfast */
 	}
 #endif
 
@@ -500,8 +500,8 @@ vfp_state_load(lwp_t *l, u_int flags)
 	 */
 	if (__predict_false((flags & PCU_LOADED) == 0)) {
 		vfpevent_use.ev_count++;
-		pcb->pcb_vfp.vfp_fpscr =	/* Runfast */
-		    (VFP_FPSCR_DN | VFP_FPSCR_FZ | VFP_FPSCR_RN);
+		pcb->pcb_vfp.vfp_fpscr =
+		    (VFP_FPSCR_DN | VFP_FPSCR_FZ | VFP_FPSCR_RN); /* Runfast */
 	} else {
 		vfpevent_reuse.ev_count++;
 	}
