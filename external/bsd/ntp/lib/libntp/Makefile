@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2014/01/23 14:06:28 joerg Exp $
+#	$NetBSD: Makefile,v 1.11 2014/01/24 23:42:31 matt Exp $
 
 LIBISPRIVATE=yes
 
@@ -89,9 +89,9 @@ COPTS.msyslog.c+=	-Wno-error=format-nonliteral
 #
 .if ${MKREPRO} == "yes"
 IMPORTDATE_FILE := ${.PARSEDIR}/../../importdate
-MKREPRO_DATE != ${TOOL_AWK} '{printf "%3s %2d %4d", $2, $3, $6}' \
+MKREPRO_DATE != ${TOOL_AWK} '{printf "%3s %2d %4d", $$2, $$3, $$6}' \
 	<${IMPORTDATE_FILE} # "Mmm DD YYYY"
-MKREPRO_TIME != ${TOOL_AWK} '{print $4}' \
+MKREPRO_TIME != ${TOOL_AWK} '{print $$4}' \
 	<${IMPORTDATE_FILE} # "HH:MM:SS"
 CPPFLAGS.ntp_calendar.c += -DMKREPRO_DATE=\"${MKREPRO_DATE:Q}\"
 CPPFLAGS.ntp_calendar.c += -DMKREPRO_TIME=\"${MKREPRO_TIME:Q}\"
