@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.89 2014/01/17 12:39:47 drochner Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.90 2014/01/24 17:26:18 christos Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -57,7 +57,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.89 2014/01/17 12:39:47 drochner Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.90 2014/01/24 17:26:18 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -199,18 +199,14 @@ debugprintf(const char *msg, res_state res, ...)
 #define BOUNDED_INCR(x) \
 	do { \
 		cp += (x); \
-		if (cp > eom) { \
-			h_errno = NO_RECOVERY; \
-			return NULL; \
-		} \
+		if (cp > eom) \
+			goto no_recovery; \
 	} while (/*CONSTCOND*/0)
 
 #define BOUNDS_CHECK(ptr, count) \
 	do { \
-		if ((ptr) + (count) > eom) { \
-			h_errno = NO_RECOVERY; \
-			return NULL; \
-		} \
+		if ((ptr) + (count) > eom) \
+			goto no_recovery; \
 	} while (/*CONSTCOND*/0)
 
 static struct hostent *
@@ -503,6 +499,7 @@ success:
 	hent->h_aliases = (void *)bp;
 	memcpy(bp, aliases, qlen);
 	free(aliases);
+	aliases = NULL;
 
 	bp += qlen;
 	n = (int)(hap - addr_ptrs);
