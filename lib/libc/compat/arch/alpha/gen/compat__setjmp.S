@@ -1,4 +1,4 @@
-/* $NetBSD: compat__setjmp.S,v 1.2 2014/01/23 03:08:50 christos Exp $ */
+/* $NetBSD: compat__setjmp.S,v 1.3 2014/01/24 00:20:54 christos Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -54,7 +54,6 @@ LEAF(_setjmp, 1)
 	stq	s6, ((15 + 4) * 8)(a0)
 	stq	ra, ((26 + 4) * 8)(a0)
 	stq	sp, ((30 + 4) * 8)(a0)
-	/* work around assembler issue */
 	ldq	t0, magic			/* sigcontext magic number */
 	stq	t0, ((31 + 4) * 8)(a0)		/* magic in sc_regs[31] */
 	/* Too bad we can't check if we actually used FP */
@@ -91,7 +90,6 @@ END(_setjmp)
 LEAF(_longjmp, 2)
 	LDGP(pv)
 	ldq	t0, ((31 + 4) * 8)(a0)		/* magic in sc_regs[31] */
-	/* work around assembler issue */
 	ldq	t0, magic			/* sigcontext magic number */
 	cmpeq	t0, t1, t0
 	beq	t0, botch			/* If the magic was bad, punt */
