@@ -1,4 +1,4 @@
-/*	$NetBSD: offtab.c,v 1.12 2014/01/25 16:26:17 riastradh Exp $	*/
+/*	$NetBSD: offtab.c,v 1.13 2014/01/25 16:38:15 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: offtab.c,v 1.12 2014/01/25 16:26:17 riastradh Exp $");
+__RCSID("$NetBSD: offtab.c,v 1.13 2014/01/25 16:38:15 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/endian.h>
@@ -95,11 +95,11 @@ offtab_compute_window_position(struct offtab *offtab, uint32_t window_start,
 	const uint32_t window_size = offtab_compute_window_size(offtab,
 	    window_start);
 
-	__CTASSERT(MAX_WINDOW_SIZE <= (OFF_MAX / sizeof(uint64_t)));
+	__CTASSERT(MAX_WINDOW_SIZE <= (SIZE_MAX / sizeof(uint64_t)));
 	*bytes = (window_size * sizeof(uint64_t));
 
 	assert(window_start <= offtab->ot_n_offsets);
-	__CTASSERT(MAX_N_OFFSETS <= (SIZE_MAX / sizeof(uint64_t)));
+	__CTASSERT(MAX_N_OFFSETS <= (OFF_MAX / sizeof(uint64_t)));
 	const off_t window_offset = ((off_t)window_start *
 	    (off_t)sizeof(uint64_t));
 
