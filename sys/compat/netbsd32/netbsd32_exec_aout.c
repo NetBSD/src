@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec_aout.c,v 1.25 2010/04/23 15:19:20 rmind Exp $	*/
+/*	$NetBSD: netbsd32_exec_aout.c,v 1.26 2014/01/25 05:15:43 christos Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_aout.c,v 1.25 2010/04/23 15:19:20 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_aout.c,v 1.26 2014/01/25 05:15:43 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,6 +113,7 @@ exec_netbsd32_makecmds(struct lwp *l, struct exec_package *epp)
 
 	/* this is already needed by setup_stack() */
 	epp->ep_flags |= EXEC_32;
+	epp->ep_flags &= ~EXEC_TOPDOWN_VM;
 
 	switch (midmag) {
 	case (NETBSD32_MID_MACHINE << 16) | ZMAGIC:
