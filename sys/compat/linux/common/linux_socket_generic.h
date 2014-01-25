@@ -1,11 +1,11 @@
-/*	$NetBSD: linux_socket.h,v 1.5 2014/01/25 13:49:27 njoly Exp $	*/
+/*	$NetBSD: linux_socket_generic.h,v 1.1 2014/01/25 13:49:27 njoly Exp $	*/
+
+#ifndef _LINUX_SOCKET_GENERIC_H
+#define _LINUX_SOCKET_GENERIC_H
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Eric Haszlakiewicz.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,64 +29,53 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ALPHA_LINUX_SOCKET_H
-#define _ALPHA_LINUX_SOCKET_H
+/* From <asm-generic/socket.h> */
 
-/*
- * Option levels for [gs]etsockopt(2).  Only SOL_SOCKET is different,
- * the rest matches IPPROTO_XXX
- */
+#define LINUX_SOL_SOCKET	1
 
-#define LINUX_SOL_SOCKET	0xffff
-
-/*
- * Options for [gs]etsockopt(2), socket level.
- */
-
-#define LINUX_SO_DEBUG		0x0001
-#define LINUX_SO_REUSEADDR	0x0004
-#define LINUX_SO_KEEPALIVE	0x0008
-#define LINUX_SO_DONTROUTE	0x0010
-#define LINUX_SO_BROADCAST	0x0020
-#define LINUX_SO_LINGER		0x0080
-#define LINUX_SO_OOBINLINE	0x0100
-/* #define LINUX_SO_REUSEPORT	0x0200 */
-#define LINUX_SO_SNDBUF		0x1001
-#define LINUX_SO_RCVBUF		0x1002
-#define LINUX_SO_ERROR		0x1007
-#define LINUX_SO_TYPE		0x1008
-#define LINUX_SO_SNDBUFFORCE	0x100a
-#define LINUX_SO_RCVBUFFORCE	0x100b
-#define LINUX_SO_RCVLOWAT	0x1010
-#define LINUX_SO_SNDLOWAT	0x1011
-#define LINUX_SO_RCVTIMEO	0x1012
-#define LINUX_SO_SNDTIMEO	0x1013
-#define LINUX_SO_ACCEPTCONN	0x1014
-#define LINUX_SO_PROTOCOL	0x1028
-#define LINUX_SO_DOMAIN		0x1029
-
+#define LINUX_SO_DEBUG		1
+#define LINUX_SO_REUSEADDR	2
+#define LINUX_SO_TYPE		3
+#define LINUX_SO_ERROR		4
+#define LINUX_SO_DONTROUTE	5
+#define LINUX_SO_BROADCAST	6
+#define LINUX_SO_SNDBUF		7
+#define LINUX_SO_RCVBUF		8
+#define LINUX_SO_KEEPALIVE	9
+#define LINUX_SO_OOBINLINE	10
 #define LINUX_SO_NO_CHECK	11
 #define LINUX_SO_PRIORITY	12
+#define LINUX_SO_LINGER		13
 #define LINUX_SO_BSDCOMPAT	14
-#define LINUX_SO_PASSCRED	17
-#define LINUX_SO_PEERCRED	18
-#define LINUX_SO_SECURITY_AUTHENTICATION	19
-#define LINUX_SO_SECURITY_ENCRYPTION_TRANSPORT	20
-#define LINUX_SO_SECURITY_ENCRYPTION_NETWORK	21
+/* #define LINUX_SO_REUSEPORT 15 */
+#define LINUX_SO_PASSCRED	16
+#define LINUX_SO_PEERCRED	17
+#define LINUX_SO_RCVLOWAT	18
+#define LINUX_SO_SNDLOWAT	19
+#define LINUX_SO_RCVTIMEO	20
+#define LINUX_SO_SNDTIMEO	21
+#define LINUX_SO_SECURITY_AUTHENTICATION	22
+#define LINUX_SO_SECURITY_ENCRYPTION_TRANSPORT	23
+#define LINUX_SO_SECURITY_ENCRYPTION_NETWORK	24
 #define LINUX_SO_BINDTODEVICE	25
 #define LINUX_SO_ATTACH_FILTER	26
 #define LINUX_SO_DETACH_FILTER	27
 #define LINUX_SO_GET_FILTER	LINUX_SO_ATTACH_FILTER
 #define LINUX_SO_PEERNAME	28
 #define LINUX_SO_TIMESTAMP	29
-#define LINUX_SO_PEERSEC	30
+#define LINUX_SO_ACCEPTCONN	30
+#define LINUX_SO_PEERSEC	31
+#define LINUX_SO_SNDBUFFORCE	32
+#define LINUX_SO_RCVBUFFORCE	33
 #define LINUX_SO_PASSSEC	34
 #define LINUX_SO_TIMESTAMPNS	35
 #define LINUX_SO_MARK		36
 #define LINUX_SO_TIMESTAMPING	37
+#define LINUX_SO_PROTOCOL	38
+#define LINUX_SO_DOMAIN		39
 #define LINUX_SO_RXQ_OVFL	40
 #define LINUX_SO_WIFI_STATUS	41
 #define LINUX_SO_PEEK_OFF	42
 #define LINUX_SO_NOFCS		43
 
-#endif /* !_ALPHA_LINUX_SOCKET_H */
+#endif /* !_LINUX_SOCKET_GENERIC_H */
