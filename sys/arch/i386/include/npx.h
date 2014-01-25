@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.h,v 1.29 2014/01/19 23:27:30 dsl Exp $	*/
+/*	$NetBSD: npx.h,v 1.30 2014/01/25 19:10:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -91,7 +91,10 @@ struct save87 {
 	uint8_t		s87_pad[8 * 2 - 2 * 4];	/* bogus historical padding */
 #endif
 };
+#ifndef __lint__
+// Has different packing semantics, adding packed to save87 works
 __CTASSERT(sizeof (struct save87) == 108 + 16);
+#endif
 
 /* FPU regsters in the extended save format. */
 struct fpaccxmm {
@@ -122,7 +125,10 @@ struct fxsave {
 	uint32_t sv_ex_sw;		/* saved SW from last exception */
 	uint32_t sv_ex_tw;		/* saved TW from last exception */
 } __aligned(16);
+#ifndef __lint__
+// lint does not know aligned
 __CTASSERT(sizeof (struct fxsave) == 512 + 16);
+#endif
 
 
 union savefpu {
