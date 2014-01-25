@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.147 2014/01/25 17:21:49 christos Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.148 2014/01/25 17:30:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.147 2014/01/25 17:21:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.148 2014/01/25 17:30:45 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -342,7 +342,7 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 		 * and ld.so did not turn it on. We take care of this on amd64
 		 * in compat32.
 		 */
-		SCARG(&ua, prot) |= PROT_EXEC;
+		prot |= PROT_EXEC;
 #endif
 	}
 	if ((flags & (MAP_SHARED|MAP_PRIVATE)) == (MAP_SHARED|MAP_PRIVATE))
