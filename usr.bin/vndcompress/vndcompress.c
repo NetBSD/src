@@ -1,4 +1,4 @@
-/*	$NetBSD: vndcompress.c,v 1.23 2014/01/24 17:30:18 christos Exp $	*/
+/*	$NetBSD: vndcompress.c,v 1.24 2014/01/25 15:31:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: vndcompress.c,v 1.23 2014/01/24 17:30:18 christos Exp $");
+__RCSID("$NetBSD: vndcompress.c,v 1.24 2014/01/25 15:31:06 riastradh Exp $");
 
 #include <sys/endian.h>
 
@@ -307,10 +307,12 @@ info_signal_handler(int signo __unused)
 	const uint64_t nread = ((uint64_t)S->blkno * (uint64_t)S->blocksize);
 
 	assert(S->n_blocks > 0);
+	__CTASSERT(CLOOP2_OFFSET_TABLE_OFFSET <=
+	    (UINT64_MAX / sizeof(uint64_t)));
 	__CTASSERT(MAX_N_BLOCKS <= ((UINT64_MAX / sizeof(uint64_t)) -
 		CLOOP2_OFFSET_TABLE_OFFSET));
 	const uint64_t nwritten = (S->offset <= (CLOOP2_OFFSET_TABLE_OFFSET +
-		(S->n_blocks * sizeof(uint64_t)))?
+		((uint64_t)S->n_blocks * sizeof(uint64_t)))?
 	    0 : S->offset);
 
 	/* snprintf_ss can't do floating-point, so do fixed-point instead.  */
@@ -533,7 +535,7 @@ compress_init(int argc, char **argv, const struct options *O,
 	/* Start at the beginning of the image.  */
 	S->blkno = 0;
 	S->offset = (sizeof(struct cloop2_header) +
-	    (S->n_offsets * sizeof(uint64_t)));
+	    ((uint64_t)S->n_offsets * sizeof(uint64_t)));
 	S->n_checkpointed_blocks = 0;
 
 	/* Good to go and ready for interruption by a signal.  */

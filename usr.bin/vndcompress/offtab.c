@@ -1,4 +1,4 @@
-/*	$NetBSD: offtab.c,v 1.10 2014/01/23 14:17:05 joerg Exp $	*/
+/*	$NetBSD: offtab.c,v 1.11 2014/01/25 15:31:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: offtab.c,v 1.10 2014/01/23 14:17:05 joerg Exp $");
+__RCSID("$NetBSD: offtab.c,v 1.11 2014/01/25 15:31:06 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/endian.h>
@@ -104,28 +104,27 @@ offtab_read_window(struct offtab *offtab, uint32_t blkno, int read_flags)
 	__CTASSERT(MAX_WINDOW_SIZE <= (SIZE_MAX / sizeof(uint64_t)));
 	__CTASSERT(MAX_N_OFFSETS <= (OFF_MAX / sizeof(uint64_t)));
 	assert(window_start < offtab->ot_n_offsets);
-	assert(offtab->ot_fdpos <=
-	    (OFF_MAX - (off_t)(window_start * sizeof(uint64_t))));
+	const off_t window_offset = ((off_t)window_start *
+	    (off_t)sizeof(uint64_t));
+	assert(offtab->ot_fdpos <= (OFF_MAX - window_offset));
+	const off_t window_pos = (offtab->ot_fdpos + window_offset);
 	assert(ISSET(read_flags, OFFTAB_READ_SEEK) ||
 	    (lseek(offtab->ot_fd, 0, SEEK_CUR) == offtab->ot_fdpos) ||
 	    ((lseek(offtab->ot_fd, 0, SEEK_CUR) == -1) && (errno == ESPIPE)));
 	const size_t n_req = (window_size * sizeof(uint64_t));
 	const ssize_t n_read = (ISSET(read_flags, OFFTAB_READ_SEEK)
-	    ? pread_block(offtab->ot_fd, offtab->ot_window, n_req,
-		(offtab->ot_fdpos + (window_start * sizeof(uint64_t))))
+	    ? pread_block(offtab->ot_fd, offtab->ot_window, n_req, window_pos)
 	    : read_block(offtab->ot_fd, offtab->ot_window, n_req));
 	if (n_read == -1) {
 		(*offtab->ot_report)("read offset table at %"PRIuMAX,
-		    (uintmax_t)(offtab->ot_fdpos +
-			(window_start * sizeof(uint64_t))));
+		    (uintmax_t)window_pos);
 		return false;
 	}
 	assert(n_read >= 0);
 	if ((size_t)n_read != (window_size * sizeof(uint64_t))) {
 		(*offtab->ot_reportx)("partial read of offset table"
 		    " at %"PRIuMAX": %zu != %zu",
-		    (uintmax_t)(offtab->ot_fdpos +
-			(window_start * sizeof(uint64_t))),
+		    (uintmax_t)window_pos,
 		    (size_t)n_read,
 		    (size_t)(window_size * sizeof(uint64_t)));
 		return false;
@@ -160,12 +159,13 @@ offtab_write_window(struct offtab *offtab)
 	__CTASSERT(MAX_WINDOW_SIZE <= (SIZE_MAX / sizeof(uint64_t)));
 	__CTASSERT(MAX_N_OFFSETS <= (OFF_MAX / sizeof(uint64_t)));
 	assert(offtab->ot_window_start < offtab->ot_n_offsets);
-	assert(offtab->ot_fdpos <=
-	    (OFF_MAX - (off_t)(offtab->ot_window_start * sizeof(uint64_t))));
+	const off_t window_offset = ((off_t)offtab->ot_window_start *
+	    (off_t)sizeof(uint64_t));
+	assert(offtab->ot_fdpos <= (OFF_MAX - window_offset));
+	const off_t window_pos = (offtab->ot_fdpos + window_offset);
 	const ssize_t n_written = pwrite(offtab->ot_fd, offtab->ot_window,
 	    (window_size * sizeof(uint64_t)),
-	    (offtab->ot_fdpos +
-		(offtab->ot_window_start * sizeof(uint64_t))));
+	    window_pos);
 	if (n_written == -1)
 		err_ss(1, "write initial offset table");
 	assert(n_written >= 0);
@@ -283,10 +283,10 @@ offtab_reset_read(struct offtab *offtab,
 
 	if (offtab->ot_window_size < offtab->ot_n_offsets) {
 		__CTASSERT(MAX_N_OFFSETS <= (OFF_MAX / sizeof(uint64_t)));
-		assert(offtab->ot_fdpos <= (OFF_MAX -
-			(off_t)(offtab->ot_n_offsets * sizeof(uint64_t))));
-		const off_t first_offset = (offtab->ot_fdpos +
-		    (offtab->ot_n_offsets * sizeof(uint64_t)));
+		const off_t offtab_bytes = ((off_t)offtab->ot_n_offsets *
+		    (off_t)sizeof(uint64_t));
+		assert(offtab->ot_fdpos <= (OFF_MAX - offtab_bytes));
+		const off_t first_offset = (offtab->ot_fdpos + offtab_bytes);
 		if (lseek(offtab->ot_fd, first_offset, SEEK_SET) == -1) {
 			(*offtab->ot_report)("lseek to first offset 0x%"PRIx64,
 			    first_offset);
@@ -371,13 +371,15 @@ offtab_reset_write(struct offtab *offtab)
 	}
 
 	offtab->ot_window_start = 0;
-	__CTASSERT(MAX_N_OFFSETS <= (OFF_MAX / sizeof(uint64_t)));
+	__CTASSERT(MAX_N_OFFSETS <=
+	    (MIN(OFF_MAX, UINT64_MAX) / sizeof(uint64_t)));
+	const off_t offtab_bytes = ((off_t)offtab->ot_n_offsets *
+	    sizeof(uint64_t));
 	assert(offtab->ot_fdpos <=
-	    (OFF_MAX - (off_t)(offtab->ot_n_offsets * sizeof(uint64_t))));
-	const uint64_t first_offset = (offtab->ot_fdpos +
-	    (offtab->ot_n_offsets * sizeof(uint64_t)));
-	assert(first_offset <= OFF_MAX);
-	offtab->ot_window[0] = htobe64(first_offset);
+	    ((off_t)MIN(OFF_MAX, UINT64_MAX) - offtab_bytes));
+	const off_t first_offset = (offtab->ot_fdpos + offtab_bytes);
+	assert(first_offset <= (off_t)MIN(OFF_MAX, UINT64_MAX));
+	offtab->ot_window[0] = htobe64((uint64_t)first_offset);
 	offtab_write_window(offtab);
 
 	if (lseek(offtab->ot_fd, first_offset, SEEK_SET) == -1)
@@ -412,11 +414,11 @@ offtab_checkpoint(struct offtab *offtab, uint32_t n_offsets, int flags)
 
 	if (ISSET(flags, OFFTAB_CHECKPOINT_SYNC)) {
 		__CTASSERT(MAX_N_OFFSETS <= (OFF_MAX / sizeof(uint64_t)));
-		assert(offtab->ot_fdpos
-		    <= (OFF_MAX - (off_t)(n_offsets * sizeof(uint64_t))));
+		const off_t sync_bytes = ((off_t)n_offsets *
+		    (off_t)sizeof(uint64_t));
+		assert(offtab->ot_fdpos <= (OFF_MAX - sync_bytes));
 		if (fsync_range(offtab->ot_fd, (FFILESYNC | FDISKSYNC),
-			offtab->ot_fdpos,
-			(offtab->ot_fdpos + (n_offsets * sizeof(uint64_t))))
+			offtab->ot_fdpos, (offtab->ot_fdpos + sync_bytes))
 		    == -1)
 			warn_ss("fsync of offset table failed");
 	}

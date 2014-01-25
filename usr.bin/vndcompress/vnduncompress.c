@@ -1,4 +1,4 @@
-/*	$NetBSD: vnduncompress.c,v 1.10 2014/01/22 06:18:00 riastradh Exp $	*/
+/*	$NetBSD: vnduncompress.c,v 1.11 2014/01/25 15:31:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: vnduncompress.c,v 1.10 2014/01/22 06:18:00 riastradh Exp $");
+__RCSID("$NetBSD: vnduncompress.c,v 1.11 2014/01/25 15:31:06 riastradh Exp $");
 
 #include <sys/endian.h>
 
@@ -158,7 +158,8 @@ vnduncompress(int argc, char **argv, const struct options *O __unused)
 	__CTASSERT(sizeof(header) <=
 	    (OFF_MAX - (MAX_N_OFFSETS * sizeof(uint64_t))));
 	__CTASSERT(OFF_MAX <= UINT64_MAX);
-	uint64_t offset = (sizeof(header) + (n_offsets * sizeof(uint64_t)));
+	uint64_t offset = (sizeof(header) +
+	    ((uint64_t)n_offsets * sizeof(uint64_t)));
 	uint32_t blkno;
 	(void)offtab_prepare_get(&offtab, 0);
 	uint64_t last = offtab_get(&offtab, 0);
