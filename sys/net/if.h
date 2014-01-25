@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.159 2013/10/28 21:38:01 christos Exp $	*/
+/*	$NetBSD: if.h,v 1.160 2014/01/25 21:10:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -609,6 +609,7 @@ struct	ifreq {
 #define	ifreq_getbroadaddr	ifreq_getaddr
 
 static inline const struct sockaddr *
+/*ARGSUSED*/
 ifreq_getaddr(u_long cmd, const struct ifreq *ifr)
 {
 	return &ifr->ifr_addr;
