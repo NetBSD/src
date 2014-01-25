@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.86 2013/01/05 23:34:19 christos Exp $	*/
+/*	$NetBSD: ums.c,v 1.87 2014/01/25 00:03:14 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.86 2013/01/05 23:34:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.87 2014/01/25 00:03:14 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -458,6 +458,7 @@ Static int
 ums_enable(void *v)
 {
 	struct ums_softc *sc = v;
+	int error;
 
 	DPRINTFN(1,("ums_enable: sc=%p\n", sc));
 
@@ -470,7 +471,11 @@ ums_enable(void *v)
 	sc->sc_enabled = 1;
 	sc->sc_buttons = 0;
 
-	return (uhidev_open(&sc->sc_hdev));
+	error = uhidev_open(&sc->sc_hdev);
+	if (error)
+		sc->sc_enabled = 0;
+
+	return error;
 }
 
 Static void
@@ -486,8 +491,10 @@ ums_disable(void *v)
 	}
 #endif
 
-	sc->sc_enabled = 0;
-	uhidev_close(&sc->sc_hdev);
+	if (sc->sc_enabled) {
+		sc->sc_enabled = 0;
+		uhidev_close(&sc->sc_hdev);
+	}
 }
 
 Static int
