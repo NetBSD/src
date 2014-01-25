@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.181 2013/07/18 13:43:32 matt Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.182 2014/01/25 02:27:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.181 2013/07/18 13:43:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.182 2014/01/25 02:27:41 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.181 2013/07/18 13:43:32 matt E
 #include <sys/sockio.h>
 #include <sys/socketvar.h>
 #include <sys/mbuf.h>
+#include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/signalvar.h>
@@ -227,12 +228,25 @@ netbsd32_open(struct lwp *l, const struct netbsd32_open_args *uap, register_t *r
 		syscallarg(mode_t) mode;
 	} */
 	struct sys_open_args ua;
+	struct pathbuf *pb;
+	int error, fd;
 
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TO64_UAP(flags);
 	NETBSD32TO64_UAP(mode);
-
-	return (sys_open(l, &ua, retval));
+        
+	if (SCARG(&ua, path) != NULL) {
+		error = pathbuf_copyin(SCARG(&ua, path), &pb);
+		if (error) 
+			return error; 
+	} else
+		pb = pathbuf_create(".");
+                
+        error = do_open(l, NULL, pb, SCARG(&ua, flags), SCARG(&ua, mode), &fd);
+        pathbuf_destroy(pb);
+	if (error == 0)
+		*retval = fd;
+        return error;
 }
 
 int
@@ -1509,9 +1523,24 @@ netbsd32_mmap(struct lwp *l, const struct netbsd32_mmap_args *uap, register_t *r
 	NETBSD32TOX_UAP(len, size_t);
 	NETBSD32TO64_UAP(prot);
 	NETBSD32TO64_UAP(flags);
+#ifdef __x86_64__
+	/*
+	 * Ancient kernel on x86 did not obey PROT_EXEC on i386 at least
+	 * and ld.so did not turn it on!
+	 */
+	if (SCARG(&ua, flags) & MAP_COPY)
+		SCARG(&ua, prot) |= PROT_EXEC;
+#endif
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TOX_UAP(PAD, long);
 	NETBSD32TOX_UAP(pos, off_t);
+printf("mmap(addr=0x%lx, len=0x%lx, prot=0x%lx, flags=0x%lx, fd=%ld, pos=0x%lx);\n",
+	(long)SCARG(&ua, addr),
+	(long)SCARG(&ua, len),
+	(long)SCARG(&ua, prot),
+	(long)SCARG(&ua, flags),
+	(long)SCARG(&ua, fd),
+	(long)SCARG(&ua, pos));
 	error = sys_mmap(l, &ua, retval);
 	if ((u_long)*retval > (u_long)UINT_MAX) {
 		printf("netbsd32_mmap: retval out of range: 0x%lx",
