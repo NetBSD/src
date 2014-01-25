@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.48 2013/09/18 13:31:39 martin Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.49 2014/01/25 15:16:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -102,8 +102,10 @@
  * The address to which unspecified mapping requests default
  */
 #define __USE_TOPDOWN_VM
-#define VM_DEFAULT_ADDRESS(da, sz) \
-	trunc_page(VM_MAXUSER_ADDRESS - MAXSSIZ - (sz))
+#define VM_DEFAULT_ADDRESS_TOPDOWN(da, sz) \
+    trunc_page(VM_MAXUSER_ADDRESS - MAXSSIZ - (sz))
+#define VM_DEFAULT_ADDRESS_BOTTOMUP(da, sz) \
+    round_page((vaddr_t)(da) + (vsize_t)maxdmap)
 
 #define	USRIOSIZE		(8 * VAX_NPTEPG)	/* 512MB */
 #define	VM_PHYS_SIZE		(USRIOSIZE*VAX_NBPG)

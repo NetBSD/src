@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.51 2014/01/22 20:49:19 christos Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.52 2014/01/25 15:16:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -178,10 +178,16 @@
  * The address to which unspecified mapping requests default
  */
 #define __USE_TOPDOWN_VM
-#define VM_DEFAULT_ADDRESS(da, sz) \
-	trunc_page(USRSTACK - MAXSSIZ - (sz))
-#define VM_DEFAULT_ADDRESS32(da, sz) \
-	trunc_page(USRSTACK32 - MAXSSIZ32 - (sz))
+
+#define VM_DEFAULT_ADDRESS_TOPDOWN(da, sz) \
+    trunc_page(USRSTACK - MAXSSIZ - (sz))
+#define VM_DEFAULT_ADDRESS_BOTTOMUP(da, sz) \
+    round_page((vaddr_t)(da) + (vsize_t)maxdmap)
+
+#define VM_DEFAULT_ADDRESS32_TOPDOWN(da, sz) \
+    trunc_page(USRSTACK32 - MAXSSIZ32 - (sz))
+#define VM_DEFAULT_ADDRESS32_BOTTOMUP(da, sz) \
+    round_page((vaddr_t)(da) + (vsize_t)MAXDSIZ32)
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
