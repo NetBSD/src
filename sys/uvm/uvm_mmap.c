@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.145 2013/09/11 18:26:14 martin Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.146 2014/01/25 05:14:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.145 2013/09/11 18:26:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.146 2014/01/25 05:14:03 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -1253,5 +1253,8 @@ vaddr_t
 uvm_default_mapaddr(struct proc *p, vaddr_t base, vsize_t sz)
 {
 
-	return VM_DEFAULT_ADDRESS(base, sz);
+	if (p->p_vmspace->vm_map.flags & VM_MAP_TOPDOWN)
+		return VM_DEFAULT_ADDRESS_TOPDOWN(base, sz);
+	else
+		return VM_DEFAULT_ADDRESS_BOTTOMUP(base, sz);
 }

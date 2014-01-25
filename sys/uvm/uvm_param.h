@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_param.h,v 1.31 2012/03/19 00:17:08 uebayasi Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.32 2014/01/25 05:14:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -225,6 +225,15 @@ extern const int *const uvmexp_pageshift;
  * NOT defined, then the port can offer topdown as an option, but it
  * MUST define the VM_DEFAULT_ADDRESS macro itself.
  */
+#ifndef VM_DEFAULT_ADDRESS_BOTTOMUP
+#define VM_DEFAULT_ADDRESS_BOTTOMUP(da, sz) \
+    round_page((vaddr_t)(da) + (vsize_t)maxdmap)
+#endif
+#ifndef VM_DEFAULT_ADDRESS_TOPDOWN
+#define VM_DEFAULT_ADDRESS_TOPDOWN(da, sz) \
+    trunc_page(VM_MAXUSER_ADDRESS - MAXSSIZ - (sz))
+#endif
+
 #if defined(USE_TOPDOWN_VM) || defined(__USE_TOPDOWN_VM)
 # if !defined(__HAVE_TOPDOWN_VM) && !defined(__USE_TOPDOWN_VM)
 #  error "Top down memory allocation not enabled for this system"
@@ -234,8 +243,7 @@ extern const int *const uvmexp_pageshift;
 #   if !defined(__USE_TOPDOWN_VM)
 #    error "Top down memory allocation not configured for this system"
 #   else /* !__USE_TOPDOWN_VM */
-#    define VM_DEFAULT_ADDRESS(da, sz) \
-	trunc_page(VM_MAXUSER_ADDRESS - MAXSSIZ - (sz))
+#    define VM_DEFAULT_ADDRESS(da, sz) VM_DEFAULT_ADDRESS_TOPDOWN(da, sz)
 #   endif /* !__USE_TOPDOWN_VM */
 #  endif /* !VM_DEFAULT_ADDRESS */
 # endif /* !__HAVE_TOPDOWN_VM && !__USE_TOPDOWN_VM */
@@ -245,7 +253,7 @@ extern const int *const uvmexp_pageshift;
 # if defined(VM_DEFAULT_ADDRESS)
 #  error "Default vm address should not be defined here"
 # else /* VM_DEFAULT_ADDRESS */
-#  define VM_DEFAULT_ADDRESS(da, sz) round_page((vaddr_t)(da) + (vsize_t)maxdmap)
+#  define VM_DEFAULT_ADDRESS(da, sz) VM_DEFAULT_ADDRESS_BOTTOMUP(da, sz)
 # endif /* VM_DEFAULT_ADDRESS */
 #endif /* !__USING_TOPDOWN_VM */
 
