@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.182 2014/01/25 02:27:41 christos Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.183 2014/01/25 03:31:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.182 2014/01/25 02:27:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.183 2014/01/25 03:31:12 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -1534,13 +1534,13 @@ netbsd32_mmap(struct lwp *l, const struct netbsd32_mmap_args *uap, register_t *r
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TOX_UAP(PAD, long);
 	NETBSD32TOX_UAP(pos, off_t);
-printf("mmap(addr=0x%lx, len=0x%lx, prot=0x%lx, flags=0x%lx, fd=%ld, pos=0x%lx);\n",
-	(long)SCARG(&ua, addr),
-	(long)SCARG(&ua, len),
-	(long)SCARG(&ua, prot),
-	(long)SCARG(&ua, flags),
-	(long)SCARG(&ua, fd),
-	(long)SCARG(&ua, pos));
+#ifdef DEBUG_MMAP
+	printf("mmap(addr=0x%lx, len=0x%lx, prot=0x%lx, flags=0x%lx, "
+	    "fd=%ld, pos=0x%lx);\n",
+	    (long)SCARG(&ua, addr), (long)SCARG(&ua, len),
+	    (long)SCARG(&ua, prot), (long)SCARG(&ua, flags),
+	    (long)SCARG(&ua, fd), (long)SCARG(&ua, pos));
+#endif
 	error = sys_mmap(l, &ua, retval);
 	if ((u_long)*retval > (u_long)UINT_MAX) {
 		printf("netbsd32_mmap: retval out of range: 0x%lx",
