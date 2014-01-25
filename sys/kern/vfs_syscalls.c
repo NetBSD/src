@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.473 2014/01/23 10:13:57 hannken Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.474 2014/01/25 02:28:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.473 2014/01/23 10:13:57 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.474 2014/01/25 02:28:31 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -119,7 +119,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.473 2014/01/23 10:13:57 hannken E
 static int change_flags(struct vnode *, u_long, struct lwp *);
 static int change_mode(struct vnode *, int, struct lwp *l);
 static int change_owner(struct vnode *, uid_t, gid_t, struct lwp *, int);
-static int do_open(lwp_t *, struct vnode *, struct pathbuf *, int, int, int *);
 static int do_sys_openat(lwp_t *, int, const char *, int, int, int *);
 static int do_sys_mkdirat(struct lwp *l, int, const char *, mode_t,
     enum uio_seg);
@@ -1534,7 +1533,7 @@ chdir_lookup(const char *path, int where, struct vnode **vpp, struct lwp *l)
  * (so we can easily reuse this function from other parts of the kernel,
  * like posix_spawn post-processing).
  */
-static int
+int
 do_open(lwp_t *l, struct vnode *dvp, struct pathbuf *pb, int open_flags, 
 	int open_mode, int *fd)
 {
