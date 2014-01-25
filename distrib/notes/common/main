@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.502 2014/01/23 22:52:15 szptvlfn Exp $
+.\"	$NetBSD: main,v 1.503 2014/01/25 18:03:10 wiedi Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1413,6 +1413,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Lex Wennmacher Ta Mt wennmach@NetBSD.org
 .It Ta Leo Weppelman Ta Mt leo@NetBSD.org
 .It Ta Assar Westerlund Ta Mt assar@NetBSD.org
+.It Ta Sebastian Wiedenroth Ta Mt wiedi@NetBSD.org
 .It Ta Frank Wille Ta Mt phx@NetBSD.org
 .It Ta Nathan Williams Ta Mt nathanw@NetBSD.org
 .It Ta Rob Windsor Ta Mt windsor@NetBSD.org
