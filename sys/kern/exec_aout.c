@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.c,v 1.37 2014/01/25 05:15:05 christos Exp $	*/
+/*	$NetBSD: exec_aout.c,v 1.38 2014/01/25 23:58:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_aout.c,v 1.37 2014/01/25 05:15:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_aout.c,v 1.38 2014/01/25 23:58:41 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_coredump.h"
@@ -116,8 +116,6 @@ exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 
 	midmag = mid << 16 | magic;
 
-	epp->ep_flags &= ~EXEC_TOPDOWN_VM;
-
 	switch (midmag) {
 	case (MID_MACHINE << 16) | ZMAGIC:
 		error = exec_aout_prep_zmagic(l, epp);
@@ -134,6 +132,8 @@ exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 
 	if (error)
 		kill_vmcmds(&epp->ep_vmcmds);
+	else
+		epp->ep_flags &= ~EXEC_TOPDOWN_VM;
 
 	return error;
 }
