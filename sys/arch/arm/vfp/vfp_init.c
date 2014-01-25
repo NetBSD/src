@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.32 2014/01/24 08:26:39 skrll Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.33 2014/01/25 17:30:56 skrll Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -407,14 +407,18 @@ vfp_handler(u_int address, u_int insn, trapframe_t *frame, int fault_code)
 
 		vfpevent_fpe.ev_count++;
 
-		pcu_save(&arm_vfp_ops);
-
 		/*
 		 * Need the clear the exception condition so any signal
-		 * can run.
+		 * and future use can proceed.
 		 */
 		armreg_fpexc_write(fpexc & ~(VFP_FPEXC_EX|VFP_FPEXC_FSUM));
 
+		pcu_save(&arm_vfp_ops);
+
+		/*
+		 * XXX Need to emulate bounce instructions here to get correct
+		 * XXX exception codes, etc.
+		 */
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGFPE;
 		if (fpexc & VFP_FPEXC_IXF)
@@ -499,6 +503,7 @@ vfp_state_load(lwp_t *l, u_int flags)
 	 * a trap to use it again" event.
 	 */
 	if (__predict_false((flags & PCU_LOADED) == 0)) {
+		KASSERT(flags & PCU_RELOAD);
 		vfpevent_use.ev_count++;
 		pcb->pcb_vfp.vfp_fpscr =
 		    (VFP_FPSCR_DN | VFP_FPSCR_FZ | VFP_FPSCR_RN); /* Runfast */
@@ -506,21 +511,24 @@ vfp_state_load(lwp_t *l, u_int flags)
 		vfpevent_reuse.ev_count++;
 	}
 
-	if (fregs->vfp_fpexc & VFP_FPEXC_EN) {
-		/*
-		 * If we think the VFP is enabled, it must have be disabled by
-		 * vfp_state_release for another LWP so we can just restore
-		 * FPEXC and return since our VFP state is still loaded.
-		 */
-		armreg_fpexc_write(fregs->vfp_fpexc);
-		return;
-	}
-
-	/* Load and Enable the VFP (so that we can write the registers).  */
+	uint32_t fpexc = armreg_fpexc_read();
 	if (flags & PCU_RELOAD) {
-		uint32_t fpexc = armreg_fpexc_read();
-		KDASSERT((fpexc & VFP_FPEXC_EX) == 0);
-		armreg_fpexc_write(fpexc | VFP_FPEXC_EN);
+		bool enabled = fregs->vfp_fpexc & VFP_FPEXC_EN;
+
+		/*
+		 * Load and Enable the VFP (so that we can write the
+		 * registers).
+		 */
+		fregs->vfp_fpexc |= VFP_FPEXC_EN;
+		armreg_fpexc_write(fregs->vfp_fpexc);
+		if (enabled) {
+			/*
+			 * If we think the VFP is enabled, it must have be
+			 * disabled by vfp_state_release for another LWP so
+			 * we can now just return.
+			 */
+			return;
+		}
 
 		load_vfpregs(fregs);
 		armreg_fpscr_write(fregs->vfp_fpscr);
@@ -531,11 +539,13 @@ vfp_state_load(lwp_t *l, u_int flags)
 			if (fregs->vfp_fpexc & VFP_FPEXC_FP2V)
 				armreg_fpinst_write(fregs->vfp_fpinst);
 		}
+	} else {
+		/*
+		 * If the VFP is already enabled we must be bouncing an
+		 * instruction.
+		 */
+		armreg_fpexc_write(fpexc | VFP_FPEXC_EN);
 	}
-
-	/* Finally, restore the FPEXC but don't enable the VFP. */
-	fregs->vfp_fpexc |= VFP_FPEXC_EN;
-	armreg_fpexc_write(fregs->vfp_fpexc);
 }
 
 void
@@ -543,6 +553,12 @@ vfp_state_save(lwp_t *l, u_int flags)
 {
 	struct pcb * const pcb = lwp_getpcb(l);
 	uint32_t fpexc = armreg_fpexc_read();
+
+	/*
+	 * Enable the VFP (so we can read the registers).
+	 * Make sure the exception bit is cleared so that we can
+	 * safely dump the registers.
+	 */
 	armreg_fpexc_write((fpexc | VFP_FPEXC_EN) & ~VFP_FPEXC_EX);
 
 	if (flags & PCU_KERNEL) {
@@ -556,11 +572,6 @@ vfp_state_save(lwp_t *l, u_int flags)
 
 	struct vfpreg * const fregs = &pcb->pcb_vfp;
 
-	/*
-	 * Enable the VFP (so we can read the registers).  
-	 * Make sure the exception bit is cleared so that we can
-	 * safely dump the registers.
-	 */
 	fregs->vfp_fpexc = fpexc;
 	if (fpexc & VFP_FPEXC_EX) {
 		/* Need to save the exception handling state */
@@ -572,7 +583,7 @@ vfp_state_save(lwp_t *l, u_int flags)
 	save_vfpregs(fregs);
 
 	/* Disable the VFP.  */
-	armreg_fpexc_write(fpexc);
+	armreg_fpexc_write(fpexc & ~VFP_FPEXC_EN);
 }
 
 void
