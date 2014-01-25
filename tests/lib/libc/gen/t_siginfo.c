@@ -1,4 +1,4 @@
-/* $NetBSD: t_siginfo.c,v 1.20 2013/04/12 17:30:50 christos Exp $ */
+/* $NetBSD: t_siginfo.c,v 1.21 2014/01/25 10:09:47 skrll Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -460,7 +460,7 @@ ATF_TC_BODY(sigbus_adraln, tc)
 	sigemptyset(&sa.sa_mask);
 	sigaction(SIGBUS, &sa, NULL);
 
-	/* Enable alignement checks for x86. 0x40000 is PSL_AC. */
+	/* Enable alignment checks for x86. 0x40000 is PSL_AC. */
 #if defined(__i386__)
 	__asm__("pushf; orl $0x40000, (%esp); popf");
 #elif defined(__amd64__)
