@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_param.h,v 1.32 2014/01/25 05:14:03 christos Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.33 2014/01/25 15:17:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -211,51 +211,15 @@ extern const int *const uvmexp_pageshift;
 #define	round_page(x)	(((x) + PAGE_MASK) & ~PAGE_MASK)
 #define	trunc_page(x)	((x) & ~PAGE_MASK)
 
-/*
- * Set up the default mapping address (VM_DEFAULT_ADDRESS) according to:
- *
- * USE_TOPDOWN_VM:	a kernel option to enable on a per-kernel basis
- *			which only be used on ports that define...
- * __HAVE_TOPDOWN_VM:	a per-port option to offer the topdown option
- *
- * __USE_TOPDOWN_VM:	a per-port option to unconditionally use it
- *
- * if __USE_TOPDOWN_VM is defined, the port can specify a default vm
- * address, or we will use the topdown default from below.  If it is
- * NOT defined, then the port can offer topdown as an option, but it
- * MUST define the VM_DEFAULT_ADDRESS macro itself.
- */
 #ifndef VM_DEFAULT_ADDRESS_BOTTOMUP
 #define VM_DEFAULT_ADDRESS_BOTTOMUP(da, sz) \
     round_page((vaddr_t)(da) + (vsize_t)maxdmap)
 #endif
+
 #ifndef VM_DEFAULT_ADDRESS_TOPDOWN
 #define VM_DEFAULT_ADDRESS_TOPDOWN(da, sz) \
     trunc_page(VM_MAXUSER_ADDRESS - MAXSSIZ - (sz))
 #endif
-
-#if defined(USE_TOPDOWN_VM) || defined(__USE_TOPDOWN_VM)
-# if !defined(__HAVE_TOPDOWN_VM) && !defined(__USE_TOPDOWN_VM)
-#  error "Top down memory allocation not enabled for this system"
-# else /* !__HAVE_TOPDOWN_VM && !__USE_TOPDOWN_VM */
-#  define __USING_TOPDOWN_VM
-#  if !defined(VM_DEFAULT_ADDRESS)
-#   if !defined(__USE_TOPDOWN_VM)
-#    error "Top down memory allocation not configured for this system"
-#   else /* !__USE_TOPDOWN_VM */
-#    define VM_DEFAULT_ADDRESS(da, sz) VM_DEFAULT_ADDRESS_TOPDOWN(da, sz)
-#   endif /* !__USE_TOPDOWN_VM */
-#  endif /* !VM_DEFAULT_ADDRESS */
-# endif /* !__HAVE_TOPDOWN_VM && !__USE_TOPDOWN_VM */
-#endif /* USE_TOPDOWN_VM || __USE_TOPDOWN_VM */
-
-#if !defined(__USING_TOPDOWN_VM)
-# if defined(VM_DEFAULT_ADDRESS)
-#  error "Default vm address should not be defined here"
-# else /* VM_DEFAULT_ADDRESS */
-#  define VM_DEFAULT_ADDRESS(da, sz) VM_DEFAULT_ADDRESS_BOTTOMUP(da, sz)
-# endif /* VM_DEFAULT_ADDRESS */
-#endif /* !__USING_TOPDOWN_VM */
 
 extern int		ubc_nwins;	/* number of UBC mapping windows */
 extern int		ubc_winshift;	/* shift for a UBC mapping window */
