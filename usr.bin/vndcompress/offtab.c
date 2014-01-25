@@ -1,4 +1,4 @@
-/*	$NetBSD: offtab.c,v 1.11 2014/01/25 15:31:06 riastradh Exp $	*/
+/*	$NetBSD: offtab.c,v 1.12 2014/01/25 16:26:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: offtab.c,v 1.11 2014/01/25 15:31:06 riastradh Exp $");
+__RCSID("$NetBSD: offtab.c,v 1.12 2014/01/25 16:26:17 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/endian.h>
@@ -88,47 +88,60 @@ offtab_current_window_end(struct offtab *offtab)
 	return (offtab->ot_window_start + offtab_current_window_size(offtab));
 }
 
+static void
+offtab_compute_window_position(struct offtab *offtab, uint32_t window_start,
+    size_t *bytes, off_t *pos)
+{
+	const uint32_t window_size = offtab_compute_window_size(offtab,
+	    window_start);
+
+	__CTASSERT(MAX_WINDOW_SIZE <= (OFF_MAX / sizeof(uint64_t)));
+	*bytes = (window_size * sizeof(uint64_t));
+
+	assert(window_start <= offtab->ot_n_offsets);
+	__CTASSERT(MAX_N_OFFSETS <= (SIZE_MAX / sizeof(uint64_t)));
+	const off_t window_offset = ((off_t)window_start *
+	    (off_t)sizeof(uint64_t));
+
+	/* XXX This assertion is not justified.  */
+	assert(offtab->ot_fdpos <= (OFF_MAX - window_offset));
+	*pos = (offtab->ot_fdpos + window_offset);
+}
+
 #define	OFFTAB_READ_SEEK	0x01
 #define	OFFTAB_READ_NOSEEK	0x00
 
 static bool
 offtab_read_window(struct offtab *offtab, uint32_t blkno, int read_flags)
 {
+	const uint32_t window_start = rounddown(blkno, offtab->ot_window_size);
+	size_t window_bytes;
+	off_t window_pos;
 
 	assert(offtab->ot_mode == OFFTAB_MODE_READ);
-
-	const uint32_t window_start = rounddown(blkno, offtab->ot_window_size);
-	const uint32_t window_size = offtab_compute_window_size(offtab,
-	    window_start);
-
-	__CTASSERT(MAX_WINDOW_SIZE <= (SIZE_MAX / sizeof(uint64_t)));
-	__CTASSERT(MAX_N_OFFSETS <= (OFF_MAX / sizeof(uint64_t)));
-	assert(window_start < offtab->ot_n_offsets);
-	const off_t window_offset = ((off_t)window_start *
-	    (off_t)sizeof(uint64_t));
-	assert(offtab->ot_fdpos <= (OFF_MAX - window_offset));
-	const off_t window_pos = (offtab->ot_fdpos + window_offset);
 	assert(ISSET(read_flags, OFFTAB_READ_SEEK) ||
 	    (lseek(offtab->ot_fd, 0, SEEK_CUR) == offtab->ot_fdpos) ||
 	    ((lseek(offtab->ot_fd, 0, SEEK_CUR) == -1) && (errno == ESPIPE)));
-	const size_t n_req = (window_size * sizeof(uint64_t));
+
+	offtab_compute_window_position(offtab, window_start,
+	    &window_bytes, &window_pos);
 	const ssize_t n_read = (ISSET(read_flags, OFFTAB_READ_SEEK)
-	    ? pread_block(offtab->ot_fd, offtab->ot_window, n_req, window_pos)
-	    : read_block(offtab->ot_fd, offtab->ot_window, n_req));
+	    ? pread_block(offtab->ot_fd, offtab->ot_window, window_bytes,
+		window_pos)
+	    : read_block(offtab->ot_fd, offtab->ot_window, window_bytes));
 	if (n_read == -1) {
 		(*offtab->ot_report)("read offset table at %"PRIuMAX,
 		    (uintmax_t)window_pos);
 		return false;
 	}
 	assert(n_read >= 0);
-	if ((size_t)n_read != (window_size * sizeof(uint64_t))) {
+	if ((size_t)n_read != window_bytes) {
 		(*offtab->ot_reportx)("partial read of offset table"
 		    " at %"PRIuMAX": %zu != %zu",
-		    (uintmax_t)window_pos,
-		    (size_t)n_read,
-		    (size_t)(window_size * sizeof(uint64_t)));
+		    (uintmax_t)window_pos, (size_t)n_read, window_bytes);
 		return false;
 	}
+
 	offtab->ot_window_start = window_start;
 
 	return true;
@@ -152,27 +165,22 @@ offtab_maybe_read_window(struct offtab *offtab, uint32_t blkno, int read_flags)
 static void
 offtab_write_window(struct offtab *offtab)
 {
+	size_t window_bytes;
+	off_t window_pos;
 
 	assert(offtab->ot_mode == OFFTAB_MODE_WRITE);
 
-	const uint32_t window_size = offtab_current_window_size(offtab);
-	__CTASSERT(MAX_WINDOW_SIZE <= (SIZE_MAX / sizeof(uint64_t)));
-	__CTASSERT(MAX_N_OFFSETS <= (OFF_MAX / sizeof(uint64_t)));
-	assert(offtab->ot_window_start < offtab->ot_n_offsets);
-	const off_t window_offset = ((off_t)offtab->ot_window_start *
-	    (off_t)sizeof(uint64_t));
-	assert(offtab->ot_fdpos <= (OFF_MAX - window_offset));
-	const off_t window_pos = (offtab->ot_fdpos + window_offset);
+	offtab_compute_window_position(offtab, offtab->ot_window_start,
+	    &window_bytes, &window_pos);
 	const ssize_t n_written = pwrite(offtab->ot_fd, offtab->ot_window,
-	    (window_size * sizeof(uint64_t)),
-	    window_pos);
+	    window_bytes, window_pos);
 	if (n_written == -1)
 		err_ss(1, "write initial offset table");
 	assert(n_written >= 0);
-	if ((size_t)n_written != (window_size * sizeof(uint64_t)))
+	if ((size_t)n_written != window_bytes)
 		errx_ss(1, "partial write of initial offset bytes: %zu <= %zu",
 		    (size_t)n_written,
-		    (size_t)(window_size * sizeof(uint64_t)));
+		    window_bytes);
 }
 
 static void
