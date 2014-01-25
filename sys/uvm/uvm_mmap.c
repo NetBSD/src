@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.146 2014/01/25 05:14:03 christos Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.147 2014/01/25 17:21:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.146 2014/01/25 05:14:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.147 2014/01/25 17:21:49 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -334,8 +334,17 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 	 * Fixup the old deprecated MAP_COPY into MAP_PRIVATE, and
 	 * validate the flags.
 	 */
-	if (flags & MAP_COPY)
+	if (flags & MAP_COPY) {
 		flags = (flags & ~MAP_COPY) | MAP_PRIVATE;
+#if defined(COMPAT_10) && defined(__i386__)
+		/*
+		 * Ancient kernel on x86 did not obey PROT_EXEC on i386 at least
+		 * and ld.so did not turn it on. We take care of this on amd64
+		 * in compat32.
+		 */
+		SCARG(&ua, prot) |= PROT_EXEC;
+#endif
+	}
 	if ((flags & (MAP_SHARED|MAP_PRIVATE)) == (MAP_SHARED|MAP_PRIVATE))
 		return (EINVAL);
 
