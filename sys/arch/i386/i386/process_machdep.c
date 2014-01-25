@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.78 2014/01/25 19:51:31 dsl Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.79 2014/01/25 20:12:53 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.78 2014/01/25 19:51:31 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.79 2014/01/25 20:12:53 dsl Exp $");
 
 #include "opt_vm86.h"
 #include "opt_ptrace.h"
@@ -95,7 +95,7 @@ void
 process_xmm_to_s87(const struct fxsave *sxmm, struct save87 *s87)
 {
 	unsigned int tag, ab_tag;
-	const struct fpaccxmm *fx_reg;
+	const struct fpaccfx *fx_reg;
 	struct fpacc87 *s87_reg;
 	int i;
 
@@ -136,11 +136,10 @@ process_xmm_to_s87(const struct fxsave *sxmm, struct save87 *s87)
 	s87->s87_dp = sxmm->fx_dp;
 
 	/* FP registers (in stack order) */
-	fx_reg = sxmm->sv_ac;
+	fx_reg = sxmm->fx_87_ac;
 	s87_reg = s87->s87_ac;
 	for (i = 0; i < 8; fx_reg++, s87_reg++, i++)
-		memcpy(s87_reg->fp_bytes, fx_reg->fp_bytes,
-		    sizeof(s87_reg->fp_bytes));
+		*s87_reg = fx_reg->r;
 
 	/* Tag word and registers. */
 	ab_tag = sxmm->fx_tw & 0xff;	/* Bits set if valid */
@@ -162,7 +161,7 @@ void
 process_s87_to_xmm(const struct save87 *s87, struct fxsave *sxmm)
 {
 	unsigned int tag, ab_tag;
-	struct fpaccxmm *fx_reg;
+	struct fpaccfx *fx_reg;
 	const struct fpacc87 *s87_reg;
 	int i;
 
@@ -203,11 +202,10 @@ process_s87_to_xmm(const struct save87 *s87, struct fxsave *sxmm)
 	sxmm->fx_tw = ab_tag;
 
 	/* FP registers (in stack order) */
-	fx_reg = sxmm->sv_ac;
+	fx_reg = sxmm->fx_87_ac;
 	s87_reg = s87->s87_ac;
 	for (i = 0; i < 8; fx_reg++, s87_reg++, i++)
-		memcpy(fx_reg->fp_bytes, s87_reg->fp_bytes,
-		    sizeof(fx_reg->fp_bytes));
+		fx_reg->r = *s87_reg;
 }
 
 int
