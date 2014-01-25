@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.33 2014/01/25 05:09:59 christos Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.34 2014/01/25 15:16:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -133,12 +133,12 @@
 #include "opt_uvm.h"
 #endif
 #define __USE_TOPDOWN_VM
+
 #define VM_DEFAULT_ADDRESS_TOPDOWN(da, sz) \
     trunc_page(USRSTACK - MAXSSIZ - (sz))
-#define VM_DEFAULT_ADDRESS(da, sz) VM_DEFAULT_ADDRESS_TOPDOWN(da, sz)
-
 #define VM_DEFAULT_ADDRESS_BOTTOMUP(da, sz) \
     round_page((vaddr_t)(da) + (vsize_t)maxdmap)
+
 #define VM_DEFAULT_ADDRESS32_TOPDOWN(da, sz) \
 	trunc_page(USRSTACK32 - MAXSSIZ32 - (sz))
 #define VM_DEFAULT_ADDRESS32_BOTTOMUP(da, sz) \
