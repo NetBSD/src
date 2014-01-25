@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.274 2013/12/14 05:28:47 nakayama Exp $ */
+/*	$NetBSD: machdep.c,v 1.275 2014/01/25 19:42:25 christos Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.274 2013/12/14 05:28:47 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.275 2014/01/25 19:42:25 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -2754,7 +2754,7 @@ sparc64_elf_mcmodel_check(struct exec_package *epp, const char *model,
 	if (epp->ep_flags & EXEC_32)
 		return;
 
-#ifdef __USING_TOPDOWN_VM
+#ifdef __USE_TOPDOWN_VM
 	/*
 	 * we allow TOPDOWN_VM for all processes where the binary is compiled
 	 * with the medany or medmid code model.
