@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.77 2014/01/19 14:30:37 dsl Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.78 2014/01/25 19:51:31 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.77 2014/01/19 14:30:37 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.78 2014/01/25 19:51:31 dsl Exp $");
 
 #include "opt_vm86.h"
 #include "opt_ptrace.h"
@@ -91,47 +91,41 @@ process_fpframe(struct lwp *l)
 	return &pcb->pcb_savefpu;
 }
 
-static int
-xmm_to_s87_tag(const uint8_t *fpac, int regno, uint8_t tw)
-{
-	static const uint8_t empty_significand[8] = { 0 };
-	int tag;
-	uint16_t exponent;
-
-	if (tw & (1U << regno)) {
-		exponent = fpac[8] | (fpac[9] << 8);
-		switch (exponent) {
-		case 0x7fff:
-			tag = 2;
-			break;
-
-		case 0x0000:
-			if (memcmp(empty_significand, fpac,
-				   sizeof(empty_significand)) == 0)
-				tag = 1;
-			else
-				tag = 2;
-			break;
-
-		default:
-			if ((fpac[7] & 0x80) == 0)
-				tag = 2;
-			else
-				tag = 0;
-			break;
-		}
-	} else
-		tag = 3;
-
-	return (tag);
-}
-
 void
 process_xmm_to_s87(const struct fxsave *sxmm, struct save87 *s87)
 {
+	unsigned int tag, ab_tag;
+	const struct fpaccxmm *fx_reg;
+	struct fpacc87 *s87_reg;
 	int i;
 
-	/* Convert context sent by userspace */
+	/*
+	 * For historic reasons core dumps and ptrace all use the old save87
+	 * layout.  Convert the important parts.
+	 * getucontext gets what we give it.
+	 * setucontext should return something given by getucontext, but
+	 * we are (at the moment) willing to change it.
+	 *
+	 * It really isn't worth setting the 'tag' bits to 01 (zero) or
+	 * 10 (NaN etc) since the processor will set any internal bits
+	 * correctly when the value is loaded (the 287 believed them).
+	 *
+	 * Additionally the s87_tw and s87_tw are 'indexed' by the actual
+	 * register numbers, whereas the registers themselves have ST(0)
+	 * first. Pairing the values and tags can only be done with
+	 * reference to the 'top of stack'.
+	 *
+	 * If any x87 registers are used, they will typically be from
+	 * r7 downwards - so the high bits of the tag register indicate
+	 * used registers. The conversions are not optimised for this.
+	 *
+	 * The ABI we use requires the FP stack to be empty on every
+	 * function call. I think this means that the stack isn't expected
+	 * to overflow - overflow doesn't drop a core in my testing.
+	 *
+	 * Note that this code writes to all of the 's87' structure that
+	 * actually gets written to userspace.
+	 */
 
 	/* FPU control/status */
 	s87->s87_cw = sxmm->fx_cw;
@@ -141,31 +135,47 @@ process_xmm_to_s87(const struct fxsave *sxmm, struct save87 *s87)
 	s87->s87_opcode = sxmm->fx_opcode;
 	s87->s87_dp = sxmm->fx_dp;
 
+	/* FP registers (in stack order) */
+	fx_reg = sxmm->sv_ac;
+	s87_reg = s87->s87_ac;
+	for (i = 0; i < 8; fx_reg++, s87_reg++, i++)
+		memcpy(s87_reg->fp_bytes, fx_reg->fp_bytes,
+		    sizeof(s87_reg->fp_bytes));
+
 	/* Tag word and registers. */
-	s87->s87_tw = 0;
-	s87->s87_ex_tw = 0;
-	for (i = 0; i < 8; i++) {
-		s87->s87_tw |=
-		    (xmm_to_s87_tag(sxmm->sv_ac[i].fp_bytes, i,
-		     sxmm->fx_tw) << (i * 2));
-
-		s87->s87_ex_tw |=
-		    (xmm_to_s87_tag(sxmm->sv_ac[i].fp_bytes, i,
-		     sxmm->sv_ex_tw) << (i * 2));
-
-		memcpy(&s87->s87_ac[i].fp_bytes, &sxmm->sv_ac[i].fp_bytes,
-		    sizeof(s87->s87_ac[i].fp_bytes));
+	ab_tag = sxmm->fx_tw & 0xff;	/* Bits set if valid */
+	if (ab_tag == 0) {
+		/* none used */
+		s87->s87_tw = 0xffff;
+		return;
 	}
 
-	s87->s87_ex_sw = sxmm->sv_ex_sw;
+	tag = 0;
+	/* Separate bits of abridged tag word with zeros */
+	for (i = 0x80; i != 0; tag <<= 1, i >>= 1)
+		tag |= ab_tag & i;
+	/* Replicate and invert so that 0 => 0b11 and 1 => 0b00 */
+	s87->s87_tw = (tag | tag >> 1) ^ 0xffff;
 }
 
 void
 process_s87_to_xmm(const struct save87 *s87, struct fxsave *sxmm)
 {
+	unsigned int tag, ab_tag;
+	struct fpaccxmm *fx_reg;
+	const struct fpacc87 *s87_reg;
 	int i;
 
-	/* Convert context sent by userspace */
+	/*
+	 * ptrace gives us registers in the save87 format and
+	 * we must convert them to the correct format.
+	 *
+	 * This code is normally used when overwriting the processes
+	 * registers (in the pcb), so it musn't change any other fields.
+	 *
+	 * There is a lot of pad in 'struct fxsave', if the destination
+	 * is written to userspace, it must be zeroed first.
+	 */
 
 	/* FPU control/status */
 	sxmm->fx_cw = s87->s87_cw;
@@ -175,34 +185,29 @@ process_s87_to_xmm(const struct save87 *s87, struct fxsave *sxmm)
 	sxmm->fx_opcode = s87->s87_opcode;
 	sxmm->fx_dp = s87->s87_dp;
 
-	/* Tag word and registers. */
-	for (i = 0; i < 8; i++) {
-		if (((s87->s87_tw >> (i * 2)) & 3) == 3)
-			sxmm->fx_tw &= ~(1U << i);
-		else
-			sxmm->fx_tw |= (1U << i);
-
-#if 0
-		/*
-		 * Software-only word not provided by the userland fpreg
-		 * structure.
-		 */
-		if (((s87->s87_ex_tw >> (i * 2)) & 3) == 3)
-			sxmm->sv_ex_tw &= ~(1U << i);
-		else
-			sxmm->sv_ex_tw |= (1U << i);
-#endif
-
-		memcpy(&sxmm->sv_ac[i].fp_bytes, &s87->s87_ac[i].fp_bytes,
-		    sizeof(sxmm->sv_ac[i].fp_bytes));
+	/* Tag word */
+	tag = s87->s87_tw & 0xffff;	/* 0b11 => unused */
+	if (tag == 0xffff) {
+		/* All unused - values don't matter */
+		sxmm->fx_tw = 0;
+		return;
 	}
-#if 0
-	/*
-	 * Software-only word not provided by the userland fpreg
-	 * structure.
-	 */
-	sxmm->sv_ex_sw = s87->s87_ex_sw;
-#endif
+
+	tag ^= 0xffff;		/* So 0b00 is unused */
+	tag |= tag >> 1;	/* Look at even bits */
+	ab_tag = 0;
+	i = 1;
+	do
+		ab_tag |= tag & i;
+	while ((tag >>= 1) >= (i <<= 1));
+	sxmm->fx_tw = ab_tag;
+
+	/* FP registers (in stack order) */
+	fx_reg = sxmm->sv_ac;
+	s87_reg = s87->s87_ac;
+	for (i = 0; i < 8; fx_reg++, s87_reg++, i++)
+		memcpy(fx_reg->fp_bytes, s87_reg->fp_bytes,
+		    sizeof(fx_reg->fp_bytes));
 }
 
 int
