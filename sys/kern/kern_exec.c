@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.369 2014/01/03 15:49:49 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.370 2014/01/25 19:44:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.369 2014/01/03 15:49:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.370 2014/01/25 19:44:11 christos Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -113,7 +113,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.369 2014/01/03 15:49:49 christos Exp
 #include <compat/common/compat_util.h>
 
 #ifndef MD_TOPDOWN_INIT
-#ifdef __USING_TOPDOWN_VM
+#ifdef __USE_TOPDOWN_VM
 #define	MD_TOPDOWN_INIT(epp)	(epp)->ep_flags |= EXEC_TOPDOWN_VM
 #else
 #define	MD_TOPDOWN_INIT(epp)
