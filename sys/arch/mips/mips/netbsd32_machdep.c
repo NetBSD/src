@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.10 2014/01/01 18:57:15 dsl Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.11 2014/01/25 15:20:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.10 2014/01/01 18:57:15 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.11 2014/01/25 15:20:55 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
@@ -145,7 +145,10 @@ compat_16_netbsd32___sigreturn14(struct lwp *l,
 vaddr_t
 netbsd32_vm_default_addr(struct proc *p, vaddr_t base, vsize_t size)
 {
-	return VM_DEFAULT_ADDRESS32(base, size);
+	if (p->p_vmspace->vm_map.flags & VM_MAP_TOPDOWN)
+		return VM_DEFAULT_ADDRESS32_TOPDOWN(base, size);
+	else
+		return VM_DEFAULT_ADDRESS32_BOTTOMUP(base, size);
 }
 
 
