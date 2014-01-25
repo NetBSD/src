@@ -1,0 +1,9 @@
+ /* $NetBSD: TODO,v 1.1 2014/01/25 19:07:25 palle Exp $ */
+
+Things to be done:
+
+sun4u:
+
+sun4v:
+- 64-bit kernel support
+- 32-bit kernel support
