@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.33 2012/07/28 00:43:24 matt Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.34 2014/01/25 21:10:41 christos Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.33 2012/07/28 00:43:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.34 2014/01/25 21:10:41 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -397,6 +397,7 @@ etheripintr(void *arg)
 		} else  m_freem(m);
 	}
 	mutex_exit(softnet_lock);
+	__USE(error);
 }
 
 static int
