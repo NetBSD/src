@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.474 2014/01/25 02:28:31 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.475 2014/01/25 17:24:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.474 2014/01/25 02:28:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.475 2014/01/25 17:24:45 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -1623,9 +1623,16 @@ do_sys_openat(lwp_t *l, int fdat, const char *path, int flags,
 	struct pathbuf *pb;
 	int error;
 
-	error = pathbuf_copyin(path, &pb);
-	if (error)
-		return error;
+#ifdef COMPAT_10	/* XXX: and perhaps later */
+	if (path == NULL)
+		pb = pathbuf_create(".");
+	else
+#endif
+	{
+		error = pathbuf_copyin(path, &pb);
+		if (error)
+			return error;
+	}
 
 	if (fdat != AT_FDCWD) {
 		/* fd_getvnode() will use the descriptor for us */
