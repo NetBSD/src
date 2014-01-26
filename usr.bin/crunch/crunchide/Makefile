@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2009/12/14 14:01:10 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.18 2014/01/26 18:24:29 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -23,6 +23,7 @@ CPPFLAGS+=-DNLIST_ELF32 -DNLIST_ELF64
 .elif	${MACHINE_ARCH} == "sparc64"
 CPPFLAGS+=-DNLIST_AOUT -DNLIST_ELF32 -DNLIST_ELF64
 .elif	${MACHINE_CPU} == "arm" || \
+	${MACHINE_ARCH} == "coldfire" || \
 	${MACHINE_ARCH} == "i386" || \
 	${MACHINE_ARCH} == "m68k" || \
 	${MACHINE_ARCH} == "m68000" || \
