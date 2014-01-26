@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.353 2014/01/07 20:11:35 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.354 2014/01/26 20:12:32 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -95,6 +95,26 @@
 
 #include "ksyms.h"
 
+#ifdef SUN4V
+	/* Misc. sun4v macros */
+	
+	.macro	GET_MMFSA reg
+	sethi	%hi(CPUINFO_VA + CI_MMFSA), \reg
+	LDPTR	[\reg + %lo(CPUINFO_VA + CI_MMFSA)], \reg
+	.endm
+
+	.macro	GET_CTXBUSY reg
+	sethi	%hi(CPUINFO_VA + CI_CTXBUSY), \reg
+	LDPTR	[\reg + %lo(CPUINFO_VA + CI_CTXBUSY)], \reg
+	.endm
+
+	.macro	GET_TSB_DMMU reg
+	sethi	%hi(CPUINFO_VA + CI_TSB_DMMU), \reg
+	LDPTR	[\reg + %lo(CPUINFO_VA + CI_TSB_DMMU)], \reg
+	.endm
+
+#endif
+		
 #if 1
 /*
  * Try to issue an elf note to ask the Solaris
@@ -875,14 +895,69 @@ TABLE(syscall):
 	.align	32
 	.endr
 	.endm
-	
+
+	.macro	sun4v_trap_entry_fail count
+	.rept	\count
+	sir
+	.align	32
+	.endr
+	.endm
+
+	.macro	sun4v_trap_entry_spill_fill_fail count
+	.rept	\count
+	sir
+	.align	128
+	.endr
+	.endm
+
 /* The actual trap base for sun4v */
 	.align	0x8000
 	.globl	_C_LABEL(trapbase_sun4v)
 _C_LABEL(trapbase_sun4v):
-	sun4v_trap_entry 512			! trap level 0:	 0x000-0x1ff
-	sun4v_trap_entry 512			! trap level 1:	 0x000-0x1ff
-	
+	!
+	! trap level 0
+	!
+	sun4v_trap_entry 49				! 0x000-0x030
+	VTRAP(T_DATA_MMU_MISS, sun4v_tl0_dtsb_miss)	! 0x031 = data MMU miss
+	sun4v_trap_entry 78				! 0x032-0x07f
+	SPILL64(uspill8_sun4v,ASI_AIUS)			! 0x080 spill_0_normal -- used to save user windows in user mode
+	SPILL32(uspill4_sun4v,ASI_AIUS)			! 0x084 spill_1_normal
+	SPILLBOTH(uspill8_sun4v,uspill4_sun4v,ASI_AIUS)	! 0x088 spill_2_normal
+	sun4v_trap_entry_spill_fill_fail 1		! 0x08c spill_3_normal
+	SPILL64(kspill8_sun4v,ASI_N)			! 0x090 spill_4_normal  -- used to save supervisor windows
+	SPILL32(kspill4_sun4v,ASI_N)			! 0x094 spill_5_normal
+	SPILLBOTH(kspill8_sun4v,kspill4_sun4v,ASI_N)	! 0x098 spill_6_normal
+	sun4v_trap_entry_spill_fill_fail 1			! 0x09c spill_7_normal
+	SPILL64(uspillk8_sun4v,ASI_AIUS)			! 0x0a0 spill_0_other -- used to save user windows in supervisor mode
+	SPILL32(uspillk4_sun4v,ASI_AIUS)			! 0x0a4 spill_1_other
+	SPILLBOTH(uspillk8_sun4v,uspillk4_sun4v,ASI_AIUS)	! 0x0a8 spill_2_other
+	sun4v_trap_entry_spill_fill_fail 1			! 0x0ac spill_3_other
+	sun4v_trap_entry_spill_fill_fail 1			! 0x0b0 spill_4_other
+	sun4v_trap_entry_spill_fill_fail 1			! 0x0b4 spill_5_other
+	sun4v_trap_entry_spill_fill_fail 1			! 0x0b8 spill_6_other
+	sun4v_trap_entry_spill_fill_fail 1			! 0x0bc spill_7_other
+	FILL64(ufill8_sun4v,ASI_AIUS)			! 0x0c0 fill_0_normal -- used to fill windows when running user mode
+	FILL32(ufill4_sun4v,ASI_AIUS)			! 0x0c4 fill_1_normal
+	FILLBOTH(ufill8_sun4v,ufill4_sun4v,ASI_AIUS)	! 0x0c8 fill_2_normal
+	sun4v_trap_entry_spill_fill_fail 1		! 0x0cc fill_3_normal
+	FILL64(kfill8_sun4v,ASI_N)			! 0x0d0 fill_4_normal  -- used to fill windows when running supervisor mode
+	FILL32(kfill4_sun4v,ASI_N)			! 0x0d4 fill_5_normal
+	FILLBOTH(kfill8_sun4v,kfill4_sun4v,ASI_N)	! 0x0d8 fill_6_normal
+	sun4v_trap_entry_spill_fill_fail 1		! 0x0dc fill_7_normal
+	FILL64(ufillk8_sun4v,ASI_AIUS)			! 0x0e0 fill_0_other
+	FILL32(ufillk4_sun4v,ASI_AIUS)			! 0x0e4 fill_1_other
+	FILLBOTH(ufillk8_sun4v,ufillk4_sun4v,ASI_AIUS)	! 0x0e8 fill_2_other
+	sun4v_trap_entry_spill_fill_fail 1		! 0x0ec fill_3_other
+	sun4v_trap_entry_spill_fill_fail 1		! 0x0f0 fill_4_other
+	sun4v_trap_entry_spill_fill_fail 1		! 0x0f4 fill_5_other
+	sun4v_trap_entry_spill_fill_fail 1		! 0x0f8 fill_6_other
+	sun4v_trap_entry_spill_fill_fail 1		! 0x0fc fill_7_other
+	sun4v_trap_entry 256				! 0x100-0x1ff
+	!
+	! trap level 1
+	!
+	sun4v_trap_entry_fail 512			! 0x000-0x1ff
+
 #endif
 		
 #if 0
@@ -2477,6 +2552,95 @@ text_error:
 	ba	text_recover
 	 nop
 	NOTREACHED
+
+#ifdef SUN4V
+
+/*
+ * Traps for sun4v.
+ */
+
+sun4v_tl0_dtsb_miss:
+	GET_MMFSA %g1				! MMU Fault status area
+	add	%g1, 0x48, %g3			
+	LDPTRA	[%g3] ASI_PHYS_CACHED, %g3	! Data fault address
+	add	%g1, 0x50, %g6			
+	LDPTRA	[%g6] ASI_PHYS_CACHED, %g6	! Data fault context
+	
+	GET_CTXBUSY %g4
+	sllx	%g6, 3, %g6			! Make it into an offset into ctxbusy
+	LDPTR	[%g4 + %g6], %g4		! Load up our page table.
+
+	srax	%g3, HOLESHIFT, %g5		! Check for valid address
+	brz,pt	%g5, 0f				! Should be zero or -1
+	 inc	%g5				! Make -1 -> 0
+	brnz,pn	%g5, sun4v_datatrap		! Error! In hole!
+0:
+	srlx	%g3, STSHIFT, %g6
+	and	%g6, STMASK, %g6		! Index into pm_segs
+	sll	%g6, 3, %g6
+	add	%g4, %g6, %g4
+	LDPTRA	[%g4] ASI_PHYS_CACHED, %g4	! Load page directory pointer
+	srlx	%g3, PDSHIFT, %g6
+	and	%g6, PDMASK, %g6
+	sll	%g6, 3, %g6
+	brz,pn	%g4, sun4v_datatrap		! NULL entry? check somewhere else
+	 add	%g4, %g6, %g4
+	LDPTRA	[%g4] ASI_PHYS_CACHED, %g4	! Load page table pointer
+
+	srlx	%g3, PTSHIFT, %g6		! Convert to ptab offset
+	and	%g6, PTMASK, %g6
+	sll	%g6, 3, %g6
+	brz,pn	%g4, sun4v_datatrap		! NULL entry? check somewhere else
+	 add	%g4, %g6, %g6
+1:
+	LDPTRA	[%g6] ASI_PHYS_CACHED, %g4	! Fetch TTE
+	brgez,pn %g4, sun4v_datatrap		! Entry invalid?  Punt
+	 or	%g4, A_SUN4V_TLB_ACCESS, %g7	! Update the access bit
+
+	btst	A_SUN4V_TLB_ACCESS, %g4		! Need to update access bit?
+	bne,pt	%xcc, 2f
+	 nop
+	casxa	[%g6] ASI_PHYS_CACHED, %g4, %g7	!  and write it out
+	cmp	%g4, %g7
+	bne,pn	%xcc, 1b
+	 or	%g4, A_SUN4V_TLB_ACCESS, %g4	! Update the modified bit
+2:
+	GET_TSB_DMMU %g2
+
+	/* Construct TSB tag word. */
+	add	%g1, 0x50, %g6
+	LDPTRA	[%g6] ASI_PHYS_CACHED, %g6	! Data fault context
+	mov	%g3, %g1			! Data fault address
+	srlx	%g1, 22, %g1			! 63..22 of virt addr
+	sllx	%g6, 48, %g6			! context_id in 63..48
+	or	%g1, %g6, %g1			! construct TTE tag
+	srlx	%g3, PTSHIFT, %g3
+	sethi	%hi(_C_LABEL(tsbsize)), %g5
+	mov	512, %g6
+	ld	[%g5 + %lo(_C_LABEL(tsbsize))], %g5
+	sllx	%g6, %g5, %g5			! %g5 = 512 << tsbsize = TSBENTS
+	sub	%g5, 1, %g5			! TSBENTS -> offset
+	and	%g3, %g5, %g3			! mask out TTE index
+	sllx	%g3, 4, %g3			! TTE size is 16 bytes
+	add	%g2, %g3, %g2			! location of TTE in ci_tsb_dmmu
+
+	membar	#StoreStore
+	
+	STPTR	%g4, [%g2 + 8]		! store TTE data
+	STPTR	%g1, [%g2]		! store TTE tag
+	
+	retry
+	NOTREACHED
+
+sun4v_datatrap:
+	/* XXX missing implementaion */
+	sir
+	
+/*
+ * End of traps for sun4v.
+ */
+	
+#endif		
 
 /*
  * We're here because we took an alignment fault in NUCLEUS context.
@@ -4206,8 +4370,7 @@ ENTRY_NOPROFILE(cpu_initialize)	/* for cosmetic reasons - nicer backtrace */
 	 nop
 	/* sun4v */
 	set	_C_LABEL(trapbase_sun4v), %o0
-	sethi	%hi(CPUINFO_VA + CI_MMFSA), %o1
-	ldx	[%o1 + %lo(CPUINFO_VA + CI_MMFSA)], %o1
+	GET_MMFSA %o1
 	call	_C_LABEL(prom_set_trap_table_sun4v)	! Now we should be running 100% from our handlers
 	 nop
 	
@@ -4219,7 +4382,7 @@ ENTRY_NOPROFILE(cpu_initialize)	/* for cosmetic reasons - nicer backtrace */
 	set	_C_LABEL(trapbase), %l1
 	call	_C_LABEL(prom_set_trap_table_sun4u)	! Now we should be running 100% from our handlers
 	 mov	%l1, %o0
-7:	
+7:
 	wrpr	%l1, 0, %tba			! Make sure the PROM didn't foul up.
 
 	/*
