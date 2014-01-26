@@ -1,4 +1,4 @@
-/*	$NetBSD: puccn.h,v 1.5 2013/07/22 13:40:36 soren Exp $ */
+/*	$NetBSD: puccn.h,v 1.6 2014/01/26 10:54:24 msaitoh Exp $ */
 
 /*
  * Derived from  pci.c
@@ -35,6 +35,7 @@
  */
 
 #include <dev/cons.h>
+#include <dev/pci/pcivar.h>
 
 /*
  * Machine independent support for PCI serial console support.
@@ -44,4 +45,6 @@
  * used before the normal PCI bus initialization.
  */
 
-int cpu_comcnprobe(struct consdev *, struct pci_attach_args *);
+void puc_cnprobe(struct consdev *);
+int puc_cninit(struct consdev *);
+int cpu_puc_cnprobe(struct consdev *, struct pci_attach_args *);
