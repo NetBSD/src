@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.368 2014/01/21 14:52:07 mlelstv Exp $
+#	$NetBSD: files.pci,v 1.369 2014/01/26 10:54:24 msaitoh Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -604,9 +604,11 @@ device	puc { port = -1 }
 attach	puc at pci
 file	dev/pci/puc.c			puc
 file	dev/pci/pucdata.c		puc
+defflag opt_puc.h	PUC_CNAUTO
+defparam opt_puc.h	PUC_CNBUS
 
 attach	com at puc with com_puc
-file	dev/pci/com_puc.c		com_puc
+file	dev/pci/com_puc.c		com_puc needs-flag
 file	dev/pci/cyber.c			com_puc
 file	dev/pci/puccn.c			com_puc
 

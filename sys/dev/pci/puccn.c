@@ -1,4 +1,4 @@
-/*	$NetBSD: puccn.c,v 1.12 2014/01/23 17:43:28 msaitoh Exp $ */
+/*	$NetBSD: puccn.c,v 1.13 2014/01/26 10:54:24 msaitoh Exp $ */
 
 /*
  * Derived from  pci.c
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puccn.c,v 1.12 2014/01/23 17:43:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puccn.c,v 1.13 2014/01/26 10:54:24 msaitoh Exp $");
 
 #include "opt_kgdb.h"
 
@@ -75,6 +75,7 @@ cons_decl(com);
 
 static bus_addr_t puccnbase;
 static bus_space_tag_t puctag;
+static int puccnflags;
 
 #ifdef KGDB
 static bus_addr_t pucgdbbase;
@@ -99,11 +100,10 @@ pucprobe_doit(struct consdev *cn)
 
 	/* Fetch our tags */
 #if defined(amd64) || defined(i386)
-	if (cpu_comcnprobe(cn, &pa) != 0)
+	if (cpu_puc_cnprobe(cn, &pa) != 0)
 #endif
 		return 0;
 
-	puctag = pa.pa_iot;
 	pci_decompose_tag(pa.pa_pc, pa.pa_tag, &bus, &maxdev, NULL);
 
 	/* Scan through devices and find a communication class device. */
@@ -145,6 +145,8 @@ resume_scan:
 	 */
 	if (!foundport)
 		return 0;
+
+	/* Clear foundport flag */
 	foundport = 0;
 
 	/* Check whether the device is in the puc device table or not */
@@ -166,12 +168,21 @@ resume_scan:
 	{
 		if (desc->ports[i].type != PUC_PORT_TYPE_COM)
 			continue;
+		puccnflags = desc->ports[i].flags;
 		base = pci_conf_read(pa.pa_pc, pa.pa_tag, desc->ports[i].bar);
 		base += desc->ports[i].offset;
 
-		if (PCI_MAPREG_TYPE(base) != PCI_MAPREG_TYPE_IO)
-			continue;
-		base = PCI_MAPREG_IO_ADDR(base);
+		if (PCI_MAPREG_TYPE(base) == PCI_MAPREG_TYPE_IO) {
+			puctag = pa.pa_iot;
+			base = PCI_MAPREG_IO_ADDR(base);
+		}
+#if 0 /* For MMIO device */
+		else {
+			puctag = pa.pa_memt;
+			base = PCI_MAPREG_MEM_ADDR(base);
+		}
+#endif
+
 		if (com_is_console(puctag, base, NULL))
 			continue;
 		foundport = 1;
@@ -183,8 +194,13 @@ resume_scan:
 		goto resume_scan;
 	}
 
+#if 0
 	cn->cn_pri = CN_REMOTE;
-	return PCI_MAPREG_IO_ADDR(base);
+#else
+	if (cn)
+		cn->cn_pri = CN_REMOTE;
+#endif
+	return base;
 }
 
 #ifdef KGDB
@@ -211,19 +227,21 @@ comgdbinit(struct consdev *cn)
 #endif
 
 void
-comcnprobe(struct consdev *cn)
+puc_cnprobe(struct consdev *cn)
 {
 
 	puccnbase = pucprobe_doit(cn);
 }
 
-void
-comcninit(struct consdev *cn)
+int
+puc_cninit(struct consdev *cn)
 {
-	if (puccnbase == 0)
-		return;
 
-	comcnattach(puctag, puccnbase, CONSPEED, COM_FREQ, COM_TYPE_NORMAL,
+	if (puccnbase == 0)
+		return -1;
+
+	return comcnattach(puctag, puccnbase, CONSPEED,
+	    puccnflags & PUC_COM_CLOCKMASK, COM_TYPE_NORMAL,
 	    CONMODE);
 }
 
