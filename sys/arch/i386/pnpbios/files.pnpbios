@@ -1,4 +1,4 @@
-# $NetBSD: files.pnpbios,v 1.17 2006/12/09 22:45:26 uwe Exp $
+# $NetBSD: files.pnpbios,v 1.18 2014/01/26 19:16:17 dsl Exp $
 
 defflag  opt_pnpbios.h	PNPBIOSVERBOSE
 defflag  opt_pnpbios.h	PNPBIOSDEBUG
@@ -43,9 +43,6 @@ file	arch/i386/pnpbios/pckbc_pnpbios.c	pckbc_pnpbios
 
 attach	fdc at pnpbios with fdc_pnpbios
 file	arch/i386/pnpbios/fdc_pnpbios.c		fdc_pnpbios
-
-attach	npx at pnpbios with npx_pnpbios
-file	arch/i386/pnpbios/npx_pnpbios.c		npx_pnpbios
 
 attach	joy at pnpbios with joy_pnpbios
 file	arch/i386/pnpbios/joy_pnpbios.c		joy_pnpbios

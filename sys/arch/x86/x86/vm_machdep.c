@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.19 2014/01/11 17:14:00 christos Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.20 2014/01/26 19:16:17 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.19 2014/01/11 17:14:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.20 2014/01/26 19:16:17 dsl Exp $");
 
 #include "opt_mtrr.h"
 
@@ -105,13 +105,6 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.19 2014/01/11 17:14:00 christos Exp
 
 #ifdef __x86_64__
 #include <machine/fpu.h>
-#else
-#include "npx.h"
-#if NNPX > 0
-#define fpusave_lwp(x, y)	npxsave_lwp(x, y)
-#else
-#define fpusave_lwp(x, y)
-#endif
 #endif
 
 void

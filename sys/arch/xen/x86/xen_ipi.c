@@ -1,4 +1,4 @@
-/* $NetBSD: xen_ipi.c,v 1.14 2013/12/01 01:05:16 christos Exp $ */
+/* $NetBSD: xen_ipi.c,v 1.15 2014/01/26 19:16:17 dsl Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -33,10 +33,10 @@
 
 /* 
  * Based on: x86/ipi.c
- * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.14 2013/12/01 01:05:16 christos Exp $"); 
+ * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.15 2014/01/26 19:16:17 dsl Exp $"); 
  */
 
-__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.14 2013/12/01 01:05:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.15 2014/01/26 19:16:17 dsl Exp $");
 
 #include <sys/types.h>
 
@@ -222,11 +222,7 @@ xen_ipi_synch_fpu(struct cpu_info *ci, struct intrframe *intrf)
 	KASSERT(ci != NULL);
 	KASSERT(intrf != NULL);
 
-#ifdef __x86_64__
 	fpusave_cpu(true);
-#else
-	npxsave_cpu(true);
-#endif /* __x86_64__ */
 }
 
 static void

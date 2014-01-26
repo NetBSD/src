@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.55 2013/06/30 21:38:57 rmind Exp $
+# $NetBSD: XEN3_DOMU,v 1.56 2014/01/26 19:16:16 dsl Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -180,8 +180,6 @@ mainbus0 at root
 hypervisor*	at mainbus?		# Xen hypervisor
 
 vcpu*		at hypervisor?		# Xen virtual CPUs
-
-npx0		at hypervisor?		# x86 math coprocessor
 
 xencons*	at hypervisor?		# Xen virtual console
 

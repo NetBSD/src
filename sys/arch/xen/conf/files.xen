@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.129 2012/10/03 18:58:32 dsl Exp $
+#	$NetBSD: files.xen,v 1.130 2014/01/26 19:16:17 dsl Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -54,6 +54,8 @@ file	arch/i386/i386/mtrr_k6.c	mtrr
 file	arch/i386/i386/process_machdep.c
 file	arch/i386/i386/trap.c
 file	arch/i386/i386/lock_stubs.S
+
+file	arch/i386/isa/npx.c
 
 
 file	arch/i386/i386/pmc.c			perfctrs
@@ -182,15 +184,6 @@ file arch/xen/xenbus/xenbus_comms.c xenbus needs-flag
 file arch/xen/xenbus/xenbus_dev.c xenbus needs-flag
 file arch/xen/xenbus/xenbus_probe.c xenbus needs-flag
 file arch/xen/xenbus/xenbus_xs.c xenbus needs-flag
-
-ifdef i386
-# Numeric Processing Extension; Math Co-processor
-device	npx
-file	arch/i386/isa/npx.c		npx needs-flag
-
-attach	npx at xendevbus with npx_hv
-file	arch/xen/i386/npx_hv.c		npx_hv
-endif
 
 # Xen console support
 device	xencons: tty

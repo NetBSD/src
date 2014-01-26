@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.h,v 1.31 2014/01/25 20:12:53 dsl Exp $	*/
+/*	$NetBSD: npx.h,v 1.32 2014/01/26 19:16:17 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -193,10 +193,8 @@ union savefpu {
 
 #ifdef _KERNEL
 
-void	probeintr(void);
-void	probetrap(void);
 int	npx586bug1(int, int);
-void 	npxinit(struct cpu_info *);
+void 	fpuinit(struct cpu_info *);
 void	process_xmm_to_s87(const struct fxsave *, struct save87 *);
 void	process_s87_to_xmm(const struct save87 *, struct fxsave *);
 struct lwp;

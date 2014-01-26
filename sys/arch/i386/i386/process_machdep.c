@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.79 2014/01/25 20:12:53 dsl Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.80 2014/01/26 19:16:17 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -52,11 +52,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.79 2014/01/25 20:12:53 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.80 2014/01/26 19:16:17 dsl Exp $");
 
 #include "opt_vm86.h"
 #include "opt_ptrace.h"
-#include "npx.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,9 +249,7 @@ process_read_fpregs(struct lwp *l, struct fpreg *regs, size_t *sz)
 	union savefpu *frame = process_fpframe(l);
 
 	if (l->l_md.md_flags & MDL_USEDFPU) {
-#if NNPX > 0
-		npxsave_lwp(l, true);
-#endif
+		fpusave_lwp(l, true);
 	} else {
 		/*
 		 * Fake a FNINIT.
@@ -353,9 +350,7 @@ process_write_fpregs(struct lwp *l, const struct fpreg *regs, size_t sz)
 	union savefpu *frame = process_fpframe(l);
 
 	if (l->l_md.md_flags & MDL_USEDFPU) {
-#if NNPX > 0
-		npxsave_lwp(l, false);
-#endif
+		fpusave_lwp(l, false);
 	} else {
 		l->l_md.md_flags |= MDL_USEDFPU;
 	}
@@ -404,13 +399,11 @@ process_machdep_read_xmmregs(struct lwp *l, struct xmmregs *regs)
 		return (EINVAL);
 
 	if (l->l_md.md_flags & MDL_USEDFPU) {
-#if NNPX > 0
 		struct pcb *pcb = lwp_getpcb(l);
 
 		if (pcb->pcb_fpcpu != NULL) {
-			npxsave_lwp(l, true);
+			fpusave_lwp(l, true);
 		}
-#endif
 	} else {
 		/*
 		 * Fake a FNINIT.
@@ -443,14 +436,12 @@ process_machdep_write_xmmregs(struct lwp *l, struct xmmregs *regs)
 		return (EINVAL);
 
 	if (l->l_md.md_flags & MDL_USEDFPU) {
-#if NNPX > 0
 		struct pcb *pcb = lwp_getpcb(l);
 
 		/* If we were using the FPU, drop it. */
 		if (pcb->pcb_fpcpu != NULL) {
-			npxsave_lwp(l, false);
+			fpusave_lwp(l, false);
 		}
-#endif
 	} else {
 		l->l_md.md_flags |= MDL_USEDFPU;
 	}

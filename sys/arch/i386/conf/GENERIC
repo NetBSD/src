@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1098 2013/10/26 09:16:20 nonaka Exp $
+# $NetBSD: GENERIC,v 1.1099 2014/01/26 19:16:16 dsl Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1098 $"
+#ident 		"GENERIC-$Revision: 1.1099 $"
 
 maxusers	64		# estimated number of users
 
@@ -364,7 +364,6 @@ hpet*		at acpinodebus?		# High Precision Event Timer (device)
 joy*		at acpi?		# Joystick/Game port
 #lpt*		at acpi?		# Parallel port
 mpu*		at acpi?		# Roland MPU-401 MIDI UART
-npx*		at acpi?		# Math coprocessor
 pckbc*		at acpi?		# PC keyboard controller
 pcppi*		at acpi?		# AT-style speaker sound
 sony*		at acpi?		# Sony Miscellaneous Controller
@@ -409,7 +408,6 @@ wsmouse*	at spic?
 
 #pckbc*		at pnpbios? index ?	# PC keyboard/mouse controller
 #fdc*		at pnpbios? index ?	# floppy controller
-#npx*		at pnpbios? index ?	# Math coprocessor
 
 # IDE controller on Toshiba Portege 3000 series (crippled PCI device)
 #pciide* 	at pnpbios? index ?
@@ -524,12 +522,6 @@ cardslot*	at cbb?
 # CardBus bus support
 cardbus*	at cardslot?
 pcmcia* 	at cardslot?
-
-# Coprocessor Support
-
-# Math Coprocessor support
-npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
-
 
 # Console Devices
 

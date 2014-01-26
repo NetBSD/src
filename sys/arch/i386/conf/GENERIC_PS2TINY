@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_PS2TINY,v 1.70 2013/06/30 21:38:57 rmind Exp $
+#	$NetBSD: GENERIC_PS2TINY,v 1.71 2014/01/26 19:16:16 dsl Exp $
 #
 #	GENERIC-style kernel config for IBM PS/2 with MCA bus. It only contains
 #	IBM PS/2 related stuff and has been generally trimmed down somewhat,
@@ -149,8 +149,6 @@ config		netbsd root on ? type ?
 
 mca0	at mainbus0
 isa0	at mainbus0
-
-#npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 
 # wscons
 pckbc0		at isa?			# PC keyboard controller
