@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.107 2013/06/27 23:22:04 yamt Exp $	*/
+/*	$NetBSD: eval.c,v 1.108 2014/01/26 22:38:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.107 2013/06/27 23:22:04 yamt Exp $");
+__RCSID("$NetBSD: eval.c,v 1.108 2014/01/26 22:38:20 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -845,15 +845,17 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 		 */
 		if (cmdentry.cmdtype == CMDNORMAL) {
 			pid_t	pid;
+			int serrno;
 
 			savelocalvars = localvars;
 			localvars = NULL;
 			vforked = 1;
 			switch (pid = vfork()) {
 			case -1:
-				TRACE(("Vfork failed, errno=%d\n", errno));
+				serrno = errno;
+				TRACE(("Vfork failed, errno=%d\n", serrno));
 				INTON;
-				error("Cannot vfork");
+				error("Cannot vfork (%s)", strerror(serrno));
 				break;
 			case 0:
 				/* Make sure that exceptions only unwind to
