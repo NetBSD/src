@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.80 2013/10/23 17:26:08 matt Exp $
+#	$NetBSD: XEN3_DOM0,v 1.81 2014/01/26 19:16:16 dsl Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -211,7 +211,6 @@ hypervisor*	at mainbus?		# Xen hypervisor
 
 vcpu*		at hypervisor?		# Xen virtual CPUs
 xenbus* 	at hypervisor?		# Xen virtual bus
-npx0		at hypervisor?		# x86 math coprocessor
 
 xencons*	at hypervisor?		# Xen virtual console
 #xennet* 	at hypervisor?		# Xen virtual network interface
