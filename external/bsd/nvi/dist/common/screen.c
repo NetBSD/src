@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.7 2014/01/06 07:56:47 mlelstv Exp $	*/
+/*	$NetBSD: screen.c,v 1.8 2014/01/26 21:43:45 christos Exp $	*/
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -10,9 +10,14 @@
 
 #include "config.h"
 
+#include <sys/cdefs.h>
+#if 0
 #ifndef lint
 static const char sccsid[] = "Id: screen.c,v 10.22 2001/06/25 15:19:12 skimo Exp  (Berkeley) Date: 2001/06/25 15:19:12 ";
 #endif /* not lint */
+#else
+__RCSID("$NetBSD: screen.c,v 1.8 2014/01/26 21:43:45 christos Exp $");
+#endif
 
 #include <sys/types.h>
 #include <sys/queue.h>
