@@ -1,4 +1,4 @@
-/*	$NetBSD: regexec.c,v 1.4 2014/01/26 21:43:45 christos Exp $ */
+/*	$NetBSD: regexec.c,v 1.5 2014/01/26 21:47:00 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -38,11 +38,13 @@
  *	@(#)regexec.c	8.2 (Berkeley) 3/16/94
  */
 
+#include <sys/cdefs.h>
+#if 0
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)regexec.c	8.2 (Berkeley) 3/16/94";
 #endif /* LIBC_SCCS and not lint */
 #else
-__RCSID("$NetBSD: regexec.c,v 1.4 2014/01/26 21:43:45 christos Exp $");
+__RCSID("$NetBSD: regexec.c,v 1.5 2014/01/26 21:47:00 christos Exp $");
 #endif
 
 /*
