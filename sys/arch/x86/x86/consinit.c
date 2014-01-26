@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.25 2014/01/26 10:54:24 msaitoh Exp $	*/
+/*	$NetBSD: consinit.c,v 1.26 2014/01/26 15:49:25 taca Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.25 2014/01/26 10:54:24 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.26 2014/01/26 15:49:25 taca Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_puc.h"
@@ -149,7 +149,9 @@ consinit(void)
 	const struct btinfo_console *consinfo;
 	const struct btinfo_framebuffer *fbinfo;
 	static int initted;
+#if (NCOM > 0)
 	int rv;
+#endif
 
 	if (initted)
 		return;
