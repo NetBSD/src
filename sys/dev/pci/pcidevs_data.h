@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.1173 2014/01/21 09:26:18 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.1174 2014/01/26 10:19:37 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1181 2014/01/21 09:25:49 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1182 2014/01/26 10:19:07 msaitoh Exp
  */
 
 /*
@@ -7659,9 +7659,23 @@ static const uint16_t pci_products[] = {
 	    24574, 17109, 0,
 	    PCI_VENDOR_OXFORDSEMI, PCI_PRODUCT_OXFORDSEMI_OX16PCI958, 
 	    24585, 0,
+	    PCI_VENDOR_OXFORDSEMI, PCI_PRODUCT_OXFORDSEMI_OXPCIE952_0, 
+	    24596, 0,
+	    PCI_VENDOR_OXFORDSEMI, PCI_PRODUCT_OXFORDSEMI_OXPCIE952_1, 
+	    24596, 0,
 	    PCI_VENDOR_OXFORDSEMI, PCI_PRODUCT_OXFORDSEMI_OXPCIE952P, 
 	    24596, 17109, 0,
-	    PCI_VENDOR_OXFORDSEMI, PCI_PRODUCT_OXFORDSEMI_OXPCIE952, 
+	    PCI_VENDOR_OXFORDSEMI, PCI_PRODUCT_OXFORDSEMI_OXPCIE952_2S, 
+	    24596, 6195, 10571, 0,
+	    PCI_VENDOR_OXFORDSEMI, PCI_PRODUCT_OXFORDSEMI_OXPCIE952_2, 
+	    24596, 0,
+	    PCI_VENDOR_OXFORDSEMI, PCI_PRODUCT_OXFORDSEMI_OXPCIE952_3, 
+	    24596, 0,
+	    PCI_VENDOR_OXFORDSEMI, PCI_PRODUCT_OXFORDSEMI_OXPCIE952_4, 
+	    24596, 0,
+	    PCI_VENDOR_OXFORDSEMI, PCI_PRODUCT_OXFORDSEMI_OXPCIE952_5, 
+	    24596, 0,
+	    PCI_VENDOR_OXFORDSEMI, PCI_PRODUCT_OXFORDSEMI_OXPCIE952_6, 
 	    24596, 0,
 	    PCI_VENDOR_PACKETENGINES, PCI_PRODUCT_PACKETENGINES_GNICII, 
 	    23222, 7375, 5501, 0,
@@ -10289,7 +10303,7 @@ static const char pci_words[] = { "."
 	    "DELTA\0" /* 1 refs @ 6174 */
 	    "Permedia\0" /* 5 refs @ 6180 */
 	    "500MX\0" /* 1 refs @ 6189 */
-	    "2\0" /* 32 refs @ 6195 */
+	    "2\0" /* 33 refs @ 6195 */
 	    "GAMMA\0" /* 1 refs @ 6197 */
 	    "2V\0" /* 1 refs @ 6203 */
 	    "3\0" /* 11 refs @ 6206 */
@@ -10978,7 +10992,7 @@ static const char pci_words[] = { "."
 	    "ADDI-DATA\0" /* 1 refs @ 10544 */
 	    "APCI-7800\0" /* 1 refs @ 10554 */
 	    "8-port\0" /* 5 refs @ 10564 */
-	    "Serial\0" /* 92 refs @ 10571 */
+	    "Serial\0" /* 93 refs @ 10571 */
 	    "S5920\0" /* 1 refs @ 10578 */
 	    "Target\0" /* 1 refs @ 10584 */
 	    "Family\0" /* 2 refs @ 10591 */
@@ -12855,7 +12869,7 @@ static const char pci_words[] = { "."
 	    "EX-41098\0" /* 1 refs @ 24565 */
 	    "OX16PCI952\0" /* 2 refs @ 24574 */
 	    "OX16PCI958\0" /* 1 refs @ 24585 */
-	    "OXPCIe952\0" /* 2 refs @ 24596 */
+	    "OXPCIe952\0" /* 9 refs @ 24596 */
 	    "HD-2000\0" /* 1 refs @ 24606 */
 	    "HDTV\0" /* 2 refs @ 24614 */
 	    "HD-5500\0" /* 1 refs @ 24619 */
