@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_cscope.c,v 1.4 2013/11/27 18:11:00 christos Exp $ */
+/*	$NetBSD: ex_cscope.c,v 1.5 2014/01/26 21:43:45 christos Exp $ */
 /*-
  * Copyright (c) 1994, 1996
  *	Rob Mayoff.  All rights reserved.
@@ -10,9 +10,14 @@
 
 #include "config.h"
 
+#include <sys/cdefs.h>
+#if 0
 #ifndef lint
 static const char sccsid[] = "Id: ex_cscope.c,v 10.21 2003/11/05 17:11:54 skimo Exp  (Berkeley) Date: 2003/11/05 17:11:54 ";
 #endif /* not lint */
+#else
+__RCSID("$NetBSD: ex_cscope.c,v 1.5 2014/01/26 21:43:45 christos Exp $");
+#endif
 
 #include <sys/param.h>
 #include <sys/types.h>		/* XXX: param.h may not have included types.h */
