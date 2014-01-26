@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_FLOPPY,v 1.21 2013/06/30 21:38:57 rmind Exp $
+#	$NetBSD: INSTALL_FLOPPY,v 1.22 2014/01/26 19:16:16 dsl Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -239,11 +239,6 @@ isapnp0 at isa?
 
 # ISA Plug-and-Play PCMCIA controllers
 pcic*	at isapnp?
-
-# Coprocessor Support
-
-# Math Coprocessor support
-npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 
 
 # Console Devices

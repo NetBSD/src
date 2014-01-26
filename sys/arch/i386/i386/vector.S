@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.63 2013/11/22 01:09:11 riz Exp $	*/
+/*	$NetBSD: vector.S,v 1.64 2014/01/26 19:16:17 dsl Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.63 2013/11/22 01:09:11 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.64 2014/01/26 19:16:17 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -88,7 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.63 2013/11/22 01:09:11 riz Exp $");
 #include "ioapic.h"
 #include "lapic.h"
 
-#include "npx.h"
 #include "assym.h"
 
 /*
