@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.268 2014/01/19 14:30:37 dsl Exp $	*/
+/*	$NetBSD: trap.c,v 1.269 2014/01/26 19:16:17 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.268 2014/01/19 14:30:37 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.269 2014/01/26 19:16:17 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -111,8 +111,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.268 2014/01/19 14:30:37 dsl Exp $");
 #include "isa.h"
 
 #include <sys/kgdb.h>
-
-#include "npx.h"
 
 #ifdef KDTRACE_HOOKS
 #include <sys/dtrace_bsd.h>
@@ -586,11 +584,9 @@ kernelfault:
 		case T_DIVIDE|T_USER:
 			ksi.ksi_code = FPE_INTDIV;
 			break;
-#if NNPX > 0
 		case T_ARITHTRAP|T_USER:
 			ksi.ksi_code = npxtrap(l);
 			break;
-#endif
 		default:
 			ksi.ksi_code = 0;
 			break;

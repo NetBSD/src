@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.742 2014/01/19 14:30:37 dsl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.743 2014/01/26 19:16:17 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.742 2014/01/19 14:30:37 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.743 2014/01/26 19:16:17 dsl Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -191,7 +191,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.742 2014/01/19 14:30:37 dsl Exp $");
 
 #include "isa.h"
 #include "isadma.h"
-#include "npx.h"
 #include "ksyms.h"
 
 #include "cardbus.h"
@@ -869,12 +868,9 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	struct trapframe *tf;
 	uint16_t control;
 
-#if NNPX > 0
 	/* If we were using the FPU, forget about it. */
-	if (pcb->pcb_fpcpu != NULL) {
-		npxsave_lwp(l, false);
-	}
-#endif
+	if (pcb->pcb_fpcpu != NULL)
+		fpusave_lwp(l, false);
 
 #ifdef USER_LDT
 	pmap_ldt_cleanup(l);
@@ -1641,16 +1637,13 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	/* Save floating point register context, if any. */
 	if ((l->l_md.md_flags & MDL_USEDFPU) != 0) {
 		struct pcb *pcb = lwp_getpcb(l);
-#if NNPX > 0
 
 		/*
 		 * If this process is the current FP owner, dump its
 		 * context to the PCB first.
 		 */
-		if (pcb->pcb_fpcpu) {
-			npxsave_lwp(l, true);
-		}
-#endif
+		if (pcb->pcb_fpcpu)
+			fpusave_lwp(l, true);
 		if (i386_use_fxsave) {
 			memcpy(&mcp->__fpregs.__fp_reg_set.__fp_xmm_state.__fp_xmm,
 			    &pcb->pcb_savefpu.sv_xmm,
@@ -1742,14 +1735,11 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	if ((flags & _UC_TLSBASE) != 0)
 		lwp_setprivate(l, (void *)(uintptr_t)mcp->_mc_tlsbase);
 
-#if NNPX > 0
 	/*
 	 * If we were using the FPU, forget that we were.
 	 */
-	if (pcb->pcb_fpcpu != NULL) {
-		npxsave_lwp(l, false);
-	}
-#endif
+	if (pcb->pcb_fpcpu != NULL)
+		fpusave_lwp(l, false);
 
 	/* Restore floating point register context, if any. */
 	if ((flags & _UC_FPU) != 0) {

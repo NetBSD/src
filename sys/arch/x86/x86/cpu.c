@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.107 2013/12/01 01:05:16 christos Exp $	*/
+/*	$NetBSD: cpu.c,v 1.108 2014/01/26 19:16:17 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.107 2013/12/01 01:05:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.108 2014/01/26 19:16:17 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -71,10 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.107 2013/12/01 01:05:16 christos Exp $");
 
 #include "lapic.h"
 #include "ioapic.h"
-
-#ifdef i386
-#include "npx.h"
-#endif
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -849,13 +845,7 @@ cpu_hatch(void *v)
 	lapic_set_lvt();
 	lapic_initclocks();
 
-#ifdef i386
-#if NNPX > 0
-	npxinit(ci);
-#endif
-#else
 	fpuinit(ci);
-#endif
 	lldt(GSYSSEL(GLDT_SEL, SEL_KPL));
 	ltr(ci->ci_tss_sel);
 
@@ -1123,13 +1113,7 @@ cpu_offline_md(void)
 	int s;
 
 	s = splhigh();
-#ifdef i386
-#if NNPX > 0
-	npxsave_cpu(true);
-#endif
-#else
 	fpusave_cpu(true);
-#endif
 	splx(s);
 }
 
