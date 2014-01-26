@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.40 2011/02/08 20:20:25 rmind Exp $	*/
+/*	$NetBSD: grf.c,v 1.41 2014/01/26 00:09:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.40 2011/02/08 20:20:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.41 2014/01/26 00:09:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,8 +270,9 @@ grfmap(dev_t dev, void **addrp, struct proc *p)
 	if (*addrp)
 		flags |= MAP_FIXED;
 	else
-		*addrp =
-		    (void *)VM_DEFAULT_ADDRESS(p->p_vmspace->vm_daddr, len);
+		*addrp = (void *)p->p_emul->e_vm_default_addr(p, 
+		    p->p_vmspace->vm_daddr, len);
+
 	vn.v_type = VCHR;			/* XXX */
 	vn.v_rdev = dev;			/* XXX */
 	error = uvm_mmap(&p->p_vmspace->vm_map, (vaddr_t *)addrp,
