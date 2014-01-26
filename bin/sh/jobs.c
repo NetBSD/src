@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.71 2012/12/31 14:10:15 dsl Exp $	*/
+/*	$NetBSD: jobs.c,v 1.72 2014/01/26 22:38:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.71 2012/12/31 14:10:15 dsl Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.72 2014/01/26 22:38:20 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -858,14 +858,16 @@ makejob(union node *node, int nprocs)
 int
 forkshell(struct job *jp, union node *n, int mode)
 {
-	int pid;
+	pid_t pid;
+	int serrno;
 
 	TRACE(("forkshell(%%%d, %p, %d) called\n", jp - jobtab, n, mode));
 	switch ((pid = fork())) {
 	case -1:
-		TRACE(("Fork failed, errno=%d\n", errno));
+		serrno = errno;
+		TRACE(("Fork failed, errno=%d\n", serrno));
 		INTON;
-		error("Cannot fork");
+		error("Cannot fork (%s)", strerror(serrno));
 		break;
 	case 0:
 		forkchild(jp, n, mode, 0);
