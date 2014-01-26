@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.44 2013/07/09 09:34:59 roy Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.45 2014/01/26 08:31:17 plunky Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -1080,7 +1080,7 @@ ra_input(int len, struct nd_router_advert *ra,
 	}
 	if (rai->leaving) {
 		syslog(LOG_DEBUG,
-		       "<%s> recieved RA on re-configuring interface (%s)",
+		       "<%s> received RA on re-configuring interface (%s)",
 			__func__, rai->ifname);
 		goto done;
 	}
