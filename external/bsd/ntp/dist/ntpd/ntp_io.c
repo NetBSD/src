@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_io.c,v 1.13 2014/01/17 17:25:47 roy Exp $	*/
+/*	$NetBSD: ntp_io.c,v 1.14 2014/01/26 02:21:08 mlelstv Exp $	*/
 
 /*
  * ntp_io.c - input/output routines for ntpd.	The socket-opening code
@@ -2818,7 +2818,6 @@ open_socket(
 {
 	SOCKET	fd;
 	int	errval;
-	char	scopetext[16];
 	/*
 	 * int is OK for REUSEADR per
 	 * http://www.kohala.com/start/mcast.api.txt
@@ -2968,16 +2967,10 @@ open_socket(
 		    || debug > 1
 #endif
 		    ) {
-			if (SCOPE(addr))
-				snprintf(scopetext, sizeof(scopetext),
-					 "%%%d", SCOPE(addr));
-			else
-				scopetext[0] = 0;
-
 			msyslog(LOG_ERR,
-				"bind(%d) AF_INET%s %s%s#%d%s flags 0x%x failed: %m",
+				"bind(%d) AF_INET%s %s#%d%s flags 0x%x failed: %m",
 				fd, IS_IPV6(addr) ? "6" : "",
-				stoa(addr), scopetext, SRCPORT(addr),
+				stoa(addr), SRCPORT(addr),
 				IS_MCAST(addr) ? " (multicast)" : "",
 				interf->flags);
 		}
