@@ -1,4 +1,4 @@
-# $NetBSD: NET4501,v 1.82 2013/06/30 21:38:57 rmind Exp $
+# $NetBSD: NET4501,v 1.83 2014/01/26 19:16:16 dsl Exp $
 #
 # NET4501 -- kernel configuration for a Soekris Engineering net4501
 # single-board computer.
@@ -10,7 +10,7 @@ include 	"arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"NET4501-$Revision: 1.82 $"
+#ident 		"NET4501-$Revision: 1.83 $"
 
 maxusers	32		# estimated number of users
 
@@ -203,11 +203,6 @@ ath*	at cardbus? function ?	# Atheros 5210/5211/5212 802.11
 atw*	at cardbus? function ?	# ADMtek ADM8211 (802.11)
 ral*	at cardbus? function ?	# Ralink RT2x60 (802.11)
 rtw*	at cardbus? function ?	# Realtek RTL8180 (802.11)
-
-# Coprocessor Support
-
-# Math Coprocessor support
-npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 
 # ISA serial interfaces
 com0	at isa? port 0x3f8 irq 4	# Standard PC serial ports

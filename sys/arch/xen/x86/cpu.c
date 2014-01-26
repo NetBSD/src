@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.95 2013/12/01 01:05:16 christos Exp $	*/
+/*	$NetBSD: cpu.c,v 1.96 2014/01/26 19:16:17 dsl Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.95 2013/12/01 01:05:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.96 2014/01/26 19:16:17 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1059,11 +1059,7 @@ cpu_offline_md(void)
         int s;
 
         s = splhigh();
-#ifdef __i386__
-        npxsave_cpu(true);
-#else   
         fpusave_cpu(true);
-#endif
         splx(s);
 }
 

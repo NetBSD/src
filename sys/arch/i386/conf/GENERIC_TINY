@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.136 2013/06/30 21:38:57 rmind Exp $
+#	$NetBSD: GENERIC_TINY,v 1.137 2014/01/26 19:16:16 dsl Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -230,11 +230,6 @@ pcic1	at isa? port 0x3e2 iomem 0xd4000 iosiz 0x4000
 
 # ISA Plug-and-Play PCMCIA controllers
 #pcic*	at isapnp?
-
-# Coprocessor Support
-
-# Math Coprocessor support
-npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 
 # Console Devices
 

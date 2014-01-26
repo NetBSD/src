@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.109 2014/01/11 17:05:17 christos Exp $	*/
+/*	$NetBSD: locore.S,v 1.110 2014/01/26 19:16:17 dsl Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -129,7 +129,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.109 2014/01/11 17:05:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.110 2014/01/26 19:16:17 dsl Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -139,7 +139,6 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.109 2014/01/11 17:05:17 christos Exp $"
 #include "opt_vm86.h"
 #include "opt_xen.h"
 
-#include "npx.h"
 #include "assym.h"
 #include "lapic.h"
 #include "ioapic.h"
@@ -1288,41 +1287,10 @@ IDTVEC(svr4_fasttrap)
 	cli
 	jmp	2b
 
-#if NNPX > 0
-/*
- * Special interrupt handlers.  Someday intr0-intr15 will be used to count
- * interrupts.  We'll still need a special exception 16 handler.  The busy
- * latch stuff in probintr() can be moved to npxprobe().
- */
-
-/*
- * void probeintr(void)
- */
-NENTRY(probeintr)
-	ss
-	incl	_C_LABEL(npx_intrs_while_probing)
-	pushl	%eax
-	movb	$0x20,%al	# EOI (asm in strings loses cpp features)
-	outb	%al,$0xa0	# IO_ICU2
-	outb	%al,$0x20	# IO_ICU1
-	movb	$0,%al
-	outb	%al,$0xf0	# clear BUSY# latch
-	popl	%eax
-	iret
-END(probeintr)
-
-/*
- * void probetrap(void)
- */
-NENTRY(probetrap)
-	ss
-	incl	_C_LABEL(npx_traps_while_probing)
-	fnclex
-	iret
-END(probetrap)
-
 /*
  * int npx586bug1(int a, int b)
+ * Used when checking for the FDIV bug on first generations pentiums.
+ * Anything 120MHz or above is fine.
  */
 NENTRY(npx586bug1)
 	fildl	4(%esp)		# x
@@ -1336,7 +1304,6 @@ NENTRY(npx586bug1)
 	popl	%eax
 	ret
 END(npx586bug1)
-#endif /* NNPX > 0 */
 
 /*
  * void sse2_idlezero_page(void *pg)
