@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.148 2014/01/19 14:30:37 dsl Exp $	*/
+/*	$NetBSD: npx.c,v 1.149 2014/01/26 19:16:17 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.148 2014/01/19 14:30:37 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.149 2014/01/26 19:16:17 dsl Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -111,33 +111,21 @@ __KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.148 2014/01/19 14:30:37 dsl Exp $");
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/cpu.h>
-#include <sys/file.h>
-#include <sys/proc.h>
-#include <sys/ioctl.h>
-#include <sys/device.h>
-#include <sys/vmmeter.h>
 #include <sys/kernel.h>
-#include <sys/bus.h>
 #include <sys/cpu.h>
-#include <sys/intr.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/cpufunc.h>
 #include <machine/cpuvar.h>
 #include <machine/pcb.h>
-#include <machine/trap.h>
 #include <machine/specialreg.h>
-#include <machine/pio.h>
-#include <machine/i8259.h>
 
-#include <dev/isa/isareg.h>
-#include <dev/isa/isavar.h>
-
-#include <i386/isa/npxvar.h>
 
 /*
- * 387 and 287 Numeric Coprocessor Extension (NPX) Driver.
+ * 387 Numeric Coprocessor Extension (NPX) Driver.
+ *
+ * Note that we only support 486 and later cpus, these do not support
+ * an external fpu, only the one that is part of the cpu fabric.
+ * A 486 might not have an fpu, but the 487 is a full 486.
  *
  * We do lazy initialization and switching using the TS bit in cr0 and the
  * MDL_USEDFPU bit in mdlwp.
@@ -164,7 +152,6 @@ static int	npxdna(struct cpu_info *);
 #define	stts() HYPERVISOR_fpu_taskswitch(1)
 #endif
 
-static	enum npx_type		npx_type;
 volatile u_int			npx_intrs_while_probing;
 volatile u_int			npx_traps_while_probing;
 
@@ -187,172 +174,42 @@ fpu_save(union savefpu *addr)
 		fnsave(&addr->sv_87);
 }
 
-static int
-npxdna_empty(struct cpu_info *ci)
+int    (*npxdna_func)(struct cpu_info *) = npxdna;
+
+void
+fpuinit(struct cpu_info *ci)
 {
+	uint16_t control;
+	uint32_t cr0;
 
-	panic("npxdna vector not initialized");
-	return 0;
-}
-
-
-int    (*npxdna_func)(struct cpu_info *) = npxdna_empty;
-
-#ifndef XEN
-/*
- * This calls i8259_* directly, but currently we can count on systems
- * having a i8259 compatible setup all the time. Maybe have to change
- * that in the future.
- */
-enum npx_type
-npxprobe1(bus_space_tag_t iot, bus_space_handle_t ioh, int irq)
-{
-	struct gate_descriptor save_idt_npxintr;
-	struct gate_descriptor save_idt_npxtrap;
-	enum npx_type rv = NPX_NONE;
-	u_long	save_eflags;
-	int control;
-	int status;
-	unsigned irqmask;
-
-	if (cpu_feature[0] & CPUID_FPU) {
-		i386_fpu_exception = 1;
-		return NPX_CPUID;
-	}
-	save_eflags = x86_read_psl();
-	x86_disable_intr();
-	save_idt_npxintr = idt[NRSVIDT + irq];
-	save_idt_npxtrap = idt[16];
-	setgate(&idt[NRSVIDT + irq], probeintr, 0, SDT_SYS386IGT, SEL_KPL,
-	    GSEL(GCODE_SEL, SEL_KPL));
-	setgate(&idt[16], probetrap, 0, SDT_SYS386TGT, SEL_KPL,
-	    GSEL(GCODE_SEL, SEL_KPL));
-
-	irqmask = i8259_setmask(~((1 << IRQ_SLAVE) | (1 << irq)));
-
-	/*
-	 * Partially reset the coprocessor, if any.  Some BIOS's don't reset
-	 * it after a warm boot.
-	 */
-	/* full reset on some systems, NOP on others */
-	bus_space_write_1(iot, ioh, 1, 0);
-	delay(1000);
-	/* clear BUSY# latch */
-	bus_space_write_1(iot, ioh, 0, 0);
-
-	/*
-	 * We set CR0 in locore to trap all ESC and WAIT instructions.
-	 * We have to turn off the CR0_EM bit temporarily while probing.
-	 */
-	lcr0(rcr0() & ~(CR0_EM|CR0_TS));
-	x86_enable_intr();
-
-	/*
-	 * Finish resetting the coprocessor, if any.  If there is an error
-	 * pending, then we may get a bogus IRQ13, but probeintr() will handle
-	 * it OK.  Bogus halts have never been observed, but we enabled
-	 * IRQ13 and cleared the BUSY# latch early to handle them anyway.
-	 */
+	/* Assume we have an FPU */
+	cr0 = rcr0();
+	cr0 &= ~(CR0_EM | CR0_TS);
+	cr0 |= CR0_NE | CR0_MP;
+	lcr0(cr0);
+	/* Read back the default contol word */
 	fninit();
-	delay(1000);		/* wait for any IRQ13 (fwait might hang) */
+	fnstcw(&control);
 
-	/*
-	 * Check for a status of mostly zero.
-	 */
-	status = 0x5a5a;
-	fnstsw(&status);
-	if ((status & 0xb8ff) == 0) {
-		/*
-		 * Good, now check for a proper control word.
-		 */
-		control = 0x5a5a;
-		fnstcw(&control);
-		if ((control & 0x1f3f) == 0x033f) {
-			/*
-			 * We have an npx, now divide by 0 to see if exception
-			 * 16 works.
-			 */
-			control &= ~(1 << 2);	/* enable divide by 0 trap */
-			fldcw(&control);
-			npx_traps_while_probing = npx_intrs_while_probing = 0;
-			fp_divide_by_0();
-			if (npx_traps_while_probing != 0) {
-				/*
-				 * Good, exception 16 works.
-				 */
-				rv = NPX_EXCEPTION;
-				i386_fpu_exception = 1;
-			} else if (npx_intrs_while_probing != 0) {
-				/*
-				 * Bad, we are stuck with IRQ13.
-				 */
-				rv = NPX_INTERRUPT;
-			} else {
-				/*
-				 * Worse, even IRQ13 is broken.  Use emulator.
-				 */
-				rv = NPX_BROKEN;
-			}
-		}
+	if (control != __INITIAL_NPXCW__) {
+		/* Must be a 486SX, emulate FP instructions */
+		lcr0((cr0 & ~CR0_MP) | CR0_EM);
+		aprint_normal_dev(ci->ci_dev, "no fpu\n");
+		return;
 	}
 
-	x86_disable_intr();
-	lcr0(rcr0() | (CR0_EM|CR0_TS));
+	/* We have a valid FPU */
+	i386_fpu_present = 1;
 
-	irqmask = i8259_setmask(irqmask);
-
-	idt[NRSVIDT + irq] = save_idt_npxintr;
-
-	idt[16] = save_idt_npxtrap;
-	x86_write_psl(save_eflags);
-
-	return (rv);
-}
-
-void npxinit(struct cpu_info *ci)
-{
-	lcr0(rcr0() & ~(CR0_EM|CR0_TS));
-	fninit();
 	if (npx586bug1(4195835, 3145727) != 0) {
+		/* NB 120+MHz cpus are not affected */
 		i386_fpu_fdivbug = 1;
 		aprint_normal_dev(ci->ci_dev,
 		    "WARNING: Pentium FDIV bug detected!\n");
 	}
-	lcr0(rcr0() | (CR0_TS));
-}
-#endif
 
-/*
- * Common attach routine.
- */
-void
-npxattach(struct npx_softc *sc)
-{
-
-	npx_softc = sc;
-	npx_type = sc->sc_type;
-
-#ifndef XEN
-	npxinit(&cpu_info_primary);
-#endif
-	i386_fpu_present = 1;
-	npxdna_func = npxdna;
-
-	if (!pmf_device_register(sc->sc_dev, NULL, NULL))
-		aprint_error_dev(sc->sc_dev, "couldn't establish power handler\n");
-}
-
-int
-npxdetach(device_t self, int flags)
-{
-	struct npx_softc *sc = device_private(self);
-
-	if (sc->sc_type == NPX_INTERRUPT)
-		return EBUSY;
-
-	pmf_device_deregister(self);
-	
-	return 0;
+	/* Set TS so first fp instruction faults */
+	lcr0(cr0 | CR0_TS);
 }
 
 /*
@@ -367,9 +224,10 @@ npxdetach(device_t self, int flags)
  * a status code!  So there is no way to have a non-naive SIGFPE handler.  At
  * best a handler could do an fninit followed by an fldcw of a static value.
  * fnclex would be of little use because it would leave junk on the FPU stack.
- * Returning from the handler would be even less safe than usual because
- * IRQ13 exception handling makes exceptions even less precise than usual.
+ *
+ * Only called dircetly from i386_trap.S
  */
+int npxintr(void *, struct intrframe *);
 int
 npxintr(void *arg, struct intrframe *frame)
 {
@@ -378,7 +236,6 @@ npxintr(void *arg, struct intrframe *frame)
 	union savefpu *addr;
 	struct pcb *pcb;
 	ksiginfo_t ksi;
-
 
 	kpreempt_disable();
 #ifndef XEN
@@ -389,15 +246,6 @@ npxintr(void *arg, struct intrframe *frame)
 	curcpu()->ci_data.cpu_ntrap++;
 	IPRINTF(("%s: fp intr\n", device_xname(ci->ci_dev)));
 
-#ifndef XEN
-	struct npx_softc *sc = npx_softc;
-	/*
-	 * Clear the interrupt latch.
-	 */
-	if (sc->sc_type == NPX_INTERRUPT)
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh, 0, 0);
-#endif
-
 	/*
 	 * If we're saving, ignore the interrupt.  The FPU will generate
 	 * another one when we restore the state later.
@@ -407,9 +255,9 @@ npxintr(void *arg, struct intrframe *frame)
 		return (1);
 	}
 
-	if (l == NULL || npx_type == NPX_NONE) {
-		printf("npxintr: l = %p, curproc = %p, npx_type = %d\n",
-		    l, curproc, npx_type);
+	if (l == NULL || !i386_fpu_present) {
+		printf("npxintr: l = %p, curproc = %p, fpu_present = %d\n",
+		    l, curproc, i386_fpu_present);
 		printf("npxintr: came from nowhere");
 		kpreempt_enable();
 		return 1;
@@ -496,18 +344,7 @@ npxintr(void *arg, struct intrframe *frame)
 
 		trapsignal(l, &ksi);
 	} else {
-		/*
-		 * This is a nested interrupt.  This should only happen when
-		 * an IRQ13 occurs at the same time as a higher-priority
-		 * interrupt.
-		 *
-		 * XXX
-		 * Currently, we treat this like an asynchronous interrupt, but
-		 * this has disadvantages.
-		 */
-		mutex_enter(proc_lock);
-		psignal(l->l_proc, SIGFPE);
-		mutex_exit(proc_lock);
+		panic("fpu trap from kernel\n");
 	}
 
 	kpreempt_enable();
@@ -582,7 +419,7 @@ npxdna(struct cpu_info *ci)
 			return 1;
 		}
 		KASSERT(fl != l);
-		npxsave_cpu(true);
+		fpusave_cpu(true);
 		KASSERT(ci->ci_fpcurlwp == NULL);
 	}
 
@@ -591,7 +428,7 @@ npxdna(struct cpu_info *ci)
 		/* Explicitly disable preemption before dropping spl. */
 		KPREEMPT_DISABLE(l);
 		splx(s);
-		npxsave_lwp(l, true);
+		fpusave_lwp(l, true);
 		KASSERT(pcb->pcb_fpcpu == NULL);
 		s = splhigh();
 		KPREEMPT_ENABLE(l);
@@ -649,7 +486,7 @@ npxdna(struct cpu_info *ci)
  * Save current CPU's FPU state.  Must be called at IPL_HIGH.
  */
 void
-npxsave_cpu(bool save)
+fpusave_cpu(bool save)
 {
 	struct cpu_info *ci;
 	struct lwp *l;
@@ -694,7 +531,7 @@ npxsave_cpu(bool save)
  * may race against it.
  */
 void
-npxsave_lwp(struct lwp *l, bool save)
+fpusave_lwp(struct lwp *l, bool save)
 {
 	struct cpu_info *oci;
 	struct pcb *pcb;
@@ -712,7 +549,7 @@ npxsave_lwp(struct lwp *l, bool save)
 		}
 		if (oci == curcpu()) {
 			KASSERT(oci->ci_fpcurlwp == l);
-			npxsave_cpu(save);
+			fpusave_cpu(save);
 			splx(s);
 			break;
 		}
@@ -731,7 +568,7 @@ npxsave_lwp(struct lwp *l, bool save)
 			spins++;
 		}
 		if (spins > 100000000) {
-			panic("npxsave_lwp: did not");
+			panic("fpusave_lwp: did not");
 		}
 	}
 
@@ -937,8 +774,8 @@ npxtrap(struct lwp *l)
 	struct lwp *fl = ci->ci_fpcurlwp;
 
 	if (!i386_fpu_present) {
-		printf("%s: fpcurthread = %p, curthread = %p, npx_type = %d\n",
-		    __func__, fl, l, npx_type);
+		printf("%s: fpcurthread = %p, curthread = %p\n",
+		    __func__, fl, l);
 		panic("npxtrap from nowhere");
 	}
 	kpreempt_disable();
