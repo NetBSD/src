@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_m68k.c,v 1.18 2010/09/20 23:23:16 jym Exp $	*/
+/*	$NetBSD: kvm_m68k.c,v 1.19 2014/01/27 21:00:01 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -58,6 +58,8 @@
 
 #include "kvm_private.h"
 #include "kvm_m68k.h"
+
+__RCSID("$NetBSD: kvm_m68k.c,v 1.19 2014/01/27 21:00:01 matt Exp $");
 
 struct name_ops {
 	const char *name;
