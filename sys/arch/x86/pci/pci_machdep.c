@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.64 2014/01/26 10:54:24 msaitoh Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.65 2014/01/27 23:11:50 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.64 2014/01/26 10:54:24 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.65 2014/01/27 23:11:50 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -938,6 +938,13 @@ device_pci_register(device_t dev, void *aux)
 				}
 #endif
 			}
+#if 1 && NWSDISPLAY > 0 && NGENFB > 0
+			/* XXX */
+			if (device_is_a(dev, "genfb")) {
+				prop_dictionary_set_bool(dict, "is_console",
+				    genfb_is_console());
+			} else
+#endif
 			prop_dictionary_set_bool(dict, "is_console", true);
 
 			prop_dictionary_set_bool(dict, "clear-screen", false);
