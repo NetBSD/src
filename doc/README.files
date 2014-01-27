@@ -1,4 +1,4 @@
-#	$NetBSD: README.files,v 1.4.10.4.2.3 2014/01/17 18:17:05 bouyer Exp $
+#	$NetBSD: README.files,v 1.4.10.4.2.4 2014/01/27 21:21:24 bouyer Exp $
 
 What's in this directory:
 
@@ -13,6 +13,8 @@ CHANGES-5.2	Changes between the 5.1 and 5.2 releases.
 CHANGES-5.2.1	Changes between the 5.2 and 5.2.1 releases.
 
 CHANGES-5.2.2	Changes between the 5.2.1 and 5.2.2 releases.
+
+CHANGES-5.2.3	Changes between the 5.2.2 and 5.2.3 releases.
 
 CHANGES.prev	Changes in previous NetBSD releases.
 
