@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_pci.c,v 1.35 2014/01/16 18:41:10 jakllsch Exp $ */
+/*	$NetBSD: genfb_pci.c,v 1.36 2014/01/27 13:22:55 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.35 2014/01/16 18:41:10 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.36 2014/01/27 13:22:55 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,10 +99,8 @@ pci_genfb_attach(device_t parent, device_t self, void *aux)
 	struct pci_genfb_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	struct genfb_ops ops;
-	prop_dictionary_t dict;
 	pcireg_t rom;
 	int idx, bar, type;
-	bool isconsole;
 
 	pci_aprint_devinfo(pa, NULL);
 
@@ -186,10 +184,6 @@ pci_genfb_attach(device_t parent, device_t self, void *aux)
 	ops.genfb_ioctl = pci_genfb_ioctl;
 	ops.genfb_mmap = pci_genfb_mmap;
 	ops.genfb_borrow = pci_genfb_borrow;
-
-	isconsole = genfb_is_console() != 0;
-	dict = device_properties(self);
-	prop_dictionary_set_bool(dict, "is_console", isconsole);
 
 	if (genfb_attach(&sc->sc_gen, &ops) == 0) {
 
