@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_add_32_cas.c,v 1.5 2014/01/27 18:08:37 matt Exp $	*/
+/*	$NetBSD: atomic_add_32_cas.c,v 1.6 2014/01/27 18:29:47 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -33,8 +33,10 @@
 
 #include <sys/atomic.h>
 
-void
-atomic_add_32(volatile uint32_t *addr, int32_t val)
+uint32_t __sync_fetch_and_add_4(volatile uint32_t *, int32_t);
+
+uint32_t
+__sync_fetch_and_add_4(volatile uint32_t *addr, int32_t val)
 {
 	uint32_t old, new;
 
@@ -42,6 +44,13 @@ atomic_add_32(volatile uint32_t *addr, int32_t val)
 		old = *addr;
 		new = old + val;
 	} while (atomic_cas_32(addr, old, new) != old);
+	return old;
+}
+
+void
+atomic_add_32(volatile uint32_t *addr, int32_t val)
+{
+	(void) __sync_fetch_and_add_4(addr, val);
 }
 
 #undef atomic_add_32
@@ -50,7 +59,6 @@ atomic_op_alias(atomic_add_32,_atomic_add_32)
 #undef atomic_add_int
 atomic_op_alias(atomic_add_int,_atomic_add_32)
 __strong_alias(_atomic_add_int,_atomic_add_32)
-__strong_alias(__sync_fetch_and_add_4,_atomic_add_32)
 
 #if !defined(_LP64)
 #undef atomic_add_long
