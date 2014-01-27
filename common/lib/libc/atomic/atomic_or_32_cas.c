@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_or_32_cas.c,v 1.6 2014/01/27 18:29:47 matt Exp $	*/
+/*	$NetBSD: atomic_or_32_cas.c,v 1.7 2014/01/27 18:36:52 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@ __sync_fetch_and_or_4(volatile uint32_t *addr, uint32_t val)
 void
 atomic_or_32(volatile uint32_t *addr, uint32_t val)
 {
-	(void) __sync_val_compare_and_swap_4(addr, val);
+	(void) __sync_fetch_and_or_4(addr, val);
 }
 
 #undef atomic_or_32

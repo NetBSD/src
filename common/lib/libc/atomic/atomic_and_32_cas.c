@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_and_32_cas.c,v 1.6 2014/01/27 18:29:47 matt Exp $	*/
+/*	$NetBSD: atomic_and_32_cas.c,v 1.7 2014/01/27 18:36:52 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/atomic.h>
 
-uint32_t atomic_and_32(volatile uint32_t *, uint32_t);
+uint32_t __sync_fetch_and_and_4(volatile uint32_t *, uint32_t);
 
 uint32_t
 __sync_fetch_and_and_4(volatile uint32_t *addr, uint32_t val)
