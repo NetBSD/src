@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_or_64_cas.c,v 1.7 2014/01/27 18:29:47 matt Exp $	*/
+/*	$NetBSD: atomic_or_64_cas.c,v 1.8 2014/01/27 20:44:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 uint64_t __sync_fetch_and_or_8(volatile uint64_t *addr, uint64_t val);
 
-void
+uint64_t
 __sync_fetch_and_or_8(volatile uint64_t *addr, uint64_t val)
 {
 	uint64_t old, new;
