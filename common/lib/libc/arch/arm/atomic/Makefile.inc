@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.14 2013/11/08 22:42:52 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.15 2014/01/27 18:05:24 matt Exp $
 
 ARMV6= ${CPUFLAGS:M-march=armv6*} ${CPUFLAGS:M-mcpu=arm11*}
 ARMV6+= ${CFLAGS:M-march=armv6*:} ${CFLAGS:M-mcpu=arm11*}
@@ -58,6 +58,8 @@ CPUFLAGS.atomic_simplelock.c+=	-marm
 SRCS.atomic+=	atomic_init_testset.c
 SRCS.atomic+=	atomic_cas_up.S
 CPPFLAGS+= -D__HAVE_ASM_ATOMIC_CAS_UP
+CPPFLAGS+= -D__HAVE_ASM_ATOMIC_CAS_16_UP
+CPPFLAGS+= -D__HAVE_ASM_ATOMIC_CAS_8_UP
 .else
 SRCS.atomic+=	atomic_init_cas.c
 .endif
