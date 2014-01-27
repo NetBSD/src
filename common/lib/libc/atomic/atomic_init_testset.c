@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_init_testset.c,v 1.9 2013/08/21 03:00:56 matt Exp $	*/
+/*	$NetBSD: atomic_init_testset.c,v 1.10 2014/01/27 18:03:44 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: atomic_init_testset.c,v 1.9 2013/08/21 03:00:56 matt Exp $");
+__RCSID("$NetBSD: atomic_init_testset.c,v 1.10 2014/01/27 18:03:44 matt Exp $");
 
 #include "atomic_op_namespace.h"
 
@@ -59,13 +59,29 @@ extern uint32_t _atomic_cas_up(volatile uint32_t *, uint32_t, uint32_t);
 #else
 static uint32_t _atomic_cas_up(volatile uint32_t *, uint32_t, uint32_t);
 #endif
-
 static uint32_t (*_atomic_cas_fn)(volatile uint32_t *, uint32_t, uint32_t) =
     _atomic_cas_up;
+RAS_DECL(_atomic_cas);
+
+#ifdef	__HAVE_ASM_ATOMIC_CAS_16_UP
+extern uint16_t _atomic_cas_16_up(volatile uint16_t *, uint16_t, uint16_t);
+#else
+static uint16_t _atomic_cas_16_up(volatile uint16_t *, uint16_t, uint16_t);
+#endif
+static uint16_t (*_atomic_cas_16_fn)(volatile uint16_t *, uint16_t, uint16_t) =
+    _atomic_cas_16_up;
+RAS_DECL(_atomic_cas_16);
+
+#ifdef	__HAVE_ASM_ATOMIC_CAS_8_UP
+extern uint8_t _atomic_cas_8_up(volatile uint8_t *, uint8_t, uint8_t);
+#else
+static uint8_t _atomic_cas_8_up(volatile uint8_t *, uint8_t, uint8_t);
+#endif
+static uint8_t (*_atomic_cas_8_fn)(volatile uint8_t *, uint8_t, uint8_t) =
+    _atomic_cas_8_up;
+RAS_DECL(_atomic_cas_8);
 
 void	__libc_atomic_init(void) __attribute__ ((visibility("hidden")));
-
-RAS_DECL(_atomic_cas);
 
 #ifndef	__HAVE_ASM_ATOMIC_CAS_UP
 static uint32_t
@@ -80,6 +96,42 @@ _atomic_cas_up(volatile uint32_t *ptr, uint32_t old, uint32_t new)
 	}
 	*ptr = new;
 	RAS_END(_atomic_cas);
+
+	return ret;
+}
+#endif
+
+#ifndef	__HAVE_ASM_ATOMIC_CAS_16_UP
+static uint16_t
+_atomic_cas_up_16(volatile uint16_t *ptr, uint16_t old, uint16_t new)
+{
+	uint16_t ret;
+
+	RAS_START(_atomic_cas_16);
+	ret = *ptr;
+	if (__predict_false(ret != old)) {
+		return ret;
+	}
+	*ptr = new;
+	RAS_END(_atomic_cas_16);
+
+	return ret;
+}
+#endif
+
+#ifndef	__HAVE_ASM_ATOMIC_CAS_UP
+static uint8_t
+_atomic_cas_up(volatile uint8_t *ptr, uint8_t old, uint8_t new)
+{
+	uint8_t ret;
+
+	RAS_START(_atomic_cas_8);
+	ret = *ptr;
+	if (__predict_false(ret != old)) {
+		return ret;
+	}
+	*ptr = new;
+	RAS_END(_atomic_cas_16);
 
 	return ret;
 }
@@ -109,6 +161,24 @@ _atomic_cas_32(volatile uint32_t *ptr, uint32_t old, uint32_t new)
 	return (*_atomic_cas_fn)(ptr, old, new);
 }
 
+uint16_t _atomic_cas_16(volatile uint16_t *, uint16_t, uint16_t);
+
+uint16_t
+_atomic_cas_16(volatile uint16_t *ptr, uint16_t old, uint16_t new)
+{
+
+	return (*_atomic_cas_16_fn)(ptr, old, new);
+}
+
+uint8_t _atomic_cas_8(volatile uint8_t *, uint8_t, uint8_t);
+
+uint8_t
+_atomic_cas_8(volatile uint8_t *ptr, uint8_t old, uint8_t new)
+{
+
+	return (*_atomic_cas_8_fn)(ptr, old, new);
+}
+
 void __section(".text.startup")
 __libc_atomic_init(void)
 {
@@ -127,6 +197,18 @@ __libc_atomic_init(void)
 	if (rasctl(RAS_ADDR(_atomic_cas), RAS_SIZE(_atomic_cas),
 	    RAS_INSTALL) == 0) {
 		_atomic_cas_fn = _atomic_cas_up;
+		return;
+	}
+
+	if (rasctl(RAS_ADDR(_atomic_cas_16), RAS_SIZE(_atomic_cas_16),
+	    RAS_INSTALL) == 0) {
+		_atomic_cas_16_fn = _atomic_cas_16_up;
+		return;
+	}
+
+	if (rasctl(RAS_ADDR(_atomic_cas_8), RAS_SIZE(_atomic_cas_8),
+	    RAS_INSTALL) == 0) {
+		_atomic_cas_8_fn = _atomic_cas_8_up;
 		return;
 	}
 }
@@ -156,3 +238,7 @@ atomic_op_alias(atomic_cas_ulong_ni,_atomic_cas_32)
 __strong_alias(_atomic_cas_ulong_ni,_atomic_cas_32)
 atomic_op_alias(atomic_cas_ptr_ni,_atomic_cas_32)
 __strong_alias(_atomic_cas_ptr_ni,_atomic_cas_32)
+
+__strong_alias(__sync_val_compare_and_swap_4,_atomic_cas_32)
+__strong_alias(__sync_val_compare_and_swap_2,_atomic_cas_16)
+__strong_alias(__sync_val_compare_and_swap_1,_atomic_cas_8)
