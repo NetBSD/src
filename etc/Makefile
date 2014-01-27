@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.411 2014/01/16 01:15:33 christos Exp $
+#	$NetBSD: Makefile,v 1.412 2014/01/27 21:37:17 apb Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -194,7 +194,7 @@ etc-release: .EXEC .MAKE
 		cat ${NETBSDSRCDIR}/sys/conf/copyright; \
 		echo ; \
 		echo "Build settings:"; \
-		printf "%20s   %s\n"  "Build date" "$$(date -u)"; \
+		printf "%20s   %s\n" "Build date" "$$(date -u)"; \
 		printf "%20s   %s\n"  "Built by" "$${USER-root}@$$(hostname)"; \
 		echo ; \
 		${PRINT_PARAMS} ; \
@@ -580,7 +580,7 @@ kernset-${configfile}: .PHONY build_kernels snap_pre
 	kerndir=${KERNOBJDIR}/${configfile:C/.*\///}; \
 	kernsuffixes="${KERNEL_SUFFIXES:S/^/./}"; \
 	kern_tgz=${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/sets/kern-${configfile}.tgz; \
-	pax_cmd="COMPRESS_PROGRAM=${TOOL_GZIP:Q} GZIP=-9 ${TOOL_PAX} -O -zw -M -N ${NETBSDSRCDIR}/etc -f $${kern_tgz}"; \
+	pax_cmd="COMPRESS_PROGRAM=${TOOL_GZIP:Q} GZIP=-9n ${TOOL_PAX} -O -zw -M -N ${NETBSDSRCDIR}/etc -f $${kern_tgz}"; \
 	cd $${kerndir} && { \
 		kernels=; newest=; \
 		for kernel in $${kernlist}; do \
@@ -625,8 +625,8 @@ releasekern-${configfile}: .PHONY build_kernels snap_pre
 				knl_gz="${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/kernel/$${kernel}-${configfile:C/.*\///}$${s}.gz"; \
 				[ $${knl_gz} -nt $${ks} ] && continue; \
 				rm -f $${knl_gz}; \
-				echo "${TOOL_GZIP} -c -9 < $${kerndir}/$${ks} > $${knl_gz}"; \
-				${TOOL_GZIP} -c -9 < $${ks} > $${knl_gz}; \
+				echo "${TOOL_GZIP} -nc -9 < $${kerndir}/$${ks} > $${knl_gz}"; \
+				${TOOL_GZIP} -nc -9 < $${ks} > $${knl_gz}; \
 			done; \
 		done; \
 	}
