@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_and_64_cas.c,v 1.7 2014/01/27 18:29:47 matt Exp $	*/
+/*	$NetBSD: atomic_and_64_cas.c,v 1.8 2014/01/27 20:01:50 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@ __sync_fetch_and_and_8(volatile uint64_t *addr, uint64_t val)
 		old = *addr;
 		new = old & val;
 	} while (atomic_cas_64(addr, old, new) != old);
+	return old;
 }
 
 void
