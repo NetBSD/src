@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_or_64_cas.c,v 1.6 2014/01/27 18:12:57 matt Exp $	*/
+/*	$NetBSD: atomic_or_64_cas.c,v 1.7 2014/01/27 18:29:47 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -35,8 +35,10 @@
 
 #ifdef __HAVE_ATOMIC64_OPS
 
+uint64_t __sync_fetch_and_or_8(volatile uint64_t *addr, uint64_t val);
+
 void
-atomic_or_64(volatile uint64_t *addr, uint64_t val)
+__sync_fetch_and_or_8(volatile uint64_t *addr, uint64_t val)
 {
 	uint64_t old, new;
 
@@ -44,11 +46,17 @@ atomic_or_64(volatile uint64_t *addr, uint64_t val)
 		old = *addr;
 		new = old | val;
 	} while (atomic_cas_64(addr, old, new) != old);
+	return old;
+}
+
+void
+atomic_or_64(volatile uint64_t *addr, uint64_t val)
+{
+	(void) __sync_fetch_and_or_8(addr, val);
 }
 
 #undef atomic_or_64
 atomic_op_alias(atomic_or_64,_atomic_or_64)
-__strong_alias(__sync_fetch_and_or_8,_atomic_or_64)
 
 #if defined(_LP64)
 #undef atomic_or_ulong
