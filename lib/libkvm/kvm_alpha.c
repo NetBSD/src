@@ -1,4 +1,4 @@
-/* $NetBSD: kvm_alpha.c,v 1.25 2010/09/20 23:23:16 jym Exp $ */
+/* $NetBSD: kvm_alpha.c,v 1.26 2014/01/27 21:00:01 matt Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -50,6 +50,8 @@
 #include <stdlib.h>
 
 #include "kvm_private.h"
+
+__RCSID("$NetBSD: kvm_alpha.c,v 1.26 2014/01/27 21:00:01 matt Exp $");
 
 /*ARGSUSED*/
 void
