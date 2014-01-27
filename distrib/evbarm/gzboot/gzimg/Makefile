@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2013/01/30 13:47:36 he Exp $
+#	$NetBSD: Makefile,v 1.25 2014/01/27 08:18:07 apb Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -76,12 +76,12 @@ GZIMGS+=	gzimg_${I}_flash_${R}.gz
 gzimg_${I}_flash_${R}: .NOTMAIN ${GZB${G}} ${KERNOBJDIR}/${K}/${W}.bin
 	@echo "Populating ${.TARGET}"
 	-rm -f ${.TARGET}.kern.gz
-	gzip -9nc ${KERNOBJDIR}/${K}/${W}.bin > ${.TARGET}.kern.gz
+	${TOOL_GZIP} -9nc ${KERNOBJDIR}/${K}/${W}.bin > ${.TARGET}.kern.gz
 	${TOOL_CAT} ${GZB${G}} ${.TARGET}.kern.gz > ${.TARGET}
 
 gzimg_${I}_flash_${R}.gz: .NOTMAIN gzimg_${I}_flash_${R}
 	-rm -f ${.TARGET}
-	gzip -9nc ${.ALLSRC} > ${.TARGET}
+	${TOOL_GZIP} -9nc ${.ALLSRC} > ${.TARGET}
 
 CLEANFILES+=	gzimg_${I}_flash_${R}.kern gzimg_${I}_flash_${R}.kern.gz \
 		gzimg_${I}_flash_${R}
