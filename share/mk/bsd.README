@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.326 2014/01/16 01:19:46 christos Exp $
+#	$NetBSD: bsd.README,v 1.327 2014/01/27 07:57:28 apb Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -463,8 +463,8 @@ USE_YP		If "no", disables building YP (NIS) support into
 		If ${MKYP} is "no", USE_YP will also be forced to "no".
 
 USE_PIGZGZIP	If "no", use the host "gzip" program to compress things.
-		Otherwise, build tools/pigz and use nbpigz to compress
-		things.
+		Otherwise, build tools/pigz, set TOOL_GZIP=${TOOL_PIGZ},
+		and use nbpigz to compress things.
 		Default: "no".
 
 X11FLAVOUR	Set to "Xorg" or "XFree86", depending on whether to build
@@ -785,6 +785,8 @@ TOOL_GMAKE		GNU make utility.  [gmake]
 TOOL_GREP		Print lines matching a pattern.  [grep]
 
 TOOL_GROFF		Front end for groff document formatting system.  [groff]
+
+TOOL_GZIP		Compression/decompression tool.  [gzip]
 
 TOOL_HEXDUMP		Ascii, decimal, hexadecimal, octal dump.  [hexdump]
 
