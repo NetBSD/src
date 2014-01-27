@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_or_32_cas.c,v 1.4 2008/04/28 20:22:53 martin Exp $	*/
+/*	$NetBSD: atomic_or_32_cas.c,v 1.5 2014/01/27 18:12:57 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -46,6 +46,8 @@ atomic_or_32(volatile uint32_t *addr, uint32_t val)
 
 #undef atomic_or_32
 atomic_op_alias(atomic_or_32,_atomic_or_32)
+__strong_alias(__sync_fetch_and_or_4,_atomic_or_32)
+
 #undef atomic_or_uint
 atomic_op_alias(atomic_or_uint,_atomic_or_32)
 __strong_alias(_atomic_or_uint,_atomic_or_32)
