@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.obs405.inc,v 1.8 2014/01/27 08:18:08 apb Exp $
+#	$NetBSD: Makefile.obs405.inc,v 1.9 2014/01/27 21:37:17 apb Exp $
 
 CFLAGS+=-mcpu=405
 AFLAGS+=-mcpu=405
@@ -55,8 +55,8 @@ MKUBOOTIMAGEARGS_GZ=    ${MKUBOOTIMAGEARGS} -C gz
 SYSTEM_LD_TAIL_EXTRA+=; \
 	echo ${OBJCOPY} -S -O binary $@ $@.bin; \
 	${OBJCOPY} -S -O binary $@ $@.bin; \
-	echo "${TOOL_GZIP} -c $@.bin > $@.bin.gz"; \
-	${TOOL_GZIP} -c $@.bin > $@.bin.gz; \
+	echo "${TOOL_GZIP} -nc $@.bin > $@.bin.gz"; \
+	${TOOL_GZIP} -nc $@.bin > $@.bin.gz; \
 	echo ${MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS_GZ} $@.bin.gz $@.gz.ub; \
 	${MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS_GZ} $@.bin.gz $@.gz.ub; \
 	echo ${MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS_NONE} $@.bin $@.ub; \
