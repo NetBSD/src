@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.116 2014/01/27 13:23:33 njoly Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.117 2014/01/27 19:19:15 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.116 2014/01/27 13:23:33 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.117 2014/01/27 19:19:15 njoly Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -114,6 +114,7 @@ static int bsd_to_linux_domain(int);
 int linux_to_bsd_sopt_level(int);
 int linux_to_bsd_so_sockopt(int);
 int linux_to_bsd_ip_sockopt(int);
+int linux_to_bsd_ipv6_sockopt(int);
 int linux_to_bsd_tcp_sockopt(int);
 int linux_to_bsd_udp_sockopt(int);
 int linux_getifname(struct lwp *, register_t *, void *);
@@ -833,6 +834,10 @@ linux_to_bsd_sopt_level(int llevel)
 		return SOL_SOCKET;
 	case LINUX_SOL_IP:
 		return IPPROTO_IP;
+#ifdef INET6
+	case LINUX_SOL_IPV6:
+		return IPPROTO_IPV6;
+#endif
 	case LINUX_SOL_TCP:
 		return IPPROTO_TCP;
 	case LINUX_SOL_UDP:
@@ -922,6 +927,23 @@ linux_to_bsd_ip_sockopt(int lopt)
 }
 
 /*
+ * Convert Linux IPV6 level socket option number to NetBSD values.
+ */
+#ifdef INET6
+int
+linux_to_bsd_ipv6_sockopt(int lopt)
+{
+
+	switch (lopt) {
+	case LINUX_IPV6_V6ONLY:
+		return IPV6_V6ONLY;
+	default:
+		return -1;
+	}
+}
+#endif
+
+/*
  * Convert Linux TCP level socket option number to NetBSD values.
  */
 int
@@ -1000,6 +1022,11 @@ linux_sys_setsockopt(struct lwp *l, const struct linux_sys_setsockopt_args *uap,
 	case IPPROTO_IP:
 		name = linux_to_bsd_ip_sockopt(SCARG(uap, optname));
 		break;
+#ifdef INET6
+	case IPPROTO_IPV6:
+		name = linux_to_bsd_ipv6_sockopt(SCARG(uap, optname));
+		break;
+#endif
 	case IPPROTO_TCP:
 		name = linux_to_bsd_tcp_sockopt(SCARG(uap, optname));
 		break;
@@ -1045,6 +1072,11 @@ linux_sys_getsockopt(struct lwp *l, const struct linux_sys_getsockopt_args *uap,
 	case IPPROTO_IP:
 		name = linux_to_bsd_ip_sockopt(SCARG(uap, optname));
 		break;
+#ifdef INET6
+	case IPPROTO_IPV6:
+		name = linux_to_bsd_ipv6_sockopt(SCARG(uap, optname));
+		break;
+#endif
 	case IPPROTO_TCP:
 		name = linux_to_bsd_tcp_sockopt(SCARG(uap, optname));
 		break;
