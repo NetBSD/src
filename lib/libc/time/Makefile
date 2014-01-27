@@ -548,12 +548,12 @@ tzcode$(VERSION).tar.gz: set-timestamps.out
 		LC_ALL=C && export LC_ALL && \
 		tar $(TARFLAGS) -cf - \
 		    $(COMMON) $(DOCS) $(SOURCES) $(MISC) | \
-		  gzip $(GZIPFLAGS) > $@
+		  ${TOOL_GZIP} $(GZIPFLAGS) > $@
 
 tzdata$(VERSION).tar.gz: set-timestamps.out
 		LC_ALL=C && export LC_ALL && \
 		tar $(TARFLAGS) -cf - $(COMMON) $(DATA) | \
-		  gzip $(GZIPFLAGS) > $@
+		  ${TOOL_GZIP} $(GZIPFLAGS) > $@
 
 signatures:	tzcode$(VERSION).tar.gz.asc tzdata$(VERSION).tar.gz.asc
 

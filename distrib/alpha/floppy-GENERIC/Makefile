@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2009/04/03 22:36:34 perry Exp $
+#	$NetBSD: Makefile,v 1.21 2014/01/27 08:18:07 apb Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -42,7 +42,7 @@ netbsd: ${FLOPPYKERNEL}
 	@rm -f ${.TARGET} ${.TARGET}.tmp
 	cp ${.ALLSRC} ${.TARGET}.tmp
 	${STRIP} ${.TARGET}.tmp
-	gzip -9nf ${.TARGET}.tmp
+	${TOOL_GZIP} -9nf ${.TARGET}.tmp
 	mv ${.TARGET}.tmp.gz ${.TARGET}
 
 CLEANFILES+=	netbsd netbsd.tmp netbsd.tmp.gz
