@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.115 2013/01/11 19:01:36 christos Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.116 2014/01/27 13:23:33 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.115 2013/01/11 19:01:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.116 2014/01/27 13:23:33 njoly Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -873,12 +873,18 @@ linux_to_bsd_so_sockopt(int lopt)
 		return SO_SNDBUF;
 	case LINUX_SO_RCVBUF:
 		return SO_RCVBUF;
+	case LINUX_SO_SNDLOWAT:
+		return SO_SNDLOWAT;
+	case LINUX_SO_RCVLOWAT:
+		return SO_RCVLOWAT;
 	case LINUX_SO_KEEPALIVE:
 		return SO_KEEPALIVE;
 	case LINUX_SO_OOBINLINE:
 		return SO_OOBINLINE;
 	case LINUX_SO_LINGER:
 		return SO_LINGER;
+	case LINUX_SO_ACCEPTCONN:
+		return SO_ACCEPTCONN;
 	case LINUX_SO_PRIORITY:
 	case LINUX_SO_NO_CHECK:
 	default:
