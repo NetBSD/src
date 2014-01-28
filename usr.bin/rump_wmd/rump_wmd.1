@@ -1,4 +1,4 @@
-.\"	$NetBSD: rump_wmd.1,v 1.2 2014/01/16 09:54:05 wiz Exp $
+.\"	$NetBSD: rump_wmd.1,v 1.3 2014/01/28 14:02:54 pooka Exp $
 .\"
 .\" Copyright (c) 2014 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 16, 2014
+.Dd January 28, 2014
 .Dt RUMP_WMD 1
 .Os
 .Sh NAME
@@ -32,7 +32,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl hv
-.Op Fl L Ar libdir
+.Op Fl L Ar dir
 .Fl l Ar component
 .Sh DESCRIPTION
 The
@@ -51,20 +51,22 @@ The command line options are:
 .Bl -tag -width indent
 .It Fl h
 Print the usage.
-.It Fl L Ar libdir
+.It Fl L Ar dir
 By default, rump kernel components in
 .Pa /usr/lib
 are examined.
 If this option is supplied, components in
-.Ar libdir
+.Ar dir
 are examined instead.
-.It Fl l Ar component
-Resolve dependencies for the given component.
-This option may be given multiple time.
 .It Fl v
 Increase debug output from the utility.
 This option may be given multiple times.
 .El
+.Pp
+The desired components are given using
+.Fl l Ar component .
+This parameter may be specified multiple time and must be the last
+set of parameters.
 .Sh EXAMPLES
 Resolve dependencies for FFS:
 .Bd -literal -offset indent
