@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_armv4.S,v 1.3 2013/08/18 06:28:18 matt Exp $	*/
+/*	$NetBSD: cpufunc_asm_armv4.S,v 1.4 2014/01/28 16:45:25 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 ARM Limited
@@ -44,24 +44,24 @@
  */
 ENTRY(armv4_tlb_flushID)
 	mcr	p15, 0, r0, c8, c7, 0	/* flush I+D tlb */
-	RET
+	mov	pc, lr
 END(armv4_tlb_flushID)
 
 ENTRY(armv4_tlb_flushI)
 	mov	r0, #0
 	mcr	p15, 0, r0, c8, c5, 0	/* flush I tlb */
-	RET
+	mov	pc, lr
 END(armv4_tlb_flushI)
 
 ENTRY(armv4_tlb_flushD)
 	mov	r0, #0
 	mcr	p15, 0, r0, c8, c6, 0	/* flush D tlb */
-	RET
+	mov	pc, lr
 END(armv4_tlb_flushD)
 
 ENTRY(armv4_tlb_flushD_SE)
 	mcr	p15, 0, r0, c8, c6, 1	/* flush D tlb single entry */
-	RET
+	mov	pc, lr
 END(armv4_tlb_flushD_SE)
 
 /*
@@ -69,5 +69,5 @@ END(armv4_tlb_flushD_SE)
  */
 ENTRY(armv4_drain_writebuf)
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
-	RET
+	mov	pc, lr
 END(armv4_drain_writebuf)
