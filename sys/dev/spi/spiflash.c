@@ -1,4 +1,4 @@
-/* $NetBSD: spiflash.c,v 1.11 2013/02/15 17:46:53 rkujawa Exp $ */
+/* $NetBSD: spiflash.c,v 1.12 2014/01/28 19:26:32 martin Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.11 2013/02/15 17:46:53 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.12 2014/01/28 19:26:32 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -509,10 +509,9 @@ spiflash_thread(void *arg)
 {
 	spiflash_handle_t sc = arg;
 	struct buf	*bp;
-	int		s;
 	int		sector;
 
-	s = splbio();
+	(void)splbio();
 	for (;;) {
 		if ((bp = bufq_get(sc->sc_waitq)) == NULL) {
 			tsleep(&sc->sc_thread, PRIBIO, "spiflash_thread", 0);
