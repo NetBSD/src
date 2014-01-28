@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1883 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1884 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -343,3 +343,5 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	postfix(1): Import version 2.10.3 [tron 20140118]
 	igmafb(4): Added framebuffer driver for Intel Graphics
 		[mlelstv 20140121]
+	ohci(4): Support the National Semiconductor PC87560 as found in
+		many hppa machines. [skrll 20140128]
