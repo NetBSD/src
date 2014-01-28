@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_pci.c,v 1.50 2012/06/10 06:15:53 mrg Exp $	*/
+/*	$NetBSD: ohci_pci.c,v 1.51 2014/01/28 17:24:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.50 2012/06/10 06:15:53 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.51 2014/01/28 17:24:42 skrll Exp $");
 
 #include "ehci.h"
 
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.50 2012/06/10 06:15:53 mrg Exp $");
 #include <sys/bus.h>
 
 #include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
 #include <dev/pci/usb_pci.h>
 
 #include <dev/usb/usb.h>
@@ -93,6 +94,11 @@ ohci_pci_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc.sc_dev = self;
 	sc->sc.sc_bus.hci_private = sc;
+
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_NS &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_NS_USB) {
+		sc->sc.sc_flags = OHCIF_SUPERIO;
+	}
 
 	pci_aprint_devinfo(pa, "USB Controller");
 
