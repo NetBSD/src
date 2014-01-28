@@ -1,4 +1,4 @@
-/*	$NetBSD: if_malo_pcmcia.c,v 1.2 2013/12/17 01:00:16 joerg Exp $	*/
+/*	$NetBSD: if_malo_pcmcia.c,v 1.3 2014/01/28 12:18:56 martin Exp $	*/
 /*      $OpenBSD: if_malo.c,v 1.65 2009/03/29 21:53:53 sthen Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.2 2013/12/17 01:00:16 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.3 2014/01/28 12:18:56 martin Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -1364,11 +1364,9 @@ cmalo_cmd_rsp_scan(struct malo_softc *sc)
 	struct malo_cmd_header *hdr = (struct malo_cmd_header *)sc->sc_cmd;
 	struct malo_cmd_body_rsp_scan *body;
 	struct malo_cmd_body_rsp_scan_set *set;
-	uint16_t psize;
 	int i;
 
 	memset(sc->sc_net, 0, sizeof(sc->sc_net));
-	psize = sizeof(*hdr) + sizeof(*body);
 
 	body = (struct malo_cmd_body_rsp_scan *)(hdr + 1);
 	body->bufsize = le16toh(body->bufsize);
