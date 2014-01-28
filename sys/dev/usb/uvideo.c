@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.39 2013/10/17 21:07:37 christos Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.40 2014/01/28 13:43:33 martin Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.39 2013/10/17 21:07:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.40 2014/01/28 13:43:33 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_uvideo.h"
@@ -797,6 +797,8 @@ uvideo_init_control(struct uvideo_softc *sc,
 		return USBD_NORMAL_COMPLETION;
 	}
 
+	i = 0;
+
 	/* allocate space for units */
 	sc->sc_nunits = nunits;
 	sc->sc_unit = kmem_alloc(sizeof(*sc->sc_unit) * nunits, KM_SLEEP);
@@ -807,7 +809,6 @@ uvideo_init_control(struct uvideo_softc *sc,
 	memcpy(iter, &orig, sizeof(orig));
 
 	/* iterate again, initializing the units */
-	i = 0;
 	while ((desc = usb_desc_iter_next_non_interface(iter)) != NULL) {
 		uvdesc = (const uvideo_descriptor_t *)desc;
 
