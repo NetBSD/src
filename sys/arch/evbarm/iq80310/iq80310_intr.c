@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_intr.c,v 1.32 2012/10/03 16:51:44 chs Exp $	*/
+/*	$NetBSD: iq80310_intr.c,v 1.33 2014/01/28 12:01:31 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80310_intr.c,v 1.32 2012/10/03 16:51:44 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80310_intr.c,v 1.33 2014/01/28 12:01:31 martin Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -419,10 +419,13 @@ iq80310_intr_dispatch(struct trapframe *frame)
 {
 	struct intrq *iq;
 	struct intrhand *ih;
-	int oldirqstate, pcpl, irq, ibit, hwpend, rv, stray;
+	int oldirqstate, pcpl, irq, ibit, hwpend, rv;
 	struct cpu_info * const ci = curcpu();
+#if 0
+	int stray;
 
 	stray = 1;
+#endif
 
 	/* First, disable external IRQs. */
 	i80200_intr_disable(INTCTL_IM | INTCTL_PM);
@@ -433,7 +436,9 @@ iq80310_intr_dispatch(struct trapframe *frame)
 		irq = ffs(hwpend) - 1;
 		ibit = (1U << irq);
 
+#if 0
 		stray = 0;
+#endif
 
 		hwpend &= ~ibit;
 
