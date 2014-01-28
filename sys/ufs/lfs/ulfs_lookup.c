@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_lookup.c,v 1.17 2013/10/25 20:05:39 martin Exp $	*/
+/*	$NetBSD: ulfs_lookup.c,v 1.18 2014/01/28 13:25:53 martin Exp $	*/
 /*  from NetBSD: ufs_lookup.c,v 1.122 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.17 2013/10/25 20:05:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.18 2014/01/28 13:25:53 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lfs.h"
@@ -1395,7 +1395,7 @@ ulfs_parentcheck(struct vnode *upper, struct vnode *lower, kauth_cred_t cred,
 		int *found_ret, struct vnode **upperchild_ret)
 {
 	const int needswap = ULFS_IPNEEDSWAP(VTOI(lower));
-	ino_t upper_ino, found_ino;
+	ino_t upper_ino, found_ino = -1;	/* XXX gcc 4.8 */
 	struct vnode *current, *next;
 	int error;
 
