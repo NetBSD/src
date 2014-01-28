@@ -1,5 +1,7 @@
 #!/bin/sh
 #
+#	$NetBSD: rump_wmd.sh,v 1.3 2014/01/28 13:56:02 pooka Exp $
+#
 # Copyright (c) 2014 Antti Kantee <pooka@iki.fi>
 #
 # Redistribution and use in source and binary forms, with or without
