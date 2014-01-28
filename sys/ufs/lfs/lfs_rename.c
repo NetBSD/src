@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rename.c,v 1.4 2013/07/28 01:10:49 dholland Exp $	*/
+/*	$NetBSD: lfs_rename.c,v 1.5 2014/01/28 13:12:22 martin Exp $	*/
 /*  from NetBSD: ufs_rename.c,v 1.6 2013/01/22 09:39:18 dholland Exp  */
 
 /*-
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rename.c,v 1.4 2013/07/28 01:10:49 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rename.c,v 1.5 2014/01/28 13:12:22 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -682,7 +682,7 @@ ulfs_gro_genealogy(struct mount *mp, kauth_cred_t cred,
     struct vnode **intermediate_node_ret)
 {
 	struct vnode *vp, *dvp;
-	ino_t dotdot_ino;
+	ino_t dotdot_ino = -1;	/* XXX  gcc 4.8: maybe-uninitialized */
 	int error;
 
 	KASSERT(mp != NULL);
