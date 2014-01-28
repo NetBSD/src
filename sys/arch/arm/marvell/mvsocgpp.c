@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsocgpp.c,v 1.5 2012/11/21 08:03:18 msaitoh Exp $	*/
+/*	$NetBSD: mvsocgpp.c,v 1.6 2014/01/28 13:17:19 martin Exp $	*/
 /*
  * Copyright (c) 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsocgpp.c,v 1.5 2012/11/21 08:03:18 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsocgpp.c,v 1.6 2014/01/28 13:17:19 martin Exp $");
 
 #include "gpio.h"
 
@@ -139,7 +139,6 @@ mvsocgpp_attach(device_t parent, device_t self, void *aux)
 	uint32_t mask, dir, valin, valout, polarity, blink;
 #endif
 	int i, j;
-	void *ih;
 
 	dir = valin = valout = polarity = blink = 0;
 
@@ -180,7 +179,7 @@ mvsocgpp_attach(device_t parent, device_t self, void *aux)
 		pic_add(gpio_pic, gpp_irqbase + i);
 		aprint_normal_dev(self, "interrupts %d..%d",
 		    gpp_irqbase + i, gpp_irqbase + i + 7);
-		ih = intr_establish(mva->mva_irq + j,
+		intr_establish(mva->mva_irq + j,
 		    IPL_HIGH, IST_LEVEL_HIGH, pic_handle_intr, gpio_pic);
 		aprint_normal(", intr %d\n", mva->mva_irq + j);
 
