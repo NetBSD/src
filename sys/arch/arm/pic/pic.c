@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.18 2013/12/08 14:37:01 skrll Exp $	*/
+/*	$NetBSD: pic.c,v 1.19 2014/01/28 13:20:30 martin Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.18 2013/12/08 14:37:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.19 2014/01/28 13:20:30 martin Exp $");
 
 #define _INTR_PRIVATE
 #include <sys/param.h>
@@ -288,7 +288,7 @@ pic_deliver_irqs(struct pic_softc *pic, int ipl, void *frame)
 	uint32_t pending_irqs;
 	uint32_t blocked_irqs;
 	int irq;
-	bool progress = false;
+	bool progress __diagused = false;
 	
 	KASSERT(pic->pic_pending_ipls & ipl_mask);
 
