@@ -1,11 +1,16 @@
-/*	$NetBSD: cdefs.h,v 1.9 2013/08/17 00:21:47 matt Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.10 2014/01/28 21:17:12 matt Exp $	*/
 
 #ifndef	_ARM_CDEFS_H_
 #define	_ARM_CDEFS_H_
 
-#if defined (__ARM_ARCH_7__) || defined (__ARM_ARCH_7A__) || \
-    defined (__ARM_ARCH_7R__) || defined (__ARM_ARCH_7M__) || \
-    defined (__ARM_ARCH_7EM__) /* 7R, 7M, 7EM are for non MMU arms */
+#if defined (__ARM_ARCH_8A__)
+#define _ARM_ARCH_8		/* ARMv8 64-bit in AARCH32 */
+#endif
+
+#if defined (_ARM_ARCH_8) || defined (__ARM_ARCH_7__) || \
+    defined (__ARM_ARCH_7A__) || defined (__ARM_ARCH_7R__) || \
+    defined (__ARM_ARCH_7M__) || defined (__ARM_ARCH_7EM__)
+	/* 7R, 7M, 7EM are for non MMU arms */
 #define _ARM_ARCH_7
 #endif
 
