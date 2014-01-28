@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.3 2014/01/26 21:43:44 christos Exp $ */
+/*	$NetBSD: dump.c,v 1.4 2014/01/28 20:43:55 joerg Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -6,6 +6,7 @@
  * %sccs.include.redist.c%
  */
 
+#if defined(__NetBSD__)
 #include <sys/cdefs.h>
 #if 0
 #ifndef lint
@@ -14,16 +15,8 @@ static char copyright[] =
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: dump.c,v 1.3 2014/01/26 21:43:44 christos Exp $");
+__RCSID("$NetBSD: dump.c,v 1.4 2014/01/28 20:43:55 joerg Exp $");
 #endif
-
-#include <sys/cdefs.h>
-#if 0
-#ifndef lint
-static char sccsid[] = "Id: dump.c,v 8.1 1994/08/31 13:27:37 bostic Exp  (Berkeley) Date: 1994/08/31 13:27:37 ";
-#endif /* not lint */
-#else
-__RCSID("$NetBSD: dump.c,v 1.3 2014/01/26 21:43:44 christos Exp $");
 #endif
 
 #include <ctype.h>
