@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.50 2013/10/20 21:13:15 christos Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.51 2014/01/28 13:23:49 martin Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.50 2013/10/20 21:13:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.51 2014/01/28 13:23:49 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,7 +231,7 @@ int
 smbfs_nget(struct mount *mp, struct vnode *dvp, const char *name, int nmlen,
 	struct smbfattr *fap, struct vnode **vpp)
 {
-	struct vnode *vp;
+	struct vnode *vp = NULL;	/* XXX gcc 4.8: maybe-uninitialized */
 	int error;
 
 	error = smbfs_node_alloc(mp, dvp, name, nmlen, fap, &vp);
