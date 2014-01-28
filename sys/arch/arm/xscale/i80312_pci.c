@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312_pci.c,v 1.14 2013/08/18 15:58:20 matt Exp $	*/
+/*	$NetBSD: i80312_pci.c,v 1.15 2014/01/28 12:02:48 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80312_pci.c,v 1.14 2013/08/18 15:58:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80312_pci.c,v 1.15 2014/01/28 12:02:48 martin Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -83,7 +83,7 @@ i80312_pci_init(pci_chipset_tag_t pc, void *cookie)
 	struct i80312_softc *sc = cookie;
 	struct extent *ioext, *memext;
 	pcireg_t binfo;
-	int pbus, sbus;
+	int sbus;
 #endif
 
 	pc->pc_conf_v = cookie;
@@ -107,7 +107,7 @@ i80312_pci_init(pci_chipset_tag_t pc, void *cookie)
 	 */
 
 	binfo = bus_space_read_4(sc->sc_st, sc->sc_ppb_sh, PPB_REG_BUSINFO);
-	pbus = PPB_BUSINFO_PRIMARY(binfo);
+	/* pbus = PPB_BUSINFO_PRIMARY(binfo); */
 	sbus = PPB_BUSINFO_SECONDARY(binfo);
 
 	ioext  = extent_create("pciio", sc->sc_sioout_base,
