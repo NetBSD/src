@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0_lcd.c,v 1.33 2012/01/11 21:15:46 macallan Exp $ */
+/* $NetBSD: pxa2x0_lcd.c,v 1.34 2014/01/28 12:22:32 martin Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.33 2012/01/11 21:15:46 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.34 2014/01/28 12:22:32 martin Exp $");
 
 #include "opt_pxa2x0_lcd.h"
 
@@ -475,8 +475,6 @@ int
 pxa2x0_lcd_new_screen(struct pxa2x0_lcd_softc *sc, int depth,
      struct pxa2x0_lcd_screen **scrpp)
 {
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
 	bus_dma_tag_t dma_tag;
 	const struct lcd_panel_geometry *geometry;
 	struct pxa2x0_lcd_screen *scr = NULL;
@@ -487,8 +485,6 @@ pxa2x0_lcd_new_screen(struct pxa2x0_lcd_softc *sc, int depth,
 	struct lcd_dma_descriptor *desc;
 	paddr_t buf_pa, desc_pa;
 
-	iot = sc->iot;
-	ioh = sc->ioh;
 	dma_tag = sc->dma_tag;
 	geometry = sc->geometry;
 
