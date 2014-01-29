@@ -1,7 +1,11 @@
-/*	$NetBSD: cdefs.h,v 1.10 2014/01/28 21:17:12 matt Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.11 2014/01/29 00:20:54 matt Exp $	*/
 
 #ifndef	_ARM_CDEFS_H_
 #define	_ARM_CDEFS_H_
+
+#if (__GNUC__ == 4 && __GNUC_MINOR__ >= 1) || __GNUC__ > 4
+#error GCC 4.1 or compatible required.
+#endif
 
 #if defined (__ARM_ARCH_8A__)
 #define _ARM_ARCH_8		/* ARMv8 64-bit in AARCH32 */
@@ -45,7 +49,7 @@
 #define	_ARM_ARCH_DWORD_OK
 #endif
 
-#ifdef __ARM_EABI__
+#if defined(__ARM_EABI__) || defined(__ARM_PCS_AAPCS64)
 #define __ALIGNBYTES		(8 - 1)
 #else
 #define __ALIGNBYTES		(sizeof(int) - 1)
