@@ -1,9 +1,9 @@
-/*	$NetBSD: cdefs.h,v 1.11 2014/01/29 00:20:54 matt Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.12 2014/01/29 01:20:03 matt Exp $	*/
 
 #ifndef	_ARM_CDEFS_H_
 #define	_ARM_CDEFS_H_
 
-#if (__GNUC__ == 4 && __GNUC_MINOR__ >= 1) || __GNUC__ > 4
+#if (__GNUC__ == 4 && __GNUC_MINOR__ < 1) || __GNUC__ < 4
 #error GCC 4.1 or compatible required.
 #endif
 
