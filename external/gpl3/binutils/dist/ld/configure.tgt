@@ -66,10 +66,10 @@ arm-*-freebsd* | arm-*-kfreebsd*-gnu)
 			targ_extra_emuls="armelf" ;;
 arm*eb-*-netbsdelf*-*eabi*)
 			targ_emul=armelfb_nbsd_eabi;
-			targ_extra_emuls="armelf_nbsd_eabi armelf_nbsd armelfb_bsd armelf armnbsd" ;;
+			targ_extra_emuls="armelf_nbsd_eabi armelf_nbsd armelfb_nbsd armelf armnbsd" ;;
 arm*-*-netbsdelf*-*eabi*)
 			targ_emul=armelf_nbsd_eabi;
-			targ_extra_emuls="armelfb_nbsd_eabi armelf_nbsd armelfb_bsd armelf armnbsd" ;;
+			targ_extra_emuls="armelfb_nbsd_eabi armelf_nbsd armelfb_nbsd armelf armnbsd" ;;
 arm*eb-*-netbsdelf*)	targ_emul=armelfb_nbsd;
 			targ_extra_emuls="armelf_nbsd armelf armnbsd" ;;
 arm-*-netbsdelf*)	targ_emul=armelf_nbsd;
