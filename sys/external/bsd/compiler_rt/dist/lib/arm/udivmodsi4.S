@@ -16,14 +16,7 @@
 
 	.syntax unified
 
-#ifdef ARM_HAS_BX
-#define	JMP(r)	bx	r
-#else
-#define	JMP(r)	mov	pc, r
-#endif
-
 	.text
-	.arm
 	.p2align 2
 DEFINE_COMPILERRT_FUNCTION(__udivmodsi4)
 #if __ARM_ARCH_EXT_IDIV__
