@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_pci.c,v 1.1.2.11 2014/01/29 19:47:38 riastradh Exp $	*/
+/*	$NetBSD: i915_pci.c,v 1.1.2.12 2014/01/29 19:48:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.1.2.11 2014/01/29 19:47:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.1.2.12 2014/01/29 19:48:14 riastradh Exp $");
 
 #include <sys/types.h>
 #ifndef _MODULE
@@ -139,7 +139,10 @@ i915drm_match(device_t parent, cfdata_t match, void *aux)
 		return 0;
 #endif
 
-	return (i915drm_pci_lookup(pa) != NULL);
+	if (i915drm_pci_lookup(pa) == NULL)
+		return 0;
+
+	return 6;		/* XXX Beat genfb_pci...  */
 }
 
 static void
