@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_machdep.c,v 1.26 2013/12/23 04:12:09 kiyohara Exp $ */
+/*	$NetBSD: marvell_machdep.c,v 1.27 2014/01/29 04:27:26 kiyohara Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.26 2013/12/23 04:12:09 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.27 2014/01/29 04:27:26 kiyohara Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
@@ -202,12 +202,7 @@ read_ttb(void)
 static struct pmap_devmap marvell_devmap[] = {
 	{
 		MARVELL_INTERREGS_VBASE,
-#if (defined(ORION) || defined(KIRKWOOD) || defined(MV78XX0)) && \
-    defined(ARMADAXP)
-		_A(0x00000000),
-#else
 		_A(MARVELL_INTERREGS_PBASE),
-#endif
 		_S(MARVELL_INTERREGS_SIZE),
 		VM_PROT_READ|VM_PROT_WRITE,
 		PTE_NOCACHE,
@@ -244,17 +239,6 @@ initarm(void *arg)
 	 */
 	if (set_cpufuncs())
 		panic("cpu not recognized!");
-
-#if (defined(ORION) || defined(KIRKWOOD) || defined(MV78XX0)) && \
-    defined(ARMADAXP)
-	int i;
-
-	for (i = 0; marvell_devmap[i].pd_size != 0; i++)
-		if (marvell_devmap[i].pd_va == MARVELL_INTERREGS_VBASE) {
-			marvell_devmap[i].pd_pa = _A(MARVELL_INTERREGS_PBASE);
-			break;
-		}
-#endif
 
 	/* map some peripheral registers */
 	pmap_devmap_bootstrap((vaddr_t)read_ttb(), marvell_devmap);
