@@ -1,4 +1,4 @@
-/* $NetBSD: int_mwgwtypes.h,v 1.5 2014/01/29 01:40:35 matt Exp $ */
+/* $NetBSD: int_mwgwtypes.h,v 1.6 2014/01/29 18:51:37 matt Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -74,29 +74,23 @@ typedef	__UINT_LEAST64_TYPE__	uint_least64_t;
 
 /* 7.18.1.3 Fastest minimum-width integer types */
 
-#ifdef _LP64
-#define __INT_FAST_PREFIX__	long
-#else
-#define __INT_FAST_PREFIX__
-#endif
-
 #ifndef __INT_FAST8_TYPE__
-# define __INT_FAST8_TYPE__	__INT_FAST_PREFIX__ int
+# define __INT_FAST8_TYPE__	int
 #endif
 #ifndef __UINT_FAST8_TYPE__
-# define __UINT_FAST8_TYPE__	__INT_FAST_PREFIX__ unsigned int
+# define __UINT_FAST8_TYPE__	unsigned int
 #endif
 #ifndef __INT_FAST16_TYPE__
-# define __INT_FAST16_TYPE__	__INT_FAST_PREFIX__ int
+# define __INT_FAST16_TYPE__	int
 #endif
 #ifndef __UINT_FAST16_TYPE__
-# define __UINT_FAST16_TYPE__	__INT_FAST_PREFIX__ unsigned int
+# define __UINT_FAST16_TYPE__	unsigned int
 #endif
 #ifndef __INT_FAST32_TYPE__
-# define __INT_FAST32_TYPE__	__INT_FAST_PREFIX__ int
+# define __INT_FAST32_TYPE__	int
 #endif
 #ifndef __UINT_FAST32_TYPE__
-# define __UINT_FAST32_TYPE__	__INT_FAST_PREFIX__ unsigned int
+# define __UINT_FAST32_TYPE__	unsigned int
 #endif
 #ifndef __INT_FAST64_TYPE__
 # define __INT_FAST64_TYPE__	long long int
