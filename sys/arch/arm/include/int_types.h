@@ -1,8 +1,11 @@
-/*	$NetBSD: int_types.h,v 1.10 2014/01/29 00:42:15 matt Exp $	*/
+/*	$NetBSD: int_types.h,v 1.11 2014/01/29 01:40:35 matt Exp $	*/
 
-/*
- * Copyright (c) 1990 The Regents of the University of California.
+/*-
+ * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Matt Thomas of 3am Software Foundry.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -12,23 +15,18 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- *	from: @(#)types.h	7.5 (Berkeley) 3/9/91
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 #ifndef	_ARM_INT_TYPES_H_
@@ -42,27 +40,37 @@
 
 /* 7.18.1.1 Exact-width integer types */
 
-typedef	signed char		 __int8_t;
-typedef	unsigned char		__uint8_t;
-typedef	short int		__int16_t;
-typedef	unsigned short int     __uint16_t;
-typedef	int			__int32_t;
-typedef	unsigned int	       __uint32_t;
-#ifdef __COMPILER_INT64__
-typedef	__COMPILER_INT64__	__int64_t;
-typedef	__COMPILER_UINT64__    __uint64_t;
-#else
-/* LONGLONG */
-typedef	long long int		__int64_t;
-/* LONGLONG */
-typedef	unsigned long long int __uint64_t;
+#ifndef __INT8_TYPE__
+# define __INT8_TYPE__		char
 #endif
+#ifndef __INT16_TYPE__
+# define __INT16_TYPE__		short int
+#endif
+#ifndef __INT32_TYPE__
+# define __INT32_TYPE__		int
+#endif
+#ifndef __INT64_TYPE__
+# define __INT64_TYPE__		long long int
+#endif
+
+typedef	signed __INT8_TYPE__		   __int8_t;
+typedef	unsigned __INT8_TYPE__		  __uint8_t;
+typedef	signed __INT16_TYPE__		  __int16_t;
+typedef	unsigned __INT16_TYPE__		 __uint16_t;
+typedef	signed __INT32_TYPE__		  __int32_t;
+typedef	unsigned __INT32_TYPE__		 __uint32_t;
+typedef	signed __INT64_TYPE__		  __int64_t;
+typedef	unsigned __INT64_TYPE__		 __uint64_t;
 
 #define	__BIT_TYPES_DEFINED__
 
 /* 7.18.1.4 Integer types capable of holding object pointers */
 
-typedef long int	       __intptr_t;
-typedef unsigned long int     __uintptr_t;
+#ifndef __INTPTR_TYPE__
+# define __INTPTR_TYPE__	long int
+#endif
+
+typedef	signed __INTPTR_TYPE__		 __intptr_t;
+typedef	unsigned __INTPTR_TYPE__	__uintptr_t;
 
 #endif	/* !_ARM_INT_TYPES_H_ */
