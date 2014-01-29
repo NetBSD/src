@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.h,v 1.1 2013/04/23 05:41:12 matt Exp $	*/
+/*	$NetBSD: fenv.h,v 1.2 2014/01/29 00:22:09 matt Exp $	*/
 
 /* 
  * Based on ieeefp.h written by J.T. Conklin, Apr 28, 1995
@@ -8,7 +8,15 @@
 #ifndef _ARM_FENV_H_
 #define _ARM_FENV_H_
 
-typedef int fenv_t;
+#ifdef __ARM_PCS_AAPCS64
+/* AArch64 split FPSCR into two registers FPCR and FPSR */
+typedef struct {
+	unsigned int __fpcr;
+	unsigned int __fpsr;
+} fenv_t;
+#else
+typedef int fenv_t;		/* FPSCR */
+#endif
 typedef int fexcept_t;
 
 #define	FE_INVALID	0x01	/* invalid operation exception */
