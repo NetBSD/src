@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.15 2014/01/29 00:34:19 matt Exp $	*/
+/*	$NetBSD: limits.h,v 1.16 2014/01/29 00:42:15 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -31,8 +31,8 @@
  *	from: @(#)limits.h	7.2 (Berkeley) 6/28/90
  */
 
-#ifndef	_ARM32_LIMITS_H_
-#define	_ARM32_LIMITS_H_
+#ifndef	_ARM_LIMITS_H_
+#define	_ARM_LIMITS_H_
 
 #include <sys/featuretest.h>
 
@@ -89,4 +89,4 @@
 #define FLT_MIN		1.17549435E-38F
 #endif
 
-#endif	/* _ARM32_LIMITS_H_ */
+#endif	/* _ARM_LIMITS_H_ */
