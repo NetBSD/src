@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.50.8.1 2014/01/29 19:48:29 riastradh Exp $ */
+/*	$NetBSD: genfb.c,v 1.50.8.2 2014/01/29 19:48:45 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.50.8.1 2014/01/29 19:48:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.50.8.2 2014/01/29 19:48:45 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -317,7 +317,8 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	}
 #else
 	genfb_init_palette(sc);
-	vcons_replay_msgbuf(&sc->sc_console_screen);
+	if (console)
+		vcons_replay_msgbuf(&sc->sc_console_screen);
 #endif
 
 	if (genfb_softc == NULL)
