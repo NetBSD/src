@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_start.S,v 1.4 2013/10/02 12:41:06 kiyohara Exp $ */
+/*	$NetBSD: marvell_start.S,v 1.5 2014/01/29 04:27:26 kiyohara Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -63,9 +63,10 @@
 #include "opt_mvsoc.h"
 #include <machine/asm.h>
 #include <arm/armreg.h>
+#include <evbarm/marvell/marvellreg.h>
 #include "assym.h"
 
-RCSID("$NetBSD: marvell_start.S,v 1.4 2013/10/02 12:41:06 kiyohara Exp $")
+RCSID("$NetBSD: marvell_start.S,v 1.5 2014/01/29 04:27:26 kiyohara Exp $")
 
 #ifndef SDRAM_START
 #define SDRAM_START	0x00000000
@@ -135,35 +136,25 @@ sheeva_l2_disable:
 	nop
 	nop
 
-	/* Check SoC mapped address */
-	mov	r4, #0x1100
-	orr	r4, r4, #0x00ab		/* Marvell Vendor ID (0x11ab) */
-	adr	r5, marvell_interregs_pbase_list_start
-	adr	r6, marvell_interregs_pbase_list_end
-0:
-	cmp	r5, r6
-	beq	1f
-	ldmia	r5!, {r7}
-	add	r8, r7, #0x40000
-	ldr	r8, [r8]		/* Read vend/prod reg from PCI config */
-	bic	r8, r8, #0xff000000
-	bic	r8, r8, #0x00ff0000
-	cmp	r4, r8
-	bne	0b
-	adr	r6, marvell_interregs_pbase
-	str	r7, [r6]
 #if defined(MVSOC_FIXUP_DEVID) && MVSOC_FIXUP_DEVID > 0
+	adr	r6, marvell_interregs_pbase
+	ldr	r7, [r6]
+	add	r7, r7, #0x40000
+	ldr	r8, [r7]
+	bic	r8, r8, 0xff000000
+	bic	r8, r8, 0x00ff0000
 	/*
 	 * Some SoC returns ugly DeviceID.  Fixup it.
 	 */
 	adr	r5, devid
 	ldr	r5, [r5]
 	orr	r8, r8, r5, lsl #16
-	add	r7, r7, #0x40000
 	str	r8, [r7]
 	b	1f
 devid:
 	.word	MVSOC_FIXUP_DEVID
+marvell_interregs_pbase:
+	.word	MARVELL_INTERREGS_PBASE
 #endif
 1:
 
@@ -236,14 +227,6 @@ cores_start:
 	.word	CPU_ID_ARM_88SV581X_V7,	PJ4B
 	.word	0,			0
 cores_end:
-
-	.globl	_C_LABEL(marvell_interregs_pbase)
-marvell_interregs_pbase:
-	.word	0x00000000
-marvell_interregs_pbase_list_start:
-	.word	0xd0000000
-	.word	0xf1000000
-marvell_interregs_pbase_list_end:
 
 #define MMU_INIT(va,pa,n_sec,attr) \
 	.word	n_sec					    ; \
