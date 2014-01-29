@@ -1,4 +1,4 @@
-/*	$NetBSD: int_types.h,v 1.11 2014/01/29 01:40:35 matt Exp $	*/
+/*	$NetBSD: int_types.h,v 1.12 2014/01/29 23:47:35 matt Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -40,37 +40,52 @@
 
 /* 7.18.1.1 Exact-width integer types */
 
+#ifndef __UINT8_TYPE__
+# define __UINT8_TYPE__		unsigned char
+#endif
 #ifndef __INT8_TYPE__
-# define __INT8_TYPE__		char
+# define __INT8_TYPE__		signed char
 #endif
-#ifndef __INT16_TYPE__
-# define __INT16_TYPE__		short int
+#ifndef __UINT16_TYPE__
+# ifndef __INT16_TYPE__
+#  define __INT16_TYPE__	short int
+# endif
+# define __UINT16_TYPE__	unsigned __INT16_TYPE__
 #endif
-#ifndef __INT32_TYPE__
-# define __INT32_TYPE__		int
+#ifndef __UINT32_TYPE__
+# ifndef __INT32_TYPE__
+#  define __INT32_TYPE__	int
+# endif
+# define __UINT32_TYPE__	unsigned __INT32_TYPE__
 #endif
-#ifndef __INT64_TYPE__
-# define __INT64_TYPE__		long long int
+#ifndef __UINT64_TYPE__
+# ifndef __INT64_TYPE__
+#  define __INT64_TYPE__	long long int
+# endif
+# define __UINT64_TYPE__	unsigned __INT64_TYPE__
 #endif
 
-typedef	signed __INT8_TYPE__		   __int8_t;
-typedef	unsigned __INT8_TYPE__		  __uint8_t;
-typedef	signed __INT16_TYPE__		  __int16_t;
-typedef	unsigned __INT16_TYPE__		 __uint16_t;
-typedef	signed __INT32_TYPE__		  __int32_t;
-typedef	unsigned __INT32_TYPE__		 __uint32_t;
-typedef	signed __INT64_TYPE__		  __int64_t;
-typedef	unsigned __INT64_TYPE__		 __uint64_t;
+typedef	__INT8_TYPE__		   __int8_t;
+typedef	__UINT8_TYPE__		  __uint8_t;
+typedef	__INT16_TYPE__		  __int16_t;
+typedef	__UINT16_TYPE__		 __uint16_t;
+typedef	__INT32_TYPE__		  __int32_t;
+typedef	__UINT32_TYPE__		 __uint32_t;
+typedef	__INT64_TYPE__		  __int64_t;
+typedef	__UINT64_TYPE__		 __uint64_t;
 
 #define	__BIT_TYPES_DEFINED__
 
 /* 7.18.1.4 Integer types capable of holding object pointers */
 
-#ifndef __INTPTR_TYPE__
-# define __INTPTR_TYPE__	long int
+#ifndef __UINTPTR_TYPE__
+# ifndef __INTPTR_TYPE__
+#  define __INTPTR_TYPE__	long int
+# endif
+# define __UINTPTR_TYPE__	unsigned __INTPTR_TYPE__
 #endif
 
-typedef	signed __INTPTR_TYPE__		 __intptr_t;
-typedef	unsigned __INTPTR_TYPE__	__uintptr_t;
+typedef	__INTPTR_TYPE__		 __intptr_t;
+typedef	__UINTPTR_TYPE__	__uintptr_t;
 
 #endif	/* !_ARM_INT_TYPES_H_ */
