@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.1.2.34 2014/01/22 16:40:53 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.1.2.35 2014/01/29 19:47:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.34 2014/01/22 16:40:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.35 2014/01/29 19:47:38 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -40,12 +40,18 @@ __KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.34 2014/01/22 16:40:53 riastradh E
 #include <sys/filedesc.h>
 #include <sys/ioccom.h>
 #include <sys/kauth.h>
+#ifndef _MODULE
+/* XXX Mega-kludge because modules are broken.  */
+#include <sys/once.h>
+#endif
 #include <sys/poll.h>
 #include <sys/select.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <drm/drmP.h>
+
+#include "ioconf.h"
 
 static int drm_minor_types[] = {
 	DRM_MINOR_LEGACY,
@@ -79,6 +85,12 @@ struct drm_attach_args {
 static int	drm_match(device_t, cfdata_t, void *);
 static void	drm_attach(device_t, device_t, void *);
 static int	drm_detach(device_t, int);
+
+#ifndef _MODULE
+/* XXX Mega-kludge because modules are broken.  */
+static int	drm_init(void);
+static ONCE_DECL(drm_init_once);
+#endif
 
 static void	drm_undo_fill_in_dev(struct drm_device *);
 
@@ -228,7 +240,7 @@ static const struct drm_ioctl_desc drm_ioctls[] = {
 #endif
 };
 
-const struct cdevsw drm_cdevsw = {
+const struct cdevsw drmkms_cdevsw = {
 	.d_open = drm_open,
 	.d_close = noclose,
 	.d_read = noread,
@@ -244,9 +256,6 @@ const struct cdevsw drm_cdevsw = {
 	.d_flag = D_NEGOFFSAFE,
 };
 
-/* XXX Does this get declared automatically by config?  */
-extern struct cfdriver drm_cd;
-
 static const struct fileops drm_fileops = {
 	.fo_read = drm_read,
 	.fo_write = fbadop_write,
@@ -259,13 +268,19 @@ static const struct fileops drm_fileops = {
 	.fo_restart = fnullop_restart,
 };
 
-CFATTACH_DECL_NEW(drm, sizeof(struct drm_softc),
+CFATTACH_DECL_NEW(drmkms, sizeof(struct drm_softc),
     drm_match, drm_attach, drm_detach, NULL);
 
 static int
 drm_match(device_t parent __unused, cfdata_t match __unused,
     void *aux __unused)
 {
+
+#ifndef _MODULE
+	/* XXX Mega-kludge because modules are broken.  */
+	if (RUN_ONCE(&drm_init_once, &drm_init) != 0)
+		return 0;
+#endif
 
 	return 1;
 }
@@ -300,7 +315,7 @@ drm_attach(device_t parent, device_t self, void *aux)
 		sc->sc_minor[i].index = (i * 64) + device_unit(self);
 		sc->sc_minor[i].type = drm_minor_types[i];
 		sc->sc_minor[i].device =
-		    makedev(cdevsw_lookup_major(&drm_cdevsw),
+		    makedev(cdevsw_lookup_major(&drmkms_cdevsw),
 			sc->sc_minor[i].index);
 		sc->sc_minor[i].kdev = self;
 		sc->sc_minor[i].dev = dev;
@@ -382,6 +397,42 @@ drm_detach(device_t self, int flags)
 	return 0;
 }
 
+#ifndef _MODULE
+/*
+ * drm_init is a mega-kludge that exists because modules are broken:
+ * builtin modules do not get initialized until long after configure
+ * runs, so there's no way for MODULE_CMD_INIT to prepare data
+ * structures that configure needs.
+ */
+static int
+drm_init(void)
+{
+	int error;
+
+	linux_mutex_init(&drm_global_mutex);
+
+	error = linux_kmap_init();
+	if (error) {
+		aprint_error("drmkms: unable to initialize linux kmap:"
+		    " %d", error);
+		goto fail0;
+	}
+
+	error = linux_workqueue_init();
+	if (error) {
+		aprint_error("drmkms: unable to initialize workqueues:"
+		    " %d", error);
+		goto fail1;
+	}
+
+	return 0;
+
+fail1:	linux_kmap_fini();
+fail0:	linux_mutex_destroy(&drm_global_mutex);
+	return error;
+}
+#endif
+
 static void
 drm_undo_fill_in_dev(struct drm_device *dev)
 {
@@ -425,7 +476,7 @@ drm_undo_fill_in_dev(struct drm_device *dev)
 static struct drm_softc *
 drm_dev_softc(dev_t d)
 {
-	return device_lookup_private(&drm_cd, (minor(d) % 64));
+	return device_lookup_private(&drmkms_cd, (minor(d) % 64));
 }
 
 static struct drm_minor *
@@ -831,7 +882,7 @@ drm_config_found(device_t parent, struct drm_driver *driver,
 	daa.daa_flags = flags;
 
 	dev->driver = driver;
-	if (config_found_ia(parent, "drmbus", &daa, NULL) == NULL) {
+	if (config_found_ia(parent, "drmkmsbus", &daa, NULL) == NULL) {
 		aprint_error_dev(parent, "unable to attach drm\n");
 		return;
 	}

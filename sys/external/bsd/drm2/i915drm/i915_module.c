@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_module.c,v 1.1.2.7 2013/07/24 03:57:33 riastradh Exp $	*/
+/*	$NetBSD: i915_module.c,v 1.1.2.8 2014/01/29 19:47:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_module.c,v 1.1.2.7 2013/07/24 03:57:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_module.c,v 1.1.2.8 2014/01/29 19:47:38 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: i915_module.c,v 1.1.2.7 2013/07/24 03:57:33 riastrad
 
 #include "i915_drv.h"
 
-MODULE(MODULE_CLASS_DRIVER, i915drm2, "drm2"); /* XXX drm2pci, drm2edid */
+MODULE(MODULE_CLASS_DRIVER, i915drmkms, "drmkms"); /* XXX drmkms_pci, drmkms_edid */
 
 #ifdef _MODULE
 #include "ioconf.c"
@@ -50,30 +50,28 @@ MODULE(MODULE_CLASS_DRIVER, i915drm2, "drm2"); /* XXX drm2pci, drm2edid */
 extern struct drm_driver *const i915_drm_driver;
 
 static int
-i915drm2_modcmd(modcmd_t cmd, void *arg __unused)
+i915drmkms_modcmd(modcmd_t cmd, void *arg __unused)
 {
-#ifdef _MODULE
 	int error;
-#endif
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-#ifdef _MODULE
 		/* XXX Kludge it up...  Must happen before attachment.  */
 		i915_drm_driver->num_ioctls = i915_max_ioctl;
 		i915_drm_driver->driver_features |= DRIVER_MODESET;
 
 		error = drm_pci_init(i915_drm_driver, NULL);
 		if (error) {
-			aprint_error("i915drm: failed to init pci: %d\n",
+			aprint_error("i915drmkms: failed to init pci: %d\n",
 			    error);
 			return error;
 		}
-		error = config_init_component(cfdriver_ioconf_i915drm,
-		    cfattach_ioconf_i915drm, cfdata_ioconf_i915drm);
+#ifdef _MODULE
+		error = config_init_component(cfdriver_ioconf_i915drmkms,
+		    cfattach_ioconf_i915drmkms, cfdata_ioconf_i915drmkms);
 		if (error) {
-			aprint_error("i915drm: failed to init component: %d\n",
-			    error);
+			aprint_error("i915drmkms: failed to init component"
+			    ": %d\n", error);
 			drm_pci_exit(i915_drm_driver, NULL);
 			return error;
 		}
@@ -82,15 +80,15 @@ i915drm2_modcmd(modcmd_t cmd, void *arg __unused)
 
 	case MODULE_CMD_FINI:
 #ifdef _MODULE
-		error = config_fini_component(cfdriver_ioconf_i915drm,
-		    cfattach_ioconf_i915drm, cfdata_ioconf_i915drm);
+		error = config_fini_component(cfdriver_ioconf_i915drmkms,
+		    cfattach_ioconf_i915drmkms, cfdata_ioconf_i915drmkms);
 		if (error) {
-			aprint_error("i915drm: failed to fini component: %d\n",
-			    error);
+			aprint_error("i915drmkms: failed to fini component"
+			    ": %d\n", error);
 			return error;
 		}
-		drm_pci_exit(i915_drm_driver, NULL);
 #endif
+		drm_pci_exit(i915_drm_driver, NULL);
 		return 0;
 
 	default:
