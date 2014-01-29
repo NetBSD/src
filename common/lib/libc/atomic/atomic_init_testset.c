@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_init_testset.c,v 1.11 2014/01/29 14:44:32 martin Exp $	*/
+/*	$NetBSD: atomic_init_testset.c,v 1.12 2014/01/29 14:49:35 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: atomic_init_testset.c,v 1.11 2014/01/29 14:44:32 martin Exp $");
+__RCSID("$NetBSD: atomic_init_testset.c,v 1.12 2014/01/29 14:49:35 martin Exp $");
 
 #include "atomic_op_namespace.h"
 
@@ -103,7 +103,7 @@ _atomic_cas_up(volatile uint32_t *ptr, uint32_t old, uint32_t new)
 
 #ifndef	__HAVE_ASM_ATOMIC_CAS_16_UP
 static uint16_t
-_atomic_cas_up_16(volatile uint16_t *ptr, uint16_t old, uint16_t new)
+_atomic_cas_16_up(volatile uint16_t *ptr, uint16_t old, uint16_t new)
 {
 	uint16_t ret;
 
@@ -131,7 +131,7 @@ _atomic_cas_8_up(volatile uint8_t *ptr, uint8_t old, uint8_t new)
 		return ret;
 	}
 	*ptr = new;
-	RAS_END(_atomic_cas_16);
+	RAS_END(_atomic_cas_8);
 
 	return ret;
 }
