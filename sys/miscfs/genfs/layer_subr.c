@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_subr.c,v 1.32 2011/06/12 03:35:58 rmind Exp $	*/
+/*	$NetBSD: layer_subr.c,v 1.33 2014/01/29 08:27:04 hannken Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.32 2011/06/12 03:35:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.33 2014/01/29 08:27:04 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,8 +259,6 @@ layer_node_create(struct mount *mp, struct vnode *lowervp, struct vnode **nvpp)
 {
 	struct vnode *aliasvp;
 	struct layer_mount *lmp = MOUNTTOLAYERMOUNT(mp);
-
-	KASSERT(VOP_ISLOCKED(lowervp));
 
 	mutex_enter(&lmp->layerm_hashlock);
 	aliasvp = layer_node_find(mp, lowervp);
