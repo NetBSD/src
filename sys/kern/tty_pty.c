@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.133 2013/09/15 14:56:26 martin Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.134 2014/01/29 02:38:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.133 2013/09/15 14:56:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.134 2014/01/29 02:38:48 yamt Exp $");
 
 #include "opt_ptm.h"
 
@@ -509,6 +509,8 @@ ptsstop(struct tty *tp, int flush)
 	KASSERT(mutex_owned(&tty_lock));
 
 	/* note: FLUSHREAD and FLUSHWRITE already ok */
+	CTASSERT(TIOCPKT_FLUSHREAD == FREAD);
+	CTASSERT(TIOCPKT_FLUSHWRITE == FWRITE);
 	if (flush == 0) {
 		flush = TIOCPKT_STOP;
 		pti->pt_flags |= PF_STOPPED;
