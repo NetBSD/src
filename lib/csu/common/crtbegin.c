@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: crtbegin.c,v 1.7 2013/12/11 06:55:24 matt Exp $");
+__RCSID("$NetBSD: crtbegin.c,v 1.8 2014/01/29 20:57:49 bouyer Exp $");
 
 #include "crtbegin.h"
 
@@ -98,7 +98,7 @@ __do_global_ctors_aux(void)
 
 #if !defined(__ARM_EABI__) || defined(SHARED)
 #if !defined(HAVE_INITFINI_ARRAY)
-__dso_hidden const fptr_t __DTOR_LIST__[] __section(".dtors") = {
+__dso_hidden const fptr_t __aligned(sizeof(void *)) __DTOR_LIST__[] __section(".dtors") = {
 	(fptr_t) -1,
 };
 __dso_hidden extern const fptr_t __DTOR_LIST_END__[];
