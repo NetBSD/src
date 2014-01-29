@@ -1,4 +1,4 @@
-/*	$NetBSD: int_types.h,v 1.9 2008/08/29 19:08:29 matt Exp $	*/
+/*	$NetBSD: int_types.h,v 1.10 2014/01/29 00:42:15 matt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -31,8 +31,8 @@
  *	from: @(#)types.h	7.5 (Berkeley) 3/9/91
  */
 
-#ifndef	_ARM32_INT_TYPES_H_
-#define	_ARM32_INT_TYPES_H_
+#ifndef	_ARM_INT_TYPES_H_
+#define	_ARM_INT_TYPES_H_
 
 #include <sys/cdefs.h>
 
@@ -65,4 +65,4 @@ typedef	unsigned long long int __uint64_t;
 typedef long int	       __intptr_t;
 typedef unsigned long int     __uintptr_t;
 
-#endif	/* !_ARM32_INT_TYPES_H_ */
+#endif	/* !_ARM_INT_TYPES_H_ */
