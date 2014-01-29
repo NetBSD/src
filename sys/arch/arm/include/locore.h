@@ -170,6 +170,42 @@ extern bool cpu_armv6_p;
 #define	CPU_IS_ARMV6_P()		true
 #endif
 
+/*
+ * User by the fault code to read the current instruction.
+ */
+static inline uint32_t
+read_insn(vaddr_t va, bool user_p)
+{
+	uint32_t insn;
+	if (user_p) {
+		__asm __volatile("ldrt %0, [%1]" : "=&r"(insn) : "r"(va));
+	} else {
+		insn = *(const uint32_t *)va;
+	}
+#if defined(__ARMEB__) && defined(_ARM_ARCH_7)
+	insn = bswap32(insn);
+#endif
+	return insn;
+}
+
+/*
+ * User by the fault code to read the current thumb instruction.
+ */
+static inline uint32_t
+read_thumb_insn(vaddr_t va, bool user_p)
+{
+	va &= ~1;
+	uint32_t insn;
+	if (user_p) {
+		__asm __volatile("ldrht %0, [%1]" : "=&r"(insn) : "r"(va));
+	} else {
+		insn = *(const uint16_t *)va;
+	}
+#if defined(__ARMEB__) && defined(_ARM_ARCH_7)
+	insn = bswap16(insn);
+#endif
+	return insn;
+}
 
 /*
  * Random cruft
