@@ -1,4 +1,4 @@
-# $NetBSD: majors,v 1.66 2013/04/22 16:49:14 rkujawa Exp $
+# $NetBSD: majors,v 1.66.6.1 2014/01/29 19:47:54 riastradh Exp $
 #
 # Device majors for Machine-Independent drivers.
 #
@@ -54,3 +54,4 @@ device-major mfi       char 205		   mfi
 device-major seeprom   char 206		   seeprom
 device-major dtrace    char 207		   dtrace
 device-major spiflash  char 208 block 208  spiflash
+device-major drmkms    char 209            drmkms
