@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.50 2013/01/10 22:06:59 jmcneill Exp $ */
+/*	$NetBSD: genfb.c,v 1.50.8.1 2014/01/29 19:48:29 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.50 2013/01/10 22:06:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.50.8.1 2014/01/29 19:48:29 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -333,7 +333,8 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 		SCREEN_DISABLE_DRAWING(&sc->sc_console_screen);
 #endif
 
-	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint);
+	config_found_ia(sc->sc_dev, "wsemuldisplaydev", &aa,
+	    wsemuldisplaydevprint);
 
 	return 0;
 }
