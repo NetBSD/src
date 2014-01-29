@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_pci.c,v 1.1.2.10 2014/01/29 19:47:09 riastradh Exp $	*/
+/*	$NetBSD: i915_pci.c,v 1.1.2.11 2014/01/29 19:47:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,9 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.1.2.10 2014/01/29 19:47:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.1.2.11 2014/01/29 19:47:38 riastradh Exp $");
 
 #include <sys/types.h>
+#ifndef _MODULE
+/* XXX Mega-kludge because modules are broken.  */
+#include <sys/once.h>
+#endif
 #include <sys/systm.h>
 
 #include <dev/pci/pciio.h>
@@ -60,6 +64,12 @@ static int	i915drm_match(device_t, cfdata_t, void *);
 static void	i915drm_attach(device_t, device_t, void *);
 static int	i915drm_detach(device_t, int);
 
+#ifndef _MODULE
+/* XXX Mega-kludge because modules are broken.  */
+static int	i915drm_init(void);
+static ONCE_DECL(i915drm_init_once);
+#endif
+
 static void	i915drm_attach_framebuffer(device_t);
 static int	i915drm_detach_framebuffer(device_t, int);
 
@@ -73,7 +83,7 @@ static int	i915drm_genfb_ioctl(void *, void *, unsigned long, void *,
 		    int, struct lwp *);
 static paddr_t	i915drm_genfb_mmap(void *, void *, off_t, int);
 
-CFATTACH_DECL_NEW(i915drm, sizeof(struct i915drm_softc),
+CFATTACH_DECL_NEW(i915drmkms, sizeof(struct i915drm_softc),
     i915drm_match, i915drm_attach, i915drm_detach, NULL);
 
 /* XXX Kludge to get these from i915_drv.c.  */
@@ -122,6 +132,12 @@ static int
 i915drm_match(device_t parent, cfdata_t match, void *aux)
 {
 	const struct pci_attach_args *const pa = aux;
+
+#ifndef _MODULE
+	/* XXX Mega-kludge because modules are broken.  */
+	if (RUN_ONCE(&i915drm_init_once, &i915drm_init) != 0)
+		return 0;
+#endif
 
 	return (i915drm_pci_lookup(pa) != NULL);
 }
@@ -185,6 +201,27 @@ i915drm_detach(device_t self, int flags)
 
 	return 0;
 }
+
+#ifndef _MODULE
+/* XXX Mega-kludge because modules are broken.  See drm_init for details.  */
+static int
+i915drm_init(void)
+{
+	int error;
+
+	i915_drm_driver->num_ioctls = i915_max_ioctl;
+	i915_drm_driver->driver_features |= DRIVER_MODESET;
+
+	error = drm_pci_init(i915_drm_driver, NULL);
+	if (error) {
+		aprint_error("i915drmkms: failed to init pci: %d\n",
+		    error);
+		return error;
+	}
+
+	return 0;
+}
+#endif
 
 static struct drm_fb_helper_funcs i915drm_fb_helper_funcs = {
 	.gamma_set = &intel_crtc_fb_gamma_set,

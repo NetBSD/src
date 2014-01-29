@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb.h,v 1.1.2.2 2013/09/08 15:58:24 riastradh Exp $	*/
+/*	$NetBSD: kgdb.h,v 1.1.2.3 2014/01/29 19:47:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #ifndef _LINUX_KGDB_H_
 #define _LINUX_KGDB_H_
 
-#if 0				/* XXX */
+#ifdef _KERNEL_OPT		/* XXX */
 #include "opt_ddb.h"
 #else
 #define	DDB

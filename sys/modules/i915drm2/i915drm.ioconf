@@ -1,6 +1,6 @@
-#	$NetBSD: i915drm.ioconf,v 1.1.2.1 2013/07/24 02:49:21 riastradh Exp $
+#	$NetBSD: i915drm.ioconf,v 1.1.2.2 2014/01/29 19:47:38 riastradh Exp $
 
-ioconf i915drm
+ioconf i915drmkms
 
 include "conf/files"
 include "dev/pci/files.pci"
@@ -8,4 +8,4 @@ include "external/bsd/drm2/conf/files.drm2"
 
 pseudo-root	pci*
 
-i915drm* 	at pci? dev ? function ?
+i915drmkms* 	at pci? dev ? function ?

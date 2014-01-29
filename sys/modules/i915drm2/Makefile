@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1.2.11 2013/09/08 16:38:02 riastradh Exp $
+# $NetBSD: Makefile,v 1.1.2.12 2014/01/29 19:47:38 riastradh Exp $
 
 .include "../Makefile.inc"
 .include "../drm2/Makefile.inc"
@@ -8,7 +8,7 @@ CPPFLAGS+=	-I${S}/external/bsd/drm2/dist/drm/i915
 .PATH:	${S}/external/bsd/drm2/i915drm
 .PATH:	${S}/external/bsd/drm2/dist/drm/i915
 
-KMOD=	i915drm2
+KMOD=	i915drmkms
 IOCONF=	i915drm.ioconf
 
 SRCS+=	dvo_ch7017.c
@@ -47,8 +47,8 @@ SRCS+=	intel_modes.c
 SRCS+=	intel_opregion.c
 SRCS+=	intel_overlay.c
 SRCS+=	intel_panel.c
-SRCS+=	intel_pm.c		# XXX overridden for now
-SRCS+=	intel_ringbuffer.c	# XXX overridden for now
+SRCS+=	intel_pm.c
+SRCS+=	intel_ringbuffer.c
 SRCS+=	intel_sdvo.c
 SRCS+=	intel_sprite.c
 SRCS+=	intel_tv.c
