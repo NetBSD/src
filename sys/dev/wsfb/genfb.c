@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.50.8.2 2014/01/29 19:48:45 riastradh Exp $ */
+/*	$NetBSD: genfb.c,v 1.50.8.3 2014/01/29 19:52:11 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.50.8.2 2014/01/29 19:48:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.50.8.3 2014/01/29 19:52:11 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,8 +55,10 @@ __KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.50.8.2 2014/01/29 19:48:45 riastradh Exp
 		AB_VERBOSE | AB_DEBUG) )
 #endif
 
+#ifdef _KERNEL_OPT
 #include "opt_genfb.h"
 #include "opt_wsfb.h"
+#endif
 
 #ifdef GENFB_DEBUG
 #define GPRINTF panic

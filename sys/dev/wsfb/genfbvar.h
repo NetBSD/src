@@ -1,4 +1,4 @@
-/*	$NetBSD: genfbvar.h,v 1.21 2011/07/13 22:47:29 macallan Exp $ */
+/*	$NetBSD: genfbvar.h,v 1.21.24.1 2014/01/29 19:52:12 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,12 +27,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.21 2011/07/13 22:47:29 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.21.24.1 2014/01/29 19:52:12 riastradh Exp $");
 
 #ifndef GENFBVAR_H
 #define GENFBVAR_H
 
+#ifdef _KERNEL_OPT
 #include "opt_splash.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -46,7 +48,9 @@ __KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.21 2011/07/13 22:47:29 macallan Exp $
 #include <dev/rasops/rasops.h>
 
 #include <dev/wscons/wsdisplay_vconsvar.h>
+#ifdef _KERNEL_OPT
 #include "opt_genfb.h"
+#endif
 
 #ifdef SPLASHSCREEN
 #define GENFB_DISABLE_TEXT
