@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.153 2014/01/18 17:20:36 skrll Exp $
+#  $NetBSD: Makefile,v 1.154 2014/01/29 23:37:18 joerg Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -341,11 +341,8 @@ MLINKS+=fdim.3 fdimf.3
 COPTS.compat_cabs.c+=	${${ACTIVE_CC} == "clang":? -Wno-incompatible-library-redeclaration :}
 COPTS.compat_cabsf.c+=	${${ACTIVE_CC} == "clang":? -Wno-incompatible-library-redeclaration :}
 
-.include "${.CURDIR}/gen/Makefile.inc"
-
-.if ${HAVE_LIBGCC} == "no"
 .include "${.CURDIR}/compiler_rt/Makefile.inc"
-.endif
+.include "${.CURDIR}/gen/Makefile.inc"
 
 .include <bsd.lib.mk>
 .include <bsd.subdir.mk>
