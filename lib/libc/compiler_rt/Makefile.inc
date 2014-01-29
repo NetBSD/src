@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.13 2014/01/18 21:27:11 joerg Exp $
+# $NetBSD: Makefile.inc,v 1.14 2014/01/29 22:38:18 joerg Exp $
 
 COMPILER_RT_SRCDIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
 
@@ -166,7 +166,6 @@ GENERIC_SRCS+= \
 	GCDAProfiling.c \
 	PGOProfiling.c
 
-.if ${HAVE_LIBGCC} == "no"
 .if ${MACHINE_ARCH} == "powerpc"
 GENERIC_SRCS+= \
 	fixtfdi.c \
@@ -177,7 +176,6 @@ GENERIC_SRCS+= \
 	gcc_qdiv.c \
 	gcc_qmul.c \
 	gcc_qsub.c
-.endif
 .endif
 
 .if ${MACHINE_CPU} == "arm"
