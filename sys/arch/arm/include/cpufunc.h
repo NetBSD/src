@@ -39,8 +39,8 @@
  * Prototypes for cpu, mmu and tlb related functions.
  */
 
-#ifndef _ARM32_CPUFUNC_H_
-#define _ARM32_CPUFUNC_H_
+#ifndef _ARM_CPUFUNC_H_
+#define _ARM_CPUFUNC_H_
 
 #ifdef _KERNEL
 
@@ -779,6 +779,6 @@ u_int get_stackptr	(u_int);
 
 #endif /* _KERNEL || _KMEMUSER */
 
-#endif	/* _ARM32_CPUFUNC_H_ */
+#endif	/* _ARM_CPUFUNC_H_ */
 
 /* End of cpufunc.h */
