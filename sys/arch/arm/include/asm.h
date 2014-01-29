@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.25 2013/11/30 20:11:11 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.26 2014/01/29 00:42:15 matt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -34,8 +34,8 @@
  *	from: @(#)asm.h	5.5 (Berkeley) 5/7/91
  */
 
-#ifndef _ARM32_ASM_H_
-#define _ARM32_ASM_H_
+#ifndef _ARM_ASM_H_
+#define _ARM_ASM_H_
 
 #include <arm/cdefs.h>
 
