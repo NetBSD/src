@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_pci.c,v 1.1.2.9 2014/01/22 14:58:39 riastradh Exp $	*/
+/*	$NetBSD: i915_pci.c,v 1.1.2.10 2014/01/29 19:47:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.1.2.9 2014/01/22 14:58:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.1.2.10 2014/01/29 19:47:09 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -154,7 +154,8 @@ i915drm_attach(device_t parent, device_t self, void *aux)
 	/* Attach the drm driver.  */
 	drm_config_found(self, i915_drm_driver, flags, &sc->sc_drm_dev);
 
-	i915drm_attach_framebuffer(self);
+	/* Attach a framebuffer, but not until interrupts work.  */
+	config_interrupts(self, &i915drm_attach_framebuffer);
 }
 
 static int
