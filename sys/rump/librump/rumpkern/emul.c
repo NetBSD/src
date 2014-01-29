@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.161 2014/01/17 01:32:53 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.162 2014/01/29 18:42:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.161 2014/01/17 01:32:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.162 2014/01/29 18:42:14 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.161 2014/01/17 01:32:53 pooka Exp $");
 #include <sys/device.h>
 #include <sys/queue.h>
 #include <sys/file.h>
+#include <sys/filedesc.h>
 #include <sys/cpu.h>
 #include <sys/kmem.h>
 #include <sys/poll.h>
@@ -73,7 +74,11 @@ int physmem = PHYSMEM;
 int nkmempages = PHYSMEM/2; /* from le chapeau */
 #undef PHYSMEM
 
-struct lwp lwp0;
+struct lwp lwp0 = {
+	.l_lid = 1,
+	.l_proc = &proc0,
+	.l_fd = &filedesc0,
+};
 struct vnode *rootvp;
 dev_t rootdev = NODEV;
 
