@@ -1,7 +1,7 @@
-/*	$NetBSD: atomic_cas_up.S,v 1.3 2014/01/29 11:03:04 skrll Exp $	*/
+/*	$NetBSD: atomic_cas_up.S,v 1.4 2014/01/29 11:34:25 skrll Exp $	*/
 
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
