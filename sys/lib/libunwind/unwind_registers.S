@@ -210,3 +210,23 @@ ENTRY(_ZNK7_Unwind15Registers_ppc326jumptoEv)
 	lwz		%r3,12(%r3)   /* do r3 last */
 	bctr
 #endif
+
+#if defined(__arm__) && !defined(__ARM_EABI__)
+	.hidden _ZN7_Unwind15Registers_arm32C1Ev
+ENTRY(_ZN7_Unwind15Registers_arm32C1Ev)
+	stmia	r0, {r0-r14}
+
+	str	lr, [r0, #60]	/* PC */
+	mrs	r1, cpsr
+	str	r1, [r0, #64]	/* CPSR */
+
+	RET
+END(_ZN7_Unwind15Registers_arm32C1Ev)
+
+	.hidden _ZNK7_Unwind15Registers_arm326jumptoEv
+ENTRY(_ZNK7_Unwind15Registers_arm326jumptoEv)
+	ldr	r1, [r0, #64]
+	msr	cpsr_sxc, r1
+	ldmia	r0, {r0-r15}
+END(_ZNK7_Unwind15Registers_arm326jumptoEv)
+#endif
