@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.559 2014/01/17 22:34:36 pgoyette Exp $
+# $NetBSD: mi,v 1.560 2014/01/30 15:04:04 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1890,6 +1890,7 @@
 ./usr/tests/lib/libc/gen/t_closefrom		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_cpuset		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_dir			tests-lib-tests		atf
+./usr/tests/lib/libc/gen/t_floatunditf		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_fmtcheck		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_fnmatch		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_fpclassify		tests-lib-tests		atf
