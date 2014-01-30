@@ -1,6 +1,10 @@
-/*	$NetBSD: kern.ldscript.tail,v 1.3 2013/12/24 17:03:07 matt Exp $	*/
+/*	$NetBSD: kern.ldscript.tail,v 1.4 2014/01/30 15:36:43 matt Exp $	*/
 
   } =0
+  .ARM.extab   : { *(.ARM.extab* .gnu.linkonce.armextab.*) }
+  PROVIDE (__exidx_start = .);
+  .ARM.exidx   : { *(.ARM.exidx* .gnu.linkonce.armexidx.*) }
+  PROVIDE (__exidx_end = .);
   PROVIDE (__etext = .);
   PROVIDE (_etext = .);
   PROVIDE (etext = .);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ldscript.epoc32,v 1.1 2013/04/28 12:11:25 kiyohara Exp $	*/
+/*	$NetBSD: ldscript.epoc32,v 1.2 2014/01/30 15:36:43 matt Exp $	*/
 
 OUTPUT_ARCH(arm)
 ENTRY(KERNEL_BASE_phys)
@@ -23,6 +23,10 @@ SECTIONS
     *(.glue_7t) *(.glue_7)
     *(.rodata) *(.rodata.*)
   } =0
+  .ARM.extab   : { *(.ARM.extab* .gnu.linkonce.armextab.*) }
+  PROVIDE (__exidx_start = .);
+  .ARM.exidx   : { *(.ARM.exidx* .gnu.linkonce.armexidx.*) }
+  PROVIDE (__exidx_end = .);
   PROVIDE (__etext = .);
   PROVIDE (_etext = .);
   PROVIDE (etext = .);
