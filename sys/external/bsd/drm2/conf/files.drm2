@@ -1,4 +1,4 @@
-#	$NetBSD: files.drm2,v 1.1.2.6 2014/01/29 19:47:38 riastradh Exp $
+#	$NetBSD: files.drm2,v 1.1.2.7 2014/01/30 16:49:33 riastradh Exp $
 
 define	drmkmsbus	{ }
 
@@ -69,7 +69,7 @@ file	external/bsd/drm2/drm/drm_gem_vm.c		drmkms
 file	external/bsd/drm2/drm/drm_module.c		drmkms
 file	external/bsd/drm2/drm/drm_sysfs.c		drmkms
 
-device	i915drmkms: drmkms, drmkmsbus, genfbbase, wsemuldisplaydev
+device	i915drmkms: drmkms, drmkmsbus, genfb, wsemuldisplaydev
 attach	i915drmkms at pci
 
 makeoptions	i915drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/dist/drm/i915"
