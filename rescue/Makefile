@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2013/12/26 02:25:57 christos Exp $
+#	$NetBSD: Makefile,v 1.31 2014/01/30 22:19:00 matt Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -6,7 +6,7 @@
 WARNS=		1
 # XXX
 .if ${MACHINE_ARCH} != "m68000"
-DBG=		-Os
+DBG+=		-Os
 .endif
 
 CRUNCHGEN_FLAGS=-d "${DBG}"
