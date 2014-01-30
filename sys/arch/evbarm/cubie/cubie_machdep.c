@@ -1,4 +1,4 @@
-/*	$NetBSD: cubie_machdep.c,v 1.9 2014/01/23 19:26:55 matt Exp $ */
+/*	$NetBSD: cubie_machdep.c,v 1.10 2014/01/30 00:08:46 matt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cubie_machdep.c,v 1.9 2014/01/23 19:26:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cubie_machdep.c,v 1.10 2014/01/30 00:08:46 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -306,7 +306,7 @@ initarm(void *arg)
 	consinit();
 
 #ifdef VERBOSE_INIT_ARM
-	printf("\nuboot arg = %#x, %#x, %#x, %#x\n",
+	printf("\nuboot arg = %#"PRIxPTR", %#"PRIxPTR", %#"PRIxPTR", %#"PRIxPTR"\n",
 	    uboot_args[0], uboot_args[1], uboot_args[2], uboot_args[3]);
 #endif
 
