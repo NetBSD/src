@@ -1,4 +1,4 @@
-/* $NetBSD: t_floatunditf.c,v 1.1 2014/01/30 15:04:04 joerg Exp $ */
+/* $NetBSD: t_floatunditf.c,v 1.2 2014/01/30 22:15:55 joerg Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,6 +31,7 @@
 #include <inttypes.h>
 #include <math.h>
 
+#ifdef __HAVE_LONG_DOUBLE
 static const struct {
 	uint64_t u64;
 	long double ld;
@@ -101,8 +102,6 @@ static const struct {
 	{ 0x1ULL, 0x8p-3L },
 };
 
-long double floatunditf(uint64_t);
-
 ATF_TC(floatunditf);
 ATF_TC_HEAD(floatunditf, tc)
 {
@@ -117,6 +116,7 @@ ATF_TC_BODY(floatunditf, tc)
 	for (i = 0; i < __arraycount(testcases); ++i)
 		ATF_CHECK(testcases[i].ld == (long double)testcases[i].u64);
 }
+#endif
 
 ATF_TP_ADD_TCS(tp)
 {
