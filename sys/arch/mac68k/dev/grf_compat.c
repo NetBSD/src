@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_compat.c,v 1.23 2014/01/26 00:08:48 christos Exp $	*/
+/*	$NetBSD: grf_compat.c,v 1.24 2014/01/30 13:04:06 martin Exp $	*/
 
 /*
  * Copyright (C) 1999 Scott Reynolds
@@ -34,7 +34,7 @@
 #include "opt_grf_compat.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_compat.c,v 1.23 2014/01/26 00:08:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_compat.c,v 1.24 2014/01/30 13:04:06 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -316,7 +316,7 @@ grfmap(dev_t dev, struct macfb_softc *sc, void **addrp, struct proc *p)
 
 	len = m68k_round_page(sc->sc_dc->dc_offset + sc->sc_dc->dc_size);
 	*addrp = (void *)p->p_emul->e_vm_default_addr(p,
-	    p->p_vmspace->vm_daddr, len);
+	    (vaddr_t)p->p_vmspace->vm_daddr, len);
 	flags = MAP_SHARED | MAP_FIXED;
 
 	vn.v_type = VCHR;		/* XXX */
