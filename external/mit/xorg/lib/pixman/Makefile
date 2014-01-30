@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2013/12/21 08:58:07 skrll Exp $
+#	$NetBSD: Makefile,v 1.27 2014/01/30 19:24:06 riz Exp $
 
 NOLINT=	1	# defined
 
@@ -48,6 +48,9 @@ SRCS+=					\
 .if ${MACHINE_ARCH} == "i386"
 SRCS+= pixman-mmx.c
 COPTS.pixman-mmx.c=	-mmmx -fvisibility=hidden
+. if defined(HAVE_LLVM)
+COPTS.pixman-mmx.c+=	-Wno-error=attributes
+. endif
 MKDEPFLAGS+=		-mmmx -msse2 -fvisibility=hidden
 SRCS+=	pixman-sse2.c
 COPTS.pixman-sse2.c=	-msse2 -fvisibility=hidden
