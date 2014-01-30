@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.50 2014/01/20 02:34:20 christos Exp $
+# $NetBSD: mi,v 1.51 2014/01/30 15:04:04 joerg Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -1764,6 +1764,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_closefrom.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_cpuset.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_dir.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/gen/t_floatunditf.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_fmtcheck.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_fnmatch.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_fpclassify.debug		tests-lib-debug		debug,atf
