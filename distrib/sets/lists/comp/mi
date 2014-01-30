@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1876 2014/01/26 21:33:54 joerg Exp $
+#	$NetBSD: mi,v 1.1877 2014/01/30 06:49:16 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3959,6 +3959,7 @@
 ./usr/lib/pkgconfig/lutok.pc			comp-crypto-lib		kyua,share
 ./usr/lib/pkgconfig/openssl.pc			comp-crypto-lib		crypto,share
 ./usr/lib/pkgconfig/sqlite3.pc			comp-c-lib
+./usr/lib/pkgconfig/zlib.pc			comp-c-lib
 ./usr/libdata/ldscripts/kmodule			comp-util-share		binutils,kmod
 ./usr/libdata/lint/llib-larchive.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lasn1.ln		comp-krb5-lintlib	lint,kerberos
