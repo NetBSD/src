@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.111 2013/10/27 02:06:06 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.112 2014/01/31 18:24:03 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -79,6 +79,278 @@ ASLOCAL(tmpstk)
  * table and is hence at 0x400 (see reset vector in vectors.s).
  */
 	PANIC("kernel jump to zero")
+	/* NOTREACHED */
+
+/*
+ * Macro to relocate a symbol, used before MMU is enabled.
+ */
+#define	_RELOC(var, ar)	\
+	lea	var,ar;	\
+	addl	%a5,ar
+
+#define	RELOC(var, ar)		_RELOC(_C_LABEL(var), ar)
+#define	ASRELOC(var, ar)	_RELOC(_ASM_LABEL(var), ar)
+
+/*
+ * Initialization
+ *
+ * A4 contains the address of the end of the symtab
+ * A5 contains physical load point from boot
+ * VBR contains zero from ROM.  Exceptions will continue to vector
+ * through ROM until MMU is turned on at which time they will vector
+ * through our table (vectors.s).
+ */
+BSS(lowram,4)
+BSS(esym,4)
+
+GLOBAL(_verspad)
+	.word	0
+GLOBAL(boot_version)
+	.word	X68K_BOOTIF_VERS
+
+ASENTRY_NOPROFILE(start)
+	movw	#PSL_HIGHIPL,%sr	| no interrupts
+
+	addql	#4,%sp
+	movel	%sp@+,%a5		| firstpa
+	movel	%sp@+,%d5		| fphysize -- last page
+	movel	%sp@,%a4		| esym
+
+	RELOC(vectab,%a0)		| set Vector Base Register temporaly
+	movc	%a0,%vbr
+
+#if 0	/* XXX this should be done by the boot loader */
+	RELOC(edata, %a0)		| clear out BSS
+	movl	#_C_LABEL(end)-4,%d0	| (must be <= 256 kB)
+	subl	#_C_LABEL(edata),%d0
+	lsrl	#2,%d0
+1:	clrl	%a0@+
+	dbra	%d0,1b
+#endif
+
+	ASRELOC(tmpstk, %a0)
+	movl	%a0,%sp			| give ourselves a temporary stack
+	RELOC(esym, %a0)
+#if 1
+	movl	%a4,%a0@		| store end of symbol table
+#else
+	clrl	%a0@			| no symbol table, yet
+#endif
+	RELOC(lowram, %a0)
+	movl	%a5,%a0@		| store start of physical memory
+
+	movl	#CACHE_OFF,%d0
+	movc	%d0,%cacr		| clear and disable on-chip cache(s)
+
+/* determine our CPU/MMU combo - check for all regardless of kernel config */
+	movl	#0x200,%d0		| data freeze bit
+	movc	%d0,%cacr		|   only exists on 68030
+	movc	%cacr,%d0		| read it back
+	tstl	%d0			| zero?
+	jeq	Lnot68030		| yes, we have 68020/68040/68060
+	jra	Lstart1			| no, we have 68030
+Lnot68030:
+	bset	#31,%d0			| data cache enable bit
+	movc	%d0,%cacr		|   only exists on 68040/68060
+	movc	%cacr,%d0		| read it back
+	tstl	%d0			| zero?
+	jeq	Lis68020		| yes, we have 68020
+	moveq	#0,%d0			| now turn it back off
+	movec	%d0,%cacr		|   before we access any data
+	.word	0xf4d8			| cinva bc - invalidate caches XXX
+	bset	#30,%d0			| data cache no allocate mode bit
+	movc	%d0,%cacr		|   only exists on 68060
+	movc	%cacr,%d0		| read it back
+	tstl	%d0			| zero?
+	jeq	Lis68040		| yes, we have 68040
+	RELOC(mmutype, %a0)		| no, we have 68060
+	movl	#MMU_68040,%a0@		| with a 68040 compatible MMU
+	RELOC(cputype, %a0)
+	movl	#CPU_68060,%a0@		| and a 68060 CPU
+	jra	Lstart1
+Lis68040:
+	RELOC(mmutype, %a0)
+	movl	#MMU_68040,%a0@		| with a 68040 MMU
+	RELOC(cputype, %a0)
+	movl	#CPU_68040,%a0@		| and a 68040 CPU
+	jra	Lstart1
+Lis68020:
+	RELOC(mmutype, %a0)
+	movl	#MMU_68851,%a0@		| we have PMMU
+	RELOC(cputype, %a0)
+	movl	#CPU_68020,%a0@		| and a 68020 CPU
+
+Lstart1:
+/* initialize source/destination control registers for movs */
+	moveq	#FC_USERD,%d0		| user space
+	movc	%d0,%sfc		|   as source
+	movc	%d0,%dfc		|   and destination of transfers
+/* initialize memory sizes (for pmap_bootstrap) */
+	movl	%d5,%d1			| last page
+	moveq	#PGSHIFT,%d2
+	lsrl	%d2,%d1			| convert to page (click) number
+	RELOC(maxmem, %a0)
+	movl	%d1,%a0@		| save as maxmem
+	movl	%a5,%d0			| lowram value from ROM via boot
+	lsrl	%d2,%d0			| convert to page number
+	subl	%d0,%d1			| compute amount of RAM present
+	RELOC(physmem, %a0)
+	movl	%d1,%a0@		| and physmem
+/* configure kernel and lwp0 VA space so we can get going */
+#if NKSYMS || defined(DDB) || defined(LKM)
+	RELOC(esym,%a0)			| end of static kernel test/data/syms
+	movl	%a0@,%d5
+	jne	Lstart2
+#endif
+	movl	#_C_LABEL(end),%d5	| end of static kernel text/data
+Lstart2:
+	RELOC(setmemrange,%a0)		| call setmemrange()
+	jbsr	%a0@			|  to probe all memory regions
+	addl	#PAGE_SIZE-1,%d5
+	andl	#PG_FRAME,%d5		| round to a page
+	movl	%d5,%a4
+	addl	%a5,%a4			| convert to PA
+	pea	%a5@			| firstpa
+	pea	%a4@			| nextpa
+	RELOC(pmap_bootstrap,%a0)
+	jbsr	%a0@			| pmap_bootstrap(firstpa, nextpa)
+	addql	#8,%sp
+
+/*
+ * Prepare to enable MMU.
+ * Since the kernel is mapped logical == physical, we just turn it on.
+ */
+	RELOC(Sysseg_pa, %a0)		| system segment table addr
+	movl	%a0@,%d1		| read value (a PA)
+	RELOC(mmutype, %a0)
+	cmpl	#MMU_68040,%a0@		| 68040?
+	jne	Lmotommu1		| no, skip
+	.long	0x4e7b1807		| movc d1,srp
+	jra	Lstploaddone
+Lmotommu1:
+	RELOC(protorp, %a0)
+	movl	#0x80000202,%a0@	| nolimit + share global + 4 byte PTEs
+	movl	%d1,%a0@(4)		| + segtable address
+	pmove	%a0@,%srp		| load the supervisor root pointer
+	movl	#0x80000002,%a0@	| reinit upper half for CRP loads
+Lstploaddone:
+	RELOC(mmutype, %a0)
+	cmpl	#MMU_68040,%a0@		| 68040?
+	jne	Lmotommu2		| no, skip
+#include "opt_jupiter.h"
+#ifdef JUPITER
+	/* JUPITER-X: set system register "SUPER" bit */
+	movl	#0x0200a240,%d0		| translate DRAM area transparently
+	.long	0x4e7b0006		| movc d0,dtt0
+	lea	0x00c00000,%a0		| a0: graphic VRAM
+	lea	0x02c00000,%a1		| a1: graphic VRAM ( not JUPITER-X )
+					|     DRAM ( JUPITER-X )
+	movw	%a0@,%d0
+	movw	%d0,%d1
+	notw	%d1
+	movw	%d1,%a1@
+	movw	%d0,%a0@
+	cmpw	%a1@,%d1		| JUPITER-X?
+	jne	Ljupiterdone		| no, skip
+	movl	#0x0100a240,%d0		| to access system register
+	.long	0x4e7b0006		| movc d0,dtt0
+	movb	#0x01,0x01800003	| set "SUPER" bit
+Ljupiterdone:
+#endif /* JUPITER */
+	moveq	#0,%d0			| ensure TT regs are disabled
+	.long	0x4e7b0004		| movc d0,itt0
+	.long	0x4e7b0005		| movc d0,itt1
+	.long	0x4e7b0006		| movc d0,dtt0
+	.long	0x4e7b0007		| movc d0,dtt1
+	.word	0xf4d8			| cinva bc
+	.word	0xf518			| pflusha
+#if PGSHIFT == 13
+	movl	#0xc000,%d0
+#else
+	movl	#0x8000,%d0
+#endif
+	.long	0x4e7b0003		| movc d0,tc
+#ifdef M68060
+	RELOC(cputype, %a0)
+	cmpl	#CPU_68060,%a0@		| 68060?
+	jne	Lnot060cache
+	movl	#1,%d0
+	.long	0x4e7b0808		| movcl d0,pcr
+	movl	#0xa0808000,%d0
+	movc	%d0,%cacr		| enable store buffer, both caches
+	jmp	Lenab1
+Lnot060cache:
+#endif
+	movl	#0x80008000,%d0
+	movc	%d0,%cacr		| turn on both caches
+	jmp	Lenab1
+Lmotommu2:
+	pflusha
+#if PGSHIFT == 13
+	movl	#0x82d08b00,%sp@-	| value to load TC with
+#else
+	movl	#0x82c0aa00,%sp@-	| value to load TC with
+#endif
+	pmove	%sp@,%tc		| load it
+
+/*
+ * Should be running mapped from this point on
+ */
+Lenab1:
+/* set vector base in virtual address */
+	movl	#_C_LABEL(vectab),%d0	| set Vector Base Register
+	movc	%d0,%vbr
+	lea	_ASM_LABEL(tmpstk),%sp	| temporary stack
+/* call final pmap setup */
+	jbsr	_C_LABEL(pmap_bootstrap_finalize)
+/* set kernel stack, user SP */
+	movl	_C_LABEL(lwp0uarea),%a1	| grab lwp0 uarea
+	lea	%a1@(USPACE-4),%sp	| set kernel stack to end of area  
+	movl	#USRSTACK-4,%a2
+	movl	%a2,%usp		| init user SP
+
+/* detect FPU type */
+	jbsr	_C_LABEL(fpu_probe)
+	movl	%d0,_C_LABEL(fputype)
+	tstl	_C_LABEL(fputype)	| Have an FPU?
+	jeq	Lenab2			| No, skip.
+	clrl	%a1@(PCB_FPCTX)		| ensure null FP context
+	movl	%a1,%sp@-
+	jbsr	_C_LABEL(m68881_restore) | restore it (does not kill a1)
+	addql	#4,%sp
+Lenab2:
+	cmpl	#MMU_68040,_C_LABEL(mmutype)	| 68040?
+	jeq	Ltbia040		| yes, cache already on
+	pflusha
+	tstl	_C_LABEL(mmutype)
+	jpl	Lenab3			| 68851 implies no d-cache
+	movl	#CACHE_ON,%d0
+	movc	%d0,%cacr		| clear cache(s)
+	jra	Lenab3
+Ltbia040:
+	.word	0xf518
+Lenab3:
+/* final setup for C code */
+	movl	%d7,_C_LABEL(boothowto)	| save reboot flags
+	movl	%d6,_C_LABEL(bootdev)	|   and boot device
+	jbsr	_C_LABEL(x68k_init)	| additional pre-main initialization
+
+/*
+ * Create a fake exception frame so that cpu_lwp_fork() can copy it.
+ * main() nevers returns; we exit to user mode from a forked process
+ * later on.
+ */
+	clrw	%sp@-			| vector offset/frame type
+	clrl	%sp@-			| PC - filled in by "execve"
+	movw	#PSL_USER,%sp@-		| in user mode
+	clrl	%sp@-			| stack adjust count and padding
+	lea	%sp@(-64),%sp		| construct space for D0-D7/A0-A7
+	lea	_C_LABEL(lwp0),%a0	| save pointer to frame
+	movl	%sp,%a0@(L_MD_REGS)	|   in lwp0.p_md.md_regs
+
+	jra	_C_LABEL(main)		| main()
+
+	PANIC("main() returned")	| Yow!  Main returned!
 	/* NOTREACHED */
 
 /*
@@ -653,278 +925,6 @@ Lnosir:
 	movl	%sp@+,%d0		| restore scratch register
 Ldorte:
 	rte				| real return
-
-/*
- * Macro to relocate a symbol, used before MMU is enabled.
- */
-#define	_RELOC(var, ar)	\
-	lea	var,ar;	\
-	addl	%a5,ar
-
-#define	RELOC(var, ar)		_RELOC(_C_LABEL(var), ar)
-#define	ASRELOC(var, ar)	_RELOC(_ASM_LABEL(var), ar)
-
-/*
- * Initialization
- *
- * A4 contains the address of the end of the symtab
- * A5 contains physical load point from boot
- * VBR contains zero from ROM.  Exceptions will continue to vector
- * through ROM until MMU is turned on at which time they will vector
- * through our table (vectors.s).
- */
-BSS(lowram,4)
-BSS(esym,4)
-
-GLOBAL(_verspad)
-	.word	0
-GLOBAL(boot_version)
-	.word	X68K_BOOTIF_VERS
-
-ASENTRY_NOPROFILE(start)
-	movw	#PSL_HIGHIPL,%sr	| no interrupts
-
-	addql	#4,%sp
-	movel	%sp@+,%a5		| firstpa
-	movel	%sp@+,%d5		| fphysize -- last page
-	movel	%sp@,%a4		| esym
-
-	RELOC(vectab,%a0)		| set Vector Base Register temporaly
-	movc	%a0,%vbr
-
-#if 0	/* XXX this should be done by the boot loader */
-	RELOC(edata, %a0)		| clear out BSS
-	movl	#_C_LABEL(end)-4,%d0	| (must be <= 256 kB)
-	subl	#_C_LABEL(edata),%d0
-	lsrl	#2,%d0
-1:	clrl	%a0@+
-	dbra	%d0,1b
-#endif
-
-	ASRELOC(tmpstk, %a0)
-	movl	%a0,%sp			| give ourselves a temporary stack
-	RELOC(esym, %a0)
-#if 1
-	movl	%a4,%a0@		| store end of symbol table
-#else
-	clrl	%a0@			| no symbol table, yet
-#endif
-	RELOC(lowram, %a0)
-	movl	%a5,%a0@		| store start of physical memory
-
-	movl	#CACHE_OFF,%d0
-	movc	%d0,%cacr		| clear and disable on-chip cache(s)
-
-/* determine our CPU/MMU combo - check for all regardless of kernel config */
-	movl	#0x200,%d0		| data freeze bit
-	movc	%d0,%cacr		|   only exists on 68030
-	movc	%cacr,%d0		| read it back
-	tstl	%d0			| zero?
-	jeq	Lnot68030		| yes, we have 68020/68040/68060
-	jra	Lstart1			| no, we have 68030
-Lnot68030:
-	bset	#31,%d0			| data cache enable bit
-	movc	%d0,%cacr		|   only exists on 68040/68060
-	movc	%cacr,%d0		| read it back
-	tstl	%d0			| zero?
-	jeq	Lis68020		| yes, we have 68020
-	moveq	#0,%d0			| now turn it back off
-	movec	%d0,%cacr		|   before we access any data
-	.word	0xf4d8			| cinva bc - invalidate caches XXX
-	bset	#30,%d0			| data cache no allocate mode bit
-	movc	%d0,%cacr		|   only exists on 68060
-	movc	%cacr,%d0		| read it back
-	tstl	%d0			| zero?
-	jeq	Lis68040		| yes, we have 68040
-	RELOC(mmutype, %a0)		| no, we have 68060
-	movl	#MMU_68040,%a0@		| with a 68040 compatible MMU
-	RELOC(cputype, %a0)
-	movl	#CPU_68060,%a0@		| and a 68060 CPU
-	jra	Lstart1
-Lis68040:
-	RELOC(mmutype, %a0)
-	movl	#MMU_68040,%a0@		| with a 68040 MMU
-	RELOC(cputype, %a0)
-	movl	#CPU_68040,%a0@		| and a 68040 CPU
-	jra	Lstart1
-Lis68020:
-	RELOC(mmutype, %a0)
-	movl	#MMU_68851,%a0@		| we have PMMU
-	RELOC(cputype, %a0)
-	movl	#CPU_68020,%a0@		| and a 68020 CPU
-
-Lstart1:
-/* initialize source/destination control registers for movs */
-	moveq	#FC_USERD,%d0		| user space
-	movc	%d0,%sfc		|   as source
-	movc	%d0,%dfc		|   and destination of transfers
-/* initialize memory sizes (for pmap_bootstrap) */
-	movl	%d5,%d1			| last page
-	moveq	#PGSHIFT,%d2
-	lsrl	%d2,%d1			| convert to page (click) number
-	RELOC(maxmem, %a0)
-	movl	%d1,%a0@		| save as maxmem
-	movl	%a5,%d0			| lowram value from ROM via boot
-	lsrl	%d2,%d0			| convert to page number
-	subl	%d0,%d1			| compute amount of RAM present
-	RELOC(physmem, %a0)
-	movl	%d1,%a0@		| and physmem
-/* configure kernel and lwp0 VA space so we can get going */
-#if NKSYMS || defined(DDB) || defined(LKM)
-	RELOC(esym,%a0)			| end of static kernel test/data/syms
-	movl	%a0@,%d5
-	jne	Lstart2
-#endif
-	movl	#_C_LABEL(end),%d5	| end of static kernel text/data
-Lstart2:
-	RELOC(setmemrange,%a0)		| call setmemrange()
-	jbsr	%a0@			|  to probe all memory regions
-	addl	#PAGE_SIZE-1,%d5
-	andl	#PG_FRAME,%d5		| round to a page
-	movl	%d5,%a4
-	addl	%a5,%a4			| convert to PA
-	pea	%a5@			| firstpa
-	pea	%a4@			| nextpa
-	RELOC(pmap_bootstrap,%a0)
-	jbsr	%a0@			| pmap_bootstrap(firstpa, nextpa)
-	addql	#8,%sp
-
-/*
- * Prepare to enable MMU.
- * Since the kernel is mapped logical == physical, we just turn it on.
- */
-	RELOC(Sysseg_pa, %a0)		| system segment table addr
-	movl	%a0@,%d1		| read value (a PA)
-	RELOC(mmutype, %a0)
-	cmpl	#MMU_68040,%a0@		| 68040?
-	jne	Lmotommu1		| no, skip
-	.long	0x4e7b1807		| movc d1,srp
-	jra	Lstploaddone
-Lmotommu1:
-	RELOC(protorp, %a0)
-	movl	#0x80000202,%a0@	| nolimit + share global + 4 byte PTEs
-	movl	%d1,%a0@(4)		| + segtable address
-	pmove	%a0@,%srp		| load the supervisor root pointer
-	movl	#0x80000002,%a0@	| reinit upper half for CRP loads
-Lstploaddone:
-	RELOC(mmutype, %a0)
-	cmpl	#MMU_68040,%a0@		| 68040?
-	jne	Lmotommu2		| no, skip
-#include "opt_jupiter.h"
-#ifdef JUPITER
-	/* JUPITER-X: set system register "SUPER" bit */
-	movl	#0x0200a240,%d0		| translate DRAM area transparently
-	.long	0x4e7b0006		| movc d0,dtt0
-	lea	0x00c00000,%a0		| a0: graphic VRAM
-	lea	0x02c00000,%a1		| a1: graphic VRAM ( not JUPITER-X )
-					|     DRAM ( JUPITER-X )
-	movw	%a0@,%d0
-	movw	%d0,%d1
-	notw	%d1
-	movw	%d1,%a1@
-	movw	%d0,%a0@
-	cmpw	%a1@,%d1		| JUPITER-X?
-	jne	Ljupiterdone		| no, skip
-	movl	#0x0100a240,%d0		| to access system register
-	.long	0x4e7b0006		| movc d0,dtt0
-	movb	#0x01,0x01800003	| set "SUPER" bit
-Ljupiterdone:
-#endif /* JUPITER */
-	moveq	#0,%d0			| ensure TT regs are disabled
-	.long	0x4e7b0004		| movc d0,itt0
-	.long	0x4e7b0005		| movc d0,itt1
-	.long	0x4e7b0006		| movc d0,dtt0
-	.long	0x4e7b0007		| movc d0,dtt1
-	.word	0xf4d8			| cinva bc
-	.word	0xf518			| pflusha
-#if PGSHIFT == 13
-	movl	#0xc000,%d0
-#else
-	movl	#0x8000,%d0
-#endif
-	.long	0x4e7b0003		| movc d0,tc
-#ifdef M68060
-	RELOC(cputype, %a0)
-	cmpl	#CPU_68060,%a0@		| 68060?
-	jne	Lnot060cache
-	movl	#1,%d0
-	.long	0x4e7b0808		| movcl d0,pcr
-	movl	#0xa0808000,%d0
-	movc	%d0,%cacr		| enable store buffer, both caches
-	jmp	Lenab1
-Lnot060cache:
-#endif
-	movl	#0x80008000,%d0
-	movc	%d0,%cacr		| turn on both caches
-	jmp	Lenab1
-Lmotommu2:
-	pflusha
-#if PGSHIFT == 13
-	movl	#0x82d08b00,%sp@-	| value to load TC with
-#else
-	movl	#0x82c0aa00,%sp@-	| value to load TC with
-#endif
-	pmove	%sp@,%tc		| load it
-
-/*
- * Should be running mapped from this point on
- */
-Lenab1:
-/* set vector base in virtual address */
-	movl	#_C_LABEL(vectab),%d0	| set Vector Base Register
-	movc	%d0,%vbr
-	lea	_ASM_LABEL(tmpstk),%sp	| temporary stack
-/* call final pmap setup */
-	jbsr	_C_LABEL(pmap_bootstrap_finalize)
-/* set kernel stack, user SP */
-	movl	_C_LABEL(lwp0uarea),%a1	| grab lwp0 uarea
-	lea	%a1@(USPACE-4),%sp	| set kernel stack to end of area  
-	movl	#USRSTACK-4,%a2
-	movl	%a2,%usp		| init user SP
-
-/* detect FPU type */
-	jbsr	_C_LABEL(fpu_probe)
-	movl	%d0,_C_LABEL(fputype)
-	tstl	_C_LABEL(fputype)	| Have an FPU?
-	jeq	Lenab2			| No, skip.
-	clrl	%a1@(PCB_FPCTX)		| ensure null FP context
-	movl	%a1,%sp@-
-	jbsr	_C_LABEL(m68881_restore) | restore it (does not kill a1)
-	addql	#4,%sp
-Lenab2:
-	cmpl	#MMU_68040,_C_LABEL(mmutype)	| 68040?
-	jeq	Ltbia040		| yes, cache already on
-	pflusha
-	tstl	_C_LABEL(mmutype)
-	jpl	Lenab3			| 68851 implies no d-cache
-	movl	#CACHE_ON,%d0
-	movc	%d0,%cacr		| clear cache(s)
-	jra	Lenab3
-Ltbia040:
-	.word	0xf518
-Lenab3:
-/* final setup for C code */
-	movl	%d7,_C_LABEL(boothowto)	| save reboot flags
-	movl	%d6,_C_LABEL(bootdev)	|   and boot device
-	jbsr	_C_LABEL(x68k_init)	| additional pre-main initialization
-
-/*
- * Create a fake exception frame so that cpu_lwp_fork() can copy it.
- * main() nevers returns; we exit to user mode from a forked process
- * later on.
- */
-	clrw	%sp@-			| vector offset/frame type
-	clrl	%sp@-			| PC - filled in by "execve"
-	movw	#PSL_USER,%sp@-		| in user mode
-	clrl	%sp@-			| stack adjust count and padding
-	lea	%sp@(-64),%sp		| construct space for D0-D7/A0-A7
-	lea	_C_LABEL(lwp0),%a0	| save pointer to frame
-	movl	%sp,%a0@(L_MD_REGS)	|   in lwp0.p_md.md_regs
-
-	jra	_C_LABEL(main)		| main()
-
-	PANIC("main() returned")	| Yow!  Main returned!
-	/* NOTREACHED */
 
 /*
  * Use common m68k sigcode.
