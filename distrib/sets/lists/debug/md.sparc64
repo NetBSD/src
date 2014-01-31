@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.41 2014/01/17 00:13:13 riz Exp $
+# $NetBSD: md.sparc64,v 1.42 2014/01/31 20:48:49 christos Exp $
 ./usr/lib/sparc/i18n/libBIG5_g.a		comp-obsolete		obsolete
 ./usr/lib/sparc/i18n/libDECHanyu_g.a		comp-obsolete		obsolete
 ./usr/lib/sparc/i18n/libEUCTW_g.a		comp-obsolete		obsolete
@@ -195,7 +195,7 @@
 ./usr/libdata/debug/usr/lib/sparc/libbluetooth.so.4.2.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libbsdmalloc.so.0.0.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libbz2.so.1.1.debug			comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/sparc/libc.so.12.189.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libc.so.12.190.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libcom_err.so.6.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/sparc/libcom_err.so.7.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/sparc/libcrypt.so.1.0.debug			comp-compat-shlib	compat,pic,debug
