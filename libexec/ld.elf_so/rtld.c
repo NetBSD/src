@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.171 2013/11/20 07:18:23 skrll Exp $	 */
+/*	$NetBSD: rtld.c,v 1.172 2014/01/31 22:46:40 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.171 2013/11/20 07:18:23 skrll Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.172 2014/01/31 22:46:40 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1546,7 +1546,8 @@ _rtld_shared_enter(void)
 		 */
 		if ((_rtld_mutex & RTLD_EXCLUSIVE_MASK) ||
 		    _rtld_waiter_exclusive)
-			_lwp_park(NULL, 0, __UNVOLATILE(&_rtld_mutex), NULL);
+			_lwp_park(CLOCK_REALTIME, 0, NULL, 0,
+			    __UNVOLATILE(&_rtld_mutex), NULL);
 		/* Try to remove us from the waiter list. */
 		atomic_cas_uint(&_rtld_waiter_shared, self, 0);
 		if (waiter)
@@ -1602,7 +1603,8 @@ _rtld_exclusive_enter(sigset_t *mask)
 			_rtld_die();
 		}
 		if (cur)
-			_lwp_park(NULL, 0, __UNVOLATILE(&_rtld_mutex), NULL);
+			_lwp_park(CLOCK_REALTIME, 0, NULL, 0,
+			    __UNVOLATILE(&_rtld_mutex), NULL);
 		atomic_cas_uint(&_rtld_waiter_exclusive, self, 0);
 		if (waiter)
 			_lwp_unpark(waiter, __UNVOLATILE(&_rtld_mutex));
