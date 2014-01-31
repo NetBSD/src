@@ -1,4 +1,4 @@
-/*	$NetBSD: gcscaudio.c,v 1.12 2012/03/02 11:41:36 nonaka Exp $	*/
+/*	$NetBSD: gcscaudio.c,v 1.13 2014/01/31 08:38:13 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2008 SHIMIZU Ryo <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscaudio.c,v 1.12 2012/03/02 11:41:36 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscaudio.c,v 1.13 2014/01/31 08:38:13 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -530,9 +530,9 @@ gcscaudio_set_params_ch(struct gcscaudio_softc *sc,
 
 	if (mode == AUMODE_PLAY) {
 		if (!AC97_IS_FIXED_RATE(sc->codec_if)) {
-			/* setup rate of DAC/ADC */
+			/* setup rate of DAC */
 			if ((error = sc->codec_if->vtbl->set_rate(sc->codec_if,
-			    AC97_REG_PCM_LR_ADC_RATE, &p->sample_rate)) != 0)
+			    AC97_REG_PCM_FRONT_DAC_RATE, &p->sample_rate)) != 0)
 				return error;
 
 			/* additional rate of DAC for Surround */
@@ -551,9 +551,9 @@ gcscaudio_set_params_ch(struct gcscaudio_softc *sc,
 
 	if (mode == AUMODE_RECORD) {
 		if (!AC97_IS_FIXED_RATE(sc->codec_if)) {
-			/* setup rate of DAC/ADC */
+			/* setup rate of ADC */
 			if ((error = sc->codec_if->vtbl->set_rate(sc->codec_if,
-			    AC97_REG_PCM_FRONT_DAC_RATE, &p->sample_rate)) != 0)
+			    AC97_REG_PCM_LR_ADC_RATE, &p->sample_rate)) != 0)
 				return error;
 		}
 	}
