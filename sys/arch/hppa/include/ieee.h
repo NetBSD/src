@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee.h,v 1.12 2011/07/10 04:49:37 matt Exp $	*/
+/*	$NetBSD: ieee.h,v 1.13 2014/01/31 12:40:37 matt Exp $	*/
 
 /*	$OpenBSD: ieee.h,v 1.1 1999/04/20 19:44:04 mickey Exp $	*/
 
@@ -42,6 +42,9 @@
  *	@(#)ieee.h	8.1 (Berkeley) 6/11/93
  */
 
+#ifndef _HPPA_IEEE_H_
+#define _HPPA_IEEE_H_
+
 /*
  * ieee.h defines the machine-dependent layout of the machine's IEEE
  * floating point.  It does *not* define (yet?) any of the rounding
@@ -52,26 +55,22 @@
 
 #ifdef _LP64
 #define	EXT_EXPBITS	15
-#define EXT_FRACHBITS	16
-#define	EXT_FRACHMBITS	32
-#define	EXT_FRACLMBITS	32
-#define	EXT_FRACLBITS	32
-#define	EXT_FRACBITS	(EXT_FRACLBITS + EXT_FRACLMBITS + EXT_FRACHMBITS + EXT_FRACHBITS)
+#define EXT_FRACHBITS	48
+#define EXT_FRACLBITS	64
+#define EXT_FRACBITS	(EXT_FRACLBITS + EXT_FRACHBITS)
 
-#define	EXT_TO_ARRAY32(u, a) do {			\
-	(a)[0] = (uint32_t)(u).extu_ext.ext_fracl;	\
-	(a)[1] = (uint32_t)(u).extu_ext.ext_fraclm;	\
-	(a)[2] = (uint32_t)(u).extu_ext.ext_frachm;	\
-	(a)[3] = (uint32_t)(u).extu_ext.ext_frach;	\
+#define EXT_TO_ARRAY32(u, a) do {				\
+	(a)[0] = (uint32_t)((u).extu_ext.ext_fracl >>  0);	\
+	(a)[1] = (uint32_t)((u).extu_ext.ext_fracl >> 32);	\
+	(a)[2] = (uint32_t)((u).extu_ext.ext_frach >>  0);	\
+	(a)[3] = (uint32_t)((u).extu_ext.ext_frach >> 32);	\
 } while(/*CONSTCOND*/0)
 
 struct ieee_ext {
-	u_int	ext_sign:1;
-	u_int	ext_exp:EXT_EXPBITS;
-	u_int	ext_frach:EXT_FRACHBITS;
-	u_int	ext_frachm;
-	u_int	ext_fraclm;
-	u_int	ext_fracl;
+	uint64_t ext_sign:1;
+	uint64_t ext_exp:EXT_EXPBITS;
+	uint64_t ext_frach:EXT_FRACHBITS;
+	uint64_t ext_fracl;
 };
 
 /*
@@ -109,11 +108,10 @@ union ieee_ext_u {
 #define extu_exp	extu_ext.ext_exp
 #define extu_sign	extu_ext.ext_sign
 #define extu_fracl	extu_ext.ext_fracl
-#define extu_fraclm	extu_ext.ext_fraclm
-#define extu_frachm	extu_ext.ext_frachm
 #define extu_frach	extu_ext.ext_frach
 
-#define LDBL_NBIT	0x80000000
-#define mask_nbit_l(u)	((u).extu_frach &= ~LDBL_NBIT)
+#define LDBL_IMPLICIT_NBIT	1	/* our NBIT is implicit */
 
 #endif /* _LP64 */
+
+#endif /* !_HPPA_IEEE_H_ */
