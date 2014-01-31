@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.56 2013/03/21 16:49:12 christos Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.57 2014/01/31 19:22:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.56 2013/03/21 16:49:12 christos Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.57 2014/01/31 19:22:00 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
@@ -213,6 +213,7 @@ pthread__mutex_lock_slow(pthread_mutex_t *ptm)
 {
 	void *waiters, *new, *owner, *next;
 	pthread_t self;
+	int serrno;
 
 	pthread__error(EINVAL, "Invalid mutex",
 	    ptm->ptm_magic == _PT_MUTEX_MAGIC);
@@ -232,6 +233,7 @@ pthread__mutex_lock_slow(pthread_mutex_t *ptm)
 			return EDEADLK;
 	}
 
+	serrno = errno;
 	for (;; owner = ptm->ptm_owner) {
 		/* Spin while the owner is running. */
 		owner = pthread__mutex_spin(ptm, owner);
@@ -244,6 +246,7 @@ pthread__mutex_lock_slow(pthread_mutex_t *ptm)
 				next = atomic_cas_ptr(&ptm->ptm_owner, owner,
 				    new);
 				if (next == owner) {
+					errno = serrno;
 #ifndef PTHREAD__ATOMIC_IS_MEMBAR
 					membar_enter();
 #endif
