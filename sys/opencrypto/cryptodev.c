@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.75 2014/01/24 15:11:09 pgoyette Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.76 2014/01/31 18:11:32 pgoyette Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.75 2014/01/24 15:11:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.76 2014/01/31 18:11:32 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2138,20 +2138,7 @@ CFATTACH_DECL2_NEW(crypto, 0, crypto_match, crypto_attach, crypto_detach,
     NULL, NULL, NULL);
 
 #ifdef _MODULE
-static int cryptoloc[] = { -1, -1 };
-
-static struct cfdata crypto_cfdata[] = {
-	{
-		.cf_name = "crypto",
-		.cf_atname = "crypto",
-		.cf_unit = 0,
-		.cf_fstate = 0,
-		.cf_loc = cryptoloc,
-		.cf_flags = 0,
-		.cf_pspec = NULL,
-	},
-	{ NULL, NULL, 0, 0, NULL, 0, NULL }
-};
+#include "ioconf.c"
 #endif
 
 static int
@@ -2159,66 +2146,46 @@ crypto_modcmd(modcmd_t cmd, void *arg)
 {
 	int error = 0;
 #ifdef _MODULE
+	device_t dev;
 	devmajor_t cmajor = NODEVMAJOR, bmajor = NODEVMAJOR;
 #endif
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 #ifdef _MODULE
-
-		error = config_cfdriver_attach(&crypto_cd);
-		if (error) {
+		error = config_init_component(cfdriver_ioconf_crypto,
+					      cfattach_ioconf_crypto,
+					      cfdata_ioconf_crypto);
+		if (error)
 			return error;
-		}
-
-		error = config_cfattach_attach(crypto_cd.cd_name, &crypto_ca);
-		if (error) {
-			config_cfdriver_detach(&crypto_cd);
-			aprint_error("%s: unable to register cfattach\n",
-				crypto_cd.cd_name);
-
-			return error;
-		}
-
-		error = config_cfdata_attach(crypto_cfdata, 1);
-		if (error) {
-			config_cfattach_detach(crypto_cd.cd_name, &crypto_ca);
-			config_cfdriver_detach(&crypto_cd);
-			aprint_error("%s: unable to register cfdata\n",
-				crypto_cd.cd_name);
-
-			return error;
-		}
 
 		error = devsw_attach(crypto_cd.cd_name, NULL, &bmajor,
-		    &crypto_cdevsw, &cmajor);
+				     &crypto_cdevsw, &cmajor);
 		if (error) {
-			error = config_cfdata_detach(crypto_cfdata);
-			if (error) {
-				return error;
-			}
-			config_cfattach_detach(crypto_cd.cd_name, &crypto_ca);
-			config_cfdriver_detach(&crypto_cd);
+			config_fini_component(cfdriver_ioconf_crypto,
+					      cfattach_ioconf_crypto,
+					      cfdata_ioconf_crypto);
 			aprint_error("%s: unable to register devsw\n",
 				crypto_cd.cd_name);
 
 			return error;
 		}
 
-		(void)config_attach_pseudo(crypto_cfdata);
+		dev = config_attach_pseudo(cfdata_ioconf_crypto);
+		if (dev)
+			aprint_normal_dev(dev, "attached\n");
 #endif
 
 		return error;
 	case MODULE_CMD_FINI:
 #ifdef _MODULE
-		error = config_cfdata_detach(crypto_cfdata);
+		error = devsw_detach(NULL, &crypto_cdevsw);
 		if (error) {
 			return error;
 		}
-
-		config_cfattach_detach(crypto_cd.cd_name, &crypto_ca);
-		config_cfdriver_detach(&crypto_cd);
-		devsw_detach(NULL, &crypto_cdevsw);
+		error = config_fini_component(cfdriver_ioconf_crypto,
+					      cfattach_ioconf_crypto,
+					      cfdata_ioconf_crypto);
 #endif
 
 		return error;
