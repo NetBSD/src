@@ -32,9 +32,12 @@
 #define ARM_EABI_UNWIND_TABLES \
   ((!USING_SJLJ_EXCEPTIONS && flag_exceptions) || flag_unwind_tables)
 
-#define TARGET_LINKER_EABI_SUFFIX "%{!mabi=apcs-gnu:%{!mabi=atpcs:_nbsd_eabi}}"
-#define TARGET_LINKER_BIG_EMULATION "armelfb%(linker_eabi_suffix)"
-#define TARGET_LINKER_LITTLE_EMULATION "armelf%(linker_eabi_suffix)"
+#define TARGET_LINKER_EABI_SUFFIX \
+    (TARGET_DEFAULT_FLOAT_ABI == ARM_FLOAT_ABI_SOFT \
+     ? "%{!mabi=apcs-gnu:%{!mabi=atpcs:%{mfloat-abi=hard:_eabihf;:_eabi}}}" \
+     : "%{!mabi=apcs-gnu:%{!mabi=atpcs:%{mfloat-abi=soft:_eabi;:_eabihf}}}")
+#define TARGET_LINKER_BIG_EMULATION "armelfb_nbsd%(linker_eabi_suffix)"
+#define TARGET_LINKER_LITTLE_EMULATION "armelf_nbsd%(linker_eabi_suffix)"
 
 /* TARGET_BIG_ENDIAN_DEFAULT is set in
    config.gcc for big endian configurations.  */
