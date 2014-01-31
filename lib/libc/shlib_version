@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.248 2014/01/16 17:21:38 christos Exp $
+#	$NetBSD: shlib_version,v 1.249 2014/01/31 20:45:48 christos Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -40,4 +40,4 @@
 # - consolidate ownership with crt0.o and avoid common symbols
 # - redo stdin/stdout/stderr to not require copy relocations
 major=12
-minor=189
+minor=190
