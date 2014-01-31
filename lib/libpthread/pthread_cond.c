@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.62 2014/01/31 19:22:00 christos Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.63 2014/01/31 20:44:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.62 2014/01/31 19:22:00 christos Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.63 2014/01/31 20:44:01 christos Exp $");
 
 #include <stdlib.h>
 #include <errno.h>
@@ -131,7 +131,7 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 {
 	pthread_t self;
 	int retval;
-	struct timespec mono;
+	clockid_t clkid = pthread_cond_getclock(cond);
 
 	if (__predict_false(__uselibcstub))
 		return __libc_cond_timedwait_stub(cond, mutex, abstime);
@@ -142,25 +142,6 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 	    mutex->ptm_magic == _PT_MUTEX_MAGIC);
 	pthread__error(EPERM, "Mutex not locked in condition wait",
 	    mutex->ptm_owner != NULL);
-	if (abstime != NULL) {
-		/*
-		 * XXX: This should be done in the kernel to avoid
-		 * extra system calls! 
-		 */
-		if (pthread_cond_getclock(cond) == CLOCK_MONOTONIC) {
-			struct timespec real;
-			if (clock_gettime(CLOCK_REALTIME, &real) == -1 ||
-			    clock_gettime(CLOCK_MONOTONIC, &mono) == -1)
-				return errno;
-			timespecsub(abstime, &mono, &mono);
-			timespecadd(&mono, &real, &mono);
-			abstime = &mono;
-		}
-		pthread__error(EINVAL, "Invalid wait time", 
-		    (abstime->tv_sec >= 0) &&
-		    (abstime->tv_nsec >= 0) &&
-		    (abstime->tv_nsec < 1000000000));
-	}
 
 	self = pthread__self();
 
@@ -185,8 +166,8 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 		self->pt_willpark = 0;
 		self->pt_blocking++;
 		do {
-			retval = _lwp_park(abstime, self->pt_unpark,
-			    __UNVOLATILE(&mutex->ptm_waiters),
+			retval = _lwp_park(clkid, TIMER_ABSTIME, abstime,
+			    self->pt_unpark, __UNVOLATILE(&mutex->ptm_waiters),
 			    __UNVOLATILE(&mutex->ptm_waiters));
 			self->pt_unpark = 0;
 		} while (retval == -1 && errno == ESRCH);
