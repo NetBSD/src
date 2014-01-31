@@ -1,4 +1,4 @@
-/*	$NetBSD: int_types.h,v 1.12 2014/01/29 23:47:35 matt Exp $	*/
+/*	$NetBSD: int_types.h,v 1.13 2014/01/31 11:37:13 matt Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -42,6 +42,9 @@
 
 #ifndef __UINT8_TYPE__
 # define __UINT8_TYPE__		unsigned char
+# ifdef __CHAR_UNSIGNED__
+#  undef __INT8_TYPE__
+# endif
 #endif
 #ifndef __INT8_TYPE__
 # define __INT8_TYPE__		signed char
