@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee.h,v 1.9 2013/02/14 08:56:21 matt Exp $	*/
+/*	$NetBSD: ieee.h,v 1.10 2014/01/31 11:53:37 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@
 #include <sys/ieee754.h>
 
 /*
- * The SPARC architecture defines the following IEEE 754 compliant
+ * The MIPS architecture defines the following IEEE 754 compliant
  * 128-bit extended-precision format, which is supported only by the
  * v9 toolchain.
  */
@@ -60,34 +60,28 @@
 #if defined(__mips_n32) || defined(__mips_n64)
 
 #define	EXT_EXPBITS	15
-#define EXT_FRACHBITS	16
-#define	EXT_FRACHMBITS	32
-#define	EXT_FRACLMBITS	32
-#define	EXT_FRACLBITS	32
-#define	EXT_FRACBITS	(EXT_FRACLBITS + EXT_FRACLMBITS + EXT_FRACHMBITS + EXT_FRACHBITS)
+#define EXT_FRACHBITS	48
+#define	EXT_FRACLBITS	64
+#define	EXT_FRACBITS	(EXT_FRACLBITS + EXT_FRACHBITS)
 
-#define	EXT_TO_ARRAY32(u, a) do {			\
-	(a)[0] = (uint32_t)(u).extu_ext.ext_fracl;	\
-	(a)[1] = (uint32_t)(u).extu_ext.ext_fraclm;	\
-	(a)[2] = (uint32_t)(u).extu_ext.ext_frachm;	\
-	(a)[3] = (uint32_t)(u).extu_ext.ext_frach;	\
+#define	EXT_TO_ARRAY32(u, a) do {				\
+	(a)[0] = (uint32_t)((u).extu_ext.ext_fracl >>  0);	\
+	(a)[1] = (uint32_t)((u).extu_ext.ext_fracl >> 32);	\
+	(a)[2] = (uint32_t)((u).extu_ext.ext_frach >>  0);	\
+	(a)[3] = (uint32_t)((u).extu_ext.ext_frach >> 32);	\
 } while(/*CONSTCOND*/0)
 
 struct ieee_ext {
 #if _BYTE_ORDER == _BIG_ENDIAN
-	u_int	ext_sign:1;
-	u_int	ext_exp:EXT_EXPBITS;
-	u_int	ext_frach:EXT_FRACHBITS;
-	u_int	ext_frachm;
-	u_int	ext_fraclm;
-	u_int	ext_fracl;
+	uint64_t ext_sign:1;
+	uint64_t ext_exp:EXT_EXPBITS;
+	uint64_t ext_frach:EXT_FRACHBITS;
+	uint64_t ext_fracl;
 #else
-	u_int	ext_fracl;
-	u_int	ext_fraclm;
-	u_int	ext_frachm;
-	u_int	ext_frach:EXT_FRACHBITS;
-	u_int	ext_exp:EXT_EXPBITS;
-	u_int	ext_sign:1;
+	uint64_t ext_fracl;
+	uint64_t ext_frach:EXT_FRACHBITS;
+	uint64_t ext_exp:EXT_EXPBITS;
+	uint64_t ext_sign:1;
 #endif
 };
 
@@ -126,8 +120,6 @@ union ieee_ext_u {
 #define extu_exp	extu_ext.ext_exp
 #define extu_sign	extu_ext.ext_sign
 #define extu_fracl	extu_ext.ext_fracl
-#define extu_fraclm	extu_ext.ext_fraclm
-#define extu_frachm	extu_ext.ext_frachm
 #define extu_frach	extu_ext.ext_frach
 
 #define LDBL_IMPLICIT_NBIT	1	/* our NBIT is implicit */
