@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.354 2014/01/26 20:12:32 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.355 2014/01/31 18:56:24 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -6578,7 +6578,7 @@ ENTRY(sparc64_ipi_ccall)
 
 	.data
 	_ALIGN
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	.globl	_C_LABEL(esym)
 _C_LABEL(esym):
 	POINTER	0

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.166 2013/08/16 13:39:47 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.167 2014/01/31 18:49:35 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -436,7 +436,7 @@ Lstart2:
 	movl	%d1,%a0@		| and physmem
 
 /* configure kernel and lwp0 VA space so we can get going */
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	RELOC(esym,%a0)			| end of static kernel test/data/syms
 	movl	%a0@,%d5
 	jne	Lstart3
