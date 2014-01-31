@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.41 2014/01/26 00:09:46 christos Exp $	*/
+/*	$NetBSD: grf.c,v 1.42 2014/01/31 18:42:45 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.41 2014/01/26 00:09:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.42 2014/01/31 18:42:45 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,7 +271,7 @@ grfmap(dev_t dev, void **addrp, struct proc *p)
 		flags |= MAP_FIXED;
 	else
 		*addrp = (void *)p->p_emul->e_vm_default_addr(p, 
-		    p->p_vmspace->vm_daddr, len);
+		    (vaddr_t)p->p_vmspace->vm_daddr, len);
 
 	vn.v_type = VCHR;			/* XXX */
 	vn.v_rdev = dev;			/* XXX */
