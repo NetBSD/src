@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.61 2011/12/22 15:33:30 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.62 2014/01/31 18:49:35 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -303,7 +303,7 @@ Lstart2:
 	movc	%d0,%sfc		|   as source
 	movc	%d0,%dfc		|   and destination of transfers
 /* configure kernel and lwp0 VA space so we can get going */
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	RELOC(esym,%a0)			| end of static kernel test/data/syms
 	movl	%a0@,%d5
 	jne	Lstart3
