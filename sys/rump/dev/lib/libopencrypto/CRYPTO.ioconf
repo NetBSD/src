@@ -1,0 +1,8 @@
+#	$NetBSD: CRYPTO.ioconf,v 1.1 2014/01/31 18:13:01 pgoyette Exp $
+#
+
+ioconf crypto
+
+include "conf/files"
+
+pseudo-device	crypto

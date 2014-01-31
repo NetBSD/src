@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.4 2014/01/16 14:12:09 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.5 2014/01/31 18:13:01 pgoyette Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../opencrypto
 
 LIB=	rumpdev_opencrypto
+IOCONF=	CRYPTO.ioconf
 
 SRCS=	component.c
 
