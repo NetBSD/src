@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2014/01/27 21:37:17 apb Exp $
+#	$NetBSD: Makefile,v 1.18 2014/01/31 19:25:14 tsutsui Exp $
 
 WARNS		?= 1
 NOMAN		=
@@ -101,7 +101,7 @@ LIBS		= ${LIBSA} ${LIBZ} ${LIBKERN}
 coffhdrfix:	${COMMON}/coffhdrfix.c
 	${HOST_CC} -o ${COFFHDRFIX} ${COMMON}/coffhdrfix.c
 
-clean cleandir distclean: .WAIT cleanlibdir
+cleandir distclean: .WAIT cleanlibdir
 
 cleanlibdir:
 	-rm -rf lib
