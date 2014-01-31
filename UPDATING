@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.250 2013/12/28 03:39:07 christos Exp $
+$NetBSD: UPDATING,v 1.251 2014/01/31 10:40:44 martin Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,15 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20140131:
+	The new compile_rt/libc integration moved a few things. If not
+	starting with a clean objdir, cd to the objdir and do:
+		rm -rf lib/libc
+	and if you are on a 64bit arch with 32bit compat, additionally:
+		rm -rf compat/sparc64/sparc/lib/libc
+	(substitute proper archs for sparc/sparc64)
+
 
 20131227:
 	1. The new ntpd runs in a restricted mode to prevent amplification
