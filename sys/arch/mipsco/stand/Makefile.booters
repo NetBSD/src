@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile.booters,v 1.20 2014/01/16 01:15:34 christos Exp $
+#	$NetBSD: Makefile.booters,v 1.21 2014/01/31 19:38:48 tsutsui Exp $
+
+NOMAN=		# defined
 
 .include <bsd.own.mk>
 
@@ -8,7 +10,6 @@ MIPSCO=	${S}/arch/mipsco
 
 .PATH:	${.CURDIR}/../common
 
-NOMAN=		# defined
 BINMODE?= 444
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
