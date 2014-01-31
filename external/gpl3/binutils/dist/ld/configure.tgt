@@ -64,12 +64,18 @@ arm-*-coff)		targ_emul=armcoff ;;
 arm-*-freebsd* | arm-*-kfreebsd*-gnu)
 	       		targ_emul=armelf_fbsd
 			targ_extra_emuls="armelf" ;;
+arm*eb-*-netbsdelf*-*eabihf*)
+			targ_emul=armelfb_nbsd_eabihf;
+			targ_extra_emuls="armelf_nbsd_eabihf armelf_nbsd_eabi armelfb_nbsd_eabi armelf_nbsd armelfb_nbsd armelf armnbsd" ;;
 arm*eb-*-netbsdelf*-*eabi*)
 			targ_emul=armelfb_nbsd_eabi;
-			targ_extra_emuls="armelf_nbsd_eabi armelf_nbsd armelfb_nbsd armelf armnbsd" ;;
+			targ_extra_emuls="armelf_nbsd_eabi armelf_nbsd_eabihf armelfb_nbsd_eabihf armelf_nbsd armelfb_nbsd armelf armnbsd" ;;
+arm*-*-netbsdelf*-*eabihf*)
+			targ_emul=armelf_nbsd_eabihf;
+			targ_extra_emuls="armelfb_nbsd_eabihf armelf_nbsd_eabi armelfb_nbsd_eabi armelf_nbsd armelfb_nbsd armelf armnbsd" ;;
 arm*-*-netbsdelf*-*eabi*)
 			targ_emul=armelf_nbsd_eabi;
-			targ_extra_emuls="armelfb_nbsd_eabi armelf_nbsd armelfb_nbsd armelf armnbsd" ;;
+			targ_extra_emuls="armelfb_nbsd_eabi armelf_nbsd_eabihf armelfb_nbsd_eabihf armelf_nbsd armelfb_nbsd armelf armnbsd" ;;
 arm*eb-*-netbsdelf*)	targ_emul=armelfb_nbsd;
 			targ_extra_emuls="armelf_nbsd armelf armnbsd" ;;
 arm-*-netbsdelf*)	targ_emul=armelf_nbsd;
