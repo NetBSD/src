@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.11 2014/02/01 01:19:22 joerg Exp $	*/
+/*	$NetBSD: locore.h,v 1.12 2014/02/01 01:19:50 joerg Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -171,7 +171,7 @@ extern bool cpu_armv6_p;
 #endif
 
 /*
- * User by the fault code to read the current instruction.
+ * Used by the fault code to read the current instruction.
  */
 static inline uint32_t
 read_insn(vaddr_t va, bool user_p)
@@ -189,7 +189,7 @@ read_insn(vaddr_t va, bool user_p)
 }
 
 /*
- * User by the fault code to read the current thumb instruction.
+ * Used by the fault code to read the current thumb instruction.
  */
 static inline uint32_t
 read_thumb_insn(vaddr_t va, bool user_p)
