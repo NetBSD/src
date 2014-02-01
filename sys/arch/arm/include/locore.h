@@ -198,7 +198,7 @@ read_thumb_insn(vaddr_t va, bool user_p)
 	uint32_t insn;
 	if (user_p) {
 #ifdef _ARM_ARCH_T2
-		__asm __volatile("ldrht %0, [%1]" : "=&r"(insn) : "r"(va));
+		__asm __volatile("ldrht %0, [%1], #0" : "=&r"(insn) : "r"(va));
 #else
 		__asm __volatile("ldrt %0, [%1]" : "=&r"(insn) : "r"(va & ~3));
 #ifdef __ARMEB__
