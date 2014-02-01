@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.252 2014/01/31 11:19:37 wiz Exp $
+$NetBSD: UPDATING,v 1.253 2014/02/01 12:51:02 joerg Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -17,13 +17,9 @@ Recent changes:
 ^^^^^^^^^^^^^^^
 
 20140131:
-	The new compiler_rt/libc integration moved a few things. If not
-	starting with a clean objdir, cd to the objdir and do:
-		rm -rf lib/libc
-	and if you are on a 64bit arch with 32bit compat, additionally:
-		rm -rf compat/sparc64/sparc/lib/libc
-	(substitute proper archs for sparc/sparc64)
-
+	The new compiler_rt/libc integration moved a few things. It is strongly
+	disadvised to a clean build. At least lib/libc, the compat version(s)
+	of libc, libkern, rump and the kernels need to be cleaned.
 
 20131227:
 	1. The new ntpd runs in a restricted mode to prevent amplification
