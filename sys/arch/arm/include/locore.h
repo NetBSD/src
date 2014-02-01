@@ -1,4 +1,4 @@
-/*	cpu.h,v 1.45.4.7 2008/01/28 18:20:39 matt Exp	*/
+/*	$NetBSD: locore.h,v 1.11 2014/02/01 01:19:22 joerg Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
