@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee754.h,v 1.12 2014/02/01 01:34:01 matt Exp $	*/
+/*	$NetBSD: ieee754.h,v 1.13 2014/02/01 10:41:38 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -119,12 +119,12 @@ struct ieee_double {
 #endif
 };
 
-#if __HAVE_LONG_DOUBLE + 0 == 128
-
 #define	EXT_EXPBITS	15
 #define EXT_FRACHBITS	48
 #define	EXT_FRACLBITS	64
 #define	EXT_FRACBITS	(EXT_FRACLBITS + EXT_FRACHBITS)
+
+#if __HAVE_LONG_DOUBLE + 0 == 128
 
 #define	EXT_TO_ARRAY32(u, a) do {				\
 	(a)[0] = (uint32_t)((u).extu_ext.ext_fracl >>  0);	\
@@ -160,18 +160,14 @@ struct ieee_ext {
  */
 #define	SNG_EXP_INFNAN	255
 #define	DBL_EXP_INFNAN	2047
-#if __HAVE_LONG_DOUBLE + 0 == 128
 #define	EXT_EXP_INFNAN	0x7fff
-#endif
 
 /*
  * Exponent biases.
  */
 #define	SNG_EXP_BIAS	127
 #define	DBL_EXP_BIAS	1023
-#if __HAVE_LONG_DOUBLE + 0 == 128
 #define	EXT_EXP_BIAS	16383
-#endif
 
 /*
  * Convenience data structures.
