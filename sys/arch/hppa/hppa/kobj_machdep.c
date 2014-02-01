@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.13 2013/11/16 17:18:42 skrll Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.14 2014/02/01 08:05:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.13 2013/11/16 17:18:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.14 2014/02/01 08:05:51 skrll Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -95,6 +95,35 @@ static inline unsigned int
 RR(unsigned int x, unsigned int constant)
 {
         return R(x + RND(constant)) + (constant - RND(constant));
+}
+
+/*
+ * It is possible for the compiler to emit relocations for unaligned data.
+ * We handle this situation with these inlines.
+ */
+#define	RELOC_ALIGNED_P(x) \
+	(((uintptr_t)(x) & (sizeof(void *) - 1)) == 0)
+
+static inline Elf_Addr
+load_ptr(void *where)
+{
+	if (__predict_true(RELOC_ALIGNED_P(where)))
+		return *(Elf_Addr *)where;
+	else {
+		Elf_Addr res;
+
+		(void)memcpy(&res, where, sizeof(res));
+		return res;
+	}
+}
+
+static inline void
+store_ptr(void *where, Elf_Addr val)
+{
+	if (__predict_true(RELOC_ALIGNED_P(where)))
+		*(Elf_Addr *)where = val;
+	else
+		(void)memcpy(where, &val, sizeof(val));
 }
 
 int
@@ -185,7 +214,7 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 	case R_TYPE(PCREL32):
 	case R_TYPE(PLABEL32):
 	case R_TYPE(SEGREL32):
-		*where = value;
+		store_ptr(where, value);
 		break;
 
 	case R_TYPE(DIR14R):
