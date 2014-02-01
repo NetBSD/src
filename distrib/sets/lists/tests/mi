@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.560 2014/01/30 15:04:04 joerg Exp $
+# $NetBSD: mi,v 1.561 2014/02/01 20:49:11 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3089,6 +3089,7 @@
 ./usr/tests/usr.bin/unifdef/t_basic		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/vmstat			tests-usr.bin-tests
 ./usr/tests/usr.bin/vmstat/Atffile		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/vmstat/Kyuafile		tests-usr.bin-tests	atf,kyua
 ./usr/tests/usr.bin/vmstat/t_vmstat		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/xlint			tests-usr.bin-tests
 ./usr/tests/usr.bin/xlint/Atffile		tests-usr.bin-tests	atf
