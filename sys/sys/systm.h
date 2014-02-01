@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.259 2013/10/26 18:31:29 matt Exp $	*/
+/*	$NetBSD: systm.h,v 1.260 2014/02/01 09:04:57 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -142,10 +142,11 @@ extern int nsysent;
 #define SYCALL_ARG6_64  0x0800000
 #define SYCALL_ARG7_64  0x1000000
 #define SYCALL_NOSYS    0x2000000 /* permanent nosys in sysent[] */
-#define	SYCALL_ARG_PTR	0x3000000 /* at least one argument is a pointer */
+#define	SYCALL_ARG_PTR	0x4000000 /* at least one argument is a pointer */
 #define SYCALL_RET_64_P(sy)	((sy)->sy_flags & SYCALL_RET_64)
 #define SYCALL_ARG_64_P(sy, n)	((sy)->sy_flags & (SYCALL_ARG0_64 << (n)))
 #define	SYCALL_ARG_64_MASK(sy)	(((sy)->sy_flags >> 17) & 0xff)
+#define	SYCALL_ARG_PTR_P(sy)	((sy)->sy_flags & SYCALL_ARG_PTR)
 #define	SYCALL_NARGS64(sy)	(((sy)->sy_flags >> 12) & 0x0f)
 #define	SYCALL_NARGS64_VAL(n)	((n) << 12)
 
