@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee754.h,v 1.11 2014/02/01 01:12:28 matt Exp $	*/
+/*	$NetBSD: ieee754.h,v 1.12 2014/02/01 01:34:01 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -197,7 +197,7 @@ union ieee_double_u {
 #define	dblu_fracl	dblu_dbl.dbl_fracl
 #define	DBLU_ZEROFRAC_P(u)	(((u).dblu_frach|(u).dblu_fracl) != 0)
 
-#ifdef __HAVE_LONG_DOUBLE
+#if __HAVE_LONG_DOUBLE + 0 == 128
 union ieee_ext_u {
 	long double		extu_ld;
 	struct ieee_ext		extu_ext;
