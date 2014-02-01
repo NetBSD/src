@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.743 2014/01/26 19:16:17 dsl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.744 2014/02/01 18:57:38 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.743 2014/01/26 19:16:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.744 2014/02/01 18:57:38 bouyer Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -229,7 +229,11 @@ struct mtrr_funcs *mtrr_funcs;
 
 int	cpu_class;
 int	use_pae;
+#ifdef XEN
+int	i386_fpu_present = 1;
+#else
 int	i386_fpu_present;
+#endif
 int	i386_fpu_exception;
 int	i386_fpu_fdivbug;
 
