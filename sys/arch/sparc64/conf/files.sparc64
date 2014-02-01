@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.144 2013/12/28 11:09:33 nakayama Exp $
+#	$NetBSD: files.sparc64,v 1.145 2014/02/01 17:01:35 nakayama Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -264,6 +264,9 @@ include "dev/bluetooth/files.bluetooth"
 
 # IEEE1394 Support
 include "dev/ieee1394/files.ieee1394"
+
+# Stack-less Just-In-Time compiler
+include "external/bsd/sljit/conf/files.sljit"
 
 #
 # Compatibility modules
