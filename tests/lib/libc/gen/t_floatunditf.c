@@ -1,4 +1,4 @@
-/* $NetBSD: t_floatunditf.c,v 1.2 2014/01/30 22:15:55 joerg Exp $ */
+/* $NetBSD: t_floatunditf.c,v 1.3 2014/02/01 10:00:04 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -114,7 +114,11 @@ ATF_TC_BODY(floatunditf, tc)
 	size_t i;
 
 	for (i = 0; i < __arraycount(testcases); ++i)
-		ATF_CHECK(testcases[i].ld == (long double)testcases[i].u64);
+		ATF_CHECK_MSG(
+		    testcases[i].ld == (long double)testcases[i].u64,
+		    "#%zu: expected %.20Lf, got %.20Lf\n", i,
+		    testcases[i].ld,
+		    (long double)testcases[i].u64);
 }
 #endif
 
