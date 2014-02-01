@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.253 2014/02/01 12:51:02 joerg Exp $
+$NetBSD: UPDATING,v 1.254 2014/02/01 13:29:45 skrll Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -18,7 +18,7 @@ Recent changes:
 
 20140131:
 	The new compiler_rt/libc integration moved a few things. It is strongly
-	disadvised to a clean build. At least lib/libc, the compat version(s)
+	advised to do a clean build. At least lib/libc, the compat version(s)
 	of libc, libkern, rump and the kernels need to be cleaned.
 
 20131227:
