@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee754.h,v 1.10 2014/01/31 19:38:06 matt Exp $	*/
+/*	$NetBSD: ieee754.h,v 1.11 2014/02/01 01:12:28 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -119,7 +119,7 @@ struct ieee_double {
 #endif
 };
 
-#if __HAVE_LONG_DOUBLE == 128
+#if __HAVE_LONG_DOUBLE + 0 == 128
 
 #define	EXT_EXPBITS	15
 #define EXT_FRACHBITS	48
@@ -160,7 +160,7 @@ struct ieee_ext {
  */
 #define	SNG_EXP_INFNAN	255
 #define	DBL_EXP_INFNAN	2047
-#if __HAVE_LONG_DOUBLE == 128
+#if __HAVE_LONG_DOUBLE + 0 == 128
 #define	EXT_EXP_INFNAN	0x7fff
 #endif
 
@@ -169,7 +169,7 @@ struct ieee_ext {
  */
 #define	SNG_EXP_BIAS	127
 #define	DBL_EXP_BIAS	1023
-#if __HAVE_LONG_DOUBLE == 128
+#if __HAVE_LONG_DOUBLE + 0 == 128
 #define	EXT_EXP_BIAS	16383
 #endif
 
@@ -197,7 +197,7 @@ union ieee_double_u {
 #define	dblu_fracl	dblu_dbl.dbl_fracl
 #define	DBLU_ZEROFRAC_P(u)	(((u).dblu_frach|(u).dblu_fracl) != 0)
 
-#if __HAVE_LONG_DOUBLE
+#ifdef __HAVE_LONG_DOUBLE
 union ieee_ext_u {
 	long double		extu_ld;
 	struct ieee_ext		extu_ext;
