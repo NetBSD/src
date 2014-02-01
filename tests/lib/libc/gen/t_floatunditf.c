@@ -1,4 +1,4 @@
-/* $NetBSD: t_floatunditf.c,v 1.3 2014/02/01 10:00:04 martin Exp $ */
+/* $NetBSD: t_floatunditf.c,v 1.4 2014/02/01 13:53:16 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -101,6 +101,7 @@ static const struct {
 	{ 0x3ULL, 0xcp-2L },
 	{ 0x1ULL, 0x8p-3L },
 };
+#endif
 
 ATF_TC(floatunditf);
 ATF_TC_HEAD(floatunditf, tc)
@@ -111,6 +112,9 @@ ATF_TC_HEAD(floatunditf, tc)
 
 ATF_TC_BODY(floatunditf, tc)
 {
+#ifndef __HAVE_LONG_DOUBLE
+	atf_tc_skip("Requires long double support");
+#else
 	size_t i;
 
 	for (i = 0; i < __arraycount(testcases); ++i)
@@ -119,16 +123,11 @@ ATF_TC_BODY(floatunditf, tc)
 		    "#%zu: expected %.20Lf, got %.20Lf\n", i,
 		    testcases[i].ld,
 		    (long double)testcases[i].u64);
-}
 #endif
+}
 
 ATF_TP_ADD_TCS(tp)
 {
-#ifdef __HAVE_LONG_DOUBLE
 	ATF_TP_ADD_TC(tp, floatunditf);
-#else
-	atf_tc_skip("No real long double");
-#endif
-
 	return atf_no_error();
 }
