@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee754.h,v 1.13 2014/02/01 10:41:38 martin Exp $	*/
+/*	$NetBSD: ieee754.h,v 1.14 2014/02/01 15:40:14 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -119,12 +119,12 @@ struct ieee_double {
 #endif
 };
 
+#if __HAVE_LONG_DOUBLE + 0 == 128
+
 #define	EXT_EXPBITS	15
 #define EXT_FRACHBITS	48
 #define	EXT_FRACLBITS	64
 #define	EXT_FRACBITS	(EXT_FRACLBITS + EXT_FRACHBITS)
-
-#if __HAVE_LONG_DOUBLE + 0 == 128
 
 #define	EXT_TO_ARRAY32(u, a) do {				\
 	(a)[0] = (uint32_t)((u).extu_ext.ext_fracl >>  0);	\
