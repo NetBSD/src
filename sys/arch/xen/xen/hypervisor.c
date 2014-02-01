@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.63 2014/01/26 19:16:17 dsl Exp $ */
+/* $NetBSD: hypervisor.c,v 1.64 2014/02/01 17:48:04 dsl Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.63 2014/01/26 19:16:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.64 2014/02/01 17:48:04 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -256,6 +256,7 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	hac.hac_xencons.xa_device = "xencons";
 	config_found_ia(self, "xendevbus", &hac.hac_xencons, hypervisor_print);
 #endif
+	fpuinit(&cpu_info_primary);
 #ifdef DOM0OPS
 #if NPCI > 0
 #if NACPICA > 0
