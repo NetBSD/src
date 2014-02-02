@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.372 2014/02/02 08:25:23 dogcow Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.373 2014/02/02 14:48:57 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.372 2014/02/02 08:25:23 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.373 2014/02/02 14:48:57 martin Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -2065,7 +2065,7 @@ posix_spawn_fa_free(struct posix_spawn_file_actions *fa, size_t len)
 
 static int
 posix_spawn_fa_alloc(struct posix_spawn_file_actions **fap,
-    const struct posix_spawn_file_actions *ufa)
+    const struct posix_spawn_file_actions *ufa, rlim_t lim)
 {
 	struct posix_spawn_file_actions *fa;
 	struct posix_spawn_file_actions_entry *fae;
@@ -2078,6 +2078,11 @@ posix_spawn_fa_alloc(struct posix_spawn_file_actions **fap,
 	if (error || fa->len == 0) {
 		kmem_free(fa, sizeof(*fa));
 		return error;	/* 0 if not an error, and len == 0 */
+	}
+
+	if (fa->len > lim) {
+		kmem_free(fa, sizeof(*fa));
+		return EINVAL;
 	}
 
 	fa->size = fa->len;
@@ -2437,6 +2442,8 @@ sys_posix_spawn(struct lwp *l1, const struct sys_posix_spawn_args *uap,
 	struct posix_spawnattr *sa = NULL;
 	pid_t pid;
 	bool child_ok = false;
+	rlim_t max_fileactions;
+	proc_t *p = l1->l_proc;
 
 	error = check_posix_spawn(l1);
 	if (error) {
@@ -2446,7 +2453,10 @@ sys_posix_spawn(struct lwp *l1, const struct sys_posix_spawn_args *uap,
 
 	/* copy in file_actions struct */
 	if (SCARG(uap, file_actions) != NULL) {
-		error = posix_spawn_fa_alloc(&fa, SCARG(uap, file_actions));
+		max_fileactions = 2 * min(p->p_rlimit[RLIMIT_NOFILE].rlim_cur,
+		    maxfiles);
+		error = posix_spawn_fa_alloc(&fa, SCARG(uap, file_actions),
+		    max_fileactions);
 		if (error)
 			goto error_exit;
 	}
