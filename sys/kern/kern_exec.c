@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.373 2014/02/02 14:48:57 martin Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.374 2014/02/02 14:50:46 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.373 2014/02/02 14:48:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.374 2014/02/02 14:50:46 martin Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -908,7 +908,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	KASSERT(no_local_exec_lock || rw_lock_held(&exec_lock));
 	KASSERT(data != NULL);
 	if (data == NULL)
-		return (EINVAL);
+		return EINVAL;
 
 	p = l->l_proc;
 	if (no_local_exec_lock)
@@ -1427,7 +1427,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	pathbuf_destroy(data->ed_pathbuf);
 	PNBUF_PUT(data->ed_resolvedpathbuf);
 	DPRINTF(("%s finished\n", __func__));
-	return (EJUSTRETURN);
+	return EJUSTRETURN;
 
  exec_abort:
 	SDT_PROBE(proc,,,exec_failure, error, 0, 0, 0, 0);
@@ -1757,7 +1757,7 @@ exec_sigcode_map(struct proc *p, const struct emul *e)
 				printf("kernel mapping failed %d\n", error);
 				(*uobj->pgops->pgo_detach)(uobj);
 				mutex_exit(&sigobject_lock);
-				return (error);
+				return error;
 			}
 			memcpy((void *)va, e->e_sigcode, sz);
 #ifdef PMAP_NEED_PROCWR
@@ -1795,10 +1795,10 @@ exec_sigcode_map(struct proc *p, const struct emul *e)
 		    __func__, __LINE__, &p->p_vmspace->vm_map, round_page(sz),
 		    va, error));
 		(*uobj->pgops->pgo_detach)(uobj);
-		return (error);
+		return error;
 	}
 	p->p_sigctx.ps_sigcode = (void *)va;
-	return (0);
+	return 0;
 }
 
 /*
