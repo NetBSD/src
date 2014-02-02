@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.38 2014/01/02 03:32:35 tsutsui Exp $ */
+/* $NetBSD: siotty.c,v 1.39 2014/02/02 15:35:06 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.38 2014/01/02 03:32:35 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.39 2014/02/02 15:35:06 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -106,7 +106,7 @@ static struct cnm_state	siotty_cnm_state;
 #include "siotty.h"
 static void siostart(struct tty *);
 static int  sioparam(struct tty *, struct termios *);
-static void siottyintr(int);
+static void siottyintr(void *);
 static void siottysoft(void *);
 static void siotty_rxsoft(struct siotty_softc *, struct tty *);
 static void siotty_txsoft(struct siotty_softc *, struct tty *);
@@ -145,15 +145,18 @@ siotty_match(device_t parent, cfdata_t cf, void *aux)
 static void
 siotty_attach(device_t parent, device_t self, void *aux)
 {
-	struct sio_softc *scp = device_private(parent);
+	struct sio_softc *siosc = device_private(parent);
 	struct siotty_softc *sc = device_private(self);
 	struct sio_attach_args *args = aux;
+	int channel;
 	struct tty *tp;
 
 	sc->sc_dev = self;
-	sc->sc_ctl = (struct sioreg *)scp->scp_ctl + args->channel;
+	channel = args->channel;
+	sc->sc_ctl = &siosc->sc_ctl[channel];
 	memcpy(sc->sc_wr, ch0_regs, sizeof(ch0_regs));
-	scp->scp_intr[args->channel] = siottyintr;
+	siosc->sc_intrhand[channel].ih_func = siottyintr;
+	siosc->sc_intrhand[channel].ih_arg = sc;
 	if (args->hwflags == 1)
 		sc->sc_hwflags |= SIOTTY_HW_CONSOLE;
 
@@ -199,7 +202,7 @@ siotty_attach(device_t parent, device_t self, void *aux)
 /*--------------------  low level routine --------------------*/
 
 static void
-siottyintr(int chan)
+siottyintr(void *arg)
 {
 	struct siotty_softc *sc;
 	struct sioreg *sio;
@@ -208,10 +211,7 @@ siottyintr(int chan)
 	uint16_t rr;
 	int cc;
 
-	sc = device_lookup_private(&siotty_cd, chan);
-	if (sc == NULL)
-		return;
-
+	sc = arg;
 	end = sc->sc_rbufend;
 	put = sc->sc_rbput;
 	cc = sc->sc_rbavail;

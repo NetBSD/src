@@ -1,4 +1,4 @@
-/* $NetBSD: lunaws.c,v 1.27 2013/09/23 17:27:09 tsutsui Exp $ */
+/* $NetBSD: lunaws.c,v 1.28 2014/02/02 15:35:06 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.27 2013/09/23 17:27:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.28 2014/02/02 15:35:06 tsutsui Exp $");
 
 #include "wsmouse.h"
 
@@ -118,7 +118,7 @@ static const struct wsmouse_accessops omms_accessops = {
 };
 #endif
 
-static void wsintr(int);
+static void wsintr(void *);
 static void wssoftintr(void *);
 
 static int  wsmatch(device_t, cfdata_t, void *);
@@ -144,14 +144,16 @@ static void
 wsattach(device_t parent, device_t self, void *aux)
 {
 	struct ws_softc *sc = device_private(self);
-	struct sio_softc *scp = device_private(parent);
+	struct sio_softc *siosc = device_private(parent);
 	struct sio_attach_args *args = aux;
+	int channel = args->channel;
 	struct wskbddev_attach_args a;
 
 	sc->sc_dev = self;
-	sc->sc_ctl = (struct sioreg *)scp->scp_ctl + 1;
+	sc->sc_ctl = &siosc->sc_ctl[channel];
 	memcpy(sc->sc_wr, ch1_regs, sizeof(ch1_regs));
-	scp->scp_intr[1] = wsintr;
+	siosc->sc_intrhand[channel].ih_func = wsintr;
+	siosc->sc_intrhand[channel].ih_arg = sc;
 
 	setsioreg(sc->sc_ctl, WR0, sc->sc_wr[WR0]);
 	setsioreg(sc->sc_ctl, WR4, sc->sc_wr[WR4]);
@@ -189,9 +191,9 @@ wsattach(device_t parent, device_t self, void *aux)
 
 /*ARGSUSED*/
 static void
-wsintr(int chan)
+wsintr(void *arg)
 {
-	struct ws_softc *sc = device_lookup_private(&ws_cd, 0);
+	struct ws_softc *sc = arg;
 	struct sioreg *sio = sc->sc_ctl;
 	uint8_t code;
 	int rr;
