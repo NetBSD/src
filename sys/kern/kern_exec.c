@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.371 2014/02/02 04:28:42 manu Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.372 2014/02/02 08:25:23 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.371 2014/02/02 04:28:42 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.372 2014/02/02 08:25:23 dogcow Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -178,7 +178,6 @@ void	syscall(void);
 /* NetBSD emul struct */
 struct emul emul_netbsd = {
 	.e_name =		"netbsd",
-	.e_path =		NULL,
 #ifdef EMUL_NATIVEROOT
 	.e_path =		EMUL_NATIVEROOT,
 #else
