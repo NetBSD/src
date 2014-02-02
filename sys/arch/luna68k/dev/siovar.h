@@ -1,4 +1,4 @@
-/* $NetBSD: siovar.h,v 1.7 2013/12/31 14:24:09 tsutsui Exp $ */
+/* $NetBSD: siovar.h,v 1.8 2014/02/02 15:35:06 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -29,12 +29,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-struct sio_softc {
-	device_t scp_dev;
-	void *scp_ctl;
-	void (*scp_intr[2])(int);
-};
-
 struct sio_attach_args {
 	int channel;
 	int hwflags;
@@ -46,6 +40,15 @@ struct sioreg {
 	volatile uint8_t sio_cmd;
 	uint8_t pad1;
 #define sio_stat sio_cmd
+};
+
+struct sio_softc {
+	device_t sc_dev;
+	struct sioreg *sc_ctl;
+	struct {
+		void (*ih_func)(void *);
+		void *ih_arg;
+	} sc_intrhand[2];
 };
 
 uint16_t getsiocsr(struct sioreg *);
