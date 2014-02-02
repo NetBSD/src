@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2014/01/27 21:37:17 apb Exp $
+#	$NetBSD: Makefile,v 1.20 2014/02/02 03:20:10 mrg Exp $
 #
 #	$eterna: Makefile,v 1.30 2010/07/11 00:34:27 mrg Exp $
 #
@@ -83,7 +83,7 @@ export-distfile:
 	  find . -name .CVS | xargs rm -r; \
 	); \
 	pax -wf ${TAR} ${BASE}; \
-	${TOOL_GZIP} -nc9 ${TAR} > ${TAR}.gz; \
+	gzip -nc9 ${TAR} > ${TAR}.gz; \
 	bzip2 -9 ${TAR}
 	@echo "Exported two files:"
 	@echo ${TAR}.gz
