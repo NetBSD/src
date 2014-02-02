@@ -364,7 +364,13 @@ inf_ptrace_resume (struct target_ops *ops,
          all possible successor instructions), so we don't have to
          worry about that here.  */
       request = PT_STEP;
-    }
+#ifdef __NetBSD__
+      sig = ptid_get_lwp(ptid);
+#else
+      sig = 0;
+#endif
+    } else
+      sig = gdb_signal_to_host (signal);
 
   /* An address of (PTRACE_TYPE_ARG3)1 tells ptrace to continue from
      where it was.  If GDB wanted it to start some other way, we have
@@ -374,7 +380,7 @@ inf_ptrace_resume (struct target_ops *ops,
     XXX __NetBSD__: We used to pass this as the signal
     sig = ptid_get_lwp(ptid);
    */
-  ptrace (request, pid, (PTRACE_TYPE_ARG3)1, gdb_signal_to_host (signal));
+  ptrace (request, pid, (PTRACE_TYPE_ARG3)1, sig);
   if (errno != 0)
     perror_with_name (("ptrace"));
 }
