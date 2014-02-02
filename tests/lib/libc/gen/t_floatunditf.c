@@ -1,4 +1,4 @@
-/* $NetBSD: t_floatunditf.c,v 1.4 2014/02/01 13:53:16 martin Exp $ */
+/* $NetBSD: t_floatunditf.c,v 1.5 2014/02/02 08:16:22 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -37,6 +37,9 @@ static const struct {
 	long double ld;
 } testcases[] = {
 	{ 0xffffffffffffffffULL, 0xf.fffffffffffffffp+60L },
+	{ 0xfffffffffffffffeULL, 0xf.ffffffffffffffep+60L },
+	{ 0xfffffffffffffffdULL, 0xf.ffffffffffffffdp+60L },
+	{ 0xfffffffffffffffcULL, 0xf.ffffffffffffffcp+60L },
 	{ 0x7fffffffffffffffULL, 0xf.ffffffffffffffep+59L },
 	{ 0x3fffffffffffffffULL, 0xf.ffffffffffffffcp+58L },
 	{ 0x1fffffffffffffffULL, 0xf.ffffffffffffff8p+57L },
