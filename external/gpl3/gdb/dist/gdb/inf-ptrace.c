@@ -365,6 +365,10 @@ inf_ptrace_resume (struct target_ops *ops,
          worry about that here.  */
       request = PT_STEP;
 #ifdef __NetBSD__
+      /*
+       * On NetBSD the data field of PT_STEP contains the thread
+       * be stepped and all other threads are continued if > 0
+       */
       sig = ptid_get_lwp(ptid);
 #else
       sig = 0;
@@ -376,10 +380,6 @@ inf_ptrace_resume (struct target_ops *ops,
      where it was.  If GDB wanted it to start some other way, we have
      already written a new program counter value to the child.  */
   errno = 0;
-  /*
-    XXX __NetBSD__: We used to pass this as the signal
-    sig = ptid_get_lwp(ptid);
-   */
   ptrace (request, pid, (PTRACE_TYPE_ARG3)1, sig);
   if (errno != 0)
     perror_with_name (("ptrace"));
