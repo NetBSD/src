@@ -1,4 +1,4 @@
-.\" $NetBSD: posix_spawn_file_actions_addopen.3,v 1.3 2013/07/20 21:39:57 wiz Exp $
+.\" $NetBSD: posix_spawn_file_actions_addopen.3,v 1.4 2014/02/02 14:48:57 martin Exp $
 .\"
 .\" Copyright (c) 2008 Ed Schouten <ed@FreeBSD.org>
 .\" All rights reserved.
@@ -148,6 +148,10 @@ These
 functions fail if:
 .Bl -tag -width Er
 .It Bq Er EINVAL
+The value specified by
+.Fa file_actions
+is invalid.
+.It Bq Er EBADF
 The value specified by
 .Fa fildes
 or
