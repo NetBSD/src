@@ -10,6 +10,7 @@ COPTS+=	-DDO_HTPASSWD
 CPPFLAGS+= -DDO_HTPASSWD
 SRCS=	bozohttpd.c ssl-bozo.c auth-bozo.c cgi-bozo.c daemon-bozo.c
 SRCS+=	tilde-luzah-bozo.c dir-index-bozo.c content-bozo.c
+SRCS+=	lua-bozo.c
 
 LDADD=	-lcrypt
 DPADD=	${LIBCRYPT}
