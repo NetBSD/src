@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.432 2013/10/13 22:34:13 wiz Exp $
+.\"	$NetBSD: options.4,v 1.433 2014/02/02 04:28:42 manu Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -450,6 +450,21 @@ Currently only some system calls which use
 are adjusted and some binaries which use
 .Xr sysctl 3
 to retrieve network details would not work properly.
+.It Cd options EMUL_NATIVEROOT=string
+Just like emulated binaries first try to lookup files in 
+an emulation root (e.g.
+.Pa /emul/linux )
+before looking them up in real root, this option cause native
+binaries to first look up files in an "emulation" directory too.
+This can be useful to test an amd64 kernel on top of an i386 system
+prior full migration: by unpacking the amd64 distribution in e.g.
+.Pa /emul/netbsd64 
+and specifying that location as
+.Cd EMUL_NATIVEROOT ,
+native amd64 binaries can be run while the root filesystem remains
+populated with i386 binaries. Beware of 
+.Pa /dev
+incompatibilities between i386 and amd64 if you do this.
 .It Cd options EXEC_ELF_NOTELESS
 Run unidentified ELF binaries as
 .Nx
