@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.26 2014/01/15 22:24:41 joerg Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.27 2014/02/02 22:41:20 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: mptramp.S,v 1.26 2014/01/15 22:24:41 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mptramp.S,v 1.27 2014/02/02 22:41:20 dsl Exp $");
 	
 #include "opt_mpbios.h"		/* for MPDEBUG */
 		
@@ -178,8 +178,8 @@ _TRMP_LABEL(mp_startup)
         /* Load base of page directory and enable mapping. */
         movl    %ecx,%cr3               # load ptd addr into mmu
         movl    %cr0,%eax               # get control word
-                                        # enable paging & NPX emulation
-        orl     $(CR0_PE|CR0_PG|CR0_NE|CR0_TS|CR0_EM|CR0_MP|CR0_WP|CR0_AM),%eax
+                                        # enable paging & the fpu
+        orl     $(CR0_PE|CR0_PG|CR0_NE|CR0_TS|CR0_MP|CR0_WP|CR0_AM),%eax
         movl    %eax,%cr0               # and page NOW!
 
 #ifdef MPDEBUG
