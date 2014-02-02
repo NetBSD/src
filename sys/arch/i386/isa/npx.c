@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.149 2014/01/26 19:16:17 dsl Exp $	*/
+/*	$NetBSD: npx.c,v 1.150 2014/02/02 22:41:20 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.149 2014/01/26 19:16:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.150 2014/02/02 22:41:20 dsl Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -145,7 +145,8 @@ __KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.149 2014/01/26 19:16:17 dsl Exp $");
  */
 
 static int	x86fpflags_to_ksiginfo(uint32_t flags);
-static int	npxdna(struct cpu_info *);
+/* Called directly from i386_trap.S */
+int	fpudna(struct cpu_info *);
 
 #ifdef XEN
 #define	clts() HYPERVISOR_fpu_taskswitch(0)
@@ -156,7 +157,6 @@ volatile u_int			npx_intrs_while_probing;
 volatile u_int			npx_traps_while_probing;
 
 extern int i386_fpu_present;
-extern int i386_fpu_exception;
 extern int i386_fpu_fdivbug;
 
 struct npx_softc		*npx_softc;
@@ -174,32 +174,27 @@ fpu_save(union savefpu *addr)
 		fnsave(&addr->sv_87);
 }
 
-int    (*npxdna_func)(struct cpu_info *) = npxdna;
-
+#ifndef XEN
+/* Initialise fpu, might be boot cpu or a later cpu coming online */
 void
 fpuinit(struct cpu_info *ci)
 {
 	uint16_t control;
-	uint32_t cr0;
 
-	/* Assume we have an FPU */
-	cr0 = rcr0();
-	cr0 &= ~(CR0_EM | CR0_TS);
-	cr0 |= CR0_NE | CR0_MP;
-	lcr0(cr0);
-	/* Read back the default contol word */
+	/* The default cr0 has the fpu enabled */
+	clts();
 	fninit();
+
+	/* Read the default control word */
 	fnstcw(&control);
 
 	if (control != __INITIAL_NPXCW__) {
-		/* Must be a 486SX, emulate FP instructions */
-		lcr0((cr0 & ~CR0_MP) | CR0_EM);
-		aprint_normal_dev(ci->ci_dev, "no fpu\n");
+		/* Must be a 486SX, trap FP instructions */
+		lcr0((rcr0() & ~CR0_MP) | CR0_EM);
+		aprint_normal_dev(ci->ci_dev, "no fpu (control %x)\n", control);
+		i386_fpu_present = 0;
 		return;
 	}
-
-	/* We have a valid FPU */
-	i386_fpu_present = 1;
 
 	if (npx586bug1(4195835, 3145727) != 0) {
 		/* NB 120+MHz cpus are not affected */
@@ -209,8 +204,9 @@ fpuinit(struct cpu_info *ci)
 	}
 
 	/* Set TS so first fp instruction faults */
-	lcr0(cr0 | CR0_TS);
+	stts();
 }
+#endif
 
 /*
  * Record the FPU state and reinitialize it all except for the control word.
@@ -384,8 +380,8 @@ x86fpflags_to_ksiginfo(uint32_t flags)
  * Otherwise, we save the previous state, if necessary, and restore
  * our last saved state.
  */
-static int
-npxdna(struct cpu_info *ci)
+int
+fpudna(struct cpu_info *ci)
 {
 	struct lwp *l, *fl;
 	struct pcb *pcb;
