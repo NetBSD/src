@@ -1,4 +1,4 @@
-.\"	$NetBSD: nanosleep.2,v 1.15 2014/02/01 22:42:45 christos Exp $
+.\"	$NetBSD: nanosleep.2,v 1.16 2014/02/02 08:31:49 wiz Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -174,4 +174,6 @@ which is by default
 in most architectures.
 This means that a request to sleep for less than
 .Dv 10ms
-(1 / HZ seconds), is rounded up to that.
+(1 /
+.Dv HZ
+seconds), is rounded up to that.
