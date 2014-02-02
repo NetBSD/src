@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: posix_spawn_fileactions.c,v 1.3 2014/02/02 14:48:57 martin Exp $");
+__RCSID("$NetBSD: posix_spawn_fileactions.c,v 1.4 2014/02/02 14:54:39 martin Exp $");
 
 #include "namespace.h"
 
@@ -48,15 +48,15 @@ int
 posix_spawn_file_actions_init(posix_spawn_file_actions_t *fa)
 {
 	if (fa == NULL)
-		return (EINVAL);
+		return EINVAL;
 
 	fa->fae = malloc(MIN_SIZE * sizeof(struct posix_spawn_file_actions_entry));
 	if (fa->fae == NULL)
-		return (ENOMEM);
+		return ENOMEM;
 	fa->size = MIN_SIZE;
 	fa->len = 0;
 
-	return (0);
+	return 0;
 }
 
 int
@@ -65,7 +65,7 @@ posix_spawn_file_actions_destroy(posix_spawn_file_actions_t *fa)
 	unsigned int i;
 
 	if (fa == NULL)
-		return (EINVAL);
+		return EINVAL;
 
 	for (i = 0; i < fa->len; i++) {
 		if (fa->fae[i].fae_action == FAE_OPEN)
@@ -73,7 +73,7 @@ posix_spawn_file_actions_destroy(posix_spawn_file_actions_t *fa)
 	}
 
 	free(fa->fae);
-	return (0);
+	return 0;
 }
 
 static int
@@ -83,21 +83,21 @@ posix_spawn_file_actions_getentry(posix_spawn_file_actions_t *fa,
 	posix_spawn_file_actions_entry_t *fae;
 
 	if (fa == NULL)
-		return (EINVAL);
+		return EINVAL;
 
 	if (fa->len < fa->size)
 		goto out;
 
 	fae = realloc(fa->fae, (fa->size + MIN_SIZE) * sizeof(*fa->fae));
 	if (fae == NULL)
-		return (ENOMEM);
+		return ENOMEM;
 
 	fa->fae = fae;
 	fa->size += MIN_SIZE;
 
 out:
 	*i = fa->len;
-	return (0);
+	return 0;
 }
 
 int
@@ -109,15 +109,15 @@ posix_spawn_file_actions_addopen(posix_spawn_file_actions_t * __restrict fa,
 	int error;
 
 	if (fildes < 0)
-		return (EBADF);
+		return EBADF;
 
 	error = posix_spawn_file_actions_getentry(fa, &i);
 	if (error)
-		return (error);
+		return error;
 
 	faepath = strdup(path);
 	if (faepath == NULL)
-		return (ENOMEM);
+		return ENOMEM;
 
 	fa->fae[i].fae_action = FAE_OPEN;
 	fa->fae[i].fae_path = faepath;
@@ -126,7 +126,7 @@ posix_spawn_file_actions_addopen(posix_spawn_file_actions_t * __restrict fa,
 	fa->fae[i].fae_mode = mode;
 	fa->len++;
 
-	return (0);
+	return 0;
 }
 
 int
@@ -137,18 +137,18 @@ posix_spawn_file_actions_adddup2(posix_spawn_file_actions_t *fa,
 	int error;
 
 	if (fildes < 0 || newfildes < 0)
-		return (EBADF);
+		return EBADF;
 
 	error = posix_spawn_file_actions_getentry(fa, &i);
 	if (error)
-		return (error);
+		return error;
 
 	fa->fae[i].fae_action = FAE_DUP2;
 	fa->fae[i].fae_fildes = fildes;
 	fa->fae[i].fae_newfildes = newfildes;
 	fa->len++;
 
-	return (0);
+	return 0;
 }
 
 int
@@ -159,15 +159,15 @@ posix_spawn_file_actions_addclose(posix_spawn_file_actions_t *fa,
 	int error;
 
 	if (fildes < 0)
-		return (EBADF);
+		return EBADF;
 
 	error = posix_spawn_file_actions_getentry(fa, &i);
 	if (error)
-		return (error);
+		return error;
 
 	fa->fae[i].fae_action = FAE_CLOSE;
 	fa->fae[i].fae_fildes = fildes;
 	fa->len++;
 
-	return (0);
+	return 0;
 }
