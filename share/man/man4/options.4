@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.433 2014/02/02 04:28:42 manu Exp $
+.\"	$NetBSD: options.4,v 1.434 2014/02/02 08:34:39 wiz Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -451,18 +451,19 @@ are adjusted and some binaries which use
 .Xr sysctl 3
 to retrieve network details would not work properly.
 .It Cd options EMUL_NATIVEROOT=string
-Just like emulated binaries first try to lookup files in 
+Just like emulated binaries first try looking up files in
 an emulation root (e.g.
 .Pa /emul/linux )
-before looking them up in real root, this option cause native
+before looking them up in real root, this option causes native
 binaries to first look up files in an "emulation" directory too.
 This can be useful to test an amd64 kernel on top of an i386 system
-prior full migration: by unpacking the amd64 distribution in e.g.
-.Pa /emul/netbsd64 
+before full migration: by unpacking the amd64 distribution in e.g.
+.Pa /emul/netbsd64
 and specifying that location as
 .Cd EMUL_NATIVEROOT ,
-native amd64 binaries can be run while the root filesystem remains
-populated with i386 binaries. Beware of 
+native amd64 binaries can be run while the root file system remains
+populated with i386 binaries.
+Beware of
 .Pa /dev
 incompatibilities between i386 and amd64 if you do this.
 .It Cd options EXEC_ELF_NOTELESS
@@ -1036,7 +1037,7 @@ of FFS file systems.
 Maybe useful for install media kernels, small memory systems and
 embedded systems which don't require the snapshot support.
 .It Cd options UFS_EXTATTR
-Enable extended attribute support for UFS1 filesystems.
+Enable extended attribute support for UFS1 file systems.
 .It Cd options UFS_DIRHASH
 Increase lookup performance by maintaining in-core hash tables
 for large directories.
