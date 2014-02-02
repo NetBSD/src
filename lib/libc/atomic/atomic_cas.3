@@ -1,4 +1,4 @@
-.\"	$NetBSD: atomic_cas.3,v 1.3 2014/02/02 17:30:06 dholland Exp $
+.\"	$NetBSD: atomic_cas.3,v 1.4 2014/02/02 17:32:38 dholland Exp $
 .\"
 .\" Copyright (c) 2007, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -100,15 +100,11 @@ The non-interlocked variants,
 .Fn *_ni ,
 guarantee atomicity within the same CPU with respect to
 interrupts and preemption.
-For example, they are suitable for synchronizing compare-and-swap
-operations on a variable shared by a thread and an interrupt
-that are bound to the same CPU.
-The
-.Fn *_ni
-variants are not atomic with respect to different CPUs.
-.Fn *_ni
-variants should avoid the interprocessor synchronization overhead
-of the standard compare-and-swap operations.
+They are not atomic with respect to different CPUs.
+These can be used to avoid interprocessor synchronization overhead
+in some cases; for example, they are suitable for synchronized
+operations on a variable shared by a thread and an interrupt that are
+bound to the same CPU.
 .Pp
 The 64-bit variants of these functions are available only on platforms
 that can support atomic 64-bit memory access.
