@@ -1,12 +1,10 @@
-#	$NetBSD: Makefile,v 1.2 2014/01/31 18:12:15 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.3 2014/02/03 23:11:40 pgoyette Exp $
 
 .include "../Makefile.inc"
 
 CPPFLAGS+=	-DCOMPAT_50
 
 .PATH:	${S}/opencrypto
-
-IOCONF=	crypto.ioconf
 
 KMOD=	crypto
 SRCS=	cryptodev.c ocryptodev.c
