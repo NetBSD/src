@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_build.c,v 1.31 2013/11/22 00:25:51 rmind Exp $	*/
+/*	$NetBSD: npf_build.c,v 1.32 2014/02/03 02:21:52 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.31 2013/11/22 00:25:51 rmind Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.32 2014/02/03 02:21:52 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -123,10 +123,25 @@ npfctl_debug_addif(const char *ifname)
 	return 0;
 }
 
-bool
-npfctl_table_exists_p(const char *name)
+unsigned
+npfctl_table_getid(const char *name)
 {
-	return npf_conf ? npf_table_exists_p(npf_conf, name) : false;
+	unsigned tid = (unsigned)-1;
+	nl_table_t *tl;
+
+	/* XXX dynamic ruleset */
+	if (!npf_conf) {
+		return (unsigned)-1;
+	}
+
+	/* XXX: Iterating all as we need to rewind for the next call. */
+	while ((tl = npf_table_iterate(npf_conf)) != NULL) {
+		const char *tname = npf_table_getname(tl);
+		if (strcmp(tname, name) == 0) {
+			tid = npf_table_getid(tl);
+		}
+	}
+	return tid;
 }
 
 static in_port_t
@@ -217,7 +232,8 @@ npfctl_build_vars(npf_bpf_t *ctx, sa_family_t family, npfvar_t *vars, int opts)
 			break;
 		}
 		case NPFVAR_TABLE: {
-			u_int tid = atoi(data);
+			u_int tid;
+			memcpy(&tid, data, sizeof(u_int));
 			npfctl_bpf_table(ctx, opts, tid);
 			break;
 		}
