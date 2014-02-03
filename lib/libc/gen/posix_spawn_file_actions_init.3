@@ -1,4 +1,4 @@
-.\" $NetBSD: posix_spawn_file_actions_init.3,v 1.1 2012/02/11 23:31:24 martin Exp $
+.\" $NetBSD: posix_spawn_file_actions_init.3,v 1.1.6.1 2014/02/03 11:56:20 sborrill Exp $
 .\"
 .\" Copyright (c) 2008 Ed Schouten <ed@FreeBSD.org>
 .\" All rights reserved.
@@ -81,6 +81,10 @@ function will fail if:
 .Bl -tag -width Er
 .It Bq Er ENOMEM
 Insufficient memory exists to initialize the spawn file actions object.
+.It Bq Er EINVAL
+The value specified by
+.Fa file_actions
+is invalid.
 .El
 .Sh SEE ALSO
 .Xr posix_spawn 3 ,
