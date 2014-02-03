@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.h,v 1.34 2013/11/08 00:38:26 rmind Exp $	*/
+/*	$NetBSD: npfctl.h,v 1.35 2014/02/03 02:21:52 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@ void		npfctl_parse_string(const char *);
 void		npfctl_print_error(const nl_error_t *);
 char *		npfctl_print_addrmask(int, const npf_addr_t *, npf_netmask_t);
 void		npfctl_note_interface(const char *);
-bool		npfctl_table_exists_p(const char *);
+unsigned	npfctl_table_getid(const char *);
 int		npfctl_protono(const char *);
 in_port_t	npfctl_portno(const char *);
 uint8_t		npfctl_icmpcode(int, uint8_t, const char *);
