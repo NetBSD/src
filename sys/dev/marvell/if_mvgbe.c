@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.35 2013/12/23 02:23:25 kiyohara Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.36 2014/02/03 05:56:23 msaitoh Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.35 2013/12/23 02:23:25 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.36 2014/02/03 05:56:23 msaitoh Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -1059,7 +1059,8 @@ mvgbe_start(struct ifnet *ifp)
 		 * for the NIC to drain the ring.
 		 */
 		if (mvgbe_encap(sc, m_head, &idx)) {
-			ifp->if_flags |= IFF_OACTIVE;
+			if (sc->sc_cdata.mvgbe_tx_cnt > 0)
+				ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
 
