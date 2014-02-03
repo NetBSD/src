@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.4,v 1.1.2.1 2014/01/27 21:27:50 bouyer Exp $
+# $NetBSD: CHANGES-6.1.4,v 1.1.2.2 2014/02/03 11:57:55 sborrill Exp $
 
 A complete list of changes from the NetBSD 6.1.3 release to the NetBSD 6.1.4
 release:
@@ -9,4 +9,18 @@ sys/sys/param.h					patched by hand
 
 	Welcome to 6.1.3_PATCH.
 	[bouyer]
+
+lib/libc/gen/posix_spawn.3			1.5
+lib/libc/gen/posix_spawn_file_actions_addopen.3	1.4
+lib/libc/gen/posix_spawn_file_actions_init.3	1.4
+lib/libc/gen/posix_spawn_fileactions.c		1.3
+sys/compat/netbsd32/netbsd32_execve.c		1.38
+sys/kern/kern_exec.c				1.373
+
+	Limit the amount of kernel memory a posix_spawn syscall can use
+	(for handling the file action list) by limiting the maximum number
+	of file actions to twice the current file descriptor limit. Fix a
+	few bugs in the support functions and document the new limit. From
+	Maxime Villard.
+	[martin, ticket #1023]
 
