@@ -1,4 +1,4 @@
-/*	$NetBSD: n_support.S,v 1.6 2003/08/07 16:44:45 agc Exp $	*/
+/*	$NetBSD: n_support.S,v 1.7 2014/02/03 21:22:21 martin Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,6 +31,8 @@
  */
 #include <machine/asm.h>
 
+WEAK_ALIAS(logbl,logb)
+
 	.text
 _sccsid:
 	.asciz "@(#)support.s\t1.3 (Berkeley) 8/21/85; 8.1 (ucb.elefunt) 6/4/93"
@@ -57,6 +59,15 @@ ENTRY(copysign, 0)
 	bicw2	$0x8000,%r0		# replace x by |x|
 	bisw2	%r2,%r0			# copy the sign bit of y to x
 Lz:	ret
+
+/*
+ * float logbf(float x);
+ */
+ENTRY(logbf, 0)
+	cvtfd   4(%ap),-(%sp)
+	calls   $2,_C_LABEL(logb)
+	cvtdf   %r0,%r0
+	ret
 
 /*
  * double logb(double x);
