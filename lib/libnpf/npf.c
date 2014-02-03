@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.24 2013/11/22 00:25:51 rmind Exp $	*/
+/*	$NetBSD: npf.c,v 1.25 2014/02/03 02:21:52 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.24 2013/11/22 00:25:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.25 2014/02/03 02:21:52 rmind Exp $");
 
 #include <sys/types.h>
 #include <netinet/in_systm.h>
@@ -961,8 +961,8 @@ npf_table_add_entry(nl_table_t *tl, int af, const npf_addr_t *addr,
 	return 0;
 }
 
-bool
-npf_table_exists_p(nl_config_t *ncf, const char *name)
+static bool
+_npf_table_exists_p(nl_config_t *ncf, const char *name)
 {
 	prop_dictionary_t tldict;
 	prop_object_iterator_t it;
@@ -988,7 +988,7 @@ npf_table_insert(nl_config_t *ncf, nl_table_t *tl)
 	if (!prop_dictionary_get_cstring_nocopy(tldict, "name", &name)) {
 		return EINVAL;
 	}
-	if (npf_table_exists_p(ncf, name)) {
+	if (_npf_table_exists_p(ncf, name)) {
 		return EEXIST;
 	}
 	prop_array_add(ncf->ncf_table_list, tldict);
