@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.28 2013/08/23 07:15:08 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.29 2014/02/03 19:18:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.28 2013/08/23 07:15:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.29 2014/02/03 19:18:59 matt Exp $");
 
 #define _MIPS_BUS_DMA_PRIVATE
 
@@ -624,7 +624,52 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
     bus_dma_segment_t *segs, int nsegs, bus_size_t size, int flags)
 {
 
-	panic("_bus_dmamap_load_raw: not implemented");
+	struct vmspace * const vm = vmspace_kernel();
+	const bool coherent_p = (mips_options.mips_cpu_flags & CPU_MIPS_D_CACHE_COHERENT);
+	const bool cached_p = coherent_p || (flags & BUS_DMA_COHERENT) == 0;
+	bus_size_t mapsize = 0;
+	bool first = true;
+	int curseg = 0;
+	int error = 0;
+
+	for (; error == 0 && nsegs-- > 0; segs++) {
+		void *kva;
+#ifdef _LP64
+		if (cached_p) {
+			kva = (void *)MIPS_PHYS_TO_XKPHYS_CACHED(segs->ds_addr);
+		} else {
+			kva = (void *)MIPS_PHYS_TO_XKPHYS_UNCACHED(segs->ds_addr);
+		}
+#else
+		if (ds->ds_addr >= MIPS_PHYS_MASK)
+			return EFBIG;
+		if (cached_p) {
+			kva = (void *)MIPS_PHYS_TO_KSEG0(segs->ds_addr);
+		} else {
+			kva = (void *)MIPS_PHYS_TO_KSEG1(segs->ds_addr);
+		}
+#endif	/* _LP64 */
+		mapsize += segs->ds_len;
+		error = _bus_dmamap_load_buffer(t, map, kva, segs->ds_len,
+		    vm, flags, &curseg, first);
+		first = false;
+	}
+	if (error == 0) {
+		map->dm_mapsize = mapsize;
+		map->dm_nsegs = curseg + 1;
+		map->_dm_vmspace = vm;		/* always kernel */
+		/*
+		 * If our cache is coherent, then the map must be coherent too.
+		 */
+		if (coherent_p)
+			map->_dm_flags |= _BUS_DMAMAP_COHERENT;
+		return 0;
+	}
+	/*
+	 * If bus_dmamem_alloc didn't return memory that didn't need bouncing
+	 * that's a bug which we will not workaround.
+	 */
+	return error;
 }
 
 /*
