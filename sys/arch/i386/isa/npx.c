@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.150 2014/02/02 22:41:20 dsl Exp $	*/
+/*	$NetBSD: npx.c,v 1.151 2014/02/03 23:00:32 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.150 2014/02/02 22:41:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.151 2014/02/03 23:00:32 dsl Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -126,6 +126,11 @@ __KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.150 2014/02/02 22:41:20 dsl Exp $");
  * Note that we only support 486 and later cpus, these do not support
  * an external fpu, only the one that is part of the cpu fabric.
  * A 486 might not have an fpu, but the 487 is a full 486.
+ *
+ * Since we set CR0.NE a FP exception can only happen when a user process
+ * executes a FP instruction. The DNA exception takes precedence, so
+ * the execption can only happen when the lwp already owns the fpu.
+ * In particular the exceptions won't happen in-kernel while saving state.
  *
  * We do lazy initialization and switching using the TS bit in cr0 and the
  * MDL_USEDFPU bit in mdlwp.
@@ -160,19 +165,6 @@ extern int i386_fpu_present;
 extern int i386_fpu_fdivbug;
 
 struct npx_softc		*npx_softc;
-
-static inline void
-fpu_save(union savefpu *addr)
-{
-	if (i386_use_fxsave)
-	{
-                fxsave(&addr->sv_xmm);
-
-		/* FXSAVE doesn't FNINIT like FNSAVE does -- so do it here. */
-		fninit();
-	} else
-		fnsave(&addr->sv_87);
-}
 
 #ifndef XEN
 /* Initialise fpu, might be boot cpu or a later cpu coming online */
@@ -221,7 +213,11 @@ fpuinit(struct cpu_info *ci)
  * best a handler could do an fninit followed by an fldcw of a static value.
  * fnclex would be of little use because it would leave junk on the FPU stack.
  *
- * Only called dircetly from i386_trap.S
+ * Only called directly from i386_trap.S (with interrupts disabled)
+ *
+ * Since we have CR0.NE set this can only happen as a result of
+ * executing an FP instruction (and after CR0.TS has been checked).
+ * This means this must be from userspace on the current lwp.
  */
 int npxintr(void *, struct intrframe *);
 int
@@ -231,7 +227,11 @@ npxintr(void *arg, struct intrframe *frame)
 	struct lwp *l = ci->ci_fpcurlwp;
 	union savefpu *addr;
 	struct pcb *pcb;
+	uint32_t statbits;
 	ksiginfo_t ksi;
+
+	if (!USERMODE(frame->if_cs, frame->if_eflags))
+		panic("fpu trap from kernel\n");
 
 	kpreempt_disable();
 #ifndef XEN
@@ -239,19 +239,13 @@ npxintr(void *arg, struct intrframe *frame)
 	x86_enable_intr();
 #endif
 
-	curcpu()->ci_data.cpu_ntrap++;
 	IPRINTF(("%s: fp intr\n", device_xname(ci->ci_dev)));
 
 	/*
-	 * If we're saving, ignore the interrupt.  The FPU will generate
-	 * another one when we restore the state later.
+	 * At this point, fpcurlwp should be curlwp.  If it wasn't, the TS
+	 * bit should be set, and we should have gotten a DNA exception.
 	 */
-	if (ci->ci_fpsaving) {
-		kpreempt_enable();
-		return (1);
-	}
-
-	if (l == NULL || !i386_fpu_present) {
+	if (l != curlwp || !i386_fpu_present) {
 		printf("npxintr: l = %p, curproc = %p, fpu_present = %d\n",
 		    l, curproc, i386_fpu_present);
 		printf("npxintr: came from nowhere");
@@ -259,89 +253,77 @@ npxintr(void *arg, struct intrframe *frame)
 		return 1;
 	}
 
-	/*
-	 * At this point, fpcurlwp should be curlwp.  If it wasn't, the TS
-	 * bit should be set, and we should have gotten a DNA exception.
-	 */
-	KASSERT(l == curlwp);
+	/* Find the address of fpcurproc's saved FPU state. */
 	pcb = lwp_getpcb(l);
-
-	/*
-	 * Find the address of fpcurproc's saved FPU state.  (Given the
-	 * invariant above, this is always the one in curpcb.)
-	 */
 	addr = &pcb->pcb_savefpu;
 
 	/*
-	 * Save state.  This does an implied fninit.  It had better not halt
-	 * the CPU or we'll hang.
+	 * XXX: (dsl) I think this is all borked.
+	 * We need to save the status word (which contains the cause)
+	 * of the fault, and clear the relevant error bits so that
+	 * the fp instruction doesn't trap again when the signal handler
+	 * returns (or if the signal is ignored).
+	 * What the code actually does is to reset the FPU, this clears
+	 * the FP stack pointer so I suspect the code then gets the
+	 * wrong register values for an later operations.
+	 * Any code that enabled the stack under/overflow traps is doomed.
+	 *
+	 * I think this code should just save the status word and clear
+	 * the pending errors.
+	 * If the signal is generated then the FP state can be saved in
+	 * the context stashed on the user stack, and restrored from
+	 * there later. So this code need not do a fsave or finit.
 	 */
-	fpu_save(addr);
-	fwait();
-        if (i386_use_fxsave) {
+	if (i386_use_fxsave) {
+		fxsave(&addr->sv_xmm);
+		/* FXSAVE doesn't FNINIT like FNSAVE does -- so do it here. */
+		fninit();
+		fwait();
 		fldcw(&addr->sv_xmm.fx_cw);
 		/*
 		 * FNINIT doesn't affect MXCSR or the XMM registers;
 		 * no need to re-load MXCSR here.
 		 */
-        } else
-                fldcw(&addr->sv_87.s87_cw);
-	fwait();
-	/*
-	 * Remember the exception status word and tag word.  The current
-	 * (almost fninit'ed) fpu state is in the fpu and the exception
-	 * state just saved will soon be junk.  However, the implied fninit
-	 * doesn't change the error pointers or register contents, and we
-	 * preserved the control word and will copy the status and tag
-	 * words, so the complete exception state can be recovered.
-	 */
-        if (i386_use_fxsave) {
-		addr->sv_xmm.sv_ex_sw = addr->sv_xmm.fx_sw;
-		addr->sv_xmm.sv_ex_tw = addr->sv_xmm.fx_tw;
+		statbits = addr->sv_xmm.fx_sw;
 	} else {
-		addr->sv_87.s87_ex_sw = addr->sv_87.s87_sw;
-		addr->sv_87.s87_ex_tw = addr->sv_87.s87_tw;
+		fnsave(&addr->sv_87);
+		/* fnsave has done an fninit() */
+		fwait();
+		fldcw(&addr->sv_87.s87_cw);
+		statbits = addr->sv_87.s87_sw;
 	}
+	fwait();
+
 	/*
 	 * Pass exception to process.
 	 */
-	if (USERMODE(frame->if_cs, frame->if_eflags)) {
-		/*
-		 * Interrupt is essentially a trap, so we can afford to call
-		 * the SIGFPE handler (if any) as soon as the interrupt
-		 * returns.
-		 *
-		 * XXX little or nothing is gained from this, and plenty is
-		 * lost - the interrupt frame has to contain the trap frame
-		 * (this is otherwise only necessary for the rescheduling trap
-		 * in doreti, and the frame for that could easily be set up
-		 * just before it is used).
-		 */
-		l->l_md.md_regs = (struct trapframe *)&frame->if_gs;
 
-		KSI_INIT_TRAP(&ksi);
-		ksi.ksi_signo = SIGFPE;
-		ksi.ksi_addr = (void *)frame->if_eip;
+	/*
+	 * Interrupt is essentially a trap, so we can afford to call
+	 * the SIGFPE handler (if any) as soon as the interrupt
+	 * returns.
+	 *
+	 * XXX little or nothing is gained from this, and plenty is
+	 * lost - the interrupt frame has to contain the trap frame
+	 * (this is otherwise only necessary for the rescheduling trap
+	 * in doreti, and the frame for that could easily be set up
+	 * just before it is used).
+	 */
+	l->l_md.md_regs = (struct trapframe *)&frame->if_gs;
 
-		/*
-		 * Encode the appropriate code for detailed information on
-		 * this exception.
-		 */
+	KSI_INIT_TRAP(&ksi);
+	ksi.ksi_signo = SIGFPE;
+	ksi.ksi_addr = (void *)frame->if_eip;
 
-		if (i386_use_fxsave) {
-			ksi.ksi_code =
-				x86fpflags_to_ksiginfo(addr->sv_xmm.sv_ex_sw);
-			ksi.ksi_trap = (int)addr->sv_xmm.sv_ex_sw;
-		} else {
-			ksi.ksi_code =
-				x86fpflags_to_ksiginfo(addr->sv_87.s87_ex_sw);
-			ksi.ksi_trap = (int)addr->sv_87.s87_ex_sw;
-		}
+	/*
+	 * Encode the appropriate code for detailed information on
+	 * this exception.
+	 */
 
-		trapsignal(l, &ksi);
-	} else {
-		panic("fpu trap from kernel\n");
-	}
+	ksi.ksi_code = x86fpflags_to_ksiginfo(statbits);
+	ksi.ksi_trap = statbits;
+
+	trapsignal(l, &ksi);
 
 	kpreempt_enable();
 	return (1);
