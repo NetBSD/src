@@ -367,7 +367,7 @@ inf_ptrace_resume (struct target_ops *ops,
 #ifdef __NetBSD__
       /*
        * On NetBSD the data field of PT_STEP contains the thread
-       * be stepped and all other threads are continued if > 0
+       * to be stepped; all other threads are continued if this value is > 0
        */
       sig = ptid_get_lwp(ptid);
 #else
