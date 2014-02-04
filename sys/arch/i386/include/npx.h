@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.h,v 1.32 2014/01/26 19:16:17 dsl Exp $	*/
+/*	$NetBSD: npx.h,v 1.33 2014/02/04 22:21:35 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -82,17 +82,10 @@ struct save87 {
 #define s87_opcode s87_ip.fa_32.fa_opcode	/* opcode last executed (11bits) */
 	union fp_addr	s87_dp;		/* floating operand offset */
 	struct fpacc87	s87_ac[8];	/* accumulator contents, 0-7 */
-
-	/* Additional fields that are not part of the hardware definition */
-#ifndef dontdef
-	uint32_t	s87_ex_sw;	/* status word for last exception */
-	uint32_t	s87_ex_tw;	/* tag word for last exception */
-	uint8_t		s87_pad[8 * 2 - 2 * 4];	/* bogus historical padding */
-#endif
 };
 #ifndef __lint__
 // Has different packing semantics, adding packed to save87 works
-__CTASSERT(sizeof (struct save87) == 108 + 16);
+__CTASSERT(sizeof (struct save87) == 108);
 #endif
 
 /* SSE/SSE2 registers. */
@@ -114,13 +107,10 @@ struct fxsave {
 	struct fpaccfx fx_87_ac[8];	/* 8 x87 registers */
 	struct xmmreg sv_xmmregs[8];	/* XMM regs */
 	uint8_t sv_rsvd[16 * 14];
-	/* 512-bytes --- end of hardware portion of save area */
-	uint32_t sv_ex_sw;		/* saved SW from last exception */
-	uint32_t sv_ex_tw;		/* saved TW from last exception */
 } __aligned(16);
 #ifndef __lint__
 // lint does not know aligned
-__CTASSERT(sizeof (struct fxsave) == 512 + 16);
+__CTASSERT(sizeof (struct fxsave) == 512);
 #endif
 
 
