@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_trap.S,v 1.3 2014/02/02 22:41:20 dsl Exp $	*/
+/*	$NetBSD: i386_trap.S,v 1.4 2014/02/04 21:09:23 dsl Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
 
 #if 0
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.3 2014/02/02 22:41:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.4 2014/02/04 21:09:23 dsl Exp $");
 #endif
 
 /*
@@ -165,8 +165,6 @@ IDTVEC(trap07)
 	pushl	CPUVAR(SELF)
 	call	_C_LABEL(fpudna)
 	addl	$4,%esp
-	testl	%eax,%eax
-	jz	calltrap
 	jmp	_C_LABEL(trapreturn)
 IDTVEC_END(trap07)
 IDTVEC(trap08)

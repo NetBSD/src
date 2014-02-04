@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.44 2013/12/11 22:06:51 dsl Exp $	*/
+/*	$NetBSD: fpu.c,v 1.45 2014/02/04 21:09:23 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.44 2013/12/11 22:06:51 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.45 2014/02/04 21:09:23 dsl Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -256,12 +256,6 @@ fpudna(struct cpu_info *ci)
 	struct pcb *pcb;
 	int s;
 
-	if (ci->ci_fpsaving) {
-		/* Recursive trap. */
-		x86_enable_intr();
-		return;
-	}
-
 	/* Lock out IPIs and disable preemption. */
 	s = splhigh();
 	x86_enable_intr();
@@ -361,16 +355,8 @@ fpusave_cpu(bool save)
 	pcb = lwp_getpcb(l);
 
 	if (save) {
-		 /*
-		  * Set ci->ci_fpsaving, so that any pending exception will
-		  * be thrown away.  It will be caught again if/when the
-		  * FPU state is restored.
-		  */
-		KASSERT(ci->ci_fpsaving == 0);
 		clts();
-		ci->ci_fpsaving = 1;
 		fxsave(&pcb->pcb_savefpu);
-		ci->ci_fpsaving = 0;
 	}
 
 	stts();
