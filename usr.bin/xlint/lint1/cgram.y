@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.56 2014/01/16 00:43:43 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.57 2014/02/04 08:08:59 njoly Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.56 2014/01/16 00:43:43 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.57 2014/02/04 08:08:59 njoly Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1340,7 +1340,7 @@ stmnt_d_list:
 
 comp_stmnt:
 	  comp_stmnt_lbrace comp_stmnt_rbrace
-	| comp_stmnt_lbrace stmnt_list comp_stmnt_rbrace
+	| comp_stmnt_lbrace stmnt_d_list comp_stmnt_rbrace
 	| comp_stmnt_lbrace declaration_list comp_stmnt_rbrace
 	| comp_stmnt_lbrace declaration_list stmnt_d_list comp_stmnt_rbrace
 	;

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2012/03/17 16:33:15 jruoho Exp $
+# $NetBSD: Makefile,v 1.2 2014/02/04 08:08:59 njoly Exp $
 
 NOMAN=		# defined
 
@@ -13,6 +13,7 @@ FILES+=		d_alignof.c
 FILES+=		d_c99_complex_num.c
 FILES+=		d_c99_decls_after_stmt.c
 FILES+=		d_c99_decls_after_stmt2.c
+FILES+=		d_c99_decls_after_stmt3.c
 FILES+=		d_c99_for_loops.c
 FILES+=		d_c99_func.c
 FILES+=		d_c99_recursive_init.c
