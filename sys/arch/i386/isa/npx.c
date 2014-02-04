@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.151 2014/02/03 23:00:32 dsl Exp $	*/
+/*	$NetBSD: npx.c,v 1.152 2014/02/04 21:09:23 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.151 2014/02/03 23:00:32 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.152 2014/02/04 21:09:23 dsl Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -151,7 +151,7 @@ __KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.151 2014/02/03 23:00:32 dsl Exp $");
 
 static int	x86fpflags_to_ksiginfo(uint32_t flags);
 /* Called directly from i386_trap.S */
-int	fpudna(struct cpu_info *);
+void	fpudna(struct cpu_info *);
 
 #ifdef XEN
 #define	clts() HYPERVISOR_fpu_taskswitch(0)
@@ -358,21 +358,18 @@ x86fpflags_to_ksiginfo(uint32_t flags)
 /*
  * Implement device not available (DNA) exception
  *
+ * Called directly from i386_trap.S with interrupts still disabled
+ *
  * If we were the last lwp to use the FPU, we can simply return.
  * Otherwise, we save the previous state, if necessary, and restore
  * our last saved state.
  */
-int
+void
 fpudna(struct cpu_info *ci)
 {
 	struct lwp *l, *fl;
 	struct pcb *pcb;
 	int s;
-
-	if (ci->ci_fpsaving) {
-		/* Recursive trap. */
-		return 1;
-	}
 
 	/* Lock out IPIs and disable preemption. */
 	s = splhigh();
@@ -394,7 +391,7 @@ fpudna(struct cpu_info *ci)
 			ci->ci_fpused = 1;
 			clts();
 			splx(s);
-			return 1;
+			return;
 		}
 		KASSERT(fl != l);
 		fpusave_cpu(true);
@@ -457,7 +454,6 @@ fpudna(struct cpu_info *ci)
 
 	KASSERT(ci == curcpu());
 	splx(s);
-	return 1;
 }
 
 /*
@@ -480,20 +476,12 @@ fpusave_cpu(bool save)
 	pcb = lwp_getpcb(l);
 
 	if (save) {
-		 /*
-		  * Set ci->ci_fpsaving, so that any pending exception will
-		  * be thrown away.  It will be caught again if/when the
-		  * FPU state is restored.
-		  */
-		KASSERT(ci->ci_fpsaving == 0);
 		clts();
-		ci->ci_fpsaving = 1;
 		if (i386_use_fxsave) {
 			fxsave(&pcb->pcb_savefpu.sv_xmm);
 		} else {
 			fnsave(&pcb->pcb_savefpu.sv_87);
 		}
-		ci->ci_fpsaving = 0;
 	}
 
 	stts();
