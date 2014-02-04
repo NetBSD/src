@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.561 2014/02/01 20:49:11 jmmv Exp $
+# $NetBSD: mi,v 1.562 2014/02/04 08:08:59 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3101,6 +3101,7 @@
 ./usr/tests/usr.bin/xlint/lint1/d_c99_complex_num.c		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/xlint/lint1/d_c99_decls_after_stmt.c	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/xlint/lint1/d_c99_decls_after_stmt2.c	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/d_c99_decls_after_stmt3.c	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/xlint/lint1/d_c99_for_loops.c		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/xlint/lint1/d_c99_func.c			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/xlint/lint1/d_c99_recursive_init.c		tests-usr.bin-tests	atf
