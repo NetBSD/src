@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.80 2014/01/26 19:16:17 dsl Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.81 2014/02/04 22:48:26 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.80 2014/01/26 19:16:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.81 2014/02/04 22:48:26 dsl Exp $");
 
 #include "opt_vm86.h"
 #include "opt_ptrace.h"
@@ -277,12 +277,9 @@ process_read_fpregs(struct lwp *l, struct fpreg *regs, size_t *sz)
 		l->l_md.md_flags |= MDL_USEDFPU;
 	}
 
+	__CTASSERT(sizeof *regs == sizeof (struct save87));
 	if (i386_use_fxsave) {
-		struct save87 s87;
-
-		/* XXX Yuck */
-		process_xmm_to_s87(&frame->sv_xmm, &s87);
-		memcpy(regs, &s87, sizeof(*regs));
+		process_xmm_to_s87(&frame->sv_xmm, (struct save87 *)regs);
 	} else
 		memcpy(regs, &frame->sv_87, sizeof(*regs));
 	return (0);
@@ -356,11 +353,7 @@ process_write_fpregs(struct lwp *l, const struct fpreg *regs, size_t sz)
 	}
 
 	if (i386_use_fxsave) {
-		struct save87 s87;
-
-		/* XXX Yuck. */
-		memcpy(&s87, regs, sizeof(*regs));
-		process_s87_to_xmm(&s87, &frame->sv_xmm);
+		process_s87_to_xmm((const struct save87 *)regs, &frame->sv_xmm);
 	} else
 		memcpy(&frame->sv_87, regs, sizeof(*regs));
 	return (0);
