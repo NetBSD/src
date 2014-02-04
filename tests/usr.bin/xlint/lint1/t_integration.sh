@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.1 2012/03/17 16:33:16 jruoho Exp $
+# $NetBSD: t_integration.sh,v 1.2 2014/02/04 08:08:59 njoly Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -82,6 +82,7 @@ test_case check_valid gcc_variable_array_init "Checks GCC variable array" \
     "initializers"
 test_case check_valid c9x_array_init "Checks C9X array initializers"
 test_case check_valid c99_decls_after_stmt "Checks C99 decls after statements"
+test_case check_valid c99_decls_after_stmt3 "Checks C99 decls after statements"
 test_case check_valid nolimit_init "Checks no limit initializers"
 test_case check_valid zero_sized_arrays "Checks zero sized arrays"
 
