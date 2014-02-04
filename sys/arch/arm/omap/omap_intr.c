@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_intr.c,v 1.9 2011/07/01 20:30:21 dyoung Exp $	*/
+/*	$NetBSD: omap_intr.c,v 1.10 2014/02/04 18:51:16 matt Exp $	*/
 
 /*
  * Based on arch/arm/xscale/pxa2x0_intr.c
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap_intr.c,v 1.9 2011/07/01 20:30:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap_intr.c,v 1.10 2014/02/04 18:51:16 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -427,16 +427,6 @@ _spllower(int ipl)
 
 	return omap_spllower(ipl);
 }
-
-#ifdef __HAVE_FAST_SOFTINTS
-#undef _setsoftintr
-void
-_setsoftintr(int si)
-{
-
-	return omap_setsoftintr(si);
-}
-#endif
 
 void *
 omap_intr_establish(int irqno, int level, const char *name,

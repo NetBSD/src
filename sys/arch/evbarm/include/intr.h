@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.24 2012/11/08 08:19:50 skrll Exp $	*/
+/*	$NetBSD: intr.h,v 1.25 2014/02/04 18:51:16 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -74,9 +74,6 @@
 int	_splraise(int);
 int	_spllower(int);
 void	splx(int);
-#ifdef __HAVE_FAST_SOFTINTS
-void	_setsoftintr(int);
-#endif
 
 #else	/* _LKM */
 
