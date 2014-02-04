@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.59 2014/01/26 19:16:17 dsl Exp $	*/
+/*	$NetBSD: cpu.h,v 1.60 2014/02/04 21:09:24 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -101,7 +101,7 @@ struct cpu_info {
 	struct cpu_info *ci_next;	/* next cpu */
 	struct lwp *ci_curlwp;		/* current owner of the processor */
 	struct lwp *ci_fpcurlwp;	/* current owner of the FPU */
-	int	ci_fpsaving;		/* save in progress */
+	int	_unused1;
 	int	ci_fpused;		/* XEN: FPU was used by curlwp */
 	cpuid_t ci_cpuid;		/* our CPU ID */
 	int	_unused;
