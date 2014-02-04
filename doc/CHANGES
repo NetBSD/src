@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1884 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1885 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -267,7 +267,7 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 		CPUs (which implement a subset of m68k instructions and
 		addressing modes). [matt 20130719]
 	bind: update to 9.9.3-P2 to fix CVE-2013-4854 remote query can cause
-		named to terminate [christos 2013-07-27]
+		named to terminate [christos 20130727]
 	iwn(4): Add support for Centrino Wireless-N 1030 and Centrino
 		Advanced-N 6230 [prlw1 20130728]
 	dhcpcd(8): Import dhcpcd-6.0.5 [roy 20130803]
@@ -325,9 +325,9 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 		[tsutsui 20131227]
 	wm(4): Add support for I354 (C2000 Internal) Ethernet
 		[msaitoh 20131230]
-	tcpdump(8): Import 4.5.1 [christos 2013131231]
+	tcpdump(8): Import 4.5.1 [christos 20131231]
 	libpcap: Import 1.5.2 [christos 20131231]
-	bind: update to 9.9.5b1 [christos 2013-12-31]
+	bind: update to 9.9.5b1 [christos 20131231]
 	wpa: Import wpa_supplicant and hostapd 2.0 [christos 20140102]
 	dhcpcd: Import dhcpcd-6.2.0 [roy 20140103]
 	luna68k: Make bootloader to detect booted device on ROM monitor's
