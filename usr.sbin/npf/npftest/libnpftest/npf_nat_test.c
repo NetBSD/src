@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_nat_test.c,v 1.4 2013/09/24 02:04:21 rmind Exp $	*/
+/*	$NetBSD: npf_nat_test.c,v 1.5 2014/02/05 03:30:13 rmind Exp $	*/
 
 /*
  * NPF NAT test.
@@ -15,6 +15,8 @@
 #define	RESULT_BLOCK	ENETUNREACH
 
 #define	NPF_BINAT	(NPF_NATIN | NPF_NATOUT)
+
+#define	RANDOM_PORT	45600
 
 static const struct test_case {
 	const char *	src;
@@ -36,12 +38,12 @@ static const struct test_case {
 	{
 		LOCAL_IP1,	15000,		REMOTE_IP1,	7000,
 		NPF_NATOUT,	IFNAME_EXT,	PFIL_OUT,
-		RESULT_PASS,	PUB_IP1,	53472
+		RESULT_PASS,	PUB_IP1,	RANDOM_PORT
 	},
 	{
 		LOCAL_IP1,	15000,		REMOTE_IP1,	7000,
 		NPF_NATOUT,	IFNAME_EXT,	PFIL_OUT,
-		RESULT_PASS,	PUB_IP1,	53472
+		RESULT_PASS,	PUB_IP1,	RANDOM_PORT
 	},
 	{
 		LOCAL_IP1,	15000,		REMOTE_IP1,	7000,
@@ -54,12 +56,12 @@ static const struct test_case {
 		RESULT_BLOCK,	NULL,		0
 	},
 	{
-		REMOTE_IP1,	7000,		PUB_IP1,	53472,
+		REMOTE_IP1,	7000,		PUB_IP1,	RANDOM_PORT,
 		NPF_NATOUT,	IFNAME_INT,	PFIL_IN,
 		RESULT_BLOCK,	NULL,		0
 	},
 	{
-		REMOTE_IP1,	7000,		PUB_IP1,	53472,
+		REMOTE_IP1,	7000,		PUB_IP1,	RANDOM_PORT,
 		NPF_NATOUT,	IFNAME_EXT,	PFIL_IN,
 		RESULT_PASS,	LOCAL_IP1,	15000
 	},
