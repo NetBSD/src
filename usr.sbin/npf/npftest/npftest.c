@@ -1,4 +1,4 @@
-/*	$NetBSD: npftest.c,v 1.14 2014/02/05 03:30:13 rmind Exp $	*/
+/*	$NetBSD: npftest.c,v 1.15 2014/02/05 03:49:48 rmind Exp $	*/
 
 /*
  * NPF testing framework.
@@ -207,7 +207,7 @@ main(int argc, char **argv)
 	rump_init();
 	rump_schedule();
 
-	rumpns_npf_test_init();
+	rumpns_npf_test_init(random);
 
 	if (config) {
 		load_npf_config(config);

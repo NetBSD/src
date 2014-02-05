@@ -1,4 +1,4 @@
-/*	$NetBSD: npftest.h,v 1.10 2013/11/08 00:38:27 rmind Exp $	*/
+/*	$NetBSD: npftest.h,v 1.11 2014/02/05 03:49:48 rmind Exp $	*/
 
 /*
  * Public Domain.
@@ -12,7 +12,7 @@
 
 #include <net/if.h>
 
-void		rumpns_npf_test_init(void);
+void		rumpns_npf_test_init(long (*)(void));
 int		rumpns_npf_test_load(const void *);
 ifnet_t *	rumpns_npf_test_addif(const char *, bool, bool);
 ifnet_t *	rumpns_npf_test_getif(const char *);
