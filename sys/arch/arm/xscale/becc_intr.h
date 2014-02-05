@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_intr.h,v 1.5 2014/02/04 18:51:16 matt Exp $	*/
+/*	$NetBSD: becc_intr.h,v 1.6 2014/02/05 19:03:45 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -103,6 +103,7 @@ becc_spllower(int ipl)
 	becc_splx(becc_imask[ipl]);
 	return (old);
 }
+#endif /* __PROG32 */
 
 #if !defined(EVBARM_SPL_NOINLINE)
 
