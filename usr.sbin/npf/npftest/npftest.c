@@ -1,4 +1,4 @@
-/*	$NetBSD: npftest.c,v 1.13 2013/11/08 00:38:26 rmind Exp $	*/
+/*	$NetBSD: npftest.c,v 1.14 2014/02/05 03:30:13 rmind Exp $	*/
 
 /*
  * NPF testing framework.
@@ -119,15 +119,6 @@ load_npf_config(const char *config)
 	if (verbose) {
 		printf("Loaded NPF config at '%s'\n", config);
 	}
-}
-
-/*
- * Need to override for cprng_fast32(), since RUMP uses arc4random() for it.
- */
-uint32_t
-arc4random(void)
-{
-	return random();
 }
 
 int
