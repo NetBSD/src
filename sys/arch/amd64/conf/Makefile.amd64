@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.42 2014/01/15 22:25:22 joerg Exp $
+#	$NetBSD: Makefile.amd64,v 1.43 2014/02/05 18:52:22 dsl Exp $
 
 # Makefile for NetBSD
 #
@@ -36,7 +36,10 @@ GENASSYM_CONF=	${AMD64}/amd64/genassym.cf
 DEFCOPTS=	-O2
 CPPFLAGS+=	-Damd64 -Dx86_64
 CFLAGS+=	-mcmodel=kernel
-CFLAGS+=	-mno-red-zone -mno-sse -mno-sse2 -mno-sse3
+# -mno-sse implies -mno-sse2 (etc) but doesn't stop avx.
+CFLAGS+=	-mno-red-zone -mno-mmx -mno-sse -mno-avx
+# make absolutely sure we don't get x87 registers used as well
+CFLAGS+=	-mno-80387 -mno-fp-ret-in-387
 
 ##
 ## (3) libkern and compat
