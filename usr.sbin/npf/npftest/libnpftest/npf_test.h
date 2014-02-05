@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_test.h,v 1.11 2013/11/08 00:38:27 rmind Exp $	*/
+/*	$NetBSD: npf_test.h,v 1.12 2014/02/05 03:49:48 rmind Exp $	*/
 
 /*
  * Public Domain.
@@ -39,7 +39,7 @@
 #define	REMOTE_IP1	"192.0.2.3"
 #define	REMOTE_IP2	"192.0.2.4"
 
-void		npf_test_init(void);
+void		npf_test_init(long (*)(void));
 int		npf_test_load(const void *);
 ifnet_t *	npf_test_addif(const char *, bool, bool);
 ifnet_t *	npf_test_getif(const char *);
