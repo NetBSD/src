@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_test_subr.c,v 1.6 2013/11/08 00:38:27 rmind Exp $	*/
+/*	$NetBSD: npf_test_subr.c,v 1.7 2014/02/05 03:30:13 rmind Exp $	*/
 
 /*
  * NPF initialisation and handler routines.
@@ -7,6 +7,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/cprng.h>
 #include <net/if.h>
 #include <net/if_types.h>
 
@@ -113,4 +114,13 @@ npf_test_statetrack(const void *data, size_t len, ifnet_t *ifp,
 	result[i++] = tstate->nst_wscale;
 
 	return 0;
+}
+
+/*
+ * Need to override for cprng_fast32() -- we need deterministic PRNG.
+ */
+uint32_t
+_arc4random(void)
+{
+	return random();
 }
