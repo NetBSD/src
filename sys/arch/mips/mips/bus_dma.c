@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.29 2014/02/03 19:18:59 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.30 2014/02/05 19:09:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.29 2014/02/03 19:18:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.30 2014/02/05 19:09:06 christos Exp $");
 
 #define _MIPS_BUS_DMA_PRIVATE
 
@@ -641,7 +641,7 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 			kva = (void *)MIPS_PHYS_TO_XKPHYS_UNCACHED(segs->ds_addr);
 		}
 #else
-		if (ds->ds_addr >= MIPS_PHYS_MASK)
+		if (segs->ds_addr >= MIPS_PHYS_MASK)
 			return EFBIG;
 		if (cached_p) {
 			kva = (void *)MIPS_PHYS_TO_KSEG0(segs->ds_addr);
