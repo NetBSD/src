@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_nat_test.c,v 1.5 2014/02/05 03:30:13 rmind Exp $	*/
+/*	$NetBSD: npf_nat_test.c,v 1.6 2014/02/05 03:49:48 rmind Exp $	*/
 
 /*
  * NPF NAT test.
@@ -16,7 +16,7 @@
 
 #define	NPF_BINAT	(NPF_NATIN | NPF_NATOUT)
 
-#define	RANDOM_PORT	45600
+#define	RANDOM_PORT	53472
 
 static const struct test_case {
 	const char *	src;
