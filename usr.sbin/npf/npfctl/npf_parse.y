@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_parse.y,v 1.29 2013/11/19 00:28:41 rmind Exp $	*/
+/*	$NetBSD: npf_parse.y,v 1.30 2014/02/06 02:51:28 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -91,6 +91,7 @@ yyerror(const char *fmt, ...)
 %token			ARROWLEFT
 %token			ARROWRIGHT
 %token			BLOCK
+%token			CDB
 %token			CURLY_CLOSE
 %token			CURLY_OPEN
 %token			CODE
@@ -278,6 +279,7 @@ table
 table_type
 	: HASH		{ $$ = NPF_TABLE_HASH; }
 	| TREE		{ $$ = NPF_TABLE_TREE; }
+	| CDB		{ $$ = NPF_TABLE_CDB; }
 	;
 
 table_store
