@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_build.c,v 1.33 2014/02/06 02:51:28 rmind Exp $	*/
+/*	$NetBSD: npf_build.c,v 1.34 2014/02/06 18:48:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.33 2014/02/06 02:51:28 rmind Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.34 2014/02/06 18:48:09 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -638,7 +638,7 @@ npfctl_build_natseg(int sd, int type, const char *ifname,
 static void
 npfctl_fill_table(nl_table_t *tl, u_int type, const char *fname)
 {
-	struct cdbw *cdbw;
+	struct cdbw *cdbw = NULL;	/* XXX: gcc */
 	char *buf = NULL;
 	int l = 0;
 	FILE *fp;
