@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.36 2014/02/06 02:51:28 rmind Exp $
+.\"    $NetBSD: npf.conf.5,v 1.37 2014/02/06 07:36:36 wiz Exp $
 .\"
 .\" Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -85,7 +85,7 @@ The following is an example of table definition:
 table <black> type hash dynamic
 .Pp
 .Ed
-Currently, tables support two storage types: "hash", "tree" or "cdb".
+Currently, tables support three storage types: "hash", "tree", or "cdb".
 They can also be "dynamic" or static i.e. loaded from the specified file.
 .Pp
 The file should contain a list of IP addresses and/or networks in the form of:
