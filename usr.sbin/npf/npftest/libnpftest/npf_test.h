@@ -57,7 +57,7 @@ void		mbuf_icmp_append(struct mbuf *, struct mbuf *);
 
 bool		npf_nbuf_test(bool);
 bool		npf_bpf_test(bool);
-bool		npf_table_test(bool);
+bool		npf_table_test(bool, void *, size_t);
 bool		npf_state_test(bool);
 
 bool		npf_rule_test(bool);
