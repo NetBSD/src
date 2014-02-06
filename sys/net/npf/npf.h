@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.34 2013/12/06 01:33:37 rmind Exp $	*/
+/*	$NetBSD: npf.h,v 1.35 2014/02/06 02:51:28 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -239,6 +239,7 @@ bool		npf_autounload_p(void);
 /* Table types. */
 #define	NPF_TABLE_HASH			1
 #define	NPF_TABLE_TREE			2
+#define	NPF_TABLE_CDB			3
 
 #define	NPF_TABLE_MAXNAMELEN		32
 
