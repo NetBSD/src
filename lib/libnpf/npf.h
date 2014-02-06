@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.22 2014/02/03 02:21:52 rmind Exp $	*/
+/*	$NetBSD: npf.h,v 1.23 2014/02/06 02:51:28 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -111,6 +111,7 @@ int		npf_nat_insert(nl_config_t *, nl_nat_t *, pri_t);
 nl_table_t *	npf_table_create(const char *, u_int, int);
 int		npf_table_add_entry(nl_table_t *, int,
 		    const npf_addr_t *, const npf_netmask_t);
+int		npf_table_setdata(nl_table_t *, const void *, size_t);
 int		npf_table_insert(nl_config_t *, nl_table_t *);
 void		npf_table_destroy(nl_table_t *);
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: npf.c,v 1.25 2014/02/03 02:21:52 rmind Exp $	*/
+/*	$NetBSD: npf.c,v 1.26 2014/02/06 02:51:28 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2010-2013 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010-2014 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.25 2014/02/03 02:21:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.26 2014/02/06 02:51:28 rmind Exp $");
 
 #include <sys/types.h>
 #include <netinet/in_systm.h>
@@ -958,6 +958,20 @@ npf_table_add_entry(nl_table_t *tl, int af, const npf_addr_t *addr,
 	tblents = prop_dictionary_get(tldict, "entries");
 	prop_array_add(tblents, entdict);
 	prop_object_release(entdict);
+	return 0;
+}
+
+int
+npf_table_setdata(nl_table_t *tl, const void *blob, size_t len)
+{
+	prop_dictionary_t tldict = tl->ntl_dict;
+	prop_data_t bobj;
+
+	if ((bobj = prop_data_create_data(blob, len)) == NULL) {
+		return ENOMEM;
+	}
+	prop_dictionary_set(tldict, "data", bobj);
+	prop_object_release(bobj);
 	return 0;
 }
 

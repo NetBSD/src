@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_scan.l,v 1.16 2013/11/19 00:28:41 rmind Exp $	*/
+/*	$NetBSD: npf_scan.l,v 1.17 2014/02/06 02:51:28 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -91,6 +91,7 @@ table			return TABLE;
 type			return TYPE;
 hash			return HASH;
 tree			return TREE;
+cdb			return CDB;
 static			return TSTATIC;
 dynamic			return TDYNAMIC;
 file			return TFILE;

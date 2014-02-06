@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_ctl.c,v 1.32 2013/11/12 00:46:34 rmind Exp $	*/
+/*	$NetBSD: npf_ctl.c,v 1.33 2014/02/06 02:51:28 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.32 2013/11/12 00:46:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.33 2014/02/06 02:51:28 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -77,6 +77,34 @@ npfctl_switch(void *data)
 }
 
 static int __noinline
+npf_mk_table_entries(npf_table_t *t, prop_array_t entries)
+{
+	prop_object_iterator_t eit;
+	prop_dictionary_t ent;
+	int error = 0;
+
+	/* Fill all the entries. */
+	eit = prop_array_iterator(entries);
+	while ((ent = prop_object_iterator_next(eit)) != NULL) {
+		const npf_addr_t *addr;
+		npf_netmask_t mask;
+		int alen;
+
+		/* Get address and mask.  Add a table entry. */
+		prop_object_t obj = prop_dictionary_get(ent, "addr");
+		addr = (const npf_addr_t *)prop_data_data_nocopy(obj);
+		prop_dictionary_get_uint8(ent, "mask", &mask);
+		alen = prop_data_size(obj);
+
+		error = npf_table_insert(t, alen, addr, mask);
+		if (error)
+			break;
+	}
+	prop_object_iterator_release(eit);
+	return error;
+}
+
+static int __noinline
 npf_mk_tables(npf_tableset_t *tblset, prop_array_t tables,
     prop_dictionary_t errdict)
 {
@@ -92,9 +120,6 @@ npf_mk_tables(npf_tableset_t *tblset, prop_array_t tables,
 
 	it = prop_array_iterator(tables);
 	while ((tbldict = prop_object_iterator_next(it)) != NULL) {
-		prop_dictionary_t ent;
-		prop_object_iterator_t eit;
-		prop_array_t entries;
 		const char *name;
 		npf_table_t *t;
 		u_int tid;
@@ -121,8 +146,25 @@ npf_mk_tables(npf_tableset_t *tblset, prop_array_t tables,
 			break;
 		}
 
+		/* Get the entries or binary data. */
+		prop_array_t entries = prop_dictionary_get(tbldict, "entries");
+		if (prop_object_type(entries) != PROP_TYPE_ARRAY) {
+			NPF_ERR_DEBUG(errdict);
+			error = EINVAL;
+			break;
+		}
+		prop_object_t obj = prop_dictionary_get(tbldict, "data");
+		void *blob = prop_data_data(obj);
+		size_t size = prop_data_size(obj);
+
+		if (type == NPF_TABLE_CDB && (blob == NULL || size == 0)) {
+			NPF_ERR_DEBUG(errdict);
+			error = EINVAL;
+			break;
+		}
+
 		/* Create and insert the table. */
-		t = npf_table_create(name, tid, type, 1024);	/* XXX */
+		t = npf_table_create(name, tid, type, blob, size);
 		if (t == NULL) {
 			NPF_ERR_DEBUG(errdict);
 			error = ENOMEM;
@@ -131,32 +173,10 @@ npf_mk_tables(npf_tableset_t *tblset, prop_array_t tables,
 		error = npf_tableset_insert(tblset, t);
 		KASSERT(error == 0);
 
-		/* Entries. */
-		entries = prop_dictionary_get(tbldict, "entries");
-		if (prop_object_type(entries) != PROP_TYPE_ARRAY) {
+		if ((error = npf_mk_table_entries(t, entries)) != 0) {
 			NPF_ERR_DEBUG(errdict);
-			error = EINVAL;
 			break;
 		}
-		eit = prop_array_iterator(entries);
-		while ((ent = prop_object_iterator_next(eit)) != NULL) {
-			const npf_addr_t *addr;
-			npf_netmask_t mask;
-			int alen;
-
-			/* Get address and mask.  Add a table entry. */
-			prop_object_t obj = prop_dictionary_get(ent, "addr");
-			addr = (const npf_addr_t *)prop_data_data_nocopy(obj);
-			prop_dictionary_get_uint8(ent, "mask", &mask);
-			alen = prop_data_size(obj);
-
-			error = npf_table_insert(t, alen, addr, mask);
-			if (error)
-				break;
-		}
-		prop_object_iterator_release(eit);
-		if (error)
-			break;
 	}
 	prop_object_iterator_release(it);
 	/*
