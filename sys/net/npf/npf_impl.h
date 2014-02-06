@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.45 2013/12/06 01:33:37 rmind Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.46 2014/02/06 02:51:28 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -229,7 +229,7 @@ npf_table_t *	npf_tableset_getbyid(npf_tableset_t *, u_int);
 void		npf_tableset_reload(npf_tableset_t *, npf_tableset_t *);
 void		npf_tableset_syncdict(const npf_tableset_t *, prop_dictionary_t);
 
-npf_table_t *	npf_table_create(const char *, u_int, int, size_t);
+npf_table_t *	npf_table_create(const char *, u_int, int, void *, size_t);
 void		npf_table_destroy(npf_table_t *);
 
 int		npf_table_check(npf_tableset_t *, const char *, u_int, int);

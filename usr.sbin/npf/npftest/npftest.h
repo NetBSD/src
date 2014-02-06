@@ -23,7 +23,7 @@ void		rumpns_npf_test_conc(bool, unsigned);
 
 bool		rumpns_npf_nbuf_test(bool);
 bool		rumpns_npf_bpf_test(bool);
-bool		rumpns_npf_table_test(bool);
+bool		rumpns_npf_table_test(bool, void *, size_t);
 bool		rumpns_npf_state_test(bool);
 
 bool		rumpns_npf_rule_test(bool);
