@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_rename.c,v 1.9 2013/11/04 19:58:02 christos Exp $	*/
+/*	$NetBSD: ufs_rename.c,v 1.10 2014/02/06 10:57:12 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,12 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_rename.c,v 1.9 2013/11/04 19:58:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_rename.c,v 1.10 2014/02/06 10:57:12 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/errno.h>
-#include <sys/fstrans.h>
 #include <sys/kauth.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
@@ -334,7 +333,6 @@ ufs_gro_rename(struct mount *mp, kauth_cred_t cred,
 	 * Commence hacking of the data on disk.
 	 */
 
-	fstrans_start(mp, FSTRANS_SHARED);
 	error = UFS_WAPBL_BEGIN(mp);
 	if (error)
 		goto ihateyou;
@@ -555,7 +553,6 @@ arghmybrainhurts:
 	UFS_WAPBL_END(mp);
 
 ihateyou:
-	fstrans_done(mp);
 	return error;
 }
 
@@ -786,7 +783,6 @@ ufs_gro_remove(struct mount *mp, kauth_cred_t cred,
 	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
 	KASSERT(cnp->cn_nameiop == DELETE);
 
-	fstrans_start(mp, FSTRANS_SHARED);
 	error = UFS_WAPBL_BEGIN(mp);
 	if (error)
 		goto out0;
@@ -800,7 +796,7 @@ ufs_gro_remove(struct mount *mp, kauth_cred_t cred,
 	VN_KNOTE(vp, (VTOI(vp)->i_nlink? NOTE_LINK : NOTE_DELETE));
 
 out1:	UFS_WAPBL_END(mp);
-out0:	fstrans_done(mp);
+out0:
 	return error;
 }
 
