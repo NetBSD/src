@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.56 2014/01/04 12:36:49 hannken Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.57 2014/02/06 16:18:38 hannken Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.56 2014/01/04 12:36:49 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.57 2014/02/06 16:18:38 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -272,7 +272,6 @@ static int
 tmpfs_vget(struct mount *mp, ino_t ino, vnode_t **vpp)
 {
 
-	printf("tmpfs_vget called; need for it unknown yet\n");
 	return EOPNOTSUPP;
 }
 
