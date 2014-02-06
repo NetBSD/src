@@ -9,6 +9,7 @@ OTHER_READONLY_SECTIONS="
 
 case "$target" in
   arm*-*-netbsdelf*-*eabihf*)
+    LIB_PATH='=/usr/lib'
     ;;
   arm*-*-netbsdelf*)
     LIB_PATH='=/usr/lib/eabihf'
