@@ -12,6 +12,7 @@ case "$target" in
     LIB_PATH='=/usr/lib/eabi'
     ;;
   arm*-*-netbsdelf*-*eabi*)
+    LIB_PATH='=/usr/lib'
     ;;
   arm*-*-netbsdelf*)
     LIB_PATH='=/usr/lib/eabi'
