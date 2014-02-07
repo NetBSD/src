@@ -1,4 +1,4 @@
-#	$NetBSD: vnode_if.src,v 1.65 2014/01/23 10:11:55 hannken Exp $
+#	$NetBSD: vnode_if.src,v 1.66 2014/02/07 15:26:42 hannken Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -61,27 +61,17 @@ vop_bwrite {
  
 #
 #% lookup     dvp     L L L
-#% lookup     vpp     - L -
+#% lookup     vpp     - U -
 #
-# XXX - the lookup locking protocol defies simple description.
 #    Note especially that *vpp may equal dvp.
 #
 #    More details:
-#     There are three types of lookups: ".", ".." (ISDOTDOT), and other.
-#     On successful lookup of ".", a reference is added to dvp, and it
-#          is returned in *vpp.
-#     To look up ISDOTDOT, dvp is unlocked, the ".." node is locked, and
-#          then dvp is relocked.  This preserves the protocol of always
-#          locking nodes from root ("/") downward and prevents deadlock.
-#     Other lookups find the named node (creating the vnode if needed) and
-#          return it, locked, in *vpp.
+#     All lookups find the named node (creating the vnode if needed) and
+#          return it, referenced and unlocked, in *vpp.
 #     On failure, *vpp is NULL, and *dvp is left locked.
-#	
-#     *vpp is always locked on return if the operation succeeds.
-#          Typically, if *vpp == dvp, you need to release twice, but
-#          unlock only once.
 #
 vop_lookup {
+	VERSION 2
 	IN struct vnode *dvp;
 	OUT WILLMAKE struct vnode **vpp;
 	IN struct componentname *cnp;
