@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.45 2014/02/04 21:09:23 dsl Exp $	*/
+/*	$NetBSD: fpu.c,v 1.46 2014/02/07 22:40:22 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.45 2014/02/04 21:09:23 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.46 2014/02/07 22:40:22 dsl Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -179,7 +179,7 @@ fputrap(struct trapframe *frame)
 {
 	struct lwp *l = curlwp;
 	struct pcb *pcb = lwp_getpcb(l);
-	struct savefpu *sfp = &pcb->pcb_savefpu;
+	union savefpu *sfp = &pcb->pcb_savefpu;
 	uint32_t mxcsr, statbits;
 	ksiginfo_t ksi;
 
@@ -194,7 +194,7 @@ fputrap(struct trapframe *frame)
 	fxsave(sfp);
 
 	if (frame->tf_trapno == T_XMM) {
-		mxcsr = sfp->fp_fxsave.fx_mxcsr;
+		mxcsr = sfp->sv_xmm.fx_mxcsr;
 		statbits = mxcsr;
 		mxcsr &= ~0x3f;
 		x86_ldmxcsr(&mxcsr);
@@ -203,10 +203,10 @@ fputrap(struct trapframe *frame)
 
 		fninit();
 		fwait();
-		cw = sfp->fp_fxsave.fx_fcw;
+		cw = sfp->sv_xmm.fx_cw;
 		fldcw(&cw);
 		fwait();
-		statbits = sfp->fp_fxsave.fx_fsw;
+		statbits = sfp->sv_xmm.fx_sw;
 	}
 	KPREEMPT_ENABLE(l);
 
@@ -300,9 +300,9 @@ fpudna(struct cpu_info *ci)
 	pcb->pcb_fpcpu = ci;
 	if ((l->l_md.md_flags & MDL_USEDFPU) == 0) {
 		fninit();
-		cw = pcb->pcb_savefpu.fp_fxsave.fx_fcw;
+		cw = pcb->pcb_savefpu.sv_xmm.fx_cw;
 		fldcw(&cw);
-		mxcsr = pcb->pcb_savefpu.fp_fxsave.fx_mxcsr;
+		mxcsr = pcb->pcb_savefpu.sv_xmm.fx_mxcsr;
 		x86_ldmxcsr(&mxcsr);
 		l->l_md.md_flags |= MDL_USEDFPU;
 	} else {

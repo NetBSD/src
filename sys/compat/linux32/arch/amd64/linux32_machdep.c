@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_machdep.c,v 1.33 2013/12/01 01:05:16 christos Exp $ */
+/*	$NetBSD: linux32_machdep.c,v 1.34 2014/02/07 22:40:22 dsl Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.33 2013/12/01 01:05:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.34 2014/02/07 22:40:22 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -286,9 +286,9 @@ linux32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	l->l_md.md_flags &= ~MDL_USEDFPU;
 	l->l_md.md_flags |= MDL_COMPAT32;	/* Forces iret not sysret */
 	pcb->pcb_flags = PCB_COMPAT32;
-	pcb->pcb_savefpu.fp_fxsave.fx_fcw = __Linux_NPXCW__;
-	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr = __INITIAL_MXCSR__;
-	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr_mask = __INITIAL_MXCSR_MASK__;
+	pcb->pcb_savefpu.sv_xmm.fx_cw = __Linux_NPXCW__;
+	pcb->pcb_savefpu.sv_xmm.fx_mxcsr = __INITIAL_MXCSR__;
+	pcb->pcb_savefpu.sv_xmm.fx_mxcsr_mask = __INITIAL_MXCSR_MASK__;
 
 	p->p_flag |= PK_32;
 
