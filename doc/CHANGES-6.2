@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.88 2014/02/07 13:23:09 sborrill Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.89 2014/02/07 13:28:24 sborrill Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -1308,4 +1308,12 @@ sys/arch/evbmips/conf/LOONGSON			1.22
 	Make sysinst much more useable when used with the VGA display
 	on LOONGSON.
 	[bouyer, #ticket 1019]
+
+external/gpl3/gcc/dist/gcc/config/mips/mips.c			1.2-1.2
+
+	Fix a problem with lazy symbols binding caused by an
+	overly aggressive optimisation. This bug shows up with
+	Xorg, preventing xf86-video-sis and xf86-video-silicon
+	modules from being loaded.
+	[bouyer, #ticket 1020]
 
