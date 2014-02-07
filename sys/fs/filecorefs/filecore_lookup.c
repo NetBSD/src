@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_lookup.c,v 1.18 2013/10/20 17:14:48 christos Exp $	*/
+/*	$NetBSD: filecore_lookup.c,v 1.19 2014/02/07 15:29:21 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.18 2013/10/20 17:14:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.19 2014/02/07 15:29:21 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -120,7 +120,7 @@ struct	nchstats filecore_nchstats;
 int
 filecore_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -316,5 +316,7 @@ found:
 	 */
 	cache_enter(vdp, *vpp, cnp->cn_nameptr, cnp->cn_namelen,
 		    cnp->cn_flags);
+	if (*vpp != vdp)
+		VOP_UNLOCK(*vpp);
 	return 0;
 }
