@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.73 2013/04/08 21:12:33 skrll Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.74 2014/02/07 15:29:22 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.73 2013/04/08 21:12:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.74 2014/02/07 15:29:22 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ struct fifoinfo {
 static int
 fifo_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnode		*a_dvp;
 		struct vnode		**a_vpp;
 		struct componentname	*a_cnp;

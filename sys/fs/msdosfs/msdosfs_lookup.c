@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.31 2014/01/23 10:13:56 hannken Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.32 2014/02/07 15:29:21 hannken Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -52,7 +52,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.31 2014/01/23 10:13:56 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.32 2014/02/07 15:29:21 hannken Exp $");
 
 #include <sys/param.h>
 
@@ -94,7 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.31 2014/01/23 10:13:56 hannken 
 int
 msdosfs_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -494,6 +494,7 @@ foundroot:
 		if ((error = deget(pmp, cluster, blkoff, &tdp)) != 0)
 			return (error);
 		*vpp = DETOV(tdp);
+		VOP_UNLOCK(*vpp);
 		return (0);
 	}
 
@@ -525,6 +526,7 @@ foundroot:
 		if ((error = deget(pmp, cluster, blkoff, &tdp)) != 0)
 			return (error);
 		*vpp = DETOV(tdp);
+		VOP_UNLOCK(*vpp);
 		return (0);
 	}
 
@@ -569,6 +571,9 @@ foundroot:
 	 * Insert name into cache if appropriate.
 	 */
 	cache_enter(vdp, *vpp, cnp->cn_nameptr, cnp->cn_namelen, cnp->cn_flags);
+
+	if (*vpp != vdp)
+		VOP_UNLOCK(*vpp);
 
 	return 0;
 }
