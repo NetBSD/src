@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_nat_test.c,v 1.6 2014/02/05 03:49:48 rmind Exp $	*/
+/*	$NetBSD: npf_nat_test.c,v 1.7 2014/02/07 23:45:22 rmind Exp $	*/
 
 /*
  * NPF NAT test.
@@ -68,7 +68,7 @@ static const struct test_case {
 
 	/*
 	 * NAT redirect (inbound NAT):
-	 *	map $ext_if dynamic $local_ip1 port 8000 <- $pub_ip1 port 8000
+	 *	map $ext_if dynamic $local_ip1 port 6000 <- $pub_ip1 port 8000
 	 */
 	{
 		REMOTE_IP2,	16000,		PUB_IP1,	8000,
@@ -104,6 +104,21 @@ static const struct test_case {
 		REMOTE_IP2,	9000,		PUB_IP2,	18000,
 		NPF_BINAT,	IFNAME_EXT,	PFIL_IN,
 		RESULT_PASS,	LOCAL_IP2,	18000
+	},
+
+	/*
+	 * Static NAT: plain translation both ways.
+	 *	map $ext_if static $local_ip3 <-> $pub_ip3
+	 */
+	{
+		LOCAL_IP3,	19000,		REMOTE_IP3,	10000,
+		NPF_BINAT,	IFNAME_EXT,	PFIL_OUT,
+		RESULT_PASS,	PUB_IP3,	19000
+	},
+	{
+		REMOTE_IP3,	10000,		PUB_IP3,	19000,
+		NPF_BINAT,	IFNAME_EXT,	PFIL_IN,
+		RESULT_PASS,	LOCAL_IP3,	19000
 	},
 
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.23 2014/02/06 02:51:28 rmind Exp $	*/
+/*	$NetBSD: npf.h,v 1.24 2014/02/07 23:45:22 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -136,6 +136,7 @@ int		npf_table_gettype(nl_table_t *);
 
 nl_nat_t *	npf_nat_iterate(nl_config_t *);
 int		npf_nat_gettype(nl_nat_t *);
+unsigned	npf_nat_getflags(nl_nat_t *);
 void		npf_nat_getmap(nl_nat_t *, npf_addr_t *, size_t *, in_port_t *);
 
 nl_rproc_t *	npf_rproc_iterate(nl_config_t *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.26 2014/02/06 02:51:28 rmind Exp $	*/
+/*	$NetBSD: npf.c,v 1.27 2014/02/07 23:45:22 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.26 2014/02/06 02:51:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.27 2014/02/07 23:45:22 rmind Exp $");
 
 #include <sys/types.h>
 #include <netinet/in_systm.h>
@@ -872,6 +872,16 @@ npf_nat_gettype(nl_nat_t *nt)
 
 	prop_dictionary_get_int32(rldict, "type", &type);
 	return type;
+}
+
+u_int
+npf_nat_getflags(nl_nat_t *nt)
+{
+	prop_dictionary_t rldict = nt->nrl_dict;
+	unsigned flags = 0;
+
+	prop_dictionary_get_uint32(rldict, "flags", &flags);
+	return flags;
 }
 
 void
