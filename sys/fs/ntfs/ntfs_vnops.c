@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.55 2013/03/18 19:35:38 plunky Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.56 2014/02/07 15:29:21 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.55 2013/03/18 19:35:38 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.56 2014/02/07 15:29:21 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -649,7 +649,7 @@ ntfs_readdir(void *v)
 int
 ntfs_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -729,6 +729,9 @@ ntfs_lookup(void *v)
 
 	cache_enter(dvp, *ap->a_vpp, cnp->cn_nameptr, cnp->cn_namelen,
 		    cnp->cn_flags);
+
+	if (*ap->a_vpp != dvp)
+		VOP_UNLOCK(*ap->a_vpp);
 
 	return error;
 }

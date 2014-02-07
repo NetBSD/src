@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vnops.c,v 1.15 2014/01/23 10:13:56 hannken Exp $	*/
+/*	$NetBSD: v7fs_vnops.c,v 1.16 2014/02/07 15:29:22 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.15 2014/01/23 10:13:56 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.16 2014/02/07 15:29:22 hannken Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -90,7 +90,7 @@ v7fs_mode_to_d_type(v7fs_mode_t mode)
 int
 v7fs_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 				  struct vnode *a_dvp;
 				  struct vnode **a_vpp;
 				  struct componentname *a_cnp;
@@ -180,6 +180,8 @@ v7fs_lookup(void *v)
 	if (isdotdot) {
 		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 	}
+	if (vpp != dvp)
+		VOP_UNLOCK(vpp);
 	*a->a_vpp = vpp;
 	DPRINTF("done.(%s)\n", name);
 
