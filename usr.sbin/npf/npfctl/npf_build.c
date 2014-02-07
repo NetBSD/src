@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_build.c,v 1.34 2014/02/06 18:48:09 christos Exp $	*/
+/*	$NetBSD: npf_build.c,v 1.35 2014/02/07 23:45:22 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.34 2014/02/06 18:48:09 christos Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.35 2014/02/07 23:45:22 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -535,7 +535,7 @@ npfctl_build_rule(uint32_t attr, const char *ifname, sa_family_t family,
  */
 static void
 npfctl_build_nat(int type, const char *ifname, sa_family_t family,
-    const addr_port_t *ap, const filt_opts_t *fopts, bool binat)
+    const addr_port_t *ap, const filt_opts_t *fopts, u_int flags)
 {
 	const opt_proto_t op = { .op_proto = -1, .op_opts = NULL };
 	fam_addr_mask_t *am;
@@ -551,36 +551,16 @@ npfctl_build_nat(int type, const char *ifname, sa_family_t family,
 		yyerror("IPv6 NAT is not supported");
 	}
 
-	switch (type) {
-	case NPF_NATOUT:
-		/*
-		 * Outbound NAT (or source NAT) policy, usually used for the
-		 * traditional NAPT.  If it is a half for bi-directional NAT,
-		 * then no port translation with mapping.
-		 */
-		nat = npf_nat_create(NPF_NATOUT, !binat ?
-		    (NPF_NAT_PORTS | NPF_NAT_PORTMAP) : 0,
-		    ifname, &am->fam_addr, am->fam_family, 0);
-		break;
-	case NPF_NATIN:
-		/*
-		 * Inbound NAT (or destination NAT).  Unless bi-NAT, a port
-		 * must be specified, since it has to be redirection.
-		 */
+	if (ap->ap_portrange) {
+		port = npfctl_get_singleport(ap->ap_portrange);
+		flags &= ~NPF_NAT_PORTMAP;
+		flags |= NPF_NAT_PORTS;
+	} else {
 		port = 0;
-		if (!binat) {
-			if (!ap->ap_portrange) {
-				yyerror("inbound port is not specified");
-			}
-			port = npfctl_get_singleport(ap->ap_portrange);
-		}
-		nat = npf_nat_create(NPF_NATIN, !binat ? NPF_NAT_PORTS : 0,
-		    ifname, &am->fam_addr, am->fam_family, port);
-		break;
-	default:
-		assert(false);
 	}
 
+	nat = npf_nat_create(type, flags, ifname,
+	    &am->fam_addr, am->fam_family, port);
 	npfctl_build_code(nat, family, &op, fopts);
 	npf_nat_insert(npf_conf, nat, NPF_PRI_LAST);
 }
@@ -595,20 +575,32 @@ npfctl_build_natseg(int sd, int type, const char *ifname,
 {
 	sa_family_t af = AF_INET;
 	filt_opts_t imfopts;
+	u_int flags;
 	bool binat;
 
-	if (sd == NPFCTL_NAT_STATIC) {
-		yyerror("static NAT is not yet supported");
-	}
-	assert(sd == NPFCTL_NAT_DYNAMIC);
 	assert(ifname != NULL);
 
 	/*
 	 * Bi-directional NAT is a combination of inbound NAT and outbound
-	 * NAT policies.  Note that the translation address is local IP and
-	 * the filter criteria is inverted accordingly.
+	 * NAT policies with the translation segments inverted respectively.
 	 */
 	binat = (NPF_NATIN | NPF_NATOUT) == type;
+
+	switch (sd) {
+	case NPFCTL_NAT_DYNAMIC:
+		/*
+		 * Dynamic NAT: traditional NAPT is expected.  Unless it
+		 * is bi-directional NAT, perform port mapping.
+		 */
+		flags = !binat ? (NPF_NAT_PORTS | NPF_NAT_PORTMAP) : 0;
+		break;
+	case NPFCTL_NAT_STATIC:
+		/* Static NAT: mechanic translation. */
+		flags = NPF_NAT_STATIC;
+		break;
+	default:
+		abort();
+	}
 
 	/*
 	 * If the filter criteria is not specified explicitly, apply implicit
@@ -623,12 +615,12 @@ npfctl_build_natseg(int sd, int type, const char *ifname,
 	if (type & NPF_NATIN) {
 		memset(&imfopts, 0, sizeof(filt_opts_t));
 		memcpy(&imfopts.fo_to, ap2, sizeof(addr_port_t));
-		npfctl_build_nat(NPF_NATIN, ifname, af, ap1, fopts, binat);
+		npfctl_build_nat(NPF_NATIN, ifname, af, ap1, fopts, flags);
 	}
 	if (type & NPF_NATOUT) {
 		memset(&imfopts, 0, sizeof(filt_opts_t));
 		memcpy(&imfopts.fo_from, ap1, sizeof(addr_port_t));
-		npfctl_build_nat(NPF_NATOUT, ifname, af, ap2, fopts, binat);
+		npfctl_build_nat(NPF_NATOUT, ifname, af, ap2, fopts, flags);
 	}
 }
 
