@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.269 2014/01/26 19:16:17 dsl Exp $	*/
+/*	$NetBSD: trap.c,v 1.270 2014/02/07 19:32:50 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.269 2014/01/26 19:16:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.270 2014/02/07 19:32:50 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -220,8 +220,6 @@ xmm_si_code(struct lwp *l)
 		return FPE_FLTOVF;
 	case EN_SW_UNDERFLOW:
 		return FPE_FLTUND;
-	case EN_SW_DATACHAIN:
-		return FPE_FLTSUB;
 	case 0:
 	default:
 		return 0;
