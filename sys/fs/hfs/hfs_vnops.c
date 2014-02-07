@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vnops.c,v 1.28 2013/10/18 19:58:11 christos Exp $	*/
+/*	$NetBSD: hfs_vnops.c,v 1.29 2014/02/07 15:29:21 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.28 2013/10/18 19:58:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.29 2014/02/07 15:29:21 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -320,7 +320,7 @@ const struct vnodeopv_desc hfs_fifoop_opv_desc =
 int
 hfs_vop_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnode * a_dvp;
 		struct vnode ** a_vpp;
 		struct componentname * a_cnp;
@@ -475,6 +475,8 @@ hfs_vop_lookup(void *v)
 	cache_enter(vdp, *vpp, cnp);
 #endif
 	
+	if (*vpp != vdp)
+		VOP_UNLOCK(*vpp);
 	error = 0;
 
 	/* FALLTHROUGH */

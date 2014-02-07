@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vnops.c,v 1.30 2013/03/18 19:35:36 plunky Exp $	*/
+/*	$NetBSD: efs_vnops.c,v 1.31 2014/02/07 15:29:21 hannken Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.30 2013/03/18 19:35:36 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.31 2014/02/07 15:29:21 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ MALLOC_DECLARE(M_EFSTMP);
 static int
 efs_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -124,6 +124,9 @@ efs_lookup(void *v)
 
 	cache_enter(ap->a_dvp, *ap->a_vpp, cnp->cn_nameptr, cnp->cn_namelen,
 		    cnp->cn_flags);
+
+	if (*ap->a_vpp != ap->a_dvp)
+		VOP_UNLOCK(*ap->a_vpp);
 
 	return 0;
 }
