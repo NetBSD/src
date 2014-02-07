@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_show.c,v 1.8 2013/11/22 18:42:02 rmind Exp $	*/
+/*	$NetBSD: npf_show.c,v 1.9 2014/02/07 23:45:22 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_show.c,v 1.8 2013/11/22 18:42:02 rmind Exp $");
+__RCSID("$NetBSD: npf_show.c,v 1.9 2014/02/07 23:45:22 rmind Exp $");
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -378,6 +378,7 @@ npfctl_print_nat(npf_conf_info_t *ctx, nl_nat_t *nt)
 	npf_addr_t addr;
 	in_port_t port;
 	size_t alen;
+	u_int flags;
 	char *seg;
 
 	/* Get the interface. */
@@ -405,12 +406,14 @@ npfctl_print_nat(npf_conf_info_t *ctx, nl_nat_t *nt)
 		seg2 = seg;
 		break;
 	default:
-		assert(false);
+		abort();
 	}
+	flags = npf_nat_getflags(nt);
 
 	/* Print out the NAT policy with the filter criteria. */
-	fprintf(ctx->fp, "map %s dynamic %s %s %s pass ",
-	    ifname, seg1, arrow, seg2);
+	fprintf(ctx->fp, "map %s %s %s %s %s pass ",
+	    ifname, (flags & NPF_NAT_STATIC) ? "static" : "dynamic",
+	    seg1, arrow, seg2);
 	npfctl_print_filter(ctx, rl);
 	fputs("\n", ctx->fp);
 	free(seg);
