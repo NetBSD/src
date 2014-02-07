@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.25 2014/01/04 00:10:02 dsl Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.26 2014/02/07 22:40:22 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.25 2014/01/04 00:10:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.26 2014/02/07 22:40:22 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.25 2014/01/04 00:10:02 dsl Exp
 #include <machine/fpu.h>
 
 static inline struct trapframe *process_frame(struct lwp *);
-static inline struct fxsave64 *process_fpframe(struct lwp *);
+static inline struct fxsave *process_fpframe(struct lwp *);
 #if 0
 static inline int verr_gdt(struct pmap *, int sel);
 static inline int verr_ldt(struct pmap *, int sel);
@@ -82,12 +82,12 @@ process_frame(struct lwp *l)
 	return (l->l_md.md_regs);
 }
 
-static inline struct fxsave64 *
+static inline struct fxsave *
 process_fpframe(struct lwp *l)
 {
 	struct pcb *pcb = lwp_getpcb(l);
 
-	return &pcb->pcb_savefpu.fp_fxsave;
+	return &pcb->pcb_savefpu.sv_xmm;
 }
 
 int
@@ -105,7 +105,7 @@ process_read_regs(struct lwp *l, struct reg *regs)
 int
 process_read_fpregs(struct lwp *l, struct fpreg *regs,size_t *sz)
 {
-	struct fxsave64 *frame = process_fpframe(l);
+	struct fxsave *frame = process_fpframe(l);
 
 	if (l->l_md.md_flags & MDL_USEDFPU) {
 		fpusave_lwp(l, true);
@@ -118,13 +118,13 @@ process_read_fpregs(struct lwp *l, struct fpreg *regs,size_t *sz)
 		 * The initial control word was already set by setregs(), so
 		 * save it temporarily.
 		 */
-		cw = frame->fx_fcw;
+		cw = frame->fx_cw;
 		mxcsr = frame->fx_mxcsr;
 		mxcsr_mask = frame->fx_mxcsr_mask;
 		memset(frame, 0, sizeof(*regs));
-		frame->fx_fcw = cw;
-		frame->fx_fsw = 0x0000;
-		frame->fx_ftw = 0x00;	/* abridged tag; all empty */
+		frame->fx_cw = cw;
+		frame->fx_sw = 0x0000;
+		frame->fx_tw = 0x00;	/* abridged tag; all empty */
 		frame->fx_mxcsr = mxcsr;
 		frame->fx_mxcsr_mask = mxcsr_mask;
 		l->l_md.md_flags |= MDL_USEDFPU;
@@ -160,7 +160,7 @@ process_write_regs(struct lwp *l, const struct reg *regp)
 int
 process_write_fpregs(struct lwp *l, const struct fpreg *regs, size_t sz)
 {
-	struct fxsave64 *frame = process_fpframe(l);
+	struct fxsave *frame = process_fpframe(l);
 
 	if (l->l_md.md_flags & MDL_USEDFPU) {
 		fpusave_lwp(l, false);

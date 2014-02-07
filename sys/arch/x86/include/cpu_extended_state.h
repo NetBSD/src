@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_extended_state.h,v 1.1 2014/02/07 19:36:15 dsl Exp $	*/
+/*	$NetBSD: cpu_extended_state.h,v 1.2 2014/02/07 22:40:22 dsl Exp $	*/
 
 #ifndef _X86_CPU_EXTENDED_STATE_H_
 #define _X86_CPU_EXTENDED_STATE_H_
@@ -118,7 +118,7 @@ __CTASSERT_NOLINT(sizeof (struct fxsave) == 512);
 
 /* The end of the fsave buffer can be used by the operating system */
 struct fxsave_os {
-	uint8_t	fxo_fxsave[offsetof(struct fxsave, fx_kernel)];
+	uint8_t	fxo_fxsave[512 - 48];
 	/* 48 bytes available */
 };
 
@@ -237,6 +237,12 @@ __CTASSERT(sizeof (struct xsave_ymm) == 256);
  * Bits 16-31 must be zero.
  */
 #define	__INITIAL_MXCSR__	0x1f80
+#define	__INITIAL_MXCSR_MASK__	0xffbf
+
+#ifdef _KERNEL
+void process_xmm_to_s87(const struct fxsave *, struct save87 *);
+void process_s87_to_xmm(const struct save87 *, struct fxsave *);
+#endif
 
 
 #endif /* _X86_CPU_EXTENDED_STATE_H_ */

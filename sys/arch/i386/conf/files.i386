@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.372 2014/01/26 19:16:16 dsl Exp $
+#	$NetBSD: files.i386,v 1.373 2014/02/07 22:40:22 dsl Exp $
 #
 # new style config file for i386 architecture
 #
@@ -79,6 +79,7 @@ file	arch/i386/i386/machdep.c
 file 	arch/i386/i386/longrun.c
 file	arch/i386/i386/mtrr_k6.c	mtrr
 file	arch/i386/i386/process_machdep.c
+file	arch/x86/x86/convert_xmm_s87.c
 file	arch/i386/i386/trap.c
 file	dev/cons.c
 file	arch/i386/isa/npx.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.22 2014/01/19 10:30:19 dsl Exp $	*/
+/*	$NetBSD: pcb.h,v 1.23 2014/02/07 22:40:22 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@ struct pcb {
 	uint64_t pcb_rbp;
 	uint64_t pcb_usersp;
 	uint32_t pcb_unused[2];		/* unused */
-	struct	savefpu pcb_savefpu __aligned(16); /* floating point state */
+	union	savefpu pcb_savefpu __aligned(16); /* floating point state */
 	uint32_t pcb_unused_1[4];	/* unused */
 	void     *pcb_onfault;		/* copyin/out fault recovery */
 	struct cpu_info *pcb_fpcpu;	/* cpu holding our fp state. */
