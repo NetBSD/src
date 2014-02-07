@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.84 2014/02/07 11:33:49 sborrill Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.85 2014/02/07 11:41:22 sborrill Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -1289,4 +1289,10 @@ sys/dev/usb/usb_subr.c				1.190, 1.192
 	Reload the full device descriptor after re-establishing the
 	default pipe with the new address.
 	[skrll, #1015]
+
+sys/arch/x86/include/db_machdep.h		1.4
+sys/arch/i386/i386/db_machdep.c			1.5
+
+	Fix ddb backtrace for softintr (i386).
+	[christos, #1017]
 
