@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.201 2014/01/09 00:57:25 dholland Exp $	*/
+/*	$NetBSD: machdep.c,v 1.202 2014/02/07 22:40:22 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.201 2014/01/09 00:57:25 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.202 2014/02/07 22:40:22 dsl Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1341,11 +1341,11 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	l->l_md.md_flags &= ~MDL_USEDFPU;
 	pcb->pcb_flags = 0;
 	if (pack->ep_osversion >= 699002600)
-		pcb->pcb_savefpu.fp_fxsave.fx_fcw = __NetBSD_NPXCW__;
+		pcb->pcb_savefpu.sv_xmm.fx_cw = __NetBSD_NPXCW__;
 	else
-		pcb->pcb_savefpu.fp_fxsave.fx_fcw = __NetBSD_COMPAT_NPXCW__;
-	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr = __INITIAL_MXCSR__;
-	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr_mask = __INITIAL_MXCSR_MASK__;
+		pcb->pcb_savefpu.sv_xmm.fx_cw = __NetBSD_COMPAT_NPXCW__;
+	pcb->pcb_savefpu.sv_xmm.fx_mxcsr = __INITIAL_MXCSR__;
+	pcb->pcb_savefpu.sv_xmm.fx_mxcsr_mask = __INITIAL_MXCSR_MASK__;
 
 	l->l_proc->p_flag &= ~PK_32;
 
@@ -1939,7 +1939,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 		if (pcb->pcb_fpcpu) {
 			fpusave_lwp(l, true);
 		}
-		memcpy(mcp->__fpregs, &pcb->pcb_savefpu.fp_fxsave,
+		memcpy(mcp->__fpregs, &pcb->pcb_savefpu.sv_xmm,
 		    sizeof (mcp->__fpregs));
 		*flags |= _UC_FPU;
 	}
@@ -1995,7 +1995,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		fpusave_lwp(l, false);
 
 	if ((flags & _UC_FPU) != 0) {
-		memcpy(&pcb->pcb_savefpu.fp_fxsave, mcp->__fpregs,
+		memcpy(&pcb->pcb_savefpu.sv_xmm, mcp->__fpregs,
 		    sizeof (mcp->__fpregs));
 		l->l_md.md_flags |= MDL_USEDFPU;
 	}
