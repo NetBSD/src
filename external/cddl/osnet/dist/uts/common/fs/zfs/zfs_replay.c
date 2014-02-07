@@ -572,6 +572,12 @@ zfs_replay_remove(zfsvfs_t *zfsvfs, lr_remove_t *lr, boolean_t byteswap)
 		VOP_UNLOCK(ZTOV(dzp));
 		goto fail;
 	}
+	error = vn_lock(vp, LK_EXCLUSIVE);
+	if (error != 0) {
+		VOP_UNLOCK(ZTOV(dzp));
+		vrele(vp);
+		goto fail;
+	}
 
 	switch ((int)lr->lr_common.lrc_txtype) {
 	case TX_REMOVE:
@@ -667,7 +673,6 @@ zfs_replay_rename(zfsvfs_t *zfsvfs, lr_rename_t *lr, boolean_t byteswap)
 	VOP_UNLOCK(ZTOV(sdzp));
 	if (error != 0)
 		goto fail;
-	VOP_UNLOCK(svp);
 
 	tcn.cn_nameptr = tname;
 	tcn.cn_namelen = strlen(tname);
@@ -682,6 +687,13 @@ zfs_replay_rename(zfsvfs_t *zfsvfs, lr_rename_t *lr, boolean_t byteswap)
 	else if (error != 0) {
 		VOP_UNLOCK(ZTOV(tdzp));
 		goto fail;
+	} else {
+		error = vn_lock(tvp, LK_EXCLUSIVE);
+		if (error != 0) {
+			VOP_UNLOCK(ZTOV(tdzp));
+			vrele(tvp);
+			goto fail;
+		}
 	}
 
 	error = VOP_RENAME(ZTOV(sdzp), svp, &scn, ZTOV(tdzp), tvp, &tcn /*,vflg*/);

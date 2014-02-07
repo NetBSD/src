@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.93 2014/01/20 07:47:22 hannken Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.94 2014/02/07 15:29:22 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.93 2014/01/20 07:47:22 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.94 2014/02/07 15:29:22 hannken Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -464,28 +464,6 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 	 */
 	ncp = NULL;
 #endif /* DEBUG */
-
-	if (vp == dvp) {	/* lookup on "." */
-		error = 0;
-	} else if (cnflags & ISDOTDOT) {
-		VOP_UNLOCK(dvp);
-		error = vn_lock(vp, LK_EXCLUSIVE);
-		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
-	} else {
-		error = vn_lock(vp, LK_EXCLUSIVE);
-	}
-
-	/*
-	 * Check that the lock succeeded.
-	 */
-	if (error) {
-		/* We don't have the right lock, but this is only for stats. */
-		COUNT(cpup->cpu_stats, ncs_badhits);
-
-		vrele(vp);
-		/* found nothing */
-		return 0;
-	}
 
 	/* We don't have the right lock, but this is only for stats. */
 	COUNT(cpup->cpu_stats, ncs_goodhits);

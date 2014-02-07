@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.53 2014/01/17 10:55:02 hannken Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.54 2014/02/07 15:29:22 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.53 2014/01/17 10:55:02 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.54 2014/02/07 15:29:22 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,7 +138,7 @@ dead_bmap(void *v)
 int
 dead_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;

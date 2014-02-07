@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.87 2012/04/30 22:51:28 rmind Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.88 2014/02/07 15:29:22 hannken Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.87 2012/04/30 22:51:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.88 2014/02/07 15:29:22 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -199,8 +199,18 @@ procfs_unmount(struct mount *mp, int mntflags)
 int
 procfs_root(struct mount *mp, struct vnode **vpp)
 {
+	int error;
 
-	return (procfs_allocvp(mp, vpp, 0, PFSroot, -1, NULL));
+	error = procfs_allocvp(mp, vpp, 0, PFSroot, -1, NULL);
+	if (error == 0) {
+		error = vn_lock(*vpp, LK_EXCLUSIVE);
+		if (error != 0) {
+			vrele(*vpp);
+			*vpp = NULL;
+		}
+	}
+
+	return error;
 }
 
 /* ARGSUSED */

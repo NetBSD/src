@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vnops.c,v 1.53 2011/07/11 08:27:39 hannken Exp $	*/
+/*	$NetBSD: umap_vnops.c,v 1.54 2014/02/07 15:29:22 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.53 2011/07/11 08:27:39 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.54 2014/02/07 15:29:22 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -331,7 +331,7 @@ umap_bypass(void *v)
 int
 umap_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnodeop_desc *a_desc;
 		struct vnode * a_dvp;
 		struct vnode ** a_vpp;
@@ -401,7 +401,7 @@ umap_lookup(void *v)
 	} else if (vp != NULL) {
 		error = layer_node_create(mp, vp, ap->a_vpp);
 		if (error) {
-			vput(vp);
+			vrele(vp);
 		}
 	}
 

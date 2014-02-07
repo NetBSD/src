@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.51 2014/01/23 10:13:56 hannken Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.52 2014/02/07 15:29:22 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.51 2014/01/23 10:13:56 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.52 2014/02/07 15:29:22 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -228,6 +228,11 @@ union_lookup1(struct vnode *udvp, struct vnode **dvpp, struct vnode **vpp,
         error = VOP_LOOKUP(dvp, &tdvp, cnp);
 	if (error)
 		return (error);
+	error = vn_lock(tdvp, LK_EXCLUSIVE);
+	if (error) {
+		vrele(tdvp);
+		return error;
+	}
 
 	dvp = tdvp;
 
@@ -256,7 +261,7 @@ union_lookup1(struct vnode *udvp, struct vnode **dvpp, struct vnode **vpp,
 int
 union_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnodeop_desc *a_desc;
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
@@ -310,6 +315,8 @@ start:
 		uerror = union_lookup1(um->um_uppervp, &upperdvp,
 					&uppervp, cnp);
 		if (cnp->cn_consume != 0) {
+			if (uppervp != upperdvp)
+				VOP_UNLOCK(uppervp);
 			*ap->a_vpp = uppervp;
 			return (uerror);
 		}
@@ -482,9 +489,13 @@ start:
 			vput(uppervp);
 		if (lowervp != NULLVP)
 			vrele(lowervp);
+		return error;
 	}
 
-	return (error);
+	if (*ap->a_vpp != dvp)
+		VOP_UNLOCK(*ap->a_vpp);
+
+	return 0;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.42 2013/11/05 00:40:33 christos Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.43 2014/02/07 15:29:21 hannken Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.42 2013/11/05 00:40:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.43 2014/02/07 15:29:21 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -582,7 +582,7 @@ ptyfs_access(void *v)
 int
 ptyfs_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnode * a_dvp;
 		struct vnode ** a_vpp;
 		struct componentname * a_cnp;
@@ -621,7 +621,10 @@ ptyfs_lookup(void *v)
 
 		error = ptyfs_allocvp(dvp->v_mount, vpp, PTYFSpts, pty,
 		    curlwp);
-		return error;
+		if (error)
+			return error;
+		VOP_UNLOCK(*vpp);
+		return 0;
 
 	default:
 		return ENOTDIR;

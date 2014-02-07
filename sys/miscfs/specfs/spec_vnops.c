@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.141 2013/09/30 18:58:00 hannken Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.142 2014/02/07 15:29:22 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.141 2013/09/30 18:58:00 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.142 2014/02/07 15:29:22 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -468,7 +468,7 @@ spec_node_destroy(vnode_t *vp)
 int
 spec_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;

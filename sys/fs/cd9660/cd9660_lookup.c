@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_lookup.c,v 1.25 2013/06/23 07:28:36 dholland Exp $	*/
+/*	$NetBSD: cd9660_lookup.c,v 1.26 2014/02/07 15:29:21 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.25 2013/06/23 07:28:36 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.26 2014/02/07 15:29:21 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -94,7 +94,7 @@ struct	nchstats iso_nchstats;
 int
 cd9660_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -402,6 +402,9 @@ found:
 	 * Insert name into cache if appropriate.
 	 */
 	cache_enter(vdp, *vpp, cnp->cn_nameptr, cnp->cn_namelen, cnp->cn_flags);
+
+	if (*vpp != vdp)
+		VOP_UNLOCK(*vpp);
 	return 0;
 }
 

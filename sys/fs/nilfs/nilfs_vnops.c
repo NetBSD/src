@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vnops.c,v 1.26 2014/01/23 10:13:56 hannken Exp $ */
+/* $NetBSD: nilfs_vnops.c,v 1.27 2014/02/07 15:29:21 hannken Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.26 2014/01/23 10:13:56 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.27 2014/02/07 15:29:21 hannken Exp $");
 #endif /* not lint */
 
 
@@ -613,7 +613,7 @@ nilfs_readdir(void *v)
 int
 nilfs_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -771,7 +771,11 @@ out:
 
 	DPRINTFIF(LOOKUP, error, ("nilfs_lookup returing error %d\n", error));
 
-	return error;
+	if (error)
+		return error;
+	if (*vpp != dvp)
+		VOP_UNLOCK(*vpp);
+	return 0;
 }
 
 /* --------------------------------------------------------------------- */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.52 2014/01/23 10:13:56 hannken Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.53 2014/02/07 15:29:21 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.52 2014/01/23 10:13:56 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.53 2014/02/07 15:29:21 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -65,7 +65,7 @@ static void sysvbfs_file_setsize(struct vnode *, size_t);
 int
 sysvbfs_lookup(void *arg)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -118,6 +118,7 @@ sysvbfs_lookup(void *arg)
 			DPRINTF("%s: can't get vnode.\n", __func__);
 			return error;
 		}
+		VOP_UNLOCK(vpp);
 		*a->a_vpp = vpp;
 	}
 
