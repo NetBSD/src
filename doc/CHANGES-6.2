@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.85 2014/02/07 11:41:22 sborrill Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.86 2014/02/07 12:30:11 sborrill Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -1295,4 +1295,9 @@ sys/arch/i386/i386/db_machdep.c			1.5
 
 	Fix ddb backtrace for softintr (i386).
 	[christos, #1017]
+
+sys/arch/hp700/hp700/machdep.c			1.118
+
+	Fix HP715/100 cpu and device detection.
+	[skrll, #1018]
 
