@@ -1,4 +1,4 @@
-/*	$NetBSD: puc.c,v 1.36 2013/07/23 07:40:38 soren Exp $	*/
+/*	$NetBSD: puc.c,v 1.37 2014/02/07 11:51:00 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998, 1999
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.36 2013/07/23 07:40:38 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.37 2014/02/07 11:51:00 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,7 +164,7 @@ puc_attach(device_t parent, device_t self, void *aux)
 		printf(": unknown PCI communications device\n");
 		printf("%s: compile kernel with PUC_PRINT_REGS and larger\n",
 		    device_xname(self));
-		printf("%s: mesage buffer (via 'options MSGBUFSIZE=...'),\n",
+		printf("%s: message buffer (via 'options MSGBUFSIZE=...'),\n",
 		    device_xname(self));
 		printf("%s: and report the result with send-pr\n",
 		    device_xname(self));

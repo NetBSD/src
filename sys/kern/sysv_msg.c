@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.64 2013/07/23 07:03:16 skrll Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.65 2014/02/07 11:51:00 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.64 2013/07/23 07:03:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.65 2014/02/07 11:51:00 msaitoh Exp $");
 
 #define SYSVMSG
 
@@ -249,7 +249,7 @@ msgrealloc(int newmsgmni, int newmsgseg)
 	}
 
 	/*
-	 * Copy all message queue identifiers, mesage headers and buffer
+	 * Copy all message queue identifiers, message headers and buffer
 	 * pools to the new memory location.
 	 */
 	for (msqid = 0; msqid < msginfo.msgmni; msqid++) {
