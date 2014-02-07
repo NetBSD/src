@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.179 2014/01/23 10:13:56 hannken Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.180 2014/02/07 15:29:21 hannken Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.179 2014/01/23 10:13:56 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.180 2014/02/07 15:29:21 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -473,7 +473,7 @@ puffs_abortbutton(struct puffs_mount *pmp, int what,
 int
 puffs_vnop_lookup(void *v)
 {
-        struct vop_lookup_args /* {
+        struct vop_lookup_v2_args /* {
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
@@ -506,17 +506,11 @@ puffs_vnop_lookup(void *v)
 	    cnp->cn_nameptr, dvp, cnp->cn_nameiop));
 
 	/*
-	 * If dotdot cache is enabled, unlock parent, lock ..
-	 * (grand-parent) and relock parent.
+	 * If dotdot cache is enabled, add reference to .. and return.
 	 */
 	if (PUFFS_USE_DOTDOTCACHE(pmp) && (cnp->cn_flags & ISDOTDOT)) {
-		VOP_UNLOCK(dvp);
-
 		vp = VPTOPP(ap->a_dvp)->pn_parent;
 		vref(vp);
-
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 
 		*ap->a_vpp = vp;
 		return 0;
@@ -542,7 +536,7 @@ puffs_vnop_lookup(void *v)
 			if (TIMED_OUT(cpn->pn_cn_timeout)) {
 				cache_purge(cvp);
 				/*
-				 * cached vnode (cvp) is still locked
+				 * cached vnode (cvp) is still referenced
 				 * so that we can reuse it upon a new
 				 * successful lookup. 
 				 */
@@ -582,8 +576,13 @@ puffs_vnop_lookup(void *v)
 		return 0;
 	}
 
-	if (cvp != NULL)
-		mutex_enter(&cpn->pn_sizemtx);
+	if (cvp != NULL) {
+		if (vn_lock(cvp, LK_EXCLUSIVE) != 0) {
+			vrele(cvp);
+			cvp = NULL;
+		} else
+			mutex_enter(&cpn->pn_sizemtx);
+	}
 
 	PUFFS_MSG_ALLOC(vn, lookup);
 	puffs_makecn(&lookup_msg->pvnr_cn, &lookup_msg->pvnr_cn_cred,
@@ -722,6 +721,8 @@ puffs_vnop_lookup(void *v)
 		if (error || (cvp != vp))
 			vput(cvp);
 	}
+	if (error == 0)
+		VOP_UNLOCK(*ap->a_vpp);
 
 	if (cnp->cn_flags & ISDOTDOT)
 		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_lookup.c,v 1.18 2014/01/28 13:25:53 martin Exp $	*/
+/*	$NetBSD: ulfs_lookup.c,v 1.19 2014/02/07 15:29:23 hannken Exp $	*/
 /*  from NetBSD: ufs_lookup.c,v 1.122 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.18 2014/01/28 13:25:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.19 2014/02/07 15:29:23 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lfs.h"
@@ -113,7 +113,7 @@ int	lfs_dirchk = 0;
 int
 ulfs_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -684,6 +684,8 @@ found:
 	error = 0;
 
 out:
+	if (error == 0 && *vpp != vdp)
+		VOP_UNLOCK(*vpp);
 	fstrans_done(vdp->v_mount);
 	return error;
 }

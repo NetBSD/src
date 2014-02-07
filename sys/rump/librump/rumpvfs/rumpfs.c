@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.123 2014/01/23 10:13:57 hannken Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.124 2014/02/07 15:29:23 hannken Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.123 2014/01/23 10:13:57 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.124 2014/02/07 15:29:23 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -653,7 +653,7 @@ freedir(struct rumpfs_node *rnd, struct componentname *cnp)
 static int
 rump_vop_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -797,30 +797,18 @@ rump_vop_lookup(void *v)
 
  getvnode:
 	KASSERT(rn);
-	if (dotdot)
-		VOP_UNLOCK(dvp);
 	mutex_enter(&reclock);
 	if ((vp = rn->rn_vp)) {
 		mutex_enter(vp->v_interlock);
 		mutex_exit(&reclock);
-		if (vget(vp, LK_EXCLUSIVE)) {
-			vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
+		if (vget(vp, 0)) {
 			goto getvnode;
 		}
 		*vpp = vp;
 	} else {
 		mutex_exit(&reclock);
 		rv = makevnode(dvp->v_mount, rn, vpp);
-		if (rv == 0) {
-			rv = vn_lock(*vpp, LK_EXCLUSIVE);
-			if (rv != 0) {
-				vrele(*vpp);
-				*vpp = NULL;
-			}
-		}
 	}
-	if (dotdot)
-		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 
 	return rv;
 }

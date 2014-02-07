@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.303 2014/01/23 10:13:57 hannken Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.304 2014/02/07 15:29:22 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.303 2014/01/23 10:13:57 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.304 2014/02/07 15:29:22 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -761,7 +761,7 @@ nfs_setattrrpc(struct vnode *vp, struct vattr *vap, kauth_cred_t cred, struct lw
 int
 nfs_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnodeop_desc *a_desc;
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
@@ -859,7 +859,7 @@ nfs_lookup(void *v)
 		if ((flags & ISDOTDOT) != 0) {
 			VOP_UNLOCK(dvp);
 		}
-		error = vn_lock(newvp, LK_EXCLUSIVE);
+		error = vn_lock(newvp, LK_SHARED);
 		if ((flags & ISDOTDOT) != 0) {
 			vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 		}
@@ -873,6 +873,7 @@ nfs_lookup(void *v)
 		    && vattr.va_ctime.tv_sec == VTONFS(newvp)->n_ctime) {
 			nfsstats.lookupcache_hits++;
 			KASSERT(newvp->v_type != VNON);
+			VOP_UNLOCK(newvp);
 			return (0);
 		}
 		cache_purge1(newvp, NULL, 0, PURGE_PARENTS);
@@ -1048,8 +1049,11 @@ validate:
 			*vpp = NULL;
 		}
 	}
-
-	return error;
+	if (error)
+		return error;
+	if (newvp != dvp)
+		VOP_UNLOCK(newvp);
+	return 0;
 }
 
 /*

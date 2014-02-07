@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.59 2014/01/23 10:13:56 hannken Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.60 2014/02/07 15:29:22 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.59 2014/01/23 10:13:56 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.60 2014/02/07 15:29:22 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -788,10 +788,7 @@ union_do_lookup(struct vnode *dvp, struct componentname *cnp, kauth_cred_t cred,
 	if (error == 0) {
 		KASSERT(vp != NULL);
 		VOP_ABORTOP(dvp, cnp);
-		if (dvp != vp)
-			vput(vp);
-		else
-			vrele(vp);
+		vrele(vp);
 		error = EEXIST;
 	} else if (error == EJUSTRETURN) {
 		error = 0;
@@ -1188,7 +1185,7 @@ union_check_rmdir(struct union_node *un, kauth_cred_t cred)
 				continue;
 			}
 			if (error == 0)
-				vput(tvp);
+				vrele(tvp);
 			error = ENOTEMPTY;
 		}
 	} while (error == 0 && !eofflag);

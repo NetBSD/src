@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.114 2014/01/23 10:13:56 hannken Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.115 2014/02/07 15:29:22 hannken Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.114 2014/01/23 10:13:56 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.115 2014/02/07 15:29:22 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -124,7 +124,7 @@ const struct vnodeopv_desc tmpfs_vnodeop_opv_desc = {
 int
 tmpfs_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -171,10 +171,10 @@ tmpfs_lookup(void *v)
 	if (cachefound && *vpp == NULLVP) {
 		/* Negative cache hit. */
 		error = ENOENT;
-		goto out;
+		goto out_unlocked;
 	} else if (cachefound) {
 		error = 0;
-		goto out;
+		goto out_unlocked;
 	}
 
 	/*
@@ -302,7 +302,9 @@ done:
 			    cnp->cn_flags);
 	}
 out:
-	KASSERT((*vpp && VOP_ISLOCKED(*vpp)) || error);
+	if (error == 0 && *vpp != dvp)
+		VOP_UNLOCK(*vpp);
+out_unlocked:
 	KASSERT(VOP_ISLOCKED(dvp));
 
 	return error;
