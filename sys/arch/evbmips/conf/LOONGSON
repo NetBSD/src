@@ -1,4 +1,4 @@
-# $NetBSD: LOONGSON,v 1.8 2011/12/18 05:49:26 dholland Exp $
+# $NetBSD: LOONGSON,v 1.8.2.1 2014/02/07 13:22:51 sborrill Exp $
 #
 # LOONGSON machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/evbmips/conf/std.loongson"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GDIUM-$Revision: 1.8 $"
+#ident 		"GDIUM-$Revision: 1.8.2.1 $"
 
 maxusers	16
 
@@ -146,6 +146,7 @@ options 	WSEMUL_VT100
 options		WS_KERNEL_FG=WSCOL_GREEN
 #options 	WSDISPLAY_DEFAULTSCREENS=4
 options 	FONT_GALLANT12x22
+options 	FONT_BOLD8x16
 # compatibility to other console drivers
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 #
