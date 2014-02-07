@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.82 2014/02/03 11:55:03 sborrill Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.83 2014/02/07 11:15:59 sborrill Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -1275,4 +1275,10 @@ sys/kern/kern_exec.c				1.373
 	few bugs in the support functions and document the new limit. From
 	Maxime Villard.
 	[martin, ticket #1023]
+
+sys/dev/ic/pckbc.c				1.56
+
+	Do not take data from the keyboard controller in interrupt
+	handler if we are polling. Fixes PR/47406
+	[skrll, #1014]
 
