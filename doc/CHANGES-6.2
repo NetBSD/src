@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.83 2014/02/07 11:15:59 sborrill Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.84 2014/02/07 11:33:49 sborrill Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -1281,4 +1281,12 @@ sys/dev/ic/pckbc.c				1.56
 	Do not take data from the keyboard controller in interrupt
 	handler if we are polling. Fixes PR/47406
 	[skrll, #1014]
+
+sys/dev/usb/usb_subr.c				1.190, 1.192
+
+	Fix PR/48496. Only set wMaxPacketSize to 64 for HS/FS and set
+	to 8 for LS to be within the USB spec.
+	Reload the full device descriptor after re-establishing the
+	default pipe with the new address.
+	[skrll, #1015]
 
