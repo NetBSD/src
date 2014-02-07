@@ -36,8 +36,11 @@
 /* Note: RFC 5737 compliant addresses. */
 #define	PUB_IP1		"192.0.2.1"
 #define	PUB_IP2		"192.0.2.2"
-#define	REMOTE_IP1	"192.0.2.3"
-#define	REMOTE_IP2	"192.0.2.4"
+#define	PUB_IP3		"192.0.2.3"
+
+#define	REMOTE_IP1	"192.0.2.101"
+#define	REMOTE_IP2	"192.0.2.102"
+#define	REMOTE_IP3	"192.0.2.103"
 
 void		npf_test_init(long (*)(void));
 int		npf_test_load(const void *);
