@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_nat.c,v 1.23 2013/12/06 01:33:37 rmind Exp $	*/
+/*	$NetBSD: npf_nat.c,v 1.24 2014/02/07 23:45:22 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2013 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.23 2013/12/06 01:33:37 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.24 2014/02/07 23:45:22 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -423,8 +423,8 @@ npf_nat_which(const int type, bool forw)
 {
 	/*
 	 * Outbound NAT rewrites:
-	 * - Source on "forwards" stream.
-	 * - Destination on "backwards" stream.
+	 * - Source (NPF_SRC) on "forwards" stream.
+	 * - Destination (NPF_DST) on "backwards" stream.
 	 * Inbound NAT is other way round.
 	 */
 	if (type == NPF_NATOUT) {
@@ -433,7 +433,7 @@ npf_nat_which(const int type, bool forw)
 		KASSERT(type == NPF_NATIN);
 	}
 	CTASSERT(NPF_SRC == 0 && NPF_DST == 1);
-	KASSERT(forw == 0 || forw == 1);
+	KASSERT(forw == NPF_SRC || forw == NPF_DST);
 	return (u_int)forw;
 }
 
@@ -528,14 +528,56 @@ out:
 }
 
 /*
- * npf_nat_translate: perform address and/or port translation.
+ * npf_nat_rwr: perform address and/or port translation.
+ */
+static int
+npf_nat_rwr(npf_cache_t *npc, const npf_natpolicy_t *np,
+    const npf_addr_t *addr, const in_addr_t port, bool forw)
+{
+	const unsigned proto = npc->npc_proto;
+	const u_int which = npf_nat_which(np->n_type, forw);
+
+	/*
+	 * Rewrite IP and/or TCP/UDP checksums first, since we need the
+	 * current (old) address/port for the calculations.  Then perform
+	 * the address translation i.e. rewrite source or destination.
+	 */
+	if (!npf_rwrcksum(npc, which, addr, port)) {
+		return EINVAL;
+	}
+	if (!npf_rwrip(npc, which, addr)) {
+		return EINVAL;
+	}
+	if ((np->n_flags & NPF_NAT_PORTS) == 0) {
+		/* Done. */
+		return 0;
+	}
+
+	switch (proto) {
+	case IPPROTO_TCP:
+	case IPPROTO_UDP:
+		/* Rewrite source/destination port. */
+		if (!npf_rwrport(npc, which, port)) {
+			return EINVAL;
+		}
+		break;
+	case IPPROTO_ICMP:
+		KASSERT(npf_iscached(npc, NPC_ICMP));
+		/* Nothing. */
+		break;
+	default:
+		return ENOTSUP;
+	}
+	return 0;
+}
+
+/*
+ * npf_nat_translate: perform translation given the state data.
  */
 int
 npf_nat_translate(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, bool forw)
 {
-	const int proto = npc->npc_proto;
 	const npf_natpolicy_t *np = nt->nt_natpolicy;
-	const u_int which = npf_nat_which(np->n_type, forw);
 	const npf_addr_t *addr;
 	in_port_t port;
 
@@ -560,39 +602,8 @@ npf_nat_translate(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, bool forw)
 		npf_alg_exec(npc, nbuf, nt, forw);
 	}
 
-	/*
-	 * Rewrite IP and/or TCP/UDP checksums first, since we need the
-	 * current (old) address/port for the calculations.  Then perform
-	 * the address translation i.e. rewrite source or destination.
-	 */
-	if (!npf_rwrcksum(npc, which, addr, port)) {
-		return EINVAL;
-	}
-	if (!npf_rwrip(npc, which, addr)) {
-		return EINVAL;
-	}
-
-	if ((np->n_flags & NPF_NAT_PORTS) == 0) {
-		/* Done. */
-		return 0;
-	}
-
-	switch (proto) {
-	case IPPROTO_TCP:
-	case IPPROTO_UDP:
-		/* Rewrite source/destination port. */
-		if (!npf_rwrport(npc, which, port)) {
-			return EINVAL;
-		}
-		break;
-	case IPPROTO_ICMP:
-		KASSERT(npf_iscached(npc, NPC_ICMP));
-		/* Nothing. */
-		break;
-	default:
-		return ENOTSUP;
-	}
-	return 0;
+	/* Finally, perform the translation. */
+	return npf_nat_rwr(npc, np, addr, port, forw);
 }
 
 /*
@@ -639,6 +650,16 @@ npf_do_nat(npf_cache_t *npc, npf_session_t *se, nbuf_t *nbuf, const int di)
 		return 0;
 	}
 	forw = true;
+
+	/* Static NAT - just perform the translation. */
+	if (np->n_flags & NPF_NAT_STATIC) {
+		if (nbuf_cksum_barrier(nbuf, di)) {
+			npf_recache(npc, nbuf);
+		}
+		error = npf_nat_rwr(npc, np, &np->n_taddr, np->n_tport, forw);
+		atomic_dec_uint(&np->n_refcnt);
+		return error;
+	}
 
 	/*
 	 * If there is no local session (no "stateful" rule - unusual, but
@@ -688,11 +709,11 @@ translate:
 	/* Perform the translation. */
 	error = npf_nat_translate(npc, nbuf, nt, forw);
 out:
-	if (error && nse) {
-		/* It created for NAT - just expire. */
-		npf_session_expire(nse);
-	}
-	if (nse) {
+	if (__predict_false(nse)) {
+		if (error) {
+			/* It created for NAT - just expire. */
+			npf_session_expire(nse);
+		}
 		npf_session_release(nse);
 	}
 	return error;
