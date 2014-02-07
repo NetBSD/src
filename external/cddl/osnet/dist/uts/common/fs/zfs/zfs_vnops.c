@@ -4813,7 +4813,7 @@ zfs_netbsd_access(void *v)
 static int
 zfs_netbsd_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -4890,9 +4890,6 @@ zfs_netbsd_lookup(void *v)
 	}
 	KASSERT(*vpp != NULL);	/* XXX Correct?  */
 
-	/*
-	 * Do a locking dance in conformance to the VOP_LOOKUP protocol.
-	 */
 	if ((cnp->cn_namelen == 1) && (cnp->cn_nameptr[0] == '.')) {
 		KASSERT(!(cnp->cn_flags & ISDOTDOT));
 		KASSERT(dvp == *vpp);
@@ -4900,17 +4897,12 @@ zfs_netbsd_lookup(void *v)
 	    (cnp->cn_nameptr[0] == '.') &&
 	    (cnp->cn_nameptr[1] == '.')) {
 		KASSERT(cnp->cn_flags & ISDOTDOT);
-		VOP_UNLOCK(dvp);
-		vn_lock(*vpp, LK_EXCLUSIVE | LK_RETRY);
-		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 	} else {
 		KASSERT(!(cnp->cn_flags & ISDOTDOT));
-		vn_lock(*vpp, LK_EXCLUSIVE | LK_RETRY);
 	}
 
 out:
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
-	KASSERT((*vpp == NULL) || (VOP_ISLOCKED(*vpp) == LK_EXCLUSIVE));
 
 #if 0				/* Namecache too scary to contemplate.  */
 	/*

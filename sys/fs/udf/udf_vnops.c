@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.89 2014/01/23 10:13:56 hannken Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.90 2014/02/07 15:29:22 hannken Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.89 2014/01/23 10:13:56 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.90 2014/02/07 15:29:22 hannken Exp $");
 #endif /* not lint */
 
 
@@ -639,7 +639,7 @@ udf_readdir(void *v)
 int
 udf_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -834,6 +834,8 @@ done:
 			    cnp->cn_flags);
 
 out:
+	if (error == 0 && *vpp != dvp)
+		VOP_UNLOCK(*vpp);
 	DPRINTFIF(LOOKUP, error, ("udf_lookup returing error %d\n", error));
 
 	return error;
