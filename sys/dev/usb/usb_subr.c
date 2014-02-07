@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.180 2011/06/09 19:08:33 matt Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.180.8.1 2014/02/07 11:33:34 sborrill Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.180 2011/06/09 19:08:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.180.8.1 2014/02/07 11:33:34 sborrill Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usbverbose.h"
@@ -1103,7 +1103,11 @@ usbd_new_device(device_t parent, usbd_bus_handle bus, int depth,
 	 * (which uses 64 bytes so it shouldn't be less),
 	 * highspeed devices must support 64 byte packets anyway
 	 */
-	USETW(dev->def_ep_desc.wMaxPacketSize, 64);
+	if (speed == USB_SPEED_HIGH || speed == USB_SPEED_FULL)
+		USETW(dev->def_ep_desc.wMaxPacketSize, 64);
+	else
+		USETW(dev->def_ep_desc.wMaxPacketSize, USB_MAX_IPACKET);
+
 	dev->def_ep_desc.bInterval = 0;
 
 	/* doesn't matter, just don't let it uninitialized */
@@ -1219,14 +1223,6 @@ usbd_new_device(device_t parent, usbd_bus_handle bus, int depth,
 	dev->address = addr;	/* new device address now */
 	bus->devices[addr] = dev;
 
-	err = usbd_reload_device_desc(dev);
-	if (err) {
-		DPRINTFN(-1, ("usbd_new_device: addr=%d, getting full desc "
-			      "failed\n", addr));
-		usbd_remove_device(dev, up);
-		return (err);
-	}
-
 	/* Re-establish the default pipe with the new address. */
 	usbd_kill_pipe(dev->default_pipe);
 	err = usbd_setup_pipe(dev, 0, &dev->def_ep, USBD_DEFAULT_INTERVAL,
@@ -1235,6 +1231,14 @@ usbd_new_device(device_t parent, usbd_bus_handle bus, int depth,
 		DPRINTFN(-1, ("usbd_new_device: setup default pipe failed\n"));
 		usbd_remove_device(dev, up);
 		return err;
+	}
+
+	err = usbd_reload_device_desc(dev);
+	if (err) {
+		DPRINTFN(-1, ("usbd_new_device: addr=%d, getting full desc "
+			      "failed\n", addr));
+		usbd_remove_device(dev, up);
+		return (err);
 	}
 
 	/* Assume 100mA bus powered for now. Changed when configured. */
