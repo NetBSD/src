@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_show.c,v 1.9 2014/02/07 23:45:22 rmind Exp $	*/
+/*	$NetBSD: npf_show.c,v 1.10 2014/02/08 01:20:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_show.c,v 1.9 2014/02/07 23:45:22 rmind Exp $");
+__RCSID("$NetBSD: npf_show.c,v 1.10 2014/02/08 01:20:09 rmind Exp $");
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -111,7 +111,7 @@ print_family(npf_conf_info_t *ctx, const uint32_t *words)
 
 	switch (af) {
 	case AF_INET:
-		return estrdup("inet");
+		return estrdup("inet4");
 	case AF_INET6:
 		return estrdup("inet6");
 	default:
