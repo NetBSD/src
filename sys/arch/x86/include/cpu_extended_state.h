@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_extended_state.h,v 1.2 2014/02/07 22:40:22 dsl Exp $	*/
+/*	$NetBSD: cpu_extended_state.h,v 1.3 2014/02/08 22:36:50 dsl Exp $	*/
 
 #ifndef _X86_CPU_EXTENDED_STATE_H_
 #define _X86_CPU_EXTENDED_STATE_H_
@@ -161,9 +161,12 @@ __CTASSERT(sizeof (struct xsave_ymm) == 256);
 /*
  * 80387 control and status word bits
  *
- * The only reference to the 0x40 and 0x80 bits I can find is for
- * the Weitek 1167/3167.
+ * The only reference I can find to bits 0x40 and 0x80 in the control word
+ * is for the Weitek 1167/3167.
  * I (dsl) can't find why the default word has 0x40 set.
+ *
+ * A stack error is signalled as an INVOP that also sets STACK_FAULT
+ * (other INVOP do not clear STACK_FAULT).
  */
 /* Interrupt masks (set masks interrupt) and status bits */
 #define EN_SW_INVOP		0x0001  /* Invalid operation */
@@ -172,8 +175,9 @@ __CTASSERT(sizeof (struct xsave_ymm) == 256);
 #define EN_SW_OVERFLOW		0x0008  /* Overflow */
 #define EN_SW_UNDERFLOW		0x0010  /* Underflow */
 #define EN_SW_PRECLOSS		0x0020  /* Loss of precision */
-#define EN_SW_RSVD_40		0x0040	/* Reserverd for all x87 parts */
-#define EN_SW_RSVD_80		0x0080	/* Reserverd for all x87 parts */
+/* Status word bits (reserved in control word) */
+#define EN_SW_STACK_FAULT	0x0040	/* Stack under/overflow */
+#define EN_SW_ERROR_SUMMARY	0x0080	/* Unmasked error has ocurred */
 /* Control bits (badly named) */
 #define EN_SW_CTL_PREC		0x0300	/* Precision control */
 #define EN_SW_PREC_24		0x0000	/* Single precision */
