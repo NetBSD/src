@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.17 2013/03/14 07:10:06 jmmv Exp $
+# $NetBSD: Makefile,v 1.18 2014/02/08 19:15:33 jmmv Exp $
 
 NOLINT=		# defined
 
@@ -6,6 +6,7 @@ NOLINT=		# defined
 
 LIB=		atf-c
 
+CWARNFLAGS+=	-Wno-format
 CWARNFLAGS+=	-Wno-missing-noreturn
 
 .PATH:		${SRCDIR}

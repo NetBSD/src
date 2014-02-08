@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.20 2013/09/12 17:14:20 joerg Exp $
+# $NetBSD: Makefile,v 1.21 2014/02/08 19:15:33 jmmv Exp $
 
 NOLINT=		# defined
 
@@ -29,20 +29,16 @@ SRCS=		application.cpp \
 		config.cpp \
 		env.cpp \
 		exceptions.cpp \
-		expand.cpp \
 		fs.cpp \
-		parser.cpp \
 		process.cpp \
 		tests.cpp \
 		text.cpp \
-		ui.cpp \
 		utils.cpp
 
 INCS=		build.hpp \
 		check.hpp \
 		config.hpp \
 		macros.hpp \
-		noncopyable.hpp \
 		tests.hpp \
 		utils.hpp
 INCSDIR=	/usr/include/atf-c++
