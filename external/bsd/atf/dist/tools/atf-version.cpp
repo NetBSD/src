@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+// Copyright (c) 2007 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,15 +30,15 @@
 #if defined(HAVE_CONFIG_H)
 #include "bconfig.h"
 #endif
-#include "revision.h"
 
 #include <cstdlib>
 #include <iostream>
 
-#include "atf-c++/application.hpp"
-#include "atf-c++/ui.hpp"
+#include "application.hpp"
+#include "revision.h"
+#include "ui.hpp"
 
-class atf_version : public atf::application::app {
+class atf_version : public tools::application::app {
     static const char* m_description;
 
 public:
@@ -59,24 +59,26 @@ atf_version::atf_version(void) :
 int
 atf_version::main(void)
 {
-    using atf::ui::format_text;
-    using atf::ui::format_text_with_tag;
+    using tools::ui::format_text;
+    using tools::ui::format_text_with_tag;
 
     std::cout << PACKAGE_STRING " (" PACKAGE_TARNAME "-" PACKAGE_VERSION
-                 ")" << std::endl
-              << PACKAGE_COPYRIGHT << std::endl
-              << std::endl;
+                 ")\n" PACKAGE_COPYRIGHT "\n\n";
 
+#if defined(PACKAGE_REVISION_TYPE_DIST)
+    std::cout << format_text("Built from a distribution file; no revision "
+        "information available.") << "\n";
+#elif defined(PACKAGE_REVISION_TYPE_GIT)
+    std::cout << format_text_with_tag(PACKAGE_REVISION_BRANCH, "Branch: ",
+                                      false) << "\n";
     std::cout << format_text_with_tag(PACKAGE_REVISION_BASE
-#if PACKAGE_REVISION_MODIFIED
-                                      " (locally modified)"
-#endif
-                                      , "Base revision: ", false)
-              << std::endl;
-#if PACKAGE_REVISION_CACHED
-    std::cout << format_text("Information gathered from data cached in "
-                             "distribution; further changes may have been "
-                             "made.") << std::endl;
+#   if PACKAGE_REVISION_MODIFIED
+        " (locally modified)"
+#   endif
+        " " PACKAGE_REVISION_DATE,
+        "Base revision: ", false) << "\n";
+#else
+#   error "Unknown PACKAGE_REVISION_TYPE value"
 #endif
 
     return EXIT_SUCCESS;
