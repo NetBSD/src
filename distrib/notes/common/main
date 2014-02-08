@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.503 2014/01/25 18:03:10 wiedi Exp $
+.\"	$NetBSD: main,v 1.504 2014/02/08 15:50:29 maxv Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1405,6 +1405,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Shuichiro URATA Ta Mt ur@NetBSD.org
 .It Ta Valeriy E. Ushakov Ta Mt uwe@NetBSD.org
 .It Ta Todd Vierling Ta Mt tv@NetBSD.org
+.It Ta Maxime Villard Ta Mt maxv@NetBSD.org
 .It Ta Aymeric Vincent Ta Mt aymeric@NetBSD.org
 .It Ta Paul Vixie Ta Mt vixie@NetBSD.org
 .It Ta Mike M. Volokhov Ta Mt mishka@NetBSD.org
