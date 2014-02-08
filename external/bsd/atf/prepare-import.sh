@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: prepare-import.sh,v 1.6 2012/01/16 22:42:40 jmmv Exp $
+# $NetBSD: prepare-import.sh,v 1.7 2014/02/08 19:06:05 jmmv Exp $
 #
 # Use this script to recreate the 'dist' subdirectory from a newly released
 # distfile.  The script takes care of unpacking the distfile, removing any
@@ -21,6 +21,7 @@ CLEAN_PATTERNS="${CLEAN_PATTERNS} bconfig.h.in"
 CLEAN_PATTERNS="${CLEAN_PATTERNS} bootstrap"
 CLEAN_PATTERNS="${CLEAN_PATTERNS} configure*"
 CLEAN_PATTERNS="${CLEAN_PATTERNS} m4"
+CLEAN_PATTERNS="${CLEAN_PATTERNS} tools/generate-revision.sh"
 
 err() {
 	echo "${ProgName}:" "${@}" 1>&2
@@ -66,26 +67,30 @@ diff_dirs() {
 	local old_dir="${1}"; shift
 	local new_dir="${1}"; shift
 
-	local old_list=$(mktemp -t atf-import.XXXXXX)
-	local new_list=$(mktemp -t atf-import.XXXXXX)
-	local diff=$(mktemp -t atf-import.XXXXXX)
-	trap "rm -f '${old_list}' '${new_list}' '${diff}'; exit 1" \
-	    HUP INT QUIT TERM
+	local tmpdir="$(mktemp -d -t atf-import)"
+	trap "rm -rf '${tmpdir}'; exit 1" HUP INT QUIT TERM
 
-	( cd "${old_dir}" && find . | sort >>"${old_list}" )
-	( cd "${new_dir}" && find . | sort >>"${new_list}" )
+	local old_list="${tmpdir}/old-list.txt"
+	( cd "${old_dir}" && find . -type f | sort >>"${old_list}" )
+	local new_list="${tmpdir}/new-list.txt"
+	( cd "${new_dir}" && find . -type f | sort >>"${new_list}" )
 
-	diff -u "${old_list}" "${new_list}" | grep '^+\.' >>"${diff}" || true
-	if [ -s "${diff}" ]; then
+	local added="${tmpdir}/added.txt"
+	comm -13 "${old_list}" "${new_list}" >"${added}"
+	local removed="${tmpdir}/removed.txt"
+	comm -23 "${old_list}" "${new_list}" | grep -v '/CVS' >"${removed}"
+	if [ -s "${removed}" ]; then
+		log "Removed files found"
+		cat "${removed}"
+	fi
+	if [ -s "${added}" ]; then
 		log "New files found"
-		diff -u "${old_list}" "${new_list}" | grep '^+\.'
+		cat "${added}"
 		log "Check if any files have to be cleaned up and update" \
 		    "the prepare-import.sh script accordingly"
-	else
-		log "No new files; all good!"
 	fi
 
-	rm -f "${old_list}" "${new_list}" "${diff}"
+	rm -rf "${tmpdir}"
 }
 
 main() {
