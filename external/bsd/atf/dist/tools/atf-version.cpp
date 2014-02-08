@@ -27,42 +27,65 @@
 // IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
+#if defined(HAVE_CONFIG_H)
+#include "bconfig.h"
+#endif
+
+#include <cstdlib>
 #include <iostream>
 
-#include "atf-c++/macros.hpp"
+#include "application.hpp"
+#include "revision.h"
+#include "ui.hpp"
 
-// ------------------------------------------------------------------------
-// Helper tests for "t_integration".
-// ------------------------------------------------------------------------
+class atf_version : public tools::application::app {
+    static const char* m_description;
 
-ATF_TEST_CASE(diff);
-ATF_TEST_CASE_HEAD(diff)
+public:
+    atf_version(void);
+
+    int main(void);
+};
+
+const char* atf_version::m_description =
+    "atf-version is a tool that shows information about the currently "
+    "installed version of ATF.";
+
+atf_version::atf_version(void) :
+    app(m_description, "atf-version(1)", "atf(7)")
 {
-    set_md_var("descr", "Helper test case for the t_integration program");
-}
-ATF_TEST_CASE_BODY(diff)
-{
-    std::cout << "--- a	2007-11-04 14:00:41.000000000 +0100\n";
-    std::cout << "+++ b	2007-11-04 14:00:48.000000000 +0100\n";
-    std::cout << "@@ -1,7 +1,7 @@\n";
-    std::cout << " This test is meant to simulate a diff.\n";
-    std::cout << " Blank space at beginning of context lines must be "
-                 "preserved.\n";
-    std::cout << " \n";
-    std::cout << "-First original line.\n";
-    std::cout << "-Second original line.\n";
-    std::cout << "+First modified line.\n";
-    std::cout << "+Second modified line.\n";
-    std::cout << " \n";
-    std::cout << " EOF\n";
 }
 
-// ------------------------------------------------------------------------
-// Main.
-// ------------------------------------------------------------------------
-
-ATF_INIT_TEST_CASES(tcs)
+int
+atf_version::main(void)
 {
-    // Add helper tests for t_integration.
-    ATF_ADD_TEST_CASE(tcs, diff);
+    using tools::ui::format_text;
+    using tools::ui::format_text_with_tag;
+
+    std::cout << PACKAGE_STRING " (" PACKAGE_TARNAME "-" PACKAGE_VERSION
+                 ")\n" PACKAGE_COPYRIGHT "\n\n";
+
+#if defined(PACKAGE_REVISION_TYPE_DIST)
+    std::cout << format_text("Built from a distribution file; no revision "
+        "information available.") << "\n";
+#elif defined(PACKAGE_REVISION_TYPE_GIT)
+    std::cout << format_text_with_tag(PACKAGE_REVISION_BRANCH, "Branch: ",
+                                      false) << "\n";
+    std::cout << format_text_with_tag(PACKAGE_REVISION_BASE
+#   if PACKAGE_REVISION_MODIFIED
+        " (locally modified)"
+#   endif
+        " " PACKAGE_REVISION_DATE,
+        "Base revision: ", false) << "\n";
+#else
+#   error "Unknown PACKAGE_REVISION_TYPE value"
+#endif
+
+    return EXIT_SUCCESS;
+}
+
+int
+main(int argc, char* const* argv)
+{
+    return atf_version().run(argc, argv);
 }
