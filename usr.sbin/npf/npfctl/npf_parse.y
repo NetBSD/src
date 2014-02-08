@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_parse.y,v 1.30 2014/02/06 02:51:28 rmind Exp $	*/
+/*	$NetBSD: npf_parse.y,v 1.31 2014/02/08 01:20:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -108,7 +108,6 @@ yyerror(const char *fmt, ...)
 %token			HASH
 %token			ICMPTYPE
 %token			ID
-%token			IFNET
 %token			IN
 %token			INET4
 %token			INET6
