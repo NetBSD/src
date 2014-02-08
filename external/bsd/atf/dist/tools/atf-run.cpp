@@ -40,6 +40,7 @@ extern "C" {
 }
 
 #include <algorithm>
+#include <cassert>
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
@@ -48,25 +49,24 @@ extern "C" {
 #include <map>
 #include <string>
 
-#include "atf-c++/detail/application.hpp"
-#include "atf-c++/config.hpp"
-#include "atf-c++/tests.hpp"
-
-#include "atf-c++/detail/env.hpp"
-#include "atf-c++/detail/exceptions.hpp"
-#include "atf-c++/detail/fs.hpp"
-#include "atf-c++/detail/parser.hpp"
-#include "atf-c++/detail/process.hpp"
-#include "atf-c++/detail/sanity.hpp"
-#include "atf-c++/detail/text.hpp"
-
+#include "application.hpp"
 #include "atffile.hpp"
 #include "config.hpp"
+#include "config_file.hpp"
+#include "env.hpp"
+#include "exceptions.hpp"
 #include "fs.hpp"
+#include "parser.hpp"
+#include "process.hpp"
 #include "requirements.hpp"
 #include "test-program.hpp"
+#include "text.hpp"
 
-namespace impl = atf::atf_run;
+namespace {
+
+typedef std::map< std::string, std::string > vars_map;
+
+} // anonymous namespace
 
 #if defined(MAXCOMLEN)
 static const std::string::size_type max_core_name_length = MAXCOMLEN;
@@ -74,12 +74,12 @@ static const std::string::size_type max_core_name_length = MAXCOMLEN;
 static const std::string::size_type max_core_name_length = std::string::npos;
 #endif
 
-class atf_run : public atf::application::app {
+class atf_run : public tools::application::app {
     static const char* m_description;
 
-    atf::tests::vars_map m_cmdline_vars;
+    vars_map m_cmdline_vars;
 
-    static atf::tests::vars_map::value_type parse_var(const std::string&);
+    static vars_map::value_type parse_var(const std::string&);
 
     void process_option(int, const char*);
     std::string specific_args(void) const;
@@ -91,14 +91,17 @@ class atf_run : public atf::application::app {
 
     size_t count_tps(std::vector< std::string >) const;
 
-    int run_test(const atf::fs::path&, impl::atf_tps_writer&,
-                 const atf::tests::vars_map&);
-    int run_test_directory(const atf::fs::path&, impl::atf_tps_writer&);
-    int run_test_program(const atf::fs::path&, impl::atf_tps_writer&,
-                         const atf::tests::vars_map&);
+    int run_test(const tools::fs::path&, tools::test_program::atf_tps_writer&,
+                 const vars_map&);
+    int run_test_directory(const tools::fs::path&,
+                           tools::test_program::atf_tps_writer&);
+    int run_test_program(const tools::fs::path&,
+                         tools::test_program::atf_tps_writer&,
+                         const vars_map&);
 
-    impl::test_case_result get_test_case_result(const std::string&,
-        const atf::process::status&, const atf::fs::path&) const;
+    tools::test_program::test_case_result get_test_case_result(
+        const std::string&, const tools::process::status&,
+        const tools::fs::path&) const;
 
 public:
     atf_run(void);
@@ -110,7 +113,7 @@ static void
 sanitize_gdb_env(void)
 {
     try {
-        atf::env::unset("TERM");
+        tools::env::unset("TERM");
     } catch (...) {
         // Just swallow exceptions here; they cannot propagate into C, which
         // is where this function is called from, and even if these exceptions
@@ -119,29 +122,30 @@ sanitize_gdb_env(void)
 }
 
 static void
-dump_stacktrace(const atf::fs::path& tp, const atf::process::status& s,
-                const atf::fs::path& workdir, impl::atf_tps_writer& w)
+dump_stacktrace(const tools::fs::path& tp, const tools::process::status& s,
+                const tools::fs::path& workdir,
+                tools::test_program::atf_tps_writer& w)
 {
-    PRE(s.signaled() && s.coredump());
+    assert(s.signaled() && s.coredump());
 
     w.stderr_tc("Test program crashed; attempting to get stack trace");
 
-    const atf::fs::path corename = workdir /
+    const tools::fs::path corename = workdir /
         (tp.leaf_name().substr(0, max_core_name_length) + ".core");
-    if (!atf::fs::exists(corename)) {
+    if (!tools::fs::exists(corename)) {
         w.stderr_tc("Expected file " + corename.str() + " not found");
         return;
     }
 
-    const atf::fs::path gdb(GDB);
-    const atf::fs::path gdbout = workdir / "gdb.out";
-    const atf::process::argv_array args(gdb.leaf_name().c_str(), "-batch",
+    const tools::fs::path gdb(GDB);
+    const tools::fs::path gdbout = workdir / "gdb.out";
+    const tools::process::argv_array args(gdb.leaf_name().c_str(), "-batch",
                                         "-q", "-ex", "bt", tp.c_str(),
                                         corename.c_str(), NULL);
-    atf::process::status status = atf::process::exec(
+    tools::process::status status = tools::process::exec(
         gdb, args,
-        atf::process::stream_redirect_path(gdbout),
-        atf::process::stream_redirect_path(atf::fs::path("/dev/null")),
+        tools::process::stream_redirect_path(gdbout),
+        tools::process::stream_redirect_path(tools::fs::path("/dev/null")),
         sanitize_gdb_env);
     if (!status.exited() || status.exitstatus() != EXIT_SUCCESS) {
         w.stderr_tc("Execution of " GDB " failed");
@@ -177,7 +181,7 @@ atf_run::process_option(int ch, const char* arg)
         break;
 
     default:
-        UNREACHABLE;
+        std::abort();
     }
 }
 
@@ -192,7 +196,7 @@ atf_run::options_set
 atf_run::specific_options(void)
     const
 {
-    using atf::application::option;
+    using tools::application::option;
     options_set opts;
     opts.insert(option('v', "var=value", "Sets the configuration variable "
                                          "`var' to `value'; overrides "
@@ -206,7 +210,7 @@ atf_run::parse_vflag(const std::string& str)
     if (str.empty())
         throw std::runtime_error("-v requires a non-empty argument");
 
-    std::vector< std::string > ws = atf::text::split(str, "=");
+    std::vector< std::string > ws = tools::text::split(str, "=");
     if (ws.size() == 1 && str[str.length() - 1] == '=') {
         m_cmdline_vars[ws[0]] = "";
     } else {
@@ -219,18 +223,18 @@ atf_run::parse_vflag(const std::string& str)
 }
 
 int
-atf_run::run_test(const atf::fs::path& tp,
-                  impl::atf_tps_writer& w,
-                  const atf::tests::vars_map& config)
+atf_run::run_test(const tools::fs::path& tp,
+                  tools::test_program::atf_tps_writer& w,
+                  const vars_map& config)
 {
-    atf::fs::file_info fi(tp);
+    tools::fs::file_info fi(tp);
 
     int errcode;
-    if (fi.get_type() == atf::fs::file_info::dir_type)
+    if (fi.get_type() == tools::fs::file_info::dir_type)
         errcode = run_test_directory(tp, w);
     else {
-        const atf::tests::vars_map effective_config =
-            impl::merge_configs(config, m_cmdline_vars);
+        const vars_map effective_config =
+            tools::config_file::merge_configs(config, m_cmdline_vars);
 
         errcode = run_test_program(tp, w, effective_config);
     }
@@ -238,39 +242,38 @@ atf_run::run_test(const atf::fs::path& tp,
 }
 
 int
-atf_run::run_test_directory(const atf::fs::path& tp,
-                            impl::atf_tps_writer& w)
+atf_run::run_test_directory(const tools::fs::path& tp,
+                            tools::test_program::atf_tps_writer& w)
 {
-    impl::atffile af = impl::read_atffile(tp / "Atffile");
+    tools::atffile af = tools::read_atffile(tp / "Atffile");
 
-    atf::tests::vars_map test_suite_vars;
+    vars_map test_suite_vars;
     {
-        atf::tests::vars_map::const_iterator iter =
-            af.props().find("test-suite");
-        INV(iter != af.props().end());
-        test_suite_vars = impl::read_config_files((*iter).second);
+        vars_map::const_iterator iter = af.props().find("test-suite");
+        assert(iter != af.props().end());
+        test_suite_vars = tools::config_file::read_config_files((*iter).second);
     }
 
     bool ok = true;
     for (std::vector< std::string >::const_iterator iter = af.tps().begin();
          iter != af.tps().end(); iter++) {
         const bool result = run_test(tp / *iter, w,
-            impl::merge_configs(af.conf(), test_suite_vars));
+            tools::config_file::merge_configs(af.conf(), test_suite_vars));
         ok &= (result == EXIT_SUCCESS);
     }
 
     return ok ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
-impl::test_case_result
+tools::test_program::test_case_result
 atf_run::get_test_case_result(const std::string& broken_reason,
-                              const atf::process::status& s,
-                              const atf::fs::path& resfile)
+                              const tools::process::status& s,
+                              const tools::fs::path& resfile)
     const
 {
-    using atf::text::to_string;
-    using impl::read_test_case_result;
-    using impl::test_case_result;
+    using tools::text::to_string;
+    using tools::test_program::read_test_case_result;
+    using tools::test_program::test_case_result;
 
     if (!broken_reason.empty()) {
         test_case_result tcr;
@@ -343,7 +346,7 @@ atf_run::get_test_case_result(const std::string& broken_reason,
             tcr = read_test_case_result(resfile);
         } catch (const std::runtime_error&) {
             return test_case_result("failed", -1, "Test program received "
-                "signal " + atf::text::to_string(s.termsig()) +
+                "signal " + tools::text::to_string(s.termsig()) +
                 (s.coredump() ? " (core dumped)" : ""));
         }
 
@@ -358,53 +361,53 @@ atf_run::get_test_case_result(const std::string& broken_reason,
                     " signal but got " + to_string(s.termsig()));
         } else {
             return test_case_result("failed", -1, "Test program received "
-                "signal " + atf::text::to_string(s.termsig()) +
+                "signal " + tools::text::to_string(s.termsig()) +
                 (s.coredump() ? " (core dumped)" : "") + " and created a "
                 "bogus results file");
         }
     }
-    UNREACHABLE;
+    std::abort();
     return test_case_result();
 }
 
 int
-atf_run::run_test_program(const atf::fs::path& tp,
-                          impl::atf_tps_writer& w,
-                          const atf::tests::vars_map& config)
+atf_run::run_test_program(const tools::fs::path& tp,
+                          tools::test_program::atf_tps_writer& w,
+                          const vars_map& config)
 {
     int errcode = EXIT_SUCCESS;
 
-    impl::metadata md;
+    tools::test_program::metadata md;
     try {
-        md = impl::get_metadata(tp, config);
-    } catch (const atf::parser::format_error& e) {
+        md = tools::test_program::get_metadata(tp, config);
+    } catch (const tools::parser::format_error& e) {
         w.start_tp(tp.str(), 0);
         w.end_tp("Invalid format for test case list: " + std::string(e.what()));
         return EXIT_FAILURE;
-    } catch (const atf::parser::parse_errors& e) {
-        const std::string reason = atf::text::join(e, "; ");
+    } catch (const tools::parser::parse_errors& e) {
+        const std::string reason = tools::text::join(e, "; ");
         w.start_tp(tp.str(), 0);
         w.end_tp("Invalid format for test case list: " + reason);
         return EXIT_FAILURE;
     }
 
-    impl::temp_dir resdir(atf::fs::path(atf::config::get("atf_workdir")) /
-                          "atf-run.XXXXXX");
+    tools::fs::temp_dir resdir(
+        tools::fs::path(tools::config::get("atf_workdir")) / "atf-run.XXXXXX");
 
     w.start_tp(tp.str(), md.test_cases.size());
     if (md.test_cases.empty()) {
         w.end_tp("Bogus test program: reported 0 test cases");
         errcode = EXIT_FAILURE;
     } else {
-        for (std::map< std::string, atf::tests::vars_map >::const_iterator iter
+        for (std::map< std::string, vars_map >::const_iterator iter
              = md.test_cases.begin(); iter != md.test_cases.end(); iter++) {
             const std::string& tcname = (*iter).first;
-            const atf::tests::vars_map& tcmd = (*iter).second;
+            const vars_map& tcmd = (*iter).second;
 
             w.start_tc(tcname);
 
             try {
-                const std::string& reqfail = impl::check_requirements(
+                const std::string& reqfail = tools::check_requirements(
                     tcmd, config);
                 if (!reqfail.empty()) {
                     w.end_tc("skipped", reqfail);
@@ -416,51 +419,53 @@ atf_run::run_test_program(const atf::fs::path& tp,
                 continue;
             }
 
-            const std::pair< int, int > user = impl::get_required_user(
+            const std::pair< int, int > user = tools::get_required_user(
                 tcmd, config);
 
-            atf::fs::path resfile = resdir.get_path() / "tcr";
-            INV(!atf::fs::exists(resfile));
+            tools::fs::path resfile = resdir.get_path() / "tcr";
+            assert(!tools::fs::exists(resfile));
             try {
-                const bool has_cleanup = atf::text::to_bool(
+                const bool has_cleanup = tools::text::to_bool(
                     (*tcmd.find("has.cleanup")).second);
 
-                impl::temp_dir workdir(atf::fs::path(atf::config::get(
+                tools::fs::temp_dir workdir(tools::fs::path(tools::config::get(
                     "atf_workdir")) / "atf-run.XXXXXX");
                 if (user.first != -1 && user.second != -1) {
                     if (::chown(workdir.get_path().c_str(), user.first,
                                 user.second) == -1) {
-                        throw atf::system_error("chown(" +
+                        throw tools::system_error("chown(" +
                             workdir.get_path().str() + ")", "chown(2) failed",
                             errno);
                     }
                     resfile = workdir.get_path() / "tcr";
                 }
 
-                std::pair< std::string, const atf::process::status > s =
-                    impl::run_test_case(tp, tcname, "body", tcmd, config,
-                                            resfile, workdir.get_path(), w);
+                std::pair< std::string, const tools::process::status > s =
+                    tools::test_program::run_test_case(
+                        tp, tcname, "body", tcmd, config,
+                        resfile, workdir.get_path(), w);
                 if (s.second.signaled() && s.second.coredump())
                     dump_stacktrace(tp, s.second, workdir.get_path(), w);
                 if (has_cleanup)
-                    (void)impl::run_test_case(tp, tcname, "cleanup", tcmd,
-                            config, resfile, workdir.get_path(), w);
+                    (void)tools::test_program::run_test_case(
+                        tp, tcname, "cleanup", tcmd,
+                        config, resfile, workdir.get_path(), w);
 
                 // TODO: Force deletion of workdir.
 
-                impl::test_case_result tcr = get_test_case_result(s.first,
-                    s.second, resfile);
+                tools::test_program::test_case_result tcr =
+                    get_test_case_result(s.first, s.second, resfile);
 
                 w.end_tc(tcr.state(), tcr.reason());
                 if (tcr.state() == "failed")
                     errcode = EXIT_FAILURE;
             } catch (...) {
-                if (atf::fs::exists(resfile))
-                    atf::fs::remove(resfile);
+                if (tools::fs::exists(resfile))
+                    tools::fs::remove(resfile);
                 throw;
             }
-            if (atf::fs::exists(resfile))
-                atf::fs::remove(resfile);
+            if (tools::fs::exists(resfile))
+                tools::fs::remove(resfile);
 
         }
         w.end_tp("");
@@ -477,11 +482,11 @@ atf_run::count_tps(std::vector< std::string > tps)
 
     for (std::vector< std::string >::const_iterator iter = tps.begin();
          iter != tps.end(); iter++) {
-        atf::fs::path tp(*iter);
-        atf::fs::file_info fi(tp);
+        tools::fs::path tp(*iter);
+        tools::fs::file_info fi(tp);
 
-        if (fi.get_type() == atf::fs::file_info::dir_type) {
-            impl::atffile af = impl::read_atffile(tp / "Atffile");
+        if (fi.get_type() == tools::fs::file_info::dir_type) {
+            tools::atffile af = tools::read_atffile(tp / "Atffile");
             std::vector< std::string > aux = af.tps();
             for (std::vector< std::string >::iterator i2 = aux.begin();
                  i2 != aux.end(); i2++)
@@ -498,16 +503,16 @@ static
 void
 call_hook(const std::string& tool, const std::string& hook)
 {
-    const atf::fs::path sh(atf::config::get("atf_shell"));
-    const atf::fs::path hooks =
-        atf::fs::path(atf::config::get("atf_pkgdatadir")) / (tool + ".hooks");
+    const tools::fs::path sh(tools::config::get("atf_shell"));
+    const tools::fs::path hooks =
+        tools::fs::path(tools::config::get("atf_pkgdatadir")) / (tool + ".hooks");
 
-    const atf::process::status s =
-        atf::process::exec(sh,
-                           atf::process::argv_array(sh.c_str(), hooks.c_str(),
+    const tools::process::status s =
+        tools::process::exec(sh,
+                           tools::process::argv_array(sh.c_str(), hooks.c_str(),
                                                     hook.c_str(), NULL),
-                           atf::process::stream_inherit(),
-                           atf::process::stream_inherit());
+                           tools::process::stream_inherit(),
+                           tools::process::stream_inherit());
 
 
     if (!s.exited() || s.exitstatus() != EXIT_SUCCESS)
@@ -518,7 +523,7 @@ call_hook(const std::string& tool, const std::string& hook)
 int
 atf_run::main(void)
 {
-    impl::atffile af = impl::read_atffile(atf::fs::path("Atffile"));
+    tools::atffile af = tools::read_atffile(tools::fs::path("Atffile"));
 
     std::vector< std::string > tps;
     tps = af.tps();
@@ -531,23 +536,22 @@ atf_run::main(void)
     }
 
     // Read configuration data for this test suite.
-    atf::tests::vars_map test_suite_vars;
+    vars_map test_suite_vars;
     {
-        atf::tests::vars_map::const_iterator iter =
-            af.props().find("test-suite");
-        INV(iter != af.props().end());
-        test_suite_vars = impl::read_config_files((*iter).second);
+        vars_map::const_iterator iter = af.props().find("test-suite");
+        assert(iter != af.props().end());
+        test_suite_vars = tools::config_file::read_config_files((*iter).second);
     }
 
-    impl::atf_tps_writer w(std::cout);
+    tools::test_program::atf_tps_writer w(std::cout);
     call_hook("atf-run", "info_start_hook");
     w.ntps(count_tps(tps));
 
     bool ok = true;
     for (std::vector< std::string >::const_iterator iter = tps.begin();
          iter != tps.end(); iter++) {
-        const bool result = run_test(atf::fs::path(*iter), w,
-            impl::merge_configs(af.conf(), test_suite_vars));
+        const bool result = run_test(tools::fs::path(*iter), w,
+            tools::config_file::merge_configs(af.conf(), test_suite_vars));
         ok &= (result == EXIT_SUCCESS);
     }
 

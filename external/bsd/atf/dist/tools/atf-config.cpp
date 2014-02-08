@@ -32,16 +32,11 @@
 #include <map>
 #include <string>
 
-extern "C" {
-#include "atf-c/defs.h"
-}
+#include "application.hpp"
+#include "config.hpp"
+#include "defs.hpp"
 
-#include "atf-c++/config.hpp"
-
-#include "atf-c++/detail/application.hpp"
-#include "atf-c++/detail/sanity.hpp"
-
-class atf_config : public atf::application::app {
+class atf_config : public tools::application::app {
     static const char* m_description;
 
     bool m_tflag;
@@ -79,7 +74,7 @@ atf_config::process_option(int ch, const char* arg ATF_DEFS_ATTRIBUTE_UNUSED)
         break;
 
     default:
-        UNREACHABLE;
+        std::abort();
     }
 }
 
@@ -94,7 +89,7 @@ atf_config::options_set
 atf_config::specific_options(void)
     const
 {
-    using atf::application::option;
+    using tools::application::option;
     options_set opts;
     opts.insert(option('t', "", "Terse output: show values only"));
     return opts;
@@ -117,20 +112,20 @@ int
 atf_config::main(void)
 {
     if (m_argc < 1) {
-        std::map< std::string, std::string > cv = atf::config::get_all();
+        std::map< std::string, std::string > cv = tools::config::get_all();
 
         for (std::map< std::string, std::string >::const_iterator iter =
              cv.begin(); iter != cv.end(); iter++)
             std::cout << format_var((*iter).first, (*iter).second) << "\n";
     } else {
         for (int i = 0; i < m_argc; i++) {
-            if (!atf::config::has(m_argv[i]))
+            if (!tools::config::has(m_argv[i]))
                 throw std::runtime_error(std::string("Unknown variable `") +
                                          m_argv[i] + "'");
         }
 
         for (int i = 0; i < m_argc; i++) {
-            std::cout << format_var(m_argv[i], atf::config::get(m_argv[i]))
+            std::cout << format_var(m_argv[i], tools::config::get(m_argv[i]))
                       << "\n";
         }
     }

@@ -41,20 +41,17 @@ extern "C" {
 #include <utility>
 #include <vector>
 
-#include "atf-c/defs.h"
-
-#include "atf-c++/detail/application.hpp"
-#include "atf-c++/detail/fs.hpp"
-#include "atf-c++/detail/sanity.hpp"
-#include "atf-c++/detail/text.hpp"
-#include "atf-c++/detail/ui.hpp"
-
+#include "application.hpp"
+#include "defs.hpp"
+#include "fs.hpp"
 #include "reader.hpp"
+#include "text.hpp"
+#include "ui.hpp"
 
 typedef std::auto_ptr< std::ostream > ostream_ptr;
 
 static ostream_ptr
-open_outfile(const atf::fs::path& path)
+open_outfile(const tools::fs::path& path)
 {
     ostream_ptr osp;
     if (path.str() == "-")
@@ -128,7 +125,7 @@ class csv_writer : public writer {
     std::string m_tcname;
 
 public:
-    csv_writer(const atf::fs::path& p) :
+    csv_writer(const tools::fs::path& p) :
         m_os(open_outfile(p))
     {
     }
@@ -223,8 +220,8 @@ class ticker_writer : public writer {
     void
     write_tp_start(const std::string& tp, size_t ntcs)
     {
-        using atf::text::to_string;
-        using atf::ui::format_text;
+        using tools::text::to_string;
+        using tools::ui::format_text;
 
         m_tpname = tp;
 
@@ -238,7 +235,7 @@ class ticker_writer : public writer {
     void
     write_tp_end(struct timeval* tv, const std::string& reason)
     {
-        using atf::ui::format_text_with_tag;
+        using tools::ui::format_text_with_tag;
 
         m_curtp++;
 
@@ -290,7 +287,7 @@ class ticker_writer : public writer {
             str = "Skipped: " + reason;
             m_tcs_skipped++;
         } else
-            UNREACHABLE;
+            std::abort();
 
         // XXX Wrap text.  format_text_with_tag does not currently allow
         // to specify the current column, which is needed because we have
@@ -304,8 +301,8 @@ class ticker_writer : public writer {
     write_expected_failures(const std::map< std::string, std::string >& xfails,
                             std::ostream& os)
     {
-        using atf::ui::format_text;
-        using atf::ui::format_text_with_tag;
+        using tools::ui::format_text;
+        using tools::ui::format_text_with_tag;
 
         os << format_text("Test cases for known bugs:") << "\n";
 
@@ -322,10 +319,10 @@ class ticker_writer : public writer {
     void
     write_eof(void)
     {
-        using atf::text::join;
-        using atf::text::to_string;
-        using atf::ui::format_text;
-        using atf::ui::format_text_with_tag;
+        using tools::text::join;
+        using tools::text::to_string;
+        using tools::ui::format_text;
+        using tools::ui::format_text_with_tag;
 
         if (!m_failed_tps.empty()) {
             (*m_os) << format_text("Failed (bogus) test programs:")
@@ -362,7 +359,7 @@ class ticker_writer : public writer {
     }
 
 public:
-    ticker_writer(const atf::fs::path& p) :
+    ticker_writer(const tools::fs::path& p) :
         m_os(open_outfile(p))
     {
     }
@@ -473,7 +470,7 @@ class xml_writer : public writer {
         } else if (state == "skipped") {
             (*m_os) << "<skipped>" << elemval(reason) << "</skipped>\n";
         } else
-            UNREACHABLE;
+            std::abort();
         (*m_os) << "<tc-time>" << format_tv(tv) << "</tc-time>";
         (*m_os) << "</tc>\n";
     }
@@ -485,7 +482,7 @@ class xml_writer : public writer {
     }
 
 public:
-    xml_writer(const atf::fs::path& p) :
+    xml_writer(const tools::fs::path& p) :
         m_os(open_outfile(p))
     {
         (*m_os) << "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n"
@@ -507,7 +504,7 @@ public:
 //! raised by the parser, redirects it to multiple writers so that they
 //! can reformat it according to their output rules.
 //!
-class converter : public atf::atf_report::atf_tps_reader {
+class converter : public tools::atf_report::atf_tps_reader {
     typedef std::vector< writer* > outs_vector;
     outs_vector m_outs;
 
@@ -586,7 +583,7 @@ class converter : public atf::atf_report::atf_tps_reader {
 
 public:
     converter(std::istream& is) :
-        atf::atf_report::atf_tps_reader(is)
+        tools::atf_report::atf_tps_reader(is)
     {
     }
 
@@ -598,7 +595,7 @@ public:
     }
 
     void
-    add_output(const std::string& fmt, const atf::fs::path& p)
+    add_output(const std::string& fmt, const tools::fs::path& p)
     {
         if (fmt == "csv") {
             m_outs.push_back(new csv_writer(p));
@@ -615,10 +612,10 @@ public:
 // The "atf_report" class.
 // ------------------------------------------------------------------------
 
-class atf_report : public atf::application::app {
+class atf_report : public tools::application::app {
     static const char* m_description;
 
-    typedef std::pair< std::string, atf::fs::path > fmt_path_pair;
+    typedef std::pair< std::string, tools::fs::path > fmt_path_pair;
     std::vector< fmt_path_pair > m_oflags;
 
     void process_option(int, const char*);
@@ -651,14 +648,14 @@ atf_report::process_option(int ch, const char* arg)
                 throw std::runtime_error("Syntax error in -o option");
             else {
                 std::string fmt = str.substr(0, pos);
-                atf::fs::path path = atf::fs::path(str.substr(pos + 1));
+                tools::fs::path path = tools::fs::path(str.substr(pos + 1));
                 m_oflags.push_back(fmt_path_pair(fmt, path));
             }
         }
         break;
 
     default:
-        UNREACHABLE;
+        std::abort();
     }
 }
 
@@ -666,7 +663,7 @@ atf_report::options_set
 atf_report::specific_options(void)
     const
 {
-    using atf::application::option;
+    using tools::application::option;
     options_set opts;
     opts.insert(option('o', "fmt:path", "Adds a new output file; multiple "
                                         "ones can be specified, and a - "
@@ -681,15 +678,15 @@ atf_report::main(void)
         throw std::runtime_error("No arguments allowed");
 
     if (m_oflags.empty())
-        m_oflags.push_back(fmt_path_pair("ticker", atf::fs::path("-")));
+        m_oflags.push_back(fmt_path_pair("ticker", tools::fs::path("-")));
 
     // Look for path duplicates.
-    std::set< atf::fs::path > paths;
+    std::set< tools::fs::path > paths;
     for (std::vector< fmt_path_pair >::const_iterator iter = m_oflags.begin();
          iter != m_oflags.end(); iter++) {
-        atf::fs::path p = (*iter).second;
-        if (p == atf::fs::path("/dev/stdout"))
-            p = atf::fs::path("-");
+        tools::fs::path p = (*iter).second;
+        if (p == tools::fs::path("/dev/stdout"))
+            p = tools::fs::path("-");
         if (paths.find(p) != paths.end())
             throw std::runtime_error("The file `" + p.str() + "' was "
                                      "specified more than once");
