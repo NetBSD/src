@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+// Copyright (c) 2007 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,24 +27,31 @@
 // IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
+extern "C" {
+#include <sys/time.h>
+}
+
+#include <cctype>
 #include <cstdlib>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <memory>
+#include <sstream>
 #include <utility>
 #include <vector>
 
-#include "atf-c++/application.hpp"
-#include "atf-c++/fs.hpp"
-#include "atf-c++/formats.hpp"
-#include "atf-c++/sanity.hpp"
-#include "atf-c++/text.hpp"
-#include "atf-c++/ui.hpp"
+#include "application.hpp"
+#include "defs.hpp"
+#include "fs.hpp"
+#include "reader.hpp"
+#include "text.hpp"
+#include "ui.hpp"
 
 typedef std::auto_ptr< std::ostream > ostream_ptr;
 
-ostream_ptr
-open_outfile(const atf::fs::path& path)
+static ostream_ptr
+open_outfile(const tools::fs::path& path)
 {
     ostream_ptr osp;
     if (path.str() == "-")
@@ -54,6 +61,16 @@ open_outfile(const atf::fs::path& path)
     if (!(*osp))
         throw std::runtime_error("Could not create file " + path.str());
     return osp;
+}
+
+static std::string
+format_tv(struct timeval* tv)
+{
+    std::ostringstream output;
+    output << static_cast< long >(tv->tv_sec) << '.'
+           << std::setfill('0') << std::setw(6)
+           << static_cast< long >(tv->tv_usec);
+    return output.str();
 }
 
 // ------------------------------------------------------------------------
@@ -79,11 +96,12 @@ public:
     virtual void write_info(const std::string&, const std::string&) {}
     virtual void write_ntps(size_t) {}
     virtual void write_tp_start(const std::string&, size_t) {}
-    virtual void write_tp_end(const std::string&) {}
+    virtual void write_tp_end(struct timeval*, const std::string&) {}
     virtual void write_tc_start(const std::string&) {}
     virtual void write_tc_stdout_line(const std::string&) {}
     virtual void write_tc_stderr_line(const std::string&) {}
-    virtual void write_tc_end(const atf::tests::tcr&) {}
+    virtual void write_tc_end(const std::string&, struct timeval*,
+                              const std::string&) {}
     virtual void write_eof(void) {}
 };
 
@@ -107,14 +125,15 @@ class csv_writer : public writer {
     std::string m_tcname;
 
 public:
-    csv_writer(const atf::fs::path& p) :
+    csv_writer(const tools::fs::path& p) :
         m_os(open_outfile(p))
     {
     }
 
     virtual
     void
-    write_tp_start(const std::string& name, size_t ntcs)
+    write_tp_start(const std::string& name,
+                   size_t ntcs ATF_DEFS_ATTRIBUTE_UNUSED)
     {
         m_tpname = name;
         m_failed = false;
@@ -122,15 +141,17 @@ public:
 
     virtual
     void
-    write_tp_end(const std::string& reason)
+    write_tp_end(struct timeval* tv, const std::string& reason)
     {
+        const std::string timestamp = format_tv(tv);
+
         if (!reason.empty())
-            (*m_os) << "tp, " << m_tpname << ", bogus, " << reason
-                    << std::endl;
+            (*m_os) << "tp, " << timestamp << ", " << m_tpname << ", bogus, "
+                    << reason << "\n";
         else if (m_failed)
-            (*m_os) << "tp, " << m_tpname << ", failed" << std::endl;
+            (*m_os) << "tp, " << timestamp << ", "<< m_tpname << ", failed\n";
         else
-            (*m_os) << "tp, " << m_tpname << ", passed" << std::endl;
+            (*m_os) << "tp, " << timestamp << ", "<< m_tpname << ", passed\n";
     }
 
     virtual
@@ -142,21 +163,16 @@ public:
 
     virtual
     void
-    write_tc_end(const atf::tests::tcr& tcr)
+    write_tc_end(const std::string& state, struct timeval* tv,
+                 const std::string& reason)
     {
-        std::string str = "tc, ";
-        if (tcr.get_state() == atf::tests::tcr::passed_state) {
-            str += m_tpname + ", " + m_tcname + ", passed";
-        } else if (tcr.get_state() == atf::tests::tcr::failed_state) {
-            str += m_tpname + ", " + m_tcname + ", failed, " +
-                   tcr.get_reason();
+        std::string str = m_tpname + ", " + m_tcname + ", " + state;
+        if (!reason.empty())
+            str += ", " + reason;
+        (*m_os) << "tc, " << format_tv(tv) << ", " << str << "\n";
+
+        if (state == "failed")
             m_failed = true;
-        } else if (tcr.get_state() == atf::tests::tcr::skipped_state) {
-            str += m_tpname + ", " + m_tcname + ", skipped, " +
-                   tcr.get_reason();
-        } else
-            UNREACHABLE;
-        (*m_os) << str << std::endl;
     }
 };
 
@@ -176,17 +192,17 @@ class ticker_writer : public writer {
     ostream_ptr m_os;
 
     size_t m_curtp, m_ntps;
-    size_t m_tcs_passed, m_tcs_failed, m_tcs_skipped;
+    size_t m_tcs_passed, m_tcs_failed, m_tcs_skipped, m_tcs_expected_failures;
     std::string m_tcname, m_tpname;
     std::vector< std::string > m_failed_tcs;
+    std::map< std::string, std::string > m_expected_failures_tcs;
     std::vector< std::string > m_failed_tps;
 
     void
     write_info(const std::string& what, const std::string& val)
     {
         if (what == "tests.root") {
-            (*m_os) << "Tests root: " << val << std::endl
-                    << std::endl;
+            (*m_os) << "Tests root: " << val << "\n\n";
         }
     }
 
@@ -197,28 +213,29 @@ class ticker_writer : public writer {
         m_tcs_passed = 0;
         m_tcs_failed = 0;
         m_tcs_skipped = 0;
+        m_tcs_expected_failures = 0;
         m_ntps = ntps;
     }
 
     void
     write_tp_start(const std::string& tp, size_t ntcs)
     {
-        using atf::text::to_string;
-        using atf::ui::format_text;
+        using tools::text::to_string;
+        using tools::ui::format_text;
 
         m_tpname = tp;
 
         (*m_os) << format_text(tp + " (" + to_string(m_curtp) +
                                "/" + to_string(m_ntps) + "): " +
                                to_string(ntcs) + " test cases")
-                << std::endl;
+                << "\n";
         (*m_os).flush();
     }
 
     void
-    write_tp_end(const std::string& reason)
+    write_tp_end(struct timeval* tv, const std::string& reason)
     {
-        using atf::ui::format_text_with_tag;
+        using tools::ui::format_text_with_tag;
 
         m_curtp++;
 
@@ -227,10 +244,10 @@ class ticker_writer : public writer {
                                             "trust its results because "
                                             "of `" + reason + "'",
                                             m_tpname + ": ", false)
-                    << std::endl;
+                    << "\n";
             m_failed_tps.push_back(m_tpname);
         }
-        (*m_os) << std::endl;
+        (*m_os) << "[" << format_tv(tv) << "s]\n\n";
         (*m_os).flush();
 
         m_tpname.clear();
@@ -246,74 +263,103 @@ class ticker_writer : public writer {
     }
 
     void
-    write_tc_end(const atf::tests::tcr& tcr)
+    write_tc_end(const std::string& state, struct timeval* tv,
+                 const std::string& reason)
     {
         std::string str;
 
-        atf::tests::tcr::state s = tcr.get_state();
-        if (s == atf::tests::tcr::passed_state) {
-            str = "Passed.";
-            m_tcs_passed++;
-        } else if (s == atf::tests::tcr::failed_state) {
-            str = "Failed: " + tcr.get_reason();
+        (*m_os) << "[" << format_tv(tv) << "s] ";
+
+        if (state == "expected_death" || state == "expected_exit" ||
+            state == "expected_failure" || state == "expected_signal" ||
+            state == "expected_timeout") {
+            str = "Expected failure: " + reason;
+            m_tcs_expected_failures++;
+            m_expected_failures_tcs[m_tpname + ":" + m_tcname] = reason;
+        } else if (state == "failed") {
+            str = "Failed: " + reason;
             m_tcs_failed++;
             m_failed_tcs.push_back(m_tpname + ":" + m_tcname);
-        } else if (s == atf::tests::tcr::skipped_state) {
-            str = "Skipped: " + tcr.get_reason();
+        } else if (state == "passed") {
+            str = "Passed.";
+            m_tcs_passed++;
+        } else if (state == "skipped") {
+            str = "Skipped: " + reason;
             m_tcs_skipped++;
         } else
-            UNREACHABLE;
+            std::abort();
 
         // XXX Wrap text.  format_text_with_tag does not currently allow
         // to specify the current column, which is needed because we have
         // already printed the tc's name.
-        (*m_os) << str << std::endl;
+        (*m_os) << str << '\n';
 
         m_tcname = "";
+    }
+
+    static void
+    write_expected_failures(const std::map< std::string, std::string >& xfails,
+                            std::ostream& os)
+    {
+        using tools::ui::format_text;
+        using tools::ui::format_text_with_tag;
+
+        os << format_text("Test cases for known bugs:") << "\n";
+
+        for (std::map< std::string, std::string >::const_iterator iter =
+             xfails.begin(); iter != xfails.end(); iter++) {
+            const std::string& name = (*iter).first;
+            const std::string& reason = (*iter).second;
+
+            os << format_text_with_tag(reason, "    " + name + ": ", false)
+               << "\n";
+        }
     }
 
     void
     write_eof(void)
     {
-        using atf::text::join;
-        using atf::text::to_string;
-        using atf::ui::format_text;
-        using atf::ui::format_text_with_tag;
+        using tools::text::join;
+        using tools::text::to_string;
+        using tools::ui::format_text;
+        using tools::ui::format_text_with_tag;
 
         if (!m_failed_tps.empty()) {
             (*m_os) << format_text("Failed (bogus) test programs:")
-                    << std::endl;
+                    << "\n";
             (*m_os) << format_text_with_tag(join(m_failed_tps, ", "),
-                                            "    ", false) << std::endl
-                    << std::endl;
+                                            "    ", false) << "\n\n";
+        }
+
+        if (!m_expected_failures_tcs.empty()) {
+            write_expected_failures(m_expected_failures_tcs, *m_os);
+            (*m_os) << "\n";
         }
 
         if (!m_failed_tcs.empty()) {
-            (*m_os) << format_text("Failed test cases:") << std::endl;
+            (*m_os) << format_text("Failed test cases:") << "\n";
             (*m_os) << format_text_with_tag(join(m_failed_tcs, ", "),
-                                            "    ", false) << std::endl
-                    << std::endl;
+                                            "    ", false) << "\n\n";
         }
 
         (*m_os) << format_text("Summary for " + to_string(m_ntps) +
-                               " test programs:")
-                << std::endl;
+                               " test programs:") << "\n";
         (*m_os) << format_text_with_tag(to_string(m_tcs_passed) +
                                         " passed test cases.",
-                                        "    ", false)
-                << std::endl;
+                                        "    ", false) << "\n";
         (*m_os) << format_text_with_tag(to_string(m_tcs_failed) +
                                         " failed test cases.",
-                                        "    ", false)
-                << std::endl;
+                                        "    ", false) << "\n";
+        (*m_os) << format_text_with_tag(to_string(m_tcs_expected_failures) +
+                                        " expected failed test cases.",
+                                        "    ", false) << "\n";
         (*m_os) << format_text_with_tag(to_string(m_tcs_skipped) +
                                         " skipped test cases.",
-                                        "    ", false)
-                << std::endl;
+                                        "    ", false) << "\n";
     }
 
 public:
-    ticker_writer(const atf::fs::path& p) :
+    ticker_writer(const tools::fs::path& p) :
         m_os(open_outfile(p))
     {
     }
@@ -333,11 +379,7 @@ public:
 class xml_writer : public writer {
     ostream_ptr m_os;
 
-    size_t m_curtp, m_ntps;
-    size_t m_tcs_passed, m_tcs_failed, m_tcs_skipped;
     std::string m_tcname, m_tpname;
-    std::vector< std::string > m_failed_tcs;
-    std::vector< std::string > m_failed_tps;
 
     static
     std::string
@@ -350,95 +392,104 @@ class xml_writer : public writer {
     std::string
     elemval(const std::string& str)
     {
-        std::string ostr;
+        std::ostringstream buf;
         for (std::string::const_iterator iter = str.begin();
              iter != str.end(); iter++) {
-            switch (*iter) {
-            case '&': ostr += "&amp;"; break;
-            case '<': ostr += "&lt;"; break;
-            case '>': ostr += "&gt;"; break;
-            default:  ostr += *iter;
+            const int character = static_cast< unsigned char >(*iter);
+            if (character == '&') {
+                buf << "&amp;";
+            } else if (character == '<') {
+                buf << "&lt;";
+            } else if (character == '>') {
+                buf << "&gt;";
+            } else if (std::isalnum(character) || std::ispunct(character) ||
+                       std::isspace(character)) {
+                buf << static_cast< char >(character);
+            } else {
+                buf << "&amp;#" << character << ";";
             }
         }
-        return ostr;
+        return buf.str();
     }
 
     void
     write_info(const std::string& what, const std::string& val)
     {
-        (*m_os) << "<info class=\"" << what << "\">" << val << "</info>"
-                << std::endl;
+        (*m_os) << "<info class=\"" << what << "\">" << val << "</info>\n";
     }
 
     void
-    write_tp_start(const std::string& tp, size_t ntcs)
+    write_tp_start(const std::string& tp,
+                   size_t ntcs ATF_DEFS_ATTRIBUTE_UNUSED)
     {
-        (*m_os) << "<tp id=\"" << attrval(tp) << "\">" << std::endl;
+        (*m_os) << "<tp id=\"" << attrval(tp) << "\">\n";
     }
 
     void
-    write_tp_end(const std::string& reason)
+    write_tp_end(struct timeval* tv, const std::string& reason)
     {
         if (!reason.empty())
-            (*m_os) << "<failed>" << elemval(reason) << "</failed>"
-                    << std::endl;
-        (*m_os) << "</tp>" << std::endl;
+            (*m_os) << "<failed>" << elemval(reason) << "</failed>\n";
+        (*m_os) << "<tp-time>" << format_tv(tv) << "</tp-time>";
+        (*m_os) << "</tp>\n";
     }
 
     void
     write_tc_start(const std::string& tcname)
     {
-        (*m_os) << "<tc id=\"" << attrval(tcname) << "\">" << std::endl;
+        (*m_os) << "<tc id=\"" << attrval(tcname) << "\">\n";
     }
 
     void
     write_tc_stdout_line(const std::string& line)
     {
-        (*m_os) << "<so>" << elemval(line) << "</so>" << std::endl;
+        (*m_os) << "<so>" << elemval(line) << "</so>\n";
     }
 
     void
     write_tc_stderr_line(const std::string& line)
     {
-        (*m_os) << "<se>" << elemval(line) << "</se>" << std::endl;
+        (*m_os) << "<se>" << elemval(line) << "</se>\n";
     }
 
     void
-    write_tc_end(const atf::tests::tcr& tcr)
+    write_tc_end(const std::string& state, struct timeval* tv,
+                 const std::string& reason)
     {
         std::string str;
 
-        atf::tests::tcr::state s = tcr.get_state();
-        if (s == atf::tests::tcr::passed_state) {
-            (*m_os) << "<passed />" << std::endl;
-        } else if (s == atf::tests::tcr::failed_state) {
-            (*m_os) << "<failed>" << elemval(tcr.get_reason())
-                    << "</failed>" << std::endl;
-        } else if (s == atf::tests::tcr::skipped_state) {
-            (*m_os) << "<skipped>" << elemval(tcr.get_reason())
-                    << "</skipped>" << std::endl;
+        if (state == "expected_death" || state == "expected_exit" ||
+            state == "expected_failure" || state == "expected_signal" ||
+            state == "expected_timeout") {
+            (*m_os) << "<" << state << ">" << elemval(reason)
+                    << "</" << state << ">\n";
+        } else if (state == "passed") {
+            (*m_os) << "<passed />\n";
+        } else if (state == "failed") {
+            (*m_os) << "<failed>" << elemval(reason) << "</failed>\n";
+        } else if (state == "skipped") {
+            (*m_os) << "<skipped>" << elemval(reason) << "</skipped>\n";
         } else
-            UNREACHABLE;
-        (*m_os) << "</tc>" << std::endl;
+            std::abort();
+        (*m_os) << "<tc-time>" << format_tv(tv) << "</tc-time>";
+        (*m_os) << "</tc>\n";
     }
 
     void
     write_eof(void)
     {
-        (*m_os) << "</tests-results>" << std::endl;
+        (*m_os) << "</tests-results>\n";
     }
 
 public:
-    xml_writer(const atf::fs::path& p) :
+    xml_writer(const tools::fs::path& p) :
         m_os(open_outfile(p))
     {
-        (*m_os) << "<?xml version=\"1.0\"?>" << std::endl
+        (*m_os) << "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n"
                 << "<!DOCTYPE tests-results PUBLIC "
                    "\"-//NetBSD//DTD ATF Tests Results 0.1//EN\" "
-                   "\"http://www.NetBSD.org/XML/atf/tests-results.dtd\">"
-                << std::endl
-                << std::endl
-                << "<tests-results>" << std::endl;
+                   "\"http://www.NetBSD.org/XML/atf/tests-results.dtd\">\n\n"
+                   "<tests-results>\n";
     }
 };
 
@@ -453,7 +504,7 @@ public:
 //! raised by the parser, redirects it to multiple writers so that they
 //! can reformat it according to their output rules.
 //!
-class converter : public atf::formats::atf_tps_reader {
+class converter : public tools::atf_report::atf_tps_reader {
     typedef std::vector< writer* > outs_vector;
     outs_vector m_outs;
 
@@ -482,11 +533,11 @@ class converter : public atf::formats::atf_tps_reader {
     }
 
     void
-    got_tp_end(const std::string& reason)
+    got_tp_end(struct timeval* tv, const std::string& reason)
     {
         for (outs_vector::iterator iter = m_outs.begin();
              iter != m_outs.end(); iter++)
-            (*iter)->write_tp_end(reason);
+            (*iter)->write_tp_end(tv, reason);
     }
 
     void
@@ -514,11 +565,12 @@ class converter : public atf::formats::atf_tps_reader {
     }
 
     void
-    got_tc_end(const atf::tests::tcr& tcr)
+    got_tc_end(const std::string& state, struct timeval* tv,
+               const std::string& reason)
     {
         for (outs_vector::iterator iter = m_outs.begin();
              iter != m_outs.end(); iter++)
-            (*iter)->write_tc_end(tcr);
+            (*iter)->write_tc_end(state, tv, reason);
     }
 
     void
@@ -531,7 +583,7 @@ class converter : public atf::formats::atf_tps_reader {
 
 public:
     converter(std::istream& is) :
-        atf::formats::atf_tps_reader(is)
+        tools::atf_report::atf_tps_reader(is)
     {
     }
 
@@ -543,7 +595,7 @@ public:
     }
 
     void
-    add_output(const std::string& fmt, const atf::fs::path& p)
+    add_output(const std::string& fmt, const tools::fs::path& p)
     {
         if (fmt == "csv") {
             m_outs.push_back(new csv_writer(p));
@@ -560,10 +612,10 @@ public:
 // The "atf_report" class.
 // ------------------------------------------------------------------------
 
-class atf_report : public atf::application::app {
+class atf_report : public tools::application::app {
     static const char* m_description;
 
-    typedef std::pair< std::string, atf::fs::path > fmt_path_pair;
+    typedef std::pair< std::string, tools::fs::path > fmt_path_pair;
     std::vector< fmt_path_pair > m_oflags;
 
     void process_option(int, const char*);
@@ -596,14 +648,14 @@ atf_report::process_option(int ch, const char* arg)
                 throw std::runtime_error("Syntax error in -o option");
             else {
                 std::string fmt = str.substr(0, pos);
-                atf::fs::path path = atf::fs::path(str.substr(pos + 1));
+                tools::fs::path path = tools::fs::path(str.substr(pos + 1));
                 m_oflags.push_back(fmt_path_pair(fmt, path));
             }
         }
         break;
 
     default:
-        UNREACHABLE;
+        std::abort();
     }
 }
 
@@ -611,7 +663,7 @@ atf_report::options_set
 atf_report::specific_options(void)
     const
 {
-    using atf::application::option;
+    using tools::application::option;
     options_set opts;
     opts.insert(option('o', "fmt:path", "Adds a new output file; multiple "
                                         "ones can be specified, and a - "
@@ -622,16 +674,19 @@ atf_report::specific_options(void)
 int
 atf_report::main(void)
 {
+    if (m_argc > 0)
+        throw std::runtime_error("No arguments allowed");
+
     if (m_oflags.empty())
-        m_oflags.push_back(fmt_path_pair("ticker", atf::fs::path("-")));
+        m_oflags.push_back(fmt_path_pair("ticker", tools::fs::path("-")));
 
     // Look for path duplicates.
-    std::set< atf::fs::path > paths;
+    std::set< tools::fs::path > paths;
     for (std::vector< fmt_path_pair >::const_iterator iter = m_oflags.begin();
          iter != m_oflags.end(); iter++) {
-        atf::fs::path p = (*iter).second;
-        if (p == atf::fs::path("/dev/stdout"))
-            p = atf::fs::path("-");
+        tools::fs::path p = (*iter).second;
+        if (p == tools::fs::path("/dev/stdout"))
+            p = tools::fs::path("-");
         if (paths.find(p) != paths.end())
             throw std::runtime_error("The file `" + p.str() + "' was "
                                      "specified more than once");
