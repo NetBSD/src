@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.24 2014/01/31 20:48:49 christos Exp $
+# $NetBSD: ad.arm,v 1.25 2014/02/08 19:17:43 jmmv Exp $
 ./usr/lib/libarm_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libc_vfp_g.a				comp-c-debuglib		debuglib,softfloat
 ./usr/lib/libpmc_g.a				comp-c-debuglib		debuglib
@@ -55,7 +55,8 @@
 ./usr/libdata/debug/usr/lib/oabi/libarm.so.0.0.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libasn1.so.8.0.debug		comp-compat-shlib	compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/oabi/libasn1.so.9.0.debug		comp-compat-shlib	compat,pic,kerberos,debug
-./usr/libdata/debug/usr/lib/oabi/libatf-c++.so.0.0.debug		comp-compat-shlib	compat,pic,atf,debug
+./usr/libdata/debug/usr/lib/oabi/libatf-c++.so.0.0.debug		comp-compat-shlib	compat,pic,atf,debug,obsolete
+./usr/libdata/debug/usr/lib/oabi/libatf-c++.so.1.0.debug		comp-compat-shlib	compat,pic,atf,debug
 ./usr/libdata/debug/usr/lib/oabi/libatf-c.so.0.0.debug		comp-compat-shlib	compat,pic,atf,debug
 ./usr/libdata/debug/usr/lib/oabi/libavl.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libbfd.so.13.0.debug	comp-sys-debug	binutils,debug,compat

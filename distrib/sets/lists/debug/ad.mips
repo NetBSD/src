@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.20 2014/01/31 20:48:49 christos Exp $
+# $NetBSD: ad.mips,v 1.21 2014/02/08 19:17:43 jmmv Exp $
 ./usr/lib/64/libcrypto_g.a			comp-c-debuglib		compat,crypto,debuglib,arch64
 ./usr/lib/64/libcrypto_idea_g.a			comp-obsolete		obsolete
 ./usr/lib/64/libcrypto_mdc2_g.a			comp-obsolete		obsolete
@@ -62,7 +62,8 @@
 ./usr/libdata/debug/usr/lib/64/libarchive.so.3.1.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libasn1.so.8.0.debug		comp-compat-shlib	compat,pic,kerberos,debug,obsolete,arch64
 ./usr/libdata/debug/usr/lib/64/libasn1.so.9.0.debug		comp-compat-shlib	compat,pic,kerberos,debug,arch64
-./usr/libdata/debug/usr/lib/64/libatf-c++.so.0.0.debug		comp-compat-shlib	compat,pic,atf,debug,arch64
+./usr/libdata/debug/usr/lib/64/libatf-c++.so.0.0.debug		comp-compat-shlib	compat,pic,atf,debug,arch64,obsolete
+./usr/libdata/debug/usr/lib/64/libatf-c++.so.1.0.debug		comp-compat-shlib	compat,pic,atf,debug,arch64
 ./usr/libdata/debug/usr/lib/64/libatf-c.so.0.0.debug		comp-compat-shlib	compat,pic,atf,debug,arch64
 ./usr/libdata/debug/usr/lib/64/libavl.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libbfd.so.13.0.debug	comp-sys-debug	binutils,debug,compat,arch64
@@ -237,7 +238,8 @@
 ./usr/libdata/debug/usr/lib/o32/libarchive.so.3.1.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libasn1.so.8.0.debug		comp-compat-shlib	compat,pic,kerberos,debug,obsolete,arch64
 ./usr/libdata/debug/usr/lib/o32/libasn1.so.9.0.debug		comp-compat-shlib	compat,pic,kerberos,debug,arch64
-./usr/libdata/debug/usr/lib/o32/libatf-c++.so.0.0.debug		comp-compat-shlib	compat,pic,atf,debug,arch64
+./usr/libdata/debug/usr/lib/o32/libatf-c++.so.0.0.debug		comp-compat-shlib	compat,pic,atf,debug,arch64,obsolete
+./usr/libdata/debug/usr/lib/o32/libatf-c++.so.1.0.debug		comp-compat-shlib	compat,pic,atf,debug,arch64
 ./usr/libdata/debug/usr/lib/o32/libatf-c.so.0.0.debug		comp-compat-shlib	compat,pic,atf,debug,arch64
 ./usr/libdata/debug/usr/lib/o32/libavl.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libbfd.so.13.0.debug	comp-sys-debug	binutils,debug,compat,arch64

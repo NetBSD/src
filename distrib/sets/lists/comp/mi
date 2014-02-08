@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1877 2014/01/30 06:49:16 wiz Exp $
+#	$NetBSD: mi,v 1.1878 2014/02/08 19:17:43 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -144,7 +144,7 @@
 ./usr/include/atf-c++/fs.hpp			comp-obsolete		obsolete
 ./usr/include/atf-c++/io.hpp			comp-obsolete		obsolete
 ./usr/include/atf-c++/macros.hpp		comp-atf-include	atf
-./usr/include/atf-c++/noncopyable.hpp		comp-atf-include	atf
+./usr/include/atf-c++/noncopyable.hpp		comp-obsolete		obsolete
 ./usr/include/atf-c++/parser.hpp		comp-obsolete		obsolete
 ./usr/include/atf-c++/process.hpp		comp-obsolete		obsolete
 ./usr/include/atf-c++/sanity.hpp		comp-obsolete		obsolete

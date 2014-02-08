@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.49 2014/01/31 20:48:49 christos Exp $
+# $NetBSD: shl.mi,v 1.50 2014/02/08 19:17:43 jmmv Exp $
 ./usr/libdata/debug/lib/libc.so.12.190.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypt.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypto.so.8.2.debug		comp-sys-debug	debug
@@ -51,7 +51,8 @@
 ./usr/libdata/debug/usr/lib/libamu.so.4.0.debug		comp-amd-debug	debug
 ./usr/libdata/debug/usr/lib/libarchive.so.3.1.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libasn1.so.9.0.debug	comp-krb5-debug	kerberos,debug
-./usr/libdata/debug/usr/lib/libatf-c++.so.0.0.debug	comp-atf-debug	atf,debug
+./usr/libdata/debug/usr/lib/libatf-c++.so.0.0.debug	comp-atf-debug	atf,debug,obsolete
+./usr/libdata/debug/usr/lib/libatf-c++.so.1.0.debug	comp-atf-debug	atf,debug
 ./usr/libdata/debug/usr/lib/libatf-c.so.0.0.debug	comp-atf-debug	atf,debug
 ./usr/libdata/debug/usr/lib/libavl.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug
 ./usr/libdata/debug/usr/lib/libbfd.so.13.0.debug	comp-sys-debug	binutils,debug
