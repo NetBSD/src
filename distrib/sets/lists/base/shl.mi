@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.688 2014/01/31 20:48:49 christos Exp $
+# $NetBSD: shl.mi,v 1.689 2014/02/08 19:17:42 jmmv Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -170,8 +170,8 @@
 ./usr/lib/libasn1.so.9				base-krb5-shlib		kerberos
 ./usr/lib/libasn1.so.9.0			base-krb5-shlib		kerberos
 ./usr/lib/libatf-c++.so				base-atf-shlib		atf
-./usr/lib/libatf-c++.so.0			base-atf-shlib		atf
-./usr/lib/libatf-c++.so.0.0			base-atf-shlib		atf
+./usr/lib/libatf-c++.so.1			base-atf-shlib		atf
+./usr/lib/libatf-c++.so.1.0			base-atf-shlib		atf
 ./usr/lib/libatf-c.so				base-atf-shlib		atf
 ./usr/lib/libatf-c.so.0				base-atf-shlib		atf
 ./usr/lib/libatf-c.so.0.0			base-atf-shlib		atf
