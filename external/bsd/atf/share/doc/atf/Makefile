@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2010/11/02 14:41:32 njoly Exp $
+# $NetBSD: Makefile,v 1.5 2014/02/08 19:15:34 jmmv Exp $
 
 .include <bsd.own.mk>
 
@@ -8,6 +8,7 @@ SRCDIR=	${NETBSDSRCDIR}/external/bsd/atf/dist
 .PATH:	${SRCDIR}/atf-c++
 .PATH:	${SRCDIR}/atf-sh
 .PATH:	${SRCDIR}/doc
+.PATH:	${SRCDIR}/tools
 
 .if ${MKDOC} != "no"
 FILESDIR=	/usr/share/doc/atf
@@ -21,7 +22,7 @@ atf.7: atf.7.in
 	${TOOL_SED} \
 	    -e 's,__DOCDIR__,/usr/share/doc/atf,g' \
 	    -e 's,__TESTSDIR__,/usr/tests,g' \
-	    <${SRCDIR}/doc/atf.7.in >atf.7.tmp
+	    <${SRCDIR}/tools/atf.7.in >atf.7.tmp
 	mv atf.7.tmp atf.7
 
 .include <bsd.files.mk>
