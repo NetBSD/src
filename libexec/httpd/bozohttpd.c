@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.47 2014/02/02 03:13:31 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.48 2014/02/09 01:46:10 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -55,17 +55,17 @@
 
 /*
  * requirements for minimal http/1.1 (at least, as documented in
- * <draft-ietf-http-v11-spec-rev-06> which expired may 18, 1999):
+ * RFC 2616 (HTTP/1.1):
  *
- *	- 14.15: content-encoding handling. [1]
+ *	- 14.11: content-encoding handling. [1]
  *
- *	- 14.16: content-length handling.  this is only a SHOULD header
+ *	- 14.13: content-length handling.  this is only a SHOULD header
  *	  thus we could just not send it ever.  [1]
  *
  *	- 14.17: content-type handling. [1]
  *
- *	- 14.25/28: if-{,un}modified-since handling.  maybe do this, but
- *	  i really don't want to have to parse 3 differnet date formats
+ *	- 14.28: if-unmodified-since handling.  if-modified-since is
+ *	  done since, shouldn't be too hard for this one.
  *
  * [1] need to revisit to ensure proper behaviour
  *
@@ -88,21 +88,21 @@
  *
  *	- 10.3.3/10.3.4/10.3.8:  just use '302' codes always.
  *
- *	- 14.1/14.2/14.3/14.27: we do not support Accept: headers..
+ *	- 14.1/14.2/14.3/14.27: we do not support Accept: headers.
  *	  just ignore them and send the request anyway.  they are
  *	  only SHOULD.
  *
- *	- 14.5/14.16/14.35: we don't do ranges.  from section 14.35.2
- *	  `A server MAY ignore the Range header'.  but it might be nice.
- *	  since 20080301 we support simple range headers.
+ *	- 14.5/14.16/14.35: only support simple ranges: %d- and %d-%d
+ *	  would be nice to support more.
  *
  *	- 14.9: we aren't a cache.
  *
- *	- 14.15: content-md5 would be nice...
+ *	- 14.15: content-md5 would be nice.
  *
- *	- 14.24/14.26/14.27: be nice to support this...
+ *	- 14.24/14.26/14.27: if-match, if-none-match, if-range.  be
+ *	  nice to support this.
  *
- *	- 14.44: not sure about this Vary: header.  ignore it for now.
+ *	- 14.44: Vary: seems unneeded.  ignore it for now.
  */
 
 #ifndef INDEX_HTML
@@ -341,6 +341,7 @@ bozo_clean_request(bozo_httpreq_t *request)
 	MF(hr_file);
 	MF(hr_oldfile);
 	MF(hr_query);
+	MF(hr_host);
 #undef MF
 	bozo_auth_cleanup(request);
 	for (hdr = SIMPLEQ_FIRST(&request->hr_headers); hdr;
@@ -681,8 +682,8 @@ bozo_read_request(bozohttpd_t *httpd)
 			else if (strcasecmp(hdr->h_header, "content-length") == 0)
 				request->hr_content_length = hdr->h_value;
 			else if (strcasecmp(hdr->h_header, "host") == 0)
-				request->hr_host = hdr->h_value;
-			/* HTTP/1.1 rev06 draft spec: 14.20 */
+				request->hr_host = bozostrdup(httpd, hdr->h_value);
+			/* RFC 2616 (HTTP/1.1): 14.20 */
 			else if (strcasecmp(hdr->h_header, "expect") == 0) {
 				(void)bozo_http_error(httpd, 417, request,
 						"we don't support Expect:");
@@ -719,8 +720,9 @@ next_header:
 		goto cleanup;
 	}
 
-	/* HTTP/1.1 draft rev-06, 14.23 & 19.6.1.1 */
+	/* RFC 2616 (HTTP/1.1), 14.23 & 19.6.1.1 */
 	if (request->hr_proto == httpd->consts.http_11 &&
+	    /*(strncasecmp(request->hr_file, "http://", 7) != 0) &&*/
 	    request->hr_host == NULL) {
 		(void)bozo_http_error(httpd, 400, request,
 				"missing Host header");
@@ -1042,9 +1044,13 @@ check_virtual(bozo_httpreq_t *request)
 	if (strncasecmp(file, "http://", 7) == 0) {
 		/* we would do virtual hosting here? */
 		file += 7;
+		/* RFC 2616 (HTTP/1.1), 5.2: URI takes precedence over Host: */
+		free(request->hr_host);
+		request->hr_host = bozostrdup(request->hr_httpd, file);
+		if ((s = strchr(request->hr_host, '/')) != NULL)
+			*s = '\0';
 		s = strchr(file, '/');
-		/* HTTP/1.1 draft rev-06, 5.2: URI takes precedence over Host: */
-		request->hr_host = file;
+		free(request->hr_file);
 		request->hr_file = bozostrdup(request->hr_httpd, s ? s : "/");
 		debug((httpd, DEBUG_OBESE, "got host ``%s'' file is now ``%s''",
 		    request->hr_host, request->hr_file));
