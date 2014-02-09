@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vnops.c,v 1.54 2014/02/07 15:29:22 hannken Exp $	*/
+/*	$NetBSD: umap_vnops.c,v 1.55 2014/02/09 17:18:38 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.54 2014/02/07 15:29:22 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.55 2014/02/09 17:18:38 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -272,16 +272,14 @@ umap_bypass(void *v)
 		vppp = VOPARG_OFFSETTO(struct vnode***,
 				 descp->vdesc_vpp_offset, ap);
 		/*
-		 * Only vop_lookup, vop_create, vop_makedir, vop_bmap,
-		 * vop_mknod, and vop_symlink return vpp's. vop_bmap
-		 * doesn't call bypass as the lower vpp is fine (we're just
-		 * going to do i/o on it). vop_lookup doesn't call bypass
+		 * Only vop_lookup, vop_create, vop_makedir, vop_mknod
+		 * and vop_symlink return vpp's. vop_lookup doesn't call bypass
 		 * as a lookup on "." would generate a locking error.
-		 * So all the calls which get us here have a locked vpp. :-)
+		 * So all the calls which get us here have a unlocked vpp. :-)
 		 */
 		error = layer_node_create(old_vps[0]->v_mount, **vppp, *vppp);
 		if (error) {
-			vput(**vppp);
+			vrele(**vppp);
 			**vppp = NULL;
 		}
 	}
