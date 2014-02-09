@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.47 2014/02/09 22:19:02 dsl Exp $	*/
+/*	$NetBSD: fpu.c,v 1.48 2014/02/09 23:02:25 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.47 2014/02/09 22:19:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.48 2014/02/09 23:02:25 dsl Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -144,7 +144,83 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.47 2014/02/09 22:19:02 dsl Exp $");
  */
 
 void		fpudna(struct cpu_info *);
-static int	x86fpflags_to_ksiginfo(uint32_t);
+
+/* 
+ * The following table is used to ensure that the FPE_... value
+ * that is passed as a trapcode to the signal handler of the user
+ * process does not have more than one bit set.
+ * 
+ * Multiple bits may be set if SSE simd instructions generate errors
+ * on more than one value or if the user process modifies the control
+ * word while a status word bit is already set (which this is a sign
+ * of bad coding).
+ * We have no choise than to narrow them down to one bit, since we must
+ * not send a trapcode that is not exactly one of the FPE_ macros.
+ *
+ * The mechanism has a static table with 127 entries.  Each combination
+ * of the 7 FPU status word exception bits directly translates to a
+ * position in this table, where a single FPE_... value is stored.
+ * This FPE_... value stored there is considered the "most important"
+ * of the exception bits and will be sent as the signal code.  The
+ * precedence of the bits is based upon Intel Document "Numerical
+ * Applications", Chapter "Special Computational Situations".
+ *
+ * The code to choose one of these values does these steps:
+ * 1) Throw away status word bits that cannot be masked.
+ * 2) Throw away the bits currently masked in the control word,
+ *    assuming the user isn't interested in them anymore.
+ * 3) Reinsert status word bit 7 (stack fault) if it is set, which
+ *    cannot be masked but must be presered.
+ *    'Stack fault' is a sub-class of 'invalid operation'.
+ * 4) Use the remaining bits to point into the trapcode table.
+ *
+ * The 6 maskable bits in order of their preference, as stated in the
+ * above referenced Intel manual:
+ * 1  Invalid operation (FP_X_INV)
+ * 1a   Stack underflow
+ * 1b   Stack overflow
+ * 1c   Operand of unsupported format
+ * 1d   SNaN operand.
+ * 2  QNaN operand (not an exception, irrelavant here)
+ * 3  Any other invalid-operation not mentioned above or zero divide
+ *      (FP_X_INV, FP_X_DZ)
+ * 4  Denormal operand (FP_X_DNML)
+ * 5  Numeric over/underflow (FP_X_OFL, FP_X_UFL)
+ * 6  Inexact result (FP_X_IMP) 
+ *
+ * NB: the above seems to mix up the mxscr error bits and the x87 ones.
+ * They are in the same order, but there is no EN_SW_STACK_FAULT in the mmx
+ * status.
+ *
+ * The table is nearly, but not quite, in bit order (ZERODIV and DENORM
+ * are swapped).
+ *
+ * This table assumes that any stack fault is cleared - so that an INVOP
+ * fault will only be reported as FLTSUB once.
+ * This might not happen if the mask is being changed.
+ */
+#define FPE_xxx1(f) (f & EN_SW_INVOP \
+		? (f & EN_SW_STACK_FAULT ? FPE_FLTSUB : FPE_FLTINV) \
+	: f & EN_SW_ZERODIV ? FPE_FLTDIV \
+	: f & EN_SW_DENORM ? FPE_FLTUND \
+	: f & EN_SW_OVERFLOW ? FPE_FLTOVF \
+	: f & EN_SW_UNDERFLOW ? FPE_FLTUND \
+	: f & EN_SW_PRECLOSS ? FPE_FLTRES \
+	: f & EN_SW_STACK_FAULT ? FPE_FLTSUB : 0)
+#define	FPE_xxx2(f)	FPE_xxx1(f),	FPE_xxx1((f + 1))
+#define	FPE_xxx4(f)	FPE_xxx2(f),	FPE_xxx2((f + 2))
+#define	FPE_xxx8(f)	FPE_xxx4(f),	FPE_xxx4((f + 4))
+#define	FPE_xxx16(f)	FPE_xxx8(f),	FPE_xxx8((f + 8))
+#define	FPE_xxx32(f)	FPE_xxx16(f),	FPE_xxx16((f + 16))
+static const uint8_t fpetable[128] = {
+	FPE_xxx32(0), FPE_xxx32(32), FPE_xxx32(64), FPE_xxx32(96)
+};
+#undef FPE_xxx1
+#undef FPE_xxx2
+#undef FPE_xxx4
+#undef FPE_xxx8
+#undef FPE_xxx16
+#undef FPE_xxx32
 
 /*
  * Init the FPU.
@@ -225,31 +301,9 @@ fputrap(struct trapframe *frame)
 	KSI_INIT_TRAP(&ksi);
 	ksi.ksi_signo = SIGFPE;
 	ksi.ksi_addr = (void *)frame->tf_rip;
-	ksi.ksi_code = x86fpflags_to_ksiginfo(statbits);
+	ksi.ksi_code = fpetable[statbits & 0x7f];
 	ksi.ksi_trap = statbits;
 	(*curlwp->l_proc->p_emul->e_trapsignal)(curlwp, &ksi);
-}
-
-static int
-x86fpflags_to_ksiginfo(uint32_t flags)
-{
-	static int x86fp_ksiginfo_table[] = {
-		FPE_FLTINV, /* bit 0 - invalid operation */
-		FPE_FLTRES, /* bit 1 - denormal operand */
-		FPE_FLTDIV, /* bit 2 - divide by zero	*/
-		FPE_FLTOVF, /* bit 3 - fp overflow	*/
-		FPE_FLTUND, /* bit 4 - fp underflow	*/
-		FPE_FLTRES, /* bit 5 - fp precision	*/
-		FPE_FLTINV, /* bit 6 - stack fault	*/
-	};
-
-	for (u_int i = 0; i < __arraycount(x86fp_ksiginfo_table); i++) {
-		if (flags & (1U << i))
-			return x86fp_ksiginfo_table[i];
-	}
-
-	/* Punt if flags not set. */
-	return FPE_FLTINV;
 }
 
 /*
