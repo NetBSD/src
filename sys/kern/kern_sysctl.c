@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.244 2014/01/17 02:12:48 pooka Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.245 2014/02/09 14:51:13 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.244 2014/01/17 02:12:48 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.245 2014/02/09 14:51:13 maxv Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -1549,13 +1549,11 @@ sysctl_lookup(SYSCTLFN_ARGS)
 			return EINVAL;
 		}
 		error = sysctl_copyin(l, newp, &tmp, sz);
+		if (error)
+			break;
 		if (tmp != true && tmp != false) {
 			DPRINTF(("%s: tmp %d\n", __func__, tmp));
 			return EINVAL;
-		}
-		if (error) {
-			DPRINTF(("%s: copyin %d\n", __func__, error));
-			break;
 		}
 		*(bool *)d = tmp;
 		break;
