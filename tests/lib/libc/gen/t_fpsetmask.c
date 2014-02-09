@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fpsetmask.c,v 1.12 2013/04/14 16:03:06 martin Exp $ */
+/*	$NetBSD: t_fpsetmask.c,v 1.13 2014/02/09 21:26:07 jmmv Exp $ */
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -25,6 +25,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/param.h>
 
 #include <atf-c.h>
 #include <atf-c/config.h>
@@ -295,7 +297,7 @@ sigfpe(int s, siginfo_t *si, void *c)
 									\
 	ATF_TC_BODY(m##_##t, tc)					\
 	{								\
-		if (strcmp(atf_config_get("atf_arch"), "macppc") == 0)	\
+		if (strcmp(MACHINE, "macppc") == 0)			\
 			atf_tc_expect_fail("PR port-macppc/46319");	\
 									\
 		if (isQEMU())						\
