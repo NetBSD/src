@@ -1,4 +1,4 @@
-/*	$NetBSD: veriexecctl.c,v 1.35 2011/08/29 14:35:04 joerg Exp $	*/
+/*	$NetBSD: veriexecctl.c,v 1.36 2014/02/09 13:40:59 maxv Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -245,7 +245,7 @@ main(int argc, char **argv)
 
 		lfd = open(file, O_RDONLY|O_EXLOCK, 0);
 		if (lfd == -1)
-			err(1, "Cannot open `%s'", argv[1]);
+			err(1, "Cannot open `%s'", file);
 
 		yyin = fdopen(lfd, "r");
 
