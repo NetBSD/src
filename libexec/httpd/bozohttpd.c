@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.48 2014/02/09 01:46:10 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.49 2014/02/09 12:32:32 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -1058,12 +1058,20 @@ check_virtual(bozo_httpreq_t *request)
 		goto use_slashdir;
 
 	/*
-	 * ok, we have a virtual host, use scandir(3) to find a case
+	 * canonicalise hr_host - that is, remove any :80.
+	 */
+	len = strlen(request->hr_host);
+	if (len > 3 && strcmp(request->hr_host + len - 3, ":80") == 0) {
+		request->hr_host[len - 3] = '\0';
+		len = strlen(request->hr_host);
+	}
+	
+	/*
+	 * ok, we have a virtual host, use opendir(3) to find a case
 	 * insensitive match for the virtual host we are asked for.
 	 * note that if the virtual host is the same as the master,
 	 * we don't need to do anything special.
 	 */
-	len = strlen(request->hr_host);
 	debug((httpd, DEBUG_OBESE,
 	    "check_virtual: checking host `%s' under httpd->virtbase `%s' "
 	    "for file `%s'",
