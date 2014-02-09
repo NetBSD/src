@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.22 2014/01/25 10:14:29 skrll Exp $  */
+/*	$NetBSD: linux_exec.h,v 1.23 2014/02/09 16:41:42 chs Exp $  */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -81,8 +81,7 @@
  * by PowerPC GNU ld.so).
  */
 #define LINUX_ELF_AUX_ARGSIZ \
-    ((howmany(LINUX_ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof(Elf32_Addr))) \
-    + 16)
+	(howmany(LINUX_ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof(Elf32_Addr)) + LINUX_RANDOM_BYTES + 16)
 
 /* we have special powerpc ELF copyargs */
 #define LINUX_MACHDEP_ELF_COPYARGS
