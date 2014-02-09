@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_subr.c,v 1.33 2014/01/29 08:27:04 hannken Exp $	*/
+/*	$NetBSD: layer_subr.c,v 1.34 2014/02/09 17:15:51 hannken Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.33 2014/01/29 08:27:04 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.34 2014/02/09 17:15:51 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,7 +187,6 @@ layer_node_alloc(struct mount *mp, struct vnode *lowervp, struct vnode **vpp)
 	struct layer_node *xp;
 	struct vnode *vp, *nvp;
 	int error;
-	extern int (**dead_vnodeop_p)(void *);
 
 	/* Get a new vnode and share its interlock with underlying vnode. */
 	error = getnewvnode(lmp->layerm_tag, mp, lmp->layerm_vnodeop_p,
@@ -209,30 +208,24 @@ layer_node_alloc(struct mount *mp, struct vnode *lowervp, struct vnode **vpp)
 		spec_node_init(vp, lowervp->v_rdev);
 	}
 
-	vp->v_data = xp;
-	vp->v_vflag = (vp->v_vflag & ~VV_MPSAFE) |
-	    (lowervp->v_vflag & VV_MPSAFE);
-	xp->layer_vnode = vp;
-	xp->layer_lowervp = lowervp;
-	xp->layer_flags = 0;
-
 	/*
 	 * Before inserting the node into the hash, check if other thread
 	 * did not race with us.  If so - return that node, destroy ours.
 	 */
 	mutex_enter(&lmp->layerm_hashlock);
 	if ((nvp = layer_node_find(mp, lowervp)) != NULL) {
-		/* Free the structures we have created. */
-		if (vp->v_type == VBLK || vp->v_type == VCHR)
-			spec_node_destroy(vp);
-
-		vp->v_type = VBAD;		/* node is discarded */
-		vp->v_op = dead_vnodeop_p;	/* so ops will still work */
-		vrele(vp);			/* get rid of it. */
+		ungetnewvnode(vp);
 		kmem_free(xp, lmp->layerm_size);
 		*vpp = nvp;
 		return 0;
 	}
+
+	vp->v_data = xp;
+	vp->v_vflag = (vp->v_vflag & ~VV_MPSAFE) |
+	    (lowervp->v_vflag & VV_MPSAFE);
+	xp->layer_vnode = vp;
+	xp->layer_lowervp = lowervp;
+	xp->layer_flags = 0;
 
 	/*
 	 * Insert the new node into the hash.
