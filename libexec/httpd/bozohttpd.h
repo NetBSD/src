@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.h,v 1.31 2014/01/02 08:21:38 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.32 2014/02/09 01:46:10 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.39 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -145,11 +145,12 @@ typedef struct bozo_httpreq_t {
 	char	*hr_file;
 	char	*hr_oldfile;	/* if we added an index_html */
 	char	*hr_query;
+	char	*hr_host;	/* HTTP/1.1 Host: or virtual hostname,
+				   possibly including a port number */
 	const char *hr_proto;
 	const char *hr_content_type;
 	const char *hr_content_length;
 	const char *hr_allow;
-	const char *hr_host;		/* HTTP/1.1 Host: */
 	const char *hr_referrer;
 	const char *hr_range;
 	const char *hr_if_modified_since;

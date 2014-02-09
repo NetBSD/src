@@ -1,4 +1,4 @@
-.\"	$NetBSD: bozohttpd.8,v 1.44 2014/02/02 03:13:31 mrg Exp $
+.\"	$NetBSD: bozohttpd.8,v 1.45 2014/02/09 01:46:10 mrg Exp $
 .\"
 .\"	$eterna: bozohttpd.8,v 1.101 2011/11/18 01:25:11 mrg Exp $
 .\"
@@ -480,7 +480,9 @@ and inside
 .Pa /var/vroot
 create a directory (or a symlink to a directory) with the same name as
 the virtual host, for each virtual host.
-Lookups for these names are done in a case-insensitive manner.
+Lookups for these names are done in a case-insensitive manner, and may
+include the port number part of the request, allowing for distinct
+virtual hosts on the same name.
 .Pp
 To use
 .Nm
@@ -613,6 +615,10 @@ option.
 .Aq Mt lukem@NetBSD.org
 provided many various fixes, including cgi-bin fixes and enhancements,
 HTTP basic authorisation support and much code clean up
+.It
+.An Rajeev V. Pillai
+.Aq Mt rajeev_v_pillai@yahoo.com
+provided several fixes for virtual hosting
 .It
 .An Jeremy C. Reed
 .Aq Mt reed@NetBSD.org
