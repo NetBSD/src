@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.46 2014/02/07 22:40:22 dsl Exp $	*/
+/*	$NetBSD: fpu.c,v 1.47 2014/02/09 22:19:02 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.46 2014/02/07 22:40:22 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.47 2014/02/09 22:19:02 dsl Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -110,12 +110,8 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.46 2014/02/07 22:40:22 dsl Exp $");
 #include <sys/cpu.h>
 #include <sys/file.h>
 #include <sys/proc.h>
-#include <sys/ioctl.h>
-#include <sys/device.h>
-#include <sys/vmmeter.h>
 #include <sys/kernel.h>
 
-#include <sys/bus.h>
 #include <machine/cpu.h>
 #include <machine/intr.h>
 #include <machine/cpufunc.h>
@@ -123,11 +119,6 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.46 2014/02/07 22:40:22 dsl Exp $");
 #include <machine/trap.h>
 #include <machine/specialreg.h>
 #include <machine/fpu.h>
-
-#ifndef XEN
-#include <dev/isa/isareg.h>
-#include <dev/isa/isavar.h>
-#endif
 
 #ifdef XEN
 #define clts() HYPERVISOR_fpu_taskswitch(0)
@@ -167,55 +158,76 @@ fpuinit(struct cpu_info *ci)
 }
 
 /*
- * Record the FPU state and reinitialize it all except for the control word.
- * Then generate a SIGFPE.
+ * This is a synchronous trap on either an x87 instruction (due to an
+ * unmasked error on the previous x87 instruction) or on an SSE/SSE2 etc
+ * instruction due to an error on the instruction itself.
  *
- * Reinitializing the state allows naive SIGFPE handlers to longjmp without
- * doing any fixups.
+ * If trap actually generates a signal, then the fpu state is saved
+ * and then copied onto the process's user-stack, and then recovered
+ * from there when the signal returns (or from the jmp_buf if the
+ * signal handler exits with a longjmp()).
+ *
+ * All this code need to do is save the reason for the trap.
+ * For x87 interrupts the status word bits need clearing to stop the
+ * trap re-occurring.
+ *
+ * The mxcsr bits are 'sticky' and need clearing to not confuse a later trap.
+ *
+ * Since this is a synchronous trap, the fpu registers must still belong
+ * to the correct process (we trap through an interrupt gate so that
+ * interrupts are disabled on entry).
+ * Interrupts (these better include IPIs) are left disabled until we've
+ * finished looking at fpu registers.
+ *
+ * For amd64 the calling code (in amd64_trap.S) has already checked
+ * that we trapped from usermode.
  */
 
 void
 fputrap(struct trapframe *frame)
 {
-	struct lwp *l = curlwp;
-	struct pcb *pcb = lwp_getpcb(l);
-	union savefpu *sfp = &pcb->pcb_savefpu;
-	uint32_t mxcsr, statbits;
+	uint32_t statbits;
 	ksiginfo_t ksi;
-
-	KPREEMPT_DISABLE(l);
-	x86_enable_intr();
 
 	/*
 	 * At this point, fpcurlwp should be curlwp.  If it wasn't, the TS bit
 	 * should be set, and we should have gotten a DNA exception.
 	 */
-	KASSERT(l == curlwp);
-	fxsave(sfp);
+	KASSERT(curcpu()->ci_fpcurlwp == curlwp);
 
 	if (frame->tf_trapno == T_XMM) {
-		mxcsr = sfp->sv_xmm.fx_mxcsr;
+		uint32_t mxcsr;
+		x86_stmxcsr(&mxcsr);
 		statbits = mxcsr;
+		/* Clear the sticky status bits */
 		mxcsr &= ~0x3f;
 		x86_ldmxcsr(&mxcsr);
-	} else {
-		uint16_t cw;
 
-		fninit();
-		fwait();
-		cw = sfp->sv_xmm.fx_cw;
-		fldcw(&cw);
-		fwait();
-		statbits = sfp->sv_xmm.fx_sw;
+		/* Remove masked interrupts and non-status bits */
+		statbits &= ~(statbits >> 7) & 0x3f;
+		/* Mark this is an XMM status */
+		statbits |= 0x10000;
+	} else {
+		uint16_t cw, sw;
+		/* Get current control and status words */
+		fnstcw(&cw);
+		fnstsw(&sw);
+		/* Clear any pending exceptions from status word */
+		fnclex();
+
+		/* Removed masked interrupts */
+		statbits = sw & ~(cw & 0x3f);
 	}
-	KPREEMPT_ENABLE(l);
+
+	/* Doesn't matter now if we get pre-empted */
+	x86_enable_intr();
 
 	KSI_INIT_TRAP(&ksi);
 	ksi.ksi_signo = SIGFPE;
 	ksi.ksi_addr = (void *)frame->tf_rip;
 	ksi.ksi_code = x86fpflags_to_ksiginfo(statbits);
 	ksi.ksi_trap = statbits;
-	(*l->l_proc->p_emul->e_trapsignal)(l, &ksi);
+	(*curlwp->l_proc->p_emul->e_trapsignal)(curlwp, &ksi);
 }
 
 static int
@@ -312,7 +324,7 @@ fpudna(struct cpu_info *ci)
 		 * manually.
 		 */
 		static const double zero = 0.0;
-		int status;
+		uint16_t status;
 
 		/*
 		 * Clear the ES bit in the x87 status word if it is currently
