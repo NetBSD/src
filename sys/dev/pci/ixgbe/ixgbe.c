@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: src/sys/dev/ixgbe/ixgbe.c,v 1.51 2011/04/25 23:34:21 jfv Exp $*/
-/*$NetBSD: ixgbe.c,v 1.5 2012/06/18 06:21:11 dsl Exp $*/
+/*$NetBSD: ixgbe.c,v 1.6 2014/02/09 12:27:37 njoly Exp $*/
 
 #include "opt_inet.h"
 
@@ -2551,8 +2551,6 @@ ixgbe_free_pci_resources(struct adapter * adapter)
 	device_t	dev = adapter->dev;
 	int		rid, memrid;
 
-	printf("%s: enter %s\n", device_xname(dev), __func__);
-
 	if (adapter->hw.mac.type == ixgbe_mac_82598EB)
 		memrid = PCI_BAR(MSIX_82598_BAR);
 	else
@@ -4115,8 +4113,6 @@ ixgbe_initialize_receive_units(struct adapter *adapter)
 	for (i = 0; i < adapter->num_queues; i++, rxr++) {
 		u64 rdba = rxr->rxdma.dma_paddr;
 
-		printf("%s: queue %d rdba %" PRIx64 "\n", __func__, i, rdba);
-
 		/* Setup the Base and Length of the Rx Descriptor Ring */
 		IXGBE_WRITE_REG(hw, IXGBE_RDBAL(i),
 			       (rdba & 0x00000000ffffffffULL));
@@ -4341,8 +4337,6 @@ ixgbe_rx_discard(struct rx_ring *rxr, int i)
 	struct ixgbe_rx_buf	*rbuf;
 
 	rbuf = &rxr->rx_buffers[i];
-
-	printf("%s: enter\n", __func__);
 
         if (rbuf->fmp != NULL) {/* Partial chain ? */
 		rbuf->fmp->m_flags |= M_PKTHDR;
@@ -4767,8 +4761,6 @@ ixgbe_setup_vlan_hw_support(struct adapter *adapter)
 	struct ixgbe_hw *hw = &adapter->hw;
 	u32		ctrl;
 
-	printf("%s: %s enter\n", device_xname(adapter->dev), __func__);
-
 	/*
 	** We get here thru init_locked, meaning
 	** a soft reset, this has already cleared
@@ -4776,7 +4768,6 @@ ixgbe_setup_vlan_hw_support(struct adapter *adapter)
 	** have been no vlan's registered do nothing.
 	*/
 	if (!VLAN_ATTACHED(&adapter->osdep.ec)) {
-		printf("%s: no VLANs attached\n", device_xname(adapter->dev));
 		return;
 	}
 
@@ -4794,8 +4785,6 @@ ixgbe_setup_vlan_hw_support(struct adapter *adapter)
 	if (ec->ec_capenable & ETHERCAP_VLAN_HWFILTER) {
 		ctrl &= ~IXGBE_VLNCTRL_CFIEN;
 		ctrl |= IXGBE_VLNCTRL_VFE;
-		printf("%s: enabled h/w VLAN filter\n",
-		    device_xname(adapter->dev));
 	}
 	if (hw->mac.type == ixgbe_mac_82598EB)
 		ctrl |= IXGBE_VLNCTRL_VME;
@@ -4807,8 +4796,6 @@ ixgbe_setup_vlan_hw_support(struct adapter *adapter)
 			ctrl = IXGBE_READ_REG(hw, IXGBE_RXDCTL(i));
 				ctrl |= IXGBE_RXDCTL_VME;
 			IXGBE_WRITE_REG(hw, IXGBE_RXDCTL(i), ctrl);
-			printf("%s: enabled VLAN queue %d\n",
-			    device_xname(adapter->dev), i);
 		}
 }
 
