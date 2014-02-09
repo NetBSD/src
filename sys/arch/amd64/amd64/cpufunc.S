@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.23 2014/02/09 17:07:41 dsl Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.24 2014/02/09 19:42:04 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -505,7 +505,7 @@ ENTRY(xrstor)
 	ret
 
 ENTRY(x86_stmxcsr)
-	ldmxcsr	(%rdi)
+	stmxcsr	(%rdi)
 	ret
 
 ENTRY(x86_ldmxcsr)
