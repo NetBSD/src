@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec.h,v 1.4 2010/07/07 01:30:35 chs Exp $ */
+/*	$NetBSD: linux32_exec.h,v 1.5 2014/02/09 16:41:42 chs Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -43,6 +43,8 @@
 
 #define LINUX32_ELF_AUX_ENTRIES 14
 
+#define LINUX32_RANDOM_BYTES 16		/* 16 bytes for AT_RANDOM */
+
 #if 0
 
 /* Hardware platform identifier string */
@@ -75,7 +77,7 @@ struct linux32_extra_stack_data {
 #endif
 
 #define LINUX32_ELF_AUX_ARGSIZ \
-	(howmany(LINUX32_ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof(Elf32_Addr)))
+	(howmany(LINUX32_ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof(Elf32_Addr)) + LINUX32_RANDOM_BYTES)
 
 #ifdef _KERNEL
 int linux32_exec_setup_stack(struct lwp *, struct exec_package *);

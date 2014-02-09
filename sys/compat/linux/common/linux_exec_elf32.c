@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.87 2013/11/18 01:32:22 chs Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.88 2014/02/09 16:41:42 chs Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.87 2013/11/18 01:32:22 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.88 2014/02/09 16:41:42 chs Exp $");
 
 #ifndef ELFSIZE
 /* XXX should die */
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.87 2013/11/18 01:32:22 chs Ex
 #include <sys/exec_elf.h>
 #include <sys/stat.h>
 #include <sys/kauth.h>
+#include <sys/cprng.h>
 
 #include <sys/mman.h>
 #include <sys/syscallargs.h>
@@ -483,10 +484,10 @@ ELFNAME2(linux,copyargs)(struct lwp *l, struct exec_package *pack,
 	a->a_v = 0;
 	a++;
 
-	randbytes[0] = random();
-	randbytes[1] = random();
-	randbytes[2] = random();
-	randbytes[3] = random();
+	randbytes[0] = cprng_strong32();
+	randbytes[1] = cprng_strong32();
+	randbytes[2] = cprng_strong32();
+	randbytes[3] = cprng_strong32();
 
 	len = sizeof(randbytes);
 	if ((error = copyout(randbytes, *stackp, len)) != 0)
