@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec_elf32.c,v 1.13 2012/02/03 20:11:54 matt Exp $ */
+/*	$NetBSD: linux32_exec_elf32.c,v 1.14 2014/02/09 16:41:42 chs Exp $ */
 
 /*-                     
  * Copyright (c) 1995, 1998, 2000, 2001,2006 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_exec_elf32.c,v 1.13 2012/02/03 20:11:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_exec_elf32.c,v 1.14 2014/02/09 16:41:42 chs Exp $");
 
 #define	ELFSIZE		32
 
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_exec_elf32.c,v 1.13 2012/02/03 20:11:54 matt
 #include <sys/resourcevar.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
+#include <sys/cprng.h>
 
 #include <compat/linux/common/linux_exec.h>
 #include <compat/netbsd32/netbsd32.h>
@@ -107,6 +108,7 @@ linux32_elf32_copyargs(struct lwp *l, struct exec_package *pack,
     struct ps_strings *arginfo, char **stackp, void *argp)
 {
 	Aux32Info ai[LINUX32_ELF_AUX_ENTRIES], *a;
+	uint32_t randbytes[4];
 	struct elf_args *ap;
 	struct vattr *vap;
 	size_t len;
@@ -184,6 +186,10 @@ linux32_elf32_copyargs(struct lwp *l, struct exec_package *pack,
 	a->a_v = 0;
 	a++;
 
+	a->a_type = LINUX_AT_RANDOM;
+	a->a_v = NETBSD32PTR32I(*stackp);
+	a++;
+
 #if 0
 	a->a_type = LINUX_AT_SYSINFO;
 	a->a_v = NETBSD32PTR32I(&esdp->kernel_vsyscall[0]);
@@ -205,6 +211,16 @@ linux32_elf32_copyargs(struct lwp *l, struct exec_package *pack,
 	a->a_type = AT_NULL;
 	a->a_v = 0;
 	a++;
+
+	randbytes[0] = cprng_strong32();
+	randbytes[1] = cprng_strong32();
+	randbytes[2] = cprng_strong32();
+	randbytes[3] = cprng_strong32();
+
+	len = sizeof(randbytes);
+	if ((error = copyout(randbytes, *stackp, len)) != 0)
+		return error;
+	*stackp += len;
 
 #if 0
 	memcpy(esd.kernel_vsyscall, linux32_kernel_vsyscall,
