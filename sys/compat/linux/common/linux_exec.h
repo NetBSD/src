@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.49 2013/11/18 01:32:22 chs Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.50 2014/02/09 16:41:42 chs Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -99,6 +99,8 @@
 #define LINUX_AT_RANDOM		25	/* address of 16 random bytes */
 #define LINUX_AT_SYSINFO	32	/* pointer to __kernel_vsyscall */
 #define LINUX_AT_SYSINFO_EHDR	33	/* pointer to ELF header */
+
+#define LINUX_RANDOM_BYTES	16	/* 16 bytes for AT_RANDOM */
 
 /*
  * Emulation specific sysctls.
