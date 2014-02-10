@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_subr.c,v 1.34 2014/02/09 17:15:51 hannken Exp $	*/
+/*	$NetBSD: layer_subr.c,v 1.35 2014/02/10 11:23:14 hannken Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.34 2014/02/09 17:15:51 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.35 2014/02/10 11:23:14 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ layerfs_done(void)
 /*
  * layer_node_find: find and return alias for lower vnode or NULL.
  *
- * => Return alias vnode locked and referenced. if already exists.
+ * => Return alias vnode referenced. if already exists.
  * => The layermp's hashlock must be held on entry, we will unlock on success.
  */
 struct vnode *
@@ -128,7 +128,7 @@ layer_node_find(struct mount *mp, struct vnode *lowervp)
 	 * Find hash bucket and search the (two-way) linked list looking
 	 * for a layerfs node structure which is referencing the lower vnode.
 	 * If found, the increment the layer_node reference count, but NOT
-	 * the lower vnode's reference counter.  Return vnode locked.
+	 * the lower vnode's reference counter.
 	 */
 	KASSERT(mutex_owned(&lmp->layerm_hashlock));
 	hd = LAYER_NHASH(lmp, lowervp);
@@ -142,29 +142,9 @@ loop:
 			continue;
 		}
 		mutex_enter(vp->v_interlock);
-		/*
-		 * If we find a node being cleaned out, then ignore it and
-		 * continue.  A thread trying to clean out the extant layer
-		 * vnode needs to acquire the shared lock (i.e. the lower
-		 * vnode's lock), which our caller already holds.  To allow
-		 * the cleaning to succeed the current thread must make
-		 * progress.  So, for a brief time more than one vnode in a
-		 * layered file system may refer to a single vnode in the
-		 * lower file system.
-		 */
-		if ((vp->v_iflag & VI_XLOCK) != 0) {
-			mutex_exit(vp->v_interlock);
-			continue;
-		}
 		mutex_exit(&lmp->layerm_hashlock);
-		/*
-		 * We must not let vget() try to lock the layer vp, since
-		 * the lower vp is already locked and locking the layer vp
-		 * will involve locking the lower vp.
-		 */
-		error = vget(vp, LK_NOWAIT);
+		error = vget(vp, 0);
 		if (error) {
-			kpause("layerfs", false, 1, NULL);
 			mutex_enter(&lmp->layerm_hashlock);
 			goto loop;
 		}
