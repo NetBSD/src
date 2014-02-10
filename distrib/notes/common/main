@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.504 2014/02/08 15:50:29 maxv Exp $
+.\"	$NetBSD: main,v 1.505 2014/02/10 06:36:53 pedro Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1287,6 +1287,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Anthony Mallet Ta Mt tho@NetBSD.org
 .It Ta John Marino Ta Mt marino@NetBSD.org
 .It Ta Roy Marples Ta Mt roy@NetBSD.org
+.It Ta Pedro Martelletto Ta Mt pedro@NetBSD.org
 .It Ta Cherry G. Mathew Ta Mt cherry@NetBSD.org
 .It Ta David Maxwell Ta Mt david@NetBSD.org
 .It Ta Gregory McGarry Ta Mt gmcgarry@NetBSD.org
