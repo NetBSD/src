@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.21 2014/01/05 19:26:44 joerg Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.22 2014/02/10 00:23:36 chs Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.21 2014/01/05 19:26:44 joerg Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.22 2014/02/10 00:23:36 chs Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -633,37 +633,40 @@ update_existing_entry(sqlite3 *db, const char *file, const char *hash,
 }
 
 /* read_and_decompress --
- *	Reads the given file into memory. If it is compressed, decompres
+ *	Reads the given file into memory. If it is compressed, decompress
  *	it before returning to the caller.
  */
 static int
-read_and_decompress(const char *file, void **buf, size_t *len)
+read_and_decompress(const char *file, void **bufp, size_t *len)
 {
 	size_t off;
 	ssize_t r;
 	struct archive *a;
 	struct archive_entry *ae;
+	char *buf;
 
 	if ((a = archive_read_new()) == NULL)
 		errx(EXIT_FAILURE, "memory allocation failed");
 
+	*bufp = NULL;
 	if (archive_read_support_compression_all(a) != ARCHIVE_OK ||
 	    archive_read_support_format_raw(a) != ARCHIVE_OK ||
 	    archive_read_open_filename(a, file, 65536) != ARCHIVE_OK ||
 	    archive_read_next_header(a, &ae) != ARCHIVE_OK)
 		goto archive_error;
 	*len = 65536;
-	*buf = emalloc(*len);
+	buf = emalloc(*len);
 	off = 0;
 	for (;;) {
-		r = archive_read_data(a, (char *)*buf + off, *len - off);
+		r = archive_read_data(a, buf + off, *len - off);
 		if (r == ARCHIVE_OK) {
 			archive_read_close(a);
+			*bufp = buf;
 			*len = off;
 			return 0;
 		}
 		if (r <= 0) {
-			free(*buf);
+			free(buf);
 			break;
 		}
 		off += r;
@@ -672,11 +675,11 @@ read_and_decompress(const char *file, void **buf, size_t *len)
 			if (*len < off) {
 				if (mflags.verbosity)
 					warnx("File too large: %s", file);
-				free(*buf);
+				free(buf);
 				archive_read_close(a);
 				return -1;
 			}
-			*buf = erealloc(*buf, *len);
+			buf = erealloc(buf, *len);
 		}
 	}
 
@@ -698,12 +701,20 @@ update_db(sqlite3 *db, struct mparse *mp, mandb_rec *rec)
 {
 	const char *sqlstr;
 	sqlite3_stmt *stmt = NULL;
-	const char *file;
-	const char *parent;
+	char *file;
+	char *parent;
 	char *errmsg = NULL;
 	char *md5sum;
 	void *buf;
 	size_t buflen;
+	struct sql_row {
+		struct sql_row *next;
+		dev_t device;
+		ino_t inode;
+		time_t mtime;
+		char *parent;
+		char *file;
+	} *rows, *row;
 	int new_count = 0;	/* Counter for newly indexed/updated pages */
 	int total_count = 0;	/* Counter for total number of pages */
 	int err_count = 0;	/* Counter for number of failed pages */
@@ -726,17 +737,33 @@ update_db(sqlite3 *db, struct mparse *mp, mandb_rec *rec)
 	}
 
 	buf = NULL;
+	rows = NULL;
 	while (sqlite3_step(stmt) == SQLITE_ROW) {
-		free(buf);
+		row = emalloc(sizeof(struct sql_row));
+		row->device = sqlite3_column_int64(stmt, 0);
+		row->inode = sqlite3_column_int64(stmt, 1);
+		row->mtime = sqlite3_column_int64(stmt, 2);
+		row->parent = estrdup((const char *) sqlite3_column_text(stmt, 3));
+		row->file = estrdup((const char *) sqlite3_column_text(stmt, 4));
+		row->next = rows;
+		rows = row;
 		total_count++;
-		rec->device = sqlite3_column_int64(stmt, 0);
-		rec->inode = sqlite3_column_int64(stmt, 1);
-		rec->mtime = sqlite3_column_int64(stmt, 2);
-		parent = (const char *) sqlite3_column_text(stmt, 3);
-		file = (const char *) sqlite3_column_text(stmt, 4);
+	}
+	sqlite3_finalize(stmt);
+
+	for ( ; rows != NULL; free(parent), free(file), free(buf)) {
+		row = rows;
+		rows = rows->next;
+
+		rec->device = row->device;
+		rec->inode = row->inode;
+		rec->mtime = row->mtime;
+		parent = row->parent;
+		file = row->file;
+		free(row);
+
 		if (read_and_decompress(file, &buf, &buflen)) {
 			err_count++;
-			buf = NULL;
 			continue;
 		}
 		md5_status = check_md5(file, db, "mandb_meta", &md5sum, buf, buflen);
@@ -789,9 +816,6 @@ update_db(sqlite3 *db, struct mparse *mp, mandb_rec *rec)
 			}
 		}
 	}
-	free(buf);
-
-	sqlite3_finalize(stmt);
 
 	if (mflags.verbosity == 2) {
 		printf("Total Number of new or updated pages encountered = %d\n"
