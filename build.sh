@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.274 2014/01/13 20:00:20 apb Exp $
+#	$NetBSD: build.sh,v 1.275 2014/02/10 08:20:05 apb Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1282,14 +1282,6 @@ parseoptions()
 #
 sanitycheck()
 {
-	# Non-root should always use either the -U or -E flag.
-	#
-	if ! ${do_expertmode} && \
-	    [ "$id_u" -ne 0 ] && \
-	    [ "${MKUNPRIVED:-no}" = "no" ] ; then
-		bomb "-U or -E must be set for build as an unprivileged user."
-	fi
-
 	# Install as non-root is a bad idea.
 	#
 	if ${do_install} && [ "$id_u" -ne 0 ] ; then
@@ -1515,6 +1507,22 @@ validatemakeparams()
 		statusmsg2 "MAKECONF file:" "${MAKECONF} (File not found)"
 	fi
 
+	# Normalise MKOBJDIRS, MKUNPRIVED, and MKUPDATE.
+	# These may be set as build.sh options or in "mk.conf".
+	# Don't export them as they're only used for tests in build.sh.
+	#
+	MKOBJDIRS=$(getmakevar MKOBJDIRS)
+	MKUNPRIVED=$(getmakevar MKUNPRIVED)
+	MKUPDATE=$(getmakevar MKUPDATE)
+
+	# Non-root should always use either the -U or -E flag.
+	#
+	if ! ${do_expertmode} && \
+	    [ "$id_u" -ne 0 ] && \
+	    [ "${MKUNPRIVED}" = "no" ] ; then
+		bomb "-U or -E must be set for build as an unprivileged user."
+	fi
+
 	if [ "${runcmd}" = "echo" ]; then
 		TOOLCHAIN_MISSING=no
 		EXTERNAL_TOOLCHAIN=""
@@ -1535,14 +1543,6 @@ validatemakeparams()
 		${runcmd} echo "	${progname} $*"
 		exit 1
 	fi
-
-	# Normalise MKOBJDIRS, MKUNPRIVED, and MKUPDATE
-	# These may be set as build.sh options or in "mk.conf".
-	# Don't export them as they're only used for tests in build.sh.
-	#
-	MKOBJDIRS=$(getmakevar MKOBJDIRS)
-	MKUNPRIVED=$(getmakevar MKUNPRIVED)
-	MKUPDATE=$(getmakevar MKUPDATE)
 
 	if [ "${MKOBJDIRS}" != "no" ]; then
 		# Create the top-level object directory.
@@ -1745,7 +1745,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.274 2014/01/13 20:00:20 apb Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.275 2014/02/10 08:20:05 apb Exp $
 # with these arguments: ${_args}
 #
 
