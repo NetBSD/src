@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.96 2014/01/26 19:16:17 dsl Exp $	*/
+/*	$NetBSD: cpu.c,v 1.97 2014/02/11 20:17:16 dsl Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.96 2014/01/26 19:16:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.97 2014/02/11 20:17:16 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -105,7 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.96 2014/01/26 19:16:17 dsl Exp $");
 #ifdef i386
 #include <machine/npx.h>
 #else
-#include <machine/fpu.h>
+#include <x86/fpu.h>
 #endif
 
 #include <xen/xen.h>
