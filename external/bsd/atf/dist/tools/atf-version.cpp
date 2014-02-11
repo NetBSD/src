@@ -31,8 +31,6 @@
 #include <iostream>
 
 #include "application.hpp"
-#include "revision.h"
-#include "ui.hpp"
 
 class atf_version : public tools::application::app {
     static const char* m_description;
@@ -55,28 +53,9 @@ atf_version::atf_version(void) :
 int
 atf_version::main(void)
 {
-    using tools::ui::format_text;
-    using tools::ui::format_text_with_tag;
-
     std::cout <<
         "Automated Testing Framework " ATF_VERSION " (atf-" ATF_VERSION ")\n"
-        "Copyright (c) 2007 The NetBSD Foundation, Inc.\n\n";
-
-#if defined(PACKAGE_REVISION_TYPE_DIST)
-    std::cout << format_text("Built from a distribution file; no revision "
-        "information available.") << "\n";
-#elif defined(PACKAGE_REVISION_TYPE_GIT)
-    std::cout << format_text_with_tag(PACKAGE_REVISION_BRANCH, "Branch: ",
-                                      false) << "\n";
-    std::cout << format_text_with_tag(PACKAGE_REVISION_BASE
-#   if PACKAGE_REVISION_MODIFIED
-        " (locally modified)"
-#   endif
-        " " PACKAGE_REVISION_DATE,
-        "Base revision: ", false) << "\n";
-#else
-#   error "Unknown PACKAGE_REVISION_TYPE value"
-#endif
+        "Copyright (c) 2007 The NetBSD Foundation, Inc.\n";
 
     return EXIT_SUCCESS;
 }
