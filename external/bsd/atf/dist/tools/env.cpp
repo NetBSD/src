@@ -27,10 +27,6 @@
 // IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-#if defined(HAVE_CONFIG_H)
-#include "bconfig.h"
-#endif
-
 extern "C" {
 #include <errno.h>
 #include <stdlib.h>
@@ -66,37 +62,15 @@ impl::has(const std::string& name)
 void
 impl::set(const std::string& name, const std::string& val)
 {
-#if defined(HAVE_SETENV)
     if (setenv(name.c_str(), val.c_str(), 1) == -1)
         throw tools::system_error(IMPL_NAME "::set",
                                 "Cannot set environment variable '" + name +
                                 "' to '" + val + "'",
                                 errno);
-#elif defined(HAVE_PUTENV)
-    const std::string buf = name + "=" + val;
-    if (putenv(strdup(buf.c_str())) == -1)
-        throw tools::system_error(IMPL_NAME "::set",
-                                "Cannot set environment variable '" + name +
-                                "' to '" + val + "'",
-                                errno);
-#else
-#   error "Don't know how to set an environment variable."
-#endif
 }
 
 void
 impl::unset(const std::string& name)
 {
-#if defined(HAVE_UNSETENV)
     unsetenv(name.c_str());
-#elif defined(HAVE_PUTENV)
-    const std::string buf = name + "=";
-
-    if (putenv(strdup(buf.c_str())) == -1)
-        throw tools::system_error(IMPL_NAME "::unset",
-                                "Cannot unset environment variable '" +
-                                name + "'", errno);
-#else
-#   error "Don't know how to unset an environment variable."
-#endif
 }
