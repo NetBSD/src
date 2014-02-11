@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_futex.c,v 1.32 2013/10/17 21:08:16 christos Exp $ */
+/*	$NetBSD: linux_futex.c,v 1.33 2014/02/11 16:00:13 maxv Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.32 2013/10/17 21:08:16 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.33 2014/02/11 16:00:13 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -610,7 +610,7 @@ futex_atomic_op(lwp_t *l, int encoded_op, void *uaddr)
 		}
 
 		error = ucas_int(uaddr, cval, nval, &oldval);
-		if (oldval == cval || error) {
+		if (error || oldval == cval) {
 			break;
 		}
 		cval = oldval;
