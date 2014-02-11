@@ -39,7 +39,6 @@ extern "C" {
 
 #include <atf-c++.hpp>
 
-#include "defs.hpp"
 #include "exceptions.hpp"
 #include "process.hpp"
 #include "signals.hpp"
@@ -53,7 +52,7 @@ namespace sigusr1 {
 
     static
     void
-    handler(int signo ATF_DEFS_ATTRIBUTE_UNUSED)
+    handler(int signo __attribute__((__unused__)))
     {
         happened = true;
     }
@@ -77,7 +76,7 @@ namespace sigusr1_2 {
 
     static
     void
-    handler(int signo ATF_DEFS_ATTRIBUTE_UNUSED)
+    handler(int signo __attribute__((__unused__)))
     {
         happened = true;
     }
@@ -223,7 +222,7 @@ ATF_TEST_CASE_BODY(signal_programmer_preserve)
 
 static
 void
-reset_child(void *v ATF_DEFS_ATTRIBUTE_UNUSED)
+reset_child(void *v __attribute__((__unused__)))
 {
     sigusr1::program();
 
