@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.137 2014/01/03 21:34:40 dsl Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.138 2014/02/11 09:04:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -700,7 +700,7 @@ typedef struct {
 #define DF_SYMBOLIC	0x00000002	/* */
 #define DF_TEXTREL	0x00000004	/* */
 #define DF_BIND_NOW	0x00000008	/* */
-#define DF_STATICT_LS	0x00000010	/* */
+#define DF_STATIC_TLS	0x00000010	/* */
 
 /* Flag values for DT_FLAGS_1 (incomplete) */
 #define DF_1_BIND_NOW	0x00000001	/* Same as DF_BIND_NOW */
