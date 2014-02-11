@@ -399,12 +399,8 @@ impl::status::coredump(void)
     const
 {
     assert(signaled());
-#if defined(WCOREDUMP)
     int mutable_status = m_status;
     return WCOREDUMP(mutable_status);
-#else
-    return false;
-#endif
 }
 
 // ------------------------------------------------------------------------
