@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.20 2014/01/26 19:16:17 dsl Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.21 2014/02/11 20:17:16 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.20 2014/01/26 19:16:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.21 2014/02/11 20:17:16 dsl Exp $");
 
 #include "opt_mtrr.h"
 
@@ -101,10 +101,6 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.20 2014/01/26 19:16:17 dsl Exp $");
 #include <machine/specialreg.h>
 #ifdef MTRR
 #include <machine/mtrr.h>
-#endif
-
-#ifdef __x86_64__
-#include <machine/fpu.h>
 #endif
 
 void

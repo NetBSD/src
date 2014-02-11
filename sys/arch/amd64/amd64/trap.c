@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.75 2013/01/14 00:06:11 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.76 2014/02/11 20:17:16 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.75 2013/01/14 00:06:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.76 2014/02/11 20:17:16 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -91,7 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.75 2013/01/14 00:06:11 christos Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpufunc.h>
-#include <machine/fpu.h>
+#include <x86/fpu.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/trap.h>

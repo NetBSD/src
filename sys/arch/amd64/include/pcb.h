@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.23 2014/02/07 22:40:22 dsl Exp $	*/
+/*	$NetBSD: pcb.h,v 1.24 2014/02/11 20:17:16 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
 
 #include <machine/segments.h>
 #include <machine/tss.h>
-#include <machine/fpu.h>
+#include <x86/fpu.h>
 #include <machine/sysarch.h>
 
 #define	NIOPORTS	1024		/* # of ports we allow to be mapped */
