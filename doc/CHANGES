@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1886 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1887 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -346,3 +346,4 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	ohci(4): Support the National Semiconductor PC87560 as found in
 		many hppa machines. [skrll 20140128]
 	atf(7): Import atf 0.19.  [jmmv 20140208]
+	atf(7): Import atf 0.20.  [jmmv 20140211]

@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1090 2014/02/08 19:18:39 jmmv Exp $
+#	$NetBSD: 3RDPARTY,v 1.1091 2014/02/11 16:15:06 jmmv Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -69,11 +69,11 @@ Fix symbolic links before import.
 Check external/bsd/am-utils/include/config.h is correct after import.
 
 Package:	Automated Testing Framework (ATF)
-Version:	0.19
-Current Vers:	0.19
+Version:	0.20
+Current Vers:	0.20
 Maintainer:	Julio Merino <jmmv@NetBSD.org>
-Archive site:	http://code.google.com/p/kyua/downloads/list?can=1
-Home page:	http://code.google.com/p/kyua/wiki/ATF
+Archive site:	https://github.com/jmmv/atf/releases
+Home page:	https://github.com/jmmv/atf
 Mailing List:	atf-devel@NetBSD.org
 Responsible:	jmmv
 License:	The NetBSD Foundation's license (BSD 2-clause)
@@ -81,9 +81,11 @@ Location:	external/bsd/atf/dist
 Notes:
 The source files are in external/bsd/atf/dist.
 Use external/bsd/atf/prepare-import.sh to regenerate the dist/ directory.
-Given that the primary goal of ATF is to provide a testing framework for
-NetBSD, no local changes should be ever needed.  Always direct them to the
-maintainer for integration in official releases.
+Please avoid performing local changes to this package without discussing
+them with the responsible person and/or the mailing list shown above.
+Note that the external/bsd/atf/dist/tools is owned by NetBSD and does not
+exist upstream; however, please continue to discuss any desired changes
+upfront.
 
 Package:	ath-hal
 Version:	FreeBSD SVN revision number 185521
