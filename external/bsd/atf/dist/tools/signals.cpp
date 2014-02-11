@@ -27,10 +27,6 @@
 // IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-#if defined(HAVE_CONFIG_H)
-#include "bconfig.h"
-#endif
-
 extern "C" {
 #include <signal.h>
 #include <unistd.h>
@@ -45,6 +41,7 @@ extern "C" {
 namespace impl = tools::signals;
 #define IMPL_NAME "tools::signals"
 
+#define LAST_SIGNO 63
 const int impl::last_signo = LAST_SIGNO;
 
 // ------------------------------------------------------------------------
