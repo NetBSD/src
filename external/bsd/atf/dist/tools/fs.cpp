@@ -434,9 +434,7 @@ impl::file_info::file_info(const path& p)
     case S_IFLNK:  m_type = lnk_type;  break;
     case S_IFREG:  m_type = reg_type;  break;
     case S_IFSOCK: m_type = sock_type; break;
-#if defined(S_IFWHT)
     case S_IFWHT:  m_type = wht_type;  break;
-#endif
     default:
         throw system_error(IMPL_NAME "::file_info", "Unknown file type "
                            "error", EINVAL);
