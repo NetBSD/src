@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.26 2014/02/07 22:40:22 dsl Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.27 2014/02/11 20:17:16 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.26 2014/02/07 22:40:22 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.27 2014/02/11 20:17:16 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.26 2014/02/07 22:40:22 dsl Exp
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/segments.h>
-#include <machine/fpu.h>
+#include <x86/fpu.h>
 
 static inline struct trapframe *process_frame(struct lwp *);
 static inline struct fxsave *process_fpframe(struct lwp *);

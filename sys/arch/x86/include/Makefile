@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile,v 1.18 2014/02/07 21:52:46 dsl Exp $
+# 	$NetBSD: Makefile,v 1.19 2014/02/11 20:17:16 dsl Exp $
 
 INCSDIR=/usr/include/x86
 
@@ -11,6 +11,7 @@ INCS=	aout_machdep.h \
 	cputypes.h \
 	cpuvar.h \
 	float.h \
+	fpu.h \
 	ieee.h ieeefp.h \
 	intr.h intrdefs.h \
 	lock.h \

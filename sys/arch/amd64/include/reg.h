@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.8 2014/02/07 22:40:22 dsl Exp $	*/
+/*	$NetBSD: reg.h,v 1.9 2014/02/11 20:17:16 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 
 #ifdef __x86_64__
 
-#include <machine/fpu.h>
+#include <x86/fpu.h>
 #include <machine/mcontext.h>
 
 /*

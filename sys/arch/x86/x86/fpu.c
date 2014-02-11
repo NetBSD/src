@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.48 2014/02/09 23:02:25 dsl Exp $	*/
+/*	$NetBSD: fpu.c,v 1.1 2014/02/11 20:17:16 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.48 2014/02/09 23:02:25 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.1 2014/02/11 20:17:16 dsl Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -118,7 +118,7 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.48 2014/02/09 23:02:25 dsl Exp $");
 #include <machine/pcb.h>
 #include <machine/trap.h>
 #include <machine/specialreg.h>
-#include <machine/fpu.h>
+#include <x86/fpu.h>
 
 #ifdef XEN
 #define clts() HYPERVISOR_fpu_taskswitch(0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.12 2014/02/07 22:40:22 dsl Exp $	*/
+/*	$NetBSD: fpu.h,v 1.1 2014/02/11 20:17:16 dsl Exp $	*/
 
 #ifndef	_AMD64_FPU_H_
 #define	_AMD64_FPU_H_

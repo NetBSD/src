@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.81 2014/02/07 22:40:22 dsl Exp $
+#	$NetBSD: files.amd64,v 1.82 2014/02/11 20:17:16 dsl Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -42,7 +42,7 @@ file	arch/amd64/amd64/gdt.c
 file	arch/amd64/amd64/machdep.c
 file	arch/amd64/amd64/process_machdep.c
 file	arch/amd64/amd64/trap.c
-file	arch/amd64/amd64/fpu.c
+file	arch/x86/x86/fpu.c
 file	arch/amd64/amd64/lock_stubs.S
 file	dev/cons.c
 
