@@ -58,9 +58,6 @@
 /* Define to 1 if vsnprintf is in std */
 /* #undef HAVE_VSNPRINTF_IN_STD */
 
-/* Define to the last valid signal number */
-#define LAST_SIGNO 63
-
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
 #define LT_OBJDIR ".libs/"
@@ -78,7 +75,7 @@
 #define PACKAGE_NAME "Automated Testing Framework"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "Automated Testing Framework 0.19"
+#define PACKAGE_STRING "Automated Testing Framework 0.20"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "atf"
@@ -87,10 +84,10 @@
 #define PACKAGE_URL "https://github.com/jmmv/atf/"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "0.19"
+#define PACKAGE_VERSION "0.20"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "0.19"
+#define VERSION "0.20"
