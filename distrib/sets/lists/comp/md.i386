@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.143 2014/02/07 23:18:04 dsl Exp $
+# $NetBSD: md.i386,v 1.144 2014/02/11 22:48:25 dsl Exp $
 ./usr/include/clang-3.0/avx2intrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.0/avxintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.0/bmi2intrin.h		comp-obsolete		obsolete
@@ -306,6 +306,7 @@
 ./usr/include/x86/cputypes.h			comp-c-include
 ./usr/include/x86/cpuvar.h			comp-c-include
 ./usr/include/x86/float.h			comp-c-include
+./usr/include/x86/fpu.h				comp-c-include
 ./usr/include/x86/ieee.h			comp-c-include
 ./usr/include/x86/ieeefp.h			comp-c-include
 ./usr/include/x86/intr.h			comp-c-include
