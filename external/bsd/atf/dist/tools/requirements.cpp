@@ -39,7 +39,6 @@ extern "C" {
 #include <stdexcept>
 
 #include "config.hpp"
-#include "defs.hpp"
 #include "env.hpp"
 #include "fs.hpp"
 #include "requirements.hpp"
@@ -192,7 +191,7 @@ check_memory_netbsd(const int64_t needed)
 #else
 static
 std::string
-check_memory_unknown(const int64_t needed ATF_DEFS_ATTRIBUTE_UNUSED)
+check_memory_unknown(const int64_t needed __attribute__((__unused__)))
 {
     return "";
 }

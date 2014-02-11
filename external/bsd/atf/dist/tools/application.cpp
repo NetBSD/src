@@ -43,7 +43,6 @@ extern "C" {
 #include <iostream>
 
 #include "application.hpp"
-#include "defs.hpp"
 #include "ui.hpp"
 
 #if !defined(HAVE_VSNPRINTF_IN_STD)
@@ -148,8 +147,8 @@ impl::app::specific_options(void)
 }
 
 void
-impl::app::process_option(int ch ATF_DEFS_ATTRIBUTE_UNUSED,
-                          const char* arg ATF_DEFS_ATTRIBUTE_UNUSED)
+impl::app::process_option(int ch __attribute__((__unused__)),
+                          const char* arg __attribute__((__unused__)))
 {
 }
 

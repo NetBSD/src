@@ -42,7 +42,6 @@ extern "C" {
 #include <vector>
 
 #include "application.hpp"
-#include "defs.hpp"
 #include "fs.hpp"
 #include "reader.hpp"
 #include "text.hpp"
@@ -133,7 +132,7 @@ public:
     virtual
     void
     write_tp_start(const std::string& name,
-                   size_t ntcs ATF_DEFS_ATTRIBUTE_UNUSED)
+                   size_t ntcs __attribute__((__unused__)))
     {
         m_tpname = name;
         m_failed = false;
@@ -420,7 +419,7 @@ class xml_writer : public writer {
 
     void
     write_tp_start(const std::string& tp,
-                   size_t ntcs ATF_DEFS_ATTRIBUTE_UNUSED)
+                   size_t ntcs __attribute__((__unused__)))
     {
         (*m_os) << "<tp id=\"" << attrval(tp) << "\">\n";
     }

@@ -40,7 +40,6 @@ extern "C" {
 #include <csignal>
 #include <ctime>
 
-#include "defs.hpp"
 #include "exceptions.hpp"
 #include "signals.hpp"
 #include "timers.hpp"
@@ -59,8 +58,8 @@ static impl::timer* compat_handle;
 #if defined(HAVE_TIMER_T)
 static
 void
-handler(const int signo ATF_DEFS_ATTRIBUTE_UNUSED, siginfo_t* si,
-        void* uc ATF_DEFS_ATTRIBUTE_UNUSED)
+handler(const int signo __attribute__((__unused__)), siginfo_t* si,
+        void* uc __attribute__((__unused__)))
 {
     impl::timer* timer = static_cast< impl::timer* >(si->si_value.sival_ptr);
     timer->set_fired();
@@ -69,9 +68,9 @@ handler(const int signo ATF_DEFS_ATTRIBUTE_UNUSED, siginfo_t* si,
 #else
 static
 void
-handler(const int signo ATF_DEFS_ATTRIBUTE_UNUSED,
-        siginfo_t* si ATF_DEFS_ATTRIBUTE_UNUSED,
-        void* uc ATF_DEFS_ATTRIBUTE_UNUSED)
+handler(const int signo __attribute__((__unused__)),
+        siginfo_t* si __attribute__((__unused__)),
+        void* uc __attribute__((__unused__)))
 {
     compat_handle->set_fired();
     compat_handle->timeout_callback();

@@ -36,7 +36,6 @@ extern "C" {
 #include <atf-c++.hpp>
 
 #include "auto_array.hpp"
-#include "defs.hpp"
 
 // ------------------------------------------------------------------------
 // Tests for the "auto_array" class.
@@ -55,7 +54,7 @@ public:
         return tools::auto_array< test_array >(ta);
     }
 
-    void* operator new(size_t size ATF_DEFS_ATTRIBUTE_UNUSED)
+    void* operator new(size_t size __attribute__((__unused__)))
     {
         ATF_FAIL("New called but should have been new[]");
         return new int(5);
@@ -69,7 +68,7 @@ public:
         return mem;
     }
 
-    void operator delete(void* mem ATF_DEFS_ATTRIBUTE_UNUSED)
+    void operator delete(void* mem __attribute__((__unused__)))
     {
         ATF_FAIL("Delete called but should have been delete[]");
     }

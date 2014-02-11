@@ -32,7 +32,6 @@
 #include <fstream>
 
 #include "atffile.hpp"
-#include "defs.hpp"
 #include "exceptions.hpp"
 #include "expand.hpp"
 #include "parser.hpp"
@@ -98,22 +97,22 @@ detail::atf_atffile_reader::~atf_atffile_reader(void)
 
 void
 detail::atf_atffile_reader::got_conf(
-    const std::string& name ATF_DEFS_ATTRIBUTE_UNUSED,
-    const std::string& val ATF_DEFS_ATTRIBUTE_UNUSED)
+    const std::string& name __attribute__((__unused__)),
+    const std::string& val __attribute__((__unused__)))
 {
 }
 
 void
 detail::atf_atffile_reader::got_prop(
-    const std::string& name ATF_DEFS_ATTRIBUTE_UNUSED,
-    const std::string& val ATF_DEFS_ATTRIBUTE_UNUSED)
+    const std::string& name __attribute__((__unused__)),
+    const std::string& val __attribute__((__unused__)))
 {
 }
 
 void
 detail::atf_atffile_reader::got_tp(
-    const std::string& name ATF_DEFS_ATTRIBUTE_UNUSED,
-    bool isglob ATF_DEFS_ATTRIBUTE_UNUSED)
+    const std::string& name __attribute__((__unused__)),
+    bool isglob __attribute__((__unused__)))
 {
 }
 
