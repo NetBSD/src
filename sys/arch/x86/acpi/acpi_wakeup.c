@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.35 2014/01/26 19:16:17 dsl Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.36 2014/02/11 20:17:16 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.35 2014/01/26 19:16:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.36 2014/02/11 20:17:16 dsl Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.35 2014/01/26 19:16:17 dsl Exp $")
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.35 2014/01/26 19:16:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.36 2014/02/11 20:17:16 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,11 +97,6 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.35 2014/01/26 19:16:17 dsl Exp $")
 #define ACPI_MACHDEP_PRIVATE
 #include <machine/acpi_machdep.h>
 #include <machine/cpu.h>
-#ifdef __i386__
-#  include <machine/npx.h>
-#else
-#  include <machine/fpu.h>
-#endif
 #include <machine/mtrr.h>
 
 #include <x86/cpuvar.h>

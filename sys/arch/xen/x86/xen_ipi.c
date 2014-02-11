@@ -1,4 +1,4 @@
-/* $NetBSD: xen_ipi.c,v 1.15 2014/01/26 19:16:17 dsl Exp $ */
+/* $NetBSD: xen_ipi.c,v 1.16 2014/02/11 20:17:16 dsl Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -33,10 +33,10 @@
 
 /* 
  * Based on: x86/ipi.c
- * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.15 2014/01/26 19:16:17 dsl Exp $"); 
+ * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.16 2014/02/11 20:17:16 dsl Exp $"); 
  */
 
-__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.15 2014/01/26 19:16:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.16 2014/02/11 20:17:16 dsl Exp $");
 
 #include <sys/types.h>
 
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.15 2014/01/26 19:16:17 dsl Exp $");
 #include <sys/systm.h>
 
 #ifdef __x86_64__
-#include <machine/fpu.h>
+#include <x86/fpu.h>
 #else
 #include <machine/npx.h>
 #endif /* __x86_64__ */
