@@ -33,7 +33,6 @@
 
 #include "config.hpp"
 #include "config_file.hpp"
-#include "defs.hpp"
 #include "env.hpp"
 #include "fs.hpp"
 #include "parser.hpp"
@@ -138,8 +137,8 @@ detail::atf_config_reader::~atf_config_reader(void)
 
 void
 detail::atf_config_reader::got_var(
-    const std::string& var ATF_DEFS_ATTRIBUTE_UNUSED,
-    const std::string& val ATF_DEFS_ATTRIBUTE_UNUSED)
+    const std::string& var __attribute__((__unused__)),
+    const std::string& val __attribute__((__unused__)))
 {
 }
 

@@ -37,7 +37,6 @@ extern "C" {
 #include <sstream>
 #include <utility>
 
-#include "defs.hpp"
 #include "parser.hpp"
 #include "reader.hpp"
 #include "text.hpp"
@@ -150,53 +149,53 @@ impl::atf_tps_reader::~atf_tps_reader(void)
 
 void
 impl::atf_tps_reader::got_info(
-    const std::string& what ATF_DEFS_ATTRIBUTE_UNUSED,
-    const std::string& val ATF_DEFS_ATTRIBUTE_UNUSED)
+    const std::string& what __attribute__((__unused__)),
+    const std::string& val __attribute__((__unused__)))
 {
 }
 
 void
-impl::atf_tps_reader::got_ntps(size_t ntps ATF_DEFS_ATTRIBUTE_UNUSED)
+impl::atf_tps_reader::got_ntps(size_t ntps __attribute__((__unused__)))
 {
 }
 
 void
 impl::atf_tps_reader::got_tp_start(
-    const std::string& tp ATF_DEFS_ATTRIBUTE_UNUSED,
-    size_t ntcs ATF_DEFS_ATTRIBUTE_UNUSED)
+    const std::string& tp __attribute__((__unused__)),
+    size_t ntcs __attribute__((__unused__)))
 {
 }
 
 void
 impl::atf_tps_reader::got_tp_end(
-    struct timeval* tv ATF_DEFS_ATTRIBUTE_UNUSED,
-    const std::string& reason ATF_DEFS_ATTRIBUTE_UNUSED)
+    struct timeval* tv __attribute__((__unused__)),
+    const std::string& reason __attribute__((__unused__)))
 {
 }
 
 void
 impl::atf_tps_reader::got_tc_start(
-    const std::string& tcname ATF_DEFS_ATTRIBUTE_UNUSED)
+    const std::string& tcname __attribute__((__unused__)))
 {
 }
 
 void
 impl::atf_tps_reader::got_tc_stdout_line(
-    const std::string& line ATF_DEFS_ATTRIBUTE_UNUSED)
+    const std::string& line __attribute__((__unused__)))
 {
 }
 
 void
 impl::atf_tps_reader::got_tc_stderr_line(
-    const std::string& line ATF_DEFS_ATTRIBUTE_UNUSED)
+    const std::string& line __attribute__((__unused__)))
 {
 }
 
 void
 impl::atf_tps_reader::got_tc_end(
-    const std::string& state ATF_DEFS_ATTRIBUTE_UNUSED,
-    struct timeval* tv ATF_DEFS_ATTRIBUTE_UNUSED,
-    const std::string& reason ATF_DEFS_ATTRIBUTE_UNUSED)
+    const std::string& state __attribute__((__unused__)),
+    struct timeval* tv __attribute__((__unused__)),
+    const std::string& reason __attribute__((__unused__)))
 {
 }
 
