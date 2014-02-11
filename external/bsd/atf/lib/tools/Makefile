@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2014/02/08 19:15:33 jmmv Exp $
+# $NetBSD: Makefile,v 1.2 2014/02/11 16:11:28 jmmv Exp $
 
 NOLINT=		# defined
 
@@ -29,6 +29,7 @@ CPPFLAGS+=	-DATF_MACHINE=\"${MACHINE}\"
 CPPFLAGS+=	-DATF_PKGDATADIR=\"/usr/share/atf\"
 CPPFLAGS+=	-DATF_SHELL=\"/bin/sh\"
 CPPFLAGS+=	-DATF_WORKDIR=\"/tmp\"
+CPPFLAGS+=	-DLAST_SIGNO=63
 CPPFLAGS+=	-I${SRCDIR}/tools
 CPPFLAGS+=	-I.
 CPPFLAGS+=	-I${TOPDIR}/lib/libatf-c  # For bconfig.h
