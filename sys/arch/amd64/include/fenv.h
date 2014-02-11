@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.h,v 1.1 2010/07/31 21:47:54 joerg Exp $	*/
+/*	$NetBSD: fenv.h,v 1.2 2014/02/11 20:17:16 dsl Exp $	*/
 /*-
  * Copyright (c) 2004-2005 David Schultz <das (at) FreeBSD.ORG>
  * All rights reserved.
@@ -29,7 +29,7 @@
 #define _AMD64_FENV_H_
 
 #include <sys/stdint.h>
-#include <machine/fpu.h>
+#include <x86/fpu.h>
 
 /*
  * Each symbol representing a floating point exception expands to an integer

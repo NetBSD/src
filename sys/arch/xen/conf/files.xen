@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.131 2014/02/07 22:40:22 dsl Exp $
+#	$NetBSD: files.xen,v 1.132 2014/02/11 20:17:16 dsl Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -79,7 +79,7 @@ file	arch/amd64/amd64/gdt.c
 file	arch/amd64/amd64/machdep.c
 file	arch/amd64/amd64/process_machdep.c
 file	arch/amd64/amd64/trap.c
-file	arch/amd64/amd64/fpu.c
+file	arch/x86/x86/fpu.c
 file	arch/amd64/amd64/lock_stubs.S
 endif
 
