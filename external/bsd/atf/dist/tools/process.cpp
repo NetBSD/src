@@ -41,7 +41,6 @@ extern "C" {
 #include <cstring>
 #include <iostream>
 
-#include "defs.hpp"
 #include "exceptions.hpp"
 #include "text.hpp"
 #include "process.hpp"
@@ -274,7 +273,7 @@ impl::stream_connect::connect_parent(void)
 }
 
 void
-impl::stream_connect::connect_child(const int fd ATF_DEFS_ATTRIBUTE_UNUSED)
+impl::stream_connect::connect_child(const int fd __attribute__((__unused__)))
 {
     safe_dup(m_tgt_fd, m_src_fd);
 }
@@ -295,7 +294,7 @@ impl::stream_inherit::connect_parent(void)
 }
 
 void
-impl::stream_inherit::connect_child(const int fd ATF_DEFS_ATTRIBUTE_UNUSED)
+impl::stream_inherit::connect_child(const int fd __attribute__((__unused__)))
 {
 }
 
