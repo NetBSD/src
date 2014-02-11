@@ -1,11 +1,10 @@
-# $NetBSD: Makefile,v 1.8 2012/07/11 22:40:16 jmmv Exp $
+# $NetBSD: Makefile,v 1.9 2014/02/11 16:11:28 jmmv Exp $
 
 .include <bsd.own.mk>
 
 TESTS_SUBDIRS=	detail
 
 TESTSDIR=	${TESTSBASE}/atf/atf-c
-ATFFILE=	yes
 
 SRCDIR=		${NETBSDSRCDIR}/external/bsd/atf/dist
 .PATH:		${SRCDIR}/atf-c
