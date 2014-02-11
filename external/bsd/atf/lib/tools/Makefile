@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2014/02/11 16:11:28 jmmv Exp $
+# $NetBSD: Makefile,v 1.3 2014/02/11 16:31:38 jmmv Exp $
 
 NOLINT=		# defined
 
@@ -55,16 +55,5 @@ SRCS=		application.cpp \
 		timers.cpp \
 		ui.cpp \
 		user.cpp
-
-CLEANFILES+=	defs.hpp
-
-beforedepend: defs.hpp
-defs.hpp: defs.hpp.in
-	${TOOL_SED} \
-	    -e 's|@ATTRIBUTE_FORMAT_PRINTF@|__attribute__((__format__(__printf__, a, b)))|g' \
-	    -e 's|@ATTRIBUTE_NORETURN@|__attribute__((__noreturn__))|g' \
-	    -e 's|@ATTRIBUTE_UNUSED@|__attribute__((__unused__))|g' \
-	    <${.ALLSRC} >${.TARGET}.tmp
-	mv ${.TARGET}.tmp ${.TARGET}
 
 .include <bsd.lib.mk>

@@ -34,7 +34,6 @@
 
 #include "application.hpp"
 #include "config.hpp"
-#include "defs.hpp"
 
 class atf_config : public tools::application::app {
     static const char* m_description;
@@ -66,7 +65,7 @@ atf_config::atf_config(void) :
 }
 
 void
-atf_config::process_option(int ch, const char* arg ATF_DEFS_ATTRIBUTE_UNUSED)
+atf_config::process_option(int ch, const char* arg __attribute__((__unused__)))
 {
     switch (ch) {
     case 't':
