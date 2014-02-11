@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2014/02/08 19:15:34 jmmv Exp $
+# $NetBSD: Makefile,v 1.13 2014/02/11 17:28:21 jmmv Exp $
 
 .include <bsd.own.mk>
 
@@ -12,9 +12,7 @@ SRCS=		atf-run.cpp
 MAN=		atf-run.1
 
 CPPFLAGS+=	-DGDB=\"/usr/bin/gdb\"
-CPPFLAGS+=	-DHAVE_CONFIG_H
 CPPFLAGS+=	-I${SRCDIR}/tools
-CPPFLAGS+=	-I${SRCDIR:H}/lib/libatf-c  # For bconfig.h.
 
 USE_ATF_LIBTOOLS=	yes
 

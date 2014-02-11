@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2014/02/11 16:31:38 jmmv Exp $
+# $NetBSD: Makefile,v 1.4 2014/02/11 17:28:21 jmmv Exp $
 
 NOLINT=		# defined
 
@@ -13,7 +13,6 @@ LIBDPLIBS+=     m	${.CURDIR}/../../../../../lib/libm
 .PATH:		${SRCDIR}
 .PATH:		${SRCDIR}/tools
 
-CPPFLAGS+=	-DHAVE_CONFIG_H
 CPPFLAGS+=	-DATF_ARCH=\"${MACHINE_ARCH}\"
 CPPFLAGS+=	-DATF_BUILD_CC=\"/usr/bin/cc\"
 CPPFLAGS+=	-DATF_BUILD_CFLAGS=\"\"
@@ -29,10 +28,8 @@ CPPFLAGS+=	-DATF_MACHINE=\"${MACHINE}\"
 CPPFLAGS+=	-DATF_PKGDATADIR=\"/usr/share/atf\"
 CPPFLAGS+=	-DATF_SHELL=\"/bin/sh\"
 CPPFLAGS+=	-DATF_WORKDIR=\"/tmp\"
-CPPFLAGS+=	-DLAST_SIGNO=63
 CPPFLAGS+=	-I${SRCDIR}/tools
 CPPFLAGS+=	-I.
-CPPFLAGS+=	-I${TOPDIR}/lib/libatf-c  # For bconfig.h
 
 WARNS?=		2
 

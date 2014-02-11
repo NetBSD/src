@@ -27,10 +27,6 @@
 // IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-#if defined(HAVE_CONFIG_H)
-#   include <bconfig.h>
-#endif
-
 extern "C" {
 #include <sys/time.h>
 }
@@ -47,15 +43,10 @@ extern "C" {
 namespace impl = tools::timers;
 #define IMPL_NAME "tools::timers"
 
-#if !defined(HAVE_TIMER_T)
-static impl::timer* compat_handle;
-#endif
-
 // ------------------------------------------------------------------------
 // Auxiliary functions.
 // ------------------------------------------------------------------------
 
-#if defined(HAVE_TIMER_T)
 static
 void
 handler(const int signo __attribute__((__unused__)), siginfo_t* si,
@@ -65,29 +56,14 @@ handler(const int signo __attribute__((__unused__)), siginfo_t* si,
     timer->set_fired();
     timer->timeout_callback();
 }
-#else
-static
-void
-handler(const int signo __attribute__((__unused__)),
-        siginfo_t* si __attribute__((__unused__)),
-        void* uc __attribute__((__unused__)))
-{
-    compat_handle->set_fired();
-    compat_handle->timeout_callback();
-}
-#endif
 
 // ------------------------------------------------------------------------
 // The "timer" class.
 // ------------------------------------------------------------------------
 
 struct impl::timer::impl {
-#if defined(HAVE_TIMER_T)
     ::timer_t m_timer;
     ::itimerspec m_old_it;
-#else
-    ::itimerval m_old_it;
-#endif
 
     struct ::sigaction m_old_sa;
     volatile bool m_fired;
@@ -108,7 +84,6 @@ impl::timer::timer(const unsigned int seconds) :
         throw tools::system_error(IMPL_NAME "::timer::timer",
                                 "Failed to set signal handler", errno);
 
-#if defined(HAVE_TIMER_T)
     struct ::sigevent se;
     se.sigev_notify = SIGEV_SIGNAL;
     se.sigev_signo = SIGALRM;
@@ -132,41 +107,17 @@ impl::timer::timer(const unsigned int seconds) :
         throw tools::system_error(IMPL_NAME "::timer::timer",
                                 "Failed to program timer", errno);
     }
-#else
-    ::itimerval it;
-    it.it_interval.tv_sec = 0;
-    it.it_interval.tv_usec = 0;
-    it.it_value.tv_sec = seconds;
-    it.it_value.tv_usec = 0;
-    if (::setitimer(ITIMER_REAL, &it, &m_pimpl->m_old_it) == -1) {
-        ::sigaction(SIGALRM, &m_pimpl->m_old_sa, NULL);
-        throw tools::system_error(IMPL_NAME "::timer::timer",
-                                "Failed to program timer", errno);
-    }
-    assert(compat_handle == NULL);
-    compat_handle = this;
-#endif
 }
 
 impl::timer::~timer(void)
 {
-#if defined(HAVE_TIMER_T)
-    {
-        const int ret = ::timer_delete(m_pimpl->m_timer);
-        assert(ret != -1);
-    }
-#else
-    {
-        const int ret = ::setitimer(ITIMER_REAL, &m_pimpl->m_old_it, NULL);
-        assert(ret != -1);
-    }
-#endif
-    const int ret = ::sigaction(SIGALRM, &m_pimpl->m_old_sa, NULL);
+    int ret;
+
+    ret = ::timer_delete(m_pimpl->m_timer);
     assert(ret != -1);
 
-#if !defined(HAVE_TIMER_T)
-    compat_handle = NULL;
-#endif
+    ret = ::sigaction(SIGALRM, &m_pimpl->m_old_sa, NULL);
+    assert(ret != -1);
 }
 
 bool

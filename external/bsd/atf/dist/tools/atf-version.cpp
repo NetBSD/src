@@ -27,10 +27,6 @@
 // IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-#if defined(HAVE_CONFIG_H)
-#include "bconfig.h"
-#endif
-
 #include <cstdlib>
 #include <iostream>
 
@@ -62,8 +58,9 @@ atf_version::main(void)
     using tools::ui::format_text;
     using tools::ui::format_text_with_tag;
 
-    std::cout << PACKAGE_STRING " (" PACKAGE_TARNAME "-" PACKAGE_VERSION
-                 ")\n" PACKAGE_COPYRIGHT "\n\n";
+    std::cout <<
+        "Automated Testing Framework " ATF_VERSION " (atf-" ATF_VERSION ")\n"
+        "Copyright (c) 2007 The NetBSD Foundation, Inc.\n\n";
 
 #if defined(PACKAGE_REVISION_TYPE_DIST)
     std::cout << format_text("Built from a distribution file; no revision "

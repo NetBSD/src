@@ -27,10 +27,6 @@
 // IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-#if defined(HAVE_CONFIG_H)
-#include "bconfig.h"
-#endif
-
 extern "C" {
 #include <sys/param.h>
 #include <sys/types.h>
@@ -52,7 +48,6 @@ extern "C" {
 #include "env.hpp"
 #include "exceptions.hpp"
 #include "fs.hpp"
-#include "process.hpp"
 #include "text.hpp"
 #include "user.hpp"
 
@@ -257,7 +252,6 @@ do_unmount(const impl::path& in_path)
     const impl::path& abs_path = in_path.is_absolute() ?
         in_path : in_path.to_absolute();
 
-#if defined(HAVE_UNMOUNT)
     int retries = max_retries;
 retry_unmount:
     if (unmount(abs_path.c_str(), 0) == -1) {
@@ -270,21 +264,6 @@ retry_unmount:
                                     ")", "unmount(2) failed", errno);
         }
     }
-#else
-    // We could use umount(2) instead if it was available... but
-    // trying to do so under, e.g. Linux, is a nightmare because we
-    // also have to update /etc/mtab to match what we did.  It is
-    // stools::fser to just leave the system-specific umount(8) tool deal
-    // with it, at least for now.
-
-    const impl::path prog("umount");
-    tools::process::argv_array argv("umount", abs_path.c_str(), NULL);
-
-    tools::process::status s = tools::process::exec(prog, argv,
-        tools::process::stream_inherit(), tools::process::stream_inherit());
-    if (!s.exited() || s.exitstatus() != EXIT_SUCCESS)
-        throw std::runtime_error("Call to unmount failed");
-#endif
 }
 
 static
@@ -731,11 +710,7 @@ impl::path
 impl::get_current_dir(void)
 {
     std::auto_ptr< char > cwd;
-#if defined(HAVE_GETCWD_DYN)
     cwd.reset(getcwd(NULL, 0));
-#else
-    cwd.reset(getcwd(NULL, MAXPATHLEN));
-#endif
     if (cwd.get() == NULL)
         throw tools::system_error(IMPL_NAME "::get_current_dir()",
                                 "getcwd() failed", errno);
