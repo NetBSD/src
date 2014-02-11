@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.45 2014/02/07 22:40:22 dsl Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.46 2014/02/11 20:17:16 dsl Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.45 2014/02/07 22:40:22 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.46 2014/02/11 20:17:16 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.45 2014/02/07 22:40:22 dsl Exp $
 
 #include <machine/reg.h>
 #include <machine/pcb.h>
-#include <machine/fpu.h>
 #include <machine/mcontext.h>
 #include <machine/specialreg.h>
 #include <machine/vmparam.h>

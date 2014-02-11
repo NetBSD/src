@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.213 2014/02/07 23:18:04 dsl Exp $
+# $NetBSD: md.amd64,v 1.214 2014/02/11 20:17:16 dsl Exp $
 
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
@@ -19,7 +19,7 @@
 ./usr/include/amd64/endian_machdep.h		comp-c-include
 ./usr/include/amd64/fenv.h			comp-c-include
 ./usr/include/amd64/float.h			comp-c-include
-./usr/include/amd64/fpu.h			comp-c-include
+./usr/include/amd64/fpu.h			comp-c-include		obsolete
 ./usr/include/amd64/frame.h			comp-c-include
 ./usr/include/amd64/frame_regs.h		comp-c-include
 ./usr/include/amd64/gdt.h			comp-c-include
@@ -431,6 +431,7 @@
 ./usr/include/x86/cputypes.h			comp-c-include
 ./usr/include/x86/cpuvar.h			comp-c-include
 ./usr/include/x86/float.h			comp-c-include
+./usr/include/x86/fpu.h				comp-c-include
 ./usr/include/x86/ieee.h			comp-c-include
 ./usr/include/x86/ieeefp.h			comp-c-include
 ./usr/include/x86/intr.h			comp-c-include
