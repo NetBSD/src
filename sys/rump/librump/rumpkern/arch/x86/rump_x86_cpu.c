@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpspl.c,v 1.2 2009/02/06 20:01:41 pooka Exp $	*/
+/*	$NetBSD: rump_x86_cpu.c,v 1.1 2014/02/12 22:28:43 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,23 +29,53 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpspl.c,v 1.2 2009/02/06 20:01:41 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_x86_cpu.c,v 1.1 2014/02/12 22:28:43 pooka Exp $");
 
 #include <sys/param.h>
 
-#include <machine/intr.h>
+#include <machine/cpu.h>
 
 #include "rump_private.h"
 
+struct cpu_info *cpu_info_list;
+
 void
-spllower(int s)
+rump_cpu_attach(struct cpu_info *ci)
 {
 
+	if (cpu_info_list == NULL)
+		ci->ci_flags |= CPUF_PRIMARY;
+
+	/* XXX: wrong order, but ... */
+	ci->ci_next = cpu_info_list;
+	cpu_info_list = ci;
+
+	kcpuset_set(kcpuset_attached, cpu_index(ci));
+	kcpuset_set(kcpuset_running, cpu_index(ci));
 }
 
-int
-splraise(int s)
+struct cpu_info *
+x86_curcpu()
 {
 
-	return 0;
+	return curlwp->l_cpu;
+}
+
+struct lwp *
+x86_curlwp()
+{
+
+	return rumpuser_curlwp();
+}
+
+void
+wbinvd(void)
+{
+
+	/*
+	 * Used by kobj_machdep().
+	 *
+	 * But, we Best not execute this since we're not Ring0 *.
+	 * Honestly, I don't know why it's required even in the kernel.
+	 */
 }

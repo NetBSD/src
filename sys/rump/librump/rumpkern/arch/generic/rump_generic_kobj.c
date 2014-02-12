@@ -1,7 +1,10 @@
-/*	$NetBSD: pmap_stub.c,v 1.25 2011/03/02 13:11:52 pooka Exp $	*/
+/*	$NetBSD: rump_generic_kobj.c,v 1.1 2014/02/12 22:28:43 pooka Exp $	*/
 
 /*
- * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
+ *
+ * Development of this software was supported by the
+ * Finnish Cultural Foundation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,67 +29,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_stub.c,v 1.25 2011/03/02 13:11:52 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_generic_kobj.c,v 1.1 2014/02/12 22:28:43 pooka Exp $");
 
 #include <sys/param.h>
+#include <sys/kobj.h>
 
-#include <uvm/uvm_extern.h>
-
-/*
- * This is the MI pmap implementation for rump.  It's used only by
- * architectures which do not conform to the kernel ABI.  The kernel
- * ABI conformant architectures provide their own pmap under librump/arch
- * (due to various messiness with macros in the pmap "interface").
- */
-
-struct pmap *const kernel_pmap_ptr = (struct pmap *const)-1;
-
-void
-pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int fl)
+int
+kobj_machdep(kobj_t ko, void *v, size_t s, bool b)
 {
 
-	panic("%s: unavailable", __func__);
-}
-
-void
-pmap_kremove(vaddr_t va, vsize_t size)
-{
-
-	panic("%s: unavailable", __func__);
+	panic("%s: not supported on this architecture", __func__);
 }
 
 int
-pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
+kobj_reloc(kobj_t ko, uintptr_t p, const void *v, bool b1, bool b2)
 {
 
-	panic("%s: unavailable", __func__);
-}
-
-void
-pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
-{
-
-	panic("%s: unavailable", __func__);
-}
-
-bool
-pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
-{
-
-	*pap = va;
-	return true;
-}
-
-void
-pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
-{
-
-	/* nada */
-}
-
-bool
-pmap_clear_modify(struct vm_page *pg)
-{
-
-	return false;
+	panic("%s: not supported on this architecture", __func__);
 }

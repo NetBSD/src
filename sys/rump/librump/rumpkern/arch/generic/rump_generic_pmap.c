@@ -1,10 +1,7 @@
-/*	$NetBSD: rumpcpu_generic.c,v 1.4 2012/06/22 12:45:43 rmind Exp $	*/
+/*	$NetBSD: rump_generic_pmap.c,v 1.1 2014/02/12 22:28:43 pooka Exp $	*/
 
 /*
- * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
- *
- * Development of this software was supported by the
- * Finnish Cultural Foundation
+ * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,25 +26,67 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpcpu_generic.c,v 1.4 2012/06/22 12:45:43 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_generic_pmap.c,v 1.1 2014/02/12 22:28:43 pooka Exp $");
 
 #include <sys/param.h>
 
-#include "rump_private.h"
+#include <uvm/uvm_extern.h>
 
-struct cpu_info *rumpcpu_info_list;
+/*
+ * This is the MI pmap implementation for rump.  It's used only by
+ * architectures which do not conform to the kernel ABI.  The kernel
+ * ABI conformant architectures provide their own pmap under librump/arch
+ * (due to various messiness with macros in the pmap "interface").
+ */
+
+struct pmap *const kernel_pmap_ptr = (struct pmap *const)-1;
 
 void
-rump_cpu_attach(struct cpu_info *ci)
+pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int fl)
 {
-	static int nattached;
 
-	/* XXX: wrong order, but ... */
-	ci->ci_next = rumpcpu_info_list;
-	rumpcpu_info_list = ci;
+	panic("%s: unavailable", __func__);
+}
 
-	ci->ci_index = nattached++;
+void
+pmap_kremove(vaddr_t va, vsize_t size)
+{
 
-	kcpuset_set(kcpuset_attached, cpu_index(ci));
-	kcpuset_set(kcpuset_running, cpu_index(ci));
+	panic("%s: unavailable", __func__);
+}
+
+int
+pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
+{
+
+	panic("%s: unavailable", __func__);
+}
+
+void
+pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
+{
+
+	panic("%s: unavailable", __func__);
+}
+
+bool
+pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
+{
+
+	*pap = va;
+	return true;
+}
+
+void
+pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
+{
+
+	/* nada */
+}
+
+bool
+pmap_clear_modify(struct vm_page *pg)
+{
+
+	return false;
 }
