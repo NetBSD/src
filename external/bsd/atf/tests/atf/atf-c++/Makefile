@@ -1,17 +1,13 @@
-# $NetBSD: Makefile,v 1.9 2014/02/11 16:11:28 jmmv Exp $
+# $NetBSD: Makefile,v 1.10 2014/02/12 04:08:32 jmmv Exp $
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 TESTS_SUBDIRS=	detail
 
 TESTSDIR=	${TESTSBASE}/atf/atf-c++
 
-SRCDIR=		${NETBSDSRCDIR}/external/bsd/atf/dist
 .PATH:		${SRCDIR}/atf-c++
 .PATH:		${SRCDIR}/atf-c++/detail
-
-CPPFLAGS+=	-DHAVE_CONFIG_H
-CPPFLAGS+=	-I${SRCDIR:H}/lib/libatf-c  # For bconfig.h.
 
 FILESDIR=	${TESTSDIR}
 FILES=		macros_hpp_test.cpp

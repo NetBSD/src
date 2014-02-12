@@ -1,9 +1,8 @@
-# $NetBSD: Makefile,v 1.4 2014/02/08 19:15:34 jmmv Exp $
+# $NetBSD: Makefile,v 1.5 2014/02/12 04:08:31 jmmv Exp $
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 .if ${MKSHARE} != "no"
-SRCDIR=		${NETBSDSRCDIR}/external/bsd/atf/dist
 .PATH:		${SRCDIR}/tools
 
 FILESDIR=	/usr/share/xml/atf

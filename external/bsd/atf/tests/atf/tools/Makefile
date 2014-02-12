@@ -1,16 +1,12 @@
-# $NetBSD: Makefile,v 1.4 2014/02/11 16:11:29 jmmv Exp $
+# $NetBSD: Makefile,v 1.5 2014/02/12 04:08:32 jmmv Exp $
 
-.include <bsd.own.mk>
+USE_ATF_LIBTOOLS=	yes
+
+.include <bsd.init.mk>
 
 TESTSDIR=	${TESTSBASE}/atf/tools
 
-SRCDIR=		${NETBSDSRCDIR}/external/bsd/atf/dist
 .PATH:		${SRCDIR}/tools
-
-CPPFLAGS+=	-DHAVE_CONFIG_H
-CPPFLAGS+=	-I${SRCDIR:H}/lib/libatf-c  # For bconfig.h.
-
-USE_ATF_LIBTOOLS=	yes
 
 PROGS=
 .for prog in	bad_metadata_helper \
@@ -51,5 +47,4 @@ TESTS_SH=	atf-config_test \
 		atf-report_test \
 		atf-run_test \
 
-.include "../../../Makefile.inc"
 .include <bsd.test.mk>
