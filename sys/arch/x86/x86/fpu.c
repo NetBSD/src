@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.1 2014/02/11 20:17:16 dsl Exp $	*/
+/*	$NetBSD: fpu.c,v 1.2 2014/02/12 19:53:49 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.1 2014/02/11 20:17:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.2 2014/02/12 19:53:49 dsl Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -143,7 +143,7 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.1 2014/02/11 20:17:16 dsl Exp $");
  * state is saved.
  */
 
-void		fpudna(struct cpu_info *);
+void fpudna(struct trapframe *frame);
 
 /* 
  * The following table is used to ensure that the FPE_... value
@@ -265,6 +265,9 @@ fputrap(struct trapframe *frame)
 	uint32_t statbits;
 	ksiginfo_t ksi;
 
+	if (!USERMODE(frame->tf_cs, frame->tf_eflags))
+		panic("fpu trap from kernel, trapframe %p\n", frame);
+
 	/*
 	 * At this point, fpcurlwp should be curlwp.  If it wasn't, the TS bit
 	 * should be set, and we should have gotten a DNA exception.
@@ -312,19 +315,26 @@ fputrap(struct trapframe *frame)
  * If we were the last lwp to use the FPU, we can simply return.
  * Otherwise, we save the previous state, if necessary, and restore
  * our last saved state.
+ *
+ * Called directly from the trap 0x13 entry with interrupts still disabled.
  */
 void
-fpudna(struct cpu_info *ci)
+fpudna(struct trapframe *frame)
 {
+	struct cpu_info *ci;
 	uint16_t cw;
 	uint32_t mxcsr;
 	struct lwp *l, *fl;
 	struct pcb *pcb;
 	int s;
 
-	/* Lock out IPIs and disable preemption. */
+	if (!USERMODE(frame->tf_cs, frame->tf_eflags))
+		panic("fpudna from kernel, trapframe %p\n", frame);
+
+	ci = curcpu();
+
+	/* Save soft spl level - interrupts are hard disabled */
 	s = splhigh();
-	x86_enable_intr();
 
 	/* Save state on current CPU. */
 	l = ci->ci_curlwp;
@@ -341,9 +351,7 @@ fpudna(struct cpu_info *ci)
 			splx(s);
 			return;
 		}
-		KASSERT(fl != l);
 		fpusave_cpu(true);
-		KASSERT(ci->ci_fpcurlwp == NULL);
 	}
 
 	/* Save our state if on a remote CPU. */
@@ -351,6 +359,10 @@ fpudna(struct cpu_info *ci)
 		/* Explicitly disable preemption before dropping spl. */
 		KPREEMPT_DISABLE(l);
 		splx(s);
+
+		/* Actually enable interrupts */
+		x86_enable_intr();
+
 		fpusave_lwp(l, true);
 		KASSERT(pcb->pcb_fpcpu == NULL);
 		s = splhigh();
