@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_x86.c,v 1.3 2012/07/22 20:32:31 joerg Exp $	*/
+/*	$NetBSD: rump_x86_cpu_counter.c,v 1.1 2014/02/12 22:28:43 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -25,86 +25,42 @@
  * SUCH DAMAGE.
  */
 
+/*
+ * __HAVE_CPU_COUNTER stubs.  It would be nice to have this
+ * MI, but need MD for now because of inline-happy archs.
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_x86.c,v 1.3 2012/07/22 20:32:31 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_x86_cpu_counter.c,v 1.1 2014/02/12 22:28:43 pooka Exp $");
 
 #include <sys/param.h>
 
-#include <uvm/uvm_extern.h>
-
-static struct pmap thepmap;
-struct pmap *const kernel_pmap_ptr = &thepmap;
-
-void
-pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int fl)
-{
-
-	panic("%s: unavailable", __func__);
-}
-
-void
-pmap_kremove(vaddr_t va, vsize_t size)
-{
-
-	panic("%s: unavailable", __func__);
-}
+#include <x86/cpu_counter.h>
 
 int
-pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
+cpu_hascounter(void)
 {
 
-	panic("%s: unavailable", __func__);
+	return 0;
 }
 
-bool
-pmap_clear_attrs(struct vm_page *pg, unsigned what)
+uint64_t
+cpu_counter(void)
 {
 
-	return false;
+	return 0;
 }
 
-void
-pmap_page_remove(struct vm_page *pg)
+uint32_t
+cpu_counter32(void)
 {
 
+	return 0;
 }
 
-bool
-pmap_test_attrs(struct vm_page *pg, unsigned what)
+uint64_t
+cpu_frequency(struct cpu_info *ci)
 {
 
-	return true;
-}
-
-paddr_t
-vtophys(vaddr_t va)
-{
-
-	return (paddr_t)va;
-}
-
-void
-pmap_update(pmap_t pmap)
-{
-
-}
-
-void
-pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
-{
-
-	panic("%s: unavailable", __func__);
-}
-
-bool
-pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
-{
-
-	*pap = va;
-	return true;
-}
-
-void
-pmap_write_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
-{
+	return 0;
 }
