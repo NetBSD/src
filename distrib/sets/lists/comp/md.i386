@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.144 2014/02/11 22:48:25 dsl Exp $
+# $NetBSD: md.i386,v 1.145 2014/02/12 23:24:09 dsl Exp $
 ./usr/include/clang-3.0/avx2intrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.0/avxintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.0/bmi2intrin.h		comp-obsolete		obsolete
@@ -259,7 +259,7 @@
 ./usr/include/i386/mtrr.h			comp-c-include
 ./usr/include/i386/multiboot.h			comp-c-include
 ./usr/include/i386/mutex.h			comp-c-include
-./usr/include/i386/npx.h			comp-c-include
+./usr/include/i386/npx.h			comp-c-include		obsolete
 ./usr/include/i386/param.h			comp-c-include
 ./usr/include/i386/pcb.h			comp-c-include
 ./usr/include/i386/pccons.h			comp-obsolete		obsolete
