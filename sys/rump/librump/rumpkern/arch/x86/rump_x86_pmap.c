@@ -1,10 +1,7 @@
-/*	$NetBSD: kobj_stubs.c,v 1.2 2009/01/01 19:33:40 pooka Exp $	*/
+/*	$NetBSD: rump_x86_pmap.c,v 1.1 2014/02/12 22:28:43 pooka Exp $	*/
 
 /*
- * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
- *
- * Development of this software was supported by the
- * Finnish Cultural Foundation
+ * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,21 +26,85 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_stubs.c,v 1.2 2009/01/01 19:33:40 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_x86_pmap.c,v 1.1 2014/02/12 22:28:43 pooka Exp $");
 
 #include <sys/param.h>
-#include <sys/kobj.h>
 
-int
-kobj_machdep(kobj_t ko, void *v, size_t s, bool b)
+#include <uvm/uvm_extern.h>
+
+static struct pmap thepmap;
+struct pmap *const kernel_pmap_ptr = &thepmap;
+
+void
+pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int fl)
 {
 
-	panic("%s: not supported on this architecture", __func__);
+	panic("%s: unavailable", __func__);
+}
+
+void
+pmap_kremove(vaddr_t va, vsize_t size)
+{
+
+	panic("%s: unavailable", __func__);
 }
 
 int
-kobj_reloc(kobj_t ko, uintptr_t p, const void *v, bool b1, bool b2)
+pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 
-	panic("%s: not supported on this architecture", __func__);
+	panic("%s: unavailable", __func__);
+}
+
+bool
+pmap_clear_attrs(struct vm_page *pg, unsigned what)
+{
+
+	return false;
+}
+
+void
+pmap_page_remove(struct vm_page *pg)
+{
+
+}
+
+bool
+pmap_test_attrs(struct vm_page *pg, unsigned what)
+{
+
+	return true;
+}
+
+paddr_t
+vtophys(vaddr_t va)
+{
+
+	return (paddr_t)va;
+}
+
+void
+pmap_update(pmap_t pmap)
+{
+
+}
+
+void
+pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
+{
+
+	panic("%s: unavailable", __func__);
+}
+
+bool
+pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
+{
+
+	*pap = va;
+	return true;
+}
+
+void
+pmap_write_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
+{
 }
