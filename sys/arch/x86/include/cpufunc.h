@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.15 2014/02/09 17:07:41 dsl Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.16 2014/02/12 23:24:09 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -81,13 +81,14 @@ void	fnclex(void);
 void	fninit(void);
 void	fnsave(void *);
 void	fnstcw(uint16_t *);
-void	fnstsw(void *);
+uint16_t fngetsw(void);
+void	fnstsw(uint16_t *);
 void	fp_divide_by_0(void);
 void	frstor(void *);
 void	fwait(void);
 void	clts(void);
 void	stts(void);
-void	fldummy(const double *);
+void	fldummy(void);
 void	fxsave(void *);
 void	fxrstor(void *);
 void	x86_monitor(const void *, uint32_t, uint32_t);

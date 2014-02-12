@@ -1,4 +1,4 @@
-/*	$NetBSD: convert_xmm_s87.c,v 1.1 2014/02/07 22:40:22 dsl Exp $	*/
+/*	$NetBSD: convert_xmm_s87.c,v 1.2 2014/02/12 23:24:09 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -30,12 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: convert_xmm_s87.c,v 1.1 2014/02/07 22:40:22 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: convert_xmm_s87.c,v 1.2 2014/02/12 23:24:09 dsl Exp $");
 
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <x86/cpu_extended_state.h>
+#include <x86/fpu.h>
 
 void
 process_xmm_to_s87(const struct fxsave *sxmm, struct save87 *s87)
