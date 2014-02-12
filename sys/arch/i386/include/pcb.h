@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.51 2014/01/19 10:30:19 dsl Exp $	*/
+/*	$NetBSD: pcb.h,v 1.52 2014/02/12 23:24:09 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2009 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <machine/segments.h>
 #include <machine/tss.h>
-#include <i386/npx.h>
+#include <x86/fpu.h>
 #include <i386/sysarch.h>
 
 struct pcb {
