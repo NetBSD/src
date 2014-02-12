@@ -1,13 +1,10 @@
-# $NetBSD: Makefile,v 1.6 2014/02/11 16:11:29 jmmv Exp $
+# $NetBSD: Makefile,v 1.7 2014/02/12 04:08:32 jmmv Exp $
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 TESTSDIR=	${TESTSBASE}/atf/atf-sh
 
-SRCDIR=		${NETBSDSRCDIR}/external/bsd/atf/dist
 .PATH:		${SRCDIR}/atf-sh
-
-CPPFLAGS+=	-DHAVE_CONFIG_H
 
 TESTS_SH=	atf-check_test
 TESTS_SH+=	atf_check_test
