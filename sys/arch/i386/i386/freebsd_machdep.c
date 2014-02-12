@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.58 2014/01/19 14:30:37 dsl Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.59 2014/02/12 23:24:09 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.58 2014/01/19 14:30:37 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.59 2014/02/12 23:24:09 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.58 2014/01/19 14:30:37 dsl Exp
 #include <compat/sys/signal.h>
 
 #include <machine/cpufunc.h>
-#include <machine/npx.h>
+#include <x86/fpu.h>
 #include <machine/reg.h>
 #include <machine/vm86.h>
 #include <machine/vmparam.h>

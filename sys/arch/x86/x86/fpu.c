@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.2 2014/02/12 19:53:49 dsl Exp $	*/
+/*	$NetBSD: fpu.c,v 1.3 2014/02/12 23:24:09 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.2 2014/02/12 19:53:49 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.3 2014/02/12 23:24:09 dsl Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -118,7 +118,11 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.2 2014/02/12 19:53:49 dsl Exp $");
 #include <machine/pcb.h>
 #include <machine/trap.h>
 #include <machine/specialreg.h>
+#include <x86/cpu.h>
 #include <x86/fpu.h>
+
+/* Check some duplicate definitions match */
+#include <machine/fenv.h>
 
 #ifdef XEN
 #define clts() HYPERVISOR_fpu_taskswitch(0)
@@ -131,7 +135,7 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.2 2014/02/12 19:53:49 dsl Exp $");
  *
  * DNA exceptions are handled like this:
  *
- * 1) If there is no FPU, return and go to the emulator.
+ * 1) If there is no FPU, send SIGILL.
  * 2) If someone else has used the FPU, save its state into that lwp's PCB.
  * 3a) If MDL_USEDFPU is not set, set it and initialize the FPU.
  * 3b) Otherwise, reload the lwp's previous FPU state.
@@ -142,8 +146,6 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.2 2014/02/12 19:53:49 dsl Exp $");
  * off when the FPU is used, and turned on again later when the lwp's FPU
  * state is saved.
  */
-
-void fpudna(struct trapframe *frame);
 
 /* 
  * The following table is used to ensure that the FPE_... value
@@ -224,13 +226,56 @@ static const uint8_t fpetable[128] = {
 
 /*
  * Init the FPU.
+ *
+ * This might not be structly necessary since it will be initialised
+ * for each process.  However it does no harm.
  */
 void
 fpuinit(struct cpu_info *ci)
 {
 	clts();
 	fninit();
+
+#if defined(__i386__) && !defined(XEN)
+	{
+		uint16_t control;
+
+		/* Read the default control word */
+		fnstcw(&control); 
+
+		if (control != __INITIAL_NPXCW__) {
+			/* Must be a 486SX, trap FP instructions */
+			lcr0((rcr0() & ~CR0_MP) | CR0_EM);
+			aprint_normal_dev(ci->ci_dev, "no fpu (control %x)\n",
+			    control);
+			i386_fpu_present = 0;
+			return;
+		}
+
+		if (npx586bug1(4195835, 3145727) != 0) {
+			/* NB 120+MHz cpus are not affected */
+			i386_fpu_fdivbug = 1;
+			aprint_normal_dev(ci->ci_dev,
+			    "WARNING: Pentium FDIV bug detected!\n");
+		}
+	}
+#endif
+
 	stts();
+}
+
+static void
+send_sigill(void *rip)
+{
+	/* No fpu (486SX) - send SIGILL */
+	ksiginfo_t ksi;
+
+	x86_enable_intr();
+	KSI_INIT_TRAP(&ksi);
+	ksi.ksi_signo = SIGILL;
+	ksi.ksi_addr = rip;
+	(*curlwp->l_proc->p_emul->e_trapsignal)(curlwp, &ksi);
+	return;
 }
 
 /*
@@ -268,6 +313,11 @@ fputrap(struct trapframe *frame)
 	if (!USERMODE(frame->tf_cs, frame->tf_eflags))
 		panic("fpu trap from kernel, trapframe %p\n", frame);
 
+	if (i386_fpu_present == 0) {
+		send_sigill((void *)X86_TF_RIP(frame));
+		return;
+	}
+
 	/*
 	 * At this point, fpcurlwp should be curlwp.  If it wasn't, the TS bit
 	 * should be set, and we should have gotten a DNA exception.
@@ -303,7 +353,7 @@ fputrap(struct trapframe *frame)
 
 	KSI_INIT_TRAP(&ksi);
 	ksi.ksi_signo = SIGFPE;
-	ksi.ksi_addr = (void *)frame->tf_rip;
+	ksi.ksi_addr = (void *)X86_TF_RIP(frame);
 	ksi.ksi_code = fpetable[statbits & 0x7f];
 	ksi.ksi_trap = statbits;
 	(*curlwp->l_proc->p_emul->e_trapsignal)(curlwp, &ksi);
@@ -322,14 +372,18 @@ void
 fpudna(struct trapframe *frame)
 {
 	struct cpu_info *ci;
-	uint16_t cw;
-	uint32_t mxcsr;
 	struct lwp *l, *fl;
 	struct pcb *pcb;
 	int s;
 
 	if (!USERMODE(frame->tf_cs, frame->tf_eflags))
-		panic("fpudna from kernel, trapframe %p\n", frame);
+		panic("fpudna from kernel, ip %p, trapframe %p\n",
+		    (void *)X86_TF_RIP(frame), frame);
+
+	if (i386_fpu_present == 0) {
+		send_sigill((void *)X86_TF_RIP(frame));
+		return;
+	}
 
 	ci = curcpu();
 
@@ -378,35 +432,35 @@ fpudna(struct trapframe *frame)
 	pcb->pcb_fpcpu = ci;
 	if ((l->l_md.md_flags & MDL_USEDFPU) == 0) {
 		fninit();
-		cw = pcb->pcb_savefpu.sv_xmm.fx_cw;
-		fldcw(&cw);
-		mxcsr = pcb->pcb_savefpu.sv_xmm.fx_mxcsr;
-		x86_ldmxcsr(&mxcsr);
+		if (i386_use_fxsave) {
+			fldcw(&pcb->pcb_savefpu.sv_xmm.fx_cw);
+			x86_ldmxcsr(&pcb->pcb_savefpu.sv_xmm.fx_mxcsr);
+		} else {
+			fldcw(&pcb->pcb_savefpu.sv_87.s87_cw);
+		}
 		l->l_md.md_flags |= MDL_USEDFPU;
-	} else {
+	} else if (i386_use_fxsave) {
 		/*
 		 * AMD FPU's do not restore FIP, FDP, and FOP on fxrstor,
 		 * leaking other process's execution history. Clear them
 		 * manually.
 		 */
-		static const double zero = 0.0;
-		uint16_t status;
 
 		/*
 		 * Clear the ES bit in the x87 status word if it is currently
 		 * set, in order to avoid causing a fault in the upcoming load.
 		 */
-		fnstsw(&status);
-		if (status & 0x80)
+		if (fngetsw() & 0x80)
 			fnclex();
 
 		/*
-		 * Load the dummy variable into the x87 stack.  This mangles
-		 * the x87 stack, but we don't care since we're about to call
-		 * fxrstor() anyway.
+		 * Load a zero into the x87 stack.  This mangles the x87 stack,
+		 * but we don't care since we're about to call fxrstor() anyway.
 		 */
-		fldummy(&zero);
+		fldummy();
 		fxrstor(&pcb->pcb_savefpu);
+	} else {
+		frstor(&pcb->pcb_savefpu.sv_87);
 	}
 
 	KASSERT(ci == curcpu());
@@ -434,7 +488,11 @@ fpusave_cpu(bool save)
 
 	if (save) {
 		clts();
-		fxsave(&pcb->pcb_savefpu);
+		if (i386_use_fxsave) {
+			fxsave(&pcb->pcb_savefpu);
+		} else {
+			fnsave(&pcb->pcb_savefpu.sv_87);
+		}
 	}
 
 	stts();
