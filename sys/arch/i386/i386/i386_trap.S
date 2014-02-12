@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_trap.S,v 1.4 2014/02/04 21:09:23 dsl Exp $	*/
+/*	$NetBSD: i386_trap.S,v 1.5 2014/02/12 23:24:09 dsl Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
 
 #if 0
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.4 2014/02/04 21:09:23 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.5 2014/02/12 23:24:09 dsl Exp $");
 #endif
 
 /*
@@ -162,7 +162,7 @@ IDTVEC(trap07)
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
 #endif
-	pushl	CPUVAR(SELF)
+	pushl	%esp
 	call	_C_LABEL(fpudna)
 	addl	$4,%esp
 	jmp	_C_LABEL(trapreturn)
@@ -231,30 +231,30 @@ IDTVEC(trap10)
 	 * this is difficult for nested interrupts.
 	 */
 	pushl	$0			# dummy error code
-	pushl	$T_ASTFLT
+	pushl	$T_ARITHTRAP
+.Ldo_fputrap:
 	INTRENTRY
 	movl	CPUVAR(ILEVEL),%ebx
-	pushl	%ebx
 	pushl	%esp
-	pushl	$0			# dummy arg
 	addl	$1,CPUVAR(NTRAP)	# statistical info
 	adcl	$0,CPUVAR(NTRAP)+4
-	call	_C_LABEL(npxintr)
-	addl	$12,%esp
+	call	_C_LABEL(fputrap)
+	addl	$4,%esp
 	jmp	_C_LABEL(trapreturn)
 IDTVEC_END(trap10)
 IDTVEC(trap11)
 	TRAP(T_ALIGNFLT)
 IDTVEC_END(trap11)
-#ifdef XEN
-IDTVEC(trap12)
-IDTVEC(trap13)
-#else
+
 IDTVEC(trap12)
 	ZTRAP(T_MCA)
+IDTVEC_END(trap12)
 IDTVEC(trap13)
-	ZTRAP(T_XMM)
-#endif
+	pushl	$0			# dummy error code
+	pushl	$T_XMM
+	jmp	.Ldo_fputrap
+IDTVEC_END(trap13)
+
 IDTVEC(trap14)
 IDTVEC(trap15)
 IDTVEC(trap16)

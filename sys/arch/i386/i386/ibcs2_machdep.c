@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_machdep.c,v 1.42 2014/01/19 14:30:37 dsl Exp $	*/
+/*	$NetBSD: ibcs2_machdep.c,v 1.43 2014/02/12 23:24:09 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.42 2014/01/19 14:30:37 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.43 2014/02/12 23:24:09 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.42 2014/01/19 14:30:37 dsl Exp $
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/psl.h>
-#include <machine/npx.h>
+#include <x86/fpu.h>
 #include <machine/reg.h>
 #include <machine/vmparam.h>
 #include <machine/ibcs2_machdep.h>
