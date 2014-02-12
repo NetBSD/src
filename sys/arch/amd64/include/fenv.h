@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.h,v 1.2 2014/02/11 20:17:16 dsl Exp $	*/
+/*	$NetBSD: fenv.h,v 1.3 2014/02/12 23:04:43 dsl Exp $	*/
 /*-
  * Copyright (c) 2004-2005 David Schultz <das (at) FreeBSD.ORG>
  * All rights reserved.
@@ -28,9 +28,21 @@
 #ifndef _AMD64_FENV_H_
 #define _AMD64_FENV_H_
 
+#ifndef _KERNEL
 #include <sys/stdint.h>
-#include <x86/fpu.h>
+#endif
 
+/* Default x87 control word. */
+#define __INITIAL_NPXCW__       0x037f
+/* Modern NetBSD uses the default control word.. */
+#define __NetBSD_NPXCW__        __INITIAL_NPXCW__
+/* NetBSD before 6.99.26 forced IEEE double precision. */
+#define __NetBSD_COMPAT_NPXCW__ 0x127f
+
+/* Default values for the mxcsr. All traps masked. */
+#define __INITIAL_MXCSR__       0x1f80
+
+#ifndef _KERNEL
 /*
  * Each symbol representing a floating point exception expands to an integer
  * constant expression with values, such that bitwise-inclusive ORs of _all
@@ -103,5 +115,6 @@ extern fenv_t		__fe_dfl_env;
  * the user to affect the subsequent behavior of floating-point arithmetic.
  */
 typedef uint32_t fexcept_t;
+#endif
 
 #endif /* ! _AMD64_FENV_H_ */
