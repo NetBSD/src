@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.52 2014/02/07 15:29:22 hannken Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.53 2014/02/13 09:50:31 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.52 2014/02/07 15:29:22 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.53 2014/02/13 09:50:31 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -228,13 +228,18 @@ union_lookup1(struct vnode *udvp, struct vnode **dvpp, struct vnode **vpp,
         error = VOP_LOOKUP(dvp, &tdvp, cnp);
 	if (error)
 		return (error);
-	error = vn_lock(tdvp, LK_EXCLUSIVE);
-	if (error) {
-		vrele(tdvp);
-		return error;
+	if (dvp != tdvp) {
+		if (cnp->cn_flags & ISDOTDOT)
+			VOP_UNLOCK(dvp);
+		error = vn_lock(tdvp, LK_EXCLUSIVE);
+		if (cnp->cn_flags & ISDOTDOT)
+			vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
+		if (error) {
+			vrele(tdvp);
+			return error;
+		}
+		dvp = tdvp;
 	}
-
-	dvp = tdvp;
 
 	/*
 	 * Lastly check if the current node is a mount point in
