@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_impl.h,v 1.46 2014/02/06 02:51:28 rmind Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.47 2014/02/13 03:34:40 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -192,6 +192,8 @@ bool		npf_rwrip(const npf_cache_t *, u_int, const npf_addr_t *);
 bool		npf_rwrport(const npf_cache_t *, u_int, const in_port_t);
 bool		npf_rwrcksum(const npf_cache_t *, u_int,
 		    const npf_addr_t *, const in_port_t);
+int		npf_npt66_rwr(const npf_cache_t *, u_int, const npf_addr_t *,
+		    npf_netmask_t, uint16_t);
 
 uint16_t	npf_fixup16_cksum(uint16_t, uint16_t, uint16_t);
 uint16_t	npf_fixup32_cksum(uint16_t, uint32_t, uint32_t);

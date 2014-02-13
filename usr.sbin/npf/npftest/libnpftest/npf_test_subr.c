@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_test_subr.c,v 1.8 2014/02/05 03:49:48 rmind Exp $	*/
+/*	$NetBSD: npf_test_subr.c,v 1.9 2014/02/13 03:34:40 rmind Exp $	*/
 
 /*
  * NPF initialisation and handler routines.
@@ -19,14 +19,21 @@ static npf_state_t	cstream_state;
 static void *		cstream_ptr;
 static bool		cstream_retval;
 
+static long		(*_random_func)(void);
+static int		(*_pton_func)(int, const char *, void *);
+static const char *	(*_ntop_func)(int, const void *, char *, socklen_t);
+
 static void		npf_state_sample(npf_state_t *, bool);
-static long		(*npf_random_func)(void) = NULL;
 
 void
-npf_test_init(long (*rndfunc)(void))
+npf_test_init(int (*pton_func)(int, const char *, void *),
+    const char *(*ntop_func)(int, const void *, char *, socklen_t),
+    long (*rndfunc)(void))
 {
 	npf_state_setsampler(npf_state_sample);
-	npf_random_func = rndfunc;
+	_pton_func = pton_func;
+	_ntop_func = ntop_func;
+	_random_func = rndfunc;
 }
 
 int
@@ -118,11 +125,23 @@ npf_test_statetrack(const void *data, size_t len, ifnet_t *ifp,
 	return 0;
 }
 
+int
+npf_inet_pton(int af, const char *src, void *dst)
+{
+	return _pton_func(af, src, dst);
+}
+
+const char *
+npf_inet_ntop(int af, const void *src, char *dst, socklen_t size)
+{
+	return _ntop_func(af, src, dst, size);
+}
+
 /*
  * Need to override for cprng_fast32() -- we need deterministic PRNG.
  */
 uint32_t
 _arc4random(void)
 {
-	return (uint32_t)(npf_random_func ? npf_random_func() : random());
+	return (uint32_t)(_random_func ? _random_func() : random());
 }

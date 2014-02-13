@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_inet.c,v 1.28 2013/12/06 01:33:37 rmind Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.29 2014/02/13 03:34:40 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.28 2013/12/06 01:33:37 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.29 2014/02/13 03:34:40 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -614,6 +614,79 @@ npf_rwrcksum(const npf_cache_t *npc, u_int which,
 	/* Rewrite TCP/UDP checksum. */
 	memcpy(ocksum, &cksum, sizeof(uint16_t));
 	return true;
+}
+
+/*
+ * IPv6-to-IPv6 Network Prefix Translation (NPTv6), as per RFC 6296.
+ */
+
+int
+npf_npt66_rwr(const npf_cache_t *npc, u_int which, const npf_addr_t *pref,
+    npf_netmask_t len, uint16_t adj)
+{
+	npf_addr_t *addr = npc->npc_ips[which];
+	unsigned remnant, word, preflen = len >> 4;
+	uint32_t sum;
+
+	KASSERT(which == NPF_SRC || which == NPF_DST);
+
+	if (!npf_iscached(npc, NPC_IP6)) {
+		return EINVAL;
+	}
+	if (len <= 48) {
+		/*
+		 * The word to adjust.  Cannot translate the 0xffff
+		 * subnet if /48 or shorter.
+		 */
+		word = 3;
+		if (addr->s6_addr16[word] == 0xffff) {
+			return EINVAL;
+		}
+	} else {
+		/*
+		 * Also, all 0s or 1s in the host part are disallowed for
+		 * longer than /48 prefixes.
+		 */
+		if ((addr->s6_addr32[2] == 0 && addr->s6_addr32[3] == 0) ||
+		    (addr->s6_addr32[2] == ~0U && addr->s6_addr32[3] == ~0U))
+			return EINVAL;
+
+		/* Determine the 16-bit word to adjust. */
+		for (word = 4; word < 8; word++)
+			if (addr->s6_addr16[word] != 0xffff)
+				break;
+	}
+
+	/* Rewrite the prefix. */
+	for (unsigned i = 0; i < preflen; i++) {
+		addr->s6_addr16[i] = pref->s6_addr16[i];
+	}
+
+	/*
+	 * If prefix length is within a 16-bit word (not dividable by 16),
+	 * then prepare a mask, determine the word and adjust it.
+	 */
+	if ((remnant = len - (preflen << 4)) != 0) {
+		const uint16_t wordmask = (1U << remnant) - 1;
+		const unsigned i = preflen;
+
+		addr->s6_addr16[i] = (pref->s6_addr16[i] & wordmask) |
+		    (addr->s6_addr16[i] & ~wordmask);
+	}
+
+	/*
+	 * Performing 1's complement sum/difference.
+	 */
+	sum = addr->s6_addr16[word] + adj;
+	while (sum >> 16) {
+		sum = (sum >> 16) + (sum & 0xffff);
+	}
+	if (sum == 0xffff) {
+		/* RFC 1071. */
+		sum = 0x0000;
+	}
+	addr->s6_addr16[word] = sum;
+	return 0;
 }
 
 #if defined(DDB) || defined(_NPF_TESTING)

@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_parse.y,v 1.31 2014/02/08 01:20:09 rmind Exp $	*/
+/*	$NetBSD: npf_parse.y,v 1.32 2014/02/13 03:34:40 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
+ * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -84,6 +84,7 @@ yyerror(const char *fmt, ...)
 %}
 
 %token			ALG
+%token			ALGO
 %token			ALL
 %token			ANY
 %token			APPLY
@@ -115,6 +116,7 @@ yyerror(const char *fmt, ...)
 %token			MAP
 %token			MINUS
 %token			NAME
+%token			NPT66
 %token			ON
 %token			OUT
 %token			PAR_CLOSE
@@ -156,7 +158,8 @@ yyerror(const char *fmt, ...)
 %type	<str>		proc_param_val, opt_apply, ifname, on_ifname, ifref
 %type	<num>		port, opt_final, number, afamily, opt_family
 %type	<num>		block_or_pass, rule_dir, group_dir, block_opts
-%type	<num>		opt_stateful, icmp_type, table_type, map_sd, map_type
+%type	<num>		opt_stateful, icmp_type, table_type
+%type	<num>		map_sd, map_algo, map_type
 %type	<var>		ifaddrs, addr_or_ifaddr, port_range, icmp_type_and_code
 %type	<var>		filt_addr, addr_and_mask, tcp_flags, tcp_flags_and_mask
 %type	<var>		procs, proc_call, proc_param_list, proc_param
@@ -296,6 +299,11 @@ map_sd
 	|		{ $$ = NPFCTL_NAT_DYNAMIC; }
 	;
 
+map_algo
+	: ALGO NPT66	{ $$ = NPF_ALGO_NPT66; }
+	|		{ $$ = 0; }
+	;
+
 map_type
 	: ARROWBOTH	{ $$ = NPF_NATIN | NPF_NATOUT; }
 	| ARROWLEFT	{ $$ = NPF_NATIN; }
@@ -311,13 +319,13 @@ mapseg
 	;
 
 map
-	: MAP ifref map_sd mapseg map_type mapseg PASS filt_opts
+	: MAP ifref map_sd map_algo mapseg map_type mapseg PASS filt_opts
 	{
-		npfctl_build_natseg($3, $5, $2, &$4, &$6, &$8);
+		npfctl_build_natseg($3, $6, $2, &$5, &$7, &$9, $4);
 	}
-	| MAP ifref map_sd mapseg map_type mapseg
+	| MAP ifref map_sd map_algo mapseg map_type mapseg
 	{
-		npfctl_build_natseg($3, $5, $2, &$4, &$6, NULL);
+		npfctl_build_natseg($3, $6, $2, &$5, &$7, NULL, $4);
 	}
 	| MAP RULESET group_opts
 	{

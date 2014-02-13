@@ -1,7 +1,7 @@
-/*	$NetBSD: npf.h,v 1.24 2014/02/07 23:45:22 rmind Exp $	*/
+/*	$NetBSD: npf.h,v 1.25 2014/02/13 03:34:41 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
+ * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -105,7 +105,7 @@ bool		npf_rproc_exists_p(nl_config_t *, const char *);
 int		npf_rproc_insert(nl_config_t *, nl_rproc_t *);
 
 nl_nat_t *	npf_nat_create(int, u_int, const char *,
-		    npf_addr_t *, int, in_port_t);
+		    int, npf_addr_t *, npf_netmask_t, in_port_t);
 int		npf_nat_insert(nl_config_t *, nl_nat_t *, pri_t);
 
 nl_table_t *	npf_table_create(const char *, u_int, int);
@@ -138,6 +138,9 @@ nl_nat_t *	npf_nat_iterate(nl_config_t *);
 int		npf_nat_gettype(nl_nat_t *);
 unsigned	npf_nat_getflags(nl_nat_t *);
 void		npf_nat_getmap(nl_nat_t *, npf_addr_t *, size_t *, in_port_t *);
+
+int		npf_nat_setalgo(nl_nat_t *, u_int);
+int		npf_nat_setnpt66(nl_nat_t *, uint16_t);
 
 nl_rproc_t *	npf_rproc_iterate(nl_config_t *);
 const char *	npf_rproc_getname(nl_rproc_t *);

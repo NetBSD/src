@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_build.c,v 1.35 2014/02/07 23:45:22 rmind Exp $	*/
+/*	$NetBSD: npf_build.c,v 1.36 2014/02/13 03:34:40 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.35 2014/02/07 23:45:22 rmind Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.36 2014/02/13 03:34:40 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -533,23 +533,14 @@ npfctl_build_rule(uint32_t attr, const char *ifname, sa_family_t family,
  * npfctl_build_nat: create a single NAT policy of a specified
  * type with a given filter options.
  */
-static void
-npfctl_build_nat(int type, const char *ifname, sa_family_t family,
-    const addr_port_t *ap, const filt_opts_t *fopts, u_int flags)
+static nl_nat_t *
+npfctl_build_nat(int type, const char *ifname, const addr_port_t *ap,
+    const filt_opts_t *fopts, u_int flags)
 {
 	const opt_proto_t op = { .op_proto = -1, .op_opts = NULL };
-	fam_addr_mask_t *am;
+	fam_addr_mask_t *am = npfctl_get_singlefam(ap->ap_netaddr);
 	in_port_t port;
 	nl_nat_t *nat;
-
-	if (!ap->ap_netaddr) {
-		yyerror("%s network segment is not specified",
-		    type == NPF_NATIN ? "inbound" : "outbound");
-	}
-	am = npfctl_get_singlefam(ap->ap_netaddr);
-	if (am->fam_family != family) {
-		yyerror("IPv6 NAT is not supported");
-	}
 
 	if (ap->ap_portrange) {
 		port = npfctl_get_singleport(ap->ap_portrange);
@@ -559,10 +550,11 @@ npfctl_build_nat(int type, const char *ifname, sa_family_t family,
 		port = 0;
 	}
 
-	nat = npf_nat_create(type, flags, ifname,
-	    &am->fam_addr, am->fam_family, port);
-	npfctl_build_code(nat, family, &op, fopts);
+	nat = npf_nat_create(type, flags, ifname, am->fam_family,
+	    &am->fam_addr, am->fam_mask, port);
+	npfctl_build_code(nat, am->fam_family, &op, fopts);
 	npf_nat_insert(npf_conf, nat, NPF_PRI_LAST);
+	return nat;
 }
 
 /*
@@ -571,10 +563,12 @@ npfctl_build_nat(int type, const char *ifname, sa_family_t family,
 void
 npfctl_build_natseg(int sd, int type, const char *ifname,
     const addr_port_t *ap1, const addr_port_t *ap2,
-    const filt_opts_t *fopts)
+    const filt_opts_t *fopts, u_int algo)
 {
-	sa_family_t af = AF_INET;
+	fam_addr_mask_t *am1 = NULL, *am2 = NULL;
+	nl_nat_t *nt1 = NULL, *nt2 = NULL;
 	filt_opts_t imfopts;
+	uint16_t adj = 0;
 	u_int flags;
 	bool binat;
 
@@ -603,6 +597,38 @@ npfctl_build_natseg(int sd, int type, const char *ifname,
 	}
 
 	/*
+	 * Validate the mappings and their configuration.
+	 */
+
+	if ((type & NPF_NATIN) != 0) {
+		if (!ap1->ap_netaddr)
+			yyerror("inbound network segment is not specified");
+		am1 = npfctl_get_singlefam(ap1->ap_netaddr);
+	}
+	if ((type & NPF_NATOUT) != 0) {
+		if (!ap2->ap_netaddr)
+			yyerror("outbound network segment is not specified");
+		am2 = npfctl_get_singlefam(ap2->ap_netaddr);
+	}
+
+	switch (algo) {
+	case NPF_ALGO_NPT66:
+		if (am1 == NULL || am2 == NULL)
+			yyerror("1:1 mapping of two segments must be "
+			    "used for NPTv6");
+		if (am1->fam_mask != am2->fam_mask)
+			yyerror("asymmetric translation is not supported");
+		adj = npfctl_npt66_calcadj(am1->fam_mask,
+		    &am1->fam_addr, &am2->fam_addr);
+		break;
+	default:
+		if ((am1 && am1->fam_mask != NPF_NO_NETMASK) ||
+		    (am2 && am2->fam_mask != NPF_NO_NETMASK))
+			yyerror("net-to-net translation is not supported");
+		break;
+	}
+
+	/*
 	 * If the filter criteria is not specified explicitly, apply implicit
 	 * filtering according to the given network segments.
 	 *
@@ -615,12 +641,17 @@ npfctl_build_natseg(int sd, int type, const char *ifname,
 	if (type & NPF_NATIN) {
 		memset(&imfopts, 0, sizeof(filt_opts_t));
 		memcpy(&imfopts.fo_to, ap2, sizeof(addr_port_t));
-		npfctl_build_nat(NPF_NATIN, ifname, af, ap1, fopts, flags);
+		nt1 = npfctl_build_nat(NPF_NATIN, ifname, ap1, fopts, flags);
 	}
 	if (type & NPF_NATOUT) {
 		memset(&imfopts, 0, sizeof(filt_opts_t));
 		memcpy(&imfopts.fo_from, ap1, sizeof(addr_port_t));
-		npfctl_build_nat(NPF_NATOUT, ifname, af, ap2, fopts, flags);
+		nt2 = npfctl_build_nat(NPF_NATOUT, ifname, ap2, fopts, flags);
+	}
+
+	if (algo == NPF_ALGO_NPT66) {
+		npf_nat_setnpt66(nt1, ~adj);
+		npf_nat_setnpt66(nt2, adj);
 	}
 }
 
