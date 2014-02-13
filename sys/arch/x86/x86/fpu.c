@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.3 2014/02/12 23:24:09 dsl Exp $	*/
+/*	$NetBSD: fpu.c,v 1.4 2014/02/13 19:37:08 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.3 2014/02/12 23:24:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.4 2014/02/13 19:37:08 dsl Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -458,7 +458,7 @@ fpudna(struct trapframe *frame)
 		 * but we don't care since we're about to call fxrstor() anyway.
 		 */
 		fldummy();
-		fxrstor(&pcb->pcb_savefpu);
+		fxrstor(&pcb->pcb_savefpu.sv_xmm);
 	} else {
 		frstor(&pcb->pcb_savefpu.sv_87);
 	}
@@ -489,7 +489,7 @@ fpusave_cpu(bool save)
 	if (save) {
 		clts();
 		if (i386_use_fxsave) {
-			fxsave(&pcb->pcb_savefpu);
+			fxsave(&pcb->pcb_savefpu.sv_xmm);
 		} else {
 			fnsave(&pcb->pcb_savefpu.sv_87);
 		}
