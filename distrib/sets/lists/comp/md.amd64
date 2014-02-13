@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.214 2014/02/11 20:17:16 dsl Exp $
+# $NetBSD: md.amd64,v 1.215 2014/02/13 17:42:24 dsl Exp $
 
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
@@ -327,7 +327,7 @@
 ./usr/include/i386/mtrr.h			comp-c-include
 ./usr/include/i386/multiboot.h			comp-c-include
 ./usr/include/i386/mutex.h			comp-c-include
-./usr/include/i386/npx.h			comp-c-include
+./usr/include/i386/npx.h			comp-c-include		obsolete
 ./usr/include/i386/param.h			comp-c-include
 ./usr/include/i386/pcb.h			comp-c-include
 ./usr/include/i386/pio.h			comp-c-include
