@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.h,v 1.35 2014/02/03 02:21:52 rmind Exp $	*/
+/*	$NetBSD: npfctl.h,v 1.36 2014/02/13 03:34:40 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -126,6 +126,8 @@ npfvar_t *	npfctl_parse_port_range_variable(const char *);
 npfvar_t *	npfctl_parse_fam_addr_mask(const char *, const char *,
 		    unsigned long *);
 bool		npfctl_parse_cidr(char *, fam_addr_mask_t *, int *);
+uint16_t	npfctl_npt66_calcadj(npf_netmask_t, const npf_addr_t *,
+		    const npf_addr_t *);
 
 /*
  * NPF extension loading.
@@ -193,7 +195,7 @@ void		npfctl_build_rule(uint32_t, const char *, sa_family_t,
 		    const char *, const char *);
 void		npfctl_build_natseg(int, int, const char *,
 		    const addr_port_t *, const addr_port_t *,
-		    const filt_opts_t *);
+		    const filt_opts_t *, unsigned);
 void		npfctl_build_maprset(const char *, int, const char *);
 void		npfctl_build_table(const char *, u_int, const char *);
 
