@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.60 2014/02/07 15:29:22 hannken Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.61 2014/02/13 09:55:04 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.60 2014/02/07 15:29:22 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.61 2014/02/13 09:55:04 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -438,9 +438,6 @@ found:
 		} else if (uppervp) {
 			vrele(uppervp);
 		}
-
-		if (un->un_uppervp)
-			un->un_flags &= ~UN_KLOCK;
 
 		/*
 		 * Save information about the lower layer.
