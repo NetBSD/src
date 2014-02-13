@@ -42,7 +42,13 @@
 #define	REMOTE_IP2	"192.0.2.102"
 #define	REMOTE_IP3	"192.0.2.103"
 
-void		npf_test_init(long (*)(void));
+#define	LOCAL_IP6	"fd01:203:405:1::1234"
+#define	REMOTE_IP6	"2001:db8:fefe::1010"
+#define	EXPECTED_IP6	"2001:db8:1:d550::1234"
+
+void		npf_test_init(int (*)(int, const char *, void *),
+		    const char *(*)(int, const void *, char *, socklen_t),
+		    long (*)(void));
 int		npf_test_load(const void *);
 ifnet_t *	npf_test_addif(const char *, bool, bool);
 ifnet_t *	npf_test_getif(const char *);
@@ -56,6 +62,7 @@ struct mbuf *	mbuf_construct_ether(int);
 struct mbuf *	mbuf_construct(int);
 struct mbuf *	mbuf_construct6(int);
 void *		mbuf_return_hdrs(struct mbuf *, bool, struct ip **);
+void *		mbuf_return_hdrs6(struct mbuf *, struct ip6_hdr **);
 void		mbuf_icmp_append(struct mbuf *, struct mbuf *);
 
 bool		npf_nbuf_test(bool);
@@ -65,5 +72,8 @@ bool		npf_state_test(bool);
 
 bool		npf_rule_test(bool);
 bool		npf_nat_test(bool);
+
+int		npf_inet_pton(int, const char *, void *);
+const char *	npf_inet_ntop(int, const void *, char *, socklen_t);
 
 #endif

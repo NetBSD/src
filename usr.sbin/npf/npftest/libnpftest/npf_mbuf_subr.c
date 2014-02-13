@@ -136,6 +136,15 @@ mbuf_return_hdrs(struct mbuf *m, bool ether, struct ip **ip)
 	return (void *)(iphdr + 1);
 }
 
+void *
+mbuf_return_hdrs6(struct mbuf *m, struct ip6_hdr **ip6)
+{
+	struct ip6_hdr *ip6hdr = mtod(m, struct ip6_hdr *);
+
+	*ip6 = ip6hdr;
+	return (void *)(ip6hdr + 1);
+}
+
 void
 mbuf_icmp_append(struct mbuf *m, struct mbuf *m_orig)
 {
