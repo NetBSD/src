@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_bpf_comp.c,v 1.2 2013/11/05 01:50:30 rmind Exp $	*/
+/*	$NetBSD: npf_bpf_comp.c,v 1.3 2014/02/13 00:42:01 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_bpf_comp.c,v 1.2 2013/11/05 01:50:30 rmind Exp $");
+__RCSID("$NetBSD: npf_bpf_comp.c,v 1.3 2014/02/13 00:42:01 rmind Exp $");
 
 #include <stdlib.h>
 #include <stdbool.h>
@@ -424,12 +424,8 @@ npfctl_bpf_cidr(npf_bpf_t *ctx, u_int opts, sa_family_t af,
 			wordmask = 0xffffffff << (maxmask - length);
 			length = 0;
 		} else {
-			/*
-			 * The mask is zero - just compare the word
-			 * against zero.
-			 */
-			wordmask = 0;
-			word = 0;
+			/* The mask became zero - skip the rest. */
+			break;
 		}
 
 		/* A <- IP address (or one word of it) */
