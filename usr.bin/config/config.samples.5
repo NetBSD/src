@@ -1,4 +1,4 @@
-.\" $NetBSD: config.samples.5,v 1.4 2008/04/30 13:11:00 martin Exp $
+.\" $NetBSD: config.samples.5,v 1.5 2014/02/13 22:36:28 wiz Exp $
 .\"
 .\"  Copyright (c) 2006 The NetBSD Foundation.
 .\"  All rights reserved.
@@ -72,7 +72,7 @@ the bus.
 The driver has to try accessing the device in order to discover it.
 That implies locators must be specified to some extent: a driver would
 usually need the base address of the device, some need the IRQ line that the
-device is configured to use, thoug some others would just try a set of known
+device is configured to use, though some others would just try a set of known
 values, at the risk of badly interacting with other devices on the bus.
 .Ss Hard-wiring kernel configuration
 This technique consists in specifying exactly the location of the devices on a
@@ -184,7 +184,7 @@ no device at isa0
 .Ed
 .Ss Interface attributes
 .Em Interface attributes
-are a subtility of
+are a subtlety of
 .Xr config 1
 and
 .Xr autoconf 9 ,
