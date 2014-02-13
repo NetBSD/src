@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_scan.l,v 1.18 2014/02/08 01:20:09 rmind Exp $	*/
+/*	$NetBSD: npf_scan.l,v 1.19 2014/02/13 03:34:40 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -99,6 +99,8 @@ map			return MAP;
 "<->"			return ARROWBOTH;
 "<-"			return ARROWLEFT;
 "->"			return ARROWRIGHT;
+algo			return ALGO;
+npt66			return NPT66;
 "-"			return MINUS;
 procedure		return PROCEDURE;
 \\\n			yylineno++; yycolumn = 0;

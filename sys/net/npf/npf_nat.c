@@ -1,6 +1,7 @@
-/*	$NetBSD: npf_nat.c,v 1.24 2014/02/07 23:45:22 rmind Exp $	*/
+/*	$NetBSD: npf_nat.c,v 1.25 2014/02/13 03:34:40 rmind Exp $	*/
 
 /*-
+ * Copyright (c) 2014 Mindaugas Rasiukevicius <rmind at netbsd org>
  * Copyright (c) 2010-2013 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -70,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.24 2014/02/07 23:45:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.25 2014/02/13 03:34:40 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -100,7 +101,7 @@ typedef struct {
 /* Portmap range: [ 1024 .. 65535 ] */
 #define	PORTMAP_FIRST		(1024)
 #define	PORTMAP_SIZE		((65536 - PORTMAP_FIRST) / 32)
-#define	PORTMAP_FILLED		((uint32_t)~0)
+#define	PORTMAP_FILLED		((uint32_t)~0U)
 #define	PORTMAP_MASK		(31)
 #define	PORTMAP_SHIFT		(5)
 
@@ -121,7 +122,12 @@ struct npf_natpolicy {
 	u_int			n_flags;
 	size_t			n_addr_sz;
 	npf_addr_t		n_taddr;
+	npf_netmask_t		n_tmask;
 	in_port_t		n_tport;
+	u_int			n_algo;
+	union {
+		uint16_t	n_npt66_adj;
+	};
 };
 
 #define	NPF_NP_CMP_START	offsetof(npf_natpolicy_t, n_type)
@@ -186,21 +192,33 @@ npf_nat_newpolicy(prop_dictionary_t natdict, npf_ruleset_t *nrlset)
 
 	/* Should be exclusively either inbound or outbound NAT. */
 	if (((np->n_type == NPF_NATIN) ^ (np->n_type == NPF_NATOUT)) == 0) {
-		kmem_free(np, sizeof(npf_natpolicy_t));
-		return NULL;
+		goto err;
 	}
 	mutex_init(&np->n_lock, MUTEX_DEFAULT, IPL_SOFTNET);
 	cv_init(&np->n_cv, "npfnatcv");
 	LIST_INIT(&np->n_nat_list);
 
-	/* Translation IP. */
+	/* Translation IP, mask and port (if applicable). */
 	obj = prop_dictionary_get(natdict, "translation-ip");
 	np->n_addr_sz = prop_data_size(obj);
-	KASSERT(np->n_addr_sz > 0 && np->n_addr_sz <= sizeof(npf_addr_t));
+	if (np->n_addr_sz == 0 || np->n_addr_sz > sizeof(npf_addr_t)) {
+		goto err;
+	}
 	memcpy(&np->n_taddr, prop_data_data_nocopy(obj), np->n_addr_sz);
-
-	/* Translation port (for redirect case). */
+	prop_dictionary_get_uint8(natdict, "translation-mask", &np->n_tmask);
 	prop_dictionary_get_uint16(natdict, "translation-port", &np->n_tport);
+
+	prop_dictionary_get_uint32(natdict, "translation-algo", &np->n_algo);
+	switch (np->n_algo) {
+	case NPF_ALGO_NPT66:
+		prop_dictionary_get_uint16(natdict, "npt66-adjustment",
+		    &np->n_npt66_adj);
+		break;
+	default:
+		if (np->n_tmask != NPF_NO_NETMASK)
+			goto err;
+		break;
+	}
 
 	/* Determine if port map is needed. */
 	np->n_portmap = NULL;
@@ -223,6 +241,9 @@ npf_nat_newpolicy(prop_dictionary_t natdict, npf_ruleset_t *nrlset)
 		KASSERT(np->n_portmap != NULL);
 	}
 	return np;
+err:
+	kmem_free(np, sizeof(npf_natpolicy_t));
+	return NULL;
 }
 
 /*
@@ -607,6 +628,29 @@ npf_nat_translate(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, bool forw)
 }
 
 /*
+ * npf_nat_algo: perform the translation given the algorithm.
+ */
+static inline int 
+npf_nat_algo(npf_cache_t *npc, const npf_natpolicy_t *np, bool forw)
+{
+	u_int which;
+	int error;
+
+	switch (np->n_algo) {
+	case NPF_ALGO_NPT66:
+		which = npf_nat_which(np->n_type, forw);
+		error = npf_npt66_rwr(npc, which, &np->n_taddr,
+		    np->n_tmask, np->n_npt66_adj);
+		break;
+	default:
+		error = npf_nat_rwr(npc, np, &np->n_taddr, np->n_tport, forw);
+		break;
+	}
+
+	return error;
+}	
+
+/*
  * npf_do_nat:
  *	- Inspect packet for a NAT policy, unless a session with a NAT
  *	  association already exists.  In such case, determine whether it
@@ -656,7 +700,7 @@ npf_do_nat(npf_cache_t *npc, npf_session_t *se, nbuf_t *nbuf, const int di)
 		if (nbuf_cksum_barrier(nbuf, di)) {
 			npf_recache(npc, nbuf);
 		}
-		error = npf_nat_rwr(npc, np, &np->n_taddr, np->n_tport, forw);
+		error = npf_nat_algo(npc, np, forw);
 		atomic_dec_uint(&np->n_refcnt);
 		return error;
 	}
