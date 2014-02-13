@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_nat_test.c,v 1.7 2014/02/07 23:45:22 rmind Exp $	*/
+/*	$NetBSD: npf_nat_test.c,v 1.8 2014/02/13 03:34:40 rmind Exp $	*/
 
 /*
  * NPF NAT test.
@@ -27,6 +27,7 @@ static const struct test_case {
 	const char *	ifname;
 	int		di;
 	int		ret;
+	int		af;
 	const char *	taddr;
 	in_port_t	tport;
 } test_cases[] = {
@@ -38,32 +39,32 @@ static const struct test_case {
 	{
 		LOCAL_IP1,	15000,		REMOTE_IP1,	7000,
 		NPF_NATOUT,	IFNAME_EXT,	PFIL_OUT,
-		RESULT_PASS,	PUB_IP1,	RANDOM_PORT
+		RESULT_PASS,	AF_INET,	PUB_IP1,	RANDOM_PORT
 	},
 	{
 		LOCAL_IP1,	15000,		REMOTE_IP1,	7000,
 		NPF_NATOUT,	IFNAME_EXT,	PFIL_OUT,
-		RESULT_PASS,	PUB_IP1,	RANDOM_PORT
+		RESULT_PASS,	AF_INET,	PUB_IP1,	RANDOM_PORT
 	},
 	{
 		LOCAL_IP1,	15000,		REMOTE_IP1,	7000,
 		NPF_NATOUT,	IFNAME_EXT,	PFIL_IN,
-		RESULT_BLOCK,	NULL,		0
+		RESULT_BLOCK,	AF_INET,	NULL,		0
 	},
 	{
 		REMOTE_IP1,	7000,		LOCAL_IP1,	15000,
 		NPF_NATOUT,	IFNAME_EXT,	PFIL_IN,
-		RESULT_BLOCK,	NULL,		0
+		RESULT_BLOCK,	AF_INET,	NULL,		0
 	},
 	{
 		REMOTE_IP1,	7000,		PUB_IP1,	RANDOM_PORT,
 		NPF_NATOUT,	IFNAME_INT,	PFIL_IN,
-		RESULT_BLOCK,	NULL,		0
+		RESULT_BLOCK,	AF_INET,	NULL,		0
 	},
 	{
 		REMOTE_IP1,	7000,		PUB_IP1,	RANDOM_PORT,
 		NPF_NATOUT,	IFNAME_EXT,	PFIL_IN,
-		RESULT_PASS,	LOCAL_IP1,	15000
+		RESULT_PASS,	AF_INET,	LOCAL_IP1,	15000
 	},
 
 	/*
@@ -73,12 +74,12 @@ static const struct test_case {
 	{
 		REMOTE_IP2,	16000,		PUB_IP1,	8000,
 		NPF_NATIN,	IFNAME_EXT,	PFIL_IN,
-		RESULT_PASS,	LOCAL_IP1,	6000
+		RESULT_PASS,	AF_INET,	LOCAL_IP1,	6000
 	},
 	{
 		LOCAL_IP1,	6000,		REMOTE_IP2,	16000,
 		NPF_NATIN,	IFNAME_EXT,	PFIL_OUT,
-		RESULT_PASS,	PUB_IP1,	8000
+		RESULT_PASS,	AF_INET,	PUB_IP1,	8000
 	},
 
 	/*
@@ -88,22 +89,22 @@ static const struct test_case {
 	{
 		REMOTE_IP2,	17000,		PUB_IP2,	9000,
 		NPF_BINAT,	IFNAME_EXT,	PFIL_IN,
-		RESULT_PASS,	LOCAL_IP2,	9000
+		RESULT_PASS,	AF_INET,	LOCAL_IP2,	9000
 	},
 	{
 		LOCAL_IP2,	9000,		REMOTE_IP2,	17000,
 		NPF_BINAT,	IFNAME_EXT,	PFIL_OUT,
-		RESULT_PASS,	PUB_IP2,	9000
+		RESULT_PASS,	AF_INET,	PUB_IP2,	9000
 	},
 	{
 		LOCAL_IP2,	18000,		REMOTE_IP2,	9000,
 		NPF_BINAT,	IFNAME_EXT,	PFIL_OUT,
-		RESULT_PASS,	PUB_IP2,	18000
+		RESULT_PASS,	AF_INET,	PUB_IP2,	18000
 	},
 	{
 		REMOTE_IP2,	9000,		PUB_IP2,	18000,
 		NPF_BINAT,	IFNAME_EXT,	PFIL_IN,
-		RESULT_PASS,	LOCAL_IP2,	18000
+		RESULT_PASS,	AF_INET,	LOCAL_IP2,	18000
 	},
 
 	/*
@@ -113,21 +114,40 @@ static const struct test_case {
 	{
 		LOCAL_IP3,	19000,		REMOTE_IP3,	10000,
 		NPF_BINAT,	IFNAME_EXT,	PFIL_OUT,
-		RESULT_PASS,	PUB_IP3,	19000
+		RESULT_PASS,	AF_INET,	PUB_IP3,	19000
 	},
 	{
 		REMOTE_IP3,	10000,		PUB_IP3,	19000,
 		NPF_BINAT,	IFNAME_EXT,	PFIL_IN,
-		RESULT_PASS,	LOCAL_IP3,	19000
+		RESULT_PASS,	AF_INET,	LOCAL_IP3,	19000
+	},
+
+	/*
+	 * NPTv6 case:
+	 *	map $ext_if static algo npt66 $net6_inner <-> $net6_outer
+	 */
+	{
+		LOCAL_IP6,	1000,		REMOTE_IP6,	1001,
+		NPF_BINAT,	IFNAME_EXT,	PFIL_OUT,
+		RESULT_PASS,	AF_INET6,	EXPECTED_IP6,	1000
+	},
+	{
+		REMOTE_IP6,	1001,		EXPECTED_IP6,	1000,
+		NPF_BINAT,	IFNAME_EXT,	PFIL_IN,
+		RESULT_PASS,	AF_INET6,	LOCAL_IP6,	1000
 	},
 
 };
 
 static bool
-nmatch_addr(const char *saddr, const struct in_addr *addr2)
+nmatch_addr(int af, const char *saddr, const npf_addr_t *addr2)
 {
-	const in_addr_t addr1 = inet_addr(saddr);
-	return memcmp(&addr1, &addr2->s_addr, sizeof(in_addr_t)) != 0;
+	npf_addr_t addr1;
+	size_t len;
+
+	npf_inet_pton(af, saddr, &addr1);
+	len = af == AF_INET ? sizeof(struct in_addr) : sizeof(struct in6_addr); 
+	return memcmp(&addr1, addr2, len) != 0;
 }
 
 static bool
@@ -135,6 +155,7 @@ checkresult(bool verbose, unsigned i, struct mbuf *m, ifnet_t *ifp, int error)
 {
 	const struct test_case *t = &test_cases[i];
 	npf_cache_t npc = { .npc_info = 0 };
+	const int af = t->af;
 	nbuf_t nbuf;
 
 	if (verbose) {
@@ -150,14 +171,17 @@ checkresult(bool verbose, unsigned i, struct mbuf *m, ifnet_t *ifp, int error)
 		return false;
 	}
 
-	const struct ip *ip = npc.npc_ip.v4;
 	const struct udphdr *uh = npc.npc_l4.udp;
 
 	if (verbose) {
-		printf("\tpost-translation: src %s (%d)",
-		    inet_ntoa(ip->ip_src), ntohs(uh->uh_sport));
-		printf(" dst %s (%d)\n",
-		    inet_ntoa(ip->ip_dst), ntohs(uh->uh_dport));
+		char sbuf[64], dbuf[64];
+
+		npf_inet_ntop(af, npc.npc_ips[NPF_SRC], sbuf, sizeof(sbuf));
+		npf_inet_ntop(af, npc.npc_ips[NPF_DST], dbuf, sizeof(dbuf));
+
+		printf("\tpost-translation:");
+		printf("src %s (%d) ", sbuf, ntohs(uh->uh_sport));
+		printf("dst %s (%d)\n", dbuf, ntohs(uh->uh_dport));
 	}
 	if (error != t->ret) {
 		return false;
@@ -170,10 +194,11 @@ checkresult(bool verbose, unsigned i, struct mbuf *m, ifnet_t *ifp, int error)
 	in_addr_t dport = forw ? t->dport : t->tport;
 
 	bool defect = false;
-	defect |= nmatch_addr(saddr, &ip->ip_src);
+	defect |= nmatch_addr(af, saddr, npc.npc_ips[NPF_SRC]);
 	defect |= sport != ntohs(uh->uh_sport);
-	defect |= nmatch_addr(daddr, &ip->ip_dst);
+	defect |= nmatch_addr(af, daddr, npc.npc_ips[NPF_DST]);
 	defect |= dport != ntohs(uh->uh_dport);
+
 	return !defect;
 }
 
@@ -181,13 +206,25 @@ static struct mbuf *
 fill_packet(const struct test_case *t)
 {
 	struct mbuf *m;
-	struct ip *ip;
+	void *ipsrc, *ipdst;
 	struct udphdr *uh;
 
-	m = mbuf_construct(IPPROTO_UDP);
-	uh = mbuf_return_hdrs(m, false, &ip);
-	ip->ip_src.s_addr = inet_addr(t->src);
-	ip->ip_dst.s_addr = inet_addr(t->dst);
+	if (t->af == AF_INET6) {
+		struct ip6_hdr *ip6;
+
+		m = mbuf_construct6(IPPROTO_UDP);
+		uh = mbuf_return_hdrs6(m, &ip6);
+		ipsrc = &ip6->ip6_src, ipdst = &ip6->ip6_dst;
+	} else {
+		struct ip *ip;
+
+		m = mbuf_construct(IPPROTO_UDP);
+		uh = mbuf_return_hdrs(m, false, &ip);
+		ipsrc = &ip->ip_src.s_addr, ipdst = &ip->ip_dst.s_addr;
+	}
+
+	npf_inet_pton(t->af, t->src, ipsrc);
+	npf_inet_pton(t->af, t->dst, ipdst);
 	uh->uh_sport = htons(t->sport);
 	uh->uh_dport = htons(t->dport);
 	return m;
