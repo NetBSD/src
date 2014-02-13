@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_mbuf_subr.c,v 1.4 2012/12/24 19:05:47 rmind Exp $	*/
+/*	$NetBSD: npf_mbuf_subr.c,v 1.5 2014/02/13 03:34:40 rmind Exp $	*/
 
 /*
  * NPF testing - helper routines.
@@ -134,6 +134,15 @@ mbuf_return_hdrs(struct mbuf *m, bool ether, struct ip **ip)
 	}
 	*ip = iphdr;
 	return (void *)(iphdr + 1);
+}
+
+void *
+mbuf_return_hdrs6(struct mbuf *m, struct ip6_hdr **ip6)
+{
+	struct ip6_hdr *ip6hdr = mtod(m, struct ip6_hdr *);
+
+	*ip6 = ip6hdr;
+	return (void *)(ip6hdr + 1);
 }
 
 void
