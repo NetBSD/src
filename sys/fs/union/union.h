@@ -1,4 +1,4 @@
-/*	$NetBSD: union.h,v 1.24 2012/11/05 17:24:11 dholland Exp $	*/
+/*	$NetBSD: union.h,v 1.25 2014/02/13 09:55:04 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -134,7 +134,6 @@ struct union_node {
 	off_t			un_lowersz;	/* l: size of lower object */
 };
 
-#define UN_KLOCK	0x08		/* Keep upper node locked on vput */
 #define UN_CACHED	0x10		/* In union cache */
 
 extern int union_allocvp(struct vnode **, struct mount *,
