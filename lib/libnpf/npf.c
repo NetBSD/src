@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.27 2014/02/07 23:45:22 rmind Exp $	*/
+/*	$NetBSD: npf.c,v 1.28 2014/02/13 03:34:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.27 2014/02/07 23:45:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.28 2014/02/13 03:34:41 rmind Exp $");
 
 #include <sys/types.h>
 #include <netinet/in_systm.h>
@@ -802,7 +802,7 @@ npf_rproc_getname(nl_rproc_t *rp)
 
 nl_nat_t *
 npf_nat_create(int type, u_int flags, const char *ifname,
-    npf_addr_t *addr, int af, in_port_t port)
+    int af, npf_addr_t *addr, npf_netmask_t mask, in_port_t port)
 {
 	nl_rule_t *rl;
 	prop_dictionary_t rldict;
@@ -832,13 +832,14 @@ npf_nat_create(int type, u_int flags, const char *ifname,
 	prop_dictionary_set_int32(rldict, "type", type);
 	prop_dictionary_set_uint32(rldict, "flags", flags);
 
-	/* Translation IP. */
+	/* Translation IP and mask. */
 	addrdat = prop_data_create_data(addr, sz);
 	if (addrdat == NULL) {
 		npf_rule_destroy(rl);
 		return NULL;
 	}
 	prop_dictionary_set(rldict, "translation-ip", addrdat);
+	prop_dictionary_set_uint32(rldict, "translation-mask", mask);
 	prop_object_release(addrdat);
 
 	/* Translation port (for redirect case). */
@@ -862,6 +863,27 @@ npf_nat_iterate(nl_config_t *ncf)
 {
 	u_int level;
 	return _npf_rule_iterate1(ncf, ncf->ncf_nat_list, &level);
+}
+
+int
+npf_nat_setalgo(nl_nat_t *nt, u_int algo)
+{
+	prop_dictionary_t rldict = nt->nrl_dict;
+	prop_dictionary_set_uint32(rldict, "translation-algo", algo);
+	return 0;
+}
+
+int
+npf_nat_setnpt66(nl_nat_t *nt, uint16_t adj)
+{
+	prop_dictionary_t rldict = nt->nrl_dict;
+	int error;
+
+	if ((error = npf_nat_setalgo(nt, NPF_ALGO_NPT66)) != 0) {
+		return error;
+	}
+	prop_dictionary_set_uint16(rldict, "npt66-adjustment", adj);
+	return 0;
 }
 
 int
