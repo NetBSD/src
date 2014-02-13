@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.54 2014/02/13 09:55:04 hannken Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.55 2014/02/13 21:05:26 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.54 2014/02/13 09:55:04 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.55 2014/02/13 21:05:26 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1647,9 +1647,7 @@ union_unlock(void *v)
 		int a_flags;
 	} */ *ap = v;
 	struct vnode *vp;
-	struct union_node *un;
 
-	un = VTOUNION(ap->a_vp);
 	vp = LOCKVP(ap->a_vp);
 	if (vp == ap->a_vp)
 		genfs_unlock(ap);
