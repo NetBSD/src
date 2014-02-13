@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.52 2012/03/07 22:10:50 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.53 2014/02/13 11:08:46 skrll Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.64 2008/09/30 18:54:26 miod Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.52 2012/03/07 22:10:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.53 2014/02/13 11:08:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 
 	uv = uvm_lwp_getuarea(l2);
 	sp = (register_t)uv + PAGE_SIZE;
-	l2->l_md.md_regs = tf = (struct trapframe *)sp;
+	tf = l2->l_md.md_regs = (struct trapframe *)sp;
 	sp += sizeof(struct trapframe);
 
 	/* copy the l1's trapframe to l2 */
