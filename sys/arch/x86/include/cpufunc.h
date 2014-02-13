@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.16 2014/02/12 23:24:09 dsl Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.17 2014/02/13 19:37:08 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -76,25 +76,30 @@ void	breakpoint(void);
 void	x86_hlt(void);
 void	x86_stihlt(void);
 u_int	x86_getss(void);
-void	fldcw(void *);
+
+struct save87;
+struct fxsave;
+void	fldcw(const uint16_t *);
 void	fnclex(void);
 void	fninit(void);
-void	fnsave(void *);
+void	fnsave(struct save87 *);
 void	fnstcw(uint16_t *);
 uint16_t fngetsw(void);
 void	fnstsw(uint16_t *);
-void	fp_divide_by_0(void);
-void	frstor(void *);
+void	frstor(const struct save87 *);
 void	fwait(void);
 void	clts(void);
 void	stts(void);
-void	fldummy(void);
-void	fxsave(void *);
-void	fxrstor(void *);
-void	x86_monitor(const void *, uint32_t, uint32_t);
-void	x86_mwait(uint32_t, uint32_t);
+void	fxsave(struct fxsave *);
+void	fxrstor(const struct fxsave *);
 void	x86_ldmxcsr(const uint32_t *);
 void	x86_stmxcsr(uint32_t *);
+
+void	fldummy(void);
+void	fp_divide_by_0(void);
+
+void	x86_monitor(const void *, uint32_t, uint32_t);
+void	x86_mwait(uint32_t, uint32_t);
 /* x86_cpuid2() writes four 32bit values, %eax, %ebx, %ecx and %edx */
 #define	x86_cpuid(a,b)	x86_cpuid2((a),0,(b))
 void	x86_cpuid2(uint32_t, uint32_t, uint32_t *);
