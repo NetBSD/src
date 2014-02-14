@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.38 2014/01/15 22:21:34 joerg Exp $
+# $NetBSD: Makefile,v 1.39 2014/02/14 20:23:56 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -98,7 +98,8 @@ SUBDIR+= \
 	libLLVMCppBackendInfo \
 	libLLVMHello \
 	libLLVMInterpreter \
-	libLLVMLTO
+	libLLVMLTO \
+	libLLVMLineEditor
 .endif
 
 SUBDIR+= \
