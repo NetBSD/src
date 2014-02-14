@@ -155,6 +155,7 @@ class Parser : public CodeCompletionHandler {
   OwningPtr<PragmaHandler> OpenMPHandler;
   OwningPtr<PragmaHandler> MSCommentHandler;
   OwningPtr<PragmaHandler> MSDetectMismatchHandler;
+  OwningPtr<PragmaHandler> MSPointersToMembers;
 
   /// Whether the '>' token acts as an operator or not. This will be
   /// true except when we are parsing an expression within a C++
@@ -456,6 +457,8 @@ private:
   /// \brief Handle the annotation token produced for
   /// #pragma comment...
   void HandlePragmaMSComment();
+
+  void HandlePragmaMSPointersToMembers();
 
   /// \brief Handle the annotation token produced for
   /// #pragma align...
@@ -2066,8 +2069,6 @@ private:
                                        ParsedAttributes &attrs,
                                        SourceLocation *endLoc);
 
-  bool IsThreadSafetyAttribute(StringRef AttrName);
-
   void ParseTypeTagForDatatypeAttribute(IdentifierInfo &AttrName,
                                         SourceLocation AttrNameLoc,
                                         ParsedAttributes &Attrs,
@@ -2224,6 +2225,10 @@ private:
                                    Decl *TagDecl);
   ExprResult ParseCXXMemberInitializer(Decl *D, bool IsFunction,
                                        SourceLocation &EqualLoc);
+  void ParseCXXMemberDeclaratorBeforeInitializer(Declarator &DeclaratorInfo,
+                                                 VirtSpecifiers &VS,
+                                                 ExprResult &BitfieldSize,
+                                                 LateParsedAttrList &LateAttrs);
   void ParseCXXClassMemberDeclaration(AccessSpecifier AS, AttributeList *Attr,
                 const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo(),
                                  ParsingDeclRAIIObject *DiagsFromTParams = 0);

@@ -546,22 +546,12 @@ public:
   bool setDiagnosticGroupMapping(StringRef Group, diag::Mapping Map,
                                  SourceLocation Loc = SourceLocation());
 
-  /// \brief Set the warning-as-error flag for the given diagnostic.
-  ///
-  /// This function always only operates on the current diagnostic state.
-  void setDiagnosticWarningAsError(diag::kind Diag, bool Enabled);
-
   /// \brief Set the warning-as-error flag for the given diagnostic group.
   ///
   /// This function always only operates on the current diagnostic state.
   ///
   /// \returns True if the given group is unknown, false otherwise.
   bool setDiagnosticGroupWarningAsError(StringRef Group, bool Enabled);
-
-  /// \brief Set the error-as-fatal flag for the given diagnostic.
-  ///
-  /// This function always only operates on the current diagnostic state.
-  void setDiagnosticErrorAsFatal(diag::kind Diag, bool Enabled);
 
   /// \brief Set the error-as-fatal flag for the given diagnostic group.
   ///
@@ -597,15 +587,18 @@ public:
     this->NumWarnings = NumWarnings;
   }
 
-  /// \brief Return an ID for a diagnostic with the specified message and level.
+  /// \brief Return an ID for a diagnostic with the specified format string and
+  /// level.
   ///
   /// If this is the first request for this diagnostic, it is registered and
   /// created, otherwise the existing ID is returned.
   ///
-  /// \param Message A fixed diagnostic format string that will be hashed and
-  /// mapped to a unique DiagID.
-  unsigned getCustomDiagID(Level L, StringRef Message) {
-    return Diags->getCustomDiagID((DiagnosticIDs::Level)L, Message);
+  /// \param FormatString A fixed diagnostic format string that will be hashed
+  /// and mapped to a unique DiagID.
+  template <unsigned N>
+  unsigned getCustomDiagID(Level L, const char (&FormatString)[N]) {
+    return Diags->getCustomDiagID((DiagnosticIDs::Level)L,
+                                  StringRef(FormatString, N - 1));
   }
 
   /// \brief Converts a diagnostic argument (as an intptr_t) into the string
