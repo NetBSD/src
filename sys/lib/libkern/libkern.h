@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.82.8.4 2011/12/27 19:21:00 matt Exp $	*/
+/*	$NetBSD: libkern.h,v 1.82.8.5 2014/02/14 18:38:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -174,15 +174,18 @@ tolower(int ch)
 
 #define	__NULL_STMT		do { } while (/* CONSTCOND */ 0)
 
+#define _KASSERTSTR "kernel %sassertion \"%s\" failed: file \"%s\", line %d "
+
+
 #ifdef NDEBUG						/* tradition! */
 #define	assert(e)	((void)0)
 #else
 #ifdef __STDC__
 #define	assert(e)	(__predict_true((e)) ? (void)0 :		    \
-			    __kernassert("", __FILE__, __LINE__, #e))
+			    __kernassert(_KASSERTSTR, __FILE__, __LINE__, #e))
 #else
 #define	assert(e)	(__predict_true((e)) ? (void)0 :		    \
-			    __kernassert("", __FILE__, __LINE__, "e"))
+			    __kernassert(_KASSERTSTR, __FILE__, __LINE__, "e"))
 #endif
 #endif
 
@@ -197,46 +200,46 @@ tolower(int ch)
 #ifndef DIAGNOSTIC
 #define _DIAGASSERT(a)	(void)0
 #ifdef lint
-#define	KASSERTMSG(e, msg)	/* NOTHING */
+#define	KASSERTMSG(e, msg, ...)	/* NOTHING */
 #define	KASSERT(e)		/* NOTHING */
 #else /* !lint */
-#define	KASSERTMSG(e, msg)	((void)0)
+#define	KASSERTMSG(e, msg, ...)	((void)0)
 #define	KASSERT(e)		((void)0)
 #endif /* !lint */
 #else /* DIAGNOSTIC */
 #define _DIAGASSERT(a)	assert(a)
-#define	KASSERTMSG(e, msg) do {		\
-	if (__predict_false(!(e)))	\
-		panic msg;		\
-	} while (/*CONSTCOND*/ 0)
+#define	KASSERTMSG(e, msg, ...)					\
+	(__predict_true((e)) ? (void)0				\
+	    : __kernassert(_KASSERTSTR msg, "diagnostic ", #e,	\
+		    __FILE__, __LINE__, ## __VA_ARGS__ ))
 #ifdef __STDC__
 #define	KASSERT(e)	(__predict_true((e)) ? (void)0 :		    \
-			    __kernassert("diagnostic ", __FILE__, __LINE__, #e))
+			    __kernassert(_KASSERTSTR, "diagnostic ", __FILE__, __LINE__, #e))
 #else
 #define	KASSERT(e)	(__predict_true((e)) ? (void)0 :		    \
-			    __kernassert("diagnostic ", __FILE__, __LINE__,"e"))
+			    __kernassert(_KASSERTSTR, "diagnostic ", __FILE__, __LINE__,"e"))
 #endif
 #endif
 
 #ifndef DEBUG
 #ifdef lint
-#define	KDASSERTMSG(e, msg)	/* NOTHING */
+#define	KDASSERTMSG(e, msg, ...) /* NOTHING */
 #define	KDASSERT(e)		/* NOTHING */
 #else /* lint */
-#define	KDASSERTMSG(e, msg)	((void)0)
+#define	KDASSERTMSG(e, msg, ...) ((void)0)
 #define	KDASSERT(e)		((void)0)
 #endif /* lint */
 #else
-#define	KDASSERTMSG(e, msg) do {	\
-	if (__predict_false(!(e)))	\
-		panic msg;		\
-	} while (/*CONSTCOND*/ 0)
+#define	KDASSERTMSG(e, msg, ...)				\
+	(__predict_true((e)) ? (void)0				\
+	    : __kernassert(_KASSERTSTR msg, "debuggin ", #e,	\
+		    __FILE__, __LINE__, ## __VA_ARGS__ ))
 #ifdef __STDC__
 #define	KDASSERT(e)	(__predict_true((e)) ? (void)0 :		    \
-			    __kernassert("debugging ", __FILE__, __LINE__, #e))
+			    __kernassert(_KASSERTSTR, "debugging ", __FILE__, __LINE__, #e))
 #else
 #define	KDASSERT(e)	(__predict_true((e)) ? (void)0 :		    \
-			    __kernassert("debugging ", __FILE__, __LINE__, "e"))
+			    __kernassert(_KASSERTSTR, "debugging ", __FILE__, __LINE__, "e"))
 #endif
 #endif
 /*
@@ -308,7 +311,7 @@ int	 ffs __P((int));
 #define	ffs(x)		__builtin_ffs(x)
 #endif
 
-void	 __kernassert __P((const char *, const char *, int, const char *));
+void	 __kernassert (const char *, ...);
 unsigned int
 	bcdtobin __P((unsigned int));
 unsigned int

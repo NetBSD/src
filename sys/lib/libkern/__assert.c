@@ -1,4 +1,4 @@
-/*	$NetBSD: __assert.c,v 1.11 2007/09/24 14:19:03 pooka Exp $	*/
+/*	$NetBSD: __assert.c,v 1.11.40.1 2014/02/14 18:38:15 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -34,19 +34,22 @@
 #include <sys/types.h>
 #include <sys/systm.h>
 
+#include <machine/stdarg.h>
+
 #ifdef _STANDALONE
 #include <lib/libkern/libkern.h>
 #endif
 
 void
-__kernassert(const char *t, const char *f, int l, const char *e)
+__kernassert(const char *fmt, ...)
 {
-
+	va_list ap;
 #ifdef _KERNEL
 	if (panicstr != NULL)
 		return;
 #endif
 
-	panic("kernel %sassertion \"%s\" failed: file \"%s\", line %d",
-	    t, e, f, l);
+	va_start(ap, fmt);
+	vpanic(fmt, ap);
+	va_end(ap);
 }

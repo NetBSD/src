@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rmixl_nand_pci.c,v 1.1.2.3 2013/11/05 18:44:02 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rmixl_nand_pci.c,v 1.1.2.4 2014/02/14 18:38:16 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -355,7 +355,7 @@ xlnand_busy(device_t self)
 			break;
 		}
 	}
-	KASSERTMSG(i < __arraycount(xlnand_cmdseqs), ("%#x", xlch->xlch_cmds));
+	KASSERTMSG(i < __arraycount(xlnand_cmdseqs), "%#x", xlch->xlch_cmds);
 	xlch->xlch_addrs = 0;
 	xlch->xlch_cmds = 0;
 	xlch->xlch_datalen = 0;

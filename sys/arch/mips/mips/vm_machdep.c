@@ -263,10 +263,10 @@ cpu_uarea_remap(struct lwp *l)
 	uarea_ok = uarea_ok && (pa + USPACE - 1 <= MIPS_PHYS_MASK);
 #endif
 	KASSERTMSG(pcb->pcb_context.val[_L_SP] == (intptr_t)l->l_md.md_utf,
-	    ("%s: %s (%#"PRIxREGISTER") != %s (%p)",
+	    "%s: %s (%#"PRIxREGISTER") != %s (%p)",
 	     __func__,
-	     "pcb->pcb_context.val[_L_SP]", pcb->pcb_context.val[_L_SP],
-	     "(intptr_t)l->l_md.md_utf", l->l_md.md_utf));
+	    "pcb->pcb_context.val[_L_SP]", pcb->pcb_context.val[_L_SP],
+	    "(intptr_t)l->l_md.md_utf", l->l_md.md_utf);
 
 	if (!uarea_ok) {
 		struct pglist pglist;
