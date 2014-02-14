@@ -48,7 +48,7 @@ const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
     "__isoc99_sscanf",
     "__memcpy_chk",
     "__sincospi_stret",
-    "__sincospi_stretf",
+    "__sincospif_stret",
     "__sinpi",
     "__sinpif",
     "__sqrt_finite",
@@ -190,6 +190,9 @@ const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
     "isdigit",
     "labs",
     "lchown",
+    "ldexp",
+    "ldexpf",
+    "ldexpl",
     "llabs",
     "log",
     "log10",
@@ -393,7 +396,7 @@ static void initialize(TargetLibraryInfo &TLI, const Triple &T,
     TLI.setUnavailable(LibFunc::cospi);
     TLI.setUnavailable(LibFunc::cospif);
     TLI.setUnavailable(LibFunc::sincospi_stret);
-    TLI.setUnavailable(LibFunc::sincospi_stretf);
+    TLI.setUnavailable(LibFunc::sincospif_stret);
   }
 
   if (T.isMacOSX() && T.getArch() == Triple::x86 &&
@@ -432,6 +435,8 @@ static void initialize(TargetLibraryInfo &TLI, const Triple &T,
     TLI.setUnavailable(LibFunc::fminl);
     TLI.setUnavailable(LibFunc::fmodl);
     TLI.setUnavailable(LibFunc::frexpl);
+    TLI.setUnavailable(LibFunc::ldexpf);
+    TLI.setUnavailable(LibFunc::ldexpl);
     TLI.setUnavailable(LibFunc::logl);
     TLI.setUnavailable(LibFunc::modfl);
     TLI.setUnavailable(LibFunc::powl);

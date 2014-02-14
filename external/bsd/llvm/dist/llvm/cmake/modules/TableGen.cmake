@@ -2,21 +2,21 @@
 # Extra parameters for `tblgen' may come after `ofn' parameter.
 # Adds the name of the generated file to TABLEGEN_OUTPUT.
 
-macro(tablegen project ofn)
+function(tablegen project ofn)
   file(GLOB local_tds "*.td")
   file(GLOB_RECURSE global_tds "${LLVM_MAIN_INCLUDE_DIR}/llvm/*.td")
 
   if (IS_ABSOLUTE ${LLVM_TARGET_DEFINITIONS})
     set(LLVM_TARGET_DEFINITIONS_ABSOLUTE ${LLVM_TARGET_DEFINITIONS})
   else()
-    set(LLVM_TARGET_DEFINITIONS_ABSOLUTE 
+    set(LLVM_TARGET_DEFINITIONS_ABSOLUTE
       ${CMAKE_CURRENT_SOURCE_DIR}/${LLVM_TARGET_DEFINITIONS})
   endif()
   add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${ofn}.tmp
     # Generate tablegen output in a temporary file.
     COMMAND ${${project}_TABLEGEN_EXE} ${ARGN} -I ${CMAKE_CURRENT_SOURCE_DIR}
     -I ${LLVM_MAIN_SRC_DIR}/lib/Target -I ${LLVM_MAIN_INCLUDE_DIR}
-    ${LLVM_TARGET_DEFINITIONS_ABSOLUTE} 
+    ${LLVM_TARGET_DEFINITIONS_ABSOLUTE}
     -o ${CMAKE_CURRENT_BINARY_DIR}/${ofn}.tmp
     # The file in LLVM_TARGET_DEFINITIONS may be not in the current
     # directory and local_tds may not contain it, so we must
@@ -40,10 +40,10 @@ macro(tablegen project ofn)
   set_property(DIRECTORY APPEND
     PROPERTY ADDITIONAL_MAKE_CLEAN_FILES ${ofn}.tmp ${ofn})
 
-  set(TABLEGEN_OUTPUT ${TABLEGEN_OUTPUT} ${CMAKE_CURRENT_BINARY_DIR}/${ofn})
-  set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/${ofn} 
+  set(TABLEGEN_OUTPUT ${TABLEGEN_OUTPUT} ${CMAKE_CURRENT_BINARY_DIR}/${ofn} PARENT_SCOPE)
+  set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/${ofn}
     PROPERTIES GENERATED 1)
-endmacro(tablegen)
+endfunction(tablegen)
 
 macro(add_public_tablegen_target target)
   # Creates a target for publicly exporting tablegen dependencies.
@@ -95,7 +95,7 @@ macro(add_tablegen target project)
           FORCE)
     endif()
   endif()
-      
+
   # Effective tblgen executable to be used:
   set(${project}_TABLEGEN_EXE ${${project}_TABLEGEN} PARENT_SCOPE)
 
@@ -117,16 +117,14 @@ macro(add_tablegen target project)
   endif()
 
   if( MINGW )
-    target_link_libraries(${target} imagehlp psapi shell32)
     if(CMAKE_SIZEOF_VOID_P MATCHES "8")
       set_target_properties(${target} PROPERTIES LINK_FLAGS -Wl,--stack,16777216)
     endif(CMAKE_SIZEOF_VOID_P MATCHES "8")
   endif( MINGW )
-  if( LLVM_ENABLE_THREADS AND HAVE_LIBPTHREAD AND NOT BEOS )
-    target_link_libraries(${target} pthread)
-  endif()
-
   if (${project} STREQUAL LLVM AND NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
-    install(TARGETS ${target} RUNTIME DESTINATION bin)
+    install(TARGETS ${target}
+            EXPORT LLVMExports
+            RUNTIME DESTINATION bin)
   endif()
+  set_property(GLOBAL APPEND PROPERTY LLVM_EXPORTS ${target})
 endmacro()

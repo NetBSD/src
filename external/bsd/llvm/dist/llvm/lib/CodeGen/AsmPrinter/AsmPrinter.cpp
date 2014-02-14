@@ -48,12 +48,15 @@
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 #include "llvm/Transforms/Utils/GlobalStatus.h"
+#include "WinCodeViewLineTables.h"
 using namespace llvm;
 
 static const char *const DWARFGroupName = "DWARF Emission";
-static const char *const DbgTimerName = "DWARF Debug Writer";
+static const char *const DbgTimerName = "Debug Info Emission";
 static const char *const EHTimerName = "DWARF Exception Writer";
+static const char *const CodeViewLineTablesGroupName = "CodeView Line Tables";
 
 STATISTIC(EmittedInsts, "Number of machine instrs printed");
 
@@ -135,6 +138,14 @@ const DataLayout &AsmPrinter::getDataLayout() const {
   return *TM.getDataLayout();
 }
 
+const MCSubtargetInfo &AsmPrinter::getSubtargetInfo() const {
+  return TM.getSubtarget<MCSubtargetInfo>();
+}
+
+void AsmPrinter::EmitToStreamer(MCStreamer &S, const MCInst &Inst) {
+  S.EmitInstruction(Inst, getSubtargetInfo());
+}
+
 StringRef AsmPrinter::getTargetTriple() const {
   return TM.getTargetTriple();
 }
@@ -163,7 +174,7 @@ bool AsmPrinter::doInitialization(Module &M) {
   const_cast<TargetLoweringObjectFile&>(getObjFileLowering())
     .Initialize(OutContext, TM);
 
-  OutStreamer.InitStreamer();
+  OutStreamer.InitSections(false);
 
   Mang = new Mangler(TM.getDataLayout());
 
@@ -193,8 +204,14 @@ bool AsmPrinter::doInitialization(Module &M) {
   }
 
   if (MAI->doesSupportDebugInformation()) {
-    DD = new DwarfDebug(this, &M);
-    Handlers.push_back(HandlerInfo(DD, DbgTimerName, DWARFGroupName));
+    if (Triple(TM.getTargetTriple()).getOS() == Triple::Win32) {
+      Handlers.push_back(HandlerInfo(new WinCodeViewLineTables(this),
+                                     DbgTimerName,
+                                     CodeViewLineTablesGroupName));
+    } else {
+      DD = new DwarfDebug(this, &M);
+      Handlers.push_back(HandlerInfo(DD, DbgTimerName, DWARFGroupName));
+    }
   }
 
   DwarfException *DE = 0;
@@ -217,6 +234,36 @@ bool AsmPrinter::doInitialization(Module &M) {
   return false;
 }
 
+static bool canBeHidden(const GlobalValue *GV, const MCAsmInfo &MAI) {
+  GlobalValue::LinkageTypes Linkage = GV->getLinkage();
+  if (Linkage != GlobalValue::LinkOnceODRLinkage)
+    return false;
+
+  if (!MAI.hasWeakDefCanBeHiddenDirective())
+    return false;
+
+  if (GV->hasUnnamedAddr())
+    return true;
+
+  // This is only used for MachO, so right now it doesn't really matter how
+  // we handle alias. Revisit this once the MachO linker implements aliases.
+  if (isa<GlobalAlias>(GV))
+    return false;
+
+  // If it is a non constant variable, it needs to be uniqued across shared
+  // objects.
+  if (const GlobalVariable *Var = dyn_cast<GlobalVariable>(GV)) {
+    if (!Var->isConstant())
+      return false;
+  }
+
+  GlobalStatus GS;
+  if (!GlobalStatus::analyzeGlobal(GV, GS) && !GS.IsCompared)
+    return true;
+
+  return false;
+}
+
 void AsmPrinter::EmitLinkage(const GlobalValue *GV, MCSymbol *GVSym) const {
   GlobalValue::LinkageTypes Linkage = GV->getLinkage();
   switch (Linkage) {
@@ -230,20 +277,7 @@ void AsmPrinter::EmitLinkage(const GlobalValue *GV, MCSymbol *GVSym) const {
       // .globl _foo
       OutStreamer.EmitSymbolAttribute(GVSym, MCSA_Global);
 
-      bool CanBeHidden = false;
-
-      if (Linkage == GlobalValue::LinkOnceODRLinkage &&
-          MAI->hasWeakDefCanBeHiddenDirective()) {
-        if (GV->hasUnnamedAddr()) {
-          CanBeHidden = true;
-        } else {
-          GlobalStatus GS;
-          if (!GlobalStatus::analyzeGlobal(GV, GS) && !GS.IsCompared)
-            CanBeHidden = true;
-        }
-      }
-
-      if (!CanBeHidden)
+      if (!canBeHidden(GV, *MAI))
         // .weak_definition _foo
         OutStreamer.EmitSymbolAttribute(GVSym, MCSA_WeakDefinition);
       else
@@ -278,7 +312,7 @@ void AsmPrinter::EmitLinkage(const GlobalValue *GV, MCSymbol *GVSym) const {
 }
 
 MCSymbol *AsmPrinter::getSymbol(const GlobalValue *GV) const {
-  return getObjFileLowering().getSymbol(*Mang, GV);
+  return getObjFileLowering().getSymbol(GV, *Mang);
 }
 
 /// EmitGlobalVariable - Emit the specified global variable to the .s file.
@@ -338,7 +372,7 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
     // Handle local BSS symbols.
     if (MAI->hasMachoZeroFillDirective()) {
       const MCSection *TheSection =
-        getObjFileLowering().SectionForGlobal(GV, GVKind, Mang, TM);
+        getObjFileLowering().SectionForGlobal(GV, GVKind, *Mang, TM);
       // .zerofill __DATA, __bss, _foo, 400, 5
       OutStreamer.EmitZerofill(TheSection, GVSym, Size, Align);
       return;
@@ -367,7 +401,7 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   }
 
   const MCSection *TheSection =
-    getObjFileLowering().SectionForGlobal(GV, GVKind, Mang, TM);
+    getObjFileLowering().SectionForGlobal(GV, GVKind, *Mang, TM);
 
   // Handle the zerofill directive on darwin, which is a special form of BSS
   // emission.
@@ -458,7 +492,8 @@ void AsmPrinter::EmitFunctionHeader() {
   // Print the 'header' of function.
   const Function *F = MF->getFunction();
 
-  OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
+  OutStreamer.SwitchSection(
+      getObjFileLowering().SectionForGlobal(F, *Mang, TM));
   EmitVisibility(CurrentFnSym, F->getVisibility());
 
   EmitLinkage(F, CurrentFnSym);
@@ -579,7 +614,7 @@ static bool emitDebugValueComment(const MachineInstr *MI, AsmPrinter &AP) {
 
   SmallString<128> Str;
   raw_svector_ostream OS(Str);
-  OS << '\t' << AP.MAI->getCommentString() << "DEBUG_VALUE: ";
+  OS << "DEBUG_VALUE: ";
 
   DIVariable V(MI->getOperand(2).getMetadata());
   if (V.getContext().isSubprogram()) {
@@ -627,7 +662,7 @@ static bool emitDebugValueComment(const MachineInstr *MI, AsmPrinter &AP) {
       // Suppress offset, it is not meaningful here.
       OS << "undef";
       // NOTE: Want this comment at start of line, don't emit with AddComment.
-      AP.OutStreamer.EmitRawText(OS.str());
+      AP.OutStreamer.emitRawComment(OS.str());
       return true;
     }
     if (Deref)
@@ -639,7 +674,7 @@ static bool emitDebugValueComment(const MachineInstr *MI, AsmPrinter &AP) {
     OS << '+' << Offset << ']';
 
   // NOTE: Want this comment at start of line, don't emit with AddComment.
-  AP.OutStreamer.EmitRawText(OS.str());
+  AP.OutStreamer.emitRawComment(OS.str());
   return true;
 }
 
@@ -748,9 +783,6 @@ void AsmPrinter::EmitFunctionBody() {
         if (isVerbose()) emitKill(II, *this);
         break;
       default:
-        if (!TM.hasMCUseLoc())
-          MCLineEntry::Make(&OutStreamer, getCurrentSection());
-
         EmitInstruction(II);
         break;
       }
@@ -781,7 +813,7 @@ void AsmPrinter::EmitFunctionBody() {
     TM.getInstrInfo()->getNoopForMachoTarget(Noop);
     if (Noop.getOpcode()) {
       OutStreamer.AddComment("avoids zero-length function");
-      OutStreamer.EmitInstruction(Noop);
+      OutStreamer.EmitInstruction(Noop, getSubtargetInfo());
     } else  // Target not mc-ized yet.
       OutStreamer.EmitRawText(StringRef("\tnop\n"));
   }
@@ -904,7 +936,7 @@ bool AsmPrinter::doFinalization(Module &M) {
   SmallVector<Module::ModuleFlagEntry, 8> ModuleFlags;
   M.getModuleFlagsMetadata(ModuleFlags);
   if (!ModuleFlags.empty())
-    getObjFileLowering().emitModuleFlags(OutStreamer, ModuleFlags, Mang, TM);
+    getObjFileLowering().emitModuleFlags(OutStreamer, ModuleFlags, *Mang, TM);
 
   // Make sure we wrote out everything we need.
   OutStreamer.Flush();
@@ -1124,7 +1156,8 @@ void AsmPrinter::EmitJumpTableInfo() {
       // FIXME: this isn't the right predicate, should be based on the MCSection
       // for the function.
       F->isWeakForLinker()) {
-    OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F,Mang,TM));
+    OutStreamer.SwitchSection(
+        getObjFileLowering().SectionForGlobal(F, *Mang, TM));
   } else {
     // Otherwise, drop it in the readonly section.
     const MCSection *ReadOnlySection =
@@ -1308,7 +1341,7 @@ void AsmPrinter::EmitLLVMUsedList(const ConstantArray *InitList) {
   for (unsigned i = 0, e = InitList->getNumOperands(); i != e; ++i) {
     const GlobalValue *GV =
       dyn_cast<GlobalValue>(InitList->getOperand(i)->stripPointerCasts());
-    if (GV && getObjFileLowering().shouldEmitUsedDirectiveFor(GV, Mang))
+    if (GV && getObjFileLowering().shouldEmitUsedDirectiveFor(GV, *Mang))
       OutStreamer.EmitSymbolAttribute(getSymbol(GV), MCSA_NoDeadStrip);
   }
 }
@@ -1483,7 +1516,7 @@ void AsmPrinter::EmitAlignment(unsigned NumBits, const GlobalValue *GV) const {
   if (getCurrentSection()->getKind().isText())
     OutStreamer.EmitCodeAlignment(1 << NumBits);
   else
-    OutStreamer.EmitValueToAlignment(1 << NumBits, 0, 1, 0);
+    OutStreamer.EmitValueToAlignment(1 << NumBits);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1513,7 +1546,7 @@ static const MCExpr *lowerConstant(const Constant *CV, AsmPrinter &AP) {
   }
 
   if (const MCExpr *RelocExpr =
-          AP.getObjFileLowering().getExecutableRelativeSymbol(CE, AP.Mang))
+          AP.getObjFileLowering().getExecutableRelativeSymbol(CE, *AP.Mang))
     return RelocExpr;
 
   switch (CE->getOpcode()) {
@@ -2042,7 +2075,7 @@ MCSymbol *AsmPrinter::GetJTSetSymbol(unsigned UID, unsigned MBBID) const {
 
 MCSymbol *AsmPrinter::getSymbolWithGlobalValueBase(const GlobalValue *GV,
                                                    StringRef Suffix) const {
-  return getObjFileLowering().getSymbolWithGlobalValueBase(*Mang, GV, Suffix);
+  return getObjFileLowering().getSymbolWithGlobalValueBase(GV, Suffix, *Mang);
 }
 
 /// GetExternalSymbolSymbol - Return the MCSymbol for the specified
@@ -2153,10 +2186,9 @@ void AsmPrinter::EmitBasicBlockStart(const MachineBasicBlock *MBB) const {
 
   // Print the main label for the block.
   if (MBB->pred_empty() || isBlockOnlyReachableByFallthrough(MBB)) {
-    if (isVerbose() && OutStreamer.hasRawTextSupport()) {
+    if (isVerbose()) {
       // NOTE: Want this comment at start of line, don't emit with AddComment.
-      OutStreamer.EmitRawText(Twine(MAI->getCommentString()) + " BB#" +
-                              Twine(MBB->getNumber()) + ":");
+      OutStreamer.emitRawComment(" BB#" + Twine(MBB->getNumber()) + ":", false);
     }
   } else {
     OutStreamer.EmitLabel(MBB->getSymbol());

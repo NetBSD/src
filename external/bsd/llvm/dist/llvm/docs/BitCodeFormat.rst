@@ -739,11 +739,15 @@ function. The operand fields are:
   * ``coldcc``: code 9
   * ``webkit_jscc``: code 12
   * ``anyregcc``: code 13
+  * ``preserve_mostcc``: code 14
+  * ``preserve_allcc``: code 15
   * ``x86_stdcallcc``: code 64
   * ``x86_fastcallcc``: code 65
   * ``arm_apcscc``: code 66
   * ``arm_aapcscc``: code 67
   * ``arm_aapcs_vfpcc``: code 68
+  * ``x86_thiscallcc``: code 70
+  * ``x86_cdeclmethodcc``: code 80
 
 * isproto*: Non-zero if this entry represents a declaration rather than a
   definition

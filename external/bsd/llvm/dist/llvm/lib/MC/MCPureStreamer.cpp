@@ -23,19 +23,18 @@ namespace {
 
 class MCPureStreamer : public MCObjectStreamer {
 private:
-  virtual void EmitInstToFragment(const MCInst &Inst);
-  virtual void EmitInstToData(const MCInst &Inst);
+  virtual void EmitInstToFragment(const MCInst &Inst,
+                                  const MCSubtargetInfo &STI);
+  virtual void EmitInstToData(const MCInst &Inst, const MCSubtargetInfo &STI);
 
 public:
   MCPureStreamer(MCContext &Context, MCAsmBackend &TAB, raw_ostream &OS,
                  MCCodeEmitter *Emitter)
-      : MCObjectStreamer(Context, 0, TAB, OS, Emitter) {}
+      : MCObjectStreamer(Context, TAB, OS, Emitter) {}
 
   /// @name MCStreamer Interface
   /// @{
 
-  virtual void InitSections();
-  virtual void InitToTextSection();
   virtual void EmitLabel(MCSymbol *Symbol);
   virtual void EmitDebugLabel(MCSymbol *Symbol);
   virtual void EmitZerofill(const MCSection *Section, MCSymbol *Symbol = 0,
@@ -104,14 +103,6 @@ public:
 };
 
 } // end anonymous namespace.
-
-void MCPureStreamer::InitSections() {
-  InitToTextSection();
-}
-
-void MCPureStreamer::InitToTextSection() {
-  SwitchSection(getContext().getObjectFileInfo()->getTextSection());
-}
 
 void MCPureStreamer::EmitLabel(MCSymbol *Symbol) {
   assert(Symbol->isUndefined() && "Cannot define a symbol twice!");
@@ -188,8 +179,9 @@ bool MCPureStreamer::EmitValueToOffset(const MCExpr *Offset,
   return false;
 }
 
-void MCPureStreamer::EmitInstToFragment(const MCInst &Inst) {
-  MCRelaxableFragment *IF = new MCRelaxableFragment(Inst);
+void MCPureStreamer::EmitInstToFragment(const MCInst &Inst,
+                                        const MCSubtargetInfo &STI) {
+  MCRelaxableFragment *IF = new MCRelaxableFragment(Inst, STI);
   insert(IF);
 
   // Add the fixups and data.
@@ -199,20 +191,21 @@ void MCPureStreamer::EmitInstToFragment(const MCInst &Inst) {
   SmallVector<MCFixup, 4> Fixups;
   SmallString<256> Code;
   raw_svector_ostream VecOS(Code);
-  getAssembler().getEmitter().EncodeInstruction(Inst, VecOS, Fixups);
+  getAssembler().getEmitter().EncodeInstruction(Inst, VecOS, Fixups, STI);
   VecOS.flush();
 
   IF->getContents() = Code;
   IF->getFixups() = Fixups;
 }
 
-void MCPureStreamer::EmitInstToData(const MCInst &Inst) {
+void MCPureStreamer::EmitInstToData(const MCInst &Inst,
+                                    const MCSubtargetInfo &STI) {
   MCDataFragment *DF = getOrCreateDataFragment();
 
   SmallVector<MCFixup, 4> Fixups;
   SmallString<256> Code;
   raw_svector_ostream VecOS(Code);
-  getAssembler().getEmitter().EncodeInstruction(Inst, VecOS, Fixups);
+  getAssembler().getEmitter().EncodeInstruction(Inst, VecOS, Fixups, STI);
   VecOS.flush();
 
   // Add the fixups and data.

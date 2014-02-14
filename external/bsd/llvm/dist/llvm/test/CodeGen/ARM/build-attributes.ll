@@ -1,6 +1,7 @@
 ; This tests that MC/asm header conversion is smooth and that the
 ; build attributes are correct
 
+; RUN: llc < %s -mtriple=thumbv5-linux-gnueabi -mcpu=xscale | FileCheck %s --check-prefix=XSCALE
 ; RUN: llc < %s -mtriple=armv6-linux-gnueabi | FileCheck %s --check-prefix=V6
 ; RUN: llc < %s -mtriple=thumbv6m-linux-gnueabi | FileCheck %s --check-prefix=V6M
 ; RUN: llc < %s -mtriple=armv6-linux-gnueabi -mcpu=arm1156t2f-s | FileCheck %s --check-prefix=ARM1156T2F-S
@@ -22,6 +23,7 @@
 ; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mcpu=cortex-a9-mp | FileCheck %s --check-prefix=CORTEX-A9-MP
 ; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mcpu=cortex-a15 | FileCheck %s --check-prefix=CORTEX-A15
 ; RUN: llc < %s -mtriple=thumbv6m-linux-gnueabi -mcpu=cortex-m0 | FileCheck %s --check-prefix=CORTEX-M0
+; RUN: llc < %s -mtriple=thumbv7m-linux-gnueabi -mcpu=cortex-m3 | FileCheck %s --check-prefix=CORTEX-M3
 ; RUN: llc < %s -mtriple=thumbv7m-linux-gnueabi -mcpu=cortex-m4 -float-abi=soft | FileCheck %s --check-prefix=CORTEX-M4-SOFT
 ; RUN: llc < %s -mtriple=thumbv7m-linux-gnueabi -mcpu=cortex-m4 -float-abi=hard | FileCheck %s --check-prefix=CORTEX-M4-HARD
 ; RUN: llc < %s -mtriple=armv7r-linux-gnueabi -mcpu=cortex-r5 | FileCheck %s --check-prefix=CORTEX-R5
@@ -31,6 +33,10 @@
 ; RUN: llc < %s -mtriple=armv7-none-linux-gnueabi -mcpu=cortex-a7 -mattr=-vfp2,-vfp3,-vfp4,-neon | FileCheck %s --check-prefix=CORTEX-A7-NOFPU
 ; RUN: llc < %s -mtriple=armv7-none-linux-gnueabi -mcpu=cortex-a7 -mattr=+vfp4,-neon | FileCheck %s --check-prefix=CORTEX-A7-FPUV4
 ; RUN: llc < %s -mtriple=armv7-none-linux-gnueabi -mcpu=cortex-a7 -mattr=+vfp4,,+d16,-neon | FileCheck %s --check-prefix=CORTEX-A7-FPUV4
+
+; XSCALE:      .eabi_attribute 6, 5
+; XSCALE:      .eabi_attribute 8, 1
+; XSCALE:      .eabi_attribute 9, 1
 
 ; V6:   .eabi_attribute 6, 6
 ; V6:   .eabi_attribute 8, 1
@@ -80,7 +86,7 @@
 ; V7M-NOT:  .eabi_attribute 28
 ; V7M-NOT:  .eabi_attribute 36
 ; V7M-NOT:  .eabi_attribute 42
-; V7M:  .eabi_attribute 44, 0
+; V7M-NOT:  .eabi_attribute 44
 ; V7M-NOT:  .eabi_attribute 68
 
 ; V7:      .syntax unified
@@ -165,7 +171,7 @@
 ; CORTEX-A7-NOFPU: .eabi_attribute	24, 1
 ; CORTEX-A7-FPUV4: .eabi_attribute	24, 1
 
-; Tag_ABI_align8_preserved
+; Tag_ABI_align_preserved
 ; CORTEX-A7-CHECK: .eabi_attribute	25, 1
 ; CORTEX-A7-NOFPU: .eabi_attribute	25, 1
 ; CORTEX-A7-FPUV4: .eabi_attribute	25, 1
@@ -344,6 +350,23 @@
 ; CORTEX-M0-NOT:  .eabi_attribute 42
 ; CORTEX-M0-NOT:  .eabi_attribute 68
 
+; CORTEX-M3:  .cpu cortex-m3
+; CORTEX-M3:  .eabi_attribute 6, 10
+; CORTEX-M3:  .eabi_attribute 7, 77
+; CORTEX-M3:  .eabi_attribute 8, 0
+; CORTEX-M3:  .eabi_attribute 9, 2
+; CORTEX-M3:  .eabi_attribute 20, 1
+; CORTEX-M3:  .eabi_attribute 21, 1
+; CORTEX-M3:  .eabi_attribute 23, 3
+; CORTEX-M3:  .eabi_attribute 24, 1
+; CORTEX-M3:  .eabi_attribute 25, 1
+; CORTEX-M3-NOT:  .eabi_attribute 27
+; CORTEX-M3-NOT:  .eabi_attribute 28
+; CORTEX-M3-NOT:  .eabi_attribute 36
+; CORTEX-M3-NOT:  .eabi_attribute 42
+; CORTEX-M3-NOT:  .eabi_attribute 44
+; CORTEX-M3-NOT:  .eabi_attribute 68
+
 ; CORTEX-M4-SOFT:  .cpu cortex-m4
 ; CORTEX-M4-SOFT:  .eabi_attribute 6, 13
 ; CORTEX-M4-SOFT:  .eabi_attribute 7, 77
@@ -359,7 +382,7 @@
 ; CORTEX-M4-SOFT-NOT:  .eabi_attribute 28
 ; CORTEX-M4-SOFT:  .eabi_attribute 36, 1
 ; CORTEX-M4-SOFT-NOT:  .eabi_attribute 42
-; CORTEX-M4-SOFT:  .eabi_attribute 44, 0
+; CORTEX-M4-SOFT-NOT:  .eabi_attribute 44
 ; CORTEX-M4-SOFT-NOT:  .eabi_attribute 68
 
 ; CORTEX-M4-HARD:  .cpu cortex-m4
@@ -377,7 +400,7 @@
 ; CORTEX-M4-HARD:  .eabi_attribute 28, 1
 ; CORTEX-M4-HARD:  .eabi_attribute 36, 1
 ; CORTEX-M4-HARD-NOT:  .eabi_attribute 42
-; CORTEX-M4-HARD:  .eabi_attribute 44, 0
+; CORTEX-M4-HARD-NOT:  .eabi_attribute 44
 ; CORTEX-M4-HRAD-NOT:  .eabi_attribute 68
 
 ; CORTEX-R5:  .cpu cortex-r5
@@ -411,7 +434,7 @@
 ; CORTEX-A53-NOT:  .eabi_attribute 28
 ; CORTEX-A53:  .eabi_attribute 36, 1
 ; CORTEX-A53:  .eabi_attribute 42, 1
-; CORTEX-A53:  .eabi_attribute 44, 2
+; CORTEX-A53-NOT:  .eabi_attribute 44
 ; CORTEX-A53:  .eabi_attribute 68, 3
 
 ; CORTEX-A57:  .cpu cortex-a57
@@ -427,7 +450,7 @@
 ; CORTEX-A57-NOT:  .eabi_attribute 28
 ; CORTEX-A57:  .eabi_attribute 36, 1
 ; CORTEX-A57:  .eabi_attribute 42, 1
-; CORTEX-A57:  .eabi_attribute 44, 2
+; CORTEX-A57-NOT:  .eabi_attribute 44
 ; CORTEX-A57:  .eabi_attribute 68, 3
 
 define i32 @f(i64 %z) {
