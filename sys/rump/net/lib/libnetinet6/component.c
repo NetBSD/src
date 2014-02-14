@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.3 2014/01/02 18:29:01 pooka Exp $	*/
+/*	$NetBSD: component.c,v 1.4 2014/02/14 01:43:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.3 2014/01/02 18:29:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.4 2014/02/14 01:43:13 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -34,6 +34,12 @@ __KERNEL_RCSID(0, "$NetBSD: component.c,v 1.3 2014/01/02 18:29:01 pooka Exp $");
 #include <sys/socketvar.h>
 
 #include <net/if.h>
+#include <net/netisr.h>
+
+#include <netinet/in.h>
+#include <netinet/ip_var.h>
+#include <netinet/ip6.h>
+#include <netinet6/ip6_var.h>
 
 #include "rump_private.h"
 #include "rump_net_private.h"
@@ -43,6 +49,8 @@ RUMP_COMPONENT(RUMP_COMPONENT_NET)
 	extern struct domain inet6domain;
 
 	DOMAINADD(inet6domain);
+
+	rump_netisr_register(NETISR_IPV6, ip6intr);
 }
 
 RUMP_COMPONENT(RUMP_COMPONENT_NET_IFCFG)
