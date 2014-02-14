@@ -15,6 +15,7 @@
 #ifndef LLI_REMOTETARGETEXTERNAL_H
 #define LLI_REMOTETARGETEXTERNAL_H
 
+#include "RPCChannel.h"
 #include "RemoteTarget.h"
 #include "RemoteTargetMessage.h"
 #include "llvm/ADT/SmallVector.h"
@@ -28,6 +29,14 @@
 namespace llvm {
 
 class RemoteTargetExternal : public RemoteTarget {
+  RPCChannel RPC;
+
+  bool WriteBytes(const void *Data, size_t Size) {
+    return RPC.WriteBytes(Data, Size);
+  }
+
+  bool ReadBytes(void *Data, size_t Size) { return RPC.ReadBytes(Data, Size); }
+
 public:
   /// Allocate space in the remote target address space.
   ///
@@ -72,24 +81,33 @@ public:
   ///          descriptive text of the encountered error.
   virtual bool executeCode(uint64_t Address, int &RetVal);
 
-  /// Minimum alignment for memory permissions. Used to seperate code and
+  /// Minimum alignment for memory permissions. Used to separate code and
   /// data regions to make sure data doesn't get marked as code or vice
   /// versa.
   ///
   /// @returns Page alignment return value. Default of 4k.
   virtual unsigned getPageAlignment() { return 4096; }
 
-  /// Start the remote process.
-  ///
-  /// @returns True on success. On failure, ErrorMsg is updated with
-  ///          descriptive text of the encountered error.
-  virtual bool create();
+  virtual bool create() {
+    RPC.ChildName = ChildName;
+    if (!RPC.createServer())
+      return true;
+
+    // We must get Ack from the client (blocking read)
+    if (!Receive(LLI_ChildActive)) {
+      ErrorMsg += ", (RPCChannel::create) - Stopping process!";
+      stop();
+      return false;
+    }
+
+    return true;
+  }
 
   /// Terminate the remote process.
   virtual void stop();
 
   RemoteTargetExternal(std::string &Name) : RemoteTarget(), ChildName(Name) {}
-  virtual ~RemoteTargetExternal();
+  virtual ~RemoteTargetExternal() {}
 
 private:
   std::string ChildName;
@@ -119,13 +137,6 @@ private:
   SmallVector<int, 2> Sizes;
   void AppendWrite(const void *Data, uint32_t Size);
   void AppendRead(void *Data, uint32_t Size);
-
-  // This will get filled in as a point to an OS-specific structure.
-  void *ConnectionData;
-
-  bool WriteBytes(const void *Data, size_t Size);
-  bool ReadBytes(void *Data, size_t Size);
-  void Wait();
 };
 
 } // end namespace llvm

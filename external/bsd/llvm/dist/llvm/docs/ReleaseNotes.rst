@@ -37,6 +37,16 @@ Non-comprehensive list of changes in this release
 * All backends have been changed to use the MC asm printer and support for the
   non MC one has been removed.
 
+* The ARM back-end now has the EHABI exception handling enabled by default. Use
+  `-arm-disable-ehabi` to turn it off (both landing pads and unwind tables).
+
+* Clang can now successfully self-host itself on Linux/Sparc64 and on
+  FreeBSD/Sparc64.
+
+* LLVM now assumes the assembler supports ``.loc`` for generating debug line
+  numbers. The old support for printing the debug line info directly was only
+  used by ``llc`` and has been removed.
+
 .. NOTE
    For small 1-3 sentence descriptions, just add an entry at the end of
    this list. If your description won't fit comfortably in one bullet

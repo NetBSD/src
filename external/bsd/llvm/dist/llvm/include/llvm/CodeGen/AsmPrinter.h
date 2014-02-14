@@ -42,9 +42,11 @@ namespace llvm {
   class MCAsmInfo;
   class MCCFIInstruction;
   class MCContext;
+  class MCInst;
   class MCInstrInfo;
   class MCSection;
   class MCStreamer;
+  class MCSubtargetInfo;
   class MCSymbol;
   class MDNode;
   class DwarfDebug;
@@ -147,6 +149,11 @@ namespace llvm {
 
     /// getDataLayout - Return information about data layout.
     const DataLayout &getDataLayout() const;
+
+    /// getSubtargetInfo - Return information about subtarget.
+    const MCSubtargetInfo &getSubtargetInfo() const;
+
+    void EmitToStreamer(MCStreamer &S, const MCInst &Inst);
 
     /// getTargetTriple - Return the target triple string.
     StringRef getTargetTriple() const;
@@ -460,6 +467,15 @@ namespace llvm {
     virtual bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
                                        unsigned AsmVariant,
                                        const char *ExtraCode, raw_ostream &OS);
+
+    /// Let the target do anything it needs to do after emitting inlineasm.
+    /// This callback can be used restore the original mode in case the
+    /// inlineasm contains directives to switch modes.
+    /// \p StartInfo - the original subtarget info before inline asm
+    /// \p EndInfo   - the final subtarget info after parsing the inline asm,
+    ///                or NULL if the value is unknown.
+    virtual void emitInlineAsmEnd(const MCSubtargetInfo &StartInfo,
+                                  const MCSubtargetInfo *EndInfo) const;
 
   private:
     /// Private state for PrintSpecial()

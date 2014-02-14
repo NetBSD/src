@@ -101,15 +101,15 @@ static bool IsNullTerminatedString(const Constant *C) {
 
 /// Return the MCSymbol for the specified global value.  This
 /// symbol is the main label that is the address of the global.
-MCSymbol *TargetLoweringObjectFile::getSymbol(Mangler &M, 
-                                              const GlobalValue *GV) const {
+MCSymbol *TargetLoweringObjectFile::getSymbol(const GlobalValue *GV,
+                                              Mangler &M) const {
   SmallString<60> NameStr;
   M.getNameWithPrefix(NameStr, GV);
   return Ctx->GetOrCreateSymbol(NameStr.str());
 }
 
 MCSymbol *TargetLoweringObjectFile::getSymbolWithGlobalValueBase(
-    Mangler &M, const GlobalValue *GV, StringRef Suffix) const {
+    const GlobalValue *GV, StringRef Suffix, Mangler &M) const {
   assert(!Suffix.empty());
 
   SmallString<60> NameStr;
@@ -120,9 +120,9 @@ MCSymbol *TargetLoweringObjectFile::getSymbolWithGlobalValueBase(
 }
 
 MCSymbol *TargetLoweringObjectFile::
-getCFIPersonalitySymbol(const GlobalValue *GV, Mangler *Mang,
+getCFIPersonalitySymbol(const GlobalValue *GV, Mangler &Mang,
                         MachineModuleInfo *MMI) const {
-  return getSymbol(*Mang, GV);
+  return getSymbol(GV, Mang);
 }
 
 void TargetLoweringObjectFile::emitPersonalityValue(MCStreamer &Streamer,
@@ -264,7 +264,7 @@ SectionKind TargetLoweringObjectFile::getKindForGlobal(const GlobalValue *GV,
 /// the specified global variable or function definition.  This should not
 /// be passed external (or available externally) globals.
 const MCSection *TargetLoweringObjectFile::
-SectionForGlobal(const GlobalValue *GV, SectionKind Kind, Mangler *Mang,
+SectionForGlobal(const GlobalValue *GV, SectionKind Kind, Mangler &Mang,
                  const TargetMachine &TM) const {
   // Select section name.
   if (GV->hasSection())
@@ -280,7 +280,7 @@ SectionForGlobal(const GlobalValue *GV, SectionKind Kind, Mangler *Mang,
 const MCSection *
 TargetLoweringObjectFile::SelectSectionForGlobal(const GlobalValue *GV,
                                                  SectionKind Kind,
-                                                 Mangler *Mang,
+                                                 Mangler &Mang,
                                                  const TargetMachine &TM) const{
   assert(!Kind.isThreadLocal() && "Doesn't support TLS");
 
@@ -310,12 +310,11 @@ TargetLoweringObjectFile::getSectionForConstant(SectionKind Kind) const {
 /// getTTypeGlobalReference - Return an MCExpr to use for a
 /// reference to the specified global variable from exception
 /// handling information.
-const MCExpr *TargetLoweringObjectFile::
-getTTypeGlobalReference(const GlobalValue *GV, Mangler *Mang,
-                        MachineModuleInfo *MMI, unsigned Encoding,
-                        MCStreamer &Streamer) const {
+const MCExpr *TargetLoweringObjectFile::getTTypeGlobalReference(
+    const GlobalValue *GV, unsigned Encoding, Mangler &Mang,
+    MachineModuleInfo *MMI, MCStreamer &Streamer) const {
   const MCSymbolRefExpr *Ref =
-    MCSymbolRefExpr::Create(getSymbol(*Mang, GV), getContext());
+      MCSymbolRefExpr::Create(getSymbol(GV, Mang), getContext());
 
   return getTTypeReference(Ref, Encoding, Streamer);
 }

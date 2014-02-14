@@ -1357,6 +1357,7 @@ bool LLParser::ParseOptionalDLLStorageClass(unsigned &Res) {
 ///   ::= 'x86_stdcallcc'
 ///   ::= 'x86_fastcallcc'
 ///   ::= 'x86_thiscallcc'
+///   ::= 'x86_cdeclmethodcc'
 ///   ::= 'arm_apcscc'
 ///   ::= 'arm_aapcscc'
 ///   ::= 'arm_aapcs_vfpcc'
@@ -1369,6 +1370,8 @@ bool LLParser::ParseOptionalDLLStorageClass(unsigned &Res) {
 ///   ::= 'x86_64_win64cc'
 ///   ::= 'webkit_jscc'
 ///   ::= 'anyregcc'
+///   ::= 'preserve_mostcc'
+///   ::= 'preserve_allcc'
 ///   ::= 'cc' UINT
 ///
 bool LLParser::ParseOptionalCallingConv(CallingConv::ID &CC) {
@@ -1380,6 +1383,7 @@ bool LLParser::ParseOptionalCallingConv(CallingConv::ID &CC) {
   case lltok::kw_x86_stdcallcc:  CC = CallingConv::X86_StdCall; break;
   case lltok::kw_x86_fastcallcc: CC = CallingConv::X86_FastCall; break;
   case lltok::kw_x86_thiscallcc: CC = CallingConv::X86_ThisCall; break;
+  case lltok::kw_x86_cdeclmethodcc:CC = CallingConv::X86_CDeclMethod; break;
   case lltok::kw_arm_apcscc:     CC = CallingConv::ARM_APCS; break;
   case lltok::kw_arm_aapcscc:    CC = CallingConv::ARM_AAPCS; break;
   case lltok::kw_arm_aapcs_vfpcc:CC = CallingConv::ARM_AAPCS_VFP; break;
@@ -1393,6 +1397,8 @@ bool LLParser::ParseOptionalCallingConv(CallingConv::ID &CC) {
   case lltok::kw_x86_64_win64cc: CC = CallingConv::X86_64_Win64; break;
   case lltok::kw_webkit_jscc:    CC = CallingConv::WebKit_JS; break;
   case lltok::kw_anyregcc:       CC = CallingConv::AnyReg; break;
+  case lltok::kw_preserve_mostcc:CC = CallingConv::PreserveMost; break;
+  case lltok::kw_preserve_allcc: CC = CallingConv::PreserveAll; break;
   case lltok::kw_cc: {
       unsigned ArbitraryCC;
       Lex.Lex();
@@ -4065,31 +4071,42 @@ bool LLParser::ParseCall(Instruction *&Inst, PerFunctionState &PFS,
 //===----------------------------------------------------------------------===//
 
 /// ParseAlloc
-///   ::= 'alloca' Type (',' TypeAndValue)? (',' OptionalInfo)?
+///   ::= 'alloca' Type (',' 'inalloca')? (',' TypeAndValue)? (',' OptionalInfo)?
 int LLParser::ParseAlloc(Instruction *&Inst, PerFunctionState &PFS) {
   Value *Size = 0;
   LocTy SizeLoc;
   unsigned Alignment = 0;
+  bool IsInAlloca = false;
   Type *Ty = 0;
   if (ParseType(Ty)) return true;
 
   bool AteExtraComma = false;
   if (EatIfPresent(lltok::comma)) {
-    if (Lex.getKind() == lltok::kw_align) {
-      if (ParseOptionalAlignment(Alignment)) return true;
-    } else if (Lex.getKind() == lltok::MetadataVar) {
-      AteExtraComma = true;
-    } else {
-      if (ParseTypeAndValue(Size, SizeLoc, PFS) ||
-          ParseOptionalCommaAlign(Alignment, AteExtraComma))
-        return true;
+    bool HaveComma = true;
+    if (EatIfPresent(lltok::kw_inalloca)) {
+      IsInAlloca = true;
+      HaveComma = EatIfPresent(lltok::comma);
+    }
+
+    if (HaveComma) {
+      if (Lex.getKind() == lltok::kw_align) {
+        if (ParseOptionalAlignment(Alignment)) return true;
+      } else if (Lex.getKind() == lltok::MetadataVar) {
+        AteExtraComma = true;
+      } else {
+        if (ParseTypeAndValue(Size, SizeLoc, PFS) ||
+            ParseOptionalCommaAlign(Alignment, AteExtraComma))
+          return true;
+      }
     }
   }
 
   if (Size && !Size->getType()->isIntegerTy())
     return Error(SizeLoc, "element count must have integer type");
 
-  Inst = new AllocaInst(Ty, Size, Alignment);
+  AllocaInst *AI = new AllocaInst(Ty, Size, Alignment);
+  AI->setUsedWithInAlloca(IsInAlloca);
+  Inst = AI;
   return AteExtraComma ? InstExtraComma : InstNormal;
 }
 

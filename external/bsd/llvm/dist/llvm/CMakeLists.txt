@@ -1,7 +1,7 @@
 # See docs/CMake.html for instructions about how to build LLVM with CMake.
 
-project(LLVM)
 cmake_minimum_required(VERSION 2.8.8)
+project(LLVM)
 
 # Add path for custom modules
 set(CMAKE_MODULE_PATH
@@ -92,16 +92,20 @@ endif()
 
 string(TOUPPER "${CMAKE_BUILD_TYPE}" uppercase_CMAKE_BUILD_TYPE)
 
-set(LLVM_MAIN_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-set(LLVM_MAIN_INCLUDE_DIR ${LLVM_MAIN_SRC_DIR}/include)
-set(LLVM_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
-set(LLVM_TOOLS_BINARY_DIR ${LLVM_BINARY_DIR}/bin)
+# They are used as destination of target generators.
+set(LLVM_RUNTIME_OUTPUT_INTDIR ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bin)
+set(LLVM_LIBRARY_OUTPUT_INTDIR ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/lib)
+
+# Each of them corresponds to llvm-config's.
+set(LLVM_TOOLS_BINARY_DIR ${LLVM_RUNTIME_OUTPUT_INTDIR}) # --bindir
+set(LLVM_LIBRARY_DIR      ${LLVM_LIBRARY_OUTPUT_INTDIR}) # --libdir
+set(LLVM_MAIN_SRC_DIR     ${CMAKE_CURRENT_SOURCE_DIR}  ) # --src-root
+set(LLVM_MAIN_INCLUDE_DIR ${LLVM_MAIN_SRC_DIR}/include ) # --includedir
+set(LLVM_BINARY_DIR       ${CMAKE_CURRENT_BINARY_DIR}  ) # --prefix
+
 set(LLVM_EXAMPLES_BINARY_DIR ${LLVM_BINARY_DIR}/examples)
 set(LLVM_INCLUDE_DIR ${CMAKE_CURRENT_BINARY_DIR}/include)
 set(LLVM_LIBDIR_SUFFIX "" CACHE STRING "Define suffix of library directory name (32/64)" )
-
-set(LLVM_RUNTIME_OUTPUT_INTDIR ${LLVM_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bin)
-set(LLVM_LIBRARY_OUTPUT_INTDIR ${LLVM_BINARY_DIR}/${CMAKE_CFG_INTDIR}/lib)
 
 set(LLVM_ALL_TARGETS
   AArch64
@@ -414,7 +418,8 @@ configure_file(
   ${LLVM_MAIN_INCLUDE_DIR}/llvm/Support/DataTypes.h.cmake
   ${LLVM_INCLUDE_DIR}/llvm/Support/DataTypes.h)
 
-set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${LLVM_TOOLS_BINARY_DIR} )
+# They are not referenced. See set_output_directory().
+set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${LLVM_BINARY_DIR}/bin )
 set( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${LLVM_BINARY_DIR}/lib )
 set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${LLVM_BINARY_DIR}/lib )
 
@@ -467,6 +472,10 @@ add_subdirectory(utils/not)
 add_subdirectory(utils/llvm-lit)
 add_subdirectory(utils/yaml-bench)
 
+if(LLVM_INCLUDE_TESTS)
+  add_subdirectory(utils/unittest)
+endif()
+
 add_subdirectory(projects)
 
 if( LLVM_INCLUDE_TOOLS )
@@ -479,7 +488,6 @@ endif()
 
 if( LLVM_INCLUDE_TESTS )
   add_subdirectory(test)
-  add_subdirectory(utils/unittest)
   add_subdirectory(unittests)
   if (MSVC)
     # This utility is used to prevent crashing tests from calling Dr. Watson on
@@ -509,7 +517,7 @@ endif()
 add_subdirectory(cmake/modules)
 
 if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
-  install(DIRECTORY include/
+  install(DIRECTORY include/llvm include/llvm-c
     DESTINATION include
     FILES_MATCHING
     PATTERN "*.def"
@@ -520,7 +528,7 @@ if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
     PATTERN ".svn" EXCLUDE
     )
 
-  install(DIRECTORY ${LLVM_INCLUDE_DIR}/
+  install(DIRECTORY ${LLVM_INCLUDE_DIR}/llvm
     DESTINATION include
     FILES_MATCHING
     PATTERN "*.def"

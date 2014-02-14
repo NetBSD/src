@@ -38,6 +38,8 @@ AMDGPUSubtarget::AMDGPUSubtarget(StringRef TT, StringRef CPU, StringRef FS) :
   CaymanISA = false;
   EnableIRStructurizer = true;
   EnableIfCvt = true;
+  WavefrontSize = 0;
+  CFALUBug = false;
   ParseSubtargetFeatures(GPU, FS);
   DevName = GPU;
 }
@@ -73,6 +75,32 @@ AMDGPUSubtarget::IsIRStructurizerEnabled() const {
 bool
 AMDGPUSubtarget::isIfCvtEnabled() const {
   return EnableIfCvt;
+}
+unsigned
+AMDGPUSubtarget::getWavefrontSize() const {
+  return WavefrontSize;
+}
+unsigned
+AMDGPUSubtarget::getStackEntrySize() const {
+  assert(getGeneration() <= NORTHERN_ISLANDS);
+  switch(getWavefrontSize()) {
+  case 16:
+    return 8;
+  case 32:
+    if (hasCaymanISA())
+      return 4;
+    else
+      return 8;
+  case 64:
+    return 4;
+  default:
+    llvm_unreachable("Illegal wavefront size.");
+  }
+}
+bool
+AMDGPUSubtarget::hasCFAluBug() const {
+  assert(getGeneration() <= NORTHERN_ISLANDS);
+  return CFALUBug;
 }
 bool
 AMDGPUSubtarget::isTargetELF() const {

@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "RemoteTarget.h"
-#include "RemoteTargetExternal.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Memory.h"
@@ -21,28 +20,6 @@
 #include <string>
 
 using namespace llvm;
-
-// Static methods
-RemoteTarget *RemoteTarget::createRemoteTarget() {
-  return new RemoteTarget;
-}
-
-RemoteTarget *RemoteTarget::createExternalRemoteTarget(std::string &ChildName) {
-#ifdef LLVM_ON_UNIX
-  return new RemoteTargetExternal(ChildName);
-#else
-  return 0;
-#endif
-}
-
-bool RemoteTarget::hostSupportsExternalRemoteTarget() {
-#ifdef LLVM_ON_UNIX
-  return true;
-#else
-  return false;
-#endif
-}
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // Simulated remote execution
@@ -62,6 +39,7 @@ bool RemoteTarget::allocateSpace(size_t Size, unsigned Alignment,
     return false;
   }
   Address = reinterpret_cast<uint64_t>(Mem.base());
+  Allocations.push_back(Mem);
   return true;
 }
 

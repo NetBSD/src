@@ -454,6 +454,48 @@ void RuntimeDyldELF::resolveAArch64Relocation(const SectionEntry &Section,
     assert((*TargetPtr >> 21 & 0x3) == 0 && "invalid shift for relocation");
     break;
   }
+  case ELF::R_AARCH64_ADR_PREL_PG_HI21: {
+    // Operation: Page(S+A) - Page(P)
+    uint64_t Result = ((Value + Addend) & ~0xfffULL) - (FinalAddress & ~0xfffULL);
+
+    // Check that -2^32 <= X < 2^32
+    assert(static_cast<int64_t>(Result) >= (-1LL << 32) &&
+           static_cast<int64_t>(Result) < (1LL << 32) &&
+           "overflow check failed for relocation");
+
+    // AArch64 code is emitted with .rela relocations. The data already in any
+    // bits affected by the relocation on entry is garbage.
+    *TargetPtr &= 0x9f00001fU;
+    // Immediate goes in bits 30:29 + 5:23 of ADRP instruction, taken
+    // from bits 32:12 of X.
+    *TargetPtr |= ((Result & 0x3000U) << (29 - 12));
+    *TargetPtr |= ((Result & 0x1ffffc000ULL) >> (14 - 5));
+    break;
+  }
+  case ELF::R_AARCH64_LDST32_ABS_LO12_NC: {
+    // Operation: S + A
+    uint64_t Result = Value + Addend;
+
+    // AArch64 code is emitted with .rela relocations. The data already in any
+    // bits affected by the relocation on entry is garbage.
+    *TargetPtr &= 0xffc003ffU;
+    // Immediate goes in bits 21:10 of LD/ST instruction, taken
+    // from bits 11:2 of X
+    *TargetPtr |= ((Result & 0xffc) << (10 - 2));
+    break;
+  }
+  case ELF::R_AARCH64_LDST64_ABS_LO12_NC: {
+    // Operation: S + A
+    uint64_t Result = Value + Addend;
+
+    // AArch64 code is emitted with .rela relocations. The data already in any
+    // bits affected by the relocation on entry is garbage.
+    *TargetPtr &= 0xffc003ffU;
+    // Immediate goes in bits 21:10 of LD/ST instruction, taken
+    // from bits 11:3 of X
+    *TargetPtr |= ((Result & 0xff8) << (10 - 3));
+    break;
+  }
   }
 }
 
@@ -481,8 +523,11 @@ void RuntimeDyldELF::resolveARMRelocation(const SectionEntry &Section,
   default:
     llvm_unreachable("Not implemented relocation type!");
 
+  case ELF::R_ARM_NONE:
+    break;
   // Write a 32bit value to relocation address, taking into account the
   // implicit addend encoded in the target.
+  case ELF::R_ARM_PREL31:
   case ELF::R_ARM_TARGET1:
   case ELF::R_ARM_ABS32:
     *TargetPtr = *Placeholder + Value;
@@ -618,10 +663,8 @@ void RuntimeDyldELF::findOPDEntrySection(ObjectImage &Obj,
                                          RelocationValueRef &Rel) {
   // Get the ELF symbol value (st_value) to compare with Relocation offset in
   // .opd entries
-
-  error_code err;
-  for (section_iterator si = Obj.begin_sections(),
-     se = Obj.end_sections(); si != se; si.increment(err)) {
+  for (section_iterator si = Obj.begin_sections(), se = Obj.end_sections();
+       si != se; ++si) {
     section_iterator RelSecI = si->getRelocatedSection();
     if (RelSecI == Obj.end_sections())
       continue;
@@ -631,16 +674,14 @@ void RuntimeDyldELF::findOPDEntrySection(ObjectImage &Obj,
     if (RelSectionName != ".opd")
       continue;
 
-    for (relocation_iterator i = si->begin_relocations(),
-         e = si->end_relocations(); i != e;) {
-      check(err);
-
+    for (relocation_iterator i = si->relocation_begin(),
+         e = si->relocation_end(); i != e;) {
       // The R_PPC64_ADDR64 relocation indicates the first field
       // of a .opd entry
       uint64_t TypeFunc;
       check(i->getType(TypeFunc));
       if (TypeFunc != ELF::R_PPC64_ADDR64) {
-        i.increment(err);
+        ++i;
         continue;
       }
 
@@ -650,10 +691,9 @@ void RuntimeDyldELF::findOPDEntrySection(ObjectImage &Obj,
       int64_t Addend;
       check(getELFRelocationAddend(*i, Addend));
 
-      i = i.increment(err);
+      ++i;
       if (i == e)
         break;
-      check(err);
 
       // Just check if following relocation is a R_PPC64_TOC
       uint64_t TypeTOC;

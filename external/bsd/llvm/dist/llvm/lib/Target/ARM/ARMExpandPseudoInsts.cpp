@@ -138,7 +138,9 @@ static const NEONLdStTableEntry NEONLdStTable[] = {
 { ARM::VLD1LNq8Pseudo_UPD,  ARM::VLD1LNd8_UPD, true, true, true,  EvenDblSpc, 1, 8 ,true},
 
 { ARM::VLD1d64QPseudo,      ARM::VLD1d64Q,     true,  false, false, SingleSpc,  4, 1 ,false},
+{ ARM::VLD1d64QPseudoWB_fixed,  ARM::VLD1d64Qwb_fixed,   true,  true, false, SingleSpc,  4, 1 ,false},
 { ARM::VLD1d64TPseudo,      ARM::VLD1d64T,     true,  false, false, SingleSpc,  3, 1 ,false},
+{ ARM::VLD1d64TPseudoWB_fixed,  ARM::VLD1d64Twb_fixed,   true,  true, false, SingleSpc,  3, 1 ,false},
 
 { ARM::VLD2LNd16Pseudo,     ARM::VLD2LNd16,     true, false, false, SingleSpc,  2, 4 ,true},
 { ARM::VLD2LNd16Pseudo_UPD, ARM::VLD2LNd16_UPD, true, true, true,  SingleSpc,  2, 4 ,true},
@@ -1077,33 +1079,6 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       MI.eraseFromParent();
       return true;
     }
-    case ARM::VDUPfqf:
-    case ARM::VDUPfdf:{
-      unsigned NewOpc = Opcode == ARM::VDUPfqf ? ARM::VDUPLN32q :
-        ARM::VDUPLN32d;
-      MachineInstrBuilder MIB =
-        BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(NewOpc));
-      unsigned OpIdx = 0;
-      unsigned SrcReg = MI.getOperand(1).getReg();
-      unsigned Lane = TRI->getEncodingValue(SrcReg) & 1;
-      unsigned DReg = TRI->getMatchingSuperReg(SrcReg,
-                            Lane & 1 ? ARM::ssub_1 : ARM::ssub_0,
-                            &ARM::DPR_VFP2RegClass);
-      // The lane is [0,1] for the containing DReg superregister.
-      // Copy the dst/src register operands.
-      MIB.addOperand(MI.getOperand(OpIdx++));
-      MIB.addReg(DReg);
-      ++OpIdx;
-      // Add the lane select operand.
-      MIB.addImm(Lane);
-      // Add the predicate operands.
-      MIB.addOperand(MI.getOperand(OpIdx++));
-      MIB.addOperand(MI.getOperand(OpIdx++));
-
-      TransferImpOps(MI, MIB, MIB);
-      MI.eraseFromParent();
-      return true;
-    }
 
     case ARM::VLD2q8Pseudo:
     case ARM::VLD2q16Pseudo:
@@ -1118,6 +1093,7 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
     case ARM::VLD3d16Pseudo:
     case ARM::VLD3d32Pseudo:
     case ARM::VLD1d64TPseudo:
+    case ARM::VLD1d64TPseudoWB_fixed:
     case ARM::VLD3d8Pseudo_UPD:
     case ARM::VLD3d16Pseudo_UPD:
     case ARM::VLD3d32Pseudo_UPD:
@@ -1134,6 +1110,7 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
     case ARM::VLD4d16Pseudo:
     case ARM::VLD4d32Pseudo:
     case ARM::VLD1d64QPseudo:
+    case ARM::VLD1d64QPseudoWB_fixed:
     case ARM::VLD4d8Pseudo_UPD:
     case ARM::VLD4d16Pseudo_UPD:
     case ARM::VLD4d32Pseudo_UPD:

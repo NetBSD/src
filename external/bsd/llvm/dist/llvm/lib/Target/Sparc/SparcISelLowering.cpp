@@ -13,10 +13,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "SparcISelLowering.h"
-#include "MCTargetDesc/SparcBaseInfo.h"
+#include "MCTargetDesc/SparcMCExpr.h"
 #include "SparcMachineFunctionInfo.h"
 #include "SparcRegisterInfo.h"
 #include "SparcTargetMachine.h"
+#include "SparcTargetObjectFile.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -896,10 +897,12 @@ SparcTargetLowering::LowerCall_32(TargetLowering::CallLoweringInfo &CLI,
   // If the callee is a GlobalAddress node (quite common, every direct call is)
   // turn it into a TargetGlobalAddress node so that legalize doesn't hack it.
   // Likewise ExternalSymbol -> TargetExternalSymbol.
+  unsigned TF = ((getTargetMachine().getRelocationModel() == Reloc::PIC_)
+                 ? SparcMCExpr::VK_Sparc_WPLT30 : 0);
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
-    Callee = DAG.getTargetGlobalAddress(G->getGlobal(), dl, MVT::i32);
+    Callee = DAG.getTargetGlobalAddress(G->getGlobal(), dl, MVT::i32, 0, TF);
   else if (ExternalSymbolSDNode *E = dyn_cast<ExternalSymbolSDNode>(Callee))
-    Callee = DAG.getTargetExternalSymbol(E->getSymbol(), MVT::i32);
+    Callee = DAG.getTargetExternalSymbol(E->getSymbol(), MVT::i32, TF);
 
   // Returns a chain & a flag for retval copy to use
   SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
@@ -1210,10 +1213,13 @@ SparcTargetLowering::LowerCall_64(TargetLowering::CallLoweringInfo &CLI,
   // Likewise ExternalSymbol -> TargetExternalSymbol.
   SDValue Callee = CLI.Callee;
   bool hasReturnsTwice = hasReturnsTwiceAttr(DAG, Callee, CLI.CS);
+  unsigned TF = ((getTargetMachine().getRelocationModel() == Reloc::PIC_)
+                 ? SparcMCExpr::VK_Sparc_WPLT30 : 0);
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
-    Callee = DAG.getTargetGlobalAddress(G->getGlobal(), DL, getPointerTy());
+    Callee = DAG.getTargetGlobalAddress(G->getGlobal(), DL, getPointerTy(), 0,
+                                        TF);
   else if (ExternalSymbolSDNode *E = dyn_cast<ExternalSymbolSDNode>(Callee))
-    Callee = DAG.getTargetExternalSymbol(E->getSymbol(), getPointerTy());
+    Callee = DAG.getTargetExternalSymbol(E->getSymbol(), getPointerTy(), TF);
 
   // Build the operands for the call instruction itself.
   SmallVector<SDValue, 8> Ops;
@@ -1363,7 +1369,7 @@ static SPCC::CondCodes FPCondCCodeToFCC(ISD::CondCode CC) {
 }
 
 SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
-  : TargetLowering(TM, new TargetLoweringObjectFileELF()) {
+  : TargetLowering(TM, new SparcELFTargetObjectFile()) {
   Subtarget = &TM.getSubtarget<SparcSubtarget>();
 
   // Set up the register classes.
@@ -1463,7 +1469,8 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
     setOperationAction(ISD::BR_CC, MVT::i64, Custom);
     setOperationAction(ISD::SELECT_CC, MVT::i64, Custom);
 
-    setOperationAction(ISD::CTPOP, MVT::i64, Legal);
+    setOperationAction(ISD::CTPOP, MVT::i64,
+                       Subtarget->usePopc() ? Legal : Expand);
     setOperationAction(ISD::CTTZ , MVT::i64, Expand);
     setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i64, Expand);
     setOperationAction(ISD::CTLZ , MVT::i64, Expand);
@@ -1493,7 +1500,7 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
 
   if (Subtarget->is64Bit()) {
     setOperationAction(ISD::ATOMIC_CMP_SWAP, MVT::i64, Legal);
-    setOperationAction(ISD::ATOMIC_SWAP, MVT::i64, Expand);
+    setOperationAction(ISD::ATOMIC_SWAP, MVT::i64, Legal);
     setOperationAction(ISD::ATOMIC_LOAD, MVT::i64, Custom);
     setOperationAction(ISD::ATOMIC_STORE, MVT::i64, Custom);
   }
@@ -1519,7 +1526,6 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::FSINCOS, MVT::f32, Expand);
   setOperationAction(ISD::FREM , MVT::f32, Expand);
   setOperationAction(ISD::FMA  , MVT::f32, Expand);
-  setOperationAction(ISD::CTPOP, MVT::i32, Expand);
   setOperationAction(ISD::CTTZ , MVT::i32, Expand);
   setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i32, Expand);
   setOperationAction(ISD::CTLZ , MVT::i32, Expand);
@@ -1569,8 +1575,8 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
 
   setStackPointerRegisterToSaveRestore(SP::O6);
 
-  if (Subtarget->isV9())
-    setOperationAction(ISD::CTPOP, MVT::i32, Legal);
+  setOperationAction(ISD::CTPOP, MVT::i32,
+                     Subtarget->usePopc() ? Legal : Expand);
 
   if (Subtarget->isV9() && Subtarget->hasHardQuad()) {
     setOperationAction(ISD::LOAD, MVT::f128, Legal);
@@ -1797,7 +1803,8 @@ SDValue SparcTargetLowering::makeAddress(SDValue Op, SelectionDAG &DAG) const {
   // Handle PIC mode first.
   if (getTargetMachine().getRelocationModel() == Reloc::PIC_) {
     // This is the pic32 code model, the GOT is known to be smaller than 4GB.
-    SDValue HiLo = makeHiLoPair(Op, SPII::MO_HI, SPII::MO_LO, DAG);
+    SDValue HiLo = makeHiLoPair(Op, SparcMCExpr::VK_Sparc_GOT22,
+                                SparcMCExpr::VK_Sparc_GOT10, DAG);
     SDValue GlobalBase = DAG.getNode(SPISD::GLOBAL_BASE_REG, DL, VT);
     SDValue AbsAddr = DAG.getNode(ISD::ADD, DL, VT, GlobalBase, HiLo);
     // GLOBAL_BASE_REG codegen'ed with call. Inform MFI that this
@@ -1812,23 +1819,26 @@ SDValue SparcTargetLowering::makeAddress(SDValue Op, SelectionDAG &DAG) const {
   switch(getTargetMachine().getCodeModel()) {
   default:
     llvm_unreachable("Unsupported absolute code model");
-  case CodeModel::JITDefault:
   case CodeModel::Small:
     // abs32.
-    return makeHiLoPair(Op, SPII::MO_HI, SPII::MO_LO, DAG);
+    return makeHiLoPair(Op, SparcMCExpr::VK_Sparc_HI,
+                        SparcMCExpr::VK_Sparc_LO, DAG);
   case CodeModel::Medium: {
     // abs44.
-    SDValue H44 = makeHiLoPair(Op, SPII::MO_H44, SPII::MO_M44, DAG);
+    SDValue H44 = makeHiLoPair(Op, SparcMCExpr::VK_Sparc_H44,
+                               SparcMCExpr::VK_Sparc_M44, DAG);
     H44 = DAG.getNode(ISD::SHL, DL, VT, H44, DAG.getConstant(12, MVT::i32));
-    SDValue L44 = withTargetFlags(Op, SPII::MO_L44, DAG);
+    SDValue L44 = withTargetFlags(Op, SparcMCExpr::VK_Sparc_L44, DAG);
     L44 = DAG.getNode(SPISD::Lo, DL, VT, L44);
     return DAG.getNode(ISD::ADD, DL, VT, H44, L44);
   }
   case CodeModel::Large: {
     // abs64.
-    SDValue Hi = makeHiLoPair(Op, SPII::MO_HH, SPII::MO_HM, DAG);
+    SDValue Hi = makeHiLoPair(Op, SparcMCExpr::VK_Sparc_HH,
+                              SparcMCExpr::VK_Sparc_HM, DAG);
     Hi = DAG.getNode(ISD::SHL, DL, VT, Hi, DAG.getConstant(32, MVT::i32));
-    SDValue Lo = makeHiLoPair(Op, SPII::MO_HI, SPII::MO_LO, DAG);
+    SDValue Lo = makeHiLoPair(Op, SparcMCExpr::VK_Sparc_HI,
+                              SparcMCExpr::VK_Sparc_LO, DAG);
     return DAG.getNode(ISD::ADD, DL, VT, Hi, Lo);
   }
   }
@@ -1860,14 +1870,18 @@ SDValue SparcTargetLowering::LowerGlobalTLSAddress(SDValue Op,
   TLSModel::Model model = getTargetMachine().getTLSModel(GV);
 
   if (model == TLSModel::GeneralDynamic || model == TLSModel::LocalDynamic) {
-    unsigned HiTF = ((model == TLSModel::GeneralDynamic)? SPII::MO_TLS_GD_HI22
-                     : SPII::MO_TLS_LDM_HI22);
-    unsigned LoTF = ((model == TLSModel::GeneralDynamic)? SPII::MO_TLS_GD_LO10
-                     : SPII::MO_TLS_LDM_LO10);
-    unsigned addTF = ((model == TLSModel::GeneralDynamic)? SPII::MO_TLS_GD_ADD
-                      : SPII::MO_TLS_LDM_ADD);
-    unsigned callTF = ((model == TLSModel::GeneralDynamic)? SPII::MO_TLS_GD_CALL
-                       : SPII::MO_TLS_LDM_CALL);
+    unsigned HiTF = ((model == TLSModel::GeneralDynamic)
+                     ? SparcMCExpr::VK_Sparc_TLS_GD_HI22
+                     : SparcMCExpr::VK_Sparc_TLS_LDM_HI22);
+    unsigned LoTF = ((model == TLSModel::GeneralDynamic)
+                     ? SparcMCExpr::VK_Sparc_TLS_GD_LO10
+                     : SparcMCExpr::VK_Sparc_TLS_LDM_LO10);
+    unsigned addTF = ((model == TLSModel::GeneralDynamic)
+                      ? SparcMCExpr::VK_Sparc_TLS_GD_ADD
+                      : SparcMCExpr::VK_Sparc_TLS_LDM_ADD);
+    unsigned callTF = ((model == TLSModel::GeneralDynamic)
+                       ? SparcMCExpr::VK_Sparc_TLS_GD_CALL
+                       : SparcMCExpr::VK_Sparc_TLS_LDM_CALL);
 
     SDValue HiLo = makeHiLoPair(Op, HiTF, LoTF, DAG);
     SDValue Base = DAG.getNode(SPISD::GLOBAL_BASE_REG, DL, PtrVT);
@@ -1905,17 +1919,17 @@ SDValue SparcTargetLowering::LowerGlobalTLSAddress(SDValue Op,
       return Ret;
 
     SDValue Hi = DAG.getNode(SPISD::Hi, DL, PtrVT,
-                             withTargetFlags(Op, SPII::MO_TLS_LDO_HIX22, DAG));
+                 withTargetFlags(Op, SparcMCExpr::VK_Sparc_TLS_LDO_HIX22, DAG));
     SDValue Lo = DAG.getNode(SPISD::Lo, DL, PtrVT,
-                             withTargetFlags(Op, SPII::MO_TLS_LDO_LOX10, DAG));
+                 withTargetFlags(Op, SparcMCExpr::VK_Sparc_TLS_LDO_LOX10, DAG));
     HiLo =  DAG.getNode(ISD::XOR, DL, PtrVT, Hi, Lo);
     return DAG.getNode(SPISD::TLS_ADD, DL, PtrVT, Ret, HiLo,
-                       withTargetFlags(Op, SPII::MO_TLS_LDO_ADD, DAG));
+                   withTargetFlags(Op, SparcMCExpr::VK_Sparc_TLS_LDO_ADD, DAG));
   }
 
   if (model == TLSModel::InitialExec) {
-    unsigned ldTF     = ((PtrVT == MVT::i64)? SPII::MO_TLS_IE_LDX
-                         : SPII::MO_TLS_IE_LD);
+    unsigned ldTF     = ((PtrVT == MVT::i64)? SparcMCExpr::VK_Sparc_TLS_IE_LDX
+                         : SparcMCExpr::VK_Sparc_TLS_IE_LD);
 
     SDValue Base = DAG.getNode(SPISD::GLOBAL_BASE_REG, DL, PtrVT);
 
@@ -1925,21 +1939,23 @@ SDValue SparcTargetLowering::LowerGlobalTLSAddress(SDValue Op,
     MFI->setHasCalls(true);
 
     SDValue TGA = makeHiLoPair(Op,
-                               SPII::MO_TLS_IE_HI22, SPII::MO_TLS_IE_LO10, DAG);
+                               SparcMCExpr::VK_Sparc_TLS_IE_HI22,
+                               SparcMCExpr::VK_Sparc_TLS_IE_LO10, DAG);
     SDValue Ptr = DAG.getNode(ISD::ADD, DL, PtrVT, Base, TGA);
     SDValue Offset = DAG.getNode(SPISD::TLS_LD,
                                  DL, PtrVT, Ptr,
                                  withTargetFlags(Op, ldTF, DAG));
     return DAG.getNode(SPISD::TLS_ADD, DL, PtrVT,
                        DAG.getRegister(SP::G7, PtrVT), Offset,
-                       withTargetFlags(Op, SPII::MO_TLS_IE_ADD, DAG));
+                       withTargetFlags(Op,
+                                       SparcMCExpr::VK_Sparc_TLS_IE_ADD, DAG));
   }
 
   assert(model == TLSModel::LocalExec);
   SDValue Hi = DAG.getNode(SPISD::Hi, DL, PtrVT,
-                           withTargetFlags(Op, SPII::MO_TLS_LE_HIX22, DAG));
+                  withTargetFlags(Op, SparcMCExpr::VK_Sparc_TLS_LE_HIX22, DAG));
   SDValue Lo = DAG.getNode(SPISD::Lo, DL, PtrVT,
-                           withTargetFlags(Op, SPII::MO_TLS_LE_LOX10, DAG));
+                  withTargetFlags(Op, SparcMCExpr::VK_Sparc_TLS_LE_LOX10, DAG));
   SDValue Offset =  DAG.getNode(ISD::XOR, DL, PtrVT, Hi, Lo);
 
   return DAG.getNode(ISD::ADD, DL, PtrVT,
@@ -2836,28 +2852,73 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) const {
 MachineBasicBlock *
 SparcTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                  MachineBasicBlock *BB) const {
-  const TargetInstrInfo &TII = *getTargetMachine().getInstrInfo();
-  unsigned BROpcode;
-  unsigned CC;
-  DebugLoc dl = MI->getDebugLoc();
-  // Figure out the conditional branch opcode to use for this select_cc.
   switch (MI->getOpcode()) {
   default: llvm_unreachable("Unknown SELECT_CC!");
   case SP::SELECT_CC_Int_ICC:
   case SP::SELECT_CC_FP_ICC:
   case SP::SELECT_CC_DFP_ICC:
   case SP::SELECT_CC_QFP_ICC:
-    BROpcode = SP::BCOND;
-    break;
+    return expandSelectCC(MI, BB, SP::BCOND);
   case SP::SELECT_CC_Int_FCC:
   case SP::SELECT_CC_FP_FCC:
   case SP::SELECT_CC_DFP_FCC:
   case SP::SELECT_CC_QFP_FCC:
-    BROpcode = SP::FBCOND;
-    break;
-  }
+    return expandSelectCC(MI, BB, SP::FBCOND);
 
-  CC = (SPCC::CondCodes)MI->getOperand(3).getImm();
+  case SP::ATOMIC_LOAD_ADD_32:
+    return expandAtomicRMW(MI, BB, SP::ADDrr);
+  case SP::ATOMIC_LOAD_ADD_64:
+    return expandAtomicRMW(MI, BB, SP::ADDXrr);
+  case SP::ATOMIC_LOAD_SUB_32:
+    return expandAtomicRMW(MI, BB, SP::SUBrr);
+  case SP::ATOMIC_LOAD_SUB_64:
+    return expandAtomicRMW(MI, BB, SP::SUBXrr);
+  case SP::ATOMIC_LOAD_AND_32:
+    return expandAtomicRMW(MI, BB, SP::ANDrr);
+  case SP::ATOMIC_LOAD_AND_64:
+    return expandAtomicRMW(MI, BB, SP::ANDXrr);
+  case SP::ATOMIC_LOAD_OR_32:
+    return expandAtomicRMW(MI, BB, SP::ORrr);
+  case SP::ATOMIC_LOAD_OR_64:
+    return expandAtomicRMW(MI, BB, SP::ORXrr);
+  case SP::ATOMIC_LOAD_XOR_32:
+    return expandAtomicRMW(MI, BB, SP::XORrr);
+  case SP::ATOMIC_LOAD_XOR_64:
+    return expandAtomicRMW(MI, BB, SP::XORXrr);
+  case SP::ATOMIC_LOAD_NAND_32:
+    return expandAtomicRMW(MI, BB, SP::ANDrr);
+  case SP::ATOMIC_LOAD_NAND_64:
+    return expandAtomicRMW(MI, BB, SP::ANDXrr);
+
+  case SP::ATOMIC_SWAP_64:
+    return expandAtomicRMW(MI, BB, 0);
+
+  case SP::ATOMIC_LOAD_MAX_32:
+    return expandAtomicRMW(MI, BB, SP::MOVICCrr, SPCC::ICC_G);
+  case SP::ATOMIC_LOAD_MAX_64:
+    return expandAtomicRMW(MI, BB, SP::MOVXCCrr, SPCC::ICC_G);
+  case SP::ATOMIC_LOAD_MIN_32:
+    return expandAtomicRMW(MI, BB, SP::MOVICCrr, SPCC::ICC_LE);
+  case SP::ATOMIC_LOAD_MIN_64:
+    return expandAtomicRMW(MI, BB, SP::MOVXCCrr, SPCC::ICC_LE);
+  case SP::ATOMIC_LOAD_UMAX_32:
+    return expandAtomicRMW(MI, BB, SP::MOVICCrr, SPCC::ICC_GU);
+  case SP::ATOMIC_LOAD_UMAX_64:
+    return expandAtomicRMW(MI, BB, SP::MOVXCCrr, SPCC::ICC_GU);
+  case SP::ATOMIC_LOAD_UMIN_32:
+    return expandAtomicRMW(MI, BB, SP::MOVICCrr, SPCC::ICC_LEU);
+  case SP::ATOMIC_LOAD_UMIN_64:
+    return expandAtomicRMW(MI, BB, SP::MOVXCCrr, SPCC::ICC_LEU);
+  }
+}
+
+MachineBasicBlock*
+SparcTargetLowering::expandSelectCC(MachineInstr *MI,
+                                    MachineBasicBlock *BB,
+                                    unsigned BROpcode) const {
+  const TargetInstrInfo &TII = *getTargetMachine().getInstrInfo();
+  DebugLoc dl = MI->getDebugLoc();
+  unsigned CC = (SPCC::CondCodes)MI->getOperand(3).getImm();
 
   // To "insert" a SELECT_CC instruction, we actually have to insert the diamond
   // control-flow pattern.  The incoming instruction knows the destination vreg
@@ -2911,6 +2972,101 @@ SparcTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   return BB;
 }
 
+MachineBasicBlock*
+SparcTargetLowering::expandAtomicRMW(MachineInstr *MI,
+                                     MachineBasicBlock *MBB,
+                                     unsigned Opcode,
+                                     unsigned CondCode) const {
+  const TargetInstrInfo &TII = *getTargetMachine().getInstrInfo();
+  MachineRegisterInfo &MRI = MBB->getParent()->getRegInfo();
+  DebugLoc DL = MI->getDebugLoc();
+
+  // MI is an atomic read-modify-write instruction of the form:
+  //
+  //   rd = atomicrmw<op> addr, rs2
+  //
+  // All three operands are registers.
+  unsigned DestReg = MI->getOperand(0).getReg();
+  unsigned AddrReg = MI->getOperand(1).getReg();
+  unsigned Rs2Reg  = MI->getOperand(2).getReg();
+
+  // SelectionDAG has already inserted memory barriers before and after MI, so
+  // we simply have to implement the operatiuon in terms of compare-and-swap.
+  //
+  //   %val0 = load %addr
+  // loop:
+  //   %val = phi %val0, %dest
+  //   %upd = op %val, %rs2
+  //   %dest = cas %addr, %val, %upd
+  //   cmp %val, %dest
+  //   bne loop
+  // done:
+  //
+  bool is64Bit = SP::I64RegsRegClass.hasSubClassEq(MRI.getRegClass(DestReg));
+  const TargetRegisterClass *ValueRC =
+    is64Bit ? &SP::I64RegsRegClass : &SP::IntRegsRegClass;
+  unsigned Val0Reg = MRI.createVirtualRegister(ValueRC);
+
+  BuildMI(*MBB, MI, DL, TII.get(is64Bit ? SP::LDXri : SP::LDri), Val0Reg)
+    .addReg(AddrReg).addImm(0);
+
+  // Split the basic block MBB before MI and insert the loop block in the hole.
+  MachineFunction::iterator MFI = MBB;
+  const BasicBlock *LLVM_BB = MBB->getBasicBlock();
+  MachineFunction *MF = MBB->getParent();
+  MachineBasicBlock *LoopMBB = MF->CreateMachineBasicBlock(LLVM_BB);
+  MachineBasicBlock *DoneMBB = MF->CreateMachineBasicBlock(LLVM_BB);
+  ++MFI;
+  MF->insert(MFI, LoopMBB);
+  MF->insert(MFI, DoneMBB);
+
+  // Move MI and following instructions to DoneMBB.
+  DoneMBB->splice(DoneMBB->begin(), MBB, MI, MBB->end());
+  DoneMBB->transferSuccessorsAndUpdatePHIs(MBB);
+
+  // Connect the CFG again.
+  MBB->addSuccessor(LoopMBB);
+  LoopMBB->addSuccessor(LoopMBB);
+  LoopMBB->addSuccessor(DoneMBB);
+
+  // Build the loop block.
+  unsigned ValReg = MRI.createVirtualRegister(ValueRC);
+  // Opcode == 0 means try to write Rs2Reg directly (ATOMIC_SWAP).
+  unsigned UpdReg = (Opcode ? MRI.createVirtualRegister(ValueRC) : Rs2Reg);
+
+  BuildMI(LoopMBB, DL, TII.get(SP::PHI), ValReg)
+    .addReg(Val0Reg).addMBB(MBB)
+    .addReg(DestReg).addMBB(LoopMBB);
+
+  if (CondCode) {
+    // This is one of the min/max operations. We need a CMPrr followed by a
+    // MOVXCC/MOVICC.
+    BuildMI(LoopMBB, DL, TII.get(SP::CMPrr)).addReg(ValReg).addReg(Rs2Reg);
+    BuildMI(LoopMBB, DL, TII.get(Opcode), UpdReg)
+      .addReg(ValReg).addReg(Rs2Reg).addImm(CondCode);
+  } else if (Opcode) {
+    BuildMI(LoopMBB, DL, TII.get(Opcode), UpdReg)
+      .addReg(ValReg).addReg(Rs2Reg);
+  }
+
+  if (MI->getOpcode() == SP::ATOMIC_LOAD_NAND_32 ||
+      MI->getOpcode() == SP::ATOMIC_LOAD_NAND_64) {
+    unsigned TmpReg = UpdReg;
+    UpdReg = MRI.createVirtualRegister(ValueRC);
+    BuildMI(LoopMBB, DL, TII.get(SP::XORri), UpdReg).addReg(TmpReg).addImm(-1);
+  }
+
+  BuildMI(LoopMBB, DL, TII.get(is64Bit ? SP::CASXrr : SP::CASrr), DestReg)
+    .addReg(AddrReg).addReg(ValReg).addReg(UpdReg)
+    .setMemRefs(MI->memoperands_begin(), MI->memoperands_end());
+  BuildMI(LoopMBB, DL, TII.get(SP::CMPrr)).addReg(ValReg).addReg(DestReg);
+  BuildMI(LoopMBB, DL, TII.get(is64Bit ? SP::BPXCC : SP::BCOND))
+    .addMBB(LoopMBB).addImm(SPCC::ICC_NE);
+
+  MI->eraseFromParent();
+  return DoneMBB;
+}
+
 //===----------------------------------------------------------------------===//
 //                         Sparc Inline Assembly Support
 //===----------------------------------------------------------------------===//
@@ -2923,10 +3079,70 @@ SparcTargetLowering::getConstraintType(const std::string &Constraint) const {
     switch (Constraint[0]) {
     default:  break;
     case 'r': return C_RegisterClass;
+    case 'I': // SIMM13
+      return C_Other;
     }
   }
 
   return TargetLowering::getConstraintType(Constraint);
+}
+
+TargetLowering::ConstraintWeight SparcTargetLowering::
+getSingleConstraintMatchWeight(AsmOperandInfo &info,
+                               const char *constraint) const {
+  ConstraintWeight weight = CW_Invalid;
+  Value *CallOperandVal = info.CallOperandVal;
+  // If we don't have a value, we can't do a match,
+  // but allow it at the lowest weight.
+  if (CallOperandVal == NULL)
+    return CW_Default;
+
+  // Look at the constraint type.
+  switch (*constraint) {
+  default:
+    weight = TargetLowering::getSingleConstraintMatchWeight(info, constraint);
+    break;
+  case 'I': // SIMM13
+    if (ConstantInt *C = dyn_cast<ConstantInt>(info.CallOperandVal)) {
+      if (isInt<13>(C->getSExtValue()))
+        weight = CW_Constant;
+    }
+    break;
+  }
+  return weight;
+}
+
+/// LowerAsmOperandForConstraint - Lower the specified operand into the Ops
+/// vector.  If it is invalid, don't add anything to Ops.
+void SparcTargetLowering::
+LowerAsmOperandForConstraint(SDValue Op,
+                             std::string &Constraint,
+                             std::vector<SDValue> &Ops,
+                             SelectionDAG &DAG) const {
+  SDValue Result(0, 0);
+
+  // Only support length 1 constraints for now.
+  if (Constraint.length() > 1)
+    return;
+
+  char ConstraintLetter = Constraint[0];
+  switch (ConstraintLetter) {
+  default: break;
+  case 'I':
+    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op)) {
+      if (isInt<13>(C->getSExtValue())) {
+        Result = DAG.getTargetConstant(C->getSExtValue(), Op.getValueType());
+        break;
+      }
+      return;
+    }
+  }
+
+  if (Result.getNode()) {
+    Ops.push_back(Result);
+    return;
+  }
+  TargetLowering::LowerAsmOperandForConstraint(Op, Constraint, Ops, DAG);
 }
 
 std::pair<unsigned, const TargetRegisterClass*>
@@ -2936,6 +3152,26 @@ SparcTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
     switch (Constraint[0]) {
     case 'r':
       return std::make_pair(0U, &SP::IntRegsRegClass);
+    }
+  } else  if (!Constraint.empty() && Constraint.size() <= 5
+              && Constraint[0] == '{' && *(Constraint.end()-1) == '}') {
+    // constraint = '{r<d>}'
+    // Remove the braces from around the name.
+    StringRef name(Constraint.data()+1, Constraint.size()-2);
+    // Handle register aliases:
+    //       r0-r7   -> g0-g7
+    //       r8-r15  -> o0-o7
+    //       r16-r23 -> l0-l7
+    //       r24-r31 -> i0-i7
+    uint64_t intVal = 0;
+    if (name.substr(0, 1).equals("r")
+        && !name.substr(1).getAsInteger(10, intVal) && intVal <= 31) {
+      const char regTypes[] = { 'g', 'o', 'l', 'i' };
+      char regType = regTypes[intVal/8];
+      char regIdx = '0' + (intVal % 8);
+      char tmp[] = { '{', regType, regIdx, '}', 0 };
+      std::string newConstraint = std::string(tmp);
+      return TargetLowering::getRegForInlineAsmConstraint(newConstraint, VT);
     }
   }
 

@@ -36,7 +36,6 @@ class MDNode;
 class SDDbgValue;
 class TargetLowering;
 class TargetSelectionDAGInfo;
-class TargetTransformInfo;
 
 class SDVTListNode : public FoldingSetNode {
   friend struct FoldingSetTrait<SDVTListNode>;
@@ -169,7 +168,6 @@ void checkForCycles(const SelectionDAG *DAG);
 class SelectionDAG {
   const TargetMachine &TM;
   const TargetSelectionDAGInfo &TSI;
-  const TargetTransformInfo *TTI;
   const TargetLowering *TLI;
   MachineFunction *MF;
   LLVMContext *Context;
@@ -269,8 +267,7 @@ public:
   /// init - Prepare this SelectionDAG to process code in the given
   /// MachineFunction.
   ///
-  void init(MachineFunction &mf, const TargetTransformInfo *TTI,
-            const TargetLowering *TLI);
+  void init(MachineFunction &mf, const TargetLowering *TLI);
 
   /// clear - Clear state and free memory necessary to make this
   /// SelectionDAG ready to process a new block.
@@ -281,7 +278,6 @@ public:
   const TargetMachine &getTarget() const { return TM; }
   const TargetLowering &getTargetLoweringInfo() const { return *TLI; }
   const TargetSelectionDAGInfo &getSelectionDAGInfo() const { return TSI; }
-  const TargetTransformInfo *getTargetTransformInfo() const { return TTI; }
   LLVMContext *getContext() const {return Context; }
 
   /// viewGraph - Pop up a GraphViz/gv window with the DAG rendered using 'dot'.
@@ -401,18 +397,22 @@ public:
   //===--------------------------------------------------------------------===//
   // Node creation methods.
   //
-  SDValue getConstant(uint64_t Val, EVT VT, bool isTarget = false);
-  SDValue getConstant(const APInt &Val, EVT VT, bool isTarget = false);
-  SDValue getConstant(const ConstantInt &Val, EVT VT, bool isTarget = false);
+  SDValue getConstant(uint64_t Val, EVT VT, bool isTarget = false,
+                      bool isOpaque = false);
+  SDValue getConstant(const APInt &Val, EVT VT, bool isTarget = false,
+                      bool isOpaque = false);
+  SDValue getConstant(const ConstantInt &Val, EVT VT, bool isTarget = false,
+                      bool isOpaque = false);
   SDValue getIntPtrConstant(uint64_t Val, bool isTarget = false);
-  SDValue getTargetConstant(uint64_t Val, EVT VT) {
-    return getConstant(Val, VT, true);
+  SDValue getTargetConstant(uint64_t Val, EVT VT, bool isOpaque = false) {
+    return getConstant(Val, VT, true, isOpaque);
   }
-  SDValue getTargetConstant(const APInt &Val, EVT VT) {
-    return getConstant(Val, VT, true);
+  SDValue getTargetConstant(const APInt &Val, EVT VT, bool isOpaque = false) {
+    return getConstant(Val, VT, true, isOpaque);
   }
-  SDValue getTargetConstant(const ConstantInt &Val, EVT VT) {
-    return getConstant(Val, VT, true);
+  SDValue getTargetConstant(const ConstantInt &Val, EVT VT,
+                            bool isOpaque = false) {
+    return getConstant(Val, VT, true, isOpaque);
   }
   // The forms below that take a double should only be used for simple
   // constants that can be exactly represented in VT.  No checks are made.

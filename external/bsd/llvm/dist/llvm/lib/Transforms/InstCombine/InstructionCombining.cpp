@@ -319,6 +319,12 @@ bool InstCombiner::SimplifyAssociativeOrCommutative(BinaryOperator &I) {
 
         Constant *Folded = ConstantExpr::get(Opcode, C1, C2);
         BinaryOperator *New = BinaryOperator::Create(Opcode, A, B);
+        if (isa<FPMathOperator>(New)) {
+          FastMathFlags Flags = I.getFastMathFlags();
+          Flags &= Op0->getFastMathFlags();
+          Flags &= Op1->getFastMathFlags();
+          New->setFastMathFlags(Flags);
+        }
         InsertNewInstWith(New, I);
         New->takeName(Op1);
         I.setOperand(0, New);
@@ -566,9 +572,14 @@ static Value *FoldOperationIntoSelectOperand(Instruction &I, Value *SO,
   if (!ConstIsRHS)
     std::swap(Op0, Op1);
 
-  if (BinaryOperator *BO = dyn_cast<BinaryOperator>(&I))
-    return IC->Builder->CreateBinOp(BO->getOpcode(), Op0, Op1,
+  if (BinaryOperator *BO = dyn_cast<BinaryOperator>(&I)) {
+    Value *RI = IC->Builder->CreateBinOp(BO->getOpcode(), Op0, Op1,
                                     SO->getName()+".op");
+    Instruction *FPInst = dyn_cast<Instruction>(RI);
+    if (FPInst && isa<FPMathOperator>(FPInst))
+      FPInst->copyFastMathFlags(BO);
+    return RI;
+  }
   if (ICmpInst *CI = dyn_cast<ICmpInst>(&I))
     return IC->Builder->CreateICmp(CI->getPredicate(), Op0, Op1,
                                    SO->getName()+".cmp");
@@ -1618,7 +1629,7 @@ Instruction *InstCombiner::visitBranchInst(BranchInst &BI) {
     return &BI;
   }
 
-  // Cannonicalize fcmp_one -> fcmp_oeq
+  // Canonicalize fcmp_one -> fcmp_oeq
   FCmpInst::Predicate FPred; Value *Y;
   if (match(&BI, m_Br(m_FCmp(FPred, m_Value(X), m_Value(Y)),
                              TrueDest, FalseDest)) &&
@@ -1634,7 +1645,7 @@ Instruction *InstCombiner::visitBranchInst(BranchInst &BI) {
       return &BI;
     }
 
-  // Cannonicalize icmp_ne -> icmp_eq
+  // Canonicalize icmp_ne -> icmp_eq
   ICmpInst::Predicate IPred;
   if (match(&BI, m_Br(m_ICmp(IPred, m_Value(X), m_Value(Y)),
                       TrueDest, FalseDest)) &&
@@ -2498,6 +2509,9 @@ public:
 }
 
 bool InstCombiner::runOnFunction(Function &F) {
+  if (skipOptnoneFunction(F))
+    return false;
+
   TD = getAnalysisIfAvailable<DataLayout>();
   TLI = &getAnalysis<TargetLibraryInfo>();
   // Minimizing size?

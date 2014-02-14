@@ -115,19 +115,16 @@ ObjectImage *RuntimeDyldImpl::loadObject(ObjectImage *InputObject) {
   // Maximum required total memory to allocate all common symbols
   uint64_t CommonSize = 0;
 
-  error_code err;
   // Parse symbols
   DEBUG(dbgs() << "Parse symbols:\n");
-  for (symbol_iterator i = obj->begin_symbols(), e = obj->end_symbols();
-       i != e; i.increment(err)) {
-    Check(err);
+  for (symbol_iterator i = obj->begin_symbols(), e = obj->end_symbols(); i != e;
+       ++i) {
     object::SymbolRef::Type SymType;
     StringRef Name;
     Check(i->getType(SymType));
     Check(i->getName(Name));
 
-    uint32_t flags;
-    Check(i->getFlags(flags));
+    uint32_t flags = i->getFlags();
 
     bool isCommon = flags & SymbolRef::SF_Common;
     if (isCommon) {
@@ -173,18 +170,16 @@ ObjectImage *RuntimeDyldImpl::loadObject(ObjectImage *InputObject) {
 
   // Parse and process relocations
   DEBUG(dbgs() << "Parse relocations:\n");
-  for (section_iterator si = obj->begin_sections(),
-       se = obj->end_sections(); si != se; si.increment(err)) {
-    Check(err);
+  for (section_iterator si = obj->begin_sections(), se = obj->end_sections();
+       si != se; ++si) {
     bool isFirstRelocation = true;
     unsigned SectionID = 0;
     StubMap Stubs;
     section_iterator RelocatedSection = si->getRelocatedSection();
 
-    for (relocation_iterator i = si->begin_relocations(),
-         e = si->end_relocations(); i != e; i.increment(err)) {
-      Check(err);
-
+    for (relocation_iterator i = si->relocation_begin(),
+                             e = si->relocation_end();
+         i != e; ++i) {
       // If it's the first relocation in this section, find its SectionID
       if (isFirstRelocation) {
         SectionID =
@@ -251,21 +246,21 @@ unsigned RuntimeDyldImpl::emitSection(ObjectImage &Obj,
 
   unsigned StubBufSize = 0,
            StubSize = getMaxStubSize();
-  error_code err;
   const ObjectFile *ObjFile = Obj.getObjectFile();
   // FIXME: this is an inefficient way to handle this. We should computed the
   // necessary section allocation size in loadObject by walking all the sections
   // once.
   if (StubSize > 0) {
-    for (section_iterator SI = ObjFile->begin_sections(),
-           SE = ObjFile->end_sections();
-         SI != SE; SI.increment(err), Check(err)) {
+    for (section_iterator SI = ObjFile->section_begin(),
+                          SE = ObjFile->section_end();
+         SI != SE; ++SI) {
       section_iterator RelSecI = SI->getRelocatedSection();
       if (!(RelSecI == Section))
         continue;
 
-      for (relocation_iterator I = SI->begin_relocations(),
-             E = SI->end_relocations(); I != E; I.increment(err), Check(err)) {
+      for (relocation_iterator I = SI->relocation_begin(),
+                               E = SI->relocation_end();
+           I != E; ++I) {
         StubBufSize += StubSize;
       }
     }
@@ -303,7 +298,7 @@ unsigned RuntimeDyldImpl::emitSection(ObjectImage &Obj,
   if (Name == ".eh_frame")
     PaddingSize = 4;
 
-  unsigned Allocate;
+  uintptr_t Allocate;
   unsigned SectionID = Sections.size();
   uint8_t *Addr;
   const char *pData = 0;

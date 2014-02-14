@@ -21,7 +21,6 @@ AMDGPUMCAsmInfo::AMDGPUMCAsmInfo(StringRef &TT) : MCAsmInfo() {
   LinkerRequiresNonEmptyDwarfLines = true;
   MaxInstLength = 16;
   SeparatorString = "\n";
-  CommentColumn = 40;
   CommentString = ";";
   LabelSuffix = ":";
   InlineAsmStart = ";#ASMSTART";
@@ -41,7 +40,6 @@ AMDGPUMCAsmInfo::AMDGPUMCAsmInfo(StringRef &TT) : MCAsmInfo() {
   UsesELFSectionDirectiveForBSS = true;
 
   //===--- Alignment Information ----------------------------------------===//
-  AlignDirective = ".align\t";
   AlignmentIsInBytes = true;
   TextAlignFillValue = 0;
 

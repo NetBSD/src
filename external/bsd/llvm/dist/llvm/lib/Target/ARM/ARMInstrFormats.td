@@ -212,25 +212,25 @@ def msr_mask : Operand<i32> {
 //     32       imm6<5> = '1', 32 - <imm> is encoded in imm6<4:0>
 //     64       64 - <imm> is encoded in imm6<5:0>
 def shr_imm8_asm_operand : ImmAsmOperand { let Name = "ShrImm8"; }
-def shr_imm8  : Operand<i32> {
+def shr_imm8  : Operand<i32>, ImmLeaf<i32, [{ return Imm > 0 && Imm <= 8; }]> {
   let EncoderMethod = "getShiftRight8Imm";
   let DecoderMethod = "DecodeShiftRight8Imm";
   let ParserMatchClass = shr_imm8_asm_operand;
 }
 def shr_imm16_asm_operand : ImmAsmOperand { let Name = "ShrImm16"; }
-def shr_imm16 : Operand<i32> {
+def shr_imm16 : Operand<i32>, ImmLeaf<i32, [{ return Imm > 0 && Imm <= 16; }]> {
   let EncoderMethod = "getShiftRight16Imm";
   let DecoderMethod = "DecodeShiftRight16Imm";
   let ParserMatchClass = shr_imm16_asm_operand;
 }
 def shr_imm32_asm_operand : ImmAsmOperand { let Name = "ShrImm32"; }
-def shr_imm32 : Operand<i32> {
+def shr_imm32 : Operand<i32>, ImmLeaf<i32, [{ return Imm > 0 && Imm <= 32; }]> {
   let EncoderMethod = "getShiftRight32Imm";
   let DecoderMethod = "DecodeShiftRight32Imm";
   let ParserMatchClass = shr_imm32_asm_operand;
 }
 def shr_imm64_asm_operand : ImmAsmOperand { let Name = "ShrImm64"; }
-def shr_imm64 : Operand<i32> {
+def shr_imm64 : Operand<i32>, ImmLeaf<i32, [{ return Imm > 0 && Imm <= 64; }]> {
   let EncoderMethod = "getShiftRight64Imm";
   let DecoderMethod = "DecodeShiftRight64Imm";
   let ParserMatchClass = shr_imm64_asm_operand;
@@ -476,6 +476,10 @@ class AsI<dag oops, dag iops, Format f, InstrItinClass itin,
 class AXI<dag oops, dag iops, Format f, InstrItinClass itin,
           string asm, list<dag> pattern>
   : XI<oops, iops, AddrModeNone, 4, IndexModeNone, f, itin,
+       asm, "", pattern>;
+class AXIM<dag oops, dag iops, AddrMode am, Format f, InstrItinClass itin,
+          string asm, list<dag> pattern>
+  : XI<oops, iops, am, 4, IndexModeNone, f, itin,
        asm, "", pattern>;
 class AInoP<dag oops, dag iops, Format f, InstrItinClass itin,
             string opc, string asm, list<dag> pattern>

@@ -311,6 +311,9 @@ public:
   bool isTargetDarwin() const { return TargetTriple.isOSDarwin(); }
   bool isTargetNaCl() const { return TargetTriple.isOSNaCl(); }
   bool isTargetLinux() const { return TargetTriple.isOSLinux(); }
+  bool isTargetNetBSD() const {
+    return TargetTriple.getOS() == Triple::NetBSD;
+  }
 
   bool isTargetELF() const { return TargetTriple.isOSBinFormatELF(); }
   bool isTargetMachO() const { return TargetTriple.isOSBinFormatMachO(); }
@@ -325,6 +328,17 @@ public:
   bool isTargetAEABI() const {
     return (TargetTriple.getEnvironment() == Triple::EABI ||
             TargetTriple.getEnvironment() == Triple::EABIHF) &&
+           !isTargetDarwin();
+  }
+
+  // ARM Targets that support EHABI exception handling standard
+  // Darwin uses SjLj. Other targets might need more checks.
+  bool isTargetEHABICompatible() const {
+    return (TargetTriple.getEnvironment() == Triple::EABI ||
+            TargetTriple.getEnvironment() == Triple::GNUEABI ||
+            TargetTriple.getEnvironment() == Triple::EABIHF ||
+            TargetTriple.getEnvironment() == Triple::GNUEABIHF ||
+            TargetTriple.getEnvironment() == Triple::Android) &&
            !isTargetDarwin();
   }
 

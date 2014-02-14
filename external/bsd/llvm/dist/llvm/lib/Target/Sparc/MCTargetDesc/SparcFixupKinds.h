@@ -48,6 +48,41 @@ namespace llvm {
       /// fixup_sparc_hm  -  10-bit fixup corresponding to %hm(foo)
       fixup_sparc_hm,
 
+      /// fixup_sparc_pc22 - 22-bit fixup corresponding to %pc22(foo)
+      fixup_sparc_pc22,
+
+      /// fixup_sparc_pc10 - 10-bit fixup corresponding to %pc10(foo)
+      fixup_sparc_pc10,
+
+      /// fixup_sparc_got22 - 22-bit fixup corresponding to %got22(foo)
+      fixup_sparc_got22,
+
+      /// fixup_sparc_got10 - 10-bit fixup corresponding to %got10(foo)
+      fixup_sparc_got10,
+
+      /// fixup_sparc_wplt30
+      fixup_sparc_wplt30,
+
+      /// fixups for Thread Local Storage
+      fixup_sparc_tls_gd_hi22,
+      fixup_sparc_tls_gd_lo10,
+      fixup_sparc_tls_gd_add,
+      fixup_sparc_tls_gd_call,
+      fixup_sparc_tls_ldm_hi22,
+      fixup_sparc_tls_ldm_lo10,
+      fixup_sparc_tls_ldm_add,
+      fixup_sparc_tls_ldm_call,
+      fixup_sparc_tls_ldo_hix22,
+      fixup_sparc_tls_ldo_lox10,
+      fixup_sparc_tls_ldo_add,
+      fixup_sparc_tls_ie_hi22,
+      fixup_sparc_tls_ie_lo10,
+      fixup_sparc_tls_ie_ld,
+      fixup_sparc_tls_ie_ldx,
+      fixup_sparc_tls_ie_add,
+      fixup_sparc_tls_le_hix22,
+      fixup_sparc_tls_le_lox10,
+
       // Marker
       LastTargetFixupKind,
       NumTargetFixupKinds = LastTargetFixupKind - FirstTargetFixupKind

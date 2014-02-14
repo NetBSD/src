@@ -65,3 +65,21 @@ bl f05(plt)
 @CHECK: 72 R_ARM_PREL31 f18
 @CHECK: 76 R_ARM_PREL31 f19
 
+@ tlsldo
+.word f20(TLSLDO)
+.word f21(tlsldo)
+@CHECK: 80 R_ARM_TLS_LDO32 f20
+@CHECK: 84 R_ARM_TLS_LDO32 f21
+
+@ tlscall
+.word f22(TLSCALL)
+.word f23(tlscall)
+@ CHECK: 88 R_ARM_TLS_CALL f22
+@ CHECK: 92 R_ARM_TLS_CALL f23
+
+@ tlsdesc
+.word f24(TLSDESC)
+.word f25(tlsdesc)
+@ CHECK: 96 R_ARM_TLS_GOTDESC f24
+@ CHECK: 100 R_ARM_TLS_GOTDESC f25
+

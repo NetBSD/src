@@ -817,8 +817,7 @@ SpeculationFailure:
     // Mark as unavailable.
     EntryVal = 0;
 
-    for (succ_iterator I = succ_begin(Entry), E = succ_end(Entry); I != E; ++I)
-      BBWorklist.push_back(*I);
+    BBWorklist.append(succ_begin(Entry), succ_end(Entry));
   } while (!BBWorklist.empty());
 
   return false;
@@ -2313,6 +2312,9 @@ bool GVN::processInstruction(Instruction *I) {
 
 /// runOnFunction - This is the main transformation entry point for a function.
 bool GVN::runOnFunction(Function& F) {
+  if (skipOptnoneFunction(F))
+    return false;
+
   if (!NoLoads)
     MD = &getAnalysis<MemoryDependenceAnalysis>();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();

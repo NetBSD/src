@@ -48,16 +48,25 @@ class StoreLeftRightMM<string opstr, SDNode OpNode, RegisterOperand RO,
 class LLBaseMM<string opstr, RegisterOperand RO> :
   InstSE<(outs RO:$rt), (ins mem_mm_12:$addr),
          !strconcat(opstr, "\t$rt, $addr"), [], NoItinerary, FrmI> {
-  let DecoderMethod = "DecodeMem";
+  let DecoderMethod = "DecodeMemMMImm12";
   let mayLoad = 1;
 }
 
 class SCBaseMM<string opstr, RegisterOperand RO> :
-  InstSE<(outs RO:$dst), (ins RO:$rt, mem_mm_12:$addr),
+  InstSE<(outs), (ins RO:$rt, mem_mm_12:$addr),
          !strconcat(opstr, "\t$rt, $addr"), [], NoItinerary, FrmI> {
-  let DecoderMethod = "DecodeMem";
+  let DecoderMethod = "DecodeMemMMImm12";
   let mayStore = 1;
-  let Constraints = "$rt = $dst";
+}
+
+class LoadMM<string opstr, DAGOperand RO, SDPatternOperator OpNode = null_frag,
+             InstrItinClass Itin = NoItinerary> :
+  InstSE<(outs RO:$rt), (ins mem_mm_12:$addr),
+         !strconcat(opstr, "\t$rt, $addr"),
+         [(set RO:$rt, (OpNode addrimm12:$addr))], Itin, FrmI> {
+  let DecoderMethod = "DecodeMemMMImm12";
+  let canFoldAsLoad = 1;
+  let mayLoad = 1;
 }
 
 let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
@@ -90,38 +99,38 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
   def SLT_MM   : MMRel, SetCC_R<"slt", setlt, GPR32Opnd>, ADD_FM_MM<0, 0x350>;
   def SLTu_MM  : MMRel, SetCC_R<"sltu", setult, GPR32Opnd>,
                  ADD_FM_MM<0, 0x390>;
-  def AND_MM   : MMRel, ArithLogicR<"and", GPR32Opnd, 1, IIAlu, and>,
+  def AND_MM   : MMRel, ArithLogicR<"and", GPR32Opnd, 1, II_AND, and>,
                  ADD_FM_MM<0, 0x250>;
-  def OR_MM    : MMRel, ArithLogicR<"or", GPR32Opnd, 1, IIAlu, or>,
+  def OR_MM    : MMRel, ArithLogicR<"or", GPR32Opnd, 1, II_OR, or>,
                  ADD_FM_MM<0, 0x290>;
-  def XOR_MM   : MMRel, ArithLogicR<"xor", GPR32Opnd, 1, IIAlu, xor>,
+  def XOR_MM   : MMRel, ArithLogicR<"xor", GPR32Opnd, 1, II_XOR, xor>,
                  ADD_FM_MM<0, 0x310>;
   def NOR_MM   : MMRel, LogicNOR<"nor", GPR32Opnd>, ADD_FM_MM<0, 0x2d0>;
-  def MULT_MM  : MMRel, Mult<"mult", IIImul, GPR32Opnd, [HI0, LO0]>,
+  def MULT_MM  : MMRel, Mult<"mult", II_MULT, GPR32Opnd, [HI0, LO0]>,
                  MULT_FM_MM<0x22c>;
-  def MULTu_MM : MMRel, Mult<"multu", IIImul, GPR32Opnd, [HI0, LO0]>,
+  def MULTu_MM : MMRel, Mult<"multu", II_MULTU, GPR32Opnd, [HI0, LO0]>,
                  MULT_FM_MM<0x26c>;
-  def SDIV_MM  : MMRel, Div<"div", IIIdiv, GPR32Opnd, [HI0, LO0]>,
+  def SDIV_MM  : MMRel, Div<"div", II_DIV, GPR32Opnd, [HI0, LO0]>,
                  MULT_FM_MM<0x2ac>;
-  def UDIV_MM  : MMRel, Div<"divu", IIIdiv, GPR32Opnd, [HI0, LO0]>,
+  def UDIV_MM  : MMRel, Div<"divu", II_DIVU, GPR32Opnd, [HI0, LO0]>,
                  MULT_FM_MM<0x2ec>;
 
   /// Shift Instructions
-  def SLL_MM   : MMRel, shift_rotate_imm<"sll", uimm5, GPR32Opnd>,
+  def SLL_MM   : MMRel, shift_rotate_imm<"sll", uimm5, GPR32Opnd, II_SLL>,
                  SRA_FM_MM<0, 0>;
-  def SRL_MM   : MMRel, shift_rotate_imm<"srl", uimm5, GPR32Opnd>,
+  def SRL_MM   : MMRel, shift_rotate_imm<"srl", uimm5, GPR32Opnd, II_SRL>,
                  SRA_FM_MM<0x40, 0>;
-  def SRA_MM   : MMRel, shift_rotate_imm<"sra", uimm5, GPR32Opnd>,
+  def SRA_MM   : MMRel, shift_rotate_imm<"sra", uimm5, GPR32Opnd, II_SRA>,
                  SRA_FM_MM<0x80, 0>;
-  def SLLV_MM  : MMRel, shift_rotate_reg<"sllv", GPR32Opnd>,
+  def SLLV_MM  : MMRel, shift_rotate_reg<"sllv", GPR32Opnd, II_SLLV>,
                  SRLV_FM_MM<0x10, 0>;
-  def SRLV_MM  : MMRel, shift_rotate_reg<"srlv", GPR32Opnd>,
+  def SRLV_MM  : MMRel, shift_rotate_reg<"srlv", GPR32Opnd, II_SRLV>,
                  SRLV_FM_MM<0x50, 0>;
-  def SRAV_MM  : MMRel, shift_rotate_reg<"srav", GPR32Opnd>,
+  def SRAV_MM  : MMRel, shift_rotate_reg<"srav", GPR32Opnd, II_SRAV>,
                  SRLV_FM_MM<0x90, 0>;
-  def ROTR_MM  : MMRel, shift_rotate_imm<"rotr", uimm5, GPR32Opnd>,
+  def ROTR_MM  : MMRel, shift_rotate_imm<"rotr", uimm5, GPR32Opnd, II_ROTR>,
                  SRA_FM_MM<0xc0, 0>;
-  def ROTRV_MM : MMRel, shift_rotate_reg<"rotrv", GPR32Opnd>,
+  def ROTRV_MM : MMRel, shift_rotate_reg<"rotrv", GPR32Opnd, II_ROTRV>,
                  SRLV_FM_MM<0xd0, 0>;
 
   /// Load and Store Instructions - aligned
@@ -135,6 +144,8 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
     def SH_MM  : Store<"sh", GPR32Opnd>, MMRel, LW_FM_MM<0xe>;
     def SW_MM  : Store<"sw", GPR32Opnd>, MMRel, LW_FM_MM<0x3e>;
   }
+
+  def LWU_MM : LoadMM<"lwu", GPR32Opnd, zextloadi32, II_LWU>, LL_FM_MM<0xe>;
 
   /// Load and Store Instructions - unaligned
   def LWL_MM : LoadLeftRightMM<"lwl", MipsLWL, GPR32Opnd, mem_mm_12>,
@@ -151,9 +162,9 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
                   NoItinerary>, ADD_FM_MM<0, 0x58>;
   def MOVN_I_MM : MMRel, CMov_I_I_FT<"movn", GPR32Opnd, GPR32Opnd,
                   NoItinerary>, ADD_FM_MM<0, 0x18>;
-  def MOVT_I_MM : MMRel, CMov_F_I_FT<"movt", GPR32Opnd, IIAlu>,
+  def MOVT_I_MM : MMRel, CMov_F_I_FT<"movt", GPR32Opnd, II_MOVT>,
                   CMov_F_I_FM_MM<0x25>;
-  def MOVF_I_MM : MMRel, CMov_F_I_FT<"movf", GPR32Opnd, IIAlu>,
+  def MOVF_I_MM : MMRel, CMov_F_I_FT<"movf", GPR32Opnd, II_MOVF>,
                   CMov_F_I_FM_MM<0x5>;
 
   /// Move to/from HI/LO
@@ -167,18 +178,18 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
                 MFLO_FM_MM<0x075>;
 
   /// Multiply Add/Sub Instructions
-  def MADD_MM  : MMRel, MArithR<"madd", 1>, MULT_FM_MM<0x32c>;
-  def MADDU_MM : MMRel, MArithR<"maddu", 1>, MULT_FM_MM<0x36c>;
-  def MSUB_MM  : MMRel, MArithR<"msub">, MULT_FM_MM<0x3ac>;
-  def MSUBU_MM : MMRel, MArithR<"msubu">, MULT_FM_MM<0x3ec>;
+  def MADD_MM  : MMRel, MArithR<"madd", II_MADD, 1>, MULT_FM_MM<0x32c>;
+  def MADDU_MM : MMRel, MArithR<"maddu", II_MADDU, 1>, MULT_FM_MM<0x36c>;
+  def MSUB_MM  : MMRel, MArithR<"msub", II_MSUB>, MULT_FM_MM<0x3ac>;
+  def MSUBU_MM : MMRel, MArithR<"msubu", II_MSUBU>, MULT_FM_MM<0x3ec>;
 
   /// Count Leading
   def CLZ_MM : MMRel, CountLeading0<"clz", GPR32Opnd>, CLO_FM_MM<0x16c>;
   def CLO_MM : MMRel, CountLeading1<"clo", GPR32Opnd>, CLO_FM_MM<0x12c>;
 
   /// Sign Ext In Register Instructions.
-  def SEB_MM : MMRel, SignExtInReg<"seb", i8, GPR32Opnd>, SEB_FM_MM<0x0ac>;
-  def SEH_MM : MMRel, SignExtInReg<"seh", i16, GPR32Opnd>, SEB_FM_MM<0x0ec>;
+  def SEB_MM : MMRel, SignExtInReg<"seb", i8, GPR32Opnd, II_SEB>, SEB_FM_MM<0x0ac>;
+  def SEH_MM : MMRel, SignExtInReg<"seh", i16, GPR32Opnd, II_SEH>, SEB_FM_MM<0x0ec>;
 
   /// Word Swap Bytes Within Halfwords
   def WSBH_MM : MMRel, SubwordSwap<"wsbh", GPR32Opnd>, SEB_FM_MM<0x1ec>;

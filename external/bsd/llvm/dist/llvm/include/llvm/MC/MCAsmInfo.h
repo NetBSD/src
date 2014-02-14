@@ -101,10 +101,6 @@ namespace llvm {
     /// instructions from each other when on the same line.
     const char *SeparatorString;             // Defaults to ';'
 
-    /// CommentColumn - This indicates the comment num (zero-based) at
-    /// which asm comments should be printed.
-    unsigned CommentColumn;                  // Defaults to 40
-
     /// CommentString - This indicates the comment character used by the
     /// assembler.
     const char *CommentString;               // Defaults to "#"
@@ -192,11 +188,6 @@ namespace llvm {
     bool NeedsDwarfSectionOffsetDirective;
 
     //===--- Alignment Information ----------------------------------------===//
-
-    /// AlignDirective - The directive used to emit round up to an alignment
-    /// boundary.
-    ///
-    const char *AlignDirective;              // Defaults to "\t.align\t"
 
     /// AlignmentIsInBytes - If this is true (the default) then the asmprinter
     /// emits ".align N" directives, where N is the number of bytes to align to.
@@ -368,7 +359,7 @@ namespace llvm {
                                 unsigned Encoding,
                                 MCStreamer &Streamer) const;
 
-    const MCExpr *
+    virtual const MCExpr *
     getExprForFDESymbol(const MCSymbol *Sym,
                         unsigned Encoding,
                         MCStreamer &Streamer) const;
@@ -407,9 +398,13 @@ namespace llvm {
     const char *getSeparatorString() const {
       return SeparatorString;
     }
+
+    /// This indicates the column (zero-based) at which asm comments should be
+    /// printed.
     unsigned getCommentColumn() const {
-      return CommentColumn;
+      return 40;
     }
+
     const char *getCommentString() const {
       return CommentString;
     }
@@ -455,9 +450,6 @@ namespace llvm {
     }
     const char *getAscizDirective() const {
       return AscizDirective;
-    }
-    const char *getAlignDirective() const {
-      return AlignDirective;
     }
     bool getAlignmentIsInBytes() const {
       return AlignmentIsInBytes;

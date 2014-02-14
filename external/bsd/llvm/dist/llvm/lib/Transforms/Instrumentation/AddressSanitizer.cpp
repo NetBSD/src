@@ -33,6 +33,7 @@
 #include "llvm/IR/InlineAsm.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/MDBuilder.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
 #include "llvm/InstVisitor.h"
@@ -59,6 +60,8 @@ static const uint64_t kDefaultShadowOffset64 = 1ULL << 44;
 static const uint64_t kDefaultShort64bitShadowOffset = 0x7FFF8000;  // < 2G.
 static const uint64_t kPPC64_ShadowOffset64 = 1ULL << 41;
 static const uint64_t kMIPS32_ShadowOffset32 = 0x0aaa8000;
+static const uint64_t kFreeBSD_ShadowOffset32 = 1ULL << 30;
+static const uint64_t kFreeBSD_ShadowOffset64 = 1ULL << 46;
 
 static const size_t kMinStackMallocSize = 1 << 6;  // 64B
 static const size_t kMaxStackMallocSize = 1 << 16;  // 64K
@@ -130,8 +133,9 @@ static cl::opt<bool> ClUseAfterReturn("asan-use-after-return",
 // This flag may need to be replaced with -f[no]asan-globals.
 static cl::opt<bool> ClGlobals("asan-globals",
        cl::desc("Handle global objects"), cl::Hidden, cl::init(true));
-static cl::opt<bool> ClCoverage("asan-coverage",
-       cl::desc("ASan coverage"), cl::Hidden, cl::init(false));
+static cl::opt<int> ClCoverage("asan-coverage",
+       cl::desc("ASan coverage. 0: none, 1: entry block, 2: all blocks"),
+       cl::Hidden, cl::init(false));
 static cl::opt<bool> ClInitializers("asan-initialization-order",
        cl::desc("Handle C++ initializer order"), cl::Hidden, cl::init(false));
 static cl::opt<bool> ClMemIntrin("asan-memintrin",
@@ -234,11 +238,11 @@ struct ShadowMapping {
   bool OrShadowOffset;
 };
 
-static ShadowMapping getShadowMapping(const Module &M, int LongSize,
-                                      bool ZeroBaseShadow) {
+static ShadowMapping getShadowMapping(const Module &M, int LongSize) {
   llvm::Triple TargetTriple(M.getTargetTriple());
   bool IsAndroid = TargetTriple.getEnvironment() == llvm::Triple::Android;
   bool IsMacOSX = TargetTriple.getOS() == llvm::Triple::MacOSX;
+  bool IsFreeBSD = TargetTriple.getOS() == llvm::Triple::FreeBSD;
   bool IsPPC64 = TargetTriple.getArch() == llvm::Triple::ppc64 ||
                  TargetTriple.getArch() == llvm::Triple::ppc64le;
   bool IsX86_64 = TargetTriple.getArch() == llvm::Triple::x86_64;
@@ -248,19 +252,21 @@ static ShadowMapping getShadowMapping(const Module &M, int LongSize,
   ShadowMapping Mapping;
 
   // OR-ing shadow offset if more efficient (at least on x86),
-  // but on ppc64 we have to use add since the shadow offset is not neccesary
+  // but on ppc64 we have to use add since the shadow offset is not necessary
   // 1/8-th of the address space.
   Mapping.OrShadowOffset = !IsPPC64 && !ClShort64BitOffset;
 
-  Mapping.Offset = (IsAndroid || ZeroBaseShadow) ? 0 :
+  Mapping.Offset = IsAndroid ? 0 :
       (LongSize == 32 ?
-       (IsMIPS32 ? kMIPS32_ShadowOffset32 : kDefaultShadowOffset32) :
+        (IsMIPS32 ? kMIPS32_ShadowOffset32 :
+          (IsFreeBSD ? kFreeBSD_ShadowOffset32 : kDefaultShadowOffset32)) :
        IsPPC64 ? kPPC64_ShadowOffset64 : kDefaultShadowOffset64);
-  if (!ZeroBaseShadow && ClShort64BitOffset && IsX86_64 && !IsMacOSX) {
+  if (!IsAndroid && ClShort64BitOffset && IsX86_64 && !IsMacOSX) {
     assert(LongSize == 64);
-    Mapping.Offset = kDefaultShort64bitShadowOffset;
+    Mapping.Offset = (IsFreeBSD ?
+                      kFreeBSD_ShadowOffset64 : kDefaultShort64bitShadowOffset);
   }
-  if (!ZeroBaseShadow && ClMappingOffsetLog >= 0) {
+  if (!IsAndroid && ClMappingOffsetLog >= 0) {
     // Zero offset log is the special case.
     Mapping.Offset = (ClMappingOffsetLog == 0) ? 0 : 1ULL << ClMappingOffsetLog;
   }
@@ -284,15 +290,13 @@ struct AddressSanitizer : public FunctionPass {
   AddressSanitizer(bool CheckInitOrder = true,
                    bool CheckUseAfterReturn = false,
                    bool CheckLifetime = false,
-                   StringRef BlacklistFile = StringRef(),
-                   bool ZeroBaseShadow = false)
+                   StringRef BlacklistFile = StringRef())
       : FunctionPass(ID),
         CheckInitOrder(CheckInitOrder || ClInitializers),
         CheckUseAfterReturn(CheckUseAfterReturn || ClUseAfterReturn),
         CheckLifetime(CheckLifetime || ClCheckLifetime),
         BlacklistFile(BlacklistFile.empty() ? ClBlacklistFile
-                                            : BlacklistFile),
-        ZeroBaseShadow(ZeroBaseShadow) {}
+                                            : BlacklistFile) {}
   virtual const char *getPassName() const {
     return "AddressSanitizerFunctionPass";
   }
@@ -323,13 +327,13 @@ struct AddressSanitizer : public FunctionPass {
   bool LooksLikeCodeInBug11395(Instruction *I);
   void FindDynamicInitializers(Module &M);
   bool GlobalIsLinkerInitialized(GlobalVariable *G);
-  bool InjectCoverage(Function &F);
+  bool InjectCoverage(Function &F, const ArrayRef<BasicBlock*> AllBlocks);
+  void InjectCoverageAtBlock(Function &F, BasicBlock &BB);
 
   bool CheckInitOrder;
   bool CheckUseAfterReturn;
   bool CheckLifetime;
   SmallString<64> BlacklistFile;
-  bool ZeroBaseShadow;
 
   LLVMContext *C;
   DataLayout *TD;
@@ -354,13 +358,11 @@ struct AddressSanitizer : public FunctionPass {
 class AddressSanitizerModule : public ModulePass {
  public:
   AddressSanitizerModule(bool CheckInitOrder = true,
-                         StringRef BlacklistFile = StringRef(),
-                         bool ZeroBaseShadow = false)
+                         StringRef BlacklistFile = StringRef())
       : ModulePass(ID),
         CheckInitOrder(CheckInitOrder || ClInitializers),
         BlacklistFile(BlacklistFile.empty() ? ClBlacklistFile
-                                            : BlacklistFile),
-        ZeroBaseShadow(ZeroBaseShadow) {}
+                                            : BlacklistFile) {}
   bool runOnModule(Module &M);
   static char ID;  // Pass identification, replacement for typeid
   virtual const char *getPassName() const {
@@ -378,7 +380,6 @@ class AddressSanitizerModule : public ModulePass {
 
   bool CheckInitOrder;
   SmallString<64> BlacklistFile;
-  bool ZeroBaseShadow;
 
   OwningPtr<SpecialCaseList> BL;
   SetOfDynamicallyInitializedGlobals DynamicallyInitializedGlobals;
@@ -536,9 +537,9 @@ INITIALIZE_PASS(AddressSanitizer, "asan",
     false, false)
 FunctionPass *llvm::createAddressSanitizerFunctionPass(
     bool CheckInitOrder, bool CheckUseAfterReturn, bool CheckLifetime,
-    StringRef BlacklistFile, bool ZeroBaseShadow) {
+    StringRef BlacklistFile) {
   return new AddressSanitizer(CheckInitOrder, CheckUseAfterReturn,
-                              CheckLifetime, BlacklistFile, ZeroBaseShadow);
+                              CheckLifetime, BlacklistFile);
 }
 
 char AddressSanitizerModule::ID = 0;
@@ -546,9 +547,8 @@ INITIALIZE_PASS(AddressSanitizerModule, "asan-module",
     "AddressSanitizer: detects use-after-free and out-of-bounds bugs."
     "ModulePass", false, false)
 ModulePass *llvm::createAddressSanitizerModulePass(
-    bool CheckInitOrder, StringRef BlacklistFile, bool ZeroBaseShadow) {
-  return new AddressSanitizerModule(CheckInitOrder, BlacklistFile,
-                                    ZeroBaseShadow);
+    bool CheckInitOrder, StringRef BlacklistFile) {
+  return new AddressSanitizerModule(CheckInitOrder, BlacklistFile);
 }
 
 static size_t TypeSizeToSizeIndex(uint32_t TypeSize) {
@@ -926,7 +926,7 @@ bool AddressSanitizerModule::runOnModule(Module &M) {
   C = &(M.getContext());
   int LongSize = TD->getPointerSizeInBits();
   IntptrTy = Type::getIntNTy(*C, LongSize);
-  Mapping = getShadowMapping(M, LongSize, ZeroBaseShadow);
+  Mapping = getShadowMapping(M, LongSize);
   initializeCallbacks(M);
   DynamicallyInitializedGlobals.Init(M);
 
@@ -1084,7 +1084,7 @@ void AddressSanitizer::initializeCallbacks(Module &M) {
   AsanHandleNoReturnFunc = checkInterfaceFunction(M.getOrInsertFunction(
       kAsanHandleNoReturnName, IRB.getVoidTy(), NULL));
   AsanCovFunction = checkInterfaceFunction(M.getOrInsertFunction(
-      kAsanCovName, IRB.getVoidTy(), IntptrTy, NULL));
+      kAsanCovName, IRB.getVoidTy(), NULL));
   // We insert an empty inline asm after __asan_report* to avoid callback merge.
   EmptyAsm = InlineAsm::get(FunctionType::get(IRB.getVoidTy(), false),
                             StringRef(""), StringRef(""),
@@ -1133,7 +1133,7 @@ bool AddressSanitizer::doInitialization(Module &M) {
   AsanInitFunction->setLinkage(Function::ExternalLinkage);
   IRB.CreateCall(AsanInitFunction);
 
-  Mapping = getShadowMapping(M, LongSize, ZeroBaseShadow);
+  Mapping = getShadowMapping(M, LongSize);
   emitShadowMapping(M, IRB);
 
   appendToGlobalCtors(M, AsanCtorFunction, kAsanCtorAndCtorPriority);
@@ -1156,33 +1156,11 @@ bool AddressSanitizer::maybeInsertAsanInitAtFunctionEntry(Function &F) {
   return false;
 }
 
-// Poor man's coverage that works with ASan.
-// We create a Guard boolean variable with the same linkage
-// as the function and inject this code into the entry block:
-// if (*Guard) {
-//    __sanitizer_cov(&F);
-//    *Guard = 1;
-// }
-// The accesses to Guard are atomic. The rest of the logic is
-// in __sanitizer_cov (it's fine to call it more than once).
-//
-// This coverage implementation provides very limited data:
-// it only tells if a given function was ever executed.
-// No counters, no per-basic-block or per-edge data.
-// But for many use cases this is what we need and the added slowdown
-// is negligible. This simple implementation will probably be obsoleted
-// by the upcoming Clang-based coverage implementation.
-// By having it here and now we hope to
-//  a) get the functionality to users earlier and
-//  b) collect usage statistics to help improve Clang coverage design.
-bool AddressSanitizer::InjectCoverage(Function &F) {
-  if (!ClCoverage) return false;
-
+void AddressSanitizer::InjectCoverageAtBlock(Function &F, BasicBlock &BB) {
+  BasicBlock::iterator IP = BB.getFirstInsertionPt(), BE = BB.end();
   // Skip static allocas at the top of the entry block so they don't become
   // dynamic when we split the block.  If we used our optimized stack layout,
   // then there will only be one alloca and it will come first.
-  BasicBlock &Entry = F.getEntryBlock();
-  BasicBlock::iterator IP = Entry.getFirstInsertionPt(), BE = Entry.end();
   for (; IP != BE; ++IP) {
     AllocaInst *AI = dyn_cast<AllocaInst>(IP);
     if (!AI || !AI->isStaticAlloca())
@@ -1198,14 +1176,48 @@ bool AddressSanitizer::InjectCoverage(Function &F) {
   Load->setAtomic(Monotonic);
   Load->setAlignment(1);
   Value *Cmp = IRB.CreateICmpEQ(Constant::getNullValue(Int8Ty), Load);
-  Instruction *Ins = SplitBlockAndInsertIfThen(Cmp, IP, false);
+  Instruction *Ins = SplitBlockAndInsertIfThen(
+      Cmp, IP, false, MDBuilder(*C).createBranchWeights(1, 100000));
   IRB.SetInsertPoint(Ins);
   // We pass &F to __sanitizer_cov. We could avoid this and rely on
   // GET_CALLER_PC, but having the PC of the first instruction is just nice.
-  IRB.CreateCall(AsanCovFunction, IRB.CreatePointerCast(&F, IntptrTy));
+  Instruction *Call = IRB.CreateCall(AsanCovFunction);
+  Call->setDebugLoc(IP->getDebugLoc());
   StoreInst *Store = IRB.CreateStore(ConstantInt::get(Int8Ty, 1), Guard);
   Store->setAtomic(Monotonic);
   Store->setAlignment(1);
+}
+
+// Poor man's coverage that works with ASan.
+// We create a Guard boolean variable with the same linkage
+// as the function and inject this code into the entry block (-asan-coverage=1)
+// or all blocks (-asan-coverage=2):
+// if (*Guard) {
+//    __sanitizer_cov(&F);
+//    *Guard = 1;
+// }
+// The accesses to Guard are atomic. The rest of the logic is
+// in __sanitizer_cov (it's fine to call it more than once).
+//
+// This coverage implementation provides very limited data:
+// it only tells if a given function (block) was ever executed.
+// No counters, no per-edge data.
+// But for many use cases this is what we need and the added slowdown
+// is negligible. This simple implementation will probably be obsoleted
+// by the upcoming Clang-based coverage implementation.
+// By having it here and now we hope to
+//  a) get the functionality to users earlier and
+//  b) collect usage statistics to help improve Clang coverage design.
+bool AddressSanitizer::InjectCoverage(Function &F,
+                                      const ArrayRef<BasicBlock *> AllBlocks) {
+  if (!ClCoverage) return false;
+
+  if (ClCoverage == 1) {
+    InjectCoverageAtBlock(F, F.getEntryBlock());
+  } else {
+    for (size_t i = 0, n = AllBlocks.size(); i < n; i++)
+      InjectCoverageAtBlock(F, *AllBlocks[i]);
+  }
   return true;
 }
 
@@ -1230,12 +1242,14 @@ bool AddressSanitizer::runOnFunction(Function &F) {
   SmallSet<Value*, 16> TempsToInstrument;
   SmallVector<Instruction*, 16> ToInstrument;
   SmallVector<Instruction*, 8> NoReturnCalls;
+  SmallVector<BasicBlock*, 16> AllBlocks;
   int NumAllocas = 0;
   bool IsWrite;
 
   // Fill the set of memory operations to instrument.
   for (Function::iterator FI = F.begin(), FE = F.end();
        FI != FE; ++FI) {
+    AllBlocks.push_back(FI);
     TempsToInstrument.clear();
     int NumInsnsPerBB = 0;
     for (BasicBlock::iterator BI = FI->begin(), BE = FI->end();
@@ -1305,7 +1319,7 @@ bool AddressSanitizer::runOnFunction(Function &F) {
 
   bool res = NumInstrumented > 0 || ChangedStack || !NoReturnCalls.empty();
 
-  if (InjectCoverage(F))
+  if (InjectCoverage(F, AllBlocks))
     res = true;
 
   DEBUG(dbgs() << "ASAN done instrumenting: " << res << " " << F << "\n");

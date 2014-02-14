@@ -22,22 +22,17 @@
 #include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
 
-MCObjectStreamer::MCObjectStreamer(MCContext &Context,
-                                   MCTargetStreamer *TargetStreamer,
-                                   MCAsmBackend &TAB, raw_ostream &OS,
-                                   MCCodeEmitter *Emitter_)
-    : MCStreamer(Context, TargetStreamer),
+MCObjectStreamer::MCObjectStreamer(MCContext &Context, MCAsmBackend &TAB,
+                                   raw_ostream &OS, MCCodeEmitter *Emitter_)
+    : MCStreamer(Context),
       Assembler(new MCAssembler(Context, TAB, *Emitter_,
                                 *TAB.createObjectWriter(OS), OS)),
       CurSectionData(0) {}
 
-MCObjectStreamer::MCObjectStreamer(MCContext &Context,
-                                   MCTargetStreamer *TargetStreamer,
-                                   MCAsmBackend &TAB, raw_ostream &OS,
-                                   MCCodeEmitter *Emitter_,
+MCObjectStreamer::MCObjectStreamer(MCContext &Context, MCAsmBackend &TAB,
+                                   raw_ostream &OS, MCCodeEmitter *Emitter_,
                                    MCAssembler *_Assembler)
-    : MCStreamer(Context, TargetStreamer), Assembler(_Assembler),
-      CurSectionData(0) {}
+    : MCStreamer(Context), Assembler(_Assembler), CurSectionData(0) {}
 
 MCObjectStreamer::~MCObjectStreamer() {
   delete &Assembler->getBackend();
@@ -192,7 +187,7 @@ void MCObjectStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
   Symbol->setVariableValue(AddValueSymbols(Value));
 }
 
-void MCObjectStreamer::EmitInstruction(const MCInst &Inst) {
+void MCObjectStreamer::EmitInstruction(const MCInst &Inst, const MCSubtargetInfo &STI) {
   // Scan for values.
   for (unsigned i = Inst.getNumOperands(); i--; )
     if (Inst.getOperand(i).isExpr())
@@ -208,7 +203,7 @@ void MCObjectStreamer::EmitInstruction(const MCInst &Inst) {
   // If this instruction doesn't need relaxation, just emit it as data.
   MCAssembler &Assembler = getAssembler();
   if (!Assembler.getBackend().mayNeedRelaxation(Inst)) {
-    EmitInstToData(Inst);
+    EmitInstToData(Inst, STI);
     return;
   }
 
@@ -223,23 +218,25 @@ void MCObjectStreamer::EmitInstruction(const MCInst &Inst) {
     getAssembler().getBackend().relaxInstruction(Inst, Relaxed);
     while (getAssembler().getBackend().mayNeedRelaxation(Relaxed))
       getAssembler().getBackend().relaxInstruction(Relaxed, Relaxed);
-    EmitInstToData(Relaxed);
+    EmitInstToData(Relaxed, STI);
     return;
   }
 
   // Otherwise emit to a separate fragment.
-  EmitInstToFragment(Inst);
+  EmitInstToFragment(Inst, STI);
 }
 
-void MCObjectStreamer::EmitInstToFragment(const MCInst &Inst) {
+void MCObjectStreamer::EmitInstToFragment(const MCInst &Inst,
+                                          const MCSubtargetInfo &STI) {
   // Always create a new, separate fragment here, because its size can change
   // during relaxation.
-  MCRelaxableFragment *IF = new MCRelaxableFragment(Inst);
+  MCRelaxableFragment *IF = new MCRelaxableFragment(Inst, STI);
   insert(IF);
 
   SmallString<128> Code;
   raw_svector_ostream VecOS(Code);
-  getAssembler().getEmitter().EncodeInstruction(Inst, VecOS, IF->getFixups());
+  getAssembler().getEmitter().EncodeInstruction(Inst, VecOS, IF->getFixups(),
+                                                STI);
   VecOS.flush();
   IF->getContents().append(Code.begin(), Code.end());
 }

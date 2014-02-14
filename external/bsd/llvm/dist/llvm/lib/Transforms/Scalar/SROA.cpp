@@ -461,13 +461,29 @@ private:
 
   void visitMemTransferInst(MemTransferInst &II) {
     ConstantInt *Length = dyn_cast<ConstantInt>(II.getLength());
-    if ((Length && Length->getValue() == 0) ||
-        (IsOffsetKnown && !Offset.isNegative() && Offset.uge(AllocSize)))
+    if (Length && Length->getValue() == 0)
       // Zero-length mem transfer intrinsics can be ignored entirely.
       return markAsDead(II);
 
+    // Because we can visit these intrinsics twice, also check to see if the
+    // first time marked this instruction as dead. If so, skip it.
+    if (VisitedDeadInsts.count(&II))
+      return;
+
     if (!IsOffsetKnown)
       return PI.setAborted(&II);
+
+    // This side of the transfer is completely out-of-bounds, and so we can
+    // nuke the entire transfer. However, we also need to nuke the other side
+    // if already added to our partitions.
+    // FIXME: Yet another place we really should bypass this when
+    // instrumenting for ASan.
+    if (!Offset.isNegative() && Offset.uge(AllocSize)) {
+      SmallDenseMap<Instruction *, unsigned>::iterator MTPI = MemTransferSliceMap.find(&II);
+      if (MTPI != MemTransferSliceMap.end())
+        S.Slices[MTPI->second].kill();
+      return markAsDead(II);
+    }
 
     uint64_t RawOffset = Offset.getLimitedValue();
     uint64_t Size = Length ? Length->getLimitedValue()
@@ -917,6 +933,7 @@ private:
                         ArrayRef<AllocaSlices::iterator> SplitUses);
   bool splitAlloca(AllocaInst &AI, AllocaSlices &S);
   bool runOnAlloca(AllocaInst &AI);
+  void clobberUse(Use &U);
   void deleteDeadInstructions(SmallPtrSet<AllocaInst *, 4> &DeletedAllocas);
   bool promoteAllocas(Function &F);
 };
@@ -940,7 +957,11 @@ static Type *findCommonType(AllocaSlices::const_iterator B,
                             AllocaSlices::const_iterator E,
                             uint64_t EndOffset) {
   Type *Ty = 0;
-  bool IgnoreNonIntegralTypes = false;
+  bool TyIsCommon = true;
+  IntegerType *ITy = 0;
+
+  // Note that we need to look at *every* alloca slice's Use to ensure we
+  // always get consistent results regardless of the order of slices.
   for (AllocaSlices::const_iterator I = B; I != E; ++I) {
     Use *U = I->getUse();
     if (isa<IntrinsicInst>(*U->getUser()))
@@ -953,37 +974,30 @@ static Type *findCommonType(AllocaSlices::const_iterator B,
       UserTy = LI->getType();
     } else if (StoreInst *SI = dyn_cast<StoreInst>(U->getUser())) {
       UserTy = SI->getValueOperand()->getType();
-    } else {
-      IgnoreNonIntegralTypes = true; // Give up on anything but an iN type.
-      continue;
     }
 
-    if (IntegerType *ITy = dyn_cast<IntegerType>(UserTy)) {
+    if (!UserTy || (Ty && Ty != UserTy))
+      TyIsCommon = false; // Give up on anything but an iN type.
+    else
+      Ty = UserTy;
+
+    if (IntegerType *UserITy = dyn_cast_or_null<IntegerType>(UserTy)) {
       // If the type is larger than the partition, skip it. We only encounter
       // this for split integer operations where we want to use the type of the
       // entity causing the split. Also skip if the type is not a byte width
       // multiple.
-      if (ITy->getBitWidth() % 8 != 0 ||
-          ITy->getBitWidth() / 8 > (EndOffset - B->beginOffset()))
+      if (UserITy->getBitWidth() % 8 != 0 ||
+          UserITy->getBitWidth() / 8 > (EndOffset - B->beginOffset()))
         continue;
 
-      // If we have found an integer type use covering the alloca, use that
-      // regardless of the other types, as integers are often used for
-      // a "bucket of bits" type.
-      //
-      // NB: This *must* be the only return from inside the loop so that the
-      // order of slices doesn't impact the computed type.
-      return ITy;
-    } else if (IgnoreNonIntegralTypes) {
-      continue;
+      // Track the largest bitwidth integer type used in this way in case there
+      // is no common type.
+      if (!ITy || ITy->getBitWidth() < UserITy->getBitWidth())
+        ITy = UserITy;
     }
-
-    if (Ty && Ty != UserTy)
-      IgnoreNonIntegralTypes = true; // Give up on anything but an iN type.
-
-    Ty = UserTy;
   }
-  return Ty;
+
+  return TyIsCommon ? Ty : ITy;
 }
 
 /// PHI instructions that use an alloca and are subsequently loaded can be
@@ -2497,8 +2511,11 @@ private:
     // alloca that should be re-examined after rewriting this instruction.
     Value *OtherPtr = IsDest ? II.getRawSource() : II.getRawDest();
     if (AllocaInst *AI
-          = dyn_cast<AllocaInst>(OtherPtr->stripInBoundsOffsets()))
+          = dyn_cast<AllocaInst>(OtherPtr->stripInBoundsOffsets())) {
+      assert(AI != &OldAI && AI != &NewAI &&
+             "Splittable transfers cannot reach the same alloca on both ends.");
       Pass.Worklist.insert(AI);
+    }
 
     if (EmitMemCpy) {
       Type *OtherPtrTy = IsDest ? II.getRawSource()->getType()
@@ -3328,6 +3345,21 @@ bool SROA::splitAlloca(AllocaInst &AI, AllocaSlices &S) {
   return Changed;
 }
 
+/// \brief Clobber a use with undef, deleting the used value if it becomes dead.
+void SROA::clobberUse(Use &U) {
+  Value *OldV = U;
+  // Replace the use with an undef value.
+  U = UndefValue::get(OldV->getType());
+
+  // Check for this making an instruction dead. We have to garbage collect
+  // all the dead instructions to ensure the uses of any alloca end up being
+  // minimal.
+  if (Instruction *OldI = dyn_cast<Instruction>(OldV))
+    if (isInstructionTriviallyDead(OldI)) {
+      DeadInsts.insert(OldI);
+    }
+}
+
 /// \brief Analyze an alloca for SROA.
 ///
 /// This analyzes the alloca to ensure we can reason about it, builds
@@ -3365,21 +3397,23 @@ bool SROA::runOnAlloca(AllocaInst &AI) {
   for (AllocaSlices::dead_user_iterator DI = S.dead_user_begin(),
                                         DE = S.dead_user_end();
        DI != DE; ++DI) {
-    Changed = true;
+    // Free up everything used by this instruction.
+    for (User::op_iterator DOI = (*DI)->op_begin(), DOE = (*DI)->op_end();
+         DOI != DOE; ++DOI)
+      clobberUse(*DOI);
+
+    // Now replace the uses of this instruction.
     (*DI)->replaceAllUsesWith(UndefValue::get((*DI)->getType()));
+
+    // And mark it for deletion.
     DeadInsts.insert(*DI);
+    Changed = true;
   }
   for (AllocaSlices::dead_op_iterator DO = S.dead_op_begin(),
                                       DE = S.dead_op_end();
        DO != DE; ++DO) {
-    Value *OldV = **DO;
-    // Clobber the use with an undef value.
-    **DO = UndefValue::get(OldV->getType());
-    if (Instruction *OldI = dyn_cast<Instruction>(OldV))
-      if (isInstructionTriviallyDead(OldI)) {
-        Changed = true;
-        DeadInsts.insert(OldI);
-      }
+    clobberUse(**DO);
+    Changed = true;
   }
 
   // No slices to split. Leave the dead alloca for a later pass to clean up.
@@ -3538,6 +3572,9 @@ namespace {
 }
 
 bool SROA::runOnFunction(Function &F) {
+  if (skipOptnoneFunction(F))
+    return false;
+
   DEBUG(dbgs() << "SROA function: " << F.getName() << "\n");
   C = &F.getContext();
   DL = getAnalysisIfAvailable<DataLayout>();

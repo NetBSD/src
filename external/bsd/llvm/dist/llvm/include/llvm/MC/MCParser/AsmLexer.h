@@ -30,7 +30,6 @@ class AsmLexer : public MCAsmLexer {
   const char *CurPtr;
   const MemoryBuffer *CurBuf;
   bool isAtStartOfLine;
-  bool AllowAtInIdentifier; // Cached here to avoid repeated MAI query.
 
   void operator=(const AsmLexer&) LLVM_DELETED_FUNCTION;
   AsmLexer(const AsmLexer&) LLVM_DELETED_FUNCTION;
@@ -47,6 +46,8 @@ public:
 
   virtual StringRef LexUntilEndOfStatement();
   StringRef LexUntilEndOfLine();
+
+  virtual const AsmToken peekTok(bool ShouldSkipSpace = true);
 
   bool isAtStartOfComment(char Char);
   bool isAtStatementSeparator(const char *Ptr);

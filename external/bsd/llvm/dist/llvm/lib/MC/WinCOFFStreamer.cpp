@@ -20,6 +20,7 @@
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCObjectStreamer.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCSectionCOFF.h"
@@ -49,8 +50,7 @@ public:
 
   // MCStreamer interface
 
-  virtual void InitSections();
-  virtual void InitToTextSection();
+  virtual void InitSections(bool Force);
   virtual void EmitLabel(MCSymbol *Symbol);
   virtual void EmitDebugLabel(MCSymbol *Symbol);
   virtual void EmitAssemblerFlag(MCAssemblerFlag Flag);
@@ -78,13 +78,13 @@ public:
   virtual void FinishImpl();
 
 private:
-  virtual void EmitInstToData(const MCInst &Inst) {
+  virtual void EmitInstToData(const MCInst &Inst, const MCSubtargetInfo &STI) {
     MCDataFragment *DF = getOrCreateDataFragment();
 
     SmallVector<MCFixup, 4> Fixups;
     SmallString<256> Code;
     raw_svector_ostream VecOS(Code);
-    getAssembler().getEmitter().EncodeInstruction(Inst, VecOS, Fixups);
+    getAssembler().getEmitter().EncodeInstruction(Inst, VecOS, Fixups, STI);
     VecOS.flush();
 
     // Add the fixups and data.
@@ -94,54 +94,18 @@ private:
     }
     DF->getContents().append(Code.begin(), Code.end());
   }
-
-  const MCSectionCOFF *getSectionText() {
-    return getContext().getCOFFSection(
-        ".text", COFF::IMAGE_SCN_CNT_CODE | COFF::IMAGE_SCN_MEM_EXECUTE |
-                     COFF::IMAGE_SCN_MEM_READ,
-        SectionKind::getText());
-  }
-
-  const MCSectionCOFF *getSectionData() {
-    return getContext().getCOFFSection(
-        ".data", COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
-                     COFF::IMAGE_SCN_MEM_READ | COFF::IMAGE_SCN_MEM_WRITE,
-        SectionKind::getDataRel());
-  }
-
-  const MCSectionCOFF *getSectionBSS() {
-    return getContext().getCOFFSection(
-        ".bss", COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA |
-                    COFF::IMAGE_SCN_MEM_READ | COFF::IMAGE_SCN_MEM_WRITE,
-        SectionKind::getBSS());
-  }
-
-  void SetSectionText() {
-    SwitchSection(getSectionText());
-    EmitCodeAlignment(4, 0);
-  }
-
-  void SetSectionData() {
-    SwitchSection(getSectionData());
-    EmitCodeAlignment(4, 0);
-  }
-
-  void SetSectionBSS() {
-    SwitchSection(getSectionBSS());
-    EmitCodeAlignment(4, 0);
-  }
 };
 } // end anonymous namespace.
 
 WinCOFFStreamer::WinCOFFStreamer(MCContext &Context, MCAsmBackend &MAB,
                                  MCCodeEmitter &CE, raw_ostream &OS)
-    : MCObjectStreamer(Context, 0, MAB, OS, &CE), CurSymbol(NULL) {}
+    : MCObjectStreamer(Context, MAB, OS, &CE), CurSymbol(NULL) {}
 
 void WinCOFFStreamer::AddCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                                       unsigned ByteAlignment, bool External) {
   assert(!Symbol->isInSection() && "Symbol must not already have a section!");
 
-  const MCSectionCOFF *Section = getSectionBSS();
+  const MCSection *Section = getContext().getObjectFileInfo()->getBSSSection();
   MCSectionData &SectionData = getAssembler().getOrCreateSectionData(*Section);
   if (SectionData.getAlignment() < ByteAlignment)
     SectionData.setAlignment(ByteAlignment);
@@ -159,15 +123,20 @@ void WinCOFFStreamer::AddCommonSymbol(MCSymbol *Symbol, uint64_t Size,
 
 // MCStreamer interface
 
-void WinCOFFStreamer::InitToTextSection() {
-  SetSectionText();
-}
+void WinCOFFStreamer::InitSections(bool Force) {
+  // FIXME: this is identical to the ELF one.
+  // This emulates the same behavior of GNU as. This makes it easier
+  // to compare the output as the major sections are in the same order.
+  SwitchSection(getContext().getObjectFileInfo()->getTextSection());
+  EmitCodeAlignment(4);
 
-void WinCOFFStreamer::InitSections() {
-  SetSectionText();
-  SetSectionData();
-  SetSectionBSS();
-  SetSectionText();
+  SwitchSection(getContext().getObjectFileInfo()->getDataSection());
+  EmitCodeAlignment(4);
+
+  SwitchSection(getContext().getObjectFileInfo()->getBSSSection());
+  EmitCodeAlignment(4);
+
+  SwitchSection(getContext().getObjectFileInfo()->getTextSection());
 }
 
 void WinCOFFStreamer::EmitLabel(MCSymbol *Symbol) {

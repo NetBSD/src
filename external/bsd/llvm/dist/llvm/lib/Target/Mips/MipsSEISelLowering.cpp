@@ -244,7 +244,9 @@ addMSAFloatType(MVT::SimpleValueType Ty, const TargetRegisterClass *RC) {
 }
 
 bool
-MipsSETargetLowering::allowsUnalignedMemoryAccesses(EVT VT, bool *Fast) const {
+MipsSETargetLowering::allowsUnalignedMemoryAccesses(EVT VT,
+                                                    unsigned,
+                                                    bool *Fast) const {
   MVT::SimpleValueType SVT = VT.getSimpleVT().SimpleTy;
 
   switch (SVT) {
@@ -1616,25 +1618,34 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
   case Intrinsic::mips_copy_s_w:
     return lowerMSACopyIntr(Op, DAG, MipsISD::VEXTRACT_SEXT_ELT);
   case Intrinsic::mips_copy_s_d:
-    // Don't lower directly into VEXTRACT_SEXT_ELT since i64 might be illegal.
-    // Instead lower to the generic EXTRACT_VECTOR_ELT node and let the type
-    // legalizer and EXTRACT_VECTOR_ELT lowering sort it out.
-    return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, SDLoc(Op), Op->getValueType(0),
-                       Op->getOperand(1), Op->getOperand(2));
+    if (HasMips64)
+      // Lower directly into VEXTRACT_SEXT_ELT since i64 is legal on Mips64.
+      return lowerMSACopyIntr(Op, DAG, MipsISD::VEXTRACT_SEXT_ELT);
+    else {
+      // Lower into the generic EXTRACT_VECTOR_ELT node and let the type
+      // legalizer and EXTRACT_VECTOR_ELT lowering sort it out.
+      return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, SDLoc(Op),
+                         Op->getValueType(0), Op->getOperand(1),
+                         Op->getOperand(2));
+    }
   case Intrinsic::mips_copy_u_b:
   case Intrinsic::mips_copy_u_h:
   case Intrinsic::mips_copy_u_w:
     return lowerMSACopyIntr(Op, DAG, MipsISD::VEXTRACT_ZEXT_ELT);
   case Intrinsic::mips_copy_u_d:
-    // Don't lower directly into VEXTRACT_ZEXT_ELT since i64 might be illegal.
-    // Instead lower to the generic EXTRACT_VECTOR_ELT node and let the type
-    // legalizer and EXTRACT_VECTOR_ELT lowering sort it out.
-    //
-    // Note: When i64 is illegal, this results in copy_s.w instructions instead
-    // of copy_u.w instructions. This makes no difference to the behaviour
-    // since i64 is only illegal when the register file is 32-bit.
-    return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, SDLoc(Op), Op->getValueType(0),
-                       Op->getOperand(1), Op->getOperand(2));
+    if (HasMips64)
+      // Lower directly into VEXTRACT_ZEXT_ELT since i64 is legal on Mips64.
+      return lowerMSACopyIntr(Op, DAG, MipsISD::VEXTRACT_ZEXT_ELT);
+    else {
+      // Lower into the generic EXTRACT_VECTOR_ELT node and let the type
+      // legalizer and EXTRACT_VECTOR_ELT lowering sort it out.
+      // Note: When i64 is illegal, this results in copy_s.w instructions
+      // instead of copy_u.w instructions. This makes no difference to the
+      // behaviour since i64 is only illegal when the register file is 32-bit.
+      return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, SDLoc(Op),
+                         Op->getValueType(0), Op->getOperand(1),
+                         Op->getOperand(2));
+    }
   case Intrinsic::mips_div_s_b:
   case Intrinsic::mips_div_s_h:
   case Intrinsic::mips_div_s_w:
@@ -1796,7 +1807,8 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
   case Intrinsic::mips_ldi_w:
   case Intrinsic::mips_ldi_d:
     return lowerMSASplatImm(Op, 1, DAG);
-  case Intrinsic::mips_lsa: {
+  case Intrinsic::mips_lsa:
+  case Intrinsic::mips_dlsa: {
     EVT ResTy = Op->getValueType(0);
     return DAG.getNode(ISD::ADD, SDLoc(Op), ResTy, Op->getOperand(1),
                        DAG.getNode(ISD::SHL, SDLoc(Op), ResTy,

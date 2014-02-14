@@ -19,16 +19,10 @@ namespace {
 
   class MCNullStreamer : public MCStreamer {
   public:
-    MCNullStreamer(MCContext &Context) : MCStreamer(Context, 0) {}
+    MCNullStreamer(MCContext &Context) : MCStreamer(Context) {}
 
     /// @name MCStreamer Interface
     /// @{
-
-    virtual void InitToTextSection() {
-    }
-
-    virtual void InitSections() {
-    }
 
     virtual void ChangeSection(const MCSection *Section,
                                const MCExpr *Subsection) {
@@ -98,7 +92,7 @@ namespace {
                                        unsigned Column, unsigned Flags,
                                        unsigned Isa, unsigned Discriminator,
                                        StringRef FileName) {}
-    virtual void EmitInstruction(const MCInst &Inst) {}
+    virtual void EmitInstruction(const MCInst &Inst, const MCSubtargetInfo&) {}
 
     virtual void EmitBundleAlignMode(unsigned AlignPow2) {}
     virtual void EmitBundleLock(bool AlignToEnd) {}

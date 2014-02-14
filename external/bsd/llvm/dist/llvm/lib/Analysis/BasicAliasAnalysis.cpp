@@ -154,7 +154,7 @@ static bool isObjectSize(const Value *V, uint64_t Size,
 /// isIdentifiedFunctionLocal - Return true if V is umabigously identified
 /// at the function-level. Different IdentifiedFunctionLocals can't alias.
 /// Further, an IdentifiedFunctionLocal can not alias with any function
-/// arguments other than itself, which is not neccessarily true for
+/// arguments other than itself, which is not necessarily true for
 /// IdentifiedObjects.
 static bool isIdentifiedFunctionLocal(const Value *V)
 {
@@ -1009,7 +1009,15 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, uint64_t V1Size,
         return NoAlias;
       }
     } else {
-      if (V1Size != UnknownSize) {
+      // We have the situation where:
+      // +                +
+      // | BaseOffset     |
+      // ---------------->|
+      // |-->V1Size       |-------> V2Size
+      // GEP1             V2
+      // We need to know that V2Size is not unknown, otherwise we might have
+      // stripped a gep with negative index ('gep <ptr>, -1, ...).
+      if (V1Size != UnknownSize && V2Size != UnknownSize) {
         if (-(uint64_t)GEP1BaseOffset < V1Size)
           return PartialAlias;
         return NoAlias;

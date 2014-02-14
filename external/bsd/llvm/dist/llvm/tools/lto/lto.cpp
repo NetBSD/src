@@ -156,6 +156,17 @@ lto_module_t lto_module_create_from_memory(const void* mem, size_t length) {
   return LTOModule::makeLTOModule(mem, length, Options, sLastErrorString);
 }
 
+/// Loads an object file from memory with an extra path argument.
+/// Returns NULL on error (check lto_get_error_message() for details).
+lto_module_t lto_module_create_from_memory_with_path(const void* mem,
+                                                     size_t length,
+                                                     const char *path) {
+  lto_initialize();
+  llvm::TargetOptions Options;
+  lto_set_target_options(Options);
+  return LTOModule::makeLTOModule(mem, length, Options, sLastErrorString, path);
+}
+
 /// lto_module_dispose - Frees all memory for a module. Upon return the
 /// lto_module_t is no longer valid.
 void lto_module_dispose(lto_module_t mod) {
@@ -191,6 +202,35 @@ const char* lto_module_get_symbol_name(lto_module_t mod, unsigned int index) {
 lto_symbol_attributes lto_module_get_symbol_attribute(lto_module_t mod,
                                                       unsigned int index) {
   return mod->getSymbolAttributes(index);
+}
+
+/// lto_module_get_num_deplibs - Returns the number of dependent libraries in
+/// the object module.
+unsigned int lto_module_get_num_deplibs(lto_module_t mod) {
+  return mod->getDependentLibraryCount();
+}
+
+/// lto_module_get_deplib - Returns the ith dependent library in the module.
+const char* lto_module_get_deplib(lto_module_t mod, unsigned int index) {
+  return mod->getDependentLibrary(index);
+}
+
+/// lto_module_get_num_linkeropts - Returns the number of linker options in the
+/// object module.
+unsigned int lto_module_get_num_linkeropts(lto_module_t mod) {
+  return mod->getLinkerOptCount();
+}
+
+/// lto_module_get_linkeropt - Returns the ith linker option in the module.
+const char* lto_module_get_linkeropt(lto_module_t mod, unsigned int index) {
+  return mod->getLinkerOpt(index);
+}
+
+/// Set a diagnostic handler.
+void lto_codegen_set_diagnostic_handler(lto_code_gen_t cg,
+                                        lto_diagnostic_handler_t diag_handler,
+                                        void *ctxt) {
+  cg->setDiagnosticHandler(diag_handler, ctxt);
 }
 
 /// lto_codegen_create - Instantiates a code generator. Returns NULL if there

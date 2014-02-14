@@ -22,6 +22,10 @@ def InterpSlot : Operand<i32> {
   let PrintMethod = "printInterpSlot";
 }
 
+def SendMsgImm : Operand<i32> {
+  let PrintMethod = "printSendMsg";
+}
+
 def isSI : Predicate<"Subtarget.getGeneration() "
                       ">= AMDGPUSubtarget::SOUTHERN_ISLANDS">;
 
@@ -826,17 +830,25 @@ def S_BARRIER : SOPP <0x0000000a, (ins), "S_BARRIER",
 def S_WAITCNT : SOPP <0x0000000c, (ins WAIT_FLAG:$simm16), "S_WAITCNT $simm16",
   []
 >;
-} // End hasSideEffects
 //def S_SETHALT : SOPP_ <0x0000000d, "S_SETHALT", []>;
 //def S_SLEEP : SOPP_ <0x0000000e, "S_SLEEP", []>;
 //def S_SETPRIO : SOPP_ <0x0000000f, "S_SETPRIO", []>;
-//def S_SENDMSG : SOPP_ <0x00000010, "S_SENDMSG", []>;
+
+let Uses = [EXEC] in {
+  def S_SENDMSG : SOPP <0x00000010, (ins SendMsgImm:$simm16, M0Reg:$m0), "S_SENDMSG $simm16",
+      [(int_SI_sendmsg imm:$simm16, M0Reg:$m0)]
+  > {
+    let DisableEncoding = "$m0";
+  }
+} // End Uses = [EXEC]
+
 //def S_SENDMSGHALT : SOPP_ <0x00000011, "S_SENDMSGHALT", []>;
 //def S_TRAP : SOPP_ <0x00000012, "S_TRAP", []>;
 //def S_ICACHE_INV : SOPP_ <0x00000013, "S_ICACHE_INV", []>;
 //def S_INCPERFLEVEL : SOPP_ <0x00000014, "S_INCPERFLEVEL", []>;
 //def S_DECPERFLEVEL : SOPP_ <0x00000015, "S_DECPERFLEVEL", []>;
 //def S_TTRACEDATA : SOPP_ <0x00000016, "S_TTRACEDATA", []>;
+} // End hasSideEffects
 
 def V_CNDMASK_B32_e32 : VOP2 <0x00000000, (outs VReg_32:$dst),
   (ins VSrc_32:$src0, VReg_32:$src1, VCCReg:$vcc),
@@ -1416,7 +1428,7 @@ def : Pat <
 /* int_SI_vs_load_input */
 def : Pat<
   (SIload_input i128:$tlst, IMM12bit:$attr_offset, i32:$buf_idx_vgpr),
-  (BUFFER_LOAD_FORMAT_XYZW_IDXEN $tlst, $buf_idx_vgpr, imm:$attr_offset)
+  (BUFFER_LOAD_FORMAT_XYZW_IDXEN $tlst, $buf_idx_vgpr, imm:$attr_offset, 0, 0, 0, 0)
 >;
 
 /* int_SI_export */
@@ -1659,7 +1671,12 @@ def : BitConvert <i128, v4i32,  VReg_128>;
 def : BitConvert <v8i32, v32i8, SReg_256>;
 def : BitConvert <v32i8, v8i32, SReg_256>;
 def : BitConvert <v8i32, v32i8, VReg_256>;
+def : BitConvert <v8i32, v8f32, VReg_256>;
+def : BitConvert <v8f32, v8i32, VReg_256>;
 def : BitConvert <v32i8, v8i32, VReg_256>;
+
+def : BitConvert <v16i32, v16f32, VReg_512>;
+def : BitConvert <v16f32, v16i32, VReg_512>;
 
 /********** =================== **********/
 /********** Src & Dst modifiers **********/
@@ -1671,16 +1688,30 @@ def : Pat <
    0 /* ABS */, 1 /* CLAMP */, 0 /* OMOD */, 0 /* NEG */)
 >;
 
+/********** ================================ **********/
+/********** Floating point absolute/negative **********/
+/********** ================================ **********/
+
+// Manipulate the sign bit directly, as e.g. using the source negation modifier
+// in V_ADD_F32_e64 $src, 0, [...] does not result in -0.0 for $src == +0.0,
+// breaking the piglit *s-floatBitsToInt-neg* tests
+
+// TODO: Look into not implementing isFNegFree/isFAbsFree for SI, and possibly
+// removing these patterns
+
+def : Pat <
+  (fneg (fabs f32:$src)),
+  (V_OR_B32_e32 $src, (V_MOV_B32_e32 0x80000000)) /* Set sign bit */
+>;
+
 def : Pat <
   (fabs f32:$src),
-  (V_ADD_F32_e64 $src, (i32 0 /* SRC1 */),
-   1 /* ABS */, 0 /* CLAMP */, 0 /* OMOD */, 0 /* NEG */)
+  (V_AND_B32_e32 $src, (V_MOV_B32_e32 0x7fffffff)) /* Clear sign bit */
 >;
 
 def : Pat <
   (fneg f32:$src),
-  (V_ADD_F32_e64 $src, (i32 0 /* SRC1 */),
-   0 /* ABS */, 0 /* CLAMP */, 0 /* OMOD */, 1 /* NEG */)
+  (V_XOR_B32_e32 $src, (V_MOV_B32_e32 0x80000000)) /* Toggle sign bit */
 >;
 
 /********** ================== **********/
@@ -1807,10 +1838,15 @@ def : Pat <
   (V_CNDMASK_B32_e64 (i32 0), (i32 -1), $src0)
 >;
 
+def : Pat <
+  (i32 (zext i1:$src0)),
+  (V_CNDMASK_B32_e64 (i32 0), (i32 1), $src0)
+>;
+
 // 1. Offset as 8bit DWORD immediate
 def : Pat <
   (SIload_constant i128:$sbase, IMM8bitDWORD:$offset),
-  (S_BUFFER_LOAD_DWORD_IMM $sbase, IMM8bitDWORD:$offset)
+  (S_BUFFER_LOAD_DWORD_IMM $sbase, (as_dword_i32imm $offset))
 >;
 
 // 2. Offset loaded in an 32bit SGPR
@@ -1822,7 +1858,7 @@ def : Pat <
 // 3. Offset in an 32Bit VGPR
 def : Pat <
   (SIload_constant i128:$sbase, i32:$voff),
-  (BUFFER_LOAD_DWORD_OFFEN $sbase, $voff)
+  (BUFFER_LOAD_DWORD_OFFEN $sbase, $voff, 0, 0, 0, 0)
 >;
 
 // The multiplication scales from [0,1] to the unsigned integer range
@@ -1890,8 +1926,8 @@ multiclass SMRD_Pattern <SMRD Instr_IMM, SMRD Instr_SGPR, ValueType vt> {
 
   // 1. Offset as 8bit DWORD immediate
   def : Pat <
-    (constant_load (SIadd64bit32bit i64:$sbase, IMM8bitDWORD:$offset)),
-    (vt (Instr_IMM $sbase, IMM8bitDWORD:$offset))
+    (constant_load (add i64:$sbase, (i64 IMM8bitDWORD:$offset))),
+    (vt (Instr_IMM $sbase, (as_dword_i32imm $offset)))
   >;
 
   // 2. Offset loaded in an 32bit SGPR
@@ -1923,6 +1959,11 @@ defm : SMRD_Pattern <S_LOAD_DWORDX16_IMM, S_LOAD_DWORDX16_SGPR, v16i32>;
 
 multiclass MUBUFLoad_Pattern <MUBUF Instr_ADDR64, ValueType vt,
                               PatFrag global_ld, PatFrag constant_ld> {
+  def : Pat <
+    (vt (global_ld (mubuf_vaddr_offset i64:$ptr, i64:$offset, IMM12bit:$imm_offset))),
+    (Instr_ADDR64 (SI_ADDR64_RSRC $ptr), $offset, (as_i16imm $imm_offset))
+  >;
+
   def : Pat <
     (vt (global_ld (add i64:$ptr, (i64 IMM12bit:$offset)))),
     (Instr_ADDR64 (SI_ADDR64_RSRC (i64 0)), $ptr, (as_i16imm $offset))
@@ -1966,6 +2007,16 @@ defm : MUBUFLoad_Pattern <BUFFER_LOAD_DWORDX4_ADDR64, v4i32,
 multiclass MUBUFStore_Pattern <MUBUF Instr, ValueType vt, PatFrag st> {
 
   def : Pat <
+    (st vt:$value, (mubuf_vaddr_offset i64:$ptr, i64:$offset, IMM12bit:$imm_offset)),
+    (Instr $value, (SI_ADDR64_RSRC $ptr), $offset, (as_i16imm $imm_offset))
+  >;
+
+  def : Pat <
+    (st vt:$value, (add i64:$ptr, IMM12bit:$offset)),
+    (Instr $value, (SI_ADDR64_RSRC (i64 0)), $ptr, (as_i16imm $offset))
+  >;
+
+  def : Pat <
     (st vt:$value, i64:$ptr),
     (Instr $value, (SI_ADDR64_RSRC (i64 0)), $ptr, 0)
   >;
@@ -1982,6 +2033,50 @@ defm : MUBUFStore_Pattern <BUFFER_STORE_DWORD, i32, global_store>;
 defm : MUBUFStore_Pattern <BUFFER_STORE_DWORDX2, i64, global_store>;
 defm : MUBUFStore_Pattern <BUFFER_STORE_DWORDX2, v2i32, global_store>;
 defm : MUBUFStore_Pattern <BUFFER_STORE_DWORDX4, v4i32, global_store>;
+
+// BUFFER_LOAD_DWORD*, addr64=0
+multiclass MUBUF_Load_Dword <ValueType vt, MUBUF offset, MUBUF offen, MUBUF idxen,
+                             MUBUF bothen> {
+
+  def : Pat <
+    (vt (int_SI_buffer_load_dword i128:$rsrc, i32:$vaddr, i32:$soffset,
+                                  imm:$offset, 0, 0, imm:$glc, imm:$slc,
+                                  imm:$tfe)),
+    (offset $rsrc, $vaddr, (as_i16imm $offset), $soffset, (as_i1imm $glc),
+            (as_i1imm $slc), (as_i1imm $tfe))
+  >;
+
+  def : Pat <
+    (vt (int_SI_buffer_load_dword i128:$rsrc, i32:$vaddr, i32:$soffset,
+                                  imm, 1, 0, imm:$glc, imm:$slc,
+                                  imm:$tfe)),
+    (offen $rsrc, $vaddr, $soffset, (as_i1imm $glc), (as_i1imm $slc),
+           (as_i1imm $tfe))
+  >;
+
+  def : Pat <
+    (vt (int_SI_buffer_load_dword i128:$rsrc, i32:$vaddr, i32:$soffset,
+                                  imm:$offset, 0, 1, imm:$glc, imm:$slc,
+                                  imm:$tfe)),
+    (idxen $rsrc, $vaddr, (as_i16imm $offset), $soffset, (as_i1imm $glc),
+           (as_i1imm $slc), (as_i1imm $tfe))
+  >;
+
+  def : Pat <
+    (vt (int_SI_buffer_load_dword i128:$rsrc, v2i32:$vaddr, i32:$soffset,
+                                  imm, 1, 1, imm:$glc, imm:$slc,
+                                  imm:$tfe)),
+    (bothen $rsrc, $vaddr, $soffset, (as_i1imm $glc), (as_i1imm $slc),
+            (as_i1imm $tfe))
+  >;
+}
+
+defm : MUBUF_Load_Dword <i32, BUFFER_LOAD_DWORD_OFFSET, BUFFER_LOAD_DWORD_OFFEN,
+                         BUFFER_LOAD_DWORD_IDXEN, BUFFER_LOAD_DWORD_BOTHEN>;
+defm : MUBUF_Load_Dword <v2i32, BUFFER_LOAD_DWORDX2_OFFSET, BUFFER_LOAD_DWORDX2_OFFEN,
+                         BUFFER_LOAD_DWORDX2_IDXEN, BUFFER_LOAD_DWORDX2_BOTHEN>;
+defm : MUBUF_Load_Dword <v4i32, BUFFER_LOAD_DWORDX4_OFFSET, BUFFER_LOAD_DWORDX4_OFFEN,
+                         BUFFER_LOAD_DWORDX4_IDXEN, BUFFER_LOAD_DWORDX4_BOTHEN>;
 
 //===----------------------------------------------------------------------===//
 // MTBUF Patterns
@@ -2008,7 +2103,7 @@ def : MTBUF_StoreResource <v4i32, 4, TBUFFER_STORE_FORMAT_XYZW>;
 /**********   Indirect adressing   **********/
 /********** ====================== **********/
 
-multiclass SI_INDIRECT_Pattern <ValueType vt, SI_INDIRECT_DST IndDst> {
+multiclass SI_INDIRECT_Pattern <ValueType vt, ValueType eltvt, SI_INDIRECT_DST IndDst> {
 
   // 1. Extract with offset
   def : Pat<
@@ -2024,21 +2119,26 @@ multiclass SI_INDIRECT_Pattern <ValueType vt, SI_INDIRECT_DST IndDst> {
 
   // 3. Insert with offset
   def : Pat<
-    (vector_insert vt:$vec, f32:$val, (add i32:$idx, imm:$off)),
+    (vector_insert vt:$vec, eltvt:$val, (add i32:$idx, imm:$off)),
     (IndDst (IMPLICIT_DEF), $vec, $idx, imm:$off, $val)
   >;
 
   // 4. Insert without offset
   def : Pat<
-    (vector_insert vt:$vec, f32:$val, i32:$idx),
+    (vector_insert vt:$vec, eltvt:$val, i32:$idx),
     (IndDst (IMPLICIT_DEF), $vec, $idx, 0, $val)
   >;
 }
 
-defm : SI_INDIRECT_Pattern <v2f32, SI_INDIRECT_DST_V2>;
-defm : SI_INDIRECT_Pattern <v4f32, SI_INDIRECT_DST_V4>;
-defm : SI_INDIRECT_Pattern <v8f32, SI_INDIRECT_DST_V8>;
-defm : SI_INDIRECT_Pattern <v16f32, SI_INDIRECT_DST_V16>;
+defm : SI_INDIRECT_Pattern <v2f32, f32, SI_INDIRECT_DST_V2>;
+defm : SI_INDIRECT_Pattern <v4f32, f32, SI_INDIRECT_DST_V4>;
+defm : SI_INDIRECT_Pattern <v8f32, f32, SI_INDIRECT_DST_V8>;
+defm : SI_INDIRECT_Pattern <v16f32, f32, SI_INDIRECT_DST_V16>;
+
+defm : SI_INDIRECT_Pattern <v2i32, i32, SI_INDIRECT_DST_V2>;
+defm : SI_INDIRECT_Pattern <v4i32, i32, SI_INDIRECT_DST_V4>;
+defm : SI_INDIRECT_Pattern <v8i32, i32, SI_INDIRECT_DST_V8>;
+defm : SI_INDIRECT_Pattern <v16i32, i32, SI_INDIRECT_DST_V16>;
 
 /********** =============== **********/
 /**********   Conditions    **********/
@@ -2068,6 +2168,11 @@ def : Pat <
 def : Pat <
   (i32 (trunc i64:$a)),
   (EXTRACT_SUBREG $a, sub0)
+>;
+
+def : Pat <
+  (i1 (trunc i32:$a)),
+  (V_CMP_EQ_I32_e64 (V_AND_B32_e32 (i32 1), $a), 1)
 >;
 
 // V_ADD_I32_e32/S_ADD_I32 produces carry in VCC/SCC. For the vector

@@ -11,6 +11,8 @@
 
 #include "llvm/CodeGen/StackMaps.h"
 #include "llvm/CodeGen/AsmPrinter.h"
+#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/MC/MCContext.h"
@@ -41,7 +43,7 @@ PatchPointOpers::PatchPointOpers(const MachineInstr *MI)
     ++CheckStartIdx;
 
   assert(getMetaIdx() == CheckStartIdx &&
-         "Unexpected additonal definition in Patchpoint intrinsic.");
+         "Unexpected additional definition in Patchpoint intrinsic.");
 #endif
 }
 
@@ -123,22 +125,19 @@ StackMaps::parseOperand(MachineInstr::const_mop_iterator MOI,
 }
 
 /// Go up the super-register chain until we hit a valid dwarf register number.
-static unsigned short getDwarfRegNum(unsigned Reg, const MCRegisterInfo &MCRI,
-                                     const TargetRegisterInfo *TRI) {
-  int RegNo = MCRI.getDwarfRegNum(Reg, false);
-  for (MCSuperRegIterator SR(Reg, TRI);
-       SR.isValid() && RegNo < 0; ++SR)
+static unsigned getDwarfRegNum(unsigned Reg, const TargetRegisterInfo *TRI) {
+  int RegNo = TRI->getDwarfRegNum(Reg, false);
+  for (MCSuperRegIterator SR(Reg, TRI); SR.isValid() && RegNo < 0; ++SR)
     RegNo = TRI->getDwarfRegNum(*SR, false);
 
   assert(RegNo >= 0 && "Invalid Dwarf register number.");
-  return (unsigned short) RegNo;
+  return (unsigned) RegNo;
 }
 
 /// Create a live-out register record for the given register Reg.
 StackMaps::LiveOutReg
-StackMaps::createLiveOutReg(unsigned Reg, const MCRegisterInfo &MCRI,
-                            const TargetRegisterInfo *TRI) const {
-  unsigned RegNo = getDwarfRegNum(Reg, MCRI, TRI);
+StackMaps::createLiveOutReg(unsigned Reg, const TargetRegisterInfo *TRI) const {
+  unsigned RegNo = getDwarfRegNum(Reg, TRI);
   unsigned Size = TRI->getMinimalPhysRegClass(Reg)->getSize();
   return LiveOutReg(Reg, RegNo, Size);
 }
@@ -149,14 +148,12 @@ StackMaps::LiveOutVec
 StackMaps::parseRegisterLiveOutMask(const uint32_t *Mask) const {
   assert(Mask && "No register mask specified");
   const TargetRegisterInfo *TRI = AP.TM.getRegisterInfo();
-  MCContext &OutContext = AP.OutStreamer.getContext();
-  const MCRegisterInfo &MCRI = *OutContext.getRegisterInfo();
   LiveOutVec LiveOuts;
 
   // Create a LiveOutReg for each bit that is set in the register mask.
   for (unsigned Reg = 0, NumRegs = TRI->getNumRegs(); Reg != NumRegs; ++Reg)
     if ((Mask[Reg / 32] >> Reg % 32) & 1)
-      LiveOuts.push_back(createLiveOutReg(Reg, MCRI, TRI));
+      LiveOuts.push_back(createLiveOutReg(Reg, TRI));
 
   // We don't need to keep track of a register if its super-register is already
   // in the list. Merge entries that refer to the same dwarf register and use
@@ -216,12 +213,19 @@ void StackMaps::recordStackMapOpers(const MachineInstr &MI, uint64_t ID,
     }
   }
 
+  // Create an expression to calculate the offset of the callsite from function
+  // entry.
   const MCExpr *CSOffsetExpr = MCBinaryExpr::CreateSub(
     MCSymbolRefExpr::Create(MILabel, OutContext),
     MCSymbolRefExpr::Create(AP.CurrentFnSym, OutContext),
     OutContext);
 
   CSInfos.push_back(CallsiteInfo(CSOffsetExpr, ID, Locations, LiveOuts));
+
+  // Record the stack size of the current function.
+  const MachineFrameInfo *MFI = AP.MF->getFrameInfo();
+  FnStackSize[AP.CurrentFnSym] =
+    MFI->hasVarSizedObjects() ? ~0U : MFI->getStackSize();
 }
 
 void StackMaps::recordStackMap(const MachineInstr &MI) {
@@ -258,6 +262,11 @@ void StackMaps::recordPatchPoint(const MachineInstr &MI) {
 /// serializeToStackMapSection conceptually populates the following fields:
 ///
 /// uint32 : Reserved (header)
+/// uint32 : NumFunctions
+/// StkSizeRecord[NumFunctions] {
+///   uint32 : Function Offset
+///   uint32 : Stack Size
+/// }
 /// uint32 : NumConstants
 /// int64  : Constants[NumConstants]
 /// uint32 : NumRecords
@@ -306,12 +315,21 @@ void StackMaps::serializeToStackMapSection() {
   // Serialize data.
   const char *WSMP = "Stack Maps: ";
   (void)WSMP;
-  const MCRegisterInfo &MCRI = *OutContext.getRegisterInfo();
 
   DEBUG(dbgs() << "********** Stack Map Output **********\n");
 
   // Header.
   AP.OutStreamer.EmitIntValue(0, 4);
+
+  // Num functions.
+  AP.OutStreamer.EmitIntValue(FnStackSize.size(), 4);
+
+  // Stack size entries.
+  for (FnStackSizeMap::iterator I = FnStackSize.begin(), E = FnStackSize.end();
+       I != E; ++I) {
+    AP.OutStreamer.EmitSymbolValue(I->first, 4);
+    AP.OutStreamer.EmitIntValue(I->second, 4);
+  }
 
   // Num constants.
   AP.OutStreamer.EmitIntValue(ConstPool.getNumConstants(), 4);
@@ -363,19 +381,16 @@ void StackMaps::serializeToStackMapSection() {
       unsigned RegNo = 0;
       int Offset = Loc.Offset;
       if(Loc.Reg) {
-        RegNo = MCRI.getDwarfRegNum(Loc.Reg, false);
-        for (MCSuperRegIterator SR(Loc.Reg, TRI);
-             SR.isValid() && (int)RegNo < 0; ++SR) {
-          RegNo = TRI->getDwarfRegNum(*SR, false);
-        }
+        RegNo = getDwarfRegNum(Loc.Reg, TRI);
+
         // If this is a register location, put the subregister byte offset in
         // the location offset.
         if (Loc.LocType == Location::Register) {
           assert(!Loc.Offset && "Register location should have zero offset");
-          unsigned LLVMRegNo = MCRI.getLLVMRegNum(RegNo, false);
-          unsigned SubRegIdx = MCRI.getSubRegIndex(LLVMRegNo, Loc.Reg);
+          unsigned LLVMRegNo = TRI->getLLVMRegNum(RegNo, false);
+          unsigned SubRegIdx = TRI->getSubRegIndex(LLVMRegNo, Loc.Reg);
           if (SubRegIdx)
-            Offset = MCRI.getSubRegIdxOffset(SubRegIdx);
+            Offset = TRI->getSubRegIdxOffset(SubRegIdx);
         }
       }
       else {
@@ -390,15 +405,15 @@ void StackMaps::serializeToStackMapSection() {
           dbgs() << "<Unprocessed operand>";
           break;
         case Location::Register:
-          dbgs() << "Register " << MCRI.getName(Loc.Reg);
+          dbgs() << "Register " << TRI->getName(Loc.Reg);
           break;
         case Location::Direct:
-          dbgs() << "Direct " << MCRI.getName(Loc.Reg);
+          dbgs() << "Direct " << TRI->getName(Loc.Reg);
           if (Loc.Offset)
             dbgs() << " + " << Loc.Offset;
           break;
         case Location::Indirect:
-          dbgs() << "Indirect " << MCRI.getName(Loc.Reg)
+          dbgs() << "Indirect " << TRI->getName(Loc.Reg)
                  << " + " << Loc.Offset;
           break;
         case Location::Constant:
@@ -429,7 +444,7 @@ void StackMaps::serializeToStackMapSection() {
     for (LiveOutVec::const_iterator LI = LiveOuts.begin(), LE = LiveOuts.end();
          LI != LE; ++LI, ++operIdx) {
       DEBUG(dbgs() << WSMP << "  LO " << operIdx << ": "
-                   << MCRI.getName(LI->Reg)
+                   << TRI->getName(LI->Reg)
                    << "     [encoding: .short " << LI->RegNo
                    << ", .byte 0, .byte " << LI->Size << "]\n");
 

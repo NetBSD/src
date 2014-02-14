@@ -25,11 +25,13 @@ static bool CheapToScalarize(Value *V, bool isConstant) {
     if (isConstant) return true;
 
     // If all elts are the same, we can extract it and use any of the values.
-    Constant *Op0 = C->getAggregateElement(0U);
-    for (unsigned i = 1, e = V->getType()->getVectorNumElements(); i != e; ++i)
-      if (C->getAggregateElement(i) != Op0)
-        return false;
-    return true;
+    if (Constant *Op0 = C->getAggregateElement(0U)) {
+      for (unsigned i = 1, e = V->getType()->getVectorNumElements(); i != e;
+           ++i)
+        if (C->getAggregateElement(i) != Op0)
+          return false;
+      return true;
+    }
   }
   Instruction *I = dyn_cast<Instruction>(V);
   if (!I) return false;
@@ -638,6 +640,8 @@ static Value *BuildNew(Instruction *I, ArrayRef<Value*> NewOps) {
       if (isa<PossiblyExactOperator>(BO)) {
         New->setIsExact(BO->isExact());
       }
+      if (isa<FPMathOperator>(BO))
+        New->copyFastMathFlags(I);
       return New;
     }
     case Instruction::ICmp:
@@ -1011,7 +1015,7 @@ Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
       // references from RHSOp0 to LHSOp0, so we don't need to shift the mask.
       // If newRHS == newLHS, we want to remap any references from newRHS to
       // newLHS so that we can properly identify splats that may occur due to
-      // obfuscation accross the two vectors.
+      // obfuscation across the two vectors.
       if (eltMask >= 0 && newRHS != NULL && newLHS != newRHS)
         eltMask += newLHSWidth;
     }

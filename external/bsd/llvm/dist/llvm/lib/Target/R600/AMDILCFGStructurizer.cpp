@@ -224,7 +224,7 @@ protected:
   /// Compute the reversed DFS post order of Blocks
   void orderBlocks(MachineFunction *MF);
 
-  // Function originaly from CFGStructTraits
+  // Function originally from CFGStructTraits
   void insertInstrEnd(MachineBasicBlock *MBB, int NewOpcode,
       DebugLoc DL = DebugLoc());
   MachineInstr *insertInstrBefore(MachineBasicBlock *MBB, int NewOpcode,
@@ -934,8 +934,8 @@ bool AMDGPUCFGStructurizer::run() {
 void AMDGPUCFGStructurizer::orderBlocks(MachineFunction *MF) {
   int SccNum = 0;
   MachineBasicBlock *MBB;
-  for (scc_iterator<MachineFunction *> It = scc_begin(MF), E = scc_end(MF);
-      It != E; ++It, ++SccNum) {
+  for (scc_iterator<MachineFunction *> It = scc_begin(MF); !It.isAtEnd();
+       ++It, ++SccNum) {
     std::vector<MachineBasicBlock *> &SccNext = *It;
     for (std::vector<MachineBasicBlock *>::const_iterator
          blockIter = SccNext.begin(), blockEnd = SccNext.end();

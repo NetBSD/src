@@ -805,6 +805,8 @@ enum LLVM_ENUM_INT_TYPE(unsigned) {
   EF_MIPS_NOREORDER = 0x00000001, // Don't reorder instructions
   EF_MIPS_PIC       = 0x00000002, // Position independent code
   EF_MIPS_CPIC      = 0x00000004, // Call object with Position independent code
+  EF_MIPS_ABI2      = 0x00000020,
+  EF_MIPS_32BITMODE = 0x00000100,
   EF_MIPS_ABI_O32   = 0x00001000, // This file follows the first MIPS 32 bit ABI
 
   //ARCH_ASE
@@ -1145,7 +1147,36 @@ enum {
   R_SPARC_L44         = 52,
   R_SPARC_REGISTER    = 53,
   R_SPARC_UA64        = 54,
-  R_SPARC_UA16        = 55
+  R_SPARC_UA16        = 55,
+  R_SPARC_TLS_GD_HI22   = 56,
+  R_SPARC_TLS_GD_LO10   = 57,
+  R_SPARC_TLS_GD_ADD    = 58,
+  R_SPARC_TLS_GD_CALL   = 59,
+  R_SPARC_TLS_LDM_HI22  = 60,
+  R_SPARC_TLS_LDM_LO10  = 61,
+  R_SPARC_TLS_LDM_ADD   = 62,
+  R_SPARC_TLS_LDM_CALL  = 63,
+  R_SPARC_TLS_LDO_HIX22 = 64,
+  R_SPARC_TLS_LDO_LOX10 = 65,
+  R_SPARC_TLS_LDO_ADD   = 66,
+  R_SPARC_TLS_IE_HI22   = 67,
+  R_SPARC_TLS_IE_LO10   = 68,
+  R_SPARC_TLS_IE_LD     = 69,
+  R_SPARC_TLS_IE_LDX    = 70,
+  R_SPARC_TLS_IE_ADD    = 71,
+  R_SPARC_TLS_LE_HIX22  = 72,
+  R_SPARC_TLS_LE_LOX10  = 73,
+  R_SPARC_TLS_DTPMOD32  = 74,
+  R_SPARC_TLS_DTPMOD64  = 75,
+  R_SPARC_TLS_DTPOFF32  = 76,
+  R_SPARC_TLS_DTPOFF64  = 77,
+  R_SPARC_TLS_TPOFF32   = 78,
+  R_SPARC_TLS_TPOFF64   = 79,
+  R_SPARC_GOTDATA_HIX22 = 80,
+  R_SPARC_GOTDATA_LOX22 = 81,
+  R_SPARC_GOTDATA_OP_HIX22 = 82,
+  R_SPARC_GOTDATA_OP_LOX22 = 83,
+  R_SPARC_GOTDATA_OP    = 84
 };
 
 // Section header.

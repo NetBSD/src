@@ -36,6 +36,7 @@
 #include <cerrno>
 #include <cstdlib>
 #include <map>
+#include <set>
 using namespace llvm;
 using namespace cl;
 
@@ -108,6 +109,13 @@ void Option::addArgument() {
 
   NextRegistered = RegisteredOptionList;
   RegisteredOptionList = this;
+  MarkOptionsChanged();
+}
+
+void Option::removeArgument() {
+  assert(NextRegistered != 0 && "argument never registered");
+  assert(RegisteredOptionList == this && "argument is not the last registered");
+  RegisteredOptionList = NextRegistered;
   MarkOptionsChanged();
 }
 
@@ -246,12 +254,11 @@ static Option *LookupNearestOption(StringRef Arg,
   return Best;
 }
 
-/// CommaSeparateAndAddOccurence - A wrapper around Handler->addOccurence() that
-/// does special handling of cl::CommaSeparated options.
-static bool CommaSeparateAndAddOccurence(Option *Handler, unsigned pos,
-                                         StringRef ArgName,
-                                         StringRef Value, bool MultiArg = false)
-{
+/// CommaSeparateAndAddOccurrence - A wrapper around Handler->addOccurrence()
+/// that does special handling of cl::CommaSeparated options.
+static bool CommaSeparateAndAddOccurrence(Option *Handler, unsigned pos,
+                                          StringRef ArgName, StringRef Value,
+                                          bool MultiArg = false) {
   // Check to see if this option accepts a comma separated list of values.  If
   // it does, we have to split up the value into multiple values.
   if (Handler->getMiscFlags() & CommaSeparated) {
@@ -312,13 +319,13 @@ static inline bool ProvideOption(Option *Handler, StringRef ArgName,
 
   // If this isn't a multi-arg option, just run the handler.
   if (NumAdditionalVals == 0)
-    return CommaSeparateAndAddOccurence(Handler, i, ArgName, Value);
+    return CommaSeparateAndAddOccurrence(Handler, i, ArgName, Value);
 
   // If it is, run the handle several times.
   bool MultiArg = false;
 
   if (Value.data()) {
-    if (CommaSeparateAndAddOccurence(Handler, i, ArgName, Value, MultiArg))
+    if (CommaSeparateAndAddOccurrence(Handler, i, ArgName, Value, MultiArg))
       return true;
     --NumAdditionalVals;
     MultiArg = true;
@@ -329,7 +336,7 @@ static inline bool ProvideOption(Option *Handler, StringRef ArgName,
       return Handler->error("not enough values!");
     Value = argv[++i];
 
-    if (CommaSeparateAndAddOccurence(Handler, i, ArgName, Value, MultiArg))
+    if (CommaSeparateAndAddOccurrence(Handler, i, ArgName, Value, MultiArg))
       return true;
     MultiArg = true;
     --NumAdditionalVals;
@@ -1489,9 +1496,7 @@ public:
   // It shall return true if A's name should be lexographically
   // ordered before B's name. It returns false otherwise.
   static bool OptionCategoryCompare(OptionCategory *A, OptionCategory *B) {
-    int Length = strcmp(A->getName(), B->getName());
-    assert(Length != 0 && "Duplicate option categories");
-    return Length < 0;
+    return strcmp(A->getName(), B->getName()) < 0;
   }
 
   // Make sure we inherit our base class's operator=()
@@ -1501,13 +1506,20 @@ protected:
   virtual void printOptions(StrOptionPairVector &Opts, size_t MaxArgLen) {
     std::vector<OptionCategory *> SortedCategories;
     std::map<OptionCategory *, std::vector<Option *> > CategorizedOptions;
+    std::set<std::string> CategoryNames;
 
-    // Collect registered option categories into vector in preperation for
+    // Collect registered option categories into vector in preparation for
     // sorting.
     for (OptionCatSet::const_iterator I = RegisteredOptionCategories->begin(),
                                       E = RegisteredOptionCategories->end();
-         I != E; ++I)
+         I != E; ++I) {
       SortedCategories.push_back(*I);
+      // FIXME: Move this check to OptionCategory::registerCategory after the
+      // problem with analyzer plugins linking to llvm/Support and causing
+      // assertion on the duplicate llvm::cl::GeneralCategory is solved.
+      assert(CategoryNames.insert((*I)->getName()).second &&
+             "Duplicate option categories");
+    }
 
     // Sort the different option categories alphabetically.
     assert(SortedCategories.size() > 0 && "No option categories registered!");

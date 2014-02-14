@@ -21,48 +21,54 @@
 #ifndef LLVM_IR_VERIFIER_H
 #define LLVM_IR_VERIFIER_H
 
+#include "llvm/ADT/StringRef.h"
 #include <string>
 
 namespace llvm {
 
+class Function;
 class FunctionPass;
 class Module;
-class Function;
-
-/// \brief An enumeration to specify the action to be taken if errors found.
-///
-/// This enumeration is used in the functions below to indicate what should
-/// happen if the verifier finds errors. Each of the functions that uses
-/// this enumeration as an argument provides a default value for it. The
-/// actions are listed below.
-enum VerifierFailureAction {
-  AbortProcessAction,   ///< verifyModule will print to stderr and abort()
-  PrintMessageAction,   ///< verifyModule will print to stderr and return true
-  ReturnStatusAction    ///< verifyModule will just return true
-};
-
-/// \brief Create a verifier pass.
-///
-/// Check a module or function for validity.  When the pass is used, the
-/// action indicated by the \p action argument will be used if errors are
-/// found.
-FunctionPass *
-createVerifierPass(VerifierFailureAction action = AbortProcessAction);
+class PreservedAnalyses;
+class raw_ostream;
 
 /// \brief Check a function for errors, useful for use when debugging a
 /// pass.
-bool verifyFunction(const Function &F,
-                    VerifierFailureAction action = AbortProcessAction);
+///
+/// If there are no errors, the function returns false. If an error is found,
+/// a message describing the error is written to OS (if non-null) and true is
+/// returned.
+bool verifyFunction(const Function &F, raw_ostream *OS = 0);
 
 /// \brief Check a module for errors.
 ///
 /// If there are no errors, the function returns false. If an error is found,
-/// the action taken depends on the \p action parameter.
-/// This should only be used for debugging, because it plays games with
-/// PassManagers and stuff.
-bool verifyModule(const Module &M,
-                  VerifierFailureAction action = AbortProcessAction,
-                  std::string *ErrorInfo = 0);
+/// a message describing the error is written to OS (if non-null) and true is
+/// returned.
+bool verifyModule(const Module &M, raw_ostream *OS = 0);
+
+/// \brief Create a verifier pass.
+///
+/// Check a module or function for validity. This is essentially a pass wrapped
+/// around the above verifyFunction and verifyModule routines and
+/// functionality. When the pass detects a verification error it is always
+/// printed to stderr, and by default they are fatal. You can override that by
+/// passing \c false to \p FatalErrors.
+///
+/// Note that this creates a pass suitable for the legacy pass manager. It has nothing to do with \c VerifierPass.
+FunctionPass *createVerifierPass(bool FatalErrors = true);
+
+class VerifierPass {
+  bool FatalErrors;
+
+public:
+  explicit VerifierPass(bool FatalErrors = true) : FatalErrors(FatalErrors) {}
+
+  PreservedAnalyses run(Module *M);
+  PreservedAnalyses run(Function *F);
+
+  static StringRef name() { return "VerifierPass"; }
+};
 
 } // End llvm namespace
 

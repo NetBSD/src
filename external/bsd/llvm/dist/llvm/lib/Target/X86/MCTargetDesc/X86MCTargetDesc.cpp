@@ -48,8 +48,11 @@ std::string X86_MC::ParseX86Triple(StringRef TT) {
   std::string FS;
   if (TheTriple.getArch() == Triple::x86_64)
     FS = "+64bit-mode,-32bit-mode,-16bit-mode";
-  else
+  else if (TheTriple.getEnvironment() != Triple::CODE16)
     FS = "-64bit-mode,+32bit-mode,-16bit-mode";
+  else
+    FS = "-64bit-mode,-32bit-mode,+16bit-mode";
+
   return FS;
 }
 
@@ -358,6 +361,7 @@ static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
                                     MCContext &Ctx, MCAsmBackend &MAB,
                                     raw_ostream &_OS,
                                     MCCodeEmitter *_Emitter,
+                                    const MCSubtargetInfo &STI,
                                     bool RelaxAll,
                                     bool NoExecStack) {
   Triple TheTriple(TT);
@@ -368,7 +372,7 @@ static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
   if (TheTriple.isOSWindows() && TheTriple.getEnvironment() != Triple::ELF)
     return createWinCOFFStreamer(Ctx, MAB, *_Emitter, _OS, RelaxAll);
 
-  return createELFStreamer(Ctx, 0, MAB, _OS, _Emitter, RelaxAll, NoExecStack);
+  return createELFStreamer(Ctx, MAB, _OS, _Emitter, RelaxAll, NoExecStack);
 }
 
 static MCInstPrinter *createX86MCInstPrinter(const Target &T,

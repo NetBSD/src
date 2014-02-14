@@ -255,8 +255,8 @@ public:
   static Constant *get(Type* Ty, double V);
   static Constant *get(Type* Ty, StringRef Str);
   static ConstantFP *get(LLVMContext &Context, const APFloat &V);
-  static ConstantFP *getNegativeZero(Type* Ty);
-  static ConstantFP *getInfinity(Type *Ty, bool Negative = false);
+  static Constant *getNegativeZero(Type *Ty);
+  static Constant *getInfinity(Type *Ty, bool Negative = false);
 
   /// isValueValidForType - return true if Ty is big enough to represent V.
   static bool isValueValidForType(Type *Ty, const APFloat &V);
@@ -756,6 +756,12 @@ public:
   /// get - Return a BlockAddress for the specified basic block.  The basic
   /// block must be embedded into a function.
   static BlockAddress *get(BasicBlock *BB);
+
+  /// \brief Lookup an existing \c BlockAddress constant for the given
+  /// BasicBlock.
+  ///
+  /// \returns 0 if \c !BB->hasAddressTaken(), otherwise the \c BlockAddress.
+  static BlockAddress *lookup(const BasicBlock *BB);
 
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);

@@ -73,9 +73,12 @@ static void PrintCallingConv(unsigned cc, raw_ostream &Out) {
   case CallingConv::Cold:          Out << "coldcc"; break;
   case CallingConv::WebKit_JS:     Out << "webkit_jscc"; break;
   case CallingConv::AnyReg:        Out << "anyregcc"; break;
+  case CallingConv::PreserveMost:  Out << "preserve_mostcc"; break;
+  case CallingConv::PreserveAll:   Out << "preserve_allcc"; break;
   case CallingConv::X86_StdCall:   Out << "x86_stdcallcc"; break;
   case CallingConv::X86_FastCall:  Out << "x86_fastcallcc"; break;
   case CallingConv::X86_ThisCall:  Out << "x86_thiscallcc"; break;
+  case CallingConv::X86_CDeclMethod:Out << "x86_cdeclmethodcc"; break;
   case CallingConv::Intel_OCL_BI:  Out << "intel_ocl_bicc"; break;
   case CallingConv::ARM_APCS:      Out << "arm_apcscc"; break;
   case CallingConv::ARM_AAPCS:     Out << "arm_aapcscc"; break;
@@ -1943,6 +1946,8 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
   } else if (const AllocaInst *AI = dyn_cast<AllocaInst>(&I)) {
     Out << ' ';
     TypePrinter.print(AI->getAllocatedType(), Out);
+    if (AI->isUsedWithInAlloca())
+      Out << ", inalloca";
     if (!AI->getArraySize() || AI->isArrayAllocation()) {
       Out << ", ";
       writeOperand(AI->getArraySize(), true);

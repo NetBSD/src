@@ -360,3 +360,17 @@ const char *Process::ResetColor() {
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), defaultColors());
   return 0;
 }
+
+unsigned Process::GetRandomNumber() {
+  HCRYPTPROV HCPC;
+  if (!::CryptAcquireContextW(&HCPC, NULL, NULL, PROV_RSA_FULL,
+                              CRYPT_VERIFYCONTEXT))
+    assert(false && "Could not acquire a cryptographic context");
+
+  ScopedCryptContext CryptoProvider(HCPC);
+  unsigned Ret;
+  if (!::CryptGenRandom(CryptoProvider, sizeof(Ret),
+                        reinterpret_cast<BYTE *>(&Ret)))
+    assert(false && "Could not generate a random number");
+  return Ret;
+}

@@ -17,7 +17,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "Unix.h"
-#include "llvm/Support/Process.h"
 #include <limits.h>
 #include <stdio.h>
 #if HAVE_SYS_STAT_H
@@ -527,7 +526,7 @@ error_code status(int FD, file_status &Result) {
 error_code setLastModificationAndAccessTime(int FD, TimeValue Time) {
 #if defined(HAVE_FUTIMENS)
   timespec Times[2];
-  Times[0].tv_sec = Time.toPosixTime();
+  Times[0].tv_sec = Time.toEpochTime();
   Times[0].tv_nsec = 0;
   Times[1] = Times[0];
   if (::futimens(FD, Times))
@@ -535,7 +534,7 @@ error_code setLastModificationAndAccessTime(int FD, TimeValue Time) {
   return error_code::success();
 #elif defined(HAVE_FUTIMES)
   timeval Times[2];
-  Times[0].tv_sec = Time.toPosixTime();
+  Times[0].tv_sec = Time.toEpochTime();
   Times[0].tv_usec = 0;
   Times[1] = Times[0];
   if (::futimes(FD, Times))
@@ -797,5 +796,20 @@ error_code openFileForWrite(const Twine &Name, int &ResultFD,
 }
 
 } // end namespace fs
+
+namespace path {
+
+bool home_directory(SmallVectorImpl<char> &result) {
+  if (char *RequestedDir = getenv("HOME")) {
+    result.clear();
+    result.append(RequestedDir, RequestedDir + strlen(RequestedDir));
+    return true;
+  }
+
+  return false;
+}
+
+} // end namespace path
+
 } // end namespace sys
 } // end namespace llvm

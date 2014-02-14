@@ -32,8 +32,8 @@ dnl===-----------------------------------------------------------------------===
 dnl Initialize autoconf and define the package name, version number and
 dnl address for reporting bugs.
 AC_INIT([LLVM],[3.5svn],[http://llvm.org/bugs/])
-AC_DEFINE([LLVM_VERSION_MAJOR], [3], [Major version of the LLVM API])
-AC_DEFINE([LLVM_VERSION_MINOR], [5], [Minor version of the LLVM API])
+LLVM_DEFINE_SUBST([LLVM_VERSION_MAJOR], [3], [Major version of the LLVM API])
+LLVM_DEFINE_SUBST([LLVM_VERSION_MINOR], [5], [Minor version of the LLVM API])
 
 dnl Provide a copyright substitution and ensure the copyright notice is included
 dnl in the output of --version option of the generated configure script.
@@ -102,68 +102,18 @@ dnl other possible compilers.
 AC_MSG_CHECKING([whether GCC or Clang is our host compiler])
 AC_LANG_PUSH([C++])
 llvm_cv_cxx_compiler=unknown
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#if ! __clang__
-                                     #error
-                                     #endif
-                                     ]])],
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([[#if ! __clang__
+                                    #error
+                                    #endif
+                                    ]])],
                   llvm_cv_cxx_compiler=clang,
-                  [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#if ! __GNUC__
-                                                        #error
-                                                        #endif
-                                                        ]])],
+                  [AC_COMPILE_IFELSE([AC_LANG_SOURCE([[#if ! __GNUC__
+                                                       #error
+                                                       #endif
+                                                       ]])],
                                      llvm_cv_cxx_compiler=gcc, [])])
 AC_LANG_POP([C++])
 AC_MSG_RESULT([${llvm_cv_cxx_compiler}])
-
-dnl Check both GCC and Clang for sufficiently modern versions. These checks can
-dnl be bypassed by passing a flag if necessary on a platform.
-AC_ARG_ENABLE(compiler-version-checks,
-              AS_HELP_STRING([--enable-compiler-version-checks],
-                             [Check the version of the host compiler (default is YES)]),,
-                             enableval=default)
-case "$enableval" in
-  no)
-    ;;
-  yes|default)
-    AC_LANG_PUSH([C++])
-    case "$llvm_cv_cxx_compiler" in
-    clang)
-      AC_MSG_CHECKING([whether Clang is new enough])
-      AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
-#if __clang_major__ < 3 || (__clang_major__ == 3 && __clang_minor__ < 1)
-#error This version of Clang is too old to build LLVM
-#endif
-]])],
-          [AC_MSG_RESULT([yes])],
-          [AC_MSG_RESULT([no])
-           AC_MSG_ERROR([
-The selected Clang compiler is not new enough to build LLVM. Please upgrade to
-Clang 3.1. You may pass --disable-compiler-version-checks to configure to
-bypass these sanity checks.])])
-      ;;
-    gcc)
-      AC_MSG_CHECKING([whether GCC is new enough])
-      AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
-#if __GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 7)
-#error This version of GCC is too old to build LLVM
-#endif
-]])],
-          [AC_MSG_RESULT([yes])],
-          [AC_MSG_RESULT([no])
-           AC_MSG_ERROR([
-The selected GCC C++ compiler is not new enough to build LLVM. Please upgrade
-to GCC 4.7. You may pass --disable-compiler-version-checks to configure to
-bypass these sanity checks.])])
-      ;;
-    unknown)
-      ;;
-    esac
-    AC_LANG_POP([C++])
-    ;;
-  *)
-    AC_MSG_ERROR([Invalid setting for --enable-compiler-version-checks. Use "yes" or "no"])
-    ;;
-esac
 
 dnl Configure all of the projects present in our source tree. While we could
 dnl just AC_CONFIG_SUBDIRS on the set of directories in projects that have a
@@ -482,6 +432,7 @@ esac
 
 dnl Define a substitution, ARCH, for the target architecture
 AC_SUBST(ARCH,$llvm_cv_target_arch)
+AC_SUBST(LLVM_NATIVE_ARCH,$LLVM_NATIVE_ARCH)
 
 dnl Determine what our host architecture.
 dnl This will allow MCJIT regress tests runs only for supported
@@ -555,6 +506,87 @@ case "$enableval" in
   no)  AC_SUBST(ENABLE_LIBCPP,[0]) ;;
   default) AC_SUBST(ENABLE_LIBCPP,[0]);;
   *) AC_MSG_ERROR([Invalid setting for --enable-libcpp. Use "yes" or "no"]) ;;
+esac
+
+dnl Check both GCC and Clang for sufficiently modern versions. These checks can
+dnl be bypassed by passing a flag if necessary on a platform. We have to do
+dnl these checks here so that we have the configuration of the standard C++
+dnl library finished.
+AC_ARG_ENABLE(compiler-version-checks,
+              AS_HELP_STRING([--enable-compiler-version-checks],
+                             [Check the version of the host compiler (default is YES)]),,
+                             enableval=default)
+case "$enableval" in
+  no)
+    ;;
+  yes|default)
+    AC_LANG_PUSH([C++])
+    case "$llvm_cv_cxx_compiler" in
+    clang)
+      AC_MSG_CHECKING([whether Clang is new enough])
+      AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
+#if __clang_major__ < 3 || (__clang_major__ == 3 && __clang_minor__ < 1)
+#error This version of Clang is too old to build LLVM
+#endif
+]])],
+          [AC_MSG_RESULT([yes])],
+          [AC_MSG_RESULT([no])
+           AC_MSG_ERROR([
+The selected Clang compiler is not new enough to build LLVM. Please upgrade to
+Clang 3.1. You may pass --disable-compiler-version-checks to configure to
+bypass these sanity checks.])])
+
+      dnl Note that libstdc++4.6 is known broken for C++11 builds. The errors
+      dnl are sometimes deeply confusing though. Here we test for an obvious
+      dnl incomplete feature in 4.6's standard library that was completed in
+      dnl 4.7's. We also have to disable this test if 'ENABLE_LIBCPP' is set
+      dnl because the enable flags don't actually fix CXXFLAGS, they rely on
+      dnl that happening in the Makefile.
+      if test "$ENABLE_LIBCPP" -eq 0 ; then
+        AC_MSG_CHECKING([whether Clang will select a modern C++ standard library])
+        llvm_cv_old_cxxflags="$CXXFLAGS"
+        CXXFLAGS="$CXXFLAGS -std=c++0x"
+        AC_LINK_IFELSE([AC_LANG_SOURCE([[
+#include <atomic>
+std::atomic<float> x(0.0f);
+int main() { return (float)x; }
+]])],
+            [AC_MSG_RESULT([yes])],
+            [AC_MSG_RESULT([no])
+             AC_MSG_ERROR([
+We detected a missing feature in the standard C++ library that was known to be
+missing in libstdc++4.6 and implemented in libstdc++4.7. There are numerous
+C++11 problems with 4.6's library, and we don't support GCCs or libstdc++ older
+than 4.7. You will need to update your system and ensure Clang uses the newer
+standard library.
+
+If this error is incorrect or you need to force things to work, you may pass
+'--disable-compiler-version-checks' to configure to bypass this test.])])
+        CXXFLAGS="$llvm_cv_old_cxxflags"
+      fi
+      ;;
+    gcc)
+      AC_MSG_CHECKING([whether GCC is new enough])
+      AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
+#if __GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 7)
+#error This version of GCC is too old to build LLVM
+#endif
+]])],
+          [AC_MSG_RESULT([yes])],
+          [AC_MSG_RESULT([no])
+           AC_MSG_ERROR([
+The selected GCC C++ compiler is not new enough to build LLVM. Please upgrade
+to GCC 4.7. You may pass --disable-compiler-version-checks to configure to
+bypass these sanity checks.])])
+      ;;
+    unknown)
+      ;;
+    esac
+    AC_LANG_POP([C++])
+    ;;
+  *)
+    AC_MSG_ERROR([Invalid setting for --enable-compiler-version-checks. Use "yes" or "no"])
+    ;;
 esac
 
 dnl --enable-cxx11 : check whether or not to use -std=c++11 on the command line
@@ -737,6 +769,9 @@ else
   esac
 fi
 
+TARGETS_WITH_JIT="AArch64 ARM Mips PowerPC SystemZ X86"
+AC_SUBST(TARGETS_WITH_JIT,$TARGETS_WITH_JIT)
+
 dnl Allow enablement of building and installing docs
 AC_ARG_ENABLE(docs,
               AS_HELP_STRING([--enable-docs],
@@ -886,6 +921,10 @@ if test "$llvm_cv_enable_crash_overrides" = "yes" ; then
             [Define to enable crash handling overrides])
 fi
 
+dnl List all possible targets
+ALL_TARGETS="X86 Sparc PowerPC AArch64 ARM Mips XCore MSP430 CppBackend NVPTX Hexagon SystemZ R600"
+AC_SUBST(ALL_TARGETS,$ALL_TARGETS)
+
 dnl Allow specific targets to be specified for building (or not)
 TARGETS_TO_BUILD=""
 AC_ARG_ENABLE([targets],AS_HELP_STRING([--enable-targets],
@@ -897,7 +936,7 @@ if test "$enableval" = host-only ; then
   enableval=host
 fi
 case "$enableval" in
-  all) TARGETS_TO_BUILD="X86 Sparc PowerPC AArch64 ARM Mips XCore MSP430 CppBackend NVPTX Hexagon SystemZ R600" ;;
+  all) TARGETS_TO_BUILD="$ALL_TARGETS" ;;
   *)for a_target in `echo $enableval|sed -e 's/,/ /g' ` ; do
       case "$a_target" in
         x86)      TARGETS_TO_BUILD="X86 $TARGETS_TO_BUILD" ;;
@@ -1158,6 +1197,21 @@ AC_ARG_ENABLE(terminfo,AS_HELP_STRING(
     *) AC_MSG_ERROR([Invalid setting for --enable-terminfo. Use "yes" or "no"]) ;;
   esac],
   llvm_cv_enable_terminfo="yes")
+case "$llvm_cv_enable_terminfo" in
+  yes) AC_SUBST(ENABLE_TERMINFO,[1]) ;;
+  no)  AC_SUBST(ENABLE_TERMINFO,[0]) ;;
+esac
+
+dnl --enable-libedit: check whether the user wants to turn off libedit.
+AC_ARG_ENABLE(libedit,AS_HELP_STRING(
+  [--enable-libedit],
+  [Use libedit if available (default is YES)]),
+  [case "$enableval" in
+    yes) llvm_cv_enable_libedit="yes" ;;
+    no)  llvm_cv_enable_libedit="no"  ;;
+    *) AC_MSG_ERROR([Invalid setting for --enable-libedit. Use "yes" or "no"]) ;;
+  esac],
+  llvm_cv_enable_libedit="yes")
 
 dnl --enable-libffi : check whether the user wants to turn off libffi:
 AC_ARG_ENABLE(libffi,AS_HELP_STRING(
@@ -1458,7 +1512,7 @@ if test "$llvm_cv_os_type" = "MingW" ; then
 fi
 
 dnl dlopen() is required for plugin support.
-AC_SEARCH_LIBS(dlopen,dl,AC_DEFINE([HAVE_DLOPEN],[1],
+AC_SEARCH_LIBS(dlopen,dl,LLVM_DEFINE_SUBST([HAVE_DLOPEN],[1],
                [Define if dlopen() is available on this platform.]),
                AC_MSG_WARN([dlopen() not found - disabling plugin support]))
 
@@ -1471,8 +1525,15 @@ dnl The curses library is optional; used for querying terminal info
 if test "$llvm_cv_enable_terminfo" = "yes" ; then
   dnl We need the has_color functionality in curses for it to be useful.
   AC_SEARCH_LIBS(setupterm,tinfo terminfo curses ncurses ncursesw,
-                 AC_DEFINE([HAVE_TERMINFO],[1],
-                           [Define if the setupterm() function is supported this platform.]))
+                 LLVM_DEFINE_SUBST([HAVE_TERMINFO],[1],
+                                   [Define if the setupterm() function is supported this platform.]))
+fi
+
+dnl The libedit library is optional; used by lib/LineEditor
+if test "$llvm_cv_enable_libedit" = "yes" ; then
+  AC_SEARCH_LIBS(el_init,edit,
+                 AC_DEFINE([HAVE_LIBEDIT],[1],
+                           [Define if libedit is available on this platform.]))
 fi
 
 dnl libffi is optional; used to call external functions from the interpreter
@@ -1708,12 +1769,15 @@ AC_CHECK_FUNCS([log log2 log10 exp exp2])
 AC_CHECK_FUNCS([getpagesize getrusage getrlimit setrlimit gettimeofday ])
 AC_CHECK_FUNCS([isatty mkdtemp mkstemp ])
 AC_CHECK_FUNCS([mktemp posix_spawn pread realpath sbrk setrlimit ])
-AC_CHECK_FUNCS([strerror strerror_r setenv arc4random ])
+AC_CHECK_FUNCS([strerror strerror_r setenv ])
 AC_CHECK_FUNCS([strtoll strtoq sysconf malloc_zone_statistics ])
 AC_CHECK_FUNCS([setjmp longjmp sigsetjmp siglongjmp writev])
 AC_CHECK_FUNCS([futimes futimens])
 AC_C_PRINTF_A
 AC_FUNC_RAND48
+
+dnl Check for arc4random accessible via AC_INCLUDES_DEFAULT.
+AC_CHECK_DECLS([arc4random])
 
 dnl Check the declaration "Secure API" on Windows environments.
 AC_CHECK_DECLS([strerror_s])

@@ -226,11 +226,48 @@ void X86ATTInstPrinter::printMemReference(const MCInst *MI, unsigned Op,
   O << markup(">");
 }
 
+void X86ATTInstPrinter::printSrcIdx(const MCInst *MI, unsigned Op,
+                                    raw_ostream &O) {
+  const MCOperand &SegReg = MI->getOperand(Op+1);
+
+  O << markup("<mem:");
+
+  // If this has a segment register, print it.
+  if (SegReg.getReg()) {
+    printOperand(MI, Op+1, O);
+    O << ':';
+  }
+
+  O << "(";
+  printOperand(MI, Op, O);
+  O << ")";
+
+  O << markup(">");
+}
+
+void X86ATTInstPrinter::printDstIdx(const MCInst *MI, unsigned Op,
+                                    raw_ostream &O) {
+  O << markup("<mem:");
+
+  O << "%es:(";
+  printOperand(MI, Op, O);
+  O << ")";
+
+  O << markup(">");
+}
+
 void X86ATTInstPrinter::printMemOffset(const MCInst *MI, unsigned Op,
                                        raw_ostream &O) {
   const MCOperand &DispSpec = MI->getOperand(Op);
+  const MCOperand &SegReg = MI->getOperand(Op+1);
 
   O << markup("<mem:");
+
+  // If this has a segment register, print it.
+  if (SegReg.getReg()) {
+    printOperand(MI, Op+1, O);
+    O << ':';
+  }
 
   if (DispSpec.isImm()) {
     O << formatImm(DispSpec.getImm());

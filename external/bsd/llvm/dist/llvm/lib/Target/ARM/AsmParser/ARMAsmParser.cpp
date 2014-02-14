@@ -12,7 +12,6 @@
 #include "MCTargetDesc/ARMAddressingModes.h"
 #include "MCTargetDesc/ARMArchName.h"
 #include "MCTargetDesc/ARMBaseInfo.h"
-#include "MCTargetDesc/ARMBuildAttrs.h"
 #include "MCTargetDesc/ARMMCExpr.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/MapVector.h"
@@ -40,6 +39,8 @@
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCTargetAsmParser.h"
+#include "llvm/Support/ARMBuildAttributes.h"
+#include "llvm/Support/ARMEHABI.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/MathExtras.h"
@@ -55,64 +56,6 @@ class ARMOperand;
 
 enum VectorLaneTy { NoLanes, AllLanes, IndexedLane };
 
-// A class to keep track of assembler-generated constant pools that are use to
-// implement the ldr-pseudo.
-class ConstantPool {
-  typedef SmallVector<std::pair<MCSymbol *, const MCExpr *>, 4> EntryVecTy;
-  EntryVecTy Entries;
-
-public:
-  // Initialize a new empty constant pool
-  ConstantPool() { }
-
-  // Add a new entry to the constant pool in the next slot.
-  // \param Value is the new entry to put in the constant pool.
-  //
-  // \returns a MCExpr that references the newly inserted value
-  const MCExpr *addEntry(const MCExpr *Value, MCContext &Context) {
-    MCSymbol *CPEntryLabel = Context.CreateTempSymbol();
-
-    Entries.push_back(std::make_pair(CPEntryLabel, Value));
-    return MCSymbolRefExpr::Create(CPEntryLabel, Context);
-  }
-
-  // Emit the contents of the constant pool using the provided streamer.
-  void emitEntries(MCStreamer &Streamer) {
-    if (Entries.empty())
-      return;
-    Streamer.EmitCodeAlignment(4); // align to 4-byte address
-    Streamer.EmitDataRegion(MCDR_DataRegion);
-    for (EntryVecTy::const_iterator I = Entries.begin(), E = Entries.end();
-         I != E; ++I) {
-      Streamer.EmitLabel(I->first);
-      Streamer.EmitValue(I->second, 4);
-    }
-    Streamer.EmitDataRegion(MCDR_DataRegionEnd);
-    Entries.clear();
-  }
-
-  // Return true if the constant pool is empty
-  bool empty() {
-    return Entries.empty();
-  }
-};
-
-// Map type used to keep track of per-Section constant pools used by the
-// ldr-pseudo opcode. The map associates a section to its constant pool. The
-// constant pool is a vector of (label, value) pairs. When the ldr
-// pseudo is parsed we insert a new (label, value) pair into the constant pool
-// for the current section and add MCSymbolRefExpr to the new label as
-// an opcode to the ldr. After we have parsed all the user input we
-// output the (label, value) pairs in each constant pool at the end of the
-// section.
-//
-// We use the MapVector for the map type to ensure stable iteration of
-// the sections at the end of the parse. We need to iterate over the
-// sections in a stable order to ensure that we have print the
-// constant pools in a deterministic order when printing an assembly
-// file.
-typedef MapVector<const MCSection *, ConstantPool> ConstantPoolMapTy;
-
 class UnwindContext {
   MCAsmParser &Parser;
 
@@ -121,21 +64,25 @@ class UnwindContext {
   Locs FnStartLocs;
   Locs CantUnwindLocs;
   Locs PersonalityLocs;
+  Locs PersonalityIndexLocs;
   Locs HandlerDataLocs;
   int FPReg;
 
 public:
-  UnwindContext(MCAsmParser &P) : Parser(P), FPReg(-1) {}
+  UnwindContext(MCAsmParser &P) : Parser(P), FPReg(ARM::SP) {}
 
   bool hasFnStart() const { return !FnStartLocs.empty(); }
   bool cantUnwind() const { return !CantUnwindLocs.empty(); }
   bool hasHandlerData() const { return !HandlerDataLocs.empty(); }
-  bool hasPersonality() const { return !PersonalityLocs.empty(); }
+  bool hasPersonality() const {
+    return !(PersonalityLocs.empty() && PersonalityIndexLocs.empty());
+  }
 
   void recordFnStart(SMLoc L) { FnStartLocs.push_back(L); }
   void recordCantUnwind(SMLoc L) { CantUnwindLocs.push_back(L); }
   void recordPersonality(SMLoc L) { PersonalityLocs.push_back(L); }
   void recordHandlerData(SMLoc L) { HandlerDataLocs.push_back(L); }
+  void recordPersonalityIndex(SMLoc L) { PersonalityIndexLocs.push_back(L); }
 
   void saveFPReg(int Reg) { FPReg = Reg; }
   int getFPReg() const { return FPReg; }
@@ -157,8 +104,18 @@ public:
   }
   void emitPersonalityLocNotes() const {
     for (Locs::const_iterator PI = PersonalityLocs.begin(),
-                              PE = PersonalityLocs.end(); PI != PE; ++PI)
-      Parser.Note(*PI, ".personality was specified here");
+                              PE = PersonalityLocs.end(),
+                              PII = PersonalityIndexLocs.begin(),
+                              PIE = PersonalityIndexLocs.end();
+         PI != PE || PII != PIE;) {
+      if (PI != PE && (PII == PIE || PI->getPointer() < PII->getPointer()))
+        Parser.Note(*PI++, ".personality was specified here");
+      else if (PII != PIE && (PI == PE || PII->getPointer() < PI->getPointer()))
+        Parser.Note(*PII++, ".personalityindex was specified here");
+      else
+        llvm_unreachable(".personality and .personalityindex cannot be "
+                         "at the same location");
+    }
   }
 
   void reset() {
@@ -166,7 +123,8 @@ public:
     CantUnwindLocs = Locs();
     PersonalityLocs = Locs();
     HandlerDataLocs = Locs();
-    FPReg = -1;
+    PersonalityIndexLocs = Locs();
+    FPReg = ARM::SP;
   }
 };
 
@@ -175,21 +133,7 @@ class ARMAsmParser : public MCTargetAsmParser {
   MCAsmParser &Parser;
   const MCInstrInfo &MII;
   const MCRegisterInfo *MRI;
-  ConstantPoolMapTy ConstantPools;
   UnwindContext UC;
-
-  // Assembler created constant pools for ldr pseudo
-  ConstantPool *getConstantPool(const MCSection *Section) {
-    ConstantPoolMapTy::iterator CP = ConstantPools.find(Section);
-    if (CP == ConstantPools.end())
-      return 0;
-
-    return &CP->second;
-  }
-
-  ConstantPool &getOrCreateConstantPool(const MCSection *Section) {
-    return ConstantPools[Section];
-  }
 
   ARMTargetStreamer &getTargetStreamer() {
     MCTargetStreamer &TS = *getParser().getStreamer().getTargetStreamer();
@@ -278,6 +222,11 @@ class ARMAsmParser : public MCTargetAsmParser {
   bool parseDirectiveInst(SMLoc L, char Suffix = '\0');
   bool parseDirectiveLtorg(SMLoc L);
   bool parseDirectiveEven(SMLoc L);
+  bool parseDirectivePersonalityIndex(SMLoc L);
+  bool parseDirectiveUnwindRaw(SMLoc L);
+  bool parseDirectiveTLSDescSeq(SMLoc L);
+  bool parseDirectiveMovSP(SMLoc L);
+  bool parseDirectiveObjectArch(SMLoc L);
 
   StringRef splitMnemonic(StringRef Mnemonic, unsigned &PredicationCode,
                           bool &CarrySetting, unsigned &ProcessorIMod,
@@ -422,7 +371,6 @@ public:
                                MCStreamer &Out, unsigned &ErrorInfo,
                                bool MatchingInlineAsm);
   void onLabelParsed(MCSymbol *Symbol);
-  void finishParse();
 };
 } // end anonymous namespace
 
@@ -4791,17 +4739,13 @@ bool ARMAsmParser::parseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
     if (Mnemonic != "ldr") // only parse for ldr pseudo (e.g. ldr r0, =val)
       return Error(Parser.getTok().getLoc(), "unexpected token in operand");
 
-    const MCSection *Section =
-        getParser().getStreamer().getCurrentSection().first;
-    assert(Section);
     Parser.Lex(); // Eat '='
     const MCExpr *SubExprVal;
     if (getParser().parseExpression(SubExprVal))
       return true;
     E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
 
-    const MCExpr *CPLoc =
-        getOrCreateConstantPool(Section).addEntry(SubExprVal, getContext());
+    const MCExpr *CPLoc = getTargetStreamer().addConstantPoolEntry(SubExprVal);
     Operands.push_back(ARMOperand::CreateImm(CPLoc, S, E));
     return false;
   }
@@ -7938,7 +7882,7 @@ MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
 
       // Only after the instruction is fully processed, we can validate it
       if (wasInITBlock && hasV8Ops() && isThumb() &&
-          !isV8EligibleForIT(&Inst, 2)) {
+          !isV8EligibleForIT(&Inst)) {
         Warning(IDLoc, "deprecated instruction in IT block");
       }
     }
@@ -7954,7 +7898,7 @@ MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
       return false;
 
     Inst.setLoc(IDLoc);
-    Out.EmitInstruction(Inst);
+    Out.EmitInstruction(Inst, STI);
     return false;
   case Match_MissingFeature: {
     assert(ErrorInfo && "Unknown missing feature!");
@@ -8062,6 +8006,16 @@ bool ARMAsmParser::ParseDirective(AsmToken DirectiveID) {
     return parseDirectiveLtorg(DirectiveID.getLoc());
   else if (IDVal == ".even")
     return parseDirectiveEven(DirectiveID.getLoc());
+  else if (IDVal == ".personalityindex")
+    return parseDirectivePersonalityIndex(DirectiveID.getLoc());
+  else if (IDVal == ".unwind_raw")
+    return parseDirectiveUnwindRaw(DirectiveID.getLoc());
+  else if (IDVal == ".tlsdescseq")
+    return parseDirectiveTLSDescSeq(DirectiveID.getLoc());
+  else if (IDVal == ".movsp")
+    return parseDirectiveMovSP(DirectiveID.getLoc());
+  else if (IDVal == ".object_arch")
+    return parseDirectiveObjectArch(DirectiveID.getLoc());
   return true;
 }
 
@@ -8071,8 +8025,10 @@ bool ARMAsmParser::parseDirectiveWord(unsigned Size, SMLoc L) {
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     for (;;) {
       const MCExpr *Value;
-      if (getParser().parseExpression(Value))
+      if (getParser().parseExpression(Value)) {
+        Parser.eatToEndOfStatement();
         return false;
+      }
 
       getParser().getStreamer().EmitValue(Value, Size);
 
@@ -8365,7 +8321,7 @@ bool ARMAsmParser::parseDirectiveEabiAttr(SMLoc L) {
   else if (Tag == ARMBuildAttrs::compatibility) {
     IsStringValue = true;
     IsIntegerValue = true;
-  } else if (Tag == ARMBuildAttrs::nodefaults || Tag < 32 || Tag % 2 == 0)
+  } else if (Tag < 32 || Tag % 2 == 0)
     IsIntegerValue = true;
   else if (Tag % 2 == 1)
     IsStringValue = true;
@@ -8454,6 +8410,9 @@ bool ARMAsmParser::parseDirectiveFnStart(SMLoc L) {
     return false;
   }
 
+  // Reset the unwind directives parser state
+  UC.reset();
+
   getTargetStreamer().emitFnStart();
 
   UC.recordFnStart(L);
@@ -8504,6 +8463,8 @@ bool ARMAsmParser::parseDirectiveCantUnwind(SMLoc L) {
 /// parseDirectivePersonality
 ///  ::= .personality name
 bool ARMAsmParser::parseDirectivePersonality(SMLoc L) {
+  bool HasExistingPersonality = UC.hasPersonality();
+
   UC.recordPersonality(L);
 
   // Check the ordering of unwind directives
@@ -8519,6 +8480,12 @@ bool ARMAsmParser::parseDirectivePersonality(SMLoc L) {
   if (UC.hasHandlerData()) {
     Error(L, ".personality must precede .handlerdata directive");
     UC.emitHandlerDataLocNotes();
+    return false;
+  }
+  if (HasExistingPersonality) {
+    Parser.eatToEndOfStatement();
+    Error(L, "multiple personality directives");
+    UC.emitPersonalityLocNotes();
     return false;
   }
 
@@ -8578,7 +8545,7 @@ bool ARMAsmParser::parseDirectiveSetFP(SMLoc L) {
   }
 
   // Consume comma
-  if (!Parser.getTok().is(AsmToken::Comma)) {
+  if (Parser.getTok().isNot(AsmToken::Comma)) {
     Error(Parser.getTok().getLoc(), "comma expected");
     return false;
   }
@@ -8799,13 +8766,7 @@ bool ARMAsmParser::parseDirectiveInst(SMLoc Loc, char Suffix) {
 /// parseDirectiveLtorg
 ///  ::= .ltorg | .pool
 bool ARMAsmParser::parseDirectiveLtorg(SMLoc L) {
-  MCStreamer &Streamer = getParser().getStreamer();
-  const MCSection *Section = Streamer.getCurrentSection().first;
-
-  if (ConstantPool *CP = getConstantPool(Section)) {
-    if (!CP->empty())
-      CP->emitEntries(Streamer);
-  }
+  getTargetStreamer().emitCurrentConstantPool();
   return false;
 }
 
@@ -8818,14 +8779,276 @@ bool ARMAsmParser::parseDirectiveEven(SMLoc L) {
   }
 
   if (!Section) {
-    getStreamer().InitToTextSection();
+    getStreamer().InitSections();
     Section = getStreamer().getCurrentSection().first;
   }
 
   if (Section->UseCodeAlign())
-    getStreamer().EmitCodeAlignment(2, 0);
+    getStreamer().EmitCodeAlignment(2);
   else
-    getStreamer().EmitValueToAlignment(2, 0, 1, 0);
+    getStreamer().EmitValueToAlignment(2);
+
+  return false;
+}
+
+/// parseDirectivePersonalityIndex
+///   ::= .personalityindex index
+bool ARMAsmParser::parseDirectivePersonalityIndex(SMLoc L) {
+  bool HasExistingPersonality = UC.hasPersonality();
+
+  UC.recordPersonalityIndex(L);
+
+  if (!UC.hasFnStart()) {
+    Parser.eatToEndOfStatement();
+    Error(L, ".fnstart must precede .personalityindex directive");
+    return false;
+  }
+  if (UC.cantUnwind()) {
+    Parser.eatToEndOfStatement();
+    Error(L, ".personalityindex cannot be used with .cantunwind");
+    UC.emitCantUnwindLocNotes();
+    return false;
+  }
+  if (UC.hasHandlerData()) {
+    Parser.eatToEndOfStatement();
+    Error(L, ".personalityindex must precede .handlerdata directive");
+    UC.emitHandlerDataLocNotes();
+    return false;
+  }
+  if (HasExistingPersonality) {
+    Parser.eatToEndOfStatement();
+    Error(L, "multiple personality directives");
+    UC.emitPersonalityLocNotes();
+    return false;
+  }
+
+  const MCExpr *IndexExpression;
+  SMLoc IndexLoc = Parser.getTok().getLoc();
+  if (Parser.parseExpression(IndexExpression)) {
+    Parser.eatToEndOfStatement();
+    return false;
+  }
+
+  const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(IndexExpression);
+  if (!CE) {
+    Parser.eatToEndOfStatement();
+    Error(IndexLoc, "index must be a constant number");
+    return false;
+  }
+  if (CE->getValue() < 0 ||
+      CE->getValue() >= ARM::EHABI::NUM_PERSONALITY_INDEX) {
+    Parser.eatToEndOfStatement();
+    Error(IndexLoc, "personality routine index should be in range [0-3]");
+    return false;
+  }
+
+  getTargetStreamer().emitPersonalityIndex(CE->getValue());
+  return false;
+}
+
+/// parseDirectiveUnwindRaw
+///   ::= .unwind_raw offset, opcode [, opcode...]
+bool ARMAsmParser::parseDirectiveUnwindRaw(SMLoc L) {
+  if (!UC.hasFnStart()) {
+    Parser.eatToEndOfStatement();
+    Error(L, ".fnstart must precede .unwind_raw directives");
+    return false;
+  }
+
+  int64_t StackOffset;
+
+  const MCExpr *OffsetExpr;
+  SMLoc OffsetLoc = getLexer().getLoc();
+  if (getLexer().is(AsmToken::EndOfStatement) ||
+      getParser().parseExpression(OffsetExpr)) {
+    Error(OffsetLoc, "expected expression");
+    Parser.eatToEndOfStatement();
+    return false;
+  }
+
+  const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(OffsetExpr);
+  if (!CE) {
+    Error(OffsetLoc, "offset must be a constant");
+    Parser.eatToEndOfStatement();
+    return false;
+  }
+
+  StackOffset = CE->getValue();
+
+  if (getLexer().isNot(AsmToken::Comma)) {
+    Error(getLexer().getLoc(), "expected comma");
+    Parser.eatToEndOfStatement();
+    return false;
+  }
+  Parser.Lex();
+
+  SmallVector<uint8_t, 16> Opcodes;
+  for (;;) {
+    const MCExpr *OE;
+
+    SMLoc OpcodeLoc = getLexer().getLoc();
+    if (getLexer().is(AsmToken::EndOfStatement) || Parser.parseExpression(OE)) {
+      Error(OpcodeLoc, "expected opcode expression");
+      Parser.eatToEndOfStatement();
+      return false;
+    }
+
+    const MCConstantExpr *OC = dyn_cast<MCConstantExpr>(OE);
+    if (!OC) {
+      Error(OpcodeLoc, "opcode value must be a constant");
+      Parser.eatToEndOfStatement();
+      return false;
+    }
+
+    const int64_t Opcode = OC->getValue();
+    if (Opcode & ~0xff) {
+      Error(OpcodeLoc, "invalid opcode");
+      Parser.eatToEndOfStatement();
+      return false;
+    }
+
+    Opcodes.push_back(uint8_t(Opcode));
+
+    if (getLexer().is(AsmToken::EndOfStatement))
+      break;
+
+    if (getLexer().isNot(AsmToken::Comma)) {
+      Error(getLexer().getLoc(), "unexpected token in directive");
+      Parser.eatToEndOfStatement();
+      return false;
+    }
+
+    Parser.Lex();
+  }
+
+  getTargetStreamer().emitUnwindRaw(StackOffset, Opcodes);
+
+  Parser.Lex();
+  return false;
+}
+
+/// parseDirectiveTLSDescSeq
+///   ::= .tlsdescseq tls-variable
+bool ARMAsmParser::parseDirectiveTLSDescSeq(SMLoc L) {
+  if (getLexer().isNot(AsmToken::Identifier)) {
+    TokError("expected variable after '.tlsdescseq' directive");
+    Parser.eatToEndOfStatement();
+    return false;
+  }
+
+  const MCSymbolRefExpr *SRE =
+    MCSymbolRefExpr::Create(Parser.getTok().getIdentifier(),
+                            MCSymbolRefExpr::VK_ARM_TLSDESCSEQ, getContext());
+  Lex();
+
+  if (getLexer().isNot(AsmToken::EndOfStatement)) {
+    Error(Parser.getTok().getLoc(), "unexpected token");
+    Parser.eatToEndOfStatement();
+    return false;
+  }
+
+  getTargetStreamer().AnnotateTLSDescriptorSequence(SRE);
+  return false;
+}
+
+/// parseDirectiveMovSP
+///  ::= .movsp reg [, #offset]
+bool ARMAsmParser::parseDirectiveMovSP(SMLoc L) {
+  if (!UC.hasFnStart()) {
+    Parser.eatToEndOfStatement();
+    Error(L, ".fnstart must precede .movsp directives");
+    return false;
+  }
+  if (UC.getFPReg() != ARM::SP) {
+    Parser.eatToEndOfStatement();
+    Error(L, "unexpected .movsp directive");
+    return false;
+  }
+
+  SMLoc SPRegLoc = Parser.getTok().getLoc();
+  int SPReg = tryParseRegister();
+  if (SPReg == -1) {
+    Parser.eatToEndOfStatement();
+    Error(SPRegLoc, "register expected");
+    return false;
+  }
+
+  if (SPReg == ARM::SP || SPReg == ARM::PC) {
+    Parser.eatToEndOfStatement();
+    Error(SPRegLoc, "sp and pc are not permitted in .movsp directive");
+    return false;
+  }
+
+  int64_t Offset = 0;
+  if (Parser.getTok().is(AsmToken::Comma)) {
+    Parser.Lex();
+
+    if (Parser.getTok().isNot(AsmToken::Hash)) {
+      Error(Parser.getTok().getLoc(), "expected #constant");
+      Parser.eatToEndOfStatement();
+      return false;
+    }
+    Parser.Lex();
+
+    const MCExpr *OffsetExpr;
+    SMLoc OffsetLoc = Parser.getTok().getLoc();
+    if (Parser.parseExpression(OffsetExpr)) {
+      Parser.eatToEndOfStatement();
+      Error(OffsetLoc, "malformed offset expression");
+      return false;
+    }
+
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(OffsetExpr);
+    if (!CE) {
+      Parser.eatToEndOfStatement();
+      Error(OffsetLoc, "offset must be an immediate constant");
+      return false;
+    }
+
+    Offset = CE->getValue();
+  }
+
+  getTargetStreamer().emitMovSP(SPReg, Offset);
+  UC.saveFPReg(SPReg);
+
+  return false;
+}
+
+/// parseDirectiveObjectArch
+///   ::= .object_arch name
+bool ARMAsmParser::parseDirectiveObjectArch(SMLoc L) {
+  if (getLexer().isNot(AsmToken::Identifier)) {
+    Error(getLexer().getLoc(), "unexpected token");
+    Parser.eatToEndOfStatement();
+    return false;
+  }
+
+  StringRef Arch = Parser.getTok().getString();
+  SMLoc ArchLoc = Parser.getTok().getLoc();
+  getLexer().Lex();
+
+  unsigned ID = StringSwitch<unsigned>(Arch)
+#define ARM_ARCH_NAME(NAME, ID, DEFAULT_CPU_NAME, DEFAULT_CPU_ARCH) \
+    .Case(NAME, ARM::ID)
+#define ARM_ARCH_ALIAS(NAME, ID) \
+    .Case(NAME, ARM::ID)
+#include "MCTargetDesc/ARMArchName.def"
+#undef ARM_ARCH_NAME
+#undef ARM_ARCH_ALIAS
+    .Default(ARM::INVALID_ARCH);
+
+  if (ID == ARM::INVALID_ARCH) {
+    Error(ArchLoc, "unknown architecture '" + Arch + "'");
+    Parser.eatToEndOfStatement();
+    return false;
+  }
+
+  getTargetStreamer().emitObjectArch(ID);
+
+  if (getLexer().isNot(AsmToken::EndOfStatement)) {
+    Error(getLexer().getLoc(), "unexpected token");
+    Parser.eatToEndOfStatement();
+  }
 
   return false;
 }
@@ -8874,21 +9097,4 @@ unsigned ARMAsmParser::validateTargetOperandClass(MCParsedAsmOperand *AsmOp,
     break;
   }
   return Match_InvalidOperand;
-}
-
-void ARMAsmParser::finishParse() {
-  // Dump contents of assembler constant pools.
-  MCStreamer &Streamer = getParser().getStreamer();
-  for (ConstantPoolMapTy::iterator CPI = ConstantPools.begin(),
-                                   CPE = ConstantPools.end();
-       CPI != CPE; ++CPI) {
-    const MCSection *Section = CPI->first;
-    ConstantPool &CP = CPI->second;
-
-    // Dump non-empty assembler constant pools at the end of the section.
-    if (!CP.empty()) {
-      Streamer.SwitchSection(Section);
-      CP.emitEntries(Streamer);
-    }
-  }
 }

@@ -117,7 +117,7 @@ public:
   static unsigned QuadFPRegs[32] = {
     Sparc::Q0,  Sparc::Q1,  Sparc::Q2,  Sparc::Q3,
     Sparc::Q4,  Sparc::Q5,  Sparc::Q6,  Sparc::Q7,
-    Sparc::Q8,  Sparc::Q7,  Sparc::Q8,  Sparc::Q9,
+    Sparc::Q8,  Sparc::Q9,  Sparc::Q10, Sparc::Q11,
     Sparc::Q12, Sparc::Q13, Sparc::Q14, Sparc::Q15 };
 
 
@@ -393,7 +393,7 @@ MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
 
   case Match_Success: {
     Inst.setLoc(IDLoc);
-    Out.EmitInstruction(Inst);
+    Out.EmitInstruction(Inst, STI);
     return false;
   }
 
@@ -546,7 +546,24 @@ parseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                                                  Parser.getTok().getLoc()));
     Parser.Lex(); // Eat the [
 
-    ResTy = parseMEMOperand(Operands);
+    if (Mnemonic == "cas" || Mnemonic == "casx") {
+      SMLoc S = Parser.getTok().getLoc();
+      if (getLexer().getKind() != AsmToken::Percent)
+        return MatchOperand_NoMatch;
+      Parser.Lex(); // eat %
+
+      unsigned RegNo, RegKind;
+      if (!matchRegisterName(Parser.getTok(), RegNo, RegKind))
+        return MatchOperand_NoMatch;
+
+      Parser.Lex(); // Eat the identifier token.
+      SMLoc E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer()-1);
+      Operands.push_back(SparcOperand::CreateReg(RegNo, RegKind, S, E));
+      ResTy = MatchOperand_Success;
+    } else {
+      ResTy = parseMEMOperand(Operands);
+    }
+
     if (ResTy != MatchOperand_Success)
       return ResTy;
 
@@ -734,7 +751,7 @@ bool SparcAsmParser::matchRegisterName(const AsmToken &Tok,
         && !name.substr(1, 2).getAsInteger(10, intVal)
         && intVal >= 32 && intVal <= 62 && (intVal % 2 == 0)) {
       // FIXME: Check V9
-      RegNo = DoubleRegs[16 + intVal/2];
+      RegNo = DoubleRegs[intVal/2];
       RegKind = SparcOperand::rk_DoubleReg;
       return true;
     }

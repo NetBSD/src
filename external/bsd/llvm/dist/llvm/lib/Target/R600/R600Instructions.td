@@ -642,6 +642,9 @@ ins, AsmPrint, [] >, CF_WORD0_EG, CF_WORD1_EG {
 def CF_ALU : ALU_CLAUSE<8, "ALU">;
 def CF_ALU_PUSH_BEFORE : ALU_CLAUSE<9, "ALU_PUSH_BEFORE">;
 def CF_ALU_POP_AFTER : ALU_CLAUSE<10, "ALU_POP_AFTER">;
+def CF_ALU_CONTINUE : ALU_CLAUSE<13, "ALU_CONTINUE">;
+def CF_ALU_BREAK : ALU_CLAUSE<14, "ALU_BREAK">;
+def CF_ALU_ELSE_AFTER : ALU_CLAUSE<15, "ALU_ELSE_AFTER">;
 
 def FETCH_CLAUSE : AMDGPUInst <(outs),
 (ins i32imm:$addr), "Fetch clause starting at $addr:", [] > {
@@ -1238,6 +1241,10 @@ let Predicates = [isR600] in {
   "JUMP @$ADDR POP:$POP_COUNT"> {
     let CNT = 0;
   }
+  def CF_PUSH_ELSE_R600 : CF_CLAUSE_R600<12, (ins i32imm:$ADDR),
+  "PUSH_ELSE @$ADDR"> {
+    let CNT = 0;
+  }
   def CF_ELSE_R600 : CF_CLAUSE_R600<13, (ins i32imm:$ADDR, i32imm:$POP_COUNT),
   "ELSE @$ADDR POP:$POP_COUNT"> {
     let CNT = 0;
@@ -1519,7 +1526,9 @@ let Predicates = [isEGorCayman] in {
                                                i32:$src2))],
     VecALU
   >;
-  def : BFEPattern <BFE_UINT_eg>;
+// XXX: This pattern is broken, disabling for now.  See comment in
+// AMDGPUInstructions.td for more info.
+//  def : BFEPattern <BFE_UINT_eg>;
 
   def BFI_INT_eg : R600_3OP <0x06, "BFI_INT", [], VecALU>;
   defm : BFIPatterns <BFI_INT_eg>;
@@ -1547,7 +1556,7 @@ let Predicates = [isEGorCayman] in {
   defm CUBE_eg : CUBE_Common<0xC0>;
 
 let hasSideEffects = 1 in {
-  def MOVA_INT_eg : R600_1OP <0xCC, "MOVA_INT", []>;
+  def MOVA_INT_eg : R600_1OP <0xCC, "MOVA_INT", [], VecALU>;
 }
 
   def TGSI_LIT_Z_eg : TGSI_LIT_Z_Common<MUL_LIT_eg, LOG_CLAMPED_eg, EXP_IEEE_eg>;
@@ -1794,6 +1803,10 @@ def LDS_USHORT_READ_RET : R600_LDS_1A <0x39, "LDS_USHORT_READ_RET",
   "JUMP @$ADDR POP:$POP_COUNT"> {
     let COUNT = 0;
   }
+  def CF_PUSH_EG : CF_CLAUSE_EG<11, (ins i32imm:$ADDR, i32imm:$POP_COUNT),
+                                "PUSH @$ADDR POP:$POP_COUNT"> {
+    let COUNT = 0;
+  }
   def CF_ELSE_EG : CF_CLAUSE_EG<13, (ins i32imm:$ADDR, i32imm:$POP_COUNT),
   "ELSE @$ADDR POP:$POP_COUNT"> {
     let COUNT = 0;
@@ -1870,9 +1883,6 @@ def : Pat <
     let COUNT = 0;
   }
 
-  def CF_PUSH_CM : CF_CLAUSE_EG<11, (ins i32imm:$ADDR, i32imm:$POP_COUNT), "PUSH @$ADDR POP:$POP_COUNT"> {
-    let COUNT = 0;
-  }
 
 def : Pat<(fsqrt f32:$src), (MUL R600_Reg32:$src, (RECIPSQRT_CLAMPED_cm $src))>;
 
@@ -2253,7 +2263,7 @@ let Inst{63-32} = Word1;
 //===--------------------------------------------------------------------===//
 //===---------------------------------------------------------------------===//
 // Custom Inserter for Branches and returns, this eventually will be a
-// seperate pass
+// separate pass
 //===---------------------------------------------------------------------===//
 let isTerminator = 1, usesCustomInserter = 1, isBranch = 1, isBarrier = 1 in {
   def BRANCH : ILFormat<(outs), (ins brtarget:$target),
