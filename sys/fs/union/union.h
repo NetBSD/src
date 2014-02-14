@@ -1,4 +1,4 @@
-/*	$NetBSD: union.h,v 1.25 2014/02/13 09:55:04 hannken Exp $	*/
+/*	$NetBSD: union.h,v 1.26 2014/02/14 08:50:27 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -127,7 +127,6 @@ struct union_node {
 	struct vnode		*un_pvp;	/* v: Parent vnode */
 	char			*un_path;	/* v: saved component name */
 	int			un_openl;	/* v: # of opens on lowervp */
-	unsigned int		un_flags;	/* v: node flags */
 	unsigned int		un_cflags;	/* c: cache flags */
 	struct vnode		**un_dircache;	/* v: cached union stack */
 	off_t			un_uppersz;	/* l: size of upper object */

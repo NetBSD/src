@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.61 2014/02/13 09:55:04 hannken Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.62 2014/02/14 08:50:27 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.61 2014/02/13 09:55:04 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.62 2014/02/14 08:50:27 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -550,7 +550,6 @@ found:
 		vref(undvp);
 	un->un_dircache = 0;
 	un->un_openl = 0;
-	un->un_flags = 0;
 	un->un_cflags = 0;
 
 	if (uppervp == NULL) {
