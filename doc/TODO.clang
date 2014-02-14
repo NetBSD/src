@@ -1,14 +1,10 @@
-$NetBSD: TODO.clang,v 1.7 2014/01/15 22:25:22 joerg Exp $
+$NetBSD: TODO.clang,v 1.8 2014/02/14 20:35:20 joerg Exp $
 
 Hacks for the clang integration
 -------------------------------
 
-"-no-integrated-as" in src/sys/arch/amd64 and src/sys/arch/i386
-to compensate for the incomplete explicit positioning support in LLVM MC.
-
-LLVM PR 18273 and -no-integrated-as as workaround:
-    src/tests/libexec/ld.elf_so/helper_symver_dso1/Makefile
-    src/tests/libexec/ld.elf_so/helper_symver_dso2/Makefile
+"-no-integrated-as" is unsed in src/sys/arch/i386/stand to compensate
+for the incomplete explicit positioning support in LLVM MC.
 
 Missing atomic support in ARM libgcc, -march=armv6 "workaround":
     src/external/bsd/libc++/lib
