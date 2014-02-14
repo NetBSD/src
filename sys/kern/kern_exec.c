@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.374 2014/02/02 14:50:46 martin Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.375 2014/02/14 16:35:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.374 2014/02/02 14:50:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.375 2014/02/14 16:35:40 christos Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -1977,6 +1977,16 @@ spawn_return(void *arg)
 		}
 
 		if (spawn_data->sed_attrs->sa_flags & POSIX_SPAWN_SETSIGDEF) {
+			/*
+			 * The following sigaction call is using a sigaction
+			 * version 0 trampoline which is in the compatibility
+			 * code only. This is not a problem because for SIG_DFL
+			 * and SIG_IGN, the trampolines are now ignored. If they
+			 * were not, this would be a problem because we are
+			 * holding the exec_lock, and the compat code needs
+			 * to do the same in order to replace the trampoline
+			 * code of the process.
+			 */
 			for (i = 1; i <= NSIG; i++) {
 				if (sigismember(
 				    &spawn_data->sed_attrs->sa_sigdefault, i))
