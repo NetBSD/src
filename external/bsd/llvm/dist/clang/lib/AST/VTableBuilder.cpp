@@ -269,11 +269,11 @@ ComputeReturnAdjustmentBaseOffset(ASTContext &Context,
   const FunctionType *DerivedFT = DerivedMD->getType()->getAs<FunctionType>();
   
   // Canonicalize the return types.
-  CanQualType CanDerivedReturnType = 
-    Context.getCanonicalType(DerivedFT->getResultType());
-  CanQualType CanBaseReturnType = 
-    Context.getCanonicalType(BaseFT->getResultType());
-  
+  CanQualType CanDerivedReturnType =
+      Context.getCanonicalType(DerivedFT->getReturnType());
+  CanQualType CanBaseReturnType =
+      Context.getCanonicalType(BaseFT->getReturnType());
+
   assert(CanDerivedReturnType->getTypeClass() == 
          CanBaseReturnType->getTypeClass() && 
          "Types must have same type class!");
@@ -479,10 +479,10 @@ static bool HasSameVirtualSignature(const CXXMethodDecl *LHS,
   // list here because there isn't necessarily an inheritance
   // relationship between the two methods.
   if (LT->getTypeQuals() != RT->getTypeQuals() ||
-      LT->getNumArgs() != RT->getNumArgs())
+      LT->getNumParams() != RT->getNumParams())
     return false;
-  for (unsigned I = 0, E = LT->getNumArgs(); I != E; ++I)
-    if (LT->getArgType(I) != RT->getArgType(I))
+  for (unsigned I = 0, E = LT->getNumParams(); I != E; ++I)
+    if (LT->getParamType(I) != RT->getParamType(I))
       return false;
   return true;
 }

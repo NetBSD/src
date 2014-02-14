@@ -187,10 +187,14 @@ void CodeGenModule::applyReplacements() {
     llvm::Function *OldF = cast<llvm::Function>(Entry);
     llvm::Function *NewF = dyn_cast<llvm::Function>(Replacement);
     if (!NewF) {
-      llvm::ConstantExpr *CE = cast<llvm::ConstantExpr>(Replacement);
-      assert(CE->getOpcode() == llvm::Instruction::BitCast ||
-             CE->getOpcode() == llvm::Instruction::GetElementPtr);
-      NewF = dyn_cast<llvm::Function>(CE->getOperand(0));
+      if (llvm::GlobalAlias *Alias = dyn_cast<llvm::GlobalAlias>(Replacement)) {
+        NewF = dyn_cast<llvm::Function>(Alias->getAliasedGlobal());
+      } else {
+        llvm::ConstantExpr *CE = cast<llvm::ConstantExpr>(Replacement);
+        assert(CE->getOpcode() == llvm::Instruction::BitCast ||
+               CE->getOpcode() == llvm::Instruction::GetElementPtr);
+        NewF = dyn_cast<llvm::Function>(CE->getOperand(0));
+      }
     }
 
     // Replace old with new, but keep the old order.
@@ -339,9 +343,9 @@ void CodeGenModule::DecorateInstruction(llvm::Instruction *Inst,
     Inst->setMetadata(llvm::LLVMContext::MD_tbaa, TBAAInfo);
 }
 
-void CodeGenModule::Error(SourceLocation loc, StringRef error) {
-  unsigned diagID = getDiags().getCustomDiagID(DiagnosticsEngine::Error, error);
-  getDiags().Report(Context.getFullLoc(loc), diagID);
+void CodeGenModule::Error(SourceLocation loc, StringRef message) {
+  unsigned diagID = getDiags().getCustomDiagID(DiagnosticsEngine::Error, "%0");
+  getDiags().Report(Context.getFullLoc(loc), diagID) << message;
 }
 
 /// ErrorUnsupported - Print out an error that codegen doesn't support the
@@ -417,73 +421,6 @@ void CodeGenModule::setTLSMode(llvm::GlobalVariable *GV,
   }
 
   GV->setThreadLocalMode(TLM);
-}
-
-/// Set the symbol visibility of type information (vtable and RTTI)
-/// associated with the given type.
-void CodeGenModule::setTypeVisibility(llvm::GlobalValue *GV,
-                                      const CXXRecordDecl *RD,
-                                      TypeVisibilityKind TVK) const {
-  setGlobalVisibility(GV, RD);
-
-  if (!CodeGenOpts.HiddenWeakVTables)
-    return;
-
-  // We never want to drop the visibility for RTTI names.
-  if (TVK == TVK_ForRTTIName)
-    return;
-
-  // We want to drop the visibility to hidden for weak type symbols.
-  // This isn't possible if there might be unresolved references
-  // elsewhere that rely on this symbol being visible.
-
-  // This should be kept roughly in sync with setThunkVisibility
-  // in CGVTables.cpp.
-
-  // Preconditions.
-  if (GV->getLinkage() != llvm::GlobalVariable::LinkOnceODRLinkage ||
-      GV->getVisibility() != llvm::GlobalVariable::DefaultVisibility)
-    return;
-
-  // Don't override an explicit visibility attribute.
-  if (RD->getExplicitVisibility(NamedDecl::VisibilityForType))
-    return;
-
-  switch (RD->getTemplateSpecializationKind()) {
-  // We have to disable the optimization if this is an EI definition
-  // because there might be EI declarations in other shared objects.
-  case TSK_ExplicitInstantiationDefinition:
-  case TSK_ExplicitInstantiationDeclaration:
-    return;
-
-  // Every use of a non-template class's type information has to emit it.
-  case TSK_Undeclared:
-    break;
-
-  // In theory, implicit instantiations can ignore the possibility of
-  // an explicit instantiation declaration because there necessarily
-  // must be an EI definition somewhere with default visibility.  In
-  // practice, it's possible to have an explicit instantiation for
-  // an arbitrary template class, and linkers aren't necessarily able
-  // to deal with mixed-visibility symbols.
-  case TSK_ExplicitSpecialization:
-  case TSK_ImplicitInstantiation:
-    return;
-  }
-
-  // If there's a key function, there may be translation units
-  // that don't have the key function's definition.  But ignore
-  // this if we're emitting RTTI under -fno-rtti.
-  if (!(TVK != TVK_ForRTTI) || LangOpts.RTTI) {
-    // FIXME: what should we do if we "lose" the key function during
-    // the emission of the file?
-    if (Context.getCurrentKeyFunction(RD))
-      return;
-  }
-
-  // Otherwise, drop the visibility to hidden.
-  GV->setVisibility(llvm::GlobalValue::HiddenVisibility);
-  GV->setUnnamedAddr(true);
 }
 
 StringRef CodeGenModule::getMangledName(GlobalDecl GD) {
@@ -714,6 +651,8 @@ void CodeGenModule::SetLLVMFunctionAttributesForDefinition(const Decl *D,
 
   if (LangOpts.getStackProtector() == LangOptions::SSPOn)
     B.addAttribute(llvm::Attribute::StackProtect);
+  else if (LangOpts.getStackProtector() == LangOptions::SSPStrong)
+    B.addAttribute(llvm::Attribute::StackProtectStrong);
   else if (LangOpts.getStackProtector() == LangOptions::SSPReq)
     B.addAttribute(llvm::Attribute::StackProtectReq);
 
@@ -1639,6 +1578,12 @@ CodeGenModule::GetOrCreateLLVMGlobal(StringRef MangledName,
   if (AddrSpace != Ty->getAddressSpace())
     return llvm::ConstantExpr::getAddrSpaceCast(GV, Ty);
 
+  if (getTarget().getTriple().getArch() == llvm::Triple::xcore &&
+      D->getLanguageLinkage() == CLanguageLinkage &&
+      D->getType().isConstant(Context) &&
+      isExternallyVisible(D->getLinkageAndVisibility().getLinkage()))
+    GV->setSection(".cp.rodata");
+
   return GV;
 }
 
@@ -2378,30 +2323,25 @@ CodeGenModule::GetAddrOfConstantCFString(const StringLiteral *Literal) {
     C = llvm::ConstantDataArray::getString(VMContext, Entry.getKey());
   }
 
-  llvm::GlobalValue::LinkageTypes Linkage;
-  if (isUTF16)
-    // FIXME: why do utf strings get "_" labels instead of "L" labels?
-    Linkage = llvm::GlobalValue::InternalLinkage;
-  else
-    // FIXME: With OS X ld 123.2 (xcode 4) and LTO we would get a linker error
-    // when using private linkage. It is not clear if this is a bug in ld
-    // or a reasonable new restriction.
-    Linkage = llvm::GlobalValue::LinkerPrivateLinkage;
-  
   // Note: -fwritable-strings doesn't make the backing store strings of
   // CFStrings writable. (See <rdar://problem/10657500>)
   llvm::GlobalVariable *GV =
-    new llvm::GlobalVariable(getModule(), C->getType(), /*isConstant=*/true,
-                             Linkage, C, ".str");
+      new llvm::GlobalVariable(getModule(), C->getType(), /*isConstant=*/true,
+                               llvm::GlobalValue::PrivateLinkage, C, ".str");
   GV->setUnnamedAddr(true);
   // Don't enforce the target's minimum global alignment, since the only use
   // of the string is via this class initializer.
+  // FIXME: We set the section explicitly to avoid a bug in ld64 224.1. Without
+  // it LLVM can merge the string with a non unnamed_addr one during LTO. Doing
+  // that changes the section it ends in, which surprises ld64.
   if (isUTF16) {
     CharUnits Align = getContext().getTypeAlignInChars(getContext().ShortTy);
     GV->setAlignment(Align.getQuantity());
+    GV->setSection("__TEXT,__ustring");
   } else {
     CharUnits Align = getContext().getTypeAlignInChars(getContext().CharTy);
     GV->setAlignment(Align.getQuantity());
+    GV->setSection("__TEXT,__cstring,cstring_literals");
   }
 
   // String.
@@ -2420,8 +2360,7 @@ CodeGenModule::GetAddrOfConstantCFString(const StringLiteral *Literal) {
   GV = new llvm::GlobalVariable(getModule(), C->getType(), true,
                                 llvm::GlobalVariable::PrivateLinkage, C,
                                 "_unnamed_cfstring_");
-  if (const char *Sect = getTarget().getCFStringSection())
-    GV->setSection(Sect);
+  GV->setSection("__DATA,__cfstring");
   Entry.setValue(GV);
 
   return GV;
@@ -2532,12 +2471,13 @@ CodeGenModule::GetAddrOfConstantString(const StringLiteral *Literal) {
   GV = new llvm::GlobalVariable(getModule(), C->getType(), true,
                                 llvm::GlobalVariable::PrivateLinkage, C,
                                 "_unnamed_nsstring_");
+  const char *NSStringSection = "__OBJC,__cstring_object,regular,no_dead_strip";
+  const char *NSStringNonFragileABISection =
+      "__DATA,__objc_stringobj,regular,no_dead_strip";
   // FIXME. Fix section.
-  if (const char *Sect = 
-        LangOpts.ObjCRuntime.isNonFragile() 
-          ? getTarget().getNSStringNonFragileABISection() 
-          : getTarget().getNSStringSection())
-    GV->setSection(Sect);
+  GV->setSection(LangOpts.ObjCRuntime.isNonFragile()
+                     ? NSStringNonFragileABISection
+                     : NSStringSection);
   Entry.setValue(GV);
   
   return GV;

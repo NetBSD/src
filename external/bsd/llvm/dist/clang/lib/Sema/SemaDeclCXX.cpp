@@ -714,8 +714,9 @@ static bool CheckConstexprParameterTypes(Sema &SemaRef,
                                          const FunctionDecl *FD) {
   unsigned ArgIndex = 0;
   const FunctionProtoType *FT = FD->getType()->getAs<FunctionProtoType>();
-  for (FunctionProtoType::arg_type_iterator i = FT->arg_type_begin(),
-       e = FT->arg_type_end(); i != e; ++i, ++ArgIndex) {
+  for (FunctionProtoType::param_type_iterator i = FT->param_type_begin(),
+                                              e = FT->param_type_end();
+       i != e; ++i, ++ArgIndex) {
     const ParmVarDecl *PD = FD->getParamDecl(ArgIndex);
     SourceLocation ParamLoc = PD->getLocation();
     if (!(*i)->isDependentType() &&
@@ -789,7 +790,7 @@ bool Sema::CheckConstexprFunctionDecl(const FunctionDecl *NewFD) {
     }
 
     // - its return type shall be a literal type;
-    QualType RT = NewFD->getResultType();
+    QualType RT = NewFD->getReturnType();
     if (!RT->isDependentType() &&
         RequireLiteralType(NewFD->getLocation(), RT,
                            diag::err_constexpr_non_literal_return))
@@ -1179,7 +1180,7 @@ bool Sema::CheckConstexprFunctionBody(const FunctionDecl *Dcl, Stmt *Body) {
       // statement. We still do, unless the return type is void, because
       // otherwise if there's no return statement, the function cannot
       // be used in a core constant expression.
-      bool OK = getLangOpts().CPlusPlus1y && Dcl->getResultType()->isVoidType();
+      bool OK = getLangOpts().CPlusPlus1y && Dcl->getReturnType()->isVoidType();
       Diag(Dcl->getLocation(),
            OK ? diag::warn_cxx11_compat_constexpr_body_no_return
               : diag::err_constexpr_body_no_return);
@@ -1520,7 +1521,7 @@ bool Sema::AttachBaseSpecifiers(CXXRecordDecl *Class, CXXBaseSpecifier **Bases,
           Invalid = true;
         }
         if (RD->hasAttr<WeakAttr>())
-          Class->addAttr(::new (Context) WeakAttr(SourceRange(), Context));
+          Class->addAttr(WeakAttr::CreateImplicit(Context));
       }
     }
   }
@@ -2094,7 +2095,7 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
   }
 
   if (VS.isOverrideSpecified())
-    Member->addAttr(new (Context) OverrideAttr(VS.getOverrideLoc(), Context));
+    Member->addAttr(new (Context) OverrideAttr(VS.getOverrideLoc(), Context, 0));
   if (VS.isFinalSpecified())
     Member->addAttr(new (Context) FinalAttr(VS.getFinalLoc(), Context,
                                             VS.isFinalSpelledSealed()));
@@ -2343,13 +2344,24 @@ namespace {
   }
 } // namespace
 
-/// ActOnCXXInClassMemberInitializer - This is invoked after parsing an
-/// in-class initializer for a non-static C++ class member, and after
-/// instantiating an in-class initializer in a class template. Such actions
-/// are deferred until the class is complete.
-void
-Sema::ActOnCXXInClassMemberInitializer(Decl *D, SourceLocation InitLoc,
-                                       Expr *InitExpr) {
+/// \brief Enter a new C++ default initializer scope. After calling this, the
+/// caller must call \ref ActOnFinishCXXInClassMemberInitializer, even if
+/// parsing or instantiating the initializer failed.
+void Sema::ActOnStartCXXInClassMemberInitializer() {
+  // Create a synthetic function scope to represent the call to the constructor
+  // that notionally surrounds a use of this initializer.
+  PushFunctionScope();
+}
+
+/// \brief This is invoked after parsing an in-class initializer for a
+/// non-static C++ class member, and after instantiating an in-class initializer
+/// in a class template. Such actions are deferred until the class is complete.
+void Sema::ActOnFinishCXXInClassMemberInitializer(Decl *D,
+                                                  SourceLocation InitLoc,
+                                                  Expr *InitExpr) {
+  // Pop the notional constructor scope we created earlier.
+  PopFunctionScopeInfo(0, D);
+
   FieldDecl *FD = cast<FieldDecl>(D);
   assert(FD->getInClassInitStyle() != ICIS_NoInit &&
          "must set init style when field is created");
@@ -4234,12 +4246,12 @@ struct CheckAbstractUsage {
   }
 
   void Check(FunctionProtoTypeLoc TL, Sema::AbstractDiagSelID Sel) {
-    Visit(TL.getResultLoc(), Sema::AbstractReturnType);
-    for (unsigned I = 0, E = TL.getNumArgs(); I != E; ++I) {
-      if (!TL.getArg(I))
+    Visit(TL.getReturnLoc(), Sema::AbstractReturnType);
+    for (unsigned I = 0, E = TL.getNumParams(); I != E; ++I) {
+      if (!TL.getParam(I))
         continue;
-      
-      TypeSourceInfo *TSI = TL.getArg(I)->getTypeSourceInfo();
+
+      TypeSourceInfo *TSI = TL.getParam(I)->getTypeSourceInfo();
       if (TSI) Visit(TSI->getTypeLoc(), Sema::AbstractParamType);
     }
   }
@@ -4705,8 +4717,8 @@ updateExceptionSpec(Sema &S, FunctionDecl *FD, const FunctionProtoType *FPT,
                     const Sema::ImplicitExceptionSpecification &ExceptSpec) {
   FunctionProtoType::ExtProtoInfo EPI = FPT->getExtProtoInfo();
   ExceptSpec.getEPI(EPI);
-  FD->setType(S.Context.getFunctionType(FPT->getResultType(),
-                                        FPT->getArgTypes(), EPI));
+  FD->setType(S.Context.getFunctionType(FPT->getReturnType(),
+                                        FPT->getParamTypes(), EPI));
 }
 
 static FunctionProtoType::ExtProtoInfo getImplicitMethodEPI(Sema &S,
@@ -4793,7 +4805,7 @@ void Sema::CheckExplicitlyDefaultedSpecialMember(CXXMethodDecl *MD) {
   QualType ReturnType = Context.VoidTy;
   if (CSM == CXXCopyAssignment || CSM == CXXMoveAssignment) {
     // Check for return type matching.
-    ReturnType = Type->getResultType();
+    ReturnType = Type->getReturnType();
     QualType ExpectedReturnType =
         Context.getLValueReferenceType(Context.getTypeDeclType(RD));
     if (!Context.hasSameType(ReturnType, ExpectedReturnType)) {
@@ -4811,7 +4823,7 @@ void Sema::CheckExplicitlyDefaultedSpecialMember(CXXMethodDecl *MD) {
   }
 
   // Check for parameter type matching.
-  QualType ArgType = ExpectedParams ? Type->getArgType(0) : QualType();
+  QualType ArgType = ExpectedParams ? Type->getParamType(0) : QualType();
   bool HasConstParam = false;
   if (ExpectedParams && ArgType->isReferenceType()) {
     // Argument must be reference to possibly-const T.
@@ -4905,6 +4917,7 @@ void Sema::CheckExplicitlyDefaultedSpecialMember(CXXMethodDecl *MD) {
       //   [For a] user-provided explicitly-defaulted function [...] if such a
       //   function is implicitly defined as deleted, the program is ill-formed.
       Diag(MD->getLocation(), diag::err_out_of_line_default_deletes) << CSM;
+      ShouldDeleteSpecialMember(MD, CSM, /*Diagnose*/true);
       HadError = true;
     }
   }
@@ -6208,14 +6221,14 @@ QualType Sema::CheckConstructorDeclarator(Declarator &D, QualType R,
   // case any of the errors above fired) and with "void" as the
   // return type, since constructors don't have return types.
   const FunctionProtoType *Proto = R->getAs<FunctionProtoType>();
-  if (Proto->getResultType() == Context.VoidTy && !D.isInvalidType())
+  if (Proto->getReturnType() == Context.VoidTy && !D.isInvalidType())
     return R;
 
   FunctionProtoType::ExtProtoInfo EPI = Proto->getExtProtoInfo();
   EPI.TypeQuals = 0;
   EPI.RefQualifier = RQ_None;
-  
-  return Context.getFunctionType(Context.VoidTy, Proto->getArgTypes(), EPI);
+
+  return Context.getFunctionType(Context.VoidTy, Proto->getParamTypes(), EPI);
 }
 
 /// CheckConstructor - Checks a fully-formed constructor for
@@ -6443,7 +6456,7 @@ void Sema::CheckConversionDeclarator(Declarator &D, QualType &R,
   const FunctionProtoType *Proto = R->getAs<FunctionProtoType>();
 
   // Make sure we don't have any parameters.
-  if (Proto->getNumArgs() > 0) {
+  if (Proto->getNumParams() > 0) {
     Diag(D.getIdentifierLoc(), diag::err_conv_function_with_params);
 
     // Delete the parameters.
@@ -6456,11 +6469,11 @@ void Sema::CheckConversionDeclarator(Declarator &D, QualType &R,
 
   // Diagnose "&operator bool()" and other such nonsense.  This
   // is actually a gcc extension which we don't support.
-  if (Proto->getResultType() != ConvType) {
+  if (Proto->getReturnType() != ConvType) {
     Diag(D.getIdentifierLoc(), diag::err_conv_function_with_complex_decl)
-      << Proto->getResultType();
+        << Proto->getReturnType();
     D.setInvalidType();
-    ConvType = Proto->getResultType();
+    ConvType = Proto->getReturnType();
   }
 
   // C++ [class.conv.fct]p4:
@@ -7230,13 +7243,7 @@ bool Sema::CheckUsingShadowDecl(UsingDecl *Using, NamedDecl *Orig,
   if (FoundEquivalentDecl)
     return false;
 
-  if (Target->isFunctionOrFunctionTemplate()) {
-    FunctionDecl *FD;
-    if (isa<FunctionTemplateDecl>(Target))
-      FD = cast<FunctionTemplateDecl>(Target)->getTemplatedDecl();
-    else
-      FD = cast<FunctionDecl>(Target);
-
+  if (FunctionDecl *FD = Target->getAsFunction()) {
     NamedDecl *OldDecl = 0;
     switch (CheckOverload(0, FD, Previous, OldDecl, /*IsForUsingDecl*/ true)) {
     case Ovl_Overload:
@@ -7245,7 +7252,7 @@ bool Sema::CheckUsingShadowDecl(UsingDecl *Using, NamedDecl *Orig,
     case Ovl_NonFunction:
       Diag(Using->getLocation(), diag::err_using_decl_conflict);
       break;
-      
+
     // We found a decl with the exact signature.
     case Ovl_Match:
       // If we're in a record, we want to hide the target, so we
@@ -8377,7 +8384,7 @@ private:
   void inherit(const CXXConstructorDecl *Ctor) {
     const FunctionProtoType *CtorType =
         Ctor->getType()->castAs<FunctionProtoType>();
-    ArrayRef<QualType> ArgTypes(CtorType->getArgTypes());
+    ArrayRef<QualType> ArgTypes(CtorType->getParamTypes());
     FunctionProtoType::ExtProtoInfo EPI = CtorType->getExtProtoInfo();
 
     SourceLocation UsingLoc = getUsingLoc(Ctor->getParent());
@@ -8405,7 +8412,7 @@ private:
       do
         declareCtor(UsingLoc, Ctor,
                     SemaRef.Context.getFunctionType(
-                        Ctor->getResultType(), ArgTypes.slice(0, Params), EPI));
+                        Ctor->getReturnType(), ArgTypes.slice(0, Params), EPI));
       while (Params > MinParams &&
              Ctor->getParamDecl(--Params)->hasDefaultArg());
     }
@@ -8519,21 +8526,21 @@ private:
     FunctionProtoType::ExtProtoInfo EPI = FPT->getExtProtoInfo();
     EPI.ExceptionSpecType = EST_Unevaluated;
     EPI.ExceptionSpecDecl = DerivedCtor;
-    DerivedCtor->setType(Context.getFunctionType(FPT->getResultType(),
-                                                 FPT->getArgTypes(), EPI));
+    DerivedCtor->setType(Context.getFunctionType(FPT->getReturnType(),
+                                                 FPT->getParamTypes(), EPI));
 
     // Build the parameter declarations.
     SmallVector<ParmVarDecl *, 16> ParamDecls;
-    for (unsigned I = 0, N = FPT->getNumArgs(); I != N; ++I) {
+    for (unsigned I = 0, N = FPT->getNumParams(); I != N; ++I) {
       TypeSourceInfo *TInfo =
-          Context.getTrivialTypeSourceInfo(FPT->getArgType(I), UsingLoc);
+          Context.getTrivialTypeSourceInfo(FPT->getParamType(I), UsingLoc);
       ParmVarDecl *PD = ParmVarDecl::Create(
           Context, DerivedCtor, UsingLoc, UsingLoc, /*IdentifierInfo=*/0,
-          FPT->getArgType(I), TInfo, SC_None, /*DefaultArg=*/0);
+          FPT->getParamType(I), TInfo, SC_None, /*DefaultArg=*/0);
       PD->setScopeInfo(0, I);
       PD->setImplicit();
       ParamDecls.push_back(PD);
-      ProtoLoc.setArg(I, PD);
+      ProtoLoc.setParam(I, PD);
     }
 
     // Set up the new constructor.
@@ -9226,8 +9233,9 @@ Sema::ComputeDefaultedCopyAssignmentExceptionSpec(CXXMethodDecl *MD) {
     return ExceptSpec;
 
   const FunctionProtoType *T = MD->getType()->castAs<FunctionProtoType>();
-  assert(T->getNumArgs() == 1 && "not a copy assignment op");
-  unsigned ArgQuals = T->getArgType(0).getNonReferenceType().getCVRQualifiers();
+  assert(T->getNumParams() == 1 && "not a copy assignment op");
+  unsigned ArgQuals =
+      T->getParamType(0).getNonReferenceType().getCVRQualifiers();
 
   // C++ [except.spec]p14:
   //   An implicitly declared special member function (Clause 12) shall have an
@@ -10050,8 +10058,8 @@ Sema::ComputeDefaultedCopyCtorExceptionSpec(CXXMethodDecl *MD) {
     return ExceptSpec;
 
   const FunctionProtoType *T = MD->getType()->castAs<FunctionProtoType>();
-  assert(T->getNumArgs() >= 1 && "not a copy ctor");
-  unsigned Quals = T->getArgType(0).getNonReferenceType().getCVRQualifiers();
+  assert(T->getNumParams() >= 1 && "not a copy ctor");
+  unsigned Quals = T->getParamType(0).getNonReferenceType().getCVRQualifiers();
 
   // C++ [except.spec]p14:
   //   An implicitly declared special member function (Clause 12) shall have an 
@@ -10624,11 +10632,11 @@ Sema::CompleteConstructorCall(CXXConstructorDecl *Constructor,
   const FunctionProtoType *Proto 
     = Constructor->getType()->getAs<FunctionProtoType>();
   assert(Proto && "Constructor without a prototype?");
-  unsigned NumArgsInProto = Proto->getNumArgs();
-  
+  unsigned NumParams = Proto->getNumParams();
+
   // If too few arguments are available, we'll fill in the rest with defaults.
-  if (NumArgs < NumArgsInProto)
-    ConvertedArgs.reserve(NumArgsInProto);
+  if (NumArgs < NumParams)
+    ConvertedArgs.reserve(NumParams);
   else
     ConvertedArgs.reserve(NumArgs);
 
@@ -10679,8 +10687,8 @@ CheckOperatorNewDeleteTypes(Sema &SemaRef, const FunctionDecl *FnDecl,
                             CanQualType ExpectedFirstParamType,
                             unsigned DependentParamTypeDiag,
                             unsigned InvalidParamTypeDiag) {
-  QualType ResultType = 
-    FnDecl->getType()->getAs<FunctionType>()->getResultType();
+  QualType ResultType =
+      FnDecl->getType()->getAs<FunctionType>()->getReturnType();
 
   // Check that the result type is not dependent.
   if (ResultType->isDependentType())
@@ -10901,11 +10909,10 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
   //   increment operator ++ for objects of that type.
   if ((Op == OO_PlusPlus || Op == OO_MinusMinus) && NumParams == 2) {
     ParmVarDecl *LastParam = FnDecl->getParamDecl(FnDecl->getNumParams() - 1);
-    bool ParamIsInt = false;
-    if (const BuiltinType *BT = LastParam->getType()->getAs<BuiltinType>())
-      ParamIsInt = BT->getKind() == BuiltinType::Int;
+    QualType ParamType = LastParam->getType();
 
-    if (!ParamIsInt)
+    if (!ParamType->isSpecificBuiltinType(BuiltinType::Int) &&
+        !ParamType->isDependentType())
       return Diag(LastParam->getLocation(),
                   diag::err_operator_overload_post_incdec_must_be_int)
         << LastParam->getType() << (Op == OO_MinusMinus);
@@ -11941,10 +11948,13 @@ void Sema::SetDeclDeleted(Decl *Dcl, SourceLocation DelLoc) {
   if (const FunctionDecl *Prev = Fn->getPreviousDecl()) {
     // Don't consider the implicit declaration we generate for explicit
     // specializations. FIXME: Do not generate these implicit declarations.
-    if ((Prev->getTemplateSpecializationKind() != TSK_ExplicitSpecialization
-        || Prev->getPreviousDecl()) && !Prev->isDefined()) {
+    if ((Prev->getTemplateSpecializationKind() != TSK_ExplicitSpecialization ||
+         Prev->getPreviousDecl()) &&
+        !Prev->isDefined()) {
       Diag(DelLoc, diag::err_deleted_decl_not_first);
-      Diag(Prev->getLocation(), diag::note_previous_declaration);
+      Diag(Prev->getLocation().isInvalid() ? DelLoc : Prev->getLocation(),
+           Prev->isImplicit() ? diag::note_previous_implicit_declaration
+                              : diag::note_previous_declaration);
     }
     // If the declaration wasn't the first, we delete the function anyway for
     // recovery.
@@ -11970,6 +11980,11 @@ void Sema::SetDeclDeleted(Decl *Dcl, SourceLocation DelLoc) {
       }
     }
   }
+
+  // C++11 [basic.start.main]p3:
+  //   A program that defines main as deleted [...] is ill-formed.
+  if (Fn->isMain())
+    Diag(DelLoc, diag::err_deleted_main);
 
   Fn->setDeletedAsWritten();
 }
@@ -12093,8 +12108,8 @@ bool Sema::CheckOverridingFunctionAttributes(const CXXMethodDecl *New,
 
 bool Sema::CheckOverridingFunctionReturnType(const CXXMethodDecl *New,
                                              const CXXMethodDecl *Old) {
-  QualType NewTy = New->getType()->getAs<FunctionType>()->getResultType();
-  QualType OldTy = Old->getType()->getAs<FunctionType>()->getResultType();
+  QualType NewTy = New->getType()->getAs<FunctionType>()->getReturnType();
+  QualType OldTy = Old->getType()->getAs<FunctionType>()->getReturnType();
 
   if (Context.hasSameType(NewTy, OldTy) ||
       NewTy->isDependentType() || OldTy->isDependentType())
@@ -12643,7 +12658,7 @@ bool Sema::checkThisInStaticMemberFunctionType(CXXMethodDecl *Method) {
   
   // If the return type came after the cv-qualifier-seq, check it now.
   if (Proto->hasTrailingReturn() &&
-      !Finder.TraverseTypeLoc(ProtoTL.getResultLoc()))
+      !Finder.TraverseTypeLoc(ProtoTL.getReturnLoc()))
     return true;
 
   // Check the exception specification.

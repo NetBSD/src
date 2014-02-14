@@ -39,7 +39,10 @@ struct FormatStyle {
     /// Should be used for C, C++, ObjectiveC, ObjectiveC++.
     LK_Cpp,
     /// Should be used for JavaScript.
-    LK_JavaScript
+    LK_JavaScript,
+    /// Should be used for Protocol Buffers
+    /// (https://developers.google.com/protocol-buffers/).
+    LK_Proto
   };
 
   /// \brief Language, this format style is targeted at.
@@ -160,6 +163,10 @@ struct FormatStyle {
   /// line.
   bool AllowShortFunctionsOnASingleLine;
 
+  /// \brief Add a space after \c @property in Objective-C, i.e. use
+  /// <tt>@property (readonly)</tt> instead of <tt>@property(readonly)</tt>.
+  bool ObjCSpaceAfterProperty;
+
   /// \brief Add a space in front of an Objective-C protocol list, i.e. use
   /// <tt>Foo <Protocol></tt> instead of \c Foo<Protocol>.
   bool ObjCSpaceBeforeProtocolList;
@@ -254,10 +261,14 @@ struct FormatStyle {
   /// template argument lists
   bool SpacesInAngles;
 
-  /// \brief If \c false, spaces may be inserted into '()'.
+  /// \brief If \c true, spaces may be inserted into '()'.
   bool SpaceInEmptyParentheses;
 
-  /// \brief If \c false, spaces may be inserted into C style casts.
+  /// \brief If \c true, spaces are inserted inside container literals (e.g.
+  /// ObjC and Javascript array and dict literals).
+  bool SpacesInContainerLiterals;
+
+  /// \brief If \c true, spaces may be inserted into C style casts.
   bool SpacesInCStyleCastParentheses;
 
   /// \brief Different ways to put a space before opening parentheses.
@@ -322,6 +333,7 @@ struct FormatStyle {
            IndentWidth == R.IndentWidth && Language == R.Language &&
            MaxEmptyLinesToKeep == R.MaxEmptyLinesToKeep &&
            NamespaceIndentation == R.NamespaceIndentation &&
+           ObjCSpaceAfterProperty == R.ObjCSpaceAfterProperty &&
            ObjCSpaceBeforeProtocolList == R.ObjCSpaceBeforeProtocolList &&
            PenaltyBreakComment == R.PenaltyBreakComment &&
            PenaltyBreakFirstLessLess == R.PenaltyBreakFirstLessLess &&
@@ -335,6 +347,7 @@ struct FormatStyle {
            UseTab == R.UseTab && SpacesInParentheses == R.SpacesInParentheses &&
            SpacesInAngles == R.SpacesInAngles &&
            SpaceInEmptyParentheses == R.SpaceInEmptyParentheses &&
+           SpacesInContainerLiterals == R.SpacesInContainerLiterals &&
            SpacesInCStyleCastParentheses == R.SpacesInCStyleCastParentheses &&
            SpaceBeforeParens == R.SpaceBeforeParens &&
            SpaceBeforeAssignmentOperators == R.SpaceBeforeAssignmentOperators &&
@@ -347,18 +360,15 @@ struct FormatStyle {
 /// http://llvm.org/docs/CodingStandards.html.
 FormatStyle getLLVMStyle();
 
-/// \brief Returns a format style complying with Google's C++ style guide:
+/// \brief Returns a format style complying with one of Google's style guides:
 /// http://google-styleguide.googlecode.com/svn/trunk/cppguide.xml.
-FormatStyle getGoogleStyle();
-
-/// \brief Returns a format style complying with Google's JavaScript style
-/// guide:
 /// http://google-styleguide.googlecode.com/svn/trunk/javascriptguide.xml.
-FormatStyle getGoogleJSStyle();
+/// https://developers.google.com/protocol-buffers/docs/style.
+FormatStyle getGoogleStyle(FormatStyle::LanguageKind Language);
 
 /// \brief Returns a format style complying with Chromium's style guide:
 /// http://www.chromium.org/developers/coding-style.
-FormatStyle getChromiumStyle();
+FormatStyle getChromiumStyle(FormatStyle::LanguageKind Language);
 
 /// \brief Returns a format style complying with Mozilla's style guide:
 /// https://developer.mozilla.org/en-US/docs/Developer_Guide/Coding_Style.

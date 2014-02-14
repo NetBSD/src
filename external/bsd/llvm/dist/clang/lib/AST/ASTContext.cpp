@@ -29,6 +29,7 @@
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/AST/TypeLoc.h"
+#include "clang/AST/VTableBuilder.h"
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
@@ -2083,12 +2084,12 @@ const FunctionType *ASTContext::adjustFunctionType(const FunctionType *T,
 
   QualType Result;
   if (const FunctionNoProtoType *FNPT = dyn_cast<FunctionNoProtoType>(T)) {
-    Result = getFunctionNoProtoType(FNPT->getResultType(), Info);
+    Result = getFunctionNoProtoType(FNPT->getReturnType(), Info);
   } else {
     const FunctionProtoType *FPT = cast<FunctionProtoType>(T);
     FunctionProtoType::ExtProtoInfo EPI = FPT->getExtProtoInfo();
     EPI.ExtInfo = Info;
-    Result = getFunctionType(FPT->getResultType(), FPT->getArgTypes(), EPI);
+    Result = getFunctionType(FPT->getReturnType(), FPT->getParamTypes(), EPI);
   }
 
   return cast<FunctionType>(Result.getTypePtr());
@@ -2100,7 +2101,7 @@ void ASTContext::adjustDeducedFunctionResultType(FunctionDecl *FD,
   while (true) {
     const FunctionProtoType *FPT = FD->getType()->castAs<FunctionProtoType>();
     FunctionProtoType::ExtProtoInfo EPI = FPT->getExtProtoInfo();
-    FD->setType(getFunctionType(ResultType, FPT->getArgTypes(), EPI));
+    FD->setType(getFunctionType(ResultType, FPT->getParamTypes(), EPI));
     if (FunctionDecl *Next = FD->getPreviousDecl())
       FD = Next;
     else
@@ -2895,7 +2896,7 @@ ASTContext::getFunctionType(QualType ResultTy, ArrayRef<QualType> ArgArray,
   } else if (EPI.ExceptionSpecType == EST_Unevaluated) {
     Size += sizeof(FunctionDecl*);
   }
-  if (EPI.ConsumedArguments)
+  if (EPI.ConsumedParameters)
     Size += NumArgs * sizeof(bool);
 
   FunctionProtoType *FTP = (FunctionProtoType*) Allocate(Size, TypeAlignment);
@@ -4795,12 +4796,11 @@ std::string ASTContext::getObjCEncodingForBlock(const BlockExpr *Expr) const {
       Expr->getType()->getAs<BlockPointerType>()->getPointeeType();
   // Encode result type.
   if (getLangOpts().EncodeExtendedBlockSig)
-    getObjCEncodingForMethodParameter(Decl::OBJC_TQ_None,
-                            BlockTy->getAs<FunctionType>()->getResultType(),
-                            S, true /*Extended*/);
+    getObjCEncodingForMethodParameter(
+        Decl::OBJC_TQ_None, BlockTy->getAs<FunctionType>()->getReturnType(), S,
+        true /*Extended*/);
   else
-    getObjCEncodingForType(BlockTy->getAs<FunctionType>()->getResultType(),
-                           S);
+    getObjCEncodingForType(BlockTy->getAs<FunctionType>()->getReturnType(), S);
   // Compute size of all parameters.
   // Start with computing size of a pointer in number of bytes.
   // FIXME: There might(should) be a better way of doing this computation!
@@ -4850,7 +4850,7 @@ std::string ASTContext::getObjCEncodingForBlock(const BlockExpr *Expr) const {
 bool ASTContext::getObjCEncodingForFunctionDecl(const FunctionDecl *Decl,
                                                 std::string& S) {
   // Encode result type.
-  getObjCEncodingForType(Decl->getResultType(), S);
+  getObjCEncodingForType(Decl->getReturnType(), S);
   CharUnits ParmOffset;
   // Compute size of all parameters.
   for (FunctionDecl::param_const_iterator PI = Decl->param_begin(),
@@ -4912,8 +4912,8 @@ bool ASTContext::getObjCEncodingForMethodDecl(const ObjCMethodDecl *Decl,
                                               bool Extended) const {
   // FIXME: This is not very efficient.
   // Encode return type.
-  getObjCEncodingForMethodParameter(Decl->getObjCDeclQualifier(), 
-                                    Decl->getResultType(), S, Extended);
+  getObjCEncodingForMethodParameter(Decl->getObjCDeclQualifier(),
+                                    Decl->getReturnType(), S, Extended);
   // Compute size of all parameters.
   // Start with computing size of a pointer in number of bytes.
   // FIXME: There might(should) be a better way of doing this computation!
@@ -4960,6 +4960,34 @@ bool ASTContext::getObjCEncodingForMethodDecl(const ObjCMethodDecl *Decl,
   return false;
 }
 
+ObjCPropertyImplDecl *
+ASTContext::getObjCPropertyImplDeclForPropertyDecl(
+                                      const ObjCPropertyDecl *PD,
+                                      const Decl *Container) const {
+  if (!Container)
+    return 0;
+  if (const ObjCCategoryImplDecl *CID =
+      dyn_cast<ObjCCategoryImplDecl>(Container)) {
+    for (ObjCCategoryImplDecl::propimpl_iterator
+         i = CID->propimpl_begin(), e = CID->propimpl_end();
+         i != e; ++i) {
+      ObjCPropertyImplDecl *PID = *i;
+        if (PID->getPropertyDecl() == PD)
+          return PID;
+      }
+    } else {
+      const ObjCImplementationDecl *OID=cast<ObjCImplementationDecl>(Container);
+      for (ObjCCategoryImplDecl::propimpl_iterator
+           i = OID->propimpl_begin(), e = OID->propimpl_end();
+           i != e; ++i) {
+        ObjCPropertyImplDecl *PID = *i;
+        if (PID->getPropertyDecl() == PD)
+          return PID;
+      }
+    }
+  return 0;
+}
+
 /// getObjCEncodingForPropertyDecl - Return the encoded type for this
 /// property declaration. If non-NULL, Container must be either an
 /// ObjCCategoryImplDecl or ObjCImplementationDecl; it should only be
@@ -4992,37 +5020,12 @@ void ASTContext::getObjCEncodingForPropertyDecl(const ObjCPropertyDecl *PD,
   bool Dynamic = false;
   ObjCPropertyImplDecl *SynthesizePID = 0;
 
-  // FIXME: Duplicated code due to poor abstraction.
-  if (Container) {
-    if (const ObjCCategoryImplDecl *CID =
-        dyn_cast<ObjCCategoryImplDecl>(Container)) {
-      for (ObjCCategoryImplDecl::propimpl_iterator
-             i = CID->propimpl_begin(), e = CID->propimpl_end();
-           i != e; ++i) {
-        ObjCPropertyImplDecl *PID = *i;
-        if (PID->getPropertyDecl() == PD) {
-          if (PID->getPropertyImplementation()==ObjCPropertyImplDecl::Dynamic) {
-            Dynamic = true;
-          } else {
-            SynthesizePID = PID;
-          }
-        }
-      }
-    } else {
-      const ObjCImplementationDecl *OID=cast<ObjCImplementationDecl>(Container);
-      for (ObjCCategoryImplDecl::propimpl_iterator
-             i = OID->propimpl_begin(), e = OID->propimpl_end();
-           i != e; ++i) {
-        ObjCPropertyImplDecl *PID = *i;
-        if (PID->getPropertyDecl() == PD) {
-          if (PID->getPropertyImplementation()==ObjCPropertyImplDecl::Dynamic) {
-            Dynamic = true;
-          } else {
-            SynthesizePID = PID;
-          }
-        }
-      }
-    }
+  if (ObjCPropertyImplDecl *PropertyImpDecl =
+      getObjCPropertyImplDeclForPropertyDecl(PD, Container)) {
+    if (PropertyImpDecl->getPropertyImplementation() == ObjCPropertyImplDecl::Dynamic)
+      Dynamic = true;
+    else
+      SynthesizePID = PropertyImpDecl;
   }
 
   // FIXME: This is not very efficient.
@@ -5411,20 +5414,17 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
       
       S += '<';
       // Block return type
-      getObjCEncodingForTypeImpl(FT->getResultType(), S, 
-                                 ExpandPointedToStructures, ExpandStructures, 
-                                 FD, 
-                                 false /* OutermostType */, 
-                                 EncodingProperty, 
-                                 false /* StructField */, 
-                                 EncodeBlockParameters, 
-                                 EncodeClassNames);
+      getObjCEncodingForTypeImpl(
+          FT->getReturnType(), S, ExpandPointedToStructures, ExpandStructures,
+          FD, false /* OutermostType */, EncodingProperty,
+          false /* StructField */, EncodeBlockParameters, EncodeClassNames);
       // Block self
       S += "@?";
       // Block parameters
       if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(FT)) {
-        for (FunctionProtoType::arg_type_iterator I = FPT->arg_type_begin(),
-               E = FPT->arg_type_end(); I && (I != E); ++I) {
+        for (FunctionProtoType::param_type_iterator I = FPT->param_type_begin(),
+                                                    E = FPT->param_type_end();
+             I && (I != E); ++I) {
           getObjCEncodingForTypeImpl(*I, S, 
                                      ExpandPointedToStructures, 
                                      ExpandStructures, 
@@ -5441,7 +5441,19 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     return;
   }
 
-  case Type::ObjCObject:
+  case Type::ObjCObject: {
+    // hack to match legacy encoding of *id and *Class
+    QualType Ty = getObjCObjectPointerType(CT);
+    if (Ty->isObjCIdType()) {
+      S += "{objc_object=}";
+      return;
+    }
+    else if (Ty->isObjCClassType()) {
+      S += "{objc_class=}";
+      return;
+    }
+  }
+  
   case Type::ObjCInterface: {
     // Ignore protocol qualifiers when mangling at this level.
     T = T->castAs<ObjCObjectType>()->getBaseType();
@@ -6855,11 +6867,11 @@ QualType ASTContext::mergeTransparentUnionType(QualType T, QualType SubType,
   return QualType();
 }
 
-/// mergeFunctionArgumentTypes - merge two types which appear as function
-/// argument types
-QualType ASTContext::mergeFunctionArgumentTypes(QualType lhs, QualType rhs, 
-                                                bool OfBlockPointer,
-                                                bool Unqualified) {
+/// mergeFunctionParameterTypes - merge two types which appear as function
+/// parameter types
+QualType ASTContext::mergeFunctionParameterTypes(QualType lhs, QualType rhs,
+                                                 bool OfBlockPointer,
+                                                 bool Unqualified) {
   // GNU extension: two types are compatible if they appear as a function
   // argument, one of the types is a transparent union type and the other
   // type is compatible with a union member
@@ -6889,23 +6901,23 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs,
   // Check return type
   QualType retType;
   if (OfBlockPointer) {
-    QualType RHS = rbase->getResultType();
-    QualType LHS = lbase->getResultType();
+    QualType RHS = rbase->getReturnType();
+    QualType LHS = lbase->getReturnType();
     bool UnqualifiedResult = Unqualified;
     if (!UnqualifiedResult)
       UnqualifiedResult = (!RHS.hasQualifiers() && LHS.hasQualifiers());
     retType = mergeTypes(LHS, RHS, true, UnqualifiedResult, true);
   }
   else
-    retType = mergeTypes(lbase->getResultType(), rbase->getResultType(), false,
+    retType = mergeTypes(lbase->getReturnType(), rbase->getReturnType(), false,
                          Unqualified);
   if (retType.isNull()) return QualType();
   
   if (Unqualified)
     retType = retType.getUnqualifiedType();
 
-  CanQualType LRetType = getCanonicalType(lbase->getResultType());
-  CanQualType RRetType = getCanonicalType(rbase->getResultType());
+  CanQualType LRetType = getCanonicalType(lbase->getReturnType());
+  CanQualType RRetType = getCanonicalType(rbase->getReturnType());
   if (Unqualified) {
     LRetType = LRetType.getUnqualifiedType();
     RRetType = RRetType.getUnqualifiedType();
@@ -6949,11 +6961,8 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs,
   if (lproto && rproto) { // two C99 style function prototypes
     assert(!lproto->hasExceptionSpec() && !rproto->hasExceptionSpec() &&
            "C++ shouldn't be here");
-    unsigned lproto_nargs = lproto->getNumArgs();
-    unsigned rproto_nargs = rproto->getNumArgs();
-
-    // Compatible functions must have the same number of arguments
-    if (lproto_nargs != rproto_nargs)
+    // Compatible functions must have the same number of parameters
+    if (lproto->getNumParams() != rproto->getNumParams())
       return QualType();
 
     // Variadic and non-variadic functions aren't compatible
@@ -6966,29 +6975,29 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs,
     if (LangOpts.ObjCAutoRefCount &&
         !FunctionTypesMatchOnNSConsumedAttrs(rproto, lproto))
       return QualType();
-      
-    // Check argument compatibility
+
+    // Check parameter type compatibility
     SmallVector<QualType, 10> types;
-    for (unsigned i = 0; i < lproto_nargs; i++) {
-      QualType largtype = lproto->getArgType(i).getUnqualifiedType();
-      QualType rargtype = rproto->getArgType(i).getUnqualifiedType();
-      QualType argtype = mergeFunctionArgumentTypes(largtype, rargtype,
-                                                    OfBlockPointer,
-                                                    Unqualified);
-      if (argtype.isNull()) return QualType();
-      
+    for (unsigned i = 0, n = lproto->getNumParams(); i < n; i++) {
+      QualType lParamType = lproto->getParamType(i).getUnqualifiedType();
+      QualType rParamType = rproto->getParamType(i).getUnqualifiedType();
+      QualType paramType = mergeFunctionParameterTypes(
+          lParamType, rParamType, OfBlockPointer, Unqualified);
+      if (paramType.isNull())
+        return QualType();
+
       if (Unqualified)
-        argtype = argtype.getUnqualifiedType();
-      
-      types.push_back(argtype);
+        paramType = paramType.getUnqualifiedType();
+
+      types.push_back(paramType);
       if (Unqualified) {
-        largtype = largtype.getUnqualifiedType();
-        rargtype = rargtype.getUnqualifiedType();
+        lParamType = lParamType.getUnqualifiedType();
+        rParamType = rParamType.getUnqualifiedType();
       }
-      
-      if (getCanonicalType(argtype) != getCanonicalType(largtype))
+
+      if (getCanonicalType(paramType) != getCanonicalType(lParamType))
         allLTypes = false;
-      if (getCanonicalType(argtype) != getCanonicalType(rargtype))
+      if (getCanonicalType(paramType) != getCanonicalType(rParamType))
         allRTypes = false;
     }
       
@@ -7012,20 +7021,19 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs,
     // The only types actually affected are promotable integer
     // types and floats, which would be passed as a different
     // type depending on whether the prototype is visible.
-    unsigned proto_nargs = proto->getNumArgs();
-    for (unsigned i = 0; i < proto_nargs; ++i) {
-      QualType argTy = proto->getArgType(i);
-      
+    for (unsigned i = 0, n = proto->getNumParams(); i < n; ++i) {
+      QualType paramTy = proto->getParamType(i);
+
       // Look at the converted type of enum types, since that is the type used
       // to pass enum values.
-      if (const EnumType *Enum = argTy->getAs<EnumType>()) {
-        argTy = Enum->getDecl()->getIntegerType();
-        if (argTy.isNull())
+      if (const EnumType *Enum = paramTy->getAs<EnumType>()) {
+        paramTy = Enum->getDecl()->getIntegerType();
+        if (paramTy.isNull())
           return QualType();
       }
-      
-      if (argTy->isPromotableIntegerType() ||
-          getCanonicalType(argTy).getUnqualifiedType() == FloatTy)
+
+      if (paramTy->isPromotableIntegerType() ||
+          getCanonicalType(paramTy).getUnqualifiedType() == FloatTy)
         return QualType();
     }
 
@@ -7034,7 +7042,7 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs,
 
     FunctionProtoType::ExtProtoInfo EPI = proto->getExtProtoInfo();
     EPI.ExtInfo = einfo;
-    return getFunctionType(retType, proto->getArgTypes(), EPI);
+    return getFunctionType(retType, proto->getParamTypes(), EPI);
   }
 
   if (allLTypes) return lhs;
@@ -7338,18 +7346,16 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS,
 bool ASTContext::FunctionTypesMatchOnNSConsumedAttrs(
                    const FunctionProtoType *FromFunctionType,
                    const FunctionProtoType *ToFunctionType) {
-  if (FromFunctionType->hasAnyConsumedArgs() != 
-      ToFunctionType->hasAnyConsumedArgs())
+  if (FromFunctionType->hasAnyConsumedParams() !=
+      ToFunctionType->hasAnyConsumedParams())
     return false;
   FunctionProtoType::ExtProtoInfo FromEPI = 
     FromFunctionType->getExtProtoInfo();
   FunctionProtoType::ExtProtoInfo ToEPI = 
     ToFunctionType->getExtProtoInfo();
-  if (FromEPI.ConsumedArguments && ToEPI.ConsumedArguments)
-    for (unsigned ArgIdx = 0, NumArgs = FromFunctionType->getNumArgs();
-         ArgIdx != NumArgs; ++ArgIdx)  {
-      if (FromEPI.ConsumedArguments[ArgIdx] != 
-          ToEPI.ConsumedArguments[ArgIdx])
+  if (FromEPI.ConsumedParameters && ToEPI.ConsumedParameters)
+    for (unsigned i = 0, n = FromFunctionType->getNumParams(); i != n; ++i) {
+      if (FromEPI.ConsumedParameters[i] != ToEPI.ConsumedParameters[i])
         return false;
     }
   return true;
@@ -7367,10 +7373,10 @@ QualType ASTContext::mergeObjCGCQualifiers(QualType LHS, QualType RHS) {
   if (RHSCan->isFunctionType()) {
     if (!LHSCan->isFunctionType())
       return QualType();
-    QualType OldReturnType = 
-      cast<FunctionType>(RHSCan.getTypePtr())->getResultType();
+    QualType OldReturnType =
+        cast<FunctionType>(RHSCan.getTypePtr())->getReturnType();
     QualType NewReturnType =
-      cast<FunctionType>(LHSCan.getTypePtr())->getResultType();
+        cast<FunctionType>(LHSCan.getTypePtr())->getReturnType();
     QualType ResReturnType = 
       mergeObjCGCQualifiers(NewReturnType, OldReturnType);
     if (ResReturnType.isNull())
@@ -7383,7 +7389,7 @@ QualType ASTContext::mergeObjCGCQualifiers(QualType LHS, QualType RHS) {
         FunctionProtoType::ExtProtoInfo EPI = FPT->getExtProtoInfo();
         EPI.ExtInfo = getFunctionExtInfo(LHS);
         QualType ResultType =
-            getFunctionType(OldReturnType, FPT->getArgTypes(), EPI);
+            getFunctionType(OldReturnType, FPT->getParamTypes(), EPI);
         return ResultType;
       }
     }
@@ -7947,6 +7953,16 @@ bool ASTContext::isNearlyEmpty(const CXXRecordDecl *RD) const {
   return ABI->isNearlyEmpty(RD);
 }
 
+VTableContextBase *ASTContext::getVTableContext() {
+  if (!VTContext.get()) {
+    if (Target->getCXXABI().isMicrosoft())
+      VTContext.reset(new MicrosoftVTableContext(*this));
+    else
+      VTContext.reset(new ItaniumVTableContext(*this));
+  }
+  return VTContext.get();
+}
+
 MangleContext *ASTContext::createMangleContext() {
   switch (Target->getCXXABI().getKind()) {
   case TargetCXXABI::GenericAArch64:
@@ -8181,8 +8197,7 @@ ASTContext::ObjCMethodsAreEqual(const ObjCMethodDecl *MethodDecl,
   if (MethodDecl->getObjCDeclQualifier() !=
       MethodImpl->getObjCDeclQualifier())
     return false;
-  if (!hasSameType(MethodDecl->getResultType(),
-                   MethodImpl->getResultType()))
+  if (!hasSameType(MethodDecl->getReturnType(), MethodImpl->getReturnType()))
     return false;
   
   if (MethodDecl->param_size() != MethodImpl->param_size())
