@@ -109,6 +109,9 @@ public:
   OperandMatchResultTy
   ParseFPImmOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
 
+  OperandMatchResultTy
+  ParseFPImm0AndImm0Operand( SmallVectorImpl<MCParsedAsmOperand*> &Operands);
+
   template<typename SomeNamedImmMapper> OperandMatchResultTy
   ParseNamedImmOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     return ParseNamedImmOperand(SomeNamedImmMapper(), Operands);
@@ -826,6 +829,10 @@ public:
     return CE->getValue() == N;
   }
 
+  bool isFPZeroIZero() const {
+    return isFPZero();
+  }
+
   static AArch64Operand *CreateImmWithLSL(const MCExpr *Val,
                                           unsigned ShiftAmount,
                                           bool ImplicitAmount,
@@ -963,6 +970,10 @@ public:
   void addFPZeroOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands");
     Inst.addOperand(MCOperand::CreateImm(0));
+  }
+
+  void addFPZeroIZeroOperands(MCInst &Inst, unsigned N) const {
+    addFPZeroOperands(Inst, N);
   }
 
   void addInvCondCodeOperands(MCInst &Inst, unsigned N) const {
@@ -1605,6 +1616,43 @@ AArch64AsmParser::ParseFPImmOperand(
   return MatchOperand_Success;
 }
 
+AArch64AsmParser::OperandMatchResultTy
+AArch64AsmParser::ParseFPImm0AndImm0Operand(
+                               SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  // FIXME?: I want to live in a world where immediates must start with
+  // #. Please don't dash my hopes (well, do if you have a good reason).
+
+  //This function is only used in floating compare with zero instructions to get
+  //those instructions accept both #0.0 and #0.
+  if (Parser.getTok().isNot(AsmToken::Hash)) return MatchOperand_NoMatch;
+
+  SMLoc S = Parser.getTok().getLoc();
+  Parser.Lex(); // Eat '#'
+
+  APFloat RealVal(0.0);
+  if (Parser.getTok().is(AsmToken::Real)) {
+    if(Parser.getTok().getString() != "0.0") {
+      Error(S, "only #0.0 is acceptable as immediate");
+      return MatchOperand_ParseFail;
+    }
+  }
+  else if (Parser.getTok().is(AsmToken::Integer)) {
+    if(Parser.getTok().getIntVal() != 0) {
+      Error(S, "only #0.0 is acceptable as immediate");
+      return MatchOperand_ParseFail;
+    }
+  }
+  else {
+    Error(S, "only #0.0 is acceptable as immediate");
+    return MatchOperand_ParseFail;
+  }
+
+  Parser.Lex(); // Eat real number
+  SMLoc E = Parser.getTok().getLoc();
+
+  Operands.push_back(AArch64Operand::CreateFPImm(0.0, S, E));
+  return MatchOperand_Success;
+}
 
 // Automatically generated
 static unsigned MatchRegisterName(StringRef Name);
@@ -2192,15 +2240,36 @@ validateInstruction(MCInst &Inst,
 bool AArch64AsmParser::ParseInstruction(ParseInstructionInfo &Info,
                                         StringRef Name, SMLoc NameLoc,
                                SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
-  size_t CondCodePos = Name.find('.');
+  StringRef PatchedName = StringSwitch<StringRef>(Name.lower())
+    .Case("beq", "b.eq")
+    .Case("bne", "b.ne")
+    .Case("bhs", "b.hs")
+    .Case("bcs", "b.cs")
+    .Case("blo", "b.lo")
+    .Case("bcc", "b.cc")
+    .Case("bmi", "b.mi")
+    .Case("bpl", "b.pl")
+    .Case("bvs", "b.vs")
+    .Case("bvc", "b.vc")
+    .Case("bhi", "b.hi")
+    .Case("bls", "b.ls")
+    .Case("bge", "b.ge")
+    .Case("blt", "b.lt")
+    .Case("bgt", "b.gt")
+    .Case("ble", "b.le")
+    .Case("bal", "b.al")
+    .Case("bnv", "b.nv")
+    .Default(Name);
 
-  StringRef Mnemonic = Name.substr(0, CondCodePos);
+  size_t CondCodePos = PatchedName.find('.');
+
+  StringRef Mnemonic = PatchedName.substr(0, CondCodePos);
   Operands.push_back(AArch64Operand::CreateToken(Mnemonic, NameLoc));
 
   if (CondCodePos != StringRef::npos) {
     // We have a condition code
     SMLoc S = SMLoc::getFromPointer(NameLoc.getPointer() + CondCodePos + 1);
-    StringRef CondStr = Name.substr(CondCodePos + 1, StringRef::npos);
+    StringRef CondStr = PatchedName.substr(CondCodePos + 1, StringRef::npos);
     A64CC::CondCodes Code;
 
     Code = A64StringToCondCode(CondStr);
@@ -2327,7 +2396,7 @@ bool AArch64AsmParser::ParseDirectiveTLSDescCall(SMLoc L) {
   Inst.setOpcode(AArch64::TLSDESCCALL);
   Inst.addOperand(MCOperand::CreateExpr(Expr));
 
-  getParser().getStreamer().EmitInstruction(Inst);
+  getParser().getStreamer().EmitInstruction(Inst, STI);
   return false;
 }
 
@@ -2350,7 +2419,7 @@ bool AArch64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
     if (validateInstruction(Inst, Operands))
       return true;
 
-    Out.EmitInstruction(Inst);
+    Out.EmitInstruction(Inst, STI);
     return false;
   case Match_MissingFeature:
     Error(IDLoc, "instruction requires a CPU feature not currently enabled");

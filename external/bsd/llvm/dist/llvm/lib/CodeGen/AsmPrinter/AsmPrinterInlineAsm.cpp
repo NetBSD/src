@@ -34,6 +34,7 @@
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 using namespace llvm;
 
 namespace {
@@ -83,6 +84,7 @@ void AsmPrinter::EmitInlineAsm(StringRef Str, const MDNode *LocMDNode,
   // system assembler does.
   if (OutStreamer.hasRawTextSupport()) {
     OutStreamer.EmitRawText(Str);
+    emitInlineAsmEnd(TM.getSubtarget<MCSubtargetInfo>(), 0);
     return;
   }
 
@@ -115,14 +117,19 @@ void AsmPrinter::EmitInlineAsm(StringRef Str, const MDNode *LocMDNode,
                                                   OutContext, OutStreamer,
                                                   *MAI));
 
-  // FIXME: It would be nice if we can avoid createing a new instance of
-  // MCSubtargetInfo here given TargetSubtargetInfo is available. However,
-  // we have to watch out for asm directives which can change subtarget
-  // state. e.g. .code 16, .code 32.
-  OwningPtr<MCSubtargetInfo>
-    STI(TM.getTarget().createMCSubtargetInfo(TM.getTargetTriple(),
-                                             TM.getTargetCPU(),
-                                             TM.getTargetFeatureString()));
+  // Initialize the parser with a fresh subtarget info. It is better to use a
+  // new STI here because the parser may modify it and we do not want those
+  // modifications to persist after parsing the inlineasm. The modifications
+  // made by the parser will be seen by the code emitters because it passes
+  // the current STI down to the EncodeInstruction() method.
+  OwningPtr<MCSubtargetInfo> STI(TM.getTarget().createMCSubtargetInfo(
+      TM.getTargetTriple(), TM.getTargetCPU(), TM.getTargetFeatureString()));
+
+  // Preserve a copy of the original STI because the parser may modify it.  For
+  // example, when switching between arm and thumb mode. If the target needs to
+  // emit code to return to the original state it can do so in emitInlineAsmEnd().
+  MCSubtargetInfo STIOrig = *STI;
+
   OwningPtr<MCTargetAsmParser>
     TAP(TM.getTarget().createMCAsmParser(*STI, *Parser, *MII));
   if (!TAP)
@@ -134,6 +141,7 @@ void AsmPrinter::EmitInlineAsm(StringRef Str, const MDNode *LocMDNode,
   // Don't implicitly switch to the text section before the asm.
   int Res = Parser->Run(/*NoInitialTextSection*/ true,
                         /*NoFinalize*/ true);
+  emitInlineAsmEnd(STIOrig, STI.get());
   if (Res && !HasDiagHandler)
     report_fatal_error("Error parsing inline asm\n");
 }
@@ -428,21 +436,14 @@ void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
   // If this asmstr is empty, just print the #APP/#NOAPP markers.
   // These are useful to see where empty asm's wound up.
   if (AsmStr[0] == 0) {
-    // Don't emit the comments if writing to a .o file.
-    if (!OutStreamer.hasRawTextSupport()) return;
-
-    OutStreamer.EmitRawText(Twine("\t")+MAI->getCommentString()+
-                            MAI->getInlineAsmStart());
-    OutStreamer.EmitRawText(Twine("\t")+MAI->getCommentString()+
-                            MAI->getInlineAsmEnd());
+    OutStreamer.emitRawComment(MAI->getInlineAsmStart());
+    OutStreamer.emitRawComment(MAI->getInlineAsmEnd());
     return;
   }
 
   // Emit the #APP start marker.  This has to happen even if verbose-asm isn't
-  // enabled, so we use EmitRawText.
-  if (OutStreamer.hasRawTextSupport())
-    OutStreamer.EmitRawText(Twine("\t")+MAI->getCommentString()+
-                            MAI->getInlineAsmStart());
+  // enabled, so we use emitRawComment.
+  OutStreamer.emitRawComment(MAI->getInlineAsmStart());
 
   // Get the !srcloc metadata node if we have it, and decode the loc cookie from
   // it.
@@ -477,10 +478,8 @@ void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
   EmitInlineAsm(OS.str(), LocMD, MI->getInlineAsmDialect());
 
   // Emit the #NOAPP end marker.  This has to happen even if verbose-asm isn't
-  // enabled, so we use EmitRawText.
-  if (OutStreamer.hasRawTextSupport())
-    OutStreamer.EmitRawText(Twine("\t")+MAI->getCommentString()+
-                            MAI->getInlineAsmEnd());
+  // enabled, so we use emitRawComment.
+  OutStreamer.emitRawComment(MAI->getInlineAsmEnd());
 }
 
 
@@ -553,3 +552,5 @@ bool AsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
   return true;
 }
 
+void AsmPrinter::emitInlineAsmEnd(const MCSubtargetInfo &StartInfo,
+                                  const MCSubtargetInfo *EndInfo) const {}

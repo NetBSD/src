@@ -858,37 +858,27 @@ Instruction *InstCombiner::visitZExt(ZExtInst &CI) {
     }
   }
 
-  // zext(trunc(t) & C) -> (t & zext(C)).
-  if (SrcI && SrcI->getOpcode() == Instruction::And && SrcI->hasOneUse())
-    if (ConstantInt *C = dyn_cast<ConstantInt>(SrcI->getOperand(1)))
-      if (TruncInst *TI = dyn_cast<TruncInst>(SrcI->getOperand(0))) {
-        Value *TI0 = TI->getOperand(0);
-        if (TI0->getType() == CI.getType())
-          return
-            BinaryOperator::CreateAnd(TI0,
-                                ConstantExpr::getZExt(C, CI.getType()));
-      }
+  // zext(trunc(X) & C) -> (X & zext(C)).
+  Constant *C;
+  Value *X;
+  if (SrcI &&
+      match(SrcI, m_OneUse(m_And(m_Trunc(m_Value(X)), m_Constant(C)))) &&
+      X->getType() == CI.getType())
+    return BinaryOperator::CreateAnd(X, ConstantExpr::getZExt(C, CI.getType()));
 
-  // zext((trunc(t) & C) ^ C) -> ((t & zext(C)) ^ zext(C)).
-  if (SrcI && SrcI->getOpcode() == Instruction::Xor && SrcI->hasOneUse())
-    if (ConstantInt *C = dyn_cast<ConstantInt>(SrcI->getOperand(1)))
-      if (BinaryOperator *And = dyn_cast<BinaryOperator>(SrcI->getOperand(0)))
-        if (And->getOpcode() == Instruction::And && And->hasOneUse() &&
-            And->getOperand(1) == C)
-          if (TruncInst *TI = dyn_cast<TruncInst>(And->getOperand(0))) {
-            Value *TI0 = TI->getOperand(0);
-            if (TI0->getType() == CI.getType()) {
-              Constant *ZC = ConstantExpr::getZExt(C, CI.getType());
-              Value *NewAnd = Builder->CreateAnd(TI0, ZC);
-              return BinaryOperator::CreateXor(NewAnd, ZC);
-            }
-          }
+  // zext((trunc(X) & C) ^ C) -> ((X & zext(C)) ^ zext(C)).
+  Value *And;
+  if (SrcI && match(SrcI, m_OneUse(m_Xor(m_Value(And), m_Constant(C)))) &&
+      match(And, m_OneUse(m_And(m_Trunc(m_Value(X)), m_Specific(C)))) &&
+      X->getType() == CI.getType()) {
+    Constant *ZC = ConstantExpr::getZExt(C, CI.getType());
+    return BinaryOperator::CreateXor(Builder->CreateAnd(X, ZC), ZC);
+  }
 
   // zext (xor i1 X, true) to i32  --> xor (zext i1 X to i32), 1
-  Value *X;
-  if (SrcI && SrcI->hasOneUse() && SrcI->getType()->isIntegerTy(1) &&
-      match(SrcI, m_Not(m_Value(X))) &&
-      (!X->hasOneUse() || !isa<CmpInst>(X))) {
+  if (SrcI && SrcI->hasOneUse() &&
+      SrcI->getType()->getScalarType()->isIntegerTy(1) &&
+      match(SrcI, m_Not(m_Value(X))) && (!X->hasOneUse() || !isa<CmpInst>(X))) {
     Value *New = Builder->CreateZExt(X, CI.getType());
     return BinaryOperator::CreateXor(New, ConstantInt::get(CI.getType(), 1));
   }
@@ -902,10 +892,10 @@ Instruction *InstCombiner::transformSExtICmp(ICmpInst *ICI, Instruction &CI) {
   Value *Op0 = ICI->getOperand(0), *Op1 = ICI->getOperand(1);
   ICmpInst::Predicate Pred = ICI->getPredicate();
 
-  if (ConstantInt *Op1C = dyn_cast<ConstantInt>(Op1)) {
+  if (Constant *Op1C = dyn_cast<Constant>(Op1)) {
     // (x <s  0) ? -1 : 0 -> ashr x, 31        -> all ones if negative
     // (x >s -1) ? -1 : 0 -> not (ashr x, 31)  -> all ones if positive
-    if ((Pred == ICmpInst::ICMP_SLT && Op1C->isZero()) ||
+    if ((Pred == ICmpInst::ICMP_SLT && Op1C->isNullValue()) ||
         (Pred == ICmpInst::ICMP_SGT && Op1C->isAllOnesValue())) {
 
       Value *Sh = ConstantInt::get(Op0->getType(),
@@ -918,7 +908,9 @@ Instruction *InstCombiner::transformSExtICmp(ICmpInst *ICI, Instruction &CI) {
         In = Builder->CreateNot(In, In->getName()+".not");
       return ReplaceInstUsesWith(CI, In);
     }
+  }
 
+  if (ConstantInt *Op1C = dyn_cast<ConstantInt>(Op1)) {
     // If we know that only one bit of the LHS of the icmp can be set and we
     // have an equality comparison with zero or a power of 2, we can transform
     // the icmp and sext into bitwise/integer operations.
@@ -972,19 +964,6 @@ Instruction *InstCombiner::transformSExtICmp(ICmpInst *ICI, Instruction &CI) {
           return ReplaceInstUsesWith(CI, In);
         return CastInst::CreateIntegerCast(In, CI.getType(), true/*SExt*/);
       }
-    }
-  }
-
-  // vector (x <s 0) ? -1 : 0 -> ashr x, 31   -> all ones if signed.
-  if (VectorType *VTy = dyn_cast<VectorType>(CI.getType())) {
-    if (Pred == ICmpInst::ICMP_SLT && match(Op1, m_Zero()) &&
-        Op0->getType() == CI.getType()) {
-      Type *EltTy = VTy->getElementType();
-
-      // splat the shift constant to a constant vector.
-      Constant *VSh = ConstantInt::get(VTy, EltTy->getScalarSizeInBits()-1);
-      Value *In = Builder->CreateAShr(Op0, VSh, Op0->getName()+".lobit");
-      return ReplaceInstUsesWith(CI, In);
     }
   }
 
@@ -1214,10 +1193,10 @@ Instruction *InstCombiner::visitFPTrunc(FPTruncInst &CI) {
         // will not occur because the result of OpI is exact (as we will for
         // FMul, for example) is hopeless.  However, we *can* nonetheless
         // frequently know that double rounding cannot occur (or that it is
-        // innoculous) by taking advantage of the specific structure of
+        // innocuous) by taking advantage of the specific structure of
         // infinitely-precise results that admit double rounding.
         //
-        // Specifically, if OpWidth >= 2*DstWdith+1 and DstWidth is sufficent
+        // Specifically, if OpWidth >= 2*DstWdith+1 and DstWidth is sufficient
         // to represent both sources, we can guarantee that the double
         // rounding is innocuous (See p50 of Figueroa's 2000 PhD thesis,
         // "A Rigorous Framework for Fully Supporting the IEEE Standard ..."
@@ -1232,7 +1211,10 @@ Instruction *InstCombiner::visitFPTrunc(FPTruncInst &CI) {
             LHSOrig = Builder->CreateFPExt(LHSOrig, CI.getType());
           if (RHSOrig->getType() != CI.getType())
             RHSOrig = Builder->CreateFPExt(RHSOrig, CI.getType());
-          return BinaryOperator::Create(OpI->getOpcode(), LHSOrig, RHSOrig);
+          Instruction *RI =
+            BinaryOperator::Create(OpI->getOpcode(), LHSOrig, RHSOrig);
+          RI->copyFastMathFlags(OpI);
+          return RI;
         }
         break;
       case Instruction::FMul:
@@ -1246,7 +1228,10 @@ Instruction *InstCombiner::visitFPTrunc(FPTruncInst &CI) {
             LHSOrig = Builder->CreateFPExt(LHSOrig, CI.getType());
           if (RHSOrig->getType() != CI.getType())
             RHSOrig = Builder->CreateFPExt(RHSOrig, CI.getType());
-          return BinaryOperator::CreateFMul(LHSOrig, RHSOrig);
+          Instruction *RI =
+            BinaryOperator::CreateFMul(LHSOrig, RHSOrig);
+          RI->copyFastMathFlags(OpI);
+          return RI;
         }
         break;
       case Instruction::FDiv:
@@ -1261,7 +1246,10 @@ Instruction *InstCombiner::visitFPTrunc(FPTruncInst &CI) {
             LHSOrig = Builder->CreateFPExt(LHSOrig, CI.getType());
           if (RHSOrig->getType() != CI.getType())
             RHSOrig = Builder->CreateFPExt(RHSOrig, CI.getType());
-          return BinaryOperator::CreateFDiv(LHSOrig, RHSOrig);
+          Instruction *RI =
+            BinaryOperator::CreateFDiv(LHSOrig, RHSOrig);
+          RI->copyFastMathFlags(OpI);
+          return RI;
         }
         break;
       case Instruction::FRem:
@@ -1274,6 +1262,8 @@ Instruction *InstCombiner::visitFPTrunc(FPTruncInst &CI) {
         else if (RHSWidth <= SrcWidth)
           RHSOrig = Builder->CreateFPExt(RHSOrig, LHSOrig->getType());
         Value *ExactResult = Builder->CreateFRem(LHSOrig, RHSOrig);
+        if (Instruction *RI = dyn_cast<Instruction>(ExactResult))
+          RI->copyFastMathFlags(OpI);
         return CastInst::CreateFPCast(ExactResult, CI.getType());
     }
 
@@ -1281,7 +1271,9 @@ Instruction *InstCombiner::visitFPTrunc(FPTruncInst &CI) {
     if (BinaryOperator::isFNeg(OpI)) {
       Value *InnerTrunc = Builder->CreateFPTrunc(OpI->getOperand(1),
                                                  CI.getType());
-      return BinaryOperator::CreateFNeg(InnerTrunc);
+      Instruction *RI = BinaryOperator::CreateFNeg(InnerTrunc);
+      RI->copyFastMathFlags(OpI);
+      return RI;
     }
   }
 

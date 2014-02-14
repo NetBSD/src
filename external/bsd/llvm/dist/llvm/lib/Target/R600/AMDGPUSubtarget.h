@@ -51,6 +51,8 @@ private:
   bool CaymanISA;
   bool EnableIRStructurizer;
   bool EnableIfCvt;
+  unsigned WavefrontSize;
+  bool CFALUBug;
 
   InstrItineraryData InstrItins;
 
@@ -68,6 +70,9 @@ public:
   bool hasCaymanISA() const;
   bool IsIRStructurizerEnabled() const;
   bool isIfCvtEnabled() const;
+  unsigned getWavefrontSize() const;
+  unsigned getStackEntrySize() const;
+  bool hasCFAluBug() const;
 
   virtual bool enableMachineScheduler() const {
     return getGeneration() <= NORTHERN_ISLANDS;

@@ -113,10 +113,6 @@ namespace llvm {
       VSHL,         // ...left
       VSHRs,        // ...right (signed)
       VSHRu,        // ...right (unsigned)
-      VSHLLs,       // ...left long (signed)
-      VSHLLu,       // ...left long (unsigned)
-      VSHLLi,       // ...left long (with maximum shift count)
-      VSHRN,        // ...right narrow
 
       // Vector rounding shift by immediate:
       VRSHRs,       // ...right (signed)
@@ -273,7 +269,8 @@ namespace llvm {
     /// allowsUnalignedMemoryAccesses - Returns true if the target allows
     /// unaligned memory accesses of the specified type. Returns whether it
     /// is "fast" by reference in the second argument.
-    virtual bool allowsUnalignedMemoryAccesses(EVT VT, bool *Fast) const;
+    virtual bool allowsUnalignedMemoryAccesses(EVT VT, unsigned AddrSpace,
+                                               bool *Fast) const;
 
     virtual EVT getOptimalMemOpType(uint64_t Size,
                                     unsigned DstAlign, unsigned SrcAlign,
@@ -385,6 +382,12 @@ namespace llvm {
     virtual bool getTgtMemIntrinsic(IntrinsicInfo &Info,
                                     const CallInst &I,
                                     unsigned Intrinsic) const;
+
+    /// \brief Returns true if it is beneficial to convert a load of a constant
+    /// to just the constant itself.
+    virtual bool shouldConvertConstantLoadToIntImm(const APInt &Imm,
+                                                   Type *Ty) const;
+
   protected:
     std::pair<const TargetRegisterClass*, uint8_t>
     findRepresentativeClass(MVT VT) const;

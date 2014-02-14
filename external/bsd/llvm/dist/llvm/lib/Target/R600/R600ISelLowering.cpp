@@ -990,7 +990,7 @@ SDValue R600TargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const 
       DAG.getCondCode(ISD::SETNE));
 }
 
-/// LLVM generates byte-addresed pointers.  For indirect addressing, we need to
+/// LLVM generates byte-addressed pointers.  For indirect addressing, we need to
 /// convert these pointers to a register index.  Each register holds
 /// 16 bytes, (4 x 32bit sub-register), but we need to take into account the
 /// \p StackWidth, which tells us how many of the 4 sub-registrers will be used
@@ -1113,6 +1113,10 @@ SDValue R600TargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
     return SDValue();
   }
 
+  SDValue Ret = AMDGPUTargetLowering::LowerSTORE(Op, DAG);
+  if (Ret.getNode()) {
+    return Ret;
+  }
   // Lowering for indirect addressing
 
   const MachineFunction &MF = DAG.getMachineFunction();
@@ -1203,6 +1207,15 @@ SDValue R600TargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const
   SDValue Chain = Op.getOperand(0);
   SDValue Ptr = Op.getOperand(1);
   SDValue LoweredLoad;
+
+  SDValue Ret = AMDGPUTargetLowering::LowerLOAD(Op, DAG);
+  if (Ret.getNode()) {
+    SDValue Ops[2];
+    Ops[0] = Ret;
+    Ops[1] = Chain;
+    return DAG.getMergeValues(Ops, 2, DL);
+  }
+
 
   if (LoadNode->getAddressSpace() == AMDGPUAS::LOCAL_ADDRESS && VT.isVector()) {
     SDValue MergedValues[2] = {
@@ -1376,8 +1389,8 @@ SDValue R600TargetLowering::LowerFormalArguments(
                                  DAG.getConstant(36 + VA.getLocMemOffset(), MVT::i32),
                                  MachinePointerInfo(UndefValue::get(PtrTy)),
                                  MemVT, false, false, 4);
-                                 // 4 is the prefered alignment for
-                                 // the CONSTANT memory space.
+    // 4 is the preferred alignment for
+    // the CONSTANT memory space.
     InVals.push_back(Arg);
   }
   return Chain;
