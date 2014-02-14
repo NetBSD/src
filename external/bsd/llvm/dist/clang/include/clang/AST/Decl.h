@@ -110,7 +110,7 @@ class NamedDecl : public Decl {
   DeclarationName Name;
 
 private:
-  NamedDecl *getUnderlyingDeclImpl();
+  NamedDecl *getUnderlyingDeclImpl() LLVM_READONLY;
 
 protected:
   NamedDecl(Kind DK, DeclContext *DC, SourceLocation L, DeclarationName N)
@@ -257,6 +257,16 @@ public:
   /// \brief True if the computed linkage is valid. Used for consistency
   /// checking. Should always return true.
   bool isLinkageValid() const;
+
+  /// \brief True if something has required us to compute the linkage
+  /// of this declaration.
+  ///
+  /// Language features which can retroactively change linkage (like a
+  /// typedef name for linkage purposes) may need to consider this,
+  /// but hopefully only in transitory ways during parsing.
+  bool hasLinkageBeenComputed() const {
+    return hasCachedLinkage();
+  }
 
   /// \brief Looks through UsingDecls and ObjCCompatibleAliasDecls for
   /// the underlying named decl.
@@ -1851,6 +1861,12 @@ public:
     setParams(getASTContext(), NewParamInfo);
   }
 
+  // ArrayRef iterface to parameters.
+  // FIXME: Should one day replace iterator interface.
+  ArrayRef<ParmVarDecl*> parameters() const {
+    return llvm::makeArrayRef(ParamInfo, getNumParams());
+  }
+
   const ArrayRef<NamedDecl *> &getDeclsInPrototypeScope() const {
     return DeclsInPrototypeScope;
   }
@@ -1862,8 +1878,8 @@ public:
   /// arguments (in C++).
   unsigned getMinRequiredArguments() const;
 
-  QualType getResultType() const {
-    return getType()->getAs<FunctionType>()->getResultType();
+  QualType getReturnType() const {
+    return getType()->getAs<FunctionType>()->getReturnType();
   }
 
   /// \brief Determine the type of an expression that calls this function.
@@ -3257,6 +3273,12 @@ public:
   unsigned param_size() const { return getNumParams(); }
   typedef ParmVarDecl **param_iterator;
   typedef ParmVarDecl * const *param_const_iterator;
+
+  // ArrayRef access to formal parameters.
+  // FIXME: Should eventual replace iterator access.
+  ArrayRef<ParmVarDecl*> parameters() const {
+    return llvm::makeArrayRef(ParamInfo, param_size());
+  }
 
   bool param_empty() const { return NumParams == 0; }
   param_iterator param_begin()  { return ParamInfo; }

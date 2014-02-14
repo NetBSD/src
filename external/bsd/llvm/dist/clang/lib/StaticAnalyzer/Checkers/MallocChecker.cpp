@@ -100,12 +100,13 @@ public:
   }
 
   void dump(raw_ostream &OS) const {
-    static const char *const Table[] = {
-      "Allocated",
-      "Released",
-      "Relinquished"
-    };
-    OS << Table[(unsigned) K];
+    switch (static_cast<Kind>(K)) {
+#define CASE(ID) case ID: OS << #ID; break;
+    CASE(Allocated)
+    CASE(Released)
+    CASE(Relinquished)
+    CASE(Escaped)
+    }
   }
 
   LLVM_DUMP_METHOD void dump() const { dump(llvm::errs()); }
@@ -1907,11 +1908,11 @@ bool MallocChecker::mayFreeAnyEscapedMemoryOrIsModeledExplicitly(
   assert(Call);
   EscapingSymbol = 0;
   
-  // For now, assume that any C++ call can free memory.
+  // For now, assume that any C++ or block call can free memory.
   // TODO: If we want to be more optimistic here, we'll need to make sure that
   // regions escape to C++ containers. They seem to do that even now, but for
   // mysterious reasons.
-  if (!(isa<FunctionCall>(Call) || isa<ObjCMethodCall>(Call)))
+  if (!(isa<SimpleFunctionCall>(Call) || isa<ObjCMethodCall>(Call)))
     return true;
 
   // Check Objective-C messages by selector name.
@@ -1966,7 +1967,7 @@ bool MallocChecker::mayFreeAnyEscapedMemoryOrIsModeledExplicitly(
   }
 
   // At this point the only thing left to handle is straight function calls.
-  const FunctionDecl *FD = cast<FunctionCall>(Call)->getDecl();
+  const FunctionDecl *FD = cast<SimpleFunctionCall>(Call)->getDecl();
   if (!FD)
     return true;
 

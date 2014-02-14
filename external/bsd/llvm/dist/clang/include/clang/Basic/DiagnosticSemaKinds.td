@@ -425,6 +425,7 @@ def ext_noreturn_main : ExtWarn<
 def note_main_remove_noreturn : Note<"remove '_Noreturn'">;
 def err_constexpr_main : Error<
   "'main' is not allowed to be declared constexpr">;
+def err_deleted_main : Error<"'main' is not allowed to be deleted">;
 def err_mainlike_template_decl : Error<"%0 cannot be a template">;
 def err_main_returns_nonint : Error<"'main' must return 'int'">;
 def ext_main_returns_nonint : ExtWarn<"return type of 'main' is not 'int'">,
@@ -437,6 +438,8 @@ def warn_main_one_arg : Warning<"only one parameter on 'main' declaration">,
 def err_main_arg_wrong : Error<"%select{first|second|third|fourth}0 "
     "parameter of 'main' (%select{argument count|argument array|environment|"
     "platform-specific data}0) must be of type %1">;
+def ext_main_used : Extension<
+  "ISO C++ does not allow 'main' to be used by a program">, InGroup<Main>;
 
 /// parser diagnostics
 def ext_no_declarators : ExtWarn<"declaration does not declare anything">,
@@ -444,6 +447,10 @@ def ext_no_declarators : ExtWarn<"declaration does not declare anything">,
 def ext_typedef_without_a_name : ExtWarn<"typedef requires a name">,
   InGroup<MissingDeclarations>;
 def err_typedef_not_identifier : Error<"typedef name must be an identifier">;
+def err_typedef_changes_linkage : Error<"unsupported: typedef changes linkage"
+  " of anonymous type, but linkage was already computed">;
+def note_typedef_changes_linkage : Note<"use a tag name here to establish "
+  "linkage prior to definition">;
 def err_statically_allocated_object : Error<
   "interface type cannot be statically allocated">;
 def err_object_cannot_be_passed_returned_by_value : Error<
@@ -462,22 +469,28 @@ def err_opencl_half_return : Error<
   "declaring function return value of type %0 is not allowed; did you forget * ?">;
 def warn_enum_value_overflow : Warning<"overflow in enumeration value">;
 def warn_pragma_options_align_reset_failed : Warning<
-  "#pragma options align=reset failed: %0">;
+  "#pragma options align=reset failed: %0">,
+  InGroup<IgnoredPragmas>;
 def err_pragma_options_align_mac68k_target_unsupported : Error<
   "mac68k alignment pragma is not supported on this target">;
 def warn_pragma_pack_invalid_alignment : Warning<
-  "expected #pragma pack parameter to be '1', '2', '4', '8', or '16'">;
+  "expected #pragma pack parameter to be '1', '2', '4', '8', or '16'">,
+  InGroup<IgnoredPragmas>;
 // Follow the MSVC implementation.
 def warn_pragma_pack_show : Warning<"value of #pragma pack(show) == %0">;
 def warn_pragma_pack_pop_identifer_and_alignment : Warning<
   "specifying both a name and alignment to 'pop' is undefined">;
-def warn_pragma_pack_pop_failed : Warning<"#pragma pack(pop, ...) failed: %0">;
-def warn_pragma_ms_struct_failed : Warning<"#pramga ms_struct can not be used with dynamic classes or structures">, InGroup<IgnoredAttributes>;
+def warn_pragma_pack_pop_failed : Warning<"#pragma pack(pop, ...) failed: %0">,
+  InGroup<IgnoredPragmas>;
+def warn_pragma_ms_struct_failed : Warning<"#pramga ms_struct can not be used with dynamic classes or structures">,
+  InGroup<IgnoredPragmas>;
 
 def warn_pragma_unused_undeclared_var : Warning<
-  "undeclared variable %0 used as an argument for '#pragma unused'">;
+  "undeclared variable %0 used as an argument for '#pragma unused'">,
+  InGroup<IgnoredPragmas>;
 def warn_pragma_unused_expected_var_arg : Warning<
-  "only variables can be arguments to '#pragma unused'">;
+  "only variables can be arguments to '#pragma unused'">,
+  InGroup<IgnoredPragmas>;
 def err_pragma_push_visibility_mismatch : Error<
   "#pragma visibility push with no matching #pragma visibility pop">;
 def note_surrounding_namespace_ends_here : Note<
@@ -945,6 +958,8 @@ def err_capture_of_abstract_type : Error<
   "by-copy capture of value of abstract type %0">;
 def err_capture_of_incomplete_type : Error<
   "by-copy capture of variable %0 with incomplete type %1">;
+def err_capture_default_non_local : Error<
+  "non-local lambda expression cannot have a capture-default">;
 
 def err_multiple_final_overriders : Error<
   "virtual function %q0 has more than one final overrider in %1">; 
@@ -1847,6 +1862,9 @@ def warn_attribute_pointers_only : Warning<
   "%0 attribute only applies to pointer arguments">,
   InGroup<IgnoredAttributes>;
 def err_attribute_pointers_only : Error<warn_attribute_pointers_only.Text>;
+def warn_attribute_return_pointers_only : Warning<
+  "%0 attribute only applies to return values that are pointers">,
+  InGroup<IgnoredAttributes>;
 def err_attribute_no_member_pointers : Error<
   "%0 attribute cannot be used with pointers to members">;
 def err_attribute_invalid_implicit_this_argument : Error<
@@ -2290,6 +2308,10 @@ def note_function_to_bool_silence : Note<
     "prefix with the address-of operator to silence this warning">;
 def note_function_to_bool_call : Note<
     "suffix with parentheses to turn this into a function call">;
+def warn_impcast_objective_c_literal_to_bool : Warning<
+    "implicit boolean conversion of Objective-C object literal always "
+    "evaluates to true">,
+    InGroup<ObjCLiteralConversion>;
 
 def warn_cast_align : Warning<
   "cast from %0 to %1 increases required alignment from %2 to %3">,
@@ -2341,6 +2363,13 @@ def warn_attribute_protected_visibility :
   InGroup<DiagGroup<"unsupported-visibility">>;
 def err_mismatched_visibility: Error<"visibility does not match previous declaration">;
 def note_previous_attribute : Note<"previous attribute is here">;
+def err_mismatched_ms_inheritance : Error<
+  "inheritance model does not match %select{definition|previous declaration}0">;
+def warn_ignored_ms_inheritance : Warning<
+  "inheritance model ignored on %select{primary template|partial specialization}0">,
+  InGroup<IgnoredAttributes>;
+def note_previous_ms_inheritance : Note<
+  "previous inheritance model specified here">;
 def err_machine_mode : Error<"%select{unknown|unsupported}0 machine mode %1">;
 def err_mode_not_primitive : Error<
   "mode attribute only supported for integer and floating-point types">;
@@ -2350,6 +2379,9 @@ def err_attr_wrong_decl : Error<
   "%0 attribute invalid on this declaration, requires typedef or value">;
 def warn_attribute_nonnull_no_pointers : Warning<
   "'nonnull' attribute applied to function with no pointer arguments">,
+  InGroup<IgnoredAttributes>;
+def warn_attribute_nonnull_parm_no_args : Warning<
+  "'nonnull' attribute when used on parameters takes no arguments">,
   InGroup<IgnoredAttributes>;
 def warn_attribute_malloc_pointer_only : Warning<
   "'malloc' attribute only applies to functions returning a pointer type">,
@@ -3176,9 +3208,13 @@ def err_default_arg_in_partial_spec : Error<
 def err_dependent_non_type_arg_in_partial_spec : Error<
     "non-type template argument depends on a template parameter of the "
     "partial specialization">;
+def note_dependent_non_type_default_arg_in_partial_spec : Note<
+    "template parameter is used in default argument declared here">;
 def err_dependent_typed_non_type_arg_in_partial_spec : Error<
     "non-type template argument specializes a template parameter with "
     "dependent type %0">;
+def note_dependent_typed_non_type_default_arg_in_partial_spec : Note<
+    "template parameter is declared here">;
 def err_partial_spec_args_match_primary_template : Error<
     "%select{class|variable}0 template partial specialization does not "
     "specialize any template argument; to %select{declare|define}1 the "
@@ -3562,9 +3598,6 @@ def err_definition_of_explicitly_defaulted_member : Error<
 def err_redefinition_extern_inline : Error<
   "redefinition of a 'extern inline' function %0 is not supported in "
   "%select{C99 mode|C++}1">;
-def warn_cxx98_compat_friend_redefinition : Warning<
-  "friend function %0 would be implicitly redefined in C++98">,
-  InGroup<CXX98Compat>, DefaultIgnore;
 
 def note_deleted_dtor_no_operator_delete : Note<
   "virtual destructor requires an unambiguous, accessible 'operator delete'">;
@@ -4531,8 +4564,9 @@ def ext_array_init_parens : ExtWarn<
 def warn_deprecated_string_literal_conversion : Warning<
   "conversion from string literal to %0 is deprecated">,
   InGroup<CXX11CompatDeprecatedWritableStr>;
-def warn_deprecated_string_literal_conversion_c : Warning<
-  "dummy warning to enable -fconst-strings">, InGroup<DeprecatedWritableStr>, DefaultIgnore;
+def ext_deprecated_string_literal_conversion : ExtWarn<
+  "ISO C++11 does not allow conversion from string literal to %0">,
+  InGroup<CXX11CompatDeprecatedWritableStr>, SFINAEFailure;
 def err_realimag_invalid_type : Error<"invalid type %0 to %1 operator">;
 def err_typecheck_sclass_fscope : Error<
   "illegal storage class on file-scoped variable">;
@@ -5225,9 +5259,10 @@ def err_typecheck_deleted_function : Error<
   "conversion function %diff{from $ to $|between types}0,1 "
   "invokes a deleted function">;
   
-def err_expected_class_or_namespace : Error<"expected a class or namespace">;
-def err_expected_class : Error<"%0 is not a class%select{ or namespace|, "
-  "namespace, or scoped enumeration}1">;
+def err_expected_class_or_namespace : Error<"%0 is not a class"
+  "%select{ or namespace|, namespace, or scoped enumeration}1">;
+def note_expected_class_or_namespace_declared_here : Note<
+  "%0 declared here">;
 def err_invalid_declarator_scope : Error<"cannot define or redeclare %0 here "
   "because namespace %1 does not enclose namespace %2">;
 def err_invalid_declarator_global_scope : Error<
@@ -5996,6 +6031,9 @@ def err_operator_new_delete_too_few_parameters : Error<
   "%0 must have at least one parameter">;
 def err_operator_new_delete_template_too_few_parameters : Error<
   "%0 template must have at least two parameters">;
+def warn_operator_new_returns_null : Warning<
+  "%0 should not return a null pointer unless it is declared 'throw()'"
+  "%select{| or 'noexcept'}1">, InGroup<OperatorNewReturnsNull>;
 
 def err_operator_new_dependent_param_type : Error<
   "%0 cannot take a dependent type as first parameter; "
@@ -6210,6 +6248,9 @@ def note_printf_c_str: Note<"did you mean to call the %0 method?">;
 def warn_null_arg : Warning<
   "null passed to a callee which requires a non-null argument">,
   InGroup<NonNull>;
+def warn_null_ret : Warning<
+  "null returned from %select{function|method}0 that requires a non-null return value">,
+  InGroup<NonNull>;
 
 // CHECK: returning address/reference of stack memory
 def warn_ret_stack_addr : Warning<
@@ -6323,6 +6364,12 @@ def err_continue_not_in_loop : Error<
   "'continue' statement not in loop statement">;
 def err_break_not_in_loop_or_switch : Error<
   "'break' statement not in loop or switch statement">;
+def warn_loop_ctrl_binds_to_inner : Warning<
+  "'%0' is bound to current loop, GCC binds it to the enclosing loop">,
+  InGroup<GccCompat>;
+def warn_break_binds_to_switch : Warning<
+  "'break' is bound to loop, GCC binds it to switch">,
+  InGroup<GccCompat>;
 def err_default_not_in_switch : Error<
   "'default' statement not in switch statement">;
 def err_case_not_in_switch : Error<"'case' statement not in switch statement">;

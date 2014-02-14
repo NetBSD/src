@@ -1205,6 +1205,7 @@ Sema::ActOnWhileStmt(SourceLocation WhileLoc, FullExprArg Cond,
   Expr *ConditionExpr = CondResult.take();
   if (!ConditionExpr)
     return StmtError();
+  CheckBreakContinueBinding(ConditionExpr);
 
   DiagnoseUnusedExprResult(Body);
 
@@ -1221,6 +1222,7 @@ Sema::ActOnDoStmt(SourceLocation DoLoc, Stmt *Body,
                   Expr *Cond, SourceLocation CondRParen) {
   assert(Cond && "ActOnDoStmt(): missing expression");
 
+  CheckBreakContinueBinding(Cond);
   ExprResult CondResult = CheckBooleanCondition(Cond, DoLoc);
   if (CondResult.isInvalid())
     return StmtError();
@@ -1483,25 +1485,33 @@ namespace {
     return false;
   }
 
-  // A visitor to determine if a continue statement is a subexpression.
-  class ContinueFinder : public EvaluatedExprVisitor<ContinueFinder> {
-    bool Found;
+  // A visitor to determine if a continue or break statement is a
+  // subexpression.
+  class BreakContinueFinder : public EvaluatedExprVisitor<BreakContinueFinder> {
+    SourceLocation BreakLoc;
+    SourceLocation ContinueLoc;
   public:
-    ContinueFinder(Sema &S, Stmt* Body) :
-        Inherited(S.Context),
-        Found(false) {
+    BreakContinueFinder(Sema &S, Stmt* Body) :
+        Inherited(S.Context) {
       Visit(Body);
     }
 
-    typedef EvaluatedExprVisitor<ContinueFinder> Inherited;
+    typedef EvaluatedExprVisitor<BreakContinueFinder> Inherited;
 
     void VisitContinueStmt(ContinueStmt* E) {
-      Found = true;
+      ContinueLoc = E->getContinueLoc();
     }
 
-    bool ContinueFound() { return Found; }
+    void VisitBreakStmt(BreakStmt* E) {
+      BreakLoc = E->getBreakLoc();
+    }
 
-  };  // end class ContinueFinder
+    bool ContinueFound() { return ContinueLoc.isValid(); }
+    bool BreakFound() { return BreakLoc.isValid(); }
+    SourceLocation GetContinueLoc() { return ContinueLoc; }
+    SourceLocation GetBreakLoc() { return BreakLoc; }
+
+  };  // end class BreakContinueFinder
 
   // Emit a warning when a loop increment/decrement appears twice per loop
   // iteration.  The conditions which trigger this warning are:
@@ -1530,11 +1540,11 @@ namespace {
     if (!ProcessIterationStmt(S, LastStmt, LastIncrement, LastDRE)) return;
 
     // Check that the two statements are both increments or both decrements
-    // on the same varaible.
+    // on the same variable.
     if (LoopIncrement != LastIncrement ||
         LoopDRE->getDecl() != LastDRE->getDecl()) return;
 
-    if (ContinueFinder(S, Body).ContinueFound()) return;
+    if (BreakContinueFinder(S, Body).ContinueFound()) return;
 
     S.Diag(LastDRE->getLocation(), diag::warn_redundant_loop_iteration)
          << LastDRE->getDecl() << LastIncrement;
@@ -1543,6 +1553,25 @@ namespace {
   }
 
 } // end namespace
+
+
+void Sema::CheckBreakContinueBinding(Expr *E) {
+  if (!E || getLangOpts().CPlusPlus)
+    return;
+  BreakContinueFinder BCFinder(*this, E);
+  Scope *BreakParent = CurScope->getBreakParent();
+  if (BCFinder.BreakFound() && BreakParent) {
+    if (BreakParent->getFlags() & Scope::SwitchScope) {
+      Diag(BCFinder.GetBreakLoc(), diag::warn_break_binds_to_switch);
+    } else {
+      Diag(BCFinder.GetBreakLoc(), diag::warn_loop_ctrl_binds_to_inner)
+          << "break";
+    }
+  } else if (BCFinder.ContinueFound() && CurScope->getContinueParent()) {
+    Diag(BCFinder.GetContinueLoc(), diag::warn_loop_ctrl_binds_to_inner)
+        << "continue";
+  }
+}
 
 StmtResult
 Sema::ActOnForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
@@ -1566,6 +1595,9 @@ Sema::ActOnForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
       }
     }
   }
+
+  CheckBreakContinueBinding(second.get());
+  CheckBreakContinueBinding(third.get());
 
   CheckForLoopConditionalStatement(*this, second.get(), third.get(), Body);
   CheckForRedundantIteration(*this, third.get(), Body);
@@ -2528,7 +2560,7 @@ Sema::PerformMoveOrCopyInitialization(const InitializedEntity &Entity,
 static bool hasDeducedReturnType(FunctionDecl *FD) {
   const FunctionProtoType *FPT =
       FD->getTypeSourceInfo()->getType()->castAs<FunctionProtoType>();
-  return FPT->getResultType()->isUndeducedType();
+  return FPT->getReturnType()->isUndeducedType();
 }
 
 /// ActOnCapScopeReturnStmt - Utility routine to type-check return statements
@@ -2547,7 +2579,7 @@ Sema::ActOnCapScopeReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
     // FIXME: Blocks might have a return type of 'auto' explicitly specified.
     FunctionDecl *FD = CurLambda->CallOperator;
     if (CurCap->ReturnType.isNull())
-      CurCap->ReturnType = FD->getResultType();
+      CurCap->ReturnType = FD->getReturnType();
 
     AutoType *AT = CurCap->ReturnType->getContainedAutoType();
     assert(AT && "lost auto type from lambda return type");
@@ -2555,7 +2587,7 @@ Sema::ActOnCapScopeReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
       FD->setInvalidDecl();
       return StmtError();
     }
-    CurCap->ReturnType = FnRetType = FD->getResultType();
+    CurCap->ReturnType = FnRetType = FD->getReturnType();
   } else if (CurCap->HasImplicitReturnType) {
     // For blocks/lambdas with implicit return types, we check each return
     // statement individually, and deduce the common return type when the block
@@ -2650,7 +2682,7 @@ Sema::ActOnCapScopeReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
       return StmtError();
     }
     RetValExp = Res.take();
-    CheckReturnStackAddr(RetValExp, FnRetType, ReturnLoc);
+    CheckReturnValExpr(RetValExp, FnRetType, ReturnLoc);
   }
 
   if (RetValExp) {
@@ -2680,7 +2712,7 @@ bool Sema::DeduceFunctionTypeFromReturnExpr(FunctionDecl *FD,
                                             Expr *&RetExpr,
                                             AutoType *AT) {
   TypeLoc OrigResultType = FD->getTypeSourceInfo()->getTypeLoc().
-    IgnoreParens().castAs<FunctionProtoTypeLoc>().getResultLoc();
+    IgnoreParens().castAs<FunctionProtoTypeLoc>().getReturnLoc();
   QualType Deduced;
 
   if (RetExpr && isa<InitListExpr>(RetExpr)) {
@@ -2774,13 +2806,21 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
 
   QualType FnRetType;
   QualType RelatedRetType;
+  const AttrVec *Attrs = 0;
+  bool isObjCMethod = false;
+
   if (const FunctionDecl *FD = getCurFunctionDecl()) {
-    FnRetType = FD->getResultType();
+    FnRetType = FD->getReturnType();
+    if (FD->hasAttrs())
+      Attrs = &FD->getAttrs();
     if (FD->isNoReturn())
       Diag(ReturnLoc, diag::warn_noreturn_function_has_return_expr)
         << FD->getDeclName();
   } else if (ObjCMethodDecl *MD = getCurMethodDecl()) {
-    FnRetType = MD->getResultType();
+    FnRetType = MD->getReturnType();
+    isObjCMethod = true;
+    if (MD->hasAttrs())
+      Attrs = &MD->getAttrs();
     if (MD->hasRelatedResultType() && MD->getClassInterface()) {
       // In the implementation of a method with a related return type, the
       // type used to type-check the validity of return statements within the
@@ -2800,7 +2840,7 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
         FD->setInvalidDecl();
         return StmtError();
       } else {
-        FnRetType = FD->getResultType();
+        FnRetType = FD->getReturnType();
       }
     }
   }
@@ -2935,7 +2975,8 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
         RetValExp = Res.takeAs<Expr>();
       }
 
-      CheckReturnStackAddr(RetValExp, FnRetType, ReturnLoc);
+      CheckReturnValExpr(RetValExp, FnRetType, ReturnLoc, isObjCMethod, Attrs,
+                         getCurFunctionDecl());
     }
 
     if (RetValExp) {
