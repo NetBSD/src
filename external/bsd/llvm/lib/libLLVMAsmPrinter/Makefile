@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2014/01/05 16:38:06 joerg Exp $
+#	$NetBSD: Makefile,v 1.10 2014/02/14 20:23:56 joerg Exp $
 
 LIB=	LLVMAsmPrinter
 
@@ -19,7 +19,8 @@ SRCS+=	ARMException.cpp \
 	DwarfUnit.cpp \
 	ErlangGCPrinter.cpp \
 	OcamlGCPrinter.cpp \
-	Win64Exception.cpp
+	Win64Exception.cpp \
+	WinCodeViewLineTables.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>
