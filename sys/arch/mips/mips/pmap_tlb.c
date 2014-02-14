@@ -453,8 +453,8 @@ pmap_tlb_shootdown_process(void)
 #if 0
 	KASSERT(cpu_intr_p());
 	KASSERTMSG(ci->ci_cpl >= IPL_SCHED,
-	    ("%s: cpl (%d) < IPL_SCHED (%d)",
-	    __func__, ci->ci_cpl, IPL_SCHED));
+	    "%s: cpl (%d) < IPL_SCHED (%d)",
+	    __func__, ci->ci_cpl, IPL_SCHED);
 #endif
 	TLBINFO_LOCK(ti);
 
@@ -862,8 +862,8 @@ pmap_tlb_asid_deactivate(pmap_t pm)
 		const uint32_t cpu_mask = 1 << cpu_index(ci);
 		KASSERT(!cpu_intr_p());
 		KASSERTMSG(pm->pm_onproc & cpu_mask,
-		    ("%s: pmap %p onproc %#x doesn't include cpu %d (%p)",
-		    __func__, pm, pm->pm_onproc, cpu_index(ci), ci));
+		    "%s: pmap %p onproc %#x doesn't include cpu %d (%p)",
+		    __func__, pm, pm->pm_onproc, cpu_index(ci), ci);
 		/*
 		 * The bits in pm_onproc that belong to this TLB can
 		 * be changed while this TLBs lock is not held as long
@@ -928,8 +928,8 @@ pmap_tlb_asid_check(void)
 	__asm("mfc0 %0,$%1" : "=r"(tlb_hi) : "n"(MIPS_COP_0_TLB_HI));
 	uint32_t asid = (tlb_hi & MIPS_TLB_PID) >> MIPS_TLB_PID_SHIFT;
 	KDASSERTMSG(asid == curcpu()->ci_pmap_asid_cur,
-	   ("tlb_hi (%#x) asid (%#x) != current asid (%#x)",
-	    tlb_hi, asid, curcpu()->ci_pmap_asid_cur));
+	   "tlb_hi (%#x) asid (%#x) != current asid (%#x)",
+	    tlb_hi, asid, curcpu()->ci_pmap_asid_cur);
 	kpreempt_enable();
 #endif
 }

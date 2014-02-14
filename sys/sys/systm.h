@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.228.4.2.4.3 2013/11/14 17:34:02 matt Exp $	*/
+/*	$NetBSD: systm.h,v 1.228.4.2.4.4 2014/02/14 18:38:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -236,6 +236,7 @@ void	twiddle(void);
 
 void	panic(const char *, ...)
     __dead __attribute__((__format__(__printf__,1,2)));
+void	vpanic(const char *, _BSD_VA_LIST_);
 void	uprintf(const char *, ...)
     __attribute__((__format__(__printf__,1,2)));
 void	uprintf_locked(const char *, ...)
