@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.357.4.4.2.1.2.1 2010/04/21 00:28:19 matt Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.357.4.4.2.1.2.2 2014/02/14 18:31:49 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.357.4.4.2.1.2.1 2010/04/21 00:28:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.357.4.4.2.1.2.2 2014/02/14 18:31:49 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -191,7 +191,7 @@ static void vrele_thread(void *);
 static void insmntque(vnode_t *, struct mount *);
 static int getdevvp(dev_t, vnode_t **, enum vtype);
 static vnode_t *getcleanvnode(void);;
-void vpanic(vnode_t *, const char *);
+void vnpanic(vnode_t *, const char *);
 
 #ifdef DEBUG 
 void printlockedvnodes(void);
@@ -199,14 +199,14 @@ void printlockedvnodes(void);
 
 #ifdef DIAGNOSTIC
 void
-vpanic(vnode_t *vp, const char *msg)
+vnpanic(vnode_t *vp, const char *msg)
 {
 
 	vprint(NULL, vp);
 	panic("%s\n", msg);
 }
 #else
-#define	vpanic(vp, msg)	/* nothing */
+#define	vnpanic(vp, msg)	/* nothing */
 #endif
 
 void
@@ -333,14 +333,14 @@ try_nextlist:
 		 * lists.
 		 */
 		if (vp->v_usecount != 0) {
-			vpanic(vp, "free vnode isn't");
+			vnpanic(vp, "free vnode isn't");
 		}
 		if ((vp->v_iflag & VI_CLEAN) != 0) {
-			vpanic(vp, "clean vnode on freelist");
+			vnpanic(vp, "clean vnode on freelist");
 		}
 		if (vp->v_freelisthd != listhd) {
 			printf("vnode sez %p, listhd %p\n", vp->v_freelisthd, listhd);
-			vpanic(vp, "list head mismatch");
+			vnpanic(vp, "list head mismatch");
 		}
 		if (!mutex_tryenter(&vp->v_interlock))
 			continue;
@@ -411,13 +411,13 @@ try_nextlist:
 
 	if (vp->v_data != NULL || vp->v_uobj.uo_npages != 0 ||
 	    !TAILQ_EMPTY(&vp->v_uobj.memq)) {
-		vpanic(vp, "cleaned vnode isn't");
+		vnpanic(vp, "cleaned vnode isn't");
 	}
 	if (vp->v_numoutput != 0) {
-		vpanic(vp, "clean vnode has pending I/O's");
+		vnpanic(vp, "clean vnode has pending I/O's");
 	}
 	if ((vp->v_iflag & VI_ONWORKLST) != 0) {
-		vpanic(vp, "clean vnode on syncer list");
+		vnpanic(vp, "clean vnode on syncer list");
 	}
 
 	return vp;
@@ -1376,7 +1376,7 @@ vrelel(vnode_t *vp, int flags)
 
 	if (__predict_false(vp->v_op == dead_vnodeop_p &&
 	    (vp->v_iflag & (VI_CLEAN|VI_XLOCK)) == 0)) {
-		vpanic(vp, "dead but not clean");
+		vnpanic(vp, "dead but not clean");
 	}
 
 	/*
@@ -1389,7 +1389,7 @@ vrelel(vnode_t *vp, int flags)
 		return;
 	}
 	if (vp->v_usecount <= 0 || vp->v_writecount != 0) {
-		vpanic(vp, "vrelel: bad ref count");
+		vnpanic(vp, "vrelel: bad ref count");
 	}
 
 	KASSERT((vp->v_iflag & VI_XLOCK) == 0);
@@ -1421,7 +1421,7 @@ vrelel(vnode_t *vp, int flags)
 			    LK_RETRY);
 			if (error != 0) {
 				/* XXX */
-				vpanic(vp, "vrele: unable to lock %p");
+				vnpanic(vp, "vrele: unable to lock %p");
 			}
 			mutex_enter(&vp->v_interlock);
 			/*
@@ -1642,7 +1642,7 @@ holdrelel(vnode_t *vp)
 	KASSERT((vp->v_iflag & VI_MARKER) == 0);
 
 	if (vp->v_holdcnt <= 0) {
-		vpanic(vp, "holdrelel: holdcnt vp %p");
+		vnpanic(vp, "holdrelel: holdcnt vp %p");
 	}
 
 	vp->v_holdcnt--;
@@ -1891,7 +1891,7 @@ vclean(vnode_t *vp, int flags)
 
 	/* Disassociate the underlying file system from the vnode. */
 	if (VOP_RECLAIM(vp)) {
-		vpanic(vp, "vclean: cannot reclaim");
+		vnpanic(vp, "vclean: cannot reclaim");
 	}
 
 	KASSERT(vp->v_uobj.uo_npages == 0);
