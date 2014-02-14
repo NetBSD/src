@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.1174 2014/01/26 10:19:37 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.1175 2014/02/14 13:25:19 njoly Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1182 2014/01/26 10:19:07 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1183 2014/02/14 13:24:46 njoly Exp
  */
 
 /*
@@ -7579,6 +7579,8 @@ static const uint16_t pci_products[] = {
 	    23830, 24197, 8268, 6239, 0,
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP79_AHCI_12, 
 	    23830, 24197, 8268, 6239, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_210_HDA, 
+	    23569, 24193, 19683, 19688, 6838, 6239, 0,
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF116, 
 	    23569, 24203, 24207, 23867, 0,
 	    PCI_VENDOR_NVIDIA_SGS, PCI_PRODUCT_NVIDIA_SGS_RIVA128, 
@@ -10312,7 +10314,7 @@ static const char pci_words[] = { "."
 	    "Escalade\0" /* 2 refs @ 6221 */
 	    "ATA\0" /* 51 refs @ 6230 */
 	    "RAID\0" /* 43 refs @ 6234 */
-	    "Controller\0" /* 865 refs @ 6239 */
+	    "Controller\0" /* 866 refs @ 6239 */
 	    "7000/8000\0" /* 1 refs @ 6250 */
 	    "Series\0" /* 116 refs @ 6260 */
 	    "9000\0" /* 5 refs @ 6267 */
@@ -10400,7 +10402,7 @@ static const char pci_words[] = { "."
 	    "SATA/Raid\0" /* 1 refs @ 6814 */
 	    "M5451\0" /* 1 refs @ 6824 */
 	    "AC-Link\0" /* 3 refs @ 6830 */
-	    "Audio\0" /* 91 refs @ 6838 */
+	    "Audio\0" /* 92 refs @ 6838 */
 	    "M5453\0" /* 1 refs @ 6844 */
 	    "M5455\0" /* 1 refs @ 6850 */
 	    "M7101\0" /* 1 refs @ 6856 */
@@ -12193,8 +12195,8 @@ static const char pci_words[] = { "."
 	    "82801FR\0" /* 1 refs @ 19661 */
 	    "82801FB/FR\0" /* 13 refs @ 19669 */
 	    "#2\0" /* 7 refs @ 19680 */
-	    "High\0" /* 22 refs @ 19683 */
-	    "Definition\0" /* 22 refs @ 19688 */
+	    "High\0" /* 23 refs @ 19683 */
+	    "Definition\0" /* 23 refs @ 19688 */
 	    "63xxESB\0" /* 20 refs @ 19699 */
 	    "#3\0" /* 6 refs @ 19707 */
 	    "#4\0" /* 5 refs @ 19710 */
@@ -12717,7 +12719,7 @@ static const char pci_words[] = { "."
 	    "Model\0" /* 1 refs @ 23554 */
 	    "64\0" /* 1 refs @ 23560 */
 	    "MCP04\0" /* 7 refs @ 23563 */
-	    "GeForce\0" /* 40 refs @ 23569 */
+	    "GeForce\0" /* 41 refs @ 23569 */
 	    "6800\0" /* 4 refs @ 23577 */
 	    "GT\0" /* 4 refs @ 23582 */
 	    "nForce4\0" /* 14 refs @ 23585 */
@@ -12821,7 +12823,7 @@ static const char pci_words[] = { "."
 	    "8400\0" /* 1 refs @ 24175 */
 	    "MCP77\0" /* 21 refs @ 24180 */
 	    "MCP78S\0" /* 1 refs @ 24186 */
-	    "210\0" /* 1 refs @ 24193 */
+	    "210\0" /* 2 refs @ 24193 */
 	    "MCP79\0" /* 17 refs @ 24197 */
 	    "GTX\0" /* 1 refs @ 24203 */
 	    "550\0" /* 2 refs @ 24207 */
