@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_net.c,v 1.16 2013/01/14 16:50:54 pooka Exp $	*/
+/*	$NetBSD: rump_net.c,v 1.17 2014/02/14 01:43:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_net.c,v 1.16 2013/01/14 16:50:54 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_net.c,v 1.17 2014/02/14 01:43:13 pooka Exp $");
 
 #include <sys/param.h>
 
@@ -50,7 +50,6 @@ RUMP_COMPONENT(RUMP__FACTION_NET)
 	soinit();
 
 	domaininit(false);
-	rump_netisr_init();
 
 	rump_component_init(RUMP_COMPONENT_NET);
 	rump_component_init(RUMP_COMPONENT_NET_ROUTE);
