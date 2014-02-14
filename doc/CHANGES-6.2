@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.90 2014/02/07 13:28:58 sborrill Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.91 2014/02/14 23:27:34 bouyer Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -1316,4 +1316,9 @@ external/gpl3/gcc/dist/gcc/config/mips/mips.c	1.2
 	Xorg, preventing xf86-video-sis and xf86-video-silicon
 	modules from being loaded.
 	[bouyer, #ticket 1020]
+
+sys/kern/exec_elf.c				1.55
+
+	Fix memory leak on bogus ELF binary.
+	[maxv, ticket #1028]
 
