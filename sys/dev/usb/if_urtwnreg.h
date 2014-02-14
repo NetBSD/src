@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwnreg.h,v 1.3 2013/01/28 23:46:33 christos Exp $	*/
+/*	$NetBSD: if_urtwnreg.h,v 1.4 2014/02/14 04:17:41 christos Exp $	*/
 /*	$OpenBSD: if_urtwnreg.h,v 1.3 2010/11/16 18:02:59 damien Exp $	*/
 
 /*-
@@ -83,6 +83,7 @@
 #define R92C_SYS_CFG			0x0f0
 /* MAC General Configuration. */
 #define R92C_CR				0x100
+#define R92C_MSR			0x102
 #define R92C_PBP			0x104
 #define R92C_TRXDMA_CTRL		0x10c
 #define R92C_TRXFF_BNDY			0x114
@@ -384,6 +385,13 @@
 #define R92C_CR_NETTYPE_INFRA	2
 #define R92C_CR_NETTYPE_AP	3
 
+/* Bits for R92C_MSR. */
+#define R92C_MSR_NOLINK		0x00
+#define R92C_MSR_ADHOC		0x01
+#define R92C_MSR_INFRA		0x02
+#define R92C_MSR_AP		0x03
+
+ /* Bits for R92C_PBP. */
 /* Bits for R92C_PBP. */
 #define R92C_PBP_PSRX_M		0x0f
 #define R92C_PBP_PSRX_S		0
@@ -483,6 +491,12 @@
 #define R92C_BCN_CTRL_EN_BCN		0x08
 #define R92C_BCN_CTRL_DIS_TSF_UDT0	0x10
 
+/* Bits for R92C_DRVERLYINT */
+#define R92C_DRIVER_EARLY_INT_TIME	0x05
+
+/* Bits for R92C_BCNDMATIM */
+#define R92C_DMA_ATIME_INT_TIME		0x02
+ 
 /* Bits for R92C_APSD_CTRL. */
 #define R92C_APSD_CTRL_OFF		0x40
 #define R92C_APSD_CTRL_OFF_STATUS	0x80
