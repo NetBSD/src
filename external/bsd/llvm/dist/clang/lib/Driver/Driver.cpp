@@ -169,6 +169,7 @@ const {
     // -{fsyntax-only,-analyze,emit-ast,S} only run up to the compiler.
   } else if ((PhaseArg = DAL.getLastArg(options::OPT_fsyntax_only)) ||
              (PhaseArg = DAL.getLastArg(options::OPT_module_file_info)) ||
+             (PhaseArg = DAL.getLastArg(options::OPT_verify_pch)) ||
              (PhaseArg = DAL.getLastArg(options::OPT_rewrite_objc)) ||
              (PhaseArg = DAL.getLastArg(options::OPT_rewrite_legacy_objc)) ||
              (PhaseArg = DAL.getLastArg(options::OPT__migrate)) ||
@@ -379,8 +380,8 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
   BuildInputs(C->getDefaultToolChain(), *TranslatedArgs, Inputs);
 
   // Construct the list of abstract actions to perform for this compilation. On
-  // Darwin target OSes this uses the driver-driver and universal actions.
-  if (TC.getTriple().isOSDarwin())
+  // MachO targets this uses the driver-driver and universal actions.
+  if (TC.getTriple().isOSBinFormatMachO())
     BuildUniversalActions(C->getDefaultToolChain(), C->getArgs(),
                           Inputs, C->getActions());
   else
@@ -492,7 +493,7 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
   // Construct the list of abstract actions to perform for this compilation. On
   // Darwin OSes this uses the driver-driver and builds universal actions.
   const ToolChain &TC = C.getDefaultToolChain();
-  if (TC.getTriple().isOSDarwin())
+  if (TC.getTriple().isOSBinFormatMachO())
     BuildUniversalActions(TC, C.getArgs(), Inputs, C.getActions());
   else
     BuildActions(TC, C.getArgs(), Inputs, C.getActions());
@@ -868,7 +869,7 @@ void Driver::BuildUniversalActions(const ToolChain &TC,
       // Validate the option here; we don't save the type here because its
       // particular spelling may participate in other driver choices.
       llvm::Triple::ArchType Arch =
-        tools::darwin::getArchTypeForDarwinArchName(A->getValue());
+        tools::darwin::getArchTypeForMachOArchName(A->getValue());
       if (Arch == llvm::Triple::UnknownArch) {
         Diag(clang::diag::err_drv_invalid_arch_name)
           << A->getAsString(Args);
@@ -935,13 +936,12 @@ void Driver::BuildUniversalActions(const ToolChain &TC,
         Actions.push_back(new DsymutilJobAction(Inputs, types::TY_dSYM));
       }
 
-      // Verify the output (debug information only) if we passed '-verify'.
-      if (Args.hasArg(options::OPT_verify)) {
-        ActionList VerifyInputs;
-        VerifyInputs.push_back(Actions.back());
+      // Verify the debug info output.
+      if (Args.hasArg(options::OPT_verify_debug_info)) {
+        Action *VerifyInput = Actions.back();
         Actions.pop_back();
-        Actions.push_back(new VerifyJobAction(VerifyInputs,
-                                              types::TY_Nothing));
+        Actions.push_back(new VerifyDebugInfoJobAction(VerifyInput,
+                                                       types::TY_Nothing));
       }
     }
   }
@@ -1030,7 +1030,8 @@ void Driver::BuildInputs(const ToolChain &TC, const DerivedArgList &Args,
           // Otherwise emit an error but still use a valid type to avoid
           // spurious errors (e.g., no inputs).
           if (!Args.hasArgNoClaim(options::OPT_E) && !CCCIsCPP())
-            Diag(clang::diag::err_drv_unknown_stdin_type);
+            Diag(IsCLMode() ? clang::diag::err_drv_unknown_stdin_type_clang_cl
+                            : clang::diag::err_drv_unknown_stdin_type);
           Ty = types::TY_C;
         } else {
           // Otherwise lookup by extension.
@@ -1315,6 +1316,8 @@ Action *Driver::ConstructPhaseAction(const ArgList &Args, phases::ID Phase,
       return new CompileJobAction(Input, types::TY_AST);
     } else if (Args.hasArg(options::OPT_module_file_info)) {
       return new CompileJobAction(Input, types::TY_ModuleFile);
+    } else if (Args.hasArg(options::OPT_verify_pch)) {
+      return new VerifyPCHJobAction(Input, types::TY_Nothing);
     } else if (IsUsingLTO(Args)) {
       types::ID Output =
         Args.hasArg(options::OPT_S) ? types::TY_LTO_IR : types::TY_LTO_BC;
@@ -1363,7 +1366,7 @@ void Driver::BuildJobs(Compilation &C) const {
 
   // Collect the list of architectures.
   llvm::StringSet<> ArchNames;
-  if (C.getDefaultToolChain().getTriple().isOSDarwin()) {
+  if (C.getDefaultToolChain().getTriple().isOSBinFormatMachO()) {
     for (ArgList::const_iterator it = C.getArgs().begin(), ie = C.getArgs().end();
          it != ie; ++it) {
       Arg *A = *it;
@@ -1864,28 +1867,18 @@ static llvm::Triple computeTargetTriple(StringRef DefaultTargetTriple,
 
   llvm::Triple Target(llvm::Triple::normalize(DefaultTargetTriple));
 
-  // Handle Darwin-specific options available here.
-  if (Target.isOSDarwin()) {
+  // Handle Apple-specific options available here.
+  if (Target.isOSBinFormatMachO()) {
     // If an explict Darwin arch name is given, that trumps all.
     if (!DarwinArchName.empty()) {
-      if (DarwinArchName == "x86_64h")
-        Target.setArchName(DarwinArchName);
-      else
-        Target.setArch(
-          tools::darwin::getArchTypeForDarwinArchName(DarwinArchName));
+      tools::darwin::setTripleTypeForMachOArchName(Target, DarwinArchName);
       return Target;
     }
 
     // Handle the Darwin '-arch' flag.
     if (Arg *A = Args.getLastArg(options::OPT_arch)) {
-      if (StringRef(A->getValue()) == "x86_64h")
-        Target.setArchName(A->getValue());
-      else {
-        llvm::Triple::ArchType DarwinArch
-          = tools::darwin::getArchTypeForDarwinArchName(A->getValue());
-        if (DarwinArch != llvm::Triple::UnknownArch)
-          Target.setArch(DarwinArch);
-      }
+      StringRef ArchName = A->getValue();
+      tools::darwin::setTripleTypeForMachOArchName(Target, ArchName);
     }
   }
 
@@ -1910,13 +1903,21 @@ static llvm::Triple computeTargetTriple(StringRef DefaultTargetTriple,
       Target.getOS() == llvm::Triple::Minix)
     return Target;
 
-  // Handle pseudo-target flags '-m32' and '-m64'.
-  if (Arg *A = Args.getLastArg(options::OPT_m32, options::OPT_m64)) {
-    llvm::Triple::ArchType AT;
-    if (A->getOption().matches(options::OPT_m32))
-      AT = Target.get32BitArchVariant().getArch();
-    else
+  // Handle pseudo-target flags '-m64', '-m32' and '-m16'.
+  if (Arg *A = Args.getLastArg(options::OPT_m64, options::OPT_m32,
+                               options::OPT_m16)) {
+    llvm::Triple::ArchType AT = llvm::Triple::UnknownArch;
+
+    if (A->getOption().matches(options::OPT_m64))
       AT = Target.get64BitArchVariant().getArch();
+    else if (A->getOption().matches(options::OPT_m32))
+      AT = Target.get32BitArchVariant().getArch();
+    else if (A->getOption().matches(options::OPT_m16) &&
+             Target.get32BitArchVariant().getArch() == llvm::Triple::x86) {
+      AT = llvm::Triple::x86;
+      Target.setEnvironment(llvm::Triple::CODE16);
+    }
+
     if (AT != llvm::Triple::UnknownArch)
       Target.setArch(AT);
   }
@@ -1989,6 +1990,10 @@ const ToolChain &Driver::getToolChain(const ArgList &Args,
       }
       if (Target.isOSBinFormatELF()) {
         TC = new toolchains::Generic_ELF(*this, Target, Args);
+        break;
+      }
+      if (Target.getEnvironment() == llvm::Triple::MachO) {
+        TC = new toolchains::MachO(*this, Target, Args);
         break;
       }
       TC = new toolchains::Generic_GCC(*this, Target, Args);

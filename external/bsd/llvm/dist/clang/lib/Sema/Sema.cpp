@@ -75,7 +75,8 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
     Diags(PP.getDiagnostics()), SourceMgr(PP.getSourceManager()),
     CollectStats(false), CodeCompleter(CodeCompleter),
     CurContext(0), OriginalLexicalContext(0),
-    PackContext(0), MSStructPragmaOn(false), VisContext(0),
+    PackContext(0), MSStructPragmaOn(false),
+    MSPointerToMemberRepresentationMethod(PPTMK_BestCase), VisContext(0),
     IsBuildingRecoveryCallExpr(false),
     ExprNeedsCleanups(false), LateTemplateParser(0), OpaqueParser(0),
     IdResolver(pp), StdInitializerList(0), CXXTypeInfoDecl(0), MSVCGuidDecl(0),
@@ -210,7 +211,6 @@ Sema::~Sema() {
     delete I->second;
   if (PackContext) FreePackedContext();
   if (VisContext) FreeVisContext();
-  MSStructPragmaOn = false;
   // Kill all the active scopes.
   for (unsigned I = 1, E = FunctionScopes.size(); I != E; ++I)
     delete FunctionScopes[I];
@@ -255,7 +255,7 @@ bool Sema::makeUnavailableInSystemHeader(SourceLocation loc,
   // If the function is already unavailable, it's not an error.
   if (fn->hasAttr<UnavailableAttr>()) return true;
 
-  fn->addAttr(new (Context) UnavailableAttr(loc, Context, msg));
+  fn->addAttr(UnavailableAttr::CreateImplicit(Context, msg, loc));
   return true;
 }
 
@@ -1240,7 +1240,7 @@ bool Sema::tryExprAsCall(Expr &E, QualType &ZeroArgCallReturnTy,
             ZeroArgCallReturnTy = QualType();
             Ambiguous = true;
           } else
-            ZeroArgCallReturnTy = OverloadDecl->getResultType();
+            ZeroArgCallReturnTy = OverloadDecl->getReturnType();
         }
       }
     }
@@ -1269,7 +1269,7 @@ bool Sema::tryExprAsCall(Expr &E, QualType &ZeroArgCallReturnTy,
   if (const DeclRefExpr *DeclRef = dyn_cast<DeclRefExpr>(E.IgnoreParens())) {
     if (const FunctionDecl *Fun = dyn_cast<FunctionDecl>(DeclRef->getDecl())) {
       if (Fun->getMinRequiredArguments() == 0)
-        ZeroArgCallReturnTy = Fun->getResultType();
+        ZeroArgCallReturnTy = Fun->getReturnType();
       return true;
     }
   }
@@ -1286,8 +1286,8 @@ bool Sema::tryExprAsCall(Expr &E, QualType &ZeroArgCallReturnTy,
 
   if (const FunctionProtoType *FPT =
       dyn_cast_or_null<FunctionProtoType>(FunTy)) {
-    if (FPT->getNumArgs() == 0)
-      ZeroArgCallReturnTy = FunTy->getResultType();
+    if (FPT->getNumParams() == 0)
+      ZeroArgCallReturnTy = FunTy->getReturnType();
     return true;
   }
   return false;
@@ -1338,7 +1338,7 @@ static void notePlausibleOverloads(Sema &S, SourceLocation Loc,
   for (OverloadExpr::decls_iterator It = Overloads.begin(),
          DeclsEnd = Overloads.end(); It != DeclsEnd; ++It) {
     const FunctionDecl *OverloadDecl = cast<FunctionDecl>(*It);
-    QualType OverloadResultTy = OverloadDecl->getResultType();
+    QualType OverloadResultTy = OverloadDecl->getReturnType();
     if (IsPlausibleResult(OverloadResultTy))
       PlausibleOverloads.addDecl(It.getDecl());
   }

@@ -2205,6 +2205,7 @@ public:
   }
 
   const Type *getClass() const { return Class; }
+  CXXRecordDecl *getMostRecentCXXRecordDecl() const;
 
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
@@ -2778,8 +2779,7 @@ protected:
   unsigned getTypeQuals() const { return FunctionTypeBits.TypeQuals; }
 
 public:
-
-  QualType getResultType() const { return ResultType; }
+  QualType getReturnType() const { return ResultType; }
 
   bool getHasRegParm() const { return getExtInfo().getHasRegParm(); }
   unsigned getRegParmType() const { return getExtInfo().getRegParm(); }
@@ -2796,7 +2796,7 @@ public:
   /// \brief Determine the type of an expression that calls a function of
   /// this type.
   QualType getCallResultType(ASTContext &Context) const {
-    return getResultType().getNonLValueExprType(Context);
+    return getReturnType().getNonLValueExprType(Context);
   }
 
   static StringRef getNameForCallConv(CallingConv CC);
@@ -2825,7 +2825,7 @@ public:
   QualType desugar() const { return QualType(this, 0); }
 
   void Profile(llvm::FoldingSetNodeID &ID) {
-    Profile(ID, getResultType(), getExtInfo());
+    Profile(ID, getReturnType(), getExtInfo());
   }
   static void Profile(llvm::FoldingSetNodeID &ID, QualType ResultType,
                       ExtInfo Info) {
@@ -2838,27 +2838,26 @@ public:
   }
 };
 
-/// FunctionProtoType - Represents a prototype with argument type info, e.g.
+/// FunctionProtoType - Represents a prototype with parameter type info, e.g.
 /// 'int foo(int)' or 'int foo(void)'.  'void' is represented as having no
-/// arguments, not as having a single void argument. Such a type can have an
+/// parameters, not as having a single void parameter. Such a type can have an
 /// exception specification, but this specification is not part of the canonical
 /// type.
 class FunctionProtoType : public FunctionType, public llvm::FoldingSetNode {
 public:
   /// ExtProtoInfo - Extra information about a function prototype.
   struct ExtProtoInfo {
-    ExtProtoInfo() :
-      Variadic(false), HasTrailingReturn(false), TypeQuals(0),
-      ExceptionSpecType(EST_None), RefQualifier(RQ_None),
-      NumExceptions(0), Exceptions(0), NoexceptExpr(0),
-      ExceptionSpecDecl(0), ExceptionSpecTemplate(0),
-      ConsumedArguments(0) {}
+    ExtProtoInfo()
+        : Variadic(false), HasTrailingReturn(false), TypeQuals(0),
+          ExceptionSpecType(EST_None), RefQualifier(RQ_None), NumExceptions(0),
+          Exceptions(0), NoexceptExpr(0), ExceptionSpecDecl(0),
+          ExceptionSpecTemplate(0), ConsumedParameters(0) {}
 
     ExtProtoInfo(CallingConv CC)
         : ExtInfo(CC), Variadic(false), HasTrailingReturn(false), TypeQuals(0),
           ExceptionSpecType(EST_None), RefQualifier(RQ_None), NumExceptions(0),
           Exceptions(0), NoexceptExpr(0), ExceptionSpecDecl(0),
-          ExceptionSpecTemplate(0), ConsumedArguments(0) {}
+          ExceptionSpecTemplate(0), ConsumedParameters(0) {}
 
     FunctionType::ExtInfo ExtInfo;
     bool Variadic : 1;
@@ -2871,7 +2870,7 @@ public:
     Expr *NoexceptExpr;
     FunctionDecl *ExceptionSpecDecl;
     FunctionDecl *ExceptionSpecTemplate;
-    const bool *ConsumedArguments;
+    const bool *ConsumedParameters;
   };
 
 private:
@@ -2886,11 +2885,11 @@ private:
     return false;
   }
 
-  FunctionProtoType(QualType result, ArrayRef<QualType> args,
+  FunctionProtoType(QualType result, ArrayRef<QualType> params,
                     QualType canonical, const ExtProtoInfo &epi);
 
-  /// NumArgs - The number of arguments this function has, not counting '...'.
-  unsigned NumArgs : 15;
+  /// The number of parameters this function has, not counting '...'.
+  unsigned NumParams : 15;
 
   /// NumExceptions - The number of types in the exception spec, if any.
   unsigned NumExceptions : 9;
@@ -2898,8 +2897,8 @@ private:
   /// ExceptionSpecType - The type of exception specification this function has.
   unsigned ExceptionSpecType : 3;
 
-  /// HasAnyConsumedArgs - Whether this function has any consumed arguments.
-  unsigned HasAnyConsumedArgs : 1;
+  /// HasAnyConsumedParams - Whether this function has any consumed parameters.
+  unsigned HasAnyConsumedParams : 1;
 
   /// Variadic - Whether the function is variadic.
   unsigned Variadic : 1;
@@ -2912,8 +2911,8 @@ private:
   /// This is a value of type \c RefQualifierKind.
   unsigned RefQualifier : 2;
 
-  // ArgInfo - There is an variable size array after the class in memory that
-  // holds the argument types.
+  // ParamInfo - There is an variable size array after the class in memory that
+  // holds the parameter types.
 
   // Exceptions - There is another variable size array after ArgInfo that
   // holds the exception types.
@@ -2926,17 +2925,17 @@ private:
   // instantiate this function type's exception specification, and the function
   // from which it should be instantiated.
 
-  // ConsumedArgs - A variable size array, following Exceptions
-  // and of length NumArgs, holding flags indicating which arguments
-  // are consumed.  This only appears if HasAnyConsumedArgs is true.
+  // ConsumedParameters - A variable size array, following Exceptions
+  // and of length NumParams, holding flags indicating which parameters
+  // are consumed.  This only appears if HasAnyConsumedParams is true.
 
   friend class ASTContext;  // ASTContext creates these.
 
-  const bool *getConsumedArgsBuffer() const {
-    assert(hasAnyConsumedArgs());
+  const bool *getConsumedParamsBuffer() const {
+    assert(hasAnyConsumedParams());
 
     // Find the end of the exceptions.
-    Expr * const *eh_end = reinterpret_cast<Expr * const *>(arg_type_end());
+    Expr *const *eh_end = reinterpret_cast<Expr *const *>(param_type_end());
     if (getExceptionSpecType() != EST_ComputedNoexcept)
       eh_end += NumExceptions;
     else
@@ -2946,13 +2945,13 @@ private:
   }
 
 public:
-  unsigned getNumArgs() const { return NumArgs; }
-  QualType getArgType(unsigned i) const {
-    assert(i < NumArgs && "Invalid argument number!");
-    return arg_type_begin()[i];
+  unsigned getNumParams() const { return NumParams; }
+  QualType getParamType(unsigned i) const {
+    assert(i < NumParams && "invalid parameter index");
+    return param_type_begin()[i];
   }
-  ArrayRef<QualType> getArgTypes() const {
-    return ArrayRef<QualType>(arg_type_begin(), arg_type_end());
+  ArrayRef<QualType> getParamTypes() const {
+    return ArrayRef<QualType>(param_type_begin(), param_type_end());
   }
 
   ExtProtoInfo getExtProtoInfo() const {
@@ -2974,8 +2973,8 @@ public:
     } else if (EPI.ExceptionSpecType == EST_Unevaluated) {
       EPI.ExceptionSpecDecl = getExceptionSpecDecl();
     }
-    if (hasAnyConsumedArgs())
-      EPI.ConsumedArguments = getConsumedArgsBuffer();
+    if (hasAnyConsumedParams())
+      EPI.ConsumedParameters = getConsumedParamsBuffer();
     return EPI;
   }
 
@@ -3014,7 +3013,7 @@ public:
     if (getExceptionSpecType() != EST_ComputedNoexcept)
       return 0;
     // NoexceptExpr sits where the arguments end.
-    return *reinterpret_cast<Expr *const *>(arg_type_end());
+    return *reinterpret_cast<Expr *const *>(param_type_end());
   }
   /// \brief If this function type has an exception specification which hasn't
   /// been determined yet (either because it has not been evaluated or because
@@ -3024,7 +3023,7 @@ public:
     if (getExceptionSpecType() != EST_Uninstantiated &&
         getExceptionSpecType() != EST_Unevaluated)
       return 0;
-    return reinterpret_cast<FunctionDecl * const *>(arg_type_end())[0];
+    return reinterpret_cast<FunctionDecl *const *>(param_type_end())[0];
   }
   /// \brief If this function type has an uninstantiated exception
   /// specification, this is the function whose exception specification
@@ -3033,17 +3032,12 @@ public:
   FunctionDecl *getExceptionSpecTemplate() const {
     if (getExceptionSpecType() != EST_Uninstantiated)
       return 0;
-    return reinterpret_cast<FunctionDecl * const *>(arg_type_end())[1];
+    return reinterpret_cast<FunctionDecl *const *>(param_type_end())[1];
   }
-  bool isNothrow(const ASTContext &Ctx) const {
-    ExceptionSpecificationType EST = getExceptionSpecType();
-    assert(EST != EST_Unevaluated && EST != EST_Uninstantiated);
-    if (EST == EST_DynamicNone || EST == EST_BasicNoexcept)
-      return true;
-    if (EST != EST_ComputedNoexcept)
-      return false;
-    return getNoexceptSpec(Ctx) == NR_Nothrow;
-  }
+  /// \brief Determine whether this function type has a non-throwing exception
+  /// specification. If this depends on template arguments, returns
+  /// \c ResultIfDependent.
+  bool isNothrow(const ASTContext &Ctx, bool ResultIfDependent = false) const;
 
   bool isVariadic() const { return Variadic; }
 
@@ -3065,16 +3059,18 @@ public:
     return static_cast<RefQualifierKind>(RefQualifier);
   }
 
-  typedef const QualType *arg_type_iterator;
-  arg_type_iterator arg_type_begin() const {
+  typedef const QualType *param_type_iterator;
+  param_type_iterator param_type_begin() const {
     return reinterpret_cast<const QualType *>(this+1);
   }
-  arg_type_iterator arg_type_end() const { return arg_type_begin()+NumArgs; }
+  param_type_iterator param_type_end() const {
+    return param_type_begin() + NumParams;
+  }
 
   typedef const QualType *exception_iterator;
   exception_iterator exception_begin() const {
     // exceptions begin where arguments end
-    return arg_type_end();
+    return param_type_end();
   }
   exception_iterator exception_end() const {
     if (getExceptionSpecType() != EST_Dynamic)
@@ -3082,13 +3078,11 @@ public:
     return exception_begin() + NumExceptions;
   }
 
-  bool hasAnyConsumedArgs() const {
-    return HasAnyConsumedArgs;
-  }
-  bool isArgConsumed(unsigned I) const {
-    assert(I < getNumArgs() && "argument index out of range!");
-    if (hasAnyConsumedArgs())
-      return getConsumedArgsBuffer()[I];
+  bool hasAnyConsumedParams() const { return HasAnyConsumedParams; }
+  bool isParamConsumed(unsigned I) const {
+    assert(I < getNumParams() && "parameter index out of range");
+    if (hasAnyConsumedParams())
+      return getConsumedParamsBuffer()[I];
     return false;
   }
 
@@ -3104,7 +3098,7 @@ public:
 
   void Profile(llvm::FoldingSetNodeID &ID, const ASTContext &Ctx);
   static void Profile(llvm::FoldingSetNodeID &ID, QualType Result,
-                      arg_type_iterator ArgTys, unsigned NumArgs,
+                      param_type_iterator ArgTys, unsigned NumArgs,
                       const ExtProtoInfo &EPI, const ASTContext &Context);
 };
 
