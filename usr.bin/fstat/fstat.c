@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.107 2014/01/17 03:28:01 christos Exp $	*/
+/*	$NetBSD: fstat.c,v 1.108 2014/02/14 20:43:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.107 2014/01/17 03:28:01 christos Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.108 2014/02/14 20:43:34 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -158,8 +158,8 @@ static const char *const dtypes[] = {
 static void	dofiles(struct kinfo_proc2 *);
 static int	ext2fs_filestat(struct vnode *, struct filestat *);
 static int	getfname(const char *);
-static void	getinetproto(int);
-static void	getatproto(int);
+static void	getinetproto(char *, size_t, int);
+static void	getatproto(char *, size_t, int);
 static char   *getmnton(struct mount *);
 static const char   *layer_filestat(struct vnode *, struct filestat *);
 static int	msdosfs_filestat(struct vnode *, struct filestat *);
@@ -1009,8 +1009,9 @@ socktrans(struct socket *sock, int i)
 	struct ddpcb	ddpcb;
 	int len;
 	char dname[32];
-	char lbuf[512], fbuf[512];
+	char lbuf[512], fbuf[512], pbuf[24];
 
+	pbuf[0] = '\0';
 	/* fill in socket */
 	if (!KVM_READ(sock, &so, sizeof(struct socket))) {
 		dprintf("can't read sock at %p", sock);
@@ -1055,7 +1056,7 @@ socktrans(struct socket *sock, int i)
 	lbuf[0] = '\0';
 	switch(dom.dom_family) {
 	case AF_INET:
-		getinetproto(proto.pr_protocol);
+		getinetproto(pbuf, sizeof(pbuf), proto.pr_protocol);
 		switch (proto.pr_protocol) {
 		case IPPROTO_TCP:
 		case IPPROTO_UDP:
@@ -1077,7 +1078,7 @@ socktrans(struct socket *sock, int i)
 		break;
 #ifdef INET6
 	case AF_INET6:
-		getinetproto(proto.pr_protocol);
+		getinetproto(pbuf, sizeof(pbuf), proto.pr_protocol);
 		switch (proto.pr_protocol) {
 		case IPPROTO_TCP:
 		case IPPROTO_UDP:
@@ -1163,7 +1164,7 @@ again:
 		}
 		break;
 	case AF_APPLETALK:
-		getatproto(proto.pr_protocol);
+		getatproto(pbuf, sizeof(pbuf), proto.pr_protocol);
 		if (so.so_pcb) {
 			if (kvm_read(kd, (u_long)so.so_pcb, (char *)&ddpcb,
 			    sizeof(ddpcb)) != sizeof(ddpcb)){
@@ -1186,6 +1187,8 @@ again:
 	else
 		(void)printf("* %s %s", dname, stypename[so.so_type]);
 
+	if (pbuf[0])
+		printf("%s", pbuf);
 	if (fbuf[0] || lbuf[0])
 		printf(" %s%s%s", fbuf, (fbuf[0] && lbuf[0]) ? " <-> " : "",
 		    lbuf);
@@ -1236,7 +1239,7 @@ misctrans(struct file *file, int i)
  *	print name of protocol number
  */
 static void
-getinetproto(int number)
+getinetproto(char *buf, size_t len, int number)
 {
 	const char *cp;
 
@@ -1262,10 +1265,10 @@ getinetproto(int number)
 	case IPPROTO_ICMPV6:
 		cp ="icmp6"; break;
 	default:
-		(void)printf(" %d", number);
+		(void)snprintf(buf, len, " %d", number);
 		return;
 	}
-	(void)printf(" %s", cp);
+	(void)snprintf(buf, len, " %s", cp);
 }
 
 /*
@@ -1273,7 +1276,7 @@ getinetproto(int number)
  *	print name of protocol number
  */
 static void
-getatproto(int number)
+getatproto(char *buf, size_t len, int number)
 {
 	const char *cp;
 
@@ -1283,10 +1286,10 @@ getatproto(int number)
 	case ATPROTO_AARP:
 		cp ="aarp"; break;
 	default:
-		(void)printf(" %d", number);
+		(void)snprintf(buf, len, " %d", number);
 		return;
 	}
-	(void)printf(" %s", cp);
+	(void)snprintf(buf, len, " %s", cp);
 }
 
 static int
