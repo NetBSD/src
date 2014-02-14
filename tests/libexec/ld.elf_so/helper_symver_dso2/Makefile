@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2013/12/25 22:26:35 joerg Exp $
+# $NetBSD: Makefile,v 1.3 2014/02/14 20:33:32 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -19,10 +19,5 @@ NOMAN=		# defined
 FILESDIR=	${TESTSBASE}/libexec/ld.elf_so/h_helper_symver_dso2
 
 LDFLAGS.lib${LIB} += -Wl,--version-script=${.CURDIR}/h_helper_symver_dso2.map
-
-.if !empty(MACHINE_ARCH:M*arm*)
-# LLVM PR 18273
-COPTS.h_helper_symver_dso2.c=	${${ACTIVE_CC} == "clang":?-no-integrated-as :}
-.endif
 
 .include <bsd.lib.mk>
