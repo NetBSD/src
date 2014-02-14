@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2013/11/28 14:19:59 joerg Exp $
+#	$NetBSD: Makefile,v 1.17 2014/02/14 20:23:56 joerg Exp $
 
 LIB=	LLVMAnalysis
 
@@ -30,6 +30,7 @@ SRCS+=	AliasAnalysis.cpp \
 	InstructionSimplify.cpp \
 	Interval.cpp \
 	IntervalPartition.cpp \
+	LazyCallGraph.cpp \
 	LazyValueInfo.cpp \
 	LibCallAliasAnalysis.cpp \
 	LibCallSemantics.cpp \

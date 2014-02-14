@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2014/01/15 21:14:55 joerg Exp $
+#	$NetBSD: Makefile,v 1.25 2014/02/14 20:23:57 joerg Exp $
 
 LIB=	LLVMSupport
 
@@ -11,6 +11,7 @@ NOGCCERROR=	yes
 SRCS+=	APFloat.cpp \
 	APInt.cpp \
 	APSInt.cpp \
+	ARMBuildAttrs.cpp \
 	Allocator.cpp \
 	BlockFrequency.cpp \
 	BranchProbability.cpp \

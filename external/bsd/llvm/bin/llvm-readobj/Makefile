@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2013/07/07 21:36:43 joerg Exp $
+#	$NetBSD: Makefile,v 1.6 2014/02/14 20:23:56 joerg Exp $
 
 PROG_CXX=	llvm-readobj
 NOMAN=		yes
@@ -8,6 +8,7 @@ NOMAN=		yes
 .PATH: ${LLVM_SRCDIR}/tools/llvm-readobj
 
 SRCS=	llvm-readobj.cpp \
+	ARMAttributeParser.cpp \
 	COFFDumper.cpp \
 	ELFDumper.cpp \
 	Error.cpp \
