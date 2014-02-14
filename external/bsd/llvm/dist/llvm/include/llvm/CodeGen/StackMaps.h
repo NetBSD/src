@@ -11,6 +11,7 @@
 #ifndef LLVM_STACKMAPS
 #define LLVM_STACKMAPS
 
+#include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include <map>
@@ -132,6 +133,7 @@ public:
 private:
   typedef SmallVector<Location, 8> LocationVec;
   typedef SmallVector<LiveOutReg, 8> LiveOutVec;
+  typedef MapVector<const MCSymbol *, uint32_t> FnStackSizeMap;
 
   struct CallsiteInfo {
     const MCExpr *CSOffsetExpr;
@@ -170,6 +172,7 @@ private:
   AsmPrinter &AP;
   CallsiteInfoList CSInfos;
   ConstantPool ConstPool;
+  FnStackSizeMap FnStackSize;
 
   MachineInstr::const_mop_iterator
   parseOperand(MachineInstr::const_mop_iterator MOI,
@@ -177,7 +180,7 @@ private:
                LocationVec &Locs, LiveOutVec &LiveOuts) const;
 
   /// \brief Create a live-out register record for the given register @p Reg.
-  LiveOutReg createLiveOutReg(unsigned Reg, const MCRegisterInfo &MCRI,
+  LiveOutReg createLiveOutReg(unsigned Reg,
                               const TargetRegisterInfo *TRI) const;
 
   /// \brief Parse the register live-out mask and return a vector of live-out

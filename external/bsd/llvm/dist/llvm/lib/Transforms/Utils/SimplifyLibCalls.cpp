@@ -493,8 +493,11 @@ struct StrChrOpt : public LibCallOptimization {
     // Otherwise, the character is a constant, see if the first argument is
     // a string literal.  If so, we can constant fold.
     StringRef Str;
-    if (!getConstantStringInfo(SrcStr, Str))
+    if (!getConstantStringInfo(SrcStr, Str)) {
+      if (TD && CharC->isZero()) // strchr(p, 0) -> p + strlen(p)
+        return B.CreateGEP(SrcStr, EmitStrLen(SrcStr, B, TD, TLI), "strchr");
       return 0;
+    }
 
     // Compute the offset, make sure to handle the case when we're searching for
     // zero (a weird way to spell strlen).
@@ -1271,37 +1274,37 @@ struct Exp2Opt : public UnsafeFPLibCallOptimization {
     Value *Op = CI->getArgOperand(0);
     // Turn exp2(sitofp(x)) -> ldexp(1.0, sext(x))  if sizeof(x) <= 32
     // Turn exp2(uitofp(x)) -> ldexp(1.0, zext(x))  if sizeof(x) < 32
-    Value *LdExpArg = 0;
-    if (SIToFPInst *OpC = dyn_cast<SIToFPInst>(Op)) {
-      if (OpC->getOperand(0)->getType()->getPrimitiveSizeInBits() <= 32)
-        LdExpArg = B.CreateSExt(OpC->getOperand(0), B.getInt32Ty());
-    } else if (UIToFPInst *OpC = dyn_cast<UIToFPInst>(Op)) {
-      if (OpC->getOperand(0)->getType()->getPrimitiveSizeInBits() < 32)
-        LdExpArg = B.CreateZExt(OpC->getOperand(0), B.getInt32Ty());
-    }
+    LibFunc::Func LdExp = LibFunc::ldexpl;
+    if (Op->getType()->isFloatTy())
+      LdExp = LibFunc::ldexpf;
+    else if (Op->getType()->isDoubleTy())
+      LdExp = LibFunc::ldexp;
 
-    if (LdExpArg) {
-      const char *Name;
-      if (Op->getType()->isFloatTy())
-        Name = "ldexpf";
-      else if (Op->getType()->isDoubleTy())
-        Name = "ldexp";
-      else
-        Name = "ldexpl";
+    if (TLI->has(LdExp)) {
+      Value *LdExpArg = 0;
+      if (SIToFPInst *OpC = dyn_cast<SIToFPInst>(Op)) {
+        if (OpC->getOperand(0)->getType()->getPrimitiveSizeInBits() <= 32)
+          LdExpArg = B.CreateSExt(OpC->getOperand(0), B.getInt32Ty());
+      } else if (UIToFPInst *OpC = dyn_cast<UIToFPInst>(Op)) {
+        if (OpC->getOperand(0)->getType()->getPrimitiveSizeInBits() < 32)
+          LdExpArg = B.CreateZExt(OpC->getOperand(0), B.getInt32Ty());
+      }
 
-      Constant *One = ConstantFP::get(*Context, APFloat(1.0f));
-      if (!Op->getType()->isFloatTy())
-        One = ConstantExpr::getFPExtend(One, Op->getType());
+      if (LdExpArg) {
+        Constant *One = ConstantFP::get(*Context, APFloat(1.0f));
+        if (!Op->getType()->isFloatTy())
+          One = ConstantExpr::getFPExtend(One, Op->getType());
 
-      Module *M = Caller->getParent();
-      Value *Callee = M->getOrInsertFunction(Name, Op->getType(),
-                                             Op->getType(),
-                                             B.getInt32Ty(), NULL);
-      CallInst *CI = B.CreateCall2(Callee, One, LdExpArg);
-      if (const Function *F = dyn_cast<Function>(Callee->stripPointerCasts()))
-        CI->setCallingConv(F->getCallingConv());
+        Module *M = Caller->getParent();
+        Value *Callee =
+            M->getOrInsertFunction(TLI->getName(LdExp), Op->getType(),
+                                   Op->getType(), B.getInt32Ty(), NULL);
+        CallInst *CI = B.CreateCall2(Callee, One, LdExpArg);
+        if (const Function *F = dyn_cast<Function>(Callee->stripPointerCasts()))
+          CI->setCallingConv(F->getCallingConv());
 
-      return CI;
+        return CI;
+      }
     }
     return Ret;
   }
@@ -1383,7 +1386,7 @@ struct SinCosPiOpt : public LibCallOptimization {
         SinCalls.push_back(CI);
       else if (Func == LibFunc::cospif)
         CosCalls.push_back(CI);
-      else if (Func == LibFunc::sincospi_stretf)
+      else if (Func == LibFunc::sincospif_stret)
         SinCosCalls.push_back(CI);
     } else {
       if (Func == LibFunc::sinpi)
@@ -1412,7 +1415,7 @@ struct SinCosPiOpt : public LibCallOptimization {
 
     Triple T(OrigCallee->getParent()->getTargetTriple());
     if (UseFloat) {
-      Name = "__sincospi_stretf";
+      Name = "__sincospif_stret";
 
       assert(T.getArch() != Triple::x86 && "x86 messy and unsupported for now");
       // x86_64 can't use {float, float} since that would be returned in both
@@ -2297,8 +2300,6 @@ void LibCallSimplifier::replaceAllUsesWith(Instruction *I, Value *With) const {
 //   * sqrt(Nroot(x)) -> pow(x,1/(2*N))
 //   * sqrt(pow(x,y)) -> pow(|x|,y*0.5)
 //
-// strchr:
-//   * strchr(p, 0) -> strlen(p)
 // tan, tanf, tanl:
 //   * tan(atan(x)) -> x
 //

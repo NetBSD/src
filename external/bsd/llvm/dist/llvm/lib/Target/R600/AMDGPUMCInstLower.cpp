@@ -80,7 +80,7 @@ void AMDGPUAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   } else {
     MCInst TmpInst;
     MCInstLowering.lower(MI, TmpInst);
-    OutStreamer.EmitInstruction(TmpInst);
+    EmitToStreamer(OutStreamer, TmpInst);
 
     if (DisasmEnabled) {
       // Disassemble instruction/operands to text.
@@ -99,7 +99,8 @@ void AMDGPUAsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
       MCObjectStreamer &ObjStreamer = (MCObjectStreamer &)OutStreamer;
       MCCodeEmitter &InstEmitter = ObjStreamer.getAssembler().getEmitter();
-      InstEmitter.EncodeInstruction(TmpInst, CodeStream, Fixups);
+      InstEmitter.EncodeInstruction(TmpInst, CodeStream, Fixups,
+                                    TM.getSubtarget<MCSubtargetInfo>());
       CodeStream.flush();
 
       HexLines.resize(HexLines.size() + 1);
