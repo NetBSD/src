@@ -14,6 +14,7 @@
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -24,16 +25,19 @@ using namespace llvm;
 
 // Pin the vtables to this file.
 MCTargetStreamer::~MCTargetStreamer() {}
-void MCTargetStreamer::emitLabel(MCSymbol *Symbol) {}
-void ARMTargetStreamer::anchor() {}
 
-MCStreamer::MCStreamer(MCContext &Ctx, MCTargetStreamer *TargetStreamer)
-    : Context(Ctx), TargetStreamer(TargetStreamer), EmitEHFrame(true),
-      EmitDebugFrame(false), CurrentW64UnwindInfo(0), LastSymbol(0),
-      AutoInitSections(false) {
+MCTargetStreamer::MCTargetStreamer(MCStreamer &S) : Streamer(S) {
+  S.setTargetStreamer(this);
+}
+
+void MCTargetStreamer::emitLabel(MCSymbol *Symbol) {}
+
+void MCTargetStreamer::finish() {}
+
+MCStreamer::MCStreamer(MCContext &Ctx)
+    : Context(Ctx), EmitEHFrame(true), EmitDebugFrame(false),
+      CurrentW64UnwindInfo(0), LastSymbol(0) {
   SectionStack.push_back(std::pair<MCSectionSubPair, MCSectionSubPair>());
-  if (TargetStreamer)
-    TargetStreamer->setStreamer(this);
 }
 
 MCStreamer::~MCStreamer() {
@@ -80,6 +84,8 @@ raw_ostream &MCStreamer::GetCommentOS() {
   // By default, discard comments.
   return nulls();
 }
+
+void MCStreamer::emitRawComment(const Twine &T, bool TabPrefix) {}
 
 void MCStreamer::generateCompactUnwindEncodings(MCAsmBackend *MAB) {
   for (std::vector<MCDwarfFrameInfo>::iterator I = FrameInfos.begin(),
@@ -199,6 +205,10 @@ void MCStreamer::EmitEHSymAttributes(const MCSymbol *Symbol,
                                      MCSymbol *EHSymbol) {
 }
 
+void MCStreamer::InitSections(bool Force) {
+  SwitchSection(getContext().getObjectFileInfo()->getTextSection());
+}
+
 void MCStreamer::AssignSection(MCSymbol *Symbol, const MCSection *Section) {
   if (Section)
     Symbol->setSection(*Section);
@@ -240,12 +250,13 @@ void MCStreamer::EmitCFISections(bool EH, bool Debug) {
   EmitDebugFrame = Debug;
 }
 
-void MCStreamer::EmitCFIStartProc() {
+void MCStreamer::EmitCFIStartProc(bool IsSimple) {
   MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();
   if (CurFrame && !CurFrame->End)
     report_fatal_error("Starting a frame before finishing the previous one!");
 
   MCDwarfFrameInfo Frame;
+  Frame.IsSimple = IsSimple;
   EmitCFIStartProcImpl(Frame);
 
   FrameInfos.push_back(Frame);
@@ -256,15 +267,9 @@ void MCStreamer::EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame) {
 
 void MCStreamer::RecordProcStart(MCDwarfFrameInfo &Frame) {
   Frame.Function = LastSymbol;
-  // If the function is externally visible, we need to create a local
-  // symbol to avoid relocations.
-  StringRef Prefix = getContext().getAsmInfo()->getPrivateGlobalPrefix();
-  if (LastSymbol && LastSymbol->getName().startswith(Prefix)) {
-    Frame.Begin = LastSymbol;
-  } else {
-    Frame.Begin = getContext().CreateTempSymbol();
-    EmitLabel(Frame.Begin);
-  }
+  // We need to create a local symbol to avoid relocations.
+  Frame.Begin = getContext().CreateTempSymbol();
+  EmitLabel(Frame.Begin);
 }
 
 void MCStreamer::EmitCFIEndProc() {
@@ -614,6 +619,10 @@ void MCStreamer::EmitW64Tables() {
 void MCStreamer::Finish() {
   if (!FrameInfos.empty() && !FrameInfos.back().End)
     report_fatal_error("Unfinished frame!");
+
+  MCTargetStreamer *TS = getTargetStreamer();
+  if (TS)
+    TS->finish();
 
   FinishImpl();
 }

@@ -1,6 +1,5 @@
 add_llvm_library(LLVMARMDesc
   ARMAsmBackend.cpp
-  ARMBuildAttrs.cpp
   ARMELFObjectWriter.cpp
   ARMELFStreamer.cpp
   ARMMCAsmInfo.cpp
@@ -9,6 +8,7 @@ add_llvm_library(LLVMARMDesc
   ARMMCTargetDesc.cpp
   ARMMachObjectWriter.cpp
   ARMELFObjectWriter.cpp
+  ARMTargetStreamer.cpp
   ARMUnwindOpAsm.cpp
   ARMMachORelocationInfo.cpp
   )

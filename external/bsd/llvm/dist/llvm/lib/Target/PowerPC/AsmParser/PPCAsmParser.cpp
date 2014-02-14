@@ -9,6 +9,7 @@
 
 #include "MCTargetDesc/PPCMCTargetDesc.h"
 #include "MCTargetDesc/PPCMCExpr.h"
+#include "PPCTargetStreamer.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
@@ -872,7 +873,7 @@ MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
     // Post-process instructions (typically extended mnemonics)
     ProcessInstruction(Inst, Operands);
     Inst.setLoc(IDLoc);
-    Out.EmitInstruction(Inst);
+    Out.EmitInstruction(Inst, STI);
     return false;
   case Match_MissingFeature:
     return Error(IDLoc, "instruction use requires an option to be enabled");
@@ -1436,6 +1437,10 @@ bool PPCAsmParser::ParseDirectiveMachine(SMLoc L) {
     Error(L, "unexpected token in directive");
     return false;
   }
+  PPCTargetStreamer &TStreamer =
+      *static_cast<PPCTargetStreamer *>(
+           getParser().getStreamer().getTargetStreamer());
+  TStreamer.emitMachine(CPU);
 
   return false;
 }

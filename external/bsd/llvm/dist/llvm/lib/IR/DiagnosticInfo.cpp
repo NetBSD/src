@@ -51,3 +51,8 @@ void DiagnosticInfoStackSize::print(DiagnosticPrinter &DP) const {
   DP << "stack size limit exceeded (" << getStackSize() << ") in "
      << getFunction();
 }
+
+void DiagnosticInfoDebugMetadataVersion::print(DiagnosticPrinter &DP) const {
+  DP << "ignoring debug info with an invalid version (" << getMetadataVersion()
+     << ") in " << getModule();
+}

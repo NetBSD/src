@@ -143,6 +143,7 @@ CodeGenTarget::CodeGenTarget(RecordKeeper &records)
 }
 
 CodeGenTarget::~CodeGenTarget() {
+  DeleteContainerSeconds(Instructions);
   delete RegBank;
   delete SchedModels;
 }
@@ -299,8 +300,8 @@ struct SortInstByName {
 };
 }
 
-/// getInstructionsByEnumValue - Return all of the instructions defined by the
-/// target, ordered by their enum value.
+/// \brief Return all of the instructions defined by the target, ordered by
+/// their enum value.
 void CodeGenTarget::ComputeInstrsByEnum() const {
   // The ordering here must match the ordering in TargetOpcodes.h.
   static const char *const FixedInstrs[] = {
@@ -528,7 +529,7 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
     } else {
       VT = getValueType(TyEl->getValueAsDef("VT"));
     }
-    if (EVT(VT).isOverloaded()) {
+    if (MVT(VT).isOverloaded()) {
       OverloadedVTs.push_back(VT);
       isOverloaded = true;
     }
@@ -562,7 +563,7 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
     } else
       VT = getValueType(TyEl->getValueAsDef("VT"));
 
-    if (EVT(VT).isOverloaded()) {
+    if (MVT(VT).isOverloaded()) {
       OverloadedVTs.push_back(VT);
       isOverloaded = true;
     }

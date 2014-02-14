@@ -15,8 +15,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "Passes.h"
+#include "llvm/Analysis/LazyCallGraph.h"
 #include "llvm/IR/IRPrintingPasses.h"
 #include "llvm/IR/PassManager.h"
+#include "llvm/IR/Verifier.h"
 #include "llvm/Support/Debug.h"
 
 using namespace llvm;
@@ -42,6 +44,7 @@ struct NoOpFunctionPass {
 static bool isModulePassName(StringRef Name) {
   if (Name == "no-op-module") return true;
   if (Name == "print") return true;
+  if (Name == "print-cg") return true;
 
   return false;
 }
@@ -62,6 +65,10 @@ static bool parseModulePassName(ModulePassManager &MPM, StringRef Name) {
     MPM.addPass(PrintModulePass(dbgs()));
     return true;
   }
+  if (Name == "print-cg") {
+    MPM.addPass(LazyCallGraphPrinterPass(dbgs()));
+    return true;
+  }
   return false;
 }
 
@@ -78,7 +85,8 @@ static bool parseFunctionPassName(FunctionPassManager &FPM, StringRef Name) {
 }
 
 static bool parseFunctionPassPipeline(FunctionPassManager &FPM,
-                                      StringRef &PipelineText) {
+                                      StringRef &PipelineText,
+                                      bool VerifyEachPass) {
   for (;;) {
     // Parse nested pass managers by recursing.
     if (PipelineText.startswith("function(")) {
@@ -86,7 +94,7 @@ static bool parseFunctionPassPipeline(FunctionPassManager &FPM,
 
       // Parse the inner pipeline inte the nested manager.
       PipelineText = PipelineText.substr(strlen("function("));
-      if (!parseFunctionPassPipeline(NestedFPM, PipelineText) ||
+      if (!parseFunctionPassPipeline(NestedFPM, PipelineText, VerifyEachPass) ||
           PipelineText.empty())
         return false;
       assert(PipelineText[0] == ')');
@@ -99,6 +107,8 @@ static bool parseFunctionPassPipeline(FunctionPassManager &FPM,
       size_t End = PipelineText.find_first_of(",)");
       if (!parseFunctionPassName(FPM, PipelineText.substr(0, End)))
         return false;
+      if (VerifyEachPass)
+        FPM.addPass(VerifierPass());
 
       PipelineText = PipelineText.substr(End);
     }
@@ -112,7 +122,8 @@ static bool parseFunctionPassPipeline(FunctionPassManager &FPM,
 }
 
 static bool parseModulePassPipeline(ModulePassManager &MPM,
-                                    StringRef &PipelineText) {
+                                    StringRef &PipelineText,
+                                    bool VerifyEachPass) {
   for (;;) {
     // Parse nested pass managers by recursing.
     if (PipelineText.startswith("module(")) {
@@ -120,7 +131,7 @@ static bool parseModulePassPipeline(ModulePassManager &MPM,
 
       // Parse the inner pipeline into the nested manager.
       PipelineText = PipelineText.substr(strlen("module("));
-      if (!parseModulePassPipeline(NestedMPM, PipelineText) ||
+      if (!parseModulePassPipeline(NestedMPM, PipelineText, VerifyEachPass) ||
           PipelineText.empty())
         return false;
       assert(PipelineText[0] == ')');
@@ -133,7 +144,7 @@ static bool parseModulePassPipeline(ModulePassManager &MPM,
 
       // Parse the inner pipeline inte the nested manager.
       PipelineText = PipelineText.substr(strlen("function("));
-      if (!parseFunctionPassPipeline(NestedFPM, PipelineText) ||
+      if (!parseFunctionPassPipeline(NestedFPM, PipelineText, VerifyEachPass) ||
           PipelineText.empty())
         return false;
       assert(PipelineText[0] == ')');
@@ -146,6 +157,8 @@ static bool parseModulePassPipeline(ModulePassManager &MPM,
       size_t End = PipelineText.find_first_of(",)");
       if (!parseModulePassName(MPM, PipelineText.substr(0, End)))
         return false;
+      if (VerifyEachPass)
+        MPM.addPass(VerifierPass());
 
       PipelineText = PipelineText.substr(End);
     }
@@ -161,13 +174,16 @@ static bool parseModulePassPipeline(ModulePassManager &MPM,
 // Primary pass pipeline description parsing routine.
 // FIXME: Should this routine accept a TargetMachine or require the caller to
 // pre-populate the analysis managers with target-specific stuff?
-bool llvm::parsePassPipeline(ModulePassManager &MPM, StringRef PipelineText) {
+bool llvm::parsePassPipeline(ModulePassManager &MPM, StringRef PipelineText,
+                             bool VerifyEachPass) {
   // Look at the first entry to figure out which layer to start parsing at.
   if (PipelineText.startswith("module("))
-    return parseModulePassPipeline(MPM, PipelineText) && PipelineText.empty();
+    return parseModulePassPipeline(MPM, PipelineText, VerifyEachPass) &&
+           PipelineText.empty();
   if (PipelineText.startswith("function(")) {
     FunctionPassManager FPM;
-    if (!parseFunctionPassPipeline(FPM, PipelineText) || !PipelineText.empty())
+    if (!parseFunctionPassPipeline(FPM, PipelineText, VerifyEachPass) ||
+        !PipelineText.empty())
       return false;
     MPM.addPass(createModuleToFunctionPassAdaptor(FPM));
     return true;
@@ -177,11 +193,13 @@ bool llvm::parsePassPipeline(ModulePassManager &MPM, StringRef PipelineText) {
   StringRef FirstName =
       PipelineText.substr(0, PipelineText.find_first_of(",)"));
   if (isModulePassName(FirstName))
-    return parseModulePassPipeline(MPM, PipelineText) && PipelineText.empty();
+    return parseModulePassPipeline(MPM, PipelineText, VerifyEachPass) &&
+           PipelineText.empty();
 
   if (isFunctionPassName(FirstName)) {
     FunctionPassManager FPM;
-    if (!parseFunctionPassPipeline(FPM, PipelineText) || !PipelineText.empty())
+    if (!parseFunctionPassPipeline(FPM, PipelineText, VerifyEachPass) ||
+        !PipelineText.empty())
       return false;
     MPM.addPass(createModuleToFunctionPassAdaptor(FPM));
     return true;
