@@ -67,7 +67,7 @@ private:
 
   static char ID;
   const TargetRegisterInfo *TRI;
-  const TargetInstrInfo *TII;
+  const SIInstrInfo *TII;
 
   bool shouldSkip(MachineBasicBlock *From, MachineBasicBlock *To);
 
@@ -408,7 +408,7 @@ void SILowerControlFlowPass::IndirectDst(MachineInstr &MI) {
 }
 
 bool SILowerControlFlowPass::runOnMachineFunction(MachineFunction &MF) {
-  TII = MF.getTarget().getInstrInfo();
+  TII = static_cast<const SIInstrInfo*>(MF.getTarget().getInstrInfo());
   TRI = MF.getTarget().getRegisterInfo();
   SIMachineFunctionInfo *MFI = MF.getInfo<SIMachineFunctionInfo>();
 
@@ -426,6 +426,11 @@ bool SILowerControlFlowPass::runOnMachineFunction(MachineFunction &MF) {
 
       Next = llvm::next(I);
       MachineInstr &MI = *I;
+      if (TII->isDS(MI.getOpcode())) {
+        NeedM0 = true;
+        NeedWQM = true;
+      }
+
       switch (MI.getOpcode()) {
         default: break;
         case AMDGPU::SI_IF:
@@ -486,14 +491,6 @@ bool SILowerControlFlowPass::runOnMachineFunction(MachineFunction &MF) {
           IndirectDst(MI);
           break;
 
-        case AMDGPU::DS_READ_B32:
-          NeedWQM = true;
-          // Fall through
-        case AMDGPU::DS_WRITE_B32:
-        case AMDGPU::DS_ADD_U32_RTN:
-          NeedM0 = true;
-          break;
-
         case AMDGPU::V_INTERP_P1_F32:
         case AMDGPU::V_INTERP_P2_F32:
         case AMDGPU::V_INTERP_MOV_F32:
@@ -512,7 +509,7 @@ bool SILowerControlFlowPass::runOnMachineFunction(MachineFunction &MF) {
             AMDGPU::M0).addImm(0xffffffff);
   }
 
-  if (NeedWQM && MFI->ShaderType != ShaderType::COMPUTE) {
+  if (NeedWQM && MFI->ShaderType == ShaderType::PIXEL) {
     MachineBasicBlock &MBB = MF.front();
     BuildMI(MBB, MBB.getFirstNonPHI(), DebugLoc(), TII->get(AMDGPU::S_WQM_B64),
             AMDGPU::EXEC).addReg(AMDGPU::EXEC);

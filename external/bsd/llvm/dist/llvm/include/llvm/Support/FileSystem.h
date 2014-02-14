@@ -49,10 +49,9 @@ namespace llvm {
 namespace sys {
 namespace fs {
 
-/// file_type - An "enum class" enumeration for the file system's view of the
-///             type.
+/// An "enum class" enumeration for the file system's view of the type.
 struct file_type {
-  enum _ {
+  enum Impl {
     status_error,
     file_not_found,
     regular_file,
@@ -65,12 +64,11 @@ struct file_type {
     type_unknown
   };
 
-  file_type(_ v) : v_(v) {}
-  explicit file_type(int v) : v_(_(v)) {}
-  operator int() const {return v_;}
+  file_type(Impl V) : V(V) {}
+  operator Impl() const { return V; }
 
 private:
-  int v_;
+  Impl V;
 };
 
 /// space_info - Self explanatory.

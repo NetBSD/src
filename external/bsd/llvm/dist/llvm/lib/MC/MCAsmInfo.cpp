@@ -37,7 +37,6 @@ MCAsmInfo::MCAsmInfo() {
   MinInstAlignment = 1;
   DollarIsPC = false;
   SeparatorString = ";";
-  CommentColumn = 40;
   CommentString = "#";
   LabelSuffix = ":";
   DebugLabelSuffix = ":";
@@ -59,7 +58,6 @@ MCAsmInfo::MCAsmInfo() {
   Data64bitsDirective = "\t.quad\t";
   SunStyleELFSectionSwitchSyntax = false;
   UsesELFSectionDirectiveForBSS = false;
-  AlignDirective = "\t.align\t";
   AlignmentIsInBytes = true;
   TextAlignFillValue = 0;
   GPRel64Directive = 0;

@@ -78,8 +78,7 @@ public:
   }
 
   void EmitInstruction(const MachineInstr *MI);
-  void printSavedRegsBitmask(raw_ostream &O);
-  void printHex32(unsigned int Value, raw_ostream &O);
+  void printSavedRegsBitmask();
   void emitFrameDirective();
   const char *getCurrentABIString() const;
   virtual void EmitFunctionEntryLabel();
@@ -101,7 +100,6 @@ public:
   void printFCCOperand(const MachineInstr *MI, int opNum, raw_ostream &O,
                        const char *Modifier = 0);
   void EmitStartOfAsmFile(Module &M);
-  void EmitEndOfAsmFile(Module &M);
   void PrintDebugValueComment(const MachineInstr *MI, raw_ostream &OS);
 };
 }
