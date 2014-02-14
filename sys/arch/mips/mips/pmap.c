@@ -1446,8 +1446,8 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 #endif
 	const bool good_color = PMAP_PAGE_COLOROK_P(pa, va);
 	KASSERTMSG(good_color,
-	    ("%s(%p, %#"PRIxVADDR", %#"PRIxPADDR", %x, %x): color mismatch\n",
-	     __func__, pmap, va, pa, prot, flags));
+	    "%s(%p, %#"PRIxVADDR", %#"PRIxPADDR", %x, %x): color mismatch\n",
+	    __func__, pmap, va, pa, prot, flags);
 	if (kernel_pmap_p) {
 		PMAP_COUNT(kernel_mappings);
 		if (!good_color)
@@ -1673,8 +1673,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 #endif
 	PMAP_COUNT(kenter_pa);
 	KASSERTMSG(!managed || PMAP_PAGE_COLOROK_P(pa, va),
-	    ("%s(%#"PRIxVADDR", %#"PRIxPADDR", %x): color mismatch\n",
-	     __func__, va, pa, prot));
+	    "%s(%#"PRIxVADDR", %#"PRIxPADDR", %x): color mismatch\n",
+	    __func__, va, pa, prot);
 	if (!PMAP_PAGE_COLOROK_P(pa, va) && managed) {
 		PMAP_COUNT(kenter_pa_bad);
 	}

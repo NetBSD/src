@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.69.10.1 2011/04/29 08:10:38 matt Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.69.10.2 2014/02/14 18:38:15 matt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -220,6 +220,27 @@
 #define	__used		__unused
 #endif
 
+/*
+ * __diagused: Note that item is used in diagnostic code, but may be
+ * unused in non-diagnostic code.
+ */
+#if (defined(_KERNEL) && defined(DIAGNOSTIC)) \
+ || (!defined(_KERNEL) && !defined(NDEBUG))
+#define	__diagused	/* empty */
+#else
+#define	__diagused	__unused
+#endif
+
+/*
+ * __debugused: Note that item is used in debug code, but may be
+ * unused in non-debug code.
+ */
+#if defined(DEBUG)
+#define	__debugused	/* empty */
+#else
+#define	__debugused	__unused
+#endif
+
 #if __GNUC_PREREQ__(2, 7)
 #define	__packed	__attribute__((__packed__))
 #define	__aligned(x)	__attribute__((__aligned__(x)))
@@ -407,5 +428,7 @@
 #define	__SHIFTOUT(__x, __mask)	(((__x) & (__mask)) / __LOWEST_SET_BIT(__mask))
 #define	__SHIFTIN(__x, __mask) ((__x) * __LOWEST_SET_BIT(__mask))
 #define	__SHIFTOUT_MASK(__mask) __SHIFTOUT((__mask), (__mask))
+
+#define __USE(a)	((void)(a))
 
 #endif /* !_SYS_CDEFS_H_ */

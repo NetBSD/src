@@ -1615,9 +1615,9 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t pending)
 
 			KASSERT(ipl == iv->iv_ipl);
 			KASSERTMSG(curcpu()->ci_cpl >= ipl,
-			    ("%s: after %s: cpl (%d) < ipl %d",
+			    "%s: after %s: cpl (%d) < ipl %d",
 			    __func__, sc->sc_vec_evcnts[vec].ev_name,
-			    ipl, curcpu()->ci_cpl));
+			    ipl, curcpu()->ci_cpl);
 		}
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.124.4.1.4.1 2013/11/14 17:34:02 matt Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.124.4.1.4.2 2014/02/14 18:38:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.124.4.1.4.1 2013/11/14 17:34:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.124.4.1.4.2 2014/02/14 18:38:15 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -167,14 +167,22 @@ twiddle(void)
  * call) we avoid trying to sync the disk and just reboot (to avoid
  * recursive panics).
  */
-
 void
 panic(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	vpanic(fmt, ap);
+	va_end(ap);
+}
+
+void
+vpanic(const char *fmt, va_list ap)
 {
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci, *oci;
 	int bootopt;
-	va_list ap;
 
 	/*
 	 * Disable preemption.  If already panicing on another CPU, sit
@@ -211,11 +219,9 @@ panic(const char *fmt, ...)
 	if (msgbufenabled && msgbufp->msg_magic == MSG_MAGIC)
 		panicstart = msgbufp->msg_bufx;
 
-	va_start(ap, fmt);
 	printf("panic: ");
 	vprintf(fmt, ap);
 	printf("\n");
-	va_end(ap);
 
 	if (msgbufenabled && msgbufp->msg_magic == MSG_MAGIC)
 		panicend = msgbufp->msg_bufx;
