@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.663 2014/01/13 08:23:58 reinoud Exp $
+$NetBSD: usbdevs,v 1.664 2014/02/14 04:20:43 christos Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -531,6 +531,7 @@ vendor AMIT		0x18c5	AMIT
 vendor QCOM		0x18e8	Qcom
 vendor LINKSYS3		0x1915	Linksys
 vendor MEINBERG		0x1938	Meinberg Funkuhren
+vendor BECEEM		0x198f	Beceem Communications
 vendor ZTE		0x19d2	ZTE
 vendor QUANTA		0x1a32	Quanta
 vendor TERMINUS		0x1a40	Terminus Technology
@@ -996,6 +997,9 @@ product BALTECH CARDREADER	0x9999	Card reader
 
 /* B&B Electronics products */
 product BBELECTRONICS USOTL4	0xAC01	uLinks RS-422/485
+
+/* Beceem Communications products */
+product	BECEEM 250U		0x0220	Mobile WiMax SS
 
 /* Belkin products */
 /*product BELKIN F5U111		0x????	F5U111 Ethernet adapter*/
