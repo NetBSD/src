@@ -117,7 +117,6 @@ def err_target_unknown_triple : Error<
   "unknown target triple '%0', please use -triple or -arch">;
 def err_target_unknown_cpu : Error<"unknown target CPU '%0'">;
 def err_target_unknown_abi : Error<"unknown target ABI '%0'">;
-def err_target_unknown_cxxabi : Error<"unknown C++ ABI '%0'">;
 def err_target_unknown_fpmath : Error<"unknown FP unit '%0'">;
 def err_target_unsupported_fpmath : Error<
     "the '%0' unit is not supported with this instruction set">;
@@ -135,5 +134,15 @@ def err_unable_to_make_temp : Error<
   
 // Modules
 def err_module_file_conflict : Error<"module '%0' found in both '%1' and '%2'">;
+
+// TransformActions
+// TODO: Use a custom category name to distinguish rewriter errors.
+def err_mt_message : Error<"[rewriter] %0">;
+def warn_mt_message : Warning<"[rewriter] %0">;
+def note_mt_message : Note<"[rewriter] %0">;
+
+// ARCMigrate
+def err_arcmt_nsalloc_realloc : Error<"[rewriter] call returns pointer to GC managed memory; it will become unmanaged in ARC">;
+def err_arcmt_nsinvocation_ownership : Error<"NSInvocation's %0 is not safe to be used with an object with ownership other than __unsafe_unretained">;
 
 }

@@ -147,3 +147,57 @@ typedef char BOOL;
   return [o Meth];
 }
 @end
+
+// rdar://15873425
+@protocol MyProtocol
+@property (nonatomic, readonly) int myProperty;
+@end
+
+@interface MyFirstClass : NSObject <MyProtocol>
+@end
+
+@interface MySecondClass : NSObject <MyProtocol>
+@end
+
+@implementation MyFirstClass
+@synthesize myProperty;
+@end
+
+@implementation MySecondClass
+@dynamic myProperty;
+-(int)myProperty  // should not warn; property is dynamic
+{
+    return 0;
+}
+@end
+
+// rdar://15890251
+@class NSURL;
+
+@protocol MCCIDURLProtocolDataProvider
+@required
+@property(strong, atomic, readonly) NSURL *cidURL;
+@property(strong, atomic, readonly) NSURL *cidURL1; // expected-note {{property declared here}}
+@end
+
+@interface UnrelatedClass : NSObject <MCCIDURLProtocolDataProvider>
+@end
+
+@implementation UnrelatedClass
+@synthesize cidURL = _cidURL;
+@synthesize cidURL1 = _cidURL1;
+@end
+
+@interface MUIWebAttachmentController : NSObject <MCCIDURLProtocolDataProvider>
+@end
+
+
+@implementation MUIWebAttachmentController
+- (NSURL *)cidURL {
+    return 0;
+}
+@synthesize cidURL1  = _cidURL1;
+- (NSURL *)cidURL1 { // expected-warning {{ivar '_cidURL1' which backs the property is not referenced in this property's accessor}}
+    return 0;
+}
+@end

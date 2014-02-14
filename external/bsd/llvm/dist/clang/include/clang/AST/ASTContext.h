@@ -66,6 +66,7 @@ namespace clang {
   class UnresolvedSetIterator;
   class UsingDecl;
   class UsingShadowDecl;
+  class VTableContextBase;
 
   namespace Builtin { class Context; }
 
@@ -1405,6 +1406,10 @@ public:
 
   bool ProtocolCompatibleWithProtocol(ObjCProtocolDecl *lProto,
                                       ObjCProtocolDecl *rProto) const;
+  
+  ObjCPropertyImplDecl *getObjCPropertyImplDeclForPropertyDecl(
+                                                  const ObjCPropertyDecl *PD,
+                                                  const Decl *Container) const;
 
   /// \brief Return the size of type \p T for Objective-C encoding purpose,
   /// in characters.
@@ -1727,6 +1732,8 @@ public:
 
   bool isNearlyEmpty(const CXXRecordDecl *RD) const;
 
+  VTableContextBase *getVTableContext();
+
   MangleContext *createMangleContext();
   
   void DeepCollectObjCIvars(const ObjCInterfaceDecl *OI, bool leafClass,
@@ -2017,9 +2024,9 @@ public:
                       bool Unqualified = false, bool BlockReturnType = false);
   QualType mergeFunctionTypes(QualType, QualType, bool OfBlockPointer=false,
                               bool Unqualified = false);
-  QualType mergeFunctionArgumentTypes(QualType, QualType,
-                                      bool OfBlockPointer=false,
-                                      bool Unqualified = false);
+  QualType mergeFunctionParameterTypes(QualType, QualType,
+                                       bool OfBlockPointer = false,
+                                       bool Unqualified = false);
   QualType mergeTransparentUnionType(QualType, QualType,
                                      bool OfBlockPointer=false,
                                      bool Unqualified = false);
@@ -2288,6 +2295,8 @@ private:
   void ReleaseDeclContextMaps();
 
   llvm::OwningPtr<ParentMap> AllParents;
+
+  llvm::OwningPtr<VTableContextBase> VTContext;
 };
 
 /// \brief Utility function for constructing a nullary selector.

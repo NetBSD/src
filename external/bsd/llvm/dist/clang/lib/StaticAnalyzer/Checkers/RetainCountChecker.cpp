@@ -688,7 +688,7 @@ public:
   const RetainSummary *getMethodSummary(const ObjCMethodDecl *MD) {
     const ObjCInterfaceDecl *ID = MD->getClassInterface();
     Selector S = MD->getSelector();
-    QualType ResultTy = MD->getResultType();
+    QualType ResultTy = MD->getReturnType();
 
     ObjCMethodSummariesTy *CachedSummaries;
     if (MD->isInstanceMethod())
@@ -860,7 +860,7 @@ void RetainSummaryManager::updateSummaryForCall(const RetainSummary *&S,
     // Special cases where the callback argument CANNOT free the return value.
     // This can generally only happen if we know that the callback will only be
     // called when the return value is already being deallocated.
-    if (const FunctionCall *FC = dyn_cast<FunctionCall>(&Call)) {
+    if (const SimpleFunctionCall *FC = dyn_cast<SimpleFunctionCall>(&Call)) {
       if (IdentifierInfo *Name = FC->getDecl()->getIdentifier()) {
         // When the CGBitmapContext is deallocated, the callback here will free
         // the associated data buffer.
@@ -908,7 +908,7 @@ RetainSummaryManager::getSummary(const CallEvent &Call,
   const RetainSummary *Summ;
   switch (Call.getKind()) {
   case CE_Function:
-    Summ = getFunctionSummary(cast<FunctionCall>(Call).getDecl());
+    Summ = getFunctionSummary(cast<SimpleFunctionCall>(Call).getDecl());
     break;
   case CE_CXXMember:
   case CE_CXXMemberOperator:
@@ -970,7 +970,7 @@ RetainSummaryManager::getFunctionSummary(const FunctionDecl *FD) {
     FName = FName.substr(FName.find_first_not_of('_'));
 
     // Inspect the result type.
-    QualType RetTy = FT->getResultType();
+    QualType RetTy = FT->getReturnType();
 
     // FIXME: This should all be refactored into a chain of "summary lookup"
     //  filters.
@@ -1174,7 +1174,7 @@ RetainSummaryManager::getUnarySummary(const FunctionType* FT,
   // Sanity check that this is *really* a unary function.  This can
   // happen if people do weird things.
   const FunctionProtoType* FTP = dyn_cast<FunctionProtoType>(FT);
-  if (!FTP || FTP->getNumArgs() != 1)
+  if (!FTP || FTP->getNumParams() != 1)
     return getPersistentStopSummary();
 
   assert (ScratchArgs.isEmpty());
@@ -1252,8 +1252,8 @@ RetainSummaryManager::updateSummaryFromAnnotations(const RetainSummary *&Summ,
     else if (pd->hasAttr<CFConsumedAttr>())
       Template->addArg(AF, parm_idx, DecRef);      
   }
-  
-  QualType RetTy = FD->getResultType();
+
+  QualType RetTy = FD->getReturnType();
   if (Optional<RetEffect> RetE = getRetEffectFromAnnotations(RetTy, FD))
     Template->setRetEffect(*RetE);
 }
@@ -1283,8 +1283,8 @@ RetainSummaryManager::updateSummaryFromAnnotations(const RetainSummary *&Summ,
       Template->addArg(AF, parm_idx, DecRef);      
     }   
   }
-  
-  QualType RetTy = MD->getResultType();
+
+  QualType RetTy = MD->getReturnType();
   if (Optional<RetEffect> RetE = getRetEffectFromAnnotations(RetTy, MD))
     Template->setRetEffect(*RetE);
 }

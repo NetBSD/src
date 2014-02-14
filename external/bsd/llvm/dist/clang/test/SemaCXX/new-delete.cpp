@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s -triple=i686-pc-linux-gnu
+// RUN: %clang_cc1 -fsyntax-only -verify %s -triple=i686-pc-linux-gnu -Wno-new-returns-null
 
 #include <stddef.h>
 
@@ -517,3 +517,7 @@ class DeletingPlaceholder {
     return 0;
   }
 };
+
+namespace PR18544 {
+  inline void *operator new(size_t); // expected-error {{'operator new' cannot be declared inside a namespace}}
+}
