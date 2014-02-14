@@ -14,7 +14,6 @@
 #ifndef MIPSSUBTARGET_H
 #define MIPSSUBTARGET_H
 
-#include "MCTargetDesc/MipsReginfo.h"
 #include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
@@ -117,9 +116,6 @@ protected:
 
   InstrItineraryData InstrItins;
 
-  // The instance to the register info section object
-  MipsReginfo MRI;
-
   // Relocation Model
   Reloc::Model RM;
 
@@ -129,6 +125,7 @@ protected:
 
   MipsTargetMachine *TM;
 
+  Triple TargetTriple;
 public:
   virtual bool enablePostRAScheduler(CodeGenOpt::Level OptLevel,
                                      AntiDepBreakMode& Mode,
@@ -211,15 +208,15 @@ public:
 
   bool os16() const { return Os16;};
 
+  bool isTargetNaCl() const { return TargetTriple.isOSNaCl(); }
+  bool isNotTargetNaCl() const { return !TargetTriple.isOSNaCl(); }
+
 // for now constant islands are on for the whole compilation unit but we only
 // really use them if in addition we are in mips16 mode
 //
 static bool useConstantIslands();
 
   unsigned stackAlignment() const { return hasMips64() ? 16 : 8; }
-
-  // Grab MipsRegInfo object
-  const MipsReginfo &getMReginfo() const { return MRI; }
 
   // Grab relocation model
   Reloc::Model getRelocationModel() const {return RM;}

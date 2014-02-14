@@ -113,13 +113,13 @@ void DwarfCFIException::beginFunction(const MachineFunction *MF) {
   if (!shouldEmitPersonality && !shouldEmitMoves)
     return;
 
-  Asm->OutStreamer.EmitCFIStartProc();
+  Asm->OutStreamer.EmitCFIStartProc(/*IsSimple=*/false);
 
   // Indicate personality routine, if any.
   if (!shouldEmitPersonality)
     return;
 
-  const MCSymbol *Sym = TLOF.getCFIPersonalitySymbol(Per, Asm->Mang, MMI);
+  const MCSymbol *Sym = TLOF.getCFIPersonalitySymbol(Per, *Asm->Mang, MMI);
   Asm->OutStreamer.EmitCFIPersonality(Sym, PerEncoding);
 
   Asm->OutStreamer.EmitDebugLabel

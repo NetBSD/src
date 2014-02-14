@@ -75,14 +75,13 @@ def HI32f : SDNodeXForm<fpimm, [{
   return CurDAG->getTargetConstantFP(APFloat(APFloat::IEEEsingle, V), MVT::f32);
 }]>;
 
-def IMM8bitDWORD : ImmLeaf <
-  i32, [{
-    return (Imm & ~0x3FC) == 0;
-  }], SDNodeXForm<imm, [{
-    return CurDAG->getTargetConstant(
-      N->getZExtValue() >> 2, MVT::i32);
-  }]>
+def IMM8bitDWORD : PatLeaf <(imm),
+  [{return (N->getZExtValue() & ~0x3FC) == 0;}]
 >;
+
+def as_dword_i32imm : SDNodeXForm<imm, [{
+  return CurDAG->getTargetConstant(N->getZExtValue() >> 2, MVT::i32);
+}]>;
 
 def as_i1imm : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(N->getZExtValue(), MVT::i1);
@@ -96,8 +95,17 @@ def as_i16imm : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(N->getSExtValue(), MVT::i16);
 }]>;
 
+def as_i32imm: SDNodeXForm<imm, [{
+  return CurDAG->getTargetConstant(N->getSExtValue(), MVT::i32);
+}]>;
+
 def IMM12bit : PatLeaf <(imm),
   [{return isUInt<12>(N->getZExtValue());}]
+>;
+
+def mubuf_vaddr_offset : PatFrag<
+  (ops node:$ptr, node:$offset, node:$imm_offset),
+  (add (add node:$ptr, node:$offset), node:$imm_offset)
 >;
 
 class InlineImm <ValueType vt> : PatLeaf <(vt imm), [{
@@ -425,26 +433,48 @@ class MTBUF_Store_Helper <bits<3> op, string asm, RegisterClass regClass> : MTBU
 
 multiclass MUBUF_Load_Helper <bits<7> op, string asm, RegisterClass regClass> {
 
-  let glc = 0, lds = 0, slc = 0, tfe = 0, soffset = 128 /* ZERO */,
-                                          mayLoad = 1 in {
+  let lds = 0, mayLoad = 1 in {
 
-  let offen = 1, idxen = 0, addr64 = 0, offset = 0 in {
-    def _OFFEN  : MUBUF <op, (outs regClass:$vdata),
-                         (ins SReg_128:$srsrc, VReg_32:$vaddr),
-                         asm#" $vdata, $srsrc + $vaddr", []>;
-  }
+    let addr64 = 0 in {
 
-  let offen = 0, idxen = 1, addr64 = 0 in {
-    def _IDXEN  : MUBUF <op, (outs regClass:$vdata),
-                         (ins SReg_128:$srsrc, VReg_32:$vaddr, i16imm:$offset),
-                         asm#" $vdata, $srsrc[$vaddr] + $offset", []>;
-  }
+      let offen = 0, idxen = 0 in {
+        def _OFFSET : MUBUF <op, (outs regClass:$vdata),
+                             (ins SReg_128:$srsrc, VReg_32:$vaddr,
+                             i16imm:$offset, SSrc_32:$soffset, i1imm:$glc,
+                             i1imm:$slc, i1imm:$tfe),
+                             asm#" $vdata, $srsrc + $offset + $soffset, glc=$glc, slc=$slc, tfe=$tfe", []>;
+      }
 
-  let offen = 0, idxen = 0, addr64 = 1 in {
-    def _ADDR64 : MUBUF <op, (outs regClass:$vdata),
-                         (ins SReg_128:$srsrc, VReg_64:$vaddr, i16imm:$offset),
-                         asm#" $vdata, $srsrc + $vaddr + $offset", []>;
-  }
+      let offen = 1, idxen = 0, offset = 0 in {
+        def _OFFEN  : MUBUF <op, (outs regClass:$vdata),
+                             (ins SReg_128:$srsrc, VReg_32:$vaddr,
+                             SSrc_32:$soffset, i1imm:$glc, i1imm:$slc,
+                             i1imm:$tfe),
+                             asm#" $vdata, $srsrc + $vaddr + $soffset, glc=$glc, slc=$slc, tfe=$tfe", []>;
+      }
+
+      let offen = 0, idxen = 1 in {
+        def _IDXEN  : MUBUF <op, (outs regClass:$vdata),
+                             (ins SReg_128:$srsrc, VReg_32:$vaddr,
+                             i16imm:$offset, SSrc_32:$soffset, i1imm:$glc,
+                             i1imm:$slc, i1imm:$tfe),
+                             asm#" $vdata, $srsrc[$vaddr] + $offset + $soffset, glc=$glc, slc=$slc, tfe=$tfe", []>;
+      }
+
+      let offen = 1, idxen = 1 in {
+        def _BOTHEN : MUBUF <op, (outs regClass:$vdata),
+                             (ins SReg_128:$srsrc, VReg_64:$vaddr,
+                             SSrc_32:$soffset, i1imm:$glc,
+                             i1imm:$slc, i1imm:$tfe),
+                             asm#" $vdata, $srsrc[$vaddr[0]] + $vaddr[1] + $soffset, glc=$glc, slc=$slc, tfe=$tfe", []>;
+      }
+    }
+
+    let offen = 0, idxen = 0, addr64 = 1, glc = 0, slc = 0, tfe = 0, soffset = 128 /* ZERO */ in {
+      def _ADDR64 : MUBUF <op, (outs regClass:$vdata),
+                           (ins SReg_128:$srsrc, VReg_64:$vaddr, i16imm:$offset),
+                           asm#" $vdata, $srsrc + $vaddr + $offset", []>;
+    }
   }
 }
 
@@ -596,6 +626,14 @@ def getCommuteOrig : InstrMapping {
   let ColFields = ["IsOrig"];
   let KeyCol = ["0"];
   let ValueCols = [["1"]];
+}
+
+def isDS : InstrMapping {
+  let FilterClass = "DS";
+  let RowFields = ["Inst"];
+  let ColFields = ["Size"];
+  let KeyCol = ["8"];
+  let ValueCols = [["8"]];
 }
 
 include "SIInstructions.td"

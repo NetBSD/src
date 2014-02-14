@@ -37,27 +37,27 @@ private:
   InstrUID UID;
   /// The record from the .td files corresponding to this instruction
   const Record* Rec;
-  /// The prefix field from the record
-  uint8_t Prefix;
+  /// The OpPrefix field from the record
+  uint8_t OpPrefix;
+  /// The OpMap field from the record
+  uint8_t OpMap;
   /// The opcode field from the record; this is the opcode used in the Intel
   /// encoding and therefore distinct from the UID
   uint8_t Opcode;
   /// The form field from the record
   uint8_t Form;
-  /// The hasOpSizePrefix field from the record
-  bool HasOpSizePrefix;
-  /// The hasOpSize16Prefix field from the record
-  bool HasOpSize16Prefix;
+  // The encoding field from the record
+  uint8_t Encoding;
+  /// The OpSize field from the record
+  uint8_t OpSize;
   /// The hasAdSizePrefix field from the record
   bool HasAdSizePrefix;
   /// The hasREX_WPrefix field from the record
   bool HasREX_WPrefix;
-  /// The hasVEXPrefix field from the record
-  bool HasVEXPrefix;
-  /// The hasVEX_4VPrefix field from the record
-  bool HasVEX_4VPrefix;
-  /// The hasVEX_4VOp3Prefix field from the record
-  bool HasVEX_4VOp3Prefix;
+  /// The hasVEX_4V field from the record
+  bool HasVEX_4V;
+  /// The hasVEX_4VOp3 field from the record
+  bool HasVEX_4VOp3;
   /// The hasVEX_WPrefix field from the record
   bool HasVEX_WPrefix;
   /// Inferred from the operands; indicates whether the L bit in the VEX prefix is set
@@ -66,8 +66,6 @@ private:
   bool HasMemOp4Prefix;
   /// The ignoreVEX_L field from the record
   bool IgnoresVEX_L;
-  /// The hasEVEXPrefix field from the record
-  bool HasEVEXPrefix;
   /// The hasEVEX_L2Prefix field from the record
   bool HasEVEX_L2Prefix;
   /// The hasEVEX_K field from the record
@@ -78,6 +76,8 @@ private:
   bool HasEVEX_B;
   /// The hasLockPrefix field from the record
   bool HasLockPrefix;
+  /// The hasREPPrefix field from the record
+  bool HasREPPrefix;
   /// The isCodeGenOnly field from the record
   bool IsCodeGenOnly;
   /// The ForceDisassemble field from the record
@@ -138,54 +138,47 @@ private:
   ///
   /// @param s              - The string, as extracted by calling Rec->getName()
   ///                         on a CodeGenInstruction::OperandInfo.
-  /// @param isSSE          - Indicates whether the instruction is an SSE 
-  ///                         instruction.  For SSE instructions, immediates are 
-  ///                         fixed-size rather than being affected by the
-  ///                         mandatory OpSize prefix.
   /// @param hasREX_WPrefix - Indicates whether the instruction has a REX.W
   ///                         prefix.  If it does, 32-bit register operands stay
   ///                         32-bit regardless of the operand size.
-  /// @param hasOpSizePrefix  Indicates whether the instruction has an OpSize
-  ///                         prefix.  If it does not, then 16-bit register
-  ///                         operands stay 16-bit.
+  /// @param OpSize           Indicates the operand size of the instruction.
+  ///                         If register size does not match OpSize, then
+  ///                         register sizes keep their size.
   /// @return               - The operand's type.
-  static OperandType typeFromString(const std::string& s, 
-                                    bool isSSE,
-                                    bool hasREX_WPrefix,
-                                    bool hasOpSizePrefix);
-  
+  static OperandType typeFromString(const std::string& s,
+                                    bool hasREX_WPrefix, uint8_t OpSize);
+
   /// immediateEncodingFromString - Translates an immediate encoding from the
   ///   string provided in the LLVM tables to an OperandEncoding for use in
   ///   the operand specifier.
   ///
-  /// @param s                - See typeFromString().
-  /// @param hasOpSizePrefix  - Indicates whether the instruction has an OpSize
-  ///                           prefix.  If it does not, then 16-bit immediate
-  ///                           operands stay 16-bit.
-  /// @return                 - The operand's encoding.
+  /// @param s       - See typeFromString().
+  /// @param OpSize  - Indicates whether this is an OpSize16 instruction.
+  ///                  If it is not, then 16-bit immediate operands stay 16-bit.
+  /// @return        - The operand's encoding.
   static OperandEncoding immediateEncodingFromString(const std::string &s,
-                                                     bool hasOpSizePrefix);
-  
+                                                     uint8_t OpSize);
+
   /// rmRegisterEncodingFromString - Like immediateEncodingFromString, but
   ///   handles operands that are in the REG field of the ModR/M byte.
   static OperandEncoding rmRegisterEncodingFromString(const std::string &s,
-                                                      bool hasOpSizePrefix);
-  
+                                                      uint8_t OpSize);
+
   /// rmRegisterEncodingFromString - Like immediateEncodingFromString, but
   ///   handles operands that are in the REG field of the ModR/M byte.
   static OperandEncoding roRegisterEncodingFromString(const std::string &s,
-                                                      bool hasOpSizePrefix);
+                                                      uint8_t OpSize);
   static OperandEncoding memoryEncodingFromString(const std::string &s,
-                                                  bool hasOpSizePrefix);
+                                                  uint8_t OpSize);
   static OperandEncoding relocationEncodingFromString(const std::string &s,
-                                                      bool hasOpSizePrefix);
+                                                      uint8_t OpSize);
   static OperandEncoding opcodeModifierEncodingFromString(const std::string &s,
-                                                          bool hasOpSizePrefix);
+                                                          uint8_t OpSize);
   static OperandEncoding vvvvRegisterEncodingFromString(const std::string &s,
-                                                        bool HasOpSizePrefix);
+                                                        uint8_t OpSize);
   static OperandEncoding writemaskRegisterEncodingFromString(const std::string &s,
-                                                             bool HasOpSizePrefix);
-  
+                                                             uint8_t OpSize);
+
   /// handleOperand - Converts a single operand from the LLVM table format to
   ///   the emitted table format, handling any duplicate operands it encounters
   ///   and then one non-duplicate.
@@ -211,8 +204,8 @@ private:
                      const unsigned *operandMapping,
                      OperandEncoding (*encodingFromString)
                        (const std::string&,
-                        bool hasOpSizePrefix));
-  
+                        uint8_t OpSize));
+
   /// shouldBeEmitted - Returns the shouldBeEmitted field.  Although filter()
   ///   filters out many instructions, at various points in decoding we
   ///   determine that the instruction should not actually be decodable.  In

@@ -1,6 +1,4 @@
-// RUN: llvm-mc -triple i386-unknown-unknown --show-encoding %s | FileCheck %s
-
-	.code16
+// RUN: llvm-mc -triple i386-unknown-unknown-code16 --show-encoding %s | FileCheck %s
 
 	movl $0x12345678, %ebx
 // CHECK: movl
@@ -330,8 +328,7 @@ cmovnae	%bx,%bx
 // CHECK:  encoding: [0x9b]
 	fwait
 
-// CHECK: [0x65,0x66,0x8b,0x06,0x7c,0x00]
-// FIXME: This is a correct bug poor encoding: Use 65 66 a1 7c 00
+// CHECK: [0x66,0x65,0xa1,0x7c,0x00]
         movl	%gs:124, %eax
 
 // CHECK: pusha
@@ -792,63 +789,63 @@ pshufw $90, %mm4, %mm0
 // CHECK: encoding: [0xe0,A]
 	loopnz 0
 
-// CHECK: outsb # encoding: [0x6e]
+// CHECK: outsb (%si), %dx # encoding: [0x6e]
 // CHECK: outsb
 // CHECK: outsb
 	outsb
 	outsb	%ds:(%si), %dx
 	outsb	(%si), %dx
 
-// CHECK: outsw # encoding: [0x6f]
+// CHECK: outsw (%si), %dx # encoding: [0x6f]
 // CHECK: outsw
 // CHECK: outsw
 	outsw
 	outsw	%ds:(%si), %dx
 	outsw	(%si), %dx
 
-// CHECK: outsl # encoding: [0x66,0x6f]
+// CHECK: outsl (%si), %dx # encoding: [0x66,0x6f]
 // CHECK: outsl
 	outsl
 	outsl	%ds:(%si), %dx
 	outsl	(%si), %dx
 
-// CHECK: insb # encoding: [0x6c]
+// CHECK: insb %dx, %es:(%di) # encoding: [0x6c]
 // CHECK: insb
 	insb
 	insb	%dx, %es:(%di)
 
-// CHECK: insw # encoding: [0x6d]
+// CHECK: insw %dx, %es:(%di) # encoding: [0x6d]
 // CHECK: insw
 	insw
 	insw	%dx, %es:(%di)
 
-// CHECK: insl # encoding: [0x66,0x6d]
+// CHECK: insl %dx, %es:(%di) # encoding: [0x66,0x6d]
 // CHECK: insl
 	insl
 	insl	%dx, %es:(%di)
 
-// CHECK: movsb # encoding: [0xa4]
+// CHECK: movsb (%si), %es:(%di) # encoding: [0xa4]
 // CHECK: movsb
 // CHECK: movsb
 	movsb
 	movsb	%ds:(%si), %es:(%di)
 	movsb	(%si), %es:(%di)
 
-// CHECK: movsw # encoding: [0xa5]
+// CHECK: movsw (%si), %es:(%di) # encoding: [0xa5]
 // CHECK: movsw
 // CHECK: movsw
 	movsw
 	movsw	%ds:(%si), %es:(%di)
 	movsw	(%si), %es:(%di)
 
-// CHECK: movsl # encoding: [0x66,0xa5]
+// CHECK: movsl (%si), %es:(%di) # encoding: [0x66,0xa5]
 // CHECK: movsl
 // CHECK: movsl
 	movsl
 	movsl	%ds:(%si), %es:(%di)
 	movsl	(%si), %es:(%di)
 
-// CHECK: lodsb # encoding: [0xac]
+// CHECK: lodsb (%si), %al # encoding: [0xac]
 // CHECK: lodsb
 // CHECK: lodsb
 // CHECK: lodsb
@@ -859,7 +856,7 @@ pshufw $90, %mm4, %mm0
 	lods	%ds:(%si), %al
 	lods	(%si), %al
 
-// CHECK: lodsw # encoding: [0xad]
+// CHECK: lodsw (%si), %ax # encoding: [0xad]
 // CHECK: lodsw
 // CHECK: lodsw
 // CHECK: lodsw
@@ -870,7 +867,7 @@ pshufw $90, %mm4, %mm0
 	lods	%ds:(%si), %ax
 	lods	(%si), %ax
 
-// CHECK: lodsl # encoding: [0x66,0xad]
+// CHECK: lodsl (%si), %eax # encoding: [0x66,0xad]
 // CHECK: lodsl
 // CHECK: lodsl
 // CHECK: lodsl
@@ -881,21 +878,21 @@ pshufw $90, %mm4, %mm0
 	lods	%ds:(%si), %eax
 	lods	(%si), %eax
 
-// CHECK: stosb # encoding: [0xaa]
+// CHECK: stosb %al, %es:(%di) # encoding: [0xaa]
 // CHECK: stosb
 // CHECK: stosb
 	stosb
 	stosb	%al, %es:(%di)
 	stos	%al, %es:(%di)
 
-// CHECK: stosw # encoding: [0xab]
+// CHECK: stosw %ax, %es:(%di) # encoding: [0xab]
 // CHECK: stosw
 // CHECK: stosw
 	stosw
 	stosw	%ax, %es:(%di)
 	stos	%ax, %es:(%di)
 
-// CHECK: stosl # encoding: [0x66,0xab]
+// CHECK: stosl %eax, %es:(%di) # encoding: [0x66,0xab]
 // CHECK: stosl
 // CHECK: stosl
 	stosl

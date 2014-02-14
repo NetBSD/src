@@ -50,7 +50,6 @@ private:
 
   unsigned IsVerboseAsm : 1;
   unsigned ShowInst : 1;
-  unsigned UseLoc : 1;
   unsigned UseCFI : 1;
   unsigned UseDwarfDirectory : 1;
 
@@ -66,14 +65,14 @@ private:
   virtual void EmitCFIEndProcImpl(MCDwarfFrameInfo &Frame);
 
 public:
-  MCAsmStreamer(MCContext &Context, MCTargetStreamer *TargetStreamer,
-                formatted_raw_ostream &os, bool isVerboseAsm, bool useLoc,
-                bool useCFI, bool useDwarfDirectory, MCInstPrinter *printer,
-                MCCodeEmitter *emitter, MCAsmBackend *asmbackend, bool showInst)
-      : MCStreamer(Context, TargetStreamer), OS(os), MAI(Context.getAsmInfo()),
+  MCAsmStreamer(MCContext &Context, formatted_raw_ostream &os,
+                bool isVerboseAsm, bool useCFI, bool useDwarfDirectory,
+                MCInstPrinter *printer, MCCodeEmitter *emitter,
+                MCAsmBackend *asmbackend, bool showInst)
+      : MCStreamer(Context), OS(os), MAI(Context.getAsmInfo()),
         InstPrinter(printer), Emitter(emitter), AsmBackend(asmbackend),
         CommentStream(CommentToEmit), IsVerboseAsm(isVerboseAsm),
-        ShowInst(showInst), UseLoc(useLoc), UseCFI(useCFI),
+        ShowInst(showInst), UseCFI(useCFI),
         UseDwarfDirectory(useDwarfDirectory) {
     if (InstPrinter && IsVerboseAsm)
       InstPrinter->setCommentStream(CommentStream);
@@ -104,7 +103,7 @@ public:
   virtual void AddComment(const Twine &T);
 
   /// AddEncodingComment - Add a comment showing the encoding of an instruction.
-  virtual void AddEncodingComment(const MCInst &Inst);
+  virtual void AddEncodingComment(const MCInst &Inst, const MCSubtargetInfo &);
 
   /// GetCommentOS - Return a raw_ostream that comments can be written to.
   /// Unlike AddComment, you are required to terminate comments with \n if you
@@ -114,6 +113,8 @@ public:
       return nulls();  // Discard comments unless in verbose asm mode.
     return CommentStream;
   }
+
+  void emitRawComment(const Twine &T, bool TabPrefix = true) LLVM_OVERRIDE;
 
   /// AddBlankLine - Emit a blank line to a .s file to pretty it up.
   virtual void AddBlankLine() {
@@ -126,12 +127,9 @@ public:
   virtual void ChangeSection(const MCSection *Section,
                              const MCExpr *Subsection);
 
-  virtual void InitSections() {
-    InitToTextSection();
-  }
-
-  virtual void InitToTextSection() {
-    SwitchSection(getContext().getObjectFileInfo()->getTextSection());
+  virtual void InitSections(bool Force) {
+    if (Force)
+      SwitchSection(getContext().getObjectFileInfo()->getTextSection());
   }
 
   virtual void EmitLabel(MCSymbol *Symbol);
@@ -247,7 +245,7 @@ public:
   virtual void EmitWin64EHPushFrame(bool Code);
   virtual void EmitWin64EHEndProlog();
 
-  virtual void EmitInstruction(const MCInst &Inst);
+  virtual void EmitInstruction(const MCInst &Inst, const MCSubtargetInfo &STI);
 
   virtual void EmitBundleAlignMode(unsigned AlignPow2);
   virtual void EmitBundleLock(bool AlignToEnd);
@@ -309,6 +307,13 @@ void MCAsmStreamer::EmitCommentsAndEOL() {
 static inline int64_t truncateToSize(int64_t Value, unsigned Bytes) {
   assert(Bytes && "Invalid size!");
   return Value & ((uint64_t) (int64_t) -1 >> (64 - Bytes * 8));
+}
+
+void MCAsmStreamer::emitRawComment(const Twine &T, bool TabPrefix) {
+  if (TabPrefix)
+    OS << '\t';
+  OS << MAI->getCommentString() << T;
+  EmitEOL();
 }
 
 void MCAsmStreamer::ChangeSection(const MCSection *Section,
@@ -667,6 +672,7 @@ void MCAsmStreamer::EmitIntValue(uint64_t Value, unsigned Size) {
 }
 
 void MCAsmStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size) {
+  assert(Size <= 8 && "Invalid size");
   assert(getCurrentSection().first &&
          "Cannot emit contents before setting section!");
   const char *Directive = 0;
@@ -675,19 +681,37 @@ void MCAsmStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size) {
   case 1: Directive = MAI->getData8bitsDirective();  break;
   case 2: Directive = MAI->getData16bitsDirective(); break;
   case 4: Directive = MAI->getData32bitsDirective(); break;
-  case 8:
-    Directive = MAI->getData64bitsDirective();
-    // If the target doesn't support 64-bit data, emit as two 32-bit halves.
-    if (Directive) break;
+  case 8: Directive = MAI->getData64bitsDirective(); break;
+  }
+
+  if (!Directive) {
     int64_t IntValue;
     if (!Value->EvaluateAsAbsolute(IntValue))
       report_fatal_error("Don't know how to emit this value.");
-    if (MAI->isLittleEndian()) {
-      EmitIntValue((uint32_t)(IntValue >> 0 ), 4);
-      EmitIntValue((uint32_t)(IntValue >> 32), 4);
-    } else {
-      EmitIntValue((uint32_t)(IntValue >> 32), 4);
-      EmitIntValue((uint32_t)(IntValue >> 0 ), 4);
+
+    // We couldn't handle the requested integer size so we fallback by breaking
+    // the request down into several, smaller, integers.  Since sizes greater
+    // than eight are invalid and size equivalent to eight should have been
+    // handled earlier, we use four bytes as our largest piece of granularity.
+    bool IsLittleEndian = MAI->isLittleEndian();
+    for (unsigned Emitted = 0; Emitted != Size;) {
+      unsigned Remaining = Size - Emitted;
+      // The size of our partial emission must be a power of two less than
+      // eight.
+      unsigned EmissionSize = PowerOf2Floor(Remaining);
+      if (EmissionSize > 4)
+        EmissionSize = 4;
+      // Calculate the byte offset of our partial emission taking into account
+      // the endianness of the target.
+      unsigned ByteOffset =
+          IsLittleEndian ? Emitted : (Remaining - EmissionSize);
+      uint64_t ValueToEmit = IntValue >> (ByteOffset * 8);
+      // We truncate our partial emission to fit within the bounds of the
+      // emission domain.  This produces nicer output and silences potential
+      // truncation warnings when round tripping through another assembler.
+      ValueToEmit &= ~0ULL >> (64 - EmissionSize * 8);
+      EmitIntValue(ValueToEmit, EmissionSize);
+      Emitted += EmissionSize;
     }
     return;
   }
@@ -756,12 +780,19 @@ void MCAsmStreamer::EmitValueToAlignment(unsigned ByteAlignment, int64_t Value,
   // emit alignments as a power of two if possible.
   if (isPowerOf2_32(ByteAlignment)) {
     switch (ValueSize) {
-    default: llvm_unreachable("Invalid size for machine code value!");
-    case 1: OS << MAI->getAlignDirective(); break;
-    // FIXME: use MAI for this!
-    case 2: OS << ".p2alignw "; break;
-    case 4: OS << ".p2alignl "; break;
-    case 8: llvm_unreachable("Unsupported alignment size!");
+    default:
+      llvm_unreachable("Invalid size for machine code value!");
+    case 1:
+      OS << "\t.align\t";
+      break;
+    case 2:
+      OS << ".p2alignw ";
+      break;
+    case 4:
+      OS << ".p2alignl ";
+      break;
+    case 8:
+      llvm_unreachable("Unsupported alignment size!");
     }
 
     if (MAI->getAlignmentIsInBytes())
@@ -831,17 +862,16 @@ bool MCAsmStreamer::EmitDwarfFileDirective(unsigned FileNo, StringRef Directory,
     return EmitDwarfFileDirective(FileNo, "", FullPathName, CUID);
   }
 
-  if (UseLoc) {
-    OS << "\t.file\t" << FileNo << ' ';
-    if (!Directory.empty()) {
-      PrintQuotedString(Directory, OS);
-      OS << ' ';
-    }
-    PrintQuotedString(Filename, OS);
-    EmitEOL();
-    // All .file will belong to a single CUID.
-    CUID = 0;
+  OS << "\t.file\t" << FileNo << ' ';
+  if (!Directory.empty()) {
+    PrintQuotedString(Directory, OS);
+    OS << ' ';
   }
+  PrintQuotedString(Filename, OS);
+  EmitEOL();
+  // All .file will belong to a single CUID.
+  CUID = 0;
+
   return this->MCStreamer::EmitDwarfFileDirective(FileNo, Directory, Filename,
                                                   CUID);
 }
@@ -853,9 +883,6 @@ void MCAsmStreamer::EmitDwarfLocDirective(unsigned FileNo, unsigned Line,
                                           StringRef FileName) {
   this->MCStreamer::EmitDwarfLocDirective(FileNo, Line, Column, Flags,
                                           Isa, Discriminator, FileName);
-  if (!UseLoc)
-    return;
-
   OS << "\t.loc\t" << FileNo << " " << Line << " " << Column;
   if (Flags & DWARF2_FLAG_BASIC_BLOCK)
     OS << " basic_block";
@@ -919,6 +946,8 @@ void MCAsmStreamer::EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame) {
   }
 
   OS << "\t.cfi_startproc";
+  if (Frame.IsSimple)
+    OS << " simple";
   EmitEOL();
 }
 
@@ -1226,12 +1255,13 @@ void MCAsmStreamer::EmitWin64EHEndProlog(void) {
   EmitEOL();
 }
 
-void MCAsmStreamer::AddEncodingComment(const MCInst &Inst) {
+void MCAsmStreamer::AddEncodingComment(const MCInst &Inst,
+                                       const MCSubtargetInfo &STI) {
   raw_ostream &OS = GetCommentOS();
   SmallString<256> Code;
   SmallVector<MCFixup, 4> Fixups;
   raw_svector_ostream VecOS(Code);
-  Emitter->EncodeInstruction(Inst, VecOS, Fixups);
+  Emitter->EncodeInstruction(Inst, VecOS, Fixups, STI);
   VecOS.flush();
 
   // If we are showing fixups, create symbolic markers in the encoded
@@ -1310,13 +1340,13 @@ void MCAsmStreamer::AddEncodingComment(const MCInst &Inst) {
   }
 }
 
-void MCAsmStreamer::EmitInstruction(const MCInst &Inst) {
+void MCAsmStreamer::EmitInstruction(const MCInst &Inst, const MCSubtargetInfo &STI) {
   assert(getCurrentSection().first &&
          "Cannot emit contents before setting section!");
 
   // Show the encoding in a comment if we have a code emitter.
   if (Emitter)
-    AddEncodingComment(Inst);
+    AddEncodingComment(Inst, STI);
 
   // Show the MCInst if enabled.
   if (ShowInst) {
@@ -1360,27 +1390,20 @@ void MCAsmStreamer::EmitRawTextImpl(StringRef String) {
 }
 
 void MCAsmStreamer::FinishImpl() {
-  // FIXME: This header is duplicated with MCObjectStreamer
-  // Dump out the dwarf file & directory tables and line tables.
-  const MCSymbol *LineSectionSymbol = NULL;
-  if (getContext().hasDwarfFiles() && !UseLoc)
-    LineSectionSymbol = MCDwarfFileTable::Emit(this);
-
   // If we are generating dwarf for assembly source files dump out the sections.
   if (getContext().getGenDwarfForAssembly())
-    MCGenDwarfInfo::Emit(this, LineSectionSymbol);
+    MCGenDwarfInfo::Emit(this, NULL);
 
   if (!UseCFI)
     EmitFrames(AsmBackend.get(), false);
 }
 
 MCStreamer *llvm::createAsmStreamer(MCContext &Context,
-                                    MCTargetStreamer *TargetStreamer,
                                     formatted_raw_ostream &OS,
-                                    bool isVerboseAsm, bool useLoc, bool useCFI,
+                                    bool isVerboseAsm, bool useCFI,
                                     bool useDwarfDirectory, MCInstPrinter *IP,
                                     MCCodeEmitter *CE, MCAsmBackend *MAB,
                                     bool ShowInst) {
-  return new MCAsmStreamer(Context, TargetStreamer, OS, isVerboseAsm, useLoc,
-                           useCFI, useDwarfDirectory, IP, CE, MAB, ShowInst);
+  return new MCAsmStreamer(Context, OS, isVerboseAsm, useCFI, useDwarfDirectory,
+                           IP, CE, MAB, ShowInst);
 }

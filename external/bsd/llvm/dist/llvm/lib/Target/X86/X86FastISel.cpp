@@ -1512,7 +1512,7 @@ bool X86FastISel::X86SelectSelect(const Instruction *I) {
   // garbage. Indeed, only the less significant bit is supposed to be accurate.
   // If we read more than the lsb, we may see non-zero values whereas lsb
   // is zero. Therefore, we have to truncate Op0Reg to i1 for the select.
-  // This is acheived by performing TEST against 1.
+  // This is achieved by performing TEST against 1.
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(X86::TEST8ri))
     .addReg(Op0Reg).addImm(1);
   unsigned ResultReg = createResultReg(RC);
@@ -1908,6 +1908,10 @@ bool X86FastISel::DoSelectCall(const Instruction *I, const char *MemIntName) {
   // Don't know how to handle Win64 varargs yet.  Nothing special needed for
   // x86-32.  Special handling for x86-64 is implemented.
   if (isVarArg && isWin64)
+    return false;
+
+  // Don't know about inalloca yet.
+  if (CS.hasInAllocaArgument())
     return false;
 
   // Fast-isel doesn't know about callee-pop yet.
@@ -2483,6 +2487,7 @@ unsigned X86FastISel::TargetMaterializeAlloca(const AllocaInst *C) {
   // X86SelectAddrss, and TargetMaterializeAlloca.
   if (!FuncInfo.StaticAllocaMap.count(C))
     return 0;
+  assert(C->isStaticAlloca() && "dynamic alloca in the static alloca map?");
 
   X86AddressMode AM;
   if (!X86SelectAddress(C, AM))

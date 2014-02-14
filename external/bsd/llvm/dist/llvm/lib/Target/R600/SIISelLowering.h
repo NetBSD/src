@@ -26,6 +26,7 @@ class SITargetLowering : public AMDGPUTargetLowering {
   SDValue LowerSampleIntrinsic(unsigned Opcode, const SDValue &Op,
                                SelectionDAG &DAG) const;
   SDValue LowerLOAD(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerSELECT(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSIGN_EXTEND(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSTORE(SDValue Op, SelectionDAG &DAG) const;
@@ -49,7 +50,7 @@ class SITargetLowering : public AMDGPUTargetLowering {
 
 public:
   SITargetLowering(TargetMachine &tm);
-  bool allowsUnalignedMemoryAccesses(EVT  VT, bool *IsFast) const;
+  bool allowsUnalignedMemoryAccesses(EVT VT, unsigned AS, bool *IsFast) const;
   virtual bool shouldSplitVectorElementType(EVT VT) const;
 
   SDValue LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv,

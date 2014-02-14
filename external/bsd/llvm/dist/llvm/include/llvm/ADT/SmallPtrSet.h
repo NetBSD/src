@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This file defines the SmallPtrSet class.  See the doxygen comment for
-// SmallPtrSetImpl for more details on the algorithm used.
+// SmallPtrSetImplBase for more details on the algorithm used.
 //
 //===----------------------------------------------------------------------===//
 
@@ -27,7 +27,7 @@ namespace llvm {
 
 class SmallPtrSetIteratorImpl;
 
-/// SmallPtrSetImpl - This is the common code shared among all the
+/// SmallPtrSetImplBase - This is the common code shared among all the
 /// SmallPtrSet<>'s, which is almost everything.  SmallPtrSet has two modes, one
 /// for small and one for large sets.
 ///
@@ -45,7 +45,7 @@ class SmallPtrSetIteratorImpl;
 /// (-2), to allow deletion.  The hash table is resized when the table is 3/4 or
 /// more.  When this happens, the table is doubled in size.
 ///
-class SmallPtrSetImpl {
+class SmallPtrSetImplBase {
   friend class SmallPtrSetIteratorImpl;
 protected:
   /// SmallArray - Points to a fixed size set of buckets, used in 'small mode'.
@@ -61,18 +61,18 @@ protected:
   unsigned NumTombstones;
 
   // Helpers to copy and move construct a SmallPtrSet.
-  SmallPtrSetImpl(const void **SmallStorage, const SmallPtrSetImpl &that);
+  SmallPtrSetImplBase(const void **SmallStorage, const SmallPtrSetImplBase &that);
 #if LLVM_HAS_RVALUE_REFERENCES
-  SmallPtrSetImpl(const void **SmallStorage, unsigned SmallSize,
-                  SmallPtrSetImpl &&that);
+  SmallPtrSetImplBase(const void **SmallStorage, unsigned SmallSize,
+                  SmallPtrSetImplBase &&that);
 #endif
-  explicit SmallPtrSetImpl(const void **SmallStorage, unsigned SmallSize) :
+  explicit SmallPtrSetImplBase(const void **SmallStorage, unsigned SmallSize) :
     SmallArray(SmallStorage), CurArray(SmallStorage), CurArraySize(SmallSize) {
     assert(SmallSize && (SmallSize & (SmallSize-1)) == 0 &&
            "Initial size must be a power of two!");
     clear();
   }
-  ~SmallPtrSetImpl();
+  ~SmallPtrSetImplBase();
 
 public:
   bool LLVM_ATTRIBUTE_UNUSED_RESULT empty() const { return size() == 0; }
@@ -132,15 +132,15 @@ private:
   /// Grow - Allocate a larger backing store for the buckets and move it over.
   void Grow(unsigned NewSize);
 
-  void operator=(const SmallPtrSetImpl &RHS) LLVM_DELETED_FUNCTION;
+  void operator=(const SmallPtrSetImplBase &RHS) LLVM_DELETED_FUNCTION;
 protected:
   /// swap - Swaps the elements of two sets.
   /// Note: This method assumes that both sets have the same small size.
-  void swap(SmallPtrSetImpl &RHS);
+  void swap(SmallPtrSetImplBase &RHS);
 
-  void CopyFrom(const SmallPtrSetImpl &RHS);
+  void CopyFrom(const SmallPtrSetImplBase &RHS);
 #if LLVM_HAS_RVALUE_REFERENCES
-  void MoveFrom(unsigned SmallSize, SmallPtrSetImpl &&RHS);
+  void MoveFrom(unsigned SmallSize, SmallPtrSetImplBase &&RHS);
 #endif
 };
 
@@ -170,8 +170,8 @@ protected:
   void AdvanceIfNotValid() {
     assert(Bucket <= End);
     while (Bucket != End &&
-           (*Bucket == SmallPtrSetImpl::getEmptyMarker() ||
-            *Bucket == SmallPtrSetImpl::getTombstoneMarker()))
+           (*Bucket == SmallPtrSetImplBase::getEmptyMarker() ||
+            *Bucket == SmallPtrSetImplBase::getTombstoneMarker()))
       ++Bucket;
   }
 };
@@ -235,30 +235,27 @@ struct RoundUpToPowerOfTwo {
 };
   
 
-/// SmallPtrSet - This class implements a set which is optimized for holding
-/// SmallSize or less elements.  This internally rounds up SmallSize to the next
-/// power of two if it is not already a power of two.  See the comments above
-/// SmallPtrSetImpl for details of the algorithm.
-template<class PtrType, unsigned SmallSize>
-class SmallPtrSet : public SmallPtrSetImpl {
-  // Make sure that SmallSize is a power of two, round up if not.
-  enum { SmallSizePowTwo = RoundUpToPowerOfTwo<SmallSize>::Val };
-  /// SmallStorage - Fixed size storage used in 'small mode'.
-  const void *SmallStorage[SmallSizePowTwo];
+/// \brief A templated base class for \c SmallPtrSet which provides the
+/// typesafe interface that is common across all small sizes.
+///
+/// This is particularly useful for passing around between interface boundaries
+/// to avoid encoding a particular small size in the interface boundary.
+template <typename PtrType>
+class SmallPtrSetImpl : public SmallPtrSetImplBase {
   typedef PointerLikeTypeTraits<PtrType> PtrTraits;
-public:
-  SmallPtrSet() : SmallPtrSetImpl(SmallStorage, SmallSizePowTwo) {}
-  SmallPtrSet(const SmallPtrSet &that) : SmallPtrSetImpl(SmallStorage, that) {}
+protected:
+  // Constructors that forward to the base.
+  SmallPtrSetImpl(const void **SmallStorage, const SmallPtrSetImpl &that)
+      : SmallPtrSetImplBase(SmallStorage, that) {}
 #if LLVM_HAS_RVALUE_REFERENCES
-  SmallPtrSet(SmallPtrSet &&that)
-      : SmallPtrSetImpl(SmallStorage, SmallSizePowTwo, std::move(that)) {}
+  SmallPtrSetImpl(const void **SmallStorage, unsigned SmallSize,
+                  SmallPtrSetImpl &&that)
+      : SmallPtrSetImplBase(SmallStorage, SmallSize, std::move(that)) {}
 #endif
+  explicit SmallPtrSetImpl(const void **SmallStorage, unsigned SmallSize)
+      : SmallPtrSetImplBase(SmallStorage, SmallSize) {}
 
-  template<typename It>
-  SmallPtrSet(It I, It E) : SmallPtrSetImpl(SmallStorage, SmallSizePowTwo) {
-    insert(I, E);
-  }
-
+public:
   /// insert - This returns true if the pointer was new to the set, false if it
   /// was already in the set.
   bool insert(PtrType Ptr) {
@@ -290,11 +287,37 @@ public:
   inline iterator end() const {
     return iterator(CurArray+CurArraySize, CurArray+CurArraySize);
   }
+};
+
+/// SmallPtrSet - This class implements a set which is optimized for holding
+/// SmallSize or less elements.  This internally rounds up SmallSize to the next
+/// power of two if it is not already a power of two.  See the comments above
+/// SmallPtrSetImplBase for details of the algorithm.
+template<class PtrType, unsigned SmallSize>
+class SmallPtrSet : public SmallPtrSetImpl<PtrType> {
+  typedef SmallPtrSetImpl<PtrType> BaseT;
+
+  // Make sure that SmallSize is a power of two, round up if not.
+  enum { SmallSizePowTwo = RoundUpToPowerOfTwo<SmallSize>::Val };
+  /// SmallStorage - Fixed size storage used in 'small mode'.
+  const void *SmallStorage[SmallSizePowTwo];
+public:
+  SmallPtrSet() : BaseT(SmallStorage, SmallSizePowTwo) {}
+  SmallPtrSet(const SmallPtrSet &that) : BaseT(SmallStorage, that) {}
+#if LLVM_HAS_RVALUE_REFERENCES
+  SmallPtrSet(SmallPtrSet &&that)
+      : BaseT(SmallStorage, SmallSizePowTwo, std::move(that)) {}
+#endif
+
+  template<typename It>
+  SmallPtrSet(It I, It E) : BaseT(SmallStorage, SmallSizePowTwo) {
+    this->insert(I, E);
+  }
 
   SmallPtrSet<PtrType, SmallSize> &
   operator=(const SmallPtrSet<PtrType, SmallSize> &RHS) {
     if (&RHS != this)
-      CopyFrom(RHS);
+      this->CopyFrom(RHS);
     return *this;
   }
 
@@ -302,14 +325,14 @@ public:
   SmallPtrSet<PtrType, SmallSize>&
   operator=(SmallPtrSet<PtrType, SmallSize> &&RHS) {
     if (&RHS != this)
-      MoveFrom(SmallSizePowTwo, std::move(RHS));
+      this->MoveFrom(SmallSizePowTwo, std::move(RHS));
     return *this;
   }
 #endif
 
   /// swap - Swaps the elements of two sets.
   void swap(SmallPtrSet<PtrType, SmallSize> &RHS) {
-    SmallPtrSetImpl::swap(RHS);
+    SmallPtrSetImplBase::swap(RHS);
   }
 };
 

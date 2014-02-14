@@ -18,6 +18,7 @@
 #include "X86.h"
 #include "X86TargetMachine.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
+#include "llvm/IR/IntrinsicInst.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/CostTable.h"
 #include "llvm/Target/TargetLowering.h"
@@ -32,7 +33,7 @@ void initializeX86TTIPass(PassRegistry &);
 
 namespace {
 
-class X86TTI : public ImmutablePass, public TargetTransformInfo {
+class X86TTI LLVM_FINAL : public ImmutablePass, public TargetTransformInfo {
   const X86Subtarget *ST;
   const X86TargetLowering *TLI;
 
@@ -46,12 +47,12 @@ public:
   }
 
   X86TTI(const X86TargetMachine *TM)
-      : ImmutablePass(ID), ST(TM->getSubtargetImpl()),
-        TLI(TM->getTargetLowering()) {
+    : ImmutablePass(ID), ST(TM->getSubtargetImpl()),
+      TLI(TM->getTargetLowering()) {
     initializeX86TTIPass(*PassRegistry::getPassRegistry());
   }
 
-  virtual void initializePass() {
+  virtual void initializePass() LLVM_OVERRIDE {
     pushTTIStack(this);
   }
 
@@ -59,7 +60,7 @@ public:
     popTTIStack();
   }
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const LLVM_OVERRIDE {
     TargetTransformInfo::getAnalysisUsage(AU);
   }
 
@@ -67,7 +68,7 @@ public:
   static char ID;
 
   /// Provide necessary pointer adjustments for the two base classes.
-  virtual void *getAdjustedAnalysisPointer(const void *ID) {
+  virtual void *getAdjustedAnalysisPointer(const void *ID) LLVM_OVERRIDE {
     if (ID == &TargetTransformInfo::ID)
       return (TargetTransformInfo*)this;
     return this;
@@ -75,35 +76,45 @@ public:
 
   /// \name Scalar TTI Implementations
   /// @{
-  virtual PopcntSupportKind getPopcntSupport(unsigned TyWidth) const;
+  virtual PopcntSupportKind
+  getPopcntSupport(unsigned TyWidth) const LLVM_OVERRIDE;
 
   /// @}
 
   /// \name Vector TTI Implementations
   /// @{
 
-  virtual unsigned getNumberOfRegisters(bool Vector) const;
-  virtual unsigned getRegisterBitWidth(bool Vector) const;
-  virtual unsigned getMaximumUnrollFactor() const;
+  virtual unsigned getNumberOfRegisters(bool Vector) const LLVM_OVERRIDE;
+  virtual unsigned getRegisterBitWidth(bool Vector) const LLVM_OVERRIDE;
+  virtual unsigned getMaximumUnrollFactor() const LLVM_OVERRIDE;
   virtual unsigned getArithmeticInstrCost(unsigned Opcode, Type *Ty,
                                           OperandValueKind,
-                                          OperandValueKind) const;
+                                          OperandValueKind) const LLVM_OVERRIDE;
   virtual unsigned getShuffleCost(ShuffleKind Kind, Type *Tp,
-                                  int Index, Type *SubTp) const;
+                                  int Index, Type *SubTp) const LLVM_OVERRIDE;
   virtual unsigned getCastInstrCost(unsigned Opcode, Type *Dst,
-                                    Type *Src) const;
+                                    Type *Src) const LLVM_OVERRIDE;
   virtual unsigned getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
-                                      Type *CondTy) const;
+                                      Type *CondTy) const LLVM_OVERRIDE;
   virtual unsigned getVectorInstrCost(unsigned Opcode, Type *Val,
-                                      unsigned Index) const;
+                                      unsigned Index) const LLVM_OVERRIDE;
   virtual unsigned getMemoryOpCost(unsigned Opcode, Type *Src,
                                    unsigned Alignment,
-                                   unsigned AddressSpace) const;
+                                   unsigned AddressSpace) const LLVM_OVERRIDE;
 
-  virtual unsigned getAddressComputationCost(Type *PtrTy, bool IsComplex) const;
+  virtual unsigned
+  getAddressComputationCost(Type *PtrTy, bool IsComplex) const LLVM_OVERRIDE;
   
   virtual unsigned getReductionCost(unsigned Opcode, Type *Ty,
-                                    bool IsPairwiseForm) const;
+                                    bool IsPairwiseForm) const LLVM_OVERRIDE;
+
+  virtual unsigned getIntImmCost(const APInt &Imm,
+                                 Type *Ty) const LLVM_OVERRIDE;
+
+  virtual unsigned getIntImmCost(unsigned Opcode, const APInt &Imm,
+                                 Type *Ty) const LLVM_OVERRIDE;
+  virtual unsigned getIntImmCost(Intrinsic::ID IID, const APInt &Imm,
+                                 Type *Ty) const LLVM_OVERRIDE;
 
   /// @}
 };
@@ -400,16 +411,58 @@ unsigned X86TTI::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) const {
     return TargetTransformInfo::getCastInstrCost(Opcode, Dst, Src);
 
   static const TypeConversionCostTblEntry<MVT::SimpleValueType>
+  AVX2ConversionTbl[] = {
+    { ISD::SIGN_EXTEND, MVT::v16i16, MVT::v16i8,  1 },
+    { ISD::ZERO_EXTEND, MVT::v16i16, MVT::v16i8,  1 },
+    { ISD::SIGN_EXTEND, MVT::v8i32,  MVT::v8i1,   3 },
+    { ISD::ZERO_EXTEND, MVT::v8i32,  MVT::v8i1,   3 },
+    { ISD::SIGN_EXTEND, MVT::v8i32,  MVT::v8i8,   3 },
+    { ISD::ZERO_EXTEND, MVT::v8i32,  MVT::v8i8,   3 },
+    { ISD::SIGN_EXTEND, MVT::v8i32,  MVT::v8i16,  1 },
+    { ISD::ZERO_EXTEND, MVT::v8i32,  MVT::v8i16,  1 },
+    { ISD::SIGN_EXTEND, MVT::v4i64,  MVT::v4i1,   3 },
+    { ISD::ZERO_EXTEND, MVT::v4i64,  MVT::v4i1,   3 },
+    { ISD::SIGN_EXTEND, MVT::v4i64,  MVT::v4i8,   3 },
+    { ISD::ZERO_EXTEND, MVT::v4i64,  MVT::v4i8,   3 },
+    { ISD::SIGN_EXTEND, MVT::v4i64,  MVT::v4i16,  3 },
+    { ISD::ZERO_EXTEND, MVT::v4i64,  MVT::v4i16,  3 },
+    { ISD::SIGN_EXTEND, MVT::v4i64,  MVT::v4i32,  1 },
+    { ISD::ZERO_EXTEND, MVT::v4i64,  MVT::v4i32,  1 },
+
+    { ISD::TRUNCATE,    MVT::v4i8,   MVT::v4i64,  2 },
+    { ISD::TRUNCATE,    MVT::v4i16,  MVT::v4i64,  2 },
+    { ISD::TRUNCATE,    MVT::v4i32,  MVT::v4i64,  2 },
+    { ISD::TRUNCATE,    MVT::v8i8,   MVT::v8i32,  2 },
+    { ISD::TRUNCATE,    MVT::v8i16,  MVT::v8i32,  2 },
+    { ISD::TRUNCATE,    MVT::v8i32,  MVT::v8i64,  4 },
+  };
+
+  static const TypeConversionCostTblEntry<MVT::SimpleValueType>
   AVXConversionTbl[] = {
-    { ISD::SIGN_EXTEND, MVT::v16i16, MVT::v16i8, 1 },
-    { ISD::ZERO_EXTEND, MVT::v16i16, MVT::v16i8, 1 },
-    { ISD::SIGN_EXTEND, MVT::v8i32, MVT::v8i16, 1 },
-    { ISD::ZERO_EXTEND, MVT::v8i32, MVT::v8i16, 1 },
-    { ISD::SIGN_EXTEND, MVT::v4i64, MVT::v4i32, 1 },
-    { ISD::ZERO_EXTEND, MVT::v4i64, MVT::v4i32, 1 },
-    { ISD::TRUNCATE,    MVT::v4i32, MVT::v4i64, 1 },
-    { ISD::TRUNCATE,    MVT::v8i16, MVT::v8i32, 1 },
-    { ISD::TRUNCATE,    MVT::v16i8, MVT::v16i16, 2 },
+    { ISD::SIGN_EXTEND, MVT::v16i16, MVT::v16i8, 4 },
+    { ISD::ZERO_EXTEND, MVT::v16i16, MVT::v16i8, 4 },
+    { ISD::SIGN_EXTEND, MVT::v8i32,  MVT::v8i1,  7 },
+    { ISD::ZERO_EXTEND, MVT::v8i32,  MVT::v8i1,  4 },
+    { ISD::SIGN_EXTEND, MVT::v8i32,  MVT::v8i8,  7 },
+    { ISD::ZERO_EXTEND, MVT::v8i32,  MVT::v8i8,  4 },
+    { ISD::SIGN_EXTEND, MVT::v8i32,  MVT::v8i16, 4 },
+    { ISD::ZERO_EXTEND, MVT::v8i32,  MVT::v8i16, 4 },
+    { ISD::SIGN_EXTEND, MVT::v4i64,  MVT::v4i1,  6 },
+    { ISD::ZERO_EXTEND, MVT::v4i64,  MVT::v4i1,  4 },
+    { ISD::SIGN_EXTEND, MVT::v4i64,  MVT::v4i8,  6 },
+    { ISD::ZERO_EXTEND, MVT::v4i64,  MVT::v4i8,  4 },
+    { ISD::SIGN_EXTEND, MVT::v4i64,  MVT::v4i16, 6 },
+    { ISD::ZERO_EXTEND, MVT::v4i64,  MVT::v4i16, 3 },
+    { ISD::SIGN_EXTEND, MVT::v4i64,  MVT::v4i32, 4 },
+    { ISD::ZERO_EXTEND, MVT::v4i64,  MVT::v4i32, 4 },
+
+    { ISD::TRUNCATE,    MVT::v4i8,  MVT::v4i64,  4 },
+    { ISD::TRUNCATE,    MVT::v4i16, MVT::v4i64,  4 },
+    { ISD::TRUNCATE,    MVT::v4i32, MVT::v4i64,  4 },
+    { ISD::TRUNCATE,    MVT::v8i8,  MVT::v8i32,  4 },
+    { ISD::TRUNCATE,    MVT::v8i16, MVT::v8i32,  5 },
+    { ISD::TRUNCATE,    MVT::v16i8, MVT::v16i16, 4 },
+    { ISD::TRUNCATE,    MVT::v8i32, MVT::v8i64,  9 },
 
     { ISD::SINT_TO_FP,  MVT::v8f32, MVT::v8i1,  8 },
     { ISD::SINT_TO_FP,  MVT::v8f32, MVT::v8i8,  8 },
@@ -439,13 +492,14 @@ unsigned X86TTI::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) const {
 
     { ISD::FP_TO_SINT,  MVT::v8i8,  MVT::v8f32, 1 },
     { ISD::FP_TO_SINT,  MVT::v4i8,  MVT::v4f32, 1 },
-    { ISD::ZERO_EXTEND, MVT::v8i32, MVT::v8i1,  6 },
-    { ISD::SIGN_EXTEND, MVT::v8i32, MVT::v8i1,  9 },
-    { ISD::SIGN_EXTEND, MVT::v4i64, MVT::v4i1,  8 },
-    { ISD::SIGN_EXTEND, MVT::v4i64, MVT::v4i8,  6 },
-    { ISD::SIGN_EXTEND, MVT::v4i64, MVT::v4i16, 6 },
-    { ISD::TRUNCATE,    MVT::v8i32, MVT::v8i64, 3 },
   };
+
+  if (ST->hasAVX2()) {
+    int Idx = ConvertCostTableLookup(AVX2ConversionTbl, ISD,
+                                     DstTy.getSimpleVT(), SrcTy.getSimpleVT());
+    if (Idx != -1)
+      return AVX2ConversionTbl[Idx].Cost;
+  }
 
   if (ST->hasAVX()) {
     int Idx = ConvertCostTableLookup(AVXConversionTbl, ISD, DstTy.getSimpleVT(),
@@ -692,3 +746,89 @@ unsigned X86TTI::getReductionCost(unsigned Opcode, Type *ValTy,
   return TargetTransformInfo::getReductionCost(Opcode, ValTy, IsPairwise);
 }
 
+unsigned X86TTI::getIntImmCost(const APInt &Imm, Type *Ty) const {
+  assert(Ty->isIntegerTy());
+
+  unsigned BitSize = Ty->getPrimitiveSizeInBits();
+  if (BitSize == 0)
+    return ~0U;
+
+  if (Imm.getBitWidth() <= 64 &&
+      (isInt<32>(Imm.getSExtValue()) || isUInt<32>(Imm.getZExtValue())))
+    return TCC_Basic;
+  else
+    return 2 * TCC_Basic;
+}
+
+unsigned X86TTI::getIntImmCost(unsigned Opcode, const APInt &Imm,
+                               Type *Ty) const {
+  assert(Ty->isIntegerTy());
+
+  unsigned BitSize = Ty->getPrimitiveSizeInBits();
+  if (BitSize == 0)
+    return ~0U;
+
+  switch (Opcode) {
+  case Instruction::Add:
+  case Instruction::Sub:
+  case Instruction::Mul:
+  case Instruction::UDiv:
+  case Instruction::SDiv:
+  case Instruction::URem:
+  case Instruction::SRem:
+  case Instruction::Shl:
+  case Instruction::LShr:
+  case Instruction::AShr:
+  case Instruction::And:
+  case Instruction::Or:
+  case Instruction::Xor:
+  case Instruction::ICmp:
+    if (Imm.getBitWidth() <= 64 && isInt<32>(Imm.getSExtValue()))
+      return TCC_Free;
+    else
+      return X86TTI::getIntImmCost(Imm, Ty);
+  case Instruction::Trunc:
+  case Instruction::ZExt:
+  case Instruction::SExt:
+  case Instruction::IntToPtr:
+  case Instruction::PtrToInt:
+  case Instruction::BitCast:
+  case Instruction::Call:
+  case Instruction::Select:
+  case Instruction::Ret:
+  case Instruction::Load:
+  case Instruction::Store:
+    return X86TTI::getIntImmCost(Imm, Ty);
+  }
+  return TargetTransformInfo::getIntImmCost(Opcode, Imm, Ty);
+}
+
+unsigned X86TTI::getIntImmCost(Intrinsic::ID IID, const APInt &Imm,
+                               Type *Ty) const {
+  assert(Ty->isIntegerTy());
+
+  unsigned BitSize = Ty->getPrimitiveSizeInBits();
+  if (BitSize == 0)
+    return ~0U;
+
+  switch (IID) {
+  default: return TargetTransformInfo::getIntImmCost(IID, Imm, Ty);
+  case Intrinsic::sadd_with_overflow:
+  case Intrinsic::uadd_with_overflow:
+  case Intrinsic::ssub_with_overflow:
+  case Intrinsic::usub_with_overflow:
+  case Intrinsic::smul_with_overflow:
+  case Intrinsic::umul_with_overflow:
+    if (Imm.getBitWidth() <= 64 && isInt<32>(Imm.getSExtValue()))
+      return TCC_Free;
+    else
+      return X86TTI::getIntImmCost(Imm, Ty);
+  case Intrinsic::experimental_stackmap:
+  case Intrinsic::experimental_patchpoint_void:
+  case Intrinsic::experimental_patchpoint_i64:
+    if (Imm.getBitWidth() <= 64 && isInt<64>(Imm.getSExtValue()))
+      return TCC_Free;
+    else
+      return X86TTI::getIntImmCost(Imm, Ty);
+  }
+}
