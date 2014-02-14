@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.25 2013/08/10 21:15:26 jnemeth Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.26 2014/02/14 04:17:41 christos Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.20 2011/11/26 06:39:33 ckuethe Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.25 2013/08/10 21:15:26 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.26 2014/02/14 04:17:41 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -246,6 +246,7 @@ static int	urtwn_init(struct ifnet *);
 static void	urtwn_stop(struct ifnet *, int);
 static int	urtwn_reset(struct ifnet *);
 static void	urtwn_chip_stop(struct urtwn_softc *);
+static void	urtwn_newassoc(struct ieee80211_node *, int);
 
 /* Aliases. */
 #define	urtwn_bb_write	urtwn_write_4
@@ -352,6 +353,8 @@ urtwn_attach(device_t parent, device_t self, void *aux)
 	/* Set device capabilities. */
 	ic->ic_caps =
 	    IEEE80211_C_MONITOR |	/* Monitor mode supported. */
+	    IEEE80211_C_IBSS |		/* IBSS mode supported */
+	    IEEE80211_C_HOSTAP |	/* HostAp mode supported */
 	    IEEE80211_C_SHPREAMBLE |	/* Short preamble supported. */
 	    IEEE80211_C_SHSLOT |	/* Short slot time supported. */
 	    IEEE80211_C_WME |		/* 802.11e */
@@ -383,6 +386,7 @@ urtwn_attach(device_t parent, device_t self, void *aux)
 	ieee80211_ifattach(ic);
 
 	/* override default methods */
+	ic->ic_newassoc = urtwn_newassoc;
 	ic->ic_reset = urtwn_reset;
 	ic->ic_wme.wme_update = urtwn_wme_update;
 
@@ -1498,6 +1502,15 @@ urtwn_next_scan(void *arg)
 	splx(s);
 }
 
+static void
+urtwn_newassoc(struct ieee80211_node *ni, int isnew)
+{
+	DPRINTFN(DBG_FN, ("%s: new node %s\n", __func__,
+	    ether_sprintf(ni->ni_macaddr)));
+	/* start with lowest Tx rate */
+	ni->ni_txrate = 0;
+}
+
 static int
 urtwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
@@ -1527,7 +1540,7 @@ urtwn_newstate_cb(struct urtwn_softc *sc, void *arg)
 	enum ieee80211_state ostate = ic->ic_state;
 	enum ieee80211_state nstate = cmd->state;
 	uint32_t reg;
-	uint8_t sifs_time;
+	uint8_t sifs_time, msr;
 	int s;
 
 	DPRINTFN(DBG_FN|DBG_STM, ("%s: %s: %s(%d)->%s(%d)\n",
@@ -1744,7 +1757,10 @@ urtwn_newstate_cb(struct urtwn_softc *sc, void *arg)
 		/* Set beacon interval. */
 		urtwn_write_2(sc, R92C_BCN_INTERVAL, ni->ni_intval);
 
-		if (ic->ic_opmode == IEEE80211_M_STA) {
+                msr = urtwn_read_1(sc, R92C_MSR);
+                msr &= 0xfc;
+		switch (ic->ic_opmode) {
+		case IEEE80211_M_STA:
 			/* Allow Rx from our BSSID only. */
 			urtwn_write_4(sc, R92C_RCR,
 			    urtwn_read_4(sc, R92C_RCR) |
@@ -1752,7 +1768,28 @@ urtwn_newstate_cb(struct urtwn_softc *sc, void *arg)
 
 			/* Enable TSF synchronization. */
 			urtwn_tsf_sync_enable(sc);
-		}
+			/*FALLTHROUGH*/
+		default:
+                        msr |= R92C_MSR_ADHOC;
+			break;
+		case IEEE80211_M_HOSTAP:
+                        urtwn_write_2(sc, R92C_BCNTCFG, 0x000f);
+
+                        /* Allow Rx from any BSSID. */
+                        urtwn_write_4(sc, R92C_RCR,
+                            urtwn_read_4(sc, R92C_RCR) &
+                            ~(R92C_RCR_CBSSID_DATA | R92C_RCR_CBSSID_BCN));
+
+                        /* Reset TSF timer to zero. */
+                        reg = urtwn_read_4(sc, R92C_TCR);
+                        reg &= ~0x01;
+                        urtwn_write_4(sc, R92C_TCR, reg);
+                        reg |= 0x01;
+                        urtwn_write_4(sc, R92C_TCR, reg);
+                        msr |= R92C_MSR_AP;
+			break;
+                }
+                urtwn_write_1(sc, R92C_MSR, msr);
 
 		sifs_time = 10;
 		urtwn_write_1(sc, R92C_SIFS_CCK + 1, sifs_time);
@@ -3732,8 +3769,8 @@ urtwn_init(struct ifnet *ifp)
 
 	/* Initialize beacon parameters. */
 	urtwn_write_2(sc, R92C_TBTT_PROHIBIT, 0x6404);
-	urtwn_write_1(sc, R92C_DRVERLYINT, 0x05);
-	urtwn_write_1(sc, R92C_BCNDMATIM, 0x02);
+	urtwn_write_1(sc, R92C_DRVERLYINT, R92C_DRIVER_EARLY_INT_TIME);
+	urtwn_write_1(sc, R92C_BCNDMATIM, R92C_DMA_ATIME_INT_TIME);
 	urtwn_write_2(sc, R92C_BCNTCFG, 0x660f);
 
 	/* Setup AMPDU aggregation. */
