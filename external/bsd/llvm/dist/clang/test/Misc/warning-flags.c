@@ -18,7 +18,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (132):
+CHECK: Warnings without flags (111):
 CHECK-NEXT:   ext_delete_void_ptr_operand
 CHECK-NEXT:   ext_expected_semi_decl_list
 CHECK-NEXT:   ext_explicit_specialization_storage_class
@@ -95,6 +95,7 @@ CHECK-NEXT:   warn_missing_case_for_condition
 CHECK-NEXT:   warn_missing_dependent_template_keyword
 CHECK-NEXT:   warn_missing_exception_specification
 CHECK-NEXT:   warn_missing_whitespace_after_macro_name
+CHECK-NEXT:   warn_mt_message
 CHECK-NEXT:   warn_multiple_method_decl
 CHECK-NEXT:   warn_no_constructor_for_refconst
 CHECK-NEXT:   warn_not_compound_assign
@@ -107,30 +108,8 @@ CHECK-NEXT:   warn_pp_convert_lhs_to_positive
 CHECK-NEXT:   warn_pp_convert_rhs_to_positive
 CHECK-NEXT:   warn_pp_expr_overflow
 CHECK-NEXT:   warn_pp_line_decimal
-CHECK-NEXT:   warn_pragma_align_expected_equal
-CHECK-NEXT:   warn_pragma_align_invalid_option
-CHECK-NEXT:   warn_pragma_debug_unexpected_command
-CHECK-NEXT:   warn_pragma_expected_colon
-CHECK-NEXT:   warn_pragma_expected_enable_disable
-CHECK-NEXT:   warn_pragma_expected_identifier
-CHECK-NEXT:   warn_pragma_expected_lparen
-CHECK-NEXT:   warn_pragma_expected_rparen
-CHECK-NEXT:   warn_pragma_extra_tokens_at_eol
-CHECK-NEXT:   warn_pragma_ms_struct
-CHECK-NEXT:   warn_pragma_options_align_reset_failed
-CHECK-NEXT:   warn_pragma_options_expected_align
-CHECK-NEXT:   warn_pragma_pack_invalid_action
-CHECK-NEXT:   warn_pragma_pack_invalid_alignment
-CHECK-NEXT:   warn_pragma_pack_malformed
-CHECK-NEXT:   warn_pragma_pack_pop_failed
 CHECK-NEXT:   warn_pragma_pack_pop_identifer_and_alignment
 CHECK-NEXT:   warn_pragma_pack_show
-CHECK-NEXT:   warn_pragma_pop_macro_no_push
-CHECK-NEXT:   warn_pragma_unknown_extension
-CHECK-NEXT:   warn_pragma_unused_expected_punc
-CHECK-NEXT:   warn_pragma_unused_expected_var
-CHECK-NEXT:   warn_pragma_unused_expected_var_arg
-CHECK-NEXT:   warn_pragma_unused_undeclared_var
 CHECK-NEXT:   warn_property_attr_mismatch
 CHECK-NEXT:   warn_property_attribute
 CHECK-NEXT:   warn_property_getter_owning_mismatch

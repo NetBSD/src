@@ -17,6 +17,8 @@ def err_drv_unsupported_option_argument : Error<
   "unsupported argument '%1' to option '%0'">;
 def err_drv_unknown_stdin_type : Error<
   "-E or -x required when input is from standard input">;
+def err_drv_unknown_stdin_type_clang_cl : Error<
+  "use /Tc or /Tp to set input type for standard input">;
 def err_drv_unknown_language : Error<"language not recognized: '%0'">;
 def err_drv_invalid_arch_name : Error<
   "invalid arch name '%0'">;
@@ -152,6 +154,8 @@ def warn_drv_pch_not_first_include : Warning<
   "precompiled header '%0' was ignored because '%1' is not first '-include'">;
 def warn_missing_sysroot : Warning<"no such sysroot directory: '%0'">,
   InGroup<DiagGroup<"missing-sysroot">>;
+def warn_missing_debug_compression : Warning<"DWARF compression is not implemented">,
+  InGroup<DiagGroup<"missing-debug-compression">>;
 
 def note_drv_command_failed_diag_msg : Note<
   "diagnostic msg: %0">;

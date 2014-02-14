@@ -569,6 +569,7 @@ void ASTDumper::dumpAttr(const Attr *A) {
   IndentScope Indent(*this);
   {
     ColorScope Color(*this, AttrColor);
+
     switch (A->getKind()) {
 #define ATTR(X) case attr::X: OS << #X; break;
 #include "clang/Basic/AttrList.inc"
@@ -579,6 +580,8 @@ void ASTDumper::dumpAttr(const Attr *A) {
   dumpPointer(A);
   dumpSourceRange(A->getRange());
 #include "clang/AST/AttrDump.inc"
+  if (A->isImplicit())
+    OS << " Implicit";
 }
 
 static void dumpPreviousDeclImpl(raw_ostream &OS, ...) {}
@@ -1267,7 +1270,7 @@ void ASTDumper::VisitObjCMethodDecl(const ObjCMethodDecl *D) {
   else
     OS << " +";
   dumpName(D);
-  dumpType(D->getResultType());
+  dumpType(D->getReturnType());
 
   bool OldMoreChildren = hasMoreChildren();
   bool IsVariadic = D->isVariadic();

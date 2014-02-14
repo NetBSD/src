@@ -177,6 +177,8 @@ def err_invalid_token_after_declarator_suggest_equal : Error<
   "invalid %0 at end of declaration; did you mean '='?">;
 def err_expected_statement : Error<"expected statement">;
 def err_expected_lparen_after : Error<"expected '(' after '%0'">;
+def err_expected_rparen_after : Error<"expected ')' after '%0'">;
+def err_expected_punc : Error<"expected ')' or ',' after '%0'">;
 def err_expected_less_after : Error<"expected '<' after '%0'">;
 def err_expected_lbrace_in_compound_literal : Error<
   "expected '{' in compound literal">;
@@ -517,7 +519,7 @@ def warn_cxx98_compat_nullptr : Warning<
 def warn_cxx98_compat_alignas : Warning<"'alignas' is incompatible with C++98">,
   InGroup<CXX98Compat>, DefaultIgnore;
 def warn_cxx98_compat_attribute : Warning<
-  "generalized attributes are incompatible with C++98">,
+  "C++11 attribute syntax is incompatible with C++98">,
   InGroup<CXX98Compat>, DefaultIgnore;
 def err_cxx11_attribute_forbids_arguments : Error<
   "attribute '%0' cannot have an argument list">;
@@ -763,32 +765,40 @@ def err_type_trait_arity : Error<
 // Language specific pragmas
 // - Generic warnings
 def warn_pragma_expected_lparen : Warning<
-  "missing '(' after '#pragma %0' - ignoring">;
+  "missing '(' after '#pragma %0' - ignoring">, InGroup<IgnoredPragmas>;
 def warn_pragma_expected_rparen : Warning<
-  "missing ')' after '#pragma %0' - ignoring">;
+  "missing ')' after '#pragma %0' - ignoring">, InGroup<IgnoredPragmas>;
 def warn_pragma_expected_identifier : Warning<
-  "expected identifier in '#pragma %0' - ignored">;  
+  "expected identifier in '#pragma %0' - ignored">, InGroup<IgnoredPragmas>;
 def warn_pragma_ms_struct : Warning<
-  "incorrect use of '#pragma ms_struct on|off' - ignored">;  
+  "incorrect use of '#pragma ms_struct on|off' - ignored">,
+  InGroup<IgnoredPragmas>;
 def warn_pragma_extra_tokens_at_eol : Warning<
-  "extra tokens at end of '#pragma %0' - ignored">; 
+  "extra tokens at end of '#pragma %0' - ignored">,
+  InGroup<IgnoredPragmas>;
+def warn_pragma_expected_punc : Warning<
+  "expected ')' or ',' in '#pragma %0'">, InGroup<IgnoredPragmas>;
 // - #pragma options
 def warn_pragma_options_expected_align : Warning<
-  "expected 'align' following '#pragma options' - ignored">;
+  "expected 'align' following '#pragma options' - ignored">,
+  InGroup<IgnoredPragmas>;
 def warn_pragma_align_expected_equal : Warning<
-  "expected '=' following '#pragma %select{align|options align}0' - ignored">;
+  "expected '=' following '#pragma %select{align|options align}0' - ignored">,
+  InGroup<IgnoredPragmas>;
 def warn_pragma_align_invalid_option : Warning<
-  "invalid alignment option in '#pragma %select{align|options align}0' - ignored">;
+  "invalid alignment option in '#pragma %select{align|options align}0' - ignored">,
+  InGroup<IgnoredPragmas>;
 // - #pragma pack
 def warn_pragma_pack_invalid_action : Warning<
-  "unknown action for '#pragma pack' - ignored">;
+  "unknown action for '#pragma pack' - ignored">,
+  InGroup<IgnoredPragmas>;
 def warn_pragma_pack_malformed : Warning<
-  "expected integer or identifier in '#pragma pack' - ignored">;
+  "expected integer or identifier in '#pragma pack' - ignored">,
+  InGroup<IgnoredPragmas>;
 // - #pragma unused
 def warn_pragma_unused_expected_var : Warning<
-  "expected '#pragma unused' argument to be a variable name">;
-def warn_pragma_unused_expected_punc : Warning<
-  "expected ')' or ',' in '#pragma unused'">;
+  "expected '#pragma unused' argument to be a variable name">,
+  InGroup<IgnoredPragmas>;
 // - #pragma fp_contract
 def err_pragma_fp_contract_scope : Error<
   "'#pragma fp_contract' can only appear at file scope or at the start of a "
@@ -801,6 +811,10 @@ def err_pragma_comment_unknown_kind : Error<"unknown kind of pragma comment">;
 def err_pragma_detect_mismatch_malformed : Error<
   "pragma detect_mismatch is malformed; it requires two comma-separated "
   "string literals">;
+// - #pragma pointers_to_members
+def err_pragma_pointers_to_members_unknown_kind : Error<
+  "unexpected %0, expected to see one of %select{|'best_case', 'full_generality', }1"
+  "'single_inheritance', 'multiple_inheritance', or 'virtual_inheritance'">;
 
 // OpenCL Section 6.8.g
 def err_not_opencl_storage_class_specifier : Error<
@@ -808,11 +822,11 @@ def err_not_opencl_storage_class_specifier : Error<
 
 // OpenCL EXTENSION pragma (OpenCL 1.1 [9.1])
 def warn_pragma_expected_colon : Warning<
-  "missing ':' after %0 - ignoring">;
+  "missing ':' after %0 - ignoring">, InGroup<IgnoredPragmas>;
 def warn_pragma_expected_enable_disable : Warning<
-  "expected 'enable' or 'disable' - ignoring">;
+  "expected 'enable' or 'disable' - ignoring">, InGroup<IgnoredPragmas>;
 def warn_pragma_unknown_extension : Warning<
-  "unknown OpenCL extension %0 - ignoring">;
+  "unknown OpenCL extension %0 - ignoring">, InGroup<IgnoredPragmas>;
 
 def err_seh_expected_handler : Error<
   "expected '__except' or '__finally' block">;
@@ -837,7 +851,7 @@ def err_omp_unknown_directive : Error <
 def err_omp_unexpected_directive : Error <
   "unexpected OpenMP directive '#pragma omp %0'">;
 def err_omp_expected_punc : Error <
-  "expected ',' or ')' in %select{'#pragma omp %1'|'%1' clause}0">;
+  "expected ',' or ')' in '%0' clause">;
 def err_omp_unexpected_clause : Error <
   "unexpected OpenMP clause '%0' in directive '#pragma omp %1'">;
 def err_omp_more_one_clause : Error <

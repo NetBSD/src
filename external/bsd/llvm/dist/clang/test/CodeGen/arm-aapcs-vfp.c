@@ -25,6 +25,11 @@ struct homogeneous_struct test_struct(struct homogeneous_struct arg) {
   return struct_callee(arg);
 }
 
+// CHECK: define arm_aapcs_vfpcc void @test_struct_variadic(%struct.homogeneous_struct* {{.*}}, [4 x i32] %{{.*}}, ...)
+struct homogeneous_struct test_struct_variadic(struct homogeneous_struct arg, ...) {
+  return struct_callee(arg);
+}
+
 struct nested_array {
   double d[4];
 };
@@ -98,3 +103,13 @@ void test_neon(struct neon_struct arg) {
 // CHECK-LABEL: define arm_aapcs_vfpcc void @f33(%struct.s33* byval %s)
 struct s33 { char buf[32*32]; };
 void f33(struct s33 s) { }
+
+typedef struct { long long x; int y; } struct_long_long_int;
+// CHECK: define arm_aapcs_vfpcc void @test_vfp_stack_gpr_split_1(double %a, double %b, double %c, double %d, double %e, double %f, double %g, double %h, double %i, i32 %j, i64 %k, i32 %l)
+void test_vfp_stack_gpr_split_1(double a, double b, double c, double d, double e, double f, double g, double h, double i, int j, long long k, int l) {}
+
+// CHECK: define arm_aapcs_vfpcc void @test_vfp_stack_gpr_split_2(double %a, double %b, double %c, double %d, double %e, double %f, double %g, double %h, double %i, i32 %j, [3 x i32], i64 %k.0, i32 %k.1)
+void test_vfp_stack_gpr_split_2(double a, double b, double c, double d, double e, double f, double g, double h, double i, int j, struct_long_long_int k) {}
+
+// CHECK: define arm_aapcs_vfpcc void @test_vfp_stack_gpr_split_3(%struct.struct_long_long_int* noalias sret %agg.result, double %a, double %b, double %c, double %d, double %e, double %f, double %g, double %h, double %i, [3 x i32], i64 %k.0, i32 %k.1)
+struct_long_long_int test_vfp_stack_gpr_split_3(double a, double b, double c, double d, double e, double f, double g, double h, double i, struct_long_long_int k) {}

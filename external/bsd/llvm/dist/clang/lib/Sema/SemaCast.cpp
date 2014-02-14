@@ -21,6 +21,7 @@
 #include "clang/AST/ExprObjC.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/Basic/PartialDiagnostic.h"
+#include "clang/Basic/TargetInfo.h"
 #include "clang/Sema/Initialization.h"
 #include "llvm/ADT/SmallVector.h"
 #include <set>
@@ -1346,7 +1347,8 @@ TryStaticMemberPointerUpcast(Sema &Self, ExprResult &SrcExpr, QualType SrcType,
   QualType DestClass(DestMemPtr->getClass(), 0);
   CXXBasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/true,
                   /*DetectVirtual=*/true);
-  if (!Self.IsDerivedFrom(SrcClass, DestClass, Paths)) {
+  if (Self.RequireCompleteType(OpRange.getBegin(), SrcClass, 0) ||
+      !Self.IsDerivedFrom(SrcClass, DestClass, Paths)) {
     return TC_NotApplicable;
   }
 
@@ -1430,6 +1432,10 @@ TryStaticImplicitCast(Sema &Self, ExprResult &SrcExpr, QualType DestType,
                                     diag::err_allocation_of_abstract_type)) {
       msg = 0;
       return TC_Failed;
+    }
+  } else if (DestType->isMemberPointerType()) {
+    if (Self.Context.getTargetInfo().getCXXABI().isMicrosoft()) {
+      Self.RequireCompleteType(OpRange.getBegin(), DestType, 0);
     }
   }
 
@@ -1776,6 +1782,13 @@ static TryCastResult TryReinterpretCast(Sema &Self, ExprResult &SrcExpr,
                            /*CheckObjCLifetime=*/CStyle)) {
       msg = diag::err_bad_cxx_cast_qualifiers_away;
       return TC_Failed;
+    }
+
+    if (Self.Context.getTargetInfo().getCXXABI().isMicrosoft()) {
+      // We need to determine the inheritance model that the class will use if
+      // haven't yet.
+      Self.RequireCompleteType(OpRange.getBegin(), SrcType, 0);
+      Self.RequireCompleteType(OpRange.getBegin(), DestType, 0);
     }
 
     // Don't allow casting between member pointers of different sizes.

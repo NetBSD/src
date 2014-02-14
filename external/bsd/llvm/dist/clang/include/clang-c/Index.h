@@ -2880,14 +2880,14 @@ CINDEX_LINKAGE CXString clang_getTypeKindSpelling(enum CXTypeKind K);
 CINDEX_LINKAGE enum CXCallingConv clang_getFunctionTypeCallingConv(CXType T);
 
 /**
- * \brief Retrieve the result type associated with a function type.
+ * \brief Retrieve the return type associated with a function type.
  *
  * If a non-function type is passed in, an invalid type is returned.
  */
 CINDEX_LINKAGE CXType clang_getResultType(CXType T);
 
 /**
- * \brief Retrieve the number of non-variadic arguments associated with a
+ * \brief Retrieve the number of non-variadic parameters associated with a
  * function type.
  *
  * If a non-function type is passed in, -1 is returned.
@@ -2895,7 +2895,7 @@ CINDEX_LINKAGE CXType clang_getResultType(CXType T);
 CINDEX_LINKAGE int clang_getNumArgTypes(CXType T);
 
 /**
- * \brief Retrieve the type of an argument of a function type.
+ * \brief Retrieve the type of a parameter of a function type.
  *
  * If a non-function type is passed in or the function does not have enough
  * parameters, an invalid type is returned.
@@ -2908,7 +2908,7 @@ CINDEX_LINKAGE CXType clang_getArgType(CXType T, unsigned i);
 CINDEX_LINKAGE unsigned clang_isFunctionTypeVariadic(CXType T);
 
 /**
- * \brief Retrieve the result type associated with a given cursor.
+ * \brief Retrieve the return type associated with a given cursor.
  *
  * This only returns a valid type if the cursor refers to a function or method.
  */
