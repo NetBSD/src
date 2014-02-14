@@ -222,7 +222,7 @@ void DiagnosticsEngine::setDiagnosticMapping(diag::kind Diag, diag::Mapping Map,
 
   // Create a new state/point and fit it into the vector of DiagStatePoints
   // so that the vector is always ordered according to location.
-  Pos->Loc.isBeforeInTranslationUnitThan(Loc);
+  assert(Pos->Loc.isBeforeInTranslationUnitThan(Loc));
   DiagStates.push_back(*Pos->State);
   DiagState *NewState = &DiagStates.back();
   GetCurDiagState()->setMappingInfo(Diag, MappingInfo);
@@ -243,24 +243,6 @@ bool DiagnosticsEngine::setDiagnosticGroupMapping(
     setDiagnosticMapping(GroupDiags[i], Map, Loc);
 
   return false;
-}
-
-void DiagnosticsEngine::setDiagnosticWarningAsError(diag::kind Diag,
-                                                    bool Enabled) {
-  // If we are enabling this feature, just set the diagnostic mappings to map to
-  // errors.
-  if (Enabled) 
-    setDiagnosticMapping(Diag, diag::MAP_ERROR, SourceLocation());
-
-  // Otherwise, we want to set the diagnostic mapping's "no Werror" bit, and
-  // potentially downgrade anything already mapped to be a warning.
-  DiagnosticMappingInfo &Info = GetCurDiagState()->getOrAddMappingInfo(Diag);
-
-  if (Info.getMapping() == diag::MAP_ERROR ||
-      Info.getMapping() == diag::MAP_FATAL)
-    Info.setMapping(diag::MAP_WARNING);
-
-  Info.setNoWarningAsError(true);
 }
 
 bool DiagnosticsEngine::setDiagnosticGroupWarningAsError(StringRef Group,
@@ -291,23 +273,6 @@ bool DiagnosticsEngine::setDiagnosticGroupWarningAsError(StringRef Group,
   }
 
   return false;
-}
-
-void DiagnosticsEngine::setDiagnosticErrorAsFatal(diag::kind Diag,
-                                                  bool Enabled) {
-  // If we are enabling this feature, just set the diagnostic mappings to map to
-  // errors.
-  if (Enabled)
-    setDiagnosticMapping(Diag, diag::MAP_FATAL, SourceLocation());
-  
-  // Otherwise, we want to set the diagnostic mapping's "no Werror" bit, and
-  // potentially downgrade anything already mapped to be a warning.
-  DiagnosticMappingInfo &Info = GetCurDiagState()->getOrAddMappingInfo(Diag);
-  
-  if (Info.getMapping() == diag::MAP_FATAL)
-    Info.setMapping(diag::MAP_ERROR);
-  
-  Info.setNoErrorAsFatal(true);
 }
 
 bool DiagnosticsEngine::setDiagnosticGroupErrorAsFatal(StringRef Group,

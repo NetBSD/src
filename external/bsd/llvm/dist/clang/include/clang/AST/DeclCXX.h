@@ -17,6 +17,7 @@
 #define LLVM_CLANG_AST_DECLCXX_H
 
 #include "clang/AST/ASTUnresolvedSet.h"
+#include "clang/AST/Attr.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
@@ -256,16 +257,6 @@ public:
 
   /// \brief Retrieves the type and source location of the base class.
   TypeSourceInfo *getTypeSourceInfo() const { return BaseTypeInfo; }
-};
-
-/// The inheritance model to use for member pointers of a given CXXRecordDecl.
-enum MSInheritanceModel {
-  MSIM_Single,
-  MSIM_SinglePolymorphic,
-  MSIM_Multiple,
-  MSIM_MultiplePolymorphic,
-  MSIM_Virtual,
-  MSIM_Unspecified
 };
 
 /// \brief Represents a C++ struct/union/class.
@@ -1608,7 +1599,21 @@ public:
   }
 
   /// \brief Returns the inheritance model used for this record.
-  MSInheritanceModel getMSInheritanceModel() const;
+  MSInheritanceAttr::Spelling getMSInheritanceModel() const;
+  /// \brief Calculate what the inheritance model would be for this class.
+  MSInheritanceAttr::Spelling calculateInheritanceModel() const;
+
+  /// In the Microsoft C++ ABI, use zero for the field offset of a null data
+  /// member pointer if we can guarantee that zero is not a valid field offset,
+  /// or if the member pointer has multiple fields.  Polymorphic classes have a
+  /// vfptr at offset zero, so we can use zero for null.  If there are multiple
+  /// fields, we can use zero even if it is a valid field offset because
+  /// null-ness testing will check the other fields.
+  bool nullFieldOffsetIsZero() const {
+    return !MSInheritanceAttr::hasOnlyOneField(/*IsMemberFunction=*/false,
+                                               getMSInheritanceModel()) ||
+           (hasDefinition() && isPolymorphic());
+  }
 
   /// \brief Determine whether this lambda expression was known to be dependent
   /// at the time it was created, even if its context does not appear to be
@@ -2360,7 +2365,7 @@ public:
 
   /// \brief Returns the type that this conversion function is converting to.
   QualType getConversionType() const {
-    return getType()->getAs<FunctionType>()->getResultType();
+    return getType()->getAs<FunctionType>()->getReturnType();
   }
 
   /// \brief Determine whether this conversion function is a conversion from

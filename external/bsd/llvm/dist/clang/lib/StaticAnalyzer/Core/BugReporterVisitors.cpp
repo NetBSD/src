@@ -1558,25 +1558,18 @@ LikelyFalsePositiveSuppressionBRVisitor::getEndPath(BugReporterContext &BRC,
       //   std::u16string s; s += u'a';
       // because we cannot reason about the internal invariants of the
       // datastructure.
-      const LocationContext *LCtx = N->getLocationContext();
-      do {
+      for (const LocationContext *LCtx = N->getLocationContext(); LCtx;
+           LCtx = LCtx->getParent()) {
         const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(LCtx->getDecl());
         if (!MD)
-          break;
+          continue;
 
         const CXXRecordDecl *CD = MD->getParent();
         if (CD->getName() == "basic_string") {
           BR.markInvalid(getTag(), 0);
           return 0;
-        } else if (CD->getName().find("allocator") == StringRef::npos) {
-          // Only keep searching if the current method is in a class with the
-          // word "allocator" in its name, e.g. std::allocator or
-          // allocator_traits.
-          break;
         }
-
-        LCtx = LCtx->getParent();
-      } while (LCtx);
+      }
     }
   }
 
@@ -1613,8 +1606,10 @@ UndefOrNullArgVisitor::VisitNode(const ExplodedNode *N,
   CallEventManager &CEMgr = BRC.getStateManager().getCallEventManager();
   CallEventRef<> Call = CEMgr.getCaller(CEnter->getCalleeContext(), State);
   unsigned Idx = 0;
-  for (CallEvent::param_iterator I = Call->param_begin(),
-                                 E = Call->param_end(); I != E; ++I, ++Idx) {
+  ArrayRef<ParmVarDecl*> parms = Call->parameters();
+
+  for (ArrayRef<ParmVarDecl*>::iterator I = parms.begin(), E = parms.end();
+                              I != E; ++I, ++Idx) {
     const MemRegion *ArgReg = Call->getArgSVal(Idx).getAsRegion();
 
     // Are we tracking the argument or its subregion?

@@ -43,7 +43,6 @@ namespace ento {
 
 class AnalysisManager;
 class CallEvent;
-class SimpleCall;
 class CXXConstructorCall;
 
 class ExprEngine : public SubEngine {
@@ -421,6 +420,10 @@ public:
   void VisitCXXDestructor(QualType ObjectType, const MemRegion *Dest,
                           const Stmt *S, bool IsBaseDtor,
                           ExplodedNode *Pred, ExplodedNodeSet &Dst);
+
+  void VisitCXXNewAllocatorCall(const CXXNewExpr *CNE,
+                                ExplodedNode *Pred,
+                                ExplodedNodeSet &Dst);
 
   void VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
                        ExplodedNodeSet &Dst);

@@ -173,6 +173,14 @@ void test_struct_of_four_doubles(void) {
   takes_struct_of_four_doubles(3.0, g_s4d, g_s4d, 4.0);
 }
 
+extern void takes_struct_of_four_doubles_variadic(double a, struct_of_four_doubles b, struct_of_four_doubles c, double d, ...);
+
+void test_struct_of_four_doubles_variadic(void) {
+// CHECK: test_struct_of_four_doubles_variadic
+// CHECK: call arm_aapcs_vfpcc void (double, [4 x i64], [4 x i64], double, ...)* @takes_struct_of_four_doubles_variadic(double {{.*}}, [4 x i64] {{.*}}, [4 x i64] {{.*}}, double {{.*}})
+  takes_struct_of_four_doubles_variadic(3.0, g_s4d, g_s4d, 4.0);
+}
+
 extern void takes_struct_with_backfill(float f1, double a, float f2, struct_of_four_doubles b, struct_of_four_doubles c, double d);
 void test_struct_with_backfill(void) {
 // CHECK: test_struct_with_backfill
@@ -196,6 +204,17 @@ void test_struct_of_vecs(void) {
 // CHECK: call arm_aapcs_vfpcc void @takes_struct_of_vecs(double {{.*}}, <8 x i8> {{.*}}, <4 x i16> {{.*}}, <8 x i8> {{.*}}, <4 x i16> {{.*}}, [6 x float] undef, <8 x i8> {{.*}}, <4 x i16> {{.*}}, <8 x i8> {{.*}}, <4 x i16> {{.*}}, double {{.*}})
   takes_struct_of_vecs(3.0, g_vec, g_vec, 4.0);
 }
+
+typedef struct {
+  double a;
+  long double b;
+} struct_of_double_and_long_double;
+struct_of_double_and_long_double g_dld;
+
+struct_of_double_and_long_double test_struct_of_double_and_long_double(void) {
+  return g_dld;
+}
+// CHECK: define arm_aapcs_vfpcc %struct.struct_of_double_and_long_double @test_struct_of_double_and_long_double()
 
 // FIXME: Tests necessary:
 //         - Vectors

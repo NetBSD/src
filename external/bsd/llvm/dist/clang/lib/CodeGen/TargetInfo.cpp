@@ -114,6 +114,9 @@ void ABIArgInfo::dump() const {
   case Ignore:
     OS << "Ignore";
     break;
+  case InAlloca:
+    OS << "InAlloca Offset=" << getInAllocaFieldIndex();
+    break;
   case Indirect:
     OS << "Indirect Align=" << getIndirectAlign()
        << " ByVal=" << getIndirectByVal()
@@ -526,6 +529,16 @@ static llvm::Type* X86AdjustInlineAsmType(CodeGen::CodeGenFunction &CGF,
 // X86-32 ABI Implementation
 //===----------------------------------------------------------------------===//
 
+/// \brief Similar to llvm::CCState, but for Clang.
+struct CCState {
+  CCState(unsigned CC) : CC(CC), FreeRegs(0) {}
+
+  unsigned CC;
+  unsigned FreeRegs;
+  unsigned StackOffset;
+  bool UseInAlloca;
+};
+
 /// X86_32ABIInfo - The X86-32 ABI information.
 class X86_32ABIInfo : public ABIInfo {
   enum Class {
@@ -544,24 +557,31 @@ class X86_32ABIInfo : public ABIInfo {
     return (Size == 8 || Size == 16 || Size == 32 || Size == 64);
   }
 
-  static bool shouldReturnTypeInRegister(QualType Ty, ASTContext &Context, 
-                                          unsigned callingConvention);
+  bool shouldReturnTypeInRegister(QualType Ty, ASTContext &Context,
+                                  bool IsInstanceMethod) const;
 
   /// getIndirectResult - Give a source type \arg Ty, return a suitable result
   /// such that the argument will be passed in memory.
-  ABIArgInfo getIndirectResult(QualType Ty, bool ByVal,
-                               unsigned &FreeRegs) const;
+  ABIArgInfo getIndirectResult(QualType Ty, bool ByVal, CCState &State) const;
+
+  ABIArgInfo getIndirectReturnResult(CCState &State) const;
 
   /// \brief Return the alignment to use for the given type on the stack.
   unsigned getTypeStackAlignInBytes(QualType Ty, unsigned Align) const;
 
   Class classify(QualType Ty) const;
-  ABIArgInfo classifyReturnType(QualType RetTy,
-                                unsigned callingConvention) const;
-  ABIArgInfo classifyArgumentType(QualType RetTy, unsigned &FreeRegs,
-                                  bool IsFastCall) const;
-  bool shouldUseInReg(QualType Ty, unsigned &FreeRegs,
-                      bool IsFastCall, bool &NeedsPadding) const;
+  ABIArgInfo classifyReturnType(QualType RetTy, CCState &State,
+                                bool IsInstanceMethod) const;
+  ABIArgInfo classifyArgumentType(QualType RetTy, CCState &State) const;
+  bool shouldUseInReg(QualType Ty, CCState &State, bool &NeedsPadding) const;
+
+  /// \brief Rewrite the function info so that all memory arguments use
+  /// inalloca.
+  void rewriteWithInAlloca(CGFunctionInfo &FI) const;
+
+  void addFieldToArgStruct(SmallVector<llvm::Type *, 6> &FrameFields,
+                           unsigned &StackOffset, ABIArgInfo &Info,
+                           QualType Type) const;
 
 public:
 
@@ -616,9 +636,8 @@ public:
 
 /// shouldReturnTypeInRegister - Determine if the given type should be
 /// passed in a register (for the Darwin ABI).
-bool X86_32ABIInfo::shouldReturnTypeInRegister(QualType Ty,
-                                               ASTContext &Context,
-                                               unsigned callingConvention) {
+bool X86_32ABIInfo::shouldReturnTypeInRegister(QualType Ty, ASTContext &Context,
+                                               bool IsInstanceMethod) const {
   uint64_t Size = Context.getTypeSize(Ty);
 
   // Type must be register sized.
@@ -644,7 +663,7 @@ bool X86_32ABIInfo::shouldReturnTypeInRegister(QualType Ty,
   // Arrays are treated like records.
   if (const ConstantArrayType *AT = Context.getAsConstantArrayType(Ty))
     return shouldReturnTypeInRegister(AT->getElementType(), Context,
-                                      callingConvention);
+                                      IsInstanceMethod);
 
   // Otherwise, it must be a record type.
   const RecordType *RT = Ty->getAs<RecordType>();
@@ -654,10 +673,8 @@ bool X86_32ABIInfo::shouldReturnTypeInRegister(QualType Ty,
 
   // For thiscall conventions, structures will never be returned in
   // a register.  This is for compatibility with the MSVC ABI
-  if (callingConvention == llvm::CallingConv::X86_ThisCall && 
-      RT->isStructureType()) {
+  if (IsWin32StructABI && IsInstanceMethod && RT->isStructureType())
     return false;
-  }
 
   // Structure types are passed in register if all fields would be
   // passed in a register.
@@ -670,15 +687,24 @@ bool X86_32ABIInfo::shouldReturnTypeInRegister(QualType Ty,
       continue;
 
     // Check fields recursively.
-    if (!shouldReturnTypeInRegister(FD->getType(), Context, 
-                                    callingConvention))
+    if (!shouldReturnTypeInRegister(FD->getType(), Context, IsInstanceMethod))
       return false;
   }
   return true;
 }
 
-ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy, 
-                                            unsigned callingConvention) const {
+ABIArgInfo X86_32ABIInfo::getIndirectReturnResult(CCState &State) const {
+  // If the return value is indirect, then the hidden argument is consuming one
+  // integer register.
+  if (State.FreeRegs) {
+    --State.FreeRegs;
+    return ABIArgInfo::getIndirectInReg(/*Align=*/0, /*ByVal=*/false);
+  }
+  return ABIArgInfo::getIndirect(/*Align=*/0, /*ByVal=*/false);
+}
+
+ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy, CCState &State,
+                                             bool IsInstanceMethod) const {
   if (RetTy->isVoidType())
     return ABIArgInfo::getIgnore();
 
@@ -701,7 +727,7 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy,
         return ABIArgInfo::getDirect(llvm::IntegerType::get(getVMContext(),
                                                             Size));
 
-      return ABIArgInfo::getIndirect(0);
+      return getIndirectReturnResult(State);
     }
 
     return ABIArgInfo::getDirect();
@@ -710,21 +736,20 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy,
   if (isAggregateTypeForABI(RetTy)) {
     if (const RecordType *RT = RetTy->getAs<RecordType>()) {
       if (isRecordReturnIndirect(RT, getCXXABI()))
-        return ABIArgInfo::getIndirect(0, /*ByVal=*/false);
+        return getIndirectReturnResult(State);
 
       // Structures with flexible arrays are always indirect.
       if (RT->getDecl()->hasFlexibleArrayMember())
-        return ABIArgInfo::getIndirect(0);
+        return getIndirectReturnResult(State);
     }
 
     // If specified, structs and unions are always indirect.
     if (!IsSmallStructInRegABI && !RetTy->isAnyComplexType())
-      return ABIArgInfo::getIndirect(0);
+      return getIndirectReturnResult(State);
 
     // Small structures which are register sized are generally returned
     // in a register.
-    if (X86_32ABIInfo::shouldReturnTypeInRegister(RetTy, getContext(), 
-                                                  callingConvention)) {
+    if (shouldReturnTypeInRegister(RetTy, getContext(), IsInstanceMethod)) {
       uint64_t Size = getContext().getTypeSize(RetTy);
 
       // As a special-case, if the struct is a "single-element" struct, and
@@ -742,7 +767,7 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy,
       return ABIArgInfo::getDirect(llvm::IntegerType::get(getVMContext(),Size));
     }
 
-    return ABIArgInfo::getIndirect(0);
+    return getIndirectReturnResult(State);
   }
 
   // Treat an enum type as its underlying type.
@@ -806,10 +831,10 @@ unsigned X86_32ABIInfo::getTypeStackAlignInBytes(QualType Ty,
 }
 
 ABIArgInfo X86_32ABIInfo::getIndirectResult(QualType Ty, bool ByVal,
-                                            unsigned &FreeRegs) const {
+                                            CCState &State) const {
   if (!ByVal) {
-    if (FreeRegs) {
-      --FreeRegs; // Non-byval indirects just use one pointer.
+    if (State.FreeRegs) {
+      --State.FreeRegs; // Non-byval indirects just use one pointer.
       return ABIArgInfo::getIndirectInReg(0, false);
     }
     return ABIArgInfo::getIndirect(0, false);
@@ -819,15 +844,12 @@ ABIArgInfo X86_32ABIInfo::getIndirectResult(QualType Ty, bool ByVal,
   unsigned TypeAlign = getContext().getTypeAlign(Ty) / 8;
   unsigned StackAlign = getTypeStackAlignInBytes(Ty, TypeAlign);
   if (StackAlign == 0)
-    return ABIArgInfo::getIndirect(4);
+    return ABIArgInfo::getIndirect(4, /*ByVal=*/true);
 
   // If the stack alignment is less than the type alignment, realign the
   // argument.
-  if (StackAlign < TypeAlign)
-    return ABIArgInfo::getIndirect(StackAlign, /*ByVal=*/true,
-                                   /*Realign=*/true);
-
-  return ABIArgInfo::getIndirect(StackAlign);
+  bool Realign = TypeAlign > StackAlign;
+  return ABIArgInfo::getIndirect(StackAlign, /*ByVal=*/true, Realign);
 }
 
 X86_32ABIInfo::Class X86_32ABIInfo::classify(QualType Ty) const {
@@ -843,8 +865,8 @@ X86_32ABIInfo::Class X86_32ABIInfo::classify(QualType Ty) const {
   return Integer;
 }
 
-bool X86_32ABIInfo::shouldUseInReg(QualType Ty, unsigned &FreeRegs,
-                                   bool IsFastCall, bool &NeedsPadding) const {
+bool X86_32ABIInfo::shouldUseInReg(QualType Ty, CCState &State,
+                                   bool &NeedsPadding) const {
   NeedsPadding = false;
   Class C = classify(Ty);
   if (C == Float)
@@ -856,14 +878,14 @@ bool X86_32ABIInfo::shouldUseInReg(QualType Ty, unsigned &FreeRegs,
   if (SizeInRegs == 0)
     return false;
 
-  if (SizeInRegs > FreeRegs) {
-    FreeRegs = 0;
+  if (SizeInRegs > State.FreeRegs) {
+    State.FreeRegs = 0;
     return false;
   }
 
-  FreeRegs -= SizeInRegs;
+  State.FreeRegs -= SizeInRegs;
 
-  if (IsFastCall) {
+  if (State.CC == llvm::CallingConv::X86_FastCall) {
     if (Size > 32)
       return false;
 
@@ -876,7 +898,7 @@ bool X86_32ABIInfo::shouldUseInReg(QualType Ty, unsigned &FreeRegs,
     if (Ty->isReferenceType())
       return true;
 
-    if (FreeRegs)
+    if (State.FreeRegs)
       NeedsPadding = true;
 
     return false;
@@ -886,20 +908,26 @@ bool X86_32ABIInfo::shouldUseInReg(QualType Ty, unsigned &FreeRegs,
 }
 
 ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty,
-                                               unsigned &FreeRegs,
-                                               bool IsFastCall) const {
+                                               CCState &State) const {
   // FIXME: Set alignment on indirect arguments.
   if (isAggregateTypeForABI(Ty)) {
     if (const RecordType *RT = Ty->getAs<RecordType>()) {
-      if (IsWin32StructABI)
-        return getIndirectResult(Ty, true, FreeRegs);
+      // Check with the C++ ABI first.
+      CGCXXABI::RecordArgABI RAA = getRecordArgABI(RT, getCXXABI());
+      if (RAA == CGCXXABI::RAA_Indirect) {
+        return getIndirectResult(Ty, false, State);
+      } else if (RAA == CGCXXABI::RAA_DirectInMemory) {
+        // The field index doesn't matter, we'll fix it up later.
+        return ABIArgInfo::getInAlloca(/*FieldIndex=*/0);
+      }
 
-      if (CGCXXABI::RecordArgABI RAA = getRecordArgABI(RT, getCXXABI()))
-        return getIndirectResult(Ty, RAA == CGCXXABI::RAA_DirectInMemory, FreeRegs);
+      // Structs are always byval on win32, regardless of what they contain.
+      if (IsWin32StructABI)
+        return getIndirectResult(Ty, true, State);
 
       // Structures with flexible arrays are always indirect.
       if (RT->getDecl()->hasFlexibleArrayMember())
-        return getIndirectResult(Ty, true, FreeRegs);
+        return getIndirectResult(Ty, true, State);
     }
 
     // Ignore empty structs/unions.
@@ -909,7 +937,7 @@ ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty,
     llvm::LLVMContext &LLVMContext = getVMContext();
     llvm::IntegerType *Int32 = llvm::Type::getInt32Ty(LLVMContext);
     bool NeedsPadding;
-    if (shouldUseInReg(Ty, FreeRegs, IsFastCall, NeedsPadding)) {
+    if (shouldUseInReg(Ty, State, NeedsPadding)) {
       unsigned SizeInRegs = (getContext().getTypeSize(Ty) + 31) / 32;
       SmallVector<llvm::Type*, 3> Elements(SizeInRegs, Int32);
       llvm::Type *Result = llvm::StructType::get(LLVMContext, Elements);
@@ -923,9 +951,10 @@ ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty,
     // optimizations.
     if (getContext().getTypeSize(Ty) <= 4*32 &&
         canExpandIndirectArgument(Ty, getContext()))
-      return ABIArgInfo::getExpandWithPadding(IsFastCall, PaddingType);
+      return ABIArgInfo::getExpandWithPadding(
+          State.CC == llvm::CallingConv::X86_FastCall, PaddingType);
 
-    return getIndirectResult(Ty, true, FreeRegs);
+    return getIndirectResult(Ty, true, State);
   }
 
   if (const VectorType *VT = Ty->getAs<VectorType>()) {
@@ -950,7 +979,7 @@ ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty,
     Ty = EnumTy->getDecl()->getIntegerType();
 
   bool NeedsPadding;
-  bool InReg = shouldUseInReg(Ty, FreeRegs, IsFastCall, NeedsPadding);
+  bool InReg = shouldUseInReg(Ty, State, NeedsPadding);
 
   if (Ty->isPromotableIntegerType()) {
     if (InReg)
@@ -963,32 +992,106 @@ ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty,
 }
 
 void X86_32ABIInfo::computeInfo(CGFunctionInfo &FI) const {
-  FI.getReturnInfo() = classifyReturnType(FI.getReturnType(),
-                                          FI.getCallingConvention());
-
-  unsigned CC = FI.getCallingConvention();
-  bool IsFastCall = CC == llvm::CallingConv::X86_FastCall;
-  unsigned FreeRegs;
-  if (IsFastCall)
-    FreeRegs = 2;
+  CCState State(FI.getCallingConvention());
+  if (State.CC == llvm::CallingConv::X86_FastCall)
+    State.FreeRegs = 2;
   else if (FI.getHasRegParm())
-    FreeRegs = FI.getRegParm();
+    State.FreeRegs = FI.getRegParm();
   else
-    FreeRegs = DefaultNumRegisterParameters;
+    State.FreeRegs = DefaultNumRegisterParameters;
 
-  // If the return value is indirect, then the hidden argument is consuming one
-  // integer register.
-  if (FI.getReturnInfo().isIndirect() && FreeRegs) {
-    --FreeRegs;
-    ABIArgInfo &Old = FI.getReturnInfo();
-    Old = ABIArgInfo::getIndirectInReg(Old.getIndirectAlign(),
-                                       Old.getIndirectByVal(),
-                                       Old.getIndirectRealign());
+  FI.getReturnInfo() =
+      classifyReturnType(FI.getReturnType(), State, FI.isInstanceMethod());
+
+  // On win32, use the x86_cdeclmethodcc convention for cdecl methods that use
+  // sret.  This convention swaps the order of the first two parameters behind
+  // the scenes to match MSVC.
+  if (IsWin32StructABI && FI.isInstanceMethod() &&
+      FI.getCallingConvention() == llvm::CallingConv::C &&
+      FI.getReturnInfo().isIndirect())
+    FI.setEffectiveCallingConvention(llvm::CallingConv::X86_CDeclMethod);
+
+  bool UsedInAlloca = false;
+  for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
+       it != ie; ++it) {
+    it->info = classifyArgumentType(it->type, State);
+    UsedInAlloca |= (it->info.getKind() == ABIArgInfo::InAlloca);
   }
 
-  for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
-       it != ie; ++it)
-    it->info = classifyArgumentType(it->type, FreeRegs, IsFastCall);
+  // If we needed to use inalloca for any argument, do a second pass and rewrite
+  // all the memory arguments to use inalloca.
+  if (UsedInAlloca)
+    rewriteWithInAlloca(FI);
+}
+
+void
+X86_32ABIInfo::addFieldToArgStruct(SmallVector<llvm::Type *, 6> &FrameFields,
+                                   unsigned &StackOffset,
+                                   ABIArgInfo &Info, QualType Type) const {
+  // Insert padding bytes to respect alignment.  For x86_32, each argument is 4
+  // byte aligned.
+  unsigned Align = 4U;
+  if (Info.getKind() == ABIArgInfo::Indirect && Info.getIndirectByVal())
+    Align = std::max(Align, Info.getIndirectAlign());
+  if (StackOffset & (Align - 1)) {
+    unsigned OldOffset = StackOffset;
+    StackOffset = llvm::RoundUpToAlignment(StackOffset, Align);
+    unsigned NumBytes = StackOffset - OldOffset;
+    assert(NumBytes);
+    llvm::Type *Ty = llvm::Type::getInt8Ty(getVMContext());
+    Ty = llvm::ArrayType::get(Ty, NumBytes);
+    FrameFields.push_back(Ty);
+  }
+
+  Info = ABIArgInfo::getInAlloca(FrameFields.size());
+  FrameFields.push_back(CGT.ConvertTypeForMem(Type));
+  StackOffset += getContext().getTypeSizeInChars(Type).getQuantity();
+}
+
+void X86_32ABIInfo::rewriteWithInAlloca(CGFunctionInfo &FI) const {
+  assert(IsWin32StructABI && "inalloca only supported on win32");
+
+  // Build a packed struct type for all of the arguments in memory.
+  SmallVector<llvm::Type *, 6> FrameFields;
+
+  unsigned StackOffset = 0;
+
+  // Put the sret parameter into the inalloca struct if it's in memory.
+  ABIArgInfo &Ret = FI.getReturnInfo();
+  if (Ret.isIndirect() && !Ret.getInReg()) {
+    CanQualType PtrTy = getContext().getPointerType(FI.getReturnType());
+    addFieldToArgStruct(FrameFields, StackOffset, Ret, PtrTy);
+  }
+
+  // Skip the 'this' parameter in ecx.
+  CGFunctionInfo::arg_iterator I = FI.arg_begin(), E = FI.arg_end();
+  if (FI.getCallingConvention() == llvm::CallingConv::X86_ThisCall)
+    ++I;
+
+  // Put arguments passed in memory into the struct.
+  for (; I != E; ++I) {
+
+    // Leave ignored and inreg arguments alone.
+    switch (I->info.getKind()) {
+    case ABIArgInfo::Indirect:
+      assert(I->info.getIndirectByVal());
+      break;
+    case ABIArgInfo::Ignore:
+      continue;
+    case ABIArgInfo::Direct:
+    case ABIArgInfo::Extend:
+      if (I->info.getInReg())
+        continue;
+      break;
+    default:
+      break;
+    }
+
+    addFieldToArgStruct(FrameFields, StackOffset, I->info, I->type);
+  }
+
+  FI.setArgStruct(llvm::StructType::get(getVMContext(), FrameFields,
+                                        /*isPacked=*/true));
 }
 
 llvm::Value *X86_32ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
@@ -3064,10 +3167,17 @@ public:
 
 private:
   ABIKind Kind;
+  mutable int VFPRegs[16];
+  const unsigned NumVFPs;
+  const unsigned NumGPRs;
+  mutable unsigned AllocatedGPRs;
+  mutable unsigned AllocatedVFPs;
 
 public:
-  ARMABIInfo(CodeGenTypes &CGT, ABIKind _Kind) : ABIInfo(CGT), Kind(_Kind) {
+  ARMABIInfo(CodeGenTypes &CGT, ABIKind _Kind) : ABIInfo(CGT), Kind(_Kind),
+    NumVFPs(16), NumGPRs(4) {
     setRuntimeCC();
+    resetAllocatedRegs();
   }
 
   bool isEABI() const {
@@ -3096,10 +3206,9 @@ public:
   ABIKind getABIKind() const { return Kind; }
 
 private:
-  ABIArgInfo classifyReturnType(QualType RetTy) const;
-  ABIArgInfo classifyArgumentType(QualType RetTy, int *VFPRegs,
-                                  unsigned &AllocatedVFP,
-                                  bool &IsHA) const;
+  ABIArgInfo classifyReturnType(QualType RetTy, bool isVariadic) const;
+  ABIArgInfo classifyArgumentType(QualType RetTy, bool &IsHA, bool isVariadic,
+                                  bool &IsCPRC) const;
   bool isIllegalVectorType(QualType Ty) const;
 
   virtual void computeInfo(CGFunctionInfo &FI) const;
@@ -3110,6 +3219,10 @@ private:
   llvm::CallingConv::ID getLLVMDefaultCC() const;
   llvm::CallingConv::ID getABIDefaultCC() const;
   void setRuntimeCC();
+
+  void markAllocatedGPRs(unsigned Alignment, unsigned NumRequired) const;
+  void markAllocatedVFPs(unsigned Alignment, unsigned NumRequired) const;
+  void resetAllocatedRegs(void) const;
 };
 
 class ARMTargetCodeGenInfo : public TargetCodeGenInfo {
@@ -3193,23 +3306,40 @@ void ARMABIInfo::computeInfo(CGFunctionInfo &FI) const {
   // allocated to the lowest-numbered sequence of such registers.
   // C.2.vfp If the argument is a VFP CPRC then any VFP registers that are
   // unallocated are marked as unavailable. 
-  unsigned AllocatedVFP = 0;
-  int VFPRegs[16] = { 0 };
-  FI.getReturnInfo() = classifyReturnType(FI.getReturnType());
+  resetAllocatedRegs();
+
+  FI.getReturnInfo() = classifyReturnType(FI.getReturnType(), FI.isVariadic());
   for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
        it != ie; ++it) {
-    unsigned PreAllocation = AllocatedVFP;
+    unsigned PreAllocationVFPs = AllocatedVFPs;
+    unsigned PreAllocationGPRs = AllocatedGPRs;
     bool IsHA = false;
+    bool IsCPRC = false;
     // 6.1.2.3 There is one VFP co-processor register class using registers
     // s0-s15 (d0-d7) for passing arguments.
-    const unsigned NumVFPs = 16;
-    it->info = classifyArgumentType(it->type, VFPRegs, AllocatedVFP, IsHA);
+    it->info = classifyArgumentType(it->type, IsHA, FI.isVariadic(), IsCPRC);
+    assert((IsCPRC || !IsHA) && "Homogeneous aggregates must be CPRCs");
     // If we do not have enough VFP registers for the HA, any VFP registers
     // that are unallocated are marked as unavailable. To achieve this, we add
-    // padding of (NumVFPs - PreAllocation) floats.
-    if (IsHA && AllocatedVFP > NumVFPs && PreAllocation < NumVFPs) {
+    // padding of (NumVFPs - PreAllocationVFP) floats.
+    // Note that IsHA will only be set when using the AAPCS-VFP calling convention,
+    // and the callee is not variadic.
+    if (IsHA && AllocatedVFPs > NumVFPs && PreAllocationVFPs < NumVFPs) {
       llvm::Type *PaddingTy = llvm::ArrayType::get(
-          llvm::Type::getFloatTy(getVMContext()), NumVFPs - PreAllocation);
+          llvm::Type::getFloatTy(getVMContext()), NumVFPs - PreAllocationVFPs);
+      it->info = ABIArgInfo::getExpandWithPadding(false, PaddingTy);
+    }
+
+    // If we have allocated some arguments onto the stack (due to running
+    // out of VFP registers), we cannot split an argument between GPRs and
+    // the stack. If this situation occurs, we add padding to prevent the
+    // GPRs from being used. In this situiation, the current argument could
+    // only be allocated by rule C.8, so rule C.6 would mark these GPRs as
+    // unusable anyway.
+    const bool StackUsed = PreAllocationGPRs > NumGPRs || PreAllocationVFPs > NumVFPs;
+    if (!IsCPRC && PreAllocationGPRs < NumGPRs && AllocatedGPRs > NumGPRs && StackUsed) {
+      llvm::Type *PaddingTy = llvm::ArrayType::get(
+          llvm::Type::getInt32Ty(getVMContext()), NumGPRs - PreAllocationGPRs);
       it->info = ABIArgInfo::getExpandWithPadding(false, PaddingTy);
     }
   }
@@ -3310,10 +3440,29 @@ static bool isHomogeneousAggregate(QualType Ty, const Type *&Base,
     const Type *TyPtr = Ty.getTypePtr();
     if (!Base)
       Base = TyPtr;
-    if (Base != TyPtr &&
-        (!Base->isVectorType() || !TyPtr->isVectorType() ||
-         Context.getTypeSize(Base) != Context.getTypeSize(TyPtr)))
-      return false;
+
+    if (Base != TyPtr) {
+      // Homogeneous aggregates are defined as containing members with the
+      // same machine type. There are two cases in which two members have
+      // different TypePtrs but the same machine type:
+
+      // 1) Vectors of the same length, regardless of the type and number
+      //    of their members.
+      const bool SameLengthVectors = Base->isVectorType() && TyPtr->isVectorType()
+        && (Context.getTypeSize(Base) == Context.getTypeSize(TyPtr));
+
+      // 2) In the 32-bit AAPCS, `double' and `long double' have the same
+      //    machine type. This is not the case for the 64-bit AAPCS.
+      const bool SameSizeDoubles =
+           (   (   Base->isSpecificBuiltinType(BuiltinType::Double)
+                && TyPtr->isSpecificBuiltinType(BuiltinType::LongDouble))
+            || (   Base->isSpecificBuiltinType(BuiltinType::LongDouble)
+                && TyPtr->isSpecificBuiltinType(BuiltinType::Double)))
+        && (Context.getTypeSize(Base) == Context.getTypeSize(TyPtr));
+
+      if (!SameLengthVectors && !SameSizeDoubles)
+        return false;
+    }
   }
 
   // Homogeneous Aggregates can have at most 4 members of the base type.
@@ -3325,12 +3474,15 @@ static bool isHomogeneousAggregate(QualType Ty, const Type *&Base,
 
 /// markAllocatedVFPs - update VFPRegs according to the alignment and
 /// number of VFP registers (unit is S register) requested.
-static void markAllocatedVFPs(int *VFPRegs, unsigned &AllocatedVFP,
-                              unsigned Alignment,
-                              unsigned NumRequired) {
+void ARMABIInfo::markAllocatedVFPs(unsigned Alignment,
+                                   unsigned NumRequired) const {
   // Early Exit.
-  if (AllocatedVFP >= 16)
+  if (AllocatedVFPs >= 16) {
+    // We use AllocatedVFP > 16 to signal that some CPRCs were allocated on
+    // the stack.
+    AllocatedVFPs = 17;
     return;
+  }
   // C.1.vfp If the argument is a VFP CPRC and there are sufficient consecutive
   // VFP registers of the appropriate type unallocated then the argument is
   // allocated to the lowest-numbered sequence of such registers.
@@ -3344,7 +3496,7 @@ static void markAllocatedVFPs(int *VFPRegs, unsigned &AllocatedVFP,
     if (FoundSlot) {
       for (unsigned J = I, JEnd = I + NumRequired; J < JEnd; J++)
         VFPRegs[J] = 1;
-      AllocatedVFP += NumRequired;
+      AllocatedVFPs += NumRequired;
       return;
     }
   }
@@ -3352,12 +3504,32 @@ static void markAllocatedVFPs(int *VFPRegs, unsigned &AllocatedVFP,
   // unallocated are marked as unavailable.
   for (unsigned I = 0; I < 16; I++)
     VFPRegs[I] = 1;
-  AllocatedVFP = 17; // We do not have enough VFP registers.
+  AllocatedVFPs = 17; // We do not have enough VFP registers.
 }
 
-ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty, int *VFPRegs,
-                                            unsigned &AllocatedVFP,
-                                            bool &IsHA) const {
+/// Update AllocatedGPRs to record the number of general purpose registers
+/// which have been allocated. It is valid for AllocatedGPRs to go above 4,
+/// this represents arguments being stored on the stack.
+void ARMABIInfo::markAllocatedGPRs(unsigned Alignment,
+                                          unsigned NumRequired) const {
+  assert((Alignment == 1 || Alignment == 2) && "Alignment must be 4 or 8 bytes");
+
+  if (Alignment == 2 && AllocatedGPRs & 0x1)
+    AllocatedGPRs += 1;
+
+  AllocatedGPRs += NumRequired;
+}
+
+void ARMABIInfo::resetAllocatedRegs(void) const {
+  AllocatedGPRs = 0;
+  AllocatedVFPs = 0;
+  for (unsigned i = 0; i < NumVFPs; ++i)
+    VFPRegs[i] = 0;
+}
+
+ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty, bool &IsHA,
+                                            bool isVariadic,
+                                            bool &IsCPRC) const {
   // We update number of allocated VFPs according to
   // 6.1.2.1 The following argument types are VFP CPRCs:
   //   A single-precision floating-point type (including promoted
@@ -3373,55 +3545,82 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty, int *VFPRegs,
     if (Size <= 32) {
       llvm::Type *ResType =
           llvm::Type::getInt32Ty(getVMContext());
+      markAllocatedGPRs(1, 1);
       return ABIArgInfo::getDirect(ResType);
     }
     if (Size == 64) {
       llvm::Type *ResType = llvm::VectorType::get(
           llvm::Type::getInt32Ty(getVMContext()), 2);
-      markAllocatedVFPs(VFPRegs, AllocatedVFP, 2, 2);
+      if (getABIKind() == ARMABIInfo::AAPCS || isVariadic){
+        markAllocatedGPRs(2, 2);
+      } else {
+        markAllocatedVFPs(2, 2);
+        IsCPRC = true;
+      }
       return ABIArgInfo::getDirect(ResType);
     }
     if (Size == 128) {
       llvm::Type *ResType = llvm::VectorType::get(
           llvm::Type::getInt32Ty(getVMContext()), 4);
-      markAllocatedVFPs(VFPRegs, AllocatedVFP, 4, 4);
+      if (getABIKind() == ARMABIInfo::AAPCS || isVariadic) {
+        markAllocatedGPRs(2, 4);
+      } else {
+        markAllocatedVFPs(4, 4);
+        IsCPRC = true;
+      }
       return ABIArgInfo::getDirect(ResType);
     }
+    markAllocatedGPRs(1, 1);
     return ABIArgInfo::getIndirect(0, /*ByVal=*/false);
   }
   // Update VFPRegs for legal vector types.
-  if (const VectorType *VT = Ty->getAs<VectorType>()) {
-    uint64_t Size = getContext().getTypeSize(VT);
-    // Size of a legal vector should be power of 2 and above 64.
-    markAllocatedVFPs(VFPRegs, AllocatedVFP, Size >= 128 ? 4 : 2, Size / 32);
+  if (getABIKind() == ARMABIInfo::AAPCS_VFP && !isVariadic) {
+    if (const VectorType *VT = Ty->getAs<VectorType>()) {
+      uint64_t Size = getContext().getTypeSize(VT);
+      // Size of a legal vector should be power of 2 and above 64.
+      markAllocatedVFPs(Size >= 128 ? 4 : 2, Size / 32);
+      IsCPRC = true;
+    }
   }
   // Update VFPRegs for floating point types.
-  if (const BuiltinType *BT = Ty->getAs<BuiltinType>()) {
-    if (BT->getKind() == BuiltinType::Half ||
-        BT->getKind() == BuiltinType::Float)
-      markAllocatedVFPs(VFPRegs, AllocatedVFP, 1, 1);
-    if (BT->getKind() == BuiltinType::Double ||
-        BT->getKind() == BuiltinType::LongDouble)
-      markAllocatedVFPs(VFPRegs, AllocatedVFP, 2, 2);
+  if (getABIKind() == ARMABIInfo::AAPCS_VFP && !isVariadic) {
+    if (const BuiltinType *BT = Ty->getAs<BuiltinType>()) {
+      if (BT->getKind() == BuiltinType::Half ||
+          BT->getKind() == BuiltinType::Float) {
+        markAllocatedVFPs(1, 1);
+        IsCPRC = true;
+      }
+      if (BT->getKind() == BuiltinType::Double ||
+          BT->getKind() == BuiltinType::LongDouble) {
+        markAllocatedVFPs(2, 2);
+        IsCPRC = true;
+      }
+    }
   }
 
   if (!isAggregateTypeForABI(Ty)) {
     // Treat an enum type as its underlying type.
-    if (const EnumType *EnumTy = Ty->getAs<EnumType>())
+    if (const EnumType *EnumTy = Ty->getAs<EnumType>()) {
       Ty = EnumTy->getDecl()->getIntegerType();
+    }
 
+    unsigned Size = getContext().getTypeSize(Ty);
+    if (!IsCPRC)
+      markAllocatedGPRs(Size > 32 ? 2 : 1, (Size + 31) / 32);
     return (Ty->isPromotableIntegerType() ?
             ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
   }
 
-  if (CGCXXABI::RecordArgABI RAA = getRecordArgABI(Ty, getCXXABI()))
+  if (CGCXXABI::RecordArgABI RAA = getRecordArgABI(Ty, getCXXABI())) {
+    markAllocatedGPRs(1, 1);
     return ABIArgInfo::getIndirect(0, RAA == CGCXXABI::RAA_DirectInMemory);
+  }
 
   // Ignore empty records.
   if (isEmptyRecord(getContext(), Ty, true))
     return ABIArgInfo::getIgnore();
 
-  if (getABIKind() == ARMABIInfo::AAPCS_VFP) {
+  if (getABIKind() == ARMABIInfo::AAPCS_VFP && !isVariadic) {
     // Homogeneous Aggregates need to be expanded when we can fit the aggregate
     // into VFP registers.
     const Type *Base = 0;
@@ -3432,16 +3631,17 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty, int *VFPRegs,
       if (Base->isVectorType()) {
         // ElementSize is in number of floats.
         unsigned ElementSize = getContext().getTypeSize(Base) == 64 ? 2 : 4;
-        markAllocatedVFPs(VFPRegs, AllocatedVFP, ElementSize,
+        markAllocatedVFPs(ElementSize,
                           Members * ElementSize);
       } else if (Base->isSpecificBuiltinType(BuiltinType::Float))
-        markAllocatedVFPs(VFPRegs, AllocatedVFP, 1, Members);
+        markAllocatedVFPs(1, Members);
       else {
         assert(Base->isSpecificBuiltinType(BuiltinType::Double) ||
                Base->isSpecificBuiltinType(BuiltinType::LongDouble));
-        markAllocatedVFPs(VFPRegs, AllocatedVFP, 2, Members * 2);
+        markAllocatedVFPs(2, Members * 2);
       }
       IsHA = true;
+      IsCPRC = true;
       return ABIArgInfo::getExpand();
     }
   }
@@ -3456,6 +3656,8 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty, int *VFPRegs,
       getABIKind() == ARMABIInfo::AAPCS)
     ABIAlign = std::min(std::max(TyAlign, (uint64_t)4), (uint64_t)8);
   if (getContext().getTypeSizeInChars(Ty) > CharUnits::fromQuantity(64)) {
+      // Update Allocated GPRs
+    markAllocatedGPRs(1, 1);
     return ABIArgInfo::getIndirect(0, /*ByVal=*/true,
            /*Realign=*/TyAlign > ABIAlign);
   }
@@ -3468,9 +3670,11 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty, int *VFPRegs,
   if (getContext().getTypeAlign(Ty) <= 32) {
     ElemTy = llvm::Type::getInt32Ty(getVMContext());
     SizeRegs = (getContext().getTypeSize(Ty) + 31) / 32;
+    markAllocatedGPRs(1, SizeRegs);
   } else {
     ElemTy = llvm::Type::getInt64Ty(getVMContext());
     SizeRegs = (getContext().getTypeSize(Ty) + 63) / 64;
+    markAllocatedGPRs(2, SizeRegs * 2);
   }
 
   llvm::Type *STy =
@@ -3563,13 +3767,16 @@ static bool isIntegerLikeType(QualType Ty, ASTContext &Context,
   return true;
 }
 
-ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy) const {
+ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy,
+                                          bool isVariadic) const {
   if (RetTy->isVoidType())
     return ABIArgInfo::getIgnore();
 
   // Large vector types should be returned via memory.
-  if (RetTy->isVectorType() && getContext().getTypeSize(RetTy) > 128)
+  if (RetTy->isVectorType() && getContext().getTypeSize(RetTy) > 128) {
+    markAllocatedGPRs(1, 1);
     return ABIArgInfo::getIndirect(0);
+  }
 
   if (!isAggregateTypeForABI(RetTy)) {
     // Treat an enum type as its underlying type.
@@ -3582,8 +3789,10 @@ ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy) const {
 
   // Structures with either a non-trivial destructor or a non-trivial
   // copy constructor are always indirect.
-  if (isRecordReturnIndirect(RetTy, getCXXABI()))
+  if (isRecordReturnIndirect(RetTy, getCXXABI())) {
+    markAllocatedGPRs(1, 1);
     return ABIArgInfo::getIndirect(0, /*ByVal=*/false);
+  }
 
   // Are we following APCS?
   if (getABIKind() == APCS) {
@@ -3610,6 +3819,7 @@ ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy) const {
     }
 
     // Otherwise return in memory.
+    markAllocatedGPRs(1, 1);
     return ABIArgInfo::getIndirect(0);
   }
 
@@ -3619,7 +3829,7 @@ ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy) const {
     return ABIArgInfo::getIgnore();
 
   // Check for homogeneous aggregates with AAPCS-VFP.
-  if (getABIKind() == AAPCS_VFP) {
+  if (getABIKind() == AAPCS_VFP && !isVariadic) {
     const Type *Base = 0;
     if (isHomogeneousAggregate(RetTy, Base, getContext())) {
       assert(Base && "Base class should be set for homogeneous aggregate");
@@ -3640,6 +3850,7 @@ ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy) const {
     return ABIArgInfo::getDirect(llvm::Type::getInt32Ty(getVMContext()));
   }
 
+  markAllocatedGPRs(1, 1);
   return ABIArgInfo::getIndirect(0);
 }
 
@@ -4472,7 +4683,7 @@ llvm::Value *SystemZABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   llvm::Type *IndexTy = RegCount->getType();
   llvm::Value *MaxRegsV = llvm::ConstantInt::get(IndexTy, MaxRegs);
   llvm::Value *InRegs = CGF.Builder.CreateICmpULT(RegCount, MaxRegsV,
-						  "fits_in_regs");
+                                                 "fits_in_regs");
 
   llvm::BasicBlock *InRegBlock = CGF.createBasicBlock("vaarg.in_reg");
   llvm::BasicBlock *InMemBlock = CGF.createBasicBlock("vaarg.in_mem");
@@ -5403,6 +5614,7 @@ llvm::Value *SparcV9ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
 
   switch (AI.getKind()) {
   case ABIArgInfo::Expand:
+  case ABIArgInfo::InAlloca:
     llvm_unreachable("Unsupported ABI kind for va_arg");
 
   case ABIArgInfo::Extend:
@@ -5489,6 +5701,7 @@ llvm::Value *XCoreABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   uint64_t ArgSize = 0;
   switch (AI.getKind()) {
   case ABIArgInfo::Expand:
+  case ABIArgInfo::InAlloca:
     llvm_unreachable("Unsupported ABI kind for va_arg");
   case ABIArgInfo::Ignore:
     Val = llvm::UndefValue::get(ArgPtrTy);

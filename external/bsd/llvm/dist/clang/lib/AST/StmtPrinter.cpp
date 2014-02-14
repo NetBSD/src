@@ -716,9 +716,11 @@ void StmtPrinter::VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node) {
 void StmtPrinter::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *Node) {
   if (Node->isSuperReceiver())
     OS << "super.";
-  else if (Node->getBase()) {
+  else if (Node->isObjectReceiver() && Node->getBase()) {
     PrintExpr(Node->getBase());
     OS << ".";
+  } else if (Node->isClassReceiver() && Node->getClassReceiver()) {
+    OS << Node->getClassReceiver()->getName() << ".";
   }
 
   if (Node->isImplicitProperty())
@@ -1527,7 +1529,7 @@ void StmtPrinter::VisitLambdaExpr(LambdaExpr *Node) {
     // Print the trailing return type if it was specified in the source.
     if (Node->hasExplicitResultType()) {
       OS << " -> ";
-      Proto->getResultType().print(OS, Policy);
+      Proto->getReturnType().print(OS, Policy);
     }
   }
 

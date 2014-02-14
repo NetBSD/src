@@ -114,7 +114,7 @@ Tool *ToolChain::getTool(Action::ActionClass AC) const {
   case Action::BindArchClass:
   case Action::LipoJobClass:
   case Action::DsymutilJobClass:
-  case Action::VerifyJobClass:
+  case Action::VerifyDebugInfoJobClass:
     llvm_unreachable("Invalid tool kind.");
 
   case Action::CompileJobClass:
@@ -122,6 +122,7 @@ Tool *ToolChain::getTool(Action::ActionClass AC) const {
   case Action::PreprocessJobClass:
   case Action::AnalyzeJobClass:
   case Action::MigrateJobClass:
+  case Action::VerifyPCHJobClass:
     return getClang();
   }
 
@@ -180,7 +181,7 @@ std::string ToolChain::ComputeLLVMTriple(const ArgList &Args,
 
   case llvm::Triple::x86_64: {
     llvm::Triple Triple = getTriple();
-    if (!Triple.isOSDarwin())
+    if (!Triple.isOSBinFormatMachO())
       return getTripleString();
 
     if (Arg *A = Args.getLastArg(options::OPT_march_EQ)) {
@@ -200,12 +201,12 @@ std::string ToolChain::ComputeLLVMTriple(const ArgList &Args,
     // Thumb2 is the default for V7 on Darwin.
     //
     // FIXME: Thumb should just be another -target-feaure, not in the triple.
-    StringRef Suffix = Triple.isOSDarwin()
+    StringRef Suffix = Triple.isOSBinFormatMachO()
       ? tools::arm::getLLVMArchSuffixForARM(tools::arm::getARMCPUForMArch(Args, Triple))
       : tools::arm::getLLVMArchSuffixForARM(tools::arm::getARMTargetCPU(Args, Triple));
     bool ThumbDefault = Suffix.startswith("v6m") || Suffix.startswith("v7m") ||
       Suffix.startswith("v7em") ||
-      (Suffix.startswith("v7") && getTriple().isOSDarwin());
+      (Suffix.startswith("v7") && getTriple().isOSBinFormatMachO());
     std::string ArchName = "arm";
 
     // Assembly files should start in ARM mode.
@@ -221,13 +222,6 @@ std::string ToolChain::ComputeLLVMTriple(const ArgList &Args,
 
 std::string ToolChain::ComputeEffectiveClangTriple(const ArgList &Args, 
                                                    types::ID InputType) const {
-  // Diagnose use of Darwin OS deployment target arguments on non-Darwin.
-  if (Arg *A = Args.getLastArg(options::OPT_mmacosx_version_min_EQ,
-                               options::OPT_miphoneos_version_min_EQ,
-                               options::OPT_mios_simulator_version_min_EQ))
-    getDriver().Diag(diag::err_drv_clang_unsupported)
-      << A->getAsString(Args);
-
   return ComputeLLVMTriple(Args, InputType);
 }
 

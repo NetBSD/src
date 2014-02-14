@@ -48,10 +48,9 @@ protected:
   /// An index into the spelling list of an
   /// attribute defined in Attr.td file.
   unsigned SpellingListIndex : 4;
-
   bool Inherited : 1;
-
   bool IsPackExpansion : 1;
+  bool Implicit : 1;
 
   virtual ~Attr();
 
@@ -76,7 +75,7 @@ public:
 protected:
   Attr(attr::Kind AK, SourceRange R, unsigned SpellingListIndex = 0)
     : Range(R), AttrKind(AK), SpellingListIndex(SpellingListIndex),
-      Inherited(false), IsPackExpansion(false) {}
+      Inherited(false), IsPackExpansion(false), Implicit(false) {}
 
 public:
 
@@ -93,6 +92,11 @@ public:
 
   bool isInherited() const { return Inherited; }
 
+  /// \brief Returns true if the attribute has been implicitly created instead
+  /// of explicitly written by the user.
+  bool isImplicit() const { return Implicit; }
+  void setImplicit(bool I) { Implicit = I; }
+
   void setPackExpansion(bool PE) { IsPackExpansion = PE; }
   bool isPackExpansion() const { return IsPackExpansion; }
 
@@ -104,6 +108,11 @@ public:
   // Pretty print this attribute.
   virtual void printPretty(raw_ostream &OS,
                            const PrintingPolicy &Policy) const = 0;
+
+  /// \brief By default, attributes cannot be duplicated when being merged;
+  /// however, an attribute can override this. Returns true if the attribute
+  /// can be duplicated when merging.
+  virtual bool duplicatesAllowed() const { return false; }
 };
 
 class InheritableAttr : public Attr {

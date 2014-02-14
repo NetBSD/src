@@ -509,7 +509,9 @@ void UnwrappedLineParser::parsePPEndIf() {
       PPLevelBranchCount[PPBranchLevel] = PPChainBranchIndex.top() + 1;
     }
   }
-  --PPBranchLevel;
+  // Guard against #endif's without #if.
+  if (PPBranchLevel > 0)
+    --PPBranchLevel;
   if (!PPChainBranchIndex.empty())
     PPChainBranchIndex.pop();
   if (!PPStack.empty())
@@ -641,9 +643,6 @@ void UnwrappedLineParser::parseStructuralElement() {
   case tok::kw_case:
     parseCaseLabel();
     return;
-  case tok::kw_return:
-    parseReturn();
-    return;
   case tok::kw_extern:
     nextToken();
     if (FormatTok->Tok.is(tok::string_literal)) {
@@ -668,6 +667,12 @@ void UnwrappedLineParser::parseStructuralElement() {
       break;
     case tok::kw_enum:
       parseEnum();
+      break;
+    case tok::kw_typedef:
+      nextToken();
+      // FIXME: Use the IdentifierTable instead.
+      if (FormatTok->TokenText == "NS_ENUM")
+        parseEnum();
       break;
     case tok::kw_struct:
     case tok::kw_union:
@@ -753,7 +758,8 @@ bool UnwrappedLineParser::tryToParseLambda() {
   // FIXME: This is a dirty way to access the previous token. Find a better
   // solution.
   if (!Line->Tokens.empty() &&
-      Line->Tokens.back().Tok->isOneOf(tok::identifier, tok::kw_operator)) {
+      (Line->Tokens.back().Tok->isOneOf(tok::identifier, tok::kw_operator) ||
+       Line->Tokens.back().Tok->isSimpleTypeSpecifier())) {
     nextToken();
     return false;
   }
@@ -762,15 +768,23 @@ bool UnwrappedLineParser::tryToParseLambda() {
   if (!tryToParseLambdaIntroducer())
     return false;
 
-  while (FormatTok->isNot(tok::l_brace)) {
+  while (FormatTok && FormatTok->isNot(tok::l_brace)) {
+    if (FormatTok->isSimpleTypeSpecifier()) {
+      nextToken();
+      continue;
+    }
     switch (FormatTok->Tok.getKind()) {
     case tok::l_brace:
       break;
     case tok::l_paren:
       parseParens();
       break;
+    case tok::less:
+    case tok::greater:
     case tok::identifier:
+    case tok::coloncolon:
     case tok::kw_mutable:
+    case tok::arrow:
       nextToken();
       break;
     default:
@@ -882,40 +896,6 @@ bool UnwrappedLineParser::parseBracedList(bool ContinueOnSemicolons) {
   return false;
 }
 
-void UnwrappedLineParser::parseReturn() {
-  nextToken();
-
-  do {
-    switch (FormatTok->Tok.getKind()) {
-    case tok::l_brace:
-      parseBracedList();
-      if (FormatTok->Tok.isNot(tok::semi)) {
-        // Assume missing ';'.
-        addUnwrappedLine();
-        return;
-      }
-      break;
-    case tok::l_paren:
-      parseParens();
-      break;
-    case tok::r_brace:
-      // Assume missing ';'.
-      addUnwrappedLine();
-      return;
-    case tok::semi:
-      nextToken();
-      addUnwrappedLine();
-      return;
-    case tok::l_square:
-      tryToParseLambda();
-      break;
-    default:
-      nextToken();
-      break;
-    }
-  } while (!eof());
-}
-
 void UnwrappedLineParser::parseParens() {
   assert(FormatTok->Tok.is(tok::l_paren) && "'(' expected.");
   nextToken();
@@ -956,7 +936,6 @@ void UnwrappedLineParser::parseSquare() {
   if (tryToParseLambda())
     return;
   do {
-    // llvm::errs() << FormatTok->Tok.getName() << "\n";
     switch (FormatTok->Tok.getKind()) {
     case tok::l_paren:
       parseParens();
@@ -1157,7 +1136,10 @@ void UnwrappedLineParser::parseAccessSpecifier() {
 }
 
 void UnwrappedLineParser::parseEnum() {
-  nextToken();
+  if (FormatTok->Tok.is(tok::kw_enum)) {
+    // Won't be 'enum' for NS_ENUMs.
+    nextToken();
+  }
   // Eat up enum class ...
   if (FormatTok->Tok.is(tok::kw_class) ||
       FormatTok->Tok.is(tok::kw_struct))

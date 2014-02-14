@@ -27,6 +27,7 @@ namespace format {
 enum TokenType {
   TT_ArrayInitializerLSquare,
   TT_ArraySubscriptLSquare,
+  TT_AttributeParen,
   TT_BinaryOperator,
   TT_BitFieldColon,
   TT_BlockComment,
@@ -279,6 +280,9 @@ struct FormatToken {
     return isOneOf(tok::kw_public, tok::kw_protected, tok::kw_private) &&
            (!ColonRequired || (Next && Next->is(tok::colon)));
   }
+
+  /// \brief Determine whether the token is a simple-type-specifier.
+  bool isSimpleTypeSpecifier() const;
 
   bool isObjCAccessSpecifier() const {
     return is(tok::at) && Next && (Next->isObjCAtKeyword(tok::objc_public) ||

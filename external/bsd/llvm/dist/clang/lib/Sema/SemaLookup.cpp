@@ -288,29 +288,27 @@ void LookupResult::configure() {
   IDNS = getIDNS(LookupKind, SemaRef.getLangOpts().CPlusPlus,
                  isForRedeclaration());
 
-  if (!isForRedeclaration()) {
-    // If we're looking for one of the allocation or deallocation
-    // operators, make sure that the implicitly-declared new and delete
-    // operators can be found.
-    switch (NameInfo.getName().getCXXOverloadedOperator()) {
-    case OO_New:
-    case OO_Delete:
-    case OO_Array_New:
-    case OO_Array_Delete:
-      SemaRef.DeclareGlobalNewDelete();
-      break;
+  // If we're looking for one of the allocation or deallocation
+  // operators, make sure that the implicitly-declared new and delete
+  // operators can be found.
+  switch (NameInfo.getName().getCXXOverloadedOperator()) {
+  case OO_New:
+  case OO_Delete:
+  case OO_Array_New:
+  case OO_Array_Delete:
+    SemaRef.DeclareGlobalNewDelete();
+    break;
 
-    default:
-      break;
-    }
+  default:
+    break;
+  }
 
-    // Compiler builtins are always visible, regardless of where they end
-    // up being declared.
-    if (IdentifierInfo *Id = NameInfo.getName().getAsIdentifierInfo()) {
-      if (unsigned BuiltinID = Id->getBuiltinID()) {
-        if (!SemaRef.Context.BuiltinInfo.isPredefinedLibFunction(BuiltinID))
-          AllowHidden = true;
-      }
+  // Compiler builtins are always visible, regardless of where they end
+  // up being declared.
+  if (IdentifierInfo *Id = NameInfo.getName().getAsIdentifierInfo()) {
+    if (unsigned BuiltinID = Id->getBuiltinID()) {
+      if (!SemaRef.Context.BuiltinInfo.isPredefinedLibFunction(BuiltinID))
+        AllowHidden = true;
     }
   }
 }
@@ -545,14 +543,6 @@ static bool LookupBuiltin(Sema &S, LookupResult &R) {
           R.addDecl(D);
           return true;
         }
-
-        if (R.isForRedeclaration()) {
-          // If we're redeclaring this function anyway, forget that
-          // this was a builtin at all.
-          S.Context.BuiltinInfo.ForgetBuiltin(BuiltinID, S.Context.Idents);
-        }
-
-        return false;
       }
     }
   }
@@ -2193,15 +2183,16 @@ addAssociatedClassesAndNamespaces(AssociatedLookup &Result, QualType Ty) {
     //        types and those associated with the return type.
     case Type::FunctionProto: {
       const FunctionProtoType *Proto = cast<FunctionProtoType>(T);
-      for (FunctionProtoType::arg_type_iterator Arg = Proto->arg_type_begin(),
-                                             ArgEnd = Proto->arg_type_end();
-             Arg != ArgEnd; ++Arg)
+      for (FunctionProtoType::param_type_iterator
+               Arg = Proto->param_type_begin(),
+               ArgEnd = Proto->param_type_end();
+           Arg != ArgEnd; ++Arg)
         Queue.push_back(Arg->getTypePtr());
       // fallthrough
     }
     case Type::FunctionNoProto: {
       const FunctionType *FnType = cast<FunctionType>(T);
-      T = FnType->getResultType().getTypePtr();
+      T = FnType->getReturnType().getTypePtr();
       continue;
     }
 
@@ -2319,11 +2310,7 @@ void Sema::FindAssociatedClassesAndNamespaces(
     for (UnresolvedSetIterator I = ULE->decls_begin(), E = ULE->decls_end();
            I != E; ++I) {
       // Look through any using declarations to find the underlying function.
-      NamedDecl *Fn = (*I)->getUnderlyingDecl();
-
-      FunctionDecl *FDecl = dyn_cast<FunctionDecl>(Fn);
-      if (!FDecl)
-        FDecl = cast<FunctionTemplateDecl>(Fn)->getTemplatedDecl();
+      FunctionDecl *FDecl = (*I)->getUnderlyingDecl()->getAsFunction();
 
       // Add the classes and namespaces associated with the parameter
       // types and return type of this function.
@@ -2348,20 +2335,20 @@ IsAcceptableNonMemberOperatorCandidate(FunctionDecl *Fn,
     return true;
 
   const FunctionProtoType *Proto = Fn->getType()->getAs<FunctionProtoType>();
-  if (Proto->getNumArgs() < 1)
+  if (Proto->getNumParams() < 1)
     return false;
 
   if (T1->isEnumeralType()) {
-    QualType ArgType = Proto->getArgType(0).getNonReferenceType();
+    QualType ArgType = Proto->getParamType(0).getNonReferenceType();
     if (Context.hasSameUnqualifiedType(T1, ArgType))
       return true;
   }
 
-  if (Proto->getNumArgs() < 2)
+  if (Proto->getNumParams() < 2)
     return false;
 
   if (!T2.isNull() && T2->isEnumeralType()) {
-    QualType ArgType = Proto->getArgType(1).getNonReferenceType();
+    QualType ArgType = Proto->getParamType(1).getNonReferenceType();
     if (Context.hasSameUnqualifiedType(T2, ArgType))
       return true;
   }
@@ -2813,14 +2800,8 @@ Sema::LookupLiteralOperator(Scope *S, LookupResult &R,
   // operator template, but not both.
   if (FoundRaw && FoundTemplate) {
     Diag(R.getNameLoc(), diag::err_ovl_ambiguous_call) << R.getLookupName();
-    for (LookupResult::iterator I = R.begin(), E = R.end(); I != E; ++I) {
-      Decl *D = *I;
-      if (UsingShadowDecl *USD = dyn_cast<UsingShadowDecl>(D))
-        D = USD->getTargetDecl();
-      if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(D))
-        D = FunTmpl->getTemplatedDecl();
-      NoteOverloadCandidate(cast<FunctionDecl>(D));
-    }
+    for (LookupResult::iterator I = R.begin(), E = R.end(); I != E; ++I)
+      NoteOverloadCandidate((*I)->getUnderlyingDecl()->getAsFunction());
     return LOLR_Error;
   }
 
@@ -2852,14 +2833,8 @@ void ADLResult::insert(NamedDecl *New) {
   }
 
   // Otherwise, decide which is a more recent redeclaration.
-  FunctionDecl *OldFD, *NewFD;
-  if (isa<FunctionTemplateDecl>(New)) {
-    OldFD = cast<FunctionTemplateDecl>(Old)->getTemplatedDecl();
-    NewFD = cast<FunctionTemplateDecl>(New)->getTemplatedDecl();
-  } else {
-    OldFD = cast<FunctionDecl>(Old);
-    NewFD = cast<FunctionDecl>(New);
-  }
+  FunctionDecl *OldFD = Old->getAsFunction();
+  FunctionDecl *NewFD = New->getAsFunction();
 
   FunctionDecl *Cursor = NewFD;
   while (true) {
@@ -3064,8 +3039,8 @@ NamedDecl *VisibleDeclsRecord::checkHidden(NamedDecl *ND) {
       // Functions and function templates in the same scope overload
       // rather than hide.  FIXME: Look for hiding based on function
       // signatures!
-      if ((*I)->isFunctionOrFunctionTemplate() &&
-          ND->isFunctionOrFunctionTemplate() &&
+      if ((*I)->getUnderlyingDecl()->isFunctionOrFunctionTemplate() &&
+          ND->getUnderlyingDecl()->isFunctionOrFunctionTemplate() &&
           SM == ShadowMaps.rbegin())
         continue;
 
@@ -4235,13 +4210,20 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
          KNI != KNIEnd; ++KNI)
       Namespaces.AddNameSpecifier(KNI->first);
 
+    bool SSIsTemplate = false;
+    if (NestedNameSpecifier *NNS =
+            (SS && SS->isValid()) ? SS->getScopeRep() : 0) {
+      if (const Type *T = NNS->getAsType())
+        SSIsTemplate = T->getTypeClass() == Type::TemplateSpecialization;
+    }
     for (ASTContext::type_iterator TI = Context.types_begin(),
                                    TIEnd = Context.types_end();
          TI != TIEnd; ++TI) {
       if (CXXRecordDecl *CD = (*TI)->getAsCXXRecordDecl()) {
         CD = CD->getCanonicalDecl();
         if (!CD->isDependentType() && !CD->isAnonymousStructOrUnion() &&
-            !CD->isUnion() &&
+            !CD->isUnion() && CD->getIdentifier() &&
+            (SSIsTemplate || !isa<ClassTemplateSpecializationDecl>(CD)) &&
             (CD->isBeingDefined() || CD->isCompleteDefinition()))
           Namespaces.AddNameSpecifier(CD);
       }
@@ -4590,7 +4572,7 @@ bool FunctionCallFilterCCC::ValidateCandidate(const TypoCorrection &candidate) {
         if (ValType->isAnyPointerType() || ValType->isReferenceType())
           ValType = ValType->getPointeeType();
         if (const FunctionProtoType *FPT = ValType->getAs<FunctionProtoType>())
-          if (FPT->getNumArgs() == NumArgs)
+          if (FPT->getNumParams() == NumArgs)
             return true;
       }
     }

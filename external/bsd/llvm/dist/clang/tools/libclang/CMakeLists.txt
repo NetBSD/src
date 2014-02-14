@@ -9,32 +9,34 @@ set(SOURCES
   CIndexCXX.cpp
   CIndexCodeCompletion.cpp
   CIndexDiagnostic.cpp
-  CIndexDiagnostic.h
   CIndexHigh.cpp
   CIndexInclusionStack.cpp
   CIndexUSRs.cpp
   CIndexer.cpp
-  CIndexer.h
   CXComment.cpp
   CXCursor.cpp
-  CXCursor.h
   CXCompilationDatabase.cpp
   CXLoadedDiagnostic.cpp
-  CXLoadedDiagnostic.h
   CXSourceLocation.cpp
-  CXSourceLocation.h
   CXStoredDiagnostic.cpp
   CXString.cpp
-  CXString.h
-  CXTranslationUnit.h
   CXType.cpp
-  CXType.h
   IndexBody.cpp
   IndexDecl.cpp
   IndexTypeSourceInfo.cpp
-  Index_Internal.h
   Indexing.cpp
   IndexingContext.cpp
+
+  ADDITIONAL_HEADERS
+  CIndexDiagnostic.h
+  CIndexer.h
+  CXCursor.h
+  CXLoadedDiagnostic.h
+  CXSourceLocation.h
+  CXString.h
+  CXTranslationUnit.h
+  CXType.h
+  Index_Internal.h
   IndexingContext.h
   ../../include/clang-c/Index.h
   )
@@ -54,6 +56,8 @@ set(GENERATED_HEADERS
   ClangAttrClasses
   ClangAttrList
   ClangAttrParsedAttrList
+  ClangAttrVisitor
+  ClangCommentCommandList
   ClangCommentNodes
   ClangDiagnosticCommon
   ClangDiagnosticFrontend
@@ -61,11 +65,20 @@ set(GENERATED_HEADERS
   ClangStmtNodes
   )
 
+option(LIBCLANG_BUILD_STATIC
+  "Build libclang as a static library (in addition to a shared one)" OFF)
+
 set(LLVM_EXPORTED_SYMBOL_FILE ${CMAKE_CURRENT_SOURCE_DIR}/libclang.exports)
 
+if(MSVC)
+  # Avoid LNK4197 not to spceify libclang.def here.
+  # Each functions is exported as "dllexport" in include/clang-c.
+  # KB835326
+  set(LLVM_EXPORTED_SYMBOL_FILE)
+endif()
+
 if( LLVM_ENABLE_PIC )
-  set(SHARED_LIBRARY TRUE)
-  add_clang_library(libclang ${SOURCES})
+  add_clang_library(libclang SHARED ${SOURCES})
   target_link_libraries(libclang ${LIBRARIES})
   add_dependencies(libclang ${GENERATED_HEADERS} clang-headers)
 
@@ -102,9 +115,6 @@ if( LLVM_ENABLE_PIC )
 else()
   set(LIBCLANG_STATIC_TARGET_NAME libclang)
 endif()
-
-option(LIBCLANG_BUILD_STATIC
-  "Build libclang as a static library (in addition to a shared one)" OFF)
 
 if( (NOT LLVM_ENABLE_PIC OR LIBCLANG_BUILD_STATIC) AND NOT WIN32 )
   add_clang_library(${LIBCLANG_STATIC_TARGET_NAME} STATIC ${SOURCES})

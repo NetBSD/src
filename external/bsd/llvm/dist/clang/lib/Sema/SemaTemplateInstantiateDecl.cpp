@@ -157,8 +157,10 @@ static void instantiateDependentEnableIfAttr(
     return;
   }
 
-  EnableIfAttr *EIA = new (S.getASTContext()) EnableIfAttr(
-      A->getLocation(), S.getASTContext(), Cond, A->getMessage());
+  EnableIfAttr *EIA = new (S.getASTContext())
+                        EnableIfAttr(A->getLocation(), S.getASTContext(), Cond,
+                                     A->getMessage(),
+                                     A->getSpellingListIndex());
   New->addAttr(EIA);
 }
 
@@ -1031,8 +1033,9 @@ Decl *TemplateDeclInstantiator::VisitVarTemplateDecl(VarTemplateDecl *D) {
 
   VarTemplateDecl *Inst = VarTemplateDecl::Create(
       SemaRef.Context, DC, D->getLocation(), D->getIdentifier(), InstParams,
-      VarInst, PrevVarTemplate);
+      VarInst);
   VarInst->setDescribedVarTemplate(Inst);
+  Inst->setPreviousDecl(PrevVarTemplate);
 
   Inst->setAccess(D->getAccess());
   if (!PrevVarTemplate)
@@ -1214,15 +1217,14 @@ static QualType adjustFunctionTypeForInstantiation(ASTContext &Context,
 
   FunctionProtoType::ExtProtoInfo NewEPI = NewFunc->getExtProtoInfo();
   NewEPI.ExtInfo = OrigFunc->getExtInfo();
-  return Context.getFunctionType(NewFunc->getResultType(),
-                                 NewFunc->getArgTypes(), NewEPI);
+  return Context.getFunctionType(NewFunc->getReturnType(),
+                                 NewFunc->getParamTypes(), NewEPI);
 }
 
 /// Normal class members are of more specific types and therefore
 /// don't make it here.  This function serves two purposes:
 ///   1) instantiating function templates
 ///   2) substituting friend declarations
-/// FIXME: preserve function definitions in case #2
 Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
                                        TemplateParameterList *TemplateParams) {
   // Check whether there is already a function template specialization for
@@ -1432,35 +1434,22 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
     PrincipalDecl->setObjectOfFriendDecl();
     DC->makeDeclVisibleInContext(PrincipalDecl);
 
-    bool queuedInstantiation = false;
+    bool QueuedInstantiation = false;
 
-    // C++98 [temp.friend]p5: When a function is defined in a friend function
-    //   declaration in a class template, the function is defined at each
-    //   instantiation of the class template. The function is defined even if it
-    //   is never used.
-    // C++11 [temp.friend]p4: When a function is defined in a friend function
-    //   declaration in a class template, the function is instantiated when the
-    //   function is odr-used.
-    //
-    // If -Wc++98-compat is enabled, we go through the motions of checking for a
-    // redefinition, but don't instantiate the function.
-    if ((!SemaRef.getLangOpts().CPlusPlus11 ||
-         SemaRef.Diags.getDiagnosticLevel(
-             diag::warn_cxx98_compat_friend_redefinition,
-             Function->getLocation())
-           != DiagnosticsEngine::Ignored) &&
-        D->isThisDeclarationADefinition()) {
+    // C++11 [temp.friend]p4 (DR329):
+    //   When a function is defined in a friend function declaration in a class
+    //   template, the function is instantiated when the function is odr-used.
+    //   The same restrictions on multiple declarations and definitions that
+    //   apply to non-template function declarations and definitions also apply
+    //   to these implicit definitions.
+    if (D->isThisDeclarationADefinition()) {
       // Check for a function body.
       const FunctionDecl *Definition = 0;
       if (Function->isDefined(Definition) &&
           Definition->getTemplateSpecializationKind() == TSK_Undeclared) {
-        SemaRef.Diag(Function->getLocation(),
-                     SemaRef.getLangOpts().CPlusPlus11 ?
-                       diag::warn_cxx98_compat_friend_redefinition :
-                       diag::err_redefinition) << Function->getDeclName();
+        SemaRef.Diag(Function->getLocation(), diag::err_redefinition)
+            << Function->getDeclName();
         SemaRef.Diag(Definition->getLocation(), diag::note_previous_definition);
-        if (!SemaRef.getLangOpts().CPlusPlus11)
-          Function->setInvalidDecl();
       }
       // Check for redefinitions due to other instantiations of this or
       // a similar friend function.
@@ -1469,36 +1458,34 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
                 R != REnd; ++R) {
         if (*R == Function)
           continue;
-        switch (R->getFriendObjectKind()) {
-        case Decl::FOK_None:
-          if (!SemaRef.getLangOpts().CPlusPlus11 &&
-              !queuedInstantiation && R->isUsed(false)) {
-            if (MemberSpecializationInfo *MSInfo
-                = Function->getMemberSpecializationInfo()) {
-              if (MSInfo->getPointOfInstantiation().isInvalid()) {
-                SourceLocation Loc = R->getLocation(); // FIXME
-                MSInfo->setPointOfInstantiation(Loc);
-                SemaRef.PendingLocalImplicitInstantiations.push_back(
-                                                 std::make_pair(Function, Loc));
-                queuedInstantiation = true;
-              }
+
+        // If some prior declaration of this function has been used, we need
+        // to instantiate its definition.
+        if (!QueuedInstantiation && R->isUsed(false)) {
+          if (MemberSpecializationInfo *MSInfo =
+                  Function->getMemberSpecializationInfo()) {
+            if (MSInfo->getPointOfInstantiation().isInvalid()) {
+              SourceLocation Loc = R->getLocation(); // FIXME
+              MSInfo->setPointOfInstantiation(Loc);
+              SemaRef.PendingLocalImplicitInstantiations.push_back(
+                                               std::make_pair(Function, Loc));
+              QueuedInstantiation = true;
             }
           }
-          break;
-        default:
-          if (const FunctionDecl *RPattern
-              = R->getTemplateInstantiationPattern())
+        }
+
+        // If some prior declaration of this function was a friend with an
+        // uninstantiated definition, reject it.
+        if (R->getFriendObjectKind()) {
+          if (const FunctionDecl *RPattern =
+                  R->getTemplateInstantiationPattern()) {
             if (RPattern->isDefined(RPattern)) {
-              SemaRef.Diag(Function->getLocation(),
-                           SemaRef.getLangOpts().CPlusPlus11 ?
-                             diag::warn_cxx98_compat_friend_redefinition :
-                             diag::err_redefinition)
+              SemaRef.Diag(Function->getLocation(), diag::err_redefinition)
                 << Function->getDeclName();
               SemaRef.Diag(R->getLocation(), diag::note_previous_definition);
-              if (!SemaRef.getLangOpts().CPlusPlus11)
-                Function->setInvalidDecl();
               break;
             }
+          }
         }
       }
     }
@@ -2930,9 +2917,9 @@ TemplateDeclInstantiator::SubstFunctionType(FunctionDecl *D,
       TypeLoc NewTL = NewTInfo->getTypeLoc().IgnoreParens();
       FunctionProtoTypeLoc NewProtoLoc = NewTL.castAs<FunctionProtoTypeLoc>();
       unsigned NewIdx = 0;
-      for (unsigned OldIdx = 0, NumOldParams = OldProtoLoc.getNumArgs();
+      for (unsigned OldIdx = 0, NumOldParams = OldProtoLoc.getNumParams();
            OldIdx != NumOldParams; ++OldIdx) {
-        ParmVarDecl *OldParam = OldProtoLoc.getArg(OldIdx);
+        ParmVarDecl *OldParam = OldProtoLoc.getParam(OldIdx);
         LocalInstantiationScope *Scope = SemaRef.CurrentInstantiationScope;
 
         Optional<unsigned> NumArgumentsInExpansion;
@@ -2943,14 +2930,14 @@ TemplateDeclInstantiator::SubstFunctionType(FunctionDecl *D,
         if (!NumArgumentsInExpansion) {
           // Simple case: normal parameter, or a parameter pack that's
           // instantiated to a (still-dependent) parameter pack.
-          ParmVarDecl *NewParam = NewProtoLoc.getArg(NewIdx++);
+          ParmVarDecl *NewParam = NewProtoLoc.getParam(NewIdx++);
           Params.push_back(NewParam);
           Scope->InstantiatedLocal(OldParam, NewParam);
         } else {
           // Parameter pack expansion: make the instantiation an argument pack.
           Scope->MakeInstantiatedLocalArgPack(OldParam);
           for (unsigned I = 0; I != *NumArgumentsInExpansion; ++I) {
-            ParmVarDecl *NewParam = NewProtoLoc.getArg(NewIdx++);
+            ParmVarDecl *NewParam = NewProtoLoc.getParam(NewIdx++);
             Params.push_back(NewParam);
             Scope->InstantiatedLocalPackArg(OldParam, NewParam);
           }
@@ -2962,11 +2949,12 @@ TemplateDeclInstantiator::SubstFunctionType(FunctionDecl *D,
       // the function parameters themselves.
       const FunctionProtoType *OldProto =
           cast<FunctionProtoType>(OldProtoLoc.getType());
-      for (unsigned i = 0, i_end = OldProtoLoc.getNumArgs(); i != i_end; ++i) {
-        ParmVarDecl *OldParam = OldProtoLoc.getArg(i);
+      for (unsigned i = 0, i_end = OldProtoLoc.getNumParams(); i != i_end;
+           ++i) {
+        ParmVarDecl *OldParam = OldProtoLoc.getParam(i);
         if (!OldParam) {
           Params.push_back(SemaRef.BuildParmVarDeclForTypedef(
-              D, D->getLocation(), OldProto->getArgType(i)));
+              D, D->getLocation(), OldProto->getParamType(i)));
           continue;
         }
 
@@ -3156,8 +3144,8 @@ static void InstantiateExceptionSpec(Sema &SemaRef, FunctionDecl *New,
   EPI.Exceptions = Exceptions.data();
   EPI.NoexceptExpr = NoexceptExpr;
 
-  New->setType(SemaRef.Context.getFunctionType(NewProto->getResultType(),
-                                               NewProto->getArgTypes(), EPI));
+  New->setType(SemaRef.Context.getFunctionType(NewProto->getReturnType(),
+                                               NewProto->getParamTypes(), EPI));
 }
 
 void Sema::InstantiateExceptionSpec(SourceLocation PointOfInstantiation,
@@ -3173,8 +3161,8 @@ void Sema::InstantiateExceptionSpec(SourceLocation PointOfInstantiation,
     // so that our callers don't have to cope with EST_Uninstantiated.
     FunctionProtoType::ExtProtoInfo EPI = Proto->getExtProtoInfo();
     EPI.ExceptionSpecType = EST_None;
-    Decl->setType(Context.getFunctionType(Proto->getResultType(),
-                                          Proto->getArgTypes(), EPI));
+    Decl->setType(Context.getFunctionType(Proto->getReturnType(),
+                                          Proto->getParamTypes(), EPI));
     return;
   }
 
@@ -3258,7 +3246,7 @@ TemplateDeclInstantiator::InitFunctionInstantiation(FunctionDecl *New,
       EPI.ExceptionSpecDecl = New;
       EPI.ExceptionSpecTemplate = ExceptionSpecTemplate;
       New->setType(SemaRef.Context.getFunctionType(
-          NewProto->getResultType(), NewProto->getArgTypes(), EPI));
+          NewProto->getReturnType(), NewProto->getParamTypes(), EPI));
     } else {
       ::InstantiateExceptionSpec(SemaRef, New, Proto, TemplateArgs);
     }
@@ -3386,10 +3374,10 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
   //   initializer or return value, and class template specializations, other
   //   explicit instantiation declarations have the effect of suppressing the
   //   implicit instantiation of the entity to which they refer.
-  if (Function->getTemplateSpecializationKind()
-        == TSK_ExplicitInstantiationDeclaration &&
+  if (Function->getTemplateSpecializationKind() ==
+          TSK_ExplicitInstantiationDeclaration &&
       !PatternDecl->isInlined() &&
-      !PatternDecl->getResultType()->getContainedAutoType())
+      !PatternDecl->getReturnType()->getContainedAutoType())
     return;
 
   if (PatternDecl->isInlined())
@@ -3514,7 +3502,18 @@ VarTemplateSpecializationDecl *Sema::BuildVarTemplateInstantiation(
   // or may not be the declaration in the class; if it's in the class, we want
   // to instantiate a member in the class (a declaration), and if it's outside,
   // we want to instantiate a definition.
-  FromVar = FromVar->getFirstDecl();
+  //
+  // If we're instantiating an explicitly-specialized member template or member
+  // partial specialization, don't do this. The member specialization completely
+  // replaces the original declaration in this case.
+  bool IsMemberSpec = false;
+  if (VarTemplatePartialSpecializationDecl *PartialSpec =
+          dyn_cast<VarTemplatePartialSpecializationDecl>(FromVar))
+    IsMemberSpec = PartialSpec->isMemberSpecialization();
+  else if (VarTemplateDecl *FromTemplate = FromVar->getDescribedVarTemplate())
+    IsMemberSpec = FromTemplate->isMemberSpecialization();
+  if (!IsMemberSpec)
+    FromVar = FromVar->getFirstDecl();
 
   MultiLevelTemplateArgumentList MultiLevelList(TemplateArgList);
   TemplateDeclInstantiator Instantiator(*this, FromVar->getDeclContext(),

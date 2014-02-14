@@ -639,21 +639,14 @@ ObjCMethodDecl *ObjCInterfaceDecl::lookupPrivateMethod(
 // ObjCMethodDecl
 //===----------------------------------------------------------------------===//
 
-ObjCMethodDecl *ObjCMethodDecl::Create(ASTContext &C,
-                                       SourceLocation beginLoc,
-                                       SourceLocation endLoc,
-                                       Selector SelInfo, QualType T,
-                                       TypeSourceInfo *ResultTInfo,
-                                       DeclContext *contextDecl,
-                                       bool isInstance,
-                                       bool isVariadic,
-                                       bool isPropertyAccessor,
-                                       bool isImplicitlyDeclared,
-                                       bool isDefined,
-                                       ImplementationControl impControl,
-                                       bool HasRelatedResultType) {
+ObjCMethodDecl *ObjCMethodDecl::Create(
+    ASTContext &C, SourceLocation beginLoc, SourceLocation endLoc,
+    Selector SelInfo, QualType T, TypeSourceInfo *ReturnTInfo,
+    DeclContext *contextDecl, bool isInstance, bool isVariadic,
+    bool isPropertyAccessor, bool isImplicitlyDeclared, bool isDefined,
+    ImplementationControl impControl, bool HasRelatedResultType) {
   return new (C, contextDecl) ObjCMethodDecl(
-      beginLoc, endLoc, SelInfo, T, ResultTInfo, contextDecl, isInstance,
+      beginLoc, endLoc, SelInfo, T, ReturnTInfo, contextDecl, isInstance,
       isVariadic, isPropertyAccessor, isImplicitlyDeclared, isDefined,
       impControl, HasRelatedResultType);
 }
@@ -833,7 +826,7 @@ ObjCMethodFamily ObjCMethodDecl::getMethodFamily() const {
   // init only has a conventional meaning for an instance method, and
   // it has to return an object.
   case OMF_init:
-    if (!isInstanceMethod() || !getResultType()->isObjCObjectPointerType())
+    if (!isInstanceMethod() || !getReturnType()->isObjCObjectPointerType())
       family = OMF_None;
     break;
 
@@ -843,7 +836,7 @@ ObjCMethodFamily ObjCMethodDecl::getMethodFamily() const {
   case OMF_copy:
   case OMF_mutableCopy:
   case OMF_new:
-    if (!getResultType()->isObjCObjectPointerType())
+    if (!getReturnType()->isObjCObjectPointerType())
       family = OMF_None;
     break;
 
@@ -860,15 +853,14 @@ ObjCMethodFamily ObjCMethodDecl::getMethodFamily() const {
     break;
       
   case OMF_performSelector:
-    if (!isInstanceMethod() ||
-        !getResultType()->isObjCIdType())
+    if (!isInstanceMethod() || !getReturnType()->isObjCIdType())
       family = OMF_None;
     else {
       unsigned noParams = param_size();
       if (noParams < 1 || noParams > 3)
         family = OMF_None;
       else {
-        ObjCMethodDecl::arg_type_iterator it = arg_type_begin();
+        ObjCMethodDecl::param_type_iterator it = param_type_begin();
         QualType ArgT = (*it);
         if (!ArgT->isObjCSelType()) {
           family = OMF_None;
@@ -941,7 +933,7 @@ void ObjCMethodDecl::createImplicitParams(ASTContext &Context,
   setSelfDecl(self);
 
   if (selfIsConsumed)
-    self->addAttr(new (Context) NSConsumedAttr(SourceLocation(), Context));
+    self->addAttr(NSConsumedAttr::CreateImplicit(Context));
 
   if (selfIsPseudoStrong)
     self->setARCPseudoStrong(true);

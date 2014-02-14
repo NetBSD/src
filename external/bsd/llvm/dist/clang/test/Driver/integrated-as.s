@@ -5,9 +5,6 @@
 // RUN: %clang -### -c -integrated-as -Wa,-L %s 2>&1 | FileCheck --check-prefix=OPT_L %s
 // OPT_L: msave-temp-labels
 
-// RUN: not %clang -c -integrated-as -Wa,--compress-debug-sections %s 2>&1 | FileCheck --check-prefix=INVALID %s
-// INVALID: error: unsupported argument '--compress-debug-sections' to option 'Wa,'
-
 // RUN: %clang -### -target x86_64-linux-gnu -c -integrated-as %s -fsanitize=address 2>&1 %s | FileCheck --check-prefix=SANITIZE %s
 // SANITIZE: argument unused during compilation: '-fsanitize=address'
 
@@ -31,3 +28,13 @@
 // RUN: %clang -### -c -integrated-as %s -Xassembler -Ifoo_dir 2>&1 | FileCheck --check-prefix=XA_INCLUDE2 %s
 // XA_INCLUDE2: cc1as
 // XA_INCLUDE2: "-Ifoo_dir"
+
+// RUN: %clang -### -c -integrated-as -Wa,-compress-debug-sections %s 2>&1 | FileCheck --check-prefix=COMPRESS_DEBUG %s
+// RUN: %clang -### -c -integrated-as -Wa,--compress-debug-sections %s 2>&1 | FileCheck --check-prefix=COMPRESS_DEBUG %s
+// COMPRESS_DEBUG: warning: DWARF compression is not implemented
+// COMPRESS_DEBUG: -cc1as
+
+// RUN: %clang -### -c -integrated-as -Wa,-compress-debug-sections -Wno-missing-debug-compression %s 2>&1 | FileCheck --check-prefix=COMPRESS_DEBUG_QUIET %s
+// COMPRESS_DEBUG_QUIET-NOT: warning: DWARF compression is not implemented
+// COMPRESS_DEBUG_QUIET-NOT: warning: argument unused during compilation
+// COMPRESS_DEBUG_QUIET: -cc1as

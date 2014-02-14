@@ -860,7 +860,9 @@ void CodeGenFunction::PopCleanupBlock(bool FallthroughIsBranchThrough) {
 
   // Emit the EH cleanup if required.
   if (RequiresEHCleanup) {
-    if (CGDebugInfo *DI = getDebugInfo())
+    CGDebugInfo *DI = getDebugInfo();
+    SaveAndRestoreLocation AutoRestoreLocation(*this, Builder);
+    if (DI)
       DI->EmitLocation(Builder, CurEHLocation);
 
     CGBuilderTy::InsertPoint SavedIP = Builder.saveAndClearIP();
@@ -882,6 +884,29 @@ void CodeGenFunction::PopCleanupBlock(bool FallthroughIsBranchThrough) {
     SimplifyCleanupEntry(*this, EHEntry);
   }
 }
+
+/// isObviouslyBranchWithoutCleanups - Return true if a branch to the
+/// specified destination obviously has no cleanups to run.  'false' is always
+/// a conservatively correct answer for this method.
+bool CodeGenFunction::isObviouslyBranchWithoutCleanups(JumpDest Dest) const {
+  assert(Dest.getScopeDepth().encloses(EHStack.stable_begin())
+         && "stale jump destination");
+  
+  // Calculate the innermost active normal cleanup.
+  EHScopeStack::stable_iterator TopCleanup =
+    EHStack.getInnermostActiveNormalCleanup();
+  
+  // If we're not in an active normal cleanup scope, or if the
+  // destination scope is within the innermost active normal cleanup
+  // scope, we don't need to worry about fixups.
+  if (TopCleanup == EHStack.stable_end() ||
+      TopCleanup.encloses(Dest.getScopeDepth())) // works for invalid
+    return true;
+
+  // Otherwise, we might need some cleanups.
+  return false;
+}
+
 
 /// Terminate the current block by emitting a branch which might leave
 /// the current cleanup-protected scope.  The target scope may not yet

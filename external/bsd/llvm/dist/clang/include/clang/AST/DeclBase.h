@@ -32,6 +32,7 @@ class DeclarationName;
 class DependentDiagnostic;
 class EnumDecl;
 class FunctionDecl;
+class FunctionType;
 class LinkageComputer;
 class LinkageSpecDecl;
 class Module;
@@ -836,7 +837,19 @@ public:
   bool isTemplateDecl() const;
 
   /// \brief Whether this declaration is a function or function template.
-  bool isFunctionOrFunctionTemplate() const;
+  bool isFunctionOrFunctionTemplate() const {
+    return (DeclKind >= Decl::firstFunction &&
+            DeclKind <= Decl::lastFunction) ||
+           DeclKind == FunctionTemplate;
+  }
+
+  /// \brief Returns the function itself, or the templated function if this is a
+  /// function template.
+  FunctionDecl *getAsFunction() LLVM_READONLY;
+
+  const FunctionDecl *getAsFunction() const {
+    return const_cast<Decl *>(this)->getAsFunction();
+  }
 
   /// \brief Changes the namespace of this declaration to reflect that it's
   /// a function-local extern declaration.
@@ -942,6 +955,11 @@ public:
   // Same as dump(), but forces color printing.
   void dumpColor() const;
   void dump(raw_ostream &Out) const;
+
+  /// \brief Looks through the Decl's underlying type to extract a FunctionType
+  /// when possible. Will return null if the type underlying the Decl does not
+  /// have a FunctionType.
+  const FunctionType *getFunctionType(bool BlocksToo = true) const;
 
 private:
   void setAttrsImpl(const AttrVec& Attrs, ASTContext &Ctx);

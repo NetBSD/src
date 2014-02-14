@@ -122,10 +122,9 @@ void Sema::AddAlignmentAttributesForRecord(RecordDecl *RD) {
   // Otherwise, check to see if we need a max field alignment attribute.
   if (unsigned Alignment = Stack->getAlignment()) {
     if (Alignment == PackStackEntry::kMac68kAlignmentSentinel)
-      RD->addAttr(::new (Context) AlignMac68kAttr(SourceLocation(), Context));
+      RD->addAttr(AlignMac68kAttr::CreateImplicit(Context));
     else
-      RD->addAttr(::new (Context) MaxFieldAlignmentAttr(SourceLocation(),
-                                                        Context,
+      RD->addAttr(MaxFieldAlignmentAttr::CreateImplicit(Context,
                                                         Alignment * 8));
   }
 }
@@ -133,7 +132,7 @@ void Sema::AddAlignmentAttributesForRecord(RecordDecl *RD) {
 void Sema::AddMsStructLayoutForRecord(RecordDecl *RD) {
   if (!MSStructPragmaOn)
     return;
-  RD->addAttr(::new (Context) MsStructAttr(SourceLocation(), Context));
+  RD->addAttr(MsStructAttr::CreateImplicit(Context));
 }
 
 void Sema::ActOnPragmaOptionsAlign(PragmaOptionsAlignKind Kind,
@@ -288,6 +287,13 @@ void Sema::ActOnPragmaDetectMismatch(StringRef Name, StringRef Value) {
   Consumer.HandleDetectMismatch(Name, Value);
 }
 
+void Sema::ActOnPragmaMSPointersToMembers(
+    PragmaMSPointersToMembersKind RepresentationMethod,
+    SourceLocation PragmaLoc) {
+  MSPointerToMemberRepresentationMethod = RepresentationMethod;
+  ImplicitMSInheritanceAttrLoc = PragmaLoc;
+}
+
 void Sema::ActOnPragmaUnused(const Token &IdTok, Scope *curScope,
                              SourceLocation PragmaLoc) {
 
@@ -312,7 +318,7 @@ void Sema::ActOnPragmaUnused(const Token &IdTok, Scope *curScope,
   if (VD->isUsed())
     Diag(PragmaLoc, diag::warn_used_but_marked_unused) << Name;
 
-  VD->addAttr(::new (Context) UnusedAttr(IdTok.getLocation(), Context));
+  VD->addAttr(UnusedAttr::CreateImplicit(Context, IdTok.getLocation()));
 }
 
 void Sema::AddCFAuditedAttribute(Decl *D) {
@@ -324,11 +330,11 @@ void Sema::AddCFAuditedAttribute(Decl *D) {
       D->hasAttr<CFUnknownTransferAttr>())
     return;
 
-  D->addAttr(::new (Context) CFAuditedTransferAttr(Loc, Context));
+  D->addAttr(CFAuditedTransferAttr::CreateImplicit(Context, Loc));
 }
 
 typedef std::vector<std::pair<unsigned, SourceLocation> > VisStack;
-enum { NoVisibility = (unsigned) -1 };
+enum LLVM_ENUM_INT_TYPE(unsigned) { NoVisibility = ~0U };
 
 void Sema::AddPushedVisibilityAttribute(Decl *D) {
   if (!VisContext)
@@ -346,7 +352,7 @@ void Sema::AddPushedVisibilityAttribute(Decl *D) {
     = (VisibilityAttr::VisibilityType) rawType;
   SourceLocation loc = Stack->back().second;
 
-  D->addAttr(::new (Context) VisibilityAttr(loc, Context, type));
+  D->addAttr(VisibilityAttr::CreateImplicit(Context, type, loc));
 }
 
 /// FreeVisContext - Deallocate and null out VisContext.

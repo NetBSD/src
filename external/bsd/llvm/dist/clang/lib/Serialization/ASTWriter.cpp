@@ -179,7 +179,7 @@ void ASTTypeWriter::VisitExtVectorType(const ExtVectorType *T) {
 }
 
 void ASTTypeWriter::VisitFunctionType(const FunctionType *T) {
-  Writer.AddTypeRef(T->getResultType(), Record);
+  Writer.AddTypeRef(T->getReturnType(), Record);
   FunctionType::ExtInfo C = T->getExtInfo();
   Record.push_back(C.getNoReturn());
   Record.push_back(C.getHasRegParm());
@@ -196,9 +196,9 @@ void ASTTypeWriter::VisitFunctionNoProtoType(const FunctionNoProtoType *T) {
 
 void ASTTypeWriter::VisitFunctionProtoType(const FunctionProtoType *T) {
   VisitFunctionType(T);
-  Record.push_back(T->getNumArgs());
-  for (unsigned I = 0, N = T->getNumArgs(); I != N; ++I)
-    Writer.AddTypeRef(T->getArgType(I), Record);
+  Record.push_back(T->getNumParams());
+  for (unsigned I = 0, N = T->getNumParams(); I != N; ++I)
+    Writer.AddTypeRef(T->getParamType(I), Record);
   Record.push_back(T->isVariadic());
   Record.push_back(T->hasTrailingReturn());
   Record.push_back(T->getTypeQuals());
@@ -512,8 +512,8 @@ void TypeLocWriter::VisitFunctionTypeLoc(FunctionTypeLoc TL) {
   Writer.AddSourceLocation(TL.getLParenLoc(), Record);
   Writer.AddSourceLocation(TL.getRParenLoc(), Record);
   Writer.AddSourceLocation(TL.getLocalRangeEnd(), Record);
-  for (unsigned i = 0, e = TL.getNumArgs(); i != e; ++i)
-    Writer.AddDeclRef(TL.getArg(i), Record);
+  for (unsigned i = 0, e = TL.getNumParams(); i != e; ++i)
+    Writer.AddDeclRef(TL.getParam(i), Record);
 }
 void TypeLocWriter::VisitFunctionProtoTypeLoc(FunctionProtoTypeLoc TL) {
   VisitFunctionTypeLoc(TL);
@@ -813,7 +813,7 @@ void ASTWriter::WriteBlockInfoBlock() {
   RECORD(DECL_OFFSET);
   RECORD(IDENTIFIER_OFFSET);
   RECORD(IDENTIFIER_TABLE);
-  RECORD(EXTERNAL_DEFINITIONS);
+  RECORD(EAGERLY_DESERIALIZED_DECLS);
   RECORD(SPECIAL_TYPES);
   RECORD(STATISTICS);
   RECORD(TENTATIVE_DEFINITIONS);
@@ -1951,8 +1951,6 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP, bool IsModule) {
 
     // Emit the macro directives in reverse source order.
     for (; MD; MD = MD->getPrevious()) {
-      if (MD->isHidden())
-        continue;
       if (shouldIgnoreMacro(MD, IsModule, PP))
         continue;
 
@@ -2995,9 +2993,6 @@ class ASTIdentifierTableTrait {
     bool isUndefined = false;
     Optional<bool> isPublic;
     for (; MD; MD = MD->getPrevious()) {
-      if (MD->isHidden())
-        continue;
-
       SubmoduleID ThisModID = getSubmoduleID(MD);
       if (ThisModID == 0) {
         isUndefined = false;
@@ -4197,8 +4192,8 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
   Stream.EmitRecord(SPECIAL_TYPES, SpecialTypes);
 
   // Write the record containing external, unnamed definitions.
-  if (!ExternalDefinitions.empty())
-    Stream.EmitRecord(EXTERNAL_DEFINITIONS, ExternalDefinitions);
+  if (!EagerlyDeserializedDecls.empty())
+    Stream.EmitRecord(EAGERLY_DESERIALIZED_DECLS, EagerlyDeserializedDecls);
 
   // Write the record containing tentative definitions.
   if (!TentativeDefinitions.empty())

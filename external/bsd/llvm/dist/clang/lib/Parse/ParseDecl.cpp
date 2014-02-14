@@ -69,9 +69,11 @@ TypeResult Parser::ParseTypeName(SourceRange *Range,
 /// isAttributeLateParsed - Return true if the attribute has arguments that
 /// require late parsing.
 static bool isAttributeLateParsed(const IdentifierInfo &II) {
+#define CLANG_ATTR_LATE_PARSED_LIST
     return llvm::StringSwitch<bool>(II.getName())
-#include "clang/Parse/AttrLateParsed.inc"
+#include "clang/Parse/AttrParserStringSwitches.inc"
         .Default(false);
+#undef CLANG_ATTR_LATE_PARSED_LIST
 }
 
 /// ParseGNUAttributes - Parse a non-empty attributes list.
@@ -196,24 +198,30 @@ static StringRef normalizeAttrName(StringRef Name) {
 
 /// \brief Determine whether the given attribute has an identifier argument.
 static bool attributeHasIdentifierArg(const IdentifierInfo &II) {
+#define CLANG_ATTR_IDENTIFIER_ARG_LIST
   return llvm::StringSwitch<bool>(normalizeAttrName(II.getName()))
-#include "clang/Parse/AttrIdentifierArg.inc"
+#include "clang/Parse/AttrParserStringSwitches.inc"
            .Default(false);
+#undef CLANG_ATTR_IDENTIFIER_ARG_LIST
 }
 
 /// \brief Determine whether the given attribute parses a type argument.
 static bool attributeIsTypeArgAttr(const IdentifierInfo &II) {
+#define CLANG_ATTR_TYPE_ARG_LIST
   return llvm::StringSwitch<bool>(normalizeAttrName(II.getName()))
-#include "clang/Parse/AttrTypeArg.inc"
+#include "clang/Parse/AttrParserStringSwitches.inc"
            .Default(false);
+#undef CLANG_ATTR_TYPE_ARG_LIST
 }
 
 /// \brief Determine whether the given attribute requires parsing its arguments
 /// in an unevaluated context or not.
 static bool attributeParsedArgsUnevaluated(const IdentifierInfo &II) {
+#define CLANG_ATTR_ARG_CONTEXT_LIST
   return llvm::StringSwitch<bool>(normalizeAttrName(II.getName()))
-#include "clang/Parse/AttrArgContext.inc"
+#include "clang/Parse/AttrParserStringSwitches.inc"
            .Default(false);
+#undef CLANG_ATTR_ARG_CONTEXT_LIST
 }
 
 IdentifierLoc *Parser::ParseIdentifierLoc() {
@@ -1096,13 +1104,6 @@ void Parser::ParseLexedAttribute(LateParsedAttribute &LA,
   // Consume the previously pushed token.
   ConsumeAnyToken(/*ConsumeCodeCompletionTok=*/true);
 
-  if (OnDefinition && !IsThreadSafetyAttribute(LA.AttrName.getName())) {
-    // FIXME: Do not warn on C++11 attributes, once we start supporting
-    // them here.
-    Diag(Tok, diag::warn_attribute_on_function_definition)
-      << &LA.AttrName;
-  }
-
   ParsedAttributes Attrs(AttrFactory);
   SourceLocation endLoc;
 
@@ -1148,9 +1149,14 @@ void Parser::ParseLexedAttribute(LateParsedAttribute &LA,
     Diag(Tok, diag::warn_attribute_no_decl) << LA.AttrName.getName();
   }
 
-  for (unsigned i = 0, ni = LA.Decls.size(); i < ni; ++i) {
+  const AttributeList *AL = Attrs.getList();
+  if (OnDefinition && AL && !AL->isCXX11Attribute() &&
+      AL->isKnownToGCC())
+    Diag(Tok, diag::warn_attribute_on_function_definition)
+      << &LA.AttrName;
+
+  for (unsigned i = 0, ni = LA.Decls.size(); i < ni; ++i)
     Actions.ActOnFinishDelayedAttribute(getCurScope(), LA.Decls[i], Attrs);
-  }
 
   if (Tok.getLocation() != OrigLoc) {
     // Due to a parsing error, we either went over the cached tokens or
@@ -1162,31 +1168,6 @@ void Parser::ParseLexedAttribute(LateParsedAttribute &LA,
     while (Tok.getLocation() != OrigLoc && Tok.isNot(tok::eof))
       ConsumeAnyToken();
   }
-}
-
-/// \brief Wrapper around a case statement checking if AttrName is
-/// one of the thread safety attributes
-bool Parser::IsThreadSafetyAttribute(StringRef AttrName) {
-  return llvm::StringSwitch<bool>(AttrName)
-      .Case("guarded_by", true)
-      .Case("guarded_var", true)
-      .Case("pt_guarded_by", true)
-      .Case("pt_guarded_var", true)
-      .Case("lockable", true)
-      .Case("scoped_lockable", true)
-      .Case("no_thread_safety_analysis", true)
-      .Case("acquired_after", true)
-      .Case("acquired_before", true)
-      .Case("exclusive_lock_function", true)
-      .Case("shared_lock_function", true)
-      .Case("exclusive_trylock_function", true)
-      .Case("shared_trylock_function", true)
-      .Case("unlock_function", true)
-      .Case("lock_returned", true)
-      .Case("locks_excluded", true)
-      .Case("exclusive_locks_required", true)
-      .Case("shared_locks_required", true)
-      .Default(false);
 }
 
 void Parser::ParseTypeTagForDatatypeAttribute(IdentifierInfo &AttrName,
@@ -5155,6 +5136,7 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
       // FIXME: currently, "static" case isn't handled correctly.
       bool IsCXX11MemberFunction =
         getLangOpts().CPlusPlus11 &&
+        D.getDeclSpec().getStorageClassSpec() != DeclSpec::SCS_typedef &&
         (D.getContext() == Declarator::MemberContext
          ? !D.getDeclSpec().isFriendSpecified()
          : D.getContext() == Declarator::FileContext &&

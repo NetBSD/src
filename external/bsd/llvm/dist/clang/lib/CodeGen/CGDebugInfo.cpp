@@ -53,29 +53,34 @@ CGDebugInfo::~CGDebugInfo() {
 }
 
 
-NoLocation::NoLocation(CodeGenFunction &CGF, CGBuilderTy &B)
+SaveAndRestoreLocation::SaveAndRestoreLocation(CodeGenFunction &CGF, CGBuilderTy &B)
   : DI(CGF.getDebugInfo()), Builder(B) {
   if (DI) {
     SavedLoc = DI->getLocation();
     DI->CurLoc = SourceLocation();
-    Builder.SetCurrentDebugLocation(llvm::DebugLoc());
   }
+}
+
+SaveAndRestoreLocation::~SaveAndRestoreLocation() {
+  if (DI)
+    DI->EmitLocation(Builder, SavedLoc);
+}
+
+NoLocation::NoLocation(CodeGenFunction &CGF, CGBuilderTy &B)
+  : SaveAndRestoreLocation(CGF, B) {
+  if (DI)
+    Builder.SetCurrentDebugLocation(llvm::DebugLoc());
 }
 
 NoLocation::~NoLocation() {
-  if (DI) {
+  if (DI)
     assert(Builder.getCurrentDebugLocation().isUnknown());
-    DI->CurLoc = SavedLoc;
-  }
 }
 
 ArtificialLocation::ArtificialLocation(CodeGenFunction &CGF, CGBuilderTy &B)
-  : DI(CGF.getDebugInfo()), Builder(B) {
-  if (DI) {
-    SavedLoc = DI->getLocation();
-    DI->CurLoc = SourceLocation();
+  : SaveAndRestoreLocation(CGF, B) {
+  if (DI)
     Builder.SetCurrentDebugLocation(llvm::DebugLoc());
-  }
 }
 
 void ArtificialLocation::Emit() {
@@ -91,10 +96,8 @@ void ArtificialLocation::Emit() {
 }
 
 ArtificialLocation::~ArtificialLocation() {
-  if (DI) {
+  if (DI)
     assert(Builder.getCurrentDebugLocation().getLine() == 0);
-    DI->CurLoc = SavedLoc;
-  }
 }
 
 void CGDebugInfo::setLocation(SourceLocation Loc) {
@@ -736,14 +739,16 @@ llvm::DIType CGDebugInfo::CreateType(const TypedefType *Ty, llvm::DIFile Unit) {
     return llvm::DIType();
   // We don't set size information, but do specify where the typedef was
   // declared.
-  unsigned Line = getLineNumber(Ty->getDecl()->getLocation());
+  SourceLocation Loc = Ty->getDecl()->getLocation();
+  llvm::DIFile File = getOrCreateFile(Loc);
+  unsigned Line = getLineNumber(Loc);
   const TypedefNameDecl *TyDecl = Ty->getDecl();
 
   llvm::DIDescriptor TypedefContext =
     getContextDescriptor(cast<Decl>(Ty->getDecl()->getDeclContext()));
 
   return
-    DBuilder.createTypedef(Src, TyDecl->getName(), Unit, Line, TypedefContext);
+    DBuilder.createTypedef(Src, TyDecl->getName(), File, Line, TypedefContext);
 }
 
 llvm::DIType CGDebugInfo::CreateType(const FunctionType *Ty,
@@ -751,15 +756,15 @@ llvm::DIType CGDebugInfo::CreateType(const FunctionType *Ty,
   SmallVector<llvm::Value *, 16> EltTys;
 
   // Add the result type at least.
-  EltTys.push_back(getOrCreateType(Ty->getResultType(), Unit));
+  EltTys.push_back(getOrCreateType(Ty->getReturnType(), Unit));
 
   // Set up remainder of arguments if there is a prototype.
   // FIXME: IF NOT, HOW IS THIS REPRESENTED?  llvm-gcc doesn't represent '...'!
   if (isa<FunctionNoProtoType>(Ty))
     EltTys.push_back(DBuilder.createUnspecifiedParameter());
   else if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(Ty)) {
-    for (unsigned i = 0, e = FPT->getNumArgs(); i != e; ++i)
-      EltTys.push_back(getOrCreateType(FPT->getArgType(i), Unit));
+    for (unsigned i = 0, e = FPT->getNumParams(); i != e; ++i)
+      EltTys.push_back(getOrCreateType(FPT->getParamType(i), Unit));
   }
 
   llvm::DIArray EltTypeArray = DBuilder.getOrCreateArray(EltTys);
@@ -2246,9 +2251,10 @@ llvm::DICompositeType CGDebugInfo::CreateLimitedType(const RecordType *Ty) {
   if (T && (!T.isForwardDecl() || !RD->getDefinition()))
       return T;
 
-  // If this is just a forward declaration, construct an appropriately
-  // marked node and just return it.
-  if (!RD->getDefinition())
+  // If this is just a forward or incomplete declaration, construct an
+  // appropriately marked node and just return it.
+  const RecordDecl *D = RD->getDefinition();
+  if (!D || !D->isCompleteDefinition())
     return getOrCreateRecordFwdDecl(Ty, RDContext);
 
   uint64_t Size = CGM.getContext().getTypeSize(Ty);
@@ -2409,7 +2415,7 @@ llvm::DICompositeType CGDebugInfo::getOrCreateFunctionType(const Decl *D,
     SmallVector<llvm::Value *, 16> Elts;
 
     // First element is always return type. For 'void' functions it is NULL.
-    QualType ResultTy = OMethod->getResultType();
+    QualType ResultTy = OMethod->getReturnType();
 
     // Replace the instancetype keyword with the actual type.
     if (ResultTy == CGM.getContext().getObjCInstanceType())

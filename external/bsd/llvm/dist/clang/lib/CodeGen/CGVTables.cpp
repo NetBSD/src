@@ -29,12 +29,8 @@
 using namespace clang;
 using namespace CodeGen;
 
-CodeGenVTables::CodeGenVTables(CodeGenModule &CGM) : CGM(CGM) {
-  if (CGM.getTarget().getCXXABI().isMicrosoft())
-    VTContext.reset(new MicrosoftVTableContext(CGM.getContext()));
-  else
-    VTContext.reset(new ItaniumVTableContext(CGM.getContext()));
-}
+CodeGenVTables::CodeGenVTables(CodeGenModule &CGM)
+    : CGM(CGM), VTContext(CGM.getContext().getVTableContext()) {}
 
 llvm::Constant *CodeGenModule::GetAddrOfThunk(GlobalDecl GD, 
                                               const ThunkInfo &Thunk) {
@@ -58,48 +54,6 @@ llvm::Constant *CodeGenModule::GetAddrOfThunk(GlobalDecl GD,
 static void setThunkVisibility(CodeGenModule &CGM, const CXXMethodDecl *MD,
                                const ThunkInfo &Thunk, llvm::Function *Fn) {
   CGM.setGlobalVisibility(Fn, MD);
-
-  if (!CGM.getCodeGenOpts().HiddenWeakVTables)
-    return;
-
-  // If the thunk has weak/linkonce linkage, but the function must be
-  // emitted in every translation unit that references it, then we can
-  // emit its thunks with hidden visibility, since its thunks must be
-  // emitted when the function is.
-
-  // This follows CodeGenModule::setTypeVisibility; see the comments
-  // there for explanation.
-
-  if ((Fn->getLinkage() != llvm::GlobalVariable::LinkOnceODRLinkage &&
-       Fn->getLinkage() != llvm::GlobalVariable::WeakODRLinkage) ||
-      Fn->getVisibility() != llvm::GlobalVariable::DefaultVisibility)
-    return;
-
-  if (MD->getExplicitVisibility(ValueDecl::VisibilityForValue))
-    return;
-
-  switch (MD->getTemplateSpecializationKind()) {
-  case TSK_ExplicitInstantiationDefinition:
-  case TSK_ExplicitInstantiationDeclaration:
-    return;
-
-  case TSK_Undeclared:
-    break;
-
-  case TSK_ExplicitSpecialization:
-  case TSK_ImplicitInstantiation:
-    return;
-    break;
-  }
-
-  // If there's an explicit definition, and that definition is
-  // out-of-line, then we can't assume that all users will have a
-  // definition to emit.
-  const FunctionDecl *Def = 0;
-  if (MD->hasBody(Def) && Def->isOutOfLine())
-    return;
-
-  Fn->setVisibility(llvm::GlobalValue::HiddenVisibility);
 }
 
 #ifndef NDEBUG
@@ -175,7 +129,7 @@ void CodeGenFunction::GenerateVarArgsThunk(
                                       GlobalDecl GD, const ThunkInfo &Thunk) {
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
   const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
-  QualType ResultType = FPT->getResultType();
+  QualType ResultType = FPT->getReturnType();
 
   // Get the original function
   assert(FnInfo.isVariadic());
@@ -246,7 +200,7 @@ void CodeGenFunction::StartThunk(llvm::Function *Fn, GlobalDecl GD,
   QualType ThisType = MD->getThisType(getContext());
   const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
   QualType ResultType =
-    CGM.getCXXABI().HasThisReturn(GD) ? ThisType : FPT->getResultType();
+      CGM.getCXXABI().HasThisReturn(GD) ? ThisType : FPT->getReturnType();
   FunctionArgList FunctionArgs;
 
   // Create the implicit 'this' parameter declaration.
@@ -317,7 +271,7 @@ void CodeGenFunction::EmitCallAndReturnForThunk(GlobalDecl GD,
 
   // Determine whether we have a return value slot to use.
   QualType ResultType =
-    CGM.getCXXABI().HasThisReturn(GD) ? ThisType : FPT->getResultType();
+      CGM.getCXXABI().HasThisReturn(GD) ? ThisType : FPT->getReturnType();
   ReturnValueSlot Slot;
   if (!ResultType->isVoidType() &&
       CurFnInfo->getReturnInfo().getKind() == ABIArgInfo::Indirect &&
@@ -630,7 +584,7 @@ CodeGenVTables::GenerateConstructionVTable(const CXXRecordDecl *RD,
   // Create the variable that will hold the construction vtable.
   llvm::GlobalVariable *VTable = 
     CGM.CreateOrReplaceCXXRuntimeVariable(Name, ArrayType, Linkage);
-  CGM.setTypeVisibility(VTable, RD, CodeGenModule::TVK_ForConstructionVTable);
+  CGM.setGlobalVisibility(VTable, RD);
 
   // V-tables are always unnamed_addr.
   VTable->setUnnamedAddr(true);

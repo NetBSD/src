@@ -866,25 +866,24 @@ DEF_TRAVERSE_TYPE(ExtVectorType, {
     TRY_TO(TraverseType(T->getElementType()));
   })
 
-DEF_TRAVERSE_TYPE(FunctionNoProtoType, {
-    TRY_TO(TraverseType(T->getResultType()));
-  })
+DEF_TRAVERSE_TYPE(FunctionNoProtoType,
+                  { TRY_TO(TraverseType(T->getReturnType())); })
 
 DEF_TRAVERSE_TYPE(FunctionProtoType, {
-    TRY_TO(TraverseType(T->getResultType()));
+  TRY_TO(TraverseType(T->getReturnType()));
 
-    for (FunctionProtoType::arg_type_iterator A = T->arg_type_begin(),
-                                           AEnd = T->arg_type_end();
-         A != AEnd; ++A) {
-      TRY_TO(TraverseType(*A));
-    }
+  for (FunctionProtoType::param_type_iterator A = T->param_type_begin(),
+                                              AEnd = T->param_type_end();
+       A != AEnd; ++A) {
+    TRY_TO(TraverseType(*A));
+  }
 
-    for (FunctionProtoType::exception_iterator E = T->exception_begin(),
-                                            EEnd = T->exception_end();
-         E != EEnd; ++E) {
-      TRY_TO(TraverseType(*E));
-    }
-  })
+  for (FunctionProtoType::exception_iterator E = T->exception_begin(),
+                                             EEnd = T->exception_end();
+       E != EEnd; ++E) {
+    TRY_TO(TraverseType(*E));
+  }
+})
 
 DEF_TRAVERSE_TYPE(UnresolvedUsingType, { })
 DEF_TRAVERSE_TYPE(TypedefType, { })
@@ -1094,20 +1093,20 @@ DEF_TRAVERSE_TYPELOC(ExtVectorType, {
   })
 
 DEF_TRAVERSE_TYPELOC(FunctionNoProtoType, {
-    TRY_TO(TraverseTypeLoc(TL.getResultLoc()));
+    TRY_TO(TraverseTypeLoc(TL.getReturnLoc()));
   })
 
 // FIXME: location of exception specifications (attributes?)
 DEF_TRAVERSE_TYPELOC(FunctionProtoType, {
-    TRY_TO(TraverseTypeLoc(TL.getResultLoc()));
+    TRY_TO(TraverseTypeLoc(TL.getReturnLoc()));
 
     const FunctionProtoType *T = TL.getTypePtr();
 
-    for (unsigned I = 0, E = TL.getNumArgs(); I != E; ++I) {
-      if (TL.getArg(I)) {
-        TRY_TO(TraverseDecl(TL.getArg(I)));
-      } else if (I < T->getNumArgs()) {
-        TRY_TO(TraverseType(T->getArgType(I)));
+    for (unsigned I = 0, E = TL.getNumParams(); I != E; ++I) {
+      if (TL.getParam(I)) {
+        TRY_TO(TraverseDecl(TL.getParam(I)));
+      } else if (I < T->getNumParams()) {
+        TRY_TO(TraverseType(T->getParamType(I)));
       }
     }
 
@@ -1362,18 +1361,18 @@ DEF_TRAVERSE_DECL(ObjCProtocolDecl, {
   })
 
 DEF_TRAVERSE_DECL(ObjCMethodDecl, {
-    if (D->getResultTypeSourceInfo()) {
-      TRY_TO(TraverseTypeLoc(D->getResultTypeSourceInfo()->getTypeLoc()));
-    }
-    for (ObjCMethodDecl::param_iterator
-           I = D->param_begin(), E = D->param_end(); I != E; ++I) {
-      TRY_TO(TraverseDecl(*I));
-    }
-    if (D->isThisDeclarationADefinition()) {
-      TRY_TO(TraverseStmt(D->getBody()));
-    }
-    return true;
-  })
+  if (D->getReturnTypeSourceInfo()) {
+    TRY_TO(TraverseTypeLoc(D->getReturnTypeSourceInfo()->getTypeLoc()));
+  }
+  for (ObjCMethodDecl::param_iterator I = D->param_begin(), E = D->param_end();
+       I != E; ++I) {
+    TRY_TO(TraverseDecl(*I));
+  }
+  if (D->isThisDeclarationADefinition()) {
+    TRY_TO(TraverseStmt(D->getBody()));
+  }
+  return true;
+})
 
 DEF_TRAVERSE_DECL(ObjCPropertyDecl, {
     // FIXME: implement
@@ -2191,11 +2190,11 @@ bool DataRecursiveASTVisitor<Derived>::TraverseLambdaExpr(LambdaExpr *S) {
     } else if (FunctionProtoTypeLoc Proto = TL.getAs<FunctionProtoTypeLoc>()) {
       if (S->hasExplicitParameters()) {
         // Visit parameters.
-        for (unsigned I = 0, N = Proto.getNumArgs(); I != N; ++I) {
-          TRY_TO(TraverseDecl(Proto.getArg(I)));
+        for (unsigned I = 0, N = Proto.getNumParams(); I != N; ++I) {
+          TRY_TO(TraverseDecl(Proto.getParam(I)));
         }
       } else {
-        TRY_TO(TraverseTypeLoc(Proto.getResultLoc()));
+        TRY_TO(TraverseTypeLoc(Proto.getReturnLoc()));
       }        
     }
   }

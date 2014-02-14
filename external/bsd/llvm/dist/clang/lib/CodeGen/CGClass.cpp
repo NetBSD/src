@@ -721,6 +721,9 @@ void CodeGenFunction::EmitConstructorBody(FunctionArgList &Args) {
   if (IsTryBody)
     EnterCXXTryStmt(*cast<CXXTryStmt>(Body), true);
 
+  RegionCounter Cnt = getPGORegionCounter(Body);
+  Cnt.beginRegion(Builder);
+
   RunCleanupsScope RunCleanups(*this);
 
   // TODO: in restricted cases, we can emit the vbase initializers of
@@ -1319,6 +1322,9 @@ void CodeGenFunction::EmitDestructorBody(FunctionArgList &Args) {
   case Dtor_Base:
     assert(Body);
 
+    RegionCounter Cnt = getPGORegionCounter(Body);
+    Cnt.beginRegion(Builder);
+
     // Enter the cleanup scopes for fields and non-virtual bases.
     EnterDtorCleanups(Dtor, Dtor_Base);
 
@@ -1708,9 +1714,8 @@ CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
 
   // Emit the call.
   llvm::Value *Callee = CGM.GetAddrOfCXXConstructor(D, Type);
-  RequiredArgs Required = RequiredArgs::forPrototypePlus(FPT, 1 + ExtraArgs);
   const CGFunctionInfo &Info =
-      CGM.getTypes().arrangeCXXMethodCall(Args, FPT, Required);
+      CGM.getTypes().arrangeCXXConstructorCall(Args, D, Type, ExtraArgs);
   EmitCall(Info, Callee, ReturnValueSlot(), Args, D);
 }
 
@@ -1738,14 +1743,14 @@ CodeGenFunction::EmitSynthesizedCXXCopyCtorCall(const CXXConstructorDecl *D,
   Args.add(RValue::get(This), D->getThisType(getContext()));
   
   // Push the src ptr.
-  QualType QT = *(FPT->arg_type_begin());
+  QualType QT = *(FPT->param_type_begin());
   llvm::Type *t = CGM.getTypes().ConvertType(QT);
   Src = Builder.CreateBitCast(Src, t);
   Args.add(RValue::get(Src), QT);
 
   // Skip over first argument (Src).
-  EmitCallArgs(Args, FPT->isVariadic(), FPT->arg_type_begin() + 1,
-               FPT->arg_type_end(), ArgBeg + 1, ArgEnd);
+  EmitCallArgs(Args, FPT->isVariadic(), FPT->param_type_begin() + 1,
+               FPT->param_type_end(), ArgBeg + 1, ArgEnd);
 
   EmitCall(CGM.getTypes().arrangeCXXMethodCall(Args, FPT, RequiredArgs::All),
            Callee, ReturnValueSlot(), Args, D);
@@ -2123,7 +2128,7 @@ void CodeGenFunction::EmitForwardingCallToLambda(
   // Prepare the return slot.
   const FunctionProtoType *FPT =
     callOperator->getType()->castAs<FunctionProtoType>();
-  QualType resultType = FPT->getResultType();
+  QualType resultType = FPT->getReturnType();
   ReturnValueSlot returnSlot;
   if (!resultType->isVoidType() &&
       calleeFnInfo.getReturnInfo().getKind() == ABIArgInfo::Indirect &&

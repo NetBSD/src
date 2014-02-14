@@ -1729,11 +1729,26 @@ InputFile ASTReader::getInputFile(ModuleFile &F, unsigned ID, bool Complain) {
 #endif
          )) {
       if (Complain) {
-        Error(diag::err_fe_pch_file_modified, Filename, F.FileName);
-        if (Context.getLangOpts().Modules && !Diags.isDiagnosticInFlight()) {
-          Diag(diag::note_module_cache_path)
-            << PP.getHeaderSearchInfo().getModuleCachePath();
+        // Build a list of the PCH imports that got us here (in reverse).
+        SmallVector<ModuleFile *, 4> ImportStack(1, &F);
+        while (ImportStack.back()->ImportedBy.size() > 0)
+          ImportStack.push_back(ImportStack.back()->ImportedBy[0]);
+
+        // The top-level PCH is stale.
+        StringRef TopLevelPCHName(ImportStack.back()->FileName);
+        Error(diag::err_fe_pch_file_modified, Filename, TopLevelPCHName);
+
+        // Print the import stack.
+        if (ImportStack.size() > 1 && !Diags.isDiagnosticInFlight()) {
+          Diag(diag::note_pch_required_by)
+            << Filename << ImportStack[0]->FileName;
+          for (unsigned I = 1; I < ImportStack.size(); ++I)
+            Diag(diag::note_pch_required_by)
+              << ImportStack[I-1]->FileName << ImportStack[I]->FileName;
         }
+
+        if (!Diags.isDiagnosticInFlight())
+          Diag(diag::note_pch_rebuild_required) << TopLevelPCHName;
       }
 
       IsOutOfDate = true;
@@ -1816,9 +1831,13 @@ ASTReader::ReadControlBlock(ModuleFile &F,
       // Validate all of the non-system input files.
       if (!DisableValidation) {
         bool Complain = (ClientLoadCapabilities & ARR_OutOfDate) == 0;
-        // All user input files reside at the index range [0, Record[1]).
+        // All user input files reside at the index range [0, Record[1]), and
+        // system input files reside at [Record[1], Record[0]).
         // Record is the one from INPUT_FILE_OFFSETS.
-        for (unsigned I = 0, N = Record[1]; I < N; ++I) {
+        unsigned NumInputs = Record[0];
+        unsigned NumUserInputs = Record[1];
+        unsigned N = ValidateSystemInputs ? NumInputs : NumUserInputs;
+        for (unsigned I = 0; I < N; ++I) {
           InputFile IF = getInputFile(F, I+1, Complain);
           if (!IF.getFile() || IF.isOutOfDate())
             return OutOfDate;
@@ -1858,8 +1877,8 @@ ASTReader::ReadControlBlock(ModuleFile &F,
     case METADATA: {
       if (Record[0] != VERSION_MAJOR && !DisableValidation) {
         if ((ClientLoadCapabilities & ARR_VersionMismatch) == 0)
-          Diag(Record[0] < VERSION_MAJOR? diag::warn_pch_version_too_old
-                                        : diag::warn_pch_version_too_new);
+          Diag(Record[0] < VERSION_MAJOR? diag::err_pch_version_too_old
+                                        : diag::err_pch_version_too_new);
         return VersionMismatch;
       }
 
@@ -1875,7 +1894,7 @@ ASTReader::ReadControlBlock(ModuleFile &F,
       StringRef ASTBranch = Blob;
       if (StringRef(CurBranch) != ASTBranch && !DisableValidation) {
         if ((ClientLoadCapabilities & ARR_VersionMismatch) == 0)
-          Diag(diag::warn_pch_different_branch) << ASTBranch << CurBranch;
+          Diag(diag::err_pch_different_branch) << ASTBranch << CurBranch;
         return VersionMismatch;
       }
       break;
@@ -1920,7 +1939,7 @@ ASTReader::ReadControlBlock(ModuleFile &F,
       bool Complain = (ClientLoadCapabilities & ARR_ConfigurationMismatch) == 0;
       if (Listener && &F == *ModuleMgr.begin() &&
           ParseLanguageOptions(Record, Complain, *Listener) &&
-          !DisableValidation)
+          !DisableValidation && !AllowConfigurationMismatch)
         return ConfigurationMismatch;
       break;
     }
@@ -1929,7 +1948,7 @@ ASTReader::ReadControlBlock(ModuleFile &F,
       bool Complain = (ClientLoadCapabilities & ARR_ConfigurationMismatch)==0;
       if (Listener && &F == *ModuleMgr.begin() &&
           ParseTargetOptions(Record, Complain, *Listener) &&
-          !DisableValidation)
+          !DisableValidation && !AllowConfigurationMismatch)
         return ConfigurationMismatch;
       break;
     }
@@ -1938,7 +1957,7 @@ ASTReader::ReadControlBlock(ModuleFile &F,
       bool Complain = (ClientLoadCapabilities & ARR_ConfigurationMismatch)==0;
       if (Listener && &F == *ModuleMgr.begin() &&
           ParseDiagnosticOptions(Record, Complain, *Listener) &&
-          !DisableValidation)
+          !DisableValidation && !AllowConfigurationMismatch)
         return ConfigurationMismatch;
       break;
     }
@@ -1947,7 +1966,7 @@ ASTReader::ReadControlBlock(ModuleFile &F,
       bool Complain = (ClientLoadCapabilities & ARR_ConfigurationMismatch)==0;
       if (Listener && &F == *ModuleMgr.begin() &&
           ParseFileSystemOptions(Record, Complain, *Listener) &&
-          !DisableValidation)
+          !DisableValidation && !AllowConfigurationMismatch)
         return ConfigurationMismatch;
       break;
     }
@@ -1956,7 +1975,7 @@ ASTReader::ReadControlBlock(ModuleFile &F,
       bool Complain = (ClientLoadCapabilities & ARR_ConfigurationMismatch)==0;
       if (Listener && &F == *ModuleMgr.begin() &&
           ParseHeaderSearchOptions(Record, Complain, *Listener) &&
-          !DisableValidation)
+          !DisableValidation && !AllowConfigurationMismatch)
         return ConfigurationMismatch;
       break;
     }
@@ -1966,7 +1985,7 @@ ASTReader::ReadControlBlock(ModuleFile &F,
       if (Listener && &F == *ModuleMgr.begin() &&
           ParsePreprocessorOptions(Record, Complain, *Listener,
                                    SuggestedPredefines) &&
-          !DisableValidation)
+          !DisableValidation && !AllowConfigurationMismatch)
         return ConfigurationMismatch;
       break;
     }
@@ -2241,9 +2260,9 @@ bool ASTReader::ReadASTBlock(ModuleFile &F) {
       break;
     }
 
-    case EXTERNAL_DEFINITIONS:
+    case EAGERLY_DESERIALIZED_DECLS:
       for (unsigned I = 0, N = Record.size(); I != N; ++I)
-        ExternalDefinitions.push_back(getGlobalDeclID(F, Record[I]));
+        EagerlyDeserializedDecls.push_back(getGlobalDeclID(F, Record[I]));
       break;
 
     case SPECIAL_TYPES:
@@ -3181,7 +3200,7 @@ ASTReader::ReadASTCore(StringRef FileName,
     case AST_BLOCK_ID:
       if (!HaveReadControlBlock) {
         if ((ClientLoadCapabilities & ARR_VersionMismatch) == 0)
-          Diag(diag::warn_pch_version_too_old);
+          Diag(diag::err_pch_version_too_old);
         return VersionMismatch;
       }
 
@@ -5062,8 +5081,8 @@ void TypeLocReader::VisitFunctionTypeLoc(FunctionTypeLoc TL) {
   TL.setLParenLoc(ReadSourceLocation(Record, Idx));
   TL.setRParenLoc(ReadSourceLocation(Record, Idx));
   TL.setLocalRangeEnd(ReadSourceLocation(Record, Idx));
-  for (unsigned i = 0, e = TL.getNumArgs(); i != e; ++i) {
-    TL.setArg(i, ReadDeclAs<ParmVarDecl>(Record, Idx));
+  for (unsigned i = 0, e = TL.getNumParams(); i != e; ++i) {
+    TL.setParam(i, ReadDeclAs<ParmVarDecl>(Record, Idx));
   }
 }
 void TypeLocReader::VisitFunctionProtoTypeLoc(FunctionProtoTypeLoc TL) {
@@ -5970,12 +5989,12 @@ void ASTReader::StartTranslationUnit(ASTConsumer *Consumer) {
   if (!Consumer)
     return;
 
-  for (unsigned I = 0, N = ExternalDefinitions.size(); I != N; ++I) {
+  for (unsigned I = 0, N = EagerlyDeserializedDecls.size(); I != N; ++I) {
     // Force deserialization of this decl, which will cause it to be queued for
     // passing to the consumer.
-    GetDecl(ExternalDefinitions[I]);
+    GetDecl(EagerlyDeserializedDecls[I]);
   }
-  ExternalDefinitions.clear();
+  EagerlyDeserializedDecls.clear();
 
   PassInterestingDeclsToConsumer();
 }
@@ -7603,13 +7622,18 @@ void ASTReader::pushExternalDeclIntoScope(NamedDecl *D, DeclarationName Name) {
 
 ASTReader::ASTReader(Preprocessor &PP, ASTContext &Context,
                      StringRef isysroot, bool DisableValidation,
-                     bool AllowASTWithCompilerErrors, bool UseGlobalIndex)
+                     bool AllowASTWithCompilerErrors,
+                     bool AllowConfigurationMismatch,
+                     bool ValidateSystemInputs,
+                     bool UseGlobalIndex)
   : Listener(new PCHValidator(PP, *this)), DeserializationListener(0),
     SourceMgr(PP.getSourceManager()), FileMgr(PP.getFileManager()),
     Diags(PP.getDiagnostics()), SemaObj(0), PP(PP), Context(Context),
     Consumer(0), ModuleMgr(PP.getFileManager()),
     isysroot(isysroot), DisableValidation(DisableValidation),
     AllowASTWithCompilerErrors(AllowASTWithCompilerErrors),
+    AllowConfigurationMismatch(AllowConfigurationMismatch),
+    ValidateSystemInputs(ValidateSystemInputs),
     UseGlobalIndex(UseGlobalIndex), TriedLoadingGlobalIndex(false),
     CurrentGeneration(0), CurrSwitchCaseStmts(&SwitchCaseStmts),
     NumSLocEntriesRead(0), TotalNumSLocEntries(0), 

@@ -35,8 +35,7 @@ static bool isDispatchBlock(QualType Ty) {
   // returns void.
   const FunctionProtoType *FT =
   BPT->getPointeeType()->getAs<FunctionProtoType>();
-  if (!FT || !FT->getResultType()->isVoidType()  ||
-      FT->getNumArgs() != 0)
+  if (!FT || !FT->getReturnType()->isVoidType() || FT->getNumParams() != 0)
     return false;
 
   return true;
@@ -290,8 +289,8 @@ static Stmt *create_OSAtomicCompareAndSwap(ASTContext &C, const FunctionDecl *D)
   //    return YES;
   //   }
   //   else return NO;
-  
-  QualType ResultTy = D->getResultType();
+
+  QualType ResultTy = D->getReturnType();
   bool isBoolean = ResultTy->isBooleanType();
   if (!isBoolean && !ResultTy->isIntegralType(C))
     return 0;
@@ -388,12 +387,20 @@ Stmt *BodyFarm::getBody(const FunctionDecl *D) {
 
 static Stmt *createObjCPropertyGetter(ASTContext &Ctx,
                                       const ObjCPropertyDecl *Prop) {
+  // First, find the backing ivar.
   const ObjCIvarDecl *IVar = Prop->getPropertyIvarDecl();
   if (!IVar)
     return 0;
+
+  // Ignore weak variables, which have special behavior.
   if (Prop->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_weak)
     return 0;
 
+  // Look to see if Sema has synthesized a body for us. This happens in
+  // Objective-C++ because the return value may be a C++ class type with a
+  // non-trivial copy constructor. We can only do this if we can find the
+  // @synthesize for this property, though (or if we know it's been auto-
+  // synthesized).
   const ObjCImplementationDecl *ImplDecl =
     IVar->getContainingInterface()->getImplementation();
   if (ImplDecl) {
@@ -411,10 +418,18 @@ static Stmt *createObjCPropertyGetter(ASTContext &Ctx,
     }
   }
 
-  if (IVar->getType().getCanonicalType() !=
-      Prop->getType().getNonReferenceType().getCanonicalType())
+  // Sanity check that the property is the same type as the ivar, or a
+  // reference to it, and that it is either an object pointer or trivially
+  // copyable.
+  if (!Ctx.hasSameUnqualifiedType(IVar->getType(),
+                                  Prop->getType().getNonReferenceType()))
+    return 0;
+  if (!IVar->getType()->isObjCLifetimeType() &&
+      !IVar->getType().isTriviallyCopyableType(Ctx))
     return 0;
 
+  // Generate our body:
+  //   return self->_ivar;
   ASTMaker M(Ctx);
 
   const VarDecl *selfVar = Prop->getGetterMethodDecl()->getSelfDecl();
@@ -432,7 +447,8 @@ static Stmt *createObjCPropertyGetter(ASTContext &Ctx,
   return M.makeReturn(loadedIVar);
 }
 
-Stmt *BodyFarm::getBody(const ObjCMethodDecl *D, const ObjCPropertyDecl *Prop) {
+Stmt *BodyFarm::getBody(const ObjCMethodDecl *D) {
+  // We currently only know how to synthesize property accessors.
   if (!D->isPropertyAccessor())
     return 0;
 
@@ -443,11 +459,11 @@ Stmt *BodyFarm::getBody(const ObjCMethodDecl *D, const ObjCPropertyDecl *Prop) {
     return Val.getValue();
   Val = 0;
 
-  if (!Prop)
-    Prop = D->findPropertyDecl();
+  const ObjCPropertyDecl *Prop = D->findPropertyDecl();
   if (!Prop)
     return 0;
 
+  // For now, we only synthesize getters.
   if (D->param_size() != 0)
     return 0;
 

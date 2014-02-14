@@ -23,9 +23,12 @@
 
 namespace llvm {
   class Type;
+  class StructType;
 }
 
 namespace clang {
+class Decl;
+
 namespace CodeGen {
 
 /// ABIArgInfo - Helper class to encapsulate information about how a
@@ -59,7 +62,15 @@ public:
     /// are all scalar types or are themselves expandable types.
     Expand,
 
-    KindFirst=Direct, KindLast=Expand
+    /// InAlloca - Pass the argument directly using the LLVM inalloca attribute.
+    /// This is similar to 'direct', except it only applies to arguments stored
+    /// in memory and forbids any implicit copies.  When applied to a return
+    /// type, it means the value is returned indirectly via an implicit sret
+    /// parameter stored in the argument struct.
+    InAlloca,
+
+    KindFirst = Direct,
+    KindLast = InAlloca
   };
 
 private:
@@ -102,6 +113,9 @@ public:
     return ABIArgInfo(Indirect, 0, Alignment, ByVal, Realign, false, false,
                       Padding);
   }
+  static ABIArgInfo getInAlloca(unsigned FieldIndex) {
+    return ABIArgInfo(InAlloca, 0, FieldIndex, false, false, false, false, 0);
+  }
   static ABIArgInfo getIndirectInReg(unsigned Alignment, bool ByVal = true
                                 , bool Realign = false) {
     return ABIArgInfo(Indirect, 0, Alignment, ByVal, Realign, true, false, 0);
@@ -117,6 +131,7 @@ public:
 
   Kind getKind() const { return TheKind; }
   bool isDirect() const { return TheKind == Direct; }
+  bool isInAlloca() const { return TheKind == InAlloca; }
   bool isExtend() const { return TheKind == Extend; }
   bool isIgnore() const { return TheKind == Ignore; }
   bool isIndirect() const { return TheKind == Indirect; }
@@ -171,6 +186,11 @@ public:
     return BoolData1;
   }
 
+  unsigned getInAllocaFieldIndex() const {
+    assert(TheKind == InAlloca && "Invalid kind!");
+    return UIntData;
+  }
+
   void dump() const;
 };
 
@@ -194,7 +214,7 @@ public:
   static RequiredArgs forPrototypePlus(const FunctionProtoType *prototype,
                                        unsigned additional) {
     if (!prototype->isVariadic()) return All;
-    return RequiredArgs(prototype->getNumArgs() + additional);
+    return RequiredArgs(prototype->getNumParams() + additional);
   }
 
   static RequiredArgs forPrototype(const FunctionProtoType *prototype) {
@@ -242,6 +262,9 @@ class CGFunctionInfo : public llvm::FoldingSetNode {
   /// The clang::CallingConv that this was originally created with.
   unsigned ASTCallingConvention : 8;
 
+  /// Whether this is an instance method.
+  unsigned InstanceMethod : 1;
+
   /// Whether this function is noreturn.
   unsigned NoReturn : 1;
 
@@ -253,6 +276,10 @@ class CGFunctionInfo : public llvm::FoldingSetNode {
   unsigned RegParm : 4;
 
   RequiredArgs Required;
+
+  /// The struct representing all arguments passed in memory.  Only used when
+  /// passing non-trivial types with inalloca.  Not part of the profile.
+  llvm::StructType *ArgStruct;
 
   unsigned NumArgs;
   ArgInfo *getArgsBuffer() {
@@ -266,6 +293,7 @@ class CGFunctionInfo : public llvm::FoldingSetNode {
 
 public:
   static CGFunctionInfo *create(unsigned llvmCC,
+                                bool InstanceMethod,
                                 const FunctionType::ExtInfo &extInfo,
                                 CanQualType resultType,
                                 ArrayRef<CanQualType> argTypes,
@@ -283,6 +311,8 @@ public:
 
   bool isVariadic() const { return Required.allowsOptionalArgs(); }
   RequiredArgs getRequiredArgs() const { return Required; }
+
+  bool isInstanceMethod() const { return InstanceMethod; }
 
   bool isNoReturn() const { return NoReturn; }
 
@@ -324,8 +354,16 @@ public:
   ABIArgInfo &getReturnInfo() { return getArgsBuffer()[0].info; }
   const ABIArgInfo &getReturnInfo() const { return getArgsBuffer()[0].info; }
 
+  /// \brief Return true if this function uses inalloca arguments.
+  bool usesInAlloca() const { return ArgStruct; }
+
+  /// \brief Get the struct type used to represent all the arguments in memory.
+  llvm::StructType *getArgStruct() const { return ArgStruct; }
+  void setArgStruct(llvm::StructType *Ty) { ArgStruct = Ty; }
+
   void Profile(llvm::FoldingSetNodeID &ID) {
     ID.AddInteger(getASTCallingConvention());
+    ID.AddBoolean(InstanceMethod);
     ID.AddBoolean(NoReturn);
     ID.AddBoolean(ReturnsRetained);
     ID.AddBoolean(HasRegParm);
@@ -336,11 +374,13 @@ public:
       it->type.Profile(ID);
   }
   static void Profile(llvm::FoldingSetNodeID &ID,
+                      bool InstanceMethod,
                       const FunctionType::ExtInfo &info,
                       RequiredArgs required,
                       CanQualType resultType,
                       ArrayRef<CanQualType> argTypes) {
     ID.AddInteger(info.getCC());
+    ID.AddBoolean(InstanceMethod);
     ID.AddBoolean(info.getNoReturn());
     ID.AddBoolean(info.getProducesResult());
     ID.AddBoolean(info.getHasRegParm());

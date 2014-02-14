@@ -588,13 +588,15 @@ std::string PredefinedExpr::ComputeName(IdentType IT, const Decl *CurrentDecl) {
     // not a constructor or destructor.
     if ((isa<CXXMethodDecl>(FD) &&
          cast<CXXMethodDecl>(FD)->getParent()->isLambda()) ||
-        (FT && FT->getResultType()->getAs<AutoType>()))
+        (FT && FT->getReturnType()->getAs<AutoType>()))
       Proto = "auto " + Proto;
-    else if (FT && FT->getResultType()->getAs<DecltypeType>())
-      FT->getResultType()->getAs<DecltypeType>()->getUnderlyingType()
+    else if (FT && FT->getReturnType()->getAs<DecltypeType>())
+      FT->getReturnType()
+          ->getAs<DecltypeType>()
+          ->getUnderlyingType()
           .getAsStringInternal(Proto, Policy);
     else if (!isa<CXXConstructorDecl>(FD) && !isa<CXXDestructorDecl>(FD))
-      AFT->getResultType().getAsStringInternal(Proto, Policy);
+      AFT->getReturnType().getAsStringInternal(Proto, Policy);
 
     Out << Proto;
 
@@ -1225,7 +1227,7 @@ QualType CallExpr::getCallReturnType() const {
     CalleeType = Expr::findBoundMemberType(getCallee());
     
   const FunctionType *FnType = CalleeType->castAs<FunctionType>();
-  return FnType->getResultType();
+  return FnType->getReturnType();
 }
 
 SourceLocation CallExpr::getLocStart() const {
@@ -1600,7 +1602,7 @@ const char *CastExpr::getCastKindName() const {
   case CK_ARCReclaimReturnedObject:
     return "ARCReclaimReturnedObject";
   case CK_ARCExtendBlockObject:
-    return "ARCCExtendBlockObject";
+    return "ARCExtendBlockObject";
   case CK_AtomicToNonAtomic:
     return "AtomicToNonAtomic";
   case CK_NonAtomicToAtomic:
@@ -1869,7 +1871,11 @@ bool InitListExpr::isStringLiteralInit() const {
   const ArrayType *AT = getType()->getAsArrayTypeUnsafe();
   if (!AT || !AT->getElementType()->isIntegerType())
     return false;
-  const Expr *Init = getInit(0)->IgnoreParens();
+  // It is possible for getInit() to return null.
+  const Expr *Init = getInit(0);
+  if (!Init)
+    return false;
+  Init = Init->IgnoreParens();
   return isa<StringLiteral>(Init) || isa<ObjCEncodeExpr>(Init);
 }
 
@@ -3055,6 +3061,9 @@ Expr::isNullPointerConstant(ASTContext &Ctx,
             Pointee->isVoidType() &&                              // to void*
             CE->getSubExpr()->getType()->isIntegerType())         // from int.
           return CE->getSubExpr()->isNullPointerConstant(Ctx, NPC);
+      // Or an integer cast.
+      } else if (CE->getType()->isIntegerType()) {
+        return CE->getSubExpr()->isNullPointerConstant(Ctx, NPC);
       }
     }
   } else if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(this)) {
@@ -3780,30 +3789,21 @@ SourceLocation DesignatedInitExpr::getLocEnd() const {
 
 Expr *DesignatedInitExpr::getArrayIndex(const Designator& D) const {
   assert(D.Kind == Designator::ArrayDesignator && "Requires array designator");
-  char *Ptr = static_cast<char *>(
-                  const_cast<void *>(static_cast<const void *>(this)));
-  Ptr += sizeof(DesignatedInitExpr);
-  Stmt **SubExprs = reinterpret_cast<Stmt**>(reinterpret_cast<void**>(Ptr));
+  Stmt *const *SubExprs = reinterpret_cast<Stmt *const *>(this + 1);
   return cast<Expr>(*(SubExprs + D.ArrayOrRange.Index + 1));
 }
 
 Expr *DesignatedInitExpr::getArrayRangeStart(const Designator &D) const {
   assert(D.Kind == Designator::ArrayRangeDesignator &&
          "Requires array range designator");
-  char *Ptr = static_cast<char *>(
-                  const_cast<void *>(static_cast<const void *>(this)));
-  Ptr += sizeof(DesignatedInitExpr);
-  Stmt **SubExprs = reinterpret_cast<Stmt**>(reinterpret_cast<void**>(Ptr));
+  Stmt *const *SubExprs = reinterpret_cast<Stmt *const *>(this + 1);
   return cast<Expr>(*(SubExprs + D.ArrayOrRange.Index + 1));
 }
 
 Expr *DesignatedInitExpr::getArrayRangeEnd(const Designator &D) const {
   assert(D.Kind == Designator::ArrayRangeDesignator &&
          "Requires array range designator");
-  char *Ptr = static_cast<char *>(
-                  const_cast<void *>(static_cast<const void *>(this)));
-  Ptr += sizeof(DesignatedInitExpr);
-  Stmt **SubExprs = reinterpret_cast<Stmt**>(reinterpret_cast<void**>(Ptr));
+  Stmt *const *SubExprs = reinterpret_cast<Stmt *const *>(this + 1);
   return cast<Expr>(*(SubExprs + D.ArrayOrRange.Index + 2));
 }
 

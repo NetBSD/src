@@ -600,6 +600,9 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   DefineType("__CHAR16_TYPE__", TI.getChar16Type(), Builder);
   DefineType("__CHAR32_TYPE__", TI.getChar32Type(), Builder);
 
+  Builder.defineMacro("__ALIGNOF_MAX_ALIGN_T__",
+                      Twine(TI.getSuitableAlign() / TI.getCharWidth()));
+
   DefineFloatMacros(Builder, "FLT", &TI.getFloatFormat(), "F");
   DefineFloatMacros(Builder, "DBL", &TI.getDoubleFormat(), "");
   DefineFloatMacros(Builder, "LDBL", &TI.getLongDoubleFormat(), "L");
@@ -692,8 +695,10 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
 
   if (LangOpts.getStackProtector() == LangOptions::SSPOn)
     Builder.defineMacro("__SSP__");
+  else if (LangOpts.getStackProtector() == LangOptions::SSPStrong)
+    Builder.defineMacro("__SSP_STRONG__", "2");
   else if (LangOpts.getStackProtector() == LangOptions::SSPReq)
-    Builder.defineMacro("__SSP_ALL__", "2");
+    Builder.defineMacro("__SSP_ALL__", "3");
 
   if (FEOpts.ProgramAction == frontend::RewriteObjC)
     Builder.defineMacro("__weak", "__attribute__((objc_gc(weak)))");
