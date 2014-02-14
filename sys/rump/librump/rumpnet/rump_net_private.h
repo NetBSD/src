@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_net_private.h,v 1.7 2013/07/03 15:08:01 pooka Exp $	*/
+/*	$NetBSD: rump_net_private.h,v 1.8 2014/02/14 01:27:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -36,8 +36,6 @@ do {									\
 		domain_attach(&dom);					\
         }								\
 } while (/*CONSTCOND*/0)
-
-void		rump_net_components(void);
 
 #include "rumpnet_if_priv.h"
 
