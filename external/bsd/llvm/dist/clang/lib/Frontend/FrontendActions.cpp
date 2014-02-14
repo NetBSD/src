@@ -320,6 +320,30 @@ ASTConsumer *DumpModuleInfoAction::CreateASTConsumer(CompilerInstance &CI,
   return new ASTConsumer();
 }
 
+ASTConsumer *VerifyPCHAction::CreateASTConsumer(CompilerInstance &CI,
+                                                StringRef InFile) {
+  return new ASTConsumer();
+}
+
+void VerifyPCHAction::ExecuteAction() {
+  CompilerInstance &CI = getCompilerInstance();
+  bool Preamble = CI.getPreprocessorOpts().PrecompiledPreambleBytes.first != 0;
+  const std::string &Sysroot = CI.getHeaderSearchOpts().Sysroot;
+  OwningPtr<ASTReader> Reader(new ASTReader(
+    CI.getPreprocessor(), CI.getASTContext(),
+    Sysroot.empty() ? "" : Sysroot.c_str(),
+    /*DisableValidation*/false,
+    /*AllowPCHWithCompilerErrors*/false,
+    /*AllowConfigurationMismatch*/true,
+    /*ValidateSystemInputs*/true));
+
+  Reader->ReadAST(getCurrentFile(),
+                  Preamble ? serialization::MK_Preamble
+                           : serialization::MK_PCH,
+                  SourceLocation(),
+                  ASTReader::ARR_ConfigurationMismatch);
+}
+
 namespace {
   /// \brief AST reader listener that dumps module information for a module
   /// file.

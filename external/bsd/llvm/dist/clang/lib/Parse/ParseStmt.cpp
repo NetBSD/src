@@ -345,6 +345,11 @@ Retry:
     ProhibitAttributes(Attrs);
     return ParseOpenMPDeclarativeOrExecutableDirective();
 
+  case tok::annot_pragma_ms_pointers_to_members:
+    ProhibitAttributes(Attrs);
+    HandlePragmaMSPointersToMembers();
+    return StmtEmpty();
+
   }
 
   // If we reached this code, the statement must end in a semicolon.
@@ -820,6 +825,9 @@ void Parser::ParseCompoundStatementLeadingPragmas() {
     case tok::annot_pragma_fp_contract:
       HandlePragmaFPContract();
       break;
+    case tok::annot_pragma_ms_pointers_to_members:
+      HandlePragmaMSPointersToMembers();
+      break;
     default:
       checkForPragmas = false;
       break;
@@ -1168,7 +1176,7 @@ StmtResult Parser::ParseSwitchStatement(SourceLocation *TrailingElseLoc) {
   // while, for, and switch statements are local to the if, while, for, or
   // switch statement (including the controlled statement).
   //
-  unsigned ScopeFlags = Scope::BreakScope | Scope::SwitchScope;
+  unsigned ScopeFlags = Scope::SwitchScope;
   if (C99orCXX)
     ScopeFlags |= Scope::DeclScope | Scope::ControlScope;
   ParseScope SwitchScope(this, ScopeFlags);
@@ -1206,6 +1214,7 @@ StmtResult Parser::ParseSwitchStatement(SourceLocation *TrailingElseLoc) {
   // See comments in ParseIfStatement for why we create a scope for the
   // condition and a new scope for substatement in C++.
   //
+  getCurScope()->AddFlags(Scope::BreakScope);
   ParseScope InnerScope(this, Scope::DeclScope,
                         C99orCXX && Tok.isNot(tok::l_brace));
 
@@ -1417,12 +1426,9 @@ StmtResult Parser::ParseForStatement(SourceLocation *TrailingElseLoc) {
   // Names declared in the for-init-statement are in the same declarative-region
   // as those declared in the condition.
   //
-  unsigned ScopeFlags;
+  unsigned ScopeFlags = 0;
   if (C99orCXXorObjC)
-    ScopeFlags = Scope::BreakScope | Scope::ContinueScope |
-                 Scope::DeclScope  | Scope::ControlScope;
-  else
-    ScopeFlags = Scope::BreakScope | Scope::ContinueScope;
+    ScopeFlags = Scope::DeclScope | Scope::ControlScope;
 
   ParseScope ForScope(this, ScopeFlags);
 
@@ -1537,6 +1543,9 @@ StmtResult Parser::ParseForStatement(SourceLocation *TrailingElseLoc) {
       }
     }
   }
+
+  // Parse the second part of the for specifier.
+  getCurScope()->AddFlags(Scope::BreakScope | Scope::ContinueScope);
   if (!ForEach && !ForRange) {
     assert(!SecondPart.get() && "Shouldn't have a second expression yet.");
     // Parse the second part of the for specifier.
