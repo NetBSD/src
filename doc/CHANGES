@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1887 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1888 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -345,5 +345,9 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 		[mlelstv 20140121]
 	ohci(4): Support the National Semiconductor PC87560 as found in
 		many hppa machines. [skrll 20140128]
+	npf: Added support for CDB based tables. [rmind 20140206]
+	npf: Added support for static (stateless) NAT. [rmind 20140207]
 	atf(7): Import atf 0.19.  [jmmv 20140208]
 	atf(7): Import atf 0.20.  [jmmv 20140211]
+	npf: Added support for IPv6-to-IPv6 Network Prefix Translation
+		(NPTv6), as per RFC 6296. [rmind 20140213]
