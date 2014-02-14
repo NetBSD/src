@@ -77,7 +77,7 @@ Instruction *InstCombiner::SimplifyMemTransfer(MemIntrinsic *MI) {
   // A single load+store correctly handles overlapping memory in the memmove
   // case.
   uint64_t Size = MemOpLength->getLimitedValue();
-  assert(Size && "0-sized memory transfering should be removed already.");
+  assert(Size && "0-sized memory transferring should be removed already.");
 
   if (Size > 8 || (Size&(Size-1)))
     return 0;  // If not 1/2/4/8 bytes, exit.
@@ -684,7 +684,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
         return ReplaceInstUsesWith(CI, ConstantVector::get(NewElems));
       }
 
-      // Couldn't simplify - cannonicalize constant to the RHS.
+      // Couldn't simplify - canonicalize constant to the RHS.
       std::swap(Arg0, Arg1);
     }
 
@@ -767,10 +767,10 @@ static bool isSafeToEliminateVarargsCast(const CallSite CS,
   if (!CI->isLosslessCast())
     return false;
 
-  // The size of ByVal arguments is derived from the type, so we
+  // The size of ByVal or InAlloca arguments is derived from the type, so we
   // can't change to a type with a different size.  If the size were
   // passed explicitly we could avoid this check.
-  if (!CS.isByValArgument(ix))
+  if (!CS.isByValOrInAllocaArgument(ix))
     return true;
 
   Type* SrcTy =
@@ -994,11 +994,12 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   Type *OldRetTy = Caller->getType();
   Type *NewRetTy = FT->getReturnType();
 
-  if (NewRetTy->isStructTy())
-    return false; // TODO: Handle multiple return values.
-
   // Check to see if we are changing the return type...
   if (OldRetTy != NewRetTy) {
+
+    if (NewRetTy->isStructTy())
+      return false; // TODO: Handle multiple return values.
+
     if (!CastInst::isBitCastable(NewRetTy, OldRetTy)) {
       if (Callee->isDeclaration())
         return false;   // Cannot transform this return value.
@@ -1047,6 +1048,9 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
           hasAttributes(AttributeFuncs::
                         typeIncompatible(ParamTy, i + 1), i + 1))
       return false;   // Attribute not compatible with transformed value.
+
+    if (CS.isInAllocaArgument(i))
+      return false;   // Cannot transform to and from inalloca.
 
     // If the parameter is passed as a byval argument, then we have to have a
     // sized type and the sized type has to have the same size as the old type.

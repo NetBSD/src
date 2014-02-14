@@ -414,6 +414,10 @@ determinePointerReadAttrs(Argument *A,
   SmallSet<Use*, 32> Visited;
   int Count = 0;
 
+  // inalloca arguments are always clobbered by the call.
+  if (A->hasInAllocaAttr())
+    return Attribute::None;
+
   bool IsRead = false;
   // We don't need to track IsWritten. If A is written to, return immediately.
 
@@ -600,8 +604,7 @@ bool FunctionAttrs::AddArgumentAttrs(const CallGraphSCC &SCC) {
   // made.  If the definition doesn't have a 'nocapture' attribute by now, it
   // captures.
 
-  for (scc_iterator<ArgumentGraph*> I = scc_begin(&AG), E = scc_end(&AG);
-       I != E; ++I) {
+  for (scc_iterator<ArgumentGraph*> I = scc_begin(&AG); !I.isAtEnd(); ++I) {
     std::vector<ArgumentGraphNode*> &ArgumentSCC = *I;
     if (ArgumentSCC.size() == 1) {
       if (!ArgumentSCC[0]->Definition) continue;  // synthetic root node

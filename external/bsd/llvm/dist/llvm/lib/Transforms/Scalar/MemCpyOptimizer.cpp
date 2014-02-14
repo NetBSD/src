@@ -662,7 +662,7 @@ bool MemCpyOpt::performCallSlotOptzn(Instruction *cpy,
   while (!srcUseList.empty()) {
     User *UI = srcUseList.pop_back_val();
 
-    if (isa<BitCastInst>(UI)) {
+    if (isa<BitCastInst>(UI) || isa<AddrSpaceCastInst>(UI)) {
       for (User::use_iterator I = UI->use_begin(), E = UI->use_end();
            I != E; ++I)
         srcUseList.push_back(*I);
@@ -816,9 +816,8 @@ bool MemCpyOpt::processMemCpyMemCpyDependence(MemCpyInst *M, MemCpyInst *MDep,
 /// circumstances). This allows later passes to remove the first memcpy
 /// altogether.
 bool MemCpyOpt::processMemCpy(MemCpyInst *M) {
-  // We can only optimize statically-sized memcpy's that are non-volatile.
-  ConstantInt *CopySize = dyn_cast<ConstantInt>(M->getLength());
-  if (CopySize == 0 || M->isVolatile()) return false;
+  // We can only optimize non-volatile memcpy's.
+  if (M->isVolatile()) return false;
 
   // If the source and destination of the memcpy are the same, then zap it.
   if (M->getSource() == M->getDest()) {
@@ -832,7 +831,7 @@ bool MemCpyOpt::processMemCpy(MemCpyInst *M) {
     if (GV->isConstant() && GV->hasDefinitiveInitializer())
       if (Value *ByteVal = isBytewiseValue(GV->getInitializer())) {
         IRBuilder<> Builder(M);
-        Builder.CreateMemSet(M->getRawDest(), ByteVal, CopySize,
+        Builder.CreateMemSet(M->getRawDest(), ByteVal, M->getLength(),
                              M->getAlignment(), false);
         MD->removeInstruction(M);
         M->eraseFromParent();
@@ -840,9 +839,16 @@ bool MemCpyOpt::processMemCpy(MemCpyInst *M) {
         return true;
       }
 
-  // The are two possible optimizations we can do for memcpy:
+  // The optimizations after this point require the memcpy size.
+  ConstantInt *CopySize = dyn_cast<ConstantInt>(M->getLength());
+  if (CopySize == 0) return false;
+
+  // The are three possible optimizations we can do for memcpy:
   //   a) memcpy-memcpy xform which exposes redundance for DSE.
   //   b) call-memcpy xform for return slot optimization.
+  //   c) memcpy from freshly alloca'd space copies undefined data, and we can
+  //      therefore eliminate the memcpy in favor of the data that was already
+  //      at the destination.
   MemDepResult DepInfo = MD->getDependency(M);
   if (DepInfo.isClobber()) {
     if (CallInst *C = dyn_cast<CallInst>(DepInfo.getInst())) {
@@ -862,6 +868,13 @@ bool MemCpyOpt::processMemCpy(MemCpyInst *M) {
   if (SrcDepInfo.isClobber()) {
     if (MemCpyInst *MDep = dyn_cast<MemCpyInst>(SrcDepInfo.getInst()))
       return processMemCpyMemCpyDependence(M, MDep, CopySize->getZExtValue());
+  } else if (SrcDepInfo.isDef()) {
+    if (isa<AllocaInst>(SrcDepInfo.getInst())) {
+      MD->removeInstruction(M);
+      M->eraseFromParent();
+      ++NumMemCpyInstr;
+      return true;
+    }
   }
 
   return false;
@@ -1007,6 +1020,9 @@ bool MemCpyOpt::iterateOnFunction(Function &F) {
 // function.
 //
 bool MemCpyOpt::runOnFunction(Function &F) {
+  if (skipOptnoneFunction(F))
+    return false;
+
   bool MadeChange = false;
   MD = &getAnalysis<MemoryDependenceAnalysis>();
   TD = getAnalysisIfAvailable<DataLayout>();

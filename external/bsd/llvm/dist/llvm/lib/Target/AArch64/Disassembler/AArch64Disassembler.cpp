@@ -245,7 +245,6 @@ static DecodeStatus DecodeSHLLInstruction(MCInst &Inst, unsigned Insn,
 static bool Check(DecodeStatus &Out, DecodeStatus In);
 
 #include "AArch64GenDisassemblerTables.inc"
-#include "AArch64GenInstrInfo.inc"
 
 static bool Check(DecodeStatus &Out, DecodeStatus In) {
   switch (In) {
@@ -1517,7 +1516,7 @@ static DecodeStatus DecodeVLDSTLanePostInstruction(MCInst &Inst, unsigned Insn,
   unsigned Q = fieldFromInstruction(Insn, 30, 1);
   unsigned S = fieldFromInstruction(Insn, 10, 3);
   unsigned lane = 0;
-  // Calculate the number of lanes by number of vectors and transfered bytes.
+  // Calculate the number of lanes by number of vectors and transferred bytes.
   // NumLanes = 16 bytes / bytes of each lane
   unsigned NumLanes = 16 / (TransferBytes / NumVecs);
   switch (NumLanes) {
