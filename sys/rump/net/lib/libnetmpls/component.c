@@ -1,4 +1,4 @@
-/* $NetBSD: component.c,v 1.1 2013/07/18 15:59:28 kefren Exp $ */
+/* $NetBSD: component.c,v 1.2 2014/02/14 01:43:13 pooka Exp $ */
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -31,14 +31,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.1 2013/07/18 15:59:28 kefren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.2 2014/02/14 01:43:13 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
 #include <sys/protosw.h>
 
 #include <net/if.h>
+#include <net/netisr.h>
 #include <net/route.h>
+
+#include <netmpls/mpls_var.h>
 
 #include "rump_private.h"
 #include "rump_net_private.h"
@@ -50,6 +53,8 @@ RUMP_COMPONENT(RUMP_COMPONENT_NET)
 	extern struct domain mplsdomain;
 
 	DOMAINADD(mplsdomain);
+
+	rump_netisr_register(NETISR_MPLS, mplsintr);
 }
 
 RUMP_COMPONENT(RUMP_COMPONENT_NET_IF)
