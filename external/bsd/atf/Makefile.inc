@@ -1,17 +1,20 @@
-# $NetBSD: Makefile.inc,v 1.4 2014/02/15 02:02:39 jmmv Exp $
+# $NetBSD: Makefile.inc,v 1.5 2014/02/15 04:19:46 jmmv Exp $
 
 .include <bsd.own.mk>
 
 TOPDIR=		${NETBSDSRCDIR}/external/bsd/atf
 SRCDIR=		${TOPDIR}/dist
 
-ATF_VERSION!=	grep 'define VERSION' ${TOPDIR}/bconfig.h | cut -d '"' -f 2
-cookie-version: cookie-version-2
-	@cmp -s cookie-version cookie-version-2 \
-	    || cp cookie-version-2 cookie-version
-cookie-version-2: .PHONY
-	@echo "${ATF_VERSION}" >cookie-version-2
-CLEANFILES+=	cookie-version cookie-version-2
+# Depend on the atf-version.txt target to generate a file that contains
+# the version number of the currently imported ATF release and that only
+# changes on new imports.
+atf-version.txt: atf-version-real.txt
+	@cmp -s atf-version.txt atf-version-real.txt \
+	    || cp atf-version-real.txt atf-version.txt
+atf-version-real.txt: .PHONY
+	@grep 'define VERSION' ${TOPDIR}/bconfig.h \
+	    | cut -d '"' -f 2 >atf-version-real.txt
+CLEANFILES+= atf-version.txt atf-version-real.txt
 
 CPPFLAGS+=	-DHAVE_CONFIG_H
 
