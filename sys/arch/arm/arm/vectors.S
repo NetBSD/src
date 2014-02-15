@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.S,v 1.4 2002/08/17 16:36:32 thorpej Exp $	*/
+/*	$NetBSD: vectors.S,v 1.4.134.1 2014/02/15 16:18:36 matt Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -32,6 +32,8 @@
  */
 
 #include "assym.h"
+#include "opt_cputypes.h"
+#include "opt_cpuoptions.h"
 #include <machine/asm.h>
 
 /*
@@ -43,10 +45,39 @@
  */
 
 	.text
-	.align	0
-	.global	_C_LABEL(page0), _C_LABEL(page0_data), _C_LABEL(page0_end)
 	.global _C_LABEL(fiqvector)
 
+#if defined(CPU_ARMV7) || defined(CPU_ARM11) || defined(ARM_HAS_VBAR)
+	/*
+	 * ARMv[67] processors with the Security Extension have the VBAR
+	 * which redirects the low vector to any 32-byte aligned address. 
+	 * Since we are in kernel, we can just do a relative branch to the
+	 * exception code and avoid the intermediate load.
+	 */
+	.global	_C_LABEL(page0rel)
+	.p2align 5
+_C_LABEL(page0rel):
+	b	reset_entry
+	b	undefined_entry
+	b	swi_entry
+	b	prefetch_abort_entry
+	b	data_abort_entry
+	b	address_exception_entry
+	b	irq_entry
+#ifdef __ARM_FIQ_INDIRECT
+	b	_C_LABEL(fiqvector)
+#else
+_C_LABEL(fiqbranch):
+	subs	pc, lr, #4
+#endif
+END(page0rel)
+
+#endif /* CPU_ARMV7 || CPU_ARM11 || ARM_HAS_VBAR */
+
+#if !defined(ARM_HAS_VBAR)
+
+	.global	_C_LABEL(page0), _C_LABEL(page0_data), _C_LABEL(page0_end)
+	.align	0
 _C_LABEL(page0):
 	ldr	pc, .Lreset_target
 	ldr	pc, .Lundefined_target
@@ -62,6 +93,7 @@ _C_LABEL(page0):
 	.set	_C_LABEL(fiqvector), . - _C_LABEL(page0)
 	subs	pc, lr, #4
 	.org	.Lfiqvector + 0x100
+END(page0)
 #endif
 
 _C_LABEL(page0_data):
@@ -93,6 +125,7 @@ _C_LABEL(page0_data):
 	.word	0	/* pad it out */
 #endif
 _C_LABEL(page0_end):
+#endif /* ARM_HAS_VBAR */
 
 #ifdef __ARM_FIQ_INDIRECT
 	.data

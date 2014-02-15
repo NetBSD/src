@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.18 2008/01/01 14:06:42 chris Exp $	*/
+/*	$NetBSD: stubs.c,v 1.18.26.1 2014/02/15 16:18:36 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stubs.c,v 1.18 2008/01/01 14:06:42 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stubs.c,v 1.18.26.1 2014/02/15 16:18:36 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ u_long	cpu_dump_mempagecnt(void);
 /*
  * These variables are needed by /sbin/savecore
  */
-u_int32_t dumpmag = 0x8fca0101;	/* magic number */
+uint32_t dumpmag = 0x8fca0101;	/* magic number */
 int 	dumpsize = 0;		/* pages */
 long	dumplo = 0; 		/* blocks */
 
@@ -84,7 +84,7 @@ struct pcb dumppcb;
  */
 
 void
-cpu_dumpconf()
+cpu_dumpconf(void)
 {
 	const struct bdevsw *bdev;
 	int nblks, dumpblks;	/* size of dump area */
@@ -92,10 +92,10 @@ cpu_dumpconf()
 	if (dumpdev == NODEV)
 		return;
 	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL)
+	if (bdev == NULL)       
 		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
 	if (bdev->d_psize == NULL)
-		return;
+		return;   
 	nblks = (*bdev->d_psize)(dumpdev);
 	if (nblks <= ctod(1))
 		return;
@@ -124,7 +124,7 @@ cpu_dumpconf()
  * cpu_dump: dump the machine-dependent kernel core dump headers.
  */
 int
-cpu_dump()
+cpu_dump(void)
 {
 	int (*dump)(dev_t, daddr_t, void *, size_t);
 	char bf[dbtob(1)];
@@ -175,7 +175,7 @@ cpu_dump()
  * cpu_dumpsize: calculate size of machine-dependent kernel core dump headers.
  */
 int
-cpu_dumpsize()
+cpu_dumpsize(void)
 {
 	int size;
 
@@ -192,7 +192,7 @@ cpu_dumpsize()
  * cpu_dump_mempagecnt: calculate the size of RAM (in pages) to be dumped.
  */
 u_long
-cpu_dump_mempagecnt()
+cpu_dump_mempagecnt(void)
 {
 	u_long i, n;
 
@@ -216,7 +216,7 @@ extern vaddr_t memhook;		/* XXX */
 void dodumpsys(void);
 
 void
-dodumpsys()
+dodumpsys(void)
 {
 	const struct bdevsw *bdev;
 	daddr_t blkno;
@@ -236,13 +236,13 @@ dodumpsys()
 		cpu_dumpconf();
 	}
 	if (dumplo <= 0 || dumpsize == 0) {
-		printf("\ndump to dev %u,%u not possible\n", major(dumpdev),
-		    minor(dumpdev));
+		printf("\ndump to dev %u,%u not possible\n",
+		    major(dumpdev), minor(dumpdev));
 		delay(5000000);
 		return;
 	}
-	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
-	    minor(dumpdev), dumplo);
+	printf("\ndumping to dev %u,%u offset %ld\n",
+	    major(dumpdev), minor(dumpdev), dumplo);
 
 
 	bdev = bdevsw_lookup(dumpdev);

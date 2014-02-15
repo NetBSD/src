@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.12 2008/08/29 19:00:25 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.12.12.1 2014/02/15 16:18:36 matt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,6 +39,20 @@
 
 #include <arm/cdefs.h>
 
+	/* .syntax		unified */
+
+#ifdef __thumb__
+#define THUMB_INSN(n)	n
+#else
+#define THUMB_INSN(n)
+#endif
+
+#define UPPER16(n)	(((n) >> 16) & 0xffff)
+#define LOWER16(n)	((n) & 0xffff)
+
+#define	__BIT(n)	(1 << (n))
+#define __BITS(hi,lo)	((~((~0)<<((hi)+1)))&((~0)<<(lo)))
+
 #define _C_LABEL(x)	x
 #define	_ASM_LABEL(x)	x
 
@@ -51,23 +65,30 @@
 #endif
 
 #ifndef _ALIGN_TEXT
-# define _ALIGN_TEXT .align 0
+# define _ALIGN_TEXT .align 2
 #endif
 
+#ifndef _TEXT_SECTION
+#define _TEXT_SECTION	.text
+#endif
 /*
  * gas/arm uses @ as a single comment character and thus cannot be used here
  * Instead it recognised the # instead of an @ symbols in .type directives
- * We define a couple of macros so that assembly code will not be dependant
+ * We define a couple of macros so that assembly code will not be dependent
  * on one or the other.
  */
 #define _ASM_TYPE_FUNCTION	%function
 #define _ASM_TYPE_OBJECT	%object
+#define _THUMB_ENTRY(x) \
+	_TEXT_SECTION; _ALIGN_TEXT; .globl x; .type x,_ASM_TYPE_FUNCTION; \
+	.thumb_func; .code 16; x:
+#define _ARM_ENTRY(x) \
+	_TEXT_SECTION; _ALIGN_TEXT; .globl x; .type x,_ASM_TYPE_FUNCTION; \
+	.code 32; x:
 #ifdef __thumb__
-#define _ENTRY(x) \
-	.text; _ALIGN_TEXT; .globl x; .type x,_ASM_TYPE_FUNCTION; .thumb_func; x:
+#define	_ENTRY(x)	_THUMB_ENTRY(x)
 #else
-#define _ENTRY(x) \
-	.text; _ALIGN_TEXT; .globl x; .type x,_ASM_TYPE_FUNCTION; x:
+#define	_ENTRY(x)	_ARM_ENTRY(x)
 #endif
 #define	_END(x)		.size x,.-x
 
@@ -78,37 +99,43 @@
 # define _PROF_PROLOGUE
 #endif
 
-#define	ENTRY(y)	_ENTRY(_C_LABEL(y)); _PROF_PROLOGUE
-#define	ENTRY_NP(y)	_ENTRY(_C_LABEL(y))
-#define	END(y)		_END(_C_LABEL(y))
-#define	ASENTRY(y)	_ENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE
-#define	ASENTRY_NP(y)	_ENTRY(_ASM_LABEL(y))
-#define	ASEND(y)	_END(_ASM_LABEL(y))
+#define	ENTRY(y)		_ENTRY(_C_LABEL(y)); _PROF_PROLOGUE
+#define	ENTRY_NP(y)		_ENTRY(_C_LABEL(y))
+#define	END(y)			_END(_C_LABEL(y))
+#define	ARM_ENTRY(y)		_ARM_ENTRY(_C_LABEL(y)); _PROF_PROLOGUE
+#define	ARM_ENTRY_NP(y)		_ARM_ENTRY(_C_LABEL(y))
+#define	THUMB_ENTRY(y)		_THUMB_ENTRY(_C_LABEL(y)); _PROF_PROLOGUE
+#define	THUMB_ENTRY_NP(y)	_THUMB_ENTRY(_C_LABEL(y))
+#define	END(y)			_END(_C_LABEL(y))
+#define	ASENTRY(y)		_ENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE
+#define	ASENTRY_NP(y)		_ENTRY(_ASM_LABEL(y))
+#define	ASEND(y)		_END(_ASM_LABEL(y))
+#define	ARM_ASENTRY(y)		_ARM_ENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE
+#define	ARM_ASENTRY_NP(y)	_ARM_ENTRY(_ASM_LABEL(y))
+#define	THUMB_ASENTRY(y)	_THUMB_ENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE
+#define	THUMB_ASENTRY_NP(y)	_THUMB_ENTRY(_ASM_LABEL(y))
 
 #define	ASMSTR		.asciz
 
-#if defined(PIC)
-#ifdef __thumb__
+#ifdef __PIC__
+#define	REL_SYM(a, b)	((a) - (b))
 #define	PLT_SYM(x)	x
-#define	GOT_SYM(x)	PIC_SYM(x, GOTOFF)
-#define	GOT_GET(x,got,sym)	\
-	ldr	x, sym;		\
-	add	x, got;		\
-	ldr	x, [x]
-#else
-#define	PLT_SYM(x)	PIC_SYM(x, PLT)
 #define	GOT_SYM(x)	PIC_SYM(x, GOT)
 #define	GOT_GET(x,got,sym)	\
 	ldr	x, sym;		\
 	ldr	x, [x, got]
-#endif /* __thumb__ */
-
 #define	GOT_INIT(got,gotsym,pclabel) \
 	ldr	got, gotsym;	\
-	add	got, got, pc;	\
-	pclabel:
+	pclabel: add	got, got, pc
+#ifdef __thumb__
 #define	GOT_INITSYM(gotsym,pclabel) \
-	gotsym: .word _C_LABEL(_GLOBAL_OFFSET_TABLE_) + (. - (pclabel+4))
+	.align 0;		\
+	gotsym: .word _C_LABEL(_GLOBAL_OFFSET_TABLE_) - (pclabel+4)
+#else
+#define	GOT_INITSYM(gotsym,pclabel) \
+	.align 0;		\
+	gotsym: .word _C_LABEL(_GLOBAL_OFFSET_TABLE_) - (pclabel+8)
+#endif
 
 #ifdef __STDC__
 #define	PIC_SYM(x,y)	x ## ( ## y ## )
@@ -117,6 +144,7 @@
 #endif
 
 #else
+#define	REL_SYM(a, b)	(a)
 #define	PLT_SYM(x)	x
 #define	GOT_SYM(x)	x
 #define	GOT_GET(x,got,sym)	\
@@ -124,7 +152,7 @@
 #define	GOT_INIT(got,gotsym,pclabel)
 #define	GOT_INITSYM(gotsym,pclabel)
 #define	PIC_SYM(x,y)	x
-#endif	/* PIC */
+#endif	/* __PIC__ */
 
 #define RCSID(x)	.pushsection ".ident"; .asciz x; .popsection
 
@@ -139,9 +167,17 @@
 	.globl alias;							\
 	alias = sym
 
+#ifdef __STDC__
 #define	WARN_REFERENCES(sym,msg)					\
-	.stabs msg,30,0,0,0 ;						\
-	.stabs __STRING(_C_LABEL(sym)),1,0,0,0
+	.pushsection .gnu.warning. ## sym;				\
+	.ascii msg;							\
+	.popsection
+#else
+#define	WARN_REFERENCES(sym,msg)					\
+	.pushsection .gnu.warning./**/sym;				\
+	.ascii msg;							\
+	.popsection
+#endif /* __STDC__ */
 
 #ifdef __thumb__
 # define XPUSH		push
@@ -159,10 +195,76 @@
   
 #if defined (_ARM_ARCH_4T)
 # define RET		bx		lr
-# define RETc(c)	__CONCAT(bx,c)	lr
+# define RETr(r)	bx		r
+# if defined(__thumb__)
+#  if defined(_ARM_ARCH_7)
+#   define RETc(c)	it c; __CONCAT(bx,c)	lr
+#  endif
+# else
+#  define RETc(c)	__CONCAT(bx,c)	lr
+# endif
 #else
 # define RET		mov		pc, lr
+# define RETr(r)	mov		pc, r
 # define RETc(c)	__CONCAT(mov,c)	pc, lr
 #endif
+
+#ifdef _ARM_ARCH_7
+#define KMODTRAMPOLINE(n)			\
+_ENTRY(__wrap_ ## n)				\
+	movw	ip, #:lower16:n;	\
+	movt	ip, #:upper16:n;	\
+	bx	ip
+#elif defined(_ARM_ARCH_4T)
+#define KMODTRAMPOLINE(n)	\
+_ENTRY(__wrap_ ## n)		\
+	ldr	ip, [pc];	\
+	bx	ip;		\
+	.word	n
+#else
+#define KMODTRAMPOLINE(n)	\
+_ENTRY(__wrap_ ## n)		\
+	ldr	pc, [pc, #-4];	\
+	.word	n
+#endif
+
+.macro	lsls	a,b,c
+	movs	\a, \b, lsl \c
+.endm
+.macro	lsl	a,b,c
+	mov	\a, \b, lsl \c
+.endm
+.macro	lsrs	a,b,c
+	movs	\a, \b, lsr \c
+.endm
+.macro	lsr	a,b,c
+	mov	\a, \b, lsr \c
+.endm
+.macro	negs	a,b
+	rsbs	\a, \b, #0
+.endm
+.macro	neg	a,b
+	rsb	\a, \b, #0
+.endm
+.macro	ldrd	a,b,c,d
+	ldrald	\a, \c, \d
+.endm
+.macro	strd	a,b,c,d
+	strald	\a, \c, \d
+.endm
+#define	strbge	strgeb
+#define	strbgt	strgtb
+#define	ldrbge	ldrgeb
+#define	ldrbgt	ldrgtb
+#define ldmdbeq	ldmeqdb
+#define ldrtne	ldrnet
+#define ldrtge	ldrget
+#define ldrtgt	ldrgtt
+#define ldrbtge	ldrgebt
+#define ldrbtgt	ldrgtbt
+#define strtge	strget
+#define strtne	strnet
+#define strbtge	strgebt
+#define strbtgt	strgtbt
 
 #endif /* !_ARM_ASM_H_ */

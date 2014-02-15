@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_sa1.S,v 1.10 2007/10/17 19:53:29 garbled Exp $	*/
+/*	$NetBSD: cpufunc_asm_sa1.S,v 1.10.38.1 2014/02/15 16:18:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,8 +35,8 @@
  * SA-1 assembly functions for CPU / MMU / TLB specific operations
  */
  
-#include <machine/cpu.h>
-#include <machine/asm.h>
+#include <arm/asm.h>
+#include <arm/locore.h>
 
 .Lblock_userspace_access:
 	.word	_C_LABEL(block_userspace_access)
@@ -49,29 +49,32 @@
  */
 ENTRY(sa1_setttb)
 #ifdef CACHE_CLEAN_BLOCK_INTR
-	mrs	r3, cpsr_all
-	orr	r1, r3, #(I32_bit | F32_bit)
-	msr	cpsr_all, r1
+	mrs	r3, cpsr
+	orr	r2, r3, #(I32_bit | F32_bit)
+	msr	cpsr_all, r2
 #else
 	ldr	r3, .Lblock_userspace_access
 	ldr	r2, [r3]
-	orr	r1, r2, #1 
-	str	r1, [r3]
+	orr	ip, r2, #1 
+	str	ip, [r3]
 #endif
+	cmp	r1, #0
+	beq	1f
 	stmfd	sp!, {r0-r3, lr}
 	bl	_C_LABEL(sa1_cache_cleanID)
 	ldmfd	sp!, {r0-r3, lr}
 	mcr	p15, 0, r0, c7, c5, 0	/* invalidate I$ and BTB */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write and fill buffer */
+	cmp	r0, #1
 
-	/* Write the TTB */ 
+1:	/* Write the TTB */ 
 	mcr	p15, 0, r0, c2, c0, 0
 
 	/* If we have updated the TTB we must flush the TLB */
-	mcr	p15, 0, r0, c8, c7, 0	/* invalidate I+D TLB */
+	mcrne	p15, 0, r0, c8, c7, 0	/* invalidate I+D TLB */
 
 	/* The cleanID above means we only need to flush the I cache here */
-	mcr	p15, 0, r0, c7, c5, 0	/* invalidate I$ and BTB */
+	mcrne	p15, 0, r0, c7, c5, 0	/* invalidate I$ and BTB */
 
 	/* Make sure that pipeline is emptied */
 	mov	r0, r0
@@ -81,7 +84,7 @@ ENTRY(sa1_setttb)
 #else
 	str	r2, [r3]
 #endif
-	mov	pc, lr
+	RET
 
 /*
  * TLB functions
@@ -143,7 +146,7 @@ _C_LABEL(sa1_cache_clean_size):
 
 #ifdef CACHE_CLEAN_BLOCK_INTR
 #define	SA1_CACHE_CLEAN_BLOCK						\
-	mrs	r3, cpsr_all					;	\
+	mrs	r3, cpsr					;	\
 	orr	r0, r3, #(I32_bit | F32_bit)			;	\
 	msr	cpsr_all, r0
 
@@ -285,7 +288,7 @@ ENTRY(sa1_cache_syncI_rng)
 /*
  * Context switch.
  *
- * These is the CPU-specific parts of the context switcher cpu_switch()
+ * These are the CPU-specific parts of the context switcher cpu_switch()
  * These functions actually perform the TTB reload.
  */
 #if defined(CPU_SA110)

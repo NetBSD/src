@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_fa526.S,v 1.4 2008/10/16 17:54:23 matt Exp $	*/
+/*	$NetBSD: cpufunc_asm_fa526.S,v 1.4.18.1 2014/02/15 16:18:35 matt Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,22 +28,24 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/cpu.h>
 #include <machine/asm.h>
+#include <arm/locore.h>
 
 #define	CACHELINE_SIZE	16
 
 ENTRY(fa526_setttb)
-	mov	r1, #0
-	mcr	p15, 0, r1, c7, c14, 0	/* clean and invalidate D$ */
-	mcr	p15, 0, r1, c7, c5, 0	/* invalidate I$ */
-	mcr	p15, 0, r1, c7, c5, 6	/* invalidate BTB */
-	mcr	p15, 0, r1, c7, c10, 4	/* drain write and fill buffer */
-
+	cmp	r1, #0			@ need to flush the cache / tlb?
+	beq	1f			@    nope, so don't
+	mov	r2, #0
+	mcr	p15, 0, r2, c7, c14, 0	/* clean and invalidate D$ */
+	mcr	p15, 0, r2, c7, c5, 0	/* invalidate I$ */
+	mcr	p15, 0, r2, c7, c5, 6	/* invalidate BTB */
+	mcr	p15, 0, r2, c7, c10, 4	/* drain write and fill buffer */
+1:
 	mcr	p15, 0, r0, c2, c0, 0	/* Write the TTB */ 
 
 	/* If we have updated the TTB we must flush the TLB */
-	mcr	p15, 0, r1, c8, c7, 0	/* invalidate I+D TLB */
+	mcrne	p15, 0, r1, c8, c7, 0	/* invalidate I+D TLB */
 
 	/* Make sure that pipeline is emptied */
 	mov	r0, r0

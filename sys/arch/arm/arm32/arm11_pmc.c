@@ -1,4 +1,4 @@
-/*	$NetBSD: arm11_pmc.c,v 1.3 2008/07/03 06:12:02 matt Exp $	*/
+/*	$NetBSD: arm11_pmc.c,v 1.3.14.1 2014/02/15 16:18:36 matt Exp $	*/
 
 /* Copyright (c) 2007 Microsoft
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm11_pmc.c,v 1.3 2008/07/03 06:12:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm11_pmc.c,v 1.3.14.1 2014/02/15 16:18:36 matt Exp $");
 #include "opt_perfctrs.h"
 #include <sys/types.h>
 #include <sys/param.h>
@@ -82,7 +82,7 @@ arm11_pmc_ccnt_read(void)
 	return val;
 }
 
-static inline void
+__unused static inline void
 arm11_pmc_ccnt_write(uint32_t val)
 {
 	__asm volatile ("mcr p15, 0, %0, c15, c12, 1;" :: "r" (val));

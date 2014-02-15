@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr_acorn.c,v 1.8 2008/01/02 11:48:23 ad Exp $	*/
+/*	$NetBSD: disksubr_acorn.c,v 1.8.28.1 2014/02/15 16:18:36 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -97,14 +97,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr_acorn.c,v 1.8 2008/01/02 11:48:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr_acorn.c,v 1.8.28.1 2014/02/15 16:18:36 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/disklabel.h>
 
-static int filecore_checksum __P((u_char *));
+static int filecore_checksum(u_char *);
 
 /*
  * static int filecore_checksum(u_char *bootblock)
@@ -139,8 +139,7 @@ static int filecore_checksum __P((u_char *));
  * so we treat such blocks as invalid.
  */
 static int
-filecore_checksum(bootblock)
-	u_char *bootblock;
+filecore_checksum(u_char *bootblock)
 {  
 	u_char byte0, accum_diff;
 	u_int sum;
@@ -177,13 +176,10 @@ filecore_checksum(bootblock)
 
 
 int
-filecore_label_read(dev, strat, lp, osdep, msgp, cylp, netbsd_label_offp)
-	dev_t dev;
-	void (*strat) __P((struct buf *));
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
-	const char **msgp;
-	int *cylp, *netbsd_label_offp;
+filecore_label_read(dev_t dev, void (*strat)(struct buf *),
+	struct disklabel *lp, struct cpu_disklabel *osdep,
+	const char **msgp,
+	int *cylp, int *netbsd_label_offp)
 {
 	struct filecore_bootblock *bb;
 	int heads;
@@ -241,7 +237,10 @@ filecore_label_read(dev, strat, lp, osdep, msgp, cylp, netbsd_label_offp)
 	/* Do we have a NETBSD partition table ? */
 
 	if (bb->partition_type == PARTITION_FORMAT_RISCBSD) {
-/*		printf("heads = %d nsectors = %d\n", heads, sectors);*/
+#ifdef DEBUG_LABEL
+		printf("%s; heads = %d nsectors = %d\n",
+		    __func__, heads, sectors);
+#endif
 		netbsdpartoff = cyl * heads * sectors;
 	} else if (bb->partition_type == PARTITION_FORMAT_RISCIX) {
 		struct riscix_partition_table *rpt;
@@ -255,8 +254,10 @@ filecore_label_read(dev, strat, lp, osdep, msgp, cylp, netbsd_label_offp)
 		 */
 
 		bp->b_blkno = cyl * heads * sectors;
-/*		printf("Found RiscIX partition table @ %08x\n",
-		    bp->b_blkno);*/
+#ifdef DEBUG_LABEL
+		printf("%s: Found RiscIX partition table @ %08x\n",
+		    __func__, bp->b_blkno);
+#endif
 		bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
 		bp->b_bcount = lp->d_secsize;
 		bp->b_oflags &= ~(BO_DONE);
@@ -274,13 +275,14 @@ filecore_label_read(dev, strat, lp, osdep, msgp, cylp, netbsd_label_offp)
 		}
 
 		rpt = (struct riscix_partition_table *)bp->b_data;
-/*		for (loop = 0; loop < NRISCIX_PARTITIONS; ++loop)
-			printf("p%d: %16s %08x %08x %08x\n", loop,
-			    rpt->partitions[loop].rp_name,
+#ifdef DEBUG_LABEL
+		for (loop = 0; loop < NRISCIX_PARTITIONS; ++loop)
+			printf("%s: p%d: %16s %08x %08x %08x\n", loop,
+			    __func__, rpt->partitions[loop].rp_name,
 			    rpt->partitions[loop].rp_start,
 			    rpt->partitions[loop].rp_length,
 			    rpt->partitions[loop].rp_type);
-*/
+#endif
 		for (loop = 0; loop < NRISCIX_PARTITIONS; ++loop) {
 			if (strcmp(rpt->partitions[loop].rp_name,
 			    "RiscBSD") == 0 ||
@@ -311,13 +313,15 @@ out:
 }
 
 
+/*
+ * Return -1 not found, 0 found positive errno
+ */
 int
-filecore_label_locate(dev, strat, lp, osdep, cylp, netbsd_label_offp)
-	dev_t dev;
-	void (*strat) __P((struct buf *));
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
-	int *cylp, *netbsd_label_offp;
+filecore_label_locate(dev_t dev,
+	void (*strat)(struct buf *),
+	struct disklabel *lp,
+	struct cpu_disklabel *osdep,
+	int *cylp, int *netbsd_label_offp)
 {
 	struct filecore_bootblock *bb;
 	int heads;
@@ -332,7 +336,9 @@ filecore_label_locate(dev, strat, lp, osdep, cylp, netbsd_label_offp)
 
 	/* read the filecore boot block */
 
-/*	printf("writedisklabel: Reading boot block\n");*/
+#ifdef DEBUG_LABEL
+	printf("%s: Reading boot block\n", __func__);
+#endif
 
 	bp->b_blkno = FILECORE_BOOT_SECTOR;
 	bp->b_bcount = lp->d_secsize;
@@ -346,12 +352,11 @@ filecore_label_locate(dev, strat, lp, osdep, cylp, netbsd_label_offp)
 	 */
 
 	if ((rv = biowait(bp)) != 0) {
-		rv = -rv;
 		goto out;
 	}
 
 	bb = (struct filecore_bootblock *)bp->b_data;
-	rv = 1;
+	rv = 0;
 
 	/* Validate boot block */
        
@@ -360,17 +365,21 @@ filecore_label_locate(dev, strat, lp, osdep, cylp, netbsd_label_offp)
 		 * Invalid boot block so lets assume the
 		 * entire disc is NetBSD
 		 */
-
-/*		printf("writedisklabel: Invalid filecore boot block (incorrect checksum)\n");*/
-		rv = 0;
+#ifdef DEBUG_LABEL
+		printf("%s: Bad filecore boot block (incorrect checksum)\n",
+		    __func__);
+#endif
+		rv = -1;
 		goto out;
 	}
 
 	/* Do we have a NetBSD partition ? */
 
 	if (bb->partition_type != PARTITION_FORMAT_RISCBSD) {
-		printf("writedisklabel: Invalid partition format\n");
-		rv = -1;
+#ifdef DEBUG_LABEL
+		printf("%s: Invalid partition format\n", __func__);
+#endif
+		rv = EINVAL;
 		goto out;
 	}
 
@@ -378,8 +387,10 @@ filecore_label_locate(dev, strat, lp, osdep, cylp, netbsd_label_offp)
 
 	heads = bb->heads;
 	sectors = bb->secspertrack;
-                       
-	/*printf("heads = %d nsectors = %d\n", heads, sectors);*/
+
+#ifdef DEBUG_LABEL
+	printf("%s: heads = %d nsectors = %d\n", __func__, heads, sectors);
+#endif
 
 	netbsdpartoff = cyl * heads * sectors;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_ixp12x0.S,v 1.2 2002/08/17 16:36:31 thorpej Exp $	*/
+/*	$NetBSD: cpufunc_asm_ixp12x0.S,v 1.2.136.1 2014/02/15 16:18:35 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -35,8 +35,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/cpu.h>
-#include <machine/asm.h>
+#include <arm/asm.h>
+#include <arm/locore.h>
 
 /*
  * This function is the same as sa110_context_switch for now, the plan

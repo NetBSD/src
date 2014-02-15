@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.21 2008/08/07 04:15:52 matt Exp $	*/
+/*	$NetBSD: mem.c,v 1.21.8.1 2014/02/15 16:18:36 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -76,7 +76,7 @@
 #include "opt_arm32_pmap.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.21 2008/08/07 04:15:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.21.8.1 2014/02/15 16:18:36 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -149,8 +149,9 @@ mmrw(dev, uio, flags)
 			{
 				struct vm_page *pg;
 				pg = PHYS_TO_VM_PAGE(trunc_page(v));
-				if (pg != NULL && pmap_is_page_colored_p(pg))
-					o = pg->mdpage.pvh_attrs;
+				struct vm_page_md *md = VM_PAGE_TO_MD(pg);
+				if (pg != NULL && pmap_is_page_colored_p(md))
+					o = md->pvh_attrs;
 				else
 					o = v;
 				m += o & arm_cache_prefer_mask;
