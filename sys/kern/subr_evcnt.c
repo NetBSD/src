@@ -1,4 +1,4 @@
-/* $NetBSD: subr_evcnt.c,v 1.4.94.2 2011/02/05 06:54:58 cliff Exp $ */
+/* $NetBSD: subr_evcnt.c,v 1.4.94.3 2014/02/15 10:13:24 matt Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_evcnt.c,v 1.4.94.2 2011/02/05 06:54:58 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_evcnt.c,v 1.4.94.3 2014/02/15 10:13:24 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -152,8 +152,15 @@ void
 evcnt_attach_dynamic(struct evcnt *ev, int type, const struct evcnt *parent,
     const char *group, const char *name)
 {
-
 	memset(ev, 0, sizeof *ev);
+	evcnt_attach_dynamic(ev, type, parent, group, name);
+}
+
+void
+evcnt_attach_dynamic_nozero(struct evcnt *ev, int type,
+    const struct evcnt *parent, const char *group, const char *name)
+{
+
 	ev->ev_type = type;
 	ev->ev_parent = parent;
 	ev->ev_group = group;

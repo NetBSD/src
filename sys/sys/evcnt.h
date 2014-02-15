@@ -1,4 +1,4 @@
-/*	$NetBSD: evcnt.h,v 1.5 2007/12/16 20:45:59 dyoung Exp $	*/
+/*	$NetBSD: evcnt.h,v 1.5.28.1 2014/02/15 10:13:25 matt Exp $	*/
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -130,6 +130,8 @@ extern struct evcntlist allevents;	/* list of all event counters */
 void	evcnt_init(void);
 void	evcnt_attach_static(struct evcnt *);
 void	evcnt_attach_dynamic(struct evcnt *, int, const struct evcnt *,
+	    const char *, const char *);
+void	evcnt_attach_dynamic_nozero(struct evcnt *, int, const struct evcnt *,
 	    const char *, const char *);
 void	evcnt_detach(struct evcnt *);
 
