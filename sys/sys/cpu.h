@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.23.4.3.4.1 2011/04/29 08:20:15 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.23.4.3.4.2 2014/02/15 10:12:47 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 YAMAMOTO Takashi,
@@ -72,6 +72,7 @@ lwp_t	*cpu_switchto(lwp_t *, lwp_t *, bool);
 struct	cpu_info *cpu_lookup(u_int);
 int	cpu_setstate(struct cpu_info *, bool);
 bool	cpu_intr_p(void);
+bool	cpu_softintr_p(void);
 bool	cpu_kpreempt_enter(uintptr_t, int);
 void	cpu_kpreempt_exit(uintptr_t);
 bool	cpu_kpreempt_disabled(void);

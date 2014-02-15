@@ -90,6 +90,9 @@ struct cpu_data {
 	u_int		cpu_nsyscall;		/* syscall counter */
 	u_int		cpu_ntrap;		/* trap counter */
 	u_int		cpu_nswtch;		/* context switch counter */
+	u_int		cpu_nintr;		/* interrupt counter */
+	u_int		cpu_nsoft;		/* soft interrupt counter */
+	u_int		cpu_nfault;		/* pagefault counter */
 	void		*cpu_uvm;		/* uvm per-cpu data */
 	void		*cpu_softcpu;		/* soft interrupt table */
 	TAILQ_HEAD(,buf) cpu_biodone;		/* finished block xfers */
@@ -100,6 +103,7 @@ struct cpu_data {
 	__cpu_simple_lock_t cpu_ld_lock;	/* lockdebug */
 	uint64_t	cpu_cc_freq;		/* cycle counter frequency */
 	int64_t		cpu_cc_skew;		/* counter skew vs cpu0 */
+	char		cpu_name[8];		/* eg, "cpu4" */
 };
 
 /* compat definitions */
