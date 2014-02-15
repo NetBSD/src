@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.156 2014/01/26 19:16:17 dsl Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.157 2014/02/15 10:11:15 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.156 2014/01/26 19:16:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.157 2014/02/15 10:11:15 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -126,25 +126,13 @@ extern char linux_sigcode[], linux_rt_sigcode[];
 void
 linux_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 {
-	struct pcb *pcb = lwp_getpcb(l);
 	struct trapframe *tf;
-
-	/* If we were using the FPU, forget about it. */
-	if (pcb->pcb_fpcpu != NULL)
-		fpusave_lwp(l, false);
-
 
 #ifdef USER_LDT
 	pmap_ldt_cleanup(l);
 #endif
 
-	l->l_md.md_flags &= ~MDL_USEDFPU;
-
-	if (i386_use_fxsave) {
-		pcb->pcb_savefpu.sv_xmm.fx_cw = __Linux_NPXCW__;
-		pcb->pcb_savefpu.sv_xmm.fx_mxcsr = __INITIAL_MXCSR__;
-	} else
-		pcb->pcb_savefpu.sv_87.s87_cw = __Linux_NPXCW__;
+	fpu_save_area_clear(l, __Linux_NPXCW__);
 
 	tf = l->l_md.md_regs;
 	tf->tf_gs = 0;

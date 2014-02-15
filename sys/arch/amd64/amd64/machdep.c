@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.203 2014/02/11 20:17:16 dsl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.204 2014/02/15 10:11:14 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.203 2014/02/11 20:17:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.204 2014/02/15 10:11:14 dsl Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -548,8 +548,8 @@ buildcontext(struct lwp *l, void *catcher, void *f)
 	tf->tf_rsp = (uint64_t)f;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 
-	/* Ensure FP state is reset, if FP is used. */
-	l->l_md.md_flags &= ~MDL_USEDFPU;
+	/* Ensure FP state is sane */
+	fpu_save_area_reset(l);
 }
 
 void
@@ -566,7 +566,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct sigacts *ps = p->p_sigacts;
-	int onstack, tocopy, error;
+	int onstack, error;
 	int sig = ksi->ksi_signo;
 	struct sigframe_siginfo *fp, frame;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
@@ -587,20 +587,8 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 		sp = (char *)tf->tf_rsp - 128;
 
 	sp -= sizeof(struct sigframe_siginfo);
-	/*
-	 * Round down the stackpointer to a multiple of 16 for
-	 * fxsave and the ABI.
-	 */
+	/* Round down the stackpointer to a multiple of 16 for the ABI. */
 	fp = (struct sigframe_siginfo *)(((unsigned long)sp & ~15) - 8);
-
-	/*
-	 * Don't bother copying out FP state if there is none.
-	 */
-	if (l->l_md.md_flags & MDL_USEDFPU)
-		tocopy = sizeof (struct sigframe_siginfo);
-	else
-		tocopy = sizeof (struct sigframe_siginfo) -
-		    sizeof (frame.sf_uc.uc_mcontext.__fpregs);
 
 	frame.sf_ra = (uint64_t)ps->sa_sigdesc[sig].sd_tramp;
 	frame.sf_si._info = ksi->ksi_info;
@@ -614,7 +602,8 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	mutex_exit(p->p_lock);
 	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
-	error = copyout(&frame, fp, tocopy);
+	/* Copyout all the fp regs, the signal handler might expect them. */
+	error = copyout(&frame, fp, sizeof frame);
 	mutex_enter(p->p_lock);
 
 	if (error != 0) {
@@ -1329,23 +1318,13 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	struct pcb *pcb = lwp_getpcb(l);
 	struct trapframe *tf;
 
-	/* If we were using the FPU, forget about it. */
-	if (pcb->pcb_fpcpu != NULL) {
-		fpusave_lwp(l, false);
-	}
-
 #ifdef USER_LDT
 	pmap_ldt_cleanup(l);
 #endif
 
-	l->l_md.md_flags &= ~MDL_USEDFPU;
+	fpu_save_area_clear(l, pack->ep_osversion >= 699002600
+	    ? __NetBSD_NPXCW__ : __NetBSD_COMPAT_NPXCW__);
 	pcb->pcb_flags = 0;
-	if (pack->ep_osversion >= 699002600)
-		pcb->pcb_savefpu.sv_xmm.fx_cw = __NetBSD_NPXCW__;
-	else
-		pcb->pcb_savefpu.sv_xmm.fx_cw = __NetBSD_COMPAT_NPXCW__;
-	pcb->pcb_savefpu.sv_xmm.fx_mxcsr = __INITIAL_MXCSR__;
-	pcb->pcb_savefpu.sv_xmm.fx_mxcsr_mask = __INITIAL_MXCSR_MASK__;
 
 	l->l_proc->p_flag &= ~PK_32;
 
@@ -1917,6 +1896,7 @@ void
 cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 {
 	const struct trapframe *tf = l->l_md.md_regs;
+	struct pcb *pcb;
 	__greg_t ras_rip;
 
 	/* Copy general registers member by member */
@@ -1933,16 +1913,11 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	mcp->_mc_tlsbase = (uintptr_t)l->l_private;;
 	*flags |= _UC_TLSBASE;
 
-	if ((l->l_md.md_flags & MDL_USEDFPU) != 0) {
-		struct pcb *pcb = lwp_getpcb(l);
+	pcb = lwp_getpcb(l);
 
-		if (pcb->pcb_fpcpu) {
-			fpusave_lwp(l, true);
-		}
-		memcpy(mcp->__fpregs, &pcb->pcb_savefpu.sv_xmm,
-		    sizeof (mcp->__fpregs));
-		*flags |= _UC_FPU;
-	}
+	fpusave_lwp(l, true);
+	memcpy(mcp->__fpregs, &pcb->pcb_savefpu.sv_xmm, sizeof (mcp->__fpregs));
+	*flags |= _UC_FPU;
 }
 
 int
@@ -1991,13 +1966,10 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		l->l_md.md_flags |= MDL_IRET;
 	}
 
-	if (pcb->pcb_fpcpu != NULL)
-		fpusave_lwp(l, false);
-
 	if ((flags & _UC_FPU) != 0) {
+		fpusave_lwp(l, false);
 		memcpy(&pcb->pcb_savefpu.sv_xmm, mcp->__fpregs,
 		    sizeof (mcp->__fpregs));
-		l->l_md.md_flags |= MDL_USEDFPU;
 	}
 
 	if ((flags & _UC_TLSBASE) != 0)

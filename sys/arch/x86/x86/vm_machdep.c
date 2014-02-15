@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.21 2014/02/11 20:17:16 dsl Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.22 2014/02/15 10:11:15 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.21 2014/02/11 20:17:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.22 2014/02/15 10:11:15 dsl Exp $");
 
 #include "opt_mtrr.h"
 
@@ -137,9 +137,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 * If parent LWP was using FPU, then we have to save the FPU h/w
 	 * state to PCB so that we can copy it.
 	 */
-	if (pcb1->pcb_fpcpu != NULL) {
-		fpusave_lwp(l1, true);
-	}
+	fpusave_lwp(l1, true);
 
 	/*
 	 * Sync the PCB before we copy it.
@@ -238,12 +236,9 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 void
 cpu_lwp_free(struct lwp *l, int proc)
 {
-	struct pcb *pcb = lwp_getpcb(l);
 
 	/* If we were using the FPU, forget about it. */
-	if (pcb->pcb_fpcpu != NULL) {
-		fpusave_lwp(l, false);
-	}
+	fpusave_lwp(l, false);
 
 #ifdef MTRR
 	if (proc && l->l_proc->p_md.md_flags & MDP_USEDMTRR)

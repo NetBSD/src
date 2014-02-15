@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.4 2014/02/13 19:37:08 dsl Exp $	*/
+/*	$NetBSD: fpu.c,v 1.5 2014/02/15 10:11:15 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.4 2014/02/13 19:37:08 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.5 2014/02/15 10:11:15 dsl Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -430,34 +430,20 @@ fpudna(struct trapframe *frame)
 	clts();
 	ci->ci_fpcurlwp = l;
 	pcb->pcb_fpcpu = ci;
-	if ((l->l_md.md_flags & MDL_USEDFPU) == 0) {
-		fninit();
-		if (i386_use_fxsave) {
-			fldcw(&pcb->pcb_savefpu.sv_xmm.fx_cw);
-			x86_ldmxcsr(&pcb->pcb_savefpu.sv_xmm.fx_mxcsr);
-		} else {
-			fldcw(&pcb->pcb_savefpu.sv_87.s87_cw);
-		}
-		l->l_md.md_flags |= MDL_USEDFPU;
-	} else if (i386_use_fxsave) {
+
+	if (i386_use_fxsave) {
 		/*
 		 * AMD FPU's do not restore FIP, FDP, and FOP on fxrstor,
-		 * leaking other process's execution history. Clear them
-		 * manually.
-		 */
-
-		/*
+		 * leaking other process's execution history.
+		 * Clear them manually by loading a zero onto the fpu stack.
+		 *
 		 * Clear the ES bit in the x87 status word if it is currently
 		 * set, in order to avoid causing a fault in the upcoming load.
 		 */
 		if (fngetsw() & 0x80)
 			fnclex();
-
-		/*
-		 * Load a zero into the x87 stack.  This mangles the x87 stack,
-		 * but we don't care since we're about to call fxrstor() anyway.
-		 */
 		fldummy();
+
 		fxrstor(&pcb->pcb_savefpu.sv_xmm);
 	} else {
 		frstor(&pcb->pcb_savefpu.sv_87);
@@ -509,15 +495,14 @@ fpusave_cpu(bool save)
 void
 fpusave_lwp(struct lwp *l, bool save)
 {
+	struct pcb *pcb = lwp_getpcb(l);
 	struct cpu_info *oci;
-	struct pcb *pcb;
 	int s, spins, ticks;
 
 	spins = 0;
 	ticks = hardclock_ticks;
 	for (;;) {
 		s = splhigh();
-		pcb = lwp_getpcb(l);
 		oci = pcb->pcb_fpcpu;
 		if (oci == NULL) {
 			splx(s);
@@ -546,9 +531,52 @@ fpusave_lwp(struct lwp *l, bool save)
 			panic("fpusave_lwp: did not");
 		}
 	}
+}
 
-	if (!save) {
-		/* Ensure we restart with a clean slate. */
-	 	l->l_md.md_flags &= ~MDL_USEDFPU;
+/*
+ * exec needs to clear the fpu save area to avoid leaking info from the
+ * old process to userspace.
+ * We must also load these values into the fpu - otherwise the process
+ * will see another processes fpu registers.
+ */
+void
+fpu_save_area_clear(struct lwp *lwp, unsigned int x87_cw)
+{
+	struct pcb *pcb;
+	union savefpu *fpu_save;
+
+	fpusave_lwp(lwp, false);
+
+	pcb = lwp_getpcb(lwp);
+	fpu_save = &pcb->pcb_savefpu;
+
+	if (i386_use_fxsave) {
+		memset(&fpu_save->sv_xmm, 0, sizeof fpu_save->sv_xmm);
+		fpu_save->sv_xmm.fx_mxcsr = __INITIAL_MXCSR__;
+		fpu_save->sv_xmm.fx_mxcsr_mask = __INITIAL_MXCSR_MASK__;
+		fpu_save->sv_xmm.fx_cw = x87_cw;
+	} else {
+		memset(&fpu_save->sv_87, 0, sizeof fpu_save->sv_87);
+		fpu_save->sv_87.s87_tw = 0xffff;
+		fpu_save->sv_87.s87_cw = x87_cw;
+	}
+	fpu_save->sv_os.fxo_dflt_cw = x87_cw;
+}
+
+/* For signal handlers the register values don't matter */
+void
+fpu_save_area_reset(struct lwp *lwp)
+{
+	struct pcb *pcb = lwp_getpcb(lwp);
+	union savefpu *fpu_save = &pcb->pcb_savefpu;
+
+	if (i386_use_fxsave) {
+		fpu_save->sv_xmm.fx_mxcsr = __INITIAL_MXCSR__;
+		fpu_save->sv_xmm.fx_mxcsr_mask = __INITIAL_MXCSR_MASK__;
+		fpu_save->sv_xmm.fx_tw = 0;
+		fpu_save->sv_xmm.fx_cw = fpu_save->sv_os.fxo_dflt_cw;
+	} else {
+		fpu_save->sv_87.s87_tw = 0xffff;
+		fpu_save->sv_87.s87_cw = fpu_save->sv_os.fxo_dflt_cw;
 	}
 }
