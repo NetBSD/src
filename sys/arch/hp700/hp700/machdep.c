@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.118 2014/01/16 13:19:36 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.119 2014/02/15 07:38:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.118 2014/01/16 13:19:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.119 2014/02/15 07:38:22 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -196,7 +196,7 @@ static struct btlb_slot {
 
 	/* The number associated with this slot. */
 	int btlb_slot_number;
-	
+
 	/* The flags associated with this slot. */
 	int btlb_slot_flags;
 #define	BTLB_SLOT_IBTLB			(1 << 0)
@@ -477,7 +477,7 @@ hppa_init(paddr_t start, void *bi)
 	error = pdcproc_hpa_processor(&hppa_mcpuhpa);
 	if (error < 0)
 		panic("%s: PDC_HPA failed", __func__);
-	
+
 	/* cache parameters */
 	error = pdcproc_cache(&pdc_cache);
 	if (error < 0) {
@@ -667,7 +667,7 @@ cpuid(void)
 	error = pdcproc_model_info(&pdc_model);
 	if (error < 0) {
 		DPRINTF(("WARNING: PDC_MODEL_INFO error %d\n", error));
-		
+
 		pdc_model.hwmodel = 0;
 		pdc_model.hv = 0;
 	} else {
@@ -1159,7 +1159,7 @@ hppa_btlb_insert(pa_space_t space, vaddr_t va, paddr_t pa, vsize_t *sizep,
 	 * allow execution also need instruction translation.
 	 */
 	switch (tlbprot & TLB_AR_MASK) {
-	case TLB_AR_R:	
+	case TLB_AR_R:
 	case TLB_AR_RW:
 	case TLB_AR_R | TLB_USER:
 	case TLB_AR_RW | TLB_USER:
@@ -1218,7 +1218,7 @@ hppa_btlb_insert(pa_space_t space, vaddr_t va, paddr_t pa, vsize_t *sizep,
 		for (btlb_slot = btlb_slots;
 		     btlb_slot < btlb_slot_end;
 		     btlb_slot++) {
-			
+
 			/*
 			 * Skip this slot if it's in use, or if we need a
 			 * variable-range slot and this isn't one.
@@ -1258,7 +1258,7 @@ hppa_btlb_insert(pa_space_t space, vaddr_t va, paddr_t pa, vsize_t *sizep,
 			DPRINTFN(10, ("BTLB full\n"));
 			return -(ENOMEM);
 		}
-			
+
 		/*
 		 * Now fill this BTLB slot record and insert the entry.
 		 */
@@ -1639,7 +1639,7 @@ hppa_pim64_dump(int check_type, void *data, size_t size)
 			printf("\n\n%s Registers:", name);
 			for (reg_k = 0; reg_k < reg_j; reg_k++)
 				printf("%s0x%016lx",
-				   (reg_k & 3) ? " " : "\n", 
+				   (reg_k & 3) ? " " : "\n",
 				   (unsigned long)regarray[reg_k]);
 		}
 
@@ -1748,7 +1748,7 @@ hppa_machine_check(int check_type)
 		DELAY(250000);
 		panic("machine check");
 	}
-	
+
 	/* Reboot the machine. */
 	printf("Rebooting...\n");
 	cpu_die();
@@ -1833,7 +1833,7 @@ dumpsys(void)
 		dump = bdev->d_dump;
 		/* TODO block map the whole physical memory */
 		for (i = 0; i < bytes; i += n) {
-		
+
 			/* Print out how many MBs we are to go. */
 			n = bytes - i;
 			if (n && (n % (1024*1024)) == 0)
@@ -1946,7 +1946,7 @@ sysctl_machdep_heartbeat(SYSCTLFN_ARGS)
 	int error;
 	bool oldval;
 	struct sysctlnode node = *rnode;
-	
+
 	oldval = lcd_blink_p;
 	/*
 	 * If we were false and are now true, start the timer.
