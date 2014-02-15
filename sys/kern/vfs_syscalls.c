@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.475 2014/01/25 17:24:45 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.476 2014/02/15 22:32:16 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.475 2014/01/25 17:24:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.476 2014/02/15 22:32:16 njoly Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -117,7 +117,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.475 2014/01/25 17:24:45 christos 
 #include <nfs/nfs_var.h>
 
 static int change_flags(struct vnode *, u_long, struct lwp *);
-static int change_mode(struct vnode *, int, struct lwp *l);
+static int change_mode(struct vnode *, int, struct lwp *);
 static int change_owner(struct vnode *, uid_t, gid_t, struct lwp *, int);
 static int do_sys_openat(lwp_t *, int, const char *, int, int, int *);
 static int do_sys_mkdirat(struct lwp *l, int, const char *, mode_t,
