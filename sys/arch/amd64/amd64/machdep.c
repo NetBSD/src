@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.204 2014/02/15 10:11:14 dsl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.205 2014/02/15 22:20:41 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.204 2014/02/15 10:11:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.205 2014/02/15 22:20:41 dsl Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1896,7 +1896,6 @@ void
 cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 {
 	const struct trapframe *tf = l->l_md.md_regs;
-	struct pcb *pcb;
 	__greg_t ras_rip;
 
 	/* Copy general registers member by member */
@@ -1913,10 +1912,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	mcp->_mc_tlsbase = (uintptr_t)l->l_private;;
 	*flags |= _UC_TLSBASE;
 
-	pcb = lwp_getpcb(l);
-
-	fpusave_lwp(l, true);
-	memcpy(mcp->__fpregs, &pcb->pcb_savefpu.sv_xmm, sizeof (mcp->__fpregs));
+	process_read_fpregs_xmm(l, (struct fxsave *)&mcp->__fpregs);
 	*flags |= _UC_FPU;
 }
 
@@ -1925,11 +1921,12 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 	const __greg_t *gr = mcp->__gregs;
-	struct pcb *pcb = lwp_getpcb(l);
 	struct proc *p = l->l_proc;
 	int error;
 	int err, trapno;
 	int64_t rflags;
+
+	CTASSERT(sizeof (mcontext_t) == 26 * 8 + 8 + 512);
 
 	if ((flags & _UC_CPU) != 0) {
 		error = cpu_mcontext_validate(l, mcp);
@@ -1966,11 +1963,8 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		l->l_md.md_flags |= MDL_IRET;
 	}
 
-	if ((flags & _UC_FPU) != 0) {
-		fpusave_lwp(l, false);
-		memcpy(&pcb->pcb_savefpu.sv_xmm, mcp->__fpregs,
-		    sizeof (mcp->__fpregs));
-	}
+	if ((flags & _UC_FPU) != 0)
+		process_write_fpregs_xmm(l, (const struct fxsave *)&mcp->__fpregs);
 
 	if ((flags & _UC_TLSBASE) != 0)
 		lwp_setprivate(l, (void *)(uintptr_t)mcp->_mc_tlsbase);
