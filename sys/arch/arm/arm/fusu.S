@@ -1,4 +1,4 @@
-/*	$NetBSD: fusu.S,v 1.13 2008/04/27 18:58:44 matt Exp $	*/
+/*	$NetBSD: fusu.S,v 1.3.2.2 2014/02/15 16:18:36 matt Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Mark Brinicombe.
@@ -36,40 +36,30 @@
 #include "opt_cpuoptions.h"
 
 #include "assym.h"
+
 #include <machine/asm.h>
-#include <machine/cpu.h>
 
-#if !defined(PROCESS_ID_IS_CURCPU) && !defined(PROCESS_ID_IS_CURLWP)
-#ifdef MULTIPROCESSOR
-.Lcpu_info:
-	.word	_C_LABEL(cpu_info)
-#else
-.Lcurpcb:
-	.word	_C_LABEL(cpu_info_store) + CI_CURPCB
-#endif
-#endif
+#include <arm/locore.h>
 
-#if !defined(PROCESS_ID_IS_CURCPU) && !defined(PROCESS_ID_IS_CURLWP)
-#if defined(MULTIPROCESSOR)
-#define	GET_CURPCB(rX)				\
-	stmfd	sp!, {r0, r1, r3, r14}		;\
-	bl	_C_LABEL(cpu_number)		;\
-	ldr	rX, .Lcpu_info			;\
-	ldr	rX, [rX, r0, lsl #2]		;\
-	ldr	rX, [rX, #CI_CURPCB]		;\
-	ldmfd	sp!, {r0, r1, r3, r14}
+/*
+ * On PROG26 systems (i.e. acorn26) taking a page fault corrupts R14_svc.
+ * To prevent this causing a problem, we save R14 in R12 in these functions.
+ */
+#ifdef __PROG26
+#define SAVE_R14	mov	ip, lr
+#define FUSU_RET	mov	pc, ip
 #else
-#define	GET_CURPCB(rX)				\
-	ldr	rX, .Lcurpcb			;\
-	ldr	rX, [rX]
+#define SAVE_R14	/* do nothing */
+#define FUSU_RET	mov	pc, lr
 #endif
-#endif
+	
 /*
  * fuword(void *uaddr);
  * Fetch an int from the user's address space.
  */
 
 ENTRY(fuword)
+	SAVE_R14
 	GET_CURPCB(r2)
 
 #ifdef DIAGNOSTIC
@@ -85,7 +75,8 @@ ENTRY(fuword)
 	mov	r1, #0x00000000
 	str	r1, [r2, #PCB_ONFAULT]
 	mov	r0, r3
-	mov	pc, lr
+	FUSU_RET
+END(fuword)
 
 /*
  * fusword(void *uaddr);
@@ -93,6 +84,7 @@ ENTRY(fuword)
  */
 
 ENTRY(fusword)
+	SAVE_R14
 	GET_CURPCB(r2)
 
 #ifdef DIAGNOSTIC
@@ -104,15 +96,16 @@ ENTRY(fusword)
 	str	r1, [r2, #PCB_ONFAULT]
 
 	ldrbt	r3, [r0], #1
-	ldrbt	ip, [r0]
+	ldrbt	r1, [r0]
 #ifdef __ARMEB__
-	orr	r0, ip, r3, asl #8
+	orr	r0, r1, r3, asl #8
 #else
-	orr	r0, r3, ip, asl #8
+	orr	r0, r3, r1, asl #8
 #endif
 	mov	r1, #0x00000000
 	str	r1, [r2, #PCB_ONFAULT]
-	mov	pc, lr
+	FUSU_RET
+END(fusword)
 
 /*
  * fuswintr(void *uaddr);
@@ -121,12 +114,13 @@ ENTRY(fusword)
  */
 
 ENTRY(fuswintr)
-	ldr	r2, Lblock_userspace_access
+	ldr	r2, .Lblock_userspace_access
 	ldr	r2, [r2]
 	teq	r2, #0
 	mvnne	r0, #0x00000000
 	movne	pc, lr
 
+	SAVE_R14
 	GET_CURPCB(r2)
 
 #ifdef DIAGNOSTIC
@@ -138,18 +132,19 @@ ENTRY(fuswintr)
 	str	r1, [r2, #PCB_ONFAULT]
 
 	ldrbt	r3, [r0], #1
-	ldrbt	ip, [r0]
+	ldrbt	r1, [r0]
 #ifdef __ARMEB__
-	orr	r0, ip, r3, asl #8
+	orr	r0, ip, r1, asl #8
 #else
-	orr	r0, r3, ip, asl #8
+	orr	r0, r1, ip, asl #8
 #endif
 
 	mov	r1, #0x00000000
 	str	r1, [r2, #PCB_ONFAULT]
-	mov	pc, lr
+	FUSU_RET
+END(fuswintr)
 
-Lblock_userspace_access:
+.Lblock_userspace_access:
 	.word	_C_LABEL(block_userspace_access)
 
 	.data
@@ -165,6 +160,7 @@ _C_LABEL(block_userspace_access):
  */
 
 ENTRY(fubyte)
+	SAVE_R14
 	GET_CURPCB(r2)
 
 #ifdef DIAGNOSTIC
@@ -180,7 +176,7 @@ ENTRY(fubyte)
 	mov	r1, #0x00000000
 	str	r1, [r2, #PCB_ONFAULT]
 	mov	r0, r3
-	mov	pc, lr
+	FUSU_RET
 
 /*
  * Handle faults from [fs]u*().  Clean up and return -1.
@@ -190,7 +186,8 @@ ENTRY(fubyte)
 	mov	r0, #0x00000000
 	str	r0, [r2, #PCB_ONFAULT]
 	mvn	r0, #0x00000000
-	mov	pc, lr
+	FUSU_RET
+END(fubyte)
 
 /*
  * Handle faults from [fs]u*().  Clean up and return -1.  This differs from
@@ -199,12 +196,12 @@ ENTRY(fubyte)
  */
 
 /* label must be global as fault.c references it */
-	.global	_C_LABEL(fusubailout)
-_C_LABEL(fusubailout):
+_ENTRY(fusubailout)
 	mov	r0, #0x00000000
 	str	r0, [r2, #PCB_ONFAULT]
 	mvn	r0, #0x00000000
-	mov	pc, lr
+	FUSU_RET
+END(fusubailout)
 
 #ifdef DIAGNOSTIC
 /*
@@ -213,10 +210,10 @@ _C_LABEL(fusubailout):
 
 .Lfusupcbfault:
 	mov	r1, r0
-	adr	r0, fusupcbfaulttext
+	adr	r0, .Lfusupcbfaulttext
 	b	_C_LABEL(panic)
 
-fusupcbfaulttext:
+.Lfusupcbfaulttext:
 	.asciz	"Yikes - no valid PCB during fusuxxx() addr=%08x\n"
 	.align	0
 #endif
@@ -227,6 +224,7 @@ fusupcbfaulttext:
  */
 
 ENTRY(suword)
+	SAVE_R14
 	GET_CURPCB(r2)
 
 #ifdef DIAGNOSTIC
@@ -241,7 +239,8 @@ ENTRY(suword)
 
 	mov	r0, #0x00000000
 	str	r0, [r2, #PCB_ONFAULT]
-	mov	pc, lr
+	FUSU_RET
+END(suword)
 
 /*
  * suswintr(void *uaddr, short x);
@@ -250,12 +249,13 @@ ENTRY(suword)
  */
 
 ENTRY(suswintr)
-	ldr	r2, Lblock_userspace_access
+	ldr	r2, .Lblock_userspace_access
 	ldr	r2, [r2]
 	teq	r2, #0
 	mvnne	r0, #0x00000000
 	movne	pc, lr
 
+	SAVE_R14
 	GET_CURPCB(r2)
 
 #ifdef DIAGNOSTIC
@@ -267,8 +267,8 @@ ENTRY(suswintr)
 	str	r3, [r2, #PCB_ONFAULT]
 
 #ifdef __ARMEB__
-	mov	ip, r1, lsr #8
-	strbt	ip, [r0], #1
+	mov	r3, r1, lsr #8
+	strbt	r3, [r0], #1
 #else
 	strbt	r1, [r0], #1
 	mov	r1, r1, lsr #8
@@ -277,7 +277,8 @@ ENTRY(suswintr)
 
 	mov	r0, #0x00000000
 	str	r0, [r2, #PCB_ONFAULT]
-	mov	pc, lr
+	FUSU_RET
+END(suswintr)
 
 /*
  * susword(void *uaddr, short x);
@@ -285,6 +286,7 @@ ENTRY(suswintr)
  */
 
 ENTRY(susword)
+	SAVE_R14
 	GET_CURPCB(r2)
 
 #ifdef DIAGNOSTIC
@@ -296,8 +298,8 @@ ENTRY(susword)
 	str	r3, [r2, #PCB_ONFAULT]
 
 #ifdef __ARMEB__
-	mov	ip, r1, lsr #8
-	strbt	ip, [r0], #1
+	mov	r3, r1, lsr #8
+	strbt	r3, [r0], #1
 #else
 	strbt	r1, [r0], #1
 	mov	r1, r1, lsr #8
@@ -306,7 +308,8 @@ ENTRY(susword)
 
 	mov	r0, #0x00000000
 	str	r0, [r2, #PCB_ONFAULT]
-	mov	pc, lr
+	FUSU_RET
+END(susword)
 
 /*
  * subyte(void *uaddr, char x);
@@ -314,20 +317,8 @@ ENTRY(susword)
  */
 
 ENTRY(subyte)
-#if defined(PROCESS_ID_IS_CURCPU) || defined(PROCESS_ID_IS_CURLWP)
+	SAVE_R14
 	GET_CURPCB(r2)
-#elif defined(MULTIPROCESSOR)
-	stmfd	sp!, {r0, r1, r3, r14}
-	bl	_C_LABEL(cpu_number)
-	ldr	r2, .Lcpu_info
-	ldr	r2, [r2, r0, lsl #2]
-	ldr	r2, [r2, #CI_CURPCB]
-	ldmfd	sp!, {r0, r1, r3, r14}
-#else
-	ldr	r2, .Lcurpcb
-	ldr	r2, [r2]
-#endif
-
 
 #ifdef DIAGNOSTIC
 	teq	r2, #0x00000000
@@ -341,4 +332,5 @@ ENTRY(subyte)
 
 	mov	r0, #0x00000000
 	str	r0, [r2, #PCB_ONFAULT]
-	mov	pc, lr
+	FUSU_RET
+END(subyte)

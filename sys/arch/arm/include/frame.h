@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.11 2008/10/15 06:51:17 wrstuden Exp $	*/
+/*	$NetBSD: frame.h,v 1.11.12.1 2014/02/15 16:18:36 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -44,7 +44,6 @@
 #ifndef _LOCORE
 
 #include <sys/signal.h>
-#include <sys/sa.h>
 #include <sys/ucontext.h>
 
 /*
@@ -53,6 +52,7 @@
 
 typedef struct trapframe {
 	register_t tf_spsr; /* Zero on arm26 */
+	register_t tf_fill; /* fill here so r0 will be dword aligned */
 	register_t tf_r0;
 	register_t tf_r1;
 	register_t tf_r2;
@@ -78,6 +78,16 @@ typedef struct trapframe {
 #define tf_r13 tf_usr_sp
 #define tf_r14 tf_usr_lr
 #define tf_r15 tf_pc
+
+#ifdef __PROG32
+#define TRAP_USERMODE(tf)	(((tf)->tf_spsr & PSR_MODE) == PSR_USR32_MODE)
+#elif defined(__PROG26)
+#define TRAP_USERMODE(tf)	(((tf)->tf_r15 & R15_MODE) == R15_MODE_USR)
+#endif
+
+struct clockframe {
+	trapframe_t cf_tf;
+};
 
 /*
  * Signal frame.  Pushed onto user stack before calling sigcode.
@@ -114,7 +124,8 @@ __BEGIN_DECLS
 void sendsig_sigcontext(const ksiginfo_t *, const sigset_t *);
 void *getframe(struct lwp *, int, int *);
 __END_DECLS
-#define process_frame(l) ((l)->l_addr->u_pcb.pcb_tf)
+#define lwp_trapframe(l)		((l)->l_md.md_tf)
+#define lwp_settrapframe(l, tf)		((l)->l_md.md_tf = (tf))
 #endif
 
 #endif /* _LOCORE */

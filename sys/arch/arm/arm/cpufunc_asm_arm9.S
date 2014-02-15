@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm9.S,v 1.6 2007/10/17 19:53:29 garbled Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm9.S,v 1.6.38.1 2014/02/15 16:18:35 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 ARM Limited
@@ -31,8 +31,10 @@
  * ARM9 assembly functions for CPU / MMU / TLB specific operations
  */
  
-#include <machine/cpu.h>
 #include <machine/asm.h>
+#include <arm/locore.h>
+
+#include "assym.h"
 
 /*
  * Functions to set the MMU Translation Table Base register
@@ -41,14 +43,18 @@
  * addresses that are about to change.
  */
 ENTRY(arm9_setttb)
+	cmp	r1, #0
+	beq	1f
+
 	stmfd	sp!, {r0, lr}
 	bl	_C_LABEL(arm9_idcache_wbinv_all)
 	ldmfd	sp!, {r0, lr}
-
+	cmp	r0, #1			/* make sure EQ=0 */
+1:
 	mcr	p15, 0, r0, c2, c0, 0	/* load new TTB */
 
-	mcr	p15, 0, r0, c8, c7, 0	/* invalidate I+D TLBs */
-	mov	pc, lr
+	mcrne	p15, 0, r0, c8, c7, 0	/* invalidate I+D TLBs */
+	RET
 
 /*
  * TLB functions
@@ -110,7 +116,7 @@ ENTRY_NP(arm9_icache_sync_all)
 	mov	pc, lr
 
 .Larm9_line_size:
-	.word	_C_LABEL(arm_pdcache_line_size)
+	.word	_C_LABEL(arm_pcache) + DCACHE_LINE_SIZE
 
 ENTRY(arm9_dcache_wb_range)
 	ldr	ip, .Larm9_line_size
@@ -213,7 +219,7 @@ ENTRY(arm9_dcache_wbinv_all)
 /*
  * Context switch.
  *
- * These is the CPU-specific parts of the context switcher cpu_switch()
+ * These are the CPU-specific parts of the context switcher cpu_switch()
  * These functions actually perform the TTB reload.
  */
 ENTRY(arm9_context_switch)

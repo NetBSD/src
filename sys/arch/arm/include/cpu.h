@@ -60,79 +60,27 @@
 #define	CPU_POWERSAVE		5	/* int: use CPU powersave mode */
 #define	CPU_MAXID		6	/* number of valid machdep ids */
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_KMEMUSER)
 
 /*
  * Kernel-only definitions
  */
 
-#ifndef _LKM
+#if !defined(_MODULE) && defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
 #include "opt_cpuoptions.h"
 #include "opt_lockdebug.h"
 #include "opt_cputypes.h"
-#endif /* !_LKM */
-
-#include <arm/cpuconf.h>
+#endif /* !_MODULE && _KERNEL_OPT */
 
 #ifndef _LOCORE
-#include <sys/user.h>
-#include <machine/frame.h>
-#include <machine/pcb.h>
-#ifdef FPU_VFP
-#include <arm/vfpvar.h>
-#endif
-#endif	/* !_LOCORE */
-
+#if defined(TPIDRPRW_IS_CURLWP) || defined(TPIDRPRW_IS_CURCPU)
 #include <arm/armreg.h>
+#endif
+#include <arm/frame.h>
 
-
-#ifndef _LOCORE
 /* 1 == use cpu_sleep(), 0 == don't */
 extern int cpu_do_powersave;
-#endif
-
-#ifdef __PROG32
-#ifdef _LOCORE
-#ifdef _ARM_ARCH_6
-#define IRQdisable	cprid	i
-#define IRQenable	cpsie	i
-#else
-#define IRQdisable \
-	stmfd	sp!, {r0} ; \
-	mrs	r0, cpsr ; \
-	orr	r0, r0, #(I32_bit) ; \
-	msr	cpsr_c, r0 ; \
-	ldmfd	sp!, {r0}
-
-#define IRQenable \
-	stmfd	sp!, {r0} ; \
-	mrs	r0, cpsr ; \
-	bic	r0, r0, #(I32_bit) ; \
-	msr	cpsr_c, r0 ; \
-	ldmfd	sp!, {r0}		
-#endif /* _ARM_ARCH_6 */
-
-#if defined (PROCESS_ID_IS_CURCPU)
-#define GET_CURCPU(rX)		mrc	p15, 0, rX, c13, c0, 4
-#define GET_CURLWP(rX)		GET_CURCPU(rX); ldr rX, [rX, #CI_CURLWP]
-#define GET_CURPCB(rX)		GET_CURCPU(rX); ldr rX, [rX, #CI_CURPCB]
-#elif defined (PROCESS_ID_IS_CURLWP)
-#define GET_CURLWP(rX)		mrc	p15, 0, rX, c13, c0, 4
-#define GET_CURCPU(rX)		GET_CURLWP(rX); ldr rX, [rX, #L_CPU]
-#define GET_CURPCB(rX)		GET_CURLWP(rX); ldr rX, [rX, #L_ADDR]
-#endif
-
-#else
-#define IRQdisable __set_cpsr_c(I32_bit, I32_bit);
-#define IRQenable __set_cpsr_c(I32_bit, 0);
-#endif	/* _LOCORE */
-#else
-#define IRQdisable set_r15(R15_IRQ_DISABLE, R15_IRQ_DISABLE);
-#define IRQenable set_r15(R15_IRQ_DISABLE, 0);
-#endif
-
-#ifndef _LOCORE
 
 /* All the CLKF_* macros take a struct clockframe * as an argument. */
 
@@ -141,29 +89,29 @@ extern int cpu_do_powersave;
  * frame came from USR mode or not.
  */
 #ifdef __PROG32
-#define CLKF_USERMODE(frame)	((frame->cf_if.if_spsr & PSR_MODE) == PSR_USR32_MODE)
+#define CLKF_USERMODE(cf) (((cf)->cf_tf.tf_spsr & PSR_MODE) == PSR_USR32_MODE)
 #else
-#define CLKF_USERMODE(frame)	((frame->cf_if.if_r15 & R15_MODE) == R15_MODE_USR)
+#define CLKF_USERMODE(cf) (((cf)->cf_if.if_r15 & R15_MODE) == R15_MODE_USR)
 #endif
 
 /*
  * CLKF_INTR: True if we took the interrupt from inside another
  * interrupt handler.
  */
-#ifdef __PROG32
+#if defined(__PROG32) && !defined(__ARM_EABI__)
 /* Hack to treat FPE time as interrupt time so we can measure it */
-#define CLKF_INTR(frame)						\
-	((curcpu()->ci_intr_depth > 1) ||				\
-	    (frame->cf_if.if_spsr & PSR_MODE) == PSR_UND32_MODE)
+#define CLKF_INTR(cf)						\
+	((curcpu()->ci_intr_depth > 1) ||			\
+	    ((cf)->cf_tf.tf_spsr & PSR_MODE) == PSR_UND32_MODE)
 #else
-#define CLKF_INTR(frame)	(curcpu()->ci_intr_depth > 1) 
+#define CLKF_INTR(cf)	((void)(cf), curcpu()->ci_intr_depth > 1) 
 #endif
 
 /*
  * CLKF_PC: Extract the program counter from a clockframe
  */
 #ifdef __PROG32
-#define CLKF_PC(frame)		(frame->cf_if.if_pc)
+#define CLKF_PC(frame)		(frame->cf_tf.tf_pc)
 #else
 #define CLKF_PC(frame)		(frame->cf_if.if_r15 & R15_PC)
 #endif
@@ -172,44 +120,9 @@ extern int cpu_do_powersave;
  * LWP_PC: Find out the program counter for the given lwp.
  */
 #ifdef __PROG32
-#define LWP_PC(l)	((l)->l_addr->u_pcb.pcb_tf->tf_pc)
+#define LWP_PC(l)		(lwp_trapframe(l)->tf_pc)
 #else
-#define LWP_PC(l)	((l)->l_addr->u_pcb.pcb_tf->tf_r15 & R15_PC)
-#endif
-
-/*
- * Validate a PC or PSR for a user process.  Used by various system calls
- * that take a context passed by the user and restore it.
- */
-
-#ifdef __PROG32
-#define VALID_R15_PSR(r15,psr)						\
-	(((psr) & PSR_MODE) == PSR_USR32_MODE &&			\
-		((psr) & (I32_bit | F32_bit)) == 0)
-#else
-#define VALID_R15_PSR(r15,psr)						\
-	(((r15) & R15_MODE) == R15_MODE_USR &&				\
-		((r15) & (R15_IRQ_DISABLE | R15_FIQ_DISABLE)) == 0)
-#endif
-
-
-
-/* The address of the vector page. */
-extern vaddr_t vector_page;
-#ifdef __PROG32
-void	arm32_vector_init(vaddr_t, int);
-
-#define	ARM_VEC_RESET			(1 << 0)
-#define	ARM_VEC_UNDEFINED		(1 << 1)
-#define	ARM_VEC_SWI			(1 << 2)
-#define	ARM_VEC_PREFETCH_ABORT		(1 << 3)
-#define	ARM_VEC_DATA_ABORT		(1 << 4)
-#define	ARM_VEC_ADDRESS_EXCEPTION	(1 << 5)
-#define	ARM_VEC_IRQ			(1 << 6)
-#define	ARM_VEC_FIQ			(1 << 7)
-
-#define	ARM_NVEC			8
-#define	ARM_VEC_ALL			0xffffffff
+#define LWP_PC(l)		(lwp_trapframe(l)->tf_r15 & R15_PC)
 #endif
 
 /*
@@ -217,61 +130,56 @@ void	arm32_vector_init(vaddr_t, int);
  */
 static inline int curcpl(void);
 static inline void set_curcpl(int);
-#ifdef __HAVE_FAST_SOFTINTS
 static inline void cpu_dosoftints(void);
-#endif
 
-#include <sys/device.h>
+#ifdef _KMEMUSER
+#include <sys/intr.h>
+#endif
 #include <sys/cpu_data.h>
+#include <sys/device.h>
+#include <sys/evcnt.h>
+
 struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
-	struct device *ci_dev;		/* Device corresponding to this CPU */
+	device_t ci_dev;		/* Device corresponding to this CPU */
 	cpuid_t ci_cpuid;
-	u_int32_t ci_arm_cpuid;		/* aggregate CPU id */
-	u_int32_t ci_arm_cputype;	/* CPU type */
-	u_int32_t ci_arm_cpurev;	/* CPU revision */
-	u_int32_t ci_ctrl;		/* The CPU control register */
+	uint32_t ci_arm_cpuid;		/* aggregate CPU id */
+	uint32_t ci_arm_cputype;	/* CPU type */
+	uint32_t ci_arm_cpurev;		/* CPU revision */
+	uint32_t ci_ctrl;		/* The CPU control register */
 	int ci_cpl;			/* current processor level (spl) */
 	int ci_astpending;		/* */
 	int ci_want_resched;		/* resched() was called */
 	int ci_intr_depth;		/* */
-	struct pcb *ci_curpcb;		/* current pcb */
-#ifdef __HAVE_FAST_SOFTINTS
+	struct cpu_softc *ci_softc;	/* platform softc */
 	lwp_t *ci_softlwps[SOFTINT_COUNT];
-	uint32_t ci_softints;
-#endif
-#if !defined(PROCESS_ID_IS_CURLWP)
+	volatile uint32_t ci_softints;
 	lwp_t *ci_curlwp;		/* current lwp */
-#endif
-#ifdef _ARM_ARCH_6
-	uint32_t ci_ccnt_freq;		/* cycle count frequency */
-#endif
 	struct evcnt ci_arm700bugcount;
 	int32_t ci_mtx_count;
 	int ci_mtx_oldspl;
-#ifdef MULTIPROCESSOR
+	register_t ci_undefsave[3];
+	uint32_t ci_vfp_id;
+	uint64_t ci_lastintr;
+	struct evcnt ci_abt_evs[16];
+#if defined(MP_CPU_INFO_MEMBERS)
 	MP_CPU_INFO_MEMBERS
-#endif
-#ifdef FPU_VFP
-	struct vfp_info ci_vfp;
 #endif
 };
 
-#ifndef MULTIPROCESSOR
 extern struct cpu_info cpu_info_store;
-#if defined(PROCESS_ID_IS_CURLWP)
+
+#if defined(TPIDRPRW_IS_CURLWP)
 static inline struct lwp *
 _curlwp(void)
 {
-	struct lwp *l;
-	__asm("mrc\tp15, 0, %0, c13, c0, 4" : "=r"(l));
-	return l;
+	return (struct lwp *) armreg_tpidrprw_read();
 }
 
 static inline void
 _curlwp_set(struct lwp *l)
 {
-	__asm("mcr\tp15, 0, %0, c13, c0, 4" : "=r"(l));
+	armreg_tpidrprw_write((uintptr_t)l);
 }
 
 #define	curlwp		(_curlwp())
@@ -280,26 +188,39 @@ curcpu(void)
 {
 	return curlwp->l_cpu;
 }
-#elif defined(PROCESS_ID_IS_CURCPU)
+#elif defined(TPIDRPRW_IS_CURCPU)
 static inline struct cpu_info *
 curcpu(void)
 {
-	struct cpu_info *ci;
-	__asm("mrc\tp15, 0, %0, c13, c0, 4" : "=r"(ci));
-	return ci;
+	return (struct cpu_info *) armreg_tpidrprw_read();
 }
-#else
+#elif !defined(MULTIPROCESSOR)
 #define	curcpu()	(&cpu_info_store)
-#endif /* !PROCESS_ID_IS_CURCPU && !PROCESS_ID_IS_CURLWP */
-#ifndef curpcb
-#define	curpcb		(curcpu()->ci_curpcb)
-#endif
+#else
+#error MULTIPROCESSOR requires TPIDRPRW_IS_CURLWP or TPIDRPRW_IS_CURCPU
+#endif /* !TPIDRPRW_IS_CURCPU && !TPIDRPRW_IS_CURLWP */
+
 #ifndef curlwp
 #define	curlwp		(curcpu()->ci_curlwp)
 #endif
-#define cpu_number()	0
+
+#define CPU_INFO_ITERATOR	int
+#if defined(MULTIPROCESSOR)
+extern struct cpu_info *cpu_info[];
+#define cpu_number()	(curcpu()->ci_cpuid)
+void cpu_boot_secondary_processors(void);
+#define CPU_IS_PRIMARY(ci)	((ci)->ci_cpuid == 0)
+#define CPU_INFO_FOREACH(cii, ci)			\
+	cii = 0, ci = cpu_info[0]; cii < ncpu && (ci = cpu_info[cii]) != NULL; cii++
+#else 
+#define cpu_number()            0
+
+#define CPU_IS_PRIMARY(ci)	true
+#define CPU_INFO_FOREACH(cii, ci)			\
+	cii = 0, __USE(cii), ci = curcpu(); ci != NULL; ci = NULL
+#endif
+
 #define	LWP0_CPU_INFO	(&cpu_info_store)
-#endif /* !MULTIPROCESSOR */
 
 static inline int
 curcpl(void)
@@ -313,16 +234,18 @@ set_curcpl(int pri)
 	curcpu()->ci_cpl = pri;
 }
 
-#ifdef __HAVE_FAST_SOFTINTS
-void	dosoftints(void);
 static inline void
 cpu_dosoftints(void)
 {
+#ifdef __HAVE_FAST_SOFTINTS
+	void	dosoftints(void);
+#ifndef __HAVE_PIC_FAST_SOFTINTS
 	struct cpu_info * const ci = curcpu();
 	if (ci->ci_intr_depth == 0 && (ci->ci_softints >> ci->ci_cpl) > 0)
 		dosoftints();
-}
 #endif
+#endif
+}
 
 #ifdef __PROG32
 void	cpu_proc_fork(struct proc *, struct proc *);
@@ -334,14 +257,14 @@ void	cpu_proc_fork(struct proc *, struct proc *);
  * Scheduling glue
  */
 
-#define setsoftast() (curcpu()->ci_astpending = 1)
+#define setsoftast()			(curcpu()->ci_astpending = 1)
 
 /*
  * Notify the current process (p) that it has a signal pending,
  * process as soon as possible.
  */
 
-#define cpu_signotify(l)            setsoftast()
+#define cpu_signotify(l)		setsoftast()
 
 /*
  * Give a profiling tick to the current process when the user profiling
@@ -350,42 +273,20 @@ void	cpu_proc_fork(struct proc *, struct proc *);
  */
 #define	cpu_need_proftick(l)	((l)->l_pflag |= LP_OWEUPC, setsoftast())
 
+/*
+ * We've already preallocated the stack for the idlelwps for additional CPUs.  
+ * This hook allows to return them.
+ */
+vaddr_t cpu_uarea_alloc_idlelwp(struct cpu_info *);
+
 #ifndef acorn26
 /*
  * cpu device glue (belongs in cpuvar.h)
  */
-
-struct device;
-void	cpu_attach(struct device *);
+void	cpu_attach(device_t, cpuid_t);
 #endif
 
-/*
- * Random cruft
- */
-
-struct lwp;
-
-/* locore.S */
-void atomic_set_bit(u_int *, u_int);
-void atomic_clear_bit(u_int *, u_int);
-
-/* cpuswitch.S */
-struct pcb;
-void	savectx(struct pcb *);
-
-/* ast.c */
-void userret(register struct lwp *);
-
-/* machdep.h */
-void bootsync(void);
-
-/* fault.c */
-int badaddr_read(void *, size_t, void *);
-
-/* syscall.c */
-void swi_handler(trapframe_t *);
-
-#endif	/* !_LOCORE */
+#endif /* !_LOCORE */
 
 #endif /* _KERNEL */
 

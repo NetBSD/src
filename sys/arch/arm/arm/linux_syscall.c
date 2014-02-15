@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.22 2008/10/21 12:16:59 ad Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.22.12.1 2014/02/15 16:18:36 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.22 2008/10/21 12:16:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.22.12.1 2014/02/15 16:18:36 matt Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -77,15 +77,13 @@ __KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.22 2008/10/21 12:16:59 ad Exp $"
 #include <sys/reboot.h>
 #include <sys/signalvar.h>
 #include <sys/systm.h>
-#include <sys/user.h>
 #include <sys/syscallvar.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/cpu.h>
-#include <machine/frame.h>
-#include <machine/pcb.h>
 #include <arm/swi.h>
+#include <arm/locore.h>
 
 #include <compat/linux/common/linux_errno.h>
 #include <compat/linux/linux_syscall.h>
@@ -95,8 +93,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.22 2008/10/21 12:16:59 ad Exp $"
 #define LINUX_SYS_ARMBASE	0x000180 /* Must agree with syscalls.master */
 
 void linux_syscall_intern(struct proc *);
-void linux_syscall_plain(struct trapframe *, struct lwp *, u_int32_t);
-void linux_syscall_fancy(struct trapframe *, struct lwp *, u_int32_t);
+void linux_syscall_plain(struct trapframe *, struct lwp *, uint32_t);
+void linux_syscall_fancy(struct trapframe *, struct lwp *, uint32_t);
 
 void
 linux_syscall_intern(struct proc *p)
@@ -109,7 +107,7 @@ linux_syscall_intern(struct proc *p)
 }
 
 void
-linux_syscall_plain(trapframe_t *frame, struct lwp *l, u_int32_t insn)
+linux_syscall_plain(trapframe_t *frame, struct lwp *l, uint32_t insn)
 {
 	const struct sysent *callp;
 	struct proc *p = l->l_proc;
@@ -154,7 +152,7 @@ linux_syscall_plain(trapframe_t *frame, struct lwp *l, u_int32_t insn)
 }
 
 void
-linux_syscall_fancy(trapframe_t *frame, struct lwp *l, u_int32_t insn)
+linux_syscall_fancy(trapframe_t *frame, struct lwp *l, uint32_t insn)
 {
 	const struct sysent *callp;
 	struct proc *p = l->l_proc;

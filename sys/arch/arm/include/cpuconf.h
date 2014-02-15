@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.h,v 1.15 2008/10/14 16:01:22 matt Exp $	*/
+/*	$NetBSD: cpuconf.h,v 1.15.12.1 2014/02/15 16:18:36 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,6 +40,7 @@
 
 #if defined(_KERNEL_OPT)
 #include "opt_cputypes.h"
+#include "opt_cpuoptions.h"
 #endif /* _KERNEL_OPT */
 
 #if defined(CPU_XSCALE_PXA250) || defined(CPU_XSCALE_PXA270)
@@ -71,6 +72,10 @@
 			 defined(CPU_ARM11) +				\
 			 defined(CPU_ARM1136) +				\
 			 defined(CPU_ARM1176) +				\
+			 defined(CPU_ARM11MPCORE) +			\
+			 defined(CPU_CORTEX) +				\
+			 defined(CPU_CORTEXA8) +			\
+			 defined(CPU_CORTEXA9) +			\
 			 defined(CPU_SA110) + defined(CPU_SA1100) +	\
 			 defined(CPU_SA1110) +				\
 			 defined(CPU_FA526) +				\
@@ -78,7 +83,8 @@
 			 defined(CPU_XSCALE_80200) +			\
 			 defined(CPU_XSCALE_80321) +			\
 			 defined(__CPU_XSCALE_PXA2XX) +			\
-			 defined(CPU_XSCALE_IXP425))
+			 defined(CPU_XSCALE_IXP425)) +			\
+			 defined(CPU_SHEEVA))
 #else
 #define	CPU_NTYPES	2
 #endif /* _KERNEL_OPT */
@@ -104,7 +110,7 @@
 #if !defined(_KERNEL_OPT) ||						\
     (defined(CPU_ARM7TDMI) || defined(CPU_ARM8) || defined(CPU_ARM9) ||	\
      defined(CPU_SA110) || defined(CPU_SA1100) || defined(CPU_FA526) || \
-     defined(CPU_SA1110) || defined(CPU_IXP12X0) || defined(CPU_XSCALE_IXP425))
+     defined(CPU_SA1110) || defined(CPU_IXP12X0))
 #define	ARM_ARCH_4	1
 #else
 #define	ARM_ARCH_4	0
@@ -113,25 +119,32 @@
 #if !defined(_KERNEL_OPT) ||						\
     (defined(CPU_ARM9E) || defined(CPU_ARM10) ||			\
      defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) ||		\
-     defined(__CPU_XSCALE_PXA2XX))
+     defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425)) ||	\
+     defined(CPU_SHEEVA)
 #define	ARM_ARCH_5	1
 #else
 #define	ARM_ARCH_5	0
 #endif
 
-#if defined(CPU_ARM11)
+#if defined(CPU_ARM11) || defined(CPU_CORTEXA8) || defined(CPU_ARM11MPCORE)
 #define ARM_ARCH_6	1
 #else
 #define ARM_ARCH_6	0
 #endif
 
+#if defined(CPU_CORTEX) || defined(CPU_PJ4B)
+#define ARM_ARCH_7	1
+#else
+#define ARM_ARCH_7	0
+#endif
+
 #define	ARM_NARCH	(ARM_ARCH_2 + ARM_ARCH_3 + ARM_ARCH_4 + \
-			 ARM_ARCH_5 + ARM_ARCH_6)
+			 ARM_ARCH_5 + ARM_ARCH_6 + ARM_ARCH_7)
 #if ARM_NARCH == 0
 #error ARM_NARCH is 0
 #endif
 
-#if ARM_ARCH_5 || ARM_ARCH_6
+#if ARM_ARCH_5 || ARM_ARCH_6 || ARM_ARCH_7
 /*
  * We could support Thumb code on v4T, but the lack of clean interworking
  * makes that hard.
@@ -154,9 +167,18 @@
  *				MMU, but also has several extensions which
  *				require different PTE layout to use.
  *
- *	ARM_MMU_V6		ARM v6 MMU.  Compatible with generic ARM
- *				MMU, but also has several extensions which
+ *	ARM_MMU_V6C		ARM v6 MMU in backward compatible mode.
+ *                              Compatible with generic ARM MMU, but
+ *                              also has several extensions which
  *				require different PTE layouts to use.
+ *                              XP bit in CP15 control reg is cleared.
+ *
+ *	ARM_MMU_V6N		ARM v6 MMU with XP bit of CP15 control reg
+ *                              set.  New features such as shared-bit
+ *                              and excute-never bit are available.
+ *                              Multiprocessor support needs this mode.
+ *
+ *	ARM_MMU_V7		ARM v7 MMU.
  */
 #if !defined(_KERNEL_OPT) ||						\
     (defined(CPU_ARM2) || defined(CPU_ARM250) || defined(CPU_ARM3))
@@ -168,7 +190,7 @@
 #if !defined(_KERNEL_OPT) ||						\
     (defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM7TDMI) ||	\
      defined(CPU_ARM8) || defined(CPU_ARM9) || defined(CPU_ARM9E) ||	\
-     defined(CPU_ARM10) || defined(CPU_FA526))
+     defined(CPU_ARM10) || defined(CPU_FA526)) || defined(CPU_SHEEVA)
 #define	ARM_MMU_GENERIC		1
 #else
 #define	ARM_MMU_GENERIC		0
@@ -191,14 +213,37 @@
 #endif
 
 #if !defined(_KERNEL_OPT) ||						\
-	 defined(CPU_ARM11)
-#define	ARM_MMU_V6		1
+	defined(CPU_ARM11MPCORE) && defined(ARM11MPCORE_COMPAT_MMU) ||	\
+	defined(CPU_ARM1136) || \
+	defined(CPU_ARM1176) || \
+	defined(CPU_ARM11) && \
+	!defined(CPU_CORTEX) && \
+	!defined(CPU_ARM11MPCORE) && !defined(CPU_PJ4B)
+#define	ARM_MMU_V6C		1
 #else
-#define	ARM_MMU_V6		0
+#define	ARM_MMU_V6C		0
+#endif
+
+#if !defined(_KERNEL_OPT) ||						\
+	defined(CPU_ARM11MPCORE) && !defined(ARM11MPCORE_COMPAT_MMU)
+#define	ARM_MMU_V6N		1
+#else
+#define	ARM_MMU_V6N		0
+#endif
+
+#define	ARM_MMU_V6	(ARM_MMU_V6C + ARM_MMU_V6N)
+
+
+#if !defined(_KERNEL_OPT) ||						\
+	 defined(CPU_CORTEX) || defined(CPU_PJ4B)
+#define	ARM_MMU_V7		1
+#else
+#define	ARM_MMU_V7		0
 #endif
 
 #define	ARM_NMMUS		(ARM_MMU_MEMC + ARM_MMU_GENERIC +	\
-				 ARM_MMU_SA1 + ARM_MMU_XSCALE + ARM_MMU_V6)
+				 ARM_MMU_SA1 + ARM_MMU_XSCALE +		\
+				 ARM_MMU_V6N + ARM_MMU_V6C + ARM_MMU_V7)
 #if ARM_NMMUS == 0
 #error ARM_NMMUS is 0
 #endif

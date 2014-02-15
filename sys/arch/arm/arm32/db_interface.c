@@ -1,29 +1,29 @@
-/*	$NetBSD: db_interface.c,v 1.45 2008/03/26 13:01:13 chris Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.45.22.1 2014/02/15 16:18:36 matt Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1996 Scott K. Stevens
  *
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
+ *
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  *
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.45 2008/03/26 13:01:13 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.45.22.1 2014/02/15 16:18:36 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -64,71 +64,13 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.45 2008/03/26 13:01:13 chris Exp 
 #define db_printf	printf
 #endif
 
-static long nil;
+u_int db_fetch_reg(int, db_regs_t *);
 
-int db_access_und_sp __P((const struct db_variable *, db_expr_t *, int));
-int db_access_abt_sp __P((const struct db_variable *, db_expr_t *, int));
-int db_access_irq_sp __P((const struct db_variable *, db_expr_t *, int));
-u_int db_fetch_reg __P((int, db_regs_t *));
-
-int db_trapper __P((u_int, u_int, trapframe_t *, int));
-
-const struct db_variable db_regs[] = {
-	{ "spsr", (long *)&DDB_REGS->tf_spsr, FCN_NULL, },
-	{ "r0", (long *)&DDB_REGS->tf_r0, FCN_NULL, },
-	{ "r1", (long *)&DDB_REGS->tf_r1, FCN_NULL, },
-	{ "r2", (long *)&DDB_REGS->tf_r2, FCN_NULL, },
-	{ "r3", (long *)&DDB_REGS->tf_r3, FCN_NULL, },
-	{ "r4", (long *)&DDB_REGS->tf_r4, FCN_NULL, },
-	{ "r5", (long *)&DDB_REGS->tf_r5, FCN_NULL, },
-	{ "r6", (long *)&DDB_REGS->tf_r6, FCN_NULL, },
-	{ "r7", (long *)&DDB_REGS->tf_r7, FCN_NULL, },
-	{ "r8", (long *)&DDB_REGS->tf_r8, FCN_NULL, },
-	{ "r9", (long *)&DDB_REGS->tf_r9, FCN_NULL, },
-	{ "r10", (long *)&DDB_REGS->tf_r10, FCN_NULL, },
-	{ "r11", (long *)&DDB_REGS->tf_r11, FCN_NULL, },
-	{ "r12", (long *)&DDB_REGS->tf_r12, FCN_NULL, },
-	{ "usr_sp", (long *)&DDB_REGS->tf_usr_sp, FCN_NULL, },
-	{ "usr_lr", (long *)&DDB_REGS->tf_usr_lr, FCN_NULL, },
-	{ "svc_sp", (long *)&DDB_REGS->tf_svc_sp, FCN_NULL, },
-	{ "svc_lr", (long *)&DDB_REGS->tf_svc_lr, FCN_NULL, },
-	{ "pc", (long *)&DDB_REGS->tf_pc, FCN_NULL, },
-	{ "und_sp", &nil, db_access_und_sp, },
-	{ "abt_sp", &nil, db_access_abt_sp, },
-	{ "irq_sp", &nil, db_access_irq_sp, },
-};
-
-const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
+int db_trapper(u_int, u_int, trapframe_t *, int);
 
 int	db_active = 0;
 db_regs_t ddb_regs;	/* register state */
 
-int
-db_access_und_sp(const struct db_variable *vp, db_expr_t *valp, int rw)
-{
-
-	if (rw == DB_VAR_GET)
-		*valp = get_stackptr(PSR_UND32_MODE);
-	return(0);
-}
-
-int
-db_access_abt_sp(const struct db_variable *vp, db_expr_t *valp, int rw)
-{
-
-	if (rw == DB_VAR_GET)
-		*valp = get_stackptr(PSR_ABT32_MODE);
-	return(0);
-}
-
-int
-db_access_irq_sp(const struct db_variable *vp, db_expr_t *valp, int rw)
-{
-
-	if (rw == DB_VAR_GET)
-		*valp = get_stackptr(PSR_IRQ32_MODE);
-	return(0);
-}
 
 #ifdef DDB
 /*
@@ -193,10 +135,7 @@ db_validate_address(vaddr_t addr)
  * Read bytes from kernel address space for debugger.
  */
 void
-db_read_bytes(addr, size, data)
-	vaddr_t	addr;
-	size_t	size;
-	char	*data;
+db_read_bytes(vaddr_t addr, size_t size, char *data)
 {
 	char	*src = (char *)addr;
 
@@ -226,7 +165,7 @@ db_read_bytes(addr, size, data)
 
 static void
 db_write_text(vaddr_t addr, size_t size, const char *data)
-{        
+{
 	struct pmap *pmap = pmap_kernel();
 	pd_entry_t *pde, oldpde, tmppde;
 	pt_entry_t *pte, oldpte, tmppte;
@@ -251,7 +190,7 @@ db_write_text(vaddr_t addr, size_t size, const char *data)
 			pgva = (vaddr_t)dst & L1_S_FRAME;
 			limit = L1_S_SIZE - ((vaddr_t)dst & L1_S_OFFSET);
 
-			tmppde = oldpde | L1_S_PROT_W;
+			tmppde = l1pte_set_writable(oldpde);
 			*pde = tmppde;
 			PTE_SYNC(pde);
 			break;
@@ -263,7 +202,7 @@ db_write_text(vaddr_t addr, size_t size, const char *data)
 			if (pte == NULL)
 				goto no_mapping;
 			oldpte = *pte;
-			tmppte = oldpte | L2_S_PROT_W;
+			tmppte = l2pte_set_writable(oldpte);
 			*pte = tmppte;
 			PTE_SYNC(pte);
 			break;
@@ -363,20 +302,6 @@ cpu_Debugger(void)
 {
 	__asm(".word	0xe7ffffff");
 }
-
-const struct db_command db_machine_command_table[] = {
-	{ DDB_ADD_CMD("frame",	db_show_frame_cmd,	0,
-			"Displays the contents of a trapframe",
-			"[address]",
-			"   address:\taddress of trapfame to display")},
-	{ DDB_ADD_CMD("panic",	db_show_panic_cmd,	0,
-			"Displays the last panic string",
-		     	NULL,NULL) },
-#ifdef ARM32_DB_COMMANDS
-	ARM32_DB_COMMANDS,
-#endif
-	{ DDB_ADD_CMD(NULL,     NULL,           0,NULL,NULL,NULL) }
-};
 
 int
 db_trapper(u_int addr, u_int inst, trapframe_t *frame, int fault_code)

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm67.S,v 1.3 2007/10/17 19:53:29 garbled Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm67.S,v 1.3.38.1 2014/02/15 16:18:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,8 +35,8 @@
  * ARM6/ARM7 assembly functions for CPU / MMU / TLB specific operations
  */
  
-#include <machine/cpu.h>
 #include <machine/asm.h>
+#include <arm/locore.h>
 
 /*
  * Functions to set the MMU Translation Table Base register
@@ -45,22 +45,26 @@
  * addresses that are about to change.
  */
 ENTRY(arm67_setttb)
-	mcr	p15, 0, r0, c7, c0, 0
+	cmp	r1, #0
+
+	/* wbinv entire L1 I$ and D$ caches */
+	movne	r2, #0
+	mcrne	p15, 0, r2, c7, c0, 0
 
 	/* Write the TTB */
 	mcr	p15, 0, r0, c2, c0, 0
 
 	/* If we have updated the TTB we must flush the TLB */
-	mcr	p15, 0, r0, c5, c0, 0
+	mcrne	p15, 0, r0, c5, c0, 0
 
 	/* For good measure we will flush the IDC as well */
-	mcr	p15, 0, r0, c7, c0, 0
+	mcrne	p15, 0, r0, c7, c0, 0
 
 	/* Make sure that pipeline is emptied */
 	mov	r0, r0
 	mov	r0, r0
 
-	mov	pc, lr
+	RET
 
 /*
  * TLB functions
@@ -83,7 +87,7 @@ ENTRY(arm67_cache_flush)
 /*
  * Context switch.
  *
- * These is the CPU-specific parts of the context switcher cpu_switch()
+ * These are the CPU-specific parts of the context switcher cpu_switch()
  * These functions actually perform the TTB reload.
  */
 ENTRY(arm67_context_switch)

@@ -1,4 +1,4 @@
-/*	$NetBSD: disassem.c,v 1.18 2008/04/27 18:58:43 matt Exp $	*/
+/*	$NetBSD: disassem.c,v 1.18.18.1 2014/02/15 16:18:36 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -49,10 +49,16 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.18 2008/04/27 18:58:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.18.18.1 2014/02/15 16:18:36 matt Exp $");
 
 #include <sys/systm.h>
+
 #include <arch/arm/arm/disassem.h>
+#include <arm/armreg.h>
+
+#ifndef _KERNEL
+#include <stdio.h>
+#endif
 
 /*
  * General instruction format
@@ -67,36 +73,43 @@ __KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.18 2008/04/27 18:58:43 matt Exp $");
  *
  *
  * 2 - print Operand 2 of a data processing instruction
- * d - destination register (bits 12-15)
- * n - n register (bits 16-19)
- * s - s register (bits 8-11)
- * o - indirect register rn (bits 16-19) (used by swap)
- * m - m register (bits 0-3)
  * a - address operand of ldr/str instruction
- * l - register list for ldm/stm instruction
+ * b - branch address
+ * c - comment field bits(0-23)
+ * d - destination register (bits 12-15)
  * f - 1st fp operand (register) (bits 12-14)
  * g - 2nd fp operand (register) (bits 16-18)
  * h - 3rd fp operand (register/immediate) (bits 0-4)
- * b - branch address
- * t - thumb branch address (bits 24, 0-23)
  * k - breakpoint comment (bits 0-3, 8-19)
- * X - block transfer type
- * Y - block transfer type (r13 base)
- * c - comment field bits(0-23)
+ * l - register list for ldm/stm instruction
+ * m - m register (bits 0-3)
+ * n - n register (bits 16-19)
+ * o - indirect register rn (bits 16-19) (used by swap)
  * p - saved or current status register
- * F - PSR transfer fields
+ * q - neon N register (7, 19-16)
+ * s - s register (bits 8-11)
+ * t - thumb branch address (bits 24, 0-23)
+ * u - neon M register (5, 3-0)
+ * v - co-processor data transfer registers + addressing mode
+ * w - neon D register (22, 15-12)
+ * x - instruction in hex
+ * y - co-processor data processing registers
+ * z - co-processor register transfer registers
  * D - destination-is-r15 (P) flag on TST, TEQ, CMP, CMN
+ * F - PSR transfer fields
+ * I - NEON operand size
  * L - co-processor transfer size
- * S - set status flag
+ * N - quad neon operand
  * P - fp precision
  * Q - fp precision (for ldf/stf)
  * R - fp rounding
- * v - co-processor data transfer registers + addressing mode
+ * S - set status flag
+ * U - neon unsigned.
  * W - writeback flag
- * x - instruction in hex
+ * X - block transfer type
+ * Y - block transfer type (r13 base)
+ * Z - 16-bit value (movw,movt)
  * # - co-processor number
- * y - co-processor data processing registers
- * z - co-processor register transfer registers
  */
 
 struct arm32_insn {
@@ -143,27 +156,29 @@ static const struct arm32_insn arm32_i[] = {
     { 0x0ff00ff0, 0x01400090, "swpb",	"dmo" },
     { 0x0fbf0fff, 0x010f0000, "mrs",	"dp" },	/* Before data processing */
     { 0x0fb0fff0, 0x0120f000, "msr",	"pFm" },/* Before data processing */
-    { 0x0fb0f000, 0x0320f000, "msr",	"pF2" },/* Before data processing */
+    { 0x0fe0f000, 0x0320f000, "msr",	"pF2" },/* Before data processing */
     { 0x0ffffff0, 0x012fff10, "bx",	"m" },
     { 0x0fff0ff0, 0x016f0f10, "clz",	"dm" },
     { 0x0ffffff0, 0x012fff30, "blx",	"m" },
     { 0xfff000f0, 0xe1200070, "bkpt",	"k" },
-    { 0x0de00000, 0x00000000, "and",	"Sdn2" },
-    { 0x0de00000, 0x00200000, "eor",	"Sdn2" },
-    { 0x0de00000, 0x00400000, "sub",	"Sdn2" },
-    { 0x0de00000, 0x00600000, "rsb",	"Sdn2" },
-    { 0x0de00000, 0x00800000, "add",	"Sdn2" },
-    { 0x0de00000, 0x00a00000, "adc",	"Sdn2" },
-    { 0x0de00000, 0x00c00000, "sbc",	"Sdn2" },
-    { 0x0de00000, 0x00e00000, "rsc",	"Sdn2" },
-    { 0x0df00000, 0x01100000, "tst",	"Dn2" },
-    { 0x0df00000, 0x01300000, "teq",	"Dn2" },
-    { 0x0de00000, 0x01400000, "cmp",	"Dn2" },
-    { 0x0de00000, 0x01600000, "cmn",	"Dn2" },
-    { 0x0de00000, 0x01800000, "orr",	"Sdn2" },
+    { 0x0fe00000, 0x02000000, "and",	"Sdn2" },
+    { 0x0fe00000, 0x02200000, "eor",	"Sdn2" },
+    { 0x0fe00000, 0x02400000, "sub",	"Sdn2" },
+    { 0x0fe00000, 0x02600000, "rsb",	"Sdn2" },
+    { 0x0fe00000, 0x02800000, "add",	"Sdn2" },
+    { 0x0fe00000, 0x02a00000, "adc",	"Sdn2" },
+    { 0x0fe00000, 0x02c00000, "sbc",	"Sdn2" },
+    { 0x0fe00000, 0x02e00000, "rsc",	"Sdn2" },
+    { 0x0ff00000, 0x03000000, "movw", 	"dZ" },
+    { 0x0ff00000, 0x03100000, "tst",	"Dn2" },
+    { 0x0ff00000, 0x03300000, "teq",	"Dn2" },
+    { 0x0ff00000, 0x03400000, "movt", 	"dZ" },
+    { 0x0ff00000, 0x03500000, "cmp",	"Dn2" },
+    { 0x0ff00000, 0x03700000, "cmn",	"Dn2" },
+    { 0x0fe00000, 0x03800000, "orr",	"Sdn2" },
     { 0x0de00000, 0x01a00000, "mov",	"Sd2" },
-    { 0x0de00000, 0x01c00000, "bic",	"Sdn2" },
-    { 0x0de00000, 0x01e00000, "mvn",	"Sd2" },
+    { 0x0fe00000, 0x03c00000, "bic",	"Sdn2" },
+    { 0x0fe00000, 0x03e00000, "mvn",	"Sd2" },
     { 0x0ff08f10, 0x0e000100, "adf",	"PRfgh" },
     { 0x0ff08f10, 0x0e100100, "muf",	"PRfgh" },
     { 0x0ff08f10, 0x0e200100, "suf",	"PRfgh" },
@@ -218,6 +233,21 @@ static const struct arm32_insn arm32_i[] = {
     { 0x0e100090, 0x0c100000, "ldc",	"L#v" },
     { 0xfe100090, 0xfc000000, "stc2",	"L#v" },
     { 0x0e100090, 0x0c000000, "stc",	"L#v" },
+    { 0xffb00f10, 0xf2000110, "vand",	"Nuqw" },
+    { 0xffb00f10, 0xf2100110, "vbic",	"Nuqw" },
+    { 0xffb00f10, 0xf2200110, "vorr",	"Nuqw" },
+    { 0xffb00f10, 0xf2300110, "vorn",	"Nuqw" },
+    { 0xffb00f10, 0xf3000110, "veor",	"Nuqw" },
+    { 0xffb00f10, 0xf3100110, "vbsl",	"Nuqw" },
+    { 0xffb00f10, 0xf3200110, "vbit",	"Nuqw" },
+    { 0xffb00f10, 0xf3300110, "vbif",	"Nuqw" },
+    { 0xfe800f10, 0xf3000400, "vshl",	"SINuqw" },
+    { 0xfe800f10, 0xf3000410, "vqshl",	"SINuqw" },
+    { 0xfe800f10, 0xf3000500, "vrshl",	"SINuqw" },
+    { 0xfe800f10, 0xf3000510, "vqrshl",	"SINuqw" },
+    { 0xffb00f10, 0xf2000800, "vadd",	"INuqw" },
+    { 0xffb00f10, 0xf2000810, "vtst",	"INuqw" },
+    { 0xffb00f10, 0xf3000800, "vsub",	"INuqw" },
     { 0x00000000, 0x00000000, NULL,	NULL }
 };
 
@@ -294,6 +324,8 @@ disasm(const disasm_interface_t *di, vaddr_t loc, int altfmt)
 	fmt = 0;
 	matchp = 0;
 	insn = di->di_readword(loc);
+	char neonfmt = 'd';
+	char neonsign = 'u';
 
 /*	di->di_printf("loc=%08x insn=%08x : ", loc, insn);*/
 
@@ -343,6 +375,11 @@ disasm(const disasm_interface_t *di, vaddr_t loc, int altfmt)
 		case 'd':
 			di->di_printf("r%d", ((insn >> 12) & 0x0f));
 			break;
+		/* u - neon destination register (bits 22, 12-15) */
+		case 'u':
+			di->di_printf("%c%d", neonfmt,
+			    ((insn >> 18) & 0x10)|((insn >> 12) & 0x0f));
+			break;
 		/* D - insert 'p' if Rd is R15 */
 		case 'D':
 			if (((insn >> 12) & 0x0f) == 15)
@@ -352,6 +389,11 @@ disasm(const disasm_interface_t *di, vaddr_t loc, int altfmt)
 		case 'n':
 			di->di_printf("r%d", ((insn >> 16) & 0x0f));
 			break;
+		/* q - neon n register (bits 7, 16-19) */
+		case 'q':
+			di->di_printf("%c%d", neonfmt,
+			    ((insn >> 3) & 0x10)|((insn >> 16) & 0x0f));
+			break;
 		/* s - s register (bits 8-11) */
 		case 's':
 			di->di_printf("r%d", ((insn >> 8) & 0x0f));
@@ -360,9 +402,14 @@ disasm(const disasm_interface_t *di, vaddr_t loc, int altfmt)
 		case 'o':
 			di->di_printf("[r%d]", ((insn >> 16) & 0x0f));
 			break;
-		/* m - m register (bits 0-4) */
+		/* m - m register (bits 0-3) */
 		case 'm':
 			di->di_printf("r%d", ((insn >> 0) & 0x0f));
+			break;
+		/* w - neon m register (bits 5, 0-3) */
+		case 'w':
+			di->di_printf("%c%d", neonfmt,
+			    ((insn >> 1) & 0x10)|(insn & 0x0f));
 			break;
 		/* a - address operand of ldr/str instruction */
 		case 'a':
@@ -406,6 +453,18 @@ disasm(const disasm_interface_t *di, vaddr_t loc, int altfmt)
 				branch |= 0xfc000000;
 			di->di_printaddr(loc + 8 + branch);
 			break;
+		case 'N':
+			if (insn & 0x40)
+				neonfmt = 'q';
+			break;
+		case 'U':
+			if (insn & (1 << 24))
+				neonsign = 's';
+			break;
+		case 'I':
+			di->di_printf(".%c%d", neonsign,
+			    8 << ((insn >> 20) & 3));
+			break;
 		/* X - block transfer type */
 		case 'X':
 			di->di_printf("%s", insn_blktrans(insn));
@@ -413,6 +472,11 @@ disasm(const disasm_interface_t *di, vaddr_t loc, int altfmt)
 		/* Y - block transfer type (r13 base) */
 		case 'Y':
 			di->di_printf("%s", insn_stkblktrans(insn));
+			break;
+		/* Z - print movw/movt argument */
+		case 'Z':
+			di->di_printf(", #0x%04x",
+			    ((insn & 0xf0000) >> 4) | (insn & 0xfff));
 			break;
 		/* c - comment field bits(0-23) */
 		case 'c':
@@ -680,7 +744,8 @@ disassemble_printaddr(u_int address)
 }
 
 static const disasm_interface_t disassemble_di = {
-	disassemble_readword, disassemble_printaddr, printf
+	disassemble_readword, disassemble_printaddr,
+	(void (*)(const char *, ...))printf
 };
 
 void

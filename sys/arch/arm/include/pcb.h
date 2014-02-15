@@ -37,17 +37,14 @@
 #define	_ARM_PCB_H_
 
 #include <machine/frame.h>
-#include <machine/fp.h>
 
 #include <arm/arm32/pte.h>
 #include <arm/reg.h>
 
-struct trapframe;
-
 struct pcb_arm32 {
 	/*
 	 * WARNING!
-	 * cpuswitch.S relies on pcb32_r8 being quad-aligned in struct pcb
+	 * cpuswitchto.S relies on pcb32_r8 being quad-aligned in struct pcb
 	 * (due to the use of "strd" when compiled for XSCALE)
 	 */
 	u_int	pcb32_r8 __aligned(8);		/* used */
@@ -71,31 +68,32 @@ struct pcb_arm32 {
 #define	pcb_l1vec	pcb_un.un_32.pcb32_l1vec
 #define	pcb_dacr	pcb_un.un_32.pcb32_dacr
 #define	pcb_cstate	pcb_un.un_32.pcb32_cstate
+#define	pcb_user_pid_rw	pcb_un.un_32.pcb32_user_pid_rw
+#ifdef __PROG32
+#define	pcb_ksp		pcb_un.un_32.pcb32_sp
+#endif
 
 struct pcb_arm26 {
 	struct	switchframe *pcb26_sf;
 };
 #define	pcb_sf	pcb_un.un_26.pcb26_sf
+#ifdef __PROG26
+#define	pcb_ksp		pcb_sf.sf_r13
+#endif
 
 /*
  * WARNING!
  * See warning for struct pcb_arm32, above, before changing struct pcb!
  */
 struct pcb {
-	u_int	pcb_flags;
-#define	PCB_OWNFPU	0x00000001
-#define	PCB_NOALIGNFLT	0x00000002		/* For EXEC_AOUT */
-	struct	trapframe *pcb_tf;
-	void *	pcb_onfault;			/* On fault handler */
 	union	{
 		struct	pcb_arm32 un_32;
 		struct	pcb_arm26 un_26;
 	} pcb_un;
-	struct	fpe_sp_state pcb_fpstate;	/* FPA Floating Point state */
+	void *	pcb_onfault;			/* On fault handler */
 	struct	vfpreg pcb_vfp;			/* VFP registers */
-	struct	cpu_info *pcb_vfpcpu;		/* CPU holding VFP state */
+	struct	vfpreg pcb_kernel_vfp;		/* kernel VFP state */
 };
-#define	pcb_ff	pcb_fpstate			/* for arm26 */
 
 /*
  * No additional data for core dumps.
@@ -103,16 +101,5 @@ struct pcb {
 struct md_coredump {
 	int	md_empty;
 };
-
-#ifdef _KERNEL
-#ifdef _KERNEL_OPT
-#include "opt_multiprocessor.h"
-#endif
-#ifdef MULTIPROCESSOR
-#define curpcb	(curcpu()->ci_curpcb)
-#else
-extern struct pcb *curpcb;
-#endif
-#endif	/* _KERNEL */
 
 #endif	/* _ARM_PCB_H_ */

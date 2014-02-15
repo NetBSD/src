@@ -1,4 +1,4 @@
-/*	$NetBSD: bootconfig.h,v 1.4 2006/10/26 23:31:47 bjh21 Exp $	*/
+/*	$NetBSD: bootconfig.h,v 1.4.76.1 2014/02/15 16:18:36 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -43,6 +43,14 @@
 #define BOOTOPT_TYPE_BININT		3
 #define BOOTOPT_TYPE_HEXINT		4
 #define BOOTOPT_TYPE_MASK		7
+
+struct boot_physmem {
+	paddr_t bp_start;		/* starting PFN (not address) */ 
+	psize_t bp_pages;		/* # of pages */
+	u_int bp_freelist;		/* VM_FREELIST_ * */
+	u_int bp_flags;
+#define BOOT_PHYSMEM_CAN_DMA	1	/* Can DMA direct to this memory.  */
+};
 
 int get_bootconf_option __P((char *, const char *, int, void *));
 

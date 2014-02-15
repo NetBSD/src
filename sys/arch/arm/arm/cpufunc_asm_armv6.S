@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_armv6.S,v 1.2 2008/04/27 18:58:43 matt Exp $	*/
+/*	$NetBSD: cpufunc_asm_armv6.S,v 1.2.18.1 2014/02/15 16:18:35 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2005 ARM Limited
@@ -35,8 +35,10 @@
  */
  
 #include "assym.h"
-#include <machine/cpu.h>
 #include <machine/asm.h>
+#include <arm/locore.h>
+
+	.arch	armv6
 
 /*
  * Functions to set the MMU Translation Table Base register
@@ -45,16 +47,18 @@
  * addresses that are about to change.
  */
 ENTRY(armv6_setttb)
+	cmp	r1, #0
 #ifdef PMAP_CACHE_VIVT
-	mcr	p15, 0, r0, c7, c5, 0	/* Flush I cache */
-	mcr	p15, 0, r0, c7, c14, 0	/* clean and invalidate D cache */
+	mcrne	p15, 0, r0, c7, c5, 0	/* Flush I cache */
+	mcrne	p15, 0, r0, c7, c14, 0	/* clean and invalidate D cache */
 #endif
-	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
+	mcrne	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 
 	mcr	p15, 0, r0, c2, c0, 0	/* load new TTB */
 
-	mcr	p15, 0, r0, c8, c7, 0	/* invalidate I+D TLBs */
+	mcrne	p15, 0, r0, c8, c7, 0	/* invalidate I+D TLBs */
 	RET
+END(armv6_setttb)
 
 /*
  * Cache operations.
@@ -68,6 +72,7 @@ ENTRY_NP(armv6_icache_sync_range)
 	mcrr	p15, 0, r1, r0, c12	/* clean D cache range */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 	RET
+END(armv6_icache_sync_range)
 
 /* LINTSTUB: void armv6_icache_sync_all(void); */
 ENTRY_NP(armv6_icache_sync_all)
@@ -80,15 +85,17 @@ ENTRY_NP(armv6_icache_sync_all)
 	mcr	p15, 0, r0, c7, c10, 0	/* Clean D cache */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 	RET
+END(armv6_icache_sync_all)
 
-/* LINTSTUB: void armv6_icache_sync_range(vaddr_t, vsize_t); */
+/* LINTSTUB: void armv6_dcache_wb_range(vaddr_t, vsize_t); */
 ENTRY(armv6_dcache_wb_range)
 	add	r1, r1, r0
 	sub	r1, r1, #1
 	mcrr	p15, 0, r1, r0, c12	/* clean D cache range */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 	RET
-	
+END(armv6_dcache_wb_range)
+
 /* LINTSTUB: void armv6_dcache_wbinv_range(vaddr_t, vsize_t); */
 ENTRY(armv6_dcache_wbinv_range)
 	add	r1, r1, r0
@@ -96,7 +103,8 @@ ENTRY(armv6_dcache_wbinv_range)
 	mcrr	p15, 0, r1, r0, c14	/* clean and invaliate D cache range */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 	RET
-	
+END(armv6_dcache_wbinv_range)
+
 /*
  * Note, we must not invalidate everything.  If the range is too big we
  * must use wb-inv of the entire cache.
@@ -109,6 +117,7 @@ ENTRY(armv6_dcache_inv_range)
 	mcrr	p15, 0, r1, r0, c6	/* invaliate D cache range */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 	RET
+END(armv6_dcache_inv_range)
 
 /* LINTSTUB: void armv6_idcache_wbinv_range(vaddr_t, vsize_t); */
 ENTRY(armv6_idcache_wbinv_range)
@@ -118,6 +127,7 @@ ENTRY(armv6_idcache_wbinv_range)
 	mcrr	p15, 0, r1, r0, c14	/* clean & invaliate D cache range */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 	RET
+END(armv6_idcache_wbinv_range)
 
 /* LINTSTUB: void armv6_idcache_wbinv_all(void); */
 ENTRY_NP(armv6_idcache_wbinv_all)
@@ -134,3 +144,5 @@ ENTRY(armv6_dcache_wbinv_all)
 	mcr	p15, 0, r0, c7, c14, 0	/* clean & invalidate D cache */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 	RET
+END(armv6_dcache_wbinv_all)
+END(armv6_idcache_wbinv_all)

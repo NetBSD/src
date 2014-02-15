@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.21 2008/10/21 19:01:00 matt Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.21.8.1 2014/02/15 16:18:35 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,30 +71,60 @@
  * SUCH DAMAGE.
  */
 
-#include "opt_compat_netbsd.h"
 #include "opt_execfmt.h"
+#include "opt_cpuoptions.h"
 #include "opt_cputypes.h"
 #include "opt_arm_debug.h"
 #include "opt_sa.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.21 2008/10/21 19:01:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.21.8.1 2014/02/15 16:18:35 matt Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
-#include <sys/user.h>
-#include <sys/pool.h>
+#include <sys/kmem.h>
 #include <sys/ucontext.h>
 #include <sys/evcnt.h>
 #include <sys/cpu.h>
+#include <sys/atomic.h>
+
+#ifdef KERN_SA
 #include <sys/savar.h>
+#endif
 
-#include <arm/cpufunc.h>
+#ifdef EXEC_AOUT
+#include <sys/exec_aout.h>
+#endif
 
-#include <machine/pcb.h>
+#include <arm/locore.h>
+#include <arm/frame.h>
+
 #include <machine/vmparam.h>
+
+/* the following is used externally (sysctl_hw) */
+char	machine[] = MACHINE;		/* from <machine/param.h> */
+char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
+
+#ifdef __PROG32
+extern const uint32_t undefinedinstruction_bounce[];
+#endif
+
+/* Our exported CPU info; we can have only one. */
+struct cpu_info cpu_info_store = {
+	.ci_cpl = IPL_HIGH,
+	.ci_curlwp = &lwp0,
+#ifdef __PROG32
+	.ci_undefsave[2] = (register_t) undefinedinstruction_bounce,
+#endif
+};
+
+#ifdef MULTIPROCESSOR
+struct cpu_info *cpu_info[MAXCPUS] = {
+	[0] = &cpu_info_store
+};
+#endif
 
 /*
  * The ARM architecture places the vector page at address 0.
@@ -131,17 +161,13 @@ EVCNT_ATTACH_STATIC(_lock_cas_fail);
  */
 
 void
-setregs(struct lwp *l, struct exec_package *pack, u_long stack)
+setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
-	struct trapframe *tf;
-
-	tf = l->l_addr->u_pcb.pcb_tf;
+	struct trapframe * const tf = lwp_trapframe(l);
 
 	memset(tf, 0, sizeof(*tf));
-	tf->tf_r0 = (u_int)l->l_proc->p_psstr;
-#ifdef COMPAT_13
+	tf->tf_r0 = (uintptr_t)l->l_proc->p_psstr;
 	tf->tf_r12 = stack;			/* needed by pre 1.4 crt0.c */
-#endif
 	tf->tf_usr_sp = stack;
 	tf->tf_usr_lr = pack->ep_entry;
 	tf->tf_svc_lr = 0x77777777;		/* Something we can see */
@@ -154,16 +180,13 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 #endif
 #endif
 
+	l->l_md.md_flags = 0;
 #ifdef EXEC_AOUT
 	if (pack->ep_esch->es_makecmds == exec_aout_makecmds)
-		l->l_addr->u_pcb.pcb_flags = PCB_NOALIGNFLT;
-	else
+		l->l_md.md_flags |= MDLWP_NOALIGNFLT;
 #endif
-	l->l_addr->u_pcb.pcb_flags = 0;
 #ifdef FPU_VFP
-	l->l_md.md_flags &= ~MDP_VFPUSED;
-	if (l->l_addr->u_pcb.pcb_vfpcpu != NULL)
-		vfp_saveregs_lwp(l, 0);
+	vfp_discardcontext(false);
 #endif
 }
 
@@ -175,18 +198,99 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 void
 startlwp(void *arg)
 {
-	int err;
 	ucontext_t *uc = arg; 
-	struct lwp *l = curlwp;
+	lwp_t *l = curlwp;
+	int error __diagused;
 
-	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
-#ifdef DIAGNOSTIC
-	if (err)
-		printf("Error %d from cpu_setmcontext.", err);
-#endif
-	pool_put(&lwp_uc_pool, uc);
+	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
+	KASSERT(error == 0);
 
+	kmem_free(uc, sizeof(ucontext_t));
 	userret(l);
+}
+
+void
+cpu_need_resched(struct cpu_info *ci, int flags)
+{
+	struct lwp * const l = ci->ci_data.cpu_onproc;
+	const bool immed = (flags & RESCHED_IMMED) != 0;
+#ifdef MULTIPROCESSOR
+	struct cpu_info * const cur_ci = curcpu();
+	u_long ipi = IPI_NOP;
+#endif
+
+	if (__predict_false((l->l_pflag & LP_INTR) != 0)) {
+		/*
+		 * No point doing anything, it will switch soon.
+		 * Also here to prevent an assertion failure in
+		 * kpreempt() due to preemption being set on a
+		 * soft interrupt LWP.
+		 */
+		return;
+	}
+	if (ci->ci_want_resched && !immed)
+		return;
+
+	if (l == ci->ci_data.cpu_idlelwp) {
+#ifdef MULTIPROCESSOR
+		/*
+		 * If the other CPU is idling, it must be waiting for an
+		 * event.  So give it one.
+		 */
+		if (ci != cur_ci)
+			goto send_ipi;
+#endif
+		return;
+	}
+#ifdef MULTIPROCESSOR
+	atomic_swap_uint(&ci->ci_want_resched, 1);
+#else
+	ci->ci_want_resched = 1;
+#endif
+	if (flags & RESCHED_KPREEMPT) {
+#ifdef __HAVE_PREEMPTION
+		atomic_or_uint(&l->l_dopreempt, DOPREEMPT_ACITBE);
+		if (ci == cur_ci) {
+			softint_trigger(SOFTINT_KPREEMPT);
+		} else {
+			ipi = IPI_KPREEMPT;
+			goto send_ipi;
+		}
+#endif /* __HAVE_PREEMPTION */
+		return;
+	}
+	ci->ci_astpending = 1;
+#ifdef MULTIPROCESSOR
+	if (ci == curcpu() || !immed)
+		return;
+	ipi = IPI_AST;
+
+   send_ipi:
+	intr_ipi_send(ci->ci_kcpuset, ipi);
+#endif /* MULTIPROCESSOR */
+}
+
+bool
+cpu_intr_p(void)
+{
+	struct cpu_info * const ci = curcpu();
+#ifdef __HAVE_PIC_FAST_SOFTINTS
+	if (ci->ci_cpl < IPL_VM)
+		return false;
+#endif
+	return ci->ci_intr_depth != 0;
+}
+
+void
+ucas_ras_check(trapframe_t *tf)
+{
+	extern char ucas_32_ras_start[];
+	extern char ucas_32_ras_end[];
+
+	if (tf->tf_pc > (vaddr_t)ucas_32_ras_start &&
+	    tf->tf_pc < (vaddr_t)ucas_32_ras_end) {
+		tf->tf_pc = (vaddr_t)ucas_32_ras_start;
+	}
 }
 
 #ifdef KERN_SA
@@ -209,10 +313,9 @@ void
 cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas,
     void *ap, void *sp, sa_upcall_t upcall)
 {
-	struct trapframe *tf;
+	struct trapframe * const tf = lwp_trapframe(l);
 	struct saframe *sf, frame;
 
-	tf = process_frame(l);
 
 	/* Finally, copy out the rest of the frame. */
 #if 0 /* First 4 args in regs (see below). */

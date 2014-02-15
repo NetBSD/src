@@ -1,0 +1,10 @@
+#	$NetBSD: BCM56340_INSTALL,v 1.1.2.2 2014/02/15 16:18:37 matt Exp $
+#
+#	BCM56340_INSTALL -- BCM56340 kernel with installation-sized
+#	ramdisk
+#
+
+include "arch/evbarm/conf/BCM56340"
+include "arch/evbarm/conf/INSTALL"
+
+options BOOTHOWTO=RB_SINGLE

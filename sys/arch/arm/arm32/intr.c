@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.29 2008/06/11 23:31:35 rafal Exp $	*/
+/*	$NetBSD: intr.c,v 1.29.10.1 2014/02/15 16:18:36 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,24 +36,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.29 2008/06/11 23:31:35 rafal Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.29.10.1 2014/02/15 16:18:36 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/syslog.h>
-#include <sys/malloc.h>
 #include <sys/conf.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
+#include <sys/syslog.h>
 
 #include <uvm/uvm_extern.h>
-
-#include <machine/atomic.h>
-#include <machine/intr.h>
-#include <machine/cpu.h>
 
 #include <arm/arm32/machdep.h>
  
 u_int spl_masks[NIPL];
-int safepri = IPL_NONE;
 
 extern u_int irqmasks[];
 
@@ -66,10 +62,14 @@ set_spl_masks(void)
 		spl_masks[loop] = 0xffffffff;
 	}
 
-	spl_masks[IPL_VM]	= irqmasks[IPL_VM];
-	spl_masks[IPL_SCHED]	= irqmasks[IPL_SCHED];
-	spl_masks[IPL_HIGH]	= irqmasks[IPL_HIGH];
-	spl_masks[IPL_NONE]	= irqmasks[IPL_NONE];
+	spl_masks[IPL_VM]	  = irqmasks[IPL_VM];
+	spl_masks[IPL_SCHED]	  = irqmasks[IPL_SCHED];
+	spl_masks[IPL_HIGH]	  = irqmasks[IPL_HIGH];
+	spl_masks[IPL_SOFTSERIAL] = irqmasks[IPL_SOFTSERIAL];
+	spl_masks[IPL_SOFTNET]	  = irqmasks[IPL_SOFTNET];
+	spl_masks[IPL_SOFTBIO]	  = irqmasks[IPL_SOFTBIO];
+	spl_masks[IPL_SOFTCLOCK]  = irqmasks[IPL_SOFTCLOCK];
+	spl_masks[IPL_NONE]	  = irqmasks[IPL_NONE];
 
 }
 

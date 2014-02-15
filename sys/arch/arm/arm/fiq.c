@@ -1,4 +1,4 @@
-/*	$NetBSD: fiq.c,v 1.5 2002/04/03 23:33:27 thorpej Exp $	*/
+/*	$NetBSD: fiq.c,v 1.5.134.1 2014/02/15 16:18:36 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fiq.c,v 1.5 2002/04/03 23:33:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fiq.c,v 1.5.134.1 2014/02/15 16:18:36 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,6 +62,7 @@ extern char fiq_nullhandler[], fiq_nullhandler_end[];
 #define	FIQ_BIT		R15_FIQ_DISABLE
 #endif /* __PROG32 */
 
+#ifndef ARM_HAS_VBAR
 /*
  * fiq_installhandler:
  *
@@ -173,5 +174,7 @@ fiq_release(struct fiqhandler *fh)
 		oldirqstate |= FIQ_BIT;
 	}
 
+	oldirqstate &= ~FIQ_BIT;
 	restore_interrupts(oldirqstate);
 }
+#endif /* !ARM_HAS_VBAR */

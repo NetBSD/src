@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.58 2008/08/07 04:17:25 matt Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.58.8.1 2014/02/15 16:18:36 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -35,81 +35,94 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Machine dependant functions for kernel setup
+ * Machine dependent functions for kernel setup
  *
  * Created      : 17/09/94
  * Updated	: 18/04/01 updated for new wscons
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.58 2008/08/07 04:17:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.58.8.1 2014/02/15 16:18:36 matt Exp $");
 
+#include "opt_modular.h"
 #include "opt_md.h"
-#include "opt_cpuoptions.h"
 #include "opt_pmap_debug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/reboot.h>
 #include <sys/proc.h>
-#include <sys/user.h>
+#include <sys/kauth.h>
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
 #include <sys/mount.h>
 #include <sys/buf.h>
 #include <sys/msgbuf.h>
 #include <sys/device.h>
-#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 #include <sys/cpu.h>
+#include <sys/intr.h>
+#include <sys/module.h>
+#include <sys/atomic.h>
+#include <sys/xcall.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
 
+#include <arm/locore.h>
+
 #include <arm/arm32/katelib.h>
 #include <arm/arm32/machdep.h>
-#include <machine/bootconfig.h>
 
-#include "md.h"
+#include <machine/bootconfig.h>
+#include <machine/pcb.h>
+
+void (*cpu_reset_address)(void);	/* Used by locore */
+paddr_t cpu_reset_address_paddr;	/* Used by locore */
 
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
-extern int physmem;
-
-#if NMD > 0 && defined(MEMORY_DISK_HOOKS) && !defined(MEMORY_DISK_ROOT_SIZE)
+#if defined(MEMORY_DISK_HOOKS) && !defined(MEMORY_DISK_ROOT_SIZE)
 extern size_t md_root_size;		/* Memory disc size */
-#endif	/* NMD && MEMORY_DISK_HOOKS && !MEMORY_DISK_ROOT_SIZE */
+#endif	/* MEMORY_DISK_HOOKS && !MEMORY_DISK_ROOT_SIZE */
 
 pv_addr_t kernelstack;
-
-/* the following is used externally (sysctl_hw) */
-char	machine[] = MACHINE;		/* from <machine/param.h> */
-char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
-
-/* Our exported CPU info; we can have only one. */
-struct cpu_info cpu_info_store = {
-	.ci_cpl = IPL_HIGH,
-#ifndef PROCESS_ID_IS_CURLWP
-	.ci_curlwp = &lwp0,
-#endif
-};
+pv_addr_t abtstack;
+pv_addr_t fiqstack;
+pv_addr_t irqstack;
+pv_addr_t undstack;
+pv_addr_t idlestack;
 
 void *	msgbufaddr;
 extern paddr_t msgbufphys;
 
-int kernel_debug = 0;
-
 struct user *proc0paddr;
+
+int kernel_debug = 0;
+int cpu_printfataltraps = 0;
+int cpu_fpu_present;
+int cpu_hwdiv_present;
+int cpu_neon_present;
+int cpu_simd_present;
+int cpu_simdex_present;
+int cpu_umull_present;
+const char *cpu_arch = "";
+
+int cpu_instruction_set_attributes[6];
+int cpu_memory_model_features[4];
+int cpu_processor_features[2];
+int cpu_media_and_vfp_features[2];
 
 /* exported variable to be filled in by the bootloaders */
 char *booted_kernel;
 
-
 /* Prototypes */
 
-void data_abort_handler		__P((trapframe_t *frame));
-void prefetch_abort_handler	__P((trapframe_t *frame));
-extern void configure		__P((void));
+void data_abort_handler(trapframe_t *frame);
+void prefetch_abort_handler(trapframe_t *frame);
+extern void configure(void);
 
 /*
  * arm32_vector_init:
@@ -123,28 +136,54 @@ extern void configure		__P((void));
 void
 arm32_vector_init(vaddr_t va, int which)
 {
-	extern unsigned int page0[], page0_data[];
-	unsigned int *vectors = (int *) va;
-	unsigned int *vectors_data = vectors + (page0_data - page0);
-	int vec;
-
+#if defined(CPU_ARMV7) || defined(CPU_ARM11) || defined(ARM_HAS_VBAR)
 	/*
-	 * Loop through the vectors we're taking over, and copy the
-	 * vector's insn and data word.
+	 * If this processor has the security extension, don't bother
+	 * to move/map the vector page.  Simply point VBAR to the copy
+	 * that exists in the .text segment.
 	 */
-	for (vec = 0; vec < ARM_NVEC; vec++) {
-		if ((which & (1 << vec)) == 0) {
-			/* Don't want to take over this vector. */
-			continue;
-		}
-		vectors[vec] = page0[vec];
-		vectors_data[vec] = page0_data[vec];
+#ifndef ARM_HAS_VBAR
+	if (va == ARM_VECTORS_LOW
+	    && (armreg_pfr1_read() & ARM_PFR1_SEC_MASK) != 0) {
+#endif
+		extern const uint32_t page0rel[];
+		vector_page = (vaddr_t)page0rel;
+		KASSERT((vector_page & 0x1f) == 0);
+		armreg_vbar_write(vector_page);
+#ifdef VERBOSE_INIT_ARM
+		printf(" vbar=%p", page0rel);
+#endif
+		cpu_control(CPU_CONTROL_VECRELOC, 0);
+		return;
+#ifndef ARM_HAS_VBAR
 	}
+#endif
+#endif
+#ifndef ARM_HAS_VBAR
+	if (CPU_IS_PRIMARY(curcpu())) {
+		extern unsigned int page0[], page0_data[];
+		unsigned int *vectors = (int *) va;
+		unsigned int *vectors_data = vectors + (page0_data - page0);
+		int vec;
 
-	/* Now sync the vectors. */
-	cpu_icache_sync_range(va, (ARM_NVEC * 2) * sizeof(u_int));
+		/*
+		 * Loop through the vectors we're taking over, and copy the
+		 * vector's insn and data word.
+		 */
+		for (vec = 0; vec < ARM_NVEC; vec++) {
+			if ((which & (1 << vec)) == 0) {
+				/* Don't want to take over this vector. */
+				continue;
+			}
+			vectors[vec] = page0[vec];
+			vectors_data[vec] = page0_data[vec];
+		}
 
-	vector_page = va;
+		/* Now sync the vectors. */
+		cpu_icache_sync_range(va, (ARM_NVEC * 2) * sizeof(u_int));
+
+		vector_page = va;
+	}
 
 	if (va == ARM_VECTORS_HIGH) {
 		/*
@@ -165,6 +204,7 @@ arm32_vector_init(vaddr_t va, int which)
 		 */
 		cpu_control(CPU_CONTROL_VECRELOC, CPU_CONTROL_VECRELOC);
 	}
+#endif
 }
 
 /*
@@ -172,14 +212,14 @@ arm32_vector_init(vaddr_t va, int which)
  */
 
 void
-halt()
+halt(void)
 {
 	while (1)
 		cpu_sleep(0);
 }
 
 
-/* Sync the discs and unmount the filesystems */
+/* Sync the discs, unmount the filesystems, and adjust the todr */
 
 void
 bootsync(void)
@@ -203,12 +243,14 @@ bootsync(void)
 	}
 
 	vfs_shutdown();
+
+	resettodr();
 }
 
 /*
  * void cpu_startup(void)
  *
- * Machine dependant startup code. 
+ * Machine dependent startup code. 
  *
  */
 void
@@ -219,11 +261,18 @@ cpu_startup(void)
 	u_int loop;
 	char pbuf[9];
 
+	/*
+	 * Until we better locking, we have to live under the kernel lock.
+	 */
+	//KERNEL_LOCK(1, NULL);
+
 	/* Set the CPU control register */
 	cpu_setup(boot_args);
 
+#ifndef ARM_HAS_VBAR
 	/* Lock down zero page */
 	vector_page_setprot(VM_PROT_READ);
+#endif
 
 	/*
 	 * Give pmap a chance to set up a few more things now the vm
@@ -238,7 +287,8 @@ cpu_startup(void)
 	/* msgbufphys was setup during the secondary boot strap */
 	for (loop = 0; loop < btoc(MSGBUFSIZE); ++loop)
 		pmap_kenter_pa((vaddr_t)msgbufaddr + loop * PAGE_SIZE,
-		    msgbufphys + loop * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE);
+		    msgbufphys + loop * PAGE_SIZE,
+		    VM_PROT_READ|VM_PROT_WRITE);
 	pmap_update(pmap_kernel());
 	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
 
@@ -269,12 +319,10 @@ cpu_startup(void)
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 
-	curpcb = &lwp0.l_addr->u_pcb;
-	curpcb->pcb_flags = 0;
-	curpcb->pcb_un.un_32.pcb32_sp = (u_int)lwp0.l_addr +
-	    USPACE_SVC_STACK_TOP;
-
-        curpcb->pcb_tf = (struct trapframe *)curpcb->pcb_un.un_32.pcb32_sp - 1;
+	struct lwp * const l = &lwp0;
+	struct pcb * const pcb = lwp_getpcb(l);
+	pcb->pcb_ksp = (vaddr_t)l->l_addr + USPACE_SVC_STACK_TOP;
+	lwp_settrapframe(l, (struct trapframe *)pcb->pcb_ksp - 1);
 }
 
 /*
@@ -289,8 +337,8 @@ sysctl_machdep_booted_device(SYSCTLFN_ARGS)
 		return (EOPNOTSUPP);
 
 	node = *rnode;
-	node.sysctl_data = booted_device->dv_xname;
-	node.sysctl_size = strlen(booted_device->dv_xname) + 1;
+	node.sysctl_data = __UNCONST(device_xname(booted_device));
+	node.sysctl_size = strlen(device_xname(booted_device)) + 1;
 	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 }
 
@@ -306,6 +354,15 @@ sysctl_machdep_booted_kernel(SYSCTLFN_ARGS)
 	node.sysctl_data = booted_kernel;
 	node.sysctl_size = strlen(booted_kernel) + 1;
 	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+}
+
+static int
+sysctl_machdep_cpu_arch(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	node.sysctl_data = __UNCONST(cpu_arch);
+	node.sysctl_size = strlen(cpu_arch) + 1;
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
 }
 
 static int
@@ -359,15 +416,89 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       sysctl_consdev, 0, NULL, sizeof(dev_t),
 		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "cpu_arch", NULL,
+		       sysctl_machdep_cpu_arch, 0, NULL, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "powersave", NULL,
 		       sysctl_machdep_powersave, 0, &cpu_do_powersave, 0,
 		       CTL_MACHDEP, CPU_POWERSAVE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+		       CTLTYPE_INT, "cpu_id", NULL,
+		       NULL, curcpu()->ci_arm_cpuid, NULL, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+#ifdef FPU_VFP
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
+		       CTLTYPE_INT, "fpu_id", NULL,
+		       NULL, 0, &cpu_info_store.ci_vfp_id, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+#endif
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
+		       CTLTYPE_INT, "fpu_present", NULL,
+		       NULL, 0, &cpu_fpu_present, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
+		       CTLTYPE_INT, "hwdiv_present", NULL,
+		       NULL, 0, &cpu_hwdiv_present, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
+		       CTLTYPE_INT, "neon_present", NULL,
+		       NULL, 0, &cpu_neon_present, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
+		       CTLTYPE_STRUCT, "id_isar", NULL,
+		       NULL, 0,
+		       cpu_instruction_set_attributes,
+		       sizeof(cpu_instruction_set_attributes),
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
+		       CTLTYPE_STRUCT, "id_mmfr", NULL,
+		       NULL, 0,
+		       cpu_memory_model_features,
+		       sizeof(cpu_memory_model_features),
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
+		       CTLTYPE_STRUCT, "id_pfr", NULL,
+		       NULL, 0,
+		       cpu_processor_features,
+		       sizeof(cpu_processor_features),
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
+		       CTLTYPE_STRUCT, "id_mvfr", NULL,
+		       NULL, 0,
+		       cpu_media_and_vfp_features,
+		       sizeof(cpu_media_and_vfp_features),
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
+		       CTLTYPE_INT, "simd_present", NULL,
+		       NULL, 0, &cpu_simd_present, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
+		       CTLTYPE_INT, "simdex_present", NULL,
+		       NULL, 0, &cpu_simdex_present, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "printfataltraps", NULL,
+		       NULL, 0, &cpu_printfataltraps, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 }
 
 void
-parse_mi_bootargs(args)
-	char *args;
+parse_mi_bootargs(char *args)
 {
 	int integer;
 
@@ -376,7 +507,8 @@ parse_mi_bootargs(args)
 		if (integer)
 			boothowto |= RB_SINGLE;
 	if (get_bootconf_option(args, "kdb", BOOTOPT_TYPE_BOOLEAN, &integer)
-	    || get_bootconf_option(args, "-k", BOOTOPT_TYPE_BOOLEAN, &integer))
+	    || get_bootconf_option(args, "-k", BOOTOPT_TYPE_BOOLEAN, &integer)
+	    || get_bootconf_option(args, "-d", BOOTOPT_TYPE_BOOLEAN, &integer))
 		if (integer)
 			boothowto |= RB_KDB;
 	if (get_bootconf_option(args, "ask", BOOTOPT_TYPE_BOOLEAN, &integer)
@@ -394,7 +526,7 @@ parse_mi_bootargs(args)
 /*	if (get_bootconf_option(args, "nbuf", BOOTOPT_TYPE_INT, &integer))
 		bufpages = integer;*/
 
-#if NMD > 0 && defined(MEMORY_DISK_HOOKS) && !defined(MEMORY_DISK_ROOT_SIZE)
+#if defined(MEMORY_DISK_HOOKS) && !defined(MEMORY_DISK_ROOT_SIZE)
 	if (get_bootconf_option(args, "memorydisc", BOOTOPT_TYPE_INT, &integer)
 	    || get_bootconf_option(args, "memorydisk", BOOTOPT_TYPE_INT, &integer)) {
 		md_root_size = integer;
@@ -404,7 +536,7 @@ parse_mi_bootargs(args)
 		if (md_root_size > 2048*1024)
 			md_root_size = 2048*1024;
 	}
-#endif	/* NMD && MEMORY_DISK_HOOKS && !MEMORY_DISK_ROOT_SIZE */
+#endif	/* MEMORY_DISK_HOOKS && !MEMORY_DISK_ROOT_SIZE */
 
 	if (get_bootconf_option(args, "quiet", BOOTOPT_TYPE_BOOLEAN, &integer)
 	    || get_bootconf_option(args, "-q", BOOTOPT_TYPE_BOOLEAN, &integer))
@@ -414,25 +546,6 @@ parse_mi_bootargs(args)
 	    || get_bootconf_option(args, "-v", BOOTOPT_TYPE_BOOLEAN, &integer))
 		if (integer)
 			boothowto |= AB_VERBOSE;
-}
-
-void
-cpu_need_resched(struct cpu_info *ci, int flags)
-{
-	bool immed = (flags & RESCHED_IMMED) != 0;
-
-	if (ci->ci_want_resched && !immed)
-		return;
-
-	ci->ci_want_resched = 1;
-	if (curlwp != ci->ci_data.cpu_idlelwp)
-		setsoftast();
-}
-
-bool
-cpu_intr_p(void)
-{
-	return curcpu()->ci_intr_depth != 0;
 }
 
 #ifdef __HAVE_FAST_SOFTINTS
@@ -448,6 +561,7 @@ cpu_intr_p(void)
 #error IPLs are screwed up
 #endif
 
+#ifndef __HAVE_PIC_FAST_SOFTINTS
 #define	SOFTINT2IPLMAP \
 	(((IPL_SOFTSERIAL - IPL_SOFTCLOCK) << (SOFTINT_SERIAL * 4)) | \
 	 ((IPL_SOFTNET    - IPL_SOFTCLOCK) << (SOFTINT_NET    * 4)) | \
@@ -457,10 +571,13 @@ cpu_intr_p(void)
 
 /*
  * This returns a mask of softint IPLs that be dispatch at <ipl>
- * SOFTIPLMASK(IPL_NONE)	= 0xffffffff
- * SOFTIPLMASK(IPL_SOFTCLOCK)	= 0xfffffff0
+ * SOFTIPLMASK(IPL_NONE)	= 0x0000000f
+ * SOFTIPLMASK(IPL_SOFTCLOCK)	= 0x0000000e
+ * SOFTIPLMASK(IPL_SOFTBIO)	= 0x0000000c
+ * SOFTIPLMASK(IPL_SOFTNET)	= 0x00000008
+ * SOFTIPLMASK(IPL_SOFTSERIAL)	= 0x00000000
  */
-#define	SOFTIPLMASK(ipl) (~0 << (ipl))
+#define	SOFTIPLMASK(ipl) ((0x0f << (ipl)) & 0x0f)
 
 void softint_switch(lwp_t *, int);
 
@@ -473,10 +590,14 @@ softint_trigger(uintptr_t mask)
 void
 softint_init_md(lwp_t *l, u_int level, uintptr_t *machdep)
 {
-	lwp_t ** lp = &curcpu()->ci_softlwps[level];
+	lwp_t ** lp = &l->l_cpu->ci_softlwps[level];
 	KASSERT(*lp == NULL || *lp == l);
 	*lp = l;
 	*machdep = 1 << SOFTINT2IPL(level);
+	KASSERT(level != SOFTINT_CLOCK || *machdep == (1 << (IPL_SOFTCLOCK - IPL_SOFTCLOCK)));
+	KASSERT(level != SOFTINT_BIO || *machdep == (1 << (IPL_SOFTBIO - IPL_SOFTCLOCK)));
+	KASSERT(level != SOFTINT_NET || *machdep == (1 << (IPL_SOFTNET - IPL_SOFTCLOCK)));
+	KASSERT(level != SOFTINT_SERIAL || *machdep == (1 << (IPL_SOFTSERIAL - IPL_SOFTCLOCK)));
 }
 
 void
@@ -486,18 +607,21 @@ dosoftints(void)
 	const int opl = ci->ci_cpl;
 	const uint32_t softiplmask = SOFTIPLMASK(opl);
 
+	splhigh();
 	for (;;) {
 		u_int softints = ci->ci_softints & softiplmask;
-		if (softints == 0)
+		KASSERT((softints != 0) == ((ci->ci_softints >> opl) != 0));
+		KASSERT(opl == IPL_NONE || (softints & (1 << (opl - IPL_SOFTCLOCK))) == 0);
+		if (softints == 0) {
+			splx(opl);
 			return;
-		ci->ci_cpl = IPL_HIGH;
+		}
 #define	DOSOFTINT(n) \
-		if (softints & (1 << (IPL_SOFT ## n - IPL_SOFTCLOCK))) { \
+		if (ci->ci_softints & (1 << (IPL_SOFT ## n - IPL_SOFTCLOCK))) { \
 			ci->ci_softints &= \
 			    ~(1 << (IPL_SOFT ## n - IPL_SOFTCLOCK)); \
 			softint_switch(ci->ci_softlwps[SOFTINT_ ## n], \
 			    IPL_SOFT ## n); \
-			ci->ci_cpl = opl; \
 			continue; \
 		}
 		DOSOFTINT(SERIAL);
@@ -507,4 +631,64 @@ dosoftints(void)
 		panic("dosoftints wtf (softints=%u?, ipl=%d)", softints, opl);
 	}
 }
+#endif /* !__HAVE_PIC_FAST_SOFTINTS */
 #endif /* __HAVE_FAST_SOFTINTS */
+
+#ifdef MODULAR
+/*
+ * Push any modules loaded by the boot loader.
+ */
+void
+module_init_md(void)
+{
+}
+#endif /* MODULAR */
+
+#ifdef __HAVE_CPU_UAREA_ALLOC_IDLELWP
+vaddr_t
+cpu_uarea_alloc_idlelwp(struct cpu_info *ci)
+{
+	const vaddr_t va = idlestack.pv_va + ci->ci_cpuid * USPACE;
+	// printf("%s: %s: va=%lx\n", __func__, ci->ci_data.cpu_name, va);
+	return va;
+}
+#endif
+
+#ifdef MULTIPROCESSOR
+void
+cpu_boot_secondary_processors(void)
+{
+	uint32_t mbox;
+	kcpuset_export_u32(kcpuset_attached, &mbox, sizeof(mbox));
+	atomic_swap_32(&arm_cpu_mbox, mbox);
+	membar_producer();
+#ifdef _ARM_ARCH_7
+	__asm __volatile("sev; sev; sev");
+#endif
+}
+
+void
+xc_send_ipi(struct cpu_info *ci)
+{
+	KASSERT(kpreempt_disabled());
+	KASSERT(curcpu() != ci);
+
+
+	if (ci) {
+		/* Unicast, remote CPU */
+		printf("%s: -> %s", __func__, ci->ci_data.cpu_name);
+		intr_ipi_send(ci->ci_kcpuset, IPI_XCALL);
+	} else {
+		printf("%s: -> !%s", __func__, ci->ci_data.cpu_name);
+		/* Broadcast to all but ourselves */
+		kcpuset_t *kcp;
+		kcpuset_create(&kcp, (ci != NULL));
+		KASSERT(kcp != NULL);
+		kcpuset_copy(kcp, kcpuset_running);
+		kcpuset_clear(kcp, cpu_index(ci));
+		intr_ipi_send(kcp, IPI_XCALL);
+		kcpuset_destroy(kcp);
+	}
+	printf("\n");
+}
+#endif /* MULTIPROCESSOR */
