@@ -1,11 +1,10 @@
-/*	$NetBSD: atomic_op_asm.h,v 1.2.12.1 2014/02/15 10:27:44 matt Exp $	*/
-
+/*	$NetBSD: atomic_cas_64.S,v 1.5.2.2 2014/02/15 10:27:44 matt Exp $	*/
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe.
+ * by Matt Thomas <matt@3am-software.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,14 +14,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
- *      
+ *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -36,35 +28,32 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ATOMIC_OP_ASM_H_
-#define	_ATOMIC_OP_ASM_H_
+#include "atomic_op_asm.h"
 
-#include <machine/asm.h>
+#if defined(_ARM_ARCH_6)
+/*
+ * ARMv6 has load-exclusive/store-exclusive which works for both user
+ * and kernel.
+ */
+ENTRY_NP(_atomic_cas_64)
+	push	{r4-r6}
+	mov	r3, r2
+	mov	r2, r1
+	ldr	r4, [sp, #0]
+	ldr	r5, [sp, #4]
+	mov	r6, r0			/* we need r0 for return value */
+1:
+	ldrexd	r0, [r6]		/* load old value */
+	cmp	r0, r2			/*   compare? */
+	cmpeq	r1, r3			/*   compare? */
+	bne	2f			/*     return if different */
+	strexd	ip, r4, [r6]		/* store new value */
+	cmp	ip, #0			/*   succeed? */
+	bne	1b			/*     nope, try again. */
+2:	pop	{r4-r6}
+	bx	lr			/*    yes, return. */
+END(_atomic_cas_64)
 
-#if defined(_KERNEL)
+ATOMIC_OP_ALIAS(atomic_cas_64,_atomic_cas_64)
 
-#define	ATOMIC_OP_ALIAS(a,s)	STRONG_ALIAS(a,s)
-
-#else /* _KERNEL */
-
-#define	ATOMIC_OP_ALIAS(a,s)	WEAK_ALIAS(a,s)
-
-#endif /* _KERNEL */
-
-#ifdef __ARMEB__
-#define HI	r0
-#define LO	r1
-#define NHI	r2
-#define NLO	r3
-#define THI	r4
-#define TLO	r5
-#else
-#define LO	r0
-#define HI	r1
-#define NLO	r2
-#define NHI	r3
-#define TLO	r4
-#define THI	r5
-#endif
-
-#endif /* _ATOMIC_OP_ASM_H_ */
+#endif /* _ARM_ARCH_6 */
