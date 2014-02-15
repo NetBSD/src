@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.11 2014/02/04 22:21:35 dsl Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.12 2014/02/15 22:20:42 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@ typedef struct {
 		} __fp_xmm_state;	/* x87 and xmm regs in fxsave format */
 		int	__fp_fpregs[128];
 	} __fp_reg_set;
-	long	__fp_pad[33];			/* Historic padding */
+	int 	__fp_pad[33];			/* Historic padding */
 } __fpregset_t;
 __CTASSERT(sizeof (__fpregset_t) == 512 + 33 * 4);
 

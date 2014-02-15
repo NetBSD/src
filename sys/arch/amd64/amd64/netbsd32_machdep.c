@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.91 2014/02/15 10:11:14 dsl Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.92 2014/02/15 22:20:41 dsl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.91 2014/02/15 10:11:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.92 2014/02/15 22:20:41 dsl Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -806,14 +806,9 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 
 	/* Restore floating point register context, if any. */
 	if ((flags & _UC_FPU) != 0) {
-		struct pcb *pcb = lwp_getpcb(l);
-
-		/*
-		 * If we were using the FPU, forget that we were.
-		 */
-		fpusave_lwp(l, false);
-		memcpy(&pcb->pcb_savefpu.sv_xmm, &mcp->__fpregs,
-		    sizeof (pcb->pcb_savefpu.sv_xmm));
+		/* Assume fxsave context */
+		process_write_fpregs_xmm(l, (const struct fxsave *)
+		    &mcp->__fpregs.__fp_reg_set.__fp_xmm_state);
 	}
 
 	mutex_enter(p->p_lock);
@@ -832,7 +827,6 @@ cpu_getmcontext32(struct lwp *l, mcontext32_t *mcp, unsigned int *flags)
 	const struct trapframe *tf = l->l_md.md_regs;
 	__greg32_t *gr = mcp->__gregs;
 	__greg32_t ras_eip;
-	struct pcb *pcb;
 
 	/* Save register context. */
 	gr[_REG32_GS]  = tf->tf_gs;
@@ -865,11 +859,10 @@ cpu_getmcontext32(struct lwp *l, mcontext32_t *mcp, unsigned int *flags)
 	*flags |= _UC_TLSBASE;
 
 	/* Save floating point register context. */
-	fpusave_lwp(l, true);
-	pcb = lwp_getpcb(l);
-	memcpy(&mcp->__fpregs, &pcb->pcb_savefpu.sv_xmm,
-	    sizeof (pcb->pcb_savefpu.sv_xmm));
-	*flags |= _UC_FPU;
+	process_read_fpregs_xmm(l, (struct fxsave *)
+	    &mcp->__fpregs.__fp_reg_set.__fp_xmm_state);
+	memset(&mcp->__fpregs.__fp_pad, 0, sizeof mcp->__fpregs.__fp_pad);
+	*flags |= _UC_FXSAVE | _UC_FPU;
 }
 
 void

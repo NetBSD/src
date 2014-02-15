@@ -1,4 +1,4 @@
-/*	$NetBSD: convert_xmm_s87.c,v 1.2 2014/02/12 23:24:09 dsl Exp $	*/
+/*	$NetBSD: convert_xmm_s87.c,v 1.3 2014/02/15 22:20:42 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: convert_xmm_s87.c,v 1.2 2014/02/12 23:24:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: convert_xmm_s87.c,v 1.3 2014/02/15 22:20:42 dsl Exp $");
 
 
 #include <sys/param.h>
@@ -131,10 +131,11 @@ process_s87_to_xmm(const struct save87 *s87, struct fxsave *sxmm)
 	sxmm->fx_dp = s87->s87_dp;
 
 	/* Tag word */
-	tag = s87->s87_tw & 0xffff;	/* 0b11 => unused */
+	tag = s87->s87_tw;	/* 0b11 => unused */
 	if (tag == 0xffff) {
-		/* All unused - values don't matter */
+		/* All unused - values don't matter, zero for safety */
 		sxmm->fx_tw = 0;
+		memset(&sxmm->fx_87_ac, 0, sizeof sxmm->fx_87_ac);
 		return;
 	}
 
