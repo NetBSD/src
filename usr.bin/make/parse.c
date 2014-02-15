@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.193 2014/01/10 16:12:52 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.194 2014/02/15 00:17:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.193 2014/01/10 16:12:52 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.194 2014/02/15 00:17:17 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.193 2014/01/10 16:12:52 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.194 2014/02/15 00:17:17 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2236,7 +2236,7 @@ ParseDoInclude(char *line)
  * Side Effects:
  *	The .INCLUDEDFROMFILE variable is overwritten by the contents
  *	of .PARSEFILE and the .INCLUDEDFROMDIR variable is overwriten
- *	but the contents of .PARSEDIR
+ *	by the contents of .PARSEDIR
  *---------------------------------------------------------------------
  */
 static void
@@ -2569,7 +2569,8 @@ ParseEOF(void)
 	/* We've run out of input */
 	Var_Delete(".PARSEDIR", VAR_GLOBAL);
 	Var_Delete(".PARSEFILE", VAR_GLOBAL);
-	Var_Delete(".INCLUDED_FROM", VAR_GLOBAL);
+	Var_Delete(".INCLUDEDFROMDIR", VAR_GLOBAL);
+	Var_Delete(".INCLUDEDFROMFILE", VAR_GLOBAL);
 	return DONE;
     }
 
