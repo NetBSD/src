@@ -5521,7 +5521,7 @@ do_pld (char * str)
 	  ++str;
 	}
       else /* [Rn] */
-	inst.instruction |= INDEX_UP | PRE_INDEX;
+	inst.instruction |= INDEX_UP;
     }
   else /* [Rn, ...] */
     {
@@ -5550,8 +5550,6 @@ do_pld (char * str)
 	  inst.error = _("writeback used in preload instruction");
 	  ++ str;
 	}
-
-      inst.instruction |= PRE_INDEX;
     }
 
   end_of_line (str);
@@ -10124,7 +10122,7 @@ static const struct asm_opcode insns[] =
   {"qdsub",      0xe1600050, 5,  ARM_EXT_V5ExP,    do_qadd},
 
   /*  ARM Architecture 5TE.  */
-  {"pld",        0xf450f000, 0,  ARM_EXT_V5E,      do_pld},
+  {"pld",        0xf550f000, 0,  ARM_EXT_V5E,      do_pld},
   {"ldrd",       0xe00000d0, 3,  ARM_EXT_V5E,      do_ldrd},
   {"strd",       0xe00000f0, 3,  ARM_EXT_V5E,      do_ldrd},
 
@@ -10261,6 +10259,7 @@ static const struct asm_opcode insns[] =
   { "movt",	 0xe3400000, 2,  ARM_EXT_V7A,      do_movwt},
   { "sbfx",      0xe7a00050, 4,  ARM_EXT_V7A,      do_bfx},
   { "ubfx",      0xe7e00050, 4,  ARM_EXT_V7A,      do_bfx},
+  { "pli",       0xf450f000, 0,  ARM_EXT_V7A,      do_pld},
 
   /* Core FPA instruction set (V1).  */
   {"wfs",        0xee200110, 3,  FPU_FPA_EXT_V1,   do_fpa_ctrl},
