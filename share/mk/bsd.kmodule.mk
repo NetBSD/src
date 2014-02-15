@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.13.2.1.2.1.2.2 2009/12/22 04:47:25 mrg Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.13.2.1.2.1.2.3 2014/02/15 17:48:37 matt Exp $
 
 .include <bsd.init.mk>
 .include <bsd.klinks.mk>
@@ -14,6 +14,7 @@ CFLAGS+=	-ffreestanding ${COPTS}
 CPPFLAGS+=	-nostdinc -I. -I${.CURDIR} -isystem $S -isystem $S/arch
 CPPFLAGS+=	-isystem ${S}/../common/include
 CPPFLAGS+=	-D_KERNEL -D_LKM -D_MODULE
+CPPFLAGS+=	-std=gnu99
 
 # XXX until the kernel is fixed again...
 .if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
