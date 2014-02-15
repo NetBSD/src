@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.46 2014/02/11 20:17:16 dsl Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.47 2014/02/15 10:11:15 dsl Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.46 2014/02/11 20:17:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.47 2014/02/15 10:11:15 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -83,15 +83,8 @@ linux_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 	struct pcb *pcb = lwp_getpcb(l);
 	struct trapframe *tf;
 
-	/* If we were using the FPU, forget about it. */
-	if (pcb->pcb_fpcpu != NULL)
-		fpusave_lwp(l, 0);
-
-	l->l_md.md_flags &= ~MDL_USEDFPU;
+	fpu_save_area_clear(l, __NetBSD_NPXCW__);
 	pcb->pcb_flags = 0;
-	pcb->pcb_savefpu.sv_xmm.fx_cw = __NetBSD_NPXCW__;
-	pcb->pcb_savefpu.sv_xmm.fx_mxcsr = __INITIAL_MXCSR__;
-	pcb->pcb_savefpu.sv_xmm.fx_mxcsr_mask = __INITIAL_MXCSR_MASK__;
 
 	l->l_proc->p_flag &= ~PK_32;
 
@@ -152,15 +145,9 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	else
 		sp = (char *)tf->tf_rsp - 128;
 
-	/* 
-	 * Save FPU state, if any 
-	 */
-	if (l->l_md.md_flags & MDL_USEDFPU) {
-		sp = (char *)
-		    (((long)sp - sizeof (*fpsp)) & ~0xfUL);
-		fpsp = (struct linux__fpstate *)sp;
-	} else
-		fpsp = NULL;
+	/* Save FPU state */
+	sp = (char *) (((long)sp - sizeof (*fpsp)) & ~0xfUL);
+	fpsp = (struct linux__fpstate *)sp;
 
 	/* 
 	 * Populate the rt_sigframe 
