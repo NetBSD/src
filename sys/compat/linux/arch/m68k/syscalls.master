@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.80 2013/12/24 13:41:25 njoly Exp $
+	$NetBSD: syscalls.master,v 1.81 2014/02/15 22:35:08 njoly Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -424,8 +424,8 @@
 			    const struct linux_timespec *timeout, int *uaddr2, \
 			    int val3); }
 236	UNIMPL		sendfile64
-237	UNIMPL		mincore
-238	UNIMPL		madvise
+237	NOARGS		{ int|sys||mincore(void *addr, size_t len, char *vec); }
+238	NOARGS		{ int|sys||madvise(void *addr, size_t len, int behav); }
 239	STD		{ int|linux_sys||fcntl64(int fd, int cmd, void *arg); }
 240	UNIMPL		readahead
 241	UNIMPL		io_setup
