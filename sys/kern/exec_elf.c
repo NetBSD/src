@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.55 2014/02/14 07:30:07 maxv Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.56 2014/02/15 16:17:01 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.55 2014/02/14 07:30:07 maxv Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.56 2014/02/15 16:17:01 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -283,7 +283,7 @@ elf_copyargs(struct lwp *l, struct exec_package *pack,
  * Check header for validity; return 0 if ok, ENOEXEC if error
  */
 int
-elf_check_header(Elf_Ehdr *eh, int type)
+elf_check_header(Elf_Ehdr *eh)
 {
 
 	if (memcmp(eh->e_ident, ELFMAG, SELFMAG) != 0 ||
@@ -299,9 +299,6 @@ elf_check_header(Elf_Ehdr *eh, int type)
 	}
 
 	if (ELF_EHDR_FLAGS_OK(eh) == 0)
-		return ENOEXEC;
-
-	if (eh->e_type != type)
 		return ENOEXEC;
 
 	if (eh->e_shnum > MAXSHNUM || eh->e_phnum > MAXPHNUM)
@@ -491,10 +488,9 @@ elf_load_file(struct lwp *l, struct exec_package *epp, char *path,
 	if ((error = exec_read_from(l, vp, 0, &eh, sizeof(eh))) != 0)
 		goto bad;
 
-	if ((error = elf_check_header(&eh, ET_DYN)) != 0)
+	if ((error = elf_check_header(&eh)) != 0)
 		goto bad;
-
-	if (eh.e_phnum == 0) {
+	if (eh.e_type != ET_DYN || eh.e_phnum == 0) {
 		error = ENOEXEC;
 		goto bad;
 	}
@@ -667,17 +663,20 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 	char *interp = NULL;
 	u_long phsize;
 	struct elf_args *ap = NULL;
-	bool is_dyn;
+	bool is_dyn = false;
 
 	if (epp->ep_hdrvalid < sizeof(Elf_Ehdr))
 		return ENOEXEC;
+	if ((error = elf_check_header(eh)) != 0)
+		return error;
 
-	is_dyn = elf_check_header(eh, ET_DYN) == 0;
-	/*
-	 * XXX allow for executing shared objects. It seems silly
-	 * but other ELF-based systems allow it as well.
-	 */
-	if (!is_dyn && elf_check_header(eh, ET_EXEC) != 0)
+	if (eh->e_type == ET_DYN)
+		/*
+		 * XXX allow for executing shared objects. It seems silly
+		 * but other ELF-based systems allow it as well.
+		 */
+		is_dyn = true;
+	else if (eh->e_type != ET_EXEC)
 		return ENOEXEC;
 
 	if (eh->e_phnum == 0)
