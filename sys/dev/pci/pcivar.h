@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.83.12.1 2013/11/05 18:34:44 matt Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.83.12.2 2014/02/15 10:17:20 matt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -123,11 +123,18 @@ struct pci_attach_args {
  * Flags given in the bus and device attachment args.
  */
 #define	PCI_FLAGS_IO_ENABLED	0x01		/* I/O space is enabled */
+#define PCI_FLAGS_IO_OKAY	PCI_FLAGS_IO_ENABLED
 #define	PCI_FLAGS_MEM_ENABLED	0x02		/* memory space is enabled */
+#define PCI_FLAGS_MEM_OKAY	PCI_FLAGS_MEM_ENABLED
 #define	PCI_FLAGS_MRL_OKAY	0x04		/* Memory Read Line okay */
 #define	PCI_FLAGS_MRM_OKAY	0x08		/* Memory Read Multiple okay */
 #define	PCI_FLAGS_MWI_OKAY	0x10		/* Memory Write and Invalidate
 						   okay */
+#define PCI_FLAGS_MSI_OKAY	0x20		/* Message Signaled Interrupts
+						   okay */
+#define PCI_FLAGS_MSIX_OKAY	0x40		/* Message Signaled Interrupts
+						   (Extended) okay */  
+
 
 /*
  * PCI device 'quirks'.
