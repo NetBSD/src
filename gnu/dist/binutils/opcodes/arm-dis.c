@@ -82,6 +82,7 @@
    %C			print the PSR sub type.
    %E			print the LSB and WIDTH fields of a BFI or BFC instruction.
    %F			print the COUNT field of a LFM/SFM instruction.
+   %Y			print address for pli instruction.
 IWMMXT specific format options:
    %<bitfield>g         print as an iWMMXt 64-bit register
    %<bitfield>G         print as an iWMMXt general purpose or control register
@@ -130,6 +131,7 @@ static const struct arm_opcode arm_opcodes[] =
   {ARM_EXT_V7A, 0xf57ff050, 0xfffffff0, "dsb\t%#0-3d"},
   {ARM_EXT_V7A, 0xf57ff06f, 0xffffffff, "isb"},
   {ARM_EXT_V7A, 0xf57ff060, 0xfffffff0, "isb\t%#0-3d"},
+  {ARM_EXT_V7A, 0xf450f000, 0xff70f000, "pli\t%Y"},
 
   /* ARM V6Z instructions.  */
   {ARM_EXT_V6Z, 0x01600070, 0x0ff000f0, "smi%c\t%e"},
@@ -353,7 +355,7 @@ static const struct arm_opcode arm_opcodes[] =
   /* V5E "El Segundo" Instructions.  */    
   {ARM_EXT_V5E, 0x000000d0, 0x0e1000f0, "ldr%cd\t%12-15r, %s"},
   {ARM_EXT_V5E, 0x000000f0, 0x0e1000f0, "str%cd\t%12-15r, %s"},
-  {ARM_EXT_V5E, 0xf450f000, 0xfc70f000, "pld\t%a"},
+  {ARM_EXT_V5E, 0xf550f000, 0xff70f000, "pld\t%a"},
   {ARM_EXT_V5ExP, 0x01000080, 0x0ff000f0, "smlabb%c\t%16-19r, %0-3r, %8-11r, %12-15r"},
   {ARM_EXT_V5ExP, 0x010000a0, 0x0ff000f0, "smlatb%c\t%16-19r, %0-3r, %8-11r, %12-15r"},
   {ARM_EXT_V5ExP, 0x010000c0, 0x0ff000f0, "smlabt%c\t%16-19r, %0-3r, %8-11r, %12-15r"},
@@ -957,6 +959,9 @@ print_insn_arm (pc, info, given)
 		      func (stream, "%%");
 		      break;
 
+		    case 'Y':
+		      given |= 0x01000000;
+		      /*FALLTHROUGH*/
 		    case 'a':
 		      if (((given & 0x000f0000) == 0x000f0000)
 			  && ((given & 0x02000000) == 0))
