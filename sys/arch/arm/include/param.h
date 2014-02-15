@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.12.12.1 2014/02/15 16:18:36 matt Exp $	*/
+/*	$NetBSD: param.h,v 1.12.12.2 2014/02/15 16:30:23 matt Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -151,7 +151,7 @@
 #define ALIGNBYTES		3
 #define ALIGN(p)		(((uintptr_t)(p) + ALIGNBYTES) & ~ALIGNBYTES)
 #define ALIGNED_POINTER(p,t)	(((uintptr_t)(p) % sizeof(t)) == 0)
-#define STACK_ALIGNBYTES	(8 - 1)
+#define STACKALIGNBYTES		(8 - 1)
 #define STACKALIGN(p)		((uintptr_t)(p) & ~STACKALIGNBYTES)
 
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
