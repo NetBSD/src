@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.5 2014/02/15 10:11:15 dsl Exp $	*/
+/*	$NetBSD: fpu.c,v 1.6 2014/02/15 22:20:42 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.5 2014/02/15 10:11:15 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.6 2014/02/15 22:20:42 dsl Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -128,6 +128,14 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.5 2014/02/15 10:11:15 dsl Exp $");
 #define clts() HYPERVISOR_fpu_taskswitch(0)
 #define stts() HYPERVISOR_fpu_taskswitch(1)
 #endif
+
+static inline union savefpu *
+process_fpframe(struct lwp *lwp)
+{
+	struct pcb *pcb = lwp_getpcb(lwp);
+
+	return &pcb->pcb_savefpu;
+}
 
 /*
  * We do lazy initialization and switching using the TS bit in cr0 and the
@@ -542,13 +550,11 @@ fpusave_lwp(struct lwp *l, bool save)
 void
 fpu_save_area_clear(struct lwp *lwp, unsigned int x87_cw)
 {
-	struct pcb *pcb;
 	union savefpu *fpu_save;
 
 	fpusave_lwp(lwp, false);
 
-	pcb = lwp_getpcb(lwp);
-	fpu_save = &pcb->pcb_savefpu;
+	fpu_save = process_fpframe(lwp);
 
 	if (i386_use_fxsave) {
 		memset(&fpu_save->sv_xmm, 0, sizeof fpu_save->sv_xmm);
@@ -567,8 +573,7 @@ fpu_save_area_clear(struct lwp *lwp, unsigned int x87_cw)
 void
 fpu_save_area_reset(struct lwp *lwp)
 {
-	struct pcb *pcb = lwp_getpcb(lwp);
-	union savefpu *fpu_save = &pcb->pcb_savefpu;
+	union savefpu *fpu_save = process_fpframe(lwp);
 
 	if (i386_use_fxsave) {
 		fpu_save->sv_xmm.fx_mxcsr = __INITIAL_MXCSR__;
@@ -578,5 +583,76 @@ fpu_save_area_reset(struct lwp *lwp)
 	} else {
 		fpu_save->sv_87.s87_tw = 0xffff;
 		fpu_save->sv_87.s87_cw = fpu_save->sv_os.fxo_dflt_cw;
+	}
+}
+
+/*
+ * Write the FP registers.
+ * Buffer has usually come from userspace so should not be trusted.
+ */
+void
+process_write_fpregs_xmm(struct lwp *lwp, const struct fxsave *fpregs)
+{
+	union savefpu *fpu_save;
+
+	fpusave_lwp(lwp, false);
+	fpu_save = process_fpframe(lwp);
+
+	if (i386_use_fxsave) {
+		memcpy(&fpu_save->sv_xmm, fpregs,
+		    sizeof fpu_save->sv_xmm);
+		/* Invalid bits in the mxcsr_mask will cause faults */
+		fpu_save->sv_xmm.fx_mxcsr_mask &= __INITIAL_MXCSR_MASK__;
+	} else {
+		process_xmm_to_s87(fpregs, &fpu_save->sv_87);
+	}
+}
+
+/* We need to use x87 format for 32bit ptrace */
+void
+process_write_fpregs_s87(struct lwp *lwp, const struct save87 *fpregs)
+{
+
+	if (i386_use_fxsave) {
+		/* Save so we don't lose the xmm registers */
+		fpusave_lwp(lwp, true);
+		process_s87_to_xmm(fpregs, &process_fpframe(lwp)->sv_xmm);
+	} else {
+		fpusave_lwp(lwp, false);
+		memcpy(&process_fpframe(lwp)->sv_87, fpregs,
+		    sizeof process_fpframe(lwp)->sv_87);
+	}
+}
+
+/*
+ * Read fpu registers, the buffer is usually copied out to userspace.
+ * Ensure we write to the entire structure.
+ */
+void
+process_read_fpregs_xmm(struct lwp *lwp, struct fxsave *fpregs)
+{
+	fpusave_lwp(lwp, true);
+	if (i386_use_fxsave) {
+		memcpy(fpregs, &process_fpframe(lwp)->sv_xmm,
+		    sizeof process_fpframe(lwp)->sv_xmm);
+	} else {
+		/* This usually gets copied to userspace */
+		memset(fpregs, 0, sizeof *fpregs);
+		process_s87_to_xmm(&process_fpframe(lwp)->sv_87, fpregs);
+
+	}
+}
+
+void
+process_read_fpregs_s87(struct lwp *lwp, struct save87 *fpregs)
+{
+	fpusave_lwp(lwp, true);
+
+	if (i386_use_fxsave) {
+		memset(fpregs, 0, 12);
+		process_xmm_to_s87(&process_fpframe(lwp)->sv_xmm, fpregs);
+	} else {
+		memcpy(fpregs, &process_fpframe(lwp)->sv_87,
+		    sizeof process_fpframe(lwp)->sv_87);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.83 2014/02/15 10:11:15 dsl Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.84 2014/02/15 22:20:41 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.83 2014/02/15 10:11:15 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.84 2014/02/15 22:20:41 dsl Exp $");
 
 #include "opt_vm86.h"
 #include "opt_ptrace.h"
@@ -80,14 +80,6 @@ process_frame(struct lwp *l)
 {
 
 	return (l->l_md.md_regs);
-}
-
-static inline union savefpu *
-process_fpframe(struct lwp *l)
-{
-	struct pcb *pcb = lwp_getpcb(l);
-
-	return &pcb->pcb_savefpu;
 }
 
 int
@@ -129,16 +121,10 @@ process_read_regs(struct lwp *l, struct reg *regs)
 int
 process_read_fpregs(struct lwp *l, struct fpreg *regs, size_t *sz)
 {
-	union savefpu *frame = process_fpframe(l);
-
-	fpusave_lwp(l, true);
 
 	__CTASSERT(sizeof *regs == sizeof (struct save87));
-	if (i386_use_fxsave) {
-		process_xmm_to_s87(&frame->sv_xmm, (struct save87 *)regs);
-	} else
-		memcpy(regs, &frame->sv_87, sizeof(*regs));
-	return (0);
+	process_read_fpregs_s87(l, (struct save87 *)regs);
+	return 0;
 }
 
 #ifdef PTRACE
@@ -200,16 +186,12 @@ process_write_regs(struct lwp *l, const struct reg *regs)
 int
 process_write_fpregs(struct lwp *l, const struct fpreg *regs, size_t sz)
 {
-	union savefpu *frame = process_fpframe(l);
 
-	fpusave_lwp(l, false);
-
-	if (i386_use_fxsave) {
-		process_s87_to_xmm((const struct save87 *)regs, &frame->sv_xmm);
-	} else
-		memcpy(&frame->sv_87, regs, sizeof(*regs));
-	return (0);
+	__CTASSERT(sizeof *regs == sizeof (struct save87));
+	process_write_fpregs_s87(l, (const struct save87 *)regs);
+	return 0;
 }
+
 
 int
 process_sstep(struct lwp *l, int sstep)
@@ -239,26 +221,18 @@ static int
 process_machdep_read_xmmregs(struct lwp *l, struct xmmregs *regs)
 {
 
-	if (i386_use_fxsave == 0)
-		return (EINVAL);
-
-	fpusave_lwp(l, true);
-
-	memcpy(regs, &process_fpframe(l)->sv_xmm, sizeof(*regs));
-	return (0);
+	__CTASSERT(sizeof *regs == sizeof (struct fxsave));
+	process_read_fpregs_xmm(l, (struct fxsave *)regs);
+	return 0;
 }
 
 static int
 process_machdep_write_xmmregs(struct lwp *l, struct xmmregs *regs)
 {
 
-	if (i386_use_fxsave == 0)
-		return (EINVAL);
-
-	fpusave_lwp(l, false);
-
-	memcpy(&process_fpframe(l)->sv_xmm, regs, sizeof(*regs));
-	return (0);
+	__CTASSERT(sizeof *regs == sizeof (struct fxsave));
+	process_write_fpregs_xmm(l, (const struct fxsave *)regs);
+	return 0;
 }
 
 int

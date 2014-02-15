@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.28 2014/02/15 10:11:14 dsl Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.29 2014/02/15 22:20:41 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.28 2014/02/15 10:11:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.29 2014/02/15 22:20:41 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.28 2014/02/15 10:11:14 dsl Exp
 #include <x86/fpu.h>
 
 static inline struct trapframe *process_frame(struct lwp *);
-static inline struct fxsave *process_fpframe(struct lwp *);
 #if 0
 static inline int verr_gdt(struct pmap *, int sel);
 static inline int verr_ldt(struct pmap *, int sel);
@@ -80,14 +79,6 @@ process_frame(struct lwp *l)
 {
 
 	return (l->l_md.md_regs);
-}
-
-static inline struct fxsave *
-process_fpframe(struct lwp *l)
-{
-	struct pcb *pcb = lwp_getpcb(l);
-
-	return &pcb->pcb_savefpu.sv_xmm;
 }
 
 int
@@ -106,10 +97,9 @@ int
 process_read_fpregs(struct lwp *l, struct fpreg *regs, size_t *sz)
 {
 
-	fpusave_lwp(l, true);
+	process_read_fpregs_xmm(l, &regs->fxstate);
 
-	regs->fxstate = *process_fpframe(l);
-	return (0);
+	return 0;
 }
 
 int
@@ -139,10 +129,8 @@ int
 process_write_fpregs(struct lwp *l, const struct fpreg *regs, size_t sz)
 {
 
-	fpusave_lwp(l, false);
-
-	memcpy(process_fpframe(l), &regs->fxstate, sizeof(*regs));
-	return (0);
+	process_write_fpregs_xmm(l, &regs->fxstate);
+	return 0;
 }
 
 int

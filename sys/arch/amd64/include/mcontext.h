@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.16 2012/12/15 22:39:04 dsl Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.17 2014/02/15 22:20:41 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -131,18 +131,12 @@ typedef struct {
 	union {
 		struct {
 			int	__fp_state[27];	/* Environment and registers */
-			int	__fp_status;	/* Software status word */
 		} __fpchip_state;
-		struct {
-			char	__fp_emul[246];
-			char	__fp_epad[2];
-		} __fp_emul_space;
 		struct {
 			char	__fp_xmm[512];
 		} __fp_xmm_state;
-		int	__fp_fpregs[128];
 	} __fp_reg_set;
-	int	__fp_wregs[33];			/* Weitek? */
+	int	__fp_pad[33];			/* Historic padding */
 } __fpregset32_t;
 
 typedef struct {
@@ -150,6 +144,8 @@ typedef struct {
 	__fpregset32_t	__fpregs;
 	uint32_t	_mc_tlsbase;
 } mcontext32_t;
+
+#define _UC_FXSAVE       0x20    /* FP state is in FXSAVE format in XMM space */
 
 #define	_UC_MACHINE32_PAD	4
 #define	__UCONTEXT32_SIZE	776
