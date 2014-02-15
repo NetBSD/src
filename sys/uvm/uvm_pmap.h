@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pmap.h,v 1.23 2008/07/16 14:33:09 matt Exp $	*/
+/*	$NetBSD: uvm_pmap.h,v 1.23.10.1 2014/02/15 10:18:33 matt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -86,6 +86,9 @@ typedef struct pmap_statistics	*pmap_statistics_t;
 #include <machine/pmap.h>
 #endif
 
+/* All accesses are uncacheable. No speculative accesses. */
+#define PMAP_NOCACHE	0x00000100	/* [BOTH] */
+
 /*
  * Flags passed to pmap_enter().  Note the bottom 3 bits are VM_PROT_*
  * bits, used to indicate the access type that was made (to seed modified
@@ -100,6 +103,10 @@ typedef struct pmap_statistics	*pmap_statistics_t;
 #ifndef PMAP_KMPAGE
 #define	PMAP_KMPAGE	0x00000000	/* this is from the kmem allocator */
 #endif
+
+#define PMAP_MD_MASK	0xff000000	/* [BOTH] Machine-dependent bits */
+#define PMAP_PROT_MASK	0x0000000f	/* [BOTH] VM_PROT_* bit mask */
+
 
 #ifndef PMAP_EXCLUDE_DECLS	/* Used in Sparc port to virtualize pmap mod */
 #ifdef _KERNEL
