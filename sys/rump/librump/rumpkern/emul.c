@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.53 2008/10/14 10:42:27 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.53.8.1 2014/02/15 17:48:09 matt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -90,6 +90,16 @@ const char *domainname;
 int domainnamelen;
 
 const struct filterops seltrue_filtops;
+
+void
+vpanic(const char *fmt, va_list ap)
+{
+
+	printf("panic: ");
+	vprintf(fmt, ap);
+	printf("\n");
+	abort();
+}
 
 void
 panic(const char *fmt, ...)
