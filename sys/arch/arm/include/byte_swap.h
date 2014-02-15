@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.8 2008/04/28 20:23:14 martin Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.8.18.1 2014/02/15 16:18:36 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2002 The NetBSD Foundation, Inc.
@@ -32,6 +32,33 @@
 #ifndef _ARM_BYTE_SWAP_H_
 #define	_ARM_BYTE_SWAP_H_
 
+#ifdef _LOCORE
+
+#if defined(_ARM_ARCH_6) || defined(_ARM_ARCH_7)
+
+#define	BSWAP16(_src, _dst, _tmp)		\
+	rev16	_dst, _src
+#define	BSWAP32(_src, _dst, _tmp)		\
+	rev	_dst, _src
+
+#else
+
+#define	BSWAP16(_src, _dst, _tmp)		\
+	mov	_tmp, _src, ror #8		;\
+	orr	_tmp, _tmp, _tmp, lsr #16	;\
+	bic	_dst, _tmp, _tmp, lsl #16
+
+#define	BSWAP32(_src, _dst, _tmp)		\
+	eor	_tmp, _src, _src, ror #16	;\
+	bic	_tmp, _tmp, #0x00FF0000		;\
+	mov	_dst, _src, ror #8		;\
+	eor	_dst, _dst, _tmp, lsr #8
+
+#endif
+
+
+#else
+
 #ifdef __GNUC__
 #include <sys/types.h>
 __BEGIN_DECLS
@@ -40,16 +67,20 @@ __BEGIN_DECLS
 static __inline uint32_t
 __byte_swap_u32_variable(uint32_t v)
 {
-#ifdef _ARM_ARCH_6
-	__asm("rev\t%0, %1" : "=r" (v) : "0" (v));
-#else
 	uint32_t t1;
+
+#ifdef _ARM_ARCH_6
+	if (!__builtin_constant_p(v)) {
+		__asm("rev\t%0, %1" : "=r" (v) : "0" (v));
+		return v;
+	}
+#endif
 
 	t1 = v ^ ((v << 16) | (v >> 16));
 	t1 &= 0xff00ffffU;
 	v = (v >> 8) | (v << 24);
 	v ^= (t1 >> 8);
-#endif
+
 	return (v);
 }
 
@@ -59,18 +90,25 @@ __byte_swap_u16_variable(uint16_t v)
 {
 
 #ifdef _ARM_ARCH_6
-	__asm("rev16\t%0, %1" : "=r" (v) : "0" (v));
-#elif !defined(__thumb__)
-	__asm volatile(
-		"mov	%0, %1, ror #8\n"
-		"orr	%0, %0, %0, lsr #16\n"
-		"bic	%0, %0, %0, lsl #16"
-	: "=r" (v)
-	: "0" (v));
-#else
+	if (!__builtin_constant_p(v)) {
+		uint32_t v32 = v;
+		__asm("rev16\t%0, %1" : "=r" (v32) : "0" (v32));
+		return v32;
+	}
+#elif !defined(__thumb__) && 0	/* gcc produces decent code for this */
+	if (!__builtin_constant_p(v)) {
+		uint32_t v0 = v;
+		__asm volatile(
+			"mov	%0, %1, ror #8\n"
+			"orr	%0, %0, %0, lsr #16\n"
+			"bic	%0, %0, %0, lsl #16"
+		: "=&r" (v0)
+		: "0" (v0));
+		return v0;
+	}
+#endif
 	v &= 0xffff;
 	v = (v >> 8) | (v << 8);
-#endif
 
 	return (v);
 }
@@ -78,5 +116,6 @@ __byte_swap_u16_variable(uint16_t v)
 __END_DECLS
 #endif
 
+#endif	/* _LOCORE */
 
 #endif /* _ARM_BYTE_SWAP_H_ */

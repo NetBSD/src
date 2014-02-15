@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.3 2008/04/28 20:23:14 martin Exp $	*/
+/*	$NetBSD: picvar.h,v 1.3.16.1 2014/02/15 16:18:37 matt Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,6 +30,10 @@
 #ifndef _ARM_PIC_PICVAR_H_
 #define _ARM_PIC_PICVAR_H_
 
+#ifdef MULTIPROCESSOR
+#include <sys/kcpuset.h>
+#endif
+
 int	_splraise(int);
 int	_spllower(int);
 void	splx(int);
@@ -38,6 +42,17 @@ const char *
 
 struct pic_softc;
 struct intrsource;
+struct cpu_info;
+
+#define	IPI_AST			0	/* just get an interrupt */
+#define	IPI_XCALL		1	/* xcall */
+#define	IPI_NOP			2	/* just get an interrupt (armv6) */
+#ifndef __HAVE_PREEMPTION
+#define	NIPI			3
+#else
+#define	IPI_KPREEMPT		4	/* cause a preemption */
+#define	NIPI			4
+#endif
 
 int	pic_handle_intr(void *);
 void	pic_mark_pending(struct pic_softc *pic, int irq);
@@ -54,8 +69,17 @@ void	pic_dispatch(struct intrsource *is, void *frame);
 void	*intr_establish(int irq, int ipl, int type, int (*func)(void *),
 	    void *arg);
 void	intr_disestablish(void *);
+#ifdef MULTIPROCESSOR
+void	intr_cpu_init(struct cpu_info *);
+void	intr_ipi_send(const kcpuset_t *, u_long ipi);
+#endif
 
 #ifdef _INTR_PRIVATE
+
+#include "opt_arm_intr_impl.h"
+
+#include <sys/evcnt.h>
+#include <sys/percpu.h>
 
 #ifndef PIC_MAXPICS
 #define PIC_MAXPICS	32
@@ -75,17 +99,25 @@ struct intrsource {
 	uint8_t is_ipl;				/* IPL_xxx */
 	uint8_t is_irq;				/* local to pic */
 	uint8_t is_iplidx;
-	struct evcnt is_ev;
 	char is_source[16];
 };
+
+struct pic_percpu {
+	struct evcnt *pcpu_evs;
+	char *pcpu_name;
+	uint32_t pcpu_magic;
+};
+
+#define	PICPERCPU_MAGIC		0xfeedface
 
 struct pic_softc {
 	const struct pic_ops *pic_ops;
 	struct intrsource **pic_sources;
-	uint32_t pic_pending_irqs[(PIC_MAXSOURCES + 31) / 32];
-	uint32_t pic_blocked_irqs[(PIC_MAXSOURCES + 31) / 32];
-	uint32_t pic_pending_ipls;
+	volatile uint32_t pic_pending_irqs[(PIC_MAXSOURCES + 31) / 32];
+	volatile uint32_t pic_blocked_irqs[(PIC_MAXSOURCES + 31) / 32];
+	volatile uint32_t pic_pending_ipls;
 	size_t pic_maxsources;
+	percpu_t *pic_percpu;
 	uint8_t pic_id;
 	int16_t pic_irqbase;
 	char pic_name[14];
@@ -98,11 +130,37 @@ struct pic_ops {
 
 	void (*pic_establish_irq)(struct pic_softc *, struct intrsource *);
 	void (*pic_source_name)(struct pic_softc *, int, char *, size_t);
+
+#ifdef __HAVE_PIC_SET_PRIORITY
+	void (*pic_set_priority)(struct pic_softc *, int);
+#endif
+#ifdef MULTIPROCESSOR
+	void (*pic_cpu_init)(struct pic_softc *, struct cpu_info *);
+	void (*pic_ipi_send)(struct pic_softc *, const kcpuset_t *, u_long);
+#endif
 };
 
+#ifdef __HAVE_PIC_SET_PRIORITY
+/*
+ * This is used to update a hardware pic with a value corresponding
+ * to the ipl being set.
+ */
+struct cpu_info;
+void	pic_set_priority(struct cpu_info *, int);
+#else
+/* Using an inline causes catch-22 problems with cpu.h */
+#define	pic_set_priority(ci, newipl)	((void)((ci)->ci_cpl = (newipl)))
+#endif
 
 void	pic_add(struct pic_softc *, int);
 void	pic_do_pending_int(void);
+#ifdef MULTIPROCESSOR
+int	pic_ipi_nop(void *);
+int	pic_ipi_xcall(void *);
+#endif
+#ifdef __HAVE_PIC_FAST_SOFTINTS
+int	pic_handle_softint(void *);
+#endif
 
 extern struct pic_softc * pic_list[PIC_MAXPICS];
 #endif /* _INTR_PRIVATE */

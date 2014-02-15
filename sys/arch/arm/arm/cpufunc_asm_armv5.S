@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_armv5.S,v 1.3 2007/01/06 00:50:54 christos Exp $	*/
+/*	$NetBSD: cpufunc_asm_armv5.S,v 1.3.68.1 2014/02/15 16:18:35 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2005 ARM Limited
@@ -33,8 +33,10 @@
  * operations.
  */
  
-#include <machine/cpu.h>
 #include <machine/asm.h>
+#include <arm/locore.h>
+
+#include "assym.h"
 
 /*
  * Functions to set the MMU Translation Table Base register
@@ -43,13 +45,16 @@
  * addresses that are about to change.
  */
 ENTRY(armv5_setttb)
+	cmp	r1, #0
+	beq	1f
+
 	stmfd	sp!, {r0, lr}
 	bl	_C_LABEL(armv5_idcache_wbinv_all)
 	ldmfd	sp!, {r0, lr}
+	cmp	r0, #1
 
-	mcr	p15, 0, r0, c2, c0, 0	/* load new TTB */
-
-	mcr	p15, 0, r0, c8, c7, 0	/* invalidate I+D TLBs */
+1:	mcr	p15, 0, r0, c2, c0, 0	/* load new TTB */
+	mcrne	p15, 0, r0, c8, c7, 0	/* invalidate I+D TLBs */
 	RET
 
 /*
@@ -107,7 +112,7 @@ ENTRY_NP(armv5_icache_sync_all)
 	RET
 
 .Larmv5_line_size:
-	.word	_C_LABEL(arm_pdcache_line_size)
+	.word	_C_LABEL(arm_pcache) + DCACHE_LINE_SIZE
 
 ENTRY(armv5_dcache_wb_range)
 	ldr	ip, .Larmv5_line_size

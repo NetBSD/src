@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.12 2008/08/29 19:08:29 matt Exp $	*/
+/*	$NetBSD: param.h,v 1.12.12.1 2014/02/15 16:18:36 matt Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -52,50 +52,107 @@
  */
 
 #if defined(_KERNEL)
-#ifndef MACHINE_ARCH			/* XXX For now */
-#ifndef __ARMEB__
-#define	_MACHINE_ARCH	arm
-#define	MACHINE_ARCH	"arm"
+# ifndef MACHINE_ARCH			/* XXX For now */
+#  ifndef __ARMEB__
+#   ifdef __ARM_EABI__
+#    define	_MACHINE_ARCH	earm
+#    define	MACHINE_ARCH	"earm"
+#   else
+#    define	_MACHINE_ARCH	arm
+#    define	MACHINE_ARCH	"arm"
+#   endif
+#  else
+#   ifdef __ARM_EABI__
+#    define	_MACHINE_ARCH	earmeb
+#    define	MACHINE_ARCH	"earmeb"
+#   else
+#    define	_MACHINE_ARCH	armeb
+#    define	MACHINE_ARCH	"armeb"
+#   endif
+#  endif /* __ARMEB__ */
+# endif /* MACHINE_ARCH */
 #else
-#define	_MACHINE_ARCH	armeb
-#define	MACHINE_ARCH	"armeb"
-#endif /* __ARMEB__ */
-#endif /* MACHINE_ARCH */
-#else
-#undef _MACHINE
-#undef MACHINE
-#undef _MACHINE_ARCH
-#undef MACHINE_ARCH
-#define	_MACHINE	arm
-#define	MACHINE		"arm"
-#ifndef __ARMEB__
-#define	_MACHINE_ARCH	arm
-#define	MACHINE_ARCH	"arm"
-#else
-#define	_MACHINE_ARCH	armeb
-#define	MACHINE_ARCH	"armeb"
-#endif /* __ARMEB__ */
+# undef _MACHINE
+# undef MACHINE
+# undef _MACHINE_ARCH
+# undef MACHINE_ARCH
+# define	_MACHINE	arm
+# define	MACHINE		"arm"
+# ifndef __ARMEB__
+#  ifdef __ARM_EABI__
+#   ifdef __ARM_PCS_VFP
+#    ifdef _ARM_ARCH_7
+#     define	_MACHINE_ARCH	earmv7hf
+#     define	MACHINE_ARCH	"earmv7hf"
+#    elif defined(_ARM_ARCH_6)
+#     define	_MACHINE_ARCH	earmv6hf
+#     define	MACHINE_ARCH	"earmv6hf"
+#    else
+#     define	_MACHINE_ARCH	earmhf
+#     define	MACHINE_ARCH	"earmhf"
+#    endif
+#   else
+#    ifdef _ARM_ARCH_7
+#     define	_MACHINE_ARCH	earmv7
+#     define	MACHINE_ARCH	"earmv7"
+#    elif defined(_ARM_ARCH_6)
+#     define	_MACHINE_ARCH	earmv6
+#     define	MACHINE_ARCH	"earmv6"
+#    elif !defined(_ARM_ARCH_5T)
+#     define	_MACHINE_ARCH	earmv4
+#     define	MACHINE_ARCH	"earmv4"
+#    else
+#     define	_MACHINE_ARCH	earm
+#     define	MACHINE_ARCH	"earm"
+#    endif
+#   endif
+#  else
+#   define	_MACHINE_ARCH	arm
+#   define	MACHINE_ARCH	"arm"
+#  endif
+# else
+#  ifdef __ARM_EABI__
+#   ifdef __ARM_PCS_VFP
+#    ifdef _ARM_ARCH_7
+#     define	_MACHINE_ARCH	earmv7hfeb
+#     define	MACHINE_ARCH	"earmv7hfeb"
+#    elif defined(_ARM_ARCH_6)
+#     define	_MACHINE_ARCH	earmv6hfeb
+#     define	MACHINE_ARCH	"earmv6hfeb"
+#    else
+#     define	_MACHINE_ARCH	earmhfeb
+#     define	MACHINE_ARCH	"earmhfeb"
+#    endif
+#  else
+#    ifdef _ARM_ARCH_7
+#     define	_MACHINE_ARCH	earmv7eb
+#     define	MACHINE_ARCH	"earmv7eb"
+#    elif defined(_ARM_ARCH_6)
+#     define	_MACHINE_ARCH	earmv6eb
+#     define	MACHINE_ARCH	"earmv6eb"
+#    elif !defined(_ARM_ARCH_5T)
+#     define	_MACHINE_ARCH	earmv4eb
+#     define	MACHINE_ARCH	"earmv4eb"
+#    else
+#     define	_MACHINE_ARCH	earmeb
+#     define	MACHINE_ARCH	"earmeb"
+#    endif
+#   endif
+#  else
+#   define	_MACHINE_ARCH	armeb
+#   define	MACHINE_ARCH	"armeb"
+#  endif
+# endif /* __ARMEB__ */
 #endif /* !_KERNEL */
 
 #define	MID_MACHINE	MID_ARM6
 
-/*
- * Round p (pointer or byte index) up to a correctly-aligned value
- * for all data types (int, long, ...).   The result is u_int and
- * must be cast to any desired pointer type.
- *
- * ALIGNED_POINTER is a boolean macro that checks whether an address
- * is valid to fetch data elements of type t from on this architecture.
- * This does not reflect the optimal alignment, just the possibility
- * (within reasonable limits). 
- *
- */
-#define ALIGNBYTES		(sizeof(int) - 1)
-#define ALIGN(p)		(((u_int)(p) + ALIGNBYTES) &~ ALIGNBYTES)
-#define ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
 /* ARM-specific macro to align a stack pointer (downwards). */
-#define STACKALIGNBYTES		(8 - 1)
-#define STACKALIGN(p)		((u_int)(p) &~ STACKALIGNBYTES)
+#define ALIGNBYTES		3
+#define ALIGN(p)		(((uintptr_t)(p) + ALIGNBYTES) & ~ALIGNBYTES)
+#define ALIGNED_POINTER(p,t)	(((uintptr_t)(p) % sizeof(t)) == 0)
+#define STACK_ALIGNBYTES	(8 - 1)
+#define STACKALIGN(p)		((uintptr_t)(p) & ~STACKALIGNBYTES)
 
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
 #define	DEV_BSIZE	(1 << DEV_BSHIFT)
@@ -120,6 +177,10 @@
 #endif	/* MCLSHIFT */
 
 #define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
+
+#ifndef NMBCLUSTERS_MAX
+#define	NMBCLUSTERS_MAX	(0x2000000 / MCLBYTES)	/* Limit to 64MB for clusters */
+#endif
 
 /*
  * Compatibility /dev/zero mapping.

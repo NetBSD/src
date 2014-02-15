@@ -1,0 +1,35 @@
+# $NetBSD: files.cortex,v 1.4.6.2 2014/02/15 16:18:36 matt Exp $
+
+defflag opt_cpu_in_cksum.h			NEON_IN_CKSUM
+
+file	arch/arm/cortex/cpu_in_cksum_neon.c	(inet | inet6) & neon_in_cksum
+file	arch/arm/cortex/cpu_in_cksum_asm_neon.S	(inet | inet6) & neon_in_cksum
+
+device	armperiph {}
+attach	armperiph at mainbus
+file	arch/arm/cortex/armperiph.c		armperiph
+
+# ARM Generic Interrupt Controller (initially on Cortex-A9)
+device	armgic: pic, pic_splfuncs
+attach	armgic at armperiph
+file	arch/arm/cortex/gic.c			armgic
+
+# ARM PL310 L2 Cache Controller(initially on Cortex-A9)
+device	arml2cc
+attach	arml2cc at armperiph
+file	arch/arm/cortex/pl310.c			arml2cc
+
+# ARMv7 Generic Timer
+device	armgtmr
+attach	armgtmr at armperiph
+file	arch/arm/cortex/gtmr.c			armgtmr
+
+# A9 MPCore Global Timer
+device	a9tmr
+attach	a9tmr at armperiph
+file	arch/arm/cortex/a9tmr.c			a9tmr
+
+# A9 MPcore Watchdog Timer
+device	a9wdt: sysmon_wdog
+attach	a9wdt at armperiph
+file	arch/arm/cortex/a9wdt.c			a9wdt

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr_mbr.c,v 1.10 2007/10/17 19:53:30 garbled Exp $	*/
+/*	$NetBSD: disksubr_mbr.c,v 1.10.38.1 2014/02/15 16:18:36 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr_mbr.c,v 1.10 2007/10/17 19:53:30 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr_mbr.c,v 1.10.38.1 2014/02/15 16:18:36 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,25 +80,17 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr_mbr.c,v 1.10 2007/10/17 19:53:30 garbled Ex
 #define MBRSIGOFS 0x1fe
 static char mbrsig[2] = {0x55, 0xaa};
 
-int fat_types[] = {
-	MBR_PTYPE_FAT12, MBR_PTYPE_FAT16S,
-	MBR_PTYPE_FAT16B, MBR_PTYPE_FAT32,
-	MBR_PTYPE_FAT32L, MBR_PTYPE_FAT16L,
-	-1
-};
-
 int
-mbr_label_read(dev, strat, lp, osdep, msgp, cylp, netbsd_label_offp)
-	dev_t dev;
-	void (*strat) __P((struct buf *));
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
-	const char **msgp;
-	int *cylp, *netbsd_label_offp;
+mbr_label_read(dev_t dev,
+	void (*strat)(struct buf *),
+	struct disklabel *lp,
+	struct cpu_disklabel *osdep,
+	const char **msgp,
+	int *cylp, int *netbsd_label_offp)
 {
 	struct mbr_partition *mbrp;
 	struct partition *pp;
-	int cyl, mbrpartoff, i, *ip;
+	int cyl, mbrpartoff, i;
 	struct buf *bp;
 	int rv = 1;
 
@@ -125,9 +117,11 @@ mbr_label_read(dev, strat, lp, osdep, msgp, cylp, netbsd_label_offp)
 		goto out;
 	} else {
 		struct mbr_partition *ourmbrp = NULL;
+		int nfound = 0;
 
 		/* XXX "there has to be a better check than this." */
-		if (memcmp((char *)bp->b_data + MBRSIGOFS, mbrsig, sizeof(mbrsig))) {
+		if (memcmp((char *)bp->b_data + MBRSIGOFS, mbrsig,
+		    sizeof(mbrsig))) {
 			rv = 0;
 			goto out;
 		}
@@ -152,43 +146,54 @@ mbr_label_read(dev, strat, lp, osdep, msgp, cylp, netbsd_label_offp)
 			}
 		}
 #endif
-		for (i = 0; i < MBR_PART_COUNT; i++, mbrp++) {
-
-			strncpy(lp->d_packname, "fictitious-MBR",
-			    sizeof lp->d_packname);
+		pp = &lp->d_partitions['e' - 'a'];
+		for (i = 0; i < MBR_PART_COUNT; i++, mbrp++, pp++) {
+			if ((i == 0 && mbrp->mbrp_type == MBR_PTYPE_PMBR)
+			    || mbrp->mbrp_type == MBR_PTYPE_UNUSED) {
+				memset(pp, 0, sizeof(*pp));
+				continue;
+			}
+			if (le32toh(mbrp->mbrp_start) +
+			    le32toh(mbrp->mbrp_size) > lp->d_secperunit) {
+				/* This mbr doesn't look good.... */
+				memset(pp, 0, sizeof(*pp));
+				continue;
+			}
+			nfound++;
 
 			/* Install in partition e, f, g, or h. */
-			pp = &lp->d_partitions['e' - 'a' + i];
-			pp->p_offset = mbrp->mbrp_start;
-			pp->p_size = mbrp->mbrp_size;
-			for (ip = fat_types; *ip != -1; ip++) {
-				if (mbrp->mbrp_type == *ip)
-					pp->p_fstype = FS_MSDOS;
-			}
-			if (mbrp->mbrp_type == MBR_PTYPE_LNXEXT2)
-				pp->p_fstype = FS_EX2FS;
+			pp->p_offset = le32toh(mbrp->mbrp_start);
+			pp->p_size = le32toh(mbrp->mbrp_size);
+			pp->p_fstype = xlat_mbr_fstype(mbrp->mbrp_type);
 
 			/* is this ours? */
-			if (mbrp == ourmbrp) {
-				/* need sector address for SCSI/IDE,
-				 cylinder for ESDI/ST506/RLL */
-				mbrpartoff = mbrp->mbrp_start;
-				cyl = MBR_PCYL(mbrp->mbrp_scyl, mbrp->mbrp_ssect);
+			if (mbrp != ourmbrp)
+				continue;
+
+			/* need sector address for SCSI/IDE,
+			   cylinder for ESDI/ST506/RLL */
+			mbrpartoff = le32toh(mbrp->mbrp_start);
+			cyl = MBR_PCYL(mbrp->mbrp_scyl, mbrp->mbrp_ssect);
 
 #ifdef __i386__ /* XXX? */
-				/* update disklabel with details */
-				lp->d_partitions[2].p_size =
-				    mbrp->mbrp_size;
-				lp->d_partitions[2].p_offset = 
-				    mbrp->mbrp_start;
-				lp->d_ntracks = mbrp->mbrp_ehd + 1;
-				lp->d_nsectors = MBR_PSECT(mbrp->mbrp_esect);
-				lp->d_secpercyl =
-				    lp->d_ntracks * lp->d_nsectors;
+			/* update disklabel with details */
+			lp->d_partitions[2].p_size = le32toh(mbrp->mbrp_size);
+			lp->d_partitions[2].p_offset = 
+			    le32toh(mbrp->mbrp_start);
+			lp->d_ntracks = mbrp->mbrp_ehd + 1;
+			lp->d_nsectors = MBR_PSECT(mbrp->mbrp_esect);
+			lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
 #endif
-			}
 		}
-		lp->d_npartitions = 'e' - 'a' + i;
+		i += 'e' - 'a';
+		if (nfound > 0) {
+			lp->d_npartitions = i;
+			strncpy(lp->d_packname, "fictitious-MBR",
+			    sizeof lp->d_packname);
+		}
+		if (lp->d_npartitions < MAXPARTITIONS) {
+			memset(pp, 0, (MAXPARTITIONS - i) * sizeof(*pp));
+		}
 	}
 
 	*cylp = cyl;
@@ -199,13 +204,15 @@ out:
 	return (rv);
 }
 
+/*
+ * Return -1 not found, 0 found positive errno
+ */
 int
-mbr_label_locate(dev, strat, lp, osdep, cylp, netbsd_label_offp)
-	dev_t dev;
-	void (*strat) __P((struct buf *));
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
-	int *cylp, *netbsd_label_offp;
+mbr_label_locate(dev_t dev,
+	void (*strat)(struct buf *),
+	struct disklabel *lp,
+	struct cpu_disklabel *osdep,
+	int *cylp, int *netbsd_label_offp)
 {
 	struct mbr_partition *mbrp;
 	int cyl, mbrpartoff, i;
@@ -231,7 +238,6 @@ mbr_label_locate(dev, strat, lp, osdep, cylp, netbsd_label_offp)
 	(*strat)(bp);
 
 	if ((rv = biowait(bp)) != 0) {
-		rv = -rv;
 		goto out;
 	}
 
@@ -241,7 +247,8 @@ mbr_label_locate(dev, strat, lp, osdep, cylp, netbsd_label_offp)
 	}
 
 	/* XXX how do we check veracity/bounds of this? */
-	memcpy(mbrp, (char *)bp->b_data + MBR_PART_OFFSET, MBR_PART_COUNT * sizeof(*mbrp));
+	memcpy(mbrp, (char *)bp->b_data + MBR_PART_OFFSET,
+	    MBR_PART_COUNT * sizeof(*mbrp));
 
 	/* look for NetBSD partition */
 	ourmbrp = NULL;
@@ -264,12 +271,12 @@ mbr_label_locate(dev, strat, lp, osdep, cylp, netbsd_label_offp)
 	}
 
 	/* need sector address for SCSI/IDE, cylinder for ESDI/ST506/RLL */
-	mbrpartoff = ourmbrp->mbrp_start;
+	mbrpartoff = le32toh(ourmbrp->mbrp_start);
 	cyl = MBR_PCYL(ourmbrp->mbrp_scyl, ourmbrp->mbrp_ssect);
 
 	*cylp = cyl;
 	*netbsd_label_offp = mbrpartoff;
-	rv = 1;
+	rv = -1;
 out:
         brelse(bp, 0);
 	return (rv);

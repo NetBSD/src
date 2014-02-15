@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.15 2008/07/22 07:07:23 matt Exp $	*/
+/*	$NetBSD: ast.c,v 1.15.8.1 2014/02/15 16:18:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -41,13 +41,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.15 2008/07/22 07:07:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.15.8.1 2014/02/15 16:18:35 matt Exp $");
 
 #include "opt_ddb.h"
 
 #include <sys/param.h>
+#include <sys/cpu.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/acct.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -55,10 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.15 2008/07/22 07:07:23 matt Exp $");
 #include <sys/vmmeter.h>
 #include <sys/userret.h>
 
-#include <machine/cpu.h>
-#include <machine/frame.h>
-
-#include <arm/cpufunc.h>
+#include <arm/locore.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -76,6 +73,10 @@ userret(struct lwp *l)
 {
 	/* Invoke MI userret code */
 	mi_userret(l);
+
+#if defined(__PROG32) && defined(DIAGNOSTIC)
+	KASSERT((lwp_trapframe(l)->tf_spsr & IF32_bits) == 0);
+#endif
 }
 
 
@@ -88,8 +89,7 @@ userret(struct lwp *l)
 void
 ast(struct trapframe *tf)
 {
-	struct lwp *l = curlwp;
-	struct proc *p;
+	struct lwp * const l = curlwp;
 
 #ifdef acorn26
 	/* Enable interrupts if they were enabled before the trap. */
@@ -99,21 +99,20 @@ ast(struct trapframe *tf)
 	/* Interrupts were restored by exception_exit. */
 #endif
 
-	uvmexp.traps++;
-	uvmexp.softs++;
+#ifdef __PROG32
+	KASSERT((tf->tf_spsr & IF32_bits) == 0);
+#endif
+
+	curcpu()->ci_data.cpu_ntrap++;
+	//curcpu()->ci_data.cpu_nast++;
 
 #ifdef DEBUG
-	if (l == NULL)
-		panic("ast: no curlwp!");
-	if (&l->l_addr->u_pcb == NULL)
-		panic("ast: no pcb!");
+	KDASSERT(curcpu()->ci_cpl == IPL_NONE);
 #endif	
-
-	p = l->l_proc;
 
 	if (l->l_pflag & LP_OWEUPC) {
 		l->l_pflag &= ~LP_OWEUPC;
-		ADDUPROF(p);
+		ADDUPROF(l);
 	}
 
 	/* Allow a forced task switch. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm8.S,v 1.5 2008/04/27 18:58:43 matt Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm8.S,v 1.5.18.1 2014/02/15 16:18:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 ARM Limited
@@ -35,8 +35,8 @@
  * ARM8 assembly functions for CPU / MMU / TLB specific operations
  */
  
-#include <machine/cpu.h>
 #include <machine/asm.h>
+#include <arm/locore.h>
 
 ENTRY(arm8_clock_config)
 	mrc	p15, 0, r3, c15, c0, 0	/* Read the clock register */
@@ -65,23 +65,26 @@ ENTRY(arm8_clock_config)
  * addresses that are about to change.
  */
 ENTRY(arm8_setttb)
-	mrs	r3, cpsr_all
-	orr	r1, r3, #(I32_bit | F32_bit)
-	msr	cpsr_all, r1
+	mrs	r3, cpsr
+	orr	r2, r3, #(I32_bit | F32_bit)
+	msr	cpsr_all, r2
 
 	stmfd	sp!, {r0-r3, lr}
 	bl	_C_LABEL(arm8_cache_cleanID)
 	ldmfd	sp!, {r0-r3, lr}
-	mcr	p15, 0, r0, c7, c7, 0	/* flush I+D cache */
+
+	cmp	r1, #0			@ do we need to flush the caches?
+
+	mcrne	p15, 0, r0, c7, c7, 0	/* flush I+D cache */
 
 	/* Write the TTB */
 	mcr	p15, 0, r0, c2, c0, 0
 
 	/* If we have updated the TTB we must flush the TLB */
-	mcr	p15, 0, r0, c8, c7, 0
+	mcrne	p15, 0, r0, c8, c7, 0
 
 	/* For good measure we will flush the IDC as well */
-	mcr	p15, 0, r0, c7, c7, 0
+	mcrne	p15, 0, r0, c7, c7, 0
 
 	/* Make sure that pipeline is emptied */
 	mov	r0, r0
@@ -173,7 +176,7 @@ ENTRY(arm8_cache_purgeID)
 
 	mov	r0, #0x00000000
 
-	mrs	r3, cpsr_all
+	mrs	r3, cpsr
 	orr	r2, r3, #(I32_bit | F32_bit)
 	msr	cpsr_all, r2
 
@@ -245,7 +248,7 @@ ENTRY(arm8_cache_purgeID_E)
 	 * mcr p15, 0, rd, c7, c11, 1
 	 * mcr p15, 0, rd, c7, c7, 1
 	 */
-	mrs	r3, cpsr_all
+	mrs	r3, cpsr
 	orr	r2, r3, #(I32_bit | F32_bit)
 	msr	cpsr_all, r2
 	mcr	p15, 0, r0, c7, c11, 1	/* clean I+D single entry */
@@ -256,7 +259,7 @@ ENTRY(arm8_cache_purgeID_E)
 /*
  * Context switch.
  *
- * These is the CPU-specific parts of the context switcher cpu_switch()
+ * These are the CPU-specific parts of the context switcher cpu_switch()
  * These functions actually perform the TTB reload.
  */
 ENTRY(arm8_context_switch)

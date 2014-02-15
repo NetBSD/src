@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.52 2008/06/04 12:41:40 ad Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.52.16.1 2014/02/15 16:18:36 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.52 2008/06/04 12:41:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.52.16.1 2014/02/15 16:18:36 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,23 +48,85 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.52 2008/06/04 12:41:40 ad Exp $");
 #include <sys/vnode.h>
 #include <sys/device.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/cpu.h>
 
 #include <arm/cpufunc.h>
 
+#ifdef BUSDMA_COUNTERS
+static struct evcnt bus_dma_creates =
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "creates");
+static struct evcnt bus_dma_bounced_creates =
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "bounced creates");
+static struct evcnt bus_dma_loads =
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "loads");
+static struct evcnt bus_dma_bounced_loads =
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "bounced loads");
+static struct evcnt bus_dma_read_bounces =
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "read bounces");
+static struct evcnt bus_dma_write_bounces =
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "write bounces");
+static struct evcnt bus_dma_bounced_unloads =
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "bounced unloads");
+static struct evcnt bus_dma_unloads =
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "unloads");
+static struct evcnt bus_dma_bounced_destroys =
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "bounced destroys");
+static struct evcnt bus_dma_destroys =
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "destroys");
+static struct evcnt bus_dma_sync_prereadwrite = 
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "sync prereadwrite");
+static struct evcnt bus_dma_sync_preread_begin =
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "sync preread begin");
+static struct evcnt bus_dma_sync_preread =
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "sync preread");
+static struct evcnt bus_dma_sync_preread_tail =
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "sync preread tail");
+static struct evcnt bus_dma_sync_prewrite = 
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "sync prewrite");
+static struct evcnt bus_dma_sync_postread = 
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "sync postread");
+static struct evcnt bus_dma_sync_postreadwrite = 
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "sync postreadwrite");
+static struct evcnt bus_dma_sync_postwrite = 
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "sync postwrite");
+
+EVCNT_ATTACH_STATIC(bus_dma_creates);
+EVCNT_ATTACH_STATIC(bus_dma_bounced_creates);
+EVCNT_ATTACH_STATIC(bus_dma_loads);
+EVCNT_ATTACH_STATIC(bus_dma_bounced_loads);
+EVCNT_ATTACH_STATIC(bus_dma_read_bounces);
+EVCNT_ATTACH_STATIC(bus_dma_write_bounces);
+EVCNT_ATTACH_STATIC(bus_dma_unloads);
+EVCNT_ATTACH_STATIC(bus_dma_bounced_unloads);
+EVCNT_ATTACH_STATIC(bus_dma_destroys);
+EVCNT_ATTACH_STATIC(bus_dma_bounced_destroys);
+EVCNT_ATTACH_STATIC(bus_dma_sync_prereadwrite);
+EVCNT_ATTACH_STATIC(bus_dma_sync_preread_begin);
+EVCNT_ATTACH_STATIC(bus_dma_sync_preread);
+EVCNT_ATTACH_STATIC(bus_dma_sync_preread_tail);
+EVCNT_ATTACH_STATIC(bus_dma_sync_prewrite);
+EVCNT_ATTACH_STATIC(bus_dma_sync_postread);
+EVCNT_ATTACH_STATIC(bus_dma_sync_postreadwrite);
+EVCNT_ATTACH_STATIC(bus_dma_sync_postwrite);
+
+#define	STAT_INCR(x)	(bus_dma_ ## x.ev_count++)
+#else
+#define	STAT_INCR(x)	/*(bus_dma_ ## x.ev_count++)*/
+#endif
+
 int	_bus_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *,
 	    bus_size_t, struct vmspace *, int);
-struct arm32_dma_range *_bus_dma_inrange(struct arm32_dma_range *,
-	    int, bus_addr_t);
+static struct arm32_dma_range *
+	_bus_dma_paddr_inrange(struct arm32_dma_range *, int, paddr_t);
 
 /*
  * Check to see if the specified page is in an allowed DMA range.
  */
 inline struct arm32_dma_range *
-_bus_dma_inrange(struct arm32_dma_range *ranges, int nranges,
+_bus_dma_paddr_inrange(struct arm32_dma_range *ranges, int nranges,
     bus_addr_t curaddr)
 {
 	struct arm32_dma_range *dr;
@@ -80,22 +142,46 @@ _bus_dma_inrange(struct arm32_dma_range *ranges, int nranges,
 }
 
 /*
+ * Check to see if the specified busaddr is in an allowed DMA range.
+ */
+static inline paddr_t
+_bus_dma_busaddr_to_paddr(bus_dma_tag_t t, bus_addr_t curaddr)
+{
+	struct arm32_dma_range *dr;
+	u_int i;
+
+	if (t->_nranges == 0)
+		return curaddr;
+
+	for (i = 0, dr = t->_ranges; i < t->_nranges; i++, dr++) {
+		if (dr->dr_busbase <= curaddr
+		    && round_page(curaddr) <= dr->dr_busbase + dr->dr_len)
+			return curaddr - dr->dr_busbase + dr->dr_sysbase;
+	}
+	panic("%s: curaddr %#lx not in range", __func__, curaddr);
+}
+
+/*
  * Common function to load the specified physical address into the
  * DMA map, coalescing segments and boundary checking as necessary.
  */
 static int
 _bus_dmamap_load_paddr(bus_dma_tag_t t, bus_dmamap_t map,
-    bus_addr_t paddr, bus_size_t size)
+    bus_addr_t paddr, bus_size_t size, bool coherent)
 {
 	bus_dma_segment_t * const segs = map->dm_segs;
 	int nseg = map->dm_nsegs;
-	bus_addr_t lastaddr = 0xdead;	/* XXX gcc */
+	bus_addr_t lastaddr;
 	bus_addr_t bmask = ~(map->_dm_boundary - 1);
 	bus_addr_t curaddr;
 	bus_size_t sgsize;
+	uint32_t _ds_flags = coherent ? _BUS_DMAMAP_COHERENT : 0;
 
 	if (nseg > 0)
 		lastaddr = segs[nseg-1].ds_addr + segs[nseg-1].ds_len;
+	else
+		lastaddr = 0xdead;
+	
  again:
 	sgsize = size;
 
@@ -103,15 +189,25 @@ _bus_dmamap_load_paddr(bus_dma_tag_t t, bus_dmamap_t map,
 	if (t->_ranges != NULL) {
 		/* XXX cache last result? */
 		const struct arm32_dma_range * const dr =
-		    _bus_dma_inrange(t->_ranges, t->_nranges, paddr);
+		    _bus_dma_paddr_inrange(t->_ranges, t->_nranges, paddr);
 		if (dr == NULL)
 			return (EINVAL);
-		
+
+		/*
+		 * If this region is coherent, mark the segment as coherent.
+		 */
+		_ds_flags |= dr->dr_flags & _BUS_DMAMAP_COHERENT;
+
 		/*
 		 * In a valid DMA range.  Translate the physical
 		 * memory address to an address in the DMA window.
 		 */
 		curaddr = (paddr - dr->dr_sysbase) + dr->dr_busbase;
+#if 0
+		printf("%p: %#lx: range %#lx/%#lx/%#lx/%#x: %#x <-- %#lx\n",
+		    t, paddr, dr->dr_sysbase, dr->dr_busbase,
+		    dr->dr_len, dr->dr_flags, _ds_flags, curaddr);
+#endif
 	} else
 		curaddr = paddr;
 
@@ -132,6 +228,7 @@ _bus_dmamap_load_paddr(bus_dma_tag_t t, bus_dmamap_t map,
 	 */
 	if (nseg > 0 && curaddr == lastaddr &&
 	    segs[nseg-1].ds_len + sgsize <= map->dm_maxsegsz &&
+	    ((segs[nseg-1]._ds_flags ^ _ds_flags) & _BUS_DMAMAP_COHERENT) == 0 &&
 	    (map->_dm_boundary == 0 ||
 	     (segs[nseg-1].ds_addr & bmask) == (curaddr & bmask))) {
 	     	/* coalesce */
@@ -142,6 +239,7 @@ _bus_dmamap_load_paddr(bus_dma_tag_t t, bus_dmamap_t map,
 		/* new segment */
 		segs[nseg].ds_addr = curaddr;
 		segs[nseg].ds_len = sgsize;
+		segs[nseg]._ds_flags = _ds_flags;
 		nseg++;
 	}
 
@@ -151,10 +249,61 @@ _bus_dmamap_load_paddr(bus_dma_tag_t t, bus_dmamap_t map,
 	size -= sgsize;
 	if (size > 0)
 		goto again;
-	
+
+	map->_dm_flags &= (_ds_flags & _BUS_DMAMAP_COHERENT);
 	map->dm_nsegs = nseg;
 	return (0);
 }
+
+#ifdef _ARM32_NEED_BUS_DMA_BOUNCE
+static int _bus_dma_alloc_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map,
+	    bus_size_t size, int flags);
+static void _bus_dma_free_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map);
+static int _bus_dma_uiomove(void *buf, struct uio *uio, size_t n,
+	    int direction);
+
+static int
+_bus_dma_load_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
+	size_t buflen, int buftype, int flags)
+{
+	struct arm32_bus_dma_cookie * const cookie = map->_dm_cookie;
+	struct vmspace * const vm = vmspace_kernel();
+	int error;
+
+	KASSERT(cookie != NULL);
+	KASSERT(cookie->id_flags & _BUS_DMA_MIGHT_NEED_BOUNCE);
+
+	/*
+	 * Allocate bounce pages, if necessary.
+	 */
+	if ((cookie->id_flags & _BUS_DMA_HAS_BOUNCE) == 0) {
+		error = _bus_dma_alloc_bouncebuf(t, map, buflen, flags);
+		if (error)
+			return (error);
+	}
+
+	/*
+	 * Cache a pointer to the caller's buffer and load the DMA map
+	 * with the bounce buffer.
+	 */
+	cookie->id_origbuf = buf;
+	cookie->id_origbuflen = buflen;
+	error = _bus_dmamap_load_buffer(t, map, cookie->id_bouncebuf,
+	    buflen, vm, flags);
+	if (error)
+		return (error);
+
+	STAT_INCR(bounced_loads);
+	map->dm_mapsize = buflen;
+	map->_dm_vmspace = vm;
+	map->_dm_buftype = buftype;
+
+	/* ...so _bus_dmamap_sync() knows we're bouncing */
+	map->_dm_flags |= _BUS_DMAMAP_IS_BOUNCING;
+	cookie->id_flags |= _BUS_DMA_IS_BOUNCING;
+	return 0;
+}
+#endif /* _ARM32_NEED_BUS_DMA_BOUNCE */
 
 /*
  * Common function for DMA map creation.  May be called by bus-specific
@@ -187,11 +336,10 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	 */
 	mapsize = sizeof(struct arm32_bus_dmamap) +
 	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
-	if ((mapstore = malloc(mapsize, M_DMAMAP,
-	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
+	const int mallocflags = M_ZERO|(flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK;
+	if ((mapstore = malloc(mapsize, M_DMAMAP, mallocflags)) == NULL)
 		return (ENOMEM);
 
-	memset(mapstore, 0, mapsize);
 	map = (struct arm32_bus_dmamap *)mapstore;
 	map->_dm_size = size;
 	map->_dm_segcnt = nsegments;
@@ -199,13 +347,61 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	map->_dm_boundary = boundary;
 	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
 	map->_dm_origbuf = NULL;
-	map->_dm_buftype = ARM32_BUFTYPE_INVALID;
+	map->_dm_buftype = _BUS_DMA_BUFTYPE_INVALID;
 	map->_dm_vmspace = vmspace_kernel();
+	map->_dm_cookie = NULL;
 	map->dm_maxsegsz = maxsegsz;
 	map->dm_mapsize = 0;		/* no valid mappings */
 	map->dm_nsegs = 0;
 
 	*dmamp = map;
+
+#ifdef _ARM32_NEED_BUS_DMA_BOUNCE
+	struct arm32_bus_dma_cookie *cookie;
+	int cookieflags;
+	void *cookiestore;
+	size_t cookiesize;
+	int error;
+
+	cookieflags = 0;
+
+	if (t->_may_bounce != NULL) {
+		error = (*t->_may_bounce)(t, map, flags, &cookieflags);
+		if (error != 0)
+			goto out;
+	}
+
+	if (t->_ranges != NULL)
+		cookieflags |= _BUS_DMA_MIGHT_NEED_BOUNCE;
+
+	if ((cookieflags & _BUS_DMA_MIGHT_NEED_BOUNCE) == 0) {
+		STAT_INCR(creates);
+		return 0;
+	}
+
+	cookiesize = sizeof(struct arm32_bus_dma_cookie) +
+	    (sizeof(bus_dma_segment_t) * map->_dm_segcnt);
+
+	/*
+	 * Allocate our cookie.
+	 */
+	if ((cookiestore = malloc(cookiesize, M_DMAMAP, mallocflags)) == NULL) {
+		error = ENOMEM;
+		goto out;
+	}
+	cookie = (struct arm32_bus_dma_cookie *)cookiestore;
+	cookie->id_flags = cookieflags;
+	map->_dm_cookie = cookie;
+	STAT_INCR(bounced_creates);
+
+	error = _bus_dma_alloc_bouncebuf(t, map, size, flags);
+ out:
+	if (error)
+		_bus_dmamap_destroy(t, map);
+#else
+	STAT_INCR(creates);
+#endif /* _ARM32_NEED_BUS_DMA_BOUNCE */
+
 #ifdef DEBUG_DMA
 	printf("dmamap_create:map=%p\n", map);
 #endif	/* DEBUG_DMA */
@@ -223,16 +419,26 @@ _bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 #ifdef DEBUG_DMA
 	printf("dmamap_destroy: t=%p map=%p\n", t, map);
 #endif	/* DEBUG_DMA */
+#ifdef _ARM32_NEED_BUS_DMA_BOUNCE
+	struct arm32_bus_dma_cookie *cookie = map->_dm_cookie;
 
 	/*
-	 * Explicit unload.
+	 * Free any bounce pages this map might hold.
 	 */
-	map->dm_maxsegsz = map->_dm_maxmaxsegsz;
-	map->dm_mapsize = 0;
-	map->dm_nsegs = 0;
-	map->_dm_origbuf = NULL;
-	map->_dm_buftype = ARM32_BUFTYPE_INVALID;
-	map->_dm_vmspace = NULL;
+	if (cookie != NULL) {
+		if (cookie->id_flags & _BUS_DMA_IS_BOUNCING)
+			STAT_INCR(bounced_unloads);
+		map->dm_nsegs = 0;
+		if (cookie->id_flags & _BUS_DMA_HAS_BOUNCE)
+			_bus_dma_free_bouncebuf(t, map);
+		STAT_INCR(bounced_destroys);
+		free(cookie, M_DMAMAP);
+	} else
+#endif
+	STAT_INCR(destroys);
+
+	if (map->dm_nsegs > 0)
+		STAT_INCR(unloads);
 
 	free(map, M_DMAMAP);
 }
@@ -245,20 +451,37 @@ int
 _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
     bus_size_t buflen, struct proc *p, int flags)
 {
-	int error;
 	struct vmspace *vm;
+	int error;
 
 #ifdef DEBUG_DMA
 	printf("dmamap_load: t=%p map=%p buf=%p len=%lx p=%p f=%d\n",
 	    t, map, buf, buflen, p, flags);
 #endif	/* DEBUG_DMA */
 
+	if (map->dm_nsegs > 0) {
+#ifdef _ARM32_NEED_BUS_DMA_BOUNCE
+		struct arm32_bus_dma_cookie *cookie = map->_dm_cookie;
+		if (cookie != NULL) {
+			if (cookie->id_flags & _BUS_DMA_IS_BOUNCING) {
+				STAT_INCR(bounced_unloads);
+				cookie->id_flags &= ~_BUS_DMA_IS_BOUNCING;
+				map->_dm_flags &= ~_BUS_DMAMAP_IS_BOUNCING;
+			}
+		} else
+#endif
+		STAT_INCR(unloads);
+	}
+
 	/*
 	 * Make sure that on error condition we return "no valid mappings".
 	 */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
-	KASSERT(map->dm_maxsegsz <= map->_dm_maxmaxsegsz);
+	map->_dm_buftype = _BUS_DMA_BUFTYPE_INVALID;
+	KASSERTMSG(map->dm_maxsegsz <= map->_dm_maxmaxsegsz,
+	    "dm_maxsegsz %lu _dm_maxmaxsegsz %lu",
+	    map->dm_maxsegsz, map->_dm_maxmaxsegsz);
 
 	if (buflen > map->_dm_size)
 		return (EINVAL);
@@ -270,18 +493,23 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	}
 
 	/* _bus_dmamap_load_buffer() clears this if we're not... */
-	map->_dm_flags |= ARM32_DMAMAP_COHERENT;
+	map->_dm_flags |= _BUS_DMAMAP_COHERENT;
 
 	error = _bus_dmamap_load_buffer(t, map, buf, buflen, vm, flags);
 	if (error == 0) {
 		map->dm_mapsize = buflen;
-		map->_dm_origbuf = buf;
-		map->_dm_buftype = ARM32_BUFTYPE_LINEAR;
 		map->_dm_vmspace = vm;
+		map->_dm_origbuf = buf;
+		map->_dm_buftype = _BUS_DMA_BUFTYPE_LINEAR;
+		return 0;
 	}
-#ifdef DEBUG_DMA
-	printf("dmamap_load: error=%d\n", error);
-#endif	/* DEBUG_DMA */
+#ifdef _ARM32_NEED_BUS_DMA_BOUNCE
+	struct arm32_bus_dma_cookie * const cookie = map->_dm_cookie;
+	if (cookie != NULL && (cookie->id_flags & _BUS_DMA_MIGHT_NEED_BOUNCE)) {
+		error = _bus_dma_load_bouncebuf(t, map, buf, buflen,
+		    _BUS_DMA_BUFTYPE_LINEAR, flags);
+	}        
+#endif           
 	return (error);
 }
 
@@ -300,26 +528,37 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 	    t, map, m0, flags);
 #endif	/* DEBUG_DMA */
 
+	if (map->dm_nsegs > 0) {
+#ifdef _ARM32_NEED_BUS_DMA_BOUNCE
+		struct arm32_bus_dma_cookie *cookie = map->_dm_cookie;
+		if (cookie != NULL) {
+			if (cookie->id_flags & _BUS_DMA_IS_BOUNCING) {
+				STAT_INCR(bounced_unloads);
+				cookie->id_flags &= ~_BUS_DMA_IS_BOUNCING;
+				map->_dm_flags &= ~_BUS_DMAMAP_IS_BOUNCING;
+			}
+		} else
+#endif
+		STAT_INCR(unloads);
+	}
+
 	/*
 	 * Make sure that on error condition we return "no valid mappings."
 	 */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
-	KASSERT(map->dm_maxsegsz <= map->_dm_maxmaxsegsz);
+	map->_dm_buftype = _BUS_DMA_BUFTYPE_INVALID;
+	KASSERTMSG(map->dm_maxsegsz <= map->_dm_maxmaxsegsz,
+	    "dm_maxsegsz %lu _dm_maxmaxsegsz %lu",
+	    map->dm_maxsegsz, map->_dm_maxmaxsegsz);
 
-#ifdef DIAGNOSTIC
-	if ((m0->m_flags & M_PKTHDR) == 0)
-		panic("_bus_dmamap_load_mbuf: no packet header");
-#endif	/* DIAGNOSTIC */
+	KASSERT(m0->m_flags & M_PKTHDR);
 
 	if (m0->m_pkthdr.len > map->_dm_size)
 		return (EINVAL);
 
-	/*
-	 * Mbuf chains should almost never have coherent (i.e.
-	 * un-cached) mappings, so clear that flag now.
-	 */
-	map->_dm_flags &= ~ARM32_DMAMAP_COHERENT;
+	/* _bus_dmamap_load_paddr() clears this if we're not... */
+	map->_dm_flags |= _BUS_DMAMAP_COHERENT;
 
 	error = 0;
 	for (m = m0; m != NULL && error == 0; m = m->m_next) {
@@ -331,6 +570,13 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 
 		if (m->m_len == 0)
 			continue;
+		/*
+		 * Don't allow reads in read-only mbufs.
+		 */
+		if (M_ROMAP(m) && (flags & BUS_DMA_READ)) {
+			error = EFAULT;
+			break;
+		}
 		switch (m->m_flags & (M_EXT|M_CLUSTER|M_EXT_PAGES)) {
 		case M_EXT|M_CLUSTER:
 			/* XXX KDASSERT */
@@ -338,7 +584,8 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 			paddr = m->m_ext.ext_paddr +
 			    (m->m_data - m->m_ext.ext_buf);
 			size = m->m_len;
-			error = _bus_dmamap_load_paddr(t, map, paddr, size);
+			error = _bus_dmamap_load_paddr(t, map, paddr, size,
+			    false);
 			break;
 		
 		case M_EXT|M_EXT_PAGES:
@@ -367,7 +614,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 				paddr = VM_PAGE_TO_PHYS(pg) + offset;
 
 				error = _bus_dmamap_load_paddr(t, map,
-				    paddr, size);
+				    paddr, size, false);
 				if (error)
 					break;
 				offset = 0;
@@ -379,7 +626,8 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 			paddr = m->m_paddr + M_BUFOFFSET(m) +
 			    (m->m_data - M_BUFADDR(m));
 			size = m->m_len;
-			error = _bus_dmamap_load_paddr(t, map, paddr, size);
+			error = _bus_dmamap_load_paddr(t, map, paddr, size,
+			    false);
 			break;
 
 		default:
@@ -390,12 +638,17 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 	if (error == 0) {
 		map->dm_mapsize = m0->m_pkthdr.len;
 		map->_dm_origbuf = m0;
-		map->_dm_buftype = ARM32_BUFTYPE_MBUF;
+		map->_dm_buftype = _BUS_DMA_BUFTYPE_MBUF;
 		map->_dm_vmspace = vmspace_kernel();	/* always kernel */
+		return 0;
 	}
-#ifdef DEBUG_DMA
-	printf("dmamap_load_mbuf: error=%d\n", error);
-#endif	/* DEBUG_DMA */
+#ifdef _ARM32_NEED_BUS_DMA_BOUNCE
+	struct arm32_bus_dma_cookie * const cookie = map->_dm_cookie;
+	if (cookie != NULL && (cookie->id_flags & _BUS_DMA_MIGHT_NEED_BOUNCE)) {
+		error = _bus_dma_load_bouncebuf(t, map, m0, m0->m_pkthdr.len,
+		    _BUS_DMA_BUFTYPE_MBUF, flags);
+	}        
+#endif           
 	return (error);
 }
 
@@ -416,13 +669,15 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 	 */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
-	KASSERT(map->dm_maxsegsz <= map->_dm_maxmaxsegsz);
+	KASSERTMSG(map->dm_maxsegsz <= map->_dm_maxmaxsegsz,
+	    "dm_maxsegsz %lu _dm_maxmaxsegsz %lu",
+	    map->dm_maxsegsz, map->_dm_maxmaxsegsz);
 
 	resid = uio->uio_resid;
 	iov = uio->uio_iov;
 
 	/* _bus_dmamap_load_buffer() clears this if we're not... */
-	map->_dm_flags |= ARM32_DMAMAP_COHERENT;
+	map->_dm_flags |= _BUS_DMAMAP_COHERENT;
 
 	error = 0;
 	for (i = 0; i < uio->uio_iovcnt && resid != 0 && error == 0; i++) {
@@ -441,7 +696,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 	if (error == 0) {
 		map->dm_mapsize = uio->uio_resid;
 		map->_dm_origbuf = uio;
-		map->_dm_buftype = ARM32_BUFTYPE_UIO;
+		map->_dm_buftype = _BUS_DMA_BUFTYPE_UIO;
 		map->_dm_vmspace = uio->uio_vmspace;
 	}
 	return (error);
@@ -478,61 +733,150 @@ _bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
 	map->_dm_origbuf = NULL;
-	map->_dm_buftype = ARM32_BUFTYPE_INVALID;
+	map->_dm_buftype = _BUS_DMA_BUFTYPE_INVALID;
 	map->_dm_vmspace = NULL;
+}
+
+static void
+_bus_dmamap_sync_segment(vaddr_t va, paddr_t pa, vsize_t len, int ops, bool readonly_p)
+{
+	KASSERT((va & PAGE_MASK) == (pa & PAGE_MASK));
+#if 0
+	printf("sync_segment: va=%#lx pa=%#lx len=%#lx ops=%#x ro=%d\n",
+	    va, pa, len, ops, readonly_p);
+#endif
+
+	switch (ops) {
+	case BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE:
+		if (!readonly_p) {
+			STAT_INCR(sync_prereadwrite);
+			cpu_dcache_wbinv_range(va, len);
+			cpu_sdcache_wbinv_range(va, pa, len);
+			break;
+		}
+		/* FALLTHROUGH */
+
+	case BUS_DMASYNC_PREREAD: {
+		const size_t line_size = arm_dcache_align;
+		const size_t line_mask = arm_dcache_align_mask;
+		vsize_t misalignment = va & line_mask;
+		if (misalignment) {
+			va -= misalignment;
+			pa -= misalignment;
+			len += misalignment;
+			STAT_INCR(sync_preread_begin);
+			cpu_dcache_wbinv_range(va, line_size);
+			cpu_sdcache_wbinv_range(va, pa, line_size);
+			if (len <= line_size)
+				break;
+			va += line_size;
+			pa += line_size;
+			len -= line_size;
+		}
+		misalignment = len & line_mask;
+		len -= misalignment;
+		if (len > 0) {
+			STAT_INCR(sync_preread);
+			cpu_dcache_inv_range(va, len);
+			cpu_sdcache_inv_range(va, pa, len);
+		}
+		if (misalignment) {
+			va += len;
+			pa += len;
+			STAT_INCR(sync_preread_tail);
+			cpu_dcache_wbinv_range(va, line_size);
+			cpu_sdcache_wbinv_range(va, pa, line_size);
+		}
+		break;
+	}
+
+	case BUS_DMASYNC_PREWRITE:
+		STAT_INCR(sync_prewrite);
+		cpu_dcache_wb_range(va, len);
+		cpu_sdcache_wb_range(va, pa, len);
+		break;
+
+#ifdef CPU_CORTEX
+	/*
+	 * Cortex CPUs can do speculative loads so we need to clean the cache
+	 * after a DMA read to deal with any speculatively loaded cache lines.
+	 * Since these can't be dirty, we can just invalidate them and don't
+	 * have to worry about having to write back their contents.
+	 */
+	case BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE:
+		STAT_INCR(sync_postreadwrite);
+		cpu_dcache_inv_range(va, len);
+		cpu_sdcache_inv_range(va, pa, len);
+		break;
+	case BUS_DMASYNC_POSTREAD:
+		STAT_INCR(sync_postread);
+		cpu_dcache_inv_range(va, len);
+		cpu_sdcache_inv_range(va, pa, len);
+		break;
+#endif
+	}
 }
 
 static inline void
 _bus_dmamap_sync_linear(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
     bus_size_t len, int ops)
 {
-	vaddr_t addr = (vaddr_t) map->_dm_origbuf;
+	bus_dma_segment_t *ds = map->dm_segs;
+	vaddr_t va = (vaddr_t) map->_dm_origbuf;
+#ifdef _ARM32_NEED_BUS_DMA_BOUNCE
+	if (map->_dm_flags & _BUS_DMAMAP_IS_BOUNCING) {
+		struct arm32_bus_dma_cookie * const cookie = map->_dm_cookie;
+		va = (vaddr_t) cookie->id_bouncebuf;
+	}
+#endif
 
-	addr += offset;
+	while (len > 0) {
+		while (offset >= ds->ds_len) {
+			offset -= ds->ds_len;
+			va += ds->ds_len;
+			ds++;
+		}
 
-	switch (ops) {
-	case BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE:
-		cpu_dcache_wbinv_range(addr, len);
-		break;
+		paddr_t pa = _bus_dma_busaddr_to_paddr(t, ds->ds_addr + offset);
+		size_t seglen = min(len, ds->ds_len - offset);
 
-	case BUS_DMASYNC_PREREAD:
-		if (((addr | len) & arm_dcache_align_mask) == 0)
-			cpu_dcache_inv_range(addr, len);
-		else
-			cpu_dcache_wbinv_range(addr, len);
-		break;
+		if ((ds->_ds_flags & _BUS_DMAMAP_COHERENT) == 0)
+			_bus_dmamap_sync_segment(va + offset, pa, seglen, ops,
+			    false);
 
-	case BUS_DMASYNC_PREWRITE:
-		cpu_dcache_wb_range(addr, len);
-		break;
+		offset += seglen;
+		len -= seglen;
 	}
 }
 
 static inline void
-_bus_dmamap_sync_mbuf(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
+_bus_dmamap_sync_mbuf(bus_dma_tag_t t, bus_dmamap_t map, bus_size_t offset,
     bus_size_t len, int ops)
 {
-	struct mbuf *m, *m0 = map->_dm_origbuf;
-	bus_size_t minlen, moff;
-	vaddr_t maddr;
+	bus_dma_segment_t *ds = map->dm_segs;
+	struct mbuf *m = map->_dm_origbuf;
+	bus_size_t voff = offset;
+	bus_size_t ds_off = offset;
 
-	for (moff = offset, m = m0; m != NULL && len != 0; m = m->m_next) {
-		/* Find the beginning mbuf. */
-		if (moff >= m->m_len) {
-			moff -= m->m_len;
-			continue;
+	while (len > 0) {
+		/* Find the current dma segment */
+		while (ds_off >= ds->ds_len) {
+			ds_off -= ds->ds_len;
+			ds++;
+		}
+		/* Find the current mbuf. */
+		while (voff >= m->m_len) {
+			voff -= m->m_len;
+			m = m->m_next;
 		}
 
 		/*
 		 * Now at the first mbuf to sync; nail each one until
 		 * we have exhausted the length.
 		 */
-		minlen = m->m_len - moff;
-		if (len < minlen)
-			minlen = len;
-
-		maddr = mtod(m, vaddr_t);
-		maddr += moff;
+		vsize_t seglen = min(len, min(m->m_len - voff, ds->ds_len - ds_off));
+		vaddr_t va = mtod(m, vaddr_t) + voff;
+		paddr_t pa = _bus_dma_busaddr_to_paddr(t, ds->ds_addr + ds_off);
 
 		/*
 		 * We can save a lot of work here if we know the mapping
@@ -550,28 +894,13 @@ _bus_dmamap_sync_mbuf(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		 * this ever becomes non-true (e.g. Physically Indexed
 		 * cache), this will have to be revisited.
 		 */
-		switch (ops) {
-		case BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE:
-			if (! M_ROMAP(m)) {
-				cpu_dcache_wbinv_range(maddr, minlen);
-				break;
-			}
-			/* else FALLTHROUGH */
 
-		case BUS_DMASYNC_PREREAD:
-			if (((maddr | minlen) & arm_dcache_align_mask) == 0)
-				cpu_dcache_inv_range(maddr, minlen);
-			else
-				cpu_dcache_wbinv_range(maddr, minlen);
-			break;
-
-		case BUS_DMASYNC_PREWRITE:
-			if (! M_ROMAP(m))
-				cpu_dcache_wb_range(maddr, minlen);
-			break;
-		}
-		moff = 0;
-		len -= minlen;
+		if ((ds->_ds_flags & _BUS_DMAMAP_COHERENT) == 0)
+			_bus_dmamap_sync_segment(va, pa, seglen, ops,
+			    M_ROMAP(m));
+		voff += seglen;
+		ds_off += seglen;
+		len -= seglen;
 	}
 }
 
@@ -579,47 +908,39 @@ static inline void
 _bus_dmamap_sync_uio(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
     bus_size_t len, int ops)
 {
+	bus_dma_segment_t *ds = map->dm_segs;
 	struct uio *uio = map->_dm_origbuf;
-	struct iovec *iov;
-	bus_size_t minlen, ioff;
-	vaddr_t addr;
+	struct iovec *iov = uio->uio_iov;
+	bus_size_t voff = offset;
+	bus_size_t ds_off = offset;
 
-	for (iov = uio->uio_iov, ioff = offset; len != 0; iov++) {
-		/* Find the beginning iovec. */
-		if (ioff >= iov->iov_len) {
-			ioff -= iov->iov_len;
-			continue;
+	while (len > 0) {
+		/* Find the current dma segment */
+		while (ds_off >= ds->ds_len) {
+			ds_off -= ds->ds_len;
+			ds++;
+		}
+
+		/* Find the current iovec. */
+		while (voff >= iov->iov_len) {
+			voff -= iov->iov_len;
+			iov++;
 		}
 
 		/*
 		 * Now at the first iovec to sync; nail each one until
 		 * we have exhausted the length.
 		 */
-		minlen = iov->iov_len - ioff;
-		if (len < minlen)
-			minlen = len;
+		vsize_t seglen = min(len, min(iov->iov_len - voff, ds->ds_len - ds_off));
+		vaddr_t va = (vaddr_t) iov->iov_base + voff;
+		paddr_t pa = _bus_dma_busaddr_to_paddr(t, ds->ds_addr + ds_off);
 
-		addr = (vaddr_t) iov->iov_base;
-		addr += ioff;
+		if ((ds->_ds_flags & _BUS_DMAMAP_COHERENT) == 0)
+			_bus_dmamap_sync_segment(va, pa, seglen, ops, false);
 
-		switch (ops) {
-		case BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE:
-			cpu_dcache_wbinv_range(addr, minlen);
-			break;
-
-		case BUS_DMASYNC_PREREAD:
-			if (((addr | minlen) & arm_dcache_align_mask) == 0)
-				cpu_dcache_inv_range(addr, minlen);
-			else
-				cpu_dcache_wbinv_range(addr, minlen);
-			break;
-
-		case BUS_DMASYNC_PREWRITE:
-			cpu_dcache_wb_range(addr, minlen);
-			break;
-		}
-		ioff = 0;
-		len -= minlen;
+		voff += seglen;
+		ds_off += seglen;
+		len -= seglen;
 	}
 }
 
@@ -639,7 +960,6 @@ void
 _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
     bus_size_t len, int ops)
 {
-
 #ifdef DEBUG_DMA
 	printf("dmamap_sync: t=%p map=%p offset=%lx len=%lx ops=%x\n",
 	    t, map, offset, len, ops);
@@ -652,13 +972,12 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	    (ops & (BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)) != 0)
 		panic("_bus_dmamap_sync: mix PRE and POST");
 
-#ifdef DIAGNOSTIC
-	if (offset >= map->dm_mapsize)
-		panic("_bus_dmamap_sync: bad offset %lu (map size is %lu)",
-		    offset, map->dm_mapsize);
-	if (len == 0 || (offset + len) > map->dm_mapsize)
-		panic("_bus_dmamap_sync: bad length");
-#endif
+	KASSERTMSG(offset < map->dm_mapsize,
+	    "offset %lu mapsize %lu",
+	    offset, map->dm_mapsize);
+	KASSERTMSG(len > 0 && offset + len <= map->dm_mapsize,
+	    "len %lu offset %lu mapsize %lu",
+	    len, offset, map->dm_mapsize);
 
 	/*
 	 * For a virtually-indexed write-back cache, we need
@@ -671,22 +990,81 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	 *	we are doing a PREREAD|PREWRITE, we can collapse
 	 *	the whole thing into a single Wb-Inv.
 	 *
-	 *	POSTREAD -- Nothing.
+	 *	POSTREAD -- Re-invalidate the D-cache in case speculative
+	 *	memory accesses caused cachelines to become valid with now
+	 *	invalid data.
 	 *
 	 *	POSTWRITE -- Nothing.
 	 */
+#ifdef _ARM32_NEED_BUS_DMA_BOUNCE
+	const bool bouncing = (map->_dm_flags & _BUS_DMAMAP_IS_BOUNCING);
+#else
+	const bool bouncing = false;
+#endif
 
-	ops &= (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
-	if (ops == 0)
+	const int pre_ops = ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+#ifdef CPU_CORTEX
+	const int post_ops = ops & (BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+#else
+	const int post_ops = 0;
+#endif
+	if (!bouncing && pre_ops == 0 && post_ops == BUS_DMASYNC_POSTWRITE) {
+		STAT_INCR(sync_postwrite);
 		return;
+	}
+	KASSERTMSG(bouncing || pre_ops != 0 || (post_ops & BUS_DMASYNC_POSTREAD),
+	    "pre_ops %#x post_ops %#x", pre_ops, post_ops);
+#ifdef _ARM32_NEED_BUS_DMA_BOUNCE
+	if (bouncing && (ops & BUS_DMASYNC_PREWRITE)) {
+		struct arm32_bus_dma_cookie * const cookie = map->_dm_cookie;
+		STAT_INCR(write_bounces);
+		char * const dataptr = (char *)cookie->id_bouncebuf + offset;
+		/*
+		 * Copy the caller's buffer to the bounce buffer.
+		 */
+		switch (map->_dm_buftype) {
+		case _BUS_DMA_BUFTYPE_LINEAR:
+			memcpy(dataptr, cookie->id_origlinearbuf + offset, len);
+			break;
+		case _BUS_DMA_BUFTYPE_MBUF:
+			m_copydata(cookie->id_origmbuf, offset, len, dataptr);
+			break;
+		case _BUS_DMA_BUFTYPE_UIO:
+			_bus_dma_uiomove(dataptr, cookie->id_origuio, len, UIO_WRITE);
+			break;
+#ifdef DIAGNOSTIC
+		case _BUS_DMA_BUFTYPE_RAW:
+			panic("_bus_dmamap_sync(pre): _BUS_DMA_BUFTYPE_RAW");
+			break;
+
+		case _BUS_DMA_BUFTYPE_INVALID:
+			panic("_bus_dmamap_sync(pre): _BUS_DMA_BUFTYPE_INVALID");
+			break;
+
+		default:
+			panic("_bus_dmamap_sync(pre): map %p: unknown buffer type %d\n",
+			    map, map->_dm_buftype);
+			break;
+#endif /* DIAGNOSTIC */
+		}
+	}
+#endif /* _ARM32_NEED_BUS_DMA_BOUNCE */
 
 	/* Skip cache frobbing if mapping was COHERENT. */
-	if (map->_dm_flags & ARM32_DMAMAP_COHERENT) {
+	if (!bouncing && (map->_dm_flags & _BUS_DMAMAP_COHERENT)) {
 		/* Drain the write buffer. */
-		cpu_drain_writebuf();
+		if (pre_ops & BUS_DMASYNC_PREWRITE)
+			cpu_drain_writebuf();
 		return;
 	}
 
+#ifdef _ARM32_NEED_BUS_DMA_BOUNCE
+	if (bouncing && ((map->_dm_flags & _BUS_DMAMAP_COHERENT) || pre_ops == 0)) {
+		goto bounce_it;
+	}
+#endif /* _ARM32_NEED_BUS_DMA_BOUNCE */
+
+#ifndef ARM_MMU_EXTENDED
 	/*
 	 * If the mapping belongs to a non-kernel vmspace, and the
 	 * vmspace has not been active since the last time a full
@@ -695,35 +1073,83 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	if (__predict_false(!VMSPACE_IS_KERNEL_P(map->_dm_vmspace) &&
 	    vm_map_pmap(&map->_dm_vmspace->vm_map)->pm_cstate.cs_cache_d == 0))
 		return;
+#endif
 
-	switch (map->_dm_buftype) {
-	case ARM32_BUFTYPE_LINEAR:
+	int buftype = map->_dm_buftype;
+#ifdef _ARM32_NEED_BUS_DMA_BOUNCE
+	if (bouncing) {
+		buftype = _BUS_DMA_BUFTYPE_LINEAR;
+	}
+#endif
+
+	switch (buftype) {
+	case _BUS_DMA_BUFTYPE_LINEAR:
 		_bus_dmamap_sync_linear(t, map, offset, len, ops);
 		break;
 
-	case ARM32_BUFTYPE_MBUF:
+	case _BUS_DMA_BUFTYPE_MBUF:
 		_bus_dmamap_sync_mbuf(t, map, offset, len, ops);
 		break;
 
-	case ARM32_BUFTYPE_UIO:
+	case _BUS_DMA_BUFTYPE_UIO:
 		_bus_dmamap_sync_uio(t, map, offset, len, ops);
 		break;
 
-	case ARM32_BUFTYPE_RAW:
-		panic("_bus_dmamap_sync: ARM32_BUFTYPE_RAW");
+	case _BUS_DMA_BUFTYPE_RAW:
+		panic("_bus_dmamap_sync: _BUS_DMA_BUFTYPE_RAW");
 		break;
 
-	case ARM32_BUFTYPE_INVALID:
-		panic("_bus_dmamap_sync: ARM32_BUFTYPE_INVALID");
+	case _BUS_DMA_BUFTYPE_INVALID:
+		panic("_bus_dmamap_sync: _BUS_DMA_BUFTYPE_INVALID");
 		break;
 
 	default:
-		printf("unknown buffer type %d\n", map->_dm_buftype);
-		panic("_bus_dmamap_sync");
+		panic("_bus_dmamap_sync: map %p: unknown buffer type %d\n",
+		    map, map->_dm_buftype);
 	}
 
 	/* Drain the write buffer. */
 	cpu_drain_writebuf();
+
+#ifdef _ARM32_NEED_BUS_DMA_BOUNCE
+  bounce_it:
+	if (!bouncing || (ops & BUS_DMASYNC_POSTREAD) == 0)
+		return;
+
+	struct arm32_bus_dma_cookie * const cookie = map->_dm_cookie;
+	char * const dataptr = (char *)cookie->id_bouncebuf + offset;
+	STAT_INCR(read_bounces);
+	/*
+	 * Copy the bounce buffer to the caller's buffer.
+	 */
+	switch (map->_dm_buftype) {
+	case _BUS_DMA_BUFTYPE_LINEAR:
+		memcpy(cookie->id_origlinearbuf + offset, dataptr, len);
+		break;
+
+	case _BUS_DMA_BUFTYPE_MBUF:
+		m_copyback(cookie->id_origmbuf, offset, len, dataptr);
+		break;
+
+	case _BUS_DMA_BUFTYPE_UIO:
+		_bus_dma_uiomove(dataptr, cookie->id_origuio, len, UIO_READ);
+		break;
+#ifdef DIAGNOSTIC
+	case _BUS_DMA_BUFTYPE_RAW:
+		panic("_bus_dmamap_sync(post): _BUS_DMA_BUFTYPE_RAW");
+		break;
+
+	case _BUS_DMA_BUFTYPE_INVALID:
+		panic("_bus_dmamap_sync(post): _BUS_DMA_BUFTYPE_INVALID");
+		break;
+
+	default:
+		panic("_bus_dmamap_sync(post): map %p: unknown buffer type %d\n",
+		    map, map->_dm_buftype);
+		break;
+#endif
+	}
+#endif /* _ARM32_NEED_BUS_DMA_BOUNCE */
 }
 
 /*
@@ -751,7 +1177,8 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	if ((dr = t->_ranges) != NULL) {
 		error = ENOMEM;
 		for (i = 0; i < t->_nranges; i++, dr++) {
-			if (dr->dr_len == 0)
+			if (dr->dr_len == 0
+			    || (dr->dr_flags & _BUS_DMAMAP_NOALLOC))
 				continue;
 			error = _bus_dmamem_alloc_range(t, size, alignment,
 			    boundary, segs, nsegs, rsegs, flags,
@@ -813,19 +1240,73 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
     size_t size, void **kvap, int flags)
 {
 	vaddr_t va;
-	bus_addr_t addr;
+	paddr_t pa;
 	int curseg;
-	pt_entry_t *ptep/*, pte*/;
-	const uvm_flag_t kmflags =
-	    (flags & BUS_DMA_NOWAIT) != 0 ? UVM_KMF_NOWAIT : 0;
+	pt_entry_t *ptep;
+	const uvm_flag_t kmflags = UVM_KMF_VAONLY
+	    | ((flags & BUS_DMA_NOWAIT) != 0 ? UVM_KMF_NOWAIT : 0);
+	vsize_t align = 0;
 
 #ifdef DEBUG_DMA
 	printf("dmamem_map: t=%p segs=%p nsegs=%x size=%lx flags=%x\n", t,
 	    segs, nsegs, (unsigned long)size, flags);
 #endif	/* DEBUG_DMA */
 
+#ifdef PMAP_MAP_POOLPAGE
+	/*
+	 * If all of memory is mapped, and we are mapping a single physically
+	 * contiguous area then this area is already mapped.  Let's see if we
+	 * avoid having a separate mapping for it.
+	 */
+	if (nsegs == 1) {
+		/*
+		 * If this is a non-COHERENT mapping, then the existing kernel
+		 * mapping is already compatible with it.
+		 */
+		bool direct_mapable = (flags & BUS_DMA_COHERENT) == 0;
+		pa = segs[0].ds_addr;
+
+		/*
+		 * This is a COHERENT mapping which, unless this address is in
+		 * a COHERENT dma range, will not be compatible.
+		 */
+		if (t->_ranges != NULL) {
+			const struct arm32_dma_range * const dr =
+			    _bus_dma_paddr_inrange(t->_ranges, t->_nranges, pa);
+			if (dr != NULL
+			    && (dr->dr_flags & _BUS_DMAMAP_COHERENT)) {
+				direct_mapable = true;
+			}
+		}
+
+		if (direct_mapable) {
+			*kvap = (void *)PMAP_MAP_POOLPAGE(pa);
+#ifdef DEBUG_DMA
+			printf("dmamem_map: =%p\n", *kvap);
+#endif	/* DEBUG_DMA */
+			return 0;
+		}
+	}
+#endif
+
 	size = round_page(size);
-	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY | kmflags);
+	if (__predict_true(size > L2_L_SIZE)) {
+#if (ARM_MMU_V6 + ARM_MMU_V7) > 0
+		if (size >= L1_SS_SIZE)
+			align = L1_SS_SIZE;
+		else
+#endif
+		if (size >= L1_S_SIZE)
+			align = L1_S_SIZE;
+		else
+			align = L2_S_SIZE;
+	}
+
+	va = uvm_km_alloc(kernel_map, size, align, kmflags);
+	if (__predict_false(va == 0 && align > 0)) {
+		align = 0;
+		va = uvm_km_alloc(kernel_map, size, 0, kmflags);
+	}
 
 	if (va == 0)
 		return (ENOMEM);
@@ -833,17 +1314,30 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	*kvap = (void *)va;
 
 	for (curseg = 0; curseg < nsegs; curseg++) {
-		for (addr = segs[curseg].ds_addr;
-		    addr < (segs[curseg].ds_addr + segs[curseg].ds_len);
-		    addr += PAGE_SIZE, va += PAGE_SIZE, size -= PAGE_SIZE) {
+		for (pa = segs[curseg].ds_addr;
+		    pa < (segs[curseg].ds_addr + segs[curseg].ds_len);
+		    pa += PAGE_SIZE, va += PAGE_SIZE, size -= PAGE_SIZE) {
+			bool uncached = (flags & BUS_DMA_COHERENT);
 #ifdef DEBUG_DMA
-			printf("wiring p%lx to v%lx", addr, va);
+			printf("wiring p%lx to v%lx", pa, va);
 #endif	/* DEBUG_DMA */
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
-			pmap_enter(pmap_kernel(), va, addr,
-			    VM_PROT_READ | VM_PROT_WRITE,
+
+			const struct arm32_dma_range * const dr =
+			    _bus_dma_paddr_inrange(t->_ranges, t->_nranges, pa);
+			/*
+			 * If this dma region is coherent then there is
+			 * no need for an uncached mapping.
+			 */
+			if (dr != NULL
+			    && (dr->dr_flags & _BUS_DMAMAP_COHERENT)) {
+				uncached = false;
+			}
+
+			pmap_kenter_pa(va, pa,
 			    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
+
 			/*
 			 * If the memory must remain coherent with the
 			 * cache then we must make the memory uncacheable
@@ -852,8 +1346,9 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 			 * contain the virtal addresses we are making
 			 * uncacheable.
 			 */
-			if (flags & BUS_DMA_COHERENT) {
+			if (uncached) {
 				cpu_dcache_wbinv_range(va, PAGE_SIZE);
+				cpu_sdcache_wbinv_range(va, pa, PAGE_SIZE);
 				cpu_drain_writebuf();
 				ptep = vtopte(va);
 				*ptep &= ~L2_S_CACHE_MASK;
@@ -882,16 +1377,13 @@ _bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 {
 
 #ifdef DEBUG_DMA
-	printf("dmamem_unmap: t=%p kva=%p size=%lx\n", t, kva,
-	    (unsigned long)size);
+	printf("dmamem_unmap: t=%p kva=%p size=%zx\n", t, kva, size);
 #endif	/* DEBUG_DMA */
-#ifdef DIAGNOSTIC
-	if ((u_long)kva & PGOFSET)
-		panic("_bus_dmamem_unmap");
-#endif	/* DIAGNOSTIC */
+	KASSERTMSG(((uintptr_t)kva & PAGE_MASK) == 0,
+	    "kva %p (%#"PRIxPTR")", kva, (uintptr_t)kva & PAGE_MASK);
 
 	size = round_page(size);
-	pmap_remove(pmap_kernel(), (vaddr_t)kva, (vaddr_t)kva + size);
+	pmap_kremove((vaddr_t)kva, size);
 	pmap_update(pmap_kernel());
 	uvm_km_free(kernel_map, (vaddr_t)kva, size, UVM_KMF_VAONLY);
 }
@@ -904,24 +1396,29 @@ paddr_t
 _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
     off_t off, int prot, int flags)
 {
+	paddr_t map_flags;
 	int i;
 
 	for (i = 0; i < nsegs; i++) {
-#ifdef DIAGNOSTIC
-		if (off & PGOFSET)
-			panic("_bus_dmamem_mmap: offset unaligned");
-		if (segs[i].ds_addr & PGOFSET)
-			panic("_bus_dmamem_mmap: segment unaligned");
-		if (segs[i].ds_len & PGOFSET)
-			panic("_bus_dmamem_mmap: segment size not multiple"
-			    " of page size");
-#endif	/* DIAGNOSTIC */
+		KASSERTMSG((off & PAGE_MASK) == 0,
+		    "off %#qx (%#x)", off, (int)off & PAGE_MASK);
+		KASSERTMSG((segs[i].ds_addr & PAGE_MASK) == 0,
+		    "ds_addr %#lx (%#x)", segs[i].ds_addr,
+		    (int)segs[i].ds_addr & PAGE_MASK);
+		KASSERTMSG((segs[i].ds_len & PAGE_MASK) == 0,
+		    "ds_len %#lx (%#x)", segs[i].ds_addr,
+		    (int)segs[i].ds_addr & PAGE_MASK);
 		if (off >= segs[i].ds_len) {
 			off -= segs[i].ds_len;
 			continue;
 		}
 
-		return (arm_btop((u_long)segs[i].ds_addr + off));
+		map_flags = 0;
+		if (flags & BUS_DMA_PREFETCHABLE)
+			map_flags |= ARM32_MMAP_WRITECOMBINE;
+
+		return (arm_btop((u_long)segs[i].ds_addr + off) | map_flags);
+		
 	}
 
 	/* Page not found. */
@@ -945,11 +1442,8 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	bus_size_t sgsize;
 	bus_addr_t curaddr;
 	vaddr_t vaddr = (vaddr_t)buf;
-	pd_entry_t *pde;
-	pt_entry_t pte;
 	int error;
 	pmap_t pmap;
-	pt_entry_t *ptep;
 
 #ifdef DEBUG_DMA
 	printf("_bus_dmamem_load_buffer(buf=%p, len=%lx, flags=%d)\n",
@@ -962,41 +1456,44 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		/*
 		 * Get the physical address for this segment.
 		 *
-		 * XXX Don't support checking for coherent mappings
+		 * XXX Doesn't support checking for coherent mappings
 		 * XXX in user address space.
 		 */
+		bool coherent;
 		if (__predict_true(pmap == pmap_kernel())) {
+			pd_entry_t *pde;
+			pt_entry_t *ptep;
 			(void) pmap_get_pde_pte(pmap, vaddr, &pde, &ptep);
 			if (__predict_false(pmap_pde_section(pde))) {
-				curaddr = (*pde & L1_S_FRAME) |
-				    (vaddr & L1_S_OFFSET);
-				if (*pde & L1_S_CACHE_MASK) {
-					map->_dm_flags &=
-					    ~ARM32_DMAMAP_COHERENT;
+				paddr_t s_frame = L1_S_FRAME;
+				paddr_t s_offset = L1_S_OFFSET;
+#if (ARM_MMU_V6 + ARM_MMU_V7) > 0
+				if (__predict_false(pmap_pde_supersection(pde))) {
+					s_frame = L1_SS_FRAME;
+					s_offset = L1_SS_OFFSET;
 				}
+#endif
+				curaddr = (*pde & s_frame) | (vaddr & s_offset);
+				coherent = (*pde & L1_S_CACHE_MASK) == 0;
 			} else {
-				pte = *ptep;
-				KDASSERT((pte & L2_TYPE_MASK) != L2_TYPE_INV);
+				pt_entry_t pte = *ptep;
+				KDASSERTMSG((pte & L2_TYPE_MASK) != L2_TYPE_INV,
+				    "va=%#"PRIxVADDR" pde=%#x ptep=%p pte=%#x",
+				    vaddr, *pde, ptep, pte);
 				if (__predict_false((pte & L2_TYPE_MASK)
 						    == L2_TYPE_L)) {
 					curaddr = (pte & L2_L_FRAME) |
 					    (vaddr & L2_L_OFFSET);
-					if (pte & L2_L_CACHE_MASK) {
-						map->_dm_flags &=
-						    ~ARM32_DMAMAP_COHERENT;
-					}
+					coherent = (pte & L2_L_CACHE_MASK) == 0;
 				} else {
 					curaddr = (pte & L2_S_FRAME) |
 					    (vaddr & L2_S_OFFSET);
-					if (pte & L2_S_CACHE_MASK) {
-						map->_dm_flags &=
-						    ~ARM32_DMAMAP_COHERENT;
-					}
+					coherent = (pte & L2_S_CACHE_MASK) == 0;
 				}
 			}
 		} else {
 			(void) pmap_extract(pmap, vaddr, &curaddr);
-			map->_dm_flags &= ~ARM32_DMAMAP_COHERENT;
+			coherent = false;
 		}
 
 		/*
@@ -1006,7 +1503,8 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		if (buflen < sgsize)
 			sgsize = buflen;
 
-		error = _bus_dmamap_load_paddr(t, map, curaddr, sgsize);
+		error = _bus_dmamap_load_paddr(t, map, curaddr, sgsize,
+		    coherent);
 		if (error)
 			return (error);
 
@@ -1031,6 +1529,9 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	struct pglist mlist;
 	int curseg, error;
 
+	KASSERTMSG(boundary == 0 || (boundary & (boundary-1)) == 0,
+	    "invalid boundary %#lx", boundary);
+
 #ifdef DEBUG_DMA
 	printf("alloc_range: t=%p size=%lx align=%lx boundary=%lx segs=%p nsegs=%x rsegs=%p flags=%x lo=%lx hi=%lx\n",
 	    t, size, alignment, boundary, segs, nsegs, rsegs, flags, low, high);
@@ -1040,9 +1541,23 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	size = round_page(size);
 
 	/*
+	 * We accept boundaries < size, splitting in multiple segments
+	 * if needed. uvm_pglistalloc does not, so compute an appropriate
+	 * boundary: next power of 2 >= size
+	 */
+	bus_size_t uboundary = boundary;
+	if (uboundary <= PAGE_SIZE) {
+		uboundary = 0;
+	} else {
+		while (uboundary < size) {
+			uboundary <<= 1;
+		}
+	}
+
+	/*
 	 * Allocate pages from the VM system.
 	 */
-	error = uvm_pglistalloc(size, low, high, alignment, boundary,
+	error = uvm_pglistalloc(size, low, high, alignment, uboundary,
 	    &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
 	if (error)
 		return (error);
@@ -1062,20 +1577,21 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 
 	for (; m != NULL; m = TAILQ_NEXT(m, pageq.queue)) {
 		curaddr = VM_PAGE_TO_PHYS(m);
-#ifdef DIAGNOSTIC
-		if (curaddr < low || curaddr >= high) {
-			printf("uvm_pglistalloc returned non-sensical"
-			    " address 0x%lx\n", curaddr);
-			panic("_bus_dmamem_alloc_range");
-		}
-#endif	/* DIAGNOSTIC */
+		KASSERTMSG(low <= curaddr && curaddr < high,
+		    "uvm_pglistalloc returned non-sensicaladdress %#lx "
+		    "(low=%#lx, high=%#lx\n", curaddr, low, high);
 #ifdef DEBUG_DMA
 		printf("alloc: page %lx\n", curaddr);
 #endif	/* DEBUG_DMA */
-		if (curaddr == (lastaddr + PAGE_SIZE))
+		if (curaddr == lastaddr + PAGE_SIZE
+		    && (lastaddr & boundary) == (curaddr & boundary))
 			segs[curseg].ds_len += PAGE_SIZE;
 		else {
 			curseg++;
+			if (curseg >= nsegs) {
+				uvm_pglistfree(&mlist);
+				return EFBIG;
+			}
 			segs[curseg].ds_addr = curaddr;
 			segs[curseg].ds_len = PAGE_SIZE;
 		}
@@ -1125,4 +1641,184 @@ arm32_dma_range_intersect(struct arm32_dma_range *ranges, int nranges,
 
 	/* No intersection found. */
 	return (0);
+}
+
+#ifdef _ARM32_NEED_BUS_DMA_BOUNCE
+static int
+_bus_dma_alloc_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map,
+    bus_size_t size, int flags)
+{
+	struct arm32_bus_dma_cookie *cookie = map->_dm_cookie;
+	int error = 0;
+
+	KASSERT(cookie != NULL);
+
+	cookie->id_bouncebuflen = round_page(size);
+	error = _bus_dmamem_alloc(t, cookie->id_bouncebuflen,
+	    PAGE_SIZE, map->_dm_boundary, cookie->id_bouncesegs,
+	    map->_dm_segcnt, &cookie->id_nbouncesegs, flags);
+	if (error == 0) {
+		error = _bus_dmamem_map(t, cookie->id_bouncesegs,
+		    cookie->id_nbouncesegs, cookie->id_bouncebuflen,
+		    (void **)&cookie->id_bouncebuf, flags);
+		if (error) {
+			_bus_dmamem_free(t, cookie->id_bouncesegs,
+			    cookie->id_nbouncesegs);
+			cookie->id_bouncebuflen = 0;
+			cookie->id_nbouncesegs = 0;
+		} else {
+			cookie->id_flags |= _BUS_DMA_HAS_BOUNCE;
+		}
+	} else {
+		cookie->id_bouncebuflen = 0;
+		cookie->id_nbouncesegs = 0;
+	}
+
+	return (error);
+}
+
+static void
+_bus_dma_free_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map)
+{
+	struct arm32_bus_dma_cookie *cookie = map->_dm_cookie;
+
+	KASSERT(cookie != NULL);
+
+	_bus_dmamem_unmap(t, cookie->id_bouncebuf, cookie->id_bouncebuflen);
+	_bus_dmamem_free(t, cookie->id_bouncesegs, cookie->id_nbouncesegs);
+	cookie->id_bouncebuflen = 0;
+	cookie->id_nbouncesegs = 0;
+	cookie->id_flags &= ~_BUS_DMA_HAS_BOUNCE;
+}
+
+/*
+ * This function does the same as uiomove, but takes an explicit
+ * direction, and does not update the uio structure.
+ */
+static int
+_bus_dma_uiomove(void *buf, struct uio *uio, size_t n, int direction)
+{
+	struct iovec *iov;
+	int error;
+	struct vmspace *vm;
+	char *cp;
+	size_t resid, cnt;
+	int i;
+
+	iov = uio->uio_iov;
+	vm = uio->uio_vmspace;
+	cp = buf;
+	resid = n;
+
+	for (i = 0; i < uio->uio_iovcnt && resid > 0; i++) {
+		iov = &uio->uio_iov[i];
+		if (iov->iov_len == 0)
+			continue;
+		cnt = MIN(resid, iov->iov_len);
+
+		if (!VMSPACE_IS_KERNEL_P(vm) &&
+		    (curlwp->l_cpu->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
+		    != 0) {
+			preempt();
+		}
+		if (direction == UIO_READ) {
+			error = copyout_vmspace(vm, cp, iov->iov_base, cnt);
+		} else {
+			error = copyin_vmspace(vm, iov->iov_base, cp, cnt);
+		}
+		if (error)
+			return (error);
+		cp += cnt;
+		resid -= cnt;
+	}
+	return (0);
+}
+#endif /* _ARM32_NEED_BUS_DMA_BOUNCE */
+
+int
+_bus_dmatag_subregion(bus_dma_tag_t tag, bus_addr_t min_addr,
+    bus_addr_t max_addr, bus_dma_tag_t *newtag, int flags)
+{
+
+#ifdef _ARM32_NEED_BUS_DMA_BOUNCE
+	struct arm32_dma_range *dr;
+	bool subset = false;
+	size_t nranges = 0;
+	size_t i;
+	for (i = 0, dr = tag->_ranges; i < tag->_nranges; i++, dr++) {
+		if (dr->dr_sysbase <= min_addr 
+		    && max_addr <= dr->dr_sysbase + dr->dr_len - 1) {
+			subset = true;
+		}
+		if (min_addr <= dr->dr_sysbase + dr->dr_len
+		    && max_addr >= dr->dr_sysbase) {
+			nranges++;
+		}
+	}
+	if (subset) {
+		*newtag = tag;
+		/* if the tag must be freed, add a reference */
+		if (tag->_tag_needs_free)
+			(tag->_tag_needs_free)++;
+		return 0;
+	}
+	if (nranges == 0) {
+		nranges = 1;
+	}
+
+	size_t mallocsize = sizeof(*tag) + nranges * sizeof(*dr);
+	if ((*newtag = malloc(mallocsize, M_DMAMAP,
+	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
+		return ENOMEM;
+
+	dr = (void *)(*newtag + 1);
+	**newtag = *tag;
+	(*newtag)->_tag_needs_free = 1;
+	(*newtag)->_ranges = dr;
+	(*newtag)->_nranges = nranges;
+
+	if (tag->_ranges == NULL) {
+		dr->dr_sysbase = min_addr;
+		dr->dr_busbase = min_addr;
+		dr->dr_len = max_addr + 1 - min_addr;
+	} else {
+		for (i = 0; i < nranges; i++) {
+			if (min_addr > dr->dr_sysbase + dr->dr_len
+			    || max_addr < dr->dr_sysbase)
+				continue;
+			dr[0] = tag->_ranges[i];
+			if (dr->dr_sysbase < min_addr) {
+				psize_t diff = min_addr - dr->dr_sysbase;
+				dr->dr_busbase += diff;
+				dr->dr_len -= diff;
+				dr->dr_sysbase += diff;
+			}
+			if (max_addr != 0xffffffff
+			    && max_addr + 1 < dr->dr_sysbase + dr->dr_len) {
+				dr->dr_len = max_addr + 1 - dr->dr_sysbase;
+			}
+			dr++;
+		}
+	}
+
+	return 0;
+#else
+	return EOPNOTSUPP;
+#endif /* _ARM32_NEED_BUS_DMA_BOUNCE */
+}
+
+void
+_bus_dmatag_destroy(bus_dma_tag_t tag)
+{
+#ifdef _ARM32_NEED_BUS_DMA_BOUNCE
+	switch (tag->_tag_needs_free) {
+	case 0:
+		break;				/* not allocated with malloc */
+	case 1:
+		free(tag, M_DMAMAP);		/* last reference to tag */
+		break;
+	default:
+		(tag->_tag_needs_free)--;	/* one less reference */
+	}
+#endif
 }

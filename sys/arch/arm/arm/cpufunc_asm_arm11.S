@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm11.S,v 1.5 2008/04/27 18:58:43 matt Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm11.S,v 1.5.18.1 2014/02/15 16:18:35 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2005 ARM Limited
@@ -30,12 +30,11 @@
  *
  * ARM11 assembly functions for CPU / MMU / TLB specific operations
  *
- * XXX We make no attempt at present to take advantage of the v6 memroy
+ * XXX We make no attempt at present to take advantage of the v6 memory
  * architecture or physically tagged cache.
  */
  
 #include "assym.h"
-#include <machine/cpu.h>
 #include <machine/asm.h>
 
 /*
@@ -46,16 +45,16 @@
  */
 ENTRY(arm11_setttb)
 #ifdef PMAP_CACHE_VIVT
-	stmfd	sp!, {r0, lr}
-	bl	_C_LABEL(armv6_idcache_wbinv_all)
-	ldmfd	sp!, {r0, lr}
+#error arm11 does not have a VIVT cache.
 #endif
 
 	mcr	p15, 0, r0, c2, c0, 0	/* load new TTB */
 
-	mcr	p15, 0, r0, c8, c7, 0	/* invalidate I+D TLBs */
-	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
+	cmp	r1, #0
+	mcrne	p15, 0, r0, c8, c7, 0	/* invalidate I+D TLBs */
+	mcrne	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	RET
+END(arm11_setttb)
 
 /*
  * TLB functions
@@ -65,17 +64,19 @@ ENTRY(arm11_tlb_flushID_SE)
 	mcr	p15, 0, r0, c8, c5, 1	/* flush I tlb single entry */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	RET
+END(arm11_tlb_flushID_SE)
 
 ENTRY(arm11_tlb_flushI_SE)
 	mcr	p15, 0, r0, c8, c5, 1	/* flush I tlb single entry */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	RET
-	
+END(arm11_tlb_flushI_SE)
+
 
 /*
  * Context switch.
  *
- * These is the CPU-specific parts of the context switcher cpu_switch()
+ * These are the CPU-specific parts of the context switcher cpu_switchto()
  * These functions actually perform the TTB reload.
  */
 ENTRY(arm11_context_switch)
@@ -92,6 +93,7 @@ ENTRY(arm11_context_switch)
 	nop
 	nop
 	RET
+END(arm11_context_switch)
 
 /*
  * TLB functions
@@ -100,21 +102,25 @@ ENTRY(arm11_tlb_flushID)
 	mcr	p15, 0, r0, c8, c7, 0	/* flush I+D tlb */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	RET
+END(arm11_tlb_flushID)
 
 ENTRY(arm11_tlb_flushI)
 	mcr	p15, 0, r0, c8, c5, 0	/* flush I tlb */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	RET
+END(arm11_tlb_flushI)
 
 ENTRY(arm11_tlb_flushD)
 	mcr	p15, 0, r0, c8, c6, 0	/* flush D tlb */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	RET
+END(arm11_tlb_flushD)
 
 ENTRY(arm11_tlb_flushD_SE)
 	mcr	p15, 0, r0, c8, c6, 1	/* flush D tlb single entry */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	RET
+END(arm11_tlb_flushD_SE)
 
 /*
  * Other functions
@@ -122,8 +128,10 @@ ENTRY(arm11_tlb_flushD_SE)
 ENTRY(arm11_drain_writebuf)
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	RET
+END(arm11_drain_writebuf)
 
 ENTRY_NP(arm11_sleep)
 	mov	r0, #0
 	mcr	p15, 0, r0, c7, c0, 4	/* wait for interrupt */
 	RET
+END(arm11_sleep)
