@@ -1,12 +1,12 @@
-# $NetBSD: Makefile,v 1.6 2014/02/15 19:33:54 jmmv Exp $
+# $NetBSD: Makefile,v 1.7 2014/02/15 22:32:26 jmmv Exp $
 
 USE_ATF_LIBTOOLS=	yes
 
 .include <bsd.init.mk>
 
 TESTSDIR=	${TESTSBASE}/atf/tools
-ATFFILE=	no
-KYUAFILE=	no
+ATFFILE=	yes
+KYUAFILE=	yes
 
 .PATH:		${SRCDIR}/tools
 
