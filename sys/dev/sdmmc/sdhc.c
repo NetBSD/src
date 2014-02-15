@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.7.2.5 2013/11/05 18:35:35 matt Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.7.2.6 2014/02/15 03:33:40 matt Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.7.2.5 2013/11/05 18:35:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.7.2.6 2014/02/15 03:33:40 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -290,7 +290,7 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	    hp->maxblklen > 1 ? "s" : ""));
 
 #if 0
-	if (sc->sc_flags & SDHC_FLAG_HAS_CGM) {
+	if (sc->sc_flags & SDHC_FLAG_HAVE_CGM) {
 		uint16_t clk = HREAD2(hp, SDHC_CLOCK_CTL);
 		clk |= SDHC_SDCLK_CGM;
 		HWRITE2(hp, SDHC_CLOCK_CTL, clk);
@@ -312,7 +312,7 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	saa.saa_sct = &sdhc_functions;
 	saa.saa_sch = hp;
 	saa.saa_dmat = hp->dmat;
-	if (sc->sc_flags & SDHC_FLAG_HAS_CGM) {
+	if (sc->sc_flags & SDHC_FLAG_HAVE_CGM) {
 		saa.saa_clkmin = hp->clkbase / 2046;
 	} else {
 		saa.saa_clkmin = hp->clkbase / 256;
@@ -573,7 +573,7 @@ sdhc_clock_divisor(struct sdhc_host *hp, u_int freq, int *divp)
 {
 	int div;
 
-	if (hp->sc->sc_flags & SDHC_FLAG_HAS_CGM) {
+	if (hp->sc->sc_flags & SDHC_FLAG_HAVE_CGM) {
 		for (div = hp->clkbase / freq; div <= 0x3ff; div++) {
 			if ((hp->clkbase / div) <= freq) {
 				*divp = SDHC_SDCLK_CGM
