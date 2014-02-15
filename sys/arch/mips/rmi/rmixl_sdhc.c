@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rmixl_sdhc.c,v 1.1.2.1 2011/12/24 01:57:54 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rmixl_sdhc.c,v 1.1.2.2 2014/02/15 03:33:40 matt Exp $");
 
 #include <sys/device.h>
 #include <sys/bus.h>
@@ -86,7 +86,7 @@ sdhc_xlsdio_attach(device_t parent, device_t self, void *aux)
 	KASSERT(psc->sc_slots[xa->xa_slot] == NULL);
 	psc->sc_slots[xa->xa_slot] = sc;
 
-	sc->sc_flags = SDHC_FLAG_HAS_CGM;
+	sc->sc_flags = SDHC_FLAG_HAVE_CGM;
 	sc->sc_dev = self;
 	sc->sc_dmat = xa->xa_dmat;
 	sc->sc_host = malloc(1 * sizeof(sc->sc_host[0]),

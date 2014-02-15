@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcvar.h,v 1.4.2.4 2011/12/27 17:12:48 matt Exp $	*/
+/*	$NetBSD: sdhcvar.h,v 1.4.2.5 2014/02/15 03:33:40 matt Exp $	*/
 /*	$OpenBSD: sdhcvar.h,v 1.3 2007/09/06 08:01:01 jsg Exp $	*/
 
 /*
@@ -39,7 +39,8 @@ struct sdhc_softc {
 #define	SDHC_FLAG_FORCE_DMA	0x0002
 #define	SDHC_FLAG_NO_PWR0	0x0004
 #define	SDHC_FLAG_HAVE_DVS	0x0008
-#define	SDHC_FLAG_HAS_CGM	0x0010
+#define	SDHC_FLAG_HAVE_CGM	0x0010
+#define	SDHC_FLAG_32BIT_ACCESS	0x0020
 	uint32_t		sc_clkbase;
 };
 
