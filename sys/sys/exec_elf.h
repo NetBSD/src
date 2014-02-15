@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.138 2014/02/11 09:04:28 skrll Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.139 2014/02/15 16:17:01 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -1261,7 +1261,7 @@ int	coredump_elf32(struct lwp *, struct coredump_iostate *);
 void	coredump_savenote_elf32(struct note_state *, unsigned int,
 	    const char *, void *, size_t);
 
-int	elf32_check_header(Elf32_Ehdr *, int);
+int	elf32_check_header(Elf32_Ehdr *);
 #endif
 
 #ifdef EXEC_ELF64
@@ -1273,7 +1273,7 @@ int	coredump_elf64(struct lwp *, struct coredump_iostate *);
 void	coredump_savenote_elf64(struct note_state *, unsigned int,
 	    const char *, void *, size_t);
 
-int	elf64_check_header(Elf64_Ehdr *, int);
+int	elf64_check_header(Elf64_Ehdr *);
 #endif
 
 #endif /* _KERNEL */
