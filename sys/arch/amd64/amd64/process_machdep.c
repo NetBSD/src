@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.27 2014/02/11 20:17:16 dsl Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.28 2014/02/15 10:11:14 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.27 2014/02/11 20:17:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.28 2014/02/15 10:11:14 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,34 +103,12 @@ process_read_regs(struct lwp *l, struct reg *regs)
 }
 
 int
-process_read_fpregs(struct lwp *l, struct fpreg *regs,size_t *sz)
+process_read_fpregs(struct lwp *l, struct fpreg *regs, size_t *sz)
 {
-	struct fxsave *frame = process_fpframe(l);
 
-	if (l->l_md.md_flags & MDL_USEDFPU) {
-		fpusave_lwp(l, true);
-	} else {
-		uint16_t cw;
-		uint32_t mxcsr, mxcsr_mask;
+	fpusave_lwp(l, true);
 
-		/*
-		 * Fake a FNINIT.
-		 * The initial control word was already set by setregs(), so
-		 * save it temporarily.
-		 */
-		cw = frame->fx_cw;
-		mxcsr = frame->fx_mxcsr;
-		mxcsr_mask = frame->fx_mxcsr_mask;
-		memset(frame, 0, sizeof(*regs));
-		frame->fx_cw = cw;
-		frame->fx_sw = 0x0000;
-		frame->fx_tw = 0x00;	/* abridged tag; all empty */
-		frame->fx_mxcsr = mxcsr;
-		frame->fx_mxcsr_mask = mxcsr_mask;
-		l->l_md.md_flags |= MDL_USEDFPU;
-	}
-
-	regs->fxstate = *frame;
+	regs->fxstate = *process_fpframe(l);
 	return (0);
 }
 
@@ -160,15 +138,10 @@ process_write_regs(struct lwp *l, const struct reg *regp)
 int
 process_write_fpregs(struct lwp *l, const struct fpreg *regs, size_t sz)
 {
-	struct fxsave *frame = process_fpframe(l);
 
-	if (l->l_md.md_flags & MDL_USEDFPU) {
-		fpusave_lwp(l, false);
-	} else {
-		l->l_md.md_flags |= MDL_USEDFPU;
-	}
+	fpusave_lwp(l, false);
 
-	memcpy(frame, &regs->fxstate, sizeof(*regs));
+	memcpy(process_fpframe(l), &regs->fxstate, sizeof(*regs));
 	return (0);
 }
 
