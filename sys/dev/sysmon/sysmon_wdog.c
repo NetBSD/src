@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_wdog.c,v 1.24.28.1 2010/05/13 15:23:56 cliff Exp $	*/
+/*	$NetBSD: sysmon_wdog.c,v 1.24.28.2 2014/02/15 10:16:32 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.24.28.1 2010/05/13 15:23:56 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.24.28.2 2014/02/15 10:16:32 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -67,7 +67,6 @@ static void *sysmon_wdog_sdhook;
 
 struct sysmon_wdog *sysmon_wdog_find(const char *);
 void	sysmon_wdog_release(struct sysmon_wdog *);
-int	sysmon_wdog_setmode(struct sysmon_wdog *, int, u_int);
 void	sysmon_wdog_ktickle(void *);
 void	sysmon_wdog_shutdown(void *);
 void	sysmon_wdog_ref(struct sysmon_wdog *);
