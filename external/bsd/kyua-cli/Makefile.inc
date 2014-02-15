@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.2 2013/10/18 23:41:40 jmmv Exp $
+# $NetBSD: Makefile.inc,v 1.3 2014/02/15 19:42:10 jmmv Exp $
 
 .include <bsd.own.mk>
 
@@ -51,10 +51,10 @@ CPPFLAGS+=	-I${TOPDIR}		# For config.h.
 CPPFLAGS+=	-I${TOPDIR}/lib		# For utils/defs.hpp.
 CPPFLAGS+=	-I${SRCDIR}
 
-PRIVATELIBDIR!=	cd ${TOPDIR}/lib; ${PRINTOBJDIR}
 .for lib in ${KYUA_LIBS}
-LDADD+=		${PRIVATELIBDIR}/${lib}/lib${lib}.a
-DPADD+=		${PRIVATELIBDIR}/${lib}/lib${lib}.a
+LIBOBJDIR_${lib}!=	cd ${TOPDIR}/lib/${lib}; ${PRINTOBJDIR}
+LDADD+=			${LIBOBJDIR_${lib}}/lib${lib}.a
+DPADD+=			${LIBOBJDIR_${lib}}/lib${lib}.a
 .endfor
 
 .if !empty(KYUA_LIBS:Mutils)
