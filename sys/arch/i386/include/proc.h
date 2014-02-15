@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.40 2013/12/01 01:05:16 christos Exp $	*/
+/*	$NetBSD: proc.h,v 1.41 2014/02/15 10:11:15 dsl Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -52,7 +52,6 @@ struct mdlwp {
 };
 
 /* md_flags */
-#define	MDL_USEDFPU	0x0001	/* has used the FPU */
 #define	MDL_IOPL	0x0002	/* XEN: i/o privilege */
 
 struct mdproc {
