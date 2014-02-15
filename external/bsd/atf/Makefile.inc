@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.3 2014/02/12 04:08:31 jmmv Exp $
+# $NetBSD: Makefile.inc,v 1.4 2014/02/15 02:02:39 jmmv Exp $
 
 .include <bsd.own.mk>
 
@@ -39,8 +39,8 @@ CPPFLAGS+=	-I${TOPDIR}/lib/libatf-c	# For atf-c/defs.hpp.
 CPPFLAGS+=	-I${SRCDIR}
 
 .if defined(USE_ATF_LIBTOOLS)
-PRIVATELIBDIR!= cd ${TOPDIR}/lib; ${PRINTOBJDIR}
-CPPFLAGS+=	-I${PRIVATELIBDIR}/tools
-LDADD+=		${PRIVATELIBDIR}/tools/libtools.a
-DPADD+=		${PRIVATELIBDIR}/tools/libtools.a
+LIBTOOLSOBJDIR!=	cd ${TOPDIR}/lib/tools; ${PRINTOBJDIR}
+CPPFLAGS+=		-I${LIBTOOLSOBJDIR}
+LDADD+=			${LIBTOOLSOBJDIR}/libtools.a
+DPADD+=			${LIBTOOLSOBJDIR}/libtools.a
 .endif
