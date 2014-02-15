@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2014/01/29 23:35:13 joerg Exp $
+#	$NetBSD: Makefile,v 1.24 2014/02/15 13:34:28 tsutsui Exp $
 
 .include <bsd.own.mk>
 
@@ -16,12 +16,12 @@ CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} --disable-nls \
 		--disable-werror \
 		${BRANDING}
 
-${.OBJDIR}/build/gas/m68k-parse.c: ${GNUHOSTDIST}/gas/m68k-parse.c
+build/gas/m68k-parse.c: ${GNUHOSTDIST}/gas/m68k-parse.c
 	@mkdir build 2>/dev/null || true
 	@mkdir build/gas 2>/dev/null || true
 	cat ${GNUHOSTDIST}/gas/m68k-parse.c > ${.TARGET}
 
-.configure_done: ${.OBJDIR}/build/gas/m68k-parse.c
+.configure_done: build/gas/m68k-parse.c
 
 MAKE_ARGS=	MACHINE= MAKEINFO=${TOOL_MAKEINFO:Q}
 
