@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.42.16.13 2012/02/29 18:03:40 matt Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.42.16.14 2014/02/15 10:19:14 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.42.16.13 2012/02/29 18:03:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.42.16.14 2014/02/15 10:19:14 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,22 +204,22 @@ uvm_pglistalloc_c_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 		 * Make sure this is a managed physical page.
 		 */
 		KDASSERTMSG(vm_physseg_find(try, &cidx) == ps - vm_physmem,
-		    ("%s: %s(%#x, &cidx) (%d) != ps - vm_physmem (%zd)",
+		    "%s: %s(%#x, &cidx) (%d) != ps - vm_physmem (%zd)",
 		     __func__, "vm_physseg_find", try,
-		    vm_physseg_find(try, &cidx), ps - vm_physmem));
+		    vm_physseg_find(try, &cidx), ps - vm_physmem);
 
 		KDASSERTMSG(cidx == try - ps->start,
-		    ("%s: cidx (%#x) != try (%#x) - ps->start (%#"PRIxPADDR")",
-		     __func__, cidx, try, ps->start));
+		    "%s: cidx (%#x) != try (%#x) - ps->start (%#"PRIxPADDR")",
+		    __func__, cidx, try, ps->start);
 
 		KDASSERTMSG(vm_physseg_find(try + num - 1, &cidx) == ps - vm_physmem,
-		    ("%s: %s(%#x + %#x - 1, &cidx) (%d) != ps - vm_physmem (%zd)",
-		     __func__, "vm_physseg_find", try, num,
-		    vm_physseg_find(try, &cidx), ps - vm_physmem));
+		    "%s: %s(%#x + %#x - 1, &cidx) (%d) != ps - vm_physmem (%zd)",
+		    __func__, "vm_physseg_find", try, num,
+		    vm_physseg_find(try, &cidx), ps - vm_physmem);
 
 		KDASSERTMSG(cidx == try - ps->start + num - 1,
-		    ("%s: cidx (%#x) != try (%#x) - ps->start (%#"PRIxPADDR") + num (%#x) - 1",
-		     __func__, cidx, try, ps->start, num));
+		    "%s: cidx (%#x) != try (%#x) - ps->start (%#"PRIxPADDR") + num (%#x) - 1",
+		    __func__, cidx, try, ps->start, num);
 
 		tryidx = try - ps->start;
 		end = tryidx + num;
@@ -414,8 +414,8 @@ uvm_pglistalloc_s_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 
 	for (;; try++, pg++) {
 		KDASSERTMSG(limit <= ps->avail_end,
-		    ("%s: limit (%#x) > ps->avail_end (%#"PRIxPADDR")",
-		     __func__, limit, ps->avail_end));
+		    "%s: limit (%#x) > ps->avail_end (%#"PRIxPADDR")",
+		    __func__, limit, ps->avail_end);
 
 		if (try >= limit) {
 			if (ps->start_hint == 0 || second_pass)
@@ -430,13 +430,13 @@ uvm_pglistalloc_s_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 		}
 
 		KDASSERTMSG(vm_physseg_find(try, &cidx) == ps - vm_physmem,
-		    ("%s: %s(%#x, &cidx) (%d) != ps - vm_physmem (%zd)",
-		     __func__, "vm_physseg_find", try,
-		    vm_physseg_find(try, &cidx), ps - vm_physmem));
+		    "%s: %s(%#x, &cidx) (%d) != ps - vm_physmem (%zd)",
+		    __func__, "vm_physseg_find", try,
+		    vm_physseg_find(try, &cidx), ps - vm_physmem);
 
 		KDASSERTMSG(cidx == try - ps->start,
-		    ("%s: cidx (%#x) != try (%#x) - ps->start (%#"PRIxPADDR")",
-		     __func__, cidx, try, ps->start));
+		    "%s: cidx (%#x) != try (%#x) - ps->start (%#"PRIxPADDR")",
+		    __func__, cidx, try, ps->start);
 
 		/*
 		 * If this page isn't free, then we need to skip a colors worth

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.140.6.3.4.10 2012/02/29 18:03:39 matt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.140.6.3.4.11 2014/02/15 10:19:14 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.140.6.3.4.10 2012/02/29 18:03:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.140.6.3.4.11 2014/02/15 10:19:14 matt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -843,7 +843,6 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
 		for (lcv = 0, paddr = ptoa(start) ;
 				 lcv < npages ; lcv++, paddr += PAGE_SIZE) {
 			pgs[lcv].phys_addr = paddr;
-			pgs[lcv].free_list = free_list;
 			if (atop(paddr) >= avail_start &&
 			    atop(paddr) <= avail_end)
 				uvm_pagefree(&pgs[lcv]);
@@ -1176,8 +1175,8 @@ uvm_pagealloc_pgfl(struct uvm_cpu *ucpu, int free_list, int try1, int try2,
 		/* global, try2 */
 		if ((pg = LIST_FIRST(&gfreeq[try2])) != NULL) {
 			KASSERTMSG(pg->pqflags & PQ_FREE,
-			    ("%s: pg %p in q %p not free!",
-			     __func__, pg, &gfreeq[try2]));
+			    "%s: pg %p in q %p not free!",
+			     __func__, pg, &gfreeq[try2]);
 			KASSERT(gpgfl->pgfl_pages[try2] > 0);
 			ucpu = VM_FREE_PAGE_TO_CPU(pg);
 #ifndef MULTIPROCESSOR
@@ -1205,18 +1204,18 @@ uvm_pagealloc_pgfl(struct uvm_cpu *ucpu, int free_list, int try1, int try2,
 		u_int i = 0;
 		do {
 			KASSERTMSG(LIST_NEXT(xpg, pageq.list) == LIST_NEXT(xpg, listq.list),
-			    ("%s: color %d free_list %d pg %p (%u): next %p/%p",
+			    "%s: color %d free_list %d pg %p (%u): next %p/%p",
 			      __func__, color, free_list, xpg, i,
 			     LIST_NEXT(xpg, pageq.list),
-			     LIST_NEXT(xpg, listq.list)));
+			     LIST_NEXT(xpg, listq.list));
 		} while (++i < 500 && (xpg = LIST_NEXT(xpg, pageq.list)) != NULL);
 	}
 #else
 	KASSERTMSG(LIST_NEXT(pg, pageq.list) == LIST_NEXT(pg, listq.list),
-	    ("%s: color %d free_list %d pg %p: next %p/%p",
+	    "%s: color %d free_list %d pg %p: next %p/%p",
 	      __func__, color, free_list, pg,
 	     LIST_NEXT(pg, pageq.list),
-	     LIST_NEXT(pg, listq.list)));
+	     LIST_NEXT(pg, listq.list));
 #endif
 #endif
 	LIST_REMOVE(pg, pageq.list);	/* global list */
