@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.162.4.3.2.1.2.1 2010/04/21 00:27:41 matt Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.162.4.3.2.1.2.2 2014/02/15 03:22:27 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.162.4.3.2.1.2.1 2010/04/21 00:27:41 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.162.4.3.2.1.2.2 2014/02/15 03:22:27 matt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1162,25 +1162,25 @@ wm_attach(device_t parent, device_t self, void *aux)
 				 * incorrectly.
 				 */
 				pcix_cmd = pci_conf_read(pa->pa_pc, pa->pa_tag,
-				    sc->sc_pcix_offset + PCI_PCIX_CMD);
+				    sc->sc_pcix_offset + PCIX_CMD);
 				pcix_sts = pci_conf_read(pa->pa_pc, pa->pa_tag,
-				    sc->sc_pcix_offset + PCI_PCIX_STATUS);
+				    sc->sc_pcix_offset + PCIX_STATUS);
 
 				bytecnt =
-				    (pcix_cmd & PCI_PCIX_CMD_BYTECNT_MASK) >>
-				    PCI_PCIX_CMD_BYTECNT_SHIFT;
+				    (pcix_cmd & PCIX_CMD_BYTECNT_MASK) >>
+				    PCIX_CMD_BYTECNT_SHIFT;
 				maxb =
-				    (pcix_sts & PCI_PCIX_STATUS_MAXB_MASK) >>
-				    PCI_PCIX_STATUS_MAXB_SHIFT;
+				    (pcix_sts & PCIX_STATUS_MAXB_MASK) >>
+				    PCIX_STATUS_MAXB_SHIFT;
 				if (bytecnt > maxb) {
 					aprint_verbose_dev(sc->sc_dev,
 					    "resetting PCI-X MMRBC: %d -> %d\n",
 					    512 << bytecnt, 512 << maxb);
 					pcix_cmd = (pcix_cmd &
-					    ~PCI_PCIX_CMD_BYTECNT_MASK) |
-					   (maxb << PCI_PCIX_CMD_BYTECNT_SHIFT);
+					    ~PCIX_CMD_BYTECNT_MASK) |
+					   (maxb << PCIX_CMD_BYTECNT_SHIFT);
 					pci_conf_write(pa->pa_pc, pa->pa_tag,
-					    sc->sc_pcix_offset + PCI_PCIX_CMD,
+					    sc->sc_pcix_offset + PCIX_CMD,
 					    pcix_cmd);
 				}
 			}
