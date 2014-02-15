@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.229 2014/01/19 10:23:29 apb Exp $
+.\"	$NetBSD: make.1,v 1.230 2014/02/15 18:55:30 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd January 19, 2014
+.Dd February 14, 2014
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -638,10 +638,6 @@ target is to be transformed (the
 source); also known as
 .Ql Va \&\*[Lt] .
 It is not defined in explicit rules.
-.It Va .INCLUDEDFROMDIR
-The directory of the file this Makefile was included from.
-.It Va .INCLUDEDFROMFILE
-The filename of the file this Makefile was included from.
 .It Va .MEMBER
 The name of the archive member.
 .It Va .OODATE
@@ -710,6 +706,10 @@ was executed.
 Refer to the description of
 .Ql Ev PWD
 for more details.
+.It Va .INCLUDEDFROMDIR
+The directory of the file this Makefile was included from.
+.It Va .INCLUDEDFROMFILE
+The filename of the file this Makefile was included from.
 .It Ev MAKE
 The name that
 .Nm
