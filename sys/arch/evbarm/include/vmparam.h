@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.25.18.2 2014/02/15 16:18:37 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.25.18.3 2014/02/15 17:50:31 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -64,6 +64,7 @@
 /* virtual sizes (bytes) for various kernel submaps */
 
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
+#endif /* _KERNEL || _KMEMUSER */
 
 /*
  * max number of non-contig chunks of physical RAM you can have
@@ -90,6 +91,5 @@
 #define	VM_FREELIST_DEFAULT	0
 #define	VM_FREELIST_ISADMA	1
 
-#endif /* _KERNEL || _KMEMUSER */
 
 #endif	/* _EVBARM_VMPARAM_H_ */
