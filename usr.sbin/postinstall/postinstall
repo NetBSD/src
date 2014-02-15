@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.163 2014/01/29 12:56:28 skrll Exp $
+# $NetBSD: postinstall,v 1.164 2014/02/15 01:54:17 jmmv Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1669,7 +1669,7 @@ do_atf()
 		failed=1
 	fi
 	if find_file_in_dirlist atf-run.hooks "atf-run.hooks" \
-	    "${SRC_DIR}/external/bsd/atf/dist/atf-run/sample" \
+	    "${SRC_DIR}/external/bsd/atf/dist/tools/sample" \
 	    "${SRC_DIR}/etc/atf"; then
 			# ${dir} is set by find_file_in_dirlist()
 		populate_dir "${op}" true "${dir}" "${DEST_DIR}/etc/atf" 644 \
