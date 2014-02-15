@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootcd,v 1.23 2014/01/16 01:15:32 christos Exp $
+#	$NetBSD: Makefile.bootcd,v 1.24 2014/02/15 09:43:02 dsl Exp $
 #
 # Makefile snipped to create a CD/DVD ISO
 #
@@ -116,6 +116,12 @@ prepare:
 .endif
 .endif
 
+.if ${MAKEVERBOSE} >= 2
+PAX_v?= -v
+.else
+PAX_v?=
+.endif
+
 # Copy $RELEASEDIR/${MACHINE} in the CDROM dir
 #
 # XXX This could be done a lot easier if makefs(8) could
@@ -134,7 +140,7 @@ copy-releasedir:
 		cd ${RELEASEDIR}/${RELEASEMACHINEDIR}; 			\
 		echo Copying $$(pwd) to $$release_destdir ...; 		\
 		${TOOL_PAX} 						\
-			-rw -pe -v 					\
+			-rw -pe ${PAX_v}				\
 			${CDRELEASE_EXCLUDE}				\
 			. $$release_destdir; 				\
 		cd $$curdir;						\
@@ -150,7 +156,7 @@ copy-releasedir:
 		cd ${RELEASEDIR}/source; 				\
 		echo Copying $$(pwd) to $$release_destdir ...;		\
 		${TOOL_PAX} 						\
-			-rw -pe -v 					\
+			-rw -pe ${PAX_v}				\
 			. $$release_destdir; 				\
 		cd $$curdir;						\
 	fi
@@ -161,7 +167,7 @@ copy-releasedir:
 		cd ${DESTDIR};						\
 		for cde in ${CDRUNTIME};				\
 		do							\
-			${TOOL_PAX} -rw -pp -v $${cde} $$release_destdir;\
+			${TOOL_PAX} -rw -pp ${PAX_v} $${cde} $$release_destdir;\
 		done;							\
 		cd $$curdir;						\
 	fi
@@ -189,7 +195,7 @@ copy-releasedir:
 				cd $${cde};				\
 				echo Copying $$(pwd) to $$release_destdir ...;	\
 				${TOOL_MTREE} -c $${skipflag} |		\
-					${TOOL_PAX} -rw -pe -v -M	\
+					${TOOL_PAX} -rw -pe ${PAX_v} -M	\
 					$$release_destdir; 		\
 			else						\
 				echo "Missing $${cde}, aborting"; 	\
