@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.62 2014/02/14 08:50:27 hannken Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.63 2014/02/16 09:50:25 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.62 2014/02/14 08:50:27 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.63 2014/02/16 09:50:25 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -291,7 +291,7 @@ union_newsize(struct vnode *vp, off_t uppersz, off_t lowersz)
 
 /*
  * allocate a union_node/vnode pair.  the vnode is
- * referenced and locked.  the new vnode is returned
+ * referenced and unlocked.  the new vnode is returned
  * via (vpp).  (mp) is the mountpoint of the union filesystem,
  * (dvp) is the parent directory where the upper layer object
  * should exist (but doesn't) and (cnp) is the componentname
@@ -299,7 +299,7 @@ union_newsize(struct vnode *vp, off_t uppersz, off_t lowersz)
  * layer object to be created at a later time.  (uppervp)
  * and (lowervp) reference the upper and lower layer objects
  * being mapped.  either, but not both, can be nil.
- * if supplied, (uppervp) is locked.
+ * both, if supplied, are unlocked.
  * the reference is either maintained in the new union_node
  * object which is allocated, or they are vrele'd.
  *
@@ -339,11 +339,11 @@ union_allocvp(
 	voff_t uppersz, lowersz;
 	dev_t rdev;
 	u_long hash[3];
-	int vflag, iflag, lflag;
+	int vflag, iflag;
 	int try;
+	bool is_dotdot;
 
-	if (uppervp)
-		KASSERT(VOP_ISLOCKED(uppervp) == LK_EXCLUSIVE);
+	is_dotdot = (dvp != NULL && cnp != NULL && (cnp->cn_flags & ISDOTDOT));
 
 	if (uppervp == NULLVP && lowervp == NULLVP)
 		panic("union: unidentifiable allocation");
@@ -396,28 +396,10 @@ loop:
 			    UNIONTOV(un)->v_mount != mp)
 				continue;
 
-			if (uppervp != NULL &&
-			    (uppervp == dvp || uppervp == un->un_uppervp))
-				/* "." or already locked. */
-				lflag = 0;
-			else
-				lflag = LK_EXCLUSIVE;
 			vp = UNIONTOV(un);
 			mutex_enter(vp->v_interlock);
-			/*
-			 * If this node being cleaned out and our caller
-			 * holds a lock, then ignore it and continue.  To
-			 * allow the cleaning to succeed the current thread
-			 * must make progress.  For a brief time the cache
-			 * may contain more than one vnode referring to
-			 * a lower node.
-			 */
-			if ((vp->v_iflag & VI_XLOCK) != 0 && lflag == 0) {
-				mutex_exit(vp->v_interlock);
-				continue;
-			}
 			mutex_exit(&uhash_lock);
-			if (vget(vp, lflag))
+			if (vget(vp, 0))
 				goto loop;
 			goto found;
 		}
@@ -427,9 +409,13 @@ loop:
 
 found:
 	if (un) {
-		KASSERT(VOP_ISLOCKED(UNIONTOV(un)) == LK_EXCLUSIVE);
-		KASSERT(uppervp == NULL ||
-		    VOP_ISLOCKED(uppervp) == LK_EXCLUSIVE);
+		if (uppervp != dvp) {
+			if (is_dotdot)
+				VOP_UNLOCK(dvp);
+			vn_lock(UNIONTOV(un), LK_EXCLUSIVE | LK_RETRY);
+			if (is_dotdot)
+				vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
+		}
 		/*
 		 * Save information about the upper layer.
 		 */
@@ -460,19 +446,23 @@ found:
 			vrele(lowervp);
 		}
 		*vpp = UNIONTOV(un);
+		if (uppervp != dvp)
+			VOP_UNLOCK(*vpp);
 		return (0);
 	}
 
 	uppersz = lowersz = VNOVAL;
-	if (uppervp != NULLVP)
+	if (uppervp != NULLVP) {
+		vn_lock(uppervp, LK_SHARED | LK_RETRY);
 		if (VOP_GETATTR(uppervp, &va, FSCRED) == 0)
 			uppersz = va.va_size;
+		VOP_UNLOCK(uppervp);
+	}
 	if (lowervp != NULLVP) {
 		vn_lock(lowervp, LK_SHARED | LK_RETRY);
-		error = VOP_GETATTR(lowervp, &va, FSCRED);
-		VOP_UNLOCK(lowervp);
-		if (error == 0)
+		if (VOP_GETATTR(lowervp, &va, FSCRED) == 0)
 			lowersz = va.va_size;
+		VOP_UNLOCK(lowervp);
 	}
 
 	/*
@@ -483,12 +473,8 @@ found:
 	error = getnewvnode(VT_UNION, mp, union_vnodeop_p,
 	    svp->v_interlock, vpp);
 	if (error) {
-		if (uppervp) {
-			if (dvp == uppervp)
-				vrele(uppervp);
-			else
-				vput(uppervp);
-		}
+		if (uppervp)
+			vrele(uppervp);
 		if (lowervp)
 			vrele(lowervp);
 
@@ -501,17 +487,6 @@ found:
 			if (un1->un_lowervp == lowervp &&
 			    un1->un_uppervp == uppervp &&
 			    UNIONTOV(un1)->v_mount == mp) {
-				vp = UNIONTOV(un1);
-				mutex_enter(vp->v_interlock);
-				/*
-				 * Ignore nodes being cleaned out.
-				 * See the cache lookup above.
-				 */
-				if ((vp->v_iflag & VI_XLOCK) != 0) {
-					mutex_exit(vp->v_interlock);
-					continue;
-				}
-				mutex_exit(vp->v_interlock);
 				/*
 				 * Another thread beat us, push back freshly
 				 * allocated vnode and retry.
@@ -551,15 +526,6 @@ found:
 	un->un_dircache = 0;
 	un->un_openl = 0;
 	un->un_cflags = 0;
-
-	if (uppervp == NULL) {
-		struct vop_lock_args ap;
-
-		ap.a_vp = UNIONTOV(un);
-		ap.a_flags = LK_EXCLUSIVE;
-		error = genfs_lock(&ap);
-		KASSERT(error == 0);
-	}
 
 	mutex_enter(&un->un_lock);
 	un->un_uppersz = VNOVAL;
@@ -1076,10 +1042,10 @@ union_dircache(struct vnode *vp, struct lwp *l)
 	if (*vpp == NULLVP)
 		goto out;
 
-	vn_lock(*vpp, LK_EXCLUSIVE | LK_RETRY);
 	vref(*vpp);
 	error = union_allocvp(&nvp, vp->v_mount, NULLVP, NULLVP, 0, *vpp, NULLVP, 0);
 	if (!error) {
+		vn_lock(nvp, LK_EXCLUSIVE | LK_RETRY);
 		VTOUNION(vp)->un_dircache = 0;
 		VTOUNION(nvp)->un_dircache = dircache;
 	}
