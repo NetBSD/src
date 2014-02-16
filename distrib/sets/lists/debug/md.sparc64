@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.43 2014/02/08 19:17:43 jmmv Exp $
+# $NetBSD: md.sparc64,v 1.44 2014/02/16 18:19:10 christos Exp $
 ./usr/lib/sparc/i18n/libBIG5_g.a		comp-obsolete		obsolete
 ./usr/lib/sparc/i18n/libDECHanyu_g.a		comp-obsolete		obsolete
 ./usr/lib/sparc/i18n/libEUCTW_g.a		comp-obsolete		obsolete
@@ -302,7 +302,7 @@
 ./usr/libdata/debug/usr/lib/sparc/libsaslc.so.0.0.debug			comp-compat-shlib	compat,pic,debug,crypto
 ./usr/libdata/debug/usr/lib/sparc/libskey.so.2.0.debug			comp-compat-shlib	compat,pic,debug,skey
 ./usr/libdata/debug/usr/lib/sparc/libsl.so.5.0.debug			comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/sparc/libsqlite3.so.1.1.debug		comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libsqlite3.so.1.2.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libss.so.6.0.debug			comp-compat-shlib	obsolete
 ./usr/libdata/debug/usr/lib/sparc/libssh.so.22.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libssl.so.10.2.debug			comp-compat-shlib	compat,pic,debug
