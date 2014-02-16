@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.26 2014/02/14 04:17:41 christos Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.27 2014/02/16 08:17:43 nonaka Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.20 2011/11/26 06:39:33 ckuethe Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.26 2014/02/14 04:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.27 2014/02/16 08:17:43 nonaka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1768,7 +1768,9 @@ urtwn_newstate_cb(struct urtwn_softc *sc, void *arg)
 
 			/* Enable TSF synchronization. */
 			urtwn_tsf_sync_enable(sc);
-			/*FALLTHROUGH*/
+
+                        msr |= R92C_MSR_INFRA;
+			break;
 		default:
                         msr |= R92C_MSR_ADHOC;
 			break;
@@ -1786,6 +1788,7 @@ urtwn_newstate_cb(struct urtwn_softc *sc, void *arg)
                         urtwn_write_4(sc, R92C_TCR, reg);
                         reg |= 0x01;
                         urtwn_write_4(sc, R92C_TCR, reg);
+
                         msr |= R92C_MSR_AP;
 			break;
                 }
