@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwnreg.h,v 1.5 2014/02/16 08:18:28 nonaka Exp $	*/
+/*	$NetBSD: if_urtwnreg.h,v 1.6 2014/02/16 16:13:37 christos Exp $	*/
 /*	$OpenBSD: if_urtwnreg.h,v 1.3 2010/11/16 18:02:59 damien Exp $	*/
 
 /*-
@@ -390,6 +390,7 @@
 #define R92C_MSR_ADHOC		0x01
 #define R92C_MSR_INFRA		0x02
 #define R92C_MSR_AP		0x03
+#define R92C_MSR_MASK		(~R92C_MSR_AP)
 
 /* Bits for R92C_PBP. */
 #define R92C_PBP_PSRX_M		0x0f
