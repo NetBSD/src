@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.61 2013/11/28 12:08:57 mrg Exp $
+#	$NetBSD: Makefile,v 1.62 2014/02/16 11:26:31 skrll Exp $
 
 .include <bsd.own.mk>
 
@@ -142,7 +142,7 @@ NATIVE_CONFIGURE_ARGS+=	\
 			--with-mpfr-lib=${MPFROBJ} \
 			--with-gmp-lib=${GMPOBJ} \
 			--with-mpc-include=${MPC}/dist/src \
-			--with-mpfr-include=${MPFR}/dist \
+			--with-mpfr-include=${MPFR}/dist/src \
 			--with-gmp-include=${GMP}/lib/libgmp/arch/${MACHINE_ARCH}
 
 .  if ${MACHINE_ARCH} != "vax"
