@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.27 2014/02/16 08:17:43 nonaka Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.28 2014/02/16 16:10:27 christos Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.20 2011/11/26 06:39:33 ckuethe Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.27 2014/02/16 08:17:43 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.28 2014/02/16 16:10:27 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1757,8 +1757,8 @@ urtwn_newstate_cb(struct urtwn_softc *sc, void *arg)
 		/* Set beacon interval. */
 		urtwn_write_2(sc, R92C_BCN_INTERVAL, ni->ni_intval);
 
-                msr = urtwn_read_1(sc, R92C_MSR);
-                msr &= 0xfc;
+		msr = urtwn_read_1(sc, R92C_MSR);
+		msr &= 0xfc;
 		switch (ic->ic_opmode) {
 		case IEEE80211_M_STA:
 			/* Allow Rx from our BSSID only. */
@@ -1769,30 +1769,30 @@ urtwn_newstate_cb(struct urtwn_softc *sc, void *arg)
 			/* Enable TSF synchronization. */
 			urtwn_tsf_sync_enable(sc);
 
-                        msr |= R92C_MSR_INFRA;
+			msr |= R92C_MSR_INFRA;
 			break;
 		default:
-                        msr |= R92C_MSR_ADHOC;
+			msr |= R92C_MSR_ADHOC;
 			break;
 		case IEEE80211_M_HOSTAP:
-                        urtwn_write_2(sc, R92C_BCNTCFG, 0x000f);
+			urtwn_write_2(sc, R92C_BCNTCFG, 0x000f);
 
-                        /* Allow Rx from any BSSID. */
-                        urtwn_write_4(sc, R92C_RCR,
-                            urtwn_read_4(sc, R92C_RCR) &
-                            ~(R92C_RCR_CBSSID_DATA | R92C_RCR_CBSSID_BCN));
+			/* Allow Rx from any BSSID. */
+			urtwn_write_4(sc, R92C_RCR,
+			    urtwn_read_4(sc, R92C_RCR) &
+			    ~(R92C_RCR_CBSSID_DATA | R92C_RCR_CBSSID_BCN));
 
-                        /* Reset TSF timer to zero. */
-                        reg = urtwn_read_4(sc, R92C_TCR);
-                        reg &= ~0x01;
-                        urtwn_write_4(sc, R92C_TCR, reg);
-                        reg |= 0x01;
-                        urtwn_write_4(sc, R92C_TCR, reg);
+			/* Reset TSF timer to zero. */
+			reg = urtwn_read_4(sc, R92C_TCR);
+			reg &= ~0x01;
+			urtwn_write_4(sc, R92C_TCR, reg);
+			reg |= 0x01;
+			urtwn_write_4(sc, R92C_TCR, reg);
 
-                        msr |= R92C_MSR_AP;
+			msr |= R92C_MSR_AP;
 			break;
-                }
-                urtwn_write_1(sc, R92C_MSR, msr);
+		}
+		urtwn_write_1(sc, R92C_MSR, msr);
 
 		sifs_time = 10;
 		urtwn_write_1(sc, R92C_SIFS_CCK + 1, sifs_time);
@@ -4001,20 +4001,20 @@ urtwn_chip_stop(struct urtwn_softc *sc)
 	reg |= ((reg << 8) & 0x0000ff00) | 0x00ff0000;
 	urtwn_write_4(sc, R92C_GPIO_PIN_CTRL, reg);
 
-        /* Disable GPIO[10:8] */
-        urtwn_write_1(sc, R92C_GPIO_MUXCFG + 3, 0x00);
+	/* Disable GPIO[10:8] */
+	urtwn_write_1(sc, R92C_GPIO_MUXCFG + 3, 0x00);
 
 	reg = urtwn_read_2(sc, R92C_GPIO_MUXCFG + 2) & ~0x00f0;
-        reg |= (((reg & 0x000f) << 4) | 0x0780);
-        urtwn_write_2(sc, R92C_GPIO_PIN_CTRL+2, reg);
+	reg |= (((reg & 0x000f) << 4) | 0x0780);
+	urtwn_write_2(sc, R92C_GPIO_PIN_CTRL+2, reg);
 
 	/* Disable LED0 & 1 */
-        urtwn_write_2(sc, R92C_LEDCFG0, 0x8080);
+	urtwn_write_2(sc, R92C_LEDCFG0, 0x8080);
 
 	/*
 	 * Reset digital sequence
 	 */
-        if (disabled) {
+	if (disabled) {
 		/* Disable ELDR clock */
 		urtwn_write_2(sc, R92C_SYS_CLKR, 0x70A3);
 		/* Isolated ELDR to PON */
@@ -4024,14 +4024,14 @@ urtwn_chip_stop(struct urtwn_softc *sc)
 	/*
 	 * Disable analog sequence
 	 */
-        if (disabled) {
+	if (disabled) {
 		/* Disable A15 power */
-                urtwn_write_1(sc, R92C_LDOA15_CTRL, 0x04);
+		urtwn_write_1(sc, R92C_LDOA15_CTRL, 0x04);
 		/* Disable digital core power */
-                urtwn_write_1(sc, R92C_LDOV12D_CTRL,
-                    urtwn_read_1(sc, R92C_LDOV12D_CTRL) &
+		urtwn_write_1(sc, R92C_LDOV12D_CTRL,
+		    urtwn_read_1(sc, R92C_LDOV12D_CTRL) &
 		      ~R92C_LDOV12D_CTRL_LDV12_EN);
-        }
+	}
 
 	/* Enter PFM mode */
 	urtwn_write_1(sc, R92C_SPS0_CTRL, 0x23);
