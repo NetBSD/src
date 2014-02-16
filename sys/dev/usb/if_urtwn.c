@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.28 2014/02/16 16:10:27 christos Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.29 2014/02/16 16:13:37 christos Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.20 2011/11/26 06:39:33 ckuethe Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.28 2014/02/16 16:10:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.29 2014/02/16 16:13:37 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1758,7 +1758,7 @@ urtwn_newstate_cb(struct urtwn_softc *sc, void *arg)
 		urtwn_write_2(sc, R92C_BCN_INTERVAL, ni->ni_intval);
 
 		msr = urtwn_read_1(sc, R92C_MSR);
-		msr &= 0xfc;
+		msr &= R92C_MSR_MASK;
 		switch (ic->ic_opmode) {
 		case IEEE80211_M_STA:
 			/* Allow Rx from our BSSID only. */
@@ -1770,9 +1770,6 @@ urtwn_newstate_cb(struct urtwn_softc *sc, void *arg)
 			urtwn_tsf_sync_enable(sc);
 
 			msr |= R92C_MSR_INFRA;
-			break;
-		default:
-			msr |= R92C_MSR_ADHOC;
 			break;
 		case IEEE80211_M_HOSTAP:
 			urtwn_write_2(sc, R92C_BCNTCFG, 0x000f);
@@ -1790,6 +1787,9 @@ urtwn_newstate_cb(struct urtwn_softc *sc, void *arg)
 			urtwn_write_4(sc, R92C_TCR, reg);
 
 			msr |= R92C_MSR_AP;
+			break;
+		default:
+			msr |= R92C_MSR_ADHOC;
 			break;
 		}
 		urtwn_write_1(sc, R92C_MSR, msr);
