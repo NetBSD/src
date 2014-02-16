@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_alg_icmp.c,v 1.18 2013/12/06 01:33:37 rmind Exp $	*/
+/*	$NetBSD: npf_alg_icmp.c,v 1.19 2014/02/16 22:10:40 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.18 2013/12/06 01:33:37 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.19 2014/02/16 22:10:40 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -65,48 +65,8 @@ MODULE(MODULE_CLASS_MISC, npf_alg_icmp, "npf");
 
 static npf_alg_t *	alg_icmp	__read_mostly;
 
-static bool	npfa_icmp_match(npf_cache_t *, nbuf_t *, npf_nat_t *, int);
-static bool	npfa_icmp_nat(npf_cache_t *, nbuf_t *, npf_nat_t *, int);
-static npf_session_t *npfa_icmp_session(npf_cache_t *, nbuf_t *, int);
-
 /*
- * npf_alg_icmp_{init,fini,modcmd}: ICMP ALG initialization, destruction
- * and module interface.
- */
-
-static int
-npf_alg_icmp_init(void)
-{
-	alg_icmp = npf_alg_register("icmp", npfa_icmp_match,
-	    npfa_icmp_nat, npfa_icmp_session);
-	return alg_icmp ? 0 : ENOMEM;
-}
-
-static int
-npf_alg_icmp_fini(void)
-{
-	KASSERT(alg_icmp != NULL);
-	return npf_alg_unregister(alg_icmp);
-}
-
-static int
-npf_alg_icmp_modcmd(modcmd_t cmd, void *arg)
-{
-	switch (cmd) {
-	case MODULE_CMD_INIT:
-		return npf_alg_icmp_init();
-	case MODULE_CMD_FINI:
-		return npf_alg_icmp_fini();
-	case MODULE_CMD_AUTOUNLOAD:
-		return EBUSY;
-	default:
-		return ENOTTY;
-	}
-	return 0;
-}
-
-/*
- * npfa_icmp_match: match inspector - determines ALG case and associates
+ * npfa_icmp_match: matching insperctor determines ALG case and associates
  * our ALG with the NAT entry.
  */
 static bool
@@ -343,7 +303,7 @@ npfa_icmp_session(npf_cache_t *npc, nbuf_t *nbuf, int di)
  * which is embedded in ICMP packet.  Note: backwards stream only.
  */
 static bool
-npfa_icmp_nat(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, int forw)
+npfa_icmp_nat(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, bool forw)
 {
 	npf_cache_t enpc;
 
@@ -434,4 +394,44 @@ npfa_icmp_nat(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, int forw)
 	}
 	ic->icmp_cksum = cksum;
 	return true;
+}
+
+/*
+ * npf_alg_icmp_{init,fini,modcmd}: ICMP ALG initialization, destruction
+ * and module interface.
+ */
+
+static int
+npf_alg_icmp_init(void)
+{
+	static const npfa_funcs_t icmp = {
+		.match		= npfa_icmp_match,
+		.translate	= npfa_icmp_nat,
+		.inspect	= npfa_icmp_session,
+	};
+	alg_icmp = npf_alg_register("icmp", &icmp);
+	return alg_icmp ? 0 : ENOMEM;
+}
+
+static int
+npf_alg_icmp_fini(void)
+{
+	KASSERT(alg_icmp != NULL);
+	return npf_alg_unregister(alg_icmp);
+}
+
+static int
+npf_alg_icmp_modcmd(modcmd_t cmd, void *arg)
+{
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return npf_alg_icmp_init();
+	case MODULE_CMD_FINI:
+		return npf_alg_icmp_fini();
+	case MODULE_CMD_AUTOUNLOAD:
+		return EBUSY;
+	default:
+		return ENOTTY;
+	}
+	return 0;
 }
