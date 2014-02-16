@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.74 2013/11/28 12:08:57 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.75 2014/02/16 11:26:31 skrll Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.
@@ -30,7 +30,7 @@ _OUTDIRBASE="gnu"
 sanitise_includes () {
 	sed \
 		-e "s,-I$_DESTDIR/usr/include,,g" \
-		-e "s,-I$_SRC/external/lgpl3/mpfr/dist,,g" \
+		-e "s,-I$_SRC/external/lgpl3/mpfr/dist/src,,g" \
 		-e "s,-I$_SRC/external/lgpl3/mpc/dist/src,,g" \
 		-e "s,-I$_SRC/external/lgpl3/gmp/lib/libgmp/arch/$MACHINE_ARCH,,g" \
 		-e "s,-I/usr/include/[^ 	]*,,"
