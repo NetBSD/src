@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.68 2012/04/30 22:51:27 rmind Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.69 2014/02/16 09:50:25 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.68 2012/04/30 22:51:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.69 2014/02/16 09:50:25 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -386,19 +386,21 @@ union_root(struct mount *mp, struct vnode **vpp)
 	 * Return locked reference to root.
 	 */
 	vref(um->um_uppervp);
-	vn_lock(um->um_uppervp, LK_EXCLUSIVE | LK_RETRY);
 	if (um->um_lowervp)
 		vref(um->um_lowervp);
 	error = union_allocvp(vpp, mp, NULL, NULL, NULL,
 			      um->um_uppervp, um->um_lowervp, 1);
 
 	if (error) {
-		vput(um->um_uppervp);
+		vrele(um->um_uppervp);
 		if (um->um_lowervp)
 			vrele(um->um_lowervp);
+		return error;
 	}
 
-	return (error);
+	vn_lock(*vpp, LK_EXCLUSIVE | LK_RETRY);
+
+	return 0;
 }
 
 int
