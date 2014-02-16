@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.47 2014/02/13 03:34:40 rmind Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.48 2014/02/16 22:10:40 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -96,8 +96,6 @@ typedef struct npf_tableset	npf_tableset_t;
  * DEFINITIONS.
  */
 
-typedef bool (*npf_alg_func_t)(npf_cache_t *, nbuf_t *, npf_nat_t *, int);
-typedef npf_session_t *(*npf_alg_sfunc_t)(npf_cache_t *, nbuf_t *, int);
 typedef void (*npf_workfunc_t)(void);
 
 /*
@@ -129,6 +127,16 @@ typedef struct {
 	u_int		nst_state;
 	npf_tcpstate_t	nst_tcpst[2];
 } npf_state_t;
+
+/*
+ * ALG FUNCTIONS.
+ */
+
+typedef struct {
+	bool		(*match)(npf_cache_t *, nbuf_t *, npf_nat_t *, int);
+	bool		(*translate)(npf_cache_t *, nbuf_t *, npf_nat_t *, bool);
+	npf_session_t * (*inspect)(npf_cache_t *, nbuf_t *, int);
+} npfa_funcs_t;
 
 /*
  * INTERFACES.
@@ -345,8 +353,7 @@ npf_nat_t *	npf_nat_restore(prop_dictionary_t, npf_session_t *);
 /* ALG interface. */
 void		npf_alg_sysinit(void);
 void		npf_alg_sysfini(void);
-npf_alg_t *	npf_alg_register(const char *, npf_alg_func_t, npf_alg_func_t,
-		    npf_alg_sfunc_t);
+npf_alg_t *	npf_alg_register(const char *, const npfa_funcs_t *);
 int		npf_alg_unregister(npf_alg_t *);
 npf_alg_t *	npf_alg_construct(const char *);
 bool		npf_alg_match(npf_cache_t *, nbuf_t *, npf_nat_t *, int);
