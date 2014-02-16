@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.115 2014/02/07 15:29:22 hannken Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.116 2014/02/16 12:54:07 maxv Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.115 2014/02/07 15:29:22 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.116 2014/02/16 12:54:07 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -534,10 +534,7 @@ tmpfs_read(void *v)
 
 	KASSERT(VOP_ISLOCKED(vp));
 
-	if (vp->v_type != VREG) {
-		return EISDIR;
-	}
-	if (uio->uio_offset < 0) {
+	if (uio->uio_offset < 0 || vp->v_type != VREG) {
 		return EINVAL;
 	}
 
