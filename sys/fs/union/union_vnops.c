@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.55 2014/02/13 21:05:26 martin Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.56 2014/02/16 09:50:25 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.55 2014/02/13 21:05:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.56 2014/02/16 09:50:25 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -467,11 +467,6 @@ start:
 						vput(lowervp);
 					goto start;
 				}
-				/*
-				 * XXX: lock upper node until lookup returns
-				 * unlocked nodes.
-				 */
-				vn_lock(uppervp, LK_EXCLUSIVE | LK_RETRY);
 			}
 			if (uerror) {
 				if (lowervp != NULLVP) {
@@ -481,6 +476,9 @@ start:
 				return (uerror);
 			}
 		}
+	} else { /* uerror == 0 */
+		if (uppervp != upperdvp)
+			VOP_UNLOCK(uppervp);
 	}
 
 	if (lowervp != NULLVP)
@@ -491,14 +489,11 @@ start:
 
 	if (error) {
 		if (uppervp != NULLVP)
-			vput(uppervp);
+			vrele(uppervp);
 		if (lowervp != NULLVP)
 			vrele(lowervp);
 		return error;
 	}
-
-	if (*ap->a_vpp != dvp)
-		VOP_UNLOCK(*ap->a_vpp);
 
 	return 0;
 }
@@ -526,11 +521,8 @@ union_create(void *v)
 		if (error)
 			return (error);
 
-		/* XXX: lock upper node until lookup returns unlocked nodes. */
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		error = union_allocvp(ap->a_vpp, mp, NULLVP, NULLVP, cnp, vp,
 				NULLVP, 1);
-		VOP_UNLOCK(vp);
 		if (error)
 			vrele(vp);
 		return (error);
@@ -579,11 +571,8 @@ union_mknod(void *v)
 		if (error)
 			return (error);
 
-		/* XXX: lock upper node until lookup returns unlocked nodes. */
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		error = union_allocvp(ap->a_vpp, mp, NULLVP, NULLVP,
 				      cnp, vp, NULLVP, 1);
-		VOP_UNLOCK(vp);
 		if (error)
 			vrele(vp);
 		return (error);
@@ -1400,11 +1389,8 @@ union_mkdir(void *v)
 			return (error);
 		}
 
-		/* XXX: lock upper node until lookup returns unlocked nodes. */
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		error = union_allocvp(ap->a_vpp, ap->a_dvp->v_mount, ap->a_dvp,
 				NULLVP, cnp, vp, NULLVP, 1);
-		VOP_UNLOCK(vp);
 		if (error)
 			vrele(vp);
 		return (error);
