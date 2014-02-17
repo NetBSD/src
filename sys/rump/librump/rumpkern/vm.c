@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.146 2013/11/23 22:24:31 christos Exp $	*/
+/*	$NetBSD: vm.c,v 1.147 2014/02/17 19:33:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.146 2013/11/23 22:24:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.147 2014/02/17 19:33:05 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -94,6 +94,7 @@ static kmutex_t pdaemonmtx;
 static kcondvar_t pdaemoncv, oomwait;
 
 unsigned long rump_physmemlimit = RUMPMEM_UNLIMITED;
+static unsigned long pdlimit = RUMPMEM_UNLIMITED; /* page daemon memlimit */
 static unsigned long curphysmem;
 static unsigned long dddlim;		/* 90% of memory limit used */
 #define NEED_PAGEDAEMON() \
@@ -305,8 +306,13 @@ uvm_init(void)
 		if (rump_physmemlimit / mult != tmp)
 			panic("uvm_init: RUMP_MEMLIMIT overflow: %s", buf);
 		/* it's not like we'd get far with, say, 1 byte, but ... */
-		if (rump_physmemlimit == 0)
-			panic("uvm_init: no memory");
+		if (rump_physmemlimit < 2*MAXPHYS)
+			panic("uvm_init: no memory, need at least %d bytes",
+			    2*MAXPHYS);
+
+		/* reserve some memory for the pager */
+		pdlimit = rump_physmemlimit;
+		rump_physmemlimit -= 2*MAXPHYS;
 
 #define HUMANIZE_BYTES 9
 		CTASSERT(sizeof(buf) >= HUMANIZE_BYTES);
@@ -919,10 +925,14 @@ void
 uvm_wait(const char *msg)
 {
 
-	if (__predict_false(curlwp == uvm.pagedaemon_lwp))
-		panic("pagedaemon out of memory");
 	if (__predict_false(rump_threads == 0))
 		panic("pagedaemon missing (RUMP_THREADS = 0)");
+
+	if (curlwp == uvm.pagedaemon_lwp) {
+		/* is it possible for us to later get memory? */
+		if (!uvmexp.paging)
+			panic("pagedaemon out of memory");
+	}
 
 	mutex_enter(&pdaemonmtx);
 	pdaemon_waiters++;
@@ -1158,7 +1168,8 @@ rump_hypermalloc(size_t howmuch, int alignment, bool waitok, const char *wmsg)
  limitagain:
 	if (rump_physmemlimit != RUMPMEM_UNLIMITED) {
 		newmem = atomic_add_long_nv(&curphysmem, howmuch);
-		if (newmem > rump_physmemlimit) {
+		if ((newmem > rump_physmemlimit) &&
+		    !(curlwp == uvm.pagedaemon_lwp || newmem > pdlimit)) {
 			newmem = atomic_add_long_nv(&curphysmem, -howmuch);
 			if (!waitok) {
 				return NULL;
