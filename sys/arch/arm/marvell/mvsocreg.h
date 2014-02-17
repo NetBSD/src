@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsocreg.h,v 1.8 2013/12/23 04:12:09 kiyohara Exp $	*/
+/*	$NetBSD: mvsocreg.h,v 1.9 2014/02/17 05:05:46 kiyohara Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -97,7 +97,7 @@
 #define MVSOC_MLMB_WRLR_REMAP_MASK		0xffff0000
 #define MVSOC_MLMB_WRHR(w)		  (((w) << 4) + 0xc)
 #define MVSOC_MLMB_IRBAR		  0x080 /* Internal regs Base Address */
-#define MVSOC_MLMB_IRBAR_BASE_MASK	0xfff00000
+#define MVSOC_MLMB_IRBAR_BASE_MASK		0xfff00000
 
 /* CPU Control and Status Registers */
 #define MVSOC_MLMB_CPUCR		  0x100	/* CPU Configuration Register */
@@ -119,6 +119,14 @@
 #define MVSOC_MLMB_CLKGATING_BIT(n)	  (1 << (n))
 
 #define MVSOC_MLMB_L2CFG		  0x128	/* L2 Cache Config */
+
+#define MVSOC_MLMB_NWIN			  4
+#define MVSOC_MLMB_WINBAR(w)		  (((w) << 3) + 0x180)
+#define MVSOC_MLMB_WINBAR_BASE_MASK		0xff000000
+#define MVSOC_MLMB_WINCR(w)		  (((w) << 3) + 0x184)
+#define MVSOC_MLMB_WINCR_EN			(1 << 0)
+#define MVSOC_MLMB_WINCR_WINCS(x)		(((x) & 0x1c) >> 2)
+#define MVSOC_MLMB_WINCR_SIZE_MASK		0xff000000
 
 /* Coherent Fabric Control and Status */
 #define MVSOC_MLMB_COHERENCY_FABRIC_CTRL  0x200
