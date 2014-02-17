@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoctmrreg.h,v 1.3 2013/10/14 04:20:44 kiyohara Exp $	*/
+/*	$NetBSD: mvsoctmrreg.h,v 1.4 2014/02/17 05:11:25 kiyohara Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -43,6 +43,6 @@
 /* CPU Timers Control Register (MVSOCTMR_CTCR) */
 #define MVSOCTMR_CTCR_CPUTIMEREN(n)	(1 << ((n) * 2))
 #define MVSOCTMR_CTCR_CPUTIMERAUTO(n)	(1 << ((n) * 2 + 1))
-#define MVSOCTMR_CTCR_25MHZEN(n)	(1 << ((n) + 11))
+#define MVSOCTMR_CTCR_25MHZEN(n)	(1 << ((n) + 11)) /* Armada XP only */
 
 #endif	/* !_MVSOCTMRREG_H_ */
