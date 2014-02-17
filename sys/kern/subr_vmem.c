@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.87 2013/11/22 21:04:11 christos Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.88 2014/02/17 20:40:06 para Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -31,10 +31,22 @@
  * -	Magazines and Vmem: Extending the Slab Allocator
  *	to Many CPUs and Arbitrary Resources
  *	http://www.usenix.org/event/usenix01/bonwick.html
+ *
+ * locking & the boundary tag pool:
+ * - 	A pool(9) is used for vmem boundary tags
+ * - 	During a pool get call the global vmem_btag_refill_lock is taken,
+ *	to serialize access to the allocation reserve, but no other
+ *	vmem arena locks.
+ * -	During pool_put calls no vmem mutexes are locked.
+ * - 	pool_drain doesn't hold the pool's mutex while releasing memory to
+ * 	its backing therefore no interferance with any vmem mutexes.
+ * -	The boundary tag pool is forced to put page headers into pool pages
+ *  	(PR_PHINPAGE) and not off page to avoid pool recursion.
+ *  	(due to sizeof(bt_t) it should be the case anyway)
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.87 2013/11/22 21:04:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.88 2014/02/17 20:40:06 para Exp $");
 
 #if defined(_KERNEL)
 #include "opt_ddb.h"
@@ -75,14 +87,13 @@ __KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.87 2013/11/22 21:04:11 christos Exp 
 #include <sys/evcnt.h>
 #define VMEM_EVCNT_DEFINE(name) \
 struct evcnt vmem_evcnt_##name = EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, \
-    "vmemev", #name); \
+    "vmem", #name); \
 EVCNT_ATTACH_STATIC(vmem_evcnt_##name);
 #define VMEM_EVCNT_INCR(ev)	vmem_evcnt_##ev.ev_count++
 #define VMEM_EVCNT_DECR(ev)	vmem_evcnt_##ev.ev_count--
 
-VMEM_EVCNT_DEFINE(bt_pages)
-VMEM_EVCNT_DEFINE(bt_count)
-VMEM_EVCNT_DEFINE(bt_inuse)
+VMEM_EVCNT_DEFINE(static_bt_count)
+VMEM_EVCNT_DEFINE(static_bt_inuse)
 
 #define	VMEM_CONDVAR_INIT(vm, wchan)	cv_init(&vm->vm_cv, wchan)
 #define	VMEM_CONDVAR_DESTROY(vm)	cv_destroy(&vm->vm_cv)
@@ -175,81 +186,56 @@ static int static_bt_count = STATIC_BT_COUNT;
 static struct vmem kmem_va_meta_arena_store;
 vmem_t *kmem_va_meta_arena;
 static struct vmem kmem_meta_arena_store;
-vmem_t *kmem_meta_arena;
+vmem_t *kmem_meta_arena = NULL;
 
-static kmutex_t vmem_refill_lock;
+static kmutex_t vmem_btag_refill_lock;
 static kmutex_t vmem_btag_lock;
 static LIST_HEAD(, vmem_btag) vmem_btag_freelist;
 static size_t vmem_btag_freelist_count = 0;
-static size_t vmem_btag_count = STATIC_BT_COUNT;
+static struct pool vmem_btag_pool;
 
 /* ---- boundary tag */
 
-#define	BT_PER_PAGE	(PAGE_SIZE / sizeof(bt_t))
-
 static int bt_refill(vmem_t *vm, vm_flag_t flags);
 
-static int
-bt_refillglobal(vm_flag_t flags)
+static void *
+pool_page_alloc_vmem_meta(struct pool *pp, int flags)
 {
+	const vm_flag_t vflags = (flags & PR_WAITOK) ? VM_SLEEP: VM_NOSLEEP;
 	vmem_addr_t va;
-	bt_t *btp;
-	bt_t *bt;
-	int i;
+	int ret;
 
-	mutex_enter(&vmem_refill_lock);
+	ret = vmem_alloc(kmem_meta_arena, pp->pr_alloc->pa_pagesz,
+	    (vflags & ~VM_FITMASK) | VM_INSTANTFIT | VM_POPULATING, &va);
 
-	mutex_enter(&vmem_btag_lock);
-	if (vmem_btag_freelist_count > 0) {
-		mutex_exit(&vmem_btag_lock);
-		mutex_exit(&vmem_refill_lock);
-		return 0;
-	}
-	mutex_exit(&vmem_btag_lock);
-
-	if (vmem_alloc(kmem_meta_arena, PAGE_SIZE,
-	    (flags & ~VM_FITMASK) | VM_INSTANTFIT | VM_POPULATING, &va) != 0) {
-		mutex_exit(&vmem_refill_lock);
-		return ENOMEM;
-	}
-	VMEM_EVCNT_INCR(bt_pages);
-
-	mutex_enter(&vmem_btag_lock);
-	btp = (void *) va;
-	for (i = 0; i < (BT_PER_PAGE); i++) {
-		bt = btp;
-		memset(bt, 0, sizeof(*bt));
-		LIST_INSERT_HEAD(&vmem_btag_freelist, bt,
-		    bt_freelist);
-		vmem_btag_freelist_count++;
-		vmem_btag_count++;
-		VMEM_EVCNT_INCR(bt_count);
-		btp++;
-	}
-	mutex_exit(&vmem_btag_lock);
-
-	bt_refill(kmem_arena, (flags & ~VM_FITMASK)
-	    | VM_INSTANTFIT | VM_POPULATING);
-	bt_refill(kmem_va_meta_arena, (flags & ~VM_FITMASK)
-	    | VM_INSTANTFIT | VM_POPULATING);
-	bt_refill(kmem_meta_arena, (flags & ~VM_FITMASK)
-	    | VM_INSTANTFIT | VM_POPULATING);
-
-	mutex_exit(&vmem_refill_lock);
-
-	return 0;
+	return ret ? NULL : (void *)va;
 }
+
+static void
+pool_page_free_vmem_meta(struct pool *pp, void *v)
+{
+
+	vmem_free(kmem_meta_arena, (vmem_addr_t)v, pp->pr_alloc->pa_pagesz);
+}
+
+/* allocator for vmem-pool metadata */
+struct pool_allocator pool_allocator_vmem_meta = {
+	.pa_alloc = pool_page_alloc_vmem_meta,
+	.pa_free = pool_page_free_vmem_meta,
+	.pa_pagesz = 0
+};
 
 static int
 bt_refill(vmem_t *vm, vm_flag_t flags)
 {
 	bt_t *bt;
 
-	if (!(flags & VM_POPULATING)) {
-		bt_refillglobal(flags);
+	VMEM_LOCK(vm);
+	if (vm->vm_nfreetags > BT_MINRESERVE) {
+		VMEM_UNLOCK(vm);
+		return 0;
 	}
 
-	VMEM_LOCK(vm);
 	mutex_enter(&vmem_btag_lock);
 	while (!LIST_EMPTY(&vmem_btag_freelist) &&
 	    vm->vm_nfreetags <= BT_MINRESERVE) {
@@ -258,61 +244,104 @@ bt_refill(vmem_t *vm, vm_flag_t flags)
 		LIST_INSERT_HEAD(&vm->vm_freetags, bt, bt_freelist);
 		vm->vm_nfreetags++;
 		vmem_btag_freelist_count--;
+		VMEM_EVCNT_INCR(static_bt_inuse);
 	}
 	mutex_exit(&vmem_btag_lock);
 
-	if (vm->vm_nfreetags == 0) {
+	while (vm->vm_nfreetags <= BT_MINRESERVE) {
 		VMEM_UNLOCK(vm);
+		mutex_enter(&vmem_btag_refill_lock);
+		bt = pool_get(&vmem_btag_pool,
+		    (flags & VM_SLEEP) ? PR_WAITOK: PR_NOWAIT);
+		mutex_exit(&vmem_btag_refill_lock);
+		VMEM_LOCK(vm);
+		if (bt == NULL && (flags & VM_SLEEP) == 0)
+			break;
+		LIST_INSERT_HEAD(&vm->vm_freetags, bt, bt_freelist);
+		vm->vm_nfreetags++;
+	}
+
+	VMEM_UNLOCK(vm);
+
+	if (vm->vm_nfreetags == 0) {
 		return ENOMEM;
 	}
-	VMEM_UNLOCK(vm);
+
+
+	if (kmem_meta_arena != NULL) {
+		bt_refill(kmem_arena, (flags & ~VM_FITMASK)
+		    | VM_INSTANTFIT | VM_POPULATING);
+		bt_refill(kmem_va_meta_arena, (flags & ~VM_FITMASK)
+		    | VM_INSTANTFIT | VM_POPULATING);
+		bt_refill(kmem_meta_arena, (flags & ~VM_FITMASK)
+		    | VM_INSTANTFIT | VM_POPULATING);
+	}
 
 	return 0;
 }
 
-static inline bt_t *
+static bt_t *
 bt_alloc(vmem_t *vm, vm_flag_t flags)
 {
 	bt_t *bt;
-again:
 	VMEM_LOCK(vm);
-	if (vm->vm_nfreetags <= BT_MINRESERVE &&
-	    (flags & VM_POPULATING) == 0) {
+	while (vm->vm_nfreetags <= BT_MINRESERVE && (flags & VM_POPULATING) == 0) {
 		VMEM_UNLOCK(vm);
 		if (bt_refill(vm, VM_NOSLEEP | VM_INSTANTFIT)) {
 			return NULL;
 		}
-		goto again;
+		VMEM_LOCK(vm);
 	}
 	bt = LIST_FIRST(&vm->vm_freetags);
 	LIST_REMOVE(bt, bt_freelist);
 	vm->vm_nfreetags--;
 	VMEM_UNLOCK(vm);
-	VMEM_EVCNT_INCR(bt_inuse);
 
 	return bt;
 }
 
-static inline void
+static void
 bt_free(vmem_t *vm, bt_t *bt)
 {
 
 	VMEM_LOCK(vm);
 	LIST_INSERT_HEAD(&vm->vm_freetags, bt, bt_freelist);
 	vm->vm_nfreetags++;
-	while (vm->vm_nfreetags > BT_MAXFREE) {
-		bt = LIST_FIRST(&vm->vm_freetags);
-		LIST_REMOVE(bt, bt_freelist);
-		vm->vm_nfreetags--;
-		mutex_enter(&vmem_btag_lock);
-		LIST_INSERT_HEAD(&vmem_btag_freelist, bt, bt_freelist);
-		vmem_btag_freelist_count++;
-		mutex_exit(&vmem_btag_lock);
-	}
 	VMEM_UNLOCK(vm);
-	VMEM_EVCNT_DECR(bt_inuse);
 }
 
+static void
+bt_freetrim(vmem_t *vm, int freelimit)
+{
+	bt_t *t;
+	LIST_HEAD(, vmem_btag) tofree;
+
+	LIST_INIT(&tofree);
+
+	VMEM_LOCK(vm);
+	while (vm->vm_nfreetags > freelimit) {
+		bt_t *bt = LIST_FIRST(&vm->vm_freetags);
+		LIST_REMOVE(bt, bt_freelist);
+		vm->vm_nfreetags--;
+		if (bt >= static_bts
+		    && bt < static_bts + sizeof(static_bts)) {
+			mutex_enter(&vmem_btag_lock);
+			LIST_INSERT_HEAD(&vmem_btag_freelist, bt, bt_freelist);
+			vmem_btag_freelist_count++;
+			mutex_exit(&vmem_btag_lock);
+			VMEM_EVCNT_DECR(static_bt_inuse);
+		} else {
+			LIST_INSERT_HEAD(&tofree, bt, bt_freelist);
+		}
+	}
+
+	VMEM_UNLOCK(vm);
+	while (!LIST_EMPTY(&tofree)) {
+		t = LIST_FIRST(&tofree);
+		LIST_REMOVE(t, bt_freelist);
+		pool_put(&vmem_btag_pool, t);
+	}
+}
 #endif	/* defined(_KERNEL) */
 
 /*
@@ -603,13 +632,13 @@ vmem_bootstrap(void)
 {
 
 	mutex_init(&vmem_list_lock, MUTEX_DEFAULT, IPL_VM);
-	mutex_init(&vmem_refill_lock, MUTEX_DEFAULT, IPL_VM);
 	mutex_init(&vmem_btag_lock, MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&vmem_btag_refill_lock, MUTEX_DEFAULT, IPL_VM);
 
 	while (static_bt_count-- > 0) {
 		bt_t *bt = &static_bts[static_bt_count];
 		LIST_INSERT_HEAD(&vmem_btag_freelist, bt, bt_freelist);
-		VMEM_EVCNT_INCR(bt_count);
+		VMEM_EVCNT_INCR(static_bt_count);
 		vmem_btag_freelist_count++;
 	}
 	vmem_bootstrapped = TRUE;
@@ -628,6 +657,9 @@ vmem_subsystem_init(vmem_t *vm)
 	    0, 0, PAGE_SIZE,
 	    uvm_km_kmem_alloc, uvm_km_kmem_free, kmem_va_meta_arena,
 	    0, VM_NOSLEEP | VM_BOOTSTRAP, IPL_VM);
+
+	pool_init(&vmem_btag_pool, sizeof(bt_t), 0, 0, PR_PHINPAGE,
+		    "vmembt", &pool_allocator_vmem_meta, IPL_VM);
 }
 #endif /* defined(_KERNEL) */
 
@@ -695,17 +727,7 @@ vmem_destroy1(vmem_t *vm)
 		}
 	}
 
-	while (vm->vm_nfreetags > 0) {
-		bt_t *bt = LIST_FIRST(&vm->vm_freetags);
-		LIST_REMOVE(bt, bt_freelist);
-		vm->vm_nfreetags--;
-		mutex_enter(&vmem_btag_lock);
-#if defined (_KERNEL)
-		LIST_INSERT_HEAD(&vmem_btag_freelist, bt, bt_freelist);
-		vmem_btag_freelist_count++;
-#endif /* defined(_KERNEL) */
-		mutex_exit(&vmem_btag_lock);
-	}
+	bt_freetrim(vm, 0);
 
 	VMEM_CONDVAR_DESTROY(vm);
 	VMEM_LOCK_DESTROY(vm);
@@ -1311,6 +1333,8 @@ vmem_xfree(vmem_t *vm, vmem_addr_t addr, vmem_size_t size)
 		LIST_REMOVE(t, bt_freelist);
 		bt_free(vm, t);
 	}
+
+	bt_freetrim(vm, BT_MAXFREE);
 }
 
 /*
