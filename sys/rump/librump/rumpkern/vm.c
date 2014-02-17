@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.147 2014/02/17 19:33:05 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.148 2014/02/17 19:43:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.147 2014/02/17 19:33:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.148 2014/02/17 19:43:52 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -306,9 +306,9 @@ uvm_init(void)
 		if (rump_physmemlimit / mult != tmp)
 			panic("uvm_init: RUMP_MEMLIMIT overflow: %s", buf);
 		/* it's not like we'd get far with, say, 1 byte, but ... */
-		if (rump_physmemlimit < 2*MAXPHYS)
-			panic("uvm_init: no memory, need at least %d bytes",
-			    2*MAXPHYS);
+		if (rump_physmemlimit < 1024*1024)
+			printf("uvm_init: WARNING: <1MB RAM limit, "
+			    "hope you know what you're doing\n");
 
 		/* reserve some memory for the pager */
 		pdlimit = rump_physmemlimit;
