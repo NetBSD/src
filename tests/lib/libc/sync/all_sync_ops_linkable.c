@@ -1,4 +1,4 @@
-/* $NetBSD: all_sync_ops_linkable.c,v 1.1 2014/02/17 10:10:41 martin Exp $ */
+/* $NetBSD: all_sync_ops_linkable.c,v 1.2 2014/02/17 21:38:04 joerg Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -82,12 +82,14 @@ main(int argc, char **argv)
 #ifdef __HAVE_ATOMIC64_OPS
 	__sync_fetch_and_and_8(&u64, 0x80);
 #endif
+#ifndef __clang__
 	__sync_fetch_and_nand(&u8, 0x80);
 	__sync_fetch_and_nand_1(&u8, 0x80);
 	__sync_fetch_and_nand_2(&u16, 0x80);
 	__sync_fetch_and_nand_4(&u32, 0x80);
 #ifdef __HAVE_ATOMIC64_OPS
 	__sync_fetch_and_nand_8(&u64, 0x80);
+#endif
 #endif
 	__sync_fetch_and_or(&u8, 0x80);
 	__sync_fetch_and_or_1(&u8, 0x80);
@@ -124,12 +126,14 @@ main(int argc, char **argv)
 #ifdef __HAVE_ATOMIC64_OPS
 	__sync_lock_test_and_set_8(&u64, 5);
 #endif
+#ifndef __clang__
 	__sync_nand_and_fetch(&u8, 5);
 	__sync_nand_and_fetch_1(&u8, 5);
 	__sync_nand_and_fetch_2(&u16, 5);
 	__sync_nand_and_fetch_4(&u32, 5);
 #ifdef __HAVE_ATOMIC64_OPS
 	__sync_nand_and_fetch_8(&u64, 5);
+#endif
 #endif
 	__sync_or_and_fetch(&u8, 5);
 	__sync_or_and_fetch_1(&u8, 5);
