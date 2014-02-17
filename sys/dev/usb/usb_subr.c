@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.195 2013/10/03 07:35:37 skrll Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.196 2014/02/17 07:34:21 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.195 2013/10/03 07:35:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.196 2014/02/17 07:34:21 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1236,6 +1236,16 @@ usbd_new_device(device_t parent, usbd_bus_handle bus, int depth,
 	}
 
 	USETW(dev->def_ep_desc.wMaxPacketSize, dd->bMaxPacketSize);
+
+	/* Re-establish the default pipe with the new MPS. */
+	usbd_kill_pipe(dev->default_pipe);
+	err = usbd_setup_pipe_flags(dev, 0, &dev->def_ep, USBD_DEFAULT_INTERVAL,
+	    &dev->default_pipe, USBD_MPSAFE);
+	if (err) {
+		DPRINTFN(-1, ("usbd_new_device: setup default pipe failed\n"));
+		usbd_remove_device(dev, up);
+		return err;
+	}
 
 	/* Set the address */
 	DPRINTFN(5, ("usbd_new_device: setting device address=%d\n", addr));
