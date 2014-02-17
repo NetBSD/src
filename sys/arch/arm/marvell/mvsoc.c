@@ -1,6 +1,6 @@
-/*	$NetBSD: mvsoc.c,v 1.16 2013/12/23 04:12:09 kiyohara Exp $	*/
+/*	$NetBSD: mvsoc.c,v 1.17 2014/02/17 05:00:38 kiyohara Exp $	*/
 /*
- * Copyright (c) 2007, 2008 KIYOHARA Takashi
+ * Copyright (c) 2007, 2008, 2013, 2014 KIYOHARA Takashi
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoc.c,v 1.16 2013/12/23 04:12:09 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoc.c,v 1.17 2014/02/17 05:00:38 kiyohara Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_mvsoc.h"
@@ -63,6 +63,10 @@ static void mvsoc_attach(device_t, device_t, void *);
 
 static int mvsoc_print(void *, const char *);
 static int mvsoc_search(device_t, cfdata_t, const int *, void *);
+
+static int mvsoc_target_ddr(uint32_t, uint32_t *, uint32_t *);
+static int mvsoc_target_ddr3(uint32_t, uint32_t *, uint32_t *);
+static int mvsoc_target_peripheral(uint32_t, uint32_t, uint32_t *, uint32_t *);
 
 uint32_t mvPclk, mvSysclk, mvTclk = 0;
 int nwindow = 0, nremap = 0;
@@ -133,6 +137,15 @@ static struct {
 	{ MARVELL_TAG_SDRAM_CS2,
 	  MARVELL_ATTR_SDRAM_CS2,	MVSOC_UNITID_DDR },
 	{ MARVELL_TAG_SDRAM_CS3,
+	  MARVELL_ATTR_SDRAM_CS3,	MVSOC_UNITID_DDR },
+
+	{ MARVELL_TAG_DDR3_CS0,
+	  MARVELL_ATTR_SDRAM_CS0,	MVSOC_UNITID_DDR },
+	{ MARVELL_TAG_DDR3_CS1,
+	  MARVELL_ATTR_SDRAM_CS1,	MVSOC_UNITID_DDR },
+	{ MARVELL_TAG_DDR3_CS2,
+	  MARVELL_ATTR_SDRAM_CS2,	MVSOC_UNITID_DDR },
+	{ MARVELL_TAG_DDR3_CS3,
 	  MARVELL_ATTR_SDRAM_CS3,	MVSOC_UNITID_DDR },
 
 #if defined(ORION)
@@ -925,76 +938,150 @@ mvsoc_target(int tag, uint32_t *target, uint32_t *attr, uint32_t *base,
 		*attr = mvsoc_tags[i].attr;
 
 	if (mvsoc_tags[i].target == MVSOC_UNITID_DDR) {
-		/*
-		 * Read DDR SDRAM Controller Address Decode Registers
-		 */
-		uint32_t baseaddrreg, sizereg;
-		int cs = 0;
+		if (tag == MARVELL_TAG_SDRAM_CS0 ||
+		    tag == MARVELL_TAG_SDRAM_CS1 ||
+		    tag == MARVELL_TAG_SDRAM_CS2 ||
+		    tag == MARVELL_TAG_SDRAM_CS3)
+			return mvsoc_target_ddr(mvsoc_tags[i].attr, base, size);
+		else
+			return mvsoc_target_ddr3(mvsoc_tags[i].attr, base,
+			    size);
+	} else
+		return mvsoc_target_peripheral(mvsoc_tags[i].target,
+		    mvsoc_tags[i].attr, base, size);
+}
 
-		switch (mvsoc_tags[i].attr) {
-		case MARVELL_ATTR_SDRAM_CS0:
-			cs = 0;
-			break;
-		case MARVELL_ATTR_SDRAM_CS1:
-			cs = 1;
-			break;
-		case MARVELL_ATTR_SDRAM_CS2:
-			cs = 2;
-			break;
-		case MARVELL_ATTR_SDRAM_CS3:
-			cs = 3;
-			break;
-		}
-		sizereg = *(volatile uint32_t *)(dsc_base + MVSOC_DSC_CSSR(cs));
-		if (sizereg & MVSOC_DSC_CSSR_WINEN) {
-			baseaddrreg = *(volatile uint32_t *)(dsc_base +
-			    MVSOC_DSC_CSBAR(cs));
+static int
+mvsoc_target_ddr(uint32_t attr, uint32_t *base, uint32_t *size)
+{
+	uint32_t baseaddrreg, sizereg;
+	int cs;
 
-			if (base != NULL)
-				*base = baseaddrreg & MVSOC_DSC_CSBAR_BASE_MASK;
-			if (size != NULL)
-				*size = (sizereg & MVSOC_DSC_CSSR_SIZE_MASK) +
-				    (~MVSOC_DSC_CSSR_SIZE_MASK + 1);
-		} else {
-			if (base != NULL)
-				*base = 0;
-			if (size != NULL)
-				*size = 0;
-		}
-		return 0;
+	/*
+	 * Read DDR SDRAM Controller Address Decode Registers
+	 */
+
+	switch (attr) {
+	case MARVELL_ATTR_SDRAM_CS0:
+		cs = 0;
+		break;
+	case MARVELL_ATTR_SDRAM_CS1:
+		cs = 1;
+		break;
+	case MARVELL_ATTR_SDRAM_CS2:
+		cs = 2;
+		break;
+	case MARVELL_ATTR_SDRAM_CS3:
+		cs = 3;
+		break;
+	default:
+		aprint_error("unknwon ATTR: 0x%x", attr);
+		return -1;
+	}
+	sizereg = *(volatile uint32_t *)(dsc_base + MVSOC_DSC_CSSR(cs));
+	if (sizereg & MVSOC_DSC_CSSR_WINEN) {
+		baseaddrreg =
+		    *(volatile uint32_t *)(dsc_base + MVSOC_DSC_CSBAR(cs));
+
+		if (base != NULL)
+			*base = baseaddrreg & MVSOC_DSC_CSBAR_BASE_MASK;
+		if (size != NULL)
+			*size = (sizereg & MVSOC_DSC_CSSR_SIZE_MASK) +
+			    (~MVSOC_DSC_CSSR_SIZE_MASK + 1);
 	} else {
-		/*
-		 * Read CPU Address Map Registers
-		 */
-		uint32_t basereg, ctrlreg, ta, tamask;
-
-		ta = MVSOC_MLMB_WCR_TARGET(mvsoc_tags[i].target) |
-		    MVSOC_MLMB_WCR_ATTR(mvsoc_tags[i].attr);
-		tamask = MVSOC_MLMB_WCR_TARGET(MVSOC_UNITID_MASK) |
-		    MVSOC_MLMB_WCR_ATTR(MARVELL_ATTR_MASK);
-
 		if (base != NULL)
 			*base = 0;
 		if (size != NULL)
 			*size = 0;
-
-		for (i = 0; i < nwindow; i++) {
-			ctrlreg = read_mlmbreg(MVSOC_MLMB_WCR(i));
-			if ((ctrlreg & tamask) != ta)
-				continue;
-			if (ctrlreg & MVSOC_MLMB_WCR_WINEN) {
-				basereg = read_mlmbreg(MVSOC_MLMB_WBR(i));
-
-				if (base != NULL)
-					*base =
-					    basereg & MVSOC_MLMB_WBR_BASE_MASK;
-				if (size != NULL)
-					*size = (ctrlreg &
-					    MVSOC_MLMB_WCR_SIZE_MASK) +
-					    (~MVSOC_MLMB_WCR_SIZE_MASK + 1);
-			}
-			break;
-		}
-		return i;
 	}
+	return 0;
+}
+
+static int
+mvsoc_target_ddr3(uint32_t attr, uint32_t *base, uint32_t *size)
+{
+	uint32_t baseaddrreg, sizereg;
+	int cs, i;
+
+	/*
+	 * Read DDR3 SDRAM Address Decoding Registers
+	 */
+
+	switch (attr) {
+	case MARVELL_ATTR_SDRAM_CS0:
+		cs = 0;
+		break;
+	case MARVELL_ATTR_SDRAM_CS1:
+		cs = 1;
+		break;
+	case MARVELL_ATTR_SDRAM_CS2:
+		cs = 2;
+		break;
+	case MARVELL_ATTR_SDRAM_CS3:
+		cs = 3;
+		break;
+	default:
+		aprint_error("unknwon ATTR: 0x%x", attr);
+		return -1;
+	}
+	for (i = 0; i < MVSOC_MLMB_NWIN; i++) {
+		sizereg = read_mlmbreg(MVSOC_MLMB_WINCR(i));
+		if ((sizereg & MVSOC_MLMB_WINCR_EN) &&
+		    MVSOC_MLMB_WINCR_WINCS(sizereg) == cs)
+			break;
+	}
+	if (i == MVSOC_MLMB_NWIN) {
+		if (base != NULL)
+			*base = 0;
+		if (size != NULL)
+			*size = 0;
+		return 0;
+	}
+
+	baseaddrreg = read_mlmbreg(MVSOC_MLMB_WINBAR(i));
+	if (base != NULL)
+		*base = baseaddrreg & MVSOC_MLMB_WINBAR_BASE_MASK;
+	if (size != NULL)
+		*size = (sizereg & MVSOC_MLMB_WINCR_SIZE_MASK) +
+		    (~MVSOC_MLMB_WINCR_SIZE_MASK + 1);
+	return 0;
+}
+
+static int
+mvsoc_target_peripheral(uint32_t target, uint32_t attr, uint32_t *base,
+			uint32_t *size)
+{
+	uint32_t basereg, ctrlreg, ta, tamask;
+	int i;
+
+	/*
+	 * Read CPU Address Map Registers
+	 */
+
+	ta = MVSOC_MLMB_WCR_TARGET(target) | MVSOC_MLMB_WCR_ATTR(attr);
+	tamask = MVSOC_MLMB_WCR_TARGET(MVSOC_UNITID_MASK) |
+	    MVSOC_MLMB_WCR_ATTR(MARVELL_ATTR_MASK);
+
+	if (base != NULL)
+		*base = 0;
+	if (size != NULL)
+		*size = 0;
+
+	for (i = 0; i < nwindow; i++) {
+		ctrlreg = read_mlmbreg(MVSOC_MLMB_WCR(i));
+		if ((ctrlreg & tamask) != ta)
+			continue;
+		if (ctrlreg & MVSOC_MLMB_WCR_WINEN) {
+			basereg = read_mlmbreg(MVSOC_MLMB_WBR(i));
+
+			if (base != NULL)
+				*base = basereg & MVSOC_MLMB_WBR_BASE_MASK;
+			if (size != NULL)
+				*size = (ctrlreg &
+				    MVSOC_MLMB_WCR_SIZE_MASK) +
+				    (~MVSOC_MLMB_WCR_SIZE_MASK + 1);
+		}
+		break;
+	}
+	return i;
 }
