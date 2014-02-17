@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_alg.c,v 1.11 2014/02/16 22:10:40 rmind Exp $	*/
+/*	$NetBSD: npf_alg.c,v 1.12 2014/02/17 02:38:46 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg.c,v 1.11 2014/02/16 22:10:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg.c,v 1.12 2014/02/17 02:38:46 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -236,7 +236,7 @@ npf_alg_session(npf_cache_t *npc, nbuf_t *nbuf, int di)
 	for (u_int i = 0; i < alg_count; i++) {
 		const npfa_funcs_t *f = &alg_funcs[i];
 
-		if (f->inspect)
+		if (!f->inspect)
 			continue;
 		if ((se = f->inspect(npc, nbuf, di)) != NULL)
 			break;
