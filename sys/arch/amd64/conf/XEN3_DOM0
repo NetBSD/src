@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.99 2013/10/23 17:22:49 matt Exp $
+# $NetBSD: XEN3_DOM0,v 1.100 2014/02/17 03:28:16 schmonz Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -623,6 +623,7 @@ urndis* at uhub? port ?		# Microsoft RNDIS specification
 atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
 ural*	at uhub? port ?		# Ralink Technology RT2500USB 802.11a/b/g
 rum*	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
+urtw*	at uhub? port ?		# Realtek RTL8187/RTL8187B 802.11b/g
 
 # Prolific PL2301/PL2302 host-to-host adapter
 upl*	at uhub? port ?
