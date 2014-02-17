@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_parse.y,v 1.32 2014/02/13 03:34:40 rmind Exp $	*/
+/*	$NetBSD: npf_parse.y,v 1.33 2014/02/17 00:45:24 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
@@ -642,8 +642,11 @@ again:
 			$$ = vp;
 			break;
 		case NPFVAR_INTERFACE:
-			ifna = npfvar_get_data(vp, type, 0);
-			$$ = ifna->ifna_addrs;
+			$$ = NULL;
+			for (u_int i = 0; i < npfvar_get_count(vp); i++) {
+				ifna = npfvar_get_data(vp, type, i);
+				$$ = npfvar_add_elements($$, ifna->ifna_addrs);
+			}
 			break;
 		case -1:
 			yyerror("undefined variable '%s'", $1);
