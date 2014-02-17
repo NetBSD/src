@@ -22030,7 +22030,7 @@ do_atof_calc:
         if( esign<0 ){
           result = 0.0*s;
         }else{
-          result = 1e308*1e308*s;  /* Infinity */
+          result = SQLITE_HUGE_DBL*SQLITE_HUGE_DBL*s;  /* Infinity */
         }
       }else
 #endif
