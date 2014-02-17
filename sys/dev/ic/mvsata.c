@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.32 2013/09/01 11:14:46 kiyohara Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.33 2014/02/17 13:41:20 kiyohara Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.32 2013/09/01 11:14:46 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.33 2014/02/17 13:41:20 kiyohara Exp $");
 
 #include "opt_mvsata.h"
 
@@ -1694,7 +1694,7 @@ again:
 		ata_c->flags |= AT_TIMEOU;
 		goto out;
 	}
-	delay(10);	/* XXXXX: Delay more times. */
+	delay(20);	/* XXXXX: Delay more times. */
 	if (ata_c->flags & AT_READ) {
 		if ((chp->ch_status & WDCS_DRQ) == 0) {
 			ata_c->flags |= AT_TIMEOU;
