@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.60 2013/10/28 23:46:17 christos Exp $	*/
+/*	$NetBSD: man.c,v 1.61 2014/02/17 03:10:12 uwe Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.60 2013/10/28 23:46:17 christos Exp $");
+__RCSID("$NetBSD: man.c,v 1.61 2014/02/17 03:10:12 uwe Exp $");
 #endif
 #endif /* not lint */
 
@@ -714,6 +714,18 @@ next:				anyfound = 1;
 	return anyfound;
 }
 
+/*
+ * A do-nothing counterpart to fmtcheck(3) that only supplies the
+ * __format_arg marker.  Actual fmtcheck(3) call is done once in
+ * config().
+ */
+__always_inline __format_arg(2)
+static inline const char *
+fmtcheck_ok(const char *userfmt, const char *template)
+{
+	return userfmt;
+}
+
 /* 
  * build_page --
  *	Build a man page for display.
@@ -788,7 +800,7 @@ build_page(const char *fmt, char **pathp, struct manstate *mp)
 		exit(EXIT_FAILURE);
 	}
 	(void)snprintf(buf, sizeof(buf), "%s > %s", fmt, tpath);
-	(void)snprintf(cmd, sizeof(cmd), buf, p);
+	(void)snprintf(cmd, sizeof(cmd), fmtcheck_ok(buf, "%s"), p);
 	(void)system(cmd);
 	(void)close(fd);
 	if ((*pathp = strdup(tpath)) == NULL) {
