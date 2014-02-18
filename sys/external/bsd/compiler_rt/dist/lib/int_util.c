@@ -7,7 +7,7 @@
  *
  * ===----------------------------------------------------------------------===
  */
-
+#include <sys/cdefs.h>
 #include "int_util.h"
 #include "int_lib.h"
 
@@ -54,6 +54,7 @@ void compilerrt_abort_impl(const char *file, int line, const char *function) {
 __attribute__((weak))
 __attribute__((visibility("hidden")))
 #endif
+/*ARGSUSED*/
 void compilerrt_abort_impl(const char *file, int line, const char *function) {
   abort();
 }
