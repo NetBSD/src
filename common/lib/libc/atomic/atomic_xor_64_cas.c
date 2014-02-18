@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_xor_64_cas.c,v 1.1 2014/02/18 10:16:55 martin Exp $	*/
+/*	$NetBSD: atomic_xor_64_cas.c,v 1.2 2014/02/18 13:21:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@ xor_and_fetch_8(volatile uint64_t *addr, uint64_t val, ...)
 		old = *addr;
 		new = old ^ val;
 	} while (atomic_cas_64(addr, old, new) != old);
-	return *addr;
+	return new;
 }
 
 #endif
