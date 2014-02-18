@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.748 2014/02/15 22:20:41 dsl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.749 2014/02/18 01:00:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.748 2014/02/15 22:20:41 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.749 2014/02/18 01:00:57 christos Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -492,8 +492,11 @@ cpu_startup(void)
 void
 i386_proc0_tss_ldt_init(void)
 {
-	struct lwp *l = &lwp0;
-	struct pcb *pcb = lwp_getpcb(l);
+	struct lwp *l;
+	struct pcb *pcb __diagused;
+
+	l = &lwp0;
+	pcb = lwp_getpcb(l);
 
 	pmap_kernel()->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0() & ~CR0_TS;
