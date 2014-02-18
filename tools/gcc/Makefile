@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.63 2014/02/17 21:39:43 christos Exp $
+#	$NetBSD: Makefile,v 1.64 2014/02/18 01:34:18 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -59,7 +59,8 @@ CONFIGURE_ARGS+= \
 		--program-transform-name="s,^,${MACHINE_GNU_PLATFORM}-," \
 		--enable-languages="${GCC_LANGUAGES}"
 
-GCC_CPPFLAGS=	-DNETBSD_TOOLS
+GCC_CPPFLAGS=	-DNETBSD_TOOLS -DTARGET_SYSTEM_ROOT=0 \
+		-DTARGET_SYSTEM_ROOT_RELOCATABLE
 
 MAKE_ARGS=	MACHINE= MAKEINFO=${TOOL_MAKEINFO:Q} \
 		LIBGCC= LIBGCC1= LIBGCC1_TEST= LIBGCC2= INSTALL_LIBGCC= \
