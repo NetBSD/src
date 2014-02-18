@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.10 2013/12/17 14:30:18 pooka Exp $	*/
+/*	$NetBSD: component.c,v 1.11 2014/02/18 06:20:46 pooka Exp $	*/
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -71,7 +71,6 @@ __weak_alias(sys_mmap,rumplinux__stub);
 __weak_alias(vm_map_unlock,rumplinux__stub);
 __weak_alias(uvm_map_lookup_entry,rumplinux__stub);
 __weak_alias(sys_obreak,rumplinux__stub);
-__weak_alias(sys_swapctl,rumplinux__stub);
 __weak_alias(vm_map_lock,rumplinux__stub);
 __weak_alias(uvm_mremap,rumplinux__stub);
 
