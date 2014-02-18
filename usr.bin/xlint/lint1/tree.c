@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.74 2014/02/18 20:43:36 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.75 2014/02/18 22:01:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.74 2014/02/18 20:43:36 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.75 2014/02/18 22:01:36 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -3171,8 +3171,9 @@ funccall(tnode_t *func, tnode_t *args)
 
 	if (func->tn_type->t_tspec != PTR ||
 	    func->tn_type->t_subt->t_tspec != FUNC) {
+		char buf[256];
 		/* illegal function */
-		error(149);
+		error(149, tyname(buf, sizeof(buf), func->tn_type));
 		return (NULL);
 	}
 
