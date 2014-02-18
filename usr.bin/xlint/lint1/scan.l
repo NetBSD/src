@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.53 2013/10/18 20:46:09 christos Exp $ */
+/* $NetBSD: scan.l,v 1.54 2014/02/18 22:01:36 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.53 2013/10/18 20:46:09 christos Exp $");
+__RCSID("$NetBSD: scan.l,v 1.54 2014/02/18 22:01:36 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -230,6 +230,7 @@ static	struct	kwtab {
 	{ "double",	T_TYPE,		0,	DOUBLE,	0,	  0, 0, 0 },
 	{ "else",	T_ELSE,		0,	0,	0,	  0, 0, 0 },
 	{ "enum",	T_ENUM,		0,	0,	0,	  0, 0, 0 },
+	{ "__extension__", T_EXTENSION,	0,	0,	0,	  0, 0, 1 },
 	{ "extern",	T_SCLASS,	EXTERN,	0,	0,	  0, 0, 0 },
 	{ "float",	T_TYPE,		0,	FLOAT,	0,	  0, 0, 0 },
 	{ "for",	T_FOR,		0,	0,	0,	  0, 0, 0 },
@@ -256,6 +257,9 @@ static	struct	kwtab {
 	{ "struct",	T_SOU,		0,	STRUCT,	0,	  0, 0, 0 },
 	{ "switch",	T_SWITCH,	0,	0,	0,	  0, 0, 0 },
 	{ "typedef",	T_SCLASS,	TYPEDEF, 0,	0,	  0, 0, 0 },
+	{ "typeof",	T_TYPEOF,	0,	0,	0,	  0, 0, 1 },
+	{ "__typeof",	T_TYPEOF,	0,	0,	0,	  0, 0, 1 },
+	{ "__typeof__",	T_TYPEOF,	0,	0,	0,	  0, 0, 1 },
 	{ "union",	T_SOU,		0,	UNION,	0,	  0, 0, 0 },
 	{ "unsigned",	T_TYPE,		0,	UNSIGN,	0,	  0, 0, 0 },
 	{ "void",	T_TYPE,		0,	VOID,	0,	  0, 0, 0 },
