@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.73 2013/04/19 18:51:14 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.74 2014/02/18 20:43:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.73 2013/04/19 18:51:14 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.74 2014/02/18 20:43:36 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -2332,6 +2332,7 @@ bldri(op_t op, tnode_t *ln)
 		return NULL;
 	}
 	ntn = mktnode(op, cn->tn_type, ln, cn);
+	ntn->tn_lvalue = 1;
 
 	return (ntn);
 }
