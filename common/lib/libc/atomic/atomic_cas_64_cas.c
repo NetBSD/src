@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_64_cas.c,v 1.1 2014/02/18 10:16:55 martin Exp $	*/
+/*	$NetBSD: atomic_cas_64_cas.c,v 1.2 2014/02/18 12:23:07 martin Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,7 +29,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <stdbool.h>
+#endif
 #include <sys/atomic.h>
 
 #ifdef __HAVE_ATOMIC64_OPS
