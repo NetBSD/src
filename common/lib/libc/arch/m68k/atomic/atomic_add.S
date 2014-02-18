@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_add.S,v 1.6 2013/07/16 23:24:18 matt Exp $	*/
+/*	$NetBSD: atomic_add.S,v 1.7 2014/02/18 16:19:28 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -66,3 +66,28 @@ ATOMIC_OP_ALIAS(atomic_add_long_nv,_atomic_add_32_nv)
 STRONG_ALIAS(_atomic_add_long_nv,_atomic_add_32_nv)
 ATOMIC_OP_ALIAS(atomic_add_ptr_nv,_atomic_add_32_nv)
 STRONG_ALIAS(_atomic_add_ptr_nv,_atomic_add_32_nv)
+STRONG_ALIAS(__sync_add_and_fetch_4,_atomic_add_32_nv)
+
+ENTRY(_atomic_add_16_nv)
+	movl	4(%sp), %a0
+1:	movw	(%a0), %d0
+	movw	%d0, %d1
+	addw	8(%sp), %d0
+	casw	%d1, %d0, (%a0)
+	bne	1b
+	rts
+END(_atomic_add_16_nv)
+
+STRONG_ALIAS(__sync_add_and_fetch_2,_atomic_add_16_nv)
+
+ENTRY(_atomic_add_8_nv)
+	movl	4(%sp), %a0
+1:	movb	(%a0), %d0
+	movb	%d0, %d1
+	addb	8(%sp), %d0
+	casb	%d1, %d0, (%a0)
+	bne	1b
+	rts
+END(_atomic_add_8_nv)
+
+STRONG_ALIAS(__sync_add_and_fetch_1,_atomic_add_8_nv)
