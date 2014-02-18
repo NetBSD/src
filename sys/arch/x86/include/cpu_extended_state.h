@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_extended_state.h,v 1.7 2014/02/15 10:11:15 dsl Exp $	*/
+/*	$NetBSD: cpu_extended_state.h,v 1.8 2014/02/18 18:39:10 dsl Exp $	*/
 
 #ifndef _X86_CPU_EXTENDED_STATE_H_
 #define _X86_CPU_EXTENDED_STATE_H_
@@ -114,11 +114,6 @@ struct fxsave {
 	uint8_t		fx_kernel[48];	/* Not written by the hardware */
 } __aligned(16);
 __CTASSERT_NOLINT(sizeof (struct fxsave) == 512);
-
-#ifndef _KERNEL
-/* Backwards compatibility for firefox (looks at fx_xmm) */
-#define fxsave64 fxsave
-#endif
 
 /* The end of the fsave buffer can be used by the operating system */
 struct fxsave_os {
