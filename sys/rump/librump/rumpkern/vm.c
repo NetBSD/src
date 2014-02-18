@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.148 2014/02/17 19:43:52 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.149 2014/02/18 06:18:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.148 2014/02/17 19:43:52 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.149 2014/02/18 06:18:13 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1198,9 +1198,4 @@ rump_hyperfree(void *what, size_t size)
 		atomic_add_long(&curphysmem, -size);
 	}
 	rumpuser_free(what, size);
-}
-
-void
-uvm_swap_shutdown(struct lwp *lwp)
-{
 }
