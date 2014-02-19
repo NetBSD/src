@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_board.c,v 1.17 2013/10/28 22:51:16 matt Exp $	*/
+/*	$NetBSD: bcm53xx_board.c,v 1.18 2014/02/19 22:20:45 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,12 +29,13 @@
  */
 
 #include "opt_broadcom.h"
+#include "arml2cc.h"
 
 #define	_ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.17 2013/10/28 22:51:16 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.18 2014/02/19 22:20:45 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -554,8 +555,10 @@ bcm53xx_bootstrap(vaddr_t iobase)
 
 	curcpu()->ci_data.cpu_cc_freq = clk->clk_cpu;
 
+#if NARML2CC > 0
 	arml2cc_init(bcm53xx_armcore_bst, bcm53xx_armcore_bsh,
 	    ARMCORE_L2C_BASE);
+#endif
 }
 
 void
