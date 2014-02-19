@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.47 2014/02/15 10:11:15 dsl Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.48 2014/02/19 20:50:56 dsl Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.47 2014/02/15 10:11:15 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.48 2014/02/19 20:50:56 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.47 2014/02/15 10:11:15 dsl Exp $
 #include <machine/specialreg.h>
 #include <machine/vmparam.h>
 #include <machine/cpufunc.h>
+#include <x86/include/sysarch.h>
 
 /* 
  * To see whether wscons is configured (for virtual console ioctl calls).
