@@ -34,8 +34,9 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_pax.c,v 1.10 2013/04/21 19:59:39 msaitoh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_pax.c,v 1.11 2014/02/19 22:21:16 matt Exp $");
 
+#include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/extent.h>
