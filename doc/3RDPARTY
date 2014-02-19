@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1093 2014/02/17 21:29:29 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1094 2014/02/19 07:39:52 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -446,7 +446,7 @@ Notes:
 
 Package:	grep
 Version:	2.5.1
-Current Vers:	2.16
+Current Vers:	2.17
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/grep/
 Home Page:	http://www.gnu.org/software/grep/
