@@ -1,4 +1,4 @@
-# $NetBSD: files.cortex,v 1.4 2013/06/16 16:44:39 matt Exp $
+# $NetBSD: files.cortex,v 1.5 2014/02/19 22:20:03 matt Exp $
 
 defflag opt_cpu_in_cksum.h			NEON_IN_CKSUM
 
@@ -17,7 +17,7 @@ file	arch/arm/cortex/gic.c			armgic
 # ARM PL310 L2 Cache Controller(initially on Cortex-A9)
 device	arml2cc
 attach	arml2cc at armperiph
-file	arch/arm/cortex/pl310.c			arml2cc
+file	arch/arm/cortex/pl310.c			arml2cc	needs-flag
 
 # ARMv7 Generic Timer
 device	armgtmr
