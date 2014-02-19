@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_show.c,v 1.11 2014/02/12 01:42:50 rmind Exp $	*/
+/*	$NetBSD: npf_show.c,v 1.12 2014/02/19 01:43:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_show.c,v 1.11 2014/02/12 01:42:50 rmind Exp $");
+__RCSID("$NetBSD: npf_show.c,v 1.12 2014/02/19 01:43:16 rmind Exp $");
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -390,7 +390,7 @@ npfctl_print_nat(npf_conf_info_t *ctx, nl_nat_t *nt)
 	seg = npfctl_print_addrmask(alen, &addr, NPF_NO_NETMASK);
 	if (port) {
 		char *p;
-		easprintf(&p, "%s port %u", seg, port);
+		easprintf(&p, "%s port %u", seg, ntohs(port));
 		free(seg), seg = p;
 	}
 	seg1 = seg2 = "any";
