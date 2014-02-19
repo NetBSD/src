@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.376 2014/02/17 19:29:46 maxv Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.377 2014/02/19 15:23:20 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.376 2014/02/17 19:29:46 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.377 2014/02/19 15:23:20 maxv Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -658,8 +658,7 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	data->ed_pack.ep_hdrvalid = 0;
 	data->ed_pack.ep_emul_arg = NULL;
 	data->ed_pack.ep_emul_arg_free = NULL;
-	data->ed_pack.ep_vmcmds.evs_cnt = 0;
-	data->ed_pack.ep_vmcmds.evs_used = 0;
+	memset(&data->ed_pack.ep_vmcmds, 0, sizeof(data->ed_pack.ep_vmcmds));
 	data->ed_pack.ep_vap = &data->ed_attr;
 	data->ed_pack.ep_flags = 0;
 	MD_TOPDOWN_INIT(&data->ed_pack);

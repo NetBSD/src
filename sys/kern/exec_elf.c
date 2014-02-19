@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.58 2014/02/16 17:46:36 maxv Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.59 2014/02/19 15:23:20 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.58 2014/02/16 17:46:36 maxv Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.59 2014/02/19 15:23:20 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -796,6 +796,14 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 			break;
 		}
 	}
+
+	if (epp->ep_vmcmds.evs_cmds == NULL) {
+		/* No VMCMD; there was no PT_LOAD section, or those
+		 * sections were empty */
+		error = ENOEXEC;
+		goto bad;
+	}
+
 	if (interp || (epp->ep_flags & EXEC_FORCEAUX) != 0) {
 		ap = kmem_alloc(sizeof(*ap), KM_SLEEP);
 		ap->arg_interp = (vaddr_t)NULL;
@@ -811,7 +819,7 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 	 * its interpreter
 	 */
 	if (interp) {
-		int j = epp->ep_vmcmds.evs_used;
+		int nused = epp->ep_vmcmds.evs_used;
 		u_long interp_offset = 0;
 
 		if ((error = elf_load_file(l, epp, interp,
@@ -819,7 +827,14 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 			kmem_free(ap, sizeof(*ap));
 			goto bad;
 		}
-		ap->arg_interp = epp->ep_vmcmds.evs_cmds[j].ev_addr;
+		if (epp->ep_vmcmds.evs_used == nused) {
+			/* elf_load_file() has not set up any new VMCMD */
+			kmem_free(ap, sizeof(*ap));
+			error = ENOEXEC;
+			goto bad;
+		}
+
+		ap->arg_interp = epp->ep_vmcmds.evs_cmds[nused].ev_addr;
 		epp->ep_entry = ap->arg_interp + interp_offset;
 		PNBUF_PUT(interp);
 	} else
