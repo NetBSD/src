@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.79 2014/01/15 08:09:10 mlelstv Exp $	*/
+/*	$NetBSD: ps.c,v 1.80 2014/02/19 20:42:14 dsl Exp $	*/
 
 /*
  * Copyright (c) 2000-2008 The NetBSD Foundation, Inc.
@@ -68,12 +68,11 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.79 2014/01/15 08:09:10 mlelstv Exp $");
+__RCSID("$NetBSD: ps.c,v 1.80 2014/02/19 20:42:14 dsl Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
-#include <sys/user.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/lwp.h>
