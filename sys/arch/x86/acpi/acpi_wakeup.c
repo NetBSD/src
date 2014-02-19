@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.36 2014/02/11 20:17:16 dsl Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.37 2014/02/19 21:23:01 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.36 2014/02/11 20:17:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.37 2014/02/19 21:23:01 dsl Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.36 2014/02/11 20:17:16 dsl Exp $")
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.36 2014/02/11 20:17:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.37 2014/02/19 21:23:01 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,6 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.36 2014/02/11 20:17:16 dsl Exp $")
 
 #include <x86/cpuvar.h>
 #include <x86/x86/tsc.h>
+#include <x86/fpu.h>
 
 #include "opt_vga.h"
 

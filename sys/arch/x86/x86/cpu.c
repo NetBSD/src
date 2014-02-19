@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.108 2014/01/26 19:16:17 dsl Exp $	*/
+/*	$NetBSD: cpu.c,v 1.109 2014/02/19 21:23:02 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.108 2014/01/26 19:16:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.109 2014/02/19 21:23:02 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -102,6 +102,8 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.108 2014/01/26 19:16:17 dsl Exp $");
 #include <machine/mtrr.h>
 #include <machine/pio.h>
 #include <machine/cpu_counter.h>
+
+#include <x86/fpu.h>
 
 #ifdef i386
 #include <machine/tlog.h>

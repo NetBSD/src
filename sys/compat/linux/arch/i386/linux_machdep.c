@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.157 2014/02/15 10:11:15 dsl Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.158 2014/02/19 21:23:02 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.157 2014/02/15 10:11:15 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.158 2014/02/19 21:23:02 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -85,6 +85,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.157 2014/02/15 10:11:15 dsl Exp 
 #include <machine/sysarch.h>
 #include <machine/vm86.h>
 #include <machine/vmparam.h>
+
+#include <x86/fpu.h>
 
 /*
  * To see whether wscons is configured (for virtual console ioctl calls).
