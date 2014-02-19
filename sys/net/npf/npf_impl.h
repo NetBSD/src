@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.48 2014/02/16 22:10:40 rmind Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.49 2014/02/19 03:51:31 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -200,6 +200,8 @@ bool		npf_rwrip(const npf_cache_t *, u_int, const npf_addr_t *);
 bool		npf_rwrport(const npf_cache_t *, u_int, const in_port_t);
 bool		npf_rwrcksum(const npf_cache_t *, u_int,
 		    const npf_addr_t *, const in_port_t);
+int		npf_napt_rwr(const npf_cache_t *, u_int, const npf_addr_t *,
+		    const in_addr_t);
 int		npf_npt66_rwr(const npf_cache_t *, u_int, const npf_addr_t *,
 		    npf_netmask_t, uint16_t);
 
@@ -341,7 +343,6 @@ bool		npf_nat_sharepm(npf_natpolicy_t *, npf_natpolicy_t *);
 void		npf_nat_freealg(npf_natpolicy_t *, npf_alg_t *);
 
 int		npf_do_nat(npf_cache_t *, npf_session_t *, nbuf_t *, const int);
-int		npf_nat_translate(npf_cache_t *, nbuf_t *, npf_nat_t *, bool);
 void		npf_nat_destroy(npf_nat_t *);
 void		npf_nat_getorig(npf_nat_t *, npf_addr_t **, in_port_t *);
 void		npf_nat_gettrans(npf_nat_t *, npf_addr_t **, in_port_t *);

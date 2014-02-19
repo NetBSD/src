@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_inet.c,v 1.29 2014/02/13 03:34:40 rmind Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.30 2014/02/19 03:51:31 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.29 2014/02/13 03:34:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.30 2014/02/19 03:51:31 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -578,7 +578,7 @@ npf_rwrcksum(const npf_cache_t *npc, u_int which,
 	}
 
 	/* Nothing else to do for ICMP. */
-	if (proto == IPPROTO_ICMP) {
+	if (proto == IPPROTO_ICMP || proto == IPPROTO_ICMPV6) {
 		return true;
 	}
 	KASSERT(npf_iscached(npc, NPC_TCP) || npf_iscached(npc, NPC_UDP));
@@ -614,6 +614,50 @@ npf_rwrcksum(const npf_cache_t *npc, u_int which,
 	/* Rewrite TCP/UDP checksum. */
 	memcpy(ocksum, &cksum, sizeof(uint16_t));
 	return true;
+}
+
+/*
+ * npf_napt_rwr: perform address and/or port translation.
+ */
+int
+npf_napt_rwr(const npf_cache_t *npc, u_int which,
+    const npf_addr_t *addr, const in_addr_t port)
+{
+	const unsigned proto = npc->npc_proto;
+
+	/*
+	 * Rewrite IP and/or TCP/UDP checksums first, since we need the
+	 * current (old) address/port for the calculations.  Then perform
+	 * the address translation i.e. rewrite source or destination.
+	 */
+	if (!npf_rwrcksum(npc, which, addr, port)) {
+		return EINVAL;
+	}
+	if (!npf_rwrip(npc, which, addr)) {
+		return EINVAL;
+	}
+	if (port == 0) {
+		/* Done. */
+		return 0;
+	}
+
+	switch (proto) {
+	case IPPROTO_TCP:
+	case IPPROTO_UDP:
+		/* Rewrite source/destination port. */
+		if (!npf_rwrport(npc, which, port)) {
+			return EINVAL;
+		}
+		break;
+	case IPPROTO_ICMP:
+	case IPPROTO_ICMPV6:
+		KASSERT(npf_iscached(npc, NPC_ICMP));
+		/* Nothing. */
+		break;
+	default:
+		return ENOTSUP;
+	}
+	return 0;
 }
 
 /*
