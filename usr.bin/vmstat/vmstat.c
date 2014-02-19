@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.190 2013/11/24 21:58:38 rmind Exp $ */
+/* $NetBSD: vmstat.c,v 1.191 2014/02/19 20:42:14 dsl Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.190 2013/11/24 21:58:38 rmind Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.191 2014/02/19 20:42:14 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,7 +93,6 @@ __RCSID("$NetBSD: vmstat.c,v 1.190 2013/11/24 21:58:38 rmind Exp $");
 #include <sys/socket.h>
 #include <sys/sysctl.h>
 #include <sys/time.h>
-#include <sys/user.h>
 #include <sys/queue.h>
 #include <sys/kernhist.h>
 
