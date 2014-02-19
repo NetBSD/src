@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.1 2011/07/16 15:52:21 tsutsui Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.2 2014/02/19 12:14:40 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -44,12 +44,30 @@ message md_may_remove_boot_medium
 {
 }
 
-message dobootblks
-{Installing boot blocks on %s....
+message nobootpartdisklabel
+{There is no boot UFS partition in the disklabel.  The boot partition should
+be prepared for the LUNA's firmware to load our native bootloader.}
+
+message copybootloader
+{Copying bootloader into the 4.3BSD boot partition on %s...
+}
+
+message howtoboot
+{The installation is almost complete. Note the installer doesn't set
+firmware NVRAM variables to load NetBSD's bootloader by default.
+
+To boot NetBSD, you need to set boot NVRAM variables 'drv'
+(or 'id' on LUNA-II), 'par' (partition, should be 'd'), and 'fname'
+(filename, should be 'boot') by 'k' (Set Boot-file constant) command.
+
+On LUNA-I, drv 0 is SCSI ID 6 disk, and drv 1 is SCSI ID 5 disk.
+The firmware can't boot from other SCSI ID disks. 
+On LUNA-II, 'id' is SCSI ID and you can also specify the external SCSI
+controller number (1) like '1-6'.
+
+Check 'h' (Help) and 'hk' (Help of 'k' command) commands on the firmware
+prompt for more details.
 }
 
 message set_kernel_1
 {Kernel (GENERIC)}
-message set_kernel_2
-{Kernel (GENERIC_TINY)}
-
