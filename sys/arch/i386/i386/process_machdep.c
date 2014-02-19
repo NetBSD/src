@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.84 2014/02/15 22:20:41 dsl Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.85 2014/02/19 21:23:01 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.84 2014/02/15 22:20:41 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.85 2014/02/19 21:23:01 dsl Exp $");
 
 #include "opt_vm86.h"
 #include "opt_ptrace.h"
@@ -70,6 +70,8 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.84 2014/02/15 22:20:41 dsl Exp
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/segments.h>
+
+#include <x86/fpu.h>
 
 #ifdef VM86
 #include <machine/vm86.h>
