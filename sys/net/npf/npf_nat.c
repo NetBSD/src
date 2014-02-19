@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_nat.c,v 1.25 2014/02/13 03:34:40 rmind Exp $	*/
+/*	$NetBSD: npf_nat.c,v 1.26 2014/02/19 03:51:31 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2014 Mindaugas Rasiukevicius <rmind at netbsd org>
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.25 2014/02/13 03:34:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.26 2014/02/19 03:51:31 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -549,62 +549,18 @@ out:
 }
 
 /*
- * npf_nat_rwr: perform address and/or port translation.
- */
-static int
-npf_nat_rwr(npf_cache_t *npc, const npf_natpolicy_t *np,
-    const npf_addr_t *addr, const in_addr_t port, bool forw)
-{
-	const unsigned proto = npc->npc_proto;
-	const u_int which = npf_nat_which(np->n_type, forw);
-
-	/*
-	 * Rewrite IP and/or TCP/UDP checksums first, since we need the
-	 * current (old) address/port for the calculations.  Then perform
-	 * the address translation i.e. rewrite source or destination.
-	 */
-	if (!npf_rwrcksum(npc, which, addr, port)) {
-		return EINVAL;
-	}
-	if (!npf_rwrip(npc, which, addr)) {
-		return EINVAL;
-	}
-	if ((np->n_flags & NPF_NAT_PORTS) == 0) {
-		/* Done. */
-		return 0;
-	}
-
-	switch (proto) {
-	case IPPROTO_TCP:
-	case IPPROTO_UDP:
-		/* Rewrite source/destination port. */
-		if (!npf_rwrport(npc, which, port)) {
-			return EINVAL;
-		}
-		break;
-	case IPPROTO_ICMP:
-		KASSERT(npf_iscached(npc, NPC_ICMP));
-		/* Nothing. */
-		break;
-	default:
-		return ENOTSUP;
-	}
-	return 0;
-}
-
-/*
  * npf_nat_translate: perform translation given the state data.
  */
-int
+static inline int
 npf_nat_translate(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, bool forw)
 {
 	const npf_natpolicy_t *np = nt->nt_natpolicy;
+	const u_int which = npf_nat_which(np->n_type, forw);
 	const npf_addr_t *addr;
 	in_port_t port;
 
 	KASSERT(npf_iscached(npc, NPC_IP46));
 	KASSERT(npf_iscached(npc, NPC_LAYER4));
-	KASSERT(!nbuf_flag_p(nbuf, NBUF_DATAREF_RESET));
 
 	if (forw) {
 		/* "Forwards" stream: use translation address/port. */
@@ -617,14 +573,16 @@ npf_nat_translate(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, bool forw)
 	}
 	KASSERT((np->n_flags & NPF_NAT_PORTS) != 0 || port == 0);
 
-	/* Execute ALG hook first. */
+	/* Execute ALG translation first. */
 	if ((npc->npc_info & NPC_ALG_EXEC) == 0) {
 		npc->npc_info |= NPC_ALG_EXEC;
 		npf_alg_exec(npc, nbuf, nt, forw);
+		npf_recache(npc, nbuf);
 	}
+	KASSERT(!nbuf_flag_p(nbuf, NBUF_DATAREF_RESET));
 
 	/* Finally, perform the translation. */
-	return npf_nat_rwr(npc, np, addr, port, forw);
+	return npf_napt_rwr(npc, which, addr, port);
 }
 
 /*
@@ -633,17 +591,16 @@ npf_nat_translate(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, bool forw)
 static inline int 
 npf_nat_algo(npf_cache_t *npc, const npf_natpolicy_t *np, bool forw)
 {
-	u_int which;
+	const u_int which = npf_nat_which(np->n_type, forw);
 	int error;
 
 	switch (np->n_algo) {
 	case NPF_ALGO_NPT66:
-		which = npf_nat_which(np->n_type, forw);
 		error = npf_npt66_rwr(npc, which, &np->n_taddr,
 		    np->n_tmask, np->n_npt66_adj);
 		break;
 	default:
-		error = npf_nat_rwr(npc, np, &np->n_taddr, np->n_tport, forw);
+		error = npf_napt_rwr(npc, which, &np->n_taddr, np->n_tport);
 		break;
 	}
 

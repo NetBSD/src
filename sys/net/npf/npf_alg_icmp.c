@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_alg_icmp.c,v 1.19 2014/02/16 22:10:40 rmind Exp $	*/
+/*	$NetBSD: npf_alg_icmp.c,v 1.20 2014/02/19 03:51:31 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.19 2014/02/16 22:10:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.20 2014/02/19 03:51:31 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -305,6 +305,7 @@ npfa_icmp_session(npf_cache_t *npc, nbuf_t *nbuf, int di)
 static bool
 npfa_icmp_nat(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, bool forw)
 {
+	const u_int which = NPF_SRC;
 	npf_cache_t enpc;
 
 	if (forw || !npf_iscached(npc, NPC_ICMP))
@@ -315,6 +316,9 @@ npfa_icmp_nat(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, bool forw)
 	KASSERT(npf_iscached(&enpc, NPC_IP46));
 	KASSERT(npf_iscached(&enpc, NPC_LAYER4));
 
+	/*
+	 * ICMP: fetch the current checksum we are going to fixup.
+	 */
 	struct icmp *ic = npc->npc_l4.icmp;
 	uint16_t cksum = ic->icmp_cksum;
 
@@ -322,12 +326,9 @@ npfa_icmp_nat(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, bool forw)
 	    offsetof(struct icmp6_hdr, icmp6_cksum));
 
 	/*
-	 * Retrieve the original address and port, then calculate ICMP
-	 * checksum for these changes in the embedded packet.  While data
-	 * is not rewritten in the cache, save IP and TCP/UDP checksums.
-	 *
-	 * XXX: Assumes NPF_NATOUT (source address/port).  Currently,
-	 * npfa_icmp_match() matches only for the PFIL_OUT traffic.
+	 * Fetch the IP and port in the _embedded_ packet.  Also, fetch
+	 * the IPv4 and TCP/UDP checksums before they are rewritten.
+	 * Calculate the part of the ICMP checksum fixup.
 	 */
 	const int proto = enpc.npc_proto;
 	uint16_t ipcksum = 0, l4cksum = 0;
@@ -340,7 +341,7 @@ npfa_icmp_nat(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, bool forw)
 		const struct ip *eip = enpc.npc_ip.v4;
 		ipcksum = eip->ip_sum;
 	}
-	cksum = npf_addr_cksum(cksum, enpc.npc_alen, enpc.npc_ips[NPF_SRC], addr);
+	cksum = npf_addr_cksum(cksum, enpc.npc_alen, enpc.npc_ips[which], addr);
 
 	switch (proto) {
 	case IPPROTO_TCP: {
@@ -363,17 +364,23 @@ npfa_icmp_nat(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, bool forw)
 	}
 
 	/*
-	 * Rewrite the source IP address and port of the embedded IP header,
-	 * which represents the original packet.  This updates the checksums
-	 * in the embedded packet.
+	 * Translate the embedded packet.  The following changes will
+	 * be performed by npf_napt_rwr():
+	 *
+	 *	1) Rewrite the IP address and, if not ICMP, port.
+	 *	2) Rewrite the TCP/UDP checksum (if not ICMP).
+	 *	3) Rewrite the IPv4 checksum for (1) and (2).
+	 *
+	 * XXX: Assumes NPF_NATOUT (source address/port).  Currently,
+	 * npfa_icmp_match() matches only for the PFIL_OUT traffic.
 	 */
-	if (npf_nat_translate(&enpc, nbuf, nt, forw)) {
+	if (npf_napt_rwr(&enpc, which, addr, port)) {
 		return false;
 	}
 
 	/*
-	 * Finish calculation of the ICMP checksum: include the checksum
-	 * change in the embedded packet.
+	 * Finally, finish the ICMP checksum fixup: include the checksum
+	 * changes in the embedded packet.
 	 */
 	if (npf_iscached(&enpc, NPC_IP4)) {
 		const struct ip *eip = enpc.npc_ip.v4;
