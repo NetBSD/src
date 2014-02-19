@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_i386.c,v 1.29 2010/10/05 23:48:16 jym Exp $	*/
+/*	$NetBSD: kvm_i386.c,v 1.30 2014/02/19 20:21:22 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_i386.c,v 1.29 2010/10/05 23:48:16 jym Exp $");
+__RCSID("$NetBSD: kvm_i386.c,v 1.30 2014/02/19 20:21:22 dsl Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,7 +47,6 @@ __RCSID("$NetBSD: kvm_i386.c,v 1.29 2010/10/05 23:48:16 jym Exp $");
  */
 
 #include <sys/param.h>
-#include <sys/user.h>
 #include <sys/stat.h>
 #include <sys/kcore.h>
 #include <sys/types.h>
