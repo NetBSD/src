@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2014/02/17 20:08:53 christos Exp $
+# $NetBSD: Makefile,v 1.5 2014/02/19 19:29:33 dsl Exp $
 
 LIB=		sqlite3
 INCS=		sqlite3.h sqlite3ext.h
@@ -17,6 +17,9 @@ FILESDIR_sqlite3.pc=	/usr/lib/pkgconfig
 CLEANFILES+=sqlite3.pc
 
 .include <bsd.lib.mk>
+
+all: sqlite3.pc
+dependall: all
 
 sqlite3.pc: ${SRCDIR}/sqlite3.h sqlite3.pc.in
 	@(V=$$( (echo '#include <sqlite3.h>'; echo SQLITE_VERSION) | \
