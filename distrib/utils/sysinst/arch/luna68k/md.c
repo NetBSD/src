@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.2 2011/11/04 11:27:03 martin Exp $	*/
+/*	$NetBSD: md.c,v 1.3 2014/02/19 12:14:40 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -38,7 +38,9 @@
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
 #include <sys/param.h>
+#include <sys/stat.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <curses.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -48,6 +50,9 @@
 #include "md.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
+
+#define PART_BOOT_BSIZE	4096
+#define PART_BOOT_FSIZE	512
 
 void
 md_init(void)
@@ -120,6 +125,16 @@ int
 md_check_partitions(void)
 {
 
+	/*
+	 * Make sure that a boot partition (old 4.3BSD UFS) is prepared
+	 * properly for our native bootloader.
+	 */
+	if (bsdlabel[PART_BOOT].pi_fstype != FS_BSDFFS ||
+	    (bsdlabel[PART_BOOT].pi_flags & PIF_NEWFS) == 0) {
+		msg_display(MSG_nobootpartdisklabel);
+		process_menu(MENU_ok, NULL);
+		return 0;
+	}
 	return 1;
 }
 
@@ -140,29 +155,45 @@ int
 md_post_disklabel(void)
 {
 
+	if (get_ramsize() <= 32)
+		set_swap(diskdev, bsdlabel);
+
+	return 0;
+}
+
+static int
+copy_bootloader(void)
+{
+	const char *mntdir = "/mnt2";
+
+	msg_display(MSG_copybootloader, diskdev);
+	if (!run_program(RUN_SILENT | RUN_ERROR_OK,
+	    "mount /dev/%s%c %s", diskdev, 'a' + PART_BOOT, mntdir)) {
+		mnt2_mounted = 1;
+		run_program(0, "/bin/cp /usr/mdec/boot %s", mntdir);
+		run_program(RUN_SILENT | RUN_ERROR_OK, "umount %s", mntdir);
+		mnt2_mounted = 0;
+	} else {
+		/* XXX print proper error message */
+		return 1;
+	}
 	return 0;
 }
 
 /*
- * hook called after upgrade() or install() has finished setting
- * up the target disk but immediately before the user is given the
- * ``disks are now set up'' message.
- *
- * On the news68k, we use this opportunity to install the boot blocks.
+ * hook called after install() has finished setting up the target disk
+ * but immediately before the user is given the ``disks are now set up''
+ * message.
  */
 int
 md_post_newfs(void)
 {
-#if 0	/* no bootloader (yet) */
-	const char *bootfile = "/boot";
 
-	printf(msg_string(MSG_dobootblks), diskdev);
-	cp_to_target("/usr/mdec/boot", bootfile);
-	sync();
-	run_program(RUN_DISPLAY, "/usr/sbin/installboot /dev/r%sc %s %s",
-	    diskdev, "/usr/mdec/bootxx", bootfile);
-#endif
-	return 0;
+	if (run_program(RUN_DISPLAY | RUN_PROGRESS,
+	    "/sbin/newfs -V2 -O 0 -b %d -f %d /dev/r%s%c",
+	    PART_BOOT_BSIZE, PART_BOOT_FSIZE, diskdev, 'a' + PART_BOOT))
+		return 1;
+	return copy_bootloader();
 }
 
 int
@@ -179,11 +210,16 @@ md_cleanup_install(void)
 #ifndef DEBUG
 	enable_rc_conf();
 #endif
+	msg_display(MSG_howtoboot);
+	process_menu(MENU_ok, NULL);
 }
 
 int
 md_pre_update(void)
 {
+
+	if (get_ramsize() <= 32)
+		set_swap(diskdev, bsdlabel);
 
 	return 1;
 }
@@ -192,8 +228,26 @@ md_pre_update(void)
 int
 md_update(void)
 {
+	const char *mntdir = "/mnt2";
+	char bootpath[MAXPATHLEN];
+	struct stat sb;
+	bool hasboot = false;
 
-	md_post_newfs();
+	/*
+	 * Check if there is a boot UFS parttion and it has the old bootloader.
+	 * We'll update bootloader only if the old one was installed.
+	 */
+	if (!run_program(RUN_SILENT | RUN_ERROR_OK,
+	    "mount -r /dev/%s%c %s", diskdev, 'a' + PART_BOOT, mntdir)) {
+		mnt2_mounted = 1;
+		snprintf(bootpath, sizeof(bootpath), "%s/%s", mntdir, "boot");
+		if (stat(bootpath, &sb) == 0 && S_ISREG(sb.st_mode))
+			hasboot = true;
+		run_program(RUN_SILENT | RUN_ERROR_OK, "umount %s", mntdir);
+		mnt2_mounted = 0;
+		if (hasboot)
+			(void)copy_bootloader();
+	}
 	return 1;
 }
 
