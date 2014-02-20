@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.12.2.2 2014/02/15 16:18:36 matt Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.12.2.3 2014/02/20 20:36:29 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -178,7 +178,7 @@ arm_cpuinit:
 	cmp	r1, #0
 	orrlt	r10, r10, #0x5b		/* MP, cachable (Normal WB) */
 	orrge	r10, r10, #0x1b		/* Non-MP, cacheable, normal WB */
-	mcr	p15, 0, r1, c2, c0, 0	/* Set Translation Table Base */
+	mcr	p15, 0, r10, c2, c0, 0	/* Set Translation Table Base */
 
 	XPUTC(#49)
 	mov	r1, #0
