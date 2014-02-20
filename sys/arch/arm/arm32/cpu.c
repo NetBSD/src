@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.99 2013/09/07 23:10:02 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.100 2014/02/20 23:24:55 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.99 2013/09/07 23:10:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.100 2014/02/20 23:24:55 matt Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -565,18 +565,24 @@ static void
 print_cache_info(device_t dv, struct arm_cache_info *info, u_int level)
 {
 	if (info->cache_unified) {
-		aprint_normal_dev(dv, "%dKB/%dB %d-way %s L%u Unified cache\n",
+		aprint_normal_dev(dv, "%dKB/%dB %d-way %s L%u %cI%cT Unified cache\n",
 		    info->dcache_size / 1024,
 		    info->dcache_line_size, info->dcache_ways,
-		    wtnames[info->cache_type], level + 1);
+		    wtnames[info->cache_type], level + 1,
+		    info->dcache_type & CACHE_TYPE_PIxx ? 'P' : 'V',
+		    info->dcache_type & CACHE_TYPE_xxPT ? 'P' : 'V');
 	} else {
-		aprint_normal_dev(dv, "%dKB/%dB %d-way L%u Instruction cache\n",
+		aprint_normal_dev(dv, "%dKB/%dB %d-way L%u %cI%cT Instruction cache\n",
 		    info->icache_size / 1024,
-		    info->icache_line_size, info->icache_ways, level + 1);
-		aprint_normal_dev(dv, "%dKB/%dB %d-way %s L%u Data cache\n",
+		    info->icache_line_size, info->icache_ways, level + 1,
+		    info->icache_type & CACHE_TYPE_PIxx ? 'P' : 'V',
+		    info->icache_type & CACHE_TYPE_xxPT ? 'P' : 'V');
+		aprint_normal_dev(dv, "%dKB/%dB %d-way %s L%u %cI%cT Data cache\n",
 		    info->dcache_size / 1024, 
 		    info->dcache_line_size, info->dcache_ways,
-		    wtnames[info->cache_type], level + 1);
+		    wtnames[info->cache_type], level + 1,
+		    info->dcache_type & CACHE_TYPE_PIxx ? 'P' : 'V',
+		    info->dcache_type & CACHE_TYPE_xxPT ? 'P' : 'V');
 	}
 }
 

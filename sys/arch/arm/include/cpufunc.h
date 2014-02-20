@@ -744,6 +744,11 @@ void cpu_reset		(void) __dead;
 /*
  * Cache info variables.
  */
+#define	CACHE_TYPE_VIVT		0
+#define	CACHE_TYPE_xxPT		1
+#define	CACHE_TYPE_VIPT		1
+#define	CACHE_TYPE_PIxx		2
+#define	CACHE_TYPE_PIPT		3
 
 /* PRIMARY CACHE VARIABLES */
 struct arm_cache_info {
@@ -759,6 +764,8 @@ struct arm_cache_info {
 
 	u_int cache_type;
 	bool cache_unified;
+	uint8_t icache_type;
+	uint8_t dcache_type;
 };
 
 extern u_int arm_cache_prefer_mask;
