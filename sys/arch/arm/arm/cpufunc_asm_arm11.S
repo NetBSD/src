@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm11.S,v 1.10 2013/08/18 06:28:18 matt Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm11.S,v 1.11 2014/02/20 17:27:46 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2005 ARM Limited
@@ -57,22 +57,6 @@ ENTRY(arm11_setttb)
 	RET
 END(arm11_setttb)
 
-/*
- * TLB functions
- */
-ENTRY(arm11_tlb_flushID_SE)
-	mcr	p15, 0, r0, c8, c6, 1	/* flush D tlb single entry */
-	mcr	p15, 0, r0, c8, c5, 1	/* flush I tlb single entry */
-	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
-	RET
-END(arm11_tlb_flushID_SE)
-
-ENTRY(arm11_tlb_flushI_SE)
-	mcr	p15, 0, r0, c8, c5, 1	/* flush I tlb single entry */
-	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
-	RET
-END(arm11_tlb_flushI_SE)
-
 
 /*
  * Context switch.
@@ -99,29 +83,66 @@ END(arm11_context_switch)
 /*
  * TLB functions
  */
-ENTRY(arm11_tlb_flushID)
-	mcr	p15, 0, r0, c8, c7, 0	/* flush I+D tlb */
-	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
-	RET
-END(arm11_tlb_flushID)
 
 ENTRY(arm11_tlb_flushI)
+	mov	r0, #0
 	mcr	p15, 0, r0, c8, c5, 0	/* flush I tlb */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	RET
 END(arm11_tlb_flushI)
 
+ENTRY(arm11_tlb_flushI_SE)
+#ifdef ARM_MMU_EXTENDED
+	orr	r0, r0, r1		/* insert ASID into MVA */
+#endif
+	mcr	p15, 0, r0, c8, c5, 1	/* flush I tlb single entry */
+	mov	r0, #0
+	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
+	RET
+END(arm11_tlb_flushI_SE)
+
 ENTRY(arm11_tlb_flushD)
+	mov	r0, #0
 	mcr	p15, 0, r0, c8, c6, 0	/* flush D tlb */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	RET
 END(arm11_tlb_flushD)
 
 ENTRY(arm11_tlb_flushD_SE)
+#ifdef ARM_MMU_EXTENDED
+	orr	r0, r0, r1		/* insert ASID into MVA */
+#endif
 	mcr	p15, 0, r0, c8, c6, 1	/* flush D tlb single entry */
+	mov	r0, #0
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	RET
 END(arm11_tlb_flushD_SE)
+
+ENTRY(arm11_tlb_flushID)
+	mov	r0, #0
+	mcr	p15, 0, r0, c8, c7, 0	/* flush I+D tlb */
+	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
+	RET
+END(arm11_tlb_flushID)
+
+ENTRY(arm11_tlb_flushID_SE)
+#ifdef ARM_MMU_EXTENDED
+	orr	r0, r0, r1		/* insert ASID into MVA */
+#endif
+	mcr	p15, 0, r0, c8, c7, 1	/* flush I+D tlb single entry */
+	mov	r0, #0
+	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
+	RET
+END(arm11_tlb_flushID_SE)
+
+#ifdef ARM_MMU_EXTENDED
+ENTRY(arm11_tlb_flushID_ASID)
+	mcr	p15, 0, r0, c8, c7, 2	/* flush I+D tlb */
+	mov	r0, #0
+	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
+	RET
+END(arm11_tlb_flushID_ASID)
+#endif
 
 /*
  * Other functions
