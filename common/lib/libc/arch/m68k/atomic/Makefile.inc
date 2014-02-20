@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11 2014/01/29 10:20:11 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.12 2014/02/20 20:39:01 martin Exp $
 
 #
 # Note: The atomic operations here in these assembly files are atomic
@@ -14,7 +14,8 @@
 .if ${MACHINE_ARCH} == "m68k"
 
 SRCS+=	atomic_add.S atomic_and.S atomic_cas.S atomic_dec.S \
-	atomic_inc.S atomic_or.S atomic_swap.S membar_ops_nop.c
+	atomic_inc.S atomic_or.S atomic_swap.S membar_ops_nop.c \
+	atomic_sub.S atomic_xor.S atomic_nand.S
 
 .else
 
