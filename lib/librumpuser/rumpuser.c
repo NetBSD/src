@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.56 2014/02/20 00:42:27 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.57 2014/02/20 00:44:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.56 2014/02/20 00:42:27 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.57 2014/02/20 00:44:20 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/ioctl.h>
@@ -645,21 +645,12 @@ rumpuser_dprintf(const char *format, ...)
 int
 rumpuser_kill(int64_t pid, int rumpsig)
 {
-	int rv, sig;
-	int error;
+	int sig;
 
 	sig = rumpuser__sig_rump2host(rumpsig);
-	if (pid == RUMPUSER_PID_SELF) {
-		error = raise(sig);
-	} else {
-		error = kill((pid_t)pid, sig);
-	}
-	if (error == -1)
-		rv = errno;
-	else
-		rv = 0;
-
-	ET(rv);
+	if (sig > 0)
+		raise(sig);
+	return 0;
 }
 
 int
