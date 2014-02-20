@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.137 2014/02/20 14:48:11 matt Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.138 2014/02/20 17:38:42 matt Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.137 2014/02/20 14:48:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.138 2014/02/20 17:38:42 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -1292,12 +1292,12 @@ struct cpu_functions cortex_cpufuncs = {
 
 	/* TLB functions */
 
-	.cf_tlb_flushID		= arm11_tlb_flushID,
+	.cf_tlb_flushID		= armv7_tlb_flushID,
 	.cf_tlb_flushID_SE	= armv7_tlb_flushID_SE,
-	.cf_tlb_flushI		= arm11_tlb_flushI,
-	.cf_tlb_flushI_SE	= arm11_tlb_flushI_SE,
-	.cf_tlb_flushD		= arm11_tlb_flushD,
-	.cf_tlb_flushD_SE	= arm11_tlb_flushD_SE,
+	.cf_tlb_flushI		= armv7_tlb_flushI,
+	.cf_tlb_flushI_SE	= armv7_tlb_flushI_SE,
+	.cf_tlb_flushD		= armv7_tlb_flushD,
+	.cf_tlb_flushD_SE	= armv7_tlb_flushD_SE,
 
 	/* Cache operations */
 
