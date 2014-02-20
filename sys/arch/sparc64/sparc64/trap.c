@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.179 2013/09/15 14:49:50 martin Exp $ */
+/*	$NetBSD: trap.c,v 1.180 2014/02/20 01:40:42 joerg Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.179 2013/09/15 14:49:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.180 2014/02/20 01:40:42 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -577,7 +577,7 @@ dopanic:
 				printf(" npc=%lx pstate=%s\n",
 				       (long)tf->tf_npc, sb);
 				DEBUGGER(type, tf);
-				panic(type < N_TRAP_TYPES ? trap_type[type] : T);
+				panic("%s", type < N_TRAP_TYPES ? trap_type[type] : T);
 			}
 			/* NOTREACHED */
 		}
