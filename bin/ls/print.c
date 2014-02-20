@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.52 2013/05/02 22:43:55 zafer Exp $	*/
+/*	$NetBSD: print.c,v 1.53 2014/02/20 18:56:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.52 2013/05/02 22:43:55 zafer Exp $");
+__RCSID("$NetBSD: print.c,v 1.53 2014/02/20 18:56:36 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,6 +72,39 @@ static time_t	now;
 
 #define	IS_NOPRINT(p)	((p)->fts_number == NO_PRINT)
 
+static int
+safe_printpath(const FTSENT *p) {
+	int chcnt;
+
+	if (f_fullpath) {
+		chcnt = safe_print(p->fts_path);
+		chcnt += safe_print("/");
+	} else
+		chcnt = 0;
+	return chcnt + safe_print(p->fts_name);
+}
+
+static int
+printescapedpath(const FTSENT *p) {
+	int chcnt;
+
+	if (f_fullpath) {
+		chcnt = printescaped(p->fts_path);
+		chcnt += printescaped("/");
+	} else
+		chcnt = 0;
+
+	return chcnt + printescaped(p->fts_name);
+}
+
+static int
+printpath(const FTSENT *p) {
+	if (f_fullpath)
+		return printf("%s/%s", p->fts_path, p->fts_name);
+	else
+		return printf("%s", p->fts_path);
+}
+
 void
 printscol(DISPLAY *dp)
 {
@@ -95,7 +128,8 @@ printlong(DISPLAY *dp)
 
 	now = time(NULL);
 
-	printtotal(dp);		/* "total: %u\n" */
+	if (!f_leafonly)
+		printtotal(dp);		/* "total: %u\n" */
 	
 	for (p = dp->list; p; p = p->fts_link) {
 		if (IS_NOPRINT(p))
@@ -151,11 +185,11 @@ printlong(DISPLAY *dp)
 		else
 			printtime(sp->st_mtime);
 		if (f_octal || f_octal_escape)
-			(void)safe_print(p->fts_name);
+			(void)safe_printpath(p);
 		else if (f_nonprint)
-			(void)printescaped(p->fts_name);
+			(void)printescapedpath(p);
 		else
-			(void)printf("%s", p->fts_name);
+			(void)printpath(p);
 
 		if (f_type || (f_typedir && S_ISDIR(sp->st_mode)))
 			(void)printtype(sp->st_mode);
@@ -346,11 +380,11 @@ printaname(FTSENT *p, int inodefield, int sizefield)
 		}
 	}
 	if (f_octal || f_octal_escape)
-		chcnt += safe_print(p->fts_name);
+		chcnt += safe_printpath(p);
 	else if (f_nonprint)
-		chcnt += printescaped(p->fts_name);
+		chcnt += printescapedpath(p);
 	else
-		chcnt += printf("%s", p->fts_name);
+		chcnt += printpath(p);
 	if (f_type || (f_typedir && S_ISDIR(sp->st_mode)))
 		chcnt += printtype(sp->st_mode);
 	return (chcnt);
