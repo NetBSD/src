@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.47 2014/01/15 10:12:12 bouyer Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.48 2014/02/20 13:54:42 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -708,4 +708,11 @@ dist/bind/bin/named/query.c			patch
 			   on some platforms.  This could cause INSIST failures
 			   when serving NSEC3 signed zones.  [RT #35120]
 	[spz, ticket #1897]
+
+lib/libpthread/pthread_cond.c			1.62
+lib/libpthread/pthread_mutex.c			1.57, 1.59
+
+	Partial fix for thread deadlock commonly observed with
+	named. Also address PR/44756.
+	[prlw1, ticket #1898]
 
