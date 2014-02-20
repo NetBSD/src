@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.31 2013/12/02 15:54:06 jdc Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.32 2014/02/20 02:09:28 joerg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.31 2013/12/02 15:54:06 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.32 2014/02/20 02:09:28 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -458,7 +458,7 @@ bwtwo_init_screen(void *cookie, struct vcons_screen *scr,
 	 */
 	for (bits = (char *) ri->ri_bits;
 	    bits < (char *) ri->ri_bits + ri->ri_stride * ri->ri_height;
-	    bits += 4);
+	    bits += 4)
 		memset(bits, (*defattr >> 16) & 0xff, 4);
 	rasops_init(ri, 0, 0);
 	ri->ri_caps = 0;
