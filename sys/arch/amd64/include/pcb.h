@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.24 2014/02/11 20:17:16 dsl Exp $	*/
+/*	$NetBSD: pcb.h,v 1.25 2014/02/20 18:19:10 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,12 +72,7 @@
 
 #ifdef __x86_64__
 
-#include <sys/signal.h>
-
-#include <machine/segments.h>
-#include <machine/tss.h>
-#include <x86/fpu.h>
-#include <machine/sysarch.h>
+#include <x86/cpu_extended_state.h>
 
 #define	NIOPORTS	1024		/* # of ports we allow to be mapped */
 
@@ -91,16 +86,18 @@ struct pcb {
 	uint64_t pcb_cr3;
 	uint64_t pcb_rsp;
 	uint64_t pcb_rbp;
-	uint64_t pcb_usersp;
-	uint32_t pcb_unused[2];		/* unused */
-	union	savefpu pcb_savefpu __aligned(16); /* floating point state */
-	uint32_t pcb_unused_1[4];	/* unused */
 	void     *pcb_onfault;		/* copyin/out fault recovery */
-	struct cpu_info *pcb_fpcpu;	/* cpu holding our fp state. */
 	uint64_t  pcb_fs;
 	uint64_t  pcb_gs;
 	int pcb_iopl;
+
+	uint32_t pcb_unused[11];		/* unused */
+
+	struct cpu_info *pcb_fpcpu;	/* cpu holding our fp state. */
+	union savefpu	pcb_savefpu __aligned(64); /* floating point state */
+	/* **** DO NOT ADD ANYTHING HERE **** */
 };
+__CTASSERT(sizeof(struct pcb) - sizeof (union savefpu) ==  128);
 
 #else	/*	__x86_64__	*/
 

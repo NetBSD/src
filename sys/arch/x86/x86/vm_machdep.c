@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.22 2014/02/15 10:11:15 dsl Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.23 2014/02/20 18:19:10 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.22 2014/02/15 10:11:15 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.23 2014/02/20 18:19:10 dsl Exp $");
 
 #include "opt_mtrr.h"
 
@@ -99,9 +99,12 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.22 2014/02/15 10:11:15 dsl Exp $");
 #include <machine/gdt.h>
 #include <machine/reg.h>
 #include <machine/specialreg.h>
+
 #ifdef MTRR
 #include <machine/mtrr.h>
 #endif
+
+#include <x86/fpu.h>
 
 void
 cpu_proc_fork(struct proc *p1, struct proc *p2)
@@ -169,10 +172,10 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	uv = uvm_lwp_getuarea(l2);
 
 #ifdef __x86_64__
-	pcb2->pcb_rsp0 = (uv + KSTACK_SIZE - 16) & ~0xf;
+	pcb2->pcb_rsp0 = (uv + USPACE - 16) & ~0xf;
 	tf = (struct trapframe *)pcb2->pcb_rsp0 - 1;
 #else
-	pcb2->pcb_esp0 = (uv + KSTACK_SIZE - 16);
+	pcb2->pcb_esp0 = (uv + USPACE - 16);
 	tf = (struct trapframe *)pcb2->pcb_esp0 - 1;
 
 	pcb2->pcb_iomap = NULL;

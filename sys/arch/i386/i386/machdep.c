@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.749 2014/02/18 01:00:57 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.750 2014/02/20 18:19:10 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.749 2014/02/18 01:00:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.750 2014/02/20 18:19:10 dsl Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -142,6 +142,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.749 2014/02/18 01:00:57 christos Exp $
 #include <machine/mtrr.h>
 #include <x86/x86/tsc.h>
 
+#include <x86/fpu.h>
 #include <x86/machdep.h>
 
 #include <machine/multiboot.h>
@@ -500,7 +501,7 @@ i386_proc0_tss_ldt_init(void)
 
 	pmap_kernel()->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0() & ~CR0_TS;
-	pcb->pcb_esp0 = uvm_lwp_getuarea(l) + KSTACK_SIZE - 16;
+	pcb->pcb_esp0 = uvm_lwp_getuarea(l) + USPACE - 16;
 	pcb->pcb_iopl = SEL_KPL;
 	l->l_md.md_regs = (struct trapframe *)pcb->pcb_esp0 - 1;
 	memcpy(&pcb->pcb_fsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_fsd));
