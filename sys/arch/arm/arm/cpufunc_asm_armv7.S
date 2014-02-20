@@ -46,8 +46,8 @@ END(armv7_wait)
 
 ENTRY(armv7_context_switch)
 	dsb				@ data synchronization barrier
-	mrc	p15, 0, r2, c0, c0, 5	@ get MPIDR
-	cmp	r2, #0
+	mrc	p15, 0, ip, c0, c0, 5	@ get MPIDR
+	cmp	ip, #0
 	orrlt	r0, r0, #0x5b		@ MP, cachable (Normal WB)
 	orrge	r0, r0, #0x1b		@ Non-MP, cacheable, normal WB
 	mcr	p15, 0, r0, c2, c0, 0 	@ set the new TTB
@@ -61,7 +61,25 @@ ENTRY(armv7_context_switch)
 	bx	lr
 END(armv7_context_switch)
 
+#ifdef ARM_MMU_EXTENDED
+ENTRY(armv7_tlb_flushID_ASID)
+#ifdef MULTIPROCESSOR
+	mcr	p15, 0, r0, c8, c3, 2	@ flush I+D tlb all ASID
+#else
+	mcr	p15, 0, r0, c8, c7, 2	@ flush I+D tlb all ASID
+#endif
+	dsb				@ data synchronization barrier
+	isb
+	bx	lr
+END(armv7_tlb_flushID_ASID)
+#endif
+
+STRONG_ALIAS(armv7_tlb_flushD_SE, armv7_tlb_flushID_SE)
+STRONG_ALIAS(armv7_tlb_flushI_SE, armv7_tlb_flushID_SE)
 ENTRY(armv7_tlb_flushID_SE)
+#ifdef ARM_MMU_EXTENDED
+	bfi	r0, r1, #0, #8		@ insert ASID into MVA
+#endif
 #ifdef MULTIPROCESSOR
 	mcr	p15, 0, r0, c8, c3, 1	@ flush I+D tlb single entry
 #else
@@ -72,10 +90,27 @@ ENTRY(armv7_tlb_flushID_SE)
 	bx	lr
 END(armv7_tlb_flushID_SE)
 
+ENTRY(armv7_tlb_flushD)
+	mov	r0, #0
+	mcr	p15, 0, r0, c8, c6, 0	@ flush entire D tlb
+	dsb				@ data synchronization barrier
+	isb
+	bx      lr
+END(armv7_tlb_flushD)
+
+STRONG_ALIAS(armv7_tlb_flushI, armv7_tlb_flushID)
+ENTRY(armv7_tlb_flushID)
+	mov	r0, #0
+	mcr	p15, 0, r0, c8, c7, 0	@ flush entire I+D tlb
+	dsb				@ data synchronization barrier
+	isb
+	bx      lr
+END(armv7_tlb_flushID)
+
 
 ENTRY_NP(armv7_setttb)
-	mrc	p15, 0, r2, c0, c0, 5	@ get MPIDR
-	cmp	r2, #0
+	mrc	p15, 0, ip, c0, c0, 5	@ get MPIDR
+	cmp	ip, #0
 	orrlt	r0, r0, #0x5b		@ MP, cachable (Normal WB)
 	orrge	r0, r0, #0x1b		@ Non-MP, cacheable, normal WB
 	mcr	p15, 0, r0, c2, c0, 0   @ load new TTB
