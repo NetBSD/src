@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.2 2014/02/15 18:41:20 tsutsui Exp $
+#	$NetBSD: list,v 1.3 2014/02/20 14:30:23 tsutsui Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin
 
@@ -43,6 +43,7 @@ PROG	sbin/route
 PROG	sbin/shutdown
 PROG	sbin/slattach
 PROG	sbin/swapctl	sbin/swapon
+PROG	sbin/sysctl
 PROG	sbin/umount
 
 PROG	usr/bin/ftp
