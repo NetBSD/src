@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.162 2014/01/29 18:42:14 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.163 2014/02/20 01:01:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.162 2014/01/29 18:42:14 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.163 2014/02/20 01:01:10 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -278,6 +278,13 @@ cnflush(void)
 {
 
 	/* done */
+}
+
+void
+resettodr(void)
+{
+
+	/* setting clocks is not in the jurisdiction of rump kernels */
 }
 
 #ifdef __HAVE_SYSCALL_INTERN
