@@ -1,4 +1,4 @@
-/*	$NetBSD: signals.c,v 1.12 2013/11/22 21:56:24 christos Exp $	*/
+/*	$NetBSD: signals.c,v 1.13 2014/02/20 00:41:05 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: signals.c,v 1.12 2013/11/22 21:56:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: signals.c,v 1.13 2014/02/20 00:41:05 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -84,15 +84,6 @@ rumpsig_ignore(struct proc *p, int signo)
 	return;
 }
 
-/* RUMP_SIGMODEL_HOST */
-
-static void
-rumpsig_host(struct proc *p, int signo)
-{
-
-	rumpuser_kill(p->p_pid, signo);
-}
-
 /* RUMP_SIGMODEL_RAISE */
 
 static void
@@ -100,7 +91,7 @@ rumpsig_raise(struct proc *p, int signo)
 {
 
 	if (RUMP_LOCALPROC_P(p)) {
-		rumpuser_kill(RUMPUSER_PID_SELF, signo);
+		rumpuser_kill(p->p_pid, signo);
 	} else {
 		rumpuser_sp_raise(p->p_vmspace->vm_map.pmap, signo);
 	}
@@ -139,14 +130,16 @@ rump_boot_setsigmodel(enum rump_sigmodel model)
 	case RUMP_SIGMODEL_IGNORE:
 		rumpsig = rumpsig_ignore;
 		break;
-	case RUMP_SIGMODEL_HOST:
-		rumpsig = rumpsig_host;
-		break;
 	case RUMP_SIGMODEL_RAISE:
 		rumpsig = rumpsig_raise;
 		break;
 	case RUMP_SIGMODEL_RECORD:
 		rumpsig = rumpsig_record;
+		break;
+
+	/* for compat, though I doubt anyone is using it */
+	case RUMP_SIGMODEL__HOST_NOTANYMORE:
+		rumpsig = rumpsig_raise;
 		break;
 	}
 }
