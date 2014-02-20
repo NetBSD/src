@@ -1,4 +1,4 @@
-/* $NetBSD: awin_var.h,v 1.6 2013/09/07 19:47:28 matt Exp $ */
+/* $NetBSD: awin_var.h,v 1.7 2014/02/20 21:45:06 matt Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -79,6 +79,7 @@ extern struct arm32_bus_dma_tag awin_dma_tag;
 psize_t awin_memprobe(void);
 void	awin_bootstrap(vaddr_t, vaddr_t); 
 void	awin_pll6_enable(void);
+void	awin_cpu_hatch(struct cpu_info *);
 
 void	awin_gpio_init(void);
 bool	awin_gpio_pinset_available(const struct awin_gpio_pinset *);
