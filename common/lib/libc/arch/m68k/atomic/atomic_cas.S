@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas.S,v 1.8 2014/02/18 16:19:28 martin Exp $	*/
+/*	$NetBSD: atomic_cas.S,v 1.9 2014/02/20 16:33:23 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,11 +68,11 @@ ENTRY(__sync_bool_compare_and_swap_4)
 	movl	12(%sp), %d1
 	casl	%d3, %d1, (%a0)
 	/* %d3 now contains the old value */
-	clrl	%d0	/* assume it did not work */
-	cmpl	%d3, %d2
-	bne	1f
-	movl	#1, %d0	/* return success */
-1:	rts
+	beq	1f
+	clrl	%d0	/* return false */
+	rts
+1:	movl	#1, %d0	/* return success */
+	rts
 END(__sync_bool_compare_and_swap_4)
 
 ENTRY(_atomic_cas_16)
@@ -94,11 +94,11 @@ ENTRY(__sync_bool_compare_and_swap_2)
 	movw	10(%sp), %d1
 	casw	%d3, %d1, (%a0)
 	/* %d3 now contains the old value */
-	clrl	%d0	/* assume it did not work */
-	cmpw	%d3, %d2
-	bne	1f
-	movl	#1, %d0	/* return success */
-1:	rts
+	beq	1f
+	clrl	%d0	/* return failure */
+	rts
+1:	movl	#1, %d0	/* return success */
+	rts
 END(__sync_bool_compare_and_swap_2)
 
 ENTRY(_atomic_cas_8)
@@ -121,10 +121,10 @@ ENTRY(__sync_bool_compare_and_swap_1)
 	movb	9(%sp), %d1
 	casb	%d3, %d1, (%a0)
 	/* %d3 now contains the old value */
-	clrl	%d0	/* assume it did not work */
-	cmpb	%d3, %d2
-	bne	1f
-	movl	#1, %d0	/* return success */
-1:	rts
+	beq	1f
+	clrl	%d0	/* return failure */
+	rts
+1:	movl	#1, %d0	/* return success */
+	rts
 END(__sync_bool_compare_and_swap_1)
 
