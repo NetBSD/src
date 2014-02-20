@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.57 2013/07/16 20:17:06 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.58 2014/02/20 00:41:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -71,7 +71,7 @@ enum rump_uiorw { RUMPUIO_READ, RUMPUIO_WRITE };
 enum rump_sigmodel {
 	RUMP_SIGMODEL_PANIC,
 	RUMP_SIGMODEL_IGNORE,
-	RUMP_SIGMODEL_HOST,
+	RUMP_SIGMODEL__HOST_NOTANYMORE,
 	RUMP_SIGMODEL_RAISE,
 	RUMP_SIGMODEL_RECORD
 };
