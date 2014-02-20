@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.111 2014/02/02 22:41:20 dsl Exp $	*/
+/*	$NetBSD: locore.S,v 1.112 2014/02/20 18:19:10 dsl Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -129,7 +129,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.111 2014/02/02 22:41:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.112 2014/02/20 18:19:10 dsl Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -727,8 +727,8 @@ begin:
 	/* Set up bootstrap stack. */
 	leal	(PROC0_STK_OFF+KERNBASE)(%esi),%eax
 	movl	%eax,_C_LABEL(lwp0uarea)
-	leal	(KSTACK_SIZE-FRAMESIZE)(%eax),%esp
-	movl	%esi,(KSTACK_SIZE+PCB_CR3)(%eax)	# pcb->pcb_cr3
+	leal	(USPACE-FRAMESIZE)(%eax),%esp
+	movl	%esi,PCB_CR3(%eax)	# pcb->pcb_cr3
 	xorl	%ebp,%ebp		# mark end of frames
 
 #if defined(MULTIBOOT)
@@ -825,7 +825,7 @@ begin:
 	movl	%esi, _C_LABEL(lwp0uarea)
 
 	/* Set up bootstrap stack. */
-	leal	(KSTACK_SIZE-FRAMESIZE)(%eax),%esp
+	leal	(USPACE-FRAMESIZE)(%eax),%esp
 	xorl	%ebp,%ebp		# mark end of frames
 
 	addl	$USPACE, %esi
