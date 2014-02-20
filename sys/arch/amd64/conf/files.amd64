@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.82 2014/02/11 20:17:16 dsl Exp $
+#	$NetBSD: files.amd64,v 1.83 2014/02/20 03:48:06 pgoyette Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -43,6 +43,7 @@ file	arch/amd64/amd64/machdep.c
 file	arch/amd64/amd64/process_machdep.c
 file	arch/amd64/amd64/trap.c
 file	arch/x86/x86/fpu.c
+file	arch/x86/x86/convert_xmm_s87.c
 file	arch/amd64/amd64/lock_stubs.S
 file	dev/cons.c
 
@@ -133,7 +134,6 @@ attach	fd at fdc
 # NetBSD/i386 32-bit binary compatibility (COMPAT_NETBSD32)
 include "compat/netbsd32/files.netbsd32"
 file	arch/amd64/amd64/netbsd32_machdep.c	compat_netbsd32
-file	arch/x86/x86/convert_xmm_s87.c		compat_netbsd32
 file	arch/amd64/amd64/netbsd32_sigcode.S	compat_netbsd32 & compat_16
 file	arch/amd64/amd64/netbsd32_syscall.c	compat_netbsd32
 
