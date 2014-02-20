@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.18 2014/02/15 10:11:15 dsl Exp $	*/
+/*	$NetBSD: proc.h,v 1.19 2014/02/20 18:19:10 dsl Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -64,11 +64,6 @@ struct mdproc {
 
 /* md_flags */
 #define MDP_USEDMTRR	0x0008	/* has set volatile MTRRs */
-
-#define	UAREA_PCB_OFFSET	(USPACE - ALIGN(sizeof(struct pcb)))
-#define	KSTACK_LOWEST_ADDR(l)	\
-    ((void *)((vaddr_t)(l)->l_addr - UAREA_PCB_OFFSET))
-#define	KSTACK_SIZE		UAREA_PCB_OFFSET
 
 #else	/*	__x86_64__	*/
 
