@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.123 2013/11/12 17:05:09 matt Exp $
+#	$NetBSD: files.arm,v 1.124 2014/02/20 17:39:59 matt Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -136,7 +136,7 @@ file	arch/arm/arm/cpufunc_asm_arm8.S		cpu_arm8
 file	arch/arm/arm/cpufunc_asm_arm9.S		cpu_arm9
 file	arch/arm/arm/cpufunc_asm_arm10.S	cpu_arm9e | cpu_arm10 |
 							cpu_sheeva
-file	arch/arm/arm/cpufunc_asm_arm11.S	cpu_arm11 | cpu_cortex
+file	arch/arm/arm/cpufunc_asm_arm11.S	cpu_arm11
 file	arch/arm/arm/cpufunc_asm_arm1136.S	cpu_arm1136
 file	arch/arm/arm/cpufunc_asm_arm11x6.S	cpu_arm1136 | cpu_arm1176
 file	arch/arm/arm/cpufunc_asm_armv4.S	cpu_arm9 | cpu_arm9e |
