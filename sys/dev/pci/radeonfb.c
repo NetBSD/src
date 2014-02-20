@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.82 2014/01/22 07:57:33 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.83 2014/02/20 01:41:28 joerg Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.82 2014/01/22 07:57:33 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.83 2014/02/20 01:41:28 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,7 +163,7 @@ static void radeonfb_engine_idle(struct radeonfb_softc *);
 static void radeonfb_engine_flush(struct radeonfb_softc *);
 static void radeonfb_engine_reset(struct radeonfb_softc *);
 static void radeonfb_engine_init(struct radeonfb_display *);
-static inline void radeonfb_unclip(struct radeonfb_softc *);
+static inline void radeonfb_unclip(struct radeonfb_softc *) __unused;
 
 static void radeonfb_eraserows(void *, int, int, long);
 static void radeonfb_erasecols(void *, int, int, int, long);
