@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh.c,v 1.13 2013/11/08 19:18:25 christos Exp $	*/
+/*	$NetBSD: ssh.c,v 1.14 2014/02/20 08:20:05 gson Exp $	*/
 /* $OpenBSD: ssh.c,v 1.381 2013/07/25 00:29:10 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -42,7 +42,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh.c,v 1.13 2013/11/08 19:18:25 christos Exp $");
+__RCSID("$NetBSD: ssh.c,v 1.14 2014/02/20 08:20:05 gson Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -1456,7 +1456,7 @@ ssh_session2_open(void)
 
 	if ((options.tcp_rcv_buf_poll > 0) && (!options.hpn_disabled)) {
 		c->dynamic_window = 1;
-		debug ("Enabled Dynamic Window Scaling\n");
+		debug ("Enabled Dynamic Window Scaling");
 	}
 	debug3("ssh_session2_open: channel_new: %d", c->self);
 
