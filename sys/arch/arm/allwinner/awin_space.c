@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_space.c,v 1.2 2014/01/23 19:26:55 matt Exp $	*/
+/*	$NetBSD: awin_space.c,v 1.3 2014/02/20 21:45:49 matt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_space.c,v 1.2 2014/01/23 19:26:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_space.c,v 1.3 2014/02/20 21:45:49 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,14 +193,14 @@ struct bus_space awin_a4x_bs_tag = {
 
 	/* read (single) */
 	a4x_bs_r_1,
-	a4x_bs_r_2,
-	a4x_bs_r_4,
+	NSWAP(a4x_bs_r_2),
+	NSWAP(a4x_bs_r_4),
 	bs_notimpl_bs_r_8,
 
 	/* read multiple */
 	a4x_bs_rm_1,
-	a4x_bs_rm_2,
-	a4x_bs_rm_4,
+	NSWAP(a4x_bs_rm_2),
+	NSWAP(a4x_bs_rm_4),
 	bs_notimpl_bs_rm_8,
 
 	/* read region */
@@ -211,14 +211,14 @@ struct bus_space awin_a4x_bs_tag = {
 
 	/* write (single) */
 	a4x_bs_w_1,
-	a4x_bs_w_2,
-	a4x_bs_w_4,
+	NSWAP(a4x_bs_w_2),
+	NSWAP(a4x_bs_w_4),
 	bs_notimpl_bs_w_8,
 
 	/* write multiple */
 	a4x_bs_wm_1,
-	a4x_bs_wm_2,
-	a4x_bs_wm_4,
+	NSWAP(a4x_bs_wm_2),
+	NSWAP(a4x_bs_wm_4),
 	bs_notimpl_bs_wm_8,
 
 	/* write region */
@@ -248,38 +248,38 @@ struct bus_space awin_a4x_bs_tag = {
 #ifdef __BUS_SPACE_HAS_STREAM_METHODS
 	/* read (single) */
 	a4x_bs_r_1,
-	a4x_bs_r_2,
-	a4x_bs_r_4,
+	NSWAP(a4x_bs_r_2),
+	NSWAP(a4x_bs_r_4),
 	bs_notimpl_bs_r_8,
 
 	/* read multiple */
 	a4x_bs_rm_1,
-	a4x_bs_rm_2,
-	a4x_bs_rm_4,
+	NSWAP(a4x_bs_rm_2),
+	NSWAP(a4x_bs_rm_4),
 	bs_notimpl_bs_rm_8,
 
 	/* read region */
 	a4x_bs_rr_1,
-	a4x_bs_rr_2,
-	a4x_bs_rr_4,
+	NSWAP(a4x_bs_rr_2),
+	NSWAP(a4x_bs_rr_4),
 	bs_notimpl_bs_rr_8,
 
 	/* write (single) */
 	a4x_bs_w_1,
-	a4x_bs_w_2,
-	a4x_bs_w_4,
+	NSWAP(a4x_bs_w_2),
+	NSWAP(a4x_bs_w_4),
 	bs_notimpl_bs_w_8,
 
 	/* write multiple */
 	a4x_bs_wm_1,
-	a4x_bs_wm_2,
-	a4x_bs_wm_4,
+	NSWAP(a4x_bs_wm_2),
+	NSWAP(a4x_bs_wm_4),
 	bs_notimpl_bs_wm_8,
 
 	/* write region */
 	a4x_bs_wr_1,
-	a4x_bs_wr_2,
-	a4x_bs_wr_4,
+	NSWAP(a4x_bs_wr_2),
+	NSWAP(a4x_bs_wr_4),
 	bs_notimpl_bs_wr_8,
 #endif
 };
