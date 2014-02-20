@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.8 2013/12/20 06:50:28 matt Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.9 2014/02/20 15:45:20 matt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.8 2013/12/20 06:50:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.9 2014/02/20 15:45:20 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_netbsd32.h"
@@ -111,12 +111,15 @@ arm_netbsd_elf32_probe(struct lwp *l, struct exec_package *epp, void *eh0,
 		strlcpy(l->l_proc->p_md.md_march, epp->ep_machine_arch,
 		    sizeof(l->l_proc->p_md.md_march));
 	}
+
 	/*
 	 * If we are AAPCS (EABI) and armv6/armv7, we want alignment faults
-	 * be off.
+	 * to be off.
 	 */
 	if (aapcs_p && (CPU_IS_ARMV7_P() || CPU_IS_ARMV6_P())) {
 		l->l_md.md_flags |= MDLWP_NOALIGNFLT;
+	} else {
+		l->l_md.md_flags &= ~MDLWP_NOALIGNFLT;
 	}
 	return 0;
 }
