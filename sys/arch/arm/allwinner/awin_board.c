@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_board.c,v 1.6 2013/09/09 17:53:36 matt Exp $	*/
+/*	$NetBSD: awin_board.c,v 1.7 2014/02/20 21:46:14 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.6 2013/09/09 17:53:36 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.7 2014/02/20 21:46:14 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -50,6 +50,8 @@ __KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.6 2013/09/09 17:53:36 matt Exp $");
 
 #include <arm/allwinner/awin_reg.h>
 #include <arm/allwinner/awin_var.h>
+
+#include <arm/cortex/gtmr_var.h>
 
 bus_space_handle_t awin_core_bsh;
 
