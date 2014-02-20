@@ -1,4 +1,4 @@
-.\"	$NetBSD: ls.1,v 1.72 2012/11/20 12:37:29 abs Exp $
+.\"	$NetBSD: ls.1,v 1.73 2014/02/20 18:56:36 christos Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)ls.1	8.7 (Berkeley) 7/29/94
 .\"
-.Dd November 20, 2012
+.Dd February 20, 2014
 .Dt LS 1
 .Os
 .Sh NAME
@@ -40,7 +40,7 @@
 .Nd list directory contents
 .Sh SYNOPSIS
 .Nm
-.Op Fl 1AaBbCcdFfghikLlMmnopqRrSsTtuWwx
+.Op Fl 1AaBbCcdFfghikLlMmnOoPpqRrSsTtuWwx
 .Op Ar
 .Sh DESCRIPTION
 For each
@@ -183,6 +183,8 @@ The same as
 except that
 the owner and group IDs are displayed numerically rather than converting
 to a owner or group name.
+.It Fl O
+Output only leaf files (not directories), eliding other ls output.
 .It Fl o
 Include the file flags in a long
 .Pq Fl l
@@ -193,6 +195,8 @@ is displayed.
 (See
 .Xr chflags 1
 for a list of possible flags and their meanings.)
+.It Fl P
+Print the full pathname for each file.
 .It Fl p
 Display a slash
 .Pq Sq \&/
