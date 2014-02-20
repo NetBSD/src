@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.51.22.1 2013/04/29 01:50:18 riz Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.51.22.2 2014/02/20 13:00:40 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.51.22.1 2013/04/29 01:50:18 riz Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.51.22.2 2014/02/20 13:00:40 sborrill Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
@@ -211,11 +211,61 @@ pthread__mutex_spin(pthread_mutex_t *ptm, pthread_t owner)
 	return owner;
 }
 
+NOINLINE static void
+pthread__mutex_setwaiters(pthread_t self, pthread_mutex_t *ptm)
+{
+	void *new, *owner;
+
+	/*
+	 * Note that the mutex can become unlocked before we set
+	 * the waiters bit.  If that happens it's not safe to sleep
+	 * as we may never be awoken: we must remove the current
+	 * thread from the waiters list and try again.
+	 *
+	 * Because we are doing this atomically, we can't remove
+	 * one waiter: we must remove all waiters and awken them,
+	 * then sleep in _lwp_park() until we have been awoken. 
+	 *
+	 * Issue a memory barrier to ensure that we are reading
+	 * the value of ptm_owner/pt_mutexwait after we have entered
+	 * the waiters list (the CAS itself must be atomic).
+	 */
+again:
+	membar_consumer();
+	owner = ptm->ptm_owner;
+
+	if (MUTEX_OWNER(owner) == 0) {
+		pthread__mutex_wakeup(self, ptm);
+		return;
+	}
+	if (!MUTEX_HAS_WAITERS(owner)) {
+		new = (void *)((uintptr_t)owner | MUTEX_WAITERS_BIT);
+		if (atomic_cas_ptr(&ptm->ptm_owner, owner, new) != owner) {
+			goto again;
+		}
+	}
+
+	/*
+	 * Note that pthread_mutex_unlock() can do a non-interlocked CAS.
+	 * We cannot know if the presence of the waiters bit is stable
+	 * while the holding thread is running.  There are many assumptions;
+	 * see sys/kern/kern_mutex.c for details.  In short, we must spin if
+	 * we see that the holder is running again.
+	 */
+	membar_sync();
+	pthread__mutex_spin(ptm, owner);
+
+	if (membar_consumer(), !MUTEX_HAS_WAITERS(ptm->ptm_owner)) {
+		goto again;
+	}
+}
+
 NOINLINE static int
 pthread__mutex_lock_slow(pthread_mutex_t *ptm)
 {
 	void *waiters, *new, *owner, *next;
 	pthread_t self;
+	int serrno;
 
 	pthread__error(EINVAL, "Invalid mutex",
 	    ptm->ptm_magic == _PT_MUTEX_MAGIC);
@@ -235,6 +285,7 @@ pthread__mutex_lock_slow(pthread_mutex_t *ptm)
 			return EDEADLK;
 	}
 
+	serrno = errno;
 	for (;; owner = ptm->ptm_owner) {
 		/* Spin while the owner is running. */
 		owner = pthread__mutex_spin(ptm, owner);
@@ -247,6 +298,7 @@ pthread__mutex_lock_slow(pthread_mutex_t *ptm)
 				next = atomic_cas_ptr(&ptm->ptm_owner, owner,
 				    new);
 				if (next == owner) {
+					errno = serrno;
 #ifndef PTHREAD__ATOMIC_IS_MEMBAR
 					membar_enter();
 #endif
@@ -277,48 +329,8 @@ pthread__mutex_lock_slow(pthread_mutex_t *ptm)
 			    	break;
 		}
 
-		/*
-		 * Set the waiters bit and block.
-		 *
-		 * Note that the mutex can become unlocked before we set
-		 * the waiters bit.  If that happens it's not safe to sleep
-		 * as we may never be awoken: we must remove the current
-		 * thread from the waiters list and try again.
-		 *
-		 * Because we are doing this atomically, we can't remove
-		 * one waiter: we must remove all waiters and awken them,
-		 * then sleep in _lwp_park() until we have been awoken. 
-		 *
-		 * Issue a memory barrier to ensure that we are reading
-		 * the value of ptm_owner/pt_mutexwait after we have entered
-		 * the waiters list (the CAS itself must be atomic).
-		 */
-		membar_consumer();
-		for (owner = ptm->ptm_owner;; owner = next) {
-			if (MUTEX_HAS_WAITERS(owner))
-				break;
-			if (MUTEX_OWNER(owner) == 0) {
-				pthread__mutex_wakeup(self, ptm);
-				break;
-			}
-			new = (void *)((uintptr_t)owner | MUTEX_WAITERS_BIT);
-			next = atomic_cas_ptr(&ptm->ptm_owner, owner, new);
-			if (next == owner) {
-				/*
-				 * pthread_mutex_unlock() can do a
-				 * non-interlocked CAS.  We cannot
-				 * know if our attempt to set the
-				 * waiters bit has succeeded while
-				 * the holding thread is running.
-				 * There are many assumptions; see
-				 * sys/kern/kern_mutex.c for details.
-				 * In short, we must spin if we see
-				 * that the holder is running again.
-				 */
-				membar_sync();
-				next = pthread__mutex_spin(ptm, owner);
-			}
-		}
+		/* Set the waiters bit and block. */
+		pthread__mutex_setwaiters(self, ptm);
 
 		/*
 		 * We may have been awoken by the current thread above,
