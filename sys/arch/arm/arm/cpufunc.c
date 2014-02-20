@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.138 2014/02/20 17:38:42 matt Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.139 2014/02/20 23:24:55 matt Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.138 2014/02/20 17:38:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.139 2014/02/20 23:24:55 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -1509,7 +1509,7 @@ get_cacheinfo_clidr(struct arm_cache_info *info, u_int level, u_int clidr)
 	u_int nsets;
 
 	if (clidr & 6) {
-		csid = get_cachesize_cp15(level << 1); /* select L1 dcache values */
+		csid = get_cachesize_cp15(level << 1); /* select dcache values */
 		nsets = CPU_CSID_NUMSETS(csid) + 1;
 		info->dcache_ways = CPU_CSID_ASSOC(csid) + 1;
 		info->dcache_line_size = 1U << (CPU_CSID_LEN(csid) + 4);
@@ -1518,22 +1518,32 @@ get_cacheinfo_clidr(struct arm_cache_info *info, u_int level, u_int clidr)
 		if (level == 0) {
 			arm_dcache_log2_assoc = CPU_CSID_ASSOC(csid) + 1;
 			arm_dcache_log2_linesize = CPU_CSID_LEN(csid) + 4;
-			arm_dcache_log2_nsets = 31 - __builtin_clz(nsets);
+			arm_dcache_log2_nsets = 31 - __builtin_clz(nsets*2-1);
 		}
 	}
 
 	info->cache_unified = (clidr == 4);
 
-	if (clidr & 1) {
-		csid = get_cachesize_cp15((level << 1)|CPU_CSSR_InD); /* select L1 icache values */
+	if (level > 0) {
+		info->dcache_type = CACHE_TYPE_PIPT;
+		info->icache_type = CACHE_TYPE_PIPT;
+	}
+
+	if (info->cache_unified) {
+		info->icache_ways = info->dcache_ways;
+		info->icache_line_size = info->dcache_line_size;
+		info->icache_size = info->dcache_size;
+	} else {
+		csid = get_cachesize_cp15((level << 1)|CPU_CSSR_InD); /* select icache values */
 		nsets = CPU_CSID_NUMSETS(csid) + 1;
 		info->icache_ways = CPU_CSID_ASSOC(csid) + 1;
 		info->icache_line_size = 1U << (CPU_CSID_LEN(csid) + 4);
 		info->icache_size = info->icache_line_size * info->icache_ways * nsets;
-	} else {
-		info->icache_ways = info->dcache_ways;
-		info->icache_line_size = info->dcache_line_size;
-		info->icache_size = info->dcache_size;
+	}
+	if (level == 0
+	    && info->dcache_size / info->dcache_ways <= PAGE_SIZE
+	    && info->icache_size / info->icache_ways <= PAGE_SIZE) {
+		arm_cache_prefer_mask = 0;
 	}
 }
 #endif /* (ARM_MMU_V6 + ARM_MMU_V7) > 0 */
@@ -1561,8 +1571,19 @@ get_cachetype_cp15(void)
 	if (CPU_CT_FORMAT(ctype) == 4) {
 		u_int clidr = armreg_clidr_read();
 
-		if (CPU_CT4_L1IPOLICY(ctype) != CPU_CT4_L1_PIPT) {
+		if (CPU_CT4_L1IPOLICY(ctype) == CPU_CT4_L1_PIPT) {
+			arm_pcache.icache_type = CACHE_TYPE_PIPT;
+		} else {
+			arm_pcache.icache_type = CACHE_TYPE_VIPT;
 			arm_cache_prefer_mask = PAGE_SIZE;
+		}
+#ifdef CPU_CORTEX
+		if (CPU_ID_CORTEX_P(cpu_id())) {
+			arm_pcache.dcache_type = CACHE_TYPE_PIPT;
+		} else
+#endif
+		{
+			arm_pcache.dcache_type = CACHE_TYPE_VIPT;
 		}
 		arm_pcache.cache_type = CPU_CT_CTYPE_WB14;
 
@@ -1573,6 +1594,9 @@ get_cachetype_cp15(void)
 			get_cacheinfo_clidr(&arm_scache, 1, clidr & 7);
 			if (arm_scache.dcache_line_size < arm_dcache_align)
 				arm_dcache_align = arm_scache.dcache_line_size;
+		}
+		if (arm_pcache.dcache_type == CACHE_TYPE_PIPT) {
+			arm_cache_prefer_mask = 0;
 		}
 		goto out;
 	}
@@ -1600,6 +1624,7 @@ get_cachetype_cp15(void)
 			arm_pcache.icache_ways = multiplier <<
 			    (CPU_CT_xSIZE_ASSOC(isize) - 1);
 #if (ARM_MMU_V6 + ARM_MMU_V7) > 0
+			arm_pcache.icache_type = CACHE_TYPE_VIPT;
 			if (CPU_CT_xSIZE_P & isize)
 				arm_cache_prefer_mask |=
 				    __BIT(9 + CPU_CT_xSIZE_SIZE(isize)
@@ -1621,11 +1646,14 @@ get_cachetype_cp15(void)
 	} else {
 		arm_pcache.dcache_ways = multiplier <<
 		    (CPU_CT_xSIZE_ASSOC(dsize) - 1);
-#if (ARM_MMU_V6 + ARM_MMU_V7) > 0
-		if (CPU_CT_xSIZE_P & dsize)
+#if (ARM_MMU_V6) > 0
+		arm_pcache.dcache_type = CACHE_TYPE_VIPT;
+		if ((CPU_CT_xSIZE_P & dsize)
+		    && CPU_ID_ARM11_P(curcpu()->ci_arm_cpuid)) {
 			arm_cache_prefer_mask |=
 			    __BIT(9 + CPU_CT_xSIZE_SIZE(dsize)
 				  - CPU_CT_xSIZE_ASSOC(dsize)) - PAGE_SIZE;
+		}
 #endif
 	}
 	arm_pcache.dcache_size = multiplier << (CPU_CT_xSIZE_SIZE(dsize) + 8);
@@ -1638,6 +1666,9 @@ get_cachetype_cp15(void)
 	    CPU_CT_xSIZE_ASSOC(dsize) - CPU_CT_xSIZE_LEN(dsize);
 
  out:
+	KASSERTMSG(arm_dcache_align <= CACHE_LINE_SIZE,
+	    "arm_dcache_align=%u CACHE_LINE_SIZE=%u",
+	    arm_dcache_align, CACHE_LINE_SIZE);
 	arm_dcache_align_mask = arm_dcache_align - 1;
 }
 #endif /* ARM7TDMI || ARM8 || ARM9 || XSCALE */
