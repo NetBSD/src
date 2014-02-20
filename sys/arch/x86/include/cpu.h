@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.62 2014/02/15 10:11:15 dsl Exp $	*/
+/*	$NetBSD: cpu.h,v 1.63 2014/02/20 18:14:11 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,6 +40,7 @@
 #if defined(_KERNEL) || defined(_STANDALONE)
 #include <sys/types.h>
 #else
+#include <stdint.h>
 #include <stdbool.h>
 #endif /* _KERNEL || _STANDALONE */
 
