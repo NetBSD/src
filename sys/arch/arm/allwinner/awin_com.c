@@ -31,8 +31,9 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_com.c,v 1.3 2013/09/07 01:50:12 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_com.c,v 1.4 2014/02/20 21:48:38 matt Exp $");
 
+#include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/intr.h>

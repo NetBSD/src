@@ -32,8 +32,9 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_gpio.c,v 1.7 2013/12/19 22:13:38 joerg Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_gpio.c,v 1.8 2014/02/20 21:48:38 matt Exp $");
 
+#include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/intr.h>
