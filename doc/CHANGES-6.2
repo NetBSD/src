@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.91 2014/02/14 23:27:34 bouyer Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.92 2014/02/20 13:01:50 sborrill Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -1321,4 +1321,11 @@ sys/kern/exec_elf.c				1.55
 
 	Fix memory leak on bogus ELF binary.
 	[maxv, ticket #1028]
+
+lib/libpthread/pthread_cond.c			1.62
+lib/libpthread/pthread_mutex.c			1.57,1.59
+
+	Partial fix for thread deadlock commonly observed with
+	named. Also address PR/44756.
+	[prlw1, #ticket 1029]
 
