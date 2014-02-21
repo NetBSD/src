@@ -1,4 +1,4 @@
-/*	$NetBSD: if_malo_pcmcia.c,v 1.3 2014/01/28 12:18:56 martin Exp $	*/
+/*	$NetBSD: if_malo_pcmcia.c,v 1.4 2014/02/21 02:10:40 christos Exp $	*/
 /*      $OpenBSD: if_malo.c,v 1.65 2009/03/29 21:53:53 sthen Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.3 2014/01/28 12:18:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.4 2014/02/21 02:10:40 christos Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -1013,7 +1013,7 @@ cmalo_rx(struct malo_softc *sc)
 
 	/* push the frame up to the network stack if not in monitor mode */
 	if (ic->ic_opmode != IEEE80211_M_MONITOR) {
-		ether_input(ifp, m);
+		(*ifp->if_input)(ifp, m);
 		ifp->if_ipackets++;
 	}
 }
