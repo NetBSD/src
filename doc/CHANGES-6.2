@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.94 2014/02/21 10:42:12 sborrill Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.95 2014/02/21 12:01:31 sborrill Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -1337,4 +1337,10 @@ sys/dev/usb/usb_mem.c				1.64
 	context which causes it to fail or a DIAGNOSTIC kernel to
 	panic.
 	[mlelstv, ticket #1032]
+
+sys/arch/atari/dev/ite.c			1.72
+
+	Fix kernel crash when a user tries to switch to nonexistent
+	terminal. Fixes PR/48599.
+	[tsutsui, ticket #1033]
 
