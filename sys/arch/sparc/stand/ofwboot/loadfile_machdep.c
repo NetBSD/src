@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.c,v 1.11 2013/12/08 14:41:28 palle Exp $	*/
+/*	$NetBSD: loadfile_machdep.c,v 1.12 2014/02/21 18:00:09 palle Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -341,7 +341,7 @@ mmu_mapin_sun4u(vaddr_t rva, vsize_t len)
 			DPRINTF(("mmu_mapin: 0x%lx:0x%x.0x%x\n", va,
 			    hi(pa), lo(pa)));
 
-			data = TSB_DATA(0,		/* global */
+			data = SUN4U_TSB_DATA(0,	/* global */
 					PGSZ_4M,	/* 4mb page */
 					pa,		/* phys.address */
 					1,		/* privileged */
@@ -351,7 +351,7 @@ mmu_mapin_sun4u(vaddr_t rva, vsize_t len)
 					1,		/* valid */
 					0		/* endianness */
 					);
-			data |= TLB_L | TLB_CV; /* locked, virt.cache */
+			data |= SUN4U_TLB_L | SUN4U_TLB_CV; /* locked, virt.cache */
 
 			dtlb_store[dtlb_slot].te_pa = pa;
 			dtlb_store[dtlb_slot].te_va = va;
@@ -634,7 +634,7 @@ sparc64_finalize_tlb_sun4u(u_long data_va)
 				continue;
 		}
 
-		data = TSB_DATA(0,		/* global */
+		data = SUN4U_TSB_DATA(0,	/* global */
 				PGSZ_4M,	/* 4mb page */
 				dtlb_store[i].te_pa,	/* phys.address */
 				1,		/* privileged */
@@ -644,7 +644,7 @@ sparc64_finalize_tlb_sun4u(u_long data_va)
 				1,		/* valid */
 				0		/* endianness */
 				);
-		data |= TLB_L | TLB_CV; /* locked, virt.cache */
+		data |= SUN4U_TLB_L | SUN4U_TLB_CV; /* locked, virt.cache */
 		if (!writable_text)
 			dtlb_replace(dtlb_store[i].te_va, hi(data), lo(data));
 		itlb_store[itlb_slot] = dtlb_store[i];

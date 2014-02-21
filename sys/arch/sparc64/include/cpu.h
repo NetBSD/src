@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.109 2014/01/09 20:28:23 palle Exp $ */
+/*	$NetBSD: cpu.h,v 1.110 2014/02/21 18:00:09 palle Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -381,6 +381,7 @@ void	loadfpstate(struct fpstate64 *);
 void	clearfpstate(void);
 uint64_t	probeget(paddr_t, int, int);
 int	probeset(paddr_t, int, int, uint64_t);
+void	setcputyp(int);
 
 #define	 write_all_windows() __asm volatile("flushw" : : )
 #define	 write_user_windows() __asm volatile("flushw" : : )
