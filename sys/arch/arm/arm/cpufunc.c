@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.139 2014/02/20 23:24:55 matt Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.140 2014/02/21 06:28:25 matt Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.139 2014/02/20 23:24:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.140 2014/02/21 06:28:25 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -1595,7 +1595,8 @@ get_cachetype_cp15(void)
 			if (arm_scache.dcache_line_size < arm_dcache_align)
 				arm_dcache_align = arm_scache.dcache_line_size;
 		}
-		if (arm_pcache.dcache_type == CACHE_TYPE_PIPT) {
+		if (arm_pcache.dcache_type == CACHE_TYPE_PIPT
+		    && arm_pcache.icache_type == CACHE_TYPE_PIPT) {
 			arm_cache_prefer_mask = 0;
 		}
 		goto out;
