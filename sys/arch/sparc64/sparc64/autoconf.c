@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.192 2013/09/24 18:11:54 jdc Exp $ */
+/*	$NetBSD: autoconf.c,v 1.193 2014/02/21 18:00:09 palle Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.192 2013/09/24 18:11:54 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.193 2014/02/21 18:00:09 palle Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -138,9 +138,6 @@ void *bootinfo = 0;
 #ifdef KGDB
 int kgdb_break_at_attach;
 #endif
-
-/* Default to sun4u */
-int cputyp = CPU_SUN4U;
 
 #define	OFPATHLEN	128
 #define	OFNODEKEY	"OFpnode"
@@ -344,12 +341,11 @@ die_old_boot_loader:
 #endif
 #endif
 #endif
-
 	if (OF_getprop(findroot(), "compatible", buf, sizeof(buf)) > 0) {
 		if (strcmp(buf, "sun4us") == 0)
-			cputyp = CPU_SUN4US;
+			setcputyp(CPU_SUN4US);
 		else if (strcmp(buf, "sun4v") == 0)
-			cputyp = CPU_SUN4V;
+			setcputyp(CPU_SUN4V);
 	}
 
 	bi_howto = lookup_bootinfo(BTINFO_BOOTHOWTO);

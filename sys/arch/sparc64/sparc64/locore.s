@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.355 2014/01/31 18:56:24 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.356 2014/02/21 18:00:09 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -166,6 +166,9 @@ romp:	POINTER	0
 	.globl	romtba
 romtba:	POINTER	0
 
+	.globl	cputyp
+cputyp:	.word	CPU_SUN4U ! Default to sun4u		
+			
 	_ALIGN
 	.text
 
@@ -1523,9 +1526,9 @@ dmmu_write_fault:
 1:
 	ldxa	[%g6] ASI_PHYS_CACHED, %g4
 	brgez,pn %g4, winfix				! Entry invalid?  Punt
-	 or	%g4, TTE_MODIFY|TTE_ACCESS|TTE_W, %g7	! Update the modified bit
+	 or	%g4, SUN4U_TTE_MODIFY|SUN4U_TTE_ACCESS|SUN4U_TTE_W, %g7	! Update the modified bit
 
-	btst	TTE_REAL_W|TTE_W, %g4			! Is it a ref fault?
+	btst	SUN4U_TTE_REAL_W|SUN4U_TTE_W, %g4			! Is it a ref fault?
 	bz,pn	%xcc, winfix				! No -- really fault
 #ifdef DEBUG
 	/* Make sure we don't try to replace a kernel translation */
@@ -1550,7 +1553,7 @@ dmmu_write_fault:
 	membar	#StoreLoad
 	cmp	%g4, %g7
 	bne,pn	%xcc, 1b
-	 or	%g4, TTE_MODIFY|TTE_ACCESS|TTE_W, %g4	! Update the modified bit
+	 or	%g4, SUN4U_TTE_MODIFY|SUN4U_TTE_ACCESS|SUN4U_TTE_W, %g4	! Update the modified bit
 	stx	%g1, [%g2]				! Update TSB entry tag
 	mov	SFSR, %g7
 	stx	%g4, [%g2+8]				! Update TSB entry data
@@ -1654,15 +1657,15 @@ data_miss:
 1:
 	ldxa	[%g6] ASI_PHYS_CACHED, %g4
 	brgez,pn %g4, data_nfo				! Entry invalid?  Punt
-	 or	%g4, TTE_ACCESS, %g7			! Update the access bit
+	 or	%g4, SUN4U_TTE_ACCESS, %g7			! Update the access bit
 	
-	btst	TTE_ACCESS, %g4				! Need to update access git?
+	btst	SUN4U_TTE_ACCESS, %g4				! Need to update access git?
 	bne,pt	%xcc, 1f
 	 nop
 	casxa	[%g6] ASI_PHYS_CACHED, %g4, %g7		!  and write it out
 	cmp	%g4, %g7
 	bne,pn	%xcc, 1b
-	 or	%g4, TTE_ACCESS, %g4			! Update the access bit
+	 or	%g4, SUN4U_TTE_ACCESS, %g4			! Update the access bit
 
 1:	
 	stx	%g1, [%g2]				! Update TSB entry tag
@@ -2431,18 +2434,18 @@ instr_miss:
 	 nop
 
 	/* Check if it's an executable mapping. */
-	andcc	%g4, TTE_EXEC, %g0
+	andcc	%g4, SUN4U_TTE_EXEC, %g0
 	bz,pn	%xcc, textfault
 	 nop
 
-	or	%g4, TTE_ACCESS, %g7			! Update accessed bit
-	btst	TTE_ACCESS, %g4				! Need to update access git?
+	or	%g4, SUN4U_TTE_ACCESS, %g7			! Update accessed bit
+	btst	SUN4U_TTE_ACCESS, %g4				! Need to update access git?
 	bne,pt	%xcc, 1f
 	 nop
 	casxa	[%g6] ASI_PHYS_CACHED, %g4, %g7		!  and store it
 	cmp	%g4, %g7
 	bne,pn	%xcc, 1b
-	 or	%g4, TTE_ACCESS, %g4			! Update accessed bit
+	 or	%g4, SUN4U_TTE_ACCESS, %g4			! Update accessed bit
 1:
 	stx	%g1, [%g2]				! Update TSB entry tag
 	stx	%g4, [%g2+8]				! Update TSB entry data
@@ -3457,7 +3460,7 @@ ENTRY_NOPROFILE(sparc_interrupt)
 #ifdef TRAPS_USE_IG
 	! This is for interrupt debugging
 	wrpr	%g0, PSTATE_KERN|PSTATE_IG, %pstate	! DEBUG
-#endif
+#endif	
 	/*
 	 * If this is a %tick or %stick softint, clear it then call
 	 * interrupt_vector. Only one of them should be enabled at any given
@@ -4219,17 +4222,17 @@ dostart:
  */
 
 #ifdef NO_VCACHE
-#define	TTE_DATABITS	TTE_L|TTE_CP|TTE_P|TTE_W
+#define	SUN4U_TTE_DATABITS	SUN4U_TTE_L|SUN4U_TTE_CP|SUN4U_TTE_P|SUN4U_TTE_W
 #else
-#define	TTE_DATABITS	TTE_L|TTE_CP|TTE_CV|TTE_P|TTE_W
+#define	SUN4U_TTE_DATABITS	SUN4U_TTE_L|SUN4U_TTE_CP|SUN4U_TTE_CV|SUN4U_TTE_P|SUN4U_TTE_W
 #endif
 
 
 ENTRY_NOPROFILE(cpu_initialize)	/* for cosmetic reasons - nicer backtrace */
 
 	/* Cache the cputyp in %l6 for later user below */
-	sethi	%hi(_C_LABEL(cputyp)), %l6
-	ld	[%l6 + %lo(_C_LABEL(cputyp))], %l6
+	sethi	%hi(cputyp), %l6
+	ld	[%l6 + %lo(cputyp)], %l6
 
 	/*
 	 * Step 5: is no more.
@@ -4279,7 +4282,7 @@ ENTRY_NOPROFILE(cpu_initialize)	/* for cosmetic reasons - nicer backtrace */
 	andn	%l1, %l4, %l1			! Mask the phys page number
 
 	or	%l2, %l1, %l1			! Now take care of the high bits
-	or	%l1, TTE_DATABITS, %l2		! And low bits:	L=1|CP=1|CV=?|E=0|P=1|W=1|G=0
+	or	%l1, SUN4U_TTE_DATABITS, %l2		! And low bits:	L=1|CP=1|CV=?|E=0|P=1|W=1|G=0
 
 	!!
 	!!  Now, map in the interrupt stack as context==0
@@ -4441,6 +4444,12 @@ ENTRY(get_romtba)
 	retl
 	 rdpr	%tba, %o0
 
+ENTRY(setcputyp)
+	sethi	%hi(cputyp), %o1	! Trash %o1 assuming this is ok
+	st	%o0, [%o1 + %lo(cputyp)]
+	retl
+	 nop
+		
 #ifdef MULTIPROCESSOR
 	/*
 	 * cpu_mp_startup is called with:
@@ -4468,7 +4477,7 @@ ENTRY(cpu_mp_startup)
 	or	%l4, 0xfff, %l4			! We can just load this in 12 (of 13) bits
 	andn	%l1, %l4, %l1			! Mask the phys page number
 	or	%l2, %l1, %l1			! Now take care of the high bits
-	or	%l1, TTE_DATABITS, %l2		! And low bits:	L=1|CP=1|CV=?|E=0|P=1|W=1|G=0
+	or	%l1, SUN4U_TTE_DATABITS, %l2		! And low bits:	L=1|CP=1|CV=?|E=0|P=1|W=1|G=0
 
 	/*
 	 *  Now, map in the interrupt stack & cpu_info as context==0
@@ -5940,7 +5949,20 @@ ENTRY(pseg_set_real)
 	!!  %o5 = old TTE
 
 	!! see if stats needs an update
-	set	A_TLB_TSB_LOCK, %g5
+#ifdef SUN4V
+	sethi	%hi(cputyp), %g5
+	ld	[%g5 + %lo(cputyp)], %g5
+	cmp	%g5, CPU_SUN4V
+	bne,pt	%icc, 0f
+	 nop
+	sethi	%hh(A_SUN4V_TLB_TSB_LOCK), %g5
+	sllx	%g5, 32, %g5
+	ba	1f
+	 nop
+0:		
+#endif		
+	set	A_SUN4U_TLB_TSB_LOCK, %g5
+1:		
 	xor	%o2, %o5, %o3			! %o3 - what changed
 
 	brgez,pn %o3, 5f			! has resident changed? (we predict it has)
