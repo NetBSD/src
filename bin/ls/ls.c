@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.71 2014/02/20 18:56:36 christos Exp $	*/
+/*	$NetBSD: ls.c,v 1.72 2014/02/21 02:42:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.71 2014/02/20 18:56:36 christos Exp $");
+__RCSID("$NetBSD: ls.c,v 1.72 2014/02/21 02:42:41 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -119,7 +119,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: %s [-1AaBbCcdFfghikLlMmnopqRrSsTtuWwx] [file ...]\n",
+	    "usage: %s [-1AaBbCcdFfghikLlMmnOoPpqRrSsTtuWwXx] [file ...]\n",
 	    getprogname());
 	exit(EXIT_FAILURE);
 	/* NOTREACHED */
@@ -151,7 +151,8 @@ ls_main(int argc, char *argv[])
 		f_listdot = 1;
 
 	fts_options = FTS_PHYSICAL;
-	while ((ch = getopt(argc, argv, "1ABCFLMOPRSTWabcdfghiklmnopqrstuwx")) != -1) {
+	while ((ch = getopt(argc, argv, "1AaBbCcdFfghikLlMmnOoPpqRrSsTtWwXx"))
+	    != -1) {
 		switch (ch) {
 		/*
 		 * The -1, -C, -l, -m and -x options all override each other so
@@ -296,6 +297,9 @@ ls_main(int argc, char *argv[])
 			f_nonprint = 0;
 			f_octal = 0;
 			f_octal_escape = 0;
+			break;
+		case 'X':
+			fts_options |= FTS_XDEV;
 			break;
 		default:
 		case '?':
