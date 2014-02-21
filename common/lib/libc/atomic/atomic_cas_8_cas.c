@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_8_cas.c,v 1.2 2014/02/21 15:51:07 martin Exp $	*/
+/*	$NetBSD: atomic_cas_8_cas.c,v 1.3 2014/02/21 16:06:48 martin Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -28,6 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "atomic_op_namespace.h"
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <stdbool.h>
