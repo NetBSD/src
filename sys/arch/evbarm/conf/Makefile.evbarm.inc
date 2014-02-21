@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.evbarm.inc,v 1.27 2013/08/09 04:24:19 matt Exp $
+#	$NetBSD: Makefile.evbarm.inc,v 1.28 2014/02/21 22:33:08 matt Exp $
 
 #
 # If this is a install kernel and the ramdisk image exists in the object
 # tree, insert it into the kernel *before* we make the u-boot images.
 #
 RAMDISKNAME?=	ramdisk
-.if ${KERNEL_BUILD:T:M*INSTALL} != ""
+.if ${KERNEL_BUILD:T:M*INSTALL*} != ""
 RAMDISKDIR!=	cd ${NETBSDSRCDIR}/distrib/${THISARM:T}/instkernel/${RAMDISKNAME} && ${PRINTOBJDIR}
 
 .if exists(${RAMDISKDIR}/${RAMDISKNAME}.fs)
