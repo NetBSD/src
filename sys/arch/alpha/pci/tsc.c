@@ -1,4 +1,4 @@
-/* $NetBSD: tsc.c,v 1.22 2013/09/23 16:50:12 tsutsui Exp $ */
+/* $NetBSD: tsc.c,v 1.23 2014/02/21 12:23:30 jdc Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.22 2013/09/23 16:50:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.23 2014/02/21 12:23:30 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,6 +80,16 @@ extern struct cfdriver tsp_cd;
 static int tsp_bus_get_window(int, int,
 	struct alpha_bus_space_translation *);
 
+static int tsciicprint(void *, const char *pnp);
+
+static int tsciicmatch(device_t, cfdata_t, void *);
+static void tsciicattach(device_t, device_t, void *);
+
+CFATTACH_DECL_NEW(tsciic, sizeof(struct tsciic_softc), tsciicmatch,
+    tsciicattach, NULL, NULL);
+
+extern struct cfdriver tsciic_cd;
+
 /* There can be only one */
 static int tscfound;
 
@@ -107,6 +117,7 @@ tscattach(device_t parent, device_t self, void * aux)
 	int nbus;
 	uint64_t csc, aar;
 	struct tsp_attach_args tsp;
+	struct tsciic_attach_args tsciic;
 	struct mainbus_attach_args *ma = aux;
 	int titan = cputype == ST_DEC_TITAN;
 
@@ -146,6 +157,11 @@ tscattach(device_t parent, device_t self, void * aux)
 			config_found(self, &tsp, tscprint);
 		}
 	}
+
+	memset(&tsciic, 0, sizeof tsciic);
+	tsciic.tsciic_name = "tsciic";
+
+	config_found(self, &tsciic, tsciicprint);
 }
 
 static int
@@ -155,6 +171,18 @@ tscprint(void *aux, const char *p)
 
 	if (p)
 		aprint_normal("%s%d at %s", tsp->tsp_name, tsp->tsp_slot, p);
+	return UNCONF;
+}
+
+static int
+tsciicprint(void *aux, const char *p)
+{
+	struct tsciic_attach_args *tsciic = aux;
+
+	if (p)
+		aprint_normal("%s at %s\n", tsciic->tsciic_name, p);
+	else
+		aprint_normal("\n");
 	return UNCONF;
 }
 
@@ -275,6 +303,28 @@ tsp_bus_get_window(int type, int window,
 	abst->abst_sys_end = TS_PHYSADDR(abst->abst_sys_end);
 
 	return 0;
+}
+
+#define tsciic() { Generate ctags(1) key. }
+
+static int
+tsciicmatch(device_t parent, cfdata_t match, void *aux)
+{
+	struct tsciic_attach_args *t = aux;
+
+	switch (cputype) {
+	case ST_DEC_6600:
+	case ST_DEC_TITAN:
+		return strcmp(t->tsciic_name, tsciic_cd.cd_name) == 0;
+	default:
+		return 0;
+	}
+}
+
+static void
+tsciicattach(device_t parent, device_t self, void *aux)
+{
+	tsciic_init(self);
 }
 
 void

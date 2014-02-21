@@ -1,4 +1,4 @@
-/* $NetBSD: tsvar.h,v 1.11 2013/09/23 16:41:57 tsutsui Exp $ */
+/* $NetBSD: tsvar.h,v 1.12 2014/02/21 12:23:30 jdc Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -33,6 +33,7 @@
 
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>
+#include <dev/i2c/i2cvar.h>
 #include <alpha/pci/pci_sgmap_pte64.h>
 
 #define	_FSTORE	(EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long))
@@ -68,6 +69,16 @@ struct tsp_attach_args {
 	int	tsp_slot;
 };
 
+struct tsciic_softc {
+	device_t	sc_dev;
+	struct		i2c_controller sc_i2c;
+	kmutex_t	sc_buslock;
+};
+
+struct tsciic_attach_args {
+	const char *tsciic_name;
+};
+
 extern int tsp_console_hose;
 
 struct	tsp_config *tsp_init(int, int);
@@ -78,6 +89,8 @@ void	tsp_bus_io_init(bus_space_tag_t, void *);
 void	tsp_bus_mem_init(bus_space_tag_t, void *);
 
 void	tsp_bus_mem_init2(bus_space_tag_t, void *);
+
+void	tsciic_init(device_t);
 
 void	tsp_print_error(unsigned int, unsigned long);
 void	tsc_print_misc(unsigned int, unsigned long);
