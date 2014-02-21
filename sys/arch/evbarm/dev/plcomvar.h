@@ -1,4 +1,4 @@
-/*	$NetBSD: plcomvar.h,v 1.14 2013/05/01 07:33:24 mlelstv Exp $	*/
+/*	$NetBSD: plcomvar.h,v 1.15 2014/02/21 16:08:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -42,7 +42,6 @@
 
 #include <sys/callout.h>
 #include <sys/timepps.h>
-#include <sys/simplelock.h>
 
 struct plcom_instance;
 
