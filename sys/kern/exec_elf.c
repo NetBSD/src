@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.59 2014/02/19 15:23:20 maxv Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.60 2014/02/21 07:47:02 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.59 2014/02/19 15:23:20 maxv Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.60 2014/02/21 07:47:02 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -873,7 +873,7 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 	size_t i;
 	Elf_Shdr *sh;
 	Elf_Nhdr *np;
-	size_t shsize;
+	size_t shsize, nsize;
 	int error;
 	int isnetbsd = 0;
 	char *ndata;
@@ -902,11 +902,23 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 		if (error)
 			continue;
 
+		/* Point to the note, skip the header */
 		ndata = (char *)(np + 1);
-		unsigned int maxlen = (unsigned int)(shp->sh_size -
-		    ((char *)ndata - (char *)np));
-		if (maxlen < np->n_namesz)
+
+		/*
+		 * Padding is present if necessary to ensure 4-byte alignment.
+		 * The actual section size is therefore:
+		 *    header size + 4-byte aligned name + 4-byte aligned desc
+		 * Ensure this size is consistent with what is indicated
+		 * in sh_size. The first check avoids integer overflows.
+		 */
+		if (np->n_namesz > shp->sh_size || np->n_descsz > shp->sh_size)
 			goto bad;
+		nsize = sizeof(*np) + roundup(np->n_namesz, 4) +
+		    roundup(np->n_descsz, 4);
+		if (nsize != shp->sh_size)
+			goto bad;
+
 		switch (np->n_type) {
 		case ELF_NOTE_TYPE_NETBSD_TAG:
 			/*
@@ -917,7 +929,7 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 			    memcmp(ndata, ELF_NOTE_NETBSD_NAME,
 			    ELF_NOTE_NETBSD_NAMESZ) == 0) {
 				memcpy(&epp->ep_osversion,
-				    ndata + ELF_NOTE_NETBSD_NAMESZ + 1,
+				    ndata + roundup(ELF_NOTE_NETBSD_NAMESZ, 4),
 				    ELF_NOTE_NETBSD_DESCSZ);
 				isnetbsd = 1;
 				break;
@@ -949,7 +961,8 @@ bad:
 				    memcmp(ndata, ELF_NOTE_GNU_NAME,
 				    ELF_NOTE_GNU_NAMESZ) == 0)
 				    break;
-				int ns = MIN(np->n_namesz, maxlen);
+
+				int ns = MIN(np->n_namesz, shp->sh_size - sizeof(*np));
 				printf("%s: Unknown elf note type %d: "
 				    "[namesz=%d, descsz=%d name=%*.*s]\n",
 				    epp->ep_kname, np->n_type, np->n_namesz,
@@ -959,7 +972,7 @@ bad:
 				continue;
 			}
 			(void)memcpy(&epp->ep_pax_flags,
-			    ndata + ELF_NOTE_PAX_NAMESZ,
+			    ndata + roundup(ELF_NOTE_PAX_NAMESZ, 4),
 			    sizeof(epp->ep_pax_flags));
 			break;
 
