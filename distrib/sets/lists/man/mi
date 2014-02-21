@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1458 2014/01/21 16:12:56 mlelstv Exp $
+# $NetBSD: mi,v 1.1459 2014/02/21 12:26:40 jdc Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -761,6 +761,7 @@
 ./usr/share/man/cat4/alpha/tlsb.0		man-sys-catman		.cat
 ./usr/share/man/cat4/alpha/tlsbmem.0		man-sys-catman		.cat
 ./usr/share/man/cat4/alpha/tsc.0		man-sys-catman		.cat
+./usr/share/man/cat4/alpha/tsciic.0		man-sys-catman		.cat
 ./usr/share/man/cat4/alpha/tsp.0		man-sys-catman		.cat
 ./usr/share/man/cat4/alpha/ttwoga.0		man-sys-catman		.cat
 ./usr/share/man/cat4/alpha/ttwopci.0		man-sys-catman		.cat
@@ -3808,6 +3809,7 @@
 ./usr/share/man/html4/alpha/tlsb.html		man-sys-htmlman		html
 ./usr/share/man/html4/alpha/tlsbmem.html	man-sys-htmlman		html
 ./usr/share/man/html4/alpha/tsc.html		man-sys-htmlman		html
+./usr/share/man/html4/alpha/tsciic.html		man-sys-htmlman		html
 ./usr/share/man/html4/alpha/tsp.html		man-sys-htmlman		html
 ./usr/share/man/html4/alpha/ttwoga.html		man-sys-htmlman		html
 ./usr/share/man/html4/alpha/ttwopci.html	man-sys-htmlman		html
@@ -6547,6 +6549,7 @@
 ./usr/share/man/man4/alpha/tlsb.4		man-sys-man		.man
 ./usr/share/man/man4/alpha/tlsbmem.4		man-sys-man		.man
 ./usr/share/man/man4/alpha/tsc.4		man-sys-man		.man
+./usr/share/man/man4/alpha/tsciic.4		man-sys-man		.man
 ./usr/share/man/man4/alpha/tsp.4		man-sys-man		.man
 ./usr/share/man/man4/alpha/ttwoga.4		man-sys-man		.man
 ./usr/share/man/man4/alpha/ttwopci.4		man-sys-man		.man
