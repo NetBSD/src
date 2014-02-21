@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.188 2014/01/03 21:12:18 dsl Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.189 2014/02/21 22:08:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -232,7 +232,6 @@ struct vm_anon;
 struct vmspace;
 struct pmap;
 struct vnode;
-struct simplelock;
 struct vm_map_entry;
 struct vm_map;
 struct vm_page;
