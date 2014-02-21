@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_op_namespace.h,v 1.4 2008/06/23 10:33:52 ad Exp $	*/
+/*	$NetBSD: atomic_op_namespace.h,v 1.5 2014/02/21 15:51:07 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -73,6 +73,8 @@
 #define	atomic_cas_ulong	_atomic_cas_ulong
 #define	atomic_cas_ptr		_atomic_cas_ptr
 #define	atomic_cas_64		_atomic_cas_64
+#define atomic_cas_16		_atomic_cas_16
+#define atomic_cas_8		_atomic_cas_8
 
 #define	atomic_cas_32_ni	_atomic_cas_32_ni
 #define	atomic_cas_uint_ni	_atomic_cas_uint_ni
