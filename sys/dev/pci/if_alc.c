@@ -1989,10 +1989,8 @@ alc_rxeof(struct alc_softc *sc, struct rx_rdesc *rrd)
 
 			bpf_mtap(ifp, m);
 
-			{
 			/* Pass it on. */
-			ether_input(ifp, m);
-			}
+			(*ifp->if_input)(ifp, m);
 		}
 	}
 	/* Reset mbuf chains. */
