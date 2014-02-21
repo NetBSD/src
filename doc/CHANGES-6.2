@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.93 2014/02/20 13:55:53 sborrill Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.94 2014/02/21 10:42:12 sborrill Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -1328,4 +1328,13 @@ lib/libpthread/pthread_mutex.c			1.57, 1.59
 	Partial fix for thread deadlock commonly observed with
 	named. Also address PR/44756.
 	[prlw1, ticket #1029]
+
+sys/dev/usb/umass.c				1.148
+sys/dev/usb/umassvar.h				1.35
+sys/dev/usb/usb_mem.c				1.64
+
+	Fix problem where umass might allocate buffers in interrupt
+	context which causes it to fail or a DIAGNOSTIC kernel to
+	panic.
+	[mlelstv, ticket #1032]
 
