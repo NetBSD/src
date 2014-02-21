@@ -1,4 +1,4 @@
-/* $NetBSD: all_sync_ops_linkable.c,v 1.3 2014/02/18 10:27:46 martin Exp $ */
+/* $NetBSD: all_sync_ops_linkable.c,v 1.4 2014/02/21 10:26:25 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -124,16 +124,7 @@ main(int argc, char **argv)
 	__sync_lock_test_and_set_2(&u16, 5);
 	__sync_lock_test_and_set_4(&u32, 5);
 #ifdef __HAVE_ATOMIC64_OPS
-
-	/*
-	 * See PR lib/48601:
-	 * some architectures do not implement this, allow them to build
-	 * anyway.
-	 */
-#if !defined(__i386__)
 	__sync_lock_test_and_set_8(&u64, 5);
-#endif
-
 #endif
 #ifndef __clang__
 	__sync_nand_and_fetch(&u8, 5);
