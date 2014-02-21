@@ -45,6 +45,10 @@ void *netpgp_allocate(size_t /*n*/, size_t /*nels*/);
 void netpgp_deallocate(void */*ptr*/, size_t /*size*/);
 
 #ifndef _KERNEL
+#  ifndef __printflike
+#  define __printflike(n, m)        __attribute__((format(printf,n,m)))
+#  endif
+
 void logmessage(const int /*level*/, const char */*fmt*/, ...)
     __printflike(2, 3);
 #endif
