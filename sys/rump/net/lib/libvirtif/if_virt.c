@@ -1,4 +1,4 @@
-/*	$NetBSD: if_virt.c,v 1.36 2013/07/04 11:46:51 pooka Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.37 2014/02/21 02:10:40 christos Exp $	*/
 
 /*
  * Copyright (c) 2008, 2013 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.36 2013/07/04 11:46:51 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.37 2014/02/21 02:10:40 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -278,7 +278,7 @@ virtif_receiver(void *arg)
 		m->m_len = m->m_pkthdr.len = n;
 		m->m_pkthdr.rcvif = ifp;
 		bpf_mtap(ifp, m);
-		ether_input(ifp, m);
+		(*ipf->if_input)(ifp, m);
 	}
 
 	kthread_exit(0);
