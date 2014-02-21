@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.71 2011/06/05 16:25:12 tsutsui Exp $	*/
+/*	$NetBSD: ite.c,v 1.71.22.1 2014/02/21 13:21:45 sborrill Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.71 2011/06/05 16:25:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.71.22.1 2014/02/21 13:21:45 sborrill Exp $");
 
 #include "opt_ddb.h"
 
@@ -665,8 +665,8 @@ ite_switch(int unit)
 	struct ite_softc	*sc;
 	extern const struct cdevsw view_cdevsw;
 
-	sc = getitesp(unit);
-	if ((sc->flags & (ITE_ATTACHED | ITE_INITED)) == 0)
+	sc = device_lookup_private(&ite_cd, unit);
+	if (sc == NULL || (sc->flags & (ITE_ATTACHED | ITE_INITED)) == 0)
 		return;
 
 	/*
