@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_machdep.c,v 1.20 2013/11/18 01:32:22 chs Exp $ */
+/*	$NetBSD: linux_exec_machdep.c,v 1.21 2014/02/21 07:53:53 maxv Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.20 2013/11/18 01:32:22 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.21 2014/02/21 07:53:53 maxv Exp $");
 
 #define ELFSIZE 64
 
@@ -233,13 +233,8 @@ ELFNAME2(linux,copyargs)(struct lwp *l, struct exec_package *pack,
 	esd.ai[i].a_type = AT_NULL;
 	esd.ai[i++].a_v = 0;
 
-#ifdef DEBUG_LINUX
-	if (i != LINUX_ELF_AUX_ENTRIES) {
-		printf("linux_elf64_copyargs: %d Aux entries\n", i);
-		return EINVAL;
-	}
-#endif
-		
+	KASSERT(i == LINUX_ELF_AUX_ENTRIES);
+
 	strcpy(esd.hw_platform, LINUX_PLATFORM); 
 
 	exec_free_emul_arg(pack);

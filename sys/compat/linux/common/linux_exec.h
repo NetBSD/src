@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.50 2014/02/09 16:41:42 chs Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.51 2014/02/21 07:53:53 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -82,6 +82,7 @@
 #define LINUX_N_BSSADDR(x,m) (LINUX_N_DATADDR(x,m) + (x).a_data)
 
 #ifndef LINUX_MACHDEP_ELF_COPYARGS
+/* Counted from linux_exec_elf32.c */
 #define LINUX_ELF_AUX_ENTRIES	14
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec_elf32.c,v 1.14 2014/02/09 16:41:42 chs Exp $ */
+/*	$NetBSD: linux32_exec_elf32.c,v 1.15 2014/02/21 07:53:53 maxv Exp $ */
 
 /*-                     
  * Copyright (c) 1995, 1998, 2000, 2001,2006 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_exec_elf32.c,v 1.14 2014/02/09 16:41:42 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_exec_elf32.c,v 1.15 2014/02/21 07:53:53 maxv Exp $");
 
 #define	ELFSIZE		32
 
@@ -191,6 +191,8 @@ linux32_elf32_copyargs(struct lwp *l, struct exec_package *pack,
 	a++;
 
 #if 0
+	/* XXX: increase LINUX32_ELF_AUX_ENTRIES if we enable those things */
+
 	a->a_type = LINUX_AT_SYSINFO;
 	a->a_v = NETBSD32PTR32I(&esdp->kernel_vsyscall[0]);
 	a++;
@@ -239,6 +241,7 @@ linux32_elf32_copyargs(struct lwp *l, struct exec_package *pack,
 #endif
 
 	len = (a - ai) * sizeof(AuxInfo);
+	KASSERT(len <= LINUX32_ELF_AUX_ENTRIES);
 	if ((error = copyout(ai, *stackp, len)) != 0)
 		return error;
 	*stackp += len;

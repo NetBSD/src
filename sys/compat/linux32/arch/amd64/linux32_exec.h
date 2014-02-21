@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec.h,v 1.5 2014/02/09 16:41:42 chs Exp $ */
+/*	$NetBSD: linux32_exec.h,v 1.6 2014/02/21 07:53:53 maxv Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -41,7 +41,8 @@
 
 #define LINUX32_DEBUGLINK_SIGNATURE	1
 
-#define LINUX32_ELF_AUX_ENTRIES 14
+/* Counted from common/linux32_exec_elf32.c */
+#define LINUX32_ELF_AUX_ENTRIES 15
 
 #define LINUX32_RANDOM_BYTES 16		/* 16 bytes for AT_RANDOM */
 
