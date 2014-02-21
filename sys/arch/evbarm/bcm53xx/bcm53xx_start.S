@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_start.S,v 1.10 2014/01/24 04:15:33 matt Exp $	*/
+/*	$NetBSD: bcm53xx_start.S,v 1.11 2014/02/21 22:22:48 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,7 +45,7 @@
 #define	CONADDR		0x18000300
 #endif
 
-RCSID("$NetBSD: bcm53xx_start.S,v 1.10 2014/01/24 04:15:33 matt Exp $")
+RCSID("$NetBSD: bcm53xx_start.S,v 1.11 2014/02/21 22:22:48 matt Exp $")
 
 #undef VERBOSE_INIT_ARM
 #define VERBOSE_INIT_ARM
@@ -74,10 +74,10 @@ _C_LABEL(bcm53xx_start):
 	/*
 	 * Save any arguments u-boot passed us.
 	 */
-	movw	r4, #:lower16:(uboot_args-.LPIC0)
-	movt	r4, #:upper16:(uboot_args-.LPIC0)
-	bic	r4, r4, #0xf0000000
-	add	r4, r4, pc
+	adr	r4, _C_LABEL(bcm53xx_start)
+	movw	r5, #:lower16:uboot_args
+	movt	r5, #:upper16:uboot_args
+	bfi	r4, r5, #0, #28
 	stmia	r4, {r0-r3}
 .LPIC0:
 
@@ -89,16 +89,18 @@ _C_LABEL(bcm53xx_start):
 	str	r1, [r0]
 
 	/*
-	 * Cal the initial start code for the a9
+	 * Cal the initial start code for Cortex cores
 	 */
-	bl	a9_start
+	bl	cortex_init
 
 	/*
 	 * Set up a preliminary mapping in the MMU to allow us to run
 	 * at KERNEL_BASE with caches on.
 	 */
+	movw	r1, #:lower16:(mmu_init_table-.LPIC1)
+	add	r1, r1, pc
+.LPIC1:
 	ldr	r0, .Ltemp_l1_table	/* The L1PT address - entered into TTB later */
-	adr	r1, mmu_init_table
 	bl	arm_boot_l1pt_init
 
 	XPUTC(#68)
@@ -108,8 +110,9 @@ _C_LABEL(bcm53xx_start):
 	 * SKU ROM but setting the magic LUT address to our own mp_start
 	 * routine. 
 	 */
-	ldr	r1, .Lsku_rom_lut
-	adr	r2, a9_mpstart
+	movw	r1, #:lower16:0xffff0400
+	movt	r1, #:upper16:0xffff0400
+	adr	r2, cortex_mpstart
 	str	r2, [r1]
 	sev				/* wake up the others */
 
@@ -123,15 +126,13 @@ _C_LABEL(bcm53xx_start):
 
 	XPUTC(#89)
 
+	adr	r1, bcm53xx_start
 	movw	r0, #:lower16:uboot_args
 	movt	r0, #:upper16:uboot_args
+	bfi	r1, r0, #0, #28
 	ldr	r2, [r0]
-	movw	r1, #:lower16:(uboot_args-.LPIC1)
-	movt	r1, #:upper16:(uboot_args-.LPIC1)
-	add	r1, r1, pc
-	ldr	r1, [r1]
-.LPIC1:
-	cmp	r1, r2
+	ldr	r3, [r1]
+	cmp	r1, r3
 1:	bne	1b
 
 	XPUTC(#90)
@@ -158,9 +159,6 @@ _C_LABEL(bcm53xx_start):
 	nop
 
 	/* NOTREACHED */
-
-.Lsku_rom_lut:
-	.word	0xffff0400
 
 .Lcca_wdog:
 	.word	0x18000080
