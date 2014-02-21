@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.68 2014/02/17 19:29:46 maxv Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.69 2014/02/21 08:11:59 maxv Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.68 2014/02/17 19:29:46 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.69 2014/02/21 08:11:59 maxv Exp $");
 
 #if defined(SETUIDSCRIPTS) && !defined(FDSCRIPTS)
 #define FDSCRIPTS		/* Need this for safe set-id scripts. */
@@ -153,13 +153,6 @@ exec_script_makecmds(struct lwp *l, struct exec_package *epp)
 		}
 	}
 	if (cp >= hdrstr + hdrlinelen)
-		return ENOEXEC;
-
-	/*
-	 * If the script has an ELF header, don't exec it.
-	 */
-	if (epp->ep_hdrvalid >= sizeof(ELFMAG)-1 &&
-	    memcmp(hdrstr, ELFMAG, sizeof(ELFMAG)-1) == 0)
 		return ENOEXEC;
 
 	shellname = NULL;
