@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.12 2014/01/24 05:14:11 matt Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.13 2014/02/21 22:22:48 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -111,26 +111,33 @@ arm_boot_l1pt_init:
 
 #if defined(CPU_CORTEXA8)
 #undef CPU_CONTROL_SWP_ENABLE		// not present on A8
-#define	CPU_CONTROL_SWP_ENABLE		0
+#define CPU_CONTROL_SWP_ENABLE		0
 #endif
 #ifdef __ARMEL__
-#undef CPU_CONTROL_EX_BEND		// needs to clear on LE systems
-#define	CPU_CONTROL_EX_BEND		0
+#define CPU_CONTROL_EX_BEND_SET		0
+#else
+#define CPU_CONTROL_EX_BEND_SET		CPU_CONTROL_EX_BEND
 #endif
 #ifdef ARM32_DISABLE_ALIGNMENT_FAULTS
-#undef CPU_CONTROL_AFLT_ENABLE
-#define CPU_CONTROL_AFLT_ENABLE		0
+#define CPU_CONTROL_AFLT_ENABLE_CLR	CPU_CONTROL_AFLT_ENABLE
+#define CPU_CONTROL_AFLT_ENABLE_SET	0
+#else
+#deifne CPU_CONTROL_AFLT_ENABLE_CLR	0
+#define CPU_CONTROL_AFLT_ENABLE_SET	CPU_CONTROL_AFLT_ENABLE
 #endif
 
-#define	CPU_CONTROL_SET \
+#define CPU_CONTROL_SET \
 	(CPU_CONTROL_MMU_ENABLE		|	\
-	 CPU_CONTROL_AFLT_ENABLE	|	\
-	 CPU_CONTROL_EX_BEND		|	\
+	 CPU_CONTROL_AFLT_ENABLE_SET	|	\
 	 CPU_CONTROL_DC_ENABLE		|	\
 	 CPU_CONTROL_SWP_ENABLE		|	\
 	 CPU_CONTROL_BPRD_ENABLE	|	\
 	 CPU_CONTROL_IC_ENABLE		|	\
+	 CPU_CONTROL_EX_BEND_SET	|	\
 	 CPU_CONTROL_UNAL_ENABLE)
+
+#define CPU_CONTROL_CLR \
+	(CPU_CONTROL_AFLT_ENABLE_CLR)
 
 arm_cpuinit:
 	/*
@@ -140,41 +147,57 @@ arm_cpuinit:
 	 */
 	mov	ip, lr
 	mov	r10, r0
+	mov	r1, #0
 
-	mcr     p15, 0, r10, c7, c5, 0	/* invalidate I cache */
+	mcr     p15, 0, r1, c7, c5, 0	// invalidate I cache
 
-	mrc	p15, 0, r2, c1, c0, 0	/*  "       "   "     */
-	bic	r2, r2, #CPU_CONTROL_DC_ENABLE	@ clear data cache enable
-	bic	r2, r2, #CPU_CONTROL_IC_ENABLE	@ clear instruction cache enable
-	mcr	p15, 0, r2, c1, c0, 0	/*  "       "   "     */
+	mrc	p15, 0, r2, c1, c0, 0	// read SCTRL
+	movw	r1, #(CPU_CONTROL_DC_ENABLE|CPU_CONTROL_IC_ENABLE)
+	bic	r2, r2, r1		// clear I+D cache enable
+
+#ifdef __ARMEB__
+	/*
+	 * SCTRL.EE determines the endianness of translation table lookups.
+	 * So we need to make sure it's set before starting to use the new
+	 * translation tables (which are big endian).
+	 */
+	orr	r2, r2, #CPU_CONTROL_EX_BEND
+	bic	r2, r2, #CPU_CONTROL_MMU_ENABLE
+	pli	[pc, #32]		/* preload the next few cachelines */
+	pli	[pc, #64]
+	pli	[pc, #96]
+	pli	[pc, #128]
+#endif
+
+	mcr	p15, 0, r2, c1, c0, 0	/* write SCTRL */
 
 	XPUTC(#70)
-	mov	r1, #0
 	dsb				/* Drain the write buffers. */
-
+1:
 	XPUTC(#71)
-	mrc	p15, 0, r2, c0, c0, 5	/* get MPIDR */
-	cmp	r2, #0
+	mrc	p15, 0, r1, c0, c0, 5	/* get MPIDR */
+	cmp	r1, #0
 	orrlt	r10, r10, #0x5b		/* MP, cachable (Normal WB) */
 	orrge	r10, r10, #0x1b		/* Non-MP, cacheable, normal WB */
 	mcr	p15, 0, r10, c2, c0, 0	/* Set Translation Table Base */
 
-	XPUTC(#49)
+	XPUTC(#72)
+	mov	r1, #0
 	mcr	p15, 0, r1, c2, c0, 2	/* Set Translation Table Control */
 
-	XPUTC(#72)
+	XPUTC(#73)
 	mov	r1, #0
 	mcr	p15, 0, r1, c8, c7, 0	/* Invalidate TLBs */
 
 	/* Set the Domain Access register.  Very important! */
-	XPUTC(#73)
+	XPUTC(#74)
 	mov     r1, #((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT)
 	mcr	p15, 0, r1, c3, c0, 0
 
 	/*
 	 * Enable the MMU, etc.
 	 */
-	XPUTC(#74)
+	XPUTC(#75)
 	mrc	p15, 0, r0, c1, c0, 0
 
 	movw	r3, #:lower16:CPU_CONTROL_SET
@@ -182,19 +205,22 @@ arm_cpuinit:
 	movt	r3, #:upper16:CPU_CONTROL_SET
 #endif
 	orr	r0, r0, r3
+#if defined(CPU_CONTROL_CLR) && (CPU_CONTROL_CLR != 0)
+	bic	r0, r0, #CPU_CONTROL_CLR
+#endif
+	pli	1f
 	
 	dsb
-	.align 5
 	@ turn mmu on!
-	mov	r0, r0
-	mcr	p15, 0, r0, c1, c0, 0
+	mov	r0, r0			/* fetch instruction cacheline */
+1:	mcr	p15, 0, r0, c1, c0, 0
 
 	/*
 	 * Ensure that the coprocessor has finished turning on the MMU.
 	 */
 	mrc	p15, 0, r0, c0, c0, 0	/* Read an arbitrary value. */
 	mov	r0, r0			/* Stall until read completes. */
-	XPUTC(#76)
+1:	XPUTC(#76)
 
 	bx	ip			/* return */
 
@@ -207,14 +233,17 @@ arm_cpuinit:
 	/* bits to set in the Control Register */
 
 #if defined(VERBOSE_INIT_ARM) && XPUTC_COM
-#define	TIMO	0x25000
+#define TIMO		0x25000
 #ifndef COM_MULT
-#define	COM_MULT	1
+#define COM_MULT	1
 #endif
 xputc:
 #ifdef MULTIPROCESSOR
+	adr	r3, xputc
+	movw	r2, #:lower16:comlock
+	movt	r2, #:upper16:comlock
+	bfi	r3, r2, #0, #28
 	mov	r2, #1
-	ldr	r3, .Lcomlock
 10:
 	ldrex	r1, [r3]
 	cmp	r1, #0
@@ -226,7 +255,13 @@ xputc:
 #endif
 
 	mov	r2, #TIMO
-	ldr	r3, .Luart0
+#ifdef CONADDR
+	movw	r3, #:lower16:CONADDR
+	movt	r3, #:upper16:CONADDR
+#elif defined(CONSADDR)
+	movw	r3, #:lower16:CONSADDR
+	movt	r3, #:upper16:CONSADDR
+#endif
 1:
 #if COM_MULT == 1
 	ldrb	r1, [r3, #(COM_LSR*COM_MULT)]
@@ -278,42 +313,40 @@ xputc:
 	bne	3b
 4:
 #ifdef MULTIPROCESSOR
-	ldr	r3, .Lcomlock
+	adr	r3, xputc
+	movw	r2, #:lower16:comlock
+	movt	r2, #:upper16:comlock
+	bfi	r3, r2, #0, #28
 	mov	r0, #0
 	str	r0, [r3]
 	dsb
 #endif
 	bx	lr
 
-.Luart0:
-#ifdef CONADDR
-	.word	CONADDR
-#elif defined(CONSADDR)
-	.word	CONSADDR
-#endif
-
 #ifdef MULTIPROCESSOR
-.Lcomlock:
-	.word	comlock
-
 	.pushsection .data
 comlock:
-	.p2align 2
+	.p2align 4
 	.word	0		@ not in bss
+	.p2align 4
 
 	.popsection
 #endif /* MULTIPROCESSOR */
 #endif /* VERBOSE_INIT_ARM */
 
-#ifdef CPU_CORTEXA9
-a9_start:
+cortex_init:
 	mov	r10, lr				@ save lr
 
 	cpsid	if, #PSR_SVC32_MODE
 
 	XPUTC(#64)
-	bl	_C_LABEL(armv7_icache_inv_all)	@ invalidate i-cache
+	adr	ip, cortex_init
+	movw	r0, #:lower16:_C_LABEL(armv7_icache_inv_all)
+	movt	r0, #:upper16:_C_LABEL(armv7_icache_inv_all)
+	bfi	ip, r0, #0, #28
+	blx	ip				@ toss i-cache
 
+#ifdef CPU_CORTEXA9
 	/*
 	 * Step 1a, invalidate the all cache tags in all ways on the SCU.
 	 */
@@ -327,14 +360,20 @@ a9_start:
 	str	r1, [r3, #SCU_INV_ALL_REG]	@ write scu invalidate all
 	dsb
 	isb
+#endif
 
 	/*
 	 * Step 1b, invalidate the data cache
 	 */
 	XPUTC(#66)
-	bl	_C_LABEL(armv7_dcache_wbinv_all)	@ writeback/invalidate d-cache
+	adr	ip, cortex_init
+	movw	r0, #:lower16:_C_LABEL(armv7_dcache_wbinv_all)
+	movt	r0, #:upper16:_C_LABEL(armv7_dcache_wbinv_all)
+	bfi	ip, r0, #0, #28
+	blx	ip				@ writeback & toss d-cache
 	XPUTC(#67)
 
+#ifdef CPU_CORTEXA9
 	/*
 	 * Step 2, disable the data cache
 	 */
@@ -362,35 +401,59 @@ a9_start:
 	mcr	p15, 0, r2, c1, c0, 0		@ reenable caches
 	isb
 	XPUTC(#51)
+#endif
 
 #ifdef MULTIPROCESSOR
 	/*
-	 * Step 4b, set ACTLR.SMP=1 (and ACTRL.FX=1)
+	 * Step 4b, set ACTLR.SMP=1 (and on A9, ACTRL.FX=1)
 	 */
 	mrc	p15, 0, r0, c1, c0, 1		@ read aux ctl
 	orr	r0, r0, #CORTEXA9_AUXCTL_SMP	@ enable SMP
 	mcr	p15, 0, r0, c1, c0, 1		@ write aux ctl
 	isb
+#ifdef CPU_CORTEXA9
 	orr	r0, r0, #CORTEXA9_AUXCTL_FW	@ enable cache/tlb/coherency
 	mcr	p15, 0, r0, c1, c0, 1		@ write aux ctl
 	isb
-	XPUTC(#52)
 #endif
+	XPUTC(#52)
+#endif /* MULTIPROCESSOR */
 
 	bx	r10
-ASEND(a9_start)
+ASEND(cortex_init)
 
 /*
  * Secondary processors come here after exiting the SKU ROM.
+ * Running native endian until we have SMP enabled.  Since no data
+ * is accessed, that shouldn't be a problem.
  */
-a9_mpstart:
-#ifdef MULTIPROCESSOR
+cortex_mpstart:
+	cpsid	if, #PSR_SVC32_MODE		@ make sure we are in SVC mode
+        mrs	r0, cpsr			@ fetch CPSR value
+        msr	spsr_sxc, r0			@ set SPSR[23:8] to known value
+
+#ifndef MULTIPROCESSOR
+	/*
+	 * If not MULTIPROCESSOR, drop CPU into power saving state.
+	 */
+3:	wfe
+	b	3b
+#else
 	/*
 	 * Step 1, invalidate the caches
 	 */
-	bl	_C_LABEL(armv7_icache_inv_all)	@ toss i-cache
-	bl	_C_LABEL(armv7_dcache_inv_all)	@ toss d-cache
+	adr	ip, cortex_mpstart
+	movw	r0, #:lower16:_C_LABEL(armv7_icache_inv_all)
+	movt	r0, #:upper16:_C_LABEL(armv7_icache_inv_all)
+	bfi	ip, r0, #0, #28
+	blx	ip				@ toss i-cache
+	adr	ip, cortex_mpstart
+	movw	ip, #:lower16:_C_LABEL(armv7_dcache_inv_all)
+	movt	ip, #:upper16:_C_LABEL(armv7_dcache_inv_all)
+	bfi	ip, r0, #0, #28
+	blx	ip				@ toss d-cache
 
+#if defined(CPU_CORTEXA9)
 	/*
 	 * Step 2, wait for the SCU to be enabled
 	 */
@@ -398,6 +461,7 @@ a9_mpstart:
 1:	ldr	r0, [r3, #SCU_CTL]		@ read scu control
 	tst	r0, #SCU_CTL_SCU_ENA		@ enable bit set yet?
 	bne	1b				@ try again
+#endif
 
 	/*
 	 * Step 3, set ACTLR.SMP=1 (and ACTRL.FX=1)
@@ -406,9 +470,11 @@ a9_mpstart:
 	orr	r0, #CORTEXA9_AUXCTL_SMP	@ enable SMP
 	mcr	p15, 0, r0, c1, c0, 1		@ write aux ctl
 	mov	r0, r0
+#if defined(CPU_CORTEXA9)
 	orr	r0, #CORTEXA9_AUXCTL_FW		@ enable cache/tlb/coherency
 	mcr	p15, 0, r0, c1, c0, 1		@ write aux ctl
 	mov	r0, r0
+#endif
 
 	/*
 	 * We should be in SMP mode now.
@@ -416,56 +482,86 @@ a9_mpstart:
 	mrc	p15, 0, r4, c0, c0, 5		@ get MPIDR
 	and	r4, r4, #7			@ get our cpu numder
 
+#ifdef __ARMEB__
+	setend	be				@ switch to BE now
+#endif
+
 #if defined(VERBOSE_INIT_ARM)
 	add	r0, r4, #48
 	bl	xputc
 #endif
 
-	ldr	r0, .Lcpu_hatched		@ now show we've hatched
+	/*
+	 * To access things are not in .start, we need to replace the upper
+	 * 4 bits of the address with where we are current executing.
+	 */
+	adr	r10, cortex_mpstart
+	lsr	r10, r10, #28
+
+	movw	r0, #:lower16:_C_LABEL(arm_cpu_hatched)
+	movt	r0, #:upper16:_C_LABEL(arm_cpu_hatched)
+	bfi	r0, r10, #28, #4		// replace top 4 bits
+	add	r0, r0, r10
 	mov	r5, #1
 	lsl	r5, r5, r4
-	mov	r1, r5
-	bl	_C_LABEL(atomic_or_32)
+	/*
+	 * We inline the atomic_or_32 call since we might be in a different
+	 * area of memory.
+	 */
+2:	ldrex	r1, [r0]
+	orr	r1, r1, r5
+	strex	r2, r1, [r0]
+	cmp	r2, #0
+	bne	2b
 
 	XPUTC(#97)
-#endif
-
-	cpsid	if, #PSR_SVC32_MODE		@ make sure we are in SVC mode
 
 	/* Now we will wait for someone tell this cpu to start running */
-#ifdef MULTIPROCESSOR
-	ldr	r0, .Lcpu_mbox
-#else
-	cmp	r0, r0
-#endif
-2:
-#ifdef MULTIPROCESSOR
-	dmb
+	movw	r0, #:lower16:_C_LABEL(arm_cpu_mbox)
+	movt	r0, #:upper16:_C_LABEL(arm_cpu_mbox)
+	bfi	r0, r10, #28, #4
+	add	r0, r0, r10
+3:	dmb
 	ldr	r2, [r0]
 	tst	r2, r5
-#endif
-	@wfeeq
-	beq	2b
+	wfeeq
+	beq	3b
+
+	XPUTC(#98)
+	movw	r0, #:lower16:_C_LABEL(arm_cpu_marker)
+	movt	r0, #:upper16:_C_LABEL(arm_cpu_marker)
+	bfi	r0, r10, #28, #4
+	str	pc, [r0]
+
+	movw	r0, #:lower16:_C_LABEL(kernel_l1pt)
+	movt	r0, #:upper16:_C_LABEL(kernel_l1pt)
+	bfi	r0, r10, #28, #4		/* get address of l1pt pvaddr */
+	ldr	r0, [r0, #PV_PA]		/* Now get the phys addr */
+	/*
+	 * After we turn on the MMU, we will no longer in .start so setup
+	 * return to rest of MP startup code in .text.
+	 */
+	movw	lr, #:lower16:cortex_mpcontinuation
+	movt	lr, #:upper16:cortex_mpcontinuation
+	b	arm_cpuinit
+#endif /* MULTIPROCESSOR */
+ASEND(cortex_mpstart)
 
 #ifdef MULTIPROCESSOR
-3:	XPUTC(#98)
-	ldr	r0, .Lcpu_marker
-	str	pc, [r0]
-
-	ldr	r0, .Lkernel_l1pt		/* get address of l1pt pvaddr */
-	ldr	r0, [r0, #PV_PA]		/* Now get the phys addr */
-	bl	cpu_init
-
-	ldr	r0, .Lcpu_marker
-	str	pc, [r0]
-
+	.pushsection .text
+cortex_mpcontinuation:
 	/* MMU, L1, are now on. */
 
-	ldr	r0, .Lcpu_info			/* get pointer to cpu_infos */
+	movw	r0, #:lower16:_C_LABEL(arm_cpu_marker)
+	movt	r0, #:upper16:_C_LABEL(arm_cpu_marker)
+	str	pc, [r0]
+
+	movw	r0, #:lower16:cpu_info
+	movt	r0, #:upper16:cpu_info		/* get pointer to cpu_infos */
 	ldr	r5, [r0, r4, lsl #2]		/* load our cpu_info */
 	ldr	r6, [r5, #CI_IDLELWP]		/* get the idlelwp */
 	ldr	r7, [r6, #L_PCB]		/* now get its pcb */
-	ldr	sp, [r7, #PCB_SP]		/* finally, we can load our SP */
+	ldr	sp, [r7, #PCB_KSP]		/* finally, we can load our SP */
 #ifdef TPIDRPRW_IS_CURCPU
 	mcr	p15, 0, r5, c13, c0, 4		/* squirrel away curcpu() */
 #elif defined(TPIDRPRW_IS_CURLWP)
@@ -475,30 +571,15 @@ a9_mpstart:
 #endif
 	str	r6, [r5, #CI_CURLWP]		/* and note we are running on it */
 
-	ldr	r0, .Lcpu_marker
-	str	pc, [r0]
+	str	pc, [r0]			// r0 still have arm_cpu_marker
 
-	mov	r0, r5				/* pass cpu_info */
-	mov	r1, r4				/* pass cpu_id */
-	ldr	r2, .Lbcm53xx_cpu_hatch		/* pass md_cpu_hatch */
+	mov	r0, r5				// pass cpu_info
+	mov	r1, r4				// pass cpu_id
+	movw	r2, #:lower16:MD_CPU_HATCH	// pass md_cpu_hatch
+	movt	r2, #:upper16:MD_CPU_HATCH	// pass md_cpu_hatch
 	bl	_C_LABEL(cpu_hatch)
 	b	_C_LABEL(idle_loop)
-ASEND(a9_mpstart)
+ASEND(cortex_mpcontinuation)
 	/* NOT REACHED */
-
-.Lkernel_l1pt:
-	.word	_C_LABEL(kernel_l1pt)
-.Lcpu_info:
-	.word	_C_LABEL(cpu_info)
-.Lcpu_max:
-	.word	_C_LABEL(arm_cpu_max)
-.Lcpu_hatched:
-	.word	_C_LABEL(arm_cpu_hatched)
-.Lcpu_mbox:
-	.word	_C_LABEL(arm_cpu_mbox)
-.Lcpu_marker:
-	.word	_C_LABEL(arm_cpu_marker)
-.Lbcm53xx_cpu_hatch:
-	.word	_C_LABEL(bcm53xx_cpu_hatch)
+	.popsection
 #endif /* MULTIPROCESSOR */
-#endif /* CPU_CORTEXA9 */

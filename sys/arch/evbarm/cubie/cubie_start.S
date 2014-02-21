@@ -40,7 +40,7 @@
 #include <arm/allwinner/awin_reg.h>
 #include <evbarm/cubie/platform.h>  
 
-RCSID("$NetBSD: cubie_start.S,v 1.5 2014/01/24 05:13:06 matt Exp $")
+RCSID("$NetBSD: cubie_start.S,v 1.6 2014/02/21 22:22:48 matt Exp $")
 
 #if defined(VERBOSE_INIT_ARM)
 #define	XPUTC(n)	mov r0, n; bl xputc
@@ -55,6 +55,8 @@ RCSID("$NetBSD: cubie_start.S,v 1.5 2014/01/24 05:13:06 matt Exp $")
 
 #define INIT_MEMSIZE	128
 #define	TEMP_L1_TABLE	(AWIN_SDRAM_PBASE + INIT_MEMSIZE * 0x100000 - L1_TABLE_SIZE)
+
+#define	MD_CPU_HATCH	_C_LABEL(awin_cpu_hatch)
 
 /*
  * Kernel start routine for BEAGLEBOARD boards.
@@ -73,26 +75,38 @@ _C_LABEL(cubie_start):
 	cpsid	if, #PSR_SVC32_MODE
 
 	/*
-	 * Save any arguments passed to us (do it PIC).
+	 * Save any arguments passed to us.  But since .start is at 0x40000000
+	 * and .text is at 0x8000000, we can't directly use the address that
+	 * the linker gave us directly.  We have to replace the upper 4 bits
+	 * of the address the linker gave us and replace it with the upper 4
+	 * bits of our pc.  Or replace the lower 28 bits of our PC with the
+	 * lower 28 bits of what the linker gave us.
 	 */
-	movw	r4, #:lower16:uboot_args-.LPIC0
-	movt	r4, #:upper16:uboot_args-.LPIC0
+	adr	r4, _C_LABEL(cubie_start)
+	movw	r5, #:lower16:uboot_args
+	movt	r5, #:upper16:uboot_args
+	bfi	r4, r5, #0, #28
+
+	stmia	r4, {r0-r3}		// Save the arguments
 	/*
-	 * Since .start is at 0x40000000 and .text is at 0x8000000
-	 * we have to clear the upper bits of the address so it's relative
-	 * to the current PC, not .text.
+	 * Turn on the SMP bit
 	 */
-	bic	r4, r4, #0xf0000000
-	add	r4, r4, pc
-	stmia	r4, {r0-r3}
-.LPIC0:
-#ifdef CPU_CORTEXA9
-	/*
-	 * Turn on the SCU if we are on a Cortex-A9
-	 */
-	bl	a9_start
+	bl	cortex_init
 	XPUTC(#67)
-#endif
+
+#if defined(MULTIPROCESSOR) && 0
+	movw	r0, #:lower16:(AWIN_CORE_PBASE+AWIN_CPUCFG_OFFSET)
+	movt	r0, #:upper16:(AWIN_CORE_PBASE+AWIN_CPUCFG_OFFSET)
+
+	/* Set where the other CPU(s) are going to execute */
+	adr	r1, cortex_mpstart
+	str	r1, [r0, #AWIN_CPUCFG_PRIVATE_REG]
+
+	/* Bring CPU1 out of reset */
+	ldr	r1, [r0, #AWIN_CPUCFG_CPU1_RST_CTRL_REG]
+	orr	r1, r1, #(AWIN_CPUCFG_CPU_RST_CTRL_CORE_RESET|AWIN_CPUCFG_CPU_RST_CTRL_RESET)
+	str	r1, [r0, #AWIN_CPUCFG_CPU1_RST_CTRL_REG]
+#endif /* MULTIPROCESSOR */
 
 	/*
 	 * Set up a preliminary mapping in the MMU to allow us to run
