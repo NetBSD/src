@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15 2014/01/27 18:05:24 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.16 2014/02/21 21:54:38 martin Exp $
 
 ARMV6= ${CPUFLAGS:M-march=armv6*} ${CPUFLAGS:M-mcpu=arm11*}
 ARMV6+= ${CFLAGS:M-march=armv6*:} ${CFLAGS:M-mcpu=arm11*}
@@ -22,7 +22,14 @@ SRCS.atomic+=	atomic_add_32_cas.c atomic_add_32_nv_cas.c \
 		atomic_dec_32_cas.c atomic_dec_32_nv_cas.c \
 		atomic_inc_32_cas.c atomic_inc_32_nv_cas.c \
 		atomic_or_32_cas.c atomic_or_32_nv_cas.c \
-		atomic_swap_32_cas.c membar_ops_nop.c
+		atomic_swap_32_cas.c membar_ops_nop.c \
+		atomic_xor_32_cas.c atomic_xor_16_cas.c atomic_xor_8_cas.c \
+		atomic_sub_32_cas.c atomic_sub_16_cas.c atomic_sub_8_cas.c \
+		atomic_nand_32_cas.c atomic_nand_16_cas.c atomic_nand_8_cas.c \
+		atomic_or_16_cas.c atomic_or_8_cas.c \
+		atomic_and_16_cas.c atomic_and_8_cas.c \
+		atomic_add_16_cas.c atomic_add_8_cas.c \
+		atomic_swap_16_cas.c atomic_swap_8_cas.c
 .else
 .for op in add and cas nand or xor
 .for sz in 8 16 32 64
