@@ -1,4 +1,4 @@
-/* $NetBSD: tsreg.h,v 1.6 2013/09/23 16:41:57 tsutsui Exp $ */
+/* $NetBSD: tsreg.h,v 1.7 2014/02/21 12:23:30 jdc Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -94,6 +94,11 @@
 #	define	MISC_REV(r)	TSFIELD((r), 39, 8)
 
 #define TS_C_MPD	0x101##a000##00c0UL
+
+#	define	MPD_DR	0x08	/* RO: Data receive */
+#	define	MPD_CKR	0x04	/* RO: Clock receive */
+#	define	MPD_DS	0x02	/* WO: Data send - Must be a 1 to receive */
+#	define	MPD_CKS	0x01	/* WO: Clock send */
 
 #define TS_C_AAR0	0x101##a000##0100UL
 #define TS_C_AAR1	0x101##a000##0140UL
