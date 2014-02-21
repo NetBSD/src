@@ -55,6 +55,10 @@
 
 #include <errno.h>
 
+#ifndef __printflike
+#define __printflike(n, m)	__attribute__((format(printf,n,m)))
+#endif
+
 /** error codes */
 /* Remember to add names to map in errors.c */
 typedef enum {
