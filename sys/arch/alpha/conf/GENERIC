@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.357 2014/01/20 15:32:23 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.358 2014/02/21 12:24:31 jdc Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.357 $"
+ident		"GENERIC-$Revision: 1.358 $"
 
 maxusers 32
 
@@ -225,6 +225,8 @@ mcmem*	at	mcbus? mid ?
 #EV6 Tsunami Core Logic
 
 tsc*	at	mainbus0
+tsciic* 	at	tsc?
+iic* 	at	tsciic?
 
 # DECpc AXP150 (Jensen) internal bus support
 jensenio* at	mainbus0
@@ -544,11 +546,20 @@ ld*	at	mlx? unit ?
 alipm* 	at pci? dev ? function ?
 iic* 	at alipm?
 
-# AlphaServer DS20L enviromental monitoring
+# AlphaServer DS20L i2c devices
 #lmenv* 	at iic? addr 0x2c
 #lmenv* 	at iic? addr 0x2d
 #lmenv* 	at iic? addr 0x2e
 #lmenv* 	at iic? addr 0x2f
+#spdmem* 	at iic? addr 0x50
+#spdmem* 	at iic? addr 0x51
+#spdmem* 	at iic? addr 0x52
+#spdmem* 	at iic? addr 0x53
+#spdmem* 	at iic? addr 0x54
+#spdmem* 	at iic? addr 0x55
+#spdmem* 	at iic? addr 0x56
+#spdmem* 	at iic? addr 0x57
+#seeprom* 	at iic0 addr 0x51 flags 0x2
 
 # PCMCIA USB controllers
 slhci*	at pcmcia? function ?			# ScanLogic SL811HS
