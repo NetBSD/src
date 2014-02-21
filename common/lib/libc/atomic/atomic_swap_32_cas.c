@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_swap_32_cas.c,v 1.4 2008/04/28 20:22:53 martin Exp $	*/
+/*	$NetBSD: atomic_swap_32_cas.c,v 1.5 2014/02/21 10:27:34 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -50,6 +50,7 @@ atomic_op_alias(atomic_swap_32,_atomic_swap_32)
 #undef atomic_swap_uint
 atomic_op_alias(atomic_swap_uint,_atomic_swap_32)
 __strong_alias(_atomic_swap_uint,_atomic_swap_32)
+__strong_alias(__sync_lock_test_and_set_4,_atomic_swap_32)
 #if !defined(_LP64)
 #undef atomic_swap_ulong
 atomic_op_alias(atomic_swap_ulong,_atomic_swap_32)
