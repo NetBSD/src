@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.72 2014/01/26 20:12:32 palle Exp $
+#	$NetBSD: genassym.cf,v 1.73 2014/02/21 18:00:09 palle Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -137,9 +137,10 @@ define	PM_RESIDENT	offsetof(struct pmap, pm_stats.resident_count)
 define	PM_WIRED	offsetof(struct pmap, pm_stats.wired_count)
 
 # the assembler doesn't grok C constants with LL suffix
-define	A_TLB_TSB_LOCK	TLB_TSB_LOCK
+define	A_SUN4U_TLB_TSB_LOCK	SUN4U_TLB_TSB_LOCK
 ifdef SUN4V
 define	A_SUN4V_TLB_ACCESS	SUN4V_TLB_ACCESS
+define	A_SUN4V_TLB_TSB_LOCK	SUN4V_TLB_TSB_LOCK
 endif
 
 # CPU info structure
