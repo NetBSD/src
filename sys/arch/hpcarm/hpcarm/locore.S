@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.15 2013/12/02 18:36:11 joerg Exp $	*/
+/*	$NetBSD: locore.S,v 1.16 2014/02/22 19:16:06 matt Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -36,9 +36,7 @@
 #include <sys/syscall.h>
 #include <sys/errno.h>
 #include <machine/asm.h>
-#include <machine/cpu.h>
 #include <machine/frame.h>
-#include <machine/param.h>
 #if defined(CPU_XSCALE_PXA250) || defined(CPU_XSCALE_PXA270)
 #include <arm/armreg.h>
 #endif
