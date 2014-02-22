@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.58 2014/02/22 10:08:12 hannken Exp $
+.\"     $NetBSD: vnode.9,v 1.59 2014/02/22 11:28:18 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -189,48 +189,51 @@ and
 .Em v_uflag .
 Valid flags are:
 .Pp
-.Bl -tag -offset indent -width VONWORKLST -compact
-.It VV_ROOT
+.Bl -tag -offset indent -width ".Dv VI_WRMAPDIRTY" -compact
+.It Dv VV_ROOT
 This vnode is the root of its file system.
-.It VV_SYSTEM
+.It Dv VV_SYSTEM
 This vnode is being used by the kernel; only used to skip quota files in
 .Fn vflush .
-.It VV_ISTTY
+.It Dv VV_ISTTY
 This vnode represents a tty; used when reading dead vnodes.
-.It VV_MAPPED
+.It Dv VV_MAPPED
 This vnode might have user mappings.
-.It VV_MPSAFE
+.It Dv VV_MPSAFE
 This file system is MP safe.
-.It VV_LOCKSWORK
+.It Dv VV_LOCKSWORK
 This vnode's file system supports locking.
-.It VI_TEXT
+.It Dv VI_TEXT
 This vnode is a pure text prototype.
-.It VI_EXECMAP
+.It Dv VI_EXECMAP
 This vnode has executable mappings.
-.It VI_WRMAP
+.It Dv VI_WRMAP
 This vnode might have PROT_WRITE user mappings.
-.It VI_WRMAPDIRTY
-This vnode might have dirty pages due to VWRITEMAP
-.It VI_XLOCK
+.It Dv VI_WRMAPDIRTY
+This vnode might have dirty pages due to
+.Dv VWRITEMAP .
+.It Dv VI_XLOCK
 This vnode is currently locked to change underlying type.
-.It VI_ONWORKLST
+.It Dv VI_ONWORKLST
 This vnode is on syncer work-list.
-.It VI_MARKER
+.It Dv VI_MARKER
 A dummy marker vnode.
-.It VI_LAYER
+.It Dv VI_LAYER
 This vnode is on a layered file system.
-.It VI_LOCKSHARE
+.It Dv VI_LOCKSHARE
 This vnode shares its
 .Em v_interlock
 with other vnodes.
-.It VI_CLEAN
+.It Dv VI_CLEAN
 This vnode has been reclaimed and is no longer attached to a file system.
-.It VU_DIROP
+.It Dv VU_DIROP
 This vnode is involved in a directory operation.
 This flag is used exclusively by LFS.
 .El
 .Pp
-The VI_XLOCK flag is used to prevent multiple processes from entering
+The
+.Dv VI_XLOCK
+flag is used to prevent multiple processes from entering
 the vnode reclamation code.
 It is also used as a flag to indicate that reclamation is in progress.
 Before
@@ -345,23 +348,23 @@ performed on valid file system objects.
 Valid types are:
 .Pp
 .Bl -tag -offset indent -width VFIFO -compact
-.It VNON
+.It Dv VNON
 The vnode has no type.
-.It VREG
+.It Dv VREG
 The vnode represents a regular file.
-.It VDIR
+.It Dv VDIR
 The vnode represents a directory.
-.It VBLK
+.It Dv VBLK
 The vnode represents a block special device.
-.It VCHR
+.It Dv VCHR
 The vnode represents a character special device.
-.It VLNK
+.It Dv VLNK
 The vnode represents a symbolic link.
-.It VSOCK
+.It Dv VSOCK
 The vnode represents a socket.
-.It VFIFO
+.It Dv VFIFO
 The vnode represents a pipe.
-.It VBAD
+.It Dv VBAD
 The vnode represents a bad file (not currently used).
 .El
 .Pp
@@ -378,59 +381,59 @@ member is read-only.
 Valid tag types are:
 .Pp
 .Bl -tag -offset indent -width "VT_FILECORE " -compact
-.It VT_NON
+.It Dv VT_NON
 non file system
-.It VT_UFS
+.It Dv VT_UFS
 universal file system
-.It VT_NFS
+.It Dv VT_NFS
 network file system
-.It VT_MFS
+.It Dv VT_MFS
 memory file system
-.It VT_MSDOSFS
+.It Dv VT_MSDOSFS
 FAT file system
-.It VT_LFS
+.It Dv VT_LFS
 log-structured file system
-.It VT_LOFS
+.It Dv VT_LOFS
 loopback file system
-.It VT_FDESC
+.It Dv VT_FDESC
 file descriptor file system
-.It VT_NULL
+.It Dv VT_NULL
 null file system layer
-.It VT_UMAP
+.It Dv VT_UMAP
 uid/gid remapping file system layer
-.It VT_KERNFS
+.It Dv VT_KERNFS
 kernel interface file system
-.It VT_PROCFS
+.It Dv VT_PROCFS
 process interface file system
-.It VT_AFS
+.It Dv VT_AFS
 AFS file system
-.It VT_ISOFS
+.It Dv VT_ISOFS
 ISO 9660 file system(s)
-.It VT_UNION
+.It Dv VT_UNION
 union file system
-.It VT_ADOSFS
+.It Dv VT_ADOSFS
 Amiga file system
-.It VT_EXT2FS
+.It Dv VT_EXT2FS
 Linux's ext2 file system
-.It VT_CODA
+.It Dv VT_CODA
 Coda file system
-.It VT_FILECORE
+.It Dv VT_FILECORE
 filecore file system
-.It VT_NTFS
+.It Dv VT_NTFS
 Microsoft NT's file system
-.It VT_VFS
+.It Dv VT_VFS
 virtual file system
-.It VT_OVERLAY
+.It Dv VT_OVERLAY
 overlay file system
-.It VT_SMBFS
+.It Dv VT_SMBFS
 SMB file system
-.It VT_PTYFS
+.It Dv VT_PTYFS
 pseudo-terminal device file system
-.It VT_TMPFS
+.It Dv VT_TMPFS
 efficient memory file system
-.It VT_UDF
+.It Dv VT_UDF
 universal disk format file system
-.It VT_SYSVBFS
+.It Dv VT_SYSVBFS
 systemV boot file system
 .El
 .Pp
@@ -531,8 +534,8 @@ specifies the
 .Xr rwlock 9
 flags used to lock the vnode.
 If the
-.Em VI_XLOCK
-is set in
+.Dv VI_XLOCK
+flag is set in
 .Fa vp Ns 's
 .Em v_flag ,
 vnode
@@ -639,14 +642,21 @@ The argument
 .Fa flags
 is a set of flags modifying the operation of
 .Fn vflush .
-If FORCECLOSE is not specified, there should not be any active vnodes and
+If
+.Dv FORCECLOSE
+is not specified, there should not be any active vnodes and
 the error
 .Er EBUSY
 is returned if any are found (this is a user error, not a system error).
-If FORCECLOSE is specified, active vnodes that are found are detached.
-If WRITECLOSE is set, only flush out regular file vnodes open for
-writing.
-SKIPSYSTEM causes any vnodes marked V_SYSTEM to be skipped.
+If
+.Dv FORCECLOSE
+is specified, active vnodes that are found are detached.
+If
+.Dv WRITECLOSE
+is set, only flush out regular file vnodes open for writing.
+SKIPSYSTEM causes any vnodes marked
+.Dv V_SYSTEM
+to be skipped.
 .It Fn vaccess "type" "file_mode" "uid" "gid" "acc_mode" "cred"
 Do access checking by comparing the file's permissions to the caller's
 desired access type
@@ -680,7 +690,9 @@ for the vnode
 .Em bp-\*[Gt]b_vp
 and do a wakeup if requested and
 .Em vp-\*[Gt]vflag
-has VBWAIT set.
+has
+.Dv VBWAIT
+set.
 .It Fn vflushbuf "vp" "sync"
 Flush all dirty buffers to disk for the file with the locked vnode
 .Fa vp .
