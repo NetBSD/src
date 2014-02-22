@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_pci_space.c,v 1.11 2012/11/12 18:00:38 skrll Exp $ */
+/*	$NetBSD: ixp425_pci_space.c,v 1.12 2014/02/22 20:33:00 matt Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_pci_space.c,v 1.11 2012/11/12 18:00:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_pci_space.c,v 1.12 2014/02/22 20:33:00 matt Exp $");
 
 /*
  * bus_space PCI functions for ixp425
@@ -382,7 +382,6 @@ ixp425_pci_mem_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
 	paddr_t		pa;
 	paddr_t		offset;
 	vaddr_t		va;
-	pt_entry_t	*pte;
 
 	if ((pd = pmap_devmap_find_pa(bpa, size)) != NULL) {
 		/* Device was statically mapped. */
@@ -403,12 +402,14 @@ ixp425_pci_mem_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
 	/* Store the bus space handle */
 	*bshp = va + offset;
 
+	const int pmapflags =
+	    (flag & (BUS_SPACE_MAP_CACHEABLE|BUS_SPACE_MAP_PREFETCHABLE))
+		? 0
+		: PMAP_NOCACHE;
+
 	/* Now map the pages */
 	for (pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
-		pte = vtopte(va);
-		*pte &= ~L2_S_CACHE_MASK;
-		PTE_SYNC(pte);
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, pmapflags);
 	}
 	pmap_update(pmap_kernel());
 

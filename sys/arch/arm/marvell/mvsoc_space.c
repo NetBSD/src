@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoc_space.c,v 1.6 2013/05/29 20:47:14 rkujawa Exp $	*/
+/*	$NetBSD: mvsoc_space.c,v 1.7 2014/02/22 20:33:00 matt Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoc_space.c,v 1.6 2013/05/29 20:47:14 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoc_space.c,v 1.7 2014/02/22 20:33:00 matt Exp $");
 
 #include "opt_mvsoc.h"
 #include "mvpex.h"
@@ -321,7 +321,6 @@ mvsoc_bs_map(void *space, bus_addr_t address, bus_size_t size, int flags,
 {
 	const struct pmap_devmap *pd;
 	paddr_t startpa, endpa, offset, pa;
-	pt_entry_t *pte;
 	vaddr_t va;
 
 /*
@@ -369,18 +368,14 @@ mvsoc_bs_map(void *space, bus_addr_t address, bus_size_t size, int flags,
 
 	*handlep = va + offset;
 
+	const int pmapflags =
+	    (flags & (BUS_SPACE_MAP_CACHEABLE|BUS_SPACE_MAP_PREFETCHABLE))
+		? 0
+		: PMAP_NOCACHE;
+
 	/* Now map the pages */
 	for (pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
-		if ((flags & BUS_SPACE_MAP_CACHEABLE) == 0) {
-			pte = vtopte(va);
-			*pte &= ~L2_S_CACHE_MASK;
-			PTE_SYNC(pte);
-			/*
-			 * XXX: pmap_kenter_pa() also does PTE_SYNC(). a bit of
-			 *      waste.
-			 */
-		}
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, pmapflags);
 	}
 	pmap_update(pmap_kernel());
 
