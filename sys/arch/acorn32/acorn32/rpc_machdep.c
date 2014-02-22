@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.87 2013/08/18 21:42:16 matt Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.88 2014/02/22 19:03:06 matt Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.87 2013/08/18 21:42:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.88 2014/02/22 19:03:06 matt Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -1096,14 +1096,14 @@ rpc_sa110_cc_setup(void)
 {
 	int loop;
 	paddr_t kaddr;
-	pt_entry_t *pte;
 
 	(void) pmap_extract(pmap_kernel(), KERNEL_TEXT_BASE, &kaddr);
+	const pt_entry_t npte = L2_S_PROTO | kaddr |
+	    L2_S_PROT(PTE_KERNEL, VM_PROT_READ) | pte_l2_s_cache_mode;
 	for (loop = 0; loop < CPU_SA110_CACHE_CLEAN_SIZE; loop += PAGE_SIZE) {
-		pte = vtopte(sa110_cc_base + loop);
-		*pte = L2_S_PROTO | kaddr |
-		    L2_S_PROT(PTE_KERNEL, VM_PROT_READ) | pte_l2_s_cache_mode;
-		PTE_SYNC(pte);
+		pt_entry_t * const ptep = vtopte(sa110_cc_base + loop);
+		l2pte_set(ptep, npte, 0);
+		PTE_SYNC(ptep);
 	}
 	sa1_cache_clean_addr = sa110_cc_base;
 	sa1_cache_clean_size = CPU_SA110_CACHE_CLEAN_SIZE / 2;
