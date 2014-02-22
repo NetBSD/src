@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.57 2013/10/29 09:53:51 hannken Exp $
+.\"     $NetBSD: vnode.9,v 1.58 2014/02/22 10:08:12 hannken Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 29, 2013
+.Dd February 22, 2014
 .Dt VNODE 9
 .Os
 .Sh NAME
@@ -79,7 +79,7 @@
 .Ft void
 .Fn ungetnewvnode "struct vnode *vp"
 .Ft int
-.Fn vrecycle "struct vnode *vp" "struct simplelock *inter_lkp"
+.Fn vrecycle "struct vnode *vp" "struct kmutex_t *inter_lkp"
 .Ft void
 .Fn vgone "struct vnode *vp"
 .Ft void
@@ -183,58 +183,61 @@ C-preprocessor directives are used to alias the members of
 .Em v_uobj .
 .Pp
 Vnode flags are recorded by
-.Em v_flag .
+.Em v_iflag ,
+.Em v_vflag
+and
+.Em v_uflag .
 Valid flags are:
 .Pp
 .Bl -tag -offset indent -width VONWORKLST -compact
-.It VROOT
+.It VV_ROOT
 This vnode is the root of its file system.
-.It VTEXT
-This vnode is a pure text prototype.
-.It VSYSTEM
+.It VV_SYSTEM
 This vnode is being used by the kernel; only used to skip quota files in
 .Fn vflush .
-.It VISTTY
+.It VV_ISTTY
 This vnode represents a tty; used when reading dead vnodes.
-.It VEXECMAP
-This vnode has executable mappings.
-.It VWRITEMAP
-This vnode might have PROT_WRITE user mappings.
-.It VWRITEMAPDIRTY
-This vnode might have dirty pages due to VWRITEMAP
-.It VLOCKSWORK
+.It VV_MAPPED
+This vnode might have user mappings.
+.It VV_MPSAFE
+This file system is MP safe.
+.It VV_LOCKSWORK
 This vnode's file system supports locking.
-.It VXLOCK
+.It VI_TEXT
+This vnode is a pure text prototype.
+.It VI_EXECMAP
+This vnode has executable mappings.
+.It VI_WRMAP
+This vnode might have PROT_WRITE user mappings.
+.It VI_WRMAPDIRTY
+This vnode might have dirty pages due to VWRITEMAP
+.It VI_XLOCK
 This vnode is currently locked to change underlying type.
-.It VXWANT
-A process is waiting for this vnode.
-.It VBWAIT
-Waiting for output associated with this vnode to complete.
-.It VALIASED
-This vnode has an alias.
-.It VDIROP
+.It VI_ONWORKLST
+This vnode is on syncer work-list.
+.It VI_MARKER
+A dummy marker vnode.
+.It VI_LAYER
+This vnode is on a layered file system.
+.It VI_LOCKSHARE
+This vnode shares its
+.Em v_interlock
+with other vnodes.
+.It VI_CLEAN
+This vnode has been reclaimed and is no longer attached to a file system.
+.It VU_DIROP
 This vnode is involved in a directory operation.
 This flag is used exclusively by LFS.
-.It VLAYER
-This vnode is on a layered file system.
-.It VONWORKLST
-This vnode is on syncer work-list.
-.It VFREEING
-This vnode is being freed.
-.It VMAPPED
-This vnode might have user mappings.
 .El
 .Pp
-The VXLOCK flag is used to prevent multiple processes from entering
+The VI_XLOCK flag is used to prevent multiple processes from entering
 the vnode reclamation code.
 It is also used as a flag to indicate that reclamation is in progress.
-The VXWANT flag is set by threads that wish to be awakened when
-reclamation is finished.
 Before
-.Em v_flag
+.Em v_iflag
 can be modified, the
 .Em v_interlock
-simplelock must be acquired.
+mutex must be acquired.
 See
 .Xr lock 9
 for details on the kernel locking API.
@@ -272,8 +275,7 @@ and
 reach zero, the vnode is recycled to the freelist and may be reused
 for another file.
 The transition to and from the freelist is handled by
-.Fn getnewvnode ,
-.Fn ungetnewvnode
+a kernel thread
 and
 .Fn vrecycle .
 Access to
@@ -283,7 +285,7 @@ and
 .Em v_holdcnt
 is also protected by the
 .Em v_interlock
-simplelock.
+mutex.
 .Pp
 The number of pending synchronous and asynchronous writes on the
 vnode are recorded in
@@ -334,8 +336,7 @@ must call
 to increment the reference count and retrieve it from the freelist.
 When a user wants a new vnode for another file,
 .Fn getnewvnode
-is invoked to remove a vnode from the freelist and initialize it for
-the new file.
+is invoked to allocate a vnode and initialize it for the new file.
 .Pp
 The type of object the vnode represents is recorded by
 .Em v_type .
@@ -529,7 +530,9 @@ The argument
 specifies the
 .Xr rwlock 9
 flags used to lock the vnode.
-If the VXLOCK is set in
+If the
+.Em VI_XLOCK
+is set in
 .Fa vp Ns 's
 .Em v_flag ,
 vnode
@@ -538,7 +541,7 @@ is being recycled in
 .Fn vgone
 and the calling thread sleeps until the transition is complete.
 When it is awakened, an error is returned to indicate that the vnode is
-no longer usable (possibly having been recycled to a new file system type).
+no longer usable.
 .It Fn vput "vp"
 Unlock vnode
 .Fa vp
@@ -568,14 +571,7 @@ and moving the vnode from the holdlist to the freelist.
 .It Fn getnewvnode "tag" "mp" "vops" "slock" "vpp"
 Retrieve the next vnode from the freelist.
 .Fn getnewvnode
-must choose whether to allocate a new vnode or recycle an existing
-one.
-The criterion for allocating a new one is that the total number of
-vnodes is less than the number desired or there are no vnodes on either
-free list.
-Generally only vnodes that have no buffers associated with them are
-recycled and the next vnode from the freelist is retrieved.
-If the freelist is empty, vnodes on the holdlist are considered.
+allocates a new vnode.
 The new vnode is returned in the address specified by
 .Fa vpp .
 .Pp
@@ -620,7 +616,7 @@ condition.
 .It Fn vrecycle "vp" "inter_lkp"
 Recycle the unused vnode
 .Fa vp
-to the front of the freelist.
+from the front of the freelist.
 .Fn vrecycle
 is a null operation if the reference count is greater than zero.
 .It Fn vgone "vp"
