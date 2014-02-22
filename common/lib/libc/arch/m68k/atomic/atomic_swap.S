@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_swap.S,v 1.7 2014/02/18 16:19:28 martin Exp $	*/
+/*	$NetBSD: atomic_swap.S,v 1.8 2014/02/22 17:08:30 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@ ATOMIC_OP_ALIAS(atomic_swap_ulong,_atomic_swap_32)
 STRONG_ALIAS(_atomic_swap_ulong,_atomic_swap_32)
 ATOMIC_OP_ALIAS(atomic_swap_ptr,_atomic_swap_32)
 STRONG_ALIAS(_atomic_swap_ptr,_atomic_swap_32)
-STRONG_ALIAS(__sync_lock_test_and_set_4,_atomic_swap_32)
+CRT_ALIAS(__sync_lock_test_and_set_4,_atomic_swap_32)
 
 
 ENTRY(_atomic_swap_16)
@@ -63,7 +63,7 @@ ENTRY(_atomic_swap_16)
 	rts
 END(_atomic_swap_16)
 ATOMIC_OP_ALIAS(atomic_swap_16,_atomic_swap_16)
-STRONG_ALIAS(__sync_lock_test_and_set_2,_atomic_swap_16)
+CRT_ALIAS(__sync_lock_test_and_set_2,_atomic_swap_16)
 
 ENTRY(_atomic_swap_8)
 	movl	4(%sp), %a0
@@ -75,4 +75,4 @@ ENTRY(_atomic_swap_8)
 	rts
 END(_atomic_swap_8)
 ATOMIC_OP_ALIAS(atomic_swap_8,_atomic_swap_8)
-STRONG_ALIAS(__sync_lock_test_and_set_1,_atomic_swap_8)
+CRT_ALIAS(__sync_lock_test_and_set_1,_atomic_swap_8)
