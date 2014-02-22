@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_init_testset.c,v 1.12 2014/01/29 14:49:35 martin Exp $	*/
+/*	$NetBSD: atomic_init_testset.c,v 1.13 2014/02/22 17:08:30 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: atomic_init_testset.c,v 1.12 2014/01/29 14:49:35 martin Exp $");
+__RCSID("$NetBSD: atomic_init_testset.c,v 1.13 2014/02/22 17:08:30 martin Exp $");
 
 #include "atomic_op_namespace.h"
 
@@ -239,6 +239,6 @@ __strong_alias(_atomic_cas_ulong_ni,_atomic_cas_32)
 atomic_op_alias(atomic_cas_ptr_ni,_atomic_cas_32)
 __strong_alias(_atomic_cas_ptr_ni,_atomic_cas_32)
 
-__strong_alias(__sync_val_compare_and_swap_4,_atomic_cas_32)
-__strong_alias(__sync_val_compare_and_swap_2,_atomic_cas_16)
-__strong_alias(__sync_val_compare_and_swap_1,_atomic_cas_8)
+crt_alias(__sync_val_compare_and_swap_4,_atomic_cas_32)
+crt_alias(__sync_val_compare_and_swap_2,_atomic_cas_16)
+crt_alias(__sync_val_compare_and_swap_1,_atomic_cas_8)
