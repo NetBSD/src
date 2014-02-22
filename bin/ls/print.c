@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.53 2014/02/20 18:56:36 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.54 2014/02/22 13:11:42 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.53 2014/02/20 18:56:36 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.54 2014/02/22 13:11:42 mlelstv Exp $");
 #endif
 #endif /* not lint */
 
@@ -102,7 +102,7 @@ printpath(const FTSENT *p) {
 	if (f_fullpath)
 		return printf("%s/%s", p->fts_path, p->fts_name);
 	else
-		return printf("%s", p->fts_path);
+		return printf("%s", p->fts_name);
 }
 
 void
