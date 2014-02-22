@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_op_namespace.h,v 1.5 2014/02/21 15:51:07 martin Exp $	*/
+/*	$NetBSD: atomic_op_namespace.h,v 1.6 2014/02/22 17:08:30 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -120,8 +120,18 @@
 
 #if defined(_KERNEL)
 #define	atomic_op_alias(a,s)	__strong_alias(a,s)
+#ifdef _HARDKERNEL
+#define	crt_alias(a,s)	__strong_alias(a,s)
+#endif
 #else
 #define	atomic_op_alias(a,s)	__weak_alias(a,s)
+#ifdef _LIBC
+#define	crt_alias(a,s)	__strong_alias(a,s)
+#endif
 #endif /* _KERNEL */
+
+#ifndef	crt_alias
+#define	crt_alias(a,s)
+#endif
 
 #endif /* _ATOMIC_OP_NAMESPACE_H_ */
