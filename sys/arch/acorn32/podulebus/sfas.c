@@ -1,4 +1,4 @@
-/*	$NetBSD: sfas.c,v 1.23 2014/01/21 19:50:40 christos Exp $	*/
+/*	$NetBSD: sfas.c,v 1.24 2014/02/22 19:03:06 matt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfas.c,v 1.23 2014/01/21 19:50:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfas.c,v 1.24 2014/02/22 19:03:06 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,7 +178,6 @@ sfas_init_nexus(struct sfas_softc *dev, struct nexus *nexus)
 void
 sfasinitialize(struct sfas_softc *dev)
 {
-	u_int		*pte;
 	int		 i;
 
 	dev->sc_led_status = 0;
@@ -245,9 +244,11 @@ sfasinitialize(struct sfas_softc *dev)
  * Setup pages to noncachable, that way we don't have to flush the cache
  * every time we need "bumped" transfer.
  */
-	pte = vtopte((vaddr_t) dev->sc_bump_va);
-	*pte &= ~(L2_C | L2_B);
-	PTE_SYNC(pte);
+	pt_entry_t * const ptep = vtopte((vaddr_t) dev->sc_bump_va);
+	const pt_entry_t opte = *ptep;
+	const pt_entry_t npte = opte & ~(L2_C | L2_B);
+	l2pte_set(ptep, npte, opte);
+	PTE_SYNC(ptep);
 	cpu_tlb_flushD();
 	cpu_dcache_wbinv_range((vm_offset_t)dev->sc_bump_va, PAGE_SIZE);
 
