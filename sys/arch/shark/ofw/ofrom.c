@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrom.c,v 1.23 2011/07/26 08:56:26 mrg Exp $	*/
+/*	$NetBSD: ofrom.c,v 1.24 2014/02/22 18:55:18 matt Exp $	*/
 
 /*
  * Copyright 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofrom.c,v 1.23 2011/07/26 08:56:26 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofrom.c,v 1.24 2014/02/22 18:55:18 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -125,6 +125,7 @@ ofromopen(dev_t dev, int oflags, int devtype, struct lwp *l)
 int
 ofromrw(dev_t dev, struct uio *uio, int flags)
 {
+	pmap_t kpm = pmap_kernel();
 	struct ofrom_softc *sc;
 	int c, error = 0;
 	struct iovec *iov;
@@ -158,16 +159,15 @@ ofromrw(dev_t dev, struct uio *uio, int flags)
 
 		/* XXX: Use unamanged mapping. */
 		v = sc->base + uio->uio_offset;
-		pmap_enter(pmap_kernel(), (vaddr_t)memhook,
-		    trunc_page(v), uio->uio_rw == UIO_READ ?
-		    VM_PROT_READ : VM_PROT_WRITE, PMAP_WIRED);
-		pmap_update(pmap_kernel());
+		pmap_kenter_pa((vaddr_t)memhook, trunc_page(v),
+		    uio->uio_rw == UIO_READ ?  VM_PROT_READ : VM_PROT_WRITE,
+		    0);
+		pmap_update(kpm);
 		o = uio->uio_offset & PGOFSET;
 		c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
 		error = uiomove((char *)memhook + o, c, uio);
-		pmap_remove(pmap_kernel(), (vaddr_t)memhook,
-		    (vaddr_t)memhook + PAGE_SIZE);
-		pmap_update(pmap_kernel());
+		pmap_kremove((vaddr_t)memhook, (vaddr_t)memhook + PAGE_SIZE);
+		pmap_update(kpm);
 	}
 	mutex_exit(&memlock);
 
