@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_topology.c,v 1.8 2013/11/15 08:47:55 msaitoh Exp $	*/
+/*	$NetBSD: cpu_topology.c,v 1.9 2014/02/22 17:48:08 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2009 Mindaugas Rasiukevicius <rmind at NetBSD org>,
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_topology.c,v 1.8 2013/11/15 08:47:55 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_topology.c,v 1.9 2014/02/22 17:48:08 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -54,7 +54,7 @@ x86_cpu_topology(struct cpu_info *ci)
 	u_int lp_max;		/* Logical processors per package (node) */
 	u_int core_max;		/* Core per package */
 	int n, cpu_family, apic_id, smt_bits, core_bits = 0;
-	uint32_t descs[4], lextmode;
+	uint32_t descs[4];
 
 	apic_id = ci->ci_initapicid;
 	cpu_family = CPUID_TO_FAMILY(ci->ci_signature);
@@ -77,15 +77,6 @@ x86_cpu_topology(struct cpu_info *ci)
 		return;
 	}
 
-	/* Determine the extended feature flags. */
-	x86_cpuid(0x80000000, descs);
-	lextmode = descs[0];
-	if (lextmode >= 0x80000001) {
-		x86_cpuid(0x80000001, descs);
-		ci->ci_feat_val[2] = descs[3]; /* edx */
-		ci->ci_feat_val[3] = descs[2]; /* ecx */
-	}
-
 	/* Check for HTT support.  See notes below regarding AMD. */
 	if ((ci->ci_feat_val[0] & CPUID_HTT) != 0) {
 		/* Maximum number of LPs sharing a cache (ebx[23:16]). */
@@ -98,8 +89,7 @@ x86_cpu_topology(struct cpu_info *ci)
 	switch (cpu_vendor) {
 	case CPUVENDOR_INTEL:
 		/* Check for leaf 4 support. */
-		x86_cpuid(0, descs);
-		if (descs[0] >= 4) {
+		if (ci->ci_max_cpuid >= 4) {
 			/* Maximum number of Cores per package (eax[31:26]). */
 			x86_cpuid2(4, 0, descs);
 			core_max = (descs[0] >> 26) + 1;
@@ -114,7 +104,7 @@ x86_cpu_topology(struct cpu_info *ci)
 			break;
 		}
 		/* Legacy Method, LPs represent Cores. */
-		if (cpu_family < 0x10 || lextmode < 0x80000008) {
+		if (cpu_family < 0x10 || ci->ci_max_ext_cpuid < 0x80000008) {
 			core_max = lp_max;
 			break;
 		}

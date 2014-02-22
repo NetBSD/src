@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.63 2014/02/20 18:14:11 dsl Exp $	*/
+/*	$NetBSD: cpu.h,v 1.64 2014/02/22 17:48:08 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -150,18 +150,20 @@ struct cpu_info {
 	uint32_t ci_ipis;		/* interprocessor interrupts pending */
 	uint32_t sc_apic_version;	/* local APIC version */
 
-	uint32_t	ci_signature;	 /* X86 cpuid type */
+	uint32_t	ci_signature;	 /* X86 cpuid type (cpuid.1.%eax) */
 	uint32_t	ci_vendor[4];	 /* vendor string */
-	uint32_t	ci_cpu_serial[3]; /* PIII serial number */
+	uint32_t	_unused2;
+	uint32_t	ci_max_cpuid;	/* cpuid.0:%eax */
+	uint32_t	ci_max_ext_cpuid; /* cpuid.80000000:%eax */
 	volatile uint32_t	ci_lapic_counter;
 
-	uint32_t	ci_feat_val[5]; /* X86 CPUID feature bits
-					 *	[0] basic features %edx
-					 *	[1] basic features %ecx
-					 *	[2] extended features %edx
-					 *	[3] extended features %ecx
-					 *	[4] VIA padlock features
-					 */
+	uint32_t	ci_feat_val[5]; /* X86 CPUID feature bits */
+			/* [0] basic features cpuid.1:%edx
+			 * [1] basic features cpuid.1:%ecx (CPUID2_xxx bits)
+			 * [2] extended features cpuid:80000001:%edx
+			 * [3] extended features cpuid:80000001:%ecx
+			 * [4] VIA padlock features
+			 */
 	
 	const struct cpu_functions *ci_func;  /* start/stop functions */
 	struct trapframe *ci_ddb_regs;
