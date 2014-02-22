@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_sub.S,v 1.1 2014/02/20 20:39:01 martin Exp $	*/
+/*	$NetBSD: atomic_sub.S,v 1.2 2014/02/22 17:08:30 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ ATOMIC_OP_ALIAS(atomic_sub_long_nv,_atomic_sub_32_nv)
 STRONG_ALIAS(_atomic_sub_long_nv,_atomic_sub_32_nv)
 ATOMIC_OP_ALIAS(atomic_sub_ptr_nv,_atomic_sub_32_nv)
 STRONG_ALIAS(_atomic_sub_ptr_nv,_atomic_sub_32_nv)
-STRONG_ALIAS(__sync_sub_and_fetch_4,_atomic_sub_32_nv)
+CRT_ALIAS(__sync_sub_and_fetch_4,_atomic_sub_32_nv)
 
 ENTRY(__sync_fetch_and_sub_4)
 	movl	4(%sp), %a0
@@ -89,7 +89,7 @@ ENTRY(_atomic_sub_16_nv)
 	rts
 END(_atomic_sub_16_nv)
 
-STRONG_ALIAS(__sync_sub_and_fetch_2,_atomic_sub_16_nv)
+CRT_ALIAS(__sync_sub_and_fetch_2,_atomic_sub_16_nv)
 
 ENTRY(__sync_fetch_and_sub_2)
 	movl	4(%sp), %a0
@@ -111,7 +111,7 @@ ENTRY(_atomic_sub_8_nv)
 	rts
 END(_atomic_sub_8_nv)
 
-STRONG_ALIAS(__sync_sub_and_fetch_1,_atomic_sub_8_nv)
+CRT_ALIAS(__sync_sub_and_fetch_1,_atomic_sub_8_nv)
 
 ENTRY(__sync_fetch_and_sub_1)
 	movl	4(%sp), %a0

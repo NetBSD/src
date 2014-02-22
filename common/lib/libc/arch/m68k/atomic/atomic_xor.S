@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_xor.S,v 1.1 2014/02/20 20:39:01 martin Exp $	*/
+/*	$NetBSD: atomic_xor.S,v 1.2 2014/02/22 17:08:30 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@ ATOMIC_OP_ALIAS(atomic_xor_ulong_nv,_atomic_xor_32_nv)
 STRONG_ALIAS(_atomic_xor_ulong_nv,_atomic_xor_32_nv)
 ATOMIC_OP_ALIAS(atomic_xor_ptr_nv,_atomic_xor_32_nv)
 STRONG_ALIAS(_atomic_xor_ptr_nv,_atomic_xor_32_nv)
-STRONG_ALIAS(__sync_xor_and_fetch_4, _atomic_xor_32_nv)
+CRT_ALIAS(__sync_xor_and_fetch_4, _atomic_xor_32_nv)
 
 
 ENTRY(__sync_fetch_and_xor_4)
@@ -93,7 +93,7 @@ ENTRY(_atomic_xor_16_nv)
 	bne	1b
 	rts
 END(_atomic_xor_16_nv)
-STRONG_ALIAS(__sync_xor_and_fetch_2, _atomic_xor_16_nv)
+CRT_ALIAS(__sync_xor_and_fetch_2, _atomic_xor_16_nv)
 
 ENTRY(__sync_fetch_and_xor_2)
 	movl	4(%sp), %a0
@@ -117,7 +117,7 @@ ENTRY(_atomic_xor_8_nv)
 	bne	1b
 	rts
 END(_atomic_xor_8_nv)
-STRONG_ALIAS(__sync_xor_and_fetch_1, _atomic_xor_8_nv)
+CRT_ALIAS(__sync_xor_and_fetch_1, _atomic_xor_8_nv)
 
 ENTRY(__sync_fetch_and_xor_1)
 	movl	4(%sp), %a0

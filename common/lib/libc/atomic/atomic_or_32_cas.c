@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_or_32_cas.c,v 1.8 2014/01/29 15:59:11 joerg Exp $	*/
+/*	$NetBSD: atomic_or_32_cas.c,v 1.9 2014/02/22 17:08:30 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,11 @@
 #include <sys/atomic.h>
 
 uint32_t fetch_and_or_4(volatile uint32_t *, uint32_t, ...)
-    asm("__sync_fetch_and_or_4");
+#if defined(_LIBC) || defined(_HARDKERNEL)
+    asm("__sync_fetch_and_or_4");	/* C runtime internal */
+#else
+    ;
+#endif
 
 uint32_t
 fetch_and_or_4(volatile uint32_t *addr, uint32_t val, ...)

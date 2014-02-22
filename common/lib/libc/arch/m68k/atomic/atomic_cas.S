@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas.S,v 1.9 2014/02/20 16:33:23 martin Exp $	*/
+/*	$NetBSD: atomic_cas.S,v 1.10 2014/02/22 17:08:30 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@ ATOMIC_OP_ALIAS(atomic_cas_ulong,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_ulong,_atomic_cas_32)
 ATOMIC_OP_ALIAS(atomic_cas_ptr,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_ptr,_atomic_cas_32)
-STRONG_ALIAS(__sync_val_compare_and_swap_4,_atomic_cas_32)
+CRT_ALIAS(__sync_val_compare_and_swap_4,_atomic_cas_32)
 
 ATOMIC_OP_ALIAS(atomic_cas_32_ni,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_32_ni,_atomic_cas_32)
@@ -85,7 +85,7 @@ ENTRY(_atomic_cas_16)
 END(_atomic_cas_16)
 
 ATOMIC_OP_ALIAS(atomic_cas_16,_atomic_cas_16)
-STRONG_ALIAS(__sync_val_compare_and_swap_2,_atomic_cas_16)
+CRT_ALIAS(__sync_val_compare_and_swap_2,_atomic_cas_16)
 
 ENTRY(__sync_bool_compare_and_swap_2)
 	movl	4(%sp), %a0
@@ -111,7 +111,7 @@ ENTRY(_atomic_cas_8)
 END(_atomic_cas_8)
 
 ATOMIC_OP_ALIAS(atomic_cas_8,_atomic_cas_8)
-STRONG_ALIAS(__sync_val_compare_and_swap_1,_atomic_cas_8)
+CRT_ALIAS(__sync_val_compare_and_swap_1,_atomic_cas_8)
 
 
 ENTRY(__sync_bool_compare_and_swap_1)
