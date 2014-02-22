@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoc_intr.c,v 1.8 2013/11/20 12:16:47 kiyohara Exp $	*/
+/*	$NetBSD: mvsoc_intr.c,v 1.9 2014/02/22 16:14:38 martin Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoc_intr.c,v 1.8 2013/11/20 12:16:47 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoc_intr.c,v 1.9 2014/02/22 16:14:38 martin Exp $");
 
 #include "opt_mvsoc.h"
 
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: mvsoc_intr.c,v 1.8 2013/11/20 12:16:47 kiyohara Exp 
 
 #include <machine/intr.h>
 
+#include <arm/armreg.h>
 #include <arm/cpu.h>
 #include <arm/pic/picvar.h>
 #include <arm/marvell/mvsocreg.h>
