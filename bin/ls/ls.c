@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.72 2014/02/21 02:42:41 christos Exp $	*/
+/*	$NetBSD: ls.c,v 1.73 2014/02/22 13:08:13 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.72 2014/02/21 02:42:41 christos Exp $");
+__RCSID("$NetBSD: ls.c,v 1.73 2014/02/22 13:08:13 mlelstv Exp $");
 #endif
 #endif /* not lint */
 
@@ -151,7 +151,7 @@ ls_main(int argc, char *argv[])
 		f_listdot = 1;
 
 	fts_options = FTS_PHYSICAL;
-	while ((ch = getopt(argc, argv, "1AaBbCcdFfghikLlMmnOoPpqRrSsTtWwXx"))
+	while ((ch = getopt(argc, argv, "1AaBbCcdFfghikLlMmnOoPpqRrSsTtuWwXx"))
 	    != -1) {
 		switch (ch) {
 		/*
