@@ -1,4 +1,4 @@
-/* $NetBSD: tsc.c,v 1.23 2014/02/21 12:23:30 jdc Exp $ */
+/* $NetBSD: tsc.c,v 1.24 2014/02/22 18:42:47 martin Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.23 2014/02/21 12:23:30 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.24 2014/02/22 18:42:47 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.23 2014/02/21 12:23:30 jdc Exp $");
 #include <dev/pci/pcivar.h>
 #include <alpha/pci/tsreg.h>
 #include <alpha/pci/tsvar.h>
+
+#include "tsciic.h"
 
 #ifdef DEC_6600
 #include <alpha/pci/pci_6600.h>
@@ -88,7 +90,9 @@ static void tsciicattach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(tsciic, sizeof(struct tsciic_softc), tsciicmatch,
     tsciicattach, NULL, NULL);
 
+#if NTSCIIC
 extern struct cfdriver tsciic_cd;
+#endif
 
 /* There can be only one */
 static int tscfound;
@@ -310,12 +314,16 @@ tsp_bus_get_window(int type, int window,
 static int
 tsciicmatch(device_t parent, cfdata_t match, void *aux)
 {
+#if NTSCIIC
 	struct tsciic_attach_args *t = aux;
+#endif
 
 	switch (cputype) {
 	case ST_DEC_6600:
 	case ST_DEC_TITAN:
+#if NTSCIIC
 		return strcmp(t->tsciic_name, tsciic_cd.cd_name) == 0;
+#endif
 	default:
 		return 0;
 	}
@@ -324,7 +332,9 @@ tsciicmatch(device_t parent, cfdata_t match, void *aux)
 static void
 tsciicattach(device_t parent, device_t self, void *aux)
 {
+#if NTSCIIC
 	tsciic_init(self);
+#endif
 }
 
 void
