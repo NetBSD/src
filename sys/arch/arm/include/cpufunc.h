@@ -240,7 +240,7 @@ u_int	arm3_control		(u_int, u_int);
 #if defined(CPU_ARM6) || defined(CPU_ARM7)
 void	arm67_setttb		(u_int, bool);
 void	arm67_tlb_flush		(void);
-void	arm67_tlb_purge		(u_int);
+void	arm67_tlb_purge		(vaddr_t);
 void	arm67_cache_flush	(void);
 void	arm67_context_switch	(u_int);
 #endif	/* CPU_ARM6 || CPU_ARM7 */
@@ -755,11 +755,13 @@ struct arm_cache_info {
 	u_int icache_size;
 	u_int icache_line_size;
 	u_int icache_ways;
+	u_int icache_way_size;
 	u_int icache_sets;
 
 	u_int dcache_size;
 	u_int dcache_line_size;
 	u_int dcache_ways;
+	u_int dcache_way_size;
 	u_int dcache_sets;
 
 	u_int cache_type;
