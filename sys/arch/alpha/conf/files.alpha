@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.186 2014/02/21 12:23:30 jdc Exp $
+# $NetBSD: files.alpha,v 1.187 2014/02/22 18:42:47 martin Exp $
 #
 # alpha-specific configuration info
 
@@ -277,7 +277,7 @@ file	arch/alpha/pci/tsp_bus_mem.c	tsp
 
 device	tsciic: i2cbus, i2c_bitbang
 attach	tsciic at tsc
-file	arch/alpha/pci/tsciic.c	tsciic
+file	arch/alpha/pci/tsciic.c	tsciic	needs-flag
 
 device	ttwoga { hose = -1 }
 attach	ttwoga at mainbus
