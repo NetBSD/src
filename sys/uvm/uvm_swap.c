@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.166 2014/02/03 13:20:21 manu Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.167 2014/02/22 19:05:31 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.166 2014/02/03 13:20:21 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.167 2014/02/22 19:05:31 mlelstv Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -397,7 +397,7 @@ swaplist_trim(void)
 	struct swappri *spp, *nextspp;
 
 	LIST_FOREACH_SAFE(spp, &swap_priority, spi_swappri, nextspp) {
-		if (TAILQ_EMPTY(&spp->spi_swapdev))
+		if (!TAILQ_EMPTY(&spp->spi_swapdev))
 			continue;
 		LIST_REMOVE(spp, spi_swappri);
 		kmem_free(spp, sizeof(*spp));
