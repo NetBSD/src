@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.62 2013/11/06 02:41:12 christos Exp $	*/
+/*	$NetBSD: ofw.c,v 1.63 2014/02/22 18:55:53 matt Exp $	*/
 
 /*
  * Copyright 1997
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.62 2013/11/06 02:41:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.63 2014/02/22 18:55:53 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1047,14 +1047,18 @@ ofw_callbackhandler(void *v)
 
 		/* Install new mappings. */
 		{
-			pt_entry_t *pte = vtopte(va);
-			int npages = size >> PGSHIFT;
-
+			pt_entry_t *ptep = vtopte(va);
+			KASSERT(ptep + size / L2_S_SIZE == vtopte(va + size));
+			pt_entry_t npte = pa | L2_TYPE_S | L2_AP(ap_bits)
+			    | cb_bits;
+			
 			ap_bits >>= 10;
-			for (; npages > 0; pte++, pa += PAGE_SIZE, npages--)
-				*pte = (pa | L2_AP(ap_bits) | L2_TYPE_S |
-				    cb_bits);
-			PTE_SYNC_RANGE(vtopte(va), size >> PGSHIFT);
+			for (size_t npages = size >> PGSHIFT;
+			     npages-- > 0;
+			     ptep += PAGE_SIZE / L2_S_SIZE, npte += PAGE_SIZE) {
+				l2pte_set(ptep, npte, 0);
+			}
+			PTE_SYNC_RANGE(vtopte(va), size >> L2_S_SHIFT);
 		}
 
 		/* Clean out tlb. */
@@ -1091,12 +1095,14 @@ ofw_callbackhandler(void *v)
 
 		/* Zero the mappings. */
 		{
-			pt_entry_t *pte = vtopte(va);
-			int npages = size >> PGSHIFT;
-
-			for (; npages > 0; pte++, npages--)
-				*pte = 0;
-			PTE_SYNC_RANGE(vtopte(va), size >> PGSHIFT);
+			pt_entry_t *ptep = vtopte(va);
+			
+			for (size_t npages = size >> PGSHIFT;
+			     npages-- > 0;
+			     ptep += PAGE_SIZE / L2_S_SIZE) {
+				l2pte_reset(ptep);
+			}
+			PTE_SYNC_RANGE(vtopte(va), size >> L2_S_SHIFT);
 		}
 
 		/* Clean out tlb. */
