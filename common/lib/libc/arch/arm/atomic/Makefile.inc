@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.17 2014/02/22 08:08:56 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.18 2014/02/22 17:16:12 martin Exp $
 
 ARMV6= ${CPUFLAGS:M-march=armv6*} ${CPUFLAGS:M-mcpu=arm11*}
 ARMV6+= ${CFLAGS:M-march=armv6*:} ${CFLAGS:M-mcpu=arm11*}
@@ -31,7 +31,8 @@ SRCS.atomic+=	atomic_xor_32_cas.c atomic_xor_16_cas.c atomic_xor_8_cas.c \
 		atomic_or_16_cas.c atomic_or_8_cas.c \
 		atomic_and_16_cas.c atomic_and_8_cas.c \
 		atomic_add_16_cas.c atomic_add_8_cas.c \
-		atomic_swap_16_cas.c atomic_swap_8_cas.c
+		atomic_swap_16_cas.c atomic_swap_8_cas.c \
+		atomic_cas_32_cas.c atomic_cas_16_cas.c atomic_cas_8_cas.c
 .endif
 
 .else
