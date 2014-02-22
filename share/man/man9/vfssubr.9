@@ -1,4 +1,4 @@
-.\"     $NetBSD: vfssubr.9,v 1.21 2014/02/22 10:05:54 hannken Exp $
+.\"     $NetBSD: vfssubr.9,v 1.22 2014/02/22 11:08:05 wiz Exp $
 .\"
 .\" Copyright (c) 2003, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -138,7 +138,9 @@ This function is used to synchronize access and to delay unmounting.
 The caller must hold a pre-existing reference to the mount.
 If
 .Fa nextp
-is not NULL, the caller must hold the
+is not
+.Dv NULL ,
+the caller must hold the
 .Em mountlist_lock
 and
 .Fa nextp
@@ -157,7 +159,9 @@ is true, preserve the reference added by
 .Fn vfs_busy .
 If
 .Fa nextp
-is not NULL, the
+is not
+.Dv NULL ,
+the
 .Em mountlist_lock
 will be aquired and
 .Fa nextp
