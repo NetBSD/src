@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11 2014/02/22 08:24:27 skrll Exp $
+#	$NetBSD: Makefile.inc,v 1.12 2014/02/22 10:23:24 skrll Exp $
 
 .if defined(LIB)
 
@@ -24,4 +24,14 @@ CPPFLAGS+= -D__HAVE_ASM_ATOMIC_CAS_16_UP
 CPPFLAGS+= -D__HAVE_ASM_ATOMIC_CAS_8_UP
 .  endif
 
+.if defined(LIB) && ${LIB} == "c"
+SRCS+=	atomic_xor_32_cas.c atomic_xor_16_cas.c atomic_xor_8_cas.c	\
+	atomic_sub_32_cas.c atomic_sub_16_cas.c atomic_sub_8_cas.c	\
+	atomic_nand_32_cas.c atomic_nand_16_cas.c atomic_nand_8_cas.c	\
+	atomic_or_16_cas.c atomic_or_8_cas.c				\
+	atomic_and_16_cas.c atomic_and_8_cas.c				\
+	atomic_add_16_cas.c atomic_add_8_cas.c				\
+	atomic_swap_16_cas.c atomic_swap_8_cas.c			\
+	atomic_cas_32_cas.c atomic_cas_16_cas.c atomic_cas_8_cas.c
+.endif
 .endif
