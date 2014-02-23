@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_io.c,v 1.16 2014/02/22 20:33:00 matt Exp $ */
+/*	$NetBSD: ixp12x0_io.c,v 1.17 2014/02/23 08:07:33 martin Exp $ */
 
 /*
  * Copyright (c) 2002, 2003
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_io.c,v 1.16 2014/02/22 20:33:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_io.c,v 1.17 2014/02/23 08:07:33 martin Exp $");
 
 /*
  * bus_space I/O functions for ixp12x0
@@ -160,7 +160,7 @@ ixp12x0_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
 	*bshp = va + offset;
 
 	const int pmapflags =
-	    (flag & (BUS_SPACE_MAP_CACHEABLE|BUS_SPACE_MAP_PREFETCHABLE))
+	    (flags & (BUS_SPACE_MAP_CACHEABLE|BUS_SPACE_MAP_PREFETCHABLE))
 		? 0
 		: PMAP_NOCACHE;
 	for (pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
