@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.750 2014/02/20 18:19:10 dsl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.751 2014/02/23 12:56:40 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.750 2014/02/20 18:19:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.751 2014/02/23 12:56:40 dsl Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -589,47 +589,6 @@ cpu_init_tss(struct cpu_info *ci)
 	ci->ci_tss_sel = tss_alloc(tss);
 }
 #endif /* XEN */
-
-/*
- * machine dependent system variables.
- */
-SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
-{
-	x86_sysctl_machdep_setup(clog);
-
-#ifndef XEN
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "biosbasemem", NULL,
-		       NULL, 0, &biosbasemem, 0,
-		       CTL_MACHDEP, CPU_BIOSBASEMEM, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "biosextmem", NULL,
-		       NULL, 0, &biosextmem, 0,
-		       CTL_MACHDEP, CPU_BIOSEXTMEM, CTL_EOL);
-#endif /* XEN */
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "osfxsr", NULL,
-		       NULL, 0, &i386_use_fxsave, 0,
-		       CTL_MACHDEP, CPU_OSFXSR, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "fpu_present", NULL,
-		       NULL, 0, &i386_fpu_present, 0,
-		       CTL_MACHDEP, CPU_FPU_PRESENT, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "sse", NULL,
-		       NULL, 0, &i386_has_sse, 0,
-		       CTL_MACHDEP, CPU_SSE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "sse2", NULL,
-		       NULL, 0, &i386_has_sse2, 0,
-		       CTL_MACHDEP, CPU_SSE2, CTL_EOL);
-}
 
 void *
 getframe(struct lwp *l, int sig, int *onstack)
