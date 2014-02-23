@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.61 2013/10/05 16:50:31 rmind Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.62 2014/02/23 12:56:40 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.61 2013/10/05 16:50:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.62 2014/02/23 12:56:40 dsl Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -1055,8 +1055,18 @@ sysctl_machdep_diskinfo(SYSCTLFN_ARGS)
         return sysctl_lookup(SYSCTLFN_CALL(&node));
 }
 
-void
-x86_sysctl_machdep_setup(struct sysctllog **clog) {
+static void
+const_sysctl(struct sysctllog **clog, const char *name, u_quad_t value, int tag)
+{
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT | CTLFLAG_IMMEDIATE,
+		       CTLTYPE_QUAD, name, NULL,
+		       NULL, value, NULL, 0,
+		       CTL_MACHDEP, tag, CTL_EOL);
+}
+
+SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
+{
 	extern uint64_t tsc_freq;
 	extern int sparse_dump;
 
@@ -1081,6 +1091,7 @@ x86_sysctl_machdep_setup(struct sysctllog **clog) {
 		       CTLTYPE_STRUCT, "diskinfo", NULL,
 		       sysctl_machdep_diskinfo, 0, NULL, 0,
 		       CTL_MACHDEP, CPU_DISKINFO, CTL_EOL);
+
 	sysctl_createv(clog, 0, NULL, NULL, 
 	    	       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "cpu_brand", NULL,
@@ -1102,4 +1113,19 @@ x86_sysctl_machdep_setup(struct sysctllog **clog) {
 		       SYSCTL_DESCR("Whether the kernel uses PAE"),
 		       NULL, 0, &use_pae, 0,
 		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+
+	/* None of these can ever change once the system has booted */
+	const_sysctl(clog, "fpu_present", i386_fpu_present, CPU_FPU_PRESENT);
+	const_sysctl(clog, "osfxsr", i386_use_fxsave, CPU_OSFXSR);
+	const_sysctl(clog, "sse", i386_has_sse, CPU_SSE);
+	const_sysctl(clog, "sse2", i386_has_sse2, CPU_SSE2);
+
+	const_sysctl(clog, "fpu_save", x86_fpu_save, CTL_CREATE);
+	const_sysctl(clog, "xsave_size", x86_xsave_size, CTL_CREATE);
+	const_sysctl(clog, "xsave_features", x86_xsave_features, CTL_CREATE);
+
+#ifndef XEN
+	const_sysctl(clog, "biosbasemem", biosbasemem, CPU_BIOSBASEMEM);
+	const_sysctl(clog, "biosextmem", biosextmem, CPU_BIOSEXTMEM);
+#endif
 }

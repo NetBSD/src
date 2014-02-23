@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.206 2014/02/20 18:19:09 dsl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.207 2014/02/23 12:56:40 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.206 2014/02/20 18:19:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.207 2014/02/23 12:56:40 dsl Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -509,27 +509,6 @@ cpu_init_tss(struct cpu_info *ci)
 	p = uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_WIRED);
 	tss->tss_ist[2] = p + PAGE_SIZE - 16;
 	ci->ci_tss_sel = tss_alloc(tss);
-}
-
-SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
-{
-	x86_sysctl_machdep_setup(clog);
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT | CTLFLAG_IMMEDIATE,
-		       CTLTYPE_INT, "fpu_present", NULL,
-		       NULL, 1, NULL, 0,
-		       CTL_MACHDEP, CPU_FPU_PRESENT, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT | CTLFLAG_IMMEDIATE,
-		       CTLTYPE_INT, "sse", NULL,
-		       NULL, 1, NULL, 0,
-		       CTL_MACHDEP, CPU_SSE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT | CTLFLAG_IMMEDIATE,
-		       CTLTYPE_INT, "sse2", NULL,
-		       NULL, 1, NULL, 0,
-		       CTL_MACHDEP, CPU_SSE2, CTL_EOL);
 }
 
 void

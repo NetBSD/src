@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.6 2014/02/15 22:20:42 dsl Exp $	*/
+/*	$NetBSD: fpu.c,v 1.7 2014/02/23 12:56:40 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.6 2014/02/15 22:20:42 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.7 2014/02/23 12:56:40 dsl Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -241,34 +241,11 @@ static const uint8_t fpetable[128] = {
 void
 fpuinit(struct cpu_info *ci)
 {
+	if (!i386_fpu_present)
+		return;
+
 	clts();
 	fninit();
-
-#if defined(__i386__) && !defined(XEN)
-	{
-		uint16_t control;
-
-		/* Read the default control word */
-		fnstcw(&control); 
-
-		if (control != __INITIAL_NPXCW__) {
-			/* Must be a 486SX, trap FP instructions */
-			lcr0((rcr0() & ~CR0_MP) | CR0_EM);
-			aprint_normal_dev(ci->ci_dev, "no fpu (control %x)\n",
-			    control);
-			i386_fpu_present = 0;
-			return;
-		}
-
-		if (npx586bug1(4195835, 3145727) != 0) {
-			/* NB 120+MHz cpus are not affected */
-			i386_fpu_fdivbug = 1;
-			aprint_normal_dev(ci->ci_dev,
-			    "WARNING: Pentium FDIV bug detected!\n");
-		}
-	}
-#endif
-
 	stts();
 }
 
