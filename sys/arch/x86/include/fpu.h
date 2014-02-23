@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.4 2014/02/15 22:20:42 dsl Exp $	*/
+/*	$NetBSD: fpu.h,v 1.5 2014/02/23 22:35:27 dsl Exp $	*/
 
 #ifndef	_X86_FPU_H_
 #define	_X86_FPU_H_
@@ -14,6 +14,8 @@ struct trapframe;
 void fpuinit(struct cpu_info *);
 void fpusave_lwp(struct lwp *, bool);
 void fpusave_cpu(bool);
+
+void fpu_set_default_cw(struct lwp *, unsigned int);
 
 void fputrap(struct trapframe *);
 void fpudna(struct trapframe *);
