@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.257 2013/02/09 00:31:21 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.258 2014/02/23 07:54:43 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.257 2013/02/09 00:31:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.258 2014/02/23 07:54:43 mlelstv Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -927,12 +927,15 @@ int
 ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	extern struct tty *constty;	/* Temporary virtual console. */
-	struct proc *p = l ? l->l_proc : NULL;
+	struct proc *p;
 	struct linesw	*lp;
 	int		s, error;
 	struct pathbuf *pb;
 	struct nameidata nd;
 	char		infobuf[200];
+
+	KASSERT(l != NULL);
+	p = l->l_proc;
 
 	/* If the ioctl involves modification, hang if in the background. */
 	switch (cmd) {
