@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_pax.c,v 1.11 2014/02/19 22:21:16 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_pax.c,v 1.12 2014/02/23 21:19:06 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -47,6 +47,8 @@ __KERNEL_RCSID(1, "$NetBSD: bcm53xx_pax.c,v 1.11 2014/02/19 22:21:16 matt Exp $"
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pciconf.h>
+
+#include <arm/locore.h>
 
 #include <arm/broadcom/bcm53xx_reg.h>
 #include <arm/broadcom/bcm53xx_var.h>
