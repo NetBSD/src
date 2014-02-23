@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.25 2013/10/28 22:51:16 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.26 2014/02/23 21:19:06 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -58,6 +58,8 @@ __KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.25 2013/10/28 22:51:16 matt Exp $"
 #include <net/bpf.h>
 
 #include <dev/mii/miivar.h>
+
+#include <arm/locore.h>
 
 #include <arm/broadcom/bcm53xx_reg.h>
 #include <arm/broadcom/bcm53xx_var.h>
