@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.7 2014/02/23 12:56:40 dsl Exp $	*/
+/*	$NetBSD: fpu.c,v 1.8 2014/02/23 22:35:28 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.7 2014/02/23 12:56:40 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.8 2014/02/23 22:35:28 dsl Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -247,6 +247,18 @@ fpuinit(struct cpu_info *ci)
 	clts();
 	fninit();
 	stts();
+}
+
+void
+fpu_set_default_cw(struct lwp *lwp, unsigned int x87_cw)
+{
+	union savefpu *fpu_save = process_fpframe(lwp);
+
+	if (i386_use_fxsave)
+		fpu_save->sv_xmm.fx_cw = x87_cw;
+	else
+		fpu_save->sv_87.s87_cw = x87_cw;
+	fpu_save->sv_os.fxo_dflt_cw = x87_cw;
 }
 
 static void
