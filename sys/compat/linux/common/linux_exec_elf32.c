@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.89 2014/02/21 07:53:53 maxv Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.90 2014/02/23 11:09:42 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.89 2014/02/21 07:53:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.90 2014/02/23 11:09:42 njoly Exp $");
 
 #ifndef ELFSIZE
 /* XXX should die */
@@ -495,7 +495,7 @@ ELFNAME2(linux,copyargs)(struct lwp *l, struct exec_package *pack,
 	*stackp += len;
 
 	len = (a - ai) * sizeof(AuxInfo);
-	KASSERT(len <= LINUX_ELF_AUX_ENTRIES);
+	KASSERT(len <= LINUX_ELF_AUX_ENTRIES * sizeof(AuxInfo));
 	if ((error = copyout(ai, *stackp, len)) != 0)
 		return error;
 	*stackp += len;
