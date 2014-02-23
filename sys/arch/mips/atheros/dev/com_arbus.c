@@ -1,4 +1,4 @@
-/* $NetBSD: com_arbus.c,v 1.11 2014/02/07 15:49:40 msaitoh Exp $ */
+/* $NetBSD: com_arbus.c,v 1.12 2014/02/23 20:56:29 martin Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_arbus.c,v 1.11 2014/02/07 15:49:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_arbus.c,v 1.12 2014/02/23 20:56:29 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,7 +227,7 @@ com_arbus_initmap(struct com_regs *regsp)
 	int off = 3;
 #else
 	int off = 0;
-#endif;
+#endif
 
 	/* rewrite the map to shift for alignment */
 	for (size_t i = 0; i < __arraycount(regsp->cr_map); i++) {
