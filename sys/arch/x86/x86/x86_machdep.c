@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.62 2014/02/23 12:56:40 dsl Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.63 2014/02/23 22:38:40 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.62 2014/02/23 12:56:40 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.63 2014/02/23 22:38:40 dsl Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -1121,7 +1121,7 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 	const_sysctl(clog, "sse2", i386_has_sse2, CPU_SSE2);
 
 	const_sysctl(clog, "fpu_save", x86_fpu_save, CTL_CREATE);
-	const_sysctl(clog, "xsave_size", x86_xsave_size, CTL_CREATE);
+	const_sysctl(clog, "fpu_save_size", x86_fpu_save_size, CTL_CREATE);
 	const_sysctl(clog, "xsave_features", x86_xsave_features, CTL_CREATE);
 
 #ifndef XEN
