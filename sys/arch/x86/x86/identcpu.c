@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.41 2014/02/23 12:56:40 dsl Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.42 2014/02/23 22:38:40 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.41 2014/02/23 12:56:40 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.42 2014/02/23 22:38:40 dsl Exp $");
 
 #include "opt_xen.h"
 
@@ -61,7 +61,7 @@ int cpu_vendor;
 char cpu_brand_string[49];
 
 int x86_fpu_save = FPU_SAVE_FSAVE;
-unsigned int x86_xsave_size = 0;
+unsigned int x86_fpu_save_size = 512;
 uint64_t x86_xsave_features = 0;
 
 /*
@@ -756,7 +756,8 @@ cpu_probe_fpu(struct cpu_info *ci)
 	/* Get features and maximum size of the save area */
 	x86_cpuid(0xd, descs);
 	/* XXX these probably ought to be per-cpu */
-	x86_xsave_size = descs[2];
+	if (descs[2] > 512)
+	    x86_fpu_save_size = descs[2];
 	x86_xsave_features = (uint64_t)descs[3] << 32 | descs[0];
 }
 
