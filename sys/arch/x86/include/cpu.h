@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.64 2014/02/22 17:48:08 dsl Exp $	*/
+/*	$NetBSD: cpu.h,v 1.65 2014/02/23 12:56:40 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -381,6 +381,14 @@ extern int i386_has_sse2;
 #define	i386_has_sse		1
 #define	i386_has_sse2		1
 #endif
+
+extern int x86_fpu_save;
+#define	FPU_SAVE_FSAVE		0
+#define	FPU_SAVE_FXSAVE		1
+#define	FPU_SAVE_XSAVE		2
+#define	FPU_SAVE_XSAVEOPT	3
+extern unsigned int x86_xsave_size;
+extern uint64_t x86_xsave_features;
 
 extern void (*x86_cpu_idle)(void);
 #define	cpu_idle() (*x86_cpu_idle)()
