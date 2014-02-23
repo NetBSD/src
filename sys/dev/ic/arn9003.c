@@ -1,4 +1,4 @@
-/*	$NetBSD: arn9003.c,v 1.5 2013/10/22 13:04:25 skrll Exp $	*/
+/*	$NetBSD: arn9003.c,v 1.6 2014/02/23 15:29:12 christos Exp $	*/
 /*	$OpenBSD: ar9003.c,v 1.25 2012/10/20 09:53:32 stsp Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arn9003.c,v 1.5 2013/10/22 13:04:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arn9003.c,v 1.6 2014/02/23 15:29:12 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -228,12 +228,12 @@ ar9003_attach(struct athn_softc *sc)
 
 	/* Determine ROM type and location. */
 	if ((error = ar9003_find_rom(sc)) != 0) {
-		printf("%s: could not find ROM\n", device_xname(sc->sc_dev));
+		aprint_error_dev(sc->sc_dev, "could not find ROM\n");
 		return error;
 	}
 	/* Read entire ROM content in memory. */
 	if ((error = ar9003_read_rom(sc)) != 0) {
-		printf("%s: could not read ROM\n", device_xname(sc->sc_dev));
+		aprint_error_dev(sc->sc_dev, "could not read ROM\n");
 		return error;
 	}
 
@@ -694,8 +694,8 @@ ar9003_tx_alloc(struct athn_softc *sc)
 		    AR9003_MAX_SCATTER, ATHN_TXBUFSZ, 0, BUS_DMA_NOWAIT,
 		    &bf->bf_map);
 		if (error != 0) {
-			printf("%s: could not create Tx buf DMA map\n",
-			    device_xname(sc->sc_dev));
+			aprint_error_dev(sc->sc_dev,
+			    "could not create Tx buf DMA map\n");
 			goto fail;
 		}
 
@@ -766,8 +766,8 @@ ar9003_rx_alloc(struct athn_softc *sc, int qid, int count)
 		    ATHN_RXBUFSZ, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
 		    &bf->bf_map);
 		if (error != 0) {
-			printf("%s: could not create Rx buf DMA map\n",
-			    device_xname(sc->sc_dev));
+			aprint_error_dev(sc->sc_dev,
+			    "could not create Rx buf DMA map\n");
 			goto fail;
 		}
 		/*
@@ -775,8 +775,8 @@ ar9003_rx_alloc(struct athn_softc *sc, int qid, int count)
 		 */
 		bf->bf_m = MCLGETI(NULL, M_DONTWAIT, NULL, ATHN_RXBUFSZ);
 		if (bf->bf_m == NULL) {
-			printf("%s: could not allocate Rx mbuf\n",
-			    device_xname(sc->sc_dev));
+			aprint_error_dev(sc->sc_dev,
+			    "could not allocate Rx mbuf\n");
 			error = ENOBUFS;
 			goto fail;
 		}
@@ -785,8 +785,8 @@ ar9003_rx_alloc(struct athn_softc *sc, int qid, int count)
 		    mtod(bf->bf_m, void *), ATHN_RXBUFSZ, NULL,
 		    BUS_DMA_NOWAIT);
 		if (error != 0) {
-			printf("%s: could not DMA map Rx buffer\n",
-			    device_xname(sc->sc_dev));
+			aprint_error_dev(sc->sc_dev,
+			    "could not DMA map Rx buffer\n");
 			goto fail;
 		}
 
@@ -953,7 +953,7 @@ ar9003_rx_process(struct athn_softc *sc, int qid)
 
 	bf = SIMPLEQ_FIRST(&rxq->head);
 	if (__predict_false(bf == NULL)) {	/* Should not happen. */
-		printf("%s: Rx queue is empty!\n", device_xname(sc->sc_dev));
+		aprint_error_dev(sc->sc_dev, "Rx queue is empty!\n");
 		return ENOENT;
 	}
 	bus_dmamap_sync(sc->sc_dmat, bf->bf_map, 0, ATHN_RXBUFSZ,
@@ -1548,8 +1548,8 @@ ar9003_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 	    BUS_DMA_NOWAIT | BUS_DMA_WRITE);
 	if (__predict_false(error != 0)) {
 		if (error != EFBIG) {
-			printf("%s: can't map mbuf (error %d)\n",
-			    device_xname(sc->sc_dev), error);
+			aprint_error_dev(sc->sc_dev,
+			    "can't map mbuf (error %d)\n", error);
 			m_freem(m);
 			return error;
 		}
@@ -1578,8 +1578,8 @@ ar9003_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, bf->bf_map, m,
 		    BUS_DMA_NOWAIT | BUS_DMA_WRITE);
 		if (error != 0) {
-			printf("%s: can't map mbuf (error %d)\n",
-			    device_xname(sc->sc_dev), error);
+			aprint_error_dev(sc->sc_dev,
+			    "can't map mbuf (error %d)\n", error);
 			m_freem(m);
 			return error;
 		}
