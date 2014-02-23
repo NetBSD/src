@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.1 2007/11/09 21:18:25 plunky Exp $	*/
+/*	$NetBSD: file.c,v 1.2 2014/02/23 07:50:01 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2007 Iain Hibbert
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: file.c,v 1.1 2007/11/09 21:18:25 plunky Exp $");
+__RCSID("$NetBSD: file.c,v 1.2 2014/02/23 07:50:01 mlelstv Exp $");
 
 #include <sys/stat.h>
 #include <prop/proplib.h>
@@ -67,8 +67,8 @@ list_file(void)
 		goto done;
 
 	while ((sym = prop_object_iterator_next(iter)) != NULL) {
-		memset(&bdaddr, 0, sizeof(bdaddr));
-		bt_aton(prop_dictionary_keysym_cstring_nocopy(sym), &bdaddr);
+		if (bt_aton(prop_dictionary_keysym_cstring_nocopy(sym), &bdaddr) == 0)
+			continue;
 		if (bdaddr_any(&bdaddr))
 			continue;
 
