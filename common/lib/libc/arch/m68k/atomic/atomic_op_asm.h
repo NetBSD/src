@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_op_asm.h,v 1.4 2014/02/22 17:08:30 martin Exp $	*/
+/*	$NetBSD: atomic_op_asm.h,v 1.5 2014/02/23 07:43:38 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -46,7 +46,6 @@
 #define	ATOMIC_OP_ALIAS(a,s)	WEAK_ALIAS(a,s)
 #ifdef _LIBC
 #define	CRT_ALIAS(a,s)		STRONG_ALIAS(a,s)
-#endif
 #endif
 
 #endif /* _KERNEL */
