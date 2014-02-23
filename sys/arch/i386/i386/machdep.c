@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.751 2014/02/23 12:56:40 dsl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.752 2014/02/23 22:36:43 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.751 2014/02/23 12:56:40 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.752 2014/02/23 22:36:43 dsl Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1185,12 +1185,6 @@ init386(paddr_t first_avail)
 	uvm_setpagesize();
 
 	/*
-	 * Saving SSE registers won't work if the save area isn't
-	 * 16-byte aligned.
-	 */
-	KASSERT((offsetof(struct pcb, pcb_savefpu) & 0xf) == 0);
-
-	/*
 	 * Start with 2 color bins -- this is just a guess to get us
 	 * started.  We'll recolor when we determine the largest cache
 	 * sizes on the system.
@@ -1540,7 +1534,6 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 {
 	const struct trapframe *tf = l->l_md.md_regs;
 	__greg_t *gr = mcp->__gregs;
-	struct pcb *pcb;
 	__greg_t ras_eip;
 
 	/* Save register context. */
@@ -1593,7 +1586,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	 * It wouldn't matter if we were doing the copyout here.
 	 * So we might as well convert to fxsave format.
 	 */
-	__CTASSERT(sizeof pcb->pcb_savefpu.sv_xmm ==
+	__CTASSERT(sizeof (struct fxsave) ==
 	    sizeof mcp->__fpregs.__fp_reg_set.__fp_xmm_state);
 	process_read_fpregs_xmm(l, (struct fxsave *)
 	    &mcp->__fpregs.__fp_reg_set.__fp_xmm_state);
@@ -1626,7 +1619,6 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 	const __greg_t *gr = mcp->__gregs;
-	struct pcb *pcb = lwp_getpcb(l);
 	struct proc *p = l->l_proc;
 	int error;
 
@@ -1676,9 +1668,9 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 
 	/* Restore floating point register context, if given. */
 	if ((flags & _UC_FPU) != 0) {
-		__CTASSERT(sizeof pcb->pcb_savefpu.sv_xmm ==
+		__CTASSERT(sizeof (struct fxsave) ==
 		    sizeof mcp->__fpregs.__fp_reg_set.__fp_xmm_state);
-		__CTASSERT(sizeof pcb->pcb_savefpu.sv_87 ==
+		__CTASSERT(sizeof (struct save87) ==
 		    sizeof mcp->__fpregs.__fp_reg_set.__fpchip_state);
 
 		if (flags & _UC_FXSAVE) {
