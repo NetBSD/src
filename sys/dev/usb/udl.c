@@ -1,4 +1,4 @@
-/*	$NetBSD: udl.c,v 1.10 2013/11/14 13:11:50 skrll Exp $	*/
+/*	$NetBSD: udl.c,v 1.11 2014/02/23 13:22:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 FUKAUMI Naoki.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.10 2013/11/14 13:11:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.11 2014/02/23 13:22:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1534,7 +1534,7 @@ udl_cmd_send_async_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 	TAILQ_REMOVE(&sc->sc_xfercmd, cmdq, cq_chain);
 	udl_cmdq_put(sc, cmdq);
 
-	/* wakeup xfer op that sleeps for a free xfer buffer */
+	/* signal xfer op that sleeps for a free xfer buffer */
 	cv_signal(&sc->sc_cv);
 	mutex_exit(&sc->sc_mtx);
 }
