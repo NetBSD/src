@@ -1,7 +1,7 @@
-# $NetBSD: md.sparc64,v 1.179 2014/02/01 17:01:35 nakayama Exp $
-./usr/include/g++/bits/sparc			comp-c-include
+# $NetBSD: md.sparc64,v 1.180 2014/02/24 21:14:13 joerg Exp $
+./usr/include/g++/bits/sparc			comp-c-include		gcccmds,gcc=48,compat
 ./usr/include/g++/bits/sparc/c++config.h	comp-c-include		gcccmds,gcc=48,compat
-./usr/include/g++/bits/sparc64			comp-c-include
+./usr/include/g++/bits/sparc64			comp-c-include		gcccmds,gcc=48,compat
 ./usr/include/g++/bits/sparc64/c++config.h	comp-c-include		gcccmds,gcc=48,compat
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcccmds,gcc=48
