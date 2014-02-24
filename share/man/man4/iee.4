@@ -1,4 +1,4 @@
-.\"	$NetBSD: iee.4,v 1.7 2013/12/09 09:35:16 wiz Exp $
+.\"	$NetBSD: iee.4,v 1.8 2014/02/24 07:23:40 skrll Exp $
 .\" Copyright (c) 2002 Jochen Kunz.
 .\" All rights reserved.
 .\"
@@ -39,7 +39,7 @@ interface
 .Sh SYNOPSIS
 .Ss ews4800mips
 .Cd iee* at sbdio?
-.Ss hp700
+.Ss hppa
 .Cd iee* at gsc?
 .Sh DESCRIPTION
 The
@@ -70,7 +70,7 @@ interface supports
 .Tn Intel
 .Tn i82596CA
 based on-board Ethernet on EWS4800/350.
-.Ss hp700
+.Ss hppa
 The
 .Nm
 interface supports
@@ -80,7 +80,7 @@ on ASP/ASP2 based machines and the
 .Tn i82596CA
 macrocell in LASI based machines.
 GSC expansion cards may work, but are not tested.
-Media selection on hp700 is done either manually via hardware
+Media selection on hppa is done either manually via hardware
 jumper or automatically depending on machine model.
 .Sh DIAGNOSTICS
 .Bl -diag

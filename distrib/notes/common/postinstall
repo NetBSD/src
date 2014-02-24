@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.77 2012/10/02 17:43:52 roy Exp $
+.\"	$NetBSD: postinstall,v 1.78 2014/02/24 07:23:39 skrll Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -163,7 +163,7 @@ For example:
 .if \n[arc]       .ds IFname sn0
 .if \n[cats]      .ds IFname tlp0
 .if \n[evbarm]    .ds IFname fxp0
-.if \n[hp700]     .ds IFname ie0
+.if \n[hppa]      .ds IFname ie0
 .if \n[hpcmips]   .ds IFname ne0
 .if \n[hpcsh]     .ds IFname ne0
 .if \n[i386]      .ds IFname wm0
