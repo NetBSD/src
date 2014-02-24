@@ -1,4 +1,4 @@
-/*	$NetBSD: enic.c,v 1.1 2011/01/26 01:18:54 pooka Exp $	*/
+/*	$NetBSD: enic.c,v 1.2 2014/02/24 08:00:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -66,6 +66,8 @@
 #include <lib/libsa/netif.h>
 #include <lib/libkern/libkern.h>
 
+#include "start.h"
+
 #include <machine/emipsreg.h>
 #define the_enic ((struct _Enic *)ETHERNET_DEFAULT_ADDRESS)
 
@@ -76,6 +78,8 @@ static void enicinit (struct iodesc *, void *);
 static int  enicget (struct iodesc *, void *, size_t, saseconds_t);
 static int  enicput (struct iodesc *, void *, size_t);
 static void enicend (struct netif *);
+int enic_getpkt(struct _Enic *regs, void *buf, int bytes, int timeo);
+int enic_present(int unit);
 
 #ifdef NET_DEBUG
 static void dump_packet(void *, int);
@@ -154,7 +158,7 @@ int enic_getpkt(struct _Enic *regs, void *buf, int bytes, int timeo)
                 ;/* nothing */
             } else if (fl != ES_F_CMD)
             {
-                printf("enic: invalid saf=x%x (lo=%x)\n", saf, lo);
+                printf("enic: invalid saf=x%x (lo=%x, hi=%x)\n", saf, lo, hi);
             }
         }
 
