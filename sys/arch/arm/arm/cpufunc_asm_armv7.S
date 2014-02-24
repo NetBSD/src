@@ -278,8 +278,6 @@ ENTRY_NP(armv7_icache_inv_all)
 
 	ubfx	r2, r0, #13, #15	@ get num sets - 1 from CCSIDR
 	ubfx	r3, r0, #3, #10		@ get numways - 1 from CCSIDR
-	lsl	r3, r3, #1 		@ double
-	sub	r3, r3, #1		@ subtract one (now rounded up)
 	clz	r1, r3			@ number of bits to MSB of way
 	lsl	r3, r3, r1		@ shift into position
 	mov	ip, #1			@ 
@@ -338,8 +336,6 @@ ENTRY_NP(armv7_dcache_inv_all)
 	lsl	r1, r1, ip		@ r1 = set decr
 
 	ubfx	ip, r0, #3, #10		@ get numways - 1 from [to be discarded] CCSIDR
-	lsl	ip, ip, #1 		@ double
-	sub	ip, ip, #1		@ subtract one (now rounded up)
 	clz	r2, ip			@ number of bits to MSB of way
 	lsl	ip, ip, r2		@ shift by that into way position
 	mov	r0, #1			@ 
@@ -403,8 +399,6 @@ ENTRY_NP(armv7_dcache_wbinv_all)
 	lsl	r1, r1, ip		@ r1 = set decr
 
 	ubfx	ip, r0, #3, #10		@ get numways - 1 from [to be discarded] CCSIDR
-	lsl	ip, ip, #1 		@ double
-	sub	ip, ip, #1		@ subtract one (now rounded up)
 	clz	r2, ip			@ number of bits to MSB of way
 	lsl	ip, ip, r2		@ shift by that into way position
 	mov	r0, #1			@ 
