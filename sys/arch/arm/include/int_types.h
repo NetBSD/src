@@ -1,4 +1,4 @@
-/*	$NetBSD: int_types.h,v 1.13 2014/01/31 11:37:13 matt Exp $	*/
+/*	$NetBSD: int_types.h,v 1.14 2014/02/24 16:57:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,8 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_ARM_INT_TYPES_H_
-#define	_ARM_INT_TYPES_H_
+#ifndef _ARM_INT_TYPES_H_
+#define _ARM_INT_TYPES_H_
 
 #include <sys/cdefs.h>
 

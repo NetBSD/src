@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.16 2014/01/29 00:18:32 matt Exp $	*/
+/*	$NetBSD: ansi.h,v 1.17 2014/02/24 16:57:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -31,8 +31,8 @@
  *	from: @(#)ansi.h	8.2 (Berkeley) 1/4/94
  */
 
-#ifndef	_ARM_ANSI_H_
-#define	_ARM_ANSI_H_
+#ifndef _ARM_ANSI_H_
+#define _ARM_ANSI_H_
 
 #include <sys/cdefs.h>
 
