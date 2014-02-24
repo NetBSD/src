@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.505 2014/02/10 06:36:53 pedro Exp $
+.\"	$NetBSD: main,v 1.506 2014/02/24 07:23:39 skrll Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,7 +43,7 @@
 .nr DOC_XR 1
 .ds MACHINE_LIST acorn26 acorn32 algor alpha amd64 amiga amigappc arc atari
 .as MACHINE_LIST " bebox cats cesfic cobalt dreamcast evbarm evbmips evbppc
-.as MACHINE_LIST " evbsh3 ews4800mips hp300 hp700 hpcarm hpcmips hpcsh i386
+.as MACHINE_LIST " evbsh3 ews4800mips hp300 hppa hpcarm hpcmips hpcsh i386
 .as MACHINE_LIST " ibmnws iyonix landisk luna68k mac68k macppc mipsco mmeye
 .as MACHINE_LIST " mvme68k mvmeppc netwinder news68k newsmips next68k ofppc
 .as MACHINE_LIST " pmax prep rs6000 sandpoint sbmips
@@ -1057,7 +1057,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Steve Woodford                 Ta Mt                  scw Ta Sy evbppc
 .It Ta Izumi Tsutsui                  Ta Mt              tsutsui Ta Sy ews4800mips
 .It Ta Izumi Tsutsui                  Ta Mt              tsutsui Ta Sy hp300
-.It Ta Nick Hudson                    Ta Mt                skrll Ta Sy hp700
+.It Ta Nick Hudson                    Ta Mt                skrll Ta Sy hppa
 .It Ta Valeriy E. Ushakov             Ta Mt                  uwe Ta Sy hpcsh
 .It Ta Matt Thomas                    Ta Mt                 matt Ta Sy ibmnws
 .It Ta Gavan Fantom                   Ta Mt                gavan Ta Sy iyonix
