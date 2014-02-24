@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11 2014/02/21 19:05:33 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.12 2014/02/24 16:15:43 martin Exp $
 
 .if defined(LIB) && (${LIB} == "kern" || ${LIB} == "c" || ${LIB} == "pthread" \
 	|| ${LIB} == "rump")
@@ -33,7 +33,7 @@ SRCS+=	membar_ops.S
 .if ${MACHINE_ARCH:Mmips64*} == ""
 SRCS+=	atomic_init_testset.c atomic_cas_up.S
 .else
-SRCS+=	atomic_cas.S atomic_init_cas.c
+SRCS+=	atomic_cas.S atomic_init_cas.c atomic_cas_by_cas32.c
 .endif
 
 .endif
