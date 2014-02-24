@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.17 2014/01/29 01:40:35 matt Exp $	*/
+/*	$NetBSD: limits.h,v 1.18 2014/02/24 16:57:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -31,8 +31,8 @@
  *	from: @(#)limits.h	7.2 (Berkeley) 6/28/90
  */
 
-#ifndef	_ARM_LIMITS_H_
-#define	_ARM_LIMITS_H_
+#ifndef _ARM_LIMITS_H_
+#define _ARM_LIMITS_H_
 
 #include <sys/featuretest.h>
 
