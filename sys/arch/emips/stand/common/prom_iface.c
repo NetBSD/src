@@ -58,7 +58,9 @@
 void epmc_halt(void);
 void save_locore(void);
 void restore_locore(void);
-
+void *nope(void);
+void real_halt(void*);
+void halt(int *unused, int howto);
 
 void *nope(void) {return NULL;}
 int getchar(void){return GetChar();}
@@ -247,7 +249,7 @@ int init_memory(void)
     /* Make sure we know */
  DoneFirst:
     if ((First == NULL) || (Ours == NULL)) {
-        printf("Bad memory layout (%x,%x), wont work.\n", First, Ours);
+        printf("Bad memory layout (%p,%p), wont work.\n", First, Ours);
         return 0;
     }
 
