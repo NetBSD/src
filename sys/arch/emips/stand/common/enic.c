@@ -1,4 +1,4 @@
-/*	$NetBSD: enic.c,v 1.3 2014/02/24 22:31:56 christos Exp $	*/
+/*	$NetBSD: enic.c,v 1.4 2014/02/24 22:34:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -66,7 +66,6 @@
 #include <lib/libsa/netif.h>
 #include <lib/libkern/libkern.h>
 
-#include "start.h"
 
 #include <machine/emipsreg.h>
 
@@ -82,8 +81,6 @@ static void enicinit (struct iodesc *, void *);
 static int  enicget (struct iodesc *, void *, size_t, saseconds_t);
 static int  enicput (struct iodesc *, void *, size_t);
 static void enicend (struct netif *);
-int enic_getpkt(struct _Enic *regs, void *buf, int bytes, int timeo);
-int enic_present(int unit);
 
 #ifdef NET_DEBUG
 static void dump_packet(void *, int);
