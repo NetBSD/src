@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_board.c,v 1.7 2014/02/20 21:46:14 matt Exp $	*/
+/*	$NetBSD: awin_board.c,v 1.8 2014/02/24 16:50:49 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.7 2014/02/20 21:46:14 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.8 2014/02/24 16:50:49 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -45,6 +45,8 @@ __KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.7 2014/02/20 21:46:14 matt Exp $");
 
 #include <net/if.h>
 #include <net/if_ether.h>
+
+#include <arm/locore.h>
 
 #include <arm/mainbus/mainbus.h>
 
@@ -162,6 +164,20 @@ awin_bootstrap(vaddr_t iobase, vaddr_t uartbase)
 	awin_gpio_init();
 #ifdef VERBOSE_INIT_ARM
 	printf("\n");
+#endif
+
+#ifdef MULTIPROCESSOR
+#ifdef VERBOSE_INIT_ARM
+	uint32_t s0 = bus_space_read_4(&awin_bs_tag, awin_core_bsh,
+	    AWIN_CPUCFG_OFFSET + AWIN_CPUCFG_CPU0_STATUS_REG);
+	uint32_t s1 = bus_space_read_4(&awin_bs_tag, awin_core_bsh,
+	    AWIN_CPUCFG_OFFSET + AWIN_CPUCFG_CPU1_STATUS_REG);
+	printf("%s: cpu status: 0=%#x 1=%#x\n", __func__, s0, s1);
+#endif
+	arm_cpu_max = 1 + __SHIFTOUT(armreg_l2ctrl_read(), L2CTRL_NUMCPU);
+#ifdef VERBOSE_INIT_ARM
+	printf("%s: %d cpus present\n", __func__, arm_cpu_max);
+#endif
 #endif
 }
 
