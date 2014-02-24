@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_ahcisata.c,v 1.8 2013/09/08 11:47:50 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_ahcisata.c,v 1.9 2014/02/24 12:21:27 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -167,6 +167,17 @@ awin_ahci_enable(bus_space_tag_t bst, bus_space_handle_t bsh)
 }
 
 static void
+awin_ahci_channel_start(struct ahci_softc *sc, struct ata_channel *chp)
+{
+	uint32_t dma;
+
+	dma = AHCI_READ(sc, AWIN_AHCI_DMA_REG);
+	dma &= ~0xff00;
+	dma |= 0x4400;
+	AHCI_WRITE(sc, AWIN_AHCI_DMA_REG, dma);
+}
+
+static void
 awin_ahci_attach(device_t parent, device_t self, void *aux)
 {
 	struct awin_ahci_softc * const asc = device_private(self);
@@ -181,6 +192,9 @@ awin_ahci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ahcit = aio->aio_core_bst;
 	sc->sc_ahcis = loc->loc_size;
 	sc->sc_ahci_ports = 1;
+	sc->sc_ahci_quirks = AHCI_QUIRK_BADPMP;
+	sc->sc_save_init_data = true;
+	sc->sc_channel_start = awin_ahci_channel_start;
 
 	bus_space_subregion(aio->aio_core_bst, aio->aio_core_bsh,
 	    loc->loc_offset, loc->loc_size, &sc->sc_ahcih);
