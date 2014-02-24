@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.154 2013/05/15 05:22:43 msaitoh Exp $
+.\"	$NetBSD: ddb.4,v 1.155 2014/02/24 07:23:40 skrll Exp $
 .\"
 .\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -119,19 +119,19 @@ from the keyboard:
 \*[Lt]Alt\*[Gt]-\*[Lt]LeftShift\*[Gt]-\*[Lt]F9\*[Gt]
 .It hp300
 \*[Lt]Shift\*[Gt]-\*[Lt]Reset\*[Gt]
-.It hp700
-\*[Lt]Ctrl\*[Gt]-\*[Lt]Alt\*[Gt]-\*[Lt]Esc\*[Gt] on PC style keyboards.
-.It ""
-+++++
-(five plus signs) on PDC console
-.It ""
-\*[Lt]Break\*[Gt] on serial console.
 .It hpcarm
 \*[Lt]Ctrl\*[Gt]-\*[Lt]Alt\*[Gt]-\*[Lt]Esc\*[Gt]
 .It hpcmips
 \*[Lt]Ctrl\*[Gt]-\*[Lt]Alt\*[Gt]-\*[Lt]Esc\*[Gt]
 .It hpcsh
 \*[Lt]Ctrl\*[Gt]-\*[Lt]Alt\*[Gt]-\*[Lt]Esc\*[Gt]
+.It hppa
+\*[Lt]Ctrl\*[Gt]-\*[Lt]Alt\*[Gt]-\*[Lt]Esc\*[Gt] on PC style keyboards.
+.It ""
++++++
+(five plus signs) on PDC console
+.It ""
+\*[Lt]Break\*[Gt] on serial console.
 .It i386
 \*[Lt]Ctrl\*[Gt]-\*[Lt]Alt\*[Gt]-\*[Lt]Esc\*[Gt]
 .It ""
@@ -994,7 +994,7 @@ Switch to another cpu.
 .It Ic frame
 Given a trap frame address, print out the trap frame.
 .El
-.Ss HP700
+.Ss HPPA
 .Bl -tag -width "traptrace" -compact
 .It Ic frame
 Without an address the default trap frame is printed.

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2013/03/04 20:10:50 christos Exp $
+#	$NetBSD: Makefile,v 1.25 2014/02/24 07:23:44 skrll Exp $
 
 PROG=		crash
 MAN=		crash.8
@@ -12,7 +12,7 @@ DPADD+=	${LIBUTIL} ${LIBKVM} ${LIBEDIT} ${LIBTERMINFO}
 # some ddb kernel components need limited modifications.  for now,
 # punt if not noted as implemented here.
 .if    ${MACHINE} == "amd64" \
-    || ${MACHINE} == "hp700" \
+    || ${MACHINE} == "hppa" \
     || ${MACHINE} == "i386" \
     || ${MACHINE} == "sparc64" \
     || (${MACHINE_ARCH} == "arm" && ${MACHINE} != "acorn26") \

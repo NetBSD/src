@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.37 2013/08/22 00:26:23 matt Exp $	*/
+/*	$NetBSD: main.c,v 1.38 2014/02/24 07:23:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: main.c,v 1.37 2013/08/22 00:26:23 matt Exp $");
+__RCSID("$NetBSD: main.c,v 1.38 2014/02/24 07:23:40 skrll Exp $");
 #endif
 #endif	/* not lint */
 
@@ -239,7 +239,7 @@ static const struct disklabel_params {
 	{ "bebox",	0, 1,   0,  8, 3, 0, BIG_ENDIAN },	/* powerpc */
 
 	{ "emips",	0, 1,   0, 16, 2, 0, BIG_ENDIAN },	/* mips */
-	{ "hp700",	0, 1,   0, 16, 2, 0, BIG_ENDIAN },	/* hppa */
+	{ "hppa",	0, 1,   0, 16, 2, 0, BIG_ENDIAN },	/* hppa */
 	{ "ibmnws",	0, 1,   0, 16, 2, 0, BIG_ENDIAN },	/* powerpc */
 	{ "ofppc",	0, 1,   0, 16, 2, 0, BIG_ENDIAN },	/* powerpc */
 	{ "rs6000",	0, 1,   0, 16, 2, 0, BIG_ENDIAN },	/* powerpc */

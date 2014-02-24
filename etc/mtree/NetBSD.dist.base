@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.133 2014/01/23 07:26:50 spz Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.134 2014/02/24 07:23:40 skrll Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -884,10 +884,10 @@
 ./usr/share/man/cat4/evbmips
 ./usr/share/man/cat4/evbppc
 ./usr/share/man/cat4/hp300
-./usr/share/man/cat4/hp700
 ./usr/share/man/cat4/hpcarm
 ./usr/share/man/cat4/hpcmips
 ./usr/share/man/cat4/hpcsh
+./usr/share/man/cat4/hppa
 ./usr/share/man/cat4/i386
 ./usr/share/man/cat4/mac68k
 ./usr/share/man/cat4/macppc
@@ -926,10 +926,10 @@
 ./usr/share/man/cat8/evbppc
 ./usr/share/man/cat8/evbsh3
 ./usr/share/man/cat8/hp300
-./usr/share/man/cat8/hp700
 ./usr/share/man/cat8/hpcarm
 ./usr/share/man/cat8/hpcmips
 ./usr/share/man/cat8/hpcsh
+./usr/share/man/cat8/hppa
 ./usr/share/man/cat8/i386
 ./usr/share/man/cat8/ibmnws
 ./usr/share/man/cat8/luna68k
@@ -995,10 +995,10 @@
 ./usr/share/man/html4/evbmips
 ./usr/share/man/html4/evbppc
 ./usr/share/man/html4/hp300
-./usr/share/man/html4/hp700
 ./usr/share/man/html4/hpcarm
 ./usr/share/man/html4/hpcmips
 ./usr/share/man/html4/hpcsh
+./usr/share/man/html4/hppa
 ./usr/share/man/html4/i386
 ./usr/share/man/html4/mac68k
 ./usr/share/man/html4/macppc
@@ -1037,10 +1037,10 @@
 ./usr/share/man/html8/evbppc
 ./usr/share/man/html8/evbsh3
 ./usr/share/man/html8/hp300
-./usr/share/man/html8/hp700
 ./usr/share/man/html8/hpcarm
 ./usr/share/man/html8/hpcmips
 ./usr/share/man/html8/hpcsh
+./usr/share/man/html8/hppa
 ./usr/share/man/html8/i386
 ./usr/share/man/html8/ibmnws
 ./usr/share/man/html8/luna68k
@@ -1106,10 +1106,10 @@
 ./usr/share/man/man4/evbmips
 ./usr/share/man/man4/evbppc
 ./usr/share/man/man4/hp300
-./usr/share/man/man4/hp700
 ./usr/share/man/man4/hpcarm
 ./usr/share/man/man4/hpcmips
 ./usr/share/man/man4/hpcsh
+./usr/share/man/man4/hppa
 ./usr/share/man/man4/i386
 ./usr/share/man/man4/mac68k
 ./usr/share/man/man4/macppc
@@ -1148,10 +1148,10 @@
 ./usr/share/man/man8/evbppc
 ./usr/share/man/man8/evbsh3
 ./usr/share/man/man8/hp300
-./usr/share/man/man8/hp700
 ./usr/share/man/man8/hpcarm
 ./usr/share/man/man8/hpcmips
 ./usr/share/man/man8/hpcsh
+./usr/share/man/man8/hppa
 ./usr/share/man/man8/i386
 ./usr/share/man/man8/ibmnws
 ./usr/share/man/man8/luna68k

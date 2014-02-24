@@ -1,0 +1,6 @@
+# $NetBSD: md.hppa,v 1.1 2014/02/24 07:23:39 skrll Exp $
+./usr/mdec/boot				base-sysutil-bin
+./usr/mdec/cdboot			base-sysutil-bin
+./usr/mdec/mkboot			base-sysutil-bin
+./usr/mdec/sdboot			base-sysutil-bin
+./usr/mdec/xxboot			base-sysutil-bin

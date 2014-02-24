@@ -25,7 +25,6 @@ port-evbmips
 port-evbppc
 port-evbsh3
 port-hp300
-port-hp700
 port-hpcarm
 port-hpcmips
 port-hpcsh

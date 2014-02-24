@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_bsdlabel.c,v 1.17 2012/06/07 16:15:31 mlelstv Exp $	*/
+/*	$NetBSD: dkwedge_bsdlabel.c,v 1.18 2014/02/24 07:23:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_bsdlabel.c,v 1.17 2012/06/07 16:15:31 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_bsdlabel.c,v 1.18 2014/02/24 07:23:43 skrll Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -118,7 +118,7 @@ static const struct disklabel_location {
 			   luna68k, mac68k, macppc, news68k, newsmips,
 			   pc532, pdp11, pmax, vax, x68k */
 	{ 0,	128 },	/* sparc, sun68k */
-	{ 1,	0 },	/* amd64, arc, arm, bebox, cobalt, evbppc, hp700,
+	{ 1,	0 },	/* amd64, arc, arm, bebox, cobalt, evbppc, hppa,
 			   hpcarm, hpcmips, i386, ibmnws, mipsco, mvmeppc,
 			   ofppc, pmppc, prep, sandpoint,
 			   sbmips, sgimips, sh3 */

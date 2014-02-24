@@ -38,7 +38,7 @@
 
 ports="acorn26 acorn32 algor alpha amd64 amiga arc atari bebox cats cesfic
 	cobalt dreamcast evbarm evbmips evbppc evbsh3
-	hp300 hp700 hpcarm hpcmips hpcsh i386 ibmnws iyonix landisk luna68k
+	hp300 hppa hpcarm hpcmips hpcsh i386 ibmnws iyonix landisk luna68k
 	mac68k macppc mipsco mmeye mvme68k mvmeppc netwinder news68k newsmips
 	next68k ofppc pmax prep sandpoint sbmips sgimips
 	shark sparc sparc64 sun2 sun3 vax x68k"
