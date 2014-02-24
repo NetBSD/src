@@ -1,4 +1,4 @@
-/*	$NetBSD: core_machdep.c,v 1.4 2014/01/04 00:10:02 dsl Exp $	*/
+/*	$NetBSD: core_machdep.c,v 1.5 2014/02/24 23:54:10 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -37,7 +37,10 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.4 2014/01/04 00:10:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.5 2014/02/24 23:54:10 matt Exp $");
+
+#include "opt_execfmt.h"
+#include "opt_compat_netbsd32.h"
 
 #include <sys/core.h>
 #include <sys/exec.h>
@@ -48,6 +51,13 @@ __KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.4 2014/01/04 00:10:02 dsl Exp $")
 #include <sys/vnode.h>
 
 #include <sys/exec_aout.h>	/* for MID_* */
+
+#ifdef EXEC_ELF32
+#include <sys/exec_elf.h>
+#ifdef COMPAT_NETBSD32
+#include <compat/netbsd32/netbsd32_exec.h>
+#endif
+#endif
 
 #include <machine/reg.h>
 
@@ -96,3 +106,33 @@ cpu_coredump(struct lwp *l, struct coredump_iostate *iocookie,
 	return coredump_write(iocookie, UIO_SYSSPACE,
 	    &cpustate, sizeof(cpustate));
 }
+
+#ifdef EXEC_ELF32
+void
+arm_netbsd_elf32_coredump_setup(struct lwp *l, void *arg)
+{
+#if defined(__ARMEB__) || defined(__ARM_EABI__) || defined(COMPAT_NETBSD32)
+	Elf_Ehdr * const eh = arg;
+#if defined(__ARM_EABI__) || defined(COMPAT_NETBSD32)
+	struct proc * const p = l->l_proc;
+
+#ifdef __ARM_EABI__
+	if (p->p_emul == &emul_netbsd) {
+		eh->e_flags |= EF_ARM_EABI_VER5;
+	}
+#elif defined(COMPAT_NETBSD32)
+	if (p->p_emul == &emul_netbsd32) {
+		eh->e_flags |= EF_ARM_EABI_VER5;
+	}
+#endif
+#endif /* __ARM_EABI__ || COMPAT_NETBSD32 */
+#ifdef __ARMEB__
+        if (CPU_IS_ARMV7_P()
+	    || (CPU_IS_ARMV6_P()
+		&& (armreg_sctrl_read() & CPU_CONTROL_BEND_ENABLE) == 0)) {
+		eh->e_flags |= EF_ARM_BE8;
+	}
+#endif
+#endif
+}
+#endif
