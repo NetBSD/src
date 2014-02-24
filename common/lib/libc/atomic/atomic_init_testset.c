@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_init_testset.c,v 1.13 2014/02/22 17:08:30 martin Exp $	*/
+/*	$NetBSD: atomic_init_testset.c,v 1.14 2014/02/24 17:18:27 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: atomic_init_testset.c,v 1.13 2014/02/22 17:08:30 martin Exp $");
+__RCSID("$NetBSD: atomic_init_testset.c,v 1.14 2014/02/24 17:18:27 martin Exp $");
 
 #include "atomic_op_namespace.h"
 
@@ -53,6 +53,12 @@ __RCSID("$NetBSD: atomic_init_testset.c,v 1.13 2014/02/22 17:08:30 martin Exp $"
 #define	I128	I16 I16 I16 I16 I16 I16 I16 I16
 
 static __cpu_simple_lock_t atomic_locks[128] = { I128 };
+/*
+ * Pick a lock out of above array depending on the object address
+ * passed. Most variables used atomically will not be in the same
+ * cacheline - and if they are, using the same lock is fine.
+ */
+#define HASH(PTR)	(((uintptr_t)(PTR) >> 3) & 127)
 
 #ifdef	__HAVE_ASM_ATOMIC_CAS_UP
 extern uint32_t _atomic_cas_up(volatile uint32_t *, uint32_t, uint32_t);
@@ -143,7 +149,41 @@ _atomic_cas_mp(volatile uint32_t *ptr, uint32_t old, uint32_t new)
 	__cpu_simple_lock_t *lock;
 	uint32_t ret;
 
-	lock = &atomic_locks[((uintptr_t)ptr >> 3) & 127];
+	lock = &atomic_locks[HASH(ptr)];
+	__cpu_simple_lock(lock);
+	ret = *ptr;
+	if (__predict_true(ret == old)) {
+		*ptr = new;
+	}
+	__cpu_simple_unlock(lock);
+
+	return ret;
+}
+
+static uint16_t
+_atomic_cas_16_mp(volatile uint16_t *ptr, uint16_t old, uint16_t new)
+{
+	__cpu_simple_lock_t *lock;
+	uint16_t ret;
+
+	lock = &atomic_locks[HASH(ptr)];
+	__cpu_simple_lock(lock);
+	ret = *ptr;
+	if (__predict_true(ret == old)) {
+		*ptr = new;
+	}
+	__cpu_simple_unlock(lock);
+
+	return ret;
+}
+
+static uint8_t
+_atomic_cas_8_mp(volatile uint8_t *ptr, uint8_t old, uint8_t new)
+{
+	__cpu_simple_lock_t *lock;
+	uint8_t ret;
+
+	lock = &atomic_locks[HASH(ptr)];
 	__cpu_simple_lock(lock);
 	ret = *ptr;
 	if (__predict_true(ret == old)) {
@@ -186,6 +226,8 @@ __libc_atomic_init(void)
 	size_t len;
 
 	_atomic_cas_fn = _atomic_cas_mp;
+	_atomic_cas_16_fn = _atomic_cas_16_mp;
+	_atomic_cas_8_fn = _atomic_cas_8_mp;
 
 	mib[0] = CTL_HW;
 	mib[1] = HW_NCPU; 
