@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.124 2014/02/07 15:29:23 hannken Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.125 2014/02/24 11:43:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.124 2014/02/07 15:29:23 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.125 2014/02/24 11:43:33 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -965,7 +965,8 @@ rump_vop_setattr(void *v)
 
 	if (vp->v_type == VREG &&
 	    vap->va_size != VSIZENOTSET &&
-	    vap->va_size != rn->rn_dlen) {
+	    vap->va_size != rn->rn_dlen &&
+	    (rn->rn_flags & RUMPNODE_ET_PHONE_HOST) == 0) {
 		void *newdata;
 		size_t copylen, newlen;
 
