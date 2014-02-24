@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_space.c,v 1.11 2014/02/22 20:33:00 matt Exp $ */
+/*	$NetBSD: pxa2x0_space.c,v 1.12 2014/02/24 00:32:17 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_space.c,v 1.11 2014/02/22 20:33:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_space.c,v 1.12 2014/02/24 00:32:17 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,7 +174,6 @@ pxa2x0_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
 {
 	u_long startpa, endpa, pa;
 	vaddr_t va;
-	pt_entry_t *pte;
 	const struct pmap_devmap	*pd;
 
 	if ((pd = pmap_devmap_find_pa(bpa, size)) != NULL) {
