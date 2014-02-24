@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.50 2013/09/08 11:47:16 matt Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.51 2014/02/24 12:19:05 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.50 2013/09/08 11:47:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.51 2014/02/24 12:19:05 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -119,6 +119,18 @@ const struct ata_bustype ahci_ata_bustype = {
 static void ahci_intr_port(struct ahci_softc *, struct ahci_channel *);
 static void ahci_setup_port(struct ahci_softc *sc, int i);
 
+static void
+ahci_enable(struct ahci_softc *sc)
+{
+	uint32_t ghc;
+
+	ghc = AHCI_READ(sc, AHCI_GHC);
+	if (!(ghc & AHCI_GHC_AE)) {
+		ghc |= AHCI_GHC_AE;
+		AHCI_WRITE(sc, AHCI_GHC, ghc);
+	}
+}
+
 static int
 ahci_reset(struct ahci_softc *sc)
 {
@@ -137,7 +149,15 @@ ahci_reset(struct ahci_softc *sc)
 		return -1;
 	}
 	/* enable ahci mode */
-	AHCI_WRITE(sc, AHCI_GHC, AHCI_GHC_AE);
+	ahci_enable(sc);
+
+	if (sc->sc_save_init_data) {
+		AHCI_WRITE(sc, AHCI_CAP, sc->sc_init_data.cap);
+		if (sc->sc_init_data.cap2)
+			AHCI_WRITE(sc, AHCI_CAP2, sc->sc_init_data.cap2);
+		AHCI_WRITE(sc, AHCI_PI, sc->sc_init_data.ports);
+	}
+
 	return 0;
 }
 
@@ -215,6 +235,24 @@ ahci_attach(struct ahci_softc *sc)
 	char buf[128];
 	void *cmdhp;
 	void *cmdtblp;
+
+	if (sc->sc_save_init_data) {
+		ahci_enable(sc);
+
+		sc->sc_init_data.cap = AHCI_READ(sc, AHCI_CAP);
+		sc->sc_init_data.ports = AHCI_READ(sc, AHCI_PI);
+		
+		ahci_rev = AHCI_READ(sc, AHCI_VS);
+		if (AHCI_VS_MJR(ahci_rev) > 1 ||
+		    (AHCI_VS_MJR(ahci_rev) == 1 && AHCI_VS_MNR(ahci_rev) >= 20)) {
+			sc->sc_init_data.cap2 = AHCI_READ(sc, AHCI_CAP2);
+		} else {
+			sc->sc_init_data.cap2 = 0;
+		}
+		if (sc->sc_init_data.ports == 0) {
+			sc->sc_init_data.ports = sc->sc_ahci_ports;
+		}
+	}
 
 	if (ahci_reset(sc) != 0)
 		return;
@@ -1330,6 +1368,9 @@ ahci_channel_stop(struct ahci_softc *sc, struct ata_channel *chp, int flags)
 		/* XXX controller reset ? */
 		return;
 	}
+
+	if (sc->sc_channel_stop)
+		sc->sc_channel_stop(sc, chp);
 }
 
 static void
@@ -1363,6 +1404,10 @@ ahci_channel_start(struct ahci_softc *sc, struct ata_channel *chp,
 			return;
 		}
 	}
+
+	if (sc->sc_channel_start)
+		sc->sc_channel_start(sc, chp);
+
 	/* and start controller */
 	p_cmd = AHCI_P_CMD_ICC_AC | AHCI_P_CMD_POD | AHCI_P_CMD_SUD |
 	    AHCI_P_CMD_FRE | AHCI_P_CMD_ST;
@@ -1382,7 +1427,7 @@ ahci_timeout(void *v)
 	struct ahci_softc *sc = (struct ahci_softc *)chp->ch_atac;
 #endif
 	int s = splbio();
-	AHCIDEBUG_PRINT(("ahci_timeout xfer %p intr %#x\n", xfer, AHCI_READ(sc, AHCI_P_IS(chp->ch_channel))), DEBUG_INTR);
+	AHCIDEBUG_PRINT(("ahci_timeout xfer %p intr %#x ghc %08x is %08x\n", xfer, AHCI_READ(sc, AHCI_P_IS(chp->ch_channel)), AHCI_READ(sc, AHCI_GHC), AHCI_READ(sc, AHCI_IS)), DEBUG_INTR);
 	
 	if ((chp->ch_flags & ATACH_IRQ_WAIT) != 0) {
 		xfer->c_flags |= C_TIMEOU;
