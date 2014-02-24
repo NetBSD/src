@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_machdep.h,v 1.6 2014/01/29 00:42:15 matt Exp $	*/
+/*	$NetBSD: aout_machdep.h,v 1.7 2014/02/24 16:57:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -32,8 +32,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef	_ARM_AOUT_MACHDEP_H_
-#define	_ARM_AOUT_MACHDEP_H_
+#ifndef _ARM_AOUT_MACHDEP_H_
+#define _ARM_AOUT_MACHDEP_H_
 
 #define	AOUT_LDPGSZ	4096
 
