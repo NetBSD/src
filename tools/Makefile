@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.170 2013/09/02 14:34:57 joerg Exp $
+#	$NetBSD: Makefile,v 1.171 2014/02/24 07:23:44 skrll Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -157,8 +157,8 @@ SUBDIR+=	autoconf .WAIT gettext
 SUBDIR+=	pigz
 .endif
 
-.if ${MACHINE} == "hp700"
-SUBDIR+=	hp700-mkboot
+.if ${MACHINE} == "hppa"
+SUBDIR+=	hppa-mkboot
 .endif
 
 .if ${MACHINE} == "ibmnws"

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.327 2014/01/27 07:57:28 apb Exp $
+#	$NetBSD: bsd.README,v 1.328 2014/02/24 07:23:41 skrll Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -792,7 +792,7 @@ TOOL_HEXDUMP		Ascii, decimal, hexadecimal, octal dump.  [hexdump]
 
 TOOL_HP300MKBOOT	Make bootable image for hp300.  [hp300-mkboot]
 
-TOOL_HP700MKBOOT	Make bootable image for hp700.  [hp700-mkboot]
+TOOL_HPPAMKBOOT		Make bootable image for hppa.  [hppa-mkboot]
 
 TOOL_INDXBIB		Make bibliographic database's inverted index.  [indxbib]
 
