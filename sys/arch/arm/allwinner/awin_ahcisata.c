@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_ahcisata.c,v 1.9 2014/02/24 12:21:27 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_ahcisata.c,v 1.10 2014/02/24 15:47:43 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -171,10 +171,10 @@ awin_ahci_channel_start(struct ahci_softc *sc, struct ata_channel *chp)
 {
 	uint32_t dma;
 
-	dma = AHCI_READ(sc, AWIN_AHCI_DMA_REG);
+	dma = AHCI_READ(sc, 0x100 + AHCI_P_OFFSET(chp->ch_channel) + AWIN_AHCI_DMA_REG);
 	dma &= ~0xff00;
 	dma |= 0x4400;
-	AHCI_WRITE(sc, AWIN_AHCI_DMA_REG, dma);
+	AHCI_WRITE(sc, 0x100 + AHCI_P_OFFSET(chp->ch_channel) + AWIN_AHCI_DMA_REG, dma);
 }
 
 static void
