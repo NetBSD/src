@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.16 2014/01/29 00:42:15 matt Exp $	*/
+/*	$NetBSD: proc.h,v 1.17 2014/02/24 16:57:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -32,8 +32,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef	_ARM_PROC_H_
-#define	_ARM_PROC_H_
+#ifndef _ARM_PROC_H_
+#define _ARM_PROC_H_
 
 /*
  * Machine-dependent part of the proc structure for arm.
