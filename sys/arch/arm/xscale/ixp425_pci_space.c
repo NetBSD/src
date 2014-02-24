@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_pci_space.c,v 1.12 2014/02/22 20:33:00 matt Exp $ */
+/*	$NetBSD: ixp425_pci_space.c,v 1.13 2014/02/24 10:50:40 martin Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_pci_space.c,v 1.12 2014/02/22 20:33:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_pci_space.c,v 1.13 2014/02/24 10:50:40 martin Exp $");
 
 /*
  * bus_space PCI functions for ixp425
@@ -373,7 +373,7 @@ _pci_io_bs_w_4(void *v, bus_space_handle_t ioh, bus_size_t off,
 /* mem bs */
 int
 ixp425_pci_mem_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
-	      int cacheable, bus_space_handle_t *bshp)
+	      int flags, bus_space_handle_t *bshp)
 {
 	const struct pmap_devmap	*pd;
 
@@ -403,7 +403,7 @@ ixp425_pci_mem_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
 	*bshp = va + offset;
 
 	const int pmapflags =
-	    (flag & (BUS_SPACE_MAP_CACHEABLE|BUS_SPACE_MAP_PREFETCHABLE))
+	    (flags & (BUS_SPACE_MAP_CACHEABLE|BUS_SPACE_MAP_PREFETCHABLE))
 		? 0
 		: PMAP_NOCACHE;
 
