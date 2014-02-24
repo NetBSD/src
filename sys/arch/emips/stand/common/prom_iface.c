@@ -58,9 +58,6 @@
 void epmc_halt(void);
 void save_locore(void);
 void restore_locore(void);
-void *nope(void);
-void real_halt(void*);
-void halt(int *unused, int howto);
 
 static void *nope(void) {return NULL;}
 int getchar(void){return GetChar();}
