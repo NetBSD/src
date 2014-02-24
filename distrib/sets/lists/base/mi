@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1061 2014/01/23 07:26:50 spz Exp $
+# $NetBSD: mi,v 1.1062 2014/02/24 07:23:39 skrll Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -3920,10 +3920,10 @@
 ./usr/share/man/cat4/evbmips			base-man-share
 ./usr/share/man/cat4/evbppc			base-man-share
 ./usr/share/man/cat4/hp300			base-man-share
-./usr/share/man/cat4/hp700			base-man-share
 ./usr/share/man/cat4/hpcarm			base-man-share
 ./usr/share/man/cat4/hpcmips			base-man-share
 ./usr/share/man/cat4/hpcsh			base-man-share
+./usr/share/man/cat4/hppa			base-man-share
 ./usr/share/man/cat4/i386			base-man-share
 ./usr/share/man/cat4/mac68k			base-man-share
 ./usr/share/man/cat4/macppc			base-man-share
@@ -3968,10 +3968,10 @@
 ./usr/share/man/cat8/evbsh3			base-man-share
 ./usr/share/man/cat8/evbsh5			base-obsolete		obsolete
 ./usr/share/man/cat8/hp300			base-man-share
-./usr/share/man/cat8/hp700			base-man-share
 ./usr/share/man/cat8/hpcarm			base-man-share
 ./usr/share/man/cat8/hpcmips			base-man-share
 ./usr/share/man/cat8/hpcsh			base-man-share
+./usr/share/man/cat8/hppa			base-man-share
 ./usr/share/man/cat8/i386			base-man-share
 ./usr/share/man/cat8/ibmnws			base-man-share
 ./usr/share/man/cat8/luna68k			base-man-share
@@ -4048,10 +4048,10 @@
 ./usr/share/man/html4/evbmips			base-man-share
 ./usr/share/man/html4/evbppc			base-man-share
 ./usr/share/man/html4/hp300			base-man-share
-./usr/share/man/html4/hp700			base-man-share
 ./usr/share/man/html4/hpcarm			base-man-share
 ./usr/share/man/html4/hpcmips			base-man-share
 ./usr/share/man/html4/hpcsh			base-man-share
+./usr/share/man/html4/hppa			base-man-share
 ./usr/share/man/html4/i386			base-man-share
 ./usr/share/man/html4/mac68k			base-man-share
 ./usr/share/man/html4/macppc			base-man-share
@@ -4095,10 +4095,10 @@
 ./usr/share/man/html8/evbsh3			base-man-share
 ./usr/share/man/html8/evbsh5			base-obsolete		obsolete
 ./usr/share/man/html8/hp300			base-man-share
-./usr/share/man/html8/hp700			base-man-share
 ./usr/share/man/html8/hpcarm			base-man-share
 ./usr/share/man/html8/hpcmips			base-man-share
 ./usr/share/man/html8/hpcsh			base-man-share
+./usr/share/man/html8/hppa			base-man-share
 ./usr/share/man/html8/i386			base-man-share
 ./usr/share/man/html8/ibmnws			base-man-share
 ./usr/share/man/html8/luna68k			base-man-share
@@ -4177,10 +4177,10 @@
 ./usr/share/man/man4/evbmips			base-man-share
 ./usr/share/man/man4/evbppc			base-man-share
 ./usr/share/man/man4/hp300			base-man-share
-./usr/share/man/man4/hp700			base-man-share
 ./usr/share/man/man4/hpcarm			base-man-share
 ./usr/share/man/man4/hpcmips			base-man-share
 ./usr/share/man/man4/hpcsh			base-man-share
+./usr/share/man/man4/hppa			base-man-share
 ./usr/share/man/man4/i386			base-man-share
 ./usr/share/man/man4/mac68k			base-man-share
 ./usr/share/man/man4/macppc			base-man-share
@@ -4225,10 +4225,10 @@
 ./usr/share/man/man8/evbsh3			base-man-share
 ./usr/share/man/man8/evbsh5			base-obsolete		obsolete
 ./usr/share/man/man8/hp300			base-man-share
-./usr/share/man/man8/hp700			base-man-share
 ./usr/share/man/man8/hpcarm			base-man-share
 ./usr/share/man/man8/hpcmips			base-man-share
 ./usr/share/man/man8/hpcsh			base-man-share
+./usr/share/man/man8/hppa			base-man-share
 ./usr/share/man/man8/i386			base-man-share
 ./usr/share/man/man8/ibmnws			base-man-share
 ./usr/share/man/man8/luna68k			base-man-share
