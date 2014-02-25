@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.142 2013/07/24 15:31:04 kefren Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.143 2014/02/25 18:30:12 pooka Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.142 2013/07/24 15:31:04 kefren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.143 2014/02/25 18:30:12 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1337,12 +1337,6 @@ static void
 sysctl_net_route_setup(struct sysctllog **clog)
 {
 	const struct sysctlnode *rnode = NULL;
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "net", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, &rnode,
 		       CTLFLAG_PERMANENT,

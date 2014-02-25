@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.94 2013/12/15 21:09:50 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.95 2014/02/25 18:30:11 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.94 2013/12/15 21:09:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.95 2014/02/25 18:30:11 pooka Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -433,11 +433,6 @@ sysctl_module_setup(void)
 {
 	const struct sysctlnode *node = NULL;
 
-	sysctl_createv(&module_sysctllog, 0, NULL, NULL,
-		CTLFLAG_PERMANENT,
-		CTLTYPE_NODE, "kern", NULL,
-		NULL, 0, NULL, 0,
-		CTL_KERN, CTL_EOL);
 	sysctl_createv(&module_sysctllog, 0, NULL, &node,
 		CTLFLAG_PERMANENT,
 		CTLTYPE_NODE, "module",

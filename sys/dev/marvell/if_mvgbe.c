@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.36 2014/02/03 05:56:23 msaitoh Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.37 2014/02/25 18:30:10 pooka Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.36 2014/02/03 05:56:23 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.37 2014/02/25 18:30:10 pooka Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -2249,12 +2249,6 @@ SYSCTL_SETUP(sysctl_mvgbe, "sysctl mvgbe subtree setup")
 {
 	int rc;
 	const struct sysctlnode *node;
-
-	if ((rc = sysctl_createv(clog, 0, NULL, NULL,
-	    0, CTLTYPE_NODE, "hw", NULL,
-	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0) {
-		goto err;
-	}
 
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
 	    0, CTLTYPE_NODE, "mvgbe",

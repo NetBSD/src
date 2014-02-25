@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.146 2013/12/28 19:44:41 pgoyette Exp $	*/
+/*	$NetBSD: ccd.c,v 1.147 2014/02/25 18:30:09 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.146 2013/12/28 19:44:41 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.147 2014/02/25 18:30:09 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1730,12 +1730,6 @@ SYSCTL_SETUP(sysctl_kern_ccd_setup, "sysctl kern.ccd subtree setup")
 {
 	const struct sysctlnode *node = NULL;
 
-	/* Make sure net.key exists before we register nodes underneath it. */
-	sysctl_createv(clog, 0, NULL, NULL,
-	    CTLFLAG_PERMANENT,
-	    CTLTYPE_NODE, "kern", NULL,
-	    NULL, 0, NULL, 0,
-	    CTL_KERN, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, &node,
 	    CTLFLAG_PERMANENT,
 	    CTLTYPE_NODE, "ccd",

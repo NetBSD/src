@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.317 2013/11/27 17:24:44 christos Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.318 2014/02/25 18:30:13 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.317 2013/11/27 17:24:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.318 2014/02/25 18:30:13 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -246,11 +246,6 @@ lfs_sysctl_setup(struct sysctllog **clog)
 		{ "segs_reclaimed", "Number of segments reclaimed" },
 	};
 
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "vfs", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "lfs",

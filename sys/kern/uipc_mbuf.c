@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.157 2013/11/15 17:48:55 christos Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.158 2014/02/25 18:30:11 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.157 2013/11/15 17:48:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.158 2014/02/25 18:30:11 pooka Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_nmbclusters.h"
@@ -387,11 +387,6 @@ sysctl_kern_mbuf_setup(void)
 {
 
 	KASSERT(mbuf_sysctllog == NULL);
-	sysctl_createv(&mbuf_sysctllog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "kern", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_KERN, CTL_EOL);
 	sysctl_createv(&mbuf_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "mbuf",

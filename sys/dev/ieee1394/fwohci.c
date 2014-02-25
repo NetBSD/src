@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.136 2013/10/16 17:40:55 christos Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.137 2014/02/25 18:30:09 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.136 2013/10/16 17:40:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.137 2014/02/25 18:30:09 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -76,12 +76,6 @@ SYSCTL_SETUP(sysctl_fwohci, "sysctl fwohci(4) subtree setup")
 {
 	int rc, fwohci_node_num;
 	const struct sysctlnode *node;
-
-	if ((rc = sysctl_createv(clog, 0, NULL, NULL,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
-	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0) {
-		goto err;
-	}
 
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "fwohci",

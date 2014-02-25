@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_dirhash.c,v 1.7 2013/07/28 01:10:49 dholland Exp $	*/
+/*	$NetBSD: ulfs_dirhash.c,v 1.8 2014/02/25 18:30:13 pooka Exp $	*/
 /*  from NetBSD: ufs_dirhash.c,v 1.34 2009/10/05 23:48:08 rmind Exp  */
 
 /*
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_dirhash.c,v 1.7 2013/07/28 01:10:49 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_dirhash.c,v 1.8 2014/02/25 18:30:13 pooka Exp $");
 
 /*
  * This implements a hash-based lookup scheme for ULFS directories.
@@ -1099,16 +1099,10 @@ ulfsdirhash_sysctl_init(void)
 
 	sysctl_createv(&ulfsdirhash_sysctl_log, 0, NULL, &rnode,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "vfs", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, CTL_EOL);
-
-	sysctl_createv(&ulfsdirhash_sysctl_log, 0, &rnode, &rnode,
-		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "ulfs",
 		       SYSCTL_DESCR("ulfs"),
 		       NULL, 0, NULL, 0,
-		       CTL_CREATE, CTL_EOL);
+		       CTL_VFS, CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(&ulfsdirhash_sysctl_log, 0, &rnode, &rnode,
 		       CTLFLAG_PERMANENT,
