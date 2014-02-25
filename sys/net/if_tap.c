@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.71 2013/08/20 12:28:12 yamt Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.72 2014/02/25 18:30:12 pooka Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.71 2013/08/20 12:28:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.72 2014/02/25 18:30:12 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -1307,13 +1307,6 @@ SYSCTL_SETUP(sysctl_tap_setup, "sysctl net.link.tap subtree setup")
 {
 	const struct sysctlnode *node;
 	int error = 0;
-
-	if ((error = sysctl_createv(clog, 0, NULL, NULL,
-	    CTLFLAG_PERMANENT,
-	    CTLTYPE_NODE, "net", NULL,
-	    NULL, 0, NULL, 0,
-	    CTL_NET, CTL_EOL)) != 0)
-		return;
 
 	if ((error = sysctl_createv(clog, 0, NULL, NULL,
 	    CTLFLAG_PERMANENT,

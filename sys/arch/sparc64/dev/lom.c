@@ -1,4 +1,4 @@
-/*	$NetBSD: lom.c,v 1.12 2014/02/20 11:00:40 joerg Exp $	*/
+/*	$NetBSD: lom.c,v 1.13 2014/02/25 18:30:08 pooka Exp $	*/
 /*	$OpenBSD: lom.c,v 1.21 2010/02/28 20:44:39 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lom.c,v 1.12 2014/02/20 11:00:40 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lom.c,v 1.13 2014/02/25 18:30:08 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -238,7 +238,6 @@ static bool	lom_shutdown(device_t, int);
 SYSCTL_SETUP_PROTO(sysctl_lom_setup);
 static int	lom_sysctl_alarm(SYSCTLFN_PROTO);
 
-static int hw_node = CTL_EOL;
 static const char *nodename[LOM_MAX_ALARM] =
     { "fault_led", "alarm1", "alarm2", "alarm3" };
 #ifdef SYSCTL_INCLUDE_DESCR
@@ -342,10 +341,9 @@ lom_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Setup our sysctl subtree, hw.lomN */
-	if (hw_node != CTL_EOL)
-		sysctl_createv(NULL, 0, NULL, &node,
-		    0, CTLTYPE_NODE, device_xname(self), NULL,
-		    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL);
+	sysctl_createv(NULL, 0, NULL, &node,
+	    0, CTLTYPE_NODE, device_xname(self), NULL,
+	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL);
 
 	/* Initialize sensor data. */
 	sc->sc_sme = sysmon_envsys_create();
@@ -1201,18 +1199,6 @@ lom_shutdown(device_t dev, int how)
 	sc->sc_wdog_ctl &= ~LOM_WDOG_ENABLE;
 	lom_write(sc, LOM_IDX_WDOG_CTL, sc->sc_wdog_ctl);
 	return true;
-}
-
-SYSCTL_SETUP(sysctl_lom_setup, "sysctl hw.lom subtree setup")
-{
-	const struct sysctlnode *node;
-
-	if (sysctl_createv(clog, 0, NULL, &node,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
-	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL) != 0)
-		return;
-
-	hw_node = node->sysctl_num;
 }
 
 static int

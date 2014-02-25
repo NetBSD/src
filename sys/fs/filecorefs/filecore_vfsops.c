@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.73 2013/12/25 11:11:55 mlelstv Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.74 2014/02/25 18:30:10 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.73 2013/12/25 11:11:55 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.74 2014/02/25 18:30:10 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -148,11 +148,6 @@ filecore_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_attach(&filecore_vfsops);
 		if (error != 0)
 			break;
-		sysctl_createv(&filecore_sysctl_log, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT,
-			       CTLTYPE_NODE, "vfs", NULL,
-			       NULL, 0, NULL, 0,
-			       CTL_VFS, CTL_EOL);
 		sysctl_createv(&filecore_sysctl_log, 0, NULL, NULL,
 			       CTLFLAG_PERMANENT,
 			       CTLTYPE_NODE, "filecore",

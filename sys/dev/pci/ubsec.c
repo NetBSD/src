@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.36 2014/01/03 16:07:27 pgoyette Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.37 2014/02/25 18:30:10 pooka Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.127 2003/06/04 14:04:58 jason Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.36 2014/01/03 16:07:27 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.37 2014/02/25 18:30:10 pooka Exp $");
 
 #undef UBSEC_DEBUG
 
@@ -632,11 +632,6 @@ ubsec_sysctl_init(void)
 
 	ubsec_sysctllog = NULL;
 
-	sysctl_createv(&ubsec_sysctllog, 0, NULL, NULL,
-		CTLFLAG_PERMANENT,
-		CTLTYPE_NODE, "hw", NULL,
-		NULL, 0, NULL, 0,
-		CTL_HW, CTL_EOL);
 	sysctl_createv(&ubsec_sysctllog, 0, NULL, &node,
 		CTLFLAG_PERMANENT,
 		CTLTYPE_NODE, "ubsec", 

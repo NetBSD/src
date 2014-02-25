@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.89 2013/09/15 15:37:27 martin Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.90 2014/02/25 18:30:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.89 2013/09/15 15:37:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.90 2014/02/25 18:30:11 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -554,11 +554,6 @@ sysctl_net_setup(void)
 {
 
 	KASSERT(domain_sysctllog == NULL);
-	sysctl_createv(&domain_sysctllog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "net", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, CTL_EOL);
 	sysctl_createv(&domain_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "local",

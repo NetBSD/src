@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.44 2012/09/18 23:42:52 christos Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.45 2014/02/25 18:30:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.44 2012/09/18 23:42:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.45 2014/02/25 18:30:10 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -389,11 +389,6 @@ ptyfs_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_attach(&ptyfs_vfsops);
 		if (error != 0)
 			break;
-		sysctl_createv(&ptyfs_sysctl_log, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT,
-			       CTLTYPE_NODE, "vfs", NULL,
-			       NULL, 0, NULL, 0,
-			       CTL_VFS, CTL_EOL);
 		sysctl_createv(&ptyfs_sysctl_log, 0, NULL, NULL,
 			       CTLFLAG_PERMANENT,
 			       CTLTYPE_NODE, "ptyfs",

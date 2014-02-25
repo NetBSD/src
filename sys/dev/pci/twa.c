@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.45 2013/10/17 21:06:15 christos Exp $ */
+/*	$NetBSD: twa.c,v 1.46 2014/02/25 18:30:10 pooka Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.45 2013/10/17 21:06:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.46 2014/02/25 18:30:10 pooka Exp $");
 
 //#define TWA_DEBUG
 
@@ -1604,14 +1604,6 @@ twa_attach(device_t parent, device_t self, void *aux)
 		twa_sdh = shutdownhook_establish(twa_shutdown, NULL);
 
 	/* sysctl set-up for 3ware cli */
-	if (sysctl_createv(NULL, 0, NULL, NULL,
-				CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw",
-				NULL, NULL, 0, NULL, 0,
-				CTL_HW, CTL_EOL) != 0) {
-		aprint_error_dev(sc->twa_dv, "could not create %s sysctl node\n",
-			"hw");
-		return;
-	}
 	if (sysctl_createv(NULL, 0, NULL, &node,
 				0, CTLTYPE_NODE, device_xname(sc->twa_dv),
 				SYSCTL_DESCR("twa driver information"),
