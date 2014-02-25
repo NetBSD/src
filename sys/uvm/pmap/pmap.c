@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.3 2013/07/22 03:40:36 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.4 2014/02/25 15:20:29 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.3 2013/07/22 03:40:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.4 2014/02/25 15:20:29 martin Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1479,7 +1479,7 @@ pmap_enter_pv(pmap_t pmap, vaddr_t va, struct vm_page *pg, u_int *npte)
 	struct vm_page_md * const mdpg = VM_PAGE_TO_MD(pg);
 	pv_entry_t pv, npv, apv;
 	int16_t gen;
-	bool first = false;
+	bool first __unused = false;
 
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmaphist);
 	UVMHIST_LOG(pmaphist,
