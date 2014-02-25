@@ -1,4 +1,5 @@
-/* $NetBSD: control.h,v 1.1.1.4 2014/02/25 13:14:30 roy Exp $ */
+#include <sys/cdefs.h>
+ __RCSID("$NetBSD: hmac_md5.c,v 1.1.1.1 2014/02/25 13:14:31 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -27,22 +28,62 @@
  * SUCH DAMAGE.
  */
 
-#ifndef CONTROL_H
-#define CONTROL_H
+#include <inttypes.h>
+#include <string.h>
 
-#include "dhcpcd.h"
+#include "crypt.h"
 
-struct fd_list {
-	struct fd_list *next;
-	struct dhcpcd_ctx *ctx;
-	int fd;
-	int listener;
-};
-
-int control_start(struct dhcpcd_ctx *, const char *);
-int control_stop(struct dhcpcd_ctx *);
-int control_open(struct dhcpcd_ctx *, const char *);
-int control_send(struct dhcpcd_ctx *, int, char * const *);
-void control_close(struct dhcpcd_ctx *ctx);
-
+#ifdef HAVE_MD5_H
+#include <md5.h>
+#else
+#include "md5.h"
 #endif
+
+#define HMAC_PAD_LEN	64
+#define IPAD		0x36
+#define OPAD		0x5C
+
+/* hmac_md5 as per RFC3118 */
+void
+hmac_md5(const uint8_t *text, int text_len,
+    const uint8_t *key, int key_len,
+    uint8_t *digest)
+{
+	uint8_t k_ipad[HMAC_PAD_LEN], k_opad[HMAC_PAD_LEN];
+	uint8_t tk[MD5_DIGEST_LENGTH];
+	int i;
+	MD5_CTX context;
+
+	/* Ensure key is no bigger than HMAC_PAD_LEN */
+	if (key_len > HMAC_PAD_LEN) {
+		MD5Init(&context);
+		MD5Update(&context, key, key_len);
+		MD5Final(tk, &context);
+		key = tk;
+		key_len = MD5_DIGEST_LENGTH;
+	}
+
+	/* store key in pads */
+	memcpy(k_ipad, key, key_len);
+	memcpy(k_opad, key, key_len);
+	memset(k_ipad + key_len, 0, sizeof(k_ipad) - key_len);
+	memset(k_opad + key_len, 0, sizeof(k_opad) - key_len);
+
+	/* XOR key with ipad and opad values */
+	for (i = 0; i < HMAC_PAD_LEN; i++) {
+		k_ipad[i] ^= IPAD;
+		k_opad[i] ^= OPAD;
+	}
+
+	/* inner MD5 */
+	MD5Init(&context);
+	MD5Update(&context, k_ipad, HMAC_PAD_LEN);
+	MD5Update(&context, text, text_len);
+	MD5Final(digest, &context);
+
+	/* outer MD5 */
+	MD5Init(&context);
+	MD5Update(&context, k_opad, HMAC_PAD_LEN);
+	MD5Update(&context, digest, MD5_DIGEST_LENGTH);
+	MD5Final(digest, &context);
+}

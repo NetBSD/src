@@ -1,9 +1,9 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if-pref.c,v 1.1.1.7 2013/06/21 19:33:07 roy Exp $");
+ __RCSID("$NetBSD: if-pref.c,v 1.1.1.8 2014/02/25 13:14:28 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2013 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -80,21 +80,21 @@ ifcmp(const struct interface *si, const struct interface *ti)
 
 /* Sort the interfaces into a preferred order - best first, worst last. */
 void
-sort_interfaces(void)
+sort_interfaces(struct dhcpcd_ctx *ctx)
 {
 	struct if_head sorted;
 	struct interface *ifp, *ift;
 
-	if (ifaces == NULL ||
-	    (ifp = TAILQ_FIRST(ifaces)) == NULL ||
+	if (ctx->ifaces == NULL ||
+	    (ifp = TAILQ_FIRST(ctx->ifaces)) == NULL ||
 	    TAILQ_NEXT(ifp, next) == NULL)
 		return;
 
 	TAILQ_INIT(&sorted);
-	TAILQ_REMOVE(ifaces, ifp, next);
+	TAILQ_REMOVE(ctx->ifaces, ifp, next);
 	TAILQ_INSERT_HEAD(&sorted, ifp, next);
-	while ((ifp = TAILQ_FIRST(ifaces))) {
-		TAILQ_REMOVE(ifaces, ifp, next);
+	while ((ifp = TAILQ_FIRST(ctx->ifaces))) {
+		TAILQ_REMOVE(ctx->ifaces, ifp, next);
 		TAILQ_FOREACH(ift, &sorted, next) {
 			if (ifcmp(ifp, ift) == -1) {
 				TAILQ_INSERT_BEFORE(ift, ifp, next);
@@ -104,5 +104,5 @@ sort_interfaces(void)
 		if (ift == NULL)
 			TAILQ_INSERT_TAIL(&sorted, ifp, next);
 	}
-	TAILQ_CONCAT(ifaces, &sorted, next);
+	TAILQ_CONCAT(ctx->ifaces, &sorted, next);
 }

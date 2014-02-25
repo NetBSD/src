@@ -1,8 +1,8 @@
-/* $NetBSD: ipv6.h,v 1.1.1.6 2014/01/03 22:10:44 roy Exp $ */
+/* $NetBSD: ipv6.h,v 1.1.1.7 2014/02/25 13:14:31 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2013 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,13 @@
 #include <sys/queue.h>
 
 #include <netinet/in.h>
+
+#ifdef __linux__
+#  define _LINUX_IN6_H
+#  include <linux/ipv6.h>
+#endif
+
+#include "dhcpcd.h"
 
 #define ALLROUTERS "ff02::2"
 #define HOPLIMIT 255
@@ -106,7 +113,7 @@ struct rt6 {
 	int metric;
 	unsigned int mtu;
 };
-TAILQ_HEAD(rt6head, rt6);
+TAILQ_HEAD(rt6_head, rt6);
 
 struct ipv6_addr_l {
 	TAILQ_ENTRY(ipv6_addr_l) next;
@@ -132,8 +139,36 @@ struct ipv6_state {
 #define IPV6_CSTATE(ifp)						       \
 	((const struct ipv6_state *)(ifp)->if_data[IF_DATA_IPV6])
 
+#define IP6BUFLEN	(CMSG_SPACE(sizeof(struct in6_pktinfo)) + \
+			CMSG_SPACE(sizeof(int)))
+
+struct ipv6_ctx {
+	struct sockaddr_in6 from;
+	struct msghdr sndhdr;
+	struct iovec sndiov[2];
+	unsigned char sndbuf[IP6BUFLEN];
+	struct msghdr rcvhdr;
+	struct iovec rcviov[2];
+	unsigned char rcvbuf[IP6BUFLEN];
+	unsigned char ansbuf[1500];
+	char ntopbuf[INET6_ADDRSTRLEN];
+	const char *sfrom;
+
+	int nd_fd;
+#ifdef IPV6_SEND_DAD
+	int unspec_fd;
+#endif
+#ifdef LISTEN_DAD
+	uint8_t dad_warned;
+#endif
+	struct ra_head *ra_routers;
+	struct rt6_head *routes;
+
+	int dhcp_fd;
+};
+
 #ifdef INET6
-int ipv6_init(void);
+struct ipv6_ctx *ipv6_init(struct dhcpcd_ctx *);
 ssize_t ipv6_printaddr(char *, ssize_t, const uint8_t *, const char *);
 int ipv6_makeaddr(struct in6_addr *, const struct interface *,
     const struct in6_addr *, int);
@@ -145,7 +180,7 @@ int ipv6_userprefix( const struct in6_addr *, short prefix_len,
 int ipv6_addaddr(struct ipv6_addr *);
 void ipv6_freedrop_addrs(struct ipv6_addrhead *, int,
     const struct interface *);
-void ipv6_handleifa(int, struct if_head *,
+void ipv6_handleifa(struct dhcpcd_ctx *ctx, int, struct if_head *,
     const char *, const struct in6_addr *, int);
 int ipv6_handleifa_addrs(int, struct ipv6_addrhead *,
     const struct in6_addr *, int);
@@ -155,8 +190,9 @@ const struct ipv6_addr_l *ipv6_findaddr(const struct interface *,
 int ipv6_addlinklocalcallback(struct interface *, void (*)(void *), void *);
 void ipv6_free_ll_callbacks(struct interface *);
 void ipv6_free(struct interface *);
-int ipv6_removesubnet(const struct interface *, struct ipv6_addr *);
-void ipv6_buildroutes(void);
+void ipv6_ctxfree(struct dhcpcd_ctx *);
+int ipv6_removesubnet(struct interface *, struct ipv6_addr *);
+void ipv6_buildroutes(struct dhcpcd_ctx *);
 
 int if_address6(const struct ipv6_addr *, int);
 #define add_address6(a) if_address6(a, 1)
@@ -170,9 +206,10 @@ int if_route6(const struct rt6 *rt, int);
 #define del_src_route6(rt) if_route6(rt, -2);
 
 #else
-#define ipv6_init() -1
+#define ipv6_init(a) NULL
 #define ipv6_free_ll_callbacks(a)
 #define ipv6_free(a)
+#define ipv6_ctxfree(a)
 #endif
 
 #endif

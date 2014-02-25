@@ -1,8 +1,8 @@
-/* $NetBSD: net.h,v 1.1.1.14 2013/06/21 19:33:08 roy Exp $ */
+/* $NetBSD: net.h,v 1.1.1.15 2014/02/25 13:14:31 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2013 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -51,10 +51,6 @@
 # endif
 #endif
 
-#ifndef DUID_LEN
-#  define DUID_LEN			128 + 2
-#endif
-
 #define EUI64_ADDR_LEN			8
 #define INFINIBAND_ADDR_LEN		20
 
@@ -87,25 +83,21 @@
 # define IN_LINKLOCAL(addr) ((addr & IN_CLASSB_NET) == LINKLOCAL_ADDR)
 #endif
 
-extern int socket_afnet;
-
-int open_sockets(void);
-
-char *hwaddr_ntoa(const unsigned char *, size_t);
+char *hwaddr_ntoa(const unsigned char *, size_t, char *, size_t);
 size_t hwaddr_aton(unsigned char *, const char *);
 
 int getifssid(const char *, char *);
-struct if_head *discover_interfaces(int, char * const *);
+int if_vimaster(const char *);
+struct if_head *discover_interfaces(struct dhcpcd_ctx *, int, char * const *);
 void free_interface(struct interface *);
 int do_mtu(const char *, short int);
 #define get_mtu(iface) do_mtu(iface, 0)
 #define set_mtu(iface, mtu) do_mtu(iface, mtu)
 
-int up_interface(struct interface *);
 int if_conf(struct interface *);
 int if_init(struct interface *);
 
 int open_link_socket(void);
-int manage_link(int);
+int manage_link(struct dhcpcd_ctx *);
 int carrier_status(struct interface *);
 #endif

@@ -1,4 +1,4 @@
-/* $NetBSD: defs.h,v 1.1.1.34 2014/01/15 20:36:32 roy Exp $ */
+/* $NetBSD: defs.h,v 1.1.1.35 2014/02/25 13:14:30 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -30,7 +30,7 @@
 #define CONFIG_H
 
 #define PACKAGE			"dhcpcd"
-#define VERSION			"6.2.1"
+#define VERSION			"6.3.0"
 
 #ifndef CONFIG
 # define CONFIG			SYSCONFDIR "/" PACKAGE ".conf"
@@ -54,7 +54,19 @@
 # define PIDFILE		RUNDIR "/" PACKAGE "%s%s.pid"
 #endif
 #ifndef CONTROLSOCKET
-# define CONTROLSOCKET		RUNDIR "/" PACKAGE ".sock"
+# define CONTROLSOCKET		RUNDIR "/" PACKAGE "%s%s.sock"
+#endif
+#ifndef RDM_MONOFILE
+# define RDM_MONOFILE		DBDIR "/" PACKAGE "-rdm.monotonic"
+#endif
+
+#ifndef NO_SIGNALS
+#  define USE_SIGNALS
+#endif
+#ifndef USE_SIGNALS
+#  ifndef THERE_IS_NO_FORK
+#    define THERE_IS_NO_FORK
+#  endif
 #endif
 
 #endif

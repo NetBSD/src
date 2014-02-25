@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp-common.c,v 1.1.1.3 2014/01/15 20:36:31 roy Exp $");
+ __RCSID("$NetBSD: dhcp-common.c,v 1.1.1.4 2014/02/25 13:14:29 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -28,6 +28,8 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/utsname.h>
+
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -40,10 +42,7 @@
 #include "common.h"
 #include "dhcp-common.h"
 #include "dhcp.h"
-
-/* DHCP Enterprise options, RFC3925 */
-struct dhcp_opt *vivso = NULL;
-size_t vivso_len = 0;
+#include "platform.h"
 
 struct dhcp_opt *
 vivso_find(uint16_t iana_en, const void *arg)
@@ -60,10 +59,26 @@ vivso_find(uint16_t iana_en, const void *arg)
 			if (opt->option == iana_en)
 				return opt;
 	}
-	for (i = 0, opt = vivso; i < vivso_len; i++, opt++)
+	for (i = 0, opt = ifp->ctx->vivso; i < ifp->ctx->vivso_len; i++, opt++)
 		if (opt->option == iana_en)
 			return opt;
 	return NULL;
+}
+
+size_t
+dhcp_vendor(char *str, size_t str_len)
+{
+	struct utsname utn;
+	char *p;
+
+	if (uname(&utn) != 0)
+		return snprintf(str, str_len, "%s-%s", PACKAGE, VERSION);
+	p = str;
+	p += snprintf(str, str_len,
+	    "%s-%s:%s-%s:%s", PACKAGE, VERSION,
+	    utn.sysname, utn.release, utn.machine);
+	p += hardware_platform(p, str_len - (p - str));
+	return p - str;
 }
 
 int
@@ -393,7 +408,7 @@ print_option(char *s, ssize_t len, int type, int dl, const uint8_t *data,
 		if ((tmp = decode_rfc3361(dl, data)) == NULL)
 			return -1;
 		l = strlen(tmp);
-		l = print_string(s, len, l - 1, (uint8_t *)tmp);
+		l = print_string(s, len, l, (uint8_t *)tmp);
 		free(tmp);
 		return l;
 	}
@@ -560,9 +575,10 @@ dhcp_envoption1(char **env, const char *prefix,
 }
 
 ssize_t
-dhcp_envoption(char **env, const char *prefix,
+dhcp_envoption(struct dhcpcd_ctx *ctx, char **env, const char *prefix,
     const char *ifname, struct dhcp_opt *opt,
-    const uint8_t *(*dgetopt)(unsigned int *, unsigned int *, unsigned int *,
+    const uint8_t *(*dgetopt)(struct dhcpcd_ctx *,
+    unsigned int *, unsigned int *, unsigned int *,
     const uint8_t *, unsigned int, struct dhcp_opt **),
     const uint8_t *od, int ol)
 {
@@ -636,13 +652,13 @@ dhcp_envoption(char **env, const char *prefix,
 		{
 			eoc = opt->option;
 			if (eopt->type & OPTION) {
-				dgetopt(NULL, &eoc, NULL, NULL, 0, &oopt);
+				dgetopt(ctx, NULL, &eoc, NULL, NULL, 0, &oopt);
 				if (oopt)
 					oopt->index = 0;
 			}
 		}
 
-		while ((eod = dgetopt(&eos, &eoc, &eol, od, ol, &oopt))) {
+		while ((eod = dgetopt(ctx, &eos, &eoc, &eol, od, ol, &oopt))) {
 			for (i = 0, eopt = opt->encopts;
 			    i < opt->encopts_len;
 			    i++, eopt++)
@@ -653,7 +669,7 @@ dhcp_envoption(char **env, const char *prefix,
 							/* Report error? */
 							continue;
 					}
-					n += dhcp_envoption(
+					n += dhcp_envoption(ctx,
 					    env == NULL ? NULL : &env[n], pfx,
 					    ifname,
 					    eopt->type & OPTION ? oopt : eopt,

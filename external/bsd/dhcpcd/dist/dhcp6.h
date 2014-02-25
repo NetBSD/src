@@ -1,8 +1,8 @@
-/* $NetBSD: dhcp6.h,v 1.1.1.4 2014/01/03 22:10:44 roy Exp $ */
+/* $NetBSD: dhcp6.h,v 1.1.1.5 2014/02/25 13:14:30 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2013 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -54,6 +54,8 @@
 #define DHCP6_INFORMATION_REQ	11
 #define DHCP6_RELAY_FLOW	12
 #define DHCP6_RELAY_REPL	13
+#define DHCP6_RECONFIGURE_REQ	18
+#define DHCP6_RECONFIGURE_REPLY	19
 
 #define D6_OPTION_CLIENTID		1
 #define D6_OPTION_SERVERID		2
@@ -63,11 +65,15 @@
 #define D6_OPTION_IA_ADDR		5
 #define D6_OPTION_PREFERENCE		7
 #define D6_OPTION_ELAPSED		8
+#define D6_OPTION_AUTH			11
 #define D6_OPTION_UNICAST		12
 #define D6_OPTION_STATUS_CODE		13
 #define D6_OPTION_RAPID_COMMIT		14
 #define D6_OPTION_VENDOR_CLASS		16
 #define D6_OPTION_VENDOR_OPTS		17
+#define D6_OPTION_INTERFACE_ID		18
+#define D6_OPTION_RECONF_MSG		19
+#define D6_OPTION_RECONF_ACCEPT		20
 #define D6_OPTION_SIP_SERVERS_NAME	21
 #define D6_OPTION_SIP_SERVERS_ADDRESS	22
 #define D6_OPTION_DNS_SERVERS		23
@@ -85,6 +91,8 @@
 #define D6_OPTION_FQDN			39
 #define D6_OPTION_POSIX_TIMEZONE	41
 #define D6_OPTION_TZDB_TIMEZONE		42
+#define D6_OPTION_SOL_MAX_RT		82
+#define D6_OPTION_INF_MAX_RT		83
 
 #define D6_FQDN_PTR	0x00
 #define D6_FQDN_BOTH	0x01
@@ -105,13 +113,6 @@ struct dhcp6_option {
 	/* followed by data */
 } __packed;
 
-struct dhcp6_status {
-	uint16_t code;
-	uint16_t len;
-	uint16_t status;
-	/* followed by message */
-} __packed;
-
 #define D6_STATUS_OK		0
 #define D6_STATUS_FAIL		1
 #define D6_STATUS_NOADDR	2
@@ -121,7 +122,7 @@ struct dhcp6_status {
 
 #define SOL_MAX_DELAY		1
 #define SOL_TIMEOUT		1
-#define SOL_MAX_RT		120
+#define SOL_MAX_RT		3600 /* RFC7083 */
 #define REQ_TIMEOUT		1
 #define REQ_MAX_RT		30
 #define REQ_MAX_RC		10
@@ -135,7 +136,7 @@ struct dhcp6_status {
 #define REB_MAX_RT		600
 #define INF_MAX_DELAY		1
 #define INF_TIMEOUT		1
-#define INF_MAX_RT		120
+#define INF_MAX_RT		3600 /* RFC7083 */
 #define REL_TIMEOUT		1
 #define REL_MAX_RC		5
 #define DEC_TIMEOUT		1
@@ -179,6 +180,8 @@ struct dhcp6_state {
 	int MRC;
 	int MRT;
 	void (*MRCcallback)(void *);
+	int sol_max_rt;
+	int inf_max_rt;
 
 	struct dhcp6_message *send;
 	size_t send_len;
@@ -197,8 +200,10 @@ struct dhcp6_state {
 	uint32_t lowpl;
 	uint32_t sla;
 	uint8_t sla_set;
-	char leasefile[PATH_MAX];
+	char leasefile[sizeof(LEASEFILE6) + IF_NAMESIZE];
 	const char *reason;
+
+	struct authstate auth;
 };
 
 #define D6_STATE(ifp)							       \
@@ -224,24 +229,22 @@ struct dhcp6_state {
     ((const uint8_t *)(o) + sizeof(struct dhcp6_option))
 
 #ifdef INET6
-extern struct dhcp_opt *dhcp6_opts;
-extern size_t dhcp6_opts_len;
-
-void dhcp6_printoptions(void);
-int dhcp6_addrexists(const struct ipv6_addr *);
+void dhcp6_printoptions(const struct dhcpcd_ctx *);
+int dhcp6_addrexists(struct dhcpcd_ctx *, const struct ipv6_addr *);
 int dhcp6_find_delegates(struct interface *);
 int dhcp6_start(struct interface *, enum DH6S);
 void dhcp6_reboot(struct interface *);
 ssize_t dhcp6_env(char **, const char *, const struct interface *,
     const struct dhcp6_message *, ssize_t);
 void dhcp6_free(struct interface *);
-void dhcp6_handleifa(int, const char *, const struct in6_addr *addr, int);
+void dhcp6_handleifa(struct dhcpcd_ctx *, int, const char *,
+    const struct in6_addr *addr, int);
 void dhcp6_drop(struct interface *, const char *);
 #else
 #define dhcp6_printoptions()
-#define dhcp6_addrexists(a) 0
-#define dhcp6_find_delegates(a) 0
-#define dhcp6_start(a, b) 0
+#define dhcp6_addrexists(a, b) (0)
+#define dhcp6_find_delegates(a) (0)
+#define dhcp6_start(a, b) (0)
 #define dhcp6_reboot(a)
 #define dhcp6_env(a, b, c, d, e)
 #define dhcp6_free(a)

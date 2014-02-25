@@ -1,9 +1,9 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: common.c,v 1.1.1.13 2013/07/29 20:35:31 roy Exp $");
+ __RCSID("$NetBSD: common.c,v 1.1.1.14 2014/02/25 13:14:27 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2012 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -63,101 +63,27 @@
 #  define _PATH_DEVNULL "/dev/null"
 #endif
 
-static char hostname_buffer[HOSTNAME_MAX_LEN + 1];
-int clock_monotonic;
-static char *lbuf;
-static size_t lbuf_len;
-#ifdef DEBUG_MEMORY
-static char lbuf_set;
-#endif
-
-#ifdef DEBUG_MEMORY
-static void
-free_lbuf(void)
-{
-	free(lbuf);
-	lbuf = NULL;
-}
-#endif
-
-/* Handy routine to read very long lines in text files.
- * This means we read the whole line and avoid any nasty buffer overflows.
- * We strip leading space and avoid comment lines, making the code that calls
- * us smaller.
- * As we don't use threads, this API is clean too. */
-char *
-get_line(FILE * __restrict fp)
-{
-	char *p;
-	ssize_t bytes;
-
-#ifdef DEBUG_MEMORY
-	if (lbuf_set == 0) {
-		atexit(free_lbuf);
-		lbuf_set = 1;
-	}
-#endif
-
-	do {
-		bytes = getline(&lbuf, &lbuf_len, fp);
-		if (bytes == -1)
-			return NULL;
-		for (p = lbuf; *p == ' ' || *p == '\t'; p++)
-			;
-	} while (*p == '\0' || *p == '\n' || *p == '#' || *p == ';');
-	if (lbuf[--bytes] == '\n')
-		lbuf[bytes] = '\0';
-	return p;
-}
-
-int
-set_cloexec(int fd)
-{
-	int flags;
-
-	if ((flags = fcntl(fd, F_GETFD, 0)) == -1 ||
-	    fcntl(fd, F_SETFD, flags | FD_CLOEXEC) == -1)
-	{
-		syslog(LOG_ERR, "fcntl: %m");
-		return -1;
-	}
-	return 0;
-}
-
-int
-set_nonblock(int fd)
-{
-	int flags;
-
-	if ((flags = fcntl(fd, F_GETFL, 0)) == -1 ||
-	    fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1)
-	{
-		syslog(LOG_ERR, "fcntl: %m");
-		return -1;
-	}
-	return 0;
-}
-
 const char *
-get_hostname(int short_hostname)
+get_hostname(char *buf, size_t buflen, int short_hostname)
 {
 	char *p;
 
-	gethostname(hostname_buffer, sizeof(hostname_buffer));
-	hostname_buffer[sizeof(hostname_buffer) - 1] = '\0';
-	if (strcmp(hostname_buffer, "(none)") == 0 ||
-	    strcmp(hostname_buffer, "localhost") == 0 ||
-	    strncmp(hostname_buffer, "localhost.", strlen("localhost.")) == 0 ||
-	    hostname_buffer[0] == '.')
+	if (gethostname(buf, buflen) != 0)
+		return NULL;
+	buf[buflen - 1] = '\0';
+	if (strcmp(buf, "(none)") == 0 ||
+	    strcmp(buf, "localhost") == 0 ||
+	    strncmp(buf, "localhost.", strlen("localhost.")) == 0 ||
+	    buf[0] == '.')
 		return NULL;
 
 	if (short_hostname) {
-		p = strchr(hostname_buffer, '.');
+		p = strchr(buf, '.');
 		if (p)
 			*p = '\0';
 	}
 
-	return hostname_buffer;
+	return buf;
 }
 
 /* Handy function to get the time.
@@ -169,24 +95,13 @@ get_hostname(int short_hostname)
 int
 get_monotonic(struct timeval *tp)
 {
-	static int posix_clock_set = 0;
 #if defined(_POSIX_MONOTONIC_CLOCK) && defined(CLOCK_MONOTONIC)
 	struct timespec ts;
-	static clockid_t posix_clock;
 
-	if (!posix_clock_set) {
-		if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
-			posix_clock = CLOCK_MONOTONIC;
-			clock_monotonic = posix_clock_set = 1;
-		}
-	}
-
-	if (clock_monotonic) {
-		if (clock_gettime(posix_clock, &ts) == 0) {
-			tp->tv_sec = ts.tv_sec;
-			tp->tv_usec = ts.tv_nsec / 1000;
-			return 0;
-		}
+	if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
+		tp->tv_sec = ts.tv_sec;
+		tp->tv_usec = ts.tv_nsec / 1000;
+		return 0;
 	}
 #elif defined(__APPLE__)
 #define NSEC_PER_SEC 1000000000
@@ -218,11 +133,13 @@ get_monotonic(struct timeval *tp)
 	}
 #endif
 
+#if 0
 	/* Something above failed, so fall back to gettimeofday */
 	if (!posix_clock_set) {
 		syslog(LOG_WARNING, NO_MONOTONIC);
 		posix_clock_set = 1;
 	}
+#endif
 	return gettimeofday(tp, NULL);
 }
 
@@ -266,17 +183,3 @@ uptime(void)
 	return tv.tv_sec;
 }
 
-int
-writepid(int fd, pid_t pid)
-{
-	char spid[16];
-	ssize_t len;
-
-	if (ftruncate(fd, (off_t)0) == -1)
-		return -1;
-	snprintf(spid, sizeof(spid), "%u\n", pid);
-	len = pwrite(fd, spid, strlen(spid), (off_t)0);
-	if (len != (ssize_t)strlen(spid))
-		return -1;
-	return 0;
-}
