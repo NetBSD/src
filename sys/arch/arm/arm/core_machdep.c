@@ -1,4 +1,4 @@
-/*	$NetBSD: core_machdep.c,v 1.6 2014/02/25 00:26:43 matt Exp $	*/
+/*	$NetBSD: core_machdep.c,v 1.7 2014/02/25 21:29:12 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -37,10 +37,14 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.6 2014/02/25 00:26:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.7 2014/02/25 21:29:12 matt Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
 #include "opt_compat_netbsd32.h"
+#else
+#define EXEC_ELF32 1
+#endif
 
 #include <sys/core.h>
 #include <sys/exec.h>
