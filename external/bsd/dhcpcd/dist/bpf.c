@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: bpf.c,v 1.1.1.7 2014/01/15 20:36:31 roy Exp $");
+ __RCSID("$NetBSD: bpf.c,v 1.1.1.8 2014/02/25 13:14:29 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -65,19 +65,15 @@ ipv4_opensocket(struct interface *ifp, int protocol)
 	int flags;
 #endif
 #ifdef _PATH_BPF
-	fd = open(_PATH_BPF, O_RDWR | O_NONBLOCK);
+	fd = open(_PATH_BPF, O_RDWR | O_CLOEXEC | O_NONBLOCK);
 #else
-	char *device;
+	char device[32];
 	int n = 0;
 
-	device = malloc(sizeof(char) * PATH_MAX);
-	if (device == NULL)
-		return -1;
 	do {
-		snprintf(device, PATH_MAX, "/dev/bpf%d", n++);
-		fd = open(device, O_RDWR | O_NONBLOCK);
+		snprintf(device, sizeof(device), "/dev/bpf%d", n++);
+		fd = open(device, O_RDWR | O_CLOEXEC | O_NONBLOCK);
 	} while (fd == -1 && errno == EBUSY);
-	free(device);
 #endif
 
 	if (fd == -1)
@@ -125,8 +121,6 @@ ipv4_opensocket(struct interface *ifp, int protocol)
 		pf.bf_len = dhcp_bpf_filter_len;
 	}
 	if (ioctl(fd, BIOCSETF, &pf) == -1)
-		goto eexit;
-	if (set_cloexec(fd) == -1)
 		goto eexit;
 	return fd;
 
@@ -200,7 +194,8 @@ ipv4_getrawpacket(struct interface *ifp, int protocol,
 		if (state->buffer_pos + packet.bh_caplen + packet.bh_hdrlen >
 		    state->buffer_len)
 			goto next; /* Packet beyond buffer, drop. */
-		payload = state->buffer + packet.bh_hdrlen + ETHER_HDR_LEN;
+		payload = state->buffer + state->buffer_pos +
+		    packet.bh_hdrlen + ETHER_HDR_LEN;
 		bytes = packet.bh_caplen - ETHER_HDR_LEN;
 		if (bytes > len)
 			bytes = len;
