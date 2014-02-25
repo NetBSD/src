@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.195 2013/06/29 21:06:58 rmind Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.196 2014/02/25 22:42:06 pooka Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.195 2013/06/29 21:06:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.196 2014/02/25 22:42:06 pooka Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -852,6 +852,10 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 #endif
 #ifdef INET6
 		case ETHERTYPE_IPV6:
+			if (__predict_false(!in6_present)) {
+				m_freem(m);
+				return;
+			}
 #ifdef GATEWAY  
 			if (ip6flow_fastforward(&m))
 				return;
