@@ -1,4 +1,4 @@
-#	$NetBSD: files.awin,v 1.6 2013/09/08 04:06:44 matt Exp $
+#	$NetBSD: files.awin,v 1.7 2014/02/25 00:08:29 jmcneill Exp $
 #
 # Configuration info for Allwinner ARM Peripherals
 #
@@ -88,9 +88,10 @@ attach	ohci at awinusb with ohci_awinusb
 attach	ehci at awinusb with ehci_awinusb
 file	arch/arm/allwinner/awin_usb.c		awin_usb
 
-# A10/A20 SD/MMC Controller (SDHC)
-attach	sdhc at awinio with awin_sdhc
-file	arch/arm/allwinner/awin_sdhc.c		awin_sdhc
+# A10/A20 SD/MMC Controller (SD/MMC)
+device	awinmmc: sdmmcbus
+attach	awinmmc at awinio with awin_mmc
+file	arch/arm/allwinner/awin_mmc.c		awin_mmc
 
 # A10 WDC Controller (PATA)
 attach	wdc at awinio with awin_wdc

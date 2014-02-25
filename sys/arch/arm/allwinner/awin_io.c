@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.6 2014/02/20 21:48:38 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.7 2014/02/25 00:08:29 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -104,11 +104,11 @@ static const struct awin_locators awin_locators[] = {
 	{ "awinwdt", OFFANDSIZE(TMR), NOPORT, NOINTR, AANY },
 	{ "awinusb", OFFANDSIZE(USB1), 0, NOINTR, AANY },
 	{ "awinusb", OFFANDSIZE(USB2), 1, NOINTR, AANY },
-	{ "sdhc", OFFANDSIZE(SDMMC0), 0, AWIN_IRQ_SDMMC0, AANY },
-	{ "sdhc", OFFANDSIZE(SDMMC1), 1, AWIN_IRQ_SDMMC1, AANY },
-	{ "sdhc", OFFANDSIZE(SDMMC2), 2, AWIN_IRQ_SDMMC2, AANY },
-	{ "sdhc", OFFANDSIZE(SDMMC3), 3, AWIN_IRQ_SDMMC3, AANY },
-	{ "sdhc", OFFANDSIZE(SDMMC1), 4, AWIN_IRQ_SDMMC1, AANY },
+	{ "awinmmc", OFFANDSIZE(SDMMC0), 0, AWIN_IRQ_SDMMC0, AANY },
+	{ "awinmmc", OFFANDSIZE(SDMMC1), 1, AWIN_IRQ_SDMMC1, AANY },
+	{ "awinmmc", OFFANDSIZE(SDMMC2), 2, AWIN_IRQ_SDMMC2, AANY },
+	{ "awinmmc", OFFANDSIZE(SDMMC3), 3, AWIN_IRQ_SDMMC3, AANY },
+	{ "awinmmc", OFFANDSIZE(SDMMC1), 4, AWIN_IRQ_SDMMC1, AANY },
 	{ "ahcisata", OFFANDSIZE(SATA), NOPORT, AWIN_IRQ_SATA, AANY },
 	{ "awiniic", OFFANDSIZE(TWI0), 0, AWIN_IRQ_TWI0, AANY },
 	{ "awiniic", OFFANDSIZE(TWI1), 1, AWIN_IRQ_TWI1, AANY },
