@@ -1,4 +1,4 @@
-# $NetBSD: md.evbppc,v 1.41 2014/01/01 16:27:10 pgoyette Exp $
+# $NetBSD: md.evbppc,v 1.42 2014/02/25 14:05:35 martin Exp $
 ./stand/powerpc-4xx							base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@						base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules					base-kernel-modules	kmod,compatmodules
@@ -425,8 +425,8 @@
 ./stand/powerpc-booke/@OSRELEASE@/modules/secmodel_overlay/secmodel_overlay.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/securelevel			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/securelevel/securelevel.kmod	base-kernel-modules	kmod,compatmodules
-./stand/powerpc-booke/@OSRELEASE@/modules/skipjack			base-kernel-modules     kmod,solaris
-./stand/powerpc-booke/@OSRELEASE@/modules/skipjack/skipjack.kmod	base-kernel-modules     kmod,solaris
+./stand/powerpc-booke/@OSRELEASE@/modules/skipjack			base-kernel-modules     kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/skipjack/skipjack.kmod	base-kernel-modules     kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/smbfs				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/smbfs/smbfs.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/solaris			base-kernel-modules     kmod,solaris
