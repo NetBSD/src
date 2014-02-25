@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcpcd.c,v 1.1.1.41 2014/02/25 13:14:28 roy Exp $");
+ __RCSID("$NetBSD: dhcpcd.c,v 1.2 2014/02/25 14:10:09 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -760,7 +760,7 @@ handle_hwaddr(struct dhcpcd_ctx *ctx, const char *ifname,
     const uint8_t *hwaddr, size_t hwlen)
 {
 	struct interface *ifp;
-	char buf[hwlen * 3];
+	char buf[sizeof(ifp->hwaddr) * 3];
 
 	ifp = find_interface(ctx, ifname);
 	if (ifp == NULL)
