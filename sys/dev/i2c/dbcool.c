@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.39 2013/09/12 19:46:31 martin Exp $ */
+/*	$NetBSD: dbcool.c,v 1.40 2014/02/25 18:30:09 pooka Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.39 2013/09/12 19:46:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.40 2014/02/25 18:30:09 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1109,19 +1109,6 @@ dbcool_read_volt(struct dbcool_softc *sc, uint8_t reg, int nom_idx, bool extres)
 	ret = (ret * nom) / 0x300;
 
 	return ret;
-}
-
-SYSCTL_SETUP(sysctl_dbcoolsetup, "sysctl dBCool subtree setup")
-{
-	sysctl_createv(clog, 0, NULL, NULL,
-#ifdef _MODULE
-		       0,
-#else
-		       CTLFLAG_PERMANENT,
-#endif
-		       CTLTYPE_NODE, "hw", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_HW, CTL_EOL);
 }
 
 static int

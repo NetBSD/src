@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.44 2014/01/14 14:16:47 pgoyette Exp $ */
+/*	$NetBSD: crypto.c,v 1.45 2014/02/25 18:30:12 pooka Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.44 2014/01/14 14:16:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.45 2014/02/25 18:30:12 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -184,11 +184,7 @@ int	crypto_devallowsoft = 1;	/* only use hardware crypto */
 
 SYSCTL_SETUP(sysctl_opencrypto_setup, "sysctl opencrypto subtree setup")
 {
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "kern", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_KERN, CTL_EOL);
+
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "usercrypto",

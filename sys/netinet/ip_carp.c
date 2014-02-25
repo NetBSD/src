@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.51 2013/10/18 19:48:36 christos Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.52 2014/02/25 18:30:12 pooka Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
 #include "opt_inet.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.51 2013/10/18 19:48:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.52 2014/02/25 18:30:12 pooka Exp $");
 
 /*
  * TODO:
@@ -2256,11 +2256,6 @@ static void
 sysctl_net_inet_carp_setup(struct sysctllog **clog)
 {
 
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "net", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "inet", NULL,

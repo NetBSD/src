@@ -1,4 +1,4 @@
-/*	$NetBSD: lua.c,v 1.6 2013/12/04 02:12:01 lneto Exp $ */
+/*	$NetBSD: lua.c,v 1.7 2014/02/25 18:30:12 pooka Exp $ */
 
 /*
  * Copyright (c) 2011, 2013 by Marc Balmer <mbalmer@NetBSD.org>.
@@ -132,11 +132,6 @@ lua_attach(device_t parent, device_t self, void *aux)
 	pmf_device_register(self, NULL, NULL);
 
 	/* Sysctl to provide some control over behaviour */
-	sysctl_createv(NULL, 0, NULL, NULL,
-            CTLFLAG_PERMANENT,
-            CTLTYPE_NODE, "kern", NULL,
-            NULL, 0, NULL, 0,
-            CTL_KERN, CTL_EOL);
         sysctl_createv(&sc->sc_log, 0, NULL, &node,
             CTLFLAG_OWNDESC,
             CTLTYPE_NODE, "lua",

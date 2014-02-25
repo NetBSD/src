@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.34 2014/01/25 21:10:41 christos Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.35 2014/02/25 18:30:12 pooka Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.34 2014/01/25 21:10:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.35 2014/02/25 18:30:12 pooka Exp $");
 
 #include "opt_inet.h"
 
@@ -640,14 +640,6 @@ SYSCTL_SETUP(sysctl_etherip_setup, "sysctl net.link.etherip subtree setup")
 {
 	const struct sysctlnode *node;
 	int error = 0;
-
-	error = sysctl_createv(clog, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT,
-			       CTLTYPE_NODE, "net", NULL,
-			       NULL, 0, NULL, 0,
-			       CTL_NET, CTL_EOL);
-	if (error)
-		return;
 
 	error = sysctl_createv(clog, 0, NULL, NULL,
 			       CTLFLAG_PERMANENT,

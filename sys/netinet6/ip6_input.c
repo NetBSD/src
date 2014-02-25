@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.144 2013/10/04 14:23:14 christos Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.145 2014/02/25 18:30:12 pooka Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.144 2013/10/04 14:23:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.145 2014/02/25 18:30:12 pooka Exp $");
 
 #include "opt_gateway.h"
 #include "opt_inet.h"
@@ -1655,11 +1655,6 @@ sysctl_net_inet6_ip6_setup(struct sysctllog **clog)
 #define IS2292(x, y)	(y)
 #endif
 
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "net", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "inet6",

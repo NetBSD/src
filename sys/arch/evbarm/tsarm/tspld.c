@@ -1,4 +1,4 @@
-/*	$NetBSD: tspld.c,v 1.23 2012/11/12 18:00:40 skrll Exp $	*/
+/*	$NetBSD: tspld.c,v 1.24 2014/02/25 18:30:08 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2004 Jesse Off
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.23 2012/11/12 18:00:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.24 2014/02/25 18:30:08 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -152,14 +152,6 @@ tspldattach(device_t parent, device_t self, void *aux)
 	bus_space_handle_t 	ioh;
         const struct sysctlnode *node;
 
-	if (sysctl_createv(NULL, 0, NULL, NULL,
-				CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw",
-				NULL, NULL, 0, NULL, 0,
-				CTL_HW, CTL_EOL) != 0) {
-		printf("%s: could not create sysctl\n",
-			device_xname(self));
-		return;
-	}
 	if (sysctl_createv(NULL, 0, NULL, &node,
         			0, CTLTYPE_NODE, device_xname(self),
         			NULL,

@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.28 2011/12/02 12:29:35 yamt Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.29 2014/02/25 18:30:11 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.28 2011/12/02 12:29:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.29 2014/02/25 18:30:11 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -507,11 +507,6 @@ SYSCTL_SETUP(sysctl_sched_4bsd_setup, "sysctl sched setup")
 {
 	const struct sysctlnode *node = NULL;
 
-	sysctl_createv(clog, 0, NULL, NULL,
-		CTLFLAG_PERMANENT,
-		CTLTYPE_NODE, "kern", NULL,
-		NULL, 0, NULL, 0,
-		CTL_KERN, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, &node,
 		CTLFLAG_PERMANENT,
 		CTLTYPE_NODE, "sched",

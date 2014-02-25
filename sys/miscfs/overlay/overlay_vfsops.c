@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.58 2014/02/10 11:23:14 hannken Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.59 2014/02/25 18:30:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.58 2014/02/10 11:23:14 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.59 2014/02/25 18:30:11 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -286,10 +286,6 @@ overlay_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_attach(&overlay_vfsops);
 		if (error != 0)
 			break;
-		sysctl_createv(&overlay_sysctl_log, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT, CTLTYPE_NODE, "vfs", NULL,
-			       NULL, 0, NULL, 0,
-			       CTL_VFS, CTL_EOL);
 		sysctl_createv(&overlay_sysctl_log, 0, NULL, NULL,
 			       CTLFLAG_PERMANENT, CTLTYPE_NODE, "overlay",
 			       SYSCTL_DESCR("Overlay file system"),

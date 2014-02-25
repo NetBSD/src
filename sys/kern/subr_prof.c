@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prof.c,v 1.45 2009/12/17 01:25:10 rmind Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.46 2014/02/25 18:30:11 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.45 2009/12/17 01:25:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.46 2014/02/25 18:30:11 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,11 +158,6 @@ sysctl_kern_profiling(SYSCTLFN_ARGS)
 SYSCTL_SETUP(sysctl_kern_gprof_setup, "sysctl kern.profiling subtree setup")
 {
 
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "kern", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_KERN, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "profiling",

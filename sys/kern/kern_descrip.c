@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.222 2013/09/15 13:03:59 martin Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.223 2014/02/25 18:30:11 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.222 2013/09/15 13:03:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.223 2014/02/25 18:30:11 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,9 +154,6 @@ fd_sys_init(void)
 	    NULL);
 	KASSERT(filedesc_cache != NULL);
 
-	sysctl_createv(&clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT, CTLTYPE_NODE, "kern", NULL,
-		       NULL, 0, NULL, 0, CTL_KERN, CTL_EOL);
 	sysctl_createv(&clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "file",

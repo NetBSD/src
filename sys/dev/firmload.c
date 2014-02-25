@@ -1,4 +1,4 @@
-/*	$NetBSD: firmload.c,v 1.17 2012/04/29 20:27:31 dsl Exp $	*/
+/*	$NetBSD: firmload.c,v 1.18 2014/02/25 18:30:09 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firmload.c,v 1.17 2012/04/29 20:27:31 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firmload.c,v 1.18 2014/02/25 18:30:09 pooka Exp $");
 
 /*
  * The firmload API provides an interface for device drivers to access
@@ -122,13 +122,6 @@ SYSCTL_SETUP_PROTO(sysctl_hw_firmware_setup);
 SYSCTL_SETUP(sysctl_hw_firmware_setup, "sysctl hw.firmware subtree setup")
 {
 	const struct sysctlnode *firmware_node;
-
-	if (sysctl_createv(clog, 0, NULL, NULL,
-	    CTLFLAG_PERMANENT,
-	    CTLTYPE_NODE, "hw", NULL,
-	    NULL, 0, NULL, 0,
-	    CTL_HW, CTL_EOL) != 0)
-	    	return;
 	
 	if (sysctl_createv(clog, 0, NULL, &firmware_node,
 	    CTLFLAG_PERMANENT,

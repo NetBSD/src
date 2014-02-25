@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: src/sys/dev/ixgbe/ixgbe.c,v 1.51 2011/04/25 23:34:21 jfv Exp $*/
-/*$NetBSD: ixgbe.c,v 1.6 2014/02/09 12:27:37 njoly Exp $*/
+/*$NetBSD: ixgbe.c,v 1.7 2014/02/25 18:30:10 pooka Exp $*/
 
 #include "opt_inet.h"
 
@@ -5347,14 +5347,9 @@ ixgbe_sysctl_instance(struct adapter *adapter)
 	dvname = device_xname(adapter->dev);
 
 	if ((rc = sysctl_createv(log, 0, NULL, &rnode,
-	    0, CTLTYPE_NODE, "hw", NULL,
-	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0)
-		goto err;
-
-	if ((rc = sysctl_createv(log, 0, &rnode, &rnode,
 	    0, CTLTYPE_NODE, dvname,
 	    SYSCTL_DESCR("ixgbe information and settings"),
-	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 
 	return rnode;

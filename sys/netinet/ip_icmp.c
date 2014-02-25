@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.131 2013/06/05 19:01:26 christos Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.132 2014/02/25 18:30:12 pooka Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.131 2013/06/05 19:01:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.132 2014/02/25 18:30:12 pooka Exp $");
 
 #include "opt_ipsec.h"
 
@@ -995,11 +995,6 @@ static void
 sysctl_netinet_icmp_setup(struct sysctllog **clog)
 {
 
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "net", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "inet", NULL,

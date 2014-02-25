@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.95 2013/11/26 09:46:24 roy Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.96 2014/02/25 18:30:10 pooka Exp $  */
 /*	$OpenBSD: if_iwi.c,v 1.111 2010/11/15 19:11:57 damien Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.95 2013/11/26 09:46:24 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.96 2014/02/25 18:30:10 pooka Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -2787,14 +2787,9 @@ SYSCTL_SETUP(sysctl_iwi, "sysctl iwi(4) subtree setup")
 	const struct sysctlnode *cnode;
 
 	if ((rc = sysctl_createv(clog, 0, NULL, &rnode,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
-	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0)
-		goto err;
-
-	if ((rc = sysctl_createv(clog, 0, &rnode, &rnode,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "iwi",
 	    SYSCTL_DESCR("iwi global controls"),
-	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 
 	/* control debugging printfs */
@@ -2824,14 +2819,9 @@ iwi_sysctlattach(struct iwi_softc *sc)
 	struct sysctllog **clog = &sc->sc_sysctllog;
 
 	if ((rc = sysctl_createv(clog, 0, NULL, &rnode,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
-	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0)
-		goto err;
-
-	if ((rc = sysctl_createv(clog, 0, &rnode, &rnode,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, device_xname(sc->sc_dev),
 	    SYSCTL_DESCR("iwi controls and statistics"),
-	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 
 	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
@@ -2936,19 +2926,11 @@ SYSCTL_SETUP(sysctl_hw_iwi_accept_eula_setup, "sysctl hw.iwi.accept_eula")
 
 	sysctl_createv(NULL, 0, NULL, &rnode,
 		CTLFLAG_PERMANENT,
-		CTLTYPE_NODE, "hw",
-		NULL,
-		NULL, 0,
-		NULL, 0,
-		CTL_HW, CTL_EOL);
-
-	sysctl_createv(NULL, 0, &rnode, &rnode,
-		CTLFLAG_PERMANENT,
 		CTLTYPE_NODE, "iwi",
 		NULL,
 		NULL, 0,
 		NULL, 0,
-		CTL_CREATE, CTL_EOL);
+		CTL_HW, CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(NULL, 0, &rnode, &cnode,
 		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,

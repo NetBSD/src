@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl_base.c,v 1.2 2014/02/25 01:02:42 justin Exp $ */
+/*	$NetBSD: init_sysctl_base.c,v 1.3 2014/02/25 18:30:11 pooka Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl_base.c,v 1.2 2014/02/25 01:02:42 justin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl_base.c,v 1.3 2014/02/25 18:30:11 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -42,46 +42,47 @@ static int sysctl_setlen(SYSCTLFN_PROTO);
 /*
  * sets up the base nodes...
  */
-SYSCTL_SETUP(sysctl_root_setup, "sysctl base setup")
+void
+sysctl_basenode_init(void)
 {
 
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(NULL, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "kern",
 		       SYSCTL_DESCR("High kernel"),
 		       NULL, 0, NULL, 0,
 		       CTL_KERN, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(NULL, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "vm",
 		       SYSCTL_DESCR("Virtual memory"),
 		       NULL, 0, NULL, 0,
 		       CTL_VM, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(NULL, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "vfs",
 		       SYSCTL_DESCR("Filesystem"),
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(NULL, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "net",
 		       SYSCTL_DESCR("Networking"),
 		       NULL, 0, NULL, 0,
 		       CTL_NET, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(NULL, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "debug",
 		       SYSCTL_DESCR("Debugging"),
 		       NULL, 0, NULL, 0,
 		       CTL_DEBUG, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(NULL, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "hw",
 		       SYSCTL_DESCR("Generic CPU, I/O"),
 		       NULL, 0, NULL, 0,
 		       CTL_HW, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(NULL, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "machdep",
 		       SYSCTL_DESCR("Machine dependent"),
@@ -91,37 +92,37 @@ SYSCTL_SETUP(sysctl_root_setup, "sysctl base setup")
 	 * this node is inserted so that the sysctl nodes in libc can
 	 * operate.
 	 */
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(NULL, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "user",
 		       SYSCTL_DESCR("User-level"),
 		       NULL, 0, NULL, 0,
 		       CTL_USER, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(NULL, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "ddb",
 		       SYSCTL_DESCR("In-kernel debugger"),
 		       NULL, 0, NULL, 0,
 		       CTL_DDB, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(NULL, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "proc",
 		       SYSCTL_DESCR("Per-process"),
 		       NULL, 0, NULL, 0,
 		       CTL_PROC, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(NULL, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_NODE, "vendor",
 		       SYSCTL_DESCR("Vendor specific"),
 		       NULL, 0, NULL, 0,
 		       CTL_VENDOR, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(NULL, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "emul",
 		       SYSCTL_DESCR("Emulation settings"),
 		       NULL, 0, NULL, 0,
 		       CTL_EMUL, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(NULL, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "security",
 		       SYSCTL_DESCR("Security"),
@@ -135,11 +136,6 @@ SYSCTL_SETUP(sysctl_root_setup, "sysctl base setup")
  */
 SYSCTL_SETUP(sysctl_kernbase_setup, "sysctl kern subtree base setup")
 {
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "kern", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_KERN, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,

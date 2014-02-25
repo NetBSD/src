@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.193 2014/01/04 14:18:12 pooka Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.194 2014/02/25 18:30:12 pooka Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.193 2014/01/04 14:18:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.194 2014/02/25 18:30:12 pooka Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -1385,11 +1385,7 @@ sysctl_net_inet_udp_stats(SYSCTLFN_ARGS)
 static void
 sysctl_net_inet_udp_setup(struct sysctllog **clog)
 {
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "net", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, CTL_EOL);
+
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "inet", NULL,

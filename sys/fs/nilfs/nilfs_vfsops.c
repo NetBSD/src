@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vfsops.c,v 1.13 2013/11/01 06:41:56 mrg Exp $ */
+/* $NetBSD: nilfs_vfsops.c,v 1.14 2014/02/25 18:30:10 pooka Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.13 2013/11/01 06:41:56 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.14 2014/02/25 18:30:10 pooka Exp $");
 #endif /* not lint */
 
 
@@ -199,11 +199,6 @@ nilfs_modcmd(modcmd_t cmd, void *arg)
 		 * more instance of the "number to vfs" mapping problem, but
 		 * "30" is the order as taken from sys/mount.h
 		 */
-		sysctl_createv(&nilfs_sysctl_log, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT,
-			       CTLTYPE_NODE, "vfs", NULL,
-			       NULL, 0, NULL, 0,
-			       CTL_VFS, CTL_EOL);
 		sysctl_createv(&nilfs_sysctl_log, 0, NULL, &node,
 			       CTLFLAG_PERMANENT,
 			       CTLTYPE_NODE, "nilfs",

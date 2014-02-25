@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.54 2010/04/13 22:46:10 pooka Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.55 2014/02/25 18:30:11 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_ntptime.c,v 1.59 2005/05/28 14:34:41 rwatson Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.54 2010/04/13 22:46:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.55 2014/02/25 18:30:11 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -967,12 +967,6 @@ sysctl_kern_ntptime(SYSCTLFN_ARGS)
 
 SYSCTL_SETUP(sysctl_kern_ntptime_setup, "sysctl kern.ntptime node setup")
 {
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "kern", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_KERN, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,

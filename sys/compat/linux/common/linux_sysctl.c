@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sysctl.c,v 1.41 2013/11/18 01:36:49 chs Exp $	*/
+/*	$NetBSD: linux_sysctl.c,v 1.42 2014/02/25 18:30:09 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.41 2013/11/18 01:36:49 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.42 2014/02/25 18:30:09 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,11 +106,6 @@ linux_sysctl_init(void)
 		       NULL, 0, linux_version, sizeof(linux_version),
 		       LINUX_KERN_VERSION, CTL_EOL);
 
-	sysctl_createv(&linux_clog2, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "emul", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_EMUL, CTL_EOL);
 	sysctl_createv(&linux_clog2, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "linux",

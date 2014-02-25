@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.60 2013/09/12 11:42:26 martin Exp $	*/
+/*	$NetBSD: an.c,v 1.61 2014/02/25 18:30:09 pooka Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.60 2013/09/12 11:42:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.61 2014/02/25 18:30:09 pooka Exp $");
 
 
 #include <sys/param.h>
@@ -349,14 +349,9 @@ SYSCTL_SETUP(sysctl_an, "sysctl an(4) subtree setup")
 	const struct sysctlnode *cnode, *rnode;
 
 	if ((rc = sysctl_createv(clog, 0, NULL, &rnode,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
-	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0)
-		goto err;
-
-	if ((rc = sysctl_createv(clog, 0, &rnode, &rnode,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "an",
 	    "Cisco/Aironet 802.11 controls",
-	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 
 	/* control debugging printfs */

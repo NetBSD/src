@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.210 2014/01/17 02:12:48 pooka Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.211 2014/02/25 18:30:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1148,6 +1148,7 @@ void	fill_eproc(struct proc *, struct eproc *, bool);
  * subsystem setup
  */
 void	sysctl_init(void);
+void	sysctl_basenode_init(void);
 void	sysctl_finalize(void);
 
 /*

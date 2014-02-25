@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.191 2014/01/25 19:44:11 christos Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.192 2014/02/25 18:30:11 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.191 2014/01/25 19:44:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.192 2014/02/25 18:30:11 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -356,12 +356,6 @@ void
 procinit_sysctl(void)
 {
 	static struct sysctllog *clog;
-
-	sysctl_createv(&clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "kern", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_KERN, CTL_EOL);
 
 	sysctl_createv(&clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.37 2013/01/26 19:38:17 riastradh Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.38 2014/02/25 18:30:11 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.37 2013/01/26 19:38:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.38 2014/02/25 18:30:11 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -938,17 +938,11 @@ pollsock(struct socket *so, const struct timespec *tsp, int events)
  */
 SYSCTL_SETUP(sysctl_select_setup, "sysctl select setup")
 {
-	const struct sysctlnode *node = NULL;
 
-	sysctl_createv(clog, 0, NULL, &node,
-		CTLFLAG_PERMANENT,
-		CTLTYPE_NODE, "kern", NULL,
-		NULL, 0, NULL, 0,
-		CTL_KERN, CTL_EOL);
-	sysctl_createv(clog, 0, &node, NULL,
+	sysctl_createv(clog, 0, NULL, NULL,
 		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 		CTLTYPE_INT, "direct_select",
 		SYSCTL_DESCR("Enable/disable direct select (for testing)"),
 		NULL, 0, &direct_select, 0,
-		CTL_CREATE, CTL_EOL);
+		CTL_KERN, CTL_CREATE, CTL_EOL);
 }

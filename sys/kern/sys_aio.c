@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.38 2013/10/25 16:23:46 martin Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.39 2014/02/25 18:30:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.38 2013/10/25 16:23:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.39 2014/02/25 18:30:11 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1098,15 +1098,6 @@ sysctl_aio_init(void)
 	int rv;
 
 	aio_sysctl = NULL;
-
-	rv = sysctl_createv(&aio_sysctl, 0, NULL, NULL,
-		CTLFLAG_PERMANENT,
-		CTLTYPE_NODE, "kern", NULL,
-		NULL, 0, NULL, 0,
-		CTL_KERN, CTL_EOL);
-
-	if (rv != 0)
-		return rv;
 
 	rv = sysctl_createv(&aio_sysctl, 0, NULL, NULL,
 		CTLFLAG_PERMANENT | CTLFLAG_IMMEDIATE,

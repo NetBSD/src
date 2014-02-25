@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.41 2013/11/24 21:58:38 rmind Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.42 2014/02/25 18:30:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.41 2013/11/24 21:58:38 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.42 2014/02/25 18:30:11 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -807,11 +807,6 @@ SYSCTL_SETUP(sysctl_sched_setup, "sysctl sched setup")
 {
 	const struct sysctlnode *node = NULL;
 
-	sysctl_createv(clog, 0, NULL, NULL,
-		CTLFLAG_PERMANENT,
-		CTLTYPE_NODE, "kern", NULL,
-		NULL, 0, NULL, 0,
-		CTL_KERN, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, &node,
 		CTLFLAG_PERMANENT,
 		CTLTYPE_NODE, "sched",

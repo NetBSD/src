@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.89 2014/02/10 11:23:14 hannken Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.90 2014/02/25 18:30:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.89 2014/02/10 11:23:14 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.90 2014/02/25 18:30:12 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -321,11 +321,6 @@ umap_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_attach(&umapfs_vfsops);
 		if (error != 0)
 			break;
-		sysctl_createv(&umapfs_sysctl_log, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT,
-			       CTLTYPE_NODE, "vfs", NULL,
-			       NULL, 0, NULL, 0,
-			       CTL_VFS, CTL_EOL);
 		sysctl_createv(&umapfs_sysctl_log, 0, NULL, NULL,
 			       CTLFLAG_PERMANENT,
 			       CTLTYPE_NODE, "umap",

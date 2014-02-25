@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp.c,v 1.35 2013/09/15 13:52:23 martin Exp $	*/
+/*	$NetBSD: sbp.c,v 1.36 2014/02/25 18:30:09 pooka Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbp.c,v 1.35 2013/09/15 13:52:23 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbp.c,v 1.36 2014/02/25 18:30:09 pooka Exp $");
 
 
 #include <sys/param.h>
@@ -127,11 +127,6 @@ SYSCTL_SETUP(sysctl_sbp, "sysctl sbp(4) subtree setup")
 {
 	int rc, sbp_node_num;
 	const struct sysctlnode *node;
-
-	if ((rc = sysctl_createv(clog, 0, NULL, NULL,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
-	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0)
-		goto err;
 
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "sbp",

@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.86 2011/09/27 01:22:12 christos Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.87 2014/02/25 18:30:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.86 2011/09/27 01:22:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.87 2014/02/25 18:30:11 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -219,11 +219,6 @@ fdesc_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_attach(&fdesc_vfsops);
 		if (error != 0)
 			break;
-		sysctl_createv(&fdesc_sysctl_log, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT,
-			       CTLTYPE_NODE, "vfs", NULL,
-			       NULL, 0, NULL, 0,
-			       CTL_VFS, CTL_EOL);
 		sysctl_createv(&fdesc_sysctl_log, 0, NULL, NULL,
 			       CTLFLAG_PERMANENT,
 			       CTLTYPE_NODE, "fdesc",

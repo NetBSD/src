@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.99 2014/01/11 17:32:20 matt Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.100 2014/02/25 18:30:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.99 2014/01/11 17:32:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.100 2014/02/25 18:30:08 pooka Exp $");
 
 #include "opt_modular.h"
 #include "opt_md.h"
@@ -501,11 +501,6 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 	 * We need override the usual CTL_HW HW_MACHINE_ARCH so we
 	 * return the right machine_arch based on the running executable.
 	 */
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "hw", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_HW, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
 		       CTLTYPE_STRING, "machine_arch",

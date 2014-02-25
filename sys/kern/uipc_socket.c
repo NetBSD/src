@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.220 2013/11/02 20:09:33 christos Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.221 2014/02/25 18:30:11 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.220 2013/11/02 20:09:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.221 2014/02/25 18:30:11 pooka Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -2425,11 +2425,6 @@ sysctl_kern_socket_setup(void)
 {
 
 	KASSERT(socket_sysctllog == NULL);
-	sysctl_createv(&socket_sysctllog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "kern", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_KERN, CTL_EOL);
 
 	sysctl_createv(&socket_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,

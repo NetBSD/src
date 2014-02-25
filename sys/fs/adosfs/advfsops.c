@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.67 2013/09/30 18:57:59 hannken Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.68 2014/02/25 18:30:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.67 2013/09/30 18:57:59 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.68 2014/02/25 18:30:10 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -822,11 +822,6 @@ adosfs_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_attach(&adosfs_vfsops);
 		if (error != 0)
 			break;
-		sysctl_createv(&adosfs_sysctl_log, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT,
-			       CTLTYPE_NODE, "vfs", NULL,
-			       NULL, 0, NULL, 0,
-			       CTL_VFS, CTL_EOL);
 		sysctl_createv(&adosfs_sysctl_log, 0, NULL, NULL,
 			       CTLFLAG_PERMANENT,
 			       CTLTYPE_NODE, "adosfs",

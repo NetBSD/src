@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vte.c,v 1.8 2013/03/30 03:21:08 christos Exp $	*/
+/*	$NetBSD: if_vte.c,v 1.9 2014/02/25 18:30:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2011 Manuel Bouyer.  All rights reserved.
@@ -55,7 +55,7 @@
 /* Driver for DM&P Electronics, Inc, Vortex86 RDC R6040 FastEthernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.8 2013/03/30 03:21:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.9 2014/02/25 18:30:10 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1656,12 +1656,6 @@ SYSCTL_SETUP(sysctl_vte, "sysctl vte subtree setup")
 {
 	int rc;
 	const struct sysctlnode *node;
-
-	if ((rc = sysctl_createv(clog, 0, NULL, NULL,
-	    0, CTLTYPE_NODE, "hw", NULL,
-	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0) {
-		goto err;
-	}
 
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
 	    0, CTLTYPE_NODE, "vte",

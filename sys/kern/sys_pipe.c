@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.137 2013/06/28 01:21:06 matt Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.138 2014/02/25 18:30:11 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.137 2013/06/28 01:21:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.138 2014/02/25 18:30:11 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1493,11 +1493,6 @@ pipe_kqfilter(file_t *fp, struct knote *kn)
 SYSCTL_SETUP(sysctl_kern_pipe_setup, "sysctl kern.pipe subtree setup")
 {
 
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "kern", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_KERN, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "pipe",

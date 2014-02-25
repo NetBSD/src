@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.99 2013/09/15 15:00:57 martin Exp $	*/
+/*	$NetBSD: twe.c,v 1.100 2014/02/25 18:30:10 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.99 2013/09/15 15:00:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.100 2014/02/25 18:30:10 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -457,14 +457,6 @@ twe_attach(device_t parent, device_t self, void *aux)
 	    TWE_CTL_ENABLE_INTRS);
 
 	/* sysctl set-up for 3ware cli */
-	if (sysctl_createv(NULL, 0, NULL, NULL,
-				CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw",
-				NULL, NULL, 0, NULL, 0,
-				CTL_HW, CTL_EOL) != 0) {
-		aprint_error_dev(self, "could not create %s sysctl node\n",
-			"hw");
-		return;
-	}
 	if (sysctl_createv(NULL, 0, NULL, &node,
 				0, CTLTYPE_NODE, device_xname(self),
 				SYSCTL_DESCR("twe driver information"),

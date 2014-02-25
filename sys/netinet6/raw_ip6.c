@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.112 2013/11/23 14:20:22 christos Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.113 2014/02/25 18:30:12 pooka Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.112 2013/11/23 14:20:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.113 2014/02/25 18:30:12 pooka Exp $");
 
 #include "opt_ipsec.h"
 
@@ -854,11 +854,6 @@ static void
 sysctl_net_inet6_raw6_setup(struct sysctllog **clog)
 {
 
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "net", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "inet6", NULL,

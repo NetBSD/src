@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.84 2013/11/03 18:37:10 mrg Exp $	*/
+/*	$NetBSD: key.c,v 1.85 2014/02/25 18:30:12 pooka Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.84 2013/11/03 18:37:10 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.85 2014/02/25 18:30:12 pooka Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -8207,11 +8207,6 @@ SYSCTL_SETUP(sysctl_net_keyv2_setup, "sysctl net.keyv2 subtree setup")
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "net", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, IPSEC_PFKEY_NAME, NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_NET, IPSEC_PFKEY, CTL_EOL);
@@ -8292,12 +8287,6 @@ SYSCTL_SETUP(sysctl_net_keyv2_setup, "sysctl net.keyv2 subtree setup")
 SYSCTL_SETUP(sysctl_net_key_compat_setup, "sysctl net.key subtree setup for IPSEC")
 {
 
-	/* Make sure net.key exists before we register nodes underneath it. */
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "net", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "key", NULL,

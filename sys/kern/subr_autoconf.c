@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.229 2013/10/25 16:08:18 martin Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.230 2014/02/25 18:30:11 pooka Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.229 2013/10/25 16:08:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.230 2014/02/25 18:30:11 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -2876,21 +2876,11 @@ null_childdetached(device_t self, device_t child)
 static void
 sysctl_detach_setup(struct sysctllog **clog)
 {
-	const struct sysctlnode *node = NULL;
 
-	sysctl_createv(clog, 0, NULL, &node,
-		CTLFLAG_PERMANENT,
-		CTLTYPE_NODE, "kern", NULL,
-		NULL, 0, NULL, 0,
-		CTL_KERN, CTL_EOL);
-
-	if (node == NULL)
-		return;
-
-	sysctl_createv(clog, 0, &node, NULL,
+	sysctl_createv(clog, 0, NULL, NULL,
 		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 		CTLTYPE_BOOL, "detachall",
 		SYSCTL_DESCR("Detach all devices at shutdown"),
 		NULL, 0, &detachall, 0,
-		CTL_CREATE, CTL_EOL);
+		CTL_KERN, CTL_CREATE, CTL_EOL);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.65 2014/02/07 11:51:00 msaitoh Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.66 2014/02/25 18:30:11 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.65 2014/02/07 11:51:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.66 2014/02/25 18:30:11 pooka Exp $");
 
 #define SYSVMSG
 
@@ -1253,11 +1253,6 @@ SYSCTL_SETUP(sysctl_ipc_msg_setup, "sysctl kern.ipc subtree setup")
 {
 	const struct sysctlnode *node = NULL;
 
-	sysctl_createv(clog, 0, NULL, NULL,
-		CTLFLAG_PERMANENT,
-		CTLTYPE_NODE, "kern", NULL,
-		NULL, 0, NULL, 0,
-		CTL_KERN, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, &node,
 		CTLFLAG_PERMANENT,
 		CTLTYPE_NODE, "ipc",

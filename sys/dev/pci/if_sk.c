@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.75 2013/09/13 21:13:08 martin Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.76 2014/02/25 18:30:10 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.75 2013/09/13 21:13:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.76 2014/02/25 18:30:10 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3104,12 +3104,6 @@ SYSCTL_SETUP(sysctl_sk, "sysctl sk subtree setup")
 {
 	int rc;
 	const struct sysctlnode *node;
-
-	if ((rc = sysctl_createv(clog, 0, NULL, NULL,
-	    0, CTLTYPE_NODE, "hw", NULL,
-	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0) {
-		goto err;
-	}
 
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
 	    0, CTLTYPE_NODE, "sk",

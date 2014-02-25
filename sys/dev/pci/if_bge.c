@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.264 2013/11/07 18:45:32 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.265 2014/02/25 18:30:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.264 2013/11/07 18:45:32 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.265 2014/02/25 18:30:10 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -5914,12 +5914,6 @@ bge_sysctl_init(struct bge_softc *sc)
 {
 	int rc, bge_root_num;
 	const struct sysctlnode *node;
-
-	if ((rc = sysctl_createv(&sc->bge_log, 0, NULL, NULL,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
-	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0) {
-		goto out;
-	}
 
 	if ((rc = sysctl_createv(&sc->bge_log, 0, NULL, &node,
 	    0, CTLTYPE_NODE, "bge",

@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.49 2012/10/06 14:37:41 christos Exp $	*/
+/*	$NetBSD: ubt.c,v 1.50 2014/02/25 18:30:10 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.49 2012/10/06 14:37:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.50 2014/02/25 18:30:10 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -113,14 +113,6 @@ int	ubt_debug = 0;
 
 SYSCTL_SETUP(sysctl_hw_ubt_debug_setup, "sysctl hw.ubt_debug setup")
 {
-
-	sysctl_createv(NULL, 0, NULL, NULL,
-		CTLFLAG_PERMANENT,
-		CTLTYPE_NODE, "hw",
-		NULL,
-		NULL, 0,
-		NULL, 0,
-		CTL_HW, CTL_EOL);
 
 	sysctl_createv(NULL, 0, NULL, NULL,
 		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
@@ -485,14 +477,6 @@ ubt_attach(device_t parent, device_t self, void *aux)
 			   sc->sc_dev);
 
 	/* sysctl set-up for alternate configs */
-	sysctl_createv(&sc->sc_log, 0, NULL, NULL,
-		CTLFLAG_PERMANENT,
-		CTLTYPE_NODE, "hw",
-		NULL,
-		NULL, 0,
-		NULL, 0,
-		CTL_HW, CTL_EOL);
-
 	sysctl_createv(&sc->sc_log, 0, NULL, &node,
 		0,
 		CTLTYPE_NODE, device_xname(sc->sc_dev),

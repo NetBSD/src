@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.88 2014/02/07 15:29:22 hannken Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.89 2014/02/25 18:30:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.88 2014/02/07 15:29:22 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.89 2014/02/25 18:30:11 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -362,11 +362,6 @@ procfs_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_attach(&procfs_vfsops);
 		if (error != 0)
 			break;
-		sysctl_createv(&procfs_sysctl_log, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT,
-			       CTLTYPE_NODE, "vfs", NULL,
-			       NULL, 0, NULL, 0,
-			       CTL_VFS, CTL_EOL);
 		sysctl_createv(&procfs_sysctl_log, 0, NULL, NULL,
 			       CTLFLAG_PERMANENT,
 			       CTLTYPE_NODE, "procfs",

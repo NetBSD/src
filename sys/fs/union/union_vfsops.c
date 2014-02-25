@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.69 2014/02/16 09:50:25 hannken Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.70 2014/02/25 18:30:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.69 2014/02/16 09:50:25 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.70 2014/02/25 18:30:11 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -543,11 +543,6 @@ union_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_attach(&union_vfsops);
 		if (error != 0)
 			break;
-		sysctl_createv(&union_sysctl_log, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT,
-			       CTLTYPE_NODE, "vfs", NULL,
-			       NULL, 0, NULL, 0,
-			       CTL_VFS, CTL_EOL);
 		sysctl_createv(&union_sysctl_log, 0, NULL, NULL,
 			       CTLFLAG_PERMANENT,
 			       CTLTYPE_NODE, "union",

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.58 2013/09/15 15:59:37 martin Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.59 2014/02/25 18:30:11 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.58 2013/09/15 15:59:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.59 2014/02/25 18:30:11 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -272,18 +272,10 @@ wapbl_sysctl_init(void)
 
 	rv = sysctl_createv(&wapbl_sysctl, 0, NULL, &rnode,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "vfs", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, CTL_EOL);
-	if (rv)
-		return rv;
-
-	rv = sysctl_createv(&wapbl_sysctl, 0, &rnode, &rnode,
-		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "wapbl",
 		       SYSCTL_DESCR("WAPBL journaling options"),
 		       NULL, 0, NULL, 0,
-		       CTL_CREATE, CTL_EOL);
+		       CTL_VFS, CTL_CREATE, CTL_EOL);
 	if (rv)
 		return rv;
 

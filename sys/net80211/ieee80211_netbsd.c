@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.c,v 1.24 2013/06/27 17:47:18 christos Exp $ */
+/* $NetBSD: ieee80211_netbsd.c,v 1.25 2014/02/25 18:30:12 pooka Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -30,7 +30,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_freebsd.c,v 1.8 2005/08/08 18:46:35 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.24 2013/06/27 17:47:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.25 2014/02/25 18:30:12 pooka Exp $");
 #endif
 
 /*
@@ -150,14 +150,9 @@ ieee80211_sysctl_treetop(struct sysctllog **log)
 	const struct sysctlnode *rnode;
 
 	if ((rc = sysctl_createv(log, 0, NULL, &rnode,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "net", NULL,
-	    NULL, 0, NULL, 0, CTL_NET, CTL_EOL)) != 0)
-		goto err;
-
-	if ((rc = sysctl_createv(log, 0, &rnode, &rnode,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "link",
 	    "link-layer statistics and controls",
-	    NULL, 0, NULL, 0, PF_LINK, CTL_EOL)) != 0)
+	    NULL, 0, NULL, 0, CTL_NET, PF_LINK, CTL_EOL)) != 0)
 		goto err;
 
 	if ((rc = sysctl_createv(log, 0, &rnode, &rnode,

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.245 2014/02/09 14:51:13 maxv Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.246 2014/02/25 18:30:11 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.245 2014/02/09 14:51:13 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.246 2014/02/25 18:30:11 pooka Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -234,6 +234,7 @@ sysctl_init(void)
 	 * dynamic mib numbers start here
 	 */
 	sysctl_root.sysctl_num = CREATE_BASE;
+	sysctl_basenode_init();
 
         __link_set_foreach(sysctl_setup, sysctl_funcs) {
 		(**sysctl_setup)(NULL);

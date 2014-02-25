@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.78 2013/11/27 17:24:44 christos Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.79 2014/02/25 18:30:08 pooka Exp $	*/
 
 /*
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.78 2013/11/27 17:24:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.79 2014/02/25 18:30:08 pooka Exp $");
 
 #ifndef _KERNEL_OPT
 #define	NVCODA 4
@@ -550,11 +550,7 @@ coda_done(void)
 
 SYSCTL_SETUP(sysctl_vfs_coda_setup, "sysctl vfs.coda subtree setup")
 {
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "vfs", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, CTL_EOL);
+
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "coda",

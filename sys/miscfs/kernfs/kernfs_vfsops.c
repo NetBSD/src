@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.91 2011/09/27 01:23:05 christos Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.92 2014/02/25 18:30:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.91 2011/09/27 01:23:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.92 2014/02/25 18:30:11 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -261,11 +261,6 @@ kernfs_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_attach(&kernfs_vfsops);
 		if (error != 0)
 			break;
-		sysctl_createv(&kernfs_sysctl_log, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT,
-			       CTLTYPE_NODE, "vfs", NULL,
-			       NULL, 0, NULL, 0,
-			       CTL_VFS, CTL_EOL);
 		sysctl_createv(&kernfs_sysctl_log, 0, NULL, NULL,
 			       CTLFLAG_PERMANENT,
 			       CTLTYPE_NODE, "kernfs",
