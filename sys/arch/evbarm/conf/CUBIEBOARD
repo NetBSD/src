@@ -1,5 +1,5 @@
 #
-#	$NetBSD: CUBIEBOARD,v 1.8 2013/09/08 04:06:44 matt Exp $
+#	$NetBSD: CUBIEBOARD,v 1.9 2014/02/25 00:09:00 jmcneill Exp $
 #
 #	CUBIEBOARD -- Allwinner A10/A20 Eval Board Kernel
 #
@@ -177,11 +177,10 @@ armgtmr0	at armperiph?				# ARM Generic Timer
 # SoC I/O
 awinio0		at mainbus?
 
-# SDHC controllers
-#sdhc0		at awinio0 port 0
-#sdhc*		at awinio0 port ?
-#sdmmc*		at sdhc?		# SD/MMC bus
-#ld*		at sdmmc?
+# SD/MMC controllers
+awinmmc0	at awinio0 port 0
+sdmmc*		at awinmmc?
+ld*		at sdmmc?
 
 # NAND controller
 awinnand0	at awinio0
@@ -293,4 +292,4 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	lockstat		# lock profiling
 
-cinclude "arch/evbarm/conf/BEAGLEBOARD.local"
+cinclude "arch/evbarm/conf/CUBIEBOARD.local"
