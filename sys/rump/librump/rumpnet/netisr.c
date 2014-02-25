@@ -1,4 +1,4 @@
-/*	$NetBSD: netisr.c,v 1.7 2014/02/14 01:43:13 pooka Exp $	*/
+/*	$NetBSD: netisr.c,v 1.8 2014/02/25 22:40:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netisr.c,v 1.7 2014/02/14 01:43:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netisr.c,v 1.8 2014/02/25 22:40:53 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/intr.h>
@@ -42,7 +42,14 @@ void
 schednetisr(int isr)
 {
 
-	softint_schedule(netisrs[isr]);
+	/*
+	 * Do not schedule a softint that is not registered.
+	 * This might cause the inq to fill, but the one calling us
+	 * should start dropping packets once the inq is full,
+	 * so no big harm done.
+	 */
+	if (__predict_true(netisrs[isr]))
+		softint_schedule(netisrs[isr]);
 }
 
 void
