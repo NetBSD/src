@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.21 2013/08/29 01:04:49 tls Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.22 2014/02/25 23:15:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.21 2013/08/29 01:04:49 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.22 2014/02/25 23:15:43 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -241,10 +241,10 @@ rnd_getmore(size_t byteswanted)
 		if (rs->flags & RND_FLAG_HASCB) {
 			KASSERT(rs->get != NULL);
 			KASSERT(rs->getarg != NULL);
-			rs->get((size_t)byteswanted, rs->getarg);
+			rs->get(byteswanted, rs->getarg);
 #ifdef RND_VERBOSE
-			printf("rnd: asking source %s for %d bytes\n",
-			       rs->name, (int)byteswanted);
+			printf("rnd: asking source %s for %zu bytes\n",
+			       rs->name, byteswanted);
 #endif
 		}    
 	}    
@@ -868,14 +868,14 @@ rnd_process_events(void)
 	mutex_spin_enter(&rndpool_mtx);
 
 	pool_entropy = rndpool_get_entropy_count(&rnd_pool);
-	if (pool_entropy > RND_ENTROPY_THRESHOLD * 8) {
+	if (pool_entropy > RND_ENTROPY_THRESHOLD * NBBY) {
 		wake++;
 	} else {
 		rnd_empty = 1;
-		rnd_getmore((RND_POOLBITS - pool_entropy) / 8);
+		rnd_getmore(howmany((RND_POOLBITS - pool_entropy), NBBY));
 #ifdef RND_VERBOSE
-		printf("rnd: empty, asking for %d bits\n",
-		       (int)((RND_POOLBITS - pool_entropy) / 8));
+		printf("rnd: empty, asking for %zu bytes\n",
+		       howmany((RND_POOLBITS - pool_entropy), NBBY));
 #endif
 	}
 
@@ -1032,8 +1032,8 @@ rnd_extract_data_locked(void *p, u_int32_t len, u_int32_t flags)
 	}
 #endif
 	entropy_count = rndpool_get_entropy_count(&rnd_pool);
-	if (entropy_count < (RND_ENTROPY_THRESHOLD * 2 + len) * 8) {
-		rnd_getmore(RND_POOLBITS - entropy_count * 8);
+	if (entropy_count < (RND_ENTROPY_THRESHOLD * 2 + len) * NBBY) {
+		rnd_getmore(howmany((RND_POOLBITS - entropy_count), NBBY));
 	}
 	return rndpool_extract_data(&rnd_pool, p, len, flags);
 }
