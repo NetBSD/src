@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp.c,v 1.1.1.28 2014/01/15 20:36:31 roy Exp $");
+ __RCSID("$NetBSD: dhcp.c,v 1.1.1.29 2014/02/25 13:14:29 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -57,8 +57,8 @@
 #include <syslog.h>
 #include <unistd.h>
 
-#include "arp.h"
 #include "config.h"
+#include "arp.h"
 #include "common.h"
 #include "dhcp.h"
 #include "dhcpcd.h"
@@ -71,13 +71,6 @@
 
 #define DAD		"Duplicate address detected"
 #define DHCP_MIN_LEASE	20
-
-static uint8_t *packet;
-
-/* Our aggregate option buffer.
- * We ONLY use this when options are split, which for most purposes is
- * practically never. See RFC3396 for details. */
-static uint8_t *opt_buffer;
 
 #define IPV4A		ADDRIPV4 | ARRAY
 #define IPV4R		ADDRIPV4 | REQUEST
@@ -96,14 +89,15 @@ struct dhcp_op {
 };
 
 static const struct dhcp_op dhcp_ops[] = {
-	{ DHCP_DISCOVER, "DISCOVER" },
-	{ DHCP_OFFER,    "OFFER" },
-	{ DHCP_REQUEST,  "REQUEST" },
-	{ DHCP_DECLINE,  "DECLINE" },
-	{ DHCP_ACK,      "ACK" },
-	{ DHCP_NAK,      "NAK" },
-	{ DHCP_RELEASE,  "RELEASE" },
-	{ DHCP_INFORM,   "INFORM" },
+	{ DHCP_DISCOVER,   "DISCOVER" },
+	{ DHCP_OFFER,      "OFFER" },
+	{ DHCP_REQUEST,    "REQUEST" },
+	{ DHCP_DECLINE,    "DECLINE" },
+	{ DHCP_ACK,        "ACK" },
+	{ DHCP_NAK,        "NAK" },
+	{ DHCP_RELEASE,    "RELEASE" },
+	{ DHCP_INFORM,     "INFORM" },
+	{ DHCP_FORCERENEW, "DHCP_FORCERENEW"},
 	{ 0, NULL }
 };
 
@@ -123,15 +117,12 @@ struct udp_dhcp_packet
 	struct dhcp_message dhcp;
 };
 
-struct dhcp_opt *dhcp_opts = NULL;
-size_t dhcp_opts_len = 0;
-
 static const size_t udp_dhcp_len = sizeof(struct udp_dhcp_packet);
 
 static int dhcp_open(struct interface *);
 
 void
-dhcp_printoptions(void)
+dhcp_printoptions(const struct dhcpcd_ctx *ctx)
 {
 	const char * const *p;
 	size_t i;
@@ -140,23 +131,14 @@ dhcp_printoptions(void)
 	for (p = dhcp_params; *p; p++)
 		printf("    %s\n", *p);
 
-	for (i = 0, opt = dhcp_opts; i < dhcp_opts_len; i++, opt++)
+	for (i = 0, opt = ctx->dhcp_opts; i < ctx->dhcp_opts_len; i++, opt++)
 		printf("%03d %s\n", opt->option, opt->var);
 }
 
-#ifdef DEBUG_MEMORY
-static void
-dhcp_cleanup(void)
-{
-
-	free(packet);
-	free(opt_buffer);
-}
-#endif
-
-#define get_option_raw(dhcp, opt) get_option(dhcp, opt, NULL)
+#define get_option_raw(ctx, dhcp, opt) get_option(ctx, dhcp, opt, NULL)
 static const uint8_t *
-get_option(const struct dhcp_message *dhcp, uint8_t opt, int *len)
+get_option(struct dhcpcd_ctx *ctx,
+    const struct dhcp_message *dhcp, uint8_t opt, int *len)
 {
 	const uint8_t *p = dhcp->options;
 	const uint8_t *e = p + sizeof(dhcp->options);
@@ -171,13 +153,13 @@ get_option(const struct dhcp_message *dhcp, uint8_t opt, int *len)
 		o = *p++;
 		if (o == opt) {
 			if (op) {
-				if (!opt_buffer) {
-					opt_buffer = malloc(sizeof(*dhcp));
-					if (opt_buffer == NULL)
+				if (!ctx->opt_buffer) {
+					ctx->opt_buffer = malloc(sizeof(*dhcp));
+					if (ctx->opt_buffer == NULL)
 						return NULL;
 				}
 				if (!bp)
-					bp = opt_buffer;
+					bp = ctx->opt_buffer;
 				memcpy(bp, op, ol);
 				bp += ol;
 			}
@@ -221,7 +203,7 @@ exit:
 		*len = bl;
 	if (bp) {
 		memcpy(bp, op, ol);
-		return (const uint8_t *)opt_buffer;
+		return (const uint8_t *)ctx->opt_buffer;
 	}
 	if (op)
 		return op;
@@ -230,13 +212,14 @@ exit:
 }
 
 int
-get_option_addr(struct in_addr *a, const struct dhcp_message *dhcp,
+get_option_addr(struct dhcpcd_ctx *ctx,
+    struct in_addr *a, const struct dhcp_message *dhcp,
     uint8_t option)
 {
 	const uint8_t *p;
 	int len;
 
-	p = get_option(dhcp, option, &len);
+	p = get_option(ctx, dhcp, option, &len);
 	if (!p || len < (ssize_t)sizeof(a->s_addr))
 		return -1;
 	memcpy(&a->s_addr, p, sizeof(a->s_addr));
@@ -244,13 +227,14 @@ get_option_addr(struct in_addr *a, const struct dhcp_message *dhcp,
 }
 
 static int
-get_option_uint32(uint32_t *i, const struct dhcp_message *dhcp, uint8_t option)
+get_option_uint32(struct dhcpcd_ctx *ctx,
+    uint32_t *i, const struct dhcp_message *dhcp, uint8_t option)
 {
 	const uint8_t *p;
 	int len;
 	uint32_t d;
 
-	p = get_option(dhcp, option, &len);
+	p = get_option(ctx, dhcp, option, &len);
 	if (!p || len < (ssize_t)sizeof(d))
 		return -1;
 	memcpy(&d, p, sizeof(d));
@@ -260,12 +244,13 @@ get_option_uint32(uint32_t *i, const struct dhcp_message *dhcp, uint8_t option)
 }
 
 static int
-get_option_uint8(uint8_t *i, const struct dhcp_message *dhcp, uint8_t option)
+get_option_uint8(struct dhcpcd_ctx *ctx,
+    uint8_t *i, const struct dhcp_message *dhcp, uint8_t option)
 {
 	const uint8_t *p;
 	int len;
 
-	p = get_option(dhcp, option, &len);
+	p = get_option(ctx, dhcp, option, &len);
 	if (!p || len < (ssize_t)sizeof(*p))
 		return -1;
 	if (i)
@@ -500,14 +485,15 @@ decode_rfc5969(char *out, ssize_t len, int pl, const uint8_t *p)
 	return bytes;
 }
 
-char *
-get_option_string(const struct dhcp_message *dhcp, uint8_t option)
+static char *
+get_option_string(struct dhcpcd_ctx *ctx,
+    const struct dhcp_message *dhcp, uint8_t option)
 {
 	int len;
 	const uint8_t *p;
 	char *s;
 
-	p = get_option(dhcp, option, &len);
+	p = get_option(ctx, dhcp, option, &len);
 	if (!p || len == 0 || *p == '\0')
 		return NULL;
 
@@ -564,12 +550,12 @@ get_option_routes(struct interface *ifp, const struct dhcp_message *dhcp)
 
 	/* If we have CSR's then we MUST use these only */
 	if (!has_option_mask(ifo->nomask, DHO_CSR))
-		p = get_option(dhcp, DHO_CSR, &len);
+		p = get_option(ifp->ctx, dhcp, DHO_CSR, &len);
 	else
 		p = NULL;
 	/* Check for crappy MS option */
 	if (!p && !has_option_mask(ifo->nomask, DHO_MSCSR)) {
-		p = get_option(dhcp, DHO_MSCSR, &len);
+		p = get_option(ifp->ctx, dhcp, DHO_MSCSR, &len);
 		if (p)
 			csr = "MS ";
 	}
@@ -594,7 +580,7 @@ get_option_routes(struct interface *ifp, const struct dhcp_message *dhcp)
 	}
 	TAILQ_INIT(routes);
 	if (!has_option_mask(ifo->nomask, DHO_STATICROUTE))
-		p = get_option(dhcp, DHO_STATICROUTE, &len);
+		p = get_option(ifp->ctx, dhcp, DHO_STATICROUTE, &len);
 	else
 		p = NULL;
 	if (p) {
@@ -617,7 +603,7 @@ get_option_routes(struct interface *ifp, const struct dhcp_message *dhcp)
 
 	/* Now grab our routers */
 	if (!has_option_mask(ifo->nomask, DHO_ROUTER))
-		p = get_option(dhcp, DHO_ROUTER, &len);
+		p = get_option(ifp->ctx, dhcp, DHO_ROUTER, &len);
 	else
 		p = NULL;
 	if (p) {
@@ -676,16 +662,18 @@ make_message(struct dhcp_message **message,
     uint8_t type)
 {
 	struct dhcp_message *dhcp;
-	uint8_t *m, *lp, *p;
+	uint8_t *m, *lp, *p, *auth;
 	uint8_t *n_params = NULL;
 	uint32_t ul;
 	uint16_t sz;
 	size_t len, i;
+	int auth_len;
 	const struct dhcp_opt *opt;
-	const struct if_options *ifo = iface->options;
+	struct if_options *ifo = iface->options;
 	const struct dhcp_state *state = D_CSTATE(iface);
 	const struct dhcp_lease *lease = &state->lease;
 	time_t up = uptime() - state->start_uptime;
+	char hbuf[HOSTNAME_MAX_LEN + 1];
 	const char *hostname;
 	const struct vivco *vivco;
 
@@ -767,7 +755,7 @@ make_message(struct dhcp_message **message,
 	}
 
 	if (type == DHCP_DISCOVER &&
-	    !(options & DHCPCD_TEST) &&
+	    !(iface->ctx->options & DHCPCD_TEST) &&
 	    has_option_mask(ifo->requestmask, DHO_RAPIDCOMMIT))
 	{
 		/* RFC 4039 Section 3 */
@@ -777,6 +765,13 @@ make_message(struct dhcp_message **message,
 
 	if (type == DHCP_DISCOVER && ifo->options & DHCPCD_REQUEST)
 		PUTADDR(DHO_IPADDRESS, ifo->req_addr);
+
+	/* RFC 2563 Auto Configure */
+	if (type == DHCP_DISCOVER && ifo->options & DHCPCD_IPV4LL) {
+		*p++ = DHO_AUTOCONFIGURE;
+		*p++ = 1;
+		*p++ = 1;
+	}
 
 	if (type == DHCP_DISCOVER ||
 	    type == DHCP_INFORM ||
@@ -823,8 +818,8 @@ make_message(struct dhcp_message **message,
 		}
 
 		if (ifo->hostname[0] == '\0')
-			hostname = get_hostname(ifo->options &
-			    DHCPCD_HOSTNAME_SHORT ? 1 : 0);
+			hostname = get_hostname(hbuf, sizeof(hbuf),
+			    ifo->options & DHCPCD_HOSTNAME_SHORT ? 1 : 0);
 		else
 			hostname = ifo->hostname;
 		if (ifo->fqdn != FQDN_DISABLE) {
@@ -868,6 +863,15 @@ make_message(struct dhcp_message **message,
 			p += ifo->vendor[0] + 1;
 		}
 
+		if ((ifo->auth.options & DHCPCD_AUTH_SENDREQUIRE) !=
+		    DHCPCD_AUTH_SENDREQUIRE)
+		{
+			/* We support HMAC-MD5 */
+			*p++ = DHO_FORCERENEW_NONCE;
+			*p++ = 1;
+			*p++ = AUTH_ALG_HMAC_MD5;
+		}
+
 		if (ifo->vivco_len) {
 			*p++ = DHO_VIVCO;
 			lp = p++;
@@ -902,7 +906,10 @@ make_message(struct dhcp_message **message,
 		*p++ = DHO_PARAMETERREQUESTLIST;
 		n_params = p;
 		*p++ = 0;
-		for (i = 0, opt = dhcp_opts; i < dhcp_opts_len; i++, opt++) {
+		for (i = 0, opt = iface->ctx->dhcp_opts;
+		    i < iface->ctx->dhcp_opts_len;
+		    i++, opt++)
+		{
 			if (!(opt->type & REQUEST ||
 				has_option_mask(ifo->requestmask, opt->option)))
 				continue;
@@ -919,6 +926,27 @@ make_message(struct dhcp_message **message,
 		}
 		*n_params = p - n_params - 1;
 	}
+
+	/* silence GCC */
+	auth_len = 0;
+	auth = NULL;
+
+	if (ifo->auth.options & DHCPCD_AUTH_SEND) {
+		auth_len = dhcp_auth_encode(&ifo->auth, state->auth.token,
+		    NULL, 0, 4, type, NULL, 0);
+		if (auth_len > 0) {
+			len = (p + auth_len) - m;
+			if (auth_len > 255 || len > sizeof(*dhcp))
+				goto toobig;
+			*p++ = DHO_AUTHENTICATION;
+			*p++ = (uint8_t)auth_len;
+			auth = p;
+			p += auth_len;
+		} else if (auth_len == -1)
+			syslog(LOG_ERR, "%s: dhcp_auth_encode: %m",
+			    iface->name);
+	}
+
 	*p++ = DHO_END;
 
 #ifdef BOOTP_MESSAGE_LENTH_MIN
@@ -929,8 +957,13 @@ make_message(struct dhcp_message **message,
 		*p++ = DHO_PAD;
 #endif
 
+	len = p - m;
+	if (ifo->auth.options & DHCPCD_AUTH_SEND && auth_len > 0)
+		dhcp_auth_encode(&ifo->auth, state->auth.token,
+		    m, len, 4, type, auth, auth_len);
+
 	*message = dhcp;
-	return p - m;
+	return len;
 
 toobig:
 	syslog(LOG_ERR, "%s: DHCP messge too big", iface->name);
@@ -950,7 +983,7 @@ write_lease(const struct interface *ifp, const struct dhcp_message *dhcp)
 	const struct dhcp_state *state = D_CSTATE(ifp);
 
 	/* We don't write BOOTP leases */
-	if (is_bootp(dhcp)) {
+	if (is_bootp(ifp, dhcp)) {
 		unlink(state->leasefile);
 		return 0;
 	}
@@ -981,12 +1014,15 @@ write_lease(const struct interface *ifp, const struct dhcp_message *dhcp)
 }
 
 struct dhcp_message *
-read_lease(const struct interface *ifp)
+read_lease(struct interface *ifp)
 {
 	int fd;
 	struct dhcp_message *dhcp;
-	const struct dhcp_state *state = D_CSTATE(ifp);
+	struct dhcp_state *state = D_STATE(ifp);
 	ssize_t bytes;
+	const uint8_t *auth;
+	uint8_t type;
+	int auth_len;
 
 	fd = open(state->leasefile, O_RDONLY);
 	if (fd == -1) {
@@ -1006,8 +1042,28 @@ read_lease(const struct interface *ifp)
 	close(fd);
 	if (bytes < 0) {
 		free(dhcp);
-		dhcp = NULL;
+		return NULL;
 	}
+
+	/* We may have found a BOOTP server */
+	if (get_option_uint8(ifp->ctx, &type, dhcp, DHO_MESSAGETYPE) == -1)
+		type = 0;
+	/* Authenticate the message */
+	auth = get_option(ifp->ctx, dhcp, DHO_AUTHENTICATION, &auth_len);
+	if (auth) {
+		if (dhcp_auth_validate(&state->auth, &ifp->options->auth,
+		    (uint8_t *)dhcp, sizeof(*dhcp), 4, type,
+		    auth, auth_len) == NULL)
+		{
+			syslog(LOG_DEBUG, "%s: dhcp_auth_validate: %m",
+			    ifp->name);
+			free(dhcp);
+			return NULL;
+		}
+		syslog(LOG_DEBUG, "%s: validated using 0x%08" PRIu32,
+		    ifp->name, state->auth.token->secretid);
+	}
+
 	return dhcp;
 }
 
@@ -1028,7 +1084,8 @@ dhcp_getoverride(const struct if_options *ifo, uint16_t o)
 }
 
 static const uint8_t *
-dhcp_getoption(unsigned int *os, unsigned int *code, unsigned int *len,
+dhcp_getoption(struct dhcpcd_ctx *ctx,
+    unsigned int *os, unsigned int *code, unsigned int *len,
     const uint8_t *od, unsigned int ol, struct dhcp_opt **oopt)
 {
 	size_t i;
@@ -1048,7 +1105,7 @@ dhcp_getoption(unsigned int *os, unsigned int *code, unsigned int *len,
 		}
 	}
 
-	for (i = 0, opt = dhcp_opts; i < dhcp_opts_len; i++, opt++) {
+	for (i = 0, opt = ctx->dhcp_opts; i < ctx->dhcp_opts_len; i++, opt++) {
 		if (opt->option == *code) {
 			*oopt = opt;
 			break;
@@ -1077,7 +1134,7 @@ dhcp_env(char **env, const char *prefix, const struct dhcp_message *dhcp,
 	uint32_t en;
 
 	ifo = ifp->options;
-	get_option_uint8(&overl, dhcp, DHO_OPTIONSOVERLOADED);
+	get_option_uint8(ifp->ctx, &overl, dhcp, DHO_OPTIONSOVERLOADED);
 
 	if (!env) {
 		if (dhcp->yiaddr || dhcp->ciaddr)
@@ -1086,18 +1143,18 @@ dhcp_env(char **env, const char *prefix, const struct dhcp_message *dhcp,
 			e++;
 		if (*dhcp->servername && !(overl & 2))
 			e++;
-		for (i = 0, opt = dhcp_opts;
-		    i < dhcp_opts_len;
+		for (i = 0, opt = ifp->ctx->dhcp_opts;
+		    i < ifp->ctx->dhcp_opts_len;
 		    i++, opt++)
 		{
 			if (has_option_mask(ifo->nomask, opt->option))
 				continue;
 			if (dhcp_getoverride(ifo, opt->option))
 				continue;
-			p = get_option(dhcp, opt->option, &pl);
+			p = get_option(ifp->ctx, dhcp, opt->option, &pl);
 			if (!p)
 				continue;
-			e += dhcp_envoption(NULL, NULL, ifp->name,
+			e += dhcp_envoption(ifp->ctx, NULL, NULL, ifp->name,
 			    opt, dhcp_getoption, p, pl);
 		}
 		for (i = 0, opt = ifo->dhcp_override;
@@ -1106,10 +1163,10 @@ dhcp_env(char **env, const char *prefix, const struct dhcp_message *dhcp,
 		{
 			if (has_option_mask(ifo->nomask, opt->option))
 				continue;
-			p = get_option(dhcp, opt->option, &pl);
+			p = get_option(ifp->ctx, dhcp, opt->option, &pl);
 			if (!p)
 				continue;
-			e += dhcp_envoption(NULL, NULL, ifp->name,
+			e += dhcp_envoption(ifp->ctx, NULL, NULL, ifp->name,
 			    opt, dhcp_getoption, p, pl);
 		}
 		return e;
@@ -1121,13 +1178,15 @@ dhcp_env(char **env, const char *prefix, const struct dhcp_message *dhcp,
 		 * message but are not necessarily in the options */
 		addr.s_addr = dhcp->yiaddr ? dhcp->yiaddr : dhcp->ciaddr;
 		setvar(&ep, prefix, "ip_address", inet_ntoa(addr));
-		if (get_option_addr(&net, dhcp, DHO_SUBNETMASK) == -1) {
+		if (get_option_addr(ifp->ctx, &net,
+		    dhcp, DHO_SUBNETMASK) == -1) {
 			net.s_addr = ipv4_getnetmask(addr.s_addr);
 			setvar(&ep, prefix, "subnet_mask", inet_ntoa(net));
 		}
 		snprintf(cidr, sizeof(cidr), "%d", inet_ntocidr(net));
 		setvar(&ep, prefix, "subnet_cidr", cidr);
-		if (get_option_addr(&brd, dhcp, DHO_BROADCAST) == -1) {
+		if (get_option_addr(ifp->ctx, &brd,
+		    dhcp, DHO_BROADCAST) == -1) {
 			brd.s_addr = addr.s_addr | ~net.s_addr;
 			setvar(&ep, prefix, "broadcast_address",
 			    inet_ntoa(brd));
@@ -1144,26 +1203,30 @@ dhcp_env(char **env, const char *prefix, const struct dhcp_message *dhcp,
 
 	/* Zero our indexes */
 	if (env) {
-		for (i = 0, opt = dhcp_opts; i < dhcp_opts_len; i++, opt++)
+		for (i = 0, opt = ifp->ctx->dhcp_opts;
+		    i < ifp->ctx->dhcp_opts_len;
+		    i++, opt++)
 			dhcp_zero_index(opt);
 		for (i = 0, opt = ifp->options->dhcp_override;
 		    i < ifp->options->dhcp_override_len;
 		    i++, opt++)
 			dhcp_zero_index(opt);
-		for (i = 0, opt = vivso; i < vivso_len; i++, opt++)
+		for (i = 0, opt = ifp->ctx->vivso;
+		    i < ifp->ctx->vivso_len;
+		    i++, opt++)
 			dhcp_zero_index(opt);
 	}
 
-	for (i = 0, opt = dhcp_opts;
-	    i < dhcp_opts_len;
+	for (i = 0, opt = ifp->ctx->dhcp_opts;
+	    i < ifp->ctx->dhcp_opts_len;
 	    i++, opt++)
 	{
 		if (has_option_mask(ifo->nomask, opt->option))
 			continue;
 		if (dhcp_getoverride(ifo, opt->option))
 			continue;
-		if ((p = get_option(dhcp, opt->option, &pl))) {
-			ep += dhcp_envoption(ep, prefix, ifp->name,
+		if ((p = get_option(ifp->ctx, dhcp, opt->option, &pl))) {
+			ep += dhcp_envoption(ifp->ctx, ep, prefix, ifp->name,
 			    opt, dhcp_getoption, p, pl);
 			if (opt->option == DHO_VIVSO &&
 			    pl > (int)sizeof(uint32_t))
@@ -1175,8 +1238,8 @@ dhcp_env(char **env, const char *prefix, const struct dhcp_message *dhcp,
 					/* Skip over en + total size */
 					p += sizeof(en) + 1;
 					pl -= sizeof(en) + 1;
-					ep += dhcp_envoption(ep, prefix,
-					    ifp->name,
+					ep += dhcp_envoption(ifp->ctx,
+					    ep, prefix, ifp->name,
 					    vo, dhcp_getoption, p, pl);
 				}
 			}
@@ -1189,18 +1252,18 @@ dhcp_env(char **env, const char *prefix, const struct dhcp_message *dhcp,
 	{
 		if (has_option_mask(ifo->nomask, opt->option))
 			continue;
-		if ((p = get_option(dhcp, opt->option, &pl)))
-			ep += dhcp_envoption(ep, prefix, ifp->name,
+		if ((p = get_option(ifp->ctx, dhcp, opt->option, &pl)))
+			ep += dhcp_envoption(ifp->ctx, ep, prefix, ifp->name,
 			    opt, dhcp_getoption, p, pl);
 	}
 
 	return ep - env;
 }
 
-void
-get_lease(struct dhcp_lease *lease, const struct dhcp_message *dhcp)
+static void
+get_lease(struct dhcpcd_ctx *ctx,
+    struct dhcp_lease *lease, const struct dhcp_message *dhcp)
 {
-	struct timeval now;
 
 	lease->cookie = dhcp->cookie;
 	/* BOOTP does not set yiaddr for replies when ciaddr is set. */
@@ -1208,22 +1271,19 @@ get_lease(struct dhcp_lease *lease, const struct dhcp_message *dhcp)
 		lease->addr.s_addr = dhcp->yiaddr;
 	else
 		lease->addr.s_addr = dhcp->ciaddr;
-	if (get_option_addr(&lease->net, dhcp, DHO_SUBNETMASK) == -1)
+	if (get_option_addr(ctx, &lease->net, dhcp, DHO_SUBNETMASK) == -1)
 		lease->net.s_addr = ipv4_getnetmask(lease->addr.s_addr);
-	if (get_option_addr(&lease->brd, dhcp, DHO_BROADCAST) == -1)
+	if (get_option_addr(ctx, &lease->brd, dhcp, DHO_BROADCAST) == -1)
 		lease->brd.s_addr = lease->addr.s_addr | ~lease->net.s_addr;
-	if (get_option_uint32(&lease->leasetime, dhcp, DHO_LEASETIME) == 0) {
-		/* Ensure that we can use the lease */
-		get_monotonic(&now);
-		if (now.tv_sec + (time_t)lease->leasetime < now.tv_sec)
-			lease->leasetime = ~0U; /* Infinite lease */
-	} else
+	if (get_option_uint32(ctx, &lease->leasetime, dhcp, DHO_LEASETIME) != 0)
 		lease->leasetime = ~0U; /* Default to infinite lease */
-	if (get_option_uint32(&lease->renewaltime, dhcp, DHO_RENEWALTIME) != 0)
+	if (get_option_uint32(ctx, &lease->renewaltime,
+	    dhcp, DHO_RENEWALTIME) != 0)
 		lease->renewaltime = 0;
-	if (get_option_uint32(&lease->rebindtime, dhcp, DHO_REBINDTIME) != 0)
+	if (get_option_uint32(ctx, &lease->rebindtime,
+	    dhcp, DHO_REBINDTIME) != 0)
 		lease->rebindtime = 0;
-	if (get_option_addr(&lease->server, dhcp, DHO_SERVERID) != 0)
+	if (get_option_addr(ctx, &lease->server, dhcp, DHO_SERVERID) != 0)
 		lease->server.s_addr = INADDR_ANY;
 }
 
@@ -1273,12 +1333,12 @@ dhcp_close(struct interface *ifp)
 		return;
 
 	if (state->arp_fd != -1) {
-		eloop_event_delete(state->arp_fd);
+		eloop_event_delete(ifp->ctx->eloop, state->arp_fd);
 		close(state->arp_fd);
 		state->arp_fd = -1;
 	}
 	if (state->raw_fd != -1) {
-		eloop_event_delete(state->raw_fd);
+		eloop_event_delete(ifp->ctx->eloop, state->raw_fd);
 		close(state->raw_fd);
 		state->raw_fd = -1;
 	}
@@ -1292,7 +1352,7 @@ dhcp_close(struct interface *ifp)
 }
 
 static int
-dhcp_openudp(struct interface *iface)
+dhcp_openudp(struct dhcpcd_ctx *ctx, struct interface *ifp)
 {
 	int s;
 	struct sockaddr_in sin;
@@ -1303,38 +1363,51 @@ dhcp_openudp(struct interface *iface)
 	char *p;
 #endif
 
+#ifdef SOCK_CLOEXEC
+	if ((s = socket(PF_INET, SOCK_DGRAM | SOCK_CLOEXEC, IPPROTO_UDP)) == -1)
+		return -1;
+#else
 	if ((s = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
 		return -1;
+	if ((n = fcntl(s, F_GETFD, 0)) == -1 ||
+	    fcntl(s, F_SETFD, n | FD_CLOEXEC) == -1)
+	{
+		close(s);
+	        return -1;
+	}
+#endif
 
 	n = 1;
 	if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &n, sizeof(n)) == -1)
 		goto eexit;
 #ifdef SO_BINDTODEVICE
-	memset(&ifr, 0, sizeof(ifr));
-	strlcpy(ifr.ifr_name, iface->name, sizeof(ifr.ifr_name));
-	/* We can only bind to the real device */
-	p = strchr(ifr.ifr_name, ':');
-	if (p)
-	    *p = '\0';
-	if (setsockopt(s, SOL_SOCKET, SO_BINDTODEVICE, &ifr,
+	if (ifp) {
+		memset(&ifr, 0, sizeof(ifr));
+		strlcpy(ifr.ifr_name, ifp->name, sizeof(ifr.ifr_name));
+		/* We can only bind to the real device */
+		p = strchr(ifr.ifr_name, ':');
+		if (p)
+			*p = '\0';
+		if (setsockopt(s, SOL_SOCKET, SO_BINDTODEVICE, &ifr,
 		    sizeof(ifr)) == -1)
-		goto eexit;
+		        goto eexit;
+	}
 #endif
-	/* As we don't use this socket for receiving, set the
-	 * receive buffer to 1 */
-	n = 1;
-	if (setsockopt(s, SOL_SOCKET, SO_RCVBUF, &n, sizeof(n)) == -1)
-		goto eexit;
-	state = D_STATE(iface);
 	memset(&sin, 0, sizeof(sin));
 	sin.sin_family = AF_INET;
 	sin.sin_port = htons(DHCP_CLIENT_PORT);
-	sin.sin_addr.s_addr = state->addr.s_addr;
+	if (ifp) {
+		state = D_STATE(ifp);
+		sin.sin_addr.s_addr = state->addr.s_addr;
+	} else
+		state = NULL; /* appease gcc */
 	if (bind(s, (struct sockaddr *)&sin, sizeof(sin)) == -1)
 		goto eexit;
 
-	state->udp_fd = s;
-	set_cloexec(s);
+	if (ifp)
+		state->udp_fd = s;
+	else
+		ctx->udp_fd = s;
 	return 0;
 
 eexit:
@@ -1456,14 +1529,14 @@ send_message(struct interface *iface, int type,
 		tv.tv_usec = arc4random() % (DHCP_RAND_MAX_U - DHCP_RAND_MIN_U);
 		timernorm(&tv);
 		syslog(LOG_DEBUG,
-		    "%s: sending %s (xid 0x%x), next in %0.2f seconds",
+		    "%s: sending %s (xid 0x%x), next in %0.1f seconds",
 		    iface->name, get_dhcp_op(type), state->xid,
 		    timeval_to_double(&tv));
 	}
 
 	/* Ensure sockets are open. */
 	if (dhcp_open(iface) == -1) {
-		if (!(options & DHCPCD_TEST))
+		if (!(iface->ctx->options & DHCPCD_TEST))
 			dhcp_drop(iface, "FAIL");
 		return;
 	}
@@ -1473,7 +1546,8 @@ send_message(struct interface *iface, int type,
 	 * This could happen if our IP was pulled out from underneath us.
 	 * Also, we should not unicast from a BOOTP lease. */
 	if (state->udp_fd == -1 ||
-	    (!(ifo->options & DHCPCD_INFORM) && is_bootp(state->new)))
+	    (!(ifo->options & DHCPCD_INFORM) &&
+	    is_bootp(iface, state->new)))
 	{
 		a = state->addr.s_addr;
 		state->addr.s_addr = 0;
@@ -1504,11 +1578,12 @@ send_message(struct interface *iface, int type,
 		 * As such we remove it from consideration without actually
 		 * stopping the interface. */
 		if (r == -1) {
-			syslog(LOG_ERR, "%s: send_raw_packet: %m", iface->name);
-			if (!(options & DHCPCD_TEST))
+			syslog(LOG_ERR, "%s: ipv4_sendrawpacket: %m",
+			    iface->name);
+			if (!(iface->ctx->options & DHCPCD_TEST))
 				dhcp_drop(iface, "FAIL");
 			dhcp_close(iface);
-			eloop_timeout_delete(NULL, iface);
+			eloop_timeout_delete(iface->ctx->eloop, NULL, iface);
 			callback = NULL;
 		}
 	}
@@ -1517,7 +1592,7 @@ send_message(struct interface *iface, int type,
 	/* Even if we fail to send a packet we should continue as we are
 	 * as our failure timeouts will change out codepath when needed. */
 	if (callback)
-		eloop_timeout_add_tv(&tv, callback, iface);
+		eloop_timeout_add_tv(iface->ctx->eloop, &tv, callback, iface);
 }
 
 static void
@@ -1566,7 +1641,9 @@ dhcp_discover(void *arg)
 	/* If we're rebooting and we're not daemonised then we need
 	 * to shorten the normal timeout to ensure we try correctly
 	 * for a fallback or IPv4LL address. */
-	if (state->state == DHS_REBOOT && !(options & DHCPCD_DAEMONISED)) {
+	if (state->state == DHS_REBOOT &&
+	    !(iface->ctx->options & DHCPCD_DAEMONISED))
+	{
 		timeout -= ifo->reboot;
 		if (timeout <= 0)
 			timeout = 2;
@@ -1574,17 +1651,17 @@ dhcp_discover(void *arg)
 
 	state->state = DHS_DISCOVER;
 	state->xid = dhcp_xid(iface);
-	eloop_timeout_delete(NULL, iface);
+	eloop_timeout_delete(iface->ctx->eloop, NULL, iface);
 	if (ifo->fallback)
-		eloop_timeout_add_sec(timeout, dhcp_fallback, iface);
+		eloop_timeout_add_sec(iface->ctx->eloop,
+		    timeout, dhcp_fallback, iface);
 	else if (ifo->options & DHCPCD_IPV4LL &&
 	    !IN_LINKLOCAL(htonl(state->addr.s_addr)))
 	{
 		if (IN_LINKLOCAL(htonl(state->fail.s_addr)))
-			eloop_timeout_add_sec(RATE_LIMIT_INTERVAL,
-			    ipv4ll_start, iface);
-		else
-			eloop_timeout_add_sec(timeout, ipv4ll_start, iface);
+			timeout = RATE_LIMIT_INTERVAL;
+		eloop_timeout_add_sec(iface->ctx->eloop,
+		    timeout, ipv4ll_start, iface);
 	}
 	if (ifo->options & DHCPCD_REQUEST)
 		syslog(LOG_INFO, "%s: soliciting a DHCP lease (requesting %s)",
@@ -1611,7 +1688,7 @@ dhcp_expire(void *arg)
 	struct dhcp_state *state = D_STATE(ifp);
 
 	syslog(LOG_ERR, "%s: DHCP lease expired", ifp->name);
-	eloop_timeout_delete(NULL, ifp);
+	eloop_timeout_delete(ifp->ctx->eloop, NULL, ifp);
 	dhcp_drop(ifp, "EXPIRE");
 	unlink(state->leasefile);
 
@@ -1656,7 +1733,7 @@ dhcp_rebind(void *arg)
 	syslog(LOG_DEBUG, "%s: expire in %"PRIu32" seconds",
 	    ifp->name, lease->leasetime - lease->rebindtime);
 	state->state = DHS_REBIND;
-	eloop_timeout_delete(send_renew, ifp);
+	eloop_timeout_delete(ifp->ctx->eloop, send_renew, ifp);
 	state->lease.server.s_addr = 0;
 	ifp->options->options &= ~ DHCPCD_CSR_WARNED;
 	send_rebind(ifp);
@@ -1670,18 +1747,15 @@ dhcp_bind(void *arg)
 	struct if_options *ifo = iface->options;
 	struct dhcp_lease *lease = &state->lease;
 	struct timeval tv;
+	uint8_t ipv4ll = 0;
 
-	/* We're binding an address now - ensure that sockets are closed */
-	dhcp_close(iface);
 	state->reason = NULL;
-	if (clock_monotonic)
-		get_monotonic(&lease->boundtime);
 	state->xid = 0;
 	free(state->old);
 	state->old = state->new;
 	state->new = state->offer;
 	state->offer = NULL;
-	get_lease(lease, state->new);
+	get_lease(iface->ctx, lease, state->new);
 	if (ifo->options & DHCPCD_STATIC) {
 		syslog(LOG_INFO, "%s: using static address %s/%d",
 		    iface->name, inet_ntoa(lease->addr),
@@ -1693,6 +1767,7 @@ dhcp_bind(void *arg)
 		    iface->name, inet_ntoa(lease->addr));
 		lease->leasetime = ~0U;
 		state->reason = "IPV4LL";
+		ipv4ll = 1;
 	} else if (ifo->options & DHCPCD_INFORM) {
 		if (ifo->req_addr.s_addr != 0)
 			lease->addr.s_addr = ifo->req_addr.s_addr;
@@ -1744,10 +1819,11 @@ dhcp_bind(void *arg)
 			    inet_ntoa(lease->addr), lease->leasetime);
 		}
 	}
-	if (options & DHCPCD_TEST) {
+	if (iface->ctx->options & DHCPCD_TEST) {
 		state->reason = "TEST";
 		script_runreason(iface, state->reason);
-		exit(EXIT_SUCCESS);
+		eloop_exit(iface->ctx->eloop, EXIT_SUCCESS);
+		return;
 	}
 	if (state->reason == NULL) {
 		if (state->old) {
@@ -1764,20 +1840,26 @@ dhcp_bind(void *arg)
 	if (lease->leasetime == ~0U)
 		lease->renewaltime = lease->rebindtime = lease->leasetime;
 	else {
-		eloop_timeout_add_sec(lease->renewaltime, dhcp_renew, iface);
-		eloop_timeout_add_sec(lease->rebindtime, dhcp_rebind, iface);
-		eloop_timeout_add_sec(lease->leasetime, dhcp_expire, iface);
+		eloop_timeout_add_sec(iface->ctx->eloop,
+		    lease->renewaltime, dhcp_renew, iface);
+		eloop_timeout_add_sec(iface->ctx->eloop,
+		    lease->rebindtime, dhcp_rebind, iface);
+		eloop_timeout_add_sec(iface->ctx->eloop,
+		    lease->leasetime, dhcp_expire, iface);
 		syslog(LOG_DEBUG,
 		    "%s: renew in %"PRIu32" seconds, rebind in %"PRIu32
 		    " seconds",
 		    iface->name, lease->renewaltime, lease->rebindtime);
 	}
 	ipv4_applyaddr(iface);
-	daemonise();
-	state->state = DHS_BOUND;
-	if (ifo->options & DHCPCD_ARP) {
-		state->claims = 0;
-		arp_announce(iface);
+	if (daemonise(iface->ctx) == 0) {
+		if (!ipv4ll)
+			arp_close(iface);
+		state->state = DHS_BOUND;
+		if (ifo->options & DHCPCD_ARP) {
+		        state->claims = 0;
+			arp_announce(iface);
+		}
 	}
 }
 
@@ -1832,7 +1914,7 @@ dhcp_static(struct interface *ifp)
 	}
 	state->offer = dhcp_message_new(&ifo->req_addr, &ifo->req_mask);
 	if (state->offer) {
-		eloop_timeout_delete(NULL, ifp);
+		eloop_timeout_delete(ifp->ctx->eloop, NULL, ifp);
 		dhcp_bind(ifp);
 	}
 }
@@ -1846,7 +1928,7 @@ dhcp_inform(struct interface *ifp)
 
 	state = D_STATE(ifp);
 	ifo = ifp->options;
-	if (options & DHCPCD_TEST) {
+	if (ifp->ctx->options & DHCPCD_TEST) {
 		state->addr.s_addr = ifo->req_addr.s_addr;
 		state->net.s_addr = ifo->req_mask.s_addr;
 	} else {
@@ -1937,14 +2019,17 @@ dhcp_reboot(struct interface *ifp)
 	state->state = DHS_REBOOT;
 	state->xid = dhcp_xid(ifp);
 	state->lease.server.s_addr = 0;
-	eloop_timeout_delete(NULL, ifp);
+	eloop_timeout_delete(ifp->ctx->eloop, NULL, ifp);
 	if (ifo->fallback)
-		eloop_timeout_add_sec(ifo->reboot, dhcp_fallback, ifp);
+		eloop_timeout_add_sec(ifp->ctx->eloop,
+		    ifo->reboot, dhcp_fallback, ifp);
 	else if (ifo->options & DHCPCD_LASTLEASE && state->lease.frominfo)
-		eloop_timeout_add_sec(ifo->reboot, dhcp_timeout, ifp);
+		eloop_timeout_add_sec(ifp->ctx->eloop,
+		    ifo->reboot, dhcp_timeout, ifp);
 	else if (!(ifo->options & DHCPCD_INFORM &&
-	    options & (DHCPCD_MASTER | DHCPCD_DAEMONISED)))
-		eloop_timeout_add_sec(ifo->reboot, dhcp_expire, ifp);
+	    ifp->ctx->options & (DHCPCD_MASTER | DHCPCD_DAEMONISED)))
+		eloop_timeout_add_sec(ifp->ctx->eloop,
+		    ifo->reboot, dhcp_expire, ifp);
 	/* Don't bother ARP checking as the server could NAK us first. */
 	if (ifo->options & DHCPCD_INFORM)
 		dhcp_inform(ifp);
@@ -1963,7 +2048,10 @@ dhcp_drop(struct interface *ifp, const char *reason)
 	state = D_STATE(ifp);
 	if (state == NULL)
 		return;
-	eloop_timeouts_delete(ifp, dhcp_expire, NULL);
+	dhcp_auth_reset(&state->auth);
+	dhcp_close(ifp);
+	arp_close(ifp);
+	eloop_timeouts_delete(ifp->ctx->eloop, ifp, dhcp_expire, NULL);
 	if (ifp->options->options & DHCPCD_RELEASE) {
 		unlink(state->leasefile);
 		if (ifp->carrier != LINK_DOWN &&
@@ -1994,9 +2082,9 @@ dhcp_drop(struct interface *ifp, const char *reason)
 }
 
 static void
-log_dhcp(int lvl, const char *msg,
+log_dhcp1(int lvl, const char *msg,
     const struct interface *iface, const struct dhcp_message *dhcp,
-    const struct in_addr *from)
+    const struct in_addr *from, int ad)
 {
 	const char *tfrom;
 	char *a;
@@ -2004,8 +2092,8 @@ log_dhcp(int lvl, const char *msg,
 	int r;
 
 	if (strcmp(msg, "NAK:") == 0)
-		a = get_option_string(dhcp, DHO_MESSAGE);
-	else if (dhcp->yiaddr != 0) {
+		a = get_option_string(iface->ctx, dhcp, DHO_MESSAGE);
+	else if (ad && dhcp->yiaddr != 0) {
 		addr.s_addr = dhcp->yiaddr;
 		a = strdup(inet_ntoa(addr));
 		if (a == NULL) {
@@ -2016,11 +2104,15 @@ log_dhcp(int lvl, const char *msg,
 		a = NULL;
 
 	tfrom = "from";
-	r = get_option_addr(&addr, dhcp, DHO_SERVERID);
-	if (dhcp->servername[0] && r == 0)
-		syslog(lvl, "%s: %s %s %s %s `%s'", iface->name, msg, a,
-		    tfrom, inet_ntoa(addr), dhcp->servername);
-	else {
+	r = get_option_addr(iface->ctx, &addr, dhcp, DHO_SERVERID);
+	if (dhcp->servername[0] && r == 0) {
+		if (a == NULL)
+			syslog(lvl, "%s: %s %s %s `%s'", iface->name, msg,
+			    tfrom, inet_ntoa(addr), dhcp->servername);
+		else
+			syslog(lvl, "%s: %s %s %s %s `%s'", iface->name, msg, a,
+			    tfrom, inet_ntoa(addr), dhcp->servername);
+	} else {
 		if (r != 0) {
 			tfrom = "via";
 			addr = *from;
@@ -2033,6 +2125,15 @@ log_dhcp(int lvl, const char *msg,
 			    iface->name, msg, a, tfrom, inet_ntoa(addr));
 	}
 	free(a);
+}
+
+static void
+log_dhcp(int lvl, const char *msg,
+    const struct interface *iface, const struct dhcp_message *dhcp,
+    const struct in_addr *from)
+{
+
+	log_dhcp1(lvl, msg, iface, dhcp, from, 1);
 }
 
 static int
@@ -2068,33 +2169,115 @@ dhcp_handledhcp(struct interface *iface, struct dhcp_message **dhcpp,
 	struct dhcp_message *dhcp = *dhcpp;
 	struct dhcp_lease *lease = &state->lease;
 	uint8_t type, tmp;
+	const uint8_t *auth;
 	struct in_addr addr;
 	size_t i;
-
-	/* reset the message counter */
-	state->interval = 0;
+	int auth_len;
+	char *msg;
 
 	/* We may have found a BOOTP server */
-	if (get_option_uint8(&type, dhcp, DHO_MESSAGETYPE) == -1)
+	if (get_option_uint8(iface->ctx, &type, dhcp, DHO_MESSAGETYPE) == -1)
 		type = 0;
+
+	/* Authenticate the message */
+	auth = get_option(iface->ctx, dhcp, DHO_AUTHENTICATION, &auth_len);
+	if (auth) {
+		if (dhcp_auth_validate(&state->auth, &ifo->auth,
+		    (uint8_t *)*dhcpp, sizeof(**dhcpp), 4, type,
+		    auth, auth_len) == NULL)
+		{
+			syslog(LOG_DEBUG, "%s: dhcp_auth_validate: %m",
+			    iface->name);
+			log_dhcp1(LOG_ERR, "authentication failed",
+			    iface, dhcp, from, 0);
+			return;
+		}
+		syslog(LOG_DEBUG, "%s: validated using 0x%08" PRIu32,
+		    iface->name, state->auth.token->secretid);
+	} else if (ifo->auth.options & DHCPCD_AUTH_REQUIRE) {
+		log_dhcp1(LOG_ERR, "no authentication", iface, dhcp, from, 0);
+		return;
+	} else if (ifo->auth.options & DHCPCD_AUTH_SEND)
+		log_dhcp1(LOG_WARNING, "no authentication",
+		    iface, dhcp, from, 0);
+
+	/* RFC 3203 */
+	if (type == DHCP_FORCERENEW) {
+		if (from->s_addr == INADDR_ANY ||
+		    from->s_addr == INADDR_BROADCAST)
+		{
+			log_dhcp(LOG_ERR, "discarding Force Renew",
+			    iface, dhcp, from);
+			return;
+		}
+		if (auth == NULL) {
+			log_dhcp(LOG_ERR, "unauthenticated Force Renew",
+			    iface, dhcp, from);
+			return;
+		}
+		if (state->state != DHS_BOUND && state->state != DHS_INFORM) {
+			log_dhcp(LOG_DEBUG, "not bound, ignoring Force Renew",
+			    iface, dhcp, from);
+			return;
+		}
+		log_dhcp(LOG_ERR, "Force Renew from", iface, dhcp, from);
+		/* The rebind and expire timings are still the same, we just
+		 * enter the renew state early */
+		if (state->state == DHS_BOUND) {
+			eloop_timeout_delete(iface->ctx->eloop,
+			    dhcp_renew, iface);
+			dhcp_renew(iface);
+		} else {
+			eloop_timeout_delete(iface->ctx->eloop,
+			    send_inform, iface);
+			dhcp_inform(iface);
+		}
+		return;
+	}
+
+	if (state->state == DHS_BOUND) {
+		/* Before we supported FORCERENEW we closed off the raw
+		 * port so we effectively ignored all messages.
+		 * As such we'll not log by default here. */
+		//log_dhcp(LOG_DEBUG, "bound, ignoring", iface, dhcp, from);
+		return;
+	}
+
+	/* Ensure it's the right transaction */
+	if (state->xid != ntohl(dhcp->xid)) {
+		syslog(LOG_DEBUG,
+		    "%s: wrong xid 0x%x (expecting 0x%x) from %s",
+		    iface->name, ntohl(dhcp->xid), state->xid,
+		    inet_ntoa(*from));
+		return;
+	}
+	/* reset the message counter */
+	state->interval = 0;
 
 	if (type == DHCP_NAK) {
 		/* For NAK, only check if we require the ServerID */
 		if (has_option_mask(ifo->requiremask, DHO_SERVERID) &&
-		    get_option_addr(&addr, dhcp, DHO_SERVERID) == -1)
+		    get_option_addr(iface->ctx, &addr, dhcp, DHO_SERVERID) == -1)
 		{
 			log_dhcp(LOG_WARNING, "reject NAK", iface, dhcp, from);
 			return;
 		}
+
 		/* We should restart on a NAK */
 		log_dhcp(LOG_WARNING, "NAK:", iface, dhcp, from);
-		if (!(options & DHCPCD_TEST)) {
+		if ((msg = get_option_string(iface->ctx, dhcp, DHO_MESSAGE))) {
+			syslog(LOG_WARNING, "%s: message: %s",
+			    iface->name, msg);
+			free(msg);
+		}
+		if (!(iface->ctx->options & DHCPCD_TEST)) {
 			dhcp_drop(iface, "NAK");
 			unlink(state->leasefile);
 		}
-		dhcp_close(iface);
+
 		/* If we constantly get NAKS then we should slowly back off */
-		eloop_timeout_add_sec(state->nakoff, dhcp_discover, iface);
+		eloop_timeout_add_sec(iface->ctx->eloop,
+		    state->nakoff, dhcp_discover, iface);
 		if (state->nakoff == 0)
 			state->nakoff = 1;
 		else {
@@ -2105,10 +2288,53 @@ dhcp_handledhcp(struct interface *iface, struct dhcp_message **dhcpp,
 		return;
 	}
 
+	/* DHCP Auto-Configure, RFC 2563 */
+	if (type == DHCP_OFFER && dhcp->yiaddr == 0) {
+		log_dhcp(LOG_WARNING, "no address given", iface, dhcp, from);
+		if ((msg = get_option_string(iface->ctx, dhcp, DHO_MESSAGE))) {
+			syslog(LOG_WARNING, "%s: message: %s",
+			    iface->name, msg);
+			free(msg);
+		}
+		if (state->state == DHS_DISCOVER &&
+		    get_option_uint8(iface->ctx, &tmp, dhcp,
+		    DHO_AUTOCONFIGURE) == 0)
+		{
+			switch (tmp) {
+			case 0:
+				log_dhcp(LOG_WARNING, "IPv4LL disabled from",
+				    iface, dhcp, from);
+				dhcp_close(iface);
+				eloop_timeout_delete(iface->ctx->eloop,
+				    NULL, iface);
+				eloop_timeout_add_sec(iface->ctx->eloop,
+				    DHCP_MAX, dhcp_discover,
+				    iface);
+				break;
+			case 1:
+				log_dhcp(LOG_WARNING, "IPv4LL enabled from",
+				    iface, dhcp, from);
+				eloop_timeout_delete(iface->ctx->eloop, NULL, iface);
+				if (IN_LINKLOCAL(htonl(state->addr.s_addr)))
+					eloop_timeout_add_sec(iface->ctx->eloop,
+					    DHCP_MAX, dhcp_discover, iface);
+				else
+					ipv4ll_start(iface);
+				break;
+			default:
+				syslog(LOG_ERR,
+				    "%s: unknown auto configuration option %d",
+				    iface->name, tmp);
+				break;
+			}
+		}
+		return;
+	}
+
 	/* Ensure that all required options are present */
 	for (i = 1; i < 255; i++) {
 		if (has_option_mask(ifo->requiremask, i) &&
-		    get_option_uint8(&tmp, dhcp, i) != 0)
+		    get_option_uint8(iface->ctx, &tmp, dhcp, i) != 0)
 		{
 			/* If we are bootp, then ignore the need for serverid.
 			 * To ignore bootp, require dhcp_message_type. */
@@ -2136,22 +2362,24 @@ dhcp_handledhcp(struct interface *iface, struct dhcp_message **dhcpp,
 		lease->addr.s_addr = dhcp->yiaddr;
 		lease->cookie = dhcp->cookie;
 		if (type == 0 ||
-		    get_option_addr(&lease->server, dhcp, DHO_SERVERID) != 0)
+		    get_option_addr(iface->ctx,
+		    &lease->server, dhcp, DHO_SERVERID) != 0)
 			lease->server.s_addr = INADDR_ANY;
 		log_dhcp(LOG_INFO, "offered", iface, dhcp, from);
 		free(state->offer);
 		state->offer = dhcp;
 		*dhcpp = NULL;
-		if (options & DHCPCD_TEST) {
+		if (iface->ctx->options & DHCPCD_TEST) {
 			free(state->old);
 			state->old = state->new;
 			state->new = state->offer;
 			state->offer = NULL;
 			state->reason = "TEST";
 			script_runreason(iface, state->reason);
-			exit(EXIT_SUCCESS);
+			eloop_exit(iface->ctx->eloop, EXIT_SUCCESS);
+			return;
 		}
-		eloop_timeout_delete(send_discover, iface);
+		eloop_timeout_delete(iface->ctx->eloop, send_discover, iface);
 		/* We don't request BOOTP addresses */
 		if (type) {
 			/* We used to ARP check here, but that seems to be in
@@ -2200,12 +2428,7 @@ dhcp_handledhcp(struct interface *iface, struct dhcp_message **dhcpp,
 	}
 
 	lease->frominfo = 0;
-	eloop_timeout_delete(NULL, iface);
-
-	/* We now have an offer, so close the DHCP sockets.
-	 * This allows us to safely ARP when broken DHCP servers send an ACK
-	 * follows by an invalid NAK. */
-	dhcp_close(iface);
+	eloop_timeout_delete(iface->ctx->eloop, NULL, iface);
 
 	if (ifo->options & DHCPCD_ARP &&
 	    state->addr.s_addr != state->offer->yiaddr)
@@ -2303,10 +2526,12 @@ dhcp_handlepacket(void *arg)
 	 * the first one fails for any reason, we can use the next. */
 	for(;;) {
 		bytes = ipv4_getrawpacket(iface, ETHERTYPE_IP,
-		    packet, udp_dhcp_len, &partialcsum);
+		    iface->ctx->packet, udp_dhcp_len, &partialcsum);
 		if (bytes == 0 || bytes == -1)
 			break;
-		if (valid_udp_packet(packet, bytes, &from, partialcsum) == -1) {
+		if (valid_udp_packet(iface->ctx->packet, bytes,
+			&from, partialcsum) == -1)
+		{
 			syslog(LOG_ERR, "%s: invalid UDP packet from %s",
 			    iface->name, inet_ntoa(from));
 			continue;
@@ -2332,7 +2557,7 @@ dhcp_handlepacket(void *arg)
 			    "%s: server %s is not destination",
 			    iface->name, inet_ntoa(from));
 		}
-		bytes = get_udp_data(&pp, packet);
+		bytes = get_udp_data(&pp, iface->ctx->packet);
 		if ((size_t)bytes > sizeof(*dhcp)) {
 			syslog(LOG_ERR,
 			    "%s: packet greater than DHCP size from %s",
@@ -2352,21 +2577,16 @@ dhcp_handlepacket(void *arg)
 			    iface->name, inet_ntoa(from));
 			continue;
 		}
-		/* Ensure it's the right transaction */
-		if (state->xid != ntohl(dhcp->xid)) {
-			syslog(LOG_DEBUG,
-			    "%s: wrong xid 0x%x (expecting 0x%x) from %s",
-			    iface->name, ntohl(dhcp->xid), state->xid,
-			    inet_ntoa(from));
-			continue;
-		}
 		/* Ensure packet is for us */
 		if (iface->hwlen <= sizeof(dhcp->chaddr) &&
 		    memcmp(dhcp->chaddr, iface->hwaddr, iface->hwlen))
 		{
+			char buf[sizeof(dhcp->chaddr) * 3];
+
 			syslog(LOG_DEBUG, "%s: xid 0x%x is not for hwaddr %s",
 			    iface->name, ntohl(dhcp->xid),
-			    hwaddr_ntoa(dhcp->chaddr, sizeof(dhcp->chaddr)));
+			    hwaddr_ntoa(dhcp->chaddr, sizeof(dhcp->chaddr),
+				buf, sizeof(buf)));
 			continue;
 		}
 		dhcp_handledhcp(iface, &dhcp, &from);
@@ -2376,20 +2596,45 @@ dhcp_handlepacket(void *arg)
 	free(dhcp);
 }
 
+static void
+dhcp_handleudp(void *arg)
+{
+	struct dhcpcd_ctx *ctx;
+	uint8_t buffer[sizeof(struct dhcp_message)];
+
+	ctx = arg;
+
+	/* Just read what's in the UDP fd and discard it as we always read
+	 * from the raw fd */
+	read(ctx->udp_fd, buffer, sizeof(buffer));
+}
+
+static void
+dhcp_handleifudp(void *arg)
+{
+	const struct interface *ifp;
+	const struct dhcp_state *state;
+	uint8_t buffer[sizeof(struct dhcp_message)];
+
+	ifp = arg;
+	state = D_CSTATE(ifp);
+
+	/* Just read what's in the UDP fd and discard it as we always read
+	 * from the raw fd */
+	read(state->udp_fd, buffer, sizeof(buffer));
+}
+
 static int
 dhcp_open(struct interface *ifp)
 {
 	struct dhcp_state *state;
 
-	if (packet == NULL) {
-		packet = malloc(udp_dhcp_len);
-		if (packet == NULL) {
+	if (ifp->ctx->packet == NULL) {
+		ifp->ctx->packet = malloc(udp_dhcp_len);
+		if (ifp->ctx->packet == NULL) {
 			syslog(LOG_ERR, "%s: %m", __func__);
 			return -1;
 		}
-#ifdef DEBUG_MEMORY
-		atexit(dhcp_cleanup);
-#endif
 	}
 
 	state = D_STATE(ifp);
@@ -2399,7 +2644,8 @@ dhcp_open(struct interface *ifp)
 			syslog(LOG_ERR, "%s: %s: %m", __func__, ifp->name);
 			return -1;
 		}
-		eloop_event_add(state->raw_fd, dhcp_handlepacket, ifp);
+		eloop_event_add(ifp->ctx->eloop,
+		    state->raw_fd, dhcp_handlepacket, ifp);
 	}
 	if (state->udp_fd == -1 &&
 	    state->addr.s_addr != 0 &&
@@ -2407,10 +2653,13 @@ dhcp_open(struct interface *ifp)
 	    (state->new->cookie == htonl(MAGIC_COOKIE) ||
 	    ifp->options->options & DHCPCD_INFORM))
 	{
-		if (dhcp_openudp(ifp) == -1 && errno != EADDRINUSE) {
+		if (dhcp_openudp(ifp->ctx, ifp) == -1 && errno != EADDRINUSE) {
 			syslog(LOG_ERR, "%s: dhcp_openudp: %m", ifp->name);
 			return -1;
 		}
+		if (state->udp_fd != -1)
+			eloop_event_add(ifp->ctx->eloop,
+			    state->udp_fd, dhcp_handleifudp, ifp);
 	}
 	return 0;
 }
@@ -2418,17 +2667,23 @@ dhcp_open(struct interface *ifp)
 int
 dhcp_dump(const char *ifname)
 {
+	struct dhcpcd_ctx ctx;
 	struct interface *ifp;
 	struct dhcp_state *state;
+	int r;
 
-	ifaces = malloc(sizeof(*ifaces));
-	if (ifaces == NULL)
+	ifp = NULL;
+	state = NULL;
+	memset(&ctx, 0, sizeof(ctx));
+	ctx.ifaces = malloc(sizeof(*ctx.ifaces));
+	if (ctx.ifaces == NULL)
 		goto eexit;
-	TAILQ_INIT(ifaces);
+	TAILQ_INIT(ctx.ifaces);
 	ifp = calloc(1, sizeof(*ifp));
 	if (ifp == NULL)
 		goto eexit;
-	TAILQ_INSERT_HEAD(ifaces, ifp, next);
+	ifp->ctx = &ctx;
+	TAILQ_INSERT_HEAD(ctx.ifaces, ifp, next);
 	ifp->if_data[IF_DATA_DHCP] = state = calloc(1, sizeof(*state));
 	if (state == NULL)
 		goto eexit;
@@ -2438,8 +2693,7 @@ dhcp_dump(const char *ifname)
 	strlcpy(ifp->name, ifname, sizeof(ifp->name));
 	snprintf(state->leasefile, sizeof(state->leasefile),
 	    LEASEFILE, ifp->name);
-	strlcpy(ifp->options->script, if_options->script,
-	    sizeof(ifp->options->script));
+	strlcpy(ifp->options->script, SCRIPT, sizeof(ifp->options->script));
 	state->new = read_lease(ifp);
 	if (state->new == NULL && errno == ENOENT) {
 		strlcpy(state->leasefile, ifname, sizeof(state->leasefile));
@@ -2448,20 +2702,35 @@ dhcp_dump(const char *ifname)
 	if (state->new == NULL) {
 		if (errno == ENOENT)
 			syslog(LOG_ERR, "%s: no lease to dump", ifname);
-		return -1;
+		r = -1;
+		goto cexit;
 	}
 	state->reason = "DUMP";
-	return script_runreason(ifp, state->reason);
+	r = script_runreason(ifp, state->reason);
+	goto cexit;
 
 eexit:
 	syslog(LOG_ERR, "%s: %m", __func__);
-	return -1;
+	r = -1;
+
+cexit:
+	if (state) {
+		free(state->new);
+		free(state);
+	}
+	if (ifp) {
+		free(ifp->options);
+		free(ifp);
+	}
+	free(ctx.ifaces);
+	return r;
 }
 
 void
 dhcp_free(struct interface *ifp)
 {
 	struct dhcp_state *state = D_STATE(ifp);
+	struct dhcpcd_ctx *ctx;
 
 	if (state) {
 		free(state->old);
@@ -2472,6 +2741,28 @@ dhcp_free(struct interface *ifp)
 		free(state);
 		ifp->if_data[IF_DATA_DHCP] = NULL;
 	}
+
+	ctx = ifp->ctx;
+	/* If we don't have any more DHCP enabled interfaces,
+	 * close the global socket and release resources */
+	if (ctx->ifaces) {
+		TAILQ_FOREACH(ifp, ctx->ifaces, next) {
+			if (D_STATE(ifp))
+				break;
+		}
+	}
+	if (ifp == NULL) {
+		if (ctx->udp_fd != -1) {
+			eloop_event_delete(ctx->eloop, ctx->udp_fd);
+			close(ctx->udp_fd);
+			ctx->udp_fd = -1;
+		}
+
+		free(ctx->packet);
+		free(ctx->opt_buffer);
+		ctx->packet = NULL;
+		ctx->opt_buffer = NULL;
+	}
 }
 
 static int
@@ -2480,6 +2771,7 @@ dhcp_init(struct interface *ifp)
 	struct dhcp_state *state;
 	const struct if_options *ifo;
 	size_t len;
+	char buf[(sizeof(ifo->clientid) - 1) * 3];
 
 	state = D_STATE(ifp);
 	if (state == NULL) {
@@ -2513,13 +2805,14 @@ dhcp_init(struct interface *ifp)
 		memcpy(state->clientid, ifo->clientid, ifo->clientid[0] + 1);
 	} else if (ifo->options & DHCPCD_CLIENTID) {
 		if (ifo->options & DHCPCD_DUID) {
-			state->clientid = malloc(duid_len + 6);
+			state->clientid = malloc(ifp->ctx->duid_len + 6);
 			if (state->clientid == NULL)
 				goto eexit;
-			state->clientid[0] = duid_len + 5;
+			state->clientid[0] = ifp->ctx->duid_len + 5;
 			state->clientid[1] = 255; /* RFC 4361 */
 			memcpy(state->clientid + 2, ifo->iaid, 4);
-			memcpy(state->clientid + 6, duid, duid_len);
+			memcpy(state->clientid + 6, ifp->ctx->duid,
+			    ifp->ctx->duid_len);
 		} else {
 			len = ifp->hwlen + 1;
 			state->clientid = malloc(len + 1);
@@ -2539,10 +2832,11 @@ dhcp_init(struct interface *ifp)
 
 	if (ifo->options & DHCPCD_CLIENTID)
 		syslog(LOG_DEBUG, "%s: using ClientID %s", ifp->name,
-		    hwaddr_ntoa(state->clientid + 1, state->clientid[0]));
+		    hwaddr_ntoa(state->clientid + 1, state->clientid[0],
+			buf, sizeof(buf)));
 	else if (ifp->hwlen)
 		syslog(LOG_DEBUG, "%s: using hwaddr %s", ifp->name,
-		    hwaddr_ntoa(ifp->hwaddr, ifp->hwlen));
+		    hwaddr_ntoa(ifp->hwaddr, ifp->hwlen, buf, sizeof(buf)));
 	return 0;
 
 eexit:
@@ -2562,6 +2856,12 @@ dhcp_start(struct interface *ifp)
 
 	if (!(ifo->options & DHCPCD_IPV4))
 		return;
+
+	/* Listen on *.*.*.*:bootpc so that the kernel never sends an
+	 * ICMP port unreachable message back to the DHCP server */
+	if (ifp->ctx->udp_fd == -1 && dhcp_openudp(ifp->ctx, NULL) != -1)
+		eloop_event_add(ifp->ctx->eloop,
+		    ifp->ctx->udp_fd, dhcp_handleudp, ifp->ctx);
 
 	if (dhcp_init(ifp) == -1) {
 		syslog(LOG_ERR, "%s: dhcp_init: %m", ifp->name);
@@ -2586,7 +2886,7 @@ dhcp_start(struct interface *ifp)
 		return;
 	}
 
-	if (dhcp_open(ifp) == -1)
+	if (ifo->options & DHCPCD_DHCP && dhcp_open(ifp) == -1)
 		return;
 
 	if (ifo->options & DHCPCD_INFORM) {
@@ -2597,16 +2897,15 @@ dhcp_start(struct interface *ifp)
 		syslog(LOG_WARNING, "%s: needs a clientid to configure",
 		    ifp->name);
 		dhcp_drop(ifp, "FAIL");
-		dhcp_close(ifp);
-		eloop_timeout_delete(NULL, ifp);
+		eloop_timeout_delete(ifp->ctx->eloop, NULL, ifp);
 		return;
 	}
 	/* We don't want to read the old lease if we NAK an old test */
-	nolease = state->offer && options & DHCPCD_TEST;
+	nolease = state->offer && ifp->ctx->options & DHCPCD_TEST;
 	if (!nolease)
 		state->offer = read_lease(ifp);
 	if (state->offer) {
-		get_lease(&state->lease, state->offer);
+		get_lease(ifp->ctx, &state->lease, state->offer);
 		state->lease.frominfo = 1;
 		if (state->offer->cookie == 0) {
 			if (state->offer->yiaddr == state->addr.s_addr) {
@@ -2635,10 +2934,21 @@ dhcp_start(struct interface *ifp)
 			}
 		}
 	}
+
+	if (!(ifo->options & DHCPCD_DHCP)) {
+		if (ifo->options & DHCPCD_IPV4LL) {
+			if (state->offer && state->offer->cookie != 0) {
+				free(state->offer);
+				state->offer = NULL;
+			}
+			ipv4ll_start(ifp);
+		}
+		return;
+	}
+
 	if (state->offer == NULL)
 		dhcp_discover(ifp);
-	else if (state->offer->cookie == 0 &&
-	    ifp->options->options & DHCPCD_IPV4LL)
+	else if (state->offer->cookie == 0 && ifo->options & DHCPCD_IPV4LL)
 		ipv4ll_start(ifp);
 	else
 		dhcp_reboot(ifp);
@@ -2699,7 +3009,7 @@ dhcp_handleifa(int type, struct interface *ifp,
 				dhcp_message_add_addr(state->new, i, *dst);
 	}
 	state->reason = "STATIC";
-	ipv4_buildroutes();
+	ipv4_buildroutes(ifp->ctx);
 	script_runreason(ifp, state->reason);
 	if (ifo->options & DHCPCD_INFORM) {
 		state->state = DHS_INFORM;

@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: platform-bsd.c,v 1.1.1.11 2014/01/15 20:36:31 roy Exp $");
+ __RCSID("$NetBSD: platform-bsd.c,v 1.1.1.12 2014/02/25 13:14:29 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -56,18 +56,17 @@
 #  define SYS_NMLN 256
 #endif
 
-static char march[SYS_NMLN];
-
-char *
-hardware_platform(void)
+int
+hardware_platform(char *str, size_t len)
 {
 	int mib[2] = { CTL_HW, HW_MACHINE_ARCH };
-	size_t len = sizeof(march);
+	char march[SYS_NMLN];
+	size_t marchlen = sizeof(march);
 
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
-		march, &len, NULL, 0) != 0)
-		return NULL;
-	return march;
+	    march, &marchlen, NULL, 0) != 0)
+		return -1;
+	return snprintf(str, len, ":%s", march);
 }
 
 #ifdef INET6
@@ -92,11 +91,11 @@ inet6_sysctl(int code, int val, int action)
 	return val;
 }
 
-static void
-restore_kernel_ra(void)
+void
+restore_kernel_ra(struct dhcpcd_ctx *ctx)
 {
 
-	if (options & DHCPCD_FORKED)
+	if (ctx->ra_kernel_set == 0 || ctx->options & DHCPCD_FORKED)
 		return;
 	syslog(LOG_INFO, "restoring Kernel IPv6 RA support");
 	if (set_inet6_sysctl(IPV6CTL_ACCEPT_RTADV, 1) == -1)
@@ -122,15 +121,14 @@ ipv6_ra_flush(void)
 }
 
 int
-check_ipv6(const char *ifname, int own)
+check_ipv6(struct dhcpcd_ctx *ctx, const char *ifname, int own)
 {
-	static int set_restore = 0, global_ra = 0;
 	int ra;
 
 	/* BSD doesn't support these values per iface, so just return
 	 * the global ra setting */
 	if (ifname)
-		return global_ra;
+		return ctx->ra_global;
 
 	ra = get_inet6_sysctl(IPV6CTL_ACCEPT_RTADV);
 	if (ra == -1)
@@ -144,11 +142,8 @@ check_ipv6(const char *ifname, int own)
 			syslog(LOG_ERR, "IPV6CTL_ACCEPT_RTADV: %m");
 			return ra;
 		}
-		if (!set_restore) {
-			set_restore = 1;
-			atexit(restore_kernel_ra);
-		}
 		ra = 0;
+		ctx->ra_kernel_set = 1;
 
 		/* Flush the kernel knowledge of advertised routers
 		 * and prefixes so the kernel does not expire prefixes
@@ -156,7 +151,7 @@ check_ipv6(const char *ifname, int own)
 		ipv6_ra_flush();
 	}
 	if (ifname == NULL)
-		global_ra = ra;
+		ctx->ra_global = ra;
 
 	return ra;
 }
