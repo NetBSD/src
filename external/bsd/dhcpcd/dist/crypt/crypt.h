@@ -1,8 +1,8 @@
-/* $NetBSD: if-pref.h,v 1.1.1.4 2014/02/25 13:14:30 roy Exp $ */
+/* $NetBSD: crypt.h,v 1.1.1.1 2014/02/25 13:14:31 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2008 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -27,10 +27,9 @@
  * SUCH DAMAGE.
  */
 
-#ifndef IF_PREF_H
-#define IF_PREF_H
+#ifndef CRYPT_H
+#define CRYPT_H
 
-#include "dhcpcd.h"
+void hmac_md5(const uint8_t *, int, const uint8_t *, int, uint8_t *);
 
-void sort_interfaces(struct dhcpcd_ctx *);
 #endif
