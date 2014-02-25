@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.223 2013/11/23 13:35:36 christos Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.224 2014/02/25 18:30:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.223 2013/11/23 13:35:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.224 2014/02/25 18:30:12 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -1028,11 +1028,6 @@ static void
 nfs_sysctl_init(void)
 {
 
-	sysctl_createv(&nfs_clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "vfs", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, CTL_EOL);
 	sysctl_createv(&nfs_clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "nfs",

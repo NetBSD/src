@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_bufq.c,v 1.20 2009/09/17 09:54:27 pooka Exp $	*/
+/*	$NetBSD: subr_bufq.c,v 1.21 2014/02/25 18:30:11 pooka Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.70 2005/08/20 12:00:01 yamt Exp $	*/
 
 /*-
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.20 2009/09/17 09:54:27 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.21 2014/02/25 18:30:11 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -330,11 +330,6 @@ sysctl_kern_bufq_strategies_setup(struct sysctllog **clog)
 {
 	const struct sysctlnode *node;
 
-	sysctl_createv(clog, 0, NULL, NULL,
-			CTLFLAG_PERMANENT,
-			CTLTYPE_NODE, "kern", NULL,
-			NULL, 0, NULL, 0,
-			CTL_KERN, CTL_EOL);
 	node = NULL;
 	sysctl_createv(clog, 0, NULL, &node,
 			CTLFLAG_PERMANENT,

@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.180 2013/12/05 15:55:35 christos Exp $	*/
+/*	$NetBSD: bpf.c,v 1.181 2014/02/25 18:30:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.180 2013/12/05 15:55:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.181 2014/02/25 18:30:12 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -2022,12 +2022,6 @@ static void
 sysctl_net_bpf_setup(void)
 {
 	const struct sysctlnode *node;
-
-	sysctl_createv(&bpf_sysctllog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "net", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, CTL_EOL);
 
 	node = NULL;
 	sysctl_createv(&bpf_sysctllog, 0, NULL, &node,

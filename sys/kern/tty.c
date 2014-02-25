@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.258 2014/02/23 07:54:43 mlelstv Exp $	*/
+/*	$NetBSD: tty.c,v 1.259 2014/02/25 18:30:11 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.258 2014/02/23 07:54:43 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.259 2014/02/25 18:30:11 pooka Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -295,11 +295,6 @@ sysctl_kern_tty_setup(void)
 	struct sysctllog *kern_tkstat_sysctllog, *kern_tty_sysctllog;
 
 	kern_tkstat_sysctllog = NULL;
-	sysctl_createv(&kern_tkstat_sysctllog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "kern", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_KERN, CTL_EOL);
 	sysctl_createv(&kern_tkstat_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "tkstat",

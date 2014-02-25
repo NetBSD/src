@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.91 2013/12/10 18:20:32 christos Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.92 2014/02/25 18:30:10 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.91 2013/12/10 18:20:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.92 2014/02/25 18:30:10 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -895,11 +895,6 @@ ntfs_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_attach(&ntfs_vfsops);
 		if (error != 0)
 			break;
-		sysctl_createv(&ntfs_sysctl_log, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT,
-			       CTLTYPE_NODE, "vfs", NULL,
-			       NULL, 0, NULL, 0,
-			       CTL_VFS, CTL_EOL);
 		sysctl_createv(&ntfs_sysctl_log, 0, NULL, NULL,
 			       CTLFLAG_PERMANENT,
 			       CTLTYPE_NODE, "ntfs",

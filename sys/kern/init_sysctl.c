@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.200 2014/02/25 01:02:42 justin Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.201 2014/02/25 18:30:11 pooka Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.200 2014/02/25 01:02:42 justin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.201 2014/02/25 18:30:11 pooka Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
@@ -142,12 +142,6 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 	extern fixpt_t ccpu;		/* defined in kern/kern_synch.c */
 	extern int dumponpanic;		/* defined in kern/subr_prf.c */
 	const struct sysctlnode *rnode;
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "kern", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_KERN, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
@@ -644,12 +638,6 @@ SYSCTL_SETUP(sysctl_hw_setup, "sysctl hw subtree setup")
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "hw", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_HW, CTL_EOL);
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "machine",
 		       SYSCTL_DESCR("Machine class"),
 		       NULL, 0, machine, 0,
@@ -773,12 +761,6 @@ SYSCTL_SETUP(sysctl_debug_setup, "sysctl debug subtree setup")
 	 int	debug.name
 
 	 */
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "debug", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_DEBUG, CTL_EOL);
 
 	for (i = 0; i < CTL_DEBUG_MAXID; i++) {
 		cdp = debugvars[i];
