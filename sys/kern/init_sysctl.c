@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.199 2014/01/17 02:12:48 pooka Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.200 2014/02/25 01:02:42 justin Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.199 2014/01/17 02:12:48 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.200 2014/02/25 01:02:42 justin Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
@@ -105,7 +105,6 @@ static int sysctl_kern_maxvnodes(SYSCTLFN_PROTO);
 static int sysctl_kern_rtc_offset(SYSCTLFN_PROTO);
 static int sysctl_kern_maxproc(SYSCTLFN_PROTO);
 static int sysctl_kern_hostid(SYSCTLFN_PROTO);
-static int sysctl_setlen(SYSCTLFN_PROTO);
 static int sysctl_kern_clockrate(SYSCTLFN_PROTO);
 static int sysctl_msgbuf(SYSCTLFN_PROTO);
 static int sysctl_kern_defcorename(SYSCTLFN_PROTO);
@@ -151,30 +150,6 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       CTL_KERN, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRING, "ostype",
-		       SYSCTL_DESCR("Operating system type"),
-		       NULL, 0, __UNCONST(&ostype), 0,
-		       CTL_KERN, KERN_OSTYPE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRING, "osrelease",
-		       SYSCTL_DESCR("Operating system release"),
-		       NULL, 0, __UNCONST(&osrelease), 0,
-		       CTL_KERN, KERN_OSRELEASE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
-		       CTLTYPE_INT, "osrevision",
-		       SYSCTL_DESCR("Operating system revision"),
-		       NULL, __NetBSD_Version__, NULL, 0,
-		       CTL_KERN, KERN_OSREV, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRING, "version",
-		       SYSCTL_DESCR("Kernel version"),
-		       NULL, 0, __UNCONST(&version), 0,
-		       CTL_KERN, KERN_VERSION, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "maxvnodes",
 		       SYSCTL_DESCR("Maximum number of vnodes"),
@@ -199,12 +174,6 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 				    "execve(2)"),
 		       NULL, ARG_MAX, NULL, 0,
 		       CTL_KERN, KERN_ARGMAX, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_STRING, "hostname",
-		       SYSCTL_DESCR("System hostname"),
-		       sysctl_setlen, 0, hostname, MAXHOSTNAMELEN,
-		       CTL_KERN, KERN_HOSTNAME, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE|CTLFLAG_HEX,
 		       CTLTYPE_INT, "hostid",
@@ -282,24 +251,12 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       NULL, 0, &boottime, sizeof(boottime),
 		       CTL_KERN, KERN_BOOTTIME, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_STRING, "domainname",
-		       SYSCTL_DESCR("YP domain name"),
-		       sysctl_setlen, 0, domainname, MAXHOSTNAMELEN,
-		       CTL_KERN, KERN_DOMAINNAME, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "maxpartitions",
 		       SYSCTL_DESCR("Maximum number of partitions allowed per "
 				    "disk"),
 		       NULL, MAXPARTITIONS, NULL, 0,
 		       CTL_KERN, KERN_MAXPARTITIONS, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
-		       CTLTYPE_INT, "rawpartition",
-		       SYSCTL_DESCR("Raw partition of a disk"),
-		       NULL, RAW_PART, NULL, 0,
-		       CTL_KERN, KERN_RAWPARTITION, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "timex", NULL,
@@ -1006,32 +963,6 @@ sysctl_kern_hostid(SYSCTLFN_ARGS)
 		return (error);
 
 	hostid = (unsigned)inthostid;
-
-	return (0);
-}
-
-/*
- * sysctl helper function for kern.hostname and kern.domainnname.
- * resets the relevant recorded length when the underlying name is
- * changed.
- */
-static int
-sysctl_setlen(SYSCTLFN_ARGS)
-{
-	int error;
-
-	error = sysctl_lookup(SYSCTLFN_CALL(rnode));
-	if (error || newp == NULL)
-		return (error);
-
-	switch (rnode->sysctl_num) {
-	case KERN_HOSTNAME:
-		hostnamelen = strlen((const char*)rnode->sysctl_data);
-		break;
-	case KERN_DOMAINNAME:
-		domainnamelen = strlen((const char*)rnode->sysctl_data);
-		break;
-	}
 
 	return (0);
 }
