@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.109 2014/02/19 21:23:02 dsl Exp $	*/
+/*	$NetBSD: cpu.c,v 1.110 2014/02/25 22:16:52 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.109 2014/02/19 21:23:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.110 2014/02/25 22:16:52 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -552,28 +552,40 @@ cpu_childdetached(device_t self, device_t child)
 void
 cpu_init(struct cpu_info *ci)
 {
+	uint32_t cr4;
 
 	lcr0(rcr0() | CR0_WP);
 
+	cr4 = rcr4();
 	/*
 	 * On a P6 or above, enable global TLB caching if the
 	 * hardware supports it.
 	 */
 	if (cpu_feature[0] & CPUID_PGE)
-		lcr4(rcr4() | CR4_PGE);	/* enable global TLB caching */
+		cr4 |= CR4_PGE;	/* enable global TLB caching */
 
 	/*
 	 * If we have FXSAVE/FXRESTOR, use them.
 	 */
 	if (cpu_feature[0] & CPUID_FXSR) {
-		lcr4(rcr4() | CR4_OSFXSR);
+		cr4 |= CR4_OSFXSR;
 
 		/*
 		 * If we have SSE/SSE2, enable XMM exceptions.
 		 */
 		if (cpu_feature[0] & (CPUID_SSE|CPUID_SSE2))
-			lcr4(rcr4() | CR4_OSXMMEXCPT);
+			cr4 |= CR4_OSXMMEXCPT;
 	}
+
+	/* If xsave is supported, enable it */
+	if (cpu_feature[1] & CPUID2_XSAVE)
+		cr4 |= CR4_OSXSAVE;
+
+	lcr4(cr4);
+
+	/* If xsave is enabled, enable all fpu features */
+	if (cr4 & CR4_OSXSAVE)
+		wrxcr(0, x86_xsave_features & XCR0_FPU);
 
 #ifdef MTRR
 	/*
