@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.h,v 1.21 2013/05/19 15:51:10 rkujawa Exp $	*/
+/*	$NetBSD: cpuconf.h,v 1.22 2014/02/25 08:54:57 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -213,19 +213,14 @@
 #endif
 
 #if !defined(_KERNEL_OPT) ||						\
-	defined(CPU_ARM11MPCORE) && defined(ARM11MPCORE_COMPAT_MMU) ||	\
-	defined(CPU_ARM1136) || \
-	defined(CPU_ARM1176) || \
-	defined(CPU_ARM11) && \
-	!defined(CPU_CORTEX) && \
-	!defined(CPU_ARM11MPCORE) && !defined(CPU_PJ4B)
+	defined(CPU_ARM11) && defined(ARM11_COMPAT_MMU)
 #define	ARM_MMU_V6C		1
 #else
 #define	ARM_MMU_V6C		0
 #endif
 
 #if !defined(_KERNEL_OPT) ||						\
-	defined(CPU_ARM11MPCORE) && !defined(ARM11MPCORE_COMPAT_MMU)
+	defined(CPU_ARM11) && !defined(ARM11_COMPAT_MMU)
 #define	ARM_MMU_V6N		1
 #else
 #define	ARM_MMU_V6N		0
@@ -239,6 +234,19 @@
 #define	ARM_MMU_V7		1
 #else
 #define	ARM_MMU_V7		0
+#endif
+
+/*
+ * Can we use the ASID support in armv6+ MMUs?
+ */
+#if !defined(_LOCORE) && 0
+#define	ARM_MMU_EXTENDED	((ARM_MMU_MEMC + ARM_MMU_GENERIC	\
+				  + ARM_MMU_SA1 + ARM_MMU_XSCALE	\
+				  + ARM_MMU_V6C) == 0			\
+				 && (ARM_MMU_V6N + ARM_MMU_V7) > 0)
+#if ARM_MMU_EXTENDED == 0
+#undef ARM_MMU_EXTENDED
+#endif
 #endif
 
 #define	ARM_NMMUS		(ARM_MMU_MEMC + ARM_MMU_GENERIC +	\
