@@ -1,8 +1,8 @@
-/* $NetBSD: common.h,v 1.1.1.9 2013/07/29 20:35:33 roy Exp $ */
+/* $NetBSD: common.h,v 1.1.1.10 2014/02/25 13:14:30 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2013 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -41,6 +41,8 @@
 #endif
 
 #define UNCONST(a)		((void *)(unsigned long)(const void *)(a))
+#define STRINGIFY(a)		#a
+#define TOSTRING(a)		STRINGIFY(a)
 
 #define timeval_to_double(tv) ((tv)->tv_sec * 1.0 + (tv)->tv_usec * 1.0e-6)
 #define timernorm(tv) do {						\
@@ -99,15 +101,12 @@
 # endif
 #endif
 
-int set_cloexec(int);
-int set_nonblock(int);
-char *get_line(FILE * __restrict);
-const char *get_hostname(int);
+void get_line_free(void);
+const char *get_hostname(char *, size_t, int);
 extern int clock_monotonic;
 int get_monotonic(struct timeval *);
 ssize_t setvar(char ***, const char *, const char *, const char *);
 ssize_t setvard(char ***, const char *, const char *, int);
 time_t uptime(void);
-int writepid(int, pid_t);
 
 #endif
