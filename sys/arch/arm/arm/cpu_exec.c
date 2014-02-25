@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.8.2.2 2014/02/15 16:18:35 matt Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.8.2.3 2014/02/25 00:05:11 matt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.8.2.2 2014/02/15 16:18:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.8.2.3 2014/02/25 00:05:11 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_netbsd32.h"
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.8.2.2 2014/02/15 16:18:35 matt Exp $"
 
 #include <arm/locore.h>
 
-#if EXEC_ELF32
+#ifdef EXEC_ELF32
 int
 arm_netbsd_elf32_probe(struct lwp *l, struct exec_package *epp, void *eh0,
 	char *itp, vaddr_t *start_p)
