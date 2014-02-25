@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.127 2013/06/08 02:42:56 christos Exp $	*/
+/*	$NetBSD: route.c,v 1.128 2014/02/25 18:30:12 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.127 2013/06/08 02:42:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.128 2014/02/25 18:30:12 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -151,14 +151,10 @@ sysctl_net_rtcache_setup(struct sysctllog **clog)
 {
 	const struct sysctlnode *rnode;
 
-	/* XXX do not duplicate */
 	if (sysctl_createv(clog, 0, NULL, &rnode, CTLFLAG_PERMANENT,
-	    CTLTYPE_NODE, "net", NULL, NULL, 0, NULL, 0, CTL_NET, CTL_EOL) != 0)
-		return;
-	if (sysctl_createv(clog, 0, &rnode, &rnode, CTLFLAG_PERMANENT,
 	    CTLTYPE_NODE,
 	    "rtcache", SYSCTL_DESCR("Route cache related settings"),
-	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL) != 0)
+	    NULL, 0, NULL, 0, CTL_NET, CTL_CREATE, CTL_EOL) != 0)
 		return;
 	if (sysctl_createv(clog, 0, &rnode, &rnode,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,

@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.117 2013/11/23 14:20:21 christos Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.118 2014/02/25 18:30:12 pooka Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.117 2013/11/23 14:20:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.118 2014/02/25 18:30:12 pooka Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -691,11 +691,6 @@ static void
 sysctl_net_inet_raw_setup(struct sysctllog **clog)
 {
 
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "net", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "inet", NULL,

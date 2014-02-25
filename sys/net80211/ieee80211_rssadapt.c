@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_rssadapt.c,v 1.17 2009/10/19 23:19:39 rmind Exp $ */
+/* $NetBSD: ieee80211_rssadapt.c,v 1.18 2014/02/25 18:30:12 pooka Exp $ */
 /*-
  * Copyright (c) 2003, 2004 David Young.  All rights reserved.
  *
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_rssadapt.c,v 1.17 2009/10/19 23:19:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_rssadapt.c,v 1.18 2014/02/25 18:30:12 pooka Exp $");
 #endif
 
 #include <sys/param.h>
@@ -148,13 +148,8 @@ SYSCTL_SETUP(sysctl_ieee80211_rssadapt,
 	const struct sysctlnode *node;
 
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "net", NULL,
-	    NULL, 0, NULL, 0, CTL_NET, CTL_EOL)) != 0)
-		goto err;
-
-	if ((rc = sysctl_createv(clog, 0, &node, &node,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "link", NULL,
-	    NULL, 0, NULL, 0, PF_LINK, CTL_EOL)) != 0)
+	    NULL, 0, NULL, 0, CTL_NET, PF_LINK, CTL_EOL)) != 0)
 		goto err;
 
 	if ((rc = sysctl_createv(clog, 0, &node, &node,

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.248 2013/10/25 20:36:08 martin Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.249 2014/02/25 18:30:11 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.248 2013/10/25 20:36:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.249 2014/02/25 18:30:11 pooka Exp $");
 
 #include "opt_bufcache.h"
 
@@ -1806,11 +1806,6 @@ sysctl_kern_buf_setup(void)
 
 	sysctl_createv(&vfsbio_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "kern", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_KERN, CTL_EOL);
-	sysctl_createv(&vfsbio_sysctllog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "buf",
 		       SYSCTL_DESCR("Kernel buffer cache information"),
 		       sysctl_dobuf, 0, NULL, 0,
@@ -1821,11 +1816,6 @@ static void
 sysctl_vm_buf_setup(void)
 {
 
-	sysctl_createv(&vfsbio_sysctllog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "vm", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_VM, CTL_EOL);
 	sysctl_createv(&vfsbio_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "bufcache",

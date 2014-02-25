@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.285 2014/02/25 01:02:42 justin Exp $	*/
+/*	$NetBSD: rump.c,v 1.286 2014/02/25 18:30:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.285 2014/02/25 01:02:42 justin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.286 2014/02/25 18:30:13 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -169,11 +169,6 @@ mksysctls(void)
 {
 
 	/* hw.pagesize */
-	sysctl_createv(NULL, 0, NULL, NULL,
-	    CTLFLAG_PERMANENT,
-	    CTLTYPE_NODE, "hw", NULL,
-	    NULL, 0, NULL, 0,
-	    CTL_HW, CTL_EOL);
 	sysctl_createv(NULL, 0, NULL, NULL,
 	    CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 	    CTLTYPE_INT, "pagesize",
