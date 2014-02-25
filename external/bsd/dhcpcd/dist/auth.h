@@ -1,8 +1,8 @@
-/* $NetBSD: if-pref.h,v 1.1.1.4 2014/02/25 13:14:30 roy Exp $ */
+/* $NetBSD: auth.h,v 1.1.1.1 2014/02/25 13:14:30 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2008 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -27,10 +27,62 @@
  * SUCH DAMAGE.
  */
 
-#ifndef IF_PREF_H
-#define IF_PREF_H
+#ifndef AUTH_H
+#define AUTH_H
 
-#include "dhcpcd.h"
+#include <sys/queue.h>
 
-void sort_interfaces(struct dhcpcd_ctx *);
+#define DHCPCD_AUTH_SEND	(1 << 0)
+#define DHCPCD_AUTH_REQUIRE	(1 << 1)
+#define DHCPCD_AUTH_RDM_COUNTER	(1 << 2)
+
+#define DHCPCD_AUTH_SENDREQUIRE	(DHCPCD_AUTH_SEND | DHCPCD_AUTH_REQUIRE)
+
+#define AUTH_PROTO_TOKEN	0
+#define AUTH_PROTO_DELAYED	1
+#define AUTH_PROTO_DELAYEDREALM	2
+#define AUTH_PROTO_RECONFKEY	3
+
+#define AUTH_ALG_HMAC_MD5	1
+
+#define AUTH_RDM_MONOTONIC	0
+
+struct token {
+	TAILQ_ENTRY(token) next;
+	uint32_t secretid;
+	unsigned int realm_len;
+	unsigned char *realm;
+	unsigned int key_len;
+	unsigned char *key;
+	time_t expire;
+};
+
+TAILQ_HEAD(token_head, token);
+
+struct auth {
+	int options;
+	uint8_t protocol;
+	uint8_t algorithm;
+	uint8_t rdm;
+	uint64_t last_replay;
+	uint8_t last_replay_set;
+	struct token_head tokens;
+};
+
+struct authstate {
+	uint64_t replay;
+	struct token *token;
+	struct token *reconf;
+};
+
+void dhcp_auth_reset(struct authstate *);
+
+const struct token * dhcp_auth_validate(struct authstate *,
+    const struct auth *,
+    const uint8_t *, unsigned int, int, int,
+    const uint8_t *, unsigned int);
+
+int dhcp_auth_encode(struct auth *, const struct token *,
+    uint8_t *, unsigned int, int, int,
+    uint8_t *, unsigned int);
 #endif

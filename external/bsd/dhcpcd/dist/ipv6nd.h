@@ -1,8 +1,8 @@
-/* $NetBSD: ipv6nd.h,v 1.1.1.1 2013/09/20 10:51:30 roy Exp $ */
+/* $NetBSD: ipv6nd.h,v 1.1.1.2 2014/02/25 13:14:31 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2013 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -67,7 +67,7 @@ struct ra {
 	int expired;
 };
 
-extern TAILQ_HEAD(rahead, ra) ipv6_routers;
+TAILQ_HEAD(ra_head, ra);
 
 struct rs_state {
 	unsigned char *rs;
@@ -85,14 +85,15 @@ struct rs_state {
 #ifdef INET6
 int ipv6nd_startrs(struct interface *);
 ssize_t ipv6nd_env(char **, const char *, const struct interface *);
-int ipv6nd_addrexists(const struct ipv6_addr *);
+int ipv6nd_addrexists(struct dhcpcd_ctx *, const struct ipv6_addr *);
 void ipv6nd_freedrop_ra(struct ra *, int);
 #define ipv6nd_free_ra(ra) ipv6nd_freedrop_ra((ra),  0)
 #define ipv6nd_drop_ra(ra) ipv6nd_freedrop_ra((ra),  1)
 ssize_t ipv6nd_free(struct interface *);
 void ipv6nd_expirera(void *arg);
 int ipv6nd_has_ra(const struct interface *);
-void ipv6nd_handleifa(int, const char *, const struct in6_addr *, int);
+void ipv6nd_handleifa(struct dhcpcd_ctx *, int,
+    const char *, const struct in6_addr *, int);
 void ipv6nd_drop(struct interface *);
 
 void ipv6nd_probeaddr(void *);
@@ -108,9 +109,9 @@ void ipv6nd_cancelprobeaddr(struct ipv6_addr *);
 
 #else
 #define ipv6nd_startrs(a) {}
-#define ipv6nd_addrexists(a) (0)
+#define ipv6nd_addrexists(a, b) (0)
 #define ipv6nd_free(a)
-#define ipv6nd_has_ra(a) 0
+#define ipv6nd_has_ra(a) (0)
 #define ipv6nd_drop(a)
 #endif
 

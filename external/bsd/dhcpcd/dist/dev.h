@@ -1,8 +1,8 @@
-/* $NetBSD: dev.h,v 1.1.1.1 2013/09/20 10:51:30 roy Exp $ */
+/* $NetBSD: dev.h,v 1.1.1.2 2014/02/25 13:14:30 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2013 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,28 +34,29 @@ struct dev {
 	const char *name;
 	int (*initialized)(const char *);
 	int (*listening)(void);
-	int (*handle_device)(void);
+	int (*handle_device)(void *);
 	int (*start)(void);
 	void (*stop)(void);
 };
 
 struct dev_dhcpcd {
-	void (*handle_interface)(int, const char *);
+	void (*handle_interface)(void *, int, const char *);
 };
 
 int dev_init(struct dev *, const struct dev_dhcpcd *);
 
 // hooks for dhcpcd
 #ifdef PLUGIN_DEV
-int dev_initialized(const char *);
-int dev_listening(void);
-int dev_start(const char *);
-void dev_stop(void);
+#include "dhcpcd.h"
+int dev_initialized(struct dhcpcd_ctx *, const char *);
+int dev_listening(struct dhcpcd_ctx *);
+int dev_start(struct dhcpcd_ctx *);
+void dev_stop(struct dhcpcd_ctx *, int);
 #else
-#define dev_initialized(a) 1
-#define dev_listening() 0
+#define dev_initialized(a, b) 1
+#define dev_listening(a) 0
 #define dev_start(a) {}
-#define dev_stop() {}
+#define dev_stop(a, b) {}
 #endif
 
 #endif

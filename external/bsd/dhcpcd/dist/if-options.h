@@ -1,8 +1,8 @@
-/* $NetBSD: if-options.h,v 1.1.1.19 2014/01/03 22:10:44 roy Exp $ */
+/* $NetBSD: if-options.h,v 1.1.1.20 2014/02/25 13:14:30 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2013 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -37,6 +37,8 @@
 #include <getopt.h>
 #include <limits.h>
 #include <stdint.h>
+
+#include "auth.h"
 
 /* Don't set any optional arguments here so we retain POSIX
  * compatibility with getopt */
@@ -100,6 +102,8 @@
 #define DHCPCD_WAITIP6			(1ULL << 46)
 #define DHCPCD_DEV			(1ULL << 47)
 #define DHCPCD_IAID			(1ULL << 48)
+#define DHCPCD_DHCP			(1ULL << 49)
+#define DHCPCD_DHCP6			(1ULL << 50)
 
 extern const struct option cf_options[];
 
@@ -144,7 +148,7 @@ struct if_options {
 	char **config;
 
 	char **environ;
-	char script[PATH_MAX];
+	char *script;
 
 	char hostname[HOSTNAME_MAX_LEN + 1]; /* We don't store the length */
 	int fqdn;
@@ -177,14 +181,14 @@ struct if_options {
 	size_t vivco_len;
 	struct dhcp_opt *vivso_override;
 	size_t vivso_override_len;
+
+	struct auth auth;
 };
 
-extern unsigned long long options;
-extern char *dev_load;
-
-struct if_options *read_config(const char *,
+struct if_options *read_config(struct dhcpcd_ctx *,
     const char *, const char *, const char *);
-int add_options(struct if_options *, int, char **);
+int add_options(struct dhcpcd_ctx *, const char *,
+    struct if_options *, int, char **);
 void free_dhcp_opt_embenc(struct dhcp_opt *);
 void free_options(struct if_options *);
 
