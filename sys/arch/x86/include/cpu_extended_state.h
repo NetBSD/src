@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_extended_state.h,v 1.8 2014/02/18 18:39:10 dsl Exp $	*/
+/*	$NetBSD: cpu_extended_state.h,v 1.9 2014/02/25 22:16:52 dsl Exp $	*/
 
 #ifndef _X86_CPU_EXTENDED_STATE_H_
 #define _X86_CPU_EXTENDED_STATE_H_
@@ -122,19 +122,13 @@ struct fxsave_os {
 	uint16_t	fxo_dflt_cw;	/* Control word for signal handlers */
 };
 
-union savefpu {
-	struct save87		sv_87;
-	struct fxsave		sv_xmm;
-	struct fxsave_os	sv_os;
-};
-
 /*
- * For XSAVE a 64byte header follows the above.
+ * For XSAVE a 64byte header follows the fxsave data.
  * Currently it only contains one field of which only 3 bits are defined.
  * Some other parts must be zero - zero it all.
  *
  * The xsh_xstate_bv bits match those of XCR0:
- *   XCR0_X87        0x00000001      x87 FPU/MMX state (always set)
+ *   XCR0_X87        0x00000001      x87 FPU/MMX state
  *   XCR0_SSE        0x00000002      SSE state
  *   XCR0_AVX        0x00000004      AVX state (ymmn registers)
  *
@@ -143,11 +137,12 @@ union savefpu {
  */
 
 struct xsave_header {
+	uint64_t	xsh_fxsave[64];	/* to align in the union */
 	uint64_t	xsh_xstate_bv;	/* bitmap of saved sub structures */
 	uint64_t	xsh_rsrvd[2];	/* must be zero */
 	uint64_t	xsh_reserved[5];/* best if zero */
 };
-__CTASSERT(sizeof (struct xsave_header) == 64);
+__CTASSERT(sizeof (struct xsave_header) == 512 + 64);
 
 /*
  * The ymm save area actually follows the xsave_header.
@@ -157,6 +152,20 @@ struct xsave_ymm {
 };
 __CTASSERT(sizeof (struct xsave_ymm) == 256);
 
+/*
+ * The following union is placed at the end of the pcb.
+ * It is defined this way to separate the definitions and to
+ * minimise the number of union/struct selectors.
+ * NB: Some userspace stuff (eg firefox) uses it to parse ucontext.
+ */
+union savefpu {
+	struct save87		sv_87;
+	struct fxsave		sv_xmm;
+#ifdef _KERNEL
+	struct fxsave_os	sv_os;
+	struct xsave_header	sv_xsave_hdr;
+#endif
+};
 
 /*
  * 80387 control and status word bits

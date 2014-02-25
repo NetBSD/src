@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.23 2014/02/20 18:19:10 dsl Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.24 2014/02/25 22:16:52 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.23 2014/02/20 18:19:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.24 2014/02/25 22:16:52 dsl Exp $");
 
 #include "opt_mtrr.h"
 
@@ -154,6 +154,8 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 
 	/* Copy the PCB from parent. */
 	memcpy(pcb2, pcb1, sizeof(struct pcb));
+	/* Copy any additional fpu state */
+	fpu_save_area_fork(pcb2, pcb1);
 
 #if defined(XEN)
 	pcb2->pcb_iopl = SEL_KPL;
