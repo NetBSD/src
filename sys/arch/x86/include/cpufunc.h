@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.17 2014/02/13 19:37:08 dsl Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.18 2014/02/25 22:16:52 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -77,26 +77,35 @@ void	x86_hlt(void);
 void	x86_stihlt(void);
 u_int	x86_getss(void);
 
-struct save87;
-struct fxsave;
+/* fpu save, restore etc */
+union savefpu;
 void	fldcw(const uint16_t *);
 void	fnclex(void);
 void	fninit(void);
-void	fnsave(struct save87 *);
+void	fnsave(union savefpu *);
 void	fnstcw(uint16_t *);
 uint16_t fngetsw(void);
 void	fnstsw(uint16_t *);
-void	frstor(const struct save87 *);
+void	frstor(const union savefpu *);
 void	fwait(void);
 void	clts(void);
 void	stts(void);
-void	fxsave(struct fxsave *);
-void	fxrstor(const struct fxsave *);
+void	fxsave(union savefpu *);
+void	fxrstor(const union savefpu *);
 void	x86_ldmxcsr(const uint32_t *);
 void	x86_stmxcsr(uint32_t *);
 
 void	fldummy(void);
 void	fp_divide_by_0(void);
+
+/* Extended processor state functions (for AVX registers etc) */
+
+uint64_t rdxcr(uint32_t);		/* xgetbv */
+void	wrxcr(uint32_t, uint64_t);	/* xsetgv */
+
+void	xrstor(const union savefpu *, uint64_t);
+void	xsave(union savefpu *, uint64_t);
+void	xsaveopt(union savefpu *, uint64_t);
 
 void	x86_monitor(const void *, uint32_t, uint32_t);
 void	x86_mwait(uint32_t, uint32_t);
@@ -133,14 +142,6 @@ void		wrmsr(u_int, uint64_t);
 void		wrmsr_locked(u_int, u_int, uint64_t);
 void		setfs(int);
 void		setusergs(int);
-
-/* Extended processor state functions (for AVX registers etc) */
-
-uint64_t	rdxcr(uint32_t);		/* xgetbv */
-void		wrxcr(uint32_t, uint64_t);	/* xsetgv */
-void		xrstor(const void *, uint64_t);
-void		xsave(void *, uint64_t);
-void		xsaveopt(const void *, uint64_t);
 
 #endif /* _KERNEL */
 
