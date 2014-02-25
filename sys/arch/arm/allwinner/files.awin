@@ -1,4 +1,4 @@
-#	$NetBSD: files.awin,v 1.7 2014/02/25 00:08:29 jmcneill Exp $
+#	$NetBSD: files.awin,v 1.8 2014/02/25 02:51:52 matt Exp $
 #
 # Configuration info for Allwinner ARM Peripherals
 #
@@ -48,6 +48,7 @@ attach	awintmr at awinio with awin_tmr
 file	arch/arm/allwinner/awin_tmr.c		awin_tmr
 
 # A10/A20 UART
+options 	COM_16750			# for IIR_BUSY
 attach	com at awinio with awin_com
 file	arch/arm/allwinner/awin_com.c		awin_com
 
