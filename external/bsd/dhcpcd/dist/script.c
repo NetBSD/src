@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: script.c,v 1.3 2014/01/15 20:43:21 roy Exp $");
+ __RCSID("$NetBSD: script.c,v 1.4 2014/02/25 13:20:23 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -79,26 +79,36 @@ if_printoptions(void)
 		printf(" -  %s\n", *p);
 }
 
+#ifdef USE_SIGNALS
+#define U
+#else
+#define U __unused
+#endif
 static int
-exec_script(char *const *argv, char *const *env)
+exec_script(U const struct dhcpcd_ctx *ctx, char *const *argv, char *const *env)
+#undef U
 {
 	pid_t pid;
 	posix_spawnattr_t attr;
+	int i;
+#ifdef USE_SIGNALS
 	short flags;
 	sigset_t defsigs;
-	int i;
+#endif
 
 	/* posix_spawn is a safe way of executing another image
 	 * and changing signals back to how they should be. */
 	if (posix_spawnattr_init(&attr) == -1)
 		return -1;
+#ifdef USE_SIGNALS
 	flags = POSIX_SPAWN_SETSIGMASK | POSIX_SPAWN_SETSIGDEF;
 	posix_spawnattr_setflags(&attr, flags);
 	sigemptyset(&defsigs);
 	for (i = 0; i < handle_sigs[i]; i++)
 		sigaddset(&defsigs, handle_sigs[i]);
 	posix_spawnattr_setsigdefault(&attr, &defsigs);
-	posix_spawnattr_setsigmask(&attr, &dhcpcd_sigset);
+	posix_spawnattr_setsigmask(&attr, &ctx->sigset);
+#endif
 	errno = 0;
 	i = posix_spawn(&pid, argv[0], NULL, &attr, argv, env);
 	if (i) {
@@ -231,7 +241,7 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 
 	/* When dumping the lease, we only want to report interface and
 	   reason - the other interface variables are meaningless */
-	if (options & DHCPCD_DUMPLEASE)
+	if (ifp->ctx->options & DHCPCD_DUMPLEASE)
 		elen = 2;
 	else
 		elen = 10;
@@ -247,7 +257,7 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 	e = strlen("reason") + strlen(reason) + 2;
 	EMALLOC(1, e);
 	snprintf(env[1], e, "reason=%s", reason);
-	if (options & DHCPCD_DUMPLEASE)
+	if (ifp->ctx->options & DHCPCD_DUMPLEASE)
 		goto dumplease;
 	e = 20;
 	EMALLOC(2, e);
@@ -261,7 +271,7 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 	EMALLOC(6, e);
 	snprintf(env[6], e, "ifmtu=%d", get_mtu(ifp->name));
 	l = e = strlen("interface_order=");
-	TAILQ_FOREACH(ifp2, ifaces, next) {
+	TAILQ_FOREACH(ifp2, ifp->ctx->ifaces, next) {
 		e += strlen(ifp2->name) + 1;
 	}
 	EMALLOC(7, e);
@@ -269,7 +279,7 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 	strlcpy(p, "interface_order=", e);
 	e -= l;
 	p += l;
-	TAILQ_FOREACH(ifp2, ifaces, next) {
+	TAILQ_FOREACH(ifp2, ifp->ctx->ifaces, next) {
 		l = strlcpy(p, ifp2->name, e);
 		p += l;
 		e -= l;
@@ -514,7 +524,7 @@ send_interface(int fd, const struct interface *iface)
 int
 script_runreason(const struct interface *ifp, const char *reason)
 {
-	char *const argv[2] = { UNCONST(ifp->options->script), NULL };
+	char *argv[2];
 	char **env = NULL, **ep;
 	char *path, *bigenv;
 	ssize_t e, elen = 0;
@@ -523,11 +533,13 @@ script_runreason(const struct interface *ifp, const char *reason)
 	const struct fd_list *fd;
 	struct iovec iov[2];
 
-	if (ifp->options->script == NULL ||
-	    ifp->options->script[0] == '\0' ||
-	    strcmp(ifp->options->script, "/dev/null") == 0)
+	if (ifp->options->script &&
+	    (ifp->options->script[0] == '\0' ||
+	    strcmp(ifp->options->script, "/dev/null") == 0))
 		return 0;
 
+	argv[0] = ifp->options->script ? ifp->options->script : UNCONST(SCRIPT);
+	argv[1] = NULL;
 	syslog(LOG_DEBUG, "%s: executing `%s' %s",
 	    ifp->name, argv[0], reason);
 
@@ -558,7 +570,7 @@ script_runreason(const struct interface *ifp, const char *reason)
 	}
 	env[++elen] = NULL;
 
-	pid = exec_script(argv, env);
+	pid = exec_script(ifp->ctx, argv, env);
 	if (pid == -1)
 		syslog(LOG_ERR, "%s: %s: %m", __func__, argv[0]);
 	else if (pid != 0) {
@@ -582,7 +594,7 @@ script_runreason(const struct interface *ifp, const char *reason)
 
 	/* Send to our listeners */
 	bigenv = NULL;
-	for (fd = control_fds; fd != NULL; fd = fd->next) {
+	for (fd = ifp->ctx->control_fds; fd != NULL; fd = fd->next) {
 		if (fd->listener) {
 			if (bigenv == NULL) {
 				elen = arraytostr((const char *const *)env,
