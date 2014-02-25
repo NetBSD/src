@@ -1,8 +1,8 @@
-/* $NetBSD: dhcp-common.h,v 1.1.1.2 2014/01/03 22:10:44 roy Exp $ */
+/* $NetBSD: dhcp-common.h,v 1.1.1.3 2014/02/25 13:14:30 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2013 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -36,6 +36,7 @@
 #include <stdint.h>
 
 #include "common.h"
+#include "dhcpcd.h"
 
 /* Max MTU - defines dhcp option length */
 #define MTU_MAX             1500
@@ -81,11 +82,9 @@ struct dhcp_opt {
 	size_t encopts_len;
 };
 
-/* DHCP Vendor-Identifying Vendor Options, RFC3925 */
-extern struct dhcp_opt *vivso;
-extern size_t vivso_len;
-
 struct dhcp_opt *vivso_find(uint16_t, const void *);
+
+size_t dhcp_vendor(char *, size_t);
 
 #define add_option_mask(var, val) (var[val >> 3] |= 1 << (val & 7))
 #define del_option_mask(var, val) (var[val >> 3] &= ~(1 << (val & 7)))
@@ -98,8 +97,10 @@ ssize_t decode_rfc3397(char *, ssize_t, int, const uint8_t *);
 ssize_t print_string(char *, ssize_t, int, const uint8_t *);
 ssize_t print_option(char *, ssize_t, int, int, const uint8_t *, const char *);
 
-ssize_t dhcp_envoption(char **, const char *, const char *, struct dhcp_opt *,
-    const uint8_t *(*dgetopt)(unsigned int *, unsigned int *, unsigned int *,
+ssize_t dhcp_envoption(struct dhcpcd_ctx *,
+    char **, const char *, const char *, struct dhcp_opt *,
+    const uint8_t *(*dgetopt)(struct dhcpcd_ctx *,
+    unsigned int *, unsigned int *, unsigned int *,
     const uint8_t *, unsigned int, struct dhcp_opt **),
     const uint8_t *od, int ol);
 void dhcp_zero_index(struct dhcp_opt *);
