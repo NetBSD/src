@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.93 2014/01/29 18:45:21 matt Exp $	*/
+/*	$NetBSD: fault.c,v 1.94 2014/02/25 09:54:33 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.93 2014/01/29 18:45:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.94 2014/02/25 09:54:33 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -258,8 +258,10 @@ data_abort_handler(trapframe_t *tf)
 
 	/* Get the current lwp structure */
 
-	UVMHIST_LOG(maphist, " (pc=0x%x, l=0x%x, far=0x%x, fsr=0x%x)",
-	    tf->tf_pc, l, far, fsr);
+	UVMHIST_LOG(maphist, " (l=%#x, far=%#x, fsr=%#x",
+	    l, far, fsr, 0);
+	UVMHIST_LOG(maphist, "  tf=%#x, pc=%#x)",
+	    tf, tf->tf_pc, 0, 0);
 
 	/* Data abort came from user mode? */
 	bool user = (TRAP_USERMODE(tf) != 0);
@@ -400,20 +402,21 @@ data_abort_handler(trapframe_t *tf)
 	}
 
 	/*
-	 * We need to know whether the page should be mapped
-	 * as R or R/W. The MMU does not give us the info as
-	 * to whether the fault was caused by a read or a write.
+	 * We need to know whether the page should be mapped as R or R/W.
+	 * Before ARMv6, the MMU did not give us the info as to whether the
+	 * fault was caused by a read or a write.
 	 *
-	 * However, we know that a permission fault can only be
-	 * the result of a write to a read-only location, so
-	 * we can deal with those quickly.
+	 * However, we know that a permission fault can only be the result of
+	 * a write to a read-only location, so we can deal with those quickly.
 	 *
-	 * Otherwise we need to disassemble the instruction
-	 * responsible to determine if it was a write.
+	 * Otherwise we need to disassemble the instruction responsible to
+	 * determine if it was a write.
 	 */
-	if (IS_PERMISSION_FAULT(fsr))
+	if (CPU_IS_ARMV6_P() || CPU_IS_ARMV7_P()) {
+		ftype = (fsr & FAULT_WRITE) ? VM_PROT_WRITE : VM_PROT_READ;
+	} else if (IS_PERMISSION_FAULT(fsr)) {
 		ftype = VM_PROT_WRITE; 
-	else {
+	} else {
 #ifdef THUMB_CODE
 		/* Fast track the ARM case.  */
 		if (__predict_false(tf->tf_spsr & PSR_T_bit)) {
