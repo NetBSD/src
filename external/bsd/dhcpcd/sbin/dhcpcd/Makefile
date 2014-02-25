@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.19 2014/01/17 18:36:25 roy Exp $
+# $NetBSD: Makefile,v 1.20 2014/02/25 13:16:04 roy Exp $
 #
 
 PROG=		dhcpcd
@@ -8,6 +8,9 @@ SRCS+=		dhcp-common.c dhcpcd-embedded.c
 SRCS+=		bpf.c if-bsd.c platform-bsd.c
 
 .include <bsd.own.mk>
+
+SRCS+=		auth.c hmac_md5.c
+CPPFLAGS+=	-DHAVE_MD5_H
 
 CPPFLAGS+=	-DINET
 SRCS+=		arp.c dhcp.c ipv4.c ipv4ll.c
@@ -20,7 +23,7 @@ SRCS+=		ipv6.c ipv6nd.c dhcp6.c
 DIST=		${NETBSDSRCDIR}/external/bsd/dhcpcd/dist
 CPPFLAGS+=	-I${DIST}
 
-.PATH: ${DIST} ${LIBC_NET}
+.PATH: ${DIST} ${DIST}/crypt ${LIBC_NET}
 
 SCRIPTS=			dhcpcd-run-hooks
 SCRIPTSDIR_dhcpcd-run-hooks=	/libexec
