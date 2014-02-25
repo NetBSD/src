@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.284 2014/01/29 18:42:14 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.285 2014/02/25 01:02:42 justin Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.284 2014/01/29 18:42:14 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.285 2014/02/25 01:02:42 justin Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -167,16 +167,6 @@ static void add_linkedin_modules(const struct modinfo *const *, size_t);
 static void
 mksysctls(void)
 {
-
-	/* kern.hostname */
-	sysctl_createv(NULL, 0, NULL, NULL,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "kern", NULL,
-	    NULL, 0, NULL, 0, CTL_KERN, CTL_EOL);
-	/* XXX: setting hostnamelen is missing */
-	sysctl_createv(NULL, 0, NULL, NULL,
-	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_STRING, "hostname",
-	    SYSCTL_DESCR("System hostname"), NULL, 0,
-	    hostname, MAXHOSTNAMELEN, CTL_KERN, KERN_HOSTNAME, CTL_EOL);
 
 	/* hw.pagesize */
 	sysctl_createv(NULL, 0, NULL, NULL,
