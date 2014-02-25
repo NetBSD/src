@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_dirhash.c,v 1.35 2013/06/09 17:57:09 dholland Exp $	*/
+/*	$NetBSD: ufs_dirhash.c,v 1.36 2014/02/25 18:30:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_dirhash.c,v 1.35 2013/06/09 17:57:09 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_dirhash.c,v 1.36 2014/02/25 18:30:13 pooka Exp $");
 
 /*
  * This implements a hash-based lookup scheme for UFS directories.
@@ -1099,16 +1099,10 @@ ufsdirhash_sysctl_init(void)
 
 	sysctl_createv(&ufsdirhash_sysctl_log, 0, NULL, &rnode,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "vfs", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, CTL_EOL);
-
-	sysctl_createv(&ufsdirhash_sysctl_log, 0, &rnode, &rnode,
-		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "ufs",
 		       SYSCTL_DESCR("ufs"),
 		       NULL, 0, NULL, 0,
-		       CTL_CREATE, CTL_EOL);
+		       CTL_VFS, CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(&ufsdirhash_sysctl_log, 0, &rnode, &rnode,
 		       CTLFLAG_PERMANENT,

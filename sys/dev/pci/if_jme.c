@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.23 2013/10/17 21:06:15 christos Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.24 2014/02/25 18:30:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.23 2013/10/17 21:06:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.24 2014/02/25 18:30:10 pooka Exp $");
 
 
 #include <sys/param.h>
@@ -2053,12 +2053,6 @@ SYSCTL_SETUP(sysctl_jme, "sysctl jme subtree setup")
 {
 	int rc;
 	const struct sysctlnode *node;
-
-	if ((rc = sysctl_createv(clog, 0, NULL, NULL,
-	    0, CTLTYPE_NODE, "hw", NULL,
-	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0) {
-		goto err;
-	}
 
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
 	    0, CTLTYPE_NODE, "jme",

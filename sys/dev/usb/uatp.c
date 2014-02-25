@@ -1,4 +1,4 @@
-/*	$NetBSD: uatp.c,v 1.4 2013/11/01 17:09:00 christos Exp $	*/
+/*	$NetBSD: uatp.c,v 1.5 2014/02/25 18:30:10 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011, 2012 Taylor R. Campbell
@@ -143,7 +143,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.4 2013/11/01 17:09:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.5 2014/02/25 18:30:10 pooka Exp $");
 
 #include <sys/atomic.h>
 #include <sys/device.h>
@@ -984,16 +984,6 @@ static void
 uatp_setup_sysctl(struct uatp_softc *sc)
 {
 	int error;
-
-	error = sysctl_createv(&sc->sc_log, 0, NULL, NULL, CTLFLAG_PERMANENT,
-	    CTLTYPE_NODE, "hw", NULL,
-	    NULL, 0, NULL, 0,
-	    CTL_HW, CTL_EOL);
-	if (error != 0) {
-		aprint_error_dev(uatp_dev(sc), "unable to set up sysctl: %d\n",
-		    error);
-		return;
-	}
 
 	error = sysctl_createv(&sc->sc_log, 0, NULL, &sc->sc_node, 0,
 	    CTLTYPE_NODE, device_xname(uatp_dev(sc)),

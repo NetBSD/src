@@ -1,4 +1,4 @@
-/*	$NetBSD: mpls_proto.c,v 1.5 2013/07/23 11:11:55 kefren Exp $ */
+/*	$NetBSD: mpls_proto.c,v 1.6 2014/02/25 18:30:12 pooka Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.5 2013/07/23 11:11:55 kefren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.6 2014/02/25 18:30:12 pooka Exp $");
 
 #include "opt_inet.h"
 #include "opt_mbuftrace.h"
@@ -142,11 +142,6 @@ static void
 sysctl_net_mpls_setup(struct sysctllog **clog)
 {
 
-        sysctl_createv(clog, 0, NULL, NULL,
-                       CTLFLAG_PERMANENT,
-                       CTLTYPE_NODE, "net", NULL,
-                       NULL, 0, NULL, 0,
-                       CTL_NET, CTL_EOL);
         sysctl_createv(clog, 0, NULL, NULL,
                        CTLFLAG_PERMANENT,
                        CTLTYPE_NODE, "mpls", NULL,

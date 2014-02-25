@@ -1,4 +1,4 @@
-/*	$NetBSD: bcsp.c,v 1.22 2013/10/17 21:22:01 christos Exp $	*/
+/*	$NetBSD: bcsp.c,v 1.23 2014/02/25 18:30:09 pooka Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.22 2013/10/17 21:22:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.23 2014/02/25 18:30:09 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -287,11 +287,6 @@ bcsp_attach(device_t parent __unused, device_t self, void *aux __unused)
 	/* Attach Bluetooth unit */
 	sc->sc_unit = hci_attach(&bcsp_hci, self, 0);
 
-	if ((rc = sysctl_createv(&sc->sc_log, 0, NULL, NULL,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
-	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0) {
-		goto err;
-	}
 	if ((rc = sysctl_createv(&sc->sc_log, 0, NULL, &node,
 	    0, CTLTYPE_NODE, device_xname(self),
 	    SYSCTL_DESCR("bcsp controls"),

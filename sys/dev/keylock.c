@@ -1,4 +1,4 @@
-/* $NetBSD: keylock.c,v 1.2 2009/08/15 09:43:58 mbalmer Exp $ */
+/* $NetBSD: keylock.c,v 1.3 2014/02/25 18:30:09 pooka Exp $ */
 
 /*
  * Copyright (c) 2009 Marc Balmer <marc@msys.ch>
@@ -53,11 +53,6 @@ SYSCTL_SETUP(sysctl_keylock_setup, "sysctl keylock setup")
 {
 	const struct sysctlnode *node = NULL;
 
-	sysctl_createv(clog, 0, NULL, NULL,
-	    CTLFLAG_PERMANENT,
-	    CTLTYPE_NODE, "hw", NULL,
-	    NULL, 0, NULL, 0,
-	    CTL_HW, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, &node,
 	    CTLFLAG_PERMANENT,
 	    CTLTYPE_NODE, "keylock",

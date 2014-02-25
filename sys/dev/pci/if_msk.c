@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.43 2013/03/30 03:21:06 christos Exp $ */
+/* $NetBSD: if_msk.c,v 1.44 2014/02/25 18:30:10 pooka Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.43 2013/03/30 03:21:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.44 2014/02/25 18:30:10 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2411,12 +2411,6 @@ SYSCTL_SETUP(sysctl_msk, "sysctl msk subtree setup")
 {
 	int rc;
 	const struct sysctlnode *node;
-
-	if ((rc = sysctl_createv(clog, 0, NULL, NULL,
-	    0, CTLTYPE_NODE, "hw", NULL,
-	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0) {
-		goto err;
-	}
 
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
 	    0, CTLTYPE_NODE, "msk",
