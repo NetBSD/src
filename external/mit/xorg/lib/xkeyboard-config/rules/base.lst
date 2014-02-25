@@ -170,7 +170,15 @@
   hhk             Happy Hacking Keyboard
   classmate       Classmate PC
   olpc            OLPC
-  sun6            Sun Type 5/6
+  sun_type7_usb   Sun Type 7 USB
+  sun_type7_euro_usb Sun Type 7 USB (European layout)
+  sun_type7_unix_usb Sun Type 7 USB (Unix layout)
+  sun_type7_jp_usb Sun Type 7 USB (Japanese layout) / Japanese 106-key
+  sun_type6_usb   Sun Type 6/7 USB
+  sun_type6_euro_usb Sun Type 6/7 USB (European layout)
+  sun_type6_unix_usb Sun Type 6 USB (Unix layout)
+  sun_type6_jp_usb Sun Type 6 USB (Japanese layout)
+  sun_type6_jp    Sun Type 6 (Japanese layout)
   targa_v811      Targa Visionary 811
   unitekkb1925    Unitek KB-1925
   compalfl90      FL90
@@ -179,7 +187,6 @@
 
 ! layout
   us              English (US)
-  ad              Catalan
   af              Afghani
   ara             Arabic
   al              Albanian
@@ -245,7 +252,7 @@
   ch              German (Switzerland)
   sy              Arabic (Syria)
   tj              Tajik
-  lk              Sinhala
+  lk              Sinhala (phonetic)
   th              Thai
   tr              Turkish
   tw              Taiwanese
@@ -271,6 +278,7 @@
   ke              Swahili (Kenya)
   bw              Tswana
   ph              Filipino
+  md              Moldavian
 
 ! variant
   chr             us: Cherokee
@@ -279,7 +287,7 @@
   alt-intl        us: English (US, alternative international)
   colemak         us: English (Colemak)
   dvorak          us: English (Dvorak)
-  dvorak-intl     us: English (Dvorak international with dead keys)
+  dvorak-intl     us: English (Dvorak, international with dead keys)
   dvorak-alt-intl us: English (Dvorak alternative international no dead keys)
   dvorak-l        us: English (left handed Dvorak)
   dvorak-r        us: English (right handed Dvorak)
@@ -290,6 +298,8 @@
   altgr-intl      us: English (international AltGr dead keys)
   olpc2           us: English (layout toggle on multiply/divide key)
   hbs             us: Serbo-Croatian (US)
+  workman         us: English (Workman)
+  workman-intl    us: English (Workman, international with dead keys)
   ps              af: Pashto
   uz              af: Uzbek (Afghanistan)
   olpc-ps         af: Pashto (Afghanistan, OLPC)
@@ -320,8 +330,12 @@
   sundeadkeys     be: Belgian (Sun dead keys)
   wang            be: Belgian (Wang model 724 azerty)
   probhat         bd: Bengali (Probhat)
-  ben             in: Bengali
-  ben_probhat     in: Bengali (Probhat)
+  ben             in: Bengali (India)
+  ben_probhat     in: Bengali (India, Probhat)
+  ben_baishakhi   in: Bengali (India, Baishakhi)
+  ben_bornona     in: Bengali (India, Bornona)
+  ben_gitanjali   in: Bengali (India, Uni Gitanjali)
+  ben_inscript    in: Bengali (India, Baishakhi Inscript)
   guj             in: Gujarati
   guru            in: Punjabi (Gurmukhi)
   jhelum          in: Punjabi (Gurmukhi Jhelum)
@@ -361,9 +375,9 @@
   tifinagh-phonetic ma: Berber (Morocco, Tifinagh phonetic)
   tifinagh-extended-phonetic ma: Berber (Morocco, Tifinagh extended phonetic)
   french          cm: French (Cameroon)
-  qwerty          cm: English (Cameroon qwerty)
-  azerty          cm: French (Cameroon azerty)
-  dvorak          cm: English (Cameroon Dvorak)
+  qwerty          cm: Cameroon Multilingual (qwerty)
+  azerty          cm: Cameroon Multilingual (azerty)
+  dvorak          cm: Cameroon Multilingual (Dvorak)
   fr-dvorak       ca: French (Canada, Dvorak)
   fr-legacy       ca: French (Canada, legacy)
   multix          ca: Canadian Multilingual
@@ -438,6 +452,7 @@
   deadacute       de: German (dead acute)
   deadgraveacute  de: German (dead grave acute)
   nodeadkeys      de: German (eliminate dead keys)
+  T3              de: German (T3)
   ro              de: Romanian (Germany)
   ro_nodeadkeys   de: Romanian (Germany, eliminate dead keys)
   dvorak          de: German (Dvorak)
@@ -449,6 +464,7 @@
   dsb_qwertz      de: Lower Sorbian (qwertz)
   qwerty          de: German (qwerty)
   ru              de: Russian (Germany, phonetic)
+  legacy          de: German (legacy)
   simple          gr: Greek (simple)
   extended        gr: Greek (extended)
   nodeadkeys      gr: Greek (eliminate dead keys)
@@ -483,10 +499,12 @@
   mac             it: Italian (Macintosh)
   us              it: Italian (US keyboard with Italian letters)
   geo             it: Georgian (Italy)
+  ibm             it: Italian (IBM 142)
   kana            jp: Japanese (Kana)
   kana86          jp: Japanese (Kana 86)
   OADG109A        jp: Japanese (OADG 109A)
   mac             jp: Japanese (Macintosh)
+  dvorak          jp: Japanese (Dvorak)
   phonetic        kg: Kyrgyz (phonetic)
   ruskaz          kz: Russian (Kazakhstan, with Kazakh)
   kazrus          kz: Kazakh (with Russian)
@@ -520,11 +538,14 @@
   smi_nodeadkeys  no: Northern Saami (Norway, eliminate dead keys)
   mac             no: Norwegian (Macintosh)
   mac_nodeadkeys  no: Norwegian (Macintosh, eliminate dead keys)
+  colemak         no: Norwegian (Colemak)
+  legacy          pl: Polish (legacy)
   qwertz          pl: Polish (qwertz)
   dvorak          pl: Polish (Dvorak)
   dvorak_quotes   pl: Polish (Dvorak, Polish quotes on quotemark key)
   dvorak_altquotes pl: Polish (Dvorak, Polish quotes on key 1)
   csb             pl: Kashubian
+  szl             pl: Silesian
   ru_phonetic_dvorak pl: Russian (Poland, phonetic Dvorak)
   dvp             pl: Polish (programmer Dvorak)
   nodeadkeys      pt: Portuguese (eliminate dead keys)
@@ -554,15 +575,16 @@
   sah             ru: Yakut
   xal             ru: Kalmyk
   dos             ru: Russian (DOS)
+  mac             ru: Russian (Macintosh)
   srp             ru: Serbian (Russia)
   bak             ru: Bashkirian
   chm             ru: Mari
-  yz              rs: Serbian (Z and ZHE swapped)
+  yz              rs: Serbian (Cyrillic, Z and ZHE swapped)
   latin           rs: Serbian (Latin)
   latinunicode    rs: Serbian (Latin Unicode)
   latinyz         rs: Serbian (Latin qwerty)
   latinunicodeyz  rs: Serbian (Latin Unicode qwerty)
-  alternatequotes rs: Serbian (with guillemets)
+  alternatequotes rs: Serbian (Cyrillic with guillemets)
   latinalternatequotes rs: Serbian (Latin with guillemets)
   rue             rs: Pannonian Rusyn (homophonic)
   alternatequotes si: Slovenian (use guillemets for quotes)
@@ -659,6 +681,7 @@
   colemak-bay     ph: Filipino (Colemak Baybayin)
   dvorak          ph: Filipino (Dvorak Latin)
   dvorak-bay      ph: Filipino (Dvorak Baybayin)
+  gag             md: Moldavian (Gagauz)
 
 ! option
   grp                  Key(s) to change layout
@@ -685,6 +708,7 @@
   grp:rctrl_rshift_toggle Right Ctrl+Right Shift
   grp:ctrl_alt_toggle  Alt+Ctrl
   grp:alt_shift_toggle Alt+Shift
+  grp:lalt_lshift_toggle Left Alt+Left Shift
   grp:alt_space_toggle Alt+Space
   grp:menu_toggle      Menu
   grp:lwin_toggle      Left Win
@@ -710,17 +734,18 @@
   lv3:caps_switch      Caps Lock
   lv3:bksl_switch      Backslash
   lv3:lsgt_switch      &lt;Less/Greater&gt;
-  lv3:caps_switch_latch Caps Lock (chooses 3rd level, latches when pressed together with another 3rd-level-chooser)
-  lv3:bksl_switch_latch Backslash (chooses 3rd level, latches when pressed together with another 3rd-level-chooser)
-  lv3:lsgt_switch_latch &lt;Less/Greater&gt; (chooses 3rd level, latches when pressed together with another 3rd-level-chooser)
+  lv3:caps_switch_latch Caps Lock chooses 3rd level, acts as onetime lock when pressed together with another 3rd-level-chooser
+  lv3:bksl_switch_latch Backslash chooses 3rd level, acts as onetime lock when pressed together with another 3rd-level-chooser
+  lv3:lsgt_switch_latch &lt;Less/Greater&gt; chooses 3rd level, acts as onetime lock when pressed together with another 3rd-level-chooser
   ctrl                 Ctrl key position
-  ctrl:nocaps          Make Caps Lock an additional Ctrl
-  ctrl:lctrl_meta      Meta on Left Ctrl
+  ctrl:nocaps          Caps Lock as Ctrl
+  ctrl:lctrl_meta      Left Ctrl as Meta
   ctrl:swapcaps        Swap Ctrl and Caps Lock
-  ctrl:ctrl_ac         At left of 'A'
-  ctrl:ctrl_aa         At bottom left
-  ctrl:ctrl_ra         Right Ctrl as Right Alt
-  ctrl:ctrl_menu       Right Ctrl is mapped to Menu
+  ctrl:ac_ctrl         At left of 'A'
+  ctrl:aa_ctrl         At bottom left
+  ctrl:rctrl_ralt      Right Ctrl as Right Alt
+  ctrl:menu_rctrl      Menu as Right Ctrl
+  ctrl:ctrl_ralt       Right Alt as Right Ctrl
   grp_led              Use keyboard LED to show alternative layout
   grp_led:num          Num Lock
   grp_led:caps         Caps Lock
@@ -761,28 +786,36 @@
   altwin               Alt/Win key behavior
   altwin:menu          Add the standard behavior to Menu key
   altwin:meta_alt      Alt and Meta are on Alt keys
+  altwin:alt_win       Alt is mapped to Win keys (and the usual Alt keys)
   altwin:ctrl_win      Control is mapped to Win keys (and the usual Ctrl keys)
   altwin:ctrl_alt_win  Control is mapped to Alt keys, Alt is mapped to Win keys
   altwin:meta_win      Meta is mapped to Win keys
   altwin:left_meta_win Meta is mapped to Left Win
   altwin:hyper_win     Hyper is mapped to Win-keys
   altwin:alt_super_win Alt is mapped to Right Win, Super to Menu
-  altwin:swap_lalt_lwin Left Alt is swapped with Left Win
+  altwin:swap_alt_win  Alt is swapped with Win
   Compose key          Compose key position
   compose:ralt         Right Alt
   compose:lwin         Left Win
+  compose:lwin-altgr   3rd level of Left Win
   compose:rwin         Right Win
+  compose:rwin-altgr   3rd level of Right Win
   compose:menu         Menu
+  compose:menu-altgr   3rd level of Menu
   compose:lctrl        Left Ctrl
+  compose:lctrl-altgr  3rd level of Left Ctrl
   compose:rctrl        Right Ctrl
+  compose:rctrl-altgr  3rd level of Right Ctrl
   compose:caps         Caps Lock
+  compose:caps-altgr   3rd level of Caps Lock
   compose:102          &lt;Less/Greater&gt;
+  compose:102-altgr    3rd level of &lt;Less/Greater&gt;
   compose:paus         Pause
   compose:prsc         PrtSc
   compose:sclk         Scroll Lock
   compat               Miscellaneous compatibility options
   numpad:pc            Default numeric keypad keys
-  numpad:mac           Numeric keypad keys work as with Macintosh
+  numpad:mac           Numeric keypad keys always enter digits (as in Mac OS)
   numpad:microsoft     Shift with numeric keypad keys works as in MS Windows
   numpad:shift3        Shift does not cancel Num Lock, chooses 3rd level instead
   srvrkeys:none        Special keys (Ctrl+Alt+&lt;key&gt;) handled in a server
@@ -793,7 +826,8 @@
   shift:both_capslock_cancel Both Shift-Keys together activate Caps Lock, one Shift-Key deactivates
   shift:both_shiftlock Both Shift-Keys together toggle ShiftLock
   keypad:pointerkeys   Toggle PointerKeys with Shift + NumLock.
-  eurosign             Adding currency signs to certain keys
+  grab:break_actions   Allow breaking grabs with keyboard actions (warning: security risk)
+  currencysign         Adding currency signs to certain keys
   eurosign:e           Euro on E
   eurosign:2           Euro on 2
   eurosign:4           Euro on 4
@@ -804,12 +838,6 @@
   lv5:ralt_switch_lock Right Alt chooses 5th level, locks when pressed together with another 5th-level-chooser
   lv5:lwin_switch_lock Left Win chooses 5th level, locks when pressed together with another 5th-level-chooser
   lv5:rwin_switch_lock Right Win chooses 5th level, locks when pressed together with another 5th-level-chooser
-  lv5:lsgt_switch_lock_cancel &lt;Less/Greater&gt; chooses 5th level, locks when pressed together with another 5th-level-chooser, one press releases the lock
-  lv5:ralt_switch_lock_cancel Right Alt chooses 5th level, locks when pressed together with another 5th-level-chooser, one press releases the lock
-  lv5:lwin_switch_lock_cancel Left Win chooses 5th level, locks when pressed together with another 5th-level-chooser, one press releases the lock
-  lv5:rwin_switch_lock_cancel Right Win chooses 5th level, locks when pressed together with another 5th-level-chooser, one press releases the lock
-  lv5:lsgt_switch_lock_cancel &lt;Less/Greater&gt; chooses 5th level and activates level5-Lock when pressed together with another 5th-level-chooser, one press releases the lock
-  lv5:ralt_switch_lock_cancel Right Alt chooses 5th level and activates level5-Lock when pressed together with another 5th-level-chooser, one press releases the lock
   nbsp                 Using space key to input non-breakable space character
   nbsp:none            Usual space at any level
   nbsp:level2          Non-breakable space character at second level
@@ -830,8 +858,11 @@
   japan                Japanese keyboard options
   japan:kana_lock      Kana Lock key is locking
   japan:nicola_f_bs    NICOLA-F style Backspace
+  japan:hztg_escape    Make Zenkaku Hankaku an additional ESC
   esperanto            Adding Esperanto circumflexes (supersigno)
   esperanto:qwerty     To the corresponding key in a Qwerty keyboard.
   esperanto:dvorak     To the corresponding key in a Dvorak keyboard.
+  solaris              Maintain key compatibility with old Solaris keycodes
+  solaris:sun_compat   Sun Key compatibility
   terminate            Key sequence to kill the X server
   terminate:ctrl_alt_bksp Control + Alt + Backspace
