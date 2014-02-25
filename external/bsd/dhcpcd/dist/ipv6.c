@@ -1,9 +1,9 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv6.c,v 1.1.1.7 2013/09/20 10:51:29 roy Exp $");
+ __RCSID("$NetBSD: ipv6.c,v 1.1.1.8 2014/02/25 13:14:29 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2013 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -75,36 +75,53 @@
 				    while (/*CONSTCOND*/ 0)
 #define EUI64_GROUP(in6)	((in6)->s6_addr[8] & EUI64_GBIT)
 
-static struct rt6head *routes;
 
-#ifdef DEBUG_MEMORY
-static void
-ipv6_cleanup()
+struct ipv6_ctx *
+ipv6_init(struct dhcpcd_ctx *dhcpcd_ctx)
 {
-	struct rt6 *rt;
+	struct ipv6_ctx *ctx;
 
-	while ((rt = TAILQ_FIRST(routes))) {
-		TAILQ_REMOVE(routes, rt, next);
-		free(rt);
+	if (dhcpcd_ctx->ipv6)
+		return dhcpcd_ctx->ipv6;
+
+	ctx = calloc(1, sizeof(*ctx));
+	if (ctx == NULL)
+		return NULL;
+
+	ctx->routes = malloc(sizeof(*ctx->routes));
+	if (ctx->routes == NULL) {
+		free(ctx);
+		return NULL;
 	}
-	free(routes);
-}
-#endif
+	TAILQ_INIT(ctx->routes);
 
-int
-ipv6_init(void)
-{
-
-	if (routes == NULL) {
-		routes = malloc(sizeof(*routes));
-		if (routes == NULL)
-			return -1;
-		TAILQ_INIT(routes);
-#ifdef DEBUG_MEMORY
-		atexit(ipv6_cleanup);
-#endif
+	ctx->ra_routers = malloc(sizeof(*ctx->ra_routers));
+	if (ctx->ra_routers == NULL) {
+		free(ctx->routes);
+		free(ctx);
+		return NULL;
 	}
-	return 0;
+	TAILQ_INIT(ctx->ra_routers);
+
+	ctx->sndhdr.msg_namelen = sizeof(struct sockaddr_in6);
+	ctx->sndhdr.msg_iov = ctx->sndiov;
+	ctx->sndhdr.msg_iovlen = 1;
+	ctx->sndhdr.msg_control = ctx->sndbuf;
+	ctx->sndhdr.msg_controllen = sizeof(ctx->sndbuf);
+	ctx->rcvhdr.msg_name = &ctx->from;
+	ctx->rcvhdr.msg_namelen = sizeof(ctx->from);
+	ctx->rcvhdr.msg_iov = ctx->rcviov;
+	ctx->rcvhdr.msg_iovlen = 1;
+	ctx->rcvhdr.msg_control = ctx->rcvbuf;
+	ctx->rcvhdr.msg_controllen = sizeof(ctx->rcvbuf);
+	ctx->rcviov[0].iov_base = ctx->ansbuf;
+	ctx->rcviov[0].iov_len = sizeof(ctx->ansbuf);
+
+	ctx->nd_fd = -1;
+	ctx->dhcp_fd = -1;
+
+	dhcpcd_ctx->ipv6 = ctx;
+	return ctx;
 }
 
 ssize_t
@@ -455,12 +472,14 @@ ipv6_freedrop_addrs(struct ipv6_addrhead *addrs, int drop,
 			continue;
 		TAILQ_REMOVE(addrs, ap, next);
 		if (ap->dadcallback)
-			eloop_q_timeout_delete(0, NULL, ap->dadcallback);
+			eloop_q_timeout_delete(ap->iface->ctx->eloop,
+			    0, NULL, ap->dadcallback);
 		/* Only drop the address if no other RAs have assigned it.
 		 * This is safe because the RA is removed from the list
 		 * before we are called. */
 		if (drop && ap->flags & IPV6_AF_ADDED &&
-		    !ipv6nd_addrexists(ap) && !dhcp6_addrexists(ap) &&
+		    !ipv6nd_addrexists(ap->iface->ctx, ap) &&
+		    !dhcp6_addrexists(ap->iface->ctx, ap) &&
 		    (ap->iface->options->options &
 		    (DHCPCD_EXITING | DHCPCD_PERSISTENT)) !=
 		    (DHCPCD_EXITING | DHCPCD_PERSISTENT))
@@ -495,7 +514,8 @@ ipv6_getstate(struct interface *ifp)
 }
 
 void
-ipv6_handleifa(int cmd, struct if_head *ifs, const char *ifname,
+ipv6_handleifa(struct dhcpcd_ctx *ctx,
+    int cmd, struct if_head *ifs, const char *ifname,
     const struct in6_addr *addr, int flags)
 {
 	struct interface *ifp;
@@ -513,7 +533,7 @@ ipv6_handleifa(int cmd, struct if_head *ifs, const char *ifname,
 
 	/* Safety, remove tentative addresses */
 	if (cmd == RTM_NEWADDR) {
-		if (flags & IN6_IFF_TENTATIVE)
+		if (flags & (IN6_IFF_TENTATIVE | IN6_IFF_DUPLICATED))
 			cmd = RTM_DELADDR;
 #ifdef IN6_IFF_DETACHED
 		if (flags & IN6_IFF_DETACHED)
@@ -522,7 +542,7 @@ ipv6_handleifa(int cmd, struct if_head *ifs, const char *ifname,
 	}
 
 	if (ifs == NULL)
-		ifs = ifaces;
+		ifs = ctx->ifaces;
 	if (ifs == NULL) {
 		errno = ESRCH;
 		return;
@@ -541,8 +561,8 @@ ipv6_handleifa(int cmd, struct if_head *ifs, const char *ifname,
 		return;
 
 	if (!IN6_IS_ADDR_LINKLOCAL(addr)) {
-		ipv6nd_handleifa(cmd, ifname, addr, flags);
-		dhcp6_handleifa(cmd, ifname, addr, flags);
+		ipv6nd_handleifa(ctx, cmd, ifname, addr, flags);
+		dhcp6_handleifa(ctx, cmd, ifname, addr, flags);
 	}
 
 	/* We don't care about duplicated addresses, so remove them */
@@ -663,16 +683,30 @@ ipv6_free(struct interface *ifp)
 	struct ipv6_state *state;
 	struct ipv6_addr_l *ap;
 
-	ipv6_free_ll_callbacks(ifp);
-	state = IPV6_STATE(ifp);
-	if (state) {
-		while ((ap = TAILQ_FIRST(&state->addrs))) {
-			TAILQ_REMOVE(&state->addrs, ap, next);
-			free(ap);
+	if (ifp) {
+		ipv6_free_ll_callbacks(ifp);
+		state = IPV6_STATE(ifp);
+		if (state) {
+			while ((ap = TAILQ_FIRST(&state->addrs))) {
+				TAILQ_REMOVE(&state->addrs, ap, next);
+				free(ap);
+			}
+			free(state);
+			ifp->if_data[IF_DATA_IPV6] = NULL;
 		}
-		free(state);
-		ifp->if_data[IF_DATA_IPV6] = NULL;
 	}
+}
+
+void
+ipv6_ctxfree(struct dhcpcd_ctx *ctx)
+{
+
+	if (ctx->ipv6 == NULL)
+		return;
+
+	free(ctx->ipv6->routes);
+	free(ctx->ipv6->ra_routers);
+	free(ctx->ipv6);
 }
 
 int
@@ -721,7 +755,7 @@ ipv6_handleifa_addrs(int cmd,
 }
 
 static struct rt6 *
-find_route6(struct rt6head *rts, const struct rt6 *r)
+find_route6(struct rt6_head *rts, const struct rt6 *r)
 {
 	struct rt6 *rt;
 
@@ -774,7 +808,8 @@ nc_route(int add, struct rt6 *ort, struct rt6 *nrt)
 	desc_route(add ? "adding" : "changing", nrt);
 	/* We delete and add the route so that we can change metric and
 	 * prefer the interface. */
-	del_route6(ort);
+	if (del_route6(ort) == -1 && errno != ESRCH)
+		syslog(LOG_ERR, "%s: del_route6: %m", ort->iface->name);
 	if (add_route6(nrt) == 0)
 		return 0;
 	syslog(LOG_ERR, "%s: add_route6: %m", nrt->iface->name);
@@ -852,7 +887,7 @@ make_router(const struct ra *rap)
 }
 
 int
-ipv6_removesubnet(const struct interface *ifp, struct ipv6_addr *addr)
+ipv6_removesubnet(struct interface *ifp, struct ipv6_addr *addr)
 {
 	struct rt6 *rt;
 #if HAVE_ROUTE_METRIC
@@ -875,10 +910,10 @@ ipv6_removesubnet(const struct interface *ifp, struct ipv6_addr *addr)
 		/* For some reason, Linux likes to re-add the subnet
 		   route under the original metric.
 		   I would love to find a way of stopping this! */
-		if ((ort = find_route6(routes, rt)) == NULL ||
+		if ((ort = find_route6(ifp->ctx->ipv6->routes, rt)) == NULL ||
 		    ort->metric != rt->metric)
 #else
-		if (!find_route6(routes, rt))
+		if (!find_route6(ifp->ctx->ipv6->routes, rt))
 #endif
 		{
 			r = del_route6(rt);
@@ -895,13 +930,13 @@ ipv6_removesubnet(const struct interface *ifp, struct ipv6_addr *addr)
 	    IN6_ARE_ADDR_EQUAL(&((rtp)->net), &in6addr_any))
 
 static void
-ipv6_build_ra_routes(struct rt6head *dnr, int expired)
+ipv6_build_ra_routes(struct ipv6_ctx *ctx, struct rt6_head *dnr, int expired)
 {
 	struct rt6 *rt;
 	const struct ra *rap;
 	const struct ipv6_addr *addr;
 
-	TAILQ_FOREACH(rap, &ipv6_routers, next) {
+	TAILQ_FOREACH(rap, ctx->ra_routers, next) {
 		if (rap->expired != expired)
 			continue;
 		if (rap->iface->options->options & DHCPCD_IPV6RA_OWN) {
@@ -924,14 +959,15 @@ ipv6_build_ra_routes(struct rt6head *dnr, int expired)
 }
 
 static void
-ipv6_build_dhcp_routes(struct rt6head *dnr, enum DH6S dstate)
+ipv6_build_dhcp_routes(struct dhcpcd_ctx *ctx,
+    struct rt6_head *dnr, enum DH6S dstate)
 {
 	const struct interface *ifp;
 	const struct dhcp6_state *d6_state;
 	const struct ipv6_addr *addr;
 	struct rt6 *rt;
 
-	TAILQ_FOREACH(ifp, ifaces, next) {
+	TAILQ_FOREACH(ifp, ctx->ifaces, next) {
 		if (!(ifp->options->options & DHCPCD_IPV6RA_OWN))
 			continue;
 		d6_state = D6_CSTATE(ifp);
@@ -949,9 +985,9 @@ ipv6_build_dhcp_routes(struct rt6head *dnr, enum DH6S dstate)
 }
 
 void
-ipv6_buildroutes(void)
+ipv6_buildroutes(struct dhcpcd_ctx *ctx)
 {
-	struct rt6head dnr, *nrs;
+	struct rt6_head dnr, *nrs;
 	struct rt6 *rt, *rtn, *or;
 	uint8_t have_default;
 	unsigned long long o;
@@ -959,7 +995,7 @@ ipv6_buildroutes(void)
 	TAILQ_INIT(&dnr);
 
 	/* First add reachable routers and their prefixes */
-	ipv6_build_ra_routes(&dnr, 0);
+	ipv6_build_ra_routes(ctx->ipv6, &dnr, 0);
 #if HAVE_ROUTE_METRIC
 	have_default = (TAILQ_FIRST(&dnr) != NULL);
 #endif
@@ -967,8 +1003,8 @@ ipv6_buildroutes(void)
 	/* We have no way of knowing if prefixes added by DHCP are reachable
 	 * or not, so we have to assume they are.
 	 * Add bound before delegated so we can prefer interfaces better */
-	ipv6_build_dhcp_routes(&dnr, DH6S_BOUND);
-	ipv6_build_dhcp_routes(&dnr, DH6S_DELEGATED);
+	ipv6_build_dhcp_routes(ctx, &dnr, DH6S_BOUND);
+	ipv6_build_dhcp_routes(ctx, &dnr, DH6S_DELEGATED);
 
 #if HAVE_ROUTE_METRIC
 	/* If we have an unreachable router, we really do need to remove the
@@ -980,7 +1016,7 @@ ipv6_buildroutes(void)
 	/* Add our non-reachable routers and prefixes
 	 * Unsure if this is needed, but it's a close match to kernel
 	 * behaviour */
-	ipv6_build_ra_routes(&dnr, 1);
+	ipv6_build_ra_routes(ctx->ipv6, &dnr, 1);
 
 	nrs = malloc(sizeof(*nrs));
 	if (nrs == NULL) {
@@ -995,7 +1031,7 @@ ipv6_buildroutes(void)
 			continue;
 		//rt->src.s_addr = ifp->addr.s_addr;
 		/* Do we already manage it? */
-		if ((or = find_route6(routes, rt))) {
+		if ((or = find_route6(ctx->ipv6->routes, rt))) {
 			if (or->iface != rt->iface ||
 		//	    or->src.s_addr != ifp->addr.s_addr ||
 			    !IN6_ARE_ADDR_EQUAL(&rt->gate, &or->gate) ||
@@ -1004,7 +1040,7 @@ ipv6_buildroutes(void)
 				if (c_route(or, rt) != 0)
 					continue;
 			}
-			TAILQ_REMOVE(routes, or, next);
+			TAILQ_REMOVE(ctx->ipv6->routes, or, next);
 			free(or);
 		} else {
 			if (n_route(rt) != 0)
@@ -1025,8 +1061,8 @@ ipv6_buildroutes(void)
 	/* Remove old routes we used to manage
 	 * If we own the default route, but not RA management itself
 	 * then we need to preserve the last best default route we had */
-	while ((rt = TAILQ_LAST(routes, rt6head))) {
-		TAILQ_REMOVE(routes, rt, next);
+	while ((rt = TAILQ_LAST(ctx->ipv6->routes, rt6_head))) {
+		TAILQ_REMOVE(ctx->ipv6->routes, rt, next);
 		if (find_route6(nrs, rt) == NULL) {
 			o = rt->iface->options->options;
 			if (!have_default &&
@@ -1045,6 +1081,6 @@ ipv6_buildroutes(void)
 		free(rt);
 	}
 
-	free(routes);
-	routes = nrs;
+	free(ctx->ipv6->routes);
+	ctx->ipv6->routes = nrs;
 }
