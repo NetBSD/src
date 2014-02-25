@@ -1,4 +1,4 @@
-#	$NetBSD: files.spi,v 1.2 2006/10/07 07:21:13 gdamore Exp $
+#	$NetBSD: files.spi,v 1.3 2014/02/25 20:09:37 rkujawa Exp $
 
 define	spibus { }
 
@@ -25,3 +25,9 @@ file	dev/spi/m25p.c			m25p
 device	tmp121temp: sysmon_envsys
 attach	tmp121temp at spi
 file	dev/spi/tmp121.c		tmp121temp
+
+# MCP48x1 DAC 
+device	mcp48x1dac
+attach	mcp48x1dac at spi
+file	dev/spi/mcp48x1.c		mcp48x1dac	
+
