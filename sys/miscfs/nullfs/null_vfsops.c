@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.85 2014/02/10 11:23:14 hannken Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.86 2014/02/25 18:30:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.85 2014/02/10 11:23:14 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.86 2014/02/25 18:30:11 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,11 +255,6 @@ null_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_attach(&nullfs_vfsops);
 		if (error != 0)
 			break;
-		sysctl_createv(&nullfs_sysctl_log, 0, NULL, NULL,
-		    CTLFLAG_PERMANENT,
-		    CTLTYPE_NODE, "vfs", NULL,
-		    NULL, 0, NULL, 0,
-		    CTL_VFS, CTL_EOL);
 		sysctl_createv(&nullfs_sysctl_log, 0, NULL, NULL,
 		    CTLFLAG_PERMANENT,
 		    CTLTYPE_NODE, "null",

@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.104 2013/11/23 13:35:37 christos Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.105 2014/02/25 18:30:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.104 2013/11/23 13:35:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.105 2014/02/25 18:30:13 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -127,11 +127,6 @@ mfs_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_attach(&mfs_vfsops);
 		if (error != 0)
 			break;
-		sysctl_createv(&mfs_sysctl_log, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT,
-			       CTLTYPE_NODE, "vfs", NULL,
-			       NULL, 0, NULL, 0,
-			       CTL_VFS, CTL_EOL);
 		sysctl_createv(&mfs_sysctl_log, 0, NULL, NULL,
 			       CTLFLAG_PERMANENT|CTLFLAG_ALIAS,
 			       CTLTYPE_NODE, "mfs",

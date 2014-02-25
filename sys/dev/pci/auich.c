@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.141 2012/06/02 21:36:44 dsl Exp $	*/
+/*	$NetBSD: auich.c,v 1.142 2014/02/25 18:30:10 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.141 2012/06/02 21:36:44 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.142 2014/02/25 18:30:10 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -658,11 +658,6 @@ map_done:
 	if (sc->sc_fixedrate && sc->sc_codectype == AC97_CODEC_TYPE_AUDIO)
 		return;
 
-	err = sysctl_createv(&sc->sc_log, 0, NULL, NULL, 0,
-			     CTLTYPE_NODE, "hw", NULL, NULL, 0, NULL, 0,
-			     CTL_HW, CTL_EOL);
-	if (err != 0)
-		goto sysctl_err;
 	err = sysctl_createv(&sc->sc_log, 0, NULL, &node, 0,
 			     CTLTYPE_NODE, device_xname(self), NULL, NULL, 0,
 			     NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL);

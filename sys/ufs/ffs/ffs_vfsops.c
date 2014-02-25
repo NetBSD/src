@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.291 2013/11/23 13:35:37 christos Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.292 2014/02/25 18:30:13 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.291 2013/11/23 13:35:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.292 2014/02/25 18:30:13 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -211,11 +211,6 @@ ffs_modcmd(modcmd_t cmd, void *arg)
 		if (error != 0)
 			break;
 
-		sysctl_createv(&ffs_sysctl_log, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT,
-			       CTLTYPE_NODE, "vfs", NULL,
-			       NULL, 0, NULL, 0,
-			       CTL_VFS, CTL_EOL);
 		sysctl_createv(&ffs_sysctl_log, 0, NULL, NULL,
 			       CTLFLAG_PERMANENT,
 			       CTLTYPE_NODE, "ffs",

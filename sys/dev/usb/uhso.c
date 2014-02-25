@@ -1,4 +1,4 @@
-/*	$NetBSD: uhso.c,v 1.11 2013/01/05 01:30:17 christos Exp $	*/
+/*	$NetBSD: uhso.c,v 1.12 2014/02/25 18:30:10 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.11 2013/01/05 01:30:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.12 2014/02/25 18:30:10 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -112,14 +112,6 @@ Static int uhso_autoswitch = 1;
 SYSCTL_SETUP(sysctl_hw_uhso_setup, "uhso sysctl setup")
 {
 	const struct sysctlnode *node = NULL;
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		CTLFLAG_PERMANENT,
-		CTLTYPE_NODE, "hw",
-		NULL,
-		NULL, 0,
-		NULL, 0,
-		CTL_HW, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, &node,
 		CTLFLAG_PERMANENT,

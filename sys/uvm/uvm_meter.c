@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.60 2012/06/02 21:36:48 dsl Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.61 2014/02/25 18:30:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.60 2012/06/02 21:36:48 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.61 2014/02/25 18:30:13 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -222,11 +222,6 @@ uvm_sysctlpctparam(SYSCTLFN_ARGS)
 SYSCTL_SETUP(sysctl_vm_setup, "sysctl vm subtree setup")
 {
 
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "vm", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_VM, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "vmmeter",

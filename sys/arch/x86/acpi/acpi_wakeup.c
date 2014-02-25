@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.37 2014/02/19 21:23:01 dsl Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.38 2014/02/25 18:30:08 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.37 2014/02/19 21:23:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38 2014/02/25 18:30:08 pooka Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.37 2014/02/19 21:23:01 dsl Exp $")
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.37 2014/02/19 21:23:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38 2014/02/25 18:30:08 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -408,15 +408,8 @@ SYSCTL_SETUP(sysctl_md_acpi_setup, "ACPI x86 sysctl setup")
 	int err;
 
 	err = sysctl_createv(clog, 0, NULL, &rnode,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw",
-	    NULL, NULL, 0, NULL, 0, CTL_HW, CTL_EOL);
-
-	if (err != 0)
-		return;
-
-	err = sysctl_createv(clog, 0, &rnode, &rnode,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "acpi", NULL,
-	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL);
+	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL);
 
 	if (err != 0)
 		return;
