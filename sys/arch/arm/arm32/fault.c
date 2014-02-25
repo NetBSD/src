@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.94 2014/02/25 09:54:33 matt Exp $	*/
+/*	$NetBSD: fault.c,v 1.95 2014/02/25 22:18:09 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.94 2014/02/25 09:54:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.95 2014/02/25 22:18:09 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -412,10 +412,11 @@ data_abort_handler(trapframe_t *tf)
 	 * Otherwise we need to disassemble the instruction responsible to
 	 * determine if it was a write.
 	 */
-	if (CPU_IS_ARMV6_P() || CPU_IS_ARMV7_P()) {
+	if (/* CPU_IS_ARMV6_P() || */ CPU_IS_ARMV7_P()) {
 		ftype = (fsr & FAULT_WRITE) ? VM_PROT_WRITE : VM_PROT_READ;
 	} else if (IS_PERMISSION_FAULT(fsr)) {
 		ftype = VM_PROT_WRITE; 
+		// KASSERTMSG(fsr & FAULT_WRITE, "fsr %#x", fsr);
 	} else {
 #ifdef THUMB_CODE
 		/* Fast track the ARM case.  */
@@ -435,6 +436,7 @@ data_abort_handler(trapframe_t *tf)
 				ftype = VM_PROT_WRITE;
 			else
 				ftype = VM_PROT_READ;
+			// KASSERTMSG(ftype == (fsr & FAULT_WRITE) ? VM_PROT_WRITE : VM_PROT_READ, "fsr %#x insn %#x", fsr, insn);
 		}
 		else
 #endif
@@ -450,6 +452,7 @@ data_abort_handler(trapframe_t *tf)
 				ftype = VM_PROT_READ | VM_PROT_WRITE; 
 			else
 				ftype = VM_PROT_READ; 
+			// KASSERTMSG(ftype == (fsr & FAULT_WRITE) ? VM_PROT_WRITE : VM_PROT_READ, "fsr %#x insn %#x", fsr, insn);
 		}
 	}
 
