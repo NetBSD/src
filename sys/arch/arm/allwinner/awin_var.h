@@ -1,4 +1,4 @@
-/* $NetBSD: awin_var.h,v 1.7 2014/02/20 21:45:06 matt Exp $ */
+/* $NetBSD: awin_var.h,v 1.8 2014/02/25 00:08:29 jmcneill Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -93,6 +93,12 @@ static inline void
 awin_gpio_pindata_write(const struct awin_gpio_pindata *pd, int value)
 {
 	gpiobus_pin_write(pd->pd_gc, pd->pd_pin, value);
+}
+
+static inline int
+awin_gpio_pindata_read(const struct awin_gpio_pindata *pd)
+{
+	return gpiobus_pin_read(pd->pd_gc, pd->pd_pin);
 }
 
 static void inline
