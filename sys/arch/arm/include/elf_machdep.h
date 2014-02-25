@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.7.78.1 2014/02/15 16:18:36 matt Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.7.78.2 2014/02/25 00:05:49 matt Exp $	*/
 
 #ifndef _ARM_ELF_MACHDEP_H_
 #define _ARM_ELF_MACHDEP_H_
@@ -143,5 +143,15 @@
 
 /* Processor specific symbol types */
 #define STT_ARM_TFUNC		STT_LOPROC
+
+#ifdef _KERNEL
+#ifdef ELFSIZE
+#define	ELF_MD_COREDUMP_FUNC	ELFNAME2(arm_netbsd,coredump_setup)
+#endif
+
+struct exec_package;
+
+void arm_netbsd_elf32_coredump_setup(struct lwp *, void *);
+#endif
 
 #endif /* _ARM_ELF_MACHDEP_H_ */

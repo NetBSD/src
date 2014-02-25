@@ -1,4 +1,4 @@
-/*	$NetBSD: core_machdep.c,v 1.4.2.2 2014/02/15 16:18:35 matt Exp $	*/
+/*	$NetBSD: core_machdep.c,v 1.4.2.3 2014/02/25 00:05:49 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -37,7 +37,10 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.4.2.2 2014/02/15 16:18:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.4.2.3 2014/02/25 00:05:49 matt Exp $");
+
+#include "opt_execfmt.h"
+#include "opt_compat_netbsd32.h"
 
 #include <sys/core.h>
 #include <sys/exec.h>
@@ -48,6 +51,12 @@ __KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.4.2.2 2014/02/15 16:18:35 matt Ex
 #include <sys/vnode.h>
 
 #include <sys/exec_aout.h>	/* for MID_* */
+
+#ifdef EXEC_ELF32
+#include <sys/exec_elf.h>
+#endif
+
+#include <arm/locore.h>
 
 #include <machine/reg.h>
 
@@ -95,3 +104,19 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 	return coredump_write(iocookie, UIO_SYSSPACE,
 	    &cpustate, sizeof(cpustate));
 }
+
+#ifdef EXEC_ELF32
+void
+arm_netbsd_elf32_coredump_setup(struct lwp *l, void *arg)
+{
+#if defined(__ARMEB__)
+	Elf32_Ehdr * const eh = arg;
+
+        if (CPU_IS_ARMV7_P()
+	    || (CPU_IS_ARMV6_P()
+		&& (armreg_sctrl_read() & CPU_CONTROL_BEND_ENABLE) == 0)) {
+		eh->e_flags |= EF_ARM_BE8;
+	}
+#endif
+}
+#endif
