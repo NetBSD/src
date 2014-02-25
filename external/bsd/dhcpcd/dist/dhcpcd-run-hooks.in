@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: dhcpcd-run-hooks.in,v 1.1.1.16 2014/01/15 20:36:32 roy Exp $
+# $NetBSD: dhcpcd-run-hooks.in,v 1.1.1.17 2014/02/25 13:14:30 roy Exp $
 
 # dhcpcd client configuration script 
 
@@ -59,6 +59,21 @@ list_interfaces()
 		[ -n "$x" ] && ifaces="$ifaces${ifaces:+ }${x##*/}"
 	done
 	echo "$ifaces"
+}
+
+# Trim function
+trim()
+{
+	local var="$*"
+
+	var=${var#"${var%%[![:space:]]*}"}
+	var=${var%"${var##*[![:space:]]}"}
+	if [ -z "$var" ]; then
+		# So it seems our shell doesn't support wctype(3) patterns
+		# Fall back to sed
+		var=$(echo "$*" | sed -e 's/^[[:space:]]*//;s/[[:space:]]*$//')
+	fi
+	printf %s "$var"
 }
 
 # We normally use sed to extract values using a key from a list of files

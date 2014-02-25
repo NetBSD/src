@@ -1,8 +1,8 @@
-/* $NetBSD: ipv4.h,v 1.1.1.3 2014/01/03 22:10:44 roy Exp $ */
+/* $NetBSD: ipv4.h,v 1.1.1.4 2014/02/25 13:14:30 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2013 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -61,19 +61,19 @@ struct ipv4_state {
 	((const struct ipv4_state *)(ifp)->if_data[IF_DATA_IPV4])
 
 #ifdef INET
-int ipv4_init(void);
+int ipv4_init(struct dhcpcd_ctx *);
 int inet_ntocidr(struct in_addr);
 int inet_cidrtoaddr(int, struct in_addr *);
 uint32_t ipv4_getnetmask(uint32_t);
-int ipv4_addrexists(const struct in_addr *);
+int ipv4_addrexists(struct dhcpcd_ctx *, const struct in_addr *);
 
-void ipv4_buildroutes(void);
+void ipv4_buildroutes(struct dhcpcd_ctx *);
 void ipv4_applyaddr(void *);
-int ipv4_routedeleted(const struct rt *);
+int ipv4_routedeleted(struct dhcpcd_ctx *, const struct rt *);
 
 struct ipv4_addr *ipv4_findaddr(struct interface *,
     const struct in_addr *, const struct in_addr *);
-void ipv4_handleifa(int, struct if_head *, const char *,
+void ipv4_handleifa(struct dhcpcd_ctx *, int, struct if_head *, const char *,
     const struct in_addr *, const struct in_addr *, const struct in_addr *);
 
 int if_address(const struct interface *,
@@ -98,12 +98,14 @@ ssize_t ipv4_sendrawpacket(const struct interface *,
     int, const void *, ssize_t);
 ssize_t ipv4_getrawpacket(struct interface *, int, void *, ssize_t, int *);
 void ipv4_free(struct interface *);
+void ipv4_ctxfree(struct dhcpcd_ctx *);
 #else
-#define ipv4_init() (-1)
+#define ipv4_init(a) (-1)
 #define ipv4_applyaddr(a) {}
 #define ipv4_freeroutes(a) {}
 #define ipv4_free(a) {}
-#define ipv4_addrexists(a) (0)
+#define ipv4_ctxfree(a) {}
+#define ipv4_addrexists(a, b) (0)
 #endif
 
 #endif
