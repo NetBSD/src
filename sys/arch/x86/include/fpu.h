@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.5 2014/02/23 22:35:27 dsl Exp $	*/
+/*	$NetBSD: fpu.h,v 1.6 2014/02/25 22:16:52 dsl Exp $	*/
 
 #ifndef	_X86_FPU_H_
 #define	_X86_FPU_H_
@@ -27,6 +27,9 @@ void process_s87_to_xmm(const struct save87 *, struct fxsave *);
 void fpu_save_area_clear(struct lwp *, unsigned int);
 /* Reset control words only - for signal handlers */
 void fpu_save_area_reset(struct lwp *);
+
+/* Copy data outside pcb during fork */
+void fpu_save_area_fork(struct pcb *, const struct pcb *);
 
 /* Load FP registers with user-supplied values */
 void process_write_fpregs_xmm(struct lwp *lwp, const struct fxsave *fpregs);
