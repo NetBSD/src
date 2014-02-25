@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_port.h,v 1.28 2014/01/16 16:03:33 pooka Exp $	*/
+/*	$NetBSD: rumpuser_port.h,v 1.29 2014/02/25 20:58:18 pooka Exp $	*/
 
 /*
  * Portability header for non-NetBSD platforms.
@@ -161,7 +161,11 @@ posix_memalign(void **ptr, size_t align, size_t size)
 #endif
 
 #ifndef __printflike
+#ifdef __GNUC__
+#define __printflike(a,b) __attribute__((__format__ (__printf__,a,b)))
+#else
 #define __printflike(a,b)
+#endif
 #endif
 
 #ifndef __noinline
