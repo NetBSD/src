@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.62 2014/02/26 16:11:59 matt Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.63 2014/02/26 20:33:53 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.62 2014/02/26 16:11:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.63 2014/02/26 20:33:53 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -272,13 +272,13 @@ SYSCTL_SETUP(sysctl_vm_setup, "sysctl vm subtree setup")
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_LONG, "minaddress",
 		       SYSCTL_DESCR("Minimum user address"),
-		       NULL, VM_MINADDRESS, NULL, 0,
+		       NULL, VM_MIN_ADDRESS, NULL, 0,
 		       CTL_VM, VM_MINADDRESS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_LONG, "maxaddress",
 		       SYSCTL_DESCR("Maximum user address"),
-		       NULL, VM_MAXUSER_ADDRESS, NULL, 0,
+		       NULL, VM_MAX_ADDRESS, NULL, 0,
 		       CTL_VM, VM_MAXADDRESS, CTL_EOL);
 
 	uvmpdpol_sysctlsetup();
