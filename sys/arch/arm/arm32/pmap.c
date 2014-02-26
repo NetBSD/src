@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.264 2013/09/12 14:45:18 kiyohara Exp $	*/
+/*	$NetBSD: pmap.c,v 1.265 2014/02/26 01:41:40 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -209,7 +209,7 @@
 #include <arm/locore.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.264 2013/09/12 14:45:18 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.265 2014/02/26 01:41:40 matt Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -3371,7 +3371,10 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	}
 
 	const pt_entry_t npte = L2_S_PROTO | pa | L2_S_PROT(PTE_KERNEL, prot)
-	    | ((flags & PMAP_NOCACHE) ? 0 : pte_l2_s_cache_mode);
+	    | ((flags & PMAP_NOCACHE)
+		? 0
+		: ((flags & PMAP_PTE)
+		    ? pte_l2_s_cache_mode_pt : pte_l2_s_cache_mode));
 	l2pte_set(ptep, npte, opte);
 	PTE_SYNC(ptep);
 
@@ -4887,7 +4890,7 @@ pmap_grow_map(vaddr_t va, pt_entry_t cache_mode, paddr_t *pap)
 		 */
 		KASSERT(SLIST_EMPTY(&md->pvh_list));
 		pmap_kenter_pa(va, pa,
-		    VM_PROT_READ|VM_PROT_WRITE, PMAP_KMPAGE);
+		    VM_PROT_READ|VM_PROT_WRITE, PMAP_KMPAGE|PMAP_PTE);
 #endif
 	}
 
@@ -5552,12 +5555,10 @@ void
 pmap_postinit(void)
 {
 	extern paddr_t physical_start, physical_end;
-	struct l2_bucket *l2b;
 	struct l1_ttable *l1;
 	struct pglist plist;
 	struct vm_page *m;
 	pd_entry_t *pl1pt;
-	pt_entry_t *ptep, pte;
 	vaddr_t va, eva;
 	u_int loop, needed;
 	int error;
@@ -5591,20 +5592,7 @@ pmap_postinit(void)
 			paddr_t pa = VM_PAGE_TO_PHYS(m);
 
 			pmap_kenter_pa(va, pa,
-			    VM_PROT_READ|VM_PROT_WRITE, PMAP_KMPAGE);
-
-			/*
-			 * Make sure the L1 descriptor table is mapped
-			 * with the cache-mode set to write-through.
-			 */
-			l2b = pmap_get_l2_bucket(pmap_kernel(), va);
-			KDASSERT(l2b != NULL);
-			ptep = &l2b->l2b_kva[l2pte_index(va)];
-			pte = *ptep;
-			pte = (pte & ~L2_S_CACHE_MASK) | pte_l2_s_cache_mode_pt;
-			*ptep = pte;
-			PTE_SYNC(ptep);
-			cpu_tlb_flushD_SE(va);
+			    VM_PROT_READ|VM_PROT_WRITE, PMAP_KMPAGE|PMAP_PTE);
 
 			va += PAGE_SIZE;
 			m = TAILQ_NEXT(m, pageq.queue);
