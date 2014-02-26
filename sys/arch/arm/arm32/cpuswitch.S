@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.81 2013/12/26 18:49:23 joerg Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.82 2014/02/26 02:07:58 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -87,7 +87,7 @@
 #include <arm/asm.h>
 #include <arm/locore.h>
 
-	RCSID("$NetBSD: cpuswitch.S,v 1.81 2013/12/26 18:49:23 joerg Exp $")
+	RCSID("$NetBSD: cpuswitch.S,v 1.82 2014/02/26 02:07:58 matt Exp $")
 
 /* LINTSTUB: include <sys/param.h> */
 	
@@ -116,8 +116,6 @@
 #endif
 
 	.text
-.Lpmap_previous_active_lwp:
-	.word	_C_LABEL(pmap_previous_active_lwp)
 
 /*
  * struct lwp *
@@ -177,7 +175,7 @@ ENTRY(cpu_switchto)
 	IRQenable
 #endif
 
-	/* rem: r3 = curlwp */
+	/* rem: r3 = curcpu() */
 	/* rem: r4 = old lwp */
 	/* rem: r6 = new lwp */
 	/* rem: r7 = new pcb */
@@ -192,7 +190,7 @@ ENTRY(cpu_switchto)
 	teq	r4, #0
 	beq	.Ldo_switch
 
-	/* rem: r3 = curlwp */
+	/* rem: r3 = curcpu() */
 	/* rem: r4 = old lwp */
 	/* rem: r6 = new lwp */
 	/* rem: r7 = new pcb */
@@ -225,7 +223,7 @@ ENTRY(cpu_switchto)
 	 * them for the new process.
 	 */
 
-	/* rem: r3 = curlwp */
+	/* rem: r3 = curcpu() */
 	/* rem: r4 = old lwp */
 	/* rem: r5 = old pcb */
 	/* rem: r6 = new lwp */
@@ -235,7 +233,7 @@ ENTRY(cpu_switchto)
 	/* Restore saved context */
 
 .Ldo_switch:
-	/* rem: r3 = curlwp */
+	/* rem: r3 = curcpu() */
 	/* rem: r4 = old lwp */
 	/* rem: r6 = new lwp */
 	/* rem: r7 = new pcb */
@@ -281,8 +279,7 @@ ENTRY(cpu_switchto)
 #endif
 
 	/* Record the old lwp for pmap_activate()'s benefit */
-	ldr	r1, .Lpmap_previous_active_lwp		/* XXXSMP */
-	str	r4, [r1]
+	str	r4, [r3, #CI_LASTLWP]
 
 	/* rem: r4 = old lwp */
 	/* rem: r5 = new lwp's proc */

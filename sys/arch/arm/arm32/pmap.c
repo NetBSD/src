@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.266 2014/02/26 01:51:11 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.267 2014/02/26 02:07:58 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -209,7 +209,7 @@
 #include <arm/locore.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.266 2014/02/26 01:51:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.267 2014/02/26 02:07:58 matt Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -257,18 +257,6 @@ struct pmap		*const kernel_pmap_ptr = &kernel_pmap_store;
 #ifdef PMAP_NEED_ALLOC_POOLPAGE
 int			arm_poolpage_vmfreelist = VM_FREELIST_DEFAULT;
 #endif
-
-/*
- * Which pmap is currently 'live' in the cache
- *
- * XXXSCW: Fix for SMP ...
- */
-static pmap_t pmap_recent_user;
-
-/*
- * Pointer to last active lwp, or NULL if it exited.
- */
-struct lwp *pmap_previous_active_lwp;
 
 /*
  * Pool and cache that pmap structures are allocated from.
@@ -826,8 +814,9 @@ static inline bool
 pmap_is_cached(pmap_t pm)
 {
 
-	if (pm == pmap_kernel() || pmap_recent_user == NULL ||
-	    pmap_recent_user == pm)
+	struct cpu_info * const ci = curcpu();
+	if (pm == pmap_kernel() || ci->ci_pmap_lastuser == NULL ||
+	    ci->ci_pmap_lastuser == pm)
 		return (true);
 
 	return false;
@@ -4134,6 +4123,7 @@ pmap_unwire(pmap_t pm, vaddr_t va)
 void
 pmap_activate(struct lwp *l)
 {
+	struct cpu_info * const ci = curcpu();
 	extern int block_userspace_access;
 	pmap_t opm, npm, rpm;
 	uint32_t odacr, ndacr;
@@ -4155,8 +4145,8 @@ pmap_activate(struct lwp *l)
 	 * If TTB and DACR are unchanged, short-circuit all the
 	 * TLB/cache management stuff.
 	 */
-	if (pmap_previous_active_lwp != NULL) {
-		opm = pmap_previous_active_lwp->l_proc->p_vmspace->vm_map.pmap;
+	if (ci->ci_lastlwp != NULL) {
+		opm = ci->ci_lastlwp->l_proc->p_vmspace->vm_map.pmap;
 		odacr = (DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL * 2)) |
 		    (DOMAIN_CLIENT << (pmap_domain(opm) * 2));
 
@@ -4174,7 +4164,7 @@ pmap_activate(struct lwp *l)
 	 * live in the cache, we must write-back and invalidate the
 	 * entire cache.
 	 */
-	rpm = pmap_recent_user;
+	rpm = ci->ci_pmap_lastuser;
 
 /*
  * XXXSCW: There's a corner case here which can leave turds in the cache as
@@ -4195,7 +4185,7 @@ pmap_activate(struct lwp *l)
 	if (rpm) {
 		rpm->pm_cstate.cs_cache = 0;
 		if (npm == pmap_kernel())
-			pmap_recent_user = NULL;
+			ci->ci_pmap_lastuser = NULL;
 #ifdef PMAP_CACHE_VIVT
 		cpu_idcache_wbinv_all();
 #endif
@@ -4250,7 +4240,7 @@ pmap_activate(struct lwp *l)
 	 */
 	npm->pm_cstate.cs_all = PMAP_CACHE_STATE_ALL;
 	if (npm != pmap_kernel())
-		pmap_recent_user = npm;
+		ci->ci_pmap_lastuser = npm;
 
 	/* The old pmap is not longer active */
 	if (opm != NULL)
@@ -4270,7 +4260,7 @@ pmap_deactivate(struct lwp *l)
 	 * otherwise skip. See PR port-arm/38950.
 	 */
 	if (l->l_proc->p_sflag & PS_WEXIT)
-		pmap_previous_active_lwp = NULL;
+		curcpu()->ci_lastlwp = NULL;
 
 	l->l_proc->p_vmspace->vm_map.pmap->pm_activated = false;
 }
@@ -4378,8 +4368,9 @@ pmap_destroy(pmap_t pm)
 
 	pmap_free_l1(pm);
 
-	if (pmap_recent_user == pm)
-		pmap_recent_user = NULL;
+	struct cpu_info * const ci = curcpu();
+	if (ci->ci_pmap_lastuser == pm)
+		ci->ci_pmap_lastuser = NULL;
 
 	uvm_obj_destroy(&pm->pm_obj, false);
 	mutex_destroy(&pm->pm_obj_lock);

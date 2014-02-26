@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.66 2013/11/09 17:28:58 jmcneill Exp $
+#	$NetBSD: genassym.cf,v 1.67 2014/02/26 02:07:58 matt Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -213,6 +213,7 @@ define	CI_CC_NSOFT		offsetof(struct cpu_info, ci_data.cpu_nsoft)
 ifdef FPU_VFP
 define	CI_VFP_ID		offsetof(struct cpu_info, ci_vfp_id)
 endif
+define	CI_LASTLWP		offsetof(struct cpu_info, ci_lastlwp)
 
 define	VFP_FPEXC_EN		VFP_FPEXC_EN
 
