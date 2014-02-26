@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.120 2013/12/21 15:18:21 kiyohara Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.121 2014/02/26 04:31:29 ozaki-r Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.117 2013/12/21 15:16:23 kiyohara Exp
+ *	NetBSD: miidevs,v 1.118 2014/02/26 04:13:44 ozaki-r Exp
  */
 
 /*-
@@ -73,6 +73,7 @@
 #define	MII_OUI_JMICRON	0x00d831	/* JMicron */
 #define	MII_OUI_LEVEL1	0x00207b	/* Level 1 */
 #define	MII_OUI_MARVELL	0x005043	/* Marvell Semiconductor */
+#define	MII_OUI_MICREL	0x0010a1	/* Micrel */
 #define	MII_OUI_MYSON	0x00c0b4	/* Myson Technology */
 #define	MII_OUI_NATSEMI	0x080017	/* National Semiconductor */
 #define	MII_OUI_PMCSIERRA	0x00e004	/* PMC-Sierra */
@@ -380,6 +381,10 @@
 #define	MII_STR_xxMARVELL_E1116R_29	"Marvell 88E1116R Gigabit PHY"
 #define	MII_MODEL_xxMARVELL_E1543	0x002a
 #define	MII_STR_xxMARVELL_E1543	"Marvell 88E1543 Alaska Quad Port Gb PHY"
+
+/* Micrel PHYs */
+#define	MII_MODEL_MICREL_KSZ9021RNI	0x0021
+#define	MII_STR_MICREL_KSZ9021RNI	"Micrel KSZ9021RNI 10/100/1000 PHY"
 
 /* Myson Technology PHYs */
 #define	MII_MODEL_xxMYSON_MTD972	0x0000
