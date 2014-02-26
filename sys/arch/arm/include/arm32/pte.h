@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.14 2014/02/22 20:46:35 matt Exp $	*/
+/*	$NetBSD: pte.h,v 1.15 2014/02/26 01:53:23 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -227,6 +227,7 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
 #define	L2_XS_nG	0x00000800	/* ARMv6 Not-Global */
 #define	L2_V6_L_TEX	L2_XS_L_TEX
 #define	L2_V6_XS_TEX	L2_XS_T_TEX
+#define	L2_XS_L_XN	0x00008000	/* ARMv6 eXecute Never */
 
 
 /*
@@ -239,7 +240,7 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
  * Access Permissions for L1 and L2 of ARMv6 with XP=1 and ARMv7
  */
 #define	AP_R		0x01		/* readable */
-#define	AP_RO		0x20		/* read-only */
+#define	AP_RO		0x20		/* read-only (L2_XS_APX >> 4) */
 
 /*
  * Short-hand for common AP_* constants.
