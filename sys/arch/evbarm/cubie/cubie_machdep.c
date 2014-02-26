@@ -1,4 +1,4 @@
-/*	$NetBSD: cubie_machdep.c,v 1.10 2014/01/30 00:08:46 matt Exp $ */
+/*	$NetBSD: cubie_machdep.c,v 1.11 2014/02/26 00:12:21 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cubie_machdep.c,v 1.10 2014/01/30 00:08:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cubie_machdep.c,v 1.11 2014/02/26 00:12:21 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -136,7 +136,6 @@ __KERNEL_RCSID(0, "$NetBSD: cubie_machdep.c,v 1.10 2014/01/30 00:08:46 matt Exp 
 #include "opt_allwinner.h"
 
 #include "com.h"
-#include "sdhc.h"
 #include "ukbd.h"
 
 #include <sys/param.h>
@@ -569,11 +568,7 @@ cubie_device_register(device_t self, void *aux)
 		return;
 	}
 
-	if (device_is_a(self, "sdhc")) {
-#if 0
-		prop_dictionary_set_uint32(dict, "clkmask", 0);
-		prop_dictionary_set_bool(dict, "8bit", true);
-#endif
+	if (device_is_a(self, "awinmmc")) {
 		return;
 	}
 
