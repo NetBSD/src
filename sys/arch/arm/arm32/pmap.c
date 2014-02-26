@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.267 2014/02/26 02:07:58 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.268 2014/02/26 17:35:21 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -209,7 +209,7 @@
 #include <arm/locore.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.267 2014/02/26 02:07:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.268 2014/02/26 17:35:21 matt Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -601,6 +601,8 @@ struct pv_entry {
 #define	PV_BEEN_EXECD(f)  (((f) & (PVF_REF | PVF_EXEC)) == (PVF_REF | PVF_EXEC))
 #endif
 #define	PV_IS_EXEC_P(f)   (((f) & PVF_EXEC) != 0)
+#define	PV_IS_KENTRY_P(f) (((f) & PVF_KENTRY) != 0)
+#define	PV_IS_WRITE_P(f)  (((f) & PVF_WRITE) != 0)
 
 /*
  * Macro to determine if a mapping might be resident in the
@@ -879,11 +881,12 @@ pmap_enter_pv(struct vm_page_md *md, paddr_t pa, struct pv_entry *pv, pmap_t pm,
 	 * Insert unmanaged entries, writeable first, at the head of
 	 * the pv list.
 	 */
-	if (__predict_true((flags & PVF_KENTRY) == 0)) {
-		while (*pvp != NULL && (*pvp)->pv_flags & PVF_KENTRY)
+	if (__predict_true(!PV_IS_KENTRY_P(flags))) {
+		while (*pvp != NULL && PV_IS_KENTRY_P((*pvp)->pv_flags))
 			pvp = &SLIST_NEXT(*pvp, pv_link);
-	} else if ((flags & PVF_WRITE) == 0) {
-		while (*pvp != NULL && (*pvp)->pv_flags & PVF_WRITE)
+	}
+	if (!PV_IS_WRITE_P(flags)) {
+		while (*pvp != NULL && PV_IS_WRITE_P((*pvp)->pv_flags))
 			pvp = &SLIST_NEXT(*pvp, pv_link);
 	}
 #endif
@@ -1067,8 +1070,8 @@ pmap_modify_pv(struct vm_page_md *md, paddr_t pa, pmap_t pm, vaddr_t va,
 	struct pv_entry *npv;
 	u_int flags, oflags;
 
-	KASSERT((clr_mask & PVF_KENTRY) == 0);
-	KASSERT((set_mask & PVF_KENTRY) == 0);
+	KASSERT(!PV_IS_KENTRY_P(clr_mask));
+	KASSERT(!PV_IS_KENTRY_P(set_mask));
 
 	if ((npv = pmap_find_pv(md, pm, va)) == NULL)
 		return (0);
@@ -2175,7 +2178,7 @@ pmap_clearbit(struct vm_page_md *md, paddr_t pa, u_int maskbits)
 		/*
 		 * Kernel entries are unmanaged and as such not to be changed.
 		 */
-		if (oflags & PVF_KENTRY)
+		if (PV_IS_KENTRY_P(oflags))
 			continue;
 		pv->pv_flags &= ~maskbits;
 
@@ -2623,7 +2626,7 @@ pmap_page_remove(struct vm_page_md *md, paddr_t pa)
 			 * Move it back on the list and advance the end-of-list
 			 * pointer.
 			 */
-			if (pv->pv_flags & PVF_KENTRY) {
+			if (PV_IS_KENTRY_P(pv->pv_flags)) {
 				*pvp = pv;
 				pvp = &SLIST_NEXT(pv, pv_link);
 				pv = npv;
@@ -3280,7 +3283,7 @@ pmap_kremove_pg(struct vm_page *pg, vaddr_t va)
 
 	pv = pmap_remove_pv(md, pa, pmap_kernel(), va);
 	KASSERT(pv);
-	KASSERT(pv->pv_flags & PVF_KENTRY);
+	KASSERT(PV_IS_KENTRY_P(pv->pv_flags));
 
 	/*
 	 * If we are removing a writeable mapping to a cached exec page,
@@ -3880,7 +3883,7 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 #endif
 
 		pv = pmap_find_pv(md, pm, va);
-		if (pv == NULL) {
+		if (pv == NULL || PV_IS_KENTRY_P(pv->pv_flags)) {
 			goto out;
 		}
 
@@ -3940,7 +3943,7 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 #endif
 
 		pv = pmap_find_pv(md, pm, va);
-		if (pv == NULL) {
+		if (pv == NULL || PV_IS_KENTRY_P(pv->pv_flags)) {
 			goto out;
 		}
 
@@ -6436,7 +6439,7 @@ pmap_uarea(vaddr_t va)
 
 		while (va < next_bucket) {
 			const pt_entry_t opte = *ptep;
-			if (!l2pte_minidata(opte)) {
+			if (!l2pte_minidata_p(opte)) {
 				cpu_dcache_wbinv_range(va, PAGE_SIZE);
 				cpu_tlb_flushD_SE(va);
 				l2pte_set(ptep, opte & ~L2_B, opte);
