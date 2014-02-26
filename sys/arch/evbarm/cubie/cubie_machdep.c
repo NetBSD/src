@@ -1,4 +1,4 @@
-/*	$NetBSD: cubie_machdep.c,v 1.11 2014/02/26 00:12:21 jmcneill Exp $ */
+/*	$NetBSD: cubie_machdep.c,v 1.12 2014/02/26 00:20:59 matt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cubie_machdep.c,v 1.11 2014/02/26 00:12:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cubie_machdep.c,v 1.12 2014/02/26 00:20:59 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -191,6 +191,7 @@ static char bootargs[MAX_BOOT_STRING];
 char *boot_args = NULL;
 char *boot_file = NULL;
 
+bool cubietruck_p;
 /*
  * uboot_args are filled in by cubie_start.S and must be in .data
  * and not .bbs since .bss is cleared after uboot_args are filled in.
@@ -201,6 +202,10 @@ uintptr_t uboot_args[4] = { 0 };
 
 extern char KERNEL_BASE_phys[];	/* physical start of kernel */
 extern char _end[];		/* physical end of kernel */
+
+#ifdef MULTIPROCESSOR
+extern uintptr_t cortex_mpfault[4];
+#endif
 
 #if NAWIN_FB > 0
 #if NCOM > 0
@@ -307,6 +312,11 @@ initarm(void *arg)
 #ifdef VERBOSE_INIT_ARM
 	printf("\nuboot arg = %#"PRIxPTR", %#"PRIxPTR", %#"PRIxPTR", %#"PRIxPTR"\n",
 	    uboot_args[0], uboot_args[1], uboot_args[2], uboot_args[3]);
+#ifdef MULTIPROCESSOR
+	printf("mpfault = %#"PRIxPTR", %#"PRIxPTR", %#"PRIxPTR", %#"PRIxPTR"\n",
+	    cortex_mpfault[0], cortex_mpfault[1], cortex_mpfault[2],
+	    cortex_mpfault[3]);
+#endif
 #endif
 
 #ifdef KGDB
@@ -339,6 +349,9 @@ initarm(void *arg)
 	 */
 	psize_t ram_size = awin_memprobe();
 
+	/* the cubietruck has 2GB whereas the cubieboards only has 1GB */
+	cubietruck_p = (ram_size == 0x80000000);
+
 	/*
 	 * If MEMSIZE specified less than what we really have, limit ourselves
 	 * to that.
@@ -349,6 +362,11 @@ initarm(void *arg)
 #else
 	KASSERTMSG(ram_size > 0, "RAM size unknown and MEMSIZE undefined");
 #endif
+
+	/*
+	 * Configure DMA tags
+	 */
+	awin_dma_bootstrap(ram_size);
 
 	/* Fake bootconfig structure for the benefit of pmap.c. */
 	bootconfig.dramblocks = 1;
@@ -412,7 +430,7 @@ initarm(void *arg)
 #define CONSPEED 115200
 #endif
 #ifndef CONMODE
-#define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
+#define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB | HUPCL)) | CS8) /* 8N1 */
 #endif
 
 __CTASSERT(AWIN_CORE_PBASE + AWIN_UART0_OFFSET <= CONADDR);
@@ -529,7 +547,11 @@ cubie_device_register(device_t self, void *aux)
 #endif
 
 	if (device_is_a(self, "awinio")) {
-		prop_dictionary_set_bool(dict, "no-awge", true);
+		if (cubietruck_p) {
+			prop_dictionary_set_bool(dict, "no-awe", true);
+		} else {
+			prop_dictionary_set_bool(dict, "no-awge", true);
+		}
 		return;
 	}
 
@@ -537,16 +559,25 @@ cubie_device_register(device_t self, void *aux)
 		/*
 		 * These are GPIOs being used for various functions.
 		 */
-		prop_dictionary_set_cstring(dict, "satapwren", ">PB8");
-		prop_dictionary_set_cstring(dict, "usb0drv", ">PB9");
+		prop_dictionary_set_cstring(dict, "satapwren",
+		    (cubietruck_p ? ">PH12" : ">PB8"));
+		prop_dictionary_set_cstring(dict, "usb0drv",
+		    (cubietruck_p ? ">PH17" : ">PB2"));
 		prop_dictionary_set_cstring(dict, "usb2drv", ">PH3");
-		prop_dictionary_set_cstring(dict, "usb0iddet", "<PH4");
-		prop_dictionary_set_cstring(dict, "usb0vbusdet", "<PH5");
+		prop_dictionary_set_cstring(dict, "usb0iddet",
+		    (cubietruck_p ? "<PH19" : "<PH4"));
+		prop_dictionary_set_cstring(dict, "usb0vbusdet",
+		    (cubietruck_p ? "<PH22" : "<PH5"));
 		prop_dictionary_set_cstring(dict, "usb1drv", ">PH6");
-		prop_dictionary_set_cstring(dict, "hdd5ven", ">PH17");
-		prop_dictionary_set_cstring(dict, "emacpwren", ">PH19");
 		prop_dictionary_set_cstring(dict, "status-led1", ">PH21");
 		prop_dictionary_set_cstring(dict, "status-led2", ">PH20");
+		if (cubietruck_p) {
+			prop_dictionary_set_cstring(dict, "status-led3", ">PH11");
+			prop_dictionary_set_cstring(dict, "status-led4", ">PH7");
+		} else {
+			prop_dictionary_set_cstring(dict, "hdd5ven", ">PH17");
+			prop_dictionary_set_cstring(dict, "emacpwren", ">PH19");
+		}
 
 		/*
 		 * These pins have no connections.
@@ -563,7 +594,7 @@ cubie_device_register(device_t self, void *aux)
 	}
 
 	if (device_is_a(self, "ahcisata")) {
-		/* PIO PB<8> output */
+		/* PIO PB<8> / PIO PH<12> output */
 		prop_dictionary_set_cstring(dict, "power-gpio", "satapwren");
 		return;
 	}
