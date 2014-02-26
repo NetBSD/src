@@ -1,9 +1,0 @@
-Move JMP/JMPc definition into assembly.h's ARM block.
---This line, and those below, will be ignored--
-
-M    arm/clzdi2.S
-M    arm/clzsi2.S
-M    arm/udivmodsi4.S
-M    arm/udivsi3.S
-M    arm/umodsi3.S
-M    assembly.h
