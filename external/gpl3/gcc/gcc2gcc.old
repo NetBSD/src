@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: gcc2gcc.old,v 1.1 2014/02/26 10:50:23 mrg Exp $
+#	$NetBSD: gcc2gcc.old,v 1.2 2014/02/26 21:18:14 mrg Exp $
 
 # run it like eg:
 #
@@ -13,7 +13,7 @@ progname="$(basename "$0")"
 
 usage() {
 	echo "Usage: $progname src/external/gpl3/gcc <copy-to-dir>" 1>&2
-	edho "Note that copy-to-dir must not exist." 1>&2
+	echo "Note that copy-to-dir must not exist." 1>&2
 	exit 1
 }
 
@@ -55,7 +55,7 @@ $doit find "$destdir" -name CVS -exec rm -rf {} +
 $doit find "$destdir" -name "ChangeLog*" -exec rm -f {} +
 $doit rm -f "$destdir"/gcc2netbsd "$destdir"/gcc2gcc.old
 
-date=$(date +%Y%m%M-%H%M)
+date=$(date +%Y%m%d-%H%M)
 echo GCC copied to gcc.old.  use these commands to import:
 echo cd "$destdir/gcc"
 echo cvs import src/external/gpl3/gcc.old NetBSD src-external-gpl3-gcc-$date
