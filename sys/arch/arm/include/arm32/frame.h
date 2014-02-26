@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.38 2013/12/20 07:01:06 matt Exp $	*/
+/*	$NetBSD: frame.h,v 1.39 2014/02/26 01:56:51 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -133,22 +133,6 @@ void validate_trapframe(trapframe_t *, int);
 #define	DO_PENDING_SOFTINTS		/* nothing */
 #endif
 
-#ifdef MULTIPROCESSOR
-#define	KERNEL_LOCK							\
-	mov	r0, #1							;\
-	mov	r1, #0							;\
-	bl	_C_LABEL(_kernel_lock)
-
-#define	KERNEL_UNLOCK							\
-	mov	r0, #1							;\
-	mov	r1, #0							;\
-	mov	r2, #0							;\
-	bl	_C_LABEL(_kernel_unlock)
-#else
-#define	KERNEL_LOCK			/* nothing */
-#define	KERNEL_UNLOCK			/* nothing */
-#endif
-
 #ifdef _ARM_ARCH_6
 #define	GET_CPSR(rb)			/* nothing */
 #define	CPSID_I(ra,rb)			cpsid	i
@@ -201,7 +185,7 @@ void validate_trapframe(trapframe_t *, int);
 	ldr	r1, [r4, #CI_CTRL]	/* Fetch control register */	;\
 	mov	r0, #-1							;\
 	BL_CF_CONTROL(r2)		/* Enable alignment faults */	;\
-1:	KERNEL_LOCK
+1:	/* done */
 
 /*
  * This macro must be invoked just before PULLFRAMEFROMSVCANDEXIT or
@@ -236,7 +220,7 @@ void validate_trapframe(trapframe_t *, int);
 	bl	_C_LABEL(ast)		/* ast(frame) */		;\
 	CPSID_I(r0, r5)			/* Disable interrupts */	;\
 	b	1b			/* Back around again */		;\
-3:	KERNEL_UNLOCK
+3:	/* done */
 
 #else	/* !EXEC_AOUT */
 
@@ -244,8 +228,8 @@ void validate_trapframe(trapframe_t *, int);
 
 #define	ENABLE_ALIGNMENT_FAULTS						\
 	and	r7, r0, #(PSR_MODE)	/* Test for USR32 mode */	;\
-	GET_CURCPU(r4)			/* r4 = cpuinfo */		;\
-	KERNEL_LOCK
+	GET_CURCPU(r4)			/* r4 = cpuinfo */
+	
 
 #define	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS				\
 	DO_PENDING_SOFTINTS						;\
@@ -263,7 +247,7 @@ void validate_trapframe(trapframe_t *, int);
 	bl	_C_LABEL(ast)		/* ast(frame) */		;\
 	CPSID_I(r0, r5)			/* Disable interrupts */	;\
 	b	1b							;\
-2:	KERNEL_UNLOCK			/* unlock the kernel */
+2:	/* done */
 #endif /* EXEC_AOUT */
 
 #ifndef _ARM_ARCH_6
