@@ -1,4 +1,4 @@
-/* $NetBSD: awin_mmc.c,v 1.1 2014/02/25 00:08:29 jmcneill Exp $ */
+/* $NetBSD: awin_mmc.c,v 1.2 2014/02/26 00:39:30 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_mmc.c,v 1.1 2014/02/25 00:08:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_mmc.c,v 1.2 2014/02/26 00:39:30 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -93,6 +93,8 @@ struct awin_mmc_softc {
 	struct awin_gpio_pindata sc_gpio_detect;	/* card detect */
 	bool sc_has_gpio_wp;
 	struct awin_gpio_pindata sc_gpio_wp;		/* write protect */
+	bool sc_has_gpio_led;
+	struct awin_gpio_pindata sc_gpio_led;		/* LED */
 };
 
 CFATTACH_DECL_NEW(awin_mmc, sizeof(struct awin_mmc_softc),
@@ -189,6 +191,14 @@ awin_mmc_attach(device_t parent, device_t self, void *aux)
 			sc->sc_has_gpio_wp = true;
 		}
 	}
+	if (prop_dictionary_get_cstring_nocopy(cfg, "led-gpio", &pin_name)) {
+		if (!awin_gpio_pin_reserve(pin_name, &sc->sc_gpio_led)) {
+			aprint_error_dev(self,
+			    "failed to reserve GPIO \"%s\"\n", pin_name);
+		} else {
+			sc->sc_has_gpio_led = true;
+		}
+	}
 
 	awin_mmc_host_reset(sc);
 	awin_mmc_bus_width(sc, 1);
@@ -206,6 +216,14 @@ awin_mmc_attach(device_t parent, device_t self, void *aux)
 		       SMC_CAPS_AUTO_STOP;
 
 	sc->sc_sdmmc_dev = config_found(self, &saa, NULL);
+}
+
+static void
+awin_mmc_led(struct awin_mmc_softc *sc, int on)
+{
+	if (!sc->sc_has_gpio_led)
+		return;
+	awin_gpio_pindata_write(&sc->sc_gpio_led, on);
 }
 
 static int
@@ -448,7 +466,9 @@ awin_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 		MMC_WRITE(sc, AWIN_MMC_CMD, cmdval | cmd->c_opcode);
 		cmd->c_resid = cmd->c_datalen;
 		cmd->c_buf = cmd->c_data;
+		awin_mmc_led(sc, 0);
 		cmd->c_error = awin_mmc_xfer_data(sc, cmd);
+		awin_mmc_led(sc, 1);
 		if (cmd->c_error) {
 			aprint_error_dev(sc->sc_dev,
 			    "xfer data timeout\n");
