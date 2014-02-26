@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.7 2014/02/25 00:08:29 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.8 2014/02/26 00:19:01 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -56,6 +56,7 @@ static struct awinio_softc {
 	bus_space_handle_t sc_bsh;
 	bus_space_handle_t sc_ccm_bsh;
 	bus_dma_tag_t sc_dmat;
+	bus_dma_tag_t sc_coherent_dmat;
 } awinio_sc;
 
 CFATTACH_DECL_NEW(awin_io, 0,
@@ -152,6 +153,7 @@ awinio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_a4x_bst = &awin_a4x_bs_tag;
 	sc->sc_bsh = awin_core_bsh;
 	sc->sc_dmat = &awin_dma_tag;
+	sc->sc_coherent_dmat = &awin_coherent_dma_tag;
 
 	bus_space_subregion(sc->sc_bst, sc->sc_bsh, AWIN_CCM_OFFSET, 0x1000,
 	    &sc->sc_ccm_bsh);
@@ -188,6 +190,7 @@ awinio_attach(device_t parent, device_t self, void *aux)
 			.aio_core_bsh = sc->sc_bsh,
 			.aio_ccm_bsh = sc->sc_ccm_bsh,
 			.aio_dmat = sc->sc_dmat,
+			.aio_coherent_dmat = sc->sc_coherent_dmat,
 		};
 		cfdata_t cf = config_search_ia(awinio_find,
 		    sc->sc_dev, "awinio", &aio);
