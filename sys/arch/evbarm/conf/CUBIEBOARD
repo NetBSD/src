@@ -1,5 +1,5 @@
 #
-#	$NetBSD: CUBIEBOARD,v 1.9 2014/02/25 00:09:00 jmcneill Exp $
+#	$NetBSD: CUBIEBOARD,v 1.10 2014/02/26 00:32:21 matt Exp $
 #
 #	CUBIEBOARD -- Allwinner A10/A20 Eval Board Kernel
 #
@@ -139,7 +139,7 @@ options		DDB_ONPANIC=1
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	KGDB
 makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=800000
+options 	SYMTAB_SPACE=820000
 
 ## USB Debugging options
 options USB_DEBUG
@@ -263,8 +263,10 @@ ahcisata*	at awinio0
 atabus*		at ata?
 wd*		at atabus? drive ?
 
-# 10/100/1000 Ethernet (A10/A20)
+# 10/100 Ethernet (A10/A20)
 awe0		at awinio0 port ?
+# 10/100/1000 Ethernet (A10/A20)
+awge0		at awinio0 port ?
 
 include "dev/usb/usbdevices.config"
 
