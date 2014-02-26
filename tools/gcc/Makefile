@@ -1,18 +1,19 @@
-#	$NetBSD: Makefile,v 1.64 2014/02/18 01:34:18 christos Exp $
+#	$NetBSD: Makefile,v 1.65 2014/02/26 09:54:34 mrg Exp $
 
 .include <bsd.own.mk>
 
 GCC_LANGUAGES=c c++ objc
 MODULE=			gcc4
 
+GCCDIST=		${.CURDIR}/../../external/gpl3/${EXTERNAL_GCC_SUBDIR}/dist
+GNUHOSTDIST=		${GCCDIST}
+
 .if ${HAVE_GCC} == 48
 CC_FOR_BUILD=		${HOST_CXX:Q}
 LIB_INTL=
-MKNATIVE=		${.CURDIR}/mknative-gcc48
-GNUHOSTDIST=		${.CURDIR}/../../external/gpl3/yagcc/dist
 .elif ${HAVE_GCC} == 45
-GNUHOSTDIST=		${.CURDIR}/../../external/gpl3/gcc/dist
 UNWIND_H=unwind.h
+MKNATIVE=		${.CURDIR}/mknative-gcc.old
 .endif
 
 # Defaults
@@ -126,7 +127,7 @@ MKNATIVE_ENV=	${BINENV} ${CONFIGURE_ENV:NC*:NLD*} \
 .if ${HAVE_GCC} < 45
 GCCSRCDIR=${.CURDIR}/../../gnu/dist/gcc4
 .else
-GCCSRCDIR=${.CURDIR}/../../external/gpl3/gcc/dist
+GCCSRCDIR=${.CURDIR}/../../external/gpl3/${EXTERNAL_GCC_SUBDIR}/dist
 .endif
 
 CXXADDFLAGS=	--sysroot=${DESTDIR}

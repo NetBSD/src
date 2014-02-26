@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2013/08/22 00:16:54 matt Exp $
+#	$NetBSD: Makefile,v 1.6 2014/02/26 09:54:32 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOPIC=		# defined
@@ -7,6 +7,7 @@ NOLINT=		# defined
 
 LIB=		gcov
 
+.include "../../../Makefile.gcc_path"
 .include <bsd.own.mk>
 .include <bsd.init.mk>
 
