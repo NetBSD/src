@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.117 2013/12/21 15:16:23 kiyohara Exp $
+$NetBSD: miidevs,v 1.118 2014/02/26 04:13:44 ozaki-r Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -66,6 +66,7 @@ oui INTEL			0x00aa00	Intel
 oui JMICRON			0x00d831	JMicron
 oui LEVEL1			0x00207b	Level 1
 oui MARVELL			0x005043	Marvell Semiconductor
+oui MICREL			0x0010a1	Micrel
 oui MYSON			0x00c0b4	Myson Technology
 oui NATSEMI			0x080017	National Semiconductor
 oui PMCSIERRA			0x00e004	PMC-Sierra
@@ -259,6 +260,9 @@ model xxMARVELL E1116		0x0021 Marvell 88E1116 Gigabit PHY
 model xxMARVELL E1116R		0x0024 Marvell 88E1116R Gigabit PHY
 model xxMARVELL E1116R_29	0x0029 Marvell 88E1116R Gigabit PHY
 model xxMARVELL E1543		0x002a Marvell 88E1543 Alaska Quad Port Gb PHY
+
+/* Micrel PHYs */
+model MICREL KSZ9021RNI		0x0021 Micrel KSZ9021RNI 10/100/1000 PHY
 
 /* Myson Technology PHYs */
 model xxMYSON MTD972		0x0000 MTD972 10/100 media interface
