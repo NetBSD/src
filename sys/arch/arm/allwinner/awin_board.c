@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_board.c,v 1.8 2014/02/24 16:50:49 matt Exp $	*/
+/*	$NetBSD: awin_board.c,v 1.9 2014/02/26 00:19:01 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.8 2014/02/24 16:50:49 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.9 2014/02/26 00:19:01 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -58,6 +58,23 @@ __KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.8 2014/02/24 16:50:49 matt Exp $");
 bus_space_handle_t awin_core_bsh;
 
 struct arm32_bus_dma_tag awin_dma_tag = {
+	_BUS_DMAMAP_FUNCS,
+	_BUS_DMAMEM_FUNCS,
+	_BUS_DMATAG_FUNCS,
+};
+
+struct arm32_dma_range awin_coherent_dma_ranges[] = {
+	[0] = {
+		.dr_sysbase = AWIN_SDRAM_PBASE,
+		.dr_busbase = AWIN_SDRAM_PBASE,
+		.dr_flags = _BUS_DMAMAP_COHERENT,
+	},
+};
+
+
+struct arm32_bus_dma_tag awin_coherent_dma_tag = {
+	._ranges = awin_coherent_dma_ranges,
+	._nranges = __arraycount(awin_coherent_dma_ranges),
 	_BUS_DMAMAP_FUNCS,
 	_BUS_DMAMEM_FUNCS,
 	_BUS_DMATAG_FUNCS,
@@ -180,6 +197,14 @@ awin_bootstrap(vaddr_t iobase, vaddr_t uartbase)
 #endif
 #endif
 }
+
+#if 0
+void
+awin_dma_bootstrap(psize_t psize)
+{
+	awin_coherent_dma_ranges[0].dr_len = psize;
+}
+#endif
 
 #ifdef MULTIPROCESSOR
 void
