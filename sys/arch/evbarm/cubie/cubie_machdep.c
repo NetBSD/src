@@ -1,4 +1,4 @@
-/*	$NetBSD: cubie_machdep.c,v 1.12 2014/02/26 00:20:59 matt Exp $ */
+/*	$NetBSD: cubie_machdep.c,v 1.13 2014/02/26 00:39:50 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cubie_machdep.c,v 1.12 2014/02/26 00:20:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cubie_machdep.c,v 1.13 2014/02/26 00:39:50 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -600,6 +600,11 @@ cubie_device_register(device_t self, void *aux)
 	}
 
 	if (device_is_a(self, "awinmmc")) {
+		struct awinio_attach_args * const aio = aux;
+		if (aio->aio_loc.loc_port == 0) {
+			prop_dictionary_set_cstring(dict,
+			    "led-gpio", "status-led2");
+		}
 		return;
 	}
 
