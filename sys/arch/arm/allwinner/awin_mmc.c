@@ -1,4 +1,4 @@
-/* $NetBSD: awin_mmc.c,v 1.2 2014/02/26 00:39:30 jmcneill Exp $ */
+/* $NetBSD: awin_mmc.c,v 1.3 2014/02/26 02:01:02 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_mmc.c,v 1.2 2014/02/26 00:39:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_mmc.c,v 1.3 2014/02/26 02:01:02 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -84,6 +84,7 @@ struct awin_mmc_softc {
 
 	int sc_mmc_number;
 	int sc_mmc_width;
+	int sc_mmc_present;
 
 	device_t sc_sdmmc_dev;
 	unsigned int sc_pll5_freq;
@@ -214,6 +215,9 @@ awin_mmc_attach(device_t parent, device_t self, void *aux)
 		       SMC_CAPS_SD_HIGHSPEED|
 		       SMC_CAPS_MMC_HIGHSPEED|
 		       SMC_CAPS_AUTO_STOP;
+	if (sc->sc_has_gpio_detect) {
+		saa.saa_caps |= SMC_CAPS_POLL_CARD_DET;
+	}
 
 	sc->sc_sdmmc_dev = config_found(self, &saa, NULL);
 }
@@ -261,7 +265,16 @@ awin_mmc_card_detect(sdmmc_chipset_handle_t sch)
 	if (sc->sc_has_gpio_detect == false) {
 		return 1;	/* no card detect pin, assume present */
 	} else {
-		return awin_gpio_pindata_read(&sc->sc_gpio_detect);
+		int v = 0, i;
+		for (i = 0; i < 5; i++) {
+			v += awin_gpio_pindata_read(&sc->sc_gpio_detect);
+			delay(1000);
+		}
+		if (v == 5)
+			sc->sc_mmc_present = 0;
+		else if (v == 0)
+			sc->sc_mmc_present = 1;
+		return sc->sc_mmc_present;
 	}
 }
 
