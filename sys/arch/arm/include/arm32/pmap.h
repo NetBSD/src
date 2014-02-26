@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.124 2014/02/26 01:45:33 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.125 2014/02/26 01:51:51 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -351,7 +351,6 @@ bool	pmap_extract(pmap_t, vaddr_t, paddr_t *);
 #define	PMAP_NEED_PROCWR
 #define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
 #define	PMAP_ENABLE_PMAP_KMPAGE	/* enable the PMAP_KMPAGE flag */
-#define PMAP_PTE		0x01000000	/* Use PTE cache settings */
 
 #if (ARM_MMU_V6 + ARM_MMU_V7) > 0
 #define	PMAP_PREFER(hint, vap, sz, td)	pmap_prefer((hint), (vap), (td))
