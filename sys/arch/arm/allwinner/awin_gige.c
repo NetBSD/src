@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_gige.c,v 1.3 2014/02/20 21:48:38 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_gige.c,v 1.4 2014/02/26 00:29:23 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -73,7 +73,7 @@ awin_gige_match(device_t parent, cfdata_t cf, void *aux)
 	KASSERT(cf->cf_loc[AWINIOCF_PORT] == AWINIOCF_PORT_DEFAULT
 	    || cf->cf_loc[AWINIOCF_PORT] == loc->loc_port);
 
-	if (!awin_gpio_pinset_available(&awin_gige_pinset))
+	if (!awin_gpio_pinset_available(&awin_gige_gpio_pinset))
 		return 0;
 
 	return 1;
@@ -88,7 +88,7 @@ awin_gige_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 
-	awin_gpio_pinset_acquire(&awin_gige_pinset);
+	awin_gpio_pinset_acquire(&awin_gige_gpio_pinset);
 
 	sc->sc_bst = aio->aio_core_bst;
 	sc->sc_dmat = aio->aio_dmat;
