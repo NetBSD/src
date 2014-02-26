@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.56 2014/02/20 00:42:27 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.57 2014/02/26 02:03:40 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -48,7 +48,7 @@
 #define USE_KQUEUE
 #endif
 
-__RCSID("$NetBSD: rumpclient.c,v 1.56 2014/02/20 00:42:27 pooka Exp $");
+__RCSID("$NetBSD: rumpclient.c,v 1.57 2014/02/26 02:03:40 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -618,7 +618,7 @@ handlereq(struct spclient *spc)
 		/*LINTED*/
 		maplen = *(size_t *)spc->spc_buf;
 		mapaddr = mmap(NULL, maplen, PROT_READ|PROT_WRITE,
-		    MAP_ANON, -1, 0);
+		    MAP_ANON|MAP_PRIVATE, -1, 0);
 		if (mapaddr == MAP_FAILED)
 			mapaddr = NULL;
 		DPRINTF(("rump_sp handlereq: anonmmap: %p\n", mapaddr));
