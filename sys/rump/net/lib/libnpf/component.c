@@ -1,11 +1,11 @@
-/*	$NetBSD: component.c,v 1.2 2013/03/10 21:01:19 christos Exp $	*/
+/*	$NetBSD: component.c,v 1.3 2014/02/26 02:39:29 pooka Exp $	*/
 
 /*
  * Public Domain.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.2 2013/03/10 21:01:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.3 2014/02/26 02:39:29 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -17,7 +17,7 @@ __KERNEL_RCSID(0, "$NetBSD: component.c,v 1.2 2013/03/10 21:01:19 christos Exp $
 
 extern const struct cdevsw npf_cdevsw;
 
-RUMP_COMPONENT(RUMP_COMPONENT_DEV)
+RUMP_COMPONENT(RUMP_COMPONENT_NET)
 {
 	devmajor_t bmajor = NODEVMAJOR, cmajor = NODEVMAJOR;
 	int error;
