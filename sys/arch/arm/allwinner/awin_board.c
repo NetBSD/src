@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_board.c,v 1.9 2014/02/26 00:19:01 matt Exp $	*/
+/*	$NetBSD: awin_board.c,v 1.10 2014/02/26 00:30:56 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.9 2014/02/26 00:19:01 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.10 2014/02/26 00:30:56 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -198,13 +198,11 @@ awin_bootstrap(vaddr_t iobase, vaddr_t uartbase)
 #endif
 }
 
-#if 0
 void
 awin_dma_bootstrap(psize_t psize)
 {
 	awin_coherent_dma_ranges[0].dr_len = psize;
 }
-#endif
 
 #ifdef MULTIPROCESSOR
 void
