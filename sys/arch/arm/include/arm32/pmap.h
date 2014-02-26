@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.123 2014/02/26 01:03:03 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.124 2014/02/26 01:45:33 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -80,6 +80,30 @@
 #include <uvm/uvm_object.h>
 #endif
 
+#ifdef ARM_MMU_EXTENDED
+#define PMAP_TLB_MAX			1
+#define PMAP_TLB_HWPAGEWALKER		1
+#define PMAP_TLB_NUM_PIDS		256
+#define cpu_set_tlb_info(ci, ti)        ((void)((ci)->ci_tlb_info = (ti)))
+#if PMAP_TLB_MAX > 1
+#define cpu_tlb_info(ci)		((ci)->ci_tlb_info)
+#else
+#define cpu_tlb_info(ci)		(&pmap_tlb0_info)
+#endif
+#define pmap_md_tlb_asid_max()		(PMAP_TLB_NUM_PIDS - 1)
+#include <uvm/pmap/tlb.h>
+#include <uvm/pmap/pmap_tlb.h>
+
+/* 
+ * If we have an EXTENDED MMU and the address space is split evenly between
+ * user and kernel, we can use the TTBR0/TTBR1 to have separate L1 tables for
+ * user and kernel address spaces.
+ */      
+#if KERNEL_BASE != 0x80000000
+#error ARMv6 or later systems must have a KERNEL_BASE of 0x8000000
+#endif  
+#endif  /* ARM_MMU_EXTENDED */
+
 /*
  * a pmap describes a processes' 4GB virtual address space.  this
  * virtual address space can be broken up into 4096 1MB regions which
@@ -111,6 +135,8 @@
  * space per l2_dtable. Most processes will, therefore, require only two or
  * three of these to map their whole working set.
  */
+#define	L2_BUCKET_XLOG2	(L1_S_SHIFT)
+#define L2_BUCKET_XSIZE	(1 << L2_BUCKET_XLOG2)
 #define	L2_BUCKET_LOG2	4
 #define	L2_BUCKET_SIZE	(1 << L2_BUCKET_LOG2)
 
@@ -119,7 +145,7 @@
  * of l2_dtable structures required to track all possible page descriptors
  * mappable by an L1 translation table is given by the following constants:
  */
-#define	L2_LOG2		((32 - L1_S_SHIFT) - L2_BUCKET_LOG2)
+#define	L2_LOG2		(32 - (L2_BUCKET_XLOG2 + L2_BUCKET_LOG2))
 #define	L2_SIZE		(1 << L2_LOG2)
 
 /*
@@ -134,6 +160,7 @@
 
 #ifndef _LOCORE
 
+#ifndef PMAP_MMU_EXTENDED
 struct l1_ttable;
 struct l2_dtable;
 
@@ -165,6 +192,7 @@ union pmap_cache_state {
  * Assigned to cs_all to force cacheops to work for a particular pmap
  */
 #define	PMAP_CACHE_STATE_ALL	0xffffffffu
+#endif /* !ARM_MMU_EXTENDED */
 
 /*
  * This structure is used by machine-dependent code to describe
@@ -182,21 +210,38 @@ struct pmap_devmap {
  * The pmap structure itself
  */
 struct pmap {
-	uint8_t			pm_domain;
-	bool			pm_remove_all;
-	bool			pm_activated;
-	struct l1_ttable	*pm_l1;
-#ifndef ARM_HAS_VBAR
-	pd_entry_t		*pm_pl1vec;
-#endif
-	pd_entry_t		pm_l1vec;
-	union pmap_cache_state	pm_cstate;
 	struct uvm_object	pm_obj;
 	kmutex_t		pm_obj_lock;
 #define	pm_lock pm_obj.vmobjlock
+#ifndef ARM_HAS_VBAR
+	pd_entry_t		*pm_pl1vec;
+	pd_entry_t		pm_l1vec;
+#endif
 	struct l2_dtable	*pm_l2[L2_SIZE];
 	struct pmap_statistics	pm_stats;
 	LIST_ENTRY(pmap)	pm_list;
+#ifdef ARM_MMU_EXTENDED
+	pd_entry_t		*pm_l1;
+	paddr_t			pm_l1_pa;
+	bool			pm_remove_all;
+#ifdef MULTIPROCESSOR
+	kcpuset_t		*pm_onproc;
+	kcpuset_t		*pm_active;
+	struct pmap_asid_info	pm_pai[2];
+#else
+	struct pmap_asid_info	pm_pai[1];
+#endif
+#else
+	struct l1_ttable	*pm_l1;
+	union pmap_cache_state	pm_cstate;
+	uint8_t			pm_domain;
+	bool			pm_activated;
+	bool			pm_remove_all;
+#endif
+};
+
+struct pmap_kernel {
+	struct pmap		kernel_pmap;
 };
 
 /*
@@ -306,6 +351,7 @@ bool	pmap_extract(pmap_t, vaddr_t, paddr_t *);
 #define	PMAP_NEED_PROCWR
 #define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
 #define	PMAP_ENABLE_PMAP_KMPAGE	/* enable the PMAP_KMPAGE flag */
+#define PMAP_PTE		0x01000000	/* Use PTE cache settings */
 
 #if (ARM_MMU_V6 + ARM_MMU_V7) > 0
 #define	PMAP_PREFER(hint, vap, sz, td)	pmap_prefer((hint), (vap), (td))
@@ -324,6 +370,7 @@ void	pmap_bootstrap(vaddr_t, vaddr_t);
 
 void	pmap_do_remove(pmap_t, vaddr_t, vaddr_t, int);
 int	pmap_fault_fixup(pmap_t, vaddr_t, vm_prot_t, int);
+int	pmap_prefetchabt_fixup(void *);
 bool	pmap_get_pde_pte(pmap_t, vaddr_t, pd_entry_t **, pt_entry_t **);
 bool	pmap_get_pde(pmap_t, vaddr_t, pd_entry_t **);
 struct pcb;
@@ -370,6 +417,8 @@ vtopte(vaddr_t va)
 {
 	pd_entry_t *pdep;
 	pt_entry_t *ptep;
+
+	KASSERT(trunc_page(va) == va);
 
 	if (pmap_get_pde_pte(pmap_kernel(), va, &pdep, &ptep) == false)
 		return (NULL);
@@ -437,32 +486,63 @@ pmap_ptesync(pt_entry_t *ptep, size_t cnt)
 #endif
 }
 
-#define	PTE_SYNC(ptep)			pmap_ptesync((ptep), 1)
+#define	PDE_SYNC(pdep)			pmap_ptesync((pdep), 1)
+#define	PDE_SYNC_RANGE(pdep, cnt)	pmap_ptesync((pdep), (cnt))
+#define	PTE_SYNC(ptep)			pmap_ptesync((ptep), PAGE_SIZE / L2_S_SIZE)
 #define	PTE_SYNC_RANGE(ptep, cnt)	pmap_ptesync((ptep), (cnt))
 
-#define	l1pte_valid(pde)	((pde) != 0)
-#define	l1pte_section_p(pde)	(((pde) & L1_TYPE_MASK) == L1_TYPE_S)
-#define	l1pte_supersection_p(pde) (l1pte_section_p(pde)	\
+#define l1pte_valid_p(pde)	((pde) != 0)
+#define l1pte_section_p(pde)	(((pde) & L1_TYPE_MASK) == L1_TYPE_S)
+#define l1pte_supersection_p(pde) (l1pte_section_p(pde)	\
 				&& ((pde) & L1_S_V6_SUPER) != 0)
-#define	l1pte_page_p(pde)	(((pde) & L1_TYPE_MASK) == L1_TYPE_C)
-#define	l1pte_fpage_p(pde)	(((pde) & L1_TYPE_MASK) == L1_TYPE_F)
+#define l1pte_page_p(pde)	(((pde) & L1_TYPE_MASK) == L1_TYPE_C)
+#define l1pte_fpage_p(pde)	(((pde) & L1_TYPE_MASK) == L1_TYPE_F)
+#define l1pte_pa(pde)		((pde) & L1_C_ADDR_MASK)
+#define l1pte_index(v)		((vaddr_t)(v) >> L1_S_SHIFT)
+#define l1pte_pgindex(v)	l1pte_index((v) & L1_ADDR_BITS \
+		& ~(PAGE_SIZE * PAGE_SIZE / sizeof(pt_entry_t) - 1))
 
-#define l2pte_index(v)		(((v) & L2_ADDR_BITS) >> L2_S_SHIFT)
-#define	l2pte_valid(pte)	(((pte) & L2_TYPE_MASK) != L2_TYPE_INV)
-#define	l2pte_pa(pte)		((pte) & L2_S_FRAME)
-#define l2pte_minidata(pte)	(((pte) & \
+static inline void
+l1pte_setone(pt_entry_t *pdep, pt_entry_t pde)
+{
+	*pdep = pde;
+}
+
+static inline void
+l1pte_set(pt_entry_t *pdep, pt_entry_t pde)
+{
+	*pdep = pde;
+	if (l1pte_page_p(pde)) {
+		KASSERTMSG((((uintptr_t)pdep / sizeof(pde)) & (PAGE_SIZE / L2_T_SIZE - 1)) == 0, "%p", pdep);
+		for (size_t k = 1; k < PAGE_SIZE / L2_T_SIZE; k++) {
+			pde += L2_T_SIZE;
+			pdep[k] = pde;
+		}
+	} else if (l1pte_supersection_p(pde)) {
+		KASSERTMSG((((uintptr_t)pdep / sizeof(pde)) & (L1_SS_SIZE / L1_S_SIZE - 1)) == 0, "%p", pdep);
+		for (size_t k = 1; k < L1_SS_SIZE / L1_S_SIZE; k++) {
+			pdep[k] = pde;
+		}
+	}
+}
+
+#define l2pte_index(v)		((((v) & L2_ADDR_BITS) >> PGSHIFT) << (PGSHIFT-L2_S_SHIFT))
+#define l2pte_valid_p(pte)	(((pte) & L2_TYPE_MASK) != L2_TYPE_INV)
+#define l2pte_pa(pte)		((pte) & L2_S_FRAME)
+#define l1pte_lpage_p(pte)	(((pte) & L2_TYPE_MASK) == L2_TYPE_L)
+#define l2pte_minidata_p(pte)	(((pte) & \
 				 (L2_B | L2_C | L2_XS_T_TEX(TEX_XSCALE_X)))\
 				 == (L2_C | L2_XS_T_TEX(TEX_XSCALE_X)))
 
 static inline void
 l2pte_set(pt_entry_t *ptep, pt_entry_t pte, pt_entry_t opte)
 {
-	KASSERT(*ptep == opte);
-	*ptep = pte;
-	for (vsize_t k = 1; k < PAGE_SIZE / L2_S_SIZE; k++) {
-		KASSERT(ptep[k] == opte ? opte + k * L2_S_SIZE : 0);
+	for (size_t k = 0; k < PAGE_SIZE / L2_S_SIZE; k++) {
+		KASSERTMSG(*ptep == opte, "%#x [*%p] != %#x", *ptep, ptep, opte);
+		*ptep++ = pte;
 		pte += L2_S_SIZE;
-		ptep[k] = pte;
+		if (opte)
+			opte += L2_S_SIZE;
 	}
 }       
 
@@ -482,7 +562,7 @@ l2pte_reset(pt_entry_t *ptep)
 #define pmap_pde_page(pde)	l1pte_page_p(*(pde))
 #define pmap_pde_fpage(pde)	l1pte_fpage_p(*(pde))
 
-#define	pmap_pte_v(pte)		l2pte_valid(*(pte))
+#define	pmap_pte_v(pte)		l2pte_valid_p(*(pte))
 #define	pmap_pte_pa(pte)	l2pte_pa(*(pte))
 
 /* Size of the kernel part of the L1 page table */
@@ -584,11 +664,16 @@ extern void (*pmap_zero_page_func)(paddr_t);
 
 /*****************************************************************************/
 
+#define	KERNEL_PID		0	/* The kernel uses ASID 0 */
+
 /*
  * Definitions for MMU domains
  */
 #define	PMAP_DOMAINS		15	/* 15 'user' domains (1-15) */
-#define	PMAP_DOMAIN_KERNEL	0	/* The kernel uses domain #0 */
+#define	PMAP_DOMAIN_KERNEL	0	/* The kernel pmap uses domain #0 */
+#ifdef ARM_MMU_EXTENDED
+#define	PMAP_DOMAIN_USER	1	/* User pmaps use domain #1 */
+#endif
 
 /*
  * These macros define the various bit masks in the PTE.
@@ -703,7 +788,11 @@ extern void (*pmap_zero_page_func)(paddr_t);
 #define	L2_S_PROTO_armv6c	(L2_TYPE_S)	/* XP=0, subpage APs */
 #endif
 #define	L2_S_PROTO_armv6n	(L2_TYPE_S)	/* with XP=1 */
+#ifdef ARM_MMU_EXTENDED
+#define	L2_S_PROTO_armv7	(L2_TYPE_S|L2_XS_XN)
+#else
 #define	L2_S_PROTO_armv7	(L2_TYPE_S)
+#endif
 
 /*
  * User-visible names for the ones that vary with MMU class.
