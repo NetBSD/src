@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.268 2014/02/26 17:35:21 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.269 2014/02/26 19:59:49 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -209,7 +209,7 @@
 #include <arm/locore.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.268 2014/02/26 17:35:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.269 2014/02/26 19:59:49 matt Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -3346,7 +3346,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 #ifdef DIAGNOSTIC
 		struct vm_page_md *omd = VM_PAGE_TO_MD(opg);
 #endif
-		if (opg) {
+		if (opg && arm_cache_prefer_mask != 0) {
 			KASSERT(opg != pg);
 			KASSERT((omd->pvh_attrs & PVF_KMPAGE) == 0);
 			KASSERT((flags & PMAP_KMPAGE) == 0);
@@ -3406,7 +3406,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 #endif
 			pmap_kmpages++;
 #ifdef PMAP_CACHE_VIPT
-		} else {
+		} else if (arm_cache_prefer_mask != 0) {
 			if (pv == NULL) {
 				pv = pool_get(&pmap_pv_pool, PR_NOWAIT);
 				KASSERT(pv != NULL);
@@ -3473,7 +3473,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 #endif
 					pmap_kmpages--;
 #ifdef PMAP_CACHE_VIPT
-				} else {
+				} else if (arm_cache_prefer_mask != 0) {
 					pool_put(&pmap_pv_pool,
 					    pmap_kremove_pg(opg, va));
 #endif
