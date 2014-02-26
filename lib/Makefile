@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.210 2013/12/26 14:15:29 christos Exp $
+#	$NetBSD: Makefile,v 1.211 2014/02/26 09:54:32 mrg Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -13,9 +13,9 @@ SUBDIR+=	../gnu/lib/crtstuff4 .WAIT
 SUBDIR+=	../gnu/lib/libgcc4 .WAIT
 . else
 .  if (${USE_COMPILERCRTSTUFF} == "yes")
-SUBDIR+=	../external/gpl3/gcc/lib/crtstuff .WAIT
+SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/crtstuff .WAIT
 .  endif
-SUBDIR+=	../external/gpl3/gcc/lib/libgcc .WAIT
+SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libgcc .WAIT
 . endif
 .endif
 
@@ -79,8 +79,8 @@ SUBDIR+=	../gnu/lib/libmalloc
 . if ${HAVE_GCC} == 4
 SUBDIR+=	../gnu/lib/libobjc4
 . else
-SUBDIR+=	../external/gpl3/gcc/lib/libobjc
-SUBDIR+=	../external/gpl3/gcc/lib/libgomp
+SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libobjc
+SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libgomp
 . endif
 . if ${HAVE_GCC} >= 45 && !defined(MLIBDIR)
 # Should probably move GMP, MPFR and MPC builds into the GCC >= 4.5
@@ -152,8 +152,8 @@ SUBDIR+=	../external/bsd/libc++
 SUBDIR+=	../gnu/lib/libstdc++-v3_4	# depends on libm
 SUBDIR+=	../gnu/lib/libsupc++4
 . else
-SUBDIR+=	../external/gpl3/gcc/lib/libstdc++-v3
-SUBDIR+=	../external/gpl3/gcc/lib/libsupc++
+SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libstdc++-v3
+SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libsupc++
 . endif
 .endif
 
