@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.31 2014/02/26 01:55:02 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.32 2014/02/26 11:00:40 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -45,6 +45,7 @@
  */
 
 #include <arm/arm32/pte.h>	/* pt_entry_t */
+#include <arm/arm32/param.h>	/* PGSHIFT for PAGE_SIZE */
 
 #define	USRSTACK	VM_MAXUSER_ADDRESS
 
