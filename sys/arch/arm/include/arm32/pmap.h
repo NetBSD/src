@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.122 2013/08/18 05:01:47 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.123 2014/02/26 01:03:03 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -293,6 +293,8 @@ u_int arm32_mmap_flags(paddr_t);
 #define ARM32_MMAP_WRITECOMBINE	0x40000000
 #define ARM32_MMAP_CACHEABLE		0x20000000
 #define pmap_mmap_flags(ppn)			arm32_mmap_flags(ppn)
+
+#define	PMAP_PTE			0x10000000 /* kenter_pa */
 
 /*
  * Functions that we need to export
