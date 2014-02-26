@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2012/08/06 00:21:09 matt Exp $
+#	$NetBSD: Makefile,v 1.6 2014/02/26 09:54:32 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -7,6 +7,7 @@ NOPROFILE=	# defined
 
 LIB=		gcc_eh
 
+.include "../../../Makefile.gcc_path"
 .include <bsd.own.mk>
 
 .if ${MKGCC} != "no"
