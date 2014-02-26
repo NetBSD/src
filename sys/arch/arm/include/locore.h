@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.12 2014/02/01 01:19:50 joerg Exp $	*/
+/*	$NetBSD: locore.h,v 1.13 2014/02/26 01:54:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -152,6 +152,8 @@ extern int cpu_printfataltraps;
 extern int cpu_do_powersave;
 extern int cpu_fpu_present;
 extern int cpu_hwdiv_present;
+
+extern u_int arm_cpu_max;
 
 #if !defined(CPU_ARMV7)
 #define	CPU_IS_ARMV7_P()		false
