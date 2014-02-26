@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.30 2014/02/21 22:05:58 skrll Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.31 2014/02/26 01:55:02 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -77,12 +77,12 @@
 /*
  * Mach derived constants
  */
-#define	VM_MIN_ADDRESS		((vaddr_t) 0x00001000)
-#define	VM_MAXUSER_ADDRESS	((vaddr_t) KERNEL_BASE - 0x1000)
+#define	VM_MIN_ADDRESS		((vaddr_t) PAGE_SIZE)
+#define	VM_MAXUSER_ADDRESS	((vaddr_t) KERNEL_BASE - PAGE_SIZE)
 #define	VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
 
 #define	VM_MIN_KERNEL_ADDRESS	((vaddr_t) KERNEL_BASE)
-#define	VM_MAX_KERNEL_ADDRESS	((vaddr_t) 0xffffefff)
+#define	VM_MAX_KERNEL_ADDRESS	((vaddr_t) -(PAGE_SIZE+1))
 
 #ifndef __ASSEMBLER__
 /* XXX max. amount of KVM to be used by buffers. */
