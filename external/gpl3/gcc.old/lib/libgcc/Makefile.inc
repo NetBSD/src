@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1.1.1 2014/02/25 18:42:04 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.1.1.2 2014/02/26 10:57:30 mrg Exp $
 
 .if ${MKGCC} != "no"
 LIBGCC_MACHINE_ARCH?=${MACHINE_ARCH:S/earmv5/earm/}
@@ -9,11 +9,11 @@ LIBGCC_MACHINE_ARCH?=${MACHINE_ARCH:S/earmv5/earm/}
 
 UNSUPPORTED_COMPILER.clang=	# defined
 
-DIST=		${NETBSDSRCDIR}/external/gpl3/gcc/dist
+DIST=		${GCCDIST}
 GNUHOSTDIST=	${DIST}
-GCCARCH=	${NETBSDSRCDIR}/external/gpl3/gcc/usr.bin/gcc/arch/${LIBGCC_MACHINE_ARCH}
-GCCARCHLIBGCC=	${NETBSDSRCDIR}/external/gpl3/gcc/lib/libgcc/arch/${LIBGCC_MACHINE_ARCH}
-GCCARCHXX=	${NETBSDSRCDIR}/external/gpl3/gcc/lib/libstdc++-v3/arch/${LIBGCC_MACHINE_ARCH}
+GCCARCH=	${GCC_SUBDIR}/usr.bin/gcc/arch/${LIBGCC_MACHINE_ARCH}
+GCCARCHLIBGCC=	${GCC_SUBDIR}/lib/libgcc/arch/${LIBGCC_MACHINE_ARCH}
+GCCARCHXX=	${GCC_SUBDIR}/lib/libstdc++-v3/arch/${LIBGCC_MACHINE_ARCH}
 
 GCPPFLAGS=	${G_LIBGCC2_CFLAGS} ${G_USE_COLLECT2} ${G_INCLUDES}
 CPPFLAGS+=	-I${.CURDIR} -I${GCCARCHLIBGCC}
