@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_param.h,v 1.33 2014/01/25 15:17:17 christos Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.34 2014/02/26 16:11:59 matt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -175,8 +175,10 @@ extern const int *const uvmexp_pageshift;
 #define	VM_ANONMAX	11
 #define	VM_EXECMAX	12
 #define	VM_FILEMAX	13
+#define	VM_MINADDRESS	14
+#define	VM_MAXADDRESS	15
 
-#define	VM_MAXID	14		/* number of valid vm ids */
+#define	VM_MAXID	16		/* number of valid vm ids */
 
 #define	CTL_VM_NAMES { \
 	{ 0, 0 }, \
@@ -193,6 +195,8 @@ extern const int *const uvmexp_pageshift;
 	{ "anonmax", CTLTYPE_INT }, \
 	{ "execmax", CTLTYPE_INT }, \
 	{ "filemax", CTLTYPE_INT }, \
+	{ "minaddress", CTLTYPE_LONG }, \
+	{ "maxaddress", CTLTYPE_LONG }, \
 }
 
 #ifndef ASSEMBLER
