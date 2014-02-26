@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.265 2014/02/26 01:41:40 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.266 2014/02/26 01:51:11 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -209,7 +209,7 @@
 #include <arm/locore.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.265 2014/02/26 01:41:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.266 2014/02/26 01:51:11 matt Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -1788,7 +1788,7 @@ pmap_vac_me_user(struct vm_page_md *md, paddr_t pa, pmap_t pm, vaddr_t va)
 			pt_entry_t npte = opte & ~L2_S_CACHE_MASK;
 
 			if ((va != pv->pv_va || pm != pv->pv_pmap)
-			    && l2pte_valid(npte)) {
+			    && l2pte_valid_p(npte)) {
 #ifdef PMAP_CACHE_VIVT
 				pmap_cache_wbinv_page(pv->pv_pmap, pv->pv_va,
 				    true, pv->pv_flags);
@@ -1823,7 +1823,7 @@ pmap_vac_me_user(struct vm_page_md *md, paddr_t pa, pmap_t pm, vaddr_t va)
 			pt_entry_t npte = (opte & ~L2_S_CACHE_MASK)
 			    | pte_l2_s_cache_mode;
 
-			if (l2pte_valid(opte)) {
+			if (l2pte_valid_p(opte)) {
 				pmap_tlb_flush_SE(pv->pv_pmap, pv->pv_va,
 				    pv->pv_flags);
 			}
@@ -2115,7 +2115,7 @@ pmap_vac_me_harder(struct vm_page_md *md, paddr_t pa, pmap_t pm, vaddr_t va)
 		if (opte == npte)	/* only update is there's a change */
 			continue;
 
-		if (l2pte_valid(npte)) {
+		if (l2pte_valid_p(npte)) {
 			pmap_tlb_flush_SE(pv->pv_pmap, pv->pv_va, pv->pv_flags);
 		}
 
@@ -2269,7 +2269,7 @@ pmap_clearbit(struct vm_page_md *md, paddr_t pa, u_int maskbits)
 		if (maskbits & PVF_REF) {
 			if ((pv->pv_flags & PVF_NC) == 0
 			    && (maskbits & (PVF_WRITE|PVF_MOD)) == 0
-			    && l2pte_valid(npte)) {
+			    && l2pte_valid_p(npte)) {
 #ifdef PMAP_CACHE_VIVT
 				/*
 				 * Check npte here; we may have already
@@ -2934,7 +2934,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 				 * initially) then make sure to frob
 				 * the cache.
 				 */
-				if (!(oflags & PVF_NC) && l2pte_valid(opte)) {
+				if (!(oflags & PVF_NC) && l2pte_valid_p(opte)) {
 					pmap_cache_wbinv_page(pm, va, true,
 					    oflags);
 				}
@@ -2992,7 +2992,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			oflags = pv->pv_flags;
 
 #ifdef PMAP_CACHE_VIVT
-			if (!(oflags & PVF_NC) && l2pte_valid(opte)) {
+			if (!(oflags & PVF_NC) && l2pte_valid_p(opte)) {
 				pmap_cache_wbinv_page(pm, va, true, oflags);
 			}
 #endif
@@ -3032,7 +3032,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			 * We only need to frob the cache/tlb if this pmap
 			 * is current
 			 */
-			if (!vector_page_p && l2pte_valid(npte)) {
+			if (!vector_page_p && l2pte_valid_p(npte)) {
 				/*
 				 * This mapping is likely to be accessed as
 				 * soon as we return to userland. Fix up the
@@ -3186,7 +3186,7 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 			}
 			mappings++;
 
-			if (!l2pte_valid(opte)) {
+			if (!l2pte_valid_p(opte)) {
 				/*
 				 * Ref/Mod emulation is still active for this
 				 * mapping, therefore it is has not yet been
@@ -3361,7 +3361,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			pv = pmap_kremove_pg(opg, va);
 		}
 #endif
-		if (l2pte_valid(opte)) {
+		if (l2pte_valid_p(opte)) {
 #ifdef PMAP_CACHE_VIVT
 			cpu_dcache_wbinv_range(va, PAGE_SIZE);
 #endif
@@ -3487,7 +3487,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 #endif
 				}
 			}
-			if (l2pte_valid(opte)) {
+			if (l2pte_valid_p(opte)) {
 #ifdef PMAP_CACHE_VIVT
 				cpu_dcache_wbinv_range(va, PAGE_SIZE);
 #endif
@@ -3617,7 +3617,7 @@ pmap_protect(pmap_t pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 
 		while (sva < next_bucket) {
 			pte = *ptep;
-			if (l2pte_valid(pte) != 0 && l2pte_writable_p(pte)) {
+			if (l2pte_valid_p(pte) != 0 && l2pte_writable_p(pte)) {
 				struct vm_page *pg;
 				u_int f;
 
@@ -3701,7 +3701,7 @@ pmap_icache_sync_range(pmap_t pm, vaddr_t sva, vaddr_t eva)
 		for (ptep = &l2b->l2b_kva[l2pte_index(sva)];
 		     sva < next_bucket;
 		     sva += page_size, ptep++, page_size = PAGE_SIZE) {
-			if (l2pte_valid(*ptep)) {
+			if (l2pte_valid_p(*ptep)) {
 				cpu_icache_sync_range(sva,
 				    min(page_size, eva - sva));
 			}
@@ -3987,7 +3987,7 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 	if (rv == 0 && curcpu()->ci_arm_cputype == CPU_ID_SA110 &&
 	    curcpu()->ci_arm_cpurev < 3) {
 		/* Always current pmap */
-		if (l2pte_valid(pte)) {
+		if (l2pte_valid_p(pte)) {
 			extern int kernel_debug;
 			if (kernel_debug & 1) {
 				struct proc *p = curlwp->l_proc;
