@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.81 2014/02/26 01:05:52 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.82 2014/02/26 07:57:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_arm_bus_space.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.81 2014/02/26 01:05:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.82 2014/02/26 07:57:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,7 +139,7 @@ _bus_dma_paddr_inrange(struct arm32_dma_range *ranges, int nranges,
 
 	for (i = 0, dr = ranges; i < nranges; i++, dr++) {
 		if (curaddr >= dr->dr_sysbase &&
-		    round_page(curaddr) <= (dr->dr_sysbase + dr->dr_len))
+		    curaddr < (dr->dr_sysbase + dr->dr_len))
 			return (dr);
 	}
 
@@ -160,7 +160,7 @@ _bus_dma_busaddr_to_paddr(bus_dma_tag_t t, bus_addr_t curaddr)
 
 	for (i = 0, dr = t->_ranges; i < t->_nranges; i++, dr++) {
 		if (dr->dr_busbase <= curaddr
-		    && round_page(curaddr) <= dr->dr_busbase + dr->dr_len)
+		    && curaddr < dr->dr_busbase + dr->dr_len)
 			return curaddr - dr->dr_busbase + dr->dr_sysbase;
 	}
 	panic("%s: curaddr %#lx not in range", __func__, curaddr);
