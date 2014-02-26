@@ -1,18 +1,18 @@
-#	$NetBSD: Makefile,v 1.7 2012/02/28 20:26:07 joerg Exp $
+#	$NetBSD: Makefile,v 1.8 2014/02/26 09:54:32 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
 UNSUPPORTED_COMPILER.clang=	# defined
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 # If using an external toolchain, we expect crtbegin/crtend to be
 # supplied by that toolchain's run-time support.
 .if !defined(EXTERNAL_TOOLCHAIN) && ${MKGCC} != "no"
 
-DIST=		${NETBSDSRCDIR}/external/gpl3/gcc/dist
+DIST=		${GCCDIST}
 GNUHOSTDIST=	${DIST}
-GCCARCH=	${NETBSDSRCDIR}/external/gpl3/gcc/usr.bin/gcc/arch/${MACHINE_ARCH}
+GCCARCH=	${EXTERNAL_GCC_SUBDIR}/usr.bin/gcc/arch/${MACHINE_ARCH}
 
 GALLCFLAGS=	${G_CRTSTUFF_CFLAGS} ${G_CRTSTUFF_T_CFLAGS}
 

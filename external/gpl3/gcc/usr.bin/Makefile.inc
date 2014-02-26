@@ -1,15 +1,16 @@
-#	$NetBSD: Makefile.inc,v 1.17 2013/11/28 13:04:35 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.18 2014/02/26 09:54:33 mrg Exp $
 
 .ifndef _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_
 _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_=1
 
 .include <bsd.own.mk>
 
+.sinclude "../../Makefile.gcc_path"
+
 GCC_MACHINE_ARCH=${MACHINE_ARCH:S/earmv5/earm/}
 GMP_MACHINE_ARCH=${MACHINE_ARCH:C/armv[4-7]/arm/}
 
-TOP=		${NETBSDSRCDIR}
-DIST=		${TOP}/external/gpl3/gcc/dist
+DIST=		${GCCDIST}
 
 GCCARCH=	${.CURDIR}/../gcc/arch/${GCC_MACHINE_ARCH}
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.304 2014/01/16 01:15:32 christos Exp $
+#	$NetBSD: Makefile,v 1.305 2014/02/26 09:54:32 mrg Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -205,7 +205,7 @@ BUILD_CC_LIB_BASEDIR= gnu/lib
 BUILD_CC_LIB_BASETARGET= gnu-lib
 .else
 LIBGCC_EXT=
-BUILD_CC_LIB_BASEDIR= external/gpl3/gcc/lib
+BUILD_CC_LIB_BASEDIR= external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib
 BUILD_CC_LIB_BASETARGET= external-gpl3-gcc-lib
 .endif
 .endif
