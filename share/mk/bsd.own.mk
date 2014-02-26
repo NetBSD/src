@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.767 2014/02/24 07:23:41 skrll Exp $
+#	$NetBSD: bsd.own.mk,v 1.768 2014/02/26 02:51:02 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -58,6 +58,18 @@ HAVE_GCC?=    45
 .endif
 .endif
 
+#
+# We import the old gcc as "gcc.old" when upgrading.  EXTERNAL_GCC_SUBDIR is
+# set to the relevant subdirectory in src/external/gpl3 for his HAVE_GCC.
+#
+.if ${HAVE_GCC} == 45
+EXTERNAL_GCC_SUBDIR=	gcc.old
+EXTERNAL_GCC_SUBDIR=	gcc
+.elif ${HAVE_GCC} == 48
+EXTERNAL_GCC_SUBDIR=	gcc
+.else
+EXTERNAL_GCC_SUBDIR=	/does/not/exist
+.endif
 
 .if ${MACHINE_ARCH} == "ia64"
 USE_COMPILERCRTSTUFF?=	yes
