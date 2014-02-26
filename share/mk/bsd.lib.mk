@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.345 2014/01/14 11:31:01 apb Exp $
+#	$NetBSD: bsd.lib.mk,v 1.346 2014/02/26 02:51:02 mrg Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -602,7 +602,7 @@ LIBDPLIBS+=     c++	${.CURDIR}/../../../../../external/bsd/libc++/lib
 . elif defined(HAVE_GCC) && ${HAVE_GCC} == 4
 LIBDPLIBS+=     stdc++	${.CURDIR}/../../../../../gnu/lib/libstdc++-v3_4
 . else
-LIBDPLIBS+=     stdc++	${.CURDIR}/../../../../../external/gpl3/gcc/lib/libstdc++-v3
+LIBDPLIBS+=     stdc++	${.CURDIR}/../../../../../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libstdc++-v3
 . endif
 .else
 LIBCC:=	${CC}
