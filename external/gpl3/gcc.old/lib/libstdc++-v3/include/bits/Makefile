@@ -1,13 +1,11 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2014/02/25 18:42:26 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.2 2014/02/26 10:57:34 mrg Exp $
 
-.include <bsd.own.mk>
 .include <bsd.init.mk>
 
 .include "${.CURDIR}/../../arch/${GCC_MACHINE_ARCH}/defs.mk"
 
 .cc: # disable .cc->NULL transform
 
-DIST=		${NETBSDSRCDIR}/external/gpl3/gcc/dist
 CONF=		${DIST}/libstdc++-v3/config
 
 INCS=		${G_bits_headers} ${G_c_base_headers_extra} ${G_thread_host_headers} ${G_host_headers_extra} ${G_host_headers}
@@ -34,6 +32,9 @@ BITS_CPUDIR=${BITS_CPUDIR.${GCC_MACHINE_ARCH}}
 BITS_CPUDIR=${MACHINE_GNU_ARCH}
 .endif
 
+# Get default targets including <bsd.inc.mk>.
+.include <bsd.prog.mk>
+
 .PATH: ${.CURDIR}/../../arch/${GCC_MACHINE_ARCH} \
 	${DIST}/libstdc++-v3/include/bits \
 	${DIST}/libstdc++-v3/include/c_std \
@@ -44,6 +45,3 @@ BITS_CPUDIR=${MACHINE_GNU_ARCH}
 	${CONF}/cpu/${BITS_CPUDIR} \
 	${CONF}/cpu/generic \
 	${CONF}/locale/generic
-
-# Get default targets including <bsd.inc.mk>.
-.include <bsd.prog.mk>

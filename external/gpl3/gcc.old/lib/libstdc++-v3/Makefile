@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2014/02/25 18:42:06 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.2 2014/02/26 10:57:31 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 .include "Makefile.inc"
 
