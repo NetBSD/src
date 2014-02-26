@@ -155,12 +155,17 @@ struct cpu_info {
 	lwp_t *ci_softlwps[SOFTINT_COUNT];
 	volatile uint32_t ci_softints;
 	lwp_t *ci_curlwp;		/* current lwp */
+	lwp_t *ci_lastlwp;		/* last lwp */
 	struct evcnt ci_arm700bugcount;
 	int32_t ci_mtx_count;
 	int ci_mtx_oldspl;
 	register_t ci_undefsave[3];
 	uint32_t ci_vfp_id;
 	uint64_t ci_lastintr;
+	struct pmap_tlb_info *ci_tlb_info;
+	struct pmap *ci_pmap_lastuser;
+	struct pmap *ci_pmap_cur;
+	tlb_asid_t ci_pmap_asid_cur;
 	struct evcnt ci_abt_evs[16];
 #if defined(MP_CPU_INFO_MEMBERS)
 	MP_CPU_INFO_MEMBERS
@@ -207,9 +212,9 @@ curcpu(void)
 #define CPU_INFO_ITERATOR	int
 #if defined(MULTIPROCESSOR)
 extern struct cpu_info *cpu_info[];
-#define cpu_number()	(curcpu()->ci_cpuid)
+#define cpu_number()		(curcpu()->ci_index)
 void cpu_boot_secondary_processors(void);
-#define CPU_IS_PRIMARY(ci)	((ci)->ci_cpuid == 0)
+#define CPU_IS_PRIMARY(ci)	((ci)->ci_index == 0)
 #define CPU_INFO_FOREACH(cii, ci)			\
 	cii = 0, ci = cpu_info[0]; cii < ncpu && (ci = cpu_info[cii]) != NULL; cii++
 #else 
