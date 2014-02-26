@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.86 2014/02/24 16:45:06 matt Exp $	*/
+/*	$NetBSD: armreg.h,v 1.87 2014/02/26 02:03:00 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -635,6 +635,22 @@
 #define TTBCR_L_EPD0	__BIT(7)	// Don't use TTBR0
 #define TTBCR_L_T0SZ	__BITS(2,0)	// TTBR0 size offset
 
+#define NRRR_ORn(n)	__BITS(17+2*(n),16+2*(n)) // Outer Cacheable mappings
+#define NRRR_IRn(n)	__BITS(1+2*(n),0+2*(n)) // Inner Cacheable mappings
+#define NRRR_NC		0		// non-cacheable
+#define NRRR_WB_WA	1		// write-back write-allocate
+#define NRRR_WT		2		// write-through
+#define NRRR_WB		3		// write-back
+#define PRRR_NOSn(n)	__BITS(24+2*(n))// Memory region is Inner Shareable
+#define PRRR_NS1	__BIT(19)	// Normal Shareable S=1 is Shareable
+#define PRRR_NS0	__BIT(18)	// Normal Shareable S=0 is Shareable
+#define PRRR_DS1	__BIT(17)	// Device Shareable S=1 is Shareable
+#define PRRR_DS0	__BIT(16)	// Device Shareable S=0 is Shareable
+#define PRRR_TRn(n)	__BITS(1+2*(n),0+2*(n))
+#define PRRR_TR_STRONG	0		// Strongly Ordered
+#define PRRR_TR_DEVICE	1		// Device
+#define PRRR_TR_NORMAL	2		// Normal Memory
+
 /* Defines for ARM Generic Timer */
 #define ARM_CNTCTL_ENABLE		__BIT(0) // Timer Enabled
 #define ARM_CNTCTL_IMASK		__BIT(1) // Mask Interrupt
@@ -803,6 +819,11 @@ ARMREG_WRITE_INLINE(pmccntr, "p15,0,%0,c9,c13,0") /* PMC Cycle Counter */
 ARMREG_READ_INLINE(pmuserenr, "p15,0,%0,c9,c14,0") /* PMC User Enable */
 ARMREG_WRITE_INLINE(pmuserenr, "p15,0,%0,c9,c14,0") /* PMC User Enable */
 ARMREG_READ_INLINE(l2ctrl, "p15,1,%0,c9,c0,2") /* A7/A15 L2 Control Register */
+/* cp10 c10 registers */
+ARMREG_READ_INLINE(prrr, "p15,0,%0,c10,c2,0") /* Primary Region Remap Register */
+ARMREG_WRITE_INLINE(prrr, "p15,0,%0,c10,c2,0") /* Primary Region Remap Register */
+ARMREG_READ_INLINE(nrrr, "p15,0,%0,c10,c2,1") /* Normal Region Remap Register */
+ARMREG_WRITE_INLINE(nrrr, "p15,0,%0,c10,c2,1") /* Normal Region Remap Register */
 /* cp15 c13 registers */
 ARMREG_READ_INLINE(contextidr, "p15,0,%0,c13,c0,1") /* Context ID Register */
 ARMREG_WRITE_INLINE(contextidr, "p15,0,%0,c13,c0,1") /* Context ID Register */
