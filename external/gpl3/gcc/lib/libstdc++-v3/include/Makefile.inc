@@ -1,3 +1,11 @@
-# $NetBSD: Makefile.inc,v 1.1 2013/08/22 16:03:30 matt Exp $
+# $NetBSD: Makefile.inc,v 1.2 2014/02/26 09:54:33 mrg Exp $
+
+.ifndef _EXTERNAL_GPL3_GCC_LIB_LIBSTDCXX_INCLUDE_MAKEFILE_INC_
+_EXTERNAL_GPL3_GCC_LIB_LIBSTDCXX_INCLUDE_MAKEFILE_INC_=1
 
 .include "../Makefile.inc"
+.include "../../../Makefile.gcc_path"
+
+DIST=${GCCDIST}
+
+.endif
