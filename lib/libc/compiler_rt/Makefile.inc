@@ -1,18 +1,18 @@
-# $NetBSD: Makefile.inc,v 1.14 2014/01/29 22:38:18 joerg Exp $
+# $NetBSD: Makefile.inc,v 1.15 2014/02/26 22:37:56 joerg Exp $
 
 COMPILER_RT_SRCDIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
 
 .if ${MACHINE_ARCH} == "powerpc"
-COMPILER_RT_CPU_DIR=	${COMPILER_RT_SRCDIR}/lib/ppc
-COMPILER_RT_ARCH_DIR=	${COMPILER_RT_SRCDIR}/lib/ppc
+COMPILER_RT_CPU_DIR=	${COMPILER_RT_SRCDIR}/lib/builtins/ppc
+COMPILER_RT_ARCH_DIR=	${COMPILER_RT_SRCDIR}/lib/builtins/ppc
 .else
-COMPILER_RT_CPU_DIR=	${COMPILER_RT_SRCDIR}/lib/${MACHINE_CPU}
-COMPILER_RT_ARCH_DIR=	${COMPILER_RT_SRCDIR}/lib/${MACHINE_ARCH}
+COMPILER_RT_CPU_DIR=	${COMPILER_RT_SRCDIR}/lib/builtins/${MACHINE_CPU}
+COMPILER_RT_ARCH_DIR=	${COMPILER_RT_SRCDIR}/lib/builtins/${MACHINE_ARCH}
 .endif
 
 .PATH: ${COMPILER_RT_CPU_DIR}
 .PATH: ${COMPILER_RT_ARCH_DIR}
-.PATH: ${COMPILER_RT_SRCDIR}/lib
+.PATH: ${COMPILER_RT_SRCDIR}/lib/builtins
 .PATH: ${COMPILER_RT_SRCDIR}/lib/profile
 
 # Complex support needs parts of libm
