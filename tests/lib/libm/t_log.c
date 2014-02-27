@@ -1,4 +1,4 @@
-/* $NetBSD: t_log.c,v 1.9 2014/02/09 21:26:07 jmmv Exp $ */
+/* $NetBSD: t_log.c,v 1.10 2014/02/27 17:26:02 joerg Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_log.c,v 1.9 2014/02/09 21:26:07 jmmv Exp $");
+__RCSID("$NetBSD: t_log.c,v 1.10 2014/02/27 17:26:02 joerg Exp $");
 
 #include <atf-c.h>
 #include <atf-c/config.h>
@@ -809,7 +809,7 @@ ATF_TC_BODY(logf_base, tc)
 {
 	const float eps = 1.0e-7;
 
-	if (fabsf(logf(M_E) - 1.0) > eps)
+	if (fabsf(logf(M_E) - 1.0f) > eps)
 		atf_tc_fail_nonfatal("logf(e) != 1");
 }
 

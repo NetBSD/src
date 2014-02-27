@@ -1,4 +1,4 @@
-/* $NetBSD: t_atan.c,v 1.9 2013/06/14 05:39:28 isaki Exp $ */
+/* $NetBSD: t_atan.c,v 1.10 2014/02/27 17:26:02 joerg Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -184,7 +184,7 @@ ATF_TC_BODY(atanf_inf_neg, tc)
 	const float x = -1.0L / 0.0L;
 	const float eps = 1.0e-7;
 
-	if (fabsf(atanf(x) + M_PI_2) > eps)
+	if (fabsf(atanf(x) + (float)M_PI_2) > eps)
 		atf_tc_fail_nonfatal("atanf(-Inf) != -pi/2");
 #endif
 }
@@ -201,7 +201,7 @@ ATF_TC_BODY(atanf_inf_pos, tc)
 	const float x = +1.0L / 0.0L;
 	const float eps = 1.0e-7;
 
-	if (fabsf(atanf(x) - M_PI_2) > eps)
+	if (fabsf(atanf(x) - (float)M_PI_2) > eps)
 		atf_tc_fail_nonfatal("atanf(+Inf) != pi/2");
 #endif
 }
