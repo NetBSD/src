@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.94 2014/02/07 15:29:21 hannken Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.95 2014/02/27 16:51:37 hannken Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.94 2014/02/07 15:29:21 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.95 2014/02/27 16:51:37 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,8 +229,7 @@ coda_open(void *v)
 
     MARK_ENTRY(CODA_OPEN_STATS);
 
-    if (!VOP_ISLOCKED(vp))
-	VOP_LOCK(vp, LK_EXCLUSIVE);
+    KASSERT(VOP_ISLOCKED(vp));
     /* Check for open of control file. */
     if (IS_CTL_VP(vp)) {
 	/* if (WRITABLE(flag)) */
@@ -1745,8 +1744,6 @@ coda_grab_vnode(vnode_t *uvp, dev_t dev, ino_t ino, vnode_t **vpp)
 
     /*
      * Obtain vnode from mount point and inode.
-     * XXX VFS_VGET does not clearly define locked/referenced state of
-     * returned vnode.
      */
     error = VFS_VGET(mp, ino, vpp);
     if (error) {
@@ -1757,8 +1754,7 @@ coda_grab_vnode(vnode_t *uvp, dev_t dev, ino_t ino, vnode_t **vpp)
     /* share the underlying vnode lock with the coda vnode */
     mutex_obj_hold((*vpp)->v_interlock);
     uvm_obj_setlock(&uvp->v_uobj, (*vpp)->v_interlock);
-    if (!VOP_ISLOCKED(*vpp))
-	VOP_LOCK(*vpp, LK_EXCLUSIVE);
+    KASSERT(VOP_ISLOCKED(*vpp));
     return(0);
 }
 

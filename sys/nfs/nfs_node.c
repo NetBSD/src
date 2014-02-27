@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.116 2011/06/12 03:35:59 rmind Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.117 2014/02/27 16:51:38 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.116 2011/06/12 03:35:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.117 2014/02/27 16:51:38 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -229,7 +229,8 @@ loop:
 	kauth_cred_hold(np->n_rcred);
 	np->n_wcred = curlwp->l_cred;
 	kauth_cred_hold(np->n_wcred);
-	VOP_LOCK(vp, LK_EXCLUSIVE);
+	error = VOP_LOCK(vp, LK_EXCLUSIVE);
+	KASSERT(error == 0);
 	NFS_INVALIDATE_ATTRCACHE(np);
 	uvm_vnp_setsize(vp, 0);
 	(void)rb_tree_insert_node(&nmp->nm_rbtree, np);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_subr.c,v 1.25 2012/03/22 20:34:38 drochner Exp $	*/
+/*	$NetBSD: kernfs_subr.c,v 1.26 2014/02/27 16:51:38 hannken Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.25 2012/03/22 20:34:38 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.26 2014/02/27 16:51:38 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -322,9 +322,11 @@ void
 kernfs_hashins(struct kernfs_node *pp)
 {
 	struct kfs_hashhead *ppp;
+	int error __diagused;
 
 	/* lock the kfsnode, then put it on the appropriate hash list */
-	VOP_LOCK(KERNFSTOV(pp), LK_EXCLUSIVE);
+	error = VOP_LOCK(KERNFSTOV(pp), LK_EXCLUSIVE);
+	KASSERT(error == 0);
 
 	mutex_enter(&kfs_ihash_lock);
 	ppp = &kfs_hashtbl[KFSVALUEHASH(pp->kfs_value)];

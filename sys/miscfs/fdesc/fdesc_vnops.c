@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.117 2014/02/07 15:29:22 hannken Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.118 2014/02/27 16:51:38 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.117 2014/02/07 15:29:22 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.118 2014/02/27 16:51:38 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -249,7 +249,8 @@ loop:
 	fd->fd_link = 0;
 	fd->fd_ix = ix;
 	uvm_vnp_setsize(*vpp, 0);
-	VOP_LOCK(*vpp, LK_EXCLUSIVE);
+	error = VOP_LOCK(*vpp, LK_EXCLUSIVE);
+	KASSERT(error == 0);
 	LIST_INSERT_HEAD(fc, fd, fd_hash);
 	mutex_exit(&fdcache_lock);
 

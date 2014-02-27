@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.31 2014/02/27 13:00:06 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.32 2014/02/27 16:51:38 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.31 2014/02/27 13:00:06 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.32 2014/02/27 16:51:38 hannken Exp $");
 
 #define _VFS_VNODE_PRIVATE
 
@@ -642,28 +642,17 @@ vrelel(vnode_t *vp, int flags)
 			 * We have to try harder.
 			 */
 			mutex_exit(vp->v_interlock);
-			error = VOP_LOCK(vp, LK_EXCLUSIVE);
+			error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 			KASSERT(error == 0);
 			mutex_enter(vp->v_interlock);
-			/*
-			 * If the node got another reference while sleeping,
-			 * don't try to inactivate it yet.
-			 */
-			if (__predict_false(vtryrele(vp))) {
-				VOP_UNLOCK(vp);
-				if ((flags & VRELEL_CHANGING_SET) != 0) {
-					KASSERT((vp->v_iflag & VI_CHANGING) != 0);
-					vp->v_iflag &= ~VI_CHANGING;
-					cv_broadcast(&vp->v_cv);
-				}
-				mutex_exit(vp->v_interlock);
-				return;
-			}
 			defer = false;
 		} else {
 			/* If we can't acquire the lock, then defer. */
-			error = VOP_LOCK(vp, LK_EXCLUSIVE | LK_NOWAIT);
+			mutex_exit(vp->v_interlock);
+			error = vn_lock(vp,
+			    LK_EXCLUSIVE | LK_RETRY | LK_NOWAIT);
 			defer = (error != 0);
+			mutex_enter(vp->v_interlock);
 		}
 
 		KASSERT(mutex_owned(vp->v_interlock));
@@ -684,6 +673,21 @@ vrelel(vnode_t *vp, int flags)
 			if (++vrele_pending > (desiredvnodes >> 8))
 				cv_signal(&vrele_cv); 
 			mutex_exit(&vrele_lock);
+			mutex_exit(vp->v_interlock);
+			return;
+		}
+
+		/*
+		 * If the node got another reference while we
+		 * released the interlock, don't try to inactivate it yet.
+		 */
+		if (__predict_false(vtryrele(vp))) {
+			VOP_UNLOCK(vp);
+			if ((flags & VRELEL_CHANGING_SET) != 0) {
+				KASSERT((vp->v_iflag & VI_CHANGING) != 0);
+				vp->v_iflag &= ~VI_CHANGING;
+				cv_broadcast(&vp->v_cv);
+			}
 			mutex_exit(vp->v_interlock);
 			return;
 		}
@@ -930,35 +934,31 @@ vclean(vnode_t *vp)
 	KASSERT((vp->v_iflag & VI_MARKER) == 0);
 	KASSERT(vp->v_usecount != 0);
 
-	/* If cleaning is already in progress wait until done and return. */
-	if (vp->v_iflag & VI_XLOCK) {
-		vwait(vp, VI_XLOCK);
-		return;
-	}
-
 	/* If already clean, nothing to do. */
 	if ((vp->v_iflag & VI_CLEAN) != 0) {
 		return;
 	}
 
+	active = (vp->v_usecount > 1);
+	doclose = ! (active && vp->v_type == VBLK &&
+	    spec_node_getmountedfs(vp) != NULL);
+	mutex_exit(vp->v_interlock);
+
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+
 	/*
 	 * Prevent the vnode from being recycled or brought into use
 	 * while we clean it out.
 	 */
+	mutex_enter(vp->v_interlock);
+	KASSERT((vp->v_iflag & (VI_XLOCK | VI_CLEAN)) == 0);
 	vp->v_iflag |= VI_XLOCK;
 	if (vp->v_iflag & VI_EXECMAP) {
 		atomic_add_int(&uvmexp.execpages, -vp->v_uobj.uo_npages);
 		atomic_add_int(&uvmexp.filepages, vp->v_uobj.uo_npages);
 	}
 	vp->v_iflag &= ~(VI_TEXT|VI_EXECMAP);
-	active = (vp->v_usecount > 1);
-
-	/* XXXAD should not lock vnode under layer */
 	mutex_exit(vp->v_interlock);
-	VOP_LOCK(vp, LK_EXCLUSIVE);
-
-	doclose = ! (active && vp->v_type == VBLK &&
-	    spec_node_getmountedfs(vp) != NULL);
 
 	/*
 	 * Clean out any cached data associated with the vnode.
