@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.2 2014/02/26 10:57:30 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.3 2014/02/27 09:11:35 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -29,7 +29,6 @@ EXTRA_FAKEHEADERS=
 LIBGCCOBJ!=    cd ${.CURDIR}/../libgcc/libgcc && ${PRINTOBJDIR}
 
 DIST=		${GCCDIST}
-DIST=		${NETBSDSRCDIR}/external/gpl3/gcc/dist
 GNUHOSTDIST=	${DIST}
 GCCARCH=	${GCC_SUBDIR}/usr.bin/gcc/arch/${GCC_MACHINE_ARCH}
 LIBOBJCARCH=	${GCC_SUBDIR}/lib/libobjc/arch/${GCC_MACHINE_ARCH}

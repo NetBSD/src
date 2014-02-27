@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.common,v 1.1.1.1 2014/02/25 18:42:26 mrg Exp $
+#	$NetBSD: Makefile.common,v 1.1.1.2 2014/02/27 09:11:39 mrg Exp $
 
-DIST=		${NETBSDSRCDIR}/external/gpl3/gcc/dist
+DIST=		${GCCDIST}
 GNUHOSTDIST=	${DIST}
 
 GCC_MACHINE_ARCH=${MACHINE_ARCH:S/earmv5/earm/}
