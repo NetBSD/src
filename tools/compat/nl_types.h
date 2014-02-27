@@ -1,5 +1,5 @@
-/*	$NetBSD: nl_types.h,v 1.1 2002/01/29 10:20:32 tv Exp $	*/
+/*	$NetBSD: nl_types.h,v 1.2 2014/02/27 01:07:52 matt Exp $	*/
 
-#ifdef _NLS_PRIVATE
+#if defined(_NLS_PRIVATE) || defined(__NetBSD__)
 #include "../../include/nl_types.h"
 #endif
