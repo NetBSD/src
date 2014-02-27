@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.42 2013/09/12 15:36:17 joerg Exp $	*/
+/*	$NetBSD: asm.h,v 1.43 2014/02/27 15:58:03 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -334,6 +334,7 @@ y:	.quad	.y,.TOC.@tocbase,0;	\
 # define streg		stw	/* load PPC general register */
 # define stregu		stwu	/* load PPC general register with udpate */
 # define SZREG		4	/* 4 byte registers */
+# define P2SZREG	2
 
 # define lptrarx	lwarx	/* load "C" pointer with reservation */
 # define llongarx	lwarx	/* load "C" long with reservation */
@@ -365,6 +366,7 @@ y:	.quad	.y,.TOC.@tocbase,0;	\
 # define lmw		lmd	/* load multiple PPC general registers */
 # define stmw		stmd	/* store multiple PPC general registers */
 # define SZREG		8	/* 8 byte registers */
+# define P2SZREG	3
 
 # define lptrarx	ldarx	/* load "C" pointer with reservation */
 # define llongarx	ldarx	/* load "C" long with reservation */
