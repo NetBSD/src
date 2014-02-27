@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_ksu.c,v 1.8 2013/12/29 22:54:58 christos Exp $	*/
+/*	$NetBSD: pam_ksu.c,v 1.9 2014/02/27 18:09:38 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 Jacques A. Vidrine <nectar@FreeBSD.org>
@@ -29,7 +29,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_ksu/pam_ksu.c,v 1.5 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_ksu.c,v 1.8 2013/12/29 22:54:58 christos Exp $");
+__RCSID("$NetBSD: pam_ksu.c,v 1.9 2014/02/27 18:09:38 joerg Exp $");
 #endif
 
 #include <sys/param.h>
@@ -139,8 +139,6 @@ auth_krb5(pam_handle_t *pamh, krb5_context context, const char *su_principal_nam
 		    su_principal_name);
 	else
 		(void)snprintf(prompt, sizeof(prompt), "Password:");
-	if (prompt == NULL)
-		return (PAM_BUF_ERR);
 	pass = NULL;
 	pamret = pam_get_authtok(pamh, PAM_AUTHTOK, &pass, prompt);
 	if (pamret != PAM_SUCCESS)
