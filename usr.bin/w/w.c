@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.78 2014/02/19 20:42:14 dsl Exp $	*/
+/*	$NetBSD: w.c,v 1.79 2014/02/27 00:49:46 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.78 2014/02/19 20:42:14 dsl Exp $");
+__RCSID("$NetBSD: w.c,v 1.79 2014/02/27 00:49:46 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -426,14 +426,10 @@ pr_args(struct kinfo_proc2 *kp)
 	left = argwidth;
 	argv = kvm_getargv2(kd, kp, (argwidth < 0) ? 0 : argwidth);
 	if (argv == 0) {
-		if (kp->p_comm == 0) {
-			goto nothing;
-		} else {
-			fmt_putc('(', &left);
-			fmt_puts((char *)kp->p_comm, &left);
-			fmt_putc(')', &left);
-			return;
-		}
+		fmt_putc('(', &left);
+		fmt_puts((char *)kp->p_comm, &left);
+		fmt_putc(')', &left);
+		return;
 	}
 	while (*argv) {
 		fmt_puts(*argv, &left);
