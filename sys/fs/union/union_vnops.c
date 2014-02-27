@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.56 2014/02/16 09:50:25 hannken Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.57 2014/02/27 16:51:38 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.56 2014/02/16 09:50:25 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.57 2014/02/27 16:51:38 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1598,10 +1598,32 @@ union_lock(void *v)
 		int a_flags;
 	} */ *ap = v;
 	struct vnode *vp;
-	struct union_node *un;
+	struct union_node *un = VTOUNION(ap->a_vp);
+	int flags = ap->a_flags;
 	int error;
 
-	un = VTOUNION(ap->a_vp);
+	if ((flags & LK_NOWAIT) != 0) {
+		if (!mutex_tryenter(&un->un_lock))
+			return EBUSY;
+		vp = LOCKVP(ap->a_vp);
+		if (!mutex_tryenter(vp->v_interlock)) {
+			mutex_exit(&un->un_lock);
+			return EBUSY;
+		}
+		if ((vp->v_iflag & (VI_XLOCK | VI_CLEAN)) != 0) {
+			mutex_exit(vp->v_interlock);
+			mutex_exit(&un->un_lock);
+			return EBUSY;
+		}
+		mutex_exit(vp->v_interlock);
+		if (vp == ap->a_vp)
+			error = genfs_lock(ap);
+		else
+			error = VOP_LOCK(vp, flags);
+		mutex_exit(&un->un_lock);
+		return error;
+	}
+
 	mutex_enter(&un->un_lock);
 	for (;;) {
 		vp = LOCKVP(ap->a_vp);
@@ -1620,9 +1642,22 @@ union_lock(void *v)
 		else
 			VOP_UNLOCK(vp);
 	}
+	mutex_enter(vp->v_interlock);
+	if ((vp->v_iflag & (VI_XLOCK | VI_CLEAN)) != 0) {
+		if (vp == ap->a_vp)
+			genfs_unlock(ap);
+		else
+			VOP_UNLOCK(vp);
+		if ((vp->v_iflag & VI_XLOCK))
+			vwait(vp, VI_XLOCK);
+		mutex_exit(vp->v_interlock);
+		mutex_exit(&un->un_lock);
+		return ENOENT;
+	}
+	mutex_exit(vp->v_interlock);
 	mutex_exit(&un->un_lock);
 
-	return error;
+	return 0;
 }
 
 int

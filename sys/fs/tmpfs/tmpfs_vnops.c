@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.117 2014/02/17 20:16:52 maxv Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.118 2014/02/27 16:51:38 hannken Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.117 2014/02/17 20:16:52 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.118 2014/02/27 16:51:38 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1082,7 +1082,6 @@ tmpfs_reclaim(void *v)
 	bool recycle;
 
 	mutex_enter(&node->tn_vlock);
-	VOP_LOCK(vp, LK_EXCLUSIVE);
 
 	/* Disassociate inode from vnode. */
 	node->tn_vnode = NULL;
@@ -1091,7 +1090,6 @@ tmpfs_reclaim(void *v)
 	/* If inode is not referenced, i.e. no links, then destroy it. */
 	recycle = node->tn_links == 0 && TMPFS_NODE_RECLAIMING(node) == 0;
 
-	VOP_UNLOCK(vp);
 	mutex_exit(&node->tn_vlock);
 
 	if (recycle) {
