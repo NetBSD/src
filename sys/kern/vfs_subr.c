@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.441 2013/11/27 17:24:44 christos Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.442 2014/02/27 13:00:06 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.441 2013/11/27 17:24:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.442 2014/02/27 13:00:06 hannken Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -131,8 +131,8 @@ vntblinit(void)
 {
 
 	vn_initialize_syncerd();
-	vfs_vnode_sysinit();
 	vfs_mount_sysinit();
+	vfs_vnode_sysinit();
 }
 
 /*

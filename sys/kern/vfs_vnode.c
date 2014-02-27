@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.30 2013/12/07 10:03:28 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.31 2014/02/27 13:00:06 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.30 2013/12/07 10:03:28 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.31 2014/02/27 13:00:06 hannken Exp $");
 
 #define _VFS_VNODE_PRIVATE
 
@@ -150,6 +150,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.30 2013/12/07 10:03:28 hannken Exp $
 u_int			numvnodes		__cacheline_aligned;
 
 static pool_cache_t	vnode_cache		__read_mostly;
+static struct mount	*dead_mount;
 
 /*
  * There are two free lists: one is for vnodes which have no buffer/page
@@ -178,6 +179,7 @@ static void		vnpanic(vnode_t *, const char *, ...)
 
 /* Routines having to do with the management of the vnode table. */
 extern int		(**dead_vnodeop_p)(void *);
+extern struct vfsops	dead_vfsops;
 
 void
 vfs_vnode_sysinit(void)
@@ -187,6 +189,10 @@ vfs_vnode_sysinit(void)
 	vnode_cache = pool_cache_init(sizeof(vnode_t), 0, 0, 0, "vnodepl",
 	    NULL, IPL_NONE, NULL, NULL, NULL);
 	KASSERT(vnode_cache != NULL);
+
+	dead_mount = vfs_mountalloc(&dead_vfsops, NULL);
+	KASSERT(dead_mount != NULL);
+	dead_mount->mnt_iflag = IMNT_MPSAFE;
 
 	mutex_init(&vnode_free_list_lock, MUTEX_DEFAULT, IPL_NONE);
 	TAILQ_INIT(&vnode_free_list);
@@ -999,12 +1005,10 @@ vclean(vnode_t *vp)
 	/* Purge name cache. */
 	cache_purge(vp);
 
-	/*
-	 * The vnode isn't clean, but still resides on the mount list.  Remove
-	 * it. XXX This is a bit dodgy.
-	 */
-	if (! doclose)
-		vfs_insmntque(vp, NULL);
+	/* Move to dead mount. */
+	vp->v_vflag &= ~VV_ROOT;
+	atomic_inc_uint(&dead_mount->mnt_refcnt);
+	vfs_insmntque(vp, dead_mount);
 
 	/* Done with purge, notify sleepers of the grim news. */
 	mutex_enter(vp->v_interlock);

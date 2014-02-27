@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.54 2014/02/07 15:29:22 hannken Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.55 2014/02/27 13:00:06 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.54 2014/02/07 15:29:22 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.55 2014/02/27 13:00:06 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,7 +146,7 @@ dead_lookup(void *v)
 
 	*(ap->a_vpp) = NULL;
 
-	return EIO;
+	return ENOENT;
 }
 
 /* ARGSUSED */

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1083 2014/02/21 07:32:43 matt Exp $
+#	$NetBSD: files,v 1.1084 2014/02/27 13:00:06 hannken Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -1649,6 +1649,7 @@ file	kern/vfs_vnops.c
 file	kern/vfs_wapbl.c		wapbl
 file	kern/vfs_xattr.c
 file	kern/vnode_if.c
+file	miscfs/deadfs/dead_vfsops.c
 file	miscfs/deadfs/dead_vnops.c
 file	miscfs/fifofs/fifo_vnops.c
 file	miscfs/genfs/genfs_io.c
