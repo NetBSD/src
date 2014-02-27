@@ -1,5 +1,11 @@
 Version history:
 ----------------
+0.8.2	- 27 February 2014
+	o Fix admin port establish-sa for tunnel mode SAs (Alexander Sbitnev)
+	o Fix source port selection regression from version 0.8.1
+	o Various logging improvements
+	o Additional compliance and build fixes
+
 0.8.1	- 08 January 2013
 	o Improved X.509 subject name comparation (Götz Babin-Ebell)
 	o Relax DPD cookie check for Cisco IOS compatibility (Roman Antink)
