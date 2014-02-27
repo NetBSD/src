@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.61 2014/02/22 07:53:16 maxv Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.62 2014/02/27 09:58:05 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.61 2014/02/22 07:53:16 maxv Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.62 2014/02/27 09:58:05 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -876,7 +876,7 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 	size_t shsize, nsize;
 	int error;
 	int isnetbsd = 0;
-	char *ndata;
+	char *ndata, *ndesc;
 
 	epp->ep_pax_flags = 0;
 	if (eh->e_shnum > MAXSHNUM || eh->e_shnum == 0)
@@ -918,6 +918,7 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 		    roundup(np->n_descsz, 4);
 		if (nsize != shp->sh_size)
 			goto bad;
+		ndesc = ndata + roundup(np->n_namesz, 4);
 
 		switch (np->n_type) {
 		case ELF_NOTE_TYPE_NETBSD_TAG:
@@ -926,8 +927,7 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 			    np->n_descsz == ELF_NOTE_NETBSD_DESCSZ &&
 			    memcmp(ndata, ELF_NOTE_NETBSD_NAME,
 			    ELF_NOTE_NETBSD_NAMESZ) == 0) {
-				memcpy(&epp->ep_osversion,
-				    ndata + roundup(ELF_NOTE_NETBSD_NAMESZ, 4),
+				memcpy(&epp->ep_osversion, ndesc,
 				    ELF_NOTE_NETBSD_DESCSZ);
 				isnetbsd = 1;
 				break;
@@ -949,8 +949,7 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 			    np->n_descsz == ELF_NOTE_PAX_DESCSZ &&
 			    memcmp(ndata, ELF_NOTE_PAX_NAME,
 			    ELF_NOTE_PAX_NAMESZ) == 0) {
-				memcpy(&epp->ep_pax_flags,
-				    ndata + roundup(ELF_NOTE_PAX_NAMESZ, 4),
+				memcpy(&epp->ep_pax_flags, ndesc,
 				    sizeof(epp->ep_pax_flags));
 				break;
 			}
@@ -961,8 +960,17 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 			if (np->n_namesz == ELF_NOTE_MARCH_NAMESZ
 			    && memcmp(ndata, ELF_NOTE_MARCH_NAME,
 				    ELF_NOTE_MARCH_NAMESZ) == 0) {
-				strlcpy(epp->ep_machine_arch,
-				    ndata + roundup(ELF_NOTE_MARCH_NAMESZ, 4),
+				/* Do not truncate the buffer */
+				if (np->n_descsz > sizeof(epp->ep_machine_arch))
+					goto bad;
+				/*
+				 * Ensure ndesc is NUL-terminated and of the
+				 * expected length.
+				 */
+				if (strnlen(ndesc, np->n_descsz) + 1 !=
+				    np->n_descsz)
+					goto bad;
+				strlcpy(epp->ep_machine_arch, ndesc,
 				    sizeof(epp->ep_machine_arch));
 				break;
 			}
@@ -974,9 +982,7 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 			if (np->n_namesz == ELF_NOTE_MCMODEL_NAMESZ
 			    && memcmp(ndata, ELF_NOTE_MCMODEL_NAME,
 				    ELF_NOTE_MCMODEL_NAMESZ) == 0) {
-				ELF_MD_MCMODEL_CHECK(epp, 
-				    ndata + roundup(ELF_NOTE_MCMODEL_NAMESZ, 4),
-				    np->n_descsz);
+				ELF_MD_MCMODEL_CHECK(epp, ndesc, np->n_descsz);
 				break;
 			}
 			goto bad;
