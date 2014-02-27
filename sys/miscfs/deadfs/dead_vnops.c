@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.55 2014/02/27 13:00:06 hannken Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.56 2014/02/27 16:51:38 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.55 2014/02/27 13:00:06 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.56 2014/02/27 16:51:38 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,12 +65,12 @@ int	dead_rmdir(void *);
 #define dead_seek	genfs_nullop
 int	dead_inactive(void *);
 #define dead_reclaim	genfs_nullop
-#define dead_lock	genfs_lock
-#define dead_unlock	genfs_unlock
+#define dead_lock	genfs_deadlock
+#define dead_unlock	genfs_deadunlock
 int	dead_bmap(void *);
 int	dead_strategy(void *);
 int	dead_print(void *);
-#define dead_islocked	genfs_islocked
+#define dead_islocked	genfs_deadislocked
 #define dead_revoke	genfs_nullop
 int	dead_getpages(void *);
 int	dead_putpages(void *);
