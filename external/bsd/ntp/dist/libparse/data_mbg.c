@@ -1,4 +1,4 @@
-/*	$NetBSD: data_mbg.c,v 1.3 2013/12/28 03:20:14 christos Exp $	*/
+/*	$NetBSD: data_mbg.c,v 1.4 2014/02/27 18:12:41 joerg Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/libparse/data_mbg.c,v 4.8 2006/06/22 18:40:01 kardel RELEASE_20060622_A
@@ -268,8 +268,8 @@ mbg_tm_str(
 		 tmp->year, tmp->month, tmp->mday,
 		 tmp->hour, tmp->minute, tmp->second, tmp->frac,
 		 (tmp->offs_from_utc < 0) ? '-' : '+',
-		 abs(tmp->offs_from_utc) / 3600,
-		 (abs(tmp->offs_from_utc) / 60) % 60);
+		 abs((int)tmp->offs_from_utc) / 3600,
+		 (abs((int)tmp->offs_from_utc) / 60) % 60);
 	*buffpp += strlen(*buffpp);
 
 	mbg_time_status_str(buffpp, tmp->status, size - (*buffpp - s));
