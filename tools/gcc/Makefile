@@ -1,12 +1,16 @@
-#	$NetBSD: Makefile,v 1.65 2014/02/26 09:54:34 mrg Exp $
+#	$NetBSD: Makefile,v 1.66 2014/02/27 20:15:53 mrg Exp $
 
 .include <bsd.own.mk>
 
 GCC_LANGUAGES=c c++ objc
 MODULE=			gcc4
 
-GCCDIST=		${.CURDIR}/../../external/gpl3/${EXTERNAL_GCC_SUBDIR}/dist
-GNUHOSTDIST=		${GCCDIST}
+.if ${HAVE_GCC} < 45
+GCCDIST=	${.CURDIR}/../../gnu/dist/gcc4
+.else
+GCCDIST=	${.CURDIR}/../../external/gpl3/${EXTERNAL_GCC_SUBDIR}/dist
+.endif
+GNUHOSTDIST=	${GCCDIST}
 
 .if ${HAVE_GCC} == 48
 CC_FOR_BUILD=		${HOST_CXX:Q}
@@ -124,12 +128,6 @@ MKNATIVE_ENV=	${BINENV} ${CONFIGURE_ENV:NC*:NLD*} \
 			gdb_cv_scanf_has_long_double=yes \
 			gcc_cv_as_sparc_gotdata_op=no
 
-.if ${HAVE_GCC} < 45
-GCCSRCDIR=${.CURDIR}/../../gnu/dist/gcc4
-.else
-GCCSRCDIR=${.CURDIR}/../../external/gpl3/${EXTERNAL_GCC_SUBDIR}/dist
-.endif
-
 CXXADDFLAGS=	--sysroot=${DESTDIR}
 CCADDFLAGS=	--sysroot=${DESTDIR} -L${DESTDIR}/lib -L${DESTDIR}/usr/lib -B${DESTDIR}/usr/lib/ -I${.OBJDIR}/.native/gcc/include
 
@@ -189,7 +187,7 @@ NATIVE_CONFIGURE_ARGS+=	\
 			--disable-multilib \
 			--disable-symvers \
 			--disable-libstdcxx-pch \
-			--build=`${GCCSRCDIR}/config.guess` \
+			--build=`${GCCDIST}/config.guess` \
 			--host=${MACHINE_GNU_PLATFORM} \
 			--with-sysroot=${DESTDIR}
 MKENV_BUILD_MAKE=cd .native && ${MKNATIVE_ENV} ${BUILD_MAKE}
