@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.91 2012/10/27 17:18:34 chs Exp $ */
+/* $NetBSD: if_ti.c,v 1.92 2014/02/27 01:30:42 joerg Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.91 2012/10/27 17:18:34 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.92 2014/02/27 01:30:42 joerg Exp $");
 
 #include "opt_inet.h"
 
@@ -483,9 +483,6 @@ static void
 ti_handle_events(struct ti_softc *sc)
 {
 	struct ti_event_desc	*e;
-
-	if (sc->ti_rdata->ti_event_ring == NULL)
-		return;
 
 	while (sc->ti_ev_saved_considx != sc->ti_ev_prodidx.ti_idx) {
 		e = &sc->ti_rdata->ti_event_ring[sc->ti_ev_saved_considx];
@@ -1009,9 +1006,6 @@ ti_free_tx_ring(struct ti_softc *sc)
 {
 	int		i;
 	struct txdmamap_pool_entry *dma;
-
-	if (sc->ti_rdata->ti_tx_ring == NULL)
-		return;
 
 	for (i = 0; i < TI_TX_RING_CNT; i++) {
 		if (sc->ti_cdata.ti_tx_chain[i] != NULL) {
