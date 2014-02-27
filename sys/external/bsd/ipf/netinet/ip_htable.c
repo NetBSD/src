@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_htable.c,v 1.4 2013/09/14 11:41:45 martin Exp $	*/
+/*	$NetBSD: ip_htable.c,v 1.5 2014/02/27 01:30:18 joerg Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -60,7 +60,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_htable.c,v 1.4 2013/09/14 11:41:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_htable.c,v 1.5 2014/02/27 01:30:18 joerg Exp $");
 #else
 static const char rcsid[] = "@(#)Id: ip_htable.c,v 1.1.1.2 2012/07/22 13:45:19 darrenr Exp";
 #endif
@@ -625,8 +625,7 @@ ipf_htent_remove(ipf_main_softc_t *softc, void *arg, iphtable_t *iph,
 	switch (iph->iph_type & ~IPHASH_ANON)
 	{
 	case IPHASH_GROUPMAP :
-		if (ipe->ipe_group != NULL)
-			ipf_group_del(softc, ipe->ipe_ptr, NULL);
+		ipf_group_del(softc, ipe->ipe_ptr, NULL);
 		break;
 
 	default :
