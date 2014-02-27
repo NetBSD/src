@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_up.S,v 1.5 2014/01/27 18:05:24 matt Exp $	*/
+/*	$NetBSD: atomic_cas_up.S,v 1.6 2014/02/27 09:39:00 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -48,6 +48,24 @@ RAS_START_ASM_HIDDEN(_atomic_cas)
 RAS_END_ASM_HIDDEN(_atomic_cas)
 1:	RET
 END(_atomic_cas_up)
+
+#if defined(__HAVE_ASM_ATOMIC_CAS_64_UP)
+ARM_ENTRY(_atomic_cas_64_up)
+	push	{r4-r5}
+	mov	ip, r0
+	ldrd	r4, r5, [sp]
+	.align	0
+RAS_START_ASM_HIDDEN(_atomic_cas_64)
+	ldrd	r0, r1, [ip]
+	cmp	r0, r2
+	cmpeq	r1, r3
+	strdeq	r4, r5, [ip]
+	.align	0
+RAS_END_ASM_HIDDEN(_atomic_cas_64)
+1:	pop	{r4-r5}
+	bx	lr
+END(_atomic_cas_64_up)
+#endif /* __HAVE_ASM_ATOMIC_64_UP */
 
 ENTRY(_atomic_cas_16_up)
 	mov	r3, r0
