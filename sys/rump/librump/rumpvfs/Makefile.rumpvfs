@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpvfs,v 1.39 2013/12/09 20:44:00 pooka Exp $
+#	$NetBSD: Makefile.rumpvfs,v 1.40 2014/02/27 13:00:06 hannken Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -41,7 +41,7 @@ SRCS+=	uvm_vnode.c
 SRCS+=	sync_subr.c sync_vnops.c
 
 # sys/miscfs/deadfs
-SRCS+=	dead_vnops.c
+SRCS+=	dead_vfsops.c dead_vnops.c
 
 # sys/miscfs
 SRCS+=	genfs_io.c genfs_rename.c genfs_vfsops.c genfs_vnops.c spec_vnops.c

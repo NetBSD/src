@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.25 2013/11/27 17:25:46 christos Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.26 2014/02/27 13:00:06 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.25 2013/11/27 17:25:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.26 2014/02/27 13:00:06 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -525,31 +525,6 @@ vflush(struct mount *mp, vnode_t *skipvp, int flags)
 }
 
 /*
- * Remove clean vnodes from a mountpoint's vnode list.
- */
-void
-vfs_scrubvnlist(struct mount *mp)
-{
-	vnode_t *vp, *nvp;
-
-retry:
-	mutex_enter(&mntvnode_lock);
-	TAILQ_FOREACH_SAFE(vp, &mp->mnt_vnodelist, v_mntvnodes, nvp) {
-		mutex_enter(vp->v_interlock);
-		if ((vp->v_iflag & VI_CLEAN) != 0) {
-			TAILQ_REMOVE(&mp->mnt_vnodelist, vp, v_mntvnodes);
-			vp->v_mount = NULL;
-			mutex_exit(&mntvnode_lock);
-			mutex_exit(vp->v_interlock);
-			vfs_destroy(mp);
-			goto retry;
-		}
-		mutex_exit(vp->v_interlock);
-	}
-	mutex_exit(&mntvnode_lock);
-}
-
-/*
  * Mount a file system.
  */
 
@@ -829,7 +804,6 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	if ((mp->mnt_flag & MNT_RDONLY) == 0) {
 		error = VFS_SYNC(mp, MNT_WAIT, l->l_cred);
 	}
-	vfs_scrubvnlist(mp);
 	if (error == 0 || (flags & MNT_FORCE)) {
 		error = VFS_UNMOUNT(mp, flags);
 	}
@@ -845,7 +819,6 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 		return (error);
 	}
 	mutex_exit(&mp->mnt_updating);
-	vfs_scrubvnlist(mp);
 
 	/*
 	 * release mnt_umounting lock here, because other code calls
