@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.92 2014/02/07 15:29:21 hannken Exp $
+.\"     $NetBSD: vnodeops.9,v 1.93 2014/02/27 16:51:37 hannken Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 7, 2014
+.Dd February 27, 2014
 .Dt VNODEOPS 9
 .Os
 .Sh NAME
@@ -1071,6 +1071,11 @@ If
 contains
 .Dv LK_NOWAIT
 and the lock is busy, the operation will return immediately with an error code.
+If
+.Fa flags
+contains
+.Dv LK_RETRY
+this is a hint the caller wants the lock on dead vnodes too.
 If the operation is successful zero is returned, otherwise an
 appropriate error code is returned.
 .Fn VOP_LOCK
