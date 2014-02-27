@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5212_reset.c,v 1.4 2011/03/07 11:25:43 cegger Exp $
+ * $Id: ar5212_reset.c,v 1.5 2014/02/27 01:31:09 joerg Exp $
  */
 #include "opt_ah.h"
 
@@ -2510,7 +2510,7 @@ ar5212GetLowerUpperValues(uint16_t v, uint16_t *lp, uint16_t listSize,
 		 * If value is close to the current value of the list
 		 * then target is not between values, it is one of the values
 		 */
-		if (abs(lp[0] * EEP_SCALE - target) < EEP_DELTA) {
+		if (lp[0] * EEP_SCALE - target < EEP_DELTA) {
 			*vlo = *vhi = lp[0];
 			return;
 		}
