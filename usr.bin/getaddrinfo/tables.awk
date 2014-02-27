@@ -1,6 +1,6 @@
 #!/usr/bin/awk -f
 
-#	$NetBSD: tables.awk,v 1.1 2013/09/30 06:19:22 riastradh Exp $
+#	$NetBSD: tables.awk,v 1.2 2014/02/27 01:17:13 ginsbach Exp $
 
 # Copyright (c) 2013 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -38,7 +38,7 @@ BEGIN {
 	next
 }
 
-$2 ~ /^AF_[A-Z0-9_]*$/ {
+($2 ~ /^AF_[A-Z0-9_]*$/) && ($2 != "AF_MAX") {
 	afs[n_afs++] = substr($2, 4)
 }
 
