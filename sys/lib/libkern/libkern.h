@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.112 2013/12/27 20:25:33 christos Exp $	*/
+/*	$NetBSD: libkern.h,v 1.113 2014/02/27 18:05:07 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -52,6 +52,9 @@ LIBKERN_INLINE long lmin(long, long) __unused;
 LIBKERN_INLINE u_long ulmax(u_long, u_long) __unused;
 LIBKERN_INLINE u_long ulmin(u_long, u_long) __unused;
 LIBKERN_INLINE int abs(int) __unused;
+LIBKERN_INLINE long labs(long) __unused;
+LIBKERN_INLINE long long llabs(long long) __unused;
+LIBKERN_INLINE intmax_t imaxabs(intmax_t) __unused;
 
 LIBKERN_INLINE int isspace(int) __unused;
 LIBKERN_INLINE int isascii(int) __unused;
@@ -107,6 +110,24 @@ ulmin(u_long a, u_long b)
 
 LIBKERN_INLINE int
 abs(int j)
+{
+	return(j < 0 ? -j : j);
+}
+
+LIBKERN_INLINE long
+labs(long j)
+{
+	return(j < 0 ? -j : j);
+}
+
+LIBKERN_INLINE long long
+llabs(long long j)
+{
+	return(j < 0 ? -j : j);
+}
+
+LIBKERN_INLINE intmax_t
+imaxabs(intmax_t j)
 {
 	return(j < 0 ? -j : j);
 }
