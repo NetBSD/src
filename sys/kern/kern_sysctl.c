@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.246 2014/02/25 18:30:11 pooka Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.247 2014/02/27 22:50:52 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.246 2014/02/25 18:30:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.247 2014/02/27 22:50:52 dsl Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -1429,7 +1429,9 @@ sysctl_lookup(SYSCTLFN_ARGS)
 {
 	int error, rw;
 	size_t sz, len;
-	void *d;
+	void *d, *d_out;
+	uint64_t qval;
+	int ival;
 
 	KASSERT(rw_lock_held(&sysctl_treelock));
 
@@ -1437,6 +1439,9 @@ sysctl_lookup(SYSCTLFN_ARGS)
 		printf("%s: rnode %p wrong version\n", __func__, rnode);
 		return EINVAL;
 	}
+
+	if (newlen == 0)
+		newp = NULL;
 
 	error = 0;
 
@@ -1496,29 +1501,41 @@ sysctl_lookup(SYSCTLFN_ARGS)
 		 * note that we discard const here because we are
 		 * modifying the contents of the node (which is okay
 		 * because it's ours)
+		 *
+		 * It also doesn't matter which field of the union we pick.
 		 */
-		switch (SYSCTL_TYPE(rnode->sysctl_flags)) {
-		case CTLTYPE_BOOL:
-			d = __UNCONST(&rnode->sysctl_bdata);
-			break;
-		case CTLTYPE_INT:
-			d = __UNCONST(&rnode->sysctl_idata);
-			break;
-		case CTLTYPE_QUAD:
-			d = __UNCONST(&rnode->sysctl_qdata);
-			break;
-		default:
-			DPRINTF(("%s: bad type\n", __func__));
-			return EINVAL;
-		}
+		d = __UNCONST(&rnode->sysctl_qdata);
 	} else
 		d = rnode->sysctl_data;
-	if (SYSCTL_TYPE(rnode->sysctl_flags) == CTLTYPE_STRING)
+	d_out = d;
+
+	sz = rnode->sysctl_size;
+	switch (SYSCTL_TYPE(rnode->sysctl_flags)) {
+	case CTLTYPE_INT:
+		/* Allow for 64bit read of 32bit value */
+		if (*oldlenp == sizeof (uint64_t)) {
+			qval = *(int *)d;
+			d_out = &qval;
+			sz =  sizeof (uint64_t);
+		}
+		break;
+	case CTLTYPE_QUAD:
+		/* Allow for 32bit read of 64bit value */
+		if (*oldlenp == sizeof (int)) {
+			qval = *(uint64_t *)d;
+			ival = qval < 0x100000000 ? qval : 0xffffffff;
+			d_out = &ival;
+			sz =  sizeof (int);
+		}
+		break;
+	case CTLTYPE_STRING:
 		sz = strlen(d) + 1; /* XXX@@@ possible fault here */
-	else
-		sz = rnode->sysctl_size;
+		break;
+	default:
+		break;
+	}
 	if (oldp != NULL) {
-		error = sysctl_copyout(l, d, oldp, MIN(sz, *oldlenp));
+		error = sysctl_copyout(l, d_out, oldp, MIN(sz, *oldlenp));
 		if (error) {
 			DPRINTF(("%s: bad copyout %d\n", __func__, error));
 			return error;
@@ -1529,7 +1546,7 @@ sysctl_lookup(SYSCTLFN_ARGS)
 	/*
 	 * are we done?
 	 */
-	if (newp == NULL || newlen == 0)
+	if (newp == NULL)
 		return 0;
 
 	/*
@@ -1561,16 +1578,34 @@ sysctl_lookup(SYSCTLFN_ARGS)
 	}
 	case CTLTYPE_INT:
 	case CTLTYPE_QUAD:
+		/* Allow 32bit of 64bit integers */
+		if (newlen == sizeof (uint64_t)) {
+			error = sysctl_copyin(l, newp, &qval, sizeof qval);
+		} else if (newlen == sizeof (int)) {
+			error = sysctl_copyin(l, newp, &ival, sizeof ival);
+			qval = ival;
+		} else {
+			goto bad_size;
+		}
+		if (!error) {
+			if (SYSCTL_TYPE(rnode->sysctl_flags) == CTLTYPE_INT) {
+				ival = qval;
+				/* Error out of range values */
+				if (ival != qval)
+					goto bad_size;
+				*(int *)d = ival;
+			} else {
+				*(uint64_t *)d = qval;
+			}
+		}
+		break;
 	case CTLTYPE_STRUCT:
 		/*
 		 * these data must be *exactly* the same size coming
 		 * in.
 		 */
-		if (newlen != sz) {
-			DPRINTF(("%s: bad size %zu != %zu\n", __func__, newlen,
-			    sz));
-			return EINVAL;
-		}
+		if (newlen != sz)
+			goto bad_size;
 		error = sysctl_copyin(l, newp, d, sz);
 		break;
 	case CTLTYPE_STRING: {
@@ -1583,11 +1618,8 @@ sysctl_lookup(SYSCTLFN_ARGS)
 		/*
 		 * too much new string?
 		 */
-		if (newlen > sz) {
-			DPRINTF(("%s: bad size %zu > %zu\n", __func__, newlen,
-			    sz));
-			return EINVAL;
-		}
+		if (newlen > sz)
+			goto bad_size;
 
 		/*
 		 * temporary copy of new inbound string
@@ -1634,6 +1666,10 @@ sysctl_lookup(SYSCTLFN_ARGS)
 	}
 
 	return error;
+
+    bad_size:
+	DPRINTF(("%s: bad size %zu > %zu\n", __func__, newlen, sz));
+	return EINVAL;
 }
 
 /*
