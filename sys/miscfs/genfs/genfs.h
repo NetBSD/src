@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs.h,v 1.31 2013/05/02 14:49:51 riastradh Exp $	*/
+/*	$NetBSD: genfs.h,v 1.32 2014/02/27 16:51:38 hannken Exp $	*/
 
 #ifndef	_MISCFS_GENFS_GENFS_H_
 #define	_MISCFS_GENFS_GENFS_H_
@@ -19,6 +19,10 @@ int	genfs_ebadf(void *);
 int	genfs_nolock(void *);
 int	genfs_noislocked(void *);
 int	genfs_nounlock(void *);
+
+int	genfs_deadlock(void *);
+#define	genfs_deadislocked genfs_islocked
+int	genfs_deadunlock(void *);
 
 int	genfs_poll(void *);
 int	genfs_kqfilter(void *);

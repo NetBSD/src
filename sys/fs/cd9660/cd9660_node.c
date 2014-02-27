@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.29 2011/06/12 03:35:52 rmind Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.30 2014/02/27 16:51:38 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.29 2011/06/12 03:35:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.30 2014/02/27 16:51:38 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,6 +170,7 @@ void
 cd9660_ihashins(struct iso_node *ip)
 {
 	struct ihashhead *ipp;
+	int error __diagused;
 
 	KASSERT(mutex_owned(&cd9660_hashlock));
 
@@ -178,7 +179,8 @@ cd9660_ihashins(struct iso_node *ip)
 	LIST_INSERT_HEAD(ipp, ip, i_hash);
 	mutex_exit(&cd9660_ihash_lock);
 
-	VOP_LOCK(ITOV(ip), LK_EXCLUSIVE);
+	error = VOP_LOCK(ITOV(ip), LK_EXCLUSIVE);
+	KASSERT(error == 0);
 }
 
 /*

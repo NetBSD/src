@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.189 2012/03/30 18:24:08 njoly Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.190 2014/02/27 16:51:38 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.189 2012/03/30 18:24:08 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.190 2014/02/27 16:51:38 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -278,6 +278,65 @@ genfs_revoke(void *v)
 }
 
 /*
+ * Lock the node (for deadfs).
+ */
+int
+genfs_deadlock(void *v)
+{
+	struct vop_lock_args /* {
+		struct vnode *a_vp;
+		int a_flags;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	int flags = ap->a_flags;
+	krw_t op;
+
+	if ((flags & LK_NOWAIT) != 0) {
+		if (!mutex_tryenter(vp->v_interlock))
+			return EBUSY;
+		if ((vp->v_iflag & VI_XLOCK)) {
+			mutex_exit(vp->v_interlock);
+			return EBUSY;
+		}
+	}
+
+	mutex_enter(vp->v_interlock);
+	if ((vp->v_iflag & VI_XLOCK))
+		vwait(vp, VI_XLOCK);
+	mutex_exit(vp->v_interlock);
+
+	if ((flags & LK_RETRY) == 0)
+		return ENOENT;
+
+	op = ((flags & LK_EXCLUSIVE) != 0 ? RW_WRITER : RW_READER);
+	if ((flags & LK_NOWAIT) != 0) {
+		if (! rw_tryenter(&vp->v_lock, op))
+			return EBUSY;
+		return 0;
+	}
+
+	rw_enter(&vp->v_lock, op);
+
+	return 0;
+}
+
+/*
+ * Unlock the node (for deadfs).
+ */
+int
+genfs_deadunlock(void *v)
+{
+	struct vop_unlock_args /* {
+		struct vnode *a_vp;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+
+	rw_exit(&vp->v_lock);
+
+	return 0;
+}
+
+/*
  * Lock the node.
  */
 int
@@ -288,24 +347,41 @@ genfs_lock(void *v)
 		int a_flags;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
+	struct mount *mp = vp->v_mount;
 	int flags = ap->a_flags;
 	krw_t op;
 
-	KASSERT((flags & ~(LK_EXCLUSIVE | LK_SHARED | LK_NOWAIT)) == 0);
-
 	op = ((flags & LK_EXCLUSIVE) != 0 ? RW_WRITER : RW_READER);
 	if ((flags & LK_NOWAIT) != 0) {
-		if (fstrans_start_nowait(vp->v_mount, FSTRANS_SHARED))
+		if (!mutex_tryenter(vp->v_interlock))
+			return EBUSY;
+		if ((vp->v_iflag & (VI_XLOCK | VI_CLEAN)) != 0) {
+			mutex_exit(vp->v_interlock);
+			return EBUSY;
+		}
+		mutex_exit(vp->v_interlock);
+		if (fstrans_start_nowait(mp, FSTRANS_SHARED))
 			return EBUSY;
 		if (! rw_tryenter(&vp->v_lock, op)) {
-			fstrans_done(vp->v_mount);
+			fstrans_done(mp);
 			return EBUSY;
 		}
 		return 0;
 	}
 
-	fstrans_start(vp->v_mount, FSTRANS_SHARED);
+	fstrans_start(mp, FSTRANS_SHARED);
 	rw_enter(&vp->v_lock, op);
+
+	mutex_enter(vp->v_interlock);
+	if ((vp->v_iflag & (VI_XLOCK | VI_CLEAN)) != 0) {
+		rw_exit(&vp->v_lock);
+		fstrans_done(mp);
+		if ((vp->v_iflag & VI_XLOCK))
+			vwait(vp, VI_XLOCK);
+		mutex_exit(vp->v_interlock);
+		return ENOENT;
+	}
+	mutex_exit(vp->v_interlock);
 
 	return 0;
 }
