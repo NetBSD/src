@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2xx0_intr.c,v 1.16 2012/01/30 03:28:33 nisimura Exp $ */
+/* $NetBSD: s3c2xx0_intr.c,v 1.17 2014/02/27 22:57:36 joerg Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2xx0_intr.c,v 1.16 2012/01/30 03:28:33 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2xx0_intr.c,v 1.17 2014/02/27 22:57:36 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,13 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: s3c2xx0_intr.c,v 1.16 2012/01/30 03:28:33 nisimura E
 
 volatile uint32_t *s3c2xx0_intr_mask_reg;
 
-static inline void
-__raise(int ipl)
-{
-	if (curcpl() < ipl) {
-		s3c2xx0_setipl(ipl);
-	}
-}
 /*
  * modify interrupt mask table for SPL levels
  */
