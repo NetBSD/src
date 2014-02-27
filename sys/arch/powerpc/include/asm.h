@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.43 2014/02/27 15:58:03 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.44 2014/02/27 18:12:28 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -108,19 +108,19 @@
 
 # define _ENTRY(y)			\
 	.globl	y;			\
-	.section ".opd","aw";		\
+	.pushsection ".opd","aw";	\
 	.align	3;			\
-y:	.quad	.y,.TOC.@tocbase,0;	\
-	.previous;			\
+y:	.quad	.##y,.TOC.@tocbase,0;	\
+	.popsection;			\
 	.size	y,24;			\
-	.type	.y,@function;		\
-	.globl	.y;			\
+	.type	.##y,@function;		\
+	.globl	.##y;			\
 	.align	3;			\
-.y:
+.##y:
 
 # define ENTRY(y) _ENTRY(y)
 
-# define END(y)
+# define END(y)	.size .##y,. - .##y
 
 # define CALL(y)			\
 	bl	.y;			\
