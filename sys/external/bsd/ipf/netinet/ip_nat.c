@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.10 2013/09/14 11:51:47 martin Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.11 2014/02/27 01:40:07 joerg Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -113,7 +113,7 @@ extern struct ifnet vpnif;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.10 2013/09/14 11:51:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.11 2014/02/27 01:40:07 joerg Exp $");
 #else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_nat.c,v 1.1.1.2 2012/07/22 13:45:27 darrenr Exp";
@@ -7904,13 +7904,13 @@ ipf_nat_rehash(ipf_main_softc_t *softc, ipftuneable_t *t, ipftuneval_t *p)
 	 * the outbound lookup table and the hash chain length for each.
 	 */
 	KMALLOCS(newtab[0], nat_t **, newsize * sizeof(nat_t *));
-	if (newtab == NULL) {
+	if (newtab[0] == NULL) {
 		error = 60063;
 		goto badrehash;
 	}
 
 	KMALLOCS(newtab[1], nat_t **, newsize * sizeof(nat_t *));
-	if (newtab == NULL) {
+	if (newtab[1] == NULL) {
 		error = 60064;
 		goto badrehash;
 	}
