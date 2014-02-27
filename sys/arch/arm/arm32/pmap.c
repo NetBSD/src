@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.269 2014/02/26 19:59:49 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.270 2014/02/27 18:10:01 joerg Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -209,7 +209,7 @@
 #include <arm/locore.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.269 2014/02/26 19:59:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.270 2014/02/27 18:10:01 joerg Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -5114,9 +5114,6 @@ pmap_get_pde_pte(pmap_t pm, vaddr_t va, pd_entry_t **pdp, pt_entry_t **ptp)
 		*ptp = NULL;
 		return true;
 	}
-
-	if (pm->pm_l2 == NULL)
-		return false;
 
 	l2 = pm->pm_l2[L2_IDX(l1idx)];
 
