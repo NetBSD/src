@@ -1,4 +1,4 @@
-/* $NetBSD: crti.S,v 1.1 2011/02/08 02:02:25 matt Exp $ */
+/* $NetBSD: crti.S,v 1.2 2014/02/27 16:47:48 matt Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -31,20 +31,54 @@
 
 #include <powerpc/asm.h>
 
-RCSID("$NetBSD: crti.S,v 1.1 2011/02/08 02:02:25 matt Exp $")
+RCSID("$NetBSD: crti.S,v 1.2 2014/02/27 16:47:48 matt Exp $")
 
 #include "sysident.S"
 
+	.globl	_init
+	.type	_init,@function
 	.section ".init", "ax", @progbits
-	.align 2; .globl _init; .type _init,@function
+	.align	P2SZREG
+#ifdef _LP64
+	.globl	._init
+	.pushsection ".opd", "aw"
+	.align	3
+_init:	.quad	._init,.TOC.@tocbase,0
+	.size	_init, (3*SZREG)
+	.popsection
+._init:
+#else
 _init:
+#endif
 	mflr	%r0
+#ifdef _LP64
+	stlongu	%r1, -(6*SZREG)(%r1)
+	stlong	%r0, (2*SZREG)(%r1)
+#else
 	stw	%r0, (1*SZREG)(%r1)
 	stwu	%r1, -(4*SZREG)(%r1)
+#endif
 
+	.globl _fini
+	.type	_fini,@function
 	.section ".fini", "ax", @progbits
-	.align 2; .globl _fini; .type _fini,@function
+	.align	P2SZREG
+#ifdef _LP64
+	.globl	._fini
+	.pushsection ".opd", "aw"
+	.align	3
+_fini:	.quad	._fini,.TOC.@tocbase,0
+	.size	_fini, (3*SZREG)
+	.popsection
+._fini:
+#else
 _fini:
+#endif
 	mflr	%r0
+#ifdef _LP64
+	stlongu	%r1, -(6*SZREG)(%r1)
+	stlong	%r0, (2*SZREG)(%r1)
+#else
 	stw	%r0, (1*SZREG)(%r1)
 	stwu	%r1, -(4*SZREG)(%r1)
+#endif
