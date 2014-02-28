@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.powerpc,v 1.52 2013/08/23 06:25:02 matt Exp $
+#	$NetBSD: Makefile.powerpc,v 1.53 2014/02/28 05:48:22 matt Exp $
 #
 # Makefile for NetBSD
 #
@@ -17,7 +17,7 @@
 #
 #	makeoptions DEBUGLIST="uvm* trap if_*"
 
-MACHINE_ARCH=powerpc
+MACHINE_ARCH?=powerpc
 USETOOLS?=	no
 NEED_OWN_INSTALL_TARGET?=no
 .include <bsd.own.mk>
