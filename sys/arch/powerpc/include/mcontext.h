@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.14 2012/09/11 00:15:19 matt Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.15 2014/02/28 05:27:05 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -111,6 +111,17 @@ typedef struct {
 	__fpregset_t	__fpregs;	/* Floating Point Register set */
 	__vrf_t		__vrf;		/* Vector Register File */
 } mcontext_t;
+
+#if defined(_LP64)
+typedef	int		__greg32_t;
+typedef	__greg32_t	__gregset32_t[_NGREG];
+
+typedef struct {
+	__gregset32_t	__gregs;	/* General Purpose Register set */
+	__fpregset_t	__fpregs;	/* Floating Point Register set */
+	__vrf_t		__vrf;		/* Vector Register File */
+} mcontext32_t;
+#endif
 
 /* Machine-dependent uc_flags */
 #define	_UC_POWERPC_VEC	0x00010000	/* Vector Register File valid */
