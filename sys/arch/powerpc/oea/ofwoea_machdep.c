@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.35 2013/11/03 22:27:27 mrg Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.36 2014/02/28 05:35:49 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.35 2013/11/03 22:27:27 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.36 2014/02/28 05:35:49 matt Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -288,7 +288,7 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 	restore_ofmap(ofmap, ofmaplen);
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
-	ksyms_addsyms_elf((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
+	ksyms_addsyms_elf((int)((uintptr_t)endsym - (uintptr_t)startsym), startsym, endsym);
 #endif
 
 	/* CPU clock stuff */
@@ -370,11 +370,13 @@ restore_ofmap(struct ofw_translations *map, int len)
 
 	pmap_pinit(&ofw_pmap);
 
+#ifndef _LP64
 	ofw_pmap.pm_sr[0] = KERNELN_SEGMENT(0)|SR_PRKEY;
 	ofw_pmap.pm_sr[KERNEL_SR] = KERNEL_SEGMENT|SR_SUKEY|SR_PRKEY;
 
 #ifdef KERNEL2_SR
 	ofw_pmap.pm_sr[KERNEL2_SR] = KERNEL2_SEGMENT|SR_SUKEY|SR_PRKEY;
+#endif
 #endif
 
 	for (i = 0; i < n; i++) {
@@ -405,7 +407,7 @@ restore_ofmap(struct ofw_translations *map, int len)
 /*
  * Scan the device tree for ranges, and return them as bitmap 0..15
  */
-#ifndef macppc
+#if !defined(macppc) && defined(PPC_OEA)
 static u_int16_t
 ranges_bitmap(int node, u_int16_t bitmap)
 {
@@ -446,7 +448,7 @@ noranges:
 	}
 	return bitmap;
 }
-#endif /* !macppc */
+#endif /* !macppc && PPC_OEA */
 
 void
 ofwoea_batinit(void)
