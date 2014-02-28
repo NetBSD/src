@@ -1,0 +1,7 @@
+; KSK rollover phase1 (new key generated but this is alread the old one)
+sub.example.de. 14400 IN DNSKEY  257 3 5 (
+			BQEAAAABzRcWJYuBn9eY8u4x+04jkYmSmfRaGuNc4soput6Fo2/HViu1
+			1Jo2uMnp4Z4MeGzti4IGsL2Lp5vC66qXeX0Qqk+aIJBQUyHCF1nPmPad
+			2hDVFpD4Lp/uArmHaaLxQ4px6LEe0PMG1W/a/gJWNxuiTmkSN5c9vXsQ
+			m3SuRnb0ef0=
+		) ; key id = 38331

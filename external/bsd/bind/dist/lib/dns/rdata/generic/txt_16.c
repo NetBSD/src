@@ -1,7 +1,7 @@
-/*	$NetBSD: txt_16.c,v 1.1.1.5 2013/07/27 15:23:17 christos Exp $	*/
+/*	$NetBSD: txt_16.c,v 1.1.1.6 2014/02/28 17:40:15 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007-2009, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007-2009, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -112,7 +112,7 @@ towire_txt(ARGS_TOWIRE) {
 	if (region.length < rdata->length)
 		return (ISC_R_NOSPACE);
 
-	memcpy(region.base, rdata->data, rdata->length);
+	memmove(region.base, rdata->data, rdata->length);
 	isc_buffer_add(target, rdata->length);
 	return (ISC_R_SUCCESS);
 }

@@ -1,7 +1,7 @@
-/*	$NetBSD: dst_result.c,v 1.1.1.5 2013/12/31 20:11:08 christos Exp $	*/
+/*	$NetBSD: dst_result.c,v 1.1.1.6 2014/02/28 17:40:13 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2008, 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -52,7 +52,8 @@ static const char *text[DST_R_NRESULTS] = {
 	"failure computing a shared secret",	/*%< 18 */
 	"no randomness available",		/*%< 19 */
 	"bad key type",				/*%< 20 */
-	"no engine"				/*%< 21 */
+	"no engine",				/*%< 21 */
+	"illegal operation for an external key"	/*%< 22 */
 };
 
 #define DST_RESULT_RESULTSET			2

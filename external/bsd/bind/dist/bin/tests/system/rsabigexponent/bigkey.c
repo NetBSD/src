@@ -1,7 +1,7 @@
-/*	$NetBSD: bigkey.c,v 1.1.1.2 2013/07/27 15:22:54 christos Exp $	*/
+/*	$NetBSD: bigkey.c,v 1.1.1.3 2014/02/28 17:40:08 christos Exp $	*/
 
 /*
- * Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,8 +18,9 @@
 
 /* Id */
 
-#ifdef OPENSSL
 #include <config.h>
+
+#if defined(OPENSSL) || defined(PKCS11CRYPTO)
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,8 +47,16 @@
 #include <dst/dst.h>
 #include <dst/result.h>
 
+#ifdef OPENSSL
 #include <openssl/opensslv.h>
 #if OPENSSL_VERSION_NUMBER <= 0x00908000L
+#define USE_FIX_KEY_FILES
+#endif
+#else
+#define USE_FIX_KEY_FILES
+#endif
+
+#ifdef USE_FIX_KEY_FILES
 
 /*
  * Use a fixed key file pair if OpenSSL doesn't support > 32 bit exponents.
@@ -110,7 +119,7 @@ main(int argc, char **argv) {
 		exit(1);
 	}
 
-	exit(0);
+	return(0);
 }
 #else
 #include <openssl/err.h>
@@ -182,8 +191,9 @@ main(int argc, char **argv) {
 	CHECK(isc_mem_create(0, 0, &mctx), "isc_mem_create()");
 	CHECK(isc_entropy_create(mctx, &ectx), "isc_entropy_create()");
 	CHECK(isc_entropy_usebestsource(ectx, &source,
-					"random.data", ISC_ENTROPY_KEYBOARDNO),
-	      "isc_entropy_usebestsource(\"random.data\")");
+					"../random.data",
+					ISC_ENTROPY_KEYBOARDNO),
+	      "isc_entropy_usebestsource(\"../random.data\")");
 	CHECK(dst_lib_init2(mctx, ectx, NULL, 0), "dst_lib_init2()");
 	CHECK(isc_log_create(mctx, &log_, &logconfig), "isc_log_create()");
 	isc_log_setcontext(log_);
@@ -237,16 +247,20 @@ main(int argc, char **argv) {
 }
 #endif
 
-#else /* OPENSSL */
+#else /* OPENSSL || PKCS11CRYPTO */
 
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <isc/util.h>
+
 int
 main(int argc, char **argv) {
-	fprintf(stderr, "Compiled without OpenSSL\n");
+	UNUSED(argc);
+	UNUSED(argv);
+	fprintf(stderr, "Compiled without Crypto\n");
 	exit(1);
 }
 
-#endif /* OPENSSL */
+#endif /* OPENSSL || PKCS11CRYPTO */
 /*! \file */

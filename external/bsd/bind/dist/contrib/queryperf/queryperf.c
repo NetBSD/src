@@ -1,4 +1,4 @@
-/*	$NetBSD: queryperf.c,v 1.1.1.4 2013/07/27 15:23:01 christos Exp $	*/
+/*	$NetBSD: queryperf.c,v 1.1.1.5 2014/02/28 17:40:10 christos Exp $	*/
 
 /*
  * Copyright (C) 2000, 2001  Nominum, Inc.
@@ -2172,12 +2172,21 @@ main(int argc, char **argv) {
 	printf("[Status] Processing input data\n");
 
 	while ((sending = keep_sending(&got_eof)) == TRUE ||
-	       queries_outstanding() > 0) {
-		print_interval_statistics();
+	       queries_outstanding() > 0)
+	{
+		if (num_queries_sent_interval > 0){
+			/*
+			 * After statistics are printed, send_query()
+			 * needs to be called at least once so that
+			 * time_of_first_query_interval is reset
+			 */
+			print_interval_statistics();
+		}
 		adjust_rate = FALSE;
 
 		while ((sending = keep_sending(&got_eof)) == TRUE &&
-		       queries_outstanding() < max_queries_outstanding) {
+		       queries_outstanding() < max_queries_outstanding)
+		{
 			int len = next_input_line(input_line, input_length);
 			if (len == 0) {
 				got_eof = TRUE;

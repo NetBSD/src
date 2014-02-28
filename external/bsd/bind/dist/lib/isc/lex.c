@@ -1,7 +1,7 @@
-/*	$NetBSD: lex.c,v 1.1.1.4 2013/12/31 20:11:28 christos Exp $	*/
+/*	$NetBSD: lex.c,v 1.1.1.5 2014/02/28 17:40:15 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -77,7 +77,7 @@ grow_data(isc_lex_t *lex, size_t *remainingp, char **currp, char **prevp) {
 	new = isc_mem_get(lex->mctx, lex->max_token * 2 + 1);
 	if (new == NULL)
 		return (ISC_R_NOMEMORY);
-	memcpy(new, lex->data, lex->max_token + 1);
+	memmove(new, lex->data, lex->max_token + 1);
 	*currp = new + (*currp - lex->data);
 	if (*prevp != NULL)
 		*prevp = new + (*prevp - lex->data);
@@ -175,7 +175,7 @@ isc_lex_getspecials(isc_lex_t *lex, isc_lexspecials_t specials) {
 
 	REQUIRE(VALID_LEX(lex));
 
-	memcpy(specials, lex->specials, 256);
+	memmove(specials, lex->specials, 256);
 }
 
 void
@@ -187,7 +187,7 @@ isc_lex_setspecials(isc_lex_t *lex, isc_lexspecials_t specials) {
 
 	REQUIRE(VALID_LEX(lex));
 
-	memcpy(lex->specials, specials, 256);
+	memmove(lex->specials, specials, 256);
 }
 
 static inline isc_result_t

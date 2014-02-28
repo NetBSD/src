@@ -1,7 +1,7 @@
-/*	$NetBSD: ecdb.c,v 1.1.1.6 2013/07/27 15:23:11 christos Exp $	*/
+/*	$NetBSD: ecdb.c,v 1.1.1.7 2014/02/28 17:40:13 christos Exp $	*/
 
 /*
- * Copyright (C) 2009-2011, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009-2013  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ecdb.c,v 1.10 2011/12/20 00:06:53 marka Exp  */
+/* Id: ecdb.c,v 1.10.34.1 2012/02/07 00:44:14 each Exp  */
 
 #include "config.h"
 
@@ -552,6 +552,7 @@ static dns_dbmethods_t ecdb_methods = {
 	detach,
 	NULL,			/* beginload */
 	NULL,			/* endload */
+	NULL,			/* serialize */
 	NULL,			/* dump */
 	NULL,			/* currentversion */
 	NULL,			/* newversion */
@@ -584,10 +585,12 @@ static dns_dbmethods_t ecdb_methods = {
 	NULL,			/* resigned */
 	NULL,			/* isdnssec */
 	NULL,			/* getrrsetstats */
-	NULL,			/* rpz_enabled */
-	NULL,			/* rpz_findips */
+	NULL,			/* rpz_attach */
+	NULL,			/* rpz_ready */
 	NULL,			/* findnodeext */
-	NULL			/* findext */
+	NULL,			/* findext */
+	NULL,			/* setcachestats */
+	NULL			/* hashsize */
 };
 
 static isc_result_t

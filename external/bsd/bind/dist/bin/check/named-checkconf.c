@@ -1,7 +1,7 @@
-/*	$NetBSD: named-checkconf.c,v 1.1.1.9 2013/12/31 20:09:47 christos Exp $	*/
+/*	$NetBSD: named-checkconf.c,v 1.1.1.10 2014/02/28 17:40:05 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -200,6 +200,7 @@ configure_zone(const char *vclass, const char *view,
 	const cfg_obj_t *obj = NULL;
 	const cfg_obj_t *fmtobj = NULL;
 	dns_masterformat_t masterformat;
+	dns_ttl_t maxttl = 0;
 
 	zone_options = DNS_ZONEOPT_CHECKNS | DNS_ZONEOPT_MANYERRORS;
 
@@ -375,11 +376,20 @@ configure_zone(const char *vclass, const char *view,
 			masterformat = dns_masterformat_text;
 		else if (strcasecmp(masterformatstr, "raw") == 0)
 			masterformat = dns_masterformat_raw;
+		else if (strcasecmp(masterformatstr, "map") == 0)
+			masterformat = dns_masterformat_map;
 		else
 			INSIST(0);
 	}
 
-	result = load_zone(mctx, zname, zfile, masterformat, zclass, NULL);
+	obj = NULL;
+	if (get_maps(maps, "max-zone-ttl", &obj)) {
+		maxttl = cfg_obj_asuint32(obj);
+		zone_options2 |= DNS_ZONEOPT2_CHECKTTL;
+	}
+
+	result = load_zone(mctx, zname, zfile, masterformat,
+			   zclass, maxttl, NULL);
 	if (result != ISC_R_SUCCESS)
 		fprintf(stderr, "%s/%s/%s: %s\n", view, zname, zclass,
 			dns_result_totext(result));
@@ -484,10 +494,11 @@ main(int argc, char **argv) {
 	isc_entropy_t *ectx = NULL;
 	isc_boolean_t load_zones = ISC_FALSE;
 	isc_boolean_t print = ISC_FALSE;
+	unsigned int flags = 0;
 
 	isc_commandline_errprint = ISC_FALSE;
 
-	while ((c = isc_commandline_parse(argc, argv, "dhjt:pvz")) != EOF) {
+	while ((c = isc_commandline_parse(argc, argv, "dhjt:pvxz")) != EOF) {
 		switch (c) {
 		case 'd':
 			debug++;
@@ -514,6 +525,10 @@ main(int argc, char **argv) {
 			printf(VERSION "\n");
 			exit(0);
 
+		case 'x':
+			flags |= CFG_PRINTER_XKEY;
+			break;
+
 		case 'z':
 			load_zones = ISC_TRUE;
 			docheckmx = ISC_FALSE;
@@ -534,6 +549,11 @@ main(int argc, char **argv) {
 				program, isc_commandline_option);
 			exit(1);
 		}
+	}
+
+	if (((flags & CFG_PRINTER_XKEY) != 0) && !print) {
+		fprintf(stderr, "%s: -x cannot be used without -p\n", program);
+		exit(1);
 	}
 
 	if (isc_commandline_index + 1 < argc)
@@ -576,7 +596,7 @@ main(int argc, char **argv) {
 	}
 
 	if (print && exit_status == 0)
-		cfg_print(config, output, NULL);
+		cfg_printx(config, flags, output, NULL);
 	cfg_obj_destroy(parser, &config);
 
 	cfg_parser_destroy(&parser);

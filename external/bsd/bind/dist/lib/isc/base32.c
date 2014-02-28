@@ -1,7 +1,7 @@
-/*	$NetBSD: base32.c,v 1.1.1.6 2013/12/31 20:11:28 christos Exp $	*/
+/*	$NetBSD: base32.c,v 1.1.1.7 2014/02/28 17:40:15 christos Exp $	*/
 
 /*
- * Copyright (C) 2008, 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2008, 2009, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -357,7 +357,7 @@ str_totext(const char *source, isc_buffer_t *target) {
 	if (l > region.length)
 		return (ISC_R_NOSPACE);
 
-	memcpy(region.base, source, l);
+	memmove(region.base, source, l);
 	isc_buffer_add(target, l);
 	return (ISC_R_SUCCESS);
 }
@@ -369,7 +369,7 @@ mem_tobuffer(isc_buffer_t *target, void *base, unsigned int length) {
 	isc_buffer_availableregion(target, &tr);
 	if (length > tr.length)
 		return (ISC_R_NOSPACE);
-	memcpy(tr.base, base, length);
+	memmove(tr.base, base, length);
 	isc_buffer_add(target, length);
 	return (ISC_R_SUCCESS);
 }

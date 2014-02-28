@@ -1,7 +1,7 @@
-/*	$NetBSD: app.c,v 1.1.1.4 2012/06/04 17:56:56 christos Exp $	*/
+/*	$NetBSD: app.c,v 1.1.1.5 2014/02/28 17:40:16 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -260,3 +260,5 @@ isc__app_unblock(void) {
 	blocked = ISC_FALSE;
 	REQUIRE(blockedthread == GetCurrentThread());
 }
+
+#include "../app_api.c"

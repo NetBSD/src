@@ -1,4 +1,4 @@
-/*	$NetBSD: t_resolver.c,v 1.1.1.7 2013/12/31 20:10:14 christos Exp $	*/
+/*	$NetBSD: t_resolver.c,v 1.1.1.8 2014/02/28 17:40:07 christos Exp $	*/
 
 /*
  * Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
@@ -55,9 +55,9 @@ setup_create_dispatch_v4(void)
 	isc_sockaddr_t local_address;
 	isc_sockaddr_any(&local_address);
 
-	CHECK(dns_dispatch_getudp(dispatch_manager, socket_manager, task_manager,
-				  &local_address, 4096, 100, 100, 100, 500,
-				  0, 0, /* unsigned int attributes, unsigned int mask, */
+	CHECK(dns_dispatch_getudp(dispatch_manager, socket_manager,
+				  task_manager, &local_address,
+				  4096, 100, 100, 100, 500, 0, 0,
 				  &dispatch_v4));
 }
 static void

@@ -1,7 +1,7 @@
-/*	$NetBSD: dst.h,v 1.1.1.9 2013/12/31 20:11:22 christos Exp $	*/
+/*	$NetBSD: dst.h,v 1.1.1.10 2014/02/28 17:40:14 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -31,6 +31,8 @@
 #include <dns/log.h>
 #include <dns/name.h>
 #include <dns/secalg.h>
+#include <dns/ds.h>
+#include <dns/dsdigest.h>
 
 #include <dst/gssapi.h>
 
@@ -170,6 +172,16 @@ dst_algorithm_supported(unsigned int alg);
  * \li	ISC_FALSE
  */
 
+isc_boolean_t
+dst_ds_digest_supported(unsigned int digest_type);
+/*%<
+ * Checks that a given digest algorithm is supported by DST.
+ *
+ * Returns:
+ * \li	ISC_TRUE
+ * \li	ISC_FALSE
+ */
+
 isc_result_t
 dst_context_create(dst_key_t *key, isc_mem_t *mctx, dst_context_t **dctxp);
 
@@ -177,6 +189,15 @@ isc_result_t
 dst_context_create2(dst_key_t *key, isc_mem_t *mctx,
 		    isc_logcategory_t *category, dst_context_t **dctxp);
 
+isc_result_t
+dst_context_create3(dst_key_t *key, isc_mem_t *mctx,
+		    isc_logcategory_t *category, isc_boolean_t useforsigning,
+		    dst_context_t **dctxp);
+
+isc_result_t
+dst_context_create4(dst_key_t *key, isc_mem_t *mctx,
+		    isc_logcategory_t *category, isc_boolean_t useforsigning,
+		    int maxbits, dst_context_t **dctxp);
 /*%<
  * Creates a context to be used for a sign or verify operation.
  *

@@ -1,7 +1,7 @@
-/*	$NetBSD: client.c,v 1.1.1.8 2013/12/31 20:11:06 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.1.1.9 2014/02/28 17:40:13 christos Exp $	*/
 
 /*
- * Copyright (C) 2009-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009-2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -23,6 +23,7 @@
 #include <stddef.h>
 
 #include <isc/app.h>
+#include <isc/buffer.h>
 #include <isc/mem.h>
 #include <isc/mutex.h>
 #include <isc/sockaddr.h>
@@ -68,6 +69,12 @@
 #define UCTX_VALID(c)			ISC_MAGIC_VALID(c, UCTX_MAGIC)
 
 #define MAX_RESTARTS 16
+
+#ifdef TUNE_LARGE
+#define RESOLVER_NTASKS 523
+#else
+#define RESOLVER_NTASKS 31
+#endif /* TUNE_LARGE */
 
 /*%
  * DNS client object
@@ -125,6 +132,8 @@ typedef struct resctx {
 	isc_mutex_t		lock;
 	dns_client_t		*client;
 	isc_boolean_t		want_dnssec;
+	isc_boolean_t		want_validation;
+	isc_boolean_t		want_cdflag;
 
 	/* Locked */
 	ISC_LINK(struct resctx)	link;
@@ -302,12 +311,12 @@ getudpdispatch(int family, dns_dispatchmgr_t *dispatchmgr,
 }
 
 static isc_result_t
-dns_client_createview(isc_mem_t *mctx, dns_rdataclass_t rdclass,
-		      unsigned int options, isc_taskmgr_t *taskmgr,
-		      unsigned int ntasks, isc_socketmgr_t *socketmgr,
-		      isc_timermgr_t *timermgr, dns_dispatchmgr_t *dispatchmgr,
-		      dns_dispatch_t *dispatchv4, dns_dispatch_t *dispatchv6,
-		      dns_view_t **viewp)
+createview(isc_mem_t *mctx, dns_rdataclass_t rdclass,
+	   unsigned int options, isc_taskmgr_t *taskmgr,
+	   unsigned int ntasks, isc_socketmgr_t *socketmgr,
+	   isc_timermgr_t *timermgr, dns_dispatchmgr_t *dispatchmgr,
+	   dns_dispatch_t *dispatchv4, dns_dispatch_t *dispatchv6,
+	   dns_view_t **viewp)
 {
 	isc_result_t result;
 	dns_view_t *view = NULL;
@@ -324,9 +333,9 @@ dns_client_createview(isc_mem_t *mctx, dns_rdataclass_t rdclass,
 		return (result);
 	}
 
-	result = dns_view_createresolver(view, taskmgr, ntasks, 1, socketmgr,
-					 timermgr, 0, dispatchmgr,
-					 dispatchv4, dispatchv6);
+	result = dns_view_createresolver(view, taskmgr, ntasks, 1,
+					 socketmgr, timermgr, 0,
+					 dispatchmgr, dispatchv4, dispatchv6);
 	if (result != ISC_R_SUCCESS) {
 		dns_view_detach(&view);
 		return (result);
@@ -508,10 +517,9 @@ dns_client_createx2(isc_mem_t *mctx, isc_appctx_t *actx,
 	}
 
 	/* Create the default view for class IN */
-	result = dns_client_createview(mctx, dns_rdataclass_in, options,
-				       taskmgr, 31, socketmgr, timermgr,
-				       dispatchmgr, dispatchv4, dispatchv6,
-				       &view);
+	result = createview(mctx, dns_rdataclass_in, options, taskmgr,
+			    RESOLVER_NTASKS, socketmgr, timermgr,
+			    dispatchmgr, dispatchv4, dispatchv6, &view);
 	if (result != ISC_R_SUCCESS)
 		goto cleanup;
 	ISC_LIST_INIT(client->viewlist);
@@ -676,6 +684,46 @@ dns_client_clearservers(dns_client_t *client, dns_rdataclass_t rdclass,
 	return (result);
 }
 
+isc_result_t
+dns_client_setdlv(dns_client_t *client, dns_rdataclass_t rdclass,
+		  const char *dlvname)
+{
+	isc_result_t result;
+	isc_buffer_t b;
+	dns_view_t *view = NULL;
+
+	REQUIRE(DNS_CLIENT_VALID(client));
+
+	LOCK(&client->lock);
+	result = dns_viewlist_find(&client->viewlist, DNS_CLIENTVIEW_NAME,
+				   rdclass, &view);
+	UNLOCK(&client->lock);
+	if (result != ISC_R_SUCCESS)
+		goto cleanup;
+
+	if (dlvname == NULL)
+		view->dlv = NULL;
+	else {
+		dns_name_t *newdlv;
+
+		isc_buffer_constinit(&b, dlvname, strlen(dlvname));
+		isc_buffer_add(&b, strlen(dlvname));
+		newdlv = dns_fixedname_name(&view->dlv_fixed);
+		result = dns_name_fromtext(newdlv, &b, dns_rootname,
+					   DNS_NAME_DOWNCASE, NULL);
+		if (result != ISC_R_SUCCESS)
+			goto cleanup;
+
+		view->dlv = dns_fixedname_name(&view->dlv_fixed);
+	}
+
+ cleanup:
+	if (view != NULL)
+		dns_view_detach(&view);
+
+	return (result);
+}
+
 static isc_result_t
 getrdataset(isc_mem_t *mctx, dns_rdataset_t **rdatasetp) {
 	dns_rdataset_t *rdataset;
@@ -726,6 +774,7 @@ fetch_done(isc_task_t *task, isc_event_t *event) {
 static inline isc_result_t
 start_fetch(resctx_t *rctx) {
 	isc_result_t result;
+	int fopts = 0;
 
 	/*
 	 * The caller must be holding the rctx's lock.
@@ -733,10 +782,15 @@ start_fetch(resctx_t *rctx) {
 
 	REQUIRE(rctx->fetch == NULL);
 
+	if (!rctx->want_cdflag)
+		fopts |= DNS_FETCHOPT_NOCDFLAG;
+	if (!rctx->want_validation)
+		fopts |= DNS_FETCHOPT_NOVALIDATE;
+
 	result = dns_resolver_createfetch(rctx->view->resolver,
 					  dns_fixedname_name(&rctx->name),
 					  rctx->type,
-					  NULL, NULL, NULL, 0,
+					  NULL, NULL, NULL, fopts,
 					  rctx->task, fetch_done, rctx,
 					  rctx->rdataset,
 					  rctx->sigrdataset,
@@ -1279,7 +1333,7 @@ dns_client_startresolve(dns_client_t *client, dns_name_t *name,
 	isc_mem_t *mctx;
 	isc_result_t result;
 	dns_rdataset_t *rdataset, *sigrdataset;
-	isc_boolean_t want_dnssec;
+	isc_boolean_t want_dnssec, want_validation, want_cdflag;
 
 	REQUIRE(DNS_CLIENT_VALID(client));
 	REQUIRE(transp != NULL && *transp == NULL);
@@ -1295,6 +1349,8 @@ dns_client_startresolve(dns_client_t *client, dns_name_t *name,
 	rdataset = NULL;
 	sigrdataset = NULL;
 	want_dnssec = ISC_TF((options & DNS_CLIENTRESOPT_NODNSSEC) == 0);
+	want_validation = ISC_TF((options & DNS_CLIENTRESOPT_NOVALIDATE) == 0);
+	want_cdflag = ISC_TF((options & DNS_CLIENTRESOPT_NOCDFLAG) == 0);
 
 	/*
 	 * Prepare some intermediate resources
@@ -1350,6 +1406,8 @@ dns_client_startresolve(dns_client_t *client, dns_name_t *name,
 	rctx->restarts = 0;
 	rctx->fetch = NULL;
 	rctx->want_dnssec = want_dnssec;
+	rctx->want_validation = want_validation;
+	rctx->want_cdflag = want_cdflag;
 	ISC_LIST_INIT(rctx->namelist);
 	rctx->event = event;
 

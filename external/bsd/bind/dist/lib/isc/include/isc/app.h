@@ -1,4 +1,4 @@
-/*	$NetBSD: app.h,v 1.1.1.5 2013/12/31 20:11:30 christos Exp $	*/
+/*	$NetBSD: app.h,v 1.1.1.6 2014/02/28 17:40:15 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
@@ -90,6 +90,18 @@
 #include <isc/lang.h>
 #include <isc/magic.h>
 #include <isc/result.h>
+
+#ifdef WIN32
+#define isc_app_start isc__app_start
+#define isc_app_onrun isc__app_onrun
+#define isc_app_run isc__app_run
+#define isc_app_shutdown isc__app_shutdown
+#define isc_app_reload isc__app_reload
+#define isc_app_finish isc__app_finish
+#define isc_app_block isc__app_block
+#define isc_app_unblock isc__app_unblock
+
+#endif
 
 /***
  *** Types
@@ -354,7 +366,6 @@ isc_appctx_settimermgr(isc_appctx_t *ctx, isc_timermgr_t *timermgr);
  *\li	'timermgr' is a valid timer manager.
  */
 
-#ifdef USE_APPIMPREGISTER
 /*%<
  * See isc_appctx_create() above.
  */
@@ -377,7 +388,6 @@ isc__app_register(void);
  * usually do not have to care about this function: it would call
  * isc_lib_register(), which internally calls this function.
  */
-#endif /* USE_APPIMPREGISTER */
 
 ISC_LANG_ENDDECLS
 

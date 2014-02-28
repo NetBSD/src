@@ -1,4 +1,4 @@
-/*	$NetBSD: rootns.c,v 1.1.1.6 2013/12/31 20:11:14 christos Exp $	*/
+/*	$NetBSD: rootns.c,v 1.1.1.7 2014/02/28 17:40:14 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2008, 2010, 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rootns.c,v 1.40 2010/06/18 05:36:24 marka Exp  */
+/* Id: rootns.c,v 1.40.476.1 2012/02/07 00:44:14 each Exp  */
 
 /*! \file */
 
@@ -214,14 +214,12 @@ dns_rootns_create(isc_mem_t *mctx, dns_rdataclass_t rdclass,
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
-	dns_rdatacallbacks_init(&callbacks);
-
 	len = strlen(root_ns);
 	isc_buffer_init(&source, root_ns, len);
 	isc_buffer_add(&source, len);
 
-	result = dns_db_beginload(db, &callbacks.add,
-				  &callbacks.add_private);
+	dns_rdatacallbacks_init(&callbacks);
+	result = dns_db_beginload(db, &callbacks);
 	if (result != ISC_R_SUCCESS)
 		return (result);
 	if (filename != NULL) {
@@ -242,7 +240,7 @@ dns_rootns_create(isc_mem_t *mctx, dns_rdataclass_t rdclass,
 					       &callbacks, db->mctx);
 	} else
 		result = ISC_R_NOTFOUND;
-	eresult = dns_db_endload(db, &callbacks.add_private);
+	eresult = dns_db_endload(db, &callbacks);
 	if (result == ISC_R_SUCCESS || result == DNS_R_SEENINCLUDE)
 		result = eresult;
 	if (result != ISC_R_SUCCESS && result != DNS_R_SEENINCLUDE)

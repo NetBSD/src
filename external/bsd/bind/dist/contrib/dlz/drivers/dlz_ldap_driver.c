@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_ldap_driver.c,v 1.1.1.5 2013/07/27 15:22:56 christos Exp $	*/
+/*	$NetBSD: dlz_ldap_driver.c,v 1.1.1.6 2014/02/28 17:40:09 christos Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -119,7 +119,9 @@ typedef struct {
 /* forward references */
 
 static isc_result_t
-dlz_ldap_findzone(void *driverarg, void *dbdata, const char *name);
+dlz_ldap_findzone(void *driverarg, void *dbdata, const char *name,
+		  dns_clientinfomethods_t *methods,
+		  dns_clientinfo_t *clientinfo);
 
 static void
 dlz_ldap_destroy(void *driverarg, void *dbdata);
@@ -880,7 +882,7 @@ dlz_ldap_allowzonexfr(void *driverarg, void *dbdata, const char *name,
 	UNUSED(driverarg);
 
 	/* check to see if we are authoritative for the zone first */
-	result = dlz_ldap_findzone(driverarg, dbdata, name);
+	result = dlz_ldap_findzone(driverarg, dbdata, name, NULL, NULL);
 	if (result != ISC_R_SUCCESS) {
 		return (result);
 	}
@@ -907,8 +909,13 @@ dlz_ldap_authority(const char *zone, void *driverarg, void *dbdata,
 }
 
 static isc_result_t
-dlz_ldap_findzone(void *driverarg, void *dbdata, const char *name) {
+dlz_ldap_findzone(void *driverarg, void *dbdata, const char *name,
+		  dns_clientinfomethods_t *methods,
+		  dns_clientinfo_t *clientinfo)
+{
 	UNUSED(driverarg);
+	UNUSED(methods);
+	UNUSED(clientinfo);
 	return (ldap_get_results(name, NULL, NULL, FINDZONE, dbdata, NULL));
 }
 

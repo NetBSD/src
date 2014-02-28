@@ -1,6 +1,6 @@
-.\"	$NetBSD: rndc.8,v 1.1.1.5 2013/12/31 20:10:09 christos Exp $
+.\"	$NetBSD: rndc.8,v 1.1.1.6 2014/02/28 17:40:07 christos Exp $
 .\"
-.\" Copyright (C) 2004, 2005, 2007, 2013 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2004, 2005, 2007, 2013, 2014 Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000, 2001 Internet Software Consortium.
 .\" 
 .\" Permission to use, copy, modify, and/or distribute this software for any
@@ -49,7 +49,7 @@ is invoked with no command line options or arguments, it prints a short summary 
 communicates with the name server over a TCP connection, sending commands authenticated with digital signatures. In the current versions of
 \fBrndc\fR
 and
-\fBnamed\fR, the only supported authentication algorithm is HMAC\-MD5, which uses a shared secret on each end of the connection. This provides TSIG\-style authentication for the command request and the name server's response. All commands sent over the channel must be signed by a key_id known to the server.
+\fBnamed\fR, the only supported authentication algorithms are HMAC\-MD5 (for compatibility), HMAC\-SHA1, HMAC\-SHA224, HMAC\-SHA256 (default), HMAC\-SHA384 and HMAC\-SHA512. They use a shared secret on each end of the connection. This provides TSIG\-style authentication for the command request and the name server's response. All commands sent over the channel must be signed by a key_id known to the server.
 .PP
 \fBrndc\fR
 reads a configuration file to determine how to contact the name server and decide what algorithm and key it should use.
@@ -185,6 +185,15 @@ Enable updates to a frozen dynamic zone. If no zone is specified, then all froze
 option is in use, then the journal file will be updated to reflect changes in the zone. Otherwise, if the zone has changed, any existing journal file will be removed.
 .RE
 .PP
+\fBscan\fR
+.RS 4
+Scan the list of available network interfaces for changes, without performing a full
+\fBreconfig\fR
+or waiting for the
+\fBinterface\-interval\fR
+timer.
+.RE
+.PP
 \fBsync \fR\fB[\-clean]\fR\fB \fR\fB[\fIzone\fR [\fIclass\fR [\fIview\fR]]]\fR
 .RS 4
 Sync changes in the journal file for a dynamic zone to the master file. If the "\-clean" option is specified, the journal file is also removed. If no zone is specified, then all zones are synced.
@@ -200,6 +209,11 @@ Resend NOTIFY messages for the zone.
 Reload the configuration file and load new zones, but do not reload existing zone files even if they have changed. This is faster than a full
 \fBreload\fR
 when there is a large number of zones because it avoids the need to examine the modification times of the zones files.
+.RE
+.PP
+\fBzonestatus \fR\fB[\fIzone\fR [\fIclass\fR [\fIview\fR]]]\fR
+.RS 4
+Displays the current status of the given zone, including the master file name and any include files from which it was loaded, when it was most recently loaded, the current serial number, the number of nodes, whether the zone supports dynamic updates, whether the zone is DNSSEC signed, whether it uses automatic DNSSEC key management or inline signing, and the scheduled refresh or expiry times for the zone.
 .RE
 .PP
 \fBstats\fR
@@ -283,11 +297,9 @@ Flushes the server's cache.
 Flushes the given name from the server's DNS cache and, if applicable, from the server's nameserver address database or bad\-server cache.
 .RE
 .PP
-\fBflushtree\fR \fIname\fR [\fIview\fR]
+\fBflushtree\fR [\-all] \fIname\fR [\fIview\fR]
 .RS 4
-Flushes the given name, and all of its subdomains, from the server's DNS cache. Note that this does
-\fInot\fR
-affect he server's address database or bad\-server cache.
+Flushes the given name, and all of its subdomains, from the server's DNS cache, the address database, and the bad server cache.
 .RE
 .PP
 \fBstatus\fR
@@ -357,11 +369,19 @@ $\fBrndc addzone example.com '{ type master; file "example.com.db"; };'\fR
 (Note the brackets and semi\-colon around the zone configuration text.)
 .RE
 .PP
-\fBdelzone \fR\fB\fIzone\fR\fR\fB \fR\fB[\fIclass\fR [\fIview\fR]]\fR\fB \fR
+\fBdelzone \fR\fB[\-clean]\fR\fB \fR\fB\fIzone\fR\fR\fB \fR\fB[\fIclass\fR [\fIview\fR]]\fR\fB \fR
 .RS 4
 Delete a zone while the server is running. Only zones that were originally added via
 \fBrndc addzone\fR
 can be deleted in this manner.
+.sp
+If the
+\fB\-clean\fR
+is specified, the zone's master file (and journal file, if any) will be deleted along with the zone. Without the
+\fB\-clean\fR
+option, zone files must be cleaned up by hand. (If the zone is of type "slave" or "stub", the files needing to be cleaned up will be reported in the output of the
+\fBrndc delzone\fR
+command.)
 .RE
 .PP
 \fBsigning \fR\fB[( \-list | \-clear \fIkeyid/algorithm\fR | \-clear all | \-nsec3param ( \fIparameters\fR | none ) ) ]\fR\fB \fR\fB\fIzone\fR\fR\fB \fR\fB[\fIclass\fR [\fIview\fR]]\fR\fB \fR
@@ -419,7 +439,7 @@ BIND 9 Administrator Reference Manual.
 .PP
 Internet Systems Consortium
 .SH "COPYRIGHT"
-Copyright \(co 2004, 2005, 2007, 2013 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2004, 2005, 2007, 2013, 2014 Internet Systems Consortium, Inc. ("ISC")
 .br
 Copyright \(co 2000, 2001 Internet Software Consortium.
 .br

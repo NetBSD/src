@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2009-2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2009-2014  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id
+# Id: tests.sh,v 1.42 2011/12/16 23:01:17 each Exp 
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
@@ -169,7 +169,7 @@ grep ns6.other.nil dig.out.ns1 > /dev/null 2>&1 || ret=1
 
 ret=0
 echo "I:check SIG(0) key is accepted"
-key=`$KEYGEN -q -r random.data -a NSEC3RSASHA1 -b 512 -T KEY -n ENTITY xxx`
+key=`$KEYGEN -q -r $RANDFILE -a NSEC3RSASHA1 -b 512 -T KEY -n ENTITY xxx`
 echo "" | $NSUPDATE -k ${key}.private > /dev/null 2>&1 || ret=1
 [ $ret = 0 ] || { echo I:failed; status=1; }
 
@@ -492,6 +492,26 @@ fi
 
 n=`expr $n + 1`
 ret=0
+echo "I:check type list options ($n)"
+$NSUPDATE -T > typelist.out.T.${n} || { ret=1; echo "I: nsupdate -T failed"; }
+$NSUPDATE -P > typelist.out.P.${n} || { ret=1; echo "I: nsupdate -P failed"; }
+$NSUPDATE -TP > typelist.out.TP.${n} || { ret=1; echo "I: nsupdate -TP failed"; }
+grep ANY typelist.out.T.${n} > /dev/null && { ret=1; echo "I: failed: ANY found (-T)"; }
+grep ANY typelist.out.P.${n} > /dev/null && { ret=1; echo "I: failed: ANY found (-P)"; }
+grep ANY typelist.out.TP.${n} > /dev/null && { ret=1; echo "I: failed: ANY found (-TP)"; }
+grep KEYDATA typelist.out.T.${n} > /dev/null && { ret=1; echo "I: failed: KEYDATA found (-T)"; }
+grep KEYDATA typelist.out.P.${n} > /dev/null && { ret=1; echo "I: failed: KEYDATA found (-P)"; }
+grep KEYDATA typelist.out.TP.${n} > /dev/null && { ret=1; echo "I: failed: KEYDATA found (-TP)"; }
+grep AAAA typelist.out.T.${n} > /dev/null || { ret=1; echo "I: failed: AAAA not found (-T)"; }
+grep AAAA typelist.out.P.${n} > /dev/null && { ret=1; echo "I: failed: AAAA found (-P)"; }
+grep AAAA typelist.out.TP.${n} > /dev/null || { ret=1; echo "I: failed: AAAA not found (-TP)"; }
+if [ $ret -ne 0 ]; then
+    echo "I:failed"
+    status=1
+fi
+
+n=`expr $n + 1`
+ret=0
 echo "I:check command list ($n)"
 (
 while read cmd 
@@ -527,6 +547,35 @@ sleep 2
 for alg in md5 sha1 sha224 sha256 sha384 sha512; do
     $DIG +short @10.53.0.1 -p 5300 ${alg}.keytests.nil | grep 10.10.10.3 > /dev/null 2>&1 || ret=1
 done
+if [ $ret -ne 0 ]; then
+    echo "I:failed"
+    status=1
+fi
+
+n=`expr $n + 1`
+ret=0
+echo "I:check that ttl is capped by max-ttl ($n)"
+$NSUPDATE <<END > /dev/null || ret=1
+server 10.53.0.1 5300
+update add cap.max-ttl.nil. 600 A 10.10.10.3
+update add nocap.max-ttl.nil. 150 A 10.10.10.3
+send
+END
+sleep 2
+$DIG @10.53.0.1 -p 5300  cap.max-ttl.nil | grep "^cap.max-ttl.nil.	300" > /dev/null 2>&1 || ret=1
+$DIG @10.53.0.1 -p 5300  nocap.max-ttl.nil | grep "^nocap.max-ttl.nil.	150" > /dev/null 2>&1 || ret=1
+if [ $ret -ne 0 ]; then
+    echo "I:failed"
+    status=1
+fi
+
+n=`expr $n + 1`
+ret=0
+echo "I:add a record which is truncated when logged. ($n)"
+$NSUPDATE verylarge || ret=1
+$DIG +tcp @10.53.0.1 -p 5300 txt txt.update.nil > dig.out.ns1.test$n
+grep "ANSWER: 1," dig.out.ns1.test$n > /dev/null || ret=1
+grep "adding an RR at 'txt.update.nil' TXT .* \[TRUNCATED\]"  ns1/named.run > /dev/null || ret=1
 if [ $ret -ne 0 ]; then
     echo "I:failed"
     status=1

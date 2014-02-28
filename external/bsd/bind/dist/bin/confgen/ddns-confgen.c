@@ -1,7 +1,7 @@
-/*	$NetBSD: ddns-confgen.c,v 1.1.1.4 2012/06/04 17:53:30 christos Exp $	*/
+/*	$NetBSD: ddns-confgen.c,v 1.1.1.5 2014/02/28 17:40:05 christos Exp $	*/
 
 /*
- * Copyright (C) 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -103,7 +103,7 @@ main(int argc, char **argv) {
 
 	result = isc_file_progname(*argv, program, sizeof(program));
 	if (result != ISC_R_SUCCESS)
-		memcpy(program, "ddns-confgen", 13);
+		memmove(program, "ddns-confgen", 13);
 	progname = program;
 
 	isc_commandline_errprint = ISC_FALSE;

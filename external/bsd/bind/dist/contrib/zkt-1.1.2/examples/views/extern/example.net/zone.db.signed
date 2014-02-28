@@ -1,0 +1,109 @@
+; File written on Tue Jan 25 20:02:30 2011
+; dnssec_signzone version 9.7.2-P2
+example.net.		7200	IN SOA	ns1.example.net. hostmaster.example.net. (
+					1295982150 ; serial
+					43200      ; refresh (12 hours)
+					1800       ; retry (30 minutes)
+					1209600    ; expire (2 weeks)
+					7200       ; minimum (2 hours)
+					)
+			7200	RRSIG	SOA 5 2 7200 20110215180230 (
+					20110125180230 38930 example.net.
+					CIEzsLXkJjCehSXcubmncFE46Mdo6duV35FA
+					83ynRO2fDHNGEMGcgc1JR0uNRPUs1AySfvMe
+					64sN9M5jw7bs+g== )
+			7200	NS	ns1.example.net.
+			7200	NS	ns2.example.net.
+			7200	RRSIG	NS 5 2 7200 20110215180230 (
+					20110125180230 38930 example.net.
+					WaUhQqPwY1IGpdo3gG5D7hJrnNsk0GnIXPKa
+					zw1WGnFj0vcwDxsiEsk9L1NSb/c1j+uPepon
+					GcCFU8lkAkPJwg== )
+			7200	NSEC	localhost.example.net. NS SOA RRSIG NSEC DNSKEY
+			7200	RRSIG	NSEC 5 2 7200 20110215180230 (
+					20110125180230 38930 example.net.
+					wkdRRnjfyPQSFb5jju3cEPfVM5T6SlMteEe9
+					Vx09wy9b9aZIO6aT2Q83RUr/GIhkC7JeVPWi
+					c3SftwVD4IKF2Q== )
+			14400	DNSKEY	256 3 5 (
+					BQEAAAABqSWPYNt6RitV7CJxyFXjIPeP6zSX
+					tBki5cAiVVA3SdX0cBs6gWttgt+wxEPMApn/
+					ncgjqcUHTJEVHyd/TrL/Aw==
+					) ; key id = 8885
+			14400	DNSKEY	256 3 5 (
+					BQEAAAABw6SqqsNvYqmiYNMlroODy8rMZdbo
+					2Pe8ldEblO9qtxI5oR4iUeUW/q3rZgCTuZI+
+					ymMiLmaFSF1DXsAyG0M03Q==
+					) ; key id = 38930
+			14400	DNSKEY	257 3 5 (
+					BQEAAAABDEEycfY6uqWNTpQO8ygi9xms6NOF
+					YGhCjijN109fVGJ4KDnIZtLhoFrOKru9rZn+
+					pyqurlyZG4vESg0BMty6xljVDlr/TegDYFTN
+					19mQuwvlasJhZPv9pjROPqQGnqLaw3O4OKCY
+					9HgTTPdXK1hQ4Mg2rNU4SM2Tu5ki91f5AQqi
+					XF8KYMics0mwVvpj5C2YTDvE9SafLrce68JM
+					6DaiC6E1sQ==
+					) ; key id = 23553
+			14400	RRSIG	DNSKEY 5 2 14400 20110215180230 (
+					20110125180230 23553 example.net.
+					A44WHsFr4O7Rzuflm19mFBAu7e6asUF5hkzB
+					KjVkCkxH2NkIcTnDdzpxM/LzXMXyZGzxYQrI
+					AjStvUqfoDpaay+Jl87/IXd77Owbc762EF6U
+					Ew1NqHGG0UdO+os5STwPNT7UUi5i8HVVPglx
+					gpHti4RS6icrcsYMTeuf4yrffMr9xWlI/S2l
+					vu9b6maVqqAMds1dj9ZEDUWKLrylTngtc33R
+					BQ== )
+			14400	RRSIG	DNSKEY 5 2 14400 20110215180230 (
+					20110125180230 38930 example.net.
+					P/9UIYie44cvptFvxgny+zKNDilIMUsswBkg
+					aEJVqCzUnbpA7x5xvzGhlilb38MRv9fvYEtr
+					AsBz1D2Uo3ZULQ== )
+localhost.example.net.	7200	IN A	127.0.0.1
+			7200	RRSIG	A 5 3 7200 20110215180230 (
+					20110125180230 38930 example.net.
+					iM76gTURcaiYI2yrAIgVcJS1//ZfhCbcVU6o
+					+aeTvwHCyT4kes8uLluV5sS24MuR1fi+E9I3
+					AIeGM/7HdIIi/g== )
+			7200	NSEC	ns1.example.net. A RRSIG NSEC
+			7200	RRSIG	NSEC 5 3 7200 20110215180230 (
+					20110125180230 38930 example.net.
+					nEzM1RA6blYjp6PkXp5QPfJd1kWdcVwByMrM
+					LWWoLI70W9ilxuD3xHOFwmjWwjED/r+NH+53
+					DCjTN5DE/RtNkA== )
+ns1.example.net.	7200	IN A	1.0.0.5
+			7200	RRSIG	A 5 3 7200 20110215180230 (
+					20110125180230 38930 example.net.
+					UmtBBwApnfVqXzj76BIVJtuajos1Qr8LfqaT
+					x0FMOrpjhg9p1JN25jUEIkexUmBqkvt9VEam
+					my5k3FrYQZpAcw== )
+			7200	AAAA	2001:db8::53
+			7200	RRSIG	AAAA 5 3 7200 20110215180230 (
+					20110125180230 38930 example.net.
+					dWIIV6h276aolyfUWyoup6svZygotNuZpUlE
+					LhXOr3MU2QgnEo8a1akuhMYf245B76VXd657
+					TBjQBuexeFt1ww== )
+			7200	NSEC	ns2.example.net. A AAAA RRSIG NSEC
+			7200	RRSIG	NSEC 5 3 7200 20110215180230 (
+					20110125180230 38930 example.net.
+					AjKEeI3cjcxi7DxYwr4cvAeycPNETAm+R74G
+					/k3Cr8WaPkenxX5n9Meb0rOJRur1RGe0LApr
+					PuFixxEFVo2EUg== )
+ns2.example.net.	7200	IN A	1.2.0.6
+			7200	RRSIG	A 5 3 7200 20110215180230 (
+					20110125180230 38930 example.net.
+					NqBJpDCmIi/XcjCIl8YGbw0mpVnp8+kT81l3
+					wciY/V07AI1ucghehgMJIaG1ZSkPnPlllc5o
+					trsxvawJv/irEw== )
+			7200	NSEC	sub.example.net. A RRSIG NSEC
+			7200	RRSIG	NSEC 5 3 7200 20110215180230 (
+					20110125180230 38930 example.net.
+					NssXK84EXEa1XUWKD+7aeSJFtg3JNnq3J/Ox
+					ItxpbWdaCgqEqJ87oHNWYGic6POmWPc5P8LI
+					yLgte5CwMN8ufg== )
+sub.example.net.	7200	IN NS	ns1.example.net.
+			7200	NSEC	example.net. NS RRSIG NSEC
+			7200	RRSIG	NSEC 5 3 7200 20110215180230 (
+					20110125180230 38930 example.net.
+					BslSne1rxv0Rkahw4vdoqh3vlVkiVOQsrsa1
+					1ofMNaBxphwoTj8nkICePawKby4cTFX0kuRL
+					MiloJ6y9vkvC3Q== )

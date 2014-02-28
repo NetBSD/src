@@ -1,7 +1,7 @@
-/*	$NetBSD: md5.h,v 1.1.1.5 2012/06/04 17:56:49 christos Exp $	*/
+/*	$NetBSD: md5.h,v 1.1.1.6 2014/02/28 17:40:15 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2010, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -56,6 +56,11 @@
 #include <openssl/evp.h>
 
 typedef EVP_MD_CTX isc_md5_t;
+
+#elif PKCS11CRYPTO
+#include <pk11/pk11.h>
+
+typedef pk11_context_t isc_md5_t;
 
 #else
 

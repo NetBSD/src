@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004, 2005, 2007-2009, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -104,6 +104,17 @@
 @ISC_PLATFORM_HAVECMPXCHG@
 
 /*
+ * If the strcasestr() operation is not available on this platform,
+ * ISC_PLATFORM_NEEDSTRCASESTR will be defined.
+ */
+@ISC_PLATFORM_NEEDSTRCASESTR@
+
+/*
+ * Define to enable Source Identity Token support.
+ */
+#define ISC_PLATFORM_USESIT 1
+
+/*
  * Set up a macro for importing and exporting from the DLL
  */
 
@@ -113,10 +124,10 @@
 #define LIBISC_EXTERNAL_DATA __declspec(dllimport)
 #endif
 
-#ifdef LIBISCCFG_EXPORTS
-#define LIBISCCFG_EXTERNAL_DATA __declspec(dllexport)
+#ifdef LIBDNS_EXPORTS
+#define LIBDNS_EXTERNAL_DATA __declspec(dllexport)
 #else
-#define LIBISCCFG_EXTERNAL_DATA __declspec(dllimport)
+#define LIBDNS_EXTERNAL_DATA __declspec(dllimport)
 #endif
 
 #ifdef LIBISCCC_EXPORTS
@@ -125,10 +136,10 @@
 #define LIBISCCC_EXTERNAL_DATA __declspec(dllimport)
 #endif
 
-#ifdef LIBDNS_EXPORTS
-#define LIBDNS_EXTERNAL_DATA __declspec(dllexport)
+#ifdef LIBISCCFG_EXPORTS
+#define LIBISCCFG_EXTERNAL_DATA __declspec(dllexport)
 #else
-#define LIBDNS_EXTERNAL_DATA __declspec(dllimport)
+#define LIBISCCFG_EXTERNAL_DATA __declspec(dllimport)
 #endif
 
 #ifdef LIBBIND9_EXPORTS

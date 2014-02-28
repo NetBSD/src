@@ -1,7 +1,7 @@
-/*	$NetBSD: lwinetpton.c,v 1.1.1.4 2013/12/31 20:11:38 christos Exp $	*/
+/*	$NetBSD: lwinetpton.c,v 1.1.1.5 2014/02/28 17:40:16 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1996-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -118,7 +118,7 @@ inet_pton4(const char *src, unsigned char *dst) {
 	}
 	if (octets < 4)
 		return (0);
-	memcpy(dst, tmp, NS_INADDRSZ);
+	memmove(dst, tmp, NS_INADDRSZ);
 	return (1);
 }
 
@@ -212,6 +212,6 @@ inet_pton6(const char *src, unsigned char *dst) {
 	}
 	if (tp != endp)
 		return (0);
-	memcpy(dst, tmp, NS_IN6ADDRSZ);
+	memmove(dst, tmp, NS_IN6ADDRSZ);
 	return (1);
 }

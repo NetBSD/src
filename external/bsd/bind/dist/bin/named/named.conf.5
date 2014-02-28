@@ -1,6 +1,6 @@
-.\"	$NetBSD: named.conf.5,v 1.1.1.9 2013/12/31 20:09:56 christos Exp $
+.\"	$NetBSD: named.conf.5,v 1.1.1.10 2014/02/28 17:40:06 christos Exp $
 .\"
-.\" Copyright (C) 2004-2011, 2013 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2004-2014 Internet Systems Consortium, Inc. ("ISC")
 .\" 
 .\" Permission to use, copy, modify, and/or distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -254,6 +254,7 @@ options {
 	max\-udp\-size \fIinteger\fR;
 	root\-delegation\-only [ exclude { \fIquoted_string\fR; ... } ];
 	disable\-algorithms \fIstring\fR { \fIstring\fR; ... };
+	disable\-ds\-digests \fIstring\fR { \fIstring\fR; ... };
 	dnssec\-enable \fIboolean\fR;
 	dnssec\-validation \fIboolean\fR;
 	dnssec\-lookaside ( \fIauto\fR | \fIno\fR | \fIdomain\fR trust\-anchor \fIdomain\fR );
@@ -284,7 +285,7 @@ options {
 	allow\-update\-forwarding { \fIaddress_match_element\fR; ... };
 	update\-check\-ksk \fIboolean\fR;
 	dnssec\-dnskey\-kskonly \fIboolean\fR;
-	masterfile\-format ( text | raw );
+	masterfile\-format ( text | raw | map );
 	notify \fInotifytype\fR;
 	notify\-source ( \fIipv4_address\fR | * ) [ port ( \fIinteger\fR | * ) ];
 	notify\-source\-v6 ( \fIipv6_address\fR | * ) [ port ( \fIinteger\fR | * ) ];
@@ -325,7 +326,7 @@ options {
 	zone\-statistics \fIboolean\fR;
 	key\-directory \fIquoted_string\fR;
 	managed\-keys\-directory \fIquoted_string\fR;
-	auto\-dnssec \fBallow\fR|\fBmaintain\fR|\fBcreate\fR|\fBoff\fR;
+	auto\-dnssec \fBallow\fR|\fBmaintain\fR|\fBoff\fR;
 	try\-tcp\-refresh \fIboolean\fR;
 	zero\-no\-soa\-ttl \fIboolean\fR;
 	zero\-no\-soa\-ttl\-cache \fIboolean\fR;
@@ -424,6 +425,7 @@ view \fIstring\fR \fIoptional_class\fR {
 	max\-udp\-size \fIinteger\fR;
 	root\-delegation\-only [ exclude { \fIquoted_string\fR; ... } ];
 	disable\-algorithms \fIstring\fR { \fIstring\fR; ... };
+	disable\-ds\-digests \fIstring\fR { \fIstring\fR; ... };
 	dnssec\-enable \fIboolean\fR;
 	dnssec\-validation \fIboolean\fR;
 	dnssec\-lookaside ( \fIauto\fR | \fIno\fR | \fIdomain\fR trust\-anchor \fIdomain\fR );
@@ -454,7 +456,7 @@ view \fIstring\fR \fIoptional_class\fR {
 	allow\-update\-forwarding { \fIaddress_match_element\fR; ... };
 	update\-check\-ksk \fIboolean\fR;
 	dnssec\-dnskey\-kskonly \fIboolean\fR;
-	masterfile\-format ( text | raw );
+	masterfile\-format ( text | raw | map );
 	notify \fInotifytype\fR;
 	notify\-source ( \fIipv4_address\fR | * ) [ port ( \fIinteger\fR | * ) ];
 	notify\-source\-v6 ( \fIipv6_address\fR | * ) [ port ( \fIinteger\fR | * ) ];
@@ -541,7 +543,7 @@ zone \fIstring\fR \fIoptional_class\fR {
 	}\fR;
 	update\-check\-ksk \fIboolean\fR;
 	dnssec\-dnskey\-kskonly \fIboolean\fR;
-	masterfile\-format ( text | raw );
+	masterfile\-format ( text | raw | map );
 	notify \fInotifytype\fR;
 	notify\-source ( \fIipv4_address\fR | * ) [ port ( \fIinteger\fR | * ) ];
 	notify\-source\-v6 ( \fIipv6_address\fR | * ) [ port ( \fIinteger\fR | * ) ];
@@ -598,5 +600,5 @@ zone \fIstring\fR \fIoptional_class\fR {
 \fBrndc\fR(8),
 BIND 9 Administrator Reference Manual.
 .SH "COPYRIGHT"
-Copyright \(co 2004\-2011, 2013 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2004\-2014 Internet Systems Consortium, Inc. ("ISC")
 .br

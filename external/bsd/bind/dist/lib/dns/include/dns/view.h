@@ -1,7 +1,7 @@
-/*	$NetBSD: view.h,v 1.1.1.11 2013/12/31 20:11:22 christos Exp $	*/
+/*	$NetBSD: view.h,v 1.1.1.12 2014/02/28 17:40:14 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -74,6 +74,7 @@
 #include <isc/stdtime.h>
 
 #include <dns/acl.h>
+#include <dns/clientinfo.h>
 #include <dns/fixedname.h>
 #include <dns/rrl.h>
 #include <dns/rdatastruct.h>
@@ -90,7 +91,6 @@ struct dns_view {
 	dns_rdataclass_t		rdclass;
 	char *				name;
 	dns_zt_t *			zonetable;
-	dns_dlzdb_t *			dlzdatabase;
 	dns_resolver_t *		resolver;
 	dns_adb_t *			adb;
 	dns_requestmgr_t *		requestmgr;
@@ -111,6 +111,7 @@ struct dns_view {
 	isc_event_t			resevent;
 	isc_event_t			adbevent;
 	isc_event_t			reqevent;
+	isc_stats_t *			adbstats;
 	isc_stats_t *			resstats;
 	dns_stats_t *			resquerystats;
 	isc_boolean_t			cacheshared;
@@ -142,14 +143,18 @@ struct dns_view {
 	dns_acl_t *			updateacl;
 	dns_acl_t *			upfwdacl;
 	dns_acl_t *			denyansweracl;
+	dns_acl_t *			nocasecompress;
 	dns_rbt_t *			answeracl_exclude;
 	dns_rbt_t *			denyanswernames;
 	dns_rbt_t *			answernames_exclude;
 	dns_rrl_t *			rrl;
 	isc_boolean_t			provideixfr;
 	isc_boolean_t			requestnsid;
+	isc_boolean_t			requestsit;
 	dns_ttl_t			maxcachettl;
 	dns_ttl_t			maxncachettl;
+	dns_ttl_t			prefetch_trigger;
+	dns_ttl_t			prefetch_eligible;
 	in_port_t			dstport;
 	dns_aclenv_t			aclenv;
 	dns_rdatatype_t			preferred_glue;
@@ -161,15 +166,16 @@ struct dns_view {
 	dns_name_t *			dlv;
 	dns_fixedname_t			dlv_fixed;
 	isc_uint16_t			maxudp;
+	isc_uint16_t			situdp;
 	unsigned int			maxbits;
-	dns_v4_aaaa_t			v4_aaaa;
-	dns_acl_t *			v4_aaaa_acl;
+	dns_aaaa_t			v4_aaaa;
+	dns_aaaa_t			v6_aaaa;
+	dns_acl_t *			aaaa_acl;
 	dns_dns64list_t 		dns64;
 	unsigned int 			dns64cnt;
-	ISC_LIST(dns_rpz_zone_t)	rpz_zones;
-	isc_boolean_t			rpz_recursive_only;
-	isc_boolean_t			rpz_break_dnssec;
-	unsigned int			rpz_min_ns_labels;
+	dns_rpz_zones_t			*rpzs;
+	dns_dlzdblist_t 		dlz_searched;
+	dns_dlzdblist_t 		dlz_unsearched;
 
 	/*
 	 * Configurable data for server use only,
@@ -192,13 +198,18 @@ struct dns_view {
 	dns_zone_t *			managed_keys;
 	dns_zone_t *			redirect;
 
-#ifdef BIND9
-	/* File in which to store configuration for newly added zones */
+	/*
+	 * File and configuration data for zones added at runtime
+	 * (only used in BIND9).
+	 *
+	 * XXX: This should be a pointer to an opaque type that
+	 * named implements.
+	 */
 	char *				new_zone_file;
-
 	void *				new_zone_config;
 	void				(*cfg_destroy)(void **);
-#endif
+
+	unsigned char			secret[33];	/* Client secret */
 };
 
 #define DNS_VIEW_MAGIC			ISC_MAGIC('V','i','e','w')
@@ -314,6 +325,24 @@ dns_view_weakdetach(dns_view_t **targetp);
  * Ensures:
  *
  *\li	*viewp is NULL.
+ */
+
+isc_result_t
+dns_view_createzonetable(dns_view_t *view);
+/*%<
+ * Create a zonetable for the view.
+ *
+ * Requires:
+ *
+ *\li	'view' is a valid, unfrozen view.
+ *
+ *\li	'view' does not have a zonetable already.
+ *
+ * Returns:
+ *
+ *\li   	#ISC_R_SUCCESS
+ *
+ *\li	Any error that dns_zt_create() can return.
  */
 
 isc_result_t
@@ -859,11 +888,8 @@ dns_view_flushnode(dns_view_t *view, dns_name_t *name, isc_boolean_t tree);
 /*%<
  * Flush the given name from the view's cache (and optionally ADB/badcache).
  *
- * If 'tree' is true, flush 'name' and all names below it
- * from the cache, but do not flush ADB.
- *
- * If 'tree' is false, flush 'name' frmo both the cache and ADB,
- * but do not touch any other nodes.
+ * Flush the given name from the cache, ADB, and bad cache.  If 'tree'
+ * is true, also flush all subdomains of 'name'.
  *
  * Requires:
  *\li	'view' is valid.
@@ -959,6 +985,31 @@ dns_view_freezezones(dns_view_t *view, isc_boolean_t freeze);
  *
  * Requires:
  * \li	'view' is valid.
+ */
+
+void
+dns_view_setadbstats(dns_view_t *view, isc_stats_t *stats);
+/*%<
+ * Set a adb statistics set 'stats' for 'view'.
+ *
+ * Requires:
+ * \li	'view' is valid and is not frozen.
+ *
+ *\li	stats is a valid statistics supporting adb statistics
+ *	(see dns/stats.h).
+ */
+
+void
+dns_view_getadbstats(dns_view_t *view, isc_stats_t **statsp);
+/*%<
+ * Get the adb statistics counter set for 'view'.  If a statistics set is
+ * set '*statsp' will be attached to the set; otherwise, '*statsp' will be
+ * untouched.
+ *
+ * Requires:
+ * \li	'view' is valid and is not frozen.
+ *
+ *\li	'statsp' != NULL && '*statsp' != NULL
  */
 
 void
@@ -1112,6 +1163,29 @@ dns_view_setnewzones(dns_view_t *view, isc_boolean_t allow, void *cfgctx,
 
 void
 dns_view_restorekeyring(dns_view_t *view);
+
+isc_result_t
+dns_view_searchdlz(dns_view_t *view, dns_name_t *name,
+		   unsigned int minlabels,
+		   dns_clientinfomethods_t *methods,
+		   dns_clientinfo_t *clientinfo,
+		   dns_db_t **dbp);
+
+/*%<
+ * Search through the DLZ database(s) in view->dlz_searched to find
+ * one that can answer a query for 'name', using the DLZ driver's
+ * findzone method.  If successful, '*dbp' is set to point to the
+ * DLZ database.
+ *
+ * Returns:
+ * \li ISC_R_SUCCESS
+ * \li ISC_R_NOTFOUND
+ *
+ * Requires:
+ * \li 'view' is valid.
+ * \li 'name' is not NULL.
+ * \li 'dbp' is not NULL and *dbp is NULL.
+ */
 
 ISC_LANG_ENDDECLS
 

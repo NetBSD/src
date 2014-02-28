@@ -1,7 +1,7 @@
-/*	$NetBSD: inet_aton.c,v 1.1.1.6 2013/12/31 20:11:28 christos Exp $	*/
+/*	$NetBSD: inet_aton.c,v 1.1.1.7 2014/02/28 17:40:15 christos Exp $	*/
 
 /*
- * Portions Copyright (C) 2004, 2005, 2007, 2008, 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004, 2005, 2007, 2008, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1996-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -29,11 +29,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- * 	This product includes software developed by the University of
- * 	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *

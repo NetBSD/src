@@ -1,7 +1,7 @@
-/*	$NetBSD: result.h,v 1.1.1.4 2012/12/04 19:25:33 spz Exp $	*/
+/*	$NetBSD: result.h,v 1.1.1.5 2014/02/28 17:40:14 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2008, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -59,8 +59,9 @@
 #define DST_R_NORANDOMNESS		(ISC_RESULTCLASS_DST + 19)
 #define DST_R_BADKEYTYPE		(ISC_RESULTCLASS_DST + 20)
 #define DST_R_NOENGINE			(ISC_RESULTCLASS_DST + 21)
+#define DST_R_EXTERNALKEY		(ISC_RESULTCLASS_DST + 22)
 
-#define DST_R_NRESULTS			22	/* Number of results */
+#define DST_R_NRESULTS			23	/* Number of results */
 
 ISC_LANG_BEGINDECLS
 

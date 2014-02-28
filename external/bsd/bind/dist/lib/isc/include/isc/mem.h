@@ -1,7 +1,7 @@
-/*	$NetBSD: mem.h,v 1.1.1.8 2013/07/27 15:23:19 christos Exp $	*/
+/*	$NetBSD: mem.h,v 1.1.1.9 2014/02/28 17:40:15 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1997-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -26,6 +26,7 @@
 
 #include <stdio.h>
 
+#include <isc/json.h>
 #include <isc/lang.h>
 #include <isc/mutex.h>
 #include <isc/platform.h>
@@ -148,20 +149,10 @@ LIBISC_EXTERNAL_DATA extern unsigned int isc_mem_debugging;
 /*%<
  * We use either isc___mem (three underscores) or isc__mem (two) depending on
  * whether it's for BIND9's internal purpose (with -DBIND9) or generic export
- * library.  This condition is generally handled in isc/namespace.h, but for
- * Windows it doesn't work if it involves multiple times of macro expansion
- * (such as isc_mem to isc__mem then to isc___mem).  The following definitions
- * are used to work around this portability issue.  Right now, we don't support
- * the export library for Windows, so we always use the three-underscore
- * version.
+ * library.
  */
-#ifdef WIN32
-#define ISCMEMFUNC(sfx) isc___mem_ ## sfx
-#define ISCMEMPOOLFUNC(sfx) isc___mempool_ ## sfx
-#else
 #define ISCMEMFUNC(sfx) isc__mem_ ## sfx
 #define ISCMEMPOOLFUNC(sfx) isc__mempool_ ## sfx
-#endif
 
 #define isc_mem_get(c, s)	ISCMEMFUNC(get)((c), (s) _ISC_MEM_FILELINE)
 #define isc_mem_allocate(c, s)	ISCMEMFUNC(allocate)((c), (s) _ISC_MEM_FILELINE)
@@ -217,6 +208,8 @@ typedef struct isc_memmethods {
 			 void *water_arg, size_t hiwater, size_t lowater);
 	void (*waterack)(isc_mem_t *ctx, int flag);
 	size_t (*inuse)(isc_mem_t *mctx);
+	size_t (*maxinuse)(isc_mem_t *mctx);
+	size_t (*total)(isc_mem_t *mctx);
 	isc_boolean_t (*isovermem)(isc_mem_t *mctx);
 	isc_result_t (*mpcreate)(isc_mem_t *mctx, size_t size,
 				 isc_mempool_t **mpctxp);
@@ -401,9 +394,23 @@ isc_mem_getquota(isc_mem_t *);
 size_t
 isc_mem_inuse(isc_mem_t *mctx);
 /*%<
- * Get an estimate of the number of memory in use in 'mctx', in bytes.
+ * Get an estimate of the amount of memory in use in 'mctx', in bytes.
  * This includes quantization overhead, but does not include memory
  * allocated from the system but not yet used.
+ */
+
+size_t
+isc_mem_maxinuse(isc_mem_t *mctx);
+/*%<
+ * Get an estimate of the largest amount of memory that has been in
+ * use in 'mctx' at any time.
+ */
+
+size_t
+isc_mem_total(isc_mem_t *mctx);
+/*%<
+ * Get the total amount of memory in 'mctx', in bytes, including memory
+ * not yet used.
  */
 
 isc_boolean_t
@@ -539,6 +546,15 @@ isc_mem_renderxml(xmlTextWriterPtr writer);
  * Render all contexts' statistics and status in XML for writer.
  */
 #endif /* HAVE_LIBXML2 */
+
+#ifdef HAVE_JSON
+isc_result_t
+isc_mem_renderjson(json_object *memobj);
+/*%<
+ * Render all contexts' statistics and status in JSON.
+ */
+#endif /* HAVE_JSON */
+
 
 /*
  * Memory pools
@@ -703,8 +719,6 @@ ISCMEMPOOLFUNC(get)(isc_mempool_t * _ISC_MEM_FLARG);
 void
 ISCMEMPOOLFUNC(put)(isc_mempool_t *, void * _ISC_MEM_FLARG);
 
-#ifdef USE_MEMIMPREGISTER
-
 /*%<
  * See isc_mem_create2() above.
  */
@@ -728,7 +742,6 @@ isc__mem_register(void);
  * usually do not have to care about this function: it would call
  * isc_lib_register(), which internally calls this function.
  */
-#endif /* USE_MEMIMPREGISTER */
 
 ISC_LANG_ENDDECLS
 

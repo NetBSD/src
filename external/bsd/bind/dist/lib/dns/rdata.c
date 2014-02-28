@@ -1,7 +1,7 @@
-/*	$NetBSD: rdata.c,v 1.1.1.9 2013/12/31 20:11:12 christos Exp $	*/
+/*	$NetBSD: rdata.c,v 1.1.1.10 2014/02/28 17:40:13 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -37,6 +37,7 @@
 #include <dns/callbacks.h>
 #include <dns/cert.h>
 #include <dns/compress.h>
+#include <dns/dsdigest.h>
 #include <dns/enumtype.h>
 #include <dns/keyflags.h>
 #include <dns/keyvalues.h>
@@ -283,7 +284,7 @@ locator_pton(const char *src, unsigned char *dst) {
 	}
 	if (tp != endp)
 		return (0);
-	memcpy(dst, tmp, NS_LOCATORSZ);
+	memmove(dst, tmp, NS_LOCATORSZ);
 	return (1);
 }
 
@@ -324,7 +325,7 @@ mem_maybedup(isc_mem_t *mctx, void *source, size_t length) {
 		return (source);
 	new = isc_mem_allocate(mctx, length);
 	if (new != NULL)
-		memcpy(new, source, length);
+		memmove(new, source, length);
 
 	return (new);
 }
@@ -591,7 +592,7 @@ dns_rdata_towire(dns_rdata_t *rdata, dns_compress_t *cctx,
 		isc_buffer_availableregion(target, &tr);
 		if (tr.length < rdata->length)
 			return (ISC_R_NOSPACE);
-		memcpy(tr.base, rdata->data, rdata->length);
+		memmove(tr.base, rdata->data, rdata->length);
 		isc_buffer_add(target, rdata->length);
 		return (ISC_R_SUCCESS);
 	}
@@ -1270,7 +1271,7 @@ txt_fromwire(isc_buffer_t *source, isc_buffer_t *target) {
 		return (ISC_R_NOSPACE);
 
 	if (tregion.base != sregion.base)
-		memcpy(tregion.base, sregion.base, n);
+		memmove(tregion.base, sregion.base, n);
 	isc_buffer_forward(source, n);
 	isc_buffer_add(target, n);
 	return (ISC_R_SUCCESS);
@@ -1420,7 +1421,7 @@ multitxt_fromwire(isc_buffer_t *source, isc_buffer_t *target) {
 			return (ISC_R_NOSPACE);
 
 		if (tregion.base != sregion.base)
-			memcpy(tregion.base, sregion.base, n);
+			memmove(tregion.base, sregion.base, n);
 		isc_buffer_forward(source, n);
 		isc_buffer_add(target, n);
 		isc_buffer_activeregion(source, &sregion);
@@ -1471,7 +1472,7 @@ str_totext(const char *source, isc_buffer_t *target) {
 	if (l > region.length)
 		return (ISC_R_NOSPACE);
 
-	memcpy(region.base, source, l);
+	memmove(region.base, source, l);
 	isc_buffer_add(target, l);
 	return (ISC_R_SUCCESS);
 }
@@ -1597,7 +1598,7 @@ mem_tobuffer(isc_buffer_t *target, void *base, unsigned int length) {
 	if (length > tr.length)
 		return (ISC_R_NOSPACE);
 	if (tr.base != base)
-		memcpy(tr.base, base, length);
+		memmove(tr.base, base, length);
 	isc_buffer_add(target, length);
 	return (ISC_R_SUCCESS);
 }

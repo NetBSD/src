@@ -1,7 +1,7 @@
-/*	$NetBSD: client.h,v 1.1.1.4 2013/12/31 20:11:19 christos Exp $	*/
+/*	$NetBSD: client.h,v 1.1.1.5 2014/02/28 17:40:14 christos Exp $	*/
 
 /*
- * Copyright (C) 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -79,10 +79,14 @@ ISC_LANG_BEGINDECLS
 /*%
  * Optional flags for dns_client_(start)resolve.
  */
-/*%< Disable DNSSEC validation. */
+/*%< Do not return DNSSEC data (e.g. RRSIGS) with response. */
 #define DNS_CLIENTRESOPT_NODNSSEC	0x01
 /*%< Allow running external context. */
 #define DNS_CLIENTRESOPT_ALLOWRUN	0x02
+/*%< Don't validate responses. */
+#define DNS_CLIENTRESOPT_NOVALIDATE	0x04
+/*%< Don't set the CD flag on upstream queries. */
+#define DNS_CLIENTRESOPT_NOCDFLAG	0x08
 
 /*%
  * Optional flags for dns_client_(start)request.
@@ -255,6 +259,26 @@ dns_client_clearservers(dns_client_t *client, dns_rdataclass_t rdclass,
  *\li	'client' is a valid client.
  *
  *\li	'namespace' is NULL or a valid name.
+ *
+ * Returns:
+ *
+ *\li	#ISC_R_SUCCESS				On success.
+ *
+ *\li	Anything else				Failure.
+ */
+
+isc_result_t
+dns_client_setdlv(dns_client_t *client, dns_rdataclass_t rdclass,
+		  const char *dlvname);
+/*%<
+ * Specify a name to use for DNSSEC lookaside validation (e.g.,
+ * "dlv.isc.org"). If a trusted key has been added for that name,
+ * then DLV will be used during validation.  If 'dlvname' is NULL,
+ * then DLV will no longer be used for this client.
+ *
+ * Requires:
+ *
+ *\li	'client' is a valid client.
  *
  * Returns:
  *

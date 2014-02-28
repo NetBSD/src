@@ -1,7 +1,7 @@
-/*	$NetBSD: hash.c,v 1.1.1.6 2013/12/31 20:11:28 christos Exp $	*/
+/*	$NetBSD: hash.c,v 1.1.1.7 2014/02/28 17:40:15 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -196,12 +196,8 @@ isc_hash_ctxcreate(isc_mem_t *mctx, isc_entropy_t *entropy,
 	hctx->vectorlen = vlen;
 	hctx->rndvector = rv;
 
-#ifdef BIND9
 	if (entropy != NULL)
 		isc_entropy_attach(entropy, &hctx->entropy);
-#else
-	UNUSED(entropy);
-#endif
 
 	*hctxp = hctx;
 	return (ISC_R_SUCCESS);
@@ -247,8 +243,7 @@ isc_hash_ctxinit(isc_hash_t *hctx) {
 	if (hctx->initialized == ISC_TRUE)
 		goto out;
 
-	if (hctx->entropy) {
-#ifdef BIND9
+	if (hctx->entropy != NULL) {
 		isc_result_t result;
 
 		result = isc_entropy_getdata(hctx->entropy,
@@ -256,9 +251,6 @@ isc_hash_ctxinit(isc_hash_t *hctx) {
 					     (unsigned int)hctx->vectorlen,
 					     NULL, 0);
 		INSIST(result == ISC_R_SUCCESS);
-#else
-		INSIST(0);
-#endif
 	} else {
 		isc_uint32_t pr;
 		size_t i, copylen;
@@ -272,7 +264,7 @@ isc_hash_ctxinit(isc_hash_t *hctx) {
 			else
 				copylen = hctx->vectorlen - i;
 
-			memcpy(p, &pr, copylen);
+			memmove(p, &pr, copylen);
 		}
 		INSIST(p == (unsigned char *)hctx->rndvector +
 		       hctx->vectorlen);
@@ -315,10 +307,8 @@ destroy(isc_hash_t **hctxp) {
 	isc_refcount_destroy(&hctx->refcnt);
 
 	mctx = hctx->mctx;
-#ifdef BIND9
 	if (hctx->entropy != NULL)
 		isc_entropy_detach(&hctx->entropy);
-#endif
 	if (hctx->rndvector != NULL)
 		isc_mem_put(mctx, hctx->rndvector, hctx->vectorlen);
 
@@ -326,9 +316,9 @@ destroy(isc_hash_t **hctxp) {
 
 	DESTROYLOCK(&hctx->lock);
 
-	memcpy(canary0, hctx + 1, sizeof(canary0));
+	memmove(canary0, hctx + 1, sizeof(canary0));
 	memset(hctx, 0, sizeof(isc_hash_t));
-	memcpy(canary1, hctx + 1, sizeof(canary1));
+	memmove(canary1, hctx + 1, sizeof(canary1));
 	INSIST(memcmp(canary0, canary1, sizeof(canary0)) == 0);
 	isc_mem_put(mctx, hctx, sizeof(isc_hash_t));
 	isc_mem_detach(&mctx);

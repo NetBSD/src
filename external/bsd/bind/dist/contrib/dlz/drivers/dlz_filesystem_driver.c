@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_filesystem_driver.c,v 1.1.1.4 2013/07/27 15:22:56 christos Exp $	*/
+/*	$NetBSD: dlz_filesystem_driver.c,v 1.1.1.5 2014/02/28 17:40:09 christos Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -751,7 +751,8 @@ fs_allnodes(const char *zone, void *driverarg, void *dbdata,
 }
 
 static isc_result_t
-fs_findzone(void *driverarg, void *dbdata, const char *name)
+fs_findzone(void *driverarg, void *dbdata, const char *name,
+	    dns_clientinfomethods_t *methods, dns_clientinfo_t *clientinfo)
 {
 
 	isc_result_t result;
@@ -760,6 +761,8 @@ fs_findzone(void *driverarg, void *dbdata, const char *name)
 	path = NULL;
 
 	UNUSED(driverarg);
+	UNUSED(methods);
+	UNUSED(clientinfo);
 
 	if (create_path(name, NULL, NULL, (config_data_t *) dbdata,
 			&path) != ISC_R_SUCCESS) {

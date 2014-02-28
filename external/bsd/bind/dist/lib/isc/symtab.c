@@ -1,4 +1,4 @@
-/*	$NetBSD: symtab.c,v 1.1.1.4 2013/07/27 15:23:19 christos Exp $	*/
+/*	$NetBSD: symtab.c,v 1.1.1.5 2014/02/28 17:40:15 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
@@ -302,4 +302,10 @@ isc_symtab_undefine(isc_symtab_t *symtab, const char *key, unsigned int type) {
 	symtab->count--;
 
 	return (ISC_R_SUCCESS);
+}
+
+unsigned int
+isc_symtab_count(isc_symtab_t *symtab) {
+	REQUIRE(VALID_SYMTAB(symtab));
+	return (symtab->count);
 }

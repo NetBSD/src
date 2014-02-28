@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssec.c,v 1.1.1.11 2013/12/31 20:11:07 christos Exp $	*/
+/*	$NetBSD: dnssec.c,v 1.1.1.12 2014/02/28 17:40:13 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -277,7 +277,8 @@ dns_dnssec_sign(dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
 	if (ret != ISC_R_SUCCESS)
 		goto cleanup_databuf;
 
-	ret = dst_context_create2(key, mctx, DNS_LOGCATEGORY_DNSSEC, &ctx);
+	ret = dst_context_create3(key, mctx,
+				  DNS_LOGCATEGORY_DNSSEC, ISC_TRUE, &ctx);
 	if (ret != ISC_R_SUCCESS)
 		goto cleanup_databuf;
 
@@ -297,7 +298,7 @@ dns_dnssec_sign(dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
 	 * Create an envelope for each rdata: <name|type|class|ttl>.
 	 */
 	isc_buffer_init(&envbuf, data, sizeof(data));
-	memcpy(data, r.base, r.length);
+	memmove(data, r.base, r.length);
 	isc_buffer_add(&envbuf, r.length);
 	isc_buffer_putuint16(&envbuf, set->type);
 	isc_buffer_putuint16(&envbuf, set->rdclass);
@@ -472,7 +473,8 @@ dns_dnssec_verify3(dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
 	}
 
  again:
-	ret = dst_context_create2(key, mctx, DNS_LOGCATEGORY_DNSSEC, &ctx);
+	ret = dst_context_create4(key, mctx, DNS_LOGCATEGORY_DNSSEC,
+				  ISC_FALSE, maxbits, &ctx);
 	if (ret != ISC_R_SUCCESS)
 		goto cleanup_struct;
 
@@ -503,10 +505,10 @@ dns_dnssec_verify3(dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
 	if (labels - sig.labels > 0) {
 		isc_buffer_putuint8(&envbuf, 1);
 		isc_buffer_putuint8(&envbuf, '*');
-		memcpy(data + 2, r.base, r.length);
+		memmove(data + 2, r.base, r.length);
 	}
 	else
-		memcpy(data, r.base, r.length);
+		memmove(data, r.base, r.length);
 	isc_buffer_add(&envbuf, r.length);
 	isc_buffer_putuint16(&envbuf, set->type);
 	isc_buffer_putuint16(&envbuf, set->rdclass);
@@ -874,7 +876,8 @@ dns_dnssec_signmessage(dns_message_t *msg, dst_key_t *key) {
 
 	isc_buffer_init(&databuf, data, sizeof(data));
 
-	RETERR(dst_context_create2(key, mctx, DNS_LOGCATEGORY_DNSSEC, &ctx));
+	RETERR(dst_context_create3(key, mctx,
+				   DNS_LOGCATEGORY_DNSSEC, ISC_TRUE, &ctx));
 
 	/*
 	 * Digest the fields of the SIG - we can cheat and use
@@ -1024,7 +1027,8 @@ dns_dnssec_verifymessage(isc_buffer_t *source, dns_message_t *msg,
 		goto failure;
 	}
 
-	RETERR(dst_context_create2(key, mctx, DNS_LOGCATEGORY_DNSSEC, &ctx));
+	RETERR(dst_context_create3(key, mctx,
+				   DNS_LOGCATEGORY_DNSSEC, ISC_FALSE, &ctx));
 
 	/*
 	 * Digest the SIG(0) record, except for the signature.
@@ -1042,14 +1046,14 @@ dns_dnssec_verifymessage(isc_buffer_t *source, dns_message_t *msg,
 	/*
 	 * Extract the header.
 	 */
-	memcpy(header, source_r.base, DNS_MESSAGE_HEADERLEN);
+	memmove(header, source_r.base, DNS_MESSAGE_HEADERLEN);
 
 	/*
 	 * Decrement the additional field counter.
 	 */
-	memcpy(&addcount, &header[DNS_MESSAGE_HEADERLEN - 2], 2);
+	memmove(&addcount, &header[DNS_MESSAGE_HEADERLEN - 2], 2);
 	addcount = htons((isc_uint16_t)(ntohs(addcount) - 1));
-	memcpy(&header[DNS_MESSAGE_HEADERLEN - 2], &addcount, 2);
+	memmove(&header[DNS_MESSAGE_HEADERLEN - 2], &addcount, 2);
 
 	/*
 	 * Digest the modified header.

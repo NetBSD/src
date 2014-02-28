@@ -1,5 +1,5 @@
 <!--
- - Copyright (C) 2004-2011, 2013 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004-2011, 2013, 2014 Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000-2003 Internet Software Consortium.
  - 
  - Permission to use, copy, modify, and/or distribute this software for any
@@ -34,7 +34,7 @@
 <div class="cmdsynopsis"><p><code class="command">dig</code>  [global-queryopt...] [query...]</p></div>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2543530"></a><h2>DESCRIPTION</h2>
+<a name="id2543533"></a><h2>DESCRIPTION</h2>
 <p><span><strong class="command">dig</strong></span>
       (domain information groper) is a flexible tool
       for interrogating DNS name servers.  It performs DNS lookups and
@@ -74,14 +74,14 @@
     </p>
 <p>
       The IN and CH class names overlap with the IN and CH top level
-      domains names.  Either use the <code class="option">-t</code> and
+      domain names.  Either use the <code class="option">-t</code> and
       <code class="option">-c</code> options to specify the type and class, 
       use the <code class="option">-q</code> the specify the domain name, or
       use "IN." and "CH." when looking up these top level domains.
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2543609"></a><h2>SIMPLE USAGE</h2>
+<a name="id2543612"></a><h2>SIMPLE USAGE</h2>
 <p>
       A typical invocation of <span><strong class="command">dig</strong></span> looks like:
       </p>
@@ -134,7 +134,7 @@
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2543713"></a><h2>OPTIONS</h2>
+<a name="id2543716"></a><h2>OPTIONS</h2>
 <p>
       The <code class="option">-b</code> option sets the source IP address of the query
       to <em class="parameter"><code>address</code></em>.  This must be a valid
@@ -193,7 +193,7 @@
     </p>
 <p>
       The <code class="option">-q</code> option sets the query name to 
-      <em class="parameter"><code>name</code></em>.  This useful do distinguish the
+      <em class="parameter"><code>name</code></em>.  This is useful to distinguish the
       <em class="parameter"><code>name</code></em> from other arguments.
     </p>
 <p>
@@ -238,7 +238,7 @@
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2544061"></a><h2>QUERY OPTIONS</h2>
+<a name="id2544065"></a><h2>QUERY OPTIONS</h2>
 <p><span><strong class="command">dig</strong></span>
       provides a number of query options which affect
       the way in which lookups are made and the results displayed.  Some of
@@ -410,6 +410,16 @@
               example, human-readable key information about DNSKEY records).
               The default is not to print record comments unless multiline
               mode is active.
+            </p></dd>
+<dt><span class="term"><code class="option">+[no]crypto</code></span></dt>
+<dd><p>
+	      Toggle the display of cryptographic fields in DNSSEC records.
+	      The contents of these field are unnecessary to debug most DNSSEC
+	      validation failures and removing them makes it easier to see
+	      the common failures.  The default is to display the fields.
+	      When omitted they are replaced by the string "[omitted]" or
+	      in the DNSKEY case the key id is displayed as the replacement,
+	      e.g. "[ key id = value ]".
             </p></dd>
 <dt><span class="term"><code class="option">+split=W</code></span></dt>
 <dd><p>
@@ -589,13 +599,31 @@
 	      than creating a new TCP socket for each lookup.  The default
 	      is <code class="option">+nokeepopen</code>.
             </p></dd>
+<dt><span class="term"><code class="option">+[no]sit[<span class="optional">=####</span>]</code></span></dt>
+<dd><p>
+	      Send a Source Identity Token EDNS option, with optional value.
+	      Replaying a SIT from a previous response will allow the
+	      server to identify a previous client.  The default is
+	      <code class="option">+nosit</code>.  Currently using experimental value
+	      65001 for the option code.
+            </p></dd>
+<dt><span class="term"><code class="option">+[no]subnet=addr/prefix</code></span></dt>
+<dd><p>
+	      Send an EDNS Client Subnet option with the speciifed
+              IP address or network prefix.
+            </p></dd>
+<dt><span class="term"><code class="option">+[no]expire</code></span></dt>
+<dd><p>
+	      Send an EDNS Expire option.  Currently using experimental
+	      value 65002 for the option code.
+            </p></dd>
 </dl></div>
 <p>
 
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2545341"></a><h2>MULTIPLE QUERIES</h2>
+<a name="id2545405"></a><h2>MULTIPLE QUERIES</h2>
 <p>
       The BIND 9 implementation of <span><strong class="command">dig </strong></span>
       supports
@@ -641,7 +669,7 @@ dig +qr www.isc.org any -x 127.0.0.1 isc.org ns +noqr
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2545403"></a><h2>IDN SUPPORT</h2>
+<a name="id2545536"></a><h2>IDN SUPPORT</h2>
 <p>
       If <span><strong class="command">dig</strong></span> has been built with IDN (internationalized
       domain name) support, it can accept and display non-ASCII domain names.
@@ -655,14 +683,14 @@ dig +qr www.isc.org any -x 127.0.0.1 isc.org ns +noqr
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2545426"></a><h2>FILES</h2>
+<a name="id2545558"></a><h2>FILES</h2>
 <p><code class="filename">/etc/resolv.conf</code>
     </p>
 <p><code class="filename">${HOME}/.digrc</code>
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2545443"></a><h2>SEE ALSO</h2>
+<a name="id2545575"></a><h2>SEE ALSO</h2>
 <p><span class="citerefentry"><span class="refentrytitle">host</span>(1)</span>,
       <span class="citerefentry"><span class="refentrytitle">named</span>(8)</span>,
       <span class="citerefentry"><span class="refentrytitle">dnssec-keygen</span>(8)</span>,
@@ -670,7 +698,7 @@ dig +qr www.isc.org any -x 127.0.0.1 isc.org ns +noqr
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2545548"></a><h2>BUGS</h2>
+<a name="id2545612"></a><h2>BUGS</h2>
 <p>
       There are probably too many query options.
     </p>

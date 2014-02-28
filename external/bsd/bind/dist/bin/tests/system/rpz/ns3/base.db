@@ -21,30 +21,7 @@
 ;   Its contents are also changed with nsupdate
 
 
-$TTL	120
+$TTL	300
 @	SOA	blx.  hostmaster.ns.blx. ( 1 3600 1200 604800 60 )
-	NS	ns
-ns	A	10.53.0.3
+	NS	ns.tld3.
 
-; Poke the radix tree a little.
-128.1111.2222.3333.4444.5555.6666.7777.8888.rpz-ip	CNAME	.
-128.1111.2222.3333.4444.5555.6666.zz.rpz-ip		CNAME	.
-128.1111.2222.3333.4444.5555.zz.8888.rpz-ip		CNAME	.
-128.1111.2222.3333.4444.zz.8888.rpz-ip			CNAME	.
-128.zz.3333.4444.0.0.8888.rpz-ip			CNAME	.
-128.zz.3333.4444.0.7777.8888.rpz-ip			CNAME	.
-128.zz.3333.4444.0.8777.8888.rpz-ip			CNAME	.
-127.zz.3333.4444.0.8777.8888.rpz-ip			CNAME	.
-
-
-; regression testing for some old crashes
-redirect	A       127.0.0.1
-*.redirect	A       127.0.0.1
-*.credirect	CNAME   google.com.
-
-
-; names in the RPZ TLDs that some say should not be rewritten.
-; This is not a bug, because any data leaked by writing 24.4.3.2.10.rpz-ip
-; (or whatever) is available by publishing "foo A 10.2.3.4" and then
-; resolving foo.
-32.3.2.1.127.rpz-ip					CNAME	walled.invalid.

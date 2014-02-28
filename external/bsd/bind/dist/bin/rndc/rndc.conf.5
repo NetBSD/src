@@ -1,6 +1,6 @@
-.\"	$NetBSD: rndc.conf.5,v 1.1.1.4 2012/06/04 17:54:01 christos Exp $
+.\"	$NetBSD: rndc.conf.5,v 1.1.1.5 2014/02/28 17:40:07 christos Exp $
 .\"
-.\" Copyright (C) 2004, 2005, 2007 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2004, 2005, 2007, 2013 Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000, 2001 Internet Software Consortium.
 .\" 
 .\" Permission to use, copy, modify, and/or distribute this software for any
@@ -100,9 +100,9 @@ The
 \fBkey\fR
 statement begins with an identifying string, the name of the key. The statement has two clauses.
 \fBalgorithm\fR
-identifies the encryption algorithm for
+identifies the authentication algorithm for
 \fBrndc\fR
-to use; currently only HMAC\-MD5 is supported. This is followed by a secret clause which contains the base\-64 encoding of the algorithm's encryption key. The base\-64 string is enclosed in double quotes.
+to use; currently only HMAC\-MD5 (for compatibility), HMAC\-SHA1, HMAC\-SHA224, HMAC\-SHA256 (default), HMAC\-SHA384 and HMAC\-SHA512 are supported. This is followed by a secret clause which contains the base\-64 encoding of the algorithm's authentication key. The base\-64 string is enclosed in double quotes.
 .PP
 There are two common ways to generate the base\-64 string for the secret. The BIND 9 program
 \fBrndc\-confgen\fR
@@ -146,7 +146,7 @@ does not ship with BIND 9 but is available on many systems. See the EXAMPLE sect
 .RS 4
 .nf
       key samplekey {
-        algorithm       hmac\-md5;
+        algorithm       hmac\-sha256;
         secret          "6FMfj43Osz4lyb24OIe2iGEz9lf1llJO+lz";
       };
 .fi
@@ -156,7 +156,7 @@ does not ship with BIND 9 but is available on many systems. See the EXAMPLE sect
 .RS 4
 .nf
       key testkey {
-        algorithm	hmac\-md5;
+        algorithm	hmac\-sha256;
         secret		"R3HI8P6BKw9ZwXwN3VZKuQ==";
       };
 .fi
@@ -165,7 +165,7 @@ does not ship with BIND 9 but is available on many systems. See the EXAMPLE sect
 .PP
 In the above example,
 \fBrndc\fR
-will by default use the server at localhost (127.0.0.1) and the key called samplekey. Commands to the localhost server will use the samplekey key, which must also be defined in the server's configuration file with the same name and secret. The key statement indicates that samplekey uses the HMAC\-MD5 algorithm and its secret clause contains the base\-64 encoding of the HMAC\-MD5 secret enclosed in double quotes.
+will by default use the server at localhost (127.0.0.1) and the key called samplekey. Commands to the localhost server will use the samplekey key, which must also be defined in the server's configuration file with the same name and secret. The key statement indicates that samplekey uses the HMAC\-SHA256 algorithm and its secret clause contains the base\-64 encoding of the HMAC\-SHA256 secret enclosed in double quotes.
 .PP
 If
 \fBrndc \-s testserver\fR
@@ -210,7 +210,7 @@ BIND 9 Administrator Reference Manual.
 .PP
 Internet Systems Consortium
 .SH "COPYRIGHT"
-Copyright \(co 2004, 2005, 2007 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2004, 2005, 2007, 2013 Internet Systems Consortium, Inc. ("ISC")
 .br
 Copyright \(co 2000, 2001 Internet Software Consortium.
 .br

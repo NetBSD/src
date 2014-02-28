@@ -1,7 +1,7 @@
-/*	$NetBSD: diff.c,v 1.1.1.8 2013/12/31 20:11:06 christos Exp $	*/
+/*	$NetBSD: diff.c,v 1.1.1.9 2014/02/28 17:40:13 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2009, 2011, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2011, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -81,7 +81,7 @@ dns_difftuple_create(isc_mem_t *mctx,
 
 	datap = (unsigned char *)(t + 1);
 
-	memcpy(datap, name->ndata, name->length);
+	memmove(datap, name->ndata, name->length);
 	dns_name_init(&t->name, NULL);
 	dns_name_clone(name, &t->name);
 	t->name.ndata = datap;
@@ -89,7 +89,7 @@ dns_difftuple_create(isc_mem_t *mctx,
 
 	t->ttl = ttl;
 
-	memcpy(datap, rdata->data, rdata->length);
+	memmove(datap, rdata->data, rdata->length);
 	dns_rdata_init(&t->rdata);
 	dns_rdata_clone(rdata, &t->rdata);
 	t->rdata.data = datap;
@@ -129,7 +129,6 @@ dns_difftuple_copy(dns_difftuple_t *orig, dns_difftuple_t **copyp) {
 void
 dns_diff_init(isc_mem_t *mctx, dns_diff_t *diff) {
 	diff->mctx = mctx;
-	diff->resign = 0;
 	ISC_LIST_INIT(diff->tuples);
 	diff->magic = DNS_DIFF_MAGIC;
 }
@@ -203,7 +202,7 @@ dns_diff_appendminimal(dns_diff_t *diff, dns_difftuple_t **tuplep)
 }
 
 static isc_stdtime_t
-setresign(dns_rdataset_t *modified, isc_uint32_t delta) {
+setresign(dns_rdataset_t *modified) {
 	dns_rdata_t rdata = DNS_RDATA_INIT;
 	dns_rdata_rrsig_t sig;
 	isc_stdtime_t when;
@@ -216,7 +215,7 @@ setresign(dns_rdataset_t *modified, isc_uint32_t delta) {
 	if ((rdata.flags & DNS_RDATA_OFFLINE) != 0)
 		when = 0;
 	else
-		when = sig.timeexpire - delta;
+		when = sig.timeexpire;
 	dns_rdata_reset(&rdata);
 
 	result = dns_rdataset_next(modified);
@@ -226,8 +225,8 @@ setresign(dns_rdataset_t *modified, isc_uint32_t delta) {
 		if ((rdata.flags & DNS_RDATA_OFFLINE) != 0) {
 			goto next_rr;
 		}
-		if (when == 0 || sig.timeexpire - delta < when)
-			when = sig.timeexpire - delta;
+		if (when == 0 || sig.timeexpire < when)
+			when = sig.timeexpire;
  next_rr:
 		dns_rdata_reset(&rdata);
 		result = dns_rdataset_next(modified);
@@ -377,8 +376,7 @@ diff_apply(dns_diff_t *diff, dns_db_t *db, dns_dbversion_t *ver,
 			if (result == ISC_R_SUCCESS) {
 				if (modified != NULL) {
 					isc_stdtime_t resign;
-					resign = setresign(modified,
-							   diff->resign);
+					resign = setresign(modified);
 					dns_db_setsigningtime(db, modified,
 							      resign);
 				}

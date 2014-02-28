@@ -1,7 +1,7 @@
-/*	$NetBSD: dig.h,v 1.1.1.7 2013/12/31 20:09:50 christos Exp $	*/
+/*	$NetBSD: dig.h,v 1.1.1.8 2014/02/28 17:40:05 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -132,6 +132,10 @@ struct dig_lookup {
 		done_as_is,
 		besteffort,
 		dnssec,
+		expire,
+#ifdef ISC_PLATFORM_USESIT
+		sit,
+#endif
 		nsid;   /*% Name Server ID (RFC 5001) */
 #ifdef DIG_SIGCHASE
 isc_boolean_t	sigchase;
@@ -186,6 +190,10 @@ isc_boolean_t	sigchase;
 	isc_buffer_t *querysig;
 	isc_uint32_t msgcounter;
 	dns_fixedname_t fdomain;
+	isc_sockaddr_t *ecs_addr;
+#ifdef ISC_PLATFORM_USESIT
+	char *sitvalue;
+#endif
 };
 
 /*% The dig_query structure */
@@ -204,6 +212,7 @@ struct dig_query {
 	isc_uint32_t second_rr_serial;
 	isc_uint32_t msg_count;
 	isc_uint32_t rr_count;
+	isc_boolean_t ixfr_axfr;
 	char *servname;
 	char *userarg;
 	isc_bufferlist_t sendlist,
@@ -337,6 +346,9 @@ setup_system(void);
 isc_result_t
 parse_uint(isc_uint32_t *uip, const char *value, isc_uint32_t max,
 	   const char *desc);
+
+isc_result_t
+parse_netprefix(isc_sockaddr_t **sap, const char *value);
 
 void
 parse_hmac(const char *hmacstr);

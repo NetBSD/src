@@ -1,7 +1,7 @@
-/*	$NetBSD: adb_test.c,v 1.1.1.5 2013/07/27 15:22:49 christos Exp $	*/
+/*	$NetBSD: adb_test.c,v 1.1.1.6 2014/02/28 17:40:07 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -206,15 +206,17 @@ create_view(void) {
 
 		attrs = DNS_DISPATCHATTR_IPV4 | DNS_DISPATCHATTR_UDP;
 		RUNTIME_CHECK(dns_dispatch_getudp(dispatchmgr, socketmgr,
-						  taskmgr, &any4, 512, 6, 1024,
-						  17, 19, attrs, attrs, &disp4)
+						  taskmgr, &any4,
+						  512, 6, 1024, 17, 19,
+						  attrs, attrs, &disp4)
 			      == ISC_R_SUCCESS);
 		INSIST(disp4 != NULL);
 
 		attrs = DNS_DISPATCHATTR_IPV6 | DNS_DISPATCHATTR_UDP;
 		RUNTIME_CHECK(dns_dispatch_getudp(dispatchmgr, socketmgr,
-						  taskmgr, &any6, 512, 6, 1024,
-						  17, 19, attrs, attrs, &disp6)
+						  taskmgr, &any6,
+						  512, 6, 1024, 17, 19,
+						  attrs, attrs, &disp6)
 			      == ISC_R_SUCCESS);
 		INSIST(disp6 != NULL);
 

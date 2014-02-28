@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssec-verify.c,v 1.1.1.2 2013/07/27 15:22:44 christos Exp $	*/
+/*	$NetBSD: dnssec-verify.c,v 1.1.1.3 2014/02/28 17:40:05 christos Exp $	*/
 
 /*
- * Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -139,7 +139,10 @@ usage(void) {
 	fprintf(stderr, "\t\tfile format of input zonefile (text)\n");
 	fprintf(stderr, "\t-c class (IN)\n");
 	fprintf(stderr, "\t-E engine:\n");
-#ifdef USE_PKCS11
+#if defined(PKCS11CRYPTO)
+	fprintf(stderr, "\t\tpath to PKCS#11 provider library "
+		"(default is %s)\n", PK11_LIB_LOCATION);
+#elif defined(USE_PKCS11)
 	fprintf(stderr, "\t\tname of an OpenSSL engine to use "
 				"(default is \"pkcs11\")\n");
 #else
@@ -158,7 +161,7 @@ main(int argc, char *argv[]) {
 	isc_result_t result;
 	isc_log_t *log = NULL;
 #ifdef USE_PKCS11
-	const char *engine = "pkcs11";
+	const char *engine = PKCS11_ENGINE;
 #else
 	const char *engine = NULL;
 #endif
