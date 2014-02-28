@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.24 2013/06/12 15:11:08 kiyohara Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.25 2014/02/28 05:44:39 matt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.24 2013/06/12 15:11:08 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.25 2014/02/28 05:44:39 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -131,7 +131,7 @@ mem_regions(struct mem_region **memp, struct mem_region **availp)
 #endif
 		OFmem[memcnt].start = addr;
 		OFmem[memcnt].size = size;
-		aprint_normal("mem region %d start=%llx size=%llx\n",
+		aprint_normal("mem region %d start=%"PRIx64" size=%"PRIx64"\n",
 		    memcnt, addr, size);
 		memcnt++;
 	}
@@ -194,7 +194,7 @@ mem_regions(struct mem_region **memp, struct mem_region **availp)
 #endif
 		OFavail[cnt].start = addr;
 		OFavail[cnt].size = size;
-		aprint_normal("avail region %d start=%llx size=%llx\n",
+		aprint_normal("avail region %d start=%#"PRIx64" size=%#"PRIx64"\n",
 		    cnt, addr, size);
 		cnt++;
 	}
