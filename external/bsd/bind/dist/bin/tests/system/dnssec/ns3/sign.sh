@@ -1,6 +1,6 @@
 #!/bin/sh -e
 #
-# Copyright (C) 2004, 2006-2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2006-2014  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -19,8 +19,6 @@
 
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
-
-RANDFILE=../random.data
 
 zone=secure.example.
 infile=secure.example.db.in

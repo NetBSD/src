@@ -53,8 +53,8 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;USE_MD5;@USE_OPENSSL@_DEBUG;_WINDOWS;_USRDLL;LIBISCCC_EXPORTS;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.\;..\..\..\;@LIBXML2_INC@include;..\include;..\..\isc\win32;..\..\isc\win32\include;..\..\isc\include;..\..\dns\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;USE_MD5;@CRYPTO@_DEBUG;_WINDOWS;_USRDLL;LIBISCCC_EXPORTS;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.\;..\..\..\;@LIBXML2_INC@@OPENSSL_INC@include;..\include;..\..\isc\win32;..\..\isc\win32\include;..\..\isc\include;..\..\dns\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <FunctionLevelLinking>false</FunctionLevelLinking>
       <PrecompiledHeaderOutputFile>.\$(Configuration)\$(TargetName).pch</PrecompiledHeaderOutputFile>
       <AssemblerListingLocation>.\$(Configuration)\</AssemblerListingLocation>
@@ -80,8 +80,8 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>@INTRINSIC@</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;USE_MD5;@USE_OPENSSL@NDEBUG;_WINDOWS;_USRDLL;LIBISCCC_EXPORTS;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.\;..\..\..\;@LIBXML2_INC@include;..\include;..\..\isc\win32;..\..\isc\win32\include;..\..\isc\include;..\..\dns\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;USE_MD5;@CRYPTO@NDEBUG;_WINDOWS;_USRDLL;LIBISCCC_EXPORTS;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.\;..\..\..\;@LIBXML2_INC@@OPENSSL_INC@include;..\include;..\..\isc\win32;..\..\isc\win32\include;..\..\isc\include;..\..\dns\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <StringPooling>true</StringPooling>
       <PrecompiledHeaderOutputFile>.\$(Configuration)\$(TargetName).pch</PrecompiledHeaderOutputFile>

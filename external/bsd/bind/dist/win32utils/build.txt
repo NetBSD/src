@@ -1,10 +1,9 @@
-Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+Copyright (C) 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
 See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
 
-       BIND 9.10 for Win32 Source Build Instructions.  11-Jul-2013
+       BIND 9.10 for Win32 Source Build Instructions.  02-Feb-2014
 
-Building BIND 9.10 on Windows XP/Vista/7/8 or server 2003/2008/2008R2
-has the following prerequisites:
+Building BIND 9.10 on Windows has the following prerequisites:
 
 1) You need to install Perl for Windows.  ActivePerl
 (http://www.activestate.com/) and Strawberry Perl
@@ -30,8 +29,11 @@ and built on the system on which you are building BIND.
 5) The BIND Installer (BINDInstall) includes a copy of the
 redistributable runtime object vcredist_x86.exe (or vcredist_x64.exe),
 which is included with Visual Studio and can be downloaded from
-Microsoft.  This file must be in place prior to running the build
-setup script.
+Microsoft.  This file must be in place prior to running Configure.
+
+6) BIND is known to run on the following versions of Windows:
+Windows XP (with Service Pack 2 or higher), Vista, 7, 8, Server 2003,
+Server 2008, Server 2008R2, and Server 2012.
 
 Step 1: Download and build OpenSSL
 
@@ -41,29 +43,37 @@ Step 1: Download and build OpenSSL
   Download and untar the OpenSSL sources from http://www.openssl.org/.
   Extract them at in the same directory in which you extracted the BIND 9
   source:  If BIND 9 is in \build\bind-9.10.0, for instance, OpenSSL should
-  be in \build\openssl-1.0.1e (subject to version number changes).
+  be in \build\openssl-1.0.1f (subject to version number changes).
 
   Note: Building OpenSSL requires that you install Perl as it uses it
   during its build process. The following commands work as of
-  openssl-1.0.1e, but you should check the OpenSSL distribution to see
+  openssl-1.0.1f, but you should check the OpenSSL distribution to see
   if the build instructions in the INSTALL.W32 (or INSTALL.W64) file
   have changed, in particular for the assembler options:
 
-    cd openssl-1.0.1e
-    perl Configure --prefix=c:/openssl enable-static-engine VC-WIN32
-    ms\do_ms
-    nmake /f ms\ntdll.mak
+    32-bit builds:
+      (In an x86 Visual Studio Command Prompt window)
+      cd openssl-1.0.1f
+      perl Configure --prefix=c:\openssl enable-static-engine VC-WIN32
+      ms\do_ms
+      nmake /f ms\ntdll.mak
 
-  For 64 bit build, replace VC-WIN32 by VC-WIN64A.
-  The enable-static-engine is needed when an OpenSSL engine will be
-  used, so with GOST support (configured by default) and/or PKCS #11
-  support.
+    64-bit builds:
+      (In an x64 Visual Studio Command Prompt window)
+      cd openssl-1.0.1f
+      perl Configure --prefix=c:\openssl64 enable-static-engine VC-WIN64A
+      ms\do_win64a
+      nmake /f ms\ntdll.mak
 
-  If you wish to use PKCS #11 to control a cryptographic hardware
-  service module, please see "PKCS #11 (Cryptoki) support" in chapter 4
-  of the BIND 9 Administrator Reference Guide.  You will need to apply
-  the patch in bind9\bin\pkcs11\openssl-1.0.1e-patch (this can be done
-  using the Cygwin 'patch' utility) and add --pk11-libname and
+  The "enable-static-engine" option is needed when an OpenSSL engine
+  will be used -- for example, when using the GOST signing algorithm or
+  OpenSSL-based PKCS#11 support.
+
+  If you wish to use OpenSSL-based PKCS#11 to control a cryptographic
+  hardware service module, please see "PKCS#11 (Cryptoki) support" in
+  chapter 4 of the BIND 9 Administrator Reference Guide.  You will need to
+  apply the patch in bind9\bin\pkcs11\openssl-1.0.1f-patch (this can be
+  done using the Cygwin 'patch' utility) and add --pk11-libname and
   --pk11-flavor to the Configure command above.
 
 Step 2: Download and build LibXML2
@@ -74,40 +84,46 @@ Step 2: Download and build LibXML2
   Download and untar the libxml2 sources from ftp://xmlsoft.org/libxml2.
   Extract them in the same directory in which you extracted the BIND 9
   source:  If BIND 9 is in \build\bind-9.10.0, for instance, libxml2 should
-  be in \build\libxml2-2.7.7 (subject to version number changes).
+  be in \build\libxml2-2.9.1 (subject to version number changes).
 
   Now build libxml2, and copy the resulting files into the include and lib
   directories:
 
-   cd libxml2-2.7.7\win32
-   cscript configure.js compiler=msvc vcmanifest=yes static=yes \
-        debug=no iconv=no
-   nmake /f Makefile.msvc libxml
+    cd libxml2-2.9.1\win32
+    cscript configure.js compiler=msvc vcmanifest=yes static=yes \
+         debug=no iconv=no
+    nmake /f Makefile.msvc libxml
 
-Step 3: Download and build optional external packages (GeoIP, readline)
+Step 3: Download and build GeoIP
 
-  3a) GeoIP is required to use IP geolocation. If you wish to build
-  BIND 9 without support for this feature, skip to step 3b. The URL is:
-  http://geolite.maxmind.com/download/geoip/api/c/GeoIP-1.5.1.tar.gz
+  Geographic ("geoip") ACLs require libGeoIP. If you wish to build BIND 9
+  without support for this feature, skip to step 4.
 
-  The current (version 1.5.1) GeoIP does not build a suitable
-  DLL with safe threading. The GeoIP.diff file:
-   - fixes WIN32 building support
-   - makes pread() safe in a multi-threaded system
-   - changes the Makefile.vc to build a DLL in place of a static
-    library (BTW this is required by the previous point)
+  The libGeoIP source code is available from:
 
-  3b) The readline library adds command-line editing in nslookup and
-  nsupdate.  If you wish to build BIND 9 without support for this feature,
-  skip to step 4.
+    https://github.com/maxmind/geoip-api-c/releases.
+
+  As of this writing, the current version of libGeoIP is 1.6.0.  There
+  is a known bug in this and all prior versions which prevents it from
+  building a suitable DLL with thread support on Windows.  You can apply
+  the patch file bind9/win32utils/GeoIP.diff to address the problem.
+  This patch has been submitted upstream, and will be included in
+  future versions of libGeoIP.
+
+Step 4: Download and build Readline
+
+  The readline library adds command-line editing in nslookup and nsupdate.
+  If you wish to build BIND 9 without support for this feature, skip to
+  step 5.
 
   Because the original GNU source for the readline library has no WIN32
-  support, it will be necessary to download a version of the static
-  readline library source that is ready to be built by Visual Studio.
-  One such version is available at:
-  http://gpsim.sourceforge.net/gpsimWin32/packages/readline-5.2-20061112-src.zip
+  support, it will be necessary to download  a version of the static
+  readline library source that is ready to be built by Visual Studio.  One
+  such version is available at:
 
-Step 4: Make the redistributable runtime object available
+    http://gpsim.sourceforge.net/gpsimWin32/gpsimWin32.html#readline_lib
+
+Step 5: Make the redistributable runtime object available
 
   Check that the Microsoft redistributable object (vcredist_x86.exe or
   vcredist_x64.exe) is available to the build.  The file may be placed
@@ -116,9 +132,10 @@ Step 4: Make the redistributable runtime object available
   may be placed in \build\vcredist_x86.exe).  Or, the path to the file
   can be specified via the VCREDIST_PATH environment variable, or via
   the "with-vcredist=PATH" option to the configuration script (see
-  step 4).
+  step 4). If none of these options is used, Configure will attempt to
+  find the redistributable based on clues in the build environment.
 
-Step 5: Configuring the BIND build
+Step 6: Configuring the BIND build
 
   From the command prompt, cd to the win32utils directory under
   the BIND 9 root:
@@ -142,35 +159,38 @@ Step 5: Configuring the BIND build
 
     perl Configure clean
 
-Step 5: Building BIND
+Step 7: Building BIND
 
   To build using 'nmake' or older versions of Visual Studio (e.g.
-  VS 2005 and 2008), go to the legacy subdirectory:
+  VS 2005 or VS 2008), go to the legacy subdirectory:
 
     cd legacy
 
-  and follow the instructions in win32-build.txt. Note that
-  only 32 bit builds are supported in this mode.
+  and follow the instructions in win32-build.txt.
 
-  To build using the Visual Studio GUI (VS 2010 and 2012): open the bind9.sln
-  solution file; this will load the project files for all of the BIND 9
-  libraries and applications.  Select "Build->Batch Build", click "Select
-  All", then click "Build".
+  Note: Only 32-bit builds are supported in this mode.
 
-  To build using MSBuild (VS 2010 and 2012): call MSBuild on the
-  bind9.sln solution file:
+  To build using the Visual Studio GUI in VS 2010 or VS 2012:
+  open the bind9.sln solution file; this will load the project
+  files for all of the BIND 9 libraries and applications.  Select
+  "Build->Batch Build", click "Select All", then click "Build".
 
-    msbuild /t:Build /p:Configuration=Release && \
-    msbuild /t:Build /p:Configuration=Debug
+  To build using MSBuild in VS 2010 or VS 2012: call MSBuild on
+  the bind9.sln solution file:
 
-Step 6: Install
+    msbuild /t:Build /p:Configuration=Release bind9.sln
+    msbuild /t:Build /p:Configuration=Debug bind9.sln
+
+  Note: This mode does not support building for Windows XP.
+
+Step 8: Install
 
   Installation is accomplished by running the BINDInstall program. All
-  DLL's are copied to the system32 area and all applications (including
-  BINDInstall which may be necessary for uninstalling BIND 9) to the
-  dns/bin directory.  If BIND 8 has previously been installed on the system
-  it must be uninstalled first by running it's own BINDInstall program.
-  The BIND 9 installer does not yet do this.
+  DLL's are copied to the Program Files area and all applications
+  (including BINDInstall which may be necessary for uninstalling BIND
+  9) to the bin directory.  If BIND 8 has previously been installed on
+  the system it must be uninstalled first by running it's own
+  BINDInstall program.  The BIND 9 installer does not yet do this.
 
   Note: BINDInstall.exe requires the MFC (Microsoft Foundation Class).
   This is only distributed with non-free (i.e., not "Express") versions of

@@ -1,6 +1,6 @@
 #!@PYTHON@
 ############################################################################
-# Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,6 +14,10 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 ############################################################################
+
+# changes 2014-01-08, Peter Palfrader:
+#  - support checking only X days into the future.
+#  - support checking only KSK keys or only ZSK keys.
 
 import argparse
 import os
@@ -506,6 +510,13 @@ def check_events(eventsList, ksk):
         eventgroups.append(eventgroup)
 
     for eventgroup in eventgroups:
+        if (args.checklimit and
+            calendar.timegm(eventgroup[0].when) > args.checklimit):
+            print("Ignoring events after %s" %
+                  time.strftime("%a %b %d %H:%M:%S UTC %Y", 
+                      time.gmtime(args.checklimit)))
+            return True
+
         (active, published) = \
            process_events(eventgroup, active, published)
 
@@ -548,21 +559,23 @@ def check_zones(eventsList):
 
         zonesfound = True
         for alg in eventsList[zone]:
-            vspace()
-            print("Checking scheduled KSK events for zone %s, algorithm %s..." %
-                   (zone, algname(alg)))
-            if not check_events(eventsList[zone][alg], True):
-                foundprob = True
-            else:
-                print ("No errors found")
+            if not args.no_ksk:
+                vspace()
+                print("Checking scheduled KSK events for zone %s, algorithm %s..." %
+                       (zone, algname(alg)))
+                if not check_events(eventsList[zone][alg], True):
+                    foundprob = True
+                else:
+                    print ("No errors found")
 
-            vspace()
-            print("Checking scheduled ZSK events for zone %s, algorithm %s..." %
-                  (zone, algname(alg)))
-            if not check_events(eventsList[zone][alg], False):
-                foundprob = True
-            else:
-                print ("No errors found")
+            if not args.no_zsk:
+                vspace()
+                print("Checking scheduled ZSK events for zone %s, algorithm %s..." %
+                      (zone, algname(alg)))
+                if not check_events(eventsList[zone][alg], False):
+                    foundprob = True
+                else:
+                    print ("No errors found")
 
     if not zonesfound:
         print("ERROR: No key events found for %s in '%s'" %
@@ -637,23 +650,38 @@ def parse_args():
                         help='zone master file', metavar='file')
     parser.add_argument('-m', dest='maxttl', type=str,
                         help='the longest TTL in the zone(s)',
-                        metavar='int')
+                        metavar='time')
     parser.add_argument('-d', dest='keyttl', type=str,
-                        help='the DNSKEY TTL', metavar='int')
+                        help='the DNSKEY TTL', metavar='time')
     parser.add_argument('-r', dest='resign', default='1944000', 
                         type=int, help='the RRSIG refresh interval '
                                        'in seconds [default: 22.5 days]',
-                        metavar='int')
+                        metavar='time')
     parser.add_argument('-c', dest='compilezone',
                         default=compilezone, type=str,
                         help='path to \'named-compilezone\'',
                         metavar='path')
+    parser.add_argument('-l', dest='checklimit',
+                        type=str, default='0',
+                        help='Length of time to check for '
+                             'DNSSEC coverage [default: 0 (unlimited)]',
+                        metavar='time')
+    parser.add_argument('-z', dest='no_ksk',
+                        action='store_true', default=False,
+                        help='Only check zone-signing keys (ZSKs)')
+    parser.add_argument('-k', dest='no_zsk',
+                        action='store_true', default=False,
+                        help='Only check key-signing keys (KSKs)')
     parser.add_argument('-D', '--debug', dest='debug_mode',
                         action='store_true', default=False,
                         help='Turn on debugging output')
     parser.add_argument('-v', '--version', action='version', version='9.9.1')
 
     args = parser.parse_args()
+
+    if args.no_zsk and args.no_ksk:
+        print("ERROR: -z and -k cannot be used together.");
+        exit(1)
 
     # convert from time arguments to seconds
     try:
@@ -674,6 +702,17 @@ def parse_args():
         if args.resign:
             r = parse_time(args.resign)
             args.resign = r
+    except:
+        pass
+
+    try:
+        if args.checklimit:
+            lim = args.checklimit
+            r = parse_time(args.checklimit)
+            if r == 0:
+                args.checklimit = None
+            else:
+                args.checklimit = time.time() + r
     except:
         pass
 

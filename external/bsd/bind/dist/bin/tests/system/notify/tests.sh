@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -63,6 +63,13 @@ kill -HUP `cat ns2/named.pid`
 sleep 45
 
 n=`expr $n + 1`
+echo "I:checking notify message was logged ($n)"
+ret=0
+grep 'notify from 10.53.0.2#[0-9][0-9]*: serial 2$' ns3/named.run > /dev/null || ret=1
+[ $ret = 0 ] || echo "I:failed"
+status=`expr $ret + $status`
+
+n=`expr $n + 1`
 echo "I:checking example2 loaded ($n)"
 ret=0
 $DIG +tcp +noadd +nosea +nostat +noquest +nocomm +nocmd a.example.\
@@ -97,6 +104,13 @@ cp -f ns2/example4.db ns2/example.db
 $PERL $SYSTEMTESTTOP/start.pl --noclean --restart . ns2
 
 sleep 45
+
+n=`expr $n + 1`
+echo "I:checking notify message was logged ($n)"
+ret=0
+grep 'notify from 10.53.0.2#[0-9][0-9]*: serial 4$' ns3/named.run > /dev/null || ret=1
+[ $ret = 0 ] || echo "I:failed"
+status=`expr $ret + $status`
 
 n=`expr $n + 1`
 echo "I:checking example4 loaded ($n)"
