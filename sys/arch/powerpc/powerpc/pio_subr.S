@@ -1,4 +1,4 @@
-/*	$NetBSD: pio_subr.S,v 1.14 2011/07/01 18:59:19 dyoung Exp $	*/
+/*	$NetBSD: pio_subr.S,v 1.15 2014/02/28 05:39:49 matt Exp $	*/
 
 /*
  * Copyright (c) 2003 Matt Thomas
@@ -400,14 +400,14 @@ ENTRY(bswm8)
 	add	%r3,%r4,%r5	/* add offset to handle & place in argument 0 */
 	mr	%r4,%r6		/* move addr to argument 1 register */
 	mr	%r5,%r7		/* move count to argument 2 register */
-ENTRY(outs32)
+ENTRY(outs64)
 	cmpdi	%r5,0		/* len == 0? */
 	beqlr-			/*   return if len == 0 */
 	addi	%r5,%r5,-1	/* len -= 1 */
 	sldi	%r5,%r5,2	/* len *= 4 */
 	add	%r5,%r5,%r4	/* len += src */
 	addi	%r4,%r4,-4	/* pre-decrement */
-1:	ldzu	%r0,4(%r4)	/* load and increment */
+1:	ldu	%r0,4(%r4)	/* load and increment */
 	std	%r0,0(%r3)	/* store */
 	cmpl	0,%r4,%r5	/* at the end? */
 	bne+	1b		/*   nope, do another pass */
