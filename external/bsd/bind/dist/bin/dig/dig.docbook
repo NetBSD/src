@@ -2,7 +2,7 @@
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	       [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2004-2011, 2013  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004-2011, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000-2003  Internet Software Consortium.
  -
  - Permission to use, copy, modify, and/or distribute this software for any
@@ -47,6 +47,7 @@
       <year>2010</year>
       <year>2011</year>
       <year>2013</year>
+      <year>2014</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
     <copyright>
@@ -138,7 +139,7 @@
 
     <para>
       The IN and CH class names overlap with the IN and CH top level
-      domains names.  Either use the <option>-t</option> and
+      domain names.  Either use the <option>-t</option> and
       <option>-c</option> options to specify the type and class, 
       use the <option>-q</option> the specify the domain name, or
       use "IN." and "CH." when looking up these top level domains.
@@ -281,7 +282,7 @@
 
     <para>
       The <option>-q</option> option sets the query name to 
-      <parameter>name</parameter>.  This useful do distinguish the
+      <parameter>name</parameter>.  This is useful to distinguish the
       <parameter>name</parameter> from other arguments.
     </para>
 
@@ -613,6 +614,21 @@
         </varlistentry>
 
         <varlistentry>
+          <term><option>+[no]crypto</option></term>
+          <listitem>
+            <para>
+	      Toggle the display of cryptographic fields in DNSSEC records.
+	      The contents of these field are unnecessary to debug most DNSSEC
+	      validation failures and removing them makes it easier to see
+	      the common failures.  The default is to display the fields.
+	      When omitted they are replaced by the string "[omitted]" or
+	      in the DNSKEY case the key id is displayed as the replacement,
+	      e.g. "[ key id = value ]".
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
           <term><option>+split=W</option></term>
           <listitem>
             <para>
@@ -904,6 +920,39 @@
               Keep the TCP socket open between queries and reuse it rather
 	      than creating a new TCP socket for each lookup.  The default
 	      is <option>+nokeepopen</option>.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>+[no]sit<optional>=####</optional></option></term>
+          <listitem>
+            <para>
+	      Send a Source Identity Token EDNS option, with optional value.
+	      Replaying a SIT from a previous response will allow the
+	      server to identify a previous client.  The default is
+	      <option>+nosit</option>.  Currently using experimental value
+	      65001 for the option code.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>+[no]subnet=addr/prefix</option></term>
+          <listitem>
+            <para>
+	      Send an EDNS Client Subnet option with the speciifed
+              IP address or network prefix.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>+[no]expire</option></term>
+          <listitem>
+            <para>
+	      Send an EDNS Expire option.  Currently using experimental
+	      value 65002 for the option code.
             </para>
           </listitem>
         </varlistentry>

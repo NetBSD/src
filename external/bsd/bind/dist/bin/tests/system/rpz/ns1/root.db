@@ -38,3 +38,6 @@ ns.tld4.	A	10.53.0.4
 ; performance test
 tld5.		NS	ns.tld5.
 ns.tld5.	A	10.53.0.5
+
+; generate SERVFAIL
+servfail	NS	ns.tld2.

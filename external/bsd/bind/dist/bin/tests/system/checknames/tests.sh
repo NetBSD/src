@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -53,8 +53,8 @@ n=`expr $n + 1`
 # Entry should exist
 echo "I: check that 'check-names response warn;' works ($n)"
 ret=0
-$DIG $DIGOPTS yy_yy.ignore.example. @10.53.0.1 a > dig.out.ns1.test$n || ret=1
-$DIG $DIGOPTS yy_yy.ignore.example. @10.53.0.2 a > dig.out.ns2.test$n || ret=1
+$DIG $DIGOPTS +noauth yy_yy.ignore.example. @10.53.0.1 a > dig.out.ns1.test$n || ret=1
+$DIG $DIGOPTS +noauth yy_yy.ignore.example. @10.53.0.2 a > dig.out.ns2.test$n || ret=1
 $PERL ../digcomp.pl dig.out.ns1.test$n dig.out.ns2.test$n || ret=1
 grep "check-names warning yy_yy.ignore.example/A/IN" ns2/named.run > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi

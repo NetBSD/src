@@ -12,15 +12,15 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id
+; Id: unsigned.db,v 1.4 2012/01/31 23:47:32 tbox Exp 
 
 $TTL	120
 @		SOA	ns.utld.  hostmaster.ns.utld. ( 1 3600 1200 604800 60 )
 @		NS	ns.utld.
+@               MX      10 mx
 a-only		NS	1.0.0.4
 aaaa-only	AAAA	2001:db8::5
 dual		A	1.0.0.6
 dual 		AAAA	2001:db8::6
 mx		A	1.0.0.3
-mx		AAAA	2001:db8::3
-
+mx 		AAAA	2001:db8::3

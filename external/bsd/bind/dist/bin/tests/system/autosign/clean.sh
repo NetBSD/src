@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2009-2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2009-2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,8 +14,6 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: clean.sh,v 1.15 2012/02/06 23:46:45 tbox Exp 
-
 rm -f */K* */dsset-* */*.signed */trusted.conf */tmp* */*.jnl */*.bk
 rm -f active.key inact.key del.key unpub.key standby.key rev.key
 rm -f nopriv.key vanishing.key del1.key del2.key
@@ -26,7 +24,6 @@ rm -f */core
 rm -f */example.bk
 rm -f */named.memstats
 rm -f dig.out.*
-rm -f random.data
 rm -f ns1/root.db
 rm -f ns2/example.db
 rm -f ns2/private.secure.example.db ns2/bar.db
@@ -50,6 +47,7 @@ rm -f ns3/prepub.example.db.in
 rm -f ns3/secure-to-insecure2.example.db
 rm -f ns3/nozsk.example.db ns3/inaczsk.example.db
 rm -f ns3/reconf.example.db
+rm -f ns3/kg.out ns3/s.out ns3/st.out
 rm -f ns3/ttl*.db
 rm -f signing.out.*
 rm -f ns3/*.nzf

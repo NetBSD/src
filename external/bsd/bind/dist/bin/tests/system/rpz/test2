@@ -58,7 +58,7 @@ update add 32.3.5.168.192.rpz-ip.bl-2	300 A	127.0.0.2
 send
 
 ; prefer QNAME to IP for a5-4.tld2
-;	13
+;	13, 14
 update add 32.4.5.168.192.rpz-ip.bl	300 CNAME a12.tld2.
 update add a5-4.tld2.bl			300 CNAME a14.tld4.
 ;
@@ -71,4 +71,9 @@ update add  32.4.4.168.192.rpz-ip.bl	300 CNAME rpz-passthru.
 update add 32.16.1.16.172.rpz-ip.bl	300 CNAME .
 send
 update add c2.crash2.tld3.bl-2		300 A	127.0.0.16
+send
+
+; client-IP address trigger
+;	17
+update add 32.1.0.53.10.rpz-client-ip.bl 300 A	127.0.0.17
 send

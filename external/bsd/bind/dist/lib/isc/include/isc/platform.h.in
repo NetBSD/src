@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2010, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -199,6 +199,11 @@
  */
 @ISC_PLATFORM_NEEDMEMMOVE@
 
+/*
+ * Define if this system needs strcasestr.
+ */
+@ISC_PLATFORM_NEEDSTRCASESTR@
+
 /***
  *** Miscellaneous.
  ***/
@@ -307,10 +312,20 @@
 @ISC_PLATFORM_OPENSSLHASH@
 
 /*
+ * Define if AES must be provided by OpenSSL.
+ */
+@ISC_PLATFORM_OPENSSLAES@
+
+/*
  * Defines for the noreturn attribute.
  */
 @ISC_PLATFORM_NORETURN_PRE@
 @ISC_PLATFORM_NORETURN_POST@
+
+/*
+ * Defined if we are enabling SIT (Source Identity Token).
+ */
+@ISC_PLATFORM_USESIT@
 
 /***
  ***	Windows dll support.

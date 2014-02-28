@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -23,8 +23,6 @@ SYSTEMTESTTOP=..
 DIGOPTS="@10.53.0.1 -p 5300"
 
 status=0
-
-RANDFILE=random.data
 
 echo "I:generating new DH key"
 ret=0
