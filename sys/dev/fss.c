@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.86 2013/02/13 14:03:48 hannken Exp $	*/
+/*	$NetBSD: fss.c,v 1.87 2014/02/28 10:16:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.86 2013/02/13 14:03:48 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.87 2014/02/28 10:16:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.86 2013/02/13 14:03:48 hannken Exp $");
 #include <sys/conf.h>
 #include <sys/kthread.h>
 #include <sys/fstrans.h>
-#include <sys/simplelock.h>
 #include <sys/vfs_syscalls.h>		/* For do_sys_unlink(). */
 
 #include <miscfs/specfs/specdev.h>
