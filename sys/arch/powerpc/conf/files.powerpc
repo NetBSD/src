@@ -1,4 +1,4 @@
-#	$NetBSD: files.powerpc,v 1.87 2013/11/17 14:34:12 alnsn Exp $
+#	$NetBSD: files.powerpc,v 1.88 2014/02/28 05:49:21 matt Exp $
 
 defflag	opt_altivec.h	ALTIVEC K_ALTIVEC PPC_HAVE_SPE
 defflag	opt_openpic.h	OPENPIC_DISTRIBUTE
@@ -23,7 +23,7 @@ file	arch/powerpc/powerpc/powerpc_machdep.c
 file	arch/powerpc/powerpc/process_machdep.c
 file	arch/powerpc/powerpc/setfault.S
 file	arch/powerpc/powerpc/sig_machdep.c
-file	arch/powerpc/powerpc/sigcode.S
+file	arch/powerpc/powerpc/sigcode.S			compat16
 file	arch/powerpc/powerpc/softint_machdep.c
 file	arch/powerpc/powerpc/subyte.c
 file	arch/powerpc/powerpc/suword.c
@@ -71,6 +71,7 @@ file	arch/powerpc/booke/trap.c			ppc_booke
 file	uvm/pmap/pmap.c					ppc_booke
 file	uvm/pmap/pmap_segtab.c				ppc_booke
 file	uvm/pmap/pmap_tlb.c				ppc_booke
+#file	uvm/pmap/pmap_pv.c				ppc_booke
 
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
 file	arch/powerpc/powerpc/compat_13_machdep.c	compat_13
@@ -79,7 +80,7 @@ file	arch/powerpc/powerpc/compat_16_machdep.c	compat_16
 include "compat/freebsd/files.freebsd" 
 
 include "compat/netbsd32/files.netbsd32"
-file	arch/powerpc/powerpc/netbsd32_sigcode.S		compat_netbsd32
+file	arch/powerpc/powerpc/netbsd32_sigcode.S		compat_16 & compat_netbsd32
 
 # OSS audio driver compatibility
 include "compat/ossaudio/files.ossaudio"	
