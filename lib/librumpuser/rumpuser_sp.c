@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.62 2014/01/08 01:45:29 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.63 2014/02/28 13:55:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.62 2014/01/08 01:45:29 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.63 2014/02/28 13:55:36 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -1021,7 +1021,7 @@ handlereq(struct spclient *spc)
 					break;
 				}
 			}
-			pthread_mutex_lock(&pfmtx);
+			pthread_mutex_unlock(&pfmtx);
 			spcfreebuf(spc);
 
 			if (!pf) {
