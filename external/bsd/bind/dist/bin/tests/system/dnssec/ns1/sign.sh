@@ -1,6 +1,6 @@
 #!/bin/sh -e
 #
-# Copyright (C) 2004, 2006-2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2006-2014  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -19,8 +19,6 @@
 
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
-
-RANDFILE=../random.data
 
 zone=.
 infile=root.db.in
@@ -73,8 +71,3 @@ cp managed.conf ../ns4/managed.conf
 keyid=`expr $keyname : 'K.+001+\(.*\)'`
 keyid=`expr $keyid + 0`
 echo "$keyid" > managed.key.id
-cat $keyname.key | grep -v '^; ' | $PERL -n -e '
-local ($dn, $class, $type, $flags, $proto, $alg, @rest) = split;
-local $key = join("", @rest);
-print "-a $alg -e -k $dn -K $key\n"
-' > sample.key

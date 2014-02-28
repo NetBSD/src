@@ -2,7 +2,7 @@
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	       [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2004-2009, 2011, 2013  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000-2003  Internet Software Consortium.
  -
  - Permission to use, copy, modify, and/or distribute this software for any
@@ -44,7 +44,9 @@
       <year>2008</year>
       <year>2009</year>
       <year>2011</year>
+      <year>2012</year>
       <year>2013</year>
+      <year>2014</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
     <copyright>
@@ -72,6 +74,7 @@
       <arg><option>-k <replaceable class="parameter">key</replaceable></option></arg>
       <arg><option>-L <replaceable class="parameter">serial</replaceable></option></arg>
       <arg><option>-l <replaceable class="parameter">domain</replaceable></option></arg>
+      <arg><option>-M <replaceable class="parameter">domain</replaceable></option></arg>
       <arg><option>-i <replaceable class="parameter">interval</replaceable></option></arg>
       <arg><option>-I <replaceable class="parameter">input-format</replaceable></option></arg>
       <arg><option>-j <replaceable class="parameter">jitter</replaceable></option></arg>
@@ -167,8 +170,8 @@
 	    (<option>-S</option>) is used, DNSKEY records are also
 	    included. The resulting file can be included in the original
 	    zone file with <command>$INCLUDE</command>. This option
-	    cannot be combined with <option>-O raw</option> or serial
-	    number updating.
+	    cannot be combined with <option>-O raw</option>, 
+            <option>-O map</option>, or serial number updating.
           </para>
         </listitem>
       </varlistentry>
@@ -177,10 +180,17 @@
         <term>-E <replaceable class="parameter">engine</replaceable></term>
         <listitem>
           <para>
-            Uses a crypto hardware (OpenSSL engine) for the crypto operations
-            it supports, for instance signing with private keys from
-            a secure key store. When compiled with PKCS#11 support
-            it defaults to pkcs11; the empty name resets it to no engine.
+            When applicable, specifies the hardware to use for
+            cryptographic operations, such as a secure key store used
+            for signing.
+          </para>
+          <para>
+            When BIND is built with OpenSSL PKCS#11 support, this defaults
+            to the string "pkcs11", which identifies an OpenSSL engine
+            that can drive a cryptographic accelerator or hardware service
+            module.  When BIND is built with native PKCS#11 cryptography
+            (--enable-native-pkcs11), it defaults to the path of the PKCS#11
+            provider library specified via "--with-pkcs11".
           </para>
         </listitem>
       </varlistentry>
@@ -222,6 +232,26 @@
           <para>
             Generate a DLV set in addition to the key (DNSKEY) and DS sets.
             The domain is appended to the name of the records.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-M <replaceable class="parameter">maxttl</replaceable></term>
+        <listitem>
+          <para>
+            Sets the maximum TTL for the signed zone.
+            Any TTL higher than <replaceable>maxttl</replaceable> in the
+            input zone will be reduced to <replaceable>maxttl</replaceable>
+            in the output. This provides certainty as to the largest
+            possible TTL in the signed zone, which is useful to know when
+            rolling keys because it is the longest possible time before
+            signatures that have been retrieved by resolvers will expire
+            from resolver caches.  Zones that are signed with this
+            option should be configured to use a matching
+            <option>max-zone-ttl</option> in <filename>named.conf</filename>.
+            (Note: This option is incompatible with <option>-D</option>,
+            because it modifies non-DNSSEC data in the output zone.)
           </para>
         </listitem>
       </varlistentry>
@@ -338,8 +368,8 @@
         <listitem>
           <para>
             The format of the input zone file.
-	    Possible formats are <command>"text"</command> (default)
-	    and <command>"raw"</command>.
+	    Possible formats are <command>"text"</command> (default),
+	    <command>"raw"</command>, and <command>"map"</command>.
 	    This option is primarily intended to be used for dynamic
             signed zones so that the dumped zone file in a non-text
             format containing updates can be signed directly.
@@ -377,9 +407,10 @@
         <term>-L <replaceable class="parameter">serial</replaceable></term>
         <listitem>
           <para>
-            When writing a signed zone to 'raw' format, set the "source serial" 
-            value in the header to the specified serial number.  (This is
-            expected to be used primarily for testing purposes.)
+            When writing a signed zone to "raw" or "map" format, set the
+            "source serial" value in the header to the specified serial
+            number.  (This is expected to be used primarily for testing
+            purposes.)
           </para>
         </listitem>
       </varlistentry>
@@ -447,16 +478,17 @@
         <listitem>
           <para>
             The format of the output file containing the signed zone.
-	    Possible formats are <command>"text"</command> (default)
+	    Possible formats are <command>"text"</command> (default),
+            which is the standard textual representation of the zone;
 	    <command>"full"</command>, which is text output in a
-            format suitable for processing by external scripts,
-            and <command>"raw"</command> or <command>"raw=N"</command>,
-            which store the zone in a binary format for rapid loading
-            by <command>named</command>.  <command>"raw=N"</command>
-            specifies the format version of the raw zone file: if N
-            is 0, the raw file can be read by any version of
-            <command>named</command>; if N is 1, the file can be
-            read by release 9.9.0 or higher.  The default is 1.
+            format suitable for processing by external scripts;
+            and <command>"map"</command>, <command>"raw"</command>,
+            and <command>"raw=N"</command>, which store the zone in
+            binary formats for rapid loading by <command>named</command>.
+            <command>"raw=N"</command> specifies the format version of
+            the raw zone file: if N is 0, the raw file can be read by
+            any version of <command>named</command>; if N is 1, the file
+            can be read by release 9.9.0 or higher; the default is 1.
           </para>
         </listitem>
       </varlistentry>

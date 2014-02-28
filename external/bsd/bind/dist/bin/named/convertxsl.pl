@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 #
-# Copyright (C) 2006-2008, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2006-2008, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -37,6 +37,7 @@ while (<>) {
     s/\>\ \</\>\</g;
     s/\"/\\\"/g;
     s/^/\t\"/;
+    s/[\ \t]+$//g;
     s/$/\\n\"/;
     if ($lines eq "") {
 	    $lines .= $_;

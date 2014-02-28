@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -12,9 +12,12 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: setup.sh,v 1.11 2012/02/23 06:53:15 marka Exp 
-
 sh clean.sh
+
+SYSTEMTESTTOP=..
+. $SYSTEMTESTTOP/conf.sh
+
+test -e $RANDFILE || $GENRANDOM 400 $RANDFILE
 
 cp ns1/root.db.in ns1/root.db
 rm -f ns1/root.db.signed
@@ -36,8 +39,6 @@ cp ns4/noixfr.db.in ns4/noixfr.db
 rm -f ns4/noixfr.db.jnl
 
 cp ns5/named.conf.pre ns5/named.conf
-
-../../../tools/genrandom 400 random.data
 
 (cd ns3; sh -e sign.sh)
 (cd ns1; sh -e sign.sh)
