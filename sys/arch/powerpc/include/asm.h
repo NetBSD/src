@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.44 2014/02/27 18:12:28 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.45 2014/02/28 05:26:23 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -348,6 +348,19 @@ y:	.quad	.##y,.TOC.@tocbase,0;	\
 # define clrrlongi	clrrwi	/* clear right "C" long immediate */
 # define clrrregi	clrrwi	/* clear right PPC general register immediate */
 
+# define cmpptr		cmpw
+# define cmplong	cmpw
+# define cmpreg		cmpw
+# define cmpptri	cmpwi
+# define cmplongi	cmpwi
+# define cmpregi	cmpwi
+# define cmpptrl	cmpwl
+# define cmplongl	cmpwl
+# define cmpregl	cmpwl
+# define cmpptrli	cmpwli
+# define cmplongli	cmpwli
+# define cmpregli	cmpwli
+
 #else /* __LP64__ */
 
 # define ldlong		ld	/* load "C" long */
@@ -379,6 +392,19 @@ y:	.quad	.##y,.TOC.@tocbase,0;	\
 # define clrrptri	clrrdi	/* clear right "C" pointer immediate */
 # define clrrlongi	clrrdi	/* clear right "C" long immediate */
 # define clrrregi	clrrdi	/* clear right PPC general register immediate */
+
+# define cmpptr		cmpd
+# define cmplong	cmpd
+# define cmpreg		cmpd
+# define cmpptri	cmpdi
+# define cmplongi	cmpdi
+# define cmpregi	cmpdi
+# define cmpptrl	cmpdl
+# define cmplongl	cmpdl
+# define cmpregl	cmpdl
+# define cmpptrli	cmpdli
+# define cmplongli	cmpdli
+# define cmpregli	cmpdli
 
 #endif /* __LP64__ */
 
