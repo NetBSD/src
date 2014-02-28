@@ -1,4 +1,4 @@
-/*	$NetBSD: fixup.c,v 1.6 2013/11/07 15:26:36 nisimura Exp $	*/
+/*	$NetBSD: fixup.c,v 1.7 2014/02/28 05:38:53 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: fixup.c,v 1.6 2013/11/07 15:26:36 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fixup.c,v 1.7 2014/02/28 05:38:53 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -146,7 +146,7 @@ powerpc_fixup_stubs(uint32_t *start, uint32_t *end,
 			case OPC_ADDIS: {
 				const u_int rs = i.i_d.i_rs;
 				const u_int ra = i.i_d.i_ra;
-				int d = i.i_d.i_d << ((i.i_d.i_opcd & 1) * 16);
+				register_t d = i.i_d.i_d << ((i.i_d.i_opcd & 1) * 16);
 				if (ra) {
 					KASSERT(valid_mask & (1 << ra));
 					d += fixreg[ra];
@@ -158,7 +158,7 @@ powerpc_fixup_stubs(uint32_t *start, uint32_t *end,
 			case OPC_LWZ: {
 				const u_int rs = i.i_d.i_rs;
 				const u_int ra = i.i_d.i_ra;
-				int addr = i.i_d.i_d;
+				register_t addr = i.i_d.i_d;
 				if (ra) {
 					KASSERT(valid_mask & (1 << ra));
 					addr += fixreg[ra];
