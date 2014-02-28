@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.772 2014/02/27 20:43:33 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.773 2014/02/28 09:42:33 martin Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -75,7 +75,7 @@ EXTERNAL_GCC_SUBDIR=	/does/not/exist
 
 .endif
 
-.if ${MACHINE_ARCH} == "ia64" || ${MACHINE_ARCH} == "powerpc64"
+.if ${MACHINE_ARCH} == "ia64"
 USE_COMPILERCRTSTUFF?=	yes
 .else
 USE_COMPILERCRTSTUFF?=	no
