@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.68 2013/11/03 22:27:27 mrg Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.69 2014/02/28 05:34:39 matt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.68 2013/11/03 22:27:27 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.69 2014/02/28 05:34:39 matt Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -915,7 +915,7 @@ oea_install_extint(void (*handler)(void))
 		}
 	}
 #endif
-	__syncicache((void *)exc_exi_base, (int)extsize);
+	__syncicache((void *)exc_exi_base, (size_t)extsize);
 
 	__asm volatile ("mtmsr %0" :: "r"(omsr));
 }
