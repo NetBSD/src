@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -11,8 +11,6 @@
 # LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
-
-# Id: clean.sh,v 1.13 2012/02/23 06:53:15 marka Exp 
 
 rm -f */named.memstats
 rm -f */named.run
@@ -77,8 +75,7 @@ rm -f ns5/bits.bk.jnl
 rm -f ns5/bits.bk.signed
 rm -f ns5/bits.bk.signed.jnl
 rm -f */*.jbk
-rm -f random.data
-rm -f dig.out.ns*.test*
+rm -f dig.out.ns*
 rm -f signing.out*
 rm -f freeze.test*
 rm -f thaw.test*
@@ -87,3 +84,4 @@ rm -f ns3/test-?.bk
 rm -f ns3/test-?.bk.signed
 rm -f ns3/test-?.bk.signed.jnl
 rm -f import.key Kimport*
+rm -f checkgost checkdsa checkecdsa

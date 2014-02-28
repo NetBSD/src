@@ -42,7 +42,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 @COPTX@ @COPTI@ /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" @COPTY@ /FD /c
-# ADD CPP /nologo /MD /W3 @COPTX@ @COPTI@ /O2 /I "./" /I "../../.." /I "../../../lib/isc/win32/include" /I "../../../lib/isc/include" /I "../include" /D "NDEBUG" /D "__STDC__" /D "WIN32" /D "_CONSOLE" /D "_MBCS" @PK11_LIB_LOCATION@ @COPTY@ /FD /c
+# ADD CPP /nologo /MD /W3 @COPTX@ @COPTI@ /O2 /I "./" /I "../../.." /I "../../../lib/isc/win32/include" /I "../../../lib/isc/include" /D "NDEBUG" /D "__STDC__" /D "WIN32" /D "_CONSOLE" /D "_MBCS" @PK11_LIB_LOCATION@ @COPTY@ /FD /c
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
 # ADD RSC /l 0x409 /d "NDEBUG"
 BSC32=bscmake.exe
@@ -50,7 +50,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console @MACHINE@
-# ADD LINK32 user32.lib advapi32.lib /nologo /subsystem:console @MACHINE@ /out:"../../../Build/Release/pkcs11-keygen.exe"
+# ADD LINK32 user32.lib advapi32.lib ../../../lib/isc/win32/Release/libisc.lib /nologo /subsystem:console @MACHINE@ /out:"../../../Build/Release/pkcs11-keygen.exe"
 
 !ELSEIF  "$(CFG)" == "pk11keygen - @PLATFORM@ Debug"
 
@@ -66,7 +66,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm @COPTX@ @COPTI@ /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" @COPTY@ /FD /GZ /c
-# ADD CPP /nologo /MDd /W3 /Gm @COPTX@ @COPTI@ /ZI /Od /I "./" /I "../../.." /I "../../../lib/isc/win32/include" /I "../../../lib/isc/include" /I "../include" /D "_DEBUG" /D "WIN32" /D "__STDC__" /D "_CONSOLE" /D "_MBCS" @PK11_LIB_LOCATION@ /FR /FD /GZ /c
+# ADD CPP /nologo /MDd /W3 /Gm @COPTX@ @COPTI@ /ZI /Od /I "./" /I "../../.." /I "../../../lib/isc/win32/include" /I "../../../lib/isc/include" /D "_DEBUG" /D "WIN32" /D "__STDC__" /D "_CONSOLE" /D "_MBCS" @PK11_LIB_LOCATION@ /FR /FD /GZ /c
 # SUBTRACT CPP /X @COPTY@
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
@@ -75,7 +75,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /debug @MACHINE@ /pdbtype:sept
-# ADD LINK32 user32.lib advapi32.lib /nologo /subsystem:console /debug @MACHINE@ /out:"../../../Build/Debug/pkcs11-keygen.exe" /pdbtype:sept
+# ADD LINK32 user32.lib advapi32.lib ../../../lib/isc/win32/Debug/libisc.lib /nologo /subsystem:console /debug @MACHINE@ /out:"../../../Build/Debug/pkcs11-keygen.exe" /pdbtype:sept
 
 !ENDIF 
 
@@ -94,22 +94,6 @@ SOURCE="..\pkcs11-keygen.c"
 # Begin Group "Header Files"
 
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
-# Begin Source File
-
-SOURCE=".\cryptoki.h"
-# End Source File
-# Begin Source File
-
-SOURCE="..\include\pkcs11.h"
-# End Source File
-# Begin Source File
-
-SOURCE="..\include\pkcs11t.h"
-# End Source File
-# Begin Source File
-
-SOURCE="..\include\pkcs11f.h"
-# End Source File
 # End Group
 # Begin Group "Resource Files"
 

@@ -179,6 +179,58 @@ n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
+echo "I:attempting to delete slave zone with inline signing ($n)"
+ret=0
+for i in 0 1 2 3 4 5 6 7 8 9
+do
+	test -f ns2/inlineslave.bk.signed -a -f ns2/inlineslave.bk && break
+	sleep 1
+done
+$RNDC -c ../common/rndc.conf -s 10.53.0.2 -p 9953 delzone inlineslave.example 2>&1 > rndc.out2.test$n
+test -f inlineslave.bk ||
+grep '^inlineslave.bk$' rndc.out2.test$n > /dev/null || {
+	echo "I:failed to report inlineslave.bk"; ret=1;
+}
+test ! -f inlineslave.bk.signed ||
+grep '^inlineslave.bk.signed$' rndc.out2.test$n > /dev/null || {
+	echo "I:failed to report inlineslave.bk.signed"; ret=1;
+}
+n=`expr $n + 1`
+status=`expr $status + $ret`
+
+echo "I:restoring slave zone with inline signing ($n)"
+$RNDC -c ../common/rndc.conf -s 10.53.0.2 -p 9953 addzone 'inlineslave.example { type slave; masters { 10.53.0.1; }; file "inlineslave.bk"; inline-signing yes; };' 2>&1 | sed 's/^/I:ns2 /'
+for i in 1 2 3 4 5
+do
+ret=0
+$DIG $DIGOPTS @10.53.0.2 a.inlineslave.example a > dig.out.ns2.$n || ret=1
+grep 'status: NOERROR' dig.out.ns2.$n > /dev/null || ret=1
+grep '^a.inlineslave.example' dig.out.ns2.$n > /dev/null || ret=1
+[ $ret = 0 ] && break
+sleep 1
+done
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:deleting slave zone with automatic zone file removal ($n)"
+ret=0
+for i in 0 1 2 3 4 5 6 7 8 9
+do
+	test -f ns2/inlineslave.bk.signed -a -f ns2/inlineslave.bk && break
+	sleep 1
+done
+$RNDC -c ../common/rndc.conf -s 10.53.0.2 -p 9953 delzone -clean inlineslave.example 2>&1 > /dev/null
+for i in 0 1 2 3 4 5 6 7 8 9
+do
+        ret=0
+	test -f ns2/inlineslave.bk.signed -a -f ns2/inlineslave.bk && ret=1
+        [ $ret = 0 ] && break
+	sleep 1
+done
+n=`expr $n + 1`
+status=`expr $status + $ret`
+
 echo "I:reconfiguring server with multiple views"
 rm -f ns2/named.conf 
 cp -f ns2/named2.conf ns2/named.conf

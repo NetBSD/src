@@ -56,27 +56,32 @@ AC_DEFUN(DLZ_ADD_DRIVER, [
 AC_MSG_CHECKING(for Postgres DLZ driver)
 AC_ARG_WITH(dlz_postgres,
 [  --with-dlz-postgres[=PATH]   Build with Postgres DLZ driver [yes|no|path].
-                               (Required to use Postgres with DLZ)],
+			       (Required to use Postgres with DLZ)],
     use_dlz_postgres="$withval", use_dlz_postgres="no")
 
-if test "$use_dlz_postgres" = "yes"
+if test "$use_dlz_postgres" != "no"
 then
-	# User did not specify a path - guess it
-	# Ask Postgres to tell us where it is
-
-	AC_PATH_PROGS(PG_CONFIG, pg_config, [not found])
+	if test "$use_dlz_postgres" != "yes"
+        then
+                AC_PATH_PROGS(PG_CONFIG, pg_config, [not found], $use_dlz_postgres/bin)
+	else
+                AC_PATH_PROGS(PG_CONFIG, pg_config, [not found])
+	fi
 
 	if test "$PG_CONFIG" != "not found"
 	then
 		use_dlz_postgres=`$PG_CONFIG --includedir`
 		use_dlz_postgres_lib=`$PG_CONFIG --libdir`
+	else
+		pgprefix="$use_dlz_postgres"
+		use_dlz_postgres="$pgprefix/include"
+		use_dlz_postgres_lib="$pgprefix/lib"
 	fi
 fi
 
 if test "$use_dlz_postgres" = "yes"
 then
 	# User did not specify path and Postgres didn't say - guess it
-
 	pgdirs="/usr /usr/local /usr/local/pgsql /usr/pkg"
 	for d in $pgdirs
 	do
@@ -120,7 +125,7 @@ esac
 AC_MSG_CHECKING(for MySQL DLZ driver)
 AC_ARG_WITH(dlz_mysql,
 [  --with-dlz-mysql[=PATH]   Build with MySQL DLZ driver [yes|no|path].
-                               (Required to use MySQL with DLZ)],
+			       (Required to use MySQL with DLZ)],
     use_dlz_mysql="$withval", use_dlz_mysql="no")
 
 mysql_include=""
@@ -205,10 +210,10 @@ esac
 # Was --with-dlz-bdb specified?
 #
 
-AC_MSG_CHECKING(for Berkeley DB DLZ driver)
+AC_MSG_CHECKING(for Berkeley DB DLZ driver...)
 AC_ARG_WITH(dlz_bdb,
 [  --with-dlz-bdb[=PATH]   Build with Berkeley DB DLZ driver [yes|no|path].
-                               (Required to use Berkeley DB with DLZ)],
+			       (Required to use Berkeley DB with DLZ)],
     use_dlz_bdb="$withval", use_dlz_bdb="no")
 
 case "$use_dlz_bdb" in
@@ -239,6 +244,7 @@ case "$use_dlz_bdb" in
 		dlz_bdb_inc="yes"
 		dlz_bdb_libs="yes"
 
+                AC_MSG_RESULT( )
 		for dd in $bdbdirs
 		do
 			# Skip nonexistant directories
@@ -250,10 +256,11 @@ case "$use_dlz_bdb" in
 			# Check other locations for includes.
 			# Order is important (sigh).
 
-			bdb_incdirs="/ /db48/ /db47/ /db46/ /db45/ /db44/ /db43/ /db42/ /db41/ /db4/ /db/"
-			for d in $bdb_incdirs
+			bdb_incdirs="/db53 /db51 /db48 /db47 /db46 /db45 /db44 /db43 /db42 /db41 /db4 /db"
+			# include a blank element first
+			for d in "" $bdb_incdirs
 			do
-				if test -f "$dd/include${d}db.h"
+				if test -f "$dd/include${d}/db.h"
 				then
 					dlz_bdb_inc="-I$dd/include${d}"
 					break
@@ -271,18 +278,19 @@ case "$use_dlz_bdb" in
 			# Look for libname other than libdb.so.
 			# Order is important (sigh).
 
-			bdb_libnames="db48 db-4.8 db47 db-4.7 db46 db-4.6 db45 db-4.5 db44 db-4.4 db43 db-4.3 db42 db-4.2 db41 db-4.1 db"
+			bdb_libnames="db53 db-5.3 db51 db-5.1 db48 db-4.8 db47 db-4.7 db46 db-4.6 db45 db-4.5 db44 db-4.4 db43 db-4.3 db42 db-4.2 db41 db-4.1 db"
 			for d in $bdb_libnames
 			do
-				if test -f "$dd/lib/lib${d}.so"
+				if test "$dd" = "/usr"
 				then
-					if test "$dd" != "/usr"
+					AC_CHECK_LIB($d, db_create, dlz_bdb_libs="-l${d}")
+					if test $dlz_bdb_libs != "yes"
 					then
-						dlz_bdb_libs="-L${dd}/lib "
-					else
-						dlz_bdb_libs=""
+						break
 					fi
-					dlz_bdb_libs="${dlz_bdb_libs}-l${d}"
+				elif test -f "$dd/lib/lib${d}.so"
+				then
+					dlz_bdb_libs="-L${dd}/lib -l${d}"
 					break
 				fi
 			done
@@ -303,7 +311,6 @@ case "$use_dlz_bdb" in
 
 		if test "$dlz_bdb_inc" = "yes"
 		then
-			AC_MSG_RESULT(not found)
 			AC_MSG_ERROR([could not find Berkeley DB include directory])
 		fi
 
@@ -330,7 +337,7 @@ esac
 AC_MSG_CHECKING(for file system DLZ driver)
 AC_ARG_WITH(dlz_filesystem,
 [  --with-dlz-filesystem[=PATH]   Build with filesystem DLZ driver [yes|no].
-                               (Required to use file system driver with DLZ)],
+			       (Required to use file system driver with DLZ)],
     use_dlz_filesystem="$withval", use_dlz_filesystem="no")
 
 case "$use_dlz_filesystem" in
@@ -352,7 +359,7 @@ esac
 AC_MSG_CHECKING(for LDAP DLZ driver)
 AC_ARG_WITH(dlz_ldap,
 [  --with-dlz-ldap[=PATH]   Build with LDAP DLZ driver [yes|no|path].
-                               (Required to use LDAP with DLZ)],
+			       (Required to use LDAP with DLZ)],
     use_dlz_ldap="$withval", use_dlz_ldap="no")
 
 if test "$use_dlz_ldap" = "yes"
@@ -398,21 +405,35 @@ esac
 AC_MSG_CHECKING(for ODBC DLZ driver)
 AC_ARG_WITH(dlz_odbc,
 [  --with-dlz-odbc[=PATH]   Build with ODBC DLZ driver [yes|no|path].
-                               (Required to use ODBC with DLZ)],
+			       (Required to use ODBC with DLZ)],
     use_dlz_odbc="$withval", use_dlz_odbc="no")
 
 if test "$use_dlz_odbc" = "yes"
 then
 	# User did not specify a path - guess it
-	odbcdirs="/usr /usr/local /usr/pkg"
-	for d in $odbcdirs
-	do
-		if test -f $d/include/sql.h -a -f $d/lib/libodbc.a
-		then
-			use_dlz_odbc=$d
-			break
-		fi
-	done
+	libodbc_found=no
+	sql_h_found=no
+	AC_CHECK_HEADER(sql.h, sql_h_found=yes)
+	AC_CHECK_LIB(odbc, SQLConnect, libodbc_found=yes)
+
+	if test $libodbc_found = "yes" -o $sql_h_found = "yes"
+	then
+		use_dlz_odbc=system
+		dlz_odbc_include=""
+		dlz_odbc_libs="-lodbc"
+	else
+		odbcdirs="/usr /usr/local /usr/pkg"
+		for d in $odbcdirs
+		do
+			if test -f $d/include/sql.h -a -f $d/lib/libodbc.a
+			then
+				use_dlz_odbc=$d
+				dlz_odbc_include="-I$use_dlz_odbc/include"
+				dlz_odbc_libs="-L$use_dlz_odbc/lib -lodbc"
+				break
+			fi
+		done
+	fi
 fi
 
 case "$use_dlz_odbc" in
@@ -426,8 +447,8 @@ case "$use_dlz_odbc" in
 		;;
 	*)
 		DLZ_ADD_DRIVER(ODBC, dlz_odbc_driver,
-				[-I$use_dlz_odbc/include],
-				[-L$use_dlz_odbc/lib -lodbc])
+				[$dlz_odbc_include],
+				[$dlz_odbc_libs])
 
 		AC_MSG_RESULT([using ODBC from $use_dlz_odbc])
 		;;
@@ -441,7 +462,7 @@ esac
 AC_MSG_CHECKING(for stub DLZ driver)
 AC_ARG_WITH(dlz_stub,
 [  --with-dlz-stub[=PATH]   Build with stub DLZ driver [yes|no].
-                               (Required to use stub driver with DLZ)],
+			       (Required to use stub driver with DLZ)],
     use_dlz_stub="$withval", use_dlz_stub="no")
 
 case "$use_dlz_stub" in
@@ -464,7 +485,7 @@ esac
 #
 if test -n "$CONTRIB_DLZ"
 then
-        CONTRIB_DLZ="-DCONTRIB_DLZ $CONTRIB_DLZ"
+	CONTRIB_DLZ="-DCONTRIB_DLZ $CONTRIB_DLZ"
 
 	#
 	# Where to find DLZ driver header files.

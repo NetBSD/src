@@ -72,6 +72,8 @@
       <arg><option>-r <replaceable class="parameter">udpretries</replaceable></option></arg>
       <arg><option>-R <replaceable class="parameter">randomdev</replaceable></option></arg>
       <arg><option>-v</option></arg>
+      <arg><option>-T</option></arg>
+      <arg><option>-P</option></arg>
       <arg>filename</arg>
     </cmdsynopsis>
   </refsynopsisdiv>
@@ -237,6 +239,22 @@
       instead of the default.  The special value
       <filename>keyboard</filename> indicates that keyboard input
       should be used.  This option may be specified multiple times.
+    </para>
+    <para>
+      Other types can be entered using "TYPEXXXXX" where "XXXXX" is the
+      decimal value of the type with no leading zeros.  The rdata,
+      if present, will be parsed using the UNKNOWN rdata format,
+      (&lt;backslash&gt; &lt;hash&gt; &lt;space&gt; &lt;length&gt;
+      &lt;space&gt; &lt;hexstring&gt;).
+    </para>
+    <para>
+      The <option>-T</option> and <option>-P</option> options print out
+      lists of non-meta types for which the type-specific presentation
+      formats are known.  <option>-T</option> prints out the list of
+      IANA-assigned types.  <option>-P</option> prints out the list of
+      private types specific to <command>named</command>.  These options
+      may be combined.  <command>nsupdate</command> will exit after the
+      lists are printed.
     </para>
   </refsect1>
 
