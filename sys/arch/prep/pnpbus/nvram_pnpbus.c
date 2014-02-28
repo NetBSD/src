@@ -1,4 +1,4 @@
-/* $NetBSD: nvram_pnpbus.c,v 1.17 2012/10/27 17:18:08 chs Exp $ */
+/* $NetBSD: nvram_pnpbus.c,v 1.18 2014/02/28 10:16:51 skrll Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.17 2012/10/27 17:18:08 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.18 2014/02/28 10:16:51 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.17 2012/10/27 17:18:08 chs Exp $"
 #include <sys/kthread.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/simplelock.h>
 #include <sys/bus.h>
 #include <sys/intr.h>
 

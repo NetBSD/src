@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.286 2014/02/25 18:30:13 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.287 2014/02/28 10:16:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.286 2014/02/25 18:30:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.287 2014/02/28 10:16:51 skrll Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -70,7 +70,6 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.286 2014/02/25 18:30:13 pooka Exp $");
 #include <sys/uidinfo.h>
 #include <sys/vmem.h>
 #include <sys/xcall.h>
-#include <sys/simplelock.h>
 #include <sys/cprng.h>
 #include <sys/ktrace.h>
 
