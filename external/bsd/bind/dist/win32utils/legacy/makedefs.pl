@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# Copyright (C) 2004, 2007, 2009, 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2009, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -30,10 +30,10 @@
 # Search String: ^(([_a-z0-9])*( ))*prefix_[_a-z0-9]+_[a-z0-9]+( )*\(
 # List of directories
 
-@prefixlist = ("isc", "isccfg","dns", "isccc", "libres");
-@prefixlist = ("isccc");
-@iscdirlist = ("isc/include/isc","isc/win32/include/isc");
-@iscprefixlist = ("isc", "isc", "cfg");
+@prefixlist = ("isc", "isccfg", "dns", "isccc", "bind9", "lwres", "irs");
+@iscdirlist = ("isc/include/isc","isc/win32/include/isc","isc/include/pk11",
+	       "isc/include/pkcs11","isc/win32/include/pkcs11");
+@iscprefixlist = ("isc", "pk11", "pkcs");
 
 @isccfgdirlist = ("isccfg/include/isccfg");
 @isccfgprefixlist = ("cfg");
@@ -41,11 +41,17 @@
 @iscccdirlist = ("isccc/include/isccc");
 @iscccprefixlist = ("isccc");
 
-@dnsdirlist = ("dns/include/dns","dns/sec/dst/include/dst");
+@dnsdirlist = ("dns/include/dns","dns/include/dst");
 @dnsprefixlist = ("dns", "dst");
 
-@lwresdirlist = ("lwres/include/lwres");
+@lwresdirlist = ("lwres/include/lwres","lwres/win32/include/lwres");
 @lwresprefixlist = ("lwres");
+
+@bind9dirlist = ("bind9/include/bind9");
+@bind9prefixlist = ("bind9");
+
+@irsdirlist = ("irs/include/irs","irs/win32/include/irs");
+@irsprefixlist = ("irs");
 
 # Run the changes for each directory in the directory list 
 
@@ -85,6 +91,22 @@ $ind = 0;
 createoutfile($lwresprefixlist[0]);
 foreach $dir (@lwresdirlist) {
 	createdeffile($dir, $lwresprefixlist[$ind]);
+	$ind++;
+}
+close OUTDEFFILE;
+
+$ind = 0;
+createoutfile($bind9prefixlist[0]);
+foreach $dir (@bind9dirlist) {
+	createdeffile($dir, $bind9prefixlist[$ind]);
+	$ind++;
+}
+close OUTDEFFILE;
+
+$ind = 0;
+createoutfile($irsprefixlist[0]);
+foreach $dir (@irsdirlist) {
+	createdeffile($dir, $irsprefixlist[$ind]);
 	$ind++;
 }
 close OUTDEFFILE;

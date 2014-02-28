@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id
+# Id: ans.pl,v 1.6 2012/02/22 23:47:34 tbox Exp 
 
 #
 # This is the name server from hell.  It provides canned

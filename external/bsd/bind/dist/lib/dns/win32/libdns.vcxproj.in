@@ -53,7 +53,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>BIND9;WIN32;USE_MD5;@USE_OPENSSL@@USE_GSSAPI@@USE_ISC_SPNEGO@_DEBUG;_WINDOWS;_USRDLL;LIBDNS_EXPORTS;%(PreprocessorDefinitions);%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>BIND9;WIN32;USE_MD5;@CRYPTO@@USE_GSSAPI@@USE_ISC_SPNEGO@_DEBUG;_WINDOWS;_USRDLL;LIBDNS_EXPORTS;%(PreprocessorDefinitions);%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;..\..\..\;include;..\include;..\..\isc\win32;..\..\isc\win32\include;..\..\isc\include;@LIBXML2_INC@@OPENSSL_INC@@GSSAPI_INC@@GEOIP_INC@%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <FunctionLevelLinking>false</FunctionLevelLinking>
       <PrecompiledHeaderOutputFile>.\$(Configuration)\$(TargetName).pch</PrecompiledHeaderOutputFile>
@@ -80,7 +80,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>@INTRINSIC@</IntrinsicFunctions>
-      <PreprocessorDefinitions>BIND9;WIN32;USE_MD5;@USE_OPENSSL@@USE_GSSAPI@@USE_ISC_SPNEGO@NDEBUG;_WINDOWS;_USRDLL;LIBDNS_EXPORTS;%(PreprocessorDefinitions);%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>BIND9;WIN32;USE_MD5;@CRYPTO@@USE_GSSAPI@@USE_ISC_SPNEGO@NDEBUG;_WINDOWS;_USRDLL;LIBDNS_EXPORTS;%(PreprocessorDefinitions);%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;..\..\..\;include;..\include;..\..\isc\win32;..\..\isc\win32\include;..\..\isc\include;@LIBXML2_INC@@OPENSSL_INC@@GSSAPI_INC@@GEOIP_INC@%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <StringPooling>true</StringPooling>
@@ -150,14 +150,24 @@
     <ClCompile Include="..\ncache.c" />
     <ClCompile Include="..\nsec.c" />
     <ClCompile Include="..\nsec3.c" />
+@IF OPENSSL
     <ClCompile Include="..\openssldh_link.c" />
     <ClCompile Include="..\openssldsa_link.c" />
     <ClCompile Include="..\opensslecdsa_link.c" />
     <ClCompile Include="..\opensslgost_link.c" />
     <ClCompile Include="..\opensslrsa_link.c" />
     <ClCompile Include="..\openssl_link.c" />
+@END OPENSSL
     <ClCompile Include="..\order.c" />
     <ClCompile Include="..\peer.c" />
+@IF PKCS11
+    <ClCompile Include="..\pkcs11.c" />
+    <ClCompile Include="..\pkcs11dh_link.c" />
+    <ClCompile Include="..\pkcs11dsa_link.c" />
+    <ClCompile Include="..\pkcs11ecdsa_link.c" />
+    <ClCompile Include="..\pkcs11gost_link.c" />
+    <ClCompile Include="..\pkcs11rsa_link.c" />
+@END PKCS11
     <ClCompile Include="..\portlist.c" />
     <ClCompile Include="..\private.c" />
     <ClCompile Include="..\rbt.c" />
@@ -201,9 +211,15 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\code.h" />
+    <ClInclude Include="..\dst_gost.h" />
     <ClInclude Include="..\dst_internal.h" />
+@IF OPENSSL
     <ClInclude Include="..\dst_openssl.h" />
+@END OPENSSL
     <ClInclude Include="..\dst_parse.h" />
+@IF PKCS11
+    <ClInclude Include="..\dst_pkcs11.h" />
+@END PKCS11
     <ClInclude Include="..\include\dns\acache.h" />
     <ClInclude Include="..\include\dns\acl.h" />
     <ClInclude Include="..\include\dns\adb.h" />

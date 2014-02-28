@@ -143,6 +143,9 @@ CLEAN :
 	-@erase "$(INTDIR)\dst_parse.obj"
 	-@erase "$(INTDIR)\dst_result.obj"
 	-@erase "$(INTDIR)\forward.obj"
+@IF GEOIP
+	-@erase "$(INTDIR)\geoip.obj"
+@END GEOIP
 	-@erase "$(INTDIR)\gssapi_link.obj"
 	-@erase "$(INTDIR)\gssapictx.obj"
 	-@erase "$(INTDIR)\spnego.obj"
@@ -161,14 +164,24 @@ CLEAN :
 	-@erase "$(INTDIR)\ncache.obj"
 	-@erase "$(INTDIR)\nsec.obj"
 	-@erase "$(INTDIR)\nsec3.obj"
+@IF OPENSSL
 	-@erase "$(INTDIR)\openssl_link.obj"
 	-@erase "$(INTDIR)\openssldh_link.obj"
 	-@erase "$(INTDIR)\openssldsa_link.obj"
 	-@erase "$(INTDIR)\opensslecdsa_link.obj"
 	-@erase "$(INTDIR)\opensslgost_link.obj"
 	-@erase "$(INTDIR)\opensslrsa_link.obj"
+@END OPENSSL
 	-@erase "$(INTDIR)\order.obj"
 	-@erase "$(INTDIR)\peer.obj"
+@IF PKCS11
+	-@erase "$(INTDIR)\pkcs11.obj"
+	-@erase "$(INTDIR)\pkcs11dh_link.obj"
+	-@erase "$(INTDIR)\pkcs11dsa_link.obj"
+	-@erase "$(INTDIR)\pkcs11ecdsa_link.obj"
+	-@erase "$(INTDIR)\pkcs11gost_link.obj"
+	-@erase "$(INTDIR)\pkcs11rsa_link.obj"
+@END PKCS11
 	-@erase "$(INTDIR)\portlist.obj"
 	-@erase "$(INTDIR)\private.obj"
 	-@erase "$(INTDIR)\rbt.obj"
@@ -217,7 +230,7 @@ CLEAN :
 
 LIBXML=@LIBXML2_LIB@
 CPP=cl.exe
-CPP_PROJ=/nologo /MD /W3 @COPTX@ @COPTI@ /O2 /I "./" /I "../../../" /I "include" /I "../include" /I "../../isc/win32" /I "../../isc/win32/include" /I "../../isc/include" @OPENSSL_INC@ @LIBXML2_INC@ @GSSAPI_INC@ /D "NDEBUG" /D "BIND9" /D "WIN32" /D "_WINDOWS" /D "__STDC__" /D "_MBCS" /D "_USRDLL" /D "USE_MD5" @USE_OPENSSL@ @USE_GSSAPI@ @USE_ISC_SPNEGO@ /D "LIBDNS_EXPORTS" /Fp"$(INTDIR)\libdns.pch" @COPTY@ /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP_PROJ=/nologo /MD /W3 @COPTX@ @COPTI@ /O2 /I "./" /I "../../../" /I "include" /I "../include" /I "../../isc/win32" /I "../../isc/win32/include" /I "../../isc/include" @OPENSSL_INC@ @LIBXML2_INC@ @GSSAPI_INC@ @GEOIP_INC@ /D "NDEBUG" /D "BIND9" /D "WIN32" /D "_WINDOWS" /D "__STDC__" /D "_MBCS" /D "_USRDLL" /D "USE_MD5" @CRYPTO@ @USE_GSSAPI@ @USE_ISC_SPNEGO@ /D "LIBDNS_EXPORTS" /Fp"$(INTDIR)\libdns.pch" @COPTY@ /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
 
 .c{$(INTDIR)}.obj::
    $(CPP) @<<
@@ -257,7 +270,7 @@ BSC32_FLAGS=/nologo /o"$(OUTDIR)\libdns.bsc"
 BSC32_SBRS= \
 	
 LINK32=link.exe
-LINK32_FLAGS=user32.lib advapi32.lib ws2_32.lib $(LIBXML) ../../isc/win32/Release/libisc.lib @OPENSSL_LIB@ @GSSAPI_LIB@ @KRB5_LIB@ /nologo /dll /incremental:no /pdb:"$(OUTDIR)\libdns.pdb" @MACHINE@ /def:".\libdns.def" /out:"../../../Build/Release/libdns.dll" /implib:"$(OUTDIR)\libdns.lib" 
+LINK32_FLAGS=user32.lib advapi32.lib ws2_32.lib $(LIBXML) ../../isc/win32/Release/libisc.lib @OPENSSL_LIB@ @GSSAPI_LIB@ @KRB5_LIB@ @GEOIP_LIB@ /nologo /dll /incremental:no /pdb:"$(OUTDIR)\libdns.pdb" @MACHINE@ /def:".\libdns.def" /out:"../../../Build/Release/libdns.dll" /implib:"$(OUTDIR)\libdns.lib" 
 DEF_FILE= \
 	".\libdns.def"
 LINK32_OBJS= \
@@ -280,6 +293,9 @@ LINK32_OBJS= \
 	"$(INTDIR)\dnssec.obj" \
 	"$(INTDIR)\ds.obj" \
 	"$(INTDIR)\forward.obj" \
+@IF GEOIP
+	"$(INTDIR)\geoip.obj" \
+@END GEOIP
 	"$(INTDIR)\iptable.obj" \
 	"$(INTDIR)\journal.obj" \
 	"$(INTDIR)\keydata.obj" \
@@ -343,12 +359,22 @@ LINK32_OBJS= \
 	"$(INTDIR)\spnego.obj" \
 	"$(INTDIR)\hmac_link.obj" \
 	"$(INTDIR)\key.obj" \
+@IF OPENSSL
 	"$(INTDIR)\openssl_link.obj" \
 	"$(INTDIR)\openssldh_link.obj" \
 	"$(INTDIR)\openssldsa_link.obj" \
 	"$(INTDIR)\opensslecdsa_link.obj" \
 	"$(INTDIR)\opensslgost_link.obj" \
 	"$(INTDIR)\opensslrsa_link.obj" \
+@END OPENSSL
+@IF PKCS11
+	"$(INTDIR)\pkcs11.obj" \
+	"$(INTDIR)\pkcs11dh_link.obj" \
+	"$(INTDIR)\pkcs11dsa_link.obj" \
+	"$(INTDIR)\pkcs11ecdsa_link.obj" \
+	"$(INTDIR)\pkcs11gost_link.obj" \
+	"$(INTDIR)\pkcs11rsa_link.obj" \
+@END PKCS11
 	"..\..\isc\win32\Release\libisc.lib"
 
 "..\..\..\Build\Release\libdns.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -426,6 +452,10 @@ CLEAN :
 	-@erase "$(INTDIR)\dst_result.sbr"
 	-@erase "$(INTDIR)\forward.obj"
 	-@erase "$(INTDIR)\forward.sbr"
+@IF GEOIP
+	-@erase "$(INTDIR)\geoip.obj"
+	-@erase "$(INTDIR)\geoip.sbr"
+@END GEOIP
 	-@erase "$(INTDIR)\gssapi_link.obj"
 	-@erase "$(INTDIR)\gssapi_link.sbr"
 	-@erase "$(INTDIR)\gssapictx.obj"
@@ -464,6 +494,7 @@ CLEAN :
 	-@erase "$(INTDIR)\nsec.sbr"
 	-@erase "$(INTDIR)\nsec3.obj"
 	-@erase "$(INTDIR)\nsec3.sbr"
+@IF OPENSSL
 	-@erase "$(INTDIR)\openssl_link.obj"
 	-@erase "$(INTDIR)\openssl_link.sbr"
 	-@erase "$(INTDIR)\openssldh_link.obj"
@@ -476,10 +507,25 @@ CLEAN :
 	-@erase "$(INTDIR)\opensslgost_link.sbr"
 	-@erase "$(INTDIR)\opensslrsa_link.obj"
 	-@erase "$(INTDIR)\opensslrsa_link.sbr"
+@END OPENSSL
 	-@erase "$(INTDIR)\order.obj"
 	-@erase "$(INTDIR)\order.sbr"
 	-@erase "$(INTDIR)\peer.obj"
 	-@erase "$(INTDIR)\peer.sbr"
+@IF PKCS11
+	-@erase "$(INTDIR)\pkcs11.obj"
+	-@erase "$(INTDIR)\pkcs11.sbr"
+	-@erase "$(INTDIR)\pkcs11dh_link.obj"
+	-@erase "$(INTDIR)\pkcs11dh_link.sbr"
+	-@erase "$(INTDIR)\pkcs11dsa_link.obj"
+	-@erase "$(INTDIR)\pkcs11dsa_link.sbr"
+	-@erase "$(INTDIR)\pkcs11ecdsa_link.obj"
+	-@erase "$(INTDIR)\pkcs11ecdsa_link.sbr"
+	-@erase "$(INTDIR)\pkcs11gost_link.obj"
+	-@erase "$(INTDIR)\pkcs11gost_link.sbr"
+	-@erase "$(INTDIR)\pkcs11rsa_link.obj"
+	-@erase "$(INTDIR)\pkcs11rsa_link.sbr"
+@END PKCS11
 	-@erase "$(INTDIR)\portlist.obj"
 	-@erase "$(INTDIR)\portlist.sbr"
 	-@erase "$(INTDIR)\private.obj"
@@ -571,7 +617,7 @@ CLEAN :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
 CPP=cl.exe
-CPP_PROJ=/nologo /MDd /W3 /Gm @COPTX@ @COPTI@ /ZI /Od /I "./" /I "../../../" /I "include" /I "../include" /I "../../isc/win32" /I "../../isc/win32/include" /I "../../isc/include" @OPENSSL_INC@ @LIBXML2_INC@ @GSSAPI_INC@ /D "_DEBUG" /D "BIND9" /D "WIN32" /D "_WINDOWS" /D "__STDC__" /D "_MBCS" /D "_USRDLL" /D "USE_MD5" @USE_OPENSSL@ @USE_GSSAPI@ @USE_ISC_SPNEGO@ /D "LIBDNS_EXPORTS" /FR"$(INTDIR)\\" /Fp"$(INTDIR)\libdns.pch" @COPTY@ /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
+CPP_PROJ=/nologo /MDd /W3 /Gm @COPTX@ @COPTI@ /ZI /Od /I "./" /I "../../../" /I "include" /I "../include" /I "../../isc/win32" /I "../../isc/win32/include" /I "../../isc/include" @OPENSSL_INC@ @LIBXML2_INC@ @GSSAPI_INC@ @GEOIP_INC@ /D "_DEBUG" /D "BIND9" /D "WIN32" /D "_WINDOWS" /D "__STDC__" /D "_MBCS" /D "_USRDLL" /D "USE_MD5" @CRYPTO@ @USE_GSSAPI@ @USE_ISC_SPNEGO@ /D "LIBDNS_EXPORTS" /FR"$(INTDIR)\\" /Fp"$(INTDIR)\libdns.pch" @COPTY@ /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
 
 .c{$(INTDIR)}.obj::
    $(CPP) @<<
@@ -628,6 +674,9 @@ BSC32_SBRS= \
 	"$(INTDIR)\dnssec.sbr" \
 	"$(INTDIR)\ds.sbr" \
 	"$(INTDIR)\forward.sbr" \
+@IF GEOIP
+	"$(INTDIR)\geoip.sbr" \
+@END GEOIP
 	"$(INTDIR)\iptable.sbr" \
 	"$(INTDIR)\journal.sbr" \
 	"$(INTDIR)\keydata.sbr" \
@@ -691,12 +740,22 @@ BSC32_SBRS= \
 	"$(INTDIR)\spnego.sbr" \
 	"$(INTDIR)\hmac_link.sbr" \
 	"$(INTDIR)\key.sbr" \
+@IF OPENSSL
 	"$(INTDIR)\openssl_link.sbr" \
 	"$(INTDIR)\openssldh_link.sbr" \
 	"$(INTDIR)\openssldsa_link.sbr" \
 	"$(INTDIR)\opensslecdsa_link.sbr" \
 	"$(INTDIR)\opensslgost_link.sbr" \
-	"$(INTDIR)\opensslrsa_link.sbr"
+	"$(INTDIR)\opensslrsa_link.sbr" \
+@END OPENSSL
+@IF PKCS11
+	"$(INTDIR)\pkcs11.sbr" \
+	"$(INTDIR)\pkcs11dh_link.sbr" \
+	"$(INTDIR)\pkcs11dsa_link.sbr" \
+	"$(INTDIR)\pkcs11ecdsa_link.sbr" \
+	"$(INTDIR)\pkcs11gost_link.sbr" \
+	"$(INTDIR)\pkcs11rsa_link.sbr"
+@END PKCS11
 
 "$(OUTDIR)\libdns.bsc" : "$(OUTDIR)" $(BSC32_SBRS)
     $(BSC32) @<<
@@ -704,7 +763,7 @@ BSC32_SBRS= \
 <<
 
 LINK32=link.exe
-LINK32_FLAGS=user32.lib advapi32.lib ws2_32.lib $(LIBXML) ../../isc/win32/debug/libisc.lib @OPENSSL_LIB@ @GSSAPI_LIB@ @KRB5_LIB@ /nologo /dll /incremental:yes /pdb:"$(OUTDIR)\libdns.pdb" /map:"$(INTDIR)\libdns.map" /debug @MACHINE@ /def:".\libdns.def" /out:"../../../Build/Debug/libdns.dll" /implib:"$(OUTDIR)\libdns.lib" /pdbtype:sept 
+LINK32_FLAGS=user32.lib advapi32.lib ws2_32.lib $(LIBXML) ../../isc/win32/Debug/libisc.lib @OPENSSL_LIB@ @GSSAPI_LIB@ @KRB5_LIB@ @GEOIP_LIB@ @GEOIP_LIB@ /nologo /dll /incremental:yes /pdb:"$(OUTDIR)\libdns.pdb" /map:"$(INTDIR)\libdns.map" /debug @MACHINE@ /def:".\libdns.def" /out:"../../../Build/Debug/libdns.dll" /implib:"$(OUTDIR)\libdns.lib" /pdbtype:sept 
 DEF_FILE= \
 	".\libdns.def"
 LINK32_OBJS= \
@@ -727,6 +786,9 @@ LINK32_OBJS= \
 	"$(INTDIR)\dnssec.obj" \
 	"$(INTDIR)\ds.obj" \
 	"$(INTDIR)\forward.obj" \
+@IF GEOIP
+	"$(INTDIR)\geoip.obj" \
+@END GEOIP
 	"$(INTDIR)\iptable.obj" \
 	"$(INTDIR)\journal.obj" \
 	"$(INTDIR)\key.obj" \
@@ -790,12 +852,22 @@ LINK32_OBJS= \
 	"$(INTDIR)\spnego.obj" \
 	"$(INTDIR)\hmac_link.obj" \
 	"$(INTDIR)\key.obj" \
+@IF OPENSSL
 	"$(INTDIR)\openssl_link.obj" \
 	"$(INTDIR)\openssldh_link.obj" \
 	"$(INTDIR)\openssldsa_link.obj" \
 	"$(INTDIR)\opensslecdsa_link.obj" \
 	"$(INTDIR)\opensslgost_link.obj" \
 	"$(INTDIR)\opensslrsa_link.obj" \
+@END OPENSSL
+@IF PKCS11
+	"$(INTDIR)\pkcs11.obj" \
+	"$(INTDIR)\pkcs11dh_link.obj" \
+	"$(INTDIR)\pkcs11dsa_link.obj" \
+	"$(INTDIR)\pkcs11ecdsa_link.obj" \
+	"$(INTDIR)\pkcs11gost_link.obj" \
+	"$(INTDIR)\pkcs11rsa_link.obj" \
+@END PKCS11
 	"..\..\isc\win32\Debug\libisc.lib"
 
 "..\..\..\Build\Debug\libdns.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -1037,7 +1109,7 @@ SOURCE=..\dispatch.c
 
 !IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
 
-CPP_SWITCHES=/nologo /MD /W3 @COPTX@ @COPTI@ /O2 /I "./" /I "../../../" /I "include" /I "../include" /I "../../isc/win32" /I "../../isc/win32/include" /I "../../isc/include" @OPENSSL_INC@ @LIBXML2_INC@ @GSSAPI_INC@ /D "NDEBUG" /D "BIND9" /D "WIN32" /D "_WINDOWS" /D "__STDC__" /D "_MBCS" /D "_USRDLL" /D "USE_MD5" @USE_OPENSSL@ @USE_GSSAPI@ @USE_ISC_SPNEGO@ /D "LIBDNS_EXPORTS" /Fp"$(INTDIR)\libdns.pch" @COPTY@ /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP_SWITCHES=/nologo /MD /W3 @COPTX@ @COPTI@ /O2 /I "./" /I "../../../" /I "include" /I "../include" /I "../../isc/win32" /I "../../isc/win32/include" /I "../../isc/include" @OPENSSL_INC@ @LIBXML2_INC@ @GSSAPI_INC@ @GEOIP_INC@ /D "NDEBUG" /D "BIND9" /D "WIN32" /D "_WINDOWS" /D "__STDC__" /D "_MBCS" /D "_USRDLL" /D "USE_MD5" @CRYPTO@ @USE_GSSAPI@ @USE_ISC_SPNEGO@ /D "LIBDNS_EXPORTS" /Fp"$(INTDIR)\libdns.pch" @COPTY@ /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
 
 "$(INTDIR)\dispatch.obj" : $(SOURCE) "$(INTDIR)"
 	$(CPP) @<<
@@ -1047,7 +1119,7 @@ CPP_SWITCHES=/nologo /MD /W3 @COPTX@ @COPTI@ /O2 /I "./" /I "../../../" /I "incl
 
 !ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
 
-CPP_SWITCHES=/nologo /MDd /W3 /Gm @COPTX@ @COPTI@ /ZI /Od /I "./" /I "../../../" /I "include" /I "../include" /I "../../isc/win32" /I "../../isc/win32/include" /I "../../isc/include" @OPENSSL_INC@ @LIBXML2_INC@ @GSSAPI_INC@ /D "_DEBUG" /D "BIND9" /D "WIN32" /D "_WINDOWS" /D "__STDC__" /D "_MBCS" /D "_USRDLL" /D "USE_MD5" @USE_OPENSSL@ @USE_GSSAPI@ @USE_ISC_SPNEGO@ /D "LIBDNS_EXPORTS" /FR"$(INTDIR)\\" /Fp"$(INTDIR)\libdns.pch" @COPTY@ /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
+CPP_SWITCHES=/nologo /MDd /W3 /Gm @COPTX@ @COPTI@ /ZI /Od /I "./" /I "../../../" /I "include" /I "../include" /I "../../isc/win32" /I "../../isc/win32/include" /I "../../isc/include" @OPENSSL_INC@ @LIBXML2_INC@ @GSSAPI_INC@ @GEOIP_INC@ /D "_DEBUG" /D "BIND9" /D "WIN32" /D "_WINDOWS" /D "__STDC__" /D "_MBCS" /D "_USRDLL" /D "USE_MD5" @CRYPTO@ @USE_GSSAPI@ @USE_ISC_SPNEGO@ /D "LIBDNS_EXPORTS" /FR"$(INTDIR)\\" /Fp"$(INTDIR)\libdns.pch" @COPTY@ /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
 
 "$(INTDIR)\dispatch.obj"	"$(INTDIR)\dispatch.sbr" : $(SOURCE) "$(INTDIR)"
 	$(CPP) @<<
@@ -1160,6 +1232,26 @@ SOURCE=..\forward.c
 
 
 !ENDIF 
+
+@IF GEOIP
+SOURCE=..\geoip.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\geoip.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\geoip.obj"	"$(INTDIR)\geoip.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+@END GEOIP
 
 SOURCE=..\iptable.c
 
@@ -2295,6 +2387,7 @@ SOURCE=..\key.c
 
 !ENDIF 
 
+@IF OPENSSL
 SOURCE=..\openssl_link.c
 
 !IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
@@ -2402,6 +2495,117 @@ SOURCE=..\opensslrsa_link.c
 
 
 !ENDIF 
+@END OPENSSL
+
+@IF PKCS11
+SOURCE=..\pkcs11.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\pkcs11.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\pkcs11.obj"	"$(INTDIR)\pkcs11.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\pkcs11dh_link.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\pkcs11dh_link.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\pkcs11dh_link.obj"	"$(INTDIR)\pkcs11dh_link.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\pkcs11dsa_link.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\pkcs11dsa_link.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\pkcs11dsa_link.obj"	"$(INTDIR)\pkcs11dsa_link.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\pkcs11ecdsa_link.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\pkcs11ecdsa_link.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\pkcs11ecdsa_link.obj"	"$(INTDIR)\pkcs11ecdsa_link.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\pkcs11gost_link.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\pkcs11gost_link.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\pkcs11gost_link.obj"	"$(INTDIR)\pkcs11gost_link.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\pkcs11rsa_link.c
+
+!IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
+
+
+"$(INTDIR)\pkcs11rsa_link.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\pkcs11rsa_link.obj"	"$(INTDIR)\pkcs11rsa_link.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+@END PKCS11
 
 !IF  "$(CFG)" == "libdns - @PLATFORM@ Release"
 

@@ -1,6 +1,6 @@
 #!/bin/sh -e
 #
-# Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -18,8 +18,6 @@
 
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
-
-RANDFILE=../random.data
 
 zone=bits
 rm -f K${zone}.+*+*.key
@@ -104,40 +102,44 @@ zone=externalkey
 rm -f K${zone}.+*+*.key
 rm -f K${zone}.+*+*.private
 
-for alg in ECDSAP256SHA256 NSEC3RSASHA1 DSA ECCGOST
+for alg in ECCGOST ECDSAP256SHA256 NSEC3RSASHA1 DSA
 do
+    case $alg in
+        DSA)
+            sh ../checkdsa.sh 2> /dev/null || continue
+            checkfile=../checkdsa
+            touch $checkfile ;;
+        ECCGOST) 
+            fail=0
+            $KEYGEN -q -r $RANDFILE -a eccgost test > /dev/null 2>&1 || fail=1
+            rm -f Ktest*
+            [ $fail != 0 ] && continue
+            checkfile=../checkgost
+            touch $checkfile ;;
+        ECDSAP256SHA256)
+            fail=0
+            $KEYGEN -q -r $RANDFILE -a ecdsap256sha256 test > /dev/null 2>&1 || fail=1
+            rm -f Ktest*
+            [ $fail != 0 ] && continue
+            sh ../checkdsa.sh 2> /dev/null || continue
+            checkfile=../checkecdsa
+            touch $checkfile ;;
+        *) ;;
+    esac
 
-if test $alg = DSA
-then
-	sh ../checkdsa.sh 2> /dev/null || continue
-fi
-if test $alg = ECCGOST
-then
-	sh ../../gost/prereq.sh 2> /dev/null || continue
-fi
-if test $alg = ECDSAP256SHA256
-then
-	sh ../../ecdsa/prereq.sh 2> /dev/null || continue
-	sh ../checkdsa.sh 2> /dev/null || continue
-fi
+    k1=`$KEYGEN -q -r $RANDFILE -a $alg -b 1024 -n zone -f KSK $zone`
+    k2=`$KEYGEN -q -r $RANDFILE -a $alg -b 1024 -n zone $zone`
+    k3=`$KEYGEN -q -r $RANDFILE -a $alg -b 1024 -n zone $zone`
+    k4=`$KEYGEN -q -r $RANDFILE -a $alg -b 1024 -n zone -f KSK $zone`
+    $DSFROMKEY -T 1200 $k4 >> ../ns1/root.db
 
-test $alg = DSA -a ! -r /dev/random -a ! -r /dev/urandom && continue
-
-k1=`$KEYGEN -q -r $RANDFILE -a $alg -b 1024 -n zone -f KSK $zone`
-k2=`$KEYGEN -q -r $RANDFILE -a $alg -b 1024 -n zone $zone`
-k3=`$KEYGEN -q -r $RANDFILE -a $alg -b 1024 -n zone $zone`
-k4=`$KEYGEN -q -r $RANDFILE -a $alg -b 1024 -n zone $zone`
-keyname=`$KEYGEN -q -r $RANDFILE -a $alg -b 1024 -n zone $zone`
-keyname=`$KEYGEN -q -r $RANDFILE -a $alg -b 1024 -n zone -f KSK $zone`
-$DSFROMKEY -T 1200 $keyname >> ../ns1/root.db
-rm -f ${k3}.* ${k4}.*
-
-#
-# Convert k1 and k2 in to External Keys.
-rm -f $k1.private 
-mv $k1.key a-file
-$IMPORTKEY -P now -D now+3600 -f a-file $zone > /dev/null 2>&1
-rm -f $k2.private 
-mv $k2.key a-file
-$IMPORTKEY -f a-file $zone > /dev/null 2>&1
+    # Convert k1 and k2 in to External Keys.
+    rm -f $k1.private 
+    mv $k1.key a-file
+    $IMPORTKEY -P now -D now+3600 -f a-file $zone > /dev/null 2>&1 ||
+        ( echo "importkey failed: $alg"; rm -f $checkfile )
+    rm -f $k2.private 
+    mv $k2.key a-file
+    $IMPORTKEY -f a-file $zone > /dev/null 2>&1 ||
+        ( echo "importkey failed: $alg"; rm -f $checkfile )
 done

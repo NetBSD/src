@@ -1,6 +1,6 @@
 #!/bin/sh -e
 #
-# Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,12 +14,8 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: sign.sh,v 1.3 2011/03/03 16:16:46 each Exp 
-
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
-
-RANDFILE=../random.data
 
 zone=dlv.isc.org
 infile=dlv.isc.org.db.in

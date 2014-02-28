@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id
+# Id: tests.sh,v 1.11 2012/02/22 14:22:54 marka Exp 
 
 
 # WARNING: The test labelled "testing request-ixfr option in view vs zone"
@@ -237,6 +237,17 @@ else
     echo "I:  success: IXFR it was"
 fi
 
+echo "I:testing DiG's handling of a multi message AXFR style IXFR response" 
+(
+(sleep 10 && kill $$) 2>/dev/null &
+sub=$!
+$DIG ixfr=0 large -p 5300 @10.53.0.3 > dig.out
+kill $sub
+)
+lines=`grep hostmaster.large dig.out | wc -l`
+test ${lines:-0} -eq 2 || { echo "I:failed"; status=1; }
+messages=`sed -n 's/^;;.*messages \([0-9]*\),.*/\1/p' dig.out`
+test ${messages:-0} -gt 1 || { echo "I:failed"; status=1; }
 
 echo "I:exit status: $status"
 exit $status
