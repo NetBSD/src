@@ -66,9 +66,18 @@ copy ..\..\bin\dnssec\dnssec-settime.html ..\..\Build\Release
 copy ..\..\bin\dnssec\dnssec-revoke.html ..\..\Build\Release
 copy ..\..\bin\dnssec\dnssec-verify.html ..\..\Build\Release
 copy ..\..\bin\dnssec\dnssec-importkey.html ..\..\Build\Release
+@IF PKCS11
 copy ..\..\bin\pkcs11\pkcs11-keygen.html ..\..\Build\Release
 copy ..\..\bin\pkcs11\pkcs11-list.html ..\..\Build\Release
 copy ..\..\bin\pkcs11\pkcs11-destroy.html ..\..\Build\Release
+copy ..\..\bin\pkcs11\pkcs11-tokens.html ..\..\Build\Release
+@END PKCS11
+copy ..\..\bin\tools\arpaname.html ..\..\Build\Release
+copy ..\..\bin\tools\genrandom.html ..\..\Build\Release
+copy ..\..\bin\tools\isc-hmac-fixup.html ..\..\Build\Release
+copy ..\..\bin\tools\named-journalprint.html ..\..\Build\Release
+copy ..\..\bin\tools\named-rrchecker.html ..\..\Build\Release
+copy ..\..\bin\tools\nsec3hash.html ..\..\Build\Release
 
 echo Copying the migration notes.
 

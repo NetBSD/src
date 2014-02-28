@@ -1,4 +1,19 @@
 #!/bin/sh
+#
+# Copyright (C) 2010, 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+
 # tests for TSIG-GSS updates
 
 SYSTEMTESTTOP=..
@@ -62,7 +77,7 @@ test_update testcname.example.nil. TXT "86400 A 10.53.0.13" "10.53.0.13" && stat
 
 echo "I:testing external policy with SIG(0) key"
 ret=0
-$NSUPDATE -R random.data -k ns1/Kkey.example.nil.*.private <<END > /dev/null 2>&1 || ret=1
+$NSUPDATE -R $RANDFILE -k ns1/Kkey.example.nil.*.private <<END > /dev/null 2>&1 || ret=1
 server 10.53.0.1 5300
 zone example.nil
 update add fred.example.nil 120 cname foo.bar.

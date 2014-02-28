@@ -1,5 +1,5 @@
 #! /bin/sh
-# Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 1996-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -14,510 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 #
-# Id: COPYRIGHT,v 1.19 2012/01/03 23:46:59 tbox Exp 
-#
-# 	Portions of this code release fall under one or more of the
-# 	following Copyright notices.  Please see individual source
-# 	files for details.
-#
-# 	For binary releases also see: OpenSSL-LICENSE.
-#
-# Copyright (C) 1996-2001  Nominum, Inc.
-#
-# Permission to use, copy, modify, and distribute this software for any
-# purpose with or without fee is hereby granted, provided that the above
-# copyright notice and this permission notice appear in all copies.
-#
-# THE SOFTWARE IS PROVIDED "AS IS" AND NOMINUM DISCLAIMS ALL WARRANTIES
-# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL NOMINUM BE LIABLE FOR
-# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
-# OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-#
-#  -----------------------------------------------------------------------------
-#
-# Copyright (C) 1995-2000 by Network Associates, Inc.
-#
-# Permission to use, copy, modify, and/or distribute this software for any
-# purpose with or without fee is hereby granted, provided that the above
-# copyright notice and this permission notice appear in all copies.
-#
-# THE SOFTWARE IS PROVIDED "AS IS" AND ISC AND NETWORK ASSOCIATES DISCLAIMS
-# ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE
-# FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
-# IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-#
-#  -----------------------------------------------------------------------------
-#
-# Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
-#
-# Permission to use, copy, modify, and distribute this software for any
-# purpose with or without fee is hereby granted, provided that the
-# above copyright notice and this permission notice appear in all
-# copies.
-#
-# THE SOFTWARE IS PROVIDED "AS IS" AND STICHTING NLNET
-# DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
-# STICHTING NLNET BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR
-# CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS
-# OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
-# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE
-# USE OR PERFORMANCE OF THIS SOFTWARE.
-#
-# The development of Dynamically Loadable Zones (DLZ) for Bind 9 was
-# conceived and contributed by Rob Butler.
-#
-# Permission to use, copy, modify, and distribute this software for any
-# purpose with or without fee is hereby granted, provided that the
-# above copyright notice and this permission notice appear in all
-# copies.
-#
-# THE SOFTWARE IS PROVIDED "AS IS" AND ROB BUTLER
-# DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
-# ROB BUTLER BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR
-# CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS
-# OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
-# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE
-# USE OR PERFORMANCE OF THIS SOFTWARE.
-#
-#  -----------------------------------------------------------------------------
-#
-# Copyright (c) 1987, 1990, 1993, 1994
-#      The Regents of the University of California.  All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-# 1. Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-# 2. Redistributions in binary form must reproduce the above copyright
-#    notice, this list of conditions and the following disclaimer in the
-#    documentation and/or other materials provided with the distribution.
-# 3. All advertising materials mentioning features or use of this software
-#    must display the following acknowledgement:
-#      This product includes software developed by the University of
-#      California, Berkeley and its contributors.
-# 4. Neither the name of the University nor the names of its contributors
-#    may be used to endorse or promote products derived from this software
-#    without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-# ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
-# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-# SUCH DAMAGE.
-#
-#  -----------------------------------------------------------------------------
-#
-# Copyright (C) The Internet Society 2005.  This version of
-# this module is part of RFC 4178; see the RFC itself for
-# full legal notices.
-#
-# (The above copyright notice is per RFC 3978 5.6 (a), q.v.)
-#
-#  -----------------------------------------------------------------------------
-#
-# Copyright (c) 2004 Masarykova universita
-# (Masaryk University, Brno, Czech Republic)
-# All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
-#
-# 1. Redistributions of source code must retain the above copyright notice,
-#    this list of conditions and the following disclaimer.
-#
-# 2. Redistributions in binary form must reproduce the above copyright
-#    notice, this list of conditions and the following disclaimer in the
-#    documentation and/or other materials provided with the distribution.
-#
-# 3. Neither the name of the University nor the names of its contributors may
-#    be used to endorse or promote products derived from this software
-#    without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
-# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-# POSSIBILITY OF SUCH DAMAGE.
-#
-#  -----------------------------------------------------------------------------
-#
-# Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
-# (Royal Institute of Technology, Stockholm, Sweden).
-# All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-#
-# 1. Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-#
-# 2. Redistributions in binary form must reproduce the above copyright
-#    notice, this list of conditions and the following disclaimer in the
-#    documentation and/or other materials provided with the distribution.
-#
-# 3. Neither the name of the Institute nor the names of its contributors
-#    may be used to endorse or promote products derived from this software
-#    without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-# ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
-# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-# SUCH DAMAGE.
-#
-#  -----------------------------------------------------------------------------
-#
-# Copyright (c) 1998 Doug Rabson
-# All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-# 1. Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-# 2. Redistributions in binary form must reproduce the above copyright
-#    notice, this list of conditions and the following disclaimer in the
-#    documentation and/or other materials provided with the distribution.
-#
-# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
-# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-# SUCH DAMAGE.
-#
-#  -----------------------------------------------------------------------------
-#
-# Copyright ((c)) 2002, Rice University
-# All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are
-# met:
-#
-#     * Redistributions of source code must retain the above copyright
-#     notice, this list of conditions and the following disclaimer.
-#
-#     * Redistributions in binary form must reproduce the above
-#     copyright notice, this list of conditions and the following
-#     disclaimer in the documentation and/or other materials provided
-#     with the distribution.
-#
-#     * Neither the name of Rice University (RICE) nor the names of its
-#     contributors may be used to endorse or promote products derived
-#     from this software without specific prior written permission.
-#
-#
-# This software is provided by RICE and the contributors on an "as is"
-# basis, without any representations or warranties of any kind, express
-# or implied including, but not limited to, representations or
-# warranties of non-infringement, merchantability or fitness for a
-# particular purpose. In no event shall RICE or contributors be liable
-# for any direct, indirect, incidental, special, exemplary, or
-# consequential damages (including, but not limited to, procurement of
-# substitute goods or services; loss of use, data, or profits; or
-# business interruption) however caused and on any theory of liability,
-# whether in contract, strict liability, or tort (including negligence
-# or otherwise) arising in any way out of the use of this software, even
-# if advised of the possibility of such damage.
-#
-#  -----------------------------------------------------------------------------
-#
-# Copyright (c) 1993 by Digital Equipment Corporation.
-#
-# Permission to use, copy, modify, and distribute this software for any
-# purpose with or without fee is hereby granted, provided that the above
-# copyright notice and this permission notice appear in all copies, and that
-# the name of Digital Equipment Corporation not be used in advertising or
-# publicity pertaining to distribution of the document or software without
-# specific, written prior permission.
-#
-# THE SOFTWARE IS PROVIDED "AS IS" AND DIGITAL EQUIPMENT CORP. DISCLAIMS ALL
-# WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES
-# OF MERCHANTABILITY AND FITNESS.   IN NO EVENT SHALL DIGITAL EQUIPMENT
-# CORPORATION BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
-# DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
-# PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
-# ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
-# SOFTWARE.
-#
-#  -----------------------------------------------------------------------------
-#
-# Copyright 2000 Aaron D. Gifford.  All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-# 1. Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-# 2. Redistributions in binary form must reproduce the above copyright
-#    notice, this list of conditions and the following disclaimer in the
-#    documentation and/or other materials provided with the distribution.
-# 3. Neither the name of the copyright holder nor the names of contributors
-#    may be used to endorse or promote products derived from this software
-#    without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) AND CONTRIBUTOR(S) ``AS IS'' AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR(S) OR CONTRIBUTOR(S) BE LIABLE
-# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-# SUCH DAMAGE.
-#
-#  -----------------------------------------------------------------------------
-#
-# Copyright (c) 1998 Doug Rabson.
-# Copyright (c) 2001 Jake Burkholder.
-# All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-# 1. Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-# 2. Redistributions in binary form must reproduce the above copyright
-#    notice, this list of conditions and the following disclaimer in the
-#    documentation and/or other materials provided with the distribution.
-#
-# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
-# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-# SUCH DAMAGE.
-#
-#  -----------------------------------------------------------------------------
-#
-# Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
-# All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-# 1. Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-# 2. Redistributions in binary form must reproduce the above copyright
-#    notice, this list of conditions and the following disclaimer in the
-#    documentation and/or other materials provided with the distribution.
-# 3. Neither the name of the project nor the names of its contributors
-#    may be used to endorse or promote products derived from this software
-#    without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-# ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
-# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-# SUCH DAMAGE.
-#
-#  -----------------------------------------------------------------------------
-#
-# Copyright (c) 1999-2000 by Nortel Networks Corporation
-#
-# Permission to use, copy, modify, and distribute this software for any
-# purpose with or without fee is hereby granted, provided that the above
-# copyright notice and this permission notice appear in all copies.
-#
-# THE SOFTWARE IS PROVIDED "AS IS" AND NORTEL NETWORKS DISCLAIMS
-# ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
-# OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL NORTEL NETWORKS
-# BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES
-# OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
-# WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
-# ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
-# SOFTWARE.
-#
-#  -----------------------------------------------------------------------------
-#
-# Copyright (c) 2000-2002 Japan Network Information Center.  All rights reserved.
-#
-# By using this file, you agree to the terms and conditions set forth bellow.
-#
-#                         LICENSE TERMS AND CONDITIONS
-#
-# The following License Terms and Conditions apply, unless a different
-# license is obtained from Japan Network Information Center ("JPNIC"),
-# a Japanese association, Kokusai-Kougyou-Kanda Bldg 6F, 2-3-4 Uchi-Kanda,
-# Chiyoda-ku, Tokyo 101-0047, Japan.
-#
-# 1. Use, Modification and Redistribution (including distribution of any
-#    modified or derived work) in source and/or binary forms is permitted
-#    under this License Terms and Conditions.
-#
-# 2. Redistribution of source code must retain the copyright notices as they
-#    appear in each source code file, this License Terms and Conditions.
-#
-# 3. Redistribution in binary form must reproduce the Copyright Notice,
-#    this License Terms and Conditions, in the documentation and/or other
-#    materials provided with the distribution.  For the purposes of binary
-#    distribution the "Copyright Notice" refers to the following language:
-#    "Copyright (c) 2000-2002 Japan Network Information Center.  All rights
-#    reserved."
-#
-# 4. The name of JPNIC may not be used to endorse or promote products
-#    derived from this Software without specific prior written approval of
-#    JPNIC.
-#
-# 5. Disclaimer/Limitation of Liability: THIS SOFTWARE IS PROVIDED BY JPNIC
-#    "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-#    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
-#    PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL JPNIC BE LIABLE
-#    FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-#    CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-#    SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
-#    BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-#    WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
-#    OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
-#    ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
-#
-#  -----------------------------------------------------------------------------
-#
-# Copyright (C) 2004  Nominet, Ltd.
-#
-# Permission to use, copy, modify, and distribute this software for any
-# purpose with or without fee is hereby granted, provided that the above
-# copyright notice and this permission notice appear in all copies.
-#
-# THE SOFTWARE IS PROVIDED "AS IS" AND NOMINET DISCLAIMS ALL WARRANTIES WITH
-# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
-# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
-# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-# PERFORMANCE OF THIS SOFTWARE.
-#
-#  -----------------------------------------------------------------------------
-#
-# Portions Copyright RSA Security Inc.
-#
-# License to copy and use this software is granted provided that it is
-# identified as "RSA Security Inc. PKCS #11 Cryptographic Token Interface
-# (Cryptoki)" in all material mentioning or referencing this software.
-#
-# License is also granted to make and use derivative works provided that
-# such works are identified as "derived from the RSA Security Inc. PKCS #11
-# Cryptographic Token Interface (Cryptoki)" in all material mentioning or
-# referencing the derived work.
-#
-# RSA Security Inc. makes no representations concerning either the
-# merchantability of this software or the suitability of this software for
-# any particular purpose. It is provided "as is" without express or implied
-# warranty of any kind.
-#
-#  -----------------------------------------------------------------------------
-#
-# Copyright (c) 1996, David Mazieres <dm@uun.org>
-# Copyright (c) 2008, Damien Miller <djm@openbsd.org>
-#
-# Permission to use, copy, modify, and distribute this software for any
-# purpose with or without fee is hereby granted, provided that the above
-# copyright notice and this permission notice appear in all copies.
-#
-# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-#
-# -----------------------------------------------------------------------------
-#
-# Copyright (c) 2000-2001 The OpenSSL Project.  All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-#
-# 1. Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-#
-# 2. Redistributions in binary form must reproduce the above copyright
-#    notice, this list of conditions and the following disclaimer in
-#    the documentation and/or other materials provided with the
-#    distribution.
-#
-# 3. All advertising materials mentioning features or use of this
-#    software must display the following acknowledgment:
-#    "This product includes software developed by the OpenSSL Project
-#    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
-#
-# 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
-#    endorse or promote products derived from this software without
-#    prior written permission. For written permission, please contact
-#    licensing@OpenSSL.org.
-#
-# 5. Products derived from this software may not be called "OpenSSL"
-#    nor may "OpenSSL" appear in their names without prior written
-#    permission of the OpenSSL Project.
-#
-# 6. Redistributions of any form whatsoever must retain the following
-#    acknowledgment:
-#    "This product includes software developed by the OpenSSL Project
-#    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
-#
-# THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
-# EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
-# ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-# STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
-# OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# From configure.in Revision: 1.533 .
+# From configure.in Revision: 1.533.34.1 .
 # Guess values for system-dependent variables and create Makefiles.
 # Generated by GNU Autoconf 2.69.
 #
@@ -1164,13 +661,16 @@ CONTRIB_DLZ
 PG_CONFIG
 SO_TARGETS
 SO_LD
+SO_LDFLAGS
 SO_CFLAGS
 SO
 BIND9_CONFIGARGS
 BIND9_SRCID
+BIND9_MAJOR
 BIND9_VERSION
 BIND9_DESCRIPTION
 BIND9_PRODUCT
+BIND9_IRS_BUILDINCLUDE
 BIND9_BIND9_BUILDINCLUDE
 BIND9_LWRES_BUILDINCLUDE
 BIND9_DNS_BUILDINCLUDE
@@ -1200,6 +700,8 @@ XSLTPROC
 W3M
 PDFLATEX
 LATEX
+HAVE_SIT
+ISC_PLATFORM_USESIT
 ISC_ARCH_DIR
 ISC_PLATFORM_USEMACASM
 ISC_PLATFORM_USESTDASM
@@ -1229,6 +731,7 @@ ISC_PLATFORM_NEEDVSNPRINTF
 LWRES_PLATFORM_NEEDSPRINTF
 ISC_PLATFORM_NEEDSPRINTF
 READLINE_LIB
+ISC_PLATFORM_NEEDSTRCASESTR
 ISC_PLATFORM_NEEDSTRLCAT
 ISC_PLATFORM_NEEDSTRLCPY
 GENRANDOMLIB
@@ -1278,10 +781,7 @@ LWRES_PLATFORM_NEEDNETINETIN6H
 ISC_PLATFORM_NEEDNETINETIN6H
 LWRES_PLATFORM_HAVEIPV6
 ISC_PLATFORM_HAVEIPV6
-export_includedir
-export_libdir
 BIND9_CO_RULE
-LIBEXPORT
 LIBTOOL_IN_MAIN
 LIBTOOL_ALLOW_UNDEFINED
 LIBTOOL_MODE_LINK
@@ -1300,23 +800,25 @@ IRIX_DNSSEC_WARNINGS_HACK
 MKDEPPROG
 MKDEPCFLAGS
 MKDEPCC
-ISC_THREAD_DIR
-THREADOPTSRCS
-THREADOPTOBJS
-ISC_PLATFORM_USETHREADS
-ALWAYS_DEFINES
-DNS_CRYPTO_LIBS
-DNS_GSSAPI_LIBS
-DST_GSSAPI_INC
-USE_GSSAPI
-ISC_PLATFORM_KRB5HEADER
-ISC_PLATFORM_GSSAPI_KRB5_HEADER
-ISC_PLATFORM_GSSAPIHEADER
-ISC_PLATFORM_HAVEGSSAPI
+PKCS11_TEST
+PKCS11_GOST
+PKCS11_ECDSA
+CRYPTO
+PKCS11LINKSRCS
+PKCS11LINKOBJS
 PKCS11_PROVIDER
+ISC_ISCPK11_API_O
+ISC_ISCPK11_API_C
+ISC_PK11_API_O
+ISC_PK11_API_C
+ISC_PK11_O
+ISC_PK11_C
+PKCS11_ENGINE
 PKCS11_TOOLS
 USE_PKCS11
+ISC_OPENSSL_LIBS
 ISC_OPENSSL_INC
+ISC_PLATFORM_OPENSSLAES
 ISC_PLATFORM_OPENSSLHASH
 OPENSSL_GOST
 OPENSSL_ECDSA
@@ -1325,14 +827,27 @@ OPENSSLLINKOBJS
 OPENSSLGOSTLINKSRCS
 OPENSSLGOSTLINKOBJS
 DST_OPENSSL_INC
-USE_OPENSSL
+ISC_THREAD_DIR
+THREADOPTSRCS
+THREADOPTOBJS
+ISC_PLATFORM_USETHREADS
+ALWAYS_DEFINES
+CHECK_DSA
+DNS_CRYPTO_LIBS
+DNS_GSSAPI_LIBS
+DST_GSSAPI_INC
+USE_GSSAPI
+ISC_PLATFORM_KRB5HEADER
+ISC_PLATFORM_GSSAPI_KRB5_HEADER
+ISC_PLATFORM_GSSAPIHEADER
+ISC_PLATFORM_HAVEGSSAPI
+GEOIPLINKOBJS
+GEOIPLINKSRCS
 LWRES_PLATFORM_NEEDSYSSELECTH
 ISC_PLATFORM_NEEDSYSSELECTH
 ISC_PLATFORM_HAVEDEVPOLL
 ISC_PLATFORM_HAVEEPOLL
 ISC_PLATFORM_HAVEKQUEUE
-RRLLINKSRCS
-RRLLINKOBJS
 ISC_PLATFORM_HAVELIFCONF
 ISC_PLATFORM_NORETURN_POST
 ISC_PLATFORM_NORETURN_PRE
@@ -1346,6 +861,7 @@ PERL
 ETAGS
 LN
 ARFLAGS
+BACKTRACECFLAGS
 CCNOOPT
 CCOPT
 STD_CWARNINGS
@@ -1438,6 +954,7 @@ LIBISC_API
 LIBISCCC_API
 LIBISCCFG_API
 LIBDNS_API
+LIBDNS_MAPAPI
 LIBBIND9_API
 LIBLWRES_API
 LIBIRS_API
@@ -1454,29 +971,29 @@ enable_libtool_lock
 enable_libbind
 enable_developer
 with_python
-enable_newstats
-enable_rrl
 enable_kqueue
 enable_epoll
 enable_devpoll
-with_openssl
-enable_openssl_version_check
-with_ecdsa
-with_gost
-enable_openssl_hash
-with_pkcs11
+with_geoip
 with_gssapi
 with_randomdev
 enable_threads
+with_libtool
+enable_native_pkcs11
+with_openssl
+with_pkcs11
+with_ecdsa
+with_gost
+enable_openssl_version_check
+enable_openssl_hash
+enable_openssl_aes
+with_sit_alg
 with_libxml2
+with_libjson
 enable_largefile
 with_purify
-with_libtool
 enable_backtrace
 enable_symtable
-enable_exportlib
-with_export_libdir
-with_export_includedir
 enable_ipv6
 with_kame
 enable_getifaddrs
@@ -1490,12 +1007,14 @@ enable_fixed_rrset
 enable_rpz_nsip
 enable_rpz_nsdname
 enable_filter_aaaa
+enable_sit
 with_docbook_xsl
 with_idn
 with_libiconv
 with_iconv
 with_idnlib
 with_atf
+with_tuning
 with_dlopen
 with_dlz_postgres
 with_dlz_mysql
@@ -2134,34 +1653,31 @@ Optional Features:
   --disable-libtool-lock  avoid locking (might break parallel builds)
   --enable-libbind	  deprecated
   --enable-developer      enable developer build settings
-  --enable-newstats       use the new statistics
-  --enable-rrl            use DNS Response Rate Limiting
   --enable-kqueue         use BSD kqueue when available [default=yes]
   --enable-epoll          use Linux epoll when available [default=auto]
   --enable-devpoll        use /dev/poll when available [default=yes]
-  --enable-openssl-version-check
-                          Check OpenSSL Version [default=yes]
-  --enable-openssl-hash   use OpenSSL for hash functions [default=no]
   --enable-threads        enable multithreading
+  --enable-native-pkcs11  use native PKCS11 for all crypto [default=no]
+  --enable-openssl-version-check
+                          check OpenSSL version [default=yes]
+  --enable-openssl-hash   use OpenSSL for hash functions [default=no]
+  --enable-openssl-aes    use OpenSSL for aes [default=no]
   --enable-largefile	  64-bit file support
   --enable-backtrace      log stack backtrace on abort [default=yes]
   --enable-symtable       use internal symbol table for backtrace
-                          [all|minimal(default)|none]
-  --enable-exportlib	  build exportable library (GNU make required)
-                          [default=no]
+			  [all|minimal(default)|none]
   --enable-ipv6           use IPv6 default=autodetect
-  --enable-getifaddrs     Enable the use of getifaddrs() [yes|no].
+  --enable-getifaddrs     enable the use of getifaddrs() [yes|no].
   --disable-isc-spnego    use SPNEGO from GSSAPI library
   --disable-chroot        disable chroot
   --disable-linux-caps	  disable linux capabilities
   --enable-atomic	  enable machine specific atomic operations
 			  [default=autodetect]
-  --enable-fixed-rrset    enable fixed rrset ordering
-			  [default=no]
+  --enable-fixed-rrset    enable fixed rrset ordering [default=no]
   --disable-rpz-nsip	  disable rpz-nsip rules [default=enabled]
   --disable-rpz-nsdname	  disable rpz-nsdname rules [default=enabled]
-  --enable-filter-aaaa    enable filtering of AAAA records over IPv4
-			  [default=no]
+  --enable-filter-aaaa    enable filtering of AAAA records [default=no]
+  --enable-sit            enable source identity token [default=no]
   --enable-full-report	  report values of all configure options
 
 Optional Packages:
@@ -2172,49 +1688,47 @@ Optional Packages:
   --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
   --with-sysroot=DIR Search for dependent libraries within DIR
                         (or the compiler's sysroot if not specified).
-  --with-python=PATH      Specify path to python interpreter
-  --with-openssl=PATH     Build with OpenSSL yes|no|path.
-			  (Required for DNSSEC)
-  --with-ecdsa            OpenSSL ECDSA
-  --with-gost             OpenSSL GOST
-  --with-pkcs11=PATH      Build with PKCS11 support yes|no|path
-                          (PATH is for the PKCS11 provider)
+  --with-python=PATH      specify path to python interpreter
+  --with-geoip=PATH       Build with GeoIP support (yes|no|path)
   --with-gssapi=PATH      Specify path for system-supplied GSSAPI [default=yes]
   --with-randomdev=PATH   Specify path for random device
-  --with-libxml2=PATH     Build with libxml2 library yes|no|path
-  --with-purify=PATH      use Rational purify
   --with-libtool          use GNU libtool
-  --with-export-libdir=PATH
-                          installation directory for the export library
-                          [EPREFIX/lib/bind9]
-  --with-export-includedir=PATH
-                          installation directory for the header files of the
-                          export library [PREFIX/include/bind9]
+  --with-openssl=PATH     Build with OpenSSL yes|no|path.
+			  (Crypto is required for DNSSEC)
+  --with-pkcs11=PATH      Build with PKCS11 support yes|no|path
+			  (PATH is for the PKCS11 provider)
+  --with-ecdsa            Crypto ECDSA
+  --with-gost             Crypto GOST yes|no|raw|asn1.
+  --with-sit-alg=ALG      choose the algorithm for SIT [aes|sha1|sha256]
+  --with-libxml2=PATH     build with libxml2 library yes|no|path
+  --with-libjson=PATH     build with libjson0 library yes|no|path
+  --with-purify=PATH      use Rational purify
   --with-kame=PATH	  use Kame IPv6 default path /usr/local/v6
   --with-readline=LIBSPEC    specify readline library default -lreadline
 
-  --with-docbook-xsl=PATH Specify path for Docbook-XSL stylesheets
+  --with-docbook-xsl=PATH specify path for Docbook-XSL stylesheets
   --with-idn=MPREFIX      enable IDN support using idnkit default PREFIX
   --with-libiconv=IPREFIX GNU libiconv are in IPREFIX default PREFIX
   --with-iconv=LIBSPEC    specify iconv library default -liconv
   --with-idnlib=ARG       specify libidnkit
-  --with-atf=ARG          Automated Test Framework support
-  --with-dlopen=ARG       Support dynamically loadable DLZ drivers
+  --with-atf=ARG          support Automated Test Framework
+  --with-tuning=ARG       Specify server tuning (large or default)
+  --with-dlopen=ARG       support dynamically loadable DLZ drivers
   --with-dlz-postgres=PATH   Build with Postgres DLZ driver yes|no|path.
-                               (Required to use Postgres with DLZ)
+			       (Required to use Postgres with DLZ)
   --with-dlz-mysql=PATH   Build with MySQL DLZ driver yes|no|path.
-                               (Required to use MySQL with DLZ)
+			       (Required to use MySQL with DLZ)
   --with-dlz-bdb=PATH   Build with Berkeley DB DLZ driver yes|no|path.
-                               (Required to use Berkeley DB with DLZ)
+			       (Required to use Berkeley DB with DLZ)
   --with-dlz-filesystem=PATH   Build with filesystem DLZ driver yes|no.
-                               (Required to use file system driver with DLZ)
+			       (Required to use file system driver with DLZ)
   --with-dlz-ldap=PATH   Build with LDAP DLZ driver yes|no|path.
-                               (Required to use LDAP with DLZ)
+			       (Required to use LDAP with DLZ)
   --with-dlz-odbc=PATH   Build with ODBC DLZ driver yes|no|path.
-                               (Required to use ODBC with DLZ)
+			       (Required to use ODBC with DLZ)
   --with-dlz-stub=PATH   Build with stub DLZ driver yes|no.
-                               (Required to use stub driver with DLZ)
-  --with-make-clean      Run "make clean" at end of configure [yes|no].
+			       (Required to use stub driver with DLZ)
+  --with-make-clean       run "make clean" at end of configure [yes|no]
 
 Some influential environment variables:
   CC          C compiler command
@@ -11846,6 +11360,7 @@ fi
 
 
 
+
 # Warn if the user specified libbind, which is now deprecated
 # Check whether --enable-libbind was given.
 if test "${enable_libbind+set}" = set; then :
@@ -11873,17 +11388,9 @@ yes)
 	test "${enable_fixed_rrset+set}" = set || enable_fixed_rrset=yes
 	test "${with_atf+set}" = set || with_atf=yes
 	test "${enable_filter_aaaa+set}" = set || enable_filter_aaaa=yes
-	test "${enable_rrl+set}" = set || enable_rrl=yes
 	test "${with_dlz_filesystem+set}" = set || with_dlz_filesystem=yes
-	case "$host" in
-	*-darwin*)
-		test "${enable_exportlib+set}" = set || enable_exportlib=yes
-		;;
-	*-linux*)
-		test "${enable_exportlib+set}" = set || enable_exportlib=yes
-		;;
-	esac
 	test "${enable_symtable+set}" = set || enable_symtable=all
+	test "${enable_sit+set}" = set || enable_sit=yes
 	;;
 esac
 #
@@ -12200,14 +11707,14 @@ $as_echo "disabled" >&6; }
 			esac
 			break
 		fi
-                testscript='try: import argparse
+		testscript='try: import argparse
 except: exit(1)'
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking python module 'argparse'" >&5
 $as_echo_n "checking python module 'argparse'... " >&6; }
-                if $PYTHON -c "$testscript"; then
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: found, using $PYTHON" >&5
+		if $PYTHON -c "$testscript"; then
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: found, using $PYTHON" >&5
 $as_echo "found, using $PYTHON" >&6; }
-                else
+		else
 			case "$use_python" in
 			unspec)
 				PYTHON=""
@@ -12217,12 +11724,12 @@ $as_echo "found, using $PYTHON" >&6; }
 $as_echo "not found, python disabled" >&6; }
 				;;
 			yes)
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no found" >&5
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no found" >&5
 $as_echo "no found" >&6; }
-                        as_fn_error $? "python 'argparse' module not supported" "$LINENO" 5
+			as_fn_error $? "python 'argparse' module not supported" "$LINENO" 5
 				;;
 			esac
-                fi
+		fi
 		;;
 esac
 
@@ -12230,7 +11737,7 @@ PYTHON_TOOLS=''
 CHECKDS=''
 COVERAGE=''
 if test "X$PYTHON" != "X"; then
-        PYTHON_TOOLS=python
+	PYTHON_TOOLS=python
 	CHECKDS=checkds
 	COVERAGE=coverage
 fi
@@ -13056,12 +12563,15 @@ $as_echo "#define STDC_HEADERS 1" >>confdefs.h
 fi
 
 
-for ac_header in fcntl.h regex.h sys/time.h unistd.h sys/sockio.h sys/select.h sys/param.h sys/sysctl.h net/if6.h
+for ac_header in fcntl.h regex.h sys/time.h unistd.h sys/mman.h sys/sockio.h sys/select.h sys/param.h sys/sysctl.h net/if6.h sys/socket.h net/route.h linux/netlink.h linux/rtnetlink.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_compile "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
 #endif
 
 "
@@ -13279,6 +12789,21 @@ $as_echo "#define FLEXIBLE_ARRAY_MEMBER /**/" >>confdefs.h
     $as_echo "#define FLEXIBLE_ARRAY_MEMBER 1" >>confdefs.h
 
   fi
+
+
+#
+# Check for the existence of mmap to enable the fast format zones
+#
+for ac_func in mmap
+do :
+  ac_fn_c_check_func "$LINENO" "mmap" "ac_cv_func_mmap"
+if test "x$ac_cv_func_mmap" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_MMAP 1
+_ACEOF
+
+fi
+done
 
 
 #
@@ -13541,48 +13066,6 @@ $as_echo "no" >&6; }
 		ISC_PLATFORM_HAVELIFCONF="#undef ISC_PLATFORM_HAVELIFCONF"
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-
-
-#
-# check if we want the new statistics
-#
-# Check whether --enable-newstats was given.
-if test "${enable_newstats+set}" = set; then :
-  enableval=$enable_newstats;
-fi
-
-case "$enable_newstats" in
-yes)
-
-$as_echo "#define NEWSTATS 1" >>confdefs.h
-
-	;;
-*)
-	;;
-esac
-
-#
-# check if we want DNS RRL
-#
-# Check whether --enable-rrl was given.
-if test "${enable_rrl+set}" = set; then :
-  enableval=$enable_rrl;
-fi
-
-case "$enable_rrl" in
-yes)
-
-$as_echo "#define USE_RRL 1" >>confdefs.h
-
-        RRLLINKOBJS='${RRLOBJS}'
-        RRLLINKSRCS='${RRLSRCS}'
-	;;
-*)
-        RRLLINKOBJS=""
-        RRLLINKSRCS=""
-	;;
-esac
-
 
 
 #
@@ -13994,532 +13477,265 @@ $as_echo "#define AC_APPLE_UNIVERSAL_BUILD 1" >>confdefs.h
 
 
 #
-# was --with-openssl specified?
+# GeoIP support?
 #
-OPENSSL_WARNING=
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for OpenSSL library" >&5
-$as_echo_n "checking for OpenSSL library... " >&6; }
+GEOIPLINKSRCS=
+GEOIPLINKOBJS=
 
-# Check whether --with-openssl was given.
-if test "${with_openssl+set}" = set; then :
-  withval=$with_openssl; use_openssl="$withval"
+# Check whether --with-geoip was given.
+if test "${with_geoip+set}" = set; then :
+  withval=$with_geoip; use_geoip="$withval"
 else
-  use_openssl="auto"
+  use_geoip="no"
 fi
 
 
-openssldirs="/usr /usr/local /usr/local/ssl /usr/pkg /usr/sfw"
-if test "$use_openssl" = "auto"
+if test "$use_geoip" = "yes"
 then
-	for d in $openssldirs
+	for d in /usr /usr/local /opt/local
 	do
-		if test -f $d/include/openssl/opensslv.h
+		if test -f $d/include/GeoIP.h
 		then
-			use_openssl=$d
+			use_geoip=$d
 			break
 		fi
 	done
 fi
-OPENSSL_ECDSA=""
-OPENSSL_GOST=""
-case "$use_openssl" in
-	no)
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-		DST_OPENSSL_INC=""
-		USE_OPENSSL=""
-		OPENSSLGOSTLINKOBJS=""
-		OPENSSLGOSTLINKSRS=""
-		OPENSSLLINKOBJS=""
-		OPENSSLLINKSRCS=""
-		;;
-	auto)
-		DST_OPENSSL_INC=""
-		USE_OPENSSL=""
-		OPENSSLGOSTLINKOBJS=""
-		OPENSSLGOSTLINKSRS=""
-		OPENSSLLINKOBJS=""
-		OPENSSLLINKSRCS=""
-		as_fn_error $? "OpenSSL was not found in any of $openssldirs; use --with-openssl=/path
-If you don't want OpenSSL, use --without-openssl" "$LINENO" 5
+
+case "$use_geoip" in
+	no|'')
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GeoIP support" >&5
+$as_echo_n "checking for GeoIP support... " >&6; }
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled" >&5
+$as_echo "disabled" >&6; }
 		;;
 	*)
-		if test "$use_openssl" = "yes"
+		if test -d "$use_geoip" -o -L "$use_geoip"
 		then
-			# User did not specify a path - guess it
-			for d in $openssldirs
-			do
-				if test -f $d/include/openssl/opensslv.h
-				then
-					use_openssl=$d
-					break
-				fi
-			done
-			if test "$use_openssl" = "yes"
-			then
-				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
-$as_echo "not found" >&6; }
-				as_fn_error $? "OpenSSL was not found in any of $openssldirs; use --with-openssl=/path" "$LINENO" 5
-			fi
-		elif ! test -f "$use_openssl"/include/openssl/opensslv.h
-		then
-			as_fn_error $? "\"$use_openssl/include/openssl/opensslv.h\" not found" "$LINENO" 5
-		fi
-		USE_OPENSSL='-DOPENSSL'
-		if test "$use_openssl" = "/usr"
-		then
-			DST_OPENSSL_INC=""
-			DNS_OPENSSL_LIBS="-lcrypto"
-		else
-			DST_OPENSSL_INC="-I$use_openssl/include"
-			case $host in
-			*-solaris*)
-				DNS_OPENSSL_LIBS="-L$use_openssl/lib -R$use_openssl/lib -lcrypto"
-				;;
-			*-hp-hpux*)
-				DNS_OPENSSL_LIBS="-L$use_openssl/lib -Wl,+b: -lcrypto"
-				;;
-			*-apple-darwin*)
-				#
-				# Apple's ld seaches for serially for dynamic
-				# then static libraries.  This means you can't
-				# use -L to override dynamic system libraries
-				# with static ones when linking.  Instead
-				# we specify a absolute path.
-				#
-				if test -f "$use_openssl/lib/libcrypto.dylib"
-				then
-					DNS_OPENSSL_LIBS="-L$use_openssl/lib -lcrypto"
-				else
-					DNS_OPENSSL_LIBS="$use_openssl/lib/libcrypto.a"
-				fi
-				;;
-			*)
-				DNS_OPENSSL_LIBS="-L$use_openssl/lib -lcrypto"
-				;;
+			CFLAGS="$CFLAGS -I$use_geoip/include"
+			CPPFLAGS="$CPPFLAGS -I$use_geoip/include"
+			case "$host_os" in
+				netbsd*|openbsd*|solaris*)
+					LIBS="$LIBS -Wl,-rpath=$use_geoip/lib"
+					;;
+				*)
+					LIBS="$LIBS -L$use_geoip/lib"
 			esac
+		elif test "$use_geoip" = "yes"
+		then
+			as_fn_error $? "GeoIP path not found" "$LINENO" 5
+		else
+			as_fn_error $? "GeoIP path $use_geoip does not exist" "$LINENO" 5
 		fi
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: using OpenSSL from $use_openssl/lib and $use_openssl/include" >&5
-$as_echo "using OpenSSL from $use_openssl/lib and $use_openssl/include" >&6; }
+		ac_fn_c_check_header_mongrel "$LINENO" "GeoIP.h" "ac_cv_header_GeoIP_h" "$ac_includes_default"
+if test "x$ac_cv_header_GeoIP_h" = xyes; then :
 
-		saved_cflags="$CFLAGS"
-		saved_libs="$LIBS"
-		CFLAGS="$CFLAGS $DST_OPENSSL_INC"
-		LIBS="$LIBS $DNS_OPENSSL_LIBS"
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether linking with OpenSSL works" >&5
-$as_echo_n "checking whether linking with OpenSSL works... " >&6; }
-		if test "$cross_compiling" = yes; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: assuming it does work on target platform" >&5
-$as_echo "assuming it does work on target platform" >&6; }
 else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
+  as_fn_error $? "GeoIP header file not found" "$LINENO" 5
 
-#include <openssl/err.h>
-int main() {
-	ERR_clear_error();
-	return (0);
-}
-
-_ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-		 as_fn_error $? "Could not run test program using OpenSSL from
-$use_openssl/lib and $use_openssl/include.
-Please check the argument to --with-openssl and your
-shared library configuration (e.g., LD_LIBRARY_PATH)." "$LINENO" 5
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
 fi
 
 
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether linking with OpenSSL requires -ldl" >&5
-$as_echo_n "checking whether linking with OpenSSL requires -ldl... " >&6; }
-		cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing GeoIP_open" >&5
+$as_echo_n "checking for library containing GeoIP_open... " >&6; }
+if ${ac_cv_search_GeoIP_open+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
-#include <openssl/err.h>
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char GeoIP_open ();
 int
 main ()
 {
- DSO_METHOD_dlfcn();
+return GeoIP_open ();
   ;
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-else
-  LIBS="$LIBS -ldl"
-		cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-#include <openssl/err.h>
-
-int
-main ()
-{
- DSO_METHOD_dlfcn();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-		DNS_OPENSSL_LIBS="$DNS_OPENSSL_LIBS -ldl"
-
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: unknown" >&5
-$as_echo "unknown" >&6; }
-		 as_fn_error $? "OpenSSL has unsupported dynamic loading" "$LINENO" 5
+for ac_lib in '' GeoIP; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_GeoIP_open=$ac_res
 fi
 rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-
-# Check whether --enable-openssl-version-check was given.
-if test "${enable_openssl_version_check+set}" = set; then :
-  enableval=$enable_openssl_version_check;
-fi
-
-case "$enable_openssl_version_check" in
-yes|'')
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking OpenSSL library version" >&5
-$as_echo_n "checking OpenSSL library version... " >&6; }
-		if test "$cross_compiling" = yes; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: assuming target platform has compatible version" >&5
-$as_echo "assuming target platform has compatible version" >&6; }
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-#include <stdio.h>
-#include <openssl/opensslv.h>
-int main() {
-	if ((OPENSSL_VERSION_NUMBER >= 0x009070cfL &&
-	     OPENSSL_VERSION_NUMBER < 0x00908000L) ||
-	     OPENSSL_VERSION_NUMBER >= 0x0090804fL)
-		return (0);
-	printf("\n\nFound   OPENSSL_VERSION_NUMBER %#010x\n",
-		OPENSSL_VERSION_NUMBER);
-	printf("Require OPENSSL_VERSION_NUMBER 0x009070cf or greater (0.9.7l)\n"
-	       "Require OPENSSL_VERSION_NUMBER 0x0090804f or greater (0.9.8d)\n\n");
-	return (1);
-}
-
-_ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: ok" >&5
-$as_echo "ok" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: not compatible" >&5
-$as_echo "not compatible" >&6; }
-		 OPENSSL_WARNING=yes
-
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
-;;
-no)
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: Skipped OpenSSL version check" >&5
-$as_echo "Skipped OpenSSL version check" >&6; }
-;;
-esac
-
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for OpenSSL DSA support" >&5
-$as_echo_n "checking for OpenSSL DSA support... " >&6; }
-        if test -f $use_openssl/include/openssl/dsa.h
-        then
-                $as_echo "#define HAVE_OPENSSL_DSA 1" >>confdefs.h
-
-                { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-        else
-                { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-        fi
-
-        for ac_func in EVP_sha256 EVP_sha384 EVP_sha512
-do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
-  cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
-_ACEOF
-
+    conftest$ac_exeext
+  if ${ac_cv_search_GeoIP_open+:} false; then :
+  break
 fi
 done
+if ${ac_cv_search_GeoIP_open+:} false; then :
 
-
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for OpenSSL ECDSA support" >&5
-$as_echo_n "checking for OpenSSL ECDSA support... " >&6; }
-        have_ecdsa=""
-        if test "$cross_compiling" = yes; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: using --with-ecdsa" >&5
-$as_echo "using --with-ecdsa" >&6; }
 else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+  ac_cv_search_GeoIP_open=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_GeoIP_open" >&5
+$as_echo "$ac_cv_search_GeoIP_open" >&6; }
+ac_res=$ac_cv_search_GeoIP_open
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+else
+  as_fn_error $? "GeoIP library not found" "$LINENO" 5
+
+fi
+
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing fabsf" >&5
+$as_echo_n "checking for library containing fabsf... " >&6; }
+if ${ac_cv_search_fabsf+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
-#include <stdio.h>
-#include <openssl/ecdsa.h>
-#include <openssl/objects.h>
-int main() {
-	EC_KEY *ec256, *ec384;
-
-#if !defined(HAVE_EVP_SHA256) || !defined(HAVE_EVP_SHA384)
-	return (1);
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
 #endif
-	ec256 = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
-	ec384 = EC_KEY_new_by_curve_name(NID_secp384r1);
-	if (ec256 == NULL || ec384 == NULL)
-		return (2);
-	return (0);
+char fabsf ();
+int
+main ()
+{
+return fabsf ();
+  ;
+  return 0;
 }
-
 _ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+for ac_lib in '' m; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_fabsf=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_fabsf+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_fabsf+:} false; then :
+
+else
+  ac_cv_search_fabsf=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_fabsf" >&5
+$as_echo "$ac_cv_search_fabsf" >&6; }
+ac_res=$ac_cv_search_fabsf
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+else
+  as_fn_error $? "Math library not found" "$LINENO" 5
+
+fi
+
+
+$as_echo "#define HAVE_GEOIP 1" >>confdefs.h
+
+		GEOIPLINKSRCS='${GEOIPLINKSRCS}'
+		GEOIPLINKOBJS='${GEOIPLINKOBJS}'
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GeoIP support" >&5
+$as_echo_n "checking for GeoIP support... " >&6; }
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-        have_ecdsa="yes"
+
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GeoIP Country IPv6 support" >&5
+$as_echo_n "checking for GeoIP Country IPv6 support... " >&6; }
+		cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+				#include <GeoIP.h>
+				#include <netinet/in.h>
+
+int
+main ()
+{
+
+				struct in6_addr in6;
+				GeoIP_country_name_by_ipnum_v6(NULL, in6);
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+
+				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+$as_echo "#define HAVE_GEOIP_V6 1" >>confdefs.h
+
+
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-        have_ecdsa="no"
+
 fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
-
-# Check whether --with-ecdsa was given.
-if test "${with_ecdsa+set}" = set; then :
-  withval=$with_ecdsa; with_ecdsa="$withval"
-else
-  with_ecdsa="auto"
-fi
-
-        case "$with_ecdsa" in
-        yes)
-            case "$have_ecdsa" in
-            no)  as_fn_error $? "ecdsa not supported" "$LINENO" 5 ;;
-            *)  have_ecdsa=yes ;;
-            esac
-            ;;
-        no)
-            have_ecdsa=no ;;
-        *)
-            case "$have_ecdsa" in
-            yes|no) ;;
-            *) as_fn_error $? "need --with-ecdsa=[yes or no]" "$LINENO" 5 ;;
-            esac
-            ;;
-        esac
-        case $have_ecdsa in
-        yes)
-                OPENSSL_ECDSA="yes"
-
-$as_echo "#define HAVE_OPENSSL_ECDSA 1" >>confdefs.h
-
-                ;;
-        *)
-                ;;
-        esac
-
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for OpenSSL GOST support" >&5
-$as_echo_n "checking for OpenSSL GOST support... " >&6; }
-        have_gost=""
-        if test "$cross_compiling" = yes; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: using --with-gost" >&5
-$as_echo "using --with-gost" >&6; }
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GeoIP City IPv6 support" >&5
+$as_echo_n "checking for GeoIP City IPv6 support... " >&6; }
+		cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
-#include <openssl/conf.h>
-#include <openssl/engine.h>
-int main() {
-#if (OPENSSL_VERSION_NUMBER >= 0x10000000L)
-	ENGINE *e;
-	EC_KEY *ek;
+				#include <GeoIP.h>
+				#include <GeoIPCity.h>
+				#include <netinet/in.h>
 
-	ek = NULL;
-	OPENSSL_config(NULL);
+int
+main ()
+{
 
-	e = ENGINE_by_id("gost");
-	if (e == NULL)
-		return (1);
-	if (ENGINE_init(e) <= 0)
-		return (1);
-	return (0);
-#else
-	return (1);
-#endif
+				struct in6_addr in6;
+				int i = GEOIP_CITY_EDITION_REV0_V6;
+				GeoIP_record_by_ipnum_v6(NULL, in6);
+
+  ;
+  return 0;
 }
-
 _ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+if ac_fn_c_try_compile "$LINENO"; then :
+
+				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-        have_gost="yes"
+
+$as_echo "#define HAVE_GEOIP_CITY_V6 1" >>confdefs.h
+
+
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-        have_gost="no"
+
 fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
-
-# Check whether --with-gost was given.
-if test "${with_gost+set}" = set; then :
-  withval=$with_gost; with_gost="$withval"
-else
-  with_gost="auto"
-fi
-
-        case "$with_gost" in
-        yes)
-            case "$have_gost" in
-            no)  as_fn_error $? "gost not supported" "$LINENO" 5 ;;
-            *)  have_gost=yes ;;
-            esac
-            ;;
-        no)
-            have_gost=no ;;
-        *)
-            case "$have_gost" in
-            yes|no) ;;
-            *) as_fn_error $? "need --with-gost=[yes or no]" "$LINENO" 5 ;;
-            esac
-            ;;
-        esac
-        case $have_gost in
-        yes)
-		OPENSSL_GOST="yes"
-		OPENSSLGOSTLINKOBJS='${OPENSSLGOSTLINKOBJS}'
-		OPENSSLGOSTLINKSRCS='${OPENSSLGOSTLINKSRCS}'
-
-$as_echo "#define HAVE_OPENSSL_GOST 1" >>confdefs.h
-
-		;;
-        *)
-                ;;
-        esac
-        CFLAGS="$saved_cflags"
-        LIBS="$saved_libs"
-        OPENSSLLINKOBJS='${OPENSSLLINKOBJS}'
-        OPENSSLLINKSRCS='${OPENSSLLINKSRCS}'
-
-        ;;
-esac
-
-#
-# This would include the system openssl path (and linker options to use
-# it as needed) if it is found.
-#
-
-
-
-
-
-
-
-
-
-
-DNS_CRYPTO_LIBS="$DNS_CRYPTO_LIBS $DNS_OPENSSL_LIBS"
-
-#
-# Use OpenSSL for hash functions
-#
-
-# Check whether --enable-openssl-hash was given.
-if test "${enable_openssl_hash+set}" = set; then :
-  enableval=$enable_openssl_hash; want_openssl_hash="$enableval"
-else
-  want_openssl_hash="no"
-fi
-
-case $want_openssl_hash in
-	yes)
-		if test "$USE_OPENSSL" = ""
-		then
-			as_fn_error $? "No OpenSSL for hash functions" "$LINENO" 5
-		fi
-		ISC_PLATFORM_OPENSSLHASH="#define ISC_PLATFORM_OPENSSLHASH 1"
-		ISC_OPENSSL_INC="$DST_OPENSSL_INC"
-		;;
-	no)
-		ISC_PLATFORM_OPENSSLHASH="#undef ISC_PLATFORM_OPENSSLHASH"
-		ISC_OPENSSL_INC=""
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 		;;
 esac
 
-
-
-#
-# PKCS11 (aka crypto hardware) support
-#
-# This works only with the right OpenSSL with PKCS11 engine!
-#
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for PKCS11 support" >&5
-$as_echo_n "checking for PKCS11 support... " >&6; }
-
-# Check whether --with-pkcs11 was given.
-if test "${with_pkcs11+set}" = set; then :
-  withval=$with_pkcs11; use_pkcs11="$withval"
-else
-  use_pkcs11="no"
-fi
-
-
-case "$use_pkcs11" in
-	no|'')
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled" >&5
-$as_echo "disabled" >&6; }
-		USE_PKCS11=''
-		PKCS11_TOOLS=''
-		;;
-	yes|*)
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: using OpenSSL with PKCS11 support" >&5
-$as_echo "using OpenSSL with PKCS11 support" >&6; }
-		USE_PKCS11='-DUSE_PKCS11'
-		PKCS11_TOOLS=pkcs11
-		;;
-esac
-
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for PKCS11 tools" >&5
-$as_echo_n "checking for PKCS11 tools... " >&6; }
-case "$use_pkcs11" in
-	no|yes|'')
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled" >&5
-$as_echo "disabled" >&6; }
-		PKCS11_PROVIDER="undefined"
-		;;
-       *)
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: PKCS11 provider is \"$use_pkcs11\"" >&5
-$as_echo "PKCS11 provider is \"$use_pkcs11\"" >&6; }
-		PKCS11_PROVIDER="$use_pkcs11"
-		;;
-esac
 
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for GSSAPI library" >&5
@@ -14554,10 +13770,10 @@ then
 	    for d in $krb5dirs
 	    do
 		if test -f $d/include/gssapi/gssapi_krb5.h -o \
-		        -f $d/include/krb5.h
+			-f $d/include/krb5.h
 		then
 			if test -f $d/include/gssapi/gssapi.h -o \
-			        -f $d/include/gssapi.h
+				-f $d/include/gssapi.h
 			then
 				use_gssapi=$d
 				break
@@ -14850,6 +14066,21 @@ $as_echo "using \"$use_randomdev\"" >&6; }
 esac
 
 #
+# Only check dsa signature generation on these platforms when performing
+# system tests.
+#
+CHECK_DSA=0
+if grep "#define PATH_RANDOMDEV " confdefs.h > /dev/null
+then
+	case "$host" in
+	*darwin*|*freebsd*)
+		CHECK_DSA=1
+		;;
+	esac
+fi
+
+
+#
 # Do we have arc4random() ?
 #
 ac_fn_c_check_func "$LINENO" "arc4random" "ac_cv_func_arc4random"
@@ -14918,16 +14149,13 @@ case $host in
 *-bsdi5*)
 	use_threads=true ;;
 *-linux*)
-   	# Threads are disabled on Linux by default because most
-	# Linux kernels produce unusable core dumps from multithreaded
-	# programs, and because of limitations in setuid().
-	use_threads=false ;;
+	use_threads=true ;;
 *-darwin[123456789].*)
 	use_threads=false ;;
 *-darwin*.*)
 	use_threads=true ;;
 *)
-	use_threads=false ;;
+	use_threads=true ;;
 esac
 
 # Check whether --enable-threads was given.
@@ -15829,6 +15057,950 @@ fi
 ISC_THREAD_DIR=$thread_dir
 
 
+
+# Check whether --with-libtool was given.
+if test "${with_libtool+set}" = set; then :
+  withval=$with_libtool; use_libtool="$withval"
+else
+  use_libtool="no"
+fi
+
+
+case $use_libtool in
+	yes)
+
+		O=lo
+		A=la
+		LIBTOOL_MKDEP_SED='s;\.o;\.lo;'
+		LIBTOOL_MODE_COMPILE='--mode=compile --tag=CC'
+		LIBTOOL_MODE_INSTALL='--mode=install --tag=CC'
+		LIBTOOL_MODE_LINK='--mode=link --tag=CC'
+		case "$host" in
+		*) LIBTOOL_ALLOW_UNDEFINED= ;;
+		esac
+		case "$host" in
+		*-ibm-aix*) LIBTOOL_IN_MAIN="-Wl,-bI:T_testlist.imp" ;;
+		*) LIBTOOL_IN_MAIN= ;;
+		esac;
+		;;
+	*)
+		O=o
+		A=a
+		LIBTOOL=
+
+		LIBTOOL_MKDEP_SED=
+		LIBTOOL_MODE_COMPILE=
+		LIBTOOL_MODE_INSTALL=
+		LIBTOOL_MODE_LINK=
+		LIBTOOL_ALLOW_UNDEFINED=
+		LIBTOOL_IN_MAIN=
+		;;
+esac
+
+#
+# was --enable-native-pkcs11 specified?
+#  (note it implies both --without-openssl and --with-pkcs11)
+#
+# Check whether --enable-native-pkcs11 was given.
+if test "${enable_native_pkcs11+set}" = set; then :
+  enableval=$enable_native_pkcs11; want_native_pkcs11="$enableval"
+else
+  want_native_pkcs11="no"
+fi
+
+
+#
+# was --with-openssl specified?
+#
+OPENSSL_WARNING=
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for OpenSSL library" >&5
+$as_echo_n "checking for OpenSSL library... " >&6; }
+
+# Check whether --with-openssl was given.
+if test "${with_openssl+set}" = set; then :
+  withval=$with_openssl; use_openssl="$withval"
+else
+  use_openssl="auto"
+fi
+
+
+#
+# was --with-pkcs11 specified?
+#
+
+# Check whether --with-pkcs11 was given.
+if test "${with_pkcs11+set}" = set; then :
+  withval=$with_pkcs11; use_pkcs11="$withval"
+else
+  use_pkcs11="auto"
+fi
+
+
+openssldirs="/usr /usr/local /usr/local/ssl /usr/pkg /usr/sfw"
+if test "$use_openssl" = "auto"
+then
+	if test "$want_native_pkcs11" = "yes"
+	then
+		use_openssl="native_pkcs11"
+	else
+		for d in $openssldirs
+		do
+			if test -f $d/include/openssl/opensslv.h
+			then
+				use_openssl=$d
+				break
+			fi
+		done
+	fi
+fi
+OPENSSL_ECDSA=""
+OPENSSL_GOST=""
+
+# Check whether --with-ecdsa was given.
+if test "${with_ecdsa+set}" = set; then :
+  withval=$with_ecdsa; with_ecdsa="$withval"
+else
+  with_ecdsa="auto"
+fi
+
+
+# Check whether --with-gost was given.
+if test "${with_gost+set}" = set; then :
+  withval=$with_gost; with_gost="$withval"
+else
+  with_gost="auto"
+fi
+
+gosttype="raw"
+case "$with_gost" in
+	raw)
+		with_gost="yes"
+		;;
+	asn1)
+
+$as_echo "#define PREFER_GOSTASN1 1" >>confdefs.h
+
+		gosttype="asn1"
+		with_gost="yes"
+		;;
+	auto|yes|no)
+		;;
+	*)
+		as_fn_error $? "unknown GOST private key encoding" "$LINENO" 5
+		;;
+esac
+
+case "$use_openssl" in
+	native_pkcs11)
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled because of native PKCS11" >&5
+$as_echo "disabled because of native PKCS11" >&6; }
+		DST_OPENSSL_INC=""
+		CRYPTO=""
+		OPENSSLGOSTLINKOBJS=""
+		OPENSSLGOSTLINKSRS=""
+		OPENSSLLINKOBJS=""
+		OPENSSLLINKSRCS=""
+		;;
+	no)
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+		DST_OPENSSL_INC=""
+		CRYPTO=""
+		OPENSSLGOSTLINKOBJS=""
+		OPENSSLGOSTLINKSRS=""
+		OPENSSLLINKOBJS=""
+		OPENSSLLINKSRCS=""
+		;;
+	auto)
+		DST_OPENSSL_INC=""
+		CRYPTO=""
+		OPENSSLGOSTLINKOBJS=""
+		OPENSSLGOSTLINKSRS=""
+		OPENSSLLINKOBJS=""
+		OPENSSLLINKSRCS=""
+		as_fn_error $? "OpenSSL was not found in any of $openssldirs; use --with-openssl=/path
+If you don't want OpenSSL, use --without-openssl" "$LINENO" 5
+		;;
+	*)
+		if test "$use_openssl" = "yes"
+		then
+			# User did not specify a path - guess it
+			for d in $openssldirs
+			do
+				if test -f $d/include/openssl/opensslv.h
+				then
+					use_openssl=$d
+					break
+				fi
+			done
+			if test "$use_openssl" = "yes"
+			then
+				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
+$as_echo "not found" >&6; }
+				as_fn_error $? "OpenSSL was not found in any of $openssldirs; use --with-openssl=/path" "$LINENO" 5
+			fi
+		elif ! test -f "$use_openssl"/include/openssl/opensslv.h
+		then
+			as_fn_error $? "\"$use_openssl/include/openssl/opensslv.h\" not found" "$LINENO" 5
+		fi
+		CRYPTO='-DOPENSSL'
+		if test "$use_openssl" = "/usr"
+		then
+			DST_OPENSSL_INC=""
+			DST_OPENSSL_LIBS="-lcrypto"
+		else
+			DST_OPENSSL_INC="-I$use_openssl/include"
+			case $host in
+			*-solaris*)
+				DST_OPENSSL_LIBS="-L$use_openssl/lib -R$use_openssl/lib -lcrypto"
+				;;
+			*-hp-hpux*)
+				DST_OPENSSL_LIBS="-L$use_openssl/lib -Wl,+b: -lcrypto"
+				;;
+			*-apple-darwin*)
+				#
+				# Apple's ld seaches for serially for dynamic
+				# then static libraries.  This means you can't
+				# use -L to override dynamic system libraries
+				# with static ones when linking.  Instead
+				# we specify a absolute path.
+				#
+				if test -f "$use_openssl/lib/libcrypto.dylib"
+				then
+					DST_OPENSSL_LIBS="-L$use_openssl/lib -lcrypto"
+				else
+					DST_OPENSSL_LIBS="$use_openssl/lib/libcrypto.a"
+				fi
+				;;
+			*)
+				DST_OPENSSL_LIBS="-L$use_openssl/lib -lcrypto"
+				;;
+			esac
+		fi
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: using OpenSSL from $use_openssl/lib and $use_openssl/include" >&5
+$as_echo "using OpenSSL from $use_openssl/lib and $use_openssl/include" >&6; }
+
+		saved_cc="$CC"
+		saved_cflags="$CFLAGS"
+		saved_libs="$LIBS"
+		CFLAGS="$CFLAGS $DST_OPENSSL_INC"
+		LIBS="$LIBS $DST_OPENSSL_LIBS"
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether linking with OpenSSL works" >&5
+$as_echo_n "checking whether linking with OpenSSL works... " >&6; }
+		if test "$cross_compiling" = yes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: assuming it does work on target platform" >&5
+$as_echo "assuming it does work on target platform" >&6; }
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <openssl/err.h>
+int main() {
+	ERR_clear_error();
+	return (0);
+}
+
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+		 as_fn_error $? "Could not run test program using OpenSSL from
+$use_openssl/lib and $use_openssl/include.
+Please check the argument to --with-openssl and your
+shared library configuration (e.g., LD_LIBRARY_PATH)." "$LINENO" 5
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether linking with OpenSSL requires -ldl" >&5
+$as_echo_n "checking whether linking with OpenSSL requires -ldl... " >&6; }
+		cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <openssl/err.h>
+int
+main ()
+{
+ DSO_METHOD_dlfcn();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+else
+  LIBS="$LIBS -ldl"
+		cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <openssl/err.h>
+
+int
+main ()
+{
+ DSO_METHOD_dlfcn();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+		DST_OPENSSL_LIBS="$DST_OPENSSL_LIBS -ldl"
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: unknown" >&5
+$as_echo "unknown" >&6; }
+		 as_fn_error $? "OpenSSL has unsupported dynamic loading" "$LINENO" 5
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+# Check whether --enable-openssl-version-check was given.
+if test "${enable_openssl_version_check+set}" = set; then :
+  enableval=$enable_openssl_version_check;
+fi
+
+case "$enable_openssl_version_check" in
+yes|'')
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking OpenSSL library version" >&5
+$as_echo_n "checking OpenSSL library version... " >&6; }
+		if test "$cross_compiling" = yes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: assuming target platform has compatible version" >&5
+$as_echo "assuming target platform has compatible version" >&6; }
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <stdio.h>
+#include <openssl/opensslv.h>
+int main() {
+	if ((OPENSSL_VERSION_NUMBER >= 0x009070cfL &&
+	     OPENSSL_VERSION_NUMBER < 0x00908000L) ||
+	     OPENSSL_VERSION_NUMBER >= 0x0090804fL)
+		return (0);
+	printf("\n\nFound   OPENSSL_VERSION_NUMBER %#010x\n",
+		OPENSSL_VERSION_NUMBER);
+	printf("Require OPENSSL_VERSION_NUMBER 0x009070cf or greater (0.9.7l)\n"
+	       "Require OPENSSL_VERSION_NUMBER 0x0090804f or greater (0.9.8d)\n\n");
+	return (1);
+}
+
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: ok" >&5
+$as_echo "ok" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: not compatible" >&5
+$as_echo "not compatible" >&6; }
+		 OPENSSL_WARNING=yes
+
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+;;
+no)
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: Skipped OpenSSL version check" >&5
+$as_echo "Skipped OpenSSL version check" >&6; }
+;;
+esac
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for OpenSSL DSA support" >&5
+$as_echo_n "checking for OpenSSL DSA support... " >&6; }
+	if test -f $use_openssl/include/openssl/dsa.h
+	then
+		$as_echo "#define HAVE_OPENSSL_DSA 1" >>confdefs.h
+
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	else
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	fi
+
+	for ac_func in EVP_sha256 EVP_sha384 EVP_sha512
+do :
+  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
+ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
+if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+done
+
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for OpenSSL ECDSA support" >&5
+$as_echo_n "checking for OpenSSL ECDSA support... " >&6; }
+	have_ecdsa=""
+	if test "$cross_compiling" = yes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: using --with-ecdsa" >&5
+$as_echo "using --with-ecdsa" >&6; }
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <stdio.h>
+#include <openssl/ecdsa.h>
+#include <openssl/objects.h>
+int main() {
+	EC_KEY *ec256, *ec384;
+
+#if !defined(HAVE_EVP_SHA256) || !defined(HAVE_EVP_SHA384)
+	return (1);
+#endif
+	ec256 = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
+	ec384 = EC_KEY_new_by_curve_name(NID_secp384r1);
+	if (ec256 == NULL || ec384 == NULL)
+		return (2);
+	return (0);
+}
+
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	have_ecdsa="yes"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	have_ecdsa="no"
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+	case "$with_ecdsa" in
+	yes)
+	    case "$have_ecdsa" in
+	    no)  as_fn_error $? "ecdsa not supported" "$LINENO" 5 ;;
+	    *)  have_ecdsa=yes ;;
+	    esac
+	    ;;
+	no)
+	    have_ecdsa=no ;;
+	*)
+	    case "$have_ecdsa" in
+	    yes|no) ;;
+	    *) as_fn_error $? "need --with-ecdsa=[yes or no]" "$LINENO" 5 ;;
+	    esac
+	    ;;
+	esac
+	case $have_ecdsa in
+	yes)
+		OPENSSL_ECDSA="yes"
+
+$as_echo "#define HAVE_OPENSSL_ECDSA 1" >>confdefs.h
+
+		;;
+	*)
+		;;
+	esac
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for OpenSSL GOST support" >&5
+$as_echo_n "checking for OpenSSL GOST support... " >&6; }
+	have_gost=""
+	case "$use_pkcs11" in
+		auto|no)
+			;;
+		*)
+			if $use_threads; then
+				CC="$CC -pthread"
+			fi
+			;;
+	esac
+	if test "$cross_compiling" = yes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: using --with-gost" >&5
+$as_echo "using --with-gost" >&6; }
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <openssl/conf.h>
+#include <openssl/engine.h>
+int main() {
+#if (OPENSSL_VERSION_NUMBER >= 0x10000000L)
+	ENGINE *e;
+	EC_KEY *ek;
+
+	ek = NULL;
+	OPENSSL_config(NULL);
+
+	e = ENGINE_by_id("gost");
+	if (e == NULL)
+		return (1);
+	if (ENGINE_init(e) <= 0)
+		return (1);
+	return (0);
+#else
+	return (1);
+#endif
+}
+
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	have_gost="yes"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	have_gost="no"
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+	case "$with_gost" in
+	yes)
+	    case "$have_gost" in
+	    no)  as_fn_error $? "gost not supported" "$LINENO" 5 ;;
+	    *)  have_gost=yes ;;
+	    esac
+	    ;;
+	no)
+	    have_gost=no ;;
+	*)
+	    case "$have_gost" in
+	    yes|no) ;;
+	    *) as_fn_error $? "need --with-gost=[yes, no, raw or asn1]" "$LINENO" 5 ;;
+	    esac
+	    ;;
+	esac
+	case $have_gost in
+	yes)
+		OPENSSL_GOST="yes"
+		OPENSSLGOSTLINKOBJS='${OPENSSLGOSTLINKOBJS}'
+		OPENSSLGOSTLINKSRCS='${OPENSSLGOSTLINKSRCS}'
+
+$as_echo "#define HAVE_OPENSSL_GOST 1" >>confdefs.h
+
+		;;
+	*)
+		;;
+	esac
+	CC="$saved_cc"
+	CFLAGS="$saved_cflags"
+	LIBS="$saved_libs"
+	OPENSSLLINKOBJS='${OPENSSLLINKOBJS}'
+	OPENSSLLINKSRCS='${OPENSSLLINKSRCS}'
+
+	;;
+esac
+
+#
+# This would include the system openssl path (and linker options to use
+# it as needed) if it is found.
+#
+
+
+
+
+
+
+
+
+
+DNS_CRYPTO_LIBS="$DNS_CRYPTO_LIBS $DST_OPENSSL_LIBS"
+
+#
+# Use OpenSSL for hash functions and/or aes
+#
+
+saved_libs="$LIBS"
+LIBS="$LIBS $DNS_CRYPTO_LIBS"
+for ac_func in AES_encrypt
+do :
+  ac_fn_c_check_func "$LINENO" "AES_encrypt" "ac_cv_func_AES_encrypt"
+if test "x$ac_cv_func_AES_encrypt" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_AES_ENCRYPT 1
+_ACEOF
+
+fi
+done
+
+LIBS="$saved_libs"
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for using OpenSSL for hash functions" >&5
+$as_echo_n "checking for using OpenSSL for hash functions... " >&6; }
+# Check whether --enable-openssl-hash was given.
+if test "${enable_openssl_hash+set}" = set; then :
+  enableval=$enable_openssl_hash; want_openssl_hash="$enableval"
+else
+  want_openssl_hash="no"
+fi
+
+
+# Check whether --enable-openssl-aes was given.
+if test "${enable_openssl_aes+set}" = set; then :
+  enableval=$enable_openssl_aes; want_openssl_aes="$enableval"
+else
+  want_openssl_aes="no"
+fi
+
+
+#
+# Source Identity Token algorithm choice
+#
+
+# Check whether --with-sit-alg was given.
+if test "${with_sit_alg+set}" = set; then :
+  withval=$with_sit_alg; with_sit_alg="$withval"
+else
+  with_sit_alg="auto"
+fi
+
+
+case $with_sit_alg in
+	*1)
+		with_sit_alg="sha1"
+		want_openssl_hash="yes"
+
+$as_echo "#define HMAC_SHA1_SIT 1" >>confdefs.h
+
+		;;
+	*2*)
+		with_sit_alg="sha256"
+		want_openssl_hash="yes"
+
+$as_echo "#define HMAC_SHA256_SIT 1" >>confdefs.h
+
+		;;
+	auto)
+		if test "$ac_cv_func_AES_encrypt" = "yes"
+		then
+			with_sit_alg="aes"
+			if test "$CRYPTO" = "-DOPENSSL"
+			then
+				want_openssl_aes="yes"
+			fi
+
+$as_echo "#define AES_SIT 1" >>confdefs.h
+
+		else
+			with_sit_alg="sha256"
+			if test "$CRYPTO" = "-DOPENSSL"
+			then
+				want_openssl_hash="yes"
+			fi
+
+$as_echo "#define HMAC_SHA256_SIT 1" >>confdefs.h
+
+		fi
+		;;
+	*)
+		with_sit_alg="aes"
+		want_openssl_aes="yes"
+
+$as_echo "#define AES_SIT 1" >>confdefs.h
+
+		;;
+esac
+
+case $want_openssl_hash in
+	yes)
+		if test "$CRYPTO" = ""
+		then
+			as_fn_error $? "No OpenSSL for hash functions" "$LINENO" 5
+		fi
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+		ISC_PLATFORM_OPENSSLHASH="#define ISC_PLATFORM_OPENSSLHASH 1"
+		ISC_OPENSSL_INC="$DST_OPENSSL_INC"
+		ISC_OPENSSL_LIBS="$DST_OPENSSL_LIBS"
+		;;
+	no)
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+		ISC_PLATFORM_OPENSSLHASH="#undef ISC_PLATFORM_OPENSSLHASH"
+		ISC_OPENSSL_INC=""
+		ISC_OPENSSL_LIBS=""
+		;;
+esac
+case $want_openssl_aes in
+	yes)
+		if test "$CRYPTO" = ""
+		then
+			as_fn_error $? "No OpenSSL for AES" "$LINENO" 5
+		fi
+		ISC_PLATFORM_OPENSSLAES="#define ISC_PLATFORM_OPENSSLAES 1"
+		ISC_OPENSSL_INC="$DST_OPENSSL_INC"
+		ISC_OPENSSL_LIBS="$DST_OPENSSL_LIBS"
+		;;
+	no)
+		ISC_PLATFORM_OPENSSLAES="#undef ISC_PLATFORM_OPENSSLAES"
+		;;
+esac
+
+
+
+
+
+#
+# PKCS11 (aka crypto hardware) support (--with moved just after openssl)
+#
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for PKCS11 support" >&5
+$as_echo_n "checking for PKCS11 support... " >&6; }
+
+if test "$use_pkcs11" = "auto"
+then
+	if test "$want_native_pkcs11" = "yes"
+	then
+		use_pkcs11="yes"
+	else
+		use_pkcs11="no"
+	fi
+fi
+
+case "$use_pkcs11" in
+	no)
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+		USE_PKCS11=""
+		PKCS11_TEST=""
+		PKCS11_TOOLS=""
+		ISC_PK11_C=""
+		ISC_PK11_O=""
+		ISC_PK11_API_C=""
+		ISC_PK11_API_O=""
+		ISC_ISCPK11_API_C=""
+		ISC_ISCPK11_API_O=""
+		;;
+	yes|*)
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+		if ! $use_threads; then
+			as_fn_error $? "PKCS11 requires thread support" "$LINENO" 5
+		fi
+		if test "$CRYPTO" != ""
+		then
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for OpenSSL with PKCS11 support" >&5
+$as_echo_n "checking for OpenSSL with PKCS11 support... " >&6; }
+			saved_cc="$CC"
+			saved_cflags="$CFLAGS"
+			saved_libs="$LIBS"
+			CC="$CC -pthread"
+			CFLAGS="$CFLAGS $DST_OPENSSL_INC"
+			LIBS="$LIBS $DST_OPENSSL_LIBS"
+			if test "$cross_compiling" = yes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: cross compile" >&5
+$as_echo "cross compile" >&6; }
+			PKCS11_TEST=''
+			PKCS11_ENGINE='-DPKCS11_ENGINE=NULL'
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <openssl/conf.h>
+#include <openssl/engine.h>
+int main() {
+	ENGINE *e;
+
+	OPENSSL_config(NULL);
+	e = ENGINE_by_id("pkcs11");
+	if (e == NULL)
+		return (1);
+	if (ENGINE_init(e) <= 0)
+		return (1);
+	return (0);
+}
+
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+			PKCS11_TEST=pkcs11ssl
+			PKCS11_ENGINE='-DPKCS11_ENGINE="\"pkcs11\""'
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+			PKCS11_TEST=''
+			PKCS11_ENGINE='-DPKCS11_ENGINE=NULL'
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+			CC="$saved_cc"
+			CFLAGS="$saved_cflags"
+			LIBS="$saved_libs"
+		else
+			PKCS11_TEST=''
+			PKCS11_ENGINE='-DPKCS11_ENGINE=NULL'
+
+		fi
+		USE_PKCS11='-DUSE_PKCS11'
+		PKCS11_TOOLS=pkcs11
+		ac_fn_c_check_func "$LINENO" "getpassphrase" "ac_cv_func_getpassphrase"
+if test "x$ac_cv_func_getpassphrase" = xyes; then :
+  $as_echo "#define HAVE_GETPASSPHRASE 1" >>confdefs.h
+
+fi
+
+		ISC_PK11_C="pk11.c"
+		ISC_PK11_O="pk11.$O"
+		ISC_PK11_API_C="pk11_api.c"
+		ISC_PK11_API_O="pk11_api.$O"
+		ISC_ISCPK11_API_C="unix/pk11_api.c"
+		ISC_ISCPK11_API_O="unix/pk11_api.$O"
+		;;
+esac
+
+
+
+
+
+
+
+
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for PKCS11 tools" >&5
+$as_echo_n "checking for PKCS11 tools... " >&6; }
+case "$use_pkcs11" in
+	no)
+		PKCS11_PROVIDER="undefined"
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled" >&5
+$as_echo "disabled" >&6; }
+		;;
+	yes|'')
+		PKCS11_PROVIDER="undefined"
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: enabled" >&5
+$as_echo "enabled" >&6; }
+		;;
+	*)
+		PKCS11_PROVIDER="$use_pkcs11"
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: enabled, PKCS11 provider is $PKCS11_PROVIDER" >&5
+$as_echo "enabled, PKCS11 provider is $PKCS11_PROVIDER" >&6; }
+		;;
+esac
+
+
+
+PKCS11_ECDSA=""
+PKCS11_GOST=""
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for native PKCS11" >&5
+$as_echo_n "checking for native PKCS11... " >&6; }
+
+case "$want_native_pkcs11" in
+	yes)
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: using native PKCS11 crypto" >&5
+$as_echo "using native PKCS11 crypto" >&6; }
+		CRYPTO="-DPKCS11CRYPTO"
+		PKCS11LINKOBJS='${PKCS11LINKOBJS}'
+		PKCS11LINKSRCS='${PKCS11LINKSRCS}'
+		PKCS11_TEST=pkcs11
+		case "$with_ecdsa" in
+		no)
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled PKCS11 ECDSA" >&5
+$as_echo "disabled PKCS11 ECDSA" >&6; }
+			;;
+		*)
+			PKCS11_ECDSA="yes"
+
+$as_echo "#define HAVE_PKCS11_ECDSA 1" >>confdefs.h
+
+			;;
+		esac
+		case "$with_gost" in
+		yes)
+			PKCS11_GOST="yes"
+
+$as_echo "#define HAVE_PKCS11_GOST 1" >>confdefs.h
+
+			;;
+		*)
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled PKCS11 GOST" >&5
+$as_echo "disabled PKCS11 GOST" >&6; }
+			;;
+		esac
+		;;
+	no|'')
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled" >&5
+$as_echo "disabled" >&6; }
+		;;
+esac
+
+
+
+
+
+
+
+
+# for PKCS11 benchmarks
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking clock_gettime" >&5
+$as_echo_n "checking clock_gettime... " >&6; }
+have_clock_gt=no
+ac_fn_c_check_func "$LINENO" "clock_gettime" "ac_cv_func_clock_gettime"
+if test "x$ac_cv_func_clock_gettime" = xyes; then :
+  have_clock_gt=yes
+fi
+
+if test "$have_clock_gt" = "no"; then
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for clock_gettime in -lrt" >&5
+$as_echo_n "checking for clock_gettime in -lrt... " >&6; }
+if ${ac_cv_lib_rt_clock_gettime+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lrt  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char clock_gettime ();
+int
+main ()
+{
+return clock_gettime ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_rt_clock_gettime=yes
+else
+  ac_cv_lib_rt_clock_gettime=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_rt_clock_gettime" >&5
+$as_echo "$ac_cv_lib_rt_clock_gettime" >&6; }
+if test "x$ac_cv_lib_rt_clock_gettime" = xyes; then :
+  have_clock_gt=yes
+fi
+
+fi
+
+if test "$have_clock_gt" = "yes"; then
+
+$as_echo "#define HAVE_CLOCK_GETTIME 1" >>confdefs.h
+
+fi
+
 #
 # was --with-libxml2 specified?
 #
@@ -15879,6 +16051,130 @@ $as_echo "#define HAVE_LIBXML2 1" >>confdefs.h
 else
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
+fi
+
+#
+# was --with-libjson specified?
+#
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for json library" >&5
+$as_echo_n "checking for json library... " >&6; }
+
+# Check whether --with-libjson was given.
+if test "${with_libjson+set}" = set; then :
+  withval=$with_libjson; use_libjson="$withval"
+else
+  use_libjson="auto"
+fi
+
+
+have_libjson=""
+case "$use_libjson" in
+	no)
+		libjson_libs=""
+		;;
+	auto|yes)
+		if test -f "/usr/include/json/json.h"
+		then
+			libjson_cflags="-I /usr/include/json"
+			have_libjson="yes"
+		elif test -f "/usr/include/json-c/json.h"
+		then
+			libjson_cflags="-I /usr/include/json-c"
+			have_libjson="yes"
+		fi
+		;;
+	*)
+		if test -f "${use_libjson}/include/json/json.h"
+		then
+			libjson_cflags="-I${use_libjson}/include/json"
+			LIBS="$LIBS -L${use_libjson}/lib"
+			have_libjson="yes"
+		elif test -f "${use_libjson}/include/json-c/json.h"
+		then
+			libjson_cflags="-I${use_libjson}/include/json-c"
+			LIBS="$LIBS -L${use_libjson}/lib"
+			have_libjson="yes"
+		else
+			as_fn_error $? "$use_libjson/include/json{,-c}/json.h not found." "$LINENO" 5
+		fi
+		;;
+esac
+
+if test "X${have_libjson}" != "X"
+then
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing json_object_new_int64" >&5
+$as_echo_n "checking for library containing json_object_new_int64... " >&6; }
+if ${ac_cv_search_json_object_new_int64+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char json_object_new_int64 ();
+int
+main ()
+{
+return json_object_new_int64 ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' json json-c; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_json_object_new_int64=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_json_object_new_int64+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_json_object_new_int64+:} false; then :
+
+else
+  ac_cv_search_json_object_new_int64=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_json_object_new_int64" >&5
+$as_echo "$ac_cv_search_json_object_new_int64" >&6; }
+ac_res=$ac_cv_search_json_object_new_int64
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: found libjson include but not library." >&5
+$as_echo "$as_me: WARNING: found libjson include but not library." >&2;}
+			have_libjson=""
+fi
+
+else
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+if test "X${have_libjson}" != "X"
+then
+	CFLAGS="$CFLAGS $libjson_cflags"
+
+$as_echo "#define HAVE_JSON 1" >>confdefs.h
+
 fi
 
 #
@@ -16024,7 +16320,8 @@ $as_echo "no" >&6; }
 	fi
 	case "$host" in
 	*-hp-hpux*)
-		LDFLAGS="-Wl,+vnocompatwarnings $LDFLAGS"
+		CFLAGS="$CFLAGS -Wl,+vnocompatwarnings"
+		BACKTRACECFLAGS="$BACKTRACECFLAGS -Wl,+vnocompatwarnings"
 		;;
 	esac
 else
@@ -16052,7 +16349,8 @@ else
 		esac
 		CCOPT="$CCOPT -Ae -z"
 		CCNOOPT="$CCNOOPT -Ae -z"
-		LDFLAGS="-Wl,+vnocompatwarnings $LDFLAGS"
+		CFLAGS="$CFLAGS -Wl,+vnocompatwarnings"
+		BACKTRACECFLAGS="$BACKTRACECFLAGS -Wl,+vnocompatwarnings"
 		MKDEPPROG='cc -Ae -E -Wp,-M >/dev/null 2>>$TMP'
 		;;
 	*-sgi-irix*)
@@ -16301,46 +16599,6 @@ esac
 
 
 
-
-# Check whether --with-libtool was given.
-if test "${with_libtool+set}" = set; then :
-  withval=$with_libtool; use_libtool="$withval"
-else
-  use_libtool="no"
-fi
-
-
-case $use_libtool in
-	yes)
-
-		O=lo
-		A=la
-		LIBTOOL_MKDEP_SED='s;\.o;\.lo;'
-		LIBTOOL_MODE_COMPILE='--mode=compile --tag=CC'
-		LIBTOOL_MODE_INSTALL='--mode=install --tag=CC'
-		LIBTOOL_MODE_LINK='--mode=link --tag=CC'
-		case "$host" in
-		*) LIBTOOL_ALLOW_UNDEFINED= ;;
-		esac
-		case "$host" in
-		*-ibm-aix*) LIBTOOL_IN_MAIN="-Wl,-bI:T_testlist.imp" ;;
-		*) LIBTOOL_IN_MAIN= ;;
-		esac;
-		;;
-	*)
-		O=o
-		A=a
-		LIBTOOL=
-
-		LIBTOOL_MKDEP_SED=
-		LIBTOOL_MODE_COMPILE=
-		LIBTOOL_MODE_INSTALL=
-		LIBTOOL_MODE_LINK=
-		LIBTOOL_ALLOW_UNDEFINED=
-		LIBTOOL_IN_MAIN=
-		;;
-esac
-
 #
 # enable/disable dumping stack backtrace.  Also check if the system supports
 # glibc-compatible backtrace() function.
@@ -16440,56 +16698,7 @@ SA=a
 
 
 
-#
-# build exportable DNS library?
-#
-# Check whether --enable-exportlib was given.
-if test "${enable_exportlib+set}" = set; then :
-  enableval=$enable_exportlib;
-fi
-
-case "$enable_exportlib" in
-	yes)
-		gmake=
-		for x in gmake gnumake make; do
-			if $x --version 2>/dev/null | grep GNU > /dev/null; then
-				gmake=$x
-				break;
-			fi
-		done
-		if test -z "$gmake"; then
-			as_fn_error $? "exportlib requires GNU make.  Install it or disable the feature." "$LINENO" 5
-		fi
-		LIBEXPORT=lib/export
-
-		BIND9_CO_RULE="%.$O:  \${srcdir}/%.c"
-		;;
-	no|*)
-		BIND9_CO_RULE=".c.$O:"
-		;;
-esac
-
-
-
-# Check whether --with-export-libdir was given.
-if test "${with_export_libdir+set}" = set; then :
-  withval=$with_export_libdir; export_libdir="$withval"
-fi
-
-if test -z "$export_libdir"; then
-	export_libdir="\${exec_prefix}/lib/bind9/"
-fi
-
-
-
-# Check whether --with-export-includedir was given.
-if test "${with_export_includedir+set}" = set; then :
-  withval=$with_export_includedir; export_includedir="$withval"
-fi
-
-if test -z "$export_includedir"; then
-	export_includedir="\${prefix}/include/bind9/"
-fi
+BIND9_CO_RULE=".c.$O:"
 
 
 #
@@ -17347,7 +17556,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #include <sys/socket.h>
 #include <netdb.h>
 int getnameinfo(const struct sockaddr *, socklen_t, char *,
-                socklen_t, char *, socklen_t, unsigned int);
+		socklen_t, char *, socklen_t, unsigned int);
 int
 main ()
 {
@@ -17373,7 +17582,7 @@ else
 #include <sys/socket.h>
 #include <netdb.h>
 int getnameinfo(const struct sockaddr *, socklen_t, char *,
-                size_t, char *, size_t, int);
+		size_t, char *, size_t, int);
 int
 main ()
 {
@@ -17614,6 +17823,14 @@ fi
 
 
 
+ac_fn_c_check_func "$LINENO" "strcasestr" "ac_cv_func_strcasestr"
+if test "x$ac_cv_func_strcasestr" = xyes; then :
+  ISC_PLATFORM_NEEDSTRCASESTR="#undef ISC_PLATFORM_NEEDSTRCASESTR"
+else
+  ISC_PLATFORM_NEEDSTRCASESTR="#define ISC_PLATFORM_NEEDSTRCASESTR 1"
+fi
+
+
 
 
 
@@ -17649,8 +17866,9 @@ done
 		READLINE_LIB="$readline"
 	fi
 	LIBS="$saved_LIBS"
-        ;;
+	;;
 esac
+
 
 ISC_PRINT_OBJS=
 ISC_PRINT_SRCS=
@@ -18118,7 +18336,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 # Older HP-UX doesn't have gettune
 #
 case "$host" in
-  	*-hp-hpux*)
+	*-hp-hpux*)
 		for ac_header in sys/dyntune.h
 do :
   ac_fn_c_check_header_mongrel "$LINENO" "sys/dyntune.h" "ac_cv_header_sys_dyntune_h" "$ac_includes_default"
@@ -18490,7 +18708,7 @@ $as_echo_n "checking architecture type for atomic operations... " >&6; }
 	i[3456]86-*)
 		# XXX: some old x86 architectures actually do not support
 		#      (some of) these operations.  Do we need stricter checks?
-                # The cast to long int works around a bug in the HP C Compiler
+		# The cast to long int works around a bug in the HP C Compiler
 # version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
 # declarations like `int a3[[(sizeof (unsigned char)) >= 0]];'.
 # This bug is HP SR number 8606223364.
@@ -18531,7 +18749,7 @@ _ACEOF
 		fi
 	;;
 	x86_64-*|amd64-*)
-                # The cast to long int works around a bug in the HP C Compiler
+		# The cast to long int works around a bug in the HP C Compiler
 # version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
 # declarations like `int a3[[(sizeof (unsigned char)) >= 0]];'.
 # This bug is HP SR number 8606223364.
@@ -18809,7 +19027,7 @@ $as_echo "#define ENABLE_RPZ_NSDNAME 1" >>confdefs.h
 esac
 
 #
-# Activate "filter-aaaa-on-v4" or not?
+# Activate "filter-aaaa-on-v4/v6" or not?
 #
 # Check whether --enable-filter-aaaa was given.
 if test "${enable_filter_aaaa+set}" = set; then :
@@ -18821,7 +19039,7 @@ fi
 case "$enable_filter" in
 	yes)
 
-$as_echo "#define ALLOW_FILTER_AAAA_ON_V4 1" >>confdefs.h
+$as_echo "#define ALLOW_FILTER_AAAA 1" >>confdefs.h
 
 		;;
 	no)
@@ -18829,6 +19047,37 @@ $as_echo "#define ALLOW_FILTER_AAAA_ON_V4 1" >>confdefs.h
 	*)
 		;;
 esac
+
+#
+# Enable Source Identity Token support
+#
+# Check whether --enable-sit was given.
+if test "${enable_sit+set}" = set; then :
+  enableval=$enable_sit; enable_sit="$enableval"
+else
+  enable_sit="no"
+fi
+
+
+ISC_PLATFORM_USESIT="#undef ISC_PLATFORM_USESIT"
+HAVE_SIT=
+
+case "$enable_sit" in
+yes)
+
+$as_echo "#define ENABLE_SIT 1" >>confdefs.h
+
+	ISC_PLATFORM_USESIT="#define ISC_PLATFORM_USESIT 1"
+        HAVE_SIT=1
+	;;
+no)
+	;;
+*)
+	as_fn_error $? "\"enable-sit requires yes or no\"" "$LINENO" 5
+	;;
+esac
+
+
 
 #
 #  The following sets up how non-blocking i/o is established.
@@ -19200,7 +19449,7 @@ $as_echo "auto" >&6; }
 	;;
 *)
 	docbook_xsl_trees="$withval"
-    	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $docbook_xsl_trees" >&5
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $docbook_xsl_trees" >&5
 $as_echo "$docbook_xsl_trees" >&6; }
 	;;
 esac
@@ -19420,10 +19669,8 @@ fi
 #
 # Same dance for db2latex
 #
-# No idea where this lives except on FreeBSD.
-#
 
-db2latex_xsl_trees="/usr/local/share"
+db2latex_xsl_trees="/usr/local/share/db2latex/xsl /usr/pkg/share/xsl/db2latex"
 
 #
 # Look for stylesheets we need.
@@ -19431,11 +19678,11 @@ db2latex_xsl_trees="/usr/local/share"
 
 
 XSLT_DB2LATEX_STYLE=""
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for db2latex/xsl/docbook.xsl" >&5
-$as_echo_n "checking for db2latex/xsl/docbook.xsl... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for docbook.xsl" >&5
+$as_echo_n "checking for docbook.xsl... " >&6; }
 for d in $db2latex_xsl_trees
 do
-	f=$d/db2latex/xsl/docbook.xsl
+	f=$d/docbook.xsl
 	if test -f $f
 	then
 		XSLT_DB2LATEX_STYLE=$f
@@ -19448,7 +19695,7 @@ if test "X$XSLT_DB2LATEX_STYLE" = "X"
 then
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: \"not found\"" >&5
 $as_echo "\"not found\"" >&6; };
-	XSLT_DB2LATEX_STYLE=db2latex/xsl/docbook.xsl
+	XSLT_DB2LATEX_STYLE=docbook.xsl
 fi
 
 
@@ -19458,16 +19705,15 @@ fi
 # because it's a directory, so just do the same things, inline.
 #
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for db2latex/xsl/figures" >&5
-$as_echo_n "checking for db2latex/xsl/figures... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for db2latex xsl figures" >&5
+$as_echo_n "checking for db2latex xsl figures... " >&6; }
 for d in $db2latex_xsl_trees
 do
-	dd=$d/db2latex/xsl/figures
-	if test -d $dd
+	if test -d $d/figures
 	then
-		XSLT_DB2LATEX_ADMONITIONS=$dd
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $dd" >&5
-$as_echo "$dd" >&6; }
+		XSLT_DB2LATEX_ADMONITIONS=$d/figures
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $d/figures" >&5
+$as_echo "$d/figures" >&6; }
 		break
 	fi
 done
@@ -19601,9 +19847,6 @@ $as_echo "#define ATF_TEST 1" >>confdefs.h
 	STD_CINCLUDES="$STD_CINCLUDES -I$atf/include"
 	ATFBIN="$atf/bin"
 	ATFLIBS="-L$atf/lib -latf-c"
-	if test "$want_openssl_hash" = yes; then
-		ATFLIBS="-L$atf/lib -latf-c $DNS_CRYPTO_LIBS"
-	fi
 	UNITTESTS=tests
 fi
 
@@ -19635,10 +19878,43 @@ done
 
 
 #
+# was --with-tuning specified?
+#
+
+# Check whether --with-tuning was given.
+if test "${with_tuning+set}" = set; then :
+  withval=$with_tuning; use_tuning="$withval"
+else
+  use_tuning="no"
+fi
+
+
+case "$use_tuning" in
+	large)
+		if ! $use_threads; then
+			as_fn_error $? "Large-system tuning requires threads." "$LINENO" 5
+		fi
+
+$as_echo "#define TUNE_LARGE 1" >>confdefs.h
+
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: using large-system tuning" >&5
+$as_echo "using large-system tuning" >&6; }
+		;;
+	no|default)
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: using default tuning" >&5
+$as_echo "using default tuning" >&6; }
+		;;
+	yes|*)
+                as_fn_error $? "You must specify \"large\" or \"default\" for --with-tuning." "$LINENO" 5
+		;;
+esac
+
+#
 # Substitutions
 #
 
 BIND9_TOP_BUILDDIR=`pwd`
+
 
 
 
@@ -19653,6 +19929,7 @@ if test "X$srcdir" != "X"; then
 	BIND9_DNS_BUILDINCLUDE="-I${BIND9_TOP_BUILDDIR}/lib/dns/include"
 	BIND9_LWRES_BUILDINCLUDE="-I${BIND9_TOP_BUILDDIR}/lib/lwres/include"
 	BIND9_BIND9_BUILDINCLUDE="-I${BIND9_TOP_BUILDDIR}/lib/bind9/include"
+	BIND9_IRS_BUILDINCLUDE="-I${BIND9_TOP_BUILDDIR}/lib/irs/include"
 else
 	BIND9_ISC_BUILDINCLUDE=""
 	BIND9_ISCCC_BUILDINCLUDE=""
@@ -19660,6 +19937,7 @@ else
 	BIND9_DNS_BUILDINCLUDE=""
 	BIND9_LWRES_BUILDINCLUDE=""
 	BIND9_BIND9_BUILDINCLUDE=""
+	BIND9_IRS_BUILDINCLUDE=""
 fi
 
 
@@ -19674,6 +19952,8 @@ BIND9_PRODUCT="PRODUCT=\"${PRODUCT}\""
 BIND9_DESCRIPTION="DESCRIPTION=\"${DESCRIPTION}\""
 
 BIND9_VERSION="VERSION=${MAJORVER}.${MINORVER}${PATCHVER:+.}${PATCHVER}${RELEASETYPE}${RELEASEVER}${EXTENSIONS}"
+
+BIND9_MAJOR="MAJOR=${MAJORVER}.${MINORVER}"
 
 
 BIND9_SRCID="SRCID=unset"
@@ -19709,6 +19989,9 @@ LIBISCCFG_API="$srcdir/lib/isccfg/api"
 
 
 LIBDNS_API="$srcdir/lib/dns/api"
+
+
+LIBDNS_MAPAPI="$srcdir/lib/dns/mapapi"
 
 
 LIBBIND9_API="$srcdir/lib/bind9/api"
@@ -19747,6 +20030,7 @@ DLZ_SYSTEM_TEST=""
 #
 SO="so"
 SO_CFLAGS=""
+SO_LDFLAGS=""
 SO_LD=""
 SO_TARGETS=""
 
@@ -19810,7 +20094,7 @@ fi
 	if test "$have_dl" = "yes"; then
 		LIBS="-ldl $LIBS"
 	fi
-        for ac_func in dlopen dlclose dlsym
+	for ac_func in dlopen dlclose dlsym
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -19830,30 +20114,37 @@ if test "$dlopen" = "yes"; then
 	case $host in
 		*-linux*)
 			SO_CFLAGS="-fPIC"
+			SO_LDFLAGS=""
 			if test "$have_dl" = "yes"
 			then
 				if test "$use_libtool" = "yes"; then
-					SO_LD="${CC} -Xcompiler -shared"
+					SO_LDFLAGS="-Xcompiler -shared"
+					SO_LD="${CC}"
 				else
-					SO_LD="${CC} -shared"
+					SO_LDFLAGS="-shared"
+					SO_LD="${CC}"
 				fi
 			else
-				SO_LD="ld -shared"
+				SO_LDFLAGS="-shared"
+				SO_LD="ld"
 			fi
 			;;
 		*-freebsd*|*-openbsd*|*-netbsd*)
 			SO_CFLAGS="-fpic"
-			SO_LD="ld -Bshareable -x"
+			SO_LDFLAGS="-Bshareable -x"
+			SO_LD="ld"
 			;;
 		*-solaris*)
 			SO_CFLAGS="-KPIC"
-			SO_LD="ld -G -z text"
-                        ;;
+			SO_LDFLAGS="-G -z text"
+			SO_LD="ld"
+			;;
 		*-hp-hpux*)
 			SO=sl
 			SO_CFLAGS="+z"
-			SO_LD="ld -b"
-                        ;;
+			SO_LDFLAGS="-b +vnocompatwarnings"
+			SO_LD="ld"
+			;;
 		*)
 			SO_CFLAGS="-fPIC"
 			;;
@@ -19861,7 +20152,16 @@ if test "$dlopen" = "yes"; then
 
 	if test "X$GCC" = "Xyes"; then
 		SO_CFLAGS="-fPIC"
-                test -n "$SO_LD" || SO_LD="${CC} -shared"
+		if test -z "$SO_LD"
+		then
+			if test "$use_libtool" = "yes"; then
+				SO_LDFLAGS="-Xcompiler -shared"
+				SO_LD="${CC}"
+			else
+				SO_LDFLAGS="-shared"
+				SO_LD="${CC}"
+			fi
+		fi
 	fi
 
 	# If we still don't know how to make shared objects, don't make any.
@@ -19872,6 +20172,7 @@ $as_echo "#define ISC_DLZ_DLOPEN 1" >>confdefs.h
 
 	fi
 fi
+
 
 
 
@@ -19929,12 +20230,58 @@ else
 fi
 
 
-if test "$use_dlz_postgres" = "yes"
+if test "$use_dlz_postgres" != "no"
 then
-	# User did not specify a path - guess it
-	# Ask Postgres to tell us where it is
+	if test "$use_dlz_postgres" != "yes"
+        then
+                for ac_prog in pg_config
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_PG_CONFIG+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $PG_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PG_CONFIG="$PG_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $use_dlz_postgres/bin
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_PG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
 
-	for ac_prog in pg_config
+  ;;
+esac
+fi
+PG_CONFIG=$ac_cv_path_PG_CONFIG
+if test -n "$PG_CONFIG"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PG_CONFIG" >&5
+$as_echo "$PG_CONFIG" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  test -n "$PG_CONFIG" && break
+done
+test -n "$PG_CONFIG" || PG_CONFIG="not found"
+
+	else
+                for ac_prog in pg_config
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -19980,18 +20327,22 @@ fi
 done
 test -n "$PG_CONFIG" || PG_CONFIG="not found"
 
+	fi
 
 	if test "$PG_CONFIG" != "not found"
 	then
 		use_dlz_postgres=`$PG_CONFIG --includedir`
 		use_dlz_postgres_lib=`$PG_CONFIG --libdir`
+	else
+		pgprefix="$use_dlz_postgres"
+		use_dlz_postgres="$pgprefix/include"
+		use_dlz_postgres_lib="$pgprefix/lib"
 	fi
 fi
 
 if test "$use_dlz_postgres" = "yes"
 then
 	# User did not specify path and Postgres didn't say - guess it
-
 	pgdirs="/usr /usr/local /usr/local/pgsql /usr/pkg"
 	for d in $pgdirs
 	do
@@ -20153,8 +20504,8 @@ esac
 # Was --with-dlz-bdb specified?
 #
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for Berkeley DB DLZ driver" >&5
-$as_echo_n "checking for Berkeley DB DLZ driver... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for Berkeley DB DLZ driver..." >&5
+$as_echo_n "checking for Berkeley DB DLZ driver...... " >&6; }
 
 # Check whether --with-dlz_bdb was given.
 if test "${with_dlz_bdb+set}" = set; then :
@@ -20194,6 +20545,8 @@ $as_echo "not found" >&6; }
 		dlz_bdb_inc="yes"
 		dlz_bdb_libs="yes"
 
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: " >&5
+$as_echo "" >&6; }
 		for dd in $bdbdirs
 		do
 			# Skip nonexistant directories
@@ -20205,10 +20558,11 @@ $as_echo "not found" >&6; }
 			# Check other locations for includes.
 			# Order is important (sigh).
 
-			bdb_incdirs="/ /db48/ /db47/ /db46/ /db45/ /db44/ /db43/ /db42/ /db41/ /db4/ /db/"
-			for d in $bdb_incdirs
+			bdb_incdirs="/db53 /db51 /db48 /db47 /db46 /db45 /db44 /db43 /db42 /db41 /db4 /db"
+			# include a blank element first
+			for d in "" $bdb_incdirs
 			do
-				if test -f "$dd/include${d}db.h"
+				if test -f "$dd/include${d}/db.h"
 				then
 					dlz_bdb_inc="-I$dd/include${d}"
 					break
@@ -20226,18 +20580,60 @@ $as_echo "not found" >&6; }
 			# Look for libname other than libdb.so.
 			# Order is important (sigh).
 
-			bdb_libnames="db48 db-4.8 db47 db-4.7 db46 db-4.6 db45 db-4.5 db44 db-4.4 db43 db-4.3 db42 db-4.2 db41 db-4.1 db"
+			bdb_libnames="db53 db-5.3 db51 db-5.1 db48 db-4.8 db47 db-4.7 db46 db-4.6 db45 db-4.5 db44 db-4.4 db43 db-4.3 db42 db-4.2 db41 db-4.1 db"
 			for d in $bdb_libnames
 			do
-				if test -f "$dd/lib/lib${d}.so"
+				if test "$dd" = "/usr"
 				then
-					if test "$dd" != "/usr"
+					as_ac_Lib=`$as_echo "ac_cv_lib_$d''_db_create" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for db_create in -l$d" >&5
+$as_echo_n "checking for db_create in -l$d... " >&6; }
+if eval \${$as_ac_Lib+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-l$d  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char db_create ();
+int
+main ()
+{
+return db_create ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  eval "$as_ac_Lib=yes"
+else
+  eval "$as_ac_Lib=no"
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+eval ac_res=\$$as_ac_Lib
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
+  dlz_bdb_libs="-l${d}"
+fi
+
+					if test $dlz_bdb_libs != "yes"
 					then
-						dlz_bdb_libs="-L${dd}/lib "
-					else
-						dlz_bdb_libs=""
+						break
 					fi
-					dlz_bdb_libs="${dlz_bdb_libs}-l${d}"
+				elif test -f "$dd/lib/lib${d}.so"
+				then
+					dlz_bdb_libs="-L${dd}/lib -l${d}"
 					break
 				fi
 			done
@@ -20258,8 +20654,6 @@ $as_echo "not found" >&6; }
 
 		if test "$dlz_bdb_inc" = "yes"
 		then
-			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
-$as_echo "not found" >&6; }
 			as_fn_error $? "could not find Berkeley DB include directory" "$LINENO" 5
 		fi
 
@@ -20423,15 +20817,73 @@ fi
 if test "$use_dlz_odbc" = "yes"
 then
 	# User did not specify a path - guess it
-	odbcdirs="/usr /usr/local /usr/pkg"
-	for d in $odbcdirs
-	do
-		if test -f $d/include/sql.h -a -f $d/lib/libodbc.a
-		then
-			use_dlz_odbc=$d
-			break
-		fi
-	done
+	libodbc_found=no
+	sql_h_found=no
+	ac_fn_c_check_header_mongrel "$LINENO" "sql.h" "ac_cv_header_sql_h" "$ac_includes_default"
+if test "x$ac_cv_header_sql_h" = xyes; then :
+  sql_h_found=yes
+fi
+
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for SQLConnect in -lodbc" >&5
+$as_echo_n "checking for SQLConnect in -lodbc... " >&6; }
+if ${ac_cv_lib_odbc_SQLConnect+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lodbc  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char SQLConnect ();
+int
+main ()
+{
+return SQLConnect ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_odbc_SQLConnect=yes
+else
+  ac_cv_lib_odbc_SQLConnect=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_odbc_SQLConnect" >&5
+$as_echo "$ac_cv_lib_odbc_SQLConnect" >&6; }
+if test "x$ac_cv_lib_odbc_SQLConnect" = xyes; then :
+  libodbc_found=yes
+fi
+
+
+	if test $libodbc_found = "yes" -o $sql_h_found = "yes"
+	then
+		use_dlz_odbc=system
+		dlz_odbc_include=""
+		dlz_odbc_libs="-lodbc"
+	else
+		odbcdirs="/usr /usr/local /usr/pkg"
+		for d in $odbcdirs
+		do
+			if test -f $d/include/sql.h -a -f $d/lib/libodbc.a
+			then
+				use_dlz_odbc=$d
+				dlz_odbc_include="-I$use_dlz_odbc/include"
+				dlz_odbc_libs="-L$use_dlz_odbc/lib -lodbc"
+				break
+			fi
+		done
+	fi
 fi
 
 case "$use_dlz_odbc" in
@@ -20452,13 +20904,13 @@ $as_echo "not found" >&6; }
 		DLZ_DRIVER_SRCS="$DLZ_DRIVER_SRCS $dlzdir/$i.c"
 		DLZ_DRIVER_OBJS="$DLZ_DRIVER_OBJS $i.$O"
 	done
-	if test -n "-I$use_dlz_odbc/include"
+	if test -n "$dlz_odbc_include"
 	then
-		DLZ_DRIVER_INCLUDES="$DLZ_DRIVER_INCLUDES -I$use_dlz_odbc/include"
+		DLZ_DRIVER_INCLUDES="$DLZ_DRIVER_INCLUDES $dlz_odbc_include"
 	fi
-	if test -n "-L$use_dlz_odbc/lib -lodbc"
+	if test -n "$dlz_odbc_libs"
 	then
-		DLZ_DRIVER_LIBS="$DLZ_DRIVER_LIBS -L$use_dlz_odbc/lib -lodbc"
+		DLZ_DRIVER_LIBS="$DLZ_DRIVER_LIBS $dlz_odbc_libs"
 	fi
 
 
@@ -20520,7 +20972,7 @@ esac
 #
 if test -n "$CONTRIB_DLZ"
 then
-        CONTRIB_DLZ="-DCONTRIB_DLZ $CONTRIB_DLZ"
+	CONTRIB_DLZ="-DCONTRIB_DLZ $CONTRIB_DLZ"
 
 	#
 	# Where to find DLZ driver header files.
@@ -20633,6 +21085,35 @@ done
 DNS_GSSAPI_LIBS="$NEWFLAGS"
 
 NEWFLAGS=""
+for e in $ISC_OPENSSL_LIBS ; do
+    case $e in
+	-L*)
+	    case $host_os in
+		netbsd*)
+		    ee=`echo $e | sed -e 's%^-L%-Wl,-rpath,%'`
+		    NEWFLAGS="$NEWFLAGS $e $ee"
+		    ;;
+		freebsd*)
+		    ee=`echo $e | sed -e 's%^-L%-Wl,-rpath,%'`
+		    NEWFLAGS="$NEWFLAGS $e $ee"
+		    ;;
+		solaris*)
+		    ee=`echo $e | sed -e 's%^-L%-R%'`
+		    NEWFLAGS="$NEWFLAGS $e $ee"
+		    ;;
+		*)
+		    NEWFLAGS="$NEWFLAGS $e"
+		    ;;
+		esac
+	    ;;
+	*)
+	    NEWFLAGS="$NEWFLAGS $e"
+	    ;;
+    esac
+done
+ISC_OPENSSL_LIBS="$NEWFLAGS"
+
+NEWFLAGS=""
 for e in $DNS_CRYPTO_LIBS ; do
     case $e in
 	-L*)
@@ -20682,7 +21163,7 @@ ac_config_commands="$ac_config_commands chmod"
 # elsewhere if there's a good reason for doing so.
 #
 
-ac_config_files="$ac_config_files make/Makefile make/mkdep Makefile bin/Makefile bin/check/Makefile bin/confgen/Makefile bin/confgen/unix/Makefile bin/dig/Makefile bin/dnssec/Makefile bin/named/Makefile bin/named/unix/Makefile bin/nsupdate/Makefile bin/pkcs11/Makefile bin/python/Makefile bin/python/dnssec-checkds.py bin/python/dnssec-coverage.py bin/rndc/Makefile bin/tests/Makefile bin/tests/atomic/Makefile bin/tests/db/Makefile bin/tests/dst/Makefile bin/tests/dst/Kdh.+002+18602.key bin/tests/dst/Kdh.+002+18602.private bin/tests/dst/Kdh.+002+48957.key bin/tests/dst/Kdh.+002+48957.private bin/tests/dst/Ktest.+001+00002.key bin/tests/dst/Ktest.+001+54622.key bin/tests/dst/Ktest.+001+54622.private bin/tests/dst/Ktest.+003+23616.key bin/tests/dst/Ktest.+003+23616.private bin/tests/dst/Ktest.+003+49667.key bin/tests/dst/dst_2_data bin/tests/dst/t2_data_1 bin/tests/dst/t2_data_2 bin/tests/dst/t2_dsasig bin/tests/dst/t2_rsasig bin/tests/hashes/Makefile bin/tests/headerdep_test.sh bin/tests/master/Makefile bin/tests/mem/Makefile bin/tests/names/Makefile bin/tests/net/Makefile bin/tests/rbt/Makefile bin/tests/resolver/Makefile bin/tests/sockaddr/Makefile bin/tests/system/Makefile bin/tests/system/conf.sh bin/tests/system/dlz/prereq.sh bin/tests/system/dlzexternal/Makefile bin/tests/system/dlzexternal/ns1/named.conf bin/tests/system/ecdsa/prereq.sh bin/tests/system/filter-aaaa/Makefile bin/tests/system/gost/prereq.sh bin/tests/system/inline/checkdsa.sh bin/tests/system/lwresd/Makefile bin/tests/system/rpz/Makefile bin/tests/system/rrl/Makefile bin/tests/system/rsabigexponent/Makefile bin/tests/system/tkey/Makefile bin/tests/system/tsiggss/Makefile bin/tests/tasks/Makefile bin/tests/timers/Makefile bin/tests/virtual-time/Makefile bin/tests/virtual-time/conf.sh bin/tools/Makefile contrib/check-secure-delegation.pl contrib/zone-edit.sh doc/Makefile doc/arm/Makefile doc/doxygen/Doxyfile doc/doxygen/Makefile doc/doxygen/doxygen-input-filter doc/misc/Makefile doc/xsl/Makefile doc/xsl/isc-docbook-chunk.xsl doc/xsl/isc-docbook-html.xsl doc/xsl/isc-docbook-latex.xsl doc/xsl/isc-manpage.xsl isc-config.sh lib/Makefile lib/bind9/Makefile lib/bind9/include/Makefile lib/bind9/include/bind9/Makefile lib/dns/Makefile lib/dns/include/Makefile lib/dns/include/dns/Makefile lib/dns/include/dst/Makefile lib/dns/tests/Makefile lib/export/Makefile lib/export/dns/Makefile lib/export/dns/include/Makefile lib/export/dns/include/dns/Makefile lib/export/dns/include/dst/Makefile lib/export/irs/Makefile lib/export/irs/include/Makefile lib/export/irs/include/irs/Makefile lib/export/isc/$thread_dir/Makefile lib/export/isc/$thread_dir/include/Makefile lib/export/isc/$thread_dir/include/isc/Makefile lib/export/isc/Makefile lib/export/isc/include/Makefile lib/export/isc/include/isc/Makefile lib/export/isc/nls/Makefile lib/export/isc/unix/Makefile lib/export/isc/unix/include/Makefile lib/export/isc/unix/include/isc/Makefile lib/export/isccfg/Makefile lib/export/isccfg/include/Makefile lib/export/isccfg/include/isccfg/Makefile lib/export/samples/Makefile lib/export/samples/Makefile-postinstall lib/irs/Makefile lib/irs/include/Makefile lib/irs/include/irs/Makefile lib/irs/include/irs/netdb.h lib/irs/include/irs/platform.h lib/isc/$arch/Makefile lib/isc/$arch/include/Makefile lib/isc/$arch/include/isc/Makefile lib/isc/$thread_dir/Makefile lib/isc/$thread_dir/include/Makefile lib/isc/$thread_dir/include/isc/Makefile lib/isc/Makefile lib/isc/include/Makefile lib/isc/include/isc/Makefile lib/isc/include/isc/platform.h lib/isc/tests/Makefile lib/isc/nls/Makefile lib/isc/unix/Makefile lib/isc/unix/include/Makefile lib/isc/unix/include/isc/Makefile lib/isccc/Makefile lib/isccc/include/Makefile lib/isccc/include/isccc/Makefile lib/isccfg/Makefile lib/isccfg/include/Makefile lib/isccfg/include/isccfg/Makefile lib/lwres/Makefile lib/lwres/include/Makefile lib/lwres/include/lwres/Makefile lib/lwres/include/lwres/netdb.h lib/lwres/include/lwres/platform.h lib/lwres/man/Makefile lib/lwres/unix/Makefile lib/lwres/unix/include/Makefile lib/lwres/unix/include/lwres/Makefile lib/tests/Makefile lib/tests/include/Makefile lib/tests/include/tests/Makefile unit/Makefile unit/unittest.sh"
+ac_config_files="$ac_config_files make/Makefile make/mkdep Makefile bin/Makefile bin/check/Makefile bin/confgen/Makefile bin/confgen/unix/Makefile bin/delve/Makefile bin/dig/Makefile bin/dnssec/Makefile bin/named/Makefile bin/named/unix/Makefile bin/nsupdate/Makefile bin/pkcs11/Makefile bin/python/Makefile bin/python/dnssec-checkds.py bin/python/dnssec-coverage.py bin/rndc/Makefile bin/tests/Makefile bin/tests/atomic/Makefile bin/tests/db/Makefile bin/tests/dst/Makefile bin/tests/dst/Kdh.+002+18602.key bin/tests/dst/Kdh.+002+18602.private bin/tests/dst/Kdh.+002+48957.key bin/tests/dst/Kdh.+002+48957.private bin/tests/dst/Ktest.+001+00002.key bin/tests/dst/Ktest.+001+54622.key bin/tests/dst/Ktest.+001+54622.private bin/tests/dst/Ktest.+003+23616.key bin/tests/dst/Ktest.+003+23616.private bin/tests/dst/Ktest.+003+49667.key bin/tests/dst/dst_2_data bin/tests/dst/t2_data_1 bin/tests/dst/t2_data_2 bin/tests/dst/t2_dsasig bin/tests/dst/t2_rsasig bin/tests/hashes/Makefile bin/tests/headerdep_test.sh bin/tests/master/Makefile bin/tests/mem/Makefile bin/tests/names/Makefile bin/tests/net/Makefile bin/tests/pkcs11/Makefile bin/tests/pkcs11/benchmarks/Makefile bin/tests/rbt/Makefile bin/tests/resolver/Makefile bin/tests/sockaddr/Makefile bin/tests/system/Makefile bin/tests/system/conf.sh bin/tests/system/dlz/prereq.sh bin/tests/system/dlzexternal/Makefile bin/tests/system/dlzexternal/ns1/named.conf bin/tests/system/dlzredir/prereq.sh bin/tests/system/filter-aaaa/Makefile bin/tests/system/geoip/Makefile bin/tests/system/inline/checkdsa.sh bin/tests/system/lwresd/Makefile bin/tests/system/sit/prereq.sh bin/tests/system/rpz/Makefile bin/tests/system/rsabigexponent/Makefile bin/tests/system/tkey/Makefile bin/tests/system/tsiggss/Makefile bin/tests/tasks/Makefile bin/tests/timers/Makefile bin/tests/virtual-time/Makefile bin/tests/virtual-time/conf.sh bin/tools/Makefile contrib/scripts/check-secure-delegation.pl contrib/scripts/zone-edit.sh doc/Makefile doc/arm/Makefile doc/doxygen/Doxyfile doc/doxygen/Makefile doc/doxygen/doxygen-input-filter doc/misc/Makefile doc/xsl/Makefile doc/xsl/isc-docbook-chunk.xsl doc/xsl/isc-docbook-html.xsl doc/xsl/isc-docbook-latex.xsl doc/xsl/isc-manpage.xsl isc-config.sh lib/Makefile lib/bind9/Makefile lib/bind9/include/Makefile lib/bind9/include/bind9/Makefile lib/dns/Makefile lib/dns/include/Makefile lib/dns/include/dns/Makefile lib/dns/include/dst/Makefile lib/dns/tests/Makefile lib/irs/Makefile lib/irs/include/Makefile lib/irs/include/irs/Makefile lib/irs/include/irs/netdb.h lib/irs/include/irs/platform.h lib/isc/$arch/Makefile lib/isc/$arch/include/Makefile lib/isc/$arch/include/isc/Makefile lib/isc/$thread_dir/Makefile lib/isc/$thread_dir/include/Makefile lib/isc/$thread_dir/include/isc/Makefile lib/isc/Makefile lib/isc/include/Makefile lib/isc/include/isc/Makefile lib/isc/include/isc/platform.h lib/isc/include/pk11/Makefile lib/isc/include/pkcs11/Makefile lib/isc/tests/Makefile lib/isc/nls/Makefile lib/isc/unix/Makefile lib/isc/unix/include/Makefile lib/isc/unix/include/isc/Makefile lib/isc/unix/include/pkcs11/Makefile lib/isccc/Makefile lib/isccc/include/Makefile lib/isccc/include/isccc/Makefile lib/isccfg/Makefile lib/isccfg/include/Makefile lib/isccfg/include/isccfg/Makefile lib/lwres/Makefile lib/lwres/include/Makefile lib/lwres/include/lwres/Makefile lib/lwres/include/lwres/netdb.h lib/lwres/include/lwres/platform.h lib/lwres/man/Makefile lib/lwres/unix/Makefile lib/lwres/unix/include/Makefile lib/lwres/unix/include/lwres/Makefile lib/tests/Makefile lib/tests/include/Makefile lib/tests/include/tests/Makefile lib/samples/Makefile lib/samples/Makefile-postinstall unit/Makefile unit/unittest.sh"
 
 
 #
@@ -21682,6 +22163,7 @@ do
     "bin/check/Makefile") CONFIG_FILES="$CONFIG_FILES bin/check/Makefile" ;;
     "bin/confgen/Makefile") CONFIG_FILES="$CONFIG_FILES bin/confgen/Makefile" ;;
     "bin/confgen/unix/Makefile") CONFIG_FILES="$CONFIG_FILES bin/confgen/unix/Makefile" ;;
+    "bin/delve/Makefile") CONFIG_FILES="$CONFIG_FILES bin/delve/Makefile" ;;
     "bin/dig/Makefile") CONFIG_FILES="$CONFIG_FILES bin/dig/Makefile" ;;
     "bin/dnssec/Makefile") CONFIG_FILES="$CONFIG_FILES bin/dnssec/Makefile" ;;
     "bin/named/Makefile") CONFIG_FILES="$CONFIG_FILES bin/named/Makefile" ;;
@@ -21717,6 +22199,8 @@ do
     "bin/tests/mem/Makefile") CONFIG_FILES="$CONFIG_FILES bin/tests/mem/Makefile" ;;
     "bin/tests/names/Makefile") CONFIG_FILES="$CONFIG_FILES bin/tests/names/Makefile" ;;
     "bin/tests/net/Makefile") CONFIG_FILES="$CONFIG_FILES bin/tests/net/Makefile" ;;
+    "bin/tests/pkcs11/Makefile") CONFIG_FILES="$CONFIG_FILES bin/tests/pkcs11/Makefile" ;;
+    "bin/tests/pkcs11/benchmarks/Makefile") CONFIG_FILES="$CONFIG_FILES bin/tests/pkcs11/benchmarks/Makefile" ;;
     "bin/tests/rbt/Makefile") CONFIG_FILES="$CONFIG_FILES bin/tests/rbt/Makefile" ;;
     "bin/tests/resolver/Makefile") CONFIG_FILES="$CONFIG_FILES bin/tests/resolver/Makefile" ;;
     "bin/tests/sockaddr/Makefile") CONFIG_FILES="$CONFIG_FILES bin/tests/sockaddr/Makefile" ;;
@@ -21725,13 +22209,13 @@ do
     "bin/tests/system/dlz/prereq.sh") CONFIG_FILES="$CONFIG_FILES bin/tests/system/dlz/prereq.sh" ;;
     "bin/tests/system/dlzexternal/Makefile") CONFIG_FILES="$CONFIG_FILES bin/tests/system/dlzexternal/Makefile" ;;
     "bin/tests/system/dlzexternal/ns1/named.conf") CONFIG_FILES="$CONFIG_FILES bin/tests/system/dlzexternal/ns1/named.conf" ;;
-    "bin/tests/system/ecdsa/prereq.sh") CONFIG_FILES="$CONFIG_FILES bin/tests/system/ecdsa/prereq.sh" ;;
+    "bin/tests/system/dlzredir/prereq.sh") CONFIG_FILES="$CONFIG_FILES bin/tests/system/dlzredir/prereq.sh" ;;
     "bin/tests/system/filter-aaaa/Makefile") CONFIG_FILES="$CONFIG_FILES bin/tests/system/filter-aaaa/Makefile" ;;
-    "bin/tests/system/gost/prereq.sh") CONFIG_FILES="$CONFIG_FILES bin/tests/system/gost/prereq.sh" ;;
+    "bin/tests/system/geoip/Makefile") CONFIG_FILES="$CONFIG_FILES bin/tests/system/geoip/Makefile" ;;
     "bin/tests/system/inline/checkdsa.sh") CONFIG_FILES="$CONFIG_FILES bin/tests/system/inline/checkdsa.sh" ;;
     "bin/tests/system/lwresd/Makefile") CONFIG_FILES="$CONFIG_FILES bin/tests/system/lwresd/Makefile" ;;
+    "bin/tests/system/sit/prereq.sh") CONFIG_FILES="$CONFIG_FILES bin/tests/system/sit/prereq.sh" ;;
     "bin/tests/system/rpz/Makefile") CONFIG_FILES="$CONFIG_FILES bin/tests/system/rpz/Makefile" ;;
-    "bin/tests/system/rrl/Makefile") CONFIG_FILES="$CONFIG_FILES bin/tests/system/rrl/Makefile" ;;
     "bin/tests/system/rsabigexponent/Makefile") CONFIG_FILES="$CONFIG_FILES bin/tests/system/rsabigexponent/Makefile" ;;
     "bin/tests/system/tkey/Makefile") CONFIG_FILES="$CONFIG_FILES bin/tests/system/tkey/Makefile" ;;
     "bin/tests/system/tsiggss/Makefile") CONFIG_FILES="$CONFIG_FILES bin/tests/system/tsiggss/Makefile" ;;
@@ -21740,8 +22224,8 @@ do
     "bin/tests/virtual-time/Makefile") CONFIG_FILES="$CONFIG_FILES bin/tests/virtual-time/Makefile" ;;
     "bin/tests/virtual-time/conf.sh") CONFIG_FILES="$CONFIG_FILES bin/tests/virtual-time/conf.sh" ;;
     "bin/tools/Makefile") CONFIG_FILES="$CONFIG_FILES bin/tools/Makefile" ;;
-    "contrib/check-secure-delegation.pl") CONFIG_FILES="$CONFIG_FILES contrib/check-secure-delegation.pl" ;;
-    "contrib/zone-edit.sh") CONFIG_FILES="$CONFIG_FILES contrib/zone-edit.sh" ;;
+    "contrib/scripts/check-secure-delegation.pl") CONFIG_FILES="$CONFIG_FILES contrib/scripts/check-secure-delegation.pl" ;;
+    "contrib/scripts/zone-edit.sh") CONFIG_FILES="$CONFIG_FILES contrib/scripts/zone-edit.sh" ;;
     "doc/Makefile") CONFIG_FILES="$CONFIG_FILES doc/Makefile" ;;
     "doc/arm/Makefile") CONFIG_FILES="$CONFIG_FILES doc/arm/Makefile" ;;
     "doc/doxygen/Doxyfile") CONFIG_FILES="$CONFIG_FILES doc/doxygen/Doxyfile" ;;
@@ -21763,29 +22247,6 @@ do
     "lib/dns/include/dns/Makefile") CONFIG_FILES="$CONFIG_FILES lib/dns/include/dns/Makefile" ;;
     "lib/dns/include/dst/Makefile") CONFIG_FILES="$CONFIG_FILES lib/dns/include/dst/Makefile" ;;
     "lib/dns/tests/Makefile") CONFIG_FILES="$CONFIG_FILES lib/dns/tests/Makefile" ;;
-    "lib/export/Makefile") CONFIG_FILES="$CONFIG_FILES lib/export/Makefile" ;;
-    "lib/export/dns/Makefile") CONFIG_FILES="$CONFIG_FILES lib/export/dns/Makefile" ;;
-    "lib/export/dns/include/Makefile") CONFIG_FILES="$CONFIG_FILES lib/export/dns/include/Makefile" ;;
-    "lib/export/dns/include/dns/Makefile") CONFIG_FILES="$CONFIG_FILES lib/export/dns/include/dns/Makefile" ;;
-    "lib/export/dns/include/dst/Makefile") CONFIG_FILES="$CONFIG_FILES lib/export/dns/include/dst/Makefile" ;;
-    "lib/export/irs/Makefile") CONFIG_FILES="$CONFIG_FILES lib/export/irs/Makefile" ;;
-    "lib/export/irs/include/Makefile") CONFIG_FILES="$CONFIG_FILES lib/export/irs/include/Makefile" ;;
-    "lib/export/irs/include/irs/Makefile") CONFIG_FILES="$CONFIG_FILES lib/export/irs/include/irs/Makefile" ;;
-    "lib/export/isc/$thread_dir/Makefile") CONFIG_FILES="$CONFIG_FILES lib/export/isc/$thread_dir/Makefile" ;;
-    "lib/export/isc/$thread_dir/include/Makefile") CONFIG_FILES="$CONFIG_FILES lib/export/isc/$thread_dir/include/Makefile" ;;
-    "lib/export/isc/$thread_dir/include/isc/Makefile") CONFIG_FILES="$CONFIG_FILES lib/export/isc/$thread_dir/include/isc/Makefile" ;;
-    "lib/export/isc/Makefile") CONFIG_FILES="$CONFIG_FILES lib/export/isc/Makefile" ;;
-    "lib/export/isc/include/Makefile") CONFIG_FILES="$CONFIG_FILES lib/export/isc/include/Makefile" ;;
-    "lib/export/isc/include/isc/Makefile") CONFIG_FILES="$CONFIG_FILES lib/export/isc/include/isc/Makefile" ;;
-    "lib/export/isc/nls/Makefile") CONFIG_FILES="$CONFIG_FILES lib/export/isc/nls/Makefile" ;;
-    "lib/export/isc/unix/Makefile") CONFIG_FILES="$CONFIG_FILES lib/export/isc/unix/Makefile" ;;
-    "lib/export/isc/unix/include/Makefile") CONFIG_FILES="$CONFIG_FILES lib/export/isc/unix/include/Makefile" ;;
-    "lib/export/isc/unix/include/isc/Makefile") CONFIG_FILES="$CONFIG_FILES lib/export/isc/unix/include/isc/Makefile" ;;
-    "lib/export/isccfg/Makefile") CONFIG_FILES="$CONFIG_FILES lib/export/isccfg/Makefile" ;;
-    "lib/export/isccfg/include/Makefile") CONFIG_FILES="$CONFIG_FILES lib/export/isccfg/include/Makefile" ;;
-    "lib/export/isccfg/include/isccfg/Makefile") CONFIG_FILES="$CONFIG_FILES lib/export/isccfg/include/isccfg/Makefile" ;;
-    "lib/export/samples/Makefile") CONFIG_FILES="$CONFIG_FILES lib/export/samples/Makefile" ;;
-    "lib/export/samples/Makefile-postinstall") CONFIG_FILES="$CONFIG_FILES lib/export/samples/Makefile-postinstall" ;;
     "lib/irs/Makefile") CONFIG_FILES="$CONFIG_FILES lib/irs/Makefile" ;;
     "lib/irs/include/Makefile") CONFIG_FILES="$CONFIG_FILES lib/irs/include/Makefile" ;;
     "lib/irs/include/irs/Makefile") CONFIG_FILES="$CONFIG_FILES lib/irs/include/irs/Makefile" ;;
@@ -21801,11 +22262,14 @@ do
     "lib/isc/include/Makefile") CONFIG_FILES="$CONFIG_FILES lib/isc/include/Makefile" ;;
     "lib/isc/include/isc/Makefile") CONFIG_FILES="$CONFIG_FILES lib/isc/include/isc/Makefile" ;;
     "lib/isc/include/isc/platform.h") CONFIG_FILES="$CONFIG_FILES lib/isc/include/isc/platform.h" ;;
+    "lib/isc/include/pk11/Makefile") CONFIG_FILES="$CONFIG_FILES lib/isc/include/pk11/Makefile" ;;
+    "lib/isc/include/pkcs11/Makefile") CONFIG_FILES="$CONFIG_FILES lib/isc/include/pkcs11/Makefile" ;;
     "lib/isc/tests/Makefile") CONFIG_FILES="$CONFIG_FILES lib/isc/tests/Makefile" ;;
     "lib/isc/nls/Makefile") CONFIG_FILES="$CONFIG_FILES lib/isc/nls/Makefile" ;;
     "lib/isc/unix/Makefile") CONFIG_FILES="$CONFIG_FILES lib/isc/unix/Makefile" ;;
     "lib/isc/unix/include/Makefile") CONFIG_FILES="$CONFIG_FILES lib/isc/unix/include/Makefile" ;;
     "lib/isc/unix/include/isc/Makefile") CONFIG_FILES="$CONFIG_FILES lib/isc/unix/include/isc/Makefile" ;;
+    "lib/isc/unix/include/pkcs11/Makefile") CONFIG_FILES="$CONFIG_FILES lib/isc/unix/include/pkcs11/Makefile" ;;
     "lib/isccc/Makefile") CONFIG_FILES="$CONFIG_FILES lib/isccc/Makefile" ;;
     "lib/isccc/include/Makefile") CONFIG_FILES="$CONFIG_FILES lib/isccc/include/Makefile" ;;
     "lib/isccc/include/isccc/Makefile") CONFIG_FILES="$CONFIG_FILES lib/isccc/include/isccc/Makefile" ;;
@@ -21824,6 +22288,8 @@ do
     "lib/tests/Makefile") CONFIG_FILES="$CONFIG_FILES lib/tests/Makefile" ;;
     "lib/tests/include/Makefile") CONFIG_FILES="$CONFIG_FILES lib/tests/include/Makefile" ;;
     "lib/tests/include/tests/Makefile") CONFIG_FILES="$CONFIG_FILES lib/tests/include/tests/Makefile" ;;
+    "lib/samples/Makefile") CONFIG_FILES="$CONFIG_FILES lib/samples/Makefile" ;;
+    "lib/samples/Makefile-postinstall") CONFIG_FILES="$CONFIG_FILES lib/samples/Makefile-postinstall" ;;
     "unit/Makefile") CONFIG_FILES="$CONFIG_FILES unit/Makefile" ;;
     "unit/unittest.sh") CONFIG_FILES="$CONFIG_FILES unit/unittest.sh" ;;
 
@@ -23127,13 +23593,40 @@ echo "Configuration summary:"
 echo "------------------------------------------------------------------------"
 echo "Optional features enabled:"
 $use_threads && echo "    Multiprocessing support (--enable-threads)"
-
-test "$enable_rrl" = "yes" && \
-    echo "    Response Rate Limiting (--enable-rrl)"
+test "$use_tuning" = "large" && echo "    Large-system tuning (--with-tuning)"
+test "$use_geoip" = "no" || echo "    GeoIP access control (--with-geoip)"
 test "$use_gssapi" = "no" || echo "    GSS-API (--with-gssapi)"
-test "$use_pkcs11" = "no" || echo "    PKCS#11/Cryptoki support (--with-pkcs11)"
-test "$enable_newstats" = "yes" && \
-    echo "    New statistics (--enable-newstats)"
+if test "$enable_sit" != "no"; then
+    echo "    Source Identity Token support (--enable-sit)"
+    if test "$enable_full_report" = "yes" -o "$with_sit_alg" != "aes"; then
+        echo "        Algorithm: $with_sit_alg"
+    fi
+fi
+
+# these lines are only printed if run with --enable-full-report
+if test "$enable_full_report" = "yes"; then
+    test "$enable_ipv6" = "no" -o "$found_ipv6" = "no" || \
+	echo "    IPv6 support (--enable-ipv6)"
+    test "X$CRYPTO" = "X" -o "$want_native_pkcs11" = "yes" || \
+	    echo "    OpenSSL cryptography/DNSSEC (--with-openssl)"
+    test "X$PYTHON" = "X" || echo "    Python tools (--with-python)"
+    test "X$libxml2_libs" = "X" || echo "    XML statistics (--with-libxml2)"
+    test "X$have_libjson" = "X" || echo "    JSON statistics (--with-libjson)"
+fi
+
+if test "$use_pkcs11" != "no"; then
+    if test "$want_native_pkcs11" = "yes"; then
+	echo "    Native PKCS#11/Cryptoki support (--enable-native-pkcs11)"
+    else
+	echo "    PKCS#11/Cryptoki support using OpenSSL (--with-pkcs11)"
+    fi
+    echo "        Provider library: $PKCS11_PROVIDER"
+fi
+if test "$OPENSSL_GOST" = "yes" -o "$PKCS11_GOST" = "yes"; then
+    echo "    GOST algorithm support (encoding: $gosttype) (--with-gost)"
+fi
+test "$OPENSSL_ECDSA" = "yes" -o "$PKCS11_ECDSA" = "yes" && \
+    echo "    ECDSA algorithm support (--with-ecdsa)"
 test "$enable_fixed" = "yes" && \
     echo "    Allow 'fixed' rrset-order (--enable-fixed-rrset)"
 test "$enable_filter" = "yes" && \
@@ -23144,21 +23637,8 @@ test "$want_symtable" = "minimal" && \
     echo "    Use symbol table for backtrace, named only (--enable-symtable)"
 test "$want_symtable" = "yes" -o "$want_symtable" = "all" && \
     echo "    Use symbol table for backtrace, all binaries (--enable-symtable=all)"
+test "$use_libtool" = "no" || echo "    Use GNU libtool (--with-libtool)"
 test "$atf" = "no" || echo "    Automated Testing Framework (--with-atf)"
-
-# these lines are only printed if run with --enable-full-report
-if test "$enable_full_report" = "yes"; then
-    test "$enable_ipv6" = "no" -o "$found_ipv6" = "no" || \
-        echo "    IPv6 support (--enable-ipv6)"
-    test "X$USE_OPENSSL" = "X" || \
-            echo "    OpenSSL cryptography/DNSSEC (--with-openssl)"
-    test "$OPENSSL_GOST" != "yes" || \
-            echo "    GOST algorithm support (--with-gost)"
-    test "$OPENSSL_ECDSA" != "yes" || \
-            echo "    ECDSA algorithm support (--with-ecdsa)"
-    test "X$PYTHON" = "X" || echo "    Python tools (--with-python)"
-    test "X$libxml2_libs" = "X" || echo "    XML statistics (--with-libxml2)"
-fi
 
 echo "    Dynamically loadable zone (DLZ) drivers:"
 test "$use_dlz_bdb" = "no" || \
@@ -23168,7 +23648,7 @@ test "$use_dlz_ldap" = "no" || \
 test "$use_dlz_mysql" = "no" || \
     echo "        MySQL (--with-dlz-mysql)"
 test "$use_dlz_odbc" = "no" || \
-    echo "        ODBC (--with-dlz-bdb)"
+    echo "        ODBC (--with-dlz-odbc)"
 test "$use_dlz_postgres" = "no" || \
     echo "        Postgres (--with-dlz-postgres)"
 test "$use_dlz_filesystem" = "no" || \
@@ -23181,31 +23661,45 @@ echo
 echo "Features disabled or unavailable on this platform:"
 $use_threads || echo "    Multiprocessing support (--enable-threads)"
 test "$enable_ipv6" = "no" -o "$found_ipv6" = "no" && \
-        echo "    IPv6 support (--enable-ipv6)"
-test "$enable_rrl" = "yes" || \
-    echo "    Response Rate Limiting (--enable-rrl)"
+	echo "    IPv6 support (--enable-ipv6)"
+test "$use_tuning" = "large" || echo "    Large-system tuning (--with-tuning)"
+
+test "$use_geoip" = "no" && echo "    GeoIP access control (--with-geoip)"
 test "$use_gssapi" = "no" && echo "    GSS-API (--with-gssapi)"
-test "$use_pkcs11" = "no" && echo "    PKCS#11/Cryptoki support (--with-pkcs11)"
-test "X$enable_newstats" = "X" && echo "    New statistics (--enable-newstats)"
+test "$enable_sit" = "no" && echo "    Source Identity Token support (--enable-sit)"
+
 test "$enable_fixed" = "yes" || \
     echo "    Allow 'fixed' rrset-order (--enable-fixed-rrset)"
+
+if test "X$CRYPTO" = "X" -o "$want_native_pkcs11" = "yes"
+then
+    echo "    OpenSSL cryptography/DNSSEC (--with-openssl)"
+elif test "$use_pkcs11" = "no"; then
+    echo "    PKCS#11/Cryptoki support (--with-pkcs11)"
+fi
+test "$want_native_pkcs11" = "yes" ||
+    echo "    Native PKCS#11/Cryptoki support (--enable-native-pkcs11)"
+test "X$CRYPTO" = "X" -o "$OPENSSL_GOST" = "yes" -o "$PKCS11_GOST" = "yes" || \
+    echo "    GOST algorithm support (--with-gost)"
+test "X$CRYPTO" = "X" -o "$OPENSSL_ECDSA" = "yes" -o "$PKCS11_ECDSA" = "yes" || \
+    echo "    ECDSA algorithm support (--with-ecdsa)"
+
 test "$want_backtrace" = "yes" || \
     echo "    Print backtrace on crash (--enable-backtrace)"
+test "$use_libtool" = "yes" || echo "    Use GNU libtool (--with-libtool)"
 test "$atf" = "no" && echo "    Automated Testing Framework (--with-atf)"
-test "X$USE_OPENSSL" = "X" && \
-        echo "    OpenSSL cryptography/DNSSEC (--with-openssl)"
-test "X$USE_OPENSSL" != "X" -a "$OPENSSL_GOST" != "yes" && \
-    echo "    GOST algorithm support (--with-gost)"
-test "X$USE_OPENSSL" != "X" -a "$OPENSSL_ECDSA" != "yes" && \
-    echo "    ECDSA algorithm support (--with-ecdsa)"
+
 test "X$PYTHON" = "X" && echo "    Python tools (--with-python)"
 test "X$libxml2_libs" = "X" && echo "    XML statistics (--with-libxml2)"
+test "X$have_libjson" = "X" && echo "    JSON statistics (--with-libjson)"
 
 echo "========================================================================"
 
-if test "X$USE_OPENSSL" = "X"; then
+if test "X$CRYPTO" = "X"; then
 cat << \EOF
-BIND is being built without OpenSSL. This means it will not have DNSSEC support.
+BIND 9 is being built without cryptography support. This means it will
+not have DNSSEC support. Use --with-openssl, or --with-pkcs11 and
+--enable-native-pkcs11 to enable cryptography.
 EOF
 fi
 

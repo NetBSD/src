@@ -1,7 +1,7 @@
-/*	$NetBSD: eui64_109.c,v 1.1.1.1 2013/07/27 15:23:16 christos Exp $	*/
+/*	$NetBSD: eui64_109.c,v 1.1.1.2 2014/02/28 17:40:14 christos Exp $	*/
 
 /*
- * Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -149,7 +149,7 @@ tostruct_eui64(ARGS_TOSTRUCT) {
 	eui64->common.rdtype = rdata->type;
 	ISC_LINK_INIT(&eui64->common, link);
 
-	memcpy(eui64->eui64, rdata->data, rdata->length);
+	memmove(eui64->eui64, rdata->data, rdata->length);
 	return (ISC_R_SUCCESS);
 }
 

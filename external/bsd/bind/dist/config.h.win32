@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004, 2006-2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -136,6 +136,11 @@
 
 /* Define if you have DH_generate_parameters(). */
 #define HAVE_DH_GENERATE_PARAMETERS
+
+/* Define if you have getpassphrase in the C library. */
+#define HAVE_GETPASSPHRASE
+
+char *getpassphrase(const char *);
 
 /*
  * Define to 1 if you want to use the DLZ "dlopen" driver
@@ -329,6 +334,15 @@ typedef __int64 off_t;
 /* Define if your OpenSSL version supports GOST. */
 @HAVE_OPENSSL_GOST@
 
+/* Define if your PKCS11 provider supports ECDSA. */
+@HAVE_PKCS11_ECDSA@
+
+/* Define if your PKCS11 provider supports GOST. */
+@HAVE_PKCS11_GOST@
+
+/* Define if GOST private keys are encoded in ASN.1. */
+@PREFER_GOSTASN1@
+
 /* Define to 1 if you have the `readline' function. */
 @HAVE_READLINE@
 
@@ -353,13 +367,13 @@ typedef __int64 off_t;
 /* From enable developer */
 @ISC_LIST_CHECKINIT@
 
+/* Large system tuning */
+@TUNE_LARGE@
+
 /* Avoid warnings with strlen() */
 #ifdef _WIN64
 #define strlen(x)	(unsigned int) strlen(x)
 #endif
-
-/* Define to enable response rate limiting. */
-#define USE_RRL
 
 /* Get SRCID */
 #include "srcid.h"
