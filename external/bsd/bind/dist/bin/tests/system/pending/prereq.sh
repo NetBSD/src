@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2009, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2009, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,14 +14,4 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: prereq.sh,v 1.3 2009/11/18 23:48:06 tbox Exp 
-
-../../../tools/genrandom 400 random.data
-
-if $KEYGEN -q -a RSAMD5 -b 512 -n zone -r random.data foo > /dev/null 2>&1
-then
-    rm -f Kfoo*
-else
-    echo "I:This test requires that --with-openssl was used." >&2
-    exit 1
-fi
+exec sh ../testcrypto.sh

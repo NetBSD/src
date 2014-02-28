@@ -17,7 +17,7 @@
 # Id: clean.sh,v 1.3 2010/09/15 03:32:34 marka Exp 
 
 rm -f dig.out.*
-rm -f rndc.out.*
+rm -f rndc.out*
 rm -f ns2/named.conf
 rm -f */named.memstats
 rm -f ns2/*.nzf

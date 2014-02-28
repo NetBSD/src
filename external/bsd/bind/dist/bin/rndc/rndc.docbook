@@ -1,8 +1,8 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
-	       [<!ENTITY mdash "&#8212;">]>
+               [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2004, 2005, 2007, 2013  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004, 2005, 2007, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000, 2001  Internet Software Consortium.
  -
  - Permission to use, copy, modify, and/or distribute this software for any
@@ -41,6 +41,7 @@
       <year>2005</year>
       <year>2007</year>
       <year>2013</year>
+      <year>2014</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
     <copyright>
@@ -76,12 +77,14 @@
       arguments.
     </para>
     <para><command>rndc</command>
-      communicates with the name server
-      over a TCP connection, sending commands authenticated with
-      digital signatures.  In the current versions of
+      communicates with the name server over a TCP connection, sending
+      commands authenticated with digital signatures.  In the current
+      versions of
       <command>rndc</command> and <command>named</command>,
-      the only supported authentication algorithm is HMAC-MD5,
-      which uses a shared secret on each end of the connection.
+      the only supported authentication algorithms are HMAC-MD5
+      (for compatibility), HMAC-SHA1, HMAC-SHA224, HMAC-SHA256
+      (default), HMAC-SHA384 and HMAC-SHA512.
+      They use a shared secret on each end of the connection.
       This provides TSIG-style authentication for the command
       request and the name server's response.  All commands sent
       over the channel must be signed by a key_id known to the
@@ -145,7 +148,7 @@
             <command>rndc</command>.  If no server is supplied on the
             command line, the host named by the default-server clause
             in the options statement of the <command>rndc</command>
-	    configuration file will be used.
+            configuration file will be used.
           </para>
         </listitem>
       </varlistentry>
@@ -338,6 +341,18 @@
       </varlistentry>
 
       <varlistentry>
+        <term><userinput>scan</userinput></term>
+        <listitem>
+          <para>
+             Scan the list of available network interfaces
+             for changes, without performing a full
+             <command>reconfig</command> or waiting for the
+             <command>interface-interval</command> timer.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
         <term><userinput>sync <optional>-clean</optional> <optional><replaceable>zone</replaceable> <optional><replaceable>class</replaceable> <optional><replaceable>view</replaceable></optional></optional></optional></userinput></term>
         <listitem>
           <para>
@@ -369,6 +384,23 @@
             is a large number of zones because it avoids the need
             to examine the
             modification times of the zones files.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><userinput>zonestatus <optional><replaceable>zone</replaceable> <optional><replaceable>class</replaceable> <optional><replaceable>view</replaceable></optional></optional></optional></userinput></term>
+        <listitem>
+          <para>
+            Displays the current status of the given zone,
+            including the master file name and any include
+            files from which it was loaded, when it was most
+            recently loaded, the current serial number, the
+            number of nodes, whether the zone supports
+            dynamic updates, whether the zone is DNSSEC
+            signed, whether it uses automatic DNSSEC key
+            management or inline signing, and the scheduled
+            refresh or expiry times for the zone.
           </para>
         </listitem>
       </varlistentry>
@@ -507,13 +539,12 @@
       </varlistentry>
 
       <varlistentry>
-        <term><userinput>flushtree</userinput> <replaceable>name</replaceable> <optional><replaceable>view</replaceable></optional> </term>
+        <term><userinput>flushtree</userinput> <optional>-all</optional> <replaceable>name</replaceable> <optional><replaceable>view</replaceable></optional> </term>
         <listitem>
           <para>
             Flushes the given name, and all of its subdomains,
-            from the server's DNS cache.  Note that this does
-            <emphasis>not</emphasis> affect he server's address
-            database or bad-server cache.
+            from the server's DNS cache, the address database,
+            and the bad server cache.
           </para>
         </listitem>
       </varlistentry>
@@ -617,13 +648,23 @@
       </varlistentry>
 
       <varlistentry>
-        <term><userinput>delzone <replaceable>zone</replaceable> <optional><replaceable>class</replaceable> <optional><replaceable>view</replaceable></optional></optional> </userinput></term>
+        <term><userinput>delzone <optional>-clean</optional> <replaceable>zone</replaceable> <optional><replaceable>class</replaceable> <optional><replaceable>view</replaceable></optional></optional> </userinput></term>
         <listitem>
           <para>
             Delete a zone while the server is running.
             Only zones that were originally added via
             <command>rndc addzone</command> can be deleted
             in this manner. 
+          </para>
+          <para>
+            If the <option>-clean</option> is specified,
+            the zone's master file (and journal file, if any)
+            will be deleted along with the zone.  Without the
+            <option>-clean</option> option, zone files must
+            be cleaned up by hand.  (If the zone is of
+            type "slave" or "stub", the files needing to
+            be cleaned up will be reported in the output
+            of the <command>rndc delzone</command> command.)
           </para>
         </listitem>
       </varlistentry>

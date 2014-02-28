@@ -55,7 +55,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;@USE_OPENSSL@@USE_GSSAPI@@USE_PYTHON@_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;@CRYPTO@@USE_GSSAPI@@USE_PYTHON@_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..\..;..\include;..\..\..\include;..\..\named\win32\include;..\..\..\lib\isc\win32\include;..\..\..\lib\isc\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <StringPooling>
       </StringPooling>
@@ -85,7 +85,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>false</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;@USE_OPENSSL@@USE_GSSAPI@@USE_PYTHON@NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;@CRYPTO@@USE_GSSAPI@@USE_PYTHON@NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..\..;..\include;..\..\..\include;..\..\named\win32\include;..\..\..\lib\isc\win32\include;..\..\..\lib\isc\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <StringPooling>true</StringPooling>
@@ -123,8 +123,8 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="AccountInfo.cpp">
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">UNICODE;WIN32;@USE_OPENSSL@@USE_GSSAPI@@USE_PYTHON@NDEBUG;_WINDOWS;_MBCS</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">UNICODE;WIN32;@USE_OPENSSL@@USE_GSSAPI@@USE_PYTHON@_DEBUG;_WINDOWS;_MBCS</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">UNICODE;WIN32;@CRYPTO@@USE_GSSAPI@@USE_PYTHON@NDEBUG;_WINDOWS;_MBCS</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">UNICODE;WIN32;@CRYPTO@@USE_GSSAPI@@USE_PYTHON@_DEBUG;_WINDOWS;_MBCS</PreprocessorDefinitions>
     </ClCompile>
     <ClCompile Include="BINDInstall.cpp" />
     <ClCompile Include="BINDInstallDlg.cpp" />

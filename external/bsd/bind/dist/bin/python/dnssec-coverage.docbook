@@ -2,7 +2,7 @@
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
                [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -36,6 +36,7 @@
   <docinfo>
     <copyright>
       <year>2013</year>
+      <year>2014</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -44,11 +45,14 @@
     <cmdsynopsis>
       <command>dnssec-coverage</command>
       <arg><option>-K <replaceable class="parameter">directory</replaceable></option></arg>
+      <arg><option>-l <replaceable class="parameter">length</replaceable></option></arg>
       <arg><option>-f <replaceable class="parameter">file</replaceable></option></arg>
       <arg><option>-d <replaceable class="parameter">DNSKEY TTL</replaceable></option></arg>
       <arg><option>-m <replaceable class="parameter">max TTL</replaceable></option></arg>
       <arg><option>-r <replaceable class="parameter">interval</replaceable></option></arg>
       <arg><option>-c <replaceable class="parameter">compilezone path</replaceable></option></arg>
+      <arg><option>-k</option></arg>
+      <arg><option>-z</option></arg>
       <arg choice="opt">zone</arg>
     </cmdsynopsis>
   </refsynopsisdiv>
@@ -87,6 +91,16 @@
 
     <variablelist>
       <varlistentry>
+        <term>-K <replaceable class="parameter">directory</replaceable></term>
+        <listitem>
+          <para>
+            Sets the directory in which keys can be found.  Defaults to the
+            current working directory.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
         <term>-f <replaceable class="parameter">file</replaceable></term>
         <listitem>
           <para>
@@ -100,11 +114,18 @@
       </varlistentry>
 
       <varlistentry>
-        <term>-K <replaceable class="parameter">directory</replaceable></term>
+        <term>-l <replaceable class="parameter">duration</replaceable></term>
         <listitem>
           <para>
-            Sets the directory in which keys can be found.  Defaults to the
-            current working directory.
+            The length of time to check for DNSSEC coverage.  Key events
+            scheduled further into the future than <option>duration</option>
+            will be ignored, and assumed to be correct.  
+          </para>
+          <para>
+            The value of <option>duration</option> can be set in seconds,
+            or in larger units of time by adding a suffix: 'mi' for minutes,
+            'h' for hours, 'd' for days, 'w' for weeks, 'mo' for months,
+            'y' for years.
           </para>
         </listitem>
       </varlistentry>
@@ -184,6 +205,27 @@
           </para>
         </listitem>
       </varlistentry>
+
+      <varlistentry>
+        <term>-k</term>
+        <listitem>
+          <para>
+	    Only check KSK coverage; ignore ZSK events. Cannot be
+            used with <option>-z</option>.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-z</term>
+        <listitem>
+          <para>
+	    Only check ZSK coverage; ignore KSK events. Cannot be
+            used with <option>-k</option>.
+          </para>
+        </listitem>
+      </varlistentry>
+
 
       <varlistentry>
         <term>-c <replaceable class="parameter">compilezone path</replaceable></term>

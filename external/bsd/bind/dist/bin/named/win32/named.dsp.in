@@ -42,7 +42,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 @COPTX@ @COPTI@ /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" @COPTY@ /FD /c
-# ADD CPP /nologo /MD /W3 @COPTX@ @COPTI@ /O2 @OPENSSL_INC@ @GSSAPI_INC@ @GEOIP_INC@ /I "./" /I "../../../" @LIBXML2_INC@ /I "../win32/include" /I "../include" /I "../../../lib/isc/win32" /I "../../../lib/isc/win32/include" /I "../../../lib/isc/include" /I "../../../lib/dns/win32/include" /I "../../../lib/dns/include" /I "../../../lib/isccc/include" /I "../../../lib/lwres/win32/include" /I "../../../lib/lwres/include" /I "../../../lib/isccfg/include" /I "../../../lib/bind9/include" @USE_OPENSSL@ @USE_GSSAPI@ /D "BUILDER=\"old Visual Studio\"" /D "WIN32" /D "NDEBUG" /D "__STDC__" /D "_CONSOLE" /D "_MBCS" @COPTY@ /FD /c
+# ADD CPP /nologo /MD /W3 @COPTX@ @COPTI@ /O2 @OPENSSL_INC@ @GSSAPI_INC@ @GEOIP_INC@ /I "./" /I "../../../" @LIBXML2_INC@ /I "../win32/include" /I "../include" /I "../../../lib/isc/win32" /I "../../../lib/isc/win32/include" /I "../../../lib/isc/include" /I "../../../lib/dns/win32/include" /I "../../../lib/dns/include" /I "../../../lib/isccc/include" /I "../../../lib/lwres/win32/include" /I "../../../lib/lwres/include" /I "../../../lib/isccfg/include" /I "../../../lib/bind9/include" @CRYPTO@ @USE_GSSAPI@ /D "BUILDER=\"old Visual Studio\"" /D "WIN32" /D "NDEBUG" /D "__STDC__" /D "_CONSOLE" /D "_MBCS" @COPTY@ /FD /c
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
 # ADD RSC /l 0x409 /d "NDEBUG"
 BSC32=bscmake.exe
@@ -66,7 +66,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm @COPTX@ @COPTI@ /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" @COPTY@ /FD /GZ /c
-# ADD CPP /nologo /MDd /W3 /Gm @COPTX@ @COPTI@ /ZI /Od @OPENSSL_INC@ @GSSAPI_INC@ @GEOIP_INC@ /I "./" /I "../../../" @LIBXML2_INC@ /I "../win32/include" /I "../include" /I "../../../lib/isc/win32" /I "../../../lib/isc/win32/include" /I "../../../lib/isc/include" /I "../../../lib/dns/win32/include" /I "../../../lib/dns/include" /I "../../../lib/isccc/include" /I "../../../lib/lwres/win32/include" /I "../../../lib/lwres/include" /I "../../../lib/isccfg/include" /I "../../../lib/bind9/include" @USE_OPENSSL@ @USE_GSSAPI@ /D "BUILDER=\"old Visual Studio\"" /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /D "i386" /FR /FD /GZ /c
+# ADD CPP /nologo /MDd /W3 /Gm @COPTX@ @COPTI@ /ZI /Od @OPENSSL_INC@ @GSSAPI_INC@ @GEOIP_INC@ /I "./" /I "../../../" @LIBXML2_INC@ /I "../win32/include" /I "../include" /I "../../../lib/isc/win32" /I "../../../lib/isc/win32/include" /I "../../../lib/isc/include" /I "../../../lib/dns/win32/include" /I "../../../lib/dns/include" /I "../../../lib/isccc/include" /I "../../../lib/lwres/win32/include" /I "../../../lib/lwres/include" /I "../../../lib/isccfg/include" /I "../../../lib/bind9/include" @CRYPTO@ @USE_GSSAPI@ /D "BUILDER=\"old Visual Studio\"" /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /D "i386" /FR /FD /GZ /c
 # SUBTRACT CPP /X @COPTY@
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"

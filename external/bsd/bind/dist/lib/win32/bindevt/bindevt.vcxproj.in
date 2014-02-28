@@ -42,12 +42,14 @@
     <OutDir>..\..\..\Build\$(Configuration)\</OutDir>
     <IntDir>.\$(Configuration)\</IntDir>
     <CustomBuildBeforeTargets>ResourceCompile</CustomBuildBeforeTargets>
+    <IgnoreImportLibrary>true</IgnoreImportLibrary>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|@PLATFORM@'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>..\..\..\Build\$(Configuration)\</OutDir>
     <IntDir>.\$(Configuration)\</IntDir>
     <CustomBuildBeforeTargets>ResourceCompile</CustomBuildBeforeTargets>
+    <IgnoreImportLibrary>true</IgnoreImportLibrary>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|@PLATFORM@'">
     <ClCompile>

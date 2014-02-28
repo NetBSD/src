@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2010-2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2010-2013  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -80,7 +80,7 @@ status=`expr $status + $ret`
 n=`expr $n + 1`
 echo "I:look for static-stub zone data with recursion (should be found) ($n)"
 ret=0
-$DIG +tcp data.example. @10.53.0.2 txt -p 5300 > dig.out.ns2.test$n || ret=1
+$DIG +tcp +noauth data.example. @10.53.0.2 txt -p 5300 > dig.out.ns2.test$n || ret=1
 $PERL ../digcomp.pl knowngood.dig.out.rec dig.out.ns2.test$n || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`

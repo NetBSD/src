@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -45,7 +45,7 @@
 #
 # XXX: Doesn't support IPv6 yet
 
-require 5.006.001;
+require 5.006_001;
 
 use strict;
 use Getopt::Std;

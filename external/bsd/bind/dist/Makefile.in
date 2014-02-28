@@ -1,4 +1,4 @@
-# Copyright (C) 2004-2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 1998-2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -23,6 +23,7 @@ top_srcdir =	@top_srcdir@
 
 SUBDIRS =	make unit lib bin doc @LIBEXPORT@
 TARGETS =
+PREREQS =	bind.keys.h
 
 MANPAGES =	isc-config.sh.1
 
@@ -31,6 +32,9 @@ HTMLPAGES =	isc-config.sh.html
 MANOBJS =	${MANPAGES} ${HTMLPAGES}
 
 @BIND9_MAKE_RULES@
+
+bind.keys.h: ${top_srcdir}/bind.keys ${srcdir}/util/bindkeys.pl
+	${PERL} ${srcdir}/util/bindkeys.pl < ${top_srcdir}/bind.keys > $@
 
 distclean::
 	rm -f config.cache config.h config.log config.status TAGS
@@ -41,6 +45,7 @@ distclean::
 # to make it.
 maintainer-clean::
 	rm -f configure
+	rm -f bind.keys.h
 
 docclean manclean maintainer-clean::
 	rm -f ${MANOBJS}
@@ -89,6 +94,9 @@ FAQ: FAQ.xml
 	${XSLTPROC} doc/xsl/isc-docbook-text.xsl FAQ.xml | \
 	LC_ALL=C ${W3M} -T text/html -dump -cols 72 >$@.tmp
 	mv $@.tmp $@
+
+unit::
+	sh ${top_srcdir}/unit/unittest.sh
 
 clean::
 	rm -f FAQ.tmp

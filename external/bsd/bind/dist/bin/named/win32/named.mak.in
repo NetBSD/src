@@ -166,7 +166,7 @@ CLEAN :
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP_PROJ=/nologo /MD /W3 @COPTX@ @COPTI@ /O2 @OPENSSL_INC@ @GSSAPI_INC@ /I "./" /I "../../../" @LIBXML2_INC@ /I "../win32/include" /I "../include" /I "../../../lib/isc/win32" /I "../../../lib/isc/win32/include" /I "../../../lib/isc/include" /I "../../../lib/dns/win32/include" /I "../../../lib/dns/include" /I "../../../lib/isccc/include" /I "../../../lib/lwres/win32/include" /I "../../../lib/lwres/include" /I "../../../lib/isccfg/include" /I "../../../lib/bind9/include" @USE_OPENSSL@ @USE_GSSAPI@ /D "BUILDER=\"nmake\"" /D "WIN32" /D "NDEBUG" /D "__STDC__" /D "_CONSOLE" /D "_MBCS" /Fp"$(INTDIR)\named.pch" @COPTY@ /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP_PROJ=/nologo /MD /W3 @COPTX@ @COPTI@ /O2 @OPENSSL_INC@ @GSSAPI_INC@ /I "./" /I "../../../" @LIBXML2_INC@ /I "../win32/include" /I "../include" /I "../../../lib/isc/win32" /I "../../../lib/isc/win32/include" /I "../../../lib/isc/include" /I "../../../lib/dns/win32/include" /I "../../../lib/dns/include" /I "../../../lib/isccc/include" /I "../../../lib/lwres/win32/include" /I "../../../lib/lwres/include" /I "../../../lib/isccfg/include" /I "../../../lib/bind9/include" @CRYPTO@ @USE_GSSAPI@ /D "BUILDER=\"nmake\"" /D "WIN32" /D "NDEBUG" /D "__STDC__" /D "_CONSOLE" /D "_MBCS" /Fp"$(INTDIR)\named.pch" @COPTY@ /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
 BSC32=bscmake.exe
 BSC32_FLAGS=/nologo /o"$(OUTDIR)\named.bsc" 
 BSC32_SBRS= \
@@ -325,7 +325,7 @@ CLEAN :
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP_PROJ=/nologo /MDd /W3 /Gm @COPTX@ @COPTI@ /ZI /Od @OPENSSL_INC@ @GSSAPI_INC@ /I "./" /I "../../../" @LIBXML2_INC@ /I "../win32/include" /I "../include" /I "../../../lib/isc/win32" /I "../../../lib/isc/win32/include" /I "../../../lib/isc/include" /I "../../../lib/dns/win32/include" /I "../../../lib/dns/include" /I "../../../lib/isccc/include" /I "../../../lib/lwres/win32/include" /I "../../../lib/lwres/include" /I "../../../lib/isccfg/include" /I "../../../lib/bind9/include" @USE_OPENSSL@ @USE_GSSAPI@ /D "BUILDER=\"nmake\"" /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /D "i386" /FR"$(INTDIR)\\" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
+CPP_PROJ=/nologo /MDd /W3 /Gm @COPTX@ @COPTI@ /ZI /Od @OPENSSL_INC@ @GSSAPI_INC@ /I "./" /I "../../../" @LIBXML2_INC@ /I "../win32/include" /I "../include" /I "../../../lib/isc/win32" /I "../../../lib/isc/win32/include" /I "../../../lib/isc/include" /I "../../../lib/dns/win32/include" /I "../../../lib/dns/include" /I "../../../lib/isccc/include" /I "../../../lib/lwres/win32/include" /I "../../../lib/lwres/include" /I "../../../lib/isccfg/include" /I "../../../lib/bind9/include" @CRYPTO@ @USE_GSSAPI@ /D "BUILDER=\"nmake\"" /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /D "i386" /FR"$(INTDIR)\\" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
 BSC32=bscmake.exe
 BSC32_FLAGS=/nologo /o"$(OUTDIR)\named.bsc" 
 BSC32_SBRS= \

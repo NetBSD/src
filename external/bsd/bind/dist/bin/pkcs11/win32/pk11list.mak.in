@@ -118,7 +118,7 @@ CLEAN :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
 CPP=cl.exe
-CPP_PROJ=/nologo /MD /W3 @COPTX@ @COPTI@ /O2 /I "./" /I "../../.." /I "../../../lib/isc/win32/include" /I "../../../lib/isc/include" /I "../include" /D "NDEBUG" /D "__STDC__" /D "WIN32" /D "_CONSOLE" /D "_MBCS" @PK11_LIB_LOCATION@ /Fp"$(INTDIR)\pk11list.pch" @COPTY@ /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP_PROJ=/nologo /MD /W3 @COPTX@ @COPTI@ /O2 /I "./" /I "../../.." /I "../../../lib/isc/win32/include" /I "../../../lib/isc/include" /D "NDEBUG" /D "__STDC__" /D "WIN32" /D "_CONSOLE" /D "_MBCS" @PK11_LIB_LOCATION@ /Fp"$(INTDIR)\pk11list.pch" @COPTY@ /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
 
 .c{$(INTDIR)}.obj::
    $(CPP) @<<
@@ -156,7 +156,7 @@ BSC32_FLAGS=/nologo /o"$(OUTDIR)\pk11list.bsc"
 BSC32_SBRS= \
 	
 LINK32=link.exe
-LINK32_FLAGS=user32.lib advapi32.lib /nologo /subsystem:console /incremental:no /pdb:"$(OUTDIR)\pkcs11-list.pdb" @MACHINE@ /out:"../../../Build/Release/pkcs11-list.exe" 
+LINK32_FLAGS=user32.lib advapi32.lib ../../../lib/isc/win32/Release/libisc.lib /nologo /subsystem:console /incremental:no /pdb:"$(OUTDIR)\pkcs11-list.pdb" @MACHINE@ /out:"../../../Build/Release/pkcs11-list.exe" 
 LINK32_OBJS= "$(INTDIR)\pkcs11-list.obj"
 
 "..\..\..\Build\Release\pkcs11-list.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -191,7 +191,7 @@ CLEAN :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
 CPP=cl.exe
-CPP_PROJ=/nologo /MDd /W3 /Gm @COPTX@ @COPTI@ /ZI /Od /I "./" /I "../../.." /I "../../../lib/isc/win32/include" /I "../../../lib/isc/include" /I "../include" /D "_DEBUG" /D "WIN32" /D "__STDC__" /D "_CONSOLE" /D "_MBCS" @PK11_LIB_LOCATION@ /FR"$(INTDIR)\\" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
+CPP_PROJ=/nologo /MDd /W3 /Gm @COPTX@ @COPTI@ /ZI /Od /I "./" /I "../../.." /I "../../../lib/isc/win32/include" /I "../../../lib/isc/include" /D "_DEBUG" /D "WIN32" /D "__STDC__" /D "_CONSOLE" /D "_MBCS" @PK11_LIB_LOCATION@ /FR"$(INTDIR)\\" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
 
 .c{$(INTDIR)}.obj::
    $(CPP) @<<
@@ -234,7 +234,7 @@ BSC32_SBRS= "$(INTDIR)\pkcs11-list.sbr"
 <<
 
 LINK32=link.exe
-LINK32_FLAGS=user32.lib advapi32.lib /nologo /subsystem:console /incremental:yes /pdb:"$(OUTDIR)\pkcs11-list.pdb" /debug @MACHINE@ /out:"../../../Build/Debug/pkcs11-list.exe" /pdbtype:sept 
+LINK32_FLAGS=user32.lib advapi32.lib ../../../lib/isc/win32/Debug/libisc.lib /nologo /subsystem:console /incremental:yes /pdb:"$(OUTDIR)\pkcs11-list.pdb" /debug @MACHINE@ /out:"../../../Build/Debug/pkcs11-list.exe" /pdbtype:sept 
 LINK32_OBJS= "$(INTDIR)\pkcs11-list.obj"
 
 "..\..\..\Build\Debug\pkcs11-list.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)

@@ -1,6 +1,6 @@
-.\"	$NetBSD: dnssec-coverage.8,v 1.1.1.1 2013/07/27 15:22:49 christos Exp $
+.\"	$NetBSD: dnssec-coverage.8,v 1.1.1.2 2014/02/28 17:40:07 christos Exp $
 .\"
-.\" Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
 .\"
 .\" Permission to use, copy, modify, and/or distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -34,7 +34,7 @@
 dnssec\-coverage \- checks future DNSKEY coverage for a zone
 .SH "SYNOPSIS"
 .HP 16
-\fBdnssec\-coverage\fR [\fB\-K\ \fR\fB\fIdirectory\fR\fR] [\fB\-f\ \fR\fB\fIfile\fR\fR] [\fB\-d\ \fR\fB\fIDNSKEY\ TTL\fR\fR] [\fB\-m\ \fR\fB\fImax\ TTL\fR\fR] [\fB\-r\ \fR\fB\fIinterval\fR\fR] [\fB\-c\ \fR\fB\fIcompilezone\ path\fR\fR] [zone]
+\fBdnssec\-coverage\fR [\fB\-K\ \fR\fB\fIdirectory\fR\fR] [\fB\-l\ \fR\fB\fIlength\fR\fR] [\fB\-f\ \fR\fB\fIfile\fR\fR] [\fB\-d\ \fR\fB\fIDNSKEY\ TTL\fR\fR] [\fB\-m\ \fR\fB\fImax\ TTL\fR\fR] [\fB\-r\ \fR\fB\fIinterval\fR\fR] [\fB\-c\ \fR\fB\fIcompilezone\ path\fR\fR] [\fB\-k\fR] [\fB\-z\fR] [zone]
 .SH "DESCRIPTION"
 .PP
 \fBdnssec\-coverage\fR
@@ -49,6 +49,11 @@ If
 is not specified, then all keys in the key repository will be scanned, and all zones for which there are keys will be analyzed. (Note: This method of reporting is only accurate if all the zones that have keys in a given repository share the same TTL parameters.)
 .SH "OPTIONS"
 .PP
+\-K \fIdirectory\fR
+.RS 4
+Sets the directory in which keys can be found. Defaults to the current working directory.
+.RE
+.PP
 \-f \fIfile\fR
 .RS 4
 If a
@@ -60,9 +65,15 @@ and
 options do not need to be specified on the command line.
 .RE
 .PP
-\-K \fIdirectory\fR
+\-l \fIduration\fR
 .RS 4
-Sets the directory in which keys can be found. Defaults to the current working directory.
+The length of time to check for DNSSEC coverage. Key events scheduled further into the future than
+\fBduration\fR
+will be ignored, and assumed to be correct.
+.sp
+The value of
+\fBduration\fR
+can be set in seconds, or in larger units of time by adding a suffix: 'mi' for minutes, 'h' for hours, 'd' for days, 'w' for weeks, 'mo' for months, 'y' for years.
 .RE
 .PP
 \-m \fImaximum TTL\fR
@@ -103,6 +114,18 @@ option in
 The length of the interval can be set in seconds, or in larger units of time by adding a suffix: 'mi' for minutes, 'h' for hours, 'd' for days, 'w' for weeks, 'mo' for months, 'y' for years.
 .RE
 .PP
+\-k
+.RS 4
+Only check KSK coverage; ignore ZSK events. Cannot be used with
+\fB\-z\fR.
+.RE
+.PP
+\-z
+.RS 4
+Only check ZSK coverage; ignore KSK events. Cannot be used with
+\fB\-k\fR.
+.RE
+.PP
 \-c \fIcompilezone path\fR
 .RS 4
 Specifies a path to a
@@ -119,5 +142,5 @@ binary. Used for testing.
 .PP
 Internet Systems Consortium
 .SH "COPYRIGHT"
-Copyright \(co 2013 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2013, 2014 Internet Systems Consortium, Inc. ("ISC")
 .br

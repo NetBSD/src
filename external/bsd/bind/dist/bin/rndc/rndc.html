@@ -1,5 +1,5 @@
 <!--
- - Copyright (C) 2004, 2005, 2007, 2013 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004, 2005, 2007, 2013, 2014 Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000, 2001 Internet Software Consortium.
  - 
  - Permission to use, copy, modify, and/or distribute this software for any
@@ -32,7 +32,7 @@
 <div class="cmdsynopsis"><p><code class="command">rndc</code>  [<code class="option">-b <em class="replaceable"><code>source-address</code></em></code>] [<code class="option">-c <em class="replaceable"><code>config-file</code></em></code>] [<code class="option">-k <em class="replaceable"><code>key-file</code></em></code>] [<code class="option">-s <em class="replaceable"><code>server</code></em></code>] [<code class="option">-p <em class="replaceable"><code>port</code></em></code>] [<code class="option">-V</code>] [<code class="option">-y <em class="replaceable"><code>key_id</code></em></code>] {command}</p></div>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2543418"></a><h2>DESCRIPTION</h2>
+<a name="id2543421"></a><h2>DESCRIPTION</h2>
 <p><span><strong class="command">rndc</strong></span>
       controls the operation of a name
       server.  It supersedes the <span><strong class="command">ndc</strong></span> utility
@@ -43,12 +43,14 @@
       arguments.
     </p>
 <p><span><strong class="command">rndc</strong></span>
-      communicates with the name server
-      over a TCP connection, sending commands authenticated with
-      digital signatures.  In the current versions of
+      communicates with the name server over a TCP connection, sending
+      commands authenticated with digital signatures.  In the current
+      versions of
       <span><strong class="command">rndc</strong></span> and <span><strong class="command">named</strong></span>,
-      the only supported authentication algorithm is HMAC-MD5,
-      which uses a shared secret on each end of the connection.
+      the only supported authentication algorithms are HMAC-MD5
+      (for compatibility), HMAC-SHA1, HMAC-SHA224, HMAC-SHA256
+      (default), HMAC-SHA384 and HMAC-SHA512.
+      They use a shared secret on each end of the connection.
       This provides TSIG-style authentication for the command
       request and the name server's response.  All commands sent
       over the channel must be signed by a key_id known to the
@@ -61,7 +63,7 @@
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2543453"></a><h2>OPTIONS</h2>
+<a name="id2543457"></a><h2>OPTIONS</h2>
 <div class="variablelist"><dl>
 <dt><span class="term">-b <em class="replaceable"><code>source-address</code></em></span></dt>
 <dd><p>
@@ -93,7 +95,7 @@
             <span><strong class="command">rndc</strong></span>.  If no server is supplied on the
             command line, the host named by the default-server clause
             in the options statement of the <span><strong class="command">rndc</strong></span>
-	    configuration file will be used.
+            configuration file will be used.
           </p></dd>
 <dt><span class="term">-p <em class="replaceable"><code>port</code></em></span></dt>
 <dd><p>
@@ -127,7 +129,7 @@
 </dl></div>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2543650"></a><h2>COMMANDS</h2>
+<a name="id2543653"></a><h2>COMMANDS</h2>
 <p>
       A list of commands supported by <span><strong class="command">rndc</strong></span> can
       be seen by running <span><strong class="command">rndc</strong></span> without arguments.
@@ -231,6 +233,13 @@
             zone has changed, any existing journal file will be
             removed.
           </p></dd>
+<dt><span class="term"><strong class="userinput"><code>scan</code></strong></span></dt>
+<dd><p>
+             Scan the list of available network interfaces
+             for changes, without performing a full
+             <span><strong class="command">reconfig</strong></span> or waiting for the
+             <span><strong class="command">interface-interval</strong></span> timer.
+          </p></dd>
 <dt><span class="term"><strong class="userinput"><code>sync [<span class="optional">-clean</span>] [<span class="optional"><em class="replaceable"><code>zone</code></em> [<span class="optional"><em class="replaceable"><code>class</code></em> [<span class="optional"><em class="replaceable"><code>view</code></em></span>]</span>]</span>]</code></strong></span></dt>
 <dd><p>
             Sync changes in the journal file for a dynamic zone
@@ -251,6 +260,18 @@
             is a large number of zones because it avoids the need
             to examine the
             modification times of the zones files.
+          </p></dd>
+<dt><span class="term"><strong class="userinput"><code>zonestatus [<span class="optional"><em class="replaceable"><code>zone</code></em> [<span class="optional"><em class="replaceable"><code>class</code></em> [<span class="optional"><em class="replaceable"><code>view</code></em></span>]</span>]</span>]</code></strong></span></dt>
+<dd><p>
+            Displays the current status of the given zone,
+            including the master file name and any include
+            files from which it was loaded, when it was most
+            recently loaded, the current serial number, the
+            number of nodes, whether the zone supports
+            dynamic updates, whether the zone is DNSSEC
+            signed, whether it uses automatic DNSSEC key
+            management or inline signing, and the scheduled
+            refresh or expiry times for the zone.
           </p></dd>
 <dt><span class="term"><strong class="userinput"><code>stats</code></strong></span></dt>
 <dd><p>
@@ -332,12 +353,11 @@
             and, if applicable, from the server's nameserver address
             database or bad-server cache.
           </p></dd>
-<dt><span class="term"><strong class="userinput"><code>flushtree</code></strong> <em class="replaceable"><code>name</code></em> [<span class="optional"><em class="replaceable"><code>view</code></em></span>] </span></dt>
+<dt><span class="term"><strong class="userinput"><code>flushtree</code></strong> [<span class="optional">-all</span>] <em class="replaceable"><code>name</code></em> [<span class="optional"><em class="replaceable"><code>view</code></em></span>] </span></dt>
 <dd><p>
             Flushes the given name, and all of its subdomains,
-            from the server's DNS cache.  Note that this does
-            <span class="emphasis"><em>not</em></span> affect he server's address
-            database or bad-server cache.
+            from the server's DNS cache, the address database,
+            and the bad server cache.
           </p></dd>
 <dt><span class="term"><strong class="userinput"><code>status</code></strong></span></dt>
 <dd><p>
@@ -409,13 +429,25 @@
             configuration text.)
           </p>
 </dd>
-<dt><span class="term"><strong class="userinput"><code>delzone <em class="replaceable"><code>zone</code></em> [<span class="optional"><em class="replaceable"><code>class</code></em> [<span class="optional"><em class="replaceable"><code>view</code></em></span>]</span>] </code></strong></span></dt>
-<dd><p>
+<dt><span class="term"><strong class="userinput"><code>delzone [<span class="optional">-clean</span>] <em class="replaceable"><code>zone</code></em> [<span class="optional"><em class="replaceable"><code>class</code></em> [<span class="optional"><em class="replaceable"><code>view</code></em></span>]</span>] </code></strong></span></dt>
+<dd>
+<p>
             Delete a zone while the server is running.
             Only zones that were originally added via
             <span><strong class="command">rndc addzone</strong></span> can be deleted
             in this manner. 
-          </p></dd>
+          </p>
+<p>
+            If the <code class="option">-clean</code> is specified,
+            the zone's master file (and journal file, if any)
+            will be deleted along with the zone.  Without the
+            <code class="option">-clean</code> option, zone files must
+            be cleaned up by hand.  (If the zone is of
+            type "slave" or "stub", the files needing to
+            be cleaned up will be reported in the output
+            of the <span><strong class="command">rndc delzone</strong></span> command.)
+          </p>
+</dd>
 <dt><span class="term"><strong class="userinput"><code>signing [<span class="optional">( -list | -clear <em class="replaceable"><code>keyid/algorithm</code></em> | -clear <code class="literal">all</code> | -nsec3param ( <em class="replaceable"><code>parameters</code></em> | <code class="literal">none</code> ) ) </span>] <em class="replaceable"><code>zone</code></em> [<span class="optional"><em class="replaceable"><code>class</code></em> [<span class="optional"><em class="replaceable"><code>view</code></em></span>]</span>] </code></strong></span></dt>
 <dd>
 <p>
@@ -480,7 +512,7 @@
 </dl></div>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2544843"></a><h2>LIMITATIONS</h2>
+<a name="id2544978"></a><h2>LIMITATIONS</h2>
 <p>
       There is currently no way to provide the shared secret for a
       <code class="option">key_id</code> without using the configuration file.
@@ -490,7 +522,7 @@
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2542131"></a><h2>SEE ALSO</h2>
+<a name="id2542129"></a><h2>SEE ALSO</h2>
 <p><span class="citerefentry"><span class="refentrytitle">rndc.conf</span>(5)</span>,
       <span class="citerefentry"><span class="refentrytitle">rndc-confgen</span>(8)</span>,
       <span class="citerefentry"><span class="refentrytitle">named</span>(8)</span>,
@@ -500,7 +532,7 @@
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2545190"></a><h2>AUTHOR</h2>
+<a name="id2545256"></a><h2>AUTHOR</h2>
 <p><span class="corpauthor">Internet Systems Consortium</span>
     </p>
 </div>

@@ -17,17 +17,16 @@ BIND 9.8.0
         - New "static-stub" zone type.
         - Allow configuration of resolver timeouts via
           "resolver-query-timeout" option.
-	- The DLZ "dlopen" driver is now built by default.
-	- Added a new include file with function typedefs
+        - The DLZ "dlopen" driver is now built by default.
+        - Added a new include file with function typedefs
           for the DLZ "dlopen" driver.
-	- Made "--with-gssapi" default.
-	- More verbose error reporting from DLZ LDAP.
+        - Made "--with-gssapi" default.
+        - More verbose error reporting from DLZ LDAP.
 
 BIND 9.7.0
 
 	BIND 9.7.0 includes a number of changes from BIND 9.6 and earlier
 	releases.  Most are intended to simplify DNSSEC configuration.
-
 	New features include:
 
 	- Fully automatic signing of zones by "named".

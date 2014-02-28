@@ -1,4 +1,4 @@
-# Copyright (C) 2004, 2005, 2007, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2005, 2007, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 1999-2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -36,6 +36,9 @@ ISCCFG_INCLUDES = @BIND9_ISCCFG_BUILDINCLUDE@ \
 
 DNS_INCLUDES = @BIND9_DNS_BUILDINCLUDE@ \
 	-I${top_srcdir}/lib/dns/include
+
+IRS_INCLUDES = @BIND9_IRS_BUILDINCLUDE@ \
+	-I${top_srcdir}/lib/irs/include
 
 LWRES_INCLUDES = @BIND9_LWRES_BUILDINCLUDE@ \
 	-I${top_srcdir}/lib/lwres/unix/include \

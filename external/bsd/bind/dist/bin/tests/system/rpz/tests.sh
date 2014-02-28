@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -21,15 +21,15 @@ SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
 ns=10.53.0
-ns1=$ns.1			    # root, defining the others
-ns2=$ns.2			    # server whose answers are rewritten
-ns3=$ns.3			    # resolve that does the rewriting
-ns4=$ns.4			    # another server that is rewritten
-ns5=$ns.5			    # check performance with this server
+ns1=$ns.1		# root, defining the others
+ns2=$ns.2		# authoritative server whose records are rewritten
+ns3=$ns.3		# main rewriting resolver
+ns4=$ns.4		# another authoritative server that is rewritten
+ns5=$ns.5		# another rewriting resolver
 
 HAVE_CORE=
 SAVE_RESULTS=
-NS3_STATS=47
+
 
 USAGE="$0: [-x]"
 while getopts "x" c; do
@@ -57,13 +57,16 @@ comment () {
 RNDCCMD="$RNDC -c $SYSTEMTESTTOP/common/rndc.conf -p 9953 -s"
 
 digcmd () {
+    if test "$1" = TCP; then
+	shift
+    fi
     # Default to +noauth and @$ns3
     # Also default to -bX where X is the @value so that OS X will choose
-    #      the right IP source address.
-    digcmd_args=`echo "+noadd +time=1 +tries=1 -p 5300 $*" |   \
-	   sed -e "/@/!s/.*/& @$ns3/"                          \
-	       -e '/-b/!s/@\([^ ]*\)/@\1 -b\1/'                \
-	       -e '/+n?o?auth/!s/.*/+noauth &/'`
+    #	    the right IP source address.
+    digcmd_args=`echo "+noadd +time=1 +tries=1 -p 5300 $*" |	\
+	    sed -e "/@/!s/.*/& @$ns3/"				\
+		-e '/-b/!s/@\([^ ]*\)/@\1 -b\1/'		\
+		-e '/+n?o?auth/!s/.*/+noauth &/'`
     #echo I:dig $digcmd_args 1>&2
     $DIG $digcmd_args
 }
@@ -89,10 +92,13 @@ setret () {
 # (re)load the reponse policy zones with the rules in the file $TEST_FILE
 load_db () {
     if test -n "$TEST_FILE"; then
-	$NSUPDATE -v $TEST_FILE || {
+	if $NSUPDATE -v $TEST_FILE; then :
+	    $RNDCCMD $ns3 sync
+	else
 	    echo "I:failed to update policy zone with $TEST_FILE"
+	    $RNDCCMD $ns3 sync
 	    exit 1
-	}
+	fi
     fi
 }
 
@@ -135,16 +141,20 @@ ckalive () {
     return 1
 }
 
-# check that statistics for $1 in $2 = $3
 ckstats () {
-    rm -f $2/named.stats
-    $RNDCCMD $1 stats
-    CNT=`sed -n -e 's/[	 ]*\([0-9]*\).response policy.*/\1/p'  \
-		    $2/named.stats`
-    CNT=`expr 0$CNT + 0`
-    if test "$CNT" -ne $3; then
-	setret "I:wrong $2 statistics of $CNT instead of $3"
+    HOST=$1
+    LABEL="$2"
+    NSDIR="$3"
+    EXPECTED="$4"
+    $RNDCCMD $HOST stats
+    NEW_CNT=0`sed -n -e 's/[	 ]*\([0-9]*\).response policy.*/\1/p'  \
+		    $NSDIR/named.stats | tail -1`
+    eval "OLD_CNT=0\$${NSDIR}_CNT"
+    GOT=`expr $NEW_CNT - $OLD_CNT`
+    if test "$GOT" -ne "$EXPECTED"; then
+	setret "I:wrong $LABEL $NSDIR statistics of $GOT instead of $EXPECTED"
     fi
+    eval "${NSDIR}_CNT=$NEW_CNT"
 }
 
 # $1=message  $2=optional test file name
@@ -181,6 +191,12 @@ clean_result () {
 ckresult () {
     #ckalive "$1" "I:server crashed by 'dig $1'" || return 1
     if $PERL $SYSTEMTESTTOP/digcomp.pl $DIGNM $2 >/dev/null; then
+	NEED_TCP=`echo "$1" | sed -n -e 's/[Tt][Cc][Pp].*/TCP/p'`
+	RESULT_TCP=`sed -n -e 's/.*Truncated, retrying in TCP.*/TCP/p' $DIGNM`
+	if test "$NEED_TCP" != "$RESULT_TCP"; then
+	    setret "I:'dig $1' wrong; no or unexpected truncation in $DIGNM"
+	    return 1
+	fi
 	clean_result ${DIGNM}*
 	return 0
     fi
@@ -237,12 +253,14 @@ addr () {
     clean_result ${DIGNM}*
 }
 
-# check that a response is not rewritten
-# $1=target domain  $2=optional query type
+# Check that a response is not rewritten
+#   Use $ns1 instead of the authority for most test domains, $ns2 to prevent
+#   spurious differences for `dig +norecurse`
+# $1=optional "TCP"  remaining args for dig
 nochange () {
     make_dignm
     digcmd $* >$DIGNM
-    digcmd $* @$ns2 >${DIGNM}_OK
+    digcmd $* @$ns1 >${DIGNM}_OK
     ckresult "$*" ${DIGNM}_OK && clean_result ${DIGNM}_OK
 }
 
@@ -253,6 +271,20 @@ here () {
     digcmd $* >$DIGNM
     ckresult "$*" ${DIGNM}_OK
 }
+
+# check dropped response
+DROPPED='^;; connection timed out; no servers could be reached'
+drop () {
+    make_dignm
+    digcmd $* >$DIGNM
+    if grep "$DROPPED" $DIGNM >/dev/null; then
+	clean_result ${DIGNM}*
+	return 0
+    fi
+    setret "I:'dig $1' wrong; response in $DIGNM"
+    return 1
+}
+
 
 # make prototype files to check against rewritten results
 digcmd nonexistent @$ns2 >proto.nxdomain
@@ -281,19 +313,27 @@ addr 56.56.56.56  a3-6.tld2		# 16 wildcard CNAME
 addr 57.57.57.57  a3-7.sub1.tld2	# 17 wildcard CNAME
 addr 127.0.0.16	  a4-5-cname3.tld2	# 18 CNAME chain
 addr 127.0.0.17	  a4-6-cname3.tld2	# 19 stop short in CNAME chain
-nochange a0-1.tld2	    +norecurse	# 20 check that RD=1 is required
-nochange a3-1.tld2	    +norecurse	# 21
-nochange a3-2.tld2	    +norecurse	# 22
-nochange sub.a3-2.tld2	    +norecurse	# 23
+nochange a5-2.tld2	    +norecurse	# 20 check that RD=1 is required
+nochange a5-3.tld2	    +norecurse	# 21
+nochange a5-4.tld2	    +norecurse	# 22
+nochange sub.a5-4.tld2	    +norecurse	# 23
 nxdomain c1.crash2.tld3			# 24 assert in rbtdb.c
 nxdomain a0-1.tld2	    +dnssec	# 25 simple DO=1 without signatures
-nxdomain a0-1.tld2s			# 26 simple DO=0 with signatures
+nxdomain a0-1.tld2s	    +nodnssec	# 26 simple DO=0 with signatures
 nochange a0-1.tld2s	    +dnssec	# 27 simple DO=1 with signatures
 nxdomain a0-1s-cname.tld2s  +dnssec	# 28 DNSSEC too early in CNAME chain
 nochange a0-1-scname.tld2   +dnssec	# 29 DNSSEC on target in CNAME chain
-nochange a0-1.tld2s srv +auth +dnssec	# 30 no write for +DNSSEC and no record
-nxdomain a0-1.tld2s srv			# 31
+nochange a0-1.tld2s srv +auth +dnssec	# 30 no write for DNSSEC and no record
+nxdomain a0-1.tld2s srv	    +nodnssec	# 31
+drop a3-8.tld2 any			# 32 drop
+nochange tcp a3-9.tld2			# 33 tcp-only
+here x.servfail <<'EOF'			# 34 qname-wait-recurse yes
+    ;; status: SERVFAIL, x
+EOF
+addr 35.35.35.35 "x.servfail @$ns5"	# 35 qname-wait-recurse no
 end_group
+ckstats $ns3 test1 ns3 22
+ckstats $ns5 test1 ns5 1
 
 start_group "IP rewrites" test2
 nodata a3-1.tld2			# 1 NODATA
@@ -308,12 +348,12 @@ nxdomain a3-1.tld2 -taaaa		# 9 IPv6 policy
 nochange a4-1-aaaa.tld2 -taaaa		# 10
 addr 127.0.0.1	 a5-1-2.tld2		# 11 prefer smallest policy address
 addr 127.0.0.1	 a5-3.tld2		# 12 prefer first conflicting IP zone
-addr 14.14.14.14 a5-4.tld2		# 13 prefer QNAME to IP
-nochange a5-4.tld2	    +norecurse	# 14 check that RD=1 is required
+nochange a5-4.tld2	    +norecurse	# 13 check that RD=1 is required for #14
+addr 14.14.14.14 a5-4.tld2		# 14 prefer QNAME to IP
 nochange a4-4.tld2			# 15 PASSTHRU
 nxdomain c2.crash2.tld3			# 16 assert in rbtdb.c
-ckstats $ns3 ns3 29
-nxdomain a7-1.tld2			# 17 slave policy zone (RT34450)
+addr 127.0.0.17 "a4-4.tld2 -b $ns1"	# 17 client-IP address trigger
+nxdomain a7-1.tld2			# 18 slave policy zone (RT34450)
 cp ns2/blv2.tld2.db.in ns2/bl.tld2.db
 $RNDCCMD 10.53.0.2 reload bl.tld2
 goodsoa="rpz.tld2. hostmaster.ns.tld2. 2 3600 1200 604800 60"
@@ -323,7 +363,7 @@ do
 	test "$soa" = "$goodsoa" && break
 	sleep 1
 done
-nochange a7-1.tld2			# 18 PASSTHRU
+nochange a7-1.tld2			# 19 PASSTHRU
 sleep 1	# ensure that a clock tick has occured so that the reload takes effect
 cp ns2/blv3.tld2.db.in ns2/bl.tld2.db
 goodsoa="rpz.tld2. hostmaster.ns.tld2. 3 3600 1200 604800 60"
@@ -334,9 +374,9 @@ do
 	test "$soa" = "$goodsoa" && break
 	sleep 1
 done
-nxdomain a7-1.tld2			# 19 slave policy zone (RT34450)
-ckstats $ns3 ns3 31
+nxdomain a7-1.tld2			# 20 slave policy zone (RT34450)
 end_group
+ckstats $ns3 test2 ns3 12
 
 # check that IP addresses for previous group were deleted from the radix tree
 start_group "radix tree deletions"
@@ -352,6 +392,7 @@ nochange a3-1.tld2 -tAAAA
 nochange a4-1-aaaa.tld2 -tAAAA
 nochange a5-1-2.tld2
 end_group
+ckstats $ns3 'radix tree deletions' ns3 0
 
 if ./rpz nsdname; then
     # these tests assume "min-ns-dots 0"
@@ -369,7 +410,7 @@ if ./rpz nsdname; then
     addr 127.0.0.2 a3-1.subsub.sub3.tld2
     nxdomain xxx.crash1.tld2		# 12 dns_db_detachnode() crash
     end_group
-    NS3_STATS=`expr $NS3_STATS + 7`
+    ckstats $ns3 test3 ns3 7
 else
     echo "I:NSDNAME not checked; named configured with --disable-rpz-nsdname"
 fi
@@ -383,15 +424,15 @@ if ./rpz nsip; then
     nochange a3-1.tld4			# 4 different NS IP address
     end_group
 
-#    start_group "walled garden NSIP rewrites" test4a
-#    addr 41.41.41.41 a3-1.tld2		# 1 walled garden for all of tld2
-#    addr 2041::41   'a3-1.tld2 AAAA'	# 2 walled garden for all of tld2
-#    here a3-1.tld2 TXT <<'EOF'		# 3 text message for all of tld2
-#    ;; status: NOERROR, x
-#    a3-1.tld2.	    x	IN	TXT   "NSIP walled garden"
-#EOF
-#    end_group
-    NS3_STATS=`expr $NS3_STATS + 1`
+    start_group "walled garden NSIP rewrites" test4a
+    addr 41.41.41.41 a3-1.tld2		# 1 walled garden for all of tld2
+    addr 2041::41   'a3-1.tld2 AAAA'	# 2 walled garden for all of tld2
+    here a3-1.tld2 TXT <<'EOF'		# 3 text message for all of tld2
+    ;; status: NOERROR, x
+    a3-1.tld2.	    x	IN	TXT   "NSIP walled garden"
+EOF
+    end_group
+    ckstats $ns3 test4 ns3 4
 else
     echo "I:NSIP not checked; named configured with --disable-rpz-nsip"
 fi
@@ -403,12 +444,12 @@ addr 127.0.0.1 a3-1.tld2		# 1 bl-given
 nochange a3-2.tld2			# 2 bl-passthru
 nochange a3-3.tld2			# 3 bl-no-op	obsolete for passthru
 nochange a3-4.tld2			# 4 bl-disabled
-nodata a3-5.tld2			# 5 bl-nodata
-nodata a3-5.tld2    +norecurse		# 6 bl-nodata	    recursive-only no
-nodata a3-5.tld2			# 7 bl-nodata
-nodata a3-5.tld2    +norecurse	@$ns5	# 8 bl-nodata	    recursive-only no
-nodata a3-5.tld2s		@$ns5	# 9 bl-nodata
-nodata a3-5.tld2s   +dnssec	@$ns5	# 10 bl-nodata	    break-dnssec
+nodata a3-5.tld2			# 5 bl-nodata	zone recursive-only no
+nodata a3-5.tld2    +norecurse		# 6 bl-nodata	zone recursive-only no
+nodata a3-5.tld2			# 7 bl-nodata		not needed
+nxdomain a3-5.tld2  +norecurse	@$ns5	# 8 bl-nodata	global recursive-only no
+nxdomain a3-5.tld2s		@$ns5	# 9 bl-nodata	global break-dnssec
+nxdomain a3-5.tld2s +dnssec	@$ns5	# 10 bl-nodata	global break-dnssec
 nxdomain a3-6.tld2			# 11 bl-nxdomain
 here a3-7.tld2 -tany <<'EOF'
     ;; status: NOERROR, x
@@ -420,10 +461,15 @@ addr 59.59.59.59 a3-9.sub9.tld2		# 14 bl_wildcname
 addr 12.12.12.12 a3-15.tld2		# 15 bl-garden	via CNAME to a12.tld2
 addr 127.0.0.16 a3-16.tld2	    100	# 16 bl		    max-policy-ttl 100
 addr 17.17.17.17 "a3-17.tld2 @$ns5" 90	# 17 ns5 bl	    max-policy-ttl 90
+drop a3-18.tld2 any			# 18 bl-drop
+nxdomain TCP a3-19.tld2			# 19 bl-tcp-only
 end_group
+ckstats $ns3 test5 ns3 12
+ckstats $ns5 test5 ns5 4
+
 
 # check that miscellaneous bugs are still absent
-start_group "crashes"
+start_group "crashes" test6
 for Q in RRSIG SIG ANY 'ANY +dnssec'; do
     nocrash a3-1.tld2 -t$Q
     nocrash a3-2.tld2 -t$Q
@@ -437,6 +483,8 @@ done
 # resolving foo.
 # nxdomain 32.3.2.1.127.rpz-ip
 end_group
+ckstats $ns3 bugs ns3 8
+
 
 
 # superficial test for major performance bugs
@@ -449,6 +497,7 @@ if test -n "$QPERF"; then
 	$QPERF -c -1 -l30 -d ns5/requests -s $ns5 -p 5300 >/dev/null
 	comment "before real test $1"
 	PFILE="ns5/$2.perf"
+	$RNDCCMD $ns5 notrace
 	$QPERF -c -1 -l30 -d ns5/requests -s $ns5 -p 5300 >$PFILE
 	comment "after test $1"
 	X=`sed -n -e 's/.*Returned *\([^ ]*:\) *\([0-9]*\) .*/\1\2/p' $PFILE \
@@ -463,34 +512,33 @@ if test -n "$QPERF"; then
     }
 
     # get qps with rpz
-    perf 'with rpz' rpz 'NOERROR:2900 NXDOMAIN:100 '
+    perf 'with RPZ' rpz 'NOERROR:2900 NXDOMAIN:100 '
     RPZ=`trim rpz`
 
     # turn off rpz and measure qps again
-    echo "# rpz off" >ns5/rpz-switch
+    echo "# RPZ off" >ns5/rpz-switch
     RNDCCMD_OUT=`$RNDCCMD $ns5 reload`
-    perf 'without rpz' norpz 'NOERROR:3000 '
+    perf 'without RPZ' norpz 'NOERROR:3000 '
     NORPZ=`trim norpz`
 
     PERCENT=`expr \( "$RPZ" \* 100 + \( $NORPZ / 2 \) \) / $NORPZ`
-    echo "I:$RPZ qps with rpz is $PERCENT% of $NORPZ qps without rpz"
+    echo "I:$RPZ qps with RPZ is $PERCENT% of $NORPZ qps without RPZ"
 
     MIN_PERCENT=30
     if test "$PERCENT" -lt $MIN_PERCENT; then
-	setret "I:$RPZ qps with rpz or $PERCENT% is below $MIN_PERCENT% of $NORPZ qps"
+	echo "I:$RPZ qps with rpz or $PERCENT% is below $MIN_PERCENT% of $NORPZ qps"
     fi
 
     if test "$PERCENT" -ge 100; then
-	setret "I:$RPZ qps with RPZ or $PERCENT% of $NORPZ qps without RPZ is too high"
+	echo "I:$RPZ qps with RPZ or $PERCENT% of $NORPZ qps without RPZ is too high"
     fi
 
-    ckstats $ns5 ns5 203
+    ckstats $ns5 performance ns5 200
 
 else
     echo "I:performance not checked; queryperf not available"
 fi
 
-ckstats $ns3 ns3 57
 
 # restart the main test RPZ server to see if that creates a core file
 if test -z "$HAVE_CORE"; then

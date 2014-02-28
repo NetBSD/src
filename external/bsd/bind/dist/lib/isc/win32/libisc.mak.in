@@ -120,11 +120,12 @@ CLEAN :
 	-@erase "$(INTDIR)\backtrace-emptytbl.obj"
 	-@erase "$(INTDIR)\base32.obj"
 	-@erase "$(INTDIR)\base64.obj"
-	-@erase "$(INTDIR)\bitstring.obj"
+	-@erase "$(INTDIR)\bind9.obj"
 	-@erase "$(INTDIR)\buffer.obj"
 	-@erase "$(INTDIR)\bufferlist.obj"
 	-@erase "$(INTDIR)\commandline.obj"
 	-@erase "$(INTDIR)\condition.obj"
+	-@erase "$(INTDIR)\crc64.obj"
 	-@erase "$(INTDIR)\dir.obj"
 	-@erase "$(INTDIR)\DLLMain.obj"
 	-@erase "$(INTDIR)\entropy.obj"
@@ -162,6 +163,10 @@ CLEAN :
 	-@erase "$(INTDIR)\ondestroy.obj"
 	-@erase "$(INTDIR)\os.obj"
 	-@erase "$(INTDIR)\parseint.obj"
+@IF PKCS11
+	-@erase "$(INTDIR)\pk11.obj"
+	-@erase "$(INTDIR)\pk11_api.obj"
+@END PKCS11
 	-@erase "$(INTDIR)\pool.obj"
 	-@erase "$(INTDIR)\portset.obj"
 	-@erase "$(INTDIR)\quota.obj"
@@ -192,6 +197,7 @@ CLEAN :
 	-@erase "$(INTDIR)\thread.obj"
 	-@erase "$(INTDIR)\time.obj"
 	-@erase "$(INTDIR)\timer.obj"
+	-@erase "$(INTDIR)\tm.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(INTDIR)\version.obj"
 	-@erase "$(INTDIR)\win32os.obj"
@@ -203,14 +209,18 @@ CLEAN :
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP_PROJ=/nologo /MD /W3 @COPTX@ @COPTI@ /O2 /I "./" /I "../../../" /I "include" /I "../include" /I "win32" /I "../../isccfg/include" @LIBXML2_INC@ /D "BIND9" /D "WIN32" /D "NDEBUG" /D "__STDC__" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "LIBISC_EXPORTS" /Fp"$(INTDIR)\libisc.pch" @COPTY@ /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+@IF PKCS11
+CPP_PROJ=/nologo /MD /W3 @COPTX@ @COPTI@ /O2 /I "./" /I "../../../" /I "include" /I "../include" /I "win32" /I "../../isccfg/include" /I "../../dns/win32/include" /I "../../dns/include" @LIBXML2_INC@ @OPENSSL_INC@ /D "BIND9" @CRYPTO@ @PK11_LIB_LOCATION@ /D "WIN32" /D "NDEBUG" /D "__STDC__" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "LIBISC_EXPORTS" /Fp"$(INTDIR)\libisc.pch" @COPTY@ /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+@ELSE PKCS11
+CPP_PROJ=/nologo /MD /W3 @COPTX@ @COPTI@ /O2 /I "./" /I "../../../" /I "include" /I "../include" /I "win32" /I "../../isccfg/include" @LIBXML2_INC@ @OPENSSL_INC@ /D "BIND9" /D "WIN32" /D "NDEBUG" /D "__STDC__" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "LIBISC_EXPORTS" /Fp"$(INTDIR)\libisc.pch" @COPTY@ /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+@END PKCS11
 MTL_PROJ=/nologo /D "NDEBUG" /mktyplib203 /win32 
 BSC32=bscmake.exe
 BSC32_FLAGS=/nologo /o"$(OUTDIR)\libisc.bsc" 
 BSC32_SBRS= \
 	
 LINK32=link.exe
-LINK32_FLAGS=user32.lib advapi32.lib ws2_32.lib $(LIBXML) /nologo /dll /incremental:no /pdb:"$(OUTDIR)\libisc.pdb" @MACHINE@ /def:".\libisc.def" /out:"../../../Build/Release/libisc.dll" /implib:"$(OUTDIR)\libisc.lib" 
+LINK32_FLAGS=user32.lib advapi32.lib ws2_32.lib $(LIBXML) @OPENSSL_LIB@ /nologo /dll /incremental:no /pdb:"$(OUTDIR)\libisc.pdb" @MACHINE@ /def:".\libisc.def" /out:"../../../Build/Release/libisc.dll" /implib:"$(OUTDIR)\libisc.lib" 
 DEF_FILE= \
 	".\libisc.def"
 LINK32_OBJS= \
@@ -230,6 +240,9 @@ LINK32_OBJS= \
 	"$(INTDIR)\ntpaths.obj" \
 	"$(INTDIR)\once.obj" \
 	"$(INTDIR)\os.obj" \
+@IF PKCS11
+	"$(INTDIR)\pk11_api.obj" \
+@END PKCS11
 	"$(INTDIR)\resource.obj" \
 	"$(INTDIR)\socket.obj" \
 	"$(INTDIR)\stdio.obj" \
@@ -245,10 +258,11 @@ LINK32_OBJS= \
 	"$(INTDIR)\backtrace-emptytbl.obj" \
 	"$(INTDIR)\base32.obj" \
 	"$(INTDIR)\base64.obj" \
-	"$(INTDIR)\bitstring.obj" \
+	"$(INTDIR)\bind9.obj" \
 	"$(INTDIR)\buffer.obj" \
 	"$(INTDIR)\bufferlist.obj" \
 	"$(INTDIR)\commandline.obj" \
+	"$(INTDIR)\crc64.obj" \
 	"$(INTDIR)\error.obj" \
 	"$(INTDIR)\event.obj" \
 	"$(INTDIR)\hash.obj" \
@@ -271,6 +285,9 @@ LINK32_OBJS= \
 	"$(INTDIR)\netaddr.obj" \
 	"$(INTDIR)\netscope.obj" \
 	"$(INTDIR)\ondestroy.obj" \
+@IF PKCS11
+	"$(INTDIR)\pk11.obj" \
+@END PKCS11
 	"$(INTDIR)\quota.obj" \
 	"$(INTDIR)\radix.obj" \
 	"$(INTDIR)\random.obj" \
@@ -289,6 +306,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\task.obj" \
 	"$(INTDIR)\taskpool.obj" \
 	"$(INTDIR)\timer.obj" \
+	"$(INTDIR)\tm.obj" \
 	"$(INTDIR)\parseint.obj" \
 	"$(INTDIR)\pool.obj" \
 	"$(INTDIR)\portset.obj" \
@@ -325,8 +343,8 @@ CLEAN :
 	-@erase "$(INTDIR)\base32.sbr"
 	-@erase "$(INTDIR)\base64.obj"
 	-@erase "$(INTDIR)\base64.sbr"
-	-@erase "$(INTDIR)\bitstring.obj"
-	-@erase "$(INTDIR)\bitstring.sbr"
+	-@erase "$(INTDIR)\bind9.obj"
+	-@erase "$(INTDIR)\bind9.sbr"
 	-@erase "$(INTDIR)\buffer.obj"
 	-@erase "$(INTDIR)\buffer.sbr"
 	-@erase "$(INTDIR)\bufferlist.obj"
@@ -335,6 +353,8 @@ CLEAN :
 	-@erase "$(INTDIR)\commandline.sbr"
 	-@erase "$(INTDIR)\condition.obj"
 	-@erase "$(INTDIR)\condition.sbr"
+	-@erase "$(INTDIR)\crc64.obj"
+	-@erase "$(INTDIR)\crc64.sbr"
 	-@erase "$(INTDIR)\dir.obj"
 	-@erase "$(INTDIR)\dir.sbr"
 	-@erase "$(INTDIR)\DLLMain.obj"
@@ -409,6 +429,10 @@ CLEAN :
 	-@erase "$(INTDIR)\os.sbr"
 	-@erase "$(INTDIR)\parseint.obj"
 	-@erase "$(INTDIR)\parseint.sbr"
+@IF PKCS11
+	-@erase "$(INTDIR)\pk11.obj"
+	-@erase "$(INTDIR)\pk11_api.obj"
+@END PKCS11
 	-@erase "$(INTDIR)\pool.obj"
 	-@erase "$(INTDIR)\pool.sbr"
 	-@erase "$(INTDIR)\portset.obj"
@@ -469,6 +493,8 @@ CLEAN :
 	-@erase "$(INTDIR)\time.sbr"
 	-@erase "$(INTDIR)\timer.obj"
 	-@erase "$(INTDIR)\timer.sbr"
+	-@erase "$(INTDIR)\tm.obj"
+	-@erase "$(INTDIR)\tm.sbr"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(INTDIR)\vc60.pdb"
 	-@erase "$(INTDIR)\version.obj"
@@ -487,7 +513,11 @@ CLEAN :
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP_PROJ=/nologo /MDd /W3 /Gm @COPTX@ @COPTI@ /ZI /Od /I "./" /I "../../../" /I "include" /I "../include" /I "win32" /I "../../isccfg/include" @LIBXML2_INC@ /D "BIND9" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "__STDC__" /D "_MBCS" /D "_USRDLL" /D "LIBISC_EXPORTS" /FR"$(INTDIR)\\" /Fp"$(INTDIR)\libisc.pch" @COPTY@ /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
+@IF PKCS11
+CPP_PROJ=/nologo /MDd /W3 /Gm @COPTX@ @COPTI@ /ZI /Od /I "./" /I "../../../" /I "include" /I "../include" /I "win32" /I "../../isccfg/include" /I "../../dns/win32/include" /I "../../dns/include" @LIBXML2_INC@ @OPENSSL_INC@ /D "BIND9" @CRYPTO@ @PK11_LIB_LOCATION@ /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "__STDC__" /D "_MBCS" /D "_USRDLL" /D "LIBISC_EXPORTS" /FR"$(INTDIR)\\" /Fp"$(INTDIR)\libisc.pch" @COPTY@ /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
+@ELSE PKCS11
+CPP_PROJ=/nologo /MDd /W3 /Gm @COPTX@ @COPTI@ /ZI /Od /I "./" /I "../../../" /I "include" /I "../include" /I "win32" /I "../../isccfg/include" @LIBXML2_INC@ @OPENSSL_INC@ /D "BIND9" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "__STDC__" /D "_MBCS" /D "_USRDLL" /D "LIBISC_EXPORTS" /FR"$(INTDIR)\\" /Fp"$(INTDIR)\libisc.pch" @COPTY@ /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
+@END PKCS11
 MTL_PROJ=/nologo /D "_DEBUG" /mktyplib203 /win32 
 BSC32=bscmake.exe
 BSC32_FLAGS=/nologo /o"$(OUTDIR)\libisc.bsc" 
@@ -508,6 +538,9 @@ BSC32_SBRS= \
 	"$(INTDIR)\ntpaths.sbr" \
 	"$(INTDIR)\once.sbr" \
 	"$(INTDIR)\os.sbr" \
+@IF PKCS11
+	"$(INTDIR)\pk11_api.sbr" \
+@END PKCS11
 	"$(INTDIR)\resource.sbr" \
 	"$(INTDIR)\socket.sbr" \
 	"$(INTDIR)\stdio.sbr" \
@@ -523,10 +556,11 @@ BSC32_SBRS= \
 	"$(INTDIR)\backtrace-emptytbl.sbr" \
 	"$(INTDIR)\base32.sbr" \
 	"$(INTDIR)\base64.sbr" \
-	"$(INTDIR)\bitstring.sbr" \
+	"$(INTDIR)\bind9.sbr" \
 	"$(INTDIR)\buffer.sbr" \
 	"$(INTDIR)\bufferlist.sbr" \
 	"$(INTDIR)\commandline.sbr" \
+	"$(INTDIR)\crc64.sbr" \
 	"$(INTDIR)\error.sbr" \
 	"$(INTDIR)\event.sbr" \
 	"$(INTDIR)\hash.sbr" \
@@ -549,6 +583,9 @@ BSC32_SBRS= \
 	"$(INTDIR)\netaddr.sbr" \
 	"$(INTDIR)\netscope.sbr" \
 	"$(INTDIR)\ondestroy.sbr" \
+@IF PKCS11
+	"$(INTDIR)\pk11.sbr" \
+@END PKCS11
 	"$(INTDIR)\quota.sbr" \
 	"$(INTDIR)\radix.sbr" \
 	"$(INTDIR)\random.sbr" \
@@ -567,6 +604,7 @@ BSC32_SBRS= \
 	"$(INTDIR)\task.sbr" \
 	"$(INTDIR)\taskpool.sbr" \
 	"$(INTDIR)\timer.sbr" \
+	"$(INTDIR)\tm.sbr" \
 	"$(INTDIR)\parseint.sbr" \
 	"$(INTDIR)\pool.sbr" \
 	"$(INTDIR)\portset.sbr" \
@@ -579,7 +617,7 @@ BSC32_SBRS= \
 <<
 
 LINK32=link.exe
-LINK32_FLAGS=user32.lib advapi32.lib ws2_32.lib $(LIBXML) /nologo /dll /incremental:yes /pdb:"$(OUTDIR)\libisc.pdb" /map:"$(INTDIR)\libisc.map" /debug @MACHINE@ /def:".\libisc.def" /out:"../../../Build/Debug/libisc.dll" /implib:"$(OUTDIR)\libisc.lib" /pdbtype:sept 
+LINK32_FLAGS=user32.lib advapi32.lib ws2_32.lib $(LIBXML) @OPENSSL_LIB@ /nologo /dll /incremental:yes /pdb:"$(OUTDIR)\libisc.pdb" /map:"$(INTDIR)\libisc.map" /debug @MACHINE@ /def:".\libisc.def" /out:"../../../Build/Debug/libisc.dll" /implib:"$(OUTDIR)\libisc.lib" /pdbtype:sept 
 DEF_FILE= \
 	".\libisc.def"
 LINK32_OBJS= \
@@ -599,6 +637,9 @@ LINK32_OBJS= \
 	"$(INTDIR)\ntpaths.obj" \
 	"$(INTDIR)\once.obj" \
 	"$(INTDIR)\os.obj" \
+@IF PKCS11
+	"$(INTDIR)\pk11_api.obj" \
+@END PKCS11
 	"$(INTDIR)\resource.obj" \
 	"$(INTDIR)\socket.obj" \
 	"$(INTDIR)\stdio.obj" \
@@ -614,10 +655,11 @@ LINK32_OBJS= \
 	"$(INTDIR)\backtrace-emptytbl.obj" \
 	"$(INTDIR)\base32.obj" \
 	"$(INTDIR)\base64.obj" \
-	"$(INTDIR)\bitstring.obj" \
+	"$(INTDIR)\bind9.obj" \
 	"$(INTDIR)\buffer.obj" \
 	"$(INTDIR)\bufferlist.obj" \
 	"$(INTDIR)\commandline.obj" \
+	"$(INTDIR)\crc64.obj" \
 	"$(INTDIR)\error.obj" \
 	"$(INTDIR)\event.obj" \
 	"$(INTDIR)\hash.obj" \
@@ -640,6 +682,9 @@ LINK32_OBJS= \
 	"$(INTDIR)\netaddr.obj" \
 	"$(INTDIR)\netscope.obj" \
 	"$(INTDIR)\ondestroy.obj" \
+@IF PKCS11
+	"$(INTDIR)\pk11.obj" \
+@END PKCS11
 	"$(INTDIR)\quota.obj" \
 	"$(INTDIR)\radix.obj" \
 	"$(INTDIR)\random.obj" \
@@ -658,6 +703,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\task.obj" \
 	"$(INTDIR)\taskpool.obj" \
 	"$(INTDIR)\timer.obj" \
+	"$(INTDIR)\tm.obj" \
 	"$(INTDIR)\parseint.obj" \
 	"$(INTDIR)\pool.obj" \
 	"$(INTDIR)\portset.obj" \
@@ -954,6 +1000,24 @@ SOURCE=.\os.c
 
 !ENDIF 
 
+SOURCE=.\pk11_api.c
+
+!IF  "$(CFG)" == "libisc - @PLATFORM@ Release"
+
+
+"$(INTDIR)\pk11_api.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libisc - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\pk11_api.obj"	"$(INTDIR)\pk11_api.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
 SOURCE=.\resource.c
 
 !IF  "$(CFG)" == "libisc - @PLATFORM@ Release"
@@ -1204,19 +1268,19 @@ SOURCE=..\base64.c
 
 !ENDIF 
 
-SOURCE=..\bitstring.c
+SOURCE=..\bind9.c
 
 !IF  "$(CFG)" == "libisc - @PLATFORM@ Release"
 
 
-"$(INTDIR)\bitstring.obj" : $(SOURCE) "$(INTDIR)"
+"$(INTDIR)\bind9.obj" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "libisc - @PLATFORM@ Debug"
 
 
-"$(INTDIR)\bitstring.obj"	"$(INTDIR)\bitstring.sbr" : $(SOURCE) "$(INTDIR)"
+"$(INTDIR)\bind9.obj"	"$(INTDIR)\bind9.sbr" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
@@ -1271,6 +1335,24 @@ SOURCE=..\commandline.c
 
 
 "$(INTDIR)\commandline.obj"	"$(INTDIR)\commandline.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\crc64.c
+
+!IF  "$(CFG)" == "libisc - @PLATFORM@ Release"
+
+
+"$(INTDIR)\crc64.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libisc - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\crc64.obj"	"$(INTDIR)\crc64.sbr" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
@@ -1708,6 +1790,24 @@ SOURCE=..\parseint.c
 
 !ENDIF 
 
+SOURCE=..\pk11.c
+
+!IF  "$(CFG)" == "libisc - @PLATFORM@ Release"
+
+
+"$(INTDIR)\pk11.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libisc - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\pk11.obj"	"$(INTDIR)\pk11.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
 SOURCE=..\pool.c
 
 !IF  "$(CFG)" == "libisc - @PLATFORM@ Release"
@@ -2100,6 +2200,24 @@ SOURCE=..\timer.c
 
 
 "$(INTDIR)\timer.obj"	"$(INTDIR)\timer.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\tm.c
+
+!IF  "$(CFG)" == "libisc - @PLATFORM@ Release"
+
+
+"$(INTDIR)\tm.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libisc - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\tm.obj"	"$(INTDIR)\tm.sbr" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 

@@ -129,7 +129,7 @@ CLEAN :
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP_PROJ=/nologo /MT /W3 @COPTX@ @COPTI@ /O2 /I "..\..\.." /I "..\include" /I "..\..\..\include" /I "..\..\named\win32\include" /I "..\..\..\lib\isc\win32\include" /I "..\..\..\lib\isc\include" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" @USE_OPENSSL@ @USE_GSSAPI@ @USE_PYTHON@ /Fp"$(INTDIR)\BINDInstall.pch" /Yu"stdafx.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /TP /c 
+CPP_PROJ=/nologo /MT /W3 @COPTX@ @COPTI@ /O2 /I "..\..\.." /I "..\include" /I "..\..\..\include" /I "..\..\named\win32\include" /I "..\..\..\lib\isc\win32\include" /I "..\..\..\lib\isc\include" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" @CRYPTO@ @USE_GSSAPI@ @USE_PYTHON@ /Fp"$(INTDIR)\BINDInstall.pch" /Yu"stdafx.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /TP /c 
 MTL_PROJ=/nologo /D "NDEBUG" /mktyplib203 /win32 
 RSC_PROJ=/l 0x409 /fo"$(INTDIR)\BINDInstall.res" /d "NDEBUG"
 BSC32=bscmake.exe
@@ -191,7 +191,7 @@ CLEAN :
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP_PROJ=/nologo /MTd /W3 /Gm @COPTX@ @COPTI@ /Zi /Od /I "..\..\.." /I "..\include" /I "..\..\..\include" /I "..\..\named\win32\include" /I "..\..\..\lib\isc\win32\include" /I "..\..\..\lib\isc\include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" @USE_OPENSSL@ @USE_GSSAPI@ @USE_PYTHON@ /FR"$(INTDIR)\\" /Fp"$(INTDIR)\BINDInstall.pch" /Yu"stdafx.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /TP /GZ /c 
+CPP_PROJ=/nologo /MTd /W3 /Gm @COPTX@ @COPTI@ /Zi /Od /I "..\..\.." /I "..\include" /I "..\..\..\include" /I "..\..\named\win32\include" /I "..\..\..\lib\isc\win32\include" /I "..\..\..\lib\isc\include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" @CRYPTO@ @USE_GSSAPI@ @USE_PYTHON@ /FR"$(INTDIR)\\" /Fp"$(INTDIR)\BINDInstall.pch" /Yu"stdafx.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /TP /GZ /c 
 MTL_PROJ=/nologo /D "_DEBUG" /mktyplib203 /win32 
 RSC_PROJ=/l 0x409 /fo"$(INTDIR)\BINDInstall.res" /d "_DEBUG"
 BSC32=bscmake.exe
@@ -339,7 +339,7 @@ SOURCE=..\..\..\lib\isc\win32\ntgroups.c
 
 !IF  "$(CFG)" == "BINDInstall - @PLATFORM@ Release"
 
-CPP_SWITCHES=/nologo /MT /W3 @COPTX@ @COPTI@ /O2 /I "..\include" /I "..\..\..\include" /I "..\..\named\win32\include" /I "..\..\..\lib\isc\win32\include" /I "..\..\..\lib\isc\include" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" @USE_OPENSSL@ @USE_GSSAPI@ /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /TP /c 
+CPP_SWITCHES=/nologo /MT /W3 @COPTX@ @COPTI@ /O2 /I "..\include" /I "..\..\..\include" /I "..\..\named\win32\include" /I "..\..\..\lib\isc\win32\include" /I "..\..\..\lib\isc\include" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" @CRYPTO@ @USE_GSSAPI@ /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /TP /c 
 
 "$(INTDIR)\ntgroups.obj" : $(SOURCE) "$(INTDIR)"
 	$(CPP) @<<
@@ -349,7 +349,7 @@ CPP_SWITCHES=/nologo /MT /W3 @COPTX@ @COPTI@ /O2 /I "..\include" /I "..\..\..\in
 
 !ELSEIF  "$(CFG)" == "BINDInstall - @PLATFORM@ Debug"
 
-CPP_SWITCHES=/nologo /MTd /W3 /Gm @COPTX@ @COPTI@ /Zi /Od /I "..\include" /I "..\..\..\include" /I "..\..\named\win32\include" /I "..\..\..\lib\isc\win32\include" /I "..\..\..\lib\isc\include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" @USE_OPENSSL@ @USE_GSSAPI@ /FR"$(INTDIR)\\" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /TP /GZ /c 
+CPP_SWITCHES=/nologo /MTd /W3 /Gm @COPTX@ @COPTI@ /Zi /Od /I "..\include" /I "..\..\..\include" /I "..\..\named\win32\include" /I "..\..\..\lib\isc\win32\include" /I "..\..\..\lib\isc\include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" @CRYPTO@ @USE_GSSAPI@ /FR"$(INTDIR)\\" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /TP /GZ /c 
 
 "$(INTDIR)\ntgroups.obj"	"$(INTDIR)\ntgroups.sbr" : $(SOURCE) "$(INTDIR)"
 	$(CPP) @<<
@@ -363,7 +363,7 @@ SOURCE=.\StdAfx.cpp
 
 !IF  "$(CFG)" == "BINDInstall - @PLATFORM@ Release"
 
-CPP_SWITCHES=/nologo /MT /W3 @COPTX@ @COPTI@ /O2 /I "..\include" /I "..\..\..\include" /I "..\..\named\win32\include" /I "..\..\..\lib\isc\win32\include" /I "..\..\..\lib\isc\include" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" @USE_OPENSSL@ @USE_GSSAPI@ /Fp"$(INTDIR)\BINDInstall.pch" /Yc"stdafx.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /TP /c 
+CPP_SWITCHES=/nologo /MT /W3 @COPTX@ @COPTI@ /O2 /I "..\include" /I "..\..\..\include" /I "..\..\named\win32\include" /I "..\..\..\lib\isc\win32\include" /I "..\..\..\lib\isc\include" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" @CRYPTO@ @USE_GSSAPI@ /Fp"$(INTDIR)\BINDInstall.pch" /Yc"stdafx.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /TP /c 
 
 "$(INTDIR)\StdAfx.obj"	"$(INTDIR)\BINDInstall.pch" : $(SOURCE) "$(INTDIR)"
 	$(CPP) @<<
@@ -373,7 +373,7 @@ CPP_SWITCHES=/nologo /MT /W3 @COPTX@ @COPTI@ /O2 /I "..\include" /I "..\..\..\in
 
 !ELSEIF  "$(CFG)" == "BINDInstall - @PLATFORM@ Debug"
 
-CPP_SWITCHES=/nologo /MTd /W3 /Gm @COPTX@ @COPTI@ /Zi /Od /I "..\include" /I "..\..\..\include" /I "..\..\named\win32\include" /I "..\..\..\lib\isc\win32\include" /I "..\..\..\lib\isc\include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" @USE_OPENSSL@ @USE_GSSAPI@ /FR"$(INTDIR)\\" /Fp"$(INTDIR)\BINDInstall.pch" /Yc"stdafx.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /TP /GZ /c 
+CPP_SWITCHES=/nologo /MTd /W3 /Gm @COPTX@ @COPTI@ /Zi /Od /I "..\include" /I "..\..\..\include" /I "..\..\named\win32\include" /I "..\..\..\lib\isc\win32\include" /I "..\..\..\lib\isc\include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" @CRYPTO@ @USE_GSSAPI@ /FR"$(INTDIR)\\" /Fp"$(INTDIR)\BINDInstall.pch" /Yc"stdafx.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /TP /GZ /c 
 
 "$(INTDIR)\StdAfx.obj"	"$(INTDIR)\StdAfx.sbr"	"$(INTDIR)\BINDInstall.pch" : $(SOURCE) "$(INTDIR)"
 	$(CPP) @<<

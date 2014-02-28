@@ -126,6 +126,7 @@ cd pkcs11\win32
 nmake /nologo -f pk11keygen.mak CFG="pk11keygen - @PLATFORM@ Release"  NO_EXTERNAL_DEPS="1"
 nmake /nologo -f pk11list.mak CFG="pk11list - @PLATFORM@ Release"  NO_EXTERNAL_DEPS="1"
 nmake /nologo -f pk11destroy.mak CFG="pk11destroy - @PLATFORM@ Release"  NO_EXTERNAL_DEPS="1"
+nmake /nologo -f pk11tokens.mak CFG="pk11tokens - @PLATFORM@ Release"  NO_EXTERNAL_DEPS="1"
 cd ..\..
 @END PKCS11
 
@@ -135,6 +136,7 @@ nmake /nologo -f genrandom.mak CFG="genrandom - @PLATFORM@ Release"  NO_EXTERNAL
 nmake /nologo -f nsec3hash.mak CFG="nsec3hash - @PLATFORM@ Release"  NO_EXTERNAL_DEPS="1"
 nmake /nologo -f journalprint.mak CFG="journalprint - @PLATFORM@ Release"  NO_EXTERNAL_DEPS="1"
 nmake /nologo -f ischmacfixup.mak CFG="ischmacfixup - @PLATFORM@ Release"  NO_EXTERNAL_DEPS="1"
+nmake /nologo -f rrchecker.mak CFG="rrchecker - @PLATFORM@ Release"  NO_EXTERNAL_DEPS="1"
 cd ..\..
 
 @IF TESTS

@@ -35,10 +35,8 @@ send
 ;	4
 update add  a3-4.tld2.bl-disabled.  300 A 127.0.0.4
 send
-;	5 - 8
+;	5 - 7
 update add  a3-5.tld2.bl-nodata.    300 A 127.0.0.5
-;	9 - 10
-update add  a3-5.tld2s.bl-nodata.   300 A 127.0.0.9
 send
 ;	11
 update add  a3-6.tld2.bl-nxdomain.  300 A 127.0.0.11
@@ -56,4 +54,10 @@ update add  a3-15.tld2.bl-garden.   300 A 127.0.0.15
 send
 ;	16
 update add  a3-16.tld2.bl.	    300 A 127.0.0.16
+send
+;	18
+update add  a3-18.tld2.bl-drop.	    300 A 127.0.0.18
+send
+;	19
+update add  a3-19.tld2.bl-tcp-only. 300 A 127.0.0.19
 send

@@ -1,4 +1,4 @@
-# Copyright (C) 2004, 2007, 2009, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2009, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 1999-2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -28,11 +28,11 @@ CWARNINGS =
 
 # Alphabetically
 OBJS =		condition.@O@ dir.@O@ file.@O@ fsaccess.@O@ once.@O@ \
-		stdtime.@O@ thread.@O@ time.@O@
+		stdtime.@O@ thread.@O@ time.@O@ @ISC_PK11_API_O@
 
 # Alphabetically
 SRCS =		condition.c dir.c file.c once.c fsaccess.c \
-		stdtime.c thread.c time.c
+		stdtime.c thread.c time.c @ISC_PK11_API_C@
 
 SUBDIRS =	include
 TARGETS =	${OBJS}

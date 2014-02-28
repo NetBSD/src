@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -33,9 +33,11 @@ NAMED=$TOP/bin/named/named
 # if the program is libtoolized.
 LWRESD="$TOP/bin/named/named -l"
 DIG=$TOP/bin/dig/dig
+DELVE=$TOP/bin/delve/delve
 RNDC=$TOP/bin/rndc/rndc
 NSUPDATE=$TOP/bin/nsupdate/nsupdate
 DDNSCONFGEN=$TOP/bin/confgen/ddns-confgen
+RNDCCONFGEN=$TOP/bin/confgen/rndc-confgen
 KEYGEN=$TOP/bin/dnssec/dnssec-keygen
 KEYFRLAB=$TOP/bin/dnssec/dnssec-keyfromlabel
 SIGNER=$TOP/bin/dnssec/dnssec-signzone
@@ -47,25 +49,31 @@ CHECKDS=$TOP/bin/python/dnssec-checkds
 COVERAGE=$TOP/bin/python/dnssec-coverage
 CHECKZONE=$TOP/bin/check/named-checkzone
 CHECKCONF=$TOP/bin/check/named-checkconf
-PK11GEN="$TOP/bin/pkcs11/pkcs11-keygen -s ${SLOT:-0} -p 1234"
-PK11LIST="$TOP/bin/pkcs11/pkcs11-list -s ${SLOT:-0} -p 1234"
-PK11DEL="$TOP/bin/pkcs11/pkcs11-destroy -s ${SLOT:-0} -p 1234"
+PK11GEN="$TOP/bin/pkcs11/pkcs11-keygen -q -s ${SLOT:-0} -p ${HSMPIN:-1234}"
+PK11LIST="$TOP/bin/pkcs11/pkcs11-list -s ${SLOT:-0} -p ${HSMPIN:-1234}"
+PK11DEL="$TOP/bin/pkcs11/pkcs11-destroy -s ${SLOT:-0} -p ${HSMPIN:-1234} -w 0"
 JOURNALPRINT=$TOP/bin/tools/named-journalprint
 VERIFY=$TOP/bin/dnssec/dnssec-verify
 ARPANAME=$TOP/bin/tools/arpaname
-SAMPLE=$TOP/lib/export/samples/sample
+RESOLVE=$TOP/lib/samples/resolve
+RRCHECKER=$TOP/bin/tools/named-rrchecker
+GENRANDOM=$TOP/bin/tools/genrandom
+
+RANDFILE=$TOP/bin/tests/system/random.data
 
 # The "stress" test is not run by default since it creates enough
 # load on the machine to make it unusable to other users.
 # v6synth
 SUBDIRS="acl additional allow_query addzone autosign builtin
-	 cacheclean case checkconf @CHECKDS@ checknames checkzone @COVERAGE@
-         database dlv dlvauto dlz dlzexternal dname dns64 dnssec ecdsa
-         formerr forward glue gost ixfr inline limits logfileconfig
-         lwresd masterfile masterformat metadata notify nsupdate pending
-	 pkcs11 redirect resolver rndc rpz rrl rrsetorder rsabigexponent
-	 smartsign sortlist spf staticstub stub tkey tsig tsiggss unknown
-	 upforwd verify views wildcard xfer xferquota zero zonechecks"
+	 cacheclean case checkconf @CHECKDS@ checknames checkzone
+	 @COVERAGE@ database dlv dlvauto dlz dlzexternal dlzredir
+	 dname dns64 dnssec dsdigest dscp ecdsa emptyzones formerr
+	 forward glue gost ixfr inline limits logfileconfig lwresd
+	 masterfile masterformat metadata notify nsupdate pending
+	 @PKCS11_TEST@ redirect resolver rndc rpz rrl rrchecker
+	 rrsetorder rsabigexponent sit smartsign sortlist spf staticstub
+	 statistics stub tkey tsig tsiggss unknown upforwd verify
+	 views wildcard xfer xferquota zero zonechecks"
 
 # PERL will be an empty string if no perl interpreter was found.
 PERL=@PERL@
@@ -83,4 +91,4 @@ fi
 
 export NAMED LWRESD DIG NSUPDATE KEYGEN KEYFRLAB SIGNER KEYSIGNER KEYSETTOOL \
        PERL SUBDIRS RNDC CHECKZONE PK11GEN PK11LIST PK11DEL TESTSOCK6 \
-       JOURNALPRINT ARPANAME SAMPLE
+       JOURNALPRINT ARPANAME RESOLVE RRCHECKER

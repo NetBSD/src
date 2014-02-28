@@ -11,12 +11,6 @@
 ;; ANSWER SECTION:
 data.child.example.	5M IN TXT	"some" "test" "data"
 
-;; AUTHORITY SECTION:
-child.example.		5M IN NS	ns2.child.example.
-
-;; ADDITIONAL SECTION:
-ns2.child.example.	5M IN A		10.53.0.2
-
 ;; Total query time: 8 msec
 ;; FROM: draco to SERVER: 10.53.0.3
 ;; WHEN: Wed Jun 21 10:58:54 2000
