@@ -1,4 +1,4 @@
-/*	$NetBSD: tdvfb.c,v 1.7 2013/11/10 03:44:03 mrg Exp $	*/
+/*	$NetBSD: tdvfb.c,v 1.8 2014/02/28 05:55:23 matt Exp $	*/
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.   
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tdvfb.c,v 1.7 2013/11/10 03:44:03 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tdvfb.c,v 1.8 2014/02/28 05:55:23 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,7 +211,7 @@ tdvfb_attach(device_t parent, device_t self, void *aux)
 	 */
 	sc->sc_memsize = tdvfb_mem_size(sc);
 
-	aprint_normal_dev(sc->sc_dev, "%d MB framebuffer memory present\n", 
+	aprint_normal_dev(sc->sc_dev, "%zu MB framebuffer memory present\n", 
 	    sc->sc_memsize / 1024 / 1024);
 
 	/* Select video mode, 800x600 32bpp 60Hz by default... */
