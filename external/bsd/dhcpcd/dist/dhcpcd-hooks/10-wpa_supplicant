@@ -1,4 +1,4 @@
-# $NetBSD: 10-wpa_supplicant,v 1.1.1.3 2014/02/25 13:14:31 roy Exp $
+# $NetBSD: 10-wpa_supplicant,v 1.1.1.4 2014/03/01 11:00:43 roy Exp $
 
 # Start, reconfigure and stop wpa_supplicant per wireless interface.
 # This is needed because wpa_supplicant lacks hotplugging of any kind
@@ -20,7 +20,8 @@ if [ -z "$wpa_supplicant_conf" ]; then
 fi
 : ${wpa_supplicant_conf:=/etc/wpa_supplicant.conf}
 
-wpa_supplcant_ctrldir() {
+wpa_supplicant_ctrldir()
+{
 	local dir
 
 	dir=$(key_get_value "[[:space:]]*ctrl_interface=" \
@@ -40,6 +41,9 @@ wpa_supplicant_start()
 {
 	local dir err errn
 
+	# If the carrier is up, don't bother checking anything
+	[ "$ifcarrier" = "up" ] && return 0
+
 	# Pre flight checks
 	if [ ! -s "$wpa_supplicant_conf" ]; then
 		syslog warn \
@@ -47,7 +51,7 @@ wpa_supplicant_start()
 		syslog warn "not interacting with wpa_supplicant(8)"
 		return 1
 	fi
-	dir=$(wpa_supplcant_ctrldir)
+	dir=$(wpa_supplicant_ctrldir)
 	if [ -z "$dir" ]; then
 		syslog warn \
 			"ctrl_interface not defined in $wpa_supplicant_conf"
@@ -70,7 +74,7 @@ wpa_supplicant_reconfigure()
 {
 	local dir err errn
 
-	dir=$(wpa_supplcant_ctrldir)
+	dir=$(wpa_supplicant_ctrldir)
 	[ -z "$dir" ] && return 1
 	if ! wpa_cli -p "$dir" -i "$interface" status >/dev/null 2>&1; then
 		wpa_supplicant_start
@@ -90,7 +94,7 @@ wpa_supplicant_stop()
 {
 	local dir err errn
 
-	dir=$(wpa_supplcant_ctrldir)
+	dir=$(wpa_supplicant_ctrldir)
 	[ -z "$dir" ] && return 1
 	wpa_cli -p "$dir" -i "$interface" status >/dev/null 2>&1 || return 0
 	syslog info "stopping wpa_supplicant"

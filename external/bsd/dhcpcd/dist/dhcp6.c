@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp6.c,v 1.1.1.7 2014/02/25 13:14:30 roy Exp $");
+ __RCSID("$NetBSD: dhcp6.c,v 1.1.1.8 2014/03/01 11:00:43 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -838,6 +838,8 @@ logsend:
 
 	/* Set the outbound interface */
 	cm = CMSG_FIRSTHDR(&ctx->sndhdr);
+	if (cm == NULL) /* unlikely */
+		return -1;
 	cm->cmsg_level = IPPROTO_IPV6;
 	cm->cmsg_type = IPV6_PKTINFO;
 	cm->cmsg_len = CMSG_LEN(sizeof(pi));
@@ -1209,7 +1211,8 @@ dhcp6_checkstatusok(const struct interface *ifp,
 		syslog(LOG_ERR, "%s: %m", __func__);
 		return -1;
 	}
-	memcpy(status, p, len);
+	if (p)
+		memcpy(status, p, len);
 	status[len] = '\0';
 	syslog(LOG_ERR, "%s: DHCPv6 REPLY: %s", ifp->name, status);
 	free(status);
@@ -1356,7 +1359,9 @@ dhcp6_findna(struct interface *ifp, const uint8_t *iaid,
 			    iabuf, sizeof(iabuf));
 			snprintf(a->saddr, sizeof(a->saddr),
 			    "%s/%d", ia, a->prefix_len);
-		}
+			TAILQ_INSERT_TAIL(&state->addrs, a, next);
+		} else
+			a->flags &= ~IPV6_AF_STALE;
 		memcpy(&u32, p, sizeof(u32));
 		a->prefix_pltime = ntohl(u32);
 		p += sizeof(u32);
@@ -1370,10 +1375,6 @@ dhcp6_findna(struct interface *ifp, const uint8_t *iaid,
 		    state->lowpl = a->prefix_pltime;
 		if (a->prefix_vltime && a->prefix_vltime > state->expire)
 		    state->expire = a->prefix_vltime;
-		if (a->flags & IPV6_AF_STALE)
-			a->flags &= ~IPV6_AF_STALE;
-		else
-			TAILQ_INSERT_TAIL(&state->addrs, a, next);
 		i++;
 	}
 	return i;
@@ -1419,7 +1420,6 @@ dhcp6_findpd(struct interface *ifp, const uint8_t *iaid,
 		p += sizeof(u8);
 		len = u8;
 		memcpy(&prefix.s6_addr, p, sizeof(prefix.s6_addr));
-		p += sizeof(prefix.s6_addr);
 
 		TAILQ_FOREACH(a, &state->addrs, next) {
 			if (IN6_ARE_ADDR_EQUAL(&a->prefix, &prefix))
@@ -1442,8 +1442,12 @@ dhcp6_findpd(struct interface *ifp, const uint8_t *iaid,
 			    iabuf, sizeof(iabuf));
 			snprintf(a->saddr, sizeof(a->saddr),
 			    "%s/%d", ia, a->prefix_len);
-		} else if (a->prefix_vltime != vltime)
-			a->flags |= IPV6_AF_NEW;
+			TAILQ_INSERT_TAIL(&state->addrs, a, next);
+		} else {
+			a->flags &= ~IPV6_AF_STALE;
+			if (a->prefix_vltime != vltime)
+				a->flags |= IPV6_AF_NEW;
+		}
 
 		a->prefix_pltime = pltime;
 		a->prefix_vltime = vltime;
@@ -1451,10 +1455,6 @@ dhcp6_findpd(struct interface *ifp, const uint8_t *iaid,
 			state->lowpl = a->prefix_pltime;
 		if (a->prefix_vltime && a->prefix_vltime > state->expire)
 			state->expire = a->prefix_vltime;
-		if (a->flags & IPV6_AF_STALE)
-			a->flags &= ~IPV6_AF_STALE;
-		else
-			TAILQ_INSERT_TAIL(&state->addrs, a, next);
 		i++;
 	}
 	return i;
@@ -1506,6 +1506,26 @@ dhcp6_findia(struct interface *ifp, const uint8_t *d, size_t l,
 			rebind = ntohl(u32);
 			p += sizeof(u32);
 			ol -= sizeof(u32);
+		} else
+			renew = rebind = 0; /* appease gcc */
+		if (dhcp6_checkstatusok(ifp, NULL, p, ol) == -1)
+			continue;
+		if (ifo->ia_type == D6_OPTION_IA_PD) {
+			if (dhcp6_findpd(ifp, iaid, p, ol) == 0) {
+				syslog(LOG_WARNING,
+				    "%s: %s: DHCPv6 REPLY missing Prefix",
+				    ifp->name, sfrom);
+				continue;
+			}
+		} else {
+			if (dhcp6_findna(ifp, iaid, p, ol) == 0) {
+				syslog(LOG_WARNING,
+				    "%s: %s: DHCPv6 REPLY missing IA Address",
+				    ifp->name, sfrom);
+				continue;
+			}
+		}
+		if (ifo->ia_type != D6_OPTION_IA_TA) {
 			if (renew > rebind && rebind > 0) {
 				if (sfrom)
 				    syslog(LOG_WARNING,
@@ -1520,23 +1540,6 @@ dhcp6_findia(struct interface *ifp, const uint8_t *d, size_t l,
 			if (rebind != 0 &&
 			    (rebind < state->rebind || state->rebind == 0))
 				state->rebind = rebind;
-		}
-		if (dhcp6_checkstatusok(ifp, NULL, p, ol) == -1)
-			return -1;
-		if (ifo->ia_type == D6_OPTION_IA_PD) {
-			if (dhcp6_findpd(ifp, iaid, p, ol) == 0) {
-				syslog(LOG_ERR,
-				    "%s: %s: DHCPv6 REPLY missing Prefix",
-				    ifp->name, sfrom);
-				return -1;
-			}
-		} else {
-			if (dhcp6_findna(ifp, iaid, p, ol) == 0) {
-				syslog(LOG_ERR,
-				    "%s: %s: DHCPv6 REPLY missing IA Address",
-				    ifp->name, sfrom);
-				return -1;
-			}
 		}
 		i++;
 	}
@@ -2633,9 +2636,14 @@ dhcp6_freedrop(struct interface *ifp, int drop, const char *reason)
 {
 	struct dhcp6_state *state;
 	struct dhcpcd_ctx *ctx;
+	int options;
 
 	eloop_timeout_delete(ifp->ctx->eloop, NULL, ifp);
 
+	if (ifp->options)
+		options = ifp->options->options;
+	else
+		options = 0;
 	/*
 	 * As the interface is going away from dhcpcd we need to
 	 * remove the delegated addresses, otherwise we lose track
@@ -2644,30 +2652,31 @@ dhcp6_freedrop(struct interface *ifp, int drop, const char *reason)
 	 * how we remember which interface delegated.
 	 *
 	 * XXX The below is no longer true due to the change of the
-	 * default IAID, but do PPP links have stable ethernet addresses?
+	 * default IAID, but do PPP links have stable ethernet
+	 * addresses?
 	 *
 	 * To make it more interesting, on some OS's with PPP links
 	 * there is no guarantee the delegating interface will have
 	 * the same name or index so think very hard before changing
 	 * this.
 	 */
-	if (ifp->options &&
-	    ifp->options->options & (DHCPCD_STOPPING | DHCPCD_RELEASE) &&
-	    (ifp->options->options & (DHCPCD_EXITING | DHCPCD_PERSISTENT)) !=
+	if (options & (DHCPCD_STOPPING | DHCPCD_RELEASE) &&
+	    (options &
+	    (DHCPCD_EXITING | DHCPCD_PERSISTENT)) !=
 	    (DHCPCD_EXITING | DHCPCD_PERSISTENT))
 		dhcp6_delete_delegates(ifp);
 
 	state = D6_STATE(ifp);
 	if (state) {
 		dhcp_auth_reset(&state->auth);
-		if (ifp->options->options & DHCPCD_RELEASE) {
+		if (options & DHCPCD_RELEASE) {
 			if (ifp->carrier != LINK_DOWN)
 				dhcp6_startrelease(ifp);
 			unlink(state->leasefile);
 		}
 		dhcp6_freedrop_addrs(ifp, drop, NULL);
 		if (drop && state->new &&
-		    (ifp->options->options &
+		    (options &
 		    (DHCPCD_EXITING | DHCPCD_PERSISTENT)) !=
 		    (DHCPCD_EXITING | DHCPCD_PERSISTENT))
 		{
@@ -2684,7 +2693,7 @@ dhcp6_freedrop(struct interface *ifp, int drop, const char *reason)
 	}
 
 	/* If we don't have any more DHCP6 enabled interfaces,
-	 * close the global socketo and release resources */
+	 * close the global socket and release resources */
 	ctx = ifp->ctx;
 	if (ctx->ifaces) {
 		TAILQ_FOREACH(ifp, ctx->ifaces, next) {
