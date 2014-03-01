@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2014/03/01 10:28:02 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2014/03/01 21:03:01 mrg Exp $
 
 .include <bsd.own.mk>
 .include <bsd.init.mk>
@@ -9,14 +9,12 @@
 
 DIST=		${NETBSDSRCDIR}/external/gpl3/gcc/dist
 
-#BUILDINCS=	basic_file.h c++allocator.h c++io.h c++locale.h
-#BUILDINCS+=	messages_members.h time_members.h opt_random.h
+BUILDINCS=	basic_file.h c++allocator.h c++io.h c++locale.h
+BUILDINCS+=	messages_members.h time_members.h opt_random.h
 
 INCS=		${G_bits_headers} ${G_c_base_headers_extra} ${G_host_headers}
 INCS+=		gthr.h gthr-single.h gthr-posix.h gthr-default.h
-INCS+=		${G_BASIC_FILE_H} ${G_ALLOCATOR_H} ${G_CLOCALE_H}
-INCS+=		${G_CSTDIO_H} ${G_CMESSAGES_H} ${G_CTIME_H}
-INCS+=		${G_CPU_OPT_BITS_RANDOM}
+INCS+=		${BUILDINCS}
 
 # libsupc++
 INCS+=		nested_exception.h hash_bytes.h atomic_lockfree_defines.h
@@ -34,13 +32,20 @@ INCSDIR=	/usr/include/g++/bits
 
 CLEANFILES+=	{BUILDINCS}
 
-INCSNAME_${G_BASIC_FILE_H}	= basic_file.h
-INCSNAME_${G_ALLOCATOR_H}	= c++allocator.h
-INCSNAME_${G_CLOCALE_H}		= c++locale.h
-INCSNAME_${G_CSTDIO_H}		= c++io.h
-INCSNAME_${G_CMESSAGES_H}	= messages_members.h 
-INCSNAME_${G_CTIME_H}		= time_members.h
-INCSNAME_${G_CPU_OPT_BITS_RANDOM}	= opt_random.h	
+opt_random.h:	${G_CPU_OPT_BITS_RANDOM}
+	cp -p ${.ALLSRC} ${.TARGET}
+basic_file.h:	${G_BASIC_FILE_H}
+	cp -p ${.ALLSRC} ${.TARGET}
+c++allocator.h:	${G_ALLOCATOR_H}
+	cp -p ${.ALLSRC} ${.TARGET}
+c++locale.h:	$(G_CLOCALE_H)
+	cp -p ${.ALLSRC} ${.TARGET}
+c++io.h:	$(G_CSTDIO_H)
+	cp -p ${.ALLSRC} ${.TARGET}
+messages_members.h:	$(G_CMESSAGES_H)
+	cp -p ${.ALLSRC} ${.TARGET}
+time_members.h:	$(G_CTIME_H)
+	cp -p ${.ALLSRC} ${.TARGET}
 
 .PATH: ${.CURDIR}/../../arch/${GCC_MACHINE_ARCH} \
 	${DIST}/libstdc++-v3/include \
