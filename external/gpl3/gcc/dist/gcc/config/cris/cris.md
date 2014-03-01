@@ -1,6 +1,5 @@
 ;; GCC machine description for CRIS cpu cores.
-;; Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,
-;; 2008, 2009  Free Software Foundation, Inc.
+;; Copyright (C) 1998-2013 Free Software Foundation, Inc.
 ;; Contributed by Axis Communications.
 
 ;; This file is part of GCC.
@@ -55,46 +54,46 @@
 ;; The movsi for a gotless symbol could be split (post reload).
 
 
-(define_constants
+(define_c_enum ""
   [
    ;; PLT reference from call expansion: operand 0 is the address,
    ;; the mode is VOIDmode.  Always wrapped in CONST.
    ;; The value is relative to the GOT.
-   (CRIS_UNSPEC_PLT_GOTREL 0)
+   CRIS_UNSPEC_PLT_GOTREL
 
    ;; PLT reference from call expansion: operand 0 is the address,
    ;; the mode is VOIDmode.  Always wrapped in CONST.
    ;; The value is relative to the PC.  It's arch-dependent whether
    ;; the offset counts from the start or the end of the current item.
-   (CRIS_UNSPEC_PLT_PCREL 1)
+   CRIS_UNSPEC_PLT_PCREL
 
    ;; The address of the global offset table as a source operand.
-   (CRIS_UNSPEC_GOT 2)
+   CRIS_UNSPEC_GOT
 
    ;; The offset from the global offset table to the operand.
-   (CRIS_UNSPEC_GOTREL 3)
+   CRIS_UNSPEC_GOTREL
 
    ;; The PC-relative offset to the operand.  It's arch-dependent whether
    ;; the offset counts from the start or the end of the current item.
-   (CRIS_UNSPEC_PCREL 4)
+   CRIS_UNSPEC_PCREL
 
    ;; The index into the global offset table of a symbol, while
    ;; also generating a GOT entry for the symbol.
-   (CRIS_UNSPEC_GOTREAD 5)
+   CRIS_UNSPEC_GOTREAD
 
    ;; Similar to CRIS_UNSPEC_GOTREAD, but also generating a PLT entry.
-   (CRIS_UNSPEC_PLTGOTREAD 6)
+   CRIS_UNSPEC_PLTGOTREAD
 
    ;; Condition for v32 casesi jump, since it needs to have if_then_else
    ;; form with register as one branch and default label as other.
    ;; Operand 0 is const_int 0.
-   (CRIS_UNSPEC_CASESI 7)
+   CRIS_UNSPEC_CASESI
 
    ;; Stack frame deallocation barrier.
-   (CRIS_UNSPEC_FRAME_DEALLOC 8)
+   CRIS_UNSPEC_FRAME_DEALLOC
 
    ;; Swap all 32 bits of the operand; 31 <=> 0, 30 <=> 1...
-   (CRIS_UNSPEC_SWAP_BITS 9)
+   CRIS_UNSPEC_SWAP_BITS
   ])
 
 ;; Register numbers.
@@ -191,10 +190,8 @@
 
 (define_delay (eq_attr "slottable" "has_call_slot")
   [(and (eq_attr "slottable" "yes")
-	(ior (eq (symbol_ref "RTX_FRAME_RELATED_P (insn)")
-		 (const_int 0))
-	     (eq (symbol_ref "flag_exceptions")
-		 (const_int 0))))
+	(ior (not (match_test "RTX_FRAME_RELATED_P (insn)"))
+	     (not (match_test "flag_exceptions"))))
    (nil) (nil)])
 
 ;; The insn in the return insn slot must not be the
@@ -204,8 +201,7 @@
 ;; naked RETURN in middle-end.
 (define_delay (eq_attr "slottable" "has_return_slot")
   [(and (eq_attr "slottable" "yes")
-	(eq (symbol_ref "dead_or_set_regno_p (insn, CRIS_SRP_REGNUM)")
-	    (const_int 0)))
+	(not (match_test "dead_or_set_regno_p (insn, CRIS_SRP_REGNUM)")))
    (nil) (nil)])
 
 
@@ -245,6 +241,7 @@
 ;; Operand and operator predicates.
 
 (include "predicates.md")
+(include "constraints.md")
 
 ;; Test insns.
 
@@ -653,8 +650,8 @@
       && (!CONST_INT_P (operands[2])
 	  || INTVAL (operands[2]) > 127
 	  || INTVAL (operands[2]) < -128
-	  || CRIS_CONST_OK_FOR_LETTER_P (INTVAL (operands[2]), 'N')
-	  || CRIS_CONST_OK_FOR_LETTER_P (INTVAL (operands[2]), 'J')))
+	  || satisfies_constraint_N (operands[2])
+	  || satisfies_constraint_J (operands[2])))
     return "#";
   if (which_alternative == 4)
     return "move<m> [%3=%2%S1],%0";
@@ -680,8 +677,8 @@
       && (!CONST_INT_P (operands[2])
 	  || INTVAL (operands[2]) > 127
 	  || INTVAL (operands[2]) < -128
-	  || CRIS_CONST_OK_FOR_LETTER_P (INTVAL (operands[2]), 'N')
-	  || CRIS_CONST_OK_FOR_LETTER_P (INTVAL (operands[2]), 'J')))
+	  || satisfies_constraint_N (operands[2])
+	  || satisfies_constraint_J (operands[2])))
     return "#";
   if (which_alternative < 3)
     return "move.%s0 [%3=%1%S2],%0";
@@ -761,7 +758,7 @@
 		      (match_operand:SI 1 "const_int_operand" ""))
 	     (match_operand:SI 2 "register_operand" ""))])
 	  (match_operand 3 "register_operand" ""))
-     (set (match_operand:SI 4 "register_operand" "")
+     (set (match_operand:SI 4 "cris_nonsp_register_operand" "")
 	  (plus:SI (mult:SI (match_dup 0)
 			    (match_dup 1))
 		   (match_dup 2)))])]
@@ -799,8 +796,8 @@
       && (!CONST_INT_P (operands[1])
 	  || INTVAL (operands[1]) > 127
 	  || INTVAL (operands[1]) < -128
-	  || CRIS_CONST_OK_FOR_LETTER_P (INTVAL (operands[1]), 'N')
-	  || CRIS_CONST_OK_FOR_LETTER_P (INTVAL (operands[1]), 'J')))
+	  || satisfies_constraint_N (operands[1])
+	  || satisfies_constraint_J (operands[1])))
     return "#";
   if (which_alternative == 1 || which_alternative == 5)
     return "#";
@@ -833,8 +830,8 @@
       && (!CONST_INT_P (operands[1])
 	  || INTVAL (operands[1]) > 127
 	  || INTVAL (operands[1]) < -128
-	  || CRIS_CONST_OK_FOR_LETTER_P (INTVAL (operands[1]), 'N')
-	  || CRIS_CONST_OK_FOR_LETTER_P (INTVAL (operands[1]), 'J')))
+	  || satisfies_constraint_N (operands[1])
+	  || satisfies_constraint_J (operands[1])))
     return "#";
   if (which_alternative == 1
       || which_alternative == 7
@@ -862,7 +859,7 @@
 	     (match_operand:SI 0 "cris_bdap_operand" "")
 	     (match_operand:SI 1 "cris_bdap_operand" ""))])
 	  (match_operand 2 "register_operand" ""))
-     (set (match_operand:SI 3 "register_operand" "")
+     (set (match_operand:SI 3 "cris_nonsp_register_operand" "")
 	  (plus:SI (match_dup 0) (match_dup 1)))])]
   "reload_completed && reg_overlap_mentioned_p (operands[3], operands[2])"
   [(set (match_dup 4) (match_dup 2))
@@ -906,8 +903,8 @@
       && (!CONST_INT_P (operands[1])
 	  || INTVAL (operands[1]) > 127
 	  || INTVAL (operands[1]) < -128
-	  || CRIS_CONST_OK_FOR_LETTER_P (INTVAL (operands[1]), 'N')
-	  || CRIS_CONST_OK_FOR_LETTER_P (INTVAL (operands[1]), 'J')))
+	  || satisfies_constraint_N (operands[1])
+	  || satisfies_constraint_J (operands[1])))
     return "#";
   if (which_alternative == 4)
     return "clear<m> [%2=%1%S0]";
@@ -978,7 +975,7 @@
 		    tem = gen_rtx_UNSPEC (Pmode, gen_rtvec (1, sym),
 					  CRIS_UNSPEC_PCREL);
 		    if (offs != 0)
-		      tem = plus_constant (tem, offs);
+		      tem = plus_constant (Pmode, tem, offs);
 		    rm = rn;
 		    emit_move_insn (rm, gen_rtx_CONST (Pmode, tem));
 		  }
@@ -990,7 +987,7 @@
 		    tem = gen_rtx_UNSPEC (Pmode, gen_rtvec (1, sym),
 					  CRIS_UNSPEC_GOTREL);
 		    if (offs != 0)
-		      tem = plus_constant (tem, offs);
+		      tem = plus_constant (Pmode, tem, offs);
 		    rm = gen_reg_rtx (Pmode);
 		    emit_move_insn (rm, gen_rtx_CONST (Pmode, tem));
 		    if (expand_binop (Pmode, add_optab, rm, pic_offset_table_rtx,
@@ -1249,8 +1246,8 @@
       && (!CONST_INT_P (operands[2])
 	  || INTVAL (operands[2]) > 127
 	  || INTVAL (operands[2]) < -128
-	  || CRIS_CONST_OK_FOR_LETTER_P (INTVAL (operands[2]), 'N')
-	  || CRIS_CONST_OK_FOR_LETTER_P (INTVAL (operands[2]), 'J')))
+	  || satisfies_constraint_N (operands[2])
+	  || satisfies_constraint_J (operands[2])))
     return "#";
   if (which_alternative == 4)
     return "mov%e4.%m4 [%3=%2%S1],%0";
@@ -1273,8 +1270,8 @@
       && (!CONST_INT_P (operands[2])
 	  || INTVAL (operands[2]) > 127
 	  || INTVAL (operands[2]) < -128
-	  || CRIS_CONST_OK_FOR_LETTER_P (INTVAL (operands[2]), 'N')
-	  || CRIS_CONST_OK_FOR_LETTER_P (INTVAL (operands[2]), 'J')))
+	  || satisfies_constraint_N (operands[2])
+	  || satisfies_constraint_J (operands[2])))
     return "#";
   if (which_alternative == 4)
     return "mov%e4<m> [%3=%2%S1],%0";
@@ -1532,7 +1529,7 @@
   "movs<m> %1,%0"
   [(set_attr "slottable" "yes,yes,no")])
 
-;; To do a byte->word extension, extend to dword, exept that the top half
+;; To do a byte->word extension, extend to dword, except that the top half
 ;; of the register will be clobbered.  FIXME: Perhaps this is not needed.
 
 (define_insn "extendqihi2"
@@ -1610,8 +1607,8 @@
       && (!CONST_INT_P (operands[3])
 	  || INTVAL (operands[3]) > 127
 	  || INTVAL (operands[3]) < -128
-	  || CRIS_CONST_OK_FOR_LETTER_P (INTVAL (operands[3]), 'N')
-	  || CRIS_CONST_OK_FOR_LETTER_P (INTVAL (operands[3]), 'J')))
+	  || satisfies_constraint_N (operands[3])
+	  || satisfies_constraint_J (operands[3])))
     return "#";
   if (which_alternative == 4)
     return "%x5.%s0 [%4=%3%S2],%0";
@@ -1668,8 +1665,8 @@
       && (!CONST_INT_P (operands[3])
 	  || INTVAL (operands[3]) > 127
 	  || INTVAL (operands[3]) < -128
-	  || CRIS_CONST_OK_FOR_LETTER_P (INTVAL (operands[3]), 'N')
-	  || CRIS_CONST_OK_FOR_LETTER_P (INTVAL (operands[3]), 'J')))
+	  || satisfies_constraint_N (operands[3])
+	  || satisfies_constraint_J (operands[3])))
     return "#";
   if (which_alternative == 4)
     return "%x5<m> [%4=%3%S2],%0";
@@ -2100,8 +2097,8 @@
       && (!CONST_INT_P (operands[3])
 	  || INTVAL (operands[3]) > 127
 	  || INTVAL (operands[3]) < -128
-	  || CRIS_CONST_OK_FOR_LETTER_P (INTVAL (operands[3]), 'N')
-	  || CRIS_CONST_OK_FOR_LETTER_P (INTVAL (operands[3]), 'J')))
+	  || satisfies_constraint_N (operands[3])
+	  || satisfies_constraint_J (operands[3])))
     return "#";
   if (which_alternative == 4)
     return "%x5%E6.%m6 [%4=%3%S2],%0";
@@ -2129,8 +2126,8 @@
       && (!CONST_INT_P (operands[3])
 	  || INTVAL (operands[3]) > 127
 	  || INTVAL (operands[3]) < -128
-	  || CRIS_CONST_OK_FOR_LETTER_P (INTVAL (operands[3]), 'N')
-	  || CRIS_CONST_OK_FOR_LETTER_P (INTVAL (operands[3]), 'J')))
+	  || satisfies_constraint_N (operands[3])
+	  || satisfies_constraint_J (operands[3])))
     return "#";
   if (which_alternative == 4)
     return "%x5%E6<m> [%4=%3%S2],%0";
@@ -2209,8 +2206,8 @@
       && (!CONST_INT_P (operands[3])
 	  || INTVAL (operands[3]) > 127
 	  || INTVAL (operands[3]) < -128
-	  || CRIS_CONST_OK_FOR_LETTER_P (INTVAL (operands[3]), 'N')
-	  || CRIS_CONST_OK_FOR_LETTER_P (INTVAL (operands[3]), 'J')))
+	  || satisfies_constraint_N (operands[3])
+	  || satisfies_constraint_J (operands[3])))
     return "#";
   if (which_alternative == 4)
     return "add%e5.b [%4=%3%S2],%0";
@@ -2237,8 +2234,8 @@
       && (!CONST_INT_P (operands[3])
 	  || INTVAL (operands[3]) > 127
 	  || INTVAL (operands[3]) < -128
-	  || CRIS_CONST_OK_FOR_LETTER_P (INTVAL (operands[3]), 'N')
-	  || CRIS_CONST_OK_FOR_LETTER_P (INTVAL (operands[3]), 'J')))
+	  || satisfies_constraint_N (operands[3])
+	  || satisfies_constraint_J (operands[3])))
     return "#";
   if (which_alternative == 4)
     return \"%x6%E5.%m5 [%4=%3%S2],%0\";
@@ -2509,7 +2506,7 @@
 
 ;; The addi insn as it is normally used.
 
-;; Make the the ACR alternative taste bad enough to not choose it as a
+;; Make the ACR alternative taste bad enough to not choose it as a
 ;; preference to avoid spilling problems (unwind-dw2-fde.c at build).
 ;; FIXME: Revisit for new register allocator.
 
@@ -2578,7 +2575,7 @@
   "TARGET_HAS_MUL_INSNS"
   "%!mul<su><mm> %2,%0"
   [(set (attr "slottable")
-	(if_then_else (ne (symbol_ref "TARGET_MUL_BUG") (const_int 0))
+	(if_then_else (match_test "TARGET_MUL_BUG")
 		      (const_string "no")
 		      (const_string "yes")))
    ;; For umuls.[bwd] it's just N unusable here, but let's be safe.
@@ -2601,7 +2598,7 @@
   "TARGET_HAS_MUL_INSNS"
   "%!muls.d %2,%0"
   [(set (attr "slottable")
-	(if_then_else (ne (symbol_ref "TARGET_MUL_BUG") (const_int 0))
+	(if_then_else (match_test "TARGET_MUL_BUG")
 		      (const_string "no")
 		      (const_string "yes")))
    ;; Just N unusable here, but let's be safe.
@@ -2917,36 +2914,51 @@
 
 ;; A strict_low_part pattern.
 
+;; Note the use of (match_dup 0) for the first operand of the operation
+;; here.  Reload can't handle an operand pair where one is read-write
+;; and must match a read, like in:
+;; (insn 80 79 81 4
+;;  (set (strict_low_part
+;;        (subreg:QI (reg/v:SI 0 r0 [orig:36 data ] [36]) 0))
+;;       (and:QI
+;;        (subreg:QI (reg:SI 15 acr [orig:27 D.7531 ] [27]) 0)
+;;        (const_int -64 [0xf..fc0]))) x.c:126 147 {*andqi_lowpart_v32}
+;;  (nil))
+;; In theory, it could reload this as a movstrictqi of the register
+;; operand at the and:QI to the destination register and change the
+;; and:QI operand to the same as the read-write output operand and the
+;; result would be recognized, but it doesn't recognize that's a valid
+;; reload for a strict_low_part-destination; it just sees a "+" at the
+;; destination constraints.  Better than adding complexity to reload is
+;; to follow the lead of m68k (see comment that begins with "These insns
+;; must use MATCH_DUP") since prehistoric times and make it just a
+;; match_dup.  FIXME: a sanity-check in gen* to refuse an insn with
+;; input-constraints matching input-output-constraints, e.g. "+r" <- "0".
+
 (define_insn "*andhi_lowpart_non_v32"
   [(set (strict_low_part
-	 (match_operand:HI 0 "register_operand"	       "+r,r, r,r,r,r"))
-	(and:HI (match_operand:HI 1 "register_operand" "%0,0, 0,0,0,r")
-		(match_operand:HI 2 "general_operand"   "r,Q>,L,O,g,!To")))]
+	 (match_operand:HI 0 "register_operand"	       "+r,r,r"))
+	(and:HI (match_dup 0)
+		(match_operand:HI 1 "general_operand"   "r,Q>,g")))]
   "!TARGET_V32"
   "@
-   and.w %2,%0
-   and.w %2,%0
-   and.w %2,%0
-   anDq %b2,%0
-   and.w %2,%0
-   and.w %2,%1,%0"
-  [(set_attr "slottable" "yes,yes,no,yes,no,no")
-   (set_attr "cc" "normal,normal,normal,clobber,normal,normal")])
+   and.w %1,%0
+   and.w %1,%0
+   and.w %1,%0"
+  [(set_attr "slottable" "yes,yes,no")])
 
 (define_insn "*andhi_lowpart_v32"
   [(set (strict_low_part
-	 (match_operand:HI 0 "register_operand" "+r,r,r,r,r"))
-	(and:HI (match_operand:HI 1 "register_operand" "%0,0,0,0,0")
-		(match_operand:HI 2 "general_operand" "r,Q>,L,O,g")))]
+	 (match_operand:HI 0 "register_operand" "+r,r,r"))
+	(and:HI (match_dup 0)
+		(match_operand:HI 1 "general_operand" "r,Q>,g")))]
   "TARGET_V32"
   "@
-   and.w %2,%0
-   and.w %2,%0
-   and.w %2,%0
-   anDq %b2,%0
-   and.w %2,%0"
-  [(set_attr "slottable" "yes,yes,no,yes,no")
-   (set_attr "cc" "noov32,noov32,noov32,clobber,noov32")])
+   and.w %1,%0
+   and.w %1,%0
+   and.w %1,%0"
+  [(set_attr "slottable" "yes,yes,no")
+   (set_attr "cc" "noov32")])
 
 (define_expand "andqi3"
   [(set (match_operand:QI 0 "register_operand")
@@ -2986,32 +2998,28 @@
 
 (define_insn "*andqi_lowpart_non_v32"
   [(set (strict_low_part
-	 (match_operand:QI 0 "register_operand"	       "+r,r, r,r,r"))
-	(and:QI (match_operand:QI 1 "register_operand" "%0,0, 0,0,r")
-		(match_operand:QI 2 "general_operand"   "r,Q>,O,g,!To")))]
+	 (match_operand:QI 0 "register_operand"	       "+r,r,r"))
+	(and:QI (match_dup 0)
+		(match_operand:QI 1 "general_operand"   "r,Q>,g")))]
   "!TARGET_V32"
   "@
-   and.b %2,%0
-   and.b %2,%0
-   andQ %b2,%0
-   and.b %2,%0
-   and.b %2,%1,%0"
-  [(set_attr "slottable" "yes,yes,yes,no,no")
-   (set_attr "cc" "normal,normal,clobber,normal,normal")])
+   and.b %1,%0
+   and.b %1,%0
+   and.b %1,%0"
+  [(set_attr "slottable" "yes,yes,no")])
 
 (define_insn "*andqi_lowpart_v32"
   [(set (strict_low_part
-	 (match_operand:QI 0 "register_operand" "+r,r,r,r"))
-	(and:QI (match_operand:QI 1 "register_operand" "%0,0,0,0")
-		(match_operand:QI 2 "general_operand" "r,Q>,O,g")))]
+	 (match_operand:QI 0 "register_operand" "+r,r,r"))
+	(and:QI (match_dup 0)
+		(match_operand:QI 1 "general_operand" "r,Q>,g")))]
   "TARGET_V32"
   "@
-   and.b %2,%0
-   and.b %2,%0
-   andQ %b2,%0
-   and.b %2,%0"
-  [(set_attr "slottable" "yes,yes,yes,no")
-   (set_attr "cc" "noov32,noov32,clobber,noov32")])
+   and.b %1,%0
+   and.b %1,%0
+   and.b %1,%0"
+  [(set_attr "slottable" "yes,yes,no")
+   (set_attr "cc" "noov32")])
 
 ;; Bitwise or.
 
@@ -3493,9 +3501,7 @@
 }
   [(set (attr "slottable")
  	(if_then_else
- 	 (ne (symbol_ref
-	      "(cris_return_address_on_stack_for_return ())")
- 	     (const_int 0))
+ 	 (match_test "cris_return_address_on_stack_for_return ()")
  	 (const_string "no")
 	 (const_string "has_return_slot")))])
 
@@ -3818,6 +3824,14 @@
   ""
   "nop"
   [(set_attr "cc" "none")])
+
+;; Same as the gdb trap breakpoint, will cause a SIGTRAP for
+;; cris-linux* and crisv32-linux*, as intended.  Will work in
+;; freestanding environments with sufficient framework.
+(define_insn "trap"
+  [(trap_if (const_int 1) (const_int 8))]
+  "TARGET_TRAP_USING_BREAK8"
+  "break 8")
 
 ;; We need to stop accesses to the stack after the memory is
 ;; deallocated.  Unfortunately, reorg doesn't look at naked clobbers,
@@ -3861,7 +3875,7 @@
      (use (label_ref (match_operand 3 "" "")))])]
   ""
 {
-  operands[2] = plus_constant (operands[2], 1);
+  operands[2] = plus_constant (SImode, operands[2], 1);
   operands[5] = gen_reg_rtx (SImode);
   operands[6] = gen_reg_rtx (SImode);
   operands[7] = gen_reg_rtx (SImode);
@@ -3896,7 +3910,7 @@
   rtx xlabel = gen_rtx_LABEL_REF (VOIDmode, operands[3]);
   for (i = 5; i <= 10; i++)
     operands[i] = gen_reg_rtx (SImode);
-  operands[2] = plus_constant (operands[2], 1);
+  operands[2] = plus_constant (SImode, operands[2], 1);
 
   /* Don't forget to decorate labels too, for PIC.  */
   operands[11] = flag_pic
@@ -3946,7 +3960,7 @@
 ;; up.
 
 (define_split
-  [(set (match_operand 0 "register_operand" "")
+  [(set (match_operand 0 "cris_nonsp_register_operand" "")
 	(match_operator
 	 4 "cris_operand_extend_operator"
 	 [(match_operand 1 "register_operand" "")
@@ -3976,7 +3990,7 @@
 ;; Call this op-extend-split-rx=rz
 
 (define_split
-  [(set (match_operand 0 "register_operand" "")
+  [(set (match_operand 0 "cris_nonsp_register_operand" "")
 	(match_operator
 	 4 "cris_plus_or_bound_operator"
 	 [(match_operand 1 "register_operand" "")
@@ -4004,7 +4018,7 @@
 ;; Call this op-extend-split-swapped
 
 (define_split
-  [(set (match_operand 0 "register_operand" "")
+  [(set (match_operand 0 "cris_nonsp_register_operand" "")
 	(match_operator
 	 4 "cris_plus_or_bound_operator"
 	 [(match_operator
@@ -4030,7 +4044,7 @@
 ;; bound.  Call this op-extend-split-swapped-rx=rz.
 
 (define_split
-  [(set (match_operand 0 "register_operand" "")
+  [(set (match_operand 0 "cris_nonsp_register_operand" "")
 	(match_operator
 	 4 "cris_plus_or_bound_operator"
 	 [(match_operator
@@ -4061,7 +4075,7 @@
 ;; Call this op-extend.
 
 (define_split
-  [(set (match_operand 0 "register_operand" "")
+  [(set (match_operand 0 "cris_nonsp_register_operand" "")
 	(match_operator
 	 3 "cris_orthogonal_operator"
 	 [(match_operand 1 "register_operand" "")
@@ -4085,7 +4099,7 @@
 ;; Call this op-split-rx=rz
 
 (define_split
-  [(set (match_operand 0 "register_operand" "")
+  [(set (match_operand 0 "cris_nonsp_register_operand" "")
 	(match_operator
 	 3 "cris_commutative_orth_op"
 	 [(match_operand 2 "memory_operand" "")
@@ -4109,7 +4123,7 @@
 ;; Call this op-split-swapped.
 
 (define_split
-  [(set (match_operand 0 "register_operand" "")
+  [(set (match_operand 0 "cris_nonsp_register_operand" "")
 	(match_operator
 	 3 "cris_commutative_orth_op"
 	 [(match_operand 1 "register_operand" "")
@@ -4132,7 +4146,7 @@
 ;; Call this op-split-swapped-rx=rz.
 
 (define_split
-  [(set (match_operand 0 "register_operand" "")
+  [(set (match_operand 0 "cris_nonsp_register_operand" "")
 	(match_operator
 	 3 "cris_orthogonal_operator"
 	 [(match_operand 2 "memory_operand" "")
@@ -4150,6 +4164,8 @@
 	 3 [(match_dup 0)
 	    (match_dup 1)]))]
   "")
+
+(include "sync.md")
 
 ;; Splits for all cases in side-effect insns where (possibly after reload
 ;; and register allocation) rx and ry in [rx=ry+i] are equal.
@@ -4539,10 +4555,11 @@
 ;; We're not allowed to generate copies of registers with different mode
 ;; until after reload; copying pseudos upsets reload.  CVS as of
 ;; 2001-08-24, unwind-dw2-fde.c, _Unwind_Find_FDE ICE in
-;; cselib_invalidate_regno.
+;; cselib_invalidate_regno.  Also, don't do this for the stack-pointer,
+;; as we don't want it set temporarily to an invalid value.
 
 (define_split ; indir_to_reg_split
-  [(set (match_operand 0 "register_operand" "")
+  [(set (match_operand 0 "cris_nonsp_register_operand" "")
 	(match_operand 1 "indirect_operand" ""))]
   "reload_completed
    && REG_P (operands[0])
@@ -4558,7 +4575,7 @@
 ;; As the above, but MOVS and MOVU.
 
 (define_split
-  [(set (match_operand 0 "register_operand" "")
+  [(set (match_operand 0 "cris_nonsp_register_operand" "")
 	(match_operator
 	 4 "cris_extend_operator"
 	 [(match_operand 1 "indirect_operand" "")]))]
@@ -4685,9 +4702,9 @@
 	(match_operator 4 "cris_mem_op" [(match_dup 0)]))]
   "GET_MODE_SIZE (GET_MODE (operands[4])) <= UNITS_PER_WORD
    && REGNO (operands[3]) != REGNO (operands[0])
-   && (BASE_P (operands[1]) || BASE_P (operands[2]))
-   && !CRIS_CONST_OK_FOR_LETTER_P (INTVAL (operands[2]), 'J')
-   && !CRIS_CONST_OK_FOR_LETTER_P (INTVAL (operands[2]), 'N')
+   && (cris_base_p (operands[1], true) || cris_base_p (operands[2], true))
+   && !satisfies_constraint_J (operands[2])
+   && !satisfies_constraint_N (operands[2])
    && (INTVAL (operands[2]) >= -128 && INTVAL (operands[2]) < 128)
    && TARGET_SIDE_EFFECT_PREFIXES"
   [(parallel
@@ -4721,9 +4738,9 @@
 	(match_operand 4 "register_operand" ""))]
   "GET_MODE_SIZE (GET_MODE (operands[4])) <= UNITS_PER_WORD
    && REGNO (operands[4]) != REGNO (operands[0])
-   && (BASE_P (operands[1]) || BASE_P (operands[2]))
-   && !CRIS_CONST_OK_FOR_LETTER_P (INTVAL (operands[2]), 'J')
-   && !CRIS_CONST_OK_FOR_LETTER_P (INTVAL (operands[2]), 'N')
+   && (cris_base_p (operands[1], true) || cris_base_p (operands[2], true))
+   && !satisfies_constraint_J (operands[2])
+   && !satisfies_constraint_N (operands[2])
    && (INTVAL (operands[2]) >= -128 && INTVAL (operands[2]) < 128)
    && TARGET_SIDE_EFFECT_PREFIXES"
   [(parallel
@@ -4760,8 +4777,8 @@
   ;; Change to GET_MODE_SIZE (GET_MODE (operands[3])) <= UNITS_PER_WORD?
   "GET_MODE (operands[3]) != DImode
    && REGNO (operands[0]) != REGNO (operands[3])
-   && !CRIS_CONST_OK_FOR_LETTER_P (INTVAL (operands[2]), 'J')
-   && !CRIS_CONST_OK_FOR_LETTER_P (INTVAL (operands[2]), 'N')
+   && !satisfies_constraint_J (operands[2])
+   && !satisfies_constraint_N (operands[2])
    && INTVAL (operands[2]) >= -128
    && INTVAL (operands[2]) <= 127
    && TARGET_SIDE_EFFECT_PREFIXES"
@@ -4929,17 +4946,17 @@
   "operands[7]
      = rtx_equal_p (operands[3], operands[0]) ? operands[4] : operands[3];")
 
-;;  I cannot tell GCC (2.1, 2.7.2) how to correctly reload an instruction
-;; that looks like
-;;   and.b some_byte,const,reg_32
-;; where reg_32 is the destination of the "three-address" code optimally.
+;; There seems to be no other way to make GCC (including 4.8/trunk at
+;; r186932) optimally reload an instruction that looks like
+;;   and.d reg_or_mem,const_32__65535,other_reg
+;; where other_reg is the destination.
 ;; It should be:
-;;   movu.b some_byte,reg_32
-;;   and.b const,reg_32
+;;   movu.[bw] reg_or_mem,reg_32
+;;   and.[bw] trunc_int_for_mode([bw], const_32__65535),reg_32 ;; or andq
 ;; but it turns into:
-;;   move.b some_byte,reg_32
-;;   and.d const,reg_32
-;; Fix it here.
+;;   move.d reg_or_mem,reg_32
+;;   and.d const_32__65535,reg_32
+;; Fix it with these two peephole2's.
 ;; Testcases: gcc.dg/cris-peep2-andu1.c gcc.dg/cris-peep2-andu2.c
 
 (define_peephole2 ; andu (casesi+45)
@@ -4952,7 +4969,7 @@
    ;; don't do this for a mem-volatile access.
   "REGNO (operands[2]) == REGNO (operands[0])
    && INTVAL (operands[3]) <= 65535 && INTVAL (operands[3]) >= 0
-   && !CRIS_CONST_OK_FOR_LETTER_P (INTVAL (operands[3]), 'I')
+   && !satisfies_constraint_I (operands[3])
    && !side_effects_p (operands[1])
    && (!REG_P (operands[1])
        || REGNO (operands[1]) <= CRIS_LAST_GENERAL_REGISTER)"
@@ -4962,7 +4979,7 @@
 {
   enum machine_mode zmode = INTVAL (operands[3]) <= 255 ? QImode : HImode;
   enum machine_mode amode
-    = CRIS_CONST_OK_FOR_LETTER_P (INTVAL (operands[3]), 'O') ? SImode : zmode;
+    = satisfies_constraint_O (operands[3]) ? SImode : zmode;
   rtx op1
     = (REG_S_P (operands[1])
        ? gen_rtx_REG (zmode, REGNO (operands[1]))
@@ -4975,6 +4992,36 @@
 		   GEN_INT (trunc_int_for_mode (INTVAL (operands[3]),
 						amode == SImode
 						? QImode : amode)));
+})
+
+;; Since r186861, gcc.dg/cris-peep2-andu2.c trigs this pattern, with which
+;; we fix up e.g.:
+;;  movu.b 254,$r9.
+;;  and.d $r10,$r9
+;; into:
+;;  movu.b $r10,$r9
+;;  andq -2,$r9.
+;; Only do this for values fitting the quick immediate operand.
+(define_peephole2 ; andqu (casesi+46)
+  [(set (match_operand:SI 0 "register_operand")
+	(match_operand:SI 1 "const_int_operand"))
+   (set (match_dup 0)
+	(and:SI (match_dup 0) (match_operand:SI 2 "nonimmediate_operand")))]
+   ;; Since the size of the memory access will be made different here,
+   ;; don't do this for a volatile access or a post-incremented address.
+  "satisfies_constraint_O (operands[1])
+   && !side_effects_p (operands[2])
+   && !reg_overlap_mentioned_p (operands[0], operands[2])"
+  [(set (match_dup 0) (match_dup 3))
+   (set (match_dup 0) (and:SI (match_dup 0) (match_dup 4)))]
+{
+  enum machine_mode zmode = INTVAL (operands[2]) <= 255 ? QImode : HImode;
+  rtx op1
+    = (REG_S_P (operands[2])
+       ? gen_rtx_REG (zmode, REGNO (operands[2]))
+       : adjust_address (operands[2], zmode, 0));
+  operands[3] = gen_rtx_ZERO_EXTEND (SImode, op1);
+  operands[4] = GEN_INT (trunc_int_for_mode (INTVAL (operands[1]), QImode));
 })
 
 ;; Try and avoid GOTPLT reads escaping a call: transform them into

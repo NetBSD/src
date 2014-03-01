@@ -1,5 +1,5 @@
 /* Timing variables for measuring compiler performance.
-   Copyright (C) 2000, 2003, 2004, 2005, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2000-2013 Free Software Foundation, Inc.
    Contributed by Alex Samuel <samuel@codesourcery.com>
 
 This file is part of GCC.
@@ -20,17 +20,7 @@ along with GCC; see the file COPYING3.  If not see
 
 #include "config.h"
 #include "system.h"
-#ifdef HAVE_SYS_TIMES_H
-# include <sys/times.h>
-#endif
-#ifdef HAVE_SYS_RESOURCE_H
-#include <sys/resource.h>
-#endif
-#include "coretypes.h"
-#include "tm.h"
-#include "intl.h"
-#include "rtl.h"
-#include "toplev.h"
+#include "timevar.h"
 
 #ifndef HAVE_CLOCK_T
 typedef int clock_t;
@@ -109,8 +99,8 @@ static double clocks_to_msec;
 #define CLOCKS_TO_MSEC (1 / (double)CLOCKS_PER_SEC)
 #endif
 
-#include "flags.h"
-#include "timevar.h"
+/* True if timevars should be used.  In GCC, this happens with
+   the -ftime-report flag.  */
 
 bool timevar_enable;
 
@@ -370,10 +360,116 @@ timevar_stop (timevar_id_t timevar)
 
   /* TIMEVAR must have been started via timevar_start.  */
   gcc_assert (tv->standalone);
+  tv->standalone = 0; /* Enable a restart.  */
 
   get_time (&now);
   timevar_accumulate (&tv->elapsed, &tv->start_time, &now);
 }
+
+
+/* Conditionally start timing TIMEVAR independently of the timing stack.
+   If the timer is already running, leave it running and return true.
+   Otherwise, start the timer and return false.
+   Elapsed time until the corresponding timevar_cond_stop
+   is called for the same timing variable is attributed to TIMEVAR.  */
+
+bool
+timevar_cond_start (timevar_id_t timevar)
+{
+  struct timevar_def *tv = &timevars[timevar];
+
+  if (!timevar_enable)
+    return false;
+
+  /* Mark this timing variable as used.  */
+  tv->used = 1;
+
+  if (tv->standalone)
+    return true;  /* The timevar is already running.  */
+
+  /* Don't allow the same timing variable
+     to be unconditionally started more than once.  */
+  tv->standalone = 1;
+
+  get_time (&tv->start_time);
+  return false;  /* The timevar was not already running.  */
+}
+
+/* Conditionally stop timing TIMEVAR.  The RUNNING parameter must come
+   from the return value of a dynamically matching timevar_cond_start.
+   If the timer had already been RUNNING, do nothing.  Otherwise, time
+   elapsed since timevar_cond_start was called is attributed to it.  */
+
+void
+timevar_cond_stop (timevar_id_t timevar, bool running)
+{
+  struct timevar_def *tv;
+  struct timevar_time_def now;
+
+  if (!timevar_enable || running)
+    return;
+
+  tv = &timevars[timevar];
+
+  /* TIMEVAR must have been started via timevar_cond_start.  */
+  gcc_assert (tv->standalone);
+  tv->standalone = 0; /* Enable a restart.  */
+
+  get_time (&now);
+  timevar_accumulate (&tv->elapsed, &tv->start_time, &now);
+}
+
+
+/* Validate that phase times are consistent.  */
+
+static void
+validate_phases (FILE *fp)
+{
+  unsigned int /* timevar_id_t */ id;
+  struct timevar_time_def *total = &timevars[TV_TOTAL].elapsed;
+  double phase_user = 0.0;
+  double phase_sys = 0.0;
+  double phase_wall = 0.0;
+  unsigned phase_ggc_mem = 0;
+  static char phase_prefix[] = "phase ";
+  const double tolerance = 1.000001;  /* One part in a million.  */
+
+  for (id = 0; id < (unsigned int) TIMEVAR_LAST; ++id)
+    {
+      struct timevar_def *tv = &timevars[(timevar_id_t) id];
+
+      /* Don't evaluate timing variables that were never used.  */
+      if (!tv->used)
+	continue;
+
+      if (strncmp (tv->name, phase_prefix, sizeof phase_prefix - 1) == 0)
+	{
+	  phase_user += tv->elapsed.user;
+	  phase_sys += tv->elapsed.sys;
+	  phase_wall += tv->elapsed.wall;
+	  phase_ggc_mem += tv->elapsed.ggc_mem;
+	}
+    }
+
+  if (phase_user > total->user * tolerance
+      || phase_sys > total->sys * tolerance
+      || phase_wall > total->wall * tolerance
+      || phase_ggc_mem > total->ggc_mem * tolerance)
+    {
+
+      fprintf (fp, "Timing error: total of phase timers exceeds total time.\n");
+      if (phase_user > total->user)
+	fprintf (fp, "user    %24.18e > %24.18e\n", phase_user, total->user);
+      if (phase_sys > total->sys)
+	fprintf (fp, "sys     %24.18e > %24.18e\n", phase_sys, total->sys);
+      if (phase_wall > total->wall)
+	fprintf (fp, "wall    %24.18e > %24.18e\n", phase_wall, total->wall);
+      if (phase_ggc_mem > total->ggc_mem)
+	fprintf (fp, "ggc_mem %24u > %24u\n", phase_ggc_mem, total->ggc_mem);
+      gcc_unreachable ();
+    }
+}
+
 
 /* Summarize timing variables to FP.  The timing variable TV_TOTAL has
    a special meaning -- it's considered to be the total elapsed time,
@@ -408,7 +504,7 @@ timevar_print (FILE *fp)
      TIMEVAR.  */
   start_time = now;
 
-  fputs (_("\nExecution times (seconds)\n"), fp);
+  fputs ("\nExecution times (seconds)\n", fp);
   for (id = 0; id < (unsigned int) TIMEVAR_LAST; ++id)
     {
       struct timevar_def *tv = &timevars[(timevar_id_t) id];
@@ -432,7 +528,7 @@ timevar_print (FILE *fp)
 	continue;
 
       /* The timing variable name.  */
-      fprintf (fp, " %-22s:", tv->name);
+      fprintf (fp, " %-24s:", tv->name);
 
 #ifdef HAVE_USER_TIME
       /* Print user-mode time for this process.  */
@@ -466,7 +562,7 @@ timevar_print (FILE *fp)
     }
 
   /* Print total time.  */
-  fputs (_(" TOTAL                 :"), fp);
+  fputs (" TOTAL                 :", fp);
 #ifdef HAVE_USER_TIME
   fprintf (fp, "%7.2f          ", total->user);
 #endif
@@ -489,6 +585,8 @@ timevar_print (FILE *fp)
 
 #endif /* defined (HAVE_USER_TIME) || defined (HAVE_SYS_TIME)
 	  || defined (HAVE_WALL_TIME) */
+
+  validate_phases (fp);
 }
 
 /* Prints a message to stderr stating that time elapsed in STR is
@@ -499,7 +597,7 @@ print_time (const char *str, long total)
 {
   long all_time = get_run_time ();
   fprintf (stderr,
-	   _("time in %s: %ld.%06ld (%ld%%)\n"),
+	   "time in %s: %ld.%06ld (%ld%%)\n",
 	   str, total / 1000000, total % 1000000,
 	   all_time == 0 ? 0
 	   : (long) (((100.0 * (double) total) / (double) all_time) + .5));

@@ -3,8 +3,7 @@
 ;; expander, and the actual vector instructions will be in altivec.md and
 ;; vsx.md
 
-;; Copyright (C) 2009, 2010, 2011
-;; Free Software Foundation, Inc.
+;; Copyright (C) 2009-2013 Free Software Foundation, Inc.
 ;; Contributed by Michael Meissner <meissner@linux.vnet.ibm.com>
 
 ;; This file is part of GCC.
@@ -74,8 +73,19 @@
 			   (V2DF  "V2DI")])
 
 ;; constants for unspec
-(define_constants
-  [(UNSPEC_PREDICATE	400)])
+(define_c_enum "unspec" [UNSPEC_PREDICATE
+			 UNSPEC_REDUC])
+
+;; Vector reduction code iterators
+(define_code_iterator VEC_reduc [plus smin smax])
+
+(define_code_attr VEC_reduc_name [(plus "splus")
+				  (smin "smin")
+				  (smax "smax")])
+
+(define_code_attr VEC_reduc_rtx [(plus "add")
+				 (smin "smin")
+				 (smax "smax")])
 
 
 ;; Vector move instructions.
@@ -161,7 +171,7 @@
 
 
 
-;; Reload patterns for vector operations.  We may need an addtional base
+;; Reload patterns for vector operations.  We may need an additional base
 ;; register to convert the reg+offset addressing to reg+reg for vector
 ;; registers and reg+reg or (reg+reg)&(-16) addressing to just an index
 ;; register for gpr registers.
@@ -239,16 +249,14 @@
   [(set (match_operand:VEC_F 0 "vfloat_operand" "")
 	(mult:VEC_F (match_operand:VEC_F 1 "vfloat_operand" "")
 		    (match_operand:VEC_F 2 "vfloat_operand" "")))]
-  "(VECTOR_UNIT_VSX_P (<MODE>mode)
-    || (VECTOR_UNIT_ALTIVEC_P (<MODE>mode) && TARGET_FUSED_MADD))"
-  "
+  "VECTOR_UNIT_VSX_P (<MODE>mode) || VECTOR_UNIT_ALTIVEC_P (<MODE>mode)"
 {
   if (<MODE>mode == V4SFmode && VECTOR_UNIT_ALTIVEC_P (<MODE>mode))
     {
       emit_insn (gen_altivec_mulv4sf3 (operands[0], operands[1], operands[2]));
       DONE;
     }
-}")
+})
 
 (define_expand "div<mode>3"
   [(set (match_operand:VEC_F 0 "vfloat_operand" "")
@@ -304,6 +312,20 @@
   "VECTOR_UNIT_VSX_P (<MODE>mode)"
   "")
 
+(define_expand "rsqrte<mode>2"
+  [(set (match_operand:VEC_F 0 "vfloat_operand" "")
+        (unspec:VEC_F [(match_operand:VEC_F 1 "vfloat_operand" "")]
+		      UNSPEC_RSQRT))]
+  "VECTOR_UNIT_ALTIVEC_OR_VSX_P (<MODE>mode)"
+  "")
+
+(define_expand "re<mode>2"
+  [(set (match_operand:VEC_F 0 "vfloat_operand" "")
+	(unspec:VEC_F [(match_operand:VEC_F 1 "vfloat_operand" "f")]
+		      UNSPEC_FRES))]
+  "VECTOR_UNIT_ALTIVEC_OR_VSX_P (<MODE>mode)"
+  "")
+
 (define_expand "ftrunc<mode>2"
   [(set (match_operand:VEC_F 0 "vfloat_operand" "")
   	(fix:VEC_F (match_operand:VEC_F 1 "vfloat_operand" "")))]
@@ -332,11 +354,8 @@
 
 (define_expand "vector_copysign<mode>3"
   [(set (match_operand:VEC_F 0 "vfloat_operand" "")
-	(if_then_else:VEC_F
-	 (ge:VEC_F (match_operand:VEC_F 2 "vfloat_operand" "")
-		   (match_dup 3))
-	 (abs:VEC_F (match_operand:VEC_F 1 "vfloat_operand" ""))
-	 (neg:VEC_F (abs:VEC_F (match_dup 1)))))]
+	(unspec:VEC_F [(match_operand:VEC_F 1 "vfloat_operand" "")
+		       (match_operand:VEC_F 2 "vfloat_operand" "")] UNSPEC_COPYSIGN))]
   "VECTOR_UNIT_ALTIVEC_OR_VSX_P (<MODE>mode)"
   "
 {
@@ -346,13 +365,11 @@
 					     operands[2]));
       DONE;
     }
-
-  operands[3] = CONST0_RTX (<MODE>mode);
 }")
 
 
 ;; Vector comparisons
-(define_expand "vcond<mode>"
+(define_expand "vcond<mode><mode>"
   [(set (match_operand:VEC_F 0 "vfloat_operand" "")
 	(if_then_else:VEC_F
 	 (match_operator 3 "comparison_operator"
@@ -370,7 +387,7 @@
     FAIL;
 }")
 
-(define_expand "vcond<mode>"
+(define_expand "vcond<mode><mode>"
   [(set (match_operand:VEC_I 0 "vint_operand" "")
 	(if_then_else:VEC_I
 	 (match_operator 3 "comparison_operator"
@@ -388,7 +405,45 @@
     FAIL;
 }")
 
-(define_expand "vcondu<mode>"
+(define_expand "vcondv4sfv4si"
+  [(set (match_operand:V4SF 0 "vfloat_operand" "")
+	(if_then_else:V4SF
+	 (match_operator 3 "comparison_operator"
+			 [(match_operand:V4SI 4 "vint_operand" "")
+			  (match_operand:V4SI 5 "vint_operand" "")])
+	 (match_operand:V4SF 1 "vfloat_operand" "")
+	 (match_operand:V4SF 2 "vfloat_operand" "")))]
+  "VECTOR_UNIT_ALTIVEC_OR_VSX_P (V4SFmode)
+   && VECTOR_UNIT_ALTIVEC_P (V4SImode)"
+  "
+{
+  if (rs6000_emit_vector_cond_expr (operands[0], operands[1], operands[2],
+				    operands[3], operands[4], operands[5]))
+    DONE;
+  else
+    FAIL;
+}")
+
+(define_expand "vcondv4siv4sf"
+  [(set (match_operand:V4SI 0 "vint_operand" "")
+	(if_then_else:V4SI
+	 (match_operator 3 "comparison_operator"
+			 [(match_operand:V4SF 4 "vfloat_operand" "")
+			  (match_operand:V4SF 5 "vfloat_operand" "")])
+	 (match_operand:V4SI 1 "vint_operand" "")
+	 (match_operand:V4SI 2 "vint_operand" "")))]
+  "VECTOR_UNIT_ALTIVEC_OR_VSX_P (V4SFmode)
+   && VECTOR_UNIT_ALTIVEC_P (V4SImode)"
+  "
+{
+  if (rs6000_emit_vector_cond_expr (operands[0], operands[1], operands[2],
+				    operands[3], operands[4], operands[5]))
+    DONE;
+  else
+    FAIL;
+}")
+
+(define_expand "vcondu<mode><mode>"
   [(set (match_operand:VEC_I 0 "vint_operand" "")
 	(if_then_else:VEC_I
 	 (match_operator 3 "comparison_operator"
@@ -397,6 +452,25 @@
 	 (match_operand:VEC_I 1 "vint_operand" "")
 	 (match_operand:VEC_I 2 "vint_operand" "")))]
   "VECTOR_UNIT_ALTIVEC_P (<MODE>mode)"
+  "
+{
+  if (rs6000_emit_vector_cond_expr (operands[0], operands[1], operands[2],
+				    operands[3], operands[4], operands[5]))
+    DONE;
+  else
+    FAIL;
+}")
+
+(define_expand "vconduv4sfv4si"
+  [(set (match_operand:V4SF 0 "vfloat_operand" "")
+	(if_then_else:V4SF
+	 (match_operator 3 "comparison_operator"
+			 [(match_operand:V4SI 4 "vint_operand" "")
+			  (match_operand:V4SI 5 "vint_operand" "")])
+	 (match_operand:V4SF 1 "vfloat_operand" "")
+	 (match_operand:V4SF 2 "vfloat_operand" "")))]
+  "VECTOR_UNIT_ALTIVEC_OR_VSX_P (V4SFmode)
+   && VECTOR_UNIT_ALTIVEC_P (V4SImode)"
   "
 {
   if (rs6000_emit_vector_cond_expr (operands[0], operands[1], operands[2],
@@ -690,7 +764,7 @@
     }
 }")
 
-(define_expand "unsigned_float<VEC_int><mode>2"
+(define_expand "floatuns<VEC_int><mode>2"
   [(set (match_operand:VEC_F 0 "vfloat_operand" "")
 	(unsigned_float:VEC_F (match_operand:<VEC_INT> 1 "vint_operand" "")))]
   "VECTOR_UNIT_ALTIVEC_OR_VSX_P (<MODE>mode)"
@@ -760,62 +834,6 @@
 				INTVAL (operands[2]));
   DONE;
 })
-
-;; Interleave patterns
-(define_expand "vec_interleave_highv4sf"
-  [(set (match_operand:V4SF 0 "vfloat_operand" "")
-        (vec_merge:V4SF
-	 (vec_select:V4SF (match_operand:V4SF 1 "vfloat_operand" "")
-			  (parallel [(const_int 0)
-				     (const_int 2)
-				     (const_int 1)
-				     (const_int 3)]))
-	 (vec_select:V4SF (match_operand:V4SF 2 "vfloat_operand" "")
-			  (parallel [(const_int 2)
-				     (const_int 0)
-				     (const_int 3)
-				     (const_int 1)]))
-	 (const_int 5)))]
-  "VECTOR_UNIT_ALTIVEC_OR_VSX_P (V4SFmode)"
-  "")
-
-(define_expand "vec_interleave_lowv4sf"
-  [(set (match_operand:V4SF 0 "vfloat_operand" "")
-        (vec_merge:V4SF
-	 (vec_select:V4SF (match_operand:V4SF 1 "vfloat_operand" "")
-			  (parallel [(const_int 2)
-				     (const_int 0)
-				     (const_int 3)
-				     (const_int 1)]))
-	 (vec_select:V4SF (match_operand:V4SF 2 "vfloat_operand" "")
-			  (parallel [(const_int 0)
-				     (const_int 2)
-				     (const_int 1)
-				     (const_int 3)]))
-	 (const_int 5)))]
-  "VECTOR_UNIT_ALTIVEC_OR_VSX_P (V4SFmode)"
-  "")
-
-(define_expand "vec_interleave_high<mode>"
-  [(set (match_operand:VEC_64 0 "vfloat_operand" "")
-	(vec_concat:VEC_64
-	 (vec_select:<VEC_base> (match_operand:VEC_64 1 "vfloat_operand" "")
-				(parallel [(const_int 0)]))
-	 (vec_select:<VEC_base> (match_operand:VEC_64 2 "vfloat_operand" "")
-				(parallel [(const_int 0)]))))]
-  "VECTOR_UNIT_VSX_P (<MODE>mode)"
-  "")
-
-(define_expand "vec_interleave_low<mode>"
-  [(set (match_operand:VEC_64 0 "vfloat_operand" "")
-	(vec_concat:VEC_64
-	 (vec_select:<VEC_base> (match_operand:VEC_64 1 "vfloat_operand" "")
-				(parallel [(const_int 1)]))
-	 (vec_select:<VEC_base> (match_operand:VEC_64 2 "vfloat_operand" "")
-				(parallel [(const_int 1)]))))]
-  "VECTOR_UNIT_VSX_P (<MODE>mode)"
-  "")
-
 
 ;; Convert double word types to single word types
 (define_expand "vec_pack_trunc_v2df"
@@ -829,7 +847,7 @@
 
   emit_insn (gen_vsx_xvcvdpsp (r1, operands[1]));
   emit_insn (gen_vsx_xvcvdpsp (r2, operands[2]));
-  emit_insn (gen_vec_extract_evenv4sf (operands[0], r1, r2));
+  rs6000_expand_extract_even (operands[0], r1, r2);
   DONE;
 })
 
@@ -844,7 +862,7 @@
 
   emit_insn (gen_vsx_xvcvdpsxws (r1, operands[1]));
   emit_insn (gen_vsx_xvcvdpsxws (r2, operands[2]));
-  emit_insn (gen_vec_extract_evenv4si (operands[0], r1, r2));
+  rs6000_expand_extract_even (operands[0], r1, r2);
   DONE;
 })
 
@@ -859,7 +877,7 @@
 
   emit_insn (gen_vsx_xvcvdpuxws (r1, operands[1]));
   emit_insn (gen_vsx_xvcvdpuxws (r2, operands[2]));
-  emit_insn (gen_vec_extract_evenv4si (operands[0], r1, r2));
+  rs6000_expand_extract_even (operands[0], r1, r2);
   DONE;
 })
 
@@ -871,7 +889,7 @@
 {
   rtx reg = gen_reg_rtx (V4SFmode);
 
-  emit_insn (gen_vec_interleave_highv4sf (reg, operands[1], operands[1]));
+  rs6000_expand_interleave (reg, operands[1], operands[1], true);
   emit_insn (gen_vsx_xvcvspdp (operands[0], reg));
   DONE;
 })
@@ -883,7 +901,7 @@
 {
   rtx reg = gen_reg_rtx (V4SFmode);
 
-  emit_insn (gen_vec_interleave_lowv4sf (reg, operands[1], operands[1]));
+  rs6000_expand_interleave (reg, operands[1], operands[1], false);
   emit_insn (gen_vsx_xvcvspdp (operands[0], reg));
   DONE;
 })
@@ -895,7 +913,7 @@
 {
   rtx reg = gen_reg_rtx (V4SImode);
 
-  emit_insn (gen_vec_interleave_highv4si (reg, operands[1], operands[1]));
+  rs6000_expand_interleave (reg, operands[1], operands[1], true);
   emit_insn (gen_vsx_xvcvsxwdp (operands[0], reg));
   DONE;
 })
@@ -907,7 +925,7 @@
 {
   rtx reg = gen_reg_rtx (V4SImode);
 
-  emit_insn (gen_vec_interleave_lowv4si (reg, operands[1], operands[1]));
+  rs6000_expand_interleave (reg, operands[1], operands[1], false);
   emit_insn (gen_vsx_xvcvsxwdp (operands[0], reg));
   DONE;
 })
@@ -919,7 +937,7 @@
 {
   rtx reg = gen_reg_rtx (V4SImode);
 
-  emit_insn (gen_vec_interleave_highv4si (reg, operands[1], operands[1]));
+  rs6000_expand_interleave (reg, operands[1], operands[1], true);
   emit_insn (gen_vsx_xvcvuxwdp (operands[0], reg));
   DONE;
 })
@@ -931,7 +949,7 @@
 {
   rtx reg = gen_reg_rtx (V4SImode);
 
-  emit_insn (gen_vec_interleave_lowv4si (reg, operands[1], operands[1]));
+  rs6000_expand_interleave (reg, operands[1], operands[1], false);
   emit_insn (gen_vsx_xvcvuxwdp (operands[0], reg));
   DONE;
 })
@@ -953,8 +971,8 @@
 ;; Under VSX, vectors of 4/8 byte alignments do not need to be aligned
 ;; since the load already handles it.
 (define_expand "movmisalign<mode>"
- [(set (match_operand:VEC_N 0 "vfloat_operand" "")
-       (match_operand:VEC_N 1 "vfloat_operand" ""))]
+ [(set (match_operand:VEC_N 0 "nonimmediate_operand" "")
+       (match_operand:VEC_N 1 "any_operand" ""))]
  "VECTOR_MEM_VSX_P (<MODE>mode) && TARGET_ALLOW_MOVMISALIGN"
  "")
 
@@ -1072,6 +1090,41 @@
 			(match_operand:VEC_I 2 "vint_operand" "")))]
   "TARGET_ALTIVEC"
   "")
+
+;; Vector reduction expanders for VSX
+
+(define_expand "reduc_<VEC_reduc_name>_v2df"
+  [(parallel [(set (match_operand:V2DF 0 "vfloat_operand" "")
+		   (VEC_reduc:V2DF
+		    (vec_concat:V2DF
+		     (vec_select:DF
+		      (match_operand:V2DF 1 "vfloat_operand" "")
+		      (parallel [(const_int 1)]))
+		     (vec_select:DF
+		      (match_dup 1)
+		      (parallel [(const_int 0)])))
+		    (match_dup 1)))
+	      (clobber (match_scratch:V2DF 2 ""))])]
+  "VECTOR_UNIT_VSX_P (V2DFmode)"
+  "")
+
+; The (VEC_reduc:V4SF
+;	(op1)
+;	(unspec:V4SF [(const_int 0)] UNSPEC_REDUC))
+;
+; is to allow us to use a code iterator, but not completely list all of the
+; vector rotates, etc. to prevent canonicalization
+
+(define_expand "reduc_<VEC_reduc_name>_v4sf"
+  [(parallel [(set (match_operand:V4SF 0 "vfloat_operand" "")
+		   (VEC_reduc:V4SF
+		    (unspec:V4SF [(const_int 0)] UNSPEC_REDUC)
+		    (match_operand:V4SF 1 "vfloat_operand" "")))
+	      (clobber (match_scratch:V4SF 2 ""))
+	      (clobber (match_scratch:V4SF 3 ""))])]
+  "VECTOR_UNIT_VSX_P (V4SFmode)"
+  "")
+
 
 ;;; Expanders for vector insn patterns shared between the SPE and TARGET_PAIRED systems.
 

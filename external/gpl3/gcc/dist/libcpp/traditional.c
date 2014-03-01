@@ -1,6 +1,5 @@
 /* CPP Library - traditional lexical analysis and macro expansion.
-   Copyright (C) 2002, 2004, 2005, 2007, 2008, 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 2002-2013 Free Software Foundation, Inc.
    Contributed by Neil Booth, May 2002
 
 This program is free software; you can redistribute it and/or modify it
@@ -738,7 +737,7 @@ recursive_macro (cpp_reader *pfile, cpp_hashnode *node)
       do
 	{
 	  depth++;
-	  if (context->macro == node && depth > 20)
+	  if (context->c.macro == node && depth > 20)
 	    break;
 	  context = context->prev;
 	}

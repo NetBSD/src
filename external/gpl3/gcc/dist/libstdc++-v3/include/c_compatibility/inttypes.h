@@ -1,6 +1,6 @@
 // -*- C++ -*- compatibility header.
 
-// Copyright (C) 2007, 2008, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2007-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -33,7 +33,7 @@
 
 #include <bits/c++config.h>
 
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus >= 201103L
 
 // For 8.11.1/1 (see C99, Note 184)
 # if _GLIBCXX_HAVE_INTTYPES_H
@@ -48,22 +48,37 @@
 #  endif
 # endif
 
-# if defined(_GLIBCXX_INCLUDE_AS_TR1)
-#  error C++0x header cannot be included from TR1 header
-# endif
-# if defined(_GLIBCXX_INCLUDE_AS_CXX0X)
-#  include <tr1_impl/cinttypes>
-# else
-#  define _GLIBCXX_INCLUDE_AS_CXX0X
-#  define _GLIBCXX_BEGIN_NAMESPACE_TR1
-#  define _GLIBCXX_END_NAMESPACE_TR1
-#  define _GLIBCXX_TR1
-#  include <tr1_impl/cinttypes>
-#  undef _GLIBCXX_TR1
-#  undef _GLIBCXX_END_NAMESPACE_TR1
-#  undef _GLIBCXX_BEGIN_NAMESPACE_TR1
-#  undef _GLIBCXX_INCLUDE_AS_CXX0X
-# endif
+#ifdef _GLIBCXX_USE_C99_INTTYPES_TR1
+
+namespace std
+{
+  // types
+  using ::imaxdiv_t;
+
+  // functions
+  using ::imaxabs;
+
+  // May collide with _Longlong abs(_Longlong), and is not described
+  // anywhere outside the synopsis.  Likely, a defect.
+  //
+  // intmax_t abs(intmax_t)
+
+  using ::imaxdiv;
+
+  // Likewise, with lldiv_t div(_Longlong, _Longlong).
+  //
+  // imaxdiv_t div(intmax_t, intmax_t)
+
+  using ::strtoimax;
+  using ::strtoumax;
+
+#if defined(_GLIBCXX_USE_WCHAR_T) && _GLIBCXX_USE_C99_INTTYPES_WCHAR_T_TR1
+  using ::wcstoimax;
+  using ::wcstoumax;
+#endif
+} // namespace
+
+#endif _GLIBCXX_USE_C99_INTTYPES_TR1
 
 #else
 
@@ -71,6 +86,6 @@
 #  include_next <inttypes.h>
 # endif
 
-#endif // __GXX_EXPERIMENTAL_CXX0X__
+#endif // C++11
 
 #endif // _GLIBCXX_INTTYPES_H

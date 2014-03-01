@@ -1,7 +1,6 @@
 // MT-optimized allocator -*- C++ -*-
 
-// Copyright (C) 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
-// Free Software Foundation, Inc.
+// Copyright (C) 2003-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -35,8 +34,13 @@
 #include <bits/functexcept.h>
 #include <ext/atomicity.h>
 #include <bits/move.h>
+#if __cplusplus >= 201103L
+#include <type_traits>
+#endif
 
-_GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
+namespace __gnu_cxx _GLIBCXX_VISIBILITY(default)
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   using std::size_t;
   using std::ptrdiff_t;
@@ -154,11 +158,11 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
 
     explicit 
     __pool_base() 
-    : _M_options(_Tune()), _M_binmap(NULL), _M_init(false) { }
+    : _M_options(_Tune()), _M_binmap(0), _M_init(false) { }
 
     explicit 
     __pool_base(const _Tune& __options)
-    : _M_options(__options), _M_binmap(NULL), _M_init(false) { }
+    : _M_options(__options), _M_binmap(0), _M_init(false) { }
 
   private:
     explicit 
@@ -235,10 +239,10 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
       { }
 
       explicit __pool() 
-      : _M_bin(NULL), _M_bin_size(1) { }
+      : _M_bin(0), _M_bin_size(1) { }
 
       explicit __pool(const __pool_base::_Tune& __tune) 
-      : __pool_base(__tune), _M_bin(NULL), _M_bin_size(1) { }
+      : __pool_base(__tune), _M_bin(0), _M_bin_size(1) { }
 
     private:
       // An "array" of bin_records each of which represents a specific
@@ -358,12 +362,12 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
       _M_get_thread_id();
 
       explicit __pool() 
-      : _M_bin(NULL), _M_bin_size(1), _M_thread_freelist(NULL) 
+      : _M_bin(0), _M_bin_size(1), _M_thread_freelist(0) 
       { }
 
       explicit __pool(const __pool_base::_Tune& __tune) 
-      : __pool_base(__tune), _M_bin(NULL), _M_bin_size(1), 
-      _M_thread_freelist(NULL) 
+      : __pool_base(__tune), _M_bin(0), _M_bin_size(1), 
+	_M_thread_freelist(0) 
       { }
 
     private:
@@ -574,33 +578,43 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
       typedef const _Tp&                const_reference;
       typedef _Tp                       value_type;
 
+#if __cplusplus >= 201103L
+      // _GLIBCXX_RESOLVE_LIB_DEFECTS
+      // 2103. propagate_on_container_move_assignment
+      typedef std::true_type propagate_on_container_move_assignment;
+#endif
+
       pointer
-      address(reference __x) const
-      { return &__x; }
+      address(reference __x) const _GLIBCXX_NOEXCEPT
+      { return std::__addressof(__x); }
 
       const_pointer
-      address(const_reference __x) const
-      { return &__x; }
+      address(const_reference __x) const _GLIBCXX_NOEXCEPT
+      { return std::__addressof(__x); }
 
       size_type
-      max_size() const throw() 
+      max_size() const _GLIBCXX_USE_NOEXCEPT 
       { return size_t(-1) / sizeof(_Tp); }
 
+#if __cplusplus >= 201103L
+      template<typename _Up, typename... _Args>
+        void
+        construct(_Up* __p, _Args&&... __args)
+	{ ::new((void *)__p) _Up(std::forward<_Args>(__args)...); }
+
+      template<typename _Up>
+        void 
+        destroy(_Up* __p) { __p->~_Up(); }
+#else
       // _GLIBCXX_RESOLVE_LIB_DEFECTS
       // 402. wrong new expression in [some_] allocator::construct
       void 
       construct(pointer __p, const _Tp& __val) 
       { ::new((void *)__p) _Tp(__val); }
 
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
-      template<typename... _Args>
-        void
-        construct(pointer __p, _Args&&... __args)
-	{ ::new((void *)__p) _Tp(std::forward<_Args>(__args)...); }
-#endif
-
       void 
       destroy(pointer __p) { __p->~_Tp(); }
+#endif
     };
 
 #ifdef __GTHREADS
@@ -642,14 +656,14 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
 	  typedef __mt_alloc<_Tp1, pol_type> other;
 	};
 
-      __mt_alloc() throw() { }
+      __mt_alloc() _GLIBCXX_USE_NOEXCEPT { }
 
-      __mt_alloc(const __mt_alloc&) throw() { }
+      __mt_alloc(const __mt_alloc&) _GLIBCXX_USE_NOEXCEPT { }
 
       template<typename _Tp1, typename _Poolp1>
-        __mt_alloc(const __mt_alloc<_Tp1, _Poolp1>&) throw() { }
+        __mt_alloc(const __mt_alloc<_Tp1, _Poolp1>&) _GLIBCXX_USE_NOEXCEPT { }
 
-      ~__mt_alloc() throw() { }
+      ~__mt_alloc() _GLIBCXX_USE_NOEXCEPT { }
 
       pointer
       allocate(size_type __n, const void* = 0);
@@ -746,6 +760,7 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
 
 #undef __thread_default
 
-_GLIBCXX_END_NAMESPACE
+_GLIBCXX_END_NAMESPACE_VERSION
+} // namespace
 
 #endif
