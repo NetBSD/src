@@ -1,4 +1,4 @@
-/*	$NetBSD: named-journalprint.c,v 1.4 2013/03/24 18:44:43 christos Exp $	*/
+/*	$NetBSD: named-journalprint.c,v 1.5 2014/03/01 22:43:35 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -76,7 +76,6 @@ main(int argc, char **argv) {
 
 	file = argv[1];
 
-	isc__mem_register();
 	RUNTIME_CHECK(isc_mem_create(0, 0, &mctx) == ISC_R_SUCCESS);
 	RUNTIME_CHECK(setup_logging(mctx, stderr, &lctx) == ISC_R_SUCCESS);
 
