@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcpcd.c,v 1.1.1.41 2014/02/25 13:14:28 roy Exp $");
+ __RCSID("$NetBSD: dhcpcd.c,v 1.1.1.42 2014/03/01 11:00:41 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -149,7 +149,7 @@ free_globals(struct dhcpcd_ctx *ctx)
 	}
 	if (ctx->ifdc) {
 		for (ctx->ifdc--; ctx->ifdc >= 0; ctx->ifdc--)
-			free(ctx->ifdv[ctx->ifac]);
+			free(ctx->ifdv[ctx->ifdc]);
 		free(ctx->ifdv);
 		ctx->ifdv = NULL;
 	}
@@ -660,7 +660,7 @@ static void
 init_state(struct interface *ifp, int argc, char **argv)
 {
 	struct if_options *ifo;
-	const char *reason = NULL;
+	const char *reason;
 
 	configure_interface(ifp, argc, argv);
 	ifo = ifp->options;
@@ -674,9 +674,7 @@ init_state(struct interface *ifp, int argc, char **argv)
 		ifo->options &= ~DHCPCD_IPV6RS;
 	}
 
-	if (!(ifp->ctx->options & DHCPCD_TEST))
-		script_runreason(ifp, "PREINIT");
-
+	reason = NULL; /* appease gcc */
 	if (ifo->options & DHCPCD_LINK) {
 		switch (carrier_status(ifp)) {
 		case LINK_DOWN:
@@ -691,10 +689,14 @@ init_state(struct interface *ifp, int argc, char **argv)
 			ifp->carrier = LINK_UNKNOWN;
 			return;
 		}
-		if (reason && !(ifp->ctx->options & DHCPCD_TEST))
-			script_runreason(ifp, reason);
 	} else
 		ifp->carrier = LINK_UNKNOWN;
+
+	if (!(ifp->ctx->options & DHCPCD_TEST))
+		script_runreason(ifp, "PREINIT");
+
+	if (ifp->carrier != LINK_UNKNOWN && !(ifp->ctx->options & DHCPCD_TEST))
+		script_runreason(ifp, reason);
 }
 
 void
@@ -760,7 +762,7 @@ handle_hwaddr(struct dhcpcd_ctx *ctx, const char *ifname,
     const uint8_t *hwaddr, size_t hwlen)
 {
 	struct interface *ifp;
-	char buf[hwlen * 3];
+	char buf[sizeof(ifp->hwaddr) * 3];
 
 	ifp = find_interface(ctx, ifname);
 	if (ifp == NULL)
