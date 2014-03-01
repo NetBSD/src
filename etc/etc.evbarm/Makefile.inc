@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.59 2013/09/08 16:34:06 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.60 2014/03/01 01:51:01 matt Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -18,6 +18,9 @@ KERNEL_SETS.armv4+=		IXM1200
 EVBARM_BOARDS.xscale+=		ADI_BRH
 KERNEL_SETS.xscale+=		NSLU2
 EVBARM_BOARDS.armv7+=		BCM5301X
+EVBARM_BOARDS.armv7hf+=		BCM5301X
+EVBARM_BOARDS.armv7+=		CUBIEBOARD
+EVBARM_BOARDS.armv7hf+=		CUBIEBOARD
 .else
 # little endian boards
 #EVBARM_BOARDS.armv4+=		ARMADILLO210
