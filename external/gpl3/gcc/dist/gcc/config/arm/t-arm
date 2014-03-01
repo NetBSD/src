@@ -75,6 +75,8 @@ NetBSD_DISABLED_config_arm_arm-tune.md:
 $(srcdir)/config/arm/arm-tables.opt: $(srcdir)/config/arm/genopt.sh \
   $(srcdir)/config/arm/arm-cores.def $(srcdir)/config/arm/arm-arches.def \
   $(srcdir)/config/arm/arm-fpus.def
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_config_arm_arm-tables.opt:
 	$(SHELL) $(srcdir)/config/arm/genopt.sh $(srcdir)/config/arm > \
 		$(srcdir)/config/arm/arm-tables.opt
 

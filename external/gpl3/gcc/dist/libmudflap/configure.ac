@@ -266,5 +266,5 @@ fi
 GCC_CHECK_TLS
 GCC_CHECK_EMUTLS
 
-AC_CONFIG_FILES([Makefile testsuite/Makefile testsuite/mfconfig.exp])
+AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

@@ -57,6 +57,21 @@ along with GCC; see the file COPYING3.  If not see
 
 #define NETBSD_ENTRY_POINT "__start"
 
+/* Provide a STARTFILE_SPEC appropriate for NetBSD.  Here we add the
+   (even more) magical crtbegin.o file which provides part of the
+   support for getting C++ file-scope static object constructed
+   before entering `main'.  */
+
+#undef	STARTFILE_SPEC
+#ifdef HAVE_LD_PIE
+#define STARTFILE_SPEC \
+  "%{!shared: %{pg|p:gcrt0.o%s;pie:Scrt0.o%s;:crt0.o%s}}\
+   crti.o%s %{static:crtbeginT.o%s;shared|pie:crtbeginS.o%s;:crtbegin.o%s}"
+#else
+#define STARTFILE_SPEC \
+  "%{!shared: %{pg|p:gcrt0.o%s;:crt0.o%s}}\
+   crti.o%s %{static:crtbeginT.o%s;shared|pie:crtbeginS.o%s;:crtbegin.o%s}"
+#endif
 
 /* Provide an ENDFILE_SPEC appropriate for NetBSD/alpha ELF.  Here we
    add crtend.o, which provides part of the support for getting

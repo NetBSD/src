@@ -359,9 +359,6 @@ extern int dot_symbols;
       ? "\t.section\t\".got2\",\"aw\""			\
       : "\t.section\t\".got1\",\"aw\""))
 
-#undef  TARGET_VERSION
-#define TARGET_VERSION fprintf (stderr, " (PowerPC64 NetBSD)");
-
 /* Make GCC agree with <machine/ansi.h>.  */
 
 #undef	SIZE_TYPE

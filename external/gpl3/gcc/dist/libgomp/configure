@@ -16262,7 +16262,7 @@ CFLAGS="$save_CFLAGS"
 
 ac_config_files="$ac_config_files omp.h omp_lib.h omp_lib.f90 libgomp_f.h"
 
-ac_config_files="$ac_config_files Makefile testsuite/Makefile libgomp.spec"
+ac_config_files="$ac_config_files Makefile libgomp.spec"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -17402,7 +17402,6 @@ do
     "omp_lib.f90") CONFIG_FILES="$CONFIG_FILES omp_lib.f90" ;;
     "libgomp_f.h") CONFIG_FILES="$CONFIG_FILES libgomp_f.h" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
-    "testsuite/Makefile") CONFIG_FILES="$CONFIG_FILES testsuite/Makefile" ;;
     "libgomp.spec") CONFIG_FILES="$CONFIG_FILES libgomp.spec" ;;
 
   *) as_fn_error "invalid argument: \`$ac_config_target'" "$LINENO" 5;;

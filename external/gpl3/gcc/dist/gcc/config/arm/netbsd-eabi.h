@@ -19,18 +19,8 @@
    <http://www.gnu.org/licenses/>.  */
 
 /* Run-time Target Specification.  */
-#undef TARGET_VERSION
-#define TARGET_VERSION fputs (" (NetBSD/earm ELF)", stderr);
-
 #undef MULTILIB_DEFAULTS
 #define MULTILIB_DEFAULTS { "mabi=aapcs-linux" }
-
-#undef MUST_USE_SJLJ_EXCEPTIONS
-#define MUST_USE_SJLJ_EXCEPTIONS (!TARGET_AAPCS_BASED)
-
-#undef ARM_EABI_UNWIND_TABLES
-#define ARM_EABI_UNWIND_TABLES \
-  ((!USING_SJLJ_EXCEPTIONS && flag_exceptions) || flag_unwind_tables)
 
 #define TARGET_LINKER_EABI_SUFFIX \
     (TARGET_DEFAULT_FLOAT_ABI == ARM_FLOAT_ABI_SOFT \

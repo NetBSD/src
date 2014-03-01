@@ -204,7 +204,7 @@ case ${host} in
   extra_parts="crtbegin.o crtbeginS.o crtend.o crtendS.o"
   ;;
 *-*-netbsd*)
-  tmake_file="$tmake_file t-crtstuff-pic t-libgcc-pic t-slibgcc t-slibgcc-gld t-slibgcc-elf-ver"
+  tmake_file="$tmake_file t-crtstuff-pic t-libgcc-pic t-eh-dw2-dip t-slibgcc t-slibgcc-gld t-slibgcc-elf-ver"
   # NetBSD 1.7 and later are set up to use GCC's crtstuff for
   # ELF configurations.  We will clear extra_parts in the
   # a.out configurations.
@@ -320,7 +320,16 @@ arm-wrs-vxworks)
 	extra_parts="$extra_parts crti.o crtn.o"
 	;;
 arm*-*-netbsdelf*)
-	tmake_file="$tmake_file arm/t-arm arm/t-netbsd t-slibgcc-gld-nover"
+	tmake_file="$tmake_file arm/t-arm"
+	case ${host} in
+	arm*-*-netbsdelf-*eabi*)
+	  tmake_file="${tmake_file} arm/t-netbsd-eabi"
+	  unwind_header=config/arm/unwind-arm.h
+	;;
+	*)
+	  tmake_file="${tmake_file} arm/t-netbsd t-slibgcc-gld-nover"
+ 	  ;;
+	esac
 	;;
 arm*-*-linux*)			# ARM GNU/Linux with ELF
 	tmake_file="${tmake_file} arm/t-arm t-fixedpoint-gnu-prefix"
@@ -486,6 +495,7 @@ hppa*-*-openbsd*)
 	tmake_file="$tmake_file pa/t-openbsd"
 	;;
 hppa*-*-netbsd*)
+	tmake_file="$tmake_file pa/t-netbsd"
 	;;
 i[34567]86-*-darwin*)
 	tmake_file="$tmake_file i386/t-crtpc i386/t-crtfm"
@@ -686,7 +696,8 @@ m32rle-*-linux*)
 m68k-*-elf* | fido-*-elf)
 	tmake_file="$tmake_file m68k/t-floatlib"
 	;;
-m68k*-*-netbsdelf*)
+m68k*-*-netbsdelf* | m5407-*-netbsdelf* | m68010-*-netbsdelf*)
+	tmake_file="$tmake_file m68k/t-floatlib"
 	;;
 m68k*-*-openbsd*)
 	;;
