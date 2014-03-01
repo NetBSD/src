@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.691 2014/03/01 03:28:06 christos Exp $
+# $NetBSD: shl.mi,v 1.692 2014/03/01 15:41:00 dsl Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -181,8 +181,8 @@
 ./usr/lib/libbfd.so.13				base-sys-shlib		binutils
 ./usr/lib/libbfd.so.13.0			base-sys-shlib		binutils
 ./usr/lib/libbind9.so				base-bind-shlib
-./usr/lib/libbind9.so.7				base-bind-shlib
-./usr/lib/libbind9.so.7.0			base-bind-shlib
+./usr/lib/libbind9.so.8				base-bind-shlib
+./usr/lib/libbind9.so.8.0			base-bind-shlib
 ./usr/lib/libbluetooth.so			base-sys-shlib
 ./usr/lib/libbluetooth.so.4			base-sys-shlib
 ./usr/lib/libbluetooth.so.4.2			base-sys-shlib
