@@ -1,4 +1,4 @@
-/*	$NetBSD: rbt.h,v 1.8 2014/03/01 03:24:37 christos Exp $	*/
+/*	$NetBSD: rbt.h,v 1.9 2014/03/01 12:12:57 dsl Exp $	*/
 
 /*
  * Copyright (C) 2004-2009, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -1035,6 +1035,7 @@ dns_rbtnode_refdecrement(dns_rbtnode_t *node, unsigned int *refs) {
 		if ((refs) != NULL)                             \
 			(*refs) = (node)->references;           \
 	} while (/*CONSTCOND*/0)
+#endif
 #endif /* DNS_RBT_USEISCREFCOUNT */
 
 ISC_LANG_ENDDECLS
