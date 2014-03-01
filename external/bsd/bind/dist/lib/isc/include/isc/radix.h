@@ -1,7 +1,7 @@
-/*	$NetBSD: radix.h,v 1.6 2013/07/27 19:23:13 christos Exp $	*/
+/*	$NetBSD: radix.h,v 1.7 2014/03/01 03:24:39 christos Exp $	*/
 
 /*
- * Copyright (C) 2007, 2008, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2007, 2008, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -43,10 +43,10 @@
 			(pt).family = (na)->family; \
 			(pt).bitlen = (bits); \
 			if ((pt).family == AF_INET6) { \
-				memcpy(&(pt).add.sin6, &(na)->type.in6, \
+				memmove(&(pt).add.sin6, &(na)->type.in6, \
 				       ((bits)+7)/8); \
 			} else \
-				memcpy(&(pt).add.sin, &(na)->type.in, \
+				memmove(&(pt).add.sin, &(na)->type.in, \
 				       ((bits)+7)/8); \
 		} else { \
 			(pt).family = AF_UNSPEC; \

@@ -1,4 +1,4 @@
-/*	$NetBSD: cfg_test.c,v 1.4 2013/03/24 18:44:40 christos Exp $	*/
+/*	$NetBSD: cfg_test.c,v 1.5 2014/03/01 03:24:33 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -75,10 +75,6 @@ main(int argc, char **argv) {
 	isc_boolean_t memstats = ISC_FALSE;
 	char *filename = NULL;
 
-	isc__mem_register();
-	isc__task_register();
-	isc__timer_register();
-	isc__socket_register();
 	RUNTIME_CHECK(isc_mem_create(0, 0, &mctx) == ISC_R_SUCCESS);
 
 	result = isc_log_create(mctx, &lctx, &lcfg);

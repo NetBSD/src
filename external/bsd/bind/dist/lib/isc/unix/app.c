@@ -1,7 +1,7 @@
-/*	$NetBSD: app.c,v 1.8 2013/12/31 20:24:42 christos Exp $	*/
+/*	$NetBSD: app.c,v 1.9 2014/03/01 03:24:39 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2009, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -54,40 +54,49 @@
 #include <pthread.h>
 #endif
 
+/*%
+ * For BIND9 internal applications built with threads, we use a single app
+ * context and let multiple worker, I/O, timer threads do actual jobs.
+ * For other cases (including BIND9 built without threads) an app context acts
+ * as an event loop dispatching various events.
+ */
+#ifndef ISC_PLATFORM_USETHREADS
 #include "../timer_p.h"
 #include "../task_p.h"
 #include "socket_p.h"
+#endif /* ISC_PLATFORM_USETHREADS */
 
 #ifdef ISC_PLATFORM_USETHREADS
 static pthread_t		blockedthread;
 #endif /* ISC_PLATFORM_USETHREADS */
 
 /*%
- * The following can be either static or public, depending on build environment.
+ * The following are intended for internal use (indicated by "isc__"
+ * prefix) but are not declared as static, allowing direct access from
+ * unit tests etc.
  */
-
-#define ISC_APPFUNC_SCOPE static
-
-ISC_APPFUNC_SCOPE isc_result_t isc__app_ctxstart(isc_appctx_t *ctx);
-ISC_APPFUNC_SCOPE isc_result_t isc__app_ctxrun(isc_appctx_t *ctx);
-ISC_APPFUNC_SCOPE isc_result_t isc__app_ctxshutdown(isc_appctx_t *ctx);
-ISC_APPFUNC_SCOPE isc_result_t isc__app_reload(void);
-ISC_APPFUNC_SCOPE isc_result_t isc__app_ctxsuspend(isc_appctx_t *ctx);
-ISC_APPFUNC_SCOPE void isc__app_ctxfinish(isc_appctx_t *ctx);
-ISC_APPFUNC_SCOPE isc_result_t isc__appctx_create(isc_mem_t *mctx,
-						  isc_appctx_t **ctxp);
-ISC_APPFUNC_SCOPE void isc__appctx_destroy(isc_appctx_t **ctxp);
-ISC_APPFUNC_SCOPE void isc__appctx_settaskmgr(isc_appctx_t *ctx,
-					      isc_taskmgr_t *taskmgr);
-ISC_APPFUNC_SCOPE void isc__appctx_setsocketmgr(isc_appctx_t *ctx,
-						isc_socketmgr_t *socketmgr);
-ISC_APPFUNC_SCOPE void isc__appctx_settimermgr(isc_appctx_t *ctx,
-					       isc_timermgr_t *timermgr);
-ISC_APPFUNC_SCOPE isc_result_t isc__app_ctxonrun(isc_appctx_t *ctx,
-						 isc_mem_t *mctx,
-						 isc_task_t *task,
-						 isc_taskaction_t action,
-						 void *arg);
+isc_result_t isc__app_start(void);
+isc_result_t isc__app_ctxstart(isc_appctx_t *ctx);
+isc_result_t isc__app_onrun(isc_mem_t *mctx, isc_task_t *task,
+			    isc_taskaction_t action, void *arg);
+isc_result_t isc__app_ctxrun(isc_appctx_t *ctx);
+isc_result_t isc__app_run(void);
+isc_result_t isc__app_ctxshutdown(isc_appctx_t *ctx);
+isc_result_t isc__app_shutdown(void);
+isc_result_t isc__app_reload(void);
+isc_result_t isc__app_ctxsuspend(isc_appctx_t *ctx);
+void isc__app_ctxfinish(isc_appctx_t *ctx);
+void isc__app_finish(void);
+void isc__app_block(void);
+void isc__app_unblock(void);
+isc_result_t isc__appctx_create(isc_mem_t *mctx, isc_appctx_t **ctxp);
+void isc__appctx_destroy(isc_appctx_t **ctxp);
+void isc__appctx_settaskmgr(isc_appctx_t *ctx, isc_taskmgr_t *taskmgr);
+void isc__appctx_setsocketmgr(isc_appctx_t *ctx, isc_socketmgr_t *socketmgr);
+void isc__appctx_settimermgr(isc_appctx_t *ctx, isc_timermgr_t *timermgr);
+isc_result_t isc__app_ctxonrun(isc_appctx_t *ctx, isc_mem_t *mctx,
+			       isc_task_t *task, isc_taskaction_t action,
+			       void *arg);
 
 /*
  * The application context of this module.  This implementation actually
@@ -118,6 +127,10 @@ typedef struct isc__appctx {
 	isc_taskmgr_t		*taskmgr;
 	isc_socketmgr_t		*socketmgr;
 	isc_timermgr_t		*timermgr;
+#ifdef ISC_PLATFORM_USETHREADS
+	isc_mutex_t		readylock;
+	isc_condition_t		ready;
+#endif /* ISC_PLATFORM_USETHREADS */
 } isc__appctx_t;
 
 static isc__appctx_t isc_g_appctx;
@@ -128,7 +141,7 @@ static struct {
 	/*%
 	 * The following are defined just for avoiding unused static functions.
 	 */
-	void *reload;
+	void *run, *shutdown, *start, *reload, *finish, *block, *unblock;
 } appmethods = {
 	{
 		isc__appctx_destroy,
@@ -142,7 +155,13 @@ static struct {
 		isc__appctx_settimermgr,
 		isc__app_ctxonrun
 	},
+	(void *)isc__app_run,
+	(void *)isc__app_shutdown,
+	(void *)isc__app_start,
 	(void *)isc__app_reload,
+	(void *)isc__app_finish,
+	(void *)isc__app_block,
+	(void *)isc__app_unblock
 };
 
 #ifdef HAVE_LINUXTHREADS
@@ -195,10 +214,13 @@ handle_signal(int sig, void (*handler)(int)) {
 	return (ISC_R_SUCCESS);
 }
 
-ISC_APPFUNC_SCOPE isc_result_t
+isc_result_t
 isc__app_ctxstart(isc_appctx_t *ctx0) {
 	isc__appctx_t *ctx = (isc__appctx_t *)ctx0;
 	isc_result_t result;
+	int presult;
+	sigset_t sset;
+	char strbuf[ISC_STRERRORSIZE];
 
 	REQUIRE(VALID_APPCTX(ctx));
 
@@ -219,13 +241,27 @@ isc__app_ctxstart(isc_appctx_t *ctx0) {
 	}
 #endif
 
+#ifdef ISC_PLATFORM_USETHREADS
 #ifdef HAVE_LINUXTHREADS
 	main_thread = pthread_self();
-#endif
+#endif /* HAVE_LINUXTHREADS */
+
+	result = isc_mutex_init(&ctx->readylock);
+	if (result != ISC_R_SUCCESS)
+		return (result);
+
+	result = isc_condition_init(&ctx->ready);
+	if (result != ISC_R_SUCCESS)
+		goto cleanup_rlock;
 
 	result = isc_mutex_init(&ctx->lock);
 	if (result != ISC_R_SUCCESS)
-		return (result);
+		goto cleanup_rcond;
+#else /* ISC_PLATFORM_USETHREADS */
+	result = isc_mutex_init(&ctx->lock);
+	if (result != ISC_R_SUCCESS)
+		goto cleanup;
+#endif /* ISC_PLATFORM_USETHREADS */
 
 	ISC_LIST_INIT(ctx->on_run);
 
@@ -234,26 +270,6 @@ isc__app_ctxstart(isc_appctx_t *ctx0) {
 	ctx->want_shutdown = ISC_FALSE;
 	ctx->want_reload = ISC_FALSE;
 	ctx->blocked = ISC_FALSE;
-
-	return (ISC_R_SUCCESS);
-}
-
-isc_result_t
-isc_app_start(void) {
-	isc_result_t result;
-	int presult;
-	sigset_t sset;
-	char strbuf[ISC_STRERRORSIZE];
-
-	isc_g_appctx.common.impmagic = APPCTX_MAGIC;
-	isc_g_appctx.common.magic = ISCAPI_APPCTX_MAGIC;
-	isc_g_appctx.common.methods = &appmethods.methods;
-	isc_g_appctx.mctx = NULL;
-	/* The remaining members will be initialized in ctxstart() */
-
-	result = isc__app_ctxstart((isc_appctx_t *)&isc_g_appctx);
-	if (result != ISC_R_SUCCESS)
-		return (result);
 
 #ifndef HAVE_SIGWAIT
 	/*
@@ -265,10 +281,10 @@ isc_app_start(void) {
 	 */
 	result = handle_signal(SIGINT, exit_action);
 	if (result != ISC_R_SUCCESS)
-		return (result);
+		goto cleanup;
 	result = handle_signal(SIGTERM, exit_action);
 	if (result != ISC_R_SUCCESS)
-		return (result);
+		goto cleanup;
 #endif
 
 	/*
@@ -276,7 +292,7 @@ isc_app_start(void) {
 	 */
 	result = handle_signal(SIGPIPE, SIG_IGN);
 	if (result != ISC_R_SUCCESS)
-		return (result);
+		goto cleanup;
 
 	/*
 	 * On Solaris 2, delivery of a signal whose action is SIG_IGN
@@ -289,15 +305,15 @@ isc_app_start(void) {
 	 */
 	result = handle_signal(SIGHUP, SIG_DFL);
 	if (result != ISC_R_SUCCESS)
-		return (result);
+		goto cleanup;
 
 #ifdef HAVE_SIGWAIT
 	result = handle_signal(SIGTERM, SIG_DFL);
 	if (result != ISC_R_SUCCESS)
-		return (result);
+		goto cleanup;
 	result = handle_signal(SIGINT, SIG_DFL);
 	if (result != ISC_R_SUCCESS)
-		return (result);
+		goto cleanup;
 #endif
 
 #ifdef ISC_PLATFORM_USETHREADS
@@ -317,7 +333,8 @@ isc_app_start(void) {
 		isc__strerror(errno, strbuf, sizeof(strbuf));
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
 				 "isc_app_start() sigsetops: %s", strbuf);
-		return (ISC_R_UNEXPECTED);
+		result = ISC_R_UNEXPECTED;
+		goto cleanup;
 	}
 	presult = pthread_sigmask(SIG_BLOCK, &sset, NULL);
 	if (presult != 0) {
@@ -325,7 +342,8 @@ isc_app_start(void) {
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
 				 "isc_app_start() pthread_sigmask: %s",
 				 strbuf);
-		return (ISC_R_UNEXPECTED);
+		result = ISC_R_UNEXPECTED;
+		goto cleanup;
 	}
 #else /* ISC_PLATFORM_USETHREADS */
 	/*
@@ -342,22 +360,45 @@ isc_app_start(void) {
 		isc__strerror(errno, strbuf, sizeof(strbuf));
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
 				 "isc_app_start() sigsetops: %s", strbuf);
-		return (ISC_R_UNEXPECTED);
+		result = ISC_R_UNEXPECTED;
+		goto cleanup;
 	}
 	presult = sigprocmask(SIG_UNBLOCK, &sset, NULL);
 	if (presult != 0) {
 		isc__strerror(presult, strbuf, sizeof(strbuf));
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
 				 "isc_app_start() sigprocmask: %s", strbuf);
-		return (ISC_R_UNEXPECTED);
+		result = ISC_R_UNEXPECTED;
+		goto cleanup;
 	}
 #endif /* ISC_PLATFORM_USETHREADS */
 
 	return (ISC_R_SUCCESS);
+
+ cleanup:
+#ifdef ISC_PLATFORM_USETHREADS
+ cleanup_rcond:
+	(void)isc_condition_destroy(&ctx->ready);
+
+ cleanup_rlock:
+	(void)isc_mutex_destroy(&ctx->readylock);
+#endif /* ISC_PLATFORM_USETHREADS */
+	return (result);
 }
 
 isc_result_t
-isc_app_onrun(isc_mem_t *mctx, isc_task_t *task, isc_taskaction_t action,
+isc__app_start(void) {
+	isc_g_appctx.common.impmagic = APPCTX_MAGIC;
+	isc_g_appctx.common.magic = ISCAPI_APPCTX_MAGIC;
+	isc_g_appctx.common.methods = &appmethods.methods;
+	isc_g_appctx.mctx = NULL;
+	/* The remaining members will be initialized in ctxstart() */
+
+	return (isc__app_ctxstart((isc_appctx_t *)&isc_g_appctx));
+}
+
+isc_result_t
+isc__app_onrun(isc_mem_t *mctx, isc_task_t *task, isc_taskaction_t action,
 	      void *arg)
 {
 	return (isc__app_ctxonrun((isc_appctx_t *)&isc_g_appctx, mctx,
@@ -540,15 +581,21 @@ isc__nothread_signal_hack(isc_condition_t *cp) {
 	signalled = ISC_TRUE;
 	return (ISC_R_SUCCESS);
 }
-
 #endif /* ISC_PLATFORM_USETHREADS */
 
-ISC_APPFUNC_SCOPE isc_result_t
+isc_result_t
 isc__app_ctxrun(isc_appctx_t *ctx0) {
 	isc__appctx_t *ctx = (isc__appctx_t *)ctx0;
 	int result;
 	isc_event_t *event, *next_event;
 	isc_task_t *task;
+#ifdef ISC_PLATFORM_USETHREADS
+	sigset_t sset;
+	char strbuf[ISC_STRERRORSIZE];
+#ifdef HAVE_SIGWAIT
+	int sig;
+#endif /* HAVE_SIGWAIT */
+#endif /* ISC_PLATFORM_USETHREADS */
 
 	REQUIRE(VALID_APPCTX(ctx));
 
@@ -578,83 +625,115 @@ isc__app_ctxrun(isc_appctx_t *ctx0) {
 
 	UNLOCK(&ctx->lock);
 
-#ifndef HAVE_SIGWAIT
-	/*
-	 * Catch SIGHUP.
-	 *
-	 * We do this here to ensure that the signal handler is installed
-	 * (i.e. that it wasn't a "one-shot" handler).
-	 */
-	if (ctx == &isc_g_appctx) {
+#ifndef ISC_PLATFORM_USETHREADS
+	if (isc_bind9 && ctx == &isc_g_appctx) {
 		result = handle_signal(SIGHUP, reload_action);
 		if (result != ISC_R_SUCCESS)
 			return (ISC_R_SUCCESS);
 	}
-#endif
 
-#ifdef ISC_PLATFORM_USETHREADS
+	(void) isc__taskmgr_dispatch(ctx->taskmgr);
+	result = evloop(ctx);
+	return (result);
+#else /* ISC_PLATFORM_USETHREADS */
 	/*
-	 * When we are using multiple contexts, we don't rely on signals.
+	 * BIND9 internal tools using multiple contexts do not
+	 * rely on signal.
 	 */
-	if (ctx == &isc_g_appctx) {
-	sigset_t sset;
-	char strbuf[ISC_STRERRORSIZE];
-#ifdef HAVE_SIGWAIT
-	int sig;
-#endif
+	if (isc_bind9 && ctx != &isc_g_appctx)
+		return (ISC_R_SUCCESS);
 
 	/*
-	 * There is no danger if isc_app_shutdown() is called before we wait
-	 * for signals.  Signals are blocked, so any such signal will simply
-	 * be made pending and we will get it when we call sigwait().
+	 * There is no danger if isc_app_shutdown() is called before we
+	 * wait for signals.  Signals are blocked, so any such signal will
+	 * simply be made pending and we will get it when we call
+	 * sigwait().
 	 */
-
 	while (!ctx->want_shutdown) {
 #ifdef HAVE_SIGWAIT
-		/*
-		 * Wait for SIGHUP, SIGINT, or SIGTERM.
-		 */
-		if (sigemptyset(&sset) != 0 ||
-		    sigaddset(&sset, SIGHUP) != 0 ||
-		    sigaddset(&sset, SIGINT) != 0 ||
-		    sigaddset(&sset, SIGTERM) != 0) {
-			isc__strerror(errno, strbuf, sizeof(strbuf));
-			UNEXPECTED_ERROR(__FILE__, __LINE__,
-					 "isc_app_run() sigsetops: %s", strbuf);
-			return (ISC_R_UNEXPECTED);
-		}
+		if (isc_bind9) {
+			/*
+			 * BIND9 internal; single context:
+			 * Wait for SIGHUP, SIGINT, or SIGTERM.
+			 */
+			if (sigemptyset(&sset) != 0 ||
+			    sigaddset(&sset, SIGHUP) != 0 ||
+			    sigaddset(&sset, SIGINT) != 0 ||
+			    sigaddset(&sset, SIGTERM) != 0) {
+				isc__strerror(errno, strbuf, sizeof(strbuf));
+				UNEXPECTED_ERROR(__FILE__, __LINE__,
+						 "isc_app_run() sigsetops: %s",
+						 strbuf);
+				return (ISC_R_UNEXPECTED);
+			}
 
 #ifndef HAVE_UNIXWARE_SIGWAIT
-		result = sigwait(&sset, &sig);
-		if (result == 0) {
-			if (sig == SIGINT || sig == SIGTERM)
-				ctx->want_shutdown = ISC_TRUE;
-			else if (sig == SIGHUP)
-				ctx->want_reload = ISC_TRUE;
-		}
+			result = sigwait(&sset, &sig);
+			if (result == 0) {
+				if (sig == SIGINT || sig == SIGTERM)
+					ctx->want_shutdown = ISC_TRUE;
+				else if (sig == SIGHUP)
+					ctx->want_reload = ISC_TRUE;
+			}
 
 #else /* Using UnixWare sigwait semantics. */
-		sig = sigwait(&sset);
-		if (sig >= 0) {
-			if (sig == SIGINT || sig == SIGTERM)
-				ctx->want_shutdown = ISC_TRUE;
-			else if (sig == SIGHUP)
-				ctx->want_reload = ISC_TRUE;
-		}
-
+			sig = sigwait(&sset);
+			if (sig >= 0) {
+				if (sig == SIGINT || sig == SIGTERM)
+					ctx->want_shutdown = ISC_TRUE;
+				else if (sig == SIGHUP)
+					ctx->want_reload = ISC_TRUE;
+			}
 #endif /* HAVE_UNIXWARE_SIGWAIT */
-#else  /* Don't have sigwait(). */
-		/*
-		 * Listen for all signals.
-		 */
-		if (sigemptyset(&sset) != 0) {
-			isc__strerror(errno, strbuf, sizeof(strbuf));
-			UNEXPECTED_ERROR(__FILE__, __LINE__,
-					 "isc_app_run() sigsetops: %s",
-					 strbuf);
-			return (ISC_R_UNEXPECTED);
+		} else {
+			/*
+			 * External, or BIND9 using multiple contexts:
+			 * wait until woken up.
+			 */
+			LOCK(&ctx->readylock);
+			if (ctx->want_shutdown) {
+				/* shutdown() won the race. */
+				UNLOCK(&ctx->readylock);
+				break;
+			}
+			if (!ctx->want_reload)
+				WAIT(&ctx->ready, &ctx->readylock);
+			UNLOCK(&ctx->readylock);
 		}
-		result = sigsuspend(&sset);
+#else  /* Don't have sigwait(). */
+		if (isc_bind9) {
+			/*
+			 * BIND9 internal; single context:
+			 * Install a signal handler for SIGHUP, then wait for
+			 * all signals.
+			 */
+			result = handle_signal(SIGHUP, reload_action);
+			if (result != ISC_R_SUCCESS)
+				return (ISC_R_SUCCESS);
+
+			if (sigemptyset(&sset) != 0) {
+				isc__strerror(errno, strbuf, sizeof(strbuf));
+				UNEXPECTED_ERROR(__FILE__, __LINE__,
+						 "isc_app_run() sigsetops: %s",
+						 strbuf);
+				return (ISC_R_UNEXPECTED);
+			}
+			result = sigsuspend(&sset);
+		} else {
+			/*
+			 * External, or BIND9 using multiple contexts:
+			 * wait until woken up.
+			 */
+			LOCK(&ctx->readylock);
+			if (ctx->want_shutdown) {
+				/* shutdown() won the race. */
+				UNLOCK(&ctx->readylock);
+				break;
+			}
+			if (!ctx->want_reload)
+				WAIT(&ctx->ready, &ctx->readylock);
+			UNLOCK(&ctx->readylock);
+		}
 #endif /* HAVE_SIGWAIT */
 
 		if (ctx->want_reload) {
@@ -665,31 +744,23 @@ isc__app_ctxrun(isc_appctx_t *ctx0) {
 		if (ctx->want_shutdown && ctx->blocked)
 			exit(1);
 	}
-	} else
-#endif
-	{
-
-	(void)isc__taskmgr_dispatch(ctx->taskmgr);
-#ifndef ISC_PLATFORM_USETHREADS
-	result = evloop(ctx);
-	if (result != ISC_R_SUCCESS)
-		return (result);
-#endif
-	}
 
 	return (ISC_R_SUCCESS);
+#endif /* ISC_PLATFORM_USETHREADS */
 }
 
 isc_result_t
-isc_app_run() {
+isc__app_run() {
 	return (isc__app_ctxrun((isc_appctx_t *)&isc_g_appctx));
 }
 
-ISC_APPFUNC_SCOPE isc_result_t
+isc_result_t
 isc__app_ctxshutdown(isc_appctx_t *ctx0) {
 	isc__appctx_t *ctx = (isc__appctx_t *)ctx0;
 	isc_boolean_t want_kill = ISC_TRUE;
+#ifdef ISC_PLATFORM_USETHREADS
 	char strbuf[ISC_STRERRORSIZE];
+#endif /* ISC_PLATFORM_USETHREADS */
 
 	REQUIRE(VALID_APPCTX(ctx));
 
@@ -705,30 +776,50 @@ isc__app_ctxshutdown(isc_appctx_t *ctx0) {
 	UNLOCK(&ctx->lock);
 
 	if (want_kill) {
-		if (ctx != &isc_g_appctx)
+		if (isc_bind9 && ctx != &isc_g_appctx)
+			/* BIND9 internal, but using multiple contexts */
 			ctx->want_shutdown = ISC_TRUE;
 		else {
+#ifndef ISC_PLATFORM_USETHREADS
+			ctx->want_shutdown = ISC_TRUE;
+#else /* ISC_PLATFORM_USETHREADS */
 #ifdef HAVE_LINUXTHREADS
-			int result;
+			if (isc_bind9) {
+				/* BIND9 internal, single context */
+				int result;
 
-			result = pthread_kill(main_thread, SIGTERM);
-			if (result != 0) {
-				isc__strerror(result, strbuf, sizeof(strbuf));
-				UNEXPECTED_ERROR(__FILE__, __LINE__,
-						 "isc_app_shutdown() "
-						 "pthread_kill: %s",
-						 strbuf);
-				return (ISC_R_UNEXPECTED);
+				result = pthread_kill(main_thread, SIGTERM);
+				if (result != 0) {
+					isc__strerror(result,
+						      strbuf, sizeof(strbuf));
+					UNEXPECTED_ERROR(__FILE__, __LINE__,
+							 "isc_app_shutdown() "
+							 "pthread_kill: %s",
+							 strbuf);
+					return (ISC_R_UNEXPECTED);
+				}
 			}
 #else
-			if (kill(getpid(), SIGTERM) < 0) {
-				isc__strerror(errno, strbuf, sizeof(strbuf));
-				UNEXPECTED_ERROR(__FILE__, __LINE__,
-						 "isc_app_shutdown() "
-						 "kill: %s", strbuf);
-				return (ISC_R_UNEXPECTED);
+			if (isc_bind9) {
+				/* BIND9 internal, single context */
+				if (kill(getpid(), SIGTERM) < 0) {
+					isc__strerror(errno,
+						      strbuf, sizeof(strbuf));
+					UNEXPECTED_ERROR(__FILE__, __LINE__,
+							 "isc_app_shutdown() "
+							 "kill: %s", strbuf);
+					return (ISC_R_UNEXPECTED);
+				}
 			}
-#endif	/* HAVE_LINUXTHREADS */
+#endif /* HAVE_LINUXTHREADS */
+			else {
+				/* External, multiple contexts */
+				LOCK(&ctx->readylock);
+				ctx->want_shutdown = ISC_TRUE;
+				UNLOCK(&ctx->readylock);
+				SIGNAL(&ctx->ready);
+			}
+#endif /* ISC_PLATFORM_USETHREADS */
 		}
 	}
 
@@ -736,15 +827,17 @@ isc__app_ctxshutdown(isc_appctx_t *ctx0) {
 }
 
 isc_result_t
-isc_app_shutdown() {
+isc__app_shutdown() {
 	return (isc__app_ctxshutdown((isc_appctx_t *)&isc_g_appctx));
 }
 
-ISC_APPFUNC_SCOPE isc_result_t
+isc_result_t
 isc__app_ctxsuspend(isc_appctx_t *ctx0) {
 	isc__appctx_t *ctx = (isc__appctx_t *)ctx0;
 	isc_boolean_t want_kill = ISC_TRUE;
+#ifdef ISC_PLATFORM_USETHREADS
 	char strbuf[ISC_STRERRORSIZE];
+#endif
 
 	REQUIRE(VALID_APPCTX(ctx));
 
@@ -761,42 +854,62 @@ isc__app_ctxsuspend(isc_appctx_t *ctx0) {
 	UNLOCK(&ctx->lock);
 
 	if (want_kill) {
-		if (ctx != &isc_g_appctx)
+		if (isc_bind9 && ctx != &isc_g_appctx)
+			/* BIND9 internal, but using multiple contexts */
 			ctx->want_reload = ISC_TRUE;
 		else {
+#ifndef ISC_PLATFORM_USETHREADS
+			ctx->want_reload = ISC_TRUE;
+#else /* ISC_PLATFORM_USETHREADS */
 #ifdef HAVE_LINUXTHREADS
-			int result;
+			if (isc_bind9) {
+				/* BIND9 internal, single context */
+				int result;
 
-			result = pthread_kill(main_thread, SIGHUP);
-			if (result != 0) {
-				isc__strerror(result, strbuf, sizeof(strbuf));
-				UNEXPECTED_ERROR(__FILE__, __LINE__,
-						 "isc_app_reload() "
-						 "pthread_kill: %s",
-						 strbuf);
-				return (ISC_R_UNEXPECTED);
+				result = pthread_kill(main_thread, SIGHUP);
+				if (result != 0) {
+					isc__strerror(result,
+						      strbuf, sizeof(strbuf));
+					UNEXPECTED_ERROR(__FILE__, __LINE__,
+							 "isc_app_reload() "
+							 "pthread_kill: %s",
+							 strbuf);
+					return (ISC_R_UNEXPECTED);
+				}
 			}
 #else
-			if (kill(getpid(), SIGHUP) < 0) {
-				isc__strerror(errno, strbuf, sizeof(strbuf));
-				UNEXPECTED_ERROR(__FILE__, __LINE__,
-						 "isc_app_reload() "
-						 "kill: %s", strbuf);
-				return (ISC_R_UNEXPECTED);
+			if (isc_bind9) {
+				/* BIND9 internal, single context */
+				if (kill(getpid(), SIGHUP) < 0) {
+					isc__strerror(errno,
+						      strbuf, sizeof(strbuf));
+					UNEXPECTED_ERROR(__FILE__, __LINE__,
+							 "isc_app_reload() "
+							 "kill: %s", strbuf);
+					return (ISC_R_UNEXPECTED);
+				}
 			}
-#endif
+#endif /* HAVE_LINUXTHREADS */
+			else {
+				/* External, multiple contexts */
+				LOCK(&ctx->readylock);
+				ctx->want_reload = ISC_TRUE;
+				UNLOCK(&ctx->readylock);
+				SIGNAL(&ctx->ready);
+			}
+#endif /* ISC_PLATFORM_USETHREADS */
 		}
 	}
 
 	return (ISC_R_SUCCESS);
 }
 
-ISC_APPFUNC_SCOPE isc_result_t
+isc_result_t
 isc__app_reload(void) {
 	return (isc__app_ctxsuspend((isc_appctx_t *)&isc_g_appctx));
 }
 
-ISC_APPFUNC_SCOPE void
+void
 isc__app_ctxfinish(isc_appctx_t *ctx0) {
 	isc__appctx_t *ctx = (isc__appctx_t *)ctx0;
 
@@ -806,12 +919,12 @@ isc__app_ctxfinish(isc_appctx_t *ctx0) {
 }
 
 void
-isc_app_finish(void) {
+isc__app_finish(void) {
 	isc__app_ctxfinish((isc_appctx_t *)&isc_g_appctx);
 }
 
 void
-isc_app_block(void) {
+isc__app_block(void) {
 #ifdef ISC_PLATFORM_USETHREADS
 	sigset_t sset;
 #endif /* ISC_PLATFORM_USETHREADS */
@@ -829,7 +942,7 @@ isc_app_block(void) {
 }
 
 void
-isc_app_unblock(void) {
+isc__app_unblock(void) {
 #ifdef ISC_PLATFORM_USETHREADS
 	sigset_t sset;
 #endif /* ISC_PLATFORM_USETHREADS */
@@ -849,7 +962,7 @@ isc_app_unblock(void) {
 #endif /* ISC_PLATFORM_USETHREADS */
 }
 
-ISC_APPFUNC_SCOPE isc_result_t
+isc_result_t
 isc__appctx_create(isc_mem_t *mctx, isc_appctx_t **ctxp) {
 	isc__appctx_t *ctx;
 
@@ -876,7 +989,7 @@ isc__appctx_create(isc_mem_t *mctx, isc_appctx_t **ctxp) {
 	return (ISC_R_SUCCESS);
 }
 
-ISC_APPFUNC_SCOPE void
+void
 isc__appctx_destroy(isc_appctx_t **ctxp) {
 	isc__appctx_t *ctx;
 
@@ -889,7 +1002,7 @@ isc__appctx_destroy(isc_appctx_t **ctxp) {
 	*ctxp = NULL;
 }
 
-ISC_APPFUNC_SCOPE void
+void
 isc__appctx_settaskmgr(isc_appctx_t *ctx0, isc_taskmgr_t *taskmgr) {
 	isc__appctx_t *ctx = (isc__appctx_t *)ctx0;
 
@@ -898,7 +1011,7 @@ isc__appctx_settaskmgr(isc_appctx_t *ctx0, isc_taskmgr_t *taskmgr) {
 	ctx->taskmgr = taskmgr;
 }
 
-ISC_APPFUNC_SCOPE void
+void
 isc__appctx_setsocketmgr(isc_appctx_t *ctx0, isc_socketmgr_t *socketmgr) {
 	isc__appctx_t *ctx = (isc__appctx_t *)ctx0;
 
@@ -907,7 +1020,7 @@ isc__appctx_setsocketmgr(isc_appctx_t *ctx0, isc_socketmgr_t *socketmgr) {
 	ctx->socketmgr = socketmgr;
 }
 
-ISC_APPFUNC_SCOPE void
+void
 isc__appctx_settimermgr(isc_appctx_t *ctx0, isc_timermgr_t *timermgr) {
 	isc__appctx_t *ctx = (isc__appctx_t *)ctx0;
 
@@ -920,3 +1033,5 @@ isc_result_t
 isc__app_register() {
 	return (isc_app_register(isc__appctx_create));
 }
+
+#include "../app_api.c"

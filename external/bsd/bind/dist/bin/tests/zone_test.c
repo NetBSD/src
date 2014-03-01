@@ -1,4 +1,4 @@
-/*	$NetBSD: zone_test.c,v 1.5 2013/07/27 19:23:10 christos Exp $	*/
+/*	$NetBSD: zone_test.c,v 1.6 2014/03/01 03:24:33 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -247,10 +247,6 @@ main(int argc, char **argv) {
 	char *filename = NULL;
 	const char *classname = "IN";
 
-	isc__mem_register();
-	isc__task_register();
-	isc__timer_register();
-	isc__socket_register();
 	while ((c = isc_commandline_parse(argc, argv, "cdf:m:qsMS")) != EOF) {
 		switch (c) {
 		case 'c':

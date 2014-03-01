@@ -1,7 +1,7 @@
-/*	$NetBSD: acconfig.h,v 1.6 2012/12/04 23:38:37 spz Exp $	*/
+/*	$NetBSD: acconfig.h,v 1.7 2014/03/01 03:24:32 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2008, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -134,14 +134,11 @@ int sigwait(const unsigned int *set, int *sig);
 /** define if you have strerror in the C library. */
 #undef HAVE_STRERROR
 
-/** Define if you are running under Compaq TruCluster. */
-#undef HAVE_TRUCLUSTER
-
 /* Define if OpenSSL includes DSA support */
 #undef HAVE_OPENSSL_DSA
 
-/* Define if OpenSSL includes ECDSA support */
-#undef HAVE_OPENSSL_ECDSA
+/* Define if you have getpassphrase in the C library. */
+#undef HAVE_GETPASSPHRASE
 
 /* Define to the length type used by the socket API (socklen_t, size_t, int). */
 #undef ISC_SOCKADDR_LEN_T

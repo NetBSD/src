@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.5 2013/12/31 20:24:42 christos Exp $	*/
+/*	$NetBSD: net.c,v 1.6 2014/03/01 03:24:40 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
@@ -333,4 +333,9 @@ isc_net_enableipv6(void) {
 	initialize();
 	if (ipv6_result == ISC_R_DISABLED)
 		ipv6_result = ISC_R_SUCCESS;
+}
+
+unsigned int
+isc_net_probedscp() {
+	return (0);
 }

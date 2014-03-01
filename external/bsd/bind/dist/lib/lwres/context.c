@@ -1,7 +1,7 @@
-/*	$NetBSD: context.c,v 1.5 2013/12/31 20:24:43 christos Exp $	*/
+/*	$NetBSD: context.c,v 1.6 2014/03/01 03:24:40 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2009, 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -305,8 +305,8 @@ context_connect(lwres_context_t *ctx) {
 	int domain;
 
 	if (ctx->confdata.lwnext != 0) {
-		memcpy(&ctx->address, &ctx->confdata.lwservers[0],
-		       sizeof(lwres_addr_t));
+		memmove(&ctx->address, &ctx->confdata.lwservers[0],
+			sizeof(lwres_addr_t));
 		LWRES_LINK_INIT(&ctx->address, link);
 	} else {
 		/* The default is the IPv4 loopback address 127.0.0.1. */
@@ -320,16 +320,16 @@ context_connect(lwres_context_t *ctx) {
 	}
 
 	if (ctx->address.family == LWRES_ADDRTYPE_V4) {
-		memcpy(&sin.sin_addr, ctx->address.address,
-		       sizeof(sin.sin_addr));
+		memmove(&sin.sin_addr, ctx->address.address,
+			sizeof(sin.sin_addr));
 		sin.sin_port = htons(lwres_udp_port);
 		sin.sin_family = AF_INET;
 		sa = (struct sockaddr *)&sin;
 		salen = sizeof(sin);
 		domain = PF_INET;
 	} else if (ctx->address.family == LWRES_ADDRTYPE_V6) {
-		memcpy(&sin6.sin6_addr, ctx->address.address,
-		       sizeof(sin6.sin6_addr));
+		memmove(&sin6.sin6_addr, ctx->address.address,
+			sizeof(sin6.sin6_addr));
 		sin6.sin6_port = htons(lwres_udp_port);
 		sin6.sin6_family = AF_INET6;
 		sa = (struct sockaddr *)&sin6;
