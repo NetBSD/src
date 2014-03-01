@@ -1,4 +1,4 @@
-/*	$NetBSD: thread.h,v 1.4 2013/12/31 20:24:42 christos Exp $	*/
+/*	$NetBSD: thread.h,v 1.5 2014/03/01 03:24:40 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
@@ -28,7 +28,7 @@
 #include <isc/result.h>
 
 /*
- * Inlines to help with wait retrun checking
+ * Inlines to help with wait return checking
  */
 
 /* check handle for NULL and INVALID_HANDLE */

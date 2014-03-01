@@ -1,7 +1,7 @@
 /* config.h.  Generated from config.h.in by configure.  */
 /* config.h.in.  Generated from configure.in by autoheader.  */
 /*
- * Copyright (C) 2004, 2005, 2007, 2008, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -143,14 +143,11 @@ int sigwait(const unsigned int *set, int *sig);
 /** define if you have strerror in the C library. */
 #define HAVE_STRERROR 1
 
-/** Define if you are running under Compaq TruCluster. */
-/* #undef HAVE_TRUCLUSTER */
-
 /* Define if OpenSSL includes DSA support */
 #define HAVE_OPENSSL_DSA 1
 
-/* Define if OpenSSL includes ECDSA support */
-#define HAVE_OPENSSL_ECDSA 1
+/* Define if you have getpassphrase in the C library. */
+/* #undef HAVE_GETPASSPHRASE */
 
 /* Define to the length type used by the socket API (socklen_t, size_t, int). */
 #define ISC_SOCKADDR_LEN_T socklen_t
@@ -161,8 +158,12 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define if building universal (internal helper macro) */
 /* #undef AC_APPLE_UNIVERSAL_BUILD */
 
-/* Define to enable the "filter-aaaa-on-v4" option. */
-/* #undef ALLOW_FILTER_AAAA_ON_V4 */
+/* Use AES for Source Identity Token generation */
+#define AES_SIT 1
+
+/* Define to enable the "filter-aaaa-on-v4" and "filter-aaaa-on-v6" options.
+   */
+/* #undef ALLOW_FILTER_AAAA */
 
 /* define if ATF unit tests are to be built. */
 /* #undef ATF_TEST */
@@ -183,6 +184,9 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to enable rpz-nsip rules. */
 #define ENABLE_RPZ_NSIP 1
 
+/* Define to enable 'sit' support. */
+#define ENABLE_SIT 1
+
 /* Solaris hack to get select_large_fdset. */
 /* #undef FD_SETSIZE */
 
@@ -195,8 +199,14 @@ int sigwait(const unsigned int *set, int *sig);
    MSVC and with C++ compilers. */
 #define FLEXIBLE_ARRAY_MEMBER /**/
 
+/* Define to 1 if you have the `AES_encrypt' function. */
+#define HAVE_AES_ENCRYPT 1
+
 /* Define to 1 if you have the `chroot' function. */
 #define HAVE_CHROOT 1
+
+/* Define if clock_gettime is available. */
+#define HAVE_CLOCK_GETTIME 1
 
 /* Define to 1 if you have the <devpoll.h> header file. */
 /* #undef HAVE_DEVPOLL_H */
@@ -225,6 +235,15 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the <fcntl.h> header file. */
 #define HAVE_FCNTL_H 1
 
+/* Build with GeoIP support */
+/* #undef HAVE_GEOIP 1 */
+
+/* Build with GeoIP City IPv6 support */
+/* #undef HAVE_GEOIP_CITY_V6 1 */
+
+/* Build with GeoIP Country IPv6 support */
+/* #undef HAVE_GEOIP_V6 1 */
+
 /* Define to 1 if you have the <gssapi/gssapi.h> header file. */
 #define HAVE_GSSAPI_GSSAPI_H 1
 
@@ -239,6 +258,9 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
+
+/* Define if libjson was found */
+/* #undef HAVE_JSON */
 
 /* Define to 1 if you have the <kerberosv5/krb5.h> header file. */
 /* #undef HAVE_KERBEROSV5_KRB5_H */
@@ -285,6 +307,12 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the <linux/capability.h> header file. */
 /* #undef HAVE_LINUX_CAPABILITY_H */
 
+/* Define to 1 if you have the <linux/netlink.h> header file. */
+/* #undef HAVE_LINUX_NETLINK_H */
+
+/* Define to 1 if you have the <linux/rtnetlink.h> header file. */
+/* #undef HAVE_LINUX_RTNETLINK_H */
+
 /* Define to 1 if you have the <linux/types.h> header file. */
 /* #undef HAVE_LINUX_TYPES_H */
 
@@ -294,17 +322,29 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
 
+/* Define to 1 if you have the `mmap' function. */
+#define HAVE_MMAP 1
+
 /* Define to 1 if you have the `nanosleep' function. */
 #define HAVE_NANOSLEEP 1
 
 /* Define to 1 if you have the <net/if6.h> header file. */
 /* #undef HAVE_NET_IF6_H */
 
+/* Define to 1 if you have the <net/route.h> header file. */
+#define HAVE_NET_ROUTE_H 1
+
 /* Define if your OpenSSL version supports ECDSA. */
 #define HAVE_OPENSSL_ECDSA 1
 
 /* Define if your OpenSSL version supports GOST. */
 #define HAVE_OPENSSL_GOST 1
+
+/* Define if your PKCS11 provider supports ECDSA. */
+/* #undef HAVE_PKCS11_ECDSA 1 */
+
+/* Define if your PKCS11 provider supports GOST. */
+/* #undef HAVE_PKCS11_GOST 1 */
 
 /* Define to 1 if you have the `pthread_yield' function. */
 /* #undef HAVE_PTHREAD_YIELD */
@@ -360,6 +400,9 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the <sys/dyntune.h> header file. */
 /* #undef HAVE_SYS_DYNTUNE_H */
 
+/* Define to 1 if you have the <sys/mman.h> header file. */
+#define HAVE_SYS_MMAN_H 1
+
 /* Define to 1 if you have the <sys/param.h> header file. */
 #define HAVE_SYS_PARAM_H 1
 
@@ -368,6 +411,9 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define to 1 if you have the <sys/select.h> header file. */
 #define HAVE_SYS_SELECT_H 1
+
+/* Define to 1 if you have the <sys/socket.h> header file. */
+#define HAVE_SYS_SOCKET_H 1
 
 /* Define to 1 if you have the <sys/sockio.h> header file. */
 #define HAVE_SYS_SOCKIO_H 1
@@ -396,6 +442,12 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the `usleep' function. */
 #define HAVE_USLEEP 1
 
+/* Use HMAC-SHA1 for Source Identity Token generation */
+/* #undef HMAC_SHA1_SIT */
+
+/* Use HMAC-SHA256 for Source Identity Token generation */
+/* #undef HMAC_SHA256_SIT */
+
 /* return type of gai_strerror */
 #define IRS_GAISTRERROR_RETURN_T const char *
 
@@ -419,9 +471,6 @@ int sigwait(const unsigned int *set, int *sig);
    */
 /* #undef NEED_SECURE_DIRECTORY */
 
-/* Use the new XML schema for statistics */
-/* #undef NEWSTATS */
-
 /* Define to the address where bug reports for this package should be sent. */
 #define PACKAGE_BUGREPORT ""
 
@@ -444,6 +493,9 @@ int sigwait(const unsigned int *set, int *sig);
    (O_NDELAY/O_NONBLOCK). */
 #define PORT_NONBLOCK O_NONBLOCK
 
+/* Define if GOST private keys are encoded in ASN.1. */
+/* #undef PREFER_GOSTASN1 */
+
 /* The size of `void *', as computed by sizeof. */
 #define SIZEOF_VOID_P 8
 
@@ -453,12 +505,12 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
 #define TIME_WITH_SYS_TIME 1
 
+/* Define to use large-system tuning. */
+/* #undef TUNE_LARGE */
+
 /* Defined if you need to use ioctl(FIONBIO) instead a fcntl call to make
    non-blocking. */
 /* #undef USE_FIONBIO_IOCTL */
-
-/* Enable DNS Response Rate Limiting */
-/* #undef USE_RRL */
 
 /* define if idnkit support is to be included. */
 /* #undef WITH_IDN */

@@ -1,7 +1,7 @@
-/*	$NetBSD: opt_41.c,v 1.5 2013/12/31 20:24:41 christos Exp $	*/
+/*	$NetBSD: opt_41.c,v 1.6 2014/03/01 03:24:37 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -153,6 +153,13 @@ fromwire_opt(ARGS_FROMWIRE) {
 			isc_region_consume(&sregion, addrbytes);
 			break;
 		}
+#ifdef notyet
+		case DNS_OPT_EXPIRE:
+			if (length != 0 && length != 4)
+				return (DNS_R_FORMERR);
+			isc_region_consume(&sregion, length);
+			break;
+#endif
 		default:
 			isc_region_consume(&sregion, length);
 			break;
@@ -164,7 +171,7 @@ fromwire_opt(ARGS_FROMWIRE) {
 	isc_buffer_availableregion(target, &tregion);
 	if (tregion.length < total)
 		return (ISC_R_NOSPACE);
-	memcpy(tregion.base, sregion.base, total);
+	memmove(tregion.base, sregion.base, total);
 	isc_buffer_forward(source, total);
 	isc_buffer_add(target, total);
 
