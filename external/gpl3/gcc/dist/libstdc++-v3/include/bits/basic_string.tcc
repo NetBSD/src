@@ -1,8 +1,6 @@
 // Components for manipulating sequences of characters -*- C++ -*-
 
-// Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-// 2006, 2007, 2008, 2009
-// Free Software Foundation, Inc.
+// Copyright (C) 1997-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -24,9 +22,9 @@
 // see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 // <http://www.gnu.org/licenses/>.
 
-/** @file basic_string.tcc
+/** @file bits/basic_string.tcc
  *  This is an internal header file, included by other library headers.
- *  You should not attempt to use it directly.
+ *  Do not attempt to use it directly. @headername{string}
  */
 
 //
@@ -41,9 +39,11 @@
 
 #pragma GCC system_header
 
-#include <cxxabi-forced.h>
+#include <bits/cxxabi_forced.h>
 
-_GLIBCXX_BEGIN_NAMESPACE(std)
+namespace std _GLIBCXX_VISIBILITY(default)
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   template<typename _CharT, typename _Traits, typename _Alloc>
     const typename basic_string<_CharT, _Traits, _Alloc>::size_type
@@ -78,7 +78,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
       _S_construct(_InIterator __beg, _InIterator __end, const _Alloc& __a,
 		   input_iterator_tag)
       {
-#ifndef _GLIBCXX_FULLY_DYNAMIC_STRING
+#if _GLIBCXX_FULLY_DYNAMIC_STRING == 0
 	if (__beg == __end && __a == _Alloc())
 	  return _S_empty_rep()._M_refdata();
 #endif
@@ -124,13 +124,13 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
       _S_construct(_InIterator __beg, _InIterator __end, const _Alloc& __a,
 		   forward_iterator_tag)
       {
-#ifndef _GLIBCXX_FULLY_DYNAMIC_STRING
+#if _GLIBCXX_FULLY_DYNAMIC_STRING == 0
 	if (__beg == __end && __a == _Alloc())
 	  return _S_empty_rep()._M_refdata();
 #endif
 	// NB: Not required, but considered best practice.
 	if (__gnu_cxx::__is_null_pointer(__beg) && __beg != __end)
-	  __throw_logic_error(__N("basic_string::_S_construct NULL not valid"));
+	  __throw_logic_error(__N("basic_string::_S_construct null not valid"));
 
 	const size_type __dnew = static_cast<size_type>(std::distance(__beg,
 								      __end));
@@ -152,7 +152,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
     basic_string<_CharT, _Traits, _Alloc>::
     _S_construct(size_type __n, _CharT __c, const _Alloc& __a)
     {
-#ifndef _GLIBCXX_FULLY_DYNAMIC_STRING
+#if _GLIBCXX_FULLY_DYNAMIC_STRING == 0
       if (__n == 0 && __a == _Alloc())
 	return _S_empty_rep()._M_refdata();
 #endif
@@ -229,7 +229,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
     : _M_dataplus(_S_construct(__beg, __end, __a), __a)
     { }
 
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus >= 201103L
   template<typename _CharT, typename _Traits, typename _Alloc>
     basic_string<_CharT, _Traits, _Alloc>::
     basic_string(initializer_list<_CharT> __l, const _Alloc& __a)
@@ -454,7 +454,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
     basic_string<_CharT, _Traits, _Alloc>::
     _M_leak_hard()
     {
-#ifndef _GLIBCXX_FULLY_DYNAMIC_STRING
+#if _GLIBCXX_FULLY_DYNAMIC_STRING == 0
       if (_M_rep() == &_S_empty_rep())
 	return;
 #endif
@@ -757,7 +757,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
   template<typename _CharT, typename _Traits, typename _Alloc>
     typename basic_string<_CharT, _Traits, _Alloc>::size_type
     basic_string<_CharT, _Traits, _Alloc>::
-    find(_CharT __c, size_type __pos) const
+    find(_CharT __c, size_type __pos) const _GLIBCXX_NOEXCEPT
     {
       size_type __ret = npos;
       const size_type __size = this->size();
@@ -796,7 +796,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
   template<typename _CharT, typename _Traits, typename _Alloc>
     typename basic_string<_CharT, _Traits, _Alloc>::size_type
     basic_string<_CharT, _Traits, _Alloc>::
-    rfind(_CharT __c, size_type __pos) const
+    rfind(_CharT __c, size_type __pos) const _GLIBCXX_NOEXCEPT
     {
       size_type __size = this->size();
       if (__size)
@@ -861,7 +861,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
   template<typename _CharT, typename _Traits, typename _Alloc>
     typename basic_string<_CharT, _Traits, _Alloc>::size_type
     basic_string<_CharT, _Traits, _Alloc>::
-    find_first_not_of(_CharT __c, size_type __pos) const
+    find_first_not_of(_CharT __c, size_type __pos) const _GLIBCXX_NOEXCEPT
     {
       for (; __pos < this->size(); ++__pos)
 	if (!traits_type::eq(_M_data()[__pos], __c))
@@ -893,7 +893,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
   template<typename _CharT, typename _Traits, typename _Alloc>
     typename basic_string<_CharT, _Traits, _Alloc>::size_type
     basic_string<_CharT, _Traits, _Alloc>::
-    find_last_not_of(_CharT __c, size_type __pos) const
+    find_last_not_of(_CharT __c, size_type __pos) const _GLIBCXX_NOEXCEPT
     {
       size_type __size = this->size();
       if (__size)
@@ -1128,7 +1128,6 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 
   // Inhibit implicit instantiations for required instantiations,
   // which are defined via explicit instantiations elsewhere.
-  // NB: This syntax is a GNU extension.
 #if _GLIBCXX_EXTERN_TEMPLATE > 0
   extern template class basic_string<char>;
   extern template
@@ -1161,6 +1160,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 #endif
 #endif
 
-_GLIBCXX_END_NAMESPACE
+_GLIBCXX_END_NAMESPACE_VERSION
+} // namespace std
 
 #endif

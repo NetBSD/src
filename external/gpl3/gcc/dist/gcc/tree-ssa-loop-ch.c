@@ -1,5 +1,5 @@
 /* Loop header copying on trees.
-   Copyright (C) 2004, 2005, 2006, 2007, 2008 Free Software Foundation, Inc.
+   Copyright (C) 2004-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -22,16 +22,10 @@ along with GCC; see the file COPYING3.  If not see
 #include "coretypes.h"
 #include "tm.h"
 #include "tree.h"
-#include "rtl.h"
 #include "tm_p.h"
-#include "hard-reg-set.h"
 #include "basic-block.h"
-#include "output.h"
-#include "diagnostic.h"
 #include "tree-flow.h"
-#include "tree-dump.h"
 #include "tree-pass.h"
-#include "timevar.h"
 #include "cfgloop.h"
 #include "tree-inline.h"
 #include "flags.h"
@@ -106,7 +100,7 @@ should_duplicate_loop_header_p (basic_block header, struct loop *loop,
 
 /* Checks whether LOOP is a do-while style loop.  */
 
-static bool
+bool
 do_while_loop_p (struct loop *loop)
 {
   gimple stmt = last_stmt (loop->latch);
@@ -147,10 +141,6 @@ copy_loop_headers (void)
       loop_optimizer_finalize ();
       return 0;
     }
-
-#ifdef ENABLE_CHECKING
-  verify_loop_structure ();
-#endif
 
   bbs = XNEWVEC (basic_block, n_basic_blocks);
   copied_bbs = XNEWVEC (basic_block, n_basic_blocks);
@@ -206,6 +196,7 @@ copy_loop_headers (void)
 
       entry = loop_preheader_edge (loop);
 
+      propagate_threaded_block_debug_into (exit->dest, entry->dest);
       if (!gimple_duplicate_sese_region (entry, exit, bbs, n_bbs, copied_bbs))
 	{
 	  fprintf (dump_file, "Duplication failed.\n");
@@ -250,6 +241,7 @@ copy_loop_headers (void)
       split_edge (loop_latch_edge (loop));
     }
 
+  update_ssa (TODO_update_ssa);
   free (bbs);
   free (copied_bbs);
 
@@ -268,6 +260,7 @@ struct gimple_opt_pass pass_ch =
  {
   GIMPLE_PASS,
   "ch",					/* name */
+  OPTGROUP_LOOP,                        /* optinfo_flags */
   gate_ch,				/* gate */
   copy_loop_headers,			/* execute */
   NULL,					/* sub */
@@ -278,7 +271,8 @@ struct gimple_opt_pass pass_ch =
   0,					/* properties_provided */
   0,					/* properties_destroyed */
   0,					/* todo_flags_start */
-  TODO_cleanup_cfg | TODO_dump_func
-  | TODO_verify_ssa			/* todo_flags_finish */
+  TODO_cleanup_cfg
+    | TODO_verify_ssa
+    | TODO_verify_flow			/* todo_flags_finish */
  }
 };

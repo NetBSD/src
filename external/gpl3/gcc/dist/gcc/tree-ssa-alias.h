@@ -1,5 +1,5 @@
 /* Tree based alias analysis and alias oracle.
-   Copyright (C) 2008 Free Software Foundation, Inc.
+   Copyright (C) 2008-2013 Free Software Foundation, Inc.
    Contributed by Richard Guenther  <rguenther@suse.de>
 
    This file is part of GCC.
@@ -21,9 +21,6 @@
 #ifndef TREE_SSA_ALIAS_H
 #define TREE_SSA_ALIAS_H
 
-#include "coretypes.h"
-
-
 /* The points-to solution.
 
    The points-to solution is a union of pt_vars and the abstract
@@ -38,8 +35,13 @@ struct GTY(()) pt_solution
      even if this is zero pt_vars can still include global variables.  */
   unsigned int nonlocal : 1;
 
-  /* Nonzero if the points-to set includes any escaped local variable.  */
+  /* Nonzero if the points-to set includes the local escaped solution by
+     reference.  */
   unsigned int escaped : 1;
+
+  /* Nonzero if the points-to set includes the IPA escaped solution by
+     reference.  */
+  unsigned int ipa_escaped : 1;
 
   /* Nonzero if the points-to set includes 'nothing', the points-to set
      includes memory at address NULL.  */
@@ -49,8 +51,6 @@ struct GTY(()) pt_solution
   /* Nonzero if the pt_vars bitmap includes a global variable.  */
   unsigned int vars_contains_global : 1;
 
-  /* Nonzero if the pt_vars bitmap includes a restrict tag variable.  */
-  unsigned int vars_contains_restrict : 1;
 
   /* Set of variables that this pointer may point to.  */
   bitmap vars;
@@ -83,6 +83,9 @@ typedef struct ao_ref_s
 
   /* The alias set of the base object or -1 if not yet computed.  */
   alias_set_type base_alias_set;
+
+  /* Whether the memory is considered a volatile access.  */
+  bool volatile_p;
 } ao_ref;
 
 
@@ -92,16 +95,23 @@ extern void ao_ref_init_from_ptr_and_size (ao_ref *, tree, tree);
 extern tree ao_ref_base (ao_ref *);
 extern alias_set_type ao_ref_alias_set (ao_ref *);
 extern bool ptr_deref_may_alias_global_p (tree);
+extern bool ptr_derefs_may_alias_p (tree, tree);
+extern bool ref_may_alias_global_p (tree);
 extern bool refs_may_alias_p (tree, tree);
 extern bool refs_may_alias_p_1 (ao_ref *, ao_ref *, bool);
 extern bool refs_anti_dependent_p (tree, tree);
 extern bool refs_output_dependent_p (tree, tree);
 extern bool ref_maybe_used_by_stmt_p (gimple, tree);
+extern bool stmt_may_clobber_global_p (gimple);
 extern bool stmt_may_clobber_ref_p (gimple, tree);
 extern bool stmt_may_clobber_ref_p_1 (gimple, ao_ref *);
-extern tree get_continuation_for_phi (gimple, ao_ref *, bitmap *);
+extern bool call_may_clobber_ref_p (gimple, tree);
+extern bool stmt_kills_ref_p (gimple, tree);
+extern tree get_continuation_for_phi (gimple, ao_ref *,
+				      unsigned int *, bitmap *, bool);
 extern void *walk_non_aliased_vuses (ao_ref *, tree,
-				     void *(*)(ao_ref *, tree, void *),
+				     void *(*)(ao_ref *, tree,
+					       unsigned int, void *),
 				     void *(*)(ao_ref *, tree, void *), void *);
 extern unsigned int walk_aliased_vdefs (ao_ref *, tree,
 					bool (*)(ao_ref *, tree, void *),
@@ -117,15 +127,18 @@ extern void dump_alias_stats (FILE *);
 
 /* In tree-ssa-structalias.c  */
 extern unsigned int compute_may_aliases (void);
-extern void delete_alias_heapvars (void);
+extern bool pt_solution_empty_p (struct pt_solution *);
+extern bool pt_solution_singleton_p (struct pt_solution *, unsigned *);
 extern bool pt_solution_includes_global (struct pt_solution *);
 extern bool pt_solution_includes (struct pt_solution *, const_tree);
 extern bool pt_solutions_intersect (struct pt_solution *, struct pt_solution *);
-extern bool pt_solutions_same_restrict_base (struct pt_solution *,
-					     struct pt_solution *);
 extern void pt_solution_reset (struct pt_solution *);
-extern void pt_solution_set (struct pt_solution *, bitmap);
+extern void pt_solution_set (struct pt_solution *, bitmap, bool);
+extern void pt_solution_set_var (struct pt_solution *, tree);
+
 extern void dump_pta_stats (FILE *);
+
+extern GTY(()) struct pt_solution ipa_escaped_pt;
 
 
 #endif /* TREE_SSA_ALIAS_H  */

@@ -1,21 +1,16 @@
-<sect1 id="manual.intro.setup.configure" xreflabel="Configuring">
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" 
+	 xml:id="manual.intro.setup.configure" xreflabel="Configuring">
 <?dbhtml filename="configure.html"?>
 
-<sect1info>
+<info><title>Configure</title>
   <keywordset>
-    <keyword>
-      ISO C++
-    </keyword>
-    <keyword>
-      configure
-    </keyword>
-    <keyword>
-      options
-    </keyword>
+    <keyword>ISO C++</keyword>
+    <keyword>configure</keyword>
+    <keyword>options</keyword>
   </keywordset>
-</sect1info>
+</info>
 
-<title>Configure</title>
+
 
 <para>
   When configuring libstdc++, you'll have to configure the entire
@@ -29,22 +24,22 @@
   Here are all of the configure options specific to libstdc++.  Keep
   in mind that
    <!-- This SECnn should be the "Choosing Package Options" section. -->
-   <ulink url="http://sourceware.org/autobook/autobook/autobook_14.html">they
-   all have opposite forms as well</ulink> (enable/disable and
+   <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://sourceware.org/autobook/autobook/autobook_14.html">they
+   all have opposite forms as well</link> (enable/disable and
    with/without).  The defaults are for the <emphasis>current
    development sources</emphasis>, which may be different than those
    for released versions.
 </para>
 <para>The canonical way to find out the configure options that are
    available for a given set of libstdc++ sources is to go to the
-   source directory and then type:<command>./configure --help</command>.
+   source directory and then type: <command>./configure --help</command>.
 </para>
 
 <variablelist>
  <varlistentry><term><code>--enable-multilib</code>[default]</term>
  <listitem><para>This is part of the generic multilib support for building cross
-	compilers.  As such, targets like &quot;powerpc-elf&quot; will have
-	libstdc++ built many different ways:  &quot;-msoft-float&quot;
+	compilers.  As such, targets like "powerpc-elf" will have
+	libstdc++ built many different ways:  "-msoft-float"
 	and not, etc.  A different libstdc++ will be built for each of
 	the different multilib versions.  This option is on by default.
      </para>
@@ -68,15 +63,15 @@
 	libstdc++'s include files will be installed in
 	<code>${libdir}/gcc-lib/${target_alias}/${gcc_version}/include/g++</code>,
 	unless you also specify
-       <literal>--with-gxx-include-dir=<filename class="directory">dirname</filename></literal> during configuration.
+       <literal>--with-gxx-include-dir=</literal><filename class="directory">dirname</filename> during configuration.
      </para>
  </listitem></varlistentry>
 
  <varlistentry><term><code>--with-gxx-include-dir=&lt;include-files dir&gt;</code></term>
  <listitem><para>Adds support for named libstdc++ include directory.  For instance,
 	the following puts all the libstdc++ headers into a directory
-	called &quot;4.4-20090404&quot; instead of the usual
-	&quot;c++/(version)&quot;.
+	called "4.4-20090404" instead of the usual
+	"c++/(version)".
      </para>
 	<programlisting>
    --with-gxx-include-dir=/foo/H-x86-gcc-3-c-gxx-inc/include/4.4-20090404</programlisting> </listitem></varlistentry>
@@ -89,7 +84,7 @@
 
  <varlistentry><term><code>--enable-cstdio=OPTION</code></term>
  <listitem><para>Select a target-specific I/O package. At the moment, the only
-	choice is to use 'stdio', a generic &quot;C&quot; abstraction.
+	choice is to use 'stdio', a generic "C" abstraction.
 	The default is 'stdio'. This option can change the library ABI.
      </para>
  </listitem></varlistentry>
@@ -105,17 +100,21 @@
 	choices are 'ieee_1003.1-2001' to specify an X/Open, Standard Unix
 	(IEEE Std. 1003.1-2001) model based on langinfo/iconv/catgets,
 	'gnu' to specify a model based on functionality from the GNU C
-	library (langinfo/iconv/gettext) (from <ulink url="http://sources.redhat.com/glibc/">glibc</ulink>, the GNU C
-	library), or 'generic' to use a generic &quot;C&quot;
-	abstraction which consists of &quot;C&quot; locale info.
+	library (langinfo/iconv/gettext) (from <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.gnu.org/software/libc/">glibc</link>, the GNU C
+	library), 'generic' to use a generic "C" abstraction which consists
+	of "C" locale info, 'newlib' to specify the Newlib C library model
+	which only differs from the 'generic' model in the handling of
+	ctype, or 'darwin' which omits the <type>wchar_t</type> specializations
+	needed by the 'generic' model.
      </para>
 
-     <para>If not explicitly specified, the configure proccess tries
+     <para>If not explicitly specified, the configure process tries
       to guess the most suitable package from the choices above. The
       default is 'generic'. On glibc-based systems of sufficient
-      vintage (2.2.5 and newer) and capability (with installed DE and
-      FR locale data), 'gnu' is automatically selected. This option
-      can change the library ABI.
+      vintage (2.3 and newer), 'gnu' is automatically selected. On newlib-based
+      systems (<code>'--with_newlib=yes'</code>) and OpenBSD, 'newlib' is
+      automatically selected. On Mac OS X 'darwin' is automatically selected.
+      This option can change the library ABI.
      </para>
  </listitem></varlistentry>
 
@@ -155,10 +154,40 @@
  <varlistentry><term><code>--enable-threads=OPTION</code></term>
  <listitem><para>Select a threading library.  A full description is
 	given in the
-	general <ulink url="http://gcc.gnu.org/install/configure.html">compiler
-	configuration instructions</ulink>. This option can change the
+	general <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://gcc.gnu.org/install/configure.html">compiler
+	configuration instructions</link>. This option can change the
 	library ABI.
      </para>
+ </listitem></varlistentry>
+
+ <varlistentry><term><code>--enable-libstdcxx-threads</code></term>
+ <listitem><para>Enable C++11 threads support.  If not explicitly specified,
+        the  configure process enables it if possible.  It defaults to 'off'
+	on Solaris 9, where it would break symbol versioning.   This
+	option can change the library ABI.
+     </para>
+ </listitem></varlistentry>
+
+ <varlistentry><term><code>--enable-libstdcxx-time</code></term>
+ <listitem><para>This is an abbreviated form of
+	<code>'--enable-libstdcxx-time=yes'</code>(described next).
+     </para>
+ </listitem></varlistentry>
+
+ <varlistentry><term><code>--enable-libstdcxx-time=OPTION</code></term>
+ <listitem><para>Enables link-type checks for the availability of the
+	clock_gettime clocks, used in the implementation of [time.clock],
+	and of the nanosleep and sched_yield functions, used in the
+	implementation of [thread.thread.this] of the 2011 ISO C++ standard.
+	The choice OPTION=yes checks for the availability of the facilities
+	in libc and libposix4.  In case it's needed the latter is also linked
+	to libstdc++ as part of the build process.  OPTION=rt also searches
+	(and, if needed, links) librt.   Note that the latter is not always
+	desirable because, in glibc, for example, in turn it triggers the
+	linking of libpthread too, which activates locking, a large overhead
+	for single-thread programs.  OPTION=no skips the tests completely.
+	The default is OPTION=no.
+    </para>
  </listitem></varlistentry>
 
  <varlistentry><term><code>--enable-libstdcxx-debug</code></term>
@@ -219,13 +248,13 @@
  </listitem></varlistentry>
 
  <varlistentry><term><code>--enable-c99</code></term>
- <listitem><para>The &quot;long long&quot; type was introduced in C99, along
+ <listitem><para>The <type>long long</type> type was introduced in C99, along
 	with many other functions for wide characters, and math
 	classification macros, etc.  If enabled, all C99 functions not
 	specified by the C++ standard will be put into <code>namespace
 	__gnu_cxx</code>, and then all these names will
 	be injected into namespace std, so that C99 functions can be
-	used &quot;as if&quot; they were in the C++ standard (as they
+	used "as if" they were in the C++ standard (as they
 	will eventually be in some future revision of the standard,
 	without a doubt).  By default, C99 support is on, assuming the
 	configure probes find all the necessary functions and bits
@@ -234,7 +263,7 @@
  </listitem></varlistentry>
 
  <varlistentry><term><code>--enable-wchar_t</code>[default]</term>
- <listitem><para>Template specializations for the &quot;wchar_t&quot; type are
+ <listitem><para>Template specializations for the <type>wchar_t</type> type are
 	required for wide character conversion support.  Disabling
 	wide character specializations may be expedient for initial
 	porting efforts, but builds only a subset of what is required by
@@ -244,14 +273,14 @@
  </listitem></varlistentry>
 
  <varlistentry><term><code>--enable-long-long  </code></term>
- <listitem><para>The &quot;long long&quot; type was introduced in C99.  It is
+ <listitem><para>The <type>long long</type> type was introduced in C99.  It is
 	provided as a GNU extension to C++98 in g++.  This flag builds
-	support for &quot;long long&quot; into the library (specialized
+	support for "long long" into the library (specialized
 	templates and the like for iostreams).  This option is on by default:
-	if enabled, users will have to either use the new-style &quot;C&quot;
+	if enabled, users will have to either use the new-style "C"
 	headers by default (i.e., &lt;cmath&gt; not &lt;math.h&gt;)
 	or add appropriate compile-time flags to all compile lines to
-	allow &quot;C&quot; visibility of this feature (on GNU/Linux,
+	allow "C" visibility of this feature (on GNU/Linux,
 	the flag is -D_ISOC99_SOURCE, which is added automatically via
 	CPLUSPLUS_CPP_SPEC's addition of _GNU_SOURCE).
 	This option can change the library ABI.
@@ -280,8 +309,8 @@
  <listitem><para>In 3.1 and later, tries to turn on symbol versioning in the
 	shared library (if a shared library has been
 	requested). Values for 'style' that are currently supported
-	are 'gnu', 'gnu-versioned-namespace', 'darwin', and
-	'darwin-export'. Both gnu- options require that a recent
+	are 'gnu', 'gnu-versioned-namespace', 'darwin',
+	'darwin-export', and 'sun'. Both gnu- options require that a recent
 	version of the GNU linker be in use. Both darwin options are
 	equivalent. With no style given, the configure script will try
 	to guess correct defaults for the host system, probe to see if
@@ -292,12 +321,15 @@
 
  </listitem></varlistentry>
 
- <varlistentry><term><code>--enable-visibility</code></term>
- <listitem><para> In 4.2 and later, enables or disables visibility attributes.
-	If enabled (as by default), and the compiler seems capable of
-	passing the simple sanity checks thrown at it, adjusts items
-	in namespace std, namespace std::tr1, and namespace __gnu_cxx
-	so that -fvisibility options work.
+ <varlistentry><term><code>--enable-libstdcxx-visibility</code></term>
+ <listitem><para> In 4.2 and later, enables or disables visibility 
+        attributes. If enabled (as by default), and the compiler seems
+        capable of passing the simple sanity checks thrown at it, adjusts
+        items in namespace std, namespace std::tr1, namespace std::tr2,
+        and namespace __gnu_cxx to have <code>visibility ("default")</code>
+        so that -fvisibility options can be used without affecting the
+        normal external-visibility of namespace std entities.
+        Prior to 4.7 this option was spelled <code>--enable-visibility</code>.
     </para>
  </listitem></varlistentry>
 
@@ -313,6 +345,19 @@
      </para>
  </listitem></varlistentry>
 
+
+ <varlistentry><term><code>--enable-extern-template</code>[default]</term>
+ <listitem><para>Use extern template to pre-instantiate all required
+ 	specializations for certain types defined in the standard libraries. 
+	These types include <classname>string</classname> and dependents like
+	<classname>char_traits</classname>, the templatized IO classes,
+	<classname>allocator</classname>, and others.  
+	Disabling means that implicit
+	template generation will be used when compiling these types.  By
+	default, this option is on. This option can change the library ABI.
+     </para>
+ </listitem></varlistentry>
+
  <varlistentry><term><code>--disable-hosted-libstdcxx</code></term>
  <listitem>
    <para>
@@ -324,28 +369,19 @@
      </para>
  </listitem></varlistentry>
 
- <varlistentry><term><code>--enable-libstdcxx-time</code></term>
- <listitem><para>This is an abbreviated form of
-	<code>'--enable-libstdcxx-time=yes'</code>(described next).
-     </para>
- </listitem></varlistentry>
-
- <varlistentry><term><code>--enable-libstdcxx-time=OPTION</code></term>
- <listitem><para>Enables link-type checks for the availability of the
-	clock_gettime clocks, used in the implementation of [time.clock],
-	and of the nanosleep and sched_yield functions, used in the
-	implementation of [thread.thread.this] of the current C++0x draft.
-	The choice OPTION=yes checks for the availability of the facilities
-	in libc and libposix4.  In case of need the latter is also linked
-	to libstdc++ as part of the build process.  OPTION=rt also searches
-	(and, in case, links) librt.   Note that the latter is not always
-	desirable because, in glibc, for example, in turn it triggers the
-	linking of libpthread too, which activates locking, a large overhead
-	for single-thread programs.  OPTION=no skips the tests completely.
-	The default is OPTION=no.
-    </para>
+<varlistentry><term><code>--disable-libstdcxx-verbose</code></term>
+ <listitem>
+   <para>
+     By default, the library is configured to write descriptive messages
+     to standard error for certain events such as calling a pure virtual
+     function or the invocation of the standard terminate handler.  Those
+     messages cause the library to depend on the demangler and standard I/O
+     facilites, which might be undesirable in a low-memory environment or
+     when standard error is not available.  This option disables those
+     messages.  This option does not change the library ABI.
+   </para>
  </listitem></varlistentry>
 
 </variablelist>
 
-</sect1>
+</section>

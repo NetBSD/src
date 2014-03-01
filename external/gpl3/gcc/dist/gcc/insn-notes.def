@@ -1,5 +1,5 @@
 /* Insn note definitions.
-   Copyright (C) 2004, 2005, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2004-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -36,6 +36,10 @@ INSN_NOTE (DELETED)
 
 /* Generated in place of user-declared labels when they are deleted.  */
 INSN_NOTE (DELETED_LABEL)
+/* Similarly, but for labels that have been present in debug stmts
+   earlier and thus will only appear with -g.  These must use different
+   label namespace.  */
+INSN_NOTE (DELETED_DEBUG_LABEL)
 
 /* These are used to mark the beginning and end of a lexical block.
    See NOTE_BLOCK and reorder_blocks.  */
@@ -61,17 +65,26 @@ INSN_NOTE (EH_REGION_END)
 /* The location of a variable.  */
 INSN_NOTE (VAR_LOCATION)
 
+/* The values passed to callee.  */
+INSN_NOTE (CALL_ARG_LOCATION)
+
 /* Record the struct for the following basic block.  Uses
    NOTE_BASIC_BLOCK.  FIXME: Redundant with the basic block pointer
-   now included in every insn.  */
+   now included in every insn.  NOTE: If there's no CFG anymore, in other words,
+   if BLOCK_FOR_INSN () == NULL, NOTE_BASIC_BLOCK cannot be considered reliable
+   anymore.  */
 INSN_NOTE (BASIC_BLOCK)
 
 /* Mark the inflection point in the instruction stream where we switch
    between hot and cold text sections.  */
 INSN_NOTE (SWITCH_TEXT_SECTIONS)
 
-/* Mark the restore point after an epilogue changed CFI data.  Used only
-   when an epilogue appears in the middle of a function.  */
-INSN_NOTE (CFA_RESTORE_STATE)
+/* When emitting dwarf2 frame information, contains a directive that
+   should be emitted.  */
+INSN_NOTE (CFI)
+
+/* When emitting dwarf2 frame information, contains the number of a debug
+   label that should be emitted.  */
+INSN_NOTE (CFI_LABEL)
 
 #undef INSN_NOTE

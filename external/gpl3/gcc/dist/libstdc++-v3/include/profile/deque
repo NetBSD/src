@@ -1,6 +1,6 @@
 // Profiling deque implementation -*- C++ -*-
 
-// Copyright (C) 2009, 2010 Free Software Foundation, Inc.
+// Copyright (C) 2009-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -31,16 +31,16 @@
 
 #include <deque>
 
-namespace std
+namespace std _GLIBCXX_VISIBILITY(default)
 {
 namespace __profile
 {
   /// Class std::deque wrapper with performance instrumentation.
   template<typename _Tp, typename _Allocator = std::allocator<_Tp> >
     class deque
-    : public _GLIBCXX_STD_D::deque<_Tp, _Allocator>
+    : public _GLIBCXX_STD_C::deque<_Tp, _Allocator>
     {
-      typedef  _GLIBCXX_STD_D::deque<_Tp, _Allocator> _Base;
+      typedef  _GLIBCXX_STD_C::deque<_Tp, _Allocator> _Base;
 
     public:
       typedef typename _Base::reference             reference;
@@ -60,14 +60,31 @@ namespace __profile
       typedef typename _Base::const_pointer         const_pointer;
 
       // 23.2.1.1 construct/copy/destroy:
-      explicit deque(const _Allocator& __a = _Allocator())
+      explicit
+      deque(const _Allocator& __a = _Allocator())
       : _Base(__a) { }
 
-      explicit deque(size_type __n, const _Tp& __value = _Tp(),
-		     const _Allocator& __a = _Allocator())
-      : _Base(__n, __value, __a) { }
+#if __cplusplus >= 201103L
+      explicit
+      deque(size_type __n)
+      : _Base(__n) { }
 
-      template<class _InputIterator>
+      deque(size_type __n, const _Tp& __value,
+	    const _Allocator& __a = _Allocator())
+      : _Base(__n, __value, __a) { }
+#else
+      explicit
+      deque(size_type __n, const _Tp& __value = _Tp(),
+	    const _Allocator& __a = _Allocator())
+      : _Base(__n, __value, __a) { }
+#endif
+
+#if __cplusplus >= 201103L
+      template<typename _InputIterator,
+	       typename = std::_RequireInputIter<_InputIterator>>
+#else
+      template<typename _InputIterator>
+#endif
         deque(_InputIterator __first, _InputIterator __last,
 	      const _Allocator& __a = _Allocator())
 	: _Base(__first, __last, __a)
@@ -79,9 +96,9 @@ namespace __profile
       deque(const _Base& __x)
       : _Base(__x) { }
 
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus >= 201103L
       deque(deque&& __x)
-      : _Base(std::forward<deque>(__x))
+      : _Base(std::move(__x))
       { }
 
       deque(initializer_list<value_type> __l,
@@ -89,7 +106,7 @@ namespace __profile
       : _Base(__l, __a) { }
 #endif
 
-      ~deque() { }
+      ~deque() _GLIBCXX_NOEXCEPT { }
 
       deque&
       operator=(const deque& __x)
@@ -98,7 +115,7 @@ namespace __profile
 	return *this;
       }
 
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus >= 201103L
       deque&
       operator=(deque&& __x)
       {
@@ -117,7 +134,12 @@ namespace __profile
       }
 #endif
 
-      template<class _InputIterator>
+#if __cplusplus >= 201103L
+      template<typename _InputIterator,
+	       typename = std::_RequireInputIter<_InputIterator>>
+#else
+      template<typename _InputIterator>
+#endif
         void
         assign(_InputIterator __first, _InputIterator __last)
         {
@@ -130,7 +152,7 @@ namespace __profile
 	_Base::assign(__n, __t);
       }
 
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus >= 201103L
       void
       assign(initializer_list<value_type> __l)
       {
@@ -142,52 +164,52 @@ namespace __profile
 
       // iterators:
       iterator
-      begin()
+      begin() _GLIBCXX_NOEXCEPT
       { return iterator(_Base::begin()); }
 
       const_iterator
-      begin() const
+      begin() const _GLIBCXX_NOEXCEPT
       { return const_iterator(_Base::begin()); }
 
       iterator
-      end()
+      end() _GLIBCXX_NOEXCEPT
       { return iterator(_Base::end()); }
 
       const_iterator
-      end() const
+      end() const _GLIBCXX_NOEXCEPT
       { return const_iterator(_Base::end()); }
 
       reverse_iterator
-      rbegin()
+      rbegin() _GLIBCXX_NOEXCEPT
       { return reverse_iterator(end()); }
 
       const_reverse_iterator
-      rbegin() const
+      rbegin() const _GLIBCXX_NOEXCEPT
       { return const_reverse_iterator(end()); }
 
       reverse_iterator
-      rend()
+      rend() _GLIBCXX_NOEXCEPT
       { return reverse_iterator(begin()); }
 
       const_reverse_iterator
-      rend() const
+      rend() const _GLIBCXX_NOEXCEPT
       { return const_reverse_iterator(begin()); }
 
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus >= 201103L
       const_iterator
-      cbegin() const
+      cbegin() const noexcept
       { return const_iterator(_Base::begin()); }
 
       const_iterator
-      cend() const
+      cend() const noexcept
       { return const_iterator(_Base::end()); }
 
       const_reverse_iterator
-      crbegin() const
+      crbegin() const noexcept
       { return const_reverse_iterator(end()); }
 
       const_reverse_iterator
-      crend() const
+      crend() const noexcept
       { return const_reverse_iterator(begin()); }
 #endif
 
@@ -195,13 +217,27 @@ namespace __profile
       using _Base::size;
       using _Base::max_size;
 
+#if __cplusplus >= 201103L
+      void
+      resize(size_type __sz)
+      {
+	_Base::resize(__sz);
+      }
+
+      void
+      resize(size_type __sz, const _Tp& __c)
+      {
+	_Base::resize(__sz, __c);
+      }
+#else
       void
       resize(size_type __sz, _Tp __c = _Tp())
       {
 	_Base::resize(__sz, __c);
       }
+#endif
 
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus >= 201103L
       using _Base::shrink_to_fit;
 #endif
 
@@ -259,7 +295,7 @@ namespace __profile
 	_Base::push_back(__x);
       }
 
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus >= 201103L
       void
       push_front(_Tp&& __x)
       { emplace_front(std::move(__x)); }
@@ -299,7 +335,7 @@ namespace __profile
 	return iterator(__res);
       }
 
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus >= 201103L
       iterator
       insert(iterator __position, _Tp&& __x)
       { return emplace(__position, std::move(__x)); }
@@ -317,7 +353,12 @@ namespace __profile
 	_Base::insert(__position, __n, __x);
       }
 
-      template<class _InputIterator>
+#if __cplusplus >= 201103L
+      template<typename _InputIterator,
+	       typename = std::_RequireInputIter<_InputIterator>>
+#else
+      template<typename _InputIterator>
+#endif
         void
         insert(iterator __position,
 	       _InputIterator __first, _InputIterator __last)
@@ -366,16 +407,16 @@ namespace __profile
       }
 
       void
-      clear()
+      clear() _GLIBCXX_NOEXCEPT
       {
 	_Base::clear();
       }
 
       _Base&
-      _M_base()       { return *this; }
+      _M_base() _GLIBCXX_NOEXCEPT       { return *this; }
 
       const _Base&
-      _M_base() const { return *this; }
+      _M_base() const _GLIBCXX_NOEXCEPT { return *this; }
     };
 
   template<typename _Tp, typename _Alloc>

@@ -1,6 +1,5 @@
 /* DDG - Data Dependence Graph - interface.
-   Copyright (C) 2004, 2005, 2006, 2007, 2008
-   Free Software Foundation, Inc.
+   Copyright (C) 2004-2013 Free Software Foundation, Inc.
    Contributed by Ayal Zaks and Mustafa Hagog <zaks,mustafa@il.ibm.com>
 
 This file is part of GCC.
@@ -185,5 +184,7 @@ void free_ddg_all_sccs (ddg_all_sccs_ptr);
 
 int find_nodes_on_paths (sbitmap result, ddg_ptr, sbitmap from, sbitmap to);
 int longest_simple_path (ddg_ptr, int from, int to, sbitmap via);
+
+bool autoinc_var_is_used_p (rtx, rtx);
 
 #endif /* GCC_DDG_H */

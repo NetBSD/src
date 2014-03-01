@@ -1,6 +1,6 @@
 // Locale support -*- C++ -*-
 
-// Copyright (C) 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+// Copyright (C) 2007-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -22,9 +22,9 @@
 // see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 // <http://www.gnu.org/licenses/>.
 
-/** @file locale_facets_nonio.tcc
+/** @file bits/locale_facets_nonio.tcc
  *  This is an internal header file, included by other library headers.
- *  You should not attempt to use it directly.
+ *  Do not attempt to use it directly. @headername{locale}
  */
 
 #ifndef _LOCALE_FACETS_NONIO_TCC
@@ -32,7 +32,9 @@
 
 #pragma GCC system_header
 
-_GLIBCXX_BEGIN_NAMESPACE(std)
+namespace std _GLIBCXX_VISIBILITY(default)
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   template<typename _CharT, bool _Intl>
     struct __use_cache<__moneypunct_cache<_CharT, _Intl> >
@@ -44,7 +46,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 	const locale::facet** __caches = __loc._M_impl->_M_caches;
 	if (!__caches[__i])
 	  {
-	    __moneypunct_cache<_CharT, _Intl>* __tmp = NULL;
+	    __moneypunct_cache<_CharT, _Intl>* __tmp = 0;
 	    __try
 	      {
 		__tmp = new __moneypunct_cache<_CharT, _Intl>;
@@ -122,7 +124,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 	}
     }
 
-_GLIBCXX_BEGIN_LDBL_NAMESPACE
+_GLIBCXX_BEGIN_NAMESPACE_LDBL
 
   template<typename _CharT, typename _InIter>
     template<bool _Intl>
@@ -608,7 +610,7 @@ _GLIBCXX_BEGIN_LDBL_NAMESPACE
     { return __intl ? _M_insert<true>(__s, __io, __fill, __digits)
 	            : _M_insert<false>(__s, __io, __fill, __digits); }
 
-_GLIBCXX_END_LDBL_NAMESPACE
+_GLIBCXX_END_NAMESPACE_LDBL
 
   // NB: Not especially useful. Without an ios_base object or some
   // kind of locale reference, we are left clawing at the air where
@@ -633,7 +635,8 @@ _GLIBCXX_END_LDBL_NAMESPACE
       const size_t __len = char_traits<_CharT>::length(__format);
 
       ios_base::iostate __tmperr = ios_base::goodbit;
-      for (size_t __i = 0; __beg != __end && __i < __len && !__tmperr; ++__i)
+      size_t __i = 0;
+      for (; __beg != __end && __i < __len && !__tmperr; ++__i)
 	{
 	  if (__ctype.narrow(__format[__i], 0) == '%')
 	    {
@@ -827,7 +830,7 @@ _GLIBCXX_END_LDBL_NAMESPACE
 	    }
 	}
 
-      if (__tmperr)
+      if (__tmperr || __i != __len)
 	__err |= ios_base::failbit;
   
       return __beg;
@@ -1212,14 +1215,13 @@ _GLIBCXX_END_LDBL_NAMESPACE
 
   // Inhibit implicit instantiations for required instantiations,
   // which are defined via explicit instantiations elsewhere.
-  // NB: This syntax is a GNU extension.
 #if _GLIBCXX_EXTERN_TEMPLATE
   extern template class moneypunct<char, false>;
   extern template class moneypunct<char, true>;
   extern template class moneypunct_byname<char, false>;
   extern template class moneypunct_byname<char, true>;
-  extern template class _GLIBCXX_LDBL_NAMESPACE money_get<char>;
-  extern template class _GLIBCXX_LDBL_NAMESPACE money_put<char>;
+  extern template class _GLIBCXX_NAMESPACE_LDBL money_get<char>;
+  extern template class _GLIBCXX_NAMESPACE_LDBL money_put<char>;
   extern template class __timepunct<char>;
   extern template class time_put<char>;
   extern template class time_put_byname<char>;
@@ -1293,8 +1295,8 @@ _GLIBCXX_END_LDBL_NAMESPACE
   extern template class moneypunct<wchar_t, true>;
   extern template class moneypunct_byname<wchar_t, false>;
   extern template class moneypunct_byname<wchar_t, true>;
-  extern template class _GLIBCXX_LDBL_NAMESPACE money_get<wchar_t>;
-  extern template class _GLIBCXX_LDBL_NAMESPACE money_put<wchar_t>;
+  extern template class _GLIBCXX_NAMESPACE_LDBL money_get<wchar_t>;
+  extern template class _GLIBCXX_NAMESPACE_LDBL money_put<wchar_t>;
   extern template class __timepunct<wchar_t>;
   extern template class time_put<wchar_t>;
   extern template class time_put_byname<wchar_t>;
@@ -1365,6 +1367,7 @@ _GLIBCXX_END_LDBL_NAMESPACE
 #endif
 #endif
 
-_GLIBCXX_END_NAMESPACE
+_GLIBCXX_END_NAMESPACE_VERSION
+} // namespace std
 
 #endif

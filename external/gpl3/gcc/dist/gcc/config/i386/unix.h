@@ -1,6 +1,5 @@
 /* Definitions for Unix assembler syntax for the Intel 80386.
-   Copyright (C) 1988, 1994, 1999, 2000, 2001, 2002, 2007, 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 1988-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -67,7 +66,7 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #define BSS_SECTION_ASM_OP "\t.bss"
 
 /* Globalizing directive for a label.  */
-#define GLOBAL_ASM_OP ".globl "
+#define GLOBAL_ASM_OP "\t.globl\t"
 
 /* By default, target has a 80387, uses IEEE compatible arithmetic,
    and returns float values in the 387.  */

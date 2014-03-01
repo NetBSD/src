@@ -1,6 +1,5 @@
 /* Definitions of target machine for GNU compiler for IA-64.
-   Copyright (C) 1999, 2000, 2002, 2003, 2004, 2005, 2007
-   Free Software Foundation, Inc.
+   Copyright (C) 1999-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -18,6 +17,9 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Shared between the driver and cc1.  */
+extern enum unwind_info_type ia64_except_unwind_info (struct gcc_options *);
+
 /* Functions defined in ia64.c */
 
 extern int bundling_p;
@@ -25,8 +27,6 @@ extern int bundling_p;
 extern int ia64_st_address_bypass_p (rtx, rtx);
 extern int ia64_ld_address_bypass_p (rtx, rtx);
 extern int ia64_produce_address_p (rtx);
-
-extern bool ia64_legitimate_constant_p (rtx);
 
 extern rtx ia64_expand_move (rtx, rtx);
 extern int ia64_move_ok (rtx, rtx);
@@ -39,12 +39,14 @@ extern bool ia64_expand_movxf_movrf (enum machine_mode, rtx[]);
 extern void ia64_expand_compare (rtx *, rtx *, rtx *);
 extern void ia64_expand_vecint_cmov (rtx[]);
 extern bool ia64_expand_vecint_minmax (enum rtx_code, enum machine_mode, rtx[]);
+extern void ia64_unpack_assemble (rtx, rtx, rtx, bool);
+extern void ia64_expand_unpack (rtx [], bool, bool);
 extern void ia64_expand_widen_sum (rtx[], bool);
-extern void ia64_expand_dot_prod_v8qi (rtx[], bool);
 extern void ia64_expand_call (rtx, rtx, rtx, int);
 extern void ia64_split_call (rtx, rtx, rtx, rtx, rtx, int, int);
 extern void ia64_reload_gp (void);
-extern void ia64_expand_atomic_op (enum rtx_code, rtx, rtx, rtx, rtx);
+extern void ia64_expand_atomic_op (enum rtx_code, rtx, rtx, rtx, rtx,
+				   enum memmodel);
 
 extern HOST_WIDE_INT ia64_initial_elimination_offset (int, int);
 extern void ia64_expand_prologue (void);
@@ -54,41 +56,34 @@ extern int ia64_direct_return (void);
 extern bool ia64_expand_load_address (rtx, rtx);
 extern int ia64_hard_regno_rename_ok (int, int);
 
-extern void ia64_print_operand_address (FILE *, rtx);
-extern void ia64_print_operand (FILE *, rtx, int);
-extern enum reg_class ia64_preferred_reload_class (rtx, enum reg_class);
 extern enum reg_class ia64_secondary_reload_class (enum reg_class,
 						   enum machine_mode, rtx);
-extern void process_for_unwind_directive (FILE *, rtx);
 extern const char *get_bundle_name (int);
+extern const char *output_probe_stack_range (rtx, rtx);
+
+extern void ia64_expand_vec_perm_even_odd (rtx, rtx, rtx, int);
+extern bool ia64_expand_vec_perm_const (rtx op[4]);
+extern void ia64_expand_vec_setv2sf (rtx op[3]);
 #endif /* RTX_CODE */
 
 #ifdef TREE_CODE
 #ifdef RTX_CODE
-extern rtx ia64_function_arg (CUMULATIVE_ARGS *, enum machine_mode,
-			      tree, int, int);
 extern rtx ia64_expand_builtin (tree, rtx, rtx, enum machine_mode, int);
 extern rtx ia64_va_arg (tree, tree);
-extern rtx ia64_function_value (const_tree, const_tree);
 #endif /* RTX_CODE */
 
-extern void ia64_function_arg_advance (CUMULATIVE_ARGS *, enum machine_mode,
-				       tree, int);
-extern int ia64_function_arg_boundary (enum machine_mode, tree);
 extern void ia64_asm_output_external (FILE *, tree, const char *);
 extern void ia64_vms_output_aligned_decl_common (FILE *, tree, const char *,
 						 unsigned HOST_WIDE_INT,
 						 unsigned int);
 extern void ia64_vms_elf_asm_named_section (const char *, unsigned int, tree);
+extern void ia64_start_function (FILE *, const char *, tree);
 #endif /* TREE_CODE */
 
-extern int ia64_register_move_cost (enum machine_mode, enum reg_class,
-				    enum reg_class);
 extern int ia64_epilogue_uses (int);
 extern int ia64_eh_uses (int);
 extern void emit_safe_across_calls (void);
 extern void ia64_init_builtins (void);
-extern void ia64_override_options (void);
 extern int ia64_dbx_register_number (int);
 
 extern rtx ia64_return_addr_rtx (HOST_WIDE_INT, rtx);
@@ -103,7 +98,6 @@ extern void ia64_hpux_handle_builtin_pragma (struct cpp_reader *);
 extern void ia64_output_function_profiler (FILE *, int);
 extern void ia64_profile_hook (int);
 
-extern void ia64_optimization_options (int, int);
 extern void ia64_init_expanders (void);
 
 extern rtx ia64_dconst_0_5 (void);
