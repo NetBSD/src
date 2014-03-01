@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.32 2014/03/01 03:28:06 christos Exp $
+# $NetBSD: ad.mips,v 1.33 2014/03/01 15:41:00 dsl Exp $
 ./lib/64					base-compat-shlib	compat,arch64
 ./lib/64/npf					base-npf-shlib		compat,arch64
 ./lib/64/npf/ext_log.so				base-npf-shlib		compat,pic,arch64
@@ -83,8 +83,8 @@
 ./usr/lib/64/libatf-c.so.0.0			base-compat-shlib	compat,pic,atf,arch64
 ./usr/lib/64/libbfd.so.13			base-compat-shlib	compat,pic,binutils,arch64
 ./usr/lib/64/libbfd.so.13.0			base-compat-shlib	compat,pic,binutils,arch64
-./usr/lib/64/libbind9.so.7			base-compat-shlib	compat,pic,arch64
-./usr/lib/64/libbind9.so.7.0			base-compat-shlib	compat,pic,arch64
+./usr/lib/64/libbind9.so.8			base-compat-shlib	compat,pic,arch64
+./usr/lib/64/libbind9.so.8.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libbluetooth.so.4			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libbluetooth.so.4.2		base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libbsdmalloc.so.0			base-compat-shlib	compat,pic,arch64
@@ -423,8 +423,8 @@
 ./usr/lib/o32/libatf-c.so.0.0			base-compat-shlib	compat,pic,atf,arch64
 ./usr/lib/o32/libbfd.so.13			base-compat-shlib	compat,pic,binutils,arch64
 ./usr/lib/o32/libbfd.so.13.0			base-compat-shlib	compat,pic,binutils,arch64
-./usr/lib/o32/libbind9.so.7			base-compat-shlib	compat,pic,arch64
-./usr/lib/o32/libbind9.so.7.0			base-compat-shlib	compat,pic,arch64
+./usr/lib/o32/libbind9.so.8			base-compat-shlib	compat,pic,arch64
+./usr/lib/o32/libbind9.so.8.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libbluetooth.so.4			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libbluetooth.so.4.2		base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libbsdmalloc.so.0			base-compat-shlib	compat,pic,arch64
