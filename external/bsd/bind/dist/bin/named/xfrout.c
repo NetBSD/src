@@ -1,7 +1,7 @@
-/*	$NetBSD: xfrout.c,v 1.5 2013/07/27 19:23:10 christos Exp $	*/
+/*	$NetBSD: xfrout.c,v 1.6 2014/03/01 03:24:32 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -731,7 +731,7 @@ ns_xfr_start(ns_client_t *client, dns_rdatatype_t reqtype) {
 	isc_result_t result;
 	dns_name_t *question_name;
 	dns_rdataset_t *question_rdataset;
-	dns_zone_t *zone = NULL;
+	dns_zone_t *zone = NULL, *raw = NULL, *mayberaw;
 	dns_db_t *db = NULL;
 	dns_dbversion_t *ver = NULL;
 	dns_rdataclass_t question_class;
@@ -757,6 +757,8 @@ ns_xfr_start(ns_client_t *client, dns_rdatatype_t reqtype) {
 	char keyname[DNS_NAME_FORMATSIZE];
 	isc_boolean_t is_poll = ISC_FALSE;
 	isc_boolean_t is_dlz = ISC_FALSE;
+	isc_boolean_t is_ixfr = ISC_FALSE;
+	isc_uint32_t begin_serial = 0, current_serial;
 
 	switch (reqtype) {
 	case dns_rdatatype_axfr:
@@ -813,7 +815,8 @@ ns_xfr_start(ns_client_t *client, dns_rdatatype_t reqtype) {
 		 * Normal zone table does not have a match.
 		 * Try the DLZ database
 		 */
-		if (client->view->dlzdatabase != NULL) {
+		// Temporary: only searching the first DLZ database
+		if (! ISC_LIST_EMPTY(client->view->dlz_searched)) {
 			result = dns_dlzallowzonexfr(client->view,
 						     question_name,
 						     &client->peeraddr,
@@ -953,8 +956,8 @@ ns_xfr_start(ns_client_t *client, dns_rdatatype_t reqtype) {
 	CHECK(dns_db_createsoatuple(db, ver, mctx, DNS_DIFFOP_EXISTS,
 				    &current_soa_tuple));
 
+	current_serial = dns_soa_getserial(&current_soa_tuple->rdata);
 	if (reqtype == dns_rdatatype_ixfr) {
-		isc_uint32_t begin_serial, current_serial;
 		isc_boolean_t provide_ixfr;
 
 		/*
@@ -972,7 +975,6 @@ ns_xfr_start(ns_client_t *client, dns_rdatatype_t reqtype) {
 			      "IXFR request missing SOA");
 
 		begin_serial = dns_soa_getserial(&soa_rdata);
-		current_serial = dns_soa_getserial(&current_soa_tuple->rdata);
 
 		/*
 		 * RFC1995 says "If an IXFR query with the same or
@@ -1011,10 +1013,10 @@ ns_xfr_start(ns_client_t *client, dns_rdatatype_t reqtype) {
 			goto axfr_fallback;
 		}
 		CHECK(result);
+		is_ixfr = ISC_TRUE;
 	} else {
 	axfr_fallback:
-		CHECK(axfr_rrstream_create(mctx, db, ver,
-					   &data_stream));
+		CHECK(axfr_rrstream_create(mctx, db, ver, &data_stream));
 	}
 
 	/*
@@ -1072,10 +1074,35 @@ ns_xfr_start(ns_client_t *client, dns_rdatatype_t reqtype) {
 		xfrout_log1(client, question_name, question_class,
 			    ISC_LOG_DEBUG(1), "IXFR poll up to date%s%s",
 			    (xfr->tsigkey != NULL) ? ": TSIG " : "", keyname);
+	else if (is_ixfr)
+		xfrout_log1(client, question_name, question_class,
+			    ISC_LOG_INFO, "%s started%s%s (serial %u -> %u)",
+			    mnemonic, (xfr->tsigkey != NULL) ? ": TSIG " : "",
+			    keyname, begin_serial, current_serial);
 	else
 		xfrout_log1(client, question_name, question_class,
-			    ISC_LOG_INFO, "%s started%s%s", mnemonic,
-			    (xfr->tsigkey != NULL) ? ": TSIG " : "", keyname);
+			    ISC_LOG_INFO, "%s started%s%s (serial %u)",
+			    mnemonic, (xfr->tsigkey != NULL) ? ": TSIG " : "",
+			    keyname, current_serial);
+
+
+	if (zone != NULL) {
+		dns_zone_getraw(zone, &raw);
+		mayberaw = (raw != NULL) ? raw : zone;
+		if ((client->attributes & NS_CLIENTATTR_WANTEXPIRE) != 0 &&
+		    dns_zone_gettype(mayberaw) == dns_zone_slave) {
+			isc_time_t expiretime;
+			isc_uint32_t secs;
+			dns_zone_getexpiretime(zone, &expiretime);
+			secs = isc_time_seconds(&expiretime);
+			if (secs >= client->now && result == ISC_R_SUCCESS) {
+				client->attributes |= NS_CLIENTATTR_HAVEEXPIRE;
+				client->expire = secs - client->now;
+			}
+		}
+		if (raw != NULL)
+			dns_zone_detach(&raw);
+	}
 
 	/*
 	 * Hand the context over to sendstream().  Set xfr to NULL;
@@ -1285,6 +1312,21 @@ sendstream(xfrout_ctx_t *xfr) {
 		CHECK(dns_message_setquerytsig(msg, xfr->lasttsig));
 		if (xfr->lasttsig != NULL)
 			isc_buffer_free(&xfr->lasttsig);
+
+		/*
+		 * Add a EDNS option to the message?
+		 */
+		if ((xfr->client->attributes & NS_CLIENTATTR_WANTOPT) != 0) {
+			dns_rdataset_t *opt = NULL;
+
+			CHECK(ns_client_addopt(xfr->client, msg, &opt));
+			CHECK(dns_message_setopt(msg, opt));
+			/*
+			 * Add to first message only.
+			 */
+			xfr->client->attributes &= ~NS_CLIENTATTR_WANTNSID;
+			xfr->client->attributes &= ~NS_CLIENTATTR_HAVEEXPIRE;
+		}
 
 		/*
 		 * Account for reserved space.

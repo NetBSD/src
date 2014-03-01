@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssec-keyfromlabel.c,v 1.10 2013/07/27 19:23:09 christos Exp $	*/
+/*	$NetBSD: dnssec-keyfromlabel.c,v 1.11 2014/03/01 03:24:32 christos Exp $	*/
 
 /*
- * Copyright (C) 2007-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2007-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -78,10 +78,15 @@ usage(void) {
 			       "NSEC3RSASHA1 if using -3)\n");
 	fprintf(stderr, "    -3: use NSEC3-capable algorithm\n");
 	fprintf(stderr, "    -c class (default: IN)\n");
-#ifdef USE_PKCS11
-	fprintf(stderr, "    -E enginename (default: pkcs11)\n");
+	fprintf(stderr, "    -E <engine>:\n");
+#if defined(PKCS11CRYPTO)
+	fprintf(stderr, "        path to PKCS#11 provider library "
+				"(default is %s)\n", PK11_LIB_LOCATION);
+#elif defined(USE_PKCS11)
+	fprintf(stderr, "        name of an OpenSSL engine to use "
+				"(default is \"pkcs11\")\n");
 #else
-	fprintf(stderr, "    -E enginename\n");
+	fprintf(stderr, "        name of an OpenSSL engine to use\n");
 #endif
 	fprintf(stderr, "    -f keyflag: KSK | REVOKE\n");
 	fprintf(stderr, "    -K directory: directory in which to place "
@@ -118,7 +123,7 @@ main(int argc, char **argv) {
 	char		*nametype = NULL, *type = NULL;
 	const char	*directory = NULL;
 #ifdef USE_PKCS11
-	const char	*engine = "pkcs11";
+	const char	*engine = PKCS11_ENGINE;
 #else
 	const char	*engine = NULL;
 #endif
@@ -161,7 +166,6 @@ main(int argc, char **argv) {
 	if (argc == 1)
 		usage();
 
-	isc__mem_register();
 	RUNTIME_CHECK(isc_mem_create(0, 0, &mctx) == ISC_R_SUCCESS);
 
 	dns_result_register();
@@ -210,10 +214,7 @@ main(int argc, char **argv) {
 			options |= DST_TYPE_KEY;
 			break;
 		case 'L':
-			if (strcmp(isc_commandline_argument, "none") == 0)
-				ttl = 0;
-			else
-				ttl = strtottl(isc_commandline_argument);
+			ttl = strtottl(isc_commandline_argument);
 			setttl = ISC_TRUE;
 			break;
 		case 'l':
@@ -246,61 +247,41 @@ main(int argc, char **argv) {
 			if (setpub || unsetpub)
 				fatal("-P specified more than once");
 
-			if (strcasecmp(isc_commandline_argument, "none")) {
-				setpub = ISC_TRUE;
-				publish = strtotime(isc_commandline_argument,
-						    now, now);
-			} else {
-				unsetpub = ISC_TRUE;
-			}
+			publish = strtotime(isc_commandline_argument,
+					    now, now, &setpub);
+			unsetpub = !setpub;
 			break;
 		case 'A':
 			if (setact || unsetact)
 				fatal("-A specified more than once");
 
-			if (strcasecmp(isc_commandline_argument, "none")) {
-				setact = ISC_TRUE;
-				activate = strtotime(isc_commandline_argument,
-						     now, now);
-			} else {
-				unsetact = ISC_TRUE;
-			}
+			activate = strtotime(isc_commandline_argument,
+					     now, now, &setact);
+			unsetact = !setact;
 			break;
 		case 'R':
 			if (setrev || unsetrev)
 				fatal("-R specified more than once");
 
-			if (strcasecmp(isc_commandline_argument, "none")) {
-				setrev = ISC_TRUE;
-				revoke = strtotime(isc_commandline_argument,
-						   now, now);
-			} else {
-				unsetrev = ISC_TRUE;
-			}
+			revoke = strtotime(isc_commandline_argument,
+					   now, now, &setrev);
+			unsetrev = !setrev;
 			break;
 		case 'I':
 			if (setinact || unsetinact)
 				fatal("-I specified more than once");
 
-			if (strcasecmp(isc_commandline_argument, "none")) {
-				setinact = ISC_TRUE;
-				inactive = strtotime(isc_commandline_argument,
-						     now, now);
-			} else {
-				unsetinact = ISC_TRUE;
-			}
+			inactive = strtotime(isc_commandline_argument,
+					     now, now, &setinact);
+			unsetinact = !setinact;
 			break;
 		case 'D':
 			if (setdel || unsetdel)
 				fatal("-D specified more than once");
 
-			if (strcasecmp(isc_commandline_argument, "none")) {
-				setdel = ISC_TRUE;
-				delete = strtotime(isc_commandline_argument,
-						   now, now);
-			} else {
-				unsetdel = ISC_TRUE;
-			}
+			delete = strtotime(isc_commandline_argument,
+					   now, now, &setdel);
+			unsetdel = !setdel;
 			break;
 		case 'F':
 			/* Reserved for FIPS mode */
@@ -337,16 +318,15 @@ main(int argc, char **argv) {
 	if (argc > isc_commandline_index + 1)
 		fatal("extraneous arguments");
 
-	if (strchr(label, ':') == NULL &&
-	    engine != NULL && strlen(engine) != 0U) {
+	if (strchr(label, ':') == NULL) {
 		char *l;
 		int len;
 
-		len = strlen(label) + strlen(engine) + 2;
+		len = strlen(label) + 8;
 		l = isc_mem_allocate(mctx, len);
 		if (l == NULL)
 			fatal("cannot allocate memory");
-		snprintf(l, len, "%s:%s", engine, label);
+		snprintf(l, len, "pkcs11:%s", label);
 		isc_mem_free(mctx, label);
 		label = l;
 	}
@@ -463,7 +443,7 @@ main(int argc, char **argv) {
 
 	/* associate the key */
 	ret = dst_key_fromlabel(name, alg, flags, protocol,
-				rdclass, engine, label, NULL, mctx, &key);
+				rdclass, "pkcs11", label, NULL, mctx, &key);
 	isc_entropy_stopcallbacksources(ectx);
 
 	if (ret != ISC_R_SUCCESS) {
@@ -471,7 +451,7 @@ main(int argc, char **argv) {
 		char algstr[DNS_SECALG_FORMATSIZE];
 		dns_name_format(name, namestr, sizeof(namestr));
 		dns_secalg_format(alg, algstr, sizeof(algstr));
-		fatal("failed to get key %s/%s: %s\n",
+		fatal("failed to get key %s/%s: %s",
 		      namestr, algstr, isc_result_totext(ret));
 		/* NOTREACHED */
 		exit(-1);

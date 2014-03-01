@@ -1,4 +1,4 @@
-/*	$NetBSD: sock_test.c,v 1.6 2013/12/31 20:24:40 christos Exp $	*/
+/*	$NetBSD: sock_test.c,v 1.7 2014/03/01 03:24:33 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2008, 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
@@ -264,11 +264,6 @@ main(int argc, char *argv[]) {
 	struct in6_addr in6a;
 	isc_result_t result;
 	int pf;
-
-	isc__mem_register();
-	isc__task_register();
-	isc__timer_register();
-	isc__socket_register();
 
 	if (argc > 1) {
 		workers = atoi(argv[1]);

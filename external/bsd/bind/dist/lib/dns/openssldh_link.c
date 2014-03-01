@@ -1,7 +1,7 @@
-/*	$NetBSD: openssldh_link.c,v 1.5 2013/12/31 20:24:41 christos Exp $	*/
+/*	$NetBSD: openssldh_link.c,v 1.6 2014/03/01 03:24:37 christos Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -465,6 +465,9 @@ openssldh_tofile(const dst_key_t *key, const char *directory) {
 	if (key->keydata.dh == NULL)
 		return (DST_R_NULLKEY);
 
+	if (key->external)
+		return (DST_R_EXTERNALKEY);
+
 	dh = key->keydata.dh;
 
 	memset(bufs, 0, sizeof(bufs));
@@ -529,6 +532,9 @@ openssldh_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 	ret = dst__privstruct_parse(key, DST_ALG_DH, lexer, mctx, &priv);
 	if (ret != ISC_R_SUCCESS)
 		return (ret);
+
+	if (key->external)
+		DST_RET(DST_R_EXTERNALKEY);
 
 	dh = DH_new();
 	if (dh == NULL)
@@ -632,6 +638,7 @@ openssldh_cleanup(void) {
 
 static dst_func_t openssldh_functions = {
 	NULL, /*%< createctx */
+	NULL, /*%< createctx2 */
 	NULL, /*%< destroyctx */
 	NULL, /*%< adddata */
 	NULL, /*%< openssldh_sign */

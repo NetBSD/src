@@ -1,7 +1,7 @@
-/*	$NetBSD: hash.c,v 1.5 2013/12/31 20:24:42 christos Exp $	*/
+/*	$NetBSD: hash.c,v 1.6 2014/03/01 03:24:39 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -243,7 +243,7 @@ isc_hash_ctxinit(isc_hash_t *hctx) {
 	if (hctx->initialized == ISC_TRUE)
 		goto out;
 
-	if (hctx->entropy) {
+	if (hctx->entropy != NULL) {
 		isc_result_t result;
 
 		result = isc_entropy_getdata(hctx->entropy,
@@ -264,7 +264,7 @@ isc_hash_ctxinit(isc_hash_t *hctx) {
 			else
 				copylen = hctx->vectorlen - i;
 
-			memcpy(p, &pr, copylen);
+			memmove(p, &pr, copylen);
 		}
 		INSIST(p == (unsigned char *)hctx->rndvector +
 		       hctx->vectorlen);
@@ -316,9 +316,9 @@ destroy(isc_hash_t **hctxp) {
 
 	DESTROYLOCK(&hctx->lock);
 
-	memcpy(canary0, hctx + 1, sizeof(canary0));
+	memmove(canary0, hctx + 1, sizeof(canary0));
 	memset(hctx, 0, sizeof(isc_hash_t));
-	memcpy(canary1, hctx + 1, sizeof(canary1));
+	memmove(canary1, hctx + 1, sizeof(canary1));
 	INSIST(memcmp(canary0, canary1, sizeof(canary0)) == 0);
 	isc_mem_put(mctx, hctx, sizeof(isc_hash_t));
 	isc_mem_detach(&mctx);

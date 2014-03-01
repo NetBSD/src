@@ -1,7 +1,7 @@
-/*	$NetBSD: t_names.c,v 1.7 2013/12/31 20:24:40 christos Exp $	*/
+/*	$NetBSD: t_names.c,v 1.8 2014/03/01 03:24:33 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -298,7 +298,7 @@ hname_to_tname(char *src, char *target, size_t len) {
 		 */
 		if (srclen >= len)
 			return (1);
-		memcpy(target, src, srclen + 1);
+		memmove(target, src, srclen + 1);
 		return (0);
 	}
 
@@ -825,7 +825,6 @@ t_dns_name_fullcompare(void) {
 	if (fp != NULL) {
 		line = 0;
 		while ((p = t_fgetbs(fp)) != NULL) {
-
 			++line;
 
 			/*
@@ -853,8 +852,8 @@ t_dns_name_fullcompare(void) {
 				else if (!strcmp(Tokens[2], "commonancestor"))
 					reln = dns_namereln_commonancestor;
 				else {
-					t_info("bad format at line %d\n",
-					       line);
+					t_info("bad format at line %d\n", line);
+					(void)free(p);
 					continue;
 				}
 				result = test_dns_name_fullcompare(

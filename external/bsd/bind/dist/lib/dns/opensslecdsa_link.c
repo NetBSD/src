@@ -1,7 +1,7 @@
-/*	$NetBSD: opensslecdsa_link.c,v 1.4 2013/12/31 20:24:41 christos Exp $	*/
+/*	$NetBSD: opensslecdsa_link.c,v 1.5 2014/03/01 03:24:37 christos Exp $	*/
 
 /*
- * Copyright (C) 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2012-2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -373,7 +373,7 @@ opensslecdsa_todns(const dst_key_t *key, isc_buffer_t *data) {
 	cp = buf;
 	if (!i2o_ECPublicKey(eckey, &cp))
 		DST_RET (dst__openssl_toresult(ISC_R_FAILURE));
-	memcpy(r.base, buf + 1, len);
+	memmove(r.base, buf + 1, len);
 	isc_buffer_add(data, len);
 	ret = ISC_R_SUCCESS;
 
@@ -416,7 +416,7 @@ opensslecdsa_fromdns(dst_key_t *key, isc_buffer_t *data) {
 		return (dst__openssl_toresult(DST_R_OPENSSLFAILURE));
 
 	buf[0] = POINT_CONVERSION_UNCOMPRESSED;
-	memcpy(buf + 1, r.base, len);
+	memmove(buf + 1, r.base, len);
 	cp = buf;
 	if (o2i_ECPublicKey(&eckey,
 			    (const unsigned char **) &cp,
@@ -476,7 +476,7 @@ opensslecdsa_tofile(const dst_key_t *key, const char *directory) {
 	priv.elements[0].length = BN_num_bytes(privkey);
 	BN_bn2bin(privkey, buf);
 	priv.elements[0].data = buf;
-	priv.nelements = ECDSA_NTAGS;
+	priv.nelements = 1;
 	ret = dst__privstruct_writefile(key, &priv, directory);
 
  err:
@@ -521,15 +521,31 @@ static isc_result_t
 opensslecdsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 	dst_private_t priv;
 	isc_result_t ret;
-	EVP_PKEY *pkey, *pubpkey;
-	EC_KEY *eckey = NULL, *pubeckey = NULL;
-	const EC_POINT *pubkey;
-	BIGNUM *privkey;
+	EVP_PKEY *pkey;
+	EC_KEY *eckey = NULL;
+	BIGNUM *privkey = NULL;
 	int group_nid;
 	isc_mem_t *mctx = key->mctx;
 
 	REQUIRE(key->key_alg == DST_ALG_ECDSA256 ||
 		key->key_alg == DST_ALG_ECDSA384);
+
+	/* read private key file */
+	ret = dst__privstruct_parse(key, DST_ALG_ECDSA256, lexer, mctx, &priv);
+	if (ret != ISC_R_SUCCESS)
+		goto err;
+
+	if (key->external) {
+		if (priv.nelements != 0)
+			DST_RET(DST_R_INVALIDPRIVATEKEY);
+		if (pub == NULL)
+			DST_RET(DST_R_INVALIDPRIVATEKEY);
+		key->keydata.pkey = pub->keydata.pkey;
+		pub->keydata.pkey = NULL;
+		dst__privstruct_free(&priv, mctx);
+		memset(&priv, 0, sizeof(priv));
+		return (ISC_R_SUCCESS);
+	}
 
 	if (key->key_alg == DST_ALG_ECDSA256)
 		group_nid = NID_X9_62_prime256v1;
@@ -540,40 +556,14 @@ opensslecdsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 	if (eckey == NULL)
 		return (dst__openssl_toresult(DST_R_OPENSSLFAILURE));
 
-	/* read private key file */
-	ret = dst__privstruct_parse(key, DST_ALG_ECDSA256, lexer, mctx, &priv);
-	if (ret != ISC_R_SUCCESS)
-		goto err;
-
-	if (key->external) {
-		/*
-		 * Copy the public key to this new key.
-		 */
-		if (pub == NULL)
-			DST_RET(DST_R_INVALIDPRIVATEKEY);
-		pubpkey = pub->keydata.pkey;
-		pubeckey = EVP_PKEY_get1_EC_KEY(pubpkey);
-		if (pubeckey == NULL)
-			DST_RET(DST_R_INVALIDPRIVATEKEY);
-		pubkey = EC_KEY_get0_public_key(pubeckey);
-		if (pubkey == NULL)
-			DST_RET(DST_R_INVALIDPRIVATEKEY);
-		if (EC_KEY_set_public_key(eckey, pubkey) != 1)
-			DST_RET(DST_R_INVALIDPRIVATEKEY);
-		if (EC_KEY_check_key(eckey) != 1)
-			DST_RET(DST_R_INVALIDPRIVATEKEY);
-	} else {
-		privkey = BN_bin2bn(priv.elements[0].data,
-				    priv.elements[0].length, NULL);
-		if (privkey == NULL)
-			DST_RET(ISC_R_NOMEMORY);
-		if (!EC_KEY_set_private_key(eckey, privkey))
-			DST_RET(ISC_R_NOMEMORY);
-		if (ecdsa_check(eckey, pub) != ISC_R_SUCCESS)
-			DST_RET(DST_R_INVALIDPRIVATEKEY);
-		dst__privstruct_free(&priv, mctx);
-		memset(&priv, 0, sizeof(priv));
-	}
+	privkey = BN_bin2bn(priv.elements[0].data,
+			    priv.elements[0].length, NULL);
+	if (privkey == NULL)
+		DST_RET(ISC_R_NOMEMORY);
+	if (!EC_KEY_set_private_key(eckey, privkey))
+		DST_RET(ISC_R_NOMEMORY);
+	if (ecdsa_check(eckey, pub) != ISC_R_SUCCESS)
+		DST_RET(DST_R_INVALIDPRIVATEKEY);
 
 	pkey = EVP_PKEY_new();
 	if (pkey == NULL)
@@ -586,10 +576,10 @@ opensslecdsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 	ret = ISC_R_SUCCESS;
 
  err:
+	if (privkey != NULL)
+		BN_clear_free(privkey);
 	if (eckey != NULL)
 		EC_KEY_free(eckey);
-	if (pubeckey != NULL)
-		EC_KEY_free(pubeckey);
 	dst__privstruct_free(&priv, mctx);
 	memset(&priv, 0, sizeof(priv));
 	return (ret);
@@ -597,6 +587,7 @@ opensslecdsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 
 static dst_func_t opensslecdsa_functions = {
 	opensslecdsa_createctx,
+	NULL, /*%< createctx2 */
 	opensslecdsa_destroyctx,
 	opensslecdsa_adddata,
 	opensslecdsa_sign,
