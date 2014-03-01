@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.52 2014/03/01 03:28:07 christos Exp $
+# $NetBSD: shl.mi,v 1.53 2014/03/01 15:41:00 dsl Exp $
 ./usr/libdata/debug/lib/libc.so.12.190.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypt.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypto.so.8.2.debug		comp-sys-debug	debug
@@ -56,7 +56,7 @@
 ./usr/libdata/debug/usr/lib/libatf-c.so.0.0.debug	comp-atf-debug	atf,debug
 ./usr/libdata/debug/usr/lib/libavl.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug
 ./usr/libdata/debug/usr/lib/libbfd.so.13.0.debug	comp-sys-debug	binutils,debug
-./usr/libdata/debug/usr/lib/libbind9.so.7.0.debug	comp-bind-debug	debug
+./usr/libdata/debug/usr/lib/libbind9.so.8.0.debug	comp-bind-debug	debug
 ./usr/libdata/debug/usr/lib/libbluetooth.so.4.2.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libbz2.so.1.1.debug		comp-sys-debug	debug

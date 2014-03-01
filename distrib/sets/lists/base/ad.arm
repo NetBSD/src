@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.36 2014/03/01 03:28:06 christos Exp $
+# $NetBSD: ad.arm,v 1.37 2014/03/01 15:41:00 dsl Exp $
 ./lib/oabi					base-compat-shlib	compat
 ./lib/oabi/npf					base-npf-shlib		compat
 ./lib/oabi/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -81,8 +81,8 @@
 ./usr/lib/oabi/libatf-c.so.0.0			base-compat-shlib	compat,pic,atf
 ./usr/lib/oabi/libbfd.so.13			base-compat-shlib	compat,pic,binutils
 ./usr/lib/oabi/libbfd.so.13.0			base-compat-shlib	compat,pic,binutils
-./usr/lib/oabi/libbind9.so.7			base-compat-shlib	compat,pic
-./usr/lib/oabi/libbind9.so.7.0			base-compat-shlib	compat,pic
+./usr/lib/oabi/libbind9.so.8			base-compat-shlib	compat,pic
+./usr/lib/oabi/libbind9.so.8.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libbluetooth.so.4		base-compat-shlib	compat,pic
 ./usr/lib/oabi/libbluetooth.so.4.2		base-compat-shlib	compat,pic
 ./usr/lib/oabi/libbsdmalloc.so.0		base-compat-shlib	compat,pic

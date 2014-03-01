@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.27 2014/03/01 03:28:07 christos Exp $
+# $NetBSD: ad.arm,v 1.28 2014/03/01 15:41:00 dsl Exp $
 ./usr/lib/libarm_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libc_vfp_g.a				comp-c-debuglib		debuglib,softfloat
 ./usr/lib/libpmc_g.a				comp-c-debuglib		debuglib
@@ -60,7 +60,7 @@
 ./usr/libdata/debug/usr/lib/oabi/libatf-c.so.0.0.debug		comp-compat-shlib	compat,pic,atf,debug
 ./usr/libdata/debug/usr/lib/oabi/libavl.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libbfd.so.13.0.debug	comp-sys-debug	binutils,debug,compat
-./usr/libdata/debug/usr/lib/oabi/libbind9.so.7.0.debug	comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/oabi/libbind9.so.8.0.debug	comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libbluetooth.so.4.2.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libbz2.so.1.1.debug		comp-sys-debug	debug,compat

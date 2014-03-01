@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.23 2014/03/01 03:28:07 christos Exp $
+# $NetBSD: ad.mips,v 1.24 2014/03/01 15:41:00 dsl Exp $
 ./usr/lib/64/libcrypto_g.a			comp-c-debuglib		compat,crypto,debuglib,arch64
 ./usr/lib/64/libcrypto_idea_g.a			comp-obsolete		obsolete
 ./usr/lib/64/libcrypto_mdc2_g.a			comp-obsolete		obsolete
@@ -67,7 +67,7 @@
 ./usr/libdata/debug/usr/lib/64/libatf-c.so.0.0.debug		comp-compat-shlib	compat,pic,atf,debug,arch64
 ./usr/libdata/debug/usr/lib/64/libavl.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libbfd.so.13.0.debug	comp-sys-debug	binutils,debug,compat,arch64
-./usr/libdata/debug/usr/lib/64/libbind9.so.7.0.debug	comp-bind-debug	debug,compat,arch64
+./usr/libdata/debug/usr/lib/64/libbind9.so.8.0.debug	comp-bind-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libbluetooth.so.4.2.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libbz2.so.1.1.debug		comp-sys-debug	debug,compat,arch64
@@ -243,7 +243,7 @@
 ./usr/libdata/debug/usr/lib/o32/libatf-c.so.0.0.debug		comp-compat-shlib	compat,pic,atf,debug,arch64
 ./usr/libdata/debug/usr/lib/o32/libavl.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libbfd.so.13.0.debug	comp-sys-debug	binutils,debug,compat,arch64
-./usr/libdata/debug/usr/lib/o32/libbind9.so.7.0.debug	comp-bind-debug	debug,compat,arch64
+./usr/libdata/debug/usr/lib/o32/libbind9.so.8.0.debug	comp-bind-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libbluetooth.so.4.2.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libbz2.so.1.1.debug		comp-sys-debug	debug,compat,arch64
