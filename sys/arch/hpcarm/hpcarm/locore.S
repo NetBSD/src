@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.16 2014/02/22 19:16:06 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.17 2014/03/01 12:48:38 joerg Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -63,7 +63,7 @@ ASENTRY_NP(start)
 
 	/* Disable PID virtual address mapping */
 	mov	r4, #0
-	mcr	15, 0, r4, c13, c0, 0
+	mcr	p15, 0, r4, c13, c0, 0
 
 #if defined(CPU_XSCALE_PXA250) || defined(CPU_XSCALE_PXA270)
 /*
@@ -211,8 +211,8 @@ ENTRY_NP(cpu_reset)
 	 * Hurl ourselves into the ROM
 	 */
 	mov	r0, #(CPU_CONTROL_32BP_ENABLE | CPU_CONTROL_32BD_ENABLE)
-	mcr     15, 0, r0, c1, c0, 0
-	mcr     15, 0, r0, c8, c7, 0
+	mcr     p15, 0, r0, c1, c0, 0
+	mcr     p15, 0, r0, c8, c7, 0
 	mov     pc, r4
 
 	/*
