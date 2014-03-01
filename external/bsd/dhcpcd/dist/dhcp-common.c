@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp-common.c,v 1.1.1.4 2014/02/25 13:14:29 roy Exp $");
+ __RCSID("$NetBSD: dhcp-common.c,v 1.1.1.5 2014/03/01 11:00:41 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -47,19 +47,19 @@
 struct dhcp_opt *
 vivso_find(uint16_t iana_en, const void *arg)
 {
-	const struct interface *ifp = arg;
+	const struct interface *ifp;
 	size_t i;
 	struct dhcp_opt *opt;
 
-	if (arg) {
-		ifp = arg;
-		for (i = 0, opt = ifp->options->vivso_override;
-		    i < ifp->options->vivso_override_len;
-		    i++, opt++)
-			if (opt->option == iana_en)
-				return opt;
-	}
-	for (i = 0, opt = ifp->ctx->vivso; i < ifp->ctx->vivso_len; i++, opt++)
+	ifp = arg;
+	for (i = 0, opt = ifp->options->vivso_override;
+	    i < ifp->options->vivso_override_len;
+	    i++, opt++)
+		if (opt->option == iana_en)
+			return opt;
+	for (i = 0, opt = ifp->ctx->vivso;
+	    i < ifp->ctx->vivso_len;
+	    i++, opt++)
 		if (opt->option == iana_en)
 			return opt;
 	return NULL;
@@ -355,7 +355,6 @@ dhcp_optlen(const struct dhcp_opt *opt, size_t dl)
 		return dl - (dl % ADDR6SZ);
 	}
 
-	sz = 0;
 	if (opt->type & (UINT32 | ADDRIPV4))
 		sz = sizeof(uint32_t);
 	else if (opt->type & UINT16)
