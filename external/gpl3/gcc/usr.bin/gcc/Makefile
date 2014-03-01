@@ -1,11 +1,15 @@
-#	$NetBSD: Makefile,v 1.2 2011/06/29 02:00:09 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2014/03/01 10:00:49 mrg Exp $
 
-.include <bsd.own.mk>
-
-PROG=           gcc
-SRCS=		gccspec.c
+PROG=		gcc
+SRCS=		gccspec.c ${G_GCC_OBJS:.o=.c}
 
 CPPFLAGS+=	-I${BACKENDOBJ}
+# XXX
+CPPFLAGS+=	-DCONFIGURE_SPECS="\"\"" \
+		-DDEFAULT_TARGET_VERSION=\"${G_version}\" \
+		-DDEFAULT_TARGET_MACHINE=\"${MACHINE_GNU_PLATFORM}\"
+
+COPTS.builtins.c = -Wno-stack-protector
 
 LINKS+=		${BINDIR}/gcc ${BINDIR}/cc 
 
@@ -13,17 +17,15 @@ MAN=		gcc.1
 MLINKS=		gcc.1 cc.1 gcc.1 g++.1 gcc.1 c++.1
 
 TEXINFO=	gcc.texi
-INFOFLAGS=      -I${DIST}/gcc/doc -I${DIST}/gcc/doc/include
-
-.include "../Makefile.frontend"
-
-.PATH: ${DIST}/gcc ${DIST}/gcc/doc
-
-.include <bsd.info.mk>
-
-COPTS.builtins.c = -Wno-stack-protector
+INFOFLAGS=	-I${DIST}/gcc/doc -I${DIST}/gcc/doc/include
 
 LDADD+=		-lintl
 DPADD+=		${LIBINTL}
+
+.include "../Makefile.frontend"
+
+.include <bsd.info.mk>
+
+.PATH: ${DIST}/gcc ${DIST}/gcc/doc ${DIST}/gcc/c
 
 gcc.info: gcc-vers.texi
