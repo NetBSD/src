@@ -1,11 +1,9 @@
-#	$NetBSD: Makefile,v 1.5 2013/08/22 00:17:48 matt Exp $
+#	$NetBSD: Makefile,v 1.6 2014/03/01 10:00:52 mrg Exp $
 
 .include "../Makefile.inc"
 
-# XXX for G_EXTRA_HEADERS.  make mknative-gcc put that somewhere
-# inside usr.bin/ not lib/
-.if exists(${.CURDIR}/../../lib/libgcc/arch/${GCC_MACHINE_ARCH}.mk)
-.include "${.CURDIR}/../../lib/libgcc/arch/${GCC_MACHINE_ARCH}.mk"
+.if exists(${.CURDIR}/arch/${GCC_MACHINE_ARCH}.mk)
+.include "${.CURDIR}/arch/${GCC_MACHINE_ARCH}.mk"
 .endif
 
 INCS= ${G_EXTRA_HEADERS:T}
@@ -22,10 +20,8 @@ mm_malloc.h: ${DIST}/gcc/config/i386/pmm_malloc.h
 CLEANFILES+=	mm_malloc.h
 .endif
 
-INCSDIR=	/usr/include/gcc-4.5
+INCSDIR=	/usr/include/gcc-4.8
 
 .include <bsd.prog.mk>
 
-# XXX probably don't need the first of these
-.PATH: ${G_out_file:H}
 .PATH: ${G_EXTRA_HEADERS:H:O:u}
