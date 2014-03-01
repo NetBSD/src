@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.87 2014/02/26 02:03:00 matt Exp $	*/
+/*	$NetBSD: armreg.h,v 1.88 2014/03/01 05:27:22 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -670,6 +670,84 @@
 #define ARM_CNTHCTL_PL1PCTEN		__BIT(1)
 #define ARM_CNTHCTL_PL1VCTEN		__BIT(0)
 
+#define ARM_A5_TLBDATA_DOM		__BITS(62,59)
+#define ARM_A5_TLBDATA_AP		__BITS(58,56)
+#define ARM_A5_TLBDATA_NS_WALK		__BIT(55)
+#define ARM_A5_TLBDATA_NS_PAGE		__BIT(54)
+#define ARM_A5_TLBDATA_NX		__BIT(53)
+#define ARM_A5_TLBDATA_TEX		__BITS(52,50)
+#define ARM_A5_TLBDATA_B		__BIT(49)
+#define ARM_A5_TLBDATA_C		__BIT(48)
+#define ARM_A5_TLBDATA_S		__BIT(47)
+#define ARM_A5_TLBDATA_ASID		__BIT(46,39)
+#define ARM_A5_TLBDATA_SIZE		__BIT(38,37)
+#define ARM_A5_TLBDATA_SIZE_4KB		0
+#define ARM_A5_TLBDATA_SIZE_16KB	1
+#define ARM_A5_TLBDATA_SIZE_1MB		2
+#define ARM_A5_TLBDATA_SIZE_16MB	3
+#define ARM_A5_TLBDATA_VA		__BIT(36,22)
+#define ARM_A5_TLBDATA_PA		__BIT(21,2)
+#define ARM_A5_TLBDATA_nG		__BIT(1)
+#define ARM_A5_TLBDATA_VALID		__BIT(0)
+
+#define ARM_A7_TLBDATA2_S2_LEVEL	__BITS(85-64,84-64)
+#define ARM_A7_TLBDATA2_S1_SIZE		__BITS(83-64,82-64)
+#define ARM_A7_TLBDATA2_S1_SIZE_4KB	0
+#define ARM_A7_TLBDATA2_S1_SIZE_64KB	0
+#define ARM_A7_TLBDATA2_S1_SIZE_1MB	0
+#define ARM_A7_TLBDATA2_S1_SIZE_16MB	0
+#define ARM_A7_TLBDATA2_DOM		__BITS(81-64,78-64)
+#define ARM_A7_TLBDATA2_IS		__BITS(77-64,76-64)
+#define ARM_A7_TLBDATA2_IS_NC		0
+#define ARM_A7_TLBDATA2_IS_WB		1
+#define ARM_A7_TLBDATA2_IS_WT		2
+#define ARM_A7_TLBDATA2_IS_DSO		3
+#define ARM_A7_TLBDATA2_S2OVR		__BIT(75-64)
+#define ARM_A7_TLBDATA2_SDO_MT		__BITS(74-64,72-64)
+#define ARM_A7_TLBDATA2_SDO_MT_D	2
+#define ARM_A7_TLBDATA2_SDO_MT_SO	6
+#define ARM_A7_TLBDATA2_OS		__BITS(75-64,74-64)
+#define ARM_A7_TLBDATA2_OS_NC		0
+#define ARM_A7_TLBDATA2_OS_WB_WA	1
+#define ARM_A7_TLBDATA2_OS_WT		2
+#define ARM_A7_TLBDATA2_OS_WB		3
+#define ARM_A7_TLBDATA2_SH		__BITS(73-64,72-64)
+#define ARM_A7_TLBDATA2_SH_NONE		0
+#define ARM_A7_TLBDATA2_SH_UNUSED	1
+#define ARM_A7_TLBDATA2_SH_OS		2
+#define ARM_A7_TLBDATA2_SH_IS		3
+#define ARM_A7_TLBDATA2_XN2		__BIT(71-64)
+#define ARM_A7_TLBDATA2_XN1		__BIT(70-64)
+#define ARM_A7_TLBDATA2_PXN		__BIT(69-64)
+
+#define ARM_A7_TLBDATA12_PA		__BITS(68-32,41-32)
+
+#define ARM_A7_TLBDATA1_NS		__BIT(40-32)
+#define ARM_A7_TLBDATA1_HAP		__BITS(39-32,38-32)
+#define ARM_A7_TLBDATA1_AP		__BITS(37-32,35-32)
+#define ARM_A7_TLBDATA1_nG		__BIT(34-32)
+
+#define ARM_A7_TLBDATA01_ASID		__BITS(33,26)
+
+#define ARM_A7_TLBDATA0_VMID		__BITS(25,18)
+#define ARM_A7_TLBDATA0_VA		__BITS(17,5)
+#define ARM_A7_TLBDATA0_NS_WALK		__BIT(4)
+#define ARM_A7_TLBDATA0_SIZE		__BITS(3,1)
+#define ARM_A7_TLBDATA0_SIZE_V7_4KB	0
+#define ARM_A7_TLBDATA0_SIZE_LPAE_4KB	1
+#define ARM_A7_TLBDATA0_SIZE_V7_64KB	2
+#define ARM_A7_TLBDATA0_SIZE_LPAE_64KB	3
+#define ARM_A7_TLBDATA0_SIZE_V7_1MB	4
+#define ARM_A7_TLBDATA0_SIZE_LPAE_2MB	5
+#define ARM_A7_TLBDATA0_SIZE_V7_16MB	6
+#define ARM_A7_TLBDATA0_SIZE_LPAE_1GB	7
+
+#define ARM_TLBDATA_VALID		__BIT(0)
+
+#define ARM_TLBDATAOP_WAY		__BIT(31)
+#define ARM_A5_TLBDATAOP_INDEX		__BITS(5,0)
+#define ARM_A7_TLBDATAOP_INDEX		__BITS(6,0)
+
 #if !defined(__ASSEMBLER__) && !defined(_RUMPKERNEL)
 #define	ARMREG_READ_INLINE(name, __insnstring)			\
 static inline uint32_t armreg_##name##_read(void)		\
@@ -860,6 +938,11 @@ ARMREG_READ_INLINE(pmcrv6, "p15,0,%0,c15,c12,0") /* PMC Control Register (armv6)
 ARMREG_WRITE_INLINE(pmcrv6, "p15,0,%0,c15,c12,0") /* PMC Control Register (armv6) */
 ARMREG_READ_INLINE(pmccntrv6, "p15,0,%0,c15,c12,1") /* PMC Cycle Counter (armv6) */
 ARMREG_WRITE_INLINE(pmccntrv6, "p15,0,%0,c15,c12,1") /* PMC Cycle Counter (armv6) */
+
+ARMREG_READ_INLINE(tlbdata0, "p15,3,%0,c15,c0,0") /* TLB Data Register 0 (cortex) */
+ARMREG_READ_INLINE(tlbdata1, "p15,3,%0,c15,c0,1") /* TLB Data Register 1 (cortex) */
+ARMREG_READ_INLINE(tlbdata2, "p15,3,%0,c15,c0,2") /* TLB Data Register 2 (cortex) */
+ARMREG_WRITE_INLINE(tlbdataop, "p15,3,%0,c15,c4,2") /* TLB Data Read Operation (cortex) */
 
 #endif /* !__ASSEMBLER__ */
 
