@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.212 2014/02/16 18:19:10 christos Exp $
+# $NetBSD: md.sparc64,v 1.213 2014/03/01 03:28:06 christos Exp $
 ./lib/sparc					base-npf-shlib		compat
 ./lib/sparc/npf					base-npf-shlib		compat
 ./lib/sparc/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -105,8 +105,8 @@
 ./usr/lib/sparc/libdevmapper.so.1.0		base-compat-shlib	compat,pic,lvm
 ./usr/lib/sparc/libdm.so.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libdm.so.0.0			base-compat-shlib	compat,pic
-./usr/lib/sparc/libdns.so.7			base-compat-shlib	compat,pic
-./usr/lib/sparc/libdns.so.7.0			base-compat-shlib	compat,pic
+./usr/lib/sparc/libdns.so.8			base-compat-shlib	compat,pic
+./usr/lib/sparc/libdns.so.8.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libdns_sd.so.0			base-compat-shlib	compat,pic,mdns
 ./usr/lib/sparc/libdns_sd.so.0.0		base-compat-shlib	compat,pic,mdns
 ./usr/lib/sparc/libdwarf.so.0			base-compat-shlib	compat,pic
@@ -153,12 +153,12 @@
 ./usr/lib/sparc/libintl.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libipsec.so.3			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libipsec.so.3.0			base-compat-shlib	compat,pic
-./usr/lib/sparc/libisc.so.7			base-compat-shlib	compat,pic
-./usr/lib/sparc/libisc.so.7.1			base-compat-shlib	compat,pic
-./usr/lib/sparc/libisccc.so.7			base-compat-shlib	compat,pic
-./usr/lib/sparc/libisccc.so.7.0			base-compat-shlib	compat,pic
-./usr/lib/sparc/libisccfg.so.7			base-compat-shlib	compat,pic
-./usr/lib/sparc/libisccfg.so.7.0		base-compat-shlib	compat,pic
+./usr/lib/sparc/libisc.so.8			base-compat-shlib	compat,pic
+./usr/lib/sparc/libisc.so.8.0			base-compat-shlib	compat,pic
+./usr/lib/sparc/libisccc.so.8			base-compat-shlib	compat,pic
+./usr/lib/sparc/libisccc.so.8.0			base-compat-shlib	compat,pic
+./usr/lib/sparc/libisccfg.so.8			base-compat-shlib	compat,pic
+./usr/lib/sparc/libisccfg.so.8.0		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libiscsi.so.2			base-compat-shlib	compat,pic,iscsi
 ./usr/lib/sparc/libiscsi.so.2.0			base-compat-shlib	compat,pic,iscsi
 ./usr/lib/sparc/libisns.so.0			base-compat-shlib	compat,pic
@@ -189,8 +189,8 @@
 ./usr/lib/sparc/liblutok.so.1.0			base-obsolete		obsolete
 ./usr/lib/sparc/liblutok.so.2			base-compat-shlib	compat,pic,kyua
 ./usr/lib/sparc/liblutok.so.2.0			base-compat-shlib	compat,pic,kyua
-./usr/lib/sparc/liblwres.so.7			base-compat-shlib	compat,pic
-./usr/lib/sparc/liblwres.so.7.0			base-compat-shlib	compat,pic
+./usr/lib/sparc/liblwres.so.8			base-compat-shlib	compat,pic
+./usr/lib/sparc/liblwres.so.8.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/liblzf.so.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/liblzf.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/liblzma.so.1			base-compat-shlib	compat,pic
