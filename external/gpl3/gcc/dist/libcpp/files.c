@@ -223,7 +223,7 @@ open_file (_cpp_file *file)
 {
   const char *cpp_restricted;
 
-  GET_ENVIRONMENT(cpp_restricted, "CPP_RESTRICTED");
+  cpp_restricted = getenv ("CPP_RESTRICTED");
 
   if (file->path[0] == '\0')
     {

@@ -93,12 +93,7 @@ __cxa_type_match(_Unwind_Exception* ue_header,
 }
 
 // ABI defined routine called at the start of a cleanup handler.
-extern "C"
-#ifdef __ARM_EABI_UNWINDER__
-void
-#else
-bool
-#endif
+extern "C" bool
 __cxa_begin_cleanup(_Unwind_Exception* ue_header)
 {
   __cxa_eh_globals *globals = __cxa_get_globals();
@@ -127,9 +122,7 @@ __cxa_begin_cleanup(_Unwind_Exception* ue_header)
       globals->propagatingExceptions = header;
     }
 
-#ifndef __ARM_EABI_UNWINDER__
   return true;
-#endif
 }
 
 // Do the work for __cxa_end_cleanup.  Returns the currently propagating

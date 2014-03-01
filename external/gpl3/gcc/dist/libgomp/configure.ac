@@ -346,5 +346,5 @@ AC_SUBST(OMP_NEST_LOCK_25_KIND)
 CFLAGS="$save_CFLAGS"
 
 AC_CONFIG_FILES(omp.h omp_lib.h omp_lib.f90 libgomp_f.h)
-AC_CONFIG_FILES(Makefile testsuite/Makefile libgomp.spec)
+AC_CONFIG_FILES(Makefile libgomp.spec)
 AC_OUTPUT
