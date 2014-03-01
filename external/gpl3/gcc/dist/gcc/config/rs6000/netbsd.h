@@ -1,6 +1,6 @@
 /* Definitions of target machine for GNU compiler,
    for PowerPC NetBSD systems.
-   Copyright 2002, 2003, 2007, 2008 Free Software Foundation, Inc.
+   Copyright (C) 2002-2013 Free Software Foundation, Inc.
    Contributed by Wasabi Systems, Inc.
 
    This file is part of GCC.
@@ -87,5 +87,4 @@
   { "netbsd_endfile_spec",	NETBSD_ENDFILE_SPEC },
 
 
-#undef  TARGET_VERSION
-#define TARGET_VERSION fprintf (stderr, " (NetBSD/powerpc ELF)");
+#define DBX_REGISTER_NUMBER(REGNO) rs6000_dbx_register_number (REGNO)

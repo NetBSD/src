@@ -1,6 +1,6 @@
 /* Definitions of target machine for GCC,
    for i386/ELF NetBSD systems.
-   Copyright (C) 2001, 2002, 2004, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2001-2013 Free Software Foundation, Inc.
    Contributed by matthew green <mrg@eterna.com.au>
 
 This file is part of GCC.
@@ -118,7 +118,4 @@ along with GCC; see the file COPYING3.  If not see
    we don't care about compatibility with older gcc versions.  */
 #define DEFAULT_PCC_STRUCT_RETURN 1
 
-/* Attempt to enable execute permissions on the stack.  */
-#define ENABLE_EXECUTE_STACK NETBSD_ENABLE_EXECUTE_STACK
-
-#define TARGET_VERSION fprintf (stderr, " (NetBSD/i386 ELF)");
+#define HAVE_ENABLE_EXECUTE_STACK

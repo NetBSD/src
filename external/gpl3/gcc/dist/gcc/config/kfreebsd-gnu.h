@@ -1,6 +1,5 @@
 /* Definitions for kFreeBSD-based GNU systems with ELF format
-   Copyright (C) 2004, 2006, 2007
-   Free Software Foundation, Inc.
+   Copyright (C) 2004-2013 Free Software Foundation, Inc.
    Contributed by Robert Millan.
 
 This file is part of GCC.
@@ -19,8 +18,7 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-#undef LINUX_TARGET_OS_CPP_BUILTINS    
-#define LINUX_TARGET_OS_CPP_BUILTINS()		\
+#define GNU_USER_TARGET_OS_CPP_BUILTINS()		\
   do						\
     {						\
 	builtin_define ("__FreeBSD_kernel__");	\
@@ -31,7 +29,7 @@ along with GCC; see the file COPYING3.  If not see
     }						\
   while (0)
 
-#ifdef GLIBC_DYNAMIC_LINKER
-#undef GLIBC_DYNAMIC_LINKER
-#define GLIBC_DYNAMIC_LINKER "/lib/ld.so.1"
-#endif
+#define GNU_USER_DYNAMIC_LINKER        GLIBC_DYNAMIC_LINKER
+#define GNU_USER_DYNAMIC_LINKER32      GLIBC_DYNAMIC_LINKER32
+#define GNU_USER_DYNAMIC_LINKER64      GLIBC_DYNAMIC_LINKER64
+#define GNU_USER_DYNAMIC_LINKERX32     GLIBC_DYNAMIC_LINKERX32

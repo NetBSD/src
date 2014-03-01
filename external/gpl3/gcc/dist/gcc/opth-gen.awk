@@ -1,5 +1,4 @@
-#  Copyright (C) 2003,2004,2005,2006,2007,2008, 2010
-#  Free Software Foundation, Inc.
+#  Copyright (C) 2003-2013 Free Software Foundation, Inc.
 #  Contributed by Kelley Cook, June 2004.
 #  Original code from Neil Booth, May 2003.
 #
@@ -21,43 +20,10 @@
 # opt-gather.awk, combines the flags of duplicate options and generates a
 # C header file.
 #
-# This program uses functions from opt-functions.awk
-# Usage: awk -f opt-functions.awk -f opth-gen.awk < inputfile > options.h
-
-BEGIN {
-	n_opts = 0
-	n_langs = 0
-	n_target_save = 0
-	n_extra_masks = 0
-	quote = "\042"
-	comma = ","
-	FS=SUBSEP
-}
-
-# Collect the text and flags of each option into an array
-	{
-		if ($1 == "Language") {
-			langs[n_langs] = $2
-			n_langs++;
-		}
-		else if ($1 == "TargetSave") {
-			# Make sure the declarations are put in source order
-			target_save_decl[n_target_save] = $2
-			n_target_save++
-		}
-		else {
-			name = opt_args("Mask", $1)
-			if (name == "") {
-				opts[n_opts]  = $1
-				flags[n_opts] = $2
-				help[n_opts]  = $3
-				n_opts++;
-			}
-			else {
-				extra_masks[n_extra_masks++] = name
-			}
-		}
-	}
+# This program uses functions from opt-functions.awk and code from
+# opt-read.awk.
+# Usage: awk -f opt-functions.awk -f opt-read.awk -f opth-gen.awk \
+#            < inputfile > options.h
 
 # Dump out an enumeration into a .h file.
 # Combine the flags of duplicate options.
@@ -67,11 +33,46 @@ print ""
 print "#ifndef OPTIONS_H"
 print "#define OPTIONS_H"
 print ""
-print "extern int target_flags;"
-print "extern int target_flags_explicit;"
+print "#include \"flag-types.h\""
 print ""
 
-have_save = 0;
+if (n_extra_h_includes > 0) {
+	for (i = 0; i < n_extra_h_includes; i++) {
+		print "#include " quote extra_h_includes[i] quote
+	}
+	print ""
+}
+
+print "#if !defined(IN_LIBGCC2) && !defined(IN_TARGET_LIBS) && !defined(IN_RTS)"
+print "#ifndef GENERATOR_FILE"
+print "#if !defined(IN_LIBGCC2) && !defined(IN_TARGET_LIBS)"
+print "struct GTY(()) gcc_options"
+print "#else"
+print "struct gcc_options"
+print "#endif"
+print "{"
+print "#endif"
+
+for (i = 0; i < n_extra_vars; i++) {
+	var = extra_vars[i]
+	sub(" *=.*", "", var)
+	orig_var = var
+	name = var
+	type = var
+	type_after = var
+	sub("^.*[ *]", "", name)
+	sub("\\[.*\\]$", "", name)
+	sub("\\[.*\\]$", "", type)
+	sub(" *" name "$", "", type)
+	sub("^.*" name, "", type_after)
+	var_seen[name] = 1
+	print "#ifdef GENERATOR_FILE"
+	print "extern " orig_var ";"
+	print "#else"
+	print "  " type " x_" name type_after ";"
+	print "#define " name " global_options.x_" name
+	print "#endif"
+}
 
 for (i = 0; i < n_opts; i++) {
 	if (flag_set_p("Save", flags[i]))
@@ -85,8 +86,37 @@ for (i = 0; i < n_opts; i++) {
 		continue;
 
 	var_seen[name] = 1;
+	print "#ifdef GENERATOR_FILE"
 	print "extern " var_type(flags[i]) name ";"
+	print "#else"
+	print "  " var_type(flags[i]) "x_" name ";"
+	print "#define " name " global_options.x_" name
+	print "#endif"
 }
+for (i = 0; i < n_opts; i++) {
+	name = static_var(opts[i], flags[i]);
+	if (name != "") {
+		print "#ifndef GENERATOR_FILE"
+		print "  " var_type(flags[i]) "x_" name ";"
+		print "#define x_" name " do_not_use"
+		print "#endif"
+	}
+}
+for (i = 0; i < n_opts; i++) {
+	if (flag_set_p("SetByCombined", flags[i])) {
+		print "#ifndef GENERATOR_FILE"
+		print "  bool frontend_set_" var_name(flags[i]) ";"
+		print "#endif"
+	}
+}
+print "#ifndef GENERATOR_FILE"
+print "};"
+print "extern struct gcc_options global_options;"
+print "extern const struct gcc_options global_options_init;"
+print "extern struct gcc_options global_options_set;"
+print "#define target_flags_explicit global_options_set.x_target_flags"
+print "#endif"
+print "#endif"
 print ""
 
 # All of the optimization switches gathered together so they can be saved and restored.
@@ -96,7 +126,7 @@ print ""
 # Also, order the structure so that pointer fields occur first, then int
 # fields, and then char fields to provide the best packing.
 
-print "#if !defined(GCC_DRIVER) && !defined(IN_LIBGCC2) && !defined(IN_TARGET_LIBS)"
+print "#if !defined(IN_LIBGCC2) && !defined(IN_TARGET_LIBS) && !defined(IN_RTS)"
 print ""
 print "/* Structure to save/restore optimization and target specific options.  */";
 print "struct GTY(()) cl_optimization";
@@ -105,9 +135,11 @@ print "{";
 n_opt_char = 2;
 n_opt_short = 0;
 n_opt_int = 0;
+n_opt_enum = 1;
 n_opt_other = 0;
-var_opt_char[0] = "unsigned char optimize";
-var_opt_char[1] = "unsigned char optimize_size";
+var_opt_char[0] = "unsigned char x_optimize";
+var_opt_char[1] = "unsigned char x_optimize_size";
+var_opt_enum[0] = "enum fp_contract_mode x_flag_fp_contract_mode";
 
 for (i = 0; i < n_opts; i++) {
 	if (flag_set_p("Optimization", flags[i])) {
@@ -121,16 +153,19 @@ for (i = 0; i < n_opts; i++) {
 		var_opt_seen[name]++;
 		otype = var_type_struct(flags[i]);
 		if (otype ~ "^((un)?signed +)?int *$")
-			var_opt_int[n_opt_int++] = otype name;
+			var_opt_int[n_opt_int++] = otype "x_" name;
 
 		else if (otype ~ "^((un)?signed +)?short *$")
-			var_opt_short[n_opt_short++] = otype name;
+			var_opt_short[n_opt_short++] = otype "x_" name;
 
 		else if (otype ~ "^((un)?signed +)?char *$")
-			var_opt_char[n_opt_char++] = otype name;
+			var_opt_char[n_opt_char++] = otype "x_" name;
+
+		else if (otype ~ ("^enum +[_" alnum "]+ *$"))
+			var_opt_enum[n_opt_enum++] = otype "x_" name;
 
 		else
-			var_opt_other[n_opt_other++] = otype name;
+			var_opt_other[n_opt_other++] = otype "x_" name;
 	}
 }
 
@@ -140,6 +175,10 @@ for (i = 0; i < n_opt_other; i++) {
 
 for (i = 0; i < n_opt_int; i++) {
 	print "  " var_opt_int[i] ";";
+}
+
+for (i = 0; i < n_opt_enum; i++) {
+	print "  " var_opt_enum[i] ";";
 }
 
 for (i = 0; i < n_opt_short; i++) {
@@ -161,18 +200,22 @@ print "{";
 n_target_char = 0;
 n_target_short = 0;
 n_target_int = 0;
+n_target_enum = 0;
 n_target_other = 0;
 
 for (i = 0; i < n_target_save; i++) {
-	if (target_save_decl[i] ~ "^((un)?signed +)?int +[_a-zA-Z0-9]+$")
+	if (target_save_decl[i] ~ "^((un)?signed +)?int +[_" alnum "]+$")
 		var_target_int[n_target_int++] = target_save_decl[i];
 
-	else if (target_save_decl[i] ~ "^((un)?signed +)?short +[_a-zA-Z0-9]+$")
+	else if (target_save_decl[i] ~ "^((un)?signed +)?short +[_" alnum "]+$")
 		var_target_short[n_target_short++] = target_save_decl[i];
 
-	else if (target_save_decl[i] ~ "^((un)?signed +)?char +[_a-zA-Z0-9]+$")
+	else if (target_save_decl[i] ~ "^((un)?signed +)?char +[_ " alnum "]+$")
 		var_target_char[n_target_char++] = target_save_decl[i];
 
+	else if (target_save_decl[i] ~ ("^enum +[_" alnum "]+ +[_" alnum "]+$")) {
+		var_target_enum[n_target_enum++] = target_save_decl[i];
+	}
 	else
 		var_target_other[n_target_other++] = target_save_decl[i];
 }
@@ -190,24 +233,31 @@ if (have_save) {
 			var_save_seen[name]++;
 			otype = var_type_struct(flags[i])
 			if (otype ~ "^((un)?signed +)?int *$")
-				var_target_int[n_target_int++] = otype name;
+				var_target_int[n_target_int++] = otype "x_" name;
 
 			else if (otype ~ "^((un)?signed +)?short *$")
-				var_target_short[n_target_short++] = otype name;
+				var_target_short[n_target_short++] = otype "x_" name;
 
 			else if (otype ~ "^((un)?signed +)?char *$")
-				var_target_char[n_target_char++] = otype name;
+				var_target_char[n_target_char++] = otype "x_" name;
+
+			else if (otype ~ ("^enum +[_" alnum "]+ +[_" alnum "]+"))
+				var_target_enum[n_target_enum++] = otype "x_" name;
 
 			else
-				var_target_other[n_target_other++] = otype name;
+				var_target_other[n_target_other++] = otype "x_" name;
 		}
 	}
 } else {
-	var_target_int[n_target_int++] = "int target_flags";
+	var_target_int[n_target_int++] = "int x_target_flags";
 }
 
 for (i = 0; i < n_target_other; i++) {
 	print "  " var_target_other[i] ";";
+}
+
+for (i = 0; i < n_target_enum; i++) {
+	print "  " var_target_enum[i] ";";
 }
 
 for (i = 0; i < n_target_int; i++) {
@@ -226,41 +276,84 @@ print "};";
 print "";
 print "";
 print "/* Save optimization variables into a structure.  */"
-print "extern void cl_optimization_save (struct cl_optimization *);";
+print "extern void cl_optimization_save (struct cl_optimization *, struct gcc_options *);";
 print "";
 print "/* Restore optimization variables from a structure.  */";
-print "extern void cl_optimization_restore (struct cl_optimization *);";
+print "extern void cl_optimization_restore (struct gcc_options *, struct cl_optimization *);";
 print "";
 print "/* Print optimization variables from a structure.  */";
 print "extern void cl_optimization_print (FILE *, int, struct cl_optimization *);";
 print "";
 print "/* Save selected option variables into a structure.  */"
-print "extern void cl_target_option_save (struct cl_target_option *);";
+print "extern void cl_target_option_save (struct cl_target_option *, struct gcc_options *);";
 print "";
 print "/* Restore selected option variables from a structure.  */"
-print "extern void cl_target_option_restore (struct cl_target_option *);";
+print "extern void cl_target_option_restore (struct gcc_options *, struct cl_target_option *);";
 print "";
 print "/* Print target option variables from a structure.  */";
 print "extern void cl_target_option_print (FILE *, int, struct cl_target_option *);";
+print "";
+print "/* Anything that includes tm.h, does not necessarily need this.  */"
+print "#if !defined(GCC_TM_H)"
+print "#include \"input.h\" /* for location_t */"
+print "bool                                                                  "
+print "common_handle_option_auto (struct gcc_options *opts,                  "
+print "                           struct gcc_options *opts_set,              "
+print "                           const struct cl_decoded_option *decoded,   "
+print "                           unsigned int lang_mask, int kind,          "
+print "                           location_t loc,                            "
+print "                           const struct cl_option_handlers *handlers, "
+print "                           diagnostic_context *dc);                   "
+for (i = 0; i < n_langs; i++) {
+    lang_name = lang_sanitized_name(langs[i]);
+    print "bool                                                                  "
+    print lang_name "_handle_option_auto (struct gcc_options *opts,              "
+    print "                           struct gcc_options *opts_set,              "
+    print "                           size_t scode, const char *arg, int value,  "
+    print "                           unsigned int lang_mask, int kind,          "
+    print "                           location_t loc,                            "
+    print "                           const struct cl_option_handlers *handlers, "
+    print "                           diagnostic_context *dc);                   "
+}
+print "#endif";
 print "#endif";
 print "";
 
 for (i = 0; i < n_opts; i++) {
 	name = opt_args("Mask", flags[i])
-	vname = var_name(flags[i])
-	mask = "MASK_"
-	if (vname != "") {
-		mask = "OPTION_MASK_"
+	if (name == "") {
+		opt = opt_args("InverseMask", flags[i])
+		if (opt ~ ",")
+			name = nth_arg(0, opt)
+		else
+			name = opt
 	}
-	if (name != "" && !flag_set_p("MaskExists", flags[i]))
-		print "#define " mask name " (1 << " masknum[vname]++ ")"
+	if (name != "" && mask_bits[name] == 0) {
+		mask_bits[name] = 1
+		vname = var_name(flags[i])
+		mask = "MASK_"
+		mask_1 = "1"
+		if (vname != "") {
+			mask = "OPTION_MASK_"
+			if (host_wide_int[vname] == "yes")
+				mask_1 = "HOST_WIDE_INT_1"
+		} else
+			extra_mask_bits[name] = 1
+		print "#define " mask name " (" mask_1 " << " masknum[vname]++ ")"
+	}
 }
 for (i = 0; i < n_extra_masks; i++) {
-	print "#define MASK_" extra_masks[i] " (1 << " masknum[""]++ ")"
+	if (extra_mask_bits[extra_masks[i]] == 0)
+		print "#define MASK_" extra_masks[i] " (1 << " masknum[""]++ ")"
 }
 
 for (var in masknum) {
-	if (masknum[var] > 31) {
+	if (var != "" && host_wide_int[var] == "yes") {
+		print" #if defined(HOST_BITS_PER_WIDE_INT) && " masknum[var] " >= HOST_BITS_PER_WIDE_INT"
+		print "#error too many masks for " var
+		print "#endif"
+	}
+	else if (masknum[var] > 31) {
 		if (var == "")
 			print "#error too many target masks"
 		else
@@ -271,21 +364,30 @@ print ""
 
 for (i = 0; i < n_opts; i++) {
 	name = opt_args("Mask", flags[i])
-	vname = var_name(flags[i])
-	macro = "OPTION_"
-	mask = "OPTION_MASK_"
-	if (vname == "") {
-		vname = "target_flags"
-		macro = "TARGET_"
-		mask = "MASK_"
+	if (name == "") {
+		opt = opt_args("InverseMask", flags[i])
+		if (opt ~ ",")
+			name = nth_arg(0, opt)
+		else
+			name = opt
 	}
-	if (name != "" && !flag_set_p("MaskExists", flags[i]))
-		print "#define " macro name \
+	if (name != "" && mask_macros[name] == 0) {
+		mask_macros[name] = 1
+		vname = var_name(flags[i])
+		mask = "OPTION_MASK_"
+		if (vname == "") {
+			vname = "target_flags"
+			mask = "MASK_"
+			extra_mask_macros[name] = 1
+		}
+		print "#define TARGET_" name \
 		      " ((" vname " & " mask name ") != 0)"
+	}
 }
 for (i = 0; i < n_extra_masks; i++) {
-	print "#define TARGET_" extra_masks[i] \
-	      " ((target_flags & MASK_" extra_masks[i] ") != 0)"
+	if (extra_mask_macros[extra_masks[i]] == 0)
+		print "#define TARGET_" extra_masks[i] \
+		      " ((target_flags & MASK_" extra_masks[i] ") != 0)"
 }
 print ""
 
@@ -293,26 +395,23 @@ for (i = 0; i < n_opts; i++) {
 	opt = opt_args("InverseMask", flags[i])
 	if (opt ~ ",") {
 		vname = var_name(flags[i])
-		macro = "OPTION_"
 		mask = "OPTION_MASK_"
 		if (vname == "") {
 			vname = "target_flags"
-			macro = "TARGET_"
 			mask = "MASK_"
 		}
-		print "#define " macro nth_arg(1, opt) \
+		print "#define TARGET_" nth_arg(1, opt) \
 		      " ((" vname " & " mask nth_arg(0, opt) ") == 0)"
 	}
 }
 print ""
 
 for (i = 0; i < n_langs; i++) {
-	macros[i] = "CL_" langs[i]
-	gsub( "[^A-Za-z0-9_]", "X", macros[i] )
+        macros[i] = "CL_" lang_sanitized_name(langs[i])
 	s = substr("            ", length (macros[i]))
-	print "#define " macros[i] s " (1 << " i ")"
+	print "#define " macros[i] s " (1U << " i ")"
     }
-print "#define CL_LANG_ALL   ((1 << " n_langs ") - 1)"
+print "#define CL_LANG_ALL   ((1U << " n_langs ") - 1)"
 
 print ""
 print "enum opt_code"
@@ -321,6 +420,7 @@ print "{"
 for (i = 0; i < n_opts; i++)
 	back_chain[i] = "N_OPTS";
 
+enum_value = 0
 for (i = 0; i < n_opts; i++) {
 	# Combine the flags of identical switches.  Switches
 	# appear many times if they are handled by many front
@@ -331,13 +431,15 @@ for (i = 0; i < n_opts; i++) {
 	}
 
 	len = length (opts[i]);
-	enum = "OPT_" opts[i]
-	if (opts[i] == "finline-limit=" || opts[i] == "Wlarger-than=" \
-	    || opts[i] == "ftemplate-depth=")
-		enum = enum "eq"
-	if (opts[i] == "gdwarf+")
-		enum = "OPT_gdwarfplus"
-	gsub ("[^A-Za-z0-9]", "_", enum)
+	enum = opt_enum(opts[i])
+	enum_string = enum " = " enum_value ","
+
+	# Aliases do not get enumeration names.
+	if ((flag_set_p("Alias.*", flags[i]) \
+	     && !flag_set_p("SeparateAlias", flags[i])) \
+	    || flag_set_p("Ignore", flags[i])) {
+		enum_string = "/* " enum_string " */"
+	}
 
 	# If this switch takes joined arguments, back-chain all
 	# subsequent switches to it for which it is a prefix.  If
@@ -352,19 +454,23 @@ for (i = 0; i < n_opts; i++) {
 		}
 	}
 
-	s = substr("                                         ", length (enum))
-	if (i + 1 == n_opts)
-		comma = ""
+	s = substr("                                          ",
+		   length (enum_string))
 
 	if (help[i] == "")
 		hlp = "0"
 	else
 		hlp = "N_(\"" help[i] "\")";
 
-	print "  " enum "," s "/* -" opts[i] " */"
+	print "  " enum_string s "/* -" opts[i] " */"
+	enum_value++
 }
 
-print "  N_OPTS"
+print "  N_OPTS,"
+print "  OPT_SPECIAL_unknown,"
+print "  OPT_SPECIAL_ignore,"
+print "  OPT_SPECIAL_program_name,"
+print "  OPT_SPECIAL_input_file"
 print "};"
 print ""
 print "#endif /* OPTIONS_H */"

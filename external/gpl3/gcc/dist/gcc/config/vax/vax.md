@@ -1,6 +1,5 @@
 ;; Machine description for GNU compiler, VAX Version
-;; Copyright (C) 1987, 1988, 1991, 1994, 1995, 1996, 1998, 1999, 2000, 2001,
-;; 2002, 2004, 2005, 2007, 2009 Free Software Foundation, Inc.
+;; Copyright (C) 1987-2013 Free Software Foundation, Inc.
 
 ;; This file is part of GCC.
 
@@ -29,11 +28,15 @@
 
 ;; UNSPEC_VOLATILE usage:
 
-(define_constants
-  [(VUNSPEC_BLOCKAGE 0)	    ; `blockage' insn to prevent scheduling across an
+(define_c_enum "unspecv" [
+  VUNSPEC_BLOCKAGE 	    ; 'blockage' insn to prevent scheduling across an
 			    ; insn in the code.
-   (VUNSPEC_SYNC_ISTREAM 1) ; sequence of insns to sync the I-stream
-   (VAX_AP_REGNUM 12)	    ; Register 12 contains the argument pointer
+  VUNSPEC_SYNC_ISTREAM      ; sequence of insns to sync the I-stream
+  VUNSPEC_PEM		    ; 'procedure_entry_mask' insn.
+])
+
+(define_constants
+  [(VAX_AP_REGNUM 12)	    ; Register 12 contains the argument pointer
    (VAX_FP_REGNUM 13)	    ; Register 13 contains the frame pointer
    (VAX_SP_REGNUM 14)	    ; Register 14 contains the stack pointer
    (VAX_PC_REGNUM 15)	    ; Register 15 contains the program counter
@@ -314,9 +317,14 @@
 
 (define_insn "fix_trunc<VAXfp:mode><VAXint:mode>2"
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g")
-	(fix:VAXint (fix:VAXfp (match_operand:VAXfp 1 "general_operand" "gF"))))]
+	(fix:VAXint (match_operand:VAXfp 1 "general_operand" "gF")))]
   ""
   "cvt<VAXfp:fsfx><VAXint:isfx> %1,%0")
+
+(define_expand "fixuns_trunc<VAXfp:mode><VAXint:mode>2"
+  [(set (match_operand:VAXint 0 "nonimmediate_operand" "")
+	(fix:VAXint (match_operand:VAXfp 1 "general_operand")))]
+  "")
 
 ;;- All kinds of add instructions.
 
@@ -361,7 +369,7 @@
 (define_insn "add<mode>3"
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g")
 	(plus:VAXint (match_operand:VAXint 1 "general_operand" "nrmT")
-		    (match_operand:VAXint 2 "general_operand" "nrmT")))]
+		     (match_operand:VAXint 2 "general_operand" "nrmT")))]
   ""
   "* return vax_output_int_add (insn, operands, <MODE>mode);")
 
@@ -401,7 +409,7 @@
 (define_insn "sub<mode>3"
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g,g")
 	(minus:VAXint (match_operand:VAXint 1 "general_operand" "0,nrmT")
-		     (match_operand:VAXint 2 "general_operand" "nrmT,nrmT")))]
+		      (match_operand:VAXint 2 "general_operand" "nrmT,nrmT")))]
   ""
   "@
    sub<VAXint:isfx>2 %2,%0
@@ -444,7 +452,7 @@
 (define_insn "mul<mode>3"
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g,g,g")
 	(mult:VAXint (match_operand:VAXint 1 "general_operand" "0,nrmT,nrmT")
-		    (match_operand:VAXint 2 "general_operand" "nrmT,0,nrmT")))]
+		     (match_operand:VAXint 2 "general_operand" "nrmT,0,nrmT")))]
   ""
   "@
    mul<VAXint:isfx>2 %2,%0
@@ -503,7 +511,7 @@
 (define_insn "div<mode>3"
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g,g")
 	(div:VAXint (match_operand:VAXint 1 "general_operand" "0,nrmT")
-		   (match_operand:VAXint 2 "general_operand" "nrmT,nrmT")))]
+		    (match_operand:VAXint 2 "general_operand" "nrmT,nrmT")))]
   ""
   "@
    div<VAXint:isfx>2 %2,%0
@@ -525,7 +533,7 @@
 (define_expand "and<mode>3"
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "")
 	(and:VAXint (not:VAXint (match_operand:VAXint 1 "general_operand" ""))
-		   (match_operand:VAXint 2 "general_operand" "")))]
+		    (match_operand:VAXint 2 "general_operand" "")))]
   ""
   "
 {
@@ -562,7 +570,7 @@
 (define_insn "*and<mode>_const_int"
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g,g")
 	(and:VAXint (match_operand:VAXint 1 "general_operand" "0,nrmT")
-		   (match_operand:VAXint 2 "const_int_operand" "n,n")))]
+		    (match_operand:VAXint 2 "const_int_operand" "n,n")))]
   ""
   "@
    bic<VAXint:isfx>2 %<VAXint:iprefx>2,%0
@@ -574,7 +582,7 @@
 (define_insn "ior<mode>3"
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g,g,g")
 	(ior:VAXint (match_operand:VAXint 1 "general_operand" "0,nrmT,nrmT")
-		   (match_operand:VAXint 2 "general_operand" "nrmT,0,nrmT")))]
+		    (match_operand:VAXint 2 "general_operand" "nrmT,0,nrmT")))]
   ""
   "@
    bis<VAXint:isfx>2 %2,%0
@@ -586,7 +594,7 @@
 (define_insn "xor<mode>3"
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g,g,g")
 	(xor:VAXint (match_operand:VAXint 1 "general_operand" "0,nrmT,nrmT")
-		   (match_operand:VAXint 2 "general_operand" "nrmT,0,nrmT")))]
+		    (match_operand:VAXint 2 "general_operand" "nrmT,0,nrmT")))]
   ""
   "@
    xor<VAXint:isfx>2 %2,%0
@@ -621,7 +629,7 @@
 (define_expand "ashrsi3"
   [(set (match_operand:SI 0 "general_operand" "=g")
 	(ashiftrt:SI (match_operand:SI 1 "general_operand" "g")
-		   (match_operand:QI 2 "general_operand" "g")))]
+		     (match_operand:QI 2 "general_operand" "g")))]
   ""
   "
 {
@@ -773,7 +781,8 @@
    "(INTVAL (operands[1]) == 8 || INTVAL (operands[1]) == 16)
    && INTVAL (operands[2]) % INTVAL (operands[1]) == 0
    && (REG_P (operands[0])
-       || ! mode_dependent_address_p (XEXP (operands[0], 0)))"
+       || ! mode_dependent_address_p (XEXP (operands[0], 0),
+				       MEM_ADDR_SPACE (operands[0])))"
   "*
 {
   if (REG_P (operands[0]))
@@ -801,7 +810,8 @@
   "(INTVAL (operands[2]) == 8 || INTVAL (operands[2]) == 16)
    && INTVAL (operands[3]) % INTVAL (operands[2]) == 0
    && (REG_P (operands[1])
-       || ! mode_dependent_address_p (XEXP (operands[1], 0)))"
+       || ! mode_dependent_address_p (XEXP (operands[1], 0),
+				      MEM_ADDR_SPACE (operands[1])))"
   "*
 {
   if (REG_P (operands[1]))
@@ -828,7 +838,8 @@
   "(INTVAL (operands[2]) == 8 || INTVAL (operands[2]) == 16)
    && INTVAL (operands[3]) % INTVAL (operands[2]) == 0
    && (REG_P (operands[1])
-       || ! mode_dependent_address_p (XEXP (operands[1], 0)))"
+       || ! mode_dependent_address_p (XEXP (operands[1], 0),
+				      MEM_ADDR_SPACE (operands[1])))"
   "*
 {
   if (REG_P (operands[1]))
@@ -951,7 +962,8 @@
       || INTVAL (operands[2]) + INTVAL (operands[3]) > 32
       || side_effects_p (operands[1])
       || (MEM_P (operands[1])
-	  && mode_dependent_address_p (XEXP (operands[1], 0))))
+	  && mode_dependent_address_p (XEXP (operands[1], 0),
+				       MEM_ADDR_SPACE (operands[1]))))
     return \"extv %3,%2,%1,%0\";
   if (INTVAL (operands[2]) == 8)
     return \"rotl %R3,%1,%0\;cvtbl %0,%0\";
@@ -979,7 +991,8 @@
       || INTVAL (operands[2]) + INTVAL (operands[3]) > 32
       || side_effects_p (operands[1])
       || (MEM_P (operands[1])
-	  && mode_dependent_address_p (XEXP (operands[1], 0))))
+	  && mode_dependent_address_p (XEXP (operands[1], 0),
+				       MEM_ADDR_SPACE (operands[1]))))
     return \"extzv %3,%2,%1,%0\";
   if (INTVAL (operands[2]) == 8)
     return \"rotl %R3,%1,%0\;movzbl %0,%0\";
@@ -1348,7 +1361,7 @@
 
 (define_insn "*call"
    [(call (match_operand:QI 0 "memory_operand" "m")
-       (match_operand:SI 1 "const_int_operand" ""))]
+	  (match_operand:SI 1 "const_int_operand" ""))]
   ""
   "calls $0,%0")
 
@@ -1409,10 +1422,23 @@
   ""
   "")
 
+(define_insn "procedure_entry_mask"
+  [(unspec_volatile [(match_operand 0 "const_int_operand")] VUNSPEC_PEM)]
+  ""
+  ".word %x0")
+
 (define_insn "return"
   [(return)]
   ""
   "ret")
+
+(define_expand "prologue"
+  [(const_int 0)]
+  ""
+{
+  vax_expand_prologue ();
+  DONE;
+})
 
 (define_expand "epilogue"
   [(return)]
@@ -1624,7 +1650,7 @@
   emit_clobber (gen_rtx_MEM (BLKmode, hard_frame_pointer_rtx));
 
   emit_move_insn (hard_frame_pointer_rtx, fp);
-  emit_stack_restore (SAVE_NONLOCAL, stack, NULL_RTX);
+  emit_stack_restore (SAVE_NONLOCAL, stack);
 
   emit_use (hard_frame_pointer_rtx);
   emit_use (stack_pointer_rtx);

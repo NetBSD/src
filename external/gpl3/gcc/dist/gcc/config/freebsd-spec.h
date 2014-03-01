@@ -1,6 +1,5 @@
 /* Base configuration file for all FreeBSD targets.
-   Copyright (C) 1999, 2000, 2001, 2004, 2005, 2007, 2009, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1999-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -33,25 +32,6 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 
 /* In case we need to know.  */
 #define USING_CONFIG_FREEBSD_SPEC 1
-
-/* This defines which switch letters take arguments.  On FreeBSD, most of
-   the normal cases (defined in gcc.c) apply, and we also have -h* and
-   -z* options (for the linker) (coming from SVR4).
-   We also have -R (alias --rpath), no -z, --soname (-h), --assert etc.  */
-
-#define FBSD_SWITCH_TAKES_ARG(CHAR)					\
-  (DEFAULT_SWITCH_TAKES_ARG (CHAR)					\
-    || (CHAR) == 'h'							\
-    || (CHAR) == 'z' /* ignored by ld */				\
-    || (CHAR) == 'R')
-
-/* This defines which multi-letter switches take arguments.  */
-
-#define FBSD_WORD_SWITCH_TAKES_ARG(STR)					\
-  (DEFAULT_WORD_SWITCH_TAKES_ARG (STR)					\
-   || !strcmp ((STR), "rpath") || !strcmp ((STR), "rpath-link")		\
-   || !strcmp ((STR), "soname") || !strcmp ((STR), "defsym") 		\
-   || !strcmp ((STR), "assert") || !strcmp ((STR), "dynamic-linker"))
 
 #define FBSD_TARGET_OS_CPP_BUILTINS()					\
   do									\
@@ -153,11 +133,6 @@ is built with the --enable-threads configure-time option.}		\
 #define FBSD_DYNAMIC_LINKER "/libexec/ld-elf.so.1"
 #endif
 
-#if defined(HAVE_LD_EH_FRAME_HDR)
-#define LINK_EH_SPEC "%{!static:--eh-frame-hdr} "
-#endif
-
-/* Use --as-needed -lgcc_s for eh support.  */
-#ifdef HAVE_LD_AS_NEEDED
-#define USE_LD_AS_NEEDED 1
-#endif
+/* NOTE: The freebsd-spec.h header is included also for various
+   non-FreeBSD powerpc targets, thus it should never define macros
+   other than FBSD_* prefixed ones, or USING_CONFIG_FREEBSD_SPEC.  */

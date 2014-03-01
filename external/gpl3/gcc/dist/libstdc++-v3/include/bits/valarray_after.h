@@ -1,7 +1,6 @@
 // The template and inlines for the -*- C++ -*- internal _Meta class.
 
-// Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-// 2006, 2007, 2008, 2009, 2010  Free Software Foundation, Inc.
+// Copyright (C) 1997-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -23,9 +22,9 @@
 // see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 // <http://www.gnu.org/licenses/>.
 
-/** @file valarray_after.h
+/** @file bits/valarray_after.h
  *  This is an internal header file, included by other library headers.
- *  You should not attempt to use it directly.
+ *  Do not attempt to use it directly. @headername{valarray}
  */
 
 // Written by Gabriel Dos Reis <Gabriel.Dos-Reis@cmla.ens-cachan.fr>
@@ -35,7 +34,9 @@
 
 #pragma GCC system_header
 
-_GLIBCXX_BEGIN_NAMESPACE(std)
+namespace std _GLIBCXX_VISIBILITY(default)
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   //
   // gslice_array closure.
@@ -544,6 +545,7 @@ _DEFINE_EXPR_BINARY_FUNCTION(pow, _Pow)
 
 #undef _DEFINE_EXPR_BINARY_FUNCTION
 
-_GLIBCXX_END_NAMESPACE
+_GLIBCXX_END_NAMESPACE_VERSION
+} // namespace
 
 #endif /* _CPP_VALARRAY_AFTER_H */

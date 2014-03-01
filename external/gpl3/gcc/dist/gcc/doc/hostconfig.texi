@@ -1,6 +1,4 @@
-@c Copyright (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-@c 2000, 2001, 2002, 2003, 2004, 2005, 2008, 2009
-@c Free Software Foundation, Inc.
+@c Copyright (C) 1988-2013 Free Software Foundation, Inc.
 @c This is part of the GCC manual.
 @c For copying conditions, see the file gccint.texi.
 
@@ -43,7 +41,8 @@ This host hook is used to set up handling for extra signals.  The most
 common thing to do in this hook is to detect stack overflow.
 @end deftypefn
 
-@deftypefn {Host Hook} void * HOST_HOOKS_GT_PCH_GET_ADDRESS (size_t @var{size}, int @var{fd})
+@deftypefn {Host Hook} {void *} HOST_HOOKS_GT_PCH_GET_ADDRESS (size_t @
+  @var{size}, int @var{fd})
 This host hook returns the address of some space that is likely to be
 free in some subsequent invocation of the compiler.  We intend to load
 the PCH data at this address such that the data need not be relocated.
@@ -52,7 +51,8 @@ The area should be able to hold @var{size} bytes.  If the host uses
 probing.
 @end deftypefn
 
-@deftypefn {Host Hook} int HOST_HOOKS_GT_PCH_USE_ADDRESS (void * @var{address}, size_t @var{size}, int @var{fd}, size_t @var{offset})
+@deftypefn {Host Hook} int HOST_HOOKS_GT_PCH_USE_ADDRESS (void * @var{address}, @
+  size_t @var{size}, int @var{fd}, size_t @var{offset})
 This host hook is called when a PCH file is about to be loaded.
 We want to load @var{size} bytes from @var{fd} at @var{offset}
 into memory at @var{address}.  The given address will be the result of
@@ -212,15 +212,15 @@ initialization when a compilation driver is being initialized.
 @item HOST_LONG_LONG_FORMAT
 If defined, the string used to indicate an argument of type @code{long
 long} to functions like @code{printf}.  The default value is
-@code{"ll"}. 
+@code{"ll"}.
 
 @item HOST_LONG_FORMAT
 If defined, the string used to indicate an argument of type @code{long}
-to functions like @code{printf}.  The default value is @code{"l"}. 
+to functions like @code{printf}.  The default value is @code{"l"}.
 
 @item HOST_PTR_PRINTF
 If defined, the string used to indicate an argument of type @code{void *}
-to functions like @code{printf}.  The default value is @code{"%p"}. 
+to functions like @code{printf}.  The default value is @code{"%p"}.
 @end ftable
 
 In addition, if @command{configure} generates an incorrect definition of

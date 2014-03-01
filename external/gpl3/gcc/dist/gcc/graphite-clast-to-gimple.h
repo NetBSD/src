@@ -1,5 +1,5 @@
 /* Translation of CLAST (CLooG AST) to Gimple.
-   Copyright (C) 2009, 2010 Free Software Foundation, Inc.
+   Copyright (C) 2009-2013 Free Software Foundation, Inc.
    Contributed by Sebastian Pop <sebastian.pop@amd.com>.
 
 This file is part of GCC.
@@ -21,6 +21,8 @@ along with GCC; see the file COPYING3.  If not see
 #ifndef GCC_GRAPHITE_CLAST_TO_GIMPLE_H
 #define GCC_GRAPHITE_CLAST_TO_GIMPLE_H
 
+extern CloogState *cloog_state;
+
 /* Data structure for CLooG program representation.  */
 
 typedef struct cloog_prog_clast {
@@ -34,13 +36,11 @@ typedef struct bb_pbb_def
 {
   basic_block bb;
   poly_bb_p pbb;
-}bb_pbb_def;
+} bb_pbb_def;
 
-extern bool gloog (scop_p, VEC (scop_p, heap) *, htab_t);
-extern cloog_prog_clast scop_to_clast (scop_p);
+extern bool gloog (scop_p, htab_t);
 extern void debug_clast_stmt (struct clast_stmt *);
 extern void print_clast_stmt (FILE *, struct clast_stmt *);
-extern void debug_clast_name_indexes (htab_t);
 
 /* Hash function for data base element BB_PBB.  */
 
@@ -58,18 +58,6 @@ eq_bb_pbb_map (const void *bb_pbb1, const void *bb_pbb2)
   const bb_pbb_def *bp1 = (const bb_pbb_def *) bb_pbb1;
   const bb_pbb_def *bp2 = (const bb_pbb_def *) bb_pbb2;
   return (bp1->bb->index == bp2->bb->index);
-}
-
-/* Returns the scattering dimension for STMTFOR.
-
-   The relationship between dimension in scattering matrix
-   and the DEPTH of the loop is:
-   DIMENSION = 2*DEPTH - 1
-*/
-
-static inline int get_scattering_level (int depth)
-{
-  return 2 * depth - 1;
 }
 
 #endif

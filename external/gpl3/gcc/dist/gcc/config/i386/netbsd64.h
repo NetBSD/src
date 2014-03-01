@@ -1,6 +1,6 @@
 /* Definitions of target machine for GCC,
    for x86-64/ELF NetBSD systems.
-   Copyright (C) 2002, 2004, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2002-2013 Free Software Foundation, Inc.
    Contributed by Wasabi Systems, Inc.
 
 This file is part of GCC.
@@ -66,7 +66,4 @@ along with GCC; see the file COPYING3.  If not see
     fprintf (FILE, "\tcall __mcount\n");				\
 }
 
-/* Attempt to enable execute permissions on the stack.  */
-#define ENABLE_EXECUTE_STACK NETBSD_ENABLE_EXECUTE_STACK
-
-#define TARGET_VERSION fprintf (stderr, " (NetBSD/x86_64 ELF)");
+#define HAVE_ENABLE_EXECUTE_STACK

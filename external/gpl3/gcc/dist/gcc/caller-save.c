@@ -1,7 +1,5 @@
 /* Save and restore call-clobbered registers which are live across a call.
-   Copyright (C) 1989, 1992, 1994, 1995, 1997, 1998, 1999, 2000,
-   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
-   Free Software Foundation, Inc.
+   Copyright (C) 1989-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -30,40 +28,24 @@ along with GCC; see the file COPYING3.  If not see
 #include "hard-reg-set.h"
 #include "recog.h"
 #include "basic-block.h"
+#include "df.h"
 #include "reload.h"
 #include "function.h"
 #include "expr.h"
-#include "toplev.h"
+#include "diagnostic-core.h"
 #include "tm_p.h"
 #include "addresses.h"
-#include "output.h"
-#include "df.h"
 #include "ggc.h"
-
-/* True if caller-save has been initialized.  */
-bool caller_save_initialized_p;
-
-/* Call used hard registers which can not be saved because there is no
-   insn for this.  */
-HARD_REG_SET no_caller_save_reg_set;
-
-#ifndef MAX_MOVE_MAX
-#define MAX_MOVE_MAX MOVE_MAX
-#endif
-
-#ifndef MIN_UNITS_PER_WORD
-#define MIN_UNITS_PER_WORD UNITS_PER_WORD
-#endif
+#include "dumpfile.h"
 
 #define MOVE_MAX_WORDS (MOVE_MAX / UNITS_PER_WORD)
 
-/* Modes for each hard register that we can save.  The smallest mode is wide
-   enough to save the entire contents of the register.  When saving the
-   register because it is live we first try to save in multi-register modes.
-   If that is not possible the save is done one register at a time.  */
-
-static enum machine_mode
-  regno_save_mode[FIRST_PSEUDO_REGISTER][MAX_MOVE_MAX / MIN_UNITS_PER_WORD + 1];
+#define regno_save_mode \
+  (this_target_reload->x_regno_save_mode)
+#define cached_reg_save_code \
+  (this_target_reload->x_cached_reg_save_code)
+#define cached_reg_restore_code \
+  (this_target_reload->x_cached_reg_restore_code)
 
 /* For each hard register, a place on the stack where it can be saved,
    if needed.  */
@@ -76,17 +58,6 @@ static int save_slots_num;
 
 /* Allocated slots so far.  */
 static rtx save_slots[FIRST_PSEUDO_REGISTER];
-
-/* We will only make a register eligible for caller-save if it can be
-   saved in its widest mode with a simple SET insn as long as the memory
-   address is valid.  We record the INSN_CODE is those insns here since
-   when we emit them, the addresses might not be valid, so they might not
-   be recognized.  */
-
-static int
-  cached_reg_save_code[FIRST_PSEUDO_REGISTER][MAX_MACHINE_MODE];
-static int
-  cached_reg_restore_code[FIRST_PSEUDO_REGISTER][MAX_MACHINE_MODE];
 
 /* Set of hard regs currently residing in save area (during insn scan).  */
 
@@ -109,7 +80,7 @@ static int reg_restore_code (int, enum machine_mode);
 
 struct saved_hard_reg;
 static void initiate_saved_hard_regs (void);
-static struct saved_hard_reg *new_saved_hard_reg (int, int);
+static void new_saved_hard_reg (int, int);
 static void finish_saved_hard_regs (void);
 static int saved_hard_reg_compare_func (const void *, const void *);
 
@@ -142,15 +113,19 @@ reg_save_code (int reg, enum machine_mode mode)
   if (cached_reg_save_code[reg][mode])
      return cached_reg_save_code[reg][mode];
   if (!HARD_REGNO_MODE_OK (reg, mode))
-     {
-       cached_reg_save_code[reg][mode] = -1;
-       cached_reg_restore_code[reg][mode] = -1;
-       return -1;
-     }
+    {
+      /* Depending on how HARD_REGNO_MODE_OK is defined, range propagation
+	 might deduce here that reg >= FIRST_PSEUDO_REGISTER.  So the assert
+	 below silences a warning.  */
+      gcc_assert (reg < FIRST_PSEUDO_REGISTER);
+      cached_reg_save_code[reg][mode] = -1;
+      cached_reg_restore_code[reg][mode] = -1;
+      return -1;
+    }
 
   /* Update the register number and modes of the register
      and memory operand.  */
-  SET_REGNO (test_reg, reg);
+  SET_REGNO_RAW (test_reg, reg);
   PUT_MODE (test_reg, mode);
   PUT_MODE (test_mem, mode);
 
@@ -254,7 +229,8 @@ init_caller_save (void)
   for (i = 0; i < FIRST_PSEUDO_REGISTER; i++)
     if (TEST_HARD_REG_BIT
 	(reg_class_contents
-	 [(int) base_reg_class (regno_save_mode[i][1], PLUS, CONST_INT)], i))
+	 [(int) base_reg_class (regno_save_mode[i][1], ADDR_SPACE_GENERIC,
+				PLUS, CONST_INT)], i))
       break;
 
   gcc_assert (i < FIRST_PSEUDO_REGISTER);
@@ -289,8 +265,8 @@ init_caller_save (void)
   savepat = gen_rtx_SET (VOIDmode, test_mem, test_reg);
   restpat = gen_rtx_SET (VOIDmode, test_reg, test_mem);
 
-  saveinsn = gen_rtx_INSN (VOIDmode, 0, 0, 0, 0, 0, savepat, -1, 0);
-  restinsn = gen_rtx_INSN (VOIDmode, 0, 0, 0, 0, 0, restpat, -1, 0);
+  saveinsn = gen_rtx_INSN (VOIDmode, 0, 0, 0, 0, savepat, 0, -1, 0);
+  restinsn = gen_rtx_INSN (VOIDmode, 0, 0, 0, 0, restpat, 0, -1, 0);
 
   for (i = 0; i < FIRST_PSEUDO_REGISTER; i++)
     for (j = 1; j <= MOVE_MAX_WORDS; j++)
@@ -369,7 +345,7 @@ initiate_saved_hard_regs (void)
 
 /* Allocate and return new saved hard register with given REGNO and
    CALL_FREQ.  */
-static struct saved_hard_reg *
+static void
 new_saved_hard_reg (int regno, int call_freq)
 {
   struct saved_hard_reg *saved_reg;
@@ -382,7 +358,6 @@ new_saved_hard_reg (int regno, int call_freq)
   saved_reg->call_freq = call_freq;
   saved_reg->first_p = FALSE;
   saved_reg->next = -1;
-  return saved_reg;
 }
 
 /* Free memory allocated for the saved hard registers.  */
@@ -456,6 +431,8 @@ setup_save_areas (void)
   /* Create hard reg saved regs.  */
   for (chain = reload_insn_chain; chain != 0; chain = next)
     {
+      rtx cheap;
+
       insn = chain->insn;
       next = chain->next;
       if (!CALL_P (insn)
@@ -486,9 +463,12 @@ setup_save_areas (void)
 	    if (hard_reg_map[regno] != NULL)
 	      hard_reg_map[regno]->call_freq += freq;
 	    else
-	      saved_reg = new_saved_hard_reg (regno, freq);
+	      new_saved_hard_reg (regno, freq);
 	    SET_HARD_REG_BIT (hard_regs_used, regno);
 	  }
+      cheap = find_reg_note (insn, REG_RETURNED, NULL);
+      if (cheap)
+	cheap = XEXP (cheap, 0);
       /* Look through all live pseudos, mark their hard registers.  */
       EXECUTE_IF_SET_IN_REG_SET
 	(&chain->live_throughout, FIRST_PSEUDO_REGISTER, regno, rsi)
@@ -496,7 +476,7 @@ setup_save_areas (void)
 	  int r = reg_renumber[regno];
 	  int bound;
 
-	  if (r < 0)
+	  if (r < 0 || regno_reg_rtx[regno] == cheap)
 	    continue;
 
 	  bound = r + hard_regno_nregs[r][PSEUDO_REGNO_MODE (regno)];
@@ -506,7 +486,7 @@ setup_save_areas (void)
 		if (hard_reg_map[r] != NULL)
 		  hard_reg_map[r]->call_freq += freq;
 		else
-		  saved_reg = new_saved_hard_reg (r, freq);
+		  new_saved_hard_reg (r, freq);
 		 SET_HARD_REG_BIT (hard_regs_to_save, r);
 		 SET_HARD_REG_BIT (hard_regs_used, r);
 	      }
@@ -531,12 +511,18 @@ setup_save_areas (void)
       memset (saved_reg_conflicts, 0, saved_regs_num * saved_regs_num);
       for (chain = reload_insn_chain; chain != 0; chain = next)
 	{
+	  rtx cheap;
 	  call_saved_regs_num = 0;
 	  insn = chain->insn;
 	  next = chain->next;
 	  if (!CALL_P (insn)
 	      || find_reg_note (insn, REG_NORETURN, NULL))
 	    continue;
+
+	  cheap = find_reg_note (insn, REG_RETURNED, NULL);
+	  if (cheap)
+	    cheap = XEXP (cheap, 0);
+
 	  REG_SET_TO_HARD_REG_SET (hard_regs_to_save,
 				   &chain->live_throughout);
 	  COPY_HARD_REG_SET (used_regs, call_used_reg_set);
@@ -569,7 +555,7 @@ setup_save_areas (void)
 	      int r = reg_renumber[regno];
 	      int bound;
 
-	      if (r < 0)
+	      if (r < 0 || regno_reg_rtx[regno] == cheap)
 		continue;
 
 	      bound = r + hard_regno_nregs[r][PSEUDO_REGNO_MODE (regno)];
@@ -670,7 +656,8 @@ setup_save_areas (void)
 		  saved_reg->slot
 		    = assign_stack_local_1
 		      (regno_save_mode[regno][1],
-		       GET_MODE_SIZE (regno_save_mode[regno][1]), 0, true);
+		       GET_MODE_SIZE (regno_save_mode[regno][1]), 0,
+		       ASLK_REDUCE_ALIGN);
 		  if (dump_file != NULL)
 		    fprintf (dump_file, "%d uses a new slot\n", regno);
 		}
@@ -728,7 +715,7 @@ setup_save_areas (void)
 	    regno_save_mem[i][j]
 	      = assign_stack_local_1 (regno_save_mode[i][j],
 				      GET_MODE_SIZE (regno_save_mode[i][j]),
-				      0, true);
+				      0, ASLK_REDUCE_ALIGN);
 
 	    /* Setup single word save area just in case...  */
 	    for (k = 0; k < j; k++)
@@ -783,6 +770,7 @@ save_call_clobbered_regs (void)
 	  if (n_regs_saved)
 	    {
 	      int regno;
+	      HARD_REG_SET this_insn_sets;
 
 	      if (code == JUMP_INSN)
 		/* Restore all registers if this is a JUMP_INSN.  */
@@ -797,7 +785,17 @@ save_call_clobbered_regs (void)
 
 	      for (regno = 0; regno < FIRST_PSEUDO_REGISTER; regno++)
 		if (TEST_HARD_REG_BIT (referenced_regs, regno))
-		  regno += insert_restore (chain, 1, regno, MOVE_MAX_WORDS, save_mode);
+		  regno += insert_restore (chain, 1, regno, MOVE_MAX_WORDS,
+					   save_mode);
+	      /* If a saved register is set after the call, this means we no
+		 longer should restore it.  This can happen when parts of a
+		 multi-word pseudo do not conflict with other pseudos, so
+		 IRA may allocate the same hard register for both.  One may
+		 be live across the call, while the other is set
+		 afterwards.  */
+	      CLEAR_HARD_REG_SET (this_insn_sets);
+	      note_stores (PATTERN (insn), mark_set_regs, &this_insn_sets);
+	      AND_COMPL_HARD_REG_SET (hard_regs_saved, this_insn_sets);
 	    }
 
 	  if (code == CALL_INSN
@@ -807,6 +805,11 @@ save_call_clobbered_regs (void)
 	      unsigned regno;
 	      HARD_REG_SET hard_regs_to_save;
 	      reg_set_iterator rsi;
+	      rtx cheap;
+
+	      cheap = find_reg_note (insn, REG_RETURNED, NULL);
+	      if (cheap)
+		cheap = XEXP (cheap, 0);
 
 	      /* Use the register life information in CHAIN to compute which
 		 regs are live during the call.  */
@@ -828,7 +831,7 @@ save_call_clobbered_regs (void)
 		  int nregs;
 		  enum machine_mode mode;
 
-		  if (r < 0)
+		  if (r < 0 || regno_reg_rtx[regno] == cheap)
 		    continue;
 		  nregs = hard_regno_nregs[r][PSEUDO_REGNO_MODE (regno)];
 		  mode = HARD_REGNO_CALLER_SAVE_MODE
@@ -862,6 +865,19 @@ save_call_clobbered_regs (void)
 	      for (regno = 0; regno < FIRST_PSEUDO_REGISTER; regno++)
 		if (TEST_HARD_REG_BIT (hard_regs_saved, regno))
 		  n_regs_saved++;
+	      
+	      if (cheap
+		  && HARD_REGISTER_P (cheap)
+		  && TEST_HARD_REG_BIT (call_used_reg_set, REGNO (cheap)))
+		{
+		  rtx dest, newpat;
+		  rtx pat = PATTERN (insn);
+		  if (GET_CODE (pat) == PARALLEL)
+		    pat = XVECEXP (pat, 0, 0);
+		  dest = SET_DEST (pat);
+		  newpat = gen_rtx_SET (VOIDmode, cheap, copy_rtx (dest));
+		  chain = insert_one_insn (chain, 0, -1, newpat);
+		}
 	    }
           last = chain;
 	}
@@ -1038,10 +1054,10 @@ mark_referenced_regs (rtx *loc, refmarker_fn *mark, void *arg)
       /* If this is a pseudo that did not get a hard register, scan its
 	 memory location, since it might involve the use of another
 	 register, which might be saved.  */
-      else if (reg_equiv_mem[regno] != 0)
-	mark_referenced_regs (&XEXP (reg_equiv_mem[regno], 0), mark, arg);
-      else if (reg_equiv_address[regno] != 0)
-	mark_referenced_regs (&reg_equiv_address[regno], mark, arg);
+      else if (reg_equiv_mem (regno) != 0)
+	mark_referenced_regs (&XEXP (reg_equiv_mem (regno), 0), mark, arg);
+      else if (reg_equiv_address (regno) != 0)
+	mark_referenced_regs (&reg_equiv_address (regno), mark, arg);
       return;
     }
 
@@ -1323,7 +1339,7 @@ insert_save (struct insn_chain *chain, int before_p, int regno,
 static int
 add_used_regs_1 (rtx *loc, void *data)
 {
-  int regno, i;
+  unsigned int regno;
   regset live;
   rtx x;
 
@@ -1332,11 +1348,10 @@ add_used_regs_1 (rtx *loc, void *data)
   if (REG_P (x))
     {
       regno = REGNO (x);
-      if (!HARD_REGISTER_NUM_P (regno))
+      if (HARD_REGISTER_NUM_P (regno))
+	bitmap_set_range (live, regno, hard_regno_nregs[regno][GET_MODE (x)]);
+      else
 	regno = reg_renumber[regno];
-      if (regno >= 0)
-	for (i = hard_regno_nregs[regno][GET_MODE (x)] - 1; i >= 0; i--)
-	  SET_REGNO_REG_SET (live, regno + i);
     }
   return 0;
 }

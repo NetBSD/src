@@ -1,7 +1,5 @@
 ;;  Mips.md	     Machine Description for MIPS based processors
-;;  Copyright (C) 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-;;  1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
-;;  Free Software Foundation, Inc.
+;;  Copyright (C) 1989-2013 Free Software Foundation, Inc.
 ;;  Contributed by   A. Lichnewsky, lich@inria.inria.fr
 ;;  Changes by       Michael Meissner, meissner@osf.org
 ;;  64-bit r4000 support by Ian Lance Taylor, ian@cygnus.com, and
@@ -23,246 +21,136 @@
 ;; along with GCC; see the file COPYING3.  If not see
 ;; <http://www.gnu.org/licenses/>.
 
-(define_constants
-  [(UNSPEC_LOAD_LOW		 0)
-   (UNSPEC_LOAD_HIGH		 1)
-   (UNSPEC_STORE_WORD		 2)
-   (UNSPEC_GET_FNADDR		 3)
-   (UNSPEC_BLOCKAGE		 4)
-   (UNSPEC_POTENTIAL_CPRESTORE	 5)
-   (UNSPEC_CPRESTORE		 6)
-   (UNSPEC_RESTORE_GP		 7)
-   (UNSPEC_MOVE_GP		 8)
-   (UNSPEC_EH_RETURN		 9)
-   (UNSPEC_CONSTTABLE_INT	10)
-   (UNSPEC_CONSTTABLE_FLOAT	11)
-   (UNSPEC_ALIGN		14)
-   (UNSPEC_HIGH			17)
-   (UNSPEC_LOAD_LEFT		18)
-   (UNSPEC_LOAD_RIGHT		19)
-   (UNSPEC_STORE_LEFT		20)
-   (UNSPEC_STORE_RIGHT		21)
-   (UNSPEC_LOADGP		22)
-   (UNSPEC_LOAD_CALL		23)
-   (UNSPEC_LOAD_GOT		24)
-   (UNSPEC_GP			25)
-   (UNSPEC_MFHI			26)
-   (UNSPEC_MTHI			27)
-   (UNSPEC_SET_HILO		28)
-   (UNSPEC_TLS_LDM		29)
-   (UNSPEC_TLS_GET_TP		30)
-   (UNSPEC_MFHC1		31)
-   (UNSPEC_MTHC1		32)
-   (UNSPEC_CLEAR_HAZARD		33)
-   (UNSPEC_RDHWR		34)
-   (UNSPEC_SYNCI		35)
-   (UNSPEC_SYNC			36)
-   (UNSPEC_COMPARE_AND_SWAP	37)
-   (UNSPEC_COMPARE_AND_SWAP_12	38)
-   (UNSPEC_SYNC_OLD_OP		39)
-   (UNSPEC_SYNC_NEW_OP		40)
-   (UNSPEC_SYNC_NEW_OP_12	41)
-   (UNSPEC_SYNC_OLD_OP_12	42)
-   (UNSPEC_SYNC_EXCHANGE	43)
-   (UNSPEC_SYNC_EXCHANGE_12	44)
-   (UNSPEC_MEMORY_BARRIER	45)
-   (UNSPEC_SET_GOT_VERSION	46)
-   (UNSPEC_UPDATE_GOT_VERSION	47)
-   (UNSPEC_COPYGP		48)
-   (UNSPEC_ERET			49)
-   (UNSPEC_DERET		50)
-   (UNSPEC_DI			51)
-   (UNSPEC_EHB			52)
-   (UNSPEC_RDPGPR		53)
-   (UNSPEC_COP0			54)
-   ;; Used in a call expression in place of args_size.  It's present for PIC
-   ;; indirect calls where it contains args_size and the function symbol.
-   (UNSPEC_CALL_ATTR		55)
-   
-   (UNSPEC_ADDRESS_FIRST	100)
+(define_enum "processor" [
+  r3000
+  4kc
+  4kp
+  5kc
+  5kf
+  20kc
+  24kc
+  24kf2_1
+  24kf1_1
+  74kc
+  74kf2_1
+  74kf1_1
+  74kf3_2
+  loongson_2e
+  loongson_2f
+  loongson_3a
+  m4k
+  octeon
+  octeon2
+  r3900
+  r6000
+  r4000
+  r4100
+  r4111
+  r4120
+  r4130
+  r4300
+  r4600
+  r4650
+  r4700
+  r5000
+  r5400
+  r5500
+  r7000
+  r8000
+  r9000
+  r10000
+  sb1
+  sb1a
+  sr71000
+  xlr
+  xlp
+])
 
-   (TLS_GET_TP_REGNUM		3)
+(define_c_enum "unspec" [
+  ;; Unaligned accesses.
+  UNSPEC_LOAD_LEFT
+  UNSPEC_LOAD_RIGHT
+  UNSPEC_STORE_LEFT
+  UNSPEC_STORE_RIGHT
+
+  ;; Integer operations that are too cumbersome to describe directly.
+  UNSPEC_WSBH
+  UNSPEC_DSBH
+  UNSPEC_DSHD
+
+  ;; Floating-point moves.
+  UNSPEC_LOAD_LOW
+  UNSPEC_LOAD_HIGH
+  UNSPEC_STORE_WORD
+  UNSPEC_MFHC1
+  UNSPEC_MTHC1
+
+  ;; HI/LO moves.
+  UNSPEC_MFHI
+  UNSPEC_MTHI
+  UNSPEC_SET_HILO
+
+  ;; GP manipulation.
+  UNSPEC_LOADGP
+  UNSPEC_COPYGP
+  UNSPEC_MOVE_GP
+  UNSPEC_POTENTIAL_CPRESTORE
+  UNSPEC_CPRESTORE
+  UNSPEC_RESTORE_GP
+  UNSPEC_EH_RETURN
+  UNSPEC_GP
+  UNSPEC_SET_GOT_VERSION
+  UNSPEC_UPDATE_GOT_VERSION
+
+  ;; Symbolic accesses.
+  UNSPEC_LOAD_CALL
+  UNSPEC_LOAD_GOT
+  UNSPEC_TLS_LDM
+  UNSPEC_TLS_GET_TP
+  UNSPEC_UNSHIFTED_HIGH
+
+  ;; MIPS16 constant pools.
+  UNSPEC_ALIGN
+  UNSPEC_CONSTTABLE_INT
+  UNSPEC_CONSTTABLE_FLOAT
+
+  ;; Blockage and synchronisation.
+  UNSPEC_BLOCKAGE
+  UNSPEC_CLEAR_HAZARD
+  UNSPEC_RDHWR
+  UNSPEC_SYNCI
+  UNSPEC_SYNC
+
+  ;; Cache manipulation.
+  UNSPEC_MIPS_CACHE
+  UNSPEC_R10K_CACHE_BARRIER
+
+  ;; Interrupt handling.
+  UNSPEC_ERET
+  UNSPEC_DERET
+  UNSPEC_DI
+  UNSPEC_EHB
+  UNSPEC_RDPGPR
+  UNSPEC_COP0
+
+  ;; Used in a call expression in place of args_size.  It's present for PIC
+  ;; indirect calls where it contains args_size and the function symbol.
+  UNSPEC_CALL_ATTR
+
+  ;; MIPS16 casesi jump table dispatch.
+  UNSPEC_CASESI_DISPATCH
+
+  ;; Stack checking.
+  UNSPEC_PROBE_STACK_RANGE
+])
+
+(define_constants
+  [(TLS_GET_TP_REGNUM		3)
+   (MIPS16_T_REGNUM		24)
+   (PIC_FUNCTION_ADDR_REGNUM	25)
    (RETURN_ADDR_REGNUM		31)
    (CPRESTORE_SLOT_REGNUM	76)
    (GOT_VERSION_REGNUM		79)
-
-   ;; For MIPS Paired-Singled Floating Point Instructions.
-
-   (UNSPEC_MOVE_TF_PS		200)
-   (UNSPEC_C			201)
-
-   ;; MIPS64/MIPS32R2 alnv.ps
-   (UNSPEC_ALNV_PS		202)
-
-   ;; MIPS-3D instructions
-   (UNSPEC_CABS			203)
-
-   (UNSPEC_ADDR_PS		204)
-   (UNSPEC_CVT_PW_PS		205)
-   (UNSPEC_CVT_PS_PW		206)
-   (UNSPEC_MULR_PS		207)
-   (UNSPEC_ABS_PS		208)
-
-   (UNSPEC_RSQRT1		209)
-   (UNSPEC_RSQRT2		210)
-   (UNSPEC_RECIP1		211)
-   (UNSPEC_RECIP2		212)
-   (UNSPEC_SINGLE_CC		213)
-   (UNSPEC_SCC			214)
-
-   ;; MIPS DSP ASE Revision 0.98 3/24/2005
-   (UNSPEC_ADDQ			300)
-   (UNSPEC_ADDQ_S		301)
-   (UNSPEC_SUBQ			302)
-   (UNSPEC_SUBQ_S		303)
-   (UNSPEC_ADDSC		304)
-   (UNSPEC_ADDWC		305)
-   (UNSPEC_MODSUB		306)
-   (UNSPEC_RADDU_W_QB		307)
-   (UNSPEC_ABSQ_S		308)
-   (UNSPEC_PRECRQ_QB_PH		309)
-   (UNSPEC_PRECRQ_PH_W		310)
-   (UNSPEC_PRECRQ_RS_PH_W	311)
-   (UNSPEC_PRECRQU_S_QB_PH	312)
-   (UNSPEC_PRECEQ_W_PHL		313)
-   (UNSPEC_PRECEQ_W_PHR		314)
-   (UNSPEC_PRECEQU_PH_QBL	315)
-   (UNSPEC_PRECEQU_PH_QBR	316)
-   (UNSPEC_PRECEQU_PH_QBLA	317)
-   (UNSPEC_PRECEQU_PH_QBRA	318)
-   (UNSPEC_PRECEU_PH_QBL	319)
-   (UNSPEC_PRECEU_PH_QBR	320)
-   (UNSPEC_PRECEU_PH_QBLA	321)
-   (UNSPEC_PRECEU_PH_QBRA	322)
-   (UNSPEC_SHLL			323)
-   (UNSPEC_SHLL_S		324)
-   (UNSPEC_SHRL_QB		325)
-   (UNSPEC_SHRA_PH		326)
-   (UNSPEC_SHRA_R		327)
-   (UNSPEC_MULEU_S_PH_QBL	328)
-   (UNSPEC_MULEU_S_PH_QBR	329)
-   (UNSPEC_MULQ_RS_PH		330)
-   (UNSPEC_MULEQ_S_W_PHL	331)
-   (UNSPEC_MULEQ_S_W_PHR	332)
-   (UNSPEC_DPAU_H_QBL		333)
-   (UNSPEC_DPAU_H_QBR		334)
-   (UNSPEC_DPSU_H_QBL		335)
-   (UNSPEC_DPSU_H_QBR		336)
-   (UNSPEC_DPAQ_S_W_PH		337)
-   (UNSPEC_DPSQ_S_W_PH		338)
-   (UNSPEC_MULSAQ_S_W_PH	339)
-   (UNSPEC_DPAQ_SA_L_W		340)
-   (UNSPEC_DPSQ_SA_L_W		341)
-   (UNSPEC_MAQ_S_W_PHL		342)
-   (UNSPEC_MAQ_S_W_PHR		343)
-   (UNSPEC_MAQ_SA_W_PHL		344)
-   (UNSPEC_MAQ_SA_W_PHR		345)
-   (UNSPEC_BITREV		346)
-   (UNSPEC_INSV			347)
-   (UNSPEC_REPL_QB		348)
-   (UNSPEC_REPL_PH		349)
-   (UNSPEC_CMP_EQ		350)
-   (UNSPEC_CMP_LT		351)
-   (UNSPEC_CMP_LE		352)
-   (UNSPEC_CMPGU_EQ_QB		353)
-   (UNSPEC_CMPGU_LT_QB		354)
-   (UNSPEC_CMPGU_LE_QB		355)
-   (UNSPEC_PICK			356)
-   (UNSPEC_PACKRL_PH		357)
-   (UNSPEC_EXTR_W		358)
-   (UNSPEC_EXTR_R_W		359)
-   (UNSPEC_EXTR_RS_W		360)
-   (UNSPEC_EXTR_S_H		361)
-   (UNSPEC_EXTP			362)
-   (UNSPEC_EXTPDP		363)
-   (UNSPEC_SHILO		364)
-   (UNSPEC_MTHLIP		365)
-   (UNSPEC_WRDSP		366)
-   (UNSPEC_RDDSP		367)
-
-   ;; MIPS DSP ASE REV 2 Revision 0.02 11/24/2006
-   (UNSPEC_ABSQ_S_QB		400)
-   (UNSPEC_ADDU_PH		401)
-   (UNSPEC_ADDU_S_PH		402)
-   (UNSPEC_ADDUH_QB		403)
-   (UNSPEC_ADDUH_R_QB		404)
-   (UNSPEC_APPEND		405)
-   (UNSPEC_BALIGN		406)
-   (UNSPEC_CMPGDU_EQ_QB		407)
-   (UNSPEC_CMPGDU_LT_QB		408)
-   (UNSPEC_CMPGDU_LE_QB		409)
-   (UNSPEC_DPA_W_PH		410)
-   (UNSPEC_DPS_W_PH		411)
-   (UNSPEC_MADD			412)
-   (UNSPEC_MADDU		413)
-   (UNSPEC_MSUB			414)
-   (UNSPEC_MSUBU		415)
-   (UNSPEC_MUL_PH		416)
-   (UNSPEC_MUL_S_PH		417)
-   (UNSPEC_MULQ_RS_W		418)
-   (UNSPEC_MULQ_S_PH		419)
-   (UNSPEC_MULQ_S_W		420)
-   (UNSPEC_MULSA_W_PH		421)
-   (UNSPEC_MULT			422)
-   (UNSPEC_MULTU		423)
-   (UNSPEC_PRECR_QB_PH		424)
-   (UNSPEC_PRECR_SRA_PH_W	425)
-   (UNSPEC_PRECR_SRA_R_PH_W	426)
-   (UNSPEC_PREPEND		427)
-   (UNSPEC_SHRA_QB		428)
-   (UNSPEC_SHRA_R_QB		429)
-   (UNSPEC_SHRL_PH		430)
-   (UNSPEC_SUBU_PH		431)
-   (UNSPEC_SUBU_S_PH		432)
-   (UNSPEC_SUBUH_QB		433)
-   (UNSPEC_SUBUH_R_QB		434)
-   (UNSPEC_ADDQH_PH		435)
-   (UNSPEC_ADDQH_R_PH		436)
-   (UNSPEC_ADDQH_W		437)
-   (UNSPEC_ADDQH_R_W		438)
-   (UNSPEC_SUBQH_PH		439)
-   (UNSPEC_SUBQH_R_PH		440)
-   (UNSPEC_SUBQH_W		441)
-   (UNSPEC_SUBQH_R_W		442)
-   (UNSPEC_DPAX_W_PH		443)
-   (UNSPEC_DPSX_W_PH		444)
-   (UNSPEC_DPAQX_S_W_PH		445)
-   (UNSPEC_DPAQX_SA_W_PH	446)
-   (UNSPEC_DPSQX_S_W_PH		447)
-   (UNSPEC_DPSQX_SA_W_PH	448)
-
-   ;; ST Microelectronics Loongson-2E/2F.
-   (UNSPEC_LOONGSON_PAVG	500)
-   (UNSPEC_LOONGSON_PCMPEQ	501)
-   (UNSPEC_LOONGSON_PCMPGT	502)
-   (UNSPEC_LOONGSON_PEXTR	503)
-   (UNSPEC_LOONGSON_PINSR_0	504)
-   (UNSPEC_LOONGSON_PINSR_1	505)
-   (UNSPEC_LOONGSON_PINSR_2	506)
-   (UNSPEC_LOONGSON_PINSR_3	507)
-   (UNSPEC_LOONGSON_PMADD	508)
-   (UNSPEC_LOONGSON_PMOVMSK	509)
-   (UNSPEC_LOONGSON_PMULHU	510)
-   (UNSPEC_LOONGSON_PMULH	511)
-   (UNSPEC_LOONGSON_PMULL	512)
-   (UNSPEC_LOONGSON_PMULU	513)
-   (UNSPEC_LOONGSON_PASUBUB	514)
-   (UNSPEC_LOONGSON_BIADD	515)
-   (UNSPEC_LOONGSON_PSADBH	516)
-   (UNSPEC_LOONGSON_PSHUFH	517)
-   (UNSPEC_LOONGSON_PUNPCKH	518)
-   (UNSPEC_LOONGSON_PUNPCKL	519)
-   (UNSPEC_LOONGSON_PADDD	520)
-   (UNSPEC_LOONGSON_PSUBD	521)
-
-   ;; Used in loongson2ef.md
-   (UNSPEC_LOONGSON_ALU1_TURN_ENABLED_INSN   530)
-   (UNSPEC_LOONGSON_ALU2_TURN_ENABLED_INSN   531)
-   (UNSPEC_LOONGSON_FALU1_TURN_ENABLED_INSN  532)
-   (UNSPEC_LOONGSON_FALU2_TURN_ENABLED_INSN  533)
-
-   (UNSPEC_MIPS_CACHE		600)
-   (UNSPEC_R10K_CACHE_BARRIER	601)
 
    ;; PIC long branch sequences are never longer than 100 bytes.
    (MAX_PIC_BRANCH_LENGTH	100)
@@ -315,16 +203,18 @@
 ;; loadpool	move a constant into a MIPS16 register by loading it
 ;;		from the pool
 ;; shift_shift	a shift left followed by a shift right
-;; lui_movf	an LUI followed by a MOVF (for d<-z CC moves)
 ;;
 ;; This attribute is used to determine the instruction's length and
 ;; scheduling type.  For doubleword moves, the attribute always describes
 ;; the split instructions; in some cases, it is more appropriate for the
 ;; scheduling type to be "multi" instead.
 (define_attr "move_type"
-  "unknown,load,fpload,store,fpstore,mtc,mfc,mthilo,mfhilo,move,fmove,
+  "unknown,load,fpload,store,fpstore,mtc,mfc,mtlo,mflo,imul,move,fmove,
    const,constN,signext,ext_ins,logical,arith,sll0,andi,loadpool,
-   shift_shift,lui_movf"
+   shift_shift"
+  (const_string "unknown"))
+
+(define_attr "alu_type" "unknown,add,sub,not,nor,and,or,xor"
   (const_string "unknown"))
 
 ;; Main data type used by the insn
@@ -334,13 +224,66 @@
 ;; True if the main data type is twice the size of a word.
 (define_attr "dword_mode" "no,yes"
   (cond [(and (eq_attr "mode" "DI,DF")
-	      (eq (symbol_ref "TARGET_64BIT") (const_int 0)))
+	      (not (match_test "TARGET_64BIT")))
 	 (const_string "yes")
 
 	 (and (eq_attr "mode" "TI,TF")
-	      (ne (symbol_ref "TARGET_64BIT") (const_int 0)))
+	      (match_test "TARGET_64BIT"))
 	 (const_string "yes")]
 	(const_string "no")))
+
+;; Attributes describing a sync loop.  These loops have the form:
+;;
+;;       if (RELEASE_BARRIER == YES) sync
+;;    1: OLDVAL = *MEM
+;;       if ((OLDVAL & INCLUSIVE_MASK) != REQUIRED_OLDVAL) goto 2
+;;         CMP  = 0 [delay slot]
+;;       $TMP1 = OLDVAL & EXCLUSIVE_MASK
+;;       $TMP2 = INSN1 (OLDVAL, INSN1_OP2)
+;;       $TMP3 = INSN2 ($TMP2, INCLUSIVE_MASK)
+;;       $AT |= $TMP1 | $TMP3
+;;       if (!commit (*MEM = $AT)) goto 1.
+;;         if (INSN1 != MOVE && INSN1 != LI) NEWVAL = $TMP3 [delay slot]
+;;       CMP  = 1
+;;       if (ACQUIRE_BARRIER == YES) sync
+;;    2:
+;;
+;; where "$" values are temporaries and where the other values are
+;; specified by the attributes below.  Values are specified as operand
+;; numbers and insns are specified as enums.  If no operand number is
+;; specified, the following values are used instead:
+;;
+;;    - OLDVAL: $AT
+;;    - CMP: NONE
+;;    - NEWVAL: $AT
+;;    - INCLUSIVE_MASK: -1
+;;    - REQUIRED_OLDVAL: OLDVAL & INCLUSIVE_MASK
+;;    - EXCLUSIVE_MASK: 0
+;;
+;; MEM and INSN1_OP2 are required.
+;;
+;; Ideally, the operand attributes would be integers, with -1 meaning "none",
+;; but the gen* programs don't yet support that.
+(define_attr "sync_mem" "none,0,1,2,3,4,5" (const_string "none"))
+(define_attr "sync_oldval" "none,0,1,2,3,4,5" (const_string "none"))
+(define_attr "sync_cmp" "none,0,1,2,3,4,5" (const_string "none"))
+(define_attr "sync_newval" "none,0,1,2,3,4,5" (const_string "none"))
+(define_attr "sync_inclusive_mask" "none,0,1,2,3,4,5" (const_string "none"))
+(define_attr "sync_exclusive_mask" "none,0,1,2,3,4,5" (const_string "none"))
+(define_attr "sync_required_oldval" "none,0,1,2,3,4,5" (const_string "none"))
+(define_attr "sync_insn1_op2" "none,0,1,2,3,4,5" (const_string "none"))
+(define_attr "sync_insn1" "move,li,addu,addiu,subu,and,andi,or,ori,xor,xori"
+  (const_string "move"))
+(define_attr "sync_insn2" "nop,and,xor,not"
+  (const_string "nop"))
+;; Memory model specifier.
+;; "0"-"9" values specify the operand that stores the memory model value.
+;; "10" specifies MEMMODEL_ACQ_REL,
+;; "11" specifies MEMMODEL_ACQUIRE.
+(define_attr "sync_memmodel" "" (const_int 10))
+
+;; Accumulator operand for madd patterns.
+(define_attr "accum_in" "none,0,1,2,3,4,5" (const_string "none"))
 
 ;; Classification of each insn.
 ;; branch	conditional branch
@@ -357,8 +300,10 @@
 ;; condmove	conditional moves
 ;; mtc		transfer to coprocessor
 ;; mfc		transfer from coprocessor
-;; mthilo	transfer to hi/lo registers
-;; mfhilo	transfer from hi/lo registers
+;; mthi		transfer to a hi register
+;; mtlo		transfer to a lo register
+;; mfhi		transfer from a hi register
+;; mflo		transfer from a lo register
 ;; const	load constant
 ;; arith	integer arithmetic instructions
 ;; logical      integer logical instructions
@@ -391,17 +336,30 @@
 ;; frsqrt       floating point reciprocal square root
 ;; frsqrt1      floating point reciprocal square root step1
 ;; frsqrt2      floating point reciprocal square root step2
+;; dspmac       DSP MAC instructions not saturating the accumulator
+;; dspmacsat    DSP MAC instructions that saturate the accumulator
+;; accext       DSP accumulator extract instructions
+;; accmod       DSP accumulator modify instructions
+;; dspalu       DSP ALU instructions not saturating the result
+;; dspalusat    DSP ALU instructions that saturate the result
 ;; multi	multiword sequence (or user asm statements)
+;; atomic	atomic memory update instruction
+;; syncloop	memory atomic operation implemented as a sync loop
 ;; nop		no operation
 ;; ghost	an instruction that produces no real code
 (define_attr "type"
   "unknown,branch,jump,call,load,fpload,fpidxload,store,fpstore,fpidxstore,
-   prefetch,prefetchx,condmove,mtc,mfc,mthilo,mfhilo,const,arith,logical,
+   prefetch,prefetchx,condmove,mtc,mfc,mthi,mtlo,mfhi,mflo,const,arith,logical,
    shift,slt,signext,clz,pop,trap,imul,imul3,imul3nc,imadd,idiv,idiv3,move,
    fmove,fadd,fmul,fmadd,fdiv,frdiv,frdiv1,frdiv2,fabs,fneg,fcmp,fcvt,fsqrt,
-   frsqrt,frsqrt1,frsqrt2,multi,nop,ghost"
+   frsqrt,frsqrt1,frsqrt2,dspmac,dspmacsat,accext,accmod,dspalu,dspalusat,
+   multi,atomic,syncloop,nop,ghost"
   (cond [(eq_attr "jal" "!unset") (const_string "call")
 	 (eq_attr "got" "load") (const_string "load")
+
+	 (eq_attr "alu_type" "add,sub") (const_string "arith")
+
+	 (eq_attr "alu_type" "not,nor,and,or,xor") (const_string "logical")
 
 	 ;; If a doubleword move uses these expensive instructions,
 	 ;; it is usually better to schedule them in the same way
@@ -412,10 +370,11 @@
 	 (eq_attr "move_type" "fpstore") (const_string "fpstore")
 	 (eq_attr "move_type" "mtc") (const_string "mtc")
 	 (eq_attr "move_type" "mfc") (const_string "mfc")
-	 (eq_attr "move_type" "mthilo") (const_string "mthilo")
-	 (eq_attr "move_type" "mfhilo") (const_string "mfhilo")
+	 (eq_attr "move_type" "mtlo") (const_string "mtlo")
+	 (eq_attr "move_type" "mflo") (const_string "mflo")
 
 	 ;; These types of move are always single insns.
+	 (eq_attr "move_type" "imul") (const_string "imul")
 	 (eq_attr "move_type" "fmove") (const_string "fmove")
 	 (eq_attr "move_type" "loadpool") (const_string "load")
 	 (eq_attr "move_type" "signext") (const_string "signext")
@@ -434,9 +393,8 @@
 	      (eq_attr "dword_mode" "yes"))
 	   (const_string "multi")
 	 (eq_attr "move_type" "move") (const_string "move")
-	 (eq_attr "move_type" "const") (const_string "const")]
-	;; We classify "lui_movf" as "unknown" rather than "multi"
-	;; because we don't split it.  FIXME: we should split instead.
+	 (eq_attr "move_type" "const") (const_string "const")
+	 (eq_attr "sync_mem" "!none") (const_string "syncloop")]
 	(const_string "unknown")))
 
 ;; Mode for conversion types (fcvt)
@@ -458,56 +416,9 @@
 		(const_string "yes")
 		(const_string "no")))
 
-;; Attributes describing a sync loop.  These loops have the form:
-;;
-;;       if (RELEASE_BARRIER == YES) sync
-;;    1: OLDVAL = *MEM
-;;       if ((OLDVAL & INCLUSIVE_MASK) != REQUIRED_OLDVAL) goto 2
-;;       $TMP1 = OLDVAL & EXCLUSIVE_MASK
-;;       $TMP2 = INSN1 (OLDVAL, INSN1_OP2)
-;;       $TMP3 = INSN2 ($TMP2, INCLUSIVE_MASK)
-;;       $AT |= $TMP1 | $TMP3
-;;       if (!commit (*MEM = $AT)) goto 1.
-;;         if (INSN1 != MOVE && INSN1 != LI) NEWVAL = $TMP3 [delay slot]
-;;       sync
-;;    2:
-;;
-;; where "$" values are temporaries and where the other values are
-;; specified by the attributes below.  Values are specified as operand
-;; numbers and insns are specified as enums.  If no operand number is
-;; specified, the following values are used instead:
-;;
-;;    - OLDVAL: $AT
-;;    - NEWVAL: $AT
-;;    - INCLUSIVE_MASK: -1
-;;    - REQUIRED_OLDVAL: OLDVAL & INCLUSIVE_MASK
-;;    - EXCLUSIVE_MASK: 0
-;;
-;; MEM and INSN1_OP2 are required.
-;;
-;; Ideally, the operand attributes would be integers, with -1 meaning "none",
-;; but the gen* programs don't yet support that.
-(define_attr "sync_mem" "none,0,1,2,3,4,5" (const_string "none"))
-(define_attr "sync_oldval" "none,0,1,2,3,4,5" (const_string "none"))
-(define_attr "sync_newval" "none,0,1,2,3,4,5" (const_string "none"))
-(define_attr "sync_inclusive_mask" "none,0,1,2,3,4,5" (const_string "none"))
-(define_attr "sync_exclusive_mask" "none,0,1,2,3,4,5" (const_string "none"))
-(define_attr "sync_required_oldval" "none,0,1,2,3,4,5" (const_string "none"))
-(define_attr "sync_insn1_op2" "none,0,1,2,3,4,5" (const_string "none"))
-(define_attr "sync_insn1" "move,li,addu,addiu,subu,and,andi,or,ori,xor,xori"
-  (const_string "move"))
-(define_attr "sync_insn2" "nop,and,xor,not"
-  (const_string "nop"))
-(define_attr "sync_release_barrier" "yes,no"
-  (const_string "yes"))
-
 ;; Length of instruction in bytes.
 (define_attr "length" ""
-   (cond [(and (eq_attr "extended_mips16" "yes")
-	       (ne (symbol_ref "TARGET_MIPS16") (const_int 0)))
-	  (const_int 8)
-
-	  ;; Direct branch instructions have a range of [-0x20000,0x1fffc],
+   (cond [;; Direct branch instructions have a range of [-0x20000,0x1fffc],
 	  ;; relative to the address of the delay slot.  If a branch is
 	  ;; outside this range, we have a choice of two sequences.
 	  ;; For PIC, an out-of-range branch like:
@@ -532,18 +443,25 @@
 	  ;; using la/jr in this case too, but we do not do so at
 	  ;; present.
 	  ;;
-	  ;; Note that this value does not account for the delay slot
+	  ;; The value we specify here does not account for the delay slot
 	  ;; instruction, whose length is added separately.  If the RTL
 	  ;; pattern has no explicit delay slot, mips_adjust_insn_length
-	  ;; will add the length of the implicit nop.  The values for
-	  ;; forward and backward branches will be different as well.
-	  (eq_attr "type" "branch")
+	  ;; will add the length of the implicit nop.  The range of
+	  ;; [-0x20000, 0x1fffc] from the address of the delay slot
+	  ;; therefore translates to a range of:
+	  ;;
+	  ;;    [-(0x20000 - sizeof (branch)), 0x1fffc - sizeof (slot)]
+	  ;; == [-0x1fffc, 0x1fff8]
+	  ;;
+	  ;; from the shorten_branches reference address.
+	  (and (eq_attr "type" "branch")
+	       (not (match_test "TARGET_MIPS16")))
 	  (cond [(and (le (minus (match_dup 0) (pc)) (const_int 131064))
-			  (le (minus (pc) (match_dup 0)) (const_int 131068)))
+		      (le (minus (pc) (match_dup 0)) (const_int 131068)))
 		   (const_int 4)
 
 		 ;; The non-PIC case: branch, first delay slot, and J.
-		 (ne (symbol_ref "TARGET_ABSOLUTE_JUMPS") (const_int 0))
+		 (match_test "TARGET_ABSOLUTE_JUMPS")
 		   (const_int 12)]
 
 		 ;; Use MAX_PIC_BRANCH_LENGTH as a (gross) overestimate.
@@ -554,12 +472,106 @@
 		 ;; of an insn.
 		 (const_int MAX_PIC_BRANCH_LENGTH))
 
+	  ;; An unextended MIPS16 branch has a range of [-0x100, 0xfe]
+	  ;; from the address of the following instruction, which leads
+	  ;; to a range of:
+	  ;;
+	  ;;    [-(0x100 - sizeof (branch)), 0xfe]
+	  ;; == [-0xfe, 0xfe]
+	  ;;
+	  ;; from the shorten_branches reference address.  Extended branches
+	  ;; likewise have a range of [-0x10000, 0xfffe] from the address
+	  ;; of the following instruction, which leads to a range of:
+	  ;;
+	  ;;    [-(0x10000 - sizeof (branch)), 0xfffe]
+	  ;; == [-0xfffc, 0xfffe]
+	  ;;
+	  ;; from the reference address.
+	  ;;
+	  ;; When a branch is out of range, mips_reorg splits it into a form
+	  ;; that uses in-range branches.  There are four basic sequences:
+	  ;;
+	  ;; (1) Absolute addressing with a readable text segment
+	  ;;     (32-bit addresses):
+	  ;;
+	  ;;	 b... foo		2 bytes
+	  ;;	 move $1,$2		2 bytes
+	  ;;     lw $2,label		2 bytes
+	  ;;	 jr $2			2 bytes
+	  ;;	 move $2,$1		2 bytes
+	  ;;	 .align 2		0 or 2 bytes
+	  ;; label:
+	  ;;	 .word target		4 bytes
+	  ;; foo:
+	  ;;				(16 bytes in the worst case)
+	  ;;
+	  ;; (2) Absolute addressing with a readable text segment
+	  ;;     (64-bit addresses):
+	  ;;
+	  ;;	 b... foo		2 bytes
+	  ;;	 move $1,$2		2 bytes
+	  ;;     ld $2,label		2 bytes
+	  ;;	 jr $2			2 bytes
+	  ;;	 move $2,$1		2 bytes
+	  ;;	 .align 3		0 to 6 bytes
+	  ;; label:
+	  ;;	 .dword target		8 bytes
+	  ;; foo:
+	  ;;				(24 bytes in the worst case)
+	  ;;
+	  ;; (3) Absolute addressing without a readable text segment
+	  ;;     (which requires 32-bit addresses at present):
+	  ;;
+	  ;;	 b... foo		2 bytes
+	  ;;	 move $1,$2		2 bytes
+	  ;;     lui $2,%hi(target)	4 bytes
+	  ;;	 sll $2,8		2 bytes
+	  ;;	 sll $2,8		2 bytes
+	  ;;     addiu $2,%lo(target)	4 bytes
+	  ;;	 jr $2			2 bytes
+	  ;;	 move $2,$1		2 bytes
+	  ;; foo:
+	  ;;				(20 bytes)
+	  ;;
+	  ;; (4) PIC addressing (which requires 32-bit addresses at present):
+	  ;;
+	  ;;	 b... foo		2 bytes
+	  ;;	 move $1,$2		2 bytes
+	  ;;     lw $2,cprestore	0, 2 or 4 bytes
+	  ;;	 lw $2,%got(target)($2)	4 bytes
+	  ;;     addiu $2,%lo(target)	4 bytes
+	  ;;	 jr $2			2 bytes
+	  ;;	 move $2,$1		2 bytes
+	  ;; foo:
+	  ;;				(20 bytes in the worst case)
+	  ;;
+	  ;; Note that the conditions test adjusted lengths, whereas the
+	  ;; result is an unadjusted length, and is thus twice the true value.
+	  (and (eq_attr "type" "branch")
+	       (match_test "TARGET_MIPS16"))
+	  (cond [(and (le (minus (match_dup 0) (pc)) (const_int 254))
+		      (le (minus (pc) (match_dup 0)) (const_int 254)))
+		 (const_int 4)
+		 (and (le (minus (match_dup 0) (pc)) (const_int 65534))
+		      (le (minus (pc) (match_dup 0)) (const_int 65532)))
+		 (const_int 8)
+		 (and (match_test "TARGET_ABICALLS")
+		      (not (match_test "TARGET_ABSOLUTE_ABICALLS")))
+		 (const_int 40)
+		 (match_test "Pmode == SImode")
+		 (const_int 32)
+		 ] (const_int 48))
+
+	  (and (eq_attr "extended_mips16" "yes")
+	       (match_test "TARGET_MIPS16"))
+	  (const_int 8)
+
 	  ;; "Ghost" instructions occupy no space.
 	  (eq_attr "type" "ghost")
 	  (const_int 0)
 
 	  (eq_attr "got" "load")
-	  (if_then_else (ne (symbol_ref "TARGET_MIPS16") (const_int 0))
+	  (if_then_else (match_test "TARGET_MIPS16")
 			(const_int 8)
 			(const_int 4))
 	  (eq_attr "got" "xgot_high")
@@ -569,20 +581,16 @@
 	  (eq_attr "move_type" "loadpool")
 	  (const_int 8)
 
-	  ;; LUI_MOVFs are decomposed into two separate instructions.
-	  (eq_attr "move_type" "lui_movf")
-	  (const_int 8)
-
 	  ;; SHIFT_SHIFTs are decomposed into two separate instructions.
 	  ;; They are extended instructions on MIPS16 targets.
 	  (eq_attr "move_type" "shift_shift")
-	  (if_then_else (ne (symbol_ref "TARGET_MIPS16") (const_int 0))
+	  (if_then_else (match_test "TARGET_MIPS16")
 			(const_int 16)
 			(const_int 8))
 
 	  ;; Check for doubleword moves that are decomposed into two
 	  ;; instructions.
-	  (and (eq_attr "move_type" "mtc,mfc,mthilo,mfhilo,move")
+	  (and (eq_attr "move_type" "mtc,mfc,mtlo,mflo,move")
 	       (eq_attr "dword_mode" "yes"))
 	  (const_int 8)
 
@@ -599,7 +607,9 @@
 	  (eq_attr "move_type" "load,fpload")
 	  (symbol_ref "mips_load_store_insns (operands[1], insn) * 4")
 	  (eq_attr "move_type" "store,fpstore")
-	  (symbol_ref "mips_load_store_insns (operands[0], insn) * 4")
+	  (cond [(not (match_test "TARGET_FIX_24K"))
+	         (symbol_ref "mips_load_store_insns (operands[0], insn) * 4")]
+	         (symbol_ref "mips_load_store_insns (operands[0], insn) * 4 + 4"))
 
 	  ;; In the worst case, a call macro will take 8 instructions:
 	  ;;
@@ -618,7 +628,7 @@
 	  ;; instruction.  The assembler does this for us, so account for
 	  ;; the worst-case length here.
 	  (and (eq_attr "type" "imadd")
-	       (ne (symbol_ref "TARGET_FIX_VR4120") (const_int 0)))
+	       (match_test "TARGET_FIX_VR4120"))
 	  (const_int 8)
 
 	  ;; VR4120 errata MD(4): if there are consecutive dmult instructions,
@@ -626,7 +636,7 @@
 	  ;; around this by inserting a nop after the first dmult.
 	  (and (eq_attr "type" "imul,imul3")
 	       (and (eq_attr "mode" "DI")
-		    (ne (symbol_ref "TARGET_FIX_VR4120") (const_int 0))))
+		    (match_test "TARGET_FIX_VR4120")))
 	  (const_int 8)
 
 	  (eq_attr "type" "idiv,idiv3")
@@ -636,11 +646,9 @@
 	  (symbol_ref "mips_sync_loop_insns (insn, operands) * 4")
 	  ] (const_int 4)))
 
-;; Attribute describing the processor.  This attribute must match exactly
-;; with the processor_type enumeration in mips.h.
-(define_attr "cpu"
-  "r3000,4kc,4kp,5kc,5kf,20kc,24kc,24kf2_1,24kf1_1,74kc,74kf2_1,74kf1_1,74kf3_2,loongson_2e,loongson_2f,m4k,octeon,r3900,r6000,r4000,r4100,r4111,r4120,r4130,r4300,r4600,r4650,r5000,r5400,r5500,r7000,r8000,r9000,r10000,sb1,sb1a,sr71000,xlr"
-  (const (symbol_ref "mips_tune_attr")))
+;; Attribute describing the processor.
+(define_enum_attr "cpu" "processor"
+  (const (symbol_ref "mips_tune")))
 
 ;; The type of hardware hazard associated with this instruction.
 ;; DELAY means that the next instruction cannot read the result
@@ -648,24 +656,24 @@
 ;; write to HI or LO.
 (define_attr "hazard" "none,delay,hilo"
   (cond [(and (eq_attr "type" "load,fpload,fpidxload")
-	      (ne (symbol_ref "ISA_HAS_LOAD_DELAY") (const_int 0)))
+	      (match_test "ISA_HAS_LOAD_DELAY"))
 	 (const_string "delay")
 
 	 (and (eq_attr "type" "mfc,mtc")
-	      (ne (symbol_ref "ISA_HAS_XFER_DELAY") (const_int 0)))
+	      (match_test "ISA_HAS_XFER_DELAY"))
 	 (const_string "delay")
 
 	 (and (eq_attr "type" "fcmp")
-	      (ne (symbol_ref "ISA_HAS_FCMP_DELAY") (const_int 0)))
+	      (match_test "ISA_HAS_FCMP_DELAY"))
 	 (const_string "delay")
 
 	 ;; The r4000 multiplication patterns include an mflo instruction.
 	 (and (eq_attr "type" "imul")
-	      (ne (symbol_ref "TARGET_FIX_R4000") (const_int 0)))
+	      (match_test "TARGET_FIX_R4000"))
 	 (const_string "hilo")
 
-	 (and (eq_attr "type" "mfhilo")
-	      (eq (symbol_ref "ISA_HAS_HILO_INTERLOCKS") (const_int 0)))
+	 (and (eq_attr "type" "mfhi,mflo")
+	      (not (match_test "ISA_HAS_HILO_INTERLOCKS")))
 	 (const_string "hilo")]
 	(const_string "none")))
 
@@ -685,14 +693,14 @@
 ;; Attribute defining whether or not we can use the branch-likely
 ;; instructions.
 (define_attr "branch_likely" "no,yes"
-  (if_then_else (ne (symbol_ref "GENERATE_BRANCHLIKELY") (const_int 0))
+  (if_then_else (match_test "GENERATE_BRANCHLIKELY")
 		(const_string "yes")
 		(const_string "no")))
 
 ;; True if an instruction might assign to hi or lo when reloaded.
 ;; This is used by the TUNE_MACC_CHAINS code.
 (define_attr "may_clobber_hilo" "no,yes"
-  (if_then_else (eq_attr "type" "imul,imul3,imadd,idiv,mthilo")
+  (if_then_else (eq_attr "type" "imul,imul3,imadd,idiv,mthi,mtlo")
 		(const_string "yes")
 		(const_string "no")))
 
@@ -787,9 +795,10 @@
 		     (HA "") (SA "") (DA "D")
 		     (UHA "") (USA "") (UDA "D")])
 
-;; This attribute gives the length suffix for a sign- or zero-extension
-;; instruction.
-(define_mode_attr size [(QI "b") (HI "h")])
+;; This attribute gives the length suffix for a load or store instruction.
+;; The same suffixes work for zero and sign extensions.
+(define_mode_attr size [(QI "b") (HI "h") (SI "w") (DI "d")])
+(define_mode_attr SIZE [(QI "B") (HI "H") (SI "W") (DI "D")])
 
 ;; This attributes gives the mode mask of a SHORT.
 (define_mode_attr mask [(QI "0x00ff") (HI "0xffff")])
@@ -897,6 +906,8 @@
 (define_code_iterator any_lt [lt ltu])
 (define_code_iterator any_le [le leu])
 
+(define_code_iterator any_return [return simple_return])
+
 ;; <u> expands to an empty string when doing a signed operation and
 ;; "u" when doing an unsigned operation.
 (define_code_attr u [(sign_extend "") (zero_extend "u")
@@ -906,6 +917,9 @@
 		     (ge "") (geu "u")
 		     (lt "") (ltu "u")
 		     (le "") (leu "u")])
+
+;; <U> is like <u> except uppercase.
+(define_code_attr U [(sign_extend "") (zero_extend "U")])
 
 ;; <su> is like <u>, but the signed form expands to "s" rather than "".
 (define_code_attr su [(sign_extend "s") (zero_extend "u")])
@@ -918,7 +932,9 @@
 			 (xor "xor")
 			 (and "and")
 			 (plus "add")
-			 (minus "sub")])
+			 (minus "sub")
+			 (return "return")
+			 (simple_return "simple_return")])
 
 ;; <insn> expands to the name of the insn that implements a particular code.
 (define_code_attr insn [(ashift "sll")
@@ -965,7 +981,7 @@
 ;; .........................
 
 (define_delay (and (eq_attr "type" "branch")
-		   (eq (symbol_ref "TARGET_MIPS16") (const_int 0))
+		   (not (match_test "TARGET_MIPS16"))
 		   (eq_attr "branch_likely" "yes"))
   [(eq_attr "can_delay" "yes")
    (nil)
@@ -973,7 +989,7 @@
 
 ;; Branches that don't have likely variants do not annul on false.
 (define_delay (and (eq_attr "type" "branch")
-		   (eq (symbol_ref "TARGET_MIPS16") (const_int 0))
+		   (not (match_test "TARGET_MIPS16"))
 		   (eq_attr "branch_likely" "no"))
   [(eq_attr "can_delay" "yes")
    (nil)
@@ -1030,10 +1046,12 @@
 (include "9000.md")
 (include "10000.md")
 (include "loongson2ef.md")
+(include "loongson3a.md")
 (include "octeon.md")
 (include "sb1.md")
 (include "sr71k.md")
 (include "xlr.md")
+(include "xlp.md")
 (include "generic.md")
 
 ;;
@@ -1108,7 +1126,7 @@
   "@
     <d>addu\t%0,%1,%2
     <d>addiu\t%0,%1,%2"
-  [(set_attr "type" "arith")
+  [(set_attr "alu_type" "add")
    (set_attr "mode" "<MODE>")])
 
 (define_insn "*add<mode>3_mips16"
@@ -1122,7 +1140,7 @@
     <d>addiu\t%0,%2
     <d>addiu\t%0,%1,%2
     <d>addu\t%0,%1,%2"
-  [(set_attr "type" "arith")
+  [(set_attr "alu_type" "add")
    (set_attr "mode" "<MODE>")
    (set_attr_alternative "length"
 		[(if_then_else (match_operand 2 "m16_simm8_8")
@@ -1260,7 +1278,7 @@
   "@
     addu\t%0,%1,%2
     addiu\t%0,%1,%2"
-  [(set_attr "type" "arith")
+  [(set_attr "alu_type" "add")
    (set_attr "mode" "SI")])
 
 ;; Split this insn so that the addiu splitters can have a crack at it.
@@ -1275,7 +1293,7 @@
   "&& reload_completed"
   [(set (match_dup 3) (plus:SI (match_dup 1) (match_dup 2)))]
   { operands[3] = gen_lowpart (SImode, operands[0]); }
-  [(set_attr "type" "arith")
+  [(set_attr "alu_type" "add")
    (set_attr "mode" "SI")
    (set_attr "extended_mips16" "yes")])
 
@@ -1289,7 +1307,7 @@
 		   (match_operand:SI 2 "register_operand" "d")) 3)))]
   "ISA_HAS_BADDU && BYTES_BIG_ENDIAN"
   "baddu\\t%0,%1,%2"
-  [(set_attr "type" "arith")])
+  [(set_attr "alu_type" "add")])
 
 (define_insn "*baddu_si_el"
   [(set (match_operand:SI 0 "register_operand" "=d")
@@ -1299,7 +1317,7 @@
 		   (match_operand:SI 2 "register_operand" "d")) 0)))]
   "ISA_HAS_BADDU && !BYTES_BIG_ENDIAN"
   "baddu\\t%0,%1,%2"
-  [(set_attr "type" "arith")])
+  [(set_attr "alu_type" "add")])
 
 (define_insn "*baddu_di<mode>"
   [(set (match_operand:GPR 0 "register_operand" "=d")
@@ -1309,7 +1327,7 @@
 		   (match_operand:DI 2 "register_operand" "d")))))]
   "ISA_HAS_BADDU && TARGET_64BIT"
   "baddu\\t%0,%1,%2"
-  [(set_attr "type" "arith")])
+  [(set_attr "alu_type" "add")])
 
 ;;
 ;;  ....................
@@ -1334,7 +1352,7 @@
 		   (match_operand:GPR 2 "register_operand" "d")))]
   ""
   "<d>subu\t%0,%1,%2"
-  [(set_attr "type" "arith")
+  [(set_attr "alu_type" "sub")
    (set_attr "mode" "<MODE>")])
 
 (define_insn "*subsi3_extended"
@@ -1344,7 +1362,7 @@
 		      (match_operand:SI 2 "register_operand" "d"))))]
   "TARGET_64BIT"
   "subu\t%0,%1,%2"
-  [(set_attr "type" "arith")
+  [(set_attr "alu_type" "sub")
    (set_attr "mode" "DI")])
 
 ;;
@@ -1446,11 +1464,19 @@
 		  (match_operand:GPR 2 "register_operand")))]
   ""
 {
-  if (TARGET_LOONGSON_2EF)
-    emit_insn (gen_mul<mode>3_mul3_ls2ef (operands[0], operands[1],
-                                          operands[2]));
+  rtx lo;
+
+  if (TARGET_LOONGSON_2EF || TARGET_LOONGSON_3A)
+    emit_insn (gen_mul<mode>3_mul3_loongson (operands[0], operands[1],
+                                             operands[2]));
   else if (ISA_HAS_<D>MUL3)
     emit_insn (gen_mul<mode>3_mul3 (operands[0], operands[1], operands[2]));
+  else if (TARGET_MIPS16)
+    {
+      lo = gen_rtx_REG (<MODE>mode, LO_REGNUM);
+      emit_insn (gen_mul<mode>3_internal (lo, operands[1], operands[2]));
+      emit_move_insn (operands[0], lo);
+    }
   else if (TARGET_FIX_R4000)
     emit_insn (gen_mul<mode>3_r4000 (operands[0], operands[1], operands[2]));
   else
@@ -1459,12 +1485,17 @@
   DONE;
 })
 
-(define_insn "mul<mode>3_mul3_ls2ef"
+(define_insn "mul<mode>3_mul3_loongson"
   [(set (match_operand:GPR 0 "register_operand" "=d")
         (mult:GPR (match_operand:GPR 1 "register_operand" "d")
                   (match_operand:GPR 2 "register_operand" "d")))]
-  "TARGET_LOONGSON_2EF"
-  "<d>multu.g\t%0,%1,%2"
+  "TARGET_LOONGSON_2EF || TARGET_LOONGSON_3A"
+{
+  if (TARGET_LOONGSON_2EF)
+    return "<d>multu.g\t%0,%1,%2";
+  else
+    return "gs<d>multu\t%0,%1,%2";
+}
   [(set_attr "type" "imul3nc")
    (set_attr "mode" "<MODE>")])
 
@@ -1508,7 +1539,7 @@
         (clobber (match_dup 0))])])
 
 (define_insn "mul<mode>3_internal"
-  [(set (match_operand:GPR 0 "register_operand" "=l")
+  [(set (match_operand:GPR 0 "muldiv_target_operand" "=l")
 	(mult:GPR (match_operand:GPR 1 "register_operand" "d")
 		  (match_operand:GPR 2 "register_operand" "d")))]
   "!TARGET_FIX_R4000"
@@ -1583,6 +1614,7 @@
     madd\t%1,%2
     #"
   [(set_attr "type"	"imadd")
+   (set_attr "accum_in"	"3")
    (set_attr "mode"	"SI")
    (set_attr "length"	"4,8")])
 
@@ -1601,6 +1633,7 @@
     madd\t%0,%1,%2
     #"
   [(set_attr "type"	"imadd")
+   (set_attr "accum_in"	"3")
    (set_attr "mode"	"SI")
    (set_attr "length"	"4,4,8")])
 
@@ -1639,6 +1672,7 @@
     return "%[macc\t%@,%1,%2%]";
 }
   [(set_attr "type" "imadd")
+   (set_attr "accum_in"	"3")
    (set_attr "mode" "SI")])
 
 (define_insn "*msac"
@@ -1657,6 +1691,7 @@
     return "msac\t$0,%2,%3";
 }
   [(set_attr "type"     "imadd")
+   (set_attr "accum_in"	"1")
    (set_attr "mode"     "SI")])
 
 ;; An msac-like instruction implemented using negation and a macc.
@@ -1680,12 +1715,13 @@
 	(clobber (match_dup 4))])]
   ""
   [(set_attr "type"     "imadd")
+   (set_attr "accum_in"	"1")
    (set_attr "length"	"8")])
 
 ;; Patterns generated by the define_peephole2 below.
 
 (define_insn "*macc2"
-  [(set (match_operand:SI 0 "register_operand" "=l")
+  [(set (match_operand:SI 0 "muldiv_target_operand" "=l")
 	(plus:SI (mult:SI (match_operand:SI 1 "register_operand" "d")
 			  (match_operand:SI 2 "register_operand" "d"))
 		 (match_dup 0)))
@@ -1696,10 +1732,11 @@
   "ISA_HAS_MACC && reload_completed"
   "macc\t%3,%1,%2"
   [(set_attr "type"	"imadd")
+   (set_attr "accum_in"	"0")
    (set_attr "mode"	"SI")])
 
 (define_insn "*msac2"
-  [(set (match_operand:SI 0 "register_operand" "=l")
+  [(set (match_operand:SI 0 "muldiv_target_operand" "=l")
 	(minus:SI (match_dup 0)
 		  (mult:SI (match_operand:SI 1 "register_operand" "d")
 			   (match_operand:SI 2 "register_operand" "d"))))
@@ -1710,6 +1747,7 @@
   "ISA_HAS_MSAC && reload_completed"
   "msac\t%3,%1,%2"
   [(set_attr "type"	"imadd")
+   (set_attr "accum_in"	"0")
    (set_attr "mode"	"SI")])
 
 ;; Convert macc $0,<r1>,<r2> & mflo <r3> into macc <r3>,<r1>,<r2>
@@ -1812,6 +1850,7 @@
    msub\t%2,%3
    #"
   [(set_attr "type"     "imadd")
+   (set_attr "accum_in"	"1")
    (set_attr "mode"     "SI")
    (set_attr "length"   "4,8")])
 
@@ -1854,12 +1893,34 @@
   DONE;
 })
 
+(define_expand "<u>mulsidi3_32bit_mips16"
+  [(set (match_operand:DI 0 "register_operand")
+	(mult:DI (any_extend:DI (match_operand:SI 1 "register_operand"))
+		 (any_extend:DI (match_operand:SI 2 "register_operand"))))]
+  "!TARGET_64BIT && TARGET_MIPS16"
+{
+  rtx hilo;
+
+  hilo = gen_rtx_REG (DImode, MD_REG_FIRST);
+  emit_insn (gen_<u>mulsidi3_32bit (hilo, operands[1], operands[2]));
+  emit_move_insn (operands[0], hilo);
+  DONE;
+})
+
+;; As well as being named patterns, these instructions are used by the
+;; __builtin_mips_mult<u>() functions.  We must always make those functions
+;; available if !TARGET_64BIT && ISA_HAS_DSP.
 (define_insn "<u>mulsidi3_32bit"
-  [(set (match_operand:DI 0 "register_operand" "=x")
+  [(set (match_operand:DI 0 "muldiv_target_operand" "=ka")
 	(mult:DI (any_extend:DI (match_operand:SI 1 "register_operand" "d"))
 		 (any_extend:DI (match_operand:SI 2 "register_operand" "d"))))]
-  "!TARGET_64BIT && !TARGET_FIX_R4000 && !ISA_HAS_DSPR2"
-  "mult<u>\t%1,%2"
+  "!TARGET_64BIT && (!TARGET_FIX_R4000 || ISA_HAS_DSP)"
+{
+  if (ISA_HAS_DSP_MULT)
+    return "mult<u>\t%q0,%1,%2";
+  else
+    return "mult<u>\t%1,%2";
+}
   [(set_attr "type" "imul")
    (set_attr "mode" "SI")])
 
@@ -1868,84 +1929,80 @@
 	(mult:DI (any_extend:DI (match_operand:SI 1 "register_operand" "d"))
 		 (any_extend:DI (match_operand:SI 2 "register_operand" "d"))))
    (clobber (match_scratch:DI 3 "=x"))]
-  "!TARGET_64BIT && TARGET_FIX_R4000"
+  "!TARGET_64BIT && TARGET_FIX_R4000 && !ISA_HAS_DSP"
   "mult<u>\t%1,%2\;mflo\t%L0\;mfhi\t%M0"
   [(set_attr "type" "imul")
    (set_attr "mode" "SI")
    (set_attr "length" "12")])
 
-(define_insn "<u>mulsidi3_64bit"
+(define_insn_and_split "<u>mulsidi3_64bit"
   [(set (match_operand:DI 0 "register_operand" "=d")
 	(mult:DI (any_extend:DI (match_operand:SI 1 "register_operand" "d"))
 		 (any_extend:DI (match_operand:SI 2 "register_operand" "d"))))
    (clobber (match_scratch:TI 3 "=x"))
    (clobber (match_scratch:DI 4 "=d"))]
-  "TARGET_64BIT && !TARGET_FIX_R4000 && !ISA_HAS_DMUL3"
+  "TARGET_64BIT && !TARGET_FIX_R4000 && !ISA_HAS_DMUL3 && !TARGET_MIPS16"
   "#"
+  "&& reload_completed"
+  [(const_int 0)]
+{
+  emit_insn (gen_<u>mulsidi3_64bit_split (operands[0], operands[1],
+					  operands[2], operands[4]));
+  DONE;
+}
   [(set_attr "type" "imul")
    (set_attr "mode" "SI")
    (set (attr "length")
-	(if_then_else (ne (symbol_ref "ISA_HAS_EXT_INS") (const_int 0))
+	(if_then_else (match_test "ISA_HAS_EXT_INS")
 		      (const_int 16)
 		      (const_int 28)))])
 
-(define_split
-  [(set (match_operand:DI 0 "d_operand")
-	(mult:DI (any_extend:DI (match_operand:SI 1 "d_operand"))
-		 (any_extend:DI (match_operand:SI 2 "d_operand"))))
-   (clobber (match_operand:TI 3 "hilo_operand"))
-   (clobber (match_operand:DI 4 "d_operand"))]
-  "TARGET_64BIT && !TARGET_FIX_R4000 && ISA_HAS_EXT_INS && reload_completed"
-  [(set (match_dup 3)
-	(unspec:TI [(mult:DI (any_extend:DI (match_dup 1))
-			     (any_extend:DI (match_dup 2)))]
-		   UNSPEC_SET_HILO))
+(define_expand "<u>mulsidi3_64bit_mips16"
+  [(set (match_operand:DI 0 "register_operand")
+	(mult:DI (any_extend:DI (match_operand:SI 1 "register_operand"))
+		 (any_extend:DI (match_operand:SI 2 "register_operand"))))]
+  "TARGET_64BIT && TARGET_MIPS16"
+{
+  emit_insn (gen_<u>mulsidi3_64bit_split (operands[0], operands[1],
+					  operands[2], gen_reg_rtx (DImode)));
+  DONE;
+})
 
-   ;; OP0 <- LO, OP4 <- HI
-   (set (match_dup 0) (match_dup 5))
-   (set (match_dup 4) (unspec:DI [(match_dup 3)] UNSPEC_MFHI))
+(define_expand "<u>mulsidi3_64bit_split"
+  [(set (match_operand:DI 0 "register_operand")
+	(mult:DI (any_extend:DI (match_operand:SI 1 "register_operand"))
+		 (any_extend:DI (match_operand:SI 2 "register_operand"))))
+   (clobber (match_operand:DI 3 "register_operand"))]
+  ""
+{
+  rtx hilo;
 
-   (set (zero_extract:DI (match_dup 0) (const_int 32) (const_int 32))
-	(match_dup 4))]
-  { operands[5] = gen_rtx_REG (DImode, LO_REGNUM); })
+  hilo = gen_rtx_REG (TImode, MD_REG_FIRST);
+  emit_insn (gen_<u>mulsidi3_64bit_hilo (hilo, operands[1], operands[2]));
 
-(define_split
-  [(set (match_operand:DI 0 "d_operand")
-	(mult:DI (any_extend:DI (match_operand:SI 1 "d_operand"))
-		 (any_extend:DI (match_operand:SI 2 "d_operand"))))
-   (clobber (match_operand:TI 3 "hilo_operand"))
-   (clobber (match_operand:DI 4 "d_operand"))]
-  "TARGET_64BIT && !TARGET_FIX_R4000 && !ISA_HAS_EXT_INS && reload_completed"
-  [(set (match_dup 3)
-	(unspec:TI [(mult:DI (any_extend:DI (match_dup 1))
-			     (any_extend:DI (match_dup 2)))]
-		   UNSPEC_SET_HILO))
+  emit_move_insn (operands[0], gen_rtx_REG (DImode, LO_REGNUM));
+  emit_insn (gen_mfhidi_ti (operands[3], hilo));
 
-   ;; OP0 <- LO, OP4 <- HI
-   (set (match_dup 0) (match_dup 5))
-   (set (match_dup 4) (unspec:DI [(match_dup 3)] UNSPEC_MFHI))
+  if (ISA_HAS_EXT_INS)
+    emit_insn (gen_insvdi (operands[0], GEN_INT (32), GEN_INT (32),
+			   operands[3]));
+  else
+    {
+      /* Zero-extend the low part.  */
+      mips_emit_binary (ASHIFT, operands[0], operands[0], GEN_INT (32));
+      mips_emit_binary (LSHIFTRT, operands[0], operands[0], GEN_INT (32));
 
-   ;; Zero-extend OP0.
-   (set (match_dup 0)
-	(ashift:DI (match_dup 0)
-		   (const_int 32)))
-   (set (match_dup 0)
-	(lshiftrt:DI (match_dup 0)
-		     (const_int 32)))
+      /* Shift the high part into place.  */
+      mips_emit_binary (ASHIFT, operands[3], operands[3], GEN_INT (32));
 
-   ;; Shift OP4 into place.
-   (set (match_dup 4)
-	(ashift:DI (match_dup 4)
-		   (const_int 32)))
-
-   ;; OR the two halves together
-   (set (match_dup 0)
-	(ior:DI (match_dup 0)
-		(match_dup 4)))]
-  { operands[5] = gen_rtx_REG (DImode, LO_REGNUM); })
+      /* OR the two halves together.  */
+      mips_emit_binary (IOR, operands[0], operands[0], operands[3]);
+    }
+  DONE;
+})
 
 (define_insn "<u>mulsidi3_64bit_hilo"
-  [(set (match_operand:TI 0 "register_operand" "=x")
+  [(set (match_operand:TI 0 "muldiv_target_operand" "=x")
 	(unspec:TI
 	  [(mult:DI
 	     (any_extend:DI (match_operand:SI 1 "register_operand" "d"))
@@ -1969,7 +2026,7 @@
 
 ;; Widening multiply with negation.
 (define_insn "*muls<u>_di"
-  [(set (match_operand:DI 0 "register_operand" "=x")
+  [(set (match_operand:DI 0 "muldiv_target_operand" "=x")
         (neg:DI
 	 (mult:DI
 	  (any_extend:DI (match_operand:SI 1 "register_operand" "d"))
@@ -1979,16 +2036,23 @@
   [(set_attr "type" "imul")
    (set_attr "mode" "SI")])
 
+;; As well as being named patterns, these instructions are used by the
+;; __builtin_mips_msub<u>() functions.  We must always make those functions
+;; available if !TARGET_64BIT && ISA_HAS_DSP.
+;;
+;; This leads to a slight inconsistency.  We honor any tuning overrides
+;; in GENERATE_MADD_MSUB for -mno-dsp, but always ignore them for -mdsp,
+;; even if !ISA_HAS_DSP_MULT.
 (define_insn "<u>msubsidi4"
-  [(set (match_operand:DI 0 "register_operand" "=ka")
+  [(set (match_operand:DI 0 "muldiv_target_operand" "=ka")
         (minus:DI
-	   (match_operand:DI 3 "register_operand" "0")
+	   (match_operand:DI 3 "muldiv_target_operand" "0")
 	   (mult:DI
 	      (any_extend:DI (match_operand:SI 1 "register_operand" "d"))
 	      (any_extend:DI (match_operand:SI 2 "register_operand" "d")))))]
-  "!TARGET_64BIT && (ISA_HAS_MSAC || GENERATE_MADD_MSUB || ISA_HAS_DSPR2)"
+  "!TARGET_64BIT && (ISA_HAS_MSAC || GENERATE_MADD_MSUB || ISA_HAS_DSP)"
 {
-  if (ISA_HAS_DSPR2)
+  if (ISA_HAS_DSP_MULT)
     return "msub<u>\t%q0,%1,%2";
   else if (TARGET_MIPS5500 || GENERATE_MADD_MSUB)
     return "msub<u>\t%1,%2";
@@ -1996,6 +2060,7 @@
     return "msac<u>\t$0,%1,%2";
 }
   [(set_attr "type" "imadd")
+   (set_attr "accum_in"	"3")
    (set_attr "mode" "SI")])
 
 ;; _highpart patterns
@@ -2013,6 +2078,9 @@
     emit_insn (gen_<su>mulsi3_highpart_mulhi_internal (operands[0],
 						       operands[1],
 						       operands[2]));
+  else if (TARGET_MIPS16)
+    emit_insn (gen_<su>mulsi3_highpart_split (operands[0], operands[1],
+					      operands[2]));
   else
     emit_insn (gen_<su>mulsi3_highpart_internal (operands[0], operands[1],
 					         operands[2]));
@@ -2027,10 +2095,27 @@
 		   (any_extend:DI (match_operand:SI 2 "register_operand" "d")))
 	  (const_int 32))))
    (clobber (match_scratch:SI 3 "=l"))]
-  "!ISA_HAS_MULHI"
+  "!ISA_HAS_MULHI && !TARGET_MIPS16"
   { return TARGET_FIX_R4000 ? "mult<u>\t%1,%2\n\tmfhi\t%0" : "#"; }
   "&& reload_completed && !TARGET_FIX_R4000"
   [(const_int 0)]
+{
+  emit_insn (gen_<su>mulsi3_highpart_split (operands[0], operands[1],
+					    operands[2]));
+  DONE;
+}
+  [(set_attr "type" "imul")
+   (set_attr "mode" "SI")
+   (set_attr "length" "8")])
+
+(define_expand "<su>mulsi3_highpart_split"
+  [(set (match_operand:SI 0 "register_operand")
+	(truncate:SI
+	 (lshiftrt:DI
+	  (mult:DI (any_extend:DI (match_operand:SI 1 "register_operand"))
+		   (any_extend:DI (match_operand:SI 2 "register_operand")))
+	  (const_int 32))))]
+  ""
 {
   rtx hilo;
 
@@ -2047,10 +2132,7 @@
       emit_insn (gen_mfhisi_di (operands[0], hilo));
     }
   DONE;
-}
-  [(set_attr "type" "imul")
-   (set_attr "mode" "SI")
-   (set_attr "length" "8")])
+})
 
 (define_insn "<su>mulsi3_highpart_mulhi_internal"
   [(set (match_operand:SI 0 "register_operand" "=d")
@@ -2084,7 +2166,25 @@
 ;; Disable unsigned multiplication for -mfix-vr4120.  This is for VR4120
 ;; errata MD(0), which says that dmultu does not always produce the
 ;; correct result.
-(define_insn_and_split "<su>muldi3_highpart"
+(define_expand "<su>muldi3_highpart"
+  [(set (match_operand:DI 0 "register_operand")
+	(truncate:DI
+	 (lshiftrt:TI
+	  (mult:TI (any_extend:TI (match_operand:DI 1 "register_operand"))
+		   (any_extend:TI (match_operand:DI 2 "register_operand")))
+	  (const_int 64))))]
+  "TARGET_64BIT && !(<CODE> == ZERO_EXTEND && TARGET_FIX_VR4120)"
+{
+  if (TARGET_MIPS16)
+    emit_insn (gen_<su>muldi3_highpart_split (operands[0], operands[1],
+					      operands[2]));
+  else
+    emit_insn (gen_<su>muldi3_highpart_internal (operands[0], operands[1],
+						 operands[2]));
+  DONE;
+})
+
+(define_insn_and_split "<su>muldi3_highpart_internal"
   [(set (match_operand:DI 0 "register_operand" "=d")
 	(truncate:DI
 	 (lshiftrt:TI
@@ -2092,10 +2192,29 @@
 		   (any_extend:TI (match_operand:DI 2 "register_operand" "d")))
 	  (const_int 64))))
    (clobber (match_scratch:DI 3 "=l"))]
-  "TARGET_64BIT && !(<CODE> == ZERO_EXTEND && TARGET_FIX_VR4120)"
+  "TARGET_64BIT
+   && !TARGET_MIPS16
+   && !(<CODE> == ZERO_EXTEND && TARGET_FIX_VR4120)"
   { return TARGET_FIX_R4000 ? "dmult<u>\t%1,%2\n\tmfhi\t%0" : "#"; }
   "&& reload_completed && !TARGET_FIX_R4000"
   [(const_int 0)]
+{
+  emit_insn (gen_<su>muldi3_highpart_split (operands[0], operands[1],
+					    operands[2]));
+  DONE;
+}
+  [(set_attr "type" "imul")
+   (set_attr "mode" "DI")
+   (set_attr "length" "8")])
+
+(define_expand "<su>muldi3_highpart_split"
+  [(set (match_operand:DI 0 "register_operand")
+	(truncate:DI
+	 (lshiftrt:TI
+	  (mult:TI (any_extend:TI (match_operand:DI 1 "register_operand"))
+		   (any_extend:TI (match_operand:DI 2 "register_operand")))
+	  (const_int 64))))]
+  ""
 {
   rtx hilo;
 
@@ -2103,10 +2222,7 @@
   emit_insn (gen_<u>mulditi3_internal (hilo, operands[1], operands[2]));
   emit_insn (gen_mfhidi_ti (operands[0], hilo));
   DONE;
-}
-  [(set_attr "type" "imul")
-   (set_attr "mode" "DI")
-   (set_attr "length" "8")])
+})
 
 (define_expand "<u>mulditi3"
   [(set (match_operand:TI 0 "register_operand")
@@ -2114,7 +2230,15 @@
 		 (any_extend:TI (match_operand:DI 2 "register_operand"))))]
   "TARGET_64BIT && !(<CODE> == ZERO_EXTEND && TARGET_FIX_VR4120)"
 {
-  if (TARGET_FIX_R4000)
+  rtx hilo;
+
+  if (TARGET_MIPS16)
+    {
+      hilo = gen_rtx_REG (TImode, MD_REG_FIRST);
+      emit_insn (gen_<u>mulditi3_internal (hilo, operands[1], operands[2]));
+      emit_move_insn (operands[0], hilo);
+    }
+  else if (TARGET_FIX_R4000)
     emit_insn (gen_<u>mulditi3_r4000 (operands[0], operands[1], operands[2]));
   else
     emit_insn (gen_<u>mulditi3_internal (operands[0], operands[1],
@@ -2123,7 +2247,7 @@
 })
 
 (define_insn "<u>mulditi3_internal"
-  [(set (match_operand:TI 0 "register_operand" "=x")
+  [(set (match_operand:TI 0 "muldiv_target_operand" "=x")
 	(mult:TI (any_extend:TI (match_operand:DI 1 "register_operand" "d"))
 		 (any_extend:TI (match_operand:DI 2 "register_operand" "d"))))]
   "TARGET_64BIT
@@ -2157,20 +2281,23 @@
   "TARGET_MAD"
   "mad\t%1,%2"
   [(set_attr "type"	"imadd")
+   (set_attr "accum_in"	"0")
    (set_attr "mode"	"SI")])
 
+;; See the comment above <u>msubsidi4 for the relationship between
+;; ISA_HAS_DSP and ISA_HAS_DSP_MULT.
 (define_insn "<u>maddsidi4"
-  [(set (match_operand:DI 0 "register_operand" "=ka")
+  [(set (match_operand:DI 0 "muldiv_target_operand" "=ka")
 	(plus:DI
 	 (mult:DI (any_extend:DI (match_operand:SI 1 "register_operand" "d"))
 		  (any_extend:DI (match_operand:SI 2 "register_operand" "d")))
-	 (match_operand:DI 3 "register_operand" "0")))]
-  "(TARGET_MAD || ISA_HAS_MACC || GENERATE_MADD_MSUB || ISA_HAS_DSPR2)
+	 (match_operand:DI 3 "muldiv_target_operand" "0")))]
+  "(TARGET_MAD || ISA_HAS_MACC || GENERATE_MADD_MSUB || ISA_HAS_DSP)
    && !TARGET_64BIT"
 {
   if (TARGET_MAD)
     return "mad<u>\t%1,%2";
-  else if (ISA_HAS_DSPR2)
+  else if (ISA_HAS_DSP_MULT)
     return "madd<u>\t%q0,%1,%2";
   else if (GENERATE_MADD_MSUB || TARGET_MIPS5500)
     return "madd<u>\t%1,%2";
@@ -2179,6 +2306,7 @@
     return "%[macc<u>\t%@,%1,%2%]";
 }
   [(set_attr "type" "imadd")
+   (set_attr "accum_in"	"3")
    (set_attr "mode" "SI")])
 
 ;; Floating point multiply accumulate instructions.
@@ -2191,6 +2319,7 @@
   "ISA_HAS_FP_MADD4_MSUB4 && TARGET_FUSED_MADD"
   "madd.<fmt>\t%0,%3,%1,%2"
   [(set_attr "type" "fmadd")
+   (set_attr "accum_in"	"3")
    (set_attr "mode" "<UNITMODE>")])
 
 (define_insn "*madd3<mode>"
@@ -2201,6 +2330,7 @@
   "ISA_HAS_FP_MADD3_MSUB3 && TARGET_FUSED_MADD"
   "madd.<fmt>\t%0,%1,%2"
   [(set_attr "type" "fmadd")
+   (set_attr "accum_in"	"3")
    (set_attr "mode" "<UNITMODE>")])
 
 (define_insn "*msub4<mode>"
@@ -2211,6 +2341,7 @@
   "ISA_HAS_FP_MADD4_MSUB4 && TARGET_FUSED_MADD"
   "msub.<fmt>\t%0,%3,%1,%2"
   [(set_attr "type" "fmadd")
+   (set_attr "accum_in"	"3")
    (set_attr "mode" "<UNITMODE>")])
 
 (define_insn "*msub3<mode>"
@@ -2221,6 +2352,7 @@
   "ISA_HAS_FP_MADD3_MSUB3 && TARGET_FUSED_MADD"
   "msub.<fmt>\t%0,%1,%2"
   [(set_attr "type" "fmadd")
+   (set_attr "accum_in"	"3")
    (set_attr "mode" "<UNITMODE>")])
 
 (define_insn "*nmadd4<mode>"
@@ -2235,6 +2367,7 @@
    && !HONOR_NANS (<MODE>mode)"
   "nmadd.<fmt>\t%0,%3,%1,%2"
   [(set_attr "type" "fmadd")
+   (set_attr "accum_in"	"3")
    (set_attr "mode" "<UNITMODE>")])
 
 (define_insn "*nmadd3<mode>"
@@ -2249,6 +2382,7 @@
    && !HONOR_NANS (<MODE>mode)"
   "nmadd.<fmt>\t%0,%1,%2"
   [(set_attr "type" "fmadd")
+   (set_attr "accum_in"	"3")
    (set_attr "mode" "<UNITMODE>")])
 
 (define_insn "*nmadd4<mode>_fastmath"
@@ -2263,6 +2397,7 @@
    && !HONOR_NANS (<MODE>mode)"
   "nmadd.<fmt>\t%0,%3,%1,%2"
   [(set_attr "type" "fmadd")
+   (set_attr "accum_in"	"3")
    (set_attr "mode" "<UNITMODE>")])
 
 (define_insn "*nmadd3<mode>_fastmath"
@@ -2277,6 +2412,7 @@
    && !HONOR_NANS (<MODE>mode)"
   "nmadd.<fmt>\t%0,%1,%2"
   [(set_attr "type" "fmadd")
+   (set_attr "accum_in"	"3")
    (set_attr "mode" "<UNITMODE>")])
 
 (define_insn "*nmsub4<mode>"
@@ -2291,6 +2427,7 @@
    && !HONOR_NANS (<MODE>mode)"
   "nmsub.<fmt>\t%0,%1,%2,%3"
   [(set_attr "type" "fmadd")
+   (set_attr "accum_in"	"1")
    (set_attr "mode" "<UNITMODE>")])
 
 (define_insn "*nmsub3<mode>"
@@ -2305,6 +2442,7 @@
    && !HONOR_NANS (<MODE>mode)"
   "nmsub.<fmt>\t%0,%1,%2"
   [(set_attr "type" "fmadd")
+   (set_attr "accum_in"	"1")
    (set_attr "mode" "<UNITMODE>")])
 
 (define_insn "*nmsub4<mode>_fastmath"
@@ -2319,6 +2457,7 @@
    && !HONOR_NANS (<MODE>mode)"
   "nmsub.<fmt>\t%0,%1,%2,%3"
   [(set_attr "type" "fmadd")
+   (set_attr "accum_in"	"1")
    (set_attr "mode" "<UNITMODE>")])
 
 (define_insn "*nmsub3<mode>_fastmath"
@@ -2333,6 +2472,7 @@
    && !HONOR_NANS (<MODE>mode)"
   "nmsub.<fmt>\t%0,%1,%2"
   [(set_attr "type" "fmadd")
+   (set_attr "accum_in"	"1")
    (set_attr "mode" "<UNITMODE>")])
 
 ;;
@@ -2380,7 +2520,7 @@
   [(set_attr "type" "fdiv")
    (set_attr "mode" "<UNITMODE>")
    (set (attr "length")
-        (if_then_else (ne (symbol_ref "TARGET_FIX_SB1") (const_int 0))
+        (if_then_else (match_test "TARGET_FIX_SB1")
                       (const_int 8)
                       (const_int 4)))])
 
@@ -2398,78 +2538,119 @@
   [(set_attr "type" "frdiv")
    (set_attr "mode" "<UNITMODE>")
    (set (attr "length")
-        (if_then_else (ne (symbol_ref "TARGET_FIX_SB1") (const_int 0))
+        (if_then_else (match_test "TARGET_FIX_SB1")
                       (const_int 8)
                       (const_int 4)))])
 
 ;; VR4120 errata MD(A1): signed division instructions do not work correctly
 ;; with negative operands.  We use special libgcc functions instead.
-(define_insn_and_split "divmod<mode>4"
-  [(set (match_operand:GPR 0 "register_operand" "=l")
+(define_expand "divmod<mode>4"
+  [(set (match_operand:GPR 0 "register_operand")
+	(div:GPR (match_operand:GPR 1 "register_operand")
+		 (match_operand:GPR 2 "register_operand")))
+   (set (match_operand:GPR 3 "register_operand")
+	(mod:GPR (match_dup 1)
+		 (match_dup 2)))]
+  "!TARGET_FIX_VR4120"
+{
+  if (TARGET_MIPS16)
+    {
+      emit_insn (gen_divmod<mode>4_split (operands[3], operands[1],
+					  operands[2]));
+      emit_move_insn (operands[0], gen_rtx_REG (<MODE>mode, LO_REGNUM));
+    }
+  else
+    emit_insn (gen_divmod<mode>4_internal (operands[0], operands[1],
+					   operands[2], operands[3]));
+  DONE;
+})
+
+(define_insn_and_split "divmod<mode>4_internal"
+  [(set (match_operand:GPR 0 "muldiv_target_operand" "=l")
 	(div:GPR (match_operand:GPR 1 "register_operand" "d")
 		 (match_operand:GPR 2 "register_operand" "d")))
    (set (match_operand:GPR 3 "register_operand" "=d")
 	(mod:GPR (match_dup 1)
 		 (match_dup 2)))]
-  "!TARGET_FIX_VR4120"
+  "!TARGET_FIX_VR4120 && !TARGET_MIPS16"
   "#"
   "&& reload_completed"
   [(const_int 0)]
 {
-  rtx hilo;
-
-  if (TARGET_64BIT)
-    {
-      hilo = gen_rtx_REG (TImode, MD_REG_FIRST);
-      emit_insn (gen_divmod<mode>4_hilo_ti (hilo, operands[1], operands[2]));
-      emit_insn (gen_mfhi<mode>_ti (operands[3], hilo));
-    }
-  else
-    {
-      hilo = gen_rtx_REG (DImode, MD_REG_FIRST);
-      emit_insn (gen_divmod<mode>4_hilo_di (hilo, operands[1], operands[2]));
-      emit_insn (gen_mfhi<mode>_di (operands[3], hilo));
-    }
+  emit_insn (gen_divmod<mode>4_split (operands[3], operands[1], operands[2]));
   DONE;
 }
  [(set_attr "type" "idiv")
   (set_attr "mode" "<MODE>")
   (set_attr "length" "8")])
 
-(define_insn_and_split "udivmod<mode>4"
-  [(set (match_operand:GPR 0 "register_operand" "=l")
+(define_expand "udivmod<mode>4"
+  [(set (match_operand:GPR 0 "register_operand")
+	(udiv:GPR (match_operand:GPR 1 "register_operand")
+		  (match_operand:GPR 2 "register_operand")))
+   (set (match_operand:GPR 3 "register_operand")
+	(umod:GPR (match_dup 1)
+		  (match_dup 2)))]
+  ""
+{
+  if (TARGET_MIPS16)
+    {
+      emit_insn (gen_udivmod<mode>4_split (operands[3], operands[1],
+					   operands[2]));
+      emit_move_insn (operands[0], gen_rtx_REG (<MODE>mode, LO_REGNUM));
+    }
+  else
+    emit_insn (gen_udivmod<mode>4_internal (operands[0], operands[1],
+					    operands[2], operands[3]));
+  DONE;
+})
+
+(define_insn_and_split "udivmod<mode>4_internal"
+  [(set (match_operand:GPR 0 "muldiv_target_operand" "=l")
 	(udiv:GPR (match_operand:GPR 1 "register_operand" "d")
 		  (match_operand:GPR 2 "register_operand" "d")))
    (set (match_operand:GPR 3 "register_operand" "=d")
 	(umod:GPR (match_dup 1)
 		  (match_dup 2)))]
-  ""
+  "!TARGET_MIPS16"
   "#"
   "reload_completed"
   [(const_int 0)]
 {
-  rtx hilo;
-
-  if (TARGET_64BIT)
-    {
-      hilo = gen_rtx_REG (TImode, MD_REG_FIRST);
-      emit_insn (gen_udivmod<mode>4_hilo_ti (hilo, operands[1], operands[2]));
-      emit_insn (gen_mfhi<mode>_ti (operands[3], hilo));
-    }
-  else
-    {
-      hilo = gen_rtx_REG (DImode, MD_REG_FIRST);
-      emit_insn (gen_udivmod<mode>4_hilo_di (hilo, operands[1], operands[2]));
-      emit_insn (gen_mfhi<mode>_di (operands[3], hilo));
-    }
+  emit_insn (gen_udivmod<mode>4_split (operands[3], operands[1], operands[2]));
   DONE;
 }
  [(set_attr "type" "idiv")
   (set_attr "mode" "<MODE>")
   (set_attr "length" "8")])
 
+(define_expand "<u>divmod<mode>4_split"
+  [(set (match_operand:GPR 0 "register_operand")
+	(any_mod:GPR (match_operand:GPR 1 "register_operand")
+		     (match_operand:GPR 2 "register_operand")))]
+  ""
+{
+  rtx hilo;
+
+  if (TARGET_64BIT)
+    {
+      hilo = gen_rtx_REG (TImode, MD_REG_FIRST);
+      emit_insn (gen_<u>divmod<mode>4_hilo_ti (hilo, operands[1],
+					       operands[2]));
+      emit_insn (gen_mfhi<mode>_ti (operands[0], hilo));
+    }
+  else
+    {
+      hilo = gen_rtx_REG (DImode, MD_REG_FIRST);
+      emit_insn (gen_<u>divmod<mode>4_hilo_di (hilo, operands[1],
+					       operands[2]));
+      emit_insn (gen_mfhi<mode>_di (operands[0], hilo));
+    }
+  DONE;
+})
+
 (define_insn "<u>divmod<GPR:mode>4_hilo_<HILO:mode>"
-  [(set (match_operand:HILO 0 "register_operand" "=x")
+  [(set (match_operand:HILO 0 "muldiv_target_operand" "=x")
 	(unspec:HILO
 	  [(any_div:GPR (match_operand:GPR 1 "register_operand" "d")
 			(match_operand:GPR 2 "register_operand" "d"))]
@@ -2502,7 +2683,7 @@
   [(set_attr "type" "fsqrt")
    (set_attr "mode" "<UNITMODE>")
    (set (attr "length")
-        (if_then_else (ne (symbol_ref "TARGET_FIX_SB1") (const_int 0))
+        (if_then_else (match_test "TARGET_FIX_SB1")
                       (const_int 8)
                       (const_int 4)))])
 
@@ -2520,7 +2701,7 @@
   [(set_attr "type" "frsqrt")
    (set_attr "mode" "<UNITMODE>")
    (set (attr "length")
-        (if_then_else (ne (symbol_ref "TARGET_FIX_SB1") (const_int 0))
+        (if_then_else (match_test "TARGET_FIX_SB1")
                       (const_int 8)
                       (const_int 4)))])
 
@@ -2538,7 +2719,7 @@
   [(set_attr "type" "frsqrt")
    (set_attr "mode" "<UNITMODE>")
    (set (attr "length")
-        (if_then_else (ne (symbol_ref "TARGET_FIX_SB1") (const_int 0))
+        (if_then_else (match_test "TARGET_FIX_SB1")
                       (const_int 8)
                       (const_int 4)))])
 
@@ -2595,6 +2776,16 @@
   "<d>pop\t%0,%1"
   [(set_attr "type" "pop")
    (set_attr "mode" "<MODE>")])
+
+;; The POP instruction is special as it does not take into account the upper
+;; 32bits and is documented that way.
+(define_insn "*popcountdi2_trunc"
+  [(set (match_operand:SI 0 "register_operand" "=d")
+       (popcount:SI (truncate:SI (match_operand:DI 1 "register_operand" "d"))))]
+  "ISA_HAS_POP && TARGET_64BIT"
+  "pop\t%0,%1"
+  [(set_attr "type" "pop")
+   (set_attr "mode" "SI")])
 
 ;;
 ;;  ....................
@@ -2613,7 +2804,7 @@
   else
     return "subu\t%0,%.,%1";
 }
-  [(set_attr "type"	"arith")
+  [(set_attr "alu_type"	"sub")
    (set_attr "mode"	"SI")])
 
 (define_insn "negdi2"
@@ -2621,7 +2812,7 @@
 	(neg:DI (match_operand:DI 1 "register_operand" "d")))]
   "TARGET_64BIT && !TARGET_MIPS16"
   "dsubu\t%0,%.,%1"
-  [(set_attr "type"	"arith")
+  [(set_attr "alu_type"	"sub")
    (set_attr "mode"	"DI")])
 
 ;; neg.fmt is an arithmetic instruction and treats all NaN inputs as
@@ -2646,7 +2837,7 @@
   else
     return "nor\t%0,%.,%1";
 }
-  [(set_attr "type" "logical")
+  [(set_attr "alu_type" "not")
    (set_attr "mode" "<MODE>")])
 
 ;;
@@ -2724,7 +2915,7 @@
 
 (define_insn "*and<mode>3_mips16"
   [(set (match_operand:GPR 0 "register_operand" "=d,d,d,d,d")
-	(and:GPR (match_operand:GPR 1 "nonimmediate_operand" "%o,o,W,d,0")
+	(and:GPR (match_operand:GPR 1 "nonimmediate_operand" "%W,W,W,d,0")
 		 (match_operand:GPR 2 "and_operand" "Yb,Yh,Yw,Yw,d")))]
   "TARGET_MIPS16 && and_operands_ok (<MODE>mode, operands[1], operands[2])"
 {
@@ -2768,7 +2959,7 @@
   "@
    or\t%0,%1,%2
    ori\t%0,%1,%x2"
-  [(set_attr "type" "logical")
+  [(set_attr "alu_type" "or")
    (set_attr "mode" "<MODE>")])
 
 (define_insn "*ior<mode>3_mips16"
@@ -2777,7 +2968,7 @@
 		 (match_operand:GPR 2 "register_operand" "d")))]
   "TARGET_MIPS16"
   "or\t%0,%2"
-  [(set_attr "type" "logical")
+  [(set_attr "alu_type" "or")
    (set_attr "mode" "<MODE>")])
 
 (define_expand "xor<mode>3"
@@ -2795,7 +2986,7 @@
   "@
    xor\t%0,%1,%2
    xori\t%0,%1,%x2"
-  [(set_attr "type" "logical")
+  [(set_attr "alu_type" "xor")
    (set_attr "mode" "<MODE>")])
 
 (define_insn ""
@@ -2807,7 +2998,7 @@
    xor\t%0,%2
    cmpi\t%1,%2
    cmp\t%1,%2"
-  [(set_attr "type" "logical,arith,arith")
+  [(set_attr "alu_type" "xor")
    (set_attr "mode" "<MODE>")
    (set_attr_alternative "length"
 		[(const_int 4)
@@ -2822,7 +3013,7 @@
 		 (not:GPR (match_operand:GPR 2 "register_operand" "d"))))]
   "!TARGET_MIPS16"
   "nor\t%0,%1,%2"
-  [(set_attr "type" "logical")
+  [(set_attr "alu_type" "nor")
    (set_attr "mode" "<MODE>")])
 
 ;;
@@ -3040,7 +3231,7 @@
   operands[2] = GEN_INT (GET_MODE_MASK (<SHORT:MODE>mode));
   return "andi\t%0,%1,%x2";
 }
-  [(set_attr "type" "logical")
+  [(set_attr "alu_type" "and")
    (set_attr "mode" "<GPR:MODE>")])
 
 (define_insn "*zero_extendhi_truncqi"
@@ -3049,7 +3240,7 @@
 	    (truncate:QI (match_operand:DI 1 "register_operand" "d"))))]
   "TARGET_64BIT && !TARGET_MIPS16"
   "andi\t%0,%1,0xff"
-  [(set_attr "type" "logical")
+  [(set_attr "alu_type" "and")
    (set_attr "mode" "HI")])
 
 ;;
@@ -3062,19 +3253,25 @@
 ;; Extension insns.
 ;; Those for integer source operand are ordered widest source type first.
 
-;; When TARGET_64BIT, all SImode integer registers should already be in
-;; sign-extended form (see TRULY_NOOP_TRUNCATION and truncdisi2).  We can
-;; therefore get rid of register->register instructions if we constrain
-;; the source to be in the same register as the destination.
+;; When TARGET_64BIT, all SImode integer and accumulator registers
+;; should already be in sign-extended form (see TRULY_NOOP_TRUNCATION
+;; and truncdisi2).  We can therefore get rid of register->register
+;; instructions if we constrain the source to be in the same register as
+;; the destination.
 ;;
-;; The register alternative has type "arith" so that the pre-reload
-;; scheduler will treat it as a move.  This reflects what happens if
-;; the register alternative needs a reload.
+;; Only the pre-reload scheduler sees the type of the register alternatives;
+;; we split them into nothing before the post-reload scheduler runs.
+;; These alternatives therefore have type "move" in order to reflect
+;; what happens if the two pre-reload operands cannot be tied, and are
+;; instead allocated two separate GPRs.  We don't distinguish between
+;; the GPR and LO cases because we don't usually know during pre-reload
+;; scheduling whether an operand will be LO or not.
 (define_insn_and_split "extendsidi2"
-  [(set (match_operand:DI 0 "register_operand" "=d,d")
-        (sign_extend:DI (match_operand:SI 1 "nonimmediate_operand" "0,m")))]
+  [(set (match_operand:DI 0 "register_operand" "=d,l,d")
+        (sign_extend:DI (match_operand:SI 1 "nonimmediate_operand" "0,0,m")))]
   "TARGET_64BIT"
   "@
+   #
    #
    lw\t%0,%1"
   "&& reload_completed && register_operand (operands[1], VOIDmode)"
@@ -3083,7 +3280,7 @@
   emit_note (NOTE_INSN_DELETED);
   DONE;
 }
-  [(set_attr "move_type" "move,load")
+  [(set_attr "move_type" "move,move,load")
    (set_attr "mode" "DI")])
 
 (define_expand "extend<SHORT:mode><GPR:mode>2"
@@ -3594,33 +3791,34 @@
 
 ;; Bit field extract patterns which use lwl/lwr or ldl/ldr.
 
-(define_expand "extv"
-  [(set (match_operand 0 "register_operand")
-	(sign_extract (match_operand 1 "nonimmediate_operand")
-		      (match_operand 2 "const_int_operand")
-		      (match_operand 3 "const_int_operand")))]
+(define_expand "extvmisalign<mode>"
+  [(set (match_operand:GPR 0 "register_operand")
+	(sign_extract:GPR (match_operand:BLK 1 "memory_operand")
+			  (match_operand 2 "const_int_operand")
+			  (match_operand 3 "const_int_operand")))]
   "!TARGET_MIPS16"
 {
   if (mips_expand_ext_as_unaligned_load (operands[0], operands[1],
 					 INTVAL (operands[2]),
-					 INTVAL (operands[3])))
+					 INTVAL (operands[3]),
+					 /*unsigned=*/ false))
     DONE;
-  else if (register_operand (operands[1], GET_MODE (operands[0]))
-	   && ISA_HAS_EXTS && UINTVAL (operands[2]) <= 32)
-    {
-      if (GET_MODE (operands[0]) == DImode)
-	emit_insn (gen_extvdi (operands[0], operands[1], operands[2],
-			       operands[3]));
-      else
-	emit_insn (gen_extvsi (operands[0], operands[1], operands[2],
-			       operands[3]));
-      DONE;
-    }
   else
     FAIL;
 })
 
-(define_insn "extv<mode>"
+(define_expand "extv<mode>"
+  [(set (match_operand:GPR 0 "register_operand")
+	(sign_extract:GPR (match_operand:GPR 1 "register_operand")
+			  (match_operand 2 "const_int_operand")
+			  (match_operand 3 "const_int_operand")))]
+  "ISA_HAS_EXTS"
+{
+  if (UINTVAL (operands[2]) > 32)
+    FAIL;
+})
+
+(define_insn "*extv<mode>"
   [(set (match_operand:GPR 0 "register_operand" "=d")
         (sign_extract:GPR (match_operand:GPR 1 "register_operand" "d")
 			  (match_operand 2 "const_int_operand" "")
@@ -3630,34 +3828,35 @@
   [(set_attr "type"     "arith")
    (set_attr "mode"     "<MODE>")])
 
-
-(define_expand "extzv"
-  [(set (match_operand 0 "register_operand")
-	(zero_extract (match_operand 1 "nonimmediate_operand")
-		      (match_operand 2 "const_int_operand")
-		      (match_operand 3 "const_int_operand")))]
+(define_expand "extzvmisalign<mode>"
+  [(set (match_operand:GPR 0 "register_operand")
+	(zero_extract:GPR (match_operand:BLK 1 "memory_operand")
+			  (match_operand 2 "const_int_operand")
+			  (match_operand 3 "const_int_operand")))]
   "!TARGET_MIPS16"
 {
   if (mips_expand_ext_as_unaligned_load (operands[0], operands[1],
 					 INTVAL (operands[2]),
-					 INTVAL (operands[3])))
+					 INTVAL (operands[3]),
+					 /*unsigned=*/ true))
     DONE;
-  else if (mips_use_ins_ext_p (operands[1], INTVAL (operands[2]),
-			       INTVAL (operands[3])))
-    {
-      if (GET_MODE (operands[0]) == DImode)
-        emit_insn (gen_extzvdi (operands[0], operands[1], operands[2],
-				operands[3]));
-      else
-        emit_insn (gen_extzvsi (operands[0], operands[1], operands[2],
-				operands[3]));
-      DONE;
-    }
   else
     FAIL;
 })
 
-(define_insn "extzv<mode>"
+(define_expand "extzv<mode>"
+  [(set (match_operand:GPR 0 "register_operand")
+	(zero_extract:GPR (match_operand:GPR 1 "register_operand")
+			  (match_operand 2 "const_int_operand")
+			  (match_operand 3 "const_int_operand")))]
+  ""
+{
+  if (!mips_use_ins_ext_p (operands[1], INTVAL (operands[2]),
+			   INTVAL (operands[3])))
+    FAIL;
+})
+
+(define_insn "*extzv<mode>"
   [(set (match_operand:GPR 0 "register_operand" "=d")
 	(zero_extract:GPR (match_operand:GPR 1 "register_operand" "d")
 			  (match_operand 2 "const_int_operand" "")
@@ -3680,36 +3879,37 @@
    (set_attr "mode"     "SI")])
 
 
-(define_expand "insv"
-  [(set (zero_extract (match_operand 0 "nonimmediate_operand")
-		      (match_operand 1 "immediate_operand")
-		      (match_operand 2 "immediate_operand"))
-	(match_operand 3 "reg_or_0_operand"))]
+(define_expand "insvmisalign<mode>"
+  [(set (zero_extract:GPR (match_operand:BLK 0 "memory_operand")
+			  (match_operand 1 "const_int_operand")
+			  (match_operand 2 "const_int_operand"))
+	(match_operand:GPR 3 "reg_or_0_operand"))]
   "!TARGET_MIPS16"
 {
   if (mips_expand_ins_as_unaligned_store (operands[0], operands[3],
 					  INTVAL (operands[1]),
 					  INTVAL (operands[2])))
     DONE;
-  else if (mips_use_ins_ext_p (operands[0], INTVAL (operands[1]),
-			       INTVAL (operands[2])))
-    {
-      if (GET_MODE (operands[0]) == DImode)
-        emit_insn (gen_insvdi (operands[0], operands[1], operands[2],
-			       operands[3]));
-      else
-        emit_insn (gen_insvsi (operands[0], operands[1], operands[2],
-			       operands[3]));
-      DONE;
-   }
-   else
-     FAIL;
+  else
+    FAIL;
 })
 
-(define_insn "insv<mode>"
+(define_expand "insv<mode>"
+  [(set (zero_extract:GPR (match_operand:GPR 0 "register_operand")
+			  (match_operand 1 "const_int_operand")
+			  (match_operand 2 "const_int_operand"))
+	(match_operand:GPR 3 "reg_or_0_operand"))]
+  ""
+{
+  if (!mips_use_ins_ext_p (operands[0], INTVAL (operands[1]),
+			   INTVAL (operands[2])))
+    FAIL;
+})
+
+(define_insn "*insv<mode>"
   [(set (zero_extract:GPR (match_operand:GPR 0 "register_operand" "+d")
-			  (match_operand:SI 1 "immediate_operand" "I")
-			  (match_operand:SI 2 "immediate_operand" "I"))
+			  (match_operand:SI 1 "const_int_operand" "")
+			  (match_operand:SI 2 "const_int_operand" ""))
 	(match_operand:GPR 3 "reg_or_0_operand" "dJ"))]
   "mips_use_ins_ext_p (operands[0], INTVAL (operands[1]),
 		       INTVAL (operands[2]))"
@@ -3887,14 +4087,19 @@
 ;;
 ;; on MIPS16 targets.
 (define_split
-  [(set (match_operand:SI 0 "d_operand")
-	(high:SI (match_operand:SI 1 "absolute_symbolic_operand")))]
+  [(set (match_operand:P 0 "d_operand")
+	(high:P (match_operand:P 1 "symbolic_operand_with_high")))]
   "TARGET_MIPS16 && reload_completed"
-  [(set (match_dup 0) (match_dup 2))
-   (set (match_dup 0) (ashift:SI (match_dup 0) (const_int 16)))]
-{
-  operands[2] = mips_unspec_address (operands[1], SYMBOL_32_HIGH);
-})
+  [(set (match_dup 0) (unspec:P [(match_dup 1)] UNSPEC_UNSHIFTED_HIGH))
+   (set (match_dup 0) (ashift:P (match_dup 0) (const_int 16)))])
+
+(define_insn "*unshifted_high"
+  [(set (match_operand:P 0 "d_operand" "=d")
+	(unspec:P [(match_operand:P 1 "symbolic_operand_with_high")]
+		  UNSPEC_UNSHIFTED_HIGH))]
+  ""
+  "li\t%0,%h1"
+  [(set_attr "extended_mips16" "yes")])
 
 ;; Insns to fetch a symbol from a big GOT.
 
@@ -3953,7 +4158,7 @@
    (set_attr "mode" "<MODE>")])
 
 ;; Convenience expander that generates the rhs of a load_got<mode> insn.
-(define_expand "unspec_got<mode>"
+(define_expand "unspec_got_<mode>"
   [(unspec:P [(match_operand:P 0)
 	      (match_operand:P 1)] UNSPEC_LOAD_GOT)])
 
@@ -3981,7 +4186,7 @@
 		  (match_operand:P 2 "immediate_operand" "")))]
   "!TARGET_MIPS16"
   "<d>addiu\t%0,%1,%R2"
-  [(set_attr "type" "arith")
+  [(set_attr "alu_type" "add")
    (set_attr "mode" "<MODE>")])
 
 (define_insn "*low<mode>_mips16"
@@ -3990,7 +4195,7 @@
 		  (match_operand:P 2 "immediate_operand" "")))]
   "TARGET_MIPS16"
   "<d>addiu\t%0,%R2"
-  [(set_attr "type" "arith")
+  [(set_attr "alu_type" "add")
    (set_attr "mode" "<MODE>")
    (set_attr "extended_mips16" "yes")])
 
@@ -4056,14 +4261,17 @@
    (set_attr "mode" "<MODE>")])
 
 (define_insn "*movdi_32bit"
-  [(set (match_operand:DI 0 "nonimmediate_operand" "=d,d,d,m,*a,*d,*f,*f,*d,*m,*B*C*D,*B*C*D,*d,*m")
-	(match_operand:DI 1 "move_operand" "d,i,m,d,*J*d,*a,*J*d,*m,*f,*f,*d,*m,*B*C*D,*B*C*D"))]
+  [(set (match_operand:DI 0 "nonimmediate_operand" "=d,d,d,m,*a,*a,*d,*f,*f,*d,*m,*B*C*D,*B*C*D,*d,*m")
+	(match_operand:DI 1 "move_operand" "d,i,m,d,*J,*d,*a,*J*d,*m,*f,*f,*d,*m,*B*C*D,*B*C*D"))]
   "!TARGET_64BIT && !TARGET_MIPS16
    && (register_operand (operands[0], DImode)
        || reg_or_0_operand (operands[1], DImode))"
   { return mips_output_move (operands[0], operands[1]); }
-  [(set_attr "move_type" "move,const,load,store,mthilo,mfhilo,mtc,fpload,mfc,fpstore,mtc,fpload,mfc,fpstore")
-   (set_attr "mode" "DI")])
+  [(set_attr "move_type" "move,const,load,store,imul,mtlo,mflo,mtc,fpload,mfc,fpstore,mtc,fpload,mfc,fpstore")
+   (set (attr "mode")
+   	(if_then_else (eq_attr "move_type" "imul")
+		      (const_string "SI")
+		      (const_string "DI")))])
 
 (define_insn "*movdi_32bit_mips16"
   [(set (match_operand:DI 0 "nonimmediate_operand" "=d,y,d,d,d,d,m,*d")
@@ -4072,7 +4280,7 @@
    && (register_operand (operands[0], DImode)
        || register_operand (operands[1], DImode))"
   { return mips_output_move (operands[0], operands[1]); }
-  [(set_attr "move_type" "move,move,move,const,constN,load,store,mfhilo")
+  [(set_attr "move_type" "move,move,move,const,constN,load,store,mflo")
    (set_attr "mode" "DI")])
 
 (define_insn "*movdi_64bit"
@@ -4082,7 +4290,7 @@
    && (register_operand (operands[0], DImode)
        || reg_or_0_operand (operands[1], DImode))"
   { return mips_output_move (operands[0], operands[1]); }
-  [(set_attr "move_type" "move,const,const,load,store,mtc,fpload,mfc,fpstore,mthilo,mfhilo,mtc,fpload,mfc,fpstore")
+  [(set_attr "move_type" "move,const,const,load,store,mtc,fpload,mfc,fpstore,mtlo,mflo,mtc,fpload,mfc,fpstore")
    (set_attr "mode" "DI")])
 
 (define_insn "*movdi_64bit_mips16"
@@ -4092,7 +4300,7 @@
    && (register_operand (operands[0], DImode)
        || register_operand (operands[1], DImode))"
   { return mips_output_move (operands[0], operands[1]); }
-  [(set_attr "move_type" "move,move,move,const,constN,const,loadpool,load,store,mfhilo")
+  [(set_attr "move_type" "move,move,move,const,constN,const,loadpool,load,store,mflo")
    (set_attr "mode" "DI")])
 
 ;; On the mips16, we can split ld $r,N($r) into an add and a load,
@@ -4160,7 +4368,7 @@
    && (register_operand (operands[0], <MODE>mode)
        || reg_or_0_operand (operands[1], <MODE>mode))"
   { return mips_output_move (operands[0], operands[1]); }
-  [(set_attr "move_type" "move,const,const,load,store,mtc,fpload,mfc,fpstore,mfc,mtc,mthilo,mfhilo,mtc,fpload,mfc,fpstore")
+  [(set_attr "move_type" "move,const,const,load,store,mtc,fpload,mfc,fpstore,mfc,mtc,mtlo,mflo,mtc,fpload,mfc,fpstore")
    (set_attr "mode" "SI")])
 
 (define_insn "*mov<mode>_mips16"
@@ -4170,7 +4378,7 @@
    && (register_operand (operands[0], <MODE>mode)
        || register_operand (operands[1], <MODE>mode))"
   { return mips_output_move (operands[0], operands[1]); }
-  [(set_attr "move_type" "move,move,move,const,constN,const,loadpool,load,store,mfhilo")
+  [(set_attr "move_type" "move,move,move,const,constN,const,loadpool,load,store,mflo")
    (set_attr "mode" "SI")])
 
 ;; On the mips16, we can split lw $r,N($r) into an add and a load,
@@ -4229,53 +4437,6 @@
 
   operands[1] = GEN_INT (0xff);
   operands[2] = GEN_INT (val - 0xff);
-})
-
-;; This insn handles moving CCmode values.  It's really just a
-;; slightly simplified copy of movsi_internal2, with additional cases
-;; to move a condition register to a general register and to move
-;; between the general registers and the floating point registers.
-
-(define_insn "movcc"
-  [(set (match_operand:CC 0 "nonimmediate_operand" "=d,*d,*d,*m,*d,*f,*f,*f,*m")
-	(match_operand:CC 1 "general_operand" "z,*d,*m,*d,*f,*d,*f,*m,*f"))]
-  "ISA_HAS_8CC && TARGET_HARD_FLOAT"
-  { return mips_output_move (operands[0], operands[1]); }
-  [(set_attr "move_type" "lui_movf,move,load,store,mfc,mtc,fmove,fpload,fpstore")
-   (set_attr "mode" "SI")])
-
-;; Reload condition code registers.  reload_incc and reload_outcc
-;; both handle moves from arbitrary operands into condition code
-;; registers.  reload_incc handles the more common case in which
-;; a source operand is constrained to be in a condition-code
-;; register, but has not been allocated to one.
-;;
-;; Sometimes, such as in movcc, we have a CCmode destination whose
-;; constraints do not include 'z'.  reload_outcc handles the case
-;; when such an operand is allocated to a condition-code register.
-;;
-;; Note that reloads from a condition code register to some
-;; other location can be done using ordinary moves.  Moving
-;; into a GPR takes a single movcc, moving elsewhere takes
-;; two.  We can leave these cases to the generic reload code.
-(define_expand "reload_incc"
-  [(set (match_operand:CC 0 "fcc_reload_operand" "=z")
-	(match_operand:CC 1 "general_operand" ""))
-   (clobber (match_operand:TF 2 "register_operand" "=&f"))]
-  "ISA_HAS_8CC && TARGET_HARD_FLOAT"
-{
-  mips_expand_fcc_reload (operands[0], operands[1], operands[2]);
-  DONE;
-})
-
-(define_expand "reload_outcc"
-  [(set (match_operand:CC 0 "fcc_reload_operand" "=z")
-	(match_operand:CC 1 "register_operand" ""))
-   (clobber (match_operand:TF 2 "register_operand" "=&f"))]
-  "ISA_HAS_8CC && TARGET_HARD_FLOAT"
-{
-  mips_expand_fcc_reload (operands[0], operands[1], operands[2]);
-  DONE;
 })
 
 ;; MIPS4 supports loading and storing a floating point register from
@@ -4347,7 +4508,7 @@
    && (register_operand (operands[0], HImode)
        || reg_or_0_operand (operands[1], HImode))"
   { return mips_output_move (operands[0], operands[1]); }
-  [(set_attr "move_type" "move,const,load,store,mthilo,mfhilo")
+  [(set_attr "move_type" "move,const,load,store,mtlo,mflo")
    (set_attr "mode" "HI")])
 
 (define_insn "*movhi_mips16"
@@ -4357,7 +4518,7 @@
    && (register_operand (operands[0], HImode)
        || register_operand (operands[1], HImode))"
   { return mips_output_move (operands[0], operands[1]); }
-  [(set_attr "move_type" "move,move,move,const,constN,load,store,mfhilo")
+  [(set_attr "move_type" "move,move,move,const,constN,load,store,mflo")
    (set_attr "mode" "HI")])
 
 ;; On the mips16, we can split lh $r,N($r) into an add and a load,
@@ -4422,7 +4583,7 @@
    && (register_operand (operands[0], QImode)
        || reg_or_0_operand (operands[1], QImode))"
   { return mips_output_move (operands[0], operands[1]); }
-  [(set_attr "move_type" "move,const,load,store,mthilo,mfhilo")
+  [(set_attr "move_type" "move,const,load,store,mtlo,mflo")
    (set_attr "mode" "QI")])
 
 (define_insn "*movqi_mips16"
@@ -4432,7 +4593,7 @@
    && (register_operand (operands[0], QImode)
        || register_operand (operands[1], QImode))"
   { return mips_output_move (operands[0], operands[1]); }
-  [(set_attr "move_type" "move,move,move,const,constN,load,store,mfhilo")
+  [(set_attr "move_type" "move,move,move,const,constN,load,store,mflo")
    (set_attr "mode" "QI")])
 
 ;; On the mips16, we can split lb $r,N($r) into an add and a load,
@@ -4556,15 +4717,18 @@
 })
 
 (define_insn "*movti"
-  [(set (match_operand:TI 0 "nonimmediate_operand" "=d,d,d,m,*a,*d")
-	(match_operand:TI 1 "move_operand" "d,i,m,dJ,*d*J,*a"))]
+  [(set (match_operand:TI 0 "nonimmediate_operand" "=d,d,d,m,*a,*a,*d")
+	(match_operand:TI 1 "move_operand" "d,i,m,dJ,*J,*d,*a"))]
   "TARGET_64BIT
    && !TARGET_MIPS16
    && (register_operand (operands[0], TImode)
        || reg_or_0_operand (operands[1], TImode))"
-  "#"
-  [(set_attr "move_type" "move,const,load,store,mthilo,mfhilo")
-   (set_attr "mode" "TI")])
+  { return mips_output_move (operands[0], operands[1]); }
+  [(set_attr "move_type" "move,const,load,store,imul,mtlo,mflo")
+   (set (attr "mode")
+   	(if_then_else (eq_attr "move_type" "imul")
+		      (const_string "SI")
+		      (const_string "TI")))])
 
 (define_insn "*movti_mips16"
   [(set (match_operand:TI 0 "nonimmediate_operand" "=d,y,d,d,d,d,m,*d")
@@ -4574,7 +4738,7 @@
    && (register_operand (operands[0], TImode)
        || register_operand (operands[1], TImode))"
   "#"
-  [(set_attr "move_type" "move,move,move,const,constN,load,store,mfhilo")
+  [(set_attr "move_type" "move,move,move,const,constN,load,store,mflo")
    (set_attr "mode" "TI")])
 
 ;; 128-bit floating point moves
@@ -4614,21 +4778,20 @@
 (define_split
   [(set (match_operand:MOVE64 0 "nonimmediate_operand")
 	(match_operand:MOVE64 1 "move_operand"))]
-  "reload_completed && !TARGET_64BIT
-   && mips_split_64bit_move_p (operands[0], operands[1])"
+  "reload_completed && mips_split_move_insn_p (operands[0], operands[1], insn)"
   [(const_int 0)]
 {
-  mips_split_doubleword_move (operands[0], operands[1]);
+  mips_split_move_insn (operands[0], operands[1], curr_insn);
   DONE;
 })
 
 (define_split
   [(set (match_operand:MOVE128 0 "nonimmediate_operand")
 	(match_operand:MOVE128 1 "move_operand"))]
-  "TARGET_64BIT && reload_completed"
+  "reload_completed && mips_split_move_insn_p (operands[0], operands[1], insn)"
   [(const_int 0)]
 {
-  mips_split_doubleword_move (operands[0], operands[1]);
+  mips_split_move_insn (operands[0], operands[1], curr_insn);
   DONE;
 })
 
@@ -4677,11 +4840,11 @@
 ;; and the errata related to -mfix-vr4130.
 (define_insn "mfhi<GPR:mode>_<HILO:mode>"
   [(set (match_operand:GPR 0 "register_operand" "=d")
-	(unspec:GPR [(match_operand:HILO 1 "register_operand" "x")]
+	(unspec:GPR [(match_operand:HILO 1 "hilo_operand" "x")]
 		    UNSPEC_MFHI))]
   ""
   { return ISA_HAS_MACCHI ? "<GPR:d>macchi\t%0,%.,%." : "mfhi\t%0"; }
-  [(set_attr "move_type" "mfhilo")
+  [(set_attr "type" "mfhi")
    (set_attr "mode" "<GPR:MODE>")])
 
 ;; Set the high part of a HI/LO value, given that the low part has
@@ -4694,7 +4857,7 @@
 		     UNSPEC_MTHI))]
   ""
   "mthi\t%z1"
-  [(set_attr "move_type" "mthilo")
+  [(set_attr "type" "mthi")
    (set_attr "mode" "SI")])
 
 ;; Emit a doubleword move in which exactly one of the operands is
@@ -4870,10 +5033,10 @@
 ;; Initialize the global pointer for MIPS16 code.  Operand 0 is the
 ;; global pointer and operand 1 is the MIPS16 register that holds
 ;; the required value.
-(define_insn_and_split "copygp_mips16"
-  [(set (match_operand:SI 0 "register_operand" "=y")
-	(unspec:SI [(match_operand:SI 1 "register_operand" "d")]
-		   UNSPEC_COPYGP))]
+(define_insn_and_split "copygp_mips16_<mode>"
+  [(set (match_operand:P 0 "register_operand" "=y")
+	(unspec:P [(match_operand:P 1 "register_operand" "d")]
+		  UNSPEC_COPYGP))]
   "TARGET_MIPS16"
   { return mips_must_initialize_gp_p () ? "#" : ""; }
   "&& mips_must_initialize_gp_p ()"
@@ -4887,12 +5050,12 @@
 ;;
 ;; The "cprestore" pattern requires operand 2 to be pic_offset_table_rtx,
 ;; otherwise any register that holds the correct value will do.
-(define_insn_and_split "potential_cprestore"
-  [(set (match_operand:SI 0 "cprestore_save_slot_operand" "=X,X")
-	(unspec:SI [(match_operand:SI 1 "const_int_operand" "I,i")
-		    (match_operand:SI 2 "register_operand" "d,d")]
-		   UNSPEC_POTENTIAL_CPRESTORE))
-   (clobber (match_operand:SI 3 "scratch_operand" "=X,&d"))]
+(define_insn_and_split "potential_cprestore_<mode>"
+  [(set (match_operand:P 0 "cprestore_save_slot_operand" "=X,X")
+	(unspec:P [(match_operand:P 1 "const_int_operand" "I,i")
+		   (match_operand:P 2 "register_operand" "d,d")]
+		  UNSPEC_POTENTIAL_CPRESTORE))
+   (clobber (match_operand:P 3 "scratch_operand" "=X,&d"))]
   "!TARGET_CPRESTORE_DIRECTIVE || operands[2] == pic_offset_table_rtx"
   { return mips_must_initialize_gp_p () ? "#" : ""; }
   "mips_must_initialize_gp_p ()"
@@ -4909,11 +5072,11 @@
 ;; for the cprestore slot.  Operand 1 is the offset of the slot from
 ;; the stack pointer.  (This is redundant with operand 0, but it makes
 ;; things a little simpler.)
-(define_insn "cprestore"
-  [(set (match_operand:SI 0 "cprestore_save_slot_operand" "=X,X")
-	(unspec:SI [(match_operand:SI 1 "const_int_operand" "I,i")
-		    (reg:SI 28)]
-		   UNSPEC_CPRESTORE))]
+(define_insn "cprestore_<mode>"
+  [(set (match_operand:P 0 "cprestore_save_slot_operand" "=X,X")
+	(unspec:P [(match_operand:P 1 "const_int_operand" "I,i")
+		   (reg:P 28)]
+		  UNSPEC_CPRESTORE))]
   "TARGET_CPRESTORE_DIRECTIVE"
 {
   if (mips_nomacro.nesting_level > 0 && which_alternative == 1)
@@ -4924,9 +5087,9 @@
   [(set_attr "type" "store")
    (set_attr "length" "4,12")])
 
-(define_insn "use_cprestore"
-  [(set (reg:SI CPRESTORE_SLOT_REGNUM)
-	(match_operand:SI 0 "cprestore_load_slot_operand"))]
+(define_insn "use_cprestore_<mode>"
+  [(set (reg:P CPRESTORE_SLOT_REGNUM)
+	(match_operand:P 0 "cprestore_load_slot_operand"))]
   ""
   ""
   [(set_attr "type" "ghost")])
@@ -4943,9 +5106,7 @@
     {
       mips_expand_synci_loop (operands[0], operands[1]);
       emit_insn (gen_sync ());
-      emit_insn (Pmode == SImode
-		 ? gen_clear_hazard_si ()
-		 : gen_clear_hazard_di ());
+      emit_insn (PMODE_INSN (gen_clear_hazard, ()));
     }
   else if (mips_cache_flush_func && mips_cache_flush_func[0])
     {
@@ -5223,6 +5384,56 @@
 }
   [(set_attr "type" "shift")
    (set_attr "mode" "<MODE>")])
+
+(define_insn "bswaphi2"
+  [(set (match_operand:HI 0 "register_operand" "=d")
+	(bswap:HI (match_operand:HI 1 "register_operand" "d")))]
+  "ISA_HAS_WSBH"
+  "wsbh\t%0,%1"
+  [(set_attr "type" "shift")])
+
+(define_insn_and_split "bswapsi2"
+  [(set (match_operand:SI 0 "register_operand" "=d")
+	(bswap:SI (match_operand:SI 1 "register_operand" "d")))]
+  "ISA_HAS_WSBH && ISA_HAS_ROR"
+  "#"
+  ""
+  [(set (match_dup 0) (unspec:SI [(match_dup 1)] UNSPEC_WSBH))
+   (set (match_dup 0) (rotatert:SI (match_dup 0) (const_int 16)))]
+  ""
+  [(set_attr "length" "8")])
+
+(define_insn_and_split "bswapdi2"
+  [(set (match_operand:DI 0 "register_operand" "=d")
+	(bswap:DI (match_operand:DI 1 "register_operand" "d")))]
+  "TARGET_64BIT && ISA_HAS_WSBH"
+  "#"
+  ""
+  [(set (match_dup 0) (unspec:DI [(match_dup 1)] UNSPEC_DSBH))
+   (set (match_dup 0) (unspec:DI [(match_dup 0)] UNSPEC_DSHD))]
+  ""
+  [(set_attr "length" "8")])
+
+(define_insn "wsbh"
+  [(set (match_operand:SI 0 "register_operand" "=d")
+	(unspec:SI [(match_operand:SI 1 "register_operand" "d")] UNSPEC_WSBH))]
+  "ISA_HAS_WSBH"
+  "wsbh\t%0,%1"
+  [(set_attr "type" "shift")])
+
+(define_insn "dsbh"
+  [(set (match_operand:DI 0 "register_operand" "=d")
+	(unspec:DI [(match_operand:DI 1 "register_operand" "d")] UNSPEC_DSBH))]
+  "TARGET_64BIT && ISA_HAS_WSBH"
+  "dsbh\t%0,%1"
+  [(set_attr "type" "shift")])
+
+(define_insn "dshd"
+  [(set (match_operand:DI 0 "register_operand" "=d")
+	(unspec:DI [(match_operand:DI 1 "register_operand" "d")] UNSPEC_DSHD))]
+  "TARGET_64BIT && ISA_HAS_WSBH"
+  "dshd\t%0,%1"
+  [(set_attr "type" "shift")])
 
 ;;
 ;;  ....................
@@ -5330,28 +5541,29 @@
 (define_insn "*branch_equality<mode>_mips16"
   [(set (pc)
 	(if_then_else
-	 (match_operator 0 "equality_operator"
-			 [(match_operand:GPR 1 "register_operand" "d,t")
+	 (match_operator 1 "equality_operator"
+			 [(match_operand:GPR 2 "register_operand" "d,t")
 			  (const_int 0)])
-	 (match_operand 2 "pc_or_label_operand" "")
-	 (match_operand 3 "pc_or_label_operand" "")))]
+	 (label_ref (match_operand 0 "" ""))
+	 (pc)))]
   "TARGET_MIPS16"
-{
-  if (operands[2] != pc_rtx)
-    {
-      if (which_alternative == 0)
-	return "b%C0z\t%1,%2";
-      else
-	return "bt%C0z\t%2";
-    }
-  else
-    {
-      if (which_alternative == 0)
-	return "b%N0z\t%1,%3";
-      else
-	return "bt%N0z\t%3";
-    }
-}
+  "@
+   b%C1z\t%2,%0
+   bt%C1z\t%0"
+  [(set_attr "type" "branch")])
+
+(define_insn "*branch_equality<mode>_mips16_inverted"
+  [(set (pc)
+	(if_then_else
+	 (match_operator 1 "equality_operator"
+			 [(match_operand:GPR 2 "register_operand" "d,t")
+			  (const_int 0)])
+	 (pc)
+	 (label_ref (match_operand 0 "" ""))))]
+  "TARGET_MIPS16"
+  "@
+   b%N1z\t%2,%0
+   bt%N1z\t%0"
   [(set_attr "type" "branch")])
 
 (define_expand "cbranch<mode>4"
@@ -5647,39 +5859,66 @@
 	(label_ref (match_operand 0 "" "")))]
   "TARGET_MIPS16"
   "b\t%l0"
-  [(set_attr "type" "branch")])
+  [(set_attr "type" "branch")
+   (set (attr "length")
+	;; This calculation is like the normal branch one, but the
+	;; range of the unextended instruction is [-0x800, 0x7fe] rather
+	;; than [-0x100, 0xfe].  This translates to a range of:
+	;;
+	;;    [-(0x800 - sizeof (branch)), 0x7fe]
+	;; == [-0x7fe, 0x7fe]
+	;;
+	;; from the shorten_branches reference address.  Long-branch
+	;; sequences will replace this one, so the minimum length
+	;; is one instruction shorter than for conditional branches.
+	(cond [(and (le (minus (match_dup 0) (pc)) (const_int 2046))
+		    (le (minus (pc) (match_dup 0)) (const_int 2046)))
+	       (const_int 4)
+	       (and (le (minus (match_dup 0) (pc)) (const_int 65534))
+		    (le (minus (pc) (match_dup 0)) (const_int 65532)))
+	       (const_int 8)
+	       (and (match_test "TARGET_ABICALLS")
+		    (not (match_test "TARGET_ABSOLUTE_ABICALLS")))
+	       (const_int 36)
+	       (match_test "Pmode == SImode")
+	       (const_int 28)
+	       ] (const_int 44)))])
 
 (define_expand "indirect_jump"
   [(set (pc) (match_operand 0 "register_operand"))]
   ""
 {
   operands[0] = force_reg (Pmode, operands[0]);
-  if (Pmode == SImode)
-    emit_jump_insn (gen_indirect_jumpsi (operands[0]));
-  else
-    emit_jump_insn (gen_indirect_jumpdi (operands[0]));
+  emit_jump_insn (PMODE_INSN (gen_indirect_jump, (operands[0])));
   DONE;
 })
 
-(define_insn "indirect_jump<mode>"
+(define_insn "indirect_jump_<mode>"
   [(set (pc) (match_operand:P 0 "register_operand" "d"))]
   ""
   "%*j\t%0%/"
   [(set_attr "type" "jump")
    (set_attr "mode" "none")])
 
+;; A combined jump-and-move instruction, used for MIPS16 long-branch
+;; sequences.  Having a dedicated pattern is more convenient than
+;; creating a SEQUENCE for this special case.
+(define_insn "indirect_jump_and_restore_<mode>"
+  [(set (pc) (match_operand:P 1 "register_operand" "d"))
+   (set (match_operand:P 0 "register_operand" "=d")
+   	(match_operand:P 2 "register_operand" "y"))]
+  ""
+  "%(%<jr\t%1\;move\t%0,%2%>%)"
+  [(set_attr "type" "multi")
+   (set_attr "extended_mips16" "yes")])
+
 (define_expand "tablejump"
   [(set (pc)
 	(match_operand 0 "register_operand"))
    (use (label_ref (match_operand 1 "")))]
-  ""
+  "!TARGET_MIPS16_SHORT_JUMP_TABLES"
 {
-  if (TARGET_MIPS16_SHORT_JUMP_TABLES)
-    operands[0] = expand_binop (Pmode, add_optab,
-				convert_to_mode (Pmode, operands[0], false),
-				gen_rtx_LABEL_REF (Pmode, operands[1]),
-				0, 0, OPTAB_WIDEN);
-  else if (TARGET_GPWORD)
+  if (TARGET_GPWORD)
     operands[0] = expand_binop (Pmode, add_optab, operands[0],
 				pic_offset_table_rtx, 0, 0, OPTAB_WIDEN);
   else if (TARGET_RTP_PIC)
@@ -5692,14 +5931,11 @@
 				  start, 0, 0, OPTAB_WIDEN);
     }
 
-  if (Pmode == SImode)
-    emit_jump_insn (gen_tablejumpsi (operands[0], operands[1]));
-  else
-    emit_jump_insn (gen_tablejumpdi (operands[0], operands[1]));
+  emit_jump_insn (PMODE_INSN (gen_tablejump, (operands[0], operands[1])));
   DONE;
 })
 
-(define_insn "tablejump<mode>"
+(define_insn "tablejump_<mode>"
   [(set (pc)
 	(match_operand:P 0 "register_operand" "d"))
    (use (label_ref (match_operand 1 "" "")))]
@@ -5707,6 +5943,94 @@
   "%*j\t%0%/"
   [(set_attr "type" "jump")
    (set_attr "mode" "none")])
+
+;; For MIPS16, we don't know whether a given jump table will use short or
+;; word-sized offsets until late in compilation, when we are able to determine
+;; the sizes of the insns which comprise the containing function.  This
+;; necessitates the use of the casesi rather than the tablejump pattern, since
+;; the latter tries to calculate the index of the offset to jump through early
+;; in compilation, i.e. at expand time, when nothing is known about the
+;; eventual function layout.
+
+(define_expand "casesi"
+  [(match_operand:SI 0 "register_operand" "")	; index to jump on
+   (match_operand:SI 1 "const_int_operand" "")	; lower bound
+   (match_operand:SI 2 "const_int_operand" "")	; total range
+   (match_operand 3 "" "")			; table label
+   (match_operand 4 "" "")]			; out of range label
+  "TARGET_MIPS16_SHORT_JUMP_TABLES"
+{
+  if (operands[1] != const0_rtx)
+    {
+      rtx reg = gen_reg_rtx (SImode);
+      rtx offset = gen_int_mode (-INTVAL (operands[1]), SImode);
+      
+      if (!arith_operand (offset, SImode))
+        offset = force_reg (SImode, offset);
+      
+      emit_insn (gen_addsi3 (reg, operands[0], offset));
+      operands[0] = reg;
+    }
+
+  if (!arith_operand (operands[0], SImode))
+    operands[0] = force_reg (SImode, operands[0]);
+
+  operands[2] = GEN_INT (INTVAL (operands[2]) + 1);
+
+  emit_jump_insn (PMODE_INSN (gen_casesi_internal_mips16,
+			      (operands[0], operands[2],
+			       operands[3], operands[4])));
+
+  DONE;
+})
+
+(define_insn "casesi_internal_mips16_<mode>"
+  [(set (pc)
+     (if_then_else
+       (leu (match_operand:SI 0 "register_operand" "d")
+	    (match_operand:SI 1 "arith_operand" "dI"))
+       (unspec:P
+        [(match_dup 0)
+	 (label_ref (match_operand 2 "" ""))]
+	UNSPEC_CASESI_DISPATCH)
+       (label_ref (match_operand 3 "" ""))))
+   (clobber (match_scratch:P 4 "=d"))
+   (clobber (match_scratch:P 5 "=d"))
+   (clobber (reg:SI MIPS16_T_REGNUM))]
+  "TARGET_MIPS16_SHORT_JUMP_TABLES"
+{
+  rtx diff_vec = PATTERN (next_real_insn (operands[2]));
+
+  gcc_assert (GET_CODE (diff_vec) == ADDR_DIFF_VEC);
+  
+  output_asm_insn ("sltu\t%0, %1", operands);
+  output_asm_insn ("bteqz\t%3", operands);
+  
+  switch (GET_MODE (diff_vec))
+    {
+    case HImode:
+      output_asm_insn ("sll\t%5, %0, 1", operands);
+      output_asm_insn ("la\t%4, %2", operands);
+      output_asm_insn ("<d>addu\t%5, %4, %5", operands);
+      output_asm_insn ("lh\t%5, 0(%5)", operands);
+      break;
+    
+    case SImode:
+      output_asm_insn ("sll\t%5, %0, 2", operands);
+      output_asm_insn ("la\t%4, %2", operands);
+      output_asm_insn ("<d>addu\t%5, %4, %5", operands);
+      output_asm_insn ("lw\t%5, 0(%5)", operands);
+      break;
+
+    default:
+      gcc_unreachable ();
+    }
+  
+  output_asm_insn ("addu\t%4, %4, %5", operands);
+  
+  return "j\t%4";
+}
+  [(set_attr "length" "32")])
 
 ;; For TARGET_USE_GOT, we save the gp in the jmp_buf as well.
 ;; While it is possible to either pull it off the stack (in the
@@ -5719,7 +6043,7 @@
 {
   rtx addr;
 
-  addr = plus_constant (operands[0], GET_MODE_SIZE (Pmode) * 3);
+  addr = plus_constant (Pmode, operands[0], GET_MODE_SIZE (Pmode) * 3);
   mips_emit_move (gen_rtx_MEM (Pmode, addr), pic_offset_table_rtx);
   DONE;
 })
@@ -5735,9 +6059,9 @@
   /* The elements of the buffer are, in order:  */
   int W = GET_MODE_SIZE (Pmode);
   rtx fp = gen_rtx_MEM (Pmode, operands[0]);
-  rtx lab = gen_rtx_MEM (Pmode, plus_constant (operands[0], 1*W));
-  rtx stack = gen_rtx_MEM (Pmode, plus_constant (operands[0], 2*W));
-  rtx gpv = gen_rtx_MEM (Pmode, plus_constant (operands[0], 3*W));
+  rtx lab = gen_rtx_MEM (Pmode, plus_constant (Pmode, operands[0], 1*W));
+  rtx stack = gen_rtx_MEM (Pmode, plus_constant (Pmode, operands[0], 2*W));
+  rtx gpv = gen_rtx_MEM (Pmode, plus_constant (Pmode, operands[0], 3*W));
   rtx pv = gen_rtx_REG (Pmode, PIC_FUNCTION_ADDR_REGNUM);
   /* Use gen_raw_REG to avoid being given pic_offset_table_rtx.
      The target is bound to be using $28 as the global pointer
@@ -5748,7 +6072,7 @@
      restores $gp as well.  */
   mips_emit_move (hard_frame_pointer_rtx, fp);
   mips_emit_move (pv, lab);
-  emit_stack_restore (SAVE_NONLOCAL, stack, NULL_RTX);
+  emit_stack_restore (SAVE_NONLOCAL, stack);
   mips_emit_move (gp, gpv);
   emit_use (hard_frame_pointer_rtx);
   emit_use (stack_pointer_rtx);
@@ -5784,6 +6108,17 @@
   [(set_attr "type" "ghost")
    (set_attr "mode" "none")])
 
+(define_insn "probe_stack_range_<P:mode>"
+  [(set (match_operand:P 0 "register_operand" "=d")
+	(unspec_volatile:P [(match_operand:P 1 "register_operand" "0")
+			    (match_operand:P 2 "register_operand" "d")]
+			    UNSPEC_PROBE_STACK_RANGE))]
+  ""
+ { return mips_output_probe_stack_range (operands[0], operands[2]); }
+  [(set_attr "type" "unknown")
+   (set_attr "can_delay" "no")
+   (set_attr "mode" "<MODE>")])
+
 (define_expand "epilogue"
   [(const_int 2)]
   ""
@@ -5804,21 +6139,26 @@
 ;; allows jump optimizations to work better.
 
 (define_expand "return"
-  [(return)]
+  [(simple_return)]
   "mips_can_use_return_insn ()"
   { mips_expand_before_return (); })
 
-(define_insn "*return"
-  [(return)]
-  "mips_can_use_return_insn ()"
+(define_expand "simple_return"
+  [(simple_return)]
+  ""
+  { mips_expand_before_return (); })
+
+(define_insn "*<optab>"
+  [(any_return)]
+  ""
   "%*j\t$31%/"
   [(set_attr "type"	"jump")
    (set_attr "mode"	"none")])
 
 ;; Normal return.
 
-(define_insn "return_internal"
-  [(return)
+(define_insn "<optab>_internal"
+  [(any_return)
    (use (match_operand 0 "pmode_register_operand" ""))]
   ""
   "%*j\t%0%/"
@@ -5926,8 +6266,10 @@
   emit_insn (gen_set_got_version ());
 
   /* If we have a call-clobbered $gp, restore it from its save slot.  */
-  if (HAVE_restore_gp)
-    emit_insn (gen_restore_gp ());
+  if (HAVE_restore_gp_si)
+    emit_insn (gen_restore_gp_si ());
+  else if (HAVE_restore_gp_di)
+    emit_insn (gen_restore_gp_di ());
   DONE;
 })
 
@@ -5942,10 +6284,10 @@
 
 ;; Restore $gp from its .cprestore stack slot.  The instruction remains
 ;; volatile until all uses of $28 are exposed.
-(define_insn_and_split "restore_gp"
-  [(set (reg:SI 28)
-	(unspec_volatile:SI [(const_int 0)] UNSPEC_RESTORE_GP))
-   (clobber (match_scratch:SI 0 "=&d"))]
+(define_insn_and_split "restore_gp_<mode>"
+  [(set (reg:P 28)
+	(unspec_volatile:P [(const_int 0)] UNSPEC_RESTORE_GP))
+   (clobber (match_scratch:P 0 "=&d"))]
   "TARGET_CALL_CLOBBERED_GP"
   "#"
   "&& epilogue_completed"
@@ -6076,7 +6418,8 @@
 	 (match_operand 1 "" ""))]
   "TARGET_SIBCALLS && SIBLING_CALL_P (insn)"
   { return MIPS_CALL ("j", operands, 0, 1); }
-  [(set_attr "type" "call")])
+  [(set_attr "jal" "indirect,direct")
+   (set_attr "jal_macro" "no")])
 
 (define_expand "sibcall_value"
   [(parallel [(set (match_operand 0 "")
@@ -6096,7 +6439,8 @@
               (match_operand 2 "" "")))]
   "TARGET_SIBCALLS && SIBLING_CALL_P (insn)"
   { return MIPS_CALL ("j", operands, 1, 2); }
-  [(set_attr "type" "call")])
+  [(set_attr "jal" "indirect,direct")
+   (set_attr "jal_macro" "no")])
 
 (define_insn "sibcall_value_multiple_internal"
   [(set (match_operand 0 "register_operand" "")
@@ -6107,7 +6451,8 @@
 	      (match_dup 2)))]
   "TARGET_SIBCALLS && SIBLING_CALL_P (insn)"
   { return MIPS_CALL ("j", operands, 1, 2); }
-  [(set_attr "type" "call")])
+  [(set_attr "jal" "indirect,direct")
+   (set_attr "jal_macro" "no")])
 
 (define_expand "call"
   [(parallel [(call (match_operand 0 "")
@@ -6156,30 +6501,29 @@
 ;;     But once we generate the separate insns, it becomes obvious that
 ;;     $gp is not live on entry to the call.
 ;;
-;; ??? The operands[2] = insn check is a hack to make the original insn
-;; available to the splitter.
 (define_insn_and_split "call_internal"
   [(call (mem:SI (match_operand 0 "call_insn_operand" "c,S"))
 	 (match_operand 1 "" ""))
    (clobber (reg:SI RETURN_ADDR_REGNUM))]
   ""
   { return TARGET_SPLIT_CALLS ? "#" : MIPS_CALL ("jal", operands, 0, 1); }
-  "reload_completed && TARGET_SPLIT_CALLS && (operands[2] = insn)"
+  "reload_completed && TARGET_SPLIT_CALLS"
   [(const_int 0)]
 {
-  mips_split_call (operands[2], gen_call_split (operands[0], operands[1]));
+  mips_split_call (curr_insn, gen_call_split (operands[0], operands[1]));
   DONE;
 }
   [(set_attr "jal" "indirect,direct")])
 
 (define_insn "call_split"
-  [(call (mem:SI (match_operand 0 "call_insn_operand" "cS"))
+  [(call (mem:SI (match_operand 0 "call_insn_operand" "c,S"))
 	 (match_operand 1 "" ""))
    (clobber (reg:SI RETURN_ADDR_REGNUM))
    (clobber (reg:SI 28))]
   "TARGET_SPLIT_CALLS"
   { return MIPS_CALL ("jal", operands, 0, 1); }
-  [(set_attr "type" "call")])
+  [(set_attr "jal" "indirect,direct")
+   (set_attr "jal_macro" "no")])
 
 ;; A pattern for calls that must be made directly.  It is used for
 ;; MIPS16 calls that the linker may need to redirect to a hard-float
@@ -6192,14 +6536,14 @@
    (clobber (reg:SI RETURN_ADDR_REGNUM))]
   ""
   { return TARGET_SPLIT_CALLS ? "#" : MIPS_CALL ("jal", operands, 0, -1); }
-  "reload_completed && TARGET_SPLIT_CALLS && (operands[2] = insn)"
+  "reload_completed && TARGET_SPLIT_CALLS"
   [(const_int 0)]
 {
-  mips_split_call (operands[2],
+  mips_split_call (curr_insn,
 		   gen_call_direct_split (operands[0], operands[1]));
   DONE;
 }
-  [(set_attr "type" "call")])
+  [(set_attr "jal" "direct")])
 
 (define_insn "call_direct_split"
   [(call (mem:SI (match_operand 0 "const_call_insn_operand"))
@@ -6209,7 +6553,8 @@
    (clobber (reg:SI 28))]
   "TARGET_SPLIT_CALLS"
   { return MIPS_CALL ("jal", operands, 0, -1); }
-  [(set_attr "type" "call")])
+  [(set_attr "jal" "direct")
+   (set_attr "jal_macro" "no")])
 
 (define_expand "call_value"
   [(parallel [(set (match_operand 0 "")
@@ -6231,10 +6576,10 @@
    (clobber (reg:SI RETURN_ADDR_REGNUM))]
   ""
   { return TARGET_SPLIT_CALLS ? "#" : MIPS_CALL ("jal", operands, 1, 2); }
-  "reload_completed && TARGET_SPLIT_CALLS && (operands[3] = insn)"
+  "reload_completed && TARGET_SPLIT_CALLS"
   [(const_int 0)]
 {
-  mips_split_call (operands[3],
+  mips_split_call (curr_insn,
 		   gen_call_value_split (operands[0], operands[1],
 					 operands[2]));
   DONE;
@@ -6243,13 +6588,14 @@
 
 (define_insn "call_value_split"
   [(set (match_operand 0 "register_operand" "")
-        (call (mem:SI (match_operand 1 "call_insn_operand" "cS"))
+        (call (mem:SI (match_operand 1 "call_insn_operand" "c,S"))
               (match_operand 2 "" "")))
    (clobber (reg:SI RETURN_ADDR_REGNUM))
    (clobber (reg:SI 28))]
   "TARGET_SPLIT_CALLS"
   { return MIPS_CALL ("jal", operands, 1, 2); }
-  [(set_attr "type" "call")])
+  [(set_attr "jal" "indirect,direct")
+   (set_attr "jal_macro" "no")])
 
 ;; See call_internal_direct.
 (define_insn_and_split "call_value_internal_direct"
@@ -6260,15 +6606,15 @@
    (clobber (reg:SI RETURN_ADDR_REGNUM))]
   ""
   { return TARGET_SPLIT_CALLS ? "#" : MIPS_CALL ("jal", operands, 1, -1); }
-  "reload_completed && TARGET_SPLIT_CALLS && (operands[3] = insn)"
+  "reload_completed && TARGET_SPLIT_CALLS"
   [(const_int 0)]
 {
-  mips_split_call (operands[3],
+  mips_split_call (curr_insn,
 		   gen_call_value_direct_split (operands[0], operands[1],
 						operands[2]));
   DONE;
 }
-  [(set_attr "type" "call")])
+  [(set_attr "jal" "direct")])
 
 (define_insn "call_value_direct_split"
   [(set (match_operand 0 "register_operand")
@@ -6279,7 +6625,8 @@
    (clobber (reg:SI 28))]
   "TARGET_SPLIT_CALLS"
   { return MIPS_CALL ("jal", operands, 1, -1); }
-  [(set_attr "type" "call")])
+  [(set_attr "jal" "direct")
+   (set_attr "jal_macro" "no")])
 
 ;; See comment for call_internal.
 (define_insn_and_split "call_value_multiple_internal"
@@ -6292,10 +6639,10 @@
    (clobber (reg:SI RETURN_ADDR_REGNUM))]
   ""
   { return TARGET_SPLIT_CALLS ? "#" : MIPS_CALL ("jal", operands, 1, 2); }
-  "reload_completed && TARGET_SPLIT_CALLS && (operands[4] = insn)"
+  "reload_completed && TARGET_SPLIT_CALLS"
   [(const_int 0)]
 {
-  mips_split_call (operands[4],
+  mips_split_call (curr_insn,
 		   gen_call_value_multiple_split (operands[0], operands[1],
 						  operands[2], operands[3]));
   DONE;
@@ -6304,7 +6651,7 @@
 
 (define_insn "call_value_multiple_split"
   [(set (match_operand 0 "register_operand" "")
-        (call (mem:SI (match_operand 1 "call_insn_operand" "cS"))
+        (call (mem:SI (match_operand 1 "call_insn_operand" "c,S"))
               (match_operand 2 "" "")))
    (set (match_operand 3 "register_operand" "")
 	(call (mem:SI (match_dup 1))
@@ -6313,7 +6660,8 @@
    (clobber (reg:SI 28))]
   "TARGET_SPLIT_CALLS"
   { return MIPS_CALL ("jal", operands, 1, 2); }
-  [(set_attr "type" "call")])
+  [(set_attr "jal" "indirect,direct")
+   (set_attr "jal_macro" "no")])
 
 ;; Call subroutine returning any type.
 
@@ -6353,8 +6701,8 @@
 	     (match_operand 2 "const_int_operand" "n"))]
   "ISA_HAS_PREFETCH && TARGET_EXPLICIT_RELOCS"
 {
-  if (TARGET_LOONGSON_2EF)
-    /* Loongson 2[ef] use load to $0 to perform prefetching.  */
+  if (TARGET_LOONGSON_2EF || TARGET_LOONGSON_3A)
+    /* Loongson 2[ef] and Loongson 3a use load to $0 to perform prefetching.  */
     return "ld\t$0,%a0";
   operands[1] = mips_prefetch_cookie (operands[1], operands[2]);
   return "pref\t%1,%a0";
@@ -6458,13 +6806,22 @@
 ;;  ....................
 ;;
 
+(define_insn "consttable_tls_reloc"
+  [(unspec_volatile [(match_operand 0 "tls_reloc_operand" "")
+		     (match_operand 1 "const_int_operand" "")]
+		    UNSPEC_CONSTTABLE_INT)]
+  "TARGET_MIPS16_PCREL_LOADS"
+  { return mips_output_tls_reloc_directive (&operands[0]); }
+  [(set (attr "length") (symbol_ref "INTVAL (operands[1])"))])
+
 (define_insn "consttable_int"
   [(unspec_volatile [(match_operand 0 "consttable_operand" "")
 		     (match_operand 1 "const_int_operand" "")]
 		    UNSPEC_CONSTTABLE_INT)]
   "TARGET_MIPS16"
 {
-  assemble_integer (operands[0], INTVAL (operands[1]),
+  assemble_integer (mips_strip_unspec_address (operands[0]),
+		    INTVAL (operands[1]),
 		    BITS_PER_UNIT * INTVAL (operands[1]), 1);
   return "";
 }
@@ -6559,6 +6916,59 @@
    ; See tls_get_tp_<mode>
    (set_attr "can_delay" "no")
    (set_attr "mode" "<MODE>")])
+
+;; In MIPS16 mode, the TLS base pointer is accessed by a
+;; libgcc helper function __mips16_rdhwr(), as 'rdhwr' is not
+;; accessible in MIPS16.
+;;
+;; This is not represented as a call insn, to avoid the
+;; unnecesarry clobbering of caller-save registers by a
+;; function consisting only of: "rdhwr $3,$29; j $31; nop;"
+;;
+;; A $25 clobber is added to cater for a $25 load stub added by the
+;; linker to __mips16_rdhwr when the call is made from non-PIC code.
+
+(define_insn_and_split "tls_get_tp_mips16_<mode>"
+  [(set (match_operand:P 0 "register_operand" "=d")
+	(unspec:P [(match_operand:P 1 "call_insn_operand" "dS")]
+		  UNSPEC_TLS_GET_TP))
+   (clobber (reg:P TLS_GET_TP_REGNUM))
+   (clobber (reg:P PIC_FUNCTION_ADDR_REGNUM))
+   (clobber (reg:P RETURN_ADDR_REGNUM))]
+  "HAVE_AS_TLS && TARGET_MIPS16"
+  "#"
+  "&& reload_completed"
+  [(parallel [(set (reg:P TLS_GET_TP_REGNUM)
+	  	   (unspec:P [(match_dup 1)] UNSPEC_TLS_GET_TP))
+	      (clobber (reg:P PIC_FUNCTION_ADDR_REGNUM))
+	      (clobber (reg:P RETURN_ADDR_REGNUM))])
+   (set (match_dup 0) (reg:P TLS_GET_TP_REGNUM))]
+  ""
+  [(set_attr "type" "multi")
+   (set_attr "length" "16")
+   (set_attr "mode" "<MODE>")])
+
+(define_insn "*tls_get_tp_mips16_call_<mode>"
+  [(set (reg:P TLS_GET_TP_REGNUM)
+	(unspec:P [(match_operand:P 0 "call_insn_operand" "dS")]
+		  UNSPEC_TLS_GET_TP))
+   (clobber (reg:P PIC_FUNCTION_ADDR_REGNUM))
+   (clobber (reg:P RETURN_ADDR_REGNUM))]
+  "HAVE_AS_TLS && TARGET_MIPS16"
+  { return MIPS_CALL ("jal", operands, 0, -1); }
+  [(set_attr "type" "call")
+   (set_attr "length" "12")
+   (set_attr "mode" "<MODE>")])
+
+;; Named pattern for expanding thread pointer reference.
+(define_expand "get_thread_pointer<mode>"
+  [(match_operand:P 0 "register_operand" "=d")]
+  "HAVE_AS_TLS"
+{
+  mips_expand_thread_pointer (operands[0]);
+  DONE;
+})
+
 
 ;; Synchronization instructions.
 
@@ -6581,3 +6991,7 @@
 
 ; ST-Microelectronics Loongson-2E/2F-specific patterns.
 (include "loongson.md")
+
+(define_c_enum "unspec" [
+  UNSPEC_ADDRESS_FIRST
+])

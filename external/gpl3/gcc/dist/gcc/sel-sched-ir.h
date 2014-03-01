@@ -1,6 +1,6 @@
 /* Instruction scheduling pass.  This file contains definitions used
    internally in the scheduler.
-   Copyright (C) 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+   Copyright (C) 2006-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -23,13 +23,12 @@ along with GCC; see the file COPYING3.  If not see
 
 /* For state_t.  */
 #include "insn-attr.h"
-/* For regset_head.  */
+#include "regset.h"
 #include "basic-block.h"
 /* For reg_note.  */
 #include "rtl.h"
 #include "ggc.h"
 #include "bitmap.h"
-#include "vecprim.h"
 #include "sched-int.h"
 #include "cfgloop.h"
 
@@ -98,8 +97,6 @@ struct expr_history_def_1
 
 typedef struct expr_history_def_1 expr_history_def;
 
-DEF_VEC_O (expr_history_def);
-DEF_VEC_ALLOC_O (expr_history_def, heap);
 
 /* Expression information.  */
 struct _expr
@@ -145,7 +142,7 @@ struct _expr
   int orig_sched_cycle;
 
   /* This vector contains the history of insn's transformations.  */
-  VEC(expr_history_def, heap) *history_of_changes;
+  vec<expr_history_def> history_of_changes;
 
   /* True (1) when original target (register or memory) of this instruction
      is available for scheduling, false otherwise.  -1 means we're not sure;
@@ -194,8 +191,7 @@ typedef expr_def *expr_t;
 #define EXPR_WAS_RENAMED(EXPR) ((EXPR)->was_renamed)
 #define EXPR_CANT_MOVE(EXPR) ((EXPR)->cant_move)
 
-#define EXPR_WAS_CHANGED(EXPR) (VEC_length (expr_history_def, \
-                                            EXPR_HISTORY_OF_CHANGES (EXPR)) > 0)
+#define EXPR_WAS_CHANGED(EXPR) (EXPR_HISTORY_OF_CHANGES (EXPR).length () > 0)
 
 /* Insn definition for list of original insns in find_used_regs.  */
 struct _def
@@ -284,7 +280,7 @@ struct _fence
   tc_t tc;
 
   /* A vector of insns that are scheduled but not yet completed.  */
-  VEC (rtx,gc) *executing_insns;
+  vec<rtx, va_gc> *executing_insns;
 
   /* A vector indexed by UIDs that caches the earliest cycle on which
      an insn can be scheduled on this fence.  */
@@ -759,13 +755,11 @@ struct _sel_insn_data
 typedef struct _sel_insn_data sel_insn_data_def;
 typedef sel_insn_data_def *sel_insn_data_t;
 
-DEF_VEC_O (sel_insn_data_def);
-DEF_VEC_ALLOC_O (sel_insn_data_def, heap);
-extern VEC (sel_insn_data_def, heap) *s_i_d;
+extern vec<sel_insn_data_def> s_i_d;
 
 /* Accessor macros for s_i_d.  */
-#define SID(INSN) (VEC_index (sel_insn_data_def, s_i_d,	INSN_LUID (INSN)))
-#define SID_BY_UID(UID) (VEC_index (sel_insn_data_def, s_i_d,	LUID_BY_UID (UID)))
+#define SID(INSN) (&s_i_d[INSN_LUID (INSN)])
+#define SID_BY_UID(UID) (&s_i_d[LUID_BY_UID (UID)])
 
 extern sel_insn_data_def insn_sid (insn_t);
 
@@ -847,7 +841,7 @@ extern rtx exit_insn;
 /* Saved loop preheader to transfer when scheduling the loop.  */
 #define LOOP_PREHEADER_BLOCKS(LOOP) ((size_t)((LOOP)->aux) == 1         \
                                      ? NULL                             \
-                                     : ((VEC(basic_block, heap) *) (LOOP)->aux))
+                                     : ((vec<basic_block> *) (LOOP)->aux))
 #define SET_LOOP_PREHEADER_BLOCKS(LOOP,BLOCKS) ((LOOP)->aux             \
                                                 = (BLOCKS != NULL       \
                                                    ? BLOCKS             \
@@ -873,7 +867,7 @@ typedef struct
 {
   /* For each bb header this field contains a set of live registers.
      For all other insns this field has a NULL.
-     We also need to know LV sets for the instructions, that are immediatly
+     We also need to know LV sets for the instructions, that are immediately
      after the border of the region.  */
   regset lv_set;
 
@@ -885,18 +879,16 @@ typedef struct
 
 typedef sel_global_bb_info_def *sel_global_bb_info_t;
 
-DEF_VEC_O (sel_global_bb_info_def);
-DEF_VEC_ALLOC_O (sel_global_bb_info_def, heap);
 
 /* Per basic block data.  This array is indexed by basic block index.  */
-extern VEC (sel_global_bb_info_def, heap) *sel_global_bb_info;
+extern vec<sel_global_bb_info_def> sel_global_bb_info;
 
 extern void sel_extend_global_bb_info (void);
 extern void sel_finish_global_bb_info (void);
 
 /* Get data for BB.  */
 #define SEL_GLOBAL_BB_INFO(BB)					\
-  (VEC_index (sel_global_bb_info_def, sel_global_bb_info, (BB)->index))
+  (&sel_global_bb_info[(BB)->index])
 
 /* Access macros.  */
 #define BB_LV_SET(BB) (SEL_GLOBAL_BB_INFO (BB)->lv_set)
@@ -919,15 +911,12 @@ typedef struct
 
 typedef sel_region_bb_info_def *sel_region_bb_info_t;
 
-DEF_VEC_O (sel_region_bb_info_def);
-DEF_VEC_ALLOC_O (sel_region_bb_info_def, heap);
 
 /* Per basic block data.  This array is indexed by basic block index.  */
-extern VEC (sel_region_bb_info_def, heap) *sel_region_bb_info;
+extern vec<sel_region_bb_info_def> sel_region_bb_info;
 
 /* Get data for BB.  */
-#define SEL_REGION_BB_INFO(BB) (VEC_index (sel_region_bb_info_def,	\
-					   sel_region_bb_info, (BB)->index))
+#define SEL_REGION_BB_INFO(BB) (&sel_region_bb_info[(BB)->index])
 
 /* Get BB's note_list.
    A note_list is a list of various notes that was scattered across BB
@@ -986,12 +975,12 @@ typedef struct
   short flags;
 
   /* When flags include SUCCS_ALL, this will be set to the exact type
-     of the sucessor we're traversing now.  */
+     of the successor we're traversing now.  */
   short current_flags;
 
   /* If skip to loop exits, save here information about loop exits.  */
   int current_exit;
-  VEC (edge, heap) *loop_exits;
+  vec<edge> loop_exits;
 } succ_iterator;
 
 /* A structure returning all successor's information.  */
@@ -1005,7 +994,7 @@ struct succs_info
 
   /* Their probabilities.  As of now, we don't need this for other
      successors.  */
-  VEC(int,heap) *probs_ok;
+  vec<int> probs_ok;
 
   /* Other successors.  */
   insn_vec_t succs_other;
@@ -1057,10 +1046,10 @@ inner_loop_header_p (basic_block bb)
 }
 
 /* Return exit edges of LOOP, filtering out edges with the same dest bb.  */
-static inline VEC (edge, heap) *
+static inline vec<edge> 
 get_loop_exit_edges_unique_dests (const struct loop *loop)
 {
-  VEC (edge, heap) *edges = NULL;
+  vec<edge> edges = vNULL;
   struct loop_exit *exit;
 
   gcc_assert (loop->latch != EXIT_BLOCK_PTR
@@ -1072,7 +1061,7 @@ get_loop_exit_edges_unique_dests (const struct loop *loop)
       edge e;
       bool was_dest = false;
 
-      for (i = 0; VEC_iterate (edge, edges, i, e); i++)
+      for (i = 0; edges.iterate (i, &e); i++)
         if (e->dest == exit->e->dest)
           {
             was_dest = true;
@@ -1080,7 +1069,7 @@ get_loop_exit_edges_unique_dests (const struct loop *loop)
           }
 
       if (!was_dest)
-        VEC_safe_push (edge, heap, edges, exit->e);
+        edges.safe_push (exit->e);
     }
   return edges;
 }
@@ -1111,15 +1100,16 @@ sel_bb_empty_or_nop_p (basic_block bb)
    traverse all of them and if any of them turns out to be another loop header
    (after skipping empty BBs), add its loop exits to the resulting vector
    as well.  */
-static inline VEC(edge, heap) *
+static inline vec<edge> 
 get_all_loop_exits (basic_block bb)
 {
-  VEC(edge, heap) *exits = NULL;
+  vec<edge> exits = vNULL;
 
   /* If bb is empty, and we're skipping to loop exits, then
      consider bb as a possible gate to the inner loop now.  */
   while (sel_bb_empty_or_nop_p (bb)
-	 && in_current_region_p (bb))
+	 && in_current_region_p (bb)
+	 && EDGE_COUNT (bb->succs) > 0)
     {
       bb = single_succ (bb);
 
@@ -1146,24 +1136,24 @@ get_all_loop_exits (basic_block bb)
       exits = get_loop_exit_edges_unique_dests (this_loop);
 
       /* Traverse all loop headers.  */
-      for (i = 0; VEC_iterate (edge, exits, i, e); i++)
+      for (i = 0; exits.iterate (i, &e); i++)
 	if (in_current_region_p (e->dest)
 	    || inner_loop_header_p (e->dest))
 	  {
-	    VEC(edge, heap) *next_exits = get_all_loop_exits (e->dest);
+	    vec<edge> next_exits = get_all_loop_exits (e->dest);
 
-	    if (next_exits)
+	    if (next_exits.exists ())
 	      {
 		int j;
 		edge ne;
 
 		/* Add all loop exits for the current edge into the
 		   resulting vector.  */
-		for (j = 0; VEC_iterate (edge, next_exits, j, ne); j++)
-		  VEC_safe_push (edge, heap, exits, ne);
+		for (j = 0; next_exits.iterate (j, &ne); j++)
+		  exits.safe_push (ne);
 
 		/* Remove the original edge.  */
-		VEC_ordered_remove (edge, exits, i);
+		exits.ordered_remove (i);
 
 		/*  Decrease the loop counter so we won't skip anything.  */
 		i--;
@@ -1214,7 +1204,7 @@ _succ_iter_start (insn_t *succp, insn_t insn, int flags)
   i.bb = bb;
   i.current_flags = 0;
   i.current_exit = -1;
-  i.loop_exits = NULL;
+  i.loop_exits.create (0);
 
   if (bb != EXIT_BLOCK_PTR && BB_END (bb) != insn)
     {
@@ -1222,7 +1212,7 @@ _succ_iter_start (insn_t *succp, insn_t insn, int flags)
 
       /* Avoid 'uninitialized' warning.  */
       i.ei.index = 0;
-      i.ei.container = NULL;
+      i.ei.container = 0;
     }
   else
     {
@@ -1255,18 +1245,17 @@ _succ_iter_cond (succ_iterator *ip, rtx *succp, rtx insn,
           edge e_tmp = NULL;
 
           /* First, try loop exits, if we have them.  */
-          if (ip->loop_exits)
+          if (ip->loop_exits.exists ())
             {
               do
                 {
-                  VEC_iterate (edge, ip->loop_exits,
-                               ip->current_exit, e_tmp);
+                  ip->loop_exits.iterate (ip->current_exit, &e_tmp);
                   ip->current_exit++;
                 }
 	      while (e_tmp && !check (e_tmp, ip));
 
               if (!e_tmp)
-                VEC_free (edge, heap, ip->loop_exits);
+                ip->loop_exits.release ();
             }
 
           /* If we have found a successor, then great.  */
@@ -1291,7 +1280,7 @@ _succ_iter_cond (succ_iterator *ip, rtx *succp, rtx insn,
 		  /* Get all loop exits recursively.  */
 		  ip->loop_exits = get_all_loop_exits (bb);
 
-		  if (ip->loop_exits)
+		  if (ip->loop_exits.exists ())
 		    {
   		      ip->current_exit = 0;
 		      /* Move the iterator now, because we won't do
@@ -1310,7 +1299,7 @@ _succ_iter_cond (succ_iterator *ip, rtx *succp, rtx insn,
 
           /* If loop_exits are non null, we have found an inner loop;
 	     do one more iteration to fetch an edge from these exits.  */
-          if (ip->loop_exits)
+          if (ip->loop_exits.exists ())
             continue;
 
           /* Otherwise, we've found an edge in a usual way.  Break now.  */
@@ -1344,7 +1333,7 @@ _succ_iter_next (succ_iterator *ip)
 {
   gcc_assert (!ip->e2 || ip->e1);
 
-  if (ip->bb_end && ip->e1 && !ip->loop_exits)
+  if (ip->bb_end && ip->e1 && !ip->loop_exits.exists ())
     ei_next (&(ip->ei));
 }
 
@@ -1543,9 +1532,9 @@ extern void merge_expr (expr_t, expr_t, insn_t);
 extern void clear_expr (expr_t);
 extern unsigned expr_dest_regno (expr_t);
 extern rtx expr_dest_reg (expr_t);
-extern int find_in_history_vect (VEC(expr_history_def, heap) *,
+extern int find_in_history_vect (vec<expr_history_def> ,
                                  rtx, vinsn_t, bool);
-extern void insert_in_history_vect (VEC(expr_history_def, heap) **,
+extern void insert_in_history_vect (vec<expr_history_def> *,
                                     unsigned, enum local_trans_type,
                                     vinsn_t, vinsn_t, ds_t);
 extern void mark_unavailable_targets (av_set_t, av_set_t, regset);
@@ -1573,6 +1562,7 @@ extern void sel_init_global_and_expr (bb_vec_t);
 extern void sel_finish_global_and_expr (void);
 
 extern regset compute_live (insn_t);
+extern bool register_unavailable_p (regset, rtx);
 
 /* Dependence analysis functions.  */
 extern void sel_clear_has_dependence (void);
@@ -1602,7 +1592,7 @@ extern bool sel_bb_empty_p (basic_block);
 extern bool in_current_region_p (basic_block);
 extern basic_block fallthru_bb_of_jump (rtx);
 
-extern void sel_init_bbs (bb_vec_t, basic_block);
+extern void sel_init_bbs (bb_vec_t);
 extern void sel_finish_bbs (void);
 
 extern struct succs_info * compute_succs_info (insn_t, short);
@@ -1627,8 +1617,8 @@ extern void sel_finish_pipelining (void);
 extern void sel_sched_region (int);
 extern loop_p get_loop_nest_for_rgn (unsigned int);
 extern bool considered_for_pipelining_p (struct loop *);
-extern void make_region_from_loop_preheader (VEC(basic_block, heap) **);
-extern void sel_add_loop_preheaders (void);
+extern void make_region_from_loop_preheader (vec<basic_block> *&);
+extern void sel_add_loop_preheaders (bb_vec_t *);
 extern bool sel_is_loop_preheader_p (basic_block);
 extern void clear_outdated_rtx_info (basic_block);
 extern void free_data_sets (basic_block);
