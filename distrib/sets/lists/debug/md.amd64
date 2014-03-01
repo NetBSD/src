@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.45 2014/03/01 03:28:07 christos Exp $
+# $NetBSD: md.amd64,v 1.46 2014/03/01 15:41:00 dsl Exp $
 ./usr/lib/i386/i18n/libBIG5_g.a			comp-c-debuglib		compat,debuglib
 ./usr/lib/i386/i18n/libDECHanyu_g.a		comp-c-debuglib		compat,debuglib
 ./usr/lib/i386/i18n/libEUCTW_g.a		comp-c-debuglib		compat,debuglib
@@ -194,7 +194,7 @@
 ./usr/libdata/debug/usr/lib/i386/libatf-c++.so.1.0.debug	comp-compat-shlib	compat,pic,atf,debug
 ./usr/libdata/debug/usr/lib/i386/libatf-c.so.0.0.debug	comp-compat-shlib	compat,pic,atf,debug
 ./usr/libdata/debug/usr/lib/i386/libbfd.so.13.0.debug	comp-compat-shlib	compat,pic,binutils,debug
-./usr/libdata/debug/usr/lib/i386/libbind9.so.7.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libbind9.so.8.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libbluetooth.so.4.2.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libbsdmalloc.so.0.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libbz2.so.1.1.debug	comp-compat-shlib	compat,pic,debug
