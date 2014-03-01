@@ -1,4 +1,4 @@
-/*	$NetBSD: rpz.c,v 1.5 2013/07/27 19:23:11 christos Exp $	*/
+/*	$NetBSD: rpz.c,v 1.6 2014/03/01 22:54:02 christos Exp $	*/
 
 /*
  * Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
@@ -42,7 +42,7 @@ main(int argc, char **argv)
 #else
 		return (1);
 #endif
-	    }
+	}
 
 	if (!strcasecmp(argv[1], "nsdname")) {
 #ifdef ENABLE_RPZ_NSDNAME
@@ -50,8 +50,8 @@ main(int argc, char **argv)
 #else
 		return (1);
 #endif
-	    }
+	}
 
-	    fputs(USAGE, stderr);
-	    return (1);
+	fputs(USAGE, stderr);
+	return (1);
 }

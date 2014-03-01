@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec.c,v 1.8 2014/03/01 03:24:36 christos Exp $	*/
+/*	$NetBSD: dnssec.c,v 1.9 2014/03/01 22:59:10 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -179,12 +179,12 @@ digest_sig(dst_context_t *ctx, isc_boolean_t downcase, dns_rdata_t *sigrdata,
 	if (ret != ISC_R_SUCCESS)
 		return (ret);
 	if (downcase) {
-	dns_fixedname_init(&fname);
+		dns_fixedname_init(&fname);
 
 		RUNTIME_CHECK(dns_name_downcase(&rrsig->signer,
 						dns_fixedname_name(&fname),
 						NULL) == ISC_R_SUCCESS);
-	dns_name_toregion(dns_fixedname_name(&fname), &r);
+		dns_name_toregion(dns_fixedname_name(&fname), &r);
 	} else
 		dns_name_toregion(&rrsig->signer, &r);
 
@@ -429,7 +429,7 @@ dns_dnssec_verify3(dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
 		} else if (isc_serial_lt(sig.timeexpire, (isc_uint32_t)now)) {
 			inc_stat(dns_dnssecstats_fail);
 			return (DNS_R_SIGEXPIRED);
-	}
+		}
 	}
 
 	/*
