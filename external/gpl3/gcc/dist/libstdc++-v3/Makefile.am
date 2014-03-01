@@ -23,7 +23,7 @@
 include $(top_srcdir)/fragment.am
 
 if GLIBCXX_HOSTED
-  hosted_source = src doc po testsuite
+  hosted_source = src doc po
 endif
 
 ## Keep this list sync'd with acinclude.m4:GLIBCXX_CONFIGURE.
@@ -33,8 +33,8 @@ SUBDIRS = include libsupc++ $(hosted_source) python
 ACLOCAL_AMFLAGS = -I . -I .. -I ../config
 
 # Testsuite/check forwarding targets.
-check-%:
-	cd testsuite && $(MAKE) $@
+#check-%:
+#	cd testsuite && $(MAKE) $@
 
 # Documentation forwarding targets.
 doc-%:

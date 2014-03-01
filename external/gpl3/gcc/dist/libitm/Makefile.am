@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 
 ACLOCAL_AMFLAGS = -I .. -I ../config
-SUBDIRS = testsuite
+SUBDIRS =
 
 ## May be used by toolexeclibdir.
 gcc_version := $(shell cat $(top_srcdir)/../gcc/BASE-VER)

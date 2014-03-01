@@ -1067,6 +1067,12 @@ extern long alpha_auto_offset;
 #define ASM_OUTPUT_SOURCE_FILENAME(STREAM, NAME)			\
   alpha_output_filename (STREAM, NAME)
 
+#define ASM_OUTPUT_COMMON(FILE, NAME, SIZE, ROUNDED)	\
+  ( fputs (".comm ", (FILE)),				\
+    assemble_name ((FILE), (NAME)),			\
+    fprintf ((FILE), ",%u\n", (int)(ROUNDED)))  
+
+
 /* By default, turn on GDB extensions.  */
 #define DEFAULT_GDB_EXTENSIONS 1
 
