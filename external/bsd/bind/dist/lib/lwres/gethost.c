@@ -1,7 +1,7 @@
-/*	$NetBSD: gethost.c,v 1.4 2013/12/31 20:24:43 christos Exp $	*/
+/*	$NetBSD: gethost.c,v 1.5 2014/03/01 03:24:40 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -155,6 +155,9 @@
 
 #include <errno.h>
 #include <string.h>
+#ifdef HAVE_INTTYPES_H
+#include <inttypes.h> /* uintptr_t */
+#endif
 
 #include <lwres/net.h>
 #include <lwres/netdb.h>
@@ -333,7 +336,7 @@ copytobuf(struct hostent *he, struct hostent *hptr, char *buf, int buflen) {
 	 */
 	hptr->h_addr_list = ptr;
 	for (i = 0; he->h_addr_list[i]; i++, ptr++) {
-		memcpy(cp, he->h_addr_list[i], n);
+		memmove(cp, he->h_addr_list[i], n);
 		hptr->h_addr_list[i] = cp;
 		cp += n;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: serial_test.c,v 1.4 2013/03/24 18:44:41 christos Exp $	*/
+/*	$NetBSD: serial_test.c,v 1.5 2014/03/01 03:24:33 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -32,10 +32,6 @@ main() {
 	char buf[1024];
 	char *s, *e;
 
-	isc__mem_register();
-	isc__task_register();
-	isc__timer_register();
-	isc__socket_register();
 	while (fgets(buf, sizeof(buf), stdin) != NULL) {
 		buf[sizeof(buf) - 1] = '\0';
 		s = buf;

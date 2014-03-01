@@ -2,7 +2,7 @@
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	       [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2004-2011, 2013  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -44,7 +44,9 @@
       <year>2009</year>
       <year>2010</year>
       <year>2011</year>
+      <year>2012</year>
       <year>2013</year>
+      <year>2014</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -284,6 +286,7 @@ options {
 	max-udp-size <replaceable>integer</replaceable>;
 	root-delegation-only <optional> exclude { <replaceable>quoted_string</replaceable>; ... } </optional>;
 	disable-algorithms <replaceable>string</replaceable> { <replaceable>string</replaceable>; ... };
+	disable-ds-digests <replaceable>string</replaceable> { <replaceable>string</replaceable>; ... };
 	dnssec-enable <replaceable>boolean</replaceable>;
 	dnssec-validation <replaceable>boolean</replaceable>;
 	dnssec-lookaside ( <replaceable>auto</replaceable> | <replaceable>no</replaceable> | <replaceable>domain</replaceable> trust-anchor <replaceable>domain</replaceable> );
@@ -319,7 +322,7 @@ options {
 	update-check-ksk <replaceable>boolean</replaceable>;
 	dnssec-dnskey-kskonly <replaceable>boolean</replaceable>;
 
-	masterfile-format ( text | raw );
+	masterfile-format ( text | raw | map );
 	notify <replaceable>notifytype</replaceable>;
 	notify-source ( <replaceable>ipv4_address</replaceable> | * ) <optional> port ( <replaceable>integer</replaceable> | * ) </optional>;
 	notify-source-v6 ( <replaceable>ipv6_address</replaceable> | * ) <optional> port ( <replaceable>integer</replaceable> | * ) </optional>;
@@ -366,7 +369,7 @@ options {
 	zone-statistics <replaceable>boolean</replaceable>;
 	key-directory <replaceable>quoted_string</replaceable>;
 	managed-keys-directory <replaceable>quoted_string</replaceable>;
-	auto-dnssec <constant>allow</constant>|<constant>maintain</constant>|<constant>create</constant>|<constant>off</constant>;
+	auto-dnssec <constant>allow</constant>|<constant>maintain</constant>|<constant>off</constant>;
 	try-tcp-refresh <replaceable>boolean</replaceable>;
 	zero-no-soa-ttl <replaceable>boolean</replaceable>;
 	zero-no-soa-ttl-cache <replaceable>boolean</replaceable>;
@@ -472,6 +475,7 @@ view <replaceable>string</replaceable> <replaceable>optional_class</replaceable>
 	max-udp-size <replaceable>integer</replaceable>;
 	root-delegation-only <optional> exclude { <replaceable>quoted_string</replaceable>; ... } </optional>;
 	disable-algorithms <replaceable>string</replaceable> { <replaceable>string</replaceable>; ... };
+	disable-ds-digests <replaceable>string</replaceable> { <replaceable>string</replaceable>; ... };
 	dnssec-enable <replaceable>boolean</replaceable>;
 	dnssec-validation <replaceable>boolean</replaceable>;
 	dnssec-lookaside ( <replaceable>auto</replaceable> | <replaceable>no</replaceable> | <replaceable>domain</replaceable> trust-anchor <replaceable>domain</replaceable> );
@@ -507,7 +511,7 @@ view <replaceable>string</replaceable> <replaceable>optional_class</replaceable>
 	update-check-ksk <replaceable>boolean</replaceable>;
 	dnssec-dnskey-kskonly <replaceable>boolean</replaceable>;
 
-	masterfile-format ( text | raw );
+	masterfile-format ( text | raw | map );
 	notify <replaceable>notifytype</replaceable>;
 	notify-source ( <replaceable>ipv4_address</replaceable> | * ) <optional> port ( <replaceable>integer</replaceable> | * ) </optional>;
 	notify-source-v6 ( <replaceable>ipv6_address</replaceable> | * ) <optional> port ( <replaceable>integer</replaceable> | * ) </optional>;
@@ -604,7 +608,7 @@ zone <replaceable>string</replaceable> <replaceable>optional_class</replaceable>
 	update-check-ksk <replaceable>boolean</replaceable>;
 	dnssec-dnskey-kskonly <replaceable>boolean</replaceable>;
 
-	masterfile-format ( text | raw );
+	masterfile-format ( text | raw | map );
 	notify <replaceable>notifytype</replaceable>;
 	notify-source ( <replaceable>ipv4_address</replaceable> | * ) <optional> port ( <replaceable>integer</replaceable> | * ) </optional>;
 	notify-source-v6 ( <replaceable>ipv6_address</replaceable> | * ) <optional> port ( <replaceable>integer</replaceable> | * ) </optional>;

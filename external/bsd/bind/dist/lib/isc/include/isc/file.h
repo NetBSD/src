@@ -1,7 +1,7 @@
-/*	$NetBSD: file.h,v 1.7 2013/12/31 20:24:42 christos Exp $	*/
+/*	$NetBSD: file.h,v 1.8 2014/03/01 03:24:39 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -200,6 +200,9 @@ isc_file_isabsolute(const char *filename);
 
 isc_result_t
 isc_file_isplainfile(const char *name);
+
+isc_result_t
+isc_file_isplainfilefd(int fd);
 /*!<
  * \brief Check that the file is a plain file
  *
@@ -329,6 +332,16 @@ isc_file_splitpath(isc_mem_t *mctx, char *path,
  */
 
 isc_result_t
+isc_file_getsize(const char *file, off_t *size);
+/*%<
+ * Return the size of the file (stored in the parameter pointed
+ * to by 'size') in bytes.
+ *
+ * Returns:
+ * - ISC_R_SUCCESS on success
+ */
+
+isc_result_t
 isc_file_getsizefd(int fd, off_t *size);
 /*%<
  * Return the size of the file (stored in the parameter pointed
@@ -336,6 +349,22 @@ isc_file_getsizefd(int fd, off_t *size);
  *
  * Returns:
  * - ISC_R_SUCCESS on success
+ */
+
+void *
+isc_file_mmap(void *addr, size_t len, int prot,
+	      int flags, int fd, off_t offset);
+/*%<
+ * Portable front-end to mmap().  If mmap() is not defined on this
+ * platform, then we simulate it by calling malloc() and read().
+ * (In this event, the addr, prot, and flags parameters are ignored).
+ */
+
+int
+isc_file_munmap(void *addr, size_t len);
+/*%<
+ * Portable front-end to munmap().  If munmap() is not defined on
+ * this platform, then we simply free the memory.
  */
 
 ISC_LANG_ENDDECLS

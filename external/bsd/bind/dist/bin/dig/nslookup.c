@@ -1,4 +1,4 @@
-/*	$NetBSD: nslookup.c,v 1.7 2013/12/31 20:24:38 christos Exp $	*/
+/*	$NetBSD: nslookup.c,v 1.8 2014/03/01 03:24:32 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
@@ -893,10 +893,6 @@ main(int argc, char **argv) {
 
 	interactive = ISC_TF(isatty(0));
 
-	isc__mem_register();
-	isc__task_register();
-	isc__timer_register();
-	isc__socket_register();
 	ISC_LIST_INIT(lookup_list);
 	ISC_LIST_INIT(server_list);
 	ISC_LIST_INIT(search_list);

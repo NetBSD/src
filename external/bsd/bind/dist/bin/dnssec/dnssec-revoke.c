@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssec-revoke.c,v 1.5 2013/07/27 19:23:09 christos Exp $	*/
+/*	$NetBSD: dnssec-revoke.c,v 1.6 2014/03/01 03:24:32 christos Exp $	*/
 
 /*
- * Copyright (C) 2009-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -55,7 +55,10 @@ usage(void) {
 	fprintf(stderr, "Usage:\n");
 	fprintf(stderr,	"    %s [options] keyfile\n\n", program);
 	fprintf(stderr, "Version: %s\n", VERSION);
-#ifdef USE_PKCS11
+#if defined(PKCS11CRYPTO)
+	fprintf(stderr, "    -E engine:    specify PKCS#11 provider "
+					"(default: %s)\n", PK11_LIB_LOCATION);
+#elif defined(USE_PKCS11)
 	fprintf(stderr, "    -E engine:    specify OpenSSL engine "
 					   "(default \"pkcs11\")\n");
 #else
@@ -78,7 +81,7 @@ int
 main(int argc, char **argv) {
 	isc_result_t result;
 #ifdef USE_PKCS11
-	const char *engine = "pkcs11";
+	const char *engine = PKCS11_ENGINE;
 #else
 	const char *engine = NULL;
 #endif
@@ -98,7 +101,6 @@ main(int argc, char **argv) {
 	if (argc == 1)
 		usage();
 
-	isc__mem_register();
 	result = isc_mem_create(0, 0, &mctx);
 	if (result != ISC_R_SUCCESS)
 		fatal("Out of memory");

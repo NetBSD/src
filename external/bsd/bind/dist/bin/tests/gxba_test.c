@@ -1,4 +1,4 @@
-/*	$NetBSD: gxba_test.c,v 1.4 2013/03/24 18:44:40 christos Exp $	*/
+/*	$NetBSD: gxba_test.c,v 1.5 2014/03/01 03:24:33 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -72,10 +72,6 @@ main(int argc, char **argv) {
 
 	(void)argc;
 
-	isc__mem_register();
-	isc__task_register();
-	isc__timer_register();
-	isc__socket_register();
 	while (argv[1] != NULL) {
 		if (inet_pton(AF_INET, argv[1], &in_addr) == 1) {
 			af = AF_INET;

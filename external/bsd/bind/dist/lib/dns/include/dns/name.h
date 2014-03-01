@@ -1,7 +1,7 @@
-/*	$NetBSD: name.h,v 1.7 2013/07/27 19:23:12 christos Exp $	*/
+/*	$NetBSD: name.h,v 1.8 2014/03/01 03:24:37 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -233,6 +233,11 @@ dns_name_invalidate(dns_name_t *name);
  * \li	If the name had a dedicated buffer, that association is ended.
  */
 
+isc_boolean_t
+dns_name_isvalid(const dns_name_t *name);
+/*%<
+ * Check whether 'name' points to a valid dns_name
+ */
 
 /***
  *** Dedicated Buffers

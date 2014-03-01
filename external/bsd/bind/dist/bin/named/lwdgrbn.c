@@ -1,7 +1,7 @@
-/*	$NetBSD: lwdgrbn.c,v 1.4 2013/12/31 20:24:39 christos Exp $	*/
+/*	$NetBSD: lwdgrbn.c,v 1.5 2014/03/01 03:24:32 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -126,8 +126,8 @@ iterate_node(lwres_grbnresponse_t *grbn, dns_db_t *db, dns_dbnode_t *node,
 			lens = isc_mem_get(mctx, size * sizeof(*lens));
 			if (lens == NULL)
 				goto out;
-			memcpy(rdatas, oldrdatas, used * sizeof(*rdatas));
-			memcpy(lens, oldlens, used * sizeof(*lens));
+			memmove(rdatas, oldrdatas, used * sizeof(*rdatas));
+			memmove(lens, oldlens, used * sizeof(*lens));
 			isc_mem_put(mctx, oldrdatas,
 				    oldsize * sizeof(*oldrdatas));
 			isc_mem_put(mctx, oldlens, oldsize * sizeof(*oldlens));
@@ -160,8 +160,8 @@ iterate_node(lwres_grbnresponse_t *grbn, dns_db_t *db, dns_dbnode_t *node,
 		newlens = isc_mem_get(mctx, used * sizeof(*lens));
 		if (newlens == NULL)
 			goto out;
-		memcpy(newrdatas, rdatas, used * sizeof(*rdatas));
-		memcpy(newlens, lens, used * sizeof(*lens));
+		memmove(newrdatas, rdatas, used * sizeof(*rdatas));
+		memmove(newlens, lens, used * sizeof(*lens));
 		isc_mem_put(mctx, rdatas, size * sizeof(*rdatas));
 		isc_mem_put(mctx, lens, size * sizeof(*lens));
 		grbn->rdatas = newrdatas;
