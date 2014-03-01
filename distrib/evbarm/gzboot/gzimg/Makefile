@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2014/01/27 08:18:07 apb Exp $
+#	$NetBSD: Makefile,v 1.26 2014/03/01 01:52:13 matt Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -6,19 +6,19 @@
 .include <bsd.kernobj.mk>
 
 #
-# `make' or `make all' builds all gzimg files defined in ${TARGETS}.
+# `make' or `make all' builds all gzimg files defined in ${ARCH_TARGETS}.
 # `make _KERNELNAME_' builds all gzimg files for specified kernels.
 #
 
 
 
-#	TARGETS is a list of:
+#	ARCH_TARGETS is a list of:
 #		KERNEL_name	GZBOOT_name	GZIMG_name
 #		RELOC_ADDR	WHICH_kernel
 #	
 .if ${MACHINE_ARCH} == "arm"
 # Little endian platforms.
-TARGETS=	ADI_BRH		ADI_BRH		ADI_BRH_sd0	\
+ARCH_TARGETS=	ADI_BRH		ADI_BRH		ADI_BRH_sd0	\
 		0x00140000	netbsd-sd0			\
 								\
 		ADI_BRH		ADI_BRH		ADI_BRH_wd0	\
@@ -53,19 +53,19 @@ TARGETS=	ADI_BRH		ADI_BRH		ADI_BRH_sd0	\
 								\
 		SMDK2800	SMDK2800	SMDK2800	\
 		0x00000000	netbsd
-.else
+.elif ${MACHINE_ARCH} == "armeb"
 # Big endian platforms.
-TARGETS=	ADI_BRH		ADI_BRH		ADI_BRH_sd0	\
+ARCH_TARGETS=	ADI_BRH		ADI_BRH		ADI_BRH_sd0	\
 		0x00140000	netbsd-sd0			\
 								\
 		ADI_BRH		ADI_BRH		ADI_BRH_wd0	\
 		0x00140000	netbsd-wd0
 .endif
 
-# Default is to build for all TARGETS
+# Default is to build for all ARCH_TARGETS
 ALL_KERNELS?= +
 
-.for K G I R W in ${TARGETS}				# {
+.for K G I R W in ${ARCH_TARGETS}			# {
 .for configsel in ${ALL_KERNELS}			# {
 .if ${configsel} == "+" || ${configsel} == ${K}
 
