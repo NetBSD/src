@@ -1,4 +1,4 @@
-/* $NetBSD: t_abs.c,v 1.2 2014/02/27 17:25:28 joerg Exp $ */
+/* $NetBSD: t_abs.c,v 1.3 2014/03/01 22:38:13 joerg Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_abs.c,v 1.2 2014/02/27 17:25:28 joerg Exp $");
+__RCSID("$NetBSD: t_abs.c,v 1.3 2014/03/01 22:38:13 joerg Exp $");
 
 #include <atf-c.h>
 #include <inttypes.h>
@@ -106,7 +106,7 @@ ATF_TC_BODY(labs_basic, tc)
 		{ LONG_MAX,	LONG_MAX	},
 		{ -LONG_MAX,	LONG_MAX	},
 		{ INT_MAX,	INT_MAX		},
-		{ -INT_MAX,	-INT_MAX	},
+		{ -INT_MAX,	INT_MAX		},
 	};
 
 	for (size_t i = 0; i < __arraycount(table); i++)
