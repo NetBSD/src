@@ -82,7 +82,6 @@ MULTILIB_OSDIRNAMES = \
 	m5-64media-nofpu=!m5-64media-nofpu $(OTHER_ENDIAN)/m5-64media-nofpu=!$(OTHER_ENDIAN)/m5-64media-nofpu
 
 $(out_object_file): gt-sh.h
-gt-sh.h : s-gtype ; @true
 
 # Local Variables:
 # mode: Makefile
