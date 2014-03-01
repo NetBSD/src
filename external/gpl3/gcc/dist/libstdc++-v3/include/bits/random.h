@@ -1,6 +1,6 @@
 // random number generation -*- C++ -*-
 
-// Copyright (C) 2009, 2010 Free Software Foundation, Inc.
+// Copyright (C) 2009-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -25,13 +25,18 @@
 /**
  * @file bits/random.h
  *  This is an internal header file, included by other library headers.
- *  You should not attempt to use it directly.
+ *  Do not attempt to use it directly. @headername{random}
  */
+
+#ifndef _RANDOM_H
+#define _RANDOM_H 1
 
 #include <vector>
 
-namespace std
+namespace std _GLIBCXX_VISIBILITY(default)
 {
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
+
   // [26.4] Random number generation
 
   /**
@@ -52,11 +57,15 @@ namespace std
     _RealType
     generate_canonical(_UniformRandomNumberGenerator& __g);
 
+_GLIBCXX_END_NAMESPACE_VERSION
+
   /*
    * Implementation-space details.
    */
   namespace __detail
   {
+  _GLIBCXX_BEGIN_NAMESPACE_VERSION
+
     template<typename _UIntType, size_t __w,
 	     bool = __w < static_cast<size_t>
 			  (std::numeric_limits<_UIntType>::digits)>
@@ -67,15 +76,86 @@ namespace std
       struct _Shift<_UIntType, __w, true>
       { static const _UIntType __value = _UIntType(1) << __w; };
 
-    template<typename _Tp, _Tp __m, _Tp __a, _Tp __c, bool>
-      struct _Mod;
+    template<int __s,
+	     int __which = ((__s <= __CHAR_BIT__ * sizeof (int))
+			    + (__s <= __CHAR_BIT__ * sizeof (long))
+			    + (__s <= __CHAR_BIT__ * sizeof (long long))
+			    /* assume long long no bigger than __int128 */
+			    + (__s <= 128))>
+      struct _Select_uint_least_t
+      {
+	static_assert(__which < 0, /* needs to be dependent */
+		      "sorry, would be too much trouble for a slow result");
+      };
 
-    // Dispatch based on modulus value to prevent divide-by-zero compile-time
-    // errors when m == 0.
+    template<int __s>
+      struct _Select_uint_least_t<__s, 4>
+      { typedef unsigned int type; };
+
+    template<int __s>
+      struct _Select_uint_least_t<__s, 3>
+      { typedef unsigned long type; };
+
+    template<int __s>
+      struct _Select_uint_least_t<__s, 2>
+      { typedef unsigned long long type; };
+
+#ifdef _GLIBCXX_USE_INT128
+    template<int __s>
+      struct _Select_uint_least_t<__s, 1>
+      { typedef unsigned __int128 type; };
+#endif
+
+    // Assume a != 0, a < m, c < m, x < m.
+    template<typename _Tp, _Tp __m, _Tp __a, _Tp __c,
+	     bool __big_enough = (!(__m & (__m - 1))
+				  || (_Tp(-1) - __c) / __a >= __m - 1),
+             bool __schrage_ok = __m % __a < __m / __a>
+      struct _Mod
+      {
+	typedef typename _Select_uint_least_t<std::__lg(__a)
+					      + std::__lg(__m) + 2>::type _Tp2;
+	static _Tp
+	__calc(_Tp __x)
+	{ return static_cast<_Tp>((_Tp2(__a) * __x + __c) % __m); }
+      };
+
+    // Schrage.
+    template<typename _Tp, _Tp __m, _Tp __a, _Tp __c>
+      struct _Mod<_Tp, __m, __a, __c, false, true>
+      {
+	static _Tp
+	__calc(_Tp __x);
+      };
+
+    // Special cases:
+    // - for m == 2^n or m == 0, unsigned integer overflow is safe.
+    // - a * (m - 1) + c fits in _Tp, there is no overflow.
+    template<typename _Tp, _Tp __m, _Tp __a, _Tp __c, bool __s>
+      struct _Mod<_Tp, __m, __a, __c, true, __s>
+      {
+	static _Tp
+	__calc(_Tp __x)
+	{
+	  _Tp __res = __a * __x + __c;
+	  if (__m)
+	    __res %= __m;
+	  return __res;
+	}
+      };
+
     template<typename _Tp, _Tp __m, _Tp __a = 1, _Tp __c = 0>
       inline _Tp
       __mod(_Tp __x)
-      { return _Mod<_Tp, __m, __a, __c, __m == 0>::__calc(__x); }
+      { return _Mod<_Tp, __m, __a, __c>::__calc(__x); }
+
+    /* Determine whether number is a power of 2.  */
+    template<typename _Tp>
+      inline bool
+      _Power_of_2(_Tp __x)
+      {
+	return ((__x - 1) & __x) == 0;
+      };
 
     /*
      * An adaptor class for converting the output of any Generator into
@@ -113,7 +193,11 @@ namespace std
       private:
 	_Engine& _M_g;
       };
+
+  _GLIBCXX_END_NAMESPACE_VERSION
   } // namespace __detail
+
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   /**
    * @addtogroup random_generators Random Number Generators
@@ -166,12 +250,12 @@ namespace std
       typedef _UIntType result_type;
 
       /** The multiplier. */
-      static const result_type multiplier   = __a;
+      static constexpr result_type multiplier   = __a;
       /** An increment. */
-      static const result_type increment    = __c;
+      static constexpr result_type increment    = __c;
       /** The modulus. */
-      static const result_type modulus      = __m;
-      static const result_type default_seed = 1u;
+      static constexpr result_type modulus      = __m;
+      static constexpr result_type default_seed = 1u;
 
       /**
        * @brief Constructs a %linear_congruential_engine random number
@@ -222,26 +306,20 @@ namespace std
        *
        * The minimum depends on the @p __c parameter: if it is zero, the
        * minimum generated must be > 0, otherwise 0 is allowed.
-       *
-       * @todo This should be constexpr.
        */
-      result_type
-      min() const
+      static constexpr result_type
+      min()
       { return __c == 0u ? 1u : 0u; }
 
       /**
        * @brief Gets the largest possible value in the output range.
-       *
-       * @todo This should be constexpr.
        */
-      result_type
-      max() const
+      static constexpr result_type
+      max()
       { return __m - 1u; }
 
       /**
        * @brief Discard a sequence of random numbers.
-       *
-       * @todo Look for a faster way to do discard.
        */
       void
       discard(unsigned long long __z)
@@ -287,9 +365,9 @@ namespace std
       template<typename _UIntType1, _UIntType1 __a1, _UIntType1 __c1,
 	       _UIntType1 __m1, typename _CharT, typename _Traits>
 	friend std::basic_ostream<_CharT, _Traits>&
-	operator<<(std::basic_ostream<_CharT, _Traits>&,
+	operator<<(std::basic_ostream<_CharT, _Traits>& __os,
 		   const std::linear_congruential_engine<_UIntType1,
-		   __a1, __c1, __m1>&);
+		   __a1, __c1, __m1>& __lcr);
 
       /**
        * @brief Sets the state of the engine by reading its textual
@@ -307,9 +385,9 @@ namespace std
       template<typename _UIntType1, _UIntType1 __a1, _UIntType1 __c1,
 	       _UIntType1 __m1, typename _CharT, typename _Traits>
 	friend std::basic_istream<_CharT, _Traits>&
-	operator>>(std::basic_istream<_CharT, _Traits>&,
+	operator>>(std::basic_istream<_CharT, _Traits>& __is,
 		   std::linear_congruential_engine<_UIntType1, __a1,
-		   __c1, __m1>&);
+		   __c1, __m1>& __lcr);
 
     private:
       _UIntType _M_x;
@@ -348,17 +426,20 @@ namespace std
    * This algorithm was originally invented by Makoto Matsumoto and
    * Takuji Nishimura.
    *
-   * @var word_size   The number of bits in each element of the state vector.
-   * @var state_size  The degree of recursion.
-   * @var shift_size  The period parameter.
-   * @var mask_bits   The separation point bit index.
-   * @var parameter_a The last row of the twist matrix.
-   * @var output_u    The first right-shift tempering matrix parameter.
-   * @var output_s    The first left-shift tempering matrix parameter.
-   * @var output_b    The first left-shift tempering matrix mask.
-   * @var output_t    The second left-shift tempering matrix parameter.
-   * @var output_c    The second left-shift tempering matrix mask.
-   * @var output_l    The second right-shift tempering matrix parameter.
+   * @tparam __w  Word size, the number of bits in each element of 
+   *              the state vector.
+   * @tparam __n  The degree of recursion.
+   * @tparam __m  The period parameter.
+   * @tparam __r  The separation point bit index.
+   * @tparam __a  The last row of the twist matrix.
+   * @tparam __u  The first right-shift tempering matrix parameter.
+   * @tparam __d  The first right-shift tempering matrix mask.
+   * @tparam __s  The first left-shift tempering matrix parameter.
+   * @tparam __b  The first left-shift tempering matrix mask.
+   * @tparam __t  The second left-shift tempering matrix parameter.
+   * @tparam __c  The second left-shift tempering matrix mask.
+   * @tparam __l  The second right-shift tempering matrix parameter.
+   * @tparam __f  Initialization multiplier.
    */
   template<typename _UIntType, size_t __w,
 	   size_t __n, size_t __m, size_t __r,
@@ -399,20 +480,20 @@ namespace std
       typedef _UIntType result_type;
 
       // parameter values
-      static const size_t      word_size                 = __w;
-      static const size_t      state_size                = __n;
-      static const size_t      shift_size                = __m;
-      static const size_t      mask_bits                 = __r;
-      static const result_type xor_mask                  = __a;
-      static const size_t      tempering_u               = __u;
-      static const result_type tempering_d               = __d;
-      static const size_t      tempering_s               = __s;
-      static const result_type tempering_b               = __b;
-      static const size_t      tempering_t               = __t;
-      static const result_type tempering_c               = __c;
-      static const size_t      tempering_l               = __l;
-      static const result_type initialization_multiplier = __f;
-      static const result_type default_seed = 5489u;
+      static constexpr size_t      word_size                 = __w;
+      static constexpr size_t      state_size                = __n;
+      static constexpr size_t      shift_size                = __m;
+      static constexpr size_t      mask_bits                 = __r;
+      static constexpr result_type xor_mask                  = __a;
+      static constexpr size_t      tempering_u               = __u;
+      static constexpr result_type tempering_d               = __d;
+      static constexpr size_t      tempering_s               = __s;
+      static constexpr result_type tempering_b               = __b;
+      static constexpr size_t      tempering_t               = __t;
+      static constexpr result_type tempering_c               = __c;
+      static constexpr size_t      tempering_l               = __l;
+      static constexpr result_type initialization_multiplier = __f;
+      static constexpr result_type default_seed = 5489u;
 
       // constructors and member function
       explicit
@@ -441,33 +522,23 @@ namespace std
 
       /**
        * @brief Gets the smallest possible value in the output range.
-       *
-       * @todo This should be constexpr.
        */
-      result_type
-      min() const
+      static constexpr result_type
+      min()
       { return 0; };
 
       /**
        * @brief Gets the largest possible value in the output range.
-       *
-       * @todo This should be constexpr.
        */
-      result_type
-      max() const
+      static constexpr result_type
+      max()
       { return __detail::_Shift<_UIntType, __w>::__value - 1; }
 
       /**
        * @brief Discard a sequence of random numbers.
-       *
-       * @todo Look for a faster way to do discard.
        */
       void
-      discard(unsigned long long __z)
-      {
-	for (; __z != 0ULL; --__z)
-	  (*this)();
-      }
+      discard(unsigned long long __z);
 
       result_type
       operator()();
@@ -487,7 +558,8 @@ namespace std
       friend bool
       operator==(const mersenne_twister_engine& __lhs,
 		 const mersenne_twister_engine& __rhs)
-      { return std::equal(__lhs._M_x, __lhs._M_x + state_size, __rhs._M_x); }
+      { return (std::equal(__lhs._M_x, __lhs._M_x + state_size, __rhs._M_x)
+		&& __lhs._M_p == __rhs._M_p); }
 
       /**
        * @brief Inserts the current state of a % mersenne_twister_engine
@@ -510,10 +582,10 @@ namespace std
 	       _UIntType1 __c1, size_t __l1, _UIntType1 __f1,
 	       typename _CharT, typename _Traits>
 	friend std::basic_ostream<_CharT, _Traits>&
-	operator<<(std::basic_ostream<_CharT, _Traits>&,
+	operator<<(std::basic_ostream<_CharT, _Traits>& __os,
 		   const std::mersenne_twister_engine<_UIntType1, __w1, __n1,
 		   __m1, __r1, __a1, __u1, __d1, __s1, __b1, __t1, __c1,
-		   __l1, __f1>&);
+		   __l1, __f1>& __x);
 
       /**
        * @brief Extracts the current state of a % mersenne_twister_engine
@@ -536,12 +608,14 @@ namespace std
 	       _UIntType1 __c1, size_t __l1, _UIntType1 __f1,
 	       typename _CharT, typename _Traits>
 	friend std::basic_istream<_CharT, _Traits>&
-	operator>>(std::basic_istream<_CharT, _Traits>&,
+	operator>>(std::basic_istream<_CharT, _Traits>& __is,
 		   std::mersenne_twister_engine<_UIntType1, __w1, __n1, __m1,
 		   __r1, __a1, __u1, __d1, __s1, __b1, __t1, __c1,
-		   __l1, __f1>&);
+		   __l1, __f1>& __x);
 
     private:
+      void _M_gen_rand();
+
       _UIntType _M_x[state_size];
       size_t    _M_p;
     };
@@ -605,10 +679,10 @@ namespace std
       typedef _UIntType result_type;
 
       // parameter values
-      static const size_t      word_size    = __w;
-      static const size_t      short_lag    = __s;
-      static const size_t      long_lag     = __r;
-      static const result_type default_seed = 19780503u;
+      static constexpr size_t      word_size    = __w;
+      static constexpr size_t      short_lag    = __s;
+      static constexpr size_t      long_lag     = __r;
+      static constexpr result_type default_seed = 19780503u;
 
       /**
        * @brief Constructs an explicitly seeded % subtract_with_carry_engine
@@ -657,27 +731,21 @@ namespace std
       /**
        * @brief Gets the inclusive minimum value of the range of random
        * integers returned by this generator.
-       *
-       * @todo This should be constexpr.
        */
-      result_type
-      min() const
+      static constexpr result_type
+      min()
       { return 0; }
 
       /**
        * @brief Gets the inclusive maximum value of the range of random
        * integers returned by this generator.
-       *
-       * @todo This should be constexpr.
        */
-      result_type
-      max() const
+      static constexpr result_type
+      max()
       { return __detail::_Shift<_UIntType, __w>::__value - 1; }
 
       /**
        * @brief Discard a sequence of random numbers.
-       *
-       * @todo Look for a faster way to do discard.
        */
       void
       discard(unsigned long long __z)
@@ -707,7 +775,9 @@ namespace std
       friend bool
       operator==(const subtract_with_carry_engine& __lhs,
 		 const subtract_with_carry_engine& __rhs)
-      { return std::equal(__lhs._M_x, __lhs._M_x + long_lag, __rhs._M_x); }
+      { return (std::equal(__lhs._M_x, __lhs._M_x + long_lag, __rhs._M_x)
+		&& __lhs._M_carry == __rhs._M_carry
+		&& __lhs._M_p == __rhs._M_p); }
 
       /**
        * @brief Inserts the current state of a % subtract_with_carry_engine
@@ -791,8 +861,8 @@ namespace std
       typedef typename _RandomNumberEngine::result_type result_type;
 
       // parameter values
-      static const size_t block_size = __p;
-      static const size_t used_block = __r;
+      static constexpr size_t block_size = __p;
+      static constexpr size_t used_block = __r;
 
       /**
        * @brief Constructs a default %discard_block_engine engine.
@@ -806,21 +876,21 @@ namespace std
        * @brief Copy constructs a %discard_block_engine engine.
        *
        * Copies an existing base class random number generator.
-       * @param rng An existing (base class) engine object.
+       * @param __rng An existing (base class) engine object.
        */
       explicit
-      discard_block_engine(const _RandomNumberEngine& __rne)
-      : _M_b(__rne), _M_n(0) { }
+      discard_block_engine(const _RandomNumberEngine& __rng)
+      : _M_b(__rng), _M_n(0) { }
 
       /**
        * @brief Move constructs a %discard_block_engine engine.
        *
        * Copies an existing base class random number generator.
-       * @param rng An existing (base class) engine object.
+       * @param __rng An existing (base class) engine object.
        */
       explicit
-      discard_block_engine(_RandomNumberEngine&& __rne)
-      : _M_b(std::move(__rne)), _M_n(0) { }
+      discard_block_engine(_RandomNumberEngine&& __rng)
+      : _M_b(std::move(__rng)), _M_n(0) { }
 
       /**
        * @brief Seed constructs a %discard_block_engine engine.
@@ -886,31 +956,25 @@ namespace std
        *        object.
        */
       const _RandomNumberEngine&
-      base() const
+      base() const noexcept
       { return _M_b; }
 
       /**
        * @brief Gets the minimum value in the generated random number range.
-       *
-       * @todo This should be constexpr.
        */
-      result_type
-      min() const
-      { return _M_b.min(); }
+      static constexpr result_type
+      min()
+      { return _RandomNumberEngine::min(); }
 
       /**
        * @brief Gets the maximum value in the generated random number range.
-       *
-       * @todo This should be constexpr.
        */
-      result_type
-      max() const
-      { return _M_b.max(); }
+      static constexpr result_type
+      max()
+      { return _RandomNumberEngine::max(); }
 
       /**
        * @brief Discard a sequence of random numbers.
-       *
-       * @todo Look for a faster way to do discard.
        */
       void
       discard(unsigned long long __z)
@@ -955,9 +1019,9 @@ namespace std
       template<typename _RandomNumberEngine1, size_t __p1, size_t __r1,
 	       typename _CharT, typename _Traits>
 	friend std::basic_ostream<_CharT, _Traits>&
-	operator<<(std::basic_ostream<_CharT, _Traits>&,
+	operator<<(std::basic_ostream<_CharT, _Traits>& __os,
 		   const std::discard_block_engine<_RandomNumberEngine1,
-		   __p1, __r1>&);
+		   __p1, __r1>& __x);
 
       /**
        * @brief Extracts the current state of a % subtract_with_carry_engine
@@ -973,9 +1037,9 @@ namespace std
       template<typename _RandomNumberEngine1, size_t __p1, size_t __r1,
 	       typename _CharT, typename _Traits>
 	friend std::basic_istream<_CharT, _Traits>&
-	operator>>(std::basic_istream<_CharT, _Traits>&,
+	operator>>(std::basic_istream<_CharT, _Traits>& __is,
 		   std::discard_block_engine<_RandomNumberEngine1,
-		   __p1, __r1>&);
+		   __p1, __r1>& __x);
 
     private:
       _RandomNumberEngine _M_b;
@@ -1030,21 +1094,21 @@ namespace std
        * @brief Copy constructs a %independent_bits_engine engine.
        *
        * Copies an existing base class random number generator.
-       * @param rng An existing (base class) engine object.
+       * @param __rng An existing (base class) engine object.
        */
       explicit
-      independent_bits_engine(const _RandomNumberEngine& __rne)
-      : _M_b(__rne) { }
+      independent_bits_engine(const _RandomNumberEngine& __rng)
+      : _M_b(__rng) { }
 
       /**
        * @brief Move constructs a %independent_bits_engine engine.
        *
        * Copies an existing base class random number generator.
-       * @param rng An existing (base class) engine object.
+       * @param __rng An existing (base class) engine object.
        */
       explicit
-      independent_bits_engine(_RandomNumberEngine&& __rne)
-      : _M_b(std::move(__rne)) { }
+      independent_bits_engine(_RandomNumberEngine&& __rng)
+      : _M_b(std::move(__rng)) { }
 
       /**
        * @brief Seed constructs a %independent_bits_engine engine.
@@ -1101,31 +1165,25 @@ namespace std
        *        object.
        */
       const _RandomNumberEngine&
-      base() const
+      base() const noexcept
       { return _M_b; }
 
       /**
        * @brief Gets the minimum value in the generated random number range.
-       *
-       * @todo This should be constexpr.
        */
-      result_type
-      min() const
+      static constexpr result_type
+      min()
       { return 0U; }
 
       /**
        * @brief Gets the maximum value in the generated random number range.
-       *
-       * @todo This should be constexpr.
        */
-      result_type
-      max() const
+      static constexpr result_type
+      max()
       { return __detail::_Shift<_UIntType, __w>::__value - 1; }
 
       /**
        * @brief Discard a sequence of random numbers.
-       *
-       * @todo Look for a faster way to do discard.
        */
       void
       discard(unsigned long long __z)
@@ -1240,7 +1298,7 @@ namespace std
       /** The type of the generated random value. */
       typedef typename _RandomNumberEngine::result_type result_type;
 
-      static const size_t table_size = __k;
+      static constexpr size_t table_size = __k;
 
       /**
        * @brief Constructs a default %shuffle_order_engine engine.
@@ -1255,22 +1313,22 @@ namespace std
        * @brief Copy constructs a %shuffle_order_engine engine.
        *
        * Copies an existing base class random number generator.
-       * @param rng An existing (base class) engine object.
+       * @param __rng An existing (base class) engine object.
        */
       explicit
-      shuffle_order_engine(const _RandomNumberEngine& __rne)
-      : _M_b(__rne)
+      shuffle_order_engine(const _RandomNumberEngine& __rng)
+      : _M_b(__rng)
       { _M_initialize(); }
 
       /**
        * @brief Move constructs a %shuffle_order_engine engine.
        *
        * Copies an existing base class random number generator.
-       * @param rng An existing (base class) engine object.
+       * @param __rng An existing (base class) engine object.
        */
       explicit
-      shuffle_order_engine(_RandomNumberEngine&& __rne)
-      : _M_b(std::move(__rne))
+      shuffle_order_engine(_RandomNumberEngine&& __rng)
+      : _M_b(std::move(__rng))
       { _M_initialize(); }
 
       /**
@@ -1337,31 +1395,25 @@ namespace std
        * Gets a const reference to the underlying generator engine object.
        */
       const _RandomNumberEngine&
-      base() const
+      base() const noexcept
       { return _M_b; }
 
       /**
        * Gets the minimum value in the generated random number range.
-       *
-       * @todo This should be constexpr.
        */
-      result_type
-      min() const
-      { return _M_b.min(); }
+      static constexpr result_type
+      min()
+      { return _RandomNumberEngine::min(); }
 
       /**
        * Gets the maximum value in the generated random number range.
-       *
-       * @todo This should be constexpr.
        */
-      result_type
-      max() const
-      { return _M_b.max(); }
+      static constexpr result_type
+      max()
+      { return _RandomNumberEngine::max(); }
 
       /**
        * Discard a sequence of random numbers.
-       *
-       * @todo Look for a faster way to do discard.
        */
       void
       discard(unsigned long long __z)
@@ -1390,7 +1442,9 @@ namespace std
       friend bool
       operator==(const shuffle_order_engine& __lhs,
 		 const shuffle_order_engine& __rhs)
-      { return __lhs._M_b == __rhs._M_b; }
+      { return (__lhs._M_b == __rhs._M_b
+		&& std::equal(__lhs._M_v, __lhs._M_v + __k, __rhs._M_v)
+		&& __lhs._M_y == __rhs._M_y); }
 
       /**
        * @brief Inserts the current state of a %shuffle_order_engine random
@@ -1406,9 +1460,9 @@ namespace std
       template<typename _RandomNumberEngine1, size_t __k1,
 	       typename _CharT, typename _Traits>
 	friend std::basic_ostream<_CharT, _Traits>&
-	operator<<(std::basic_ostream<_CharT, _Traits>&,
+	operator<<(std::basic_ostream<_CharT, _Traits>& __os,
 		   const std::shuffle_order_engine<_RandomNumberEngine1,
-		   __k1>&);
+		   __k1>& __x);
 
       /**
        * @brief Extracts the current state of a % subtract_with_carry_engine
@@ -1424,8 +1478,8 @@ namespace std
       template<typename _RandomNumberEngine1, size_t __k1,
 	       typename _CharT, typename _Traits>
 	friend std::basic_istream<_CharT, _Traits>&
-	operator>>(std::basic_istream<_CharT, _Traits>&,
-		   std::shuffle_order_engine<_RandomNumberEngine1, __k1>&);
+	operator>>(std::basic_istream<_CharT, _Traits>& __is,
+		   std::shuffle_order_engine<_RandomNumberEngine1, __k1>& __x);
 
     private:
       void _M_initialize()
@@ -1529,66 +1583,43 @@ namespace std
 #ifdef _GLIBCXX_USE_RANDOM_TR1
 
     explicit
-    random_device(const std::string& __token = "/dev/urandom")
+    random_device(const std::string& __token = "default")
     {
-      if ((__token != "/dev/urandom" && __token != "/dev/random")
-	  || !(_M_file = std::fopen(__token.c_str(), "rb")))
-	std::__throw_runtime_error(__N("random_device::"
-				       "random_device(const std::string&)"));
+      _M_init(__token);
     }
 
     ~random_device()
-    { std::fclose(_M_file); }
+    { _M_fini(); }
 
 #else
 
     explicit
     random_device(const std::string& __token = "mt19937")
-    : _M_mt(_M_strtoul(__token)) { }
-
-  private:
-    static unsigned long
-    _M_strtoul(const std::string& __str)
-    {
-      unsigned long __ret = 5489UL;
-      if (__str != "mt19937")
-	{
-	  const char* __nptr = __str.c_str();
-	  char* __endptr;
-	  __ret = std::strtoul(__nptr, &__endptr, 0);
-	  if (*__nptr == '\0' || *__endptr != '\0')
-	    std::__throw_runtime_error(__N("random_device::_M_strtoul"
-					   "(const std::string&)"));
-	}
-      return __ret;
-    }
+    { _M_init_pretr1(__token); }
 
   public:
 
 #endif
 
-    result_type
-    min() const
+    static constexpr result_type
+    min()
     { return std::numeric_limits<result_type>::min(); }
 
-    result_type
-    max() const
+    static constexpr result_type
+    max()
     { return std::numeric_limits<result_type>::max(); }
 
     double
-    entropy() const
+    entropy() const noexcept
     { return 0.0; }
 
     result_type
     operator()()
     {
 #ifdef _GLIBCXX_USE_RANDOM_TR1
-      result_type __ret;
-      std::fread(reinterpret_cast<void*>(&__ret), sizeof(result_type),
-		 1, _M_file);
-      return __ret;
+      return this->_M_getval();
 #else
-      return _M_mt();
+      return this->_M_getval_pretr1();
 #endif
     }
 
@@ -1598,11 +1629,18 @@ namespace std
 
   private:
 
-#ifdef _GLIBCXX_USE_RANDOM_TR1
+    void _M_init(const std::string& __token);
+    void _M_init_pretr1(const std::string& __token);
+    void _M_fini();
+
+    result_type _M_getval();
+    result_type _M_getval_pretr1();
+
+    union
+    {
     FILE*        _M_file;
-#else
     mt19937      _M_mt;
-#endif
+  };
   };
 
   /* @} */ // group random_generators
@@ -1614,7 +1652,7 @@ namespace std
    */
 
   /**
-   * @addtogroup random_distributions_uniform Uniform
+   * @addtogroup random_distributions_uniform Uniform Distributions
    * @ingroup random_distributions
    * @{
    */
@@ -1729,25 +1767,54 @@ namespace std
       template<typename _UniformRandomNumberGenerator>
 	result_type
 	operator()(_UniformRandomNumberGenerator& __urng)
-        { return this->operator()(__urng, this->param()); }
+        { return this->operator()(__urng, _M_param); }
 
       template<typename _UniformRandomNumberGenerator>
 	result_type
 	operator()(_UniformRandomNumberGenerator& __urng,
 		   const param_type& __p);
 
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate(_ForwardIterator __f, _ForwardIterator __t,
+		   _UniformRandomNumberGenerator& __urng)
+	{ this->__generate(__f, __t, __urng, _M_param); }
+
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate(_ForwardIterator __f, _ForwardIterator __t,
+		   _UniformRandomNumberGenerator& __urng,
+		   const param_type& __p)
+	{ this->__generate_impl(__f, __t, __urng, __p); }
+
+      template<typename _UniformRandomNumberGenerator>
+	void
+	__generate(result_type* __f, result_type* __t,
+		   _UniformRandomNumberGenerator& __urng,
+		   const param_type& __p)
+	{ this->__generate_impl(__f, __t, __urng, __p); }
+
+      /**
+       * @brief Return true if two uniform integer distributions have
+       *        the same parameters.
+       */
+      friend bool
+      operator==(const uniform_int_distribution& __d1,
+		 const uniform_int_distribution& __d2)
+      { return __d1._M_param == __d2._M_param; }
+
+    private:
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate_impl(_ForwardIterator __f, _ForwardIterator __t,
+			_UniformRandomNumberGenerator& __urng,
+			const param_type& __p);
+
       param_type _M_param;
     };
-
-  /**
-   * @brief Return true if two uniform integer distributions have
-   *        the same parameters.
-   */
-  template<typename _IntType>
-    inline bool
-    operator==(const std::uniform_int_distribution<_IntType>& __d1,
-	       const std::uniform_int_distribution<_IntType>& __d2)
-    { return __d1.param() == __d2.param(); }
 
   /**
    * @brief Return true if two uniform integer distributions have
@@ -1839,8 +1906,8 @@ namespace std
       /**
        * @brief Constructs a uniform_real_distribution object.
        *
-       * @param __min [IN]  The lower bound of the distribution.
-       * @param __max [IN]  The upper bound of the distribution.
+       * @param __a [IN]  The lower bound of the distribution.
+       * @param __b [IN]  The upper bound of the distribution.
        */
       explicit
       uniform_real_distribution(_RealType __a = _RealType(0),
@@ -1904,7 +1971,7 @@ namespace std
       template<typename _UniformRandomNumberGenerator>
 	result_type
 	operator()(_UniformRandomNumberGenerator& __urng)
-        { return this->operator()(__urng, this->param()); }
+        { return this->operator()(__urng, _M_param); }
 
       template<typename _UniformRandomNumberGenerator>
 	result_type
@@ -1916,19 +1983,47 @@ namespace std
 	  return (__aurng() * (__p.b() - __p.a())) + __p.a();
 	}
 
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate(_ForwardIterator __f, _ForwardIterator __t,
+		   _UniformRandomNumberGenerator& __urng)
+	{ this->__generate(__f, __t, __urng, _M_param); }
+
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate(_ForwardIterator __f, _ForwardIterator __t,
+		   _UniformRandomNumberGenerator& __urng,
+		   const param_type& __p)
+	{ this->__generate_impl(__f, __t, __urng, __p); }
+
+      template<typename _UniformRandomNumberGenerator>
+	void
+	__generate(result_type* __f, result_type* __t,
+		   _UniformRandomNumberGenerator& __urng,
+		   const param_type& __p)
+	{ this->__generate_impl(__f, __t, __urng, __p); }
+
+      /**
+       * @brief Return true if two uniform real distributions have
+       *        the same parameters.
+       */
+      friend bool
+      operator==(const uniform_real_distribution& __d1,
+		 const uniform_real_distribution& __d2)
+      { return __d1._M_param == __d2._M_param; }
+
     private:
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate_impl(_ForwardIterator __f, _ForwardIterator __t,
+			_UniformRandomNumberGenerator& __urng,
+			const param_type& __p);
+
       param_type _M_param;
     };
-
-  /**
-   * @brief Return true if two uniform real distributions have
-   *        the same parameters.
-   */
-  template<typename _IntType>
-    inline bool
-    operator==(const std::uniform_real_distribution<_IntType>& __d1,
-	       const std::uniform_real_distribution<_IntType>& __d2)
-    { return __d1.param() == __d2.param(); }
 
   /**
    * @brief Return true if two uniform real distributions have
@@ -1972,7 +2067,7 @@ namespace std
   /* @} */ // group random_distributions_uniform
 
   /**
-   * @addtogroup random_distributions_normal Normal
+   * @addtogroup random_distributions_normal Normal Distributions
    * @ingroup random_distributions
    * @{
    */
@@ -2083,7 +2178,7 @@ namespace std
        */
       result_type
       min() const
-      { return std::numeric_limits<result_type>::min(); }
+      { return std::numeric_limits<result_type>::lowest(); }
 
       /**
        * @brief Returns the least upper bound value of the distribution.
@@ -2098,12 +2193,34 @@ namespace std
       template<typename _UniformRandomNumberGenerator>
 	result_type
 	operator()(_UniformRandomNumberGenerator& __urng)
-	{ return this->operator()(__urng, this->param()); }
+	{ return this->operator()(__urng, _M_param); }
 
       template<typename _UniformRandomNumberGenerator>
 	result_type
 	operator()(_UniformRandomNumberGenerator& __urng,
 		   const param_type& __p);
+
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate(_ForwardIterator __f, _ForwardIterator __t,
+		   _UniformRandomNumberGenerator& __urng)
+	{ this->__generate(__f, __t, __urng, _M_param); }
+
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate(_ForwardIterator __f, _ForwardIterator __t,
+		   _UniformRandomNumberGenerator& __urng,
+		   const param_type& __p)
+	{ this->__generate_impl(__f, __t, __urng, __p); }
+
+      template<typename _UniformRandomNumberGenerator>
+	void
+	__generate(result_type* __f, result_type* __t,
+		   _UniformRandomNumberGenerator& __urng,
+		   const param_type& __p)
+	{ this->__generate_impl(__f, __t, __urng, __p); }
 
       /**
        * @brief Return true if two normal distributions have
@@ -2127,8 +2244,8 @@ namespace std
        */
       template<typename _RealType1, typename _CharT, typename _Traits>
 	friend std::basic_ostream<_CharT, _Traits>&
-	operator<<(std::basic_ostream<_CharT, _Traits>&,
-		   const std::normal_distribution<_RealType1>&);
+	operator<<(std::basic_ostream<_CharT, _Traits>& __os,
+		   const std::normal_distribution<_RealType1>& __x);
 
       /**
        * @brief Extracts a %normal_distribution random number distribution
@@ -2142,10 +2259,17 @@ namespace std
        */
       template<typename _RealType1, typename _CharT, typename _Traits>
 	friend std::basic_istream<_CharT, _Traits>&
-	operator>>(std::basic_istream<_CharT, _Traits>&,
-		   std::normal_distribution<_RealType1>&);
+	operator>>(std::basic_istream<_CharT, _Traits>& __is,
+		   std::normal_distribution<_RealType1>& __x);
 
     private:
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate_impl(_ForwardIterator __f, _ForwardIterator __t,
+			_UniformRandomNumberGenerator& __urng,
+			const param_type& __p);
+
       param_type  _M_param;
       result_type _M_saved;
       bool        _M_saved_available;
@@ -2271,7 +2395,7 @@ namespace std
       template<typename _UniformRandomNumberGenerator>
 	result_type
 	operator()(_UniformRandomNumberGenerator& __urng)
-	{ return this->operator()(__urng, this->param()); }
+        { return this->operator()(__urng, _M_param); }
 
       template<typename _UniformRandomNumberGenerator>
 	result_type
@@ -2279,17 +2403,38 @@ namespace std
 		   const param_type& __p)
         { return std::exp(__p.s() * _M_nd(__urng) + __p.m()); }
 
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate(_ForwardIterator __f, _ForwardIterator __t,
+		   _UniformRandomNumberGenerator& __urng)
+	{ this->__generate(__f, __t, __urng, _M_param); }
+
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate(_ForwardIterator __f, _ForwardIterator __t,
+		   _UniformRandomNumberGenerator& __urng,
+		   const param_type& __p)
+	{ this->__generate_impl(__f, __t, __urng, __p); }
+
+      template<typename _UniformRandomNumberGenerator>
+	void
+	__generate(result_type* __f, result_type* __t,
+		   _UniformRandomNumberGenerator& __urng,
+		   const param_type& __p)
+	{ this->__generate_impl(__f, __t, __urng, __p); }
+
       /**
        * @brief Return true if two lognormal distributions have
        *        the same parameters and the sequences that would
        *        be generated are equal.
        */
-      template<typename _RealType1>
-        friend bool
-        operator==(const std::lognormal_distribution<_RealType1>& __d1,
-		   const std::lognormal_distribution<_RealType1>& __d2)
-        { return (__d1.param() == __d2.param()
-		  && __d1._M_nd == __d2._M_nd); }
+      friend bool
+      operator==(const lognormal_distribution& __d1,
+		 const lognormal_distribution& __d2)
+      { return (__d1._M_param == __d2._M_param
+		&& __d1._M_nd == __d2._M_nd); }
 
       /**
        * @brief Inserts a %lognormal_distribution random number distribution
@@ -2303,8 +2448,8 @@ namespace std
        */
       template<typename _RealType1, typename _CharT, typename _Traits>
 	friend std::basic_ostream<_CharT, _Traits>&
-	operator<<(std::basic_ostream<_CharT, _Traits>&,
-		   const std::lognormal_distribution<_RealType1>&);
+	operator<<(std::basic_ostream<_CharT, _Traits>& __os,
+		   const std::lognormal_distribution<_RealType1>& __x);
 
       /**
        * @brief Extracts a %lognormal_distribution random number distribution
@@ -2318,10 +2463,17 @@ namespace std
        */
       template<typename _RealType1, typename _CharT, typename _Traits>
 	friend std::basic_istream<_CharT, _Traits>&
-	operator>>(std::basic_istream<_CharT, _Traits>&,
-		   std::lognormal_distribution<_RealType1>&);
+	operator>>(std::basic_istream<_CharT, _Traits>& __is,
+		   std::lognormal_distribution<_RealType1>& __x);
 
     private:
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate_impl(_ForwardIterator __f, _ForwardIterator __t,
+			_UniformRandomNumberGenerator& __urng,
+			const param_type& __p);
+
       param_type _M_param;
 
       std::normal_distribution<result_type> _M_nd;
@@ -2465,24 +2617,45 @@ namespace std
       template<typename _UniformRandomNumberGenerator>
 	result_type
 	operator()(_UniformRandomNumberGenerator& __urng)
-	{ return this->operator()(__urng, this->param()); }
+	{ return this->operator()(__urng, _M_param); }
 
       template<typename _UniformRandomNumberGenerator>
 	result_type
 	operator()(_UniformRandomNumberGenerator& __urng,
 		   const param_type& __p);
 
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate(_ForwardIterator __f, _ForwardIterator __t,
+		   _UniformRandomNumberGenerator& __urng)
+	{ this->__generate(__f, __t, __urng, _M_param); }
+
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate(_ForwardIterator __f, _ForwardIterator __t,
+		   _UniformRandomNumberGenerator& __urng,
+		   const param_type& __p)
+	{ this->__generate_impl(__f, __t, __urng, __p); }
+
+      template<typename _UniformRandomNumberGenerator>
+	void
+	__generate(result_type* __f, result_type* __t,
+		   _UniformRandomNumberGenerator& __urng,
+		   const param_type& __p)
+	{ this->__generate_impl(__f, __t, __urng, __p); }
+
       /**
        * @brief Return true if two gamma distributions have the same
        *        parameters and the sequences that would be generated
        *        are equal.
        */
-      template<typename _RealType1>
-        friend bool
-        operator==(const std::gamma_distribution<_RealType1>& __d1,
-		   const std::gamma_distribution<_RealType1>& __d2)
-        { return (__d1.param() == __d2.param()
-		  && __d1._M_nd == __d2._M_nd); }
+      friend bool
+      operator==(const gamma_distribution& __d1,
+		 const gamma_distribution& __d2)
+      { return (__d1._M_param == __d2._M_param
+		&& __d1._M_nd == __d2._M_nd); }
 
       /**
        * @brief Inserts a %gamma_distribution random number distribution
@@ -2496,8 +2669,8 @@ namespace std
        */
       template<typename _RealType1, typename _CharT, typename _Traits>
 	friend std::basic_ostream<_CharT, _Traits>&
-	operator<<(std::basic_ostream<_CharT, _Traits>&,
-		   const std::gamma_distribution<_RealType1>&);
+	operator<<(std::basic_ostream<_CharT, _Traits>& __os,
+		   const std::gamma_distribution<_RealType1>& __x);
 
       /**
        * @brief Extracts a %gamma_distribution random number distribution
@@ -2510,10 +2683,17 @@ namespace std
        */
       template<typename _RealType1, typename _CharT, typename _Traits>
 	friend std::basic_istream<_CharT, _Traits>&
-	operator>>(std::basic_istream<_CharT, _Traits>&,
-		   std::gamma_distribution<_RealType1>&);
+	operator>>(std::basic_istream<_CharT, _Traits>& __is,
+		   std::gamma_distribution<_RealType1>& __x);
 
     private:
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate_impl(_ForwardIterator __f, _ForwardIterator __t,
+			_UniformRandomNumberGenerator& __urng,
+			const param_type& __p);
+
       param_type _M_param;
 
       std::normal_distribution<result_type> _M_nd;
@@ -2523,7 +2703,7 @@ namespace std
    * @brief Return true if two gamma distributions are different.
    */
    template<typename _RealType>
-    inline bool
+     inline bool
      operator!=(const std::gamma_distribution<_RealType>& __d1,
 		const std::gamma_distribution<_RealType>& __d2)
     { return !(__d1 == __d2); }
@@ -2637,16 +2817,47 @@ namespace std
 	  return 2 * _M_gd(__urng, param_type(__p.n() / 2));
 	}
 
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate(_ForwardIterator __f, _ForwardIterator __t,
+		   _UniformRandomNumberGenerator& __urng)
+        { this->__generate_impl(__f, __t, __urng); }
+
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate(_ForwardIterator __f, _ForwardIterator __t,
+		   _UniformRandomNumberGenerator& __urng,
+		   const param_type& __p)
+	{ typename std::gamma_distribution<result_type>::param_type
+	    __p2(__p.n() / 2);
+	  this->__generate_impl(__f, __t, __urng, __p2); }
+
+      template<typename _UniformRandomNumberGenerator>
+	void
+	__generate(result_type* __f, result_type* __t,
+		   _UniformRandomNumberGenerator& __urng)
+        { this->__generate_impl(__f, __t, __urng); }
+
+      template<typename _UniformRandomNumberGenerator>
+	void
+	__generate(result_type* __f, result_type* __t,
+		   _UniformRandomNumberGenerator& __urng,
+		   const param_type& __p)
+	{ typename std::gamma_distribution<result_type>::param_type
+	    __p2(__p.n() / 2);
+	  this->__generate_impl(__f, __t, __urng, __p2); }
+
       /**
        * @brief Return true if two Chi-squared distributions have
        *        the same parameters and the sequences that would be
        *        generated are equal.
        */
-      template<typename _RealType1>
-        friend bool
-        operator==(const std::chi_squared_distribution<_RealType1>& __d1,
-		   const std::chi_squared_distribution<_RealType1>& __d2)
-        { return __d1.param() == __d2.param() && __d1._M_gd == __d2._M_gd; }
+      friend bool
+      operator==(const chi_squared_distribution& __d1,
+		 const chi_squared_distribution& __d2)
+      { return __d1._M_param == __d2._M_param && __d1._M_gd == __d2._M_gd; }
 
       /**
        * @brief Inserts a %chi_squared_distribution random number distribution
@@ -2660,8 +2871,8 @@ namespace std
        */
       template<typename _RealType1, typename _CharT, typename _Traits>
 	friend std::basic_ostream<_CharT, _Traits>&
-	operator<<(std::basic_ostream<_CharT, _Traits>&,
-		   const std::chi_squared_distribution<_RealType1>&);
+	operator<<(std::basic_ostream<_CharT, _Traits>& __os,
+		   const std::chi_squared_distribution<_RealType1>& __x);
 
       /**
        * @brief Extracts a %chi_squared_distribution random number distribution
@@ -2675,10 +2886,24 @@ namespace std
        */
       template<typename _RealType1, typename _CharT, typename _Traits>
 	friend std::basic_istream<_CharT, _Traits>&
-	operator>>(std::basic_istream<_CharT, _Traits>&,
-		   std::chi_squared_distribution<_RealType1>&);
+	operator>>(std::basic_istream<_CharT, _Traits>& __is,
+		   std::chi_squared_distribution<_RealType1>& __x);
 
     private:
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate_impl(_ForwardIterator __f, _ForwardIterator __t,
+			_UniformRandomNumberGenerator& __urng);
+
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate_impl(_ForwardIterator __f, _ForwardIterator __t,
+			_UniformRandomNumberGenerator& __urng,
+			const typename
+			std::gamma_distribution<result_type>::param_type& __p);
+
       param_type _M_param;
 
       std::gamma_distribution<result_type> _M_gd;
@@ -2786,7 +3011,7 @@ namespace std
        */
       result_type
       min() const
-      { return std::numeric_limits<result_type>::min(); }
+      { return std::numeric_limits<result_type>::lowest(); }
 
       /**
        * @brief Returns the least upper bound value of the distribution.
@@ -2801,26 +3026,54 @@ namespace std
       template<typename _UniformRandomNumberGenerator>
 	result_type
 	operator()(_UniformRandomNumberGenerator& __urng)
-	{ return this->operator()(__urng, this->param()); }
+	{ return this->operator()(__urng, _M_param); }
 
       template<typename _UniformRandomNumberGenerator>
 	result_type
 	operator()(_UniformRandomNumberGenerator& __urng,
 		   const param_type& __p);
 
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate(_ForwardIterator __f, _ForwardIterator __t,
+		   _UniformRandomNumberGenerator& __urng)
+	{ this->__generate(__f, __t, __urng, _M_param); }
+
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate(_ForwardIterator __f, _ForwardIterator __t,
+		   _UniformRandomNumberGenerator& __urng,
+		   const param_type& __p)
+	{ this->__generate_impl(__f, __t, __urng, __p); }
+
+      template<typename _UniformRandomNumberGenerator>
+	void
+	__generate(result_type* __f, result_type* __t,
+		   _UniformRandomNumberGenerator& __urng,
+		   const param_type& __p)
+	{ this->__generate_impl(__f, __t, __urng, __p); }
+
+      /**
+       * @brief Return true if two Cauchy distributions have
+       *        the same parameters.
+       */
+      friend bool
+      operator==(const cauchy_distribution& __d1,
+		 const cauchy_distribution& __d2)
+      { return __d1._M_param == __d2._M_param; }
+
     private:
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate_impl(_ForwardIterator __f, _ForwardIterator __t,
+			_UniformRandomNumberGenerator& __urng,
+			const param_type& __p);
+
       param_type _M_param;
     };
-
-  /**
-   * @brief Return true if two Cauchy distributions have
-   *        the same parameters.
-   */
-  template<typename _RealType>
-    inline bool
-    operator==(const std::cauchy_distribution<_RealType>& __d1,
-	       const std::cauchy_distribution<_RealType>& __d2)
-    { return __d1.param() == __d2.param(); }
 
   /**
    * @brief Return true if two Cauchy distributions have
@@ -2844,8 +3097,8 @@ namespace std
    */
   template<typename _RealType, typename _CharT, typename _Traits>
     std::basic_ostream<_CharT, _Traits>&
-    operator<<(std::basic_ostream<_CharT, _Traits>&,
-	       const std::cauchy_distribution<_RealType>&);
+    operator<<(std::basic_ostream<_CharT, _Traits>& __os,
+	       const std::cauchy_distribution<_RealType>& __x);
 
   /**
    * @brief Extracts a %cauchy_distribution random number distribution
@@ -2859,8 +3112,8 @@ namespace std
    */
   template<typename _RealType, typename _CharT, typename _Traits>
     std::basic_istream<_CharT, _Traits>&
-    operator>>(std::basic_istream<_CharT, _Traits>&,
-	       std::cauchy_distribution<_RealType>&);
+    operator>>(std::basic_istream<_CharT, _Traits>& __is,
+	       std::cauchy_distribution<_RealType>& __x);
 
 
   /**
@@ -2990,18 +3243,45 @@ namespace std
 		  / (_M_gd_y(__urng, param_type(__p.n() / 2)) * m()));
 	}
 
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate(_ForwardIterator __f, _ForwardIterator __t,
+		   _UniformRandomNumberGenerator& __urng)
+	{ this->__generate_impl(__f, __t, __urng); }
+
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate(_ForwardIterator __f, _ForwardIterator __t,
+		   _UniformRandomNumberGenerator& __urng,
+		   const param_type& __p)
+	{ this->__generate_impl(__f, __t, __urng, __p); }
+
+      template<typename _UniformRandomNumberGenerator>
+	void
+	__generate(result_type* __f, result_type* __t,
+		   _UniformRandomNumberGenerator& __urng)
+	{ this->__generate_impl(__f, __t, __urng); }
+
+      template<typename _UniformRandomNumberGenerator>
+	void
+	__generate(result_type* __f, result_type* __t,
+		   _UniformRandomNumberGenerator& __urng,
+		   const param_type& __p)
+	{ this->__generate_impl(__f, __t, __urng, __p); }
+
       /**
        * @brief Return true if two Fisher f distributions have
        *        the same parameters and the sequences that would
        *        be generated are equal.
        */
-      template<typename _RealType1>
-        friend bool
-        operator==(const std::fisher_f_distribution<_RealType1>& __d1,
-		   const std::fisher_f_distribution<_RealType1>& __d2)
-        { return (__d1.param() == __d2.param()
-		  && __d1._M_gd_x == __d2._M_gd_x
-		  && __d1._M_gd_y == __d2._M_gd_y); }
+      friend bool
+      operator==(const fisher_f_distribution& __d1,
+		 const fisher_f_distribution& __d2)
+      { return (__d1._M_param == __d2._M_param
+		&& __d1._M_gd_x == __d2._M_gd_x
+		&& __d1._M_gd_y == __d2._M_gd_y); }
 
       /**
        * @brief Inserts a %fisher_f_distribution random number distribution
@@ -3015,8 +3295,8 @@ namespace std
        */
       template<typename _RealType1, typename _CharT, typename _Traits>
 	friend std::basic_ostream<_CharT, _Traits>&
-	operator<<(std::basic_ostream<_CharT, _Traits>&,
-		   const std::fisher_f_distribution<_RealType1>&);
+	operator<<(std::basic_ostream<_CharT, _Traits>& __os,
+		   const std::fisher_f_distribution<_RealType1>& __x);
 
       /**
        * @brief Extracts a %fisher_f_distribution random number distribution
@@ -3030,10 +3310,23 @@ namespace std
        */
       template<typename _RealType1, typename _CharT, typename _Traits>
 	friend std::basic_istream<_CharT, _Traits>&
-	operator>>(std::basic_istream<_CharT, _Traits>&,
-		   std::fisher_f_distribution<_RealType1>&);
+	operator>>(std::basic_istream<_CharT, _Traits>& __is,
+		   std::fisher_f_distribution<_RealType1>& __x);
 
     private:
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate_impl(_ForwardIterator __f, _ForwardIterator __t,
+			_UniformRandomNumberGenerator& __urng);
+
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate_impl(_ForwardIterator __f, _ForwardIterator __t,
+			_UniformRandomNumberGenerator& __urng,
+			const param_type& __p);
+
       param_type _M_param;
 
       std::gamma_distribution<result_type> _M_gd_x, _M_gd_y;
@@ -3135,7 +3428,7 @@ namespace std
        */
       result_type
       min() const
-      { return std::numeric_limits<result_type>::min(); }
+      { return std::numeric_limits<result_type>::lowest(); }
 
       /**
        * @brief Returns the least upper bound value of the distribution.
@@ -3164,17 +3457,44 @@ namespace std
 	  return _M_nd(__urng) * std::sqrt(__p.n() / __g);
         }
 
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate(_ForwardIterator __f, _ForwardIterator __t,
+		   _UniformRandomNumberGenerator& __urng)
+	{ this->__generate_impl(__f, __t, __urng); }
+
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate(_ForwardIterator __f, _ForwardIterator __t,
+		   _UniformRandomNumberGenerator& __urng,
+		   const param_type& __p)
+	{ this->__generate_impl(__f, __t, __urng, __p); }
+
+      template<typename _UniformRandomNumberGenerator>
+	void
+	__generate(result_type* __f, result_type* __t,
+		   _UniformRandomNumberGenerator& __urng)
+	{ this->__generate_impl(__f, __t, __urng); }
+
+      template<typename _UniformRandomNumberGenerator>
+	void
+	__generate(result_type* __f, result_type* __t,
+		   _UniformRandomNumberGenerator& __urng,
+		   const param_type& __p)
+	{ this->__generate_impl(__f, __t, __urng, __p); }
+
       /**
        * @brief Return true if two Student t distributions have
        *        the same parameters and the sequences that would
        *        be generated are equal.
        */
-      template<typename _RealType1>
-        friend bool
-        operator==(const std::student_t_distribution<_RealType1>& __d1,
-		   const std::student_t_distribution<_RealType1>& __d2)
-        { return (__d1.param() == __d2.param()
-		  && __d1._M_nd == __d2._M_nd && __d1._M_gd == __d2._M_gd); }
+      friend bool
+      operator==(const student_t_distribution& __d1,
+		 const student_t_distribution& __d2)
+      { return (__d1._M_param == __d2._M_param
+		&& __d1._M_nd == __d2._M_nd && __d1._M_gd == __d2._M_gd); }
 
       /**
        * @brief Inserts a %student_t_distribution random number distribution
@@ -3188,8 +3508,8 @@ namespace std
        */
       template<typename _RealType1, typename _CharT, typename _Traits>
 	friend std::basic_ostream<_CharT, _Traits>&
-	operator<<(std::basic_ostream<_CharT, _Traits>&,
-		   const std::student_t_distribution<_RealType1>&);
+	operator<<(std::basic_ostream<_CharT, _Traits>& __os,
+		   const std::student_t_distribution<_RealType1>& __x);
 
       /**
        * @brief Extracts a %student_t_distribution random number distribution
@@ -3203,10 +3523,22 @@ namespace std
        */
       template<typename _RealType1, typename _CharT, typename _Traits>
 	friend std::basic_istream<_CharT, _Traits>&
-	operator>>(std::basic_istream<_CharT, _Traits>&,
-		   std::student_t_distribution<_RealType1>&);
+	operator>>(std::basic_istream<_CharT, _Traits>& __is,
+		   std::student_t_distribution<_RealType1>& __x);
 
     private:
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate_impl(_ForwardIterator __f, _ForwardIterator __t,
+			_UniformRandomNumberGenerator& __urng);
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate_impl(_ForwardIterator __f, _ForwardIterator __t,
+			_UniformRandomNumberGenerator& __urng,
+			const param_type& __p);
+
       param_type _M_param;
 
       std::normal_distribution<result_type> _M_nd;
@@ -3226,7 +3558,7 @@ namespace std
   /* @} */ // group random_distributions_normal
 
   /**
-   * @addtogroup random_distributions_bernoulli Bernoulli
+   * @addtogroup random_distributions_bernoulli Bernoulli Distributions
    * @ingroup random_distributions
    * @{
    */
@@ -3333,7 +3665,7 @@ namespace std
     template<typename _UniformRandomNumberGenerator>
       result_type
       operator()(_UniformRandomNumberGenerator& __urng)
-      { return this->operator()(__urng, this->param()); }
+      { return this->operator()(__urng, _M_param); }
 
     template<typename _UniformRandomNumberGenerator>
       result_type
@@ -3348,18 +3680,46 @@ namespace std
 	return false;
       }
 
+    template<typename _ForwardIterator,
+	     typename _UniformRandomNumberGenerator>
+      void
+      __generate(_ForwardIterator __f, _ForwardIterator __t,
+		 _UniformRandomNumberGenerator& __urng)
+      { this->__generate(__f, __t, __urng, _M_param); }
+
+    template<typename _ForwardIterator,
+	     typename _UniformRandomNumberGenerator>
+      void
+      __generate(_ForwardIterator __f, _ForwardIterator __t,
+		 _UniformRandomNumberGenerator& __urng, const param_type& __p)
+      { this->__generate_impl(__f, __t, __urng, __p); }
+
+    template<typename _UniformRandomNumberGenerator>
+      void
+      __generate(result_type* __f, result_type* __t,
+		 _UniformRandomNumberGenerator& __urng,
+		 const param_type& __p)
+      { this->__generate_impl(__f, __t, __urng, __p); }
+
+    /**
+     * @brief Return true if two Bernoulli distributions have
+     *        the same parameters.
+     */
+    friend bool
+    operator==(const bernoulli_distribution& __d1,
+	       const bernoulli_distribution& __d2)
+    { return __d1._M_param == __d2._M_param; }
+
   private:
+    template<typename _ForwardIterator,
+	     typename _UniformRandomNumberGenerator>
+      void
+      __generate_impl(_ForwardIterator __f, _ForwardIterator __t,
+		      _UniformRandomNumberGenerator& __urng,
+		      const param_type& __p);
+
     param_type _M_param;
   };
-
-  /**
-   * @brief Return true if two Bernoulli distributions have
-   *        the same parameters.
-   */
-  inline bool
-  operator==(const std::bernoulli_distribution& __d1,
-	     const std::bernoulli_distribution& __d2)
-  { return __d1.param() == __d2.param(); }
 
   /**
    * @brief Return true if two Bernoulli distributions have
@@ -3382,8 +3742,8 @@ namespace std
    */
   template<typename _CharT, typename _Traits>
     std::basic_ostream<_CharT, _Traits>&
-    operator<<(std::basic_ostream<_CharT, _Traits>&,
-	       const std::bernoulli_distribution&);
+    operator<<(std::basic_ostream<_CharT, _Traits>& __os,
+	       const std::bernoulli_distribution& __x);
 
   /**
    * @brief Extracts a %bernoulli_distribution random number distribution
@@ -3410,7 +3770,7 @@ namespace std
    * @brief A discrete binomial random number distribution.
    *
    * The formula for the binomial probability density function is
-   * @f$p(i|t,p) = \binom{n}{i} p^i (1 - p)^{t - i}@f$ where @f$t@f$
+   * @f$p(i|t,p) = \binom{t}{i} p^i (1 - p)^{t - i}@f$ where @f$t@f$
    * and @f$p@f$ are the parameters of the distribution.
    */
   template<typename _IntType = int>
@@ -3533,26 +3893,47 @@ namespace std
       template<typename _UniformRandomNumberGenerator>
 	result_type
 	operator()(_UniformRandomNumberGenerator& __urng)
-	{ return this->operator()(__urng, this->param()); }
+	{ return this->operator()(__urng, _M_param); }
 
       template<typename _UniformRandomNumberGenerator>
 	result_type
 	operator()(_UniformRandomNumberGenerator& __urng,
 		   const param_type& __p);
 
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate(_ForwardIterator __f, _ForwardIterator __t,
+		   _UniformRandomNumberGenerator& __urng)
+	{ this->__generate(__f, __t, __urng, _M_param); }
+
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate(_ForwardIterator __f, _ForwardIterator __t,
+		   _UniformRandomNumberGenerator& __urng,
+		   const param_type& __p)
+	{ this->__generate_impl(__f, __t, __urng, __p); }
+
+      template<typename _UniformRandomNumberGenerator>
+	void
+	__generate(result_type* __f, result_type* __t,
+		   _UniformRandomNumberGenerator& __urng,
+		   const param_type& __p)
+	{ this->__generate_impl(__f, __t, __urng, __p); }
+
       /**
        * @brief Return true if two binomial distributions have
        *        the same parameters and the sequences that would
        *        be generated are equal.
        */
-      template<typename _IntType1>
 	friend bool
-        operator==(const std::binomial_distribution<_IntType1>& __d1,
-		   const std::binomial_distribution<_IntType1>& __d2)
+        operator==(const binomial_distribution& __d1,
+		   const binomial_distribution& __d2)
 #ifdef _GLIBCXX_USE_C99_MATH_TR1
-	{ return __d1.param() == __d2.param() && __d1._M_nd == __d2._M_nd; }
+	{ return __d1._M_param == __d2._M_param && __d1._M_nd == __d2._M_nd; }
 #else
-        { return __d1.param() == __d2.param(); }
+        { return __d1._M_param == __d2._M_param; }
 #endif
 
       /**
@@ -3568,8 +3949,8 @@ namespace std
       template<typename _IntType1,
 	       typename _CharT, typename _Traits>
 	friend std::basic_ostream<_CharT, _Traits>&
-	operator<<(std::basic_ostream<_CharT, _Traits>&,
-		   const std::binomial_distribution<_IntType1>&);
+	operator<<(std::basic_ostream<_CharT, _Traits>& __os,
+		   const std::binomial_distribution<_IntType1>& __x);
 
       /**
        * @brief Extracts a %binomial_distribution random number distribution
@@ -3584,13 +3965,21 @@ namespace std
       template<typename _IntType1,
 	       typename _CharT, typename _Traits>
 	friend std::basic_istream<_CharT, _Traits>&
-	operator>>(std::basic_istream<_CharT, _Traits>&,
-		   std::binomial_distribution<_IntType1>&);
+	operator>>(std::basic_istream<_CharT, _Traits>& __is,
+		   std::binomial_distribution<_IntType1>& __x);
 
     private:
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate_impl(_ForwardIterator __f, _ForwardIterator __t,
+			_UniformRandomNumberGenerator& __urng,
+			const param_type& __p);
+
       template<typename _UniformRandomNumberGenerator>
 	result_type
-	_M_waiting(_UniformRandomNumberGenerator& __urng, _IntType __t);
+	_M_waiting(_UniformRandomNumberGenerator& __urng,
+		   _IntType __t, double __q);
 
       param_type _M_param;
 
@@ -3612,7 +4001,7 @@ namespace std
    * @brief A discrete geometric random number distribution.
    *
    * The formula for the geometric probability density function is
-   * @f$p(i|p) = (1 - p)p^{i-1}@f$ where @f$p@f$ is the parameter of the
+   * @f$p(i|p) = p(1 - p)^{i}@f$ where @f$p@f$ is the parameter of the
    * distribution.
    */
   template<typename _IntType = int>
@@ -3634,8 +4023,7 @@ namespace std
 	param_type(double __p = 0.5)
 	: _M_p(__p)
 	{
-	  _GLIBCXX_DEBUG_ASSERT((_M_p >= 0.0)
-			     && (_M_p <= 1.0));
+	  _GLIBCXX_DEBUG_ASSERT((_M_p > 0.0) && (_M_p < 1.0));
 	  _M_initialize();
 	}
 
@@ -3650,11 +4038,11 @@ namespace std
       private:
 	void
 	_M_initialize()
-	{ _M_log_p = std::log(_M_p); }
+	{ _M_log_1_p = std::log(1.0 - _M_p); }
 
 	double _M_p;
 
-	double _M_log_p;
+	double _M_log_1_p;
       };
 
       // constructors and member function
@@ -3718,26 +4106,54 @@ namespace std
       template<typename _UniformRandomNumberGenerator>
 	result_type
 	operator()(_UniformRandomNumberGenerator& __urng)
-	{ return this->operator()(__urng, this->param()); }
+	{ return this->operator()(__urng, _M_param); }
 
       template<typename _UniformRandomNumberGenerator>
 	result_type
 	operator()(_UniformRandomNumberGenerator& __urng,
 		   const param_type& __p);
 
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate(_ForwardIterator __f, _ForwardIterator __t,
+		   _UniformRandomNumberGenerator& __urng)
+	{ this->__generate(__f, __t, __urng, _M_param); }
+
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate(_ForwardIterator __f, _ForwardIterator __t,
+		   _UniformRandomNumberGenerator& __urng,
+		   const param_type& __p)
+	{ this->__generate_impl(__f, __t, __urng, __p); }
+
+      template<typename _UniformRandomNumberGenerator>
+	void
+	__generate(result_type* __f, result_type* __t,
+		   _UniformRandomNumberGenerator& __urng,
+		   const param_type& __p)
+	{ this->__generate_impl(__f, __t, __urng, __p); }
+
+      /**
+       * @brief Return true if two geometric distributions have
+       *        the same parameters.
+       */
+      friend bool
+      operator==(const geometric_distribution& __d1,
+		 const geometric_distribution& __d2)
+      { return __d1._M_param == __d2._M_param; }
+
     private:
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate_impl(_ForwardIterator __f, _ForwardIterator __t,
+			_UniformRandomNumberGenerator& __urng,
+			const param_type& __p);
+
       param_type _M_param;
     };
-
-  /**
-   * @brief Return true if two geometric distributions have
-   *        the same parameters.
-   */
-  template<typename _IntType>
-    inline bool
-    operator==(const std::geometric_distribution<_IntType>& __d1,
-	       const std::geometric_distribution<_IntType>& __d2)
-    { return __d1.param() == __d2.param(); }
 
   /**
    * @brief Return true if two geometric distributions have
@@ -3762,8 +4178,8 @@ namespace std
   template<typename _IntType,
 	   typename _CharT, typename _Traits>
     std::basic_ostream<_CharT, _Traits>&
-    operator<<(std::basic_ostream<_CharT, _Traits>&,
-	       const std::geometric_distribution<_IntType>&);
+    operator<<(std::basic_ostream<_CharT, _Traits>& __os,
+	       const std::geometric_distribution<_IntType>& __x);
 
   /**
    * @brief Extracts a %geometric_distribution random number distribution
@@ -3777,8 +4193,8 @@ namespace std
   template<typename _IntType,
 	   typename _CharT, typename _Traits>
     std::basic_istream<_CharT, _Traits>&
-    operator>>(std::basic_istream<_CharT, _Traits>&,
-	       std::geometric_distribution<_IntType>&);
+    operator>>(std::basic_istream<_CharT, _Traits>& __is,
+	       std::geometric_distribution<_IntType>& __x);
 
 
   /**
@@ -3805,7 +4221,9 @@ namespace std
 	explicit
 	param_type(_IntType __k = 1, double __p = 0.5)
 	: _M_k(__k), _M_p(__p)
-	{ }
+	{
+	  _GLIBCXX_DEBUG_ASSERT((_M_k > 0) && (_M_p > 0.0) && (_M_p <= 1.0));
+	}
 
 	_IntType
 	k() const
@@ -3826,12 +4244,12 @@ namespace std
 
       explicit
       negative_binomial_distribution(_IntType __k = 1, double __p = 0.5)
-      : _M_param(__k, __p), _M_gd(__k, __p / (1.0 - __p))
+      : _M_param(__k, __p), _M_gd(__k, (1.0 - __p) / __p)
       { }
 
       explicit
       negative_binomial_distribution(const param_type& __p)
-      : _M_param(__p), _M_gd(__p.k(), __p.p() / (1.0 - __p.p()))
+      : _M_param(__p), _M_gd(__p.k(), (1.0 - __p.p()) / __p.p())
       { }
 
       /**
@@ -3896,16 +4314,43 @@ namespace std
 	operator()(_UniformRandomNumberGenerator& __urng,
 		   const param_type& __p);
 
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate(_ForwardIterator __f, _ForwardIterator __t,
+		   _UniformRandomNumberGenerator& __urng)
+	{ this->__generate_impl(__f, __t, __urng); }
+
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate(_ForwardIterator __f, _ForwardIterator __t,
+		   _UniformRandomNumberGenerator& __urng,
+		   const param_type& __p)
+	{ this->__generate_impl(__f, __t, __urng, __p); }
+
+      template<typename _UniformRandomNumberGenerator>
+	void
+	__generate(result_type* __f, result_type* __t,
+		   _UniformRandomNumberGenerator& __urng)
+	{ this->__generate_impl(__f, __t, __urng); }
+
+      template<typename _UniformRandomNumberGenerator>
+	void
+	__generate(result_type* __f, result_type* __t,
+		   _UniformRandomNumberGenerator& __urng,
+		   const param_type& __p)
+	{ this->__generate_impl(__f, __t, __urng, __p); }
+
       /**
        * @brief Return true if two negative binomial distributions have
        *        the same parameters and the sequences that would be
        *        generated are equal.
        */
-      template<typename _IntType1>
-        friend bool
-        operator==(const std::negative_binomial_distribution<_IntType1>& __d1,
-		   const std::negative_binomial_distribution<_IntType1>& __d2)
-        { return __d1.param() == __d2.param() && __d1._M_gd == __d2._M_gd; }
+      friend bool
+      operator==(const negative_binomial_distribution& __d1,
+		 const negative_binomial_distribution& __d2)
+      { return __d1._M_param == __d2._M_param && __d1._M_gd == __d2._M_gd; }
 
       /**
        * @brief Inserts a %negative_binomial_distribution random
@@ -3920,8 +4365,8 @@ namespace std
        */
       template<typename _IntType1, typename _CharT, typename _Traits>
 	friend std::basic_ostream<_CharT, _Traits>&
-	operator<<(std::basic_ostream<_CharT, _Traits>&,
-		   const std::negative_binomial_distribution<_IntType1>&);
+	operator<<(std::basic_ostream<_CharT, _Traits>& __os,
+		   const std::negative_binomial_distribution<_IntType1>& __x);
 
       /**
        * @brief Extracts a %negative_binomial_distribution random number
@@ -3935,10 +4380,22 @@ namespace std
        */
       template<typename _IntType1, typename _CharT, typename _Traits>
 	friend std::basic_istream<_CharT, _Traits>&
-	operator>>(std::basic_istream<_CharT, _Traits>&,
-		   std::negative_binomial_distribution<_IntType1>&);
+	operator>>(std::basic_istream<_CharT, _Traits>& __is,
+		   std::negative_binomial_distribution<_IntType1>& __x);
 
     private:
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate_impl(_ForwardIterator __f, _ForwardIterator __t,
+			_UniformRandomNumberGenerator& __urng);
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate_impl(_ForwardIterator __f, _ForwardIterator __t,
+			_UniformRandomNumberGenerator& __urng,
+			const param_type& __p);
+
       param_type _M_param;
 
       std::gamma_distribution<double> _M_gd;
@@ -3957,7 +4414,7 @@ namespace std
   /* @} */ // group random_distributions_bernoulli
 
   /**
-   * @addtogroup random_distributions_poisson Poisson
+   * @addtogroup random_distributions_poisson Poisson Distributions
    * @ingroup random_distributions
    * @{
    */
@@ -4073,26 +4530,47 @@ namespace std
       template<typename _UniformRandomNumberGenerator>
 	result_type
 	operator()(_UniformRandomNumberGenerator& __urng)
-	{ return this->operator()(__urng, this->param()); }
+	{ return this->operator()(__urng, _M_param); }
 
       template<typename _UniformRandomNumberGenerator>
 	result_type
 	operator()(_UniformRandomNumberGenerator& __urng,
 		   const param_type& __p);
 
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate(_ForwardIterator __f, _ForwardIterator __t,
+		   _UniformRandomNumberGenerator& __urng)
+	{ this->__generate(__f, __t, __urng, _M_param); }
+
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate(_ForwardIterator __f, _ForwardIterator __t,
+		   _UniformRandomNumberGenerator& __urng,
+		   const param_type& __p)
+	{ this->__generate_impl(__f, __t, __urng, __p); }
+
+      template<typename _UniformRandomNumberGenerator>
+	void
+	__generate(result_type* __f, result_type* __t,
+		   _UniformRandomNumberGenerator& __urng,
+		   const param_type& __p)
+	{ this->__generate_impl(__f, __t, __urng, __p); }
+
        /**
 	* @brief Return true if two Poisson distributions have the same
 	*        parameters and the sequences that would be generated
 	*        are equal.
 	*/
-      template<typename _IntType1>
-        friend bool
-        operator==(const std::poisson_distribution<_IntType1>& __d1,
-		   const std::poisson_distribution<_IntType1>& __d2)
+      friend bool
+      operator==(const poisson_distribution& __d1,
+		 const poisson_distribution& __d2)
 #ifdef _GLIBCXX_USE_C99_MATH_TR1
-        { return __d1.param() == __d2.param() && __d1._M_nd == __d2._M_nd; }
+      { return __d1._M_param == __d2._M_param && __d1._M_nd == __d2._M_nd; }
 #else
-        { return __d1.param() == __d2.param(); }
+      { return __d1._M_param == __d2._M_param; }
 #endif
 
       /**
@@ -4107,8 +4585,8 @@ namespace std
        */
       template<typename _IntType1, typename _CharT, typename _Traits>
 	friend std::basic_ostream<_CharT, _Traits>&
-	operator<<(std::basic_ostream<_CharT, _Traits>&,
-		   const std::poisson_distribution<_IntType1>&);
+	operator<<(std::basic_ostream<_CharT, _Traits>& __os,
+		   const std::poisson_distribution<_IntType1>& __x);
 
       /**
        * @brief Extracts a %poisson_distribution random number distribution
@@ -4122,10 +4600,17 @@ namespace std
        */
       template<typename _IntType1, typename _CharT, typename _Traits>
 	friend std::basic_istream<_CharT, _Traits>&
-	operator>>(std::basic_istream<_CharT, _Traits>&,
-		   std::poisson_distribution<_IntType1>&);
+	operator>>(std::basic_istream<_CharT, _Traits>& __is,
+		   std::poisson_distribution<_IntType1>& __x);
 
     private:
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate_impl(_ForwardIterator __f, _ForwardIterator __t,
+			_UniformRandomNumberGenerator& __urng,
+			const param_type& __p);
+
       param_type _M_param;
 
       // NB: Unused when _GLIBCXX_USE_C99_MATH_TR1 is undefined.
@@ -4255,7 +4740,7 @@ namespace std
       template<typename _UniformRandomNumberGenerator>
 	result_type
 	operator()(_UniformRandomNumberGenerator& __urng)
-        { return this->operator()(__urng, this->param()); }
+        { return this->operator()(__urng, _M_param); }
 
       template<typename _UniformRandomNumberGenerator>
 	result_type
@@ -4264,22 +4749,50 @@ namespace std
 	{
 	  __detail::_Adaptor<_UniformRandomNumberGenerator, result_type>
 	    __aurng(__urng);
-	  return -std::log(__aurng()) / __p.lambda();
+	  return -std::log(result_type(1) - __aurng()) / __p.lambda();
 	}
 
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate(_ForwardIterator __f, _ForwardIterator __t,
+		   _UniformRandomNumberGenerator& __urng)
+	{ this->__generate(__f, __t, __urng, _M_param); }
+
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate(_ForwardIterator __f, _ForwardIterator __t,
+		   _UniformRandomNumberGenerator& __urng,
+		   const param_type& __p)
+	{ this->__generate_impl(__f, __t, __urng, __p); }
+
+      template<typename _UniformRandomNumberGenerator>
+	void
+	__generate(result_type* __f, result_type* __t,
+		   _UniformRandomNumberGenerator& __urng,
+		   const param_type& __p)
+	{ this->__generate_impl(__f, __t, __urng, __p); }
+
+      /**
+       * @brief Return true if two exponential distributions have the same
+       *        parameters.
+       */
+      friend bool
+      operator==(const exponential_distribution& __d1,
+		 const exponential_distribution& __d2)
+      { return __d1._M_param == __d2._M_param; }
+
     private:
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate_impl(_ForwardIterator __f, _ForwardIterator __t,
+			_UniformRandomNumberGenerator& __urng,
+			const param_type& __p);
+
       param_type _M_param;
     };
-
-  /**
-   * @brief Return true if two exponential distributions have the same
-   *        parameters.
-   */
-  template<typename _RealType>
-    inline bool
-    operator==(const std::exponential_distribution<_RealType>& __d1,
-	       const std::exponential_distribution<_RealType>& __d2)
-    { return __d1.param() == __d2.param(); }
 
   /**
    * @brief Return true if two exponential distributions have different
@@ -4303,8 +4816,8 @@ namespace std
    */
   template<typename _RealType, typename _CharT, typename _Traits>
     std::basic_ostream<_CharT, _Traits>&
-    operator<<(std::basic_ostream<_CharT, _Traits>&,
-	       const std::exponential_distribution<_RealType>&);
+    operator<<(std::basic_ostream<_CharT, _Traits>& __os,
+	       const std::exponential_distribution<_RealType>& __x);
 
   /**
    * @brief Extracts a %exponential_distribution random number distribution
@@ -4318,8 +4831,8 @@ namespace std
    */
   template<typename _RealType, typename _CharT, typename _Traits>
     std::basic_istream<_CharT, _Traits>&
-    operator>>(std::basic_istream<_CharT, _Traits>&,
-	       std::exponential_distribution<_RealType>&);
+    operator>>(std::basic_istream<_CharT, _Traits>& __is,
+	       std::exponential_distribution<_RealType>& __x);
 
 
   /**
@@ -4435,26 +4948,54 @@ namespace std
       template<typename _UniformRandomNumberGenerator>
 	result_type
 	operator()(_UniformRandomNumberGenerator& __urng)
-	{ return this->operator()(__urng, this->param()); }
+	{ return this->operator()(__urng, _M_param); }
 
       template<typename _UniformRandomNumberGenerator>
 	result_type
 	operator()(_UniformRandomNumberGenerator& __urng,
 		   const param_type& __p);
 
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate(_ForwardIterator __f, _ForwardIterator __t,
+		   _UniformRandomNumberGenerator& __urng)
+	{ this->__generate(__f, __t, __urng, _M_param); }
+
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate(_ForwardIterator __f, _ForwardIterator __t,
+		   _UniformRandomNumberGenerator& __urng,
+		   const param_type& __p)
+	{ this->__generate_impl(__f, __t, __urng, __p); }
+
+      template<typename _UniformRandomNumberGenerator>
+	void
+	__generate(result_type* __f, result_type* __t,
+		   _UniformRandomNumberGenerator& __urng,
+		   const param_type& __p)
+	{ this->__generate_impl(__f, __t, __urng, __p); }
+
+      /**
+       * @brief Return true if two Weibull distributions have the same
+       *        parameters.
+       */
+      friend bool
+      operator==(const weibull_distribution& __d1,
+		 const weibull_distribution& __d2)
+      { return __d1._M_param == __d2._M_param; }
+
     private:
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate_impl(_ForwardIterator __f, _ForwardIterator __t,
+			_UniformRandomNumberGenerator& __urng,
+			const param_type& __p);
+
       param_type _M_param;
     };
-
-   /**
-    * @brief Return true if two Weibull distributions have the same
-    *        parameters.
-    */
-  template<typename _RealType>
-    inline bool
-    operator==(const std::weibull_distribution<_RealType>& __d1,
-	       const std::weibull_distribution<_RealType>& __d2)
-    { return __d1.param() == __d2.param(); }
 
    /**
     * @brief Return true if two Weibull distributions have different
@@ -4478,8 +5019,8 @@ namespace std
    */
   template<typename _RealType, typename _CharT, typename _Traits>
     std::basic_ostream<_CharT, _Traits>&
-    operator<<(std::basic_ostream<_CharT, _Traits>&,
-	       const std::weibull_distribution<_RealType>&);
+    operator<<(std::basic_ostream<_CharT, _Traits>& __os,
+	       const std::weibull_distribution<_RealType>& __x);
 
   /**
    * @brief Extracts a %weibull_distribution random number distribution
@@ -4493,8 +5034,8 @@ namespace std
    */
   template<typename _RealType, typename _CharT, typename _Traits>
     std::basic_istream<_CharT, _Traits>&
-    operator>>(std::basic_istream<_CharT, _Traits>&,
-	       std::weibull_distribution<_RealType>&);
+    operator>>(std::basic_istream<_CharT, _Traits>& __is,
+	       std::weibull_distribution<_RealType>& __x);
 
 
   /**
@@ -4595,7 +5136,7 @@ namespace std
        */
       result_type
       min() const
-      { return std::numeric_limits<result_type>::min(); }
+      { return std::numeric_limits<result_type>::lowest(); }
 
       /**
        * @brief Returns the least upper bound value of the distribution.
@@ -4610,26 +5151,54 @@ namespace std
       template<typename _UniformRandomNumberGenerator>
 	result_type
 	operator()(_UniformRandomNumberGenerator& __urng)
-	{ return this->operator()(__urng, this->param()); }
+	{ return this->operator()(__urng, _M_param); }
 
       template<typename _UniformRandomNumberGenerator>
 	result_type
 	operator()(_UniformRandomNumberGenerator& __urng,
 		   const param_type& __p);
 
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate(_ForwardIterator __f, _ForwardIterator __t,
+		   _UniformRandomNumberGenerator& __urng)
+	{ this->__generate(__f, __t, __urng, _M_param); }
+
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate(_ForwardIterator __f, _ForwardIterator __t,
+		   _UniformRandomNumberGenerator& __urng,
+		   const param_type& __p)
+	{ this->__generate_impl(__f, __t, __urng, __p); }
+
+      template<typename _UniformRandomNumberGenerator>
+	void
+	__generate(result_type* __f, result_type* __t,
+		   _UniformRandomNumberGenerator& __urng,
+		   const param_type& __p)
+	{ this->__generate_impl(__f, __t, __urng, __p); }
+
+      /**
+       * @brief Return true if two extreme value distributions have the same
+       *        parameters.
+       */
+      friend bool
+      operator==(const extreme_value_distribution& __d1,
+		 const extreme_value_distribution& __d2)
+      { return __d1._M_param == __d2._M_param; }
+
     private:
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate_impl(_ForwardIterator __f, _ForwardIterator __t,
+			_UniformRandomNumberGenerator& __urng,
+			const param_type& __p);
+
       param_type _M_param;
     };
-
-  /**
-    * @brief Return true if two extreme value distributions have the same
-    *        parameters.
-   */
-  template<typename _RealType>
-    inline bool
-    operator==(const std::extreme_value_distribution<_RealType>& __d1,
-	       const std::extreme_value_distribution<_RealType>& __d2)
-    { return __d1.param() == __d2.param(); }
 
   /**
     * @brief Return true if two extreme value distributions have different
@@ -4653,8 +5222,8 @@ namespace std
    */
   template<typename _RealType, typename _CharT, typename _Traits>
     std::basic_ostream<_CharT, _Traits>&
-    operator<<(std::basic_ostream<_CharT, _Traits>&,
-	       const std::extreme_value_distribution<_RealType>&);
+    operator<<(std::basic_ostream<_CharT, _Traits>& __os,
+	       const std::extreme_value_distribution<_RealType>& __x);
 
   /**
    * @brief Extracts a %extreme_value_distribution random number
@@ -4668,8 +5237,8 @@ namespace std
    */
   template<typename _RealType, typename _CharT, typename _Traits>
     std::basic_istream<_CharT, _Traits>&
-    operator>>(std::basic_istream<_CharT, _Traits>&,
-	       std::extreme_value_distribution<_RealType>&);
+    operator>>(std::basic_istream<_CharT, _Traits>& __is,
+	       std::extreme_value_distribution<_RealType>& __x);
 
 
   /**
@@ -4695,7 +5264,7 @@ namespace std
 
 	param_type()
 	: _M_prob(), _M_cp()
-	{ _M_initialize(); }
+	{ }
 
 	template<typename _InputIterator>
 	  param_type(_InputIterator __wbegin,
@@ -4711,9 +5280,13 @@ namespace std
 	  param_type(size_t __nw, double __xmin, double __xmax,
 		     _Func __fw);
 
+	// See: http://cpp-next.com/archive/2010/10/implicit-move-must-go/
+	param_type(const param_type&) = default;
+	param_type& operator=(const param_type&) = default;
+
 	std::vector<double>
 	probabilities() const
-	{ return _M_prob; }
+	{ return _M_prob.empty() ? std::vector<double>(1, 1.0) : _M_prob; }
 
 	friend bool
 	operator==(const param_type& __p1, const param_type& __p2)
@@ -4764,7 +5337,10 @@ namespace std
        */
       std::vector<double>
       probabilities() const
-      { return _M_param.probabilities(); }
+      {
+	return _M_param._M_prob.empty()
+	  ? std::vector<double>(1, 1.0) : _M_param._M_prob;
+      }
 
       /**
        * @brief Returns the parameter set of the distribution.
@@ -4793,7 +5369,10 @@ namespace std
        */
       result_type
       max() const
-      { return this->_M_param._M_prob.size() - 1; }
+      {
+	return _M_param._M_prob.empty()
+	  ? result_type(0) : result_type(_M_param._M_prob.size() - 1);
+      }
 
       /**
        * @brief Generating functions.
@@ -4801,12 +5380,43 @@ namespace std
       template<typename _UniformRandomNumberGenerator>
 	result_type
 	operator()(_UniformRandomNumberGenerator& __urng)
-	{ return this->operator()(__urng, this->param()); }
+	{ return this->operator()(__urng, _M_param); }
 
       template<typename _UniformRandomNumberGenerator>
 	result_type
 	operator()(_UniformRandomNumberGenerator& __urng,
 		   const param_type& __p);
+
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate(_ForwardIterator __f, _ForwardIterator __t,
+		   _UniformRandomNumberGenerator& __urng)
+	{ this->__generate(__f, __t, __urng, _M_param); }
+
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate(_ForwardIterator __f, _ForwardIterator __t,
+		   _UniformRandomNumberGenerator& __urng,
+		   const param_type& __p)
+	{ this->__generate_impl(__f, __t, __urng, __p); }
+
+      template<typename _UniformRandomNumberGenerator>
+	void
+	__generate(result_type* __f, result_type* __t,
+		   _UniformRandomNumberGenerator& __urng,
+		   const param_type& __p)
+	{ this->__generate_impl(__f, __t, __urng, __p); }
+
+      /**
+       * @brief Return true if two discrete distributions have the same
+       *        parameters.
+       */
+      friend bool
+      operator==(const discrete_distribution& __d1,
+		 const discrete_distribution& __d2)
+      { return __d1._M_param == __d2._M_param; }
 
       /**
        * @brief Inserts a %discrete_distribution random number distribution
@@ -4820,8 +5430,8 @@ namespace std
        */
       template<typename _IntType1, typename _CharT, typename _Traits>
 	friend std::basic_ostream<_CharT, _Traits>&
-	operator<<(std::basic_ostream<_CharT, _Traits>&,
-		   const std::discrete_distribution<_IntType1>&);
+	operator<<(std::basic_ostream<_CharT, _Traits>& __os,
+		   const std::discrete_distribution<_IntType1>& __x);
 
       /**
        * @brief Extracts a %discrete_distribution random number distribution
@@ -4836,22 +5446,19 @@ namespace std
        */
       template<typename _IntType1, typename _CharT, typename _Traits>
 	friend std::basic_istream<_CharT, _Traits>&
-	operator>>(std::basic_istream<_CharT, _Traits>&,
-		   std::discrete_distribution<_IntType1>&);
+	operator>>(std::basic_istream<_CharT, _Traits>& __is,
+		   std::discrete_distribution<_IntType1>& __x);
 
     private:
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate_impl(_ForwardIterator __f, _ForwardIterator __t,
+			_UniformRandomNumberGenerator& __urng,
+			const param_type& __p);
+
       param_type _M_param;
     };
-
-  /**
-    * @brief Return true if two discrete distributions have the same
-    *        parameters.
-    */
-  template<typename _IntType>
-    inline bool
-    operator==(const std::discrete_distribution<_IntType>& __d1,
-	       const std::discrete_distribution<_IntType>& __d2)
-    { return __d1.param() == __d2.param(); }
 
   /**
     * @brief Return true if two discrete distributions have different
@@ -4887,7 +5494,7 @@ namespace std
 
 	param_type()
 	: _M_int(), _M_den(), _M_cp()
-	{ _M_initialize(); }
+	{ }
 
 	template<typename _InputIteratorB, typename _InputIteratorW>
 	  param_type(_InputIteratorB __bfirst,
@@ -4901,13 +5508,26 @@ namespace std
 	  param_type(size_t __nw, _RealType __xmin, _RealType __xmax,
 		     _Func __fw);
 
+	// See: http://cpp-next.com/archive/2010/10/implicit-move-must-go/
+	param_type(const param_type&) = default;
+	param_type& operator=(const param_type&) = default;
+
 	std::vector<_RealType>
 	intervals() const
-	{ return _M_int; }
+	{
+	  if (_M_int.empty())
+	    {
+	      std::vector<_RealType> __tmp(2);
+	      __tmp[1] = _RealType(1);
+	      return __tmp;
+	    }
+	  else
+	    return _M_int;
+	}
 
 	std::vector<double>
 	densities() const
-	{ return _M_den; }
+	{ return _M_den.empty() ? std::vector<double>(1, 1.0) : _M_den; }
 
 	friend bool
 	operator==(const param_type& __p1, const param_type& __p2)
@@ -4964,14 +5584,26 @@ namespace std
        */
       std::vector<_RealType>
       intervals() const
-      { return _M_param.intervals(); }
+      {
+	if (_M_param._M_int.empty())
+	  {
+	    std::vector<_RealType> __tmp(2);
+	    __tmp[1] = _RealType(1);
+	    return __tmp;
+	  }
+	else
+	  return _M_param._M_int;
+      }
 
       /**
        * @brief Returns a vector of the probability densities.
        */
       std::vector<double>
       densities() const
-      { return _M_param.densities(); }
+      {
+	return _M_param._M_den.empty()
+	  ? std::vector<double>(1, 1.0) : _M_param._M_den;
+      }
 
       /**
        * @brief Returns the parameter set of the distribution.
@@ -4993,14 +5625,20 @@ namespace std
        */
       result_type
       min() const
-      { return this->_M_param._M_int.front(); }
+      {
+	return _M_param._M_int.empty()
+	  ? result_type(0) : _M_param._M_int.front();
+      }
 
       /**
        * @brief Returns the least upper bound value of the distribution.
        */
       result_type
       max() const
-      { return this->_M_param._M_int.back(); }
+      {
+	return _M_param._M_int.empty()
+	  ? result_type(1) : _M_param._M_int.back();
+      }
 
       /**
        * @brief Generating functions.
@@ -5008,12 +5646,43 @@ namespace std
       template<typename _UniformRandomNumberGenerator>
 	result_type
 	operator()(_UniformRandomNumberGenerator& __urng)
-	{ return this->operator()(__urng, this->param()); }
+	{ return this->operator()(__urng, _M_param); }
 
       template<typename _UniformRandomNumberGenerator>
 	result_type
 	operator()(_UniformRandomNumberGenerator& __urng,
 		   const param_type& __p);
+
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate(_ForwardIterator __f, _ForwardIterator __t,
+		   _UniformRandomNumberGenerator& __urng)
+	{ this->__generate(__f, __t, __urng, _M_param); }
+
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate(_ForwardIterator __f, _ForwardIterator __t,
+		   _UniformRandomNumberGenerator& __urng,
+		   const param_type& __p)
+	{ this->__generate_impl(__f, __t, __urng, __p); }
+
+      template<typename _UniformRandomNumberGenerator>
+	void
+	__generate(result_type* __f, result_type* __t,
+		   _UniformRandomNumberGenerator& __urng,
+		   const param_type& __p)
+	{ this->__generate_impl(__f, __t, __urng, __p); }
+
+      /**
+       * @brief Return true if two piecewise constant distributions have the
+       *        same parameters.
+       */
+      friend bool
+      operator==(const piecewise_constant_distribution& __d1,
+		 const piecewise_constant_distribution& __d2)
+      { return __d1._M_param == __d2._M_param; }
 
       /**
        * @brief Inserts a %piecewise_constan_distribution random
@@ -5028,8 +5697,8 @@ namespace std
        */
       template<typename _RealType1, typename _CharT, typename _Traits>
 	friend std::basic_ostream<_CharT, _Traits>&
-	operator<<(std::basic_ostream<_CharT, _Traits>&,
-		   const std::piecewise_constant_distribution<_RealType1>&);
+	operator<<(std::basic_ostream<_CharT, _Traits>& __os,
+		   const std::piecewise_constant_distribution<_RealType1>& __x);
 
       /**
        * @brief Extracts a %piecewise_constan_distribution random
@@ -5044,22 +5713,19 @@ namespace std
        */
       template<typename _RealType1, typename _CharT, typename _Traits>
 	friend std::basic_istream<_CharT, _Traits>&
-	operator>>(std::basic_istream<_CharT, _Traits>&,
-		   std::piecewise_constant_distribution<_RealType1>&);
+	operator>>(std::basic_istream<_CharT, _Traits>& __is,
+		   std::piecewise_constant_distribution<_RealType1>& __x);
 
     private:
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate_impl(_ForwardIterator __f, _ForwardIterator __t,
+			_UniformRandomNumberGenerator& __urng,
+			const param_type& __p);
+
       param_type _M_param;
     };
-
-  /**
-    * @brief Return true if two piecewise constant distributions have the
-    *        same parameters.
-   */
-  template<typename _RealType>
-    inline bool
-    operator==(const std::piecewise_constant_distribution<_RealType>& __d1,
-	       const std::piecewise_constant_distribution<_RealType>& __d2)
-    { return __d1.param() == __d2.param(); }
 
   /**
     * @brief Return true if two piecewise constant distributions have 
@@ -5095,7 +5761,7 @@ namespace std
 
 	param_type()
 	: _M_int(), _M_den(), _M_cp(), _M_m()
-	{ _M_initialize(); }
+	{ }
 
 	template<typename _InputIteratorB, typename _InputIteratorW>
 	  param_type(_InputIteratorB __bfirst,
@@ -5109,13 +5775,26 @@ namespace std
 	  param_type(size_t __nw, _RealType __xmin, _RealType __xmax,
 		     _Func __fw);
 
+	// See: http://cpp-next.com/archive/2010/10/implicit-move-must-go/
+	param_type(const param_type&) = default;
+	param_type& operator=(const param_type&) = default;
+
 	std::vector<_RealType>
 	intervals() const
-	{ return _M_int; }
+	{
+	  if (_M_int.empty())
+	    {
+	      std::vector<_RealType> __tmp(2);
+	      __tmp[1] = _RealType(1);
+	      return __tmp;
+	    }
+	  else
+	    return _M_int;
+	}
 
 	std::vector<double>
 	densities() const
-	{ return _M_den; }
+	{ return _M_den.empty() ? std::vector<double>(2, 1.0) : _M_den; }
 
 	friend bool
 	operator==(const param_type& __p1, const param_type& __p2)
@@ -5174,7 +5853,16 @@ namespace std
        */
       std::vector<_RealType>
       intervals() const
-      { return _M_param.intervals(); }
+      {
+	if (_M_param._M_int.empty())
+	  {
+	    std::vector<_RealType> __tmp(2);
+	    __tmp[1] = _RealType(1);
+	    return __tmp;
+	  }
+	else
+	  return _M_param._M_int;
+      }
 
       /**
        * @brief Return a vector of the probability densities of the
@@ -5182,7 +5870,10 @@ namespace std
        */
       std::vector<double>
       densities() const
-      { return _M_param.densities(); }
+      {
+	return _M_param._M_den.empty()
+	  ? std::vector<double>(2, 1.0) : _M_param._M_den;
+      }
 
       /**
        * @brief Returns the parameter set of the distribution.
@@ -5204,14 +5895,20 @@ namespace std
        */
       result_type
       min() const
-      { return this->_M_param._M_int.front(); }
+      {
+	return _M_param._M_int.empty()
+	  ? result_type(0) : _M_param._M_int.front();
+      }
 
       /**
        * @brief Returns the least upper bound value of the distribution.
        */
       result_type
       max() const
-      { return this->_M_param._M_int.back(); }
+      {
+	return _M_param._M_int.empty()
+	  ? result_type(1) : _M_param._M_int.back();
+      }
 
       /**
        * @brief Generating functions.
@@ -5219,12 +5916,43 @@ namespace std
       template<typename _UniformRandomNumberGenerator>
 	result_type
 	operator()(_UniformRandomNumberGenerator& __urng)
-	{ return this->operator()(__urng, this->param()); }
+	{ return this->operator()(__urng, _M_param); }
 
       template<typename _UniformRandomNumberGenerator>
 	result_type
 	operator()(_UniformRandomNumberGenerator& __urng,
 		   const param_type& __p);
+
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate(_ForwardIterator __f, _ForwardIterator __t,
+		   _UniformRandomNumberGenerator& __urng)
+	{ this->__generate(__f, __t, __urng, _M_param); }
+
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate(_ForwardIterator __f, _ForwardIterator __t,
+		   _UniformRandomNumberGenerator& __urng,
+		   const param_type& __p)
+	{ this->__generate_impl(__f, __t, __urng, __p); }
+
+      template<typename _UniformRandomNumberGenerator>
+	void
+	__generate(result_type* __f, result_type* __t,
+		   _UniformRandomNumberGenerator& __urng,
+		   const param_type& __p)
+	{ this->__generate_impl(__f, __t, __urng, __p); }
+
+      /**
+       * @brief Return true if two piecewise linear distributions have the
+       *        same parameters.
+       */
+      friend bool
+      operator==(const piecewise_linear_distribution& __d1,
+		 const piecewise_linear_distribution& __d2)
+      { return __d1._M_param == __d2._M_param; }
 
       /**
        * @brief Inserts a %piecewise_linear_distribution random number
@@ -5239,8 +5967,8 @@ namespace std
        */
       template<typename _RealType1, typename _CharT, typename _Traits>
 	friend std::basic_ostream<_CharT, _Traits>&
-	operator<<(std::basic_ostream<_CharT, _Traits>&,
-		   const std::piecewise_linear_distribution<_RealType1>&);
+	operator<<(std::basic_ostream<_CharT, _Traits>& __os,
+		   const std::piecewise_linear_distribution<_RealType1>& __x);
 
       /**
        * @brief Extracts a %piecewise_linear_distribution random number
@@ -5255,22 +5983,19 @@ namespace std
        */
       template<typename _RealType1, typename _CharT, typename _Traits>
 	friend std::basic_istream<_CharT, _Traits>&
-	operator>>(std::basic_istream<_CharT, _Traits>&,
-		   std::piecewise_linear_distribution<_RealType1>&);
+	operator>>(std::basic_istream<_CharT, _Traits>& __is,
+		   std::piecewise_linear_distribution<_RealType1>& __x);
 
     private:
+      template<typename _ForwardIterator,
+	       typename _UniformRandomNumberGenerator>
+	void
+	__generate_impl(_ForwardIterator __f, _ForwardIterator __t,
+			_UniformRandomNumberGenerator& __urng,
+			const param_type& __p);
+
       param_type _M_param;
     };
-
-  /**
-    * @brief Return true if two piecewise linear distributions have the
-    *        same parameters.
-   */
-  template<typename _RealType>
-    inline bool
-    operator==(const std::piecewise_linear_distribution<_RealType>& __d1,
-	       const std::piecewise_linear_distribution<_RealType>& __d2)
-    { return __d1.param() == __d2.param(); }
 
   /**
     * @brief Return true if two piecewise linear distributions have
@@ -5338,5 +6063,7 @@ namespace std
 
   /* @} */ // group random
 
-}
+_GLIBCXX_END_NAMESPACE_VERSION
+} // namespace std
 
+#endif

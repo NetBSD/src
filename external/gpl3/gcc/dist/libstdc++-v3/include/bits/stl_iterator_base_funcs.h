@@ -1,7 +1,6 @@
 // Functions used by iterators -*- C++ -*-
 
-// Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
-// Free Software Foundation, Inc.
+// Copyright (C) 2001-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -49,9 +48,9 @@
  * purpose.  It is provided "as is" without express or implied warranty.
  */
 
-/** @file stl_iterator_base_funcs.h
+/** @file bits/stl_iterator_base_funcs.h
  *  This is an internal header file, included by other library headers.
- *  You should not attempt to use it directly.
+ *  Do not attempt to use it directly. @headername{iterator}
  *
  *  This file contains all of the general iterator-related utility
  *  functions, such as distance() and advance().
@@ -63,8 +62,11 @@
 #pragma GCC system_header
 
 #include <bits/concept_check.h>
+#include <debug/debug.h>
 
-_GLIBCXX_BEGIN_NAMESPACE(std)
+namespace std _GLIBCXX_VISIBILITY(default)
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   template<typename _InputIterator>
     inline typename iterator_traits<_InputIterator>::difference_type
@@ -96,12 +98,13 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 
   /**
    *  @brief A generalization of pointer arithmetic.
-   *  @param  first  An input iterator.
-   *  @param  last  An input iterator.
+   *  @param  __first  An input iterator.
+   *  @param  __last  An input iterator.
    *  @return  The distance between them.
    *
-   *  Returns @c n such that first + n == last.  This requires that @p last
-   *  must be reachable from @p first.  Note that @c n may be negative.
+   *  Returns @c n such that __first + n == __last.  This requires
+   *  that @p __last must be reachable from @p __first.  Note that @c
+   *  n may be negative.
    *
    *  For random access iterators, this uses their @c + and @c - operations
    *  and are constant time.  For other %iterator classes they are linear time.
@@ -121,6 +124,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
     {
       // concept requirements
       __glibcxx_function_requires(_InputIteratorConcept<_InputIterator>)
+      _GLIBCXX_DEBUG_ASSERT(__n >= 0);
       while (__n--)
 	++__i;
     }
@@ -154,12 +158,12 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 
   /**
    *  @brief A generalization of pointer arithmetic.
-   *  @param  i  An input iterator.
-   *  @param  n  The @a delta by which to change @p i.
+   *  @param  __i  An input iterator.
+   *  @param  __n  The @a delta by which to change @p __i.
    *  @return  Nothing.
    *
    *  This increments @p i by @p n.  For bidirectional and random access
-   *  iterators, @p n may be negative, in which case @p i is decremented.
+   *  iterators, @p __n may be negative, in which case @p __i is decremented.
    *
    *  For random access iterators, this uses their @c + and @c - operations
    *  and are constant time.  For other %iterator classes they are linear time.
@@ -173,18 +177,10 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
       std::__advance(__i, __d, std::__iterator_category(__i));
     }
 
-_GLIBCXX_END_NAMESPACE
-
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
-
-#include <ext/type_traits.h> // For __enable_if and __is_iterator
-
-_GLIBCXX_BEGIN_NAMESPACE(std)
+#if __cplusplus >= 201103L
 
   template<typename _ForwardIterator>
-    inline typename
-    __gnu_cxx::__enable_if<__is_iterator<_ForwardIterator>::__value,
-			   _ForwardIterator>::__type
+    inline _ForwardIterator
     next(_ForwardIterator __x, typename
 	 iterator_traits<_ForwardIterator>::difference_type __n = 1)
     {
@@ -193,9 +189,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
     }
 
   template<typename _BidirectionalIterator>
-    inline typename
-    __gnu_cxx::__enable_if<__is_iterator<_BidirectionalIterator>::__value,
-			   _BidirectionalIterator>::__type
+    inline _BidirectionalIterator
     prev(_BidirectionalIterator __x, typename
 	 iterator_traits<_BidirectionalIterator>::difference_type __n = 1) 
     {
@@ -203,8 +197,9 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
       return __x;
     }
 
-_GLIBCXX_END_NAMESPACE
+#endif // C++11
 
-#endif // __GXX_EXPERIMENTAL_CXX0X__
+_GLIBCXX_END_NAMESPACE_VERSION
+} // namespace
 
 #endif /* _STL_ITERATOR_BASE_FUNCS_H */

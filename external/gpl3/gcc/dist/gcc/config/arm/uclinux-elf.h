@@ -1,6 +1,5 @@
 /* Definitions for ARM running ucLinux using ELF
-   Copyright (C) 1999, 2001, 2004, 2005, 2007, 2008
-   Free Software Foundation, Inc.
+   Copyright (C) 1999-2013 Free Software Foundation, Inc.
    Contributed by Philip Blundell <pb@nexus.co.uk>
 
    This file is part of GCC.
@@ -22,9 +21,6 @@
 /* We don't want a PLT.  */
 #undef  NEED_PLT_RELOC
 #define NEED_PLT_RELOC 0
-
-#undef  TARGET_VERSION
-#define TARGET_VERSION fputs (" (ARM/ELF ucLinux)", stderr);
 
 #undef  TARGET_DEFAULT
 #define TARGET_DEFAULT (MASK_SINGLE_PIC_BASE)

@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2005, 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2005-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -34,9 +34,9 @@
 // warranty.
 
 /**
- * @file constructor_destructor_fn_imps.hpp
+ * @file gp_hash_table_map_/constructor_destructor_fn_imps.hpp
  * Contains implementations of gp_ht_map_'s constructors, destructor,
- *    and related functions.
+ * and related functions.
  */
 
 PB_DS_CLASS_T_DEC
@@ -55,41 +55,41 @@ copy_from_range(It first_it, It last_it)
 
 PB_DS_CLASS_T_DEC
 PB_DS_CLASS_C_DEC::
-PB_DS_CLASS_NAME() 
+PB_DS_GP_HASH_NAME() 
 : ranged_probe_fn_base(resize_base::get_nearest_larger_size(1)),
   m_num_e(resize_base::get_nearest_larger_size(1)), m_num_used_e(0),
   m_entries(s_entry_allocator.allocate(m_num_e))
 {
   initialize();
-  _GLIBCXX_DEBUG_ONLY(PB_DS_CLASS_C_DEC::assert_valid();)
+  PB_DS_ASSERT_VALID((*this))
 }
 
 PB_DS_CLASS_T_DEC
 PB_DS_CLASS_C_DEC::
-PB_DS_CLASS_NAME(const Hash_Fn& r_hash_fn)    
+PB_DS_GP_HASH_NAME(const Hash_Fn& r_hash_fn)    
 : ranged_probe_fn_base(resize_base::get_nearest_larger_size(1), r_hash_fn),
   m_num_e(resize_base::get_nearest_larger_size(1)), m_num_used_e(0),
   m_entries(s_entry_allocator.allocate(m_num_e))
 {
   initialize();
-  _GLIBCXX_DEBUG_ONLY(PB_DS_CLASS_C_DEC::assert_valid();)
+  PB_DS_ASSERT_VALID((*this))
 }
 
 PB_DS_CLASS_T_DEC
 PB_DS_CLASS_C_DEC::
-PB_DS_CLASS_NAME(const Hash_Fn& r_hash_fn, const Eq_Fn& r_eq_fn) 
+PB_DS_GP_HASH_NAME(const Hash_Fn& r_hash_fn, const Eq_Fn& r_eq_fn) 
 : hash_eq_fn_base(r_eq_fn),
   ranged_probe_fn_base(resize_base::get_nearest_larger_size(1), r_hash_fn),
   m_num_e(resize_base::get_nearest_larger_size(1)), m_num_used_e(0),
   m_entries(s_entry_allocator.allocate(m_num_e))
 {
   initialize();
-  _GLIBCXX_DEBUG_ONLY(PB_DS_CLASS_C_DEC::assert_valid();)
+  PB_DS_ASSERT_VALID((*this))
 }
 
 PB_DS_CLASS_T_DEC
 PB_DS_CLASS_C_DEC::
-PB_DS_CLASS_NAME(const Hash_Fn& r_hash_fn, const Eq_Fn& r_eq_fn, 
+PB_DS_GP_HASH_NAME(const Hash_Fn& r_hash_fn, const Eq_Fn& r_eq_fn, 
 		 const Comb_Probe_Fn& r_comb_hash_fn) 
 : hash_eq_fn_base(r_eq_fn),
   ranged_probe_fn_base(resize_base::get_nearest_larger_size(1),
@@ -98,12 +98,12 @@ PB_DS_CLASS_NAME(const Hash_Fn& r_hash_fn, const Eq_Fn& r_eq_fn,
   m_entries(s_entry_allocator.allocate(m_num_e))
 {
   initialize();
-  _GLIBCXX_DEBUG_ONLY(PB_DS_CLASS_C_DEC::assert_valid();)
+  PB_DS_ASSERT_VALID((*this))
 }
 
 PB_DS_CLASS_T_DEC
 PB_DS_CLASS_C_DEC::
-PB_DS_CLASS_NAME(const Hash_Fn& r_hash_fn, const Eq_Fn& r_eq_fn, 
+PB_DS_GP_HASH_NAME(const Hash_Fn& r_hash_fn, const Eq_Fn& r_eq_fn, 
 		 const Comb_Probe_Fn& comb_hash_fn, const Probe_Fn& prober) 
 : hash_eq_fn_base(r_eq_fn),
   ranged_probe_fn_base(resize_base::get_nearest_larger_size(1),
@@ -112,12 +112,12 @@ PB_DS_CLASS_NAME(const Hash_Fn& r_hash_fn, const Eq_Fn& r_eq_fn,
   m_entries(s_entry_allocator.allocate(m_num_e))
 {
   initialize();
-  _GLIBCXX_DEBUG_ONLY(PB_DS_CLASS_C_DEC::assert_valid();)
+  PB_DS_ASSERT_VALID((*this))
 }
 
 PB_DS_CLASS_T_DEC
 PB_DS_CLASS_C_DEC::
-PB_DS_CLASS_NAME(const Hash_Fn& r_hash_fn, const Eq_Fn& r_eq_fn, 
+PB_DS_GP_HASH_NAME(const Hash_Fn& r_hash_fn, const Eq_Fn& r_eq_fn, 
 		 const Comb_Probe_Fn& comb_hash_fn, const Probe_Fn& prober, 
 		 const Resize_Policy& r_resize_policy) 
 : hash_eq_fn_base(r_eq_fn), resize_base(r_resize_policy),
@@ -127,12 +127,12 @@ PB_DS_CLASS_NAME(const Hash_Fn& r_hash_fn, const Eq_Fn& r_eq_fn,
   m_entries(s_entry_allocator.allocate(m_num_e))
 {
   initialize();
-  _GLIBCXX_DEBUG_ONLY(PB_DS_CLASS_C_DEC::assert_valid();)
+  PB_DS_ASSERT_VALID((*this))
 }
 
 PB_DS_CLASS_T_DEC
 PB_DS_CLASS_C_DEC::
-PB_DS_CLASS_NAME(const PB_DS_CLASS_C_DEC& other) :
+PB_DS_GP_HASH_NAME(const PB_DS_CLASS_C_DEC& other) :
 #ifdef _GLIBCXX_DEBUG
   debug_base(other),
 #endif 
@@ -160,12 +160,12 @@ PB_DS_CLASS_NAME(const PB_DS_CLASS_C_DEC& other) :
       deallocate_all();
       __throw_exception_again;
     }
-  _GLIBCXX_DEBUG_ONLY(PB_DS_CLASS_C_DEC::assert_valid();)
+  PB_DS_ASSERT_VALID((*this))
 }
 
 PB_DS_CLASS_T_DEC
 PB_DS_CLASS_C_DEC::
-~PB_DS_CLASS_NAME()
+~PB_DS_GP_HASH_NAME()
 { deallocate_all(); }
 
 PB_DS_CLASS_T_DEC
@@ -173,8 +173,8 @@ void
 PB_DS_CLASS_C_DEC::
 swap(PB_DS_CLASS_C_DEC& other)
 {
-  _GLIBCXX_DEBUG_ONLY(assert_valid());
-  _GLIBCXX_DEBUG_ONLY(other.assert_valid());
+  PB_DS_ASSERT_VALID((*this))
+  PB_DS_ASSERT_VALID(other)
   std::swap(m_num_e, other.m_num_e);
   std::swap(m_num_used_e, other.m_num_used_e);
   std::swap(m_entries, other.m_entries);
@@ -182,8 +182,8 @@ swap(PB_DS_CLASS_C_DEC& other)
   hash_eq_fn_base::swap(other);
   resize_base::swap(other);
   _GLIBCXX_DEBUG_ONLY(debug_base::swap(other));
-  _GLIBCXX_DEBUG_ONLY(assert_valid());
-  _GLIBCXX_DEBUG_ONLY(other.assert_valid());
+  PB_DS_ASSERT_VALID((*this))
+  PB_DS_ASSERT_VALID(other)
 }
 
 PB_DS_CLASS_T_DEC
