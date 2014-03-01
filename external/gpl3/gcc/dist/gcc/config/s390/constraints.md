@@ -1,5 +1,5 @@
 ;; Constraints definitions belonging to the gcc backend for IBM S/390.
-;; Copyright (C) 2006, 2007, 2008 Free Software Foundation, Inc.
+;; Copyright (C) 2006-2013 Free Software Foundation, Inc.
 ;; Written by Wolfgang Gellerich, using code and information found in
 ;; files s390.md, s390.h, and s390.c.
 ;;
@@ -45,6 +45,8 @@
 ;;         H,Q:     mode of the part
 ;;         D,S,H:   mode of the containing operand
 ;;         0,F:     value of the other parts (F - all bits set)
+;;         --
+;;         xx[DS]q  satisfies s390_contiguous_bitmask_p for DImode or SImode
 ;;
 ;;         The constraint matches if the specified part of a constant
 ;;         has a value different from its other parts.  If the letter x
@@ -330,8 +332,15 @@
   (and (match_code "const_int")
        (match_test "s390_N_constraint_str (\"xQH0\", ival)")))
 
+(define_constraint "NxxDq"
+  "@internal"
+  (and (match_code "const_int")
+       (match_test "s390_contiguous_bitmask_p (ival, 64, NULL, NULL)")))
 
-
+(define_constraint "NxxSq"
+  "@internal"
+  (and (match_code "const_int")
+       (match_test "s390_contiguous_bitmask_p (ival, 32, NULL, NULL)")))
 
 ;;
 ;; Double-letter constraints starting with O follow.

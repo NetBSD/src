@@ -36,17 +36,19 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-DIST_COMMON = $(glibcxxinstall_HEADERS) $(srcdir)/Makefile.am \
-	$(srcdir)/Makefile.in $(top_srcdir)/fragment.am
+DIST_COMMON = $(top_srcdir)/fragment.am $(srcdir)/Makefile.in \
+	$(srcdir)/Makefile.am $(bits_HEADERS) $(std_HEADERS)
 subdir = libsupc++
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/../config/enable.m4 \
+am__aclocal_m4_deps = $(top_srcdir)/../config/acx.m4 \
+	$(top_srcdir)/../config/enable.m4 \
 	$(top_srcdir)/../config/futex.m4 \
 	$(top_srcdir)/../config/iconv.m4 \
 	$(top_srcdir)/../config/lead-dot.m4 \
 	$(top_srcdir)/../config/lib-ld.m4 \
 	$(top_srcdir)/../config/lib-link.m4 \
 	$(top_srcdir)/../config/lib-prefix.m4 \
+	$(top_srcdir)/../config/lthostflags.m4 \
 	$(top_srcdir)/../config/multi.m4 \
 	$(top_srcdir)/../config/no-executables.m4 \
 	$(top_srcdir)/../config/override.m4 \
@@ -56,7 +58,9 @@ am__aclocal_m4_deps = $(top_srcdir)/../config/enable.m4 \
 	$(top_srcdir)/../ltsugar.m4 $(top_srcdir)/../ltversion.m4 \
 	$(top_srcdir)/../lt~obsolete.m4 $(top_srcdir)/crossconfig.m4 \
 	$(top_srcdir)/linkage.m4 $(top_srcdir)/acinclude.m4 \
-	$(top_srcdir)/../config/tls.m4 $(top_srcdir)/configure.ac
+	$(top_srcdir)/../config/gc++filt.m4 \
+	$(top_srcdir)/../config/tls.m4 $(top_srcdir)/../config/gthr.m4 \
+	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 CONFIG_HEADER = $(top_builddir)/config.h
@@ -83,50 +87,27 @@ am__nobase_list = $(am__nobase_strip_setup); \
 am__base_list = \
   sed '$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;s/\n/ /g' | \
   sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
-am__installdirs = "$(DESTDIR)$(toolexeclibdir)" \
-	"$(DESTDIR)$(glibcxxinstalldir)"
+am__installdirs = "$(DESTDIR)$(toolexeclibdir)" "$(DESTDIR)$(bitsdir)" \
+	"$(DESTDIR)$(stddir)"
 LTLIBRARIES = $(noinst_LTLIBRARIES) $(toolexeclib_LTLIBRARIES)
 libsupc___la_LIBADD =
-am__libsupc___la_SOURCES_DIST = array_type_info.cc atexit_arm.cc \
-	bad_cast.cc bad_typeid.cc class_type_info.cc del_op.cc \
-	del_opnt.cc del_opv.cc del_opvnt.cc dyncast.cc eh_alloc.cc \
-	eh_arm.cc eh_aux_runtime.cc eh_call.cc eh_catch.cc \
-	eh_exception.cc eh_globals.cc eh_personality.cc eh_ptr.cc \
-	eh_term_handler.cc eh_terminate.cc eh_throw.cc eh_type.cc \
-	eh_unex_handler.cc enum_type_info.cc function_type_info.cc \
-	fundamental_type_info.cc guard.cc new_handler.cc new_op.cc \
-	new_opnt.cc new_opv.cc new_opvnt.cc pbase_type_info.cc \
-	pmem_type_info.cc pointer_type_info.cc pure.cc \
-	si_class_type_info.cc tinfo.cc tinfo2.cc vec.cc \
-	vmi_class_type_info.cc vterminate.cc cp-demangle.c
-am__objects_1 = array_type_info.lo atexit_arm.lo bad_cast.lo \
-	bad_typeid.lo class_type_info.lo del_op.lo del_opnt.lo \
-	del_opv.lo del_opvnt.lo dyncast.lo eh_alloc.lo eh_arm.lo \
-	eh_aux_runtime.lo eh_call.lo eh_catch.lo eh_exception.lo \
-	eh_globals.lo eh_personality.lo eh_ptr.lo eh_term_handler.lo \
-	eh_terminate.lo eh_throw.lo eh_type.lo eh_unex_handler.lo \
-	enum_type_info.lo function_type_info.lo \
-	fundamental_type_info.lo guard.lo new_handler.lo new_op.lo \
-	new_opnt.lo new_opv.lo new_opvnt.lo pbase_type_info.lo \
-	pmem_type_info.lo pointer_type_info.lo pure.lo \
-	si_class_type_info.lo tinfo.lo tinfo2.lo vec.lo \
+am__objects_1 = array_type_info.lo atexit_arm.lo atexit_thread.lo \
+	bad_alloc.lo bad_cast.lo bad_typeid.lo class_type_info.lo \
+	del_op.lo del_opnt.lo del_opv.lo del_opvnt.lo dyncast.lo \
+	eh_alloc.lo eh_arm.lo eh_aux_runtime.lo eh_call.lo eh_catch.lo \
+	eh_exception.lo eh_globals.lo eh_personality.lo eh_ptr.lo \
+	eh_term_handler.lo eh_terminate.lo eh_tm.lo eh_throw.lo \
+	eh_type.lo eh_unex_handler.lo enum_type_info.lo \
+	function_type_info.lo fundamental_type_info.lo guard.lo \
+	guard_error.lo hash_bytes.lo nested_exception.lo \
+	new_handler.lo new_op.lo new_opnt.lo new_opv.lo new_opvnt.lo \
+	pbase_type_info.lo pmem_type_info.lo pointer_type_info.lo \
+	pure.lo si_class_type_info.lo tinfo.lo tinfo2.lo vec.lo \
 	vmi_class_type_info.lo vterminate.lo
 @GLIBCXX_HOSTED_TRUE@am__objects_2 = cp-demangle.lo
 am_libsupc___la_OBJECTS = $(am__objects_1) $(am__objects_2)
 libsupc___la_OBJECTS = $(am_libsupc___la_OBJECTS)
 libsupc__convenience_la_LIBADD =
-am__libsupc__convenience_la_SOURCES_DIST = array_type_info.cc \
-	atexit_arm.cc bad_cast.cc bad_typeid.cc class_type_info.cc \
-	del_op.cc del_opnt.cc del_opv.cc del_opvnt.cc dyncast.cc \
-	eh_alloc.cc eh_arm.cc eh_aux_runtime.cc eh_call.cc eh_catch.cc \
-	eh_exception.cc eh_globals.cc eh_personality.cc eh_ptr.cc \
-	eh_term_handler.cc eh_terminate.cc eh_throw.cc eh_type.cc \
-	eh_unex_handler.cc enum_type_info.cc function_type_info.cc \
-	fundamental_type_info.cc guard.cc new_handler.cc new_op.cc \
-	new_opnt.cc new_opv.cc new_opvnt.cc pbase_type_info.cc \
-	pmem_type_info.cc pointer_type_info.cc pure.cc \
-	si_class_type_info.cc tinfo.cc tinfo2.cc vec.cc \
-	vmi_class_type_info.cc vterminate.cc cp-demangle.c
 am_libsupc__convenience_la_OBJECTS = $(am__objects_1) $(am__objects_2)
 libsupc__convenience_la_OBJECTS =  \
 	$(am_libsupc__convenience_la_OBJECTS)
@@ -143,12 +124,9 @@ CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
 CXXLD = $(CXX)
 SOURCES = $(libsupc___la_SOURCES) $(libsupc__convenience_la_SOURCES)
-DIST_SOURCES = $(am__libsupc___la_SOURCES_DIST) \
-	$(am__libsupc__convenience_la_SOURCES_DIST)
-HEADERS = $(glibcxxinstall_HEADERS)
+HEADERS = $(bits_HEADERS) $(std_HEADERS)
 ETAGS = etags
 CTAGS = ctags
-DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ABI_TWEAKS_SRCDIR = @ABI_TWEAKS_SRCDIR@
 ACLOCAL = @ACLOCAL@
 ALLOCATOR_H = @ALLOCATOR_H@
@@ -180,16 +158,22 @@ CNUMERIC_CC = @CNUMERIC_CC@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CPU_DEFINES_SRCDIR = @CPU_DEFINES_SRCDIR@
+CPU_OPT_BITS_RANDOM = @CPU_OPT_BITS_RANDOM@
+CPU_OPT_EXT_RANDOM = @CPU_OPT_EXT_RANDOM@
 CSTDIO_H = @CSTDIO_H@
 CTIME_CC = @CTIME_CC@
 CTIME_H = @CTIME_H@
 CXX = @CXX@
 CXXCPP = @CXXCPP@
+CXXFILT = @CXXFILT@
 CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
 C_INCLUDE_DIR = @C_INCLUDE_DIR@
+DBLATEX = @DBLATEX@
 DEBUG_FLAGS = @DEBUG_FLAGS@
 DEFS = @DEFS@
+DOT = @DOT@
+DOXYGEN = @DOXYGEN@
 DSYMUTIL = @DSYMUTIL@
 DUMPBIN = @DUMPBIN@
 ECHO_C = @ECHO_C@
@@ -203,6 +187,7 @@ FGREP = @FGREP@
 GLIBCXX_INCLUDES = @GLIBCXX_INCLUDES@
 GLIBCXX_LIBS = @GLIBCXX_LIBS@
 GREP = @GREP@
+HWCAP_FLAGS = @HWCAP_FLAGS@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -213,7 +198,6 @@ LDFLAGS = @LDFLAGS@
 LIBICONV = @LIBICONV@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
-LIBSUPCXX_PICFLAGS = @LIBSUPCXX_PICFLAGS@
 LIBTOOL = @LIBTOOL@
 LIPO = @LIPO@
 LN_S = @LN_S@
@@ -239,6 +223,7 @@ PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
+PDFLATEX = @PDFLATEX@
 RANLIB = @RANLIB@
 SECTION_FLAGS = @SECTION_FLAGS@
 SECTION_LDFLAGS = @SECTION_LDFLAGS@
@@ -252,6 +237,9 @@ USE_NLS = @USE_NLS@
 VERSION = @VERSION@
 WARN_FLAGS = @WARN_FLAGS@
 WERROR = @WERROR@
+XMLLINT = @XMLLINT@
+XSLTPROC = @XSLTPROC@
+XSL_STYLE_DIR = @XSL_STYLE_DIR@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
@@ -263,6 +251,7 @@ am__leading_dot = @am__leading_dot@
 am__tar = @am__tar@
 am__untar = @am__untar@
 baseline_dir = @baseline_dir@
+baseline_subdir_switch = @baseline_subdir_switch@
 bindir = @bindir@
 build = @build@
 build_alias = @build_alias@
@@ -282,10 +271,12 @@ glibcxx_MOFILES = @glibcxx_MOFILES@
 glibcxx_PCHFLAGS = @glibcxx_PCHFLAGS@
 glibcxx_POFILES = @glibcxx_POFILES@
 glibcxx_builddir = @glibcxx_builddir@
+glibcxx_compiler_pic_flag = @glibcxx_compiler_pic_flag@
+glibcxx_compiler_shared_flag = @glibcxx_compiler_shared_flag@
 glibcxx_localedir = @glibcxx_localedir@
+glibcxx_lt_pic_flag = @glibcxx_lt_pic_flag@
 glibcxx_prefixdir = @glibcxx_prefixdir@
 glibcxx_srcdir = @glibcxx_srcdir@
-glibcxx_thread_h = @glibcxx_thread_h@
 glibcxx_toolexecdir = @glibcxx_toolexecdir@
 glibcxx_toolexeclibdir = @glibcxx_toolexeclibdir@
 gxx_include_dir = @gxx_include_dir@
@@ -303,6 +294,7 @@ libexecdir = @libexecdir@
 libtool_VERSION = @libtool_VERSION@
 localedir = @localedir@
 localstatedir = @localstatedir@
+lt_host_flags = @lt_host_flags@
 mandir = @mandir@
 mkdir_p = @mkdir_p@
 multi_basedir = @multi_basedir@
@@ -312,6 +304,7 @@ port_specific_symbol_files = @port_specific_symbol_files@
 prefix = @prefix@
 program_transform_name = @program_transform_name@
 psdir = @psdir@
+python_mod_dir = @python_mod_dir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
@@ -321,9 +314,11 @@ target_alias = @target_alias@
 target_cpu = @target_cpu@
 target_os = @target_os@
 target_vendor = @target_vendor@
+thread_header = @thread_header@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
+toplevel_builddir = @toplevel_builddir@
 toplevel_srcdir = @toplevel_srcdir@
 
 # May be used by various substitution variables.
@@ -334,14 +329,16 @@ PWD_COMMAND = $${PWDCMD-pwd}
 STAMP = echo timestamp >
 toolexecdir = $(glibcxx_toolexecdir)
 toolexeclibdir = $(glibcxx_toolexeclibdir)
+@ENABLE_WERROR_FALSE@WERROR_FLAG = 
+@ENABLE_WERROR_TRUE@WERROR_FLAG = $(WERROR)
 
 # These bits are all figured out from configure.  Look in acinclude.m4
 # or configure.ac to see how they are set.  See GLIBCXX_EXPORT_FLAGS.
 CONFIG_CXXFLAGS = \
-	$(SECTION_FLAGS) $(EXTRA_CXX_FLAGS)
+	$(SECTION_FLAGS) $(HWCAP_FLAGS) -frandom-seed=$@
 
 WARN_CXXFLAGS = \
-	$(WARN_FLAGS) $(WERROR) -fdiagnostics-show-location=once
+	$(WARN_FLAGS) $(WERROR_FLAG) -fdiagnostics-show-location=once 
 
 
 # -I/-D flags to pass when compiling.
@@ -353,16 +350,22 @@ AM_CPPFLAGS = $(GLIBCXX_INCLUDES)
 toolexeclib_LTLIBRARIES = libsupc++.la
 # 2) integrated libsupc++convenience.la that is to be a part of libstdc++.a
 noinst_LTLIBRARIES = libsupc++convenience.la
-headers = \
-	exception new typeinfo cxxabi.h cxxabi-forced.h exception_defines.h \
-	initializer_list exception_ptr.h nested_exception.h
+std_HEADERS = \
+	cxxabi.h exception initializer_list new typeinfo
 
+bits_HEADERS = \
+	atomic_lockfree_defines.h cxxabi_forced.h \
+	exception_defines.h exception_ptr.h hash_bytes.h nested_exception.h
+
+headers = $(std_HEADERS) $(bits_HEADERS)
 @GLIBCXX_HOSTED_TRUE@c_sources = \
-@GLIBCXX_HOSTED_TRUE@	cp-demangle.c 
+@GLIBCXX_HOSTED_TRUE@	cp-demangle.c
 
 sources = \
 	array_type_info.cc \
 	atexit_arm.cc \
+	atexit_thread.cc \
+	bad_alloc.cc \
 	bad_cast.cc \
 	bad_typeid.cc \
 	class_type_info.cc \
@@ -382,6 +385,7 @@ sources = \
 	eh_ptr.cc \
 	eh_term_handler.cc \
 	eh_terminate.cc \
+	eh_tm.cc \
 	eh_throw.cc \
 	eh_type.cc \
 	eh_unex_handler.cc \
@@ -389,6 +393,9 @@ sources = \
 	function_type_info.cc \
 	fundamental_type_info.cc \
 	guard.cc \
+	guard_error.cc \
+	hash_bytes.cc \
+	nested_exception.cc \
 	new_handler.cc \
 	new_op.cc \
 	new_opnt.cc \
@@ -407,8 +414,6 @@ sources = \
 
 libsupc___la_SOURCES = $(sources) $(c_sources)
 libsupc__convenience_la_SOURCES = $(sources) $(c_sources)
-glibcxxinstalldir = $(gxx_include_dir)
-glibcxxinstall_HEADERS = $(headers)
 
 # AM_CXXFLAGS needs to be in each subdirectory so that it can be
 # modified in a per-library or per-sub-library way.  Need to manually
@@ -416,11 +421,9 @@ glibcxxinstall_HEADERS = $(headers)
 # OPTIMIZE_CXXFLAGS on the compile line so that -O2 can be overridden
 # as the occasion call for it.
 AM_CXXFLAGS = \
-	-fno-implicit-templates \
-	$(LIBSUPCXX_PICFLAGS) \
-	$(WARN_CXXFLAGS) \
-	$(OPTIMIZE_CXXFLAGS) \
-	$(CONFIG_CXXFLAGS)
+	$(glibcxx_lt_pic_flag) $(glibcxx_compiler_shared_flag) \
+	$(XTEMPLATE_FLAGS) \
+	$(WARN_CXXFLAGS) $(OPTIMIZE_CXXFLAGS)  $(CONFIG_CXXFLAGS)
 
 AM_MAKEFLAGS = \
 	"gxx_include_dir=$(gxx_include_dir)"
@@ -437,17 +440,14 @@ C_COMPILE = \
 
 # LTCOMPILE is copied from LTCXXCOMPILE below.
 LTCOMPILE = $(LIBTOOL) --tag CC --tag disable-shared $(LIBTOOLFLAGS) --mode=compile \
-	    $(CC) $(DEFS) $(C_INCLUDES) $(LIBSUPCXX_PICFLAGS) \
-            $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+	    $(CC) $(DEFS) $(C_INCLUDES) \
+	    $(glibcxx_lt_pic_flag) $(glibcxx_compiler_shared_flag) \
+	    $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 
 
-# libstdc++ libtool notes
+# Libtool notes
 
-# 1) Need to explicitly set LTCXXCOMPILE so that AM_CXXFLAGS is
-# last. (That way, things like -O2 passed down from the toplevel can
-# be overridden by --enable-debug.)
-
-# 2) In general, libtool expects an argument such as `--tag=CXX' when
+# 1) In general, libtool expects an argument such as `--tag=CXX' when
 # using the C++ compiler, because that will enable the settings
 # detected when C++ support was being configured.  However, when no
 # such flag is given in the command line, libtool attempts to figure
@@ -459,12 +459,23 @@ LTCOMPILE = $(LIBTOOL) --tag CC --tag disable-shared $(LIBTOOLFLAGS) --mode=comp
 # correct solution is to add `--tag CXX' to LTCXXCOMPILE and maybe
 # CXXLINK, just after $(LIBTOOL), so that libtool doesn't have to
 # attempt to infer which configuration to use.
-#
-# We have to put --tag disable-shared after --tag CXX lest things
-# CXX undo the affect of disable-shared.
-LTCXXCOMPILE = $(LIBTOOL) --tag CXX --tag disable-shared $(LIBTOOLFLAGS) \
-	       --mode=compile $(CXX) $(TOPLEVEL_INCLUDES) \
-	       $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) 
+# 
+# The second tag argument, `--tag disable-shared` means that libtool
+# only compiles each source once, for static objects. In actuality,
+# glibcxx_lt_pic_flag and glibcxx_compiler_shared_flag are added to
+# the libtool command that is used create the object, which is
+# suitable for shared libraries.  The `--tag disable-shared` must be
+# placed after --tag CXX lest things CXX undo the affect of
+# disable-shared.
+
+# 2) Need to explicitly set LTCXXCOMPILE so that EXTRA_CXX_FLAGS is
+# last. (That way, things like -O2 passed down from the toplevel can
+# be overridden by --enable-debug.)
+LTCXXCOMPILE = \
+	$(LIBTOOL) --tag CXX --tag disable-shared \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+	--mode=compile $(CXX) $(TOPLEVEL_INCLUDES) \
+	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) $(EXTRA_CXX_FLAGS)
 
 LTLDFLAGS = $(shell $(SHELL) $(top_srcdir)/../libtool-ldflags $(LDFLAGS))
 
@@ -474,10 +485,18 @@ LTLDFLAGS = $(shell $(SHELL) $(top_srcdir)/../libtool-ldflags $(LDFLAGS))
 # course is problematic at this point.  So, we get the top-level
 # directory to configure libstdc++-v3 to use gcc as the C++
 # compilation driver.
-CXXLINK = $(LIBTOOL) --tag CXX --tag disable-shared $(LIBTOOLFLAGS) \
-	  --mode=link $(CXX) \
-	  $(OPT_LDFLAGS) $(SECTION_LDFLAGS) $(AM_CXXFLAGS) $(LTLDFLAGS) -o $@
+CXXLINK = \
+	$(LIBTOOL) --tag CXX --tag disable-shared \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+	--mode=link $(CXX) \
+	$(OPT_LDFLAGS) $(SECTION_LDFLAGS) $(AM_CXXFLAGS) $(LTLDFLAGS) -o $@
 
+
+# Install notes
+# We have to have rules modified from the default to counteract SUN make
+# prepending each of $(*_HEADERS) with VPATH below.
+stddir = $(gxx_include_dir)
+bitsdir = $(gxx_include_dir)/bits
 all: all-am
 
 .SUFFIXES:
@@ -638,42 +657,11 @@ GTAGS:
 
 distclean-tags:
 	-rm -f TAGS ID GTAGS GRTAGS GSYMS GPATH tags
-
-distdir: $(DISTFILES)
-	@srcdirstrip=`echo "$(srcdir)" | sed 's/[].[^$$\\*]/\\\\&/g'`; \
-	topsrcdirstrip=`echo "$(top_srcdir)" | sed 's/[].[^$$\\*]/\\\\&/g'`; \
-	list='$(DISTFILES)'; \
-	  dist_files=`for file in $$list; do echo $$file; done | \
-	  sed -e "s|^$$srcdirstrip/||;t" \
-	      -e "s|^$$topsrcdirstrip/|$(top_builddir)/|;t"`; \
-	case $$dist_files in \
-	  */*) $(MKDIR_P) `echo "$$dist_files" | \
-			   sed '/\//!d;s|^|$(distdir)/|;s,/[^/]*$$,,' | \
-			   sort -u` ;; \
-	esac; \
-	for file in $$dist_files; do \
-	  if test -f $$file || test -d $$file; then d=.; else d=$(srcdir); fi; \
-	  if test -d $$d/$$file; then \
-	    dir=`echo "/$$file" | sed -e 's,/[^/]*$$,,'`; \
-	    if test -d "$(distdir)/$$file"; then \
-	      find "$(distdir)/$$file" -type d ! -perm -700 -exec chmod u+rwx {} \;; \
-	    fi; \
-	    if test -d $(srcdir)/$$file && test $$d != $(srcdir); then \
-	      cp -fpR $(srcdir)/$$file "$(distdir)$$dir" || exit 1; \
-	      find "$(distdir)/$$file" -type d ! -perm -700 -exec chmod u+rwx {} \;; \
-	    fi; \
-	    cp -fpR $$d/$$file "$(distdir)$$dir" || exit 1; \
-	  else \
-	    test -f "$(distdir)/$$file" \
-	    || cp -p $$d/$$file "$(distdir)/$$file" \
-	    || exit 1; \
-	  fi; \
-	done
 check-am: all-am
 check: check-am
 all-am: Makefile $(LTLIBRARIES) $(HEADERS)
 installdirs:
-	for dir in "$(DESTDIR)$(toolexeclibdir)" "$(DESTDIR)$(glibcxxinstalldir)"; do \
+	for dir in "$(DESTDIR)$(toolexeclibdir)" "$(DESTDIR)$(bitsdir)" "$(DESTDIR)$(stddir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -723,7 +711,7 @@ info: info-am
 
 info-am:
 
-install-data-am: install-glibcxxinstallHEADERS
+install-data-am: install-bitsHEADERS install-stdHEADERS
 
 install-dvi: install-dvi-am
 
@@ -768,7 +756,7 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-glibcxxinstallHEADERS \
+uninstall-am: uninstall-bitsHEADERS uninstall-stdHEADERS \
 	uninstall-toolexeclibLTLIBRARIES
 
 .MAKE: install-am install-strip
@@ -776,17 +764,18 @@ uninstall-am: uninstall-glibcxxinstallHEADERS \
 .PHONY: CTAGS GTAGS all all-am check check-am clean clean-generic \
 	clean-libtool clean-noinstLTLIBRARIES \
 	clean-toolexeclibLTLIBRARIES ctags distclean distclean-compile \
-	distclean-generic distclean-libtool distclean-tags distdir dvi \
-	dvi-am html html-am info info-am install install-am \
-	install-data install-data-am install-dvi install-dvi-am \
-	install-exec install-exec-am install-glibcxxinstallHEADERS \
-	install-html install-html-am install-info install-info-am \
-	install-man install-pdf install-pdf-am install-ps \
-	install-ps-am install-strip install-toolexeclibLTLIBRARIES \
-	installcheck installcheck-am installdirs maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-compile \
-	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags uninstall uninstall-am uninstall-glibcxxinstallHEADERS \
+	distclean-generic distclean-libtool distclean-tags dvi dvi-am \
+	html html-am info info-am install install-am \
+	install-bitsHEADERS install-data install-data-am install-dvi \
+	install-dvi-am install-exec install-exec-am install-html \
+	install-html-am install-info install-info-am install-man \
+	install-pdf install-pdf-am install-ps install-ps-am \
+	install-stdHEADERS install-strip \
+	install-toolexeclibLTLIBRARIES installcheck installcheck-am \
+	installdirs maintainer-clean maintainer-clean-generic \
+	mostlyclean mostlyclean-compile mostlyclean-generic \
+	mostlyclean-libtool pdf pdf-am ps ps-am tags uninstall \
+	uninstall-am uninstall-bitsHEADERS uninstall-stdHEADERS \
 	uninstall-toolexeclibLTLIBRARIES
 
 
@@ -798,23 +787,64 @@ cp-demangle.lo: cp-demangle.c
 cp-demangle.o: cp-demangle.c
 	$(C_COMPILE) -DIN_GLIBCPP_V3 -Wno-error -c $<
 
-# We have to have rules modified from the default to counteract SUN make
-# prepending each of $(glibcxxinstall_HEADERS) with VPATH below.
-install-glibcxxinstallHEADERS: $(glibcxxinstall_HEADERS)
+# Use special rules for the C++0x sources so that the proper flags are passed.
+eh_ptr.lo: eh_ptr.cc
+	$(LTCXXCOMPILE) -std=gnu++0x -c $<
+eh_ptr.o: eh_ptr.cc
+	$(CXXCOMPILE) -std=gnu++0x -c $<
+
+eh_throw.lo: eh_throw.cc
+	$(LTCXXCOMPILE) -std=gnu++0x -c $<
+eh_throw.o: eh_throw.cc
+	$(CXXCOMPILE) -std=gnu++0x -c $<
+
+guard.lo: guard.cc
+	$(LTCXXCOMPILE) -std=gnu++0x -c $<
+guard.o: guard.cc
+	$(CXXCOMPILE) -std=gnu++0x -c $<
+
+atexit_thread.lo: atexit_thread.cc
+	$(LTCXXCOMPILE) -std=gnu++0x -c $<
+atexit_thread.o: atexit_thread.cc
+	$(CXXCOMPILE) -std=gnu++0x -c $<
+
+nested_exception.lo: nested_exception.cc
+	$(LTCXXCOMPILE) -std=gnu++0x -c $<
+nested_exception.o: nested_exception.cc
+	$(CXXCOMPILE) -std=gnu++0x -c $<
+
+install-stdHEADERS: $(std_HEADERS)
 	@$(NORMAL_INSTALL)
-	$(mkinstalldirs) $(DESTDIR)$(glibcxxinstalldir)
-	@list='$(glibcxxinstall_HEADERS)'; for p in $$list; do \
+	$(mkinstalldirs) $(DESTDIR)$(stddir)
+	@list='$(std_HEADERS)'; for p in $$list; do \
 	  q=`echo $$p | sed -e 's,.*/,,'`; \
 	  if test -f "$$p"; then d= ; else d="$(srcdir)/"; fi; \
-	  echo " $(INSTALL_DATA) $$d$$p $(DESTDIR)$(glibcxxinstalldir)/$$q"; \
-	  $(INSTALL_DATA) $$d$$p $(DESTDIR)$(glibcxxinstalldir)/$$q; \
+	  echo " $(INSTALL_DATA) $$d$$p $(DESTDIR)$(stddir)/$$q"; \
+	  $(INSTALL_DATA) $$d$$p $(DESTDIR)$(stddir)/$$q; \
 	done
 
-uninstall-glibcxxinstallHEADERS:
-	@$(NORMAL_UNINSTALL)
-	list='$(glibcxxinstall_HEADERS)'; for p in $$list; do \
+install-bitsHEADERS: $(bits_HEADERS)
+	@$(NORMAL_INSTALL)
+	$(mkinstalldirs) $(DESTDIR)$(bitsdir)
+	@list='$(bits_HEADERS)'; for p in $$list; do \
 	  q=`echo $$p | sed -e 's,.*/,,'`; \
-	  rm -f $(DESTDIR)$(glibcxxinstalldir)/$$q; \
+	  if test -f "$$p"; then d= ; else d="$(srcdir)/"; fi; \
+	  echo " $(INSTALL_DATA) $$d$$p $(DESTDIR)$(bitsdir)/$$q"; \
+	  $(INSTALL_DATA) $$d$$p $(DESTDIR)$(bitsdir)/$$q; \
+	done
+
+uninstall-stdHEADERS:
+	@$(NORMAL_UNINSTALL)
+	list='$(std_HEADERS)'; for p in $$list; do \
+	  q=`echo $$p | sed -e 's,.*/,,'`; \
+	  rm -f $(DESTDIR)$(stddir)/$$q; \
+	done
+
+uninstall-bitsHEADERS:
+	@$(NORMAL_UNINSTALL)
+	list='$(bits_HEADERS)'; for p in $$list; do \
+	  q=`echo $$p | sed -e 's,.*/,,'`; \
+	  rm -f $(DESTDIR)$(bitsdir)/$$q; \
 	done
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

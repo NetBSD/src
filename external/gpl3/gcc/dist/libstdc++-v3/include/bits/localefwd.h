@@ -1,8 +1,6 @@
-// Locale support -*- C++ -*-
+// <locale> Forward declarations -*- C++ -*-
 
-// Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-// 2006, 2007, 2009, 2010
-// Free Software Foundation, Inc.
+// Copyright (C) 1997-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -24,9 +22,9 @@
 // see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 // <http://www.gnu.org/licenses/>.
 
-/** @file localefwd.h
+/** @file bits/localefwd.h
  *  This is an internal header file, included by other library headers.
- *  You should not attempt to use it directly.
+ *  Do not attempt to use it directly. @headername{locale}
  */
 
 //
@@ -43,7 +41,9 @@
 #include <iosfwd>            // For ostreambuf_iterator, istreambuf_iterator
 #include <cctype>
 
-_GLIBCXX_BEGIN_NAMESPACE(std)
+namespace std _GLIBCXX_VISIBILITY(default)
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   /** 
    *  @defgroup locales Locales
@@ -138,12 +138,12 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
     class codecvt_byname;
 
   // 22.2.2 and 22.2.3 numeric
-_GLIBCXX_BEGIN_LDBL_NAMESPACE
+_GLIBCXX_BEGIN_NAMESPACE_LDBL
   template<typename _CharT, typename _InIter = istreambuf_iterator<_CharT> >
     class num_get;
   template<typename _CharT, typename _OutIter = ostreambuf_iterator<_CharT> >
     class num_put;
-_GLIBCXX_END_LDBL_NAMESPACE
+_GLIBCXX_END_NAMESPACE_LDBL
   template<typename _CharT> class numpunct;
   template<typename _CharT> class numpunct_byname;
 
@@ -166,12 +166,12 @@ _GLIBCXX_END_LDBL_NAMESPACE
 
   // 22.2.6 money
   class money_base;
-_GLIBCXX_BEGIN_LDBL_NAMESPACE
+_GLIBCXX_BEGIN_NAMESPACE_LDBL
   template<typename _CharT, typename _InIter =  istreambuf_iterator<_CharT> >
     class money_get;
   template<typename _CharT, typename _OutIter = ostreambuf_iterator<_CharT> >
     class money_put;
-_GLIBCXX_END_LDBL_NAMESPACE
+_GLIBCXX_END_NAMESPACE_LDBL
   template<typename _CharT, bool _Intl = false>
     class moneypunct;
   template<typename _CharT, bool _Intl = false>
@@ -184,6 +184,7 @@ _GLIBCXX_END_LDBL_NAMESPACE
   template<typename _CharT>
     class messages_byname;
 
-_GLIBCXX_END_NAMESPACE
+_GLIBCXX_END_NAMESPACE_VERSION
+} // namespace std
 
 #endif

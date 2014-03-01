@@ -1,5 +1,5 @@
 /* Loop unswitching.
-   Copyright (C) 2004, 2005, 2007, 2008, 2010 Free Software Foundation, Inc.
+   Copyright (C) 2004-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -22,15 +22,9 @@ along with GCC; see the file COPYING3.  If not see
 #include "coretypes.h"
 #include "tm.h"
 #include "tree.h"
-#include "rtl.h"
 #include "tm_p.h"
-#include "hard-reg-set.h"
 #include "basic-block.h"
-#include "output.h"
-#include "diagnostic.h"
 #include "tree-flow.h"
-#include "tree-dump.h"
-#include "timevar.h"
 #include "cfgloop.h"
 #include "params.h"
 #include "tree-pass.h"
@@ -84,10 +78,41 @@ tree_ssa_unswitch_loops (void)
   loop_iterator li;
   struct loop *loop;
   bool changed = false;
+  HOST_WIDE_INT iterations;
 
   /* Go through inner loops (only original ones).  */
   FOR_EACH_LOOP (li, loop, LI_ONLY_INNERMOST)
     {
+      if (dump_file && (dump_flags & TDF_DETAILS))
+        fprintf (dump_file, ";; Considering loop %d\n", loop->num);
+
+      /* Do not unswitch in cold regions. */
+      if (optimize_loop_for_size_p (loop))
+        {
+          if (dump_file && (dump_flags & TDF_DETAILS))
+            fprintf (dump_file, ";; Not unswitching cold loops\n");
+          continue;
+        }
+
+      /* The loop should not be too large, to limit code growth. */
+      if (tree_num_loop_insns (loop, &eni_size_weights)
+          > (unsigned) PARAM_VALUE (PARAM_MAX_UNSWITCH_INSNS))
+        {
+          if (dump_file && (dump_flags & TDF_DETAILS))
+            fprintf (dump_file, ";; Not unswitching, loop too big\n");
+          continue;
+        }
+
+      /* If the loop is not expected to iterate, there is no need
+	 for unswitching.  */
+      iterations = estimated_loop_iterations_int (loop);
+      if (iterations >= 0 && iterations <= 1)
+	{
+          if (dump_file && (dump_flags & TDF_DETAILS))
+            fprintf (dump_file, ";; Not unswitching, loop is not expected to iterate\n");
+          continue;
+	}
+
       changed |= tree_unswitch_single_loop (loop, 0);
     }
 
@@ -180,31 +205,6 @@ tree_unswitch_single_loop (struct loop *loop, int num)
   tree cond = NULL_TREE;
   gimple stmt;
   bool changed = false;
-
-  /* Only unswitch innermost loops.  */
-  if (loop->inner)
-    {
-      if (dump_file && (dump_flags & TDF_DETAILS))
-	fprintf (dump_file, ";; Not unswitching, not innermost loop\n");
-      return false;
-    }
-
-  /* Do not unswitch in cold regions.  */
-  if (optimize_loop_for_size_p (loop))
-    {
-      if (dump_file && (dump_flags & TDF_DETAILS))
-	fprintf (dump_file, ";; Not unswitching cold loops\n");
-      return false;
-    }
-
-  /* The loop should not be too large, to limit code growth.  */
-  if (tree_num_loop_insns (loop, &eni_size_weights)
-      > (unsigned) PARAM_VALUE (PARAM_MAX_UNSWITCH_INSNS))
-    {
-      if (dump_file && (dump_flags & TDF_DETAILS))
-	fprintf (dump_file, ";; Not unswitching, loop too big\n");
-      return false;
-    }
 
   i = 0;
   bbs = get_loop_body (loop);

@@ -1,6 +1,5 @@
 /* CPP Library - charsets
-   Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2006, 2008, 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 1998-2013 Free Software Foundation, Inc.
 
    Broken out of c-lex.c Apr 2003, adding valid C99 UCN ranges.
 
@@ -993,9 +992,9 @@ _cpp_valid_ucn (cpp_reader *pfile, const uchar **pstr,
     cpp_error (pfile, CPP_DL_WARNING,
 	       "universal character names are only valid in C++ and C99");
   else if (CPP_WTRADITIONAL (pfile) && identifier_pos == 0)
-    cpp_error (pfile, CPP_DL_WARNING,
-	       "the meaning of '\\%c' is different in traditional C",
-	       (int) str[-1]);
+    cpp_warning (pfile, CPP_W_TRADITIONAL,
+	         "the meaning of '\\%c' is different in traditional C",
+	         (int) str[-1]);
 
   if (str[-1] == 'u')
     length = 4;
@@ -1174,8 +1173,8 @@ convert_hex (cpp_reader *pfile, const uchar *from, const uchar *limit,
   size_t mask = width_to_mask (width);
 
   if (CPP_WTRADITIONAL (pfile))
-    cpp_error (pfile, CPP_DL_WARNING,
-	       "the meaning of '\\x' is different in traditional C");
+    cpp_warning (pfile, CPP_W_TRADITIONAL,
+	         "the meaning of '\\x' is different in traditional C");
 
   from++;  /* Skip 'x'.  */
   while (from < limit)
@@ -1302,8 +1301,8 @@ convert_escape (cpp_reader *pfile, const uchar *from, const uchar *limit,
 
     case 'a':
       if (CPP_WTRADITIONAL (pfile))
-	cpp_error (pfile, CPP_DL_WARNING,
-		   "the meaning of '\\a' is different in traditional C");
+	cpp_warning (pfile, CPP_W_TRADITIONAL,
+		     "the meaning of '\\a' is different in traditional C");
       c = charconsts[0];
       break;
 
@@ -1509,7 +1508,7 @@ narrow_str_to_charconst (cpp_reader *pfile, cpp_string str,
 		 "character constant too long for its type");
     }
   else if (i > 1 && CPP_OPTION (pfile, warn_multichar))
-    cpp_error (pfile, CPP_DL_WARNING, "multi-character character constant");
+    cpp_warning (pfile, CPP_W_MULTICHAR, "multi-character character constant");
 
   /* Multichar constants are of type int and therefore signed.  */
   if (i > 1)
@@ -1729,9 +1728,15 @@ _cpp_convert_input (cpp_reader *pfile, const char *input_charset,
     iconv_close (input_cset.cd);
 
   /* Resize buffer if we allocated substantially too much, or if we
-     haven't enough space for the \n-terminator.  */
-  if (to.len + 4096 < to.asize || to.len >= to.asize)
-    to.text = XRESIZEVEC (uchar, to.text, to.len + 1);
+     haven't enough space for the \n-terminator or following
+     15 bytes of padding (used to quiet warnings from valgrind or
+     Address Sanitizer, when the optimized lexer accesses aligned
+     16-byte memory chunks, including the bytes after the malloced,
+     area, and stops lexing on '\n').  */
+  if (to.len + 4096 < to.asize || to.len + 16 > to.asize)
+    to.text = XRESIZEVEC (uchar, to.text, to.len + 16);
+
+  memset (to.text + to.len, '\0', 16);
 
   /* If the file is using old-school Mac line endings (\r only),
      terminate with another \r, not an \n, so that we do not mistake

@@ -1,4 +1,4 @@
-/* Copyright (C) 2007, 2008, 2009 Free Software Foundation, Inc.
+/* Copyright (C) 2007-2013 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -19,8 +19,7 @@
    You should have received a copy of the GNU General Public License and
    a copy of the GCC Runtime Library Exception along with this program;
    see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
-   <http://www.gnu.org/licenses/>.
-
+   <http://www.gnu.org/licenses/>.  */
 
 /* Implemented from the specification included in the Intel C++ Compiler
    User Guide and Reference, version 10.0.  */
@@ -439,7 +438,7 @@ _mm_insert_epi64 (__m128i __D, long long __S, const int __N)
 extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_extract_epi8 (__m128i __X, const int __N)
 {
-   return __builtin_ia32_vec_ext_v16qi ((__v16qi)__X, __N);
+   return (unsigned char) __builtin_ia32_vec_ext_v16qi ((__v16qi)__X, __N);
 }
 
 extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
@@ -457,7 +456,7 @@ _mm_extract_epi64 (__m128i __X, const int __N)
 #endif
 #else
 #define _mm_extract_epi8(X, N) \
-  ((int) __builtin_ia32_vec_ext_v16qi ((__v16qi)(__m128i)(X), (int)(N)))
+  ((int) (unsigned char) __builtin_ia32_vec_ext_v16qi ((__v16qi)(__m128i)(X), (int)(N)))
 #define _mm_extract_epi32(X, N) \
   ((int) __builtin_ia32_vec_ext_v4si ((__v4si)(__m128i)(X), (int)(N)))
 
@@ -597,7 +596,7 @@ _mm_stream_load_si128 (__m128i *__X)
 #define _SIDD_CMP_EQUAL_EACH		0x08
 #define _SIDD_CMP_EQUAL_ORDERED		0x0c
 
-/* These macros specify the the polarity.  */
+/* These macros specify the polarity.  */
 #define _SIDD_POSITIVE_POLARITY		0x00
 #define _SIDD_NEGATIVE_POLARITY		0x10
 #define _SIDD_MASKED_POSITIVE_POLARITY	0x20
