@@ -1,7 +1,7 @@
-/*	$NetBSD: time.h,v 1.4 2013/07/27 19:23:13 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.5 2014/03/01 03:24:40 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -315,6 +315,16 @@ isc_time_formathttptimestamp(const isc_time_t *t, char *buf, unsigned int len);
  *\li      'len' > 0
  *\li      'buf' points to an array of at least len chars
  *
+ */
+
+isc_result_t
+isc_time_parsehttptimestamp(char *input, isc_time_t *t);
+/*%<
+ * Parse the time in 'input' into the isc_time_t pointed to by 't',
+ * expecting a format like "Mon, 30 Aug 2000 04:06:47 GMT"
+ *
+ *  Requires:
+ *\li      'buf' and 't' are not NULL.
  */
 
 void

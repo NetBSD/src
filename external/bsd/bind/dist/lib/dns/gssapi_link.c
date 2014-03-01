@@ -1,7 +1,7 @@
-/*	$NetBSD: gssapi_link.c,v 1.6 2013/12/31 20:24:41 christos Exp $	*/
+/*	$NetBSD: gssapi_link.c,v 1.7 2014/03/01 03:24:36 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -218,7 +218,7 @@ gssapi_verify(dst_context_t *dctx, const isc_region_t *sig) {
 	buf = isc_mem_allocate(dst__memory_pool, sig->length);
 	if (buf == NULL)
 		return (ISC_R_FAILURE);
-	memcpy(buf, sig->base, sig->length);
+	memmove(buf, sig->base, sig->length);
 	r.base = buf;
 	r.length = sig->length;
 	REGION_TO_GBUFFER(r, gsig);
@@ -360,6 +360,7 @@ gssapi_dump(dst_key_t *key, isc_mem_t *mctx, char **buffer, int *length) {
 
 static dst_func_t gssapi_functions = {
 	gssapi_create_signverify_ctx,
+	NULL, /*%< createctx2 */
 	gssapi_destroy_signverify_ctx,
 	gssapi_adddata,
 	gssapi_sign,

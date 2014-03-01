@@ -1,7 +1,7 @@
-/*	$NetBSD: ds.h,v 1.4 2012/12/04 23:38:43 spz Exp $	*/
+/*	$NetBSD: ds.h,v 1.5 2014/03/01 03:24:37 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2010, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2010, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -31,10 +31,6 @@
 #define DNS_DSDIGEST_GOST (3)
 #define DNS_DSDIGEST_SHA384 (4)
 
-/* should not be here... */
-
-#define ISC_GOST_DIGESTLENGTH 32U
-
 /*
  * Assuming SHA-384 digest type.
  */
@@ -58,12 +54,6 @@ dns_ds_buildrdata(dns_name_t *owner, dns_rdata_t *key,
  * Ensures:
  *  \li    *rdata	Contains a valid DS rdata.  The 'data' member refers
  *		to 'buffer'.
- */
-
-isc_boolean_t
-dns_ds_digest_supported(unsigned int digest_type);
-/*%<
- * Is this digest algorithm supported by dns_ds_buildrdata()?
  */
 
 ISC_LANG_ENDDECLS
