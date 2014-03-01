@@ -1,4 +1,4 @@
-/*	$NetBSD: masterdump.c,v 1.8 2014/03/01 03:24:36 christos Exp $	*/
+/*	$NetBSD: masterdump.c,v 1.9 2014/03/01 23:02:14 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -1736,7 +1736,7 @@ opentmp(isc_mem_t *mctx, dns_masterformat_t format, const char *file,
 		goto cleanup;
 
 	if (format == dns_masterformat_text)
-	result = isc_file_openunique(tempname, &f);
+		result = isc_file_openunique(tempname, &f);
 	else
 		result = isc_file_bopenunique(tempname, &f);
 	if (result != ISC_R_SUCCESS) {

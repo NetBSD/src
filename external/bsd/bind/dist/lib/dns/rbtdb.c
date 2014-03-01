@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtdb.c,v 1.16 2014/03/01 03:24:37 christos Exp $	*/
+/*	$NetBSD: rbtdb.c,v 1.17 2014/03/01 23:03:58 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -5950,7 +5950,7 @@ add(dns_rbtdb_t *rbtdb, dns_rbtnode_t *rbtnode, rbtdb_version_t *rbtversion,
 					topheader->type ==
 					RBTDB_RDATATYPE_VALUE(0, covers))) {
 					break;
-			}
+				}
 			}
 			if (topheader != NULL && EXISTS(topheader) &&
 			    topheader->rdh_ttl >= now) {

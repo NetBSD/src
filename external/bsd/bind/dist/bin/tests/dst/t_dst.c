@@ -1,4 +1,4 @@
-/*	$NetBSD: t_dst.c,v 1.8 2014/03/01 03:24:33 christos Exp $	*/
+/*	$NetBSD: t_dst.c,v 1.9 2014/03/01 22:53:11 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -277,9 +277,9 @@ dh(dns_name_t *name1, int id1, dns_name_t *name2, int id2, isc_mem_t *mctx,
 
  cleanup:
 	if (key1 != NULL)
-	dst_key_free(&key1);
+		dst_key_free(&key1);
 	if (key2 != NULL)
-	dst_key_free(&key2);
+		dst_key_free(&key2);
 }
 
 static void
@@ -412,7 +412,7 @@ generate(int alg, isc_mem_t *mctx, int size, int *nfails) {
 		use(key, mctx, ISC_R_SUCCESS, nfails);
  cleanup:
 	if (key != NULL)
-	dst_key_free(&key);
+		dst_key_free(&key);
 }
 
 #define	DBUFSIZ	25
