@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp.c,v 1.1.1.29 2014/02/25 13:14:29 roy Exp $");
+ __RCSID("$NetBSD: dhcp.c,v 1.1.1.30 2014/03/01 11:00:42 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -154,7 +154,9 @@ get_option(struct dhcpcd_ctx *ctx,
 		if (o == opt) {
 			if (op) {
 				if (!ctx->opt_buffer) {
-					ctx->opt_buffer = malloc(sizeof(*dhcp));
+					ctx->opt_buffer =
+					    malloc(DHCP_OPTION_LEN +
+					    BOOTFILE_LEN + SERVERNAME_LEN);
 					if (ctx->opt_buffer == NULL)
 						return NULL;
 				}
@@ -975,9 +977,8 @@ ssize_t
 write_lease(const struct interface *ifp, const struct dhcp_message *dhcp)
 {
 	int fd;
-	ssize_t bytes = sizeof(*dhcp);
-	const uint8_t *p = dhcp->options;
-	const uint8_t *e = p + sizeof(dhcp->options);
+	ssize_t bytes;
+	const uint8_t *e, *p;
 	uint8_t l;
 	uint8_t o = 0;
 	const struct dhcp_state *state = D_CSTATE(ifp);
@@ -996,6 +997,9 @@ write_lease(const struct interface *ifp, const struct dhcp_message *dhcp)
 		return -1;
 
 	/* Only write as much as we need */
+	p = dhcp->options;
+	e = p + sizeof(dhcp->options);
+	bytes = sizeof(*dhcp);
 	while (p < e) {
 		o = *p;
 		if (o == DHO_END) {
@@ -1452,8 +1456,8 @@ checksum(const void *data, uint16_t len)
 	return ~sum;
 }
 
-static ssize_t
-dhcp_makeudppacket(uint8_t **p, const uint8_t *data, size_t length,
+static struct udp_dhcp_packet *
+dhcp_makeudppacket(ssize_t *sz, const uint8_t *data, size_t length,
 	struct in_addr source, struct in_addr dest)
 {
 	struct udp_dhcp_packet *udpp;
@@ -1462,7 +1466,7 @@ dhcp_makeudppacket(uint8_t **p, const uint8_t *data, size_t length,
 
 	udpp = calloc(1, sizeof(*udpp));
 	if (udpp == NULL)
-		return -1;
+		return NULL;
 	ip = &udpp->ip;
 	udp = &udpp->udp;
 
@@ -1497,8 +1501,8 @@ dhcp_makeudppacket(uint8_t **p, const uint8_t *data, size_t length,
 	ip->ip_len = htons(sizeof(*ip) + sizeof(*udp) + length);
 	ip->ip_sum = checksum(ip, sizeof(*ip));
 
-	*p = (uint8_t *)udpp;
-	return sizeof(*ip) + sizeof(*udp) + length;
+	*sz = sizeof(*ip) + sizeof(*udp) + length;
+	return udpp;
 }
 
 static void
@@ -1508,7 +1512,7 @@ send_message(struct interface *iface, int type,
 	struct dhcp_state *state = D_STATE(iface);
 	struct if_options *ifo = iface->options;
 	struct dhcp_message *dhcp;
-	uint8_t *udp;
+	struct udp_dhcp_packet *udp;
 	ssize_t len, r;
 	struct in_addr from, to;
 	in_addr_t a = 0;
@@ -1567,11 +1571,15 @@ send_message(struct interface *iface, int type,
 			dhcp_close(iface);
 		}
 	} else {
-		len = dhcp_makeudppacket(&udp, (uint8_t *)dhcp, len, from, to);
-		if (len == -1)
-			return;
-		r = ipv4_sendrawpacket(iface, ETHERTYPE_IP, udp, len);
-		free(udp);
+		r = 0;
+		udp = dhcp_makeudppacket(&r, (uint8_t *)dhcp, len, from, to);
+		if (udp == NULL) {
+			syslog(LOG_ERR, "dhcp_makeudppacket: %m");
+		} else {
+			r = ipv4_sendrawpacket(iface, ETHERTYPE_IP,
+			    (uint8_t *)udp, r);
+			free(udp);
+		}
 		/* If we failed to send a raw packet this normally means
 		 * we don't have the ability to work beneath the IP layer
 		 * for this interface.
