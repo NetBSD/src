@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.15 2014/03/01 03:24:32 christos Exp $	*/
+/*	$NetBSD: server.c,v 1.16 2014/03/01 22:51:24 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -9341,10 +9341,10 @@ ns_server_signing(ns_server_t *server, char *args, isc_buffer_t *text) {
 			if (strcmp(ptr, "-") != 0) {
 				isc_buffer_t buf;
 
-			isc_buffer_init(&buf, salt, sizeof(salt));
-			CHECK(isc_hex_decodestring(ptr, &buf));
-			saltlen = isc_buffer_usedlength(&buf);
-		}
+				isc_buffer_init(&buf, salt, sizeof(salt));
+				CHECK(isc_hex_decodestring(ptr, &buf));
+				saltlen = isc_buffer_usedlength(&buf);
+			}
 		}
 	} else
 		CHECK(DNS_R_SYNTAX);
