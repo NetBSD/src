@@ -56,8 +56,12 @@ const struct default_include cpp_include_defaults[]
       GPLUSPLUS_INCLUDE_DIR_ADD_SYSROOT, 0 },
 #endif
 #ifdef GCC_INCLUDE_DIR
+#ifndef GCC_INCLUDE_DIR_ADD_SYSROOT
+#define GCC_INCLUDE_DIR_ADD_SYSROOT 0
+#endif
     /* This is the dir for gcc's private headers.  */
-    { GCC_INCLUDE_DIR, "GCC", 0, 0, 0, 0 },
+    { GCC_INCLUDE_DIR, "GCC", 0, 0,
+      GCC_INCLUDE_DIR_ADD_SYSROOT, 0 },
 #endif
 #ifdef LOCAL_INCLUDE_DIR
     /* /usr/local/include comes before the fixincluded header files.  */

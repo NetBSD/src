@@ -1679,7 +1679,12 @@ enable_lto=$enableval,
 enable_lto=yes; default_enable_lto=yes)
 
 ACX_ELF_TARGET_IFELSE([# ELF platforms build the lto-plugin always.
-  build_lto_plugin=yes
+  case $target in
+  m68010-*)
+    build_lto_plugin=no;;
+  *)
+    build_lto_plugin=yes;;
+  esac
 ],[if test x"$default_enable_lto" = x"yes" ; then
     case $target in
       *-apple-darwin9* | *-cygwin* | *-mingw*) ;;

@@ -38,6 +38,8 @@ rs6000-c.o: $(srcdir)/config/rs6000/rs6000-c.c \
 
 $(srcdir)/config/rs6000/rs6000-tables.opt: $(srcdir)/config/rs6000/genopt.sh \
   $(srcdir)/config/rs6000/rs6000-cpus.def
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_rs6000-tables.opt:
 	$(SHELL) $(srcdir)/config/rs6000/genopt.sh $(srcdir)/config/rs6000 > \
 		$(srcdir)/config/rs6000/rs6000-tables.opt
 
