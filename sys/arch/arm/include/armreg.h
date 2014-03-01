@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.88 2014/03/01 05:27:22 matt Exp $	*/
+/*	$NetBSD: armreg.h,v 1.89 2014/03/01 05:41:59 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -674,19 +674,19 @@
 #define ARM_A5_TLBDATA_AP		__BITS(58,56)
 #define ARM_A5_TLBDATA_NS_WALK		__BIT(55)
 #define ARM_A5_TLBDATA_NS_PAGE		__BIT(54)
-#define ARM_A5_TLBDATA_NX		__BIT(53)
+#define ARM_A5_TLBDATA_XN		__BIT(53)
 #define ARM_A5_TLBDATA_TEX		__BITS(52,50)
 #define ARM_A5_TLBDATA_B		__BIT(49)
 #define ARM_A5_TLBDATA_C		__BIT(48)
 #define ARM_A5_TLBDATA_S		__BIT(47)
-#define ARM_A5_TLBDATA_ASID		__BIT(46,39)
-#define ARM_A5_TLBDATA_SIZE		__BIT(38,37)
+#define ARM_A5_TLBDATA_ASID		__BITS(46,39)
+#define ARM_A5_TLBDATA_SIZE		__BITS(38,37)
 #define ARM_A5_TLBDATA_SIZE_4KB		0
 #define ARM_A5_TLBDATA_SIZE_16KB	1
 #define ARM_A5_TLBDATA_SIZE_1MB		2
 #define ARM_A5_TLBDATA_SIZE_16MB	3
-#define ARM_A5_TLBDATA_VA		__BIT(36,22)
-#define ARM_A5_TLBDATA_PA		__BIT(21,2)
+#define ARM_A5_TLBDATA_VA		__BITS(36,22)
+#define ARM_A5_TLBDATA_PA		__BITS(21,2)
 #define ARM_A5_TLBDATA_nG		__BIT(1)
 #define ARM_A5_TLBDATA_VALID		__BIT(0)
 
