@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: script.c,v 1.1.1.5 2014/02/25 13:14:28 roy Exp $");
+ __RCSID("$NetBSD: script.c,v 1.1.1.6 2014/03/01 11:00:41 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -61,6 +61,7 @@ static const char * const if_params[] = {
 	"interface",
 	"reason",
 	"pid",
+	"ifcarrier",
 	"ifmetric",
 	"ifwireless",
 	"ifflags",
@@ -142,11 +143,13 @@ append_config(char ***env, ssize_t *len,
 {
 	ssize_t i, j, e1;
 	char **ne, *eq, **nep, *p;
+	int ret;
 
 	if (config == NULL)
 		return 0;
 
 	ne = *env;
+	ret = 0;
 	for (i = 0; config[i] != NULL; i++) {
 		eq = strchr(config[i], '=');
 		e1 = eq - config[i] + 1;
@@ -154,22 +157,29 @@ append_config(char ***env, ssize_t *len,
 			if (strncmp(ne[j] + strlen(prefix) + 1,
 				config[i], e1) == 0)
 			{
+				p = make_var(prefix, config[i]);
+				if (p == NULL) {
+					ret = -1;
+					break;
+				}
 				free(ne[j]);
-				ne[j] = make_var(prefix, config[i]);
-				if (ne[j] == NULL)
-					return -1;
+				ne[j] = p;
 				break;
 			}
 		}
 		if (j == *len) {
 			j++;
 			p = make_var(prefix, config[i]);
-			if (p == NULL)
-				return -1;
+			if (p == NULL) {
+				ret = -1;
+				break;
+			}
 			nep = realloc(ne, sizeof(char *) * (j + 1));
 			if (nep == NULL) {
 				syslog(LOG_ERR, "%s: %m", __func__);
-				return -1;
+				free(p);
+				ret = -1;
+				break;
 			}
 			ne = nep;
 			ne[j - 1] = p;
@@ -177,7 +187,7 @@ append_config(char ***env, ssize_t *len,
 		}
 	}
 	*env = ne;
-	return 0;
+	return ret;
 }
 #endif
 
@@ -188,6 +198,8 @@ arraytostr(const char *const *argv, char **s)
 	char *p;
 	size_t len, l;
 
+	if (*argv == NULL)
+		return 0;
 	len = 0;
 	ap = argv;
 	while (*ap)
@@ -212,39 +224,53 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 	ssize_t e, elen, l;
 	const struct if_options *ifo = ifp->options;
 	const struct interface *ifp2;
-	int dhcp, dhcp6, ra;
+#ifdef INET
+	int dhcp;
 	const struct dhcp_state *state;
+#endif
 #ifdef INET6
 	const struct dhcp6_state *d6_state;
+	int dhcp6, ra;
 #endif
 
-	dhcp = dhcp6 = ra = 0;
+#ifdef INET
+	dhcp = 0;
 	state = D_STATE(ifp);
+#endif
 #ifdef INET6
+	dhcp6 = ra = 0;
 	d6_state = D6_CSTATE(ifp);
 #endif
 	if (strcmp(reason, "TEST") == 0) {
+		if (1 == 2) {}
 #ifdef INET6
-		if (d6_state && d6_state->new)
+		else if (d6_state && d6_state->new)
 			dhcp6 = 1;
 		else if (ipv6nd_has_ra(ifp))
 			ra = 1;
-		else
 #endif
+#ifdef INET
+		else
 			dhcp = 1;
-	} else if (reason[strlen(reason) - 1] == '6')
+#endif
+	}
+#ifdef INET6
+	else if (reason[strlen(reason) - 1] == '6')
 		dhcp6 = 1;
 	else if (strcmp(reason, "ROUTERADVERT") == 0)
 		ra = 1;
+#endif
+#ifdef INET
 	else
 		dhcp = 1;
+#endif
 
 	/* When dumping the lease, we only want to report interface and
 	   reason - the other interface variables are meaningless */
 	if (ifp->ctx->options & DHCPCD_DUMPLEASE)
 		elen = 2;
 	else
-		elen = 10;
+		elen = 11;
 
 #define EMALLOC(i, l) if ((env[(i)] = malloc(l)) == NULL) goto eexit;
 	/* Make our env */
@@ -263,19 +289,23 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 	EMALLOC(2, e);
 	snprintf(env[2], e, "pid=%d", getpid());
 	EMALLOC(3, e);
-	snprintf(env[3], e, "ifmetric=%d", ifp->metric);
+	snprintf(env[3], e, "ifcarrier=%s",
+	    ifp->carrier == LINK_UNKNOWN ? "unknown" :
+	    ifp->carrier == LINK_UP ? "up" : "down");
 	EMALLOC(4, e);
-	snprintf(env[4], e, "ifwireless=%d", ifp->wireless);
+	snprintf(env[4], e, "ifmetric=%d", ifp->metric);
 	EMALLOC(5, e);
-	snprintf(env[5], e, "ifflags=%u", ifp->flags);
+	snprintf(env[5], e, "ifwireless=%d", ifp->wireless);
 	EMALLOC(6, e);
-	snprintf(env[6], e, "ifmtu=%d", get_mtu(ifp->name));
+	snprintf(env[6], e, "ifflags=%u", ifp->flags);
+	EMALLOC(7, e);
+	snprintf(env[7], e, "ifmtu=%d", get_mtu(ifp->name));
 	l = e = strlen("interface_order=");
 	TAILQ_FOREACH(ifp2, ifp->ctx->ifaces, next) {
 		e += strlen(ifp2->name) + 1;
 	}
-	EMALLOC(7, e);
-	p = env[7];
+	EMALLOC(8, e);
+	p = env[8];
 	strlcpy(p, "interface_order=", e);
 	e -= l;
 	p += l;
@@ -288,22 +318,25 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 	}
 	*--p = '\0';
 	if (strcmp(reason, "TEST") == 0) {
-		env[8] = strdup("if_up=false");
-		env[9] = strdup("if_down=false");
-	} else if ((dhcp && state && state->new)
+		env[9] = strdup("if_up=false");
+		env[10] = strdup("if_down=false");
+	} else if (1 == 2 /* appease ifdefs */
+#ifdef INET
+	    || (dhcp && state && state->new)
+#endif
 #ifdef INET6
 	    || (dhcp6 && d6_state && d6_state->new)
 	    || (ra && ipv6nd_has_ra(ifp))
 #endif
 	    )
 	{
-		env[8] = strdup("if_up=true");
-		env[9] = strdup("if_down=false");
+		env[9] = strdup("if_up=true");
+		env[10] = strdup("if_down=false");
 	} else {
-		env[8] = strdup("if_up=false");
-		env[9] = strdup("if_down=true");
+		env[9] = strdup("if_up=false");
+		env[10] = strdup("if_down=true");
 	}
-	if (env[8] == NULL || env[9] == NULL)
+	if (env[9] == NULL || env[10] == NULL)
 		goto eexit;
 	if (*ifp->profile) {
 		e = strlen("profile=") + strlen(ifp->profile) + 2;
@@ -319,8 +352,7 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 			env = nenv;
 			EMALLOC(elen, e);
 			snprintf(env[elen++], e, "new_ssid=%s", ifp->ssid);
-		}
-		else if (strcmp(reason, "NOCARRIER") == 0) {
+		} else if (strcmp(reason, "NOCARRIER") == 0) {
 			nenv = realloc(env, sizeof(char *) * (elen + 2));
 			if (nenv == NULL)
 				goto eexit;
@@ -441,10 +473,12 @@ dumplease:
 
 eexit:
 	syslog(LOG_ERR, "%s: %m", __func__);
-	nenv = env;
-	while (*nenv)
-		free(*nenv++);
-	free(env);
+	if (env) {
+		nenv = env;
+		while (*nenv)
+			free(*nenv++);
+		free(env);
+	}
 	return -1;
 }
 
