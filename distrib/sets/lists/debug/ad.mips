@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.22 2014/02/16 18:19:10 christos Exp $
+# $NetBSD: ad.mips,v 1.23 2014/03/01 03:28:07 christos Exp $
 ./usr/lib/64/libcrypto_g.a			comp-c-debuglib		compat,crypto,debuglib,arch64
 ./usr/lib/64/libcrypto_idea_g.a			comp-obsolete		obsolete
 ./usr/lib/64/libcrypto_mdc2_g.a			comp-obsolete		obsolete
@@ -82,7 +82,7 @@
 ./usr/libdata/debug/usr/lib/64/libdes.so.8.2.debug		comp-crypto-debug	crypto,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libdevmapper.so.1.0.debug	comp-lvm-debug	lvm,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libdm.so.0.0.debug 		comp-sys-debug	debug,compat,arch64
-./usr/libdata/debug/usr/lib/64/libdns.so.7.0.debug		comp-bind-debug	debug,compat,arch64
+./usr/libdata/debug/usr/lib/64/libdns.so.8.0.debug		comp-bind-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libdns_sd.so.0.0.debug	comp-mdns-debug	mdns,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libdtrace.so.2.0.debug	comp-sys-debug	dtrace,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libdwarf.so.0.1.debug	comp-sys-debug	debug,compat,arch64
@@ -112,11 +112,11 @@
 ./usr/libdata/debug/usr/lib/64/libintl.so.1.0.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libipsec.so.3.0.debug	comp-net-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libisc.so.6.0.debug		comp-bind-debug	debug,compat,arch64,obsolete
-./usr/libdata/debug/usr/lib/64/libisc.so.7.1.debug		comp-bind-debug	debug,compat,arch64
+./usr/libdata/debug/usr/lib/64/libisc.so.8.0.debug		comp-bind-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libisccc.so.6.0.debug	comp-bind-debug	debug,compat,arch64,obsolete
-./usr/libdata/debug/usr/lib/64/libisccc.so.7.0.debug	comp-bind-debug	debug,compat,arch64
+./usr/libdata/debug/usr/lib/64/libisccc.so.8.0.debug	comp-bind-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libisccfg.so.6.0.debug	comp-bind-debug	debug,compat,arch64,obsolete
-./usr/libdata/debug/usr/lib/64/libisccfg.so.7.0.debug	comp-bind-debug	debug,compat,arch64
+./usr/libdata/debug/usr/lib/64/libisccfg.so.8.0.debug	comp-bind-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libiscsi.so.2.0.debug	comp-iscsi-debug	iscsi,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libisns.so.0.0.debug	comp-isns-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libkadm5clnt.so.12.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug,obsolete,arch64
@@ -136,7 +136,7 @@
 ./usr/libdata/debug/usr/lib/64/liblutok.so.1.0.debug		comp-obsolete	obsolete
 ./usr/libdata/debug/usr/lib/64/liblutok.so.2.0.debug		comp-kyua-debug	kyua,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/liblwres.so.6.0.debug	comp-bind-debug	debug,compat,arch64,obsolete
-./usr/libdata/debug/usr/lib/64/liblwres.so.7.0.debug	comp-bind-debug	debug,compat,arch64
+./usr/libdata/debug/usr/lib/64/liblwres.so.8.0.debug	comp-bind-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/liblzf.so.1.0.debug		comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/liblzma.so.1.1.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libm.so.0.10.debug		comp-sys-debug	debug,compat,arch64
@@ -258,7 +258,7 @@
 ./usr/libdata/debug/usr/lib/o32/libdes.so.8.2.debug		comp-crypto-debug	crypto,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libdevmapper.so.1.0.debug	comp-lvm-debug	lvm,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libdm.so.0.0.debug 		comp-sys-debug	debug,compat,arch64
-./usr/libdata/debug/usr/lib/o32/libdns.so.7.0.debug		comp-bind-debug	debug,compat,arch64
+./usr/libdata/debug/usr/lib/o32/libdns.so.8.0.debug		comp-bind-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libdns_sd.so.0.0.debug	comp-mdns-debug	mdns,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libdtrace.so.2.0.debug	comp-sys-debug	dtrace,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libdwarf.so.0.1.debug	comp-sys-debug	debug,compat,arch64
@@ -288,11 +288,11 @@
 ./usr/libdata/debug/usr/lib/o32/libintl.so.1.0.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libipsec.so.3.0.debug	comp-net-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libisc.so.6.0.debug		comp-bind-debug	debug,compat,arch64,obsolete
-./usr/libdata/debug/usr/lib/o32/libisc.so.7.1.debug		comp-bind-debug	debug,compat,arch64
+./usr/libdata/debug/usr/lib/o32/libisc.so.8.0.debug		comp-bind-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libisccc.so.6.0.debug	comp-bind-debug	debug,compat,arch64,obsolete
-./usr/libdata/debug/usr/lib/o32/libisccc.so.7.0.debug	comp-bind-debug	debug,compat,arch64
+./usr/libdata/debug/usr/lib/o32/libisccc.so.8.0.debug	comp-bind-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libisccfg.so.6.0.debug	comp-bind-debug	debug,compat,arch64,obsolete
-./usr/libdata/debug/usr/lib/o32/libisccfg.so.7.0.debug	comp-bind-debug	debug,compat,arch64
+./usr/libdata/debug/usr/lib/o32/libisccfg.so.8.0.debug	comp-bind-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libiscsi.so.2.0.debug	comp-iscsi-debug	iscsi,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libisns.so.0.0.debug	comp-isns-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libkadm5clnt.so.12.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug,obsolete,arch64
@@ -312,7 +312,7 @@
 ./usr/libdata/debug/usr/lib/o32/liblutok.so.1.0.debug		comp-obsolete	obsolete
 ./usr/libdata/debug/usr/lib/o32/liblutok.so.2.0.debug		comp-kyua-debug	kyua,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/liblwres.so.6.0.debug	comp-bind-debug	debug,compat,arch64,obsolete
-./usr/libdata/debug/usr/lib/o32/liblwres.so.7.0.debug	comp-bind-debug	debug,compat,arch64
+./usr/libdata/debug/usr/lib/o32/liblwres.so.8.0.debug	comp-bind-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/liblzf.so.1.0.debug		comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/liblzma.so.1.1.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libm.so.0.10.debug		comp-sys-debug	debug,compat,arch64
