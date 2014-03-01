@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.7 2014/03/01 03:24:36 christos Exp $	*/
+/*	$NetBSD: adb.c,v 1.8 2014/03/01 22:57:23 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -4026,8 +4026,8 @@ dns_adb_adjustsrtt(dns_adb_t *adb, dns_adbaddrinfo_t *addr,
 	addr->srtt = (unsigned int) new_srtt;
 
 	if (addr->entry->expires == 0) {
-	isc_stdtime_get(&now);
-	addr->entry->expires = now + ADB_ENTRY_WINDOW;
+		isc_stdtime_get(&now);
+		addr->entry->expires = now + ADB_ENTRY_WINDOW;
 	}
 
 	UNLOCK(&adb->entrylocks[bucket]);
@@ -4392,7 +4392,7 @@ dns_adb_freeaddrinfo(dns_adb_t *adb, dns_adbaddrinfo_t **addrp) {
 
 	if (entry->expires == 0) {
 		isc_stdtime_get(&now);
-	entry->expires = now + ADB_ENTRY_WINDOW;
+		entry->expires = now + ADB_ENTRY_WINDOW;
 	}
 
 	want_check_exit = dec_entry_refcnt(adb, overmem, entry, ISC_FALSE);
