@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.773 2014/02/28 09:42:33 martin Exp $
+#	$NetBSD: bsd.own.mk,v 1.774 2014/03/01 20:34:17 tsutsui Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -973,8 +973,7 @@ ${var}?=no
     ${MACHINE} == "amiga"	|| \
     ${MACHINE} == "mac68k"	|| \
     ${MACHINE} == "pmax"	|| \
-    ${MACHINE} == "sun3"	|| \
-    ${MACHINE} == "x68k"
+    ${MACHINE} == "sun3"
 X11FLAVOUR?=	XFree86
 .else
 X11FLAVOUR?=	Xorg
