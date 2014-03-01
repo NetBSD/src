@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.8 2014/03/01 03:24:36 christos Exp $	*/
+/*	$NetBSD: check.c,v 1.9 2014/03/01 22:45:32 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -2703,7 +2703,7 @@ check_viewconf(const cfg_obj_t *config, const cfg_obj_t *voptions,
 	if (symtab != NULL)
 		isc_symtab_destroy(&symtab);
 	if (actx != NULL)
-	cfg_aclconfctx_detach(&actx);
+		cfg_aclconfctx_detach(&actx);
 
 	return (result);
 }
