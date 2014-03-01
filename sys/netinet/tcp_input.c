@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.330 2013/11/12 09:02:05 kefren Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.331 2014/03/01 16:46:14 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.330 2013/11/12 09:02:05 kefren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.331 2014/03/01 16:46:14 maxv Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1100,7 +1100,7 @@ static void tcp_vtw_input(struct tcphdr *th, vestigial_inpcb_t *vp,
 				/* We only support this in the !NOFDREF case, which
 				 * is to say: not here.
 				 */
-				goto dropwithreset;;
+				goto dropwithreset;
 			}
 			/*
 			 * If window is closed can only take segments at
