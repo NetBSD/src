@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-signzone.c,v 1.11 2014/03/01 03:24:32 christos Exp $	*/
+/*	$NetBSD: dnssec-signzone.c,v 1.12 2014/03/01 22:49:08 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -3659,11 +3659,11 @@ main(int argc, char *argv[]) {
 	cleanup_zone();
 
 	if (!nonsecify) {
-	if (IS_NSEC3)
-		nsec3ify(dns_hash_sha1, nsec3iter, salt, salt_length,
-			 &hashlist);
-	else
-		nsecify();
+		if (IS_NSEC3)
+			nsec3ify(dns_hash_sha1, nsec3iter, salt, salt_length,
+				 &hashlist);
+		else
+			nsecify();
 	}
 
 	if (!nokeys) {
@@ -3689,7 +3689,7 @@ main(int argc, char *argv[]) {
 		check_result(result, "isc_file_mktemplate");
 
 		if (outputformat == dns_masterformat_text)
-		result = isc_file_openunique(tempfile, &fp);
+			result = isc_file_openunique(tempfile, &fp);
 		else
 			result = isc_file_bopenunique(tempfile, &fp);
 		if (result != ISC_R_SUCCESS)
