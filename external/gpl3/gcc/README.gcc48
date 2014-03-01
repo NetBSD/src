@@ -1,0 +1,85 @@
+$Id: README.gcc48,v 1.1 2014/03/01 10:00:31 mrg Exp $
+
+usr.bin:
+	note:
+		-static-libstdc++ -static-libgcc
+		-rdynamic  -lz
+
+lib:
+
+	G_NOEXCEPTION_FLAGS -- need to use this
+
+new stuff:
+	cc1objcplus
+	collect2 -- need to re-introduce?
+
+	gcc-ar, -nm and -ranlib, for lto plugin stuff
+
+	- what is libitm?
+
+	- asan/libsanitizer
+
+ppc port:
+//#define TRANSFER_FROM_TRAMPOLINE NETBSD_ENABLE_EXECUTE_STACK
+// XXXMRG use enable-execute-stack-mprotect.c ?
+
+x86_64 port:
+- copied manually i386-builtin-types.inc instead of generating it.
+
+
+
+
+arch/feature list:
+
+architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
+------------	-----	-------	------	----------	------------	----	---
+alpha		yes	no[2]	yes	yes		yes
+arm		yes	yes	yes	yes		yes		yes	no[7]
+armeb		yes	?	yes	builds
+coldfire	yes	?	yes	yes		no[8]
+earm		yes	?	yes	builds
+earmeb		yes	?	yes	builds
+earmhf		yes	?	yes	builds
+earmhfeb	yes	?	yes	builds
+earmv4		yes	?	yes	yes		yes[shark]	yes	no
+earmv4eb	yes	?	yes	builds
+earmv6		yes	yes	yes	builds
+earmv6eb	yes	?	yes	builds
+earmv6hf	yes	yes	yes	builds
+earmv6hfeb	yes	?	yes	builds
+earmv7		yes	?	yes	builds
+earmv7eb	yes	?	yes	builds
+earmv7hf	yes	?	yes	builds
+earmv7hfeb	yes	?	yes	builds
+hppa		yes	yes	yes	yes		yes		yes	yes
+i386		yes	yes	yes	yes		yes
+ia64
+m68000		yes	?	yes	no[3]		
+m68k		yes	yes	yes	yes		no[8]
+mips64eb	yes	yes[5]	yes	yes		
+mips64el	yes	yes	yes	yes		yes[9]		no[10]
+mipseb		yes	yes[5]	yes	yes		yes
+mipsel		yes	yes	yes	yes		yes		yes[10]	no[11]
+powerpc		yes	yes[1]	yes	yes		yes		yes	yes
+powerpc64
+sh3eb		yes	?	yes	yes		no[8]
+sh3el		yes	?	yes	yes		no[8]
+sparc		yes	yes	yes	yes		yes		yes	yes[4]
+sparc64		yes	yes	yes	yes		yes		yes	no[5]
+vax		yes	yes	yes	yes		no[8]
+x86_64		yes	yes	yes	yes		yes		?
+
+[1] ofppc/pegasos has issues with symtab loading.
+    sandpoint works fine in multi-user, found an annoyance by com(4) change.
+[2] a kernel has it's text overwritten by something before alpha_init
+[3] relocations fail in libgcc
+[4] mostly works, some tests fail.  same(?) has gcc 4.5
+[5] mips*eb kernels seem to work as well as gcc 4.5 ones.
+[7] shark atf-report fails with: Unexpected token `tc-start'; expected end of test program
+[8] m68k/vax/sh3 gcc seem to randomly get -fstack-protector/-Wstack-protector
+    wrong, for example m68k flags alarm() as unprotected in
+    libc/gen/alarm.c:53, vax ifinit() in sbin/routed/if.c:680.
+[9] LOONGSON kernel has general problems
+[10] mips64el fails -- something in /sbin/init or /rescue/init jumps to zero.
+    in -current.  a hack for o32 works.
+[11] weird failures.
