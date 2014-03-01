@@ -1,6 +1,6 @@
 // Locale support -*- C++ -*-
 
-// Copyright (C) 2000, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2000-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -30,18 +30,40 @@
 // Full details can be found from the CVS files at:
 //   anoncvs@anoncvs.netbsd.org:/cvsroot/basesrc/include/ctype.h
 // See www.netbsd.org for details of access.
-
-_GLIBCXX_BEGIN_NAMESPACE(std)
+  
+namespace std _GLIBCXX_VISIBILITY(default)
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   /// @brief  Base class for ctype.
   struct ctype_base
   {
-    // Non-standard typedefs.
-    typedef const unsigned char*	__to_type;
 
     // NB: Offsets into ctype<char>::_M_table force a particular size
     // on the mask type. Because of this, we don't use an enum.
+
+#ifndef _CTYPE_U
+    // Non-standard typedefs.
+    typedef const unsigned char*	__to_type;
+
+    typedef unsigned char      	mask;
+
+    static const mask upper    	= _U;
+    static const mask lower 	= _L;
+    static const mask alpha 	= _U | _L;
+    static const mask digit 	= _N;
+    static const mask xdigit 	= _N | _X;
+    static const mask space 	= _S;
+    static const mask print 	= _P | _U | _L | _N | _B;
+    static const mask graph 	= _P | _U | _L | _N;
+    static const mask cntrl 	= _C;
+    static const mask punct 	= _P;
+    static const mask alnum 	= _U | _L | _N;
+#else
+    typedef const unsigned short*	__to_type;
+
     typedef unsigned short     	mask;
+
     static const mask upper    	= _CTYPE_U;
     static const mask lower 	= _CTYPE_L;
     static const mask alpha 	= _CTYPE_A;
@@ -53,6 +75,8 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
     static const mask cntrl 	= _CTYPE_C;
     static const mask punct 	= _CTYPE_P;
     static const mask alnum 	= _CTYPE_A | _CTYPE_D;
+#endif
   };
 
-_GLIBCXX_END_NAMESPACE
+_GLIBCXX_END_NAMESPACE_VERSION
+} // namespace

@@ -1,7 +1,7 @@
 /* Definitions of target machine for GNU compiler,
    for m68k (including m68010) NetBSD platforms using the
    ELF object format.
-   Copyright (C) 2002, 2003, 2004, 2006, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2002-2013 Free Software Foundation, Inc.
    Contributed by Wasabi Systems. Inc.
 
    This file is derived from <m68k/m68kv4.h>, <m68k/m68kelf.h>,
@@ -66,10 +66,6 @@ along with GCC; see the file COPYING3.  If not see
   { "netbsd_entry_point",   NETBSD_ENTRY_POINT },
 
 
-#undef TARGET_VERSION
-#define TARGET_VERSION fprintf (stderr, " (NetBSD/m68k ELF)");
-
-
 /* Provide a CPP_SPEC appropriate for NetBSD m68k targets.  Currently we
    deal with the GCC option '-posix', as well as an indication as to
    whether or not use of the FPU is allowed.  */
@@ -89,8 +85,6 @@ along with GCC; see the file COPYING3.  If not see
     %{m5200} %{m5206e} %{m528x} %{m5307} %{m5407} %{mcfv4e}\
     %{mcpu=*:-mcpu=%*} %{march=*:-march=%*}\
     %{fpic|fpie:-k} %{fPIC|fPIE:-k -K}"
-
-#define AS_NEEDS_DASH_FOR_PIPED_INPUT
 
 /* Provide a LINK_SPEC appropriate for a NetBSD/m68k ELF target.  */
 
@@ -207,15 +201,6 @@ while (0)
 
 #define BSS_SECTION_ASM_OP	".section\t.bss"
 
-
-/* Like `ASM_OUTPUT_BSS' except takes the required alignment as a
-   separate, explicit argument.  If you define this macro, it is used
-   in place of `ASM_OUTPUT_BSS', and gives you more flexibility in
-   handling the required alignment of the variable.  The alignment is
-   specified as the number of bits.
-
-   Try to use function `asm_output_aligned_bss' defined in file
-   `varasm.c' when defining this macro.  */
 
 #undef ASM_OUTPUT_ALIGNED_BSS
 #define ASM_OUTPUT_ALIGNED_BSS(FILE, DECL, NAME, SIZE, ALIGN)		\
