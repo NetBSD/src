@@ -1,4 +1,4 @@
-/*	$NetBSD: query.c,v 1.14 2014/03/01 03:24:32 christos Exp $	*/
+/*	$NetBSD: query.c,v 1.15 2014/03/01 22:50:34 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -6608,7 +6608,7 @@ query_find(ns_client_t *client, dns_fetchevent_t *event, dns_rdatatype_t qtype)
 					 * and set the TTL then.
 					 */
 					if (dns_rdataset_isassociated(rdataset))
-					dns_rdataset_disassociate(rdataset);
+						dns_rdataset_disassociate(rdataset);
 				} else {
 					/*
 					 * We will add this rdataset.
