@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.213 2014/03/01 03:28:06 christos Exp $
+# $NetBSD: md.sparc64,v 1.214 2014/03/01 15:41:00 dsl Exp $
 ./lib/sparc					base-npf-shlib		compat
 ./lib/sparc/npf					base-npf-shlib		compat
 ./lib/sparc/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -73,8 +73,8 @@
 ./usr/lib/sparc/libatf-c.so.0.0			base-compat-shlib	compat,pic,atf
 ./usr/lib/sparc/libbfd.so.13			base-compat-shlib	compat,pic,binutils
 ./usr/lib/sparc/libbfd.so.13.0			base-compat-shlib	compat,pic,binutils
-./usr/lib/sparc/libbind9.so.7			base-compat-shlib	compat,pic
-./usr/lib/sparc/libbind9.so.7.0			base-compat-shlib	compat,pic
+./usr/lib/sparc/libbind9.so.8			base-compat-shlib	compat,pic
+./usr/lib/sparc/libbind9.so.8.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libbluetooth.so.4		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libbluetooth.so.4.2		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libbsdmalloc.so.0		base-compat-shlib	compat,pic
