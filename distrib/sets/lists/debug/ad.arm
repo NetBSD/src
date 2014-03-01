@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.26 2014/02/16 18:19:10 christos Exp $
+# $NetBSD: ad.arm,v 1.27 2014/03/01 03:28:07 christos Exp $
 ./usr/lib/libarm_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libc_vfp_g.a				comp-c-debuglib		debuglib,softfloat
 ./usr/lib/libpmc_g.a				comp-c-debuglib		debuglib
@@ -77,7 +77,7 @@
 ./usr/libdata/debug/usr/lib/oabi/libdes.so.8.2.debug		comp-crypto-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libdevmapper.so.1.0.debug	comp-lvm-debug	lvm,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libdm.so.0.0.debug 		comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/oabi/libdns.so.7.0.debug		comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/oabi/libdns.so.8.0.debug		comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libdns_sd.so.0.0.debug	comp-mdns-debug	mdns,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libdtrace.so.2.0.debug	comp-sys-debug	dtrace,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libdwarf.so.0.1.debug	comp-sys-debug	debug,compat
@@ -107,11 +107,11 @@
 ./usr/libdata/debug/usr/lib/oabi/libintl.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libipsec.so.3.0.debug	comp-net-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libisc.so.6.0.debug		comp-bind-debug	debug,compat,obsolete
-./usr/libdata/debug/usr/lib/oabi/libisc.so.7.1.debug		comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/oabi/libisc.so.8.0.debug		comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libisccc.so.6.0.debug	comp-bind-debug	debug,compat,obsolete
-./usr/libdata/debug/usr/lib/oabi/libisccc.so.7.0.debug	comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/oabi/libisccc.so.8.0.debug	comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libisccfg.so.6.0.debug	comp-bind-debug	debug,compat,obsolete
-./usr/libdata/debug/usr/lib/oabi/libisccfg.so.7.0.debug	comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/oabi/libisccfg.so.8.0.debug	comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libiscsi.so.2.0.debug	comp-iscsi-debug	iscsi,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libisns.so.0.0.debug	comp-isns-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libkadm5clnt.so.12.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
@@ -131,7 +131,7 @@
 ./usr/libdata/debug/usr/lib/oabi/liblutok.so.1.0.debug		comp-obsolete	obsolete
 ./usr/libdata/debug/usr/lib/oabi/liblutok.so.2.0.debug		comp-kyua-debug	kyua,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/liblwres.so.6.0.debug	comp-bind-debug	debug,compat,obsolete
-./usr/libdata/debug/usr/lib/oabi/liblwres.so.7.0.debug	comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/oabi/liblwres.so.8.0.debug	comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/liblzf.so.1.0.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/liblzma.so.1.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libm.so.0.10.debug		comp-sys-debug	debug,compat
