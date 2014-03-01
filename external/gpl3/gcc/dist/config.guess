@@ -154,6 +154,8 @@ case "${UNAME_MACHINE}:${UNAME_SYSTEM}:${UNAME_RELEASE}:${UNAME_VERSION}" in
 	UNAME_MACHINE_ARCH=`(/sbin/$sysctl 2>/dev/null || \
 	    /usr/sbin/$sysctl 2>/dev/null || echo unknown)`
 	case "${UNAME_MACHINE_ARCH}" in
+	    earm*eb*) machine=armeb-unknown ;;
+	    earm*) machine=arm-unknown ;;
 	    armeb) machine=armeb-unknown ;;
 	    arm*) machine=arm-unknown ;;
 	    coldfire) machine=m5407-unknown ;;

@@ -201,8 +201,10 @@ extern int fprintf_unlocked (FILE *, const char *, ...);
 extern int errno;
 #endif
 
+#ifndef GENERATOR_FILE
 #ifdef __cplusplus
 # include <cstring>
+#endif
 #endif
 
 /* Some of glibc's string inlines cause warnings.  Plus we'd rather
