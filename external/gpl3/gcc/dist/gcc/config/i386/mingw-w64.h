@@ -1,8 +1,7 @@
 /* Operating system specific defines to be used when targeting GCC for
    hosting on Windows 32/64 via mingw-w64 runtime, using GNU tools and
    the Windows API Library.
-   Copyright (C) 2009,
-   2009 Free Software Foundation, Inc.
+   Copyright (C) 2009-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -20,11 +19,13 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-/* Enable -municode feature.  */
+/* Enable -municode feature and support optional pthread support.  */
 
 #undef CPP_SPEC
-#define CPP_SPEC "%{posix:-D_POSIX_SOURCE} %{mthreads:-D_MT} \
-  %{municode:-DUNICODE}"
+#define CPP_SPEC "%{posix:-D_POSIX_SOURCE} %{mthreads:-D_MT} " \
+		 "%{municode:-DUNICODE} " \
+		 "%{" SPEC_PTHREAD1 ":-D_REENTRANT} " \
+		 "%{" SPEC_PTHREAD2 ":-U_REENTRANT} "
 
 #undef STARTFILE_SPEC
 #define STARTFILE_SPEC "%{shared|mdll:dllcrt2%O%s} \
@@ -36,8 +37,13 @@ along with GCC; see the file COPYING3.  If not see
 /* Enable multilib.  */
 
 #undef ASM_SPEC
-#define ASM_SPEC "%{v:-v} %{n} %{T} %{Ym,*} %{Yd,*} \
- %{Wa,*:%*} %{m32:--32} %{m64:--64}"
+#define ASM_SPEC "%{m32:--32} %{m64:--64}"
+
+#undef LIB_SPEC
+#define LIB_SPEC "%{pg:-lgmon} %{" SPEC_PTHREAD1 ":-lpthread} " \
+		 "%{" SPEC_PTHREAD2 ": } " \
+		 "%{mwindows:-lgdi32 -lcomdlg32} " \
+		 "-ladvapi32 -lshell32 -luser32 -lkernel32"
 
 #undef SPEC_32
 #undef SPEC_64

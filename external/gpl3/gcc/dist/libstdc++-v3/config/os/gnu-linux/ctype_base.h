@@ -1,7 +1,6 @@
 // Locale support -*- C++ -*-
 
-// Copyright (C) 1997, 1998, 1999, 2000, 2002, 2003, 2004, 2009
-// Free Software Foundation, Inc.
+// Copyright (C) 1997-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -23,18 +22,20 @@
 // see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 // <http://www.gnu.org/licenses/>.
 
+/** @file bits/ctype_base.h
+ *  This is an internal header file, included by other library headers.
+ *  Do not attempt to use it directly. @headername{locale}
+ */
+
 //
 // ISO C++ 14882: 22.1  Locales
 //
-  
-/** @file ctype_base.h
- *  This is an internal header file, included by other library headers.
- *  You should not attempt to use it directly.
- */
 
 // Information as gleaned from /usr/include/ctype.h
-  
-_GLIBCXX_BEGIN_NAMESPACE(std)
+
+namespace std _GLIBCXX_VISIBILITY(default)
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   /// @brief  Base class for ctype.
   struct ctype_base
@@ -44,7 +45,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 
     // NB: Offsets into ctype<char>::_M_table force a particular size
     // on the mask type. Because of this, we don't use an enum.
-    typedef unsigned short 	mask;   
+    typedef unsigned short 	mask;
     static const mask upper    	= _ISupper;
     static const mask lower 	= _ISlower;
     static const mask alpha 	= _ISalpha;
@@ -58,4 +59,5 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
     static const mask alnum 	= _ISalpha | _ISdigit;
   };
 
-_GLIBCXX_END_NAMESPACE
+_GLIBCXX_END_NAMESPACE_VERSION
+} // namespace

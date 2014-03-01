@@ -1,6 +1,5 @@
 /* Definitions of target machine for GNU compiler.  Vxworks PowerPC version.
-   Copyright (C) 1996, 2000, 2002, 2003, 2004, 2005, 2007, 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 1996-2013 Free Software Foundation, Inc.
    Contributed by CodeSourcery, LLC.
 
 This file is part of GCC.
@@ -24,9 +23,6 @@ along with GCC; see the file COPYING3.  If not see
    it anyway.  However, if you change that file, consider making
    analogous changes here too.  */
 
-#undef TARGET_VERSION
-#define TARGET_VERSION fprintf (stderr, " (PowerPC VxWorks)");
-
 /* CPP predefined macros.  */
 
 #undef TARGET_OS_CPP_BUILTINS
@@ -34,21 +30,24 @@ along with GCC; see the file COPYING3.  If not see
   do						\
     {						\
       builtin_define ("__ppc");			\
+      builtin_define ("__PPC__");		\
       builtin_define ("__EABI__");		\
       builtin_define ("__ELF__");		\
-      builtin_define ("__vxworks");		\
-      builtin_define ("__VXWORKS__");		\
       if (!TARGET_SOFT_FLOAT)			\
 	builtin_define ("__hardfp");		\
 						\
       /* C89 namespace violation! */		\
       builtin_define ("CPU_FAMILY=PPC");	\
-    }						\
+        					\
+      VXWORKS_OS_CPP_BUILTINS ();		\
+    }		\
   while (0)
 
 /* Only big endian PPC is supported by VxWorks.  */
 #undef BYTES_BIG_ENDIAN
 #define BYTES_BIG_ENDIAN 1
+#undef WORDS_BIG_ENDIAN
+#define WORDS_BIG_ENDIAN 1
 
 /* We have to kill off the entire specs set created by rs6000/sysv4.h
    and substitute our own set.  The top level vxworks.h has done some
@@ -79,14 +78,11 @@ VXWORKS_ADDITIONAL_CPP_SPEC
 
 #define CC1_SPEC						\
 "%{G*} %{mno-sdata:-msdata=none} %{msdata:-msdata=default}	\
- %{mlittle|mlittle-endian:-mstrict-align}			\
- %{profile: -p}		\
- %{fvec:-maltivec} %{fvec-eabi:-maltivec -mabi=altivec}"
+ %{mlittle|mlittle-endian:-mstrict-align}"
 
 #define ASM_SPEC \
 "%(asm_cpu) \
  %{,assembler|,assembler-with-cpp: %{mregnames} %{mno-regnames}} \
- %{v:-v} %{Qy:} %{!Qn:-Qy} %{n} %{T} %{Ym,*} %{Yd,*} %{Wa,*:%*} \
  %{mrelocatable} %{mrelocatable-lib} %{fpic:-K PIC} %{fPIC:-K PIC} -mbig"
 
 #undef  LIB_SPEC
@@ -102,8 +98,7 @@ VXWORKS_ADDITIONAL_CPP_SPEC
 #undef MULTILIB_DEFAULTS
 
 #undef TARGET_DEFAULT
-#define TARGET_DEFAULT \
-  (MASK_POWERPC | MASK_NEW_MNEMONICS | MASK_EABI | MASK_STRICT_ALIGN)
+#define TARGET_DEFAULT (MASK_EABI | MASK_STRICT_ALIGN)
 
 #undef PROCESSOR_DEFAULT
 #define PROCESSOR_DEFAULT PROCESSOR_PPC604
@@ -113,25 +108,22 @@ VXWORKS_ADDITIONAL_CPP_SPEC
 #undef SDATA_DEFAULT_SIZE
 #define SDATA_DEFAULT_SIZE (TARGET_VXWORKS_RTP ? 8 : 0)
 
+/* Enforce 16bytes alignment for the stack pointer, to permit general
+   compliance with e.g. Altivec instructions requirements.  Make sure
+   this isn't overruled by the EABI constraints.  */
+
 #undef  STACK_BOUNDARY
 #define STACK_BOUNDARY (16*BITS_PER_UNIT)
-/* Override sysv4.h, reset to the default.  */
-#undef  PREFERRED_STACK_BOUNDARY
 
-/* Make -mcpu=8540 imply SPE.  ISEL is automatically enabled, the
-   others must be done by hand.  Handle -mrtp.  Disable -fPIC
-   for -mrtp - the VxWorks PIC model is not compatible with it.  */
+#undef  PREFERRED_STACK_BOUNDARY
+#define PREFERRED_STACK_BOUNDARY STACK_BOUNDARY
+
+#undef  ABI_STACK_BOUNDARY
+
 #undef SUBSUBTARGET_OVERRIDE_OPTIONS
 #define SUBSUBTARGET_OVERRIDE_OPTIONS		\
   do {						\
-    if (TARGET_E500)				\
-      {						\
-	rs6000_spe = 1;				\
-	rs6000_spe_abi = 1;			\
-	rs6000_float_gprs = 1;			\
-      }						\
-						\
-  if (!g_switch_set)				\
+  if (!global_options_set.x_g_switch_value)	\
     g_switch_value = SDATA_DEFAULT_SIZE;	\
   VXWORKS_OVERRIDE_OPTIONS;			\
   } while (0)

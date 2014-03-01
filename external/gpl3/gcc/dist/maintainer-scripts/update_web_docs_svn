@@ -15,6 +15,7 @@ MANUALS="cpp
   cppinternals
   fastjar
   gcc
+  gccgo
   gccint
   gcj
   gfortran
@@ -27,6 +28,7 @@ MANUALS="cpp
   gnat-style
   gnat_rm
   libgomp
+  libquadmath
   libiberty
   porting"
 
@@ -91,6 +93,7 @@ fi
 
 if [ ! -d $DOCSDIR ]; then
   mkdir $DOCSDIR
+  chmod g+w $DOCSDIR
 fi
 
 if [ -z "$RELEASE" ]; then
@@ -149,14 +152,22 @@ fi
    echo "@set BUGURL @uref{http://gcc.gnu.org/bugs/}"
 ) > $includedir/gcc-vers.texi
 
+# Generate libquadmath-vers.texi.
+echo "@set BUGURL @uref{http://gcc.gnu.org/bugs/}" \
+  > $includedir/libquadmath-vers.texi
+
 # Now convert the relevant files from texi to HTML, PDF and PostScript.
 for file in $MANUALS; do
   filename=`find . -name ${file}.texi`
   if [ "${filename}" ]; then
-    makeinfo --html -I ${includedir} -I `dirname ${filename}` -o ${file} ${filename}
+    includes="-I ${includedir} -I `dirname ${filename}`"
+    if [ "$file" = "gnat_ugn_unw" ]; then
+      includes="$includes -I gcc/gcc/ada"
+    fi
+    makeinfo --html $includes -o ${file} ${filename}
     tar cf ${file}-html.tar ${file}/*.html
-    texi2dvi -I ${includedir} -o ${file}.dvi ${filename} </dev/null >/dev/null && dvips -o ${file}.ps ${file}.dvi
-    texi2pdf -I ${includedir} -o ${file}.pdf ${filename} </dev/null
+    texi2dvi $includes -o ${file}.dvi ${filename} </dev/null >/dev/null && dvips -o ${file}.ps ${file}.dvi
+    texi2pdf $includes -o ${file}.pdf ${filename} </dev/null
     mkdir -p $DOCSDIR/$file
   fi
 done

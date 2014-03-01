@@ -1,5 +1,5 @@
 // -*- C++ -*- 
-// Copyright (C) 2000, 2001, 2009 Free Software Foundation
+// Copyright (C) 2000-2013 Free Software Foundation, Inc.
 //
 // This file is part of GCC.
 //
@@ -26,7 +26,7 @@
 #include <cxxabi.h>
 #include "unwind-cxx.h"
 
-#if _GLIBCXX_HOSTED
+#if _GLIBCXX_HOSTED && _GLIBCXX_VERBOSE
 #ifdef _GLIBCXX_HAVE_UNISTD_H
 # include <unistd.h>
 # define writestr(str)	write(2, str, sizeof(str) - 1)
@@ -47,5 +47,12 @@ extern "C" void
 __cxxabiv1::__cxa_pure_virtual (void)
 {
   writestr ("pure virtual method called\n");
+  std::terminate ();
+}
+
+extern "C" void
+__cxxabiv1::__cxa_deleted_virtual (void)
+{
+  writestr ("deleted virtual method called\n");
   std::terminate ();
 }

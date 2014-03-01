@@ -1,5 +1,5 @@
 /* Definitions for rtems targeting a AVR using ELF.
-   Copyright (C) 2004, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2004-2013 Free Software Foundation, Inc.
    Contributed by Ralf Corsepius (ralf.corsepius@rtems.org).
 
 This file is part of GCC.
@@ -23,6 +23,5 @@ along with GCC; see the file COPYING3.  If not see
 #define TARGET_OS_CPP_BUILTINS()	\
 do {					\
   builtin_define ("__rtems__");		\
-  builtin_define ("__USE_INIT_FINI__");	\
   builtin_assert ("system=rtems");	\
 } while (0)

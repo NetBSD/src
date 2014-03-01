@@ -1,4 +1,4 @@
-/* Copyright (C) 2005, 2006, 2007 Free Software Foundation, Inc.
+/* Copyright (C) 2005-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -25,9 +25,12 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #define STARTFILE_SPEC \
   "%{!shared: crt1%O%s} crti%O%s crtbegin%O%s crtlibid%O%s"
 
-#define TARGET_OS_CPP_BUILTINS() LINUX_TARGET_OS_CPP_BUILTINS()
+#define TARGET_OS_CPP_BUILTINS() GNU_USER_TARGET_OS_CPP_BUILTINS()
 
-#define MD_UNWIND_SUPPORT "config/bfin/linux-unwind.h"
+#undef LINK_GCC_C_SEQUENCE_SPEC
+#define LINK_GCC_C_SEQUENCE_SPEC "\
+  %{mfast-fp:-lbffastfp} %G %L %{mfast-fp:-lbffastfp} %G \
+"
 
 /* Like the definition in gcc.c, but for purposes of uClinux, every link is
    static.  */
@@ -39,3 +42,5 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 
 #undef TARGET_SUPPORTS_SYNC_CALLS
 #define TARGET_SUPPORTS_SYNC_CALLS 1
+
+#define SUBTARGET_FDPIC_NOT_SUPPORTED

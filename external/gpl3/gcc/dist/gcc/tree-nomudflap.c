@@ -1,6 +1,5 @@
 /* Mudflap: narrow-pointer bounds-checking by tree rewriting.
-   Copyright (C) 2001, 2002, 2003, 2007, 2008, 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 2001-2013 Free Software Foundation, Inc.
    Contributed by Frank Ch. Eigler <fche@redhat.com>
 
 This file is part of GCC.
@@ -27,15 +26,12 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree.h"
 #include "tree-inline.h"
 #include "gimple.h"
-#include "diagnostic.h"
 #include "hashtab.h"
-#include "output.h"
-#include "varray.h"
 #include "langhooks.h"
 #include "tree-mudflap.h"
 #include "tree-pass.h"
 #include "ggc.h"
-#include "toplev.h"
+#include "diagnostic-core.h"
 
 
 
@@ -46,7 +42,7 @@ along with GCC; see the file COPYING3.  If not see
 static void
 nogo (void)
 {
-  internal_error ("mudflap: this language is not supported");
+  sorry ("mudflap: this language is not supported");
 }
 
 void
@@ -94,6 +90,7 @@ struct gimple_opt_pass pass_mudflap_1 =
  {
   GIMPLE_PASS,
   "mudflap1",				/* name */
+  OPTGROUP_NONE,                        /* optinfo_flags */
   gate_mudflap,                         /* gate */
   NULL,					/* execute */
   NULL,					/* sub */
@@ -113,6 +110,7 @@ struct gimple_opt_pass pass_mudflap_2 =
  {
   GIMPLE_PASS,
   "mudflap2",				/* name */
+  OPTGROUP_NONE,                        /* optinfo_flags */
   gate_mudflap,                         /* gate */
   NULL,					/* execute */
   NULL,					/* sub */

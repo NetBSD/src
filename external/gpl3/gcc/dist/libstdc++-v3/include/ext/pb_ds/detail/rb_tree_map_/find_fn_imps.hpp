@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2005, 2006, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2005-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -34,6 +34,6 @@
 // warranty.
 
 /**
- * @file find_fn_imps.hpp
+ * @file rb_tree_map_/find_fn_imps.hpp
  * Contains an implementation for rb_tree_.
  */

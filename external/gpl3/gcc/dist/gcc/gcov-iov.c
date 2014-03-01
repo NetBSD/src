@@ -1,6 +1,6 @@
 /* Generate gcov version string from version.c. See gcov-io.h for
    description of how the version string is generated.
-   Copyright (C) 2002, 2003, 2005, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2002-2013 Free Software Foundation, Inc.
    Contributed by Nathan Sidwell <nathan@codesourcery.com>
 
 This file is part of GCC.
@@ -70,7 +70,7 @@ main (int argc, char **argv)
   printf ("   from `%s (%lu %lu) and %s (%c)'.  */\n",
 	  argv[1], major, minor, argv[2], phase);
   printf ("\n");
-  printf ("#define GCOV_VERSION ((gcov_unsigned_t)%#08x)  /* %.4s */\n",
+  printf ("#define GCOV_VERSION ((gcov_unsigned_t)0x%08x)  /* %.4s */\n",
 	  version, v);
 
   return 0;

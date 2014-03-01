@@ -1,6 +1,6 @@
 // Stream iterators
 
-// Copyright (C) 2001, 2004, 2005, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2001-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -22,9 +22,9 @@
 // see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 // <http://www.gnu.org/licenses/>.
 
-/** @file stream_iterator.h
+/** @file bits/stream_iterator.h
  *  This is an internal header file, included by other library headers.
- *  You should not attempt to use it directly.
+ *  Do not attempt to use it directly. @headername{iterator}
  */
 
 #ifndef _STREAM_ITERATOR_H
@@ -34,7 +34,9 @@
 
 #include <debug/debug.h>
 
-_GLIBCXX_BEGIN_NAMESPACE(std)
+namespace std _GLIBCXX_VISIBILITY(default)
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   /**
    * @addtogroup iterators
@@ -59,7 +61,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 
     public:
       ///  Construct end of input stream iterator.
-      istream_iterator()
+      _GLIBCXX_CONSTEXPR istream_iterator()
       : _M_stream(0), _M_value(), _M_ok(false) {}
 
       ///  Construct start of input stream iterator.
@@ -143,9 +145,9 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
    *  the only type written by this iterator and there must be an
    *  operator<<(Tp) defined.
    *
-   *  @param  Tp  The type to write to the ostream.
-   *  @param  CharT  The ostream char_type.
-   *  @param  Traits  The ostream char_traits.
+   *  @tparam  _Tp  The type to write to the ostream.
+   *  @tparam  _CharT  The ostream char_type.
+   *  @tparam  _Traits  The ostream char_traits.
   */
   template<typename _Tp, typename _CharT = char,
            typename _Traits = char_traits<_CharT> >
@@ -175,8 +177,8 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
        *  written to the stream.  The delimiter is not copied, and thus must
        *  not be destroyed while this iterator is in use.
        *
-       *  @param  s  Underlying ostream to write to.
-       *  @param  c  CharT delimiter string to insert.
+       *  @param  __s  Underlying ostream to write to.
+       *  @param  __c  CharT delimiter string to insert.
       */
       ostream_iterator(ostream_type& __s, const _CharT* __c)
       : _M_stream(&__s), _M_string(__c)  { }
@@ -213,6 +215,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 
   // @} group iterators
 
-_GLIBCXX_END_NAMESPACE
+_GLIBCXX_END_NAMESPACE_VERSION
+} // namespace
 
 #endif

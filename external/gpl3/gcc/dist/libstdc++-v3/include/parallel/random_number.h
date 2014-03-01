@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2007, 2008, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2007-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -104,7 +104,7 @@ namespace __gnu_parallel
     }
 
     /** @brief Generate a number of random bits, run-time parameter.
-     *  @param bits Number of bits to generate. */
+     *  @param __bits Number of bits to generate. */
     unsigned long
     __genrand_bits(int __bits)
     {

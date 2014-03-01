@@ -1,31 +1,25 @@
 // Profiling map implementation -*- C++ -*-
 
-// Copyright (C) 2009, 2010 Free Software Foundation, Inc.
+// Copyright (C) 2009-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
 // terms of the GNU General Public License as published by the
-// Free Software Foundation; either version 2, or (at your option)
+// Free Software Foundation; either version 3, or (at your option)
 // any later version.
-
+//
 // This library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
-// You should have received a copy of the GNU General Public License along
-// with this library; see the file COPYING.  If not, write to the Free
-// Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301,
-// USA.
+// Under Section 7 of GPL version 3, you are granted additional
+// permissions described in the GCC Runtime Library Exception, version
+// 3.1, as published by the Free Software Foundation.
 
-// As a special exception, you may use this file as part of a free software
-// library without restriction.  Specifically, if other files instantiate
-// templates or use macros or inline functions from this file, or you compile
-// this file and link it with other files to produce an executable, this
-// file does not by itself cause the resulting executable to be covered by
-// the GNU General Public License.  This exception does not however
-// invalidate any other reasons why the executable file might be covered by
-// the GNU General Public License.
+// You should have received a copy of the GNU General Public License along
+// with this library; see the file COPYING3.  If not see
+// <http://www.gnu.org/licenses/>.
 
 /** @file profile/map.h
  *  This file is a GNU profile extension to the Standard C++ Library.
@@ -37,7 +31,7 @@
 #include <utility>
 #include <profile/base.h>
 
-namespace std
+namespace std _GLIBCXX_VISIBILITY(default)
 {
 namespace __profile
 {
@@ -45,9 +39,9 @@ namespace __profile
   template<typename _Key, typename _Tp, typename _Compare = std::less<_Key>,
 	   typename _Allocator = std::allocator<std::pair<const _Key, _Tp> > >
     class map
-    : public _GLIBCXX_STD_D::map<_Key, _Tp, _Compare, _Allocator>
+    : public _GLIBCXX_STD_C::map<_Key, _Tp, _Compare, _Allocator>
     {
-      typedef _GLIBCXX_STD_D::map<_Key, _Tp, _Compare, _Allocator> _Base;
+      typedef _GLIBCXX_STD_C::map<_Key, _Tp, _Compare, _Allocator> _Base;
 
     public:
       // types:
@@ -68,36 +62,37 @@ namespace __profile
       typedef std::reverse_iterator<iterator>       reverse_iterator;
       typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
-      using _Base::value_compare;
-
       // 23.3.1.1 construct/copy/destroy:
-      explicit map(const _Compare& __comp = _Compare(),
-		   const _Allocator& __a = _Allocator())
-      : _Base(__comp, __a) {
-          __profcxx_map_to_unordered_map_construct(this);
-      }
+      explicit
+      map(const _Compare& __comp = _Compare(),
+	  const _Allocator& __a = _Allocator())
+      : _Base(__comp, __a)
+      { __profcxx_map_to_unordered_map_construct(this); }
 
+#if __cplusplus >= 201103L
+      template<typename _InputIterator,
+	       typename = std::_RequireInputIter<_InputIterator>>
+#else
       template<typename _InputIterator>
+#endif
         map(_InputIterator __first, _InputIterator __last,
 	    const _Compare& __comp = _Compare(),
 	    const _Allocator& __a = _Allocator())
-	: _Base(__first, __last, __comp, __a) {
-          __profcxx_map_to_unordered_map_construct(this);
-        }
+	: _Base(__first, __last, __comp, __a)
+        { __profcxx_map_to_unordered_map_construct(this); }
 
       map(const map& __x)
-      : _Base(__x) {
-          __profcxx_map_to_unordered_map_construct(this);
-      }
+      : _Base(__x)
+      { __profcxx_map_to_unordered_map_construct(this); }
 
       map(const _Base& __x)
-      : _Base(__x) {
-          __profcxx_map_to_unordered_map_construct(this);
-      }
+      : _Base(__x)
+      { __profcxx_map_to_unordered_map_construct(this); }
 
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus >= 201103L
       map(map&& __x)
-      : _Base(std::forward<map>(__x))
+      noexcept(is_nothrow_copy_constructible<_Compare>::value)
+      : _Base(std::move(__x))
       { }
 
       map(initializer_list<value_type> __l,
@@ -106,9 +101,8 @@ namespace __profile
       : _Base(__l, __c, __a) { }
 #endif
 
-      ~map() {
-          __profcxx_map_to_unordered_map_destruct(this);
-      }
+      ~map() _GLIBCXX_NOEXCEPT
+      { __profcxx_map_to_unordered_map_destruct(this); }
 
       map&
       operator=(const map& __x)
@@ -117,7 +111,7 @@ namespace __profile
 	return *this;
       }
 
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus >= 201103L
       map&
       operator=(map&& __x)
       {
@@ -143,67 +137,67 @@ namespace __profile
 
       // iterators:
       iterator 
-      begin()
+      begin() _GLIBCXX_NOEXCEPT
       { return _Base::begin(); }
 
       const_iterator
-      begin() const
+      begin() const _GLIBCXX_NOEXCEPT
       { return _Base::begin(); }
 
       iterator
-      end()
+      end() _GLIBCXX_NOEXCEPT
       { return _Base::end(); }
 
       const_iterator
-      end() const
+      end() const _GLIBCXX_NOEXCEPT
       { return _Base::end(); }
 
       reverse_iterator
-      rbegin()
+      rbegin() _GLIBCXX_NOEXCEPT
       { 
         __profcxx_map_to_unordered_map_invalidate(this);
         return reverse_iterator(end()); 
       }
 
       const_reverse_iterator
-      rbegin() const
+      rbegin() const _GLIBCXX_NOEXCEPT
       {
         __profcxx_map_to_unordered_map_invalidate(this);
         return const_reverse_iterator(end());
       }
 
       reverse_iterator
-      rend()
+      rend() _GLIBCXX_NOEXCEPT
       {
         __profcxx_map_to_unordered_map_invalidate(this);
         return reverse_iterator(begin());
       }
 
       const_reverse_iterator
-      rend() const
+      rend() const _GLIBCXX_NOEXCEPT
       {
         __profcxx_map_to_unordered_map_invalidate(this);
         return const_reverse_iterator(begin());
       }
 
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus >= 201103L
       const_iterator
-      cbegin() const
+      cbegin() const noexcept
       { return const_iterator(_Base::begin()); }
 
       const_iterator
-      cend() const
+      cend() const noexcept
       { return const_iterator(_Base::end()); }
 
       const_reverse_iterator
-      crbegin() const
+      crbegin() const noexcept
       {
         __profcxx_map_to_unordered_map_invalidate(this);
         return const_reverse_iterator(end());
       }
 
       const_reverse_iterator
-      crend() const
+      crend() const noexcept
       {
         __profcxx_map_to_unordered_map_invalidate(this);
         return const_reverse_iterator(begin());
@@ -223,6 +217,15 @@ namespace __profile
         return _Base::operator[](__k);
       }
 
+#if __cplusplus >= 201103L
+      mapped_type&
+      operator[](key_type&& __k)
+      {
+        __profcxx_map_to_unordered_map_find(this, size());
+        return _Base::operator[](std::move(__k));
+      }
+#endif
+
       mapped_type&
       at(const key_type& __k)
       {
@@ -238,6 +241,30 @@ namespace __profile
       }
 
       // modifiers:
+#if __cplusplus >= 201103L
+      template<typename... _Args>
+	std::pair<iterator, bool>
+	emplace(_Args&&... __args)
+	{
+	  __profcxx_map_to_unordered_map_insert(this, size(), 1);
+	  auto __res = _Base::emplace(std::forward<_Args>(__args)...);
+	  return std::pair<iterator, bool>(iterator(__res.first),
+					   __res.second);
+	}
+
+      template<typename... _Args>
+	iterator
+	emplace_hint(const_iterator __pos, _Args&&... __args)
+	{
+	  size_type size_before = size();
+	  auto __res = _Base::emplace_hint(__pos,
+					   std::forward<_Args>(__args)...);
+	  __profcxx_map_to_unordered_map_insert(this, size_before,
+						size() - size_before);
+	  return __res;
+	}
+#endif
+
       std::pair<iterator, bool>
       insert(const value_type& __x)
       {
@@ -248,27 +275,69 @@ namespace __profile
 					 __res.second);
       }
 
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus >= 201103L
+      template<typename _Pair, typename = typename
+	       std::enable_if<std::is_constructible<value_type,
+						    _Pair&&>::value>::type>
+        std::pair<iterator, bool>
+        insert(_Pair&& __x)
+        {
+	  __profcxx_map_to_unordered_map_insert(this, size(), 1);
+	  typedef typename _Base::iterator _Base_iterator;
+	  std::pair<_Base_iterator, bool> __res
+	    = _Base::insert(std::forward<_Pair>(__x));
+	  return std::pair<iterator, bool>(iterator(__res.first),
+					   __res.second);
+	}
+#endif
+
+#if __cplusplus >= 201103L
       void
       insert(std::initializer_list<value_type> __list)
       { 
         size_type size_before = size();
         _Base::insert(__list); 
         __profcxx_map_to_unordered_map_insert(this, size_before, 
-                                                size() - size_before);
+					      size() - size_before);
       }
 #endif
 
       iterator
+#if __cplusplus >= 201103L
+      insert(const_iterator __position, const value_type& __x)
+#else
       insert(iterator __position, const value_type& __x)
+#endif
       {
         size_type size_before = size();
-	return iterator(_Base::insert(__position, __x));
-        __profcxx_map_to_unordered_map_insert(this, size_before, 
-                                                size() - size_before);
+	iterator __i = iterator(_Base::insert(__position, __x));
+        __profcxx_map_to_unordered_map_insert(this, size_before,
+					      size() - size_before);
+	return __i;
       }
 
+#if __cplusplus >= 201103L
+      template<typename _Pair, typename = typename
+	       std::enable_if<std::is_constructible<value_type,
+						    _Pair&&>::value>::type>
+        iterator
+        insert(const_iterator __position, _Pair&& __x)
+        {
+	  size_type size_before = size();
+	  iterator __i
+	    = iterator(_Base::insert(__position, std::forward<_Pair>(__x)));
+	  __profcxx_map_to_unordered_map_insert(this, size_before, 
+						size() - size_before);
+	  return __i;
+      }
+#endif
+
+#if __cplusplus >= 201103L
+      template<typename _InputIterator,
+	       typename = std::_RequireInputIter<_InputIterator>>
+#else
       template<typename _InputIterator>
+#endif
         void
         insert(_InputIterator __first, _InputIterator __last)
         {
@@ -278,14 +347,18 @@ namespace __profile
                                                 size() - size_before);
 	}
 
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus >= 201103L
       iterator
-      erase(iterator __position)
+      erase(const_iterator __position)
       {
 	iterator __i = _Base::erase(__position);
         __profcxx_map_to_unordered_map_erase(this, size(), 1);
         return __i;
       }
+
+      iterator
+      erase(iterator __position)
+      { return erase(const_iterator(__position)); }
 #else
       void
       erase(iterator __position)
@@ -308,36 +381,22 @@ namespace __profile
 	}
       }
 
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus >= 201103L
       iterator
-      erase(iterator __first, iterator __last)
-      {
-	// _GLIBCXX_RESOLVE_LIB_DEFECTS
-	// 151. can't currently clear() empty container
-	while (__first != __last)
-	  this->erase(__first++);
-	return __last;
-      }
+      erase(const_iterator __first, const_iterator __last)
+      { return iterator(_Base::erase(__first, __last)); }
 #else
       void
       erase(iterator __first, iterator __last)
-      {
-	// _GLIBCXX_RESOLVE_LIB_DEFECTS
-	// 151. can't currently clear() empty container
-	while (__first != __last)
-	  this->erase(__first++);
-      }
+      { _Base::erase(__first, __last); }
 #endif
 
       void
-
       swap(map& __x)
-      {
-	_Base::swap(__x);
-      }
+      { _Base::swap(__x); }
 
       void
-      clear()
+      clear() _GLIBCXX_NOEXCEPT
       { this->erase(begin(), end()); }
 
       // observers:
@@ -416,10 +475,10 @@ namespace __profile
       }
 
       _Base& 
-      _M_base() { return *this; }
+      _M_base() _GLIBCXX_NOEXCEPT       { return *this; }
 
       const _Base&
-      _M_base() const { return *this; }
+      _M_base() const _GLIBCXX_NOEXCEPT { return *this; }
 
     };
 

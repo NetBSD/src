@@ -1,7 +1,6 @@
 /* Definitions for ia64-linux target.
 
-Copyright (C) 2000, 2001, 2002, 2003, 2004, 2006,
-2009 Free Software Foundation, Inc.
+Copyright (C) 2000-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -24,11 +23,6 @@ a copy of the GCC Runtime Library Exception along with this program;
 see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 <http://www.gnu.org/licenses/>.  */
 
-/* This macro is a C statement to print on `stderr' a string describing the
-   particular machine description choice.  */
-
-#define TARGET_VERSION fprintf (stderr, " (IA-64) Linux");
-
 /* This is for -profile to use -lc_p instead of -lc.  */
 #undef CC1_SPEC
 #define CC1_SPEC "%{profile:-p} %{G*}"
@@ -36,7 +30,7 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 /* Target OS builtins.  */
 #define TARGET_OS_CPP_BUILTINS()		\
 do {						\
-	LINUX_TARGET_OS_CPP_BUILTINS();		\
+	GNU_USER_TARGET_OS_CPP_BUILTINS();	\
 	builtin_define("_LONGLONG");		\
 } while (0)
 
@@ -55,7 +49,7 @@ do {						\
 /* Similar to standard Linux, but adding -ffast-math support.  */
 #undef  ENDFILE_SPEC
 #define ENDFILE_SPEC \
-  "%{ffast-math|funsafe-math-optimizations:crtfastmath.o%s} \
+  "%{Ofast|ffast-math|funsafe-math-optimizations:crtfastmath.o%s} \
    %{shared|pie:crtendS.o%s;:crtend.o%s} crtn.o%s"
 
 /* Define this for shared library support because it isn't in the main
@@ -69,7 +63,7 @@ do {						\
   %{!shared: \
     %{!static: \
       %{rdynamic:-export-dynamic} \
-      %{!dynamic-linker:-dynamic-linker " LINUX_DYNAMIC_LINKER "}} \
+      -dynamic-linker " GNU_USER_DYNAMIC_LINKER "} \
       %{static:-static}}"
 
 #define CPP_SPEC "%{posix:-D_POSIX_SOURCE} %{pthread:-D_REENTRANT}"
@@ -82,8 +76,6 @@ do {						\
 #undef LINK_EH_SPEC
 #define LINK_EH_SPEC ""
 
-#define MD_UNWIND_SUPPORT "config/ia64/linux-unwind.h"
-
 /* Put all *tf routines in libgcc.  */
 #undef LIBGCC2_HAS_TF_MODE
 #define LIBGCC2_HAS_TF_MODE 1
@@ -93,3 +85,6 @@ do {						\
 
 #undef TARGET_INIT_LIBFUNCS
 #define TARGET_INIT_LIBFUNCS ia64_soft_fp_init_libfuncs
+
+/* Define this to be nonzero if static stack checking is supported.  */
+#define STACK_CHECK_STATIC_BUILTIN 1

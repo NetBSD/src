@@ -1,23 +1,27 @@
 /* Process source files and output type information.
-   Copyright (C) 2006, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2006-2013 Free Software Foundation, Inc.
 
-This file is part of GCC.
+   This file is part of GCC.
 
-GCC is free software; you can redistribute it and/or modify it under
-the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 3, or (at your option) any later
-version.
+   GCC is free software; you can redistribute it and/or modify it under
+   the terms of the GNU General Public License as published by the Free
+   Software Foundation; either version 3, or (at your option) any later
+   version.
 
-GCC is distributed in the hope that it will be useful, but WITHOUT ANY
-WARRANTY; without even the implied warranty of MERCHANTABILITY or
-FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-for more details.
+   GCC is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+   for more details.
 
-You should have received a copy of the GNU General Public License
-along with GCC; see the file COPYING3.  If not see
-<http://www.gnu.org/licenses/>.  */
+   You should have received a copy of the GNU General Public License
+   along with GCC; see the file COPYING3.  If not see
+   <http://www.gnu.org/licenses/>.  */
 
+#ifdef GENERATOR_FILE
 #include "bconfig.h"
+#else
+#include "config.h"
+#endif
 #include "system.h"
 #include "gengtype.h"
 
@@ -72,10 +76,6 @@ static const char *const token_names[] = {
   "union",
   "struct",
   "enum",
-  "VEC",
-  "DEF_VEC_[OP]",
-  "DEF_VEC_I",
-  "DEF_VEC_ALLOC_[IOP]",
   "...",
   "ptr_alias",
   "nested_ptr",
@@ -86,6 +86,7 @@ static const char *const token_names[] = {
   "a string constant",
   "a character constant",
   "an array declarator",
+  "a C++ keyword to ignore"
 };
 
 /* This array is indexed by token code minus FIRST_TOKEN_WITH_VALUE.  */
@@ -97,6 +98,7 @@ static const char *const token_value_format[] = {
   "'\"%s\"'",
   "\"'%s'\"",
   "'[%s]'",
+  "'%s'",
 };
 
 /* Produce a printable representation for a token defined by CODE and
@@ -113,7 +115,7 @@ print_token (int code, const char *value)
   else if (code < FIRST_TOKEN_WITH_VALUE)
     return xasprintf ("'%s'", token_names[code - CHAR_TOKEN_OFFSET]);
   else if (!value)
-    return token_names[code - CHAR_TOKEN_OFFSET]; /* don't quote these */
+    return token_names[code - CHAR_TOKEN_OFFSET];	/* don't quote these */
   else
     return xasprintf (token_value_format[code - FIRST_TOKEN_WITH_VALUE],
 		      value);
@@ -135,7 +137,8 @@ parse_error (const char *msg, ...)
 {
   va_list ap;
 
-  fprintf (stderr, "%s:%d: parse error: ", lexer_line.file, lexer_line.line);
+  fprintf (stderr, "%s:%d: parse error: ", 
+	   get_input_file_name (lexer_line.file), lexer_line.line);
 
   va_start (ap, msg);
   vfprintf (stderr, msg, ap);
@@ -199,7 +202,7 @@ string_seq (void)
 
       l1 = strlen (s1);
       l2 = strlen (s2);
-      buf = XRESIZEVEC (char, CONST_CAST(char *, s1), l1 + l2 + 1);
+      buf = XRESIZEVEC (char, CONST_CAST (char *, s1), l1 + l2 + 1);
       memcpy (buf + l1, s2, l2 + 1);
       XDELETE (CONST_CAST (char *, s2));
       s1 = buf;
@@ -207,28 +210,51 @@ string_seq (void)
   return s1;
 }
 
-/* typedef_name: either an ID, or VEC(x,y) which is translated to VEC_x_y.
-   Use only where VEC(x,y) is legitimate, i.e. in positions where a
-   typedef name may appear.  */
+
+/* The caller has detected a template declaration that starts
+   with TMPL_NAME.  Parse up to the closing '>'.  This recognizes
+   simple template declarations of the form ID<ID1,ID2,...,IDn>.
+   It does not try to parse anything more sophisticated than that.
+
+   Returns the template declaration string "ID<ID1,ID2,...,IDn>".  */
+
+static const char *
+require_template_declaration (const char *tmpl_name)
+{
+  char *str;
+
+  /* Recognize the opening '<'.  */
+  require ('<');
+  str = concat (tmpl_name, "<", (char *) 0);
+
+  /* Read the comma-separated list of identifiers.  */
+  while (token () != '>')
+    {
+      const char *id = require2 (ID, ',');
+      if (id == NULL)
+	id = ",";
+      str = concat (str, id, (char *) 0);
+    }
+
+  /* Recognize the closing '>'.  */
+  require ('>');
+  str = concat (str, ">", (char *) 0);
+
+  return str;
+}
+
+
+/* typedef_name: either an ID, or a template type
+   specification of the form ID<t1,t2,...,tn>.  */
+
 static const char *
 typedef_name (void)
 {
-  if (token () == VEC_TOKEN)
-    {
-      const char *c1, *c2, *r;
-      advance ();
-      require ('(');
-      c1 = require2 (ID, SCALAR);
-      require (',');
-      c2 = require (ID);
-      require (')');
-      r = concat ("VEC_", c1, "_", c2, (char *)0);
-      free (CONST_CAST (char *, c1));
-      free (CONST_CAST (char *, c2));
-      return r;
-    }
+  const char *id = require (ID);
+  if (token () == '<')
+    return require_template_declaration (id);
   else
-    return require (ID);
+    return id;
 }
 
 /* Absorb a sequence of tokens delimited by balanced ()[]{}.  */
@@ -239,10 +265,18 @@ consume_balanced (int opener, int closer)
   for (;;)
     switch (token ())
       {
-      default: advance (); break;
-      case '(': consume_balanced ('(',')'); break;
-      case '[': consume_balanced ('[',']'); break;
-      case '{': consume_balanced ('{','}'); break;
+      default:
+	advance ();
+	break;
+      case '(':
+	consume_balanced ('(', ')');
+	break;
+      case '[':
+	consume_balanced ('[', ']');
+	break;
+      case '{':
+	consume_balanced ('{', '}');
+	break;
 
       case '}':
       case ']':
@@ -250,8 +284,8 @@ consume_balanced (int opener, int closer)
 	if (token () != closer)
 	  parse_error ("unbalanced delimiters - expected '%c', have '%c'",
 		       closer, token ());
-	advance ();
-	return;
+      advance ();
+      return;
 
       case EOF_TOKEN:
 	parse_error ("unexpected end of file within %c%c-delimited construct",
@@ -261,23 +295,30 @@ consume_balanced (int opener, int closer)
 }
 
 /* Absorb a sequence of tokens, possibly including ()[]{}-delimited
-   expressions, until we encounter a semicolon outside any such
-   delimiters; absorb that too.  If IMMEDIATE is true, it is an error
-   if the semicolon is not the first token encountered.  */
+   expressions, until we encounter an end-of-statement marker (a ';' or
+   a '}') outside any such delimiters; absorb that too.  */
+
 static void
-consume_until_semi (bool immediate)
+consume_until_eos (void)
 {
-  if (immediate && token () != ';')
-    require (';');
   for (;;)
     switch (token ())
       {
-      case ';':	advance (); return;
-      default:	advance (); break;
+      case ';':
+	advance ();
+	return;
 
-      case '(':	consume_balanced ('(',')'); break;
-      case '[': consume_balanced ('[',']'); break;
-      case '{':	consume_balanced ('{','}'); break;
+      case '{':
+	consume_balanced ('{', '}');
+	return;
+
+      case '(':
+	consume_balanced ('(', ')');
+	break;
+
+      case '[':
+	consume_balanced ('[', ']');
+	break;
 
       case '}':
       case ']':
@@ -288,44 +329,62 @@ consume_until_semi (bool immediate)
       case EOF_TOKEN:
 	parse_error ("unexpected end of file while scanning for ';'");
 	return;
+
+      default:
+	advance ();
+	break;
       }
 }
 
 /* Absorb a sequence of tokens, possibly including ()[]{}-delimited
    expressions, until we encounter a comma or semicolon outside any
-   such delimiters; absorb that too.  If IMMEDIATE is true, it is an
-   error if the comma or semicolon is not the first token encountered.
-   Returns true if the loop ended with a comma.  */
+   such delimiters; absorb that too.  Returns true if the loop ended
+   with a comma.  */
+
 static bool
-consume_until_comma_or_semi (bool immediate)
+consume_until_comma_or_eos ()
 {
-  if (immediate && token () != ',' && token () != ';')
-    require2 (',', ';');
   for (;;)
     switch (token ())
       {
-      case ',':	advance (); return true;
-      case ';':	advance (); return false;
-      default:	advance (); break;
+      case ',':
+	advance ();
+	return true;
 
-      case '(':	consume_balanced ('(',')'); break;
-      case '[': consume_balanced ('[',']'); break;
-      case '{':	consume_balanced ('{','}'); break;
+      case ';':
+	advance ();
+	return false;
+
+      case '{':
+	consume_balanced ('{', '}');
+	return false;
+
+      case '(':
+	consume_balanced ('(', ')');
+	break;
+
+      case '[':
+	consume_balanced ('[', ']');
+	break;
 
       case '}':
       case ']':
       case ')':
 	parse_error ("unmatched '%s' while scanning for ',' or ';'",
 		     print_cur_token ());
-	return false;
+      return false;
 
       case EOF_TOKEN:
 	parse_error ("unexpected end of file while scanning for ',' or ';'");
 	return false;
+
+      default:
+	advance ();
+	break;
       }
 }
-
 
+
 /* GTY(()) option handling.  */
 static type_p type (options_p *optsp, bool nested);
 
@@ -341,7 +400,7 @@ str_optvalue_opt (options_p prev)
       value = string_seq ();
       require (')');
     }
-  return create_option (prev, name, value);
+  return create_string_option (prev, name, value);
 }
 
 /* absdecl: type '*'*
@@ -379,7 +438,7 @@ type_optvalue (options_p prev, const char *name)
   require ('(');
   ty = absdecl ();
   require (')');
-  return create_option (prev, name, ty);
+  return create_type_option (prev, name, ty);
 }
 
 /* Nested pointer data: '(' type '*'* ',' string_seq ',' string_seq ')' */
@@ -401,11 +460,11 @@ nestedptr_optvalue (options_p prev)
 }
 
 /* One GTY(()) option:
-         ID str_optvalue_opt
-       | PTR_ALIAS type_optvalue
-       | PARAM_IS type_optvalue
-       | NESTED_PTR nestedptr_optvalue
- */
+   ID str_optvalue_opt
+   | PTR_ALIAS type_optvalue
+   | PARAM_IS type_optvalue
+   | NESTED_PTR nestedptr_optvalue
+*/
 static options_p
 option (options_p prev)
 {
@@ -425,11 +484,14 @@ option (options_p prev)
       advance ();
       return nestedptr_optvalue (prev);
 
-    default:
-      parse_error ("expected an option keyword, have %s",
-		   print_cur_token ());
+    case USER_GTY:
       advance ();
-      return create_option (prev, "", "");
+      return create_string_option (prev, "user", "");
+
+    default:
+      parse_error ("expected an option keyword, have %s", print_cur_token ());
+      advance ();
+      return create_string_option (prev, "", "");
     }
 }
 
@@ -471,6 +533,8 @@ gtymarker_opt (void)
     return 0;
   return gtymarker ();
 }
+
+
 
 /* Declarators. The logic here is largely lifted from c-parser.c.
    Note that we do not have to process abstract declarators, which can
@@ -479,9 +543,9 @@ gtymarker_opt (void)
    we don't have to do it.  */
 
 /* array_and_function_declarators_opt:
-      \epsilon
-      array_and_function_declarators_opt ARRAY
-      array_and_function_declarators_opt '(' ... ')'
+   \epsilon
+   array_and_function_declarators_opt ARRAY
+   array_and_function_declarators_opt '(' ... ')'
 
    where '...' indicates stuff we ignore except insofar as grouping
    symbols ()[]{} must balance.
@@ -507,16 +571,21 @@ array_and_function_declarators_opt (type_p ty)
     return ty;
 }
 
-static type_p inner_declarator (type_p, const char **, options_p *);
+static type_p inner_declarator (type_p, const char **, options_p *, bool);
 
 /* direct_declarator:
-      '(' inner_declarator ')'
-      gtymarker_opt ID array_and_function_declarators_opt
+   '(' inner_declarator ')'
+   '(' \epsilon ')'	<-- C++ ctors/dtors
+   gtymarker_opt ID array_and_function_declarators_opt
 
    Subroutine of declarator, mutually recursive with inner_declarator;
-   do not use elsewhere.  */
+   do not use elsewhere.
+
+   IN_STRUCT is true if we are called while parsing structures or classes.  */
+
 static type_p
-direct_declarator (type_p ty, const char **namep, options_p *optsp)
+direct_declarator (type_p ty, const char **namep, options_p *optsp,
+		   bool in_struct)
 {
   /* The first token in a direct-declarator must be an ID, a
      GTY marker, or an open parenthesis.  */
@@ -525,18 +594,45 @@ direct_declarator (type_p ty, const char **namep, options_p *optsp)
     case GTY_TOKEN:
       *optsp = gtymarker ();
       /* fall through */
+
     case ID:
       *namep = require (ID);
+      /* If the next token is '(', we are parsing a function declaration.
+	 Functions are ignored by gengtype, so we return NULL.  */
+      if (token () == '(')
+	return NULL;
       break;
 
     case '(':
+      /* If the declarator starts with a '(', we have three options.  We
+	 are either parsing 'TYPE (*ID)' (i.e., a function pointer)
+	 or 'TYPE(...)'.
+
+	 The latter will be a constructor iff we are inside a
+	 structure or class.  Otherwise, it could be a typedef, but
+	 since we explicitly reject typedefs inside structures, we can
+	 assume that we found a ctor and return NULL.  */
       advance ();
-      ty = inner_declarator (ty, namep, optsp);
+      if (in_struct && token () != '*')
+	{
+	  /* Found a constructor.  Find and consume the closing ')'.  */
+	  while (token () != ')')
+	    advance ();
+	  advance ();
+	  /* Tell the caller to ignore this.  */
+	  return NULL;
+	}
+      ty = inner_declarator (ty, namep, optsp, in_struct);
       require (')');
       break;
 
+    case IGNORABLE_CXX_KEYWORD:
+      /* Any C++ keyword like 'operator' means that we are not looking
+	 at a regular data declarator.  */
+      return NULL;
+
     default:
-      parse_error ("expected '(', 'GTY', or an identifier, have %s",
+      parse_error ("expected '(', ')', 'GTY', or an identifier, have %s",
 		   print_cur_token ());
       /* Do _not_ advance if what we have is a close squiggle brace, as
 	 we will get much better error recovery that way.  */
@@ -550,7 +646,7 @@ direct_declarator (type_p ty, const char **namep, options_p *optsp)
 /* The difference between inner_declarator and declarator is in the
    handling of stars.  Consider this declaration:
 
-      char * (*pfc) (void)
+   char * (*pfc) (void)
 
    It declares a pointer to a function that takes no arguments and
    returns a char*.  To construct the correct type for this
@@ -562,27 +658,30 @@ direct_declarator (type_p ty, const char **namep, options_p *optsp)
    creating pointers.  */
 
 /* inner_declarator:
-     '*' inner_declarator
-     direct_declarator
+   '*' inner_declarator
+   direct_declarator
 
    Mutually recursive subroutine of direct_declarator; do not use
-   elsewhere.  */
+   elsewhere.
+
+   IN_STRUCT is true if we are called while parsing structures or classes.  */
 
 static type_p
-inner_declarator (type_p ty, const char **namep, options_p *optsp)
+inner_declarator (type_p ty, const char **namep, options_p *optsp,
+		  bool in_struct)
 {
   if (token () == '*')
     {
       type_p inner;
       advance ();
-      inner = inner_declarator (ty, namep, optsp);
+      inner = inner_declarator (ty, namep, optsp, in_struct);
       if (inner == 0)
 	return 0;
       else
 	return create_pointer (ty);
     }
   else
-    return direct_declarator (ty, namep, optsp);
+    return direct_declarator (ty, namep, optsp, in_struct);
 }
 
 /* declarator: '*'+ direct_declarator
@@ -590,10 +689,15 @@ inner_declarator (type_p ty, const char **namep, options_p *optsp)
    This is the sole public interface to this part of the grammar.
    Arguments are the type known so far, a pointer to where the name
    may be stored, and a pointer to where GTY options may be stored.
-   Returns the final type. */
+
+   IN_STRUCT is true when we are called to parse declarators inside
+   a structure or class.
+
+   Returns the final type.  */
 
 static type_p
-declarator (type_p ty, const char **namep, options_p *optsp)
+declarator (type_p ty, const char **namep, options_p *optsp,
+	    bool in_struct = false)
 {
   *namep = 0;
   *optsp = 0;
@@ -602,20 +706,20 @@ declarator (type_p ty, const char **namep, options_p *optsp)
       advance ();
       ty = create_pointer (ty);
     }
-  return direct_declarator (ty, namep, optsp);
+  return direct_declarator (ty, namep, optsp, in_struct);
 }
 
 /* Types and declarations.  */
 
 /* Structure field(s) declaration:
    (
-       type bitfield ';'
-     | type declarator bitfield? ( ',' declarator bitfield? )+ ';'
+   type bitfield ';'
+   | type declarator bitfield? ( ',' declarator bitfield? )+ ';'
    )+
 
    Knows that such declarations must end with a close brace (or,
    erroneously, at EOF).
- */
+*/
 static pair_p
 struct_field_seq (void)
 {
@@ -628,24 +732,22 @@ struct_field_seq (void)
   do
     {
       ty = type (&opts, true);
-      /* Another piece of the IFCVT_EXTRA_FIELDS special case, see type().  */
-      if (!ty && token () == '}')
-	break;
 
       if (!ty || token () == ':')
 	{
-	  consume_until_semi (false);
+	  consume_until_eos ();
 	  continue;
 	}
 
       do
 	{
-	  dty = declarator (ty, &name, &dopts);
+	  dty = declarator (ty, &name, &dopts, true);
+
 	  /* There could be any number of weird things after the declarator,
 	     notably bitfield declarations and __attribute__s.  If this
 	     function returns true, the last thing was a comma, so we have
 	     more than one declarator paired with the current type.  */
-	  another = consume_until_comma_or_semi (false);
+	  another = consume_until_comma_or_eos ();
 
 	  if (!dty)
 	    continue;
@@ -663,10 +765,22 @@ struct_field_seq (void)
   return nreverse_pairs (f);
 }
 
+/* Return true if OPTS contain the option named STR.  */
+
+static bool
+opts_have (options_p opts, const char *str)
+{
+  for (options_p opt = opts; opt; opt = opt->next)
+    if (strcmp (opt->name, str) == 0)
+      return true;
+  return false;
+}
+
+
 /* This is called type(), but what it parses (sort of) is what C calls
    declaration-specifiers and specifier-qualifier-list:
 
-     SCALAR
+   SCALAR
    | ID     // typedef
    | (STRUCT|UNION) ID? gtymarker? ( '{' gtymarker? struct_field_seq '}' )?
    | ENUM ID ( '{' ... '}' )?
@@ -674,7 +788,12 @@ struct_field_seq (void)
    Returns a partial type; under some conditions (notably
    "struct foo GTY((...)) thing;") it may write an options
    structure to *OPTSP.
- */
+
+   NESTED is true when parsing a declaration already known to have a
+   GTY marker. In these cases, typedef and enum declarations are not
+   allowed because gengtype only understands types at the global
+   scope.  */
+
 static type_p
 type (options_p *optsp, bool nested)
 {
@@ -687,80 +806,142 @@ type (options_p *optsp, bool nested)
       return create_scalar_type (s);
 
     case ID:
-    case VEC_TOKEN:
       s = typedef_name ();
       return resolve_typedef (s, &lexer_line);
+
+    case IGNORABLE_CXX_KEYWORD:
+      /* By returning NULL here, we indicate to the caller that they
+	 should ignore everything following this keyword up to the
+	 next ';' or '}'.  */
+      return NULL;
 
     case STRUCT:
     case UNION:
       {
 	options_p opts = 0;
-    /* GTY annotations follow attribute syntax
-       GTY_BEFORE_ID is for union/struct declarations
-       GTY_AFTER_ID is for variable declarations.  */
-    enum {
-        NO_GTY,
-        GTY_BEFORE_ID,
-        GTY_AFTER_ID
-    } is_gty = NO_GTY;
-    bool is_union = (token () == UNION);
+	/* GTY annotations follow attribute syntax
+	   GTY_BEFORE_ID is for union/struct declarations
+	   GTY_AFTER_ID is for variable declarations.  */
+	enum
+	{
+	  NO_GTY,
+	  GTY_BEFORE_ID,
+	  GTY_AFTER_ID
+	} is_gty = NO_GTY;
+	enum typekind kind = (token () == UNION) ? TYPE_UNION : TYPE_STRUCT;
 	advance ();
 
 	/* Top-level structures that are not explicitly tagged GTY(())
 	   are treated as mere forward declarations.  This is because
 	   there are a lot of structures that we don't need to know
-	   about, and some of those have weird macro stuff in them
-	   that we can't handle.  */
+	   about, and some of those have C++ and macro constructs that
+	   we cannot handle.  */
 	if (nested || token () == GTY_TOKEN)
 	  {
-        is_gty = GTY_BEFORE_ID;
-        opts = gtymarker_opt ();
+	    is_gty = GTY_BEFORE_ID;
+	    opts = gtymarker_opt ();
 	  }
 
 	if (token () == ID)
 	  s = advance ();
 	else
-	  s = xasprintf ("anonymous:%s:%d", lexer_line.file, lexer_line.line);
+	  s = xasprintf ("anonymous:%s:%d",
+			 get_input_file_name (lexer_line.file),
+			 lexer_line.line);
 
-        /* Unfortunately above GTY_TOKEN check does not capture the
-           typedef struct_type GTY case.  */
+	/* Unfortunately above GTY_TOKEN check does not capture the
+	   typedef struct_type GTY case.  */
 	if (token () == GTY_TOKEN)
 	  {
-        is_gty = GTY_AFTER_ID;
-        opts = gtymarker_opt ();
+	    is_gty = GTY_AFTER_ID;
+	    opts = gtymarker_opt ();
 	  }
 
-    if (is_gty)
-      {
-        if (token () == '{')
-          {
-            pair_p fields;
+	if (token () == ':')
+	  {
+	    /* Skip over C++ inheritance specification.  */
+	    while (token () != '{')
+	      advance ();
+	  }
 
-            if (is_gty == GTY_AFTER_ID)
-                parse_error ("GTY must be specified before identifier");
+	if (is_gty)
+	  {
+	    bool is_user_gty = opts_have (opts, "user");
+	    if (token () == '{')
+	      {
+		pair_p fields;
 
-            advance ();
-            fields = struct_field_seq ();
-            require ('}');
-            return new_structure (s, is_union, &lexer_line, fields, opts);
-          }
-      }
-    else if (token () == '{')
-      consume_balanced ('{', '}');
+		if (is_gty == GTY_AFTER_ID)
+		  parse_error ("GTY must be specified before identifier");
+
+		if (!is_user_gty)
+		  {
+		    advance ();
+		    fields = struct_field_seq ();
+		    require ('}');
+		  }
+		else
+		  {
+		    /* Do not look inside user defined structures.  */
+		    fields = NULL;
+		    kind = TYPE_USER_STRUCT;
+		    consume_balanced ('{', '}');
+		    return create_user_defined_type (s, &lexer_line);
+		  }
+
+		return new_structure (s, kind, &lexer_line, fields, opts);
+	      }
+	  }
+	else if (token () == '{')
+	  consume_balanced ('{', '}');
 	if (opts)
 	  *optsp = opts;
-	return find_structure (s, is_union);
+	return find_structure (s, kind);
       }
+
+    case TYPEDEF:
+      /* In C++, a typedef inside a struct/class/union defines a new
+	 type for that inner scope.  We cannot support this in
+	 gengtype because we have no concept of scoping.
+
+	 We handle typedefs in the global scope separately (see
+	 parse_file), so if we find a 'typedef', we must be inside
+	 a struct.  */
+      gcc_assert (nested);
+      parse_error ("typedefs not supported in structures marked with "
+		   "automatic GTY markers.  Use GTY((user)) to mark "
+		   "this structure.");
+      advance ();
+      return NULL;
 
     case ENUM:
       advance ();
-	if (token () == ID)
-	  s = advance ();
-	else
-	  s = xasprintf ("anonymous:%s:%d", lexer_line.file, lexer_line.line);
+      if (token () == ID)
+	s = advance ();
+      else
+	s = xasprintf ("anonymous:%s:%d",
+		       get_input_file_name (lexer_line.file),
+		       lexer_line.line);
 
       if (token () == '{')
-	consume_balanced ('{','}');
+	consume_balanced ('{', '}');
+
+      /* If after parsing the enum we are at the end of the statement,
+	 and we are currently inside a structure, then this was an
+	 enum declaration inside this scope.
+
+	 We cannot support this for the same reason we cannot support
+	 'typedef' inside structures (see the TYPEDEF handler above).
+	 If this happens, emit an error and return NULL.  */
+      if (nested && token () == ';')
+	{
+	  parse_error ("enum definitions not supported in structures marked "
+		       "with automatic GTY markers.  Use GTY((user)) to mark "
+	               "this structure.");
+	  advance ();
+	  return NULL;
+	}
+
       return create_scalar_type (s);
 
     default:
@@ -798,7 +979,7 @@ typedef_decl (void)
 
       /* Yet another place where we could have junk (notably attributes)
 	 after the declarator.  */
-      another = consume_until_comma_or_semi (false);
+      another = consume_until_comma_or_eos ();
       if (dty)
 	do_typedef (name, dty, &lexer_line);
     }
@@ -821,7 +1002,7 @@ struct_or_union (void)
 }
 
 /* GC root declaration:
-     (extern|static) gtymarker? type ID array_declarators_opt (';'|'=')
+   (extern|static) gtymarker? type ID array_declarators_opt (';'|'=')
    If the gtymarker is not present, we ignore the rest of the declaration.  */
 static void
 extern_or_static (void)
@@ -838,8 +1019,8 @@ extern_or_static (void)
     }
 
   opts = gtymarker ();
-  ty   = type (&opts2, true);  /* if we get here, it's got a GTY(()) */
-  dty  = declarator (ty, &name, &dopts);
+  ty = type (&opts2, true);	/* if we get here, it's got a GTY(()) */
+  dty = declarator (ty, &name, &dopts);
 
   if ((opts && dopts) || (opts && opts2) || (opts2 && dopts))
     parse_error ("GTY((...)) specified more than once for %s", name);
@@ -853,55 +1034,6 @@ extern_or_static (void)
       note_variable (name, adjust_field_type (dty, opts), opts, &lexer_line);
       require2 (';', '=');
     }
-}
-
-/* Definition of a generic VEC structure:
-
-   'DEF_VEC_[IPO]' '(' id ')' ';'
-
-   Scalar VECs require slightly different treatment than otherwise -
-   that's handled in note_def_vec, we just pass it along.*/
-static void
-def_vec (void)
-{
-  bool is_scalar = (token() == DEFVEC_I);
-  const char *type;
-
-  require2 (DEFVEC_OP, DEFVEC_I);
-  require ('(');
-  type = require2 (ID, SCALAR);
-  require (')');
-  require (';');
-
-  if (!type)
-    return;
-
-  note_def_vec (type, is_scalar, &lexer_line);
-  note_def_vec_alloc (type, "none", &lexer_line);
-}
-
-/* Definition of an allocation strategy for a VEC structure:
-
-   'DEF_VEC_ALLOC_[IPO]' '(' id ',' id ')' ';'
-
-   For purposes of gengtype, this just declares a wrapper structure.  */
-static void
-def_vec_alloc (void)
-{
-  const char *type, *astrat;
-
-  require (DEFVEC_ALLOC);
-  require ('(');
-  type = require2 (ID, SCALAR);
-  require (',');
-  astrat = require (ID);
-  require (')');
-  require (';');
-
-  if (!type || !astrat)
-    return;
-
-  note_def_vec_alloc (type, astrat, &lexer_line);
 }
 
 /* Parse the file FNAME for GC-relevant declarations and definitions.
@@ -926,15 +1058,6 @@ parse_file (const char *fname)
 
 	case TYPEDEF:
 	  typedef_decl ();
-	  break;
-
-	case DEFVEC_OP:
-	case DEFVEC_I:
-	  def_vec ();
-	  break;
-
-	case DEFVEC_ALLOC:
-	  def_vec_alloc ();
 	  break;
 
 	case EOF_TOKEN:

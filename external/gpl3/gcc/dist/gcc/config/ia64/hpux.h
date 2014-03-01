@@ -1,6 +1,5 @@
 /* Definitions of target machine GNU compiler.  IA-64 version.
-   Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2007
-   Free Software Foundation, Inc.
+   Copyright (C) 1999-2013 Free Software Foundation, Inc.
    Contributed by Steve Ellcey <sje@cup.hp.com> and
                   Reva Cuthbertson <reva@cup.hp.com>
 
@@ -19,11 +18,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
-
-/* This macro is a C statement to print on `stderr' a string describing the
-   particular machine description choice.  */
-
-#define TARGET_VERSION fprintf (stderr, " (IA-64) HP-UX");
 
 /* Enable HPUX ABI quirks.  */
 #undef  TARGET_HPUX
@@ -68,6 +62,18 @@ do {							\
 #undef  ASM_EXTRA_SPEC
 #define ASM_EXTRA_SPEC "%{milp32:-milp32} %{mlp64:-mlp64}"
 
+#ifndef USE_GAS
+#define AS_NEEDS_DASH_FOR_PIPED_INPUT
+#endif
+
+#ifndef CROSS_DIRECTORY_STRUCTURE
+#undef MD_EXEC_PREFIX
+#define MD_EXEC_PREFIX "/usr/ccs/bin/"
+
+#undef MD_STARTFILE_PREFIX
+#define MD_STARTFILE_PREFIX "/usr/ccs/lib/"
+#endif
+
 #undef ENDFILE_SPEC
 
 #undef STARTFILE_SPEC
@@ -106,10 +112,7 @@ do {							\
 
 #undef TARGET_DEFAULT
 #define TARGET_DEFAULT \
-  (MASK_DWARF2_ASM | MASK_BIG_ENDIAN | MASK_ILP32 | MASK_FUSED_MADD)
-
-/* ??? Might not be needed anymore.  */
-#define MEMBER_TYPE_FORCES_BLK(FIELD, MODE) ((MODE) == TFmode)
+  (MASK_DWARF2_ASM | MASK_BIG_ENDIAN | MASK_ILP32)
 
 /* ASM_OUTPUT_EXTERNAL_LIBCALL defaults to just a globalize_label call,
    but that doesn't put out the @function type information which causes
@@ -213,5 +216,18 @@ do {								\
 #undef NO_PROFILE_COUNTERS
 #define NO_PROFILE_COUNTERS 0
 
-#undef HANDLE_PRAGMA_PACK_PUSH_POP
-#define HANDLE_PRAGMA_PACK_PUSH_POP
+/* The HP-UX linker has a bug that causes calls from functions in
+   .text.unlikely to functions in .text to cause a segfault.  Until
+   it is fixed, prevent code from being put into .text.unlikely or
+   .text.hot.  */
+
+#define TARGET_ASM_FUNCTION_SECTION ia64_hpux_function_section
+
+#define TARGET_POSIX_IO
+
+/* Define this to be nonzero if static stack checking is supported.  */
+#define STACK_CHECK_STATIC_BUILTIN 1
+
+/* Minimum amount of stack required to recover from an anticipated stack
+   overflow detection.  */
+#define STACK_CHECK_PROTECT (24 * 1024)

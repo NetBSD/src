@@ -1,6 +1,6 @@
 ; Options for the NEC V850 port of the compiler.
 
-; Copyright (C) 2005, 2007 Free Software Foundation, Inc.
+; Copyright (C) 2005-2013 Free Software Foundation, Inc.
 ;
 ; This file is part of GCC.
 ;
@@ -18,6 +18,12 @@
 ; along with GCC; see the file COPYING3.  If not see
 ; <http://www.gnu.org/licenses/>.
 
+HeaderInclude
+config/v850/v850-opts.h
+
+Variable
+int small_memory_max[(int)SMALL_MEMORY_max] = { 0, 0, 0 }
+
 mapp-regs
 Target Report Mask(APP_REGS)
 Use registers r2 and r5
@@ -32,15 +38,14 @@ Enable backend debugging
 
 mdisable-callt
 Target Report Mask(DISABLE_CALLT)
-Do not use the callt instruction
+Do not use the callt instruction (default)
 
 mep
 Target Report Mask(EP)
 Reuse r30 on a per function basis
 
 mghs
-Target Report Mask(GHS)
-Support Green Hills ABI
+Target RejectNegative InverseMask(GCC_ABI) MaskExists
 
 mlong-calls
 Target Report Mask(LONG_CALLS)
@@ -50,9 +55,12 @@ mprolog-function
 Target Report Mask(PROLOG_FUNCTION)
 Use stubs for function prologues
 
-msda
-Target RejectNegative Joined
+msda=
+Target RejectNegative Joined UInteger
 Set the max size of data eligible for the SDA area
+
+msda-
+Target RejectNegative Joined Undocumented Alias(msda=)
 
 msmall-sld
 Target Report Mask(SMALL_SLD)
@@ -62,13 +70,20 @@ mspace
 Target RejectNegative
 Same as: -mep -mprolog-function
 
-mtda
-Target RejectNegative Joined
+mtda=
+Target RejectNegative Joined UInteger
 Set the max size of data eligible for the TDA area
 
-mstrict-align
-Target Report Mask(STRICT_ALIGN)
-Enforce strict alignment
+mtda-
+Target RejectNegative Joined Undocumented Alias(mtda=)
+
+mno-strict-align
+Target Report Mask(NO_STRICT_ALIGN)
+Do not enforce strict alignment
+
+mjump-tables-in-data-section
+Target Report Mask(JUMP_TABLES_IN_DATA_SECTION)
+Put jump tables for switch statements into the .data section rather than the .code section
 
 mUS-bit-set
 Target Report Mask(US_BIT_SET)
@@ -82,9 +97,63 @@ Target Report RejectNegative Mask(V850E)
 Compile for the v850e processor
 
 mv850e1
-Target RejectNegative Mask(V850E) MaskExists
+Target RejectNegative Mask(V850E1)
 Compile for the v850e1 processor
 
-mzda
-Target RejectNegative Joined
+mv850es
+Target RejectNegative Mask(V850E1)
+Compile for the v850es variant of the v850e1
+
+mv850e2
+Target Report RejectNegative Mask(V850E2)
+Compile for the v850e2 processor
+
+mv850e2v3
+Target Report RejectNegative Mask(V850E2V3)
+Compile for the v850e2v3 processor
+
+mv850e3v5
+Target Report RejectNegative Mask(V850E3V5)
+Compile for the v850e3v5 processor
+
+mv850e2v4
+Target RejectNegative Mask(V850E3V5) MaskExists
+
+mloop
+Target Report Mask(LOOP)
+Enable v850e3v5 loop instructions
+
+mzda=
+Target RejectNegative Joined UInteger
 Set the max size of data eligible for the ZDA area
+
+mzda-
+Target RejectNegative Joined Undocumented Alias(mzda=)
+
+mrelax
+Target Report Mask(RELAX)
+Enable relaxing in the assembler
+
+mlong-jumps
+Target Report Mask(BIG_SWITCH) MaskExists
+Prohibit PC relative jumps
+
+msoft-float
+Target Report RejectNegative Mask(SOFT_FLOAT)
+Inhibit the use of hardware floating point instructions
+
+mhard-float
+Target Report RejectNegative InverseMask(SOFT_FLOAT) MaskExists
+Allow the use of hardware floating point instructions for V850E2V3 and up
+
+mrh850-abi
+Target RejectNegative Report InverseMask(GCC_ABI) MaskExists
+Enable support for the RH850 ABI.  This is the default
+
+mgcc-abi
+Target RejectNegative Report Mask(GCC_ABI)
+Enable support for the old GCC ABI
+
+m8byte-align
+Target Report Mask(8BYTE_ALIGN)
+Support alignments of up to 64-bits

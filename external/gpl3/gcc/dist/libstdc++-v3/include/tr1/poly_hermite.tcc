@@ -1,7 +1,6 @@
 // Special functions -*- C++ -*-
 
-// Copyright (C) 2006, 2007, 2008, 2009
-// Free Software Foundation, Inc.
+// Copyright (C) 2006-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -25,7 +24,7 @@
 
 /** @file tr1/poly_hermite.tcc
  *  This is an internal header file, included by other library headers.
- *  You should not attempt to use it directly.
+ *  Do not attempt to use it directly. @headername{tr1/cmath}
  */
 
 //
@@ -40,16 +39,16 @@
 #ifndef _GLIBCXX_TR1_POLY_HERMITE_TCC
 #define _GLIBCXX_TR1_POLY_HERMITE_TCC 1
 
-namespace std
+namespace std _GLIBCXX_VISIBILITY(default)
 {
 namespace tr1
 {
-
   // [5.2] Special functions
 
   // Implementation-space details.
   namespace __detail
   {
+  _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
     /**
      *   @brief This routine returns the Hermite polynomial
@@ -67,7 +66,7 @@ namespace tr1
      */
     template<typename _Tp>
     _Tp
-    __poly_hermite_recursion(const unsigned int __n, const _Tp __x)
+    __poly_hermite_recursion(unsigned int __n, _Tp __x)
     {
       //  Compute H_0.
       _Tp __H_0 = 1;
@@ -84,7 +83,7 @@ namespace tr1
       unsigned int __i;
       for  (__H_nm2 = __H_0, __H_nm1 = __H_1, __i = 2; __i <= __n; ++__i)
         {
-          __H_n = 2 * (__x * __H_nm1 + (__i - 1) * __H_nm2);
+          __H_n = 2 * (__x * __H_nm1 - (__i - 1) * __H_nm2);
           __H_nm2 = __H_nm1;
           __H_nm1 = __H_n;
         }
@@ -109,7 +108,7 @@ namespace tr1
      */
     template<typename _Tp>
     inline _Tp
-    __poly_hermite(const unsigned int __n, const _Tp __x)
+    __poly_hermite(unsigned int __n, _Tp __x)
     {
       if (__isnan(__x))
         return std::numeric_limits<_Tp>::quiet_NaN();
@@ -117,6 +116,7 @@ namespace tr1
         return __poly_hermite_recursion(__n, __x);
     }
 
+  _GLIBCXX_END_NAMESPACE_VERSION
   } // namespace std::tr1::__detail
 }
 }

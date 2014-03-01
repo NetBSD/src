@@ -1,6 +1,5 @@
 /* Definitions for SOM assembler support.
-   Copyright (C) 1999, 2001, 2002, 2003, 2004, 2005, 2007 Free Software Foundation,
-   Inc.
+   Copyright (C) 1999-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -118,7 +117,7 @@ do {								\
 		 fputs (",PRIV_LEV=3", FILE);				\
 	       }							\
 	     for (parm = DECL_ARGUMENTS (DECL), i = 0; parm && i < 4;	\
-		  parm = TREE_CHAIN (parm))				\
+		  parm = DECL_CHAIN (parm))				\
 	       {							\
 		 if (TYPE_MODE (DECL_ARG_TYPE (parm)) == SFmode		\
 		     && ! TARGET_SOFT_FLOAT)				\
@@ -157,9 +156,7 @@ do {								\
 		   }							\
 	       }							\
 	     /* anonymous args */					\
-	     if (TYPE_ARG_TYPES (tree_type) != 0			\
-		 && (TREE_VALUE (tree_last (TYPE_ARG_TYPES (tree_type)))\
-		     != void_type_node))				\
+	     if (stdarg_p (tree_type))					\
 	       {							\
 		 for (; i < 4; i++)					\
 		   fprintf (FILE, ",ARGW%d=GR", i);			\
@@ -229,7 +226,7 @@ do {								\
        tree id;								\
 									\
        if (!function_label_operand (RTL, VOIDmode))			\
-	 hppa_encode_label (RTL);					\
+	 pa_encode_label (RTL);						\
 									\
        name = targetm.strip_name_encoding (XSTR ((RTL), 0));		\
        id = maybe_get_identifier (name);				\
@@ -271,14 +268,17 @@ do {						\
    must be removed from library prefixes to prevent binaries from depending
    on the location of the GCC tool directory.  The downside is GCC
    cannot be moved after installation using a symlink.  */
-#define ALWAYS_STRIP_DOTDOT 1
+#undef TARGET_ALWAYS_STRIP_DOTDOT
+#define TARGET_ALWAYS_STRIP_DOTDOT true
 
 /* If GAS supports weak, we can support weak when we have working linker
-   support for secondary definitions and are generating code for GAS.  */
+   support for secondary definitions and are generating code for GAS.
+   This is primarily for one-only support as SOM doesn't allow undefined
+   weak symbols.  */
 #ifdef HAVE_GAS_WEAK
-#define SUPPORTS_WEAK (TARGET_SOM_SDEF && TARGET_GAS)
+#define TARGET_SUPPORTS_WEAK (TARGET_SOM_SDEF && TARGET_GAS)
 #else
-#define SUPPORTS_WEAK 0
+#define TARGET_SUPPORTS_WEAK 0
 #endif
 
 /* CVS GAS as of 4/28/04 supports a comdat parameter for the .nsubspa
@@ -291,7 +291,7 @@ do {						\
 #endif
 
 /* We can support one only if we support weak or comdat.  */
-#define SUPPORTS_ONE_ONLY (SUPPORTS_WEAK || SUPPORTS_SOM_COMDAT)
+#define SUPPORTS_ONE_ONLY (TARGET_SUPPORTS_WEAK || SUPPORTS_SOM_COMDAT)
 
 /* We use DECL_COMMON for uninitialized one-only variables as we don't
    have linkonce .bss.  We use SOM secondary definitions or comdat for
@@ -302,7 +302,7 @@ do {						\
         && (DECL_INITIAL (DECL) == 0					\
             || DECL_INITIAL (DECL) == error_mark_node))			\
       DECL_COMMON (DECL) = 1;						\
-    else if (SUPPORTS_WEAK)						\
+    else if (TARGET_SUPPORTS_WEAK)					\
       DECL_WEAK (DECL) = 1;						\
   } while (0)
 
@@ -339,3 +339,7 @@ do {						\
 /* Shared library suffix.  Collect2 strips the version string after
    this suffix when generating constructor/destructor names.  */ 
 #define SHLIB_SUFFIX ".sl"
+
+#define TARGET_HAVE_NAMED_SECTIONS false
+
+#define TARGET_ASM_TM_CLONE_TABLE_SECTION pa_som_tm_clone_table_section

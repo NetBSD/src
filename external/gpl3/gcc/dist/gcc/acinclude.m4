@@ -1,4 +1,4 @@
-dnl Copyright (C) 2005, 2006, 2007, 2008 Free Software Foundation, Inc.
+dnl Copyright (C) 2005-2013 Free Software Foundation, Inc.
 dnl
 dnl This file is part of GCC.
 dnl
@@ -220,99 +220,6 @@ test -z "$INSTALL_DATA" && INSTALL_DATA='${INSTALL} -m 644'
 AC_SUBST(INSTALL_DATA)dnl
 ])
 
-# mmap(2) blacklisting.  Some platforms provide the mmap library routine
-# but don't support all of the features we need from it.
-AC_DEFUN([gcc_AC_FUNC_MMAP_BLACKLIST],
-[
-AC_CHECK_HEADER([sys/mman.h],
-		[gcc_header_sys_mman_h=yes], [gcc_header_sys_mman_h=no])
-AC_CHECK_FUNC([mmap], [gcc_func_mmap=yes], [gcc_func_mmap=no])
-if test "$gcc_header_sys_mman_h" != yes \
- || test "$gcc_func_mmap" != yes; then
-   gcc_cv_func_mmap_file=no
-   gcc_cv_func_mmap_dev_zero=no
-   gcc_cv_func_mmap_anon=no
-else
-   AC_CACHE_CHECK([whether read-only mmap of a plain file works], 
-  gcc_cv_func_mmap_file,
-  [# Add a system to this blacklist if 
-   # mmap(0, stat_size, PROT_READ, MAP_PRIVATE, fd, 0) doesn't return a
-   # memory area containing the same data that you'd get if you applied
-   # read() to the same fd.  The only system known to have a problem here
-   # is VMS, where text files have record structure.
-   case "$host_os" in
-     vms* | ultrix*) 
-        gcc_cv_func_mmap_file=no ;;
-     *)
-        gcc_cv_func_mmap_file=yes;;
-   esac])
-   AC_CACHE_CHECK([whether mmap from /dev/zero works],
-  gcc_cv_func_mmap_dev_zero,
-  [# Add a system to this blacklist if it has mmap() but /dev/zero
-   # does not exist, or if mmapping /dev/zero does not give anonymous
-   # zeroed pages with both the following properties:
-   # 1. If you map N consecutive pages in with one call, and then
-   #    unmap any subset of those pages, the pages that were not
-   #    explicitly unmapped remain accessible.
-   # 2. If you map two adjacent blocks of memory and then unmap them
-   #    both at once, they must both go away.
-   # Systems known to be in this category are Windows (all variants),
-   # VMS, and Darwin.
-   case "$host_os" in
-     vms* | cygwin* | pe | mingw* | darwin* | ultrix* | hpux10* | hpux11.00)
-        gcc_cv_func_mmap_dev_zero=no ;;
-     *)
-        gcc_cv_func_mmap_dev_zero=yes;;
-   esac])
-
-   # Unlike /dev/zero, the MAP_ANON(YMOUS) defines can be probed for.
-   AC_CACHE_CHECK([for MAP_ANON(YMOUS)], gcc_cv_decl_map_anon,
-    [AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
-[#include <sys/types.h>
-#include <sys/mman.h>
-#include <unistd.h>
-
-#ifndef MAP_ANONYMOUS
-#define MAP_ANONYMOUS MAP_ANON
-#endif
-],
-[int n = MAP_ANONYMOUS;])],
-    gcc_cv_decl_map_anon=yes,
-    gcc_cv_decl_map_anon=no)])
-
-   if test $gcc_cv_decl_map_anon = no; then
-     gcc_cv_func_mmap_anon=no
-   else
-     AC_CACHE_CHECK([whether mmap with MAP_ANON(YMOUS) works],
-     gcc_cv_func_mmap_anon,
-  [# Add a system to this blacklist if it has mmap() and MAP_ANON or
-   # MAP_ANONYMOUS, but using mmap(..., MAP_PRIVATE|MAP_ANONYMOUS, -1, 0)
-   # doesn't give anonymous zeroed pages with the same properties listed
-   # above for use of /dev/zero.
-   # Systems known to be in this category are Windows, VMS, and SCO Unix.
-   case "$host_os" in
-     vms* | cygwin* | pe | mingw* | sco* | udk* )
-        gcc_cv_func_mmap_anon=no ;;
-     *)
-        gcc_cv_func_mmap_anon=yes;;
-   esac])
-   fi
-fi
-
-if test $gcc_cv_func_mmap_file = yes; then
-  AC_DEFINE(HAVE_MMAP_FILE, 1,
-	    [Define if read-only mmap of a plain file works.])
-fi
-if test $gcc_cv_func_mmap_dev_zero = yes; then
-  AC_DEFINE(HAVE_MMAP_DEV_ZERO, 1,
-	    [Define if mmap of /dev/zero works.])
-fi
-if test $gcc_cv_func_mmap_anon = yes; then
-  AC_DEFINE(HAVE_MMAP_ANON, 1,
-	    [Define if mmap with MAP_ANON(YMOUS) works.])
-fi
-])
-
 dnl Determine if enumerated bitfields are unsigned.   ISO C says they can 
 dnl be either signed or unsigned.
 dnl
@@ -370,22 +277,106 @@ fi
 fi])
 
 AC_DEFUN([gcc_AC_INITFINI_ARRAY],
-[AC_ARG_ENABLE(initfini-array,
+[AC_REQUIRE([gcc_SUN_LD_VERSION])dnl
+AC_ARG_ENABLE(initfini-array,
 	[  --enable-initfini-array	use .init_array/.fini_array sections],
 	[], [
 AC_CACHE_CHECK(for .preinit_array/.init_array/.fini_array support,
 		 gcc_cv_initfini_array, [dnl
-  AC_RUN_IFELSE([AC_LANG_SOURCE([
+  if test "x${build}" = "x${target}" && test "x${build}" = "x${host}"; then
+    case "${target}" in
+      ia64-*)
+	AC_RUN_IFELSE([AC_LANG_SOURCE([
+#ifndef __ELF__
+#error Not an ELF OS
+#endif
+/* We turn on .preinit_array/.init_array/.fini_array support for ia64
+   if it can be used.  */
 static int x = -1;
 int main (void) { return x; }
 int foo (void) { x = 0; }
-int (*fp) (void) __attribute__ ((section (".init_array"))) = foo;])],
+int (*fp) (void) __attribute__ ((section (".init_array"))) = foo;
+])],
 	     [gcc_cv_initfini_array=yes], [gcc_cv_initfini_array=no],
-	     [gcc_cv_initfini_array=no])])
+	     [gcc_cv_initfini_array=no]);;
+      *)
+	gcc_cv_initfini_array=no
+	if test $in_tree_ld = yes ; then
+	  if test "$gcc_cv_gld_major_version" -eq 2 \
+	     -a "$gcc_cv_gld_minor_version" -ge 22 \
+	     -o "$gcc_cv_gld_major_version" -gt 2 \
+	     && test $in_tree_ld_is_elf = yes; then
+	    gcc_cv_initfini_array=yes
+	  fi
+	elif test x$gcc_cv_as != x -a x$gcc_cv_ld != x -a x$gcc_cv_objdump != x ; then
+	  cat > conftest.s <<\EOF
+.section .dtors,"a",%progbits
+.balign 4
+.byte 'A', 'A', 'A', 'A'
+.section .ctors,"a",%progbits
+.balign 4
+.byte 'B', 'B', 'B', 'B'
+.section .fini_array.65530,"a",%progbits
+.balign 4
+.byte 'C', 'C', 'C', 'C'
+.section .init_array.65530,"a",%progbits
+.balign 4
+.byte 'D', 'D', 'D', 'D'
+.section .dtors.64528,"a",%progbits
+.balign 4
+.byte 'E', 'E', 'E', 'E'
+.section .ctors.64528,"a",%progbits
+.balign 4
+.byte 'F', 'F', 'F', 'F'
+.section .fini_array.01005,"a",%progbits
+.balign 4
+.byte 'G', 'G', 'G', 'G'
+.section .init_array.01005,"a",%progbits
+.balign 4
+.byte 'H', 'H', 'H', 'H'
+.text
+.globl _start
+_start:
+EOF
+	  if $gcc_cv_as -o conftest.o conftest.s > /dev/null 2>&1 \
+	     && $gcc_cv_ld -o conftest conftest.o > /dev/null 2>&1 \
+	     && $gcc_cv_objdump -s -j .init_array conftest \
+		| grep HHHHFFFFDDDDBBBB > /dev/null 2>&1 \
+	     && $gcc_cv_objdump -s -j .fini_array conftest \
+		| grep GGGGEEEECCCCAAAA > /dev/null 2>&1; then
+	    gcc_cv_initfini_array=yes
+	  fi
+changequote(,)dnl
+	  rm -f conftest conftest.*
+changequote([,])dnl
+	fi
+	AC_PREPROC_IFELSE([AC_LANG_SOURCE([
+#ifndef __ELF__
+# error Not an ELF OS
+#endif
+#include <stdlib.h>
+#if defined __GLIBC_PREREQ
+# if __GLIBC_PREREQ (2, 4)
+# else
+#  error GLIBC 2.4 required
+# endif
+#else
+# if defined __sun__ && defined __svr4__
+   /* Solaris ld.so.1 supports .init_array/.fini_array since Solaris 8.  */
+# else
+#  error The C library not known to support .init_array/.fini_array
+# endif
+#endif
+])],, [gcc_cv_initfini_array=no]);;
+    esac
+  else
+    AC_MSG_CHECKING(cross compile... guessing)
+    gcc_cv_initfini_array=no
+  fi])
   enable_initfini_array=$gcc_cv_initfini_array
 ])
 if test $enable_initfini_array = yes; then
-  AC_DEFINE(HAVE_INITFINI_ARRAY, 1,
+  AC_DEFINE(HAVE_INITFINI_ARRAY_SUPPORT, 1,
     [Define .init_array/.fini_array sections are available and working.])
 fi])
 
@@ -401,11 +392,15 @@ for f in $gcc_cv_as_bfd_srcdir/configure \
          $gcc_cv_as_gas_srcdir/configure \
          $gcc_cv_as_gas_srcdir/configure.in \
          $gcc_cv_as_gas_srcdir/Makefile.in ; do
-  gcc_cv_gas_version=`sed -n -e 's/^[[ 	]]*\(VERSION=[[0-9]]*\.[[0-9]]*.*\)/\1/p' < $f`
+  gcc_cv_gas_version=`sed -n -e 's/^[[ 	]]*VERSION=[[^0-9A-Za-z_]]*\([[0-9]]*\.[[0-9]]*.*\)/VERSION=\1/p' < $f`
   if test x$gcc_cv_gas_version != x; then
     break
   fi
 done
+case $gcc_cv_gas_version in
+  VERSION=[[0-9]]*) ;;
+  *) AC_MSG_ERROR([[cannot find version of in-tree assembler]]);;
+esac
 gcc_cv_gas_major_version=`expr "$gcc_cv_gas_version" : "VERSION=\([[0-9]]*\)"`
 gcc_cv_gas_minor_version=`expr "$gcc_cv_gas_version" : "VERSION=[[0-9]]*\.\([[0-9]]*\)"`
 gcc_cv_gas_patch_version=`expr "$gcc_cv_gas_version" : "VERSION=[[0-9]]*\.[[0-9]]*\.\([[0-9]]*\)"`
@@ -452,6 +447,10 @@ AC_DEFUN([gcc_GAS_FLAGS],
     dnl Always pass --32 to ia32 Linux assembler.
     gcc_cv_as_flags="--32"
     ;;
+  powerpc*-*-darwin*)
+    dnl Always pass -arch ppc to assembler.
+    gcc_cv_as_flags="-arch ppc"
+    ;;
   *)
     gcc_cv_as_flags=" "
     ;;
@@ -477,7 +476,7 @@ AC_CACHE_CHECK([assembler for $1], [$2],
   if test $in_tree_gas = yes; then
     gcc_GAS_VERSION_GTE_IFELSE($3, [[$2]=yes])
   el])if test x$gcc_cv_as != x; then
-    echo ifelse(m4_substr([$5],0,1),[$], "[$5]", '[$5]') > conftest.s
+    AS_ECHO([ifelse(m4_substr([$5],0,1),[$], "[$5]", '[$5]')]) > conftest.s
     if AC_TRY_COMMAND([$gcc_cv_as $gcc_cv_as_flags $4 -o conftest.o conftest.s >&AS_MESSAGE_LOG_FD])
     then
 	ifelse([$6],, [$2]=yes, [$6])
@@ -491,6 +490,43 @@ ifelse([$7],,,[dnl
 if test $[$2] = yes; then
   $7
 fi])])
+
+dnl gcc_SUN_LD_VERSION
+dnl
+dnl Determines Sun linker version numbers, setting gcc_cv_sun_ld_vers to
+dnl the complete version number and gcc_cv_sun_ld_vers_{major, minor} to
+dnl the corresponding fields.
+dnl
+dnl ld and ld.so.1 are guaranteed to be updated in lockstep, so ld version
+dnl numbers can be used in ld.so.1 feature checks even if a different
+dnl linker is configured.
+dnl
+AC_DEFUN([gcc_SUN_LD_VERSION],
+[changequote(,)dnl
+if test "x${build}" = "x${target}" && test "x${build}" = "x${host}"; then
+  case "${target}" in
+    *-*-solaris2*)
+      #
+      # Solaris 2 ld -V output looks like this for a regular version:
+      #
+      # ld: Software Generation Utilities - Solaris Link Editors: 5.11-1.1699
+      #
+      # but test versions add stuff at the end:
+      #
+      # ld: Software Generation Utilities - Solaris Link Editors: 5.11-1.1701:onnv-ab196087-6931056-03/25/10
+      #
+      gcc_cv_sun_ld_ver=`/usr/ccs/bin/ld -V 2>&1`
+      if echo "$gcc_cv_sun_ld_ver" | grep 'Solaris Link Editors' > /dev/null; then
+	gcc_cv_sun_ld_vers=`echo $gcc_cv_sun_ld_ver | sed -n \
+	  -e 's,^.*: 5\.[0-9][0-9]*-\([0-9]\.[0-9][0-9]*\).*$,\1,p'`
+	gcc_cv_sun_ld_vers_major=`expr "$gcc_cv_sun_ld_vers" : '\([0-9]*\)'`
+	gcc_cv_sun_ld_vers_minor=`expr "$gcc_cv_sun_ld_vers" : '[0-9]*\.\([0-9]*\)'`
+      fi
+      ;;
+  esac
+fi
+changequote([,])dnl
+])
 
 dnl GCC_TARGET_TEMPLATE(KEY)
 dnl ------------------------

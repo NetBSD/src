@@ -1,7 +1,6 @@
 // std::codecvt implementation details, GNU version -*- C++ -*-
 
-// Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2009
-// Free Software Foundation, Inc.
+// Copyright (C) 2002-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -34,7 +33,9 @@
 #include <climits>  // For MB_LEN_MAX
 #include <bits/c++locale_internal.h>
 
-_GLIBCXX_BEGIN_NAMESPACE(std)
+namespace std _GLIBCXX_VISIBILITY(default)
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   // Specializations.
 #ifdef _GLIBCXX_USE_WCHAR_T
@@ -268,7 +269,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 	    // mbrtowc.
 	    for (__from = __tmp_from;; __from += __conv)
 	      {
-		__conv = mbrtowc(NULL, __from, __end - __from,
+		__conv = mbrtowc(0, __from, __end - __from,
 				 &__tmp_state);
 		if (__conv == static_cast<size_t>(-1)
 		    || __conv == static_cast<size_t>(-2))
@@ -302,4 +303,5 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
   }
 #endif
 
-_GLIBCXX_END_NAMESPACE
+_GLIBCXX_END_NAMESPACE_VERSION
+} // namespace

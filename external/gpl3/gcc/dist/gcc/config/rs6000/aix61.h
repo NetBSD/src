@@ -1,7 +1,6 @@
 /* Definitions of target machine for GNU compiler,
    for IBM RS/6000 POWER running AIX V6.1.
-   Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 2002-2013 Free Software Foundation, Inc.
    Contributed by David Edelsohn (edelsohn@gnu.org).
 
    This file is part of GCC.
@@ -20,37 +19,42 @@
    along with GCC; see the file COPYING3.  If not see
    <http://www.gnu.org/licenses/>.  */
 
-/* Sometimes certain combinations of command options do not make sense
-   on a particular target machine.  You can define a macro
-   `OVERRIDE_OPTIONS' to take account of this.  This macro, if
-   defined, is executed once just after all the command options have
-   been parsed.
+/* The macro SUBTARGET_OVERRIDE_OPTIONS is provided for subtargets, to
+   get control in TARGET_OPTION_OVERRIDE.  */
 
-   The macro SUBTARGET_OVERRIDE_OPTIONS is provided for subtargets, to
-   get control.  */
-
-#define NON_POWERPC_MASKS (MASK_POWER | MASK_POWER2)
 #define SUBTARGET_OVERRIDE_OPTIONS					\
 do {									\
-  if (TARGET_64BIT && (target_flags & NON_POWERPC_MASKS))		\
-    {									\
-      target_flags &= ~NON_POWERPC_MASKS;				\
-      warning (0, "-maix64 and POWER architecture are incompatible");	\
-    }									\
   if (TARGET_64BIT && ! TARGET_POWERPC64)				\
     {									\
-      target_flags |= MASK_POWERPC64;					\
+      rs6000_isa_flags |= OPTION_MASK_POWERPC64;			\
       warning (0, "-maix64 requires PowerPC64 architecture remain enabled"); \
     }									\
   if (TARGET_SOFT_FLOAT && TARGET_LONG_DOUBLE_128)			\
     {									\
       rs6000_long_double_type_size = 64;				\
-      if (rs6000_explicit_options.long_double)				\
+      if (global_options_set.x_rs6000_long_double_type_size)		\
 	warning (0, "soft-float and long-double-128 are incompatible");	\
     }									\
   if (TARGET_POWERPC64 && ! TARGET_64BIT)				\
     {									\
       error ("-maix64 required: 64-bit computation with 32-bit addressing not yet supported"); \
+    }									\
+  if ((rs6000_isa_flags_explicit					\
+       & OPTION_MASK_MINIMAL_TOC) != 0)					\
+    {									\
+      if (global_options_set.x_rs6000_current_cmodel			\
+	  && rs6000_current_cmodel != CMODEL_SMALL)			\
+	error ("-mcmodel incompatible with other toc options"); 	\
+      SET_CMODEL (CMODEL_SMALL);					\
+    }									\
+  if (rs6000_current_cmodel != CMODEL_SMALL)				\
+    {									\
+      TARGET_NO_FP_IN_TOC = 0;						\
+      TARGET_NO_SUM_IN_TOC = 0;						\
+    }									\
+  if (rs6000_current_cmodel == CMODEL_MEDIUM)				\
+    {									\
+      rs6000_current_cmodel = CMODEL_LARGE;				\
     }									\
 } while (0);
 
@@ -66,7 +70,7 @@ do {									\
 "%{!mcpu*: %{!maix64: \
   %{mpowerpc64: -mppc64} \
   %{maltivec: -m970} \
-  %{!maltivec: %{!mpower64: %(asm_default)}}}} \
+  %{!maltivec: %{!mpowerpc64: %(asm_default)}}}} \
 %{mcpu=native: %(asm_cpu_native)} \
 %{mcpu=power3: -m620} \
 %{mcpu=power4: -mpwr4} \
@@ -75,6 +79,7 @@ do {									\
 %{mcpu=power6: -mpwr6} \
 %{mcpu=power6x: -mpwr6} \
 %{mcpu=power7: -mpwr7} \
+%{mcpu=power8: -mpwr8} \
 %{mcpu=powerpc: -mppc} \
 %{mcpu=rs64a: -mppc} \
 %{mcpu=603: -m603} \
@@ -84,10 +89,12 @@ do {									\
 %{mcpu=620: -m620} \
 %{mcpu=630: -m620} \
 %{mcpu=970: -m970} \
-%{mcpu=G5: -m970}"
+%{mcpu=G5: -m970} \
+%{mvsx: %{!mcpu*: -mpwr6}} \
+-many"
 
 #undef	ASM_DEFAULT_SPEC
-#define ASM_DEFAULT_SPEC "-mppc"
+#define ASM_DEFAULT_SPEC "-mpwr4"
 
 #undef TARGET_OS_CPP_BUILTINS
 #define TARGET_OS_CPP_BUILTINS()     \
@@ -119,15 +126,15 @@ do {									\
    %{pthread: -D_THREAD_SAFE}"
 
 #undef  TARGET_DEFAULT
-#define TARGET_DEFAULT (MASK_POWERPC | MASK_NEW_MNEMONICS)
+#define TARGET_DEFAULT (MASK_PPC_GPOPT | MASK_PPC_GFXOPT | MASK_MFCRF)
 
 #undef  PROCESSOR_DEFAULT
-#define PROCESSOR_DEFAULT PROCESSOR_POWER5
+#define PROCESSOR_DEFAULT PROCESSOR_POWER7
 #undef  PROCESSOR_DEFAULT64
-#define PROCESSOR_DEFAULT64 PROCESSOR_POWER5
+#define PROCESSOR_DEFAULT64 PROCESSOR_POWER7
 
-#undef  TARGET_POWER
-#define TARGET_POWER 0
+/* AIX 6.1 kernel and assembler have necessary support for Altivec and VSX.  */
+#undef OS_MISSING_ALTIVEC
 
 /* Define this macro as a C expression for the initializer of an
    array of string to tell the driver program which options are
@@ -144,6 +151,7 @@ do {									\
 #define LIB_SPEC "%{pg:-L%R/lib/profiled -L%R/usr/lib/profiled}\
    %{p:-L%R/lib/profiled -L%R/usr/lib/profiled}\
    %{!maix64:%{!shared:%{g*:-lg}}}\
+   %{fprofile-arcs|fprofile-generate*|coverage:-lpthreads}\
    %{mpe:-L%R/usr/lpp/ppe.poe/lib -lmpi -lvtd}\
    %{pthread:-lpthreads} -lc"
 
@@ -158,7 +166,8 @@ do {									\
    %{maix64:%{pg:gcrt0_64%O%s}%{!pg:%{p:mcrt0_64%O%s}%{!p:crt0_64%O%s}}}\
    %{!maix64:\
      %{pthread:%{pg:gcrt0_r%O%s}%{!pg:%{p:mcrt0_r%O%s}%{!p:crt0_r%O%s}}}\
-     %{!pthread:%{pg:gcrt0%O%s}%{!pg:%{p:mcrt0%O%s}%{!p:crt0%O%s}}}}}"
+     %{!pthread:%{pg:gcrt0%O%s}%{!pg:%{p:mcrt0%O%s}%{!p:crt0%O%s}}}}}\
+   %{shared:crtcxa_s%O%s;:crtcxa%O%s}"
 
 /* AIX V5 typedefs ptrdiff_t as "long" while earlier releases used "int".  */
 
@@ -172,12 +181,6 @@ do {									\
 /* Width of wchar_t in bits.  */
 #undef  WCHAR_TYPE_SIZE
 #define WCHAR_TYPE_SIZE (!TARGET_64BIT ? 16 : 32)
-
-/* AIX V5 uses PowerPC nop (ori 0,0,0) instruction as call glue for PowerPC
-   and "cror 31,31,31" for POWER architecture.  */
-
-#undef RS6000_CALL_GLUE
-#define RS6000_CALL_GLUE "{cror 31,31,31|nop}"
 
 /* AIX 4.2 and above provides initialization and finalization function
    support from linker command line.  */
@@ -198,13 +201,18 @@ extern long long int    atoll(const char *);
 /* This target uses the aix64.opt file.  */
 #define TARGET_USES_AIX64_OPT 1
 
+/* Large TOC Support */
+#ifdef HAVE_LD_LARGE_TOC
+#undef TARGET_CMODEL
+#define TARGET_CMODEL rs6000_current_cmodel
+#define SET_CMODEL(opt) rs6000_current_cmodel = opt
+#else
+#define SET_CMODEL(opt) do {} while (0)
+#endif
+
 /* This target defines SUPPORTS_WEAK and TARGET_ASM_NAMED_SECTION,
    but does not have crtbegin/end.  */
 
 #define TARGET_USE_JCR_SECTION 0
-
-/* Default to 128 bit long double.  */
-
-#define RS6000_DEFAULT_LONG_DOUBLE_SIZE 128
 
 #define TARGET_AIX_VERSION 61

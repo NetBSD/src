@@ -1,7 +1,6 @@
 // std::ctype implementation details, GNU version -*- C++ -*-
 
-// Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
-// Free Software Foundation, Inc.
+// Copyright (C) 2001-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -35,7 +34,7 @@
 #include <cstring>
 #include <cstdio>
 
-namespace std
+namespace std _GLIBCXX_VISIBILITY(default)
 {
   // NB: The other ctype<char> specializations are in src/locale.cc and
   // various /config/os/* files.

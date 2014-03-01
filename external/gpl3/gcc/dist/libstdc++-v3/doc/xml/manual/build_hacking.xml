@@ -1,33 +1,23 @@
-<sect1 id="appendix.porting.build_hacking" xreflabel="Build Hacking">
+<section xmlns="http://docbook.org/ns/docbook" version="5.0"
+	 xml:id="appendix.porting.build_hacking" xreflabel="Build Hacking">
 <?dbhtml filename="build_hacking.html"?>
 
-<sect1info>
+<info><title>Configure and Build Hacking</title>
   <keywordset>
-    <keyword>
-      C++
-    </keyword>
-    <keyword>
-      BUILD_HACKING
-    </keyword>
-    <keyword>
-      version
-    </keyword>
-    <keyword>
-      dynamic
-    </keyword>
-    <keyword>
-      shared
-    </keyword>
+    <keyword>C++</keyword>
+    <keyword>build</keyword>
+    <keyword>configure</keyword>
+    <keyword>hacking</keyword>
+    <keyword>version</keyword>
+    <keyword>dynamic</keyword>
+    <keyword>shared</keyword>
   </keywordset>
-</sect1info>
+</info>
 
-<title>Configure and Build Hacking</title>
+<section xml:id="build_hacking.prereq"><info><title>Prerequisites</title></info>
 
-<sect2 id="build_hacking.prereq">
-  <title>Prerequisites</title>
   <para>
-    As noted <ulink
-    url="http://gcc.gnu.org/install/prerequisites.html">previously</ulink>,
+    As noted <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://gcc.gnu.org/install/prerequisites.html">previously</link>,
     certain other tools are necessary for hacking on files that
     control configure (<code>configure.ac</code>,
     <code>acinclude.m4</code>) and make
@@ -38,37 +28,84 @@
     the auto-tools used, so please try to play nicely with the
     neighbors.
   </para>
-</sect2>
+</section>
 
-<sect2 id="build_hacking.map">
-  <title>Overview: What Comes from Where</title>
+<section xml:id="build_hacking.overview">
+<info><title>Overview</title></info>
 
-  <screen>
-  <inlinemediaobject>
+<section xml:id="build_hacking.overview.basic">
+<info><title>General Process</title></info>
+
+<para>
+  The configure process begins the act of building libstdc++, and is
+  started via:
+</para>
+
+<screen>
+<computeroutput>
+configure
+</computeroutput>
+</screen>
+
+<para>
+The <filename>configure</filename> file is a script generated (via
+<command>autoconf</command>) from the file
+<filename>configure.ac</filename>.
+</para>
+
+
+<para>
+  After the configure process is complete, 
+</para>
+
+<screen>
+<computeroutput>
+make all
+</computeroutput>
+</screen>
+
+<para>
+in the build directory starts the build process. The <literal>all</literal> target comes from the <filename>Makefile</filename> file, which is  generated via <command>configure</command> from the <filename>Makefile.in</filename> file, which is in turn generated (via
+<command>automake</command>) from the file
+<filename>Makefile.am</filename>.
+</para>
+
+</section>
+
+
+<section xml:id="build_hacking.overview.map"><info><title>What Comes from Where</title></info>
+
+
+  <figure>
+    <title>Configure and Build File Dependencies</title>
+  <mediaobject>
     <imageobject>
-      <imagedata fileref="../images/confdeps.png"/>
+      <imagedata align="center" format="PDF" scale="75" fileref="../images/confdeps.pdf"/>
+    </imageobject>
+    <imageobject>
+      <imagedata align="center" format="PNG" scale="100" fileref="../images/confdeps.png"/>
     </imageobject>
     <textobject>
-      <phrase>Dependency Graph Configure to Build Files</phrase>
+      <phrase>Dependency Graph for Configure and Build Files</phrase>
     </textobject>
-  </inlinemediaobject>
-  </screen>
+  </mediaobject>
+  </figure>
 
   <para>
-    Regenerate all generated files by using the command sequence
-    <code>"autoreconf"</code> at the top level of the libstdc++ source
-    directory. The following will also work, but is much more complex:
-    <code>"aclocal-1.11 &amp;&amp; autoconf-2.64 &amp;&amp;
-    autoheader-2.64 &amp;&amp; automake-1.11"</code> The version
-    numbers may be absent entirely or otherwise vary depending on
-    <ulink url="http://gcc.gnu.org/install/prerequisites.html">the
-    current requirements</ulink> and your vendor's choice of
-    installation names.
+    Regenerate all generated files by using the command 
+    <code>autoreconf</code> at the top level of the libstdc++ source
+    directory.
   </para>
-</sect2>
+</section>
 
-<sect2 id="build_hacking.scripts">
-  <title>Storing Information in non-AC files (like configure.host)</title>
+</section> <!-- overview -->
+
+
+<section xml:id="build_hacking.configure">
+<info><title>Configure</title></info>
+
+<section xml:id="build_hacking.configure.scripts"><info><title>Storing Information in non-AC files (like configure.host)</title></info>
+
 
   <para>
     Until that glorious day when we can use AC_TRY_LINK with a
@@ -97,10 +134,10 @@
     to properly find them all when generating configure.  I would
     discourage that.
 </para>
-</sect2>
+</section>
 
-<sect2 id="build_hacking.conventions">
-  <title>Coding and Commenting Conventions</title>
+<section xml:id="build_hacking.configure.conventions"><info><title>Coding and Commenting Conventions</title></info>
+
 
   <para>
     Most comments should use {octothorpes, shibboleths, hash marks,
@@ -122,10 +159,10 @@
     <code>$target_alias</code>.  The single exception is in
     configure.ac, for automake+dejagnu's sake.
   </para>
-</sect2>
+</section>
 
-<sect2 id="build_hacking.acinclude">
-  <title>The acinclude.m4 layout</title>
+<section xml:id="build_hacking.configure.acinclude"><info><title>The acinclude.m4 layout</title></info>
+
   <para>
     The nice thing about acinclude.m4/aclocal.m4 is that macros aren't
     actually performed/called/expanded/whatever here, just loaded.  So
@@ -213,21 +250,21 @@
   present otherwise stuff magically goes wonky.
 </para>
 
-</sect2>
+</section>
 
-<sect2 id="build_hacking.enable">
-  <title><constant>GLIBCXX_ENABLE</constant>, the <literal>--enable</literal> maker</title>
+<section xml:id="build_hacking.configure.enable"><info><title><constant>GLIBCXX_ENABLE</constant>, the <literal>--enable</literal> maker</title></info>
+
 
   <para>
-    All the GLIBCXX_ENABLE_FOO macros use a common helper,
-    GLIBCXX_ENABLE.  (You don't have to use it, but it's easy.)  The
-    helper does two things for us:
+    All the <literal>GLIBCXX_ENABLE_FOO</literal> macros use a common
+    helper, <literal>GLIBCXX_ENABLE</literal>.  (You don't have to use
+    it, but it's easy.)  The helper does two things for us:
   </para>
 
 <orderedlist>
  <listitem>
    <para>
-     Builds the call to the AC_ARG_ENABLE macro, with --help text
+     Builds the call to the <literal>AC_ARG_ENABLE</literal> macro, with --help text
      properly quoted and aligned.  (Death to changequote!)
    </para>
  </listitem>
@@ -235,7 +272,7 @@
    <para>
      Checks the result against a list of allowed possibilities, and
      signals a fatal error if there's no match.  This means that the
-     rest of the GLIBCXX_ENABLE_FOO macro doesn't need to test for
+     rest of the <literal>GLIBCXX_ENABLE_FOO</literal> macro doesn't need to test for
      strange arguments, nor do we need to protect against
      empty/whitespace strings with the <code>"x$foo" = "xbar"</code>
      idiom.
@@ -282,13 +319,13 @@
      not pass --enable/--disable.  It should be one of the permitted
      values passed later.  Examples: <code>[yes]</code>, or
      <code>[bar]</code>, or <code>[$1]</code> (which passes the
-     argument given to the GLIBCXX_ENABLE_FOO macro as the
-     default).
+     argument given to the <literal>GLIBCXX_ENABLE_FOO</literal> macro
+     as the default).
    </para>
    <para>
      For cases where we need to probe for particular models of things,
      it is useful to have an undocumented "auto" value here (see
-     GLIBCXX_ENABLE_CLOCALE for an example).
+     <literal>GLIBCXX_ENABLE_CLOCALE</literal> for an example).
    </para>
  </listitem>
  <listitem>
@@ -304,8 +341,7 @@
    <para>
      If you're wondering what that line noise in the last example was,
      that's how you embed autoconf special characters in output text.
-     They're called <ulink
-       url="http://www.gnu.org/software/autoconf/manual/autoconf.html#Quadrigraphs"><emphasis>quadrigraphs</emphasis></ulink>
+     They're called <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.gnu.org/software/autoconf/manual/autoconf.html#Quadrigraphs"><emphasis>quadrigraphs</emphasis></link>
      and you should use them whenever necessary.
  </para>
  </listitem>
@@ -349,6 +385,87 @@
   message.
 </para>
 
-</sect2>
+</section>
+</section> <!-- configure -->
 
-</sect1>
+<section xml:id="build_hacking.make"><info><title>Make</title></info>
+
+  <para>
+    The build process has to make all of object files needed for
+    static or shared libraries, but first it has to generate some
+    include files. The general order is as follows:
+  </para>
+
+<orderedlist>
+ <listitem>
+   <para>
+     make include files, make pre-compiled headers
+   </para>
+ </listitem>
+ <listitem>
+   <para>
+     make libsupc++
+   </para>
+   <para>
+     Generates a libtool convenience library,
+     <filename>libsupc++convenience</filename> with language-support
+     routines. Also generates a freestanding static library,
+     <filename>libsupc++.a</filename>.
+   </para>
+ </listitem>
+ <listitem>
+   <para>
+     make src
+   </para>
+   <para>
+     Generates two convenience libraries, one for C++98 and one for
+     C++11, various compability files for shared and static
+     libraries, and then collects all the generated bits and creates
+     the final libstdc++ libraries.
+  </para>
+<orderedlist>
+ <listitem>
+   <para>
+     make src/c++98
+   </para>
+   <para>
+     Generates a libtool convenience library,
+     <filename>libc++98convenience</filename> with language-support
+     routines. Uses the <literal>-std=gnu++98</literal> dialect.
+   </para>
+ </listitem>
+ <listitem>
+   <para>
+     make src/c++11
+   </para>
+   <para>
+     Generates a libtool convenience library,
+     <filename>libc++11convenience</filename> with language-support
+     routines. Uses the <literal>-std=gnu++11</literal> dialect.
+   </para>
+ </listitem>
+ <listitem>
+   <para>
+     make src
+   </para>
+   <para>
+     Generates needed compatibility objects for shared and static
+     libraries. Shared-only code is seggregated at compile-time via
+     the macro <literal>_GLIBCXX_SHARED</literal>.
+   </para>
+
+   <para>
+     Then, collects all the generated convenience libraries, adds in
+     any required compatibility objects, and creates the final shared
+     and static libraries: <filename>libstdc++.so</filename> and
+     <filename>libstdc++.a</filename>.
+   </para>
+
+ </listitem>
+</orderedlist>
+ </listitem>
+</orderedlist>
+
+</section> <!-- make -->
+
+</section>

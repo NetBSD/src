@@ -1,5 +1,5 @@
 ;; Constraint definitions for RS6000
-;; Copyright (C) 2006, 2007, 2009, 2010 Free Software Foundation, Inc.
+;; Copyright (C) 2006-2013 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -17,7 +17,7 @@
 ;; along with GCC; see the file COPYING3.  If not see
 ;; <http://www.gnu.org/licenses/>.
 
-;; Available constraint letters: "e", "k", "u", "A", "B", "C", "D"
+;; Available constraint letters: "e", "k", "q", "u", "A", "B", "C", "D"
 
 ;; Register constraints
 
@@ -31,9 +31,6 @@
   "@internal")
 
 (define_register_constraint "h" "SPECIAL_REGS"
-  "@internal")
-
-(define_register_constraint "q" "MQ_REGS"
   "@internal")
 
 (define_register_constraint "c" "CTR_REGS"
@@ -51,7 +48,7 @@
 (define_register_constraint "y" "CR_REGS"
   "@internal")
 
-(define_register_constraint "z" "XER_REGS"
+(define_register_constraint "z" "CA_REGS"
   "@internal")
 
 ;; Use w as a prefix to add VSX modes
@@ -150,8 +147,9 @@ to use @samp{m} or @samp{es} in @code{asm} statements)"
        (match_test "GET_CODE (XEXP (op, 0)) == REG")))
 
 (define_memory_constraint "Y"
-  "Indexed or word-aligned displacement memory operand"
-  (match_operand 0 "word_offset_memref_operand"))
+  "memory operand for 8 byte and 16 byte gpr load/store"
+  (and (match_code "mem")
+       (match_operand 0 "mem_operand_gpr")))
 
 (define_memory_constraint "Z"
   "Memory operand that is an indexed or indirect from a register (it is
@@ -166,7 +164,7 @@ usually better to use @samp{m} or @samp{es} in @code{asm} statements)"
 
 (define_constraint "R"
   "AIX TOC entry"
-  (match_test "legitimate_constant_pool_address_p (op)"))
+  (match_test "legitimate_constant_pool_address_p (op, QImode, false)"))
 
 ;; General constraints
 
@@ -198,4 +196,4 @@ usually better to use @samp{m} or @samp{es} in @code{asm} statements)"
 
 (define_constraint "j"
   "Zero vector constant"
-  (match_test "(op == const0_rtx || op == CONST0_RTX (GET_MODE (op)))"))
+  (match_test "op == const0_rtx || op == CONST0_RTX (GET_MODE (op))"))

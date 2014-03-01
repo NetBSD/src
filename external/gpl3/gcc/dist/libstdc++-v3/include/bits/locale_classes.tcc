@@ -1,6 +1,6 @@
 // Locale support -*- C++ -*-
 
-// Copyright (C) 2007, 2008, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2007-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -22,9 +22,9 @@
 // see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 // <http://www.gnu.org/licenses/>.
 
-/** @file locale_classes.tcc
+/** @file bits/locale_classes.tcc
  *  This is an internal header file, included by other library headers.
- *  You should not attempt to use it directly.
+ *  Do not attempt to use it directly. @headername{locale}
  */
 
 //
@@ -36,7 +36,9 @@
 
 #pragma GCC system_header
 
-_GLIBCXX_BEGIN_NAMESPACE(std)
+namespace std _GLIBCXX_VISIBILITY(default)
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   template<typename _Facet>
     locale::
@@ -85,7 +87,18 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 				__s2.data(), __s2.data() + __s2.length()) < 0);
     }
 
-
+  /**
+   *  @brief  Test for the presence of a facet.
+   *  @ingroup locales
+   *
+   *  has_facet tests the locale argument for the presence of the facet type
+   *  provided as the template parameter.  Facets derived from the facet
+   *  parameter will also return true.
+   *
+   *  @tparam  _Facet  The facet type to test the presence of.
+   *  @param  __loc  The locale to test.
+   *  @return  true if @p __loc contains a facet of type _Facet, else false.
+  */
   template<typename _Facet>
     bool
     has_facet(const locale& __loc) throw()
@@ -100,6 +113,20 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 #endif
     }
 
+  /**
+   *  @brief  Return a facet.
+   *  @ingroup locales
+   *
+   *  use_facet looks for and returns a reference to a facet of type Facet
+   *  where Facet is the template parameter.  If has_facet(locale) is true,
+   *  there is a suitable facet to return.  It throws std::bad_cast if the
+   *  locale doesn't contain a facet of type Facet.
+   *
+   *  @tparam  _Facet  The facet type to access.
+   *  @param  __loc  The locale to use.
+   *  @return  Reference to facet of type Facet.
+   *  @throw  std::bad_cast if @p __loc doesn't contain a facet of type _Facet.
+  */
   template<typename _Facet>
     const _Facet&
     use_facet(const locale& __loc)
@@ -239,7 +266,6 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 
   // Inhibit implicit instantiations for required instantiations,
   // which are defined via explicit instantiations elsewhere.
-  // NB: This syntax is a GNU extension.
 #if _GLIBCXX_EXTERN_TEMPLATE
   extern template class collate<char>;
   extern template class collate_byname<char>;
@@ -266,6 +292,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 #endif
 #endif
 
-_GLIBCXX_END_NAMESPACE
+_GLIBCXX_END_NAMESPACE_VERSION
+} // namespace std
 
 #endif

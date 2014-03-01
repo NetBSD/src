@@ -1,5 +1,5 @@
 ;; Predicate definitions for ATMEL AVR micro controllers.
-;; Copyright (C) 2006, 2007, 2008 Free Software Foundation, Inc.
+;; Copyright (C) 2006-2013 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -45,22 +45,70 @@
 ;; Return true if OP is a valid address for lower half of I/O space.
 (define_predicate "low_io_address_operand"
   (and (match_code "const_int")
-       (match_test "IN_RANGE((INTVAL (op)), 0x20, 0x3F)")))
+       (match_test "IN_RANGE (INTVAL (op) - avr_current_arch->sfr_offset,
+                              0, 0x1f)")))
 
 ;; Return true if OP is a valid address for high half of I/O space.
 (define_predicate "high_io_address_operand"
   (and (match_code "const_int")
-       (match_test "IN_RANGE((INTVAL (op)), 0x40, 0x5F)")))
+       (match_test "IN_RANGE (INTVAL (op) - avr_current_arch->sfr_offset,
+                              0x20, 0x3F)")))
 
 ;; Return true if OP is a valid address of I/O space.
 (define_predicate "io_address_operand"
   (and (match_code "const_int")
-       (match_test "IN_RANGE((INTVAL (op)), 0x20, (0x60 - GET_MODE_SIZE(mode)))")))
+       (match_test "IN_RANGE (INTVAL (op) - avr_current_arch->sfr_offset,
+                              0, 0x40 - GET_MODE_SIZE (mode))")))
+
+;; Return 1 if OP is a general operand not in flash memory
+(define_predicate "nop_general_operand"
+  (and (match_operand 0 "general_operand")
+       (match_test "!avr_mem_flash_p (op)")))
+
+;; Return 1 if OP is an "ordinary" general operand, i.e. a general
+;; operand whose load is not handled by a libgcc call or ELPM.
+(define_predicate "nox_general_operand"
+  (and (match_operand 0 "general_operand")
+       (not (match_test "avr_load_libgcc_p (op)"))
+       (not (match_test "avr_mem_memx_p (op)"))))
+
+;; Return 1 if OP is a memory operand in one of the __flash* address spaces
+(define_predicate "flash_operand"
+  (and (match_operand 0 "memory_operand")
+       (match_test "Pmode == mode")
+       (ior (match_test "!MEM_P (op)")
+            (match_test "avr_mem_flash_p (op)"))))
 
 ;; Return 1 if OP is the zero constant for MODE.
 (define_predicate "const0_operand"
-  (and (match_code "const_int,const_double")
+  (and (match_code "const_int,const_fixed,const_double")
        (match_test "op == CONST0_RTX (mode)")))
+
+;; Return 1 if OP is the one constant integer for MODE.
+(define_predicate "const1_operand"
+  (and (match_code "const_int")
+       (match_test "op == CONST1_RTX (mode)")))
+
+
+;; Return 1 if OP is constant integer 0..7 for MODE.
+(define_predicate "const_0_to_7_operand"
+  (and (match_code "const_int")
+       (match_test "IN_RANGE (INTVAL (op), 0, 7)")))
+
+;; Return 1 if OP is constant integer 2..7 for MODE.
+(define_predicate "const_2_to_7_operand"
+  (and (match_code "const_int")
+       (match_test "IN_RANGE (INTVAL (op), 2, 7)")))
+
+;; Return 1 if OP is constant integer 1..6 for MODE.
+(define_predicate "const_1_to_6_operand"
+  (and (match_code "const_int")
+       (match_test "IN_RANGE (INTVAL (op), 1, 6)")))
+
+;; Return 1 if OP is constant integer 2..6 for MODE.
+(define_predicate "const_2_to_6_operand"
+  (and (match_code "const_int")
+       (match_test "IN_RANGE (INTVAL (op), 2, 6)")))
 
 ;; Returns true if OP is either the constant zero or a register.
 (define_predicate "reg_or_0_operand"
@@ -109,16 +157,16 @@
 ;;
 (define_predicate "avr_sp_immediate_operand"
   (and (match_code "const_int")
-       (match_test "INTVAL (op) >= -6 && INTVAL (op) <= 5")))
+       (match_test "satisfies_constraint_Csp (op)")))
 
 ;; True for EQ & NE
 (define_predicate "eqne_operator"
   (match_code "eq,ne"))
-       
+
 ;; True for GE & LT
 (define_predicate "gelt_operator"
   (match_code "ge,lt"))
-       
+
 ;; True for GT, GTU, LE & LEU
 (define_predicate "difficult_comparison_operator"
   (match_code "gt,gtu,le,leu"))
@@ -134,7 +182,94 @@
        (ior (match_test "register_operand (XEXP (op, 0), mode)")
             (match_test "CONSTANT_ADDRESS_P (XEXP (op, 0))"))))
 
+;; For some insns we must ensure that no hard register is inserted
+;; into their operands because the insns are split and the split
+;; involves hard registers.  An example are divmod insn that are
+;; split to insns that represent implicit library calls.
+
 ;; True for register that is pseudo register.
 (define_predicate "pseudo_register_operand"
-  (and (match_code "reg")
-       (match_test "!HARD_REGISTER_P (op)")))
+  (and (match_operand 0 "register_operand")
+       (not (and (match_code "reg")
+                 (match_test "HARD_REGISTER_P (op)")))))
+
+;; True for operand that is pseudo register or CONST_INT.
+(define_predicate "pseudo_register_or_const_int_operand"
+  (ior (match_operand 0 "const_int_operand")
+       (match_operand 0 "pseudo_register_operand")))
+
+;; We keep combiner from inserting hard registers into the input of sign- and
+;; zero-extends.  A hard register in the input operand is not wanted because
+;; 32-bit multiply patterns clobber some hard registers and extends with a
+;; hard register that overlaps these clobbers won't combine to a widening
+;; multiplication.  There is no need for combine to propagate or insert
+;; hard registers, register allocation can do it just as well.
+
+;; True for operand that is pseudo register at combine time.
+(define_predicate "combine_pseudo_register_operand"
+  (ior (match_operand 0 "pseudo_register_operand")
+       (and (match_operand 0 "register_operand")
+            (match_test "reload_completed || reload_in_progress"))))
+
+;; Return true if OP is a constant integer that is either
+;; 8 or 16 or 24.
+(define_predicate "const_8_16_24_operand"
+  (and (match_code "const_int")
+       (match_test "8 == INTVAL(op) || 16 == INTVAL(op) || 24 == INTVAL(op)")))
+
+;; Unsigned CONST_INT that fits in 8 bits, i.e. 0..255.
+(define_predicate "u8_operand"
+  (and (match_code "const_int")
+       (match_test "IN_RANGE (INTVAL (op), 0, 255)")))
+
+;; Signed CONST_INT that fits in 8 bits, i.e. -128..127.
+(define_predicate "s8_operand"
+  (and (match_code "const_int")
+       (match_test "IN_RANGE (INTVAL (op), -128, 127)")))
+
+;; One-extended CONST_INT that fits in 8 bits, i.e. -256..-1.
+(define_predicate "o8_operand"
+  (and (match_code "const_int")
+       (match_test "IN_RANGE (INTVAL (op), -256, -1)")))
+
+;; Signed CONST_INT that fits in 9 bits, i.e. -256..255.
+(define_predicate "s9_operand"
+  (and (match_code "const_int")
+       (match_test "IN_RANGE (INTVAL (op), -256, 255)")))
+
+(define_predicate "register_or_s9_operand"
+  (ior (match_operand 0 "register_operand")
+       (match_operand 0 "s9_operand")))
+
+;; Unsigned CONST_INT that fits in 16 bits, i.e. 0..65536.
+(define_predicate "u16_operand"
+  (and (match_code "const_int")
+       (match_test "IN_RANGE (INTVAL (op), 0, (1<<16)-1)")))
+
+;; Signed CONST_INT that fits in 16 bits, i.e. -32768..32767.
+(define_predicate "s16_operand"
+  (and (match_code "const_int")
+       (match_test "IN_RANGE (INTVAL (op), -(1<<15), (1<<15)-1)")))
+
+;; One-extended CONST_INT that fits in 16 bits, i.e. -65536..-1.
+(define_predicate "o16_operand"
+  (and (match_code "const_int")
+       (match_test "IN_RANGE (INTVAL (op), -(1<<16), -1)")))
+
+;; Const int, fixed, or double operand
+(define_predicate "const_operand"
+  (ior (match_code "const_fixed")
+       (match_code "const_double")
+       (match_operand 0 "const_int_operand")))
+
+;; Const int, const fixed, or const double operand
+(define_predicate "nonmemory_or_const_operand"
+  (ior (match_code "const_fixed")
+       (match_code "const_double")
+       (match_operand 0 "nonmemory_operand")))
+
+;; Immediate, const fixed, or const double operand
+(define_predicate "const_or_immediate_operand"
+  (ior (match_code "const_fixed")
+       (match_code "const_double")
+       (match_operand 0 "immediate_operand")))

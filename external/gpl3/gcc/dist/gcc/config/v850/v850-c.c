@@ -1,6 +1,5 @@
 /* v850 specific, C compiler specific functions.
-   Copyright (C) 2000, 2001, 2002, 2003, 2005, 2007, 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 2000-2013 Free Software Foundation, Inc.
    Contributed by Jeff Law (law@cygnus.com).
 
 This file is part of GCC.
@@ -25,8 +24,8 @@ along with GCC; see the file COPYING3.  If not see
 #include "tm.h"
 #include "cpplib.h"
 #include "tree.h"
-#include "c-pragma.h"
-#include "toplev.h"
+#include "c-family/c-pragma.h"
+#include "diagnostic-core.h"
 #include "ggc.h"
 #include "tm_p.h"
 

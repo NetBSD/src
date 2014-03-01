@@ -1,6 +1,5 @@
 /* Debug hooks for GCC.
-   Copyright (C) 2001, 2002, 2003, 2004, 2005, 2007, 2008
-   Free Software Foundation, Inc.
+   Copyright (C) 2001-2013 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify it
    under the terms of the GNU General Public License as published by the
@@ -75,6 +74,9 @@ struct gcc_debug_hooks
      function.  */
   void (* end_prologue) (unsigned int line, const char *file);
 
+  /* Called at beginning of epilogue code.  */
+  void (* begin_epilogue) (unsigned int line, const char *file);
+
   /* Record end of epilogue code.  */
   void (* end_epilogue) (unsigned int line, const char *file);
 
@@ -130,31 +132,6 @@ struct gcc_debug_hooks
      text sections.  */
   void (* switch_text_section) (void);
 
-  /* Records a direct call to the function DECL, noting the point of call
-     and the debug info for the function.  Called from final_scan_insn
-     when ICF debugging is enabled.  */
-  void (* direct_call) (tree decl);
-
-  /* Records the OBJ_TYPE_REF_TOKEN for a virtual call through ADDR, which
-     for C++ is the vtable slot index, noting the INSN_UID for the call
-     instruction.  Called from calls.c:emit_call_1 when ICF debugging is
-     enabled.  It's necessary to do this during lowering because the
-     call instruction and the OBJ_TYPE_REF become separated after that
-     point.  */
-  void (* virtual_call_token) (tree addr, int insn_uid);
-
-  /* Copies the OBJ_TYPE_REF_TOKEN for a virtual call from OLD_INSN to
-     NEW_INSN.  Called from emit-rtl.c:try_split when a CALL_INSN is
-     split, so that the vtable slot index remains associated with the
-     new CALL_INSN.  */
-  void (* copy_call_info) (rtx old_insn, rtx new_insn);
-
-  /* Records a virtual call given INSN_UID, which is the UID of the call
-     instruction.  The UID is then mapped to the vtable slot index noted
-     during the lowering phase.  Called from final_scan_insn when ICF
-     debugging is enabled.  */
-  void (* virtual_call) (int insn_uid);
-
   /* Called from grokdeclarator.  Replaces the anonymous name with the
      type name.  */
   void (* set_name) (tree, tree);
@@ -162,6 +139,10 @@ struct gcc_debug_hooks
   /* This is 1 if the debug writer wants to see start and end commands for the
      main source files, and 0 otherwise.  */
   int start_end_main_source_file;
+
+  /* The type of symtab field used by these debug hooks.  This is one
+     of the TYPE_SYMTAB_IS_xxx values defined in tree.h.  */
+  int tree_type_symtab_field;
 };
 
 extern const struct gcc_debug_hooks *debug_hooks;
@@ -181,7 +162,6 @@ extern void debug_nothing_tree_tree_tree_bool (tree, tree, tree, bool);
 extern bool debug_true_const_tree (const_tree);
 extern void debug_nothing_rtx (rtx);
 extern void debug_nothing_rtx_rtx (rtx, rtx);
-extern void debug_nothing_uid (int);
 
 /* Hooks for various debug formats.  */
 extern const struct gcc_debug_hooks do_nothing_debug_hooks;
@@ -194,22 +174,22 @@ extern const struct gcc_debug_hooks vmsdbg_debug_hooks;
 /* Dwarf2 frame information.  */
 
 extern void dwarf2out_begin_prologue (unsigned int, const char *);
+extern void dwarf2out_vms_end_prologue (unsigned int, const char *);
+extern void dwarf2out_vms_begin_epilogue (unsigned int, const char *);
 extern void dwarf2out_end_epilogue (unsigned int, const char *);
-extern void dwarf2out_frame_init (void);
 extern void dwarf2out_frame_finish (void);
 /* Decide whether we want to emit frame unwind information for the current
    translation unit.  */
-extern int dwarf2out_do_frame (void);
-extern int dwarf2out_do_cfi_asm (void);
+extern bool dwarf2out_do_frame (void);
+extern bool dwarf2out_do_cfi_asm (void);
 extern void dwarf2out_switch_text_section (void);
-
-extern void debug_flush_symbol_queue (void);
-extern void debug_queue_symbol (tree);
-extern void debug_free_queue (void);
-extern int debug_nesting;
-extern int symbol_queue_index;
 
 const char *remap_debug_filename (const char *);
 void add_debug_prefix_map (const char *);
+
+/* For -fdump-go-spec.  */
+
+extern const struct gcc_debug_hooks *
+dump_go_spec_init (const char *, const struct gcc_debug_hooks *);
 
 #endif /* !GCC_DEBUG_H  */

@@ -1,7 +1,5 @@
 /* Separate lexical analyzer for GNU C++.
-   Copyright (C) 1987, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-   1999, 2000, 2001, 2002, 2003, 2004, 2005, 2007, 2008
-   Free Software Foundation, Inc.
+   Copyright (C) 1987-2013 Free Software Foundation, Inc.
    Hacked by Michael Tiemann (tiemann@cygnus.com)
 
 This file is part of GCC.
@@ -32,9 +30,8 @@ along with GCC; see the file COPYING3.  If not see
 #include "cp-tree.h"
 #include "cpplib.h"
 #include "flags.h"
-#include "c-pragma.h"
-#include "toplev.h"
-#include "output.h"
+#include "c-family/c-pragma.h"
+#include "c-family/c-objc.h"
 #include "tm_p.h"
 #include "timevar.h"
 
@@ -174,7 +171,7 @@ init_reswords (void)
   tree id;
   int mask = 0;
 
-  if (cxx_dialect != cxx0x)
+  if (cxx_dialect < cxx0x)
     mask |= D_CXX0X;
   if (flag_no_asm)
     mask |= D_ASM | D_EXT;
@@ -184,7 +181,7 @@ init_reswords (void)
   /* The Objective-C keywords are all context-dependent.  */
   mask |= D_OBJC;
 
-  ridpointers = GGC_CNEWVEC (tree, (int) RID_MAX);
+  ridpointers = ggc_alloc_cleared_vec_tree ((int) RID_MAX);
   for (i = 0; i < num_c_common_reswords; i++)
     {
       if (c_common_reswords[i].disable & D_CONLY)
@@ -226,8 +223,9 @@ cxx_init (void)
    CTOR_INITIALIZER,	TRY_BLOCK,	HANDLER,
    EH_SPEC_BLOCK,	USING_STMT,	TAG_DEFN,
    IF_STMT,		CLEANUP_STMT,	FOR_STMT,
-   WHILE_STMT,		DO_STMT,	BREAK_STMT,
-   CONTINUE_STMT,	SWITCH_STMT,	EXPR_STMT
+   RANGE_FOR_STMT,	WHILE_STMT,	DO_STMT,
+   BREAK_STMT,		CONTINUE_STMT,	SWITCH_STMT,
+   EXPR_STMT
   };
 
   memset (&statement_code_p, 0, sizeof (statement_code_p));
@@ -279,10 +277,10 @@ interface_strcmp (const char* s)
       const char *t1 = ifiles->filename;
       s1 = s;
 
-      if (*s1 != *t1 || *s1 == 0)
+      if (*s1 == 0 || filename_ncmp (s1, t1, 1) != 0)
 	continue;
 
-      while (*s1 == *t1 && *s1 != 0)
+      while (*s1 != 0 && filename_ncmp (s1, t1, 1) == 0)
 	s1++, t1++;
 
       /* A match.  */
@@ -330,21 +328,21 @@ parse_strconst_pragma (const char* name, int opt)
 }
 
 static void
-handle_pragma_vtable (cpp_reader* dfile ATTRIBUTE_UNUSED )
+handle_pragma_vtable (cpp_reader* /*dfile*/)
 {
   parse_strconst_pragma ("vtable", 0);
   sorry ("#pragma vtable no longer supported");
 }
 
 static void
-handle_pragma_unit (cpp_reader* dfile ATTRIBUTE_UNUSED )
+handle_pragma_unit (cpp_reader* /*dfile*/)
 {
   /* Validate syntax, but don't do anything.  */
   parse_strconst_pragma ("unit", 0);
 }
 
 static void
-handle_pragma_interface (cpp_reader* dfile ATTRIBUTE_UNUSED )
+handle_pragma_interface (cpp_reader* /*dfile*/)
 {
   tree fname = parse_strconst_pragma ("interface", 1);
   struct c_fileinfo *finfo;
@@ -384,7 +382,7 @@ handle_pragma_interface (cpp_reader* dfile ATTRIBUTE_UNUSED )
    any effect.  */
 
 static void
-handle_pragma_implementation (cpp_reader* dfile ATTRIBUTE_UNUSED )
+handle_pragma_implementation (cpp_reader* /*dfile*/)
 {
   tree fname = parse_strconst_pragma ("implementation", 1);
   const char *filename;
@@ -411,7 +409,7 @@ handle_pragma_implementation (cpp_reader* dfile ATTRIBUTE_UNUSED )
 
   for (; ifiles; ifiles = ifiles->next)
     {
-      if (! strcmp (ifiles->filename, filename))
+      if (! filename_cmp (ifiles->filename, filename))
 	break;
     }
   if (ifiles == 0)
@@ -425,7 +423,7 @@ handle_pragma_implementation (cpp_reader* dfile ATTRIBUTE_UNUSED )
 
 /* Indicate that this file uses Java-personality exception handling.  */
 static void
-handle_pragma_java_exceptions (cpp_reader* dfile ATTRIBUTE_UNUSED)
+handle_pragma_java_exceptions (cpp_reader* /*dfile*/)
 {
   tree x;
   if (pragma_lex (&x) != CPP_EOF)
@@ -448,10 +446,14 @@ unqualified_name_lookup_error (tree name)
     }
   else
     {
-      error ("%qD was not declared in this scope", name);
+      if (!objc_diagnose_private_ivar (name))
+	{
+	  error ("%qD was not declared in this scope", name);
+	  suggest_alternatives_for (location_of (name), name);
+	}
       /* Prevent repeated error messages by creating a VAR_DECL with
 	 this NAME in the innermost block scope.  */
-      if (current_function_decl)
+      if (local_bindings_p ())
 	{
 	  tree decl;
 	  decl = build_decl (input_location,
@@ -507,13 +509,25 @@ unqualified_fn_lookup_error (tree name)
   return unqualified_name_lookup_error (name);
 }
 
+/* Wrapper around build_lang_decl_loc(). Should gradually move to
+   build_lang_decl_loc() and then rename build_lang_decl_loc() back to
+   build_lang_decl().  */
+
 tree
 build_lang_decl (enum tree_code code, tree name, tree type)
 {
+  return build_lang_decl_loc (input_location, code, name, type);
+}
+
+/* Build a decl from CODE, NAME, TYPE declared at LOC, and then add
+   DECL_LANG_SPECIFIC info to the result.  */
+
+tree
+build_lang_decl_loc (location_t loc, enum tree_code code, tree name, tree type)
+{
   tree t;
 
-  t = build_decl (input_location,
-		  code, name, type);
+  t = build_decl (loc, code, name, type);
   retrofit_lang_decl (t);
 
   return t;
@@ -540,7 +554,7 @@ retrofit_lang_decl (tree t)
   else
     gcc_unreachable ();
 
-  ld = GGC_CNEWVAR (struct lang_decl, size);
+  ld = ggc_alloc_cleared_lang_decl (size);
 
   ld->u.base.selector = sel;
 
@@ -555,10 +569,11 @@ retrofit_lang_decl (tree t)
   else
     gcc_unreachable ();
 
-#ifdef GATHER_STATISTICS
-  tree_node_counts[(int)lang_decl] += 1;
-  tree_node_sizes[(int)lang_decl] += size;
-#endif
+  if (GATHER_STATISTICS)
+    {
+      tree_node_counts[(int)lang_decl] += 1;
+      tree_node_sizes[(int)lang_decl] += size;
+    }
 }
 
 void
@@ -581,14 +596,15 @@ cxx_dup_lang_specific_decl (tree node)
   else
     gcc_unreachable ();
 
-  ld = GGC_NEWVAR (struct lang_decl, size);
+  ld = ggc_alloc_lang_decl (size);
   memcpy (ld, DECL_LANG_SPECIFIC (node), size);
   DECL_LANG_SPECIFIC (node) = ld;
 
-#ifdef GATHER_STATISTICS
-  tree_node_counts[(int)lang_decl] += 1;
-  tree_node_sizes[(int)lang_decl] += size;
-#endif
+  if (GATHER_STATISTICS)
+    {
+      tree_node_counts[(int)lang_decl] += 1;
+      tree_node_sizes[(int)lang_decl] += size;
+    }
 }
 
 /* Copy DECL, including any language-specific parts.  */
@@ -618,14 +634,15 @@ copy_lang_type (tree node)
     size = sizeof (struct lang_type);
   else
     size = sizeof (struct lang_type_ptrmem);
-  lt = GGC_NEWVAR (struct lang_type, size);
+  lt = ggc_alloc_lang_type (size);
   memcpy (lt, TYPE_LANG_SPECIFIC (node), size);
   TYPE_LANG_SPECIFIC (node) = lt;
 
-#ifdef GATHER_STATISTICS
-  tree_node_counts[(int)lang_type] += 1;
-  tree_node_sizes[(int)lang_type] += size;
-#endif
+  if (GATHER_STATISTICS)
+    {
+      tree_node_counts[(int)lang_type] += 1;
+      tree_node_sizes[(int)lang_type] += size;
+    }
 }
 
 /* Copy TYPE, including any language-specific parts.  */
@@ -649,15 +666,17 @@ cxx_make_type (enum tree_code code)
   if (RECORD_OR_UNION_CODE_P (code)
       || code == BOUND_TEMPLATE_TEMPLATE_PARM)
     {
-      struct lang_type *pi = GGC_CNEW (struct lang_type);
+      struct lang_type *pi
+          = ggc_alloc_cleared_lang_type (sizeof (struct lang_type));
 
       TYPE_LANG_SPECIFIC (t) = pi;
       pi->u.c.h.is_lang_type_class = 1;
 
-#ifdef GATHER_STATISTICS
-      tree_node_counts[(int)lang_type] += 1;
-      tree_node_sizes[(int)lang_type] += sizeof (struct lang_type);
-#endif
+      if (GATHER_STATISTICS)
+	{
+	  tree_node_counts[(int)lang_type] += 1;
+	  tree_node_sizes[(int)lang_type] += sizeof (struct lang_type);
+	}
     }
 
   /* Set up some flags that give proper default behavior.  */
@@ -688,8 +707,8 @@ in_main_input_context (void)
   struct tinst_level *tl = outermost_tinst_level();
 
   if (tl)
-    return strcmp (main_input_filename,
-                  LOCATION_FILE (tl->locus)) == 0;
+    return filename_cmp (main_input_filename,
+			 LOCATION_FILE (tl->locus)) == 0;
   else
-    return strcmp (main_input_filename, input_filename) == 0;
+    return filename_cmp (main_input_filename, input_filename) == 0;
 }

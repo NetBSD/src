@@ -1,7 +1,6 @@
 // std::time_get, std::time_put implementation, generic version -*- C++ -*-
 
-// Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2009, 2010
-// Free Software Foundation, Inc.
+// Copyright (C) 2001-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -34,7 +33,9 @@
 #include <cstdlib>
 #include <cstring>
 
-_GLIBCXX_BEGIN_NAMESPACE(std)
+namespace std _GLIBCXX_VISIBILITY(default)
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   template<>
     void
@@ -42,7 +43,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
     _M_put(char* __s, size_t __maxlen, const char* __format,
 	   const tm* __tm) const throw()
     {
-      char* __old = setlocale(LC_ALL, NULL);
+      char* __old = setlocale(LC_ALL, 0);
       const size_t __llen = strlen(__old) + 1;
       char* __sav = new char[__llen];
       memcpy(__sav, __old, __llen);
@@ -127,7 +128,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
     _M_put(wchar_t* __s, size_t __maxlen, const wchar_t* __format,
 	   const tm* __tm) const throw()
     {
-      char* __old = setlocale(LC_ALL, NULL);
+      char* __old = setlocale(LC_ALL, 0);
       const size_t __llen = strlen(__old) + 1;
       char* __sav = new char[__llen];
       memcpy(__sav, __old, __llen);
@@ -206,4 +207,5 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
     }
 #endif
 
-_GLIBCXX_END_NAMESPACE
+_GLIBCXX_END_NAMESPACE_VERSION
+} // namespace

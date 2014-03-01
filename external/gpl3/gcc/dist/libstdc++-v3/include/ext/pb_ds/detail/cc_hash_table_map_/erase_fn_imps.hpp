@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2005, 2006, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2005-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -34,7 +34,7 @@
 // warranty.
 
 /**
- * @file erase_fn_imps.hpp
+ * @file cc_hash_table_map_/erase_fn_imps.hpp
  * Contains implementations of cc_ht_map_'s erase related functions.
  */
 
@@ -61,7 +61,7 @@ erase_if(Pred pred)
   size_type num_ersd = 0;
   for (size_type pos = 0; pos < m_num_e; ++pos)
     {
-      while (m_entries[pos] != NULL && pred(m_entries[pos]->m_value))
+      while (m_entries[pos] != 0 && pred(m_entries[pos]->m_value))
         {
 	  ++num_ersd;
 	  entry_pointer p_next_e = m_entries[pos]->m_p_next;
@@ -70,7 +70,7 @@ erase_if(Pred pred)
         }
 
       entry_pointer p_e = m_entries[pos];
-      while (p_e != NULL && p_e->m_p_next != NULL)
+      while (p_e != 0 && p_e->m_p_next != 0)
         {
 	  if (pred(p_e->m_p_next->m_value))
             {
@@ -92,7 +92,7 @@ PB_DS_CLASS_C_DEC::
 clear()
 {
   for (size_type pos = 0; pos < m_num_e; ++pos)
-    while (m_entries[pos] != NULL)
+    while (m_entries[pos] != 0)
       erase_entry_pointer(m_entries[pos]);
   do_resize_if_needed_no_throw();
   resize_base::notify_cleared();

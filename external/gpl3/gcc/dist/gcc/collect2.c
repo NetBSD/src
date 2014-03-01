@@ -1,8 +1,6 @@
 /* Collect static initialization info into data structures that can be
    traversed by C++ initialization and finalization routines.
-   Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-   1999, 2000, 2001, 2002, 2003, 2004, 2005, 2007, 2008, 2009, 2010
-   Free Software Foundation, Inc.
+   Copyright (C) 1992-2013 Free Software Foundation, Inc.
    Contributed by Chris Smith (csmith@convex.com).
    Heavily modified by Michael Meissner (meissner@cygnus.com),
    Per Bothner (bothner@cygnus.com), and John Gilmore (gnu@cygnus.com).
@@ -30,10 +28,8 @@ along with GCC; see the file COPYING3.  If not see
 #include "system.h"
 #include "coretypes.h"
 #include "tm.h"
-#include <signal.h>
-#if ! defined( SIGCHLD ) && defined( SIGCLD )
-#  define SIGCHLD SIGCLD
-#endif
+#include "filenames.h"
+#include "file-find.h"
 
 /* TARGET_64BIT may be defined to use driver specific functionality. */
 #undef TARGET_64BIT
@@ -47,6 +43,7 @@ along with GCC; see the file COPYING3.  If not see
 
 #include "collect2.h"
 #include "collect2-aix.h"
+#include "diagnostic.h"
 #include "demangle.h"
 #include "obstack.h"
 #include "intl.h"
@@ -178,10 +175,9 @@ struct head
   int number;
 };
 
-int vflag;				/* true if -v */
+bool vflag;				/* true if -v or --version */ 
 static int rflag;			/* true if -r */
 static int strip_flag;			/* true if -s */
-static const char *demangle_flag;
 #ifdef COLLECT_EXPORT_LIST
 static int export_flag;                 /* true if -bE */
 static int aix64_flag;			/* true if -b64 */
@@ -197,7 +193,8 @@ enum lto_mode_d {
 /* Current LTO mode.  */
 static enum lto_mode_d lto_mode = LTO_MODE_NONE;
 
-int debug;				/* true if -debug */
+bool debug;				/* true if -debug */
+bool helpflag;			/* true if --help */
 
 static int shared_obj;			/* true if -shared */
 
@@ -239,21 +236,11 @@ static const char *target_system_root = TARGET_SYSTEM_ROOT;
 static const char *target_system_root = "";
 #endif
 
-/* Structure to hold all the directories in which to search for files to
-   execute.  */
-
-struct prefix_list
-{
-  const char *prefix;         /* String to prepend to the path.  */
-  struct prefix_list *next;   /* Next in linked list.  */
-};
-
-struct path_prefix
-{
-  struct prefix_list *plist;  /* List of prefixes to try */
-  int max_len;                /* Max length of a prefix in PLIST */
-  const char *name;           /* Name of this list (used in config stuff) */
-};
+/* Whether we may unlink the output file, which should be set as soon as we
+   know we have successfully produced it.  This is typically useful to prevent
+   blindly attempting to unlink a read-only output that the target linker
+   would leave untouched.  */
+bool may_unlink_output_file = false;
 
 #ifdef COLLECT_EXPORT_LIST
 /* Lists to keep libraries to be scanned for global constructors/destructors.  */
@@ -298,10 +285,6 @@ typedef enum {
 static symkind is_ctor_dtor (const char *);
 
 static void handler (int);
-static char *find_a_file (struct path_prefix *, const char *);
-static void add_prefix (struct path_prefix *, const char *);
-static void prefix_from_env (const char *, struct path_prefix *);
-static void prefix_from_string (const char *, struct path_prefix *);
 static void do_wait (const char *, struct pex_obj *);
 static void fork_execute (const char *, char **);
 static void maybe_unlink (const char *);
@@ -325,9 +308,6 @@ static void write_c_file_glob (FILE *, const char *);
 #ifdef SCAN_LIBRARIES
 static void scan_libraries (const char *);
 #endif
-#if LINK_ELIMINATE_DUPLICATE_LDIRECTORIES
-static int is_in_args (const char *, const char **, const char **);
-#endif
 #ifdef COLLECT_EXPORT_LIST
 #if 0
 static int is_in_list (const char *, struct id *);
@@ -336,6 +316,8 @@ static void write_aix_file (FILE *, struct id *);
 static char *resolve_lib_name (const char *);
 #endif
 static char *extract_string (const char **);
+static void post_ld_pass (bool);
+static void process_args (int *argcp, char **argv);
 
 /* Enumerations describing which pass this is for scanning the
    program file ...  */
@@ -384,8 +366,8 @@ static void scan_prog_file (const char *, scanpass, scanfilter);
 
 /* Delete tempfiles and exit function.  */
 
-void
-collect_exit (int status)
+static void
+collect_atexit (void)
 {
   if (c_file != 0 && c_file[0])
     maybe_unlink (c_file);
@@ -403,23 +385,18 @@ collect_exit (int status)
 
   if (ldout != 0 && ldout[0])
     {
-      dump_file (ldout, stdout);
+      dump_ld_file (ldout, stdout);
       maybe_unlink (ldout);
     }
 
   if (lderrout != 0 && lderrout[0])
     {
-      dump_file (lderrout, stderr);
+      dump_ld_file (lderrout, stderr);
       maybe_unlink (lderrout);
     }
 
-  if (status != 0 && output_file != 0 && output_file[0])
-    maybe_unlink (output_file);
-
   if (response_file)
     maybe_unlink (response_file);
-
-  exit (status);
 }
 
 
@@ -443,62 +420,6 @@ notice_translated (const char *cmsgid, ...)
   va_start (ap, cmsgid);
   vfprintf (stderr, cmsgid, ap);
   va_end (ap);
-}
-
-/* Die when sys call fails.  */
-
-void
-fatal_perror (const char * cmsgid, ...)
-{
-  int e = errno;
-  va_list ap;
-
-  va_start (ap, cmsgid);
-  fprintf (stderr, "collect2: ");
-  vfprintf (stderr, _(cmsgid), ap);
-  fprintf (stderr, ": %s\n", xstrerror (e));
-  va_end (ap);
-
-  collect_exit (FATAL_EXIT_CODE);
-}
-
-/* Just die.  */
-
-void
-fatal (const char * cmsgid, ...)
-{
-  va_list ap;
-
-  va_start (ap, cmsgid);
-  fprintf (stderr, "collect2: ");
-  vfprintf (stderr, _(cmsgid), ap);
-  fprintf (stderr, "\n");
-  va_end (ap);
-
-  collect_exit (FATAL_EXIT_CODE);
-}
-
-/* Write error message.  */
-
-void
-error (const char * gmsgid, ...)
-{
-  va_list ap;
-
-  va_start (ap, gmsgid);
-  fprintf (stderr, "collect2: ");
-  vfprintf (stderr, _(gmsgid), ap);
-  fprintf (stderr, "\n");
-  va_end(ap);
-}
-
-/* In case obstack is linked in, and abort is defined to fancy_abort,
-   provide a default entry.  */
-
-void
-fancy_abort (const char *file, int line, const char *func)
-{
-  fatal ("internal gcc abort in %s, at %s:%d", func, file, line);
 }
 
 static void
@@ -571,7 +492,7 @@ extract_string (const char **pp)
 }
 
 void
-dump_file (const char *name, FILE *to)
+dump_ld_file (const char *name, FILE *to)
 {
   FILE *stream = fopen (name, "r");
 
@@ -706,168 +627,6 @@ static const char *const target_machine = TARGET_MACHINE;
 
    Return 0 if not found, otherwise return its name, allocated with malloc.  */
 
-static char *
-find_a_file (struct path_prefix *pprefix, const char *name)
-{
-  char *temp;
-  struct prefix_list *pl;
-  int len = pprefix->max_len + strlen (name) + 1;
-
-  if (debug)
-    fprintf (stderr, "Looking for '%s'\n", name);
-
-#ifdef HOST_EXECUTABLE_SUFFIX
-  len += strlen (HOST_EXECUTABLE_SUFFIX);
-#endif
-
-  temp = XNEWVEC (char, len);
-
-  /* Determine the filename to execute (special case for absolute paths).  */
-
-  if (IS_ABSOLUTE_PATH (name))
-    {
-      if (access (name, X_OK) == 0)
-	{
-	  strcpy (temp, name);
-
-	  if (debug)
-	    fprintf (stderr, "  - found: absolute path\n");
-
-	  return temp;
-	}
-
-#ifdef HOST_EXECUTABLE_SUFFIX
-	/* Some systems have a suffix for executable files.
-	   So try appending that.  */
-      strcpy (temp, name);
-	strcat (temp, HOST_EXECUTABLE_SUFFIX);
-
-	if (access (temp, X_OK) == 0)
-	  return temp;
-#endif
-
-      if (debug)
-	fprintf (stderr, "  - failed to locate using absolute path\n");
-    }
-  else
-    for (pl = pprefix->plist; pl; pl = pl->next)
-      {
-	struct stat st;
-
-	strcpy (temp, pl->prefix);
-	strcat (temp, name);
-
-	if (stat (temp, &st) >= 0
-	    && ! S_ISDIR (st.st_mode)
-	    && access (temp, X_OK) == 0)
-	  return temp;
-
-#ifdef HOST_EXECUTABLE_SUFFIX
-	/* Some systems have a suffix for executable files.
-	   So try appending that.  */
-	strcat (temp, HOST_EXECUTABLE_SUFFIX);
-
-	if (stat (temp, &st) >= 0
-	    && ! S_ISDIR (st.st_mode)
-	    && access (temp, X_OK) == 0)
-	  return temp;
-#endif
-      }
-
-  if (debug && pprefix->plist == NULL)
-    fprintf (stderr, "  - failed: no entries in prefix list\n");
-
-  free (temp);
-  return 0;
-}
-
-/* Add an entry for PREFIX to prefix list PPREFIX.  */
-
-static void
-add_prefix (struct path_prefix *pprefix, const char *prefix)
-{
-  struct prefix_list *pl, **prev;
-  int len;
-
-  if (pprefix->plist)
-    {
-      for (pl = pprefix->plist; pl->next; pl = pl->next)
-	;
-      prev = &pl->next;
-    }
-  else
-    prev = &pprefix->plist;
-
-  /* Keep track of the longest prefix.  */
-
-  len = strlen (prefix);
-  if (len > pprefix->max_len)
-    pprefix->max_len = len;
-
-  pl = XNEW (struct prefix_list);
-  pl->prefix = xstrdup (prefix);
-
-  if (*prev)
-    pl->next = *prev;
-  else
-    pl->next = (struct prefix_list *) 0;
-  *prev = pl;
-}
-
-/* Take the value of the environment variable ENV, break it into a path, and
-   add of the entries to PPREFIX.  */
-
-static void
-prefix_from_env (const char *env, struct path_prefix *pprefix)
-{
-  const char *p;
-  GET_ENVIRONMENT (p, env);
-
-  if (p)
-    prefix_from_string (p, pprefix);
-}
-
-static void
-prefix_from_string (const char *p, struct path_prefix *pprefix)
-{
-  const char *startp, *endp;
-  char *nstore = XNEWVEC (char, strlen (p) + 3);
-
-  if (debug)
-    fprintf (stderr, "Convert string '%s' into prefixes, separator = '%c'\n", p, PATH_SEPARATOR);
-
-  startp = endp = p;
-  while (1)
-    {
-      if (*endp == PATH_SEPARATOR || *endp == 0)
-	{
-	  strncpy (nstore, startp, endp-startp);
-	  if (endp == startp)
-	    {
-	      strcpy (nstore, "./");
-	    }
-	  else if (! IS_DIR_SEPARATOR (endp[-1]))
-	    {
-	      nstore[endp-startp] = DIR_SEPARATOR;
-	      nstore[endp-startp+1] = 0;
-	    }
-	  else
-	    nstore[endp-startp] = 0;
-
-	  if (debug)
-	    fprintf (stderr, "  - add prefix: %s\n", nstore);
-
-	  add_prefix (pprefix, nstore);
-	  if (*endp == 0)
-	    break;
-	  endp = startp = endp + 1;
-	}
-      else
-	endp++;
-    }
-  free (nstore);
-}
-
 #ifdef OBJECT_FORMAT_NONE
 
 /* Add an entry for the object file NAME to object file list LIST.
@@ -895,7 +654,7 @@ add_lto_object (struct lto_object_list *list, const char *name)
    files contain LTO info.  The linker command line LTO_LD_ARGV
    represents the linker command that would produce a final executable
    without the use of LTO. OBJECT_LST is a vector of object file names
-   appearing in LTO_LD_ARGV that are to be considerd for link-time
+   appearing in LTO_LD_ARGV that are to be considered for link-time
    recompilation, where OBJECT is a pointer to the last valid element.
    (This awkward convention avoids an impedance mismatch with the
    usage of similarly-named variables in main().)  The elements of
@@ -939,66 +698,35 @@ maybe_run_lto_and_relink (char **lto_ld_argv, char **object_lst,
 
   if (lto_objects.first)
     {
-      const char *opts;
       char **lto_c_argv;
       const char **lto_c_ptr;
-      const char *cp;
-      const char **p, **q, **r;
-      const char **lto_o_ptr;
+      char **p;
+      char **lto_o_ptr;
       struct lto_object *list;
       char *lto_wrapper = getenv ("COLLECT_LTO_WRAPPER");
       struct pex_obj *pex;
       const char *prog = "lto-wrapper";
+      int lto_ld_argv_size = 0;
+      char **out_lto_ld_argv;
+      int out_lto_ld_argv_size;
+      size_t num_files;
 
       if (!lto_wrapper)
-	fatal ("COLLECT_LTO_WRAPPER must be set.");
+	fatal_error ("COLLECT_LTO_WRAPPER must be set");
+
+      num_lto_c_args++;
 
       /* There is at least one object file containing LTO info,
-         so we need to run the LTO back end and relink.  */
+         so we need to run the LTO back end and relink.
 
-      /* Get compiler options passed down from the parent `gcc' command.
-         These must be passed to the LTO back end.  */
-      opts = getenv ("COLLECT_GCC_OPTIONS");
-
-      /* Increment the argument count by the number of inherited options.
-         Some arguments may be filtered out later.  Again, an upper bound
-         suffices.  */
-
-      cp = opts;
-
-      while (cp && *cp)
-        {
-          extract_string (&cp);
-          num_lto_c_args++;
-        }
-      obstack_free (&temporary_obstack, temporary_firstobj);
-
-      if (debug)
-	num_lto_c_args++;
-
-      /* Increment the argument count by the number of initial
-	 arguments added below.  */
-      num_lto_c_args += 9;
+	 To do so we build updated ld arguments with first
+	 LTO object replaced by all partitions and other LTO
+	 objects removed.  */
 
       lto_c_argv = (char **) xcalloc (sizeof (char *), num_lto_c_args);
       lto_c_ptr = CONST_CAST2 (const char **, char **, lto_c_argv);
 
       *lto_c_ptr++ = lto_wrapper;
-      *lto_c_ptr++ = c_file_name;
-
-      cp = opts;
-
-      while (cp && *cp)
-        {
-          const char *s = extract_string (&cp);
-
-	  /* Pass the option or argument to the wrapper.  */
-	  *lto_c_ptr++ = xstrdup (s);
-        }
-      obstack_free (&temporary_obstack, temporary_firstobj);
-
-      if (debug)
-	*lto_c_ptr++ = xstrdup ("-debug");
 
       /* Add LTO objects to the wrapper command line.  */
       for (list = lto_objects.first; list; list = list->next)
@@ -1006,16 +734,12 @@ maybe_run_lto_and_relink (char **lto_ld_argv, char **object_lst,
 
       *lto_c_ptr = NULL;
 
-      /* Save intermediate WPA files in lto1 if debug.  */
-      if (debug)
-	putenv (xstrdup ("WPA_SAVE_LTRANS=1"));
-
       /* Run the LTO back end.  */
       pex = collect_execute (prog, lto_c_argv, NULL, NULL, PEX_SEARCH);
       {
 	int c;
 	FILE *stream;
-	size_t i, num_files;
+	size_t i;
 	char *start, *end;
 
 	stream = pex_read_output (pex, 0);
@@ -1049,55 +773,51 @@ maybe_run_lto_and_relink (char **lto_ld_argv, char **object_lst,
       do_wait (prog, pex);
       pex = NULL;
 
+      /* Compute memory needed for new LD arguments.  At most number of original arguemtns
+	 plus number of partitions.  */
+      for (lto_ld_argv_size = 0; lto_ld_argv[lto_ld_argv_size]; lto_ld_argv_size++)
+	;
+      out_lto_ld_argv = XCNEWVEC(char *, num_files + lto_ld_argv_size + 1);
+      out_lto_ld_argv_size = 0;
+
       /* After running the LTO back end, we will relink, substituting
 	 the LTO output for the object files that we submitted to the
 	 LTO. Here, we modify the linker command line for the relink.  */
-      p = CONST_CAST2 (const char **, char **, lto_ld_argv);
-      lto_o_ptr = CONST_CAST2 (const char **, char **, lto_o_files);
 
+      /* Copy all arguments until we find first LTO file.  */
+      p = lto_ld_argv;
       while (*p != NULL)
         {
           for (list = lto_objects.first; list; list = list->next)
-            {
-              if (*p == list->name) /* Note test for pointer equality!  */
-                {
-                  /* Excise argument from linker command line.  */
-                  if (*lto_o_ptr)
-                    {
-                      /* Replace first argument with LTO output file.  */
-                      *p++ = *lto_o_ptr++;
-                    }
-                  else
-                    {
-                      /* Move following arguments one position earlier,
-                         overwriting the current argument.  */
-                      q = p;
-                      r = p + 1;
-                      while (*r != NULL)
-                        *q++ = *r++;
-                      *q = NULL;
-                    }
-
-                  /* No need to continue searching the LTO object list.  */
-                  break;
-                }
-            }
-
-          /* If we didn't find a match, move on to the next argument.
-             Otherwise, P has been set to the correct argument position
-             at which to continue.  */
-          if (!list) ++p;
+            if (*p == list->name) /* Note test for pointer equality!  */
+	      break;
+	  if (list)
+	    break;
+	  out_lto_ld_argv[out_lto_ld_argv_size++] = *p++;
         }
 
-      /* The code above assumes we will never have more lto output files than
-	 input files.  Otherwise, we need to resize lto_ld_argv.  Check this
-	 assumption.  */
-      if (*lto_o_ptr)
-	fatal ("too many lto output files");
+      /* Now insert all LTO partitions.  */
+      lto_o_ptr = lto_o_files;
+      while (*lto_o_ptr)
+	out_lto_ld_argv[out_lto_ld_argv_size++] = *lto_o_ptr++;
+
+      /* ... and copy the rest.  */
+      while (*p != NULL)
+        {
+          for (list = lto_objects.first; list; list = list->next)
+            if (*p == list->name) /* Note test for pointer equality!  */
+	      break;
+	  if (!list)
+	    out_lto_ld_argv[out_lto_ld_argv_size++] = *p;
+	  p++;
+        }
+      out_lto_ld_argv[out_lto_ld_argv_size++] = 0;
 
       /* Run the linker again, this time replacing the object files
          optimized by the LTO with the temporary file generated by the LTO.  */
-      fork_execute ("ld", lto_ld_argv);
+      fork_execute ("ld", out_lto_ld_argv);
+      post_ld_pass (true);
+      free (lto_ld_argv);
 
       maybe_unlink_list (lto_o_files);
     }
@@ -1105,7 +825,8 @@ maybe_run_lto_and_relink (char **lto_ld_argv, char **object_lst,
     {
       /* Our caller is relying on us to do the link
          even though there is no LTO back end work to be done.  */
-      fork_execute  ("ld", lto_ld_argv);
+      fork_execute ("ld", lto_ld_argv);
+      post_ld_pass (false);
     }
 }
 
@@ -1114,8 +835,21 @@ maybe_run_lto_and_relink (char **lto_ld_argv, char **object_lst,
 int
 main (int argc, char **argv)
 {
-  static const char *const ld_suffix	= "ld";
-  static const char *const plugin_ld_suffix = PLUGIN_LD;
+  enum linker_select
+    {
+      USE_DEFAULT_LD,
+      USE_PLUGIN_LD,
+      USE_GOLD_LD,
+      USE_BFD_LD,
+      USE_LD_MAX
+    } selected_linker = USE_DEFAULT_LD;
+  static const char *const ld_suffixes[USE_LD_MAX] =
+    {
+      "ld",
+      PLUGIN_LD_SUFFIX,
+      "ld.gold",
+      "ld.bfd"
+    };
   static const char *const real_ld_suffix = "real-ld";
   static const char *const collect_ld_suffix = "collect-ld";
   static const char *const nm_suffix	= "nm";
@@ -1126,16 +860,13 @@ main (int argc, char **argv)
   static const char *const strip_suffix = "strip";
   static const char *const gstrip_suffix = "gstrip";
 
+  const char *full_ld_suffixes[USE_LD_MAX];
 #ifdef CROSS_DIRECTORY_STRUCTURE
   /* If we look for a program in the compiler directories, we just use
      the short name, since these directories are already system-specific.
      But it we look for a program in the system directories, we need to
      qualify the program name with the target machine.  */
 
-  const char *const full_ld_suffix =
-    concat(target_machine, "-", ld_suffix, NULL);
-  const char *const full_plugin_ld_suffix =
-    concat(target_machine, "-", plugin_ld_suffix, NULL);
   const char *const full_nm_suffix =
     concat (target_machine, "-", nm_suffix, NULL);
   const char *const full_gnm_suffix =
@@ -1149,13 +880,11 @@ main (int argc, char **argv)
   const char *const full_gstrip_suffix =
     concat (target_machine, "-", gstrip_suffix, NULL);
 #else
-  const char *const full_ld_suffix	= ld_suffix;
-  const char *const full_plugin_ld_suffix = plugin_ld_suffix;
-  const char *const full_nm_suffix	= nm_suffix;
-  const char *const full_gnm_suffix	= gnm_suffix;
 #ifdef LDD_SUFFIX
   const char *const full_ldd_suffix	= ldd_suffix;
 #endif
+  const char *const full_nm_suffix	= nm_suffix;
+  const char *const full_gnm_suffix	= gnm_suffix;
   const char *const full_strip_suffix	= strip_suffix;
   const char *const full_gstrip_suffix	= gstrip_suffix;
 #endif /* CROSS_DIRECTORY_STRUCTURE */
@@ -1172,6 +901,7 @@ main (int argc, char **argv)
   char **ld1_argv;
   const char **ld1;
   bool use_plugin = false;
+  bool use_collect_ld = false;
 
   /* The kinds of symbols we will have to consider when scanning the
      outcome of a first pass link.  This is ALL to start with, then might
@@ -1185,23 +915,44 @@ main (int argc, char **argv)
   const char **ld2;
   char **object_lst;
   const char **object;
+#ifdef TARGET_AIX_VERSION
+  int object_nbr = argc;
+#endif
   int first_file;
   int num_c_args;
   char **old_argv;
+  int i;
 
-  bool use_verbose = false;
+  for (i = 0; i < USE_LD_MAX; i++)
+    full_ld_suffixes[i]
+#ifdef CROSS_DIRECTORY_STRUCTURE
+      = concat (target_machine, "-", ld_suffixes[i], NULL);
+#else
+      = ld_suffixes[i];
+#endif
+
+  p = argv[0] + strlen (argv[0]);
+  while (p != argv[0] && !IS_DIR_SEPARATOR (p[-1]))
+    --p;
+  progname = p;
+
+  xmalloc_set_program_name (progname);
 
   old_argv = argv;
   expandargv (&argc, &argv);
   if (argv != old_argv)
     at_file_supplied = 1;
 
+  process_args (&argc, argv);
+
   num_c_args = argc + 9;
 
+#ifndef HAVE_LD_DEMANGLE
   no_demangle = !! getenv ("COLLECT_NO_DEMANGLE");
 
   /* Suppress demangling by the real linker, which may be broken.  */
-  putenv (xstrdup ("COLLECT_NO_DEMANGLE="));
+  putenv (xstrdup ("COLLECT_NO_DEMANGLE=1"));
+#endif
 
 #if defined (COLLECT2_HOST_INITIALIZATION)
   /* Perform system dependent initialization, if necessary.  */
@@ -1214,10 +965,15 @@ main (int argc, char **argv)
   signal (SIGCHLD, SIG_DFL);
 #endif
 
+  if (atexit (collect_atexit) != 0)
+    fatal_error ("atexit failed");
+
   /* Unlock the stdio streams.  */
   unlock_std_streams ();
 
   gcc_init_libintl ();
+
+  diagnostic_initialize (global_dc, 0);
 
   /* Do not invoke xcalloc before this point, since locale needs to be
      set first, in case a diagnostic is issued.  */
@@ -1235,49 +991,55 @@ main (int argc, char **argv)
 
   /* Parse command line early for instances of -debug.  This allows
      the debug flag to be set before functions like find_a_file()
-     are called.  We also look for the -flto or -fwhopr flag to know
+     are called.  We also look for the -flto or -flto-partition=none flag to know
      what LTO mode we are in.  */
   {
-    int i;
+    bool no_partition = false;
 
     for (i = 1; argv[i] != NULL; i ++)
       {
 	if (! strcmp (argv[i], "-debug"))
-	  debug = 1;
-        else if (! strcmp (argv[i], "-flto") && ! use_plugin)
-	  {
-	    use_verbose = true;
-	    lto_mode = LTO_MODE_LTO;
-	  }
-        else if (! strcmp (argv[i], "-fwhopr") && ! use_plugin)
-	  {
-	    use_verbose = true;
-	    lto_mode = LTO_MODE_WHOPR;
-	  }
+	  debug = true;
+        else if (! strcmp (argv[i], "-flto-partition=none"))
+	  no_partition = true;
+        else if ((! strncmp (argv[i], "-flto=", 6)
+		  || ! strcmp (argv[i], "-flto")) && ! use_plugin)
+	  lto_mode = LTO_MODE_WHOPR;
+	else if (!strncmp (argv[i], "-fno-lto", 8))
+	  lto_mode = LTO_MODE_NONE;
         else if (! strcmp (argv[i], "-plugin"))
 	  {
 	    use_plugin = true;
-	    use_verbose = true;
 	    lto_mode = LTO_MODE_NONE;
+	    if (selected_linker == USE_DEFAULT_LD)
+	      selected_linker = USE_PLUGIN_LD;
 	  }
+	else if (strcmp (argv[i], "-fuse-ld=bfd") == 0)
+	  selected_linker = USE_BFD_LD;
+	else if (strcmp (argv[i], "-fuse-ld=gold") == 0)
+	  selected_linker = USE_GOLD_LD;
+
 #ifdef COLLECT_EXPORT_LIST
-	/* since -brtl, -bexport, -b64 are not position dependent
-	   also check for them here */
-	if ((argv[i][0] == '-') && (argv[i][1] == 'b'))
-  	  {
-	    arg = argv[i];
-	    /* We want to disable automatic exports on AIX when user
-	       explicitly puts an export list in command line */
-	    if (arg[2] == 'E' || strncmp (&arg[2], "export", 6) == 0)
-	      export_flag = 1;
-	    else if (arg[2] == '6' && arg[3] == '4')
-	      aix64_flag = 1;
-	    else if (arg[2] == 'r' && arg[3] == 't' && arg[4] == 'l')
-	      aixrtl_flag = 1;
-	  }
+	/* These flags are position independent, although their order
+	   is important - subsequent flags override earlier ones. */
+	else if (strcmp (argv[i], "-b64") == 0)
+	    aix64_flag = 1;
+	/* -bexport:filename always needs the :filename */
+	else if (strncmp (argv[i], "-bE:", 4) == 0
+	      || strncmp (argv[i], "-bexport:", 9) == 0)
+	    export_flag = 1;
+	else if (strcmp (argv[i], "-brtl") == 0
+	      || strcmp (argv[i], "-bsvr4") == 0
+	      || strcmp (argv[i], "-G") == 0)
+	    aixrtl_flag = 1;
+	else if (strcmp (argv[i], "-bnortl") == 0)
+	    aixrtl_flag = 0;
 #endif
       }
     vflag = debug;
+    find_file_set_debug (debug);
+    if (no_partition && lto_mode == LTO_MODE_WHOPR)
+      lto_mode = LTO_MODE_LTO;
   }
 
 #ifndef DEFAULT_A_OUT_NAME
@@ -1309,7 +1071,7 @@ main (int argc, char **argv)
   c_ptr = CONST_CAST2 (const char **, char **, c_argv);
 
   if (argc < 2)
-    fatal ("no arguments");
+    fatal_error ("no arguments");
 
 #ifdef SIGQUIT
   if (signal (SIGQUIT, SIG_IGN) != SIG_IGN)
@@ -1346,58 +1108,55 @@ main (int argc, char **argv)
   if (ld_file_name == 0)
 #endif
 #ifdef REAL_LD_FILE_NAME
-  ld_file_name = find_a_file (&path, REAL_LD_FILE_NAME);
+  ld_file_name = find_a_file (&path, REAL_LD_FILE_NAME, X_OK);
   if (ld_file_name == 0)
 #endif
   /* Search the (target-specific) compiler dirs for ld'.  */
-  ld_file_name = find_a_file (&cpath, real_ld_suffix);
+  ld_file_name = find_a_file (&cpath, real_ld_suffix, X_OK);
   /* Likewise for `collect-ld'.  */
   if (ld_file_name == 0)
-    ld_file_name = find_a_file (&cpath, collect_ld_suffix);
+    {
+      ld_file_name = find_a_file (&cpath, collect_ld_suffix, X_OK);
+      use_collect_ld = ld_file_name != 0;
+    }
   /* Search the compiler directories for `ld'.  We have protection against
      recursive calls in find_a_file.  */
   if (ld_file_name == 0)
-    ld_file_name = find_a_file (&cpath,
-				use_plugin
-				? plugin_ld_suffix
-				: ld_suffix);
+    ld_file_name = find_a_file (&cpath, ld_suffixes[selected_linker], X_OK);
   /* Search the ordinary system bin directories
      for `ld' (if native linking) or `TARGET-ld' (if cross).  */
   if (ld_file_name == 0)
-    ld_file_name = find_a_file (&path,
-				use_plugin
-				? full_plugin_ld_suffix
-				: full_ld_suffix);
+    ld_file_name = find_a_file (&path, full_ld_suffixes[selected_linker], X_OK);
 
 #ifdef REAL_NM_FILE_NAME
-  nm_file_name = find_a_file (&path, REAL_NM_FILE_NAME);
+  nm_file_name = find_a_file (&path, REAL_NM_FILE_NAME, X_OK);
   if (nm_file_name == 0)
 #endif
-  nm_file_name = find_a_file (&cpath, gnm_suffix);
+  nm_file_name = find_a_file (&cpath, gnm_suffix, X_OK);
   if (nm_file_name == 0)
-    nm_file_name = find_a_file (&path, full_gnm_suffix);
+    nm_file_name = find_a_file (&path, full_gnm_suffix, X_OK);
   if (nm_file_name == 0)
-    nm_file_name = find_a_file (&cpath, nm_suffix);
+    nm_file_name = find_a_file (&cpath, nm_suffix, X_OK);
   if (nm_file_name == 0)
-    nm_file_name = find_a_file (&path, full_nm_suffix);
+    nm_file_name = find_a_file (&path, full_nm_suffix, X_OK);
 
 #ifdef LDD_SUFFIX
-  ldd_file_name = find_a_file (&cpath, ldd_suffix);
+  ldd_file_name = find_a_file (&cpath, ldd_suffix, X_OK);
   if (ldd_file_name == 0)
-    ldd_file_name = find_a_file (&path, full_ldd_suffix);
+    ldd_file_name = find_a_file (&path, full_ldd_suffix, X_OK);
 #endif
 
 #ifdef REAL_STRIP_FILE_NAME
-  strip_file_name = find_a_file (&path, REAL_STRIP_FILE_NAME);
+  strip_file_name = find_a_file (&path, REAL_STRIP_FILE_NAME, X_OK);
   if (strip_file_name == 0)
 #endif
-  strip_file_name = find_a_file (&cpath, gstrip_suffix);
+  strip_file_name = find_a_file (&cpath, gstrip_suffix, X_OK);
   if (strip_file_name == 0)
-    strip_file_name = find_a_file (&path, full_gstrip_suffix);
+    strip_file_name = find_a_file (&path, full_gstrip_suffix, X_OK);
   if (strip_file_name == 0)
-    strip_file_name = find_a_file (&cpath, strip_suffix);
+    strip_file_name = find_a_file (&cpath, strip_suffix, X_OK);
   if (strip_file_name == 0)
-    strip_file_name = find_a_file (&path, full_strip_suffix);
+    strip_file_name = find_a_file (&path, full_strip_suffix, X_OK);
 
   /* Determine the full path name of the C compiler to use.  */
   c_file_name = getenv ("COLLECT_GCC");
@@ -1410,12 +1169,12 @@ main (int argc, char **argv)
 #endif
     }
 
-  p = find_a_file (&cpath, c_file_name);
+  p = find_a_file (&cpath, c_file_name, X_OK);
 
   /* Here it should be safe to use the system search path since we should have
      already qualified the name of the compiler when it is needed.  */
   if (p == 0)
-    p = find_a_file (&path, c_file_name);
+    p = find_a_file (&path, c_file_name, X_OK);
 
   if (p)
     c_file_name = p;
@@ -1470,11 +1229,6 @@ main (int argc, char **argv)
 	      *c_ptr++ = xstrdup (q);
 	    }
 	}
-      if (use_verbose && *q == '-' && q[1] == 'v' && q[2] == 0)
-	{
-	  /* Turn on trace in collect2 if needed.  */
-	  vflag = 1;
-	}
     }
   obstack_free (&temporary_obstack, temporary_firstobj);
   *c_ptr++ = "-fno-profile-arcs";
@@ -1495,12 +1249,6 @@ main (int argc, char **argv)
   /* After the first file, put in the c++ rt0.  */
 
   first_file = 1;
-#ifdef HAVE_LD_DEMANGLE
-  if (!demangle_flag && !no_demangle)
-    demangle_flag = "--demangle";
-  if (demangle_flag)
-    *ld1++ = *ld2++ = demangle_flag;
-#endif
   while ((arg = *++argv) != (char *) 0)
     {
       *ld1++ = *ld2++ = arg;
@@ -1524,7 +1272,7 @@ main (int argc, char **argv)
 	      break;
 
             case 'f':
-	      if (strcmp (arg, "-flto") == 0 || strcmp (arg, "-fwhopr") == 0)
+	      if (strncmp (arg, "-flto", 5) == 0)
 		{
 #ifdef ENABLE_LTO
 		  /* Do not pass LTO flag to the linker. */
@@ -1535,6 +1283,67 @@ main (int argc, char **argv)
 			 "configuration");
 #endif
 		}
+	      else if (!use_collect_ld
+		       && strncmp (arg, "-fuse-ld=", 9) == 0)
+		{
+		  /* Do not pass -fuse-ld={bfd|gold} to the linker. */
+		  ld1--;
+		  ld2--;
+		}
+#ifdef TARGET_AIX_VERSION
+	      else
+		{
+		  /* File containing a list of input files to process.  */
+
+		  FILE *stream;
+                  char buf[MAXPATHLEN + 2];
+		  /* Number of additionnal object files.  */
+		  int add_nbr = 0;
+		  /* Maximum of additionnal object files before vector
+		     expansion.  */
+		  int add_max = 0;
+		  const char *list_filename = arg + 2;
+
+		  /* Accept -fFILENAME and -f FILENAME.  */
+		  if (*list_filename == '\0' && argv[1])
+		    {
+		      ++argv;
+		      list_filename = *argv;
+		      *ld1++ = *ld2++ = *argv;
+		    }
+
+		  stream = fopen (list_filename, "r");
+		  if (stream == NULL)
+		    fatal_error ("can't open %s: %m", list_filename);
+
+		  while (fgets (buf, sizeof buf, stream) != NULL)
+		    {
+		      /* Remove end of line.  */
+		      int len = strlen (buf);
+		      if (len >= 1 && buf[len - 1] =='\n')
+			buf[len - 1] = '\0';
+
+		      /* Put on object vector.
+			 Note: we only expanse vector here, so we must keep
+			 extra space for remaining arguments.  */
+		      if (add_nbr >= add_max)
+			{
+			  int pos =
+			    object - CONST_CAST2 (const char **, char **,
+						  object_lst);
+			  add_max = (add_max == 0) ? 16 : add_max * 2;
+			  object_lst = XRESIZEVEC (char *, object_lst,
+                                                   object_nbr + add_max);
+			  object = CONST_CAST2 (const char **, char **,
+						object_lst) + pos;
+			  object_nbr += add_max;
+			}
+		      *object++ = xstrdup (buf);
+		      add_nbr++;
+		    }
+		  fclose (stream);
+		}
+#endif
               break;
 
 	    case 'l':
@@ -1562,26 +1371,12 @@ main (int argc, char **argv)
 	    case 'L':
 	      add_prefix (&cmdline_lib_dirs, arg+2);
 	      break;
-#else
-#if LINK_ELIMINATE_DUPLICATE_LDIRECTORIES
-	    case 'L':
-	      if (is_in_args (arg,
-			      CONST_CAST2 (const char **, char **, ld1_argv),
-			      ld1 - 1))
-		--ld1;
-	      break;
-#endif /* LINK_ELIMINATE_DUPLICATE_LDIRECTORIES */
 #endif
 
 	    case 'o':
 	      if (arg[2] == '\0')
 		output_file = *ld1++ = *ld2++ = *++argv;
-	      else if (1
-#ifdef SWITCHES_NEED_SPACES
-		       && ! strchr (SWITCHES_NEED_SPACES, arg[1])
-#endif
-		       )
-
+	      else
 		output_file = &arg[2];
 	      break;
 
@@ -1603,22 +1398,22 @@ main (int argc, char **argv)
 
 	    case 'v':
 	      if (arg[2] == '\0')
-		vflag = 1;
+		vflag = true;
 	      break;
 
 	    case '-':
 	      if (strcmp (arg, "--no-demangle") == 0)
 		{
-		  demangle_flag = arg;
+#ifndef HAVE_LD_DEMANGLE
 		  no_demangle = 1;
 		  ld1--;
 		  ld2--;
+#endif
 		}
 	      else if (strncmp (arg, "--demangle", 10) == 0)
 		{
-		  demangle_flag = arg;
-		  no_demangle = 0;
 #ifndef HAVE_LD_DEMANGLE
+		  no_demangle = 0;
 		  if (arg[10] == '=')
 		    {
 		      enum demangling_styles style
@@ -1628,12 +1423,16 @@ main (int argc, char **argv)
 		      else
 			current_demangling_style = style;
 		    }
-#endif
 		  ld1--;
 		  ld2--;
+#endif
 		}
 	      else if (strncmp (arg, "--sysroot=", 10) == 0)
 		target_system_root = arg + 10;
+	      else if (strcmp (arg, "--version") == 0)
+		vflag = true;
+	      else if (strcmp (arg, "--help") == 0)
+		helpflag = true;
 	      break;
 	    }
 	}
@@ -1716,10 +1515,10 @@ main (int argc, char **argv)
 
       exportf = fopen (export_file, "w");
       if (exportf == (FILE *) 0)
-	fatal_perror ("fopen %s", export_file);
+	fatal_error ("fopen %s: %m", export_file);
       write_aix_file (exportf, exports.first);
       if (fclose (exportf))
-	fatal_perror ("fclose %s", export_file);
+	fatal_error ("fclose %s: %m", export_file);
     }
 #endif
 
@@ -1727,12 +1526,20 @@ main (int argc, char **argv)
   *c_ptr = *ld1 = *object = (char *) 0;
 
   if (vflag)
+    notice ("collect2 version %s\n", version_string);
+
+  if (helpflag)
     {
-      notice ("collect2 version %s", version_string);
-#ifdef TARGET_VERSION
-      TARGET_VERSION;
-#endif
-      fprintf (stderr, "\n");
+      printf ("Usage: collect2 [options]\n");
+      printf (" Wrap linker and generate constructor code if needed.\n");
+      printf (" Options:\n");
+      printf ("  -debug          Enable debug output\n");
+      printf ("  --help          Display this information\n");
+      printf ("  -v, --version   Display this program's version number\n");
+      printf ("\n");
+      printf ("Overview: http://gcc.gnu.org/onlinedocs/gccint/Collect2.html\n");
+      printf ("Report bugs: %s\n", bug_report_url);
+      printf ("\n");
     }
 
   if (debug)
@@ -1804,6 +1611,8 @@ main (int argc, char **argv)
 #endif
 	if (lto_mode != LTO_MODE_NONE)
 	  maybe_run_lto_and_relink (ld1_argv, object_lst, object, false);
+	else
+	  post_ld_pass (false);
 
 	maybe_unlink (c_file);
 	maybe_unlink (o_file);
@@ -1875,6 +1684,8 @@ main (int argc, char **argv)
 #ifdef COLLECT_EXPORT_LIST
       maybe_unlink (export_file);
 #endif
+      post_ld_pass (false);
+
       maybe_unlink (c_file);
       maybe_unlink (o_file);
       return 0;
@@ -1887,12 +1698,12 @@ main (int argc, char **argv)
   maybe_unlink(output_file);
   outf = fopen (c_file, "w");
   if (outf == (FILE *) 0)
-    fatal_perror ("fopen %s", c_file);
+    fatal_error ("fopen %s: %m", c_file);
 
   write_c_file (outf, c_file);
 
   if (fclose (outf))
-    fatal_perror ("fclose %s", c_file);
+    fatal_error ("fclose %s: %m", c_file);
 
   /* Tell the linker that we have initializer and finalizer functions.  */
 #ifdef LD_INIT_SWITCH
@@ -1922,10 +1733,10 @@ main (int argc, char **argv)
 #endif
       exportf = fopen (export_file, "w");
       if (exportf == (FILE *) 0)
-	fatal_perror ("fopen %s", export_file);
+	fatal_error ("fopen %s: %m", export_file);
       write_aix_file (exportf, exports.first);
       if (fclose (exportf))
-	fatal_perror ("fclose %s", export_file);
+	fatal_error ("fclose %s: %m", export_file);
     }
 #endif
 
@@ -1960,7 +1771,10 @@ main (int argc, char **argv)
   if (lto_mode)
     maybe_run_lto_and_relink (ld2_argv, object_lst, object, true);
   else
-    fork_execute ("ld", ld2_argv);
+    {
+      fork_execute ("ld", ld2_argv);
+      post_ld_pass (false);
+    }
 
   /* Let scan_prog_file do any final mods (OSF/rose needs this for
      constructors/destructors in shared libraries.  */
@@ -1986,7 +1800,7 @@ collect_wait (const char *prog, struct pex_obj *pex)
   int status;
 
   if (!pex_get_status (pex, 1, &status))
-    fatal_perror ("can't get program status");
+    fatal_error ("can't get program status: %m");
   pex_free (pex);
 
   if (status)
@@ -1997,7 +1811,7 @@ collect_wait (const char *prog, struct pex_obj *pex)
 	  error ("%s terminated with signal %d [%s]%s",
 		 prog, sig, strsignal(sig),
 		 WCOREDUMP(status) ? ", core dumped" : "");
-	  collect_exit (FATAL_EXIT_CODE);
+	  exit (FATAL_EXIT_CODE);
 	}
 
       if (WIFEXITED (status))
@@ -2013,7 +1827,7 @@ do_wait (const char *prog, struct pex_obj *pex)
   if (ret != 0)
     {
       error ("%s returned %d exit status", prog, ret);
-      collect_exit (ret);
+      exit (ret);
     }
 
   if (response_file)
@@ -2055,17 +1869,17 @@ collect_execute (const char *prog, char **argv, const char *outname,
       f = fopen (response_file, "w");
 
       if (f == NULL)
-        fatal ("could not open response file %s", response_file);
+        fatal_error ("could not open response file %s", response_file);
 
       status = writeargv (current_argv, f);
 
       if (status)
-        fatal ("could not write to response file %s", response_file);
+        fatal_error ("could not write to response file %s", response_file);
 
       status = fclose (f);
 
       if (EOF == status)
-        fatal ("could not close response file %s", response_file);
+        fatal_error ("could not close response file %s", response_file);
 
       response_arg = concat ("@", response_file, NULL);
       response_argv[0] = argv0;
@@ -2098,11 +1912,11 @@ collect_execute (const char *prog, char **argv, const char *outname,
      since we might not end up needing something that we could not find.  */
 
   if (argv[0] == 0)
-    fatal ("cannot find '%s'", prog);
+    fatal_error ("cannot find '%s'", prog);
 
   pex = pex_init (0, "collect2", NULL);
   if (pex == NULL)
-    fatal_perror ("pex_init failed");
+    fatal_error ("pex_init failed: %m");
 
   errmsg = pex_run (pex, flags, argv[0], argv, outname,
 		    errname, &err);
@@ -2111,14 +1925,13 @@ collect_execute (const char *prog, char **argv, const char *outname,
       if (err != 0)
 	{
 	  errno = err;
-	  fatal_perror (errmsg);
+	  fatal_error ("%s: %m", _(errmsg));
 	}
       else
-	fatal (errmsg);
+	fatal_error (errmsg);
     }
 
-  if (response_arg)
-    free (response_arg);
+  free (response_arg);
 
   return pex;
 }
@@ -2132,15 +1945,22 @@ fork_execute (const char *prog, char **argv)
   do_wait (prog, pex);
 }
 
-/* Unlink a file unless we are debugging.  */
+/* Unlink FILE unless we are debugging or this is the output_file
+   and we may not unlink it.  */
 
 static void
 maybe_unlink (const char *file)
 {
-  if (!debug)
-    unlink_if_ordinary (file);
-  else
-    notice ("[Leaving %s]\n", file);
+  if (debug)
+    {
+      notice ("[Leaving %s]\n", file);
+      return;
+    }
+
+  if (file == output_file && !may_unlink_output_file)
+    return;
+
+  unlink_if_ordinary (file);
 }
 
 /* Call maybe_unlink on the NULL-terminated list, FILE_LIST.  */
@@ -2260,22 +2080,6 @@ write_list (FILE *stream, const char *prefix, struct id *list)
     }
 }
 
-#if LINK_ELIMINATE_DUPLICATE_LDIRECTORIES
-/* Given a STRING, return nonzero if it occurs in the list in range
-   [ARGS_BEGIN,ARGS_END).  */
-
-static int
-is_in_args (const char *string, const char **args_begin,
-	    const char **args_end)
-{
-  const char **args_pointer;
-  for (args_pointer = args_begin; args_pointer != args_end; ++args_pointer)
-    if (strcmp (string, *args_pointer) == 0)
-      return 1;
-  return 0;
-}
-#endif /* LINK_ELIMINATE_DUPLICATE_LDIRECTORIES */
-
 #ifdef COLLECT_EXPORT_LIST
 /* This function is really used only on AIX, but may be useful.  */
 #if 0
@@ -2339,12 +2143,8 @@ write_c_file_stat (FILE *stream, const char *name ATTRIBUTE_UNUSED)
   int frames = (frame_tables.number > 0);
 
   /* Figure out name of output_file, stripping off .so version.  */
-  p = strrchr (output_file, '/');
-  if (p == 0)
-    p = output_file;
-  else
-    p++;
-  q = p;
+  q = p = lbasename (output_file);
+
   while (q)
     {
       q = strchr (q,'.');
@@ -2355,7 +2155,7 @@ write_c_file_stat (FILE *stream, const char *name ATTRIBUTE_UNUSED)
 	}
       else
 	{
-	  if (strncmp (q, SHLIB_SUFFIX, strlen (SHLIB_SUFFIX)) == 0)
+	  if (filename_ncmp (q, SHLIB_SUFFIX, strlen (SHLIB_SUFFIX)) == 0)
 	    {
 	      q += strlen (SHLIB_SUFFIX);
 	      break;
@@ -2559,6 +2359,7 @@ maybe_lto_object_file (const char *prog_name)
 
   static unsigned char elfmagic[4] = { 0x7f, 'E', 'L', 'F' };
   static unsigned char coffmagic[2] = { 0x4c, 0x01 };
+  static unsigned char coffmagic_x64[2] = { 0x64, 0x86 };
   static unsigned char machomagic[4][4] = {
     { 0xcf, 0xfa, 0xed, 0xfe },
     { 0xce, 0xfa, 0xed, 0xfe },
@@ -2574,7 +2375,8 @@ maybe_lto_object_file (const char *prog_name)
   fclose (f);
 
   if (memcmp (buf, elfmagic, sizeof (elfmagic)) == 0
-      || memcmp (buf, coffmagic, sizeof (coffmagic)) == 0)
+      || memcmp (buf, coffmagic, sizeof (coffmagic)) == 0
+      || memcmp (buf, coffmagic_x64, sizeof (coffmagic_x64)) == 0)
     return true;
   for (i = 0; i < 4; i++)
     if (memcmp (buf, machomagic[i], sizeof (machomagic[i])) == 0)
@@ -2609,13 +2411,13 @@ scan_prog_file (const char *prog_name, scanpass which_pass,
 
   /* LTO objects must be in a known format.  This check prevents
      us from accepting an archive containing LTO objects, which
-     gcc cannnot currently handle.  */
+     gcc cannot currently handle.  */
   if (which_pass == PASS_LTOINFO && !maybe_lto_object_file (prog_name))
     return;
 
   /* If we do not have an `nm', complain.  */
   if (nm_file_name == 0)
-    fatal ("cannot find 'nm'");
+    fatal_error ("cannot find 'nm'");
 
   nm_argv[argc++] = nm_file_name;
   if (NM_FLAGS[0] != '\0')
@@ -2641,7 +2443,7 @@ scan_prog_file (const char *prog_name, scanpass which_pass,
 
   pex = pex_init (PEX_USE_PIPES, "collect2", NULL);
   if (pex == NULL)
-    fatal_perror ("pex_init failed");
+    fatal_error ("pex_init failed: %m");
 
   errmsg = pex_run (pex, 0, nm_file_name, real_nm_argv, NULL, HOST_BIT_BUCKET,
 		    &err);
@@ -2650,10 +2452,10 @@ scan_prog_file (const char *prog_name, scanpass which_pass,
       if (err != 0)
 	{
 	  errno = err;
-	  fatal_perror (errmsg);
+	  fatal_error ("%s: %m", _(errmsg));
 	}
       else
-	fatal (errmsg);
+	fatal_error (errmsg);
     }
 
   int_handler  = (void (*) (int)) signal (SIGINT,  SIG_IGN);
@@ -2663,7 +2465,7 @@ scan_prog_file (const char *prog_name, scanpass which_pass,
 
   inf = pex_read_output (pex, 0);
   if (inf == NULL)
-    fatal_perror ("can't open nm output");
+    fatal_error ("can't open nm output: %m");
 
   if (debug)
     {
@@ -2746,7 +2548,7 @@ scan_prog_file (const char *prog_name, scanpass which_pass,
 	  if (! (filter & SCAN_INIT))
 	    break;
 	  if (which_pass != PASS_LIB)
-	    fatal ("init function found in object %s", prog_name);
+	    fatal_error ("init function found in object %s", prog_name);
 #ifndef LD_INIT_SWITCH
 	  add_to_list (&constructors, name);
 #endif
@@ -2756,7 +2558,7 @@ scan_prog_file (const char *prog_name, scanpass which_pass,
 	  if (! (filter & SCAN_FINI))
 	    break;
 	  if (which_pass != PASS_LIB)
-	    fatal ("fini function found in object %s", prog_name);
+	    fatal_error ("fini function found in object %s", prog_name);
 #ifndef LD_FINI_SWITCH
 	  add_to_list (&destructors, name);
 #endif
@@ -2837,7 +2639,7 @@ scan_libraries (const char *prog_name)
 
   pex = pex_init (PEX_USE_PIPES, "collect2", NULL);
   if (pex == NULL)
-    fatal_perror ("pex_init failed");
+    fatal_error ("pex_init failed: %m");
 
   errmsg = pex_run (pex, 0, ldd_file_name, real_ldd_argv, NULL, NULL, &err);
   if (errmsg != NULL)
@@ -2845,10 +2647,10 @@ scan_libraries (const char *prog_name)
       if (err != 0)
 	{
 	  errno = err;
-	  fatal_perror (errmsg);
+	  fatal_error ("%s: %m", _(errmsg));
 	}
       else
-	fatal (errmsg);
+	fatal_error (errmsg);
     }
 
   int_handler  = (void (*) (int)) signal (SIGINT,  SIG_IGN);
@@ -2858,7 +2660,7 @@ scan_libraries (const char *prog_name)
 
   inf = pex_read_output (pex, 0);
   if (inf == NULL)
-    fatal_perror ("can't open ldd output");
+    fatal_error ("can't open ldd output: %m");
 
   if (debug)
     notice ("\nldd output with constructors/destructors.\n");
@@ -2876,7 +2678,7 @@ scan_libraries (const char *prog_name)
 
       name = p;
       if (strncmp (name, "not found", sizeof ("not found") - 1) == 0)
-	fatal ("dynamic dependency %s not found", buf);
+	fatal_error ("dynamic dependency %s not found", buf);
 
       /* Find the end of the symbol name.  */
       for (end = p;
@@ -2888,7 +2690,7 @@ scan_libraries (const char *prog_name)
       if (access (name, R_OK) == 0)
 	add_to_list (&libraries, name);
       else
-	fatal ("unable to open dynamic dependency '%s'", buf);
+	fatal_error ("unable to open dynamic dependency '%s'", buf);
 
       if (debug)
 	fprintf (stderr, "\t%s\n", buf);
@@ -2959,12 +2761,14 @@ scan_libraries (const char *prog_name)
 /* 0757 = U803XTOCMAGIC (AIX 4.3) and 0767 = U64_TOCMAGIC (AIX V5) */
 #if TARGET_AIX_VERSION >= 51
 #   define GCC_CHECK_HDR(X) \
-     ((HEADER (X).f_magic == U802TOCMAGIC && ! aix64_flag) \
-      || (HEADER (X).f_magic == 0767 && aix64_flag))
+     (((HEADER (X).f_magic == U802TOCMAGIC && ! aix64_flag) \
+       || (HEADER (X).f_magic == 0767 && aix64_flag)) \
+      && !(HEADER (X).f_flags & F_LOADONLY))
 #else
 #   define GCC_CHECK_HDR(X) \
-     ((HEADER (X).f_magic == U802TOCMAGIC && ! aix64_flag) \
-      || (HEADER (X).f_magic == 0757 && aix64_flag))
+     (((HEADER (X).f_magic == U802TOCMAGIC && ! aix64_flag) \
+       || (HEADER (X).f_magic == 0757 && aix64_flag)) \
+      && !(HEADER (X).f_flags & F_LOADONLY))
 #endif
 
 #endif
@@ -3049,7 +2853,7 @@ scan_prog_file (const char *prog_name, scanpass which_pass,
       if ((ldptr = ldopen (CONST_CAST (char *, prog_name), ldptr)) != NULL)
 	{
 	  if (! MY_ISCOFF (HEADER (ldptr).f_magic))
-	    fatal ("%s: not a COFF file", prog_name);
+	    fatal_error ("%s: not a COFF file", prog_name);
 
 	  if (GCC_CHECK_HDR (ldptr))
 	    {
@@ -3179,7 +2983,7 @@ scan_prog_file (const char *prog_name, scanpass which_pass,
 	}
       else
 	{
-	  fatal ("%s: cannot open as COFF file", prog_name);
+	  fatal_error ("%s: cannot open as COFF file", prog_name);
 	}
 #ifdef COLLECT_EXPORT_LIST
       /* On AIX loop continues while there are more members in archive.  */
@@ -3215,10 +3019,10 @@ resolve_lib_name (const char *name)
       for (; list; list = list->next)
 	{
 	  /* The following lines are needed because path_prefix list
-	     may contain directories both with trailing '/' and
+	     may contain directories both with trailing DIR_SEPARATOR and
 	     without it.  */
 	  const char *p = "";
-	  if (list->prefix[strlen(list->prefix)-1] != '/')
+	  if (!IS_DIR_SEPARATOR (list->prefix[strlen(list->prefix)-1]))
 	    p = "/";
 	  for (j = 0; j < 2; j++)
 	    {
@@ -3237,7 +3041,71 @@ resolve_lib_name (const char *name)
   if (debug)
     fprintf (stderr, "not found\n");
   else
-    fatal ("library lib%s not found", name);
+    fatal_error ("library lib%s not found", name);
   return (NULL);
 }
 #endif /* COLLECT_EXPORT_LIST */
+
+#ifdef COLLECT_RUN_DSYMUTIL
+static int flag_dsym = false;
+static int flag_idsym = false;
+
+static void
+process_args (int *argcp, char **argv) {
+  int i, j;
+  int argc = *argcp;
+  for (i=0; i<argc; ++i)
+    {
+      if (strcmp (argv[i], "-dsym") == 0)
+	{
+	  flag_dsym = true;
+	  /* Remove the flag, as we handle all processing for it.  */
+	  j = i;
+	  do
+	    argv[j] = argv[j+1];
+	  while (++j < argc);
+	  --i;
+	  argc = --(*argcp);
+	}
+      else if (strcmp (argv[i], "-idsym") == 0)
+	{
+	  flag_idsym = true;
+	  /* Remove the flag, as we handle all processing for it.  */
+	  j = i;
+	  do
+	    argv[j] = argv[j+1];
+	  while (++j < argc);
+	  --i;
+	  argc = --(*argcp);
+	}
+    }
+}
+
+static void
+do_dsymutil (const char *output_file) {
+  const char *dsymutil = DSYMUTIL + 1;
+  struct pex_obj *pex;
+  char **real_argv = XCNEWVEC (char *, 3);
+  const char ** argv = CONST_CAST2 (const char **, char **,
+				    real_argv);
+
+  argv[0] = dsymutil;
+  argv[1] = output_file;
+  argv[2] = (char *) 0;
+
+  pex = collect_execute (dsymutil, real_argv, NULL, NULL, PEX_LAST | PEX_SEARCH);
+  do_wait (dsymutil, pex);
+}
+
+static void
+post_ld_pass (bool temp_file) {
+  if (!(temp_file && flag_idsym) && !flag_dsym)
+    return;
+      
+  do_dsymutil (output_file);
+}
+#else
+static void
+process_args (int *argcp ATTRIBUTE_UNUSED, char **argv ATTRIBUTE_UNUSED) { }
+static void post_ld_pass (bool temp_file ATTRIBUTE_UNUSED) { }
+#endif

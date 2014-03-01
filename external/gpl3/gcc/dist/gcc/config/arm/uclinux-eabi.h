@@ -1,5 +1,5 @@
 /* Definitions for ARM EABI ucLinux
-   Copyright (C) 2006, 2007, 2008 Free Software Foundation, Inc.
+   Copyright (C) 2006-2013 Free Software Foundation, Inc.
    Contributed by Paul Brook <paul@codesourcery.com>
 
    This file is part of GCC.
@@ -64,3 +64,4 @@
 		    : "0" (_beg), "r" (_end), "r" (_flg), "r" (_scno));	\
 }
 
+#define ARM_TARGET2_DWARF_FORMAT DW_EH_PE_absptr

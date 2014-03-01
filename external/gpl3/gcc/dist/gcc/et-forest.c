@@ -1,7 +1,6 @@
 /* ET-trees data structure implementation.
    Contributed by Pavel Nejedly
-   Copyright (C) 2002, 2003, 2004, 2005, 2007, 2008 Free Software
-   Foundation, Inc.
+   Copyright (C) 2002-2013 Free Software Foundation, Inc.
 
 This file is part of the libiberty library.
 Libiberty is free software; you can redistribute it and/or
@@ -26,7 +25,6 @@ License along with libiberty; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
 #include "et-forest.h"
 #include "alloc-pool.h"
 
@@ -34,7 +32,7 @@ License along with libiberty; see the file COPYING3.  If not see
 #undef DEBUG_ET
 
 #ifdef DEBUG_ET
-#include "basic-block.h"
+#include "basic-block.h" /* To access index in record_path_before_1.  */
 #endif
 
 /* The occurrence of a node in the et tree.  */
@@ -661,13 +659,22 @@ et_nca (struct et_node *n1, struct et_node *n2)
       if (r)
 	r->parent = o1;
     }
-  else
+  else if (r == o2 || (r && r->parent != NULL))
     {
       ret = o2->prev;
 
       set_next (o1, o2);
       if (l)
 	l->parent = o1;
+    }
+  else
+    {
+      /* O1 and O2 are in different components of the forest.  */
+      if (l)
+	l->parent = o1;
+      if (r)
+	r->parent = o1;
+      return NULL;
     }
 
   if (0 < o2->depth)

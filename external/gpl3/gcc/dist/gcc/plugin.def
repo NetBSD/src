@@ -1,5 +1,5 @@
 /* This file contains the definitions for plugin events in GCC.
-   Copyright (C) 2009 Free Software Foundation, Inc.
+   Copyright (C) 2009-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -23,6 +23,9 @@ DEFEVENT (PLUGIN_PASS_MANAGER_SETUP)
 
 /* After finishing parsing a type.  */
 DEFEVENT (PLUGIN_FINISH_TYPE)
+
+/* After finishing parsing a declaration. */
+DEFEVENT (PLUGIN_FINISH_DECL)
 
 /* Useful for summary processing.  */
 DEFEVENT (PLUGIN_FINISH_UNIT)

@@ -279,8 +279,15 @@ So instead we use the macro below and test it against specific values.  */
 # endif
 #endif
 
+/* Similarly to ARG_UNUSED below.  Prior to GCC 3.4, the C++ frontend
+   couldn't parse attributes placed after the identifier name, and now
+   the entire compiler is built with C++.  */
 #ifndef ATTRIBUTE_UNUSED
-#define ATTRIBUTE_UNUSED __attribute__ ((__unused__))
+#if GCC_VERSION >= 3004
+#  define ATTRIBUTE_UNUSED __attribute__ ((__unused__))
+#else
+#define ATTRIBUTE_UNUSED
+#endif
 #endif /* ATTRIBUTE_UNUSED */
 
 /* Before GCC 3.4, the C++ frontend couldn't parse attributes placed after the
@@ -414,6 +421,17 @@ So instead we use the macro below and test it against specific values.  */
 #define EXPORTED_CONST extern const
 #else
 #define EXPORTED_CONST const
+#endif
+
+/* Be conservative and only use enum bitfields with C++ or GCC.
+   FIXME: provide a complete autoconf test for buggy enum bitfields.  */
+
+#ifdef __cplusplus
+#define ENUM_BITFIELD(TYPE) enum TYPE
+#elif (GCC_VERSION > 2000)
+#define ENUM_BITFIELD(TYPE) __extension__ enum TYPE
+#else
+#define ENUM_BITFIELD(TYPE) unsigned int
 #endif
 
 #ifdef __cplusplus

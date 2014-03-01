@@ -1,5 +1,5 @@
 /* Language-dependent hooks for Objective-C++.
-   Copyright 2005, 2007, 2008 Free Software Foundation, Inc.
+   Copyright (C) 2005-2013 Free Software Foundation, Inc.
    Contributed by Ziemowit Laski  <zlaski@apple.com>
 
 This file is part of GCC.
@@ -18,26 +18,22 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
 #include "tm.h"
 #include "tree.h"
 #include "cp-tree.h"
-#include "c-common.h"
-#include "toplev.h"
+#include "c-family/c-common.h"
+#include "c-family/c-objc.h"
 #include "objc-act.h"
 #include "langhooks.h"
 #include "langhooks-def.h"
-#include "diagnostic.h"
-#include "debug.h"
+#include "target.h"
 #include "cp-objcp-common.h"
-#include "except.h"
 
 enum c_language_kind c_language = clk_objcxx;
 static void objcxx_init_ts (void);
-static tree objcxx_eh_personality (void);
 
 /* Lang hooks common to C++ and ObjC++ are declared in cp/cp-objcp-common.h;
    consequently, there should be very few hooks below.  */
@@ -46,16 +42,10 @@ static tree objcxx_eh_personality (void);
 #define LANG_HOOKS_NAME "GNU Objective-C++"
 #undef LANG_HOOKS_INIT
 #define LANG_HOOKS_INIT objc_init
-#undef LANG_HOOKS_DECL_PRINTABLE_NAME
-#define LANG_HOOKS_DECL_PRINTABLE_NAME	objc_printable_name
 #undef LANG_HOOKS_GIMPLIFY_EXPR 
 #define LANG_HOOKS_GIMPLIFY_EXPR objc_gimplify_expr
 #undef LANG_HOOKS_INIT_TS
 #define LANG_HOOKS_INIT_TS objcxx_init_ts
-#undef LANG_HOOKS_EH_PERSONALITY
-#define LANG_HOOKS_EH_PERSONALITY objcxx_eh_personality
-#undef LANG_HOOKS_EH_RUNTIME_TYPE
-#define LANG_HOOKS_EH_RUNTIME_TYPE build_eh_type_type
 
 /* Each front end provides its own lang hook initializer.  */
 struct lang_hooks lang_hooks = LANG_HOOKS_INITIALIZER;
@@ -80,7 +70,7 @@ objcp_tsubst_copy_and_build (tree t, tree args, tsubst_flags_t complain,
       return objc_finish_message_expr
 	(RECURSE (TREE_OPERAND (t, 0)),
 	 TREE_OPERAND (t, 1),  /* No need to expand the selector.  */
-	 RECURSE (TREE_OPERAND (t, 2)));
+	 RECURSE (TREE_OPERAND (t, 2)), NULL);
 
     case CLASS_REFERENCE_EXPR:
       return objc_get_class_reference
@@ -99,70 +89,10 @@ objcp_tsubst_copy_and_build (tree t, tree args, tsubst_flags_t complain,
 static void
 objcxx_init_ts (void)
 {
-  /* objc decls */
-  tree_contains_struct[CLASS_METHOD_DECL][TS_DECL_NON_COMMON] = 1;
-  tree_contains_struct[INSTANCE_METHOD_DECL][TS_DECL_NON_COMMON] = 1;
-  tree_contains_struct[KEYWORD_DECL][TS_DECL_NON_COMMON] = 1;
-  
-  tree_contains_struct[CLASS_METHOD_DECL][TS_DECL_WITH_VIS] = 1;
-  tree_contains_struct[INSTANCE_METHOD_DECL][TS_DECL_WITH_VIS] = 1;
-  tree_contains_struct[KEYWORD_DECL][TS_DECL_WITH_VIS] = 1;
-
-  tree_contains_struct[CLASS_METHOD_DECL][TS_DECL_WRTL] = 1;
-  tree_contains_struct[INSTANCE_METHOD_DECL][TS_DECL_WRTL] = 1;
-  tree_contains_struct[KEYWORD_DECL][TS_DECL_WRTL] = 1;
-  
-  tree_contains_struct[CLASS_METHOD_DECL][TS_DECL_MINIMAL] = 1;
-  tree_contains_struct[INSTANCE_METHOD_DECL][TS_DECL_MINIMAL] = 1;
-  tree_contains_struct[KEYWORD_DECL][TS_DECL_MINIMAL] = 1;
-  
-  tree_contains_struct[CLASS_METHOD_DECL][TS_DECL_COMMON] = 1;
-  tree_contains_struct[INSTANCE_METHOD_DECL][TS_DECL_COMMON] = 1;
-  tree_contains_struct[KEYWORD_DECL][TS_DECL_COMMON] = 1;
-  
-  /* C++ decls */
-  tree_contains_struct[NAMESPACE_DECL][TS_DECL_NON_COMMON] = 1;
-  tree_contains_struct[USING_DECL][TS_DECL_NON_COMMON] = 1;
-  tree_contains_struct[TEMPLATE_DECL][TS_DECL_NON_COMMON] = 1;
-
-  tree_contains_struct[NAMESPACE_DECL][TS_DECL_WITH_VIS] = 1;
-  tree_contains_struct[USING_DECL][TS_DECL_WITH_VIS] = 1;
-  tree_contains_struct[TEMPLATE_DECL][TS_DECL_WITH_VIS] = 1;
-
-  tree_contains_struct[NAMESPACE_DECL][TS_DECL_WRTL] = 1;
-  tree_contains_struct[USING_DECL][TS_DECL_WRTL] = 1;
-  tree_contains_struct[TEMPLATE_DECL][TS_DECL_WRTL] = 1;
-  
-  tree_contains_struct[NAMESPACE_DECL][TS_DECL_COMMON] = 1;
-  tree_contains_struct[USING_DECL][TS_DECL_COMMON] = 1;
-  tree_contains_struct[TEMPLATE_DECL][TS_DECL_COMMON] = 1;
- 
-  tree_contains_struct[NAMESPACE_DECL][TS_DECL_MINIMAL] = 1;
-  tree_contains_struct[USING_DECL][TS_DECL_MINIMAL] = 1;
-  tree_contains_struct[TEMPLATE_DECL][TS_DECL_MINIMAL] = 1;
+  objc_common_init_ts ();
+  cp_common_init_ts ();
 
   init_shadowed_var_for_decl ();
-}
-
-static GTY(()) tree objcp_eh_personality_decl;
-
-static tree
-objcxx_eh_personality (void)
-{
-  if (!objcp_eh_personality_decl)
-    objcp_eh_personality_decl
-	= build_personality_function (USING_SJLJ_EXCEPTIONS
-				      ? "__gxx_personality_sj0"
-				      : "__gxx_personality_v0");
-
-  return objcp_eh_personality_decl;
-}
-
-
-void
-finish_file (void)
-{
-  objc_finish_file ();
 }
 
 #include "gtype-objcp.h"

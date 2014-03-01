@@ -1,11 +1,11 @@
 /* Declarations of functions and data types used for SHA1 sum
    library functions.
-   Copyright (C) 2000, 2001, 2003, 2005, 2006, 2008
+   Copyright (C) 2000, 2001, 2003, 2005, 2006, 2008, 2010
    Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify it
    under the terms of the GNU General Public License as published by the
-   Free Software Foundation; either version 2, or (at your option) any
+   Free Software Foundation; either version 3, or (at your option) any
    later version.
 
    This program is distributed in the hope that it will be useful,
@@ -38,6 +38,11 @@
 #ifdef _LIBC
 # include <sys/types.h>
 typedef u_int32_t sha1_uint32;
+typedef uintptr_t sha1_uintptr;
+#elif defined (HAVE_SYS_TYPES_H) && defined (HAVE_STDINT_H)
+#include <stdint.h>
+#include <sys/types.h>
+typedef uint32_t sha1_uint32;
 typedef uintptr_t sha1_uintptr;
 #else
 #  define INT_MAX_32_BITS 2147483647

@@ -1,6 +1,5 @@
 /* Natural loop analysis code for GNU compiler.
-   Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 2002-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -28,9 +27,13 @@ along with GCC; see the file COPYING3.  If not see
 #include "basic-block.h"
 #include "cfgloop.h"
 #include "expr.h"
-#include "output.h"
 #include "graphds.h"
 #include "params.h"
+
+struct target_cfgloop default_target_cfgloop;
+#if SWITCHABLE_TARGET
+struct target_cfgloop *this_target_cfgloop = &default_target_cfgloop;
+#endif
 
 /* Checks whether BB is executed exactly once in each LOOP iteration.  */
 
@@ -125,7 +128,7 @@ mark_irreducible_loops (void)
 	    if (depth == loop_depth (act->loop_father))
 	      cloop = act->loop_father;
 	    else
-	      cloop = VEC_index (loop_p, act->loop_father->superloops, depth);
+	      cloop = (*act->loop_father->superloops)[depth];
 
 	    src = LOOP_REPR (cloop);
 	  }
@@ -309,24 +312,13 @@ seq_cost (const_rtx seq, bool speed)
     {
       set = single_set (seq);
       if (set)
-	cost += rtx_cost (set, SET, speed);
+	cost += set_rtx_cost (set, speed);
       else
 	cost++;
     }
 
   return cost;
 }
-
-/* The properties of the target.  */
-
-unsigned target_avail_regs;	/* Number of available registers.  */
-unsigned target_res_regs;	/* Number of registers reserved for temporary
-				   expressions.  */
-unsigned target_reg_cost[2];	/* The cost for register when there still
-				   is some reserve, but we are approaching
-				   the number of available registers.  */
-unsigned target_spill_cost[2];	/* The cost for register when we need
-				   to spill.  */
 
 /* Initialize the constants for computing set costs.  */
 
@@ -342,10 +334,15 @@ init_set_costs (void)
   unsigned i;
 
   target_avail_regs = 0;
+  target_clobbered_regs = 0;
   for (i = 0; i < FIRST_PSEUDO_REGISTER; i++)
     if (TEST_HARD_REG_BIT (reg_class_contents[GENERAL_REGS], i)
 	&& !fixed_regs[i])
-      target_avail_regs++;
+      {
+	target_avail_regs++;
+	if (call_used_regs[i])
+	  target_clobbered_regs++;
+      }
 
   target_res_regs = 3;
 
@@ -379,20 +376,29 @@ init_set_costs (void)
 
 /* Estimates cost of increased register pressure caused by making N_NEW new
    registers live around the loop.  N_OLD is the number of registers live
-   around the loop.  */
+   around the loop.  If CALL_P is true, also take into account that
+   call-used registers may be clobbered in the loop body, reducing the
+   number of available registers before we spill.  */
 
 unsigned
-estimate_reg_pressure_cost (unsigned n_new, unsigned n_old, bool speed)
+estimate_reg_pressure_cost (unsigned n_new, unsigned n_old, bool speed,
+			    bool call_p)
 {
   unsigned cost;
   unsigned regs_needed = n_new + n_old;
+  unsigned available_regs = target_avail_regs;
+
+  /* If there is a call in the loop body, the call-clobbered registers
+     are not available for loop invariants.  */
+  if (call_p)
+    available_regs = available_regs - target_clobbered_regs;
 
   /* If we have enough registers, we should use them and not restrict
      the transformations unnecessarily.  */
-  if (regs_needed + target_res_regs <= target_avail_regs)
+  if (regs_needed + target_res_regs <= available_regs)
     return 0;
 
-  if (regs_needed <= target_avail_regs)
+  if (regs_needed <= available_regs)
     /* If we are close to running out of registers, try to preserve
        them.  */
     cost = target_reg_cost [speed] * n_new;
@@ -439,3 +445,73 @@ mark_loop_exit_edges (void)
     }
 }
 
+/* Return exit edge if loop has only one exit that is likely
+   to be executed on runtime (i.e. it is not EH or leading
+   to noreturn call.  */
+
+edge
+single_likely_exit (struct loop *loop)
+{
+  edge found = single_exit (loop);
+  vec<edge> exits;
+  unsigned i;
+  edge ex;
+
+  if (found)
+    return found;
+  exits = get_loop_exit_edges (loop);
+  FOR_EACH_VEC_ELT (exits, i, ex)
+    {
+      if (ex->flags & (EDGE_EH | EDGE_ABNORMAL_CALL))
+	continue;
+      /* The constant of 5 is set in a way so noreturn calls are
+	 ruled out by this test.  The static branch prediction algorithm
+         will not assign such a low probability to conditionals for usual
+         reasons.  */
+      if (profile_status != PROFILE_ABSENT
+	  && ex->probability < 5 && !ex->count)
+	continue;
+      if (!found)
+	found = ex;
+      else
+	{
+	  exits.release ();
+	  return NULL;
+	}
+    }
+  exits.release ();
+  return found;
+}
+
+
+/* Gets basic blocks of a LOOP.  Header is the 0-th block, rest is in dfs
+   order against direction of edges from latch.  Specially, if
+   header != latch, latch is the 1-st block.  */
+
+vec<basic_block>
+get_loop_hot_path (const struct loop *loop)
+{
+  basic_block bb = loop->header;
+  vec<basic_block> path = vNULL;
+  bitmap visited = BITMAP_ALLOC (NULL);
+
+  while (true)
+    {
+      edge_iterator ei;
+      edge e;
+      edge best = NULL;
+
+      path.safe_push (bb);
+      bitmap_set_bit (visited, bb->index);
+      FOR_EACH_EDGE (e, ei, bb->succs)
+        if ((!best || e->probability > best->probability)
+	    && !loop_exit_edge_p (loop, e)
+	    && !bitmap_bit_p (visited, e->dest->index))
+	  best = e;
+      if (!best || best->dest == loop->header)
+	break;
+      bb = best->dest;
+    }
+  BITMAP_FREE (visited);
+  return path;
+}

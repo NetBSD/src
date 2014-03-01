@@ -1,5 +1,5 @@
 /* Common VxWorks AE target definitions for GNU compiler.
-   Copyright (C) 2004, 2005, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2004-2013 Free Software Foundation, Inc.
    Contributed by CodeSourcery, LLC.
 
 This file is part of GCC.
@@ -55,3 +55,16 @@ along with GCC; see the file COPYING3.  If not see
 #define VXWORKS_STARTFILE_SPEC ""
 
 #define VXWORKS_KIND VXWORKS_KIND_AE
+
+/* Both kernels and RTPs have the facilities required by this macro.  */
+#define TARGET_POSIX_IO
+
+/* A VxWorks 653 implementation of TARGET_OS_CPP_BUILTINS.  */
+#define VXWORKS_OS_CPP_BUILTINS()                                       \
+  do                                                                    \
+    {                                                                   \
+      builtin_define ("__vxworks");                                     \
+      builtin_define ("__VXWORKS__");                                   \
+    }                                                                   \
+  while (0)
+

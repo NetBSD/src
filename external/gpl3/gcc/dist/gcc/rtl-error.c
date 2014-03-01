@@ -1,5 +1,5 @@
 /* RTL specific diagnostic subroutines for GCC
-   Copyright (C) 2001, 2002, 2003, 2004, 2007, 2008 Free Software Foundation, Inc.
+   Copyright (C) 2001-2013 Free Software Foundation, Inc.
    Contributed by Gabriel Dos Reis <gdr@codesourcery.com>
 
 This file is part of GCC.
@@ -19,16 +19,13 @@ along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include "config.h"
-#undef FLOAT /* This is for hpux. They should change hpux.  */
-#undef FFS  /* Some systems define this in param.h.  */
 #include "system.h"
 #include "coretypes.h"
 #include "tm.h"
-#include "rtl.h"
+#include "rtl-error.h"
 #include "insn-attr.h"
 #include "insn-config.h"
 #include "input.h"
-#include "toplev.h"
 #include "intl.h"
 #include "diagnostic.h"
 

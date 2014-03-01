@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2005, 2006, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2005-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -34,7 +34,7 @@
 // warranty.
 
 /**
- * @file insert_fn_imps.hpp
+ * @file left_child_next_sibling_heap_/insert_fn_imps.hpp
  * Contains an implementation class for left_child_next_sibling_heap_.
  */
 
@@ -87,12 +87,12 @@ inline void
 PB_DS_CLASS_C_DEC::
 make_child_of(node_pointer p_nd, node_pointer p_new_parent)
 {
-  _GLIBCXX_DEBUG_ASSERT(p_nd != NULL);
-  _GLIBCXX_DEBUG_ASSERT(p_new_parent != NULL);
+  _GLIBCXX_DEBUG_ASSERT(p_nd != 0);
+  _GLIBCXX_DEBUG_ASSERT(p_new_parent != 0);
 
   p_nd->m_p_next_sibling = p_new_parent->m_p_l_child;
 
-  if (p_new_parent->m_p_l_child != NULL)
+  if (p_new_parent->m_p_l_child != 0)
     p_new_parent->m_p_l_child->m_p_prev_or_parent = p_nd;
 
   p_nd->m_p_prev_or_parent = p_new_parent;
@@ -109,7 +109,7 @@ parent(node_pointer p_nd)
     {
       node_pointer p_pot = p_nd->m_p_prev_or_parent;
 
-      if (p_pot == NULL || p_pot->m_p_l_child == p_nd)
+      if (p_pot == 0 || p_pot->m_p_l_child == p_nd)
 	return p_pot;
 
       p_nd = p_pot;
@@ -124,12 +124,12 @@ swap_with_parent(node_pointer p_nd, node_pointer p_parent)
   if (p_parent == m_p_root)
     m_p_root = p_nd;
 
-  _GLIBCXX_DEBUG_ASSERT(p_nd != NULL);
-  _GLIBCXX_DEBUG_ASSERT(p_parent != NULL);
+  _GLIBCXX_DEBUG_ASSERT(p_nd != 0);
+  _GLIBCXX_DEBUG_ASSERT(p_parent != 0);
   _GLIBCXX_DEBUG_ASSERT(parent(p_nd) == p_parent);
 
   const bool nd_direct_child = p_parent->m_p_l_child == p_nd;
-  const bool parent_root = p_parent->m_p_prev_or_parent == NULL;
+  const bool parent_root = p_parent->m_p_prev_or_parent == 0;
   const bool parent_direct_child =
     !parent_root&&  p_parent->m_p_prev_or_parent->m_p_l_child == p_parent;
 
@@ -138,16 +138,16 @@ swap_with_parent(node_pointer p_nd, node_pointer p_parent)
   std::swap(p_parent->m_p_l_child, p_nd->m_p_l_child);
   std::swap(p_parent->m_metadata, p_nd->m_metadata);
 
-  _GLIBCXX_DEBUG_ASSERT(p_nd->m_p_l_child != NULL);
-  _GLIBCXX_DEBUG_ASSERT(p_parent->m_p_prev_or_parent != NULL);
+  _GLIBCXX_DEBUG_ASSERT(p_nd->m_p_l_child != 0);
+  _GLIBCXX_DEBUG_ASSERT(p_parent->m_p_prev_or_parent != 0);
 
-  if (p_nd->m_p_next_sibling != NULL)
+  if (p_nd->m_p_next_sibling != 0)
     p_nd->m_p_next_sibling->m_p_prev_or_parent = p_nd;
 
-  if (p_parent->m_p_next_sibling != NULL)
+  if (p_parent->m_p_next_sibling != 0)
     p_parent->m_p_next_sibling->m_p_prev_or_parent = p_parent;
 
-  if (p_parent->m_p_l_child != NULL)
+  if (p_parent->m_p_l_child != 0)
     p_parent->m_p_l_child->m_p_prev_or_parent = p_parent;
 
   if (parent_direct_child)

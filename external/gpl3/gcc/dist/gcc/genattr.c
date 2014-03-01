@@ -1,6 +1,5 @@
 /* Generate attribute information (insn-attr.h) from machine description.
-   Copyright (C) 1991, 1994, 1996, 1998, 1999, 2000, 2003, 2004, 2007, 2008
-   Free Software Foundation, Inc.
+   Copyright (C) 1991-2013 Free Software Foundation, Inc.
    Contributed by Richard Kenner (kenner@vlsi1.ultra.nyu.edu)
 
 This file is part of GCC.
@@ -26,49 +25,39 @@ along with GCC; see the file COPYING3.  If not see
 #include "tm.h"
 #include "rtl.h"
 #include "errors.h"
+#include "read-md.h"
 #include "gensupport.h"
 
 
-static void write_upcase (const char *);
 static void gen_attr (rtx);
 
-static void
-write_upcase (const char *str)
-{
-  for (; *str; str++)
-    putchar (TOUPPER(*str));
-}
+static vec<rtx> const_attrs, reservations;
+
 
 static void
 gen_attr (rtx attr)
 {
-  const char *p, *tag;
+  const char *p;
   int is_const = GET_CODE (XEXP (attr, 2)) == CONST;
 
-  printf ("#define HAVE_ATTR_%s\n", XSTR (attr, 0));
+  if (is_const)
+    const_attrs.safe_push (attr);
+
+  printf ("#define HAVE_ATTR_%s 1\n", XSTR (attr, 0));
 
   /* If numeric attribute, don't need to write an enum.  */
-  p = XSTR (attr, 1);
-  if (*p == '\0')
-    printf ("extern int get_attr_%s (%s);\n", XSTR (attr, 0),
-	    (is_const ? "void" : "rtx"));
+  if (GET_CODE (attr) == DEFINE_ENUM_ATTR)
+    printf ("extern enum %s get_attr_%s (%s);\n\n",
+	    XSTR (attr, 1), XSTR (attr, 0), (is_const ? "void" : "rtx"));
   else
     {
-      printf ("enum attr_%s {", XSTR (attr, 0));
-
-      while ((tag = scan_comma_elt (&p)) != 0)
-	{
-	  write_upcase (XSTR (attr, 0));
-	  putchar ('_');
-	  while (tag != p)
-	    putchar (TOUPPER (*tag++));
-	  if (*p == ',')
-	    fputs (", ", stdout);
-	}
-
-      fputs ("};\n", stdout);
-      printf ("extern enum attr_%s get_attr_%s (%s);\n\n",
-	      XSTR (attr, 0), XSTR (attr, 0), (is_const ? "void" : "rtx"));
+      p = XSTR (attr, 1);
+      if (*p == '\0')
+	printf ("extern int get_attr_%s (%s);\n", XSTR (attr, 0),
+		(is_const ? "void" : "rtx"));
+      else
+	printf ("extern enum attr_%s get_attr_%s (%s);\n\n",
+		XSTR (attr, 0), XSTR (attr, 0), (is_const ? "void" : "rtx"));
     }
 
   /* If `length' attribute, write additional function definitions and define
@@ -85,6 +74,68 @@ extern int insn_current_length (rtx);\n\n\
     }
 }
 
+/* Check that attribute NAME is used in define_insn_reservation condition
+   EXP.  Return true if it is.  */
+static bool
+check_tune_attr (const char *name, rtx exp)
+{
+  switch (GET_CODE (exp))
+    {
+    case AND:
+      if (check_tune_attr (name, XEXP (exp, 0)))
+	return true;
+      return check_tune_attr (name, XEXP (exp, 1));
+
+    case IOR:
+      return (check_tune_attr (name, XEXP (exp, 0))
+	      && check_tune_attr (name, XEXP (exp, 1)));
+
+    case EQ_ATTR:
+      return strcmp (XSTR (exp, 0), name) == 0;
+
+    default:
+      return false;
+    }
+}
+
+/* Try to find a const attribute (usually cpu or tune) that is used
+   in all define_insn_reservation conditions.  */
+static bool
+find_tune_attr (rtx exp)
+{
+  unsigned int i;
+  rtx attr;
+
+  switch (GET_CODE (exp))
+    {
+    case AND:
+    case IOR:
+      if (find_tune_attr (XEXP (exp, 0)))
+	return true;
+      return find_tune_attr (XEXP (exp, 1));
+
+    case EQ_ATTR:
+      if (strcmp (XSTR (exp, 0), "alternative") == 0)
+	return false;
+
+      FOR_EACH_VEC_ELT (const_attrs, i, attr)
+	if (strcmp (XSTR (attr, 0), XSTR (exp, 0)) == 0)
+	  {
+	    unsigned int j;
+	    rtx resv;
+
+	    FOR_EACH_VEC_ELT (reservations, j, resv)
+	      if (! check_tune_attr (XSTR (attr, 0), XEXP (resv, 2)))
+		return false;
+	    return true;
+	  }
+      return false;
+
+    default:
+      return false;
+    }
+}
+
 int
 main (int argc, char **argv)
 {
@@ -97,7 +148,7 @@ main (int argc, char **argv)
 
   progname = "genattr";
 
-  if (init_md_reader_args (argc, argv) != SUCCESS_EXIT_CODE)
+  if (!init_rtx_reader_args (argc, argv))
     return (FATAL_EXIT_CODE);
 
   puts ("/* Generated automatically by the program `genattr'");
@@ -105,11 +156,7 @@ main (int argc, char **argv)
   puts ("#ifndef GCC_INSN_ATTR_H");
   puts ("#define GCC_INSN_ATTR_H\n");
 
-  /* For compatibility, define the attribute `alternative', which is just
-     a reference to the variable `which_alternative'.  */
-
-  puts ("#define HAVE_ATTR_alternative");
-  puts ("#define get_attr_alternative(insn) which_alternative");
+  puts ("#include \"insn-attr-common.h\"\n");
 
   /* Read the machine description.  */
 
@@ -121,14 +168,14 @@ main (int argc, char **argv)
       if (desc == NULL)
 	break;
 
-      if (GET_CODE (desc) == DEFINE_ATTR)
+      if (GET_CODE (desc) == DEFINE_ATTR
+	  || GET_CODE (desc) == DEFINE_ENUM_ATTR)
 	gen_attr (desc);
 
       else if (GET_CODE (desc) == DEFINE_DELAY)
         {
 	  if (! have_delay)
 	    {
-	      printf ("#define DELAY_SLOTS\n");
 	      printf ("extern int num_delay_slots (rtx);\n");
 	      printf ("extern int eligible_for_delay (rtx, int, rtx, int);\n\n");
 	      printf ("extern int const_num_delay_slots (rtx);\n\n");
@@ -154,14 +201,18 @@ main (int argc, char **argv)
         }
 
       else if (GET_CODE (desc) == DEFINE_INSN_RESERVATION)
-	num_insn_reservations++;
+	{
+	  num_insn_reservations++;
+	  reservations.safe_push (desc);
+	}
     }
 
   if (num_insn_reservations > 0)
     {
+      bool has_tune_attr
+	= find_tune_attr (XEXP (reservations[0], 2));
       /* Output interface for pipeline hazards recognition based on
 	 DFA (deterministic finite state automata.  */
-      printf ("\n#define INSN_SCHEDULING\n");
       printf ("\n/* DFA based pipeline interface.  */");
       printf ("\n#ifndef AUTOMATON_ALTS\n");
       printf ("#define AUTOMATON_ALTS 0\n");
@@ -173,10 +224,24 @@ main (int argc, char **argv)
       printf ("#define CPU_UNITS_QUERY 0\n");
       printf ("#endif\n\n");
       /* Interface itself: */
-      printf ("/* Internal insn code number used by automata.  */\n");
-      printf ("extern int internal_dfa_insn_code (rtx);\n\n");
-      printf ("/* Insn latency time defined in define_insn_reservation. */\n");
-      printf ("extern int insn_default_latency (rtx);\n\n");
+      if (has_tune_attr)
+	{
+	  printf ("/* Initialize fn pointers for internal_dfa_insn_code\n");
+	  printf ("   and insn_default_latency.  */\n");
+	  printf ("extern void init_sched_attrs (void);\n\n");
+	  printf ("/* Internal insn code number used by automata.  */\n");
+	  printf ("extern int (*internal_dfa_insn_code) (rtx);\n\n");
+	  printf ("/* Insn latency time defined in define_insn_reservation. */\n");
+	  printf ("extern int (*insn_default_latency) (rtx);\n\n");
+	}
+      else
+	{
+	  printf ("#define init_sched_attrs() do { } while (0)\n\n");
+	  printf ("/* Internal insn code number used by automata.  */\n");
+	  printf ("extern int internal_dfa_insn_code (rtx);\n\n");
+	  printf ("/* Insn latency time defined in define_insn_reservation. */\n");
+	  printf ("extern int insn_default_latency (rtx);\n\n");
+	}
       printf ("/* Return nonzero if there is a bypass for given insn\n");
       printf ("   which is a data producer.  */\n");
       printf ("extern int bypass_p (rtx);\n\n");
@@ -270,16 +335,34 @@ main (int argc, char **argv)
       printf ("typedef void *state_t;\n\n");
     }
 
+  /* Special-purpose atributes should be tested with if, not #ifdef.  */
+  const char * const special_attrs[] = { "length", "enabled", 0 };
+  for (const char * const *p = special_attrs; *p; p++)
+    {
+      printf ("#ifndef HAVE_ATTR_%s\n"
+	      "#define HAVE_ATTR_%s 0\n"
+	      "#endif\n", *p, *p);
+    }
+  /* We make an exception here to provide stub definitions for
+     insn_*_length* / get_attr_enabled functions.  */
+  puts ("#if !HAVE_ATTR_length\n"
+	"extern int hook_int_rtx_unreachable (rtx);\n"
+	"#define insn_default_length hook_int_rtx_unreachable\n"
+	"#define insn_min_length hook_int_rtx_unreachable\n"
+	"#define insn_variable_length_p hook_int_rtx_unreachable\n"
+	"#define insn_current_length hook_int_rtx_unreachable\n"
+	"#include \"insn-addr.h\"\n"
+	"#endif\n"
+	"#if !HAVE_ATTR_enabled\n"
+	"extern int hook_int_rtx_1 (rtx);\n"
+	"#define get_attr_enabled hook_int_rtx_1\n"
+	"#endif\n");
+
   /* Output flag masks for use by reorg.
 
-     Flags are used to hold branch direction and prediction information
-     for use by eligible_for_...  */
+     Flags are used to hold branch direction for use by eligible_for_...  */
   printf("\n#define ATTR_FLAG_forward\t0x1\n");
   printf("#define ATTR_FLAG_backward\t0x2\n");
-  printf("#define ATTR_FLAG_likely\t0x4\n");
-  printf("#define ATTR_FLAG_very_likely\t0x8\n");
-  printf("#define ATTR_FLAG_unlikely\t0x10\n");
-  printf("#define ATTR_FLAG_very_unlikely\t0x20\n");
 
   puts("\n#endif /* GCC_INSN_ATTR_H */");
 

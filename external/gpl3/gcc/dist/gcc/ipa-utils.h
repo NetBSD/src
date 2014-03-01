@@ -1,5 +1,5 @@
 /* Utilities for ipa analysis.
-   Copyright (C) 2004, 2005, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2004-2013 Free Software Foundation, Inc.
    Contributed by Kenneth Zadeck <zadeck@naturalbridge.com>
 
 This file is part of GCC.
@@ -26,6 +26,9 @@ along with GCC; see the file COPYING3.  If not see
 struct ipa_dfs_info {
   int dfn_number;
   int low_link;
+  /* This field will have the samy value for any two nodes in the same strongly
+     connected component.  */
+  int scc_no;
   bool new_node;
   bool on_stack;
   struct cgraph_node* next_cycle;
@@ -35,9 +38,12 @@ struct ipa_dfs_info {
 
 
 /* In ipa-utils.c  */
-void ipa_utils_print_order (FILE*, const char *, struct cgraph_node**, int);
-int ipa_utils_reduced_inorder (struct cgraph_node **, bool, bool,
-			       bool (*ignore_edge) (struct cgraph_edge *));
+void ipa_print_order (FILE*, const char *, struct cgraph_node**, int);
+int ipa_reduced_postorder (struct cgraph_node **, bool, bool,
+			  bool (*ignore_edge) (struct cgraph_edge *));
+void ipa_free_postorder_info (void);
+vec<cgraph_node_ptr> ipa_get_nodes_in_cycle (struct cgraph_node *);
+int ipa_reverse_postorder (struct cgraph_node **);
 tree get_base_var (tree);
 
 

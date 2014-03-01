@@ -1,7 +1,5 @@
 /* Output dbx-format symbol table information from GNU compiler.
-   Copyright (C) 1987, 1988, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-   1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 1987-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -81,26 +79,22 @@ along with GCC; see the file COPYING3.  If not see
 #include "reload.h"
 #include "output.h"
 #include "dbxout.h"
+#include "diagnostic-core.h"
 #include "toplev.h"
 #include "tm_p.h"
 #include "ggc.h"
 #include "debug.h"
 #include "function.h"
 #include "target.h"
+#include "common/common-target.h"
 #include "langhooks.h"
 #include "obstack.h"
 #include "expr.h"
+#include "cgraph.h"
 
 #ifdef XCOFF_DEBUGGING_INFO
 #include "xcoffout.h"
 #endif
-
-#define DBXOUT_DECR_NESTING \
-  if (--debug_nesting == 0 && symbol_queue_index > 0) \
-    { emit_pending_bincls_if_required (); debug_flush_symbol_queue (); }
-
-#define DBXOUT_DECR_NESTING_AND_RETURN(x) \
-  do {--debug_nesting; return (x);} while (0)
 
 #ifndef ASM_STABS_OP
 # ifdef XCOFF_DEBUGGING_INFO
@@ -288,9 +282,12 @@ static const char *base_input_file;
 #endif
 
 /* A C expression for the integer offset value of an argument (N_PSYM)
-   having address X (an RTX).  The nominal offset is OFFSET.  */
+   having address X (an RTX).  The nominal offset is OFFSET.
+   Note that we use OFFSET + 0 here to avoid the self-assign warning
+   when the macro is called in a context like
+   number = DEBUGGER_ARG_OFFSET(number, X)  */
 #ifndef DEBUGGER_ARG_OFFSET
-#define DEBUGGER_ARG_OFFSET(OFFSET, X) (OFFSET)
+#define DEBUGGER_ARG_OFFSET(OFFSET, X) (OFFSET + 0)
 #endif
 
 /* This obstack holds the stab string currently being constructed.  We
@@ -329,6 +326,7 @@ static const char *dbxout_common_check (tree, int *);
 static void dbxout_global_decl (tree);
 static void dbxout_type_decl (tree, int);
 static void dbxout_handle_pch (unsigned);
+static void debug_free_queue (void);
 
 /* The debug hooks structure.  */
 #if defined (DBX_DEBUGGING_INFO)
@@ -357,6 +355,7 @@ const struct gcc_debug_hooks dbx_debug_hooks =
   dbxout_source_line,		         /* source_line */
   dbxout_begin_prologue,	         /* begin_prologue */
   debug_nothing_int_charstar,	         /* end_prologue */
+  debug_nothing_int_charstar,	         /* begin_epilogue */
   debug_nothing_int_charstar,	         /* end_epilogue */
 #ifdef DBX_FUNCTION_FIRST
   dbxout_begin_function,
@@ -374,12 +373,9 @@ const struct gcc_debug_hooks dbx_debug_hooks =
   dbxout_handle_pch,		         /* handle_pch */
   debug_nothing_rtx,		         /* var_location */
   debug_nothing_void,                    /* switch_text_section */
-  debug_nothing_tree,		         /* direct_call */
-  debug_nothing_tree_int,		 /* virtual_call_token */
-  debug_nothing_rtx_rtx,	         /* copy_call_info */
-  debug_nothing_uid,		         /* virtual_call */
   debug_nothing_tree_tree,		 /* set_name */
-  0                                      /* start_end_main_source_file */
+  0,                                     /* start_end_main_source_file */
+  TYPE_SYMTAB_IS_ADDRESS                 /* tree_type_symtab_field */
 };
 #endif /* DBX_DEBUGGING_INFO  */
 
@@ -399,6 +395,7 @@ const struct gcc_debug_hooks xcoff_debug_hooks =
   xcoffout_source_line,
   xcoffout_begin_prologue,	         /* begin_prologue */
   debug_nothing_int_charstar,	         /* end_prologue */
+  debug_nothing_int_charstar,	         /* begin_epilogue */
   xcoffout_end_epilogue,
   debug_nothing_tree,		         /* begin_function */
   xcoffout_end_function,
@@ -412,12 +409,9 @@ const struct gcc_debug_hooks xcoff_debug_hooks =
   dbxout_handle_pch,		         /* handle_pch */
   debug_nothing_rtx,		         /* var_location */
   debug_nothing_void,                    /* switch_text_section */
-  debug_nothing_tree,		         /* direct_call */
-  debug_nothing_tree_int,		 /* virtual_call_token */
-  debug_nothing_rtx_rtx,	         /* copy_call_info */
-  debug_nothing_uid,		         /* virtual_call */
   debug_nothing_tree_tree,	         /* set_name */
-  0                                      /* start_end_main_source_file */
+  0,                                     /* start_end_main_source_file */
+  TYPE_SYMTAB_IS_ADDRESS                 /* tree_type_symtab_field */
 };
 #endif /* XCOFF_DEBUGGING_INFO  */
 
@@ -707,7 +701,7 @@ stabstr_O (tree cst)
      present.  */
   {
     const unsigned int width = TYPE_PRECISION (TREE_TYPE (cst));
-    if (width == HOST_BITS_PER_WIDE_INT * 2)
+    if (width == HOST_BITS_PER_DOUBLE_INT)
       ;
     else if (width > HOST_BITS_PER_WIDE_INT)
       high &= (((HOST_WIDE_INT) 1 << (width - HOST_BITS_PER_WIDE_INT)) - 1);
@@ -909,6 +903,31 @@ dbxout_finish_complex_stabs (tree sym, stab_code_type code,
   obstack_free (&stabstr_ob, str);
 }
 
+#if defined (DBX_DEBUGGING_INFO) || defined (XCOFF_DEBUGGING_INFO)
+
+/* When -gused is used, emit debug info for only used symbols. But in
+   addition to the standard intercepted debug_hooks there are some
+   direct calls into this file, i.e., dbxout_symbol, dbxout_parms, and
+   dbxout_reg_params.  Those routines may also be called from a higher
+   level intercepted routine. So to prevent recording data for an inner
+   call to one of these for an intercept, we maintain an intercept
+   nesting counter (debug_nesting). We only save the intercepted
+   arguments if the nesting is 1.  */
+static int debug_nesting = 0;
+
+static tree *symbol_queue;
+static int symbol_queue_index = 0;
+static int symbol_queue_size = 0;
+
+#define DBXOUT_DECR_NESTING \
+  if (--debug_nesting == 0 && symbol_queue_index > 0) \
+    { emit_pending_bincls_if_required (); debug_flush_symbol_queue (); }
+
+#define DBXOUT_DECR_NESTING_AND_RETURN(x) \
+  do {--debug_nesting; return (x);} while (0)
+
+#endif /* DBX_DEBUGGING_INFO || XCOFF_DEBUGGING_INFO */
+
 #if defined (DBX_DEBUGGING_INFO)
 
 static void
@@ -931,7 +950,7 @@ dbxout_function_end (tree decl ATTRIBUTE_UNUSED)
      named sections.  */
   if (!use_gnu_debug_info_extensions
       || NO_DBX_FUNCTION_END
-      || !targetm.have_named_sections)
+      || !targetm_common.have_named_sections)
     return;
 
   /* By convention, GCC will mark the end of a function with an N_FUN
@@ -1004,7 +1023,7 @@ dbxout_init (const char *input_file_name)
   const char *mapped_name;
 
   typevec_len = 100;
-  typevec = GGC_CNEWVEC (struct typeinfo, typevec_len);
+  typevec = ggc_alloc_cleared_vec_typeinfo (typevec_len);
 
   /* stabstr_ob contains one string, which will be just fine with
      1-byte alignment.  */
@@ -1096,7 +1115,7 @@ dbxout_init (const char *input_file_name)
 static void
 dbxout_typedefs (tree syms)
 {
-  for (; syms != NULL_TREE; syms = TREE_CHAIN (syms))
+  for (; syms != NULL_TREE; syms = DECL_CHAIN (syms))
     {
       if (TREE_CODE (syms) == TYPE_DECL)
 	{
@@ -1403,7 +1422,73 @@ dbxout_type_index (tree type)
 }
 
 
+/* Generate the symbols for any queued up type symbols we encountered
+   while generating the type info for some originally used symbol.
+   This might generate additional entries in the queue.  Only when
+   the nesting depth goes to 0 is this routine called.  */
 
+static void
+debug_flush_symbol_queue (void)
+{
+  int i;
+
+  /* Make sure that additionally queued items are not flushed
+     prematurely.  */
+
+  ++debug_nesting;
+
+  for (i = 0; i < symbol_queue_index; ++i)
+    {
+      /* If we pushed queued symbols then such symbols must be
+         output no matter what anyone else says.  Specifically,
+         we need to make sure dbxout_symbol() thinks the symbol was
+         used and also we need to override TYPE_DECL_SUPPRESS_DEBUG
+         which may be set for outside reasons.  */
+      int saved_tree_used = TREE_USED (symbol_queue[i]);
+      int saved_suppress_debug = TYPE_DECL_SUPPRESS_DEBUG (symbol_queue[i]);
+      TREE_USED (symbol_queue[i]) = 1;
+      TYPE_DECL_SUPPRESS_DEBUG (symbol_queue[i]) = 0;
+
+#ifdef DBX_DEBUGGING_INFO
+      dbxout_symbol (symbol_queue[i], 0);
+#endif
+
+      TREE_USED (symbol_queue[i]) = saved_tree_used;
+      TYPE_DECL_SUPPRESS_DEBUG (symbol_queue[i]) = saved_suppress_debug;
+    }
+
+  symbol_queue_index = 0;
+  --debug_nesting;
+}
+
+/* Queue a type symbol needed as part of the definition of a decl
+   symbol.  These symbols are generated when debug_flush_symbol_queue()
+   is called.  */
+
+static void
+debug_queue_symbol (tree decl)
+{
+  if (symbol_queue_index >= symbol_queue_size)
+    {
+      symbol_queue_size += 10;
+      symbol_queue = XRESIZEVEC (tree, symbol_queue, symbol_queue_size);
+    }
+
+  symbol_queue[symbol_queue_index++] = decl;
+}
+
+/* Free symbol queue.  */
+static void
+debug_free_queue (void)
+{
+  if (symbol_queue)
+    {
+      free (symbol_queue);
+      symbol_queue = NULL;
+      symbol_queue_size = 0;
+    }
+}
+
 /* Used in several places: evaluates to '0' for a private decl,
    '1' for a protected decl, '2' for a public decl.  */
 #define DECL_ACCESSIBILITY_CHAR(DECL) \
@@ -1420,11 +1505,11 @@ dbxout_type_fields (tree type)
 
   /* Output the name, type, position (in bits), size (in bits) of each
      field that we can support.  */
-  for (tem = TYPE_FIELDS (type); tem; tem = TREE_CHAIN (tem))
+  for (tem = TYPE_FIELDS (type); tem; tem = DECL_CHAIN (tem))
     {
       /* If one of the nodes is an error_mark or its type is then
 	 return early.  */
-      if (tem == error_mark_node || TREE_TYPE (tem) == error_mark_node)
+      if (error_operand_p (tem))
 	return;
 
       /* Omit here local type decls until we know how to support them.  */
@@ -1563,7 +1648,7 @@ dbxout_type_methods (tree type)
 	 These differ in the types of the arguments.  */
       for (last = NULL_TREE;
 	   fndecl && (last == NULL_TREE || DECL_NAME (fndecl) == DECL_NAME (last));
-	   fndecl = TREE_CHAIN (fndecl))
+	   fndecl = DECL_CHAIN (fndecl))
 	/* Output the name of the field (after overloading), as
 	   well as the name of the field before overloading, along
 	   with its parameter list */
@@ -1671,16 +1756,7 @@ static void
 dbxout_type (tree type, int full)
 {
   static int anonymous_type_number = 0;
-  bool vector_type = false;
   tree tem, main_variant, low, high;
-
-  if (TREE_CODE (type) == VECTOR_TYPE)
-    {
-      /* The frontend feeds us a representation for the vector as a struct
-	 containing an array.  Pull out the array type.  */
-      type = TREE_TYPE (TYPE_FIELDS (TYPE_DEBUG_REPRESENTATION_TYPE (type)));
-      vector_type = true;
-    }
 
   if (TREE_CODE (type) == INTEGER_TYPE)
     {
@@ -1866,6 +1942,7 @@ dbxout_type (tree type, int full)
   switch (TREE_CODE (type))
     {
     case VOID_TYPE:
+    case NULLPTR_TYPE:
     case LANG_TYPE:
       /* For a void type, just define it as itself; i.e., "5=5".
 	 This makes us consider it defined
@@ -2014,9 +2091,6 @@ dbxout_type (tree type, int full)
 	  break;
 	}
 
-      if (use_gnu_debug_info_extensions && vector_type)
-	stabstr_S ("@V;");
-
       /* Output "a" followed by a range type definition
 	 for the index type of the array
 	 followed by a reference to the target-type.
@@ -2039,6 +2113,22 @@ dbxout_type (tree type, int full)
 	  stabstr_C ('a');
 	  dbxout_range_type (tem, TYPE_MIN_VALUE (tem), TYPE_MAX_VALUE (tem));
 	}
+
+      dbxout_type (TREE_TYPE (type), 0);
+      break;
+
+    case VECTOR_TYPE:
+      /* Make vectors look like an array.  */
+      if (use_gnu_debug_info_extensions)
+	stabstr_S ("@V;");
+
+      /* Output "a" followed by a range type definition
+	 for the index type of the array
+	 followed by a reference to the target-type.
+	 ar1;0;N;M for a C array of type M and size N+1.  */
+      stabstr_C ('a');
+      dbxout_range_type (integer_type_node, size_zero_node,
+			 size_int (TYPE_VECTOR_SUBPARTS (type) - 1));
 
       dbxout_type (TREE_TYPE (type), 0);
       break;
@@ -2092,7 +2182,7 @@ dbxout_type (tree type, int full)
 	  {
 	    int i;
 	    tree child;
-	    VEC(tree,gc) *accesses = BINFO_BASE_ACCESSES (binfo);
+	    vec<tree, va_gc> *accesses = BINFO_BASE_ACCESSES (binfo);
 
 	    if (use_gnu_debug_info_extensions)
 	      {
@@ -2105,8 +2195,7 @@ dbxout_type (tree type, int full)
 	      }
 	    for (i = 0; BINFO_BASE_ITERATE (binfo, i, child); i++)
 	      {
-		tree access = (accesses ? VEC_index (tree, accesses, i)
-			       : access_public_node);
+		tree access = (accesses ? (*accesses)[i] : access_public_node);
 
 		if (use_gnu_debug_info_extensions)
 		  {
@@ -2380,15 +2469,29 @@ dbxout_expand_expr (tree expr)
 	 disable debug info for these variables.  */
       if (!targetm.have_tls && DECL_THREAD_LOCAL_P (expr))
 	return NULL;
+      if (TREE_STATIC (expr)
+	  && !TREE_ASM_WRITTEN (expr)
+	  && !DECL_HAS_VALUE_EXPR_P (expr)
+	  && !TREE_PUBLIC (expr)
+	  && DECL_RTL_SET_P (expr)
+	  && MEM_P (DECL_RTL (expr)))
+	{
+	  /* If this is a var that might not be actually output,
+	     return NULL, otherwise stabs might reference an undefined
+	     symbol.  */
+	  struct varpool_node *node = varpool_get_node (expr);
+	  if (!node || !node->analyzed)
+	    return NULL;
+	}
       /* FALLTHRU */
 
     case PARM_DECL:
+    case RESULT_DECL:
       if (DECL_HAS_VALUE_EXPR_P (expr))
 	return dbxout_expand_expr (DECL_VALUE_EXPR (expr));
       /* FALLTHRU */
 
     case CONST_DECL:
-    case RESULT_DECL:
       return DECL_RTL_IF_SET (expr);
 
     case INTEGER_CST:
@@ -2435,7 +2538,7 @@ static int
 output_used_types_helper (void **slot, void *data)
 {
   tree type = (tree) *slot;
-  VEC(tree, heap) **types_p = (VEC(tree, heap) **) data;
+  vec<tree> *types_p = (vec<tree> *) data;
 
   if ((TREE_CODE (type) == RECORD_TYPE
        || TREE_CODE (type) == UNION_TYPE
@@ -2444,10 +2547,10 @@ output_used_types_helper (void **slot, void *data)
       && TYPE_STUB_DECL (type)
       && DECL_P (TYPE_STUB_DECL (type))
       && ! DECL_IGNORED_P (TYPE_STUB_DECL (type)))
-    VEC_quick_push (tree, *types_p, TYPE_STUB_DECL (type));
+    types_p->quick_push (TYPE_STUB_DECL (type));
   else if (TYPE_NAME (type)
 	   && TREE_CODE (TYPE_NAME (type)) == TYPE_DECL)
-    VEC_quick_push (tree, *types_p, TYPE_NAME (type));
+    types_p->quick_push (TYPE_NAME (type));
 
   return 1;
 }
@@ -2487,21 +2590,20 @@ output_used_types (void)
 {
   if (cfun && cfun->used_types_hash)
     {
-      VEC(tree, heap) *types;
+      vec<tree> types;
       int i;
       tree type;
 
-      types = VEC_alloc (tree, heap, htab_elements (cfun->used_types_hash));
+      types.create (htab_elements (cfun->used_types_hash));
       htab_traverse (cfun->used_types_hash, output_used_types_helper, &types);
 
       /* Sort by UID to prevent dependence on hash table ordering.  */
-      qsort (VEC_address (tree, types), VEC_length (tree, types),
-	     sizeof (tree), output_types_sort);
+      types.qsort (output_types_sort);
 
-      for (i = 0; VEC_iterate (tree, types, i, type); i++)
+      FOR_EACH_VEC_ELT (types, i, type)
 	debug_queue_symbol (type);
 
-      VEC_free (tree, heap, types);
+      types.release ();
     }
 }
 
@@ -2812,7 +2914,7 @@ dbxout_symbol (tree decl, int local ATTRIBUTE_UNUSED)
 	  && DECL_INITIAL (decl) != 0
 	  && host_integerp (DECL_INITIAL (decl), 0)
 	  && ! TREE_ASM_WRITTEN (decl)
-	  && (DECL_CONTEXT (decl) == NULL_TREE
+	  && (DECL_FILE_SCOPE_P (decl)
 	      || TREE_CODE (DECL_CONTEXT (decl)) == BLOCK
 	      || TREE_CODE (DECL_CONTEXT (decl)) == NAMESPACE_DECL)
 	  && TREE_PUBLIC (decl) == 0)
@@ -2843,7 +2945,7 @@ dbxout_symbol (tree decl, int local ATTRIBUTE_UNUSED)
 
       decl_rtl = eliminate_regs (decl_rtl, VOIDmode, NULL_RTX);
 #ifdef LEAF_REG_REMAP
-      if (current_function_uses_only_leaf_regs)
+      if (crtl->uses_only_leaf_regs)
 	leaf_renumber_regs_insn (decl_rtl);
 #endif
 
@@ -2889,7 +2991,7 @@ dbxout_symbol_location (tree decl, tree type, const char *suffix, rtx home)
 	  if (REGNO (value) >= FIRST_PSEUDO_REGISTER)
 	    return 0;
 	}
-      home = alter_subreg (&home);
+      home = alter_subreg (&home, true);
     }
   if (REG_P (home))
     {
@@ -3005,7 +3107,7 @@ dbxout_symbol_location (tree decl, tree type, const char *suffix, rtx home)
 	       || (REG_P (XEXP (home, 0))
 		   && REGNO (XEXP (home, 0)) != HARD_FRAME_POINTER_REGNUM
 		   && REGNO (XEXP (home, 0)) != STACK_POINTER_REGNUM
-#if ARG_POINTER_REGNUM != HARD_FRAME_POINTER_REGNUM
+#if !HARD_FRAME_POINTER_IS_ARG_POINTER
 		   && REGNO (XEXP (home, 0)) != ARG_POINTER_REGNUM
 #endif
 		   )))
@@ -3304,7 +3406,7 @@ dbxout_syms (tree syms)
       comm_prev = comm_new;
 
       result += dbxout_symbol (syms, 1);
-      syms = TREE_CHAIN (syms);
+      syms = DECL_CHAIN (syms);
     }
 
   if (comm_prev != NULL)
@@ -3331,7 +3433,7 @@ dbxout_parms (tree parms)
   ++debug_nesting;
   emit_pending_bincls_if_required ();
 
-  for (; parms; parms = TREE_CHAIN (parms))
+  for (; parms; parms = DECL_CHAIN (parms))
     if (DECL_NAME (parms)
 	&& TREE_TYPE (parms) != error_mark_node
 	&& DECL_RTL_SET_P (parms)
@@ -3349,7 +3451,7 @@ dbxout_parms (tree parms)
 	SET_DECL_RTL (parms,
 		      eliminate_regs (DECL_RTL (parms), VOIDmode, NULL_RTX));
 #ifdef LEAF_REG_REMAP
-	if (current_function_uses_only_leaf_regs)
+	if (crtl->uses_only_leaf_regs)
 	  {
 	    leaf_renumber_regs_insn (DECL_INCOMING_RTL (parms));
 	    leaf_renumber_regs_insn (DECL_RTL (parms));
@@ -3419,7 +3521,7 @@ dbxout_parms (tree parms)
 		 && REG_P (XEXP (DECL_RTL (parms), 0))
 		 && REGNO (XEXP (DECL_RTL (parms), 0)) != HARD_FRAME_POINTER_REGNUM
 		 && REGNO (XEXP (DECL_RTL (parms), 0)) != STACK_POINTER_REGNUM
-#if ARG_POINTER_REGNUM != HARD_FRAME_POINTER_REGNUM
+#if !HARD_FRAME_POINTER_IS_ARG_POINTER
 		 && REGNO (XEXP (DECL_RTL (parms), 0)) != ARG_POINTER_REGNUM
 #endif
 		 )
@@ -3533,7 +3635,7 @@ dbxout_reg_parms (tree parms)
 {
   ++debug_nesting;
 
-  for (; parms; parms = TREE_CHAIN (parms))
+  for (; parms; parms = DECL_CHAIN (parms))
     if (DECL_NAME (parms) && PARM_PASSED_IN_MEMORY (parms))
       {
 	/* Report parms that live in registers during the function
@@ -3711,5 +3813,41 @@ dbxout_begin_function (tree decl)
 #endif /* DBX_DEBUGGING_INFO */
 
 #endif /* DBX_DEBUGGING_INFO || XCOFF_DEBUGGING_INFO */
+
+/* Record an element in the table of global destructors.  SYMBOL is
+   a SYMBOL_REF of the function to be called; PRIORITY is a number
+   between 0 and MAX_INIT_PRIORITY.  */
+
+void
+default_stabs_asm_out_destructor (rtx symbol ATTRIBUTE_UNUSED,
+				  int priority ATTRIBUTE_UNUSED)
+{
+#if defined DBX_DEBUGGING_INFO || defined XCOFF_DEBUGGING_INFO
+  /* Tell GNU LD that this is part of the static destructor set.
+     This will work for any system that uses stabs, most usefully
+     aout systems.  */
+  dbxout_begin_simple_stabs ("___DTOR_LIST__", 22 /* N_SETT */);
+  dbxout_stab_value_label (XSTR (symbol, 0));
+#else
+  sorry ("global destructors not supported on this target");
+#endif
+}
+
+/* Likewise for global constructors.  */
+
+void
+default_stabs_asm_out_constructor (rtx symbol ATTRIBUTE_UNUSED,
+				   int priority ATTRIBUTE_UNUSED)
+{
+#if defined DBX_DEBUGGING_INFO || defined XCOFF_DEBUGGING_INFO
+  /* Tell GNU LD that this is part of the static destructor set.
+     This will work for any system that uses stabs, most usefully
+     aout systems.  */
+  dbxout_begin_simple_stabs ("___CTOR_LIST__", 22 /* N_SETT */);
+  dbxout_stab_value_label (XSTR (symbol, 0));
+#else
+  sorry ("global constructors not supported on this target");
+#endif
+}
 
 #include "gt-dbxout.h"
