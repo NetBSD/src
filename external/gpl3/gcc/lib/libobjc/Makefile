@@ -1,18 +1,18 @@
-#	$NetBSD: Makefile,v 1.9 2014/02/26 22:27:10 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2014/03/01 10:00:42 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
 
 UNSUPPORTED_COMPILER.clang=	# defined
 
-.include <bsd.init.mk>
+.include <bsd.own.mk>
 
 LIB=		objc
 GCC_MACHINE_ARCH?=	${MACHINE_ARCH:S/earmv5/earm/}
 
 .if ${MKGCC} != "no"
 
-SHLIB_MAJOR=	3
+SHLIB_MAJOR=	4
 SHLIB_MINOR=	0
 
 # XXX just while all platforms defs.mk are updated..
@@ -28,18 +28,19 @@ EXTRA_FAKEHEADERS=
 
 LIBGCCOBJ!=    cd ${.CURDIR}/../libgcc/libgcc && ${PRINTOBJDIR}
 
-DIST=		${GCCDIST}
-GNUHOSTDIST=	${DIST}
-GCCARCH=	${GCC_SUBDIR}/usr.bin/gcc/arch/${GCC_MACHINE_ARCH}
-LIBOBJCARCH=	${GCC_SUBDIR}/lib/libobjc/arch/${GCC_MACHINE_ARCH}
-GCCLIBXX=	${GCC_SUBDIR}/lib/libstdc++-v3/arch/${GCC_MACHINE_ARCH}
+DIST=		${NETBSDSRCDIR}/external/gpl3/gcc/dist
+GNUHOSTDIST=	${NETBSDSRCDIR}/external/gpl3/gcc/dist
+GCCARCH=	${NETBSDSRCDIR}/external/gpl3/gcc/usr.bin/gcc/arch/${GCC_MACHINE_ARCH}
+LIBOBJCARCH=	${NETBSDSRCDIR}/external/gpl3/gcc/lib/libobjc/arch/${GCC_MACHINE_ARCH}
+GCCLIBXX=	${NETBSDSRCDIR}/external/gpl3/gcc/lib/libstdc++-v3/arch/${GCC_MACHINE_ARCH}
 
-SRCS=		${G_OBJS:N[A-Z]*:Nlinking.lo:.lo=.c} ${G_OBJS:M[A-Z]*:.lo=.m} linking.m
+SRCS=		${G_OBJC_SOURCE_FILES} ${G_C_SOURCE_FILES}
 
 GCPPFLAGS=	${G_ALL_CFLAGS} ${G_INCLUDES}
 CPPFLAGS+=	-I. -I${.CURDIR}/arch/${GCC_MACHINE_ARCH}
 CPPFLAGS+=	-I${GCCARCH} ${GCPPFLAGS:M-D*} ${GCPPFLAGS:M-I*:N-I.*}
 CPPFLAGS+=	-I${GCCLIBXX}
+CPPFLAGS+=	-I${DIST}/libobjc/objc-private
 
 BUILDSYMLINKS=	${.CURDIR}/../libstdc++-v3/arch/${GCC_MACHINE_ARCH} bits
 DPSRCS+=	bits
@@ -68,12 +69,20 @@ runtime-info.h:
 	touch rtscratch
 	`${OBJC} --print-prog-name=cc1obj` -print-objc-runtime-info rtscratch >$@
 
+.PATH: ${DIST}/libobjc ${DIST}/libobjc/objc ${DIST}/libobjc/objc-private
+
 ${OBJS} ${POBJS} ${SOBJS}: runtime-info.h
 
-${SRCS}: tconfig.h unwind.h options.h
+${SRCS}: tconfig.h options.h
 
-BUILDSYMLINKS+=	${G_UNWIND_H} unwind.h
-DPSRCS+=	unwind.h
+.if ${MKGCC} != "no"
+.if defined(G_CONFIGLINKS) && !empty(G_CONFIGLINKS)
+BUILDSYMLINKS+=	${G_CONFIGLINKS}
+.for _src _dst in ${G_CONFIGLINKS}
+DPSRCS+=	${_dst}
+.endfor
+.endif
+.endif
 
 .include "../Makefile.tconfigh"
 .include "../Makefile.hacks"
@@ -84,17 +93,22 @@ optionlist: ${G_ALL_OPT_FILES} ${LIBOBJCARCH}/defs.mk Makefile ${DIST}/gcc/opt-g
 	${TOOL_AWK} -f ${DIST}/gcc/opt-gather.awk ${G_ALL_OPT_FILES} \
 		> ${.TARGET}
 
-options.h: optionlist ${DIST}/gcc/opt-functions.awk ${DIST}/gcc/opth-gen.awk
+.if ${MACHINE_ARCH} == "vax" || ${MACHINE_ARCH} == "mipseb"
+OPTION_FLAGS=-v header_name="config.h system.h coretypes.h options.h tm.h" \
+	-f ${DIST}/gcc/opt-read.awk
+OPTION_DEPS=${DIST}/gcc/opt-read.awk
+.endif
+
+options.h: optionlist ${DIST}/gcc/opt-functions.awk ${DIST}/gcc/opth-gen.awk \
+	${OPTION_DEPS}
 	${TOOL_AWK} -f ${DIST}/gcc/opt-functions.awk \
-		-f ${DIST}/gcc/opth-gen.awk \
+		-f ${DIST}/gcc/opth-gen.awk ${OPTION_FLAGS} \
 		< optionlist > ${.TARGET}
 
 CLEANFILES+=	options.h optionlist
 .endif
 
 .include <bsd.lib.mk>
-
-.PATH: ${DIST}/libobjc ${DIST}/libobjc/objc
 
 .else
 .include <bsd.prog.mk>	# do nothing
