@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.85 2014/02/25 18:30:12 pooka Exp $	*/
+/*	$NetBSD: key.c,v 1.86 2014/03/01 12:55:23 joerg Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.85 2014/02/25 18:30:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.86 2014/03/01 12:55:23 joerg Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -6997,7 +6997,6 @@ key_setdump_chain(u_int8_t req_satype, int *errorp, int *lenp, pid_t pid)
 	u_int8_t state;
 	int cnt;
 	struct mbuf *m, *n, *prev;
-	int totlen;
 
 	*lenp = 0;
 
@@ -7057,7 +7056,6 @@ key_setdump_chain(u_int8_t req_satype, int *errorp, int *lenp, pid_t pid)
 					return (NULL);
 				}
 
-				totlen += n->m_pkthdr.len;
 				if (!m)
 					m = n;
 				else
