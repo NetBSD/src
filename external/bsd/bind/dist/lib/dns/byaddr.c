@@ -1,4 +1,4 @@
-/*	$NetBSD: byaddr.c,v 1.5 2013/07/27 19:23:12 christos Exp $	*/
+/*	$NetBSD: byaddr.c,v 1.6 2014/03/01 03:24:36 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
@@ -111,7 +111,6 @@ dns_byaddr_createptrname2(isc_netaddr_t *address, unsigned int options,
 	return (dns_name_fromtext(name, &buffer, dns_rootname, 0, NULL));
 }
 
-#ifdef BIND9
 struct dns_byaddr {
 	/* Unlocked. */
 	unsigned int		magic;
@@ -317,4 +316,3 @@ dns_byaddr_destroy(dns_byaddr_t **byaddrp) {
 
 	*byaddrp = NULL;
 }
-#endif /* BIND9 */

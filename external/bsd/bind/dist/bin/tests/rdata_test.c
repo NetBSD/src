@@ -1,7 +1,7 @@
-/*	$NetBSD: rdata_test.c,v 1.6 2013/07/27 19:23:10 christos Exp $	*/
+/*	$NetBSD: rdata_test.c,v 1.7 2014/03/01 03:24:33 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -918,10 +918,6 @@ main(int argc, char *argv[]) {
 	int raw = 0;
 	int tostruct = 0;
 
-	isc__mem_register();
-	isc__task_register();
-	isc__timer_register();
-	isc__socket_register();
 	while ((c = isc_commandline_parse(argc, argv, "dqswtarzS")) != -1) {
 		switch (c) {
 		case 'd':
@@ -1199,7 +1195,7 @@ main(int argc, char *argv[]) {
 		dns_rdata_init(&last);
 		region.base = malloc(region.length = rdata.length);
 		if (region.base) {
-			memcpy(region.base, rdata.data, rdata.length);
+			memmove(region.base, rdata.data, rdata.length);
 			dns_rdata_fromregion(&last, class, type, &region);
 			lasttype = type;
 			first = 0;

@@ -1,7 +1,7 @@
-/*	$NetBSD: adb_test.c,v 1.5 2013/07/27 19:23:10 christos Exp $	*/
+/*	$NetBSD: adb_test.c,v 1.6 2014/03/01 03:24:33 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -206,15 +206,17 @@ create_view(void) {
 
 		attrs = DNS_DISPATCHATTR_IPV4 | DNS_DISPATCHATTR_UDP;
 		RUNTIME_CHECK(dns_dispatch_getudp(dispatchmgr, socketmgr,
-						  taskmgr, &any4, 512, 6, 1024,
-						  17, 19, attrs, attrs, &disp4)
+						  taskmgr, &any4,
+						  512, 6, 1024, 17, 19,
+						  attrs, attrs, &disp4)
 			      == ISC_R_SUCCESS);
 		INSIST(disp4 != NULL);
 
 		attrs = DNS_DISPATCHATTR_IPV6 | DNS_DISPATCHATTR_UDP;
 		RUNTIME_CHECK(dns_dispatch_getudp(dispatchmgr, socketmgr,
-						  taskmgr, &any6, 512, 6, 1024,
-						  17, 19, attrs, attrs, &disp6)
+						  taskmgr, &any6,
+						  512, 6, 1024, 17, 19,
+						  attrs, attrs, &disp6)
 			      == ISC_R_SUCCESS);
 		INSIST(disp6 != NULL);
 
@@ -291,11 +293,6 @@ main(int argc, char **argv) {
 	UNUSED(argc);
 	UNUSED(argv);
 
-	isc__mem_register();
-	isc__task_register();
-	isc__timer_register();
-	isc__socket_register();
-	dns_result_register();
 	result = isc_app_start();
 	check_result(result, "isc_app_start()");
 
