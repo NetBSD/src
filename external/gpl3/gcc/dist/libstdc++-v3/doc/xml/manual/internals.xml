@@ -1,18 +1,15 @@
-<sect1 id="appendix.porting.internals" xreflabel="Portin Internals">
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" 
+	 xml:id="appendix.porting.internals" xreflabel="Portin Internals">
 <?dbhtml filename="internals.html"?>
 
-<sect1info>
+<info><title>Porting to New Hardware or Operating Systems</title>
   <keywordset>
-    <keyword>
-      ISO C++
-    </keyword>
-    <keyword>
-      internals
-    </keyword>
+    <keyword>ISO C++</keyword>
+    <keyword>internals</keyword>
   </keywordset>
-</sect1info>
+</info>
 
-<title>Porting to New Hardware or Operating Systems</title>
+
 
 <para>
 </para>
@@ -45,8 +42,8 @@ a "host."  The comment at the top of <code>configure.ac</code> explains why.)
    </para>
 
 
-<sect2 id="internals.os">
-<title>Operating System</title>
+<section xml:id="internals.os"><info><title>Operating System</title></info>
+
 
 <para>If you are porting to a new operating system (as opposed to a new chip
 using an existing operating system), you will need to create a new
@@ -151,11 +148,11 @@ this:
    <para>We recommend copying an existing <code>os_defines.h</code> to use as a
 starting point.
    </para>
-</sect2>
+</section>
 
 
-<sect2 id="internals.cpu">
-<title>CPU</title>
+<section xml:id="internals.cpu"><info><title>CPU</title></info>
+
 
 <para>If you are porting to a new chip (as opposed to a new operating system
 running on an existing chip), you will need to create a new directory in the
@@ -183,11 +180,11 @@ example, <code>alpha</code>, <code>alphaev5</code>, and <code>alphaev6</code> al
 appropriate for your chip.
    </para>
 
-</sect2>
+</section>
 
 
-<sect2 id="internals.char_types">
-<title>Character Types</title>
+<section xml:id="internals.char_types"><info><title>Character Types</title></info>
+
 
 <para>The library requires that you provide three header files to implement
 character classification, analogous to that provided by the C libraries
@@ -253,11 +250,8 @@ not have to include <code>&lt;ctype.h&gt;</code> in this header; it will always 
 included before <code>ctype_base.h</code> is included.
    </para>
 
-   <para>The next file to write is <code>ctype_noninline.h</code>, which also does
-not require include guards.  This file defines a few member functions
-that will be included in <code>include/bits/locale_facets.h</code>.  The first
-function that must be written is the <code>ctype&lt;char&gt;::ctype</code>
-constructor.  Here is the IRIX example:
+   <para>The next file to write is <code>ctype_configure_char.cc</code>.
+The first function that must be written is the <code>ctype&lt;char&gt;::ctype</code> constructor.  Here is the IRIX example:
    </para>
 
 <programlisting>
@@ -399,11 +393,11 @@ from <code>__low</code> up until <code>__high</code> into the vector given by
      }
 </programlisting>
 
-</sect2>
+</section>
 
 
-<sect2 id="internals.thread_safety">
-<title>Thread Safety</title>
+<section xml:id="internals.thread_safety"><info><title>Thread Safety</title></info>
+
 
 <para>The C++ library string functionality requires a couple of atomic
 operations to provide thread-safety.  If you don't take any special
@@ -482,11 +476,11 @@ must be equivalent to those provided here, but using atomic operations:
      }
 </programlisting>
 
-</sect2>
+</section>
 
 
-<sect2 id="internals.numeric_limits">
-<title>Numeric Limits</title>
+<section xml:id="internals.numeric_limits"><info><title>Numeric Limits</title></info>
+
 
 <para>The C++ library requires information about the fundamental data types,
 such as the minimum and maximum representable values of each type.
@@ -504,11 +498,11 @@ To take that approach, create a new file called <code>cpu_limits.h</code> in
 your CPU configuration directory (see <link linkend="internals.cpu">CPU</link>).
    </para>
 
-</sect2>
+</section>
 
 
-<sect2 id="internals.libtool">
-<title>Libtool</title>
+<section xml:id="internals.libtool"><info><title>Libtool</title></info>
+
 
 <para>The C++ library is compiled, archived and linked with libtool.
 Explaining the full workings of libtool is beyond the scope of this
@@ -543,6 +537,6 @@ operating system.
    </para>
 
 
-</sect2>
+</section>
 
-</sect1>
+</section>

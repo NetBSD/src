@@ -1,6 +1,6 @@
 ; MinGW-w64-specific options.
 
-; Copyright (C) 2009 Free Software Foundation, Inc.
+; Copyright (C) 2009-2013 Free Software Foundation, Inc.
 ;
 ; This file is part of GCC.
 ;
@@ -21,3 +21,5 @@
 municode
 Target
 Use unicode startup and define UNICODE macro
+
+; Retain blank line above.

@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2005, 2006, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2005-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -34,7 +34,7 @@
 // warranty.
 
 /**
- * @file find_no_store_hash_fn_imps.hpp
+ * @file gp_hash_table_map_/find_no_store_hash_fn_imps.hpp
  * Contains implementations of gp_ht_map_'s find related functions,
  * when the hash value is not stored.
  */
@@ -42,5 +42,5 @@
 PB_DS_CLASS_T_DEC
 inline typename PB_DS_CLASS_C_DEC::pointer
 PB_DS_CLASS_C_DEC::
-find_key_pointer(const_key_reference r_key, false_type)
+find_key_pointer(key_const_reference r_key, false_type)
 

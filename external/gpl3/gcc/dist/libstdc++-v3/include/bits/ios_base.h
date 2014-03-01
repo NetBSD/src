@@ -1,8 +1,6 @@
 // Iostreams base classes -*- C++ -*-
 
-// Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-// 2006, 2007, 2008, 2009, 2010
-// Free Software Foundation, Inc.
+// Copyright (C) 1997-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -24,9 +22,9 @@
 // see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 // <http://www.gnu.org/licenses/>.
 
-/** @file ios_base.h
+/** @file bits/ios_base.h
  *  This is an internal header file, included by other library headers.
- *  You should not attempt to use it directly.
+ *  Do not attempt to use it directly. @headername{ios}
  */
 
 //
@@ -42,16 +40,9 @@
 #include <bits/localefwd.h>
 #include <bits/locale_classes.h>
 
-#ifndef _GLIBCXX_STDIO_MACROS
-# include <cstdio>   // For SEEK_CUR, SEEK_END
-# define _IOS_BASE_SEEK_CUR SEEK_CUR
-# define _IOS_BASE_SEEK_END SEEK_END
-#else
-# define _IOS_BASE_SEEK_CUR 1
-# define _IOS_BASE_SEEK_END 2
-#endif
-
-_GLIBCXX_BEGIN_NAMESPACE(std)
+namespace std _GLIBCXX_VISIBILITY(default)
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   // The following definitions of bitmask types are enums, not ints,
   // as permitted (but not required) in the standard, in order to provide
@@ -80,33 +71,33 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
       _S_ios_fmtflags_end = 1L << 16 
     };
 
-  inline _Ios_Fmtflags
+  inline _GLIBCXX_CONSTEXPR _Ios_Fmtflags
   operator&(_Ios_Fmtflags __a, _Ios_Fmtflags __b)
   { return _Ios_Fmtflags(static_cast<int>(__a) & static_cast<int>(__b)); }
 
-  inline _Ios_Fmtflags
+  inline _GLIBCXX_CONSTEXPR _Ios_Fmtflags
   operator|(_Ios_Fmtflags __a, _Ios_Fmtflags __b)
   { return _Ios_Fmtflags(static_cast<int>(__a) | static_cast<int>(__b)); }
 
-  inline _Ios_Fmtflags
+  inline _GLIBCXX_CONSTEXPR _Ios_Fmtflags
   operator^(_Ios_Fmtflags __a, _Ios_Fmtflags __b)
   { return _Ios_Fmtflags(static_cast<int>(__a) ^ static_cast<int>(__b)); }
 
-  inline _Ios_Fmtflags&
+  inline _GLIBCXX_CONSTEXPR _Ios_Fmtflags
+  operator~(_Ios_Fmtflags __a)
+  { return _Ios_Fmtflags(~static_cast<int>(__a)); }
+
+  inline const _Ios_Fmtflags&
   operator|=(_Ios_Fmtflags& __a, _Ios_Fmtflags __b)
   { return __a = __a | __b; }
 
-  inline _Ios_Fmtflags&
+  inline const _Ios_Fmtflags&
   operator&=(_Ios_Fmtflags& __a, _Ios_Fmtflags __b)
   { return __a = __a & __b; }
 
-  inline _Ios_Fmtflags&
+  inline const _Ios_Fmtflags&
   operator^=(_Ios_Fmtflags& __a, _Ios_Fmtflags __b)
   { return __a = __a ^ __b; }
-
-  inline _Ios_Fmtflags
-  operator~(_Ios_Fmtflags __a)
-  { return _Ios_Fmtflags(~static_cast<int>(__a)); }
 
 
   enum _Ios_Openmode 
@@ -120,33 +111,33 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
       _S_ios_openmode_end = 1L << 16 
     };
 
-  inline _Ios_Openmode
+  inline _GLIBCXX_CONSTEXPR _Ios_Openmode
   operator&(_Ios_Openmode __a, _Ios_Openmode __b)
   { return _Ios_Openmode(static_cast<int>(__a) & static_cast<int>(__b)); }
 
-  inline _Ios_Openmode
+  inline _GLIBCXX_CONSTEXPR _Ios_Openmode
   operator|(_Ios_Openmode __a, _Ios_Openmode __b)
   { return _Ios_Openmode(static_cast<int>(__a) | static_cast<int>(__b)); }
 
-  inline _Ios_Openmode
+  inline _GLIBCXX_CONSTEXPR _Ios_Openmode
   operator^(_Ios_Openmode __a, _Ios_Openmode __b)
   { return _Ios_Openmode(static_cast<int>(__a) ^ static_cast<int>(__b)); }
 
-  inline _Ios_Openmode&
+  inline _GLIBCXX_CONSTEXPR _Ios_Openmode
+  operator~(_Ios_Openmode __a)
+  { return _Ios_Openmode(~static_cast<int>(__a)); }
+
+  inline const _Ios_Openmode&
   operator|=(_Ios_Openmode& __a, _Ios_Openmode __b)
   { return __a = __a | __b; }
 
-  inline _Ios_Openmode&
+  inline const _Ios_Openmode&
   operator&=(_Ios_Openmode& __a, _Ios_Openmode __b)
   { return __a = __a & __b; }
 
-  inline _Ios_Openmode&
+  inline const _Ios_Openmode&
   operator^=(_Ios_Openmode& __a, _Ios_Openmode __b)
   { return __a = __a ^ __b; }
-
-  inline _Ios_Openmode
-  operator~(_Ios_Openmode __a)
-  { return _Ios_Openmode(~static_cast<int>(__a)); }
 
 
   enum _Ios_Iostate
@@ -158,39 +149,40 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
       _S_ios_iostate_end = 1L << 16 
     };
 
-  inline _Ios_Iostate
+  inline _GLIBCXX_CONSTEXPR _Ios_Iostate
   operator&(_Ios_Iostate __a, _Ios_Iostate __b)
   { return _Ios_Iostate(static_cast<int>(__a) & static_cast<int>(__b)); }
 
-  inline _Ios_Iostate
+  inline _GLIBCXX_CONSTEXPR _Ios_Iostate
   operator|(_Ios_Iostate __a, _Ios_Iostate __b)
   { return _Ios_Iostate(static_cast<int>(__a) | static_cast<int>(__b)); }
 
-  inline _Ios_Iostate
+  inline _GLIBCXX_CONSTEXPR _Ios_Iostate
   operator^(_Ios_Iostate __a, _Ios_Iostate __b)
   { return _Ios_Iostate(static_cast<int>(__a) ^ static_cast<int>(__b)); }
 
-  inline _Ios_Iostate&
+  inline _GLIBCXX_CONSTEXPR _Ios_Iostate
+  operator~(_Ios_Iostate __a)
+  { return _Ios_Iostate(~static_cast<int>(__a)); }
+
+  inline const _Ios_Iostate&
   operator|=(_Ios_Iostate& __a, _Ios_Iostate __b)
   { return __a = __a | __b; }
 
-  inline _Ios_Iostate&
+  inline const _Ios_Iostate&
   operator&=(_Ios_Iostate& __a, _Ios_Iostate __b)
   { return __a = __a & __b; }
 
-  inline _Ios_Iostate&
+  inline const  _Ios_Iostate&
   operator^=(_Ios_Iostate& __a, _Ios_Iostate __b)
   { return __a = __a ^ __b; }
 
-  inline _Ios_Iostate
-  operator~(_Ios_Iostate __a)
-  { return _Ios_Iostate(~static_cast<int>(__a)); }
 
   enum _Ios_Seekdir 
     { 
       _S_beg = 0,
-      _S_cur = _IOS_BASE_SEEK_CUR,
-      _S_end = _IOS_BASE_SEEK_END,
+      _S_cur = _GLIBCXX_STDIO_SEEK_CUR,
+      _S_end = _GLIBCXX_STDIO_SEEK_END,
       _S_ios_seekdir_end = 1L << 16 
     };
 
@@ -433,15 +425,15 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 
     /**
      *  @brief  The type of an event callback function.
-     *  @param  event  One of the members of the event enum.
-     *  @param  ios_base  Reference to the ios_base object.
-     *  @param  int  The integer provided when the callback was registered.
+     *  @param  __e  One of the members of the event enum.
+     *  @param  __b  Reference to the ios_base object.
+     *  @param  __i  The integer provided when the callback was registered.
      *
      *  Event callbacks are user defined functions that get called during
      *  several ios_base and basic_ios functions, specifically imbue(),
      *  copyfmt(), and ~ios().
     */
-    typedef void (*event_callback) (event, ios_base&, int);
+    typedef void (*event_callback) (event __e, ios_base& __b, int __i);
 
     /**
      *  @brief  Add the callback __fn with parameter __index.
@@ -483,7 +475,16 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
       // 0 => OK to delete.
       int
       _M_remove_reference() 
-      { return __gnu_cxx::__exchange_and_add_dispatch(&_M_refcount, -1); }
+      {
+        // Be race-detector-friendly.  For more info see bits/c++config.
+        _GLIBCXX_SYNCHRONIZATION_HAPPENS_BEFORE(&_M_refcount);
+        int __res = __gnu_cxx::__exchange_and_add_dispatch(&_M_refcount, -1);
+        if (__res == 0)
+          {
+            _GLIBCXX_SYNCHRONIZATION_HAPPENS_AFTER(&_M_refcount);
+          }
+        return __res;
+      }
     };
 
      _Callback_list*	_M_callbacks;
@@ -552,10 +553,10 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 
     /**
      *  @brief  Setting new format flags all at once.
-     *  @param  fmtfl  The new flags to set.
+     *  @param  __fmtfl  The new flags to set.
      *  @return  The previous format control flags.
      *
-     *  This function overwrites all the format flags with @a fmtfl.
+     *  This function overwrites all the format flags with @a __fmtfl.
     */
     fmtflags
     flags(fmtflags __fmtfl)
@@ -567,7 +568,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 
     /**
      *  @brief  Setting new format flags.
-     *  @param  fmtfl  Additional flags to set.
+     *  @param  __fmtfl  Additional flags to set.
      *  @return  The previous format control flags.
      *
      *  This function sets additional flags in format control.  Flags that
@@ -583,8 +584,8 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 
     /**
      *  @brief  Setting new format flags.
-     *  @param  fmtfl  Additional flags to set.
-     *  @param  mask  The flags mask for @a fmtfl.
+     *  @param  __fmtfl  Additional flags to set.
+     *  @param  __mask  The flags mask for @a fmtfl.
      *  @return  The previous format control flags.
      *
      *  This function clears @a mask in the format flags, then sets
@@ -601,9 +602,9 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 
     /**
      *  @brief  Clearing format flags.
-     *  @param  mask  The flags to unset.
+     *  @param  __mask  The flags to unset.
      *
-     *  This function clears @a mask in the format flags.
+     *  This function clears @a __mask in the format flags.
     */
     void
     unsetf(fmtflags __mask)
@@ -622,7 +623,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 
     /**
      *  @brief  Changing flags.
-     *  @param  prec  The new precision value.
+     *  @param  __prec  The new precision value.
      *  @return  The previous value of precision().
     */
     streamsize
@@ -645,7 +646,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 
     /**
      *  @brief  Changing flags.
-     *  @param  wide  The new width value.
+     *  @param  __wide  The new width value.
      *  @return  The previous value of width().
     */
     streamsize
@@ -659,7 +660,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
     // [27.4.2.4] ios_base static members
     /**
      *  @brief  Interaction with the standard C I/O objects.
-     *  @param  sync  Whether to synchronize or not.
+     *  @param  __sync  Whether to synchronize or not.
      *  @return  True if the standard streams were previously synchronized.
      *
      *  The synchronization referred to is @e only that between the standard
@@ -673,7 +674,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
     // [27.4.2.3] ios_base locale functions
     /**
      *  @brief  Setting a new locale.
-     *  @param  loc  The new locale.
+     *  @param  __loc  The new locale.
      *  @return  The previous locale.
      *
      *  Sets the new locale for this stream, and then invokes each callback
@@ -968,10 +969,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
     return __base;
   }
 
-_GLIBCXX_END_NAMESPACE
-
-#undef _IOS_BASE_SEEK_CUR
-#undef _IOS_BASE_SEEK_END
+_GLIBCXX_END_NAMESPACE_VERSION
+} // namespace
 
 #endif /* _IOS_BASE_H */
-
