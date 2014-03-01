@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1895 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1896 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -345,6 +345,8 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 		[mlelstv 20140121]
 	ohci(4): Support the National Semiconductor PC87560 as found in
 		many hppa machines. [skrll 20140128]
+	ews4800mips: Switch to X11FLAVOUR=Xorg. Untested. [tsutsui 20140131]
+	newsmips: Switch to X11FLAVOUR=Xorg. Untested. [tsutsui 20140131]
 	npf: Added support for CDB based tables. [rmind 20140206]
 	npf: Added support for static (stateless) NAT. [rmind 20140207]
 	atf(7): Import atf 0.19.  [jmmv 20140208]
@@ -359,3 +361,5 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 		Digital-to-Analog converters. [rkujawa 20140225]
 	bind: update to 9.10.0b1 [christos 20130228]
 	dhcpcd(8): Import dhcpcd-6.3.1 [roy 20140301]
+	x68k: Switch to X11FLAVOUR=Xorg, including X68k monolithic server.
+		[tsutsui 20140301]
