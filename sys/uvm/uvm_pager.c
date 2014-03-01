@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.109 2013/10/25 20:27:29 martin Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.110 2014/03/01 18:32:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.109 2013/10/25 20:27:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.110 2014/03/01 18:32:01 christos Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -468,9 +468,10 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 
 		/* these pages are now only in swap. */
 		mutex_enter(&uvm_swap_data_lock);
-		KASSERT(uvmexp.swpgonly + npages <= uvmexp.swpginuse);
-		if (error != ENOMEM)
+		if (error != ENOMEM) {
+			KASSERT(uvmexp.swpgonly + npages <= uvmexp.swpginuse);
 			uvmexp.swpgonly += npages;
+		}
 		mutex_exit(&uvm_swap_data_lock);
 		if (error) {
 			if (error != ENOMEM)
