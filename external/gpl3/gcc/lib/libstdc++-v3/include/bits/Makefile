@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2014/03/01 21:03:01 mrg Exp $
+#	$NetBSD: Makefile,v 1.11 2014/03/01 22:49:43 mrg Exp $
 
 .include <bsd.own.mk>
 .include <bsd.init.mk>
@@ -32,6 +32,9 @@ INCSDIR=	/usr/include/g++/bits
 
 CLEANFILES+=	{BUILDINCS}
 
+# XXX these rules don't always work if the ${.TARGET} ends up being the
+#     copy in ../../arch/$arch/ and that version is older.  (but will
+#     only break read-only source builds.)
 opt_random.h:	${G_CPU_OPT_BITS_RANDOM}
 	cp -p ${.ALLSRC} ${.TARGET}
 basic_file.h:	${G_BASIC_FILE_H}
