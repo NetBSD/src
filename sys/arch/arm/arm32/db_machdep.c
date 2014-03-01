@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.17 2013/12/15 09:14:09 skrll Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.18 2014/03/01 05:41:39 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.17 2013/12/15 09:14:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.18 2014/03/01 05:41:39 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -92,6 +92,11 @@ const struct db_command db_machine_command_table[] = {
 			"Displays the fault registers",
 		     	NULL,NULL) },
 #endif
+#if defined(_KERNEL) && (defined(CPU_CORTEXA5) || defined(CPU_CORTEXA7))
+	{ DDB_ADD_CMD("tlb",	db_show_tlb_cmd,	0,
+			"Displays the TLB",
+		     	NULL,NULL) },
+#endif
 #ifdef ARM32_DB_COMMANDS
 	ARM32_DB_COMMANDS,
 #endif
@@ -129,12 +134,264 @@ db_access_irq_sp(const struct db_variable *vp, db_expr_t *valp, int rw)
 void
 db_show_fault_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
-	db_printf("DFAR=%#x DFSR=%#x IFAR=%#x IFSR=%#x TTBR=%#x\n",
+	db_printf("DFAR=%#x DFSR=%#x IFAR=%#x IFSR=%#x\n",
 	    armreg_dfar_read(), armreg_dfsr_read(),
-	    armreg_ifar_read(), armreg_ifsr_read(),
+	    armreg_ifar_read(), armreg_ifsr_read());
+	db_printf("CONTEXTIDR=%#x TTBCR=%#x TTBR=%#x\n",
+	    armreg_contextidr_read(), armreg_ttbcr_read(),
 	    armreg_ttbr_read());
 }
+
+#if defined(CPU_CORTEXA5) || defined(CPU_CORTEXA7)
+static void
+tlb_print_common_header(const char *str)
+{
+	db_printf("-W/I-- ----VA---- ----PA---- --SIZE-- D AP XN ASD %s\n", str);
+}
+
+static void
+tlb_print_addr(size_t way, size_t va_index, vaddr_t vpn, paddr_t pfn)
+{
+	db_printf("[%1zu:%02zx] 0x%05lx000 0x%05lx000", way, va_index, vpn, pfn);
+}
+
+static void
+tlb_print_size_domain_prot(const char *sizestr, u_int domain, u_int ap,
+    bool xn_p)
+{
+	db_printf(" %8s %1x %2d %s", sizestr, domain, ap, (xn_p ? "XN" : "--"));
+}
+
+static void
+tlb_print_asid(bool ng_p, tlb_asid_t asid)
+{
+	if (ng_p) {
+		db_printf(" %3d", asid);
+	} else {
+		db_printf(" ---");
+	}
+}
+
+struct db_tlbinfo {
+	vaddr_t (*dti_decode_vpn)(size_t, uint32_t, uint32_t);
+	void (*dti_print_header)(void);
+	void (*dti_print_entry)(size_t, size_t, uint32_t, uint32_t);
+	u_int dti_index; 
+};
+
+#if defined(CPU_CORTEXA5)
+static void
+tlb_print_cortex_a5_header(void)
+{
+	tlb_print_common_header(" S TEX C B");
+}
+
+static vaddr_t
+tlb_decode_cortex_a5_vpn(size_t va_index, uint32_t d0, uint32_t d1)
+{
+	const uint64_t d = ((uint64_t)d1 << 32) | d0;
+
+	const u_int size = __SHIFTOUT(d, ARM_A5_TLBDATA_SIZE);
+	return __SHIFTOUT(d, ARM_A5_TLBDATA_VA) * (ARM_A5_TLBDATAOP_INDEX + 1)
+	    + (va_index << (4*size));
+}
+
+static void
+tlb_print_cortex_a5_entry(size_t way, size_t va_index, uint32_t d0, uint32_t d1)
+{
+	static const char size_strings[4][8] = {
+	    "  4KB  ", " 64KB  ", "  1MB  ", " 16MB  ",
+	};
+
+	const uint64_t d = ((uint64_t)d1 << 32) | d0;
+
+	const paddr_t pfn = __SHIFTOUT(d, ARM_A5_TLBDATA_PA);
+	const vaddr_t vpn = tlb_decode_cortex_a5_vpn(va_index, d0, d1);
+
+	tlb_print_addr(way, va_index, vpn, pfn);
+
+	const u_int size = __SHIFTOUT(d, ARM_A5_TLBDATA_SIZE);
+	const u_int domain = __SHIFTOUT(d, ARM_A5_TLBDATA_DOM);
+	const u_int ap = __SHIFTOUT(d, ARM_A5_TLBDATA_AP);
+	const bool xn_p = (d & ARM_A5_TLBDATA_XN) != 0;
+
+	tlb_print_size_domain_prot(size_strings[size], domain, ap, xn_p);
+
+	const bool ng_p = (d & ARM_A5_TLBDATA_nG) != 0;
+	const tlb_asid_t asid = __SHIFTOUT(d, ARM_A5_TLBDATA_ASID);
+
+	tlb_print_asid(ng_p, asid);
+
+	const u_int tex = __SHIFTOUT(d, ARM_A5_TLBDATA_TEX);
+	const bool c_p = (d & ARM_A5_TLBDATA_C) != 0;
+	const bool b_p = (d & ARM_A5_TLBDATA_B) != 0;
+	const bool s_p = (d & ARM_A5_TLBDATA_S) != 0;
+
+	db_printf(" %c  %d  %c %c\n", (s_p ? 'S' : '-'), tex,
+	    (c_p ? 'C' : '-'), (b_p ? 'B' : '-'));
+}
+
+static const struct db_tlbinfo tlb_cortex_a5_info = {
+	.dti_decode_vpn = tlb_decode_cortex_a5_vpn,
+	.dti_print_header = tlb_print_cortex_a5_header,
+	.dti_print_entry = tlb_print_cortex_a5_entry,
+	.dti_index = ARM_A5_TLBDATAOP_INDEX,
+};
+#endif /* CPU_CORTEXA5 */
+
+#if defined(CPU_CORTEXA7)
+static const char tlb_cortex_a7_esizes[8][8] = {
+    " 4KB(S)", " 4KB(L)", "64KB(S)", "64KB(L)",
+    " 1MB(S)", " 2MB(L)", "16MB(S)", " 1GB(L)",
+};
+
+static void
+tlb_print_cortex_a7_header(void)
+{
+	tlb_print_common_header("IS --OS- SH");
+}
+
+static inline vaddr_t
+tlb_decode_cortex_a7_vpn(size_t va_index, uint32_t d0, uint32_t d1)
+{
+	const u_int size = __SHIFTOUT(d0, ARM_A7_TLBDATA0_SIZE);
+	const u_int shift = (size & 1)
+	    ? ((0x12090400 >> (8*size)) & 0x1f)
+	    : (2 * size);
+
+	return __SHIFTOUT(d0, ARM_A7_TLBDATA0_VA) * (ARM_A7_TLBDATAOP_INDEX + 1)
+	    + (va_index << shift);
+}
+
+static void
+tlb_print_cortex_a7_entry(size_t way, size_t va_index, uint32_t d0, uint32_t d1)
+{
+	const uint32_t d2 = armreg_tlbdata2_read();
+	const uint64_t d01 = ((uint64_t)d1 << 32) | d0;
+	const uint64_t d12 = ((uint64_t)d2 << 32) | d1;
+
+	const paddr_t pfn = __SHIFTOUT(d12, ARM_A7_TLBDATA12_PA);
+	const vaddr_t vpn = tlb_decode_cortex_a7_vpn(va_index, d0, d1);
+
+	tlb_print_addr(way, va_index, vpn, pfn);
+
+	const u_int size = __SHIFTOUT(d0, ARM_A7_TLBDATA0_SIZE);
+	const u_int domain = __SHIFTOUT(d2, ARM_A7_TLBDATA2_DOM);
+	const u_int ap = __SHIFTOUT(d1, ARM_A7_TLBDATA1_AP);
+	const bool xn_p = (d2 & ARM_A7_TLBDATA2_XN1) != 0;
+
+	tlb_print_size_domain_prot(tlb_cortex_a7_esizes[size], domain, ap, xn_p);
+
+	const bool ng_p = (d1 & ARM_A7_TLBDATA1_nG) != 0;
+	const tlb_asid_t asid = __SHIFTOUT(d01, ARM_A7_TLBDATA01_ASID);
+
+	tlb_print_asid(ng_p, asid);
+
+	const u_int is = __SHIFTOUT(d2, ARM_A7_TLBDATA2_IS);
+	if (is == ARM_A7_TLBDATA2_IS_DSO) {
+		u_int mt = __SHIFTOUT(d2, ARM_A7_TLBDATA2_SDO_MT);
+		switch (mt) {
+		case ARM_A7_TLBDATA2_SDO_MT_D:
+			db_printf(" DV\n");
+			return;
+		case ARM_A7_TLBDATA2_SDO_MT_SO:
+			db_printf(" SO\n");
+			return;
+		default:
+			db_printf(" %02u\n", mt);
+			return;
+		}
+	}
+	const u_int os = __SHIFTOUT(d2, ARM_A7_TLBDATA2_OS);
+	const u_int sh = __SHIFTOUT(d2, ARM_A7_TLBDATA2_SH);
+	static const char is_types[3][3] = { "NC", "WB", "WT" };
+	static const char os_types[4][6] = { "NC", "WB+WA", "WT", "WB" };
+	static const char sh_types[4][3] = { "NC", "na", "OS", "IS" };
+	db_printf(" %2s %5s %2s\n", is_types[is], os_types[os], sh_types[sh]);
+}
+
+static const struct db_tlbinfo tlb_cortex_a7_info = {
+	.dti_decode_vpn = tlb_decode_cortex_a7_vpn,
+	.dti_print_header = tlb_print_cortex_a7_header,
+	.dti_print_entry = tlb_print_cortex_a7_entry,
+	.dti_index = ARM_A7_TLBDATAOP_INDEX,
+};
+#endif /* CPU_CORTEXA7 */
+
+static inline const struct db_tlbinfo *
+tlb_lookup_tlbinfo(void)
+{
+#if defined(CPU_CORTEXA5) && defined(CPU_CORTEXA7)
+	const bool cortex_a5_p = CPU_ID_CORTEX_A5_P(curcpu()->ci_arm_cpuid);
+	const bool cortex_a7_p = CPU_ID_CORTEX_A7_P(curcpu()->ci_arm_cpuid);
+#elif defined(CPU_CORTEXA5)
+	const bool cortex_a5_p = true;
+#else
+	const bool cortex_a7_p = true;
 #endif
+#ifdef CPU_CORTEXA5
+	if (cortex_a5_p) {
+		return &tlb_cortex_a5_info;
+	}
+#endif
+#ifdef CPU_CORTEXA7
+	if (cortex_a7_p) {
+		return &tlb_cortex_a7_info;
+	}
+#endif
+	return NULL;
+}
+
+void
+db_show_tlb_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
+{
+	const struct db_tlbinfo * const dti = tlb_lookup_tlbinfo();
+
+	if (have_addr) {
+		const vaddr_t vpn = (vaddr_t)addr >> L2_S_SHIFT;
+		const u_int va_index = vpn & dti->dti_index;
+		for (size_t way = 0; way < 2; way++) {
+			armreg_tlbdataop_write(
+			    __SHIFTIN(va_index, dti->dti_index)
+			    | __SHIFTIN(way, ARM_TLBDATAOP_WAY));
+			__asm("isb");
+			const uint32_t d0 = armreg_tlbdata0_read();
+			const uint32_t d1 = armreg_tlbdata1_read();
+			if ((d0 & ARM_TLBDATA_VALID)
+			    && vpn == (*dti->dti_decode_vpn)(va_index, d0, d1)) {
+				(*dti->dti_print_header)();
+				(*dti->dti_print_entry)(way, va_index, d0, d1);
+				return;
+			}
+		}
+		db_printf("VA %#"DDB_EXPR_FMT"x not found in TLB\n", addr);
+		return;
+	}
+
+	bool first = true;
+	size_t n = 0;
+	for (size_t va_index = 0; va_index <= dti->dti_index; va_index++) {
+		for (size_t way = 0; way < 2; way++) {
+			armreg_tlbdataop_write(
+			    __SHIFTIN(way, ARM_TLBDATAOP_WAY)
+			    | __SHIFTIN(va_index, dti->dti_index));
+			__asm("isb");
+			const uint32_t d0 = armreg_tlbdata0_read();
+			const uint32_t d1 = armreg_tlbdata1_read();
+			if (d0 & ARM_TLBDATA_VALID) {
+				if (first) {
+					(*dti->dti_print_header)();
+					first = false;
+				}
+				(*dti->dti_print_entry)(way, va_index, d0, d1);
+				n++;
+			}
+		}
+	}
+	db_printf("%zu TLB valid entries found\n", n);
+}
+#endif /* CPU_CORTEXA5 || CPU_CORTEXA7 */
+#endif /* _KERNEL */
 
 
 void
