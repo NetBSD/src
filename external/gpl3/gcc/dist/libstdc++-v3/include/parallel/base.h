@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+// Copyright (C) 2007-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -45,7 +45,7 @@
  * @namespace std::__parallel
  * @brief GNU parallel code, replaces standard behavior with parallel behavior.
  */
-namespace std 
+namespace std _GLIBCXX_VISIBILITY(default) 
 { 
   namespace __parallel { } 
 }
@@ -68,7 +68,7 @@ namespace __gnu_sequential
 { 
   // Import whatever is the serial version.
 #ifdef _GLIBCXX_PARALLEL
-  using namespace std::__norm;
+  using namespace std::_GLIBCXX_STD_A;
 #else
   using namespace std;
 #endif   
@@ -140,13 +140,13 @@ namespace __gnu_parallel
 
   /** @brief Equivalent to std::min. */
   template<typename _Tp>
-    const _Tp&
+    inline const _Tp&
     min(const _Tp& __a, const _Tp& __b)
     { return (__a < __b) ? __a : __b; }
 
   /** @brief Equivalent to std::max. */
   template<typename _Tp>
-    const _Tp&
+    inline const _Tp&
     max(const _Tp& __a, const _Tp& __b)
     { return (__a > __b) ? __a : __b; }
 
@@ -267,8 +267,8 @@ namespace __gnu_parallel
 
   /** @brief Similar to std::plus, but allows two different types. */
   template<typename _Tp1, typename _Tp2, typename _Result
-	   = __typeof__(*static_cast<_Tp1*>(NULL)
-			+ *static_cast<_Tp2*>(NULL))>
+	   = __typeof__(*static_cast<_Tp1*>(0)
+			+ *static_cast<_Tp2*>(0))>
     struct _Plus : public std::binary_function<_Tp1, _Tp2, _Result>
     {
       _Result
@@ -283,8 +283,8 @@ namespace __gnu_parallel
 
   /** @brief Similar to std::multiplies, but allows two different types. */
   template<typename _Tp1, typename _Tp2, typename _Result
-	   = __typeof__(*static_cast<_Tp1*>(NULL)
-			* *static_cast<_Tp2*>(NULL))>
+	   = __typeof__(*static_cast<_Tp1*>(0)
+			* *static_cast<_Tp2*>(0))>
     struct _Multiplies : public std::binary_function<_Tp1, _Tp2, _Result>
     {
       _Result
@@ -300,7 +300,7 @@ namespace __gnu_parallel
   /** @brief _Iterator associated with __gnu_parallel::_PseudoSequence.
    *  If features the usual random-access iterator functionality.
    *  @param _Tp Sequence _M_value type.
-   *  @param _DifferenceType Sequence difference type.
+   *  @param _DifferenceTp Sequence difference type.
    */
   template<typename _Tp, typename _DifferenceTp>
     class _PseudoSequenceIterator
@@ -353,7 +353,7 @@ namespace __gnu_parallel
       the same element.
       *  The copies are not stored explicitly, of course.
       *  @param _Tp Sequence _M_value type.
-      *  @param _DifferenceType Sequence difference type.
+      *  @param _DifferenceTp Sequence difference type.
       */
   template<typename _Tp, typename _DifferenceTp>
     class _PseudoSequence
@@ -365,7 +365,7 @@ namespace __gnu_parallel
       typedef _PseudoSequenceIterator<_Tp, uint64_t> iterator;
 
       /** @brief Constructor.
-       *  @param _M_val Element of the sequence.
+       *  @param __val Element of the sequence.
        *  @param __count Number of (virtual) copies.
        */
       _PseudoSequence(const _Tp& __val, _DifferenceType __count)

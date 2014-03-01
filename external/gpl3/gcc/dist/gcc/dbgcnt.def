@@ -1,5 +1,5 @@
 /* This file contains the list of the debug counter for GCC.
-   Copyright (C) 2006, 2007, 2008 Free Software Foundation, Inc.
+   Copyright (C) 2006-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -157,9 +157,12 @@ DEBUG_COUNTER (dse2)
 DEBUG_COUNTER (gcse2_delete)
 DEBUG_COUNTER (global_alloc_at_func)
 DEBUG_COUNTER (global_alloc_at_reg)
+DEBUG_COUNTER (graphite_scop)
 DEBUG_COUNTER (hoist)
+DEBUG_COUNTER (hoist_insn)
 DEBUG_COUNTER (ia64_sched2)
 DEBUG_COUNTER (if_conversion)
+DEBUG_COUNTER (if_conversion_tree)
 DEBUG_COUNTER (if_after_combine)
 DEBUG_COUNTER (if_after_reload)
 DEBUG_COUNTER (local_alloc_for_sched)
@@ -167,10 +170,13 @@ DEBUG_COUNTER (postreload_cse)
 DEBUG_COUNTER (pre)
 DEBUG_COUNTER (pre_insn)
 DEBUG_COUNTER (treepre_insert)
+DEBUG_COUNTER (tree_sra)
+DEBUG_COUNTER (eipa_sra)
 DEBUG_COUNTER (sched2_func)
 DEBUG_COUNTER (sched_block)
 DEBUG_COUNTER (sched_func)
 DEBUG_COUNTER (sched_insn)
+DEBUG_COUNTER (sched_breakdep)
 DEBUG_COUNTER (sched_region)
 DEBUG_COUNTER (sel_sched_cnt)
 DEBUG_COUNTER (sel_sched_region_cnt)
@@ -179,3 +185,4 @@ DEBUG_COUNTER (sms_sched_loop)
 DEBUG_COUNTER (store_motion)
 DEBUG_COUNTER (split_for_sched2)
 DEBUG_COUNTER (tail_call)
+DEBUG_COUNTER (ira_move)

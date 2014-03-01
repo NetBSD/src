@@ -1,6 +1,5 @@
 /* Default macros to initialize the lang_hooks data structure.
-   Copyright 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008
-   Free Software Foundation, Inc.
+   Copyright (C) 2001-2013 Free Software Foundation, Inc.
    Contributed by Alexandre Oliva  <aoliva@redhat.com>
 
 This file is part of GCC.
@@ -24,7 +23,6 @@ along with GCC; see the file COPYING3.  If not see
 
 #include "hooks.h"
 
-struct diagnostic_context;
 struct diagnostic_info;
 
 /* Note to creators of new hooks:
@@ -38,7 +36,6 @@ struct diagnostic_info;
 
 extern void lhd_do_nothing (void);
 extern void lhd_do_nothing_t (tree);
-extern void lhd_do_nothing_i (int);
 extern void lhd_do_nothing_f (struct function *);
 extern tree lhd_pass_through_t (tree);
 extern bool lhd_post_options (const char **);
@@ -51,7 +48,7 @@ extern void lhd_print_tree_nothing (FILE *, tree, int);
 extern const char *lhd_decl_printable_name (tree, int);
 extern const char *lhd_dwarf_name (tree, int);
 extern int lhd_types_compatible_p (tree, tree);
-extern void lhd_print_error_function (struct diagnostic_context *,
+extern void lhd_print_error_function (diagnostic_context *,
 				      const char *, struct diagnostic_info *);
 extern void lhd_set_decl_assembler_name (tree);
 extern bool lhd_warn_unused_global_decl (const_tree);
@@ -65,8 +62,12 @@ extern tree lhd_expr_to_decl (tree, bool *, bool *);
 extern tree lhd_builtin_function (tree);
 
 /* Declarations of default tree inlining hooks.  */
-extern void lhd_initialize_diagnostics (struct diagnostic_context *);
-extern tree lhd_callgraph_analyze_expr (tree *, int *);
+extern void lhd_initialize_diagnostics (diagnostic_context *);
+extern void lhd_init_options (unsigned int,
+			      struct cl_decoded_option *);
+extern bool lhd_complain_wrong_lang_p (const struct cl_option *);
+extern bool lhd_handle_option (size_t, const char *, int, int, location_t,
+			       const struct cl_option_handlers *);
 
 
 /* Declarations for tree gimplification hooks.  */
@@ -81,11 +82,13 @@ extern void lhd_omp_firstprivatize_type_sizes (struct gimplify_omp_ctx *,
 #define LANG_HOOKS_IDENTIFIER_SIZE	sizeof (struct lang_identifier)
 #define LANG_HOOKS_INIT			hook_bool_void_false
 #define LANG_HOOKS_FINISH		lhd_do_nothing
-#define LANG_HOOKS_PARSE_FILE		lhd_do_nothing_i
-#define LANG_HOOKS_INIT_OPTIONS		hook_uint_uint_constcharptrptr_0
+#define LANG_HOOKS_PARSE_FILE		lhd_do_nothing
+#define LANG_HOOKS_OPTION_LANG_MASK	hook_uint_void_0
+#define LANG_HOOKS_INIT_OPTIONS_STRUCT	hook_void_gcc_optionsp
+#define LANG_HOOKS_INIT_OPTIONS		lhd_init_options
 #define LANG_HOOKS_INITIALIZE_DIAGNOSTICS lhd_initialize_diagnostics
-#define LANG_HOOKS_HANDLE_OPTION	hook_int_size_t_constcharptr_int_0
-#define LANG_HOOKS_MISSING_ARGUMENT	hook_bool_constcharptr_size_t_false
+#define LANG_HOOKS_COMPLAIN_WRONG_LANG_P lhd_complain_wrong_lang_p
+#define LANG_HOOKS_HANDLE_OPTION	lhd_handle_option
 #define LANG_HOOKS_POST_OPTIONS		lhd_post_options
 #define LANG_HOOKS_MISSING_NORETURN_OK_P hook_bool_tree_true
 #define LANG_HOOKS_GET_ALIAS_SET	lhd_get_alias_set
@@ -110,7 +113,10 @@ extern void lhd_omp_firstprivatize_type_sizes (struct gimplify_omp_ctx *,
 #define LANG_HOOKS_INIT_TS		lhd_do_nothing
 #define LANG_HOOKS_EH_PERSONALITY	lhd_gcc_personality
 #define LANG_HOOKS_EH_RUNTIME_TYPE	lhd_pass_through_t
+#define LANG_HOOKS_EH_PROTECT_CLEANUP_ACTIONS	NULL
+#define LANG_HOOKS_BLOCK_MAY_FALLTHRU	hook_bool_const_tree_true
 #define LANG_HOOKS_EH_USE_CXA_END_CLEANUP	false
+#define LANG_HOOKS_DEEP_UNSHARING	false
 
 /* Attribute hooks.  */
 #define LANG_HOOKS_ATTRIBUTE_TABLE		NULL
@@ -125,15 +131,8 @@ extern void lhd_omp_firstprivatize_type_sizes (struct gimplify_omp_ctx *,
   LANG_HOOKS_TREE_INLINING_VAR_MOD_TYPE_P, \
 }
 
-#define LANG_HOOKS_CALLGRAPH_ANALYZE_EXPR lhd_callgraph_analyze_expr
-
-#define LANG_HOOKS_CALLGRAPH_INITIALIZER { \
-  LANG_HOOKS_CALLGRAPH_ANALYZE_EXPR \
-}
-
 /* Hooks for tree gimplification.  */
 #define LANG_HOOKS_GIMPLIFY_EXPR lhd_gimplify_expr
-#define LANG_HOOKS_FOLD_OBJ_TYPE_REF NULL
 
 /* Tree dump hooks.  */
 extern bool lhd_tree_dump_dump_tree (void *, tree);
@@ -170,8 +169,8 @@ extern tree lhd_make_node (enum tree_code);
 #define LANG_HOOKS_TYPE_HASH_EQ		NULL
 #define LANG_HOOKS_GET_ARRAY_DESCR_INFO	NULL
 #define LANG_HOOKS_GET_SUBRANGE_BOUNDS	NULL
+#define LANG_HOOKS_DESCRIPTIVE_TYPE	NULL
 #define LANG_HOOKS_RECONSTRUCT_COMPLEX_TYPE reconstruct_complex_type
-#define LANG_HOOKS_HASH_TYPES		true
 
 #define LANG_HOOKS_FOR_TYPES_INITIALIZER { \
   LANG_HOOKS_MAKE_TYPE, \
@@ -188,8 +187,8 @@ extern tree lhd_make_node (enum tree_code);
   LANG_HOOKS_TYPE_HASH_EQ, \
   LANG_HOOKS_GET_ARRAY_DESCR_INFO, \
   LANG_HOOKS_GET_SUBRANGE_BOUNDS, \
-  LANG_HOOKS_RECONSTRUCT_COMPLEX_TYPE, \
-  LANG_HOOKS_HASH_TYPES \
+  LANG_HOOKS_DESCRIPTIVE_TYPE, \
+  LANG_HOOKS_RECONSTRUCT_COMPLEX_TYPE \
 }
 
 /* Declaration hooks.  */
@@ -257,10 +256,12 @@ extern void lhd_end_section (void);
   LANG_HOOKS_IDENTIFIER_SIZE, \
   LANG_HOOKS_FREE_LANG_DATA, \
   LANG_HOOKS_TREE_SIZE, \
+  LANG_HOOKS_OPTION_LANG_MASK, \
+  LANG_HOOKS_INIT_OPTIONS_STRUCT, \
   LANG_HOOKS_INIT_OPTIONS, \
   LANG_HOOKS_INITIALIZE_DIAGNOSTICS, \
+  LANG_HOOKS_COMPLAIN_WRONG_LANG_P, \
   LANG_HOOKS_HANDLE_OPTION, \
-  LANG_HOOKS_MISSING_ARGUMENT, \
   LANG_HOOKS_POST_OPTIONS, \
   LANG_HOOKS_INIT, \
   LANG_HOOKS_FINISH, \
@@ -284,7 +285,6 @@ extern void lhd_end_section (void);
   LANG_HOOKS_COMMON_ATTRIBUTE_TABLE, \
   LANG_HOOKS_FORMAT_ATTRIBUTE_TABLE, \
   LANG_HOOKS_TREE_INLINING_INITIALIZER, \
-  LANG_HOOKS_CALLGRAPH_INITIALIZER, \
   LANG_HOOKS_TREE_DUMP_INITIALIZER, \
   LANG_HOOKS_DECLS, \
   LANG_HOOKS_FOR_TYPES_INITIALIZER, \
@@ -293,14 +293,16 @@ extern void lhd_end_section (void);
   LANG_HOOKS_GET_INNERMOST_GENERIC_ARGS, \
   LANG_HOOKS_FUNCTION_PARAMETER_PACK_P, \
   LANG_HOOKS_GIMPLIFY_EXPR, \
-  LANG_HOOKS_FOLD_OBJ_TYPE_REF, \
   LANG_HOOKS_BUILTIN_FUNCTION, \
   LANG_HOOKS_BUILTIN_FUNCTION_EXT_SCOPE, \
   LANG_HOOKS_INIT_TS,          \
   LANG_HOOKS_EXPR_TO_DECL, \
   LANG_HOOKS_EH_PERSONALITY, \
   LANG_HOOKS_EH_RUNTIME_TYPE, \
+  LANG_HOOKS_EH_PROTECT_CLEANUP_ACTIONS, \
+  LANG_HOOKS_BLOCK_MAY_FALLTHRU, \
   LANG_HOOKS_EH_USE_CXA_END_CLEANUP, \
+  LANG_HOOKS_DEEP_UNSHARING \
 }
 
 #endif /* GCC_LANG_HOOKS_DEF_H */

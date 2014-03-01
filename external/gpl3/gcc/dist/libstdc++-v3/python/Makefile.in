@@ -35,17 +35,19 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
-	$(top_srcdir)/fragment.am
+DIST_COMMON = $(top_srcdir)/fragment.am $(srcdir)/Makefile.in \
+	$(srcdir)/Makefile.am
 subdir = python
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/../config/enable.m4 \
+am__aclocal_m4_deps = $(top_srcdir)/../config/acx.m4 \
+	$(top_srcdir)/../config/enable.m4 \
 	$(top_srcdir)/../config/futex.m4 \
 	$(top_srcdir)/../config/iconv.m4 \
 	$(top_srcdir)/../config/lead-dot.m4 \
 	$(top_srcdir)/../config/lib-ld.m4 \
 	$(top_srcdir)/../config/lib-link.m4 \
 	$(top_srcdir)/../config/lib-prefix.m4 \
+	$(top_srcdir)/../config/lthostflags.m4 \
 	$(top_srcdir)/../config/multi.m4 \
 	$(top_srcdir)/../config/no-executables.m4 \
 	$(top_srcdir)/../config/override.m4 \
@@ -55,7 +57,9 @@ am__aclocal_m4_deps = $(top_srcdir)/../config/enable.m4 \
 	$(top_srcdir)/../ltsugar.m4 $(top_srcdir)/../ltversion.m4 \
 	$(top_srcdir)/../lt~obsolete.m4 $(top_srcdir)/crossconfig.m4 \
 	$(top_srcdir)/linkage.m4 $(top_srcdir)/acinclude.m4 \
-	$(top_srcdir)/../config/tls.m4 $(top_srcdir)/configure.ac
+	$(top_srcdir)/../config/gc++filt.m4 \
+	$(top_srcdir)/../config/tls.m4 $(top_srcdir)/../config/gthr.m4 \
+	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 CONFIG_HEADER = $(top_builddir)/config.h
@@ -64,7 +68,6 @@ CONFIG_CLEAN_VPATH_FILES =
 depcomp =
 am__depfiles_maybe =
 SOURCES =
-DIST_SOURCES =
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
@@ -88,7 +91,6 @@ am__base_list = \
   sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
 am__installdirs = "$(DESTDIR)$(pythondir)"
 DATA = $(nobase_python_DATA)
-DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ABI_TWEAKS_SRCDIR = @ABI_TWEAKS_SRCDIR@
 ACLOCAL = @ACLOCAL@
 ALLOCATOR_H = @ALLOCATOR_H@
@@ -120,16 +122,22 @@ CNUMERIC_CC = @CNUMERIC_CC@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CPU_DEFINES_SRCDIR = @CPU_DEFINES_SRCDIR@
+CPU_OPT_BITS_RANDOM = @CPU_OPT_BITS_RANDOM@
+CPU_OPT_EXT_RANDOM = @CPU_OPT_EXT_RANDOM@
 CSTDIO_H = @CSTDIO_H@
 CTIME_CC = @CTIME_CC@
 CTIME_H = @CTIME_H@
 CXX = @CXX@
 CXXCPP = @CXXCPP@
+CXXFILT = @CXXFILT@
 CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
 C_INCLUDE_DIR = @C_INCLUDE_DIR@
+DBLATEX = @DBLATEX@
 DEBUG_FLAGS = @DEBUG_FLAGS@
 DEFS = @DEFS@
+DOT = @DOT@
+DOXYGEN = @DOXYGEN@
 DSYMUTIL = @DSYMUTIL@
 DUMPBIN = @DUMPBIN@
 ECHO_C = @ECHO_C@
@@ -143,6 +151,7 @@ FGREP = @FGREP@
 GLIBCXX_INCLUDES = @GLIBCXX_INCLUDES@
 GLIBCXX_LIBS = @GLIBCXX_LIBS@
 GREP = @GREP@
+HWCAP_FLAGS = @HWCAP_FLAGS@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -153,7 +162,6 @@ LDFLAGS = @LDFLAGS@
 LIBICONV = @LIBICONV@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
-LIBSUPCXX_PICFLAGS = @LIBSUPCXX_PICFLAGS@
 LIBTOOL = @LIBTOOL@
 LIPO = @LIPO@
 LN_S = @LN_S@
@@ -179,6 +187,7 @@ PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
+PDFLATEX = @PDFLATEX@
 RANLIB = @RANLIB@
 SECTION_FLAGS = @SECTION_FLAGS@
 SECTION_LDFLAGS = @SECTION_LDFLAGS@
@@ -192,6 +201,9 @@ USE_NLS = @USE_NLS@
 VERSION = @VERSION@
 WARN_FLAGS = @WARN_FLAGS@
 WERROR = @WERROR@
+XMLLINT = @XMLLINT@
+XSLTPROC = @XSLTPROC@
+XSL_STYLE_DIR = @XSL_STYLE_DIR@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
@@ -203,6 +215,7 @@ am__leading_dot = @am__leading_dot@
 am__tar = @am__tar@
 am__untar = @am__untar@
 baseline_dir = @baseline_dir@
+baseline_subdir_switch = @baseline_subdir_switch@
 bindir = @bindir@
 build = @build@
 build_alias = @build_alias@
@@ -222,10 +235,12 @@ glibcxx_MOFILES = @glibcxx_MOFILES@
 glibcxx_PCHFLAGS = @glibcxx_PCHFLAGS@
 glibcxx_POFILES = @glibcxx_POFILES@
 glibcxx_builddir = @glibcxx_builddir@
+glibcxx_compiler_pic_flag = @glibcxx_compiler_pic_flag@
+glibcxx_compiler_shared_flag = @glibcxx_compiler_shared_flag@
 glibcxx_localedir = @glibcxx_localedir@
+glibcxx_lt_pic_flag = @glibcxx_lt_pic_flag@
 glibcxx_prefixdir = @glibcxx_prefixdir@
 glibcxx_srcdir = @glibcxx_srcdir@
-glibcxx_thread_h = @glibcxx_thread_h@
 glibcxx_toolexecdir = @glibcxx_toolexecdir@
 glibcxx_toolexeclibdir = @glibcxx_toolexeclibdir@
 gxx_include_dir = @gxx_include_dir@
@@ -243,6 +258,7 @@ libexecdir = @libexecdir@
 libtool_VERSION = @libtool_VERSION@
 localedir = @localedir@
 localstatedir = @localstatedir@
+lt_host_flags = @lt_host_flags@
 mandir = @mandir@
 mkdir_p = @mkdir_p@
 multi_basedir = @multi_basedir@
@@ -252,6 +268,7 @@ port_specific_symbol_files = @port_specific_symbol_files@
 prefix = @prefix@
 program_transform_name = @program_transform_name@
 psdir = @psdir@
+python_mod_dir = @python_mod_dir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
@@ -261,9 +278,11 @@ target_alias = @target_alias@
 target_cpu = @target_cpu@
 target_os = @target_os@
 target_vendor = @target_vendor@
+thread_header = @thread_header@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
+toplevel_builddir = @toplevel_builddir@
 toplevel_srcdir = @toplevel_srcdir@
 
 # May be used by various substitution variables.
@@ -274,19 +293,22 @@ PWD_COMMAND = $${PWDCMD-pwd}
 STAMP = echo timestamp >
 toolexecdir = $(glibcxx_toolexecdir)
 toolexeclibdir = $(glibcxx_toolexeclibdir)
+@ENABLE_WERROR_FALSE@WERROR_FLAG = 
+@ENABLE_WERROR_TRUE@WERROR_FLAG = $(WERROR)
 
 # These bits are all figured out from configure.  Look in acinclude.m4
 # or configure.ac to see how they are set.  See GLIBCXX_EXPORT_FLAGS.
 CONFIG_CXXFLAGS = \
-	$(SECTION_FLAGS) $(EXTRA_CXX_FLAGS)
+	$(SECTION_FLAGS) $(HWCAP_FLAGS) -frandom-seed=$@
 
 WARN_CXXFLAGS = \
-	$(WARN_FLAGS) $(WERROR) -fdiagnostics-show-location=once
+	$(WARN_FLAGS) $(WERROR_FLAG) -fdiagnostics-show-location=once 
 
 
 # -I/-D flags to pass when compiling.
 AM_CPPFLAGS = $(GLIBCXX_INCLUDES)
-pythondir = $(datadir)/gcc-$(gcc_version)/python
+@ENABLE_PYTHONDIR_FALSE@pythondir = $(datadir)/gcc-$(gcc_version)/python
+@ENABLE_PYTHONDIR_TRUE@pythondir = $(prefix)/$(python_mod_dir)
 nobase_python_DATA = \
     libstdcxx/v6/printers.py \
     libstdcxx/v6/__init__.py \
@@ -360,37 +382,6 @@ TAGS:
 ctags: CTAGS
 CTAGS:
 
-
-distdir: $(DISTFILES)
-	@srcdirstrip=`echo "$(srcdir)" | sed 's/[].[^$$\\*]/\\\\&/g'`; \
-	topsrcdirstrip=`echo "$(top_srcdir)" | sed 's/[].[^$$\\*]/\\\\&/g'`; \
-	list='$(DISTFILES)'; \
-	  dist_files=`for file in $$list; do echo $$file; done | \
-	  sed -e "s|^$$srcdirstrip/||;t" \
-	      -e "s|^$$topsrcdirstrip/|$(top_builddir)/|;t"`; \
-	case $$dist_files in \
-	  */*) $(MKDIR_P) `echo "$$dist_files" | \
-			   sed '/\//!d;s|^|$(distdir)/|;s,/[^/]*$$,,' | \
-			   sort -u` ;; \
-	esac; \
-	for file in $$dist_files; do \
-	  if test -f $$file || test -d $$file; then d=.; else d=$(srcdir); fi; \
-	  if test -d $$d/$$file; then \
-	    dir=`echo "/$$file" | sed -e 's,/[^/]*$$,,'`; \
-	    if test -d "$(distdir)/$$file"; then \
-	      find "$(distdir)/$$file" -type d ! -perm -700 -exec chmod u+rwx {} \;; \
-	    fi; \
-	    if test -d $(srcdir)/$$file && test $$d != $(srcdir); then \
-	      cp -fpR $(srcdir)/$$file "$(distdir)$$dir" || exit 1; \
-	      find "$(distdir)/$$file" -type d ! -perm -700 -exec chmod u+rwx {} \;; \
-	    fi; \
-	    cp -fpR $$d/$$file "$(distdir)$$dir" || exit 1; \
-	  else \
-	    test -f "$(distdir)/$$file" \
-	    || cp -p $$d/$$file "$(distdir)/$$file" \
-	    || exit 1; \
-	  fi; \
-	done
 check-am: all-am
 check: check-am
 all-am: Makefile $(DATA) all-local
@@ -493,13 +484,13 @@ uninstall-am: uninstall-nobase_pythonDATA
 
 .PHONY: all all-am all-local check check-am clean clean-generic \
 	clean-libtool distclean distclean-generic distclean-libtool \
-	distdir dvi dvi-am html html-am info info-am install \
-	install-am install-data install-data-am install-data-local \
-	install-dvi install-dvi-am install-exec install-exec-am \
-	install-html install-html-am install-info install-info-am \
-	install-man install-nobase_pythonDATA install-pdf \
-	install-pdf-am install-ps install-ps-am install-strip \
-	installcheck installcheck-am installdirs maintainer-clean \
+	dvi dvi-am html html-am info info-am install install-am \
+	install-data install-data-am install-data-local install-dvi \
+	install-dvi-am install-exec install-exec-am install-html \
+	install-html-am install-info install-info-am install-man \
+	install-nobase_pythonDATA install-pdf install-pdf-am \
+	install-ps install-ps-am install-strip installcheck \
+	installcheck-am installdirs maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-generic \
 	mostlyclean-libtool pdf pdf-am ps ps-am uninstall uninstall-am \
 	uninstall-nobase_pythonDATA

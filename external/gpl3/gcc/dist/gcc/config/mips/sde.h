@@ -1,7 +1,6 @@
 /* Definitions of target machine for GNU compiler.
    MIPS SDE version.
-   Copyright (C) 2003, 2004, 2007, 2008, 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 2003-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -42,13 +41,6 @@ along with GCC; see the file COPYING3.  If not see
      things like LINK_SPEC easier to write.  */				\
   "%{!EB:%{!EL:%(endian_spec)}}",					\
 									\
-  /* -mcode-xonly is a traditional alias for -mcode-readable=pcrel and	\
-     -mno-data-in-code is a traditional alias for -mcode-readable=no.	\
-     The latter trumps the former.  */					\
-  "%{mno-data-in-code: -mcode-readable=no}",				\
-  "%{!mcode-readable=no: %{mcode-xonly: -mcode-readable=pcrel}}",	\
-  "%<mno-data-in-code %<mcode-xonly",					\
-									\
   /* Configuration-independent MIPS rules.  */				\
   BASE_DRIVER_SELF_SPECS				
 
@@ -66,17 +58,13 @@ along with GCC; see the file COPYING3.  If not see
 #define LINK_SPEC "\
 %(endian_spec) \
 %{G*} %{mips1} %{mips2} %{mips3} %{mips4} %{mips32*} %{mips64*} \
-%{bestGnum} \
-%{shared} %{non_shared} %{call_shared} \
+%{shared} \
 %{mabi=n32:-melf32%{EB:b}%{EL:l}tsmipn32} \
 %{mabi=64:-melf64%{EB:b}%{EL:l}tsmip} \
 %{mabi=32:-melf32%{EB:b}%{EL:l}tsmip}"
 
 #undef DEFAULT_SIGNED_CHAR
 #define DEFAULT_SIGNED_CHAR 0
-
-/* SDE-MIPS won't ever support SDB debugging info.  */
-#undef SDB_DEBUGGING_INFO
 
 /* Describe how we implement __builtin_eh_return.  */
 
@@ -101,26 +89,12 @@ along with GCC; see the file COPYING3.  If not see
 #undef PTRDIFF_TYPE
 #define PTRDIFF_TYPE "long int"
 
-/* Enable parsing of #pragma pack(push,<n>) and #pragma pack(pop).  */
-#define HANDLE_PRAGMA_PACK_PUSH_POP 1
-
 /* Use standard ELF-style local labels (not '$' as on early Irix).  */
 #undef LOCAL_LABEL_PREFIX
 #define LOCAL_LABEL_PREFIX "."
 
 /* Use periods rather than dollar signs in special g++ assembler names.  */
 #define NO_DOLLAR_IN_LABEL
-
-/* Attach a special .ident directive to the end of the file to identify
-   the version of GCC which compiled this code.  */
-#undef IDENT_ASM_OP
-#define IDENT_ASM_OP "\t.ident\t"
-
-/* Output #ident string into the ELF .comment section, so it doesn't
-   form part of the load image, and so that it can be stripped.  */
-#undef ASM_OUTPUT_IDENT
-#define ASM_OUTPUT_IDENT(STREAM, STRING) \
-  fprintf (STREAM, "%s\"%s\"\n", IDENT_ASM_OP, STRING);
 
 /* Currently we don't support 128bit long doubles, so for now we force
    n32 to be 64bit.  */

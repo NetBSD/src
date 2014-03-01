@@ -1,5 +1,5 @@
 ;; Constraint definitions for pa
-;; Copyright (C) 2007 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2013 Free Software Foundation, Inc.
 
 ;; This file is part of GCC.
 
@@ -18,8 +18,8 @@
 ;; <http://www.gnu.org/licenses/>.
 
 ;;; Unused letters:
-;;;    ABCDEF H             V  Y 
-;;;     bcde ghijklmnop  stuvw  z
+;;;    ABCD   H                Y 
+;;;     bcde  h jkl       tuvw  z
 
 ;; Register constraints.
 (define_register_constraint "a" "R1_REGS"
@@ -55,7 +55,7 @@
 (define_constraint "K"
   "Integer constant that can be deposited with a zdepi instruction."
   (and (match_code "const_int")
-       (match_test "zdepi_cint_p (ival)")))
+       (match_test "pa_zdepi_cint_p (ival)")))
 
 (define_constraint "L"
   "Signed 5-bit integer constant."
@@ -70,7 +70,7 @@
 (define_constraint "N"
   "Integer constant that can be loaded with a ldil instruction."
   (and (match_code "const_int")
-       (match_test "ldil_cint_p (ival)")))
+       (match_test "pa_ldil_cint_p (ival)")))
 
 (define_constraint "O"
   "Integer constant such that ival+1 is a power of 2."
@@ -81,7 +81,7 @@
   "Integer constant that can be used as an and mask in depi and
    extru instructions."
   (and (match_code "const_int")
-       (match_test "and_mask_p (ival)")))
+       (match_test "pa_and_mask_p (ival)")))
 
 (define_constraint "S"
   "Integer constant 31."
@@ -124,12 +124,7 @@
 
 (define_constraint "T"
   "A memory operand for floating-point loads and stores."
-  (and (match_code "mem")
-       (match_test "!IS_LO_SUM_DLT_ADDR_P (XEXP (op, 0))
-		    && !IS_INDEX_ADDR_P (XEXP (op, 0))
-		    && memory_address_p ((GET_MODE_SIZE (mode) == 4
-					  ? SFmode : DFmode),
-					 XEXP (op, 0))")))
+  (match_test "floating_point_store_memory_operand (op, mode)"))
 
 ;; We could allow short displacements but TARGET_LEGITIMATE_ADDRESS_P
 ;; can't tell when a long displacement is valid.

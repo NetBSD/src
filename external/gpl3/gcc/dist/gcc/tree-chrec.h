@@ -1,6 +1,5 @@
 /* Chains of recurrences.
-   Copyright (C) 2003, 2004, 2005, 2006, 2007, 2008, 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 2003-2013 Free Software Foundation, Inc.
    Contributed by Sebastian Pop <pop@cri.ensmp.fr>
 
 This file is part of GCC.
@@ -64,6 +63,7 @@ extern tree chrec_convert_aggressive (tree, tree);
 
 /* Operations.  */
 extern tree chrec_apply (unsigned, tree, tree);
+extern tree chrec_apply_map (tree, vec<tree> );
 extern tree chrec_replace_initial_condition (tree, tree);
 extern tree initial_condition (tree);
 extern tree initial_condition_in_loop_num (tree, unsigned);
@@ -76,7 +76,6 @@ extern void for_each_scev_op (tree *, bool (*) (tree *, void *), void *);
 /* Observers.  */
 extern bool eq_evolutions_p (const_tree, const_tree);
 extern bool is_multivariate_chrec (const_tree);
-extern bool chrec_is_positive (tree, bool *);
 extern bool chrec_contains_symbols (const_tree);
 extern bool chrec_contains_symbols_defined_in_loop (const_tree, unsigned);
 extern bool chrec_contains_undetermined (const_tree);
@@ -117,7 +116,7 @@ no_evolution_in_loop_p (tree chrec, unsigned loop_num, bool *res)
 
   STRIP_NOPS (chrec);
   scev = hide_evolution_in_other_loops_than_loop (chrec, loop_num);
-  *res = !tree_is_chrec (scev);
+  *res = !tree_contains_chrecs (scev, NULL);
   return true;
 }
 
@@ -144,7 +143,7 @@ build_polynomial_chrec (unsigned loop_num,
 
   /* Types of left and right sides of a chrec should be compatible.  */
   if (POINTER_TYPE_P (TREE_TYPE (left)))
-    gcc_assert (sizetype == TREE_TYPE (right));
+    gcc_assert (ptrofftype_p (TREE_TYPE (right)));
   else
     gcc_assert (TREE_TYPE (left) == TREE_TYPE (right));
 
@@ -201,23 +200,12 @@ evolution_function_is_affine_in_loop (const_tree chrec, int loopnum)
 static inline bool
 evolution_function_is_affine_p (const_tree chrec)
 {
-  if (chrec == NULL_TREE)
-    return false;
-
-  switch (TREE_CODE (chrec))
-    {
-    case POLYNOMIAL_CHREC:
-      if (evolution_function_is_invariant_p (CHREC_LEFT (chrec),
-					     CHREC_VARIABLE (chrec))
-	  && evolution_function_is_invariant_p (CHREC_RIGHT (chrec),
-						CHREC_VARIABLE (chrec)))
-	return true;
-      else
-	return false;
-
-    default:
-      return false;
-    }
+  return chrec
+    && TREE_CODE (chrec) == POLYNOMIAL_CHREC
+    && evolution_function_is_invariant_p (CHREC_RIGHT (chrec),
+					  CHREC_VARIABLE (chrec))
+    && (TREE_CODE (CHREC_RIGHT (chrec)) != POLYNOMIAL_CHREC
+	|| evolution_function_is_affine_p (CHREC_RIGHT (chrec)));
 }
 
 /* Determines whether EXPR does not contains chrec expressions.  */
