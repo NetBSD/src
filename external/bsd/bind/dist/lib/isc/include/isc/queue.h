@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.5 2013/07/27 19:23:13 christos Exp $	*/
+/*	$NetBSD: queue.h,v 1.6 2014/03/01 23:07:24 christos Exp $	*/
 
 /*
  * Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
@@ -134,9 +134,9 @@
 					(queue).head = (queue).tail = NULL; \
 					UNLOCK(&(queue).taillock); \
 					break; \
+				} \
+				UNLOCK(&(queue).taillock); \
 			} \
-			UNLOCK(&(queue).taillock); \
-		} \
 			(queue).head = ret->link.next; \
 			(queue).head->link.prev = NULL; \
 			break; \
