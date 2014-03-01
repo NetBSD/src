@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_test.c,v 1.6 2014/03/01 03:24:33 christos Exp $	*/
+/*	$NetBSD: adb_test.c,v 1.7 2014/03/01 22:42:46 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
@@ -293,6 +293,7 @@ main(int argc, char **argv) {
 	UNUSED(argc);
 	UNUSED(argv);
 
+	dns_result_register();
 	result = isc_app_start();
 	check_result(result, "isc_app_start()");
 
