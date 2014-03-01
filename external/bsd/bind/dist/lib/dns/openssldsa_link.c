@@ -1,7 +1,7 @@
-/*	$NetBSD: openssldsa_link.c,v 1.7 2013/12/31 20:24:41 christos Exp $	*/
+/*	$NetBSD: openssldsa_link.c,v 1.8 2014/03/01 03:24:37 christos Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -575,12 +575,23 @@ openssldsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 	isc_mem_t *mctx = key->mctx;
 #define DST_RET(a) {ret = a; goto err;}
 
-	UNUSED(pub);
-
 	/* read private key file */
 	ret = dst__privstruct_parse(key, DST_ALG_DSA, lexer, mctx, &priv);
 	if (ret != ISC_R_SUCCESS)
 		return (ret);
+
+	if (key->external) {
+		if (priv.nelements != 0)
+			DST_RET(DST_R_INVALIDPRIVATEKEY);
+		if (pub == NULL)
+			DST_RET(DST_R_INVALIDPRIVATEKEY);
+		key->keydata.pkey = pub->keydata.pkey;
+		pub->keydata.pkey = NULL;
+		key->key_size = pub->key_size;
+		dst__privstruct_free(&priv, mctx);
+		memset(&priv, 0, sizeof(priv));
+		return (ISC_R_SUCCESS);
+	}
 
 	dsa = DSA_new();
 	if (dsa == NULL)
@@ -588,7 +599,7 @@ openssldsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 	dsa->flags &= ~DSA_FLAG_CACHE_MONT_P;
 	key->keydata.dsa = dsa;
 
-	for (i=0; i < priv.nelements; i++) {
+	for (i = 0; i < priv.nelements; i++) {
 		BIGNUM *bn;
 		bn = BN_bin2bn(priv.elements[i].data,
 			       priv.elements[i].length, NULL);
@@ -614,22 +625,8 @@ openssldsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 		}
 	}
 	dst__privstruct_free(&priv, mctx);
-
-	if (key->external) {
-		if (pub == NULL)
-			DST_RET(DST_R_INVALIDPRIVATEKEY);
-		dsa->q = pub->keydata.dsa->q;
-		pub->keydata.dsa->q = NULL;
-		dsa->p = pub->keydata.dsa->p;
-		pub->keydata.dsa->p = NULL;
-		dsa->g = pub->keydata.dsa->g;
-		pub->keydata.dsa->g =  NULL;
-		dsa->pub_key = pub->keydata.dsa->pub_key;
-		pub->keydata.dsa->pub_key = NULL;
-	}
-
+	memset(&priv, 0, sizeof(priv));
 	key->key_size = BN_num_bits(dsa->p);
-
 	return (ISC_R_SUCCESS);
 
  err:
@@ -641,6 +638,7 @@ openssldsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 
 static dst_func_t openssldsa_functions = {
 	openssldsa_createctx,
+	NULL, /*%< createctx2 */
 	openssldsa_destroyctx,
 	openssldsa_adddata,
 	openssldsa_sign,

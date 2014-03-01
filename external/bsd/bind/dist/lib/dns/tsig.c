@@ -1,7 +1,7 @@
-/*	$NetBSD: tsig.c,v 1.5 2013/07/27 19:23:12 christos Exp $	*/
+/*	$NetBSD: tsig.c,v 1.6 2014/03/01 03:24:37 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -948,8 +948,9 @@ dns_tsig_sign(dns_message_t *msg) {
 		isc_buffer_t headerbuf;
 		isc_uint16_t digestbits;
 
-		ret = dst_context_create2(key->key, mctx,
-					  DNS_LOGCATEGORY_DNSSEC, &ctx);
+		ret = dst_context_create3(key->key, mctx,
+					  DNS_LOGCATEGORY_DNSSEC,
+					  ISC_TRUE, &ctx);
 		if (ret != ISC_R_SUCCESS)
 			return (ret);
 
@@ -1347,8 +1348,9 @@ dns_tsig_verify(isc_buffer_t *source, dns_message_t *msg,
 		sig_r.base = tsig.signature;
 		sig_r.length = tsig.siglen;
 
-		ret = dst_context_create2(key, mctx,
-					  DNS_LOGCATEGORY_DNSSEC, &ctx);
+		ret = dst_context_create3(key, mctx,
+					  DNS_LOGCATEGORY_DNSSEC,
+					  ISC_FALSE, &ctx);
 		if (ret != ISC_R_SUCCESS)
 			return (ret);
 
@@ -1372,21 +1374,21 @@ dns_tsig_verify(isc_buffer_t *source, dns_message_t *msg,
 		 * Extract the header.
 		 */
 		isc_buffer_usedregion(source, &r);
-		memcpy(header, r.base, DNS_MESSAGE_HEADERLEN);
+		memmove(header, r.base, DNS_MESSAGE_HEADERLEN);
 		isc_region_consume(&r, DNS_MESSAGE_HEADERLEN);
 
 		/*
 		 * Decrement the additional field counter.
 		 */
-		memcpy(&addcount, &header[DNS_MESSAGE_HEADERLEN - 2], 2);
+		memmove(&addcount, &header[DNS_MESSAGE_HEADERLEN - 2], 2);
 		addcount = htons((isc_uint16_t)(ntohs(addcount) - 1));
-		memcpy(&header[DNS_MESSAGE_HEADERLEN - 2], &addcount, 2);
+		memmove(&header[DNS_MESSAGE_HEADERLEN - 2], &addcount, 2);
 
 		/*
 		 * Put in the original id.
 		 */
 		id = htons(tsig.originalid);
-		memcpy(&header[0], &id, 2);
+		memmove(&header[0], &id, 2);
 
 		/*
 		 * Digest the modified header.
@@ -1579,9 +1581,9 @@ tsig_verify_tcp(isc_buffer_t *source, dns_message_t *msg) {
 	key = tsigkey->key;
 
 	if (msg->tsigctx == NULL) {
-		ret = dst_context_create2(key, mctx,
+		ret = dst_context_create3(key, mctx,
 					  DNS_LOGCATEGORY_DNSSEC,
-					  &msg->tsigctx);
+					  ISC_FALSE, &msg->tsigctx);
 		if (ret != ISC_R_SUCCESS)
 			goto cleanup_querystruct;
 
@@ -1611,16 +1613,16 @@ tsig_verify_tcp(isc_buffer_t *source, dns_message_t *msg) {
 	 * Extract the header.
 	 */
 	isc_buffer_usedregion(source, &r);
-	memcpy(header, r.base, DNS_MESSAGE_HEADERLEN);
+	memmove(header, r.base, DNS_MESSAGE_HEADERLEN);
 	isc_region_consume(&r, DNS_MESSAGE_HEADERLEN);
 
 	/*
 	 * Decrement the additional field counter if necessary.
 	 */
 	if (has_tsig) {
-		memcpy(&addcount, &header[DNS_MESSAGE_HEADERLEN - 2], 2);
+		memmove(&addcount, &header[DNS_MESSAGE_HEADERLEN - 2], 2);
 		addcount = htons((isc_uint16_t)(ntohs(addcount) - 1));
-		memcpy(&header[DNS_MESSAGE_HEADERLEN - 2], &addcount, 2);
+		memmove(&header[DNS_MESSAGE_HEADERLEN - 2], &addcount, 2);
 	}
 
 	/*
@@ -1629,7 +1631,7 @@ tsig_verify_tcp(isc_buffer_t *source, dns_message_t *msg) {
 	/* XXX Can TCP transfers be forwarded?  How would that work? */
 	if (has_tsig) {
 		id = htons(tsig.originalid);
-		memcpy(&header[0], &id, 2);
+		memmove(&header[0], &id, 2);
 	}
 
 	/*

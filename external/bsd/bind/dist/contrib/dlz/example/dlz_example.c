@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_example.c,v 1.4 2013/07/27 19:23:11 christos Exp $	*/
+/*	$NetBSD: dlz_example.c,v 1.5 2014/03/01 03:24:34 christos Exp $	*/
 
 /*
  * Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -308,8 +308,47 @@ dlz_destroy(void *dbdata) {
  * See if we handle a given zone
  */
 isc_result_t
-dlz_findzonedb(void *dbdata, const char *name) {
+dlz_findzonedb(void *dbdata, const char *name,
+	   dns_clientinfomethods_t *methods,
+	   dns_clientinfo_t *clientinfo)
+{
 	struct dlz_example_data *state = (struct dlz_example_data *)dbdata;
+	isc_sockaddr_t *src;
+	char addrbuf[100];
+
+	strcpy(addrbuf, "unknown");
+	if (methods != NULL &&
+	    methods->sourceip != NULL &&
+	    methods->version - methods->age <= DNS_CLIENTINFOMETHODS_VERSION &&
+	    DNS_CLIENTINFOMETHODS_VERSION <= methods->version)
+	{
+		methods->sourceip(clientinfo, &src);
+		fmt_address(src, addrbuf, sizeof(addrbuf));
+	}
+	state->log(ISC_LOG_INFO,
+		   "dlz_example: findzonedb connection from: %s\n", addrbuf);
+
+	state->log(ISC_LOG_INFO,
+		   "dlz_example: dlz_findzonedb called with name '%s' "
+		   "in zone DB '%s'", name, state->zone_name);
+
+	/*
+	 * Returning ISC_R_NOTFOUND will cause the query logic to
+	 * check the database for parent names, looking for zone cuts.
+	 *
+	 * Returning ISC_R_NOMORE prevents the query logic from doing
+	 * this; it will move onto the next database after a single query.
+	 */
+	if (strcasecmp(name, "test.example.com") == 0)
+		return (ISC_R_NOMORE);
+
+	/*
+	 * For example.net, only return ISC_R_NOMORE when queried
+	 * from 10.53.0.1.
+	 */
+	if (strcasecmp(name, "test.example.net") == 0 &&
+	    strncmp(addrbuf, "10.53.0.1", 9) == 0)
+		return (ISC_R_NOMORE);
 
 	if (strcasecmp(state->zone_name, name) == 0)
 		return (ISC_R_SUCCESS);
@@ -320,9 +359,12 @@ dlz_findzonedb(void *dbdata, const char *name) {
 /*
  * Look up one record in the sample database.
  *
- * If the queryname is "source-addr", we add a TXT record containing
+ * If the queryname is "source-addr", send back a TXT record containing
  * the address of the client; this demonstrates the use of 'methods'
  * and 'clientinfo'.
+ *
+ * If the queryname is "too-long", send back a TXT record that's too long
+ * to process; this should result in a SERVFAIL when queried.
  */
 isc_result_t
 dlz_lookup(const char *zone, const char *name, void *dbdata,
@@ -334,6 +376,7 @@ dlz_lookup(const char *zone, const char *name, void *dbdata,
 	isc_boolean_t found = ISC_FALSE;
 	isc_sockaddr_t *src;
 	char full_name[256];
+	char buf[512];
 	int i;
 
 	UNUSED(zone);
@@ -348,19 +391,30 @@ dlz_lookup(const char *zone, const char *name, void *dbdata,
 		snprintf(full_name, 255, "%s.%s", name, state->zone_name);
 
 	if (strcmp(name, "source-addr") == 0) {
-		char buf[100];
 		strcpy(buf, "unknown");
 		if (methods != NULL &&
-		    methods->version - methods->age <=
-		   	 DNS_CLIENTINFOMETHODS_VERSION &&
+		    methods->sourceip != NULL &&
+		    (methods->version - methods->age <=
+		     DNS_CLIENTINFOMETHODS_VERSION) &&
 		    DNS_CLIENTINFOMETHODS_VERSION <= methods->version)
 		{
 			methods->sourceip(clientinfo, &src);
 			fmt_address(src, buf, sizeof(buf));
 		}
 
-		fprintf(stderr, "lookup: connection from: %s\n", buf);
+		state->log(ISC_LOG_INFO,
+			   "dlz_example: lookup connection from: %s\n", buf);
 
+		found = ISC_TRUE;
+		result = state->putrr(lookup, "TXT", 0, buf);
+		if (result != ISC_R_SUCCESS)
+			return (result);
+	}
+
+	if (strcmp(name, "too-long") == 0) {
+		for (i = 0; i < 511; i++)
+			buf[i] = 'x';
+		buf[i] = '\0';
 		found = ISC_TRUE;
 		result = state->putrr(lookup, "TXT", 0, buf);
 		if (result != ISC_R_SUCCESS)
@@ -393,7 +447,7 @@ dlz_allowzonexfr(void *dbdata, const char *name, const char *client) {
 	UNUSED(client);
 
 	/* Just say yes for all our zones */
-	return (dlz_findzonedb(dbdata, name));
+	return (dlz_findzonedb(dbdata, name, NULL, NULL));
 }
 
 /*
@@ -505,7 +559,7 @@ dlz_closeversion(const char *zone, isc_boolean_t commit,
  * Configure a writeable zone
  */
 isc_result_t
-dlz_configure(dns_view_t *view, void *dbdata) {
+dlz_configure(dns_view_t *view, dns_dlzdb_t *dlzdb, void *dbdata) {
 	struct dlz_example_data *state = (struct dlz_example_data *)dbdata;
 	isc_result_t result;
 
@@ -519,7 +573,7 @@ dlz_configure(dns_view_t *view, void *dbdata) {
 		return (ISC_R_FAILURE);
 	}
 
-	result = state->writeable_zone(view, state->zone_name);
+	result = state->writeable_zone(view, dlzdb, state->zone_name);
 	if (result != ISC_R_SUCCESS) {
 		if (state->log != NULL)
 			state->log(ISC_LOG_ERROR, "dlz_example: failed to "

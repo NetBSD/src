@@ -1,7 +1,7 @@
-/*	$NetBSD: t_api.c,v 1.5 2013/12/31 20:24:43 christos Exp $	*/
+/*	$NetBSD: t_api.c,v 1.6 2014/03/01 03:24:40 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2010, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2010, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -412,8 +412,8 @@ t_result(int result) {
 		case T_UNRESOLVED:
 			p = "UNRESOLVED";
 			break;
-		case T_UNSUPPORTED:
-			p = "UNSUPPORTED";
+		case T_SKIPPED:
+			p = "SKIPPED";
 			break;
 		case T_UNTESTED:
 			p = "UNTESTED";
@@ -764,11 +764,13 @@ t_eval(const char *filename, int (*func)(char **), int nargs) {
 	int		line;
 	int		cnt;
 	int		result;
+	int		tresult;
 	int		nfails;
 	int		nprobs;
 	int		npass;
 	char		*tokens[T_MAXTOKS + 1];
 
+	tresult = T_UNTESTED;
 	npass = 0;
 	nfails = 0;
 	nprobs = 0;
@@ -790,14 +792,15 @@ t_eval(const char *filename, int (*func)(char **), int nargs) {
 
 			cnt = t_bustline(p, tokens);
 			if (cnt == nargs) {
-				result = func(tokens);
-				switch (result) {
+				tresult = func(tokens);
+				switch (tresult) {
 				case T_PASS:
 					++npass;
 					break;
 				case T_FAIL:
 					++nfails;
 					break;
+				case T_SKIPPED:
 				case T_UNTESTED:
 					break;
 				default:
@@ -825,7 +828,7 @@ t_eval(const char *filename, int (*func)(char **), int nargs) {
 	else if (nfails > 0)
 		result = T_FAIL;
 	else if (npass == 0)
-		result = T_UNTESTED;
+		result = tresult;
 
 	return (result);
 }

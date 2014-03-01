@@ -1,4 +1,4 @@
-/*	$NetBSD: byname_test.c,v 1.5 2013/07/27 19:23:10 christos Exp $	*/
+/*	$NetBSD: byname_test.c,v 1.6 2014/03/01 03:24:33 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -210,10 +210,6 @@ main(int argc, char *argv[]) {
 	dns_cache_t *cache;
 	isc_buffer_t b;
 
-	isc__mem_register();
-	isc__task_register();
-	isc__timer_register();
-	isc__socket_register();
 	RUNTIME_CHECK(isc_app_start() == ISC_R_SUCCESS);
 
 	dns_result_register();

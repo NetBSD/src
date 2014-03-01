@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssectool.c,v 1.6 2013/12/31 20:24:39 christos Exp $	*/
+/*	$NetBSD: dnssectool.c,v 1.7 2014/03/01 03:24:32 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -302,11 +302,20 @@ time_units(isc_stdtime_t offset, char *suffix, const char *str) {
 	return(0); /* silence compiler warning */
 }
 
+static inline isc_boolean_t
+isnone(const char *str) {
+	return (ISC_TF((strcasecmp(str, "none") == 0) ||
+		       (strcasecmp(str, "never") == 0)));
+}
+
 dns_ttl_t
 strtottl(const char *str) {
 	const char *orig = str;
 	dns_ttl_t ttl;
 	char *endp;
+
+	if (isnone(str))
+		return ((dns_ttl_t) 0);
 
 	ttl = strtol(str, &endp, 0);
 	if (ttl == 0 && endp == str)
@@ -316,12 +325,23 @@ strtottl(const char *str) {
 }
 
 isc_stdtime_t
-strtotime(const char *str, isc_int64_t now, isc_int64_t base) {
+strtotime(const char *str, isc_int64_t now, isc_int64_t base,
+	  isc_boolean_t *setp)
+{
 	isc_int64_t val, offset;
 	isc_result_t result;
 	const char *orig = str;
 	char *endp;
-	int n;
+	size_t n;
+
+	if (isnone(str)) {
+		if (setp != NULL)
+			*setp = ISC_FALSE;
+		return ((isc_stdtime_t) 0);
+	}
+
+	if (setp != NULL)
+		*setp = ISC_TRUE;
 
 	if ((str[0] == '0' || str[0] == '-') && str[1] == '\0')
 		return ((isc_stdtime_t) 0);
@@ -334,14 +354,14 @@ strtotime(const char *str, isc_int64_t now, isc_int64_t base) {
 	 *   [+-]offset
 	 */
 	n = strspn(str, "0123456789");
-	if ((n == 8 || n == 14) &&
+	if ((n == 8u || n == 14u) &&
 	    (str[n] == '\0' || str[n] == '-' || str[n] == '+'))
 	{
 		char timestr[15];
 
 		strlcpy(timestr, str, sizeof(timestr));
 		timestr[n] = 0;
-		if (n == 8)
+		if (n == 8u)
 			strlcat(timestr, "000000", sizeof(timestr));
 		result = dns_time64_fromtext(timestr, &val);
 		if (result != ISC_R_SUCCESS)
@@ -727,11 +747,11 @@ record_nsec3(const unsigned char *rawhash, const dns_rdata_nsec3_t *nsec3,
 	element->next_length = nsec3->next_length;
 	element->iterations = nsec3->iterations;
 	cp = (unsigned char *)(element + 1);
-	memcpy(cp, nsec3->salt, nsec3->salt_length);
+	memmove(cp, nsec3->salt, nsec3->salt_length);
 	cp += nsec3->salt_length;
-	memcpy(cp, rawhash, nsec3->next_length);
+	memmove(cp, rawhash, nsec3->next_length);
 	cp += nsec3->next_length;
-	memcpy(cp, nsec3->next, nsec3->next_length);
+	memmove(cp, nsec3->next, nsec3->next_length);
 	result = isc_heap_insert(chains, element);
 	if (result != ISC_R_SUCCESS) {
 		fprintf(stderr, "isc_heap_insert failed: %s\n",

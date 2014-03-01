@@ -1,4 +1,4 @@
-/*	$NetBSD: task_test.c,v 1.6 2013/12/31 20:24:40 christos Exp $	*/
+/*	$NetBSD: task_test.c,v 1.7 2014/03/01 03:24:33 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2013  Internet Systems Consortium, Inc. ("ISC")
@@ -70,11 +70,6 @@ main(int argc, char *argv[]) {
 	isc_timermgr_t *timgr;
 	isc_timer_t *ti1, *ti2;
 	struct isc_interval interval;
-
-	isc__mem_register();
-	isc__task_register();
-	isc__timer_register();
-	isc__socket_register();
 
 	if (argc > 1) {
 		workers = atoi(argv[1]);

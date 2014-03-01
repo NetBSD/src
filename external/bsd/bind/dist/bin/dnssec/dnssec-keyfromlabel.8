@@ -1,6 +1,6 @@
-.\"	$NetBSD: dnssec-keyfromlabel.8,v 1.6 2012/12/04 23:38:38 spz Exp $
+.\"	$NetBSD: dnssec-keyfromlabel.8,v 1.7 2014/03/01 03:24:32 christos Exp $
 .\"
-.\" Copyright (C) 2008-2012 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2008-2012, 2014 Internet Systems Consortium, Inc. ("ISC")
 .\" 
 .\" Permission to use, copy, modify, and/or distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -69,12 +69,26 @@ Use an NSEC3\-capable algorithm to generate a DNSSEC key. If this option is used
 .PP
 \-E \fIengine\fR
 .RS 4
-Specifies the name of the crypto hardware (OpenSSL engine). When compiled with PKCS#11 support it defaults to "pkcs11".
+Specifies the cryptographic hardware to use.
+.sp
+When BIND is built with OpenSSL PKCS#11 support, this defaults to the string "pkcs11", which identifies an OpenSSL engine that can drive a cryptographic accelerator or hardware service module. When BIND is built with native PKCS#11 cryptography (\-\-enable\-native\-pkcs11), it defaults to the path of the PKCS#11 provider library specified via "\-\-with\-pkcs11".
 .RE
 .PP
 \-l \fIlabel\fR
 .RS 4
-Specifies the label of the key pair in the crypto hardware. The label may be preceded by an optional OpenSSL engine name, separated by a colon, as in "pkcs11:keylabel".
+Specifies the label for a key pair in the crypto hardware.
+.sp
+When
+BIND
+9 is built with OpenSSL\-based PKCS#11 support, the label is an arbitrary string that identifies a particular key. It may be preceded by an optional OpenSSL engine name, followed by a colon, as in "pkcs11:\fIkeylabel\fR".
+.sp
+When
+BIND
+9 is built with native PKCS#11 support, the label is a PKCS#11 URI string in the format "pkcs11:\fBkeyword\fR=\fIvalue\fR[;\fBkeyword\fR=\fIvalue\fR;...]" Keywords include "token", which identifies the HSM; "object", which identifies the key; and "pin\-source", which identifies a file from which the HSM's PIN code can be obtained. The label will be stored in the on\-disk "private" file.
+.sp
+If the label contains a
+\fBpin\-source\fR
+field, tools using the generated key files will be able to use the HSM for signing and other operations without any need for an operator to manually enter a PIN. Note: Making the HSM's PIN accessible in this manner may reduce the security advantage of using an HSM; be sure this is what you want to do before making use of this feature.
 .RE
 .PP
 \-n \fInametype\fR
@@ -156,7 +170,7 @@ Allows DNSSEC key files to be generated even if the key ID would collide with th
 .RE
 .SH "TIMING OPTIONS"
 .PP
-Dates can be expressed in the format YYYYMMDD or YYYYMMDDHHMMSS. If the argument begins with a '+' or '\-', it is interpreted as an offset from the present time. For convenience, if such an offset is followed by one of the suffixes 'y', 'mo', 'w', 'd', 'h', or 'mi', then the offset is computed in years (defined as 365 24\-hour days, ignoring leap years), months (defined as 30 24\-hour days), weeks, days, hours, or minutes, respectively. Without a suffix, the offset is computed in seconds.
+Dates can be expressed in the format YYYYMMDD or YYYYMMDDHHMMSS. If the argument begins with a '+' or '\-', it is interpreted as an offset from the present time. For convenience, if such an offset is followed by one of the suffixes 'y', 'mo', 'w', 'd', 'h', or 'mi', then the offset is computed in years (defined as 365 24\-hour days, ignoring leap years), months (defined as 30 24\-hour days), weeks, days, hours, or minutes, respectively. Without a suffix, the offset is computed in seconds. To explicitly prevent a date from being set, use 'none' or 'never'.
 .PP
 \-P \fIdate/offset\fR
 .RS 4
@@ -221,10 +235,11 @@ file contains algorithm\-specific fields. For obvious security reasons, this fil
 \fBdnssec\-keygen\fR(8),
 \fBdnssec\-signzone\fR(8),
 BIND 9 Administrator Reference Manual,
-RFC 4034.
+RFC 4034,
+The PKCS#11 URI Scheme (draft\-pechanec\-pkcs11uri\-13).
 .SH "AUTHOR"
 .PP
 Internet Systems Consortium
 .SH "COPYRIGHT"
-Copyright \(co 2008\-2012 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2008\-2012, 2014 Internet Systems Consortium, Inc. ("ISC")
 .br

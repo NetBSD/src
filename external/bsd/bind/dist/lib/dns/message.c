@@ -1,7 +1,7 @@
-/*	$NetBSD: message.c,v 1.11 2013/12/31 20:24:41 christos Exp $	*/
+/*	$NetBSD: message.c,v 1.12 2014/03/01 03:24:36 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -46,6 +46,7 @@
 #include <dns/rdatastruct.h>
 #include <dns/result.h>
 #include <dns/tsig.h>
+#include <dns/ttl.h>
 #include <dns/view.h>
 
 #ifdef SKAN_MSG_DEBUG
@@ -438,6 +439,8 @@ msginit(dns_message_t *m) {
 	m->saved.base = NULL;
 	m->saved.length = 0;
 	m->free_saved = 0;
+	m->sitok = 0;
+	m->sitbad = 0;
 	m->querytsig = NULL;
 }
 
@@ -486,6 +489,8 @@ msgresetopt(dns_message_t *msg)
 		dns_rdataset_disassociate(msg->opt);
 		isc_mempool_put(msg->rdspool, msg->opt);
 		msg->opt = NULL;
+		msg->sitok = 0;
+		msg->sitbad = 0;
 	}
 }
 
@@ -1677,8 +1682,8 @@ dns_message_parse(dns_message_t *msg, isc_buffer_t *source,
 		msg->saved.base = isc_mem_get(msg->mctx, msg->saved.length);
 		if (msg->saved.base == NULL)
 			return (ISC_R_NOMEMORY);
-		memcpy(msg->saved.base, isc_buffer_base(&origsource),
-		       msg->saved.length);
+		memmove(msg->saved.base, isc_buffer_base(&origsource),
+			msg->saved.length);
 		msg->free_saved = 1;
 	}
 
@@ -1750,7 +1755,7 @@ dns_message_renderchangebuffer(dns_message_t *msg, isc_buffer_t *buffer) {
 	 * Copy the contents from the old to the new buffer.
 	 */
 	isc_buffer_add(buffer, r.length);
-	memcpy(rn.base, r.base, r.length);
+	memmove(rn.base, r.base, r.length);
 
 	msg->buffer = buffer;
 
@@ -1814,7 +1819,7 @@ wrong_priority(dns_rdataset_t *rds, int pass, dns_rdatatype_t preferred_glue) {
 	return (ISC_TRUE);
 }
 
-#ifdef ALLOW_FILTER_AAAA_ON_V4
+#ifdef ALLOW_FILTER_AAAA
 /*
  * Decide whether to not answer with an AAAA record and its RRSIG
  */
@@ -1971,7 +1976,7 @@ dns_message_rendersection(dns_message_t *msg, dns_section_t sectionid,
 						      preferred_glue))
 					goto next;
 
-#ifdef ALLOW_FILTER_AAAA_ON_V4
+#ifdef ALLOW_FILTER_AAAA
 				/*
 				 * Suppress AAAAs if asked and we are
 				 * not doing DNSSEC or are breaking DNSSEC.
@@ -3193,6 +3198,43 @@ dns_message_sectiontotext(dns_message_t *msg, dns_section_t section,
 	return (result);
 }
 
+static isc_result_t
+render_ecs(isc_buffer_t *optbuf, isc_buffer_t *target) {
+	int i;
+	char addr[16], addr_text[64];
+	isc_uint16_t family;
+	isc_uint8_t addrlen, addrbytes, scopelen;
+
+	INSIST(isc_buffer_remaininglength(optbuf) >= 4);
+	family = isc_buffer_getuint16(optbuf);
+	addrlen = isc_buffer_getuint8(optbuf);
+	scopelen = isc_buffer_getuint8(optbuf);
+
+	addrbytes = (addrlen + 7) / 8;
+	INSIST(isc_buffer_remaininglength(optbuf) >= addrbytes);
+
+	memset(addr, 0, sizeof(addr));
+	for (i = 0; i < addrbytes; i ++)
+		addr[i] = isc_buffer_getuint8(optbuf);
+
+	if (family == 1)
+		inet_ntop(AF_INET, addr, addr_text, sizeof(addr_text));
+	else if (family == 2)
+		inet_ntop(AF_INET6, addr, addr_text, sizeof(addr_text));
+	else {
+		snprintf(addr_text, sizeof(addr_text),
+			 "Unsupported family %d",
+			 family);
+		ADD_STRING(target, addr_text);
+		return (ISC_R_SUCCESS);
+	}
+
+	ADD_STRING(target, addr_text);
+	sprintf(addr_text, "/%d/%d", addrlen, scopelen);
+	ADD_STRING(target, addr_text);
+	return (ISC_R_SUCCESS);
+}
+
 isc_result_t
 dns_message_pseudosectiontotext(dns_message_t *msg,
 				dns_pseudosection_t section,
@@ -3257,6 +3299,27 @@ dns_message_pseudosectiontotext(dns_message_t *msg,
 
 			if (optcode == DNS_OPT_NSID) {
 				ADD_STRING(target, "; NSID");
+			} else if (optcode == DNS_OPT_SIT) {
+				ADD_STRING(target, "; SIT");
+			} else if (optcode == DNS_OPT_CLIENT_SUBNET) {
+				ADD_STRING(target, "; CLIENT-SUBNET: ");
+				render_ecs(&optbuf, target);
+				ADD_STRING(target, "\n");
+				continue;
+			} else if (optcode == DNS_OPT_EXPIRE) {
+				if (optlen == 4) {
+					char buf[sizeof("4294967296")];
+					isc_uint32_t secs;
+					secs = isc_buffer_getuint32(&optbuf);
+					ADD_STRING(target, "; EXPIRE: ");
+					snprintf(buf, sizeof(buf), "%u", secs);
+					ADD_STRING(target, buf);
+					ADD_STRING(target, " (");
+					dns_ttl_totext(secs, ISC_TRUE, target);
+					ADD_STRING(target, ")\n");
+					continue;
+				}
+				ADD_STRING(target, "; EXPIRE");
 			} else {
 				ADD_STRING(target, "; OPT=");
 				sprintf(buf, "%u", optcode);
@@ -3269,20 +3332,44 @@ dns_message_pseudosectiontotext(dns_message_t *msg,
 
 				optdata = isc_buffer_current(&optbuf);
 				for (i = 0; i < optlen; i++) {
-					sprintf(buf, "%02x ", optdata[i]);
+					const char *sep;
+					switch (optcode) {
+					case DNS_OPT_SIT:
+						sep = "";
+						break;
+					default:
+						sep = " ";
+						break;
+					}
+					sprintf(buf, "%02x%s", optdata[i], sep);
 					ADD_STRING(target, buf);
 				}
+
+				isc_buffer_forward(&optbuf, optlen);
+
+				if (optcode == DNS_OPT_SIT) {
+					if (msg->sitok)
+						ADD_STRING(target, " (good)");
+					if (msg->sitbad)
+						ADD_STRING(target, " (bad)");
+					ADD_STRING(target, "\n");
+					continue;
+				}
+
+				/*
+				 * For non-SIT options, add a printable
+				 * version
+				 */
+				ADD_STRING(target, "(\"");
 				for (i = 0; i < optlen; i++) {
-					ADD_STRING(target, " (");
 					if (isprint(optdata[i]))
 						isc_buffer_putmem(target,
 								  &optdata[i],
 								  1);
 					else
 						isc_buffer_putstr(target, ".");
-					ADD_STRING(target, ")");
 				}
-				isc_buffer_forward(&optbuf, optlen);
+				ADD_STRING(target, "\")");
 			}
 			ADD_STRING(target, "\n");
 		}
@@ -3459,6 +3546,54 @@ dns_opcode_totext(dns_opcode_t opcode, isc_buffer_t *target) {
 		return (ISC_R_NOSPACE);
 	isc_buffer_putstr(target, opcodetext[opcode]);
 	return (ISC_R_SUCCESS);
+}
+
+void
+dns_message_logpacket(dns_message_t *message, const char *description,
+		      isc_logcategory_t *category, isc_logmodule_t *module,
+		      int level, isc_mem_t *mctx)
+{
+	dns_message_logfmtpacket(message, description, category, module,
+				 &dns_master_style_debug, level, mctx);
+}
+
+void
+dns_message_logfmtpacket(dns_message_t *message, const char *description,
+			 isc_logcategory_t *category, isc_logmodule_t *module,
+			 const dns_master_style_t *style, int level,
+			 isc_mem_t *mctx)
+{
+	isc_buffer_t buffer;
+	char *buf = NULL;
+	int len = 1024;
+	isc_result_t result;
+
+	if (! isc_log_wouldlog(dns_lctx, level))
+		return;
+
+	/*
+	 * Note that these are multiline debug messages.  We want a newline
+	 * to appear in the log after each message.
+	 */
+
+	do {
+		buf = isc_mem_get(mctx, len);
+		if (buf == NULL)
+			break;
+		isc_buffer_init(&buffer, buf, len);
+		result = dns_message_totext(message, style, 0, &buffer);
+		if (result == ISC_R_NOSPACE) {
+			isc_mem_put(mctx, buf, len);
+			len += 1024;
+		} else if (result == ISC_R_SUCCESS)
+			isc_log_write(dns_lctx, category, module, level,
+				      "%s%.*s", description,
+				      (int)isc_buffer_usedlength(&buffer),
+				      buf);
+	} while (result == ISC_R_NOSPACE);
+
+	if (buf != NULL)
+		isc_mem_put(mctx, buf, len);
 }
 
 isc_result_t

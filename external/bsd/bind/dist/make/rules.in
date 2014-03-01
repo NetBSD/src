@@ -1,4 +1,4 @@
-# Copyright (C) 2004-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 1998-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -35,8 +35,6 @@ sysconfdir =	@sysconfdir@
 localstatedir =	@localstatedir@
 mandir =	@mandir@
 datarootdir =   @datarootdir@
-export_libdir =	@export_libdir@
-export_includedir = @export_includedir@
 
 DESTDIR =
 
@@ -48,9 +46,10 @@ top_builddir =	@BIND9_TOP_BUILDDIR@
 ### All
 ###
 ### Makefile may define:
+###	PREREQS
 ###	TARGETS
 
-all: subdirs ${TARGETS} testdirs
+all: ${PREREQS} subdirs ${TARGETS} testdirs
 
 ###
 ### Subdirectories

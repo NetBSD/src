@@ -1,4 +1,4 @@
-/*	$NetBSD: backtrace_test.c,v 1.5 2013/12/31 20:24:40 christos Exp $	*/
+/*	$NetBSD: backtrace_test.c,v 1.6 2014/03/01 03:24:33 christos Exp $	*/
 
 /*
  * Copyright (C) 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
@@ -95,9 +95,5 @@ func1() {
 
 int
 main() {
-	isc__mem_register();
-	isc__task_register();
-	isc__timer_register();
-	isc__socket_register();
 	return (func1());
 }

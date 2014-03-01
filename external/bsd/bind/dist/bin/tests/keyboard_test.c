@@ -1,4 +1,4 @@
-/*	$NetBSD: keyboard_test.c,v 1.4 2013/03/24 18:44:40 christos Exp $	*/
+/*	$NetBSD: keyboard_test.c,v 1.5 2014/03/01 03:24:33 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -46,10 +46,6 @@ main(int argc, char **argv) {
 	UNUSED(argc);
 	UNUSED(argv);
 
-	isc__mem_register();
-	isc__task_register();
-	isc__timer_register();
-	isc__socket_register();
 	printf("Type Q to exit.\n");
 
 	res = isc_keyboard_open(&kbd);

@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown_test.c,v 1.5 2013/07/27 19:23:10 christos Exp $	*/
+/*	$NetBSD: shutdown_test.c,v 1.6 2014/03/01 03:24:33 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2011, 2013  Internet Systems Consortium, Inc. ("ISC")
@@ -174,10 +174,6 @@ main(int argc, char *argv[]) {
 	isc_task_t *task;
 	isc_mem_t *mctx, *mctx2;
 
-	isc__mem_register();
-	isc__task_register();
-	isc__timer_register();
-	isc__socket_register();
 	RUNTIME_CHECK(isc_app_start() == ISC_R_SUCCESS);
 
 	if (argc > 1) {

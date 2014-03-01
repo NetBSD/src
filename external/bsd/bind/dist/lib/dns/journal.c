@@ -1,7 +1,7 @@
-/*	$NetBSD: journal.c,v 1.6 2013/12/31 20:24:41 christos Exp $	*/
+/*	$NetBSD: journal.c,v 1.7 2014/03/01 03:24:36 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2011, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2011, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -359,7 +359,7 @@ journal_pos_encode(journal_rawpos_t *raw, journal_pos_t *cooked) {
 static void
 journal_header_decode(journal_rawheader_t *raw, journal_header_t *cooked) {
 	INSIST(sizeof(cooked->format) == sizeof(raw->h.format));
-	memcpy(cooked->format, raw->h.format, sizeof(cooked->format));
+	memmove(cooked->format, raw->h.format, sizeof(cooked->format));
 	journal_pos_decode(&raw->h.begin, &cooked->begin);
 	journal_pos_decode(&raw->h.end, &cooked->end);
 	cooked->index_size = decode_uint32(raw->h.index_size);
@@ -373,7 +373,7 @@ journal_header_encode(journal_header_t *cooked, journal_rawheader_t *raw) {
 
 	INSIST(sizeof(cooked->format) == sizeof(raw->h.format));
 	memset(raw->pad, 0, sizeof(raw->pad));
-	memcpy(raw->h.format, cooked->format, sizeof(raw->h.format));
+	memmove(raw->h.format, cooked->format, sizeof(raw->h.format));
 	journal_pos_encode(&raw->h.begin, &cooked->begin);
 	journal_pos_encode(&raw->h.end, &cooked->end);
 	encode_uint32(cooked->index_size, raw->h.index_size);
@@ -389,7 +389,8 @@ journal_header_encode(journal_header_t *cooked, journal_rawheader_t *raw) {
 static isc_result_t
 journal_seek(dns_journal_t *j, isc_uint32_t offset) {
 	isc_result_t result;
-	result = isc_stdio_seek(j->fp, (long)offset, SEEK_SET);
+
+	result = isc_stdio_seek(j->fp, (off_t)offset, SEEK_SET);
 	if (result != ISC_R_SUCCESS) {
 		isc_log_write(JOURNAL_COMMON_LOGARGS, ISC_LOG_ERROR,
 			      "%s: seek: %s", j->filename,
@@ -530,7 +531,7 @@ journal_file_create(isc_mem_t *mctx, const char *filename) {
 		return (ISC_R_NOMEMORY);
 	}
 	memset(mem, 0, size);
-	memcpy(mem, &rawheader, sizeof(rawheader));
+	memmove(mem, &rawheader, sizeof(rawheader));
 
 	result = isc_stdio_write(mem, 1, (size_t) size, fp, NULL);
 	if (result != ISC_R_SUCCESS) {
@@ -1397,24 +1398,14 @@ roll_forward(dns_journal_t *j, dns_db_t *db, unsigned int options) {
 }
 
 isc_result_t
-dns_journal_rollforward(isc_mem_t *mctx, dns_db_t *db,
-			unsigned int options, const char *filename)
-{
-	REQUIRE((options & DNS_JOURNALOPT_RESIGN) == 0);
-	return (dns_journal_rollforward2(mctx, db, options, 0, filename));
-}
-
-isc_result_t
-dns_journal_rollforward2(isc_mem_t *mctx, dns_db_t *db, unsigned int options,
-			 isc_uint32_t resign, const char *filename)
+dns_journal_rollforward(isc_mem_t *mctx, dns_db_t *db, unsigned int options,
+			const char *filename)
 {
 	dns_journal_t *j;
 	isc_result_t result;
 
 	REQUIRE(DNS_DB_VALID(db));
 	REQUIRE(filename != NULL);
-
-	UNUSED(resign);
 
 	j = NULL;
 	result = dns_journal_open(mctx, filename, DNS_JOURNAL_READ, &j);

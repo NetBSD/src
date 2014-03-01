@@ -1,7 +1,7 @@
-/*	$NetBSD: control.c,v 1.6 2013/12/31 20:24:39 christos Exp $	*/
+/*	$NetBSD: control.c,v 1.7 2014/03/01 03:24:32 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id */
+/* Id: control.c,v 1.49 2012/01/31 23:47:31 tbox Exp  */
 
 /*! \file */
 
@@ -188,6 +188,9 @@ ns_control_docommand(isccc_sexpr_t *message, isc_buffer_t *text) {
 		   command_compare(command, NS_COMMAND_THAW)) {
 		result = ns_server_freeze(ns_g_server, ISC_FALSE, command,
 					  text);
+	} else if (command_compare(command, NS_COMMAND_SCAN)) {
+		result = ISC_R_SUCCESS;
+		ns_server_scan_interfaces(ns_g_server);
 	} else if (command_compare(command, NS_COMMAND_SYNC)) {
 		result = ns_server_sync(ns_g_server, command, text);
 	} else if (command_compare(command, NS_COMMAND_RECURSING)) {
@@ -200,7 +203,7 @@ ns_control_docommand(isccc_sexpr_t *message, isc_buffer_t *text) {
 	} else if (command_compare(command, NS_COMMAND_NOTIFY)) {
 		result = ns_server_notifycommand(ns_g_server, command, text);
 	} else if (command_compare(command, NS_COMMAND_VALIDATION)) {
-		result = ns_server_validation(ns_g_server, command);
+		result = ns_server_validation(ns_g_server, command, text);
 	} else if (command_compare(command, NS_COMMAND_SIGN) ||
 		   command_compare(command, NS_COMMAND_LOADKEYS)) {
 		result = ns_server_rekey(ns_g_server, command, text);
@@ -210,6 +213,8 @@ ns_control_docommand(isccc_sexpr_t *message, isc_buffer_t *text) {
 		result = ns_server_del_zone(ns_g_server, command, text);
 	} else if (command_compare(command, NS_COMMAND_SIGNING)) {
 		result = ns_server_signing(ns_g_server, command, text);
+	} else if (command_compare(command, NS_COMMAND_ZONESTATUS)) {
+		result = ns_server_zonestatus(ns_g_server, command, text);
 	} else {
 		isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
 			      NS_LOGMODULE_CONTROL, ISC_LOG_WARNING,

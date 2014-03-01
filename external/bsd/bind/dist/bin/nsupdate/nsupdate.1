@@ -1,4 +1,4 @@
-.\"	$NetBSD: nsupdate.1,v 1.3 2012/06/05 00:39:15 christos Exp $
+.\"	$NetBSD: nsupdate.1,v 1.4 2014/03/01 03:24:33 christos Exp $
 .\"
 .\" Copyright (C) 2004-2012 Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000-2003 Internet Software Consortium.
@@ -35,7 +35,7 @@
 nsupdate \- Dynamic DNS update utility
 .SH "SYNOPSIS"
 .HP 9
-\fBnsupdate\fR [\fB\-d\fR] [\fB\-D\fR] [[\fB\-g\fR] | [\fB\-o\fR] | [\fB\-l\fR] | [\fB\-y\ \fR\fB\fI[hmac:]\fR\fIkeyname:secret\fR\fR] | [\fB\-k\ \fR\fB\fIkeyfile\fR\fR]] [\fB\-t\ \fR\fB\fItimeout\fR\fR] [\fB\-u\ \fR\fB\fIudptimeout\fR\fR] [\fB\-r\ \fR\fB\fIudpretries\fR\fR] [\fB\-R\ \fR\fB\fIrandomdev\fR\fR] [\fB\-v\fR] [filename]
+\fBnsupdate\fR [\fB\-d\fR] [\fB\-D\fR] [[\fB\-g\fR] | [\fB\-o\fR] | [\fB\-l\fR] | [\fB\-y\ \fR\fB\fI[hmac:]\fR\fIkeyname:secret\fR\fR] | [\fB\-k\ \fR\fB\fIkeyfile\fR\fR]] [\fB\-t\ \fR\fB\fItimeout\fR\fR] [\fB\-u\ \fR\fB\fIudptimeout\fR\fR] [\fB\-r\ \fR\fB\fIudpretries\fR\fR] [\fB\-R\ \fR\fB\fIrandomdev\fR\fR] [\fB\-v\fR] [\fB\-T\fR] [\fB\-P\fR] [filename]
 .SH "DESCRIPTION"
 .PP
 \fBnsupdate\fR
@@ -170,6 +170,21 @@ or equivalent device, the default source of randomness is keyboard input.
 specifies the name of a character device or file containing random data to be used instead of the default. The special value
 \fIkeyboard\fR
 indicates that keyboard input should be used. This option may be specified multiple times.
+.PP
+Other types can be entered using "TYPEXXXXX" where "XXXXX" is the decimal value of the type with no leading zeros. The rdata, if present, will be parsed using the UNKNOWN rdata format, (<backslash> <hash> <space> <length> <space> <hexstring>).
+.PP
+The
+\fB\-T\fR
+and
+\fB\-P\fR
+options print out lists of non\-meta types for which the type\-specific presentation formats are known.
+\fB\-T\fR
+prints out the list of IANA\-assigned types.
+\fB\-P\fR
+prints out the list of private types specific to
+\fBnamed\fR. These options may be combined.
+\fBnsupdate\fR
+will exit after the lists are printed.
 .SH "INPUT FORMAT"
 .PP
 \fBnsupdate\fR

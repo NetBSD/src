@@ -1,4 +1,4 @@
-/*	$NetBSD: dnskey_48.c,v 1.5 2013/12/31 20:24:41 christos Exp $	*/
+/*	$NetBSD: dnskey_48.c,v 1.6 2014/03/01 03:24:37 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
@@ -84,11 +84,12 @@ fromtext_dnskey(ARGS_FROMTEXT) {
 static inline isc_result_t
 totext_dnskey(ARGS_TOTEXT) {
 	isc_region_t sr;
-	char buf[sizeof("64000")];
+	char buf[sizeof("[key id = 64000]")];
 	unsigned int flags;
 	unsigned char algorithm;
 	char algbuf[DNS_NAME_FORMATSIZE];
 	const char *keyinfo;
+	isc_region_t tmpr;
 
 	REQUIRE(rdata->type == 48);
 	REQUIRE(rdata->length != 0);
@@ -140,11 +141,19 @@ totext_dnskey(ARGS_TOTEXT) {
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
 		RETERR(str_totext(" (", target));
 	RETERR(str_totext(tctx->linebreak, target));
-	if (tctx->width == 0)   /* No splitting */
-		RETERR(isc_base64_totext(&sr, 0, "", target));
-	else
-		RETERR(isc_base64_totext(&sr, tctx->width - 2,
-					 tctx->linebreak, target));
+
+	if ((tctx->flags & DNS_STYLEFLAG_NOCRYPTO) == 0) {
+		if (tctx->width == 0)   /* No splitting */
+			RETERR(isc_base64_totext(&sr, 0, "", target));
+		else
+			RETERR(isc_base64_totext(&sr, tctx->width - 2,
+						 tctx->linebreak, target));
+	} else {
+		dns_rdata_toregion(rdata, &tmpr);
+		snprintf(buf, sizeof(buf), "[key id = %u]",
+			 dst_region_computeid(&tmpr, algorithm));
+		RETERR(str_totext(buf, target));
+	}
 
 	if ((tctx->flags & DNS_STYLEFLAG_RRCOMMENT) != 0)
 		RETERR(str_totext(tctx->linebreak, target));
@@ -155,7 +164,6 @@ totext_dnskey(ARGS_TOTEXT) {
 		RETERR(str_totext(")", target));
 
 	if ((tctx->flags & DNS_STYLEFLAG_RRCOMMENT) != 0) {
-		isc_region_t tmpr;
 
 		RETERR(str_totext(" ; ", target));
 		RETERR(str_totext(keyinfo, target));

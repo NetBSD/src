@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2013 Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2014 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003 Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -1863,7 +1863,7 @@ typedef struct dns_rdata_nsec3param {
 
 #endif /* GENERIC_NSEC3PARAM_51_H */
 /*
- * Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -1884,7 +1884,7 @@ typedef struct dns_rdata_nsec3param {
 #define GENERIC_TLSA_52_H 1
 
 /*!
- *  \brief per draft-ietf-dane-protocol-19.txt
+ *  \brief per rfc6698.txt
  */
 typedef struct dns_rdata_tlsa {
 	dns_rdatacommon_t	common;

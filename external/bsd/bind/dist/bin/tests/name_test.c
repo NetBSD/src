@@ -1,4 +1,4 @@
-/*	$NetBSD: name_test.c,v 1.4 2013/03/24 18:44:41 christos Exp $	*/
+/*	$NetBSD: name_test.c,v 1.5 2014/03/01 03:24:33 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -90,10 +90,6 @@ main(int argc, char *argv[]) {
 	dns_name_t *prefix, *suffix;
 	int ch;
 
-	isc__mem_register();
-	isc__task_register();
-	isc__timer_register();
-	isc__socket_register();
 	while ((ch = isc_commandline_parse(argc, argv, "acdiqs:w")) != -1) {
 		switch (ch) {
 		case 'a':

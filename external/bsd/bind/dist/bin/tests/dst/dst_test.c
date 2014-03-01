@@ -1,7 +1,7 @@
-/*	$NetBSD: dst_test.c,v 1.5 2013/07/27 19:23:10 christos Exp $	*/
+/*	$NetBSD: dst_test.c,v 1.6 2014/03/01 03:24:33 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -32,6 +32,7 @@
 #include <isc/string.h>		/* Required for HP/UX (and others?) */
 
 #include <dns/fixedname.h>
+#include <dns/log.h>
 #include <dns/name.h>
 #include <dns/result.h>
 
@@ -60,7 +61,8 @@ use(dst_key_t *key, isc_mem_t *mctx) {
 	isc_buffer_add(&databuf, strlen(data));
 	isc_buffer_usedregion(&databuf, &datareg);
 
-	ret = dst_context_create(key, mctx, &ctx);
+	ret = dst_context_create3(key, mctx,
+				  DNS_LOGCATEGORY_GENERAL, ISC_TRUE, &ctx);
 	if (ret != ISC_R_SUCCESS) {
 		printf("contextcreate(%d) returned: %s\n", dst_key_alg(key),
 		       isc_result_totext(ret));
@@ -80,7 +82,8 @@ use(dst_key_t *key, isc_mem_t *mctx) {
 
 	isc_buffer_forward(&sigbuf, 1);
 	isc_buffer_remainingregion(&sigbuf, &sigreg);
-	ret = dst_context_create(key, mctx, &ctx);
+	ret = dst_context_create3(key, mctx,
+				  DNS_LOGCATEGORY_GENERAL, ISC_FALSE, &ctx);
 	if (ret != ISC_R_SUCCESS) {
 		printf("contextcreate(%d) returned: %s\n", dst_key_alg(key),
 		       isc_result_totext(ret));
@@ -240,10 +243,6 @@ main(void) {
 	dns_name_t *name;
 	isc_result_t result;
 
-	isc__mem_register();
-	isc__task_register();
-	isc__timer_register();
-	isc__socket_register();
 	result = isc_mem_create(0, 0, &mctx);
 	if (result != ISC_R_SUCCESS)
 		return (1);

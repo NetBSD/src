@@ -1,7 +1,7 @@
-/*	$NetBSD: cfg.h,v 1.4 2013/07/27 19:23:13 christos Exp $	*/
+/*	$NetBSD: cfg.h,v 1.5 2014/03/01 03:24:40 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2010, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2010, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -195,6 +195,18 @@ cfg_map_getname(const cfg_obj_t *mapobj);
  *	or NULL if the map object does not have a name.
  */
 
+unsigned int
+cfg_map_count(const cfg_obj_t *mapobj);
+/*%<
+ * Get the number of elements defined in the symbol table of a map object.
+ *
+ * Requires:
+ *    \li  'mapobj' points to a valid configuration object of a map type.
+ *
+ * Returns:
+ * \li     The number of elements in the map object.
+ */
+
 isc_boolean_t
 cfg_obj_istuple(const cfg_obj_t *obj);
 /*%<
@@ -305,6 +317,20 @@ cfg_obj_assockaddr(const cfg_obj_t *obj);
  *      if necessary.
  */
 
+isc_dscp_t
+cfg_obj_getdscp(const cfg_obj_t *obj);
+/*%<
+ * Returns the DSCP value of a configuration object representing a
+ * socket address.
+ *
+ * Requires:
+ * \li     'obj' points to a valid configuration object of a
+ *         socket address type.
+ *
+ * Returns:
+ * \li     DSCP value associated with a sockaddr, or -1.
+ */
+
 isc_boolean_t
 cfg_obj_isnetprefix(const cfg_obj_t *obj);
 /*%<
@@ -382,10 +408,20 @@ void
 cfg_print(const cfg_obj_t *obj,
 	  void (*f)(void *closure, const char *text, int textlen),
 	  void *closure);
+void
+cfg_printx(const cfg_obj_t *obj, unsigned int flags,
+	   void (*f)(void *closure, const char *text, int textlen),
+	   void *closure);
+
+#define CFG_PRINTER_XKEY        0x1     /* '?' out shared keys. */
+
 /*%<
  * Print the configuration object 'obj' by repeatedly calling the
  * function 'f', passing 'closure' and a region of text starting
  * at 'text' and comprising 'textlen' characters.
+ *
+ * If CFG_PRINTER_XKEY the contents of shared keys will be obscured
+ * by replacing them with question marks ('?')
  */
 
 void

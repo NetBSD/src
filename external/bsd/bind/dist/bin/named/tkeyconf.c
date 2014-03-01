@@ -1,7 +1,7 @@
-/*	$NetBSD: tkeyconf.c,v 1.4 2013/07/27 19:23:10 christos Exp $	*/
+/*	$NetBSD: tkeyconf.c,v 1.5 2014/03/01 03:24:32 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2010, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2010, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -126,7 +126,6 @@ ns_tkeyctx_fromconfig(const cfg_obj_t *options, isc_mem_t *mctx,
 			goto failure;
 		}
 	}
-
 
 	*tctxp = tctx;
 	return (ISC_R_SUCCESS);
