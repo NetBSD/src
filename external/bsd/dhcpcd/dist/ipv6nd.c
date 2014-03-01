@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv6nd.c,v 1.5 2014/02/25 13:20:23 roy Exp $");
+ __RCSID("$NetBSD: ipv6nd.c,v 1.6 2014/03/01 11:04:21 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -360,6 +360,8 @@ ipv6nd_sendrsprobe(void *arg)
 
 	/* Set the outbound interface */
 	cm = CMSG_FIRSTHDR(&ctx->sndhdr);
+	if (cm == NULL) /* unlikely */
+		return;
 	cm->cmsg_level = IPPROTO_IPV6;
 	cm->cmsg_type = IPV6_PKTINFO;
 	cm->cmsg_len = CMSG_LEN(sizeof(pi));
@@ -369,6 +371,8 @@ ipv6nd_sendrsprobe(void *arg)
 
 	/* Hop limit */
 	cm = CMSG_NXTHDR(&ctx->sndhdr, cm);
+	if (cm == NULL) /* unlikely */
+		return;
 	cm->cmsg_level = IPPROTO_IPV6;
 	cm->cmsg_type = IPV6_HOPLIMIT;
 	cm->cmsg_len = CMSG_LEN(sizeof(hoplimit));
@@ -753,9 +757,8 @@ ipv6nd_handlera(struct ipv6_ctx *ctx, struct interface *ifp,
 
 	len -= sizeof(struct nd_router_advert);
 	p = ((uint8_t *)icp) + sizeof(struct nd_router_advert);
-	olen = 0;
 	lifetime = ~0U;
-	for (olen = 0; len > 0; p += olen, len -= olen) {
+	for (; len > 0; p += olen, len -= olen) {
 		if ((size_t)len < sizeof(struct nd_opt_hdr)) {
 			syslog(LOG_ERR, "%s: short option", ifp->name);
 			break;
@@ -1415,12 +1418,15 @@ ipv6nd_probeaddr(void *arg)
 	//memcpy(&dst.sin6_addr, &ap->addr, sizeof(dst.sin6_addr));
 	dst.sin6_scope_id = ap->iface->index;
 
-	sndhdr.msg_name = (caddr_t)&dst;
-	sndhdr.msg_iov[0].iov_base = ap->ns;
-	sndhdr.msg_iov[0].iov_len = ap->nslen;
+	ctx = ap->iface->ctx->ipv6;
+	ctx->sndhdr.msg_name = (caddr_t)&dst;
+	ctx->sndhdr.msg_iov[0].iov_base = ap->ns;
+	ctx->sndhdr.msg_iov[0].iov_len = ap->nslen;
 
 	/* Set the outbound interface */
-	cm = CMSG_FIRSTHDR(&sndhdr);
+	cm = CMSG_FIRSTHDR(&ctx->sndhdr);
+	if (cm == NULL) /* unlikely */
+		return;
 	cm->cmsg_level = IPPROTO_IPV6;
 	cm->cmsg_type = IPV6_PKTINFO;
 	cm->cmsg_len = CMSG_LEN(sizeof(pi));
@@ -1430,6 +1436,8 @@ ipv6nd_probeaddr(void *arg)
 
 	/* Hop limit */
 	cm = CMSG_NXTHDR(&sndhdr, cm);
+	if (cm == NULL) /* unlikely */
+		return;
 	cm->cmsg_level = IPPROTO_IPV6;
 	cm->cmsg_type = IPV6_HOPLIMIT;
 	cm->cmsg_len = CMSG_LEN(sizeof(hoplimit));
@@ -1571,6 +1579,8 @@ ipv6nd_proberouter(void *arg)
 
 	/* Set the outbound interface */
 	cm = CMSG_FIRSTHDR(&ctx->sndhdr);
+	if (cm == NULL) /* unlikely */
+		return;
 	cm->cmsg_level = IPPROTO_IPV6;
 	cm->cmsg_type = IPV6_PKTINFO;
 	cm->cmsg_len = CMSG_LEN(sizeof(pi));
@@ -1580,6 +1590,8 @@ ipv6nd_proberouter(void *arg)
 
 	/* Hop limit */
 	cm = CMSG_NXTHDR(&ctx->sndhdr, cm);
+	if (cm == NULL) /* unlikely */
+		return;
 	cm->cmsg_level = IPPROTO_IPV6;
 	cm->cmsg_type = IPV6_HOPLIMIT;
 	cm->cmsg_len = CMSG_LEN(sizeof(hoplimit));
