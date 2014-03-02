@@ -1,4 +1,4 @@
-/*	$NetBSD: iyonix_machdep.c,v 1.22 2013/08/18 21:50:31 matt Exp $	*/
+/*	$NetBSD: iyonix_machdep.c,v 1.23 2014/03/02 13:28:23 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iyonix_machdep.c,v 1.22 2013/08/18 21:50:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iyonix_machdep.c,v 1.23 2014/03/02 13:28:23 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -441,8 +441,8 @@ initarm(void *arg)
 	int loop;
 	int loop1;
 	u_int l1pagetable;
-	paddr_t memstart;
-	psize_t memsize;
+	paddr_t memstart = 0;
+	psize_t memsize = 0;
 
 	/* Calibrate the delay loop. */
 	i80321_calibrate_delay();
