@@ -31,6 +31,7 @@
 #include <iostream>
 
 #include "application.hpp"
+#include "version.hpp"
 
 class atf_version : public tools::application::app {
     static const char* m_description;
