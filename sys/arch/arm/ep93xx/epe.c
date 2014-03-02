@@ -1,4 +1,4 @@
-/*	$NetBSD: epe.c,v 1.29 2012/11/12 18:00:36 skrll Exp $	*/
+/*	$NetBSD: epe.c,v 1.30 2014/03/02 13:22:21 joerg Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.29 2012/11/12 18:00:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.30 2014/03/02 13:22:21 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -422,7 +422,8 @@ epe_init(struct epe_softc *sc)
 	/* maximum valid max frame length */
 	EPE_WRITE(MaxFrmLen, (0x7ff << 16)|MHLEN);
 	/* wait for receiver ready */
-	while((EPE_READ(BMSts) & BMSts_RxAct) == 0); 
+	while((EPE_READ(BMSts) & BMSts_RxAct) == 0)
+		continue;
 	/* enqueue the entries in RXStsQ and RXDQ */
 	CTRLPAGE_DMASYNC(0, sc->ctrlpage_dmamap->dm_mapsize, 
 		BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
