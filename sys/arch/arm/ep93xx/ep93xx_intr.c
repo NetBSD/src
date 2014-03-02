@@ -1,4 +1,4 @@
-/* $NetBSD: ep93xx_intr.c,v 1.20 2013/12/18 13:03:59 skrll Exp $ */
+/* $NetBSD: ep93xx_intr.c,v 1.21 2014/03/02 13:22:32 joerg Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.20 2013/12/18 13:03:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.21 2014/03/02 13:22:32 joerg Exp $");
 
 /*
  * Interrupt support for the Cirrus Logic EP93XX
@@ -65,9 +65,6 @@ volatile int hardware_spl_level;
 /* Software copy of the IRQs we have enabled. */
 volatile uint32_t vic1_intr_enabled;
 volatile uint32_t vic2_intr_enabled;
-
-/* Interrupts pending. */
-static volatile int ipending;
 
 void	ep93xx_intr_dispatch(struct trapframe *);
 
