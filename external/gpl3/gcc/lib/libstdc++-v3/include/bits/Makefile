@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2014/03/02 03:47:57 mrg Exp $
+#	$NetBSD: Makefile,v 1.13 2014/03/02 04:31:55 mrg Exp $
 
 .include <bsd.own.mk>
 .include <bsd.init.mk>
@@ -7,13 +7,14 @@
 
 .cc: # disable .cc->NULL transform
 
-DIST=		${NETBSDSRCDIR}/external/gpl3/gcc/dist
+DIST=		${NETBSDSRCDIR}/external/gpl3/${EXTERNAL_GCC_SUBDIR}/dist
+GNUHOSTDIST=	${DIST}
 
 BUILDINCS=	basic_file.h c++allocator.h c++io.h c++locale.h
-BUILDINCS+=	messages_members.h time_members.h opt_random.h
+BUILDINCS+=	messages_members.h time_members.h opt_random.h gthr-default.h
 
 INCS=		${G_bits_headers} ${G_c_base_headers_extra} ${G_host_headers}
-INCS+=		gthr.h gthr-single.h gthr-posix.h gthr-default.h
+INCS+=		gthr.h gthr-single.h gthr-posix.h
 INCS+=		${BUILDINCS}
 
 # libsupc++
@@ -34,16 +35,23 @@ CLEANFILES+=	{BUILDINCS}
 
 CXXDIST=			${DIST}/libstdc++-v3
 COPYHEADERS= \
-	opt_random.h		${G_CPU_OPT_BITS_RANDOM} \
-	basic_file.h		${G_BASIC_FILE_H} \
-	c++allocator.h		${G_ALLOCATOR_H} \
-	c++locale.h		${G_CLOCALE_H} \
-	c++io.h			${G_CSTDIO_H} \
-	messages_members.h	${G_CMESSAGES_H} \
-	time_members.h		${G_CTIME_H}
+	opt_random.h		${CXXDIST}/${G_CPU_OPT_BITS_RANDOM} \
+	basic_file.h		${CXXDIST}/${G_BASIC_FILE_H} \
+	c++allocator.h		${CXXDIST}/${G_ALLOCATOR_H} \
+	c++locale.h		${CXXDIST}/${G_CLOCALE_H} \
+	c++io.h			${CXXDIST}/${G_CSTDIO_H} \
+	messages_members.h	${CXXDIST}/${G_CMESSAGES_H} \
+	time_members.h		${CXXDIST}/${G_CTIME_H}
+
+# gthr-default.h is a little special
+.for _src _dst in ${G_CONFIGLINKS}
+. if ${_dst} == "gthr-default.h"
+COPYHEADERS+=	${_dst} ${_src}
+. endif
+.endfor
 
 .for _h _s in ${COPYHEADERS}
-${_h}: ${CXXDIST}/${_s}
+${_h}: ${_s}
 	cp -p ${.ALLSRC} ${.TARGET}
 .endfor
 
