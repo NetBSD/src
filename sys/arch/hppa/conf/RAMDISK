@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK,v 1.1 2014/02/24 07:23:42 skrll Exp $
+# $NetBSD: RAMDISK,v 1.2 2014/03/02 08:20:09 skrll Exp $
 #
 # RAMDISK machine description file
 #
@@ -9,6 +9,6 @@ include 	"arch/hppa/conf/GENERIC"
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MEMORY_DISK_ROOT_SIZE=5000	# size of memory disk, in blocks
+options 	MEMORY_DISK_ROOT_SIZE=6000	# size of memory disk, in blocks
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
