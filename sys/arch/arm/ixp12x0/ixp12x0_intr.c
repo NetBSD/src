@@ -1,4 +1,4 @@
-/* $NetBSD: ixp12x0_intr.c,v 1.26 2013/12/18 13:03:59 skrll Exp $ */
+/* $NetBSD: ixp12x0_intr.c,v 1.27 2014/03/02 13:23:32 joerg Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.26 2013/12/18 13:03:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.27 2014/03/02 13:23:32 joerg Exp $");
 
 /*
  * Interrupt support for the Intel ixp12x0
@@ -69,9 +69,6 @@ volatile int hardware_spl_level;
 /* Software copy of the IRQs we have enabled. */
 volatile uint32_t intr_enabled;
 volatile uint32_t pci_intr_enabled;
-
-/* Interrupts pending. */
-static volatile int ipending;
 
 void	ixp12x0_intr_dispatch(struct trapframe *);
 
