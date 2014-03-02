@@ -63,5 +63,6 @@ SECTIONS
       *(.debug_str)
       *(.debug_frame)
       *(.eh_frame)
+      *(.SUNW_ctf)
   }
 }
