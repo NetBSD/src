@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.287 2014/01/15 13:59:38 joerg Exp $
+#	$NetBSD: bsd.prog.mk,v 1.288 2014/03/02 22:22:05 christos Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -65,6 +65,9 @@ MKDEP_SUFFIXES?=	.o .ln
 .if defined(MKDTRACE) && (${MKDTRACE} != "no") && (${CFLAGS:M-g} != "")
 CTFFLAGS+= -g
 CTFMFLAGS+= -g
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 48
+CFLAGS+=-gdwarf-2
+.endif
 .endif
 
 # ELF platforms depend on crti.o, crtbegin.o, crtend.o, and crtn.o
