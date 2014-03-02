@@ -1,4 +1,4 @@
-/* $NetBSD: t_acos.c,v 1.5 2014/03/01 21:08:39 dsl Exp $ */
+/* $NetBSD: t_acos.c,v 1.6 2014/03/02 22:40:45 dsl Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -31,29 +31,32 @@
 
 #include <atf-c.h>
 #include <math.h>
+#include <fenv.h>
 
 /*
  * Check result of fn(arg) is correct within the bounds.
  * Should be ok to do the checks using 'double' for 'float' functions.
  */
-#define T_LIBM_CHECK(fn, arg, expect, epsilon) do { \
+#define T_LIBM_CHECK(subtest, fn, arg, expect, epsilon) do { \
 	double r = fn(arg); \
 	double e = fabs(r - expect); \
 	if (e > epsilon) \
-		atf_tc_fail_nonfatal(#fn "(%g) is %g not %g (error %g > %g)", \
-			arg, r, expect, e, epsilon); \
+		atf_tc_fail_nonfatal( \
+		    "subtest %zu: " #fn "(%g) is %g not %g (error %g > %g), roundmode %x", \
+		    subtest, arg, r, expect, e, epsilon, fegetround()); \
     } while (0)
 
 /* Check that the result of fn(arg) is NaN */
 #ifndef __vax__
-#define T_LIBM_CHECK_NAN(fn, arg) do { \
+#define T_LIBM_CHECK_NAN(subtest, fn, arg) do { \
 	double r = fn(arg); \
 	if (!isnan(r)) \
-		atf_tc_fail_nonfatal(#fn "(%g) is %g not NaN", arg, r); \
+		atf_tc_fail_nonfatal("subtest %zu: " #fn "(%g) is %g not NaN", \
+		    subtest, arg, r); \
     } while (0)
 #else
 /* vax doesn't support NaN */
-#define T_LIBM_CHECK_NAN(fn, arg) (void)(arg)
+#define T_LIBM_CHECK_NAN(subtest, fn, arg) (void)(arg)
 #endif
 
 #define AFT_LIBM_TEST(name, description) \
@@ -78,11 +81,11 @@ AFT_LIBM_TEST(acos_nan, "Test acos/acosf(x) == NaN, x = NaN, +/-Inf, ![-1..1]")
 	size_t i;
 
 	for (i = 0; i < __arraycount(x); i++) {
-		T_LIBM_CHECK_NAN(acos, x[i]);
+		T_LIBM_CHECK_NAN(i, acos, x[i]);
 		if (i < 2)
 			/* Values are too small for float */
 			continue;
-		T_LIBM_CHECK_NAN(acosf, x[i]);
+		T_LIBM_CHECK_NAN(i, acosf, x[i]);
 	}
 }
 
@@ -104,14 +107,14 @@ AFT_LIBM_TEST(acos_inrange, "Test acos/acosf(x) for some valid values")
 	size_t i;
 
 	/*
-	 * Note that acos(x) might be calcualted as atan((1-x*x)/x).
-	 * This means that acos(-1) is atan(-0.0), if the sign is lost
-	 * the value will be 0 (atan(+0)) not M_PI.
+	 * Note that acos(x) might be calculated as atan2(sqrt(1-x*x),x).
+	 * This means that acos(-1) is atan2(+0,-1), if the sign is wrong
+	 * the value will be -M_PI (atan2(-0,-1)) not M_PI.
 	 */
 
 	for (i = 0; i < __arraycount(values); i++) {
-		T_LIBM_CHECK(acos, values[i].x, values[i].y, 1.0e-15);
-		T_LIBM_CHECK(acosf, values[i].x, values[i].y, 1.0e-5);
+		T_LIBM_CHECK(i, acos, values[i].x, values[i].y, 1.0e-15);
+		T_LIBM_CHECK(i, acosf, values[i].x, values[i].y, 1.0e-5);
 	}
 }
 
