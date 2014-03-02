@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2014/02/15 04:19:46 jmmv Exp $
+# $NetBSD: Makefile,v 1.12 2014/03/02 22:50:13 jmmv Exp $
 
 .include <bsd.init.mk>
 
@@ -26,7 +26,7 @@ FILESDIR_atf-sh.pc=	/usr/lib/pkgconfig
 
 realall: atf-sh.pc
 atf-sh.pc: Makefile atf-sh.pc.in atf-version.txt
-	${TOOL_SED} -e 's,__ATF_VERSION__,$$(cat atf-version.txt),g' \
+	${TOOL_SED} -e "s,__ATF_VERSION__,$$(cat atf-version.txt),g" \
 	    -e 's,__EXEC_PREFIX__,/usr,g' \
 	    <${SRCDIR}/atf-sh/atf-sh.pc.in >atf-sh.pc
 CLEANFILES+=	atf-sh.pc
