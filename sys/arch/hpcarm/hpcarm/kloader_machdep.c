@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader_machdep.c,v 1.1 2012/03/31 14:02:54 nonaka Exp $	*/
+/*	$NetBSD: kloader_machdep.c,v 1.2 2014/03/02 13:27:38 joerg Exp $	*/
 
 /*-
  * Copyright (C) 2012 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader_machdep.c,v 1.1 2012/03/31 14:02:54 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader_machdep.c,v 1.2 2014/03/02 13:27:38 joerg Exp $");
 
 #include "debug_kloader.h"
 #include "opt_cputypes.h"
@@ -67,7 +67,7 @@ kloader_reboot_setup(const char *filename)
 void
 kloader_hpcarm_reset(void)
 {
-	extern void (*__cpu_reset)(void);
+	extern void (*__cpu_reset)(void) __dead;
 
 	__cpu_reset();
 	/*NOTREACHED*/
@@ -83,6 +83,7 @@ kloader_hpcarm_jump(kloader_bootfunc_t func, vaddr_t sp,
 
 	/* jump to 2nd boot-loader */
 	(*func)(kbi, tag);
+	__builtin_unreachable();
 }
 
 /*
