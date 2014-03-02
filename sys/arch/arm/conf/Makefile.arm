@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm,v 1.41 2014/01/23 20:58:55 martin Exp $
+#	$NetBSD: Makefile.arm,v 1.42 2014/03/02 13:21:59 joerg Exp $
 
 # Makefile for NetBSD
 #
@@ -35,6 +35,7 @@ GENASSYM_CONF=	${ARM}/arm32/genassym.cf
 # CPPFLAGS set by platform-specific Makefile fragment.
 AFLAGS+=	-x assembler-with-cpp
 COPTS.arm32_kvminit.c+=		-fno-stack-protector
+COPTS.vfp_init.c=		-mfpu=vfp
 AFLAGS.bcopyinout.S+=-marm
 AFLAGS.cpuswitch.S+=-marm -mfpu=vfp
 AFLAGS.locore.S+=-marm
