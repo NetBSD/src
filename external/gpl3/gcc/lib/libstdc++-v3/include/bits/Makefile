@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2014/03/01 22:49:43 mrg Exp $
+#	$NetBSD: Makefile,v 1.12 2014/03/02 03:47:57 mrg Exp $
 
 .include <bsd.own.mk>
 .include <bsd.init.mk>
@@ -32,23 +32,20 @@ INCSDIR=	/usr/include/g++/bits
 
 CLEANFILES+=	{BUILDINCS}
 
-# XXX these rules don't always work if the ${.TARGET} ends up being the
-#     copy in ../../arch/$arch/ and that version is older.  (but will
-#     only break read-only source builds.)
-opt_random.h:	${G_CPU_OPT_BITS_RANDOM}
+CXXDIST=			${DIST}/libstdc++-v3
+COPYHEADERS= \
+	opt_random.h		${G_CPU_OPT_BITS_RANDOM} \
+	basic_file.h		${G_BASIC_FILE_H} \
+	c++allocator.h		${G_ALLOCATOR_H} \
+	c++locale.h		${G_CLOCALE_H} \
+	c++io.h			${G_CSTDIO_H} \
+	messages_members.h	${G_CMESSAGES_H} \
+	time_members.h		${G_CTIME_H}
+
+.for _h _s in ${COPYHEADERS}
+${_h}: ${CXXDIST}/${_s}
 	cp -p ${.ALLSRC} ${.TARGET}
-basic_file.h:	${G_BASIC_FILE_H}
-	cp -p ${.ALLSRC} ${.TARGET}
-c++allocator.h:	${G_ALLOCATOR_H}
-	cp -p ${.ALLSRC} ${.TARGET}
-c++locale.h:	$(G_CLOCALE_H)
-	cp -p ${.ALLSRC} ${.TARGET}
-c++io.h:	$(G_CSTDIO_H)
-	cp -p ${.ALLSRC} ${.TARGET}
-messages_members.h:	$(G_CMESSAGES_H)
-	cp -p ${.ALLSRC} ${.TARGET}
-time_members.h:	$(G_CTIME_H)
-	cp -p ${.ALLSRC} ${.TARGET}
+.endfor
 
 .PATH: ${.CURDIR}/../../arch/${GCC_MACHINE_ARCH} \
 	${DIST}/libstdc++-v3/include \
