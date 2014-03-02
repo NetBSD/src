@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.17 2014/03/01 12:48:38 joerg Exp $	*/
+/*	$NetBSD: locore.S,v 1.18 2014/03/02 13:26:30 joerg Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -263,9 +263,9 @@ ENTRY(dumpsys)
         add     r2, r0, #(PCB_R8)
         stmia   r2, {r8-r13}
 #else
-        strd    r8, [r0, #(PCB_R8)]
-        strd    r10, [r0, #(PCB_R10)]
-        strd    r12, [r0, #(PCB_R12)]
+        strd    r8, r9, [r0, #(PCB_R8)]
+        strd    r10, r11, [r0, #(PCB_R10)]
+        strd    r12, r13, [r0, #(PCB_R12)]
 #endif
 
 	bl	_C_LABEL(dodumpsys)
