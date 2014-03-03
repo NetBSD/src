@@ -1,4 +1,4 @@
-.\"	$NetBSD: mii.4,v 1.26 2014/03/03 01:36:21 ozaki-r Exp $
+.\"	$NetBSD: mii.4,v 1.27 2014/03/03 09:10:00 wiz Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -68,7 +68,8 @@
 .Sh DESCRIPTION
 Media Independent Interface is an IEEE standard serial bus for
 connecting MACs (network controllers) to PHYs (physical media
-interfaces).  The
+interfaces).
+The
 .Nm
 layer allows network device drivers to share support code for
 various PHY models, and allows unused support for PHYs which
@@ -78,7 +79,8 @@ Network device drivers which use the
 .Nm
 layer carry the
 .Dq mii
-autoconfiguration attribute.  This allows kernel configuration
+autoconfiguration attribute.
+This allows kernel configuration
 files to simply specify PHYs as described above in the synopsis.
 .Pp
 The following is an example of the messages displayed when a network
@@ -92,8 +94,8 @@ qsphy0: 10baseT, 10baseT-FDX, 100baseTX, 100baseTX-FDX, auto
 .Ed
 .Pp
 All PHY drivers display the media types supported by the PHY when it
-is detected by the kernel.  These media types are valid media keywords
-for use with the
+is detected by the kernel.
+These media types are valid media keywords for use with the
 .Xr ifconfig 8
 program.
 .Sh SEE ALSO
