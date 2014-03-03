@@ -1,4 +1,4 @@
-.\"	$NetBSD: mii.4,v 1.25 2012/03/13 19:25:40 njoly Exp $
+.\"	$NetBSD: mii.4,v 1.26 2014/03/03 01:36:21 ozaki-r Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 13, 2006
+.Dd March 3, 2014
 .Dt MII 4
 .Os
 .Sh NAME
@@ -51,6 +51,7 @@
 .Cd "iophy*    at mii? phy ?		# Intel 82553 PHYs"
 .Cd "lxtphy*   at mii? phy ?		# Level One LXT-970 PHYs"
 .Cd "makphy*   at mii? phy ?		# Marvel 88E1000 Gig-E PHYs"
+.Cd "micphy*   at mii? phy ?		# Micrel KSZ9021 Gig-E PHYs"
 .Cd "nsphy*    at mii? phy ?		# NatSemi DP83840 PHYs"
 .Cd "nsphyter* at mii? phy ?		# NatSemi DP83843/DP83815 PHYs"
 .Cd "pnaphy*   at mii? phy ?		# Generic HomePNA PHYs"
@@ -113,6 +114,7 @@ program.
 .Xr iophy 4 ,
 .Xr lxtphy 4 ,
 .Xr makphy 4 ,
+.Xr micphy 4 ,
 .Xr nsphy 4 ,
 .Xr nsphyter 4 ,
 .Xr pnaphy 4 ,
