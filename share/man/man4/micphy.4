@@ -1,4 +1,4 @@
-.\"	$NetBSD: micphy.4,v 1.1 2014/03/03 01:35:08 ozaki-r Exp $
+.\"	$NetBSD: micphy.4,v 1.2 2014/03/03 09:10:46 wiz Exp $
 .\"
 .\" Copyright (c) 2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -28,10 +28,10 @@ The
 .Nm
 driver currently supports only Micrel KSZ9021RN PHY.
 The driver has a fixup for
-.Xr cpsw 4
+.Xr evbarm/cpsw 4
 which requires Gig-E PHYs to adjust RGMII signal timing.
 .Sh SEE ALSO
-.Xr cpsw 4 ,
+.Xr evbarm/cpsw 4 ,
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
 .Xr mii 4 ,
