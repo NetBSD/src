@@ -1,3 +1,18 @@
+2014-01-23  Jakub Jelinek  <jakub@redhat.com>
+
+	PR middle-end/58809
+	* c-typeck.c (c_finish_omp_clause): Reject MIN_EXPR, MAX_EXPR,
+	BIT_AND_EXPR, BIT_IOR_EXPR and BIT_XOR_EXPR on COMPLEX_TYPEs.
+
+2014-01-22  Marek Polacek  <polacek@redhat.com>
+
+	Backport from mainline
+	2014-01-22  Marek Polacek  <polacek@redhat.com>
+
+	PR c/59891
+	* c-typeck.c (build_conditional_expr): Call c_fully_fold instead
+	of remove_c_maybe_const_expr on op1 and op2.
+
 2013-12-03  Marek Polacek  <polacek@redhat.com>
 
 	Backport from mainline

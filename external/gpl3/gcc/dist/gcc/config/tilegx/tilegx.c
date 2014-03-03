@@ -702,6 +702,16 @@ tilegx_init_expanders (void)
 }
 
 
+/* Implement TARGET_EXPAND_TO_RTL_HOOK.  */
+static void
+tilegx_expand_to_rtl_hook (void)
+{
+  /* Exclude earlier sets of crtl->uses_pic_offset_table, because we
+     only care about uses actually emitted.  */
+  crtl->uses_pic_offset_table = 0;
+}
+
+
 /* Implement TARGET_SHIFT_TRUNCATION_MASK.  DImode shifts use the mode
    matching insns and therefore guarantee that the shift count is
    modulo 64.  SImode shifts sometimes use the 64 bit version so do
@@ -3543,6 +3553,12 @@ tilegx_expand_builtin (tree exp,
     }
   if (!pat)
     return NULL_RTX;
+
+  /* If we are generating a prefetch, tell the scheduler not to move
+     it around.  */
+  if (GET_CODE (pat) == PREFETCH)
+    PREFETCH_SCHEDULE_BARRIER_P (pat) = true;
+
   emit_insn (pat);
 
   if (nonvoid)
@@ -4368,10 +4384,12 @@ tilegx_gen_bundles (void)
   basic_block bb;
   FOR_EACH_BB (bb)
     {
-      rtx insn, next;
+      rtx insn, next, prev;
       rtx end = NEXT_INSN (BB_END (bb));
 
-      for (insn = next_insn_to_bundle (BB_HEAD (bb), end); insn; insn = next)
+      prev = NULL_RTX;
+      for (insn = next_insn_to_bundle (BB_HEAD (bb), end); insn;
+	   prev = insn, insn = next)
 	{
 	  next = next_insn_to_bundle (NEXT_INSN (insn), end);
 
@@ -4396,6 +4414,18 @@ tilegx_gen_bundles (void)
 		  PUT_MODE (insn, SImode);
 		}
 	    }
+
+	  /* Delete barrier insns, because they can mess up the
+	     emitting of bundle braces.  If it is end-of-bundle, then
+	     the previous insn must be marked end-of-bundle.  */
+	  if (get_attr_type (insn) == TYPE_NOTHING) {
+	    if (GET_MODE (insn) == QImode && prev != NULL
+		&& GET_MODE (prev) == SImode)
+	      {
+		PUT_MODE (prev, QImode);
+	      }
+	    delete_insn (insn);
+	  }
 	}
     }
 }
@@ -5497,6 +5527,9 @@ tilegx_file_end (void)
 
 #undef  TARGET_RTX_COSTS
 #define TARGET_RTX_COSTS tilegx_rtx_costs
+
+#undef  TARGET_EXPAND_TO_RTL_HOOK
+#define TARGET_EXPAND_TO_RTL_HOOK tilegx_expand_to_rtl_hook
 
 #undef  TARGET_SHIFT_TRUNCATION_MASK
 #define TARGET_SHIFT_TRUNCATION_MASK tilegx_shift_truncation_mask
