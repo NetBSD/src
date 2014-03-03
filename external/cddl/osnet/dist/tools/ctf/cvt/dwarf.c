@@ -1064,6 +1064,9 @@ die_sou_resolve(tdesc_t *tdp, tdesc_t **tdpp __unused, void *private)
 		if (ml->ml_size == 0) {
 			mt = tdesc_basetype(ml->ml_type);
 
+			if (mt == NULL)
+				continue;
+
 			if ((ml->ml_size = tdesc_bitsize(mt)) != 0)
 				continue;
 
