@@ -74,7 +74,7 @@
 ;; bshift 	Shift operations
 
 (define_attr "type"
-  "unknown,branch,jump,call,load,store,move,arith,darith,imul,idiv,icmp,multi,nop,no_delay_arith,no_delay_load,no_delay_store,no_delay_imul,no_delay_move,bshift,fadd,frsub,fmul,fdiv,fcmp,fsl,fsqrt,fcvt"
+  "unknown,branch,jump,call,load,store,move,arith,darith,imul,idiv,icmp,multi,nop,no_delay_arith,no_delay_load,no_delay_store,no_delay_imul,no_delay_move,bshift,fadd,frsub,fmul,fdiv,fcmp,fsl,fsqrt,fcvt,trap"
   (const_string "unknown"))
 
 ;; Main data type used by the insn
@@ -365,7 +365,8 @@
   [(set (match_operand:HI 0 "register_operand" "=r")
         (bswap:HI (match_operand:HI 1 "register_operand" "r")))]
   "TARGET_REORDER"
-  "swaph %0, %1"
+  "swapb %0, %1
+   swaph %0, %0"
 )
 
 ;;----------------------------------------------------------------
@@ -1118,6 +1119,18 @@
   }
 )
 
+;;Load and store reverse
+(define_insn "movsi4_rev"
+  [(set (match_operand:SI 0 "reg_or_mem_operand" "=r,Q")
+        (bswap:SI (match_operand:SF 1 "reg_or_mem_operand" "Q,r")))]
+  "TARGET_REORDER"
+  "@
+   lwr\t%0,%y1,r0
+   swr\t%1,%y0,r0"
+  [(set_attr "type"     "load,store")
+  (set_attr "mode"      "SI")
+  (set_attr "length"    "4,4")])
+
 ;; 32-bit floating point moves
 
 (define_expand "movsf"
@@ -1472,7 +1485,7 @@
   (set_attr "length"   "124")]
 )
 
-(define_insn "*ashlri_reg"
+(define_insn "*ashrsi_reg"
   [(set (match_operand:SI 0 "register_operand" "=&d")
        (ashiftrt:SI (match_operand:SI 1 "register_operand"  "d")
                    (match_operand:SI 2 "register_operand" "d")))]
@@ -1561,7 +1574,7 @@
   (set_attr "length"   "124")]
 )
 
-(define_insn "*lshlri_reg"
+(define_insn "*lshrsi_reg"
   [(set (match_operand:SI 0 "register_operand" "=&d")
        (lshiftrt:SI (match_operand:SI 1 "register_operand"  "d")
                    (match_operand:SI 2 "register_operand" "d")))]
@@ -1622,34 +1635,12 @@
   (set_attr "length"	"4")]
 )              
 
-(define_insn "signed_compare"
-  [(set (match_operand:SI 0 "register_operand" "=d")
-	(unspec
-		[(match_operand:SI 1 "register_operand" "d")
-		 (match_operand:SI 2 "register_operand" "d")] UNSPEC_CMP))]
-  ""
-  "cmp\t%0,%1,%2"
-  [(set_attr "type"	"arith")
-  (set_attr "mode"	"SI")
-  (set_attr "length"	"4")])
-
-(define_insn "unsigned_compare"
-  [(set (match_operand:SI 0 "register_operand" "=d")
-	(unspec 
-		[(match_operand:SI 1 "register_operand" "d")
-		 (match_operand:SI 2 "register_operand" "d")] UNSPEC_CMPU))]
-  ""
-  "cmpu\t%0,%1,%2"
-  [(set_attr "type"	"arith")
-  (set_attr "mode"	"SI")
-  (set_attr "length"	"4")])
-
 ;;----------------------------------------------------------------
 ;; Setting a register from an floating point comparison. 
 ;;----------------------------------------------------------------
 (define_insn "cstoresf4"
    [(set (match_operand:SI 0 "register_operand" "=r")
-        (match_operator 1 "comparison_operator"
+        (match_operator:SI 1 "ordered_comparison_operator"
 	      [(match_operand:SF 2 "register_operand" "r")
 	       (match_operand:SF 3 "register_operand" "r")]))]
   "TARGET_HARD_FLOAT"
@@ -1678,7 +1669,7 @@
 
 (define_expand "cbranchsf4"
   [(set (pc)
-	(if_then_else (match_operator 0 "comparison_operator"
+	(if_then_else (match_operator 0 "ordered_comparison_operator"
 		       [(match_operand:SF 1 "register_operand")
 		        (match_operand:SF 2 "register_operand")])
 		      (label_ref (match_operand 3 ""))
@@ -1715,6 +1706,47 @@
   [(set_attr "type"	"branch")
    (set_attr "mode"	"none")
    (set_attr "length"	"4")]
+)
+
+(define_insn "branch_compare"
+  [(set (pc)
+        (if_then_else (match_operator:SI 0 "cmp_op"
+                                         [(match_operand:SI 1 "register_operand" "d")
+                                          (match_operand:SI 2 "register_operand" "d")
+                                         ])
+                      (label_ref (match_operand 3))
+                      (pc)))
+  (clobber(reg:SI R_TMP))]
+  ""
+  {
+    operands[4] = gen_rtx_REG (SImode, MB_ABI_ASM_TEMP_REGNUM);
+    enum rtx_code code = GET_CODE (operands[0]);
+
+    if (code == GT || code == LE)
+      {
+        output_asm_insn ("cmp\tr18,%z1,%z2", operands);
+        code = swap_condition (code);
+      }
+    else if (code == GTU || code == LEU)
+      {
+        output_asm_insn ("cmpu\tr18,%z1,%z2", operands);
+        code = swap_condition (code);
+      }
+    else if (code == GE || code == LT)
+      {
+        output_asm_insn ("cmp\tr18,%z2,%z1", operands);
+      }
+    else if (code == GEU || code == LTU)
+      {
+        output_asm_insn ("cmpu\tr18,%z2,%z1", operands);
+      }
+
+    operands[0] = gen_rtx_fmt_ee (signed_condition (code), SImode, operands[4], const0_rtx);
+    return "b%C0i%?\tr18,%3";
+  }
+  [(set_attr "type"     "branch")
+   (set_attr "mode"     "none")
+   (set_attr "length"   "12")]
 )
 
 ;;----------------------------------------------------------------
@@ -2200,6 +2232,14 @@
   [(set_attr "type"	"nop")
   (set_attr "mode"	"none")
   (set_attr "length"	"4")])
+
+;; Trap instruction pattern for __builtin_trap. Same as the glibc ABORT_INSTRUCTION
+(define_insn "trap"
+  [(trap_if (const_int 1) (const_int 0))]
+  ""
+  "brki\tr0,-1"
+ [(set_attr "type" "trap")]
+)
 
 ;; The insn to set GOT. The hardcoded number "8" accounts for $pc difference
 ;; between "mfs" and "addik" instructions.
