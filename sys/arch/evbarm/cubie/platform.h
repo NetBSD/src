@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.h,v 1.1 2013/09/03 18:01:33 matt Exp $	*/
+/*	$NetBSD: platform.h,v 1.2 2014/03/03 03:06:13 matt Exp $	*/
 /*
  * Copyright (c) 2007 Microsoft
  * All rights reserved.
@@ -35,10 +35,10 @@
 
 /*
  * Memory may be mapped VA:PA starting at 0x80000000:0x40000000
- * Kernel VM space: 512MB at KERNEL_VM_BASE
+ * Kernel VM space: 576MB at KERNEL_VM_BASE
  */
 #define KERNEL_VM_BASE		0xc0000000
-#define KERNEL_VM_SIZE		0x20000000
+#define KERNEL_VM_SIZE		0x24000000
 
 /*
  * We devmap IO starting at KERNEL_VM_BASE + KERNEL_VM_SIZE
@@ -48,5 +48,7 @@
 #define AWIN_SRAM_VBASE		(AWIN_CORE_VBASE + AWIN_CORE_SIZE)
 #define AWIN_KERNEL_IO_VEND	(AWIN_SRAM_VBASE + AWIN_SRAM_SIZE)
 #define CONADDR_VA		((CONADDR - AWIN_CORE_PBASE) + AWIN_CORE_VBASE)
-
+#ifndef _LOCORE
+CTASSERT(AWIN_KERNEL_IO_VEND <= VM_MAX_KERNEL_ADDRESS);
+#endif
 #endif /* _EVBARM_CUBIE_PLATFORM_H */
