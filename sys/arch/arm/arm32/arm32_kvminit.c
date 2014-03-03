@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.22 2013/08/29 15:46:17 riz Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.23 2014/03/03 14:03:14 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.22 2013/08/29 15:46:17 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.23 2014/03/03 14:03:14 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -302,6 +302,8 @@ valloc_pages(struct bootmem_info *bmi, pv_addr_t *pv, size_t npages,
 	size_t free_idx = 0;
 	static bool l1pt_found;
 
+	KASSERT(npages > 0);
+
 	/*
 	 * If we haven't allocated the kernel L1 page table and we are aligned
 	 * at a L1 table boundary, alloc the memory for it.
@@ -392,21 +394,31 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	 */
 	size_t kernel_size = bmi->bmi_kernelend;
 	kernel_size -= (bmi->bmi_kernelstart & -L2_S_SEGSIZE);
-	kernel_size += L1_TABLE_SIZE;
-	kernel_size += L2_TABLE_SIZE * (2 + 1 + KERNEL_L2PT_VMDATA_NUM + 1);
+	kernel_size += L1_TABLE_SIZE_REAL;
+	kernel_size += PAGE_SIZE * KERNEL_L2PT_VMDATA_NUM;
+	if (map_vectors_p) {
+		kernel_size += PAGE_SIZE;	/* L2PT for VECTORS */
+	}
+	if (iovbase) {
+		kernel_size += PAGE_SIZE;	/* L2PT for IO */
+	}
 	kernel_size +=
 	    cpu_num * (ABT_STACK_SIZE + FIQ_STACK_SIZE + IRQ_STACK_SIZE
 	    + UND_STACK_SIZE + UPAGES) * PAGE_SIZE;
 	kernel_size += round_page(MSGBUFSIZE);
 	kernel_size += 0x10000;	/* slop */
-	kernel_size += PAGE_SIZE * (kernel_size + L2_S_SEGSIZE - 1) / L2_S_SEGSIZE;
+	if (!mapallmem_p) {
+		kernel_size += PAGE_SIZE
+		    * ((kernel_size + L2_S_SEGSIZE - 1) / L2_S_SEGSIZE);
+	}
 	kernel_size = round_page(kernel_size);
 
 	/*
-	 * Now we know how many L2 pages it will take.
+	 * Now we know how many L2 pages it will take.  If we've mapped
+	 * all of memory, then it won't take any.
 	 */
-	const size_t KERNEL_L2PT_KERNEL_NUM =
-	    (kernel_size + L2_S_SEGSIZE - 1) / L2_S_SEGSIZE;
+	const size_t KERNEL_L2PT_KERNEL_NUM = mapallmem_p
+	    ? 0 : round_page(kernel_size + L2_S_SEGSIZE - 1) / L2_S_SEGSIZE;
 
 #ifdef VERBOSE_INIT_ARM
 	printf("%s: %zu L2 pages are needed to map %#zx kernel bytes\n",
@@ -463,9 +475,8 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 #ifdef VERBOSE_INIT_ARM
 		printf(" vector");
 #endif
-		valloc_pages(bmi, &bmi->bmi_vector_l2pt,
-		    L2_TABLE_SIZE / PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE,
-		    PTE_PAGETABLE, true);
+		valloc_pages(bmi, &bmi->bmi_vector_l2pt, 1,
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE, true);
 		add_pages(bmi, &bmi->bmi_vector_l2pt);
 	}
 
@@ -475,8 +486,10 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 #ifdef VERBOSE_INIT_ARM
 	printf(" kernel");
 #endif
+	KASSERT(mapallmem_p || KERNEL_L2PT_KERNEL_NUM > 0);
+	KASSERT(!mapallmem_p || KERNEL_L2PT_KERNEL_NUM == 0);
 	for (size_t idx = 0; idx < KERNEL_L2PT_KERNEL_NUM; ++idx) {
-		valloc_pages(bmi, &kernel_l2pt[idx], L2_TABLE_SIZE / PAGE_SIZE,
+		valloc_pages(bmi, &kernel_l2pt[idx], 1,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE, true);
 		add_pages(bmi, &kernel_l2pt[idx]);
 	}
@@ -488,7 +501,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	printf(" vm");
 #endif
 	for (size_t idx = 0; idx < KERNEL_L2PT_VMDATA_NUM; ++idx) {
-		valloc_pages(bmi, &vmdata_l2pt[idx], L2_TABLE_SIZE / PAGE_SIZE,
+		valloc_pages(bmi, &vmdata_l2pt[idx], 1,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE, true);
 		add_pages(bmi, &vmdata_l2pt[idx]);
 	}
@@ -496,11 +509,11 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	/*
 	 * If someone wanted a L2 page for I/O, allocate it now.
 	 */
-	if (iovbase != 0) {
+	if (iovbase) {
 #ifdef VERBOSE_INIT_ARM
 		printf(" io");
 #endif
-		valloc_pages(bmi, &bmi->bmi_io_l2pt, L2_TABLE_SIZE / PAGE_SIZE,
+		valloc_pages(bmi, &bmi->bmi_io_l2pt, 1,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE, true);
 		add_pages(bmi, &bmi->bmi_io_l2pt);
 	}
@@ -600,8 +613,8 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 		    &kernel_l2pt[idx]);
 #ifdef VERBOSE_INIT_ARM
 		printf("%s: adding L2 pt (VA %#lx, PA %#lx) for VA %#lx (kernel)\n",
-		    __func__, kernel_l2pt[idx].pv_va, kernel_l2pt[idx].pv_pa,
-		    kernel_base + idx * L2_S_SEGSIZE);
+		    __func__, kernel_l2pt[idx].pv_va,
+		    kernel_l2pt[idx].pv_pa, kernel_base + idx * L2_S_SEGSIZE);
 #endif
 	}
 
@@ -903,17 +916,36 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	printf("switching to new L1 page table @%#lx...", l1pt_pa);
 #endif
 
-	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
-	cpu_idcache_wbinv_all();
 #ifdef ARM_MMU_EXTENDED
+	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2))
+	    | (DOMAIN_CLIENT << (PMAP_DOMAIN_USER*2)));
+#else
+	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
+#endif
+	cpu_idcache_wbinv_all();
+#ifdef VERBOSE_INIT_ARM
+	printf(" ttb");
+#endif
+#ifdef ARM_MMU_EXTENDED
+	/*
+	 * TTBCR should have been initialized by the MD start code.
+	 */
+	KASSERT(armreg_ttbcr_read() == __SHIFTIN(1, TTBCR_S_N));
 	cpu_setttb(l1pt_pa, KERNEL_PID);
 #else
 	cpu_setttb(l1pt_pa, true);
+	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 #endif
 	cpu_tlb_flushID();
-	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 
 #ifdef VERBOSE_INIT_ARM
+#ifdef ARM_MMU_EXTENDED
+	printf("TTBCR=%#x TTBR0=%#x TTBR1=%#x OK\n",
+	    armreg_ttbcr_read(),
+	    armreg_ttbr_read(),
+	    armreg_ttbr1_read());
+#else
 	printf("TTBR0=%#x OK\n", armreg_ttbr_read());
+#endif
 #endif
 }
