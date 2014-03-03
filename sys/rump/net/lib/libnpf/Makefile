@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2013/11/08 00:38:27 rmind Exp $
+#	$NetBSD: Makefile,v 1.10 2014/03/03 14:01:30 pooka Exp $
 #
 # Public Domain.
 #
@@ -19,7 +19,9 @@ SRCS+=	npf_ext_log.c npf_ext_normalize.c npf_ext_rndblock.c
 
 SRCS+=	component.c
 
+.if ${RUMP_NPF_TESTING:Uyes} == "yes"
 CPPFLAGS+=	-D_NPF_TESTING
+.endif
 CPPFLAGS+=	-I${.CURDIR}/../../../librump/rumpvfs
 
 .include <bsd.lib.mk>
