@@ -5721,9 +5721,9 @@ init_cumulative_args (CUMULATIVE_ARGS *cum,  /* Argument info to initialize */
 	  cum->nregs = 0;
 	  cum->sse_nregs = 0;
 	  cum->mmx_nregs = 0;
-	  cum->warn_avx = 0;
-	  cum->warn_sse = 0;
-	  cum->warn_mmx = 0;
+	  cum->warn_avx = false;
+	  cum->warn_sse = false;
+	  cum->warn_mmx = false;
 	  return;
 	}
 
@@ -5764,10 +5764,14 @@ init_cumulative_args (CUMULATIVE_ARGS *cum,  /* Argument info to initialize */
 
    The midde-end can't deal with the vector types > 16 bytes.  In this
    case, we return the original mode and warn ABI change if CUM isn't
-   NULL.  */
+   NULL. 
+
+   If INT_RETURN is true, warn ABI change if the vector mode isn't
+   available for function return value.  */
 
 static enum machine_mode
-type_natural_mode (const_tree type, const CUMULATIVE_ARGS *cum)
+type_natural_mode (const_tree type, const CUMULATIVE_ARGS *cum,
+		   bool in_return)
 {
   enum machine_mode mode = TYPE_MODE (type);
 
@@ -5793,42 +5797,58 @@ type_natural_mode (const_tree type, const CUMULATIVE_ARGS *cum)
 		if (size == 32 && !TARGET_AVX)
 		  {
 		    static bool warnedavx;
+		    static bool warnedavx_ret;
 
-		    if (cum
-			&& !warnedavx
-			&& cum->warn_avx)
+		    if (cum && cum->warn_avx && !warnedavx)
 		      {
-			warnedavx = true;
-			warning (0, "AVX vector argument without AVX "
-				 "enabled changes the ABI");
+			if (warning (OPT_Wpsabi, "AVX vector argument "
+				     "without AVX enabled changes the ABI"))
+			  warnedavx = true;
 		      }
+		    else if (in_return && !warnedavx_ret)
+		      {
+			if (warning (OPT_Wpsabi, "AVX vector return "
+				     "without AVX enabled changes the ABI"))
+			  warnedavx_ret = true;
+		      }
+
 		    return TYPE_MODE (type);
 		  }
 		else if (((size == 8 && TARGET_64BIT) || size == 16)
 			 && !TARGET_SSE)
 		  {
 		    static bool warnedsse;
+		    static bool warnedsse_ret;
 
-		    if (cum
-			&& !warnedsse
-			&& cum->warn_sse)
+		    if (cum && cum->warn_sse && !warnedsse)
 		      {
-			warnedsse = true;
-			warning (0, "SSE vector argument without SSE "
-				 "enabled changes the ABI");
+			if (warning (OPT_Wpsabi, "SSE vector argument "
+				     "without SSE enabled changes the ABI"))
+			  warnedsse = true;
+		      }
+		    else if (!TARGET_64BIT && in_return && !warnedsse_ret)
+		      {
+			if (warning (OPT_Wpsabi, "SSE vector return "
+				     "without SSE enabled changes the ABI"))
+			  warnedsse_ret = true;
 		      }
 		  }
 		else if ((size == 8 && !TARGET_64BIT) && !TARGET_MMX)
 		  {
 		    static bool warnedmmx;
+		    static bool warnedmmx_ret;
 
-		    if (cum
-			&& !warnedmmx
-			&& cum->warn_mmx)
+		    if (cum && cum->warn_mmx && !warnedmmx)
 		      {
-			warnedmmx = true;
-			warning (0, "MMX vector argument without MMX "
-				 "enabled changes the ABI");
+			if (warning (OPT_Wpsabi, "MMX vector argument "
+				     "without MMX enabled changes the ABI"))
+			  warnedmmx = true;
+		      }
+		    else if (in_return && !warnedmmx_ret)
+		      {
+			if (warning (OPT_Wpsabi, "MMX vector return "
+				     "without MMX enabled changes the ABI"))
+			  warnedmmx_ret = true;
 		      }
 		  }
 		return mode;
@@ -6176,25 +6196,28 @@ classify_argument (enum machine_mode mode, const_tree type,
     case CHImode:
     case CQImode:
       {
-	int size = (bit_offset % 64)+ (int) GET_MODE_BITSIZE (mode);
+	int size = bit_offset + (int) GET_MODE_BITSIZE (mode);
 
-	if (size <= 32)
+	/* Analyze last 128 bits only.  */
+	size = (size - 1) & 0x7f;
+
+	if (size < 32)
 	  {
 	    classes[0] = X86_64_INTEGERSI_CLASS;
 	    return 1;
 	  }
-	else if (size <= 64)
+	else if (size < 64)
 	  {
 	    classes[0] = X86_64_INTEGER_CLASS;
 	    return 1;
 	  }
-	else if (size <= 64+32)
+	else if (size < 64+32)
 	  {
 	    classes[0] = X86_64_INTEGER_CLASS;
 	    classes[1] = X86_64_INTEGERSI_CLASS;
 	    return 2;
 	  }
-	else if (size <= 64+64)
+	else if (size < 64+64)
 	  {
 	    classes[0] = classes[1] = X86_64_INTEGER_CLASS;
 	    return 2;
@@ -6461,7 +6484,7 @@ construct_container (enum machine_mode mode, enum machine_mode orig_mode,
   if (n == 2
       && regclass[0] == X86_64_INTEGER_CLASS
       && regclass[1] == X86_64_INTEGER_CLASS
-      && (mode == CDImode || mode == TImode || mode == TFmode)
+      && (mode == CDImode || mode == TImode)
       && intreg[0] + 1 == intreg[1])
     return gen_rtx_REG (mode, intreg[0]);
 
@@ -6711,7 +6734,7 @@ ix86_function_arg_advance (cumulative_args_t cum_v, enum machine_mode mode,
   words = (bytes + UNITS_PER_WORD - 1) / UNITS_PER_WORD;
 
   if (type)
-    mode = type_natural_mode (type, NULL);
+    mode = type_natural_mode (type, NULL, false);
 
   if (TARGET_64BIT && (cum ? cum->call_abi : ix86_abi) == MS_ABI)
     function_arg_advance_ms_64 (cum, bytes, words);
@@ -6739,8 +6762,6 @@ function_arg_32 (const CUMULATIVE_ARGS *cum, enum machine_mode mode,
 		 enum machine_mode orig_mode, const_tree type,
 		 HOST_WIDE_INT bytes, HOST_WIDE_INT words)
 {
-  static bool warnedsse, warnedmmx;
-
   /* Avoid the AL settings for the Unix64 ABI.  */
   if (mode == VOIDmode)
     return constm1_rtx;
@@ -6797,12 +6818,6 @@ function_arg_32 (const CUMULATIVE_ARGS *cum, enum machine_mode mode,
     case V2DFmode:
       if (!type || !AGGREGATE_TYPE_P (type))
 	{
-	  if (!TARGET_SSE && !warnedsse && cum->warn_sse)
-	    {
-	      warnedsse = true;
-	      warning (0, "SSE vector argument without SSE enabled "
-		       "changes the ABI");
-	    }
 	  if (cum->sse_nregs)
 	    return gen_reg_or_parallel (mode, orig_mode,
 				        cum->sse_regno + FIRST_SSE_REG);
@@ -6835,12 +6850,6 @@ function_arg_32 (const CUMULATIVE_ARGS *cum, enum machine_mode mode,
     case V1DImode:
       if (!type || !AGGREGATE_TYPE_P (type))
 	{
-	  if (!TARGET_MMX && !warnedmmx && cum->warn_mmx)
-	    {
-	      warnedmmx = true;
-	      warning (0, "MMX vector argument without MMX enabled "
-		       "changes the ABI");
-	    }
 	  if (cum->mmx_nregs)
 	    return gen_reg_or_parallel (mode, orig_mode,
 				        cum->mmx_regno + FIRST_MMX_REG);
@@ -6963,7 +6972,7 @@ ix86_function_arg (cumulative_args_t cum_v, enum machine_mode omode,
   /* To simplify the code below, represent vector types with a vector mode
      even if MMX/SSE are not active.  */
   if (type && TREE_CODE (type) == VECTOR_TYPE)
-    mode = type_natural_mode (type, cum);
+    mode = type_natural_mode (type, cum, false);
 
   if (TARGET_64BIT && (cum ? cum->call_abi : ix86_abi) == MS_ABI)
     arg = function_arg_ms_64 (cum, mode, omode, named, bytes);
@@ -7414,7 +7423,7 @@ ix86_function_value (const_tree valtype, const_tree fntype_or_decl,
   enum machine_mode mode, orig_mode;
 
   orig_mode = TYPE_MODE (valtype);
-  mode = type_natural_mode (valtype, NULL);
+  mode = type_natural_mode (valtype, NULL, true);
   return ix86_function_value_1 (valtype, fntype_or_decl, orig_mode, mode);
 }
 
@@ -7529,7 +7538,7 @@ ix86_return_in_memory (const_tree type, const_tree fntype ATTRIBUTE_UNUSED)
 #ifdef SUBTARGET_RETURN_IN_MEMORY
   return SUBTARGET_RETURN_IN_MEMORY (type, fntype);
 #else
-  const enum machine_mode mode = type_natural_mode (type, NULL);
+  const enum machine_mode mode = type_natural_mode (type, NULL, true);
 
   if (TARGET_64BIT)
     {
@@ -7541,52 +7550,6 @@ ix86_return_in_memory (const_tree type, const_tree fntype ATTRIBUTE_UNUSED)
   else
     return return_in_memory_32 (type, mode);
 #endif
-}
-
-/* When returning SSE vector types, we have a choice of either
-     (1) being abi incompatible with a -march switch, or
-     (2) generating an error.
-   Given no good solution, I think the safest thing is one warning.
-   The user won't be able to use -Werror, but....
-
-   Choose the STRUCT_VALUE_RTX hook because that's (at present) only
-   called in response to actually generating a caller or callee that
-   uses such a type.  As opposed to TARGET_RETURN_IN_MEMORY, which is called
-   via aggregate_value_p for general type probing from tree-ssa.  */
-
-static rtx
-ix86_struct_value_rtx (tree type, int incoming ATTRIBUTE_UNUSED)
-{
-  static bool warnedsse, warnedmmx;
-
-  if (!TARGET_64BIT && type)
-    {
-      /* Look at the return type of the function, not the function type.  */
-      enum machine_mode mode = TYPE_MODE (TREE_TYPE (type));
-
-      if (!TARGET_SSE && !warnedsse)
-	{
-	  if (mode == TImode
-	      || (VECTOR_MODE_P (mode) && GET_MODE_SIZE (mode) == 16))
-	    {
-	      warnedsse = true;
-	      warning (0, "SSE vector return without SSE enabled "
-		       "changes the ABI");
-	    }
-	}
-
-      if (!TARGET_MMX && !warnedmmx)
-	{
-	  if (VECTOR_MODE_P (mode) && GET_MODE_SIZE (mode) == 8)
-	    {
-	      warnedmmx = true;
-	      warning (0, "MMX vector return without MMX enabled "
-		       "changes the ABI");
-	    }
-	}
-    }
-
-  return NULL;
 }
 
 
@@ -8013,7 +7976,7 @@ ix86_gimplify_va_arg (tree valist, tree type, gimple_seq *pre_p,
   size = int_size_in_bytes (type);
   rsize = (size + UNITS_PER_WORD - 1) / UNITS_PER_WORD;
 
-  nat_mode = type_natural_mode (type, NULL);
+  nat_mode = type_natural_mode (type, NULL, false);
   switch (nat_mode)
     {
     case V8SFmode:
@@ -10558,17 +10521,16 @@ ix86_expand_prologue (void)
 	 works for realigned stack, too.  */
       if (r10_live && eax_live)
         {
-	  t = plus_constant (Pmode, stack_pointer_rtx, allocate);
+	  t = gen_rtx_PLUS (Pmode, stack_pointer_rtx, eax);
 	  emit_move_insn (gen_rtx_REG (word_mode, R10_REG),
 			  gen_frame_mem (word_mode, t));
-	  t = plus_constant (Pmode, stack_pointer_rtx,
-			     allocate - UNITS_PER_WORD);
+	  t = plus_constant (Pmode, t, UNITS_PER_WORD);
 	  emit_move_insn (gen_rtx_REG (word_mode, AX_REG),
 			  gen_frame_mem (word_mode, t));
 	}
       else if (eax_live || r10_live)
 	{
-	  t = plus_constant (Pmode, stack_pointer_rtx, allocate);
+	  t = gen_rtx_PLUS (Pmode, stack_pointer_rtx, eax);
 	  emit_move_insn (gen_rtx_REG (word_mode,
 				       (eax_live ? AX_REG : R10_REG)),
 			  gen_frame_mem (word_mode, t));
@@ -17343,8 +17305,18 @@ ix86_avoid_lea_for_addr (rtx insn, rtx operands[])
   if (!TARGET_OPT_AGU || optimize_function_for_size_p (cfun))
     return false;
 
-  /* Check it is correct to split here.  */
-  if (!ix86_ok_to_clobber_flags(insn))
+  /* The "at least two components" test below might not catch simple
+     move or zero extension insns if parts.base is non-NULL and parts.disp
+     is const0_rtx as the only components in the address, e.g. if the
+     register is %rbp or %r13.  As this test is much cheaper and moves or
+     zero extensions are the common case, do this check first.  */
+  if (REG_P (operands[1])
+      || (SImode_address_operand (operands[1], VOIDmode)
+	  && REG_P (XEXP (operands[1], 0))))
+    return false;
+
+  /* Check if it is OK to split here.  */
+  if (!ix86_ok_to_clobber_flags (insn))
     return false;
 
   ok = ix86_decompose_address (operands[1], &parts);
@@ -20488,7 +20460,7 @@ ix86_expand_vec_perm (rtx operands[])
 	  return;
 
 	case V8SFmode:
-	  mask = gen_lowpart (V8SFmode, mask);
+	  mask = gen_lowpart (V8SImode, mask);
 	  if (one_operand_shuffle)
 	    emit_insn (gen_avx2_permvarv8sf (target, op0, mask));
 	  else
@@ -39433,7 +39405,9 @@ expand_vec_perm_interleave2 (struct expand_vec_perm_d *d)
       else
 	dfinal.perm[i] = e;
     }
-  dfinal.op0 = gen_reg_rtx (dfinal.vmode);
+
+  if (!d->testing_p)
+    dfinal.op0 = gen_reg_rtx (dfinal.vmode);
   dfinal.op1 = dfinal.op0;
   dfinal.one_operand_p = true;
   dremap.target = dfinal.op0;
@@ -39868,6 +39842,9 @@ expand_vec_perm_pshufb2 (struct expand_vec_perm_d *d)
     return false;
   gcc_assert (!d->one_operand_p);
 
+  if (d->testing_p)
+    return true;
+
   nelt = d->nelt;
   eltsz = GET_MODE_SIZE (GET_MODE_INNER (d->vmode));
 
@@ -40067,6 +40044,8 @@ expand_vec_perm_even_odd_1 (struct expand_vec_perm_d *d, unsigned odd)
   switch (d->vmode)
     {
     case V4DFmode:
+      if (d->testing_p)
+	break;
       t1 = gen_reg_rtx (V4DFmode);
       t2 = gen_reg_rtx (V4DFmode);
 
@@ -40086,6 +40065,8 @@ expand_vec_perm_even_odd_1 (struct expand_vec_perm_d *d, unsigned odd)
       {
 	int mask = odd ? 0xdd : 0x88;
 
+	if (d->testing_p)
+	  break;
 	t1 = gen_reg_rtx (V8SFmode);
 	t2 = gen_reg_rtx (V8SFmode);
 	t3 = gen_reg_rtx (V8SFmode);
@@ -40127,6 +40108,8 @@ expand_vec_perm_even_odd_1 (struct expand_vec_perm_d *d, unsigned odd)
 	return expand_vec_perm_pshufb2 (d);
       else
 	{
+	  if (d->testing_p)
+	    break;
 	  /* We need 2*log2(N)-1 operations to achieve odd/even
 	     with interleave. */
 	  t1 = gen_reg_rtx (V8HImode);
@@ -40148,6 +40131,8 @@ expand_vec_perm_even_odd_1 (struct expand_vec_perm_d *d, unsigned odd)
 	return expand_vec_perm_pshufb2 (d);
       else
 	{
+	  if (d->testing_p)
+	    break;
 	  t1 = gen_reg_rtx (V16QImode);
 	  t2 = gen_reg_rtx (V16QImode);
 	  t3 = gen_reg_rtx (V16QImode);
@@ -40180,6 +40165,9 @@ expand_vec_perm_even_odd_1 (struct expand_vec_perm_d *d, unsigned odd)
 	  return expand_vec_perm_even_odd_1 (&d_copy, odd);
 	}
 
+      if (d->testing_p)
+	break;
+
       t1 = gen_reg_rtx (V4DImode);
       t2 = gen_reg_rtx (V4DImode);
 
@@ -40205,6 +40193,9 @@ expand_vec_perm_even_odd_1 (struct expand_vec_perm_d *d, unsigned odd)
 	  d_copy.op1 = gen_lowpart (V8SFmode, d->op1);
 	  return expand_vec_perm_even_odd_1 (&d_copy, odd);
 	}
+
+      if (d->testing_p)
+	break;
 
       t1 = gen_reg_rtx (V8SImode);
       t2 = gen_reg_rtx (V8SImode);
@@ -40298,6 +40289,8 @@ expand_vec_perm_broadcast_1 (struct expand_vec_perm_d *d)
     case V16QImode:
       /* These can be implemented via interleave.  We save one insn by
 	 stopping once we have promoted to V4SImode and then use pshufd.  */
+      if (d->testing_p)
+	return true;
       do
 	{
 	  rtx dest;
@@ -42535,8 +42528,6 @@ ix86_memmodel_check (unsigned HOST_WIDE_INT val)
 
 #undef TARGET_PROMOTE_PROTOTYPES
 #define TARGET_PROMOTE_PROTOTYPES hook_bool_const_tree_true
-#undef TARGET_STRUCT_VALUE_RTX
-#define TARGET_STRUCT_VALUE_RTX ix86_struct_value_rtx
 #undef TARGET_SETUP_INCOMING_VARARGS
 #define TARGET_SETUP_INCOMING_VARARGS ix86_setup_incoming_varargs
 #undef TARGET_MUST_PASS_IN_STACK
