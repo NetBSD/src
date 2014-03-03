@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.89 2014/03/01 05:41:59 matt Exp $	*/
+/*	$NetBSD: armreg.h,v 1.90 2014/03/03 14:26:32 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -269,6 +269,11 @@
 #define CPU_ID_ARM_88SV584X_V6	0x410fb020 /* Marvell Sheeva 88SV584x v6 Core */
 
 /* CPUID registers */
+#define ARM_ISA3_SYNCHPRIM_MASK	0x0000f000
+#define ARM_ISA4_SYNCHPRIM_MASK	0x00f00000
+#define ARM_ISA3_SYNCHPRIM_LDREX	0x10	// LDREX
+#define ARM_ISA3_SYNCHPRIM_LDREXPLUS	0x13	// +CLREX/LDREXB/LDREXH
+#define ARM_ISA3_SYNCHPRIM_LDREXD	0x20	// +LDREXD
 #define ARM_PFR0_THUMBEE_MASK	0x0000f000
 #define ARM_PFR1_GTIMER_MASK	0x000f0000
 #define ARM_PFR1_VIRT_MASK	0x0000f000
@@ -358,6 +363,9 @@
 #define CPU_CONTROL_VECRELOC	0x00002000 /* V: Vector relocation */
 #define CPU_CONTROL_ROUNDROBIN	0x00004000 /* RR: Predictable replacement */
 #define CPU_CONTROL_V4COMPAT	0x00008000 /* L4: ARMv4 compat LDR R15 etc */
+#define CPU_CONTROL_HA_ENABLE	0x00020000 /* HA: Hardware Access flag enable */
+#define CPU_CONTROL_WXN_ENABLE	0x00080000 /* WXN: Write Execute Never */
+#define CPU_CONTROL_UWXN_ENABLE	0x00100000 /* UWXN: User Write eXecute Never */
 #define CPU_CONTROL_FI_ENABLE	0x00200000 /* FI: Low interrupt latency */
 #define CPU_CONTROL_UNAL_ENABLE	0x00400000 /* U: unaligned data access */
 #define CPU_CONTROL_XP_ENABLE	0x00800000 /* XP: extended page table */
