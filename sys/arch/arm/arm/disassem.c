@@ -1,4 +1,4 @@
-/*	$NetBSD: disassem.c,v 1.23 2014/01/10 23:52:53 matt Exp $	*/
+/*	$NetBSD: disassem.c,v 1.24 2014/03/03 08:51:39 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -49,7 +49,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.23 2014/01/10 23:52:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.24 2014/03/03 08:51:39 matt Exp $");
 
 #include <sys/systm.h>
 
@@ -122,6 +122,9 @@ struct arm32_insn {
 static const struct arm32_insn arm32_i[] = {
     { 0x0fffffff, 0x0ff00000, "imb",	"c" },		/* Before swi */
     { 0x0fffffff, 0x0ff00001, "imbrange",	"c" },	/* Before swi */
+    { 0x0fffffff, 0x0320f003, "yield",	"" },	/* Before swi */
+    { 0x0fffffff, 0x0320f002, "wfe",	"" },	/* Before swi */
+    { 0x0fffffff, 0x0320f003, "wfi",	"" },	/* Before swi */
     { 0x0f000000, 0x0f000000, "swi",	"c" },
     { 0xfe000000, 0xfa000000, "blx",	"t" },		/* Before b and bl */
     { 0x0f000000, 0x0a000000, "b",	"b" },
@@ -140,10 +143,20 @@ static const struct arm32_insn arm32_i[] = {
     { 0x0c500000, 0x04100000, "ldr",	"daW" },
     { 0x0c500000, 0x04400000, "strb",	"daW" },
     { 0x0c500000, 0x04500000, "ldrb",	"daW" },
+    { 0x0fff0000, 0x092d0000, "push",	"l" },	/* separate out r13 base */
+    { 0x0fff0000, 0x08bd0000, "pop",	"l" },	/* separate out r13 base */
     { 0x0e1f0000, 0x080d0000, "stm",	"YnWl" },/* separate out r13 base */
     { 0x0e1f0000, 0x081d0000, "ldm",	"YnWl" },/* separate out r13 base */    
     { 0x0e100000, 0x08000000, "stm",	"XnWl" },
     { 0x0e100000, 0x08100000, "ldm",	"XnWl" },    
+    { 0x0ff00fff, 0x01900f9f, "ldrex",	"da" },
+    { 0x0ff00fff, 0x01b00f9f, "ldrexd",	"da" },
+    { 0x0ff00fff, 0x01d00f9f, "ldrexb",	"da" },
+    { 0x0ff00fff, 0x01f00f9f, "ldrexh",	"da" },
+    { 0x0ff00ff0, 0x01800f90, "strex",	"dma" },
+    { 0x0ff00ff0, 0x01a00f90, "strexd",	"dma" },
+    { 0x0ff00ff0, 0x01c00f90, "strexb",	"dma" },
+    { 0x0ff00ff0, 0x01e00f90, "strexh",	"dma" },
     { 0x0e1000f0, 0x00100090, "ldrb",	"de" },
     { 0x0e1000f0, 0x00000090, "strb",	"de" },
     { 0x0e1000f0, 0x001000d0, "ldrsb",	"de" },
@@ -667,7 +680,8 @@ disasm_insn_ldrstr(const disasm_interface_t *di, u_int insn, u_int loc)
 		di->di_printaddr(loc + 8);
  	} else {
 		di->di_printf("[r%d", (insn >> 16) & 0x0f);
-		if ((insn & 0x03000fff) != 0x01000000) {
+		if ((insn & 0x03000fff) != 0x01000000
+		    && (insn & 0x0f800ff0) != 0x01800f90) {
 			di->di_printf("%s, ", (insn & (1 << 24)) ? "" : "]");
 			if (!(insn & 0x00800000))
 				di->di_printf("-");
