@@ -1,8 +1,14 @@
-# $NetBSD: Makefile,v 1.20 2013/11/12 16:48:39 joerg Exp $
+# $NetBSD: Makefile,v 1.21 2014/03/03 12:15:27 martin Exp $
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/lib/libm
+
+.if ${MACHINE} == "sparc" || ${MACHINE} == "i386" \
+	|| ${MACHINE} == "amd64" || ${MACHINE_CPU} == "arm"	\
+	|| ${MACHINE} == "sparc64"
+CPPFLAGS+=	-DHAVE_FENV_H
+.endif
 
 TESTS_C+=	t_acos
 TESTS_C+=	t_asin
