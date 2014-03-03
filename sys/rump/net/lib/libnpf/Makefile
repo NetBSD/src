@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2014/03/03 14:01:30 pooka Exp $
+#	$NetBSD: Makefile,v 1.11 2014/03/03 19:09:52 pooka Exp $
 #
 # Public Domain.
 #
@@ -18,6 +18,8 @@ SRCS+=	npf_alg_icmp.c
 SRCS+=	npf_ext_log.c npf_ext_normalize.c npf_ext_rndblock.c
 
 SRCS+=	component.c
+
+.include <bsd.own.mk>
 
 .if ${RUMP_NPF_TESTING:Uyes} == "yes"
 CPPFLAGS+=	-D_NPF_TESTING
