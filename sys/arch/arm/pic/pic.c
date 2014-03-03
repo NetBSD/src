@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.19 2014/01/28 13:20:30 martin Exp $	*/
+/*	$NetBSD: pic.c,v 1.20 2014/03/03 08:50:48 matt Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.19 2014/01/28 13:20:30 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.20 2014/03/03 08:50:48 matt Exp $");
 
 #define _INTR_PRIVATE
 #include <sys/param.h>
@@ -255,17 +255,26 @@ pic_find_pending_irqs_by_ipl(struct pic_softc *pic, size_t irq_base,
 void
 pic_dispatch(struct intrsource *is, void *frame)
 {
-	int rv __unused;
+	int (*func)(void *) = is->is_func;
+	void *arg = is->is_arg;
 
-	if (__predict_false(is->is_arg == NULL)
-	    && __predict_true(frame != NULL)) {
-		rv = (*is->is_func)(frame);
-	} else if (__predict_true(is->is_arg != NULL)) {
-		rv = (*is->is_func)(is->is_arg);
-	} else {
-		pic_deferral_ev.ev_count++;
-		return;
+	if (__predict_false(arg == NULL)) {
+		if (__predict_false(frame == NULL)) {
+			pic_deferral_ev.ev_count++;
+			return;
+		}
+		arg = frame;
 	}
+
+#ifdef MULTIPROCESSOR
+	if (!is->is_mpsafe) {
+		KERNEL_LOCK(1, NULL);
+		(void)(*func)(arg);
+		KERNEL_UNLOCK_ONE(NULL);
+	} else
+#endif
+		(void)(*func)(arg);
+
 
 	struct pic_percpu * const pcpu = percpu_getref(is->is_pic->pic_percpu);
 	KASSERT(pcpu->pcpu_magic == PICPERCPU_MAGIC);
@@ -607,6 +616,9 @@ pic_establish_intr(struct pic_softc *pic, int irq, int ipl, int type,
 	is->is_type = type;
 	is->is_func = func;
 	is->is_arg = arg;
+#ifdef MULTIPROCESSOR
+	is->is_mpsafe = false;
+#endif
 
 	if (pic->pic_ops->pic_source_name)
 		(*pic->pic_ops->pic_source_name)(pic, irq, is->is_source,
