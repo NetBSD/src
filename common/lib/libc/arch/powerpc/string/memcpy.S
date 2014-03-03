@@ -1,4 +1,4 @@
-/* $NetBSD: memcpy.S,v 1.4 2014/03/03 15:30:31 macallan Exp $ */
+/* $NetBSD: memcpy.S,v 1.5 2014/03/03 18:55:02 matt Exp $ */
 
 /* stropt/memcpy_440.S, pl_string_common, pl_linux 10/11/04 11:45:36
  * ==========================================================================
@@ -52,7 +52,7 @@
  */
 
 #include <machine/asm.h>
-#ifdef _KERNEL
+#ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
 #endif
 
