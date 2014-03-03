@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.149 2014/02/18 06:18:13 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.150 2014/03/03 16:50:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.149 2014/02/18 06:18:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.150 2014/03/03 16:50:28 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1158,6 +1158,8 @@ uvm_kick_pdaemon()
 void *
 rump_hypermalloc(size_t howmuch, int alignment, bool waitok, const char *wmsg)
 {
+	const unsigned long thelimit =
+	    curlwp == uvm.pagedaemon_lwp ? pdlimit : rump_physmemlimit;
 	unsigned long newmem;
 	void *rv;
 	int error;
@@ -1166,10 +1168,9 @@ rump_hypermalloc(size_t howmuch, int alignment, bool waitok, const char *wmsg)
 
 	/* first we must be within the limit */
  limitagain:
-	if (rump_physmemlimit != RUMPMEM_UNLIMITED) {
+	if (thelimit != RUMPMEM_UNLIMITED) {
 		newmem = atomic_add_long_nv(&curphysmem, howmuch);
-		if ((newmem > rump_physmemlimit) &&
-		    !(curlwp == uvm.pagedaemon_lwp || newmem > pdlimit)) {
+		if (newmem > thelimit) {
 			newmem = atomic_add_long_nv(&curphysmem, -howmuch);
 			if (!waitok) {
 				return NULL;
