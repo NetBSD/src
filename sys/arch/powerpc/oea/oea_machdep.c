@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.69 2014/02/28 05:34:39 matt Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.70 2014/03/03 15:36:36 macallan Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.69 2014/02/28 05:34:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.70 2014/03/03 15:36:36 macallan Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -496,9 +496,16 @@ mpc601_ioseg_add(paddr_t pa, register_t len)
 	 * in pmap_bootstrap().
 	 */
 	iosrtable[i] = SR601(SR601_Ks, SR601_BUID_MEMFORCED, 0, i);
+
+	/*
+	 * XXX Setting segment register 0xf on my powermac 7200
+	 * wedges machine so set later in pmap.c
+	 */
+	/*
 	__asm volatile ("mtsrin %0,%1"
 	    ::	"r"(iosrtable[i]),
 		"r"(pa));
+	*/
 }
 #endif /* PPC_OEA601 */
 
