@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.13 2013/04/25 00:11:35 macallan Exp $	*/
+/*	$NetBSD: clock.c,v 1.14 2014/03/03 15:36:36 macallan Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.13 2013/04/25 00:11:35 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.14 2014/03/03 15:36:36 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -68,7 +68,11 @@ static struct timecounter powerpc_timecounter = {
 	0,			/* no poll_pps */
 	0x7fffffff,		/* counter_mask */
 	0,			/* frequency */
+#if PPC_OEA601
+	"rtc",			/* name */
+#else
 	"mftb",			/* name */
+#endif
 	100,			/* quality */
 	NULL,			/* tc_priv */
 	NULL			/* tc_next */
@@ -88,8 +92,7 @@ cpu_initclocks(void)
 	cpu_timebase = ticks_per_sec;
 #ifdef PPC_OEA601
 	if ((mfpvr() >> 16) == MPC601)
-		__asm volatile 
-		    ("mfspr %0,%1" : "=r"(ci->ci_lasttb) : "n"(SPR_RTCL_R));
+		ci->ci_lasttb = rtc_nanosecs();
 	else
 #endif
 		__asm volatile ("mftb %0" : "=r"(ci->ci_lasttb));
@@ -154,8 +157,7 @@ decr_intr(struct clockframe *cfp)
 		 */
 #ifdef PPC_OEA601
 		if ((mfpvr() >> 16) == MPC601)
-			__asm volatile 
-			    ("mfspr %0,%1" : "=r"(tb) : "n"(SPR_RTCL_R));
+			tb = rtc_nanosecs();
 		else
 #endif
 			__asm volatile ("mftb %0" : "=r"(tb));
@@ -241,7 +243,7 @@ get_powerpc_timecount(struct timecounter *tc)
 		      : "=r"(msr), "=r"(scratch) : "K"((u_short)~PSL_EE));
 #ifdef PPC_OEA601
 	if ((mfpvr() >> 16) == MPC601)
-		__asm volatile ("mfspr %0,%1" : "=r"(tb) : "n"(SPR_RTCL_R));
+		tb = rtc_nanosecs();
 	else
 #endif
 		__asm volatile ("mftb %0" : "=r"(tb));

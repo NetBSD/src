@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.36 2014/02/28 05:35:49 matt Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.37 2014/03/03 15:36:36 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.36 2014/02/28 05:35:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.37 2014/03/03 15:36:36 macallan Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.36 2014/02/28 05:35:49 matt Exp
 #include <powerpc/oea/bat.h>
 #include <powerpc/oea/ofw_rasconsvar.h>
 #include <powerpc/oea/cpufeat.h>
+#include <powerpc/include/oea/spr.h>
 #include <powerpc/ofw_cons.h>
 #include <powerpc/spr.h>
 #include <powerpc/pic/picvar.h>
@@ -120,6 +121,11 @@ char model_name[64];
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 void *startsym, *endsym;
 #endif
+
+#if PPC_OEA601
+#define TIMEBASE_FREQ (1000000000)  /* RTC register */
+#endif
+
 #ifdef TIMEBASE_FREQ
 u_int timebase_freq = TIMEBASE_FREQ;
 #else
@@ -334,7 +340,14 @@ found:
 	ns_per_tick = 1000000000 / ticks_per_sec;
 	ticks_per_intr = ticks_per_sec / hz;
 	cpu_timebase = ticks_per_sec;
+
+#ifdef PPC_OEA601
+	if ((mfpvr() >> 16) == MPC601)
+	    curcpu()->ci_lasttb = rtc_nanosecs();
+	else
+#endif
 	curcpu()->ci_lasttb = mftbl();
+
 	mtspr(SPR_DEC, ticks_per_intr);
 	mtmsr(msr);
 }
@@ -458,6 +471,24 @@ ofwoea_batinit(void)
 #ifdef macppc
 	/*
 	 * cover PCI and register space but not the firmware ROM
+	 */
+#ifdef PPC_OEA601
+
+        /*
+	 * use segment registers for the 601
+	 */
+	if ((mfpvr() >> 16 ) == MPC601)
+	    oea_batinit(
+		0x80000000, BAT_BL_256M,
+		0x90000000, BAT_BL_256M,
+		0xa0000000, BAT_BL_256M,
+		0xb0000000, BAT_BL_256M,
+		0xf0000000, BAT_BL_256M,
+		0);
+	else
+#endif
+	/*
+	 * map to bats
 	 */
 	oea_batinit(0x80000000, BAT_BL_1G,
 		    0xf0000000, BAT_BL_128M,
