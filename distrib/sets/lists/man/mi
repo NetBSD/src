@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1460 2014/02/24 07:23:39 skrll Exp $
+# $NetBSD: mi,v 1.1461 2014/03/03 02:10:24 ozaki-r Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1363,6 +1363,7 @@
 ./usr/share/man/cat4/mfi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mgadrm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mhzc.0			man-sys-catman		.cat
+./usr/share/man/cat4/micphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/midi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mii.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mixer.0			man-sys-catman		.cat
@@ -4333,6 +4334,7 @@
 ./usr/share/man/html4/mfi.html			man-sys-htmlman		html
 ./usr/share/man/html4/mgadrm.html		man-sys-htmlman		html
 ./usr/share/man/html4/mhzc.html			man-sys-htmlman		html
+./usr/share/man/html4/micphy.html		man-sys-htmlman		html
 ./usr/share/man/html4/midi.html			man-sys-htmlman		html
 ./usr/share/man/html4/mii.html			man-sys-htmlman		html
 ./usr/share/man/html4/mixer.html		man-sys-htmlman		html
@@ -7151,6 +7153,7 @@
 ./usr/share/man/man4/mfi.4			man-sys-man		.man
 ./usr/share/man/man4/mgadrm.4			man-sys-man		.man
 ./usr/share/man/man4/mhzc.4			man-sys-man		.man
+./usr/share/man/man4/micphy.4			man-sys-man		.man
 ./usr/share/man/man4/midi.4			man-sys-man		.man
 ./usr/share/man/man4/mii.4			man-sys-man		.man
 ./usr/share/man/man4/mixer.4			man-sys-man		.man
