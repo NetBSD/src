@@ -1,3 +1,475 @@
+2014-02-25  Richard Biener  <rguenther@suse.de>
+
+	Backport from mainline
+	2014-02-21  Richard Biener  <rguenther@suse.de>
+
+        PR tree-optimization/60276
+        * tree-vectorizer.h (struct _stmt_vec_info): Add min_neg_dist field.
+        (STMT_VINFO_MIN_NEG_DIST): New macro.
+        * tree-vect-data-refs.c (vect_analyze_data_ref_dependence): Record
+        STMT_VINFO_MIN_NEG_DIST.
+        * tree-vect-stmts.c (vectorizable_load): Verify if assumptions
+        made for negative dependence distances still hold.
+
+2014-02-25  Richard Biener  <rguenther@suse.de>
+
+	Backport from mainline
+	2014-02-21  Richard Biener  <rguenther@suse.de>
+
+	PR middle-end/60291
+	* tree-ssa-live.c (mark_all_vars_used_1): Do not walk
+	DECL_INITIAL for globals not in the current function context.
+
+	2014-02-20  Richard Biener  <rguenther@suse.de>
+
+	PR middle-end/60221
+	* tree-eh.c (execute_cleanup_eh_1): Also cleanup empty EH
+	regions at -O0.
+
+	2014-02-14  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/60183
+	* tree-ssa-phiprop.c (propagate_with_phi): Avoid speculating
+	loads.
+	(tree_ssa_phiprop): Calculate and free post-dominators.
+
+2014-02-25  Kyrylo Tkachov  <kyrylo.tkachov@arm.com>
+
+	PR target/55426
+	* config/arm/arm.h (CANNOT_CHANGE_MODE_CLASS): Allow 128 to 64-bit
+	conversions.
+
+2014-02-24  John David Anglin  <danglin@gcc.gnu.org>
+
+	* config/pa/pa.c (pa_output_move_double): Don't valididate when
+	adjusting offsetable addresses.
+
+2014-02-23  David Holsgrove <david.holsgrove@xilinx.com>
+
+	* config/microblaze/microblaze.md: Correct ashrsi_reg / lshrsi_reg names
+
+2014-02-23  Edgar E. Iglesias <edgar.iglesias@xilinx.com>
+
+	* config/microblaze/microblaze.h: Remove SECONDARY_MEMORY_NEEDED
+	definition.
+
+2014-02-23  David Holsgrove <david.holsgrove@xilinx.com>
+
+	* /config/microblaze/microblaze.c: Add microblaze_asm_output_mi_thunk
+	and define TARGET_ASM_OUTPUT_MI_THUNK and
+	TARGET_ASM_CAN_OUTPUT_MI_THUNK.
+
+2014-02-23  David Holsgrove <david.holsgrove@xilinx.com>
+
+	* config/microblaze/predicates.md: Add cmp_op predicate.
+	* config/microblaze/microblaze.md: Add branch_compare instruction 
+	which uses cmp_op predicate and emits cmp insn before branch.
+	* config/microblaze/microblaze.c (microblaze_emit_compare): Rename 
+	to microblaze_expand_conditional_branch and consolidate logic.
+	(microblaze_expand_conditional_branch): emit branch_compare
+	insn instead of handling cmp op separate from branch insn.
+
+2014-02-21  Martin Jambor  <mjambor@suse.cz>
+
+	PR ipa/55260
+	* ipa-cp.c (cgraph_edge_brings_all_agg_vals_for_node): Uce correct
+	info when checking whether lattices are bottom.
+
+2014-02-21  Jakub Jelinek  <jakub@redhat.com>
+
+	* config/i386/i386.c (ix86_expand_vec_perm): Use V8SImode
+	mode for mask of V8SFmode permutation.
+
+2014-02-20  Richard Henderson  <rth@redhat.com>
+
+	PR c++/60272
+	* builtins.c (expand_builtin_atomic_compare_exchange): Conditionalize
+	on failure the store back into EXPECT.  Always make a new pseudo for
+	OLDVAL.
+
+2014-02-20  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/57896
+	* config/i386/i386.c (expand_vec_perm_interleave2): Don't call
+	gen_reg_rtx if d->testing_p.
+	(expand_vec_perm_pshufb2, expand_vec_perm_even_odd_1,
+	expand_vec_perm_broadcast_1): Return early if d->testing_p and
+	we will certainly return true.
+
+2014-02-20  Richard Biener  <rguenther@suse.de>
+
+	* tree-cfg.c (replace_uses_by): Mark altered BBs before
+	doing the substitution.
+
+2014-02-19  H.J. Lu  <hongjiu.lu@intel.com>
+
+	Backport from mainline
+	2014-02-19  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR target/60207
+	* config/i386/i386.c (construct_container): Remove TFmode check
+	for X86_64_INTEGER_CLASS.
+
+2014-02-19  Uros Bizjak  <ubizjak@gmail.com>
+
+	Backport from mainline
+	2014-02-19  Uros Bizjak  <ubizjak@gmail.com>
+
+	PR target/59794
+	* config/i386/i386.c (type_natural_mode): Warn for ABI changes
+	only when -Wpsabi is enabled.
+
+2014-02-19  Terry Guo  <terry.guo@arm.com>
+
+	Backport from mainline
+	2014-02-08  Terry Guo  <terry.guo@arm.com>
+
+	* doc/invoke.texi: Document ARM -march=armv7e-m.
+
+2014-02-18  Kai Tietz  <ktietz@redhat.com>
+
+	Backport from mainline
+	2014-02-18  Kai Tietz  <ktietz@redhat.com>
+
+	PR target/60193
+	* config/i386/i386.c (ix86_expand_prologue): Use
+	rax register as displacement for restoring %r10, %rax.
+	Additional fix wrong offset for restoring both-registers.
+
+2014-02-18  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* ipa-prop.c (compute_complex_ancestor_jump_func): Replace overzealous
+	assertion with conditional return.
+
+2014-02-18  Jakub Jelinek  <jakub@redhat.com>
+	    Uros Bizjak  <ubizjak@gmail.com>
+
+	PR driver/60233
+	* config/i386/driver-i386.c (host_detect_local_cpu): If
+	YMM state is not saved by the OS, also clear has_f16c.  Move
+	CPUID 0x80000001 handling before YMM state saving checking.
+
+2014-02-14  Roland McGrath  <mcgrathr@google.com>
+
+	* configure.ac (HAVE_AS_IX86_UD2): New test for 'ud2' mnemonic.
+	* configure: Regenerated.
+	* config.in: Regenerated.
+	* config/i386/i386.md (trap) [HAVE_AS_IX86_UD2]: Use the mnemonic
+	instead of ASM_SHORT.
+
+2014-02-13  Uros Bizjak  <ubizjak@gmail.com>
+
+	Backport from mainline
+	2014-02-13  Uros Bizjak  <ubizjak@gmail.com>
+
+	* config/i386/sse.md (xop_vmfrcz<mode>2): Generate const0 in
+	operands[2], not operands[3].
+
+2014-02-13  Dominik Vogt  <vogt@linux.vnet.ibm.com>
+
+	* config/s390/s390.c (s390_asm_output_function_label): Fix crash
+	caused by bad second argument to warning_at() with -mhotpatch and
+	nested functions (e.g. with gfortran).
+
+2014-02-12  H.J. Lu  <hongjiu.lu@intel.com>
+
+	Backport from mainline
+	2014-02-12  H.J. Lu  <hongjiu.lu@intel.com>
+		    Uros Bizjak  <ubizjak@gmail.com>
+
+	PR target/60151
+	* configure.ac (HAVE_AS_GOTOFF_IN_DATA): Pass --32 to GNU assembler.
+
+2014-02-12  Eric Botcazou  <ebotcazou@adacore.com>
+
+	PR rtl-optimization/60116
+	* combine.c (try_combine): Also remove dangling REG_DEAD notes on the
+	other_insn once the combination has been validated.
+
+2014-02-10  Nagaraju Mekala <nagaraju.mekala@xilinx.com>
+
+	* config/microblaze/microblaze.md: Add movsi4_rev insn pattern.
+	* config/microblaze/predicates.md: Add reg_or_mem_operand predicate.
+
+2014-02-10  Nagaraju Mekala <nagaraju.mekala@xilinx.com>
+
+	* config/microblaze/microblaze.c: Extend mcpu version format
+
+2014-02-10  David Holsgrove <david.holsgrove@xilinx.com>
+
+	* config/microblaze/microblaze.h: Define SIZE_TYPE and PTRDIFF_TYPE.
+
+2014-02-10  Richard Biener  <rguenther@suse.de>
+
+	Backport from mainline
+	2014-01-30  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/59903
+	* tree-vect-loop.c (vect_transform_loop): Guard multiple-types
+	check properly.
+
+	2014-02-10  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/60115
+	* tree-eh.c (tree_could_trap_p): Unify TARGET_MEM_REF and
+	MEM_REF handling.  Properly verify that the accesses are not
+	out of the objects bound.
+
+2014-02-05  James Greenhalgh  <james.greenhalgh@arm.com>
+
+	Backport from mainline.
+	2014-02-05  James Greenhalgh  <james.greenhalgh@arm.com>
+
+	PR target/59718
+	* doc/invoke.texi (-march): Clarify documentation for ARM.
+	(-mtune): Likewise.
+	(-mcpu): Likewise.
+
+2014-02-04  John David Anglin  <danglin@gcc.gnu.org>
+
+	PR target/59777
+	* config/pa/pa.c (legitimize_tls_address): Return original address
+	if not passed a SYMBOL_REF rtx.
+	(hppa_legitimize_address): Call legitimize_tls_address for all TLS
+	addresses.
+	(pa_emit_move_sequence): Simplify TLS source operands.
+	(pa_legitimate_constant_p): Reject all TLS constants.
+	* config/pa/pa.h (PA_SYMBOL_REF_TLS_P): Correct comment.
+	(CONSTANT_ADDRESS_P): Reject TLS CONST addresses.
+
+2014-02-04  Uros Bizjak  <ubizjak@gmail.com>
+
+	Backport from mainline
+	2014-02-02  Uros Bizjak  <ubizjak@gmail.com>
+
+	PR target/60017
+	* config/i386/i386.c (classify_argument): Fix handling of bit_offset
+	when calculating size of integer atomic types.
+
+2014-02-02  Uros Bizjak  <ubizjak@gmail.com>
+
+	Backport from mainline
+	2014-01-30  Jakub Jelinek  <jakub@redhat.com>
+
+	* config/i386/f16cintrin.h (_cvtsh_ss): Avoid -Wnarrowing warning.
+
+2014-01-31  Richard Henderson  <rth@redhat.com>
+
+	PR middle-end/60004
+	* tree-eh.c (lower_try_finally_switch): Delay lowering finally block
+	until after else_eh is processed.
+
+2014-01-30  David Holsgrove <david.holsgrove@xilinx.com>
+
+	Backport from mainline
+	* config/microblaze/microblaze.md(cstoresf4, cbranchsf4): Replace
+	comparison_operator with ordered_comparison_operator.
+
+2014-01-25  Walter Lee  <walt@tilera.com>
+
+	Backport from mainline
+	2014-01-25  Walter Lee  <walt@tilera.com>
+
+	* config/tilegx/sync.md (atomic_fetch_sub): Fix negation and
+	avoid clobbering a live register.
+
+2014-01-25  Walter Lee  <walt@tilera.com>
+
+	Backport from mainline
+	2014-01-25  Walter Lee  <walt@tilera.com>
+
+	* config/tilegx/tilegx-c.c (tilegx_cpu_cpp_builtins):
+	Define __GCC_HAVE_SYNC_COMPARE_AND_SWAP_{1,2}.
+	* config/tilegx/tilepro-c.c (tilepro_cpu_cpp_builtins):
+	Define __GCC_HAVE_SYNC_COMPARE_AND_SWAP_{1,2,4,8}.
+
+2014-01-25  Walter Lee  <walt@tilera.com>
+
+	Backport from mainline
+	2014-01-25  Walter Lee  <walt@tilera.com>
+
+	* config/tilegx/tilegx.c (tilegx_gen_bundles): Delete barrier
+	insns before bundling.
+	* config/tilegx/tilegx.md (tile_network_barrier): Update comment.
+
+2014-01-25  Walter Lee  <walt@tilera.com>
+
+	Backport from mainline
+	2014-01-25  Walter Lee  <walt@tilera.com>
+
+	* config/tilegx/tilegx.c (tilegx_expand_builtin): Set
+	PREFETCH_SCHEDULE_BARRIER_P to true for prefetches.
+	* config/tilepro/tilepro.c (tilepro_expand_builtin): Ditto.
+
+2014-01-25  Walter Lee  <walt@tilera.com>
+
+	Backport from mainline
+	2014-01-25  Walter Lee  <walt@tilera.com>
+
+	* config/tilepro/tilepro.md (ctzdi2): Use register_operand
+	predicate.
+	(clzdi2): Ditto.
+	(ffsdi2): Ditto.
+
+2014-01-25  Walter Lee  <walt@tilera.com>
+
+	Backport from mainline
+	2014-01-25  Walter Lee  <walt@tilera.com>
+
+	* config/tilegx/tilegx.c (tilegx_expand_to_rtl_hook): New.
+	(TARGET_EXPAND_TO_RTL_HOOK): Define.
+
+2014-01-24  H.J. Lu  <hongjiu.lu@intel.com>
+
+	Backport from mainline
+	2014-01-23  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR target/59929
+	* config/i386/i386.md (pushsf splitter): Get stack adjustment
+	from push operand if code of push isn't PRE_DEC.
+
+2014-01-23  David Holsgrove <david.holsgrove@xilinx.com>
+
+	Backport from mainline.
+	* config/microblaze/microblaze.md: Add trap insn and attribute
+
+2014-01-23  Marek Polacek  <polacek@redhat.com>
+
+	Backport from mainline
+	2013-10-21  Marek Polacek  <polacek@redhat.com>
+
+	PR middle-end/58809
+	* fold-const.c (fold_range_test): Return 0 if the type is not
+	an integral type.
+
+2014-01-22  David Holsgrove <david.holsgrove@xilinx.com>
+
+	* config/microblaze/microblaze.md: Correct bswaphi2 insn.
+
+2014-01-22  Uros Bizjak  <ubizjak@gmail.com>
+
+	Backport from mainline
+	2014-01-20  Uros Bizjak  <ubizjak@gmail.com>
+
+	* config/i386/i386.c (ix86_avoid_lea_for_addr): Return false
+	for SImode_address_operand operands, having only a REG argument.
+
+	2014-01-20  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/59880
+	* config/i386/i386.c (ix86_avoid_lea_for_addr): Return false
+	if operands[1] is a REG or ZERO_EXTEND of a REG.
+
+	2014-01-18  Uros Bizjak  <ubizjak@gmail.com>
+		    H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR target/59379
+	* config/i386/i386.md (*lea<mode>): Zero-extend return register
+	to DImode for zero-extended addresses.
+
+2014-01-21  Andrew Pinski <apinski@cavium.com>
+	    Steve Ellcey  <sellcey@mips.com>
+
+	PR target/59462
+	* config/mips/mips.c (mips_print_operand): Check operand mode instead
+	of operator mode.
+
+2014-01-21  Andrey Belevantsev  <abel@ispras.ru>
+
+	Backport from mainline
+	2013-12-23  Andrey Belevantsev  <abel@ispras.ru>
+
+	PR rtl-optimization/57422
+	* sel-sched.c (mark_unavailable_hard_regs): Fix typo when calling
+	add_to_hard_reg_set.
+
+2014-01-20  Jakub Jelinek  <jakub@redhat.com>
+
+	PR middle-end/59860
+	* tree.h (fold_builtin_strcat): New prototype.
+	* builtins.c (fold_builtin_strcat): No longer static.  Add len
+	argument, if non-NULL, don't call c_strlen.  Optimize
+	directly into __builtin_memcpy instead of __builtin_strcpy.
+	(fold_builtin_2): Adjust fold_builtin_strcat caller.
+	* gimple-fold.c (gimple_fold_builtin): Handle BUILT_IN_STRCAT.
+
+2014-01-20  Richard Biener  <rguenther@suse.de>
+
+	PR middle-end/59860
+	* builtins.c (fold_builtin_strcat): Remove case better handled
+	by tree-ssa-strlen.c.
+
+2014-01-19  John David Anglin  <danglin@gcc.gnu.org>
+
+	* config/pa/pa.c (pa_attr_length_millicode_call): Correct length of
+	long non-pic millicode calls.
+
+2014-01-17  John David Anglin  <danglin@gcc.gnu.org>
+
+	* config/pa/pa.c (pa_attr_length_indirect_call): Don't output a short
+	call to $$dyncall when TARGET_LONG_CALLS is true.
+
+2014-01-17  H.J. Lu  <hongjiu.lu@intel.com>
+
+	Backport from mainline
+	2014-01-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR target/59794
+	* config/i386/i386.c (type_natural_mode): Add a bool parameter
+	to indicate if type is used for function return value.  Warn
+	ABI change if the vector mode isn't available for function
+	return value.
+	(ix86_function_arg_advance): Pass false to type_natural_mode.
+	(ix86_function_arg): Likewise.
+	(ix86_gimplify_va_arg): Likewise.
+	(function_arg_32): Don't warn ABI change.
+	(ix86_function_value): Pass true to type_natural_mode.
+	(ix86_return_in_memory): Likewise.
+	(ix86_struct_value_rtx): Removed.
+	(TARGET_STRUCT_VALUE_RTX): Likewise.
+
+2014-01-17  Charles Baylis  <charles.baylis@linaro.org>
+
+	Backport from mainline
+	2013-12-19  Charles Baylis  <charles.baylis@linaro.org>
+
+	PR target/59142
+	* config/arm/arm-ldmstm.ml: Use low_register_operand for Thumb
+	patterns.
+	* config/arm/ldmstm.md: Regenerate.
+
+	2013-12-19  Charles Baylis  <charles.baylis@linaro.org>
+
+	PR target/59142
+	* config/arm/predicates.md (arm_hard_general_register_operand):
+	New predicate.
+	(arm_hard_register_operand): Remove.
+	* config/arm/arm-ldmstm.ml: Use arm_hard_general_register_operand
+	for all patterns.
+	* config/arm/ldmstm.md: Regenerate.
+
+	2013-12-19  Charles Baylis  <charles.baylis@linaro.org>
+
+	PR target/59142
+	* config/arm/predicates.md (vfp_hard_register_operand): New predicate.
+	* config/arm/arm.md (vfp_pop_multiple_with_writeback): Use
+	vfp_hard_register_operand.
+
+2014-01-17  Kugan Vivekanandarajah  <kuganv@linaro.org>
+
+	Backport from mainline
+	2014-01-15  Matthew Gretton-Dann  <matthew.gretton-dann@linaro.org>
+	    Kugan Vivekanandarajah  <kuganv@linaro.org>
+
+	PR target/59695
+	* config/aarch64/aarch64.c (aarch64_build_constant): Fix incorrect
+	truncation.
+
+2014-01-17  Terry Guo  <terry.guo@arm.com>
+
+	PR target/59826
+	* config/arm/arm.md (prefetch): Set insn type attribute to load1.
+
 2014-01-16  Jakub Jelinek  <jakub@redhat.com>
 
 	PR target/59839
