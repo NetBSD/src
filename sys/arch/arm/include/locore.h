@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.13 2014/02/26 01:54:35 matt Exp $	*/
+/*	$NetBSD: locore.h,v 1.14 2014/03/03 08:15:36 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -148,10 +148,20 @@ void	cpu_attach(device_t, cpuid_t);
 #endif
 
 /* 1 == use cpu_sleep(), 0 == don't */
-extern int cpu_printfataltraps;
 extern int cpu_do_powersave;
+extern int cpu_printfataltraps;
 extern int cpu_fpu_present;
 extern int cpu_hwdiv_present;
+extern int cpu_neon_present;
+extern int cpu_simd_present;
+extern int cpu_simdex_present;
+extern int cpu_umull_present;
+extern int cpu_synchprim_present;
+
+extern int cpu_instruction_set_attributes[6];
+extern int cpu_memory_model_features[4];
+extern int cpu_processor_features[2];
+extern int cpu_media_and_vfp_features[2];
 
 extern u_int arm_cpu_max;
 
