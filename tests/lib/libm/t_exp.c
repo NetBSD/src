@@ -1,4 +1,4 @@
-/* $NetBSD: t_exp.c,v 1.4 2014/02/27 17:26:02 joerg Exp $ */
+/* $NetBSD: t_exp.c,v 1.5 2014/03/03 10:39:08 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -60,12 +60,10 @@ ATF_TC_HEAD(exp2_nan, tc)
 
 ATF_TC_BODY(exp2_nan, tc)
 {
-#ifndef __vax__
 	const double x = 0.0L / 0.0L;
 
 	if (isnan(exp2(x)) == 0)
 		atf_tc_fail_nonfatal("exp2(NaN) != NaN");
-#endif
 }
 
 ATF_TC(exp2_inf_neg);
@@ -76,13 +74,11 @@ ATF_TC_HEAD(exp2_inf_neg, tc)
 
 ATF_TC_BODY(exp2_inf_neg, tc)
 {
-#ifndef __vax__
 	const double x = -1.0L / 0.0L;
 	double y = exp2(x);
 
 	if (fabs(y) > 0.0 || signbit(y) != 0)
 		atf_tc_fail_nonfatal("exp2(-Inf) != +0.0");
-#endif
 }
 
 ATF_TC(exp2_inf_pos);
@@ -93,13 +89,11 @@ ATF_TC_HEAD(exp2_inf_pos, tc)
 
 ATF_TC_BODY(exp2_inf_pos, tc)
 {
-#ifndef __vax__
 	const double x = 1.0L / 0.0L;
 	double y = exp2(x);
 
 	if (isinf(y) == 0 || signbit(y) != 0)
 		atf_tc_fail_nonfatal("exp2(+Inf) != +Inf");
-#endif
 }
 
 ATF_TC(exp2_product);
@@ -110,7 +104,6 @@ ATF_TC_HEAD(exp2_product, tc)
 
 ATF_TC_BODY(exp2_product, tc)
 {
-#ifndef __vax__
 	const double x[] = { 0.0, 1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8 };
 	const double y[] = { 8.8, 7.7, 6.6, 5.5, 4.4, 3.3, 2.2, 1.1, 0.0 };
 	const double eps = 1.0e-11;
@@ -122,7 +115,6 @@ ATF_TC_BODY(exp2_product, tc)
 			atf_tc_fail_nonfatal("exp2(%0.01f + %0.01f) != exp2("
 			    "%0.01f) * exp2(%0.01f)", x[i], y[i], x[i], y[i]);
 	}
-#endif
 }
 
 ATF_TC(exp2_zero_neg);
@@ -133,12 +125,10 @@ ATF_TC_HEAD(exp2_zero_neg, tc)
 
 ATF_TC_BODY(exp2_zero_neg, tc)
 {
-#ifndef __vax__
 	const double x = -0.0L;
 
 	if (fabs(exp2(x) - 1.0) > 0.0)
 		atf_tc_fail_nonfatal("exp2(-0.0) != 1.0");
-#endif
 }
 
 ATF_TC(exp2_zero_pos);
@@ -149,12 +139,10 @@ ATF_TC_HEAD(exp2_zero_pos, tc)
 
 ATF_TC_BODY(exp2_zero_pos, tc)
 {
-#ifndef __vax__
 	const double x = 0.0L;
 
 	if (fabs(exp2(x) - 1.0) > 0.0)
 		atf_tc_fail_nonfatal("exp2(+0.0) != 1.0");
-#endif
 }
 
 /*
@@ -168,12 +156,10 @@ ATF_TC_HEAD(exp2f_nan, tc)
 
 ATF_TC_BODY(exp2f_nan, tc)
 {
-#ifndef __vax__
 	const float x = 0.0L / 0.0L;
 
 	if (isnan(exp2f(x)) == 0)
 		atf_tc_fail_nonfatal("exp2f(NaN) != NaN");
-#endif
 }
 
 ATF_TC(exp2f_inf_neg);
@@ -184,13 +170,11 @@ ATF_TC_HEAD(exp2f_inf_neg, tc)
 
 ATF_TC_BODY(exp2f_inf_neg, tc)
 {
-#ifndef __vax__
 	const float x = -1.0L / 0.0L;
 	float y = exp2f(x);
 
 	if (fabsf(y) > 0.0 || signbit(y) != 0)
 		atf_tc_fail_nonfatal("exp2f(-Inf) != +0.0");
-#endif
 }
 
 ATF_TC(exp2f_inf_pos);
@@ -201,13 +185,11 @@ ATF_TC_HEAD(exp2f_inf_pos, tc)
 
 ATF_TC_BODY(exp2f_inf_pos, tc)
 {
-#ifndef __vax__
 	const float x = 1.0L / 0.0L;
 	float y = exp2f(x);
 
 	if (isinf(y) == 0 || signbit(y) != 0)
 		atf_tc_fail_nonfatal("exp2f(+Inf) != +Inf");
-#endif
 }
 
 ATF_TC(exp2f_product);
@@ -218,7 +200,6 @@ ATF_TC_HEAD(exp2f_product, tc)
 
 ATF_TC_BODY(exp2f_product, tc)
 {
-#ifndef __vax__
 	const float x[] = { 0.0, 1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8 };
 	const float y[] = { 8.8, 7.7, 6.6, 5.5, 4.4, 3.3, 2.2, 1.1, 0.0 };
 	const float eps = 1.0e-2;
@@ -231,7 +212,6 @@ ATF_TC_BODY(exp2f_product, tc)
 			atf_tc_fail_nonfatal("exp2f(%0.01f + %0.01f) != exp2f("
 			    "%0.01f) * exp2f(%0.01f)", x[i], y[i], x[i], y[i]);
 	}
-#endif
 }
 
 ATF_TC(exp2f_zero_neg);
@@ -242,12 +222,10 @@ ATF_TC_HEAD(exp2f_zero_neg, tc)
 
 ATF_TC_BODY(exp2f_zero_neg, tc)
 {
-#ifndef __vax__
 	const float x = -0.0L;
 
 	if (fabsf(exp2f(x) - 1.0f) > 0.0)
 		atf_tc_fail_nonfatal("exp2f(-0.0) != 1.0");
-#endif
 }
 
 ATF_TC(exp2f_zero_pos);
@@ -258,12 +236,10 @@ ATF_TC_HEAD(exp2f_zero_pos, tc)
 
 ATF_TC_BODY(exp2f_zero_pos, tc)
 {
-#ifndef __vax__
 	const float x = 0.0L;
 
 	if (fabsf(exp2f(x) - 1.0f) > 0.0)
 		atf_tc_fail_nonfatal("exp2f(+0.0) != 1.0");
-#endif
 }
 
 /*
@@ -277,12 +253,10 @@ ATF_TC_HEAD(exp_nan, tc)
 
 ATF_TC_BODY(exp_nan, tc)
 {
-#ifndef __vax__
 	const double x = 0.0L / 0.0L;
 
 	if (isnan(exp(x)) == 0)
 		atf_tc_fail_nonfatal("exp(NaN) != NaN");
-#endif
 }
 
 ATF_TC(exp_inf_neg);
@@ -293,13 +267,11 @@ ATF_TC_HEAD(exp_inf_neg, tc)
 
 ATF_TC_BODY(exp_inf_neg, tc)
 {
-#ifndef __vax__
 	const double x = -1.0L / 0.0L;
 	double y = exp(x);
 
 	if (fabs(y) > 0.0 || signbit(y) != 0)
 		atf_tc_fail_nonfatal("exp(-Inf) != +0.0");
-#endif
 }
 
 ATF_TC(exp_inf_pos);
@@ -310,13 +282,11 @@ ATF_TC_HEAD(exp_inf_pos, tc)
 
 ATF_TC_BODY(exp_inf_pos, tc)
 {
-#ifndef __vax__
 	const double x = 1.0L / 0.0L;
 	double y = exp(x);
 
 	if (isinf(y) == 0 || signbit(y) != 0)
 		atf_tc_fail_nonfatal("exp(+Inf) != +Inf");
-#endif
 }
 
 ATF_TC(exp_product);
@@ -327,7 +297,6 @@ ATF_TC_HEAD(exp_product, tc)
 
 ATF_TC_BODY(exp_product, tc)
 {
-#ifndef __vax__
 	double eps;
 	double x;
 	double y;
@@ -341,7 +310,6 @@ ATF_TC_BODY(exp_product, tc)
 		if (fabs(exp(x) - y) > eps)
 			atf_tc_fail_nonfatal("exp(%0.01f) != %18.18e", x, y);
 	}
-#endif
 }
 
 ATF_TC(exp_zero_neg);
@@ -352,12 +320,10 @@ ATF_TC_HEAD(exp_zero_neg, tc)
 
 ATF_TC_BODY(exp_zero_neg, tc)
 {
-#ifndef __vax__
 	const double x = -0.0L;
 
 	if (fabs(exp(x) - 1.0) > 0.0)
 		atf_tc_fail_nonfatal("exp(-0.0) != 1.0");
-#endif
 }
 
 ATF_TC(exp_zero_pos);
@@ -368,12 +334,10 @@ ATF_TC_HEAD(exp_zero_pos, tc)
 
 ATF_TC_BODY(exp_zero_pos, tc)
 {
-#ifndef __vax__
 	const double x = 0.0L;
 
 	if (fabs(exp(x) - 1.0) > 0.0)
 		atf_tc_fail_nonfatal("exp(+0.0) != 1.0");
-#endif
 }
 
 /*
@@ -387,12 +351,10 @@ ATF_TC_HEAD(expf_nan, tc)
 
 ATF_TC_BODY(expf_nan, tc)
 {
-#ifndef __vax__
 	const float x = 0.0L / 0.0L;
 
 	if (isnan(expf(x)) == 0)
 		atf_tc_fail_nonfatal("expf(NaN) != NaN");
-#endif
 }
 
 ATF_TC(expf_inf_neg);
@@ -403,13 +365,11 @@ ATF_TC_HEAD(expf_inf_neg, tc)
 
 ATF_TC_BODY(expf_inf_neg, tc)
 {
-#ifndef __vax__
 	const float x = -1.0L / 0.0L;
 	float y = expf(x);
 
 	if (fabsf(y) > 0.0 || signbit(y) != 0)
 		atf_tc_fail_nonfatal("expf(-Inf) != +0.0");
-#endif
 }
 
 ATF_TC(expf_inf_pos);
@@ -420,13 +380,11 @@ ATF_TC_HEAD(expf_inf_pos, tc)
 
 ATF_TC_BODY(expf_inf_pos, tc)
 {
-#ifndef __vax__
 	const float x = 1.0L / 0.0L;
 	float y = expf(x);
 
 	if (isinf(y) == 0 || signbit(y) != 0)
 		atf_tc_fail_nonfatal("expf(+Inf) != +Inf");
-#endif
 }
 
 ATF_TC(expf_product);
@@ -437,7 +395,6 @@ ATF_TC_HEAD(expf_product, tc)
 
 ATF_TC_BODY(expf_product, tc)
 {
-#ifndef __vax__
 	float eps;
 	float x;
 	float y;
@@ -451,7 +408,6 @@ ATF_TC_BODY(expf_product, tc)
 		if (fabsf(expf(x) - y) > eps)
 			atf_tc_fail_nonfatal("expf(%0.01f) != %18.18e", x, y);
 	}
-#endif
 }
 
 ATF_TC(expf_zero_neg);
@@ -462,12 +418,10 @@ ATF_TC_HEAD(expf_zero_neg, tc)
 
 ATF_TC_BODY(expf_zero_neg, tc)
 {
-#ifndef __vax__
 	const float x = -0.0L;
 
 	if (fabsf(expf(x) - 1.0f) > 0.0)
 		atf_tc_fail_nonfatal("expf(-0.0) != 1.0");
-#endif
 }
 
 ATF_TC(expf_zero_pos);
@@ -478,12 +432,10 @@ ATF_TC_HEAD(expf_zero_pos, tc)
 
 ATF_TC_BODY(expf_zero_pos, tc)
 {
-#ifndef __vax__
 	const float x = 0.0L;
 
 	if (fabsf(expf(x) - 1.0f) > 0.0)
 		atf_tc_fail_nonfatal("expf(+0.0) != 1.0");
-#endif
 }
 
 /*
@@ -497,12 +449,10 @@ ATF_TC_HEAD(expm1_nan, tc)
 
 ATF_TC_BODY(expm1_nan, tc)
 {
-#ifndef __vax__
 	const double x = 0.0L / 0.0L;
 
 	if (isnan(expm1(x)) == 0)
 		atf_tc_fail_nonfatal("expm1(NaN) != NaN");
-#endif
 }
 
 ATF_TC(expm1_inf_neg);
@@ -513,12 +463,10 @@ ATF_TC_HEAD(expm1_inf_neg, tc)
 
 ATF_TC_BODY(expm1_inf_neg, tc)
 {
-#ifndef __vax__
 	const double x = -1.0L / 0.0L;
 
 	if (expm1(x) != -1.0)
 		atf_tc_fail_nonfatal("expm1(-Inf) != -1.0");
-#endif
 }
 
 ATF_TC(expm1_inf_pos);
@@ -529,13 +477,11 @@ ATF_TC_HEAD(expm1_inf_pos, tc)
 
 ATF_TC_BODY(expm1_inf_pos, tc)
 {
-#ifndef __vax__
 	const double x = 1.0L / 0.0L;
 	double y = expm1(x);
 
 	if (isinf(y) == 0 || signbit(y) != 0)
 		atf_tc_fail_nonfatal("expm1(+Inf) != +Inf");
-#endif
 }
 
 ATF_TC(expm1_zero_neg);
@@ -546,13 +492,11 @@ ATF_TC_HEAD(expm1_zero_neg, tc)
 
 ATF_TC_BODY(expm1_zero_neg, tc)
 {
-#ifndef __vax__
 	const double x = -0.0L;
 	double y = expm1(x);
 
 	if (fabs(y) > 0.0 || signbit(y) == 0)
 		atf_tc_fail_nonfatal("expm1(-0.0) != -0.0");
-#endif
 }
 
 ATF_TC(expm1_zero_pos);
@@ -563,13 +507,11 @@ ATF_TC_HEAD(expm1_zero_pos, tc)
 
 ATF_TC_BODY(expm1_zero_pos, tc)
 {
-#ifndef __vax__
 	const double x = 0.0L;
 	double y = expm1(x);
 
 	if (fabs(y) > 0.0 || signbit(y) != 0)
 		atf_tc_fail_nonfatal("expm1(+0.0) != +0.0");
-#endif
 }
 
 /*
@@ -583,12 +525,10 @@ ATF_TC_HEAD(expm1f_nan, tc)
 
 ATF_TC_BODY(expm1f_nan, tc)
 {
-#ifndef __vax__
 	const float x = 0.0L / 0.0L;
 
 	if (isnan(expm1f(x)) == 0)
 		atf_tc_fail_nonfatal("expm1f(NaN) != NaN");
-#endif
 }
 
 ATF_TC(expm1f_inf_neg);
@@ -599,12 +539,10 @@ ATF_TC_HEAD(expm1f_inf_neg, tc)
 
 ATF_TC_BODY(expm1f_inf_neg, tc)
 {
-#ifndef __vax__
 	const float x = -1.0L / 0.0L;
 
 	if (expm1f(x) != -1.0)
 		atf_tc_fail_nonfatal("expm1f(-Inf) != -1.0");
-#endif
 }
 
 ATF_TC(expm1f_inf_pos);
@@ -615,13 +553,11 @@ ATF_TC_HEAD(expm1f_inf_pos, tc)
 
 ATF_TC_BODY(expm1f_inf_pos, tc)
 {
-#ifndef __vax__
 	const float x = 1.0L / 0.0L;
 	float y = expm1f(x);
 
 	if (isinf(y) == 0 || signbit(y) != 0)
 		atf_tc_fail_nonfatal("expm1f(+Inf) != +Inf");
-#endif
 }
 
 ATF_TC(expm1f_zero_neg);
@@ -632,13 +568,11 @@ ATF_TC_HEAD(expm1f_zero_neg, tc)
 
 ATF_TC_BODY(expm1f_zero_neg, tc)
 {
-#ifndef __vax__
 	const float x = -0.0L;
 	float y = expm1f(x);
 
 	if (fabsf(y) > 0.0 || signbit(y) == 0)
 		atf_tc_fail_nonfatal("expm1f(-0.0) != -0.0");
-#endif
 }
 
 ATF_TC(expm1f_zero_pos);
@@ -649,13 +583,11 @@ ATF_TC_HEAD(expm1f_zero_pos, tc)
 
 ATF_TC_BODY(expm1f_zero_pos, tc)
 {
-#ifndef __vax__
 	const float x = 0.0L;
 	float y = expm1f(x);
 
 	if (fabsf(y) > 0.0 || signbit(y) != 0)
 		atf_tc_fail_nonfatal("expm1f(+0.0) != +0.0");
-#endif
 }
 
 ATF_TP_ADD_TCS(tp)

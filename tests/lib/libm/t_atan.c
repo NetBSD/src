@@ -1,4 +1,4 @@
-/* $NetBSD: t_atan.c,v 1.10 2014/02/27 17:26:02 joerg Exp $ */
+/* $NetBSD: t_atan.c,v 1.11 2014/03/03 10:39:08 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -57,12 +57,10 @@ ATF_TC_HEAD(atan_nan, tc)
 
 ATF_TC_BODY(atan_nan, tc)
 {
-#ifndef __vax__
 	const double x = 0.0L / 0.0L;
 
 	if (isnan(atan(x)) == 0)
 		atf_tc_fail_nonfatal("atan(NaN) != NaN");
-#endif
 }
 
 ATF_TC(atan_inf_neg);
@@ -73,13 +71,11 @@ ATF_TC_HEAD(atan_inf_neg, tc)
 
 ATF_TC_BODY(atan_inf_neg, tc)
 {
-#ifndef __vax__
 	const double x = -1.0L / 0.0L;
 	const double eps = 1.0e-15;
 
 	if (fabs(atan(x) + M_PI_2) > eps)
 		atf_tc_fail_nonfatal("atan(-Inf) != -pi/2");
-#endif
 }
 
 ATF_TC(atan_inf_pos);
@@ -90,13 +86,11 @@ ATF_TC_HEAD(atan_inf_pos, tc)
 
 ATF_TC_BODY(atan_inf_pos, tc)
 {
-#ifndef __vax__
 	const double x = +1.0L / 0.0L;
 	const double eps = 1.0e-15;
 
 	if (fabs(atan(x) - M_PI_2) > eps)
 		atf_tc_fail_nonfatal("atan(+Inf) != pi/2");
-#endif
 }
 
 ATF_TC(atan_inrange);
@@ -107,7 +101,6 @@ ATF_TC_HEAD(atan_inrange, tc)
 
 ATF_TC_BODY(atan_inrange, tc)
 {
-#ifndef __vax__
 	const double eps = 1.0e-15;
 	size_t i;
 
@@ -116,7 +109,6 @@ ATF_TC_BODY(atan_inrange, tc)
 			atf_tc_fail_nonfatal("atan(%g) != %g",
 				values[i].x, values[i].y);
 	}
-#endif
 }
 
 ATF_TC(atan_zero_neg);
@@ -127,13 +119,11 @@ ATF_TC_HEAD(atan_zero_neg, tc)
 
 ATF_TC_BODY(atan_zero_neg, tc)
 {
-#ifndef __vax__
 	const double x = -0.0L;
 	double y = atan(x);
 
 	if (fabs(y) > 0.0 || signbit(y) == 0)
 		atf_tc_fail_nonfatal("atan(-0.0) != -0.0");
-#endif
 }
 
 ATF_TC(atan_zero_pos);
@@ -144,13 +134,11 @@ ATF_TC_HEAD(atan_zero_pos, tc)
 
 ATF_TC_BODY(atan_zero_pos, tc)
 {
-#ifndef __vax__
 	const double x = 0.0L;
 	double y = atan(x);
 
 	if (fabs(y) > 0.0 || signbit(y) != 0)
 		atf_tc_fail_nonfatal("atan(+0.0) != +0.0");
-#endif
 }
 
 /*
@@ -164,12 +152,10 @@ ATF_TC_HEAD(atanf_nan, tc)
 
 ATF_TC_BODY(atanf_nan, tc)
 {
-#ifndef __vax__
 	const float x = 0.0L / 0.0L;
 
 	if (isnan(atanf(x)) == 0)
 		atf_tc_fail_nonfatal("atanf(NaN) != NaN");
-#endif
 }
 
 ATF_TC(atanf_inf_neg);
@@ -180,13 +166,11 @@ ATF_TC_HEAD(atanf_inf_neg, tc)
 
 ATF_TC_BODY(atanf_inf_neg, tc)
 {
-#ifndef __vax__
 	const float x = -1.0L / 0.0L;
 	const float eps = 1.0e-7;
 
 	if (fabsf(atanf(x) + (float)M_PI_2) > eps)
 		atf_tc_fail_nonfatal("atanf(-Inf) != -pi/2");
-#endif
 }
 
 ATF_TC(atanf_inf_pos);
@@ -197,13 +181,11 @@ ATF_TC_HEAD(atanf_inf_pos, tc)
 
 ATF_TC_BODY(atanf_inf_pos, tc)
 {
-#ifndef __vax__
 	const float x = +1.0L / 0.0L;
 	const float eps = 1.0e-7;
 
 	if (fabsf(atanf(x) - (float)M_PI_2) > eps)
 		atf_tc_fail_nonfatal("atanf(+Inf) != pi/2");
-#endif
 }
 
 ATF_TC(atanf_inrange);
@@ -214,7 +196,6 @@ ATF_TC_HEAD(atanf_inrange, tc)
 
 ATF_TC_BODY(atanf_inrange, tc)
 {
-#ifndef __vax__
 	const float eps = 1.0e-7;
 	float x;
 	float y;
@@ -226,7 +207,6 @@ ATF_TC_BODY(atanf_inrange, tc)
 		if (fabs(atanf(x) - y) > eps)
 			atf_tc_fail_nonfatal("atan(%g) != %g", x, y);
 	}
-#endif
 }
 
 ATF_TC(atanf_zero_neg);
@@ -237,13 +217,11 @@ ATF_TC_HEAD(atanf_zero_neg, tc)
 
 ATF_TC_BODY(atanf_zero_neg, tc)
 {
-#ifndef __vax__
 	const float x = -0.0L;
 	float y = atanf(x);
 
 	if (fabsf(y) > 0.0 || signbit(y) == 0)
 		atf_tc_fail_nonfatal("atanf(-0.0) != -0.0");
-#endif
 }
 
 ATF_TC(atanf_zero_pos);
@@ -254,13 +232,11 @@ ATF_TC_HEAD(atanf_zero_pos, tc)
 
 ATF_TC_BODY(atanf_zero_pos, tc)
 {
-#ifndef __vax__
 	const float x = 0.0L;
 	float y = atanf(x);
 
 	if (fabsf(y) > 0.0 || signbit(y) != 0)
 		atf_tc_fail_nonfatal("atanf(+0.0) != +0.0");
-#endif
 }
 
 ATF_TP_ADD_TCS(tp)
