@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.98 2013/11/08 03:59:35 nisimura Exp $	*/
+/*	$NetBSD: cpu.h,v 1.99 2014/03/03 15:36:36 macallan Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -315,6 +315,26 @@ mfrtc(uint32_t *rtcp)
 	"	bne-	1b"
 	    : [rtcu] "=r"(rtcp[0]), [rtcl] "=r"(rtcp[1]), [tmp] "=r"(tmp)
 	    :: "cr0");
+}
+
+static __inline uint64_t
+rtc_nanosecs(void)
+{
+    /* 
+     * 601 RTC/DEC registers share clock of 7.8125 MHz, 128 ns per tick.
+     * DEC has max of 25 bits, FFFFFF => 2.14748352 seconds.
+     * RTCU is seconds, 32 bits.
+     * RTCL is nano-seconds, 23 bit counter from 0 - 999,999,872 (999,999,999 - 128 ns)
+     */
+    uint64_t cycles;
+    uint32_t tmp[2];
+
+    mfrtc(tmp);
+
+    cycles = tmp[0] * 1000000000;
+    cycles += (tmp[1] >> 7);
+
+    return cycles;
 }
 #endif /* !_MODULE */
 

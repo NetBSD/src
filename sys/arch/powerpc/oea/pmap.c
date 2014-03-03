@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.90 2013/11/03 22:15:57 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.91 2014/03/03 15:36:36 macallan Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.90 2013/11/03 22:15:57 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.91 2014/03/03 15:36:36 macallan Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -3403,6 +3403,11 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 /* PMAP_OEA64_BRIDGE does support these instructions */
 #if defined (PMAP_OEA) || defined (PMAP_OEA64_BRIDGE)
 	for (i = 0; i < 16; i++) {
+#if defined(PPC_OEA601)
+	    /* XXX wedges for segment register 0xf , so set later */
+	    if ((iosrtable[i] & SR601_T) && ((MFPVR() >> 16) == MPC601))
+		    continue;
+#endif
  		pmap_kernel()->pm_sr[i] = KERNELN_SEGMENT(i)|SR_PRKEY;
 		__asm volatile ("mtsrin %0,%1"
  			      :: "r"(KERNELN_SEGMENT(i)|SR_PRKEY), "r"(i << ADDR_SR_SHFT));
@@ -3529,5 +3534,10 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 		__asm volatile ("mtsrin %0,%1"
  			      :: "r"(sr), "r"(kernelstart));
 	}
+#endif
+
+#if defined(PMAPDEBUG)
+	if ( pmapdebug )
+	    pmap_print_mmuregs();
 #endif
 }
