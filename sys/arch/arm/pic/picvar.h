@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.7 2012/09/01 00:00:42 matt Exp $	*/
+/*	$NetBSD: picvar.h,v 1.8 2014/03/03 08:50:48 matt Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -99,6 +99,7 @@ struct intrsource {
 	uint8_t is_ipl;				/* IPL_xxx */
 	uint8_t is_irq;				/* local to pic */
 	uint8_t is_iplidx;
+	bool is_mpsafe;
 	char is_source[16];
 };
 
