@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1461 2014/03/03 02:10:24 ozaki-r Exp $
+# $NetBSD: mi,v 1.1462 2014/03/03 13:54:43 skrll Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1139,6 +1139,25 @@
 ./usr/share/man/cat4/hp300/rtc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hp300/tc.0			man-obsolete		obsolete
 ./usr/share/man/cat4/hp300/topcat.0		man-sys-catman		.cat
+./usr/share/man/cat4/hp700/asp.0		man-obsolete		obsolete
+./usr/share/man/cat4/hp700/astro.0		man-obsolete		obsolete
+./usr/share/man/cat4/hp700/cpu.0		man-obsolete		obsolete
+./usr/share/man/cat4/hp700/dino.0		man-obsolete		obsolete
+./usr/share/man/cat4/hp700/elroy.0		man-obsolete		obsolete
+./usr/share/man/cat4/hp700/gsc.0		man-obsolete		obsolete
+./usr/share/man/cat4/hp700/gsckbc.0		man-obsolete		obsolete
+./usr/share/man/cat4/hp700/harmony.0		man-obsolete		obsolete
+./usr/share/man/cat4/hp700/intro.0		man-obsolete		obsolete
+./usr/share/man/cat4/hp700/io.0			man-obsolete		obsolete
+./usr/share/man/cat4/hp700/lasi.0		man-obsolete		obsolete
+./usr/share/man/cat4/hp700/lcd.0		man-obsolete		obsolete
+./usr/share/man/cat4/hp700/mem.0		man-obsolete		obsolete
+./usr/share/man/cat4/hp700/mongoose.0		man-obsolete		obsolete
+./usr/share/man/cat4/hp700/pdc.0		man-obsolete		obsolete
+./usr/share/man/cat4/hp700/phantomas.0		man-obsolete		obsolete
+./usr/share/man/cat4/hp700/ssio.0		man-obsolete		obsolete
+./usr/share/man/cat4/hp700/uturn.0		man-obsolete		obsolete
+./usr/share/man/cat4/hp700/wax.0		man-obsolete		obsolete
 ./usr/share/man/cat4/hpacel.0			man-sys-catman		.cat
 ./usr/share/man/cat4/hpcarm/intro.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hpcarm/j720kbd.0		man-sys-catman		.cat
@@ -2443,6 +2462,10 @@
 ./usr/share/man/cat8/hp300/crash.0		man-sys-catman		.cat
 ./usr/share/man/cat8/hp300/format.0		man-sys-catman		.cat
 ./usr/share/man/cat8/hp300/makedev.0		man-obsolete		obsolete
+./usr/share/man/cat8/hp700/MAKEDEV.0		man-obsolete		obsolete
+./usr/share/man/cat8/hp700/boot.0		man-obsolete		obsolete
+./usr/share/man/cat8/hp700/makedev.0		man-obsolete		obsolete
+./usr/share/man/cat8/hp700/mkboot.0		man-obsolete		obsolete
 ./usr/share/man/cat8/hpcarm/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/hpcarm/boot.0		man-sys-catman		.cat
 ./usr/share/man/cat8/hpcarm/makedev.0		man-obsolete		obsolete
@@ -2454,9 +2477,7 @@
 ./usr/share/man/cat8/hpcsh/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/hpcsh/boot.0		man-sys-catman		.cat
 ./usr/share/man/cat8/hpcsh/makedev.0		man-obsolete		obsolete
-./usr/share/man/cat8/hppa/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/hppa/boot.0		man-sys-catman		.cat
-./usr/share/man/cat8/hppa/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/hppa/mkboot.0		man-sys-catman		.cat
 ./usr/share/man/cat8/hprop.0			man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat8/hpropd.0			man-krb5-catman		kerberos,.cat
@@ -4139,6 +4160,25 @@
 ./usr/share/man/html4/hp300/rmp.html		man-sys-htmlman		html
 ./usr/share/man/html4/hp300/rtc.html		man-sys-htmlman		html
 ./usr/share/man/html4/hp300/topcat.html		man-sys-htmlman		html
+./usr/share/man/html4/hp700/asp.html		man-obsolete		obsolete
+./usr/share/man/html4/hp700/astro.html		man-obsolete		obsolete
+./usr/share/man/html4/hp700/cpu.html		man-obsolete		obsolete
+./usr/share/man/html4/hp700/dino.html		man-obsolete		obsolete
+./usr/share/man/html4/hp700/elroy.html		man-obsolete		obsolete
+./usr/share/man/html4/hp700/gsc.html		man-obsolete		obsolete
+./usr/share/man/html4/hp700/gsckbc.html		man-obsolete		obsolete
+./usr/share/man/html4/hp700/harmony.html	man-obsolete		obsolete
+./usr/share/man/html4/hp700/intro.html		man-obsolete		obsolete
+./usr/share/man/html4/hp700/io.html		man-obsolete		obsolete
+./usr/share/man/html4/hp700/lasi.html		man-obsolete		obsolete
+./usr/share/man/html4/hp700/lcd.html		man-obsolete		obsolete
+./usr/share/man/html4/hp700/mem.html		man-obsolete		obsolete
+./usr/share/man/html4/hp700/mongoose.html	man-obsolete		obsolete
+./usr/share/man/html4/hp700/pdc.html		man-obsolete		obsolete
+./usr/share/man/html4/hp700/phantomas.html	man-obsolete		obsolete
+./usr/share/man/html4/hp700/ssio.html		man-obsolete		obsolete
+./usr/share/man/html4/hp700/uturn.html		man-obsolete		obsolete
+./usr/share/man/html4/hp700/wax.html		man-obsolete		obsolete
 ./usr/share/man/html4/hpacel.html		man-sys-htmlman		html
 ./usr/share/man/html4/hpcarm/intro.html		man-sys-htmlman		html
 ./usr/share/man/html4/hpcarm/j720kbd.html	man-sys-htmlman		html
@@ -5288,6 +5328,8 @@
 ./usr/share/man/html8/hp300/boot.html		man-sys-htmlman		html
 ./usr/share/man/html8/hp300/crash.html		man-sys-htmlman		html
 ./usr/share/man/html8/hp300/format.html		man-sys-htmlman		html
+./usr/share/man/html8/hp700/boot.html		man-obsolete		obsolete
+./usr/share/man/html8/hp700/mkboot.html		man-obsolete		obsolete
 ./usr/share/man/html8/hpcarm/boot.html		man-sys-htmlman		html
 ./usr/share/man/html8/hpcboot.html		man-sys-htmlman		html
 ./usr/share/man/html8/hpcmips/boot.html		man-sys-htmlman		html
@@ -6929,6 +6971,25 @@
 ./usr/share/man/man4/hp300/rtc.4		man-sys-man		.man
 ./usr/share/man/man4/hp300/tc.4			man-obsolete		obsolete
 ./usr/share/man/man4/hp300/topcat.4		man-sys-man		.man
+./usr/share/man/man4/hp700/asp.4		man-obsolete		obsolete
+./usr/share/man/man4/hp700/astro.4		man-obsolete		obsolete
+./usr/share/man/man4/hp700/cpu.4		man-obsolete		obsolete
+./usr/share/man/man4/hp700/dino.4		man-obsolete		obsolete
+./usr/share/man/man4/hp700/elroy.4		man-obsolete		obsolete
+./usr/share/man/man4/hp700/gsc.4		man-obsolete		obsolete
+./usr/share/man/man4/hp700/gsckbc.4		man-obsolete		obsolete
+./usr/share/man/man4/hp700/harmony.4		man-obsolete		obsolete
+./usr/share/man/man4/hp700/intro.4		man-obsolete		obsolete
+./usr/share/man/man4/hp700/io.4			man-obsolete		obsolete
+./usr/share/man/man4/hp700/lasi.4		man-obsolete		obsolete
+./usr/share/man/man4/hp700/lcd.4		man-obsolete		obsolete
+./usr/share/man/man4/hp700/mem.4		man-obsolete		obsolete
+./usr/share/man/man4/hp700/mongoose.4		man-obsolete		obsolete
+./usr/share/man/man4/hp700/pdc.4		man-obsolete		obsolete
+./usr/share/man/man4/hp700/phantomas.4		man-obsolete		obsolete
+./usr/share/man/man4/hp700/ssio.4		man-obsolete		obsolete
+./usr/share/man/man4/hp700/uturn.4		man-obsolete		obsolete
+./usr/share/man/man4/hp700/wax.4		man-obsolete		obsolete
 ./usr/share/man/man4/hpacel.4			man-sys-man		.man
 ./usr/share/man/man4/hpcarm/intro.4		man-sys-man		.man
 ./usr/share/man/man4/hpcarm/j720kbd.4		man-sys-man		.man
@@ -8232,6 +8293,10 @@
 ./usr/share/man/man8/hp300/crash.8		man-sys-man		.man
 ./usr/share/man/man8/hp300/format.8		man-sys-man		.man
 ./usr/share/man/man8/hp300/makedev.8		man-obsolete		obsolete
+./usr/share/man/man8/hp700/MAKEDEV.8		man-obsolete		obsolete
+./usr/share/man/man8/hp700/boot.8		man-obsolete		obsolete
+./usr/share/man/man8/hp700/makedev.8		man-obsolete		obsolete
+./usr/share/man/man8/hp700/mkboot.8		man-obsolete		obsolete
 ./usr/share/man/man8/hpcarm/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/hpcarm/boot.8		man-sys-man		.man
 ./usr/share/man/man8/hpcarm/makedev.8		man-obsolete		obsolete
@@ -8243,9 +8308,7 @@
 ./usr/share/man/man8/hpcsh/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/hpcsh/boot.8		man-sys-man		.man
 ./usr/share/man/man8/hpcsh/makedev.8		man-obsolete		obsolete
-./usr/share/man/man8/hppa/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/hppa/boot.8		man-sys-man		.man
-./usr/share/man/man8/hppa/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/hppa/mkboot.8		man-sys-man		.man
 ./usr/share/man/man8/hprop.8			man-krb5-man		kerberos,.man
 ./usr/share/man/man8/hpropd.8			man-krb5-man		kerberos,.man
