@@ -3478,6 +3478,7 @@ mangle_decl (const tree decl)
 
   if (G.need_abi_warning
       /* Don't do this for a fake symbol we aren't going to emit anyway.  */
+      && TREE_CODE (decl) != TYPE_DECL
       && !DECL_MAYBE_IN_CHARGE_CONSTRUCTOR_P (decl)
       && !DECL_MAYBE_IN_CHARGE_DESTRUCTOR_P (decl))
     {
@@ -3773,7 +3774,8 @@ mangle_conv_op_name_for_type (const tree type)
 static void
 write_guarded_var_name (const tree variable)
 {
-  if (strncmp (IDENTIFIER_POINTER (DECL_NAME (variable)), "_ZGR", 4) == 0)
+  if (DECL_NAME (variable)
+      && strncmp (IDENTIFIER_POINTER (DECL_NAME (variable)), "_ZGR", 4) == 0)
     /* The name of a guard variable for a reference temporary should refer
        to the reference, not the temporary.  */
     write_string (IDENTIFIER_POINTER (DECL_NAME (variable)) + 4);
