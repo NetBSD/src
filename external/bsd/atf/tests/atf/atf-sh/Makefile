@@ -1,8 +1,10 @@
-# $NetBSD: Makefile,v 1.7 2014/02/12 04:08:32 jmmv Exp $
+# $NetBSD: Makefile,v 1.8 2014/03/03 19:56:32 jmmv Exp $
 
 .include <bsd.init.mk>
 
 TESTSDIR=	${TESTSBASE}/atf/atf-sh
+ATFFILE=	yes
+KYUAFILE=	yes
 
 .PATH:		${SRCDIR}/atf-sh
 
