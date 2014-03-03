@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_boot.c,v 1.5 2013/08/18 06:28:18 matt Exp $	*/
+/*	$NetBSD: arm32_boot.c,v 1.6 2014/03/03 08:52:30 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -123,7 +123,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.5 2013/08/18 06:28:18 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.6 2014/03/03 08:52:30 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -342,14 +342,18 @@ cpu_hatch(struct cpu_info *ci, cpuid_t cpuid, void (*md_cpu_init)(struct cpu_inf
 	set_stackptr(PSR_UND32_MODE,
 	    undstack.pv_va + cpu_index(ci) * UND_STACK_SIZE * PAGE_SIZE);
 
-#if 0
+	ci->ci_lastlwp = NULL;
+	ci->ci_pmap_lastuser = NULL;
+#ifdef ARM_MMU_EXTENDED
+	printf(" tlb");
 	/*
-	 * Now that we are going to apart of the kernel,
-	 * take out the kernel lock.
+	 * Attach to the tlb.
 	 */
-	printf(" kernel_lock");
-	KERNEL_LOCK(1, NULL);
+	ci->ci_pmap_cur = pmap_kernel();
+	ci->ci_pmap_asid_cur = KERNEL_PID;
+	pmap_tlb_info_attach(&pmap_tlb0_info, ci);
 #endif
+
 #ifdef CPU_CORTEX
 	if (CPU_ID_CORTEX_P(ci->ci_arm_cpuid)) {
 		/*
