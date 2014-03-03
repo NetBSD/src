@@ -1,4 +1,4 @@
-/* $NetBSD: t_acos.c,v 1.7 2014/03/03 10:38:36 martin Exp $ */
+/* $NetBSD: t_acos.c,v 1.8 2014/03/03 18:21:33 dsl Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -32,24 +32,10 @@
 #include <atf-c.h>
 #include <math.h>
 
-#ifdef HAVE_FENV_H
-#include <fenv.h>
-#endif
-
 /*
  * Check result of fn(arg) is correct within the bounds.
  * Should be ok to do the checks using 'double' for 'float' functions.
  */
-#ifdef HAVE_FENV_H
-#define T_LIBM_CHECK(subtest, fn, arg, expect, epsilon) do { \
-	double r = fn(arg); \
-	double e = fabs(r - expect); \
-	if (e > epsilon) \
-		atf_tc_fail_nonfatal( \
-		    "subtest %zu: " #fn "(%g) is %g not %g (error %g > %g), roundmode %x", \
-		    subtest, arg, r, expect, e, epsilon, fegetround()); \
-    } while (0)
-#else
 #define T_LIBM_CHECK(subtest, fn, arg, expect, epsilon) do { \
 	double r = fn(arg); \
 	double e = fabs(r - expect); \
@@ -58,7 +44,6 @@
 		    "subtest %zu: " #fn "(%g) is %g not %g (error %g > %g)", \
 		    subtest, arg, r, expect, e, epsilon); \
     } while (0)
-#endif
 
 /* Check that the result of fn(arg) is NaN */
 #ifndef __vax__
