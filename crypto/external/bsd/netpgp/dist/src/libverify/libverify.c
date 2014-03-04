@@ -1609,7 +1609,9 @@ verify_dsa_sig(uint8_t *calculated, unsigned calclen, pgpv_bignum_t *sig, pgpv_p
 	BIGNUM		 *t1;
 	int		  ret;
 
-	if (pubkey[DSA_P].bn == NULL || pubkey[DSA_Q].bn == NULL || pubkey[DSA_G].bn == NULL) {
+	if (pubkey->bn[DSA_P].bn == NULL ||
+	    pubkey->bn[DSA_Q].bn == NULL ||
+	    pubkey->bn[DSA_G].bn == NULL) {
 		return 0;
 	}
 	M = W = t1 = NULL;
