@@ -201,7 +201,8 @@ namespace {
       AA = &P->getAnalysis<AliasAnalysis>();
       DT = &P->getAnalysis<DominatorTreeWrapperPass>().getDomTree();
       SE = &P->getAnalysis<ScalarEvolution>();
-      TD = P->getAnalysisIfAvailable<DataLayout>();
+      DataLayoutPass *DLP = P->getAnalysisIfAvailable<DataLayoutPass>();
+      DL = DLP ? &DLP->getDataLayout() : 0;
       TTI = IgnoreTargetInfo ? 0 : &P->getAnalysis<TargetTransformInfo>();
     }
 
@@ -214,7 +215,7 @@ namespace {
     AliasAnalysis *AA;
     DominatorTree *DT;
     ScalarEvolution *SE;
-    DataLayout *TD;
+    const DataLayout *DL;
     const TargetTransformInfo *TTI;
 
     // FIXME: const correct?
@@ -436,7 +437,8 @@ namespace {
       AA = &getAnalysis<AliasAnalysis>();
       DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
       SE = &getAnalysis<ScalarEvolution>();
-      TD = getAnalysisIfAvailable<DataLayout>();
+      DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
+      DL = DLP ? &DLP->getDataLayout() : 0;
       TTI = IgnoreTargetInfo ? 0 : &getAnalysis<TargetTransformInfo>();
 
       return vectorizeBB(BB);
@@ -532,7 +534,11 @@ namespace {
 
     // Returns the cost of the provided instruction using TTI.
     // This does not handle loads and stores.
-    unsigned getInstrCost(unsigned Opcode, Type *T1, Type *T2) {
+    unsigned getInstrCost(unsigned Opcode, Type *T1, Type *T2,
+                          TargetTransformInfo::OperandValueKind Op1VK = 
+                              TargetTransformInfo::OK_AnyValue,
+                          TargetTransformInfo::OperandValueKind Op2VK =
+                              TargetTransformInfo::OK_AnyValue) {
       switch (Opcode) {
       default: break;
       case Instruction::GetElementPtr:
@@ -562,7 +568,7 @@ namespace {
       case Instruction::And:
       case Instruction::Or:
       case Instruction::Xor:
-        return TTI->getArithmeticInstrCost(Opcode, T1);
+        return TTI->getArithmeticInstrCost(Opcode, T1, Op1VK, Op2VK);
       case Instruction::Select:
       case Instruction::ICmp:
       case Instruction::FCmp:
@@ -630,11 +636,11 @@ namespace {
         int64_t Offset = IntOff->getSExtValue();
 
         Type *VTy = IPtr->getType()->getPointerElementType();
-        int64_t VTyTSS = (int64_t) TD->getTypeStoreSize(VTy);
+        int64_t VTyTSS = (int64_t) DL->getTypeStoreSize(VTy);
 
         Type *VTy2 = JPtr->getType()->getPointerElementType();
         if (VTy != VTy2 && Offset < 0) {
-          int64_t VTy2TSS = (int64_t) TD->getTypeStoreSize(VTy2);
+          int64_t VTy2TSS = (int64_t) DL->getTypeStoreSize(VTy2);
           OffsetInElmts = Offset/VTy2TSS;
           return (abs64(Offset) % VTy2TSS) == 0;
         }
@@ -817,7 +823,7 @@ namespace {
 
     // It is important to cleanup here so that future iterations of this
     // function have less work to do.
-    (void) SimplifyInstructionsInBlock(&BB, TD, AA->getTargetLibraryInfo());
+    (void) SimplifyInstructionsInBlock(&BB, DL, AA->getTargetLibraryInfo());
     return true;
   }
 
@@ -872,7 +878,7 @@ namespace {
     }
 
     // We can't vectorize memory operations without target data
-    if (TD == 0 && IsSimpleLoadStore)
+    if (DL == 0 && IsSimpleLoadStore)
       return false;
 
     Type *T1, *T2;
@@ -909,7 +915,7 @@ namespace {
     if (T2->isX86_FP80Ty() || T2->isPPC_FP128Ty() || T2->isX86_MMXTy())
       return false;
 
-    if ((!Config.VectorizePointers || TD == 0) &&
+    if ((!Config.VectorizePointers || DL == 0) &&
         (T1->getScalarType()->isPointerTy() ||
          T2->getScalarType()->isPointerTy()))
       return false;
@@ -973,7 +979,7 @@ namespace {
           // with the lower offset has an alignment suitable for the
           // vector type.
 
-          unsigned VecAlignment = TD->getPrefTypeAlignment(VType);
+          unsigned VecAlignment = DL->getPrefTypeAlignment(VType);
           if (BottomAlignment < VecAlignment)
             return false;
         }
@@ -1013,13 +1019,49 @@ namespace {
       unsigned JCost = getInstrCost(J->getOpcode(), JT1, JT2);
       Type *VT1 = getVecTypeForPair(IT1, JT1),
            *VT2 = getVecTypeForPair(IT2, JT2);
+      TargetTransformInfo::OperandValueKind Op1VK =
+          TargetTransformInfo::OK_AnyValue;
+      TargetTransformInfo::OperandValueKind Op2VK =
+          TargetTransformInfo::OK_AnyValue;
+
+      // On some targets (example X86) the cost of a vector shift may vary
+      // depending on whether the second operand is a Uniform or
+      // NonUniform Constant.
+      switch (I->getOpcode()) {
+      default : break;
+      case Instruction::Shl:
+      case Instruction::LShr:
+      case Instruction::AShr:
+
+        // If both I and J are scalar shifts by constant, then the
+        // merged vector shift count would be either a constant splat value
+        // or a non-uniform vector of constants.
+        if (ConstantInt *CII = dyn_cast<ConstantInt>(I->getOperand(1))) {
+          if (ConstantInt *CIJ = dyn_cast<ConstantInt>(J->getOperand(1)))
+            Op2VK = CII == CIJ ? TargetTransformInfo::OK_UniformConstantValue :
+                               TargetTransformInfo::OK_NonUniformConstantValue;
+        } else {
+          // Check for a splat of a constant or for a non uniform vector
+          // of constants.
+          Value *IOp = I->getOperand(1);
+          Value *JOp = J->getOperand(1);
+          if ((isa<ConstantVector>(IOp) || isa<ConstantDataVector>(IOp)) &&
+              (isa<ConstantVector>(JOp) || isa<ConstantDataVector>(JOp))) {
+            Op2VK = TargetTransformInfo::OK_NonUniformConstantValue;
+            Constant *SplatValue = cast<Constant>(IOp)->getSplatValue();
+            if (SplatValue != NULL &&
+                SplatValue == cast<Constant>(JOp)->getSplatValue())
+              Op2VK = TargetTransformInfo::OK_UniformConstantValue;
+          }
+        }
+      }
 
       // Note that this procedure is incorrect for insert and extract element
       // instructions (because combining these often results in a shuffle),
       // but this cost is ignored (because insert and extract element
       // instructions are assigned a zero depth factor and are not really
       // fused in general).
-      unsigned VCost = getInstrCost(I->getOpcode(), VT1, VT2);
+      unsigned VCost = getInstrCost(I->getOpcode(), VT1, VT2, Op1VK, Op2VK);
 
       if (VCost > ICost + JCost)
         return false;

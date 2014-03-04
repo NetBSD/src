@@ -36,7 +36,18 @@ def FeatureCrypto : SubtargetFeature<"crypto", "HasCrypto", "true",
 
 include "AArch64Schedule.td"
 
-def : Processor<"generic", GenericItineraries, [FeatureFPARMv8]>;
+class ProcNoItin<string Name, list<SubtargetFeature> Features>
+ : Processor<Name, NoItineraries, Features>;
+
+def : Processor<"generic", GenericItineraries, [FeatureFPARMv8, FeatureNEON]>;
+
+def : ProcNoItin<"cortex-a53",      [FeatureFPARMv8,
+                                    FeatureNEON,
+                                    FeatureCrypto]>;
+
+def : ProcNoItin<"cortex-a57",      [FeatureFPARMv8,
+                                    FeatureNEON,
+                                    FeatureCrypto]>;
 
 //===----------------------------------------------------------------------===//
 // Register File Description
