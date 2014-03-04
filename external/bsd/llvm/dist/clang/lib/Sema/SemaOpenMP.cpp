@@ -699,6 +699,10 @@ StmtResult Sema::ActOnOpenMPExecutableDirective(OpenMPDirectiveKind Kind,
     Res = ActOnOpenMPParallelDirective(ClausesWithImplicit, AStmt,
                                        StartLoc, EndLoc);
     break;
+  case OMPD_simd:
+    Res = ActOnOpenMPSimdDirective(ClausesWithImplicit, AStmt,
+                                   StartLoc, EndLoc);
+    break;
   case OMPD_threadprivate:
   case OMPD_task:
     llvm_unreachable("OpenMP Directive is not allowed");
@@ -721,6 +725,71 @@ StmtResult Sema::ActOnOpenMPParallelDirective(ArrayRef<OMPClause *> Clauses,
                                             Clauses, AStmt));
 }
 
+StmtResult Sema::ActOnOpenMPSimdDirective(ArrayRef<OMPClause *> Clauses,
+                                          Stmt *AStmt,
+                                          SourceLocation StartLoc,
+                                          SourceLocation EndLoc) {
+  Stmt *CStmt = AStmt;
+  while (CapturedStmt *CS = dyn_cast_or_null<CapturedStmt>(CStmt))
+    CStmt = CS->getCapturedStmt();
+  while (AttributedStmt *AS = dyn_cast_or_null<AttributedStmt>(CStmt))
+    CStmt = AS->getSubStmt();
+  ForStmt *For = dyn_cast<ForStmt>(CStmt);
+  if (!For) {
+    Diag(CStmt->getLocStart(), diag::err_omp_not_for)
+      << getOpenMPDirectiveName(OMPD_simd);
+    return StmtError();
+  }
+
+  // FIXME: Checking loop canonical form, collapsing etc.
+
+  getCurFunction()->setHasBranchProtectedScope();
+  return Owned(OMPSimdDirective::Create(Context, StartLoc, EndLoc,
+                                        Clauses, AStmt));
+}
+
+OMPClause *Sema::ActOnOpenMPSingleExprClause(OpenMPClauseKind Kind,
+                                             Expr *Expr,
+                                             SourceLocation StartLoc,
+                                             SourceLocation LParenLoc,
+                                             SourceLocation EndLoc) {
+  OMPClause *Res = 0;
+  switch (Kind) {
+  case OMPC_if:
+    Res = ActOnOpenMPIfClause(Expr, StartLoc, LParenLoc, EndLoc);
+    break;
+  case OMPC_default:
+  case OMPC_private:
+  case OMPC_firstprivate:
+  case OMPC_shared:
+  case OMPC_threadprivate:
+  case OMPC_unknown:
+  case NUM_OPENMP_CLAUSES:
+    llvm_unreachable("Clause is not allowed.");
+  }
+  return Res;
+}
+
+OMPClause *Sema::ActOnOpenMPIfClause(Expr *Condition,
+                                     SourceLocation StartLoc,
+                                     SourceLocation LParenLoc,
+                                     SourceLocation EndLoc) {
+  Expr *ValExpr = Condition;
+  if (!Condition->isValueDependent() && !Condition->isTypeDependent() &&
+      !Condition->isInstantiationDependent() &&
+      !Condition->containsUnexpandedParameterPack()) {
+    ExprResult Val = ActOnBooleanCondition(DSAStack->getCurScope(),
+                                           Condition->getExprLoc(),
+                                           Condition);
+    if (Val.isInvalid())
+      return 0;
+
+    ValExpr = Val.take();
+  }
+
+  return new (Context) OMPIfClause(ValExpr, StartLoc, LParenLoc, EndLoc);
+}
+
 OMPClause *Sema::ActOnOpenMPSimpleClause(OpenMPClauseKind Kind,
                                          unsigned Argument,
                                          SourceLocation ArgumentLoc,
@@ -734,6 +803,7 @@ OMPClause *Sema::ActOnOpenMPSimpleClause(OpenMPClauseKind Kind,
       ActOnOpenMPDefaultClause(static_cast<OpenMPDefaultClauseKind>(Argument),
                                ArgumentLoc, StartLoc, LParenLoc, EndLoc);
     break;
+  case OMPC_if:
   case OMPC_private:
   case OMPC_firstprivate:
   case OMPC_shared:
@@ -780,7 +850,9 @@ OMPClause *Sema::ActOnOpenMPDefaultClause(OpenMPDefaultClauseKind Kind,
   case OMPC_DEFAULT_shared:
     DSAStack->setDefaultDSAShared();
     break;
-  default:
+  case OMPC_DEFAULT_unknown:
+  case NUM_OPENMP_DEFAULT_KINDS:
+    llvm_unreachable("Clause kind is not allowed.");
     break;
   }
   return new (Context) OMPDefaultClause(Kind, KindKwLoc, StartLoc, LParenLoc,
@@ -803,6 +875,7 @@ OMPClause *Sema::ActOnOpenMPVarListClause(OpenMPClauseKind Kind,
   case OMPC_shared:
     Res = ActOnOpenMPSharedClause(VarList, StartLoc, LParenLoc, EndLoc);
     break;
+  case OMPC_if:
   case OMPC_default:
   case OMPC_threadprivate:
   case OMPC_unknown:
