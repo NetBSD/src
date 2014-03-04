@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2013/10/20 14:53:23 joerg Exp $
+#	$NetBSD: Makefile,v 1.15 2014/03/04 21:05:06 joerg Exp $
 
 LIB=	LLVMMC
 
@@ -40,7 +40,6 @@ SRCS+=	ELFObjectWriter.cpp \
 	MCObjectStreamer.cpp \
 	MCObjectSymbolizer.cpp \
 	MCObjectWriter.cpp \
-	MCPureStreamer.cpp \
 	MCRegisterInfo.cpp \
 	MCRelocationInfo.cpp \
 	MCSection.cpp \
