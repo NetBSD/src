@@ -73187,7 +73187,7 @@ ac_config_files="$ac_config_files doc/xsl/customization.xsl"
 # append it here.  Only modify Makefiles that have just been created.
 #
 # Also, get rid of this simulated-VPATH thing that automake does.
-ac_config_files="$ac_config_files include/Makefile libsupc++/Makefile python/Makefile src/Makefile src/c++98/Makefile src/c++11/Makefile doc/Makefile po/Makefile"
+ac_config_files="$ac_config_files include/Makefile libsupc++/Makefile python/Makefile src/Makefile src/c++98/Makefile src/c++11/Makefile doc/Makefile"
 
 
 ac_config_commands="$ac_config_commands generate-headers"
