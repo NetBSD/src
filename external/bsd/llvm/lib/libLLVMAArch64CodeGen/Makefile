@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2013/02/19 12:35:42 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2014/03/04 21:05:05 joerg Exp $
 
 LIB=	LLVMAArch64CodeGen
 
@@ -20,7 +20,8 @@ SRCS+=	AArch64AsmPrinter.cpp \
 	AArch64SelectionDAGInfo.cpp \
 	AArch64Subtarget.cpp \
 	AArch64TargetMachine.cpp \
-	AArch64TargetObjectFile.cpp
+	AArch64TargetObjectFile.cpp \
+	AArch64TargetTransformInfo.cpp
 
 TABLEGEN_SRC=		AArch64.td
 TABLEGEN_INCLUDES=	-I${LLVM_SRCDIR}/lib/Target/AArch64

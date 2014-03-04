@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2014/01/05 16:38:07 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2014/03/04 21:05:06 joerg Exp $
 
 LIB=	lldReaderWriterPECOFF
 
@@ -8,6 +8,7 @@ LIB=	lldReaderWriterPECOFF
 
 SRCS+=	EdataPass.cpp \
 	IdataPass.cpp \
+	LoadConfigPass.cpp \
 	PECOFFLinkingContext.cpp \
 	Pass.cpp \
 	ReaderCOFF.cpp \
