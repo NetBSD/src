@@ -1,4 +1,4 @@
-/*	$NetBSD: syscallvar.h,v 1.8 2013/06/29 16:50:51 rmind Exp $	*/
+/*	$NetBSD: syscallvar.h,v 1.9 2014/03/04 03:24:03 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -72,10 +72,10 @@ sy_invoke(const struct sysent *sy, struct lwp *l, const void *uap,
 	    (sy->sy_flags & SYCALL_INDIRECT) == 0;
 	int error;
 
-	if (__predict_true(!do_trace) || (error = trace_enter(code, uap,
-	    sy->sy_narg)) == 0) {
+	if (__predict_true(!do_trace)
+	    || (error = trace_enter(code, uap, sy->sy_narg)) == 0) {
 		rval[0] = 0;
-#if !defined(__mips__)
+#if !defined(__mips__) && !defined(__m68k__)
 		/*
 		 * Due to the mips userland code for SYS_break needing v1 to be
 		 * preserved, we can't clear this on mips. 
