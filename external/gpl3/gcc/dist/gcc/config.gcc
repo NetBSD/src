@@ -2114,13 +2114,15 @@ powerpc*-*-freebsd*)
 	esac
 	;;
 powerpc*-*-netbsd*)
+	tm_file="${tm_file} dbxelf.h elfos.h freebsd-spec.h rs6000/sysv4.h"
+	tm_file="${tm_file} netbsd.h netbsd-elf.h"
 	case ${target} in
 	  powerpc64*)
 	    tm_file="rs6000/biarch64.h ${tm_file} rs6000/default64.h rs6000/netbsd64.h"
 	    tmake_file="${tmake_file} rs6000/t-netbsd64"
 	    ;;
 	  *)
-            tm_file="${tm_file} dbxelf.h elfos.h netbsd.h netbsd-elf.h freebsd-spec.h rs6000/sysv4.h rs6000/netbsd.h"
+	    tm_file="${tm_file} rs6000/netbsd.h"
 	    tmake_file="${tmake_file} rs6000/t-netbsd"
 	    ;;
 	esac
