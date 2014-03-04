@@ -1,5 +1,7 @@
 ; RUN: llc < %s -mtriple=i386-unknown-linux-gnu | FileCheck %s -check-prefix=LINUX
 ; RUN: llc < %s -mtriple=i386-apple-darwin9.7 | FileCheck %s -check-prefix=DARWIN
+; RUN: llc < %s -mtriple=i386-apple-darwin10 -relocation-model=static | FileCheck %s -check-prefix=DARWIN-STATIC
+; RUN: llc < %s -mtriple=x86_64-apple-darwin10 | FileCheck %s -check-prefix=DARWIN64
 ; RUN: llc < %s -mtriple=i386-unknown-linux-gnu -fdata-sections | FileCheck %s -check-prefix=LINUX-SECTIONS
 
 
@@ -46,6 +48,14 @@
 ; DARWIN: .section        __TEXT,__literal16,16byte_literals
 ; DARWIN: _G4:
 ; DARWIN:     .long 34
+
+; DARWIN-STATIC: .section        __TEXT,__literal16,16byte_literals
+; DARWIN-STATIC: _G4:
+; DARWIN-STATIC:     .long 34
+
+; DARWIN64: .section        __TEXT,__literal16,16byte_literals
+; DARWIN64: _G4:
+; DARWIN64:     .quad 34
 
 
 ; int G5 = 47;
@@ -158,3 +168,11 @@
 ; DARWIN: .zerofill __DATA,__common,_G12,1,3
 ; DARWIN: .globl _G13
 ; DARWIN: .zerofill __DATA,__common,_G13,1,3
+
+@G14 = private unnamed_addr constant [4 x i8] c"foo\00", align 1
+
+; LINUX-SECTIONS:        .type   .LG14,@object           # @G14
+; LINUX-SECTIONS:        .section        .rodata..LG14,"aMS",@progbits,1
+; LINUX-SECTIONS: .LG14:
+; LINUX-SECTIONS:        .asciz  "foo"
+; LINUX-SECTIONS:        .size   .LG14, 4

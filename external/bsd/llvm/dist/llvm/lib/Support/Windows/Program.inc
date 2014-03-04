@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Windows.h"
+#include "WindowsSupport.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/FileSystem.h"
 #include <cstdio>
@@ -432,13 +432,6 @@ error_code sys::ChangeStdinToBinary(){
 
 error_code sys::ChangeStdoutToBinary(){
   int result = _setmode( _fileno(stdout), _O_BINARY );
-  if (result == -1)
-    return error_code(errno, generic_category());
-  return make_error_code(errc::success);
-}
-
-error_code sys::ChangeStderrToBinary(){
-  int result = _setmode( _fileno(stderr), _O_BINARY );
   if (result == -1)
     return error_code(errno, generic_category());
   return make_error_code(errc::success);
