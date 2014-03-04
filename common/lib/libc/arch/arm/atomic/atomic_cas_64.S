@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_64.S,v 1.5 2013/11/30 21:09:11 joerg Exp $	*/
+/*	$NetBSD: atomic_cas_64.S,v 1.6 2014/03/04 03:34:22 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,10 +36,10 @@
  * and kernel.
  */
 ENTRY_NP(_atomic_cas_64)
-	push	{r4, r5, r6}		/* save temporaries */
+	push	{r4-r7}			/* save temporaries */
 	mov	ip, r0			/* we need r0 for return value */
 #ifdef __ARM_EABI__
-	ldrd	r4, r5, [sp]		/* fetch new value */
+	ldrd	r4, r5, [sp, #16]	/* fetch new value */
 #else
 	ldr	r4, [sp, #0]		/* fetch new value */
 	ldr	r5, [sp, #4]		/* fetch new value */
@@ -65,7 +65,7 @@ ENTRY_NP(_atomic_cas_64)
 	mcr	p15, 0, ip, c7, c10, 4	/* data synchronization barrier */
 #endif
 2:
-	pop	{r4, r5, r6}		/* restore temporaries */
+	pop	{r4-r7}			/* restore temporaries */
 	RET				/* return. */
 END(_atomic_cas_64)
 
