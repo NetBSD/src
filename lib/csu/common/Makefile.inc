@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.24 2014/01/11 00:18:15 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.25 2014/03/04 17:57:56 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -114,7 +114,7 @@ sysident_assym.h: ${GENASSYM_CONF} ${GENASSYM_EXTRAS} ${NETBSDSRCDIR}/sys/sys/pa
 	${_MKTARGET_CREATE}
 	cat ${COMMON_DIR}/sysident_assym.cf | \
 	    ${TOOL_GENASSYM} -- ${CC} ${CFLAGS:N-Wa,*} ${CPPFLAGS} ${PROF} \
-	    > sysident_assym.h.tmp && \
+	    ${GENASSYM_CPPFLAGS} > sysident_assym.h.tmp && \
 	mv -f sysident_assym.h.tmp sysident_assym.h
 
 CLEANFILES+=	sysident_assym.h
