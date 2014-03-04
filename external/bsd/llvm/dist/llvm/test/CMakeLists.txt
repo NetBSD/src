@@ -37,13 +37,13 @@ set(LLVM_TEST_DEPENDS
           llvm-mcmarkup
           llvm-nm
           llvm-objdump
+          llvm-profdata
           llvm-readobj
           llvm-rtdyld
           llvm-symbolizer
           llvm-tblgen
           macho-dump
           opt
-          profile_rt-shared
           FileCheck
           count
           not
