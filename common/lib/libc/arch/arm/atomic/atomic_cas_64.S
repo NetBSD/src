@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_64.S,v 1.7 2014/03/04 03:50:37 matt Exp $	*/
+/*	$NetBSD: atomic_cas_64.S,v 1.8 2014/03/04 07:01:26 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -40,7 +40,8 @@ ENTRY_NP(_atomic_cas_64)
 	mov	ip, r0			/* we need r0 for return value */
 #ifdef __ARM_EABI__
 	ldrd	r4, r5, [sp, #16]	/* fetch new value */
-#elif __ARMEB__
+#else
+#if __ARMEB__
 	ldr	r5, [sp, #16]		/* fetch new value */
 	ldr	r4, [sp, #20]		/* fetch new value */
 #else
