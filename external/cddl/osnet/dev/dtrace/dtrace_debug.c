@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_debug.c,v 1.6 2013/04/14 16:39:59 christos Exp $	*/
+/*	$NetBSD: dtrace_debug.c,v 1.7 2014/03/04 03:20:49 ozaki-r Exp $	*/
 
 /*-
  * Copyright (C) 2008 John Birrell <jb@freebsd.org>.
@@ -167,7 +167,7 @@ dtrace_debug_output(void)
 
 			for (p = d->first; p < d->next; p++)
 				*p1++ = *p;
-		} else if (d->next > d->first) {
+		} else if (d->first > d->next) {
 			char *p1 = dtrace_debug_bufr;
 
 			count = (uintptr_t) d->last - (uintptr_t) d->first;
