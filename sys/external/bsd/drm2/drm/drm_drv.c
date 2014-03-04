@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.1.2.35 2014/01/29 19:47:38 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.1.2.36 2014/03/04 20:45:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.35 2014/01/29 19:47:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.36 2014/03/04 20:45:16 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -124,6 +124,25 @@ struct mutex drm_global_mutex;
 		.func = (FUNC),						\
 		.cmd_drv = 0,						\
 	}
+
+/* XXX Kludge for AGP.  */
+static drm_ioctl_t	drm_agp_acquire_hook_ioctl;
+static drm_ioctl_t	drm_agp_release_hook_ioctl;
+static drm_ioctl_t	drm_agp_enable_hook_ioctl;
+static drm_ioctl_t	drm_agp_info_hook_ioctl;
+static drm_ioctl_t	drm_agp_alloc_hook_ioctl;
+static drm_ioctl_t	drm_agp_free_hook_ioctl;
+static drm_ioctl_t	drm_agp_bind_hook_ioctl;
+static drm_ioctl_t	drm_agp_unbind_hook_ioctl;
+
+#define	drm_agp_acquire_ioctl	drm_agp_acquire_hook_ioctl
+#define	drm_agp_release_ioctl	drm_agp_release_hook_ioctl
+#define	drm_agp_enable_ioctl	drm_agp_enable_hook_ioctl
+#define	drm_agp_info_ioctl	drm_agp_info_hook_ioctl
+#define	drm_agp_alloc_ioctl	drm_agp_alloc_hook_ioctl
+#define	drm_agp_free_ioctl	drm_agp_free_hook_ioctl
+#define	drm_agp_bind_ioctl	drm_agp_bind_hook_ioctl
+#define	drm_agp_unbind_ioctl	drm_agp_unbind_hook_ioctl
 
 /* Table copied verbatim from dist/drm/drm_drv.c.  */
 static const struct drm_ioctl_desc drm_ioctls[] = {
@@ -240,7 +259,7 @@ static const struct drm_ioctl_desc drm_ioctls[] = {
 #endif
 };
 
-const struct cdevsw drmkms_cdevsw = {
+const struct cdevsw drm_cdevsw = {
 	.d_open = drm_open,
 	.d_close = noclose,
 	.d_read = noread,
@@ -315,7 +334,7 @@ drm_attach(device_t parent, device_t self, void *aux)
 		sc->sc_minor[i].index = (i * 64) + device_unit(self);
 		sc->sc_minor[i].type = drm_minor_types[i];
 		sc->sc_minor[i].device =
-		    makedev(cdevsw_lookup_major(&drmkms_cdevsw),
+		    makedev(cdevsw_lookup_major(&drm_cdevsw),
 			sc->sc_minor[i].index);
 		sc->sc_minor[i].kdev = self;
 		sc->sc_minor[i].dev = dev;
@@ -407,9 +426,10 @@ drm_detach(device_t self, int flags)
 static int
 drm_init(void)
 {
+	extern int linux_suppress_init;
 	int error;
 
-	linux_mutex_init(&drm_global_mutex);
+	KASSERT(!linux_suppress_init);
 
 	error = linux_kmap_init();
 	if (error) {
@@ -424,6 +444,9 @@ drm_init(void)
 		    " %d", error);
 		goto fail1;
 	}
+
+	linux_suppress_init = 1;
+	linux_mutex_init(&drm_global_mutex);
 
 	return 0;
 
@@ -984,3 +1007,67 @@ map:	vm_prot = ((ISSET(prot, PROT_READ)? VM_PROT_READ : 0) |
 	args->dnm_addr = (void *)vaddr;
 	return 0;
 }
+
+static const struct drm_agp_hooks *volatile drm_current_agp_hooks;
+
+int
+drm_agp_register(const struct drm_agp_hooks *hooks)
+{
+
+	membar_producer();
+	if (atomic_cas_ptr(&drm_current_agp_hooks, NULL, __UNCONST(hooks))
+	    != NULL)
+		return EBUSY;
+
+	return 0;
+}
+
+void
+drm_agp_deregister(const struct drm_agp_hooks *hooks)
+{
+
+	if (atomic_cas_ptr(&drm_current_agp_hooks, __UNCONST(hooks), NULL)
+	    != hooks)
+		panic("%s: wrong hooks: %p != %p", __func__,
+		    hooks, drm_current_agp_hooks);
+}
+
+int
+drm_agp_release_hook(struct drm_device *dev)
+{
+	const struct drm_agp_hooks *const hooks = drm_current_agp_hooks;
+
+	if (hooks == NULL) {
+		if ((dev != NULL) &&
+		    (dev->control != NULL) &&
+		    (dev->control->kdev != NULL))
+			panic("drm_agp_release(%s): no agp loaded",
+			    device_xname(dev->control->kdev));
+		else
+			panic("drm_agp_release(drm_device %p): no agp loaded",
+			    dev);
+	}
+	membar_consumer();
+	return (*hooks->agph_release)(dev);
+}
+
+#define	DEFINE_AGP_HOOK_IOCTL(NAME, HOOK)				      \
+static int								      \
+NAME(struct drm_device *dev, void *data, struct drm_file *file)		      \
+{									      \
+	const struct drm_agp_hooks *const hooks = drm_current_agp_hooks;      \
+									      \
+	if (hooks == NULL)						      \
+		return -ENODEV;						      \
+	membar_consumer();						      \
+	return (*hooks->HOOK)(dev, data, file);				      \
+}
+
+DEFINE_AGP_HOOK_IOCTL(drm_agp_acquire_hook_ioctl, agph_acquire_ioctl)
+DEFINE_AGP_HOOK_IOCTL(drm_agp_release_hook_ioctl, agph_release_ioctl)
+DEFINE_AGP_HOOK_IOCTL(drm_agp_enable_hook_ioctl, agph_enable_ioctl)
+DEFINE_AGP_HOOK_IOCTL(drm_agp_info_hook_ioctl, agph_info_ioctl)
+DEFINE_AGP_HOOK_IOCTL(drm_agp_alloc_hook_ioctl, agph_alloc_ioctl)
+DEFINE_AGP_HOOK_IOCTL(drm_agp_free_hook_ioctl, agph_free_ioctl)
+DEFINE_AGP_HOOK_IOCTL(drm_agp_bind_hook_ioctl, agph_bind_ioctl)
+DEFINE_AGP_HOOK_IOCTL(drm_agp_unbind_hook_ioctl, agph_unbind_ioctl)

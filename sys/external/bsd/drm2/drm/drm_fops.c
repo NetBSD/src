@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_fops.c,v 1.1.2.8 2014/01/15 21:25:29 riastradh Exp $	*/
+/*	$NetBSD: drm_fops.c,v 1.1.2.9 2014/03/04 20:45:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_fops.c,v 1.1.2.8 2014/01/15 21:25:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_fops.c,v 1.1.2.9 2014/03/04 20:45:16 riastradh Exp $");
 
 #include <drm/drmP.h>
 
@@ -402,7 +402,7 @@ drm_lastclose_agp(struct drm_device *dev)
 	INIT_LIST_HEAD(&dev->agp->memory); /* XXX seems kludgey */
 
 	if (dev->agp->acquired)
-		drm_agp_release(dev);
+		(void)drm_agp_release_hook(dev);
 
 	dev->agp->acquired = 0;
 	dev->agp->enabled = 0;

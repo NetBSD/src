@@ -1706,6 +1706,25 @@ extern int drm_agp_bind(struct drm_device *dev, struct drm_agp_binding *request)
 extern int drm_agp_bind_ioctl(struct drm_device *dev, void *data,
 			struct drm_file *file_priv);
 
+#ifdef __NetBSD__
+struct drm_agp_hooks {
+	drm_ioctl_t	*agph_acquire_ioctl;
+	drm_ioctl_t	*agph_release_ioctl;
+	drm_ioctl_t	*agph_enable_ioctl;
+	drm_ioctl_t	*agph_info_ioctl;
+	drm_ioctl_t	*agph_alloc_ioctl;
+	drm_ioctl_t	*agph_free_ioctl;
+	drm_ioctl_t	*agph_bind_ioctl;
+	drm_ioctl_t	*agph_unbind_ioctl;
+	int		(*agph_release)(struct drm_device *);
+};
+
+extern int drm_agp_release_hook(struct drm_device *);
+
+extern int drm_agp_register(const struct drm_agp_hooks *);
+extern void drm_agp_deregister(const struct drm_agp_hooks *);
+#endif
+
 				/* Stub support (drm_stub.h) */
 extern int drm_setmaster_ioctl(struct drm_device *dev, void *data,
 			       struct drm_file *file_priv);
@@ -2153,6 +2172,10 @@ drm_io_mapping_create_wc(struct drm_device *dev, resource_size_t addr,
 }
 
 #endif	/* defined(__NetBSD__) */
+
+#ifdef __NetBSD__
+extern const struct cdevsw drm_cdevsw;
+#endif
 
 #endif				/* __KERNEL__ */
 #endif
