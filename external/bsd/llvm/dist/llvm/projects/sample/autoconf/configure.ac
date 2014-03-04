@@ -1017,12 +1017,6 @@ AC_LINK_EXPORT_DYNAMIC
 dnl Determine whether the linker supports the --version-script option.
 AC_LINK_VERSION_SCRIPT
 
-dnl Check for libtool and the library that has dlopen function (which must come
-dnl before the AC_PROG_LIBTOOL check in order to enable dlopening libraries with
-dnl libtool).
-AC_LIBTOOL_DLOPEN
-AC_LIB_LTDL
-
 AC_MSG_CHECKING([tool compatibility])
 
 dnl Ensure that compilation tools are GCC or a GNU compatible compiler such as
@@ -1400,10 +1394,6 @@ AC_CHECK_FUNCS([__dso_handle])
 dnl Propagate the shared library extension that the libltdl checks did to
 dnl the Makefiles so we can use it there too
 AC_SUBST(SHLIBEXT,$libltdl_cv_shlibext)
-
-dnl Propagate the run-time library path variable that the libltdl
-dnl checks found to the Makefiles so we can use it there too
-AC_SUBST(SHLIBPATH_VAR,$libltdl_cv_shlibpath_var)
 
 # Translate the various configuration directories and other basic
 # information into substitutions that will end up in Makefile.config.in
