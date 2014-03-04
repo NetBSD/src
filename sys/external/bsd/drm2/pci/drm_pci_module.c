@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci_module.c,v 1.1.2.1 2013/07/24 02:44:20 riastradh Exp $	*/
+/*	$NetBSD: drm_pci_module.c,v 1.1.2.2 2014/03/04 20:45:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,22 +30,40 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci_module.c,v 1.1.2.1 2013/07/24 02:44:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci_module.c,v 1.1.2.2 2014/03/04 20:45:17 riastradh Exp $");
 
 #include <sys/module.h>
 
-MODULE(MODULE_CLASS_MISC, drm2pci, "drm2,pci");
+#include <drm/drmP.h>
+
+MODULE(MODULE_CLASS_MISC, drmkms_pci, "drmkms,pci");
+
+const struct drm_agp_hooks drmkms_pci_agp_hooks = {
+	.agph_acquire_ioctl = &drm_agp_acquire_ioctl,
+	.agph_release_ioctl = &drm_agp_release_ioctl,
+	.agph_enable_ioctl = &drm_agp_enable_ioctl,
+	.agph_info_ioctl = &drm_agp_info_ioctl,
+	.agph_alloc_ioctl = &drm_agp_alloc_ioctl,
+	.agph_free_ioctl = &drm_agp_free_ioctl,
+	.agph_bind_ioctl = &drm_agp_bind_ioctl,
+	.agph_unbind_ioctl = &drm_agp_unbind_ioctl,
+	.agph_release = &drm_agp_release,
+};
 
 static int
-drm2pci_modcmd(modcmd_t cmd, void *arg __unused)
+drmkms_pci_modcmd(modcmd_t cmd, void *arg __unused)
 {
+	int error;
+
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		/* XXX Install pci/agp hooks.  */
+		error = drm_agp_register(&drmkms_pci_agp_hooks);
+		if (error)
+			return error;
 		return 0;
 
 	case MODULE_CMD_FINI:
-		/* XXX Uninstall pci/agp hooks.  */
+		drm_agp_deregister(&drmkms_pci_agp_hooks);
 		return 0;
 
 	default:

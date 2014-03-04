@@ -1,7 +1,7 @@
-/*	$NetBSD: i915_module.c,v 1.1.2.9 2014/03/04 20:45:17 riastradh Exp $	*/
+/*	$NetBSD: linux_module.c,v 1.1.2.1 2014/03/04 20:45:17 riastradh Exp $	*/
 
 /*-
- * Copyright (c) 2013 The NetBSD Foundation, Inc.
+ * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,65 +30,56 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_module.c,v 1.1.2.9 2014/03/04 20:45:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_module.c,v 1.1.2.1 2014/03/04 20:45:17 riastradh Exp $");
 
-#include <sys/types.h>
 #include <sys/module.h>
-#include <sys/systm.h>
 
-#include <drm/drmP.h>
+#include <linux/highmem.h>
+#include <linux/mutex.h>
+#include <linux/workqueue.h>
 
-#include "i915_drv.h"
+MODULE(MODULE_CLASS_MISC, drmkms_linux, NULL);
 
-MODULE(MODULE_CLASS_DRIVER, i915drmkms, "drmkms,drmkms_pci"); /* XXX drmkms_i2c */
-
-#ifdef _MODULE
-#include "ioconf.c"
+#ifndef _MODULE
+/*
+ * XXX Mega-kludge.  See drm_init in drm_drv.c for details.
+ */
+int linux_suppress_init = 0;
 #endif
 
-/* XXX Kludge.  */
-extern struct drm_driver *const i915_drm_driver;
-
 static int
-i915drmkms_modcmd(modcmd_t cmd, void *arg __unused)
+drmkms_linux_modcmd(modcmd_t cmd, void *arg __unused)
 {
 	int error;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		/* XXX Kludge it up...  Must happen before attachment.  */
-		i915_drm_driver->num_ioctls = i915_max_ioctl;
-		i915_drm_driver->driver_features |= DRIVER_MODESET;
-
-		error = drm_pci_init(i915_drm_driver, NULL);
-		if (error) {
-			aprint_error("i915drmkms: failed to init pci: %d\n",
-			    error);
-			return error;
-		}
-#ifdef _MODULE
-		error = config_init_component(cfdriver_ioconf_i915drmkms,
-		    cfattach_ioconf_i915drmkms, cfdata_ioconf_i915drmkms);
-		if (error) {
-			aprint_error("i915drmkms: failed to init component"
-			    ": %d\n", error);
-			drm_pci_exit(i915_drm_driver, NULL);
-			return error;
-		}
+#ifndef _MODULE
+		if (linux_suppress_init)
+			return 0;
 #endif
+		error = linux_kmap_init();
+		if (error) {
+			aprint_error("drmkms_linux:"
+			    " unable to initialize linux kmap: %d",
+			    error);
+			goto init_fail0;
+		}
+		error = linux_workqueue_init();
+		if (error) {
+			aprint_error("drmkms_linux:"
+			    " unable to initialize workqueues: %d",
+			    error);
+			goto init_fail1;
+		}
 		return 0;
 
+init_fail1:	linux_kmap_fini();
+init_fail0:	return error;
+
 	case MODULE_CMD_FINI:
-#ifdef _MODULE
-		error = config_fini_component(cfdriver_ioconf_i915drmkms,
-		    cfattach_ioconf_i915drmkms, cfdata_ioconf_i915drmkms);
-		if (error) {
-			aprint_error("i915drmkms: failed to fini component"
-			    ": %d\n", error);
-			return error;
-		}
-#endif
-		drm_pci_exit(i915_drm_driver, NULL);
+		linux_workqueue_fini();
+		linux_kmap_fini();
 		return 0;
 
 	default:
