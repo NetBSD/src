@@ -1,4 +1,4 @@
-/* $NetBSD: memcpy.S,v 1.5 2014/03/03 18:55:02 matt Exp $ */
+/* $NetBSD: memcpy.S,v 1.6 2014/03/04 17:05:14 macallan Exp $ */
 
 /* stropt/memcpy_440.S, pl_string_common, pl_linux 10/11/04 11:45:36
  * ==========================================================================
@@ -73,11 +73,14 @@ ENTRY(memcpy)
 	 * not available.  Maybe want to have a different memcpy for 601
 	 * that checks for page boundaries/word alignment...
 	 */
-	mfspr   %r6, 287		/* mfpvbr %r6 PVR = 287       */
-	srwi    %r6, %r6, 0x10		/* get version field from PVR */
-	cmpwi   %r6, 0x1		/* 601 CPU = 0x0001           */
-	bne     bnorm			/* skip byte-only unless 601  */
+	mfspr   %r6, 287		/* mfpvbr %r6 PVR = 287        */
+	srwi    %r6, %r6, 0x10		/* get version field from PVR  */
+	cmpwi   %r6, 0x1		/* 601 CPU = 0x0001            */
+	bne     bnorm			/* skip byte-only unless 601   */
 
+	or	%r6, %r3, %r4		/* see if both source and dest */
+	andi.	%r6, %r6, 3		/* are 32bit aligned           */
+	beq	bnorm			/* skip byte-only if they are  */
 bcpy:
 	mtctr   %r5			/* byte copy everything */
 	li      %r6, 0
