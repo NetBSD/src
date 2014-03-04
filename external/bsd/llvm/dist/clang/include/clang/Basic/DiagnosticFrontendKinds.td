@@ -29,6 +29,7 @@ def note_fe_backend_frame_larger_than: Note<"%0">, CatBackend;
 
 def warn_fe_backend_plugin: Warning<"%0">, CatBackend, InGroup<BackendPlugin>;
 def err_fe_backend_plugin: Error<"%0">, CatBackend;
+def remark_fe_backend_plugin: Remark<"%0">, CatBackend, InGroup<RemarkBackendPlugin>;
 def note_fe_backend_plugin: Note<"%0">, CatBackend;
 
 def err_fe_invalid_code_complete_file : Error<
@@ -158,4 +159,9 @@ def warn_module_config_macro_undef : Warning<
   InGroup<ConfigMacros>;
 def note_module_def_undef_here : Note<
   "macro was %select{defined|#undef'd}0 here">;
+
+def err_missing_vfs_overlay_file : Error<
+  "virtual filesystem overlay file '%0' not found">, DefaultFatal;
+def err_invalid_vfs_overlay : Error<
+  "invalid virtual filesystem overlay file '%0'">, DefaultFatal;
 }

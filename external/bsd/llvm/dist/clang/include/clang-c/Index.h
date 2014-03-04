@@ -19,7 +19,9 @@
 #include <time.h>
 
 #include "clang-c/Platform.h"
+#include "clang-c/CXErrorCode.h"
 #include "clang-c/CXString.h"
+#include "clang-c/BuildSystem.h"
 
 /**
  * \brief The version constants for the libclang API.
@@ -30,7 +32,7 @@
  * compatible, thus CINDEX_VERSION_MAJOR is expected to remain stable.
  */
 #define CINDEX_VERSION_MAJOR 0
-#define CINDEX_VERSION_MINOR 21
+#define CINDEX_VERSION_MINOR 24
 
 #define CINDEX_VERSION_ENCODE(major, minor) ( \
       ((major) * 10000)                       \
@@ -651,6 +653,12 @@ enum CXDiagnosticSeverity {
   CXDiagnostic_Note    = 1,
 
   /**
+   * \brief This diagnostic is a remark that provides additional information
+   * for the user.
+   */
+  CXDiagnostic_Remark = 5,
+
+  /**
    * \brief This diagnostic indicates suspicious code that may not be
    * wrong.
    */
@@ -1076,10 +1084,27 @@ CINDEX_LINKAGE CXTranslationUnit clang_createTranslationUnitFromSourceFile(
                                          struct CXUnsavedFile *unsaved_files);
 
 /**
- * \brief Create a translation unit from an AST file (-emit-ast).
+ * \brief Same as \c clang_createTranslationUnit2, but returns
+ * the \c CXTranslationUnit instead of an error code.  In case of an error this
+ * routine returns a \c NULL \c CXTranslationUnit, without further detailed
+ * error codes.
  */
-CINDEX_LINKAGE CXTranslationUnit clang_createTranslationUnit(CXIndex,
-                                             const char *ast_filename);
+CINDEX_LINKAGE CXTranslationUnit clang_createTranslationUnit(
+    CXIndex CIdx,
+    const char *ast_filename);
+
+/**
+ * \brief Create a translation unit from an AST file (\c -emit-ast).
+ *
+ * \param[out] out_TU A non-NULL pointer to store the created
+ * \c CXTranslationUnit.
+ *
+ * \returns Zero on success, otherwise returns an error code.
+ */
+CINDEX_LINKAGE enum CXErrorCode clang_createTranslationUnit2(
+    CXIndex CIdx,
+    const char *ast_filename,
+    CXTranslationUnit *out_TU);
 
 /**
  * \brief Flags that control the creation of translation units.
@@ -1193,7 +1218,22 @@ enum CXTranslationUnit_Flags {
  * set of optimizations enabled may change from one version to the next.
  */
 CINDEX_LINKAGE unsigned clang_defaultEditingTranslationUnitOptions(void);
-  
+
+/**
+ * \brief Same as \c clang_parseTranslationUnit2, but returns
+ * the \c CXTranslationUnit instead of an error code.  In case of an error this
+ * routine returns a \c NULL \c CXTranslationUnit, without further detailed
+ * error codes.
+ */
+CINDEX_LINKAGE CXTranslationUnit
+clang_parseTranslationUnit(CXIndex CIdx,
+                           const char *source_filename,
+                           const char *const *command_line_args,
+                           int num_command_line_args,
+                           struct CXUnsavedFile *unsaved_files,
+                           unsigned num_unsaved_files,
+                           unsigned options);
+
 /**
  * \brief Parse the given source file and the translation unit corresponding
  * to that file.
@@ -1208,7 +1248,7 @@ CINDEX_LINKAGE unsigned clang_defaultEditingTranslationUnitOptions(void);
  * associated.
  *
  * \param source_filename The name of the source file to load, or NULL if the
- * source file is included in \p command_line_args.
+ * source file is included in \c command_line_args.
  *
  * \param command_line_args The command-line arguments that would be
  * passed to the \c clang executable if it were being invoked out-of-process.
@@ -1217,7 +1257,7 @@ CINDEX_LINKAGE unsigned clang_defaultEditingTranslationUnitOptions(void);
  * '-emit-ast', '-fsyntax-only' (which is the default), and '-o \<output file>'.
  *
  * \param num_command_line_args The number of command-line arguments in
- * \p command_line_args.
+ * \c command_line_args.
  *
  * \param unsaved_files the files that have not yet been saved to disk
  * but may be required for parsing, including the contents of
@@ -1232,18 +1272,22 @@ CINDEX_LINKAGE unsigned clang_defaultEditingTranslationUnitOptions(void);
  * is managed but not its compilation. This should be a bitwise OR of the
  * CXTranslationUnit_XXX flags.
  *
- * \returns A new translation unit describing the parsed code and containing
- * any diagnostics produced by the compiler. If there is a failure from which
- * the compiler cannot recover, returns NULL.
+ * \param[out] out_TU A non-NULL pointer to store the created
+ * \c CXTranslationUnit, describing the parsed code and containing any
+ * diagnostics produced by the compiler.
+ *
+ * \returns Zero on success, otherwise returns an error code.
  */
-CINDEX_LINKAGE CXTranslationUnit clang_parseTranslationUnit(CXIndex CIdx,
-                                                    const char *source_filename,
-                                         const char * const *command_line_args,
-                                                      int num_command_line_args,
-                                            struct CXUnsavedFile *unsaved_files,
-                                                     unsigned num_unsaved_files,
-                                                            unsigned options);
-  
+CINDEX_LINKAGE enum CXErrorCode
+clang_parseTranslationUnit2(CXIndex CIdx,
+                            const char *source_filename,
+                            const char *const *command_line_args,
+                            int num_command_line_args,
+                            struct CXUnsavedFile *unsaved_files,
+                            unsigned num_unsaved_files,
+                            unsigned options,
+                            CXTranslationUnit *out_TU);
+
 /**
  * \brief Flags that control how translation units are saved.
  *
@@ -1395,10 +1439,11 @@ CINDEX_LINKAGE unsigned clang_defaultReparseOptions(CXTranslationUnit TU);
  * The function \c clang_defaultReparseOptions() produces a default set of
  * options recommended for most uses, based on the translation unit.
  *
- * \returns 0 if the sources could be reparsed. A non-zero value will be
+ * \returns 0 if the sources could be reparsed.  A non-zero error code will be
  * returned if reparsing was impossible, such that the translation unit is
- * invalid. In such cases, the only valid call for \p TU is 
- * \c clang_disposeTranslationUnit(TU).
+ * invalid. In such cases, the only valid call for \c TU is
+ * \c clang_disposeTranslationUnit(TU).  The error codes returned by this
+ * routine are described by the \c CXErrorCode enum.
  */
 CINDEX_LINKAGE int clang_reparseTranslationUnit(CXTranslationUnit TU,
                                                 unsigned num_unsaved_files,
@@ -2096,7 +2141,11 @@ enum CXCursorKind {
    */
   CXCursor_OMPParallelDirective          = 232,
 
-  CXCursor_LastStmt                      = CXCursor_OMPParallelDirective,
+  /** \brief OpenMP simd directive.
+   */
+  CXCursor_OMPSimdDirective              = 233,
+
+  CXCursor_LastStmt                      = CXCursor_OMPSimdDirective,
 
   /**
    * \brief Cursor that represents the translation unit itself.
@@ -3036,6 +3085,24 @@ enum CXRefQualifierKind {
   /** \brief An rvalue ref-qualifier was provided (\c &&). */
   CXRefQualifier_RValue
 };
+
+/**
+ * \brief Returns the number of template arguments for given class template
+ * specialization, or -1 if type \c T is not a class template specialization.
+ *
+ * Variadic argument packs count as only one argument, and can not be inspected
+ * further.
+ */
+CINDEX_LINKAGE int clang_Type_getNumTemplateArguments(CXType T);
+
+/**
+ * \brief Returns the type template argument of a template class specialization
+ * at given index.
+ *
+ * This function only returns template type arguments and does not handle
+ * template template arguments or variadic packs.
+ */
+CINDEX_LINKAGE CXType clang_Type_getTemplateArgumentAsType(CXType T, unsigned i);
 
 /**
  * \brief Retrieve the ref-qualifier kind of a function or method.
@@ -5789,11 +5856,12 @@ typedef enum {
  * \param index_options A bitmask of options that affects how indexing is
  * performed. This should be a bitwise OR of the CXIndexOpt_XXX flags.
  *
- * \param out_TU [out] pointer to store a CXTranslationUnit that can be reused
- * after indexing is finished. Set to NULL if you do not require it.
+ * \param[out] out_TU pointer to store a \c CXTranslationUnit that can be
+ * reused after indexing is finished. Set to \c NULL if you do not require it.
  *
- * \returns If there is a failure from which the there is no recovery, returns
- * non-zero, otherwise returns 0.
+ * \returns 0 on success or if there were errors from which the compiler could
+ * recover.  If there is a failure from which the there is no recovery, returns
+ * a non-zero \c CXErrorCode.
  *
  * The rest of the parameters are the same as #clang_parseTranslationUnit.
  */

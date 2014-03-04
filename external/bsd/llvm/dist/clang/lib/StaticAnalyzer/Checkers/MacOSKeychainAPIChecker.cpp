@@ -91,7 +91,7 @@ private:
 
   inline void initBugType() const {
     if (!BT)
-      BT.reset(new BugType("Improper use of SecKeychain API",
+      BT.reset(new BugType(this, "Improper use of SecKeychain API",
                            "API Misuse (Apple)"));
   }
 
@@ -575,7 +575,7 @@ void MacOSKeychainAPIChecker::checkDeadSymbols(SymbolReaper &SR,
     return;
   }
 
-  static SimpleProgramPointTag Tag("MacOSKeychainAPIChecker : DeadSymbolsLeak");
+  static CheckerProgramPointTag Tag(this, "DeadSymbolsLeak");
   ExplodedNode *N = C.addTransition(C.getState(), C.getPredecessor(), &Tag);
 
   // Generate the error reports.

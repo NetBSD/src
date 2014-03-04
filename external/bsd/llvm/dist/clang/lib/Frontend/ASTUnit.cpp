@@ -20,6 +20,7 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/TargetOptions.h"
+#include "clang/Basic/VirtualFileSystem.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
@@ -37,7 +38,6 @@
 #include "llvm/ADT/StringSet.h"
 #include "llvm/Support/Atomic.h"
 #include "llvm/Support/CrashRecoveryContext.h"
-#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Mutex.h"
@@ -191,10 +191,7 @@ struct ASTUnit::ASTWriterData {
 };
 
 void ASTUnit::clearFileLevelDecls() {
-  for (FileDeclsTy::iterator
-         I = FileDecls.begin(), E = FileDecls.end(); I != E; ++I)
-    delete I->second;
-  FileDecls.clear();
+  llvm::DeleteContainerSeconds(FileDecls);
 }
 
 void ASTUnit::CleanTemporaryFiles() {
@@ -721,8 +718,6 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
   HeaderSearch &HeaderInfo = *AST->HeaderInfo.get();
   unsigned Counter;
 
-  OwningPtr<ASTReader> Reader;
-
   AST->PP = new Preprocessor(PPOpts,
                              AST->getDiagnostics(), AST->ASTFileLangOpts,
                              /*Target=*/0, AST->getSourceManager(), HeaderInfo, 
@@ -745,21 +740,17 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
   bool disableValid = false;
   if (::getenv("LIBCLANG_DISABLE_PCH_VALIDATION"))
     disableValid = true;
-  Reader.reset(new ASTReader(PP, Context,
+  AST->Reader = new ASTReader(PP, Context,
                              /*isysroot=*/"",
                              /*DisableValidation=*/disableValid,
-                             AllowPCHWithCompilerErrors));
-  
-  // Recover resources if we crash before exiting this method.
-  llvm::CrashRecoveryContextCleanupRegistrar<ASTReader>
-    ReaderCleanup(Reader.get());
+                             AllowPCHWithCompilerErrors);
 
-  Reader->setListener(new ASTInfoCollector(*AST->PP, Context,
+  AST->Reader->setListener(new ASTInfoCollector(*AST->PP, Context,
                                            AST->ASTFileLangOpts,
                                            AST->TargetOpts, AST->Target, 
                                            Counter));
 
-  switch (Reader->ReadAST(Filename, serialization::MK_MainFile,
+  switch (AST->Reader->ReadAST(Filename, serialization::MK_MainFile,
                           SourceLocation(), ASTReader::ARR_None)) {
   case ASTReader::Success:
     break;
@@ -774,21 +765,14 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
     return NULL;
   }
 
-  AST->OriginalSourceFile = Reader->getOriginalSourceFile();
+  AST->OriginalSourceFile = AST->Reader->getOriginalSourceFile();
 
   PP.setCounterValue(Counter);
 
   // Attach the AST reader to the AST context as an external AST
   // source, so that declarations will be deserialized from the
   // AST file as needed.
-  ASTReader *ReaderPtr = Reader.get();
-  OwningPtr<ExternalASTSource> Source(Reader.take());
-
-  // Unregister the cleanup for ASTReader.  It will get cleaned up
-  // by the ASTUnit cleanup.
-  ReaderCleanup.unregister();
-
-  Context.setExternalSource(Source);
+  Context.setExternalSource(AST->Reader);
 
   // Create an AST consumer, even though it isn't used.
   AST->Consumer.reset(new ASTConsumer);
@@ -796,8 +780,7 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
   // Create a semantic analysis object and tell the AST reader about it.
   AST->TheSema.reset(new Sema(PP, Context, *AST->Consumer));
   AST->TheSema->Initialize();
-  ReaderPtr->InitializeSema(*AST->TheSema);
-  AST->Reader = ReaderPtr;
+  AST->Reader->InitializeSema(*AST->TheSema);
 
   // Tell the diagnostic client that we have started a source file.
   AST->getDiagnostics().getClient()->BeginSourceFile(Context.getLangOpts(),&PP);
@@ -1176,9 +1159,8 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
 
   if (OverrideMainBuffer) {
     std::string ModName = getPreambleFile(this);
-    TranslateStoredDiagnostics(Clang->getModuleManager(), ModName,
-                               getSourceManager(), PreambleDiagnostics,
-                               StoredDiagnostics);
+    TranslateStoredDiagnostics(getFileManager(), getSourceManager(),
+                               PreambleDiagnostics, StoredDiagnostics);
   }
 
   if (!Act->Execute())
@@ -1346,6 +1328,53 @@ bool operator==(const ASTUnit::PreambleFileHash &LHS,
 }
 } // namespace clang
 
+static std::pair<unsigned, unsigned>
+makeStandaloneRange(CharSourceRange Range, const SourceManager &SM,
+                    const LangOptions &LangOpts) {
+  CharSourceRange FileRange = Lexer::makeFileCharRange(Range, SM, LangOpts);
+  unsigned Offset = SM.getFileOffset(FileRange.getBegin());
+  unsigned EndOffset = SM.getFileOffset(FileRange.getEnd());
+  return std::make_pair(Offset, EndOffset);
+}
+
+static void makeStandaloneFixIt(const SourceManager &SM,
+                                const LangOptions &LangOpts,
+                                const FixItHint &InFix,
+                                ASTUnit::StandaloneFixIt &OutFix) {
+  OutFix.RemoveRange = makeStandaloneRange(InFix.RemoveRange, SM, LangOpts);
+  OutFix.InsertFromRange = makeStandaloneRange(InFix.InsertFromRange, SM,
+                                               LangOpts);
+  OutFix.CodeToInsert = InFix.CodeToInsert;
+  OutFix.BeforePreviousInsertions = InFix.BeforePreviousInsertions;
+}
+
+static void makeStandaloneDiagnostic(const LangOptions &LangOpts,
+                                     const StoredDiagnostic &InDiag,
+                                     ASTUnit::StandaloneDiagnostic &OutDiag) {
+  OutDiag.ID = InDiag.getID();
+  OutDiag.Level = InDiag.getLevel();
+  OutDiag.Message = InDiag.getMessage();
+  OutDiag.LocOffset = 0;
+  if (InDiag.getLocation().isInvalid())
+    return;
+  const SourceManager &SM = InDiag.getLocation().getManager();
+  SourceLocation FileLoc = SM.getFileLoc(InDiag.getLocation());
+  OutDiag.Filename = SM.getFilename(FileLoc);
+  if (OutDiag.Filename.empty())
+    return;
+  OutDiag.LocOffset = SM.getFileOffset(FileLoc);
+  for (StoredDiagnostic::range_iterator
+         I = InDiag.range_begin(), E = InDiag.range_end(); I != E; ++I) {
+    OutDiag.Ranges.push_back(makeStandaloneRange(*I, SM, LangOpts));
+  }
+  for (StoredDiagnostic::fixit_iterator
+         I = InDiag.fixit_begin(), E = InDiag.fixit_end(); I != E; ++I) {
+    ASTUnit::StandaloneFixIt Fix;
+    makeStandaloneFixIt(SM, LangOpts, *I, Fix);
+    OutDiag.FixIts.push_back(Fix);
+  }
+}
+
 /// \brief Attempt to build or re-use a precompiled preamble when (re-)parsing
 /// the source file.
 ///
@@ -1421,7 +1450,7 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
              REnd = PreprocessorOpts.remapped_file_end();
            !AnyFileChanged && R != REnd;
            ++R) {
-        llvm::sys::fs::file_status Status;
+        vfs::Status Status;
         if (FileMgr->getNoncachedStatValue(R->second, Status)) {
           // If we can't stat the file we're remapping to, assume that something
           // horrible happened.
@@ -1457,7 +1486,7 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
         }
         
         // The file was not remapped; check whether it has changed on disk.
-        llvm::sys::fs::file_status Status;
+        vfs::Status Status;
         if (FileMgr->getNoncachedStatValue(F->first(), Status)) {
           // If we can't stat the file, assume that something horrible happened.
           AnyFileChanged = true;
@@ -1606,6 +1635,7 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
   checkAndRemoveNonDriverDiags(StoredDiagnostics);
   TopLevelDecls.clear();
   TopLevelDeclsInPreamble.clear();
+  PreambleDiagnostics.clear();
   
   // Create a file manager object to provide access to and cache the filesystem.
   Clang->setFileManager(new FileManager(Clang->getFileSystemOpts()));
@@ -1626,7 +1656,20 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
   }
   
   Act->Execute();
+
+  // Transfer any diagnostics generated when parsing the preamble into the set
+  // of preamble diagnostics.
+  for (stored_diag_iterator
+         I = stored_diag_afterDriver_begin(),
+         E = stored_diag_end(); I != E; ++I) {
+    StandaloneDiagnostic Diag;
+    makeStandaloneDiagnostic(Clang->getLangOpts(), *I, Diag);
+    PreambleDiagnostics.push_back(Diag);
+  }
+
   Act->EndSourceFile();
+
+  checkAndRemoveNonDriverDiags(StoredDiagnostics);
 
   if (!Act->hasEmittedPreamblePCH()) {
     // The preamble PCH failed (e.g. there was a module loading fatal error),
@@ -1640,13 +1683,6 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
                                PreprocessorOpts.remapped_file_buffer_end() - 1);
     return 0;
   }
-  
-  // Transfer any diagnostics generated when parsing the preamble into the set
-  // of preamble diagnostics.
-  PreambleDiagnostics.clear();
-  PreambleDiagnostics.insert(PreambleDiagnostics.end(), 
-                            stored_diag_afterDriver_begin(), stored_diag_end());
-  checkAndRemoveNonDriverDiags(StoredDiagnostics);
   
   // Keep track of the preamble we precompiled.
   setPreambleFile(this, FrontendOpts.OutputFile);
@@ -2443,6 +2479,7 @@ void ASTUnit::CodeComplete(StringRef File, unsigned Line, unsigned Column,
   for (unsigned I = 0, N = RemappedFiles.size(); I != N; ++I) {
     PreprocessorOpts.addRemappedFile(RemappedFiles[I].first,
                                      RemappedFiles[I].second);
+    OwnedBuffers.push_back(RemappedFiles[I].second);
   }
 
   // Use the code completion consumer we were given, but adding any cached
@@ -2561,68 +2598,57 @@ bool ASTUnit::serialize(raw_ostream &OS) {
 
 typedef ContinuousRangeMap<unsigned, int, 2> SLocRemap;
 
-static void TranslateSLoc(SourceLocation &L, SLocRemap &Remap) {
-  unsigned Raw = L.getRawEncoding();
-  const unsigned MacroBit = 1U << 31;
-  L = SourceLocation::getFromRawEncoding((Raw & MacroBit) |
-      ((Raw & ~MacroBit) + Remap.find(Raw & ~MacroBit)->second));
-}
-
 void ASTUnit::TranslateStoredDiagnostics(
-                          ASTReader *MMan,
-                          StringRef ModName,
+                          FileManager &FileMgr,
                           SourceManager &SrcMgr,
-                          const SmallVectorImpl<StoredDiagnostic> &Diags,
+                          const SmallVectorImpl<StandaloneDiagnostic> &Diags,
                           SmallVectorImpl<StoredDiagnostic> &Out) {
-  // The stored diagnostic has the old source manager in it; update
-  // the locations to refer into the new source manager. We also need to remap
-  // all the locations to the new view. This includes the diag location, any
-  // associated source ranges, and the source ranges of associated fix-its.
+  // Map the standalone diagnostic into the new source manager. We also need to
+  // remap all the locations to the new view. This includes the diag location,
+  // any associated source ranges, and the source ranges of associated fix-its.
   // FIXME: There should be a cleaner way to do this.
 
   SmallVector<StoredDiagnostic, 4> Result;
   Result.reserve(Diags.size());
-  assert(MMan && "Don't have a module manager");
-  serialization::ModuleFile *Mod = MMan->ModuleMgr.lookup(ModName);
-  assert(Mod && "Don't have preamble module");
-  SLocRemap &Remap = Mod->SLocRemap;
   for (unsigned I = 0, N = Diags.size(); I != N; ++I) {
     // Rebuild the StoredDiagnostic.
-    const StoredDiagnostic &SD = Diags[I];
-    SourceLocation L = SD.getLocation();
-    TranslateSLoc(L, Remap);
+    const StandaloneDiagnostic &SD = Diags[I];
+    if (SD.Filename.empty())
+      continue;
+    const FileEntry *FE = FileMgr.getFile(SD.Filename);
+    if (!FE)
+      continue;
+    FileID FID = SrcMgr.translateFile(FE);
+    SourceLocation FileLoc = SrcMgr.getLocForStartOfFile(FID);
+    if (FileLoc.isInvalid())
+      continue;
+    SourceLocation L = FileLoc.getLocWithOffset(SD.LocOffset);
     FullSourceLoc Loc(L, SrcMgr);
 
     SmallVector<CharSourceRange, 4> Ranges;
-    Ranges.reserve(SD.range_size());
-    for (StoredDiagnostic::range_iterator I = SD.range_begin(),
-                                          E = SD.range_end();
-         I != E; ++I) {
-      SourceLocation BL = I->getBegin();
-      TranslateSLoc(BL, Remap);
-      SourceLocation EL = I->getEnd();
-      TranslateSLoc(EL, Remap);
-      Ranges.push_back(CharSourceRange(SourceRange(BL, EL), I->isTokenRange()));
+    Ranges.reserve(SD.Ranges.size());
+    for (std::vector<std::pair<unsigned, unsigned> >::const_iterator
+           I = SD.Ranges.begin(), E = SD.Ranges.end(); I != E; ++I) {
+      SourceLocation BL = FileLoc.getLocWithOffset((*I).first);
+      SourceLocation EL = FileLoc.getLocWithOffset((*I).second);
+      Ranges.push_back(CharSourceRange::getCharRange(BL, EL));
     }
 
     SmallVector<FixItHint, 2> FixIts;
-    FixIts.reserve(SD.fixit_size());
-    for (StoredDiagnostic::fixit_iterator I = SD.fixit_begin(),
-                                          E = SD.fixit_end();
+    FixIts.reserve(SD.FixIts.size());
+    for (std::vector<StandaloneFixIt>::const_iterator
+           I = SD.FixIts.begin(), E = SD.FixIts.end();
          I != E; ++I) {
       FixIts.push_back(FixItHint());
       FixItHint &FH = FixIts.back();
       FH.CodeToInsert = I->CodeToInsert;
-      SourceLocation BL = I->RemoveRange.getBegin();
-      TranslateSLoc(BL, Remap);
-      SourceLocation EL = I->RemoveRange.getEnd();
-      TranslateSLoc(EL, Remap);
-      FH.RemoveRange = CharSourceRange(SourceRange(BL, EL),
-                                       I->RemoveRange.isTokenRange());
+      SourceLocation BL = FileLoc.getLocWithOffset(I->RemoveRange.first);
+      SourceLocation EL = FileLoc.getLocWithOffset(I->RemoveRange.second);
+      FH.RemoveRange = CharSourceRange::getCharRange(BL, EL);
     }
 
-    Result.push_back(StoredDiagnostic(SD.getLevel(), SD.getID(), 
-                                      SD.getMessage(), Loc, Ranges, FixIts));
+    Result.push_back(StoredDiagnostic(SD.Level, SD.ID, 
+                                      SD.Message, Loc, Ranges, FixIts));
   }
   Result.swap(Out);
 }

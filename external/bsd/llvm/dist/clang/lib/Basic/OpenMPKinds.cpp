@@ -77,6 +77,7 @@ unsigned clang::getOpenMPSimpleClauseType(OpenMPClauseKind Kind,
              .Default(OMPC_DEFAULT_unknown);
   case OMPC_unknown:
   case OMPC_threadprivate:
+  case OMPC_if:
   case OMPC_private:
   case OMPC_firstprivate:
   case OMPC_shared:
@@ -100,6 +101,7 @@ const char *clang::getOpenMPSimpleClauseTypeName(OpenMPClauseKind Kind,
     llvm_unreachable("Invalid OpenMP 'default' clause type");
   case OMPC_unknown:
   case OMPC_threadprivate:
+  case OMPC_if:
   case OMPC_private:
   case OMPC_firstprivate:
   case OMPC_shared:
@@ -117,6 +119,15 @@ bool clang::isAllowedClauseForDirective(OpenMPDirectiveKind DKind,
   case OMPD_parallel:
     switch (CKind) {
 #define OPENMP_PARALLEL_CLAUSE(Name) \
+    case OMPC_##Name: return true;
+#include "clang/Basic/OpenMPKinds.def"
+    default:
+      break;
+    }
+    break;
+  case OMPD_simd:
+    switch (CKind) {
+#define OPENMP_SIMD_CLAUSE(Name) \
     case OMPC_##Name: return true;
 #include "clang/Basic/OpenMPKinds.def"
     default:

@@ -76,7 +76,10 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
     CollectStats(false), CodeCompleter(CodeCompleter),
     CurContext(0), OriginalLexicalContext(0),
     PackContext(0), MSStructPragmaOn(false),
-    MSPointerToMemberRepresentationMethod(PPTMK_BestCase), VisContext(0),
+    MSPointerToMemberRepresentationMethod(
+        LangOpts.getMSPointerToMemberRepresentationMethod()),
+    VtorDispModeStack(1, MSVtorDispAttr::Mode(LangOpts.VtorDispMode)),
+    VisContext(0),
     IsBuildingRecoveryCallExpr(false),
     ExprNeedsCleanups(false), LateTemplateParser(0), OpaqueParser(0),
     IdResolver(pp), StdInitializerList(0), CXXTypeInfoDecl(0), MSVCGuidDecl(0),
@@ -86,7 +89,7 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
     NSDictionaryDecl(0), DictionaryWithObjectsMethod(0),
     GlobalNewDeleteDeclared(false),
     TUKind(TUKind),
-    NumSFINAEErrors(0), InFunctionDeclarator(0),
+    NumSFINAEErrors(0),
     AccessCheckingSFINAE(false), InNonInstantiationSFINAEContext(false),
     NonInstantiationEntries(0), ArgumentPackSubstitutionIndex(-1),
     CurrentInstantiationScope(0), DisableTypoCorrection(false),
@@ -205,10 +208,7 @@ void Sema::Initialize() {
 }
 
 Sema::~Sema() {
-  for (LateParsedTemplateMapT::iterator I = LateParsedTemplateMap.begin(),
-                                        E = LateParsedTemplateMap.end();
-       I != E; ++I)
-    delete I->second;
+  llvm::DeleteContainerSeconds(LateParsedTemplateMap);
   if (PackContext) FreePackedContext();
   if (VisContext) FreeVisContext();
   // Kill all the active scopes.

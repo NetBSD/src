@@ -104,7 +104,9 @@ void NonNullParamChecker::checkPreCall(const CallEvent &Call,
         V = *CSV_I;
         DV = V.getAs<DefinedSVal>();
         assert(++CSV_I == CSV->end());
-        if (!DV)
+        // FIXME: Handle (some_union){ some_other_union_val }, which turns into
+        // a LazyCompoundVal inside a CompoundVal.
+        if (!V.getAs<Loc>())
           continue;
         // Retrieve the corresponding expression.
         if (const CompoundLiteralExpr *CE = dyn_cast<CompoundLiteralExpr>(ArgE))
@@ -162,8 +164,7 @@ BugReport *NonNullParamChecker::genReportNullAttrNonNull(
   // the BugReport is passed to 'EmitWarning'.
   if (!BTAttrNonNull)
     BTAttrNonNull.reset(new BugType(
-                            "Argument with 'nonnull' attribute passed null",
-                            "API"));
+        this, "Argument with 'nonnull' attribute passed null", "API"));
 
   BugReport *R = new BugReport(*BTAttrNonNull,
                   "Null pointer passed as an argument to a 'nonnull' parameter",
@@ -177,7 +178,7 @@ BugReport *NonNullParamChecker::genReportNullAttrNonNull(
 BugReport *NonNullParamChecker::genReportReferenceToNullPointer(
   const ExplodedNode *ErrorNode, const Expr *ArgE) const {
   if (!BTNullRefArg)
-    BTNullRefArg.reset(new BuiltinBug("Dereference of null pointer"));
+    BTNullRefArg.reset(new BuiltinBug(this, "Dereference of null pointer"));
 
   BugReport *R = new BugReport(*BTNullRefArg,
                                "Forming reference to null pointer",

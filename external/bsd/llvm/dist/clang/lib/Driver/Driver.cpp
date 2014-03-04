@@ -77,10 +77,7 @@ Driver::Driver(StringRef ClangExecutable,
 Driver::~Driver() {
   delete Opts;
 
-  for (llvm::StringMap<ToolChain *>::iterator I = ToolChains.begin(),
-                                              E = ToolChains.end();
-       I != E; ++I)
-    delete I->second;
+  llvm::DeleteContainerSeconds(ToolChains);
 }
 
 void Driver::ParseDriverMode(ArrayRef<const char *> Args) {
@@ -525,8 +522,7 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
       std::string Err;
       std::string Script = StringRef(*it).rsplit('.').first;
       Script += ".sh";
-      llvm::raw_fd_ostream ScriptOS(
-          Script.c_str(), Err, llvm::sys::fs::F_Excl | llvm::sys::fs::F_Binary);
+      llvm::raw_fd_ostream ScriptOS(Script.c_str(), Err, llvm::sys::fs::F_Excl);
       if (!Err.empty()) {
         Diag(clang::diag::note_drv_command_failed_diag_msg)
           << "Error generating run script: " + Script + " " + Err;
@@ -748,51 +744,34 @@ bool Driver::HandleImmediateArgs(const Compilation &C) {
   }
 
   if (C.getArgs().hasArg(options::OPT_print_multi_lib)) {
-    // FIXME: We need tool chain support for this.
-    llvm::outs() << ".;\n";
+    const MultilibSet &Multilibs = TC.getMultilibs();
 
-    switch (C.getDefaultToolChain().getTriple().getArch()) {
-    default:
-      break;
-
-    case llvm::Triple::x86_64:
-      llvm::outs() << "x86_64;@m64" << "\n";
-      break;
-
-    case llvm::Triple::ppc64:
-      llvm::outs() << "ppc64;@m64" << "\n";
-      break;
-
-    case llvm::Triple::ppc64le:
-      llvm::outs() << "ppc64le;@m64" << "\n";
-      break;
+    for (MultilibSet::const_iterator I = Multilibs.begin(), E = Multilibs.end();
+         I != E; ++I) {
+      llvm::outs() << *I << "\n";
     }
     return false;
   }
 
-  // FIXME: What is the difference between print-multi-directory and
-  // print-multi-os-directory?
-  if (C.getArgs().hasArg(options::OPT_print_multi_directory) ||
-      C.getArgs().hasArg(options::OPT_print_multi_os_directory)) {
-    switch (C.getDefaultToolChain().getTriple().getArch()) {
-    default:
-    case llvm::Triple::x86:
-    case llvm::Triple::ppc:
-      llvm::outs() << "." << "\n";
-      break;
-
-    case llvm::Triple::x86_64:
-      llvm::outs() << "x86_64" << "\n";
-      break;
-
-    case llvm::Triple::ppc64:
-      llvm::outs() << "ppc64" << "\n";
-      break;
-
-    case llvm::Triple::ppc64le:
-      llvm::outs() << "ppc64le" << "\n";
-      break;
+  if (C.getArgs().hasArg(options::OPT_print_multi_directory)) {
+    const MultilibSet &Multilibs = TC.getMultilibs();
+    for (MultilibSet::const_iterator I = Multilibs.begin(), E = Multilibs.end();
+         I != E; ++I) {
+      if (I->gccSuffix().empty())
+        llvm::outs() << ".\n";
+      else {
+        StringRef Suffix(I->gccSuffix());
+        assert(Suffix.front() == '/');
+        llvm::outs() << Suffix.substr(1) << "\n";
+      }
     }
+    return false;
+  }
+
+  if (C.getArgs().hasArg(options::OPT_print_multi_os_directory)) {
+    // FIXME: This should print out "lib/../lib", "lib/../lib64", or
+    // "lib/../lib32" as appropriate for the toolchain. For now, print
+    // nothing because it's not supported yet.
     return false;
   }
 

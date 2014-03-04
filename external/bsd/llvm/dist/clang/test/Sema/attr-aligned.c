@@ -1,6 +1,7 @@
 // RUN: %clang_cc1 -triple i386-apple-darwin9 -fsyntax-only -verify %s
 
 int x __attribute__((aligned(3))); // expected-error {{requested alignment is not a power of 2}}
+int y __attribute__((aligned(1 << 29))); // expected-error {{requested alignment must be 268435456 bytes or smaller}}
 
 // PR3254
 short g0[3] __attribute__((aligned));
@@ -19,6 +20,12 @@ char a0[__alignof__(ueber_aligned_char) == 8? 1 : -1] = { 0 };
 char a1[__alignof__(struct struct_with_ueber_char) == 8? 1 : -1] = { 0 };
 char a2[__alignof__(a) == 1? : -1] = { 0 };
 char a3[sizeof(a) == 1? : -1] = { 0 };
+
+typedef long long __attribute__((aligned(1))) underaligned_longlong;
+char a4[__alignof__(underaligned_longlong) == 1 ?: -1] = {0};
+
+typedef long long __attribute__((aligned(1))) underaligned_complex_longlong;
+char a5[__alignof__(underaligned_complex_longlong) == 1 ?: -1] = {0};
 
 // rdar://problem/8335865
 int b __attribute__((aligned(2)));
