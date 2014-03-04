@@ -42,12 +42,14 @@ void dtrace_membar_producer(void)
 */
 ENTRY(dtrace_membar_producer)
 	RET
+END(dtrace_membar_producer)
 
 /*
 void dtrace_membar_consumer(void)
 */
 ENTRY(dtrace_membar_consumer)
 	RET
+END(dtrace_membar_consumer)
 
 /*
 dtrace_icookie_t dtrace_interrupt_disable(void)
@@ -58,6 +60,8 @@ ENTRY(dtrace_interrupt_disable)
 	orr	r1, r1, #(I32_bit|F32_bit)
 	msr	cpsr_c, r1
 	RET
+END(dtrace_interrupt_disable)
+
 /*
 void dtrace_interrupt_enable(dtrace_icookie_t cookie)
 */
@@ -68,6 +72,7 @@ ENTRY(dtrace_interrupt_enable)
 	orr	r1, r1, r0
 	msr	cpsr_c, r1
 	RET
+END(dtrace_interrupt_enable)
 
 /*
 uint32_t dtrace_cas32(uint32_t *target, uint32_t cmp, uint32_t new)
@@ -95,6 +100,8 @@ ENTRY(dtrace_cas32)
 	msr	cpsr_c, r3
 	ldmfd	sp!, {r4, r5}
 	RET
+END(dtrace_cas32)
+END(dtrace_casptr)
 
 /*
 uint8_t
@@ -104,6 +111,7 @@ ENTRY(dtrace_fuword8_nocheck)
 	ldrb	r3, [r0]
 	mov 	r0, r3
 	RET
+END(dtrace_fuword8_nocheck)
 
 /*
 uint16_t
@@ -113,6 +121,7 @@ ENTRY(dtrace_fuword16_nocheck)
 	ldrh	r3, [r0]
 	mov 	r0, r3
 	RET
+END(dtrace_fuword16_nocheck)
 
 /*
 uint32_t
@@ -122,6 +131,7 @@ ENTRY(dtrace_fuword32_nocheck)
 	ldr	r3, [r0]
 	mov 	r0, r3
 	RET
+END(dtrace_fuword32_nocheck)
 
 /*
 uint64_t
@@ -142,6 +152,7 @@ ENTRY(dtrace_fuword64_nocheck)
 	mov	r1, r2
 #endif
 	RET
+END(dtrace_fuword64_nocheck)
 
 /*
 void
@@ -161,6 +172,7 @@ ENTRY(dtrace_copy)
 
 2:	ldmfd   sp!, {r4-r5}			/* stack is 8 byte aligned */
 	RET
+END(dtrace_copy)
 
 
 /*
@@ -184,6 +196,7 @@ ENTRY(dtrace_copystr)
 
 2:	ldmfd   sp!, {r4-r5}			/* stack is 8 byte aligned */
 	RET
+END(dtrace_copystr)
 
 
 /*
@@ -191,12 +204,14 @@ void dtrace_invop_init(void)
 */
 ENTRY(dtrace_invop_init)
 	RET
+END(dtrace_invop_init)
 
 /*
 void dtrace_invop_uninit(void)
 */
 ENTRY(dtrace_invop_uninit)
 	RET
+END(dtrace_invop_uninit)
 
 /*
 void
@@ -205,6 +220,7 @@ vpanic(const char *format, va_list alist)
 ENTRY(vpanic)				/* Initial stack layout: */
 vpanic_common:
 	RET
+END(vpanic)
 
 /*
 void
@@ -212,6 +228,7 @@ dtrace_vpanic(const char *format, va_list alist)
 */
 ENTRY(dtrace_vpanic)			/* Initial stack layout: */
 	RET
+END(dtrace_vpanic)
 
 /*
 uintptr_t
@@ -220,3 +237,4 @@ dtrace_caller(int aframes)
 ENTRY(dtrace_caller)
 	mov	r0, #-1
 	RET
+END(dtrace_caller)
