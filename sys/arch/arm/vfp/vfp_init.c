@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.34 2014/03/03 08:45:18 matt Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.35 2014/03/04 08:32:23 matt Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -43,9 +43,6 @@
 #include <arm/mcontext.h>
 
 #include <uvm/uvm_extern.h>		/* for pmap.h */
-
-extern int cpu_media_and_vfp_features[];
-extern int cpu_neon_present;
 
 #ifdef FPU_VFP
 
@@ -171,6 +168,9 @@ vfp_test(u_int address, u_int insn, trapframe_t *frame, int fault_code)
 	return 0;
 }
 
+#else
+/* determine what bits can be changed */
+uint32_t vfp_fpscr_changable = VFP_FPSCR_CSUM|VFP_FPSCR_ESUM|VFP_FPSCR_RMODE;
 #endif /* FPU_VFP */
 
 struct evcnt vfp_fpscr_ev = 
@@ -201,8 +201,7 @@ vfp_fpscr_handler(u_int address, u_int insn, trapframe_t *frame, int fault_code)
 		return 1;
 
 	if (__predict_false(!vfp_used_p())) {
-		pcb->pcb_vfp.vfp_fpscr =
-		    (VFP_FPSCR_DN | VFP_FPSCR_FZ | VFP_FPSCR_RN); /* Runfast */
+		pcb->pcb_vfp.vfp_fpscr = vfp_fpscr_default;
 	}
 #endif
 
@@ -341,6 +340,9 @@ vfp_attach(void)
 		aprint_normal_dev(ci->ci_dev, "unrecognized VFP version %x\n",
 		    fpsid);
 		install_coproc_handler(VFP_COPROC, vfp_fpscr_handler);
+		vfp_fpscr_changable = VFP_FPSCR_CSUM|VFP_FPSCR_ESUM
+		    |VFP_FPSCR_RMODE;
+		vfp_fpscr_default = 0;
 		return;
 	}
 
