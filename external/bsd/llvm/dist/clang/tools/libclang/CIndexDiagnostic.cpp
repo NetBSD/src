@@ -305,6 +305,7 @@ CXString clang_formatDiagnostic(CXDiagnostic Diagnostic, unsigned Options) {
   switch (Severity) {
   case CXDiagnostic_Ignored: llvm_unreachable("impossible");
   case CXDiagnostic_Note: Out << "note: "; break;
+  case CXDiagnostic_Remark: Out << "remark: "; break;
   case CXDiagnostic_Warning: Out << "warning: "; break;
   case CXDiagnostic_Error: Out << "error: "; break;
   case CXDiagnostic_Fatal: Out << "fatal error: "; break;
@@ -450,9 +451,10 @@ CXString clang_getDiagnosticFixIt(CXDiagnostic Diag, unsigned FixIt,
 }
 
 void clang_disposeDiagnosticSet(CXDiagnosticSet Diags) {
-  CXDiagnosticSetImpl *D = static_cast<CXDiagnosticSetImpl*>(Diags);
-  if (D->isExternallyManaged())
-    delete D;
+  if (CXDiagnosticSetImpl *D = static_cast<CXDiagnosticSetImpl *>(Diags)) {
+    if (D->isExternallyManaged())
+      delete D;
+  }
 }
   
 CXDiagnostic clang_getDiagnosticInSet(CXDiagnosticSet Diags,

@@ -21,6 +21,9 @@
 #ifndef OPENMP_PARALLEL_CLAUSE
 #  define OPENMP_PARALLEL_CLAUSE(Name)
 #endif
+#ifndef OPENMP_SIMD_CLAUSE
+#  define OPENMP_SIMD_CLAUSE(Name)
+#endif
 #ifndef OPENMP_DEFAULT_KIND
 #  define OPENMP_DEFAULT_KIND(Name)
 #endif
@@ -29,18 +32,23 @@
 OPENMP_DIRECTIVE(threadprivate)
 OPENMP_DIRECTIVE(parallel)
 OPENMP_DIRECTIVE(task)
+OPENMP_DIRECTIVE(simd)
 
 // OpenMP clauses.
+OPENMP_CLAUSE(if, OMPIfClause)
 OPENMP_CLAUSE(default, OMPDefaultClause)
 OPENMP_CLAUSE(private, OMPPrivateClause)
 OPENMP_CLAUSE(firstprivate, OMPFirstprivateClause)
 OPENMP_CLAUSE(shared,  OMPSharedClause)
 
 // Clauses allowed for OpenMP directives.
+OPENMP_PARALLEL_CLAUSE(if)
 OPENMP_PARALLEL_CLAUSE(default)
 OPENMP_PARALLEL_CLAUSE(private)
 OPENMP_PARALLEL_CLAUSE(firstprivate)
 OPENMP_PARALLEL_CLAUSE(shared)
+
+// FIXME: clauses allowed for directive 'omp simd'.
 
 // Static attributes for 'default' clause.
 OPENMP_DEFAULT_KIND(none)
@@ -50,3 +58,5 @@ OPENMP_DEFAULT_KIND(shared)
 #undef OPENMP_DIRECTIVE
 #undef OPENMP_CLAUSE
 #undef OPENMP_PARALLEL_CLAUSE
+#undef OPENMP_SIMD_CLAUSE
+
