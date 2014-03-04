@@ -40,6 +40,10 @@ void GlobalValue::Dematerialize() {
   getParent()->Dematerialize(this);
 }
 
+const DataLayout *GlobalValue::getDataLayout() const {
+  return getParent()->getDataLayout();
+}
+
 /// Override destroyConstant to make sure it doesn't get called on
 /// GlobalValue's because they shouldn't be treated like other constants.
 void GlobalValue::destroyConstant() {
@@ -53,9 +57,12 @@ void GlobalValue::copyAttributesFrom(const GlobalValue *Src) {
   setSection(Src->getSection());
   setVisibility(Src->getVisibility());
   setUnnamedAddr(Src->hasUnnamedAddr());
+  setDLLStorageClass(Src->getDLLStorageClass());
 }
 
 void GlobalValue::setAlignment(unsigned Align) {
+  assert((!isa<GlobalAlias>(this) || !Align) &&
+         "GlobalAlias should not have an alignment!");
   assert((Align & (Align-1)) == 0 && "Alignment is not a power of 2!");
   assert(Align <= MaximumAlignment &&
          "Alignment is greater than MaximumAlignment!");
