@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.775 2014/03/02 03:33:29 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.776 2014/03/04 21:06:02 joerg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -779,6 +779,8 @@ MACHINE_GNU_PLATFORM?=${MACHINE_GNU_ARCH}--netbsd
 ARM_APCS_FLAGS=	-mabi=apcs-gnu -mfloat-abi=soft
 ARM_APCS_FLAGS+=${${ACTIVE_CC} == "clang":? -target ${MACHINE_GNU_ARCH}--netbsdelf -B ${TOOLDIR}/${MACHINE_GNU_PLATFORM}/bin :}
 .endif
+
+GENASSYM_CPPFLAGS+=	${${ACTIVE_CC} == "clang":? -no-integrated-as :}
 
 #
 # Determine if arch uses native kernel modules with rump
