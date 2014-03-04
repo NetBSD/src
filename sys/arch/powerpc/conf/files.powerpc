@@ -1,4 +1,4 @@
-#	$NetBSD: files.powerpc,v 1.88 2014/02/28 05:49:21 matt Exp $
+#	$NetBSD: files.powerpc,v 1.89 2014/03/04 08:25:11 matt Exp $
 
 defflag	opt_altivec.h	ALTIVEC K_ALTIVEC PPC_HAVE_SPE
 defflag	opt_openpic.h	OPENPIC_DISTRIBUTE
@@ -23,7 +23,7 @@ file	arch/powerpc/powerpc/powerpc_machdep.c
 file	arch/powerpc/powerpc/process_machdep.c
 file	arch/powerpc/powerpc/setfault.S
 file	arch/powerpc/powerpc/sig_machdep.c
-file	arch/powerpc/powerpc/sigcode.S			compat16
+file	arch/powerpc/powerpc/sigcode.S			compat_16
 file	arch/powerpc/powerpc/softint_machdep.c
 file	arch/powerpc/powerpc/subyte.c
 file	arch/powerpc/powerpc/suword.c
@@ -68,6 +68,18 @@ file	arch/powerpc/booke/copyout.c			ppc_booke
 file	arch/powerpc/booke/kcopy.c			ppc_booke
 file	arch/powerpc/booke/spe.c			ppc_booke
 file	arch/powerpc/booke/trap.c			ppc_booke
+
+# MPC8xx (Power QUICC 1) Family files
+file	arch/powerpc/mpc8xx/mpc8xx_machdep.c		ppc_mpc8xx
+file	arch/powerpc/mpc8xx/mpc8xx_cache.c		ppc_mpc8xx
+file	arch/powerpc/mpc8xx/mpc8xx_pmap.c		ppc_mpc8xx
+file	arch/powerpc/mpc8xx/mpc8xx_stubs.c		ppc_mpc8xx
+file	arch/powerpc/mpc8xx/copyin.c			ppc_mpc8xx
+file	arch/powerpc/mpc8xx/copyout.c			ppc_mpc8xx
+file	arch/powerpc/mpc8xx/kcopy.c			ppc_mpc8xx
+file	arch/powerpc/mpc8xx/trap.c			ppc_mpc8xx
+
+# Common PMAP files
 file	uvm/pmap/pmap.c					ppc_booke
 file	uvm/pmap/pmap_segtab.c				ppc_booke
 file	uvm/pmap/pmap_tlb.c				ppc_booke
