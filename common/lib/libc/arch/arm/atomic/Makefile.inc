@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.21 2014/03/04 06:36:41 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.22 2014/03/04 16:15:28 matt Exp $
 
 .ifnmake obj
 .include "${NETBSDSRCDIR}/common/lib/libc/arch/arm/features.mk"
@@ -37,12 +37,14 @@ SRCS.atomic+=	atomic_inc_32.S atomic_inc_64.S
 SRCS.atomic+=	atomic_sub_64.S
 SRCS.atomic+=	atomic_swap.S atomic_swap_16.S atomic_swap_64.S
 SRCS.atomic+=	membar_ops.S
+.if defined(LIB) && ${LIB} != "kern"
 .for op in add and nand or sub xor
 SRCS.atomic+=	sync_fetch_and_${op}_8.S
 .endfor
 .for sz in 1 2 4 8
 SRCS.atomic+=	sync_bool_compare_and_swap_${sz}.S
 .endfor
+.endif
 .endif
 
 .endif
