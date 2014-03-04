@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.20 2014/03/04 03:49:07 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.21 2014/03/04 06:36:41 matt Exp $
 
 .ifnmake obj
 .include "${NETBSDSRCDIR}/common/lib/libc/arch/arm/features.mk"
@@ -34,7 +34,7 @@ SRCS.atomic+=	atomic_${op}_${sz}.S
 .endfor
 SRCS.atomic+=	atomic_dec_32.S atomic_dec_64.S
 SRCS.atomic+=	atomic_inc_32.S atomic_inc_64.S
-SRCS.atomic+=	atomic_sub_32.S
+SRCS.atomic+=	atomic_sub_64.S
 SRCS.atomic+=	atomic_swap.S atomic_swap_16.S atomic_swap_64.S
 SRCS.atomic+=	membar_ops.S
 .for op in add and nand or sub xor
