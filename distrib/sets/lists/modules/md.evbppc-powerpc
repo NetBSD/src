@@ -1,4 +1,4 @@
-# $NetBSD: md.evbppc,v 1.42 2014/02/25 14:05:35 martin Exp $
+# $NetBSD: md.evbppc-powerpc,v 1.1 2014/03/04 11:53:48 martin Exp $
 ./stand/powerpc-4xx							base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@						base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules					base-kernel-modules	kmod,compatmodules
