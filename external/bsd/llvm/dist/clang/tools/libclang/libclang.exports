@@ -64,6 +64,8 @@ clang_Type_getAlignOf
 clang_Type_getClassType
 clang_Type_getSizeOf
 clang_Type_getOffsetOf
+clang_Type_getNumTemplateArguments
+clang_Type_getTemplateArgumentAsType
 clang_Type_getCXXRefQualifier
 clang_VerbatimBlockLineComment_getText
 clang_VerbatimLineComment_getText
@@ -87,6 +89,7 @@ clang_constructUSR_ObjCProtocol
 clang_createCXCursorSet
 clang_createIndex
 clang_createTranslationUnit
+clang_createTranslationUnit2
 clang_createTranslationUnitFromSourceFile
 clang_defaultCodeCompleteOptions
 clang_defaultDiagnosticDisplayOptions
@@ -119,6 +122,7 @@ clang_formatDiagnostic
 clang_getArgType
 clang_getArrayElementType
 clang_getArraySize
+clang_getBuildSessionTimestamp
 clang_getCString
 clang_getCXTUResourceUsage
 clang_getCXXAccessSpecifier
@@ -261,6 +265,7 @@ clang_loadDiagnostics
 clang_Location_isInSystemHeader
 clang_Location_isFromMainFile
 clang_parseTranslationUnit
+clang_parseTranslationUnit2
 clang_remap_dispose
 clang_remap_getFilenames
 clang_remap_getNumFiles
@@ -281,3 +286,7 @@ clang_CompileCommand_getNumArgs
 clang_CompileCommand_getArg
 clang_visitChildren
 clang_visitChildrenWithBlock
+clang_VirtualFileOverlay_addFileMapping
+clang_VirtualFileOverlay_create
+clang_VirtualFileOverlay_dispose
+clang_VirtualFileOverlay_writeToBuffer

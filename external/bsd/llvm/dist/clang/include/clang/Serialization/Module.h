@@ -115,6 +115,10 @@ public:
   /// \brief The file name of the module file.
   std::string FileName;
 
+  std::string getTimestampFilename() const {
+    return FileName + ".timestamp";
+  }
+
   /// \brief The original source file name that was used to build the
   /// primary AST file, which may have been modified for
   /// relocatable-pch support.
@@ -167,6 +171,9 @@ public:
   /// If module A depends on and imports module B, both modules will have the
   /// same DirectImportLoc, but different ImportLoc (B's ImportLoc will be a
   /// source location inside module A).
+  ///
+  /// WARNING: This is largely useless. It doesn't tell you when a module was
+  /// made visible, just when the first submodule of that module was imported.
   SourceLocation DirectImportLoc;
 
   /// \brief The source location where this module was first imported.
@@ -184,6 +191,12 @@ public:
 
   /// \brief The input files that have been loaded from this AST file.
   std::vector<InputFile> InputFilesLoaded;
+
+  /// \brief If non-zero, specifies the time when we last validated input
+  /// files.  Zero means we never validated them.
+  ///
+  /// The time is specified in seconds since the start of the Epoch.
+  uint64_t InputFilesValidationTimestamp;
 
   // === Source Locations ===
 

@@ -171,17 +171,17 @@ struct CA2 : public CA1, public CA0 {
 // CHECK-NEXT:    9 |   struct CA0 (virtual base) (empty)
 // CHECK-NEXT:      | [sizeof=9, align=1
 // CHECK-NEXT:      |  nvsize=9, nvalign=1]
-// CHECK-C64: *** Dumping AST Record Layout
-// CHECK-C64: *** Dumping AST Record Layout
-// CHECK-C64: *** Dumping AST Record Layout
-// CHECK-C64-NEXT:    0 | struct CA2
-// CHECK-C64-NEXT:    0 |   (CA2 vftable pointer)
-// CHECK-C64-NEXT:    8 |   struct CA1 (base)
-// CHECK-C64-NEXT:    8 |     (CA1 vbtable pointer)
-// CHECK-C64-NEXT:   17 |   struct CA0 (base) (empty)
-// CHECK-C64-NEXT:   17 |   struct CA0 (virtual base) (empty)
-// CHECK-C64-NEXT:      | [sizeof=17, align=1
-// CHECK-C64-NEXT:      |  nvsize=17, nvalign=1]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64-NEXT:    0 | struct CA2
+// CHECK-X64-NEXT:    0 |   (CA2 vftable pointer)
+// CHECK-X64-NEXT:    8 |   struct CA1 (base)
+// CHECK-X64-NEXT:    8 |     (CA1 vbtable pointer)
+// CHECK-X64-NEXT:   17 |   struct CA0 (base) (empty)
+// CHECK-X64-NEXT:   17 |   struct CA0 (virtual base) (empty)
+// CHECK-X64-NEXT:      | [sizeof=17, align=1
+// CHECK-X64-NEXT:      |  nvsize=17, nvalign=1]
 
 #pragma pack(16)
 struct YA {
@@ -192,9 +192,6 @@ struct YA {
 // CHECK-NEXT:    0 |   char
 // CHECK-NEXT:      | [sizeof=32, align=32
 // CHECK-NEXT:      |  nvsize=32, nvalign=32]
-// CHECK-X64: *** Dumping AST Record Layout
-// CHECK-X64: *** Dumping AST Record Layout
-// CHECK-X64: *** Dumping AST Record Layout
 // CHECK-X64: *** Dumping AST Record Layout
 // CHECK-X64-NEXT:    0 | struct YA (empty)
 // CHECK-X64-NEXT:    0 |   char
@@ -371,6 +368,49 @@ struct KB : KA { __declspec(align(2)) char a; };
 // CHECK-X64-NEXT:      | [sizeof=4, align=2
 // CHECK-X64-NEXT:      |  nvsize=3, nvalign=2]
 
+#pragma pack(1)
+struct L {
+  virtual void fun() {}
+  __declspec(align(256)) int Field;
+};
+
+// CHECK: *** Dumping AST Record Layout
+// CHECK-NEXT:    0 | struct L
+// CHECK-NEXT:    0 |   (L vftable pointer)
+// CHECK-NEXT:  256 |   int Field
+// CHECK-NEXT:      | [sizeof=512, align=256
+// CHECK-NEXT:      |  nvsize=260, nvalign=256]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64-NEXT:    0 | struct L
+// CHECK-X64-NEXT:    0 |   (L vftable pointer)
+// CHECK-X64-NEXT:  256 |   int Field
+// CHECK-X64-NEXT:      | [sizeof=512, align=256
+// CHECK-X64-NEXT:      |  nvsize=260, nvalign=256]
+
+#pragma pack()
+struct MA {};
+#pragma pack(1)
+struct MB : virtual MA {
+  __declspec(align(256)) int Field;
+};
+
+// CHECK: *** Dumping AST Record Layout
+// CHECK: *** Dumping AST Record Layout
+// CHECK-NEXT:    0 | struct MB
+// CHECK-NEXT:    0 |   (MB vbtable pointer)
+// CHECK-NEXT:  256 |   int Field
+// CHECK-NEXT:  260 |   struct MA (virtual base) (empty)
+// CHECK-NEXT:      | [sizeof=512, align=256
+// CHECK-NEXT:      |  nvsize=260, nvalign=256]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64-NEXT:    0 | struct MB
+// CHECK-X64-NEXT:    0 |   (MB vbtable pointer)
+// CHECK-X64-NEXT:  256 |   int Field
+// CHECK-X64-NEXT:  260 |   struct MA (virtual base) (empty)
+// CHECK-X64-NEXT:      | [sizeof=512, align=256
+// CHECK-X64-NEXT:      |  nvsize=260, nvalign=256]
+
 int a[
 sizeof(X)+
 sizeof(Y)+
@@ -387,4 +427,6 @@ sizeof(YF)+
 sizeof(D2)+
 sizeof(JC)+
 sizeof(KB)+
+sizeof(L)+
+sizeof(MB)+
 0];
