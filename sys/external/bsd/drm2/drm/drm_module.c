@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_module.c,v 1.1.2.9 2014/01/29 19:47:38 riastradh Exp $	*/
+/*	$NetBSD: drm_module.c,v 1.1.2.10 2014/03/04 20:45:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,32 +30,29 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.1.2.9 2014/01/29 19:47:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.1.2.10 2014/03/04 20:45:16 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
 #include <sys/module.h>
 #include <sys/systm.h>
 
-#include <linux/highmem.h>
-#include <linux/mutex.h>
-#include <linux/workqueue.h>
-
 #include <drm/drmP.h>
 
 /*
- * XXX I2C stuff should be moved to a separate drmkms_edid module.
- *
- * XXX PCI stuff should be moved to a separate drmkms_pci module.
- *
- * XXX Other Linux stuff should be moved to a linux compatibility
- * module on which this one depends.
+ * XXX I2C stuff should be moved to a separate drmkms_i2c module.
  */
-MODULE(MODULE_CLASS_DRIVER, drmkms, "iic,pci");
+MODULE(MODULE_CLASS_DRIVER, drmkms, "iic,drmkms_linux");
 
 #ifdef _MODULE
 #include "ioconf.c"
-extern const struct cdevsw drmkms_cdevsw; /* XXX */
+#endif
+
+#ifndef _MODULE
+/*
+ * XXX Mega-kludge.  See drm_init in drm_drv.c for details.
+ */
+extern int linux_suppress_init;
 #endif
 
 static int
@@ -68,52 +65,40 @@ drmkms_modcmd(modcmd_t cmd, void *arg __unused)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-#ifdef _MODULE
+#ifndef _MODULE
+		if (!linux_suppress_init)
+#endif
 		linux_mutex_init(&drm_global_mutex);
-		error = linux_kmap_init();
-		if (error) {
-			aprint_error("drmkms: unable to initialize linux kmap:"
-			    " %d", error);
-			goto init_fail0;
-		}
-		error = linux_workqueue_init();
-		if (error) {
-			aprint_error("drmkms: unable to initialize workqueues:"
-			    " %d", error);
-			goto init_fail1;
-		}
+#ifdef _MODULE
 		error = config_init_component(cfdriver_ioconf_drmkms,
 		    cfattach_ioconf_drmkms, cfdata_ioconf_drmkms);
 		if (error) {
 			aprint_error("drmkms: unable to init component: %d\n",
 			    error);
-			goto init_fail2;
+			goto init_fail0;
 		}
 		error = devsw_attach("drm", NULL, &bmajor,
-		    &drmkms_cdevsw, &cmajor);
+		    &drm_cdevsw, &cmajor);
 		if (error) {
 			aprint_error("drmkms: unable to attach devsw: %d\n",
 			    error);
-			goto init_fail3;
+			goto init_fail1;
 		}
 #endif
 		return 0;
 
 #ifdef _MODULE
-#if 0
-init_fail4:	(void)devsw_detach(NULL, &drmkms_cdevsw);
-#endif
-init_fail3:	(void)config_fini_component(cfdriver_ioconf_drmkms,
+init_fail2: __unused
+		(void)devsw_detach(NULL, &drm_cdevsw);
+init_fail1:	(void)config_fini_component(cfdriver_ioconf_drmkms,
 		    cfattach_ioconf_drmkms, cfdata_ioconf_drmkms);
-init_fail2:	linux_workqueue_fini();
-init_fail1:	linux_kmap_fini();
 init_fail0:	linux_mutex_destroy(&drm_global_mutex);
 		return error;
 #endif	/* _MODULE */
 
 	case MODULE_CMD_FINI:
 #ifdef _MODULE
-		error = devsw_detach(NULL, &drmkms_cdevsw);
+		error = devsw_detach(NULL, &drm_cdevsw);
 		if (error)
 			return error;
 		error = config_fini_component(cfdriver_ioconf_drmkms,
@@ -121,10 +106,8 @@ init_fail0:	linux_mutex_destroy(&drm_global_mutex);
 		if (error)
 			/* XXX Now what?  Reattach the devsw?  */
 			return error;
-		linux_workqueue_fini();
-		linux_kmap_fini();
-		linux_mutex_destroy(&drm_global_mutex);
 #endif
+		linux_mutex_destroy(&drm_global_mutex);
 		return 0;
 
 	default:

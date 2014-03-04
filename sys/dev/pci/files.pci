@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.364.6.2 2014/01/29 19:47:38 riastradh Exp $
+#	$NetBSD: files.pci,v 1.364.6.3 2014/03/04 20:45:16 riastradh Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -1130,6 +1130,5 @@ device	tdvfb: wsemuldisplaydev, rasops16, rasops32, vcons, videomode
 attach	tdvfb at pci
 file	dev/pci/tdvfb.c		tdvfb	
 
-# DRMKMS, DRM2 with kernel mode-switching, PCI-only for now.
-define drmkms
-include "external/bsd/drm2/conf/files.drm2"
+# PCI graphics devices with DRM/KMS
+include "external/bsd/drm2/pci/files.drmkms_pci"

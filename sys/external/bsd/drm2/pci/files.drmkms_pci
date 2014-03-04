@@ -1,0 +1,13 @@
+#	$NetBSD: files.drmkms_pci,v 1.1.2.1 2014/03/04 20:45:17 riastradh Exp $
+
+define	drmkms_pci: drmkms
+
+#file	external/bsd/drm2/dist/drm/ati_pcigart.c	drmkms_pci
+file	external/bsd/drm2/dist/drm/drm_agpsupport.c	drmkms_pci
+file	external/bsd/drm2/pci/drm_pci.c			drmkms_pci
+file	external/bsd/drm2/pci/drm_pci_module.c		drmkms_pci
+
+include "external/bsd/drm2/i915drm/files.i915drmkms"
+#include "external/bsd/drm2/radeon/files.radeondrmkms"
+#include "external/bsd/drm2/nouveau/files.nouveaudrmkms"
+#...

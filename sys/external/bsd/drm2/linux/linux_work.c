@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.1.2.9 2014/01/22 14:58:20 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.1.2.10 2014/03/04 20:45:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.1.2.9 2014/01/22 14:58:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.1.2.10 2014/03/04 20:45:17 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -48,6 +48,13 @@ __KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.1.2.9 2014/01/22 14:58:20 riastradh
 #include <machine/lock.h>
 
 #include <linux/workqueue.h>
+
+/* XXX Kludge until we sync with HEAD.  */
+#if DIAGNOSTIC
+#define	__diagused
+#else
+#define	__diagused	__unused
+#endif
 
 struct workqueue_struct {
 	struct workqueue		*wq_workqueue;
@@ -69,7 +76,7 @@ struct workqueue_struct {
 static void	linux_work_lock_init(struct work_struct *);
 static void	linux_work_lock(struct work_struct *);
 static void	linux_work_unlock(struct work_struct *);
-static bool	linux_work_locked(struct work_struct *);
+static bool	linux_work_locked(struct work_struct *) __diagused;
 
 static void	linux_wq_barrier(struct work_struct *);
 
@@ -285,7 +292,7 @@ linux_work_unlock(struct work_struct *work)
 	__cpu_simple_unlock(&work->w_lock);
 }
 
-static bool
+static bool __diagused
 linux_work_locked(struct work_struct *work)
 {
 	return __SIMPLELOCK_LOCKED_P(&work->w_lock);
