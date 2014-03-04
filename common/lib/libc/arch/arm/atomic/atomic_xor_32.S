@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_xor_32.S,v 1.1 2013/11/08 22:42:52 matt Exp $	*/
+/*	$NetBSD: atomic_xor_32.S,v 1.2 2014/03/04 16:15:28 matt Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -50,7 +50,7 @@ END(_atomic_xor_32)
 ATOMIC_OP_ALIAS(atomic_xor_32,_atomic_xor_32)
 ATOMIC_OP_ALIAS(atomic_xor_uint,_atomic_xor_32)
 ATOMIC_OP_ALIAS(atomic_xor_ulong,_atomic_xor_32)
-STRONG_ALIAS(__sync_fetch_and_xor_4,_atomic_xor_32)
+CRT_ALIAS(__sync_fetch_and_xor_4,_atomic_xor_32)
 STRONG_ALIAS(_atomic_xor_uint,_atomic_xor_32)
 STRONG_ALIAS(_atomic_xor_ulong,_atomic_xor_32)
 
@@ -72,7 +72,7 @@ END(_atomic_xor_32_nv)
 ATOMIC_OP_ALIAS(atomic_xor_32_nv,_atomic_xor_32_nv)
 ATOMIC_OP_ALIAS(atomic_xor_uint_nv,_atomic_xor_32_nv)
 ATOMIC_OP_ALIAS(atomic_xor_ulong_nv,_atomic_xor_32_nv)
-STRONG_ALIAS(__sync_xor_and_fetch_4,_atomic_xor_32_nv)
+CRT_ALIAS(__sync_xor_and_fetch_4,_atomic_xor_32_nv)
 STRONG_ALIAS(_atomic_xor_uint_nv,_atomic_xor_32_nv)
 STRONG_ALIAS(_atomic_xor_ulong_nv,_atomic_xor_32_nv)
 
