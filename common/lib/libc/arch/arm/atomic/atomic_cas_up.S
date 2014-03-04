@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_up.S,v 1.6 2014/02/27 09:39:00 matt Exp $	*/
+/*	$NetBSD: atomic_cas_up.S,v 1.7 2014/03/04 03:36:24 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@ END(_atomic_cas_up)
 ARM_ENTRY(_atomic_cas_64_up)
 	push	{r4-r5}
 	mov	ip, r0
-	ldrd	r4, r5, [sp]
+	ldrd	r4, r5, [sp, #8]
 	.align	0
 RAS_START_ASM_HIDDEN(_atomic_cas_64)
 	ldrd	r0, r1, [ip]
