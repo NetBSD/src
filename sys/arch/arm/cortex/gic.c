@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.5 2013/12/17 13:12:45 joerg Exp $	*/
+/*	$NetBSD: gic.c,v 1.6 2014/03/04 15:24:38 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,7 +31,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.5 2013/12/17 13:12:45 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.6 2014/03/04 15:24:38 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -104,33 +104,30 @@ static struct intrsource armgic_dummy_source;
 __CTASSERT(NIPL == 8);
 
 /*
- * GIC register are always in little-endian.
+ * GIC register are always in little-endian.  It is assumed the bus_space
+ * will do any endian conversion required.
  */
 static inline uint32_t
 gicc_read(struct armgic_softc *sc, bus_size_t o)
 {
-	uint32_t v = bus_space_read_4(sc->sc_memt, sc->sc_gicch, o);
-	return le32toh(v);
+	return bus_space_read_4(sc->sc_memt, sc->sc_gicch, o);
 }
 
 static inline void
 gicc_write(struct armgic_softc *sc, bus_size_t o, uint32_t v)
 {
-	v = htole32(v);
 	bus_space_write_4(sc->sc_memt, sc->sc_gicch, o, v);
 }
 
 static inline uint32_t
 gicd_read(struct armgic_softc *sc, bus_size_t o)
 {
-	uint32_t v = bus_space_read_4(sc->sc_memt, sc->sc_gicdh, o);
-	return le32toh(v);
+	return bus_space_read_4(sc->sc_memt, sc->sc_gicdh, o);
 }
 
 static inline void
 gicd_write(struct armgic_softc *sc, bus_size_t o, uint32_t v)
 {
-	v = htole32(v);
 	bus_space_write_4(sc->sc_memt, sc->sc_gicdh, o, v);
 }
 
