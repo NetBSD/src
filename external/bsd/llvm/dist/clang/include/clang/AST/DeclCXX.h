@@ -1615,6 +1615,10 @@ public:
            (hasDefinition() && isPolymorphic());
   }
 
+  /// \brief Controls when vtordisps will be emitted if this record is used as a
+  /// virtual base.
+  MSVtorDispAttr::Mode getMSVtorDispMode() const;
+
   /// \brief Determine whether this lambda expression was known to be dependent
   /// at the time it was created, even if its context does not appear to be
   /// dependent.
@@ -2303,8 +2307,12 @@ public:
                                    bool isImplicitlyDeclared);
   static CXXDestructorDecl *CreateDeserialized(ASTContext & C, unsigned ID);
 
-  void setOperatorDelete(FunctionDecl *OD) { OperatorDelete = OD; }
-  const FunctionDecl *getOperatorDelete() const { return OperatorDelete; }
+  void setOperatorDelete(FunctionDecl *OD) {
+    cast<CXXDestructorDecl>(getFirstDecl())->OperatorDelete = OD;
+  }
+  const FunctionDecl *getOperatorDelete() const {
+    return cast<CXXDestructorDecl>(getFirstDecl())->OperatorDelete;
+  }
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }

@@ -165,7 +165,7 @@ void UnreachableCodeChecker::checkEndAnalysis(ExplodedGraph &G,
     if (SM.isInSystemHeader(SL) || SM.isInExternCSystemHeader(SL))
       continue;
 
-    B.EmitBasicReport(D, "Unreachable code", "Dead code",
+    B.EmitBasicReport(D, this, "Unreachable code", "Dead code",
                       "This statement is never executed", DL, SR);
   }
 }
@@ -178,6 +178,9 @@ void UnreachableCodeChecker::FindUnreachableEntryPoints(const CFGBlock *CB,
 
   for (CFGBlock::const_pred_iterator I = CB->pred_begin(), E = CB->pred_end();
       I != E; ++I) {
+    if (!*I)
+      continue;
+
     if (!reachable.count((*I)->getBlockID())) {
       // If we find an unreachable predecessor, mark this block as reachable so
       // we don't report this block
@@ -219,6 +222,8 @@ bool UnreachableCodeChecker::isInvalidPath(const CFGBlock *CB,
     return false;
 
   const CFGBlock *pred = *CB->pred_begin();
+  if (!pred)
+    return false;
 
   // Get the predecessor block's terminator conditon
   const Stmt *cond = pred->getTerminatorCondition();
