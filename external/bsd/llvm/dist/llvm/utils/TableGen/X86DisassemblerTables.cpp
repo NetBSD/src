@@ -737,11 +737,9 @@ void DisassemblerTables::emitContextDecisions(raw_ostream &o1, raw_ostream &o2,
   emitContextDecision(o1, o2, i1, i2, ModRMTableNum, *Tables[1], TWOBYTE_STR);
   emitContextDecision(o1, o2, i1, i2, ModRMTableNum, *Tables[2], THREEBYTE38_STR);
   emitContextDecision(o1, o2, i1, i2, ModRMTableNum, *Tables[3], THREEBYTE3A_STR);
-  emitContextDecision(o1, o2, i1, i2, ModRMTableNum, *Tables[4], THREEBYTEA6_STR);
-  emitContextDecision(o1, o2, i1, i2, ModRMTableNum, *Tables[5], THREEBYTEA7_STR);
-  emitContextDecision(o1, o2, i1, i2, ModRMTableNum, *Tables[6], XOP8_MAP_STR);
-  emitContextDecision(o1, o2, i1, i2, ModRMTableNum, *Tables[7], XOP9_MAP_STR);
-  emitContextDecision(o1, o2, i1, i2, ModRMTableNum, *Tables[8], XOPA_MAP_STR);
+  emitContextDecision(o1, o2, i1, i2, ModRMTableNum, *Tables[4], XOP8_MAP_STR);
+  emitContextDecision(o1, o2, i1, i2, ModRMTableNum, *Tables[5], XOP9_MAP_STR);
+  emitContextDecision(o1, o2, i1, i2, ModRMTableNum, *Tables[6], XOPA_MAP_STR);
 }
 
 void DisassemblerTables::emit(raw_ostream &o) const {
@@ -796,9 +794,6 @@ void DisassemblerTables::setTableFields(ModRMDecision     &decision,
         InstructionSpecifier &previousInfo =
           InstructionSpecifiers[decision.instructionIDs[index]];
 
-        if(newInfo.filtered)
-          continue; // filtered instructions get lowest priority
-
         // Instructions such as MOV8ao8 and MOV8ao8_16 differ only in the
         // presence of the AdSize prefix. However, the disassembler doesn't
         // care about that difference in the instruction definition; it
@@ -817,8 +812,7 @@ void DisassemblerTables::setTableFields(ModRMDecision     &decision,
         if (outranks(previousInfo.insnContext, newInfo.insnContext))
           continue;
 
-        if (previousInfo.insnContext == newInfo.insnContext &&
-            !previousInfo.filtered) {
+        if (previousInfo.insnContext == newInfo.insnContext) {
           errs() << "Error: Primary decode conflict: ";
           errs() << newInfo.name << " would overwrite " << previousInfo.name;
           errs() << "\n";

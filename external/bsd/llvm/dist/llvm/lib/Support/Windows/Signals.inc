@@ -17,7 +17,7 @@
 #include <vector>
 
 // The Windows.h header must be after LLVM and standard headers.
-#include "Windows.h"
+#include "WindowsSupport.h"
 
 #ifdef __MINGW32__
  #include <imagehlp.h>
@@ -318,8 +318,7 @@ static void Cleanup() {
 
   if (FilesToRemove != NULL)
     while (!FilesToRemove->empty()) {
-      bool Existed;
-      llvm::sys::fs::remove(FilesToRemove->back(), Existed);
+      llvm::sys::fs::remove(FilesToRemove->back());
       FilesToRemove->pop_back();
     }
 

@@ -26,6 +26,7 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/IR/CallingConv.h"
+#include "llvm/Support/MathExtras.h"
 
 using namespace llvm;
 
@@ -520,7 +521,21 @@ AArch64TargetLowering::AArch64TargetLowering(AArch64TargetMachine &TM)
     // do such optimization in the future.
     setOperationAction(ISD::MUL, MVT::v1i64, Expand);
     setOperationAction(ISD::MUL, MVT::v2i64, Expand);
+
+    setOperationAction(ISD::FCOS, MVT::v2f64, Expand);
+    setOperationAction(ISD::FCOS, MVT::v4f32, Expand);
+    setOperationAction(ISD::FCOS, MVT::v2f32, Expand);
+    setOperationAction(ISD::FSIN, MVT::v2f64, Expand);
+    setOperationAction(ISD::FSIN, MVT::v4f32, Expand);
+    setOperationAction(ISD::FSIN, MVT::v2f32, Expand);
+    setOperationAction(ISD::FPOW, MVT::v2f64, Expand);
+    setOperationAction(ISD::FPOW, MVT::v4f32, Expand);
+    setOperationAction(ISD::FPOW, MVT::v2f32, Expand);
   }
+
+  setTargetDAGCombine(ISD::SETCC);
+  setTargetDAGCombine(ISD::SIGN_EXTEND);
+  setTargetDAGCombine(ISD::VSELECT);
 }
 
 EVT AArch64TargetLowering::getSetCCResultType(LLVMContext &, EVT VT) const {
@@ -1268,7 +1283,8 @@ AArch64TargetLowering::SaveVarArgRegisters(CCState &CCInfo, SelectionDAG &DAG,
     FuncInfo->setVariadicFPRSize(FPRSaveSize);
   }
 
-  int StackIdx = MFI->CreateFixedObject(8, CCInfo.getNextStackOffset(), true);
+  unsigned StackOffset = RoundUpToAlignment(CCInfo.getNextStackOffset(), 8);
+  int StackIdx = MFI->CreateFixedObject(8, StackOffset, true);
 
   FuncInfo->setVariadicStackIdx(StackIdx);
   FuncInfo->setVariadicGPRIdx(GPRIdx);
@@ -3032,6 +3048,8 @@ static SDValue LowerVectorSELECT_CC(SDValue Op, SelectionDAG &DAG) {
   SDValue RHS = Op.getOperand(1);
   SDValue IfTrue = Op.getOperand(2);
   SDValue IfFalse = Op.getOperand(3);
+  EVT IfTrueVT = IfTrue.getValueType();
+  EVT CondVT = IfTrueVT.changeVectorElementTypeToInteger();
   ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(4))->get();
 
   // If LHS & RHS are floating point and IfTrue & IfFalse are vectors, we will
@@ -3056,11 +3074,6 @@ static SDValue LowerVectorSELECT_CC(SDValue Op, SelectionDAG &DAG) {
 
     SDValue VSetCC = DAG.getSetCC(dl, CVT, LHS, RHS, CC);
     SDValue ResCC = LowerVectorSETCC(VSetCC, DAG);
-    EVT IfTrueVT = IfTrue.getValueType();
-    EVT CastEltT =
-        MVT::getIntegerVT(IfTrueVT.getVectorElementType().getSizeInBits());
-    EVT CastVT = EVT::getVectorVT(*DAG.getContext(), CastEltT,
-                                  IfTrueVT.getVectorNumElements());
     if (CEltT.getSizeInBits() < IfTrueVT.getSizeInBits()) {
       EVT DUPVT =
           EVT::getVectorVT(*DAG.getContext(), CEltT,
@@ -3068,7 +3081,7 @@ static SDValue LowerVectorSELECT_CC(SDValue Op, SelectionDAG &DAG) {
       ResCC = DAG.getNode(AArch64ISD::NEON_VDUPLANE, dl, DUPVT, ResCC,
                           DAG.getConstant(0, MVT::i64, false));
 
-      ResCC = DAG.getNode(ISD::BITCAST, dl, CastVT, ResCC);
+      ResCC = DAG.getNode(ISD::BITCAST, dl, CondVT, ResCC);
     } else {
       // FIXME: If IfTrue & IfFalse hold v1i8, v1i16 or v1i32, this function
       // can't handle them and will hit this assert.
@@ -3080,7 +3093,7 @@ static SDValue LowerVectorSELECT_CC(SDValue Op, SelectionDAG &DAG) {
       EVT ExVT = EVT::getVectorVT(*DAG.getContext(), CEltT, ExEltNum);
       ResCC = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, ExVT, ResCC,
                           DAG.getConstant(0, MVT::i64, false));
-      ResCC = DAG.getNode(ISD::BITCAST, dl, CastVT, ResCC);
+      ResCC = DAG.getNode(ISD::BITCAST, dl, CondVT, ResCC);
     }
     SDValue VSelect = DAG.getNode(ISD::VSELECT, dl, IfTrue.getValueType(),
                                   ResCC, IfTrue, IfFalse);
@@ -3109,11 +3122,9 @@ static SDValue LowerVectorSELECT_CC(SDValue Op, SelectionDAG &DAG) {
   }
   SDValue VDup;
   if (IfTrue.getValueType().getVectorNumElements() == 1)
-    VDup = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, IfTrue.getValueType(),
-                       A64SELECT_CC);
+    VDup = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, CondVT, A64SELECT_CC);
   else
-    VDup = DAG.getNode(AArch64ISD::NEON_VDUP, dl, IfTrue.getValueType(),
-                       A64SELECT_CC);
+    VDup = DAG.getNode(AArch64ISD::NEON_VDUP, dl, CondVT, A64SELECT_CC);
   SDValue VSelect = DAG.getNode(ISD::VSELECT, dl, IfTrue.getValueType(),
                                 VDup, IfTrue, IfFalse);
   return VSelect;
@@ -3181,7 +3192,7 @@ AArch64TargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const {
 SDValue
 AArch64TargetLowering::LowerVACOPY(SDValue Op, SelectionDAG &DAG) const {
   const Value *DestSV = cast<SrcValueSDNode>(Op.getOperand(3))->getValue();
-  const Value *SrcSV = cast<SrcValueSDNode>(Op.getOperand(3))->getValue();
+  const Value *SrcSV = cast<SrcValueSDNode>(Op.getOperand(4))->getValue();
 
   // We have to make sure we copy the entire structure: 8+8+8+4+4 = 32 bytes
   // rather than just 8.
@@ -4258,6 +4269,89 @@ static SDValue CombineVLDDUP(SDNode *N, TargetLowering::DAGCombinerInfo &DCI) {
   return SDValue(N, 0);
 }
 
+// v1i1 setcc ->
+//     v1i1 (bitcast (i1 setcc (extract_vector_elt, extract_vector_elt))
+// FIXME: Currently the type legalizer can't handle SETCC having v1i1 as result.
+// If it can legalize "v1i1 SETCC" correctly, no need to combine such SETCC.
+static SDValue PerformSETCCCombine(SDNode *N, SelectionDAG &DAG) {
+  EVT ResVT = N->getValueType(0);
+
+  if (!ResVT.isVector() || ResVT.getVectorNumElements() != 1 ||
+      ResVT.getVectorElementType() != MVT::i1)
+    return SDValue();
+
+  SDValue LHS = N->getOperand(0);
+  SDValue RHS = N->getOperand(1);
+  EVT CmpVT = LHS.getValueType();
+  LHS = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, SDLoc(N),
+                    CmpVT.getVectorElementType(), LHS,
+                    DAG.getConstant(0, MVT::i64));
+  RHS = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, SDLoc(N),
+                    CmpVT.getVectorElementType(), RHS,
+                    DAG.getConstant(0, MVT::i64));
+  SDValue SetCC =
+      DAG.getSetCC(SDLoc(N), MVT::i1, LHS, RHS,
+                   cast<CondCodeSDNode>(N->getOperand(2))->get());
+  return DAG.getNode(ISD::BITCAST, SDLoc(N), ResVT, SetCC);
+}
+
+// vselect (v1i1 setcc) ->
+//     vselect (v1iXX setcc)  (XX is the size of the compared operand type)
+// FIXME: Currently the type legalizer can't handle VSELECT having v1i1 as
+// condition. If it can legalize "VSELECT v1i1" correctly, no need to combine
+// such VSELECT.
+static SDValue PerformVSelectCombine(SDNode *N, SelectionDAG &DAG) {
+  SDValue N0 = N->getOperand(0);
+  EVT CCVT = N0.getValueType();
+
+  if (N0.getOpcode() != ISD::SETCC || CCVT.getVectorNumElements() != 1 ||
+      CCVT.getVectorElementType() != MVT::i1)
+    return SDValue();
+
+  EVT ResVT = N->getValueType(0);
+  EVT CmpVT = N0.getOperand(0).getValueType();
+  // Only combine when the result type is of the same size as the compared
+  // operands.
+  if (ResVT.getSizeInBits() != CmpVT.getSizeInBits())
+    return SDValue();
+
+  SDValue IfTrue = N->getOperand(1);
+  SDValue IfFalse = N->getOperand(2);
+  SDValue SetCC =
+      DAG.getSetCC(SDLoc(N), CmpVT.changeVectorElementTypeToInteger(),
+                   N0.getOperand(0), N0.getOperand(1),
+                   cast<CondCodeSDNode>(N0.getOperand(2))->get());
+  return DAG.getNode(ISD::VSELECT, SDLoc(N), ResVT, SetCC,
+                     IfTrue, IfFalse);
+}
+
+// sign_extend (extract_vector_elt (v1i1 setcc)) ->
+//     extract_vector_elt (v1iXX setcc)
+// (XX is the size of the compared operand type)
+static SDValue PerformSignExtendCombine(SDNode *N, SelectionDAG &DAG) {
+  SDValue N0 = N->getOperand(0);
+  SDValue Vec = N0.getOperand(0);
+
+  if (N0.getOpcode() != ISD::EXTRACT_VECTOR_ELT ||
+      Vec.getOpcode() != ISD::SETCC)
+    return SDValue();
+
+  EVT ResVT = N->getValueType(0);
+  EVT CmpVT = Vec.getOperand(0).getValueType();
+  // Only optimize when the result type is of the same size as the element
+  // type of the compared operand.
+  if (ResVT.getSizeInBits() != CmpVT.getVectorElementType().getSizeInBits())
+    return SDValue();
+
+  SDValue Lane = N0.getOperand(1);
+  SDValue SetCC =
+      DAG.getSetCC(SDLoc(N), CmpVT.changeVectorElementTypeToInteger(),
+                   Vec.getOperand(0), Vec.getOperand(1),
+                   cast<CondCodeSDNode>(Vec.getOperand(2))->get());
+  return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, SDLoc(N), ResVT,
+                     SetCC, Lane);
+}
+
 SDValue
 AArch64TargetLowering::PerformDAGCombine(SDNode *N,
                                          DAGCombinerInfo &DCI) const {
@@ -4269,6 +4363,9 @@ AArch64TargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::SRA:
   case ISD::SRL:
     return PerformShiftCombine(N, DCI, getSubtarget());
+  case ISD::SETCC: return PerformSETCCCombine(N, DCI.DAG);
+  case ISD::VSELECT: return PerformVSelectCombine(N, DCI.DAG);
+  case ISD::SIGN_EXTEND: return PerformSignExtendCombine(N, DCI.DAG);
   case ISD::INTRINSIC_WO_CHAIN:
     return PerformIntrinsicCombine(N, DCI.DAG);
   case AArch64ISD::NEON_VDUPLANE:

@@ -14,9 +14,9 @@ absolute requirements to be followed in all instances, coding standards are
 particularly important for large-scale code bases that follow a library-based
 design (like LLVM).
 
-This document intentionally does not prescribe fixed standards for religious
-issues such as brace placement and space usage.  For issues like this, follow
-the golden rule:
+While this document may provide guidance for some mechanical formatting issues,
+whitespace, or other "microscopic details", these are not fixed standards.
+Always follow the golden rule:
 
 .. _Golden Rule:
 
@@ -42,6 +42,128 @@ the functionality change.
 The ultimate goal of these guidelines is the increase readability and
 maintainability of our common source base. If you have suggestions for topics to
 be included, please mail them to `Chris <mailto:sabre@nondot.org>`_.
+
+Languages, Libraries, and Standards
+===================================
+
+Most source code in LLVM and other LLVM projects using these coding standards
+is C++ code. There are some places where C code is used either due to
+environment restrictions, historical restrictions, or due to third-party source
+code imported into the tree. Generally, our preference is for standards
+conforming, modern, and portable C++ code as the implementation language of
+choice.
+
+C++ Standard Versions
+---------------------
+
+LLVM, Clang, and LLD are currently written using C++11 conforming code,
+although we restrict ourselves to features which are available in the major
+toolchains supported as host compilers. The LLDB project is even more
+aggressive in the set of host compilers supported and thus uses still more
+features. Regardless of the supported features, code is expected to (when
+reasonable) be standard, portable, and modern C++11 code. We avoid unnecessary
+vendor-specific extensions, etc.
+
+C++ Standard Library
+--------------------
+
+Use the C++ standard library facilities whenever they are available for
+a particular task. LLVM and related projects emphasize and rely on the standard
+library facilities for as much as possible. Common support libraries providing
+functionality missing from the standard library for which there are standard
+interfaces or active work on adding standard interfaces will often be
+implemented in the LLVM namespace following the expected standard interface.
+
+There are some exceptions such as the standard I/O streams library which are
+avoided. Also, there is much more detailed information on these subjects in the
+`Programmer's Manual`_.
+
+.. _Programmer's Manual:
+  http://llvm.org/docs/ProgrammersManual.html
+
+Supported C++11 Language and Library Features
+-------------------------------------------
+
+While LLVM, Clang, and LLD use C++11, not all features are available in all of
+the toolchains which we support. The set of features supported for use in LLVM
+is the intersection of those supported in MSVC 2012, GCC 4.7, and Clang 3.1.
+The ultimate definition of this set is what build bots with those respective
+toolchains accept. Don't argue with the build bots. However, we have some
+guidance below to help you know what to expect.
+
+Each toolchain provides a good reference for what it accepts:
+
+* Clang: http://clang.llvm.org/cxx_status.html
+* GCC: http://gcc.gnu.org/projects/cxx0x.html
+* MSVC: http://msdn.microsoft.com/en-us/library/hh567368.aspx
+
+In most cases, the MSVC list will be the dominating factor. Here is a summary
+of the features that are expected to work. Features not on this list are
+unlikely to be supported by our host compilers.
+
+* Rvalue references: N2118_
+
+  * But *not* Rvalue references for ``*this`` or member qualifiers (N2439_)
+
+* Static assert: N1720_
+* ``auto`` type deduction: N1984_, N1737_
+* Trailing return types: N2541_
+* Lambdas: N2927_
+* ``decltype``: N2343_
+* Nested closing right angle brackets: N1757_
+* Extern templates: N1987_
+* ``nullptr``: N2431_
+* Strongly-typed and forward declarable enums: N2347_, N2764_
+* Local and unnamed types as template arguments: N2657_
+* Range-based for-loop: N2930_
+* ``override`` and ``final``: N2928_, N3206_, N3272_
+* Atomic operations and the C++11 memory model: N2429_
+
+.. _N2118: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2006/n2118.html
+.. _N2439: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2439.htm
+.. _N1720: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2004/n1720.html
+.. _N1984: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2006/n1984.pdf
+.. _N1737: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2004/n1737.pdf
+.. _N2541: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2541.htm
+.. _N2927: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2009/n2927.pdf
+.. _N2343: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2343.pdf
+.. _N1757: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2005/n1757.html
+.. _N1987: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2006/n1987.htm
+.. _N2431: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2431.pdf
+.. _N2347: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2347.pdf
+.. _N2764: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2764.pdf
+.. _N2657: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2657.htm
+.. _N2930: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2009/n2930.html
+.. _N2928: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2009/n2928.htm
+.. _N3206: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2010/n3206.htm
+.. _N3272: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2011/n3272.htm
+.. _N2429: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2429.htm
+
+The supported features in the C++11 standard libraries are less well tracked,
+but also much greater. Most of the standard libraries implement most of C++11's
+library. The most likely lowest common denominator is Linux support. For
+libc++, the support is just poorly tested and undocumented but expected to be
+largely complete. YMMV. For libstdc++, the support is documented in detail in
+`the libstdc++ manual`_. There are some very minor missing facilities that are
+unlikely to be common problems, and there are a few larger gaps that are worth
+being aware of:
+
+* Not all of the type traits are implemented
+* No regular expression library.
+* While most of the atomics library is well implemented, the fences are
+  missing. Fortunately, they are rarely needed.
+* The locale support is incomplete.
+
+Other than these areas you should assume the standard library is available and
+working as expected until some build bot tells you otherwise. If you're in an
+uncertain area of one of the above points, but you cannot test on a Linux
+system, your best approach is to minimize your use of these features, and watch
+the Linux build bots to find out if your usage triggered a bug. For example, if
+you hit a type trait which doesn't work we can then add support to LLVM's
+traits header to emulate it.
+
+.. _the libstdc++ manual:
+  http://gcc.gnu.org/onlinedocs/gcc-4.7.3/libstdc++/manual/manual/status.html#status.iso.2011
 
 Mechanical Source Issues
 ========================

@@ -27,6 +27,8 @@
 #include <io.h>
 #endif
 
+using namespace llvm;
+
 namespace {
   using llvm::StringRef;
   using llvm::sys::path::is_separator;
@@ -162,10 +164,75 @@ enum FSEntity {
 };
 
 // Implemented in Unix/Path.inc and Windows/Path.inc.
-static llvm::error_code
-createUniqueEntity(const llvm::Twine &Model, int &ResultFD,
-                   llvm::SmallVectorImpl<char> &ResultPath,
-                   bool MakeAbsolute, unsigned Mode, FSEntity Type);
+static error_code TempDir(SmallVectorImpl<char> &result);
+
+static error_code createUniqueEntity(const Twine &Model, int &ResultFD,
+                                     SmallVectorImpl<char> &ResultPath,
+                                     bool MakeAbsolute, unsigned Mode,
+                                     FSEntity Type) {
+  SmallString<128> ModelStorage;
+  Model.toVector(ModelStorage);
+
+  if (MakeAbsolute) {
+    // Make model absolute by prepending a temp directory if it's not already.
+    if (!sys::path::is_absolute(Twine(ModelStorage))) {
+      SmallString<128> TDir;
+      if (error_code EC = TempDir(TDir))
+        return EC;
+      sys::path::append(TDir, Twine(ModelStorage));
+      ModelStorage.swap(TDir);
+    }
+  }
+
+  // From here on, DO NOT modify model. It may be needed if the randomly chosen
+  // path already exists.
+  ResultPath = ModelStorage;
+  // Null terminate.
+  ResultPath.push_back(0);
+  ResultPath.pop_back();
+
+retry_random_path:
+  // Replace '%' with random chars.
+  for (unsigned i = 0, e = ModelStorage.size(); i != e; ++i) {
+    if (ModelStorage[i] == '%')
+      ResultPath[i] = "0123456789abcdef"[sys::Process::GetRandomNumber() & 15];
+  }
+
+  // Try to open + create the file.
+  switch (Type) {
+  case FS_File: {
+    if (error_code EC =
+            sys::fs::openFileForWrite(Twine(ResultPath.begin()), ResultFD,
+                                      sys::fs::F_RW | sys::fs::F_Excl, Mode)) {
+      if (EC == errc::file_exists)
+        goto retry_random_path;
+      return EC;
+    }
+
+    return error_code::success();
+  }
+
+  case FS_Name: {
+    bool Exists;
+    error_code EC = sys::fs::exists(ResultPath.begin(), Exists);
+    if (EC)
+      return EC;
+    if (Exists)
+      goto retry_random_path;
+    return error_code::success();
+  }
+
+  case FS_Dir: {
+    if (error_code EC = sys::fs::create_directory(ResultPath.begin(), false)) {
+      if (EC == errc::file_exists)
+        goto retry_random_path;
+      return EC;
+    }
+    return error_code::success();
+  }
+  }
+  llvm_unreachable("Invalid Type");
+}
 
 namespace llvm {
 namespace sys  {
@@ -508,8 +575,9 @@ bool is_separator(char value) {
 void system_temp_directory(bool erasedOnReboot, SmallVectorImpl<char> &result) {
   result.clear();
 
-#ifdef __APPLE__
+#if defined(_CS_DARWIN_USER_TEMP_DIR) && defined(_CS_DARWIN_USER_CACHE_DIR)
   // On Darwin, use DARWIN_USER_TEMP_DIR or DARWIN_USER_CACHE_DIR.
+  // macros defined in <unistd.h> on darwin >= 9
   int ConfName = erasedOnReboot? _CS_DARWIN_USER_TEMP_DIR
                                : _CS_DARWIN_USER_CACHE_DIR;
   size_t ConfLen = confstr(ConfName, 0, 0);
@@ -750,20 +818,27 @@ error_code make_absolute(SmallVectorImpl<char> &path) {
                    "occurred above!");
 }
 
-error_code create_directories(const Twine &path, bool &existed) {
-  SmallString<128> path_storage;
-  StringRef p = path.toStringRef(path_storage);
+error_code create_directories(const Twine &Path, bool IgnoreExisting) {
+  SmallString<128> PathStorage;
+  StringRef P = Path.toStringRef(PathStorage);
 
-  StringRef parent = path::parent_path(p);
-  if (!parent.empty()) {
-    bool parent_exists;
-    if (error_code ec = fs::exists(parent, parent_exists)) return ec;
+  // Be optimistic and try to create the directory
+  error_code EC = create_directory(P, IgnoreExisting);
+  // If we succeeded, or had any error other than the parent not existing, just
+  // return it.
+  if (EC != errc::no_such_file_or_directory)
+    return EC;
 
-    if (!parent_exists)
-      if (error_code ec = create_directories(parent, existed)) return ec;
-  }
+  // We failed because of a no_such_file_or_directory, try to create the
+  // parent.
+  StringRef Parent = path::parent_path(P);
+  if (Parent.empty())
+    return EC;
 
-  return create_directory(p, existed);
+  if ((EC = create_directories(Parent)))
+      return EC;
+
+  return create_directory(P, IgnoreExisting);
 }
 
 bool exists(file_status status) {

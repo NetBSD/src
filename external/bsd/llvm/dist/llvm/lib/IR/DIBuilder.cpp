@@ -69,7 +69,10 @@ void DIBuilder::finalize() {
   DIArray GVs = getOrCreateArray(AllGVs);
   DIType(TempGVs).replaceAllUsesWith(GVs);
 
-  DIArray IMs = getOrCreateArray(AllImportedModules);
+  SmallVector<Value *, 16> RetainValuesI;
+  for (unsigned I = 0, E = AllImportedModules.size(); I < E; I++)
+    RetainValuesI.push_back(AllImportedModules[I]);
+  DIArray IMs = getOrCreateArray(RetainValuesI);
   DIType(TempImportedModules).replaceAllUsesWith(IMs);
 }
 
@@ -97,7 +100,9 @@ DICompileUnit DIBuilder::createCompileUnit(unsigned Lang, StringRef Filename,
                                            StringRef Directory,
                                            StringRef Producer, bool isOptimized,
                                            StringRef Flags, unsigned RunTimeVer,
-                                           StringRef SplitName) {
+                                           StringRef SplitName,
+                                           DebugEmissionKind Kind) {
+
   assert(((Lang <= dwarf::DW_LANG_Python && Lang >= dwarf::DW_LANG_C89) ||
           (Lang <= dwarf::DW_LANG_hi_user && Lang >= dwarf::DW_LANG_lo_user)) &&
          "Invalid Language tag");
@@ -127,7 +132,8 @@ DICompileUnit DIBuilder::createCompileUnit(unsigned Lang, StringRef Filename,
     TempSubprograms,
     TempGVs,
     TempImportedModules,
-    MDString::get(VMContext, SplitName)
+    MDString::get(VMContext, SplitName),
+    ConstantInt::get(Type::getInt32Ty(VMContext), Kind)
   };
 
   MDNode *CUNode = MDNode::get(VMContext, Elts);
@@ -142,7 +148,7 @@ DICompileUnit DIBuilder::createCompileUnit(unsigned Lang, StringRef Filename,
 static DIImportedEntity
 createImportedModule(LLVMContext &C, DIScope Context, DIDescriptor NS,
                      unsigned Line, StringRef Name,
-                     SmallVectorImpl<Value *> &AllImportedModules) {
+                     SmallVectorImpl<TrackingVH<MDNode> > &AllImportedModules) {
   const MDNode *R;
   if (Name.empty()) {
     Value *Elts[] = {
@@ -164,7 +170,7 @@ createImportedModule(LLVMContext &C, DIScope Context, DIDescriptor NS,
   }
   DIImportedEntity M(R);
   assert(M.Verify() && "Imported module should be valid");
-  AllImportedModules.push_back(M);
+  AllImportedModules.push_back(TrackingVH<MDNode>(M));
   return M;
 }
 
@@ -194,7 +200,7 @@ DIImportedEntity DIBuilder::createImportedDeclaration(DIScope Context,
   };
   DIImportedEntity M(MDNode::get(VMContext, Elts));
   assert(M.Verify() && "Imported module should be valid");
-  AllImportedModules.push_back(M);
+  AllImportedModules.push_back(TrackingVH<MDNode>(M));
   return M;
 }
 
@@ -1095,7 +1101,8 @@ DISubprogram DIBuilder::createFunction(DIDescriptor Context, StringRef Name,
   if (isDefinition)
     AllSubprograms.push_back(Node);
   DISubprogram S(Node);
-  assert(S.isSubprogram() && "createFunction should return a valid DISubprogram");
+  assert(S.isSubprogram() &&
+         "createFunction should return a valid DISubprogram");
   return S;
 }
 

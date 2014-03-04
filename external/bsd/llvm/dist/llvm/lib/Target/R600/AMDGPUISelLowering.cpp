@@ -45,6 +45,8 @@ static bool allocateStack(unsigned ValNo, MVT ValVT, MVT LocVT,
 AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   TargetLowering(TM, new TargetLoweringObjectFileELF()) {
 
+  Subtarget = &TM.getSubtarget<AMDGPUSubtarget>();
+
   // Initialize target lowering borrowed from AMDIL
   InitAMDILLowering();
 
@@ -120,8 +122,14 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
 
   setOperationAction(ISD::CONCAT_VECTORS, MVT::v4i32, Custom);
   setOperationAction(ISD::CONCAT_VECTORS, MVT::v4f32, Custom);
-  setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v2i32, Custom);
+  setOperationAction(ISD::CONCAT_VECTORS, MVT::v8i32, Custom);
+  setOperationAction(ISD::CONCAT_VECTORS, MVT::v8f32, Custom);
   setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v2f32, Custom);
+  setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v2i32, Custom);
+  setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v4f32, Custom);
+  setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v4i32, Custom);
+  setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v8f32, Custom);
+  setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v8i32, Custom);
 
   setLoadExtAction(ISD::EXTLOAD, MVT::v2i8, Expand);
   setLoadExtAction(ISD::SEXTLOAD, MVT::v2i8, Expand);
@@ -232,9 +240,15 @@ bool AMDGPUTargetLowering::isFNegFree(EVT VT) const {
   return VT == MVT::f32;
 }
 
-bool AMDGPUTargetLowering::isTruncateFree(EVT, EVT Dest) const {
+bool AMDGPUTargetLowering::isTruncateFree(EVT Source, EVT Dest) const {
   // Truncate is just accessing a subregister.
-  return (Dest.getSizeInBits() % 32 == 0);
+  return Dest.bitsLT(Source) && (Dest.getSizeInBits() % 32 == 0);
+}
+
+bool AMDGPUTargetLowering::isTruncateFree(Type *Source, Type *Dest) const {
+  // Truncate is just accessing a subregister.
+  return Dest->getPrimitiveSizeInBits() < Source->getPrimitiveSizeInBits() &&
+         (Dest->getPrimitiveSizeInBits() % 32 == 0);
 }
 
 //===---------------------------------------------------------------------===//
@@ -996,6 +1010,7 @@ const char* AMDGPUTargetLowering::getTargetNodeName(unsigned Opcode) const {
   NODE_NAME_CASE(SMIN)
   NODE_NAME_CASE(UMIN)
   NODE_NAME_CASE(URECIP)
+  NODE_NAME_CASE(DOT4)
   NODE_NAME_CASE(EXPORT)
   NODE_NAME_CASE(CONST_ADDRESS)
   NODE_NAME_CASE(REGISTER_LOAD)

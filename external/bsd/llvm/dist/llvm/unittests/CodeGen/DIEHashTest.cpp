@@ -91,7 +91,8 @@ TEST(DIEHashTest, TypeWithMember) {
   DIEString MemberStr(&Four, "member");
   Member->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &MemberStr);
   DIEInteger Zero(0);
-  Member->addValue(dwarf::DW_AT_data_member_location, dwarf::DW_FORM_data1, &Zero);
+  Member->addValue(dwarf::DW_AT_data_member_location, dwarf::DW_FORM_data1,
+                   &Zero);
 
   Unnamed.addChild(Member);
 
@@ -121,14 +122,16 @@ TEST(DIEHashTest, ReusedType) {
   DIEString Mem1Str(&Four, "mem1");
   Mem1->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &Mem1Str);
   DIEInteger Zero(0);
-  Mem1->addValue(dwarf::DW_AT_data_member_location, dwarf::DW_FORM_data1, &Zero);
+  Mem1->addValue(dwarf::DW_AT_data_member_location, dwarf::DW_FORM_data1,
+                 &Zero);
 
   Unnamed.addChild(Mem1);
 
   DIE *Mem2 = new DIE(dwarf::DW_TAG_member);
   DIEString Mem2Str(&Four, "mem2");
   Mem2->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &Mem2Str);
-  Mem2->addValue(dwarf::DW_AT_data_member_location, dwarf::DW_FORM_data1, &Four);
+  Mem2->addValue(dwarf::DW_AT_data_member_location, dwarf::DW_FORM_data1,
+                 &Four);
 
   Unnamed.addChild(Mem2);
 
@@ -282,7 +285,8 @@ TEST(DIEHashTest, PtrToMember) {
   DIE PtrToFooMem(dwarf::DW_TAG_ptr_to_member_type);
   DIEEntry FooEntry(&Foo);
   PtrToFooMem.addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &FooEntry);
-  PtrToFooMem.addValue(dwarf::DW_AT_containing_type, dwarf::DW_FORM_ref4, &FooEntry);
+  PtrToFooMem.addValue(dwarf::DW_AT_containing_type, dwarf::DW_FORM_ref4,
+                       &FooEntry);
 
   DIEEntry PtrToFooMemRef(&PtrToFooMem);
   Mem->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &PtrToFooMemRef);
@@ -544,5 +548,105 @@ TEST(DIEHashTest, MemberFuncFlag) {
 
   // The exact same hash GCC produces for this DIE.
   ASSERT_EQ(0x8f78211ddce3df10ULL, MD5Res);
+}
+
+// Derived from:
+// struct A {
+//   const static int PI = -3;
+// };
+// A a;
+TEST(DIEHashTest, MemberSdata) {
+  DIE A(dwarf::DW_TAG_structure_type);
+  DIEInteger One(1);
+  DIEString AStr(&One, "A");
+  A.addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &AStr);
+  A.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, &One);
+  A.addValue(dwarf::DW_AT_decl_file, dwarf::DW_FORM_data1, &One);
+  A.addValue(dwarf::DW_AT_decl_line, dwarf::DW_FORM_data1, &One);
+
+  DIEInteger Four(4);
+  DIEInteger Five(5);
+  DIEString FStr(&One, "int");
+  DIE *IntTyDIE = new DIE(dwarf::DW_TAG_base_type);
+  IntTyDIE->addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, &Four);
+  IntTyDIE->addValue(dwarf::DW_AT_encoding, dwarf::DW_FORM_data1, &Five);
+  IntTyDIE->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &FStr);
+
+  DIEEntry IntTy(IntTyDIE);
+  DIE *PITyDIE = new DIE(dwarf::DW_TAG_const_type);
+  PITyDIE->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &IntTy);
+
+  DIEEntry PITy(PITyDIE);
+  DIE *PI = new DIE(dwarf::DW_TAG_member);
+  DIEString PIStr(&One, "PI");
+  DIEInteger Two(2);
+  DIEInteger NegThree(-3);
+  PI->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &PIStr);
+  PI->addValue(dwarf::DW_AT_decl_file, dwarf::DW_FORM_data1, &One);
+  PI->addValue(dwarf::DW_AT_decl_line, dwarf::DW_FORM_data1, &Two);
+  PI->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &PITy);
+  PI->addValue(dwarf::DW_AT_external, dwarf::DW_FORM_flag_present, &One);
+  PI->addValue(dwarf::DW_AT_declaration, dwarf::DW_FORM_flag_present, &One);
+  PI->addValue(dwarf::DW_AT_const_value, dwarf::DW_FORM_sdata, &NegThree);
+
+  A.addChild(PI);
+
+  uint64_t MD5Res = DIEHash().computeTypeSignature(A);
+  ASSERT_EQ(0x9a216000dd3788a7ULL, MD5Res);
+}
+
+// Derived from:
+// struct A {
+//   const static float PI = 3.14;
+// };
+// A a;
+TEST(DIEHashTest, MemberBlock) {
+  DIE A(dwarf::DW_TAG_structure_type);
+  DIEInteger One(1);
+  DIEString AStr(&One, "A");
+  A.addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &AStr);
+  A.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, &One);
+  A.addValue(dwarf::DW_AT_decl_file, dwarf::DW_FORM_data1, &One);
+  A.addValue(dwarf::DW_AT_decl_line, dwarf::DW_FORM_data1, &One);
+
+  DIEInteger Four(4);
+  DIEString FStr(&One, "float");
+  DIE *FloatTyDIE = new DIE(dwarf::DW_TAG_base_type);
+  FloatTyDIE->addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, &Four);
+  FloatTyDIE->addValue(dwarf::DW_AT_encoding, dwarf::DW_FORM_data1, &Four);
+  FloatTyDIE->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &FStr);
+
+  DIEEntry FloatTy(FloatTyDIE);
+  DIE *PITyDIE = new DIE(dwarf::DW_TAG_const_type);
+  PITyDIE->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &FloatTy);
+
+  DIEEntry PITy(PITyDIE);
+  DIE *PI = new DIE(dwarf::DW_TAG_member);
+  DIEString PIStr(&One, "PI");
+  DIEInteger Two(2);
+  PI->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &PIStr);
+  PI->addValue(dwarf::DW_AT_decl_file, dwarf::DW_FORM_data1, &One);
+  PI->addValue(dwarf::DW_AT_decl_line, dwarf::DW_FORM_data1, &Two);
+  PI->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &PITy);
+  PI->addValue(dwarf::DW_AT_external, dwarf::DW_FORM_flag_present, &One);
+  PI->addValue(dwarf::DW_AT_declaration, dwarf::DW_FORM_flag_present, &One);
+
+  DIEBlock *PIBlock = new DIEBlock();
+  DIEInteger Blk1(0xc3);
+  DIEInteger Blk2(0xf5);
+  DIEInteger Blk3(0x48);
+  DIEInteger Blk4(0x40);
+
+  PIBlock->addValue((dwarf::Attribute)0, dwarf::DW_FORM_data1, &Blk1);
+  PIBlock->addValue((dwarf::Attribute)0, dwarf::DW_FORM_data1, &Blk2);
+  PIBlock->addValue((dwarf::Attribute)0, dwarf::DW_FORM_data1, &Blk3);
+  PIBlock->addValue((dwarf::Attribute)0, dwarf::DW_FORM_data1, &Blk4);
+
+  PI->addValue(dwarf::DW_AT_const_value, dwarf::DW_FORM_block1, PIBlock);
+
+  A.addChild(PI);
+
+  uint64_t MD5Res = DIEHash().computeTypeSignature(A);
+  ASSERT_EQ(0x493af53ad3d3f651ULL, MD5Res);
 }
 }
