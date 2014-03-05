@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_64.S,v 1.9 2014/03/04 16:15:28 matt Exp $	*/
+/*	$NetBSD: atomic_cas_64.S,v 1.10 2014/03/05 17:20:48 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,13 +41,8 @@ ENTRY_NP(_atomic_cas_64)
 #ifdef __ARM_EABI__
 	ldrd	r4, r5, [sp, #16]	/* fetch new value */
 #else
-#if __ARMEB__
-	ldr	r5, [sp, #16]		/* fetch new value */
-	ldr	r4, [sp, #20]		/* fetch new value */
-#else
-	ldr	r4, [sp, #16]		/* fetch new value */
-	ldr	r5, [sp, #20]		/* fetch new value */
-#endif
+	ldr	r5, [sp, #16]		/* second word third argument */
+	mov	r4, r3			/* first word third argument */
 	mov	r3, r2			/* r2 will be overwritten by r1 which ... */
 	mov	r2, r1			/* r1 will be overwritten by ldrexd */
 #endif
