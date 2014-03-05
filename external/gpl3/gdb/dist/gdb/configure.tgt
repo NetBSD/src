@@ -405,8 +405,8 @@ powerpc*-*-freebsd*)
 powerpc-*-netbsd* | powerpc-*-knetbsd*-gnu | powerpc64-*-netbsd*)
 	# Target: NetBSD/powerpc
 	gdb_target_obs="rs6000-tdep.o ppcnbsd-tdep.o ppc-sysv-tdep.o \
-			solib.o solib-svr4.o solib-spu.o spu-multiarch.o \
-			corelow.o symfile-mem.o nbsd-tdep.o
+			solib-svr4.o solib-spu.o spu-multiarch.o \
+			symfile-mem.o nbsd-tdep.o
 			ravenscar-thread.o ppc-ravenscar-thread.o"
 	gdb_sim=../sim/ppc/libsim.a
 	;;
@@ -486,7 +486,7 @@ sh*-*-linux*)
 sh*-*-netbsdelf* | sh*-*-knetbsd*-gnu)
 	# Target: NetBSD/sh
 	gdb_target_obs="sh-tdep.o sh64-tdep.o shnbsd-tdep.o \
-			nbsd-tdep.o corelow.o solib.o solib-svr4.o"
+			nbsd-tdep.o solib-svr4.o"
 	gdb_sim=../sim/sh/libsim.a
 	;;
 sh*-*-openbsd*)
