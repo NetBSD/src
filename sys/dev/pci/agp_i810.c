@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.73.26.1 2014/03/05 14:42:40 riastradh Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.73.26.2 2014/03/05 22:18:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.73.26.1 2014/03/05 14:42:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.73.26.2 2014/03/05 22:18:19 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,8 +87,6 @@ static bool agp_i810_resume(device_t, const pmf_qual_t *);
 static int agp_i810_init(struct agp_softc *);
 
 static int agp_i810_init(struct agp_softc *);
-static int agp_i810_write_gtt_entry(struct agp_i810_softc *, off_t,
-				    bus_addr_t);
 
 static struct agp_methods agp_i810_methods = {
 	agp_i810_get_aperture,
@@ -103,7 +101,7 @@ static struct agp_methods agp_i810_methods = {
 	agp_i810_unbind_memory,
 };
 
-static int
+int
 agp_i810_write_gtt_entry(struct agp_i810_softc *isc, off_t off, bus_addr_t v)
 {
 	u_int32_t pte;
@@ -155,6 +153,35 @@ agp_i810_write_gtt_entry(struct agp_i810_softc *isc, off_t off, bus_addr_t v)
 
 	WRITE4(base_off + wroff, pte);
 	return 0;
+}
+
+void
+agp_i810_post_gtt_entry(struct agp_i810_softc *isc, off_t off)
+{
+	bus_size_t base_off, wroff;
+
+	base_off = 0;
+	wroff = (off >> AGP_PAGE_SHIFT) * 4;
+
+	switch (isc->chiptype) {
+	case CHIP_I810:
+	case CHIP_I830:
+	case CHIP_I855:
+		base_off = AGP_I810_GTT;
+		break;
+	case CHIP_I965:
+		base_off = AGP_I965_GTT;
+		break;
+	case CHIP_G4X:
+		base_off = AGP_G4X_GTT;
+		break;
+	case CHIP_I915:
+	case CHIP_G33:
+		(void)bus_space_read_4(isc->gtt_bst, isc->gtt_bsh, wroff);
+		return;
+	}
+
+	(void)READ4(base_off + wroff);
 }
 
 /* XXXthorpej -- duplicated code (see arch/x86/pci/pchb.c) */
