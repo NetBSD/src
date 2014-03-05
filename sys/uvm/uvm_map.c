@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.327 2013/11/14 12:07:11 martin Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.328 2014/03/05 05:35:55 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.327 2013/11/14 12:07:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.328 2014/03/05 05:35:55 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -101,7 +101,8 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.327 2013/11/14 12:07:11 martin Exp $")
 #endif
 
 #ifdef UVMHIST
-UVMHIST_DEFINE(maphist);
+static struct kern_history_ent maphistbuf[100];
+UVMHIST_DEFINE(maphist) = UVMHIST_INITIALIZER(maphist, maphistbuf);
 #endif
 
 #if !defined(UVMMAP_COUNTERS)
@@ -875,7 +876,6 @@ void
 uvm_map_init(void)
 {
 #if defined(UVMHIST)
-	static struct kern_history_ent maphistbuf[100];
 	static struct kern_history_ent pdhistbuf[100];
 #endif
 
@@ -884,7 +884,7 @@ uvm_map_init(void)
 	 */
 
 	UVMHIST_FUNC("uvm_map_init");
-	UVMHIST_INIT_STATIC(maphist, maphistbuf);
+	UVMHIST_LINK_STATIC(maphist);
 	UVMHIST_INIT_STATIC(pdhist, pdhistbuf);
 	UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist,"<starting uvm map system>", 0, 0, 0, 0);
