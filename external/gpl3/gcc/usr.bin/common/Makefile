@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2014/03/01 10:00:49 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2014/03/05 21:37:02 tron Exp $
 
 LIBISPRIVATE=	yes
 
@@ -21,6 +21,9 @@ MKPIC:=		no
 MKPICLIB:=	no
 
 HOSTPROG_CXX=	1
+
+COPTS.diagnostic.c=	-Wno-stack-protector
+COPTS.intl.c=		-Wno-stack-protector
 
 .include <bsd.lib.mk>
 
