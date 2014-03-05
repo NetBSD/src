@@ -1,4 +1,4 @@
-/*	$NetBSD: kernhist.h,v 1.7 2013/02/19 22:54:03 skrll Exp $	*/
+/*	$NetBSD: kernhist.h,v 1.8 2014/03/05 05:32:41 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -122,6 +122,19 @@ do { \
 	LIST_INSERT_HEAD(&kern_histories, &(NAME), list); \
 } while (/*CONSTCOND*/ 0)
 
+#define KERNHIST_INITIALIZER(NAME,BUF) \
+{ \
+	.name = __STRING(NAME), \
+	.namelen = sizeof(__STRING(NAME)) - 1, \
+	.n = sizeof(BUF) / sizeof(struct kern_history_ent), \
+	.f = 0, \
+	.e = (struct kern_history_ent *) (BUF), \
+	/* BUF will inititalized to zeroes by being in .bss */ \
+}
+
+#define KERNHIST_LINK_STATIC(NAME) \
+	LIST_INSERT_HEAD(&kern_histories, &(NAME), list)
+
 #define KERNHIST_INIT_STATIC(NAME,BUF) \
 do { \
 	(NAME).name = __STRING(NAME); \
@@ -130,7 +143,7 @@ do { \
 	(NAME).f = 0; \
 	(NAME).e = (struct kern_history_ent *) (BUF); \
 	memset((NAME).e, 0, sizeof(struct kern_history_ent) * (NAME).n); \
-	LIST_INSERT_HEAD(&kern_histories, &(NAME), list); \
+	KERNHIST_LINK_STATIC(NAME); \
 } while (/*CONSTCOND*/ 0)
 
 #ifndef KERNHIST_DELAY
