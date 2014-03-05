@@ -1,4 +1,4 @@
-/*	$NetBSD: intel-gtt.h,v 1.1.2.2 2013/09/08 15:40:17 riastradh Exp $	*/
+/*	$NetBSD: intel-gtt.h,v 1.1.2.3 2014/03/05 15:08:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@ struct intel_gtt {
 	bus_dma_segment_t	gtt_scratch_seg;
 	bus_dmamap_t		gtt_scratch_map;
 	bus_space_handle_t	gtt_bsh;
+	bool			do_idle_maps;
 };
 
 struct intel_gtt *
