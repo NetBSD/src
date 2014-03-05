@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_gtt.c,v 1.1.2.1 2013/09/08 15:52:20 riastradh Exp $	*/
+/*	$NetBSD: intel_gtt.c,v 1.1.2.2 2014/03/05 22:17:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,17 +32,36 @@
 /* Intel GTT stubs */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_gtt.c,v 1.1.2.1 2013/09/08 15:52:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_gtt.c,v 1.1.2.2 2014/03/05 22:17:59 riastradh Exp $");
+
+#include <sys/types.h>			/* XXX pcivar.h needs...@!&#^  */
+
+#include <dev/pci/pcivar.h>		/* XXX agpvar.h needs...  */
+#include <dev/pci/agpvar.h>
+#include <dev/pci/agp_i810var.h>
 
 #include "drm/intel-gtt.h"
 
 bool
 intel_enable_gtt(void)
 {
-	return false;
+
+	/*
+	 * The agp_i810 initialization code already enables the GTT, as
+	 * far as I can tell.
+	 *
+	 * XXX That might not be correct.
+	 */
+	return (agp_i810_sc != NULL);
 }
 
 void
 intel_gtt_chipset_flush(void)
 {
+
+	/*
+	 * XXX If the Linux code is any indication, this is not
+	 * sufficient...but it'll probably do for now.
+	 */
+	agp_flush_cache();
 }
