@@ -696,7 +696,9 @@ m32rle-*-linux*)
 m68k-*-elf* | fido-*-elf)
 	tmake_file="$tmake_file m68k/t-floatlib"
 	;;
-m68k*-*-netbsdelf* | m5407-*-netbsdelf* | m68010-*-netbsdelf*)
+m5407-*-netbsdelf*)
+	;;
+m68k*-*-netbsdelf* | m68010-*-netbsdelf*)
 	tmake_file="$tmake_file m68k/t-floatlib"
 	;;
 m68k*-*-openbsd*)
@@ -847,8 +849,8 @@ powerpc*-*-freebsd*)
 	  ;;
 	esac
 	;;
-powerpc-*-netbsd*)
-	tmake_file="$tmake_file rs6000/t-netbsd rs6000/t-crtstuff"
+powerpc*-*-netbsd*)
+	tmake_file="${tmake_file} rs6000/t-netbsd rs6000/t-crtstuff"
 	;;
 powerpc-*-eabispe*)
 	tmake_file="${tmake_file} rs6000/t-ppccomm rs6000/t-savresfgpr rs6000/t-crtstuff t-crtstuff-pic t-fdpbit"
