@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2014/03/01 10:00:36 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2014/03/05 21:38:59 tron Exp $
 
 USE_SHLIBDIR=	yes
 REQUIRETOOLS=	yes
@@ -46,6 +46,7 @@ LIBGCC_S_OBJS=	${OBJS}
 .endif
 
 LIBGCC_STD_VER_IN=	${GNUHOSTDIST}/libgcc/libgcc-std.ver.in
+CLEANFILES+=		libgcc-std.ver
 
 libgcc-std.ver:	${LIBGCC_STD_VER_IN}
 	${_MKTARGET_CREATE}
