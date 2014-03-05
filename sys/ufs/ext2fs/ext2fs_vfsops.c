@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.176 2014/02/25 18:30:13 pooka Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.177 2014/03/05 09:37:29 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.176 2014/02/25 18:30:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.177 2014/03/05 09:37:29 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -512,7 +512,7 @@ fail:
 int
 ext2fs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 {
-	struct vnode *vp, *mvp, *devvp;
+	struct vnode *vp, *devvp;
 	struct inode *ip;
 	struct buf *bp;
 	struct m_ext2fs *fs;
@@ -520,6 +520,7 @@ ext2fs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	int i, error;
 	void *cp;
 	struct ufsmount *ump;
+	struct vnode_iterator *marker;
 
 	if ((mp->mnt_flag & MNT_RDONLY) == 0)
 		return (EINVAL);
@@ -585,35 +586,19 @@ ext2fs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 		brelse(bp, 0);
 	}
 
-	/* Allocate a marker vnode. */
-	mvp = vnalloc(mp);
-	/*
-	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
-	 * and vclean() can be called indirectly
-	 */
-	mutex_enter(&mntvnode_lock);
-loop:
-	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
-		vmark(mvp, vp);
-		if (vp->v_mount != mp || vismarker(vp))
-			continue;
+	vfs_vnode_iterator_init(mp, &marker);
+	while (vfs_vnode_iterator_next(marker, &vp)) {
 		/*
 		 * Step 4: invalidate all inactive vnodes.
 		 */
-		if (vrecycle(vp, &mntvnode_lock)) {
-			mutex_enter(&mntvnode_lock);
-			(void)vunmark(mvp);
-			goto loop;
-		}
+		if (vrecycle(vp))
+			continue;
 		/*
 		 * Step 5: invalidate all cached file data.
 		 */
-		mutex_enter(vp->v_interlock);
-		mutex_exit(&mntvnode_lock);
-		if (vget(vp, LK_EXCLUSIVE)) {
-			mutex_enter(&mntvnode_lock);
-			(void)vunmark(mvp);
-			goto loop;
+		if (vn_lock(vp, LK_EXCLUSIVE)) {
+			vrele(vp);
+			continue;
 		}
 		if (vinvalbuf(vp, 0, cred, l, 0, 0))
 			panic("ext2fs_reload: dirty2");
@@ -625,8 +610,6 @@ loop:
 		    (int)fs->e2fs_bsize, NOCRED, 0, &bp);
 		if (error) {
 			vput(vp);
-			mutex_enter(&mntvnode_lock);
-			(void)vunmark(mvp);
 			break;
 		}
 		cp = (char *)bp->b_data +
@@ -635,10 +618,8 @@ loop:
 		ext2fs_set_inode_guid(ip);
 		brelse(bp, 0);
 		vput(vp);
-		mutex_enter(&mntvnode_lock);
 	}
-	mutex_exit(&mntvnode_lock);
-	vnfree(mvp);
+	vfs_vnode_iterator_destroy(marker);
 	return (error);
 }
 

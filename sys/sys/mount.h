@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.211 2014/02/27 13:00:06 hannken Exp $	*/
+/*	$NetBSD: mount.h,v 1.212 2014/03/05 09:37:29 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -432,6 +432,11 @@ int	vfs_quotactl_cursoratend(struct mount *, struct quotakcursor *, int *);
 int	vfs_quotactl_cursorrewind(struct mount *, struct quotakcursor *);
 int	vfs_quotactl_quotaon(struct mount *, int, const char *);
 int	vfs_quotactl_quotaoff(struct mount *, int);
+
+struct vnode_iterator; /* Opaque. */
+void	vfs_vnode_iterator_init(struct mount *, struct vnode_iterator **);
+void	vfs_vnode_iterator_destroy(struct vnode_iterator *);
+bool	vfs_vnode_iterator_next(struct vnode_iterator *, struct vnode **);
 
 extern	TAILQ_HEAD(mntlist, mount) mountlist;	/* mounted filesystem list */
 extern	struct vfsops *vfssw[];			/* filesystem type table */

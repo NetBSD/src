@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.292 2014/02/25 18:30:13 pooka Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.293 2014/03/05 09:37:29 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.292 2014/02/25 18:30:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.293 2014/03/05 09:37:29 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -636,7 +636,7 @@ fail:
 int
 ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 {
-	struct vnode *vp, *mvp, *devvp;
+	struct vnode *vp, *devvp;
 	struct inode *ip;
 	void *space;
 	struct buf *bp;
@@ -646,6 +646,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	int32_t *lp;
 	struct ufsmount *ump;
 	daddr_t sblockloc;
+	struct vnode_iterator *marker;
 
 	if ((mp->mnt_flag & MNT_RDONLY) == 0)
 		return (EINVAL);
@@ -805,34 +806,19 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 			*lp++ = fs->fs_contigsumsize;
 	}
 
-	/* Allocate a marker vnode. */
-	mvp = vnalloc(mp);
-	/*
-	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
-	 * and vclean() can be called indirectly
-	 */
-	mutex_enter(&mntvnode_lock);
- loop:
-	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
-		vmark(mvp, vp);
-		if (vp->v_mount != mp || vismarker(vp))
-			continue;
+	vfs_vnode_iterator_init(mp, &marker);
+	while (vfs_vnode_iterator_next(marker, &vp)) {
 		/*
 		 * Step 4: invalidate all inactive vnodes.
 		 */
-		if (vrecycle(vp, &mntvnode_lock)) {
-			mutex_enter(&mntvnode_lock);
-			(void)vunmark(mvp);
-			goto loop;
-		}
+		if (vrecycle(vp))
+			continue;
 		/*
 		 * Step 5: invalidate all cached file data.
 		 */
-		mutex_enter(vp->v_interlock);
-		mutex_exit(&mntvnode_lock);
-		if (vget(vp, LK_EXCLUSIVE)) {
-			(void)vunmark(mvp);
-			goto loop;
+		if (vn_lock(vp, LK_EXCLUSIVE)) {
+			vrele(vp);
+			continue;
 		}
 		if (vinvalbuf(vp, 0, cred, l, 0, 0))
 			panic("ffs_reload: dirty2");
@@ -844,16 +830,13 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 			      (int)fs->fs_bsize, NOCRED, 0, &bp);
 		if (error) {
 			vput(vp);
-			(void)vunmark(mvp);
 			break;
 		}
 		ffs_load_inode(bp, ip, fs, ip->i_number);
 		brelse(bp, 0);
 		vput(vp);
-		mutex_enter(&mntvnode_lock);
 	}
-	mutex_exit(&mntvnode_lock);
-	vnfree(mvp);
+	vfs_vnode_iterator_destroy(marker);
 	return (error);
 }
 
