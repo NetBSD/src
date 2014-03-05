@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.221 2013/09/28 17:58:53 dholland Exp $
+$NetBSD: acronyms,v 1.222 2014/03/05 03:51:25 ginsbach Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -93,6 +93,7 @@ CNP	continued [in my] next post
 COB	close of business [day]
 COTS	commercial off-the-shelf
 CPC	cost per click
+CPE	customer premises equipment
 CTN	can't talk now
 CU	see you
 CUL	see you later
