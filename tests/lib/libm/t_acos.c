@@ -1,4 +1,4 @@
-/* $NetBSD: t_acos.c,v 1.9 2014/03/05 19:43:46 dsl Exp $ */
+/* $NetBSD: t_acos.c,v 1.10 2014/03/05 20:14:46 dsl Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * acos(3) and acosf(3)
  */
 
-AFT_LIBM_TEST(acos_is_nan, "Test acos/acosf(x) == NaN, x = NaN, +/-Inf, ![-1..1]")
+ATF_LIBM_TEST(acos_is_nan, "Test acos/acosf(x) == NaN, x = NaN, +/-Inf, ![-1..1]")
 {
 	static const double x[] = {
 	    -1.000000001, 1.000000001,
@@ -59,7 +59,7 @@ AFT_LIBM_TEST(acos_is_nan, "Test acos/acosf(x) == NaN, x = NaN, +/-Inf, ![-1..1]
 	}
 }
 
-AFT_LIBM_TEST(acos_inrange, "Test acos/acosf(x) for some valid values")
+ATF_LIBM_TEST(acos_inrange, "Test acos/acosf(x) for some valid values")
 {
 	static const struct {
 		double x;
@@ -88,7 +88,7 @@ AFT_LIBM_TEST(acos_inrange, "Test acos/acosf(x) for some valid values")
 	}
 }
 
-AFT_LIBM_TEST(acos_is_plus_zero, "Test acosf(1.0) == +0.0")
+ATF_LIBM_TEST(acos_is_plus_zero, "Test acosf(1.0) == +0.0")
 {
 	T_LIBM_CHECK_PLUS_ZERO(0, acos, 1.0);
 	T_LIBM_CHECK_PLUS_ZERO(0, acosf, 1.0);
