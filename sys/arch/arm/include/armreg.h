@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.90 2014/03/03 14:26:32 matt Exp $	*/
+/*	$NetBSD: armreg.h,v 1.91 2014/03/05 16:33:33 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -565,7 +565,21 @@
 
 #define INSN_SIZE		4		/* Always 4 bytes */
 #define INSN_COND_MASK		0xf0000000	/* Condition mask */
-#define INSN_COND_AL		0xe0000000	/* Always condition */
+#define INSN_COND_EQ		0		/* Z == 1 */
+#define INSN_COND_NE		1		/* Z == 0 */
+#define INSN_COND_CS		2		/* C == 1 */
+#define INSN_COND_CC		3		/* C == 0 */
+#define INSN_COND_MI		4		/* N == 1 */
+#define INSN_COND_PL		5		/* N == 0 */
+#define INSN_COND_VS		6		/* V == 1 */
+#define INSN_COND_VC		7		/* V == 0 */
+#define INSN_COND_HI		8		/* C == 1 && Z == 0 */
+#define INSN_COND_LS		9		/* C == 0 || Z == 1 */
+#define INSN_COND_GE		10		/* N == V */
+#define INSN_COND_LT		11		/* N != V */
+#define INSN_COND_GT		12		/* Z == 0 && N == V */
+#define INSN_COND_LE		13		/* Z == 1 || N != V */
+#define INSN_COND_AL		14		/* Always condition */
 
 #define THUMB_INSN_SIZE		2		/* Some are 4 bytes.  */
 
@@ -756,6 +770,47 @@
 #define ARM_A5_TLBDATAOP_INDEX		__BITS(5,0)
 #define ARM_A7_TLBDATAOP_INDEX		__BITS(6,0)
 
+#if !defined(__ASSEMBLER__)
+static inline bool
+arm_cond_ok_p(uint32_t insn, uint32_t psr)
+{
+	const uint32_t __cond = __SHIFTOUT(insn, INSN_COND_MASK);
+
+	bool __ok;
+	const bool __z = (psr & PSR_Z_bit);
+	const bool __n = (psr & PSR_N_bit);
+	const bool __c = (psr & PSR_C_bit);
+	const bool __v = (psr & PSR_V_bit);
+	switch (__cond & ~1) {
+	case INSN_COND_EQ:	// Z == 1
+		__ok = __z;
+		break;
+	case INSN_COND_CS:	// C == 1
+		__ok = __c;
+		break;
+	case INSN_COND_MI:	// N == 1
+		__ok = __n;
+		break;
+	case INSN_COND_VS:	// V == 1
+		__ok = __v;
+		break;
+	case INSN_COND_HI:	// C == 1 && Z == 0
+		__ok = __c && !__z;
+		break;
+	case INSN_COND_GE:	// N == V
+		__ok = __n == __v;
+		break;
+	case INSN_COND_GT:	// N == V && Z == 0
+		__ok = __n == __v && !__z;
+		break;
+	case INSN_COND_AL:
+		return true;
+	}
+
+	return (__cond & 1) ? !__ok : __ok;
+}
+#endif
+
 #if !defined(__ASSEMBLER__) && !defined(_RUMPKERNEL)
 #define	ARMREG_READ_INLINE(name, __insnstring)			\
 static inline uint32_t armreg_##name##_read(void)		\
@@ -815,6 +870,7 @@ ARMREG_WRITE_INLINE2(fpinst2, "fmxr\tfpinst2, %0") /* VFP Exception Instruction 
 /* cp15 c0 registers */
 ARMREG_READ_INLINE(midr, "p15,0,%0,c0,c0,0") /* Main ID Register */
 ARMREG_READ_INLINE(ctr, "p15,0,%0,c0,c0,1") /* Cache Type Register */
+ARMREG_READ_INLINE(tlbtr, "p15,0,%0,c0,c0,3") /* TLB Type Register */
 ARMREG_READ_INLINE(mpidr, "p15,0,%0,c0,c0,5") /* Multiprocess Affinity Register */
 ARMREG_READ_INLINE(pfr0, "p15,0,%0,c0,c1,0") /* Processor Feature Register 0 */
 ARMREG_READ_INLINE(pfr1, "p15,0,%0,c0,c1,1") /* Processor Feature Register 1 */
