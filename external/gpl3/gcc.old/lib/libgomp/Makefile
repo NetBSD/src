@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.2 2014/02/26 10:57:30 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2014/03/05 16:18:41 tron Exp $
 
 # build GCC's libgomp, so that -fopenmp works.
 
@@ -72,6 +72,9 @@ INCSDIR=	/usr/include/gcc-4.5
 .else			# } else {
 libinstall::
 .endif			# }
+
+COPTS.team.c = -Wno-stack-protector
+COPTS.task.c = -Wno-stack-protector
 
 .include <bsd.lib.mk>
 
