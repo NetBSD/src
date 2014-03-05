@@ -16666,6 +16666,7 @@ dtrace_state_worker_add(void (*fn)(dtrace_state_t *), dtrace_state_t *state,
 	w->exiting = false;
 	error = kthread_create(PRI_NONE, KTHREAD_MPSAFE|KTHREAD_MUSTJOIN, NULL,
 	    dtrace_state_worker_thread, w, &w->lwp, "dtrace-state-worker");
+	(void) error;
 	KASSERT(error == 0); /* XXX */
 	return w;
 }
