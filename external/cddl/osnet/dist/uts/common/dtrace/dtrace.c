@@ -16603,7 +16603,7 @@ static int		dtrace_unload(void);
 #include <dtrace_unload.c>
 #include <dtrace_vtime.c>
 #include <dtrace_hacks.c>
-#if defined(__i386__) || defined(__x86_64__)
+#if defined(__i386__) || defined(__x86_64__) || defined(__arm__)
 #include <dtrace_isa.c>
 #endif
 
