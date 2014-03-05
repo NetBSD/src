@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_gtt.c,v 1.1.2.9 2014/03/05 14:45:00 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_gtt.c,v 1.1.2.10 2014/03/05 22:18:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.1.2.9 2014/03/05 14:45:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.1.2.10 2014/03/05 22:18:27 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -82,6 +82,18 @@ i915_gem_gtt_init(struct drm_device *dev)
 		ret = gen6_gtt_init(dev);
 	if (ret)
 		goto fail0;
+
+	/*
+	 * The GTT entries are limited to 32-bit physical addresses up
+	 * until gen4, at and after which they are limited to 36-bit
+	 * physical addresses.
+	 *
+	 * XXX pci_set_dma_mask?  pci_set_consistent_dma_mask?
+	 */
+	if (INTEL_INFO(dev)->gen < 4)
+		drm_limit_dma_space(dev, 0, 0x00000000ffffffffULL);
+	else
+		drm_limit_dma_space(dev, 0, 0x0000000fffffffffULL);
 
 	/* Success!  */
 	DRM_INFO("Memory usable by graphics device = %dM\n",
@@ -428,10 +440,12 @@ agp_ggtt_bind_object(struct drm_i915_gem_object *obj,
 {
 	struct drm_device *const dev = obj->base.dev;
 	struct drm_i915_private *const dev_priv = dev->dev_private;
+	struct agp_i810_softc *const isc = agp_i810_sc->as_chipc;
 	const off_t start = obj->gtt_space->start;
 	bus_addr_t addr;
 	bus_size_t len;
 	unsigned int seg, i = 0;
+	int error;
 
 	for (seg = 0; seg < obj->igo_dmamap->dm_nsegs; seg++) {
 		addr = obj->igo_dmamap->dm_segs[seg].ds_addr;
@@ -439,8 +453,14 @@ agp_ggtt_bind_object(struct drm_i915_gem_object *obj,
 		do {
 			KASSERT(PAGE_SIZE <= len);
 			KASSERT(0 == (len % PAGE_SIZE));
-			AGP_BIND_PAGE(agp_i810_sc, (start + (i << PAGE_SHIFT)),
-			    addr);
+			error = agp_i810_write_gtt_entry(isc,
+			    (start + (i << PAGE_SHIFT)), (addr | 1));
+			if (error)
+				DRM_DEBUG("agp_i810_write_gtt_entry"
+				    " %"PRIxMAX" -> %"PRIxMAX" failed: %d\n",
+				    (uintmax_t)(start + (i << PAGE_SHIFT)),
+				    (uintmax_t)(addr | 1),
+				    error);
 			addr += PAGE_SIZE;
 			len -= PAGE_SIZE;
 			i += 1;
@@ -452,22 +472,20 @@ agp_ggtt_bind_object(struct drm_i915_gem_object *obj,
 		(start >> PAGE_SHIFT)));
 	KASSERT(i == (obj->base.size >> PAGE_SHIFT));
 
-	/*
-	 * XXX Linux does a posting read here of the last PTE, but the
-	 * AGP API provides no way to do that.  Hope it's OK...
-	 */
+	agp_i810_post_gtt_entry(isc, (start + ((i-1) << PAGE_SHIFT)));
 }
 
 static void
 agp_ggtt_clear_range(struct drm_device *dev, unsigned start_page,
     unsigned npages)
 {
+	struct agp_i810_softc *const isc = agp_i810_sc->as_chipc;
 	unsigned page;
 
 	for (page = start_page; npages--; page++)
-		AGP_UNBIND_PAGE(agp_i810_sc, (off_t)page << PAGE_SHIFT);
+		agp_i810_write_gtt_entry(isc, (off_t)page << PAGE_SHIFT, 0);
 
-	/* XXX Posting read!  */
+	agp_i810_post_gtt_entry(isc, ((page - 1) << PAGE_SHIFT));
 }
 
 /*
@@ -533,9 +551,6 @@ gen6_gtt_init(struct drm_device *dev)
 
 	gtt->do_idle_maps = false;
 
-	/* XXX pci_set_dma_mask?  pci_set_consistent_dma_mask?  */
-	drm_limit_dma_space(dev, 0, 0x0000000fffffffffULL);
-
 	gtt->gma_bus_addr = dev->bus_maps[2].bm_base;
 
 	snb_gmch_ctl = pci_conf_read(pa->pa_pc, pa->pa_tag, SNB_GMCH_CTRL);
@@ -595,8 +610,7 @@ fail2: __unused
 	i915_gem_gtt_fini_scratch_page(gtt, dev->dmat);
 fail1:	bus_space_unmap(dev->bst, gtt->gtt_bsh,
 	    (gtt->gtt_total_entries * sizeof(gtt_pte_t)));
-fail0:	/* XXX Undo drm_limit_dma_space?  */
-	return ret;
+fail0:	return ret;
 }
 
 static void
