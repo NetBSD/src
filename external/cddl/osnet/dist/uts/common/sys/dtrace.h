@@ -2286,7 +2286,7 @@ extern void dtrace_safe_synchronous_signal(void);
 
 extern int dtrace_mach_aframes(void);
 
-#if defined(__i386) || defined(__amd64)
+#if defined(__i386) || defined(__amd64) || defined(__arm__)
 extern int dtrace_instr_size(uchar_t *instr);
 extern int dtrace_instr_size_isa(uchar_t *, model_t, int *);
 extern void dtrace_invop_add(int (*)(uintptr_t, uintptr_t *, uintptr_t));
