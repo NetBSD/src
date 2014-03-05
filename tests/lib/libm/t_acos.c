@@ -1,4 +1,4 @@
-/* $NetBSD: t_acos.c,v 1.8 2014/03/03 18:21:33 dsl Exp $ */
+/* $NetBSD: t_acos.c,v 1.9 2014/03/05 19:43:46 dsl Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -31,55 +31,24 @@
 
 #include <atf-c.h>
 #include <math.h>
-
-/*
- * Check result of fn(arg) is correct within the bounds.
- * Should be ok to do the checks using 'double' for 'float' functions.
- */
-#define T_LIBM_CHECK(subtest, fn, arg, expect, epsilon) do { \
-	double r = fn(arg); \
-	double e = fabs(r - expect); \
-	if (e > epsilon) \
-		atf_tc_fail_nonfatal( \
-		    "subtest %zu: " #fn "(%g) is %g not %g (error %g > %g)", \
-		    subtest, arg, r, expect, e, epsilon); \
-    } while (0)
-
-/* Check that the result of fn(arg) is NaN */
-#ifndef __vax__
-#define T_LIBM_CHECK_NAN(subtest, fn, arg) do { \
-	double r = fn(arg); \
-	if (!isnan(r)) \
-		atf_tc_fail_nonfatal("subtest %zu: " #fn "(%g) is %g not NaN", \
-		    subtest, arg, r); \
-    } while (0)
-#else
-/* vax doesn't support NaN */
-#define T_LIBM_CHECK_NAN(subtest, fn, arg) (void)(arg)
-#endif
-
-#define AFT_LIBM_TEST(name, description) \
-ATF_TC(name); \
-ATF_TC_HEAD(name, tc) { atf_tc_set_md_var(tc, "descr", description); } \
-ATF_TC_BODY(name, tc)
+#include "t_libm.h"
 
 /*
  * acos(3) and acosf(3)
  */
 
-AFT_LIBM_TEST(acos_nan, "Test acos/acosf(x) == NaN, x = NaN, +/-Inf, ![-1..1]")
+AFT_LIBM_TEST(acos_is_nan, "Test acos/acosf(x) == NaN, x = NaN, +/-Inf, ![-1..1]")
 {
 	static const double x[] = {
 	    -1.000000001, 1.000000001,
 	    -1.0000001, 1.0000001,
 	    -1.1, 1.1,
 #ifndef __vax__
-	    0.0L / 0.0L,  /* NAN */
-	    -1.0L / 0.0L, /* -Inf */
-	    +1.0L / 0.0L, /* +Inf */
+	    T_LIBM_NAN,
+	    T_LIBM_MINUS_INF, T_LIBM_PLUS_INF,
 #endif
 	};
-	size_t i;
+	unsigned int i;
 
 	for (i = 0; i < __arraycount(x); i++) {
 		T_LIBM_CHECK_NAN(i, acos, x[i]);
@@ -105,7 +74,7 @@ AFT_LIBM_TEST(acos_inrange, "Test acos/acosf(x) for some valid values")
 		{  0.5,  1.047197551196598, },
 		{  0.99, 0.141539473324427, },
 	};
-	size_t i;
+	unsigned int i;
 
 	/*
 	 * Note that acos(x) might be calculated as atan2(sqrt(1-x*x),x).
@@ -119,29 +88,18 @@ AFT_LIBM_TEST(acos_inrange, "Test acos/acosf(x) for some valid values")
 	}
 }
 
-AFT_LIBM_TEST(acos_one_pos, "Test acos(1.0) == +0.0")
+AFT_LIBM_TEST(acos_is_plus_zero, "Test acosf(1.0) == +0.0")
 {
-	const double y = acos(1.0);
-
-	if (fabs(y) > 0.0 || signbit(y) != 0)
-		atf_tc_fail_nonfatal("acos(1.0) != +0.0");
-}
-
-AFT_LIBM_TEST(acosf_one_pos, "Test acosf(1.0) == +0.0")
-{
-	const float y = acosf(1.0);
-
-	if (fabsf(y) > 0.0 || signbit(y) != 0)
-		atf_tc_fail_nonfatal("acosf(1.0) != +0.0");
+	T_LIBM_CHECK_PLUS_ZERO(0, acos, 1.0);
+	T_LIBM_CHECK_PLUS_ZERO(0, acosf, 1.0);
 }
 
 ATF_TP_ADD_TCS(tp)
 {
 
-	ATF_TP_ADD_TC(tp, acos_nan);
 	ATF_TP_ADD_TC(tp, acos_inrange);
-	ATF_TP_ADD_TC(tp, acos_one_pos);
-	ATF_TP_ADD_TC(tp, acosf_one_pos);
+	ATF_TP_ADD_TC(tp, acos_is_nan);
+	ATF_TP_ADD_TC(tp, acos_is_plus_zero);
 
 	return atf_no_error();
 }
