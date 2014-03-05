@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810var.h,v 1.1.2.1 2014/03/05 14:42:40 riastradh Exp $	*/
+/*	$NetBSD: agp_i810var.h,v 1.1.2.2 2014/03/05 22:18:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -51,3 +51,6 @@ struct agp_i810_softc {
 };
 
 extern struct agp_softc	*agp_i810_sc;
+
+int	agp_i810_write_gtt_entry(struct agp_i810_softc *, off_t, bus_addr_t);
+void	agp_i810_post_gtt_entry(struct agp_i810_softc *, off_t);
