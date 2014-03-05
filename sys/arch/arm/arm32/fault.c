@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.97 2014/03/05 02:10:39 matt Exp $	*/
+/*	$NetBSD: fault.c,v 1.98 2014/03/05 06:27:41 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.97 2014/03/05 02:10:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.98 2014/03/05 06:27:41 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -243,11 +243,7 @@ data_abort_handler(trapframe_t *tf)
 	ksiginfo_t ksi;
 
 	UVMHIST_FUNC(__func__);
-#ifdef UVMHIST
-	if (__predict_true(maphist.e)) {
-		UVMHIST_CALLED(maphist);
-	}
-#endif
+	UVMHIST_CALLED(maphist);
 
 	/* Grab FAR/FSR before enabling interrupts */
 	far = cpu_faultaddress();
@@ -263,14 +259,10 @@ data_abort_handler(trapframe_t *tf)
 
 	/* Get the current lwp structure */
 
-#ifdef UVMHIST
-	if (__predict_true(maphist.e)) {
-		UVMHIST_LOG(maphist, " (l=%#x, far=%#x, fsr=%#x",
-		    l, far, fsr, 0);
-		UVMHIST_LOG(maphist, "  tf=%#x, pc=%#x)",
-		    tf, tf->tf_pc, 0, 0);
-	}
-#endif
+	UVMHIST_LOG(maphist, " (l=%#x, far=%#x, fsr=%#x",
+	    l, far, fsr, 0);
+	UVMHIST_LOG(maphist, "  tf=%#x, pc=%#x)",
+	    tf, tf->tf_pc, 0, 0);
 
 	/* Data abort came from user mode? */
 	bool user = (TRAP_USERMODE(tf) != 0);
@@ -470,11 +462,7 @@ data_abort_handler(trapframe_t *tf)
 	last_fault_code = fsr;
 #endif
 	if (pmap_fault_fixup(map->pmap, va, ftype, user)) {
-#ifdef UVMHIST
-		if (__predict_true(maphist.e)) {
-			UVMHIST_LOG(maphist, " <- ref/mod emul", 0, 0, 0, 0);
-		}
-#endif
+		UVMHIST_LOG(maphist, " <- ref/mod emul", 0, 0, 0, 0);
 		goto out;
 	}
 
@@ -498,11 +486,7 @@ data_abort_handler(trapframe_t *tf)
 			uvm_grow(l->l_proc, va); /* Record any stack growth */
 		else
 			ucas_ras_check(tf);
-#ifdef UVMHIST
-		if (__predict_true(maphist.e)) {
-			UVMHIST_LOG(maphist, " <- uvm", 0, 0, 0, 0);
-		}
-#endif
+		UVMHIST_LOG(maphist, " <- uvm", 0, 0, 0, 0);
 		goto out;
 	}
 
@@ -531,11 +515,7 @@ data_abort_handler(trapframe_t *tf)
 	ksi.ksi_code = (error == EACCES) ? SEGV_ACCERR : SEGV_MAPERR;
 	ksi.ksi_addr = (uint32_t *)(intptr_t) far;
 	ksi.ksi_trap = fsr;
-#ifdef UVMHIST
-	if (__predict_true(maphist.e)) {
-		UVMHIST_LOG(maphist, " <- error (%d)", error, 0, 0, 0);
-	}
-#endif
+	UVMHIST_LOG(maphist, " <- error (%d)", error, 0, 0, 0);
 
 do_trapsignal:
 	call_trapsignal(l, tf, &ksi);
@@ -804,11 +784,7 @@ prefetch_abort_handler(trapframe_t *tf)
 	int error, user;
 
 	UVMHIST_FUNC(__func__);
-#ifdef UVMHIST
-	if (__predict_true(maphist.e)) {
-		UVMHIST_CALLED(maphist);
-	}
-#endif
+	UVMHIST_CALLED(maphist);
 
 	/* Update vmmeter statistics */
 	curcpu()->ci_data.cpu_ntrap++;
@@ -852,12 +828,8 @@ prefetch_abort_handler(trapframe_t *tf)
 	/* Get fault address */
 	fault_pc = tf->tf_pc;
 	lwp_settrapframe(l, tf);
-#ifdef UVMHIST
-	if (__predict_true(maphist.e)) {
-		UVMHIST_LOG(maphist, " (pc=0x%x, l=0x%x, tf=0x%x)",
-		    fault_pc, l, tf, 0);
-	}
-#endif
+	UVMHIST_LOG(maphist, " (pc=0x%x, l=0x%x, tf=0x%x)",
+	    fault_pc, l, tf, 0);
 
 	/* Ok validate the address, can only execute in USER space */
 	if (__predict_false(fault_pc >= VM_MAXUSER_ADDRESS ||
@@ -880,11 +852,7 @@ prefetch_abort_handler(trapframe_t *tf)
 	last_fault_code = -1;
 #endif
 	if (pmap_fault_fixup(map->pmap, va, VM_PROT_READ|VM_PROT_EXECUTE, 1)) {
-#ifdef UVMHIST
-		if (__predict_true(maphist.e)) {
-			UVMHIST_LOG (maphist, " <- emulated", 0, 0, 0, 0);
-		}
-#endif
+		UVMHIST_LOG (maphist, " <- emulated", 0, 0, 0, 0);
 		goto out;
 	}
 
@@ -899,20 +867,13 @@ prefetch_abort_handler(trapframe_t *tf)
 	error = uvm_fault(map, va, VM_PROT_READ);
 
 	if (__predict_true(error == 0)) {
-#ifdef UVMHIST
-		if (__predict_true(maphist.e)) {
-			UVMHIST_LOG (maphist, " <- uvm", 0, 0, 0, 0);
-		}
-#endif
+		UVMHIST_LOG (maphist, " <- uvm", 0, 0, 0, 0);
 		goto out;
 	}
 	KSI_INIT_TRAP(&ksi);
 
-#ifdef UVMHIST
-	if (__predict_true(maphist.e)) {
-		UVMHIST_LOG (maphist, " <- fatal (%d)", error, 0, 0, 0);
-	}
-#endif
+	UVMHIST_LOG (maphist, " <- fatal (%d)", error, 0, 0, 0);
+
 	if (error == ENOMEM) {
 		printf("UVM: pid %d (%s), uid %d killed: "
 		    "out of swap\n", l->l_proc->p_pid, l->l_proc->p_comm,
