@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_pci.c,v 1.1.2.12 2014/01/29 19:48:14 riastradh Exp $	*/
+/*	$NetBSD: i915_pci.c,v 1.1.2.13 2014/03/05 14:42:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.1.2.12 2014/01/29 19:48:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.1.2.13 2014/03/05 14:42:27 riastradh Exp $");
 
 #include <sys/types.h>
 #ifndef _MODULE
@@ -153,6 +153,7 @@ i915drm_attach(device_t parent, device_t self, void *aux)
 	const struct intel_device_info *const info = i915drm_pci_lookup(pa);
 	const unsigned long flags =
 	    (unsigned long)(uintptr_t)(const void *)info;
+	int error;
 
 	KASSERT(info != NULL);
 
@@ -171,7 +172,12 @@ i915drm_attach(device_t parent, device_t self, void *aux)
 	drm_pci_attach(self, pa, &sc->sc_pci_dev, &sc->sc_drm_dev);
 
 	/* Attach the drm driver.  */
-	drm_config_found(self, i915_drm_driver, flags, &sc->sc_drm_dev);
+	error = drm_config_found(self, i915_drm_driver, flags,
+	    &sc->sc_drm_dev);
+	if (error) {
+		aprint_error_dev(self, "unable to attach drm: %d\n", error);
+		return;
+	}
 
 	/* Attach a framebuffer, but not until interrupts work.  */
 	config_interrupts(self, &i915drm_attach_framebuffer);
