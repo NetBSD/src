@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.23 2014/03/03 14:03:14 matt Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.24 2014/03/05 02:17:21 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.23 2014/03/03 14:03:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.24 2014/03/05 02:17:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -134,6 +134,7 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.23 2014/03/03 14:03:14 matt Exp 
 
 #include <uvm/uvm_extern.h>
 
+#include <arm/locore.h>
 #include <arm/db_machdep.h>
 #include <arm/undefined.h>
 #include <arm/bootconfig.h>
@@ -931,7 +932,12 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	 * TTBCR should have been initialized by the MD start code.
 	 */
 	KASSERT(armreg_ttbcr_read() == __SHIFTIN(1, TTBCR_S_N));
+	/*
+	 * Disable lookups via TTBR0 until there is an activated pmap.
+	 */
+	armreg_ttbcr_write(armreg_ttbcr_read() | TTBCR_S_PD0);
 	cpu_setttb(l1pt_pa, KERNEL_PID);
+	arm_isb();
 #else
 	cpu_setttb(l1pt_pa, true);
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
@@ -940,12 +946,11 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 
 #ifdef VERBOSE_INIT_ARM
 #ifdef ARM_MMU_EXTENDED
-	printf("TTBCR=%#x TTBR0=%#x TTBR1=%#x OK\n",
-	    armreg_ttbcr_read(),
-	    armreg_ttbr_read(),
-	    armreg_ttbr1_read());
+	printf(" (TTBCR=%#x TTBR0=%#x TTBR1=%#x)",
+	    armreg_ttbcr_read(), armreg_ttbr_read(), armreg_ttbr1_read());
 #else
-	printf("TTBR0=%#x OK\n", armreg_ttbr_read());
+	printf(" (TTBR0=%#x)", armreg_ttbr_read());
 #endif
+	printf(" OK\n");
 #endif
 }
