@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.243 2013/12/01 17:29:40 christos Exp $	*/
+/*	$NetBSD: vnode.h,v 1.244 2014/03/05 09:37:29 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -545,7 +545,7 @@ void 	vgone(struct vnode *);
 int	vinvalbuf(struct vnode *, int, kauth_cred_t, struct lwp *, bool, int);
 void	vprint(const char *, struct vnode *);
 void 	vput(struct vnode *);
-int	vrecycle(struct vnode *, kmutex_t *);
+bool	vrecycle(struct vnode *);
 void 	vrele(struct vnode *);
 void 	vrele_async(struct vnode *);
 void	vrele_flush(void);
