@@ -1,4 +1,4 @@
-/* $NetBSD: t_libm.h,v 1.1 2014/03/05 19:43:46 dsl Exp $ */
+/* $NetBSD: t_libm.h,v 1.2 2014/03/05 20:14:46 dsl Exp $ */
 
 /*
  * Check result of fn(arg) is correct within the bounds.
@@ -43,12 +43,12 @@
     } while (0)
 
 /* Some useful constants (for test vectors) */
-#define T_LIBM_NAN	(0.0L / 0.0L)
-#define T_LIBM_PLUS_INF	(+1.0L / 0.0L)
-#define T_LIBM_MINUS_INF (-1.0L / 0.0L)
+#define T_LIBM_NAN	(0.0 / 0.0)
+#define T_LIBM_PLUS_INF	(+1.0 / 0.0)
+#define T_LIBM_MINUS_INF (-1.0 / 0.0)
 
 /* One line definition of a simple test */
-#define AFT_LIBM_TEST(name, description) \
+#define ATF_LIBM_TEST(name, description) \
 ATF_TC(name); \
 ATF_TC_HEAD(name, tc) { atf_tc_set_md_var(tc, "descr", description); } \
 ATF_TC_BODY(name, tc)
