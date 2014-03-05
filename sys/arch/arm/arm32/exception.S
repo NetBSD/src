@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.20 2013/12/02 18:36:10 joerg Exp $	*/
+/*	$NetBSD: exception.S,v 1.21 2014/03/05 02:12:24 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -51,7 +51,7 @@
 
 #include <arm/locore.h>
 
-	RCSID("$NetBSD: exception.S,v 1.20 2013/12/02 18:36:10 joerg Exp $")
+	RCSID("$NetBSD: exception.S,v 1.21 2014/03/05 02:12:24 matt Exp $")
 
 	.text	
 	.align	0
@@ -178,11 +178,13 @@ ASEND(data_abort_entry)
  *	it like a Data Abort.
  */
 ASENTRY_NP(address_exception_entry)
+	push	{r0-r3,ip,lr}
 	mrs	r1, cpsr
 	mrs	r2, spsr
 	mov	r3, lr
 	adr	r0, .Laddress_exception_msg
 	bl	_C_LABEL(printf)	/* XXX CLOBBERS LR!! */
+	pop	{r0-r3,ip,lr}
 	b	_ASM_LABEL(data_abort_entry)
 .Laddress_exception_msg:
 	.asciz	"Address Exception CPSR=0x%08x SPSR=0x%08x LR=0x%08x\n"
