@@ -1,4 +1,4 @@
-/*	$NetBSD: puccn.h,v 1.6 2014/01/26 10:54:24 msaitoh Exp $ */
+/*	$NetBSD: puccn.h,v 1.7 2014/03/05 05:56:04 msaitoh Exp $ */
 
 /*
  * Derived from  pci.c
@@ -48,3 +48,5 @@
 void puc_cnprobe(struct consdev *);
 int puc_cninit(struct consdev *);
 int cpu_puc_cnprobe(struct consdev *, struct pci_attach_args *);
+void puc_gdbprobe(struct consdev *);
+void puc_gdbinit(struct consdev *);
