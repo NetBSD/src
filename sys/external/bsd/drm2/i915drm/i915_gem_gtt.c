@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_gtt.c,v 1.1.2.7 2014/03/04 22:14:12 aymeric Exp $	*/
+/*	$NetBSD: i915_gem_gtt.c,v 1.1.2.8 2014/03/05 08:45:06 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.1.2.7 2014/03/04 22:14:12 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.1.2.8 2014/03/05 08:45:06 aymeric Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -330,7 +330,7 @@ i915_gem_gtt_bind_object(struct drm_i915_gem_object *obj,
     enum i915_cache_level cache_level)
 {
 
-	KASSERT(6 <= INTEL_INFO(obj->base.dev)->gen); /* XXX gen<6 */
+	KASSERT(6 < INTEL_INFO(obj->base.dev)->gen); /* XXX gen<6 */
 	gen6_ggtt_bind_object(obj, cache_level);
 	obj->has_global_gtt_mapping = 1;
 }
