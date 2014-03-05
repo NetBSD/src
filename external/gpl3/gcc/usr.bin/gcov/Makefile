@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2014/03/01 10:00:52 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2014/03/05 21:37:02 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -18,7 +18,7 @@ HOSTPROG_CXX=	1
 # Force using C++ for this
 HOST_CC:=	${HOST_CXX}
 CC:=		${CXX}
-CFLAGS:=	${CXXFLAGS}
+CFLAGS:=	${CXXFLAGS} -Wno-stack-protector
 
 .include "../Makefile.common"
 .include "../Makefile.libcpp"
@@ -28,7 +28,5 @@ CFLAGS:=	${CXXFLAGS}
 
 LDADD+=		-lintl
 DPADD+=		${LIBINTL}
-
-COPTS+=		-Wno-stack-protector
 
 .PATH: ${DIST}/gcc

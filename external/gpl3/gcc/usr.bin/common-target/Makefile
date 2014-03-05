@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2014/03/01 10:00:49 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2014/03/05 21:37:02 tron Exp $
 
 LIBISPRIVATE=	yes
 
@@ -18,6 +18,9 @@ CPPFLAGS+=	-I${GCCARCH} -I${BACKENDOBJ} -I. \
 		-DDEFAULT_TARGET_MACHINE=\"${MACHINE_GNU_PLATFORM}\" \
 		-DCONFIGURE_SPECS="\"\"" \
 		-I${BACKENDOBJ}
+
+COPTS.prefix.c=		-Wno-stack-protector
+COPTS.opts-common.c=	-Wno-stack-protector
 
 GENPROG_ERROR_DEPENDS=errors.lo
 
