@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.73 2011/04/04 20:37:56 dyoung Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.73.26.1 2014/03/05 14:42:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -26,11 +26,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$FreeBSD: src/sys/pci/agp_i810.c,v 1.4 2001/07/05 21:28:47 jhb Exp $
+ *	$FreeBSD$
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.73 2011/04/04 20:37:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.73.26.1 2014/03/05 14:42:40 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,12 +45,15 @@ __KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.73 2011/04/04 20:37:56 dyoung Exp $")
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/agpvar.h>
 #include <dev/pci/agpreg.h>
+#include <dev/pci/agp_i810var.h>
 
 #include <sys/agpio.h>
 
 #include <sys/bus.h>
 
 #include "agp_intel.h"
+
+struct agp_softc *agp_i810_sc = NULL;
 
 #define READ1(off)	bus_space_read_1(isc->bst, isc->bsh, off)
 #define READ4(off)	bus_space_read_4(isc->bst, isc->bsh, off)
@@ -63,22 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.73 2011/04/04 20:37:56 dyoung Exp $")
 #define CHIP_I965 4	/* 965Q/965PM */
 #define CHIP_G33  5	/* G33/Q33/Q35 */
 #define CHIP_G4X  6	/* G45/Q45 */
-
-struct agp_i810_softc {
-	u_int32_t initial_aperture;	/* aperture size at startup */
-	struct agp_gatt *gatt;
-	int chiptype;			/* i810-like or i830 */
-	u_int32_t dcache_size;		/* i810 only */
-	u_int32_t stolen;		/* number of i830/845 gtt entries
-					   for stolen memory */
-	bus_space_tag_t bst;		/* register bus_space tag */
-	bus_space_handle_t bsh;		/* register bus_space handle */
-	bus_space_tag_t gtt_bst;	/* GTT bus_space tag */
-	bus_space_handle_t gtt_bsh;	/* GTT bus_space handle */
-	struct pci_attach_args vga_pa;
-
-	u_int32_t pgtblctl;
-};
 
 /* XXX hack, see below */
 static bus_addr_t agp_i810_vga_regbase;
@@ -675,6 +662,15 @@ static int agp_i810_init(struct agp_softc *sc)
 	 * Make sure the chipset can see everything.
 	 */
 	agp_flush_cache();
+
+	/*
+	 * Publish what we found for kludgey drivers (I'm looking at
+	 * you, drm).
+	 */
+	if (agp_i810_sc == NULL)
+		agp_i810_sc = sc;
+	else
+		aprint_error_dev(sc->as_dev, "i810 agp already attached\n");
 
 	return 0;
 }
