@@ -89,12 +89,12 @@ ENTRY(dtrace_cas32)
 	msr	cpsr_c, r4
 
 	ldr	r5, [r0]
-	cmp	r5, r2
-	movne	r0, #0
+	cmp	r5, r1
+	movne	r0, r5
 	bne	2f
 
 	str	r2, [r0]
-	mov	r0, #1
+	mov	r0, r5
 
 2:
 	msr	cpsr_c, r3
