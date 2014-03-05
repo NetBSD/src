@@ -1469,7 +1469,7 @@ extern int drm_lastclose(struct drm_device *dev);
 #endif
 
 #ifdef __NetBSD__
-extern void drm_config_found(device_t, /* XXXX const */ struct drm_driver *,
+extern int drm_config_found(device_t, /* XXX const */ struct drm_driver *,
     unsigned long, struct drm_device *);
 #endif
 
