@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.170 2013/06/30 21:38:59 rmind Exp $
+# $NetBSD: GENERIC,v 1.171 2014/03/05 16:02:29 isaki Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.170 $"
+#ident 		"GENERIC-$Revision: 1.171 $"
 
 maxusers	8
 
@@ -173,7 +173,7 @@ options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 file-system	FFS		# Berkeley Fast Filesystem
 file-system	NFS		# Sun NFS-compatible filesystem client
 file-system	KERNFS		# kernel data-structure filesystem
-#file-system	NULLFS		# NULL layered filesystem (buggy)
+#file-system	NULLFS		# NULL layered filesystem
 #file-system 	OVERLAY		# overlay file system
 file-system	MFS		# memory-based filesystem
 #file-system	FDESC		# user file descriptor filesystem
