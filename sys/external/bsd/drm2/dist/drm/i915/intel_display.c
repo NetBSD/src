@@ -2248,14 +2248,12 @@ intel_finish_fb(struct drm_framebuffer *old_fb)
 	bool was_interruptible = dev_priv->mm.interruptible;
 	int ret;
 
-#ifdef __NetBSD__		/* XXX DRM_WAIT_UNINTERRUPTIBLE_UNTIL */
+#ifdef __NetBSD__
 	mutex_lock(&dev_priv->pending_flip_lock);
-	do {
-		DRM_WAIT_UNTIL(ret, &dev_priv->pending_flip_queue,
-		    &dev_priv->pending_flip_lock,
-		    (atomic_read(&dev_priv->mm.wedged) ||
-			atomic_read(&obj->pending_flip) == 0));
-	} while (ret);
+	DRM_WAIT_NOINTR_UNTIL(ret, &dev_priv->pending_flip_queue,
+	    &dev_priv->pending_flip_lock,
+	    (atomic_read(&dev_priv->mm.wedged) ||
+		atomic_read(&obj->pending_flip) == 0));
 	mutex_unlock(&dev_priv->pending_flip_lock);
 #else
 	wait_event(dev_priv->pending_flip_queue,
@@ -2970,13 +2968,11 @@ static void intel_crtc_wait_for_pending_flips(struct drm_crtc *crtc)
 	if (crtc->fb == NULL)
 		return;
 
-#ifdef __NetBSD__		/* XXX DRM_WAIT_UNINTERRUPTIBLE_UNTIL */
+#ifdef __NetBSD__
 	mutex_lock(&dev_priv->pending_flip_lock);
-	do {
-		DRM_WAIT_UNTIL(error, &dev_priv->pending_flip_queue,
-		    &dev_priv->pending_flip_lock,
-		    !intel_crtc_has_pending_flip(crtc));
-	} while (error);
+	DRM_WAIT_NOINTR_UNTIL(error, &dev_priv->pending_flip_queue,
+	    &dev_priv->pending_flip_lock,
+	    !intel_crtc_has_pending_flip(crtc));
 	mutex_unlock(&dev_priv->pending_flip_lock);
 #else
 	wait_event(dev_priv->pending_flip_queue,
