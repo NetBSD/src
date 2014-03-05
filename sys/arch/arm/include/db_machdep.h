@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.18 2012/02/16 02:26:35 christos Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.19 2014/03/05 16:33:33 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K Stevens
@@ -99,8 +99,8 @@ extern db_regs_t	ddb_regs;	/* register state */
 #define inst_load(ins)		(0)
 #define inst_store(ins)		(0)
 #define inst_unconditional_flow_transfer(ins)	\
-	((((ins) & INSN_COND_MASK) == INSN_COND_AL) && \
-	 (inst_branch(ins) || inst_call(ins) || inst_return(ins)))
+	(__SHIFTOUT((ins), INSN_COND_MASK) == INSN_COND_AL \
+	 && (inst_branch(ins) || inst_call(ins) || inst_return(ins)))
 
 #define getreg_val			(0)
 #define next_instr_address(pc, bd)	((bd) ? (pc) : ((pc) + INSN_SIZE))
