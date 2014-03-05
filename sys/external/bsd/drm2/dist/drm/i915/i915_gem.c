@@ -1195,14 +1195,16 @@ static int __wait_seqno(struct intel_ring_buffer *ring, u32 seqno,
 #ifdef __NetBSD__
 		unsigned long flags;
 		spin_lock_irqsave(&dev_priv->irq_lock, flags);
-		/*
-		 * XXX This wait is always interruptible; we should
-		 * heed the flag `interruptible'.
-		 */
-		DRM_SPIN_TIMED_WAIT_UNTIL(end, &ring->irq_queue,
-		    &dev_priv->irq_lock,
-		    timeout_jiffies,
-		    EXIT_COND);
+		if (interruptible)
+			DRM_SPIN_TIMED_WAIT_UNTIL(end, &ring->irq_queue,
+			    &dev_priv->irq_lock,
+			    timeout_jiffies,
+			    EXIT_COND);
+		else
+			DRM_SPIN_TIMED_WAIT_NOINTR_UNTIL(end, &ring->irq_queue,
+			    &dev_priv->irq_lock,
+			    timeout_jiffies,
+			    EXIT_COND);
 		spin_unlock_irqrestore(&dev_priv->irq_lock, flags);
 #else
 		if (interruptible)
