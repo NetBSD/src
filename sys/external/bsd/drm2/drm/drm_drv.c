@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.1.2.36 2014/03/04 20:45:16 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.1.2.37 2014/03/05 14:42:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.36 2014/03/04 20:45:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.37 2014/03/05 14:42:27 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -48,6 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.36 2014/03/04 20:45:16 riastradh E
 #include <sys/select.h>
 
 #include <uvm/uvm_extern.h>
+
+#include <prop/proplib.h>
 
 #include <drm/drmP.h>
 
@@ -327,6 +329,7 @@ drm_attach(device_t parent, device_t self, void *aux)
 
 	if (device_unit(self) >= 64) { /* XXX Need to do something here!  */
 		aprint_error_dev(self, "can't handle >=64 drm devices!");
+		error = ENFILE;	/* XXX */
 		goto fail0;
 	}
 
@@ -373,8 +376,11 @@ drm_attach(device_t parent, device_t self, void *aux)
 		/* XXX errno Linux->NetBSD */
 		error = -drm_mode_group_init_legacy_group(dev,
 		    &dev->primary->mode_group);
-		if (error)
+		if (error) {
+			aprint_error_dev(parent, "unable to init legacy group"
+			    ": %d\n", error);
 			goto fail2;
+		}
 	}
 
 	/* Success!  */
@@ -384,7 +390,8 @@ drm_attach(device_t parent, device_t self, void *aux)
 fail2:	if (dev->driver->unload != NULL)
 		(*dev->driver->unload)(dev);
 fail1:	drm_undo_fill_in_dev(dev);
-fail0:	return;
+fail0:	prop_dictionary_set_int64(device_properties(self), "error",
+	    (int64_t)error);
 }
 
 static int
@@ -893,22 +900,33 @@ out:
 	return error;
 }
 
-void
+int
 drm_config_found(device_t parent, struct drm_driver *driver,
     unsigned long flags, struct drm_device *dev)
 {
 	static const struct drm_attach_args zero_daa;
 	struct drm_attach_args daa = zero_daa;
+	device_t child;
+	int64_t error64;
+	int error = 0;
 
 	daa.daa_drm_dev = dev;
 	daa.daa_driver = driver;
 	daa.daa_flags = flags;
 
 	dev->driver = driver;
-	if (config_found_ia(parent, "drmkmsbus", &daa, NULL) == NULL) {
-		aprint_error_dev(parent, "unable to attach drm\n");
-		return;
+
+	child = config_found_ia(parent, "drmkmsbus", &daa, NULL);
+	if (child == NULL) {
+		aprint_error_dev(parent, "no drm pseudo-device found\n");
+		return ENOENT;
 	}
+
+	if (prop_dictionary_get_int64(device_properties(child), "error",
+		&error64))
+		error = (int)error64;
+
+	return error;
 }
 
 struct drm_local_map *
