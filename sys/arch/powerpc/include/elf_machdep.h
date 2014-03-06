@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.10 2014/03/06 07:48:25 matt Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.11 2014/03/06 19:30:39 matt Exp $	*/
 
 #ifndef _POWERPC_ELF_MACHDEP_H_
 #define _POWERPC_ELF_MACHDEP_H_
@@ -24,6 +24,10 @@
 
 /* Specify the value of _GLOBAL_OFFSET_TABLE_ */
 #define	DT_PPC_GOT		DT_LOPROC
+#define	DT_PPC64_GLINK		(DT_LOPROC + 0)
+#define	DT_PPC64_OPD		(DT_LOPROC + 1)
+#define	DT_PPC64_OPDSZ		(DT_LOPROC + 2)
+#define	DT_PPC64_TLSOPT		(DT_LOPROC + 3)
 
 // A = the addend used to compute the value of relocatable field
 // B = the base address of the shared object
