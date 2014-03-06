@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.62 2014/02/27 09:58:05 maxv Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.63 2014/03/06 09:30:37 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.62 2014/02/27 09:58:05 maxv Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.63 2014/03/06 09:30:37 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -162,6 +162,7 @@ elf_placedynexec(struct lwp *l, struct exec_package *epp, Elf_Ehdr *eh,
 
 	for (i = 0; i < eh->e_phnum; i++)
 		ph[i].p_vaddr += offset;
+	epp->ep_entryoffset = offset;
 	eh->e_entry += offset;
 }
 
@@ -835,6 +836,7 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 		}
 
 		ap->arg_interp = epp->ep_vmcmds.evs_cmds[nused].ev_addr;
+		epp->ep_entryoffset = interp_offset;
 		epp->ep_entry = ap->arg_interp + interp_offset;
 		PNBUF_PUT(interp);
 	} else
