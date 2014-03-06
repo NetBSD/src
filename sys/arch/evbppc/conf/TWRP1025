@@ -1,4 +1,4 @@
-#	$NetBSD: TWRP1025,v 1.13 2014/03/06 19:55:37 matt Exp $
+#	$NetBSD: TWRP1025,v 1.14 2014/03/06 23:30:28 joerg Exp $
 #
 #	TWRP1025 -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"TWRP1025-$Revision: 1.13 $"
+ident 		"TWRP1025-$Revision: 1.14 $"
 
 maxusers	32
 
@@ -135,6 +135,7 @@ options 	SCSIVERBOSE	# human readable SCSI error messages
 
 # Kernel root file system and dump configuration.
 config		netbsd		root on ? type ?
+config		netbsd-ld0a	root on ld0a type ffs
 config		netbsd-sd0a	root on sd0a type ffs
 config		nfsnetbsd	root on tsec0 type nfs
 
