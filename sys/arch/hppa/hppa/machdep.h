@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.16 2014/02/24 07:23:43 skrll Exp $	*/
+/*	$NetBSD: machdep.h,v 1.17 2014/03/06 19:02:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -80,6 +80,9 @@ extern u_int fpu_csw;
 void hppa_fpu_bootstrap(u_int);
 void hppa_fpu_flush(struct lwp *);
 void hppa_fpu_emulate(struct trapframe *, struct lwp *, u_int);
+
+/* Set up of space registers and protection IDs */
+void hppa_setvmspace(struct lwp *);
 
 /* Interrupt dispatching. */
 void hppa_intr(struct trapframe *);

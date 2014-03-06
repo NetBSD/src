@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.105 2014/02/13 15:04:18 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.106 2014/03/06 19:02:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.105 2014/02/13 15:04:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.106 2014/03/06 19:02:58 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -1236,7 +1236,7 @@ syscall(struct trapframe *frame, int *args)
 		 * run reads as:
 		 *
 		 *	ldil	L%SYSCALLGATE, r1
-		 *	ble	4(sr7, r1)
+		 *	ble	4(srX, r1)
 		 *	ldi	__CONCAT(SYS_,x), t1
 		 *	comb,<>	%r0, %t1, __cerror
 		 *

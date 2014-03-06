@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.1 2014/02/24 07:23:43 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.2 2014/03/06 19:02:58 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -313,7 +313,7 @@ struct cpu_info {
  * referenced in generic code
  */
 
-#define	cpu_proc_fork(p1, p2)
+void	cpu_proc_fork(struct proc *, struct proc *);
 
 #ifdef MULTIPROCESSOR
 
