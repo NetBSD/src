@@ -1,4 +1,4 @@
-/*	$NetBSD: n_sqrt.S,v 1.8 2007/04/18 04:46:13 matt Exp $	*/
+/*	$NetBSD: n_sqrt.S,v 1.9 2014/03/06 11:00:17 martin Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,6 +31,10 @@
  */
 
 #include <machine/asm.h>
+
+#ifdef WEAK_ALIAS
+WEAK_ALIAS(sqrtl, sqrt)
+#endif
 
 /*
  * double sqrt(arg)   revised August 15,1982
