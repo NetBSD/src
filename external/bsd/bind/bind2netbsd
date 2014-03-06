@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: bind2netbsd,v 1.1 2013/12/31 20:23:12 christos Exp $
+#	$NetBSD: bind2netbsd,v 1.2 2014/03/06 02:12:56 christos Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -78,6 +78,11 @@ mkdir -p $d
 echo copying $r to $d
 cd $r
 pax -rw * $d
+
+if [ -d $d/libtool.m4 ]
+then
+	mv $d/libtool.m4 $d/m4
+fi
 
 ### Remove the $'s around RCS tags
 cleantags $d
