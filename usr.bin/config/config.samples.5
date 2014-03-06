@@ -1,4 +1,4 @@
-.\" $NetBSD: config.samples.5,v 1.5 2014/02/13 22:36:28 wiz Exp $
+.\" $NetBSD: config.samples.5,v 1.6 2014/03/06 15:00:21 riastradh Exp $
 .\"
 .\"  Copyright (c) 2006 The NetBSD Foundation.
 .\"  All rights reserved.
@@ -222,13 +222,13 @@ Of course, it is possible to specify
 .Bd -literal -offset indent
 audio* at auvia?
 .Ed
-in the kernel configuration file, but then one instance per audio controler
+in the kernel configuration file, but then one instance per audio controller
 would be needed.
 .Em Interface attributes
 reflect the fact there is a standard way to attach a device to its parent, no
 matter what the latter is precisely.
 It also means lower maintainance of the kernel configuration files because
-drivers for audio controlers are added more easily.
+drivers for audio controllers are added more easily.
 .Pp
 Most attachments are done through
 .Em interface attributes ,
