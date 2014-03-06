@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.21 2014/03/06 17:47:28 skrll Exp $	*/
+/*	$NetBSD: copy.S,v 1.22 2014/03/06 17:48:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -158,7 +158,7 @@ LEAF_ENTRY(spstrcpy)
 	ldw	HPPA_FRAME_ARG(4)(%sp), %t2	/* size */
 	mtsp	%arg0, %sr1
 	mtsp	%arg2, %sr2
-	copy	%arg1, %arg0	/* save src */
+	copy	%arg1, %arg0			/* save src */
 
 L$spstrcpy_loop:
 	comb,=,n %r0, %t2, L$spstrcpy_exit
