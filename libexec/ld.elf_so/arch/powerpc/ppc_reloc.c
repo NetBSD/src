@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.50 2014/03/06 09:34:07 matt Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.51 2014/03/06 19:19:40 matt Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ppc_reloc.c,v 1.50 2014/03/06 09:34:07 matt Exp $");
+__RCSID("$NetBSD: ppc_reloc.c,v 1.51 2014/03/06 19:19:40 matt Exp $");
 #endif /* not lint */
 
 #include <stdarg.h>
@@ -70,8 +70,8 @@ extern const uint64_t _rtld_bind_start[3];
 void _rtld_bind_bssplt_start(void);
 void _rtld_bind_secureplt_start(void);
 #endif
+Elf_Addr _rtld_bind(const Obj_Entry *, Elf_Word);
 void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
-caddr_t _rtld_bind(const Obj_Entry *, Elf_Word);
 static int _rtld_relocate_plt_object(const Obj_Entry *,
     const Elf_Rela *, int, Elf_Addr *);
 
@@ -297,9 +297,13 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 int
 _rtld_relocate_plt_lazy(const Obj_Entry *obj)
 {
-#ifndef _LP64
+#ifdef _LP64
+	/*
+	 * For PowerPC64, the plt stubs handle an empty function descriptor
+	 * so there's nothing to do.
+	 */
+#else
 	Elf_Addr * const pltresolve = obj->pltgot + 8;
-#endif
 	const Elf_Rela *rela;
 	int reloff;
 
@@ -310,12 +314,6 @@ _rtld_relocate_plt_lazy(const Obj_Entry *obj)
 
 		assert(ELF_R_TYPE(rela->r_info) == R_TYPE(JMP_SLOT));
 
-#ifdef _LP64
-		/*
-		 * For now, simply treat then as relative.
-		 */
-		*where += (Elf_Addr)obj->relocbase;
-#else
 		if (obj->gotptr != NULL) {
 			/*
 			 * For now, simply treat then as relative.
@@ -345,8 +343,8 @@ _rtld_relocate_plt_lazy(const Obj_Entry *obj)
 			 */
 			/* __syncicache(where - 3, 12); */
 		}
-#endif
 	}
+#endif /* !_LP64 */
 
 	return 0;
 }
@@ -358,7 +356,6 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, int reloff
 	Elf_Addr value;
 	const Elf_Sym *def;
 	const Obj_Entry *defobj;
-	int distance;
 	unsigned long info = rela->r_info;
 
 	assert(ELF_R_TYPE(info) == R_TYPE(JMP_SLOT));
@@ -370,19 +367,22 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, int reloff
 		return 0;
 
 	value = (Elf_Addr)(defobj->relocbase + def->st_value);
-	distance = value - (Elf_Addr)where;
 	rdbg(("bind now/fixup in %s --> new=%p", 
 	    defobj->strtab + def->st_name, (void *)value));
 
 #ifdef _LP64
 	/*
-	 * For PowerPC64 we simply replace the entry in the PLTGOT with the
-	 * address of the routine.
+	 * For PowerPC64 we simply replace the function descriptor in the
+	 * PLTGOT with the one from source object.
 	 */
 	assert(where >= (Elf_Word *)obj->pltgot);
 	assert(where < (Elf_Word *)obj->pltgot + (obj->pltrelalim - obj->pltrela));
-	*where = value;
+	const Elf_Addr * const fdesc = (Elf_Addr *) value;
+	where[0] = fdesc[0];
+	where[1] = fdesc[1];
+	where[2] = fdesc[2];
 #else
+	ptrdiff_t distance = value - (Elf_Addr)where;
 	if (obj->gotptr != NULL) {
 		/*
 		 * For Secure-PLT we simply replace the entry in GOT with the
@@ -391,7 +391,7 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, int reloff
 		assert(where >= (Elf_Word *)obj->pltgot);
 		assert(where < (Elf_Word *)obj->pltgot + (obj->pltrelalim - obj->pltrela));
 		*where = value;
-	} else if (abs(distance) < 32*1024*1024) {	/* inside 32MB? */
+	} else if (labs(distance) < 32*1024*1024) {	/* inside 32MB? */
 		/* b	value	# branch directly */
 		*where = 0x48000000 | (distance & 0x03fffffc);
 		__syncicache(where, 4);
@@ -440,7 +440,7 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, int reloff
 	return 0;
 }
 
-caddr_t
+Elf_Addr
 _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 {
 	const Elf_Rela *rela = obj->pltrela + reloff;
@@ -455,7 +455,11 @@ _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 		_rtld_die();
 	_rtld_shared_exit();
 
-	return (caddr_t)new_value;
+#ifdef _LP64
+	return obj->glink;
+#else
+	return new_value;
+#endif
 }
 
 int
