@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.45 2014/02/28 05:26:23 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.46 2014/03/06 19:05:24 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -106,7 +106,7 @@
 # define SF_LR		16
 # define SF_PARAM	SF_HEADER_SZ
 
-# define _ENTRY(y)			\
+# define _XENTRY(y)			\
 	.globl	y;			\
 	.pushsection ".opd","aw";	\
 	.align	3;			\
@@ -117,6 +117,8 @@ y:	.quad	.##y,.TOC.@tocbase,0;	\
 	.globl	.##y;			\
 	.align	3;			\
 .##y:
+
+#define _ENTRY(x)	.text; _XENTRY(x)
 
 # define ENTRY(y) _ENTRY(y)
 
@@ -130,8 +132,8 @@ y:	.quad	.##y,.TOC.@tocbase,0;	\
 # define ASENTRY(y)		ENTRY(y)
 #else /* !_LP64 */
 
-# define _ENTRY(x) \
-	.text; .align 2; .globl x; .type x,@function; x:
+# define _XENTRY(x)	.align 2; .globl x; .type x,@function; x:
+# define _ENTRY(x)	.text; _XENTRY(x)
 
 # define ENTRY(y)	_ENTRY(_C_LABEL(y)); _PROF_PROLOGUE
 
