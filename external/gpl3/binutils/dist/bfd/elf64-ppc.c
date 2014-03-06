@@ -9196,7 +9196,13 @@ ppc64_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 		    srel = htab->reliplt;
 		  srel->size += p->count * sizeof (Elf64_External_Rela);
 		  if ((p->sec->output_section->flags & SEC_READONLY) != 0)
-		    info->flags |= DF_TEXTREL;
+		    {
+		      if (info->warn_shared_textrel)
+			(*_bfd_error_handler)
+			  (_("warning: dynamic relocation in readonly section `%s'"),
+			  p->sec->output_section->name);
+		      info->flags |= DF_TEXTREL;
+		    }
 		}
 	    }
 	}
