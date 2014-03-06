@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.154 2014/01/29 23:37:18 joerg Exp $
+#  $NetBSD: Makefile,v 1.155 2014/03/06 11:01:16 martin Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -203,9 +203,10 @@ COPTS.compat_cabsf.c=	${${ACTIVE_CC} == "gcc":? -fno-builtin-cabsf :}
 
 # math routines for non-IEEE architectures.
 NOIEEE_SRCS = n_asincos.c n_acosh.c n_asinh.c n_atan.c n_atanh.c n_cosh.c \
-	n_erf.c n_exp.c n_exp__E.c n_expm1.c n_floor.c n_fmod.c n_gamma.c \
+	n_erf.c n_exp.c n_exp2.c n_exp2f.c n_exp__E.c n_expm1.c n_floor.c \
+	n_fmod.c n_gamma.c \
 	n_lgamma.c n_j0.c n_j1.c n_jn.c n_log.c n_log10.c n_log1p.c \
-	n_log__L.c n_pow.c n_sinh.c n_tanh.c \
+	n_log2.c n_log__L.c n_pow.c n_sinh.c n_tanh.c \
 	n_sincos.c n_tan.c \
 	n_round.c n_roundf.c n_lround.c n_lroundf.c \
 	n_fmax.c n_fmaxf.c n_fmin.c n_fminf.c
