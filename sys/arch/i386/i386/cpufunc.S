@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.19 2014/02/25 22:16:52 dsl Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.20 2014/03/06 12:30:24 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/errno.h>
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.19 2014/02/25 22:16:52 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.20 2014/03/06 12:30:24 nonaka Exp $");
 
 #include "opt_xen.h"
 
@@ -427,7 +427,7 @@ ENTRY(xrstor)
 	movl	4(%esp), %ecx
 	movl	8(%esp), %eax	/* feature mask bits */
 	movl	12(%esp), %edx
-	xrstor	(%eax)
+	xrstor	(%ecx)
 	ret
 END(xrstor)
 
