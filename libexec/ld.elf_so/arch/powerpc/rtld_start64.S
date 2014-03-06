@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start64.S,v 1.1 2014/03/06 07:47:19 matt Exp $	*/
+/*	$NetBSD: rtld_start64.S,v 1.2 2014/03/06 19:19:40 matt Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -107,8 +107,7 @@ ENTRY_NOPROFILE(_rtld_bind_start)
 	CALL(_rtld_bind)		// _rtld_bind(obj, reloff)
 
 	mtctr	%r3
-	ld	%r2,8(%r31)		// load TOC for function
-	ld	%r11,16(%r31)		// load env ptr for function.
+	mr	%r12,%r31		// restore r12
 
 	ld	%r0,8(%r1)		// get saved CR
 	mtcr	%r0			// restore it
