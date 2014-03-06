@@ -1774,10 +1774,12 @@ i915_gem_release_mmap(struct drm_i915_gem_object *obj)
 	{
 		struct vm_page *page;
 
+		mutex_enter(obj->base.gemo_shm_uao->vmobjlock);
 		KASSERT(obj->pages != NULL);
 		/* Force a fresh fault for each page.  */
 		TAILQ_FOREACH(page, &obj->igo_pageq, pageq.queue)
 			pmap_page_protect(page, VM_PROT_NONE);
+		mutex_exit(obj->base.gemo_shm_uao->vmobjlock);
 	}
 #else
 	if (obj->base.dev->dev_mapping)
