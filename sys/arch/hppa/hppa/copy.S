@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.19 2011/10/01 15:50:46 chs Exp $	*/
+/*	$NetBSD: copy.S,v 1.20 2014/03/06 17:44:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -156,7 +156,6 @@ LEAF_ENTRY(spstrcpy)
 	stw	%t2, PCB_ONFAULT(%r31)
 
 	ldw	HPPA_FRAME_ARG(4)(%sp), %ret1		/* size */
-	mfsp	%sr2, %ret0	/* XXX need this? */
 	mtsp	%arg0, %sr1
 	mtsp	%arg2, %sr2
 	copy	%arg1, %arg0	/* save src */
@@ -175,7 +174,6 @@ L$spstrcpy_exit:
 L$spstrcpy_fault:
 	/* reset fault handler */
 	stw	%r0, PCB_ONFAULT(%r31)
-	mtsp	%r0, %sr2	/* XXX need this? */
 	sub	%arg1, %arg0, %arg1
 	ldw	HPPA_FRAME_ARG(5)(%sp), %arg0		/* rsize */
 	comiclr,= 0, %arg0, %r0
