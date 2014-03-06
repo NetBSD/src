@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.53 2014/02/13 11:08:46 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.54 2014/03/06 19:02:58 skrll Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.64 2008/09/30 18:54:26 miod Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.53 2014/02/13 11:08:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.54 2014/03/06 19:02:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,6 +75,13 @@ cpu_activate_pcb(struct lwp *l)
 	pmap_remove(pmap_kernel(), maxsp - PAGE_SIZE, maxsp);
 	pmap_update(pmap_kernel());
 #endif
+}
+
+void
+cpu_proc_fork(struct proc *p1, struct proc *p2)
+{
+
+	p2->p_md.md_flags = p1->p_md.md_flags;
 }
 
 void
@@ -126,23 +133,11 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	cpu_activate_pcb(l2);
 
 	if (__predict_true(l2->l_proc->p_vmspace != NULL)) {
-		struct proc *p = l2->l_proc;
-		pmap_t pmap = p->p_vmspace->vm_map.pmap;
-		pa_space_t space = pmap->pm_space;
-
-		/* Load all of the user's space registers. */
-		tf->tf_sr0 = tf->tf_sr1 = tf->tf_sr3 = tf->tf_sr2 = 
-		tf->tf_sr4 = tf->tf_sr5 = tf->tf_sr6 = space;
-		tf->tf_iisq_head = tf->tf_iisq_tail = space;
-
-		/* Load the protection registers */
-		tf->tf_pidr1 = tf->tf_pidr2 = pmap->pm_pid;
-
+		hppa_setvmspace(l2);
 		/*
 		 * theoretically these could be inherited from the father,
 		 * but just in case.
 		 */
-		tf->tf_sr7 = HPPA_SID_KERNEL;
 		mfctl(CR_EIEM, tf->tf_eiem);
 		tf->tf_ipsw = PSW_C | PSW_Q | PSW_P | PSW_D | PSW_I /* | PSW_L */ |
 		    (curcpu()->ci_psw & PSW_O);
