@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.116 2013/05/09 15:38:14 christos Exp $	 */
+/*	$NetBSD: rtld.h,v 1.117 2014/03/06 19:19:40 matt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -259,7 +259,11 @@ typedef struct Struct_Obj_Entry {
 						  * object we know about. */
 
 #ifdef __powerpc__
+#ifdef _LP64
+	Elf_Addr	glink;		/* global linkage */
+#else
 	Elf_Addr       *gotptr;		/* GOT table (secure-plt only) */
+#endif
 #endif
 
 #if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
