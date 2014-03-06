@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.67 2014/02/28 05:43:49 matt Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.68 2014/03/06 19:44:32 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.67 2014/02/28 05:43:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.68 2014/03/06 19:44:32 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_modular.h"
@@ -97,13 +97,13 @@ struct cpuset_info cpuset_info;
  * Set set up registers on exec.
  */
 void
-setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
+setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 {
 	struct proc * const p = l->l_proc;
 	struct trapframe * const tf = l->l_md.md_utf;
 	struct pcb * const pcb = lwp_getpcb(l);
 	struct ps_strings arginfo;
-	vaddr_t func = pack->ep_entry;
+	vaddr_t func = epp->ep_entry;
 
 	memset(tf, 0, sizeof *tf);
 	tf->tf_fixreg[1] = -roundup(-stack + 8, 16);
@@ -133,20 +133,18 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	tf->tf_fixreg[5] = (register_t)arginfo.ps_envstr;
 	tf->tf_fixreg[6] = 0;			/* auxillary vector */
 	tf->tf_fixreg[7] = 0;			/* termination vector */
-	tf->tf_fixreg[8] = p->p_psstrp;	/* NetBSD extension */
+	tf->tf_fixreg[8] = p->p_psstrp;		/* NetBSD extension */
 
 #ifdef _LP64
-	if (l->l_proc->p_emul == &emul_netbsd) {
-		/*
-		 * For native ELF64, entry point to the function
-		 * descriptor which contains the real function address
-		 * and its TOC base address.
-		 */
-		uintptr_t fdesc[3] = { [0] = func, [1] = 0, [2] = 0 };
-		copyin((void *)func, fdesc, sizeof(fdesc));
-		tf->tf_fixreg[2] = fdesc[1];
-		func = fdesc[0];
-	}
+	/*
+	 * For native ELF64, entry point to the function
+	 * descriptor which contains the real function address
+	 * and its TOC base address.
+	 */
+	uintptr_t fdesc[3] = { [0] = func, [1] = 0, [2] = 0 };
+	copyin((void *)func, fdesc, sizeof(fdesc));
+	tf->tf_fixreg[2] = fdesc[1] + epp->ep_entryoffset;
+	func = fdesc[0] + epp->ep_entryoffset;
 #endif
 	tf->tf_srr0 = func;
 	tf->tf_srr1 = PSL_MBO | PSL_USERSET;
