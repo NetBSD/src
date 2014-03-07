@@ -1,4 +1,6 @@
-#	$NetBSD: mk.netwalker,v 1.2 2011/06/30 18:20:24 matt Exp $
+#	$NetBSD: mk.netwalker,v 1.3 2014/03/07 12:35:14 hkenken Exp $
+
+CPPFLAGS+= -mcpu=cortex-a8 -mfpu=neon
 
 SYSTEM_FIRST_OBJ=	netwalker_start.o
 SYSTEM_FIRST_SFILE=	${THISARM}/netwalker/netwalker_start.S

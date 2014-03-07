@@ -1,4 +1,4 @@
-#	$NetBSD: std.netwalker,v 1.7 2013/11/01 18:41:06 skrll Exp $
+#	$NetBSD: std.netwalker,v 1.8 2014/03/07 12:35:14 hkenken Exp $
 #
 # standard NetBSD/evbarm options for Sharp NetWalker
 
@@ -8,14 +8,16 @@ include 	"arch/evbarm/conf/std.evbarm"
 # Pull in i.mx51 config definitions.
 include	  	"arch/evbarm/conf/files.netwalker"
 
-options 	NETWALKER
-
-options 	KERNEL_BASE_EXT=0xc0000000
-makeoptions	CPUFLAGS="-mcpu=cortex-a8 -mfpu=neon"
-
-# To support easy transit to ../arch/arm/arm32
+options 	MODULAR
+options 	__HAVE_FAST_SOFTINTS		# should be in types.h
+options 	__HAVE_CPU_COUNTER
+options 	ARM_HAS_VBAR
+options 	TPIDRPRW_IS_CURCPU
 options 	CORTEX_PMC
 options 	CORTEX_PMC_CCNT_HZ=800000000
+options 	KERNEL_BASE_EXT=0xc0000000
+options 	EVBARM_BOARDTYPE="netwalker"
+options 	FPU_VFP
 
 makeoptions	LOADADDRESS="0x90100000"
 makeoptions	BOARDTYPE="netwalker"
