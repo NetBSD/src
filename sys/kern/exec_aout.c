@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.c,v 1.39 2014/03/07 01:34:29 christos Exp $	*/
+/*	$NetBSD: exec_aout.c,v 1.40 2014/03/07 01:55:01 matt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_aout.c,v 1.39 2014/03/07 01:34:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_aout.c,v 1.40 2014/03/07 01:55:01 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_coredump.h"
@@ -62,7 +62,7 @@ static struct execsw exec_aout_execsw = {
 	.u = {
 		.elf_probe_func = NULL,
 	},
-	.es_emul = .&emul_netbsd,
+	.es_emul = &emul_netbsd,
 	.es_prio = EXECSW_PRIO_ANY,
 	.es_arglen = 0,
 	.es_copyargs = copyargs,
