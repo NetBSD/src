@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_name.c,v 1.5 2014/03/07 01:04:29 christos Exp $	*/
+/*	$NetBSD: ns_name.c,v 1.6 2014/03/07 05:51:44 matt Exp $	*/
 
 /*
  * Copyright (c) 2004,2009 by Internet Systems Consortium, Inc. ("ISC")
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ns_name.c,v 1.5 2014/03/07 01:04:29 christos Exp $");
+__RCSID("$NetBSD: ns_name.c,v 1.6 2014/03/07 05:51:44 matt Exp $");
 
 #ifndef lint
 static const char rcsid[] = "Id: ns_name.c,v 1.2 2009/10/28 04:12:29 sar Exp ";
@@ -345,7 +345,7 @@ MRns_name_unpack(const u_char *msg, const u_char *eom, const u_char *src,
 			if (len < 0)
 				len = srcp - src + 1;
 			n = ((n & 0x3f) << 8) | (*srcp & 0xff);
-			if (n >= eom - msg) {  / Out of range. */
+			if (n >= eom - msg) {  /* Out of range. */
 				errno = EMSGSIZE;
 				return (-1);
 			}
