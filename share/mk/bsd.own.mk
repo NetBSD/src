@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.779 2014/03/07 06:01:34 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.780 2014/03/07 08:31:05 martin Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -58,7 +58,8 @@ TOOLCHAIN_MISSING?=	no
 HAVE_GCC?=    4
 
 # Platforms switched to GCC 4.8
-.elif ${MACHINE_CPU} == "hppa" || \
+.elif ${MACHINE_CPU} == "alpha" || \
+      ${MACHINE_CPU} == "hppa" || \
       ${MACHINE_CPU} == "sparc" || \
       ${MACHINE_CPU} == "sparc64"
 HAVE_GCC?=    48
