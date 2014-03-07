@@ -1,4 +1,4 @@
-/*	$NetBSD: icpsp.c,v 1.25 2012/10/27 17:18:20 chs Exp $	*/
+/*	$NetBSD: icpsp.c,v 1.26 2014/03/07 13:19:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icpsp.c,v 1.25 2012/10/27 17:18:20 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icpsp.c,v 1.26 2014/03/07 13:19:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,11 +271,12 @@ void
 icpsp_intr(struct icp_ccb *ic)
 {
 	struct scsipi_xfer *xs;
-	struct icpsp_softc *sc;
  	struct icp_softc *icp;
  	int soff;
 
-	sc = device_private(ic->ic_dv);
+#ifdef DIAGNOSTIC
+	struct icpsp_softc *sc = device_private(ic->ic_dv);
+#endif
 	xs = ic->ic_context;
 	icp = device_private(device_parent(ic->ic_dv));
 	soff = ICP_SCRATCH_SENSE + ic->ic_ident *
