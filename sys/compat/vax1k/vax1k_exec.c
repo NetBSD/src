@@ -1,4 +1,4 @@
-/*	$NetBSD: vax1k_exec.c,v 1.17 2013/09/19 18:50:36 christos Exp $	*/
+/*	$NetBSD: vax1k_exec.c,v 1.18 2014/03/07 01:33:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vax1k_exec.c,v 1.17 2013/09/19 18:50:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vax1k_exec.c,v 1.18 2014/03/07 01:33:44 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,18 +69,20 @@ MODULE(MODULE_CLASS_EXEC, exec_vax1k, NULL);
 int	exec_vax1k_prep_anymagic(struct lwp *, struct exec_package *,
 	    size_t, bool);
 
-static struct execsw exec_vax1k_execsw[] = {
+static struct execsw exec_vax1k_execsw = {
 	/* NetBSD vax1k a.out */
-	{ sizeof(struct exec),
-	  exec_vax1k_makecmds,
-	  { NULL },
-	  &emul_netbsd,
-	  EXECSW_PRIO_ANY,
-	  0,
-	  copyargs,
-	  NULL,
-	  coredump_netbsd,
-	  exec_setup_stack },
+	.es_hdrsz = sizeof(struct exec),
+	.es_makecmds = exec_vax1k_makecmds,
+	.u = {
+		.elf_probe_func = NULL,
+	},
+	.es_emul = &emul_netbsd,
+	.es_prio = EXECSW_PRIO_ANY,
+	.es_arglen = 0,
+	.es_copyargs = copyargs,
+	.es_setregs = NULL,
+	.es_coredump = coredump_netbsd,
+	.es_setup_stack = exec_setup_stack,
 };
 
 static int
@@ -89,12 +91,10 @@ exec_vax1k_modcmd(modcmd_t cmd, void *arg)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		return exec_add(exec_vax1k_execsw,
-		    __arraycount(exec_vax1k_execsw));
+		return exec_add(&exec_vax1k_execsw, 1);
 
 	case MODULE_CMD_FINI:
-		return exec_remove(exec_vax1k_execsw,
-		    __arraycount(exec_vax1k_execsw));
+		return exec_remove(&exec_vax1k_execsw, 1);
 
 	default:
 		return ENOTTY;

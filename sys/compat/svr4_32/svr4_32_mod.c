@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_mod.c,v 1.2 2013/09/19 18:50:36 christos Exp $	*/
+/*	$NetBSD: svr4_32_mod.c,v 1.3 2014/03/07 01:33:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_mod.c,v 1.2 2013/09/19 18:50:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_mod.c,v 1.3 2014/03/07 01:33:44 christos Exp $");
 
 #ifndef ELFSIZE
 #define ELFSIZE ARCH_ELFSIZE
@@ -56,16 +56,20 @@ MODULE(MODULE_CLASS_EXEC, compat_svr4_32, "compat,compat_netbsd32" MD1);
 
 static struct execsw svr4_32_execsw[] = {
 #if defined(EXEC_ELF32)
-	{ sizeof (Elf32_Ehdr),
-	  exec_elf32_makecmds,
-	  { svr4_32_elf32_probe },
-	  &emul_svr4_32,
-	  EXECSW_PRIO_LAST,	 /* probe always succeeds */
-	  SVR4_32_AUX_ARGSIZ,
-	  svr4_32_copyargs,
-	  NULL,
-	  coredump_elf32,
-	  exec_setup_stack },
+	{
+		.es_hdrsz = sizeof (Elf32_Ehdr),
+		.es_makecmds = exec_elf32_makecmds,
+		.u = {
+			.elf_probe_func = svr4_32_elf32_probe,
+		},
+		.es_emul = &emul_svr4_32,
+		.es_prio = EXECSW_PRIO_LAST,
+		.es_arglen = SVR4_32_AUX_ARGSIZ,
+		.es_copyargs = svr4_32_copyargs,
+		.es_setregs = NULL,
+		.es_coredump = coredump_elf32,
+		.es_setup_stack = exec_setup_stack,
+	},
 #endif
 };
 
