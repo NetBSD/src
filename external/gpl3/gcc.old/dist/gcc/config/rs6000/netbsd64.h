@@ -371,7 +371,7 @@ extern int dot_symbols;
 #define	PTRDIFF_TYPE (TARGET_64BIT ? "long int" : "int")
 
 #undef	WCHAR_TYPE
-#define	WCHAR_TYPE (TARGET_64BIT ? "int" : "long int")
+#define	WCHAR_TYPE "int"
 #undef  WCHAR_TYPE_SIZE
 #define WCHAR_TYPE_SIZE 32
 
