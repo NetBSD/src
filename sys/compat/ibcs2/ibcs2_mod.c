@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_mod.c,v 1.2 2013/09/19 18:50:35 christos Exp $	*/
+/*	$NetBSD: ibcs2_mod.c,v 1.3 2014/03/07 01:33:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_mod.c,v 1.2 2013/09/19 18:50:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_mod.c,v 1.3 2014/03/07 01:33:43 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -63,39 +63,49 @@ MODULE(MODULE_CLASS_EXEC, compat_ibcs2, "compat" MD1);
 
 static struct execsw ibcs2_execsw[] = {
 #ifdef EXEC_ELF32
-	{ sizeof (Elf32_Ehdr),
-	  exec_elf32_makecmds,
-	  { ibcs2_elf32_probe },
-	  &emul_ibcs2,
-	  EXECSW_PRIO_ANY,
-	  ELF32_AUXSIZE,
-	  elf32_copyargs,
-	  NULL,
-	  coredump_elf32,
-	  exec_setup_stack },
+	{
+		.es_hdrsz = sizeof (Elf32_Ehdr),
+		.es_makecmds = exec_elf32_makecmds,
+		.u = {
+			.coff_probe_func = ibcs2_elf32_probe,
+		},
+		.es_emul = &emul_ibcs2,
+		.es_prio = EXECSW_PRIO_ANY,
+		.es_arglen = ELF32_AUXSIZE,
+		.es_copyargs = elf32_copyargs,
+		.es_setregs = NULL,
+		.es_coredump = coredump_elf32,
+		.es_setup_stack = exec_setup_stack,
+	},
 #endif
-	{ COFF_HDR_SIZE,
-	  exec_ibcs2_coff_makecmds,
-	  { NULL },
-	  &emul_ibcs2,
-	  EXECSW_PRIO_ANY,
-	  0,
-	  copyargs,
-	  NULL,
-	  coredump_netbsd,
-	  ibcs2_exec_setup_stack },
-
-	{ XOUT_HDR_SIZE,
-	  exec_ibcs2_xout_makecmds,
-	  { NULL },
-	  &emul_ibcs2,
-	  EXECSW_PRIO_ANY,
-	  0,
-	  copyargs,
-	  NULL,
-	  coredump_netbsd,
-	  ibcs2_exec_setup_stack },
-
+	{
+		.es_hdrsz = COFF_HDR_SIZE,
+		.es_makecmds = exec_ibcs2_coff_makecmds,
+		.u = {
+			.elf_probe_func = NULL,
+		},
+		.es_emul = &emul_ibcs2,
+		.es_prio = EXECSW_PRIO_ANY,
+		.es_arglen = 0,
+		.es_copyargs = copyargs,
+		.es_setregs = NULL,
+		.es_coredump = coredump_netbsd,
+	 	.es_setup_stack = ibcs2_exec_setup_stack,
+	},
+	{
+		.es_hdrsz = XOUT_HDR_SIZE,
+		.es_makecmds = exec_ibcs2_xout_makecmds,
+		.u = {
+			.elf_probe_func = NULL,
+		},
+		.es_emul = &emul_ibcs2,
+		.es_prio = EXECSW_PRIO_ANY,
+		.es_arglen = 0,
+		.es_copyargs = copyargs,
+		.es_setregs = NULL,
+		.es_coredump = coredump_netbsd,
+		.es_setup_stack = ibcs2_exec_setup_stack
+	},
 };
 
 static int
