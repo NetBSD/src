@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.138 2013/09/19 18:50:59 christos Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.139 2014/03/07 01:34:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_elf32.c,v 1.138 2013/09/19 18:50:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_elf32.c,v 1.139 2014/03/07 01:34:29 christos Exp $");
 
 #define	ELFSIZE	32
 
@@ -52,27 +52,35 @@ __KERNEL_RCSID(0, "$NetBSD: exec_elf32.c,v 1.138 2013/09/19 18:50:59 christos Ex
 MODULE(MODULE_CLASS_EXEC, exec_elf32, DEP);
 
 static struct execsw exec_elf32_execsw[] = {
-	{ sizeof (Elf32_Ehdr),
-	  exec_elf32_makecmds,
-	  { netbsd_elf32_probe },
-	  &emul_netbsd,
-	  EXECSW_PRIO_ANY,
-	  ELF32_AUXSIZE,
-	  elf32_copyargs,
-	  NULL,
-	  coredump_elf32,
-	  exec_setup_stack },
+	{
+		.es_hdrsz = sizeof (Elf32_Ehdr),
+	  	.es_makecmds = exec_elf32_makecmds,
+	  	.u = {
+			.elf_probe_func = netbsd_elf32_probe,
+		},
+		.es_emul = &emul_netbsd,
+		.es_prio = EXECSW_PRIO_ANY,
+		.es_arglen = ELF32_AUXSIZE,
+		.es_copyargs = elf32_copyargs,
+		.es_setregs = NULL,
+		.es_coredump = coredump_elf32,
+		.es_setup_stack =exec_setup_stack,
+	},
 #if EXEC_ELF_NOTELESS
-	{ sizeof (Elf32_Ehdr),
-	  exec_elf32_makecmds,
-	  { NULL },
-	  &emul_netbsd,
-	  EXECSW_PRIO_LAST,
-	  ELF32_AUXSIZE,
-	  elf32_copyargs,
-	  NULL,
-	  coredump_elf32,
-	  exec_setup_stack },
+	{
+		.es_hdrsz = sizeof (Elf32_Ehdr),
+	  	.es_makecmds = exec_elf32_makecmds,
+	  	.u {
+			elf_probe_func = NULL,
+		},
+		.es_emul = &emul_netbsd,
+		.es_prio = EXECSW_PRIO_LAST,
+		.es_arglen = ELF32_AUXSIZE,
+		.es_copyargs = elf32_copyargs,
+		.es_setregs = NULL,
+		.es_coredump = coredump_elf32,
+		.es_setup_stack = exec_setup_stack,
+	},
 #endif
 };
 
