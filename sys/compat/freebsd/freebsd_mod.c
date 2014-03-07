@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_mod.c,v 1.4 2014/03/07 01:33:43 christos Exp $	*/
+/*	$NetBSD: freebsd_mod.c,v 1.5 2014/03/07 02:02:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_mod.c,v 1.4 2014/03/07 01:33:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_mod.c,v 1.5 2014/03/07 02:02:16 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -86,13 +86,13 @@ static struct execsw freebsd_execsw[] = {
 		.es_hdrsz = FREEBSD_AOUT_HDR_SIZE,
 		.es_makecmds = exec_freebsd_aout_makecmds,
 		.u = {
-			.elf_probe_function = NULL,
+			.elf_probe_func = NULL,
 		},
 		.es_emul = &emul_freebsd,
 		.es_prio = EXECSW_PRIO_ANY,
 		.es_arglen = 0,
 		.es_copyargs = copyargs,
-		.se_setregs = NULL,
+		.es_setregs = NULL,
 		.es_coredump = coredump_netbsd,
 		.es_setup_stack = exec_setup_stack,
 	},
