@@ -337,7 +337,7 @@ extern int dot_symbols;
 #undef	LINK_OS_DEFAULT_SPEC
 #define LINK_OS_DEFAULT_SPEC "%(link_os_netbsd)"
 
-#define LINK_OS_NETBSD_SPEC32 "-m elf32ppc %{!shared: %{!static: \
+#define LINK_OS_NETBSD_SPEC32 "-m elf32ppc_nbsd %{!shared: %{!static: \
   %{rdynamic:-export-dynamic} \
   %{!dynamic-linker:-dynamic-linker /usr/libexec/ld.elf_so}}}"
 
