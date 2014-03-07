@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_mod.c,v 1.3 2014/03/07 01:33:44 christos Exp $	*/
+/*	$NetBSD: svr4_mod.c,v 1.4 2014/03/07 08:40:59 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_mod.c,v 1.3 2014/03/07 01:33:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_mod.c,v 1.4 2014/03/07 08:40:59 martin Exp $");
 
 #ifndef ELFSIZE
 #define ELFSIZE ARCH_ELFSIZE
@@ -72,7 +72,7 @@ static struct execsw svr4_execsw[] = {
 		},
 		.es_emul = &emul_svr4,
 		.es_prio = EXECSW_PRIO_LAST,
-		.es_argslen = ELF32_AUXSIZE,
+		.es_arglen = ELF32_AUXSIZE,
 		.es_copyargs = elf32_copyargs,
 		.es_setregs = NULL,
 		.es_coredump = coredump_elf32,
