@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.91 2014/03/05 16:33:33 matt Exp $	*/
+/*	$NetBSD: armreg.h,v 1.92 2014/03/07 05:27:33 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -803,7 +803,7 @@ arm_cond_ok_p(uint32_t insn, uint32_t psr)
 	case INSN_COND_GT:	// N == V && Z == 0
 		__ok = __n == __v && !__z;
 		break;
-	case INSN_COND_AL:
+	default: /* INSN_COND_AL or unconditional */
 		return true;
 	}
 
