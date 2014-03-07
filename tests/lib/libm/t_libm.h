@@ -1,4 +1,4 @@
-/* $NetBSD: t_libm.h,v 1.2 2014/03/05 20:14:46 dsl Exp $ */
+/* $NetBSD: t_libm.h,v 1.3 2014/03/07 12:46:47 martin Exp $ */
 
 /*
  * Check result of fn(arg) is correct within the bounds.
@@ -43,9 +43,11 @@
     } while (0)
 
 /* Some useful constants (for test vectors) */
+#ifndef __vax__	/* no NAN nor +/- INF on vax */
 #define T_LIBM_NAN	(0.0 / 0.0)
 #define T_LIBM_PLUS_INF	(+1.0 / 0.0)
 #define T_LIBM_MINUS_INF (-1.0 / 0.0)
+#endif
 
 /* One line definition of a simple test */
 #define ATF_LIBM_TEST(name, description) \

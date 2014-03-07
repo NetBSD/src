@@ -1,4 +1,4 @@
-/* $NetBSD: t_atan.c,v 1.12 2014/03/05 20:15:41 dsl Exp $ */
+/* $NetBSD: t_atan.c,v 1.13 2014/03/07 12:46:47 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -37,8 +37,11 @@ static const struct {
 	double x;
 	double y;
 } values[] = {
+#ifndef __vax__
+	/* vax has no +/- INF */
 	{ T_LIBM_MINUS_INF, -M_PI / 2 },
 	{ T_LIBM_PLUS_INF,   M_PI / 2 },
+#endif
 	{ -100, -1.560796660108231, },
 	{  -10, -1.471127674303735, },
 	{   -1, -M_PI / 4, },
