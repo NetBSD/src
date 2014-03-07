@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.69 2014/02/21 08:11:59 maxv Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.70 2014/03/07 01:34:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.69 2014/02/21 08:11:59 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.70 2014/03/07 01:34:29 christos Exp $");
 
 #if defined(SETUIDSCRIPTS) && !defined(FDSCRIPTS)
 #define FDSCRIPTS		/* Need this for safe set-id scripts. */
@@ -56,17 +56,19 @@ __KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.69 2014/02/21 08:11:59 maxv Exp $"
 
 MODULE(MODULE_CLASS_EXEC, exec_script, NULL);
 
-static struct execsw exec_script_execsw[] = {
-	{ SCRIPT_HDR_SIZE,
-	  exec_script_makecmds,
-	  { NULL },
-	  NULL,
-	  EXECSW_PRIO_ANY,
-	  0,
-	  NULL,
-	  NULL,
-	  NULL,
-	  exec_setup_stack },
+static struct execsw exec_script_execsw = {
+	.es_hdrsz = SCRIPT_HDR_SIZE,
+	.es_makecmds = exec_script_makecmds,
+	.u = {
+		.elf_probe_func = NULL,
+	},
+	.es_emul = NULL,
+	.es_prio = EXECSW_PRIO_ANY,
+	.es_arglen = 0,
+	.es_copyargs = NULL,
+	.es_setregs = NULL,
+	.es_coredump = NULL,
+	.es_setup_stack = exec_setup_stack,
 };
 
 static int
@@ -75,12 +77,10 @@ exec_script_modcmd(modcmd_t cmd, void *arg)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		return exec_add(exec_script_execsw,
-		    __arraycount(exec_script_execsw));
+		return exec_add(&exec_script_execsw, 1);
 
 	case MODULE_CMD_FINI:
-		return exec_remove(exec_script_execsw,
-		    __arraycount(exec_script_execsw));
+		return exec_remove(&exec_script_execsw, 1);
 
 	case MODULE_CMD_AUTOUNLOAD:
 		/*
