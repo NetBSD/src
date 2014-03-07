@@ -1,4 +1,4 @@
-/*	$NetBSD: completion.h,v 1.1.2.5 2013/09/08 16:01:49 riastradh Exp $	*/
+/*	$NetBSD: completion.h,v 1.1.2.6 2014/03/07 15:39:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -37,6 +37,8 @@
 #include <sys/mutex.h>
 
 #include <machine/limits.h>
+
+#include <linux/errno.h>
 
 struct completion {
 	kmutex_t	c_lock;
@@ -152,17 +154,25 @@ static inline int
 wait_for_completion_interruptible_timeout(struct completion *completion,
     unsigned long ticks)
 {
+	/* XXX Arithmetic overflow...?  */
+	unsigned int start = hardclock_ticks, now;
 	int error;
 
 	mutex_enter(&completion->c_lock);
 
 	/* Wait until c_done is nonzero.  */
 	while (completion->c_done == 0) {
-		/* XXX errno NetBSD->Linux */
-		error = -cv_timedwait_sig(&completion->c_cv,
+		error = cv_timedwait_sig(&completion->c_cv,
 		    &completion->c_lock, ticks);
 		if (error)
 			goto out;
+		now = hardclock_ticks;
+		if (ticks < (now - start)) {
+			error = EWOULDBLOCK;
+			goto out;
+		}
+		ticks -= (now - start);
+		start = now;
 	}
 
 	/* Claim a completion if it's not open season.  */
@@ -175,7 +185,14 @@ wait_for_completion_interruptible_timeout(struct completion *completion,
 	error = 0;
 
 out:	mutex_exit(&completion->c_lock);
-	return error;
+	if (error == EWOULDBLOCK) {
+		return 0;
+	} else if ((error == EINTR) || (error == ERESTART)) {
+		return -ERESTARTSYS;
+	} else {
+		KASSERTMSG((error == 0), "error = %d", error);
+		return ticks;
+	}
 }
 
 #endif	/* _LINUX_COMPLETION_H_ */
