@@ -1,4 +1,4 @@
-#	$NetBSD: NETWALKER,v 1.22 2014/01/23 12:23:20 hkenken Exp $
+#	$NetBSD: NETWALKER,v 1.23 2014/03/07 12:35:14 hkenken Exp $
 #
 #	NETWALKER -- http://www.sharp.co.jp/netwalker/
 #
@@ -22,8 +22,6 @@ options 	IMX51
 options 	PMAPCOUNTERS
 
 # Architecture options
-
-options        IMX51_IPGCLK_FREQ=50000000   # XXX This value is not correct.
 
 # File systems
 
@@ -77,8 +75,8 @@ options 	INET6		# IPV6
 
 #options 	COMPAT_43	# 4.3BSD compatibility.
 options 	COMPAT_60	# NetBSD 6.0 compatibility.
-options 	COMPAT_50	# NetBSD 5.0 compatibility.
-options 	COMPAT_40	# NetBSD 4.0 compatibility.
+#options 	COMPAT_50	# NetBSD 5.0 compatibility.
+#options 	COMPAT_40	# NetBSD 4.0 compatibility.
 #options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	COMPAT_20	# NetBSD 2.0 compatibility.
 #options 	COMPAT_16	# NetBSD 1.6 compatibility.
@@ -140,7 +138,7 @@ options 	DDB_VERBOSE_HELP
 #options 	LOCKDEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
-options 	VERBOSE_INIT_ARM # verbose bootstraping messages
+#options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 makeoptions	DEBUG="-g"	# compile full symbol table
 #makeoptions	COPTS="-O2"
 #options 	SYSCALL_STATS	# per syscall counts
@@ -207,50 +205,11 @@ ehci1	  at imxusbc0	unit 1	irq 14 # Host1
 #ehci3	  at imxusbc0	unit 3	irq 17 # Host3
 
 usb*		at ehci?
-uhub*		at usb?
-uhub*		at uhub? port ?
-ugen*		at uhub? port ?
 
-# USB HID device
-uhidev* at uhub? port ? configuration ? interface ?
+# USB device drivers
+include "dev/usb/usbdevices.config"
 
-# USB Mice
-ums*	at uhidev? reportid ?
-wsmouse* at ums? mux 0
-
-# USB Keyboards
-ukbd*	at uhidev? reportid ?
-wskbd*	at ukbd? console ? mux 1
-
-# USB Mass Storage
-umass*	at uhub? port ? configuration ? interface ?
-wd*	at umass?
-
-# Serial adapters
-ubsa*	at uhub? port ?		# Belkin serial adapter
-ucom*	at ubsa? portno ?
-
-uchcom* at uhub? port ? 	# WinChipHead CH341/CH340 serial adapter
-ucom*	at uchcom? portno ?
-
-uftdi*	at uhub? port ?		# FTDI FT8U100AX serial adapter
-ucom*	at uftdi? portno ?
-
-umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
-ucom*	at umct? portno ?
-
-uplcom* at uhub? port ? 	# I/O DATA USB-RSAQ2 serial adapter
-ucom*	at uplcom? portno ?
-
-uslsa*	at uhub? port ?		# Silicon Labs USB-RS232 serial adapter
-ucom*	at uslsa? portno ?
-
-uvscom* at uhub? port ? 	# SUNTAC Slipper U VS-10U serial adapter
-ucom*	at uvscom? portno ?
-
-# USB generic serial port (e.g., data over cellular)
-ugensa* at uhub? port ?
-ucom*	at ugensa?
+ukphy*		at mii? phy ?
 
 # IPUv3 LCD Controller
 ipu0		at axi?
@@ -272,12 +231,6 @@ options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 options 	WSDISPLAY_DEFAULTSCREENS=4
 
-# SCSI bus support
-scsibus* at scsi?
-
-# SCSI devices
-sd*	at scsibus? target ? lun ?	# SCSI disk drives
-
 # Pseudo-Devices
 
 pseudo-device	crypto			# /dev/crypto device
@@ -290,10 +243,10 @@ pseudo-device	swcrypto		# software crypto implementation
 #pseudo-device	putter			# for puffs and pud
 
 # network pseudo-devices
-#pseudo-device	bpfilter		# Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
-pseudo-device	ppp			# Point-to-Point Protocol
+#pseudo-device	ppp			# Point-to-Point Protocol
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
@@ -303,3 +256,6 @@ pseudo-device	clockctl		# NTP clockctl
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
+
+# local configuration
+cinclude "arch/evbarm/conf/NETWALKER.local"
