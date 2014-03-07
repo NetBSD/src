@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.1.2.37 2014/03/05 14:42:27 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.1.2.38 2014/03/07 15:39:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.37 2014/03/05 14:42:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.38 2014/03/07 15:39:08 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1008,7 +1008,7 @@ map:	vm_prot = ((ISSET(prot, PROT_READ)? VM_PROT_READ : 0) |
 	    (ISSET(prot, PROT_WRITE)? VM_PROT_WRITE : 0));
 	KASSERT(vm_prot == (vm_prot & vm_maxprot));
 	uvmflag = UVM_MAPFLAG(vm_prot, vm_maxprot, UVM_INH_COPY,
-	    UVM_ADV_RANDOM, UVM_FLAG_COPYONW);
+	    UVM_ADV_RANDOM, 0);
 
 	align = 0;		/* XXX */
 	vaddr = (*curproc->p_emul->e_vm_default_addr)(curproc,
