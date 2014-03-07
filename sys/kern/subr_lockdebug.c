@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.50 2013/10/12 16:42:27 christos Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.51 2014/03/07 16:36:32 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.50 2013/10/12 16:42:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.51 2014/03/07 16:36:32 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -284,7 +284,7 @@ lockdebug_alloc(volatile void *lock, lockops_t *lo, uintptr_t initaddr)
 	ci->ci_lkdebug_recurse--;
 
 	if (ld->ld_lock != NULL) {
-		panic("lockdebug_alloc: corrupt table");
+		panic("lockdebug_alloc: corrupt table ld %p", ld);
 	}
 
 	/* Initialise the structure. */
