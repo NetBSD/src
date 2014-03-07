@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.42 2013/06/27 15:27:46 martin Exp $ */
+/*	$NetBSD: syscall.c,v 1.43 2014/03/07 22:51:27 nakayama Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.42 2013/06/27 15:27:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.43 2014/03/07 22:51:27 nakayama Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -380,7 +380,7 @@ startlwp(void *arg)
 {
 	ucontext_t *uc = arg;
 	lwp_t *l = curlwp;
-	int error;
+	int error __diagused;
 
 	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
 	KASSERT(error == 0);
