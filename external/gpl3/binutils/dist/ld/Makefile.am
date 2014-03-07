@@ -248,6 +248,7 @@ ALL_EMULATION_SOURCES = \
 	eelf32openrisc.c \
 	eelf32ppc.c \
 	eelf32ppc_fbsd.c \
+	eelf32ppc_nbsd.c \
 	eelf32ppclinux.c \
 	eelf32ppcnto.c \
 	eelf32ppcsim.c \
@@ -1173,6 +1174,12 @@ eelf32ppc_fbsd.c: $(srcdir)/emulparams/elf32ppc_fbsd.sh \
   ldemul-list.h \
   $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} elf32ppc_fbsd "$(tdir_elf32ppc_fbsd)"
+eelf32ppc_nbsd.c: $(srcdir)/emulparams/elf32ppc_nbsd.sh \
+  $(srcdir)/emulparams/elf32ppc.sh $(srcdir)/emulparams/elf32ppccommon.sh \
+  $(srcdir)/emultempl/ppc32elf.em $(ELF_DEPS) \
+  ldemul-list.h \
+  $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+	${GENSCRIPTS} elf32ppc_nbsd "$(tdir_elf32ppc_nbsd)"
 eelf32ppclinux.c: $(srcdir)/emulparams/elf32ppclinux.sh \
   $(srcdir)/emulparams/elf32ppc.sh $(srcdir)/emulparams/elf32ppccommon.sh \
   $(srcdir)/emultempl/ppc32elf.em $(ELF_DEPS) \
