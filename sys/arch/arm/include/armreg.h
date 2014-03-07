@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.92 2014/03/07 05:27:33 matt Exp $	*/
+/*	$NetBSD: armreg.h,v 1.93 2014/03/07 05:30:08 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -770,7 +770,7 @@
 #define ARM_A5_TLBDATAOP_INDEX		__BITS(5,0)
 #define ARM_A7_TLBDATAOP_INDEX		__BITS(6,0)
 
-#if !defined(__ASSEMBLER__)
+#if !defined(__ASSEMBLER__) && defined(_KERNEL) 
 static inline bool
 arm_cond_ok_p(uint32_t insn, uint32_t psr)
 {
@@ -809,7 +809,7 @@ arm_cond_ok_p(uint32_t insn, uint32_t psr)
 
 	return (__cond & 1) ? !__ok : __ok;
 }
-#endif
+#endif /* !__ASSEMBLER && _KERNEL */
 
 #if !defined(__ASSEMBLER__) && !defined(_RUMPKERNEL)
 #define	ARMREG_READ_INLINE(name, __insnstring)			\
