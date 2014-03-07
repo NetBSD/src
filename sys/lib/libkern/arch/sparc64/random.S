@@ -1,4 +1,4 @@
-/*	$NetBSD: random.S,v 1.4 2013/09/12 15:36:17 joerg Exp $	*/
+/*	$NetBSD: random.S,v 1.5 2014/03/07 20:23:09 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1990,1993 The Regents of the University of California.
@@ -43,6 +43,7 @@
 #include <machine/asm.h>
 
 	.data
+	.align	4
 randseed:
 	.long	1
 
