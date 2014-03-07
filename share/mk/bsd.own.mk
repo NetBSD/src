@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.778 2014/03/06 11:21:05 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.779 2014/03/07 06:01:34 matt Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -864,8 +864,9 @@ MK${var}:=	yes
 #
 # MK* options which have variable defaults.
 #
-.if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "sparc64" || \
-    ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el"
+.if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "sparc64" \
+    || ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el" \
+    || ${MACHINE_ARCH} == "powerpc64"
 MKCOMPAT?=	yes
 .elif !empty(MACHINE_ARCH:Mearm*)
 MKCOMPAT?=	no
@@ -876,7 +877,7 @@ MKCOMPAT:=	no
 
 #.if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "i386" || \
 
-.if ${MACHINE} == "evbppc"
+.if ${MACHINE} == "evbppc" && ${MACHINE_ARCH} == "powerpc64"
 MKCOMPATMODULES?=	yes
 .else
 MKCOMPATMODULES:=	no
