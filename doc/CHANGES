@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1899 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1900 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -365,6 +365,7 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 		[tsutsui 20140301]
 	macppc: add support for ppc601-based machines
 		from scole_mail via PR48600 [macallan 20140303]
-	hppa: Switched to GCC 4.8.  [skrll 20140305]
-	sparc: Switched to GCC 4.8.  [mrg 20140305]
-	sparc64: Switched to GCC 4.8.  [mrg 20140305]
+	hppa: Switched to GCC 4.8.  [skrll 20140306]
+	sparc: Switched to GCC 4.8.  [mrg 20140306]
+	sparc64: Switched to GCC 4.8.  [mrg 20140306]
+	alpha: Switched to GCC 4.8.  [martin 20140307]
