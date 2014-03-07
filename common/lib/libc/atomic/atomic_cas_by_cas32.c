@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_by_cas32.c,v 1.1 2014/02/24 16:15:43 martin Exp $	*/
+/*	$NetBSD: atomic_cas_by_cas32.c,v 1.2 2014/03/07 08:42:58 martin Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@ _atomic_cas_16(volatile uint16_t *addr, uint16_t old, uint16_t new)
 		new32 = (old32 & ~mask) | (uint32_t)new << shift;
 		old32 = (old32 & ~mask) | (uint32_t)old << shift;
 	} while (_atomic_cas_32(ptr, old32, new32) != old32);
-	return (old >> shift) & mask;
+	return (old & mask) >> shift;
 }
 
 uint8_t
@@ -73,5 +73,5 @@ _atomic_cas_8(volatile uint8_t *addr, uint8_t old, uint8_t new)
 		new32 = (old32 & ~mask) | (uint32_t)new << shift;
 		old32 = (old32 & ~mask) | (uint32_t)old << shift;
 	} while (_atomic_cas_32(ptr, old32, new32) != old32);
-	return (old >> shift) & mask;
+	return (old & mask) >> shift;
 }
