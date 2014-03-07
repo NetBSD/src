@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k4k_exec.c,v 1.23 2013/09/19 18:50:35 christos Exp $	*/
+/*	$NetBSD: m68k4k_exec.c,v 1.24 2014/03/07 01:33:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k4k_exec.c,v 1.23 2013/09/19 18:50:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k4k_exec.c,v 1.24 2014/03/07 01:33:43 christos Exp $");
 
 #if !defined(__m68k__)
 #error YOU GOTTA BE KIDDING!
@@ -67,17 +67,19 @@ __KERNEL_RCSID(0, "$NetBSD: m68k4k_exec.c,v 1.23 2013/09/19 18:50:35 christos Ex
 
 MODULE(MODULE_CLASS_EXEC, exec_m68k4k, DEP);
 
-static struct execsw exec_m68k4k_execsw[] = {
-	{ sizeof(struct exec),
-	  exec_m68k4k_makecmds,
-	  { NULL },
-	  &emul_netbsd,
-	  EXECSW_PRIO_ANY,
-	  0,
-	  copyargs,
-	  NULL,
-	  coredump_netbsd,
-	  exec_setup_stack },
+static struct execsw exec_m68k4k_execsw = {
+	.es_hdrsz = sizeof(struct exec),
+	.es_makecmds = exec_m68k4k_makecmds,
+	.u = {
+		.elf_probe_func = NULL,
+	},
+	.es_emul = &emul_netbsd,
+	.es_prio = EXECSW_PRIO_ANY,
+	.es_arglen = 0,
+	.es_copyargs = copyargs,
+	.es_setregs = NULL,
+	.es_coredump = coredump_netbsd,
+	.es_setup_stack = exec_setup_stack,
 };
 
 static int
@@ -86,12 +88,10 @@ exec_m68k4k_modcmd(modcmd_t cmd, void *arg)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		return exec_add(exec_m68k4k_execsw,
-		    __arraycount(exec_m68k4k_execsw));
+		return exec_add(&exec_m68k4k_execsw, 1);
 
 	case MODULE_CMD_FINI:
-		return exec_remove(exec_m68k4k_execsw,
-		    __arraycount(exec_m68k4k_execsw));
+		return exec_remove(&exec_m68k4k_execsw, 1);
 
 	default:
 		return ENOTTY;
