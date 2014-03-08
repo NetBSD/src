@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_mod.c,v 1.4 2014/03/07 02:03:32 christos Exp $	*/
+/*	$NetBSD: ibcs2_mod.c,v 1.5 2014/03/08 01:51:58 nakayama Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_mod.c,v 1.4 2014/03/07 02:03:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_mod.c,v 1.5 2014/03/08 01:51:58 nakayama Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -67,7 +67,7 @@ static struct execsw ibcs2_execsw[] = {
 		.es_hdrsz = sizeof (Elf32_Ehdr),
 		.es_makecmds = exec_elf32_makecmds,
 		.u = {
-			.ecoff_probe_func = ibcs2_elf32_probe,
+			.elf_probe_func = ibcs2_elf32_probe,
 		},
 		.es_emul = &emul_ibcs2,
 		.es_prio = EXECSW_PRIO_ANY,
