@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.18 2013/10/18 22:42:31 bad Exp $	*/
+/*	$NetBSD: disks.c,v 1.19 2014/03/08 20:51:20 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)disks.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: disks.c,v 1.18 2013/10/18 22:42:31 bad Exp $");
+__RCSID("$NetBSD: disks.c,v 1.19 2014/03/08 20:51:20 jdc Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -102,6 +102,7 @@ drvselect(char *args, int truefalse, int selections[])
 		for (i = 0; i < ndrive; i++)
 			if (fnmatch(args, dr_name[i], 0) == 0) {
 				selections[i] = truefalse;
+				break;
 			}
 		if (i >= ndrive)
 			error("%s: unknown drive", args);
