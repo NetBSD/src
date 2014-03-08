@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.164 2014/02/15 01:54:17 jmmv Exp $
+# $NetBSD: postinstall,v 1.165 2014/03/08 16:36:24 martin Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -905,7 +905,7 @@ do_fontconfig()
 		msg \
     "Broken fontconfig configuration found; please delete these files"
 		msg \
-    "in the ${DESTDIR}/etc/fonts/conf.d/ subdirectory:"
+    "in the ${DEST_DIR}/etc/fonts/conf.d/ subdirectory:"
 		msg \
     "   10-autohint.conf 10-no-sub-pixel.conf 10-sub-pixel-bgr.conf"
 		msg \
@@ -1562,7 +1562,7 @@ ${pcpath} was a directory, should be a file.
 		_notfixed="${NOT_FIXED}"
 	fi
 
-	if [ ! -d "${DESTDIR}${pcpath}" ]; then
+	if [ ! -d "${DEST_DIR}${pcpath}" ]; then
 		return 0
 	fi
 
@@ -1578,7 +1578,7 @@ ${pcpath} was a directory, should be a file.
 
 	# If the directory was removed above, then try to replace it with
 	# a file.
-	if [ -d "${DESTDIR}${pcpath}" ]; then
+	if [ -d "${DEST_DIR}${pcpath}" ]; then
 		msg "${filemsg}${_notfixed}"
 		failed=$(( ${failed} + 1 ))
 	else
