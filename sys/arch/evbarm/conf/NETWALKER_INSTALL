@@ -1,0 +1,8 @@
+#	$NetBSD: NETWALKER_INSTALL,v 1.1 2014/03/08 23:38:52 hkenken Exp $
+#
+#	NETWALKER_INSTALL -- NETWALKER kernel with installation-sized
+#	ramdisk
+#
+
+include "arch/evbarm/conf/NETWALKER"
+include "arch/evbarm/conf/INSTALL"
