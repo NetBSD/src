@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2014/03/01 10:00:31 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2014/03/08 01:58:11 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -17,7 +17,7 @@ GCCARCH=	${NETBSDSRCDIR}/external/gpl3/gcc/usr.bin/gcc/arch/${MACHINE_ARCH}
 GALLCFLAGS=	${G_CRTSTUFF_CFLAGS} ${G_CRTSTUFF_T_CFLAGS}
 
 CPPFLAGS+=	-I${GCCARCH} ${GALLCFLAGS:M-D*} ${GALLCFLAGS:M-I*:N-I.*}
-CPPFLAGS+=	-I.
+CPPFLAGS+=	-I. -I${DIST}/libgcc
 COPTS+=		-finhibit-size-directive \
 		-fno-inline \
 		-fno-exceptions \
