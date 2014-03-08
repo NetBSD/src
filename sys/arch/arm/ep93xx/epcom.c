@@ -1,4 +1,4 @@
-/*	$NetBSD: epcom.c,v 1.24 2012/11/12 18:00:36 skrll Exp $ */
+/*	$NetBSD: epcom.c,v 1.25 2014/03/08 18:08:48 skrll Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.24 2012/11/12 18:00:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.25 2014/03/08 18:08:48 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -874,7 +874,7 @@ epcomcngetc(dev_t dev)
 	if (!db_active)
 #endif
 	{
-		int cn_trapped = 0; /* unused */
+		int cn_trapped __unused = 0;
 
 		cn_check_magic(dev, c, epcom_cnm_state);
 	}
@@ -1017,10 +1017,9 @@ epcomintr(void* arg)
 	u_char *put, *end;
 	u_int cc;
 	u_int flagr;
-	u_int intr;
 	uint32_t c, csts;
 
-	intr = bus_space_read_4(iot, ioh, EPCOM_IntIDIntClr);
+	(void) bus_space_read_4(iot, ioh, EPCOM_IntIDIntClr);
 
 	if (COM_ISALIVE(sc) == 0) 
 		panic("intr on disabled epcom");

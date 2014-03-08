@@ -1,4 +1,4 @@
-/*	$NetBSD: epe.c,v 1.30 2014/03/02 13:22:21 joerg Exp $	*/
+/*	$NetBSD: epe.c,v 1.31 2014/03/08 18:08:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.30 2014/03/02 13:22:21 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.31 2014/03/08 18:08:48 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -460,10 +460,7 @@ epe_mediachange(struct ifnet *ifp)
 int
 epe_mii_readreg(device_t self, int phy, int reg)
 {
-	struct epe_softc *sc;
 	uint32_t d, v;
-
-	sc = device_private(self);
 
 	d = EPE_READ(SelfCtl);
 	EPE_WRITE(SelfCtl, d & ~SelfCtl_PSPRS); /* no preamble suppress */
@@ -477,10 +474,7 @@ epe_mii_readreg(device_t self, int phy, int reg)
 void
 epe_mii_writereg(device_t self, int phy, int reg, int val)
 {
-	struct epe_softc *sc;
 	uint32_t d;
-
-	sc = device_private(self);
 
 	d = EPE_READ(SelfCtl);
 	EPE_WRITE(SelfCtl, d & ~SelfCtl_PSPRS); /* no preamble suppress */
