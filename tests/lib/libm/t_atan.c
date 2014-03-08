@@ -1,4 +1,4 @@
-/* $NetBSD: t_atan.c,v 1.13 2014/03/07 12:46:47 martin Exp $ */
+/* $NetBSD: t_atan.c,v 1.14 2014/03/08 17:05:47 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -57,8 +57,12 @@ static const struct {
  */
 ATF_LIBM_TEST(atan_nan, "Test atan/atanf(NaN) == NaN")
 {
+#ifdef __vax__
+	atf_tc_skip("no NaN in vax floating point format");
+#else
 	T_LIBM_CHECK_NAN(0, atan, T_LIBM_NAN);
 	T_LIBM_CHECK_NAN(0, atanf, T_LIBM_NAN);
+#endif
 }
 
 ATF_LIBM_TEST(atan_inrange, "Test atan/atanf(x) for some values")
