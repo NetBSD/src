@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.211 2014/02/26 09:54:32 mrg Exp $
+#	$NetBSD: Makefile,v 1.212 2014/03/09 17:09:20 christos Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -64,7 +64,7 @@ SUBDIR+=	../external/bsd/am-utils/lib
 
 SUBDIR+=	../external/bsd/flex/lib
 SUBDIR+=	../external/bsd/tre/lib
-SUBDIR+=	../external/bsd/libelf/lib
+SUBDIR+=	../external/bsd/elftoolchain/lib/libelf
 SUBDIR+=	../external/bsd/liblzf/lib
 SUBDIR+=	../external/bsd/libpcap/lib
 
@@ -103,7 +103,7 @@ SUBDIR+=	../crypto/external/bsd/netpgp/libmj
 SUBDIR+=	../crypto/external/bsd/netpgp/lib/verify # depends on libz
 .endif
 
-SUBDIR+=	../external/bsd/libdwarf/lib # depends on libelf
+SUBDIR+=	../external/bsd/elftoolchain/lib/libdwarf # depends on libelf
 SUBDIR+=	../external/mit/lua/lib # depends on libm
 SUBDIR+=	libcurses	# depends on libterminfo
 SUBDIR+=	libdm		# depends on libprop
