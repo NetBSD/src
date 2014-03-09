@@ -641,7 +641,7 @@ wq_init(workqueue_t *wq, int nfiles)
 	if (getenv("CTFMERGE_MAX_SLOTS"))
 		nslots = atoi(getenv("CTFMERGE_MAX_SLOTS"));
 	else
-		nslots = CTFMERGE_MAX_SLOTS;
+		nslots = MERGE_PHASE1_MAX_SLOTS;
 
 	if (getenv("CTFMERGE_PHASE1_BATCH_SIZE"))
 		wq->wq_maxbatchsz = atoi(getenv("CTFMERGE_PHASE1_BATCH_SIZE"));
