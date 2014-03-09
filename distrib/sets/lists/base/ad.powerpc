@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.2 2014/03/07 05:50:41 matt Exp $
+# $NetBSD: ad.powerpc,v 1.3 2014/03/09 18:12:57 christos Exp $
 ./usr/bin/fdformat				base-util-bin
 ./lib/powerpc					base-npf-shlib		compat,arch64
 ./lib/powerpc/npf				base-npf-shlib		compat,arch64
@@ -104,12 +104,12 @@
 ./usr/lib/powerpc/libdns.so.8.0			base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libdns_sd.so.0		base-compat-shlib	compat,arch64,pic,mdns
 ./usr/lib/powerpc/libdns_sd.so.0.0		base-compat-shlib	compat,arch64,pic,mdns
-./usr/lib/powerpc/libdwarf.so.0			base-compat-shlib	compat,arch64,pic
-./usr/lib/powerpc/libdwarf.so.0.1		base-compat-shlib	compat,arch64,pic
+./usr/lib/powerpc/libdwarf.so.1			base-compat-shlib	compat,arch64,pic
+./usr/lib/powerpc/libdwarf.so.1.0		base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libedit.so.3			base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libedit.so.3.1		base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libelf.so.0			base-compat-shlib	compat,arch64,pic
-./usr/lib/powerpc/libelf.so.0.0			base-compat-shlib	compat,arch64,pic
+./usr/lib/powerpc/libelf.so..0			base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libevent.so.4			base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libevent.so.4.0		base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libevent_openssl.so.4		base-compat-shlib	compat,arch64,pic,crypto
