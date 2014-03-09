@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_pci.c,v 1.15 2012/09/07 04:32:03 matt Exp $	*/
+/*	$NetBSD: ifpga_pci.c,v 1.16 2014/03/09 19:55:48 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -64,7 +64,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga_pci.c,v 1.15 2012/09/07 04:32:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga_pci.c,v 1.16 2014/03/09 19:55:48 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -352,7 +352,7 @@ ifpga_pci_intr_establish(void *pcv, pci_intr_handle_t ih, int level,
     int (*func) (void *), void *arg)
 {
 	void *intr;
-	int length;
+	/* int length; */
 
 #ifdef PCI_DEBUG
 	printf("ifpga_pci_intr_establish(pcv=%p, ih=0x%lx, level=%d, "
@@ -360,7 +360,7 @@ ifpga_pci_intr_establish(void *pcv, pci_intr_handle_t ih, int level,
 #endif
 
 	/* Copy the interrupt string to a private buffer */
-	length = strlen(ifpga_pci_intr_string(pcv, ih));
+	/* length = strlen(ifpga_pci_intr_string(pcv, ih)); */
 	intr = ifpga_intr_establish(ih, level, func, arg);
 
 	return intr;
