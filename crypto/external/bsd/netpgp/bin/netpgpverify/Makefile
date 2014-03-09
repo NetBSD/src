@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.5 2014/03/09 00:15:46 agc Exp $
+#	$NetBSD: Makefile,v 1.6 2014/03/09 00:27:54 agc Exp $
 
 PROG=netpgpverify
+BINDIR=		/usr/bin
 
 SRCS= b64.c bignum.c bufgap.c digest.c
 SRCS+= libverify.c main.c misc.c
