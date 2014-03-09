@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ctf,v 1.1 2014/03/09 17:05:01 christos Exp $
+#	$NetBSD: Makefile.ctf,v 1.2 2014/03/09 22:01:31 christos Exp $
 
 CPPFLAGS+=	-I${OSNETDIR}/sys \
 		-I${OSNETDIR}/include \
@@ -24,4 +24,3 @@ DPADD+=		${LIBZ}
 
 .PATH:		${.CURDIR}
 .PATH:		${OPENSOLARIS_USR_DISTDIR}/tools/ctf/common
-.PATH:		${OPENSOLARIS_USR_DISTDIR}/tools/ctf/cvt
