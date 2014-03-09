@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.20 2014/03/04 09:16:04 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.21 2014/03/09 17:06:30 martin Exp $
 
 .ifndef _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_
 _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_=1
@@ -65,7 +65,7 @@ DATESTAMPSTR=		"\"\""
 
 # XXX pull this out of our configs
 G_BUGURL=<http://www.NetBSD.org/Misc/send-pr.html>
-G_BUGURL_s="\"${G_BUG_URL}\""
+G_BUGURL_s="\"${G_BUGURL}\""
 G_PKGVERSION=(NetBSD nb2 20140304) 
 G_PKGVERSION_s="\"${G_PKGVERSION} \""
 
