@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.30 2014/03/09 16:18:00 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.31 2014/03/09 16:28:43 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -411,7 +411,6 @@ ENTRY_NOPROFILE(addrerr4060)
 	orl	#IC60_CABC,%d2		| clear all branch cache entries
 	movc	%d2,%cacr
 	movl	%d0,%d1
-	addql	#1,L60bpe
 	andl	#0x7ffd,%d1
 	jeq	_ASM_LABEL(faultstkadjnotrap2)
 Lnobpe:
