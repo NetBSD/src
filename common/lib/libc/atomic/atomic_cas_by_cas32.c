@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_by_cas32.c,v 1.2 2014/03/07 08:42:58 martin Exp $	*/
+/*	$NetBSD: atomic_cas_by_cas32.c,v 1.3 2014/03/09 16:19:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -48,14 +48,18 @@ _atomic_cas_16(volatile uint16_t *addr, uint16_t old, uint16_t new)
 	volatile uint32_t * ptr = (volatile uint32_t *)base;
 	const size_t shift = off*8;
 	const uint32_t mask = 0x0ffff << shift;
+	const uint32_t old32_part = (uint32_t)old << shift;
+	const uint32_t new32_part = (uint32_t)new << shift;
 	uint32_t old32, new32;
 
 	do {
 		old32 = *ptr;
-		new32 = (old32 & ~mask) | (uint32_t)new << shift;
-		old32 = (old32 & ~mask) | (uint32_t)old << shift;
+		if ((old32 & mask) != old32_part)
+			return (uint16_t)((old32 & mask) >> shift);
+		new32 = (old32 & ~mask) | new32_part;
 	} while (_atomic_cas_32(ptr, old32, new32) != old32);
-	return (old & mask) >> shift;
+
+	return old;
 }
 
 uint8_t
@@ -66,12 +70,16 @@ _atomic_cas_8(volatile uint8_t *addr, uint8_t old, uint8_t new)
 	volatile uint32_t * ptr = (volatile uint32_t *)base;
 	const size_t shift = off*8;
 	const uint32_t mask = 0x0ff << shift;
+	const uint32_t old32_part = (uint32_t)old << shift;
+	const uint32_t new32_part = (uint32_t)new << shift;
 	uint32_t old32, new32;
 
 	do {
 		old32 = *ptr;
-		new32 = (old32 & ~mask) | (uint32_t)new << shift;
-		old32 = (old32 & ~mask) | (uint32_t)old << shift;
+		if ((old32 & mask) != old32_part)
+			return (uint8_t)((old32 & mask) >> shift);
+		new32 = (old32 & ~mask) | new32_part;
 	} while (_atomic_cas_32(ptr, old32, new32) != old32);
-	return (old & mask) >> shift;
+
+	return old;
 }
