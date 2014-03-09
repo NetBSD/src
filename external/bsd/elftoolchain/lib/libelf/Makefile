@@ -71,6 +71,7 @@ CLEANFILES+=	${GENSRCS}
 CPPFLAGS+=	-I. -I${SRCDIR} -I${TOP}/common
 
 SHLIB_MAJOR=	1
+SHLIB_MINOR=	0
 
 MAN=	elf.3							\
 	elf_begin.3						\
