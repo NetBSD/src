@@ -122,7 +122,6 @@ verify_data(pgpv_t *pgp, const char *cmd, const char *inname, char *in, ssize_t 
 int
 main(int argc, char **argv)
 {
-	const char	*modifiers;
 	const char	*keyring;
 	const char	*cmd;
 	ssize_t		 cc;
@@ -138,7 +137,6 @@ main(int argc, char **argv)
 	ssh = 0;
 	ok = 1;
 	cmd = "verify";
-	modifiers = NULL;
 	while ((i = getopt(argc, argv, "S:c:k:v")) != -1) {
 		switch(i) {
 		case 'S':
