@@ -88,6 +88,7 @@ LDADD+=		-lelf
 DPADD+=		${LIBELF}
 
 SHLIB_MAJOR=	1
+SHLIB_MINOR=	0
 
 MAN=	dwarf.3                                         \
 	dwarf_add_arange.3				\
