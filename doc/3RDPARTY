@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1099 2014/03/01 11:08:11 roy Exp $
+#	$NetBSD: 3RDPARTY,v 1.1100 2014/03/09 17:16:09 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1457,19 +1457,18 @@ Location:	crypto/external/cpl/tpm-tools/dist
 Notes:
 		Need to feed back local changes
 
-Package:	libdwarf
-Version:	FreeBSD-2013-01-17
+Package:	elftoolchain (libelf/libdwarf)
+Version:	FreeBSD-2014-03-08
 Current Vers:	FreeBSD-XXXX-YY-ZZ
-Maintainer:	John Birrell <jb@freebsd.org>
+Maintainer:	Joseph Koshi <jkoshi@freebsd.org>
 Archive Site:	none
 Home Page:	none
 Mailing List:	none
 Responsible:	christos
 License:	BSD-like (2-clause)
-Location:	sys/external/bsd/libdwarf/dist
+Location:	sys/external/bsd/elftoolchain/dist
 Notes:
 		Run prepare-import.sh; next time use svn id.
-		Ask jkoshy who the upstream will be.
 
 Package:	smbfs
 Version:	smbfs-1.4.1.tar.gz + FreeBSD-2003-02-16
