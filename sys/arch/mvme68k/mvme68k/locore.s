@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.111 2014/01/31 18:49:35 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.112 2014/03/09 14:53:52 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -706,7 +706,7 @@ Lmemc040berr:
 
 /*
  * Trap/interrupt vector routines
- */ 
+ */
 #include <m68k/m68k/trap_subr.s>
 
 #if defined(M68040) || defined(M68060)
@@ -729,7 +729,7 @@ ENTRY_NOPROFILE(buserr60)
 	movl	%a0,%sp@(FR_SP)		|   in the savearea
 	movel	%sp@(FR_HW+12),%d0	| FSLW
 	btst	#2,%d0			| branch prediction error?
-	jeq	Lnobpe			
+	jeq	Lnobpe
 	movc	%cacr,%d2
 	orl	#IC60_CABC,%d2		| clear all branch cache entries
 	movc	%d2,%cacr
@@ -748,7 +748,7 @@ Lnobpe:
 Lberr3:
 	movl	%d1,%sp@-
 	movl	%d0,%sp@-		| code is FSLW now.
-	andw	#0x1f80,%d0 
+	andw	#0x1f80,%d0
 	jeq	Lberr60			| it is a bus error
 	movl	#T_MMUFLT,%sp@-		| show that we are an MMU fault
 	jra	_ASM_LABEL(faultstkadj)	| and deal with it
@@ -1205,7 +1205,7 @@ Laststkadj:
 
 /*
  * Primitives
- */ 
+ */
 
 /*
  * Use common m68k support routines.
