@@ -1,4 +1,4 @@
-$Id: README.gcc48,v 1.1 2014/03/01 10:00:31 mrg Exp $
+$Id: README.gcc48,v 1.2 2014/03/09 21:01:14 mrg Exp $
 
 usr.bin:
 	note:
@@ -19,14 +19,8 @@ new stuff:
 
 	- asan/libsanitizer
 
-ppc port:
-//#define TRANSFER_FROM_TRAMPOLINE NETBSD_ENABLE_EXECUTE_STACK
-// XXXMRG use enable-execute-stack-mprotect.c ?
-
 x86_64 port:
 - copied manually i386-builtin-types.inc instead of generating it.
-
-
 
 
 arch/feature list:
@@ -36,12 +30,12 @@ architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
 alpha		yes	no[2]	yes	yes		yes
 arm		yes	yes	yes	yes		yes		yes	no[7]
 armeb		yes	?	yes	builds
-coldfire	yes	?	yes	yes		no[8]
+coldfire	yes	?	yes	yes		no[8]		?	?
 earm		yes	?	yes	builds
 earmeb		yes	?	yes	builds
 earmhf		yes	?	yes	builds
 earmhfeb	yes	?	yes	builds
-earmv4		yes	?	yes	yes		yes[shark]	yes	no
+earmv4		yes	?	yes	yes[13]		yes[shark]	yes	no
 earmv4eb	yes	?	yes	builds
 earmv6		yes	yes	yes	builds
 earmv6eb	yes	?	yes	builds
@@ -61,11 +55,11 @@ mips64el	yes	yes	yes	yes		yes[9]		no[10]
 mipseb		yes	yes[5]	yes	yes		yes
 mipsel		yes	yes	yes	yes		yes		yes[10]	no[11]
 powerpc		yes	yes[1]	yes	yes		yes		yes	yes
-powerpc64
+powerpc64	yes[12]
 sh3eb		yes	?	yes	yes		no[8]
 sh3el		yes	?	yes	yes		no[8]
-sparc		yes	yes	yes	yes		yes		yes	yes[4]
-sparc64		yes	yes	yes	yes		yes		yes	no[5]
+sparc		yes	yes	yes	yes		yes		yes	yes
+sparc64		yes	yes	yes	yes		yes		yes	yes
 vax		yes	yes	yes	yes		no[8]
 x86_64		yes	yes	yes	yes		yes		?
 
@@ -73,13 +67,15 @@ x86_64		yes	yes	yes	yes		yes		?
     sandpoint works fine in multi-user, found an annoyance by com(4) change.
 [2] a kernel has it's text overwritten by something before alpha_init
 [3] relocations fail in libgcc
-[4] mostly works, some tests fail.  same(?) has gcc 4.5
 [5] mips*eb kernels seem to work as well as gcc 4.5 ones.
 [7] shark atf-report fails with: Unexpected token `tc-start'; expected end of test program
 [8] m68k/vax/sh3 gcc seem to randomly get -fstack-protector/-Wstack-protector
     wrong, for example m68k flags alarm() as unprotected in
     libc/gen/alarm.c:53, vax ifinit() in sbin/routed/if.c:680.
+   --> hacked around
 [9] LOONGSON kernel has general problems
 [10] mips64el fails -- something in /sbin/init or /rescue/init jumps to zero.
     in -current.  a hack for o32 works.
 [11] weird failures.
+[12] cc1 gets segv compiling libgcc.
+[13] some answers about C99 support in libstdc++-v3 are wrong.
