@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.139 2014/02/15 16:17:01 maxv Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.140 2014/03/09 17:59:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -417,10 +417,15 @@ typedef struct {
 
 #define SHT_LOOS	     0x60000000 /* Operating system specific range */
 #define SHT_GNU_INCREMENTAL_INPUTS 0x6fff4700   /* GNU incremental build data */
+#define	SHT_LOSUNW	     0x6ffffff4
+#define	SHT_SUNW_dof	     0x6ffffff4
 #define	SHT_GNU_ATTRIBUTES   0x6ffffff5	/* GNU object attributes */
+#define	SHT_SUNW_cap	     0x6ffffff5
+#define	SHT_SUNW_SIGNATURE   0x6ffffff6
 #define SHT_GNU_HASH	     0x6ffffff6 /* GNU style symbol hash table */
 #define SHT_GNU_LIBLIST	     0x6ffffff7 /* GNU list of prelink dependencies */
 #define SHT_SUNW_move	     0x6ffffffa
+#define	SHT_SUNW_COMDAT	     0x6ffffffb
 #define SHT_SUNW_syminfo     0x6ffffffc
 #define SHT_SUNW_verdef	     0x6ffffffd /* Versions defined by file */
 #define SHT_GNU_verdef	     SHT_SUNW_verdef
@@ -428,6 +433,7 @@ typedef struct {
 #define SHT_GNU_verneed	     SHT_SUNW_verneed
 #define SHT_SUNW_versym	     0x6fffffff /* Symbol versions */
 #define SHT_GNU_versym	     SHT_SUNW_versym
+#define	SHT_HISUNW	     0x6fffffff
 #define SHT_HIOS	     0x6fffffff
 #define SHT_LOPROC	     0x70000000 /* Processor-specific range */
 #define SHT_AMD64_UNWIND     0x70000001 /* unwind information */
@@ -438,6 +444,9 @@ typedef struct {
 					 * attributes */
 #define SHT_ARM_DEBUGOVERLAY 0x70000004 /* See DBGOVL for details */
 #define SHT_ARM_OVERLAYSECTION 0x70000005
+#define	SHT_MIPS_REGINFO     0x70000006
+#define	SHT_MIPS_OPTIONS     0x7000000d
+#define	SHT_MIPS_DWARF	     0x7000001e	/* MIPS gcc uses MIPS_DWARF */
 #define SHT_HIPROC	     0x7fffffff
 #define SHT_LOUSER	     0x80000000 /* Application-specific range */
 #define SHT_HIUSER	     0xffffffff
@@ -761,6 +770,16 @@ typedef struct {
 #define AT_SUN_EMUL_EXECFD 2013 /* coff file descriptor */
 	/* Executable's fully resolved name */
 #define AT_SUN_EXECNAME 2014
+
+/*
+ * The header for GNU-style hash sections.
+ */
+typedef struct {
+	uint32_t	gh_nbuckets;	/* Number of hash buckets. */
+	uint32_t	gh_symndx;	/* First visible symbol in .dynsym. */
+	uint32_t	gh_maskwords;	/* #maskwords used in bloom filter. */
+	uint32_t	gh_shift2;	/* Bloom filter shift count. */
+} Elf_GNU_Hash_Header;
 
 /*
  * Note Headers
