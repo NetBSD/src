@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.25 2014/03/09 22:31:25 matt Exp $	*/
+/*	$NetBSD: userret.h,v 1.26 2014/03/09 23:09:32 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -75,11 +75,11 @@ userret(struct lwp *l, struct trapframe *tf)
 #ifdef PPC_BOOKE
 	/*
 	 * BookE doesn't have PSL_SE but it does have a debug instruction
-	 * completion exception but it needs PSL_DE to fire.  Since we don't
-	 * want it to happen in the kernel, we must disable PSL_DE and let
-	 * it get restored by rfi/rfci.
+	 * completion exception but it needs PSL_DE to fire.  Instead we
+	 * use IAC1/IAC2 to match the next PC.
 	 */
-	if (__predict_false(l->l_md.md_flags & PSL_SE)) {
+	if (__predict_false(tf->tf_ssr1 & PSL_SE)) {
+		tf->tf_ssr1 &= ~PSL_SE;
 		extern void booke_sstep(struct trapframe *); /* ugly */
 		booke_sstep(tf);
 	}
