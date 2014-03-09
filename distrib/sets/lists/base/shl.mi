@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.692 2014/03/01 15:41:00 dsl Exp $
+# $NetBSD: shl.mi,v 1.693 2014/03/09 18:12:57 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -241,14 +241,14 @@
 ./usr/lib/libdtrace.so.2			base-sys-shlib		dtrace
 ./usr/lib/libdtrace.so.2.0			base-sys-shlib		dtrace
 ./usr/lib/libdwarf.so				base-sys-shlib
-./usr/lib/libdwarf.so.0				base-sys-shlib
-./usr/lib/libdwarf.so.0.1			base-sys-shlib
+./usr/lib/libdwarf.so.1				base-sys-shlib
+./usr/lib/libdwarf.so.1.0			base-sys-shlib
 ./usr/lib/libedit.so				base-sys-shlib
 ./usr/lib/libedit.so.3				base-sys-shlib
 ./usr/lib/libedit.so.3.1			base-sys-shlib
 ./usr/lib/libelf.so				base-sys-shlib
 ./usr/lib/libelf.so.0				base-sys-shlib
-./usr/lib/libelf.so.0.0				base-sys-shlib
+./usr/lib/libelf.so..0				base-sys-shlib
 ./usr/lib/libevent.so				base-sys-shlib
 ./usr/lib/libevent.so.4				base-sys-shlib
 ./usr/lib/libevent.so.4.0			base-sys-shlib
