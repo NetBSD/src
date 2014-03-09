@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.29 2014/03/09 18:12:57 christos Exp $
+# $NetBSD: ad.arm,v 1.30 2014/03/09 20:35:30 htodd Exp $
 ./usr/lib/libarm_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libc_vfp_g.a				comp-c-debuglib		debuglib,softfloat
 ./usr/lib/libpmc_g.a				comp-c-debuglib		debuglib
@@ -82,7 +82,7 @@
 ./usr/libdata/debug/usr/lib/oabi/libdtrace.so.2.0.debug	comp-sys-debug	dtrace,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libdwarf.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libedit.so.3.1.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/oabi/libelf.so..0.debug		comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/oabi/libelf.so.0.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libevent.so.4.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libevent_openssl.so.4.0.debug	comp-sys-debug	debug,compat,crypto
 ./usr/libdata/debug/usr/lib/oabi/libevent_pthreads.so.4.0.debug	comp-sys-debug	debug,compat
