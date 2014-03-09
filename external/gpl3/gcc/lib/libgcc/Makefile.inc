@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.23 2014/03/01 10:00:33 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.24 2014/03/09 23:23:09 mrg Exp $
 
 LIBGCC_MACHINE_ARCH?=${MACHINE_ARCH:S/earmv5/earm/}
 
@@ -93,8 +93,15 @@ LIB2FUNCS_ST=	${G_LIB2FUNCS_ST:=.c}
 LIB2DIVMOD=	${LIB2_DIVMOD_FUNCS:=.c}
 LIB2_EH=	${G_LIB2ADDEH:M*.c:T}
 LIB2_EHASM=	${G_LIB2ADDEH:M*.S:T}
+
+# We have to weed out any existing func.S file that may exist
+# from the list of files we create.
 .if !empty(G_LIB1ASMFUNCS)
-LIB1ASMFUNCS=	${G_LIB1ASMFUNCS:=.S}
+. for f in ${G_LIB1ASMFUNCS:=.S}
+.  if !exists(${DIST}/libgcc/config/${MACHINE_GNU_ARCH}/${f})
+LIB1ASMFUNCS+=	${f}
+.  endif
+. endfor
 .endif
 
 .if exists(${.CURDIR}/../arch/${LIBGCC_MACHINE_ARCH}/defs.mk)
