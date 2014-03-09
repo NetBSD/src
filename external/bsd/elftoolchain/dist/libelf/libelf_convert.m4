@@ -1,3 +1,5 @@
+/*	$NetBSD: libelf_convert.m4,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+
 /*-
  * Copyright (c) 2006-2011 Joseph Koshy
  * All rights reserved.
@@ -24,6 +26,10 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+# include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 
 #include <assert.h>
@@ -32,6 +38,7 @@
 
 #include "_libelf.h"
 
+__RCSID("$NetBSD: libelf_convert.m4,v 1.2 2014/03/09 16:58:04 christos Exp $");
 ELFTC_VCSID("Id: libelf_convert.m4 2361 2011-12-28 12:03:05Z jkoshy ");
 
 /* WARNING: GENERATED FROM __file__. */
@@ -536,10 +543,10 @@ divert(0)
 #define	SWAP_IDENT(X)	do { (void) (X); } while (0)
 #define	SWAP_HALF(X)	do {						\
 		uint16_t _x = (uint16_t) (X);				\
-		uint16_t _t = _x & 0xFF;				\
+		uint32_t _t = _x & 0xFF;				\
 		_t <<= 8; _x >>= 8; _t |= _x & 0xFF;			\
 		(X) = _t;						\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define	SWAP_WORD(X)	do {						\
 		uint32_t _x = (uint32_t) (X);				\
 		uint32_t _t = _x & 0xFF;				\
@@ -547,7 +554,7 @@ divert(0)
 		_t <<= 8; _x >>= 8; _t |= _x & 0xFF;			\
 		_t <<= 8; _x >>= 8; _t |= _x & 0xFF;			\
 		(X) = _t;						\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define	SWAP_ADDR32(X)	SWAP_WORD(X)
 #define	SWAP_OFF32(X)	SWAP_WORD(X)
 #define	SWAP_SWORD(X)	SWAP_WORD(X)
@@ -562,7 +569,7 @@ divert(0)
 		_t <<= 8; _x >>= 8; _t |= _x & 0xFF;			\
 		_t <<= 8; _x >>= 8; _t |= _x & 0xFF;			\
 		(X) = _t;						\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define	SWAP_ADDR64(X)	SWAP_WORD64(X)
 #define	SWAP_LWORD(X)	SWAP_WORD64(X)
 #define	SWAP_OFF64(X)	SWAP_WORD64(X)
@@ -578,45 +585,54 @@ divert(0)
  * - The destination pointer is incremented after the write.
  */
 #define	WRITE_BYTE(P,X) do {						\
-		char *const _p = (char *) (P);	\
-		_p[0]		= (char) (X);			\
-		(P)		= _p + 1;				\
-	} while (0)
+		char *const _p = (void *) (P);				\
+		_p[0]		= (char) (X);				\
+		(P)		= (void *)(_p + 1);			\
+	} while (/*CONSTCOND*/0)
 #define	WRITE_HALF(P,X)	do {						\
-		uint16_t _t	= (X);					\
-		char *const _p	= (char *) (P);	\
-		const char *const _q = (char *) &_t;	\
-		_p[0]		= _q[0];				\
-		_p[1]		= _q[1];				\
-		(P)		= _p + 2;				\
-	} while (0)
+		union {							\
+			uint16_t val;					\
+			uint8_t bytes[2];				\
+		} _t;							\
+		unsigned char *const _p	= (void *) (P);			\
+		_t.val = (X);						\
+		_p[0]		= _t.bytes[0];				\
+		_p[1]		= _t.bytes[1];				\
+		(P) 		= (void *)(_p + 2);			\
+	} while (/*CONSTCOND*/0)
 #define	WRITE_WORD(P,X)	do {						\
-		uint32_t _t	= (X);					\
-		char *const _p	= (char *) (P);	\
-		const char *const _q = (char *) &_t;	\
-		_p[0]		= _q[0];				\
-		_p[1]		= _q[1];				\
-		_p[2]		= _q[2];				\
-		_p[3]		= _q[3];				\
-		(P)		= _p + 4;				\
-	} while (0)
+		union {							\
+			uint32_t val;					\
+			uint8_t bytes[4];				\
+		} _t;							\
+		unsigned char *const _p	= (void *) (P);			\
+		_t.val = (X);						\
+		_p[0]		= _t.bytes[0];				\
+		_p[1]		= _t.bytes[1];				\
+		_p[2]		= _t.bytes[2];				\
+		_p[3]		= _t.bytes[3];				\
+		(P)		= (void *)(_p + 4);			\
+	} while (/*CONSTCOND*/0)
 #define	WRITE_ADDR32(P,X)	WRITE_WORD(P,X)
 #define	WRITE_OFF32(P,X)	WRITE_WORD(P,X)
 #define	WRITE_SWORD(P,X)	WRITE_WORD(P,X)
 #define	WRITE_WORD64(P,X)	do {					\
-		uint64_t _t	= (X);					\
-		char *const _p	= (char *) (P);	\
-		const char *const _q = (char *) &_t;	\
-		_p[0]		= _q[0];				\
-		_p[1]		= _q[1];				\
-		_p[2]		= _q[2];				\
-		_p[3]		= _q[3];				\
-		_p[4]		= _q[4];				\
-		_p[5]		= _q[5];				\
-		_p[6]		= _q[6];				\
-		_p[7]		= _q[7];				\
-		(P)		= _p + 8;				\
-	} while (0)
+		union {							\
+			uint64_t val;					\
+			uint8_t bytes[8];				\
+		} _t;							\
+		unsigned char *const _p	= (void *) (P);			\
+		_t.val = (X);						\
+		_p[0]		= _t.bytes[0];				\
+		_p[1]		= _t.bytes[1];				\
+		_p[2]		= _t.bytes[2];				\
+		_p[3]		= _t.bytes[3];				\
+		_p[4]		= _t.bytes[4];				\
+		_p[5]		= _t.bytes[5];				\
+		_p[6]		= _t.bytes[6];				\
+		_p[7]		= _t.bytes[7];				\
+		(P)		= (void *)(_p + 8);			\
+	} while (/*CONSTCOND*/0)
 #define	WRITE_ADDR64(P,X)	WRITE_WORD64(P,X)
 #define	WRITE_LWORD(P,X)	WRITE_WORD64(P,X)
 #define	WRITE_OFF64(P,X)	WRITE_WORD64(P,X)
@@ -625,7 +641,7 @@ divert(0)
 #define	WRITE_IDENT(P,X)	do {					\
 		(void) memcpy((P), (X), sizeof((X)));			\
 		(P)		= (P) + EI_NIDENT;			\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 /*
  * C macros to read in various integral values.
@@ -637,11 +653,11 @@ divert(0)
  */
 
 #define	READ_BYTE(P,X)	do {						\
-		const char *const _p =				\
-			(const char *) (P);			\
+		const char *const _p =					\
+			(const void *) (P);				\
 		(X)		= _p[0];				\
 		(P)		= (P) + 1;				\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define	READ_HALF(P,X)	do {						\
 		uint16_t _t;						\
 		char *const _q = (char *) &_t;	\
@@ -651,27 +667,27 @@ divert(0)
 		_q[1]		= _p[1];				\
 		(P)		= (P) + 2;				\
 		(X)		= _t;					\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define	READ_WORD(P,X)	do {						\
 		uint32_t _t;						\
-		char *const _q = (char *) &_t;	\
+		char *const _q = (void *) &_t;	\
 		const char *const _p =				\
-			(const char *) (P);			\
+			(const void *) (P);			\
 		_q[0]		= _p[0];				\
 		_q[1]		= _p[1];				\
 		_q[2]		= _p[2];				\
 		_q[3]		= _p[3];				\
 		(P)		= (P) + 4;				\
 		(X)		= _t;					\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define	READ_ADDR32(P,X)	READ_WORD(P,X)
 #define	READ_OFF32(P,X)		READ_WORD(P,X)
 #define	READ_SWORD(P,X)		READ_WORD(P,X)
 #define	READ_WORD64(P,X)	do {					\
 		uint64_t _t;						\
-		char *const _q = (char *) &_t;	\
+		char *const _q = (void *) &_t;	\
 		const char *const _p =				\
-			(const char *) (P);			\
+			(const void *) (P);			\
 		_q[0]		= _p[0];				\
 		_q[1]		= _p[1];				\
 		_q[2]		= _p[2];				\
@@ -682,7 +698,7 @@ divert(0)
 		_q[7]		= _p[7];				\
 		(P)		= (P) + 8;				\
 		(X)		= _t;					\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define	READ_ADDR64(P,X)	READ_WORD64(P,X)
 #define	READ_LWORD(P,X)		READ_WORD64(P,X)
 #define	READ_OFF64(P,X)		READ_WORD64(P,X)
@@ -691,7 +707,7 @@ divert(0)
 #define	READ_IDENT(P,X)		do {					\
 		(void) memcpy((X), (P), sizeof((X)));			\
 		(P)		= (P) + EI_NIDENT;			\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define	ROUNDUP2(V,N)	(V) = ((((V) + (N) - 1)) & ~((N) - 1))
 
@@ -706,6 +722,7 @@ MAKE_VERSION_CONVERTERS(VNEED,Verneed,Vernaux,vn)
  * simple memcpy suffices for both directions of conversion.
  */
 
+/*ARGSUSED*/
 static int
 _libelf_cvt_BYTE_tox(char *dst, size_t dsz, char *src, size_t count,
     int byteswap)
@@ -913,7 +930,7 @@ _libelf_cvt_GNUHASH64_tof(char *dst, size_t dsz, char *src, size_t srcsz,
 }
 
 /*
- * Elf_Note structures comprise a fixed size header followed by variable
+ * Elf note structures comprise a fixed size header followed by variable
  * length strings.  The fixed size header needs to be byte swapped, but
  * not the strings.
  *

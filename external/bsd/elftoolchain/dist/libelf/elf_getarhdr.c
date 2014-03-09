@@ -1,3 +1,5 @@
+/*	$NetBSD: elf_getarhdr.c,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+
 /*-
  * Copyright (c) 2006,2008,2010 Joseph Koshy
  * All rights reserved.
@@ -30,6 +32,7 @@
 
 #include "_libelf.h"
 
+__RCSID("$NetBSD: elf_getarhdr.c,v 1.2 2014/03/09 16:58:04 christos Exp $");
 ELFTC_VCSID("Id: elf_getarhdr.c 2225 2011-11-26 18:55:54Z jkoshy ");
 
 Elf_Arhdr *

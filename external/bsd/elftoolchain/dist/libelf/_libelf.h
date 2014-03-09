@@ -1,3 +1,5 @@
+/*	$NetBSD: _libelf.h,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+
 /*-
  * Copyright (c) 2006,2008-2011 Joseph Koshy
  * All rights reserved.
@@ -35,6 +37,10 @@
 
 #include "_elftc.h"
 
+#ifndef roundup2
+#define roundup2(x, m)  (((x) + (m) - 1) & ~((m) - 1))
+#endif
+
 /*
  * Library-private data structures.
  */
@@ -42,9 +48,6 @@
 #define LIBELF_MSG_SIZE	256
 
 struct _libelf_globals {
-	int		libelf_arch;
-	unsigned int	libelf_byteorder;
-	int		libelf_class;
 	int		libelf_error;
 	int		libelf_fillchar;
 	unsigned int	libelf_version;
@@ -63,7 +66,7 @@ extern struct _libelf_globals _libelf;
 
 #define	LIBELF_SET_ERROR(E, O) do {					\
 		LIBELF_PRIVATE(error) = LIBELF_ERROR(ELF_E_##E, (O));	\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define	LIBELF_ADJUST_AR_SIZE(S)	(((S) + 1U) & ~1U)
 
@@ -163,21 +166,21 @@ enum {
 };
 
 #define	LIBELF_COPY_U32(DST,SRC,NAME)	do {		\
-		if ((SRC)->NAME > UINT_MAX) {		\
+		if ((uint64_t)(SRC)->NAME > UINT_MAX) {	\
 			LIBELF_SET_ERROR(RANGE, 0);	\
 			return (0);			\
 		}					\
 		(DST)->NAME = (SRC)->NAME;		\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define	LIBELF_COPY_S32(DST,SRC,NAME)	do {		\
-		if ((SRC)->NAME > INT_MAX ||		\
-		    (SRC)->NAME < INT_MIN) {		\
+		if ((uint64_t)(SRC)->NAME > INT_MAX ||	\
+		    (uint64_t)(SRC)->NAME < INT_MIN) {	\
 			LIBELF_SET_ERROR(RANGE, 0);	\
 			return (0);			\
 		}					\
 		(DST)->NAME = (SRC)->NAME;		\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 
 /*
@@ -185,6 +188,7 @@ enum {
  */
 
 __BEGIN_DECLS
+unsigned int _libelf_host_byteorder(void);
 struct _Libelf_Data *_libelf_allocate_data(Elf_Scn *_s);
 Elf	*_libelf_allocate_elf(void);
 Elf_Scn	*_libelf_allocate_scn(Elf *_e, size_t _ndx);

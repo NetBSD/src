@@ -1,3 +1,5 @@
+/*	$NetBSD: elf_end.c,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+
 /*-
  * Copyright (c) 2006,2008-2009,2011 Joseph Koshy
  * All rights reserved.
@@ -24,6 +26,10 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+# include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 
 #include <assert.h>
@@ -36,6 +42,7 @@
 #include <sys/mman.h>
 #endif
 
+__RCSID("$NetBSD: elf_end.c,v 1.2 2014/03/09 16:58:04 christos Exp $");
 ELFTC_VCSID("Id: elf_end.c 2240 2011-11-28 06:36:48Z jkoshy ");
 
 int

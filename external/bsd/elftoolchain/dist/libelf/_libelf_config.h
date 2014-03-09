@@ -1,3 +1,5 @@
+/*	$NetBSD: _libelf_config.h,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+
 /*-
  * Copyright (c) 2008-2011 Joseph Koshy
  * All rights reserved.
