@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.24 2014/03/01 15:41:00 dsl Exp $
+# $NetBSD: ad.mips,v 1.25 2014/03/09 18:12:57 christos Exp $
 ./usr/lib/64/libcrypto_g.a			comp-c-debuglib		compat,crypto,debuglib,arch64
 ./usr/lib/64/libcrypto_idea_g.a			comp-obsolete		obsolete
 ./usr/lib/64/libcrypto_mdc2_g.a			comp-obsolete		obsolete
@@ -85,9 +85,9 @@
 ./usr/libdata/debug/usr/lib/64/libdns.so.8.0.debug		comp-bind-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libdns_sd.so.0.0.debug	comp-mdns-debug	mdns,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libdtrace.so.2.0.debug	comp-sys-debug	dtrace,debug,compat,arch64
-./usr/libdata/debug/usr/lib/64/libdwarf.so.0.1.debug	comp-sys-debug	debug,compat,arch64
+./usr/libdata/debug/usr/lib/64/libdwarf.so.1.0.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libedit.so.3.1.debug	comp-sys-debug	debug,compat,arch64
-./usr/libdata/debug/usr/lib/64/libelf.so.0.0.debug		comp-sys-debug	debug,compat,arch64
+./usr/libdata/debug/usr/lib/64/libelf.so..0.debug		comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libevent.so.4.0.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libevent_openssl.so.4.0.debug	comp-sys-debug	debug,compat,crypto,arch64
 ./usr/libdata/debug/usr/lib/64/libevent_pthreads.so.4.0.debug	comp-sys-debug	debug,compat,arch64
@@ -261,9 +261,9 @@
 ./usr/libdata/debug/usr/lib/o32/libdns.so.8.0.debug		comp-bind-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libdns_sd.so.0.0.debug	comp-mdns-debug	mdns,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libdtrace.so.2.0.debug	comp-sys-debug	dtrace,debug,compat,arch64
-./usr/libdata/debug/usr/lib/o32/libdwarf.so.0.1.debug	comp-sys-debug	debug,compat,arch64
+./usr/libdata/debug/usr/lib/o32/libdwarf.so.1.0.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libedit.so.3.1.debug	comp-sys-debug	debug,compat,arch64
-./usr/libdata/debug/usr/lib/o32/libelf.so.0.0.debug		comp-sys-debug	debug,compat,arch64
+./usr/libdata/debug/usr/lib/o32/libelf.so..0.debug		comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libevent.so.4.0.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libevent_openssl.so.4.0.debug	comp-sys-debug	debug,compat,crypto,arch64
 ./usr/libdata/debug/usr/lib/o32/libevent_pthreads.so.4.0.debug	comp-sys-debug	debug,compat,arch64

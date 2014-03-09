@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.53 2014/03/01 15:41:00 dsl Exp $
+# $NetBSD: shl.mi,v 1.54 2014/03/09 18:12:57 christos Exp $
 ./usr/libdata/debug/lib/libc.so.12.190.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypt.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypto.so.8.2.debug		comp-sys-debug	debug
@@ -76,9 +76,9 @@
 ./usr/libdata/debug/usr/lib/libdns.so.8.0.debug 	comp-bind-debug debug
 ./usr/libdata/debug/usr/lib/libdns_sd.so.0.0.debug	comp-mdns-debug	mdns,debug
 ./usr/libdata/debug/usr/lib/libdtrace.so.2.0.debug	comp-sys-debug	dtrace,debug
-./usr/libdata/debug/usr/lib/libdwarf.so.0.1.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libdwarf.so.1.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libedit.so.3.1.debug	comp-sys-debug	debug
-./usr/libdata/debug/usr/lib/libelf.so.0.0.debug		comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libelf.so..0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libevent.so.4.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libevent_openssl.so.4.0.debug	comp-sys-debug	debug,crypto
 ./usr/libdata/debug/usr/lib/libevent_pthreads.so.4.0.debug	comp-sys-debug	debug

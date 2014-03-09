@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.28 2014/03/01 15:41:00 dsl Exp $
+# $NetBSD: ad.arm,v 1.29 2014/03/09 18:12:57 christos Exp $
 ./usr/lib/libarm_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libc_vfp_g.a				comp-c-debuglib		debuglib,softfloat
 ./usr/lib/libpmc_g.a				comp-c-debuglib		debuglib
@@ -80,9 +80,9 @@
 ./usr/libdata/debug/usr/lib/oabi/libdns.so.8.0.debug		comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libdns_sd.so.0.0.debug	comp-mdns-debug	mdns,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libdtrace.so.2.0.debug	comp-sys-debug	dtrace,debug,compat
-./usr/libdata/debug/usr/lib/oabi/libdwarf.so.0.1.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/oabi/libdwarf.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libedit.so.3.1.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/oabi/libelf.so.0.0.debug		comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/oabi/libelf.so..0.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libevent.so.4.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libevent_openssl.so.4.0.debug	comp-sys-debug	debug,compat,crypto
 ./usr/libdata/debug/usr/lib/oabi/libevent_pthreads.so.4.0.debug	comp-sys-debug	debug,compat
