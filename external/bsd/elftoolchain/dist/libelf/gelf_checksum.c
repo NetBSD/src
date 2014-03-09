@@ -1,3 +1,5 @@
+/*	$NetBSD: gelf_checksum.c,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
  * All rights reserved.
@@ -31,6 +33,7 @@
 
 #include "_libelf.h"
 
+__RCSID("$NetBSD: gelf_checksum.c,v 1.2 2014/03/09 16:58:04 christos Exp $");
 ELFTC_VCSID("Id: gelf_checksum.c 2225 2011-11-26 18:55:54Z jkoshy ");
 
 long

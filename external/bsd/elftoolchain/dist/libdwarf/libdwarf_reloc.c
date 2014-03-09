@@ -1,3 +1,5 @@
+/*	$NetBSD: libdwarf_reloc.c,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+
 /*-
  * Copyright (c) 2010 Kai Wang
  * All rights reserved.
@@ -26,7 +28,45 @@
 
 #include "_libdwarf.h"
 
+__RCSID("$NetBSD: libdwarf_reloc.c,v 1.2 2014/03/09 16:58:04 christos Exp $");
 ELFTC_VCSID("Id: libdwarf_reloc.c 2948 2013-05-30 21:25:52Z kaiwang27 ");
+
+#ifndef R_386_32
+#define R_386_32	1
+#endif
+#ifndef R_X86_64_64
+#define R_X86_64_64	1
+#endif
+#ifndef R_X86_64_32
+#define R_X86_64_32	10
+#endif
+#ifndef R_SPARC_UA32
+#define R_SPARC_UA32	23
+#endif
+#ifndef R_SPARC_UA64
+#define R_SPARC_UA64	54
+#endif
+#ifndef R_PPC_ADDR32
+#define R_PPC_ADDR32	1
+#endif
+#ifndef R_ARM_ABS32
+#define R_ARM_ABS32	2
+#endif
+#ifndef R_MIPS_32
+#define R_MIPS_32	2
+#endif
+#ifndef R_MIPS_64
+#define R_MIPS_64	18
+#endif
+#ifndef R_IA_64_DIR32LSB
+#define R_IA_64_DIR32LSB	0x25
+#endif
+#ifndef R_IA_64_DIR64LSB
+#define R_IA_64_DIR64LSB	0x27
+#endif
+#ifndef R_IA_64_SECREL32LSB
+#define R_IA_64_SECREL32LSB	0x65
+#endif
 
 Dwarf_Unsigned
 _dwarf_get_reloc_type(Dwarf_P_Debug dbg, int is64)

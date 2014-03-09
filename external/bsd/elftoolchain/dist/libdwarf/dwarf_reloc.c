@@ -1,3 +1,5 @@
+/*	$NetBSD: dwarf_reloc.c,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+
 /*-
  * Copyright (c) 2010 Kai Wang
  * All rights reserved.
@@ -26,6 +28,7 @@
 
 #include "_libdwarf.h"
 
+__RCSID("$NetBSD: dwarf_reloc.c,v 1.2 2014/03/09 16:58:04 christos Exp $");
 ELFTC_VCSID("Id: dwarf_reloc.c 2075 2011-10-27 03:47:28Z jkoshy ");
 
 int

@@ -1,3 +1,5 @@
+/*	$NetBSD: _libdwarf.h,v 1.2 2014/03/09 16:58:03 christos Exp $	*/
+
 /*-
  * Copyright (c) 2007 John Birrell (jb@freebsd.org)
  * Copyright (c) 2009-2011 Kai Wang
@@ -29,6 +31,10 @@
 
 #ifndef	__LIBDWARF_H_
 #define	__LIBDWARF_H_
+
+#if HAVE_NBTOOL_CONFIG_H
+# include "nbtool_config.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -87,7 +93,7 @@ extern struct _libdwarf_globals _libdwarf;
 		ret = expr;						\
 		if (ret != DW_DLE_NONE)					\
 			goto gen_fail;					\
-	} while(0)
+	} while (/*CONSTCOND*/0)
 
 
 struct _Dwarf_AttrDef {

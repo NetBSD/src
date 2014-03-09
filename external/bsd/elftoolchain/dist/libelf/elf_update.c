@@ -1,3 +1,5 @@
+/*	$NetBSD: elf_update.c,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+
 /*-
  * Copyright (c) 2006-2011 Joseph Koshy
  * All rights reserved.
@@ -24,6 +26,10 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+# include "nbtool_config.h"
+#endif
+
 #include <sys/param.h>
 #include <sys/stat.h>
 
@@ -41,6 +47,7 @@
 #include <sys/mman.h>
 #endif
 
+__RCSID("$NetBSD: elf_update.c,v 1.2 2014/03/09 16:58:04 christos Exp $");
 ELFTC_VCSID("Id: elf_update.c 2931 2013-03-23 11:41:07Z jkoshy ");
 
 /*
@@ -576,7 +583,7 @@ _libelf_resync_elf(Elf *e, struct _Elf_Extent_List *extents)
 		    ELF_T_PHDR, (EC), (V), (size_t) 1);			\
 		(E)->e_shentsize = _libelf_fsize(ELF_T_SHDR, (EC), (V),	\
 		    (size_t) 1);					\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 	if (ec == ELFCLASS32)
 		INITIALIZE_EHDR(eh32, ec, eh_version);
