@@ -652,6 +652,10 @@ ia64*-*-linux*)
 	fi
 	md_unwind_header=ia64/linux-unwind.h
 	;;
+ia64*-*-netbsd*)
+	extra_parts="${extra_parts} crtfastmath.o"
+	tmake_file="${tmake_file} ia64/t-ia64 ia64/t-ia64-elf ia64/t-eh-ia64 t-crtfm"
+	;;
 ia64*-*-hpux*)
 	tmake_file="ia64/t-ia64 ia64/t-ia64-elf ia64/t-hpux t-slibgcc ia64/t-slibgcc-hpux t-slibgcc-hpux"
 	;;
