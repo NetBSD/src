@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.63 2014/01/31 18:49:35 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.64 2014/03/09 16:18:00 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -479,10 +479,6 @@ Lenab3:
  */
 #include <m68k/m68k/trap_subr.s>
 
-	.data
-GLOBAL(m68k_fault_addr)
-	.long	0
-
 #if defined(M68020) || defined(M68030)
 ENTRY_NOPROFILE(busaddrerr2030)
 	clrl	%sp@-			| stack adjust count
@@ -569,7 +565,6 @@ Lisberr1:
 	clrw	%sp@			| re-clear pad word
 	tstl	_C_LABEL(nofault)	| catch bus error?
 	jeq	Lisberr			| no, handle as usual
-	movl	%sp@(FR_HW+8+16),_C_LABEL(m68k_fault_addr) | save fault addr
 	movl	_C_LABEL(nofault),%sp@-	| yes,
 	jbsr	_C_LABEL(longjmp)	|  longjmp(nofault)
 	/* NOTREACHED */
