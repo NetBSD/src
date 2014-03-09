@@ -817,7 +817,9 @@ die_enum_create(dwarf_t *dw, Dwarf_Die die, Dwarf_Off off, tdesc_t *tdp)
 
 	debug(3, "die %llu: creating enum\n", off);
 
-	tdp->t_type = ENUM;
+	tdp->t_type = (die_isdecl(dw, die) ? FORWARD : ENUM);
+	if (tdp->t_type != ENUM)
+		return;
 
 	(void) die_unsigned(dw, die, DW_AT_byte_size, &uval, DW_ATTR_REQ);
 	/* Check for bogus gcc DW_AT_byte_size attribute */
@@ -1137,6 +1139,9 @@ die_sou_resolve(tdesc_t *tdp, tdesc_t **tdpp __unused, void *private)
 		if (ml->ml_size == 0) {
 			mt = tdesc_basetype(ml->ml_type);
 
+			if (mt == NULL)
+				continue;
+
 			if ((ml->ml_size = tdesc_bitsize(mt)) != 0)
 				continue;
 
@@ -1149,6 +1154,16 @@ die_sou_resolve(tdesc_t *tdp, tdesc_t **tdpp __unused, void *private)
 			if (mt->t_type == ARRAY && mt->t_ardef->ad_nelems == 0)
 				continue;
 
+			if (mt->t_type == STRUCT && 
+				mt->t_members != NULL &&
+				mt->t_members->ml_type->t_type == ARRAY &&
+				mt->t_members->ml_type->t_ardef->ad_nelems == 0) {
+			    /* struct with zero sized array */
+			    continue;
+			}
+
+			printf("%s unresolved type = %d (%s)\n", tdesc_name(tdp),
+				mt->t_type, tdesc_name(mt));
 			dw->dw_nunres++;
 			return (1);
 		}
