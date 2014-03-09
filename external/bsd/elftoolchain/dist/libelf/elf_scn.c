@@ -1,3 +1,5 @@
+/*	$NetBSD: elf_scn.c,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+
 /*-
  * Copyright (c) 2006,2008-2010 Joseph Koshy
  * All rights reserved.
@@ -24,6 +26,10 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+# include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #include <sys/queue.h>
 
@@ -36,6 +42,7 @@
 
 #include "_libelf.h"
 
+__RCSID("$NetBSD: elf_scn.c,v 1.2 2014/03/09 16:58:04 christos Exp $");
 ELFTC_VCSID("Id: elf_scn.c 2225 2011-11-26 18:55:54Z jkoshy ");
 
 /*
@@ -83,8 +90,12 @@ _libelf_load_section_headers(Elf *e, void *ehdr)
 
 	xlator = _libelf_get_translator(ELF_T_SHDR, ELF_TOMEMORY, ec);
 
-	swapbytes = e->e_byteorder != LIBELF_PRIVATE(byteorder);
-	src = e->e_rawfile + shoff;
+	swapbytes = e->e_byteorder != _libelf_host_byteorder();
+	if (shoff > SSIZE_MAX) {
+		LIBELF_SET_ERROR(HEADER, 0);
+		return (0);
+	}
+	src = e->e_rawfile + (ssize_t)shoff;
 
 	/*
 	 * If the file is using extended numbering then section #0
@@ -104,7 +115,7 @@ _libelf_load_section_headers(Elf *e, void *ehdr)
 		if ((scn = _libelf_allocate_scn(e, i)) == NULL)
 			return (0);
 
-		(*xlator)((char *) &scn->s_shdr, sizeof(scn->s_shdr), src,
+		(*xlator)((void *) &scn->s_shdr, sizeof(scn->s_shdr), src,
 		    (size_t) 1, swapbytes);
 
 		if (ec == ELFCLASS32) {
