@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.781 2014/03/07 16:22:24 skrll Exp $
+#	$NetBSD: bsd.own.mk,v 1.782 2014/03/09 19:58:43 matt Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -880,7 +880,7 @@ MKCOMPAT:=	no
 
 #.if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "i386" || \
 
-.if ${MACHINE} == "evbppc" && ${MACHINE_ARCH} == "powerpc64"
+.if ${MACHINE} == "evbppc" && ${MACHINE_ARCH} == "powerpc"
 MKCOMPATMODULES?=	yes
 .else
 MKCOMPATMODULES:=	no
