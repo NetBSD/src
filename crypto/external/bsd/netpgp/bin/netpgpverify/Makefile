@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2014/03/09 06:57:58 christos Exp $
+#	$NetBSD: Makefile,v 1.8 2014/03/09 07:00:52 christos Exp $
 
 PROG=netpgpverify
 BINDIR=		/usr/bin
@@ -19,7 +19,7 @@ LDFLAGS+=-g -O0
 .endif
 
 MAN=	netpgpverify.1
-WARNS=	6
+WARNS=	4
 
 EXTDIST=${.CURDIR}/../../dist
 
