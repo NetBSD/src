@@ -19,7 +19,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
 
@@ -177,13 +177,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#ifndef _NETBSD_SOURCE
-#define _NETBSD_SOURCE	/* XXX TBD fix this */
 #include <unistd.h>
-#undef _NETBSD_SOURCE
-#else
-#include <unistd.h>
-#endif
 #include <pthread.h>
 #include <assert.h>
 #if defined(sun)
@@ -374,7 +368,7 @@ wip_save_work(workqueue_t *wq, wip_t *slot, int slotnum)
 	pthread_mutex_lock(&wq->wq_donequeue_lock);
 
 	while (wq->wq_lastdonebatch + 1 < slot->wip_batchid)
-		 pthread_cond_wait(&slot->wip_cv, &wq->wq_donequeue_lock);
+		pthread_cond_wait(&slot->wip_cv, &wq->wq_donequeue_lock);
 	assert(wq->wq_lastdonebatch + 1 == slot->wip_batchid);
 
 	fifo_add(wq->wq_donequeue, slot->wip_td);
@@ -630,7 +624,7 @@ copy_ctf_data(char *srcfile, char *destfile, int keep_stabs)
 		terminate("No CTF data found in source file %s\n", srcfile);
 
 	tmpname = mktmpname(destfile, ".ctf");
-	write_ctf(srctd, destfile, tmpname, CTF_COMPRESS | keep_stabs);
+	write_ctf(srctd, destfile, tmpname, CTF_COMPRESS | CTF_SWAP_BYTES | keep_stabs);
 	if (rename(tmpname, destfile) != 0) {
 		terminate("Couldn't rename temp file %s to %s", tmpname,
 		    destfile);
@@ -647,7 +641,7 @@ wq_init(workqueue_t *wq, int nfiles)
 	if (getenv("CTFMERGE_MAX_SLOTS"))
 		nslots = atoi(getenv("CTFMERGE_MAX_SLOTS"));
 	else
-		nslots = MERGE_PHASE1_MAX_SLOTS;
+		nslots = CTFMERGE_MAX_SLOTS;
 
 	if (getenv("CTFMERGE_PHASE1_BATCH_SIZE"))
 		wq->wq_maxbatchsz = atoi(getenv("CTFMERGE_PHASE1_BATCH_SIZE"));
@@ -659,7 +653,11 @@ wq_init(workqueue_t *wq, int nfiles)
 
 	wq->wq_wip = xcalloc(sizeof (wip_t) * nslots);
 	wq->wq_nwipslots = nslots;
+#ifdef _SC_NPROCESSORS_ONLN
 	wq->wq_nthreads = MIN(sysconf(_SC_NPROCESSORS_ONLN) * 3 / 2, nslots);
+#else
+	wq->wq_nthreads = 2;
+#endif
 	wq->wq_thread = xmalloc(sizeof (pthread_t) * wq->wq_nthreads);
 
 	if (getenv("CTFMERGE_INPUT_THROTTLE"))
@@ -675,7 +673,6 @@ wq_init(workqueue_t *wq, int nfiles)
 
 	for (i = 0; i < nslots; i++) {
 		pthread_mutex_init(&wq->wq_wip[i].wip_lock, NULL);
-		pthread_cond_init(&wq->wq_wip[i].wip_cv, NULL);
 		wq->wq_wip[i].wip_batchid = wq->wq_next_batchid++;
 	}
 
@@ -704,7 +701,6 @@ wq_init(workqueue_t *wq, int nfiles)
 static void
 start_threads(workqueue_t *wq)
 {
-	pthread_t thrid;
 	sigset_t sets;
 	int i;
 
@@ -740,7 +736,6 @@ join_threads(workqueue_t *wq)
 		pthread_join(wq->wq_thread[i], NULL);
 	}
 }
-
 
 static int
 strcompare(const void *p1, const void *p2)
@@ -1028,7 +1023,7 @@ main(int argc, char **argv)
 
 	tmpname = mktmpname(outfile, ".ctf");
 	write_ctf(savetd, outfile, tmpname,
-	    CTF_COMPRESS | write_fuzzy_match | dynsym | keep_stabs);
+	    CTF_COMPRESS | CTF_SWAP_BYTES | write_fuzzy_match | dynsym | keep_stabs);
 	if (rename(tmpname, outfile) != 0)
 		terminate("Couldn't rename output temp file %s", tmpname);
 	free(tmpname);

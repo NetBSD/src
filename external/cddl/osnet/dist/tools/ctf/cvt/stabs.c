@@ -198,6 +198,8 @@ stabs_read(tdata_t *td, Elf *elf, char *file)
 	    (stabstridx = findelfsecidx(elf, file, ".stab.exclstr")) >= 0) &&
 	    !((stabidx = findelfsecidx(elf, file, ".stab")) >= 0 &&
 	    (stabstridx = findelfsecidx(elf, file, ".stabstr")) >= 0)) {
+		debug(1, "NO stabs: .stab=%d, .stabstr=%d\n", stabidx,
+		    stabstridx);
 		errno = ENOENT;
 		return (-1);
 	}
