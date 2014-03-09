@@ -1,3 +1,5 @@
+/*	$NetBSD: libdwarf_nametbl.c,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+
 /*-
  * Copyright (c) 2009,2010 Kai Wang
  * All rights reserved.
@@ -26,6 +28,7 @@
 
 #include "_libdwarf.h"
 
+__RCSID("$NetBSD: libdwarf_nametbl.c,v 1.2 2014/03/09 16:58:04 christos Exp $");
 ELFTC_VCSID("Id: libdwarf_nametbl.c 2070 2011-10-27 03:05:32Z jkoshy ");
 
 void

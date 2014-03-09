@@ -1,3 +1,5 @@
+/*	$NetBSD: elf_strptr.c,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
  * All rights reserved.
@@ -24,6 +26,10 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+# include "nbtool_config.h"
+#endif
+
 #include <sys/param.h>
 
 #include <assert.h>
@@ -31,6 +37,7 @@
 
 #include "_libelf.h"
 
+__RCSID("$NetBSD: elf_strptr.c,v 1.2 2014/03/09 16:58:04 christos Exp $");
 ELFTC_VCSID("Id: elf_strptr.c 2271 2011-12-03 17:06:35Z jkoshy ");
 
 /*

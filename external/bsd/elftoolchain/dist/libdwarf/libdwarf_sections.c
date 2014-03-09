@@ -1,3 +1,5 @@
+/*	$NetBSD: libdwarf_sections.c,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+
 /*-
  * Copyright (c) 2010 Kai Wang
  * All rights reserved.
@@ -26,6 +28,7 @@
 
 #include "_libdwarf.h"
 
+__RCSID("$NetBSD: libdwarf_sections.c,v 1.2 2014/03/09 16:58:04 christos Exp $");
 ELFTC_VCSID("Id: libdwarf_sections.c 2379 2012-01-05 02:08:20Z jkoshy ");
 
 #define	_SECTION_INIT_SIZE	128

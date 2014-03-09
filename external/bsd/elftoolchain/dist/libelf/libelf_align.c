@@ -1,3 +1,5 @@
+/*	$NetBSD: libelf_align.c,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
  * All rights reserved.
@@ -24,6 +26,10 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+# include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 
 #include <sys/types.h>
@@ -32,6 +38,7 @@
 
 #include "_libelf.h"
 
+__RCSID("$NetBSD: libelf_align.c,v 1.2 2014/03/09 16:58:04 christos Exp $");
 ELFTC_VCSID("Id: libelf_align.c 2225 2011-11-26 18:55:54Z jkoshy ");
 
 struct align {

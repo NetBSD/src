@@ -1,3 +1,5 @@
+/*	$NetBSD: libelf_memory.c,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+
 /*-
  * Copyright (c) 2011 Joseph Koshy
  * All rights reserved.
@@ -24,6 +26,10 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+# include "nbtool_config.h"
+#endif
+
 #include <ar.h>
 #include <assert.h>
 #include <string.h>
@@ -31,6 +37,7 @@
 
 #include "_libelf.h"
 
+__RCSID("$NetBSD: libelf_memory.c,v 1.2 2014/03/09 16:58:04 christos Exp $");
 ELFTC_VCSID("Id: libelf_memory.c 2368 2011-12-29 06:34:28Z jkoshy ");
 
 /*

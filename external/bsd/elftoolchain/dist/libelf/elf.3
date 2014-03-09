@@ -1,3 +1,5 @@
+.\"	$NetBSD: elf.3,v 1.2 2014/03/09 16:58:04 christos Exp $
+.\"
 .\" Copyright (c) 2006-2008,2011 Joseph Koshy.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -389,7 +391,6 @@ See
 .It Dv SHT_SUNW_move Ta Dv ELF_T_MOVE Ta ELF move records.
 .It Dv SHT_SUNW_syminfo Ta Dv ELF_T_SYMINFO Ta Additional symbol flags.
 .El
-.TE
 .Ss Functional Grouping
 This section contains a brief overview of the available functionality
 in the ELF library.
@@ -581,8 +582,10 @@ descriptor itself.
 .Xr elf 5
 .Sh HISTORY
 The original ELF(3) API was developed for Unix System V.
-The current implementation of the ELF(3) API appeared in
-.Fx 7.0 .
+This implementation first appeared in
+.Fx 7.0
+and
+.Nx 6.0 .
 .Sh AUTHORS
 The ELF library was written by
 .An "Joseph Koshy"

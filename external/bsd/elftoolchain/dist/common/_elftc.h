@@ -1,3 +1,5 @@
+/*	$NetBSD: _elftc.h,v 1.2 2014/03/09 16:58:03 christos Exp $	*/
+
 /*-
  * Copyright (c) 2009 Joseph Koshy
  * All rights reserved.

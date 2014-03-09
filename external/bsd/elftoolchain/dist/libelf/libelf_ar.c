@@ -1,3 +1,5 @@
+/*	$NetBSD: libelf_ar.c,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+
 /*-
  * Copyright (c) 2006,2008,2010 Joseph Koshy
  * All rights reserved.
@@ -24,6 +26,10 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+# include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 
 #include <assert.h>
@@ -35,6 +41,7 @@
 #include "_libelf.h"
 #include "_libelf_ar.h"
 
+__RCSID("$NetBSD: libelf_ar.c,v 1.2 2014/03/09 16:58:04 christos Exp $");
 ELFTC_VCSID("Id: libelf_ar.c 2225 2011-11-26 18:55:54Z jkoshy ");
 
 #define	LIBELF_NALLOC_SIZE	16
@@ -281,7 +288,7 @@ _libelf_ar_open_member(int fd, Elf_Cmd c, Elf *elf)
 #define	GET_LONG(P, V)do {				\
 		memcpy(&(V), (P), sizeof(long));	\
 		(P) += sizeof(long);			\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 Elf_Arsym *
 _libelf_ar_process_bsd_symtab(Elf *e, size_t *count)

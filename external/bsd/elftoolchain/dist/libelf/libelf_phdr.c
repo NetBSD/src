@@ -1,3 +1,5 @@
+/*	$NetBSD: libelf_phdr.c,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
  * All rights reserved.
@@ -24,6 +26,10 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+# include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 
 #include <assert.h>
@@ -33,6 +39,7 @@
 
 #include "_libelf.h"
 
+__RCSID("$NetBSD: libelf_phdr.c,v 1.2 2014/03/09 16:58:04 christos Exp $");
 ELFTC_VCSID("Id: libelf_phdr.c 2931 2013-03-23 11:41:07Z jkoshy ");
 
 void *
@@ -101,7 +108,7 @@ _libelf_getphdr(Elf *e, int ec)
 
 	xlator = _libelf_get_translator(ELF_T_PHDR, ELF_TOMEMORY, ec);
 	(*xlator)(phdr, phnum * msz, e->e_rawfile + phoff, phnum,
-	    e->e_byteorder != LIBELF_PRIVATE(byteorder));
+	    e->e_byteorder != _libelf_host_byteorder());
 
 	return (phdr);
 }

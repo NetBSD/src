@@ -1,3 +1,5 @@
+/*	$NetBSD: libdwarf.h,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+
 /*-
  * Copyright (c) 2007 John Birrell (jb@freebsd.org)
  * Copyright (c) 2009-2011 Kai Wang

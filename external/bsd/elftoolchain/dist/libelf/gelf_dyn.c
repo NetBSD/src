@@ -1,3 +1,5 @@
+/*	$NetBSD: gelf_dyn.c,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
  * All rights reserved.
@@ -24,6 +26,10 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+# include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 
 #include <assert.h>
@@ -32,6 +38,7 @@
 
 #include "_libelf.h"
 
+__RCSID("$NetBSD: gelf_dyn.c,v 1.2 2014/03/09 16:58:04 christos Exp $");
 ELFTC_VCSID("Id: gelf_dyn.c 2272 2011-12-03 17:07:31Z jkoshy ");
 
 GElf_Dyn *

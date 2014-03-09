@@ -1,3 +1,5 @@
+/*	$NetBSD: dwarf_pro_attr.c,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+
 /*-
  * Copyright (c) 2009 Kai Wang
  * All rights reserved.
@@ -26,6 +28,7 @@
 
 #include "_libdwarf.h"
 
+__RCSID("$NetBSD: dwarf_pro_attr.c,v 1.2 2014/03/09 16:58:04 christos Exp $");
 ELFTC_VCSID("Id: dwarf_pro_attr.c 2074 2011-10-27 03:34:33Z jkoshy ");
 
 Dwarf_P_Attribute

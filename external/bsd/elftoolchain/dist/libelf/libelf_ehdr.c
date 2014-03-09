@@ -1,3 +1,5 @@
+/*	$NetBSD: libelf_ehdr.c,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
  * All rights reserved.
@@ -24,6 +26,10 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+# include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 
 #include <assert.h>
@@ -33,6 +39,7 @@
 
 #include "_libelf.h"
 
+__RCSID("$NetBSD: libelf_ehdr.c,v 1.2 2014/03/09 16:58:04 christos Exp $");
 ELFTC_VCSID("Id: libelf_ehdr.c 2225 2011-11-26 18:55:54Z jkoshy ");
 
 /*
@@ -61,20 +68,30 @@ _libelf_load_extended(Elf *e, int ec, uint64_t shoff, uint16_t phnum,
 	if ((scn = _libelf_allocate_scn(e, (size_t) 0)) == NULL)
 		return (0);
 
+	if (shoff > SSIZE_MAX) {
+		LIBELF_SET_ERROR(HEADER, 0);
+		return (0);
+	}
+
 	xlator = _libelf_get_translator(ELF_T_SHDR, ELF_TOMEMORY, ec);
-	(*xlator)((char *) &scn->s_shdr, sizeof(scn->s_shdr),
+	(*xlator)((void *) &scn->s_shdr, sizeof(scn->s_shdr),
 	    e->e_rawfile + shoff, (size_t) 1,
-	    e->e_byteorder != LIBELF_PRIVATE(byteorder));
+	    e->e_byteorder != _libelf_host_byteorder());
 
 #define	GET_SHDR_MEMBER(M) ((ec == ELFCLASS32) ? scn->s_shdr.s_shdr32.M : \
 		scn->s_shdr.s_shdr64.M)
+
+	if (GET_SHDR_MEMBER(sh_size) > UINT_MAX) {
+		LIBELF_SET_ERROR(HEADER, 0);
+		return (0);
+	}
 
 	if ((shtype = GET_SHDR_MEMBER(sh_type)) != SHT_NULL) {
 		LIBELF_SET_ERROR(SECTION, 0);
 		return (0);
 	}
 
-	e->e_u.e_elf.e_nscn = GET_SHDR_MEMBER(sh_size);
+	e->e_u.e_elf.e_nscn = (unsigned int)GET_SHDR_MEMBER(sh_size);
 	e->e_u.e_elf.e_nphdr = (phnum != PN_XNUM) ? phnum :
 	    GET_SHDR_MEMBER(sh_info);
 	e->e_u.e_elf.e_strndx = (strndx != SHN_XINDEX) ? strndx :
@@ -96,7 +113,7 @@ _libelf_load_extended(Elf *e, int ec, uint64_t shoff, uint16_t phnum,
 		eh->e_machine = EM_NONE;				\
 		eh->e_type    = ELF_K_NONE;				\
 		eh->e_version = LIBELF_PRIVATE(version);		\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 void *
 _libelf_ehdr(Elf *e, int ec, int allocate)
@@ -168,7 +185,7 @@ _libelf_ehdr(Elf *e, int ec, int allocate)
 
 	xlator = _libelf_get_translator(ELF_T_EHDR, ELF_TOMEMORY, ec);
 	(*xlator)(ehdr, msz, e->e_rawfile, (size_t) 1,
-	    e->e_byteorder != LIBELF_PRIVATE(byteorder));
+	    e->e_byteorder != _libelf_host_byteorder());
 
 	/*
 	 * If extended numbering is being used, read the correct

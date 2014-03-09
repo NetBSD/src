@@ -1,3 +1,5 @@
+/*	$NetBSD: elf_data.c,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+
 /*-
  * Copyright (c) 2006,2008,2011 Joseph Koshy
  * All rights reserved.
@@ -24,6 +26,10 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+# include "nbtool_config.h"
+#endif
+
 #include <assert.h>
 #include <errno.h>
 #include <libelf.h>
@@ -31,6 +37,7 @@
 
 #include "_libelf.h"
 
+__RCSID("$NetBSD: elf_data.c,v 1.2 2014/03/09 16:58:04 christos Exp $");
 ELFTC_VCSID("Id: elf_data.c 2921 2013-03-04 16:19:22Z jkoshy ");
 
 Elf_Data *
@@ -140,7 +147,7 @@ elf_getdata(Elf_Scn *s, Elf_Data *ed)
 	xlate = _libelf_get_translator(elftype, ELF_TOMEMORY, elfclass);
 	if (!(*xlate)(d->d_data.d_buf, d->d_data.d_size,
 	    e->e_rawfile + sh_offset, count,
-	    e->e_byteorder != LIBELF_PRIVATE(byteorder))) {
+	    e->e_byteorder != _libelf_host_byteorder())) {
 		_libelf_release_data(d);
 		LIBELF_SET_ERROR(DATA, 0);
 		return (NULL);
