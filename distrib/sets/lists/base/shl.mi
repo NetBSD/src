@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.693 2014/03/09 18:12:57 christos Exp $
+# $NetBSD: shl.mi,v 1.694 2014/03/09 20:35:30 htodd Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -248,7 +248,6 @@
 ./usr/lib/libedit.so.3.1			base-sys-shlib
 ./usr/lib/libelf.so				base-sys-shlib
 ./usr/lib/libelf.so.0				base-sys-shlib
-./usr/lib/libelf.so..0				base-sys-shlib
 ./usr/lib/libevent.so				base-sys-shlib
 ./usr/lib/libevent.so.4				base-sys-shlib
 ./usr/lib/libevent.so.4.0			base-sys-shlib

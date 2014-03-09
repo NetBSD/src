@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.38 2014/03/09 18:12:57 christos Exp $
+# $NetBSD: ad.arm,v 1.39 2014/03/09 20:35:30 htodd Exp $
 ./lib/oabi					base-compat-shlib	compat
 ./lib/oabi/npf					base-npf-shlib		compat
 ./lib/oabi/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -124,7 +124,6 @@
 ./usr/lib/oabi/libedit.so.3			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libedit.so.3.1			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libelf.so.0			base-compat-shlib	compat,pic
-./usr/lib/oabi/libelf.so..0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libevent.so.4			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libevent.so.4.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libevent_openssl.so.4		base-compat-shlib	compat,pic,crypto
