@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2013/04/30 01:41:01 matt Exp $
+# $NetBSD: Makefile,v 1.5 2014/03/09 21:37:37 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -12,7 +12,7 @@ INCS=execinfo.h
 #CPPFLAGS+=-I/usr/include/libelf
 #COPTS+=-std=gnu99
 
-LIBDPLIBS+= elf	${NETBSDSRCDIR}/external/bsd/libelf/lib
+LIBDPLIBS+= elf	${NETBSDSRCDIR}/external/bsd/elftoolchain/lib/libelf
 
 LIB=execinfo
 SRCS=symtab.c backtrace.c
