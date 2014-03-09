@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.36 2014/01/04 00:10:03 dsl Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.37 2014/03/09 22:31:25 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.36 2014/01/04 00:10:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.37 2014/03/09 22:31:25 matt Exp $");
 
 #include "opt_altivec.h"
 
@@ -137,10 +137,13 @@ process_sstep(struct lwp *l, int sstep)
 {
 	struct trapframe * const tf = l->l_md.md_utf;
 	
-	if (sstep)
+	if (sstep) {
 		tf->tf_srr1 |= PSL_SE;
-	else
+		l->l_md.md_flags |= PSL_SE;
+	} else {
 		tf->tf_srr1 &= ~PSL_SE;
+		l->l_md.md_flags &= ~PSL_SE;
+	}
 	return 0;
 }
 
