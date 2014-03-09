@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.4 2013/01/18 19:58:43 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2014/03/09 17:05:23 christos Exp $
 
 # $FreeBSD: src/cddl/usr.bin/ctfconvert/Makefile,v 1.1.4.1 2009/08/03 08:13:06 kensmith Exp $
 
 .include <bsd.own.mk>
 
 .include	"../../Makefile.inc"
+.include	"../../Makefile.ctf"
 
 DEBUG_FLAGS=	-g
 
@@ -31,28 +32,5 @@ SRCS=		alist.c \
 		traverse.c \
 		util.c
 
-CFLAGS+=	-I${OSNETDIR}/sys \
-		-I${OSNETDIR}/include \
-		-I${OPENSOLARIS_USR_DISTDIR} \
-		-I${OPENSOLARIS_SYS_DISTDIR} \
-		-I${OPENSOLARIS_USR_DISTDIR}/head \
-		-I${OPENSOLARIS_USR_DISTDIR}/tools/ctf/common \
-		-I${OPENSOLARIS_USR_DISTDIR}/tools/ctf/cvt \
-		-I${OPENSOLARIS_SYS_DISTDIR}/uts/common \
-		-g
-
-.ifndef HOSTPROG
-LIBCTF_OBJDIR!=	cd ${.CURDIR}/../../lib/libctf  && ${PRINTOBJDIR}
-
-LDADD+=		-L${OSNETDIR}/lib/libctf \
-		-L${NETBSDSRCDIR}/external/bsd/libdwarf/lib \
-		-L${NETBSDSRCDIR}/external/bsd/libelf/lib \
-		-L${LIBCTF_OBJDIR}
-LDADD+=		-lctf -ldwarf -lelf -lz 
-.endif
-
-.PATH:		${.CURDIR}
-.PATH:		${OPENSOLARIS_USR_DISTDIR}/tools/ctf/common
-.PATH:		${OPENSOLARIS_USR_DISTDIR}/tools/ctf/cvt
 
 .include <bsd.prog.mk>
