@@ -217,6 +217,7 @@ static char *tmpname = NULL;
 static int dynsym;
 int debug_level = DEBUG_LEVEL;
 static size_t maxpgsize = 0x400000;
+static int maxslots = MERGE_PHASE1_MAX_SLOTS;
 
 
 void
@@ -641,7 +642,7 @@ wq_init(workqueue_t *wq, int nfiles)
 	if (getenv("CTFMERGE_MAX_SLOTS"))
 		nslots = atoi(getenv("CTFMERGE_MAX_SLOTS"));
 	else
-		nslots = MERGE_PHASE1_MAX_SLOTS;
+		nslots = maxslots;
 
 	if (getenv("CTFMERGE_PHASE1_BATCH_SIZE"))
 		wq->wq_maxbatchsz = atoi(getenv("CTFMERGE_PHASE1_BATCH_SIZE"));
@@ -776,7 +777,7 @@ main(int argc, char **argv)
 		debug_level = atoi(getenv("CTFMERGE_DEBUG_LEVEL"));
 
 	err = 0;
-	while ((c = getopt(argc, argv, ":cd:D:fgl:L:o:tvw:s")) != EOF) {
+	while ((c = getopt(argc, argv, ":cd:D:fgl:L:o:tvw:sS:")) != EOF) {
 		switch (c) {
 		case 'c':
 			docopy = 1;
@@ -823,6 +824,9 @@ main(int argc, char **argv)
 		case 's':
 			/* use the dynsym rather than the symtab */
 			dynsym = CTF_USE_DYNSYM;
+			break;
+		case 'S':
+			maxslots = atoi(optarg);
 			break;
 		default:
 			usage();
