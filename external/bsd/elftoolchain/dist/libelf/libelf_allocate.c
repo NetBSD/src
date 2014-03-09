@@ -1,3 +1,5 @@
+/*	$NetBSD: libelf_allocate.c,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+
 /*-
  * Copyright (c) 2006,2008,2010 Joseph Koshy
  * All rights reserved.
@@ -24,6 +26,10 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+# include "nbtool_config.h"
+#endif
+
 /*
  * Internal APIs
  */
@@ -38,6 +44,7 @@
 
 #include "_libelf.h"
 
+__RCSID("$NetBSD: libelf_allocate.c,v 1.2 2014/03/09 16:58:04 christos Exp $");
 ELFTC_VCSID("Id: libelf_allocate.c 2272 2011-12-03 17:07:31Z jkoshy ");
 
 Elf *
@@ -88,7 +95,7 @@ _libelf_init_elf(Elf *e, Elf_Kind kind)
 #define	FREE(P)		do {				\
 		if (P)					\
 			free(P);			\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 
 Elf *

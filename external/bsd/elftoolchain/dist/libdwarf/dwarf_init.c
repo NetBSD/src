@@ -1,3 +1,5 @@
+/*	$NetBSD: dwarf_init.c,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+
 /*-
  * Copyright (c) 2007 John Birrell (jb@freebsd.org)
  * Copyright (c) 2009 Kai Wang
@@ -27,6 +29,7 @@
 
 #include "_libdwarf.h"
 
+__RCSID("$NetBSD: dwarf_init.c,v 1.2 2014/03/09 16:58:04 christos Exp $");
 ELFTC_VCSID("Id: dwarf_init.c 2073 2011-10-27 03:30:47Z jkoshy ");
 
 int

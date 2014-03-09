@@ -1,3 +1,5 @@
+/*	$NetBSD: libdwarf_rw.c,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+
 /*-
  * Copyright (c) 2007 John Birrell (jb@freebsd.org)
  * Copyright (c) 2010 Kai Wang
@@ -27,6 +29,7 @@
 
 #include "_libdwarf.h"
 
+__RCSID("$NetBSD: libdwarf_rw.c,v 1.2 2014/03/09 16:58:04 christos Exp $");
 ELFTC_VCSID("Id: libdwarf_rw.c 2952 2013-06-26 19:09:40Z kaiwang27 ");
 
 uint64_t

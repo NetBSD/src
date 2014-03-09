@@ -1,3 +1,5 @@
+/*	$NetBSD: libelf.h,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+
 /*-
  * Copyright (c) 2006,2008-2010 Joseph Koshy
  * All rights reserved.
@@ -29,9 +31,17 @@
 #ifndef	_LIBELF_H_
 #define	_LIBELF_H_
 
+#if HAVE_NBTOOL_CONFIG_H
+# include "nbtool_config.h"
+#endif
+
 #include <sys/types.h>
+#ifdef __NetBSD__
+#include <sys/exec_elf.h>
+#else
 #include <sys/elf32.h>
 #include <sys/elf64.h>
+#endif
 
 /* Library private data structures */
 typedef struct _Elf Elf;
@@ -204,7 +214,7 @@ int		elf_getshdrnum(Elf *_elf, size_t *_dst);
 int		elf_getshnum(Elf *_elf, size_t *_dst);	/* Deprecated */
 int		elf_getshdrstrndx(Elf *_elf, size_t *_dst);
 int		elf_getshstrndx(Elf *_elf, size_t *_dst); /* Deprecated */
-unsigned long	elf_hash(const char *_name);
+unsigned long	elf_hash(const void *_name);
 Elf_Kind	elf_kind(Elf *_elf);
 Elf		*elf_memory(char *_image, size_t _size);
 size_t		elf_ndxscn(Elf_Scn *_scn);
