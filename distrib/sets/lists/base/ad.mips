@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.33 2014/03/01 15:41:00 dsl Exp $
+# $NetBSD: ad.mips,v 1.34 2014/03/09 18:12:57 christos Exp $
 ./lib/64					base-compat-shlib	compat,arch64
 ./lib/64/npf					base-npf-shlib		compat,arch64
 ./lib/64/npf/ext_log.so				base-npf-shlib		compat,pic,arch64
@@ -119,12 +119,12 @@
 ./usr/lib/64/libdns.so.8.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libdns_sd.so.0			base-compat-shlib	compat,pic,mdns,arch64
 ./usr/lib/64/libdns_sd.so.0.0			base-compat-shlib	compat,pic,mdns,arch64
-./usr/lib/64/libdwarf.so.0			base-compat-shlib	compat,pic,arch64
-./usr/lib/64/libdwarf.so.0.1			base-compat-shlib	compat,pic,arch64
+./usr/lib/64/libdwarf.so.1			base-compat-shlib	compat,pic,arch64
+./usr/lib/64/libdwarf.so.1.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libedit.so.3			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libedit.so.3.1			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libelf.so.0			base-compat-shlib	compat,pic,arch64
-./usr/lib/64/libelf.so.0.0			base-compat-shlib	compat,pic,arch64
+./usr/lib/64/libelf.so..0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libevent.so.4			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libevent.so.4.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libevent_openssl.so.4		base-compat-shlib	compat,pic,crypto,arch64
@@ -453,12 +453,12 @@
 ./usr/lib/o32/libdns.so.8.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libdns_sd.so.0			base-compat-shlib	compat,pic,mdns,arch64
 ./usr/lib/o32/libdns_sd.so.0.0			base-compat-shlib	compat,pic,mdns,arch64
-./usr/lib/o32/libdwarf.so.0			base-compat-shlib	compat,pic,arch64
-./usr/lib/o32/libdwarf.so.0.1			base-compat-shlib	compat,pic,arch64
+./usr/lib/o32/libdwarf.so.1			base-compat-shlib	compat,pic,arch64
+./usr/lib/o32/libdwarf.so.1.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libedit.so.3			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libedit.so.3.1			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libelf.so.0			base-compat-shlib	compat,pic,arch64
-./usr/lib/o32/libelf.so.0.0			base-compat-shlib	compat,pic,arch64
+./usr/lib/o32/libelf.so..0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libevent.so.4			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libevent.so.4.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libevent_openssl.so.4		base-compat-shlib	compat,pic,crypto,arch64
