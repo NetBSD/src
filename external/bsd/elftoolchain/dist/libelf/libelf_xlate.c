@@ -1,3 +1,5 @@
+/*	$NetBSD: libelf_xlate.c,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
  * All rights reserved.
@@ -24,6 +26,10 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+# include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 
 #include <assert.h>
@@ -31,6 +37,7 @@
 
 #include "_libelf.h"
 
+__RCSID("$NetBSD: libelf_xlate.c,v 1.2 2014/03/09 16:58:04 christos Exp $");
 ELFTC_VCSID("Id: libelf_xlate.c 2225 2011-11-26 18:55:54Z jkoshy ");
 
 /*
@@ -54,7 +61,7 @@ _libelf_xlate(Elf_Data *dst, const Elf_Data *src, unsigned int encoding,
 	uintptr_t sb, se, db, de;
 
 	if (encoding == ELFDATANONE)
-		encoding = LIBELF_PRIVATE(byteorder);
+		encoding = _libelf_host_byteorder();
 
 	if ((encoding != ELFDATA2LSB && encoding != ELFDATA2MSB) ||
 	    dst == NULL || src == NULL || dst == src)	{
@@ -134,7 +141,7 @@ _libelf_xlate(Elf_Data *dst, const Elf_Data *src, unsigned int encoding,
 	dst->d_type = src->d_type;
 	dst->d_size = dsz;
 
-	byteswap = encoding != LIBELF_PRIVATE(byteorder);
+	byteswap = encoding != _libelf_host_byteorder();
 
 	if (src->d_size == 0 ||
 	    (db == sb && !byteswap && fsz == msz))
