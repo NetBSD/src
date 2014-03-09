@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.120 2014/01/02 19:25:08 christos Exp $
+#	$NetBSD: sys.mk,v 1.121 2014/03/09 18:01:06 christos Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 #
 # This file contains the basic rules for make(1) and is read first
@@ -45,6 +45,9 @@ LINK.c?=	${CC} ${CFLAGS} ${CPPFLAGS} ${LDFLAGS}
 # C Type Format data is required for DTrace
 CTFFLAGS	?=	-g -L VERSION
 CTFMFLAGS	?=	-g -t -L VERSION
+# XXX: Avoid deadlock in threads
+CTFMERGE_MAX_SLOTS=1
+.export CFTMERGE_MAX_SLOTS
 
 # We have to define these here, because if we don't the rules below will
 # not work
