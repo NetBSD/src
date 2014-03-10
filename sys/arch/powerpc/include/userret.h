@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.26 2014/03/09 23:09:32 matt Exp $	*/
+/*	$NetBSD: userret.h,v 1.27 2014/03/10 00:03:14 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -78,7 +78,7 @@ userret(struct lwp *l, struct trapframe *tf)
 	 * completion exception but it needs PSL_DE to fire.  Instead we
 	 * use IAC1/IAC2 to match the next PC.
 	 */
-	if (__predict_false(tf->tf_ssr1 & PSL_SE)) {
+	if (__predict_false(tf->tf_srr1 & PSL_SE)) {
 		tf->tf_ssr1 &= ~PSL_SE;
 		extern void booke_sstep(struct trapframe *); /* ugly */
 		booke_sstep(tf);
