@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.14 2014/03/10 13:01:28 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.15 2014/03/10 13:10:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.14 2014/03/10 13:01:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.15 2014/03/10 13:10:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -566,7 +566,7 @@ hexdump(const char *msg, const void *base, size_t len)
 }
 
 
-usbd_status
+int
 xhci_init(struct xhci_softc *sc)
 {
 	bus_size_t bsz;
@@ -598,7 +598,7 @@ xhci_init(struct xhci_softc *sc)
 	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh, 0, caplength,
 	    &sc->sc_cbh) != 0) {
 		aprint_error_dev(sc->sc_dev, "capability subregion failure\n");
-		return USBD_NOMEM;
+		return ENOMEM;
 	}
 
 	hcs1 = xhci_cap_read_4(sc, XHCI_HCSPARAMS1);
@@ -654,21 +654,21 @@ xhci_init(struct xhci_softc *sc)
 	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh, caplength, bsz,
 	    &sc->sc_obh) != 0) {
 		aprint_error_dev(sc->sc_dev, "operational subregion failure\n");
-		return USBD_NOMEM;
+		return ENOMEM;
 	}
 
 	dboff = xhci_cap_read_4(sc, XHCI_DBOFF);
 	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh, dboff,
 	    sc->sc_maxslots * 4, &sc->sc_dbh) != 0) {
 		aprint_error_dev(sc->sc_dev, "doorbell subregion failure\n");
-		return USBD_NOMEM;
+		return ENOMEM;
 	}
 
 	rtsoff = xhci_cap_read_4(sc, XHCI_RTSOFF);
 	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh, rtsoff,
 	    sc->sc_maxintrs * 0x20, &sc->sc_rbh) != 0) {
 		aprint_error_dev(sc->sc_dev, "runtime subregion failure\n");
-		return USBD_NOMEM;
+		return ENOMEM;
 	}
 
 	for (i = 0; i < 100; i++) {
@@ -678,7 +678,7 @@ xhci_init(struct xhci_softc *sc)
 		usb_delay_ms(&sc->sc_bus, 1);
 	}
 	if (i >= 100)
-		return USBD_IOERROR;
+		return EIO;
 
 	usbcmd = 0;
 	xhci_op_write_4(sc, XHCI_USBCMD, usbcmd);
@@ -693,7 +693,7 @@ xhci_init(struct xhci_softc *sc)
 		usb_delay_ms(&sc->sc_bus, 1);
 	}
 	if (i >= 100)
-		return USBD_IOERROR;
+		return EIO;
 
 	for (i = 0; i < 100; i++) {
 		usbsts = xhci_op_read_4(sc, XHCI_USBSTS);
@@ -702,13 +702,13 @@ xhci_init(struct xhci_softc *sc)
 		usb_delay_ms(&sc->sc_bus, 1);
 	}
 	if (i >= 100)
-		return USBD_IOERROR;
+		return EIO;
 
 	pagesize = xhci_op_read_4(sc, XHCI_PAGESIZE);
 	aprint_debug_dev(sc->sc_dev, "PAGESIZE 0x%08x\n", pagesize);
 	pagesize = ffs(pagesize);
 	if (pagesize == 0)
-		return USBD_IOERROR;
+		return EIO;
 	sc->sc_pgsz = 1 << (12 + (pagesize - 1));
 	aprint_debug_dev(sc->sc_dev, "sc_pgsz 0x%08x\n", (uint32_t)sc->sc_pgsz);
 	aprint_debug_dev(sc->sc_dev, "sc_maxslots 0x%08x\n",
