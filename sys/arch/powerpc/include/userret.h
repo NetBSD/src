@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.27 2014/03/10 00:03:14 matt Exp $	*/
+/*	$NetBSD: userret.h,v 1.28 2014/03/10 00:04:04 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -79,7 +79,7 @@ userret(struct lwp *l, struct trapframe *tf)
 	 * use IAC1/IAC2 to match the next PC.
 	 */
 	if (__predict_false(tf->tf_srr1 & PSL_SE)) {
-		tf->tf_ssr1 &= ~PSL_SE;
+		tf->tf_srr1 &= ~PSL_SE;
 		extern void booke_sstep(struct trapframe *); /* ugly */
 		booke_sstep(tf);
 	}
