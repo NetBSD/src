@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.138 2014/02/28 14:19:25 matt Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.139 2014/03/10 22:38:53 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -211,7 +211,7 @@ CPPFLAGS+=	-Dsun3
 
 # include libkern source files
 KERNDIR=${RUMPTOP}/../lib/libkern
-.ifdef RUMPKMOD
+.if "${_RUMP_NATIVEABI}" == "yes"
 KERNMISCCPPFLAGS+=	-D_RUMPKERNEL
 .endif
 .include "${RUMPTOP}/../lib/libkern/Makefile.libkern"
