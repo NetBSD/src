@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.59 2014/03/10 22:38:53 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.60 2014/03/10 22:44:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -100,6 +100,7 @@ enum rump_etfs_type {
 _BEGIN_DECLS
 #endif
 
+int	rump_getversion(void);
 int	rump_nativeabi_p(void);
 
 int	rump_boot_gethowto(void);

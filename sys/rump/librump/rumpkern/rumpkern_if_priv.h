@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpkern_if_priv.h,v 1.13 2013/03/07 18:50:17 pooka Exp $	*/
+/*	$NetBSD: rumpkern_if_priv.h,v 1.14 2014/03/10 22:44:11 pooka Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
@@ -6,7 +6,6 @@
  * by:   NetBSD: makerumpif.sh,v 1.6 2013/02/14 10:54:54 pooka Exp 
  */
 
-int rump_getversion(void);
 int rump_module_init(const struct modinfo * const *, size_t);
 int rump_module_fini(const struct modinfo *);
 int rump_kernelfsym_load(void *, uint64_t, char *, uint64_t);
