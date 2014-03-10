@@ -1,4 +1,4 @@
-/*	$NetBSD: xhcivar.h,v 1.2 2013/10/28 17:49:33 matt Exp $	*/
+/*	$NetBSD: xhcivar.h,v 1.3 2014/03/10 13:10:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -116,7 +116,7 @@ struct xhci_softc {
 	uint8_t sc_conf;
 };
 
-usbd_status     xhci_init(struct xhci_softc *);
+int             xhci_init(struct xhci_softc *);
 int             xhci_intr(void *);
 int             xhci_detach(struct xhci_softc *, int);
 int             xhci_activate(device_t, enum devact);

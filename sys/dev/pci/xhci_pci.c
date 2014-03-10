@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci_pci.c,v 1.1 2013/09/14 00:40:31 jakllsch Exp $	*/
+/*	$NetBSD: xhci_pci.c,v 1.2 2014/03/10 13:10:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.1 2013/09/14 00:40:31 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.2 2014/03/10 13:10:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 	char const *intrstr;
 	pci_intr_handle_t ih;
 	pcireg_t csr, memtype;
-	usbd_status r;
+	int err;
 	//const char *vendor;
 	uint32_t hccparams;
 
@@ -164,9 +164,9 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 		    "vendor 0x%04x", PCI_VENDOR(pa->pa_id));
 #endif
 
-	r = xhci_init(sc);
-	if (r != USBD_NORMAL_COMPLETION) {
-		aprint_error_dev(self, "init failed, error=%d\n", r);
+	err = xhci_init(sc);
+	if (err) {
+		aprint_error_dev(self, "init failed, error=%d\n", err);
 		goto fail;
 	}
 
