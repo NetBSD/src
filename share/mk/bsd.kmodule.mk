@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.42 2014/02/21 20:44:03 joerg Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.43 2014/03/10 12:13:14 nakayama Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -36,7 +36,7 @@ CFLAGS+=	-mlongcall
 CFLAGS+=	-fno-pic
 .endif
 
-.if ${MACHINE} == "sparc64"
+.if ${MACHINE_CPU} == "sparc64"
 # force same memory model as rest of the kernel
 CFLAGS+=	${${ACTIVE_CC} == "gcc":? -mcmodel=medlow :}
 CFLAGS+=	${${ACTIVE_CC} == "clang":? -mcmodel=small :}
