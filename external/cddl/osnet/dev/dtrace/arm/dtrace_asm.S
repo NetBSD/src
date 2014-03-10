@@ -34,8 +34,7 @@
 #include <sys/dtrace.h>
 
 #include <machine/asm.h>
-
-#include "assym.s"
+#include <arm/armreg.h>
 
 /*
 void dtrace_membar_producer(void)
