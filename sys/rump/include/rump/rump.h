@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.60 2014/03/10 22:44:10 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.61 2014/03/10 22:48:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -101,6 +101,7 @@ _BEGIN_DECLS
 #endif
 
 int	rump_getversion(void);
+int	rump_pub_getversion(void); /* compat */
 int	rump_nativeabi_p(void);
 
 int	rump_boot_gethowto(void);
