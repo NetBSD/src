@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.68 2013/09/10 21:30:21 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.69 2014/03/10 05:18:34 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.68 2013/09/10 21:30:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.69 2014/03/10 05:18:34 matt Exp $");
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"
@@ -244,8 +244,8 @@ vmapbuf(struct buf *bp, vsize_t len)
 	while (len) {
 		(void) pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map),
 		    faddr, &fpa);
-		pmap_enter(pmap_kernel(), taddr, fpa,
-			VM_PROT_READ|VM_PROT_WRITE, VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+		pmap_kenter_pa(taddr, fpa, VM_PROT_READ|VM_PROT_WRITE,
+		    PMAP_WIRED);
 		faddr += PAGE_SIZE;
 		taddr += PAGE_SIZE;
 		len -= PAGE_SIZE;
@@ -280,7 +280,7 @@ vunmapbuf(struct buf *bp, vsize_t len)
 	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
 
-	pmap_remove(pmap_kernel(), addr, addr + len);
+	pmap_kremove(addr, len);
 	pmap_update(pmap_kernel());
 	uvm_km_free(phys_map, addr, len, UVM_KMF_VAONLY);
 	bp->b_data = bp->b_saveaddr;
