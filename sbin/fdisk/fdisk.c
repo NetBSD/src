@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.145 2013/04/14 22:48:22 jakllsch Exp $ */
+/*	$NetBSD: fdisk.c,v 1.146 2014/03/10 15:42:51 jakllsch Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.145 2013/04/14 22:48:22 jakllsch Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.146 2014/03/10 15:42:51 jakllsch Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -705,7 +705,7 @@ print_s0(int which)
 			else
 				printf("First active partition: %d\n", active);
 		}
-		if (!sh_flag && mboot.mbr_dsn != 0)
+		if (!sh_flag)
 			printf("Drive serial number: %"PRIu32" (0x%08x)\n",
 			    le32toh(mboot.mbr_dsn),
 			    le32toh(mboot.mbr_dsn));
