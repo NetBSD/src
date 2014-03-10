@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.15 2014/03/10 13:10:41 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.16 2014/03/10 13:21:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.15 2014/03/10 13:10:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.16 2014/03/10 13:21:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -762,45 +762,45 @@ xhci_init(struct xhci_softc *sc)
 		return err;
 	}
 
-	{
-		usb_dma_t *dma;
-		size_t size;
-		size_t align;
+	usb_dma_t *dma;
+	size_t size;
+	size_t align;
 
-		dma = &sc->sc_eventst_dma;
-		size = roundup2(XHCI_EVENT_RING_SEGMENTS * XHCI_ERSTE_SIZE,
-		    XHCI_EVENT_RING_SEGMENT_TABLE_ALIGN);
-		KASSERT(size <= (512 * 1024));
-		align = XHCI_EVENT_RING_SEGMENT_TABLE_ALIGN;
-		err = usb_allocmem(&sc->sc_bus, size, align, dma);
-		memset(KERNADDR(dma, 0), 0, size);
-		usb_syncmem(dma, 0, size, BUS_DMASYNC_PREWRITE);
-		aprint_debug_dev(sc->sc_dev, "eventst: %s %016jx %p %zx\n",
-		    usbd_errstr(err),
-		    (uintmax_t)DMAADDR(&sc->sc_eventst_dma, 0),
-		    KERNADDR(&sc->sc_eventst_dma, 0),
-		    sc->sc_eventst_dma.block->size);
+	dma = &sc->sc_eventst_dma;
+	size = roundup2(XHCI_EVENT_RING_SEGMENTS * XHCI_ERSTE_SIZE,
+	    XHCI_EVENT_RING_SEGMENT_TABLE_ALIGN);
+	KASSERT(size <= (512 * 1024));
+	align = XHCI_EVENT_RING_SEGMENT_TABLE_ALIGN;
+	err = usb_allocmem(&sc->sc_bus, size, align, dma);
 
-		dma = &sc->sc_dcbaa_dma;
-		size = (1 + sc->sc_maxslots) * sizeof(uint64_t);
-		KASSERT(size <= 2048);
-		align = XHCI_DEVICE_CONTEXT_BASE_ADDRESS_ARRAY_ALIGN;
-		err = usb_allocmem(&sc->sc_bus, size, align, dma);
-		memset(KERNADDR(dma, 0), 0, size);
-		if (sc->sc_maxspbuf != 0) {
-			/*
-			 * DCBA entry 0 hold the scratchbuf array pointer.
-			 */
-			*(uint64_t *)KERNADDR(dma, 0) =
-			    htole64(DMAADDR(&sc->sc_spbufarray_dma, 0));
-		}
-		usb_syncmem(dma, 0, size, BUS_DMASYNC_PREWRITE);
-		aprint_debug_dev(sc->sc_dev, "dcbaa: %s %016jx %p %zx\n",
-		    usbd_errstr(err),
-		    (uintmax_t)DMAADDR(&sc->sc_dcbaa_dma, 0),
-		    KERNADDR(&sc->sc_dcbaa_dma, 0),
-		    sc->sc_dcbaa_dma.block->size);
+	memset(KERNADDR(dma, 0), 0, size);
+	usb_syncmem(dma, 0, size, BUS_DMASYNC_PREWRITE);
+	aprint_debug_dev(sc->sc_dev, "eventst: %s %016jx %p %zx\n",
+	    usbd_errstr(err),
+	    (uintmax_t)DMAADDR(&sc->sc_eventst_dma, 0),
+	    KERNADDR(&sc->sc_eventst_dma, 0),
+	    sc->sc_eventst_dma.block->size);
+
+	dma = &sc->sc_dcbaa_dma;
+	size = (1 + sc->sc_maxslots) * sizeof(uint64_t);
+	KASSERT(size <= 2048);
+	align = XHCI_DEVICE_CONTEXT_BASE_ADDRESS_ARRAY_ALIGN;
+	err = usb_allocmem(&sc->sc_bus, size, align, dma);
+
+	memset(KERNADDR(dma, 0), 0, size);
+	if (sc->sc_maxspbuf != 0) {
+		/*
+		 * DCBA entry 0 hold the scratchbuf array pointer.
+		 */
+		*(uint64_t *)KERNADDR(dma, 0) =
+		    htole64(DMAADDR(&sc->sc_spbufarray_dma, 0));
 	}
+	usb_syncmem(dma, 0, size, BUS_DMASYNC_PREWRITE);
+	aprint_debug_dev(sc->sc_dev, "dcbaa: %s %016jx %p %zx\n",
+	    usbd_errstr(err),
+	    (uintmax_t)DMAADDR(&sc->sc_dcbaa_dma, 0),
+	    KERNADDR(&sc->sc_dcbaa_dma, 0),
+	    sc->sc_dcbaa_dma.block->size);
 
 	sc->sc_slots = kmem_zalloc(sizeof(*sc->sc_slots) * sc->sc_maxslots,
 	    KM_SLEEP);
