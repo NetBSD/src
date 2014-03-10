@@ -1460,6 +1460,7 @@ case "${targ}" in
   sparc-*-netbsdelf*)
     targ_defvec=bfd_elf32_sparc_vec
     targ_selvecs="sparcnetbsd_vec sunos_big_vec"
+    want64=true
     ;;
   sparc-*-netbsd*)
     targ_defvec=sparcnetbsd_vec
