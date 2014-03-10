@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.63 2014/02/07 15:29:21 hannken Exp $	*/
+/*	$NetBSD: p2k.c,v 1.64 2014/03/10 22:47:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -754,7 +754,7 @@ needcompat(void)
 
 	/*LINTED*/
 	return __NetBSD_Version__ < VERS_TIMECHANGE
-	    && rump_pub_getversion() >= VERS_TIMECHANGE;
+	    && rump_getversion() >= VERS_TIMECHANGE;
 }
 
 #define DOCOMPAT(va, va_compat)						\
