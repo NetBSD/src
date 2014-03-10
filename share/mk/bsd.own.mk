@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.782 2014/03/09 19:58:43 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.783 2014/03/10 22:38:53 pooka Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -791,14 +791,6 @@ ARM_APCS_FLAGS+=${${ACTIVE_CC} == "clang":? -target ${MACHINE_GNU_ARCH}--netbsde
 .endif
 
 GENASSYM_CPPFLAGS+=	${${ACTIVE_CC} == "clang":? -no-integrated-as :}
-
-#
-# Determine if arch uses native kernel modules with rump
-#
-.if ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE_ARCH} == "x86_64"
-RUMPKMOD=	# defined
-.endif
 
 TARGETS+=	all clean cleandir depend dependall includes \
 		install lint obj regress tags html analyze
