@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.222 2014/03/05 03:51:25 ginsbach Exp $
+$NetBSD: acronyms,v 1.223 2014/03/10 17:56:21 mbalmer Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -521,6 +521,7 @@ TWIAVBP	the world is a very big place
 TY	thank you
 TYVM	thank you very much
 U/L	upload
+UGT	universal greeting time
 UTSL	use the source, Luke
 VCR	video cassette recorder
 VEG	very evil grin
