@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.229 2014/03/09 20:35:30 htodd Exp $
+# $NetBSD: md.amd64,v 1.230 2014/03/10 00:23:22 htodd Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./lib/i386					base-compat-shlib		compat
@@ -115,7 +115,8 @@
 ./usr/lib/i386/libdwarf.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libedit.so.3			base-compat-shlib	compat,pic
 ./usr/lib/i386/libedit.so.3.1			base-compat-shlib	compat,pic
-./usr/lib/i386/libelf.so.0			base-compat-shlib	compat,pic
+./usr/lib/i386/libelf.so.1			base-compat-shlib	compat,pic
+./usr/lib/i386/libelf.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libevent.so.4			base-compat-shlib	compat,pic
 ./usr/lib/i386/libevent.so.4.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libevent_openssl.so.4		base-compat-shlib	compat,pic,crypto
