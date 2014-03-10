@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.166 2014/03/10 02:04:29 ozaki-r Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.167 2014/03/10 02:36:50 ozaki-r Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -355,6 +355,7 @@ vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP} $S/conf/newvers.sh \
 	${HOST_SH} $S/conf/newvers.sh ${_NVFLAGS}
 	${_MKTARGET_COMPILE}
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
+	${COMPILE_CTFCONVERT}
 .endif
 
 .if defined(MEMORY_DISK_IMAGE)
