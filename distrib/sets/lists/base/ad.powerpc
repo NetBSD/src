@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.4 2014/03/09 20:35:30 htodd Exp $
+# $NetBSD: ad.powerpc,v 1.5 2014/03/10 13:19:53 martin Exp $
 ./usr/bin/fdformat				base-util-bin
 ./lib/powerpc					base-npf-shlib		compat,arch64
 ./lib/powerpc/npf				base-npf-shlib		compat,arch64
@@ -108,7 +108,8 @@
 ./usr/lib/powerpc/libdwarf.so.1.0		base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libedit.so.3			base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libedit.so.3.1		base-compat-shlib	compat,arch64,pic
-./usr/lib/powerpc/libelf.so.0			base-compat-shlib	compat,arch64,pic
+./usr/lib/powerpc/libelf.so.1			base-compat-shlib	compat,arch64,pic
+./usr/lib/powerpc/libelf.so.1.0			base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libevent.so.4			base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libevent.so.4.0		base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libevent_openssl.so.4		base-compat-shlib	compat,arch64,pic,crypto

@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.35 2014/03/09 20:35:30 htodd Exp $
+# $NetBSD: ad.mips,v 1.36 2014/03/10 13:19:53 martin Exp $
 ./lib/64					base-compat-shlib	compat,arch64
 ./lib/64/npf					base-npf-shlib		compat,arch64
 ./lib/64/npf/ext_log.so				base-npf-shlib		compat,pic,arch64
@@ -123,7 +123,8 @@
 ./usr/lib/64/libdwarf.so.1.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libedit.so.3			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libedit.so.3.1			base-compat-shlib	compat,pic,arch64
-./usr/lib/64/libelf.so.0			base-compat-shlib	compat,pic,arch64
+./usr/lib/64/libelf.so.1			base-compat-shlib	compat,pic,arch64
+./usr/lib/64/libelf.so.1.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libevent.so.4			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libevent.so.4.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libevent_openssl.so.4		base-compat-shlib	compat,pic,crypto,arch64
@@ -456,7 +457,8 @@
 ./usr/lib/o32/libdwarf.so.1.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libedit.so.3			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libedit.so.3.1			base-compat-shlib	compat,pic,arch64
-./usr/lib/o32/libelf.so.0			base-compat-shlib	compat,pic,arch64
+./usr/lib/o32/libelf.so.1			base-compat-shlib	compat,pic,arch64
+./usr/lib/o32/libelf.so.1.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libevent.so.4			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libevent.so.4.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libevent_openssl.so.4		base-compat-shlib	compat,pic,crypto,arch64
