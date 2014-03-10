@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.35 2014/03/09 23:01:11 justin Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.36 2014/03/10 22:37:51 justin Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.35 2014/03/09 23:01:11 justin Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.36 2014/03/10 22:37:51 justin Exp $");
 #endif /* !lint */
 
 #include <sys/queue.h>
@@ -622,15 +622,13 @@ rumpuser_cv_has_waiters(struct rumpuser_cv *cv, int *nwaiters)
  * curlwp
  */
 
-static __thread struct lwp *curlwp;
+static pthread_key_t curlwpkey;
 
 /*
  * the if0'd curlwp implementation is not used by this hypervisor,
  * but serves as test code to check that the intended usage works.
  */
 #if 0
-static pthread_key_t curlwpkey;
-
 struct rumpuser_lwp {
 	struct lwp *l;
 	LIST_ENTRY(rumpuser_lwp) l_entries;
@@ -718,12 +716,12 @@ rumpuser_curlwpop(int enum_rumplwpop, struct lwp *l)
 	case RUMPUSER_LWP_DESTROY:
 		break;
 	case RUMPUSER_LWP_SET:
-		assert(curlwp == NULL);
-		curlwp = l;
+		assert(pthread_getspecific(curlwpkey) == NULL);
+		pthread_setspecific(curlwpkey, l);
 		break;
 	case RUMPUSER_LWP_CLEAR:
-		assert(curlwp == l);
-		curlwp = NULL;
+		assert(pthread_getspecific(curlwpkey) == l);
+		pthread_setspecific(curlwpkey, NULL);
 		break;
 	}
 }
@@ -732,7 +730,7 @@ struct lwp *
 rumpuser_curlwp(void)
 {
 
-	return curlwp;
+	return pthread_getspecific(curlwpkey);
 }
 #endif
 
@@ -740,5 +738,5 @@ rumpuser_curlwp(void)
 void
 rumpuser__thrinit(void)
 {
-
+	pthread_key_create(&curlwpkey, NULL);
 }
