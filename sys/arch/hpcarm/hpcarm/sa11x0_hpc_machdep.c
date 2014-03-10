@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_hpc_machdep.c,v 1.8 2013/08/18 22:26:51 matt Exp $	*/
+/*	$NetBSD: sa11x0_hpc_machdep.c,v 1.9 2014/03/10 14:51:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_hpc_machdep.c,v 1.8 2013/08/18 22:26:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_hpc_machdep.c,v 1.9 2014/03/10 14:51:15 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_dram_pages.h"
@@ -342,10 +342,8 @@ init_sa11x0(int argc, char **argv, struct bootinfo *bi)
 		if (!(sa1_cc_base & (CPU_SA110_CACHE_CLEAN_SIZE - 1)))
 			break;
 	}
-	{
-		vaddr_t dummy;
-		alloc_pages(dummy, CPU_SA110_CACHE_CLEAN_SIZE / PAGE_SIZE - 1);
-	}
+	alloc_pages(sa1_cache_clean_addr, CPU_SA110_CACHE_CLEAN_SIZE / PAGE_SIZE - 1);
+
 	sa1_cache_clean_addr = sa1_cc_base;
 	sa1_cache_clean_size = CPU_SA110_CACHE_CLEAN_SIZE / 2;
 
