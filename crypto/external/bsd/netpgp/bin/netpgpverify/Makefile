@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2014/03/09 07:00:52 christos Exp $
+#	$NetBSD: Makefile,v 1.9 2014/03/10 17:00:53 agc Exp $
 
 PROG=netpgpverify
 BINDIR=		/usr/bin
@@ -11,7 +11,7 @@ SRCS+= bzlib.c zlib.c
 
 SRCS+= md5c.c rmd160.c sha1.c sha2.c tiger.c
 
-CPPFLAGS+=-I${.CURDIR} ${EXTDIST}/src/netpgpverify
+CPPFLAGS+=-I${.CURDIR} -I${EXTDIST}/src/netpgpverify
 
 .ifndef PRODUCTION
 CPPFLAGS+=-g -O0
