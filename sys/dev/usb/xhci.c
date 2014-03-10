@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.13 2014/01/16 20:55:56 dsl Exp $	*/
+/*	$NetBSD: xhci.c,v 1.14 2014/03/10 13:01:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.13 2014/01/16 20:55:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.14 2014/03/10 13:01:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -579,7 +579,8 @@ xhci_init(struct xhci_softc *sc)
 
 	DPRINTF(("%s\n", __func__));
 
-	sc->sc_bus.usbrev = USBREV_2_0; /* XXX Low/Full/High speeds for now */
+	/* XXX Low/Full/High speeds for now */
+	sc->sc_bus.usbrev = USBREV_2_0;
 
 	cap = xhci_read_4(sc, XHCI_CAPLENGTH);
 	caplength = XHCI_CAP_CAPLENGTH(cap);
