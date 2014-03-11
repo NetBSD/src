@@ -1,4 +1,4 @@
-/*	$NetBSD: kirkwood.c,v 1.8 2013/12/23 04:12:09 kiyohara Exp $	*/
+/*	$NetBSD: kirkwood.c,v 1.9 2014/03/11 07:52:37 martin Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kirkwood.c,v 1.8 2013/12/23 04:12:09 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kirkwood.c,v 1.9 2014/03/11 07:52:37 martin Exp $");
 
 #define _INTR_PRIVATE
 
@@ -145,7 +145,7 @@ static void
 kirkwood_intr_init(void)
 {
 	extern struct pic_softc mvsoc_bridge_pic;
-	void *ih;
+	void *ih __diagused;
 
 	pic_add(&kirkwood_pic, 0);
 
