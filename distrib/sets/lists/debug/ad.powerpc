@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.4 2014/03/09 20:35:30 htodd Exp $
+# $NetBSD: ad.powerpc,v 1.5 2014/03/11 01:38:15 christos Exp $
 ./usr/lib/powerpc/libamu_g.a			comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/libarchive_g.a		comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/libasn1_g.a			comp-c-debuglib		compat,arch64,debuglib,kerberos
@@ -166,7 +166,7 @@
 ./usr/libdata/debug/usr/lib/powerpc/libdns_sd.so.0.0.debug		comp-compat-shlib	compat,arch64,debug,pic,mdns
 ./usr/libdata/debug/usr/lib/powerpc/libdwarf.so.1.0.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libedit.so.3.1.debug			comp-compat-shlib	compat,arch64,debug,pic
-./usr/libdata/debug/usr/lib/powerpc/libelf.so.0.debug			comp-compat-shlib	compat,arch64,debug,pic
+./usr/libdata/debug/usr/lib/powerpc/libelf.so.1.0.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libevent.so.4.0.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libevent_openssl.so.4.0.debug		comp-compat-shlib	compat,arch64,debug,pic,crypto
 ./usr/libdata/debug/usr/lib/powerpc/libevent_pthreads.so.4.0.debug	comp-compat-shlib	compat,arch64,debug,pic
