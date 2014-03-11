@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.163 2014/02/20 01:01:10 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.164 2014/03/11 00:59:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.163 2014/02/20 01:01:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.164 2014/03/11 00:59:38 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -147,6 +147,9 @@ struct emul emul_netbsd = {
 u_int nprocs = 1;
 
 cprng_strong_t *kern_cprng;
+
+/* not used, but need the symbols for pointer comparisons */
+syncobj_t mutex_syncobj, rw_syncobj;
 
 int
 kpause(const char *wmesg, bool intr, int timeo, kmutex_t *mtx)
