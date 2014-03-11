@@ -45,7 +45,7 @@ void *netpgp_allocate(size_t /*n*/, size_t /*nels*/);
 void netpgp_deallocate(void */*ptr*/, size_t /*size*/);
 
 #ifndef _KERNEL
-void logmessage(const int /*level*/, const char */*fmt*/, ...);
+void logmessage(const int /*level*/, const char */*fmt*/, ...) __printflike(2, 3);
 #endif
 
 __END_DECLS
