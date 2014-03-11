@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.150 2014/03/03 16:50:28 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.151 2014/03/11 20:22:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.150 2014/03/03 16:50:28 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.151 2014/03/11 20:22:47 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -658,16 +658,6 @@ ubc_purge(struct uvm_object *uobj)
 {
 
 }
-
-#ifdef DEBUGPRINT
-void
-uvm_object_printit(struct uvm_object *uobj, bool full,
-	void (*pr)(const char *, ...))
-{
-
-	pr("VM OBJECT at %p, refs %d", uobj, uobj->uo_refs);
-}
-#endif
 
 vaddr_t
 uvm_default_mapaddr(struct proc *p, vaddr_t base, vsize_t sz)
