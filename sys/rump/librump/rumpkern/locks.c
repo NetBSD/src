@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.67 2013/12/09 17:03:41 pooka Exp $	*/
+/*	$NetBSD: locks.c,v 1.68 2014/03/11 00:59:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.67 2013/12/09 17:03:41 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.68 2014/03/11 00:59:38 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -72,9 +72,6 @@ static lockops_t rw_lockops = {
 #define LOCKED(a, b)
 #define UNLOCKED(a, b)
 #endif
-
-/* not used, but need the symbols for pointer comparisons */
-syncobj_t mutex_syncobj, rw_syncobj;
 
 /*
  * We map locks to pthread routines.  The difference between kernel
