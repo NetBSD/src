@@ -32,9 +32,9 @@ enum {
 class Registers_x86 {
 public:
   enum {
-    LAST_RESTORE_REG = REGNO_X86_EIP,
-    IP_PSEUDO_REG = REGNO_X86_EIP,
     LAST_REGISTER = REGNO_X86_EIP,
+    LAST_RESTORE_REG = REGNO_X86_EIP,
+    RETURN_REG = REGNO_X86_EIP,
   };
 
   __dso_hidden Registers_x86();
@@ -97,9 +97,9 @@ enum {
 class Registers_x86_64 {
 public:
   enum {
-    LAST_RESTORE_REG = REGNO_X86_64_RIP,
-    IP_PSEUDO_REG = REGNO_X86_64_RIP,
     LAST_REGISTER = REGNO_X86_64_RIP,
+    LAST_RESTORE_REG = REGNO_X86_64_RIP,
+    RETURN_REG = REGNO_X86_64_RIP,
   };
 
   __dso_hidden Registers_x86_64();
@@ -166,9 +166,9 @@ enum {
 class Registers_ppc32 {
 public:
   enum {
-    LAST_RESTORE_REG = REGNO_PPC32_V31,
-    IP_PSEUDO_REG = REGNO_PPC32_SRR0,
     LAST_REGISTER = REGNO_PPC32_V31,
+    LAST_RESTORE_REG = REGNO_PPC32_V31,
+    RETURN_REG = REGNO_PPC32_LR,
   };
 
   __dso_hidden Registers_ppc32();
@@ -246,9 +246,9 @@ enum {
 class Registers_arm32 {
 public:
   enum {
-    LAST_RESTORE_REG = REGNO_ARM32_SPSR,
-    IP_PSEUDO_REG = REGNO_ARM32_SPSR,
     LAST_REGISTER = REGNO_ARM32_D31,
+    LAST_RESTORE_REG = REGNO_ARM32_SPSR,
+    RETURN_REG = REGNO_ARM32_SPSR,
   };
 
   __dso_hidden Registers_arm32();

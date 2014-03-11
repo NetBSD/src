@@ -49,7 +49,7 @@ private:
 
   static int lastRestoreReg(const R &) { return R::LAST_RESTORE_REG; }
   static bool isReturnAddressRegister(int regno, const R &) {
-    return regno == R::IP_PSEUDO_REG;
+    return regno == R::RETURN_REG;
   }
 
   static pint_t getCFA(A &addressSpace,
