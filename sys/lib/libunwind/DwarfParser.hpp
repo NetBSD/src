@@ -172,7 +172,7 @@ bool CFI_Parser<A, R>::decodeFDE(A &addressSpace, pint_t fdeStart,
   if (cieInfo->fdesHaveAugmentationData) {
     uintptr_t augLen = addressSpace.getULEB128(p, nextCFI);
     pint_t endOfAug = p + augLen;
-    if (cieInfo->lsdaEncoding != 0) {
+    if (cieInfo->lsdaEncoding != DW_EH_PE_omit) {
       // Peek at value (without indirection).  Zero means no LSDA.
       pint_t lsdaStart = p;
       if (addressSpace.getEncodedP(p, nextCFI, cieInfo->lsdaEncoding & 0x0F,
@@ -198,7 +198,7 @@ template <typename A, typename R>
 bool CFI_Parser<A, R>::parseCIE(A &addressSpace, pint_t cie,
                                 CIE_Info *cieInfo) {
   cieInfo->pointerEncoding = 0;
-  cieInfo->lsdaEncoding = 0;
+  cieInfo->lsdaEncoding = DW_EH_PE_omit;
   cieInfo->personalityEncoding = 0;
   cieInfo->personalityOffsetInCIE = 0;
   cieInfo->personality = 0;
