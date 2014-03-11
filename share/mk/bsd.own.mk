@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.783 2014/03/10 22:38:53 pooka Exp $
+#	$NetBSD: bsd.own.mk,v 1.784 2014/03/11 23:22:36 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -63,7 +63,8 @@ HAVE_GCC?=    4
       ${MACHINE_CPU} == "arm" || \
       ${MACHINE_CPU} == "hppa" || \
       ${MACHINE_CPU} == "sparc" || \
-      ${MACHINE_CPU} == "sparc64"
+      ${MACHINE_CPU} == "sparc64" || \
+      ${MACHINE_CPU} == "x86_64"
 HAVE_GCC?=    48
 
 .else
