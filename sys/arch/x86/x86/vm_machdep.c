@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.24 2014/02/25 22:16:52 dsl Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.25 2014/03/11 20:55:19 para Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.24 2014/02/25 22:16:52 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.25 2014/03/11 20:55:19 para Exp $");
 
 #include "opt_mtrr.h"
 
@@ -270,7 +270,7 @@ paddr_t
 kvtop(void *addr)
 {
 	paddr_t pa;
-	bool ret;
+	bool ret __diagused;
 
 	ret = pmap_extract(pmap_kernel(), (vaddr_t)addr, &pa);
 	KASSERT(ret == true);
