@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.20 2013/08/26 15:31:06 matt Exp $	*/
+/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.21 2014/03/11 04:17:36 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.20 2013/08/26 15:31:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.21 2014/03/11 04:17:36 ozaki-r Exp $");
 
 #include "opt_ddb.h"
 #include "opt_dram_pages.h"
@@ -252,7 +252,6 @@ init_pxa2x0(int argc, char **argv, struct bootinfo *bi)
 	u_int kerneldatasize, symbolsize;
 	u_int l1pagetable;
 	vaddr_t freemempos;
-	vsize_t pt_size;
 	int loop;
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	Elf_Shdr *sh;
@@ -391,8 +390,6 @@ init_pxa2x0(int argc, char **argv, struct bootinfo *bi)
 	 * shared by all processes.
 	 */
 	valloc_pages(systempage, 1);
-
-	pt_size = round_page(freemempos) - physical_start;
 
 	/* Allocate stacks for all modes */
 	valloc_pages(irqstack, IRQ_STACK_SIZE);
