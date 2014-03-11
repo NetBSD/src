@@ -1,4 +1,4 @@
-/*	$NetBSD: gdium_intr.c,v 1.5 2011/07/10 00:03:53 matt Exp $	*/
+/*	$NetBSD: gdium_intr.c,v 1.6 2014/03/11 08:19:45 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdium_intr.c,v 1.5 2011/07/10 00:03:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdium_intr.c,v 1.6 2014/03/11 08:19:45 mrg Exp $");
 
 #define __INTR_PRIVATE
 
@@ -299,7 +299,6 @@ evbmips_intr_disestablish(void *cookie)
 void
 evbmips_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 {
-	const struct gdium_irqmap *irqmap;
 	struct evbmips_intrhand *ih;
 	int level;
 	uint32_t isr;
@@ -315,7 +314,6 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 			continue;
 		gdium_cpuintrs[level].cintr_count.ev_count++;
 		LIST_FOREACH (ih, &gdium_cpuintrs[level].cintr_list, ih_q) {
-			irqmap = &gdium_irqmap[ih->ih_irq];
 			if (isr & (1 << ih->ih_irq)) {
 				gdium_intrtab[ih->ih_irq].intr_count.ev_count++;
 				(*ih->ih_func)(ih->ih_arg);
