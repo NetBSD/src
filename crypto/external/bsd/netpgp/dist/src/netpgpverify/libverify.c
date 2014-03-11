@@ -56,6 +56,14 @@
 #define USE_ARG(x)	/*LINTED*/(void)&(x)
 #endif
 
+#ifndef __dead
+#define __dead				__attribute__((__noreturn__))
+#endif
+
+#ifndef __printflike
+#define __printflike(n, m)		__attribute__((format(printf,n,m)))
+#endif
+
 #define BITS_TO_BYTES(b)		(((b) + (CHAR_BIT - 1)) / CHAR_BIT)
 
 /* packet types */
