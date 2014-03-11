@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.77 2014/02/12 19:53:49 dsl Exp $	*/
+/*	$NetBSD: trap.c,v 1.78 2014/03/11 20:54:29 para Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.77 2014/02/12 19:53:49 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.78 2014/03/11 20:54:29 para Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -705,7 +705,7 @@ startlwp(void *arg)
 {
 	ucontext_t *uc = arg;
 	lwp_t *l = curlwp;
-	int error;
+	int error __diagused;
 
 	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
 	KASSERT(error == 0);
