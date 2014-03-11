@@ -151,7 +151,7 @@
 
 /* Forward declarations */
 static int read_all_packets(pgpv_t */*pgp*/, pgpv_mem_t */*mem*/, const char */*op*/);
-static int read_binary_file(pgpv_t */*pgp*/, const char */*op*/, const char */*fmt*/, ...);
+static int read_binary_file(pgpv_t */*pgp*/, const char */*op*/, const char */*fmt*/, ...) __printflike(3, 4);
 static int read_binary_memory(pgpv_t */*pgp*/, const char */*op*/, const void */*memory*/, size_t /*size*/);
 
 /* read a file into the pgpv_mem_t struct */
@@ -2221,7 +2221,7 @@ findstr(str_t *array, const char *name)
 }
 
 /* read public key from the ssh pubkey file */
-static int
+static __printflike(3, 4) int
 read_ssh_file(pgpv_t *pgp, pgpv_primarykey_t *primary, const char *fmt, ...)
 {
 	pgpv_signed_userid_t	 userid;
@@ -2690,7 +2690,7 @@ pgpv_read_ssh_pubkeys(pgpv_t *pgp, const void *keyring, ssize_t size)
 		if (!read_ssh_file(pgp, &primary, "%s", keyring)) {
 			return 0;
 		}
-	} else if (!read_ssh_file(pgp, &primary, "pubring", "%s/%s", nonnull_getenv("HOME"), ".ssh/id_rsa.pub")) {
+	} else if (!read_ssh_file(pgp, &primary, "%s/%s", nonnull_getenv("HOME"), ".ssh/id_rsa.pub")) {
 		return 0;
 	}
 	ARRAY_APPEND(pgp->primaries, primary);
