@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcix.c,v 1.10 2012/10/27 17:18:03 chs Exp $	*/
+/*	$NetBSD: rmixl_pcix.c,v 1.11 2014/03/11 08:19:45 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.10 2012/10/27 17:18:03 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.11 2014/03/11 08:19:45 mrg Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -385,11 +385,14 @@ rmixl_pcix_attach(device_t parent, device_t self, void *aux)
 	 * check PCI-X interface byteswap setup
 	 * ensure 'Match Byte Lane' is disabled
 	 */
-	uint32_t mble, mba, mbs;
+	uint32_t mble;
 	mble = RMIXL_PCIXREG_READ(RMIXL_PCIX_ECFG_XLR_MBLE);
+#ifdef PCI_DEBUG
+	uint32_t mba, mbs;
 	mba  = RMIXL_PCIXREG_READ(RMIXL_PCIX_ECFG_MATCH_BIT_ADDR);
 	mbs  = RMIXL_PCIXREG_READ(RMIXL_PCIX_ECFG_MATCH_BIT_SIZE);
 	DPRINTF(("%s: MBLE=%#x, MBA=%#x, MBS=%#x\n", __func__, mble, mba, mbs));
+#endif
 	if ((mble & __BIT(40)) != 0)
 		RMIXL_PCIXREG_WRITE(RMIXL_PCIX_ECFG_XLR_MBLE, 0);
 

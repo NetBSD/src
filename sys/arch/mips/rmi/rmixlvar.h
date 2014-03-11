@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixlvar.h,v 1.6 2011/07/01 19:01:31 dyoung Exp $	*/
+/*	$NetBSD: rmixlvar.h,v 1.7 2014/03/11 08:19:45 mrg Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -208,14 +208,13 @@ rmixl_cache_err_check(void)
 static inline int
 rmixl_probe_4(volatile uint32_t *va)
 {
-	uint32_t tmp;
 	uint32_t r;
 	int err;
 	int s;
 
 	s = splhigh();
 	r = rmixl_cache_err_dis();
-	tmp = *va;			/* probe */
+	(void)*va;			/* probe */
 	err = rmixl_cache_err_check();
 	rmixl_cache_err_restore(r);
 	splx(s);
