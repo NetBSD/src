@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.88 2014/02/17 20:40:06 para Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.89 2014/03/11 20:32:05 pooka Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.88 2014/02/17 20:40:06 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.89 2014/03/11 20:32:05 pooka Exp $");
 
 #if defined(_KERNEL)
 #include "opt_ddb.h"
@@ -1176,7 +1176,7 @@ retry:
 	/* XXX */
 
 	if ((flags & VM_SLEEP) != 0) {
-#if defined(_KERNEL) && !defined(_RUMPKERNEL)
+#if defined(_KERNEL)
 		mutex_spin_enter(&uvm_fpageqlock);
 		uvm_kick_pdaemon();
 		mutex_spin_exit(&uvm_fpageqlock);
