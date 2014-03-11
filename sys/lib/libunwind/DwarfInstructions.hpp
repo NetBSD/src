@@ -39,12 +39,6 @@ public:
   static step_result stepWithDwarf(A &, pint_t, pint_t, R &, unw_proc_info_t *);
 
 private:
-  // Pseudo-register used for return addresses.
-  enum {
-    DW_X86_RET_ADDR = 8,
-    DW_X86_64_RET_ADDR = 16,
-  };
-
   static pint_t evaluateExpression(pint_t, A &, const R &, pint_t);
   static pint_t
   getSavedRegister(A &, const R &, pint_t,
