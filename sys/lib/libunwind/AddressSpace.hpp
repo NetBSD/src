@@ -242,6 +242,7 @@ public:
       return false;
     if (n->hdr_start == 0) {
       fdeStart = n->hdr_base;
+      data_base = n->data_base;
       return true;
     }
 
@@ -264,6 +265,7 @@ public:
         len = (len + 1) / 2;
     }
     fdeStart = base + (int32_t)get32(first + 4);
+    data_base = n->data_base;
     return true;
   }
 
