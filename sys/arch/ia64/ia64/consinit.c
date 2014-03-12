@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.2 2012/06/18 01:40:55 kiyohara Exp $	*/
+/*	$NetBSD: consinit.c,v 1.3 2014/03/12 08:36:59 martin Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.2 2012/06/18 01:40:55 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.3 2014/03/12 08:36:59 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -123,7 +123,9 @@ static void
 pcdp_cninit(struct consdev *cn)
 {
 	struct dig64_hcdp_table *tbl;
+#if NVGA > 0
 	union dev_desc *desc;
+#endif
 	uint64_t hcdp;
 	int n, m;
 
@@ -135,8 +137,8 @@ pcdp_cninit(struct consdev *cn)
 	n = 0;
 	m = tbl->length - sizeof(struct dig64_hcdp_table);
 	while (n < m) {
-		desc = (union dev_desc *)((char *)tbl->entry + n);
 #if NVGA > 0
+		desc = (union dev_desc *)((char *)tbl->entry + n);
 
 /* not yet... */
 /* Our VGA is Framebuffer? */
