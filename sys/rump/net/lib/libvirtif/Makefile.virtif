@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.virtif,v 1.1 2014/03/12 23:40:58 pooka Exp $
+#	$NetBSD: Makefile.virtif,v 1.2 2014/03/12 23:42:33 pooka Exp $
 #
 
 .if !defined(VIRTIF)
 .error Define VIRTIF when including ${.PARSEFILE}
 .endif
 
-SRCS=	if_virt.c component.c
+SRCS=	if_virt.c virtif_component.c
 
 VIRTIFDIR:=	${.PARSEDIR}
 .PATH:		${VIRTIFDIR}
