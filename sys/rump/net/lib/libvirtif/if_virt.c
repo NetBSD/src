@@ -1,4 +1,4 @@
-/*	$NetBSD: if_virt.c,v 1.39 2014/03/03 13:56:40 pooka Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.40 2014/03/12 17:49:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008, 2013 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.39 2014/03/03 13:56:40 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.40 2014/03/12 17:49:13 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -296,12 +296,15 @@ virtif_start(struct ifnet *ifp)
 		}
 
 		m = m0;
-		for (i = 0; i < LB_SH && m; i++) {
-			io[i].iov_base = mtod(m, void *);
-			io[i].iov_len = m->m_len;
+		for (i = 0; i < LB_SH && m; ) {
+			if (m->m_len) {
+				io[i].iov_base = mtod(m, void *);
+				io[i].iov_len = m->m_len;
+				i++;
+			}
 			m = m->m_next;
 		}
-		if (i == LB_SH)
+		if (i == LB_SH && m)
 			panic("lazy bum");
 		bpf_mtap(ifp, m0);
 
