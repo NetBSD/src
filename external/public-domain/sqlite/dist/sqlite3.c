@@ -7538,6 +7538,7 @@ struct sqlite3_rtree_geometry {
 #  include <float.h>
 #  define SQLITE_BIG_DBL DBL_MAX
 #  define SQLITE_HUGE_DBL DBL_MAX
+#  define SQLITE_HUGE_COST 1e38
 # endif
 #endif
 #ifndef SQLITE_BIG_DBL
@@ -7548,6 +7549,9 @@ struct sqlite3_rtree_geometry {
 #endif
 #ifndef SQLITE_MAX_SQL_LENGTH
 # define SQLITE_MAX_SQL_LENGTH 1000000000
+#endif
+#ifndef SQLITE_HUGE_COST
+# define SQLITE_HUGE_COST 1e50
 #endif
 
 /*
@@ -20406,8 +20410,12 @@ SQLITE_PRIVATE void sqlite3VXPrintf(
         }
         if( realvalue>0.0 ){
           LONGDOUBLE_TYPE scale = 1.0;
+#if __DBL_MAX_10_EXP__ > 100
           while( realvalue>=1e100*scale && exp<=350 ){ scale *= 1e100;exp+=100;}
+#endif
+#if __DBL_MAX_10_EXP__ > 64
           while( realvalue>=1e64*scale && exp<=350 ){ scale *= 1e64; exp+=64; }
+#endif
           while( realvalue>=1e8*scale && exp<=350 ){ scale *= 1e8; exp+=8; }
           while( realvalue>=10.0*scale && exp<=350 ){ scale *= 10.0; exp++; }
           realvalue /= scale;
@@ -125559,7 +125567,7 @@ static int fts3BestIndexMethod(sqlite3_vtab *pVTab, sqlite3_index_info *pInfo){
         ** function MATCH in the requested context" error. To discourage
         ** this, return a very high cost here.  */
         pInfo->idxNum = FTS3_FULLSCAN_SEARCH;
-        pInfo->estimatedCost = 1e50;
+        pInfo->estimatedCost = SQLITE_HUGE_COST;
         fts3SetEstimatedRows(pInfo, ((sqlite3_int64)1) << 50);
         return SQLITE_OK;
       }
