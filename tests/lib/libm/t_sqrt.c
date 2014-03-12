@@ -1,4 +1,4 @@
-/* $NetBSD: t_sqrt.c,v 1.6 2014/03/03 10:39:08 martin Exp $ */
+/* $NetBSD: t_sqrt.c,v 1.7 2014/03/12 21:40:07 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sqrt.c,v 1.6 2014/03/03 10:39:08 martin Exp $");
+__RCSID("$NetBSD: t_sqrt.c,v 1.7 2014/03/12 21:40:07 martin Exp $");
 
 #include <atf-c.h>
 #include <math.h>
@@ -62,7 +62,11 @@ ATF_TC_HEAD(sqrt_pow, tc)
 ATF_TC_BODY(sqrt_pow, tc)
 {
 	const double x[] = { 0.0, 0.005, 1.0, 99.0, 123.123, 9999.9999 };
+#if __DBL_MIN_10_EXP__ <= -40
 	const double eps = 1.0e-40;
+#else
+	const double eps = __DBL_MIN__*4.0;
+#endif
 	double y, z;
 	size_t i;
 
