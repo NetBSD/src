@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.160 2014/01/25 21:10:29 christos Exp $	*/
+/*	$NetBSD: if.h,v 1.161 2014/03/12 12:59:57 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -388,6 +388,7 @@ typedef struct ifnet {
 #define	IF_Gbps(x)	(IF_Mbps((x) * 1000))	/* gigabits/sec. */
 
 /* Capabilities that interfaces can advertise. */
+					/* 0x01 .. 0x40 were previously used */
 #define	IFCAP_TSOv4		0x00080	/* can do TCPv4 segmentation offload */
 #define	IFCAP_CSUM_IPv4_Rx	0x00100	/* can do IPv4 header checksums (Rx) */
 #define	IFCAP_CSUM_IPv4_Tx	0x00200	/* can do IPv4 header checksums (Tx) */
@@ -400,6 +401,7 @@ typedef struct ifnet {
 #define	IFCAP_CSUM_UDPv6_Rx	0x10000	/* can do IPv6/UDP checksums (Rx) */
 #define	IFCAP_CSUM_UDPv6_Tx	0x20000	/* can do IPv6/UDP checksums (Tx) */
 #define	IFCAP_TSOv6		0x40000	/* can do TCPv6 segmentation offload */
+#define	IFCAP_MASK		0x7ff80 /* currently valid capabilities */
 
 #define	IFCAPBITS		\
 	"\020"			\
