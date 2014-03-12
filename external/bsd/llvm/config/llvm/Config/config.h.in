@@ -136,7 +136,7 @@
 /* #undef HAVE_FDP */
 
 /* Define to 1 if you have the <fenv.h> header file. */
-  #ifndef __ppc__
+  #ifndef __powerpc__
 #define HAVE_FENV_H 1
   #endif
 
