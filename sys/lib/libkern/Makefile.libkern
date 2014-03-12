@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libkern,v 1.31 2014/01/29 23:37:18 joerg Exp $
+#	$NetBSD: Makefile.libkern,v 1.32 2014/03/12 00:22:53 pooka Exp $
 
 # 
 # Variable definitions for libkern.  
@@ -43,7 +43,9 @@ CPPFLAGS+=	-I${KERNDIR}/../../../common/include
 .include "$M/Makefile.inc"
 .endif
 
+.if !defined(RUMPKERNEL)
 .include ".${PARSEDIR}/Makefile.compiler-rt"
+.endif
 
 # Other stuff
 SRCS+=	kern_assert.c __main.c
