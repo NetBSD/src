@@ -1,4 +1,4 @@
-/* $NetBSD: t_ldexp.c,v 1.12 2014/03/03 10:39:08 martin Exp $ */
+/* $NetBSD: t_ldexp.c,v 1.13 2014/03/12 21:40:07 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ldexp.c,v 1.12 2014/03/03 10:39:08 martin Exp $");
+__RCSID("$NetBSD: t_ldexp.c,v 1.13 2014/03/12 21:40:07 martin Exp $");
 
 #include <sys/param.h>
 
@@ -196,7 +196,11 @@ ATF_TC_HEAD(ldexp_exp2, tc)
 ATF_TC_BODY(ldexp_exp2, tc)
 {
 	const double n[] = { 1, 2, 3, 10, 50, 100 };
+#if __DBL_MIN_10_EXP__ <= -40
 	const double eps = 1.0e-40;
+#else
+	const double eps = __DBL_MIN__*4.0;
+#endif
 	const double x = 12.0;
 	double y;
 	size_t i;
