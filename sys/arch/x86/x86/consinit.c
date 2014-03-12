@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.26 2014/01/26 15:49:25 taca Exp $	*/
+/*	$NetBSD: consinit.c,v 1.27 2014/03/12 12:54:33 martin Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.26 2014/01/26 15:49:25 taca Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.27 2014/03/12 12:54:33 martin Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_puc.h"
@@ -147,7 +147,9 @@ void
 consinit(void)
 {
 	const struct btinfo_console *consinfo;
+#if (NGENFB > 0)
 	const struct btinfo_framebuffer *fbinfo;
+#endif
 	static int initted;
 #if (NCOM > 0)
 	int rv;
@@ -163,7 +165,9 @@ consinit(void)
 #endif
 		consinfo = &default_consinfo;
 
+#if (NGENFB > 0)
 	fbinfo = lookup_bootinfo(BTINFO_FRAMEBUFFER);
+#endif
 
 	if (!strcmp(consinfo->devname, "pc")) {
 		int error;
