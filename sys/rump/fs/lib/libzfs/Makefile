@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/03/10 19:24:37 pooka Exp $
+#	$NetBSD: Makefile,v 1.4 2014/03/13 01:46:10 pooka Exp $
 #
 
 S!=             cd ${.PARSEDIR}/../../../../;pwd
@@ -11,7 +11,7 @@ LIB=	rumpfs_zfs
 CPPFLAGS+=      -I${RUMPTOP}/librump/rumpkern -I${RUMPTOP}/librump/rumpvfs\
 		-I${RUMPTOP}/librump/rumpdev
 
-SRCS+=	component.c
+SRCS+=	zfs_component.c
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>
