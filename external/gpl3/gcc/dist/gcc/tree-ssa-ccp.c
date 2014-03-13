@@ -2553,6 +2553,10 @@ struct gimple_opt_pass pass_fold_builtins =
 #ifdef _LP64
 #define	TARGET_64BIT	1
 #else
+#ifdef __sh__
+#undef UNITS_PER_WORD
+#define	UNITS_PER_WORD	4	/* original definition varies depending on cpu */
+#endif
 #define	TARGET_64BIT	0
 #endif
 
