@@ -1,4 +1,4 @@
-/*	$NetBSD: if_virt.c,v 1.40 2014/03/12 17:49:13 pooka Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.41 2014/03/13 18:14:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008, 2013 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.40 2014/03/12 17:49:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.41 2014/03/13 18:14:13 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.40 2014/03/12 17:49:13 pooka Exp $");
 #include "rump_net_private.h"
 
 #include "if_virt.h"
-#include "rumpcomp_user.h"
+#include "virtif_user.h"
 
 /*
  * Virtual interface.  Uses hypercalls to shovel packets back

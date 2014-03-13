@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcomp_user.c,v 1.12 2014/03/03 13:56:40 pooka Exp $	*/
+/*	$NetBSD: virtif_user.c,v 1.1 2014/03/13 18:14:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -49,7 +49,7 @@
 #include <rump/rumpuser_component.h>
 
 #include "if_virt.h"
-#include "rumpcomp_user.h"
+#include "virtif_user.h"
 
 #if VIFHYPER_REVISION != 20140302
 #error VIFHYPER_REVISION mismatch
