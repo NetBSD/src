@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcomp_user.c,v 1.8 2013/07/04 09:58:28 pooka Exp $	*/
+/*	$NetBSD: sockin_user.c,v 1.1 2014/03/13 01:40:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -42,7 +42,7 @@
 #include <rump/rumpuser_component.h>
 #include <rump/rumpdefs.h>
 
-#include "rumpcomp_user.h"
+#include "sockin_user.h"
 
 #define seterror(_v_) if ((_v_) == -1) rv = errno; else rv = 0;
 

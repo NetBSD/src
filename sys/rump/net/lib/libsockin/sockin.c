@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.35 2013/08/29 17:49:21 rmind Exp $	*/
+/*	$NetBSD: sockin.c,v 1.36 2014/03/13 01:40:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.35 2013/08/29 17:49:21 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.36 2014/03/13 01:40:30 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.35 2013/08/29 17:49:21 rmind Exp $");
 #include <rump/rumpuser.h>
 
 #include "rump_private.h"
-#include "rumpcomp_user.h"
+#include "sockin_user.h"
 
 /*
  * An inet communication domain which uses the socket interface.
