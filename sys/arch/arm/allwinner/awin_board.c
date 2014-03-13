@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_board.c,v 1.11 2014/03/07 16:38:28 matt Exp $	*/
+/*	$NetBSD: awin_board.c,v 1.12 2014/03/13 23:45:02 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.11 2014/03/07 16:38:28 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.12 2014/03/13 23:45:02 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -199,6 +199,14 @@ awin_bootstrap(vaddr_t iobase, vaddr_t uartbase)
 #endif
 #ifdef VERBOSE_INIT_ARM
 	printf("%s: %d cpus present\n", __func__, arm_cpu_max);
+#endif
+#if defined(MULTIPROCESSOR)
+	for (size_t i = 1; i < arm_cpu_max; i++) {
+		if ((arm_cpu_hatched & (1 << i)) == 0) {
+			printf("%s: warning: cpu%zu failed to hatch\n",
+			    __func__, i);
+		}
+	}
 #endif
 }
 
