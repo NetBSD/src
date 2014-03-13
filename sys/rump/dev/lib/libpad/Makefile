@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2013/04/04 01:41:51 pooka Exp $
+#	$NetBSD: Makefile,v 1.3 2014/03/13 01:52:04 pooka Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev/pad
@@ -6,7 +6,7 @@
 LIB=	rumpdev_pad
 
 SRCS=	pad.c padvol.c
-SRCS+=	component.c
+SRCS+=	pad_component.c
 
 CPPFLAGS+=	-I${.CURDIR}/../../../librump/rumpvfs
 
