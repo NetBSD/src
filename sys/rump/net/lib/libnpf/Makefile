@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2014/03/03 19:09:52 pooka Exp $
+#	$NetBSD: Makefile,v 1.12 2014/03/13 02:07:24 pooka Exp $
 #
 # Public Domain.
 #
@@ -17,7 +17,7 @@ SRCS+=	npf_alg_icmp.c
 
 SRCS+=	npf_ext_log.c npf_ext_normalize.c npf_ext_rndblock.c
 
-SRCS+=	component.c
+SRCS+=	npf_component.c
 
 .include <bsd.own.mk>
 
