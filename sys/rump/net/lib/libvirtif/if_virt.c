@@ -1,4 +1,4 @@
-/*	$NetBSD: if_virt.c,v 1.43 2014/03/13 20:59:12 pooka Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.44 2014/03/13 21:11:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008, 2013 Antti Kantee.  All Rights Reserved.
@@ -26,12 +26,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.43 2014/03/13 20:59:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.44 2014/03/13 21:11:12 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/cprng.h>
+#include <sys/module.h>
 
 #include <net/bpf.h>
 #include <net/if.h>
@@ -377,4 +378,32 @@ VIF_DELIVERPKT(struct virtif_sc *sc, struct iovec *iov, size_t iovlen)
 		m_freem(m);
 	}
 	m = NULL;
+}
+
+MODULE(MODULE_CLASS_DRIVER, if_virt, NULL);
+
+static int
+if_virt_modcmd(modcmd_t cmd, void *opaque)
+{
+	int error = 0;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		if_clone_attach(&VIF_CLONER);
+		break;
+	case MODULE_CMD_FINI:
+		/*
+		 * not sure if interfaces are refcounted
+		 * and properly protected
+		 */
+#if 0
+		if_clone_detach(&VIF_CLONER);
+#else
+		error = ENOTTY;
+#endif
+		break;
+	default:
+		error = ENOTTY;
+	}
+	return error;
 }
