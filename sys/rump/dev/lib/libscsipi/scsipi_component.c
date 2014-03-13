@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.1 2010/08/23 20:49:53 pooka Exp $	*/
+/*	$NetBSD: scsipi_component.c,v 1.1 2014/03/13 01:58:20 pooka Exp $	*/
 
 #include <sys/param.h>
 #include <sys/conf.h>
