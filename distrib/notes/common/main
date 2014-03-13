@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.507 2014/02/24 11:56:01 ozaki-r Exp $
+.\"	$NetBSD: main,v 1.508 2014/03/13 03:34:00 nat Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1376,6 +1376,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Daniel Sieger Ta Mt dsieger@NetBSD.org
 .It Ta Chuck Silvers Ta Mt chs@NetBSD.org
 .It Ta Thor Lancelot Simon Ta Mt tls@NetBSD.org
+.It Ta Nathanial Sloss Ta Mt nat@NetBSD.org
 .It Ta Jeff Smith Ta Mt jeffs@NetBSD.org
 .It Ta Noriyuki Soda Ta Mt soda@NetBSD.org
 .It Ta Wolfgang Solfrank Ta Mt ws@NetBSD.org
