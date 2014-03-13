@@ -1,4 +1,4 @@
-/*	$NetBSD: if_virt.c,v 1.42 2014/03/13 20:55:26 pooka Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.43 2014/03/13 20:59:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008, 2013 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.42 2014/03/13 20:55:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.43 2014/03/13 20:59:12 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -40,11 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.42 2014/03/13 20:55:26 pooka Exp $");
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
-
-#include <rump/rump.h>
-
-#include "rump_private.h"
-#include "rump_net_private.h"
 
 #include "if_virt.h"
 #include "virtif_user.h"
