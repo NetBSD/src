@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.2 2011/02/25 19:27:05 riz Exp $	*/
+/*	$NetBSD: audio_component.c,v 1.1 2014/03/13 01:57:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.2 2011/02/25 19:27:05 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio_component.c,v 1.1 2014/03/13 01:57:52 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
