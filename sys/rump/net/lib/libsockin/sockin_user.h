@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcomp_user.h,v 1.3 2013/04/30 00:03:54 pooka Exp $	*/
+/*	$NetBSD: sockin_user.h,v 1.1 2014/03/13 01:40:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
