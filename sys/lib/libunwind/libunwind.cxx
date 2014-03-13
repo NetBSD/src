@@ -275,6 +275,12 @@ uintptr_t _Unwind_GetIP(struct _Unwind_Context *context) {
   return cursor->getIP();
 }
 
+uintptr_t _Unwind_GetIPInfo(struct _Unwind_Context *context, int *isSignalFrame) {
+  ThisUnwindCursor *cursor = (ThisUnwindCursor *)context;
+  *isSignalFrame = cursor->isSignalFrame() ? 1 : 0;
+  return cursor->getIP();
+}
+
 void _Unwind_SetIP(struct _Unwind_Context *context, uintptr_t new_value) {
   ThisUnwindCursor *cursor = (ThisUnwindCursor *)context;
   cursor->setIP(new_value);
