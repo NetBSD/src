@@ -1,4 +1,4 @@
-/*	$NetBSD: if_virt.c,v 1.41 2014/03/13 18:14:13 pooka Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.42 2014/03/13 20:55:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008, 2013 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.41 2014/03/13 18:14:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.42 2014/03/13 20:55:26 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -151,11 +151,13 @@ static int
 virtif_unclone(struct ifnet *ifp)
 {
 	struct virtif_sc *sc = ifp->if_softc;
+	int rv;
 
 	if (ifp->if_flags & IFF_UP)
 		return EBUSY;
 
-	VIFHYPER_DYING(sc->sc_viu);
+	if ((rv = VIFHYPER_DYING(sc->sc_viu)) != 0)
+		return rv;
 
 	virtif_stop(ifp, 1);
 	if_down(ifp);
