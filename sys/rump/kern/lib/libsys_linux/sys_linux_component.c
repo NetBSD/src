@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.11 2014/02/18 06:20:46 pooka Exp $	*/
+/*	$NetBSD: sys_linux_component.c,v 1.1 2014/03/13 02:03:47 pooka Exp $	*/
 
 #include <sys/param.h>
 #include <sys/proc.h>
