@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.2 2012/04/10 13:45:07 gson Exp $	*/
+/*	$NetBSD: drvctl_component.c,v 1.1 2014/03/13 01:56:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.2 2012/04/10 13:45:07 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drvctl_component.c,v 1.1 2014/03/13 01:56:55 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
