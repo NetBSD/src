@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.virtif,v 1.2 2014/03/12 23:42:33 pooka Exp $
+#	$NetBSD: Makefile.virtif,v 1.3 2014/03/13 20:59:12 pooka Exp $
 #
 
 .if !defined(VIRTIF)
@@ -10,7 +10,7 @@ SRCS=	if_virt.c virtif_component.c
 VIRTIFDIR:=	${.PARSEDIR}
 .PATH:		${VIRTIFDIR}
 
-CPPFLAGS+=	-I${VIRTIFDIR}/../../../librump/rumpkern -I${VIRTIFDIR}
-CPPFLAGS+=	-DVIRTIF_BASE=${VIRTIF}
+CPPFLAGS+=	-I${VIRTIFDIR}/../../../librump/rumpkern
 
+CPPFLAGS+=		 -DVIRTIF_BASE=${VIRTIF} -I${VIRTIFDIR}
 RUMPCOMP_USER_CPPFLAGS+= -DVIRTIF_BASE=${VIRTIF} -I${VIRTIFDIR}
