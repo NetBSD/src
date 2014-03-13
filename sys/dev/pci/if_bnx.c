@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.49 2013/09/13 20:54:14 martin Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.50 2014/03/13 16:33:52 hannken Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.85 2009/11/09 14:32:41 dlg Exp $ */
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.49 2013/09/13 20:54:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.50 2014/03/13 16:33:52 hannken Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -4334,7 +4334,7 @@ bnx_rx_intr(struct bnx_softc *sc)
 	 */
 	while (sw_cons != hw_cons) {
 		struct mbuf *m;
-		struct rx_bd *rxbd;
+		struct rx_bd *rxbd __diagused;
 		unsigned int len;
 		u_int32_t status;
 

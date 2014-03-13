@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.46 2014/02/25 18:30:10 pooka Exp $ */
+/*	$NetBSD: twa.c,v 1.47 2014/03/13 16:34:13 hannken Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.46 2014/02/25 18:30:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.47 2014/03/13 16:34:13 hannken Exp $");
 
 //#define TWA_DEBUG
 
@@ -1865,7 +1865,7 @@ twa_map_request(struct twa_request *tr)
 static int
 twa_intr(void *arg)
 {
-	int	caught, s, rv;
+	int	caught, s, rv __diagused;
 	struct twa_softc *sc;
 	uint32_t	status_reg;
 	sc = (struct twa_softc *)arg;
@@ -2756,7 +2756,7 @@ twa_aen_callback(struct twa_request *tr)
 static uint16_t
 twa_enqueue_aen(struct twa_softc *sc, struct twa_command_header *cmd_hdr)
 {
-	int			rv, s;
+	int			rv __diagused, s;
 	struct tw_cl_event_packet *event;
 	uint16_t		aen_code;
 	unsigned long		sync_time;
