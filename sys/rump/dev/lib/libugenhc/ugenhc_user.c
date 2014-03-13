@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcomp_user.c,v 1.6 2013/07/04 10:09:55 pooka Exp $	*/
+/*	$NetBSD: ugenhc_user.c,v 1.1 2014/03/13 01:38:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
 
 #include <rump/rumpuser_component.h>
 
-#include "rumpcomp_user.h"
+#include "ugenhc_user.h"
 
 int
 rumpcomp_ugenhc_ioctl(int fd, u_long cmd, void *data, int *ioctlrv)

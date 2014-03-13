@@ -1,4 +1,4 @@
-/*	$NetBSD: ugenhc.c,v 1.16 2013/09/13 20:38:39 joerg Exp $	*/
+/*	$NetBSD: ugenhc.c,v 1.17 2014/03/13 01:38:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.16 2013/09/13 20:38:39 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.17 2014/03/13 01:38:11 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.16 2013/09/13 20:38:39 joerg Exp $");
 
 #include <rump/rumpuser.h>
 
-#include "rumpcomp_user.h"
+#include "ugenhc_user.h"
 
 #include "rump_private.h"
 #include "rump_dev_private.h"
