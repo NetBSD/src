@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.6 2013/03/10 04:24:16 christos Exp $	*/
+/*	$NetBSD: zfs_component.c,v 1.1 2014/03/13 01:46:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.6 2013/03/10 04:24:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zfs_component.c,v 1.1 2014/03/13 01:46:10 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
