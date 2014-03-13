@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.6 2010/10/20 18:48:13 pooka Exp $	*/
+/*	$NetBSD: sysmon_component.c,v 1.1 2014/03/13 01:47:07 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.6 2010/10/20 18:48:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_component.c,v 1.1 2014/03/13 01:47:07 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
