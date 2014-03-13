@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpcomp_user.c,v 1.14 2014/01/08 11:06:33 pooka Exp $	*/
+/*      $NetBSD: shmif_user.c,v 1.1 2014/03/13 01:42:59 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -32,7 +32,7 @@
 
 #include <rump/rumpuser_component.h>
 
-#include "rumpcomp_user.h"
+#include "shmif_user.h"
 
 #define seterr(_v_) if ((_v_) == -1) *error = errno; else *error = 0;
 

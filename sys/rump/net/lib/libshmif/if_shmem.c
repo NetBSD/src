@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.58 2013/09/13 20:38:04 joerg Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.59 2014/03/13 01:42:59 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.58 2013/09/13 20:38:04 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.59 2014/03/13 01:42:59 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.58 2013/09/13 20:38:04 joerg Exp $");
 
 #include "rump_private.h"
 #include "rump_net_private.h"
-#include "rumpcomp_user.h"
+#include "shmif_user.h"
 
 static int shmif_clone(struct if_clone *, int);
 static int shmif_unclone(struct ifnet *);
