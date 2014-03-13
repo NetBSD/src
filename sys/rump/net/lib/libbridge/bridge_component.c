@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.1 2010/12/08 18:06:43 pooka Exp $	*/
+/*	$NetBSD: bridge_component.c,v 1.1 2014/03/13 02:08:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.1 2010/12/08 18:06:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bridge_component.c,v 1.1 2014/03/13 02:08:24 pooka Exp $");
 
 #include <sys/param.h>
 
