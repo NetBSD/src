@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.3 2013/04/04 01:33:53 pooka Exp $	*/
+/*	$NetBSD: putter_component.c,v 1.1 2014/03/13 01:53:48 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.3 2013/04/04 01:33:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: putter_component.c,v 1.1 2014/03/13 01:53:48 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
