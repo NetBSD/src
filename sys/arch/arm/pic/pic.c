@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.20 2014/03/03 08:50:48 matt Exp $	*/
+/*	$NetBSD: pic.c,v 1.21 2014/03/13 23:47:53 matt Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,10 +27,13 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.20 2014/03/03 08:50:48 matt Exp $");
 
 #define _INTR_PRIVATE
+#include "opt_ddb.h"
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.21 2014/03/13 23:47:53 matt Exp $");
+
 #include <sys/param.h>
 #include <sys/atomic.h>
 #include <sys/cpu.h>
@@ -42,6 +45,10 @@ __KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.20 2014/03/03 08:50:48 matt Exp $");
 
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
+
+#ifdef DDB
+#include <arm/db_machdep.h>
+#endif
 
 #include <arm/pic/picvar.h>
 
@@ -99,6 +106,16 @@ pic_ipi_xcall(void *arg)
 	xc_ipi_handler();
 	return 1;
 }
+
+#ifdef DDB
+int
+pic_ipi_ddb(void *arg)
+{
+	printf("%s: %s: tf=%p\n", __func__, curcpu()->ci_cpuname, arg);
+	kdb_trap(-1, arg);
+	return 1;
+}
+#endif
 
 void
 intr_cpu_init(struct cpu_info *ci)
@@ -269,7 +286,11 @@ pic_dispatch(struct intrsource *is, void *frame)
 #ifdef MULTIPROCESSOR
 	if (!is->is_mpsafe) {
 		KERNEL_LOCK(1, NULL);
+		const u_int ci_blcnt __diagused = curcpu()->ci_biglock_count;
+		const u_int l_blcnt __diagused = curlwp->l_blcnt;
 		(void)(*func)(arg);
+		KASSERT(ci_blcnt == curcpu()->ci_biglock_count);
+		KASSERT(l_blcnt == curlwp->l_blcnt);
 		KERNEL_UNLOCK_ONE(NULL);
 	} else
 #endif
@@ -613,11 +634,11 @@ pic_establish_intr(struct pic_softc *pic, int irq, int ipl, int type,
 	is->is_pic = pic;
 	is->is_irq = irq;
 	is->is_ipl = ipl;
-	is->is_type = type;
+	is->is_type = type & 0xff;
 	is->is_func = func;
 	is->is_arg = arg;
 #ifdef MULTIPROCESSOR
-	is->is_mpsafe = false;
+	is->is_mpsafe = (type & IST_MPSAFE);
 #endif
 
 	if (pic->pic_ops->pic_source_name)
