@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.5 2010/03/26 15:51:55 pooka Exp $	*/
+/*	$NetBSD: wscons_component.c,v 1.1 2014/03/13 01:48:08 pooka Exp $	*/
 
 #include <sys/param.h>
 #include <sys/conf.h>
