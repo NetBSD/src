@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.21 2014/03/05 02:12:24 matt Exp $	*/
+/*	$NetBSD: exception.S,v 1.22 2014/03/13 01:45:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -51,7 +51,7 @@
 
 #include <arm/locore.h>
 
-	RCSID("$NetBSD: exception.S,v 1.21 2014/03/05 02:12:24 matt Exp $")
+	RCSID("$NetBSD: exception.S,v 1.22 2014/03/13 01:45:35 matt Exp $")
 
 	.text	
 	.align	0
@@ -102,6 +102,14 @@ ARM_ASENTRY_NP(prefetch_abort_entry)
 #endif
         sub     lr, lr, #0x00000004     /* Adjust the lr */
 
+#ifdef _ARM_ARCH_7
+	/*
+	 * After taking a Data Abort exception, the state of the exclusive
+	 * monitors is UNKNOWN. Therefore ARM strongly recommends that the
+	 * abort handling software performs a CLREX instruction
+	 */
+	clrex
+#endif
 	PUSHFRAMEINSVC
 	ENABLE_ALIGNMENT_FAULTS
 
@@ -140,6 +148,14 @@ ASENTRY_NP(data_abort_entry)
 #endif
         sub     lr, lr, #0x00000008     /* Adjust the lr */
 
+#ifdef _ARM_ARCH_7
+	/*
+	 * After taking a Data Abort exception, the state of the exclusive
+	 * monitors is UNKNOWN. Therefore ARM strongly recommends that the
+	 * abort handling software performs a CLREX instruction
+	 */
+	clrex
+#endif
 	PUSHFRAMEINSVC			/* Push trap frame and switch */
 					/* to SVC32 mode */
 	ENABLE_ALIGNMENT_FAULTS
@@ -178,6 +194,14 @@ ASEND(data_abort_entry)
  *	it like a Data Abort.
  */
 ASENTRY_NP(address_exception_entry)
+#ifdef _ARM_ARCH_7
+	/*
+	 * After taking a Data Abort exception, the state of the exclusive
+	 * monitors is UNKNOWN. Therefore ARM strongly recommends that the
+	 * abort handling software performs a CLREX instruction
+	 */
+	clrex
+#endif
 	push	{r0-r3,ip,lr}
 	mrs	r1, cpsr
 	mrs	r2, spsr
@@ -220,13 +244,11 @@ ASEND(address_exception_entry)
  *	look like direct entry from the vector.
  */
 ASENTRY_NP(undefined_entry)
-	stmfd	sp!, {r0, r1}
+	str	r0, [sp, #-8]!
 	GET_CURCPU(r0)
-	ldr	r1, [sp], #0x0004
-	str	r1, [r0, #CI_UNDEFSAVE]!
-	ldr	r1, [sp], #0x0004
-	str	r1, [r0, #0x0004]
-	ldmia	r0, {r0, r1, pc}
+	ldr	r0, [r0, #CI_UNDEFSAVE+8]
+	str	r0, [sp, #4]
+	pop	{r0, pc}
 ASEND(undefined_entry)
 
 /*
