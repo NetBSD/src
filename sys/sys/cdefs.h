@@ -1,7 +1,6 @@
-/*	$NetBSD: cdefs.h,v 1.118 2014/02/05 01:59:58 matt Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.119 2014/03/13 20:36:01 pooka Exp $	*/
 
-/*
- * Copyright (c) 1991, 1993
+/* * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -146,7 +145,9 @@
 #ifdef __COUNTER__
 #define	__CTASSERT(x)		__CTASSERT0(x, __ctassert, __COUNTER__)
 #else
-#define	__CTASSERT(x)		__CTASSERT0(x, __ctassert, __LINE__)
+#define	__CTASSERT(x)		__CTASSERT99(x, __INCLUDE_LEVEL__, __LINE__)
+#define	__CTASSERT99(x, a, b)	__CTASSERT0(x, __CONCAT(__ctassert,a), \
+					       __CONCAT(_,b))
 #endif
 #define	__CTASSERT0(x, y, z)	__CTASSERT1(x, y, z) 
 #define	__CTASSERT1(x, y, z)	typedef char y ## z[/*CONSTCOND*/(x) ? 1 : -1] __unused
