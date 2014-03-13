@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2014/03/01 10:00:52 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2014/03/13 16:19:24 gdt Exp $
 
 .include "../Makefile.inc"
 
@@ -15,7 +15,7 @@ INCS+=	mm_malloc.h
 # XXX we should put this in gcc/config.gcc and regenerate the i386/x86
 # mknative files
 mm_malloc.h: ${DIST}/gcc/config/i386/pmm_malloc.h
-	cp $> ${.TARGET}
+	cp -f $> ${.TARGET}
 
 CLEANFILES+=	mm_malloc.h
 .endif
