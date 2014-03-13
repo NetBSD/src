@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.10 2014/02/14 01:43:13 pooka Exp $	*/
+/*	$NetBSD: netinet_component.c,v 1.1 2014/03/13 02:07:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.10 2014/02/14 01:43:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netinet_component.c,v 1.1 2014/03/13 02:07:42 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
