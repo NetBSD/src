@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2014/03/02 04:31:55 mrg Exp $
+#	$NetBSD: Makefile,v 1.14 2014/03/13 16:14:27 gdt Exp $
 
 .include <bsd.own.mk>
 .include <bsd.init.mk>
@@ -52,7 +52,7 @@ COPYHEADERS+=	${_dst} ${_src}
 
 .for _h _s in ${COPYHEADERS}
 ${_h}: ${_s}
-	cp -p ${.ALLSRC} ${.TARGET}
+	cp -pf ${.ALLSRC} ${.TARGET}
 .endfor
 
 .PATH: ${.CURDIR}/../../arch/${GCC_MACHINE_ARCH} \
