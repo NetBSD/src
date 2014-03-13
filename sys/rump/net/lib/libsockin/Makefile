@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.7 2014/03/13 01:40:30 pooka Exp $
+#	$NetBSD: Makefile,v 1.8 2014/03/13 02:05:49 pooka Exp $
 #
 
 LIB=	rumpnet_sockin
 
 SRCS=	sockin.c
-SRCS+=	component.c
+SRCS+=	sockin_component.c
 
 CPPFLAGS+= -I${RUMPTOP}/librump/rumpkern
 

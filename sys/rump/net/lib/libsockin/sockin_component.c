@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.3 2013/06/01 10:10:57 stacktic Exp $	*/
+/*	$NetBSD: sockin_component.c,v 1.1 2014/03/13 02:05:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.3 2013/06/01 10:10:57 stacktic Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin_component.c,v 1.1 2014/03/13 02:05:49 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
