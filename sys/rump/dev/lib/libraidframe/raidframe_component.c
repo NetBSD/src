@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.5 2010/03/01 13:12:19 pooka Exp $	*/
+/*	$NetBSD: raidframe_component.c,v 1.1 2014/03/13 01:49:59 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.5 2010/03/01 13:12:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raidframe_component.c,v 1.1 2014/03/13 01:49:59 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
