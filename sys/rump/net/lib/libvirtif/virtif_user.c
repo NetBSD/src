@@ -1,4 +1,4 @@
-/*	$NetBSD: virtif_user.c,v 1.1 2014/03/13 18:14:13 pooka Exp $	*/
+/*	$NetBSD: virtif_user.c,v 1.2 2014/03/13 20:55:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -251,7 +251,7 @@ VIFHYPER_SEND(struct virtif_user *viu,
 	rumpuser_component_schedule(cookie);
 }
 
-void
+int
 VIFHYPER_DYING(struct virtif_user *viu)
 {
 	void *cookie = rumpuser_component_unschedule();
@@ -259,11 +259,17 @@ VIFHYPER_DYING(struct virtif_user *viu)
 	viu->viu_dying = 1;
 	if (write(viu->viu_pipe[1],
 	    &viu->viu_dying, sizeof(viu->viu_dying)) == -1) {
+		/*
+		 * this is here mostly to avoid a compiler warning
+		 * about ignoring the return value of write()
+		 */
 		fprintf(stderr, "%s: failed to signal thread\n",
 		    VIF_STRING(VIFHYPER_DYING));
 	}
 
 	rumpuser_component_schedule(cookie);
+
+	return 0;
 }
 
 void
