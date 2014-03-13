@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.26 2014/03/12 17:55:02 matt Exp $	*/
+/*	$NetBSD: lock.h,v 1.27 2014/03/13 12:59:08 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -121,7 +121,7 @@ __swp(unsigned char __val, __cpu_simple_lock_t *__ptr)
 static __inline int
 __swp(int __val, __cpu_simple_lock_t *__ptr)
 {
-	int __tmp;
+	int __tmp, __rv;
 	__asm volatile(
 #if 1
 	"1:\t"	"swp	%[__rv], %[__val], [%[__ptr]]"
@@ -133,7 +133,7 @@ __swp(int __val, __cpu_simple_lock_t *__ptr)
 	"\n\t"	"cmp	%[__tmp],#0"
 	"\n\t"	"bne	1b"
 	"\n"	"2:"
-	    : [__rv] "=&r" (__rv), [__tmp] "=&r" (__tmp__)
+	    : [__rv] "=&r" (__rv), [__tmp] "=&r" (__tmp)
 	    : [__val] "r" (__val), [__ptr] "r" (__ptr) : "cc", "memory");
 	return __rv;
 }
