@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_dl.c,v 1.25 2013/10/30 13:08:14 pooka Exp $	*/
+/*      $NetBSD: rumpuser_dl.c,v 1.26 2014/03/13 11:21:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -40,7 +40,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_dl.c,v 1.25 2013/10/30 13:08:14 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_dl.c,v 1.26 2014/03/13 11:21:54 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -388,6 +388,22 @@ rumpuser_dl_bootstrap(rump_modinit_fn domodinit,
 		return;
 	}
 	origmap = mainmap;
+
+	/*
+	 * Use a heuristic to determine if we are static linked.
+	 * A dynamically linked binary should always have at least
+	 * two objects: itself and ld.so.
+	 *
+	 * In a statically linked binary with glibc the linkmap
+	 * contains some "info" that leads to a segfault.  Since we
+	 * can't really do anything useful in here without ld.so, just
+	 * simply bail and let the symbol references in librump do the
+	 * right things.
+	 */
+	if (origmap->l_next == NULL && origmap->l_prev == NULL) {
+		dlclose(mainhandle);
+		return;
+	}
 
 	/*
 	 * Process last->first because that's the most probable
