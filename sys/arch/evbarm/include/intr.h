@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.25 2014/02/04 18:51:16 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.26 2014/03/13 23:48:38 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -64,6 +64,8 @@
 #define IST_EDGE_RISING	5
 #define IST_EDGE_BOTH	6
 #define IST_SOFT	7
+
+#define IST_MPSAFE	0x100	/* interrupt is MPSAFE */
 
 #ifndef _LOCORE
 
