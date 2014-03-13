@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.90 2014/03/10 22:38:53 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.91 2014/03/13 01:34:06 pooka Exp $
 #
 
 WARNS?=		3	# XXX: src/sys won't compile with -Wsign-compare yet
@@ -96,30 +96,36 @@ DPSRCS+=	${RUMPTOP}/Makefile.rump
 
 # XXX: Warning flags are not in CWARNFLAGS.  Manually add a few important ones.
 
-.ifdef RUMPCOMP_USER && !defined(RUMPKERN_ONLY)
+.ifdef RUMPCOMP_USER
+.warning RUMPCOMP_USER is deprecated.  Use RUMPCOMP_USER_SRCS
+RUMPCOMP_USER_SRCS= rumpcomp_user.c
+.endif
+.ifdef RUMPCOMP_USER_SRCS && !defined(RUMPKERN_ONLY)
 .if empty(DESTDIR)
 DESTDIR=/
 .endif
 BUILDRUMP_CPPFLAGS ?= -isysroot ${DESTDIR}
 RUMPCOMP_USER_WERROR = ${${_NOWERROR} == "no" :?-Werror:}
-rumpcomp_user.d: rumpcomp_user.c
+.for rcusrc in ${RUMPCOMP_USER_SRCS:R}
+${rcusrc}.d: ${rcusrc}.c
 	${_MKTARGET_CREATE}
-	${MKDEP} -f ${.TARGET} -- ${MKDEPFLAGS} ${BUILDRUMP_CPPFLAGS} ${RUMPCOMP_USER_CPPFLAGS} ${.ALLSRC:O:u:M*rumpcomp_user.c}
+	${MKDEP} -f ${.TARGET} -- ${MKDEPFLAGS} ${BUILDRUMP_CPPFLAGS} ${RUMPCOMP_USER_CPPFLAGS} ${.ALLSRC:O:u:M*${rcusrc}.c}
 
-rumpcomp_user.o: rumpcomp_user.c
+${rcusrc}.o: ${rcusrc}.c
 	${_MKTARGET_COMPILE}
-	${CC} -o ${.TARGET} ${DBG} ${CWARNFLAGS} ${RUMPCOMP_USER_WERROR} -Wall -Wmissing-prototypes ${BUILDRUMP_CPPFLAGS} ${BUILDRUMP_CFLAGS} ${RUMPCOMP_USER_CPPFLAGS} ${RUMPCOMP_USER_CFLAGS} -c ${.ALLSRC:O:u:M*rumpcomp_user.c}
+	${CC} -o ${.TARGET} ${DBG} ${CWARNFLAGS} ${RUMPCOMP_USER_WERROR} -Wall -Wmissing-prototypes ${BUILDRUMP_CPPFLAGS} ${BUILDRUMP_CFLAGS} ${RUMPCOMP_USER_CPPFLAGS} ${RUMPCOMP_USER_CFLAGS} -c ${.ALLSRC:O:u:M*${rcusrc}.c}
 
-rumpcomp_user.pico: rumpcomp_user.c
+${rcusrc}.pico: ${rcusrc}.c
 	${_MKTARGET_COMPILE}
-	${CC} -o ${.TARGET} -fPIC -DPIC ${DBG} ${CWARNFLAGS} ${RUMPCOMP_USER_WERROR} -Wall -Wmissing-prototypes ${BUILDRUMP_CPPFLAGS} ${BUILDRUMP_CFLAGS} ${RUMPCOMP_USER_CPPFLAGS} ${RUMPCOMP_USER_CFLAGS} -c ${.ALLSRC:O:u:M*rumpcomp_user.c}
+	${CC} -o ${.TARGET} -fPIC -DPIC ${DBG} ${CWARNFLAGS} ${RUMPCOMP_USER_WERROR} -Wall -Wmissing-prototypes ${BUILDRUMP_CPPFLAGS} ${BUILDRUMP_CFLAGS} ${RUMPCOMP_USER_CPPFLAGS} ${RUMPCOMP_USER_CFLAGS} -c ${.ALLSRC:O:u:M*${rcusrc}.c}
 
-rumpcomp_user.po: rumpcomp_user.c
+${rcusrc}.po: ${rcusrc}.c
 	${_MKTARGET_COMPILE}
-	${CC} -o ${.TARGET} ${PROFFLAGS} -pg ${DBG} ${CWARNFLAGS} ${RUMPCOMP_USER_WERROR} -Wall -Wmissing-prototypes ${BUILDRUMP_CPPFLAGS} ${BUILDRUMP_CFLAGS} ${RUMPCOMP_USER_CPPFLAGS} ${RUMPCOMP_USER_CFLAGS} -c ${.ALLSRC:O:u:M*rumpcomp_user.c}
+	${CC} -o ${.TARGET} ${PROFFLAGS} -pg ${DBG} ${CWARNFLAGS} ${RUMPCOMP_USER_WERROR} -Wall -Wmissing-prototypes ${BUILDRUMP_CPPFLAGS} ${BUILDRUMP_CFLAGS} ${RUMPCOMP_USER_CPPFLAGS} ${RUMPCOMP_USER_CFLAGS} -c ${.ALLSRC:O:u:M*${rcusrc}.c}
 
-RUMPOBJ_NORENAME+=rumpcomp_user.*o
-SRCS+=rumpcomp_user.c
+RUMPOBJ_NORENAME+=${rcusrc}.o ${rcusrc}.pico ${rcusrc}.po
+SRCS+=${rcusrc}.c
+.endfor
 .endif
 
 #
@@ -182,14 +188,14 @@ __archivebuild: .USE
 	${_MKTARGET_BUILD}
 	rm -f ${.TARGET}
 .endif
-	for obj in ${RUMP_SYMREN:U${.ALLSRC:N${RUMPOBJ_NORENAME}}}; do \
-		${NM} -go $${obj} | ${TOOL_AWK} ' \
+	for renameobj in ${RUMP_SYMREN:U${.ALLSRC:C/(${RUMPOBJ_NORENAME:ts|})//g}}; do \
+		${NM} -go $${renameobj} | ${TOOL_AWK} ' \
 		    $$NF!~/^'${_PQ}'(rump|RUMP|__|_GLOBAL_OFFSET_TABLE'${_SYMQUIRK}')/ \
 		      {s=$$NF;sub(/^'${_PQ}'/, "&rumpns_", s); print $$NF, s}'\
-		    | sort | uniq  > renametab.$${obj}; \
+		    | sort | uniq  > renametab.$${renameobj}; \
 		${OBJCOPY} --preserve-dates --redefine-syms \
-		    renametab.$${obj} $${obj}; \
-		rm -f renametab.$${obj}; \
+		    renametab.$${renameobj} $${renameobj}; \
+		rm -f renametab.$${renameobj}; \
 	done
 .if !defined(RUMP_SYMREN)
 	${AR} ${_ARFL} ${.TARGET} \
