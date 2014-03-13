@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.67 2012/06/30 10:52:31 tsutsui Exp $	*/
+/*	$NetBSD: md.c,v 1.68 2014/03/13 10:22:35 hannken Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.67 2012/06/30 10:52:31 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.68 2014/03/13 10:22:35 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_md.h"
@@ -340,6 +340,10 @@ mdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 		break;
 	}
 	dk->dk_openmask = dk->dk_copenmask | dk->dk_bopenmask;
+	if (dk->dk_openmask != 0) {
+		mutex_exit(&dk->dk_openlock);
+		return 0;
+	}
 
 	mutex_exit(&dk->dk_openlock);
 
