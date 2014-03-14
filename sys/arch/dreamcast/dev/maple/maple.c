@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.46 2013/10/13 06:55:34 riz Exp $	*/
+/*	$NetBSD: maple.c,v 1.47 2014/03/14 08:55:40 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.46 2013/10/13 06:55:34 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.47 2014/03/14 08:55:40 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -554,10 +554,7 @@ static void
 maple_check_unit_change(struct maple_softc *sc, struct maple_unit *u)
 {
 	struct maple_devinfo *newinfo = (void *) (u->u_rxbuf + 1);
-	int port, subunit;
 
-	port = u->port;
-	subunit = u->subunit;
 	if (memcmp(&u->devinfo, newinfo, sizeof(struct maple_devinfo)) == 0)
 		goto out;	/* no change */
 
