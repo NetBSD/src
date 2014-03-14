@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.37 2014/02/13 03:34:40 rmind Exp $	*/
+/*	$NetBSD: npf.h,v 1.38 2014/03/14 11:29:44 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -210,6 +210,7 @@ bool		npf_autounload_p(void);
 #define	NPF_RULE_RETRST			0x0010
 #define	NPF_RULE_RETICMP		0x0020
 #define	NPF_RULE_DYNAMIC		0x0040
+#define	NPF_RULE_MULTIENDS		0x0080
 
 #define	NPF_DYNAMIC_GROUP		(NPF_RULE_GROUP | NPF_RULE_DYNAMIC)
 

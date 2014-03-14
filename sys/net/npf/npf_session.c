@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_session.c,v 1.30 2013/12/06 01:33:37 rmind Exp $	*/
+/*	$NetBSD: npf_session.c,v 1.31 2014/03/14 11:29:44 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2013 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.30 2013/12/06 01:33:37 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.31 2014/03/14 11:29:44 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -260,19 +260,12 @@ sess_rbtree_cmp_nodes(void *ctx, const void *n1, const void *n2)
 	const int sz = sen1->se_alen;
 	int ret;
 
-	/*
-	 * Ports are expected to vary most, therefore they are first.
-	 */
 	if (sen1->se_src_id != sen2->se_src_id) {
 		return (sen1->se_src_id < sen2->se_src_id) ? -1 : 1;
 	}
 	if (sen1->se_dst_id != sen2->se_dst_id) {
 		return (sen1->se_dst_id < sen2->se_dst_id) ? -1 : 1;
 	}
-
-	/*
-	 * Note that hash should minimise differentiation on addresses.
-	 */
 	if (sen1->se_alen != sen2->se_alen) {
 		return (sen1->se_alen < sen2->se_alen) ? -1 : 1;
 	}
@@ -285,7 +278,19 @@ sess_rbtree_cmp_nodes(void *ctx, const void *n1, const void *n2)
 
 	const npf_secomid_t *id1 = &sen1->se_backptr->s_common_id;
 	const npf_secomid_t *id2 = ctx ? ctx : &sen2->se_backptr->s_common_id;
-	return memcmp(id1, id2, sizeof(npf_secomid_t));
+
+	if (id1->proto != id2->proto) {
+		return (id1->proto < id2->proto) ? -1 : 1;
+	}
+
+	/*
+	 * Zero interface ID is a special case indicating a global state,
+	 * in which case we match straight away.
+	 */
+	if (id1->ifid && id1->ifid != id2->ifid) {
+		return (id1->ifid < id2->ifid) ? -1 : 1;
+	}
+	return 0;
 }
 
 static signed int
@@ -312,8 +317,7 @@ sess_hash_bucket(npf_sehash_t *stbl, const npf_secomid_t *scid,
 	const int sz = sen->se_alen;
 	uint32_t hash, mix[2];
 
-	mix[0] = (scid->proto ^ scid->ifid) << 16;
-	mix[0] |= sen->se_src_id ^ sen->se_dst_id;
+	mix[0] = (scid->proto << 16) | (sen->se_src_id ^ sen->se_dst_id);
 	mix[1] = npf_addr_mix(sz, &sen->se_src_addr, &sen->se_dst_addr);
 	hash = murmurhash2(mix, sizeof(mix), sess_hash_seed);
 
@@ -486,6 +490,7 @@ npf_session_lookup(const npf_cache_t *npc, const nbuf_t *nbuf,
     const int di, bool *forw)
 {
 	const u_int proto = npc->npc_proto;
+	const u_int ifid = nbuf->nb_ifid;
 	npf_sentry_t senkey, *sen;
 	npf_session_t *se;
 	npf_sehash_t *sh;
@@ -505,9 +510,7 @@ npf_session_lookup(const npf_cache_t *npc, const nbuf_t *nbuf,
 	 * Note: this is a special case where we use common ID pointer
 	 * to pass the structure for the key comparator.
 	 */
-	npf_secomid_t scid;
-	memset(&scid, 0, sizeof(npf_secomid_t));
-	scid = (npf_secomid_t){ .proto = proto, .ifid = nbuf->nb_ifid };
+	npf_secomid_t scid = { .proto = proto, .ifid = ifid };
 	senkey.se_common_id = &scid;
 
 	/*
@@ -528,7 +531,7 @@ npf_session_lookup(const npf_cache_t *npc, const nbuf_t *nbuf,
 	}
 	se = sen->se_backptr;
 	KASSERT(se->s_common_id.proto == proto);
-	KASSERT(se->s_common_id.ifid == nbuf->nb_ifid);
+	KASSERT(se->s_common_id.ifid == 0 || se->s_common_id.ifid == ifid);
 	flags = se->s_flags;
 
 	/* Check if session is active and not expired. */
@@ -597,13 +600,13 @@ npf_session_inspect(npf_cache_t *npc, nbuf_t *nbuf, const int di, int *error)
 }
 
 /*
- * npf_establish_session: create a new session, insert into the global list.
+ * npf_session_establish: create a new session, insert into the global list.
  *
  * => Session is created with the reference held for the caller.
  * => Session will be activated on the first reference release.
  */
 npf_session_t *
-npf_session_establish(npf_cache_t *npc, nbuf_t *nbuf, const int di)
+npf_session_establish(npf_cache_t *npc, nbuf_t *nbuf, int di, bool per_if)
 {
 	npf_sentry_t *fw, *bk;
 	npf_sehash_t *sh;
@@ -612,6 +615,7 @@ npf_session_establish(npf_cache_t *npc, nbuf_t *nbuf, const int di)
 	bool ok;
 
 	KASSERT(!nbuf_flag_p(nbuf, NBUF_DATAREF_RESET));
+
 	if (!npf_session_trackable_p(npc)) {
 		return NULL;
 	}
@@ -644,9 +648,8 @@ npf_session_establish(npf_cache_t *npc, nbuf_t *nbuf, const int di)
 	memcpy(&fw->se_dst_addr, npc->npc_ips[NPF_DST], alen);
 
 	/* Protocol and interface. */
-	memset(&se->s_common_id, 0, sizeof(npf_secomid_t));
 	se->s_common_id.proto = npc->npc_proto;
-	se->s_common_id.ifid = nbuf->nb_ifid;
+	se->s_common_id.ifid = per_if ? nbuf->nb_ifid : 0;
 
 	/* Setup "forwards" entry. */
 	if (!npf_session_fillent(npc, fw)) {
