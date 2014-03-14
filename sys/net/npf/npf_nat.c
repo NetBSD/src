@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_nat.c,v 1.26 2014/02/19 03:51:31 rmind Exp $	*/
+/*	$NetBSD: npf_nat.c,v 1.27 2014/03/14 11:29:44 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2014 Mindaugas Rasiukevicius <rmind at netbsd org>
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.26 2014/02/19 03:51:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.27 2014/03/14 11:29:44 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -669,7 +669,7 @@ npf_do_nat(npf_cache_t *npc, npf_session_t *se, nbuf_t *nbuf, const int di)
 	 * stream depends on other, stateless filtering rules.
 	 */
 	if (se == NULL) {
-		nse = npf_session_establish(npc, nbuf, di);
+		nse = npf_session_establish(npc, nbuf, di, true);
 		if (nse == NULL) {
 			atomic_dec_uint(&np->n_refcnt);
 			return ENOMEM;
