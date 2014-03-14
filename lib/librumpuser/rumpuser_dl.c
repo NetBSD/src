@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_dl.c,v 1.26 2014/03/13 11:21:54 pooka Exp $	*/
+/*      $NetBSD: rumpuser_dl.c,v 1.27 2014/03/14 01:18:39 justin Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -40,7 +40,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_dl.c,v 1.26 2014/03/13 11:21:54 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_dl.c,v 1.27 2014/03/14 01:18:39 justin Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -382,6 +382,9 @@ rumpuser_dl_bootstrap(rump_modinit_fn domodinit,
 	int error;
 
 	mainhandle = dlopen(NULL, RTLD_NOW);
+	/* Will be null if statically linked so just return */
+	if (mainhandle == NULL)
+		return;
 	if (dlinfo(mainhandle, RTLD_DI_LINKMAP, &mainmap) == -1) {
 		fprintf(stderr, "warning: rumpuser module bootstrap "
 		    "failed: %s\n", dlerror());
