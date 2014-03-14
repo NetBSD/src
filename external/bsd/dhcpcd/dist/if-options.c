@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if-options.c,v 1.1.1.25 2014/03/01 11:00:41 roy Exp $");
+ __RCSID("$NetBSD: if-options.c,v 1.1.1.26 2014/03/14 11:27:35 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -127,6 +127,7 @@ const struct option cf_options[] = {
 	{"broadcast",       no_argument,       NULL, 'J'},
 	{"nolink",          no_argument,       NULL, 'K'},
 	{"noipv4ll",        no_argument,       NULL, 'L'},
+	{"master",          no_argument,       NULL, 'M'},
 	{"nooption",        optional_argument, NULL, 'O'},
 	{"require",         required_argument, NULL, 'Q'},
 	{"static",          required_argument, NULL, 'S'},
@@ -928,6 +929,9 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		break;
 	case 'L':
 		ifo->options &= ~DHCPCD_IPV4LL;
+		break;
+	case 'M':
+		ifo->options |= DHCPCD_MASTER;
 		break;
 	case 'O':
 		arg = set_option_space(ctx, arg, &d, &dl, ifo,
