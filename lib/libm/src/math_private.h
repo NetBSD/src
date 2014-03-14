@@ -11,7 +11,7 @@
 
 /*
  * from: @(#)fdlibm.h 5.1 93/09/24
- * $NetBSD: math_private.h,v 1.20 2013/11/19 19:24:34 joerg Exp $
+ * $NetBSD: math_private.h,v 1.21 2014/03/14 22:21:31 dsl Exp $
  */
 
 #ifndef _MATH_PRIVATE_H_
@@ -185,7 +185,7 @@ do {								\
 #define	STRICT_ASSIGN(type, lval, rval) do {	\
 	volatile type __lval;			\
 						\
-	if (sizeof(type) >= sizeof(double))	\
+	if (sizeof(type) >= sizeof(long double))	\
 		(lval) = (rval);		\
 	else {					\
 		__lval = (rval);		\
