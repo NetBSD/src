@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_handler.c,v 1.28 2013/11/08 00:38:26 rmind Exp $	*/
+/*	$NetBSD: npf_handler.c,v 1.29 2014/03/14 11:29:44 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.28 2013/11/08 00:38:26 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.29 2014/03/14 11:29:44 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -229,7 +229,8 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 	 * if session creation fails (e.g. due to unsupported protocol).
 	 */
 	if ((retfl & NPF_RULE_STATEFUL) != 0 && !se) {
-		se = npf_session_establish(&npc, &nbuf, di);
+		se = npf_session_establish(&npc, &nbuf, di,
+		    (retfl & NPF_RULE_MULTIENDS) == 0);
 		if (se) {
 			/*
 			 * Note: the reference on the rule procedure is
