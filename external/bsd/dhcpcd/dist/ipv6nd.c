@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv6nd.c,v 1.6 2014/03/01 11:04:21 roy Exp $");
+ __RCSID("$NetBSD: ipv6nd.c,v 1.7 2014/03/14 11:31:11 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -49,14 +49,6 @@
 #include <syslog.h>
 #include <unistd.h>
 
-/* Currently, no known kernel allows us to send from the unspecified address
- * which is required for DAD to work. This isn't that much of a problem as
- * the kernel will do DAD for us correctly, however we don't know the exact
- * randomness the kernel applies to the timeouts. So we just follow the same
- * logic and have a little faith.
- * This define is purely for completeness */
-// #define IPV6_SEND_DAD
-
 #define ELOOP_QUEUE 2
 #include "common.h"
 #include "dhcpcd.h"
@@ -65,11 +57,6 @@
 #include "ipv6.h"
 #include "ipv6nd.h"
 #include "script.h"
-
-#if defined(LISTEN_DAD) && defined(INET6)
-#  warning kernel does not report DAD results to userland
-#  warning listening to duplicated addresses on the wire
-#endif
 
 /* Debugging Router Solicitations is a lot of spam, so disable it */
 //#define DEBUG_RS
@@ -172,16 +159,10 @@ ipv6nd_open(struct dhcpcd_ctx *dctx)
 	struct ipv6_ctx *ctx;
 	int on;
 	struct icmp6_filter filt;
-#ifdef IPV6_SEND_DAD
-	union {
-		struct sockaddr sa;
-		struct sockaddr_in6 sin;
-	} su;
-#endif
 
 	ctx = dctx->ipv6;
 	if (ctx->nd_fd != -1)
-		goto unspec;
+		return ctx->nd_fd;
 #ifdef SOCK_CLOEXEC
 	ctx->nd_fd = socket(AF_INET6, SOCK_RAW | SOCK_CLOEXEC | SOCK_NONBLOCK,
 	    IPPROTO_ICMPV6);
@@ -206,6 +187,12 @@ ipv6nd_open(struct dhcpcd_ctx *dctx)
 	}
 #endif
 
+	/* RFC4861 4.1 */
+	on = 255;
+	if (setsockopt(ctx->nd_fd, IPPROTO_IPV6, IPV6_MULTICAST_HOPS,
+	    &on, sizeof(on)) == -1)
+		goto eexit;
+
 	on = 1;
 	if (setsockopt(ctx->nd_fd, IPPROTO_IPV6, IPV6_RECVPKTINFO,
 	    &on, sizeof(on)) == -1)
@@ -224,62 +211,6 @@ ipv6nd_open(struct dhcpcd_ctx *dctx)
 		goto eexit;
 
 	eloop_event_add(dctx->eloop, ctx->nd_fd, ipv6nd_handledata, dctx);
-
-unspec:
-#ifdef IPV6_SEND_DAD
-	if (ctx->unspec_fd != -1)
-		return ctx->nd_fd;
-
-	ICMP6_FILTER_SETBLOCKALL(&filt);
-
-	/* We send DAD requests from the unspecified address. */
-#ifdef SOCK_CLOEXEC
-	ctx->unspec_fd = socket(AF_INET6,
-	    SOCK_RAW | SOCK_CLOEXEC | SOCK_NONBLOCK,
-	    IPPROTO_ICMPV6);
-	if (ctx->unspec_fd == -1)
-		return -1;
-#else
-	if ((ctx->unspec_fd = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6)) == -1)
-		return -1;
-	if ((on = fcntl(ctx->unspec_fd, F_GETFD, 0)) == -1 ||
-	    fcntl(ctx->unspec_fd, F_SETFD, on | FD_CLOEXEC) == -1)
-	{
-		close(ctx->unspec_fd);
-		ctx->unspec_fd = -1;
-	        return -1;
-	}
-	if ((on = fcntl(ctx->unspec_fd, F_GETFL, 0)) == -1 ||
-	    fcntl(ctx->unspec_fd, F_SETFL, on | O_NONBLOCK) == -1)
-	{
-		close(ctx->unspec_fd);
-		ctx->unspec_fd = -1;
-	        return -1;
-	}
-#endif
-	
-	if (setsockopt(ctx->unspec_fd, IPPROTO_ICMPV6, ICMP6_FILTER,
-	    &filt, sizeof(filt)) == -1)
-		goto eexit;
-	memset(&su, 0, sizeof(su));
-	su.sin.sin6_family = AF_INET6;
-#ifdef SIN6_LEN
-	su.sin.sin6_len = sizeof(su.sin);
-#endif
-	if (bind(ctx->unspec_fd, &su.sa, sizeof(su.sin)) == -1)
-		goto eexit;
-#endif
-
-#ifdef LISTEN_DAD
-	if (!ctx->dad_warned) {
-		syslog(LOG_WARNING, 
-		    "kernel does not report DAD results to userland");
-		syslog(LOG_WARNING,
-		    "warning listening to duplicated addresses on the wire");
-		ctx->dad_warned = 1;
-	}
-#endif
-
 	return ctx->nd_fd;
 
 eexit:
@@ -288,12 +219,6 @@ eexit:
 		close(ctx->nd_fd);
 		ctx->nd_fd = -1;
 	}
-#ifdef IPV6_SEND_DAD
-	if (ctx->unpsec_fd != -1) {
-		close(ctx->unspec_fd);
-		ctx->unspec_fd = -1;
-	}
-#endif
 	return -1;
 }
 
@@ -331,7 +256,6 @@ ipv6nd_sendrsprobe(void *arg)
 	struct sockaddr_in6 dst;
 	struct cmsghdr *cm;
 	struct in6_pktinfo pi;
-	int hoplimit = HOPLIMIT;
 
 	if (ipv6_linklocal(ifp) == NULL) {
 		syslog(LOG_DEBUG,
@@ -368,15 +292,6 @@ ipv6nd_sendrsprobe(void *arg)
 	memset(&pi, 0, sizeof(pi));
 	pi.ipi6_ifindex = ifp->index;
 	memcpy(CMSG_DATA(cm), &pi, sizeof(pi));
-
-	/* Hop limit */
-	cm = CMSG_NXTHDR(&ctx->sndhdr, cm);
-	if (cm == NULL) /* unlikely */
-		return;
-	cm->cmsg_level = IPPROTO_IPV6;
-	cm->cmsg_type = IPV6_HOPLIMIT;
-	cm->cmsg_len = CMSG_LEN(sizeof(hoplimit));
-	memcpy(CMSG_DATA(cm), &hoplimit, sizeof(hoplimit));
 
 	syslog(LOG_DEBUG, "%s: sending Router Solicitation", ifp->name);
 	if (sendmsg(ctx->nd_fd, &ctx->sndhdr, 0) == -1) {
@@ -581,16 +496,11 @@ ipv6nd_dadcallback(void *arg)
 	int wascompleted, found;
 
 	wascompleted = (ap->flags & IPV6_AF_DADCOMPLETED);
-	ipv6nd_cancelprobeaddr(ap);
 	ap->flags |= IPV6_AF_DADCOMPLETED;
 	if (ap->flags & IPV6_AF_DUPLICATED)
 		/* No idea what how to try and make another address :( */
 		syslog(LOG_WARNING, "%s: DAD detected %s",
 		    ap->iface->name, ap->saddr);
-#ifdef IPV6_SEND_DAD
-	else
-		ipv6_addaddr(ap);
-#endif
 
 	if (!wascompleted) {
 		ifp = ap->iface;
@@ -611,7 +521,7 @@ ipv6nd_dadcallback(void *arg)
 					found = 1;
 			}
 
-			if (wascompleted && found && rap->lifetime) {
+			if (wascompleted && found) {
 				syslog(LOG_DEBUG,
 				    "%s: Router Advertisement DAD completed",
 				    rap->iface->name);
@@ -687,11 +597,6 @@ ipv6nd_handlera(struct ipv6_ctx *ctx, struct interface *ifp,
 	}
 
 	nd_ra = (struct nd_router_advert *)icp;
-	/* Don't bother doing anything if we don't know about a router
-	 * expiring */
-	if ((rap == NULL || rap->lifetime == 0)
-	    && nd_ra->nd_ra_router_lifetime == 0)
-		return;
 
 	/* We don't want to spam the log with the fact we got an RA every
 	 * 30 seconds or so, so only spam the log if it's different. */
@@ -860,13 +765,13 @@ ipv6nd_handlera(struct ipv6_ctx *ctx, struct interface *ifp,
 			    ntohl(pi->nd_opt_pi_preferred_time);
 			ap->nsprobes = 0;
 			if (opt) {
-				l = strlen(opt);
-				tmp = realloc(opt,
-					l + strlen(ap->saddr) + 2);
+				l = strlen(opt) + 1;
+				m = strlen(ap->saddr) + 1;
+				tmp = realloc(opt, l + m);
 				if (tmp) {
 					opt = tmp;
-					opt[l] = ' ';
-					strcpy(opt + l + 1, ap->saddr);
+					opt[l - 1] = ' ';
+					strlcpy(opt + l, ap->saddr, m);
 				}
 			} else
 				opt = strdup(ap->saddr);
@@ -1001,14 +906,10 @@ ipv6nd_handlera(struct ipv6_ctx *ctx, struct interface *ifp,
 		script_runreason(ifp, "TEST");
 		goto handle_flag;
 	}
-	ipv6nd_probeaddrs(&rap->addrs);
+	ipv6_addaddrs(&rap->addrs);
 	ipv6_buildroutes(ifp->ctx);
-
-	/* We will get run by the expire function */
-	if (rap->lifetime) {
-		if (ipv6nd_scriptrun(rap))
-			return;
-	}
+	if (ipv6nd_scriptrun(rap))
+		return;
 
 	eloop_timeout_delete(ifp->ctx->eloop, NULL, ifp);
 	eloop_timeout_delete(ifp->ctx->eloop, NULL, rap); /* reachable timer */
@@ -1025,15 +926,13 @@ ipv6nd_handlera(struct ipv6_ctx *ctx, struct interface *ifp,
 
 handle_flag:
 	if (rap->flags & ND_RA_FLAG_MANAGED) {
-		if (rap->lifetime && new_data &&
-		    dhcp6_start(ifp, DH6S_INIT) == -1)
+		if (new_data && dhcp6_start(ifp, DH6S_INIT) == -1)
 			syslog(LOG_ERR, "dhcp6_start: %s: %m", ifp->name);
 	} else if (rap->flags & ND_RA_FLAG_OTHER) {
-		if (rap->lifetime && new_data &&
-		    dhcp6_start(ifp, DH6S_INFORM) == -1)
+		if (new_data && dhcp6_start(ifp, DH6S_INFORM) == -1)
 			syslog(LOG_ERR, "dhcp6_start: %s: %m", ifp->name);
 	} else {
-		if (rap->lifetime && new_data)
+		if (new_data)
 			syslog(LOG_DEBUG, "%s: No DHCPv6 instruction in RA",
 			    ifp->name);
 		if (ifp->ctx->options & DHCPCD_TEST) {
@@ -1132,24 +1031,25 @@ ipv6nd_env(char **env, const char *prefix, const struct interface *ifp)
 					if (new) {
 						**var = new;
 						new = strchr(**var, '=');
-						if (new)
-							strcpy(new + 1,
-							    rao->option);
-						else
+						if (new) {
+							len -= (new - **var);
+							strlcpy(new + 1,
+							    rao->option,
+							    len - 1);
+						} else
 							syslog(LOG_ERR,
 							    "new is null");
 					}
 					continue;
 				}
-				new = realloc(**var,
-				    strlen(**var) + 1 +
-				    strlen(rao->option) + 1);
+				len = strlen(rao->option) + 1;
+				new = realloc(**var, strlen(**var) + 1 + len);
 				if (new == NULL)
 					return -1;
 				**var = new;
 				new += strlen(new);
 				*new++ = ' ';
-				strcpy(new, rao->option);
+				strlcpy(new, rao->option, len);
 				continue;
 			}
 			if (env) {
@@ -1202,26 +1102,29 @@ ipv6nd_expirera(void *arg)
 	TAILQ_FOREACH_SAFE(rap, ifp->ctx->ipv6->ra_routers, next, ran) {
 		if (rap->iface != ifp)
 			continue;
-		lt.tv_sec = rap->lifetime;
-		lt.tv_usec = 0;
-		timeradd(&rap->received, &lt, &expire);
-		if (rap->lifetime == 0 || timercmp(&now, &expire, >)) {
-			valid = 0;
-			if (!rap->expired) {
-				syslog(LOG_WARNING,
-				    "%s: %s: router expired",
-				    ifp->name, rap->sfrom);
-				rap->expired = expired = 1;
-				ipv6nd_cancelproberouter(rap);
+		valid = 0;
+		if (rap->lifetime) {
+			lt.tv_sec = rap->lifetime;
+			lt.tv_usec = 0;
+			timeradd(&rap->received, &lt, &expire);
+			if (rap->lifetime == 0 || timercmp(&now, &expire, >)) {
+				if (!rap->expired) {
+					syslog(LOG_WARNING,
+					    "%s: %s: router expired",
+					    ifp->name, rap->sfrom);
+					rap->expired = expired = 1;
+					ipv6nd_cancelproberouter(rap);
+				}
+			} else {
+				valid = 1;
+				timersub(&expire, &now, &lt);
+				if (!timerisset(&next) ||
+				    timercmp(&next, &lt, >))
+					next = lt;
 			}
-		} else {
-			valid = 1;
-			timersub(&expire, &now, &lt);
-			if (!timerisset(&next) || timercmp(&next, &lt, >))
-				next = lt;
 		}
 
-		/* Addresses are expired in ipv6ns_probeaddrs
+		/* Addresses are expired in ipv6_addaddrs
 		 * so that DHCPv6 addresses can be removed also. */
 		TAILQ_FOREACH_SAFE(rao, &rap->options, next, raon) {
 			if (rap->expired) {
@@ -1332,201 +1235,6 @@ ipv6nd_unreachable(void *arg)
 	    &tv, ipv6nd_proberouter, rap);
 }
 
-#ifdef LISTEN_DAD
-void
-ipv6nd_cancelprobeaddr(struct ipv6_addr *ap)
-{
-
-	eloop_timeout_delete(ap->iface->ctx->eloop, ipv6nd_probeaddr, ap);
-	if (ap->dadcallback)
-		eloop_timeout_delete(ap->iface->ctx->eloop, ap->dadcallback,ap);
-}
-#endif
-
-void
-ipv6nd_probeaddr(void *arg)
-{
-	struct ipv6_addr *ap = arg;
-#ifdef IPV6_SEND_DAD
-	struct nd_neighbor_solicit *ns;
-	struct nd_opt_hdr *nd;
-	struct sockaddr_in6 dst;
-	struct cmsghdr *cm;
-	struct in6_pktinfo pi;
-	int hoplimit = HOPLIMIT;
-#else
-#ifdef LISTEN_DAD
-	struct timeval tv, rtv;
-	struct timeval mtv;
-	int i;
-#endif
-#endif
-
-	if (ap->dadcallback &&
-	    ((ap->flags & IPV6_AF_NEW) == 0 ||
-	    ap->nsprobes >= ap->iface->options->dadtransmits))
-	{
-#ifdef IPV6_SEND_DAD
-		ap->dadcallback(ap);
-#else
-		if (!(ap->flags & IPV6_AF_AUTOCONF) ||
-		    ap->iface->options->options & DHCPCD_IPV6RA_OWN)
-			ipv6_addaddr(ap);
-#endif
-		return;
-	}
-
-	if (ipv6nd_open(ap->iface->ctx) == -1) {
-		syslog(LOG_ERR, "%s: ipv6nd_open: %m", __func__);
-		return;
-	}
-
-	ap->flags &= ~IPV6_AF_DADCOMPLETED;
-
-#ifdef IPV6_SEND_DAD
-	if (!ap->ns) {
-	        ap->nslen = sizeof(*ns) + ROUNDUP8(ap->iface->hwlen + 2);
-		ap->ns = calloc(1, ap->nslen);
-		if (ap->ns == NULL) {
-			syslog(LOG_ERR, "%s: %m", __func__);
-			return;
-		}
-		ns = (struct nd_neighbor_solicit *)(void *)ap->ns;
-		ns->nd_ns_type = ND_NEIGHBOR_SOLICIT;
-		//ns->nd_ns_cksum = 0;
-		//ns->nd_ns_code = 0;
-		//ns->nd_ns_reserved = 0;
-		ns->nd_ns_target = ap->addr;
-		nd = (struct nd_opt_hdr *)(ap->ns + sizeof(*ns));
-		nd->nd_opt_type = ND_OPT_SOURCE_LINKADDR;
-		nd->nd_opt_len = (ROUNDUP8(ap->iface->hwlen + 2)) >> 3;
-		memcpy(nd + 1, ap->iface->hwaddr, ap->iface->hwlen);
-	}
-
-	memset(&dst, 0, sizeof(dst));
-	dst.sin6_family = AF_INET6;
-#ifdef SIN6_LEN
-	dst.sin6_len = sizeof(dst);
-#endif
-	dst.sin6_addr.s6_addr16[0] = IPV6_ADDR_INT16_MLL;
-	dst.sin6_addr.s6_addr16[1] = 0;
-	dst.sin6_addr.s6_addr32[1] = 0;
-	dst.sin6_addr.s6_addr32[2] = IPV6_ADDR_INT32_ONE;
-	dst.sin6_addr.s6_addr32[3] = ap->addr.s6_addr32[3];
-	dst.sin6_addr.s6_addr[12] = 0xff;
-
-	//memcpy(&dst.sin6_addr, &ap->addr, sizeof(dst.sin6_addr));
-	dst.sin6_scope_id = ap->iface->index;
-
-	ctx = ap->iface->ctx->ipv6;
-	ctx->sndhdr.msg_name = (caddr_t)&dst;
-	ctx->sndhdr.msg_iov[0].iov_base = ap->ns;
-	ctx->sndhdr.msg_iov[0].iov_len = ap->nslen;
-
-	/* Set the outbound interface */
-	cm = CMSG_FIRSTHDR(&ctx->sndhdr);
-	if (cm == NULL) /* unlikely */
-		return;
-	cm->cmsg_level = IPPROTO_IPV6;
-	cm->cmsg_type = IPV6_PKTINFO;
-	cm->cmsg_len = CMSG_LEN(sizeof(pi));
-	memset(&pi, 0, sizeof(pi));
-	pi.ipi6_ifindex = ap->iface->index;
-	memcpy(CMSG_DATA(cm), &pi, sizeof(pi));
-
-	/* Hop limit */
-	cm = CMSG_NXTHDR(&sndhdr, cm);
-	if (cm == NULL) /* unlikely */
-		return;
-	cm->cmsg_level = IPPROTO_IPV6;
-	cm->cmsg_type = IPV6_HOPLIMIT;
-	cm->cmsg_len = CMSG_LEN(sizeof(hoplimit));
-	memcpy(CMSG_DATA(cm), &hoplimit, sizeof(hoplimit));
-
-#ifdef DEBUG_NS
-	syslog(LOG_INFO, "%s: sending IPv6 NS for %s",
-	    ap->iface->name, ap->saddr);
-	if (ap->dadcallback == NULL)
-		syslog(LOG_WARNING, "%s: no callback!", ap->iface->name);
-#endif
-	if (sendmsg(unspec_sock, &sndhdr, 0) == -1) {
-		syslog(LOG_ERR, "%s: %s: sendmsg: %m",
-		    ap->iface->name, __func__);
-		return;
-	}
-
-	if (ap->dadcallback) {
-		ms_to_tv(&tv, RETRANS_TIMER);
-		ms_to_tv(&rtv, MIN_RANDOM_FACTOR);
-		timeradd(&tv, &rtv, &tv);
-		rtv.tv_sec = 0;
-		rtv.tv_usec = arc4random() %
-		    (MAX_RANDOM_FACTOR_U - MIN_RANDOM_FACTOR_U);
-		timeradd(&tv, &rtv, &tv);
-
-		eloop_timeout_add_tv(ap->iface->ctx->eloop, &tv,
-		    ++(ap->nsprobes) < ap->iface->options->dadtransmits ?
-		    ipv6nd_probeaddr : ap->dadcallback,
-		    ap);
-	}
-#else /* IPV6_SEND_DAD */
-
-	if (!(ap->flags & IPV6_AF_AUTOCONF) ||
-	    ap->iface->options->options & DHCPCD_IPV6RA_OWN)
-		ipv6_addaddr(ap);
-
-#ifdef LISTEN_DAD
-	/* Let the kernel handle DAD.
-	 * We don't know the timings, so just wait for the max */
-	if (ap->dadcallback) {
-		mtv.tv_sec = 0;
-		mtv.tv_usec = 0;
-		for (i = 0; i < ap->iface->options->dadtransmits; i++) {
-			ms_to_tv(&tv, RETRANS_TIMER);
-			ms_to_tv(&rtv, MAX_RANDOM_FACTOR);
-			timeradd(&tv, &rtv, &tv);
-			timeradd(&mtv, &tv, &mtv);
-		}
-		eloop_timeout_add_tv(ap->iface->ctx->eloop,
-		    &mtv, ap->dadcallback, ap);
-	}
-#endif
-#endif /* IPV6_SEND_DAD */
-}
-
-ssize_t
-ipv6nd_probeaddrs(struct ipv6_addrhead *addrs)
-{
-	struct ipv6_addr *ap, *apn;
-	ssize_t i;
-
-	i = 0;
-	TAILQ_FOREACH_SAFE(ap, addrs, next, apn) {
-		if (ap->prefix_vltime == 0) {
-			TAILQ_REMOVE(addrs, ap, next);
-			if (ap->flags & IPV6_AF_ADDED) {
-				syslog(LOG_INFO, "%s: deleting address %s",
-				    ap->iface->name, ap->saddr);
-				i++;
-				if (!IN6_IS_ADDR_UNSPECIFIED(&ap->addr) &&
-				    del_address6(ap) == -1 &&
-				    errno != EADDRNOTAVAIL && errno != ENXIO)
-					syslog(LOG_ERR, "del_address6 %m");
-			}
-			if (ap->dadcallback)
-				eloop_q_timeout_delete(ap->iface->ctx->eloop,
-				    0, NULL, ap->dadcallback);
-			free(ap);
-		} else if (!IN6_IS_ADDR_UNSPECIFIED(&ap->addr)) {
-			ipv6nd_probeaddr(ap);
-			if (ap->flags & IPV6_AF_NEW)
-				i++;
-		}
-	}
-
-	return i;
-}
-
 void
 ipv6nd_proberouter(void *arg)
 {
@@ -1536,7 +1244,6 @@ ipv6nd_proberouter(void *arg)
 	struct sockaddr_in6 dst;
 	struct cmsghdr *cm;
 	struct in6_pktinfo pi;
-	int hoplimit = HOPLIMIT;
 	struct timeval tv, rtv;
 	struct ipv6_ctx *ctx;
 
@@ -1588,15 +1295,6 @@ ipv6nd_proberouter(void *arg)
 	pi.ipi6_ifindex = rap->iface->index;
 	memcpy(CMSG_DATA(cm), &pi, sizeof(pi));
 
-	/* Hop limit */
-	cm = CMSG_NXTHDR(&ctx->sndhdr, cm);
-	if (cm == NULL) /* unlikely */
-		return;
-	cm->cmsg_level = IPPROTO_IPV6;
-	cm->cmsg_type = IPV6_HOPLIMIT;
-	cm->cmsg_len = CMSG_LEN(sizeof(hoplimit));
-	memcpy(CMSG_DATA(cm), &hoplimit, sizeof(hoplimit));
-
 #ifdef DEBUG_NS
 	syslog(LOG_INFO, "%s: sending IPv6 NS for %s",
 	    rap->iface->name, rap->sfrom);
@@ -1636,15 +1334,7 @@ ipv6nd_handlena(struct ipv6_ctx *ctx, struct interface *ifp,
 	struct nd_neighbor_advert *nd_na;
 	struct ra *rap;
 	int is_router, is_solicited;
-#ifdef DEBUG_NS
-	int found;
-#endif
 	struct timeval tv;
-
-#ifdef LISTEN_DAD
-	struct dhcp6_state *d6state;
-	struct ipv6_addr *ap;
-#endif
 
 	if ((size_t)len < sizeof(struct nd_neighbor_advert)) {
 		syslog(LOG_ERR, "IPv6 NA packet too short from %s", ctx->sfrom);
@@ -1669,55 +1359,16 @@ ipv6nd_handlena(struct ipv6_ctx *ctx, struct interface *ifp,
 		return;
 	}
 
-#ifdef DEBUG_NS
-	found = 0;
-#endif
 	TAILQ_FOREACH(rap, ctx->ra_routers, next) {
-		if (rap->iface != ifp)
-			continue;
-		if (memcmp(rap->from.s6_addr, nd_na->nd_na_target.s6_addr,
+		if (rap->iface == ifp &&
+		    memcmp(rap->from.s6_addr, nd_na->nd_na_target.s6_addr,
 		    sizeof(rap->from.s6_addr)) == 0)
 			break;
-#ifdef LISTEN_DAD
-		TAILQ_FOREACH(ap, &rap->addrs, next) {
-			if (memcmp(ap->addr.s6_addr,
-			    nd_na->nd_na_target.s6_addr,
-			    sizeof(ap->addr.s6_addr)) == 0)
-			{
-				ap->flags |= IPV6_AF_DUPLICATED;
-				if (ap->dadcallback)
-					ap->dadcallback(ap);
-#ifdef DEBUG_NS
-				found++;
-#endif
-			}
-		}
-#endif
 	}
 	if (rap == NULL) {
-#ifdef LISTEN_DAD
-		d6state = D6_STATE(ifp);
-		if (d6state) {
-			TAILQ_FOREACH(ap, &d6state->addrs, next) {
-				if (memcmp(ap->addr.s6_addr,
-				    nd_na->nd_na_target.s6_addr,
-				    sizeof(ap->addr.s6_addr)) == 0)
-				{
-					ap->flags |= IPV6_AF_DUPLICATED;
-					if (ap->dadcallback)
-						ap->dadcallback(ap);
 #ifdef DEBUG_NS
-					found++;
-#endif
-				}
-			}
-		}
-#endif
-
-#ifdef DEBUG_NS
-		if (found == 0)
-			syslog(LOG_DEBUG, "%s: unexpected NA from %s",
-			    ifp->name, ctx->sfrom);
+		syslog(LOG_DEBUG, "%s: unexpected NA from s",
+		    ifp->name, ctx->sfrom);
 #endif
 		return;
 	}
@@ -1774,6 +1425,8 @@ ipv6nd_handledata(void *arg)
 
 	dhcpcd_ctx = arg;
 	ctx = dhcpcd_ctx->ipv6;
+	ctx->rcvhdr.msg_controllen = CMSG_SPACE(sizeof(struct in6_pktinfo)) +
+	    CMSG_SPACE(sizeof(int));
 	len = recvmsg(ctx->nd_fd, &ctx->rcvhdr, 0);
 	if (len == -1) {
 		syslog(LOG_ERR, "recvmsg: %m");
