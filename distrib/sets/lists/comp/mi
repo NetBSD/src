@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1880 2014/03/12 12:26:40 njoly Exp $
+#	$NetBSD: mi,v 1.1881 2014/03/14 01:05:57 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3844,6 +3844,8 @@
 ./usr/lib/librumpkern_sljit_p.a			comp-c-proflib		profile,sljit,rump
 ./usr/lib/librumpkern_solaris.a			comp-c-lib		zfs,rump
 ./usr/lib/librumpkern_solaris_p.a		comp-c-proflib		profile,zfs,rump
+./usr/lib/librumpkern_time.a			comp-c-lib		rump
+./usr/lib/librumpkern_time_p.a			comp-c-proflib		profile,rump
 ./usr/lib/librumpkern_tty.a			comp-c-lib		rump
 ./usr/lib/librumpkern_tty_p.a			comp-c-proflib		profile,rump
 ./usr/lib/librumpkern_z.a			comp-c-lib		rump
