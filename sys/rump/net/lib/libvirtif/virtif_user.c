@@ -1,4 +1,4 @@
-/*	$NetBSD: virtif_user.c,v 1.2 2014/03/13 20:55:26 pooka Exp $	*/
+/*	$NetBSD: virtif_user.c,v 1.3 2014/03/14 10:06:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -51,7 +51,7 @@
 #include "if_virt.h"
 #include "virtif_user.h"
 
-#if VIFHYPER_REVISION != 20140302
+#if VIFHYPER_REVISION != 20140313
 #error VIFHYPER_REVISION mismatch
 #endif
 
