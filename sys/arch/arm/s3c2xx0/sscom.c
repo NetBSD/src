@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.40 2014/03/10 04:25:51 htodd Exp $ */
+/*	$NetBSD: sscom.c,v 1.41 2014/03/14 21:40:48 matt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.40 2014/03/10 04:25:51 htodd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.41 2014/03/14 21:40:48 matt Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -142,6 +142,7 @@ __KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.40 2014/03/10 04:25:51 htodd Exp $");
 #include <sys/kauth.h>
 #include <sys/intr.h>
 #include <sys/bus.h>
+#include <sys/mutex.h>
 
 #include <arm/s3c2xx0/s3c2xx0reg.h>
 #include <arm/s3c2xx0/s3c2xx0var.h>
@@ -244,8 +245,8 @@ void	sscom_kgdb_putc (void *, int);
 
 #if (defined(MULTIPROCESSOR) || defined(LOCKDEBUG)) && defined(SSCOM_MPLOCK)
 
-#define SSCOM_LOCK(sc) simple_lock((sc)->sc_lock)
-#define SSCOM_UNLOCK(sc) simple_unlock((sc)->sc_lock)
+#define SSCOM_LOCK(sc) mutex_enter((sc)->sc_lock)
+#define SSCOM_UNLOCK(sc) mutex_exit((sc)->sc_lock)
 
 #else
 
@@ -365,7 +366,7 @@ sscom_enable_debugport(struct sscom_softc *sc)
 	sc->sc_ucon = UCON_DEBUGPORT;
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, SSCOM_UCON, sc->sc_ucon);
 	sc->sc_umcon = UMCON_RTS|UMCON_DTR;
-	sc->set_modem_control(sc);
+	sc->sc_set_modem_control(sc);
 	sscom_enable_rxint(sc);
 	sscom_disable_txint(sc);
 	SSCOM_UNLOCK(sc);
@@ -402,7 +403,7 @@ sscom_attach_subr(struct sscom_softc *sc)
 
 	callout_init(&sc->sc_diag_callout, 0);
 #if (defined(MULTIPROCESSOR) || defined(LOCKDEBUG)) && defined(SSCOM_MPLOCK)
-	simple_lock_init(&sc->sc_lock);
+	sc->sc_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SERIAL);
 #endif
 
 	sc->sc_ucon = UCON_RXINT_ENABLE|UCON_TXINT_ENABLE;
@@ -410,12 +411,13 @@ sscom_attach_subr(struct sscom_softc *sc)
 	/*
 	 * set default for modem control hook
 	 */
-	if (sc->set_modem_control == NULL)
-		sc->set_modem_control = sscom_set_modem_control;
-	if (sc->read_modem_status == NULL)
-		sc->read_modem_status = sscom_read_modem_status;
+	if (sc->sc_set_modem_control == NULL)
+		sc->sc_set_modem_control = sscom_set_modem_control;
+	if (sc->sc_read_modem_status == NULL)
+		sc->sc_read_modem_status = sscom_read_modem_status;
 
 	/* Disable interrupts before configuring the device. */
+	KASSERT(sc->sc_change_txrx_interrupts != NULL);
 	sscom_disable_txrxint(sc);
 
 #ifdef KGDB
@@ -640,7 +642,7 @@ sscomopen(dev_t dev, int flag, int mode, struct lwp *l)
 		sscom_enable_txrxint(sc);
 
 		/* Fetch the current modem control status, needed later. */
-		sc->sc_msts = sc->read_modem_status(sc);
+		sc->sc_msts = sc->sc_read_modem_status(sc);
 
 #if 0
 		/* Clear PPS capture state on first open. */
@@ -1206,7 +1208,7 @@ sscom_loadchannelregs(struct sscom_softc *sc)
 
 	bus_space_write_2(iot, ioh, SSCOM_UBRDIV, sc->sc_ubrdiv);
 	bus_space_write_1(iot, ioh, SSCOM_ULCON, sc->sc_ulcon);
-	sc->set_modem_control(sc);
+	sc->sc_set_modem_control(sc);
 	bus_space_write_2(iot, ioh, SSCOM_UCON, sc->sc_ucon);
 }
 
@@ -1262,7 +1264,7 @@ sscom_hwiflow(struct sscom_softc *sc)
 		SET(sc->sc_umcon, sc->sc_mcr_rts);
 		SET(sc->sc_mcr_active, sc->sc_mcr_rts);
 	}
-	sc->set_modem_control(sc);
+	sc->sc_set_modem_control(sc);
 }
 
 
@@ -1634,7 +1636,7 @@ sscomrxintr(void *arg)
 		}
 
 
-		msts = sc->read_modem_status(sc);
+		msts = sc->sc_read_modem_status(sc);
 		delta = msts ^ sc->sc_msts;
 		sc->sc_msts = msts;
 
