@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcpcd-embedded.c,v 1.1.1.3 2014/02/25 13:14:29 roy Exp $");
+ __RCSID("$NetBSD: dhcpcd-embedded.c,v 1.1.1.4 2014/03/14 11:27:36 roy Exp $");
 
 /*
  * DO NOT EDIT
@@ -36,7 +36,7 @@
 
 #include <unistd.h>
 
-const char *dhcpcd_embedded_conf[] = {
+const char * const dhcpcd_embedded_conf[] = {
 "define 1 request ipaddress subnet_mask",
 "define 121 rfc3442 classless_static_routes",
 "define 249 rfc3442 ms_classless_static_routes",

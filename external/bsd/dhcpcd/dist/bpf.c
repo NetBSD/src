@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: bpf.c,v 1.1.1.8 2014/02/25 13:14:29 roy Exp $");
+ __RCSID("$NetBSD: bpf.c,v 1.1.1.9 2014/03/14 11:27:36 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -122,6 +122,14 @@ ipv4_opensocket(struct interface *ifp, int protocol)
 	}
 	if (ioctl(fd, BIOCSETF, &pf) == -1)
 		goto eexit;
+
+#ifdef __OpenBSD__
+	/* For some reason OpenBSD fails to open the fd as non blocking */
+	if ((flags = fcntl(fd, F_GETFL, 0)) == -1 ||
+	    fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1)
+		goto eexit;
+#endif
+
 	return fd;
 
 eexit:
