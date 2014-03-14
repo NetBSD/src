@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.56 2014/03/10 00:23:22 htodd Exp $
+# $NetBSD: shl.mi,v 1.57 2014/03/14 01:05:57 pooka Exp $
 ./usr/libdata/debug/lib/libc.so.12.190.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypt.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypto.so.8.2.debug		comp-sys-debug	debug
@@ -218,6 +218,7 @@
 ./usr/libdata/debug/usr/lib/librumpkern_ksem.so.0.0.debug	comp-obsolete		obsolete,rump
 ./usr/libdata/debug/usr/lib/librumpkern_sljit.so.0.0.debug	comp-rump-debug	debug,sljit,rump
 ./usr/libdata/debug/usr/lib/librumpkern_solaris.so.0.0.debug	comp-rump-debug	debug,zfs,rump
+./usr/libdata/debug/usr/lib/librumpkern_time.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpkern_tty.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpkern_z.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpnet.so.0.0.debug	comp-rump-debug	debug,rump
