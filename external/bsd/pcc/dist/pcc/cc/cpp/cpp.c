@@ -1,5 +1,5 @@
 /*	Id: cpp.c,v 1.145 2011/09/27 08:22:55 plunky Exp 	*/	
-/*	$NetBSD: cpp.c,v 1.1.1.5 2012/01/11 20:33:06 plunky Exp $	*/
+/*	$NetBSD: cpp.c,v 1.2 2014/03/14 00:06:52 christos Exp $	*/
 
 /*
  * Copyright (c) 2004,2010 Anders Magnusson (ragge@ludd.luth.se).
@@ -908,7 +908,6 @@ xwarning(usch *s)
 {
 	usch *t;
 	usch *sb = stringbuf;
-	int dummy;
 
 	flbuf();
 	savch(0);
@@ -916,8 +915,8 @@ xwarning(usch *s)
 		t = sheap("%s:%d: warning: ", ifiles->fname, ifiles->lineno);
 		write (2, t, strlen((char *)t));
 	}
-	dummy = write (2, s, strlen((char *)s));
-	dummy = write (2, "\n", 1);
+	(void)write (2, s, strlen((char *)s));
+	(void)write (2, "\n", 1);
 	stringbuf = sb;
 }
 
@@ -925,16 +924,15 @@ void
 xerror(usch *s)
 {
 	usch *t;
-	int dummy;
 
 	flbuf();
 	savch(0);
 	if (ifiles != NULL) {
 		t = sheap("%s:%d: error: ", ifiles->fname, ifiles->lineno);
-		dummy = write (2, t, strlen((char *)t));
+		(void)write (2, t, strlen((char *)t));
 	}
-	dummy = write (2, s, strlen((char *)s));
-	dummy = write (2, "\n", 1);
+	(void)write (2, s, strlen((char *)s));
+	(void)write (2, "\n", 1);
 	exit(1);
 }
 
