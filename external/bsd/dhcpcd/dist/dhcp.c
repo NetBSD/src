@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp.c,v 1.11 2014/03/01 11:04:21 roy Exp $");
+ __RCSID("$NetBSD: dhcp.c,v 1.12 2014/03/14 11:31:11 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -1064,8 +1064,12 @@ read_lease(struct interface *ifp)
 			free(dhcp);
 			return NULL;
 		}
-		syslog(LOG_DEBUG, "%s: validated using 0x%08" PRIu32,
-		    ifp->name, state->auth.token->secretid);
+		if (state->auth.token)
+			syslog(LOG_DEBUG, "%s: validated using 0x%08" PRIu32,
+			    ifp->name, state->auth.token->secretid);
+		else
+			syslog(LOG_DEBUG, "%s: accepted reconfigure key",
+			    ifp->name);
 	}
 
 	return dhcp;
@@ -1347,7 +1351,7 @@ dhcp_close(struct interface *ifp)
 		state->raw_fd = -1;
 	}
 	if (state->udp_fd != -1) {
-		/* we don't listen to events on the udp */
+		eloop_event_delete(ifp->ctx->eloop, state->udp_fd);
 		close(state->udp_fd);
 		state->udp_fd = -1;
 	}
@@ -2200,8 +2204,12 @@ dhcp_handledhcp(struct interface *iface, struct dhcp_message **dhcpp,
 			    iface, dhcp, from, 0);
 			return;
 		}
-		syslog(LOG_DEBUG, "%s: validated using 0x%08" PRIu32,
-		    iface->name, state->auth.token->secretid);
+		if (state->auth.token)
+			syslog(LOG_DEBUG, "%s: validated using 0x%08" PRIu32,
+			    iface->name, state->auth.token->secretid);
+		else
+			syslog(LOG_DEBUG, "%s: accepted reconfigure key",
+			    iface->name);
 	} else if (ifo->auth.options & DHCPCD_AUTH_REQUIRE) {
 		log_dhcp1(LOG_ERR, "no authentication", iface, dhcp, from, 0);
 		return;
@@ -2614,7 +2622,7 @@ dhcp_handleudp(void *arg)
 
 	/* Just read what's in the UDP fd and discard it as we always read
 	 * from the raw fd */
-	read(ctx->udp_fd, buffer, sizeof(buffer));
+	(void)read(ctx->udp_fd, buffer, sizeof(buffer));
 }
 
 static void
@@ -2629,7 +2637,7 @@ dhcp_handleifudp(void *arg)
 
 	/* Just read what's in the UDP fd and discard it as we always read
 	 * from the raw fd */
-	read(state->udp_fd, buffer, sizeof(buffer));
+	(void)read(state->udp_fd, buffer, sizeof(buffer));
 }
 
 static int
@@ -2673,25 +2681,23 @@ dhcp_open(struct interface *ifp)
 }
 
 int
-dhcp_dump(const char *ifname)
+dhcp_dump(struct dhcpcd_ctx *ctx, const char *ifname)
 {
-	struct dhcpcd_ctx ctx;
 	struct interface *ifp;
 	struct dhcp_state *state;
-	int r;
 
-	ifp = NULL;
+	if (ctx->ifaces == NULL) {
+		ctx->ifaces = malloc(sizeof(*ctx->ifaces));
+		if (ctx->ifaces == NULL)
+			return -1;
+		TAILQ_INIT(ctx->ifaces);
+	}
 	state = NULL;
-	memset(&ctx, 0, sizeof(ctx));
-	ctx.ifaces = malloc(sizeof(*ctx.ifaces));
-	if (ctx.ifaces == NULL)
-		goto eexit;
-	TAILQ_INIT(ctx.ifaces);
 	ifp = calloc(1, sizeof(*ifp));
 	if (ifp == NULL)
 		goto eexit;
-	ifp->ctx = &ctx;
-	TAILQ_INSERT_HEAD(ctx.ifaces, ifp, next);
+	ifp->ctx = ctx;
+	TAILQ_INSERT_HEAD(ctx->ifaces, ifp, next);
 	ifp->if_data[IF_DATA_DHCP] = state = calloc(1, sizeof(*state));
 	if (state == NULL)
 		goto eexit;
@@ -2701,7 +2707,6 @@ dhcp_dump(const char *ifname)
 	strlcpy(ifp->name, ifname, sizeof(ifp->name));
 	snprintf(state->leasefile, sizeof(state->leasefile),
 	    LEASEFILE, ifp->name);
-	strlcpy(ifp->options->script, SCRIPT, sizeof(ifp->options->script));
 	state->new = read_lease(ifp);
 	if (state->new == NULL && errno == ENOENT) {
 		strlcpy(state->leasefile, ifname, sizeof(state->leasefile));
@@ -2710,28 +2715,14 @@ dhcp_dump(const char *ifname)
 	if (state->new == NULL) {
 		if (errno == ENOENT)
 			syslog(LOG_ERR, "%s: no lease to dump", ifname);
-		r = -1;
-		goto cexit;
+		return -1;
 	}
 	state->reason = "DUMP";
-	r = script_runreason(ifp, state->reason);
-	goto cexit;
+	return script_runreason(ifp, state->reason);
 
 eexit:
 	syslog(LOG_ERR, "%s: %m", __func__);
-	r = -1;
-
-cexit:
-	if (state) {
-		free(state->new);
-		free(state);
-	}
-	if (ifp) {
-		free(ifp->options);
-		free(ifp);
-	}
-	free(ctx.ifaces);
-	return r;
+	return -1;
 }
 
 void
