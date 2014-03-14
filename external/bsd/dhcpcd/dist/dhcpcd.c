@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcpcd.c,v 1.3 2014/03/01 11:04:21 roy Exp $");
+ __RCSID("$NetBSD: dhcpcd.c,v 1.4 2014/03/14 11:31:11 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -300,9 +300,11 @@ find_interface(struct dhcpcd_ctx *ctx, const char *ifname)
 {
 	struct interface *ifp;
 
-	TAILQ_FOREACH(ifp, ctx->ifaces, next) {
-		if (strcmp(ifp->name, ifname) == 0)
-			return ifp;
+	if (ctx != NULL && ctx->ifaces != NULL) {
+		TAILQ_FOREACH(ifp, ctx->ifaces, next) {
+			if (strcmp(ifp->name, ifname) == 0)
+				return ifp;
+		}
 	}
 	return NULL;
 }
@@ -522,7 +524,8 @@ handle_carrier(struct dhcpcd_ctx *ctx, int carrier, int flags,
 			 * them as some OS's will remove, mark tentative or
 			 * do nothing. */
 			ipv6_free_ll_callbacks(ifp);
-			dhcp_drop(ifp, "NOCARRIER");
+			dhcp_drop(ifp, "EXPIRE");
+			script_runreason(ifp, "NOCARRIER");
 		}
 	} else if (carrier == LINK_UP && ifp->flags & IFF_UP) {
 		if (ifp->carrier != LINK_UP) {
@@ -578,7 +581,8 @@ start_interface(void *arg)
 	size_t i;
 	char buf[DUID_LEN * 3];
 
-	handle_carrier(ifp->ctx, LINK_UNKNOWN, 0, ifp->name);
+	if (ifp->carrier == LINK_UNKNOWN)
+		handle_carrier(ifp->ctx, LINK_UNKNOWN, 0, ifp->name);
 	if (ifp->carrier == LINK_DOWN) {
 		syslog(LOG_INFO, "%s: waiting for carrier", ifp->name);
 		return;
@@ -852,6 +856,7 @@ struct dhcpcd_siginfo {
 	pid_t pid;
 } dhcpcd_siginfo;
 
+#define sigmsg "received signal %s from PID %d, %s"
 static void
 handle_signal1(void *arg)
 {
@@ -866,17 +871,17 @@ handle_signal1(void *arg)
 	do_release = 0;
 	switch (si->signo) {
 	case SIGINT:
-		syslog(LOG_INFO, "received SIGINT from PID %d, stopping",
-		    (int)si->pid);
+		syslog(LOG_INFO, sigmsg, "INT", (int)si->pid, "stopping");
 		break;
 	case SIGTERM:
-		syslog(LOG_INFO, "received SIGTERM from PID %d, stopping",
-		    (int)si->pid);
+		syslog(LOG_INFO, sigmsg, "TERM", (int)si->pid, "stopping");
 		break;
 	case SIGALRM:
-		syslog(LOG_INFO, "received SIGALRM from PID %d, rebinding",
-		    (int)si->pid);
-
+		syslog(LOG_INFO, sigmsg, "ALRM", (int)si->pid, "releasing");
+		do_release = 1;
+		break;
+	case SIGHUP:
+		syslog(LOG_INFO, sigmsg, "HUP", (int)si->pid, "rebinding");
 		free_globals(ctx);
 		ifo = read_config(ctx, NULL, NULL, NULL);
 		add_options(ctx, NULL, ifo, ctx->argc, ctx->argv);
@@ -892,20 +897,14 @@ handle_signal1(void *arg)
 		reconf_reboot(ctx, 1, ctx->argc, ctx->argv,
 		    ctx->argc - ctx->ifc);
 		return;
-	case SIGHUP:
-		syslog(LOG_INFO, "received SIGHUP from PID %d, releasing",
-		    (int)si->pid);
-		do_release = 1;
-		break;
 	case SIGUSR1:
-		syslog(LOG_INFO, "received SIGUSR from PID %d, reconfiguring",
-		    (int)si->pid);
+		syslog(LOG_INFO, sigmsg, "USR1", (int)si->pid, "reconfiguring");
 		TAILQ_FOREACH(ifp, ctx->ifaces, next) {
 			ipv4_applyaddr(ifp);
 		}
 		return;
 	case SIGPIPE:
-		syslog(LOG_WARNING, "received SIGPIPE");
+		syslog(LOG_WARNING, "received signal PIPE");
 		return;
 	default:
 		syslog(LOG_ERR,
@@ -921,14 +920,14 @@ handle_signal1(void *arg)
 }
 
 static void
-handle_signal(__unused int sig, siginfo_t *siginfo, __unused void *context)
+handle_signal(int sig, siginfo_t *siginfo, __unused void *context)
 {
 
 	/* So that we can operate safely under a signal we instruct
 	 * eloop to pass a copy of the siginfo structure to handle_signal1
 	 * as the very first thing to do. */
-	dhcpcd_siginfo.signo = siginfo->si_signo;
-	dhcpcd_siginfo.pid = siginfo->si_pid;
+	dhcpcd_siginfo.signo = sig;
+	dhcpcd_siginfo.pid = siginfo ? siginfo->si_pid : 0;
 	eloop_timeout_add_now(dhcpcd_ctx->eloop,
 	    handle_signal1, &dhcpcd_siginfo);
 }
@@ -1118,6 +1117,7 @@ main(int argc, char **argv)
 #endif
 #ifdef USE_SIGNALS
 	int sig;
+	const char *siga;
 #endif
 	struct timespec ts;
 
@@ -1125,6 +1125,7 @@ main(int argc, char **argv)
 #ifdef USE_SIGNALS
 	dhcpcd_ctx = &ctx;
 	sig = 0;
+	siga = NULL;
 #endif
 	closefrom(3);
 	openlog(PACKAGE, LOG_PERROR | LOG_PID, LOG_DAEMON);
@@ -1166,15 +1167,19 @@ main(int argc, char **argv)
 #ifdef USE_SIGNALS
 		case 'g':
 			sig = SIGUSR1;
+			siga = "USR1";
 			break;
 		case 'k':
-			sig = SIGHUP;
+			sig = SIGALRM;
+			siga = "ARLM";
 			break;
 		case 'n':
-			sig = SIGALRM;
+			sig = SIGHUP;
+			siga = "HUP";
 			break;
 		case 'x':
 			sig = SIGTERM;
+			siga = "TERM";;
 			break;
 #endif
 		case 'T':
@@ -1194,6 +1199,9 @@ main(int argc, char **argv)
 
 	ctx.argv = argv;
 	ctx.argc = argc;
+	ctx.ifc = argc - optind;
+	ctx.ifv = argv + optind;
+
 	ifo = read_config(&ctx, NULL, NULL, NULL);
 	opt = add_options(&ctx, NULL, ifo, argc, argv);
 	if (opt != 1) {
@@ -1247,7 +1255,7 @@ main(int argc, char **argv)
 	if (!(ctx.options & (DHCPCD_TEST | DHCPCD_DUMPLEASE))) {
 		/* If we have any other args, we should run as a single dhcpcd
 		 *  instance for that interface. */
-		if (optind == argc - 1) {
+		if (optind == argc - 1 && !(ctx.options & DHCPCD_MASTER)) {
 			if (strlen(argv[optind]) > IF_NAMESIZE) {
 				syslog(LOG_ERR, "%s: interface name too long",
 				    argv[optind]);
@@ -1270,13 +1278,15 @@ main(int argc, char **argv)
 			syslog(LOG_ERR, "dumplease requires an interface");
 			goto exit_failure;
 		}
-		if (dhcp_dump(argv[optind]) == -1)
+		if (dhcp_dump(&ctx, argv[optind]) == -1)
 			goto exit_failure;
 		goto exit_success;
 	}
 
 #ifdef USE_SIGNALS
-	if (!(ctx.options & (DHCPCD_MASTER | DHCPCD_TEST))) {
+	if (!(ctx.options & DHCPCD_TEST) &&
+	    (sig == 0 || ctx.ifc != 0))
+	{
 #endif
 		if (ctx.options & DHCPCD_MASTER)
 			i = -1;
@@ -1318,20 +1328,20 @@ main(int argc, char **argv)
 	if (sig != 0) {
 		pid = read_pid(pidfile);
 		if (pid != 0)
-			syslog(LOG_INFO, "sending signal %d to pid %d",
-			    sig, pid);
+			syslog(LOG_INFO, "sending signal %s to pid %d",
+			    siga, pid);
 		if (pid == 0 || kill(pid, sig) != 0) {
-			if (sig != SIGALRM && errno != EPERM)
+			if (sig != SIGHUP && errno != EPERM)
 				syslog(LOG_ERR, ""PACKAGE" not running");
 			if (pid != 0 && errno != ESRCH) {
 				syslog(LOG_ERR, "kill: %m");
 				goto exit_failure;
 			}
 			unlink(pidfile);
-			if (sig != SIGALRM)
+			if (sig != SIGHUP)
 				goto exit_failure;
 		} else {
-			if (sig == SIGALRM || sig == SIGUSR1)
+			if (sig == SIGHUP || sig == SIGUSR1)
 				goto exit_success;
 			/* Spin until it exits */
 			syslog(LOG_INFO, "waiting for pid %d to exit", pid);
@@ -1405,8 +1415,10 @@ main(int argc, char **argv)
 	}
 #endif
 
-	ctx.ifc = argc - optind;
-	ctx.ifv = argv + optind;
+#ifdef __FreeBSD__
+	syslog(LOG_WARNING, "FreeBSD errors that are worked around:");
+	syslog(LOG_WARNING, "IPv4 subnet routes cannot be deleted");
+#endif
 
 	/* When running dhcpcd against a single interface, we need to retain
 	 * the old behaviour of waiting for an IP address */
