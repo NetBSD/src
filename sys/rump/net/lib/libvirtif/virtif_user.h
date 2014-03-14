@@ -1,4 +1,4 @@
-/*	$NetBSD: virtif_user.h,v 1.2 2014/03/13 20:55:26 pooka Exp $	*/
+/*	$NetBSD: virtif_user.h,v 1.3 2014/03/14 10:06:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 struct virtif_user;
 
-#define VIFHYPER_REVISION 20140302
+#define VIFHYPER_REVISION 20140313
 
 int 	VIFHYPER_CREATE(const char *, struct virtif_sc *, uint8_t *,
 			struct virtif_user **);
