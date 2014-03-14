@@ -131,7 +131,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mini2440_machdep.c,v 1.7 2013/10/30 06:47:18 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mini2440_machdep.c,v 1.8 2014/03/14 21:39:48 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -176,6 +176,7 @@ __KERNEL_RCSID(0, "$NetBSD: mini2440_machdep.c,v 1.7 2013/10/30 06:47:18 uebayas
 
 #include <machine/autoconf.h>
 
+#include <arm/locore.h>
 #include <arm/arm32/machdep.h>
 
 #include <arm/s3c2xx0/s3c2440reg.h>
