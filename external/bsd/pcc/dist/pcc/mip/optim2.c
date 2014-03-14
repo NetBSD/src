@@ -1,5 +1,5 @@
 /*	Id: optim2.c,v 1.82 2011/08/16 06:14:16 ragge Exp 	*/	
-/*	$NetBSD: optim2.c,v 1.1.1.4 2011/09/01 12:47:14 plunky Exp $	*/
+/*	$NetBSD: optim2.c,v 1.2 2014/03/14 00:06:52 christos Exp $	*/
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -1871,12 +1871,11 @@ void TraceSchedule(struct p2env* p2e)
 	struct block_map* map ;
 	unsigned long block_count = count_blocks(p2e);
 	unsigned long i ;
-	unsigned long threads;
 	struct interpass *front, *back ;
 
 	map = tmpalloc(block_count * sizeof(struct block_map));
 
-	threads = map_blocks(p2e, map, block_count) ;
+	(void)map_blocks(p2e, map, block_count) ;
 
 	back = map[0].block->last ;
 	for (i=1; i < block_count; i++) {
