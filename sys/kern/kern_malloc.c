@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.121.10.2 2014/03/14 21:45:41 matt Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.121.10.3 2014/03/14 22:34:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.121.10.2 2014/03/14 21:45:41 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.121.10.3 2014/03/14 22:34:35 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -926,7 +926,12 @@ kmeminit(void)
 	kmembase = (char *)kmb;
 	kmemlimit = (char *)kml;
 
-	KASSERT(((kmemlimit - kmembase) >> PAGE_SHIFT) == nkmempages);
+	/*
+	 * Since the suballoc was VM_MAP_INTRSAFE, the allocated size
+	 * may be larger than was we asked for.  Recompute nkmempages
+	 * to cover the additional space allocated.  
+	 */
+	nkmempages = (kmemlimit - kmembase) >> PAGE_SHIFT;
 
 	kmemusage = (struct kmemusage *) uvm_km_alloc(kernel_map,
 	    (vsize_t)(nkmempages * sizeof(struct kmemusage)), 0,
