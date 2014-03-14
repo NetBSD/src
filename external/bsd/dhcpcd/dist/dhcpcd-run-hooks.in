@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: dhcpcd-run-hooks.in,v 1.1.1.17 2014/02/25 13:14:30 roy Exp $
+# $NetBSD: dhcpcd-run-hooks.in,v 1.1.1.18 2014/03/14 11:27:37 roy Exp $
 
 # dhcpcd client configuration script 
 
@@ -184,7 +184,9 @@ valid_domainname()
 		[ -z "$label" -o ${#label} -gt 63 ] && return 1
 		case "$label" in
 		-*|_*|*-|*_)		return 1;;
-		*[![:alnum:]-_]*)	return 1;;
+		# some sh require - as the first or last character in the class
+		# when matching it
+		*[![:alnum:]_-]*)	return 1;;
 		esac
 		[ "$name" = "${name#*.}" ] && break
 		name="${name#*.}"
@@ -264,6 +266,8 @@ detect_init()
 		done
 		if [ -e /etc/arch-release ]; then
 			_service_status="[ -e /var/run/daemons/\$1 ]"
+		elif [ "$x" = "/etc/rc.d" -a -e /etc/rc.d/rc.subr ]; then
+			_service_status="$x/\$1 check 1>/dev/null 2>&1"
 		fi
 	fi
 

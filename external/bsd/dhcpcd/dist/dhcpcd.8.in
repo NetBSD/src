@@ -1,4 +1,4 @@
-.\"     $NetBSD: dhcpcd.8.in,v 1.1.1.27 2014/02/25 13:14:30 roy Exp $
+.\"     $NetBSD: dhcpcd.8.in,v 1.1.1.28 2014/03/14 11:27:37 roy Exp $
 .\" Copyright (c) 2006-2014 Roy Marples
 .\" All rights reserved
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd February 25, 2014
+.Dd March 7, 2014
 .Dt DHCPCD 8
 .Os
 .Sh NAME
@@ -31,7 +31,7 @@
 .Nd a DHCP client
 .Sh SYNOPSIS
 .Nm
-.Op Fl 46ABbDdEGgHJKLpqTV
+.Op Fl 46ABbDdEGgHJKLMpqTV
 .Op Fl C , Fl Fl nohook Ar hook
 .Op Fl c , Fl Fl script Ar script
 .Op Fl e , Fl Fl env Ar value
@@ -327,6 +327,10 @@ By default
 .Nm
 does not request any lease time and leaves it in the hands of the
 DHCP server.
+.It Fl M , Fl Fl master
+Start
+.Nm
+in master mode even if only one interface specified on the command line.
 .It Fl m , Fl Fl metric Ar metric
 Metrics are used to prefer an interface over another one, lowest wins.
 .Nm
@@ -639,11 +643,11 @@ lease and use the files mtime as when it was issued.
 Stores the monotonic counter used in the
 .Ar replay
 field in Authentication Options.
-.It Pa @RUNDIR@dhcpcd.pid
+.It Pa @RUNDIR@/dhcpcd.pid
 Stores the PID of
 .Nm
 running on all interfaces.
-.It Pa @RUNDIR@dhcpcd\- Ns Ar interface Ns .pid
+.It Pa @RUNDIR@/dhcpcd\- Ns Ar interface Ns .pid
 Stores the PID of
 .Nm
 running on the
