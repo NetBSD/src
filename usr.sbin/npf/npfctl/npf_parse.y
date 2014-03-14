@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_parse.y,v 1.33 2014/02/17 00:45:24 rmind Exp $	*/
+/*	$NetBSD: npf_parse.y,v 1.34 2014/03/14 11:29:45 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
@@ -136,6 +136,7 @@ yyerror(const char *fmt, ...)
 %token			SEPLINE
 %token			SLASH
 %token			STATEFUL
+%token			STATEFUL_ENDS
 %token			TABLE
 %token			TCP
 %token			TO
@@ -553,6 +554,7 @@ all_or_filt_opts
 
 opt_stateful
 	: STATEFUL	{ $$ = NPF_RULE_STATEFUL; }
+	| STATEFUL_ENDS	{ $$ = NPF_RULE_STATEFUL | NPF_RULE_MULTIENDS; }
 	|		{ $$ = 0; }
 	;
 
