@@ -1,4 +1,4 @@
-/*	$NetBSD: am79c950.c,v 1.32 2011/07/26 08:36:02 macallan Exp $	*/
+/*	$NetBSD: am79c950.c,v 1.33 2014/03/14 21:59:41 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.32 2011/07/26 08:36:02 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.33 2014/03/14 21:59:41 mrg Exp $");
 
 #include "opt_inet.h"
 
@@ -484,9 +484,9 @@ mcintr(void *arg)
 integrate void
 mc_tint(struct mc_softc *sc)
 {
-	u_int8_t xmtrc, xmtfs;
+	u_int8_t xmtfs;
 
-	xmtrc = NIC_GET(sc, MACE_XMTRC);
+	(void)NIC_GET(sc, MACE_XMTRC);
 	xmtfs = NIC_GET(sc, MACE_XMTFS);
 
 	if ((xmtfs & XMTSV) == 0)
