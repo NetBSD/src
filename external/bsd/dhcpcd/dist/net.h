@@ -1,4 +1,4 @@
-/* $NetBSD: net.h,v 1.1.1.15 2014/02/25 13:14:31 roy Exp $ */
+/* $NetBSD: net.h,v 1.1.1.16 2014/03/14 11:27:41 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -43,7 +43,7 @@
 
 /* Some systems have route metrics */
 #ifndef HAVE_ROUTE_METRIC
-# ifdef __linux__
+# if defined(__linux__) || defined(SIOCGIFPRIORITY)
 #  define HAVE_ROUTE_METRIC 1
 # endif
 # ifndef HAVE_ROUTE_METRIC
