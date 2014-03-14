@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.80 2013/11/03 22:27:27 mrg Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.81 2014/03/14 21:59:41 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.80 2013/11/03 22:27:27 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.81 2014/03/14 21:59:41 mrg Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_ppccache.h"
@@ -1218,11 +1218,9 @@ cpu_spinup(device_t self, struct cpu_info *ci)
 {
 	volatile struct cpu_hatch_data hatch_data, *h = &hatch_data;
 	struct pglist mlist;
-	int i, error, pvr, vers;
+	int i, error;
 	char *hp;
 
-	pvr = mfpvr();
-	vers = pvr >> 16;
 	KASSERT(ci != curcpu());
 
 	/* Now allocate a hatch stack */

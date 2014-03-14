@@ -1,4 +1,4 @@
-/*	$NetBSD: gffb.c,v 1.7 2013/10/23 13:15:47 macallan Exp $	*/
+/*	$NetBSD: gffb.c,v 1.8 2014/03/14 21:59:41 mrg Exp $	*/
 
 /*
  * Copyright (c) 2013 Michael Lorenz
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.7 2013/10/23 13:15:47 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.8 2014/03/14 21:59:41 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -644,12 +644,11 @@ gffb_putpalreg(struct gffb_softc *sc, uint8_t idx, uint8_t r, uint8_t g,
 static void
 gffb_dma_kickoff(struct gffb_softc *sc)
 {
-	volatile uint8_t scratch;
 
-	if(sc->sc_current != sc->sc_put) {
+	if (sc->sc_current != sc->sc_put) {
 		sc->sc_put = sc->sc_current;
 		membar_sync();
-		scratch = *sc->sc_fbaddr;
+		(void)*sc->sc_fbaddr;
 		GFFB_WRITE_4(GFFB_FIFO_PUT, sc->sc_put);
 		membar_sync();
 	}
