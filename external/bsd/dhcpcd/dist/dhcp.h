@@ -1,4 +1,4 @@
-/* $NetBSD: dhcp.h,v 1.1.1.17 2014/02/25 13:14:30 roy Exp $ */
+/* $NetBSD: dhcp.h,v 1.1.1.18 2014/03/14 11:27:38 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -287,7 +287,7 @@ void dhcp_bind(void *);
 void dhcp_reboot_newopts(struct interface *, int);
 void dhcp_close(struct interface *);
 void dhcp_free(struct interface *);
-int dhcp_dump(const char *);
+int dhcp_dump(struct dhcpcd_ctx *, const char *);
 #else
 #define dhcp_printoptions
 #define dhcp_drop(a, b)

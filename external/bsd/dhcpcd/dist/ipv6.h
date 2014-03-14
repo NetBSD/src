@@ -1,4 +1,4 @@
-/* $NetBSD: ipv6.h,v 1.1.1.7 2014/02/25 13:14:31 roy Exp $ */
+/* $NetBSD: ipv6.h,v 1.1.1.8 2014/03/14 11:27:41 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -31,6 +31,7 @@
 #define IPV6_H
 
 #include <sys/queue.h>
+#include <sys/uio.h>
 
 #include <netinet/in.h>
 
@@ -42,7 +43,6 @@
 #include "dhcpcd.h"
 
 #define ALLROUTERS "ff02::2"
-#define HOPLIMIT 255
 
 #define ROUNDUP8(a) (1 + (((a) - 1) | 7))
 
@@ -52,11 +52,6 @@
 
 /*
  * BSD kernels don't inform userland of DAD results.
- * Also, for RTM_NEWADDR messages the address flags could be
- * undefined leading to false positive duplicate address errors.
- * As such we listen for duplicate addresses on the wire and
- * wait the maxium possible length of time as dictated by the DAD transmission
- * counter and RFC timings.
  * See the discussion here:
  *    http://mail-index.netbsd.org/tech-net/2013/03/15/msg004019.html
  */
@@ -65,13 +60,13 @@
 #  include <sys/param.h>
 #endif
 #ifdef BSD
-#  define LISTEN_DAD
+#  define IPV6_POLLADDRFLAG
 #endif
 
 /* This was fixed in NetBSD */
 #ifdef __NetBSD_Prereq__
 #  if __NetBSD_Prereq__(6, 99, 20)
-#    undef LISTEN_DAD
+#    undef IPV6_POLLADDRFLAG
 #  endif
 #endif
 
@@ -83,6 +78,7 @@ struct ipv6_addr {
 	uint32_t prefix_vltime;
 	uint32_t prefix_pltime;
 	struct in6_addr addr;
+	int addr_flags;
 	short flags;
 	char saddr[INET6_ADDRSTRLEN];
 	uint8_t iaid[4];
@@ -115,13 +111,6 @@ struct rt6 {
 };
 TAILQ_HEAD(rt6_head, rt6);
 
-struct ipv6_addr_l {
-	TAILQ_ENTRY(ipv6_addr_l) next;
-	struct in6_addr addr;
-};
-
-TAILQ_HEAD(ipv6_addr_l_head, ipv6_addr_l);
-
 struct ll_callback {
 	TAILQ_ENTRY(ll_callback) next;
 	void (*callback)(void *);
@@ -130,7 +119,7 @@ struct ll_callback {
 TAILQ_HEAD(ll_callback_head, ll_callback);
 
 struct ipv6_state {
-	struct ipv6_addr_l_head addrs;
+	struct ipv6_addrhead addrs;
 	struct ll_callback_head ll_callbacks;
 };
 
@@ -142,11 +131,12 @@ struct ipv6_state {
 #define IP6BUFLEN	(CMSG_SPACE(sizeof(struct in6_pktinfo)) + \
 			CMSG_SPACE(sizeof(int)))
 
+#ifdef INET6
 struct ipv6_ctx {
 	struct sockaddr_in6 from;
 	struct msghdr sndhdr;
 	struct iovec sndiov[2];
-	unsigned char sndbuf[IP6BUFLEN];
+	unsigned char sndbuf[CMSG_SPACE(sizeof(struct in6_pktinfo))];
 	struct msghdr rcvhdr;
 	struct iovec rcviov[2];
 	unsigned char rcvbuf[IP6BUFLEN];
@@ -155,17 +145,15 @@ struct ipv6_ctx {
 	const char *sfrom;
 
 	int nd_fd;
-#ifdef IPV6_SEND_DAD
-	int unspec_fd;
-#endif
-#ifdef LISTEN_DAD
-	uint8_t dad_warned;
+#ifdef IPV6_POLLADDRFLAG
+	uint8_t polladdr_warned;
 #endif
 	struct ra_head *ra_routers;
 	struct rt6_head *routes;
 
 	int dhcp_fd;
 };
+#endif
 
 #ifdef INET6
 struct ipv6_ctx *ipv6_init(struct dhcpcd_ctx *);
@@ -177,16 +165,18 @@ int ipv6_mask(struct in6_addr *, int);
 int ipv6_prefixlen(const struct in6_addr *);
 int ipv6_userprefix( const struct in6_addr *, short prefix_len,
     uint64_t user_number, struct in6_addr *result, short result_len);
+void ipv6_checkaddrflags(void *);
 int ipv6_addaddr(struct ipv6_addr *);
+ssize_t ipv6_addaddrs(struct ipv6_addrhead *addrs);
 void ipv6_freedrop_addrs(struct ipv6_addrhead *, int,
     const struct interface *);
 void ipv6_handleifa(struct dhcpcd_ctx *ctx, int, struct if_head *,
     const char *, const struct in6_addr *, int);
 int ipv6_handleifa_addrs(int, struct ipv6_addrhead *,
     const struct in6_addr *, int);
-const struct ipv6_addr_l *ipv6_linklocal(const struct interface *);
-const struct ipv6_addr_l *ipv6_findaddr(const struct interface *,
+const struct ipv6_addr *ipv6_findaddr(const struct interface *,
     const struct in6_addr *);
+#define ipv6_linklocal(ifp) (ipv6_findaddr((ifp), NULL))
 int ipv6_addlinklocalcallback(struct interface *, void (*)(void *), void *);
 void ipv6_free_ll_callbacks(struct interface *);
 void ipv6_free(struct interface *);
