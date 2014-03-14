@@ -1,4 +1,4 @@
-/*	$NetBSD: pmu.c,v 1.22 2013/11/05 11:08:20 macallan Exp $ */
+/*	$NetBSD: pmu.c,v 1.23 2014/03/14 21:59:41 mrg Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.22 2013/11/05 11:08:20 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.23 2014/03/14 21:59:41 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -467,9 +467,8 @@ pmu_send_byte(struct pmu_softc *sc, uint8_t data)
 static inline int
 pmu_read_byte(struct pmu_softc *sc, uint8_t *data)
 {
-	volatile uint8_t scratch;
 	pmu_in(sc);
-	scratch = pmu_read_reg(sc, vSR);
+	(void)pmu_read_reg(sc, vSR);
 	pmu_ack_off(sc);
 	/* wait for intr to come up */
 	do {} while (pmu_intr_state(sc) == 0);
@@ -827,7 +826,7 @@ static int
 pmu_adb_send(void *cookie, int poll, int command, int len, uint8_t *data)
 {
 	struct pmu_softc *sc = cookie;
-	int i, replen;
+	int i;
 	uint8_t packet[16], resp[16];
 
 	/* construct an ADB command packet and send it */
@@ -836,7 +835,7 @@ pmu_adb_send(void *cookie, int poll, int command, int len, uint8_t *data)
 	packet[2] = len;
 	for (i = 0; i < len; i++)
 		packet[i + 3] = data[i];
-	replen = pmu_send(sc, PMU_ADB_CMD, len + 3, packet, 16, resp);
+	(void)pmu_send(sc, PMU_ADB_CMD, len + 3, packet, 16, resp);
 
 	return 0;
 }
