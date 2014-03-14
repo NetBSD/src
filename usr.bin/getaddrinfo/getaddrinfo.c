@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.1 2013/09/30 06:19:22 riastradh Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.2 2014/03/14 13:17:18 ginsbach Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getaddrinfo.c,v 1.1 2013/09/30 06:19:22 riastradh Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.2 2014/03/14 13:17:18 ginsbach Exp $");
 
 #include <assert.h>
 #include <err.h>
@@ -101,6 +101,7 @@ main(int argc, char **argv)
 				warnx("invalid protocol: %s", optarg);
 				usage();
 			}
+			break;
 
 		case 'P':
 			hints.ai_flags |= AI_PASSIVE;
