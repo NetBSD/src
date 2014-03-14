@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.6 2013/01/15 13:30:12 kiyohara Exp $	*/
+/*	$NetBSD: asm.h,v 1.7 2014/03/14 17:36:03 cherry Exp $	*/
 
 /* -
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -201,6 +201,12 @@ label:	ASCIZ msg;				\
 	.popsection
 #endif /* __STDC__ */
 
+
+#ifdef __ELF__
+#define RCSID(name)		.pushsection ".ident"; .asciz name; .popsection
+#else
+#define RCSID(name)		.asciz name
+#endif
 
 /*
  * Kernel RCS ID tag and copyright macros
