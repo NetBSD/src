@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_show.c,v 1.12 2014/02/19 01:43:16 rmind Exp $	*/
+/*	$NetBSD: npf_show.c,v 1.13 2014/03/14 11:29:45 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_show.c,v 1.12 2014/02/19 01:43:16 rmind Exp $");
+__RCSID("$NetBSD: npf_show.c,v 1.13 2014/03/14 11:29:45 rmind Exp $");
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -218,6 +218,7 @@ print_portrange(npf_conf_info_t *ctx, const uint32_t *words)
  */
 
 #define	F(name)		__CONCAT(NPF_RULE_, name)
+#define	STATEFUL_ENDS	(NPF_RULE_STATEFUL | NPF_RULE_MULTIENDS)
 #define	NAME_AT		2
 
 static const struct attr_keyword_mapent {
@@ -232,7 +233,8 @@ static const struct attr_keyword_mapent {
 	{ F(RETRST)|F(RETICMP),	F(RETRST)|F(RETICMP),	"return"	},
 	{ F(RETRST)|F(RETICMP),	F(RETRST),		"return-rst"	},
 	{ F(RETRST)|F(RETICMP),	F(RETICMP),		"return-icmp"	},
-	{ F(STATEFUL),		F(STATEFUL),		"stateful"	},
+	{ STATEFUL_ENDS,	F(STATEFUL),		"stateful"	},
+	{ STATEFUL_ENDS,	STATEFUL_ENDS,		"stateful-ends"	},
 	{ F(DIMASK),		F(IN),			"in"		},
 	{ F(DIMASK),		F(OUT),			"out"		},
 	{ F(FINAL),		F(FINAL),		"final"		},

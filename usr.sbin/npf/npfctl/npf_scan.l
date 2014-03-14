@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_scan.l,v 1.19 2014/02/13 03:34:40 rmind Exp $	*/
+/*	$NetBSD: npf_scan.l,v 1.20 2014/03/14 11:29:45 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -118,6 +118,7 @@ block			return BLOCK;
 pass			return PASS;
 pcap-filter		return PCAP_FILTER;
 stateful		return STATEFUL;
+stateful-ends		return STATEFUL_ENDS;
 apply			return APPLY;
 final			return FINAL;
 quick			return FINAL;
