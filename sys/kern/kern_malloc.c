@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.121.10.1 2010/04/21 00:28:16 matt Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.121.10.2 2014/03/14 21:45:41 matt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.121.10.1 2010/04/21 00:28:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.121.10.2 2014/03/14 21:45:41 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -918,9 +918,6 @@ kmeminit(void)
 	 */
 	kmeminit_nkmempages();
 
-	kmemusage = (struct kmemusage *) uvm_km_alloc(kernel_map,
-	    (vsize_t)(nkmempages * sizeof(struct kmemusage)), 0,
-	    UVM_KMF_WIRED|UVM_KMF_ZERO);
 	kmb = 0;
 	kmem_map = uvm_km_suballoc(kernel_map, &kmb,
 	    &kml, ((vsize_t)nkmempages << PAGE_SHIFT),
@@ -928,6 +925,12 @@ kmeminit(void)
 	uvm_km_vacache_init(kmem_map, "kvakmem", 0);
 	kmembase = (char *)kmb;
 	kmemlimit = (char *)kml;
+
+	KASSERT(((kmemlimit - kmembase) >> PAGE_SHIFT) == nkmempages);
+
+	kmemusage = (struct kmemusage *) uvm_km_alloc(kernel_map,
+	    (vsize_t)(nkmempages * sizeof(struct kmemusage)), 0,
+	    UVM_KMF_WIRED|UVM_KMF_ZERO);
 #ifdef KMEMSTATS
 	for (indx = 0; indx < MINBUCKET + 16; indx++) {
 		if (1 << indx >= PAGE_SIZE)
