@@ -1,4 +1,4 @@
-/*	$NetBSD: mlcd.c,v 1.14 2010/10/17 14:17:49 tsutsui Exp $	*/
+/*	$NetBSD: mlcd.c,v 1.15 2014/03/14 08:55:40 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlcd.c,v 1.14 2010/10/17 14:17:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlcd.c,v 1.15 2014/03/14 08:55:40 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -526,10 +526,8 @@ static void
 mlcdstart_bp(struct mlcd_softc *sc)
 {
 	struct mlcd_buf *bp;
-	struct mlcd_pt *pt;
 
 	bp = sc->sc_bp;
-	pt = &sc->sc_pt[bp->lb_partno];
 
 	/* handle retry */
 	if (sc->sc_retry++ > MLCD_MAXRETRY) {
@@ -720,14 +718,11 @@ mlcdwrite(dev_t dev, struct uio *uio, int flags)
 int
 mlcdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	int unit, part;
+	int unit;
 	struct mlcd_softc *sc;
-	struct mlcd_pt *pt;
 
 	unit = MLCD_UNIT(dev);
-	part = MLCD_PART(dev);
 	sc = device_lookup_private(&mlcd_cd, unit);
-	pt = &sc->sc_pt[part];
 
 	switch (cmd) {
 
