@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.52 2014/02/08 19:17:43 jmmv Exp $
+# $NetBSD: mi,v 1.53 2014/03/14 01:05:57 pooka Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -194,6 +194,7 @@
 ./usr/lib/librumpkern_ksem_g.a			comp-obsolete		obsolete
 ./usr/lib/librumpkern_sljit_g.a			comp-c-debuglib		debuglib,sljit,rump
 ./usr/lib/librumpkern_solaris_g.a		comp-c-debuglib		debuglib,zfs,rump
+./usr/lib/librumpkern_time_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpkern_tty_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpkern_z_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpnet_agr_g.a			comp-c-debuglib		debuglib,rump
