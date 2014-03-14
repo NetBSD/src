@@ -1,5 +1,5 @@
 /*	Id: local2.c,v 1.49 2011/09/21 21:23:09 plunky Exp 	*/	
-/*	$NetBSD: local2.c,v 1.1.1.4 2012/01/11 20:32:40 plunky Exp $	*/
+/*	$NetBSD: local2.c,v 1.2 2014/03/14 00:06:52 christos Exp $	*/
 /*
  * Copyright (c) 2008 Michael Shalayeff
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -321,7 +321,7 @@ ultofd(NODE *p)
 static void
 ldtoul(NODE *p)
 {
-	int r;
+	int r __unused;
 
 	r = getlr(p, '1')->n_rval;
 

@@ -1,5 +1,5 @@
 /*	Id: trees.c,v 1.306 2012/03/22 18:51:40 plunky Exp 	*/	
-/*	$NetBSD: trees.c,v 1.1.1.5 2012/03/26 14:26:54 plunky Exp $	*/
+/*	$NetBSD: trees.c,v 1.2 2014/03/14 00:06:52 christos Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -2430,9 +2430,8 @@ static NODE *
 wrualfld(NODE *val, NODE *d, TWORD t, TWORD ct, int off, int fsz)
 { 
 	NODE *p, *q, *r, *rn, *s;
-	int tsz, ctsz, t2f, inbits;
+	int ctsz, t2f, inbits;
  
-	tsz = (int)tsize(t, 0, 0);
 	ctsz = (int)tsize(ct, 0, 0);
   
 	ct = ENUNSIGN(ct);
@@ -2504,16 +2503,14 @@ wrualfld(NODE *val, NODE *d, TWORD t, TWORD ct, int off, int fsz)
 static NODE *
 rmfldops(NODE *p)
 {
-	CONSZ msk;
 	TWORD t, ct;
 	NODE *q, *r, *t1, *t2, *bt, *t3, *t4;
-	int fsz, foff, tsz;
+	int fsz, foff;
 
 	if (p->n_op == FLD) {
 		/* Rewrite a field read operation */
 		fsz = UPKFSZ(p->n_rval);
 		foff = UPKFOFF(p->n_rval);
-		tsz = (int)tsize(p->n_left->n_type, 0, 0);
 		q = buildtree(ADDROF, p->n_left, NIL);
 
 		ct = t = p->n_type;
@@ -2542,11 +2539,9 @@ rmfldops(NODE *p)
 		fsz = UPKFSZ(q->n_rval);
 		foff = UPKFOFF(q->n_rval);
 		t = q->n_left->n_type;
-		tsz = (int)tsize(t, 0, 0);
 #if TARGET_ENDIAN == TARGET_BE
 		foff = tsz - fsz - foff;
 #endif
-		msk = (((1LL << (fsz-1))-1) << 1) | 1;
 		bt = NULL;
 		if (p->n_right->n_op != ICON && p->n_right->n_op != NAME) {
 			t2 = tempnode(0, p->n_right->n_type, 0, 0);

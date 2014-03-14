@@ -1,5 +1,5 @@
 /*      Id: gcc_compat.c,v 1.83 2012/03/22 18:04:41 plunky Exp      */	
-/*      $NetBSD: gcc_compat.c,v 1.3 2012/03/26 14:30:46 plunky Exp $     */
+/*      $NetBSD: gcc_compat.c,v 1.4 2014/03/14 00:06:52 christos Exp $     */
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -551,6 +551,7 @@ pragmas_gcc(char *t)
 			return 0;
 		}
 		*t = u;
+		__USE(ign);
 	} else if (strcmp(t, "poison") == 0) {
 		/* currently ignore */;
 	} else if (strcmp(t, "visibility") == 0) {
