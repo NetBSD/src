@@ -39,6 +39,17 @@
 #include <ddb/db_sym.h>
 #include <ddb/ddb.h>
 
+uintptr_t kernelbase = (uintptr_t)KERNEL_BASE;
+
+/* TODO: support AAPCS */
+/* XXX: copied from sys/arch/arm/arm/db_trace.c */
+#define INKERNEL(va)	(((vaddr_t)(va)) >= VM_MIN_KERNEL_ADDRESS)
+
+#define FR_SCP	(0)
+#define FR_RLV	(-1)
+#define FR_RSP	(-2)
+#define FR_RFP	(-3)
+
 #include "regset.h"
 
 /*
