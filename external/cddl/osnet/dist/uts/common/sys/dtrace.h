@@ -2331,6 +2331,20 @@ extern void dtrace_getfsr(uint64_t *);
 #define	DTRACE_INVOP_NOP		4
 #define	DTRACE_INVOP_RET		5
 
+#elif defined(__arm__)
+
+#define	DTRACE_INVOP_MOV_IP_SP		1
+#define	DTRACE_INVOP_BX_LR		2
+#define	DTRACE_INVOP_MOV_PC_LR		3
+#define	DTRACE_INVOP_LDM		4
+#define	DTRACE_INVOP_LDMIB		5
+#define	DTRACE_INVOP_LDR_IMM		6
+#define	DTRACE_INVOP_MOVW		7
+#define	DTRACE_INVOP_MOV_IMM		8
+#define	DTRACE_INVOP_CMP_IMM		9
+#define	DTRACE_INVOP_B_LABEL		10
+#define	DTRACE_INVOP_PUSH		11
+
 #endif
 
 #ifdef	__cplusplus
