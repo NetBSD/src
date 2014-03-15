@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1176 2014/02/14 13:25:19 njoly Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1177 2014/03/15 10:32:36 kiyohara Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1183 2014/02/14 13:24:46 njoly Exp
+ *	NetBSD: pcidevs,v 1.1184 2014/03/15 10:30:41 kiyohara Exp
  */
 
 /*
@@ -2333,6 +2333,9 @@
 #define	PCI_PRODUCT_MARVELL_GT64260	0x6430		/* GT-64260 System Controller */
 #define	PCI_PRODUCT_MARVELL_MV64360	0x6460		/* MV6436x System Controller */
 #define	PCI_PRODUCT_MARVELL_MV64460	0x6480		/* MV6446x System Controller */
+#define	PCI_PRODUCT_MARVELL_MV6707	0x6707		/* MV6707 SoC Armada 370 */
+#define	PCI_PRODUCT_MARVELL_MV6710	0x6710		/* MV6710 SoC Armada 370 */
+#define	PCI_PRODUCT_MARVELL_MV6W11	0x6711		/* MV6W11 SoC Armada 370 */
 #define	PCI_PRODUCT_MARVELL_88SX7042	0x7042		/* 88SX7042 SATA IIe */
 #define	PCI_PRODUCT_MARVELL_MV78100	0x7810		/* MV78100 SoC Discovery Innovation */
 #define	PCI_PRODUCT_MARVELL_MV78130	0x7813		/* MV78130 SoC Armada XP */
