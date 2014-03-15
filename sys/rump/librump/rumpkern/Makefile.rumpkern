@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.140 2014/03/13 01:34:06 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.141 2014/03/15 15:22:42 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -38,8 +38,11 @@ CPPFLAGS+= -DRUMP_KERNEL_IS_LIBC
 
 # Multiprocessor or uniprocessor locking.  TODO: select right
 # locking at runtime.
+.if ${RUMP_LOCKS_UP:Uno} == "yes"
+SRCS+=	locks_up.c
+.else
 SRCS+=	locks.c
-#SRCS+=	locks_up.c
+.endif
 
 MKREPRO?=no
 
