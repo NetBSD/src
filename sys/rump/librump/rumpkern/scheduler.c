@@ -1,4 +1,4 @@
-/*      $NetBSD: scheduler.c,v 1.35 2013/12/09 19:47:59 pooka Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.36 2014/03/15 15:15:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.35 2013/12/09 19:47:59 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.36 2014/03/15 15:15:27 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -240,7 +240,7 @@ rump_schedule()
 	 * for this case -- anyone who cares about performance will
 	 * start a real thread.
 	 */
-	if (__predict_true((l = rumpuser_curlwp()) != NULL)) {
+	if (__predict_true((l = curlwp) != NULL)) {
 		rump_schedule_cpu(l);
 		LWP_CACHE_CREDS(l, l->l_proc);
 	} else {
@@ -248,7 +248,7 @@ rump_schedule()
 
 		/* schedule cpu and use lwp0 */
 		rump_schedule_cpu(&lwp0);
-		rumpuser_curlwpop(RUMPUSER_LWP_SET, &lwp0);
+		rump_lwproc_curlwp_set(&lwp0);
 
 		/* allocate thread, switch to it, and release lwp0 */
 		l = rump__lwproc_alloclwp(initproc);
@@ -365,7 +365,7 @@ rump_schedule_cpu_interlock(struct lwp *l, void *interlock)
 void
 rump_unschedule()
 {
-	struct lwp *l = rumpuser_curlwp();
+	struct lwp *l = curlwp;
 #ifdef DIAGNOSTIC
 	int nlock;
 
@@ -399,10 +399,10 @@ rump_unschedule()
 		lwp0.l_mutex = &unruntime_lock;
 		lwp0.l_pflag &= ~LP_RUNNING;
 		lwp0rele();
-		rumpuser_curlwpop(RUMPUSER_LWP_CLEAR, &lwp0);
+		rump_lwproc_curlwp_clear(&lwp0);
 
 	} else if (__predict_false(l->l_flag & LW_RUMP_CLEAR)) {
-		rumpuser_curlwpop(RUMPUSER_LWP_CLEAR, l);
+		rump_lwproc_curlwp_clear(l);
 		l->l_flag &= ~LW_RUMP_CLEAR;
 	}
 }

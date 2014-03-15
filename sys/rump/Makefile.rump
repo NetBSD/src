@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.91 2014/03/13 01:34:06 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.92 2014/03/15 15:15:26 pooka Exp $
 #
 
 WARNS?=		3	# XXX: src/sys won't compile with -Wsign-compare yet
@@ -8,14 +8,13 @@ NOLINT=		# kernel code
 
 # Use NetBSD kernel ABI by default on x86 archs.  Performance-related
 # compile-time options may override this at a later date.
-.if ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE_ARCH} == "x86_64"
+.if (${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64")
 _RUMP_NATIVEABI= yes
 CPPFLAGS+=	-D_RUMP_NATIVE_ABI
 .else
 _RUMP_NATIVEABI= no
 CPPFLAGS:=	-I${RUMPTOP}/include ${CPPFLAGS}
-CPPFLAGS+=	-D_RUMPKERNEL
+CPPFLAGS+=	-D_RUMPKERNEL -I${RUMPTOP}/librump/rumpkern
 .endif
 
 CPPFLAGS+=	-DMAXUSERS=32

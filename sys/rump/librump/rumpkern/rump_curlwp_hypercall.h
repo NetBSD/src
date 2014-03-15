@@ -1,10 +1,7 @@
-/*	$NetBSD: rump_x86_cpu.c,v 1.2 2014/03/15 15:15:27 pooka Exp $	*/
+/*	$NetBSD: rump_curlwp_hypercall.h,v 1.1 2014/03/15 15:15:27 pooka Exp $	*/
 
-/*
- * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
- *
- * Development of this software was supported by the
- * Finnish Cultural Foundation.
+/*-
+ * Copyright (c) 2014 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,55 +25,19 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_x86_cpu.c,v 1.2 2014/03/15 15:15:27 pooka Exp $");
-
-#include <sys/param.h>
-
-#include <machine/cpu.h>
-
-#include "rump_private.h"
-#include "rump_curlwp.h"
-
-struct cpu_info *cpu_info_list;
-
-void
-rump_cpu_attach(struct cpu_info *ci)
+#ifdef RUMP_CURLWP_PRIVATE
+#include <rump/rumpuser.h>
+static void
+lwproc_curlwpop(enum rumplwpop op, struct lwp *l)
 {
 
-	if (cpu_info_list == NULL)
-		ci->ci_flags |= CPUF_PRIMARY;
-
-	/* XXX: wrong order, but ... */
-	ci->ci_next = cpu_info_list;
-	cpu_info_list = ci;
-
-	kcpuset_set(kcpuset_attached, cpu_index(ci));
-	kcpuset_set(kcpuset_running, cpu_index(ci));
+	rumpuser_curlwpop(op, l);
 }
+#endif
 
-struct cpu_info *
-x86_curcpu()
+static inline struct lwp *
+rump_curlwp_fast(void)
 {
 
-	return curlwp->l_cpu;
-}
-
-struct lwp *
-x86_curlwp()
-{
-
-	return rump_curlwp_fast();
-}
-
-void
-wbinvd(void)
-{
-
-	/*
-	 * Used by kobj_machdep().
-	 *
-	 * But, we Best not execute this since we're not Ring0 *.
-	 * Honestly, I don't know why it's required even in the kernel.
-	 */
+	return rump_lwproc_curlwp_hypercall();
 }

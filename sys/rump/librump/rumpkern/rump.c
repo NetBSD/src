@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.289 2014/03/10 22:44:11 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.290 2014/03/15 15:15:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.289 2014/03/10 22:44:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.290 2014/03/15 15:15:27 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -254,12 +254,10 @@ rump_init(void)
 	}
 
 	/* init minimal lwp/cpu context */
+	rump_lwproc_init();
 	l = &lwp0;
 	l->l_cpu = l->l_target_cpu = rump_cpu;
-
-	/* lwp0 isn't created like other threads, so notify hypervisor here */
-	rumpuser_curlwpop(RUMPUSER_LWP_CREATE, l);
-	rumpuser_curlwpop(RUMPUSER_LWP_SET, l);
+	rump_lwproc_curlwp_set(l);
 
 	/* retrieve env vars which affect the early stage of bootstrap */
 	if (rumpuser_getparam("RUMP_THREADS", buf, sizeof(buf)) == 0) {
@@ -341,7 +339,7 @@ rump_init(void)
 
 	rump_scheduler_init(numcpu);
 	/* revert temporary context and schedule a semireal context */
-	rumpuser_curlwpop(RUMPUSER_LWP_CLEAR, l);
+	rump_lwproc_curlwp_clear(l);
 	initproc = &proc0; /* borrow proc0 before we get initproc started */
 	rump_schedule();
 	bootlwp = curlwp;

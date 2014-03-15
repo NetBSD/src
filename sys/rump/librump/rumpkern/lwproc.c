@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.26 2013/12/16 15:36:29 pooka Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.27 2014/03/15 15:15:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -25,8 +25,10 @@
  * SUCH DAMAGE.
  */
 
+#define RUMP_CURLWP_PRIVATE
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.26 2013/12/16 15:36:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.27 2014/03/15 15:15:27 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -42,10 +44,40 @@ __KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.26 2013/12/16 15:36:29 pooka Exp $");
 #include <sys/uidinfo.h>
 
 #include <rump/rumpuser.h>
-
 #include "rump_private.h"
+#include "rump_curlwp.h"
 
 struct emul *emul_default = &emul_netbsd;
+
+void
+rump_lwproc_init(void)
+{
+
+	lwproc_curlwpop(RUMPUSER_LWP_CREATE, &lwp0);
+}
+
+struct lwp *
+rump_lwproc_curlwp_hypercall(void)
+{
+
+	return rumpuser_curlwp();
+}
+
+void
+rump_lwproc_curlwp_set(struct lwp *l)
+{
+
+	KASSERT(curlwp == NULL);
+	lwproc_curlwpop(RUMPUSER_LWP_SET, l);
+}
+
+void
+rump_lwproc_curlwp_clear(struct lwp *l)
+{
+
+	KASSERT(l == curlwp);
+	lwproc_curlwpop(RUMPUSER_LWP_CLEAR, l);
+}
 
 static void
 lwproc_proc_free(struct proc *p)
@@ -219,7 +251,7 @@ lwproc_freelwp(struct lwp *l)
 		kmem_free(l->l_name, MAXCOMLEN);
 	lwp_finispecific(l);
 
-	rumpuser_curlwpop(RUMPUSER_LWP_DESTROY, l);
+	lwproc_curlwpop(RUMPUSER_LWP_DESTROY, l);
 	membar_exit();
 	kmem_free(l, sizeof(*l));
 
@@ -255,7 +287,7 @@ lwproc_makelwp(struct proc *p, struct lwp *l, bool doswitch, bool procmake)
 	lwp_initspecific(l);
 
 	membar_enter();
-	rumpuser_curlwpop(RUMPUSER_LWP_CREATE, l);
+	lwproc_curlwpop(RUMPUSER_LWP_CREATE, l);
 	if (doswitch) {
 		rump_lwproc_switch(l);
 	}
@@ -364,13 +396,13 @@ rump_lwproc_switch(struct lwp *newlwp)
 	}
 
 	KERNEL_UNLOCK_ALL(NULL, &l->l_biglocks);
-	rumpuser_curlwpop(RUMPUSER_LWP_CLEAR, l);
+	lwproc_curlwpop(RUMPUSER_LWP_CLEAR, l);
 
 	newlwp->l_cpu = newlwp->l_target_cpu = l->l_cpu;
 	newlwp->l_mutex = l->l_mutex;
 	newlwp->l_pflag |= LP_RUNNING;
 
-	rumpuser_curlwpop(RUMPUSER_LWP_SET, newlwp);
+	lwproc_curlwpop(RUMPUSER_LWP_SET, newlwp);
 	curcpu()->ci_curlwp = newlwp;
 	KERNEL_LOCK(newlwp->l_biglocks, NULL);
 

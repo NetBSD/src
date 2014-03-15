@@ -1,10 +1,7 @@
-/*	$NetBSD: rump_x86_cpu.c,v 1.2 2014/03/15 15:15:27 pooka Exp $	*/
+/*	$NetBSD: rump_curlwp___thread.h,v 1.1 2014/03/15 15:15:27 pooka Exp $	*/
 
-/*
- * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
- *
- * Development of this software was supported by the
- * Finnish Cultural Foundation.
+/*-
+ * Copyright (c) 2014 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,55 +25,39 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_x86_cpu.c,v 1.2 2014/03/15 15:15:27 pooka Exp $");
+extern __thread struct lwp *curlwp_storage;
+#ifdef RUMP_CURLWP_PRIVATE
+#include <rump/rumpuser.h>
 
-#include <sys/param.h>
-
-#include <machine/cpu.h>
-
-#include "rump_private.h"
-#include "rump_curlwp.h"
-
-struct cpu_info *cpu_info_list;
-
-void
-rump_cpu_attach(struct cpu_info *ci)
+__thread struct lwp *curlwp_storage;
+static void
+lwproc_curlwpop(enum rumplwpop op, struct lwp *l)
 {
 
-	if (cpu_info_list == NULL)
-		ci->ci_flags |= CPUF_PRIMARY;
-
-	/* XXX: wrong order, but ... */
-	ci->ci_next = cpu_info_list;
-	cpu_info_list = ci;
-
-	kcpuset_set(kcpuset_attached, cpu_index(ci));
-	kcpuset_set(kcpuset_running, cpu_index(ci));
-}
-
-struct cpu_info *
-x86_curcpu()
-{
-
-	return curlwp->l_cpu;
-}
-
-struct lwp *
-x86_curlwp()
-{
-
-	return rump_curlwp_fast();
-}
-
-void
-wbinvd(void)
-{
-
+	switch (op) {
+	case RUMPUSER_LWP_CREATE:
+	case RUMPUSER_LWP_DESTROY:
+		break;
+	case RUMPUSER_LWP_SET:
+		KASSERT(curlwp_storage == NULL);
+		curlwp_storage = l;
+		break;
+	case RUMPUSER_LWP_CLEAR:
+		KASSERT(curlwp_storage == l);
+		curlwp_storage = NULL;
+		break;
+	}
 	/*
-	 * Used by kobj_machdep().
-	 *
-	 * But, we Best not execute this since we're not Ring0 *.
-	 * Honestly, I don't know why it's required even in the kernel.
+	 * Need to keep hypercall layer in sync, since it can use curlwp
+	 * for things like mutexes.  Should be fixed/adjusted somehow.
 	 */
+	rumpuser_curlwpop(op, l);
+}
+#endif
+
+static inline struct lwp * __attribute__((const))
+rump_curlwp_fast(void)
+{
+
+	return curlwp_storage;
 }
