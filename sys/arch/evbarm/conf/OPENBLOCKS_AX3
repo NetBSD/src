@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS_AX3,v 1.6 2014/03/15 13:56:19 kiyohara Exp $
+#	$NetBSD: OPENBLOCKS_AX3,v 1.7 2014/03/15 14:02:01 kiyohara Exp $
 #
 #	OPENBLOCKS_AX3 -- Plat'Home. OpenBlockS AX3 kernel
 #
@@ -21,6 +21,8 @@ options 	L2CACHE_ENABLE
 #options 	AURORA_IO_CACHE_COHERENCY
 options 	AURORA_L2_PT_WALK
 options 	ARM_HAS_VBAR
+#options 	FPU_VFP
+#makeoptions	CPUFLAGS="-march=armv7-a -mfpu=neon"
 makeoptions	CPUFLAGS="-march=armv7-a -msoft-float"
 
 # Architecture options
@@ -177,8 +179,7 @@ mvgbe*	at mvgbec? port ? irq ?
 makphy* at mii? phy ?
 
 # On-chip USB 2.0 Interface
-ehci0	at mvsoc? offset ? irq ?
-ehci1	at mvsoc? offset ? irq ?
+ehci*	at mvsoc? offset ? irq ?
 
 # Serial Peripheral Interface (SPI)
 #mvspi*	at mvsoc? offset ? irq ?
@@ -213,6 +214,8 @@ options 	PCI_NETBSD_CONFIGURE
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 pci*	at mvpex?
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
+
+#athn*	at pci? dev ? function ?	# Atheros AR9k (802.11a/g/n)
 
 # ATA (IDE) bus support
 atabus* at ata?
