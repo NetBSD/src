@@ -1,4 +1,4 @@
-/*	$NetBSD: n_support.S,v 1.8 2014/03/15 12:20:09 martin Exp $	*/
+/*	$NetBSD: n_support.S,v 1.9 2014/03/15 14:12:56 martin Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -62,7 +62,7 @@ ENTRY(copysign, 0)
 Lz:	ret
 
 ENTRY(copysignf, 0)
-	movw	4(%ap),%r0		# load x into %r0
+	movl	4(%ap),%r0		# load x into %r0
 	bicw3	$0x807f,%r0,%r2		# mask off the exponent of x
 	beql	1f			# if zero or reserved op then return x
 	bicw3	$0x7fff,8(%ap),%r2	# copy the sign bit of y into %r2
