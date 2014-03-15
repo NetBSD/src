@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2014/03/05 21:37:02 tron Exp $
+#	$NetBSD: Makefile,v 1.3 2014/03/15 23:12:58 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -32,6 +32,7 @@ ${G_common_out_file:T:R}.o:  common/common-target-hooks-def.h
 DPSRCS+=	options.h
 
 HOST_CPPFLAGS+=	-I${BACKENDOBJ} -I${GCCARCH} -I. -I${DIST}/include -I${DIST}/gcc
+HOST_CPPFLAGS+=	-DGENERATOR_FILE
 
 MKPIC:=		no
 MKPICLIB:=	no
