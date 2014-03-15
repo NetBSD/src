@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_machdep.c,v 1.27 2014/01/29 04:27:26 kiyohara Exp $ */
+/*	$NetBSD: marvell_machdep.c,v 1.28 2014/03/15 13:48:44 kiyohara Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.27 2014/01/29 04:27:26 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.28 2014/03/15 13:48:44 kiyohara Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
@@ -230,7 +230,7 @@ u_int
 initarm(void *arg)
 {
 	uint32_t target, attr, base, size;
-	int cs, memtag = 0, iotag = 0, window;
+	int cs, cs_end, memtag = 0, iotag = 0, window;
 
 	mvsoc_bootstrap(MARVELL_INTERREGS_VBASE);
 
@@ -279,6 +279,9 @@ initarm(void *arg)
 		nwindow = ORION_MLMB_NWINDOW;
 		nremap = ORION_MLMB_NREMAP;
 
+		cs = MARVELL_TAG_SDRAM_CS0;
+		cs_end = MARVELL_TAG_SDRAM_CS3;
+
 		orion_getclks(MARVELL_INTERREGS_VBASE);
 		break;
 #endif	/* ORION */
@@ -297,6 +300,9 @@ initarm(void *arg)
 		nwindow = KIRKWOOD_MLMB_NWINDOW;
 		nremap = KIRKWOOD_MLMB_NREMAP;
 
+		cs = MARVELL_TAG_SDRAM_CS0;
+		cs_end = MARVELL_TAG_SDRAM_CS3;
+
 		kirkwood_getclks(MARVELL_INTERREGS_VBASE);
 		mvsoc_clkgating = kirkwood_clkgating;
 		break;
@@ -313,6 +319,9 @@ initarm(void *arg)
 		iotag = MV78XX0_TAG_PEX0_IO;
 		nwindow = MV78XX0_MLMB_NWINDOW;
 		nremap = MV78XX0_MLMB_NREMAP;
+
+		cs = MARVELL_TAG_SDRAM_CS0;
+		cs_end = MARVELL_TAG_SDRAM_CS3;
 
 		mv78xx0_getclks(MARVELL_INTERREGS_VBASE);
 		break;
@@ -333,9 +342,47 @@ initarm(void *arg)
 		nwindow = ARMADAXP_MLMB_NWINDOW;
 		nremap = ARMADAXP_MLMB_NREMAP;
 
+		cs = MARVELL_TAG_DDR3_CS0;
+		cs_end = MARVELL_TAG_DDR3_CS3;
+
 		extern vaddr_t misc_base;
 	        misc_base = MARVELL_INTERREGS_VBASE + ARMADAXP_MISC_BASE;
 		armadaxp_getclks();
+		mvsoc_clkgating = armadaxp_clkgating;
+
+#ifdef L2CACHE_ENABLE
+		/* Initialize L2 Cache */
+		{
+			extern int armadaxp_l2_init(bus_addr_t);
+
+			(void)armadaxp_l2_init(MARVELL_INTERREGS_PBASE);
+		}
+#endif
+
+#ifdef AURORA_IO_CACHE_COHERENCY
+		/* Initialize cache coherency */
+		armadaxp_io_coherency_init();
+#endif
+		break;
+
+	case MARVELL_ARMADA370_MV6707:
+	case MARVELL_ARMADA370_MV6710:
+	case MARVELL_ARMADA370_MV6W11:
+		cpu_reset_address = armadaxp_system_reset;
+
+		armadaxp_intr_bootstrap(MARVELL_INTERREGS_PBASE);
+
+		memtag = ARMADAXP_TAG_PEX00_MEM;
+		iotag = ARMADAXP_TAG_PEX00_IO;
+		nwindow = ARMADAXP_MLMB_NWINDOW;
+		nremap = ARMADAXP_MLMB_NREMAP;
+
+		cs = MARVELL_TAG_DDR3_CS0;
+		cs_end = MARVELL_TAG_DDR3_CS3;
+
+		extern vaddr_t misc_base;
+	        misc_base = MARVELL_INTERREGS_VBASE + ARMADAXP_MISC_BASE;
+		armada370_getclks();
 		mvsoc_clkgating = armadaxp_clkgating;
 
 #ifdef L2CACHE_ENABLE
@@ -414,7 +461,7 @@ initarm(void *arg)
 	bootconfig.dramblocks = 0;
 	paddr_t segment_end;
 	segment_end = physmem = 0;
-	for (cs = MARVELL_TAG_SDRAM_CS0; cs <= MARVELL_TAG_SDRAM_CS3; cs++) {
+	for ( ; cs <= cs_end; cs++) {
 		mvsoc_target(cs, &target, &attr, &base, &size);
 		if (size == 0)
 			continue;
@@ -649,6 +696,10 @@ marvell_device_register(device_t dev, void *aux)
 		case MARVELL_ARMADAXP_MV78230:
 		case MARVELL_ARMADAXP_MV78260:
 		case MARVELL_ARMADAXP_MV78460:
+
+		case MARVELL_ARMADA370_MV6707:
+		case MARVELL_ARMADA370_MV6710:
+		case MARVELL_ARMADA370_MV6W11:
 		  {
 			extern struct arm32_pci_chipset
 			    arm32_mvpex2_chipset, arm32_mvpex3_chipset,
