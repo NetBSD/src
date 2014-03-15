@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_mv.c,v 1.4 2013/09/08 04:10:23 kiyohara Exp $	*/
+/*	$NetBSD: ehci_mv.c,v 1.5 2014/03/15 13:33:48 kiyohara Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_mv.c,v 1.4 2013/09/08 04:10:23 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_mv.c,v 1.5 2014/03/15 13:33:48 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -164,8 +164,8 @@ struct mvusb_softc {
 static int mvusb_match(device_t, cfdata_t, void *);
 static void mvusb_attach(device_t, device_t, void *);
 
-static void mvusb_init(struct mvusb_softc *);
-static void mvusb_wininit(struct mvusb_softc *);
+static void mvusb_init(struct mvusb_softc *, enum marvell_tags *);
+static void mvusb_wininit(struct mvusb_softc *, enum marvell_tags *);
 
 static void mvusb_vendor_init(struct ehci_softc *);
 static int mvusb_vendor_port_status(struct ehci_softc *, uint32_t, int);
@@ -216,7 +216,7 @@ mvusb_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "can't map registers\n");
 		return;
 	}
-	mvusb_init(sc);
+	mvusb_init(sc, mva->mva_tags);
 
 	/* Map I/O registers for ehci */
 	sc->sc.sc_size = MARVELL_USB_EHCI_SIZE;
@@ -254,7 +254,7 @@ mvusb_attach(device_t parent, device_t self, void *aux)
 }
 
 static void
-mvusb_init(struct mvusb_softc *sc)
+mvusb_init(struct mvusb_softc *sc, enum marvell_tags *tags)
 {
 	uint32_t reg;
 	int opr_offs;
@@ -357,24 +357,16 @@ mvusb_init(struct mvusb_softc *sc)
 		    reg);
 	}
 
-	mvusb_wininit(sc);
+	mvusb_wininit(sc, tags);
 }
 
 static void
-mvusb_wininit(struct mvusb_softc *sc)
+mvusb_wininit(struct mvusb_softc *sc, enum marvell_tags *tags)
 {
 	device_t pdev = device_parent(sc->sc.sc_dev);
 	uint64_t base;
 	uint32_t size;
 	int window, target, attr, rv, i;
-	static int tags[] = {
-		MARVELL_TAG_SDRAM_CS0,
-		MARVELL_TAG_SDRAM_CS1,
-		MARVELL_TAG_SDRAM_CS2,
-		MARVELL_TAG_SDRAM_CS3,
-
-		MARVELL_TAG_UNDEFINED,
-	};
 
 	for (window = 0, i = 0;
 	    tags[i] != MARVELL_TAG_UNDEFINED && window < MARVELL_USB_NWINDOW;

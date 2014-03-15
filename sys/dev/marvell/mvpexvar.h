@@ -1,4 +1,4 @@
-/*	$NetBSD: mvpexvar.h,v 1.3 2012/09/07 04:25:37 matt Exp $	*/
+/*	$NetBSD: mvpexvar.h,v 1.4 2014/03/15 13:33:48 kiyohara Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -27,6 +27,8 @@
 
 #ifndef	_MVPEXVAR_H_
 #define	_MVPEXVAR_H_
+
+extern enum marvell_tags *mvpex_bar2_tags;
 
 struct mvpex_intrhand {
 	LIST_ENTRY(mvpex_intrhand) ih_q;
