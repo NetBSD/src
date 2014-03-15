@@ -1,4 +1,4 @@
-/*	$NetBSD: armadaxp.c,v 1.6 2013/12/23 04:12:09 kiyohara Exp $	*/
+/*	$NetBSD: armadaxp.c,v 1.7 2014/03/15 10:54:40 kiyohara Exp $	*/
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
 
@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadaxp.c,v 1.6 2013/12/23 04:12:09 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadaxp.c,v 1.7 2014/03/15 10:54:40 kiyohara Exp $");
 
 #define _INTR_PRIVATE
 
@@ -61,10 +61,12 @@ __KERNEL_RCSID(0, "$NetBSD: armadaxp.c,v 1.6 2013/12/23 04:12:09 kiyohara Exp $"
 
 #include <dev/marvell/marvellreg.h>
 
-#define EXTRACT_CPU_FREQ_FIELD(sar)	(((0x01 & (sar >> 52)) << 3) | \
+#define EXTRACT_XP_CPU_FREQ_FIELD(sar)	(((0x01 & (sar >> 52)) << 3) | \
 					    (0x07 & (sar >> 21)))
-#define EXTRACT_FAB_FREQ_FIELD(sar)	(((0x01 & (sar >> 51)) << 4) | \
+#define EXTRACT_XP_FAB_FREQ_FIELD(sar)	(((0x01 & (sar >> 51)) << 4) | \
 					    (0x0F & (sar >> 24)))
+#define EXTRACT_370_CPU_FREQ_FIELD(sar)	((sar >> 11) & 0xf)
+#define EXTRACT_370_FAB_FREQ_FIELD(sar)	((sar >> 15) & 0x1f)
 
 #define	MPIC_WRITE(reg, val)		(bus_space_write_4(&mvsoc_bs_tag, \
 					    mpic_handle, reg, val))
@@ -133,9 +135,15 @@ static struct vco_freq_ratio freq_conf_table[] = {
 /*22*/	{ 2, 5,	10,  5 }
 };
 
-static uint16_t	cpu_clock_table[] = {
-    1000, 1066, 1200, 1333, 1500, 1666, 1800, 2000, 600,  667,  800,  1600,
-    2133, 2200, 2400 };
+static uint16_t clock_table_xp[] = {
+	1000, 1066, 1200, 1333, 1500, 1666, 1800, 2000,
+	 600,  667,  800, 1600, 2133, 2200, 2400
+};
+static uint16_t clock_table_370[] = {
+	 400,  533,  667,  800, 1000, 1067, 1200, 1333,
+	1500, 1600, 1667, 1800, 2000,  333,  600,  900,
+	   0
+};
 
 static struct pic_ops armadaxp_picops = {
 	.pic_unblock_irqs = armadaxp_pic_unblock_irqs,
@@ -324,7 +332,7 @@ void
 armadaxp_getclks(void)
 {
 	uint64_t sar_reg;
-	uint8_t  sar_cpu_freq, sar_fab_freq, array_size;
+	uint8_t  sar_cpu_freq, sar_fab_freq;
 
 	if (cputype == CPU_ID_MV88SV584X_V7)
 		mvTclk = 250000000; /* 250 MHz */
@@ -334,23 +342,21 @@ armadaxp_getclks(void)
 	sar_reg = (read_miscreg(ARMADAXP_MISC_SAR_HI) << 31) |
 	    read_miscreg(ARMADAXP_MISC_SAR_LO);
 
-	sar_cpu_freq = EXTRACT_CPU_FREQ_FIELD(sar_reg);
-	sar_fab_freq = EXTRACT_FAB_FREQ_FIELD(sar_reg);
+	sar_cpu_freq = EXTRACT_XP_CPU_FREQ_FIELD(sar_reg);
+	sar_fab_freq = EXTRACT_XP_FAB_FREQ_FIELD(sar_reg);
 
 	/* Check if CPU frequency field has correct value */
-	array_size = sizeof(cpu_clock_table) / sizeof(cpu_clock_table[0]);
-	if (sar_cpu_freq >= array_size)
+	if (sar_cpu_freq >= __arraycount(clock_table_xp))
 		panic("Reserved value in cpu frequency configuration field: "
 		    "%d", sar_cpu_freq);
 
 	/* Check if fabric frequency field has correct value */
-	array_size = sizeof(freq_conf_table) / sizeof(freq_conf_table[0]);
-	if (sar_fab_freq >= array_size)
+	if (sar_fab_freq >= __arraycount(freq_conf_table))
 		panic("Reserved value in fabric frequency configuration field: "
 		    "%d", sar_fab_freq);
 
 	/* Get CPU clock frequency */
-	mvPclk = cpu_clock_table[sar_cpu_freq] *
+	mvPclk = clock_table_xp[sar_cpu_freq] *
 	    freq_conf_table[sar_fab_freq].vco_cpu;
 
 	/* Get L2CLK clock frequency and use as system clock (mvSysclk) */
@@ -361,8 +367,49 @@ armadaxp_getclks(void)
 	    freq_conf_table[sar_fab_freq].vco_l2c) >= 5)
 		mvSysclk++;
 
-	mvPclk = mvPclk * 1000000;
-	mvSysclk = mvSysclk * 1000000;
+	mvPclk *= 1000000;
+	mvSysclk *= 1000000;
+}
+
+void
+armada370_getclks(void)
+{
+	uint32_t sar;
+	uint8_t  cpu_freq, fab_freq;
+
+	sar = read_miscreg(ARMADAXP_MISC_SAR_LO);
+	if (sar & 0x00100000)
+		mvTclk = 200000000; /* 200 MHz */
+	else
+		mvTclk = 166666667; /* 166 MHz */
+
+	cpu_freq = EXTRACT_370_CPU_FREQ_FIELD(sar);
+	fab_freq = EXTRACT_370_FAB_FREQ_FIELD(sar);
+
+	/* Check if CPU frequency field has correct value */
+	if (cpu_freq >= __arraycount(clock_table_370))
+		panic("Reserved value in cpu frequency configuration field: "
+		    "%d", cpu_freq);
+
+	/* Check if fabric frequency field has correct value */
+	if (fab_freq >= __arraycount(freq_conf_table))
+		panic("Reserved value in fabric frequency configuration field: "
+		    "%d", fab_freq);
+
+	/* Get CPU clock frequency */
+	mvPclk = clock_table_370[cpu_freq] *
+	    freq_conf_table[fab_freq].vco_cpu;
+
+	/* Get L2CLK clock frequency and use as system clock (mvSysclk) */
+	mvSysclk = mvPclk / freq_conf_table[fab_freq].vco_l2c;
+
+	/* Round mvSysclk value to integer MHz */
+	if (((mvPclk % freq_conf_table[fab_freq].vco_l2c) * 10 /
+	    freq_conf_table[fab_freq].vco_l2c) >= 5)
+		mvSysclk++;
+
+	mvPclk *= 1000000;
+	mvSysclk *= 1000000;
 }
 
 /*
@@ -452,7 +499,7 @@ armadaxp_io_coherency_init(void)
 	iocc_state = 1;
 }
 
-int     
+int
 armadaxp_clkgating(struct marvell_attach_args *mva)
 {
 	uint32_t val;
@@ -463,10 +510,10 @@ armadaxp_clkgating(struct marvell_attach_args *mva)
 			val = read_miscreg(ARMADAXP_MISC_PMCGC);
 			if ((val & clkgatings[i].bits) == clkgatings[i].bits)
 				/* Clock enabled */
-				return 0; 
+				return 0;
 			return 1;
 		}
-	} 
+	}
 	/* Clock Gating not support */
 	return 0;
 }
