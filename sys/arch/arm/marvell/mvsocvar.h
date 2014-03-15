@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsocvar.h,v 1.7 2013/12/23 04:12:09 kiyohara Exp $	*/
+/*	$NetBSD: mvsocvar.h,v 1.8 2014/03/15 10:54:40 kiyohara Exp $	*/
 /*
  * Copyright (c) 2007, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -136,6 +136,7 @@ void mv78xx0_getclks(bus_addr_t);
 
 void armadaxp_intr_bootstrap(bus_addr_t);
 void armadaxp_getclks(void);
+void armada370_getclks(void);
 int armadaxp_clkgating(struct marvell_attach_args *);
 
 #endif	/* _MVSOCVAR_H_ */
