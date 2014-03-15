@@ -202,13 +202,24 @@ END(dtrace_copystr)
 void dtrace_invop_init(void)
 */
 ENTRY(dtrace_invop_init)
+	ldr	r1, .Ldtrace_invop
+	ldr	r2, .Ldtrace_invop_jump_addr
+	str	r1, [r2]
 	RET
+	.align	0
+.Ldtrace_invop:
+	.word	dtrace_invop
+.Ldtrace_invop_jump_addr:
+	.word	dtrace_invop_jump_addr
 END(dtrace_invop_init)
 
 /*
 void dtrace_invop_uninit(void)
 */
 ENTRY(dtrace_invop_uninit)
+	mov	r0, #0
+	ldr	r1, .Ldtrace_invop_jump_addr
+	str	r0, [r1]
 	RET
 END(dtrace_invop_uninit)
 
