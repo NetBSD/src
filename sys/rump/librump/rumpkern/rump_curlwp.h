@@ -1,10 +1,7 @@
-/*	$NetBSD: rump_x86_cpu.c,v 1.2 2014/03/15 15:15:27 pooka Exp $	*/
+/*	$NetBSD: rump_curlwp.h,v 1.1 2014/03/15 15:15:27 pooka Exp $	*/
 
-/*
- * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
- *
- * Development of this software was supported by the
- * Finnish Cultural Foundation.
+/*-
+ * Copyright (c) 2014 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,55 +25,30 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_x86_cpu.c,v 1.2 2014/03/15 15:15:27 pooka Exp $");
+#ifndef _SYS_RUMP_CURLWP_H_
+#define _SYS_RUMP_CURLWP_H_
 
-#include <sys/param.h>
+struct lwp *    rump_lwproc_curlwp_hypercall(void);
 
-#include <machine/cpu.h>
+/* hattrick numbers to avoid someone accidentally using "1" as the value */
+#define RUMP_CURLWP_MODEL_HYPERCALL     10501
+#define RUMP_CURLWP_MODEL___THREAD      20502
+#define RUMP_CURLWP_MODEL_REGISTER      30503
+#define RUMP_CURLWP_MODEL_DEFAULT       RUMP_CURLWP_MODEL_HYPERCALL
 
-#include "rump_private.h"
-#include "rump_curlwp.h"
+#ifndef RUMP_CURLWP_MODEL
+#define RUMP_CURLWP_MODEL RUMP_CURLWP_MODEL_DEFAULT
+#endif
 
-struct cpu_info *cpu_info_list;
+/* provides rump_curlwp_fast() */
+#if RUMP_CURLWP_MODEL == RUMP_CURLWP_MODEL_HYPERCALL
+#include "rump_curlwp_hypercall.h"
+#elif RUMP_CURLWP_MODEL == RUMP_CURLWP_MODEL___THREAD
+#include "rump_curlwp___thread.h"
+#elif RUMP_CURLWP_MODEL == RUMP_CURLWP_MODEL_REGISTER
+#error "RUMP_CURLWP_MODEL_REGISTER not yet implemented"
+#else
+#error "unknown RUMP_CURLWP"
+#endif
 
-void
-rump_cpu_attach(struct cpu_info *ci)
-{
-
-	if (cpu_info_list == NULL)
-		ci->ci_flags |= CPUF_PRIMARY;
-
-	/* XXX: wrong order, but ... */
-	ci->ci_next = cpu_info_list;
-	cpu_info_list = ci;
-
-	kcpuset_set(kcpuset_attached, cpu_index(ci));
-	kcpuset_set(kcpuset_running, cpu_index(ci));
-}
-
-struct cpu_info *
-x86_curcpu()
-{
-
-	return curlwp->l_cpu;
-}
-
-struct lwp *
-x86_curlwp()
-{
-
-	return rump_curlwp_fast();
-}
-
-void
-wbinvd(void)
-{
-
-	/*
-	 * Used by kobj_machdep().
-	 *
-	 * But, we Best not execute this since we're not Ring0 *.
-	 * Honestly, I don't know why it's required even in the kernel.
-	 */
-}
+#endif /* _SYS_RUMP_CURLWP_H_ */
