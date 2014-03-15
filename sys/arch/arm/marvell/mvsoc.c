@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoc.c,v 1.17 2014/02/17 05:00:38 kiyohara Exp $	*/
+/*	$NetBSD: mvsoc.c,v 1.18 2014/03/15 11:48:37 kiyohara Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013, 2014 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoc.c,v 1.17 2014/02/17 05:00:38 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoc.c,v 1.18 2014/03/15 11:48:37 kiyohara Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_mvsoc.h"
@@ -271,10 +271,6 @@ static struct {
 #endif
 };
 
-#if defined(ARMADAXP)
-#undef ARMADAXP
-#define ARMADAXP(m)	MARVELL_ARMADAXP_ ## m
-#endif
 #if defined(ORION)
 #define ORION_1(m)	MARVELL_ORION_1_ ## m
 #define ORION_2(m)	MARVELL_ORION_2_ ## m
@@ -286,6 +282,11 @@ static struct {
 #if defined(MV78XX0)
 #undef MV78XX0
 #define MV78XX0(m)	MARVELL_MV78XX0_ ## m
+#endif
+#if defined(ARMADAXP)
+#undef ARMADAXP
+#define ARMADAXP(m)	MARVELL_ARMADAXP_ ## m
+#define ARMADA370(m)	MARVELL_ARMADA370_ ## m
 #endif
 static struct {
 	uint16_t model;
@@ -348,8 +349,101 @@ static struct {
 	{ ARMADAXP(MV78260),	1, "MV78260",	"A0",  "Armada XP" },
 	{ ARMADAXP(MV78460),	1, "MV78460",	"A0",  "Armada XP" },
 	{ ARMADAXP(MV78460),	2, "MV78460",	"B0",  "Armada XP" },
+
+	{ ARMADA370(MV6707),	0, "MV6707",	"A0",  "Armada 370" },
+	{ ARMADA370(MV6707),	1, "MV6707",	"A1",  "Armada 370" },
+	{ ARMADA370(MV6710),	0, "MV6710",	"A0",  "Armada 370" },
+	{ ARMADA370(MV6710),	1, "MV6710",	"A1",  "Armada 370" },
+	{ ARMADA370(MV6W11),	0, "MV6W11",	"A0",  "Armada 370" },
+	{ ARMADA370(MV6W11),	1, "MV6W11",	"A1",  "Armada 370" },
 #endif
 };
+
+enum marvell_tags ddr_tags[] = {
+	MARVELL_TAG_SDRAM_CS0,
+	MARVELL_TAG_SDRAM_CS1,
+	MARVELL_TAG_SDRAM_CS2,
+	MARVELL_TAG_SDRAM_CS3,
+
+	MARVELL_TAG_UNDEFINED
+};
+enum marvell_tags ddr3_tags[] = {
+	MARVELL_TAG_DDR3_CS0,
+	MARVELL_TAG_DDR3_CS1,
+	MARVELL_TAG_DDR3_CS2,
+	MARVELL_TAG_DDR3_CS3,
+
+	MARVELL_TAG_UNDEFINED
+};
+static struct {
+	uint16_t model;
+	uint8_t rev;
+	enum marvell_tags *tags;
+} tagstbl[] = {
+#if defined(ORION)
+	{ ORION_1(88F1181),	0, ddr_tags },
+	{ ORION_1(88F5082),	2, ddr_tags },
+	{ ORION_1(88F5180N),	3, ddr_tags },
+	{ ORION_1(88F5181),	0, ddr_tags },
+	{ ORION_1(88F5181),	1, ddr_tags },
+	{ ORION_1(88F5181),	2, ddr_tags },
+	{ ORION_1(88F5181),	3, ddr_tags },
+	{ ORION_1(88F5181),	8, ddr_tags },
+	{ ORION_1(88F5181),	9, ddr_tags },
+	{ ORION_1(88F5182),	0, ddr_tags },
+	{ ORION_1(88F5182),	1, ddr_tags },
+	{ ORION_1(88F5182),	2, ddr_tags },
+	{ ORION_1(88F6082),	0, ddr_tags },
+	{ ORION_1(88F6082),	1, ddr_tags },
+	{ ORION_1(88F6183),	0, ddr_tags },
+	{ ORION_1(88F6183),	1, ddr_tags },
+	{ ORION_1(88W8660),	0, ddr_tags },
+	{ ORION_1(88W8660),	1, ddr_tags },
+
+	{ ORION_2(88F1281),	0, ddr_tags },
+	{ ORION_2(88F5281),	0, ddr_tags },
+	{ ORION_2(88F5281),	1, ddr_tags },
+	{ ORION_2(88F5281),	2, ddr_tags },
+	{ ORION_2(88F5281),	3, ddr_tags },
+	{ ORION_2(88F5281),	4, ddr_tags },
+#endif
+
+#if defined(KIRKWOOD)
+	{ KIRKWOOD(88F6180),	2, ddr_tags },
+	{ KIRKWOOD(88F6180),	3, ddr_tags },
+	{ KIRKWOOD(88F6192),	0, ddr_tags },
+	{ KIRKWOOD(88F6192),	2, ddr_tags },
+	{ KIRKWOOD(88F6192),	3, ddr_tags },
+	{ KIRKWOOD(88F6281),	0, ddr_tags },
+	{ KIRKWOOD(88F6281),	2, ddr_tags },
+	{ KIRKWOOD(88F6281),	3, ddr_tags },
+	{ KIRKWOOD(88F6282),	0, ddr_tags },
+	{ KIRKWOOD(88F6282),	1, ddr_tags },
+#endif
+
+#if defined(MV78XX0)
+	{ MV78XX0(MV78100),	1, ddr_tags },
+	{ MV78XX0(MV78100),	2, ddr_tags },
+	{ MV78XX0(MV78200),	1, ddr_tags },
+#endif
+
+#if defined(ARMADAXP)
+	{ ARMADAXP(MV78130),	1, ddr3_tags },
+	{ ARMADAXP(MV78160),	1, ddr3_tags },
+	{ ARMADAXP(MV78230),	1, ddr3_tags },
+	{ ARMADAXP(MV78260),	1, ddr3_tags },
+	{ ARMADAXP(MV78460),	1, ddr3_tags },
+	{ ARMADAXP(MV78460),	2, ddr3_tags },
+
+	{ ARMADA370(MV6707),	0, ddr3_tags },
+	{ ARMADA370(MV6707),	1, ddr3_tags },
+	{ ARMADA370(MV6710),	0, ddr3_tags },
+	{ ARMADA370(MV6710),	1, ddr3_tags },
+	{ ARMADA370(MV6W11),	0, ddr3_tags },
+	{ ARMADA370(MV6W11),	1, ddr3_tags },
+#endif
+};
+
 
 #define OFFSET_DEFAULT	MVA_OFFSET_DEFAULT
 #define IRQ_DEFAULT	MVA_IRQ_DEFAULT
@@ -698,6 +792,25 @@ static const struct mvsoc_periph {
     { ARMADAXP(MV78460), "mvgbec", 3, ARMADAXP_GBE3_BASE,IRQ_DEFAULT },
     { ARMADAXP(MV78460), "mvcesa", 0, ARMADAXP_CESA0_BASE,ARMADAXP_IRQ_CESA0 },
     { ARMADAXP(MV78460), "mvcesa", 1, ARMADAXP_CESA1_BASE,ARMADAXP_IRQ_CESA1 },
+
+    { ARMADA370(MV6710), "mvsoctmr",0,MVSOC_TMR_BASE,	ARMADAXP_IRQ_TIMER0 },
+    { ARMADA370(MV6710), "com",    0, MVSOC_COM0_BASE,	ARMADAXP_IRQ_UART0 },
+    { ARMADA370(MV6710), "com",    1, MVSOC_COM1_BASE,	ARMADAXP_IRQ_UART1 },
+    { ARMADA370(MV6710), "mvsocrtc",0,ARMADAXP_RTC_BASE,ARMADAXP_IRQ_RTC },
+    { ARMADA370(MV6710), "gttwsi", 0, MVSOC_TWSI_BASE,	ARMADAXP_IRQ_TWSI0 },
+    { ARMADA370(MV6710), "gttwsi", 1, ARMADAXP_TWSI1_BASE,ARMADAXP_IRQ_TWSI1 },
+    { ARMADA370(MV6710), "gtidmac",0, ARMADAXP_XORE0_BASE,IRQ_DEFAULT },
+    { ARMADA370(MV6710), "ehci",   0, ARMADAXP_USB0_BASE,ARMADAXP_IRQ_USB0 },
+    { ARMADA370(MV6710), "ehci",   1, ARMADAXP_USB1_BASE,ARMADAXP_IRQ_USB1 },
+    { ARMADA370(MV6710), "mvpex",  0, MVSOC_PEX_BASE,	ARMADAXP_IRQ_PEX00 },
+    { ARMADA370(MV6710), "mvpex",  1, ARMADAXP_PEX01_BASE,ARMADAXP_IRQ_PEX01 },
+    { ARMADA370(MV6710), "mvsata", 0, ARMADAXP_SATAHC_BASE,ARMADAXP_IRQ_SATA0 },
+    { ARMADA370(MV6710), "mvspi",  0, ARMADAXP_SPI_BASE,ARMADAXP_IRQ_SPI },
+    { ARMADA370(MV6710), "mvspi",  1, ARMADAXP_SPI_BASE,ARMADAXP_IRQ_SPI },
+    { ARMADA370(MV6710), "mvsdio", 0, ARMADAXP_SDIO_BASE,ARMADAXP_IRQ_SDIO },
+    { ARMADA370(MV6710), "mvgbec", 0, ARMADAXP_GBE0_BASE,IRQ_DEFAULT },
+    { ARMADA370(MV6710), "mvgbec", 1, ARMADAXP_GBE1_BASE,IRQ_DEFAULT },
+    { ARMADA370(MV6710), "mvcesa", 0, ARMADAXP_CESA0_BASE,ARMADAXP_IRQ_CESA0 },
 #endif
 };
 
@@ -719,6 +832,7 @@ mvsoc_attach(device_t parent, device_t self, void *aux)
 {
 	struct mvsoc_softc *sc = device_private(self);
 	struct marvell_attach_args mva;
+	enum marvell_tags *tags;
 	uint16_t model;
 	uint8_t rev;
 	int i;
@@ -756,6 +870,13 @@ mvsoc_attach(device_t parent, device_t self, void *aux)
 
 	mvsoc_intr_init();
 
+	for (i = 0; i < __arraycount(tagstbl); i++)
+		if (tagstbl[i].model == model && tagstbl[i].rev == rev)
+			break;
+	if (i >= __arraycount(tagstbl))
+		panic("unknown SoC: model 0x%04x, rev 0x%02x", model, rev);
+	tags = tagstbl[i].tags;
+
 	for (i = 0; i < __arraycount(mvsoc_periphs); i++) {
 		if (mvsoc_periphs[i].model != model)
 			continue;
@@ -771,6 +892,7 @@ mvsoc_attach(device_t parent, device_t self, void *aux)
 		mva.mva_size = 0;
 		mva.mva_dmat = sc->sc_dmat;
 		mva.mva_irq = mvsoc_periphs[i].irq;
+		mva.mva_tags = tags;
 
 		/* Skip clock disabled devices */
 		if (mvsoc_clkgating != NULL && mvsoc_clkgating(&mva)) {
