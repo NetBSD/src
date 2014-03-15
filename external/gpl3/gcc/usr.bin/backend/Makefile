@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2014/03/10 18:57:35 mrg Exp $
+#	$NetBSD: Makefile,v 1.21 2014/03/15 20:46:38 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -21,6 +21,7 @@ HOSTPROG_CXX=	1
 .include <bsd.lib.mk>
 
 # Force using C++ for this
+ORIGHOST_CC:=	${HOST_CC}
 HOST_CC:=	${HOST_CXX}
 CC:=		${CXX}
 CFLAGS:=	${CXXFLAGS}
@@ -159,6 +160,8 @@ ${G_OBJS} ${G_OBJS:.o=.d}:	tm_p.h		# XXX crude
 .include "../Makefile.options"
 
 # Yuck, we have to run configure to generate this one...
+# We use ORIGHOST_CC here because GCC's ./configure expects (and
+# depends upon) it.
 CLEANFILES+=	auto-build.h
 HOST_CFLAGS+= -I${.OBJDIR}
 auto-build.h: gmp.h Makefile
@@ -167,7 +170,7 @@ auto-build.h: gmp.h Makefile
 	mkdir .ab && \
 	(cd .ab && \
 		AWK=${TOOL_AWK:Q} \
-		CC=${HOST_CC:Q} CFLAGS=${HOST_CFLAGS:Q} \
+		CC=${ORIGHOST_CC:Q} CFLAGS=${HOST_CFLAGS:Q} \
 		MAKE=${MAKE:Q} \
 		CONFIG_SHELL=${HOST_SH:Q} \
 		gcc_cv_ld=${LD} \
