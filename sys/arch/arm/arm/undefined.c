@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.52 2014/03/05 02:18:30 matt Exp $	*/
+/*	$NetBSD: undefined.c,v 1.53 2014/03/15 05:58:30 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -48,13 +48,14 @@
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#include "opt_dtrace.h"
 
 #include <sys/param.h>
 #ifdef KGDB
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.52 2014/03/05 02:18:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.53 2014/03/15 05:58:30 ozaki-r Exp $");
 
 #include <sys/kmem.h>
 #include <sys/queue.h>
@@ -220,6 +221,45 @@ static struct undefined_handler gdb_uh;
 static struct undefined_handler gdb_uh_thumb;
 #endif
 
+#ifdef KDTRACE_HOOKS
+#include <sys/dtrace_bsd.h>
+
+/* Not used for now, but needed for dtrace/fbt modules */
+dtrace_doubletrap_func_t	dtrace_doubletrap_func = NULL;
+dtrace_trap_func_t		dtrace_trap_func = NULL;
+
+int (* dtrace_invop_jump_addr)(uintptr_t, uintptr_t *, uintptr_t);
+void (* dtrace_emulation_jump_addr)(int, struct trapframe *);
+
+static int
+dtrace_trapper(u_int addr, struct trapframe *frame)
+{
+	int op;
+	struct trapframe back;
+	u_int insn = read_insn(addr, false);
+
+	if (dtrace_invop_jump_addr == NULL || dtrace_emulation_jump_addr == NULL)
+		return 1;
+
+	if (!DTRACE_IS_BREAKPOINT(insn))
+		return 1;
+
+	/* cond value is encoded in the first byte */
+	if (!arm_cond_ok_p(__SHIFTIN(insn, INSN_COND_MASK), frame->tf_spsr)) {
+		frame->tf_pc += INSN_SIZE;
+		return 0;
+	}
+
+	back = *frame;
+	op = dtrace_invop_jump_addr(addr, (uintptr_t *) frame->tf_svc_sp, frame->tf_r0);
+	*frame = back;
+
+	dtrace_emulation_jump_addr(op, frame);
+
+	return 0;
+}
+#endif
+
 void
 undefined_init(void)
 {
@@ -261,6 +301,15 @@ undefinedinstruction(trapframe_t *tf)
 #endif
 
 	und_ev.ev_count++;
+
+#ifdef KDTRACE_HOOKS
+	if ((tf->tf_spsr & PSR_MODE) != PSR_USR32_MODE) {
+		tf->tf_pc -= INSN_SIZE;
+		if (dtrace_trapper(tf->tf_pc, tf) == 0)
+			return;
+		tf->tf_pc += INSN_SIZE; /* Reset for the rest code */
+	}
+#endif
 
 	/* Enable interrupts if they were enabled before the exception. */
 #ifdef acorn26
