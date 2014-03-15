@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS_AX3,v 1.5 2013/12/23 02:37:35 kiyohara Exp $
+#	$NetBSD: OPENBLOCKS_AX3,v 1.6 2014/03/15 13:56:19 kiyohara Exp $
 #
 #	OPENBLOCKS_AX3 -- Plat'Home. OpenBlockS AX3 kernel
 #
@@ -165,6 +165,7 @@ cpu0	at mainbus?
 
 # Marvell MV88F78260 ARMADA XP System-on-chip
 mvsoc0	at mainbus?
+options 	MVSOC_INTERREGS_PBASE=0xd0000000
 options 	MVSOC_FIXUP_DEVID=0x7826
 
 # On-chip Serial-ATA II Host Controller (SATAHC)
