@@ -1,4 +1,4 @@
-/*	$NetBSD: marvellvar.h,v 1.4 2014/02/17 04:52:44 kiyohara Exp $	*/
+/*	$NetBSD: marvellvar.h,v 1.5 2014/03/15 11:47:43 kiyohara Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -59,6 +59,7 @@ struct marvell_attach_args {
 	bus_size_t mva_size;
 	bus_dma_tag_t mva_dmat;
 	int mva_irq;
+	enum marvell_tags *mva_tags;
 };
 
 #include "locators.h"
