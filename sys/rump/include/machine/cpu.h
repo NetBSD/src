@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.19 2014/03/10 23:02:07 pooka Exp $	*/
+/*	$NetBSD: cpu.h,v 1.20 2014/03/15 15:15:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008-2011 Antti Kantee.  All Rights Reserved.
@@ -38,6 +38,8 @@
 #include <sys/cpu_data.h>
 #include <machine/pcb.h>
 
+#include "rump_curlwp.h"
+
 struct cpu_info {
 	struct cpu_data ci_data;
 	cpuid_t ci_cpuid;
@@ -73,8 +75,7 @@ static __inline void cpu_handle_ipi(void) {}
 void __syncicache(void *, size_t);
 #endif /* __powerpc__ */
 
-struct lwp *rumpuser_curlwp(void);
-#define curlwp rumpuser_curlwp()
+#define curlwp rump_curlwp_fast()
 
 #define curcpu() (curlwp->l_cpu)
 #define cpu_number() (cpu_index(curcpu))
