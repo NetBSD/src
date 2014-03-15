@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.37 2014/02/25 18:30:10 pooka Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.38 2014/03/15 13:33:48 kiyohara Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.37 2014/02/25 18:30:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.38 2014/03/15 13:33:48 kiyohara Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -271,7 +271,7 @@ static int mvgbec_miibus_readreg(device_t, int, int);
 static void mvgbec_miibus_writereg(device_t, int, int, int);
 static void mvgbec_miibus_statchg(struct ifnet *);
 
-static void mvgbec_wininit(struct mvgbec_softc *);
+static void mvgbec_wininit(struct mvgbec_softc *, enum marvell_tags *);
 
 /* Gigabit Ethernet Port part functions */
 
@@ -385,6 +385,13 @@ struct mvgbe_port {
 	{ MARVELL_ARMADAXP_MV78460,	1, 1, { 70 }, FLAGS_HAS_PV },
 	{ MARVELL_ARMADAXP_MV78460,	2, 1, { 74 }, FLAGS_HAS_PV },
 	{ MARVELL_ARMADAXP_MV78460,	3, 1, { 78 }, FLAGS_HAS_PV },
+
+	{ MARVELL_ARMADA370_MV6707,	0, 1, { 66 }, FLAGS_HAS_PV },
+	{ MARVELL_ARMADA370_MV6707,	1, 1, { 70 }, FLAGS_HAS_PV },
+	{ MARVELL_ARMADA370_MV6710,	0, 1, { 66 }, FLAGS_HAS_PV },
+	{ MARVELL_ARMADA370_MV6710,	1, 1, { 70 }, FLAGS_HAS_PV },
+	{ MARVELL_ARMADA370_MV6W11,	0, 1, { 66 }, FLAGS_HAS_PV },
+	{ MARVELL_ARMADA370_MV6W11,	1, 1, { 70 }, FLAGS_HAS_PV },
 };
 
 
@@ -443,7 +450,7 @@ mvgbec_attach(device_t parent, device_t self, void *aux)
 	MVGBE_WRITE(csc, MVGBE_EUIM, 0);
 	MVGBE_WRITE(csc, MVGBE_EUIC, 0);
 
-	mvgbec_wininit(csc);
+	mvgbec_wininit(csc, mva->mva_tags);
 
 	memset(&gbea, 0, sizeof(gbea));
 	for (i = 0; i < __arraycount(mvgbe_ports); i++) {
@@ -614,20 +621,12 @@ mvgbec_miibus_statchg(struct ifnet *ifp)
 
 
 static void
-mvgbec_wininit(struct mvgbec_softc *sc)
+mvgbec_wininit(struct mvgbec_softc *sc, enum marvell_tags *tags)
 {
 	device_t pdev = device_parent(sc->sc_dev);
 	uint64_t base;
 	uint32_t en, ac, size;
 	int window, target, attr, rv, i;
-	static int tags[] = {
-		MARVELL_TAG_SDRAM_CS0,
-		MARVELL_TAG_SDRAM_CS1,
-		MARVELL_TAG_SDRAM_CS2,
-		MARVELL_TAG_SDRAM_CS3,
-
-		MARVELL_TAG_UNDEFINED,
-	};
 
 	/* First disable all address decode windows */
 	en = MVGBE_BARE_EN_MASK;
@@ -1173,10 +1172,10 @@ mvgbe_init(struct ifnet *ifp)
 		MVGBE_WRITE(csc, MVGBE_PMACC0,
 		    MVGBE_PMACC0_RESERVED |
 		    MVGBE_PMACC0_FRAMESIZELIMIT(1600));
+		reg = MVGBE_READ(csc, MVGBE_PMACC2);
+		reg &= MVGBE_PMACC2_PCSEN;	/* keep PCSEN bit */
 		MVGBE_WRITE(csc, MVGBE_PMACC2,
-		    MVGBE_PMACC2_PCSEN		|
-		    MVGBE_PMACC2_RESERVED	|
-		    MVGBE_PMACC2_RGMIIEN);
+		    reg | MVGBE_PMACC2_RESERVED | MVGBE_PMACC2_RGMIIEN);
 
 		MVGBE_WRITE(sc, MVGBE_PXCX,
 		    MVGBE_READ(sc, MVGBE_PXCX) & ~MVGBE_PXCX_TXCRCDIS);
