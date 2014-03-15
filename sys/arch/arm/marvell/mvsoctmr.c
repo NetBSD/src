@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoctmr.c,v 1.12 2014/02/26 19:41:46 martin Exp $	*/
+/*	$NetBSD: mvsoctmr.c,v 1.13 2014/03/15 10:44:10 kiyohara Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoctmr.c,v 1.12 2014/02/26 19:41:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoctmr.c,v 1.13 2014/03/15 10:44:10 kiyohara Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mvsoc.h"
@@ -159,13 +159,11 @@ mvsoctmr_attach(device_t parent, device_t self, void *aux)
 	case MARVELL_ARMADAXP_MV78460:
 		sc->sc_flags = TMR_FLAGS_25MHZ | TMR_FLAGS_NOBRIDGE;
 		break;
-#if 0
 	case MARVELL_ARMADA370_MV6707:
 	case MARVELL_ARMADA370_MV6710:
 	case MARVELL_ARMADA370_MV6W11:
 		sc->sc_flags = TMR_FLAGS_NOBRIDGE | TMR_FLAGS_SYSCLK;
 		break;
-#endif
 	}
 
 	mvsoctmr_timecounter.tc_name = device_xname(self);
