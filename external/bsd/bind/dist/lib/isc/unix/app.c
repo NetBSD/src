@@ -1,4 +1,4 @@
-/*	$NetBSD: app.c,v 1.9 2014/03/01 03:24:39 christos Exp $	*/
+/*	$NetBSD: app.c,v 1.10 2014/03/15 18:28:22 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
@@ -317,6 +317,7 @@ isc__app_ctxstart(isc_appctx_t *ctx0) {
 #endif
 
 #ifdef ISC_PLATFORM_USETHREADS
+	if (isc_bind9) {
 	/*
 	 * Block SIGHUP, SIGINT, SIGTERM.
 	 *
@@ -344,6 +345,7 @@ isc__app_ctxstart(isc_appctx_t *ctx0) {
 				 strbuf);
 		result = ISC_R_UNEXPECTED;
 		goto cleanup;
+	}
 	}
 #else /* ISC_PLATFORM_USETHREADS */
 	/*
