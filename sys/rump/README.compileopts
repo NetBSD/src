@@ -1,8 +1,10 @@
-	$NetBSD: README.compileopts,v 1.1 2014/03/16 14:33:22 pooka Exp $
+	$NetBSD: README.compileopts,v 1.2 2014/03/16 14:47:47 pooka Exp $
 
 This file describes compile-time options for rump kernels.  Additionally,
 NetBSD build options will have an effect.  See src/share/mk/bsd.README
 for a desciption of NetBSD build options.
+
+Note: after changing an option, do a clean build.
 
 
     RUMP_DIAGNOSTIC
