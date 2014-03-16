@@ -1,4 +1,4 @@
-/*	$NetBSD: opmbell.c,v 1.23 2009/01/18 05:00:39 isaki Exp $	*/
+/*	$NetBSD: opmbell.c,v 1.24 2014/03/16 05:20:26 dholland Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto, Takuya Harakawa.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opmbell.c,v 1.23 2009/01/18 05:00:39 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opmbell.c,v 1.24 2014/03/16 05:20:26 dholland Exp $");
 
 #include "bell.h"
 #if NBELL > 0
@@ -117,8 +117,17 @@ dev_type_close(bellclose);
 dev_type_ioctl(bellioctl);
 
 const struct cdevsw bell_cdevsw = {
-	bellopen, bellclose, noread, nowrite, bellioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	.d_open = bellopen,
+	.d_close = bellclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = bellioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = 0
 };
 
 void

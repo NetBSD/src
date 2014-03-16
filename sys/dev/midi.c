@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.79 2013/09/14 21:02:36 martin Exp $	*/
+/*	$NetBSD: midi.c,v 1.80 2014/03/16 05:20:26 dholland Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.79 2013/09/14 21:02:36 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.80 2014/03/16 05:20:26 dholland Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -109,8 +109,17 @@ static dev_type_poll(midipoll);
 static dev_type_kqfilter(midikqfilter);
 
 const struct cdevsw midi_cdevsw = {
-	midiopen, midiclose, midiread, midiwrite, midiioctl,
-	nostop, notty, midipoll, nommap, midikqfilter, D_OTHER | D_MPSAFE
+	.d_open = midiopen,
+	.d_close = midiclose,
+	.d_read = midiread,
+	.d_write = midiwrite,
+	.d_ioctl = midiioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = midipoll,
+	.d_mmap = nommap,
+	.d_kqfilter = midikqfilter,
+	.d_flag = D_OTHER | D_MPSAFE
 };
 
 CFATTACH_DECL_NEW(midi, sizeof(struct midi_softc),

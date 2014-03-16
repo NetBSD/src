@@ -1,4 +1,4 @@
-/*	$NetBSD: m41st84.c,v 1.19 2013/11/08 03:56:10 nisimura Exp $	*/
+/*	$NetBSD: m41st84.c,v 1.20 2014/03/16 05:20:27 dholland Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.19 2013/11/08 03:56:10 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.20 2014/03/16 05:20:27 dholland Exp $");
 
 #include "opt_strtc.h"
 
@@ -78,8 +78,17 @@ dev_type_read(strtc_read);
 dev_type_write(strtc_write);
 
 const struct cdevsw strtc_cdevsw = {
-	strtc_open, strtc_close, strtc_read, strtc_write, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
+	.d_open = strtc_open,
+	.d_close = strtc_close,
+	.d_read = strtc_read,
+	.d_write = strtc_write,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER
 };
 #endif
 

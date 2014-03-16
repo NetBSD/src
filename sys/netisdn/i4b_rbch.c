@@ -27,7 +27,7 @@
  *	i4b_rbch.c - device driver for raw B channel data
  *	---------------------------------------------------
  *
- *	$Id: i4b_rbch.c,v 1.26 2012/10/27 17:18:40 chs Exp $
+ *	$Id: i4b_rbch.c,v 1.27 2014/03/16 05:20:30 dholland Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.26 2012/10/27 17:18:40 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.27 2014/03/16 05:20:30 dholland Exp $");
 
 #include "isdnbchan.h"
 
@@ -190,9 +190,17 @@ PDEVSTATIC int isdnbchanselect(dev_t dev, int rw, struct lwp *l);
 
 #ifdef __NetBSD__
 const struct cdevsw isdnbchan_cdevsw = {
-	isdnbchanopen, isdnbchanclose, isdnbchanread, isdnbchanwrite,
-	isdnbchanioctl, nostop, notty, isdnbchanpoll, nommap, nokqfilter,
-	D_OTHER
+	.d_open = isdnbchanopen,
+	.d_close = isdnbchanclose,
+	.d_read = isdnbchanread,
+	.d_write = isdnbchanwrite,
+	.d_ioctl = isdnbchanioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = isdnbchanpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER
 };
 #endif /* __NetBSD__ */
 

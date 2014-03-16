@@ -1,4 +1,4 @@
-/* $NetBSD: nvram_pnpbus.c,v 1.18 2014/02/28 10:16:51 skrll Exp $ */
+/* $NetBSD: nvram_pnpbus.c,v 1.19 2014/03/16 05:20:25 dholland Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.18 2014/02/28 10:16:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.19 2014/03/16 05:20:25 dholland Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -91,8 +91,17 @@ dev_type_close(prep_nvramclose);
 dev_type_read(prep_nvramread);
 
 const struct cdevsw nvram_cdevsw = {
-	prep_nvramopen, prep_nvramclose, prep_nvramread, nowrite,
-	prep_nvramioctl, nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
+	.d_open = prep_nvramopen,
+	.d_close = prep_nvramclose,
+	.d_read = prep_nvramread,
+	.d_write = nowrite,
+	.d_ioctl = prep_nvramioctl, 
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER,
 };
 
 extern struct cfdriver nvram_cd;

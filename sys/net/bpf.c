@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.181 2014/02/25 18:30:12 pooka Exp $	*/
+/*	$NetBSD: bpf.c,v 1.182 2014/03/16 05:20:30 dholland Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.181 2014/02/25 18:30:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.182 2014/03/16 05:20:30 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -181,8 +181,17 @@ static const struct fileops bpf_fileops = {
 dev_type_open(bpfopen);
 
 const struct cdevsw bpf_cdevsw = {
-	bpfopen, noclose, noread, nowrite, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
+	.d_open = bpfopen,
+	.d_close = noclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER
 };
 
 bpfjit_func_t

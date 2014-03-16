@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_mvme.c,v 1.16 2009/11/23 02:13:47 rmind Exp $	*/
+/*	$NetBSD: lpt_mvme.c,v 1.17 2014/03/16 05:20:28 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_mvme.c,v 1.16 2009/11/23 02:13:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_mvme.c,v 1.17 2014/03/16 05:20:28 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,8 +130,17 @@ dev_type_write(lptwrite);
 dev_type_ioctl(lptioctl);
 
 const struct cdevsw lpt_cdevsw = {
-	lptopen, lptclose, noread, lptwrite, lptioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	.d_open = lptopen,
+	.d_close = lptclose,
+	.d_read = noread,
+	.d_write = lptwrite,
+	.d_ioctl = lptioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = 0
 };
 
 void

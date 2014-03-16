@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.76 2013/09/15 13:43:20 martin Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.77 2014/03/16 05:20:27 dholland Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.76 2013/09/15 13:43:20 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.77 2014/03/16 05:20:27 dholland Exp $");
 
 #include "opt_inet.h"
 
@@ -120,15 +120,21 @@ dev_type_mmap(esh_fpmmap);
 dev_type_strategy(esh_fpstrategy);
 
 const struct cdevsw esh_cdevsw = {
-	esh_fpopen, esh_fpclose, esh_fpread, esh_fpwrite, nullioctl,
-	nostop, notty, nullpoll,
+	.d_open = esh_fpopen,
+	.d_close = esh_fpclose,
+	.d_read = esh_fpread,
+	.d_write = esh_fpwrite,
+	.d_ioctl = nullioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nullpoll,
 #ifdef MORE_DONE
-	esh_fpmmap,
+	.d_mmap = esh_fpmmap,
 #else
-	nommap,
+	.d_mmap = nommap,
 #endif
-	nullkqfilter,
-	D_OTHER,
+	.d_kqfilter = nullkqfilter,
+	.d_flag = D_OTHER
 };
 
 /* General routines, not externally visable */

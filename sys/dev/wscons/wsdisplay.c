@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.136 2014/01/21 00:08:27 mlelstv Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.137 2014/03/16 05:20:29 dholland Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.136 2014/01/21 00:08:27 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.137 2014/03/16 05:20:29 dholland Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_wsmsgattrs.h"
@@ -189,9 +189,17 @@ dev_type_mmap(wsdisplaymmap);
 dev_type_kqfilter(wsdisplaykqfilter);
 
 const struct cdevsw wsdisplay_cdevsw = {
-	wsdisplayopen, wsdisplayclose, wsdisplayread, wsdisplaywrite,
-	wsdisplayioctl, wsdisplaystop, wsdisplaytty, wsdisplaypoll,
-	wsdisplaymmap, wsdisplaykqfilter, D_TTY
+	.d_open = wsdisplayopen,
+	.d_close = wsdisplayclose,
+	.d_read = wsdisplayread,
+	.d_write = wsdisplaywrite,
+	.d_ioctl = wsdisplayioctl,
+	.d_stop = wsdisplaystop,
+	.d_tty = wsdisplaytty,
+	.d_poll = wsdisplaypoll,
+	.d_mmap = wsdisplaymmap,
+	.d_kqfilter = wsdisplaykqfilter,
+	.d_flag = D_TTY
 };
 
 static void wsdisplaystart(struct tty *);

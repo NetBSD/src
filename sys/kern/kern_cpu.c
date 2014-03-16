@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.62 2013/12/19 23:36:07 mlelstv Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.63 2014/03/16 05:20:30 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.62 2013/12/19 23:36:07 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.63 2014/03/16 05:20:30 dholland Exp $");
 
 #include "opt_cpu_ucode.h"
 #include "opt_compat_netbsd.h"
@@ -102,9 +102,17 @@ static void	cpu_xc_offline(struct cpu_info *);
 dev_type_ioctl(cpuctl_ioctl);
 
 const struct cdevsw cpuctl_cdevsw = {
-	nullopen, nullclose, nullread, nullwrite, cpuctl_ioctl,
-	nullstop, notty, nopoll, nommap, nokqfilter,
-	D_OTHER | D_MPSAFE
+	.d_open = nullopen,
+	.d_close = nullclose,
+	.d_read = nullread,
+	.d_write = nullwrite,
+	.d_ioctl = cpuctl_ioctl,
+	.d_stop = nullstop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER | D_MPSAFE
 };
 
 kmutex_t	cpu_lock		__cacheline_aligned;

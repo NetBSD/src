@@ -1,4 +1,4 @@
-/* $NetBSD: radio.c,v 1.25 2011/02/23 16:20:30 dyoung Exp $ */
+/* $NetBSD: radio.c,v 1.26 2014/03/16 05:20:26 dholland Exp $ */
 /* $OpenBSD: radio.c,v 1.2 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radio.c,v 1.7 2001/12/04 06:03:05 tm Exp $ */
 
@@ -30,7 +30,7 @@
 /* This is the /dev/radio driver from OpenBSD */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radio.c,v 1.25 2011/02/23 16:20:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radio.c,v 1.26 2014/03/16 05:20:26 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,8 +63,17 @@ static dev_type_close(radioclose);
 static dev_type_ioctl(radioioctl);
 
 const struct cdevsw radio_cdevsw = {
-	radioopen, radioclose, noread, nowrite, radioioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
+	.d_open = radioopen,
+	.d_close = radioclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = radioioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER,
 };
 
 extern struct cfdriver radio_cd;

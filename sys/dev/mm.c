@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.17 2013/01/19 00:27:34 matt Exp $	*/
+/*	$NetBSD: mm.c,v 1.18 2014/03/16 05:20:26 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2008, 2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.17 2013/01/19 00:27:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.18 2014/03/16 05:20:26 dholland Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -60,19 +60,35 @@ static dev_type_ioctl(mm_ioctl);
 
 const struct cdevsw mem_cdevsw = {
 #ifdef __HAVE_MM_MD_OPEN
-	mm_md_open,
+	.d_open = mm_md_open,
 #else
-	nullopen,
+	.d_open = nullopen,
 #endif
-	nullclose, mm_readwrite, mm_readwrite,
-	mm_ioctl, nostop, notty, nopoll, mm_mmap, nokqfilter,
-	D_MPSAFE
+	.d_close = nullclose,
+	.d_read = mm_readwrite,
+	.d_write = mm_readwrite,
+	.d_ioctl = mm_ioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = mm_mmap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_MPSAFE
 };
 
 #ifdef pmax	/* XXX */
 const struct cdevsw mem_ultrix_cdevsw = {
-	nullopen, nullclose, mm_readwrite, mm_readwrite, mm_ioctl,
-	nostop, notty, nopoll, mm_mmap, nokqfilter, D_MPSAFE
+	.d_open = nullopen,
+	.d_close = nullclose,
+	.d_read = mm_readwrite,
+	.d_write = mm_readwrite,
+	.d_ioctl = mm_ioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = mm_mmap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_MPSAFE
 };
 #endif
 
