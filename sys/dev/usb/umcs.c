@@ -1,4 +1,4 @@
-/* $NetBSD: umcs.c,v 1.1 2014/03/16 09:34:45 martin Exp $ */
+/* $NetBSD: umcs.c,v 1.2 2014/03/16 10:06:40 martin Exp $ */
 /* $FreeBSD: head/sys/dev/usb/serial/umcs.c 260559 2014-01-12 11:44:28Z hselasky $ */
 
 /*-
@@ -41,7 +41,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.1 2014/03/16 09:34:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.2 2014/03/16 10:06:40 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,12 +125,11 @@ static int umcs7840_port_open(void *sc, int portno);
 static void umcs7840_port_close(void *sc, int portno);
 
 struct ucom_methods umcs7840_methods = {
-	umcs7840_get_status,
-	umcs7840_set,
-	umcs7840_param,
-	NULL,
-	umcs7840_port_open,
-	umcs7840_port_close,
+	.ucom_get_status = umcs7840_get_status,
+	.ucom_set = umcs7840_set,
+	.ucom_param = umcs7840_param,
+	.ucom_open = umcs7840_port_open,
+	.ucom_close = umcs7840_port_close,
 };
 
 static const struct usb_devno umcs7840_devs[] = {
