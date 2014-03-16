@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.32 2014/02/20 02:09:28 joerg Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.33 2014/03/16 05:20:29 dholland Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.32 2014/02/20 02:09:28 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.33 2014/03/16 05:20:29 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,8 +116,17 @@ dev_type_ioctl(bwtwoioctl);
 dev_type_mmap(bwtwommap);
 
 const struct cdevsw bwtwo_cdevsw = {
-	bwtwoopen, nullclose, noread, nowrite, bwtwoioctl,
-	nostop, notty, nopoll, bwtwommap, nokqfilter, D_OTHER
+	.d_open = bwtwoopen,
+	.d_close = nullclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = bwtwoioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = bwtwommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER
 };
 
 /* XXX we do not handle frame buffer interrupts (do not know how) */

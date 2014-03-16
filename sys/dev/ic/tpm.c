@@ -1,4 +1,4 @@
-/*	$NetBSD: tpm.c,v 1.9 2013/10/17 21:24:24 christos Exp $	*/
+/*	$NetBSD: tpm.c,v 1.10 2014/03/16 05:20:27 dholland Exp $	*/
 /*
  * Copyright (c) 2008, 2009 Michael Shalayeff
  * Copyright (c) 2009, 2010 Hans-Jörg Höxer
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.9 2013/10/17 21:24:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.10 2014/03/16 05:20:27 dholland Exp $");
 
 #if 0
 #define	TPM_DEBUG 
@@ -78,8 +78,17 @@ extern struct cfdriver	tpm_cd;
 #define TPMUNIT(a)	minor(a)
  
 const struct cdevsw tpm_cdevsw = {
-	tpmopen, tpmclose, tpmread, tpmwrite, tpmioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
+	.d_open = tpmopen,
+	.d_close = tpmclose,
+	.d_read = tpmread,
+	.d_write = tpmwrite,
+	.d_ioctl = tpmioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER,
 }; 
 
 /* Probe TPM using TIS 1.2 interface. */

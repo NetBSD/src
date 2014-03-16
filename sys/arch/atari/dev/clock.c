@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.55 2013/01/26 18:13:55 apb Exp $	*/
+/*	$NetBSD: clock.c,v 1.56 2014/03/16 05:20:23 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.55 2013/01/26 18:13:55 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.56 2014/03/16 05:20:23 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -122,8 +122,17 @@ CFATTACH_DECL_NEW(clock, sizeof(struct clock_softc),
     clockmatch, clockattach, NULL, NULL);
 
 const struct cdevsw rtc_cdevsw = {
-	rtcopen, rtcclose, rtcread, rtcwrite, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	.d_open = rtcopen,
+	.d_close = rtcclose,
+	.d_read = rtcread,
+	.d_write = rtcwrite,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = 0
 };
 
 void statintr(struct clockframe);

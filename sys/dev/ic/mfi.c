@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.51 2014/01/25 10:14:29 skrll Exp $ */
+/* $NetBSD: mfi.c,v 1.52 2014/03/16 05:20:27 dholland Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.51 2014/01/25 10:14:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.52 2014/03/16 05:20:27 dholland Exp $");
 
 #include "bio.h"
 
@@ -184,8 +184,17 @@ static dev_type_open(mfifopen);
 static dev_type_close(mfifclose);
 static dev_type_ioctl(mfifioctl);
 const struct cdevsw mfi_cdevsw = {
-	mfifopen, mfifclose, noread, nowrite, mfifioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
+	.d_open = mfifopen,
+	.d_close = mfifclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = mfifioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER
 };
 
 extern struct cfdriver mfi_cd;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.71 2013/05/29 00:47:48 christos Exp $	*/
+/*	$NetBSD: ld.c,v 1.72 2014/03/16 05:20:26 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.71 2013/05/29 00:47:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.72 2014/03/16 05:20:26 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,12 +82,27 @@ static dev_type_dump(lddump);
 static dev_type_size(ldsize);
 
 const struct bdevsw ld_bdevsw = {
-	ldopen, ldclose, ldstrategy, ldioctl, lddump, ldsize, D_DISK
+	.d_open = ldopen,
+	.d_close = ldclose,
+	.d_strategy = ldstrategy,
+	.d_ioctl = ldioctl,
+	.d_dump = lddump,
+	.d_psize = ldsize,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw ld_cdevsw = {
-	ldopen, ldclose, ldread, ldwrite, ldioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = ldopen,
+	.d_close = ldclose,
+	.d_read = ldread,
+	.d_write = ldwrite,
+	.d_ioctl = ldioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_DISK
 };
 
 static struct	dkdriver lddkdriver = { ldstrategy, ldminphys };

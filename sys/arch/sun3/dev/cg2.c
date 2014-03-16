@@ -1,4 +1,4 @@
-/*	$NetBSD: cg2.c,v 1.29 2008/06/28 12:13:38 tsutsui Exp $	*/
+/*	$NetBSD: cg2.c,v 1.30 2014/03/16 05:20:26 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cg2.c,v 1.29 2008/06/28 12:13:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cg2.c,v 1.30 2014/03/16 05:20:26 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,8 +105,17 @@ dev_type_ioctl(cg2ioctl);
 dev_type_mmap(cg2mmap);
 
 const struct cdevsw cgtwo_cdevsw = {
-	cg2open, nullclose, noread, nowrite, cg2ioctl,
-	nostop, notty, nopoll, cg2mmap, nokqfilter,
+	.d_open = cg2open,
+	.d_close = nullclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = cg2ioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = cg2mmap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = 0
 };
 
 static int cg2gattr(struct fbdevice *,  void *);

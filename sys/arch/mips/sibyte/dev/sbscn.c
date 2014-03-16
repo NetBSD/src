@@ -1,4 +1,4 @@
-/* $NetBSD: sbscn.c,v 1.37 2012/02/02 19:43:00 tls Exp $ */
+/* $NetBSD: sbscn.c,v 1.38 2014/03/16 05:20:25 dholland Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.37 2012/02/02 19:43:00 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.38 2014/03/16 05:20:25 dholland Exp $");
 
 #define	SBSCN_DEBUG
 
@@ -186,8 +186,17 @@ dev_type_tty(sbscntty);
 dev_type_poll(sbscnpoll);
 
 const struct cdevsw sbscn_cdevsw = {
-	sbscnopen, sbscnclose, sbscnread, sbscnwrite, sbscnioctl,
-	sbscnstop, sbscntty, sbscnpoll, nommap, ttykqfilter, D_TTY
+	.d_open = sbscnopen,
+	.d_close = sbscnclose,
+	.d_read = sbscnread,
+	.d_write = sbscnwrite,
+	.d_ioctl = sbscnioctl,
+	.d_stop = sbscnstop,
+	.d_tty = sbscntty,
+	.d_poll = sbscnpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_flag = D_TTY
 };
 
 #define	integrate	static inline

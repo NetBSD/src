@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.52 2012/10/27 17:17:23 chs Exp $	*/
+/*	$NetBSD: fd.c,v 1.53 2014/03/16 05:20:22 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.52 2012/10/27 17:17:23 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.53 2014/03/16 05:20:22 dholland Exp $");
 
 #include "opt_ddb.h"
 
@@ -268,12 +268,27 @@ dev_type_ioctl(fdioctl);
 dev_type_strategy(fdstrategy);
 
 const struct bdevsw fd_bdevsw = {
-	fdopen, fdclose, fdstrategy, fdioctl, nodump, nosize, D_DISK
+	.d_open = fdopen,
+	.d_close = fdclose,
+	.d_strategy = fdstrategy,
+	.d_ioctl = fdioctl,
+	.d_dump = nodump,
+	.d_psize = nosize,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw fd_cdevsw = {
-	fdopen, fdclose, fdread, fdwrite, fdioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = fdopen,
+	.d_close = fdclose,
+	.d_read = fdread,
+	.d_write = fdwrite,
+	.d_ioctl = fdioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_DISK
 };
 
 void fdgetdisklabel(struct fd_softc *);

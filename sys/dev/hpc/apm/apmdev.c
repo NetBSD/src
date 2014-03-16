@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.28 2013/11/09 02:44:52 christos Exp $ */
+/*	$NetBSD: apmdev.c,v 1.29 2014/03/16 05:20:27 dholland Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.28 2013/11/09 02:44:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.29 2014/03/16 05:20:27 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_apm.h"
@@ -122,8 +122,17 @@ dev_type_poll(apmdevpoll);
 dev_type_kqfilter(apmdevkqfilter);
 
 const struct cdevsw apmdev_cdevsw = {
-	apmdevopen, apmdevclose, noread, nowrite, apmdevioctl,
-	nostop, notty, apmdevpoll, nommap, apmdevkqfilter, D_OTHER
+	.d_open = apmdevopen,
+	.d_close = apmdevclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = apmdevioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = apmdevpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = apmdevkqfilter,
+	.d_flag = D_OTHER
 };
 
 /* configurable variables */

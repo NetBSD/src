@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.77 2014/02/03 23:11:40 pgoyette Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.78 2014/03/16 05:20:30 dholland Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.77 2014/02/03 23:11:40 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.78 2014/03/16 05:20:30 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1109,17 +1109,17 @@ cryptoselect(dev_t dev, int rw, struct lwp *l)
 
 /*static*/
 struct cdevsw crypto_cdevsw = {
-	/* open */	cryptoopen,
-	/* close */	noclose,
-	/* read */	cryptoread,
-	/* write */	cryptowrite,
-	/* ioctl */	noioctl,
-	/* ttstop?*/	nostop,
-	/* ??*/		notty,
-	/* poll */	cryptoselect /*nopoll*/,
-	/* mmap */	nommap,
-	/* kqfilter */	nokqfilter,
-	/* type */	D_OTHER,
+	.d_open = cryptoopen,
+	.d_close = noclose,
+	.d_read = cryptoread,
+	.d_write = cryptowrite,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = cryptoselect /*nopoll*/,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER
 };
 
 int 

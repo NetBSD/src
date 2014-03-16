@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.95 2014/01/22 00:25:16 christos Exp $ */
+/*	$NetBSD: ite.c,v 1.96 2014/03/16 05:20:22 dholland Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,7 +46,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.95 2014/01/22 00:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.96 2014/03/16 05:20:22 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -162,8 +162,17 @@ dev_type_tty(itetty);
 dev_type_poll(itepoll);
 
 const struct cdevsw ite_cdevsw = {
-	iteopen, iteclose, iteread, itewrite, iteioctl,
-	nostop, itetty, itepoll, nommap, ttykqfilter, D_TTY
+	.d_open = iteopen,
+	.d_close = iteclose,
+	.d_read = iteread,
+	.d_write = itewrite,
+	.d_ioctl = iteioctl,
+	.d_stop = nostop,
+	.d_tty = itetty,
+	.d_poll = itepoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_flag = D_TTY
 };
 
 int
