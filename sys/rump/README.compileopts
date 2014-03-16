@@ -1,0 +1,87 @@
+	$NetBSD: README.compileopts,v 1.1 2014/03/16 14:33:22 pooka Exp $
+
+This file describes compile-time options for rump kernels.  Additionally,
+NetBSD build options will have an effect.  See src/share/mk/bsd.README
+for a desciption of NetBSD build options.
+
+
+    RUMP_DIAGNOSTIC
+
+values:	yes|no
+defval:	yes
+effect:	Iff "yes", build with -DDIAGNOSTIC.
+
+
+    RUMP_DEBUG
+
+values:	defined / not defined
+effect:	Iff defined, build with -DDEBUG.
+
+
+    RUMP_LOCKDEBUG
+
+values:	defined / not defined
+effect:	Iff defined, build with -DLOCKDEBUG.
+
+
+    RUMP_KTRACE
+
+values:	yes|no
+defval:	yes
+effect:	Iff "yes", build with -DKTRACE.
+
+
+    RUMP_LOCKS_UP
+
+values: yes|no
+defval:	no
+effect: If "yes", build rump kernel with uniprocess-optimized locking.
+	An implication of this is that RUMP_NCPU==1 is required at
+	runtime.  If "no", build with multiprocessor-capable locking.
+
+
+    RUMP_UNREAL_ALLOCATORS
+
+values: yes|no
+defval:	no
+effect: If "yes", build version of kmem_alloc, pool and pool_cache
+	that directly relegate allocation to a hypercall.  If "no",
+	build the regular NetBSD memory allocators which use
+	page-sized memory allocation hypercalls.
+
+
+    RUMP_VIRTIF
+
+values:	yes|no
+defval:	yes
+effect:	Iff "yes", build the virt(4) network interface.  Turning this
+	off may be necessary on systems that lack the necessary headers,
+	e.g. musl libc based Linux.
+
+
+================================================================================
+
+
+The rest of the options described in this file are not intended to be
+set by users, but by the package building rump kernels.
+
+
+    RUMP_KERNEL_IS_LIBC
+
+values:	defined / not defined
+effect: Iff defined, export normal system call symbols from libc.
+	For example, without this option rump_sys_open() is exported.
+	With this option, both open() and rump_sys_open() are exported.
+	This option is meant for building systems where a rump kernel
+	is the only operating system like component.
+
+
+    RUMP_LDSCRIPT
+
+values: no/GNU/sun
+defval: GNU
+effect: Select the linker script to be used for linking rump kernel shared
+	library components.
+	no  - do not use a linker script
+	GNU - use a linker script for GNU ld 2.18 and later
+	sun - use a linker script for the Solaris linker
