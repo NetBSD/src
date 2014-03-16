@@ -1,4 +1,4 @@
-.\" $NetBSD: umcs.4,v 1.1 2014/03/16 09:28:43 martin Exp $
+.\" $NetBSD: umcs.4,v 1.2 2014/03/16 09:37:47 wiz Exp $
 .\"
 .\" Copyright (c) 2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,7 +35,7 @@
 .Nd USB multiport serial adapters driver
 .Sh SYNOPSIS
 .Cd "umcs* at uhub?"
-.Cd "ucom*   at umcs?"
+.Cd "ucom* at umcs?"
 .Sh HARDWARE
 The
 .Nm
@@ -55,7 +55,7 @@ Examples of hardware known to work with this driver are:
 The
 .Nm
 driver attaches the MosChip multiport chipset with individual port
-drivers via 
+drivers via
 .Xr ucom 4 ,
 which makes it behave like a
 .Xr tty 4 .
@@ -70,6 +70,6 @@ driver
 appeared in
 .Nx 7 .
 .Pp
-It superseeded the
+It superseded the
 .Xr moscom 4
 driver.
