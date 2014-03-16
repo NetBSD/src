@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_curlwp___thread.h,v 1.1 2014/03/15 15:15:27 pooka Exp $	*/
+/*	$NetBSD: rump_curlwp___thread.h,v 1.2 2014/03/16 15:30:05 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2014 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 extern __thread struct lwp *curlwp_storage;
-#ifdef RUMP_CURLWP_PRIVATE
+#ifdef RUMP__CURLWP_PRIVATE
 #include <rump/rumpuser.h>
 
 __thread struct lwp *curlwp_storage;

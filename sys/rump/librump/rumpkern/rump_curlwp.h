@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_curlwp.h,v 1.1 2014/03/15 15:15:27 pooka Exp $	*/
+/*	$NetBSD: rump_curlwp.h,v 1.2 2014/03/16 15:30:05 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2014 Antti Kantee.  All Rights Reserved.
@@ -31,22 +31,22 @@
 struct lwp *    rump_lwproc_curlwp_hypercall(void);
 
 /* hattrick numbers to avoid someone accidentally using "1" as the value */
-#define RUMP_CURLWP_MODEL_HYPERCALL     10501
-#define RUMP_CURLWP_MODEL___THREAD      20502
-#define RUMP_CURLWP_MODEL_REGISTER      30503
-#define RUMP_CURLWP_MODEL_DEFAULT       RUMP_CURLWP_MODEL_HYPERCALL
+#define RUMP_CURLWP_HYPERCALL     10501
+#define RUMP_CURLWP___THREAD      20502
+#define RUMP_CURLWP_REGISTER      30503
+#define RUMP_CURLWP_DEFAULT       RUMP_CURLWP_HYPERCALL
 
-#ifndef RUMP_CURLWP_MODEL
-#define RUMP_CURLWP_MODEL RUMP_CURLWP_MODEL_DEFAULT
+#ifndef RUMP_CURLWP
+#define RUMP_CURLWP RUMP_CURLWP_DEFAULT
 #endif
 
 /* provides rump_curlwp_fast() */
-#if RUMP_CURLWP_MODEL == RUMP_CURLWP_MODEL_HYPERCALL
+#if RUMP_CURLWP == RUMP_CURLWP_HYPERCALL
 #include "rump_curlwp_hypercall.h"
-#elif RUMP_CURLWP_MODEL == RUMP_CURLWP_MODEL___THREAD
+#elif RUMP_CURLWP == RUMP_CURLWP___THREAD
 #include "rump_curlwp___thread.h"
-#elif RUMP_CURLWP_MODEL == RUMP_CURLWP_MODEL_REGISTER
-#error "RUMP_CURLWP_MODEL_REGISTER not yet implemented"
+#elif RUMP_CURLWP == RUMP_CURLWP_REGISTER
+#error "RUMP_CURLWP_REGISTER not yet implemented"
 #else
 #error "unknown RUMP_CURLWP"
 #endif
