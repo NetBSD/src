@@ -1,8 +1,8 @@
-/*	$NetBSD: h_initfini_align.S,v 1.1 2014/03/16 09:20:05 cherry Exp $	*/
+/*	$NetBSD: h_initfini_align.S,v 1.2 2014/03/16 09:27:04 cherry Exp $	*/
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: h_initfini_align.S,v 1.1 2014/03/16 09:20:05 cherry Exp $")
+RCSID("$NetBSD: h_initfini_align.S,v 1.2 2014/03/16 09:27:04 cherry Exp $")
 
 ENTRY(check_stack_alignment, 0)
 	.prologue
@@ -14,7 +14,7 @@ ENTRY(check_stack_alignment, 0)
 	mov ret0 = 1
 	;;
 	
-	/* ar.bspstore has an 8-byte alignment requirement */
+	/* ar.bsp has an 8-byte alignment requirement */
  	mov loc1 = ar.bsp
 	;;
 	
