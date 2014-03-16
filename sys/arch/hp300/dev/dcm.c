@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.83 2011/04/24 16:26:55 rmind Exp $	*/
+/*	$NetBSD: dcm.c,v 1.84 2014/03/16 05:20:24 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.83 2011/04/24 16:26:55 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.84 2014/03/16 05:20:24 dholland Exp $");
 
 #include "opt_kgdb.h"
 
@@ -331,8 +331,17 @@ static dev_type_tty(dcmtty);
 static dev_type_poll(dcmpoll);
 
 const struct cdevsw dcm_cdevsw = {
-	dcmopen, dcmclose, dcmread, dcmwrite, dcmioctl,
-	dcmstop, dcmtty, dcmpoll, nommap, ttykqfilter, D_TTY
+	.d_open = dcmopen,
+	.d_close = dcmclose,
+	.d_read = dcmread,
+	.d_write = dcmwrite,
+	.d_ioctl = dcmioctl,
+	.d_stop = dcmstop,
+	.d_tty = dcmtty,
+	.d_poll = dcmpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_flag = D_TTY
 };
 
 static int

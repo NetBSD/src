@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.100 2014/02/25 18:30:10 pooka Exp $	*/
+/*	$NetBSD: twe.c,v 1.101 2014/03/16 05:20:28 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.100 2014/02/25 18:30:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.101 2014/03/16 05:20:28 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1881,8 +1881,17 @@ done:
 }
 
 const struct cdevsw twe_cdevsw = {
-	tweopen, tweclose, noread, nowrite, tweioctl,
-	    nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
+	.d_open = tweopen,
+	.d_close = tweclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = tweioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER
 };
 
 /*

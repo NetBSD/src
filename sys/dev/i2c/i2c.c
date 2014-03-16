@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.42 2013/09/24 18:04:53 jdc Exp $	*/
+/*	$NetBSD: i2c.c,v 1.43 2014/03/16 05:20:27 dholland Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.42 2013/09/24 18:04:53 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.43 2014/03/16 05:20:27 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,8 +68,17 @@ static dev_type_close(iic_close);
 static dev_type_ioctl(iic_ioctl);
 
 const struct cdevsw iic_cdevsw = {
-	iic_open, iic_close, noread, nowrite, iic_ioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
+	.d_open = iic_open,
+	.d_close = iic_close,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = iic_ioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER
 };
 
 extern struct cfdriver iic_cd;

@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.34 2013/04/26 09:04:43 msaitoh Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.35 2014/03/16 05:20:30 dholland Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.34 2013/04/26 09:04:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.35 2014/03/16 05:20:30 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,8 +66,17 @@ static struct selinfo		drvctl_rdsel;
 dev_type_open(drvctlopen);
 
 const struct cdevsw drvctl_cdevsw = {
-	drvctlopen, nullclose, nullread, nullwrite, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
+	.d_open = drvctlopen,
+	.d_close = nullclose,
+	.d_read = nullread,
+	.d_write = nullwrite,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER
 };
 
 void drvctlattach(int);

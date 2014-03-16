@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.68 2014/03/13 10:22:35 hannken Exp $	*/
+/*	$NetBSD: md.c,v 1.69 2014/03/16 05:20:26 dholland Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.68 2014/03/13 10:22:35 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.69 2014/03/16 05:20:26 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_md.h"
@@ -107,12 +107,27 @@ static dev_type_strategy(mdstrategy);
 static dev_type_size(mdsize);
 
 const struct bdevsw md_bdevsw = {
-	mdopen, mdclose, mdstrategy, mdioctl, nodump, mdsize, D_DISK | D_MPSAFE
+	.d_open = mdopen,
+	.d_close = mdclose,
+	.d_strategy = mdstrategy,
+	.d_ioctl = mdioctl,
+	.d_dump = nodump,
+	.d_psize = mdsize,
+	.d_flag = D_DISK | D_MPSAFE
 };
 
 const struct cdevsw md_cdevsw = {
-	mdopen, mdclose, mdread, mdwrite, mdioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = mdopen,
+	.d_close = mdclose,
+	.d_read = mdread,
+	.d_write = mdwrite,
+	.d_ioctl = mdioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_DISK
 };
 
 static struct dkdriver mddkdriver = { mdstrategy, NULL };

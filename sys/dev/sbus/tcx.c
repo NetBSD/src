@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.44 2012/01/11 16:08:57 macallan Exp $ */
+/*	$NetBSD: tcx.c,v 1.45 2014/03/16 05:20:29 dholland Exp $ */
 
 /*
  *  Copyright (c) 1996, 1998, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.44 2012/01/11 16:08:57 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.45 2014/03/16 05:20:29 dholland Exp $");
 
 /*
  * define for cg8 emulation on S24 (24-bit version of tcx) for the SS5;
@@ -158,8 +158,17 @@ dev_type_ioctl(tcxioctl);
 dev_type_mmap(tcxmmap);
 
 const struct cdevsw tcx_cdevsw = {
-	tcxopen, tcxclose, noread, nowrite, tcxioctl,
-	nostop, notty, nopoll, tcxmmap, nokqfilter,
+	.d_open = tcxopen,
+	.d_close = tcxclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = tcxioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = tcxmmap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = 0
 };
 
 /* frame buffer generic driver */

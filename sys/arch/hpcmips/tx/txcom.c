@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.46 2012/10/27 17:17:54 chs Exp $ */
+/*	$NetBSD: txcom.c,v 1.47 2014/03/16 05:20:24 dholland Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.46 2012/10/27 17:17:54 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.47 2014/03/16 05:20:24 dholland Exp $");
 
 #include "opt_tx39uart_debug.h"
 
@@ -177,8 +177,17 @@ dev_type_tty(txcomtty);
 dev_type_poll(txcompoll);
 
 const struct cdevsw txcom_cdevsw = {
-	txcomopen, txcomclose, txcomread, txcomwrite, txcomioctl,
-	txcomstop, txcomtty, txcompoll, nommap, ttykqfilter, D_TTY
+	.d_open = txcomopen,
+	.d_close = txcomclose,
+	.d_read = txcomread,
+	.d_write = txcomwrite,
+	.d_ioctl = txcomioctl,
+	.d_stop = txcomstop,
+	.d_tty = txcomtty,
+	.d_poll = txcompoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_flag = D_TTY
 };
 
 int

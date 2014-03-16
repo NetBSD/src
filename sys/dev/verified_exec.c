@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.67 2012/03/13 18:40:30 elad Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.68 2014/03/16 05:20:26 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.67 2012/03/13 18:40:30 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.68 2014/03/16 05:20:26 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -69,20 +69,20 @@ struct veriexec_softc {
 #endif
 
 const struct cdevsw veriexec_cdevsw = {
-        veriexecopen,
-	veriexecclose,
-	noread,
-	nowrite,
-        veriexecioctl,
+        .d_open = veriexecopen,
+	.d_close = veriexecclose,
+	.d_read = noread,
+	.d_write = nowrite,
+        .d_ioctl = veriexecioctl,
 #ifdef __NetBSD__
-	nostop,
-	notty,
+	.d_stop = nostop,
+	.d_tty = notty,
 #endif
-	nopoll,
-	nommap,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
 #if defined(__NetBSD__)
-       nokqfilter,
-       D_OTHER,
+       .d_kqfilter = nokqfilter,
+       .d_flag = D_OTHER,
 #elif defined(__FreeBSD__)
        nostrategy,
        "veriexec",

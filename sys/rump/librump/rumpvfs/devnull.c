@@ -1,4 +1,4 @@
-/*	$NetBSD: devnull.c,v 1.4 2013/04/04 01:29:55 pooka Exp $	*/
+/*	$NetBSD: devnull.c,v 1.5 2014/03/16 05:20:30 dholland Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devnull.c,v 1.4 2013/04/04 01:29:55 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devnull.c,v 1.5 2014/03/16 05:20:30 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -46,8 +46,17 @@ static dev_type_open(rump_devnullopen);
 static dev_type_read(rump_devnullrw);
 
 static struct cdevsw null_cdevsw = {
-	rump_devnullopen, nullclose, rump_devnullrw, rump_devnullrw, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER | D_MPSAFE,
+	.d_open = rump_devnullopen,
+	.d_close = nullclose,
+	.d_read = rump_devnullrw,
+	.d_write = rump_devnullrw,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER | D_MPSAFE
 };
 
 int

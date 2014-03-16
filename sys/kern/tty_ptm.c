@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.28 2012/10/19 16:55:22 apb Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.29 2014/03/16 05:20:30 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.28 2012/10/19 16:55:22 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.29 2014/03/16 05:20:30 dholland Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ptm.h"
@@ -66,8 +66,17 @@ __KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.28 2012/10/19 16:55:22 apb Exp $");
 
 #ifdef NO_DEV_PTM
 const struct cdevsw ptm_cdevsw = {
-	noopen, noclose, noread, nowrite, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_TTY
+	.d_open = noopen,
+	.d_close = noclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_TTY
 };
 #else
 
@@ -391,7 +400,16 @@ ptmioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 }
 
 const struct cdevsw ptm_cdevsw = {
-	ptmopen, ptmclose, noread, nowrite, ptmioctl,
-	nullstop, notty, nopoll, nommap, nokqfilter, D_TTY
+	.d_open = ptmopen,
+	.d_close = ptmclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = ptmioctl,
+	.d_stop = nullstop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_TTY
 };
 #endif

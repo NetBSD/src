@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.54 2013/04/30 00:03:54 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.55 2014/03/16 05:20:30 dholland Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.54 2013/04/30 00:03:54 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.55 2014/03/16 05:20:30 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -95,18 +95,37 @@ dev_type_dump(rumpblk_dump);
 dev_type_size(rumpblk_size);
 
 static const struct bdevsw rumpblk_bdevsw = {
-	rumpblk_open, rumpblk_close, rumpblk_strategy, rumpblk_ioctl,
-	nodump, nosize, D_DISK
+	.d_open = rumpblk_open,
+	.d_close = rumpblk_close,
+	.d_strategy = rumpblk_strategy,
+	.d_ioctl = rumpblk_ioctl,
+	.d_dump = nodump,
+	.d_psize = nosize,
+	.d_flag = D_DISK
 };
 
 static const struct bdevsw rumpblk_bdevsw_fail = {
-	rumpblk_open, rumpblk_close, rumpblk_strategy_fail, rumpblk_ioctl,
-	nodump, nosize, D_DISK
+	.d_open = rumpblk_open,
+	.d_close = rumpblk_close,
+	.d_strategy = rumpblk_strategy_fail,
+	.d_ioctl = rumpblk_ioctl,
+	.d_dump = nodump,
+	.d_psize = nosize,
+	.d_flag = D_DISK
 };
 
 static const struct cdevsw rumpblk_cdevsw = {
-	rumpblk_open, rumpblk_close, rumpblk_read, rumpblk_write,
-	rumpblk_ioctl, nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = rumpblk_open,
+	.d_close = rumpblk_close,
+	.d_read = rumpblk_read,
+	.d_write = rumpblk_write,
+	.d_ioctl = rumpblk_ioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_DISK
 };
 
 static int backend_open(struct rblkdev *, const char *);

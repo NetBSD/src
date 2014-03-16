@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.70 2013/12/22 18:05:40 matt Exp $	*/
+/*	$NetBSD: cons.c,v 1.71 2014/03/16 05:20:26 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.70 2013/12/22 18:05:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.71 2014/03/16 05:20:26 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -67,8 +67,17 @@ dev_type_kqfilter(cnkqfilter);
 static bool cn_redirect(dev_t *, int, int *);
 
 const struct cdevsw cons_cdevsw = {
-	cnopen, cnclose, cnread, cnwrite, cnioctl,
-	nostop, notty, cnpoll, nommap, cnkqfilter, D_TTY
+	.d_open = cnopen,
+	.d_close = cnclose,
+	.d_read = cnread,
+	.d_write = cnwrite,
+	.d_ioctl = cnioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = cnpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = cnkqfilter,
+	.d_flag = D_TTY
 };
 
 struct	tty *constty = NULL;	/* virtual console output device */

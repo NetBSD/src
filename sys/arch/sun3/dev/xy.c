@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.73 2013/11/07 17:50:18 christos Exp $	*/
+/*	$NetBSD: xy.c,v 1.74 2014/03/16 05:20:26 dholland Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.73 2013/11/07 17:50:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.74 2014/03/16 05:20:26 dholland Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -217,12 +217,27 @@ dev_type_dump(xydump);
 dev_type_size(xysize);
 
 const struct bdevsw xy_bdevsw = {
-	xyopen, xyclose, xystrategy, xyioctl, xydump, xysize, D_DISK
+	.d_open = xyopen,
+	.d_close = xyclose,
+	.d_strategy = xystrategy,
+	.d_ioctl = xyioctl,
+	.d_dump = xydump,
+	.d_psize = xysize,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw xy_cdevsw = {
-	xyopen, xyclose, xyread, xywrite, xyioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = xyopen,
+	.d_close = xyclose,
+	.d_read = xyread,
+	.d_write = xywrite,
+	.d_ioctl = xyioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_DISK
 };
 
 /*

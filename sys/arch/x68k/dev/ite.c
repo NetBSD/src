@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.60 2012/10/10 17:49:50 tsutsui Exp $	*/
+/*	$NetBSD: ite.c,v 1.61 2014/03/16 05:20:26 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.60 2012/10/10 17:49:50 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.61 2014/03/16 05:20:26 dholland Exp $");
 
 #include "ite.h"
 #if NITE > 0
@@ -166,8 +166,17 @@ dev_type_tty(itetty);
 dev_type_poll(itepoll);
 
 const struct cdevsw ite_cdevsw = {
-	iteopen, iteclose, iteread, itewrite, iteioctl,
-	nostop, itetty, itepoll, nommap, ttykqfilter, D_TTY
+	.d_open = iteopen,
+	.d_close = iteclose,
+	.d_read = iteread,
+	.d_write = itewrite,
+	.d_ioctl = iteioctl,
+	.d_stop = nostop,
+	.d_tty = itetty,
+	.d_poll = itepoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_flag = D_TTY
 };
 
 int

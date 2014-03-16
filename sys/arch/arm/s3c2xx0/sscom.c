@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.41 2014/03/14 21:40:48 matt Exp $ */
+/*	$NetBSD: sscom.c,v 1.42 2014/03/16 05:20:23 dholland Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.41 2014/03/14 21:40:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.42 2014/03/16 05:20:23 dholland Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -192,8 +192,17 @@ static int	sscom_init(bus_space_tag_t, const struct sscom_uart_info *,
 extern struct cfdriver sscom_cd;
 
 const struct cdevsw sscom_cdevsw = {
-	sscomopen, sscomclose, sscomread, sscomwrite, sscomioctl,
-	sscomstop, sscomtty, sscompoll, nommap, ttykqfilter, D_TTY
+	.d_open = sscomopen,
+	.d_close = sscomclose,
+	.d_read = sscomread,
+	.d_write = sscomwrite,
+	.d_ioctl = sscomioctl,
+	.d_stop = sscomstop,
+	.d_tty = sscomtty,
+	.d_poll = sscompoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_flag = D_TTY
 };
 
 /*

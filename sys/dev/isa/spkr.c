@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.33 2012/04/06 20:16:58 plunky Exp $	*/
+/*	$NetBSD: spkr.c,v 1.34 2014/03/16 05:20:28 dholland Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.33 2012/04/06 20:16:58 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.34 2014/03/16 05:20:28 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,8 +74,17 @@ dev_type_write(spkrwrite);
 dev_type_ioctl(spkrioctl);
 
 const struct cdevsw spkr_cdevsw = {
-	spkropen, spkrclose, noread, spkrwrite, spkrioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
+	.d_open = spkropen,
+	.d_close = spkrclose,
+	.d_read = noread,
+	.d_write = spkrwrite,
+	.d_ioctl = spkrioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER
 };
 
 static pcppi_tag_t ppicookie;

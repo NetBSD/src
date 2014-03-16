@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio.c,v 1.20 2013/10/16 18:20:17 christos Exp $ */
+/* $NetBSD: hdaudio.c,v 1.21 2014/03/16 05:20:28 dholland Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.20 2013/10/16 18:20:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.21 2014/03/16 05:20:28 dholland Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -58,9 +58,17 @@ dev_type_close(hdaudioclose);
 dev_type_ioctl(hdaudioioctl);
 
 const struct cdevsw hdaudio_cdevsw = {
-	hdaudioopen, hdaudioclose, noread, nowrite, hdaudioioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
-	D_OTHER
+	.d_open = hdaudioopen,
+	.d_close = hdaudioclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = hdaudioioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER
 };
 
 extern struct cfdriver hdaudio_cd;

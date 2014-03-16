@@ -1,4 +1,4 @@
-/* $NetBSD: imxuart.c,v 1.10 2013/05/01 07:38:01 mlelstv Exp $ */
+/* $NetBSD: imxuart.c,v 1.11 2014/03/16 05:20:23 dholland Exp $ */
 
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.10 2013/05/01 07:38:01 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.11 2014/03/16 05:20:23 dholland Exp $");
 
 #include "opt_imxuart.h"
 #include "opt_ddb.h"
@@ -338,8 +338,17 @@ dev_type_tty(imxutty);
 dev_type_poll(imxupoll);
 
 const struct cdevsw imxcom_cdevsw = {
-	imxuopen, imxuclose, imxuread, imxuwrite, imxuioctl,
-	imxustop, imxutty, imxupoll, nommap, ttykqfilter, D_TTY
+	.d_open = imxuopen,
+	.d_close = imxuclose,
+	.d_read = imxuread,
+	.d_write = imxuwrite,
+	.d_ioctl = imxuioctl,
+	.d_stop = imxustop,
+	.d_tty = imxutty,
+	.d_poll = imxupoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_flag = D_TTY
 };
 
 /*

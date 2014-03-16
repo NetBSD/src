@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_tape.c,v 1.40 2013/10/25 16:00:35 martin Exp $ */
+/*	$NetBSD: mscp_tape.c,v 1.41 2014/03/16 05:20:28 dholland Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.40 2013/10/25 16:00:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.41 2014/03/16 05:20:28 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -124,12 +124,27 @@ dev_type_strategy(mtstrategy);
 dev_type_dump(mtdump);
 
 const struct bdevsw mt_bdevsw = {
-	mtopen, mtclose, mtstrategy, mtioctl, mtdump, nosize, D_TAPE
+	.d_open = mtopen,
+	.d_close = mtclose,
+	.d_strategy = mtstrategy,
+	.d_ioctl = mtioctl,
+	.d_dump = mtdump,
+	.d_psize = nosize,
+	.d_flag = D_TAPE
 };
 
 const struct cdevsw mt_cdevsw = {
-	mtopen, mtclose, mtread, mtwrite, mtioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_TAPE
+	.d_open = mtopen,
+	.d_close = mtclose,
+	.d_read = mtread,
+	.d_write = mtwrite,
+	.d_ioctl = mtioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_TAPE
 };
 
 /*

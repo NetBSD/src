@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.53 2012/10/27 17:18:37 chs Exp $	*/
+/*	$NetBSD: qd.c,v 1.54 2014/03/16 05:20:29 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.53 2012/10/27 17:18:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.54 2014/03/16 05:20:29 dholland Exp $");
 
 #include "opt_ddb.h"
 
@@ -344,8 +344,17 @@ dev_type_poll(qdpoll);
 dev_type_kqfilter(qdkqfilter);
 
 const struct cdevsw qd_cdevsw = {
-	qdopen, qdclose, qdread, qdwrite, qdioctl,
-	qdstop, notty, qdpoll, nommap, qdkqfilter,
+	.d_open = qdopen,
+	.d_close = qdclose,
+	.d_read = qdread,
+	.d_write = qdwrite,
+	.d_ioctl = qdioctl,
+	.d_stop = qdstop,
+	.d_tty = notty,
+	.d_poll = qdpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = qdkqfilter,
+	.d_flag = 0
 };
 
 /*

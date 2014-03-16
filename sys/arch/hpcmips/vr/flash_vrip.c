@@ -1,4 +1,4 @@
-/* $NetBSD: flash_vrip.c,v 1.8 2012/10/27 17:17:55 chs Exp $ */
+/* $NetBSD: flash_vrip.c,v 1.9 2014/03/16 05:20:24 dholland Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flash_vrip.c,v 1.8 2012/10/27 17:17:55 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash_vrip.c,v 1.9 2014/03/16 05:20:24 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -84,8 +84,17 @@ dev_type_read(flashread);
 dev_type_write(flashwrite);
 
 const struct cdevsw flash_cdevsw = {
-	flashopen, flashclose, flashread, flashwrite, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	.d_open = flashopen,
+	.d_close = flashclose,
+	.d_read = flashread,
+	.d_write = flashwrite,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = 0
 };
 
 static const struct flash_command_set {

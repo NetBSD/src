@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.37 2013/10/14 18:15:12 skrll Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.38 2014/03/16 05:20:29 dholland Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.37 2013/10/14 18:15:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.38 2014/03/16 05:20:29 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,8 +148,17 @@ dev_type_tty(ucycomtty);
 dev_type_poll(ucycompoll);
 
 const struct cdevsw ucycom_cdevsw = {
-	ucycomopen, ucycomclose, ucycomread, ucycomwrite, ucycomioctl,
-	ucycomstop, ucycomtty, ucycompoll, nommap, ttykqfilter, D_TTY
+	.d_open = ucycomopen,
+	.d_close = ucycomclose,
+	.d_read = ucycomread,
+	.d_write = ucycomwrite,
+	.d_ioctl = ucycomioctl,
+	.d_stop = ucycomstop,
+	.d_tty = ucycomtty,
+	.d_poll = ucycompoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_flag = D_TTY
 };
 
 Static int ucycomparam(struct tty *, struct termios *);

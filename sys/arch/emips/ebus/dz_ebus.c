@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_ebus.c,v 1.6 2013/11/10 18:27:15 christos Exp $	*/
+/*	$NetBSD: dz_ebus.c,v 1.7 2014/03/16 05:20:23 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz_ebus.c,v 1.6 2013/11/10 18:27:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz_ebus.c,v 1.7 2014/03/16 05:20:23 dholland Exp $");
 
 #include "opt_ddb.h"
 
@@ -111,8 +111,17 @@ dev_type_tty(dztty);
 dev_type_poll(dzpoll);
 
 const struct cdevsw dz_cdevsw = {
-	dzopen, dzclose, dzread, dzwrite, dzioctl,
-	dzstop, dztty, dzpoll, nommap, ttykqfilter, D_TTY
+	.d_open = dzopen,
+	.d_close = dzclose,
+	.d_read = dzread,
+	.d_write = dzwrite,
+	.d_ioctl = dzioctl,
+	.d_stop = dzstop,
+	.d_tty = dztty,
+	.d_poll = dzpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_flag = D_TTY
 };
 
 int

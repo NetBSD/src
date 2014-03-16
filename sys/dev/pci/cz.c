@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.57 2013/09/12 19:37:19 martin Exp $	*/
+/*	$NetBSD: cz.c,v 1.58 2014/03/16 05:20:28 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.57 2013/09/12 19:37:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.58 2014/03/16 05:20:28 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1535,8 +1535,17 @@ cztty_diag(void *arg)
 }
 
 const struct cdevsw cz_cdevsw = {
-	czttyopen, czttyclose, czttyread, czttywrite, czttyioctl,
-	    czttystop, czttytty, czttypoll, nommap, ttykqfilter, D_TTY
+	.d_open = czttyopen,
+	.d_close = czttyclose,
+	.d_read = czttyread,
+	.d_write = czttywrite,
+	.d_ioctl = czttyioctl,
+	.d_stop = czttystop,
+	.d_tty = czttytty,
+	.d_poll = czttypoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_flag = D_TTY
 };
 
 /*

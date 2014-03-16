@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.304 2013/05/29 00:47:49 christos Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.305 2014/03/16 05:20:29 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.304 2013/05/29 00:47:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.305 2014/03/16 05:20:29 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -205,13 +205,27 @@ dev_type_dump(raiddump);
 dev_type_size(raidsize);
 
 const struct bdevsw raid_bdevsw = {
-	raidopen, raidclose, raidstrategy, raidioctl,
-	raiddump, raidsize, D_DISK
+	.d_open = raidopen,
+	.d_close = raidclose,
+	.d_strategy = raidstrategy,
+	.d_ioctl = raidioctl,
+	.d_dump = raiddump,
+	.d_psize = raidsize,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw raid_cdevsw = {
-	raidopen, raidclose, raidread, raidwrite, raidioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = raidopen,
+	.d_close = raidclose,
+	.d_read = raidread,
+	.d_write = raidwrite,
+	.d_ioctl = raidioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_DISK
 };
 
 static struct dkdriver rf_dkdriver = { raidstrategy, minphys };

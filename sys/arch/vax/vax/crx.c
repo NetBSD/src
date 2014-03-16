@@ -1,4 +1,4 @@
-/*	$NetBSD: crx.c,v 1.13 2008/03/11 05:34:03 matt Exp $	*/
+/*	$NetBSD: crx.c,v 1.14 2014/03/16 05:20:26 dholland Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crx.c,v 1.13 2008/03/11 05:34:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crx.c,v 1.14 2014/03/16 05:20:26 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -59,8 +59,17 @@ static dev_type_close(crxclose);
 static dev_type_read(crxrw);
 
 const struct cdevsw crx_cdevsw = {
-	crxopen, crxclose, crxrw, crxrw, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	.d_open = crxopen,
+	.d_close = crxclose,
+	.d_read = crxrw,
+	.d_write = crxrw,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = 0
 };
 
 extern struct	rx50device *rx50device_ptr;

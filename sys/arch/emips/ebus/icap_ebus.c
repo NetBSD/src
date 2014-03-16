@@ -1,4 +1,4 @@
-/*	$NetBSD: icap_ebus.c,v 1.4 2013/11/10 18:27:15 christos Exp $	*/
+/*	$NetBSD: icap_ebus.c,v 1.5 2014/03/16 05:20:23 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: icap_ebus.c,v 1.4 2013/11/10 18:27:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icap_ebus.c,v 1.5 2014/03/16 05:20:23 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,16 +149,17 @@ icap_ebus_attach(device_t parent, device_t self, void *aux)
 /* The character device handlers
  */
 const struct cdevsw icap_cdevsw = {
-	icapopen,
-	icapclose,
-	icapread,
-	icapwrite,
-	icapioctl,
-	nostop,
-	notty,
-	nopoll,
-	nommap,
-	nokqfilter,
+	.d_open = icapopen,
+	.d_close = icapclose,
+	.d_read = icapread,
+	.d_write = icapwrite,
+	.d_ioctl = icapioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = 0
 };
 
 /*

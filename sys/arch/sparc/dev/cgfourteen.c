@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.76 2013/08/14 01:53:27 macallan Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.77 2014/03/16 05:20:25 dholland Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -120,8 +120,17 @@ dev_type_mmap(cgfourteenmmap);
 dev_type_poll(cgfourteenpoll);
 
 const struct cdevsw cgfourteen_cdevsw = {
-        cgfourteenopen, cgfourteenclose, noread, nowrite, cgfourteenioctl,
-        nostop, notty, cgfourteenpoll, cgfourteenmmap, nokqfilter,
+        .d_open = cgfourteenopen,
+	.d_close = cgfourteenclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = cgfourteenioctl,
+        .d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = cgfourteenpoll,
+	.d_mmap = cgfourteenmmap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = 0
 };
 
 /* frame buffer generic driver */

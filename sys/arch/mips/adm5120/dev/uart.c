@@ -1,4 +1,4 @@
-/* $NetBSD: uart.c,v 1.9 2011/07/10 23:13:23 matt Exp $ */
+/* $NetBSD: uart.c,v 1.10 2014/03/16 05:20:25 dholland Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uart.c,v 1.9 2011/07/10 23:13:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uart.c,v 1.10 2014/03/16 05:20:25 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -66,8 +66,17 @@ dev_type_poll(uart_poll);
 dev_type_stop(uart_stop);
 
 const struct cdevsw uart_cdevsw = {
-        uart_open, uart_close, uart_read, uart_write, uart_ioctl,
-        uart_stop, uart_tty, uart_poll, nommap, ttykqfilter, D_TTY
+        .d_open = uart_open,
+	.d_close = uart_close,
+	.d_read = uart_read,
+	.d_write = uart_write,
+	.d_ioctl = uart_ioctl,
+        .d_stop = uart_stop,
+	.d_tty = uart_tty,
+	.d_poll = uart_poll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_flag = D_TTY
 };
 
 struct consdev uartcons = {

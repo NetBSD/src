@@ -1,4 +1,4 @@
-/*	$NetBSD: isv.c,v 1.4 2010/11/06 10:59:45 uebayasi Exp $ */
+/*	$NetBSD: isv.c,v 1.5 2014/03/16 05:20:28 dholland Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isv.c,v 1.4 2010/11/06 10:59:45 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isv.c,v 1.5 2014/03/16 05:20:28 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,8 +105,17 @@ CFATTACH_DECL_NEW(isv_isa, sizeof(struct isv_softc),
     isv_match, isv_attach, isv_detach, NULL);
 
 const struct cdevsw isv_cdevsw = {
-	isv_open, nullclose, noread, nowrite, isv_ioctl,
-	nostop, notty, nopoll, isv_mmap, nokqfilter, D_OTHER
+	.d_open = isv_open,
+	.d_close = nullclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = isv_ioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = isv_mmap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER
 };
 
 static uint16_t

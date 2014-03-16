@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.77 2013/10/25 16:00:35 martin Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.78 2014/03/16 05:20:28 dholland Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.77 2013/10/25 16:00:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.78 2014/03/16 05:20:28 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -157,12 +157,27 @@ dev_type_size(rasize);
 #if NRA
 
 const struct bdevsw ra_bdevsw = {
-	raopen, raclose, rastrategy, raioctl, radump, rasize, D_DISK
+	.d_open = raopen,
+	.d_close = raclose,
+	.d_strateegy = rastrategy,
+	.d_ioctl = raioctl,
+	.d_dump = radump,
+	.d_psize = rasize,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw ra_cdevsw = {
-	raopen, raclose, raread, rawrite, raioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = raopen,
+	.d_close = raclose,
+	.d_read = raread,
+	.d_write = rawrite,
+	.d_ioctl = raioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_DISK
 };
 
 static struct dkdriver radkdriver = {
@@ -563,12 +578,27 @@ dev_type_dump(radump);
 dev_type_size(rxsize);
 
 const struct bdevsw rx_bdevsw = {
-	rxopen, nullclose, rxstrategy, rxioctl, radump, rxsize, D_DISK
+	.d_open = rxopen,
+	.d_close = nullclose,
+	.d_strategy = rxstrategy,
+	.d_ioctl = rxioctl,
+	.d_dump = radump,
+	.d_psize = rxsize,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw rx_cdevsw = {
-	rxopen, nullclose, rxread, rxwrite, rxioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = rxopen,
+	.d_close = nullclose,
+	.d_read = rxread,
+	.d_write = rxwrite,
+	.d_ioctl = rxioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_DISK
 };
 
 static struct dkdriver rxdkdriver = {
@@ -619,12 +649,27 @@ dev_type_dump(radump);
 dev_type_size(rasize);
 
 const struct bdevsw racd_bdevsw = {
-	raopen, nullclose, rastrategy, raioctl, radump, rasize, D_DISK
+	.d_open = raopen,
+	.d_close = nullclose,
+	.d_strategy = rastrategy,
+	.d_ioctl = raioctl,
+	.d_dump = radump,
+	.d_psize = rasize,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw racd_cdevsw = {
-	raopen, nullclose, raread, rawrite, raioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = raopen,
+	.d_close = nullclose,
+	.d_read = raread,
+	.d_write = rawrite,
+	.d_ioctl = raioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_DISK
 };
 
 static struct dkdriver racddkdriver = {

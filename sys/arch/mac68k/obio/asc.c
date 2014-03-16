@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.55 2013/10/25 21:24:14 martin Exp $	*/
+/*	$NetBSD: asc.c,v 1.56 2014/03/16 05:20:25 dholland Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.55 2013/10/25 21:24:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.56 2014/03/16 05:20:25 dholland Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -121,8 +121,17 @@ dev_type_ioctl(ascioctl);
 dev_type_mmap(ascmmap);
 
 const struct cdevsw asc_cdevsw = {
-	ascopen, ascclose, ascread, ascwrite, ascioctl,
-	nostop, notty, nopoll, ascmmap, nokqfilter,
+	.d_open = ascopen,
+	.d_close = ascclose,
+	.d_read = ascread,
+	.d_write = ascwrite,
+	.d_ioctl = ascioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = ascmmap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = 0
 };
 
 static int

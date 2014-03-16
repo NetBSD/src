@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.30 2009/01/17 03:26:31 isaki Exp $ */
+/*	$NetBSD: ms.c,v 1.31 2014/03/16 05:20:26 dholland Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.30 2009/01/17 03:26:31 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.31 2014/03/16 05:20:26 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -163,8 +163,17 @@ dev_type_poll(mspoll);
 dev_type_kqfilter(mskqfilter);
 
 const struct cdevsw ms_cdevsw ={
-	msopen, msclose, msread, nowrite, msioctl,
-	nostop, notty, mspoll, nommap, mskqfilter,
+	.d_open = msopen,
+	.d_close = msclose,
+	.d_read = msread,
+	.d_write = nowrite,
+	.d_ioctl = msioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = mspoll,
+	.d_mmap = nommap,
+	.d_kqfilter = mskqfilter,
+	.d_flag = 0
 };
 
 /*

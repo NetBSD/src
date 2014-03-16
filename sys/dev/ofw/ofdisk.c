@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.44 2011/07/26 08:59:38 mrg Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.45 2014/03/16 05:20:28 dholland Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.44 2011/07/26 08:59:38 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.45 2014/03/16 05:20:28 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -81,13 +81,27 @@ dev_type_dump(ofdisk_dump);
 dev_type_size(ofdisk_size);
 
 const struct bdevsw ofdisk_bdevsw = {
-	ofdisk_open, ofdisk_close, ofdisk_strategy, ofdisk_ioctl,
-	ofdisk_dump, ofdisk_size, D_DISK
+	.d_open = ofdisk_open,
+	.d_close = ofdisk_close,
+	.d_strategy = ofdisk_strategy,
+	.d_ioctl = ofdisk_ioctl,
+	.d_dump = ofdisk_dump,
+	.d_psize = ofdisk_size,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw ofdisk_cdevsw = {
-	ofdisk_open, ofdisk_close, ofdisk_read, ofdisk_write, ofdisk_ioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = ofdisk_open,
+	.d_close = ofdisk_close,
+	.d_read = ofdisk_read,
+	.d_write = ofdisk_write,
+	.d_ioctl = ofdisk_ioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_DISK
 };
 
 static void ofminphys(struct buf *);

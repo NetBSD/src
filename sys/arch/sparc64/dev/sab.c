@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.50 2013/09/15 13:45:31 martin Exp $	*/
+/*	$NetBSD: sab.c,v 1.51 2014/03/16 05:20:26 dholland Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.50 2013/09/15 13:45:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.51 2014/03/16 05:20:26 dholland Exp $");
 
 #include "opt_kgdb.h"
 #include <sys/types.h>
@@ -185,8 +185,17 @@ dev_type_poll(sabpoll);
 static struct cnm_state sabtty_cnm_state;
 
 const struct cdevsw sabtty_cdevsw = {
-	sabopen, sabclose, sabread, sabwrite, sabioctl,
-	sabstop, sabtty, sabpoll, nommap, ttykqfilter, D_TTY
+	.d_open = sabopen,
+	.d_close = sabclose,
+	.d_read = sabread,
+	.d_write = sabwrite,
+	.d_ioctl = sabioctl,
+	.d_stop = sabstop,
+	.d_tty = sabtty,
+	.d_poll = sabpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_flag = D_TTY
 };
 
 struct sabtty_rate {

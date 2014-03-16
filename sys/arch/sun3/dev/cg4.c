@@ -1,4 +1,4 @@
-/*	$NetBSD: cg4.c,v 1.39 2008/06/28 12:13:38 tsutsui Exp $	*/
+/*	$NetBSD: cg4.c,v 1.40 2014/03/16 05:20:26 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cg4.c,v 1.39 2008/06/28 12:13:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cg4.c,v 1.40 2014/03/16 05:20:26 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,8 +127,17 @@ dev_type_ioctl(cg4ioctl);
 dev_type_mmap(cg4mmap);
 
 const struct cdevsw cgfour_cdevsw = {
-	cg4open, nullclose, noread, nowrite, cg4ioctl,
-	nostop, notty, nopoll, cg4mmap, nokqfilter,
+	.d_open = cg4open,
+	.d_close = nullclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = cg4ioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = cg4mmap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = 0
 };
 
 static int	cg4gattr  (struct fbdevice *, void *);

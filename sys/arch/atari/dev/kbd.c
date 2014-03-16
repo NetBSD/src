@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.42 2011/06/05 06:31:41 tsutsui Exp $	*/
+/*	$NetBSD: kbd.c,v 1.43 2014/03/16 05:20:23 dholland Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.42 2011/06/05 06:31:41 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.43 2014/03/16 05:20:23 dholland Exp $");
 
 #include "mouse.h"
 #include "ite.h"
@@ -129,8 +129,17 @@ CFATTACH_DECL_NEW(kbd, 0,
     kbdmatch, kbdattach, NULL, NULL);
 
 const struct cdevsw kbd_cdevsw = {
-	kbdopen, kbdclose, kbdread, nowrite, kbdioctl,
-	nostop, notty, kbdpoll, nommap, kbdkqfilter,
+	.d_open = kbdopen,
+	.d_close = kbdclose,
+	.d_read = kbdread,
+	.d_write = nowrite,
+	.d_ioctl = kbdioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = kbdpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = kbdkqfilter,
+	.d_flag = 0
 };
 
 #if NWSKBD>0

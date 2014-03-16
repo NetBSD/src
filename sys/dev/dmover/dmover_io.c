@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_io.c,v 1.41 2013/07/25 04:32:37 msaitoh Exp $	*/
+/*	$NetBSD: dmover_io.c,v 1.42 2014/03/16 05:20:27 dholland Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.41 2013/07/25 04:32:37 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.42 2014/03/16 05:20:27 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -133,9 +133,17 @@ void	dmoverioattach(int);
 dev_type_open(dmoverioopen);
 
 const struct cdevsw dmoverio_cdevsw = {
-	dmoverioopen, noclose, noread, nowrite, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
-	D_OTHER
+	.d_open = dmoverioopen,
+	.d_close = noclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: at24cxx.c,v 1.16 2013/10/25 14:32:10 jdc Exp $	*/
+/*	$NetBSD: at24cxx.c,v 1.17 2014/03/16 05:20:27 dholland Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.16 2013/10/25 14:32:10 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.17 2014/03/16 05:20:27 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,8 +94,17 @@ dev_type_read(seeprom_read);
 dev_type_write(seeprom_write);
 
 const struct cdevsw seeprom_cdevsw = {
-	seeprom_open, seeprom_close, seeprom_read, seeprom_write, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
+	.d_open = seeprom_open,
+	.d_close = seeprom_close,
+	.d_read = seeprom_read,
+	.d_write = seeprom_write,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER
 };
 
 static int seeprom_wait_idle(struct seeprom_softc *);

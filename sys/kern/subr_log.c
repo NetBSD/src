@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.50 2008/04/28 20:24:04 martin Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.51 2014/03/16 05:20:30 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.50 2008/04/28 20:24:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.51 2014/03/16 05:20:30 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -397,7 +397,15 @@ logputchar(int c)
 }
 
 const struct cdevsw log_cdevsw = {
-	logopen, logclose, logread, nowrite, logioctl,
-	nostop, notty, logpoll, nommap, logkqfilter,
-	D_OTHER | D_MPSAFE
+	.d_open = logopen,
+	.d_close = logclose,
+	.d_read = logread,
+	.d_write = nowrite,
+	.d_ioctl = logioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = logpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = logkqfilter,
+	.d_flag = D_OTHER | D_MPSAFE
 };

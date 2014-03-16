@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.70 2013/04/07 00:49:45 chs Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.71 2014/03/16 05:20:30 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.70 2013/04/07 00:49:45 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.71 2014/03/16 05:20:30 dholland Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -1135,6 +1135,15 @@ ksymsioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *l)
 }
 
 const struct cdevsw ksyms_cdevsw = {
-	ksymsopen, ksymsclose, ksymsread, ksymswrite, ksymsioctl,
-	nullstop, notty, nopoll, nommap, nullkqfilter, D_OTHER | D_MPSAFE
+	.d_open = ksymsopen,
+	.d_close = ksymsclose,
+	.d_read = ksymsread,
+	.d_write = ksymswrite,
+	.d_ioctl = ksymsioctl,
+	.d_stop = nullstop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nullkqfilter,
+	.d_flag = D_OTHER | D_MPSAFE
 };

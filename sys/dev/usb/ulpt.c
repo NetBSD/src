@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.93 2013/09/15 15:46:33 martin Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.94 2014/03/16 05:20:29 dholland Exp $	*/
 
 /*
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.93 2013/09/15 15:46:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.94 2014/03/16 05:20:29 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,8 +130,17 @@ dev_type_read(ulptread);
 dev_type_ioctl(ulptioctl);
 
 const struct cdevsw ulpt_cdevsw = {
-	ulptopen, ulptclose, ulptread, ulptwrite, ulptioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
+	.d_open = ulptopen,
+	.d_close = ulptclose,
+	.d_read = ulptread,
+	.d_write = ulptwrite,
+	.d_ioctl = ulptioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER
 };
 
 void ulpt_disco(void *);

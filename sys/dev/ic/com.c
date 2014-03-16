@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.322 2013/12/22 18:20:46 matt Exp $ */
+/* $NetBSD: com.c,v 1.323 2014/03/16 05:20:27 dholland Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.322 2013/12/22 18:20:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.323 2014/03/16 05:20:27 dholland Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -215,8 +215,17 @@ static struct consdev comcons = {
 
 
 const struct cdevsw com_cdevsw = {
-	comopen, comclose, comread, comwrite, comioctl,
-	comstop, comtty, compoll, nommap, ttykqfilter, D_TTY
+	.d_open = comopen,
+	.d_close = comclose,
+	.d_read = comread,
+	.d_write = comwrite,
+	.d_ioctl = comioctl,
+	.d_stop = comstop,
+	.d_tty = comtty,
+	.d_poll = compoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_flag = D_TTY
 };
 
 /*

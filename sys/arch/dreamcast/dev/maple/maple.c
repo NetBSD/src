@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.47 2014/03/14 08:55:40 martin Exp $	*/
+/*	$NetBSD: maple.c,v 1.48 2014/03/16 05:20:23 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.47 2014/03/14 08:55:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.48 2014/03/16 05:20:23 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -165,8 +165,17 @@ dev_type_close(mapleclose);
 dev_type_ioctl(mapleioctl);
 
 const struct cdevsw maple_cdevsw = {
-	mapleopen, mapleclose, noread, nowrite, mapleioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	.d_open = mapleopen,
+	.d_close = mapleclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = mapleioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = 0
 };
 
 static int

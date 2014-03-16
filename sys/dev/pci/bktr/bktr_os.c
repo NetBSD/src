@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_os.c,v 1.5 2003/03/11 23:11:25 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_os.c,v 1.62 2013/08/10 18:14:21 dholland Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.63 2014/03/16 05:20:28 dholland Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp$ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.62 2013/08/10 18:14:21 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.63 2014/03/16 05:20:28 dholland Exp $");
 
 #ifdef __FreeBSD__
 #include "bktr.h"
@@ -180,8 +180,17 @@ dev_type_ioctl(bktr_ioctl);
 dev_type_mmap(bktr_mmap);
 
 const struct cdevsw bktr_cdevsw = {
-	bktr_open, bktr_close, bktr_read, bktr_write, bktr_ioctl,
-	nostop, notty, nopoll, bktr_mmap, nokqfilter, D_OTHER
+	.d_open = bktr_open,
+	.d_close = bktr_close,
+	.d_read = bktr_read,
+	.d_write = bktr_write,
+	.d_ioctl = bktr_ioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = bktr_mmap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER
 };
 #endif /* __NetBSD __ */
 

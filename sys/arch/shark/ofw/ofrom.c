@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrom.c,v 1.24 2014/02/22 18:55:18 matt Exp $	*/
+/*	$NetBSD: ofrom.c,v 1.25 2014/03/16 05:20:25 dholland Exp $	*/
 
 /*
  * Copyright 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofrom.c,v 1.24 2014/02/22 18:55:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofrom.c,v 1.25 2014/03/16 05:20:25 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -70,8 +70,17 @@ dev_type_read(ofromrw);
 dev_type_mmap(ofrommmap);
 
 const struct cdevsw ofrom_cdevsw = {
-	ofromopen, nullclose, ofromrw, ofromrw, noioctl,
-	nostop, notty, nopoll, ofrommmap, nokqfilter,
+	.d_open = ofromopen,
+	.d_close = nullclose,
+	.d_read = ofromrw,
+	.d_write = ofromrw,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = ofrommmap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = 0
 };
 
 int

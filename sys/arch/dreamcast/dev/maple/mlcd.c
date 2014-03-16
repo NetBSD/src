@@ -1,4 +1,4 @@
-/*	$NetBSD: mlcd.c,v 1.15 2014/03/14 08:55:40 martin Exp $	*/
+/*	$NetBSD: mlcd.c,v 1.16 2014/03/16 05:20:23 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlcd.c,v 1.15 2014/03/14 08:55:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlcd.c,v 1.16 2014/03/16 05:20:23 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -169,8 +169,17 @@ dev_type_write(mlcdwrite);
 dev_type_ioctl(mlcdioctl);
 
 const struct cdevsw mlcd_cdevsw = {
-	mlcdopen, mlcdclose, noread, mlcdwrite, mlcdioctl,
-	nostop, notty, nopoll, nommap, nokqfilter
+	.d_open = mlcdopen,
+	.d_close = mlcdclose,
+	.d_read = noread,
+	.d_write = mlcdwrite,
+	.d_ioctl = mlcdioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = 0
 };
 
 CFATTACH_DECL_NEW(mlcd, sizeof(struct mlcd_softc),

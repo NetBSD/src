@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.254 2014/01/02 18:52:04 pooka Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.255 2014/03/16 05:20:30 dholland Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.254 2014/01/02 18:52:04 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.255 2014/03/16 05:20:30 dholland Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -224,7 +224,7 @@ int	tcp_rttlocal = 0;		/* Use RTT to decide who's 'local' */
 int	tcp4_vtw_enable = 0;		/* 1 to enable */
 int	tcp6_vtw_enable = 0;		/* 1 to enable */
 int	tcp_vtw_was_enabled = 0;
-int	tcp_vtw_entries = 1 << 16;	/* 64K vestigial TIME_WAIT entries */
+int	tcp_vtw_entries = 1 << 4;	/* 16 vestigial TIME_WAIT entries */
 
 /* tcb hash */
 #ifndef TCBHASHSIZE

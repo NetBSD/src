@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.57 2013/10/19 19:40:23 mrg Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.58 2014/03/16 05:20:25 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.57 2013/10/19 19:40:23 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.58 2014/03/16 05:20:25 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,8 +88,17 @@ dev_type_poll(tctrlpoll);
 dev_type_kqfilter(tctrlkqfilter);
 
 const struct cdevsw tctrl_cdevsw = {
-	tctrlopen, tctrlclose, noread, nowrite, tctrlioctl,
-	nostop, notty, tctrlpoll, nommap, tctrlkqfilter,
+	.d_open = tctrlopen,
+	.d_close = tctrlclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = tctrlioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = tctrlpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = tctrlkqfilter,
+	.d_flag = 0
 };
 
 static const char *tctrl_ext_statuses[16] = {
