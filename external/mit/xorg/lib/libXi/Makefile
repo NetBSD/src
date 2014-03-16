@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2013/10/18 01:12:00 riz Exp $
+#	$NetBSD: Makefile,v 1.12 2014/03/16 22:53:17 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -65,6 +65,7 @@ SRCS+=	XAllowDv.c \
 	XExtInt.c
 
 CPPFLAGS+=	${X11FLAGS.THREADLIB}
+CPPFLAGS+=	-DHAVE__XEATDATAWORDS
 
 LIBDPLIBS=\
 	Xext	${.CURDIR}/../libXext \
