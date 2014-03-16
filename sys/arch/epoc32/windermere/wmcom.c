@@ -1,4 +1,4 @@
-/*      $NetBSD: wmcom.c,v 1.1 2013/04/28 12:11:26 kiyohara Exp $      */
+/*      $NetBSD: wmcom.c,v 1.2 2014/03/16 05:20:23 dholland Exp $      */
 /*
  * Copyright (c) 2012 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmcom.c,v 1.1 2013/04/28 12:11:26 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmcom.c,v 1.2 2014/03/16 05:20:23 dholland Exp $");
 
 #include "rnd.h"
 
@@ -133,8 +133,17 @@ CFATTACH_DECL_NEW(wmcom, sizeof(struct wmcom_softc),
     wmcom_match, wmcom_attach, NULL, NULL);
 
 const struct cdevsw wmcom_cdevsw = {
-	wmcomopen, wmcomclose, wmcomread, wmcomwrite, wmcomioctl,
-	wmcomstop, wmcomtty, wmcompoll, nommap, ttykqfilter, D_TTY
+	.d_open = wmcomopen,
+	.d_close = wmcomclose,
+	.d_read = wmcomread,
+	.d_write = wmcomwrite,
+	.d_ioctl = wmcomioctl,
+	.d_stop = wmcomstop,
+	.d_tty = wmcomtty,
+	.d_poll = wmcompoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_flag = D_TTY
 };
 
 static struct cnm_state wmcom_cnm_state;

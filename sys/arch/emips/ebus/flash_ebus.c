@@ -1,4 +1,4 @@
-/*	$NetBSD: flash_ebus.c,v 1.7 2013/10/13 06:55:34 riz Exp $	*/
+/*	$NetBSD: flash_ebus.c,v 1.8 2014/03/16 05:20:23 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: flash_ebus.c,v 1.7 2013/10/13 06:55:34 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash_ebus.c,v 1.8 2014/03/16 05:20:23 dholland Exp $");
 
 /* Driver for the Intel 28F320/640/128 (J3A150) StrataFlash memory device
  * Extended to include the Intel JS28F256P30T95.
@@ -1302,7 +1302,7 @@ static int eflash_write_at (struct eflash_softc *sc,
 /* Rest of code lifted with mods from the dev\ata\wd.c driver
  */
 
-/*	$NetBSD: flash_ebus.c,v 1.7 2013/10/13 06:55:34 riz Exp $ */
+/*	$NetBSD: flash_ebus.c,v 1.8 2014/03/16 05:20:23 dholland Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -1396,12 +1396,27 @@ dev_type_dump(eflashdump);
 dev_type_size(eflashsize);
 
 const struct bdevsw eflash_bdevsw = {
-	eflashopen, eflashclose, eflashstrategy, eflashioctl, eflashdump, eflashsize, D_DISK
+	.d_open = eflashopen,
+	.d_close = eflashclose,
+	.d_strategy = eflashstrategy,
+	.d_ioctl = eflashioctl,
+	.d_dump = eflashdump,
+	.d_psize = eflashsize,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw eflash_cdevsw = {
-	eflashopen, eflashclose, eflashread, eflashwrite, eflashioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = eflashopen,
+	.d_close = eflashclose,
+	.d_read = eflashread,
+	.d_write = eflashwrite,
+	.d_ioctl = eflashioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_DISK
 };
 
 void  eflashgetdefaultlabel(struct eflash_softc *, struct disklabel *);

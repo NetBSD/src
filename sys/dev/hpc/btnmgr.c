@@ -1,4 +1,4 @@
-/*	$NetBSD: btnmgr.c,v 1.26 2012/10/27 17:18:17 chs Exp $	*/
+/*	$NetBSD: btnmgr.c,v 1.27 2014/03/16 05:20:27 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.26 2012/10/27 17:18:17 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.27 2014/03/16 05:20:27 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_btnmgr.h"
@@ -101,8 +101,17 @@ dev_type_write(btnmgrwrite);
 dev_type_ioctl(btnmgrioctl);
 
 const struct cdevsw btnmgr_cdevsw = {
-	btnmgropen, btnmgrclose, btnmgrread, btnmgrwrite, btnmgrioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	.d_open = btnmgropen,
+	.d_close = btnmgrclose,
+	.d_read = btnmgrread,
+	.d_write = btnmgrwrite,
+	.d_ioctl = btnmgrioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = 0
 };
 #endif /* notyet */
 

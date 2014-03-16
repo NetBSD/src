@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.72 2014/02/25 18:30:12 pooka Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.73 2014/03/16 05:20:30 dholland Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.72 2014/02/25 18:30:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.73 2014/03/16 05:20:30 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -175,12 +175,17 @@ static int	tap_cdev_poll(dev_t, int, struct lwp *);
 static int	tap_cdev_kqfilter(dev_t, struct knote *);
 
 const struct cdevsw tap_cdevsw = {
-	tap_cdev_open, tap_cdev_close,
-	tap_cdev_read, tap_cdev_write,
-	tap_cdev_ioctl, nostop, notty,
-	tap_cdev_poll, nommap,
-	tap_cdev_kqfilter,
-	D_OTHER,
+	.d_open = tap_cdev_open,
+	.d_close = tap_cdev_close,
+	.d_read = tap_cdev_read,
+	.d_write = tap_cdev_write,
+	.d_ioctl = tap_cdev_ioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = tap_cdev_poll,
+	.d_mmap = nommap,
+	.d_kqfilter = tap_cdev_kqfilter,
+	.d_flag = D_OTHER
 };
 
 #define TAP_CLONER	0xfffff		/* Maximal minor value */

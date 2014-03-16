@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.47 2013/12/14 09:52:33 skrll Exp $	*/
+/*	$NetBSD: plcom.c,v 1.48 2014/03/16 05:20:23 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.47 2013/12/14 09:52:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.48 2014/03/16 05:20:23 dholland Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -194,8 +194,17 @@ bool	plcom_intstatus(struct plcom_instance *, u_int *);
 extern struct cfdriver plcom_cd;
 
 const struct cdevsw plcom_cdevsw = {
-	plcomopen, plcomclose, plcomread, plcomwrite, plcomioctl,
-	plcomstop, plcomtty, plcompoll, nommap, ttykqfilter, D_TTY
+	.d_open = plcomopen,
+	.d_close = plcomclose,
+	.d_read = plcomread,
+	.d_write = plcomwrite,
+	.d_ioctl = plcomioctl,
+	.d_stop = plcomstop,
+	.d_tty = plcomtty,
+	.d_poll = plcompoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_flag = D_TTY
 };
 
 /*

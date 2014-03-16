@@ -1,4 +1,4 @@
-/*	$NetBSD: pcons.c,v 1.32 2013/09/15 09:25:22 martin Exp $	*/
+/*	$NetBSD: pcons.c,v 1.33 2014/03/16 05:20:26 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo E. Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcons.c,v 1.32 2013/09/15 09:25:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcons.c,v 1.33 2014/03/16 05:20:26 dholland Exp $");
 
 #include "opt_ddb.h"
 
@@ -78,8 +78,17 @@ dev_type_tty(pconstty);
 dev_type_poll(pconspoll);
 
 const struct cdevsw pcons_cdevsw = {
-	pconsopen, pconsclose, pconsread, pconswrite, pconsioctl,
-	nostop, pconstty, pconspoll, nommap, ttykqfilter, D_TTY
+	.d_open = pconsopen,
+	.d_close = pconsclose,
+	.d_read = pconsread,
+	.d_write = pconswrite,
+	.d_ioctl = pconsioctl,
+	.d_stop = nostop,
+	.d_tty = pconstty,
+	.d_poll = pconspoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_flag = D_TTY
 };
 
 static struct cnm_state pcons_cnm_state;

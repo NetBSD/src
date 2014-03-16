@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.4 2012/10/27 17:18:09 chs Exp $ */
+/*	$NetBSD: scn.c,v 1.5 2014/03/16 05:20:25 dholland Exp $ */
 
 /*
  * Resurrected from the old pc532 port 1/18/2009.
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.4 2012/10/27 17:18:09 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.5 2014/03/16 05:20:25 dholland Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -155,8 +155,17 @@ dev_type_tty(scntty);
 dev_type_poll(scnpoll);
 
 const struct cdevsw scn_cdevsw = {
-	scnopen, scnclose, scnread, scnwrite, scnioctl,
-	scnstop, scntty, scnpoll, nommap, ttykqfilter, D_TTY
+	.d_open = scnopen,
+	.d_close = scnclose,
+	.d_read = scnread,
+	.d_write = scnwrite,
+	.d_ioctl = scnioctl,
+	.d_stop = scnstop,
+	.d_tty = scntty,
+	.d_poll = scnpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_flag = D_TTY
 };
 
 struct consdev scn_cn = {

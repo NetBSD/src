@@ -1,4 +1,4 @@
-/* $NetBSD: sbjcn.c,v 1.28 2011/07/10 23:32:03 matt Exp $ */
+/* $NetBSD: sbjcn.c,v 1.29 2014/03/16 05:20:25 dholland Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbjcn.c,v 1.28 2011/07/10 23:32:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbjcn.c,v 1.29 2014/03/16 05:20:25 dholland Exp $");
 
 #define	SBJCN_DEBUG
 
@@ -175,8 +175,17 @@ dev_type_stop(sbjcnstop);
 dev_type_tty(sbjcntty);
 
 const struct cdevsw sbjcn_cdevsw = {
-	sbjcnopen, sbjcnclose, sbjcnread, sbjcnwrite, sbjcnioctl,
-	sbjcnstop, sbjcntty, nopoll, nommap, ttykqfilter, D_TTY
+	.d_open = sbjcnopen,
+	.d_close = sbjcnclose,
+	.d_read = sbjcnread,
+	.d_write = sbjcnwrite,
+	.d_ioctl = sbjcnioctl,
+	.d_stop = sbjcnstop,
+	.d_tty = sbjcntty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_flag = D_TTY
 };
 
 #define	integrate	static inline

@@ -1,4 +1,4 @@
-/*	$NetBSD: netwalker_lcd.c,v 1.1 2012/04/17 10:19:57 bsh Exp $	*/
+/*	$NetBSD: netwalker_lcd.c,v 1.2 2014/03/16 05:20:24 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2011, 2012 Genetec corp. All rights reserved.
@@ -73,8 +73,17 @@ dev_type_close(lcdclose);
 dev_type_ioctl(lcdioctl);
 dev_type_mmap(lcdmmap);
 const struct cdevsw ipu_cdevsw = {
-	lcdopen, lcdclose, noread, nowrite, lcdioctl,
-	nostop, notty, nopoll, lcdmmap, nokqfilter, D_TTY
+	.d_open = lcdopen,
+	.d_close = lcdclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = lcdioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = lcdmmap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_TTY
 };
 
 #endif

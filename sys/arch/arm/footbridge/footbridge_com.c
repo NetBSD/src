@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.36 2013/11/17 08:32:55 skrll Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.37 2014/03/16 05:20:23 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.36 2013/11/17 08:32:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.37 2014/03/16 05:20:23 dholland Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
@@ -128,8 +128,17 @@ dev_type_tty(fcomtty);
 dev_type_poll(fcompoll);
 
 const struct cdevsw fcom_cdevsw = {
-	fcomopen, fcomclose, fcomread, fcomwrite, fcomioctl,
-	nostop, fcomtty, fcompoll, nommap, ttykqfilter, D_TTY
+	.d_open = fcomopen,
+	.d_close = fcomclose,
+	.d_read = fcomread,
+	.d_write = fcomwrite,
+	.d_ioctl = fcomioctl,
+	.d_stop = nostop,
+	.d_tty = fcomtty,
+	.d_poll = fcompoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_flag = D_TTY
 };
 
 void fcominit(bus_space_tag_t, bus_space_handle_t, int, int);

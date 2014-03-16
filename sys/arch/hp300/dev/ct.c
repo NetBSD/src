@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.57 2009/01/13 13:35:51 yamt Exp $	*/
+/*	$NetBSD: ct.c,v 1.58 2014/03/16 05:20:24 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.57 2009/01/13 13:35:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.58 2014/03/16 05:20:24 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,12 +153,27 @@ static dev_type_ioctl(ctioctl);
 static dev_type_strategy(ctstrategy);
 
 const struct bdevsw ct_bdevsw = {
-	ctopen, ctclose, ctstrategy, ctioctl, nodump, nosize, D_TAPE
+	.d_open = ctopen,
+	.d_close = ctclose,
+	.d_strategy = ctstrategy,
+	.d_ioctl = ctioctl,
+	.d_dump = nodump,
+	.d_psize = nosize,
+	.d_flag = D_TAPE
 };
 
 const struct cdevsw ct_cdevsw = {
-	ctopen, ctclose, ctread, ctwrite, ctioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_TAPE
+	.d_open = ctopen,
+	.d_close = ctclose,
+	.d_read = ctread,
+	.d_write = ctwrite,
+	.d_ioctl = ctioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_TAPE
 };
 
 static int	ctident(device_t, struct ct_softc *,

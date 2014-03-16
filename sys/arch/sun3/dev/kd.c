@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.57 2012/10/27 17:18:13 chs Exp $	*/
+/*	$NetBSD: kd.c,v 1.58 2014/03/16 05:20:26 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.57 2012/10/27 17:18:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.58 2014/03/16 05:20:26 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -95,8 +95,17 @@ dev_type_tty(kdtty);
 dev_type_poll(kdpoll);
 
 const struct cdevsw kd_cdevsw = {
-	kdopen, kdclose, kdread, kdwrite, kdioctl,
-	nostop, kdtty, kdpoll, nommap, ttykqfilter, D_TTY
+	.d_open = kdopen,
+	.d_close = kdclose,
+	.d_read = kdread,
+	.d_write = kdwrite,
+	.d_ioctl = kdioctl,
+	.d_stop = nostop,
+	.d_tty = kdtty,
+	.d_poll = kdpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_flag = D_TTY
 };
 
 /*

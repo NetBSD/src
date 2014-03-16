@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.83 2012/10/27 17:18:25 chs Exp $	*/
+/*	$NetBSD: wt.c,v 1.84 2014/03/16 05:20:28 dholland Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.83 2012/10/27 17:18:25 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.84 2014/03/16 05:20:28 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,12 +158,27 @@ static dev_type_dump(wtdump);
 static dev_type_size(wtsize);
 
 const struct bdevsw wt_bdevsw = {
-	wtopen, wtclose, wtstrategy, wtioctl, wtdump, wtsize, D_TAPE
+	.d_open = wtopen,
+	.d_close = wtclose,
+	.d_strategy = wtstrategy,
+	.d_ioctl = wtioctl,
+	.d_dump = wtdump,
+	.d_psize = wtsize,
+	.d_flag = D_TAPE
 };
 
 const struct cdevsw wt_cdevsw = {
-	wtopen, wtclose, wtread, wtwrite, wtioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_TAPE
+	.d_open = wtopen,
+	.d_close = wtclose,
+	.d_read = wtread,
+	.d_write = wtwrite,
+	.d_ioctl = wtioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_TAPE
 };
 
 static int	wtwait(struct wt_softc *sc, int catch, const char *msg);

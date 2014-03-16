@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.74 2011/06/30 20:09:21 wiz Exp $	*/
+/*	$NetBSD: zs.c,v 1.75 2014/03/16 05:20:23 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.74 2011/06/30 20:09:21 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.75 2014/03/16 05:20:23 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,8 +238,17 @@ dev_type_tty(zstty);
 dev_type_poll(zspoll);
 
 const struct cdevsw zs_cdevsw = {
-	zsopen, zsclose, zsread, zswrite, zsioctl,
-	zsstop, zstty, zspoll, nommap, ttykqfilter, D_TTY
+	.d_open = zsopen,
+	.d_close = zsclose,
+	.d_read = zsread,
+	.d_write = zswrite,
+	.d_ioctl = zsioctl,
+	.d_stop = zsstop,
+	.d_tty = zstty,
+	.d_poll = zspoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_flag = D_TTY
 };
 
 /* Interrupt handlers. */

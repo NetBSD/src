@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.90 2013/10/19 21:00:32 mrg Exp $	*/
+/*	$NetBSD: xd.c,v 1.91 2014/03/16 05:20:29 dholland Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.90 2013/10/19 21:00:32 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.91 2014/03/16 05:20:29 dholland Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -292,12 +292,27 @@ dev_type_dump(xddump);
 dev_type_size(xdsize);
 
 const struct bdevsw xd_bdevsw = {
-	xdopen, xdclose, xdstrategy, xdioctl, xddump, xdsize, D_DISK
+	.d_open = xdopen,
+	.d_close = xdclose,
+	.d_strategy = xdstrategy,
+	.d_ioctl = xdioctl,
+	.d_dump = xddump,
+	.d_psize = xdsize,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw xd_cdevsw = {
-	xdopen, xdclose, xdread, xdwrite, xdioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = xdopen,
+	.d_close = xdclose,
+	.d_read = xdread,
+	.d_write = xdwrite,
+	.d_ioctl = xdioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_DISK
 };
 
 struct xdc_attach_args {	/* this is the "aux" args to xdattach */
