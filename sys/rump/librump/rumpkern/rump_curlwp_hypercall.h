@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_curlwp_hypercall.h,v 1.1 2014/03/15 15:15:27 pooka Exp $	*/
+/*	$NetBSD: rump_curlwp_hypercall.h,v 1.2 2014/03/16 15:30:05 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2014 Antti Kantee.  All Rights Reserved.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 
-#ifdef RUMP_CURLWP_PRIVATE
+#ifdef RUMP__CURLWP_PRIVATE
 #include <rump/rumpuser.h>
 static void
 lwproc_curlwpop(enum rumplwpop op, struct lwp *l)
