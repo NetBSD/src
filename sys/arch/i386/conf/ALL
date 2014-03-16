@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.367 2014/01/26 19:16:16 dsl Exp $
+# $NetBSD: ALL,v 1.368 2014/03/16 09:35:05 martin Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.367 $"
+#ident 		"ALL-$Revision: 1.368 $"
 
 maxusers	64		# estimated number of users
 
@@ -1341,6 +1341,9 @@ ucom*	at uark? portno ?
 
 moscom* at uhub? port ?
 ucom*	at moscom? portno ?
+
+umcs* at uhub? port ?		# Moschip MCS7xxx serial adapter
+ucom*	at umcs? portno ?
 
 uhmodem* at uhub?
 ucom*	at uhmodem? portno ?
