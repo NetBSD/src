@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.57 2014/02/20 00:44:20 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.58 2014/03/16 10:23:59 njoly Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.57 2014/02/20 00:44:20 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.58 2014/03/16 10:23:59 njoly Exp $");
 #endif /* !lint */
 
 #include <sys/ioctl.h>
@@ -217,7 +217,7 @@ rumpuser_getfileinfo(const char *path, uint64_t *sizep, int *ftp)
 int
 rumpuser_malloc(size_t howmuch, int alignment, void **memp)
 {
-	void *mem;
+	void *mem = NULL;
 	int rv;
 
 	if (alignment == 0)
