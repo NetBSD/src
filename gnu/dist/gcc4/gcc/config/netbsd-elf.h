@@ -81,7 +81,7 @@ Boston, MA 02110-1301, USA.  */
    Target-specific code must provide the %(netbsd_entry_point) spec.  */
 
 #define NETBSD_LINK_SPEC_ELF \
-  "%{assert*} %{R*} %{rpath*} \
+  "--eh-frame-hdr %{assert*} %{R*} %{rpath*} \
    %{shared:-shared} \
    %{symbolic:-Bsymbolic} \
    %{!shared: \
