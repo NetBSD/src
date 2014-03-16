@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpseudo.c,v 1.18 2014/03/11 20:35:47 pooka Exp $	*/
+/*	$NetBSD: rndpseudo.c,v 1.19 2014/03/16 05:20:26 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.18 2014/03/11 20:35:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.19 2014/03/16 05:20:26 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -127,8 +127,17 @@ void	rndattach(int);
 dev_type_open(rndopen);
 
 const struct cdevsw rnd_cdevsw = {
-	rndopen, noclose, noread, nowrite, noioctl, nostop,
-	notty, nopoll, nommap, nokqfilter, D_OTHER|D_MPSAFE
+	.d_open = rndopen,
+	.d_close = noclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER | D_MPSAFE
 };
 
 static int rnd_read(struct file *, off_t *, struct uio *, kauth_cred_t, int);

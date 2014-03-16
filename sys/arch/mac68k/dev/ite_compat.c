@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_compat.c,v 1.10 2007/03/04 06:00:07 christos Exp $	*/
+/*	$NetBSD: ite_compat.c,v 1.11 2014/03/16 05:20:24 dholland Exp $	*/
 
 /*
  * Copyright (C) 2000 Scott Reynolds
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_compat.c,v 1.10 2007/03/04 06:00:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_compat.c,v 1.11 2014/03/16 05:20:24 dholland Exp $");
 
 #include "ite.h"
 #include "wsdisplay.h"
@@ -63,8 +63,17 @@ dev_type_poll(itepoll);
 dev_type_kqfilter(itekqfilter);
 
 const struct cdevsw ite_cdevsw = {
-	iteopen, iteclose, iteread, itewrite, iteioctl,
-	nostop, itetty, itepoll, nommap, itekqfilter, D_TTY
+	.d_open = iteopen,
+	.d_close = iteclose,
+	.d_read = iteread,
+	.d_write = itewrite,
+	.d_ioctl = iteioctl,
+	.d_stop = nostop,
+	.d_tty = itetty,
+	.d_poll = itepoll,
+	.d_mmap = nommap,
+	.d_kqfilter = itekqfilter,
+	.d_flag = D_TTY
 };
 
 #if NWSDISPLAY > 0

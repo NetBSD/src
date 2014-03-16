@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.29 2009/10/26 19:16:54 cegger Exp $ */
+/*	$NetBSD: view.c,v 1.30 2014/03/16 05:20:22 dholland Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,7 +38,7 @@
  * a interface to graphics. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.29 2009/10/26 19:16:54 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.30 2014/03/16 05:20:22 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,8 +80,17 @@ dev_type_ioctl(viewioctl);
 dev_type_mmap(viewmmap);
 
 const struct cdevsw view_cdevsw = {
-	viewopen, viewclose, nullread, nullwrite, viewioctl,
-	nostop, notty, nopoll, viewmmap, nokqfilter,
+	.d_open = viewopen,
+	.d_close = viewclose,
+	.d_read = nullread,
+	.d_write = nullwrite,
+	.d_ioctl = viewioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = viewmmap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = 0
 };
 
 /*

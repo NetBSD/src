@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.60 2013/11/19 10:49:00 macallan Exp $ */
+/*	$NetBSD: p9100.c,v 1.61 2014/03/16 05:20:29 dholland Exp $ */
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.60 2013/11/19 10:49:00 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.61 2014/03/16 05:20:29 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,8 +173,17 @@ static dev_type_ioctl(p9100ioctl);
 static dev_type_mmap(p9100mmap);
 
 const struct cdevsw pnozz_cdevsw = {
-	p9100open, nullclose, noread, nowrite, p9100ioctl,
-	nostop, notty, nopoll, p9100mmap, nokqfilter,
+	.d_open = p9100open,
+	.d_close = nullclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = p9100ioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = p9100mmap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = 0
 };
 
 /* frame buffer generic driver */

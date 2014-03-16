@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.115 2012/01/28 01:02:27 rmind Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.116 2014/03/16 05:20:30 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.115 2012/01/28 01:02:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.116 2014/03/16 05:20:30 dholland Exp $");
 
 #include "opt_inet.h"
 
@@ -97,8 +97,17 @@ static dev_type_poll(tunpoll);
 static dev_type_kqfilter(tunkqfilter);
 
 const struct cdevsw tun_cdevsw = {
-	tunopen, tunclose, tunread, tunwrite, tunioctl,
-	nostop, notty, tunpoll, nommap, tunkqfilter, D_OTHER,
+	.d_open = tunopen,
+	.d_close = tunclose,
+	.d_read = tunread,
+	.d_write = tunwrite,
+	.d_ioctl = tunioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = tunpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = tunkqfilter,
+	.d_flag = D_OTHER
 };
 
 void

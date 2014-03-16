@@ -188,7 +188,7 @@ struct cdevsw vchiq_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
-	.d_flag = D_OTHER|D_MPSAFE,
+	.d_flag = D_OTHER | D_MPSAFE
 };
 
 extern struct cfdriver vchiq_cd;

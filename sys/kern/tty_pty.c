@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.134 2014/01/29 02:38:48 yamt Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.135 2014/03/16 05:20:30 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.134 2014/01/29 02:38:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.135 2014/03/16 05:20:30 dholland Exp $");
 
 #include "opt_ptm.h"
 
@@ -109,13 +109,31 @@ dev_type_ioctl(ptyioctl);
 dev_type_tty(ptytty);
 
 const struct cdevsw ptc_cdevsw = {
-	ptcopen, ptcclose, ptcread, ptcwrite, ptyioctl,
-	nullstop, ptytty, ptcpoll, nommap, ptckqfilter, D_TTY
+	.d_open = ptcopen,
+	.d_close = ptcclose,
+	.d_read = ptcread,
+	.d_write = ptcwrite,
+	.d_ioctl = ptyioctl,
+	.d_stop = nullstop,
+	.d_tty = ptytty,
+	.d_poll = ptcpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ptckqfilter,
+	.d_flag = D_TTY
 };
 
 const struct cdevsw pts_cdevsw = {
-	ptsopen, ptsclose, ptsread, ptswrite, ptyioctl,
-	ptsstop, ptytty, ptspoll, nommap, ttykqfilter, D_TTY
+	.d_open = ptsopen,
+	.d_close = ptsclose,
+	.d_read = ptsread,
+	.d_write = ptswrite,
+	.d_ioctl = ptyioctl,
+	.d_stop = ptsstop,
+	.d_tty = ptytty,
+	.d_poll = ptspoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_flag = D_TTY
 };
 
 #if defined(pmax)
@@ -125,13 +143,31 @@ const struct cdevsw pts_cdevsw = {
  */
 
 const struct cdevsw ptc_ultrix_cdevsw = {
-	ptcopen, ptcclose, ptcread, ptcwrite, ptyioctl,
-	nullstop, ptytty, ptcpoll, nommap, ptckqfilter, D_TTY
+	.d_open = ptcopen,
+	.d_close = ptcclose,
+	.d_read = ptcread,
+	.d_write = ptcwrite,
+	.d_ioctl = ptyioctl,
+	.d_stop = nullstop,
+	.d_tty = ptytty,
+	.d_poll = ptcpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ptckqfilter,
+	.d_flag = D_TTY
 };
 
 const struct cdevsw pts_ultrix_cdevsw = {
-	ptsopen, ptsclose, ptsread, ptswrite, ptyioctl,
-	ptsstop, ptytty, ptspoll, nommap, ttykqfilter, D_TTY
+	.d_open = ptsopen,
+	.d_close = ptsclose,
+	.d_read = ptsread,
+	.d_write = ptswrite,
+	.d_ioctl = ptyioctl,
+	.d_stop = ptsstop,
+	.d_tty = ptytty,
+	.d_poll = ptspoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_flag = D_TTY
 };
 #endif /* defined(pmax) */
 

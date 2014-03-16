@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_compat.c,v 1.24 2014/01/30 13:04:06 martin Exp $	*/
+/*	$NetBSD: grf_compat.c,v 1.25 2014/03/16 05:20:24 dholland Exp $	*/
 
 /*
  * Copyright (C) 1999 Scott Reynolds
@@ -34,7 +34,7 @@
 #include "opt_grf_compat.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_compat.c,v 1.24 2014/01/30 13:04:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_compat.c,v 1.25 2014/03/16 05:20:24 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,8 +67,17 @@ dev_type_ioctl(grfioctl);
 dev_type_mmap(grfmmap);
 
 const struct cdevsw grf_cdevsw = {
-	grfopen, grfclose, noread, nowrite, grfioctl,
-	nostop, notty, nopoll, grfmmap, nokqfilter,
+	.d_open = grfopen,
+	.d_close = grfclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = grfioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = grfmmap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = 0
 };
 
 void	grf_scinit(struct grf_softc *, const char *, int);

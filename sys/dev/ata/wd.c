@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.406 2013/10/30 15:41:14 drochner Exp $ */
+/*	$NetBSD: wd.c,v 1.407 2014/03/16 05:20:27 dholland Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.406 2013/10/30 15:41:14 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.407 2014/03/16 05:20:27 dholland Exp $");
 
 #include "opt_ata.h"
 
@@ -142,12 +142,27 @@ dev_type_dump(wddump);
 dev_type_size(wdsize);
 
 const struct bdevsw wd_bdevsw = {
-	wdopen, wdclose, wdstrategy, wdioctl, wddump, wdsize, D_DISK
+	.d_open = wdopen,
+	.d_close = wdclose,
+	.d_strategy = wdstrategy,
+	.d_ioctl = wdioctl,
+	.d_dump = wddump,
+	.d_psize = wdsize,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw wd_cdevsw = {
-	wdopen, wdclose, wdread, wdwrite, wdioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = wdopen,
+	.d_close = wdclose,
+	.d_read = wdread,
+	.d_write = wdwrite,
+	.d_ioctl = wdioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_DISK
 };
 
 /*
