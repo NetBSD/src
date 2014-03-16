@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.144 2013/08/11 22:29:03 joerg Exp $
+#	 $NetBSD: mi,v 1.145 2014/03/16 23:25:15 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5518,6 +5518,7 @@
 ./usr/X11R7/include/X11/extensions/dpmsstr.h		-unknown-	obsolete
 ./usr/X11R7/include/X11/extensions/dri2proto.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/dri2tokens.h		-unknown-	xorg
+./usr/X11R7/include/X11/extensions/dri3proto.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/evieproto.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/extutil.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/fontcache.h		-unknown-	xorg
@@ -5543,6 +5544,9 @@
 ./usr/X11R7/include/X11/extensions/multibufst.h		-unknown-	obsolete
 ./usr/X11R7/include/X11/extensions/panoramiXext.h	-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/panoramiXproto.h	-unknown-	xorg
+./usr/X11R7/include/X11/extensions/presentproto.h	-unknown-	xorg
+./usr/X11R7/include/X11/extensions/presenttokens.h	-unknown-	xorg
+./usr/X11R7/include/X11/extensions/presenttokens.h	-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/randr.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/randrproto.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/record.h		-unknown-	xorg
@@ -6277,6 +6281,7 @@
 ./usr/X11R7/lib/pkgconfig/damageproto.pc		-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/dri.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/dri2proto.pc			-unknown-	xorg
+./usr/X11R7/lib/pkgconfig/dri3proto.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/evieproto.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/fixesproto.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/fontcacheproto.pc		-unknown-	xorg
@@ -6299,6 +6304,7 @@
 ./usr/X11R7/lib/pkgconfig/libfs.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/pciaccess.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/pixman-1.pc			-unknown-	xorg
+./usr/X11R7/lib/pkgconfig/presentproto.pc		-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/printproto.pc			-obsolete-	obsolete
 ./usr/X11R7/lib/pkgconfig/randrproto.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/recordproto.pc		-unknown-	xorg
@@ -9126,8 +9132,10 @@
 ./usr/X11R7/share/xcb/damage.xml			-unknown-	xorg
 ./usr/X11R7/share/xcb/dpms.xml				-unknown-	xorg
 ./usr/X11R7/share/xcb/dri2.xml				-unknown-	xorg
+./usr/X11R7/share/xcb/dri3.xml				-unknown-	xorg
 ./usr/X11R7/share/xcb/ge.xml				-unknown-	xorg
 ./usr/X11R7/share/xcb/glx.xml				-unknown-	xorg
+./usr/X11R7/share/xcb/present.xml			-unknown-	xorg
 ./usr/X11R7/share/xcb/randr.xml				-unknown-	xorg
 ./usr/X11R7/share/xcb/record.xml			-unknown-	xorg
 ./usr/X11R7/share/xcb/render.xml			-unknown-	xorg
