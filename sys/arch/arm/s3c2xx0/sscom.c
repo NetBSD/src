@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.42 2014/03/16 05:20:23 dholland Exp $ */
+/*	$NetBSD: sscom.c,v 1.43 2014/03/16 11:36:26 reinoud Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.42 2014/03/16 05:20:23 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.43 2014/03/16 11:36:26 reinoud Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -186,8 +186,10 @@ static int	sscom_to_tiocm(struct sscom_softc *);
 static void	sscom_iflush(struct sscom_softc *);
 
 static int	sscomhwiflow(struct tty *tp, int block);
+#if defined(KGDB) || defined(SSCOM0CONSOLE) || defined(SSCOM1CONSOLE)
 static int	sscom_init(bus_space_tag_t, const struct sscom_uart_info *,
 		    int, int, tcflag_t, bus_space_handle_t *);
+#endif
 
 extern struct cfdriver sscom_cd;
 
