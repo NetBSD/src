@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.78 2014/03/16 05:20:28 dholland Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.79 2014/03/16 05:49:41 dholland Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.78 2014/03/16 05:20:28 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.79 2014/03/16 05:49:41 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -159,7 +159,7 @@ dev_type_size(rasize);
 const struct bdevsw ra_bdevsw = {
 	.d_open = raopen,
 	.d_close = raclose,
-	.d_strateegy = rastrategy,
+	.d_strategy = rastrategy,
 	.d_ioctl = raioctl,
 	.d_dump = radump,
 	.d_psize = rasize,
