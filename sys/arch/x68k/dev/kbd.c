@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.37 2011/10/23 13:21:54 tsutsui Exp $	*/
+/*	$NetBSD: kbd.c,v 1.38 2014/03/16 05:20:26 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.37 2011/10/23 13:21:54 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.38 2014/03/16 05:20:26 dholland Exp $");
 
 #include "ite.h"
 #include "bell.h"
@@ -93,8 +93,17 @@ dev_type_poll(kbdpoll);
 dev_type_kqfilter(kbdkqfilter);
 
 const struct cdevsw kbd_cdevsw = {
-	kbdopen, kbdclose, kbdread, nowrite, kbdioctl,
-	nostop, notty, kbdpoll, nommap, kbdkqfilter,
+	.d_open = kbdopen,
+	.d_close = kbdclose,
+	.d_read = kbdread,
+	.d_write = nowrite,
+	.d_ioctl = kbdioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = kbdpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = kbdkqfilter,
+	.d_flag = 0
 };
 
 static int

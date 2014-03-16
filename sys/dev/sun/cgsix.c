@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.63 2013/12/03 17:01:04 macallan Exp $ */
+/*	$NetBSD: cgsix.c,v 1.64 2014/03/16 05:20:29 dholland Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.63 2013/12/03 17:01:04 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.64 2014/03/16 05:20:29 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,8 +125,17 @@ dev_type_ioctl(cgsixioctl);
 dev_type_mmap(cgsixmmap);
 
 const struct cdevsw cgsix_cdevsw = {
-	cgsixopen, cgsixclose, noread, nowrite, cgsixioctl,
-	nostop, notty, nopoll, cgsixmmap, nokqfilter, D_OTHER
+	.d_open = cgsixopen,
+	.d_close = cgsixclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = cgsixioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = cgsixmmap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER
 };
 
 /* frame buffer generic driver */

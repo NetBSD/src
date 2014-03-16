@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.59 2011/07/01 19:25:41 dyoung Exp $	*/
+/*	$NetBSD: pccons.c,v 1.60 2014/03/16 05:20:22 dholland Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.59 2011/07/01 19:25:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.60 2014/03/16 05:20:22 dholland Exp $");
 
 #include "opt_ddb.h"
 
@@ -186,8 +186,17 @@ dev_type_poll(pcpoll);
 dev_type_mmap(pcmmap);
 
 const struct cdevsw pc_cdevsw = {
-	pcopen, pcclose, pcread, pcwrite, pcioctl,
-	nostop, pctty, pcpoll, pcmmap, ttykqfilter, D_TTY
+	.d_open = pcopen,
+	.d_close = pcclose,
+	.d_read = pcread,
+	.d_write = pcwrite,
+	.d_ioctl = pcioctl,
+	.d_stop = nostop,
+	.d_tty = pctty,
+	.d_poll = pcpoll,
+	.d_mmap = pcmmap,
+	.d_kqfilter = ttykqfilter,
+	.d_flag = D_TTY
 };
 
 #define	CHR		2

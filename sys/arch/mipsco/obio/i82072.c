@@ -1,4 +1,4 @@
-/*	$NetBSD: i82072.c,v 1.12 2012/10/27 17:18:03 chs Exp $	*/
+/*	$NetBSD: i82072.c,v 1.13 2014/03/16 05:20:25 dholland Exp $	*/
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82072.c,v 1.12 2012/10/27 17:18:03 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82072.c,v 1.13 2014/03/16 05:20:25 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,12 +49,27 @@ dev_type_open(fdopen);
 dev_type_strategy(fdstrategy);
 
 const struct bdevsw fd_bdevsw = {
-	fdopen, nullclose, fdstrategy, noioctl, nodump, nosize, D_DISK
+	.d_open = fdopen,
+	.d_close = nullclose,
+	.d_strategy = fdstrategy,
+	.d_ioctl = noioctl,
+	.d_dump = nodump,
+	.d_psize = nosize,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw fd_cdevsw = {
-	fdopen, nullclose, noread, nowrite, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = fdopen,
+	.d_close = nullclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_DISK
 };
 
 #define	I82072_STATUS	0x000003

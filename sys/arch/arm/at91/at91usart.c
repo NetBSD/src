@@ -1,5 +1,5 @@
-/*	$Id: at91usart.c,v 1.8 2012/11/12 18:00:36 skrll Exp $	*/
-/*	$NetBSD: at91usart.c,v 1.8 2012/11/12 18:00:36 skrll Exp $ */
+/*	$Id: at91usart.c,v 1.9 2014/03/16 05:20:22 dholland Exp $	*/
+/*	$NetBSD: at91usart.c,v 1.9 2014/03/16 05:20:22 dholland Exp $ */
 
 /*
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91usart.c,v 1.8 2012/11/12 18:00:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91usart.c,v 1.9 2014/03/16 05:20:22 dholland Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -185,8 +185,17 @@ dev_type_tty(at91usart_tty);
 dev_type_poll(at91usart_poll);
 
 const struct cdevsw at91usart_cdevsw = {
-	at91usart_open, at91usart_close, at91usart_read, at91usart_write, at91usart_ioctl,
-	at91usart_stop, at91usart_tty, at91usart_poll, nommap, ttykqfilter, D_TTY
+	.d_open = at91usart_open,
+	.d_close = at91usart_close,
+	.d_read = at91usart_read,
+	.d_write = at91usart_write,
+	.d_ioctl = at91usart_ioctl,
+	.d_stop = at91usart_stop,
+	.d_tty = at91usart_tty,
+	.d_poll = at91usart_poll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_flag = D_TTY
 };
 
 #if	NOTYET

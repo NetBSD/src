@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.40 2011/04/24 16:26:59 rmind Exp $	*/
+/*	$NetBSD: dz.c,v 1.41 2014/03/16 05:20:27 dholland Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.40 2011/04/24 16:26:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.41 2014/03/16 05:20:27 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,8 +187,17 @@ static dev_type_tty(dztty);
 static dev_type_poll(dzpoll);
 
 const struct cdevsw dz_cdevsw = {
-	dzopen, dzclose, dzread, dzwrite, dzioctl,
-	dzstop, dztty, dzpoll, nommap, ttykqfilter, D_TTY
+	.d_open = dzopen,
+	.d_close = dzclose,
+	.d_read = dzread,
+	.d_write = dzwrite,
+	.d_ioctl = dzioctl,
+	.d_stop = dzstop,
+	.d_tty = dztty,
+	.d_poll = dzpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_flag = D_TTY
 };
 
 /*

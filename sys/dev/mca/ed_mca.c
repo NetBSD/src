@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.53 2012/10/27 17:18:26 chs Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.54 2014/03/16 05:20:28 dholland Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.53 2012/10/27 17:18:26 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.54 2014/03/16 05:20:28 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,13 +96,27 @@ dev_type_dump(edmcadump);
 dev_type_size(edmcasize);
 
 const struct bdevsw ed_bdevsw = {
-	edmcaopen, edmcaclose, edmcastrategy, edmcaioctl,
-	edmcadump, edmcasize, D_DISK
+	.d_open = edmcaopen,
+	.d_close = edmcaclose,
+	.d_strategy = edmcastrategy,
+	.d_ioctl = edmcaioctl,
+	.d_dump = edmcadump,
+	.d_psize = edmcasize,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw ed_cdevsw = {
-	edmcaopen, edmcaclose, edmcaread, edmcawrite, edmcaioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = edmcaopen,
+	.d_close = edmcaclose,
+	.d_read = edmcaread,
+	.d_write = edmcawrite,
+	.d_ioctl = edmcaioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_DISK
 };
 
 static struct dkdriver eddkdriver = { edmcastrategy, minphys };

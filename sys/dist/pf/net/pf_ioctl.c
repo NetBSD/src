@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.48 2013/07/01 08:32:48 skrll Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.49 2014/03/16 05:20:29 dholland Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.182 2007/06/24 11:17:13 mcbride Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.48 2013/07/01 08:32:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.49 2014/03/16 05:20:29 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -169,8 +169,17 @@ void			 pf_rtlabel_copyout(struct pf_addr_wrap *);
 
 #ifdef __NetBSD__
 const struct cdevsw pf_cdevsw = {
-	pfopen, pfclose, noread, nowrite, pfioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
+	.d_open = pfopen,
+	.d_close = pfclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = pfioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER
 };
 
 static int pfil4_wrapper(void *, struct mbuf **, struct ifnet *, int);

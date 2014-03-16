@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.28 2012/10/29 12:51:39 chs Exp $	*/
+/*	$NetBSD: scr.c,v 1.29 2014/03/16 05:20:25 dholland Exp $	*/
 
 /*
  * Copyright 1997
@@ -102,7 +102,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.28 2012/10/29 12:51:39 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.29 2014/03/16 05:20:25 dholland Exp $");
 
 #include "opt_ddb.h"
 
@@ -641,8 +641,17 @@ dev_type_close(scrclose);
 dev_type_ioctl(scrioctl);
 
 const struct cdevsw scr_cdevsw = {
-	scropen, scrclose, noread, nowrite, scrioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_TTY
+	.d_open = scropen,
+	.d_close = scrclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = scrioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_TTY
 };
 
 /*
