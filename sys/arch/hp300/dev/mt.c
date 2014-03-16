@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.50 2009/12/05 22:34:43 pooka Exp $	*/
+/*	$NetBSD: mt.c,v 1.51 2014/03/16 05:20:24 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.50 2009/12/05 22:34:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.51 2014/03/16 05:20:24 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,12 +142,27 @@ static dev_type_ioctl(mtioctl);
 static dev_type_strategy(mtstrategy);
 
 const struct bdevsw mt_bdevsw = {
-	mtopen, mtclose, mtstrategy, mtioctl, nodump, nosize, D_TAPE
+	.d_open = mtopen,
+	.d_close = mtclose,
+	.d_strategy = mtstrategy,
+	.d_ioctl = mtioctl,
+	.d_dump = nodump,
+	.d_psize = nosize,
+	.d_flag = D_TAPE
 };
 
 const struct cdevsw mt_cdevsw = {
-	mtopen, mtclose, mtread, mtwrite, mtioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_TAPE
+	.d_open = mtopen,
+	.d_close = mtclose,
+	.d_read = mtread,
+	.d_write = mtwrite,
+	.d_ioctl = mtioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_TAPE
 };
 
 static int	mtident(struct mt_softc *, struct hpibbus_attach_args *);

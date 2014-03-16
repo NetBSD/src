@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.61 2013/11/06 06:23:15 mrg Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.62 2014/03/16 05:20:26 dholland Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.61 2013/11/06 06:23:15 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.62 2014/03/16 05:20:26 dholland Exp $");
 
 #include "opt_xen.h"
 
@@ -191,13 +191,27 @@ dev_type_dump(xbddump);
 dev_type_size(xbdsize);
 
 const struct bdevsw xbd_bdevsw = {
-	xbdopen, xbdclose, xbdstrategy, xbdioctl,
-	xbddump, xbdsize, D_DISK
+	.d_open = xbdopen,
+	.d_close = xbdclose,
+	.d_strategy = xbdstrategy,
+	.d_ioctl = xbdioctl,
+	.d_dump = xbddump,
+	.d_psize = xbdsize,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw xbd_cdevsw = {
-	xbdopen, xbdclose, xbdread, xbdwrite, xbdioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = xbdopen,
+	.d_close = xbdclose,
+	.d_read = xbdread,
+	.d_write = xbdwrite,
+	.d_ioctl = xbdioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_DISK
 };
 
 extern struct cfdriver xbd_cd;

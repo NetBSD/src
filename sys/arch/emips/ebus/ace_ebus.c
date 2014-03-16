@@ -1,4 +1,4 @@
-/*	$NetBSD: ace_ebus.c,v 1.9 2013/11/10 18:27:15 christos Exp $	*/
+/*	$NetBSD: ace_ebus.c,v 1.10 2014/03/16 05:20:23 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.9 2013/11/10 18:27:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.10 2014/03/16 05:20:23 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1462,7 +1462,7 @@ sysace_send_config(struct ace_softc *sc, uint32_t *Data, unsigned int nBytes)
  * Rest of code lifted with mods from the dev\ata\wd.c driver
  */
 
-/*	$NetBSD: ace_ebus.c,v 1.9 2013/11/10 18:27:15 christos Exp $ */
+/*	$NetBSD: ace_ebus.c,v 1.10 2014/03/16 05:20:23 dholland Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -1556,12 +1556,27 @@ dev_type_dump(acedump);
 dev_type_size(acesize);
 
 const struct bdevsw ace_bdevsw = {
-	aceopen, aceclose, acestrategy, aceioctl, acedump, acesize, D_DISK
+	.d_open = aceopen,
+	.d_close = aceclose,
+	.d_strategy = acestrategy,
+	.d_ioctl = aceioctl,
+	.d_dump = acedump,
+	.d_psize = acesize,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw ace_cdevsw = {
-	aceopen, aceclose, aceread, acewrite, aceioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = aceopen,
+	.d_close = aceclose,
+	.d_read = aceread,
+	.d_write = acewrite,
+	.d_ioctl = aceioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_DISK
 };
 
 void  acegetdefaultlabel(struct ace_softc *, struct disklabel *);

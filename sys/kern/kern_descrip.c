@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.223 2014/02/25 18:30:11 pooka Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.224 2014/03/16 05:20:30 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.223 2014/02/25 18:30:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.224 2014/03/16 05:20:30 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,8 +122,17 @@ static void fill_file(struct kinfo_file *, const file_t *, const fdfile_t *,
 		      int, pid_t);
 
 const struct cdevsw filedesc_cdevsw = {
-	filedescopen, noclose, noread, nowrite, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER | D_MPSAFE,
+	.d_open = filedescopen,
+	.d_close = noclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER | D_MPSAFE
 };
 
 /* For ease of reading. */

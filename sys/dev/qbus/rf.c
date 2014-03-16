@@ -1,4 +1,4 @@
-/*	$NetBSD: rf.c,v 1.25 2012/10/27 17:18:37 chs Exp $	*/
+/*	$NetBSD: rf.c,v 1.26 2014/03/16 05:20:29 dholland Exp $	*/
 /*
  * Copyright (c) 2002 Jochen Kunz.
  * All rights reserved.
@@ -36,7 +36,7 @@ TODO:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.25 2012/10/27 17:18:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.26 2014/03/16 05:20:29 dholland Exp $");
 
 /* autoconfig stuff */
 #include <sys/param.h>
@@ -117,27 +117,27 @@ dev_type_size(rfsize);
 
 /* Entries in block and character major device number switch table. */
 const struct bdevsw rf_bdevsw = {
-	rfopen,
-	rfclose,
-	rfstrategy,
-	rfioctl,
-	rfdump,
-	rfsize,
-	D_DISK
+	.d_open = rfopen,
+	.d_close = rfclose,
+	.d_strategy = rfstrategy,
+	.d_ioctl = rfioctl,
+	.d_dump = rfdump,
+	.d_psize = rfsize,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw rf_cdevsw = {
-	rfopen,
-	rfclose,
-	rfread,
-	rfwrite,
-	rfioctl,
-	nostop,
-	notty,
-	nopoll,
-	nommap,
-	nokqfilter,
-	D_DISK
+	.d_open = rfopen,
+	.d_close = rfclose,
+	.d_read = rfread,
+	.d_write = rfwrite,
+	.d_ioctl = rfioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_DISK
 };
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.81 2014/01/22 00:25:16 christos Exp $ */
+/*	$NetBSD: ser.c,v 1.82 2014/03/16 05:20:22 dholland Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.81 2014/01/22 00:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.82 2014/03/16 05:20:22 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,8 +89,17 @@ dev_type_tty(sertty);
 dev_type_poll(serpoll);
 
 const struct cdevsw ser_cdevsw = {
-	seropen, serclose, serread, serwrite, serioctl,
-	serstop, sertty, serpoll, nommap, ttykqfilter, D_TTY
+	.d_open = seropen,
+	.d_close = serclose,
+	.d_read = serread,
+	.d_write = serwrite,
+	.d_ioctl = serioctl,
+	.d_stop = serstop,
+	.d_tty = sertty,
+	.d_poll = serpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_flag = D_TTY
 };
 
 #ifndef SEROBUF_SIZE

@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.47 2014/03/13 16:34:13 hannken Exp $ */
+/*	$NetBSD: twa.c,v 1.48 2014/03/16 05:20:28 dholland Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.47 2014/03/13 16:34:13 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.48 2014/03/16 05:20:28 dholland Exp $");
 
 //#define TWA_DEBUG
 
@@ -2273,8 +2273,17 @@ fw_passthru_done:
 }
 
 const struct cdevsw twa_cdevsw = {
-	twaopen, twaclose, noread, nowrite, twaioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
+	.d_open = twaopen,
+	.d_close = twaclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = twaioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER
 };
 
 /*

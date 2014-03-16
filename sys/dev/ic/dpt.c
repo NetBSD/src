@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.69 2013/09/12 19:49:08 martin Exp $	*/
+/*	$NetBSD: dpt.c,v 1.70 2014/03/16 05:20:27 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.69 2013/09/12 19:49:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.70 2014/03/16 05:20:27 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,8 +137,17 @@ dev_type_open(dptopen);
 dev_type_ioctl(dptioctl);
 
 const struct cdevsw dpt_cdevsw = {
-	dptopen, nullclose, noread, nowrite, dptioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
+	.d_open = dptopen,
+	.d_close = nullclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = dptioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER,
 };
 
 extern struct cfdriver dpt_cd;

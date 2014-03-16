@@ -1,4 +1,4 @@
-/*	$NetBSD: gdrom.c,v 1.36 2014/03/14 08:50:08 martin Exp $	*/
+/*	$NetBSD: gdrom.c,v 1.37 2014/03/16 05:20:23 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.36 2014/03/14 08:50:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.37 2014/03/16 05:20:23 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,13 +64,27 @@ dev_type_ioctl(gdromioctl);
 dev_type_strategy(gdromstrategy);
 
 const struct bdevsw gdrom_bdevsw = {
-	gdromopen, gdromclose, gdromstrategy, gdromioctl, nodump,
-	nosize, D_DISK
+	.d_open = gdromopen,
+	.d_close = gdromclose,
+	.d_strateegy = gdromstrategy,
+	.d_ioctl = gdromioctl,
+	.d_dump = nodump,
+	.d_psize = nosize,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw gdrom_cdevsw = {
-	gdromopen, gdromclose, gdromread, gdromwrite, gdromioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = gdromopen,
+	.d_close = gdromclose,
+	.d_read = gdromread,
+	.d_write = gdromwrite,
+	.d_ioctl = gdromioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_DISK
 };
 
 struct gdrom_softc {

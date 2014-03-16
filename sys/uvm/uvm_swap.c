@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.167 2014/02/22 19:05:31 mlelstv Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.168 2014/03/16 05:20:30 dholland Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.167 2014/02/22 19:05:31 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.168 2014/03/16 05:20:30 dholland Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -1277,12 +1277,27 @@ swwrite(dev_t dev, struct uio *uio, int ioflag)
 }
 
 const struct bdevsw swap_bdevsw = {
-	nullopen, nullclose, swstrategy, noioctl, nodump, nosize, D_OTHER,
+	.d_open = nullopen,
+	.d_close = nullclose,
+	.d_strategy = swstrategy,
+	.d_ioctl = noioctl,
+	.d_dump = nodump,
+	.d_psize = nosize,
+	.d_flag = D_OTHER
 };
 
 const struct cdevsw swap_cdevsw = {
-	nullopen, nullclose, swread, swwrite, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
+	.d_open = nullopen,
+	.d_close = nullclose,
+	.d_read = swread,
+	.d_write = swwrite,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER,
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: epcom.c,v 1.25 2014/03/08 18:08:48 skrll Exp $ */
+/*	$NetBSD: epcom.c,v 1.26 2014/03/16 05:20:23 dholland Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.25 2014/03/08 18:08:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.26 2014/03/16 05:20:23 dholland Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -162,8 +162,17 @@ dev_type_tty(epcomtty);
 dev_type_poll(epcompoll);
 
 const struct cdevsw epcom_cdevsw = {
-	epcomopen, epcomclose, epcomread, epcomwrite, epcomioctl,
-	epcomstop, epcomtty, epcompoll, nommap, ttykqfilter, D_TTY
+	.d_open = epcomopen,
+	.d_close = epcomclose,
+	.d_read = epcomread,
+	.d_write = epcomwrite,
+	.d_ioctl = epcomioctl,
+	.d_stop = epcomstop,
+	.d_tty = epcomtty,
+	.d_poll = epcompoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_flag = D_TTY
 };
 
 struct consdev epcomcons = {

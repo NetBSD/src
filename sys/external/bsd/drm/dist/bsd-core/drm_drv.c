@@ -304,17 +304,17 @@ devclass_t drm_devclass;
 struct drm_device *drm_units[DRM_MAXUNITS];
 
 struct cdevsw drm_cdevsw = {
-	drm_open,
-	drm_close,
-	drm_read,
-	nowrite,
-	drm_ioctl,
-	nostop,
-	notty,
-	drm_poll,
-	drm_mmap,
-	nokqfilter,
-	D_TTY | D_NEGOFFSAFE
+	.d_open = drm_open,
+	.d_close = drm_close,
+	.d_read = drm_read,
+	.d_write = nowrite,
+	.d_ioctl = drm_ioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = drm_poll,
+	.d_mmap = drm_mmap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_TTY | D_NEGOFFSAFE
 };
 
 int drm_refcnt = 0;

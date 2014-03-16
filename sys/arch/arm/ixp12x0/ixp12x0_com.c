@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_com.c,v 1.42 2012/11/12 18:00:37 skrll Exp $ */
+/*	$NetBSD: ixp12x0_com.c,v 1.43 2014/03/16 05:20:23 dholland Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.42 2012/11/12 18:00:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.43 2014/03/16 05:20:23 dholland Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -151,8 +151,17 @@ dev_type_tty(ixpcomtty);
 dev_type_poll(ixpcompoll);
 
 const struct cdevsw ixpcom_cdevsw = {
-	ixpcomopen, ixpcomclose, ixpcomread, ixpcomwrite, ixpcomioctl,
-	ixpcomstop, ixpcomtty, ixpcompoll, nommap, ttykqfilter, D_TTY
+	.d_open = ixpcomopen,
+	.d_close = ixpcomclose,
+	.d_read = ixpcomread,
+	.d_write = ixpcomwrite,
+	.d_ioctl = ixpcomioctl,
+	.d_stop = ixpcomstop,
+	.d_tty = ixpcomtty,
+	.d_poll = ixpcompoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_flag = D_TTY
 };
 
 struct consdev ixpcomcons = {

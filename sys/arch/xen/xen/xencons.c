@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.39 2011/12/07 15:47:43 cegger Exp $	*/
+/*	$NetBSD: xencons.c,v 1.40 2014/03/16 05:20:26 dholland Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.39 2011/12/07 15:47:43 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.40 2014/03/16 05:20:26 dholland Exp $");
 
 #include "opt_xen.h"
 
@@ -122,9 +122,17 @@ dev_type_tty(xencons_tty);
 dev_type_poll(xencons_poll);
 
 const struct cdevsw xencons_cdevsw = {
-	xencons_open, xencons_close, xencons_read, xencons_write,
-	xencons_ioctl, xencons_stop, xencons_tty, xencons_poll,
-	NULL, ttykqfilter, D_TTY
+	.d_open = xencons_open,
+	.d_close = xencons_close,
+	.d_read = xencons_read,
+	.d_write = xencons_write,
+	.d_ioctl = xencons_ioctl, 
+	.d_stop = xencons_stop,
+	.d_tty = xencons_tty,
+	.d_poll = xencons_poll,
+	.d_mmap = NULL,	/* XXX: is this safe? - dholland 20140315 */
+	.d_kqfilter = ttykqfilter,
+	.d_flag = D_TTY
 };
 
 
