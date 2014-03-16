@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.125 2014/02/24 11:43:33 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.126 2014/03/16 10:16:15 njoly Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.125 2014/02/24 11:43:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.126 2014/03/16 10:16:15 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -971,7 +971,9 @@ rump_vop_setattr(void *v)
 		size_t copylen, newlen;
 
 		newlen = vap->va_size;
-		newdata = rump_hypermalloc(newlen, 0, true, "rumpfs");
+		newdata = rump_hypermalloc(newlen, 0, false, "rumpfs");
+		if (newdata == NULL)
+			return ENOSPC;
 
 		copylen = MIN(rn->rn_dlen, newlen);
 		memset(newdata, 0, newlen);
@@ -1465,7 +1467,9 @@ rump_vop_write(void *v)
 		oldlen = rn->rn_dlen;
 		olddata = rn->rn_data;
 
-		rn->rn_data = rump_hypermalloc(newlen, 0, true, "rumpfs");
+		rn->rn_data = rump_hypermalloc(newlen, 0, false, "rumpfs");
+		if (rn->rn_data == NULL)
+			return ENOSPC;
 		rn->rn_dlen = newlen;
 		memset(rn->rn_data, 0, newlen);
 		memcpy(rn->rn_data, olddata, oldlen);
