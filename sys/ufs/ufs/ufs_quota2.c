@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.37 2014/01/29 20:13:04 bouyer Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.38 2014/03/16 01:21:35 uwe Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.37 2014/01/29 20:13:04 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.38 2014/03/16 01:21:35 uwe Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -1280,7 +1280,7 @@ quota2_handle_cmd_cursorget(struct ufsmount *ump, struct quotakcursor *qkc,
 	struct q2cursor_state state;
 	struct quota2_entry default_q2e;
 	int idtype;
-	int quota2_hash_size;
+	int quota2_hash_size = 0; /* XXX: sh3 gcc 4.8 -Wuninitialized */
 
 	/*
 	 * Convert and validate the cursor.
