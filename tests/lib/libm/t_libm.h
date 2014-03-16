@@ -1,15 +1,18 @@
-/* $NetBSD: t_libm.h,v 1.4 2014/03/16 18:42:21 dsl Exp $ */
+/* $NetBSD: t_libm.h,v 1.5 2014/03/16 22:49:27 dsl Exp $ */
 
 /*
  * Check result of fn(arg) is correct within the bounds.
  * Should be ok to do the checks using 'double' for 'float' functions.
+ * On i386 float and double values are returned on the x87 stack and might
+ * be out of range for the function - so save and print as 'long double'.
+ * (otherwise you can get 'inf != inf' reported!)
  */
 #define T_LIBM_CHECK(subtest, fn, arg, expect, epsilon) do { \
-	double r = fn(arg); \
+	long double r = fn(arg); \
 	double e = fabs(r - expect); \
 	if (r != expect && e > epsilon) \
 		atf_tc_fail_nonfatal( \
-		    "subtest %u: " #fn "(%g) is %g (%.13a) not %g (%.13a), error %g (%.6a) > %g", \
+		    "subtest %u: " #fn "(%g) is %Lg (%.14La) not %g (%.13a), error %g (%.6a) > %g", \
 		    subtest, arg, r, r, expect, expect, e, e, epsilon); \
     } while (0)
 
