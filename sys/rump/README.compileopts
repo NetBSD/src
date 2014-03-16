@@ -1,4 +1,4 @@
-	$NetBSD: README.compileopts,v 1.2 2014/03/16 14:47:47 pooka Exp $
+	$NetBSD: README.compileopts,v 1.3 2014/03/16 15:31:03 pooka Exp $
 
 This file describes compile-time options for rump kernels.  Additionally,
 NetBSD build options will have an effect.  See src/share/mk/bsd.README
@@ -59,6 +59,20 @@ defval:	yes
 effect:	Iff "yes", build the virt(4) network interface.  Turning this
 	off may be necessary on systems that lack the necessary headers,
 	e.g. musl libc based Linux.
+
+
+    RUMP_CURLWP
+
+values: hypercall/__thread/register or <undefined>
+defval: <undefined>
+effect: Control how curlwp is obtained in a rump kernel.  This is
+	a very frequently accessed thread-local variable, and optimizing
+	access has a significant performance impact.  Note that all
+	options are not available on hosts/machine architectures.
+	<undefined> - use default implementation (currently "hypercall")
+	hypercall   - use a hypercall to fetch the value
+	__thread    - use the __thread feature to fetch value via TLS
+	register    - use a dedicated register (implies -ffixed)
 
 
 ================================================================================
