@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.93 2014/03/16 14:02:06 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.94 2014/03/16 15:31:03 pooka Exp $
 #
 
 WARNS?=		3	# XXX: src/sys won't compile with -Wsign-compare yet
@@ -50,6 +50,18 @@ SRCS+=		linksyms_sun.c
 LDFLAGS+=	-Wl,-T,${RUMPTOP}/ldscript.rump
 .else
 .error Unknown ldscript ${RUMP_LDSCRIPT}
+.endif
+.endif
+
+.if defined(RUMP_CURLWP)
+.if   ${RUMP_CURLWP} == "hypercall"
+CPPFLAGS+=	-DRUMP_CURLWP=RUMP_CURLWP_HYPERCALL
+.elif ${RUMP_CURLWP} == "__thread"
+CPPFLAGS+=	-DRUMP_CURLWP=RUMP_CURLWP___THREAD
+.elif ${RUMP_CURLWP} == "register"
+CPPFLAGS+=	-DRUMP_CURLWP=RUMP_CURLWP_REGISTER
+.else
+.error Unsupported curlwp scheme: ${RUMP_CURLWP}
 .endif
 .endif
 
