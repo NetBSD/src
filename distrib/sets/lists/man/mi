@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1463 2014/03/03 18:27:20 pooka Exp $
+# $NetBSD: mi,v 1.1464 2014/03/16 09:28:58 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1800,6 +1800,7 @@
 ./usr/share/man/cat4/ukyopon.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ulpt.0			man-sys-catman		.cat
 ./usr/share/man/cat4/umass.0			man-sys-catman		.cat
+./usr/share/man/cat4/umcs.0			man-sys-catman		.cat
 ./usr/share/man/cat4/umct.0			man-sys-catman		.cat
 ./usr/share/man/cat4/umidi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/umodem.0			man-sys-catman		.cat
@@ -4756,6 +4757,7 @@
 ./usr/share/man/html4/ukyopon.html		man-sys-htmlman		html
 ./usr/share/man/html4/ulpt.html			man-sys-htmlman		html
 ./usr/share/man/html4/umass.html		man-sys-htmlman		html
+./usr/share/man/html4/umcs.html			man-sys-htmlman		html
 ./usr/share/man/html4/umct.html			man-sys-htmlman		html
 ./usr/share/man/html4/umidi.html		man-sys-htmlman		html
 ./usr/share/man/html4/umodem.html		man-sys-htmlman		html
@@ -7634,6 +7636,7 @@
 ./usr/share/man/man4/ukyopon.4			man-sys-man		.man
 ./usr/share/man/man4/ulpt.4			man-sys-man		.man
 ./usr/share/man/man4/umass.4			man-sys-man		.man
+./usr/share/man/man4/umcs.4			man-sys-man		.man
 ./usr/share/man/man4/umct.4			man-sys-man		.man
 ./usr/share/man/man4/umidi.4			man-sys-man		.man
 ./usr/share/man/man4/umodem.4			man-sys-man		.man
