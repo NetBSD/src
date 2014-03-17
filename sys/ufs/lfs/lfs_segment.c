@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.233 2013/10/29 09:53:51 hannken Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.234 2014/03/17 09:33:20 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.233 2013/10/29 09:53:51 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.234 2014/03/17 09:33:20 hannken Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -508,7 +508,7 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 		}
 
 		mutex_enter(vp->v_interlock);
-		if (vp->v_type == VNON || vismarker(vp) ||
+		if (vp->v_type == VNON || (vp->v_iflag & VI_MARKER) ||
 		    (vp->v_iflag & VI_CLEAN) != 0) {
 			mutex_exit(vp->v_interlock);
 			continue;
