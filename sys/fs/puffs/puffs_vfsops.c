@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.107 2013/01/16 21:10:14 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.108 2014/03/17 09:36:34 hannken Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.107 2013/01/16 21:10:14 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.108 2014/03/17 09:36:34 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -518,14 +518,12 @@ static int
 pageflush(struct mount *mp, kauth_cred_t cred, int waitfor)
 {
 	struct puffs_node *pn;
-	struct vnode *vp, *mvp;
+	struct vnode *vp;
+	struct vnode_iterator *marker;
 	int error, rv, fsyncwait;
 
 	error = 0;
 	fsyncwait = (waitfor == MNT_WAIT) ? FSYNC_WAIT : 0;
-
-	/* Allocate a marker vnode. */
-	mvp = vnalloc(mp);
 
 	/*
 	 * Sync all cached data from regular vnodes (which are not
@@ -533,22 +531,8 @@ pageflush(struct mount *mp, kauth_cred_t cred, int waitfor)
 	 * for the fs server, which should handle data and metadata for
 	 * all the nodes it knows to exist.
 	 */
-	mutex_enter(&mntvnode_lock);
- loop:
-	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
-		vmark(mvp, vp);
-		if (vp->v_mount != mp || vismarker(vp))
-			continue;
-
-		mutex_enter(vp->v_interlock);
-		pn = VPTOPP(vp);
-		if (vp->v_type != VREG || UVM_OBJ_IS_CLEAN(&vp->v_uobj)) {
-			mutex_exit(vp->v_interlock);
-			continue;
-		}
-
-		mutex_exit(&mntvnode_lock);
-
+	vfs_vnode_iterator_init(mp, &marker);
+	while (vfs_vnode_iterator_next(marker, &vp)) {
 		/*
 		 * Here we try to get a reference to the vnode and to
 		 * lock it.  This is mostly cargo-culted, but I will
@@ -564,13 +548,14 @@ pageflush(struct mount *mp, kauth_cred_t cred, int waitfor)
 		 * vnodes through other routes in any case.  So there,
 		 * sync() doesn't actually sync.  Happy now?
 		 */
-		rv = vget(vp, LK_EXCLUSIVE | LK_NOWAIT);
-		if (rv) {
-			mutex_enter(&mntvnode_lock);
-			if (rv == ENOENT) {
-				(void)vunmark(mvp);
-				goto loop;
-			}
+		error = vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT);
+		if (error) {
+			vrele(vp);
+			continue;
+		}
+		pn = VPTOPP(vp);
+		if (vp->v_type != VREG || UVM_OBJ_IS_CLEAN(&vp->v_uobj)) {
+			vput(vp);
 			continue;
 		}
 
@@ -589,10 +574,8 @@ pageflush(struct mount *mp, kauth_cred_t cred, int waitfor)
 		if (rv)
 			error = rv;
 		vput(vp);
-		mutex_enter(&mntvnode_lock);
 	}
-	mutex_exit(&mntvnode_lock);
-	vnfree(mvp);
+	vfs_vnode_iterator_destroy(marker);
 
 	return error;
 }
