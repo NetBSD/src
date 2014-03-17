@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ARMADAXP,v 1.6 2013/08/09 21:19:43 aymeric Exp $
+#	$NetBSD: ARMADAXP,v 1.7 2014/03/17 01:56:14 kiyohara Exp $
 #
 #	ARMADA XP DEV BOARD
 #
@@ -172,6 +172,7 @@ options 	MEMSIZE=0x80000000
 
 # Marvell SoC Bus
 mvsoc0		at mainbus?
+options 	MVSOC_INTERREGS_PBASE=0xd0000000
 
 # On-chip Timers
 mvsoctmr*	at mvsoc? offset ? irq ?
