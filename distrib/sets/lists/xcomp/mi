@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.146 2014/03/17 01:09:07 mrg Exp $
+#	 $NetBSD: mi,v 1.147 2014/03/17 07:25:34 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6210,6 +6210,8 @@
 ./usr/X11R7/lib/libpciaccess_p.a			-unknown-	profile,xorg
 ./usr/X11R7/lib/libpixman-1.a				-unknown-	xorg
 ./usr/X11R7/lib/libpixman-1_p.a				-unknown-	profile,xorg
+./usr/X11R7/lib/libpthread-stubs.a			-unknown-	xorg
+./usr/X11R7/lib/libpthread-stubs_p.a			-unknown-	profile,xorg
 ./usr/X11R7/lib/libre.a					-unknown-	xorg
 ./usr/X11R7/lib/libre_p.a				-unknown-	profile,xorg
 ./usr/X11R7/lib/libxcb-atom.a				-unknown-	xorg
@@ -6224,6 +6226,8 @@
 ./usr/X11R7/lib/libxcb-dpms_p.a				-unknown-	profile,xorg
 ./usr/X11R7/lib/libxcb-dri2.a				-unknown-	xorg
 ./usr/X11R7/lib/libxcb-dri2_p.a				-unknown-	profile,xorg
+./usr/X11R7/lib/libxcb-dri3.a				-unknown-	xorg
+./usr/X11R7/lib/libxcb-dri3_p.a				-unknown-	profile,xorg
 ./usr/X11R7/lib/libxcb-event.a				-unknown-	xorg
 ./usr/X11R7/lib/libxcb-event_p.a			-unknown-	profile,xorg
 ./usr/X11R7/lib/libxcb-glx.a				-unknown-	xorg
@@ -6234,6 +6238,8 @@
 ./usr/X11R7/lib/libxcb-image_p.a			-unknown-	profile,xorg
 ./usr/X11R7/lib/libxcb-keysyms.a			-unknown-	xorg
 ./usr/X11R7/lib/libxcb-keysyms_p.a			-unknown-	profile,xorg
+./usr/X11R7/lib/libxcb-present.a			-unknown-	xorg
+./usr/X11R7/lib/libxcb-present_p.a			-unknown-	profile,xorg
 ./usr/X11R7/lib/libxcb-property.a			-unknown-	xorg
 ./usr/X11R7/lib/libxcb-property_p.a			-unknown-	profile,xorg
 ./usr/X11R7/lib/libxcb-randr.a				-unknown-	xorg
@@ -6264,6 +6270,8 @@
 ./usr/X11R7/lib/libxcb-xfixes_p.a			-unknown-	profile,xorg
 ./usr/X11R7/lib/libxcb-xinerama.a			-unknown-	xorg
 ./usr/X11R7/lib/libxcb-xinerama_p.a			-unknown-	profile,xorg
+./usr/X11R7/lib/libxcb-xkb.a				-unknown-	xorg
+./usr/X11R7/lib/libxcb-xkb_p.a				-unknown-	profile,xorg
 ./usr/X11R7/lib/libxcb-xtest.a				-unknown-	xorg
 ./usr/X11R7/lib/libxcb-xtest_p.a			-unknown-	profile,xorg
 ./usr/X11R7/lib/libxcb-xv.a				-unknown-	xorg
@@ -6306,6 +6314,7 @@
 ./usr/X11R7/lib/pkgconfig/pixman-1.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/presentproto.pc		-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/printproto.pc			-obsolete-	obsolete
+./usr/X11R7/lib/pkgconfig/pthread-stubs.pc		-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/randrproto.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/recordproto.pc		-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/renderproto.pc		-unknown-	xorg
@@ -6327,11 +6336,13 @@
 ./usr/X11R7/lib/pkgconfig/xcb-damage.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xcb-dpms.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xcb-dri2.pc			-unknown-	xorg
+./usr/X11R7/lib/pkgconfig/xcb-dri3.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xcb-event.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xcb-glx.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xcb-icccm.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xcb-image.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xcb-keysyms.pc		-unknown-	xorg
+./usr/X11R7/lib/pkgconfig/xcb-present.pc		-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xcb-property.pc		-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xcb-proto.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xcb-randr.pc			-unknown-	xorg
@@ -6348,6 +6359,7 @@
 ./usr/X11R7/lib/pkgconfig/xcb-xf86dri.pc		-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xcb-xfixes.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xcb-xinerama.pc		-unknown-	xorg
+./usr/X11R7/lib/pkgconfig/xcb-xkb.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xcb-xtest.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xcb-xv.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xcb-xvmc.pc			-unknown-	xorg

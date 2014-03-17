@@ -20,7 +20,7 @@ extern "C" {
 #endif
 
 #define XCB_GLX_MAJOR_VERSION 1
-#define XCB_GLX_MINOR_VERSION 3
+#define XCB_GLX_MINOR_VERSION 4
   
 extern xcb_extension_t xcb_glx_id;
 
@@ -242,6 +242,26 @@ typedef struct xcb_glx_pbuffer_clobber_event_t {
     uint16_t           count; /**<  */
     uint8_t            pad1[4]; /**<  */
 } xcb_glx_pbuffer_clobber_event_t;
+
+/** Opcode for xcb_glx_buffer_swap_complete. */
+#define XCB_GLX_BUFFER_SWAP_COMPLETE 1
+
+/**
+ * @brief xcb_glx_buffer_swap_complete_event_t
+ **/
+typedef struct xcb_glx_buffer_swap_complete_event_t {
+    uint8_t            response_type; /**<  */
+    uint8_t            pad0; /**<  */
+    uint16_t           sequence; /**<  */
+    uint16_t           event_type; /**<  */
+    uint8_t            pad1[2]; /**<  */
+    xcb_glx_drawable_t drawable; /**<  */
+    uint32_t           ust_hi; /**<  */
+    uint32_t           ust_lo; /**<  */
+    uint32_t           msc_hi; /**<  */
+    uint32_t           msc_lo; /**<  */
+    uint32_t           sbc; /**<  */
+} xcb_glx_buffer_swap_complete_event_t;
 
 typedef enum xcb_glx_pbcet_t {
     XCB_GLX_PBCET_DAMAGED = 32791,
