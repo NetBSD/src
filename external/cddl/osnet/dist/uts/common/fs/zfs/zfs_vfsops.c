@@ -153,7 +153,8 @@ zfs_sync(vfs_t *vfsp, int flag, cred_t *cr)
 {
 	zfsvfs_t *zfsvfs = vfsp->vfs_data;
 	znode_t *zp;
-	vnode_t *vp, *nvp, *mvp;
+	vnode_t *vp;
+	struct vnode_iterator *marker;
 	dmu_tx_t *tx;
 	int error;
 	
@@ -167,51 +168,26 @@ zfs_sync(vfs_t *vfsp, int flag, cred_t *cr)
 	if (panicstr)
 		return (0);
 
-	/* Allocate a marker vnode. */
-	mvp = vnalloc(vfsp);
-
 	/*
 	 * On NetBSD, we need to push out atime updates.  Solaris does
 	 * this during VOP_INACTIVE, but that does not work well with the
 	 * BSD VFS, so we do it in batch here.
 	 */
-	mutex_enter(&mntvnode_lock);
-loop:
-	for (vp = TAILQ_FIRST(&vfsp->mnt_vnodelist); vp; vp = nvp) {
-		nvp = TAILQ_NEXT(vp, v_mntvnodes);
-		/*
-		 * If the vnode that we are about to sync is no
-		 * longer associated with this mount point, start
-		 * over.
-		 */
-		if (vp->v_mount != vfsp)
-			goto loop;
-		/*
-		 * Don't interfere with concurrent scans of this FS.
-		 */
-		if (vismarker(vp))
+	vfs_vnode_iterator_init(vfsp, &marker);
+	while (vfs_vnode_iterator_next(marker, &vp)) {
+		error = vn_lock(vp, LK_EXCLUSIVE);
+		if (error) {
+			vrele(vp);
 			continue;
+		}
 		/*
 		 * Skip the vnode/inode if inaccessible, or if the
 		 * atime is clean.
 		 */
-		mutex_enter(vp->v_interlock);
 		zp = VTOZ(vp);
 		if (zp == NULL || vp->v_type == VNON ||
-		   (vp->v_iflag & (VI_XLOCK | VI_CLEAN)) != 0 ||
 		   zp->z_atime_dirty == 0 || zp->z_unlinked) {
-			mutex_exit(vp->v_interlock);
-			continue;
-		}
-		vmark(mvp, vp);
-		mutex_exit(&mntvnode_lock);
-		error = vget(vp, LK_EXCLUSIVE);
-		if (error) {
-			mutex_enter(&mntvnode_lock);
-			nvp = vunmark(mvp);
-			if (error == ENOENT) {
-				goto loop;
-			}
+			vput(vp);
 			continue;
 		}
 		tx = dmu_tx_create(zfsvfs->z_os);
@@ -227,10 +203,8 @@ loop:
 			dmu_tx_commit(tx);
 		}
 		vput(vp);
-		mutex_enter(&mntvnode_lock);
-		nvp = vunmark(mvp);
 	}
-	mutex_exit(&mntvnode_lock);
+	vfs_vnode_iterator_destroy(marker);
 
 	/*
 	 * SYNC_ATTR is used by fsflush() to force old filesystems like UFS
@@ -274,8 +248,6 @@ loop:
 		spa_sync_allpools();
 	}
 
-	vnfree(nvp);
-	
 	return (0);
 }
 
