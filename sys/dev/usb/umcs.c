@@ -1,4 +1,4 @@
-/* $NetBSD: umcs.c,v 1.2 2014/03/16 10:06:40 martin Exp $ */
+/* $NetBSD: umcs.c,v 1.3 2014/03/17 19:59:42 martin Exp $ */
 /* $FreeBSD: head/sys/dev/usb/serial/umcs.c 260559 2014-01-12 11:44:28Z hselasky $ */
 
 /*-
@@ -41,7 +41,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.2 2014/03/16 10:06:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.3 2014/03/17 19:59:42 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.2 2014/03/16 10:06:40 martin Exp $");
 #include <sys/conf.h>
 #include <sys/tty.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/workqueue.h>
 
 #include <dev/usb/usb.h>
@@ -90,8 +90,8 @@ struct umcs7840_softc {
 	usbd_interface_handle sc_iface; /* the usb interface */
 	usbd_device_handle sc_udev;	/* the usb device */
 	usbd_pipe_handle sc_intr_pipe;	/* interrupt pipe */
-	usbd_xfer_handle sc_intr_xfer;	/* and preallocated xfer */
 	uint8_t *sc_intr_buf;		/* buffer for interrupt xfer */
+	unsigned int sc_intr_buflen;	/* size of buffer */
 	struct workqueue *sc_change_wq;	/* workqueue for status changes */
 	struct work sc_work;		/* work for said workqueue.  */
 	struct umcs7840_softc_oneport sc_ports[UMCS7840_MAX_PORTS];
@@ -205,7 +205,6 @@ umcs7840_attach(device_t parent, device_t self, void * aux)
 	struct ucom_attach_args uca;
 	int error, i, intr_addr;
 	uint8_t data;
-	uint16_t isize;
 
 	sc->sc_dev = self;
 	sc->sc_udev = uaa->device;
@@ -269,7 +268,6 @@ umcs7840_attach(device_t parent, device_t self, void * aux)
 	 * Set up the interrupt pipe
 	 */
 	id = usbd_get_interface_descriptor(sc->sc_iface);
-	isize = 0;
 	intr_addr = -1;
 	for (i = 0 ; i < id->bNumEndpoints ; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->sc_iface, i);
@@ -277,7 +275,7 @@ umcs7840_attach(device_t parent, device_t self, void * aux)
 		if (UE_GET_DIR(ed->bEndpointAddress) != UE_DIR_IN
 		    || UE_GET_XFERTYPE(ed->bmAttributes) != UE_INTERRUPT)
 			continue;
-		isize = UGETW(ed->wMaxPacketSize);
+		sc->sc_intr_buflen = UGETW(ed->wMaxPacketSize);
 		intr_addr = ed->bEndpointAddress;
 		break;
 	}
@@ -285,22 +283,17 @@ umcs7840_attach(device_t parent, device_t self, void * aux)
 		aprint_error_dev(self, "interrupt pipe not found\n");
 		return;
 	}
-	sc->sc_intr_buf = malloc(isize, M_USBDEV, M_WAITOK);
+	sc->sc_intr_buf = kmem_alloc(sc->sc_intr_buflen, KM_SLEEP);
 
 	error = usbd_open_pipe_intr(sc->sc_iface, intr_addr,
 		    USBD_SHORT_XFER_OK, &sc->sc_intr_pipe, sc, sc->sc_intr_buf,
-		    isize, umcs7840_intr, 100);
+		    sc->sc_intr_buflen, umcs7840_intr, 100);
 	if (error) {
 		aprint_error_dev(self, "cannot open interrupt pipe "
 		    "(addr %d)\n", intr_addr);
 		return;
 	}
 
-	sc->sc_intr_xfer = usbd_alloc_xfer(uaa->device);
-	if (sc->sc_intr_xfer == NULL) {
-		aprint_error_dev(self, "alloc intr xfer failed\n");
-		return;
-        }
 	if (workqueue_create(&sc->sc_change_wq, "umcsq",
 		umcs7840_change_worker, sc, PRI_NONE, IPL_USB, WQ_MPSAFE)) {
 		aprint_error_dev(self, "workqueue creation failed\n");
@@ -438,7 +431,9 @@ umcs7840_set_UART_reg(struct umcs7840_softc *sc, uint8_t portno, uint8_t reg, ui
 
 	err = usbd_do_request(sc->sc_udev, &req, NULL);
 	if (err)
-		device_printf(sc->sc_dev, "Writing UART%d register %d failed: %s\n", portno, reg, usbd_errstr(err));
+		aprint_error_dev(sc->sc_dev,
+		    "Writing UART %d register %d failed: %s\n",
+		    portno, reg, usbd_errstr(err));
 	return err;
 }
 
@@ -522,6 +517,16 @@ umcs7840_detach(device_t self, int flags)
 	struct umcs7840_softc *sc = device_private(self);
 	int rv = 0, i;
 
+	/* detach children */
+	for (i = 0; i < sc->sc_numports; i++) {
+		if (sc->sc_ports[i].sc_port_ucom) {
+			rv = config_detach(sc->sc_ports[i].sc_port_ucom,
+			    flags);
+			if (rv)
+				break;
+		}
+	}
+
 	/* close interrupt pipe */
 	if (sc->sc_intr_pipe != NULL) {
 		rv = usbd_abort_pipe(sc->sc_intr_pipe);
@@ -532,22 +537,13 @@ umcs7840_detach(device_t self, int flags)
 		rv = usbd_close_pipe(sc->sc_intr_pipe);
 		if (rv)
 			aprint_error_dev(sc->sc_dev,
-			    "close interrupt pipe failed: %s\n",
+			    "failed to close interrupt pipe: %s\n",
 			    usbd_errstr(rv));
-		free(sc->sc_intr_buf, M_USBDEV);
+		kmem_free(sc->sc_intr_buf, sc->sc_intr_buflen);
 		sc->sc_intr_pipe = NULL;
 	}
 	if (sc->sc_change_wq != NULL)
 		workqueue_destroy(sc->sc_change_wq);
-
-	for (i = 0; i < sc->sc_numports; i++) {
-		if (sc->sc_ports[i].sc_port_ucom) {
-			rv = config_detach(sc->sc_ports[i].sc_port_ucom,
-			    flags);
-			if (rv)
-				break;
-		}
-	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   sc->sc_dev);
@@ -922,8 +918,8 @@ umcs7840_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
 			workqueue_enqueue(sc->sc_change_wq, &sc->sc_work,
 			    NULL);
 	} else {
-		device_printf(sc->sc_dev, "Invalid interrupt data length %d",
-		   actlen);
+		aprint_error_dev(sc->sc_dev,
+		   "Invalid interrupt data length %d", actlen);
 	}
 }
 
