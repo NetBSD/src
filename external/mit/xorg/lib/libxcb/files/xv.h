@@ -56,13 +56,13 @@ typedef enum xcb_xv_type_t {
 } xcb_xv_type_t;
 
 typedef enum xcb_xv_image_format_info_type_t {
-    XCB_XV_IMAGE_FORMAT_INFO_TYPE_RGB,
-    XCB_XV_IMAGE_FORMAT_INFO_TYPE_YUV
+    XCB_XV_IMAGE_FORMAT_INFO_TYPE_RGB = 0,
+    XCB_XV_IMAGE_FORMAT_INFO_TYPE_YUV = 1
 } xcb_xv_image_format_info_type_t;
 
 typedef enum xcb_xv_image_format_info_format_t {
-    XCB_XV_IMAGE_FORMAT_INFO_FORMAT_PACKED,
-    XCB_XV_IMAGE_FORMAT_INFO_FORMAT_PLANAR
+    XCB_XV_IMAGE_FORMAT_INFO_FORMAT_PACKED = 0,
+    XCB_XV_IMAGE_FORMAT_INFO_FORMAT_PLANAR = 1
 } xcb_xv_image_format_info_format_t;
 
 typedef enum xcb_xv_attribute_flag_t {
@@ -71,25 +71,25 @@ typedef enum xcb_xv_attribute_flag_t {
 } xcb_xv_attribute_flag_t;
 
 typedef enum xcb_xv_video_notify_reason_t {
-    XCB_XV_VIDEO_NOTIFY_REASON_STARTED,
-    XCB_XV_VIDEO_NOTIFY_REASON_STOPPED,
-    XCB_XV_VIDEO_NOTIFY_REASON_BUSY,
-    XCB_XV_VIDEO_NOTIFY_REASON_PREEMPTED,
-    XCB_XV_VIDEO_NOTIFY_REASON_HARD_ERROR
+    XCB_XV_VIDEO_NOTIFY_REASON_STARTED = 0,
+    XCB_XV_VIDEO_NOTIFY_REASON_STOPPED = 1,
+    XCB_XV_VIDEO_NOTIFY_REASON_BUSY = 2,
+    XCB_XV_VIDEO_NOTIFY_REASON_PREEMPTED = 3,
+    XCB_XV_VIDEO_NOTIFY_REASON_HARD_ERROR = 4
 } xcb_xv_video_notify_reason_t;
 
 typedef enum xcb_xv_scanline_order_t {
-    XCB_XV_SCANLINE_ORDER_TOP_TO_BOTTOM,
-    XCB_XV_SCANLINE_ORDER_BOTTOM_TO_TOP
+    XCB_XV_SCANLINE_ORDER_TOP_TO_BOTTOM = 0,
+    XCB_XV_SCANLINE_ORDER_BOTTOM_TO_TOP = 1
 } xcb_xv_scanline_order_t;
 
 typedef enum xcb_xv_grab_port_status_t {
-    XCB_XV_GRAB_PORT_STATUS_SUCCESS,
-    XCB_XV_GRAB_PORT_STATUS_BAD_EXTENSION,
-    XCB_XV_GRAB_PORT_STATUS_ALREADY_GRABBED,
-    XCB_XV_GRAB_PORT_STATUS_INVALID_TIME,
-    XCB_XV_GRAB_PORT_STATUS_BAD_REPLY,
-    XCB_XV_GRAB_PORT_STATUS_BAD_ALLOC
+    XCB_XV_GRAB_PORT_STATUS_SUCCESS = 0,
+    XCB_XV_GRAB_PORT_STATUS_BAD_EXTENSION = 1,
+    XCB_XV_GRAB_PORT_STATUS_ALREADY_GRABBED = 2,
+    XCB_XV_GRAB_PORT_STATUS_INVALID_TIME = 3,
+    XCB_XV_GRAB_PORT_STATUS_BAD_REPLY = 4,
+    XCB_XV_GRAB_PORT_STATUS_BAD_ALLOC = 5
 } xcb_xv_grab_port_status_t;
 
 /**

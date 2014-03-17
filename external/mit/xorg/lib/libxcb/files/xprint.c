@@ -64,7 +64,7 @@ xcb_x_print_printer_serialize (void                        **_buffer  /**< */,
 {
     char *xcb_out = *_buffer;
     unsigned int xcb_buffer_len = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
     unsigned int xcb_pad = 0;
     char xcb_pad0[3] = {0, 0, 0};
@@ -135,7 +135,7 @@ xcb_x_print_printer_unserialize (const void              *_buffer  /**< */,
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
     xcb_x_print_string8_t *name;
     int name_len;
@@ -480,11 +480,13 @@ xcb_x_print_print_get_printer_list_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_x_print_print_get_printer_list_request_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* printer_name */
     xcb_block_len += _aux->printerNameLen * sizeof(xcb_x_print_string8_t);
     xcb_tmp += xcb_block_len;
@@ -764,11 +766,13 @@ xcb_x_print_create_context_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_x_print_create_context_request_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* printerName */
     xcb_block_len += _aux->printerNameLen * sizeof(xcb_x_print_string8_t);
     xcb_tmp += xcb_block_len;
@@ -1541,11 +1545,13 @@ xcb_x_print_print_put_document_data_sizeof (const void  *_buffer  /**< */,
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_x_print_print_put_document_data_request_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* data */
     xcb_block_len += _aux->len_data * sizeof(uint8_t);
     xcb_tmp += xcb_block_len;
@@ -1736,11 +1742,13 @@ xcb_x_print_print_get_document_data_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_x_print_print_get_document_data_reply_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* data */
     xcb_block_len += _aux->dataLen * sizeof(uint8_t);
     xcb_tmp += xcb_block_len;
@@ -2067,11 +2075,13 @@ xcb_x_print_print_select_input_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_x_print_print_select_input_request_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* event_list */
     xcb_block_len += xcb_popcount(_aux->event_mask) * sizeof(uint32_t);
     xcb_tmp += xcb_block_len;
@@ -2190,7 +2200,7 @@ xcb_x_print_print_input_selected_serialize (void                                
 {
     char *xcb_out = *_buffer;
     unsigned int xcb_buffer_len = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
     unsigned int xcb_pad = 0;
     char xcb_pad0[3] = {0, 0, 0};
@@ -2267,7 +2277,7 @@ xcb_x_print_print_input_selected_unserialize (const void                        
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
     uint32_t *event_list;
     int event_list_len;
@@ -2659,11 +2669,13 @@ xcb_x_print_print_get_one_attributes_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_x_print_print_get_one_attributes_request_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* name */
     xcb_block_len += _aux->nameLen * sizeof(xcb_x_print_string8_t);
     xcb_tmp += xcb_block_len;
@@ -2862,11 +2874,13 @@ xcb_x_print_print_set_attributes_sizeof (const void  *_buffer  /**< */,
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_x_print_print_set_attributes_request_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* attributes */
     xcb_block_len += attributes_len * sizeof(xcb_x_print_string8_t);
     xcb_tmp += xcb_block_len;
@@ -3097,11 +3111,13 @@ xcb_x_print_print_query_screens_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_x_print_print_query_screens_reply_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* roots */
     xcb_block_len += _aux->listCount * sizeof(xcb_window_t);
     xcb_tmp += xcb_block_len;

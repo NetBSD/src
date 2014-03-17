@@ -20,7 +20,7 @@ extern "C" {
 #endif
 
 #define XCB_TEST_MAJOR_VERSION 2
-#define XCB_TEST_MINOR_VERSION 1
+#define XCB_TEST_MINOR_VERSION 2
   
 extern xcb_extension_t xcb_test_id;
 
