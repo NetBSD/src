@@ -540,11 +540,13 @@ xcb_xinerama_query_screens_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_xinerama_query_screens_reply_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* screen_info */
     xcb_block_len += _aux->number * sizeof(xcb_xinerama_screen_info_t);
     xcb_tmp += xcb_block_len;

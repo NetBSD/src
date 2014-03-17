@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.27 2013/06/05 02:51:49 mrg Exp $
+#	$NetBSD: Makefile,v 1.28 2014/03/17 07:25:34 mrg Exp $
 
 # build libraries for xorg
 
 SUBDIR=	libfontenc freetype libFS libICE libOSMesa \
-	libXau libXdmcp libdrm libpciaccess .WAIT
+	libXau libXdmcp libdrm libpciaccess libpthread-stubs .WAIT
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 SUBDIR+=libdrm_intel
 .endif
