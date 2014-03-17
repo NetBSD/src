@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.293 2014/03/05 09:37:29 hannken Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.294 2014/03/17 09:29:55 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.293 2014/03/05 09:37:29 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.294 2014/03/17 09:29:55 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1603,10 +1603,11 @@ ffs_statvfs(struct mount *mp, struct statvfs *sbp)
 int
 ffs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 {
-	struct vnode *vp, *mvp, *nvp;
+	struct vnode *vp;
 	struct inode *ip;
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct fs *fs;
+	struct vnode_iterator *marker;
 	int error, allerror = 0;
 	bool is_suspending;
 
@@ -1616,42 +1617,24 @@ ffs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 		panic("update: rofs mod");
 	}
 
-	/* Allocate a marker vnode. */
-	mvp = vnalloc(mp);
-
 	fstrans_start(mp, FSTRANS_SHARED);
 	is_suspending = (fstrans_getstate(mp) == FSTRANS_SUSPENDING);
 	/*
 	 * Write back each (modified) inode.
 	 */
-	mutex_enter(&mntvnode_lock);
-loop:
-	/*
-	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
-	 * and vclean() can be called indirectly
-	 */
-	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = nvp) {
-		nvp = TAILQ_NEXT(vp, v_mntvnodes);
-		/*
-		 * If the vnode that we are about to sync is no longer
-		 * associated with this mount point, start over.
-		 */
-		if (vp->v_mount != mp)
-			goto loop;
-		/*
-		 * Don't interfere with concurrent scans of this FS.
-		 */
-		if (vismarker(vp))
+	vfs_vnode_iterator_init(mp, &marker);
+	while (vfs_vnode_iterator_next(marker, &vp)) {
+		error = vn_lock(vp, LK_EXCLUSIVE);
+		if (error) {
+			vrele(vp);
 			continue;
-		mutex_enter(vp->v_interlock);
+		}
 		ip = VTOI(vp);
-
 		/*
 		 * Skip the vnode/inode if inaccessible.
 		 */
-		if (ip == NULL || (vp->v_iflag & (VI_XLOCK | VI_CLEAN)) != 0 ||
-		    vp->v_type == VNON) {
-			mutex_exit(vp->v_interlock);
+		if (ip == NULL || vp->v_type == VNON) {
+			vput(vp);
 			continue;
 		}
 
@@ -1674,22 +1657,11 @@ loop:
 		    IN_MODIFY | IN_MODIFIED | IN_ACCESSED)) == 0 &&
 		    (waitfor == MNT_LAZY || (LIST_EMPTY(&vp->v_dirtyblkhd) &&
 		    UVM_OBJ_IS_CLEAN(&vp->v_uobj)))) {
-			mutex_exit(vp->v_interlock);
+			vput(vp);
 			continue;
 		}
 		if (vp->v_type == VBLK && is_suspending) {
-			mutex_exit(vp->v_interlock);
-			continue;
-		}
-		vmark(mvp, vp);
-		mutex_exit(&mntvnode_lock);
-		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT);
-		if (error) {
-			mutex_enter(&mntvnode_lock);
-			nvp = vunmark(mvp);
-			if (error == ENOENT) {
-				goto loop;
-			}
+			vput(vp);
 			continue;
 		}
 		if (waitfor == MNT_LAZY) {
@@ -1706,10 +1678,9 @@ loop:
 		if (error)
 			allerror = error;
 		vput(vp);
-		mutex_enter(&mntvnode_lock);
-		nvp = vunmark(mvp);
 	}
-	mutex_exit(&mntvnode_lock);
+	vfs_vnode_iterator_destroy(marker);
+
 	/*
 	 * Force stale file system control information to be flushed.
 	 */
@@ -1721,10 +1692,6 @@ loop:
 		    0, 0)) != 0)
 			allerror = error;
 		VOP_UNLOCK(ump->um_devvp);
-		if (allerror == 0 && waitfor == MNT_WAIT && !mp->mnt_wapbl) {
-			mutex_enter(&mntvnode_lock);
-			goto loop;
-		}
 	}
 #if defined(QUOTA) || defined(QUOTA2)
 	qsync(mp);
@@ -1754,7 +1721,6 @@ loop:
 #endif
 
 	fstrans_done(mp);
-	vnfree(mvp);
 	return (allerror);
 }
 
