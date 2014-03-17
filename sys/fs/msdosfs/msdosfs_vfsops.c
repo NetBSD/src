@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.104 2014/02/25 18:30:10 pooka Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.105 2014/03/17 09:35:59 hannken Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.104 2014/02/25 18:30:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.105 2014/03/17 09:35:59 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -946,7 +946,8 @@ msdosfs_statvfs(struct mount *mp, struct statvfs *sbp)
 int
 msdosfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 {
-	struct vnode *vp, *mvp;
+	struct vnode *vp;
+	struct vnode_iterator *marker;
 	struct denode *dep;
 	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
 	int error, allerror = 0;
@@ -962,46 +963,32 @@ msdosfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 			/* update FATs here */
 		}
 	}
-	/* Allocate a marker vnode. */
-	mvp = vnalloc(mp);
 	fstrans_start(mp, FSTRANS_SHARED);
 	/*
 	 * Write back each (modified) denode.
 	 */
-	mutex_enter(&mntvnode_lock);
-loop:
-	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
-		vmark(mvp, vp);
-		if (vp->v_mount != mp || vismarker(vp))
+	vfs_vnode_iterator_init(mp, &marker);
+	while (vfs_vnode_iterator_next(marker, &vp)) {
+		error = vn_lock(vp, LK_EXCLUSIVE);
+		if (error) {
+			vrele(vp);
 			continue;
-		mutex_enter(vp->v_interlock);
+		}
 		dep = VTODE(vp);
 		if (waitfor == MNT_LAZY || vp->v_type == VNON ||
 		    dep == NULL || (((dep->de_flag &
 		    (DE_ACCESS | DE_CREATE | DE_UPDATE | DE_MODIFIED)) == 0) &&
 		     (LIST_EMPTY(&vp->v_dirtyblkhd) &&
 		      UVM_OBJ_IS_CLEAN(&vp->v_uobj)))) {
-			mutex_exit(vp->v_interlock);
-			continue;
-		}
-		mutex_exit(&mntvnode_lock);
-		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT);
-		if (error) {
-			mutex_enter(&mntvnode_lock);
-			if (error == ENOENT) {
-				(void)vunmark(mvp);
-				goto loop;
-			}
+			vput(vp);
 			continue;
 		}
 		if ((error = VOP_FSYNC(vp, cred,
 		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0)) != 0)
 			allerror = error;
 		vput(vp);
-		mutex_enter(&mntvnode_lock);
 	}
-	mutex_exit(&mntvnode_lock);
-	vnfree(mvp);
+	vfs_vnode_iterator_destroy(marker);
 
 	/*
 	 * Force stale file system control information to be flushed.
