@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.145 2014/03/16 23:25:15 mrg Exp $
+#	 $NetBSD: mi,v 1.146 2014/03/17 01:09:07 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5334,7 +5334,7 @@
 ./usr/X11R7/include/X11/Xtrans/Xtranslcl.c		-unknown-	xorg
 ./usr/X11R7/include/X11/Xtrans/Xtransos2.c		-unknown-	xorg
 ./usr/X11R7/include/X11/Xtrans/Xtranssock.c		-unknown-	xorg
-./usr/X11R7/include/X11/Xtrans/Xtranstli.c		-unknown-	xorg
+./usr/X11R7/include/X11/Xtrans/Xtranstli.c		-obsolete-	obsolete
 ./usr/X11R7/include/X11/Xtrans/Xtransutil.c		-unknown-	xorg
 ./usr/X11R7/include/X11/Xtrans/transport.c		-unknown-	xorg
 ./usr/X11R7/include/X11/Xutil.h				-unknown-	xorg
