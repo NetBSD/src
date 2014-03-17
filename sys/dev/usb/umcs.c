@@ -1,4 +1,4 @@
-/* $NetBSD: umcs.c,v 1.3 2014/03/17 19:59:42 martin Exp $ */
+/* $NetBSD: umcs.c,v 1.4 2014/03/17 21:21:57 martin Exp $ */
 /* $FreeBSD: head/sys/dev/usb/serial/umcs.c 260559 2014-01-12 11:44:28Z hselasky $ */
 
 /*-
@@ -41,7 +41,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.3 2014/03/17 19:59:42 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.4 2014/03/17 21:21:57 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -517,15 +517,7 @@ umcs7840_detach(device_t self, int flags)
 	struct umcs7840_softc *sc = device_private(self);
 	int rv = 0, i;
 
-	/* detach children */
-	for (i = 0; i < sc->sc_numports; i++) {
-		if (sc->sc_ports[i].sc_port_ucom) {
-			rv = config_detach(sc->sc_ports[i].sc_port_ucom,
-			    flags);
-			if (rv)
-				break;
-		}
-	}
+	sc->sc_dying = true;
 
 	/* close interrupt pipe */
 	if (sc->sc_intr_pipe != NULL) {
@@ -544,6 +536,16 @@ umcs7840_detach(device_t self, int flags)
 	}
 	if (sc->sc_change_wq != NULL)
 		workqueue_destroy(sc->sc_change_wq);
+
+	/* detach children */
+	for (i = 0; i < sc->sc_numports; i++) {
+		if (sc->sc_ports[i].sc_port_ucom) {
+			rv = config_detach(sc->sc_ports[i].sc_port_ucom,
+			    flags);
+			if (rv)
+				break;
+		}
+	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   sc->sc_dev);
@@ -586,6 +588,9 @@ umcs7840_get_status(void *self, int portno, u_char *lsr, u_char *msr)
 	uint8_t pn = sc->sc_ports[portno].sc_port_phys;
 	uint8_t	hw_lsr = 0;	/* local line status register */
 	uint8_t	hw_msr = 0;	/* local modem status register */
+
+	if (sc->sc_dying)
+		return;
 
 	/* Read LSR & MSR */
 	umcs7840_get_UART_reg(sc, pn, MCS7840_UART_REG_LSR, &hw_lsr);
@@ -853,6 +858,9 @@ umcs7840_port_close(void *self, int portno)
 
 	atomic_swap_32(&sc->sc_ports[portno].sc_port_changed, 0);
 
+	if (sc->sc_dying)
+		return;
+
 	umcs7840_set_UART_reg(sc, pn, MCS7840_UART_REG_MCR, 0);
 	umcs7840_set_UART_reg(sc, pn, MCS7840_UART_REG_IER, 0);
 
@@ -873,14 +881,12 @@ umcs7840_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
 	int actlen;
 	int subunit, found;
 
-	if (sc->sc_dying)
+	if (status == USBD_NOT_STARTED || status == USBD_CANCELLED
+	    || status == USBD_IOERROR)
 		return;
 
 	found = 0;
 	if (status != USBD_NORMAL_COMPLETION) {
-		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED)
-			return;
-
 		aprint_error_dev(sc->sc_dev,
 		    "umcs7840_intr: abnormal status: %s\n",
 		    usbd_errstr(status));
