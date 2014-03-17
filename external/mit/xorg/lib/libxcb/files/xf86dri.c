@@ -245,11 +245,13 @@ xcb_xf86dri_open_connection_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_xf86dri_open_connection_reply_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* bus_id */
     xcb_block_len += _aux->bus_id_len * sizeof(char);
     xcb_tmp += xcb_block_len;
@@ -494,11 +496,13 @@ xcb_xf86dri_get_client_driver_name_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_xf86dri_get_client_driver_name_reply_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* client_driver_name */
     xcb_block_len += _aux->client_driver_name_len * sizeof(char);
     xcb_tmp += xcb_block_len;
@@ -1035,11 +1039,13 @@ xcb_xf86dri_get_drawable_info_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_xf86dri_get_drawable_info_reply_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* clip_rects */
     xcb_block_len += _aux->num_clip_rects * sizeof(xcb_xf86dri_drm_clip_rect_t);
     xcb_tmp += xcb_block_len;
@@ -1282,11 +1288,13 @@ xcb_xf86dri_get_device_info_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_xf86dri_get_device_info_reply_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* device_private */
     xcb_block_len += _aux->device_private_size * sizeof(uint32_t);
     xcb_tmp += xcb_block_len;

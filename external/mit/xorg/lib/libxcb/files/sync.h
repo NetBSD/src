@@ -36,9 +36,9 @@ typedef struct xcb_sync_alarm_iterator_t {
 } xcb_sync_alarm_iterator_t;
 
 typedef enum xcb_sync_alarmstate_t {
-    XCB_SYNC_ALARMSTATE_ACTIVE,
-    XCB_SYNC_ALARMSTATE_INACTIVE,
-    XCB_SYNC_ALARMSTATE_DESTROYED
+    XCB_SYNC_ALARMSTATE_ACTIVE = 0,
+    XCB_SYNC_ALARMSTATE_INACTIVE = 1,
+    XCB_SYNC_ALARMSTATE_DESTROYED = 2
 } xcb_sync_alarmstate_t;
 
 typedef uint32_t xcb_sync_counter_t;
@@ -64,15 +64,15 @@ typedef struct xcb_sync_fence_iterator_t {
 } xcb_sync_fence_iterator_t;
 
 typedef enum xcb_sync_testtype_t {
-    XCB_SYNC_TESTTYPE_POSITIVE_TRANSITION,
-    XCB_SYNC_TESTTYPE_NEGATIVE_TRANSITION,
-    XCB_SYNC_TESTTYPE_POSITIVE_COMPARISON,
-    XCB_SYNC_TESTTYPE_NEGATIVE_COMPARISON
+    XCB_SYNC_TESTTYPE_POSITIVE_TRANSITION = 0,
+    XCB_SYNC_TESTTYPE_NEGATIVE_TRANSITION = 1,
+    XCB_SYNC_TESTTYPE_POSITIVE_COMPARISON = 2,
+    XCB_SYNC_TESTTYPE_NEGATIVE_COMPARISON = 3
 } xcb_sync_testtype_t;
 
 typedef enum xcb_sync_valuetype_t {
-    XCB_SYNC_VALUETYPE_ABSOLUTE,
-    XCB_SYNC_VALUETYPE_RELATIVE
+    XCB_SYNC_VALUETYPE_ABSOLUTE = 0,
+    XCB_SYNC_VALUETYPE_RELATIVE = 1
 } xcb_sync_valuetype_t;
 
 typedef enum xcb_sync_ca_t {
@@ -348,6 +348,18 @@ typedef struct xcb_sync_set_counter_request_t {
     xcb_sync_int64_t   value; /**<  */
 } xcb_sync_set_counter_request_t;
 
+/**
+ * @brief xcb_sync_create_alarm_value_list_t
+ **/
+typedef struct xcb_sync_create_alarm_value_list_t {
+    xcb_sync_counter_t counter; /**<  */
+    uint32_t           valueType; /**<  */
+    xcb_sync_int64_t   value; /**<  */
+    uint32_t           testType; /**<  */
+    xcb_sync_int64_t   delta; /**<  */
+    uint32_t           events; /**<  */
+} xcb_sync_create_alarm_value_list_t;
+
 /** Opcode for xcb_sync_create_alarm. */
 #define XCB_SYNC_CREATE_ALARM 8
 
@@ -361,6 +373,18 @@ typedef struct xcb_sync_create_alarm_request_t {
     xcb_sync_alarm_t id; /**<  */
     uint32_t         value_mask; /**<  */
 } xcb_sync_create_alarm_request_t;
+
+/**
+ * @brief xcb_sync_change_alarm_value_list_t
+ **/
+typedef struct xcb_sync_change_alarm_value_list_t {
+    xcb_sync_counter_t counter; /**<  */
+    uint32_t           valueType; /**<  */
+    xcb_sync_int64_t   value; /**<  */
+    uint32_t           testType; /**<  */
+    xcb_sync_int64_t   delta; /**<  */
+    uint32_t           events; /**<  */
+} xcb_sync_change_alarm_value_list_t;
 
 /** Opcode for xcb_sync_change_alarm. */
 #define XCB_SYNC_CHANGE_ALARM 9
@@ -1482,7 +1506,18 @@ xcb_sync_set_counter (xcb_connection_t   *c  /**< */,
                       xcb_sync_int64_t    value  /**< */);
 
 int
-xcb_sync_create_alarm_sizeof (const void  *_buffer  /**< */);
+xcb_sync_create_alarm_value_list_serialize (void                                     **_buffer  /**< */,
+                                            uint32_t                                   value_mask  /**< */,
+                                            const xcb_sync_create_alarm_value_list_t  *_aux  /**< */);
+
+int
+xcb_sync_create_alarm_value_list_unpack (const void                          *_buffer  /**< */,
+                                         uint32_t                             value_mask  /**< */,
+                                         xcb_sync_create_alarm_value_list_t  *_aux  /**< */);
+
+int
+xcb_sync_create_alarm_value_list_sizeof (const void  *_buffer  /**< */,
+                                         uint32_t     value_mask  /**< */);
 
 /**
  *
@@ -1503,7 +1538,7 @@ xcb_sync_create_alarm_sizeof (const void  *_buffer  /**< */);
  ** @param xcb_connection_t *c
  ** @param xcb_sync_alarm_t  id
  ** @param uint32_t          value_mask
- ** @param const uint32_t   *value_list
+ ** @param const void       *value_list
  ** @returns xcb_void_cookie_t
  **
  *****************************************************************************/
@@ -1512,7 +1547,7 @@ xcb_void_cookie_t
 xcb_sync_create_alarm_checked (xcb_connection_t *c  /**< */,
                                xcb_sync_alarm_t  id  /**< */,
                                uint32_t          value_mask  /**< */,
-                               const uint32_t   *value_list  /**< */);
+                               const void       *value_list  /**< */);
 
 /**
  *
@@ -1530,7 +1565,7 @@ xcb_sync_create_alarm_checked (xcb_connection_t *c  /**< */,
  ** @param xcb_connection_t *c
  ** @param xcb_sync_alarm_t  id
  ** @param uint32_t          value_mask
- ** @param const uint32_t   *value_list
+ ** @param const void       *value_list
  ** @returns xcb_void_cookie_t
  **
  *****************************************************************************/
@@ -1539,10 +1574,78 @@ xcb_void_cookie_t
 xcb_sync_create_alarm (xcb_connection_t *c  /**< */,
                        xcb_sync_alarm_t  id  /**< */,
                        uint32_t          value_mask  /**< */,
-                       const uint32_t   *value_list  /**< */);
+                       const void       *value_list  /**< */);
+
+/**
+ *
+ * @param c The connection
+ * @return A cookie
+ *
+ * Delivers a request to the X server.
+ * 
+ * This form can be used only if the request will not cause
+ * a reply to be generated. Any returned error will be
+ * saved for handling by xcb_request_check().
+ */
+
+/*****************************************************************************
+ **
+ ** xcb_void_cookie_t xcb_sync_create_alarm_aux_checked
+ ** 
+ ** @param xcb_connection_t                         *c
+ ** @param xcb_sync_alarm_t                          id
+ ** @param uint32_t                                  value_mask
+ ** @param const xcb_sync_create_alarm_value_list_t *value_list
+ ** @returns xcb_void_cookie_t
+ **
+ *****************************************************************************/
+ 
+xcb_void_cookie_t
+xcb_sync_create_alarm_aux_checked (xcb_connection_t                         *c  /**< */,
+                                   xcb_sync_alarm_t                          id  /**< */,
+                                   uint32_t                                  value_mask  /**< */,
+                                   const xcb_sync_create_alarm_value_list_t *value_list  /**< */);
+
+/**
+ *
+ * @param c The connection
+ * @return A cookie
+ *
+ * Delivers a request to the X server.
+ * 
+ */
+
+/*****************************************************************************
+ **
+ ** xcb_void_cookie_t xcb_sync_create_alarm_aux
+ ** 
+ ** @param xcb_connection_t                         *c
+ ** @param xcb_sync_alarm_t                          id
+ ** @param uint32_t                                  value_mask
+ ** @param const xcb_sync_create_alarm_value_list_t *value_list
+ ** @returns xcb_void_cookie_t
+ **
+ *****************************************************************************/
+ 
+xcb_void_cookie_t
+xcb_sync_create_alarm_aux (xcb_connection_t                         *c  /**< */,
+                           xcb_sync_alarm_t                          id  /**< */,
+                           uint32_t                                  value_mask  /**< */,
+                           const xcb_sync_create_alarm_value_list_t *value_list  /**< */);
 
 int
-xcb_sync_change_alarm_sizeof (const void  *_buffer  /**< */);
+xcb_sync_change_alarm_value_list_serialize (void                                     **_buffer  /**< */,
+                                            uint32_t                                   value_mask  /**< */,
+                                            const xcb_sync_change_alarm_value_list_t  *_aux  /**< */);
+
+int
+xcb_sync_change_alarm_value_list_unpack (const void                          *_buffer  /**< */,
+                                         uint32_t                             value_mask  /**< */,
+                                         xcb_sync_change_alarm_value_list_t  *_aux  /**< */);
+
+int
+xcb_sync_change_alarm_value_list_sizeof (const void  *_buffer  /**< */,
+                                         uint32_t     value_mask  /**< */);
 
 /**
  *
@@ -1563,7 +1666,7 @@ xcb_sync_change_alarm_sizeof (const void  *_buffer  /**< */);
  ** @param xcb_connection_t *c
  ** @param xcb_sync_alarm_t  id
  ** @param uint32_t          value_mask
- ** @param const uint32_t   *value_list
+ ** @param const void       *value_list
  ** @returns xcb_void_cookie_t
  **
  *****************************************************************************/
@@ -1572,7 +1675,7 @@ xcb_void_cookie_t
 xcb_sync_change_alarm_checked (xcb_connection_t *c  /**< */,
                                xcb_sync_alarm_t  id  /**< */,
                                uint32_t          value_mask  /**< */,
-                               const uint32_t   *value_list  /**< */);
+                               const void       *value_list  /**< */);
 
 /**
  *
@@ -1590,7 +1693,7 @@ xcb_sync_change_alarm_checked (xcb_connection_t *c  /**< */,
  ** @param xcb_connection_t *c
  ** @param xcb_sync_alarm_t  id
  ** @param uint32_t          value_mask
- ** @param const uint32_t   *value_list
+ ** @param const void       *value_list
  ** @returns xcb_void_cookie_t
  **
  *****************************************************************************/
@@ -1599,7 +1702,64 @@ xcb_void_cookie_t
 xcb_sync_change_alarm (xcb_connection_t *c  /**< */,
                        xcb_sync_alarm_t  id  /**< */,
                        uint32_t          value_mask  /**< */,
-                       const uint32_t   *value_list  /**< */);
+                       const void       *value_list  /**< */);
+
+/**
+ *
+ * @param c The connection
+ * @return A cookie
+ *
+ * Delivers a request to the X server.
+ * 
+ * This form can be used only if the request will not cause
+ * a reply to be generated. Any returned error will be
+ * saved for handling by xcb_request_check().
+ */
+
+/*****************************************************************************
+ **
+ ** xcb_void_cookie_t xcb_sync_change_alarm_aux_checked
+ ** 
+ ** @param xcb_connection_t                         *c
+ ** @param xcb_sync_alarm_t                          id
+ ** @param uint32_t                                  value_mask
+ ** @param const xcb_sync_change_alarm_value_list_t *value_list
+ ** @returns xcb_void_cookie_t
+ **
+ *****************************************************************************/
+ 
+xcb_void_cookie_t
+xcb_sync_change_alarm_aux_checked (xcb_connection_t                         *c  /**< */,
+                                   xcb_sync_alarm_t                          id  /**< */,
+                                   uint32_t                                  value_mask  /**< */,
+                                   const xcb_sync_change_alarm_value_list_t *value_list  /**< */);
+
+/**
+ *
+ * @param c The connection
+ * @return A cookie
+ *
+ * Delivers a request to the X server.
+ * 
+ */
+
+/*****************************************************************************
+ **
+ ** xcb_void_cookie_t xcb_sync_change_alarm_aux
+ ** 
+ ** @param xcb_connection_t                         *c
+ ** @param xcb_sync_alarm_t                          id
+ ** @param uint32_t                                  value_mask
+ ** @param const xcb_sync_change_alarm_value_list_t *value_list
+ ** @returns xcb_void_cookie_t
+ **
+ *****************************************************************************/
+ 
+xcb_void_cookie_t
+xcb_sync_change_alarm_aux (xcb_connection_t                         *c  /**< */,
+                           xcb_sync_alarm_t                          id  /**< */,
+                           uint32_t                                  value_mask  /**< */,
+                           const xcb_sync_change_alarm_value_list_t *value_list  /**< */);
 
 /**
  *

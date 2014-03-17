@@ -190,11 +190,13 @@ xcb_shape_rectangles_sizeof (const void  *_buffer  /**< */,
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_shape_rectangles_request_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* rectangles */
     xcb_block_len += rectangles_len * sizeof(xcb_rectangle_t);
     xcb_tmp += xcb_block_len;
@@ -925,11 +927,13 @@ xcb_shape_get_rectangles_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_shape_get_rectangles_reply_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* rectangles */
     xcb_block_len += _aux->rectangles_len * sizeof(xcb_rectangle_t);
     xcb_tmp += xcb_block_len;

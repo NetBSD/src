@@ -25,9 +25,9 @@ extern "C" {
 extern xcb_extension_t xcb_screensaver_id;
 
 typedef enum xcb_screensaver_kind_t {
-    XCB_SCREENSAVER_KIND_BLANKED,
-    XCB_SCREENSAVER_KIND_INTERNAL,
-    XCB_SCREENSAVER_KIND_EXTERNAL
+    XCB_SCREENSAVER_KIND_BLANKED = 0,
+    XCB_SCREENSAVER_KIND_INTERNAL = 1,
+    XCB_SCREENSAVER_KIND_EXTERNAL = 2
 } xcb_screensaver_kind_t;
 
 typedef enum xcb_screensaver_event_t {
@@ -36,10 +36,10 @@ typedef enum xcb_screensaver_event_t {
 } xcb_screensaver_event_t;
 
 typedef enum xcb_screensaver_state_t {
-    XCB_SCREENSAVER_STATE_OFF,
-    XCB_SCREENSAVER_STATE_ON,
-    XCB_SCREENSAVER_STATE_CYCLE,
-    XCB_SCREENSAVER_STATE_DISABLED
+    XCB_SCREENSAVER_STATE_OFF = 0,
+    XCB_SCREENSAVER_STATE_ON = 1,
+    XCB_SCREENSAVER_STATE_CYCLE = 2,
+    XCB_SCREENSAVER_STATE_DISABLED = 3
 } xcb_screensaver_state_t;
 
 /**
@@ -184,17 +184,14 @@ typedef struct xcb_screensaver_suspend_request_t {
  **/
 typedef struct xcb_screensaver_notify_event_t {
     uint8_t         response_type; /**<  */
-    uint8_t         code; /**<  */
-    uint16_t        sequence; /**<  */
     uint8_t         state; /**<  */
-    uint8_t         pad0; /**<  */
-    uint16_t        sequence_number; /**<  */
+    uint16_t        sequence; /**<  */
     xcb_timestamp_t time; /**<  */
     xcb_window_t    root; /**<  */
     xcb_window_t    window; /**<  */
     uint8_t         kind; /**<  */
     uint8_t         forced; /**<  */
-    uint8_t         pad1[14]; /**<  */
+    uint8_t         pad0[14]; /**<  */
 } xcb_screensaver_notify_event_t;
 
 /**

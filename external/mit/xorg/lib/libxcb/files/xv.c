@@ -179,11 +179,13 @@ xcb_xv_adaptor_info_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_xv_adaptor_info_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* name */
     xcb_block_len += _aux->name_size * sizeof(char);
     xcb_tmp += xcb_block_len;
@@ -369,11 +371,13 @@ xcb_xv_encoding_info_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_xv_encoding_info_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* name */
     xcb_block_len += _aux->name_size * sizeof(char);
     xcb_tmp += xcb_block_len;
@@ -493,11 +497,13 @@ xcb_xv_image_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_xv_image_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* pitches */
     xcb_block_len += _aux->num_planes * sizeof(uint32_t);
     xcb_tmp += xcb_block_len;
@@ -749,11 +755,13 @@ xcb_xv_attribute_info_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_xv_attribute_info_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* name */
     xcb_block_len += _aux->size * sizeof(char);
     xcb_tmp += xcb_block_len;
@@ -999,13 +1007,15 @@ xcb_xv_query_adaptors_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
     unsigned int i;
     unsigned int xcb_tmp_len;
 
     xcb_block_len += sizeof(xcb_xv_query_adaptors_reply_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* info */
     for(i=0; i<_aux->num_adaptors; i++) {
         xcb_tmp_len = xcb_xv_adaptor_info_sizeof(xcb_tmp);
@@ -1163,13 +1173,15 @@ xcb_xv_query_encodings_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
     unsigned int i;
     unsigned int xcb_tmp_len;
 
     xcb_block_len += sizeof(xcb_xv_query_encodings_reply_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* info */
     for(i=0; i<_aux->num_encodings; i++) {
         xcb_tmp_len = xcb_xv_encoding_info_sizeof(xcb_tmp);
@@ -2599,13 +2611,15 @@ xcb_xv_query_port_attributes_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
     unsigned int i;
     unsigned int xcb_tmp_len;
 
     xcb_block_len += sizeof(xcb_xv_query_port_attributes_reply_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* attributes */
     for(i=0; i<_aux->num_attributes; i++) {
         xcb_tmp_len = xcb_xv_attribute_info_sizeof(xcb_tmp);
@@ -2763,11 +2777,13 @@ xcb_xv_list_image_formats_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_xv_list_image_formats_reply_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* format */
     xcb_block_len += _aux->num_formats * sizeof(xcb_xv_image_format_info_t);
     xcb_tmp += xcb_block_len;
@@ -2938,11 +2954,13 @@ xcb_xv_query_image_attributes_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_xv_query_image_attributes_reply_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* pitches */
     xcb_block_len += _aux->num_planes * sizeof(uint32_t);
     xcb_tmp += xcb_block_len;
@@ -3197,11 +3215,13 @@ xcb_xv_put_image_sizeof (const void  *_buffer  /**< */,
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_xv_put_image_request_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* data */
     xcb_block_len += data_len * sizeof(uint8_t);
     xcb_tmp += xcb_block_len;

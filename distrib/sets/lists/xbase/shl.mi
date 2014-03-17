@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.53 2013/08/11 22:29:03 joerg Exp $
+# $NetBSD: shl.mi,v 1.54 2014/03/17 07:25:34 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -351,6 +351,9 @@
 ./usr/X11R7/lib/libxcb-dri2.so			-unknown-		xorg
 ./usr/X11R7/lib/libxcb-dri2.so.0		-unknown-		xorg
 ./usr/X11R7/lib/libxcb-dri2.so.0.1		-unknown-		xorg
+./usr/X11R7/lib/libxcb-dri3.so			-unknown-		xorg
+./usr/X11R7/lib/libxcb-dri3.so.0		-unknown-		xorg
+./usr/X11R7/lib/libxcb-dri3.so.0.1		-unknown-		xorg
 ./usr/X11R7/lib/libxcb-event.so			-unknown-		xorg
 ./usr/X11R7/lib/libxcb-event.so.1		-unknown-		xorg
 ./usr/X11R7/lib/libxcb-event.so.1.0		-unknown-		xorg
@@ -366,6 +369,9 @@
 ./usr/X11R7/lib/libxcb-keysyms.so		-unknown-		xorg
 ./usr/X11R7/lib/libxcb-keysyms.so.1		-unknown-		xorg
 ./usr/X11R7/lib/libxcb-keysyms.so.1.0		-unknown-		xorg
+./usr/X11R7/lib/libxcb-present.so		-unknown-		xorg
+./usr/X11R7/lib/libxcb-present.so.0		-unknown-		xorg
+./usr/X11R7/lib/libxcb-present.so.0.1		-unknown-		xorg
 ./usr/X11R7/lib/libxcb-property.so		-unknown-		xorg
 ./usr/X11R7/lib/libxcb-property.so.1		-unknown-		xorg
 ./usr/X11R7/lib/libxcb-property.so.1.0		-unknown-		xorg
@@ -411,6 +417,9 @@
 ./usr/X11R7/lib/libxcb-xinerama.so		-unknown-		xorg
 ./usr/X11R7/lib/libxcb-xinerama.so.0		-unknown-		xorg
 ./usr/X11R7/lib/libxcb-xinerama.so.0.1		-unknown-		xorg
+./usr/X11R7/lib/libxcb-xkb.so			-unknown-		xorg
+./usr/X11R7/lib/libxcb-xkb.so.0			-unknown-		xorg
+./usr/X11R7/lib/libxcb-xkb.so.0.1		-unknown-		xorg
 ./usr/X11R7/lib/libxcb-xtest.so			-unknown-		xorg
 ./usr/X11R7/lib/libxcb-xtest.so.0		-unknown-		xorg
 ./usr/X11R7/lib/libxcb-xtest.so.0.1		-unknown-		xorg

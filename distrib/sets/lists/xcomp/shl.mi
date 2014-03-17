@@ -1,4 +1,4 @@
-#	$NetBSD: shl.mi,v 1.36 2014/01/02 16:46:40 tho Exp $
+#	$NetBSD: shl.mi,v 1.37 2014/03/17 07:25:34 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -104,6 +104,7 @@
 ./usr/X11R7/lib/libmp_pic.a				-unknown-	xorg,picinstall
 ./usr/X11R7/lib/libpciaccess_pic.a			-unknown-	xorg,picinstall
 ./usr/X11R7/lib/libpixman-1_pic.a			-unknown-	xorg,picinstall
+./usr/X11R7/lib/libpthread-stubs_pic.a			-unknown-	xorg,picinstall
 ./usr/X11R7/lib/libre_pic.a				-unknown-	xorg,picinstall
 ./usr/X11R7/lib/libxcb-atom_pic.a			-unknown-	xorg,picinstall
 ./usr/X11R7/lib/libxcb-aux_pic.a			-unknown-	xorg,picinstall
@@ -111,11 +112,13 @@
 ./usr/X11R7/lib/libxcb-damage_pic.a			-unknown-	xorg,picinstall
 ./usr/X11R7/lib/libxcb-dpms_pic.a			-unknown-	xorg,picinstall
 ./usr/X11R7/lib/libxcb-dri2_pic.a			-unknown-	xorg,picinstall
+./usr/X11R7/lib/libxcb-dri3_pic.a			-unknown-	xorg,picinstall
 ./usr/X11R7/lib/libxcb-event_pic.a			-unknown-	xorg,picinstall
 ./usr/X11R7/lib/libxcb-glx_pic.a			-unknown-	xorg,picinstall
 ./usr/X11R7/lib/libxcb-icccm_pic.a			-unknown-	xorg,picinstall
 ./usr/X11R7/lib/libxcb-image_pic.a			-unknown-	xorg,picinstall
 ./usr/X11R7/lib/libxcb-keysyms_pic.a			-unknown-	xorg,picinstall
+./usr/X11R7/lib/libxcb-present_pic.a			-unknown-	xorg,picinstall
 ./usr/X11R7/lib/libxcb-property_pic.a			-unknown-	xorg,picinstall
 ./usr/X11R7/lib/libxcb-randr_pic.a			-unknown-	xorg,picinstall
 ./usr/X11R7/lib/libxcb-record_pic.a			-unknown-	xorg,picinstall
@@ -131,6 +134,7 @@
 ./usr/X11R7/lib/libxcb-xf86dri_pic.a			-unknown-	xorg,picinstall
 ./usr/X11R7/lib/libxcb-xfixes_pic.a			-unknown-	xorg,picinstall
 ./usr/X11R7/lib/libxcb-xinerama_pic.a			-unknown-	xorg,picinstall
+./usr/X11R7/lib/libxcb-xkb_pic.a			-unknown-	xorg,picinstall
 ./usr/X11R7/lib/libxcb-xtest_pic.a			-unknown-	xorg,picinstall
 ./usr/X11R7/lib/libxcb-xv_pic.a				-unknown-	xorg,picinstall
 ./usr/X11R7/lib/libxcb-xvmc_pic.a			-unknown-	xorg,picinstall

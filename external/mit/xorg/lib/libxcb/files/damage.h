@@ -39,10 +39,10 @@ typedef struct xcb_damage_damage_iterator_t {
 } xcb_damage_damage_iterator_t;
 
 typedef enum xcb_damage_report_level_t {
-    XCB_DAMAGE_REPORT_LEVEL_RAW_RECTANGLES,
-    XCB_DAMAGE_REPORT_LEVEL_DELTA_RECTANGLES,
-    XCB_DAMAGE_REPORT_LEVEL_BOUNDING_BOX,
-    XCB_DAMAGE_REPORT_LEVEL_NON_EMPTY
+    XCB_DAMAGE_REPORT_LEVEL_RAW_RECTANGLES = 0,
+    XCB_DAMAGE_REPORT_LEVEL_DELTA_RECTANGLES = 1,
+    XCB_DAMAGE_REPORT_LEVEL_BOUNDING_BOX = 2,
+    XCB_DAMAGE_REPORT_LEVEL_NON_EMPTY = 3
 } xcb_damage_report_level_t;
 
 /** Opcode for xcb_damage_bad_damage. */

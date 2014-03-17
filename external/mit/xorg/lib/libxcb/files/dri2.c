@@ -202,11 +202,13 @@ xcb_dri2_connect_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_dri2_connect_reply_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* driver_name */
     xcb_block_len += _aux->driver_name_length * sizeof(char);
     xcb_tmp += xcb_block_len;
@@ -763,11 +765,13 @@ xcb_dri2_get_buffers_sizeof (const void  *_buffer  /**< */,
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_dri2_get_buffers_request_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* attachments */
     xcb_block_len += attachments_len * sizeof(uint32_t);
     xcb_tmp += xcb_block_len;
@@ -1074,11 +1078,13 @@ xcb_dri2_get_buffers_with_format_sizeof (const void  *_buffer  /**< */,
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_dri2_get_buffers_with_format_request_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* attachments */
     xcb_block_len += attachments_len * sizeof(xcb_dri2_attach_format_t);
     xcb_tmp += xcb_block_len;
