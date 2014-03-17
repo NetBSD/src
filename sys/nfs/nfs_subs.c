@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.224 2013/09/18 23:27:38 pgoyette Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.225 2014/03/17 09:35:24 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.224 2013/09/18 23:27:38 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.225 2014/03/17 09:35:24 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -1754,22 +1754,21 @@ void
 nfs_clearcommit(struct mount *mp)
 {
 	struct vnode *vp;
+	struct vnode_iterator *marker;
 	struct nfsnode *np;
 	struct vm_page *pg;
 	struct nfsmount *nmp = VFSTONFS(mp);
 
 	rw_enter(&nmp->nm_writeverflock, RW_WRITER);
-	mutex_enter(&mntvnode_lock);
-	TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
-		KASSERT(vp->v_mount == mp);
-		if (vp->v_type != VREG)
-			continue;
+	vfs_vnode_iterator_init(mp, &marker);
+	while (vfs_vnode_iterator_next(marker, &vp)) {
 		mutex_enter(vp->v_interlock);
-		if (vp->v_iflag & (VI_XLOCK | VI_CLEAN)) {
+		np = VTONFS(vp);
+		if (vp->v_type != VREG || vp->v_mount != mp || np == NULL) {
 			mutex_exit(vp->v_interlock);
+			vrele(vp);
 			continue;
 		}
-		np = VTONFS(vp);
 		np->n_pushlo = np->n_pushhi = np->n_pushedlo =
 		    np->n_pushedhi = 0;
 		np->n_commitflags &=
@@ -1778,8 +1777,9 @@ nfs_clearcommit(struct mount *mp)
 			pg->flags &= ~PG_NEEDCOMMIT;
 		}
 		mutex_exit(vp->v_interlock);
+		vrele(vp);
 	}
-	mutex_exit(&mntvnode_lock);
+	vfs_vnode_iterator_destroy(marker);
 	mutex_enter(&nmp->nm_lock);
 	nmp->nm_iflag &= ~NFSMNT_STALEWRITEVERF;
 	mutex_exit(&nmp->nm_lock);
