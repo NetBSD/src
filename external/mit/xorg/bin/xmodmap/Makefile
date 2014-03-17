@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.3 2013/05/30 23:42:19 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2014/03/17 10:11:27 mrg Exp $
 
 .include <bsd.own.mk>
 
 PROG=	xmodmap
 SRCS=	xmodmap.c pf.c handle.c exec.c
 
-CPPFLAGS+=	-I${X11SRCDIR.${PROG}}/../include
+CPPFLAGS+=	-I${X11SRCDIR.${PROG}}/../include -DHAVE_CONFIG_H
 
 LDADD+=	-lX11
 DPADD+=	${LIBX11}
