@@ -1,4 +1,4 @@
-#      $NetBSD: Makefile,v 1.4 2010/08/14 10:29:43 mrg Exp $
+#      $NetBSD: Makefile,v 1.5 2014/03/17 08:01:18 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +11,7 @@ SRCS=	radeon_bo.c \
 	radeon_cs.c \
 	radeon_cs_gem.c \
 	radeon_cs_space.c \
+	radeon_surface.c \
 	bof.c
 
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/libdrm
@@ -22,6 +23,8 @@ LIBDPLIBS=	drm	${.CURDIR}/../libdrm
 
 PKGCONFIG=	libdrm_radeon
 PKGDIST=	drm
+
+.include "../libdrm/Makefile.defines"
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
