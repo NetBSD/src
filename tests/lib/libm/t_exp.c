@@ -1,4 +1,4 @@
-/* $NetBSD: t_exp.c,v 1.6 2014/03/16 22:51:19 dsl Exp $ */
+/* $NetBSD: t_exp.c,v 1.7 2014/03/17 11:08:11 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -55,14 +55,22 @@ static const struct {
  */
 ATF_LIBM_TEST(exp2_is_nan, "Test exp2(x) == NaN")
 {
+#ifdef T_LIBM_NAN
 	T_LIBM_CHECK_NAN(0, exp2, T_LIBM_NAN);
 	T_LIBM_CHECK_NAN(0, exp2f, T_LIBM_NAN);
+#else
+	atf_tc_skip("no NaN on this machine");
+#endif
 }
 
 ATF_LIBM_TEST(exp2_is_plus_zero, "Test exp2(x) == +0.0")
 {
+#ifdef T_LIBM_MINUS_INF
 	T_LIBM_CHECK_PLUS_ZERO(0, exp2, T_LIBM_MINUS_INF);
 	T_LIBM_CHECK_PLUS_ZERO(0, exp2f, T_LIBM_MINUS_INF);
+#else
+	atf_tc_skip("no +/-Inf on this machine");
+#endif
 }
 
 ATF_LIBM_TEST(exp2_powers, "Test exp2(x) is correct for some integer x")
@@ -79,7 +87,10 @@ ATF_LIBM_TEST(exp2_powers, "Test exp2(x) is correct for some integer x")
 	    {  100,	0x1p100,	0x1p100 },
 	    {  125,	0x1p125,	0x1p125 },
 	    {  126,	0x1p126,	0x1p126 },
+#if __DBL_MAX_EXP__ > 129
 	    {  127,	0x1p127,	0x1p127 },
+#endif
+#ifdef T_LIBM_PLUS_INF
 	    {  128,	0x1p128,	T_LIBM_PLUS_INF },
 	    {  129,	0x1p129,	T_LIBM_PLUS_INF },
 	    { 1000,	0x1p1000,	T_LIBM_PLUS_INF },
@@ -92,11 +103,13 @@ ATF_LIBM_TEST(exp2_powers, "Test exp2(x) is correct for some integer x")
 	    { 16383,	T_LIBM_PLUS_INF,	T_LIBM_PLUS_INF },
 	    { 16384,	T_LIBM_PLUS_INF,	T_LIBM_PLUS_INF },
 	    { 16385,	T_LIBM_PLUS_INF,	T_LIBM_PLUS_INF },
+#endif
 	    {   -1,	0x1p-1,	0x1p-1 },
 	    {   -2,	0x1p-2,	0x1p-2 },
 	    { -100,	0x1p-100,	0x1p-100 },
 	    { -127,	0x1p-127,	0x1p-127 },
 	    { -128,	0x1p-128,	0x1p-128 },
+#if __LDBL_MIN_EXP__ < -129
 	    { -300,	0x1p-300,	0.0},
 	    { -400,	0x1p-400,	0.0},
 	    {-1000,	0x1p-1000,	0.0},
@@ -108,6 +121,7 @@ ATF_LIBM_TEST(exp2_powers, "Test exp2(x) is correct for some integer x")
 	    {-1060,	0x1p-1060,	0.0},
 	    /* This is the smallest result gcc will allow */
 	    {-1074,	0x1p-1074,	0.0},
+#endif
 	    {-1075,	0x0,	0.0},
 	    {-1080,	0x0,	0.0},
 	    {-2000,	0x0,	0.0},
@@ -131,12 +145,14 @@ ATF_LIBM_TEST(exp2_values, "Test exp2(x) is correct for some x")
 		double	d_eps;
 		double	f_eps;
 	} v[] = {
+#if __DBL_MAX_EXP__ > 128
 	    /* The largest double constant */
 	    { 0x1.fffffffffffffp9,	0x1.ffffffffffd3ap1023,
 		0x1p969,	0.0 },
 	    /* The largest float constant */
 	    { 0x1.fffffep6,	0x1.ffff4ep+127,	6e30,	0.0 },
-#ifndef __vax__
+#endif
+#ifdef T_LIBM_PLUS_INF
 	    { T_LIBM_PLUS_INF,	T_LIBM_PLUS_INF,	0.0,	0.0 },
 #endif
 
