@@ -23,13 +23,13 @@ extern "C" {
 #endif
 
 #define XCB_COMPOSITE_MAJOR_VERSION 0
-#define XCB_COMPOSITE_MINOR_VERSION 3
+#define XCB_COMPOSITE_MINOR_VERSION 4
   
 extern xcb_extension_t xcb_composite_id;
 
 typedef enum xcb_composite_redirect_t {
-    XCB_COMPOSITE_REDIRECT_AUTOMATIC,
-    XCB_COMPOSITE_REDIRECT_MANUAL
+    XCB_COMPOSITE_REDIRECT_AUTOMATIC = 0,
+    XCB_COMPOSITE_REDIRECT_MANUAL = 1
 } xcb_composite_redirect_t;
 
 /**
