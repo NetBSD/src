@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ARMADAXP,v 1.9 2014/03/18 07:34:15 matt Exp $
+#	$NetBSD: ARMADAXP,v 1.10 2014/03/18 08:56:42 matt Exp $
 #
 #	ARMADA XP DEV BOARD
 #
@@ -199,6 +199,9 @@ m25p0		at spi? slave 0
 # TWSI SDRAM Serial Presence Detect
 spdmem0		at iic? addr 0x56
 
+# On-chip Cryptographic Engines and Security Accelerator
+mvcesa* 	at mvsoc? offset ? irq ?
+
 # On-chip USB 2.0 Interface
 ehci*		at mvsoc? offset ? irq ?
 
@@ -244,6 +247,10 @@ wd*		at atabus? drive ? flags 0x0000
 # flags have the same meaning as for IDE drives.
 sd*		at atapibus? drive ? flags 0x0000       # ATAPI disk drives
 uk*		at atapibus? drive ? flags 0x0000       # ATAPI unknown
+
+# On-chip Gigabit Ethernet Controller Interface
+mvgbec* 	at mvsoc? offset ?
+mvgbe*		at mvgbec? port ? irq ?
 
 # On-chip RTC
 mvsocrtc*	at mvsoc? offset ? irq ?
