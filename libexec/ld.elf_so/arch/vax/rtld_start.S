@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.16 2003/03/02 22:03:40 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.17 2014/03/18 23:43:38 matt Exp $	*/
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -53,26 +53,42 @@ ENTRY(_rtld_start, 0)
 
 	movq	(%sp)+,%r7	/* grab cleanup and obj_main into %r7/%r8 */
 	jmp	2(%r0)		/* jump to entry point + 2 */
+END(_rtld_start)
 
 /*
- * Lazy binding entry point, called via PLT.
+ * Lazy binding entry point, called via PLT via JMP into pltgot[1].
+ * SP+0: obj entry points
+ * SP+4: address to relocation index
  *
  * Note: Some functions rely on there not being an additional call frame;
  * hence the `optimization' to avoid the callg opportunistically.
  */
 ALTENTRY(_rtld_bind_start)
+	.cfi_startproc
+	.cfi_def_cfa 13, 60
+	.cfi_offset 16, -56
+	.cfi_offset 12, -52
+	.cfi_offset 13, -48
+	.cfi_offset 15, -44
+	.cfi_offset 2, -40
+	.cfi_offset 3, -36
+	.cfi_offset 4, -32
+	.cfi_offset 5, -28
+	.cfi_offset 6, -24
+	.cfi_offset 7, -20
+	.cfi_offset 8, -16
+	.cfi_offset 9, -12
+	.cfi_offset 10, -8
+	.cfi_offset 11, -4
 	pushr	$0x3f		/* save R0-R5 */
 	movq	24(%sp),%r0	/* get addresses of plt.got & reloc index */
 	pushl	(%r1)		/* push relocation index */
 	pushl	%r0		/* push address of obj entry */
 	calls	$2,_rtld_bind
 	movl	%r0,28(%sp)	/* save return address onto stack */
-	bicw3	6(%fp),(%r0),%r0/* does the entry mask save any additional regs */
 	popr	$0x3f		/* restore R0-R5 (cond flags not modified) */
-	bneq	4f		/* yes? do it the hard way */
-	addl2	$4,%sp		/* no? skip past plt.got on stack */
-	addl2	$2,(%sp)		/*    skip past the mask */
-	rsb			/*    and jump to it */
-4:	addl2	$4,%sp
+	addl2	$4,%sp
 	callg	(%ap),*(%sp)+	/* return value from _rtld_bind() == actual */
 	ret
+	.cfi_endproc
+END(_rtld_bind_start)
