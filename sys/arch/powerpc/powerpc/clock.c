@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.15 2014/03/18 14:34:31 macallan Exp $	*/
+/*	$NetBSD: clock.c,v 1.16 2014/03/18 20:11:08 macallan Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.15 2014/03/18 14:34:31 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.16 2014/03/18 20:11:08 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -68,26 +68,26 @@ uint32_t ticks_per_intr = 0;
 
 #ifdef PPC_OEA601
 static struct timecounter powerpc_601_timecounter = {
-	get_601_timecount,	/* get_timecount */
-	0,			/* no poll_pps */
-	0x7fffffff,		/* counter_mask */
-	0,			/* frequency */
-	"rtc",			/* name */
-	100,			/* quality */
-	NULL,			/* tc_priv */
-	NULL			/* tc_next */
+	.tc_get_timecount = get_601_timecount,
+	.tc_poll_pps = 0,
+	.tc_counter_mask = 0x7fffffff,
+	.tc_frequency = 0,
+	.tc_name = "rtc",
+	.tc_quality = 100,
+	.tc_priv = NULL,
+	.tc_next = NULL
 };
 #endif
 
 static struct timecounter powerpc_timecounter = {
-	get_powerpc_timecount,	/* get_timecount */
-	0,			/* no poll_pps */
-	0x7fffffff,		/* counter_mask */
-	0,			/* frequency */
-	"mftb",			/* name */
-	100,			/* quality */
-	NULL,			/* tc_priv */
-	NULL			/* tc_next */
+	.tc_get_timecount = get_powerpc_timecount,
+	.tc_poll_pps = 0,
+	.tc_counter_mask = 0x7fffffff,
+	.tc_frequency = 0,
+	.tc_name = "mftb",
+	.tc_quality = 100,
+	.tc_priv = NULL,
+	.tc_next = NULL
 };
 
 /*
