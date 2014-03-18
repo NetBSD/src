@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.97 2014/03/18 08:57:53 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.98 2014/03/18 09:44:02 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -1382,3 +1382,8 @@ sys/ufs/ufs/ufs_quota2.c			1.37
 distrib/sets/lists/comp/md.amd64		patch
 	Build fix with MKDEBUG=yes on amd64.
 	[mlelstv, ticket #1030]
+
+sys/kern/kern_verifiedexec.c			1.132
+
+	Reorder code to avoid use-after-free on error.
+	[maxv, ticket #1034]
