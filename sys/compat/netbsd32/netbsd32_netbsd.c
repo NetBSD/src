@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.179 2012/02/01 05:43:54 dholland Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.179.2.1 2014/03/18 08:09:46 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.179 2012/02/01 05:43:54 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.179.2.1 2014/03/18 08:09:46 msaitoh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.179 2012/02/01 05:43:54 dholla
 #include <sys/socketvar.h>
 #include <sys/mbuf.h>
 #include <sys/stat.h>
+#include <sys/swap.h>
 #include <sys/time.h>
 #include <sys/signalvar.h>
 #include <sys/ptrace.h>
@@ -73,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.179 2012/02/01 05:43:54 dholla
 #include <sys/vfs_syscalls.h>
 
 #include <uvm/uvm_extern.h>
+#include <uvm/uvm_swap.h>
 
 #include <sys/sa.h>
 #include <sys/savar.h>
@@ -1728,6 +1730,51 @@ netbsd32___posix_rename(struct lwp *l, const struct netbsd32___posix_rename_args
 	return (sys___posix_rename(l, &ua, retval));
 }
 
+static int
+netbsd32_swapctl_stats(struct lwp *l, struct sys_swapctl_args *uap, register_t *retval)
+{
+	struct swapent *ksep;
+	struct netbsd32_swapent *usep32;
+	struct netbsd32_swapent se32;
+	int count = SCARG(uap, misc);
+	int i, error = 0;
+	size_t ksep_len;
+
+	/* Make sure userland cannot exhaust kernel memory */
+	if ((size_t)count > (size_t)uvmexp.nswapdev)
+		count = uvmexp.nswapdev;
+
+	ksep_len = sizeof(*ksep) * count;
+	ksep = kmem_alloc(ksep_len, KM_SLEEP);
+	usep32 = (struct netbsd32_swapent *)SCARG(uap, arg);
+
+	uvm_swap_stats(SWAP_STATS, ksep, count, retval);
+	count = *retval;
+
+	if (count < 1)
+		goto out;
+
+	for (i = 0; i < count; i++) {
+		se32.se_dev = ksep[i].se_dev;
+		se32.se_flags = ksep[i].se_flags;
+		se32.se_nblks = ksep[i].se_nblks;
+		se32.se_inuse = ksep[i].se_inuse;
+		se32.se_priority = ksep[i].se_priority;
+		memcpy(se32.se_path, ksep[i].se_path,
+			sizeof(se32.se_path));
+
+		error = copyout(&se32, usep32 + i, sizeof(se32));
+		if (error)
+			break;
+	}
+
+	
+out:
+	kmem_free(ksep, ksep_len);
+
+	return error;
+}
+
 int
 netbsd32_swapctl(struct lwp *l, const struct netbsd32_swapctl_args *uap, register_t *retval)
 {
@@ -1741,6 +1788,11 @@ netbsd32_swapctl(struct lwp *l, const struct netbsd32_swapctl_args *uap, registe
 	NETBSD32TO64_UAP(cmd);
 	NETBSD32TOP_UAP(arg, void);
 	NETBSD32TO64_UAP(misc);
+
+	/* SWAP_STATS50 and SWAP_STATS13 structures need no translation */
+	if (SCARG(&ua, cmd) == SWAP_STATS)
+		return netbsd32_swapctl_stats(l, &ua, retval);
+	
 	return (sys_swapctl(l, &ua, retval));
 }
 
