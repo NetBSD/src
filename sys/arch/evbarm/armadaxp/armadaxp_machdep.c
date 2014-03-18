@@ -1,4 +1,4 @@
-/*	$NetBSD: armadaxp_machdep.c,v 1.6 2013/12/23 04:12:09 kiyohara Exp $	*/
+/*	$NetBSD: armadaxp_machdep.c,v 1.7 2014/03/18 06:17:55 matt Exp $	*/
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
 
@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadaxp_machdep.c,v 1.6 2013/12/23 04:12:09 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadaxp_machdep.c,v 1.7 2014/03/18 06:17:55 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_mvsoc.h"
@@ -414,7 +414,7 @@ initarm(void *arg)
 #define	CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
 #endif
 #ifndef CONSFREQ
-#define	CONSFREQ 250000000
+#define	CONSFREQ 0
 #endif
 static const int	comcnspeed = CONSPEED;
 static const int	comcnfreq  = CONSFREQ;
@@ -435,7 +435,7 @@ consinit(void)
 	    uint32_t, int);
 
 	if (mvuart_cnattach(&mvsoc_bs_tag, comcnaddr, comcnspeed,
-			comcnfreq, comcnmode))
+			comcnfreq ? comcnfreq : mvTclk , comcnmode))
 		panic("Serial console can not be initialized.");
 #endif
 }
