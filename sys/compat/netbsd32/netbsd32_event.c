@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_event.c,v 1.9 2011/05/23 21:34:47 joerg Exp $	*/
+/*	$NetBSD: netbsd32_event.c,v 1.9.10.1 2014/03/18 08:01:34 msaitoh Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_event.c,v 1.9 2011/05/23 21:34:47 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_event.c,v 1.9.10.1 2014/03/18 08:01:34 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -86,7 +86,7 @@ netbsd32_kevent_put_events(void *private, struct kevent *events,
 
 	for (i = 0, kev32 = events32; i < n; i++, kev32++, events++)
 		netbsd32_from_kevent(events, kev32);
-	kev32 = (struct netbsd32_kevent *)eventlist;
+	kev32 = ((struct netbsd32_kevent *)eventlist) + index;
 	return  copyout(events32, kev32, n * sizeof(*events32));
 }
 
