@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.27 2014/03/05 09:37:29 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.28 2014/03/18 10:21:47 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.27 2014/03/05 09:37:29 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.28 2014/03/18 10:21:47 hannken Exp $");
+
+#define _VFS_VNODE_PRIVATE
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -337,50 +339,12 @@ vfs_unbusy(struct mount *mp, bool keepref, struct mount **nextp)
 	}
 }
 
-/*
- * Insert a marker vnode into a mount's vnode list, after the
- * specified vnode.  mntvnode_lock must be held.
- */
-void
-vmark(vnode_t *mvp, vnode_t *vp)
-{
-	struct mount *mp = mvp->v_mount;
-
-	KASSERT(mutex_owned(&mntvnode_lock));
-	KASSERT((mvp->v_iflag & VI_MARKER) != 0);
-	KASSERT(vp->v_mount == mp);
-
-	TAILQ_INSERT_AFTER(&mp->mnt_vnodelist, vp, mvp, v_mntvnodes);
-}
-
-/*
- * Remove a marker vnode from a mount's vnode list, and return
- * a pointer to the next vnode in the list.  mntvnode_lock must
- * be held.
- */
-vnode_t *
-vunmark(vnode_t *mvp)
-{
-	struct mount *mp = mvp->v_mount;
-	vnode_t *vp;
-
-	KASSERT(mutex_owned(&mntvnode_lock));
-	KASSERT((mvp->v_iflag & VI_MARKER) != 0);
-
-	vp = TAILQ_NEXT(mvp, v_mntvnodes);
-	TAILQ_REMOVE(&mp->mnt_vnodelist, mvp, v_mntvnodes); 
-
-	KASSERT(vp == NULL || vp->v_mount == mp);
-
-	return vp;
-}
-
 struct vnode_iterator {
 	struct vnode vi_vnode;
 }; 
 
 void
-vfs_vnode_iterator_init(struct mount *mp, struct vnode_iterator **vipp)
+vfs_vnode_iterator_init(struct mount *mp, struct vnode_iterator **vip)
 {
 	struct vnode *vp;
 
@@ -391,7 +355,7 @@ vfs_vnode_iterator_init(struct mount *mp, struct vnode_iterator **vipp)
 	vp->v_usecount = 1;
 	mutex_exit(&mntvnode_lock);
 
-	*vipp = (struct vnode_iterator *)vp;
+	*vip = (struct vnode_iterator *)vp;
 }
 
 void
