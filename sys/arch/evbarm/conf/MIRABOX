@@ -1,39 +1,21 @@
-#	$NetBSD: MIRABOX,v 1.1 2014/03/15 14:09:09 kiyohara Exp $
+#	$NetBSD: MIRABOX,v 1.2 2014/03/18 07:07:40 matt Exp $
 #
 #  This configuration supports for generically GlobalScale MiraBox
 #
 
-include 	"arch/evbarm/conf/SHEEVAPLUG"
+include 	"arch/evbarm/conf/ARMADAXP"
 
 # Board Type
 no makeoptions	BOARDTYPE
 makeoptions	BOARDTYPE="mirabox"
 no options 	EVBARM_BOARDTYPE
 options 	EVBARM_BOARDTYPE=mirabox
+options 	VERBOSE_INIT_ARM
+no options	MEMSIZE
+options 	MEMSIZE=0x40000000
 
 # CPU options
-no options 	CPU_SHEEVA
-#no options 	MV_L2_CACHE_ENABLE
-#no options 	MV_L2_CACHE_WRITE_THROUGH
-no options 	MV_CACHE_RANGE_OPS
-options 	CPU_PJ4B
-options 	L2CACHE_ENABLE
-#options 	AURORA_IO_CACHE_COHERENCY
-options 	AURORA_L2_PT_WALK
-options 	ARM_HAS_VBAR
-#options 	FPU_VFP
+options 	FPU_VFP
 no makeoptions	CPUFLAGS
-#makeoptions	CPUFLAGS="-march=armv7-a -mfpu=neon"
-makeoptions	CPUFLAGS="-march=armv7-a -msoft-float"
-
-# Architecture options
-no options 	KIRKWOOD
-options 	ARMADAXP
-
-options 	PIC_MAXSOURCES=128
-
-# Marvell MV6710 Armada 370 System-on-chip
-mvsoc0	at mainbus?
-options 	MVSOC_INTERREGS_PBASE=0xd0000000
-
-options 	COM_16750		# XXXX: required
+makeoptions	CPUFLAGS="-march=armv7-a -msoft-float -mfpu=vfpv4"
+no options	CONSFREQ
