@@ -29,9 +29,12 @@
  *      Dave Airlie <airlied@linux.ie>
  *      Jesse Barnes <jesse.barnes@intel.com>
  */
+#include <linux/err.h>
+#include <linux/spinlock.h>
 #include <linux/list.h>
 #include <linux/slab.h>
 #include <linux/export.h>
+#include <asm/bug.h>
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
 #include <drm/drm_edid.h>
@@ -39,7 +42,7 @@
 
 /* Avoid boilerplate.  I'm tired of typing. */
 #define DRM_ENUM_NAME_FN(fnname, list)				\
-	char *fnname(int val)					\
+	const char *fnname(int val)				\
 	{							\
 		int i;						\
 		for (i = 0; i < ARRAY_SIZE(list); i++) {	\
@@ -130,12 +133,15 @@ static struct drm_prop_enum_list drm_dirty_info_enum_list[] = {
 	{ DRM_MODE_DIRTY_ANNOTATE, "Annotate" },
 };
 
+#ifndef __NetBSD__
+/* XXX Doesn't seem to be used...  */
 DRM_ENUM_NAME_FN(drm_get_dirty_info_name,
 		 drm_dirty_info_enum_list)
+#endif
 
 struct drm_conn_prop_enum_list {
 	int type;
-	char *name;
+	const char *name;
 	int count;
 };
 
@@ -192,6 +198,7 @@ char *drm_get_connector_name(struct drm_connector *connector)
 }
 EXPORT_SYMBOL(drm_get_connector_name);
 
+#ifndef __NetBSD__
 char *drm_get_connector_status_name(enum drm_connector_status status)
 {
 	if (status == connector_status_connected)
@@ -201,6 +208,7 @@ char *drm_get_connector_status_name(enum drm_connector_status status)
 	else
 		return "unknown";
 }
+#endif
 
 /**
  * drm_mode_object_get - allocate a new identifier
@@ -606,11 +614,13 @@ EXPORT_SYMBOL(drm_connector_cleanup);
 
 void drm_connector_unplug_all(struct drm_device *dev)
 {
+#ifndef __NetBSD__
 	struct drm_connector *connector;
 
 	/* taking the mode config mutex ends up in a clash with sysfs */
 	list_for_each_entry(connector, &dev->mode_config.connector_list, head)
 		drm_sysfs_connector_remove(connector);
+#endif
 
 }
 EXPORT_SYMBOL(drm_connector_unplug_all);
@@ -831,7 +841,7 @@ EXPORT_SYMBOL(drm_mode_create_dvi_i_properties);
  * this routine.
  */
 int drm_mode_create_tv_properties(struct drm_device *dev, int num_modes,
-				  char *modes[])
+				  const char *modes[])
 {
 	struct drm_property *tv_selector;
 	struct drm_property *tv_subconnector;
@@ -986,8 +996,13 @@ EXPORT_SYMBOL(drm_mode_create_dirty_info_property);
  */
 void drm_mode_config_init(struct drm_device *dev)
 {
+#ifdef __NetBSD__
+	linux_mutex_init(&dev->mode_config.mutex);
+	linux_mutex_init(&dev->mode_config.idr_mutex);
+#else
 	mutex_init(&dev->mode_config.mutex);
 	mutex_init(&dev->mode_config.idr_mutex);
+#endif
 	INIT_LIST_HEAD(&dev->mode_config.fb_list);
 	INIT_LIST_HEAD(&dev->mode_config.crtc_list);
 	INIT_LIST_HEAD(&dev->mode_config.connector_list);
@@ -1009,7 +1024,8 @@ void drm_mode_config_init(struct drm_device *dev)
 }
 EXPORT_SYMBOL(drm_mode_config_init);
 
-int drm_mode_group_init(struct drm_device *dev, struct drm_mode_group *group)
+static int drm_mode_group_init(struct drm_device *dev,
+			       struct drm_mode_group *group)
 {
 	uint32_t total_objects = 0;
 
@@ -1104,6 +1120,11 @@ void drm_mode_config_cleanup(struct drm_device *dev)
 
 	idr_remove_all(&dev->mode_config.crtc_idr);
 	idr_destroy(&dev->mode_config.crtc_idr);
+
+#ifdef __NetBSD__
+	linux_mutex_destroy(&dev->mode_config.mutex);
+	linux_mutex_destroy(&dev->mode_config.idr_mutex);
+#endif
 }
 EXPORT_SYMBOL(drm_mode_config_cleanup);
 
@@ -2139,7 +2160,8 @@ int drm_mode_addfb(struct drm_device *dev,
 		   void *data, struct drm_file *file_priv)
 {
 	struct drm_mode_fb_cmd *or = data;
-	struct drm_mode_fb_cmd2 r = {};
+	static const struct drm_mode_fb_cmd2 zero_fbcmd;
+	struct drm_mode_fb_cmd2 r = zero_fbcmd;
 	struct drm_mode_config *config = &dev->mode_config;
 	struct drm_framebuffer *fb;
 	int ret = 0;
@@ -2592,7 +2614,12 @@ int drm_mode_attachmode_crtc(struct drm_device *dev, struct drm_crtc *crtc,
 	struct drm_connector *connector;
 	int ret = 0;
 	struct drm_display_mode *dup_mode, *next;
+#ifdef __NetBSD__
+	/* LIST_HEAD has another meaning in NetBSD.  */
+	struct list_head list = LIST_HEAD_INIT(list);
+#else
 	LIST_HEAD(list);
+#endif
 
 	list_for_each_entry(connector, &dev->mode_config.connector_list, head) {
 		if (!connector->encoder)
@@ -3470,13 +3497,13 @@ int drm_mode_gamma_set_ioctl(struct drm_device *dev,
 		goto out;
 	}
 
-	g_base = r_base + size;
+	g_base = (char *)r_base + size;
 	if (copy_from_user(g_base, (void __user *)(unsigned long)crtc_lut->green, size)) {
 		ret = -EFAULT;
 		goto out;
 	}
 
-	b_base = g_base + size;
+	b_base = (char *)g_base + size;
 	if (copy_from_user(b_base, (void __user *)(unsigned long)crtc_lut->blue, size)) {
 		ret = -EFAULT;
 		goto out;
@@ -3524,13 +3551,13 @@ int drm_mode_gamma_get_ioctl(struct drm_device *dev,
 		goto out;
 	}
 
-	g_base = r_base + size;
+	g_base = (char *)r_base + size;
 	if (copy_to_user((void __user *)(unsigned long)crtc_lut->green, g_base, size)) {
 		ret = -EFAULT;
 		goto out;
 	}
 
-	b_base = g_base + size;
+	b_base = (char *)g_base + size;
 	if (copy_to_user((void __user *)(unsigned long)crtc_lut->blue, b_base, size)) {
 		ret = -EFAULT;
 		goto out;

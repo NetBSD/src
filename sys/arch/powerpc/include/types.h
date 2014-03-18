@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.48 2013/07/17 23:27:02 matt Exp $	*/
+/*	$NetBSD: types.h,v 1.49 2014/03/18 18:20:41 riastradh Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.

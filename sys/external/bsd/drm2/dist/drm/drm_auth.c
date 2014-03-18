@@ -141,8 +141,7 @@ int drm_remove_magic(struct drm_master *master, drm_magic_t magic)
  */
 int drm_getmagic(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
-	static drm_magic_t sequence = 0;
-	static DEFINE_SPINLOCK(lock);
+	static atomic_t sequence = ATOMIC_INIT(0);
 	struct drm_auth *auth = data;
 
 	/* Find unique magic */
@@ -150,11 +149,7 @@ int drm_getmagic(struct drm_device *dev, void *data, struct drm_file *file_priv)
 		auth->magic = file_priv->magic;
 	} else {
 		do {
-			spin_lock(&lock);
-			if (!sequence)
-				++sequence;	/* reserve 0 */
-			auth->magic = sequence++;
-			spin_unlock(&lock);
+			auth->magic = atomic_inc_return(&sequence);
 		} while (drm_find_file(file_priv->master, auth->magic));
 		file_priv->magic = auth->magic;
 		drm_add_magic(file_priv->master, file_priv, auth->magic);

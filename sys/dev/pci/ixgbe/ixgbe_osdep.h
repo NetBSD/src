@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: src/sys/dev/ixgbe/ixgbe_osdep.h,v 1.9 2010/11/26 22:46:32 jfv Exp $*/
-/*$NetBSD: ixgbe_osdep.h,v 1.2 2013/07/17 19:52:15 soren Exp $*/
+/*$NetBSD: ixgbe_osdep.h,v 1.3 2014/03/18 18:20:42 riastradh Exp $*/
 
 #ifndef _IXGBE_OS_H_
 #define _IXGBE_OS_H_
