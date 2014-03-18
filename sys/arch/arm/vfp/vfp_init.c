@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.35 2014/03/04 08:32:23 matt Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.36 2014/03/18 07:03:22 matt Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -270,6 +270,7 @@ vfp_attach(void)
 	const char *model = NULL;
 
 	if (CPU_ID_ARM11_P(curcpu()->ci_arm_cpuid)
+	    || CPU_ID_MV88SV58XX_P(curcpu()->ci_arm_cpuid)
 	    || CPU_ID_CORTEX_P(curcpu()->ci_arm_cpuid)) {
 		const uint32_t cpacr_vfp = CPACR_CPn(VFP_COPROC);
 		const uint32_t cpacr_vfp2 = CPACR_CPn(VFP_COPROC2);
@@ -328,6 +329,9 @@ vfp_attach(void)
 	case FPU_VFP11_ARM11:
 		model = "VFP11";
 		break;
+	case FPU_VFP_MV88SV58XX:
+		model = "VFP3";
+		break;
 	case FPU_VFP_CORTEXA5:
 	case FPU_VFP_CORTEXA7:
 	case FPU_VFP_CORTEXA8:
@@ -337,7 +341,7 @@ vfp_attach(void)
 		cpu_neon_present = 1;
 		break;
 	default:
-		aprint_normal_dev(ci->ci_dev, "unrecognized VFP version %x\n",
+		aprint_normal_dev(ci->ci_dev, "unrecognized VFP version %#x\n",
 		    fpsid);
 		install_coproc_handler(VFP_COPROC, vfp_fpscr_handler);
 		vfp_fpscr_changable = VFP_FPSCR_CSUM|VFP_FPSCR_ESUM
