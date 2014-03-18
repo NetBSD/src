@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1085 2014/03/05 03:16:43 ozaki-r Exp $
+#	$NetBSD: files,v 1.1086 2014/03/18 18:20:41 riastradh Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -1099,6 +1099,9 @@ file	dev/ic/lan9118.c		smsh
 define drm {}
 include "external/bsd/drm/conf/files.drm"
 include "dev/drm/files.drm"
+
+# DRM/KMS - Newer direct rendering manager with kernel mode-switching
+include "external/bsd/drm2/drm/files.drmkms"
 
 
 # Definitions for wscons

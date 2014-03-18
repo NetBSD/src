@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.12 2013/07/17 23:27:02 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.13 2014/03/18 18:20:41 riastradh Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.

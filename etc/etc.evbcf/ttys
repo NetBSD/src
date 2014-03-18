@@ -1,4 +1,4 @@
-#	$NetBSD: ttys,v 1.1 2013/07/18 22:08:59 matt Exp $
+#	$NetBSD: ttys,v 1.2 2014/03/18 18:20:36 riastradh Exp $
 #	from: @(#)ttys	5.1 (Berkeley) 4/17/89
 #
 # name	getty				type	status		comments

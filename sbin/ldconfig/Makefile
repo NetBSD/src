@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2013/07/18 21:59:46 matt Exp $
+#	$NetBSD: Makefile,v 1.28 2014/03/18 18:20:39 riastradh Exp $
 
 .include <bsd.own.mk>   # For MKPIC
 .include <bsd.shlib.mk>

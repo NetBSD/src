@@ -1,4 +1,4 @@
-# $NetBSD: majors,v 1.67 2013/10/18 08:03:48 mbalmer Exp $
+# $NetBSD: majors,v 1.68 2014/03/18 18:20:41 riastradh Exp $
 #
 # Device majors for Machine-Independent drivers.
 #
@@ -29,7 +29,7 @@ device-major amr       char 176		   amr		vector=1
 device-major lockstat  char 177		   lockstat	single
 device-major putter    char 178		   putter
 device-major srt       char 179		   srt		
-device-major drm       char 180		   drmbase
+device-major drm       char 180		   drmbase | drmkms
 device-major bio       char 181		   bio		single
 device-major altmem    char 182 block 182  altmem	
 device-major twa       char 187		   twa

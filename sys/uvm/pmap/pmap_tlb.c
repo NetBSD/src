@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.3 2013/07/17 23:15:20 matt Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.4 2014/03/18 18:20:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.3 2013/07/17 23:15:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.4 2014/03/18 18:20:44 riastradh Exp $");
 
 /*
  * Manages address spaces in a TLB.

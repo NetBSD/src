@@ -1,0 +1,62 @@
+#	$NetBSD: files.drmkms,v 1.2 2014/03/18 18:20:42 riastradh Exp $
+
+define	drmkmsbus	{ }
+
+include "external/bsd/drm2/linux/files.drmkms_linux"
+
+# i2c code is not separated out, but it is marked so that it could be
+# if we wanted.  Not clear that this provides as much advantage as
+# separating out PCI code, which will be necessary for, e.g., PCIless
+# ARM SoC graphics drivers.
+define	drmkms_i2c
+
+define	drmkms
+device	drmkms: drmkms_linux, drmkms_i2c
+attach	drmkms at drmkmsbus
+
+defflag		opt_drmkms.h	DRMKMS_DEBUG
+makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/include"
+makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/dist/uapi"
+makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/dist/include"
+
+makeoptions 	drmkms 	"CWARNFLAGS.drm_crtc.c"+="-Wno-shadow"
+makeoptions 	drmkms 	"CWARNFLAGS.drm_edid.c"+="-Wno-shadow"
+
+# XXX Should probably be in a header file.  opt_drmkms.h?
+makeoptions	drmkms	CPPFLAGS+="-D__KERNEL__"
+
+file	external/bsd/drm2/dist/drm/drm_auth.c		drmkms
+file	external/bsd/drm2/dist/drm/drm_buffer.c		drmkms
+file	external/bsd/drm2/dist/drm/drm_bufs.c		drmkms
+file	external/bsd/drm2/drm/drm_cache.c		drmkms
+file	external/bsd/drm2/dist/drm/drm_context.c	drmkms
+file	external/bsd/drm2/dist/drm/drm_crtc.c		drmkms
+file	external/bsd/drm2/dist/drm/drm_crtc_helper.c	drmkms
+file	external/bsd/drm2/dist/drm/drm_dma.c		drmkms
+file	external/bsd/drm2/dist/drm/drm_dp_helper.c	drmkms_i2c
+file	external/bsd/drm2/drm/drm_drv.c			drmkms
+file	external/bsd/drm2/dist/drm/drm_edid.c		drmkms_i2c
+#file	external/bsd/drm2/dist/drm/drm_encoder_slave.c	drmkms_i2c
+file	external/bsd/drm2/dist/drm/drm_fb_helper.c	drmkms
+file	external/bsd/drm2/drm/drm_fops.c		drmkms
+file	external/bsd/drm2/dist/drm/drm_gem.c		drmkms
+file	external/bsd/drm2/dist/drm/drm_global.c		drmkms
+file	external/bsd/drm2/dist/drm/drm_hashtab.c	drmkms
+#file	external/bsd/drm2/dist/drm/drm_info.c		drmkms
+#file	external/bsd/drm2/dist/drm/drm_ioc32.c		drmkms
+file	external/bsd/drm2/dist/drm/drm_ioctl.c		drmkms
+file	external/bsd/drm2/dist/drm/drm_irq.c		drmkms
+file	external/bsd/drm2/drm/drm_lock.c		drmkms
+file	external/bsd/drm2/drm/drm_memory.c		drmkms
+file	external/bsd/drm2/dist/drm/drm_mm.c		drmkms
+file	external/bsd/drm2/dist/drm/drm_modes.c		drmkms
+#file	external/bsd/drm2/dist/drm/drm_platform.c	drmkms
+#file	external/bsd/drm2/dist/drm/drm_prime.c		drmkms
+#file	external/bsd/drm2/dist/drm/drm_proc.c		drmkms
+file	external/bsd/drm2/drm/drm_scatter.c		drmkms
+file	external/bsd/drm2/dist/drm/drm_stub.c		drmkms
+file	external/bsd/drm2/drm/drm_vm.c			drmkms
+
+file	external/bsd/drm2/drm/drm_gem_vm.c		drmkms
+file	external/bsd/drm2/drm/drm_module.c		drmkms
+file	external/bsd/drm2/drm/drm_sysfs.c		drmkms
