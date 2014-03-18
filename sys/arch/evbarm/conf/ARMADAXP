@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ARMADAXP,v 1.8 2014/03/18 07:06:43 matt Exp $
+#	$NetBSD: ARMADAXP,v 1.9 2014/03/18 07:34:15 matt Exp $
 #
 #	ARMADA XP DEV BOARD
 #
@@ -24,7 +24,8 @@ options 	L2CACHE_ENABLE
 #options 	AURORA_IO_CACHE_COHERENCY
 options 	AURORA_L2_PT_WALK
 
-#options	VERBOSE_INIT_ARM
+#options 	VERBOSE_INIT_ARM
+#options 	MVSOC_CONSOLE_EARLY
 
 # File systems
 file-system	FFS		# UFS
