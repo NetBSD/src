@@ -28,8 +28,15 @@
 #include <linux/cpufreq.h>
 #include "i915_drv.h"
 #include "intel_drv.h"
+#ifndef __NetBSD__
 #include "../../../platform/x86/intel_ips.h"
+#endif
 #include <linux/module.h>
+#include <linux/kgdb.h>
+#include <linux/log2.h>
+#include <linux/math64.h>
+#include <linux/time.h>
+#include <asm/param.h>
 
 #define FORCEWAKE_ACK_TIMEOUT_MS 2
 
@@ -2293,7 +2300,11 @@ err_unref:
 /**
  * Lock protecting IPS related data structures
  */
+#ifdef __NetBSD__
+spinlock_t mchdev_lock;
+#else
 DEFINE_SPINLOCK(mchdev_lock);
+#endif
 
 /* Global for IPS driver to get at the current i915 device. Protected by
  * mchdev_lock. */
@@ -2675,6 +2686,12 @@ static void gen6_update_ring_freq(struct drm_device *dev)
 
 	WARN_ON(!mutex_is_locked(&dev_priv->rps.hw_lock));
 
+#ifdef __NetBSD__		/* XXX cpufreq */
+	{
+		extern uint64_t tsc_freq; /* x86 TSC frequency in Hz */
+		max_ia_freq = (tsc_freq / 1000);
+	}
+#else
 	max_ia_freq = cpufreq_quick_get_max(0);
 	/*
 	 * Default to measured freq if none found, PCU will ensure we don't go
@@ -2682,6 +2699,7 @@ static void gen6_update_ring_freq(struct drm_device *dev)
 	 */
 	if (!max_ia_freq)
 		max_ia_freq = tsc_khz;
+#endif
 
 	/* Convert from kHz to MHz */
 	max_ia_freq /= 1000;
@@ -3183,6 +3201,7 @@ unsigned long i915_gfx_val(struct drm_i915_private *dev_priv)
 	return val;
 }
 
+#ifndef __NetBSD__		/* XXX IPS */
 /**
  * i915_read_mch_val - return value for IPS use
  *
@@ -3322,6 +3341,7 @@ out_unlock:
 	return ret;
 }
 EXPORT_SYMBOL_GPL(i915_gpu_turbo_disable);
+#endif
 
 /**
  * Tells the intel_ips driver that the i915 driver is now loaded, if
@@ -3334,6 +3354,7 @@ EXPORT_SYMBOL_GPL(i915_gpu_turbo_disable);
 static void
 ips_ping_for_i915_load(void)
 {
+#ifndef __NetBSD__		/* XXX whattakludge for Linux module mania */
 	void (*link)(void);
 
 	link = symbol_get(ips_link_to_i915_driver);
@@ -3341,10 +3362,19 @@ ips_ping_for_i915_load(void)
 		link();
 		symbol_put(ips_link_to_i915_driver);
 	}
+#endif
 }
 
 void intel_gpu_ips_init(struct drm_i915_private *dev_priv)
 {
+#ifdef __NetBSD__		/* XXX */
+	/*
+	 * This seems as good a place as any to initialize mchdev_lock.
+	 * Taking the lock in the rest of this routine is silly, but...
+	 */
+	spin_lock_init(&mchdev_lock);
+#endif
+
 	/* We only register the i915 ips part with intel-ips once everything is
 	 * set up, to avoid intel-ips sneaking in and reading bogus values. */
 	spin_lock_irq(&mchdev_lock);
@@ -3356,9 +3386,16 @@ void intel_gpu_ips_init(struct drm_i915_private *dev_priv)
 
 void intel_gpu_ips_teardown(void)
 {
+#ifdef __NetBSD__
+	if (i915_mch_dev == NULL)
+		return;
+#endif
 	spin_lock_irq(&mchdev_lock);
 	i915_mch_dev = NULL;
 	spin_unlock_irq(&mchdev_lock);
+#ifdef __NetBSD__
+	spin_lock_destroy(&mchdev_lock);
+#endif
 }
 static void intel_init_emon(struct drm_device *dev)
 {
@@ -4416,6 +4453,16 @@ void intel_gt_init(struct drm_device *dev)
 	INIT_DELAYED_WORK(&dev_priv->rps.delayed_resume_work,
 			  intel_gen6_powersave_work);
 }
+
+#ifdef __NetBSD__		/* XXX gt fini */
+void
+intel_gt_fini(struct drm_device *dev)
+{
+	struct drm_i915_private *dev_priv = dev->dev_private;
+
+	spin_lock_destroy(&dev_priv->gt_lock);
+}
+#endif
 
 int sandybridge_pcode_read(struct drm_i915_private *dev_priv, u8 mbox, u32 *val)
 {

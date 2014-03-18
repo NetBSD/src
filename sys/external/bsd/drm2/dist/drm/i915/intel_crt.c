@@ -706,6 +706,7 @@ static const struct drm_encoder_funcs intel_crt_enc_funcs = {
 	.destroy = intel_encoder_destroy,
 };
 
+#ifndef __NetBSD__		/* XXX dmi hack */
 static int __init intel_no_crt_dmi_callback(const struct dmi_system_id *id)
 {
 	DRM_INFO("Skipping CRT initialization for %s\n", id->ident);
@@ -723,6 +724,7 @@ static const struct dmi_system_id intel_no_crt[] = {
 	},
 	{ }
 };
+#endif
 
 void intel_crt_init(struct drm_device *dev)
 {
@@ -731,9 +733,11 @@ void intel_crt_init(struct drm_device *dev)
 	struct intel_connector *intel_connector;
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
+#ifndef __NetBSD__		/* XXX dmi hack */
 	/* Skip machines without VGA that falsely report hotplug events */
 	if (dmi_check_system(intel_no_crt))
 		return;
+#endif
 
 	crt = kzalloc(sizeof(struct intel_crt), GFP_KERNEL);
 	if (!crt)

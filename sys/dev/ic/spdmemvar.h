@@ -1,4 +1,4 @@
-/* $NetBSD: spdmemvar.h,v 1.3 2013/07/19 01:02:49 soren Exp $ */
+/* $NetBSD: spdmemvar.h,v 1.4 2014/03/18 18:20:41 riastradh Exp $ */
 
 /*
  * Copyright (c) 2007 Paul Goyette
