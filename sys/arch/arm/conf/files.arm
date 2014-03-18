@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.124 2014/02/20 17:39:59 matt Exp $
+#	$NetBSD: files.arm,v 1.125 2014/03/18 07:05:46 matt Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -64,6 +64,7 @@ defparam opt_arm_intr_impl.h	ARM_INTR_IMPL
 
 # ARM-specific debug options
 defflag	opt_arm_debug.h		ARM_LOCK_CAS_DEBUG
+defflag	opt_arm_debug.h		VERBOSE_INIT_ARM
 
 # Board-specific bus_space(9)/bus_dma(9) definitions
 defflag  opt_arm_bus_space.h	__BUS_SPACE_HAS_STREAM_METHODS
