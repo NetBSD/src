@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsold.c,v 1.38 2014/03/18 00:16:49 christos Exp $	*/
+/*	$NetBSD: rtsold.c,v 1.39 2014/03/18 19:30:09 christos Exp $	*/
 /*	$KAME: rtsold.c,v 1.77 2004/01/03 01:35:13 itojun Exp $	*/
 
 /*
@@ -565,7 +565,7 @@ rtsol_timer_update(struct ifinfo *ifinfo)
 {
 #define MILLION 1000000
 #define DADRETRY 10		/* XXX: adhoc */
-	long interval;
+	time_t interval;
 	struct timeval now;
 
 	bzero(&ifinfo->timer, sizeof(ifinfo->timer));
@@ -587,7 +587,7 @@ rtsol_timer_update(struct ifinfo *ifinfo)
 			ifinfo->timer = tm_max;	/* stop timer(valid?) */
 		break;
 	case IFS_DELAY:
-		interval = arc4random() % (MAX_RTR_SOLICITATION_DELAY * MILLION);
+		interval = (time_t) (arc4random() % (MAX_RTR_SOLICITATION_DELAY * MILLION));
 		ifinfo->timer.tv_sec = interval / MILLION;
 		ifinfo->timer.tv_usec = (suseconds_t)(interval % MILLION);
 		break;
