@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ARMADAXP,v 1.7 2014/03/17 01:56:14 kiyohara Exp $
+#	$NetBSD: ARMADAXP,v 1.8 2014/03/18 07:06:43 matt Exp $
 #
 #	ARMADA XP DEV BOARD
 #
@@ -288,6 +288,10 @@ tlphy*		at mii? phy ?		# ThunderLAN internal PHYs
 tqphy*		at mii? phy ?		# TSC Semiconductor 78Q2120 PHYs
 ukphy*		at mii? phy ?		# Generic/unknown PHYs
 urlphy*		at mii? phy ?		# Realtek RTL8150L internal PHYs
+
+# PCI USB devices
+xhci*		at pci? dev ? function ?
+usb*		at xhci?
 
 # Pseudo-Devices
 # disk/mass storage pseudo-devices
