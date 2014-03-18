@@ -11,10 +11,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#if __x86_64
-
 #include "int_lib.h"
 #include <stdio.h>
+
+#ifdef CRT_HAS_128BIT
 
 // Effects: if rem != 0, *rem = a % b
 // Returns: a / b
@@ -65339,7 +65339,7 @@ tu_int tests[][4] =
 
 int main()
 {
-#if __x86_64
+#ifdef CRT_HAS_128BIT
     const unsigned N = sizeof(tests) / sizeof(tests[0]);
     unsigned i;
     for (i = 0; i < N; ++i)
