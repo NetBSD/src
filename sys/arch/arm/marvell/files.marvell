@@ -1,4 +1,4 @@
-#       $NetBSD: files.marvell,v 1.12 2014/03/18 07:05:00 matt Exp $
+#       $NetBSD: files.marvell,v 1.13 2014/03/18 07:25:57 matt Exp $
 #
 # Configuration info for Marvell System on Chip support
 #
@@ -15,6 +15,7 @@ file	arch/arm/arm32/irq_dispatch.S
 
 # Some SoC(ARMADAXP) reports false DeviceID. 
 defflag opt_mvsoc.h				ORION KIRKWOOD MV78XX0 ARMADAXP
+						MVSOC_CONSOLE_EARLY
 defparam opt_mvsoc.h				MVSOC_INTERREGS_PBASE
 						MVSOC_FIXUP_DEVID MEMSIZE
 file	arch/arm/marvell/mvsoc_intr.c
