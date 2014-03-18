@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsold.c,v 1.39 2014/03/18 19:30:09 christos Exp $	*/
+/*	$NetBSD: rtsold.c,v 1.40 2014/03/18 20:39:55 dsl Exp $	*/
 /*	$KAME: rtsold.c,v 1.77 2004/01/03 01:35:13 itojun Exp $	*/
 
 /*
@@ -565,7 +565,7 @@ rtsol_timer_update(struct ifinfo *ifinfo)
 {
 #define MILLION 1000000
 #define DADRETRY 10		/* XXX: adhoc */
-	time_t interval;
+	uint32_t interval;
 	struct timeval now;
 
 	bzero(&ifinfo->timer, sizeof(ifinfo->timer));
