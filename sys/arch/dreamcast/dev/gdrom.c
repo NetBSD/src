@@ -1,4 +1,4 @@
-/*	$NetBSD: gdrom.c,v 1.37 2014/03/16 05:20:23 dholland Exp $	*/
+/*	$NetBSD: gdrom.c,v 1.38 2014/03/18 08:08:55 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.37 2014/03/16 05:20:23 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.38 2014/03/18 08:08:55 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ dev_type_strategy(gdromstrategy);
 const struct bdevsw gdrom_bdevsw = {
 	.d_open = gdromopen,
 	.d_close = gdromclose,
-	.d_strateegy = gdromstrategy,
+	.d_strategy = gdromstrategy,
 	.d_ioctl = gdromioctl,
 	.d_dump = nodump,
 	.d_psize = nosize,
