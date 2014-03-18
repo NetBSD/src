@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.5,v 1.1.2.4 2014/02/21 12:28:04 sborrill Exp $
+# $NetBSD: CHANGES-6.0.5,v 1.1.2.5 2014/03/18 09:44:51 msaitoh Exp $
 
 A complete list of changes from the NetBSD 6.0.4 release to the NetBSD 6.0.5
 release:
@@ -35,3 +35,7 @@ sys/arch/atari/dev/ite.c			1.72
 	terminal. Fixes PR/48599.
 	[tsutsui, ticket #1033]
 
+sys/kern/kern_verifiedexec.c			1.132
+
+	Reorder code to avoid use-after-free on error.
+	[maxv, ticket #1034]
