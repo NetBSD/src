@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1881 2014/03/14 01:05:57 pooka Exp $
+#	$NetBSD: mi,v 1.1882 2014/03/18 10:21:47 hannken Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -11002,6 +11002,9 @@
 ./usr/share/man/cat9/vfs_sysctl.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/vfs_unbusy.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vfs_unmountall.0		comp-sys-catman		.cat
+./usr/share/man/cat9/vfs_vnode_iterator_destroy.0	comp-sys-catman		.cat
+./usr/share/man/cat9/vfs_vnode_iterator_init.0	comp-sys-catman		.cat
+./usr/share/man/cat9/vfs_vnode_iterator_next.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/vfs_write_resume.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/vfs_write_suspend.0	comp-obsolete		obsolete
 ./usr/share/man/cat9/vfsops.0			comp-sys-catman		.cat
@@ -17650,6 +17653,9 @@
 ./usr/share/man/html9/vfs_suspend.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vfs_unbusy.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vfs_unmountall.html	comp-sys-htmlman	html
+./usr/share/man/html9/vfs_vnode_iterator_destroy.html	comp-sys-htmlman	html
+./usr/share/man/html9/vfs_vnode_iterator_init.html	comp-sys-htmlman	html
+./usr/share/man/html9/vfs_vnode_iterator_next.html	comp-sys-htmlman	html
 ./usr/share/man/html9/vfsops.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vfssubr.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vget.html			comp-sys-htmlman	html
@@ -24539,6 +24545,9 @@
 ./usr/share/man/man9/vfs_sysctl.9		comp-obsolete		obsolete
 ./usr/share/man/man9/vfs_unbusy.9		comp-sys-man		.man
 ./usr/share/man/man9/vfs_unmountall.9		comp-sys-man		.man
+./usr/share/man/man9/vfs_vnode_iterator_destroy.9	comp-sys-man		.man
+./usr/share/man/man9/vfs_vnode_iterator_init.9	comp-sys-man		.man
+./usr/share/man/man9/vfs_vnode_iterator_next.9	comp-sys-man		.man
 ./usr/share/man/man9/vfs_write_resume.9		comp-obsolete		obsolete
 ./usr/share/man/man9/vfs_write_suspend.9	comp-obsolete		obsolete
 ./usr/share/man/man9/vfsops.9			comp-sys-man		.man
