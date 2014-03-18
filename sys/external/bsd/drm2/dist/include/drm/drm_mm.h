@@ -40,6 +40,7 @@
 #ifdef CONFIG_DEBUG_FS
 #include <linux/seq_file.h>
 #endif
+#include <linux/spinlock.h>
 
 struct drm_mm_node {
 	struct list_head node_list;
@@ -89,6 +90,7 @@ static inline bool drm_mm_initialized(struct drm_mm *mm)
 {
 	return mm->hole_stack.next;
 }
+
 #define drm_mm_for_each_node(entry, mm) list_for_each_entry(entry, \
 						&(mm)->head_node.node_list, \
 						node_list)

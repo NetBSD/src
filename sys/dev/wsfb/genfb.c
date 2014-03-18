@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.52 2014/01/22 18:47:11 skrll Exp $ */
+/*	$NetBSD: genfb.c,v 1.53 2014/03/18 18:20:42 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.52 2014/01/22 18:47:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.53 2014/03/18 18:20:42 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,8 +55,10 @@ __KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.52 2014/01/22 18:47:11 skrll Exp $");
 		AB_VERBOSE | AB_DEBUG) )
 #endif
 
+#ifdef _KERNEL_OPT
 #include "opt_genfb.h"
 #include "opt_wsfb.h"
+#endif
 
 #ifdef GENFB_DEBUG
 #define GPRINTF panic
@@ -320,7 +322,8 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	}
 #else
 	genfb_init_palette(sc);
-	vcons_replay_msgbuf(&sc->sc_console_screen);
+	if (console)
+		vcons_replay_msgbuf(&sc->sc_console_screen);
 #endif
 
 	if (genfb_softc == NULL)
@@ -336,7 +339,8 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 		SCREEN_DISABLE_DRAWING(&sc->sc_console_screen);
 #endif
 
-	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint);
+	config_found_ia(sc->sc_dev, "wsemuldisplaydev", &aa,
+	    wsemuldisplaydevprint);
 
 	return 0;
 }

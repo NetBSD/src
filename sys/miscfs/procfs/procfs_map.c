@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_map.c,v 1.43 2013/07/18 07:59:44 ryo Exp $	*/
+/*	$NetBSD: procfs_map.c,v 1.44 2014/03/18 18:20:43 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.43 2013/07/18 07:59:44 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.44 2014/03/18 18:20:43 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

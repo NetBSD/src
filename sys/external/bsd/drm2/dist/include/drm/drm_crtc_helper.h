@@ -145,19 +145,37 @@ extern int drm_helper_mode_fill_fb_struct(struct drm_framebuffer *fb,
 static inline void drm_crtc_helper_add(struct drm_crtc *crtc,
 				       const struct drm_crtc_helper_funcs *funcs)
 {
+#ifdef __NetBSD__
+	/*
+	 * XXX This is wrong, but more expedient than going through all
+	 * the uses of helper_private and constifying them.  Whoever
+	 * comes through this code with a few spare moments should
+	 * consider donating them to the cause of doing that.
+	 */
+	crtc->helper_private = (void *)__UNCONST(funcs);
+#else
 	crtc->helper_private = (void *)funcs;
+#endif
 }
 
 static inline void drm_encoder_helper_add(struct drm_encoder *encoder,
 					  const struct drm_encoder_helper_funcs *funcs)
 {
+#ifdef __NetBSD__
+	encoder->helper_private = (void *)__UNCONST(funcs);
+#else
 	encoder->helper_private = (void *)funcs;
+#endif
 }
 
 static inline void drm_connector_helper_add(struct drm_connector *connector,
 					    const struct drm_connector_helper_funcs *funcs)
 {
+#ifdef __NetBSD__
+	connector->helper_private = (void *)__UNCONST(funcs);
+#else
 	connector->helper_private = (void *)funcs;
+#endif
 }
 
 extern int drm_helper_resume_force_mode(struct drm_device *dev);

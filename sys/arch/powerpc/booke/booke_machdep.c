@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_machdep.c,v 1.18 2013/07/17 23:27:02 matt Exp $	*/
+/*	$NetBSD: booke_machdep.c,v 1.19 2014/03/18 18:20:41 riastradh Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 #define	_POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.18 2013/07/17 23:27:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.19 2014/03/18 18:20:41 riastradh Exp $");
 
 #include "opt_modular.h"
 

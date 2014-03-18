@@ -1,4 +1,4 @@
-/*	$NetBSD: kcpuset.h,v 1.9 2013/07/17 22:36:26 matt Exp $	*/
+/*	$NetBSD: kcpuset.h,v 1.10 2014/03/18 18:20:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2011 The NetBSD Foundation, Inc.

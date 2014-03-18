@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.100 2013/07/20 19:59:31 dholland Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.101 2014/03/18 18:20:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.

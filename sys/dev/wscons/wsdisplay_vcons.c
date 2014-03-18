@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.31 2014/01/21 00:36:11 mlelstv Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.32 2014/03/18 18:20:42 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.31 2014/01/21 00:36:11 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.32 2014/03/18 18:20:42 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,9 +51,11 @@ __KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.31 2014/01/21 00:36:11 mlelstv
 
 #include <dev/wscons/wsdisplay_vconsvar.h>
 
+#ifdef _KERNEL_OPT
 #include "opt_wsemul.h"
 #include "opt_wsdisplay_compat.h"
 #include "opt_vcons.h"
+#endif
 
 static void vcons_dummy_init_screen(void *, struct vcons_screen *, int, 
 	    long *);

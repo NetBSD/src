@@ -40,6 +40,8 @@
  *		needed by SiS driver's memory management.
  */
 
+#include <linux/err.h>
+
 #include <drm/drmP.h>
 
 /******************************************************************/
@@ -119,6 +121,7 @@ void drm_ctxbitmap_cleanup(struct drm_device * dev)
 {
 	mutex_lock(&dev->struct_mutex);
 	idr_remove_all(&dev->ctx_idr);
+	idr_destroy(&dev->ctx_idr);
 	mutex_unlock(&dev->struct_mutex);
 }
 
@@ -264,15 +267,22 @@ static int drm_context_switch_complete(struct drm_device *dev,
 	dev->last_context = new;	/* PRE/POST: This is the _only_ writer. */
 	dev->last_switch = jiffies;
 
-	if (!_DRM_LOCK_IS_HELD(file_priv->master->lock.hw_lock->lock)) {
+	spin_lock(&file_priv->master->lock.spinlock);
+	if (file_priv->master->lock.hw_lock == NULL ||
+	    !_DRM_LOCK_IS_HELD(file_priv->master->lock.hw_lock->lock)) {
 		DRM_ERROR("Lock isn't held after context switch\n");
 	}
+	spin_unlock(&file_priv->master->lock.spinlock);
 
 	/* If a context switch is ever initiated
 	   when the kernel holds the lock, release
 	   that lock here. */
 	clear_bit(0, &dev->context_flag);
+#ifdef __NetBSD__
+	DRM_WAKEUP_ONE(&dev->context_wait, &drm_global_mutex);
+#else
 	wake_up(&dev->context_wait);
+#endif
 
 	return 0;
 }

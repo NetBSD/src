@@ -1,4 +1,4 @@
-/*	$NetBSD: fpreg.h,v 1.2 2013/07/18 22:18:31 matt Exp $	*/
+/*	$NetBSD: fpreg.h,v 1.3 2014/03/18 18:20:41 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross

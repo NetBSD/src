@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.9 2013/07/18 22:14:10 matt Exp $
+# $NetBSD: Makefile.inc,v 1.10 2014/03/18 18:20:37 riastradh Exp $
 
 .if ${MACHINE_CPU} == "m68k"
 NOLINT=		# defined

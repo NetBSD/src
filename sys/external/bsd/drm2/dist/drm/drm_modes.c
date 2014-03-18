@@ -829,6 +829,8 @@ void drm_mode_validate_size(struct drm_device *dev,
 }
 EXPORT_SYMBOL(drm_mode_validate_size);
 
+#ifndef __NetBSD__
+
 /**
  * drm_mode_validate_clocks - validate modes against clock limits
  * @dev: DRM device
@@ -865,6 +867,8 @@ void drm_mode_validate_clocks(struct drm_device *dev,
 	}
 }
 EXPORT_SYMBOL(drm_mode_validate_clocks);
+
+#endif	/* !defined(__NetBSD__) */
 
 /**
  * drm_mode_prune_invalid - remove invalid modes from mode list
@@ -987,6 +991,8 @@ void drm_mode_connector_list_update(struct drm_connector *connector)
 	}
 }
 EXPORT_SYMBOL(drm_mode_connector_list_update);
+
+#ifndef __NetBSD__
 
 /**
  * drm_mode_parse_command_line_for_connector - parse command line for connector
@@ -1176,3 +1182,5 @@ drm_mode_create_from_cmdline_mode(struct drm_device *dev,
 	return mode;
 }
 EXPORT_SYMBOL(drm_mode_create_from_cmdline_mode);
+
+#endif

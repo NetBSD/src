@@ -1,4 +1,4 @@
-/* $NetBSD: timekeeper.c,v 1.13 2013/07/19 16:42:30 tsutsui Exp $ */
+/* $NetBSD: timekeeper.c,v 1.14 2014/03/18 18:20:41 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: timekeeper.c,v 1.13 2013/07/19 16:42:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timekeeper.c,v 1.14 2014/03/18 18:20:41 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: grabmyaddr.c,v 1.32 2013/07/18 17:02:58 christos Exp $	*/
+/*	$NetBSD: grabmyaddr.c,v 1.33 2014/03/18 18:20:35 riastradh Exp $	*/
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * Copyright (C) 2008 Timo Teras <timo.teras@iki.fi>.

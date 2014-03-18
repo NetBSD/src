@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.10 2013/07/18 22:20:48 matt Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.11 2014/03/18 18:20:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

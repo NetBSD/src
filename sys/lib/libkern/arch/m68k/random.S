@@ -1,4 +1,4 @@
-/*	$NetBSD: random.S,v 1.5 2013/07/18 12:16:40 matt Exp $	*/
+/*	$NetBSD: random.S,v 1.6 2014/03/18 18:20:43 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1990,1993 The Regents of the University of California.

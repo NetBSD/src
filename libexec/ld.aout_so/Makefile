@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.50 2013/07/18 21:39:11 matt Exp $
+#	$NetBSD: Makefile,v 1.51 2014/03/18 18:20:38 riastradh Exp $
 
 .include <bsd.own.mk>			# for MKPIC definition
 .include <bsd.endian.mk>		# for TARGET_ENDIANNESS

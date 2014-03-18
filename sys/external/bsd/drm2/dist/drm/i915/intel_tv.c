@@ -30,6 +30,7 @@
  * Integrated TV-out support for the 915GM and 945GM.
  */
 
+#include <linux/math64.h>
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
 #include <drm/drm_edid.h>
@@ -1554,7 +1555,11 @@ intel_tv_init(struct drm_device *dev)
 	struct intel_encoder *intel_encoder;
 	struct intel_connector *intel_connector;
 	u32 tv_dac_on, tv_dac_off, save_tv_dac;
+#ifdef __NetBSD__		/* XXX const */
+	const char *tv_format_names[ARRAY_SIZE(tv_modes)];
+#else
 	char *tv_format_names[ARRAY_SIZE(tv_modes)];
+#endif
 	int i, initial_mode = 0;
 
 	if ((I915_READ(TV_CTL) & TV_FUSE_STATE_MASK) == TV_FUSE_STATE_DISABLED)
@@ -1650,7 +1655,11 @@ intel_tv_init(struct drm_device *dev)
 
 	/* Create TV properties then attach current values */
 	for (i = 0; i < ARRAY_SIZE(tv_modes); i++)
+#ifdef __NetBSD__		/* XXX const */
+		tv_format_names[i] = (const char *)tv_modes[i].name;
+#else
 		tv_format_names[i] = (char *)tv_modes[i].name;
+#endif
 	drm_mode_create_tv_properties(dev,
 				      ARRAY_SIZE(tv_modes),
 				      tv_format_names);
