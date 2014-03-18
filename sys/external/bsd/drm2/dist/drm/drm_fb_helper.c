@@ -34,6 +34,12 @@
 #include <linux/slab.h>
 #include <linux/fb.h>
 #include <linux/module.h>
+#include <linux/device.h>
+#include <linux/export.h>
+#include <linux/list.h>
+#include <linux/notifier.h>
+#include <linux/printk.h>
+#include <linux/sysrq.h>
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
 #include <drm/drm_fb_helper.h>
@@ -43,7 +49,12 @@ MODULE_AUTHOR("David Airlie, Jesse Barnes");
 MODULE_DESCRIPTION("DRM KMS helper");
 MODULE_LICENSE("GPL and additional rights");
 
+#ifdef __NetBSD__		/* XXX LIST_HEAD means something else */
+static struct list_head kernel_fb_helper_list =
+    LIST_HEAD_INIT(kernel_fb_helper_list);
+#else
 static LIST_HEAD(kernel_fb_helper_list);
+#endif
 
 /**
  * DOC: fbdev helpers
@@ -82,6 +93,7 @@ fail:
 }
 EXPORT_SYMBOL(drm_fb_helper_single_add_all_connectors);
 
+#ifndef __NetBSD__		/* XXX fb command line */
 static int drm_fb_helper_parse_command_line(struct drm_fb_helper *fb_helper)
 {
 	struct drm_fb_helper_connector *fb_helper_conn;
@@ -135,7 +147,9 @@ static int drm_fb_helper_parse_command_line(struct drm_fb_helper *fb_helper)
 	}
 	return 0;
 }
+#endif
 
+#ifndef __NetBSD__		/* XXX fb info */
 static void drm_fb_helper_save_lut_atomic(struct drm_crtc *crtc, struct drm_fb_helper *helper)
 {
 	uint16_t *r_base, *g_base, *b_base;
@@ -238,6 +252,7 @@ int drm_fb_helper_debug_leave(struct fb_info *info)
 	return 0;
 }
 EXPORT_SYMBOL(drm_fb_helper_debug_leave);
+#endif
 
 bool drm_fb_helper_restore_fbdev_mode(struct drm_fb_helper *fb_helper)
 {
@@ -272,7 +287,7 @@ static bool drm_fb_helper_force_kernel_mode(void)
 	return error;
 }
 
-int drm_fb_helper_panic(struct notifier_block *n, unsigned long ununsed,
+static int drm_fb_helper_panic(struct notifier_block *n, unsigned long ununsed,
 			void *panic_str)
 {
 	/*
@@ -323,9 +338,10 @@ static struct sysrq_key_op sysrq_drm_fb_helper_restore_op = {
 	.action_msg = "Restore framebuffer console",
 };
 #else
-static struct sysrq_key_op sysrq_drm_fb_helper_restore_op = { };
+static struct sysrq_key_op sysrq_drm_fb_helper_restore_op;
 #endif
 
+#ifndef __NetBSD__		/* XXX fb info */
 static void drm_fb_helper_dpms(struct fb_info *info, int dpms_mode)
 {
 	struct drm_fb_helper *fb_helper = info->par;
@@ -382,6 +398,7 @@ int drm_fb_helper_blank(int blank, struct fb_info *info)
 	return 0;
 }
 EXPORT_SYMBOL(drm_fb_helper_blank);
+#endif
 
 static void drm_fb_helper_crtc_free(struct drm_fb_helper *helper)
 {
@@ -462,6 +479,7 @@ void drm_fb_helper_fini(struct drm_fb_helper *fb_helper)
 }
 EXPORT_SYMBOL(drm_fb_helper_fini);
 
+#ifndef __NetBSD__		/* XXX fb info */
 static int setcolreg(struct drm_crtc *crtc, u16 red, u16 green,
 		     u16 blue, u16 regno, struct fb_info *info)
 {
@@ -656,21 +674,16 @@ int drm_fb_helper_check_var(struct fb_var_screeninfo *var,
 	return 0;
 }
 EXPORT_SYMBOL(drm_fb_helper_check_var);
+#endif
 
 /* this will let fbcon do the mode init */
-int drm_fb_helper_set_par(struct fb_info *info)
+static int
+drm_fb_helper_set_config(struct drm_fb_helper *fb_helper)
 {
-	struct drm_fb_helper *fb_helper = info->par;
 	struct drm_device *dev = fb_helper->dev;
-	struct fb_var_screeninfo *var = &info->var;
 	struct drm_crtc *crtc;
 	int ret;
 	int i;
-
-	if (var->pixclock != 0) {
-		DRM_ERROR("PIXEL CLOCK SET\n");
-		return -EINVAL;
-	}
 
 	mutex_lock(&dev->mode_config.mutex);
 	for (i = 0; i < fb_helper->crtc_count; i++) {
@@ -688,6 +701,20 @@ int drm_fb_helper_set_par(struct fb_info *info)
 		drm_fb_helper_hotplug_event(fb_helper);
 	}
 	return 0;
+}
+
+#ifndef __NetBSD__
+int drm_fb_helper_set_par(struct fb_info *info)
+{
+	struct drm_fb_helper *fb_helper = info->par;
+	struct fb_var_screeninfo *var = &info->var;
+
+	if (var->pixclock != 0) {
+		DRM_ERROR("PIXEL CLOCK SET\n");
+		return -EINVAL;
+	}
+
+	return drm_fb_helper_set_config(fb_helper);
 }
 EXPORT_SYMBOL(drm_fb_helper_set_par);
 
@@ -722,6 +749,7 @@ int drm_fb_helper_pan_display(struct fb_var_screeninfo *var,
 	return ret;
 }
 EXPORT_SYMBOL(drm_fb_helper_pan_display);
+#endif
 
 int drm_fb_helper_single_fb_probe(struct drm_fb_helper *fb_helper,
 				  int preferred_bpp)
@@ -729,7 +757,9 @@ int drm_fb_helper_single_fb_probe(struct drm_fb_helper *fb_helper,
 	int new_fb = 0;
 	int crtc_count = 0;
 	int i;
+#ifndef __NetBSD__		/* XXX fb info */
 	struct fb_info *info;
+#endif
 	struct drm_fb_helper_surface_size sizes;
 	int gamma_size = 0;
 
@@ -808,13 +838,16 @@ int drm_fb_helper_single_fb_probe(struct drm_fb_helper *fb_helper,
 	if (new_fb < 0)
 		return new_fb;
 
+#ifndef __NetBSD__		/* XXX fb info */
 	info = fb_helper->fbdev;
+#endif
 
 	/* set the fb pointer */
 	for (i = 0; i < fb_helper->crtc_count; i++)
 		fb_helper->crtc_info[i].mode_set.fb = fb_helper->fb;
 
 	if (new_fb) {
+#ifndef __NetBSD__		/* XXX fb info */
 		info->var.pixclock = 0;
 		if (register_framebuffer(info) < 0)
 			return -EINVAL;
@@ -822,8 +855,19 @@ int drm_fb_helper_single_fb_probe(struct drm_fb_helper *fb_helper,
 		dev_info(fb_helper->dev->dev, "fb%d: %s frame buffer device\n",
 				info->node, info->fix.id);
 
+#else
+		/*
+		 * XXX Not sure this is right, but this logic will get
+		 * cleaned up in a newer import of drm2.
+		 */
+		drm_fb_helper_set_config(fb_helper);
+#endif
 	} else {
+#ifdef __NetBSD__		/* XXX fb info */
+		drm_fb_helper_set_config(fb_helper);
+#else
 		drm_fb_helper_set_par(info);
+#endif
 	}
 
 	/* Switch back to kernel console on panic */
@@ -841,6 +885,7 @@ int drm_fb_helper_single_fb_probe(struct drm_fb_helper *fb_helper,
 }
 EXPORT_SYMBOL(drm_fb_helper_single_fb_probe);
 
+#ifndef __NetBSD__		/* XXX fb info */
 void drm_fb_helper_fill_fix(struct fb_info *info, uint32_t pitch,
 			    uint32_t depth)
 {
@@ -934,6 +979,7 @@ void drm_fb_helper_fill_var(struct fb_info *info, struct drm_fb_helper *fb_helpe
 	info->var.yres = fb_height;
 }
 EXPORT_SYMBOL(drm_fb_helper_fill_var);
+#endif
 
 static int drm_fb_helper_probe_connector_modes(struct drm_fb_helper *fb_helper,
 					       uint32_t maxX,
@@ -975,6 +1021,9 @@ static bool drm_has_cmdline_mode(struct drm_fb_helper_connector *fb_connector)
 static struct drm_display_mode *drm_pick_cmdline_mode(struct drm_fb_helper_connector *fb_helper_conn,
 						      int width, int height)
 {
+#ifdef __NetBSD__		/* XXX fb command line */
+	return NULL;
+#else
 	struct drm_cmdline_mode *cmdline_mode;
 	struct drm_display_mode *mode = NULL;
 
@@ -1011,6 +1060,7 @@ create_mode:
 						 cmdline_mode);
 	list_add(&mode->head, &fb_helper_conn->connector->modes);
 	return mode;
+#endif
 }
 
 static bool drm_connector_enabled(struct drm_connector *connector, bool strict)
@@ -1333,7 +1383,9 @@ bool drm_fb_helper_initial_config(struct drm_fb_helper *fb_helper, int bpp_sel)
 	/* disable all the possible outputs/crtcs before entering KMS mode */
 	drm_helper_disable_unused_functions(fb_helper->dev);
 
+#ifndef __NetBSD__		/* XXX fb command line */
 	drm_fb_helper_parse_command_line(fb_helper);
+#endif
 
 	count = drm_fb_helper_probe_connector_modes(fb_helper,
 						    dev->mode_config.max_width,

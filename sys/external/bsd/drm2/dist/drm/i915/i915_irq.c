@@ -28,6 +28,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/printk.h>
 #include <linux/sysrq.h>
 #include <linux/slab.h>
 #include <drm/drmP.h>
@@ -353,7 +354,16 @@ static void notify_ring(struct drm_device *dev,
 
 	trace_i915_gem_request_complete(ring, ring->get_seqno(ring, false));
 
+#ifdef __NetBSD__
+    {
+	unsigned long flags;
+	spin_lock_irqsave(&dev_priv->irq_lock, flags);
+	DRM_SPIN_WAKEUP_ALL(&ring->irq_queue, &dev_priv->irq_lock);
+	spin_unlock_irqrestore(&dev_priv->irq_lock, flags);
+    }
+#else
 	wake_up_all(&ring->irq_queue);
+#endif
 	if (i915_enable_hangcheck) {
 		dev_priv->hangcheck_count = 0;
 		mod_timer(&dev_priv->hangcheck_timer,
@@ -411,7 +421,9 @@ static void ivybridge_parity_work(struct work_struct *work)
 	drm_i915_private_t *dev_priv = container_of(work, drm_i915_private_t,
 						    l3_parity.error_work);
 	u32 error_status, row, bank, subbank;
+#ifndef __NetBSD__		/* XXX kobject uevent...? */
 	char *parity_event[5];
+#endif
 	uint32_t misccpctl;
 	unsigned long flags;
 
@@ -443,6 +455,7 @@ static void ivybridge_parity_work(struct work_struct *work)
 
 	mutex_unlock(&dev_priv->dev->struct_mutex);
 
+#ifndef __NetBSD__		/* XXX kobject uevent...? */
 	parity_event[0] = "L3_PARITY_ERROR=1";
 	parity_event[1] = kasprintf(GFP_KERNEL, "ROW=%d", row);
 	parity_event[2] = kasprintf(GFP_KERNEL, "BANK=%d", bank);
@@ -458,6 +471,7 @@ static void ivybridge_parity_work(struct work_struct *work)
 	kfree(parity_event[3]);
 	kfree(parity_event[2]);
 	kfree(parity_event[1]);
+#endif
 }
 
 static void ivybridge_handle_parity_error(struct drm_device *dev)
@@ -524,7 +538,7 @@ static void gen6_queue_rps_work(struct drm_i915_private *dev_priv,
 	queue_work(dev_priv->wq, &dev_priv->rps.work);
 }
 
-static irqreturn_t valleyview_irq_handler(int irq, void *arg)
+static irqreturn_t valleyview_irq_handler(DRM_IRQ_ARGS)
 {
 	struct drm_device *dev = (struct drm_device *) arg;
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
@@ -680,7 +694,7 @@ static void cpt_irq_handler(struct drm_device *dev, u32 pch_iir)
 					 I915_READ(FDI_RX_IIR(pipe)));
 }
 
-static irqreturn_t ivybridge_irq_handler(int irq, void *arg)
+static irqreturn_t ivybridge_irq_handler(DRM_IRQ_ARGS)
 {
 	struct drm_device *dev = (struct drm_device *) arg;
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
@@ -753,7 +767,7 @@ static void ilk_gt_irq_handler(struct drm_device *dev,
 		notify_ring(dev, &dev_priv->ring[VCS]);
 }
 
-static irqreturn_t ironlake_irq_handler(int irq, void *arg)
+static irqreturn_t ironlake_irq_handler(DRM_IRQ_ARGS)
 {
 	struct drm_device *dev = (struct drm_device *) arg;
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
@@ -841,18 +855,24 @@ static void i915_error_work_func(struct work_struct *work)
 	drm_i915_private_t *dev_priv = container_of(work, drm_i915_private_t,
 						    error_work);
 	struct drm_device *dev = dev_priv->dev;
+#ifndef __NetBSD__		/* XXX kobject uevent...? */
 	char *error_event[] = { "ERROR=1", NULL };
 	char *reset_event[] = { "RESET=1", NULL };
 	char *reset_done_event[] = { "ERROR=0", NULL };
 
 	kobject_uevent_env(&dev->primary->kdev.kobj, KOBJ_CHANGE, error_event);
+#endif
 
 	if (atomic_read(&dev_priv->mm.wedged)) {
 		DRM_DEBUG_DRIVER("resetting chip\n");
+#ifndef __NetBSD__		/* XXX kobject uevent...? */
 		kobject_uevent_env(&dev->primary->kdev.kobj, KOBJ_CHANGE, reset_event);
+#endif
 		if (!i915_reset(dev)) {
 			atomic_set(&dev_priv->mm.wedged, 0);
+#ifndef __NetBSD__		/* XXX kobject uevent...? */
 			kobject_uevent_env(&dev->primary->kdev.kobj, KOBJ_CHANGE, reset_done_event);
+#endif
 		}
 		complete_all(&dev_priv->error_completion);
 	}
@@ -1151,7 +1171,17 @@ static void i915_record_ring_state(struct drm_device *dev,
 		error->instdone[ring->id] = I915_READ(INSTDONE);
 	}
 
+#ifdef __NetBSD__
+    {
+	unsigned long flags;
+	spin_lock_irqsave(&dev_priv->irq_lock, flags);
+	error->waiting[ring->id] = DRM_SPIN_WAITERS_P(&ring->irq_queue,
+	    &dev_priv->irq_lock);
+	spin_unlock_irqrestore(&dev_priv->irq_lock, flags);
+    }
+#else
 	error->waiting[ring->id] = waitqueue_active(&ring->irq_queue);
+#endif
 	error->instpm[ring->id] = I915_READ(RING_INSTPM(ring->mmio_base));
 	error->seqno[ring->id] = ring->get_seqno(ring, false);
 	error->acthd[ring->id] = intel_ring_get_active_head(ring);
@@ -1466,7 +1496,17 @@ void i915_handle_error(struct drm_device *dev, bool wedged)
 		 * Wakeup waiting processes so they don't hang
 		 */
 		for_each_ring(ring, dev_priv, i)
+#ifdef __NetBSD__
+		    {
+			unsigned long flags;
+			spin_lock_irqsave(&dev_priv->irq_lock, flags);
+			DRM_SPIN_WAKEUP_ALL(&ring->irq_queue,
+			    &dev_priv->irq_lock);
+			spin_unlock_irqrestore(&dev_priv->irq_lock, flags);
+		    }
+#else
 			wake_up_all(&ring->irq_queue);
+#endif
 	}
 
 	queue_work(dev_priv->wq, &dev_priv->error_work);
@@ -1671,12 +1711,30 @@ static bool i915_hangcheck_ring_idle(struct intel_ring_buffer *ring, bool *err)
 	    i915_seqno_passed(ring->get_seqno(ring, false),
 			      ring_last_seqno(ring))) {
 		/* Issue a wake-up to catch stuck h/w. */
+#ifdef __NetBSD__
+		/*
+		 * XXX What invariants is the irq_queue relying on?
+		 */
+		struct drm_i915_private *dev_priv = ring->dev->dev_private;
+		unsigned long flags;
+		spin_lock_irqsave(&dev_priv->irq_lock, flags);
+		if (DRM_SPIN_WAITERS_P(&ring->irq_queue,
+			&dev_priv->irq_lock)) {
+			DRM_ERROR("Hangcheck timer elapsed... %s idle\n",
+				  ring->name);
+			DRM_SPIN_WAKEUP_ALL(&ring->irq_queue,
+			    &dev_priv->irq_lock);
+			*err = true;
+		}
+		spin_unlock_irqrestore(&dev_priv->irq_lock, flags);
+#else
 		if (waitqueue_active(&ring->irq_queue)) {
 			DRM_ERROR("Hangcheck timer elapsed... %s idle\n",
 				  ring->name);
 			wake_up_all(&ring->irq_queue);
 			*err = true;
 		}
+#endif
 		return true;
 	}
 	return false;
@@ -2146,7 +2204,7 @@ static int i8xx_irq_postinstall(struct drm_device *dev)
 	return 0;
 }
 
-static irqreturn_t i8xx_irq_handler(int irq, void *arg)
+static irqreturn_t i8xx_irq_handler(DRM_IRQ_ARGS)
 {
 	struct drm_device *dev = (struct drm_device *) arg;
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
@@ -2324,7 +2382,7 @@ static int i915_irq_postinstall(struct drm_device *dev)
 	return 0;
 }
 
-static irqreturn_t i915_irq_handler(int irq, void *arg)
+static irqreturn_t i915_irq_handler(DRM_IRQ_ARGS)
 {
 	struct drm_device *dev = (struct drm_device *) arg;
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
@@ -2562,7 +2620,7 @@ static int i965_irq_postinstall(struct drm_device *dev)
 	return 0;
 }
 
-static irqreturn_t i965_irq_handler(int irq, void *arg)
+static irqreturn_t i965_irq_handler(DRM_IRQ_ARGS)
 {
 	struct drm_device *dev = (struct drm_device *) arg;
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;

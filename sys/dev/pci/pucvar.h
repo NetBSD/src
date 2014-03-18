@@ -1,4 +1,4 @@
-/*	$NetBSD: pucvar.h,v 1.10 2013/07/17 19:49:11 soren Exp $	*/
+/*	$NetBSD: pucvar.h,v 1.11 2014/03/18 18:20:42 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.

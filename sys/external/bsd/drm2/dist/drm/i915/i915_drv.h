@@ -40,6 +40,8 @@
 #include <linux/backlight.h>
 #include <linux/intel-iommu.h>
 #include <linux/kref.h>
+#include <linux/completion.h>
+#include <linux/shrinker.h>
 
 /* General customization:
  */
@@ -143,6 +145,11 @@ struct opregion_swsci;
 struct opregion_asle;
 struct drm_i915_private;
 
+#ifdef __NetBSD__		/* XXX acpi iomem */
+#  include <linux/acpi_io.h>
+#  define	__iomem			__acpi_iomem
+#endif
+
 struct intel_opregion {
 	struct opregion_header __iomem *header;
 	struct opregion_acpi __iomem *acpi;
@@ -152,6 +159,10 @@ struct intel_opregion {
 	u32 __iomem *lid_state;
 };
 #define OPREGION_SIZE            (8*1024)
+
+#ifdef __NetBSD__		/* XXX acpi iomem */
+#  undef	__iomem
+#endif
 
 struct intel_overlay;
 struct intel_overlay_error_state;
@@ -604,7 +615,11 @@ struct intel_ilk_power_mgmt {
 
 struct i915_dri1_state {
 	unsigned allow_batchbuffer : 1;
+#ifdef __NetBSD__
+	struct drm_local_map gfx_hws_cpu_map;
+#else
 	u32 __iomem *gfx_hws_cpu_addr;
+#endif
 
 	unsigned int cpp;
 	int back_offset;
@@ -627,7 +642,11 @@ typedef struct drm_i915_private {
 
 	int relative_constants_mode;
 
+#ifdef __NetBSD__
+	struct drm_local_map *regs_map;
+#else
 	void __iomem *regs;
+#endif
 
 	struct drm_i915_gt_funcs gt;
 	/** gt_fifo_count and the subsequent register write are synchronized
@@ -870,7 +889,13 @@ typedef struct drm_i915_private {
 
 	struct drm_crtc *plane_to_crtc_mapping[3];
 	struct drm_crtc *pipe_to_crtc_mapping[3];
+#ifdef __NetBSD__
+	/* XXX The locking scheme looks broken.  This mutex is a stop-gap.  */
+	struct mutex pending_flip_lock;
+	drm_waitqueue_t pending_flip_queue;
+#else
 	wait_queue_head_t pending_flip_queue;
+#endif
 
 	struct intel_pch_pll pch_plls[I915_NUM_PLLS];
 	struct intel_ddi_plls ddi_plls;
@@ -900,7 +925,11 @@ typedef struct drm_i915_private {
 	struct drm_mm_node *compressed_fb;
 	struct drm_mm_node *compressed_llb;
 
+#ifdef __NetBSD__
+	time_t last_gpu_reset;
+#else
 	unsigned long last_gpu_reset;
+#endif
 
 	/* list of fbdev register on this device */
 	struct intel_fbdev *fbdev;
@@ -1055,7 +1084,14 @@ struct drm_i915_gem_object {
 	unsigned int has_global_gtt_mapping:1;
 	unsigned int has_dma_mapping:1;
 
+#ifdef __NetBSD__
+	struct pglist igo_pageq;
+	bus_dma_segment_t *pages; /* `pages' is an expedient misnomer.  */
+	int igo_nsegs;
+	bus_dmamap_t igo_dmamap;
+#else
 	struct sg_table *pages;
+#endif
 	int pages_pin_count;
 
 	/* prime dma-buf support */
@@ -1324,6 +1360,9 @@ void i915_handle_error(struct drm_device *dev, bool wedged);
 
 extern void intel_irq_init(struct drm_device *dev);
 extern void intel_gt_init(struct drm_device *dev);
+#ifdef __NetBSD__		/* XXX gt fini */
+extern void intel_gt_fini(struct drm_device *dev);
+#endif
 extern void intel_gt_reset(struct drm_device *dev);
 
 void i915_error_state_free(struct kref *error_ref);
@@ -1407,6 +1446,24 @@ void i915_gem_release_mmap(struct drm_i915_gem_object *obj);
 void i915_gem_lastclose(struct drm_device *dev);
 
 int __must_check i915_gem_object_get_pages(struct drm_i915_gem_object *obj);
+#ifdef __NetBSD__		/* XXX */
+static inline struct page *
+i915_gem_object_get_page(struct drm_i915_gem_object *obj, int n)
+{
+
+	/*
+	 * Pages must be pinned so that we need not hold the lock to
+	 * prevent them from disappearing.
+	 */
+	KASSERT(obj->pages != NULL);
+	mutex_enter(obj->base.gemo_shm_uao->vmobjlock);
+	struct vm_page *const page = uvm_pagelookup(obj->base.gemo_shm_uao,
+	    ptoa(n));
+	mutex_exit(obj->base.gemo_shm_uao->vmobjlock);
+
+	return container_of(page, struct page, p_vmp);
+}
+#else
 static inline struct page *i915_gem_object_get_page(struct drm_i915_gem_object *obj, int n)
 {
 	struct scatterlist *sg = obj->pages->sgl;
@@ -1421,6 +1478,7 @@ static inline struct page *i915_gem_object_get_page(struct drm_i915_gem_object *
 	}
 	return sg_page(sg+n);
 }
+#endif
 static inline void i915_gem_object_pin_pages(struct drm_i915_gem_object *obj)
 {
 	BUG_ON(obj->pages == NULL);
@@ -1503,7 +1561,12 @@ int i915_add_request(struct intel_ring_buffer *ring,
 		     u32 *seqno);
 int __must_check i915_wait_seqno(struct intel_ring_buffer *ring,
 				 uint32_t seqno);
+#ifdef __NetBSD__		/* XXX */
+int i915_gem_fault(struct uvm_faultinfo *, vaddr_t, struct vm_page **,
+    int, int, vm_prot_t, int);
+#else
 int i915_gem_fault(struct vm_area_struct *vma, struct vm_fault *vmf);
+#endif
 int __must_check
 i915_gem_object_set_to_gtt_domain(struct drm_i915_gem_object *obj,
 				  bool write);
@@ -1566,6 +1629,9 @@ void i915_gem_init_global_gtt(struct drm_device *dev,
 			      unsigned long start,
 			      unsigned long mappable_end,
 			      unsigned long end);
+#ifdef __NetBSD__		/* XXX fini global gtt */
+void i915_gem_fini_global_gtt(struct drm_device *dev);
+#endif
 int i915_gem_gtt_init(struct drm_device *dev);
 void i915_gem_gtt_fini(struct drm_device *dev);
 static inline void i915_gem_chipset_flush(struct drm_device *dev)
@@ -1624,7 +1690,11 @@ void i915_teardown_sysfs(struct drm_device *dev_priv);
 /* intel_i2c.c */
 extern int intel_setup_gmbus(struct drm_device *dev);
 extern void intel_teardown_gmbus(struct drm_device *dev);
+#ifdef __NetBSD__
+static inline bool intel_gmbus_is_port_valid(unsigned port)
+#else
 extern inline bool intel_gmbus_is_port_valid(unsigned port)
+#endif
 {
 	return (port >= GMBUS_PORT_SSC && port <= GMBUS_PORT_DPD);
 }
@@ -1633,7 +1703,11 @@ extern struct i2c_adapter *intel_gmbus_get_adapter(
 		struct drm_i915_private *dev_priv, unsigned port);
 extern void intel_gmbus_set_speed(struct i2c_adapter *adapter, int speed);
 extern void intel_gmbus_force_bit(struct i2c_adapter *adapter, bool force_bit);
+#ifdef __NetBSD__
+static inline bool intel_gmbus_is_forced_bit(struct i2c_adapter *adapter)
+#else
 extern inline bool intel_gmbus_is_forced_bit(struct i2c_adapter *adapter)
+#endif
 {
 	return container_of(adapter, struct intel_gmbus, adapter)->force_bit;
 }
@@ -1730,13 +1804,23 @@ __i915_write(64, q)
 
 #define I915_READ16(reg)	i915_read16(dev_priv, (reg))
 #define I915_WRITE16(reg, val)	i915_write16(dev_priv, (reg), (val))
+#ifdef __NetBSD__
+#define	I915_READ16_NOTRACE(reg)	DRM_READ16(dev_priv->regs_map, (reg))
+#define	I915_WRITE16_NOTRACE(reg, val)	DRM_WRITE16(dev_priv->regs_map, (reg), (val))
+#else
 #define I915_READ16_NOTRACE(reg)	readw(dev_priv->regs + (reg))
 #define I915_WRITE16_NOTRACE(reg, val)	writew(val, dev_priv->regs + (reg))
+#endif
 
 #define I915_READ(reg)		i915_read32(dev_priv, (reg))
 #define I915_WRITE(reg, val)	i915_write32(dev_priv, (reg), (val))
+#ifdef __NetBSD__
+#define I915_READ_NOTRACE(reg)		DRM_READ32(dev_priv->regs_map, (reg))
+#define I915_WRITE_NOTRACE(reg, val)	DRM_WRITE32(dev_priv->regs_map, (reg), (val))
+#else
 #define I915_READ_NOTRACE(reg)		readl(dev_priv->regs + (reg))
 #define I915_WRITE_NOTRACE(reg, val)	writel(val, dev_priv->regs + (reg))
+#endif
 
 #define I915_WRITE64(reg, val)	i915_write64(dev_priv, (reg), (val))
 #define I915_READ64(reg)	i915_read64(dev_priv, (reg))
