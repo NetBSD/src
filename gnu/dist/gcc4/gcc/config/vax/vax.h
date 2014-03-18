@@ -166,6 +166,9 @@ Boston, MA 02110-1301, USA.  */
 /* Specify the registers used for certain standard purposes.
    The values of these macros are register numbers.  */
 
+/* VAX PSW for DWARF-2 */
+#define PSW_REGNUM VAX_PSW_REGNUM
+
 /* VAX pc is overloaded on a register.  */
 #define PC_REGNUM VAX_PC_REGNUM
 
