@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.14 2014/03/03 08:15:36 matt Exp $	*/
+/*	$NetBSD: locore.h,v 1.15 2014/03/18 07:05:46 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -51,6 +51,7 @@
 #ifdef _KERNEL_OPT
 #include "opt_cpuoptions.h"
 #include "opt_cputypes.h"
+#include "opt_arm_debug.h"
 #endif
 
 #include <arm/cpuconf.h>
