@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.14 2014/03/03 15:36:36 macallan Exp $	*/
+/*	$NetBSD: clock.c,v 1.15 2014/03/18 14:34:31 macallan Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.14 2014/03/03 15:36:36 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.15 2014/03/18 14:34:31 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -58,21 +58,33 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.14 2014/03/03 15:36:36 macallan Exp $");
 void decr_intr(struct clockframe *);
 void init_powerpc_tc(void);
 static u_int get_powerpc_timecount(struct timecounter *);
+#ifdef PPC_OEA601
+static u_int get_601_timecount(struct timecounter *);
+#endif
 
 uint32_t ticks_per_sec;
 uint32_t ns_per_tick;
 uint32_t ticks_per_intr = 0;
+
+#ifdef PPC_OEA601
+static struct timecounter powerpc_601_timecounter = {
+	get_601_timecount,	/* get_timecount */
+	0,			/* no poll_pps */
+	0x7fffffff,		/* counter_mask */
+	0,			/* frequency */
+	"rtc",			/* name */
+	100,			/* quality */
+	NULL,			/* tc_priv */
+	NULL			/* tc_next */
+};
+#endif
 
 static struct timecounter powerpc_timecounter = {
 	get_powerpc_timecount,	/* get_timecount */
 	0,			/* no poll_pps */
 	0x7fffffff,		/* counter_mask */
 	0,			/* frequency */
-#if PPC_OEA601
-	"rtc",			/* name */
-#else
 	"mftb",			/* name */
-#endif
 	100,			/* quality */
 	NULL,			/* tc_priv */
 	NULL			/* tc_next */
@@ -122,7 +134,7 @@ void
 decr_intr(struct clockframe *cfp)
 {
 	struct cpu_info * const ci = curcpu();
-	int msr;
+	const register_t msr = mfmsr();
 	int pri;
 	u_long tb;
 	long ticks;
@@ -163,13 +175,8 @@ decr_intr(struct clockframe *cfp)
 			__asm volatile ("mftb %0" : "=r"(tb));
 
 		ci->ci_lasttb = tb + ticks - ticks_per_intr;
-
-		/*
-		 * Reenable interrupts
-		 */
-		__asm volatile ("mfmsr %0; ori %0, %0, %1; mtmsr %0"
-			      : "=r"(msr) : "K"(PSL_EE));
-
+		ci->ci_idepth++;
+		mtmsr(msr | PSL_EE);
 		/*
 		 * Do standard timer interrupt stuff.
 		 * Do softclock stuff only on the last iteration.
@@ -177,8 +184,12 @@ decr_intr(struct clockframe *cfp)
 		while (--nticks > 0)
 			hardclock(cfp);
 		hardclock(cfp);
+		mtmsr(msr);
+		ci->ci_idepth--;
 	}
+	mtmsr(msr | PSL_EE);
 	splx(pri);
+	mtmsr(msr);
 }
 
 /*
@@ -241,21 +252,42 @@ get_powerpc_timecount(struct timecounter *tc)
 	
 	__asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
 		      : "=r"(msr), "=r"(scratch) : "K"((u_short)~PSL_EE));
-#ifdef PPC_OEA601
-	if ((mfpvr() >> 16) == MPC601)
-		tb = rtc_nanosecs();
-	else
-#endif
-		__asm volatile ("mftb %0" : "=r"(tb));
+
+	tb = (u_int)(mftb() & 0x7fffffff);
 	mtmsr(msr);
 
 	return tb;
 }
 
+#ifdef PPC_OEA601
+static u_int
+get_601_timecount(struct timecounter *tc)
+{
+	u_long tb;
+	int msr, scratch;
+	
+	__asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
+		      : "=r"(msr), "=r"(scratch) : "K"((u_short)~PSL_EE));
+
+	tb = rtc_nanosecs();
+	mtmsr(msr);
+
+	return tb;
+}
+#endif
+
 void
 init_powerpc_tc(void)
 {
-	/* from machdep initialization */
-	powerpc_timecounter.tc_frequency = ticks_per_sec;
-	tc_init(&powerpc_timecounter);
+	struct timecounter *tc;
+
+#ifdef PPC_OEA601
+	if ((mfpvr() >> 16) == MPC601) {
+		tc = &powerpc_601_timecounter;
+	} else
+#endif
+		tc = &powerpc_timecounter;
+
+	tc->tc_frequency = ticks_per_sec;
+	tc_init(tc);
 }
