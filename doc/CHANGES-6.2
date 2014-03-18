@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.95 2014/02/21 12:01:31 sborrill Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.96 2014/03/18 08:22:45 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -1344,3 +1344,31 @@ sys/arch/atari/dev/ite.c			1.72
 	terminal. Fixes PR/48599.
 	[tsutsui, ticket #1033]
 
+sys/compat/netbsd32/netbsd32_event.c		1.10
+
+	Fix netbsd32 compatibility bug in kevent().
+	[manu, ticket #1021]
+
+sys/compat/netbsd32/netbsd32_ioctl.c		1.68
+sys/compat/netbsd32/netbsd32_ioctl.h		1.44
+
+	Add ATAIOCCOMMAND ioctl form COMPAT_NETBSD32. This enables SMART
+	monitoring by a netbsd32 binary.
+	[manu, ticket #1022]
+
+sys/compat/netbsd32/netbsd32.h			1.99
+sys/compat/netbsd32/netbsd32_netbsd.c		1.184
+sys/uvm/uvm_swap.c				1.166
+sys/uvm/uvm_swap.h				1.20
+
+	Properly translate struct swapent for COMPAT_NETBSD32.
+	[manu, ticket #1025]
+
+share/man/man4/options.4			1.433
+sys/kern/kern_exec.c				1.371-1.372
+
+	Add EMUL_NATIVEROOT so that native binaries can be told to search an
+	"emulation" directory before the real root. This makes easier to test
+	an amd64 kernel on the top of an i386 root filesystem prior a full
+	migration.
+	[manu, ticket #1026]
