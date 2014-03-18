@@ -1,4 +1,4 @@
-.\"     $NetBSD: vfssubr.9,v 1.22 2014/02/22 11:08:05 wiz Exp $
+.\"     $NetBSD: vfssubr.9,v 1.23 2014/03/18 10:21:47 hannken Exp $
 .\"
 .\" Copyright (c) 2003, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 22, 2014
+.Dd March 18, 2014
 .Dt VFSSUBR 9
 .Os
 .Sh NAME
@@ -51,7 +51,10 @@
 .Nm vfs_reinit ,
 .Nm vfs_getopsbyname ,
 .Nm vfs_suspend ,
-.Nm vfs_resume
+.Nm vfs_resume ,
+.Nm vfs_vnode_iterator_init ,
+.Nm vfs_vnode_iterator_destroy ,
+.Nm vfs_vnode_iterator_next
 .Nd high-level interface to kernel file system interface
 .Sh SYNOPSIS
 .In sys/param.h
@@ -96,6 +99,12 @@
 .Fn vfs_suspend "struct mount *mp" "int nowait"
 .Ft void
 .Fn vfs_resume "struct mount *mp"
+.Ft void
+.Fn vfs_vnode_iterator_init "struct mount *mp" " struct vnode_iterator **vip"
+.Ft void
+.Fn vfs_vnode_iterator_destroy "struct vnode_iterator *vi"
+.Ft bool
+.Fn vfs_vnode_iterator_next "struct vnode_iterator *vi" " struct vnode **vpp"
 .Sh DESCRIPTION
 The high-level functions described in this page are the interface to
 the kernel file system interface (VFS).
@@ -226,9 +235,32 @@ If the operation is successful, zero is returned, otherwise an
 appropriate error code is returned.
 .It Fn vfs_resume "mp"
 Request a mounted file system to resume operations.
+.It Fn vfs_vnode_iterator_init "mp" "vip"
+Allocate and initialize an iterator
+.Fa vip
+over all vnodes attached to mount point
+.Fa mp .
+.It Fn vfs_vnode_iterator_destroy "vi"
+Free all resources associated with an iterator
+.Fa vi .
+.It Fn vfs_vnode_iterator_next "vi" "vpp"
+Return the next vnode from iterator
+.Fa vi .
+If the operation is successful the vnode has a reference added to it
+and it is returned in
+.Fa *vpp
+and the function returns
+.Dv true .
+If the iterator is exhausted,
+.Fa *vpp
+is
+.Dv NULL
+and the function returns
+.Dv false .
 .El
 .Sh CODE REFERENCES
 The vfs interface functions are implemented within the files
+.Pa sys/kern/vfs_mount.c ,
 .Pa sys/kern/vfs_subr.c
 and
 .Pa sys/kern/vfs_init.c .
