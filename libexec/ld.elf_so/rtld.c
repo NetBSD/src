@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.172 2014/01/31 22:46:40 joerg Exp $	 */
+/*	$NetBSD: rtld.c,v 1.173 2014/03/18 16:05:34 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.172 2014/01/31 22:46:40 joerg Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.173 2014/03/18 16:05:34 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -558,7 +558,10 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 				*oenvp++ = *env;
 			}
 		} else if (strncmp(*env, bind_var, LEN(bind_var)) == 0) {
-			ld_bind_now = *env + LEN(bind_var);
+			if (_rtld_trust) {
+				ld_bind_now = *env + LEN(bind_var);
+				*oenvp++ = *env;
+			}
 		} else if (strncmp(*env, path_var, LEN(path_var)) == 0) {
 			if (_rtld_trust) {
 				ld_library_path = *env + LEN(path_var);
