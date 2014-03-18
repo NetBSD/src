@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.374 2013/09/19 17:29:06 rmind Exp $
+#       $NetBSD: Makefile,v 1.375 2014/03/18 10:21:47 hannken Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -876,7 +876,10 @@ MLINKS+=vfssubr.9 vfs_getnewfsid.9 \
 	vfssubr.9 vfs_reinit.9 \
 	vfssubr.9 vfs_getopsbyname.9 \
 	vfssubr.9 vfs_resume.9 \
-	vfssubr.9 vfs_suspend.9
+	vfssubr.9 vfs_suspend.9 \
+	vfssubr.9 vfs_vnode_iterator_init.9 \
+	vfssubr.9 vfs_vnode_iterator_destroy.9 \
+	vfssubr.9 vfs_vnode_iterator_next.9
 MLINKS+=vmem.9 vmem_alloc.9 \
 	vmem.9 vmem_create.9 \
 	vmem.9 vmem_destroy.9 \
