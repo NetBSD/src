@@ -384,6 +384,7 @@ static void gen6_pm_rps_work(struct work_struct *work)
 	pm_imr = I915_READ(GEN6_PMIMR);
 	I915_WRITE(GEN6_PMIMR, 0);
 	spin_unlock_irq(&dev_priv->rps.lock);
+	__USE(pm_imr);		/* XXX reduce merge conflicts */
 
 	if ((pm_iir & GEN6_PM_DEFERRED_EVENTS) == 0)
 		return;
@@ -464,10 +465,12 @@ static void ivybridge_parity_work(struct work_struct *work)
 
 	kobject_uevent_env(&dev_priv->dev->primary->kdev.kobj,
 			   KOBJ_CHANGE, parity_event);
+#endif
 
 	DRM_DEBUG("Parity error: Row = %d, Bank = %d, Sub bank = %d.\n",
 		  row, bank, subbank);
 
+#ifndef __NetBSD__		/* XXX kobject uevent...? */
 	kfree(parity_event[3]);
 	kfree(parity_event[2]);
 	kfree(parity_event[1]);
@@ -547,7 +550,7 @@ static irqreturn_t valleyview_irq_handler(DRM_IRQ_ARGS)
 	unsigned long irqflags;
 	int pipe;
 	u32 pipe_stats[I915_MAX_PIPES];
-	bool blc_event;
+	bool blc_event __unused;
 
 	atomic_inc(&dev_priv->irq_received);
 
@@ -2211,7 +2214,6 @@ static irqreturn_t i8xx_irq_handler(DRM_IRQ_ARGS)
 	u16 iir, new_iir;
 	u32 pipe_stats[2];
 	unsigned long irqflags;
-	int irq_received;
 	int pipe;
 	u16 flip_mask =
 		I915_DISPLAY_PLANE_A_FLIP_PENDING_INTERRUPT |
@@ -2245,7 +2247,6 @@ static irqreturn_t i8xx_irq_handler(DRM_IRQ_ARGS)
 					DRM_DEBUG_DRIVER("pipe %c underrun\n",
 							 pipe_name(pipe));
 				I915_WRITE(reg, pipe_stats[pipe]);
-				irq_received = 1;
 			}
 		}
 		spin_unlock_irqrestore(&dev_priv->irq_lock, irqflags);
