@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.234 2014/03/17 09:33:20 hannken Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.235 2014/03/18 10:21:47 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.234 2014/03/17 09:33:20 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.235 2014/03/18 10:21:47 hannken Exp $");
+
+#define _VFS_VNODE_PRIVATE	/* XXX: check for VI_MARKER, this has to go */
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
