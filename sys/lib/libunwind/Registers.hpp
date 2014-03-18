@@ -308,6 +308,70 @@ private:
   uint64_t fpreg[32];
 };
 
+enum {
+  DWARF_VAX_R0 = 0,
+  DWARF_VAX_R15 = 15,
+  DWARF_VAX_PSW = 16,
+
+  REGNO_VAX_R0 = 0,
+  REGNO_VAX_R14 = 14,
+  REGNO_VAX_R15 = 15,
+  REGNO_VAX_PSW = 16,
+};
+
+class Registers_vax {
+public:
+  enum {
+    LAST_REGISTER = REGNO_VAX_PSW,
+    LAST_RESTORE_REG = REGNO_VAX_PSW,
+    RETURN_REG = REGNO_VAX_R15,
+  };
+
+  __dso_hidden Registers_vax();
+
+  static int dwarf2regno(int num) {
+    if (num >= DWARF_VAX_R0 && num <= DWARF_VAX_R15)
+      return REGNO_VAX_R0 + (num - DWARF_VAX_R0);
+    if (num == DWARF_VAX_PSW)
+      return REGNO_VAX_PSW;
+    return LAST_REGISTER + 1;
+  }
+
+  bool validRegister(int num) const {
+    return num >= 0 && num <= LAST_RESTORE_REG;
+  }
+
+  uint64_t getRegister(int num) const {
+    assert(validRegister(num));
+    return reg[num];
+  }
+
+  void setRegister(int num, uint64_t value) {
+    assert(validRegister(num));
+    reg[num] = value;
+  }
+
+  uint64_t getIP() const { return reg[REGNO_VAX_R15]; }
+
+  void setIP(uint64_t value) { reg[REGNO_VAX_R15] = value; }
+
+  uint64_t getSP() const { return reg[REGNO_VAX_R14]; }
+
+  void setSP(uint64_t value) { reg[REGNO_VAX_R14] = value; }
+
+  bool validFloatVectorRegister(int num) const {
+    return false;
+  }
+
+  void copyFloatVectorRegister(int num, uint64_t addr_) {
+  }
+
+  __dso_hidden void jumpto() const __dead;
+
+private:
+  uint32_t reg[REGNO_VAX_PSW + 1];
+};
+
 } // namespace _Unwind
 
 #endif // __REGISTERS_HPP__

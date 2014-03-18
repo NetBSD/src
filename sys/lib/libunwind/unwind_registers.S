@@ -288,3 +288,58 @@ ENTRY(_ZNK7_Unwind15Registers_arm326jumptoEv)
 	ldmia	r0, {r0-r15}
 END(_ZNK7_Unwind15Registers_arm326jumptoEv)
 #endif
+
+#if defined(__vax__)
+	.hidden _ZN7_Unwind13Registers_vaxC1Ev
+ENTRY(_ZN7_Unwind13Registers_vaxC1Ev, R0)
+	subl2	$4, %sp
+	movl	4(%ap), %r0
+	movl	 %r1,  4(%r0)
+	movl	 %r2,  8(%r0)
+	movl	 %r3, 12(%r0)
+	movl	 %r4, 16(%r0)
+	movl	 %r5, 20(%r0)
+	movl	 %r6, 24(%r0)
+	movl	 %r7, 28(%r0)
+	movl	 %r8, 32(%r0)
+	movl	 %r9, 36(%r0)
+	movl	%r10, 40(%r0)
+	movl	%r11, 44(%r0)
+	movl	8(%fp), 48(%r0)
+	movl	12(%fp), 52(%r0)
+	/* XXX correct argument handling */
+	addl3	$36, %r14, 56(%r0)
+	/* Return PC */
+	movl	16(%fp), 60(%r0)
+	/* Load saved value of r0 as r1 */
+	movl	20(%fp), 0(%r0)
+	/* Saved PSW */
+	movl	4(%fp), 64(%r0)
+	ret
+END(_ZN7_Unwind13Registers_vaxC1Ev)
+
+	.hidden _ZNK7_Unwind13Registers_vax6jumptoEv
+ENTRY(_ZNK7_Unwind13Registers_vax6jumptoEv, 0)
+	subl2	$4, %sp
+	movl	 4(%ap),  %r0
+	movl	 4(%r0),  %r1
+	movl	 8(%r0),  %r2
+	movl	12(%r0),  %r3
+	movl	16(%r0),  %r4
+	movl	20(%r0),  %r5
+	movl	24(%r0),  %r6
+	movl	28(%r0),  %r7
+	movl	32(%r0),  %r8
+	movl	36(%r0),  %r9
+	movl	40(%r0), %r10
+	movl	44(%r0), %r11
+	movl	48(%r0), %r12
+	movl	52(%r0), %r13
+	movl	56(%r0), %r14
+	movl	60(%r0), -(%sp)
+	movl	0(%r0), %r0
+	/* XXX restore PSW */
+	rsb
+
+END(_ZNK7_Unwind13Registers_vax6jumptoEv)
+#endif
