@@ -25,6 +25,8 @@ typedef Registers_x86_64 ThisUnwindRegisters;
 typedef Registers_ppc32 ThisUnwindRegisters;
 #elif __arm__ && !defined(__ARM_EABI__)
 typedef Registers_arm32 ThisUnwindRegisters;
+#elif __vax__
+typedef Registers_vax ThisUnwindRegisters;
 #else
 #error Unsupported architecture
 #endif
