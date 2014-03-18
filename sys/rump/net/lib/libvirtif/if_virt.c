@@ -1,4 +1,4 @@
-/*	$NetBSD: if_virt.c,v 1.44 2014/03/13 21:11:12 pooka Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.45 2014/03/18 18:10:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008, 2013 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.44 2014/03/13 21:11:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.45 2014/03/18 18:10:08 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -353,8 +353,10 @@ VIF_DELIVERPKT(struct virtif_sc *sc, struct iovec *iov, size_t iovlen)
 			return;
 		}
 	}
-
 	m->m_data += align;
+	m->m_pkthdr.len -= align;
+	m->m_len -= align;
+
 	eth = mtod(m, struct ether_header *);
 	if (memcmp(eth->ether_dhost, CLLADDR(ifp->if_sadl),
 	    ETHER_ADDR_LEN) == 0) {
