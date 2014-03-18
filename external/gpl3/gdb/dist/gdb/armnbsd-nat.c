@@ -177,7 +177,7 @@ fill_fpregset (const struct regcache *regcache, fpregset_t *vfpregsetp, int regn
     }
   else if (regno >= ARM_D0_REGNUM && regno <= ARM_D0_REGNUM + 15)
     regcache_raw_collect(regcache, regno,
-			 (char *) vfpregsetp->fpr_vfp.vfp_regs + 8*regno);
+			 (char *) vfpregsetp->fpr_vfp.vfp_regs + 8 * (regno - ARM_D0_REGNUM));
 
   if (ARM_FPSCR_REGNUM == regno || -1 == regno)
     regcache_raw_collect (regcache, ARM_FPSCR_REGNUM,
@@ -308,7 +308,7 @@ fetch_fp_regs (struct regcache *regcache)
 
   if (ret < 0)
     {
-      warning (_("unable to fetch general registers"));
+      warning (_("unable to fetch floating-point registers"));
       return;
     }
 
