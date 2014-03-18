@@ -1,4 +1,4 @@
-/*	$NetBSD: marvellvar.h,v 1.2 2013/09/30 12:57:53 kiyohara Exp $ */
+/*	$NetBSD: marvellvar.h,v 1.3 2014/03/18 07:30:09 matt Exp $ */
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -37,6 +37,8 @@
 #define MARVELL_INTERREGS_VBASE			0xf1000000
 #define MARVELL_PEXIO_VBASE			0xf2000000
 
+#ifndef _LOCORE
 extern bus_addr_t marvell_interregs_pbase;
+#endif
 
 #endif /* _EVBARM_MARVELLVAR_H_ */
