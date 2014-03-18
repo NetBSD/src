@@ -124,16 +124,22 @@ vax_output_function_prologue (FILE * file, HOST_WIDE_INT size)
   if (dwarf2out_do_frame ())
     {
       const char *label = dwarf2out_cfi_label ();
-      int offset = 0;
+      int offset;
 
-      for (regno = FIRST_PSEUDO_REGISTER-1; regno >= 0; --regno)
-	if (regs_ever_live[regno] && !call_used_regs[regno])
-	  dwarf2out_reg_save (label, regno, offset -= 4);
+      offset = -20;
+      for (regno = 0; regno < FIRST_PSEUDO_REGISTER; ++regno)
+        if (regs_ever_live[regno] && !call_used_regs[regno])
+          offset -= 4;
 
-      dwarf2out_reg_save (label, PC_REGNUM, offset -= 4);
-      dwarf2out_reg_save (label, FRAME_POINTER_REGNUM, offset -= 4);
-      dwarf2out_reg_save (label, ARG_POINTER_REGNUM, offset -= 4);
-      dwarf2out_def_cfa (label, FRAME_POINTER_REGNUM, -(offset - 4));
+      dwarf2out_def_cfa (label, FRAME_POINTER_REGNUM, -offset);
+      dwarf2out_reg_save (label, PSW_REGNUM, offset += 4);
+      dwarf2out_reg_save (label, ARG_POINTER_REGNUM, offset += 4);
+      dwarf2out_reg_save (label, FRAME_POINTER_REGNUM, offset += 4);
+      dwarf2out_reg_save (label, PC_REGNUM, offset += 4);
+
+      for (regno = 0; regno < FIRST_PSEUDO_REGISTER; ++regno)
+        if (regs_ever_live[regno] && !call_used_regs[regno])
+          dwarf2out_reg_save (label, regno, offset += 4);
     }
 
   size -= STARTING_FRAME_OFFSET;
