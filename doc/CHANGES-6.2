@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.96 2014/03/18 08:22:45 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.97 2014/03/18 08:57:53 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -1372,3 +1372,13 @@ sys/kern/kern_exec.c				1.371-1.372
 	an amd64 kernel on the top of an i386 root filesystem prior a full
 	migration.
 	[manu, ticket #1026]
+
+sys/ufs/ufs/ufs_quota2.c			1.37
+
+	Set grace time if lowering the limit cause the user/group to now be
+	overquota. Patch was sent from Edgar Fuss on tech-kern.
+	[bouyer, ticket #1027]
+
+distrib/sets/lists/comp/md.amd64		patch
+	Build fix with MKDEBUG=yes on amd64.
+	[mlelstv, ticket #1030]
