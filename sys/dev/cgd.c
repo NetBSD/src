@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.84 2014/03/16 05:20:26 dholland Exp $ */
+/* $NetBSD: cgd.c,v 1.85 2014/03/18 15:44:37 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.84 2014/03/16 05:20:26 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.85 2014/03/18 15:44:37 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -200,7 +200,7 @@ cgd_attach(device_t parent, device_t self, void *aux)
 {
 	struct cgd_softc *sc = device_private(self);
 
-	simple_lock_init(&sc->sc_slock);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_BIO);
 	dk_sc_init(&sc->sc_dksc, device_xname(self));
 	sc->sc_dksc.sc_dev = self;
 	disk_init(&sc->sc_dksc.sc_dkdev, sc->sc_dksc.sc_xname, &cgddkdriver);
@@ -354,12 +354,12 @@ cgd_getdata(struct dk_softc *dksc, unsigned long size)
 	struct	cgd_softc *cs = (struct cgd_softc *)dksc;
 	void *	data = NULL;
 
-	simple_lock(&cs->sc_slock);
+	mutex_enter(&cs->sc_lock);
 	if (cs->sc_data_used == 0) {
 		cs->sc_data_used = 1;
 		data = cs->sc_data;
 	}
-	simple_unlock(&cs->sc_slock);
+	mutex_exit(&cs->sc_lock);
 
 	if (data)
 		return data;
@@ -373,9 +373,9 @@ cgd_putdata(struct dk_softc *dksc, void *data)
 	struct	cgd_softc *cs = (struct cgd_softc *)dksc;
 
 	if (data == cs->sc_data) {
-		simple_lock(&cs->sc_slock);
+		mutex_enter(&cs->sc_lock);
 		cs->sc_data_used = 0;
-		simple_unlock(&cs->sc_slock);
+		mutex_exit(&cs->sc_lock);
 	} else {
 		free(data, M_DEVBUF);
 	}
