@@ -31,13 +31,15 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/export.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
+#include <linux/printk.h>
 #include <linux/slab.h>
 #include <drm/drmP.h>
 #include <drm/drm_core.h>
 
-unsigned int drm_debug = 0;	/* 1 to enable debug output */
+unsigned int drm_debug = 0xf;	/* 1 to enable debug output */
 EXPORT_SYMBOL(drm_debug);
 
 unsigned int drm_vblank_offdelay = 5000;    /* Default to 5000 msecs. */
@@ -65,14 +67,26 @@ module_param_named(vblankoffdelay, drm_vblank_offdelay, int, 0600);
 module_param_named(timestamp_precision_usec, drm_timestamp_precision, int, 0600);
 module_param_named(timestamp_monotonic, drm_timestamp_monotonic, int, 0600);
 
+#ifndef __NetBSD__
 struct idr drm_minors_idr;
 
 struct class *drm_class;
 struct proc_dir_entry *drm_proc_root;
 struct dentry *drm_debugfs_root;
+#endif
 
 int drm_err(const char *func, const char *format, ...)
 {
+#ifdef __NetBSD__
+	va_list args;
+
+	va_start(args, format);
+	printf("DRM error in %s: ", func);
+	vprintf(format, args);
+	va_end(args);
+
+	return 0;
+#else
 	struct va_format vaf;
 	va_list args;
 	int r;
@@ -87,6 +101,7 @@ int drm_err(const char *func, const char *format, ...)
 	va_end(args);
 
 	return r;
+#endif
 }
 EXPORT_SYMBOL(drm_err);
 
@@ -107,6 +122,7 @@ void drm_ut_debug_printk(unsigned int request_level,
 }
 EXPORT_SYMBOL(drm_ut_debug_printk);
 
+#ifndef __NetBSD__
 static int drm_minor_get_id(struct drm_device *dev, int type)
 {
 	int new_id;
@@ -141,6 +157,7 @@ again:
 	}
 	return new_id;
 }
+#endif
 
 struct drm_master *drm_master_create(struct drm_minor *minor)
 {
@@ -152,7 +169,11 @@ struct drm_master *drm_master_create(struct drm_minor *minor)
 
 	kref_init(&master->refcount);
 	spin_lock_init(&master->lock.spinlock);
+#ifdef __NetBSD__
+	DRM_INIT_WAITQUEUE(&master->lock.lock_queue, "drmlockq");
+#else
 	init_waitqueue_head(&master->lock.lock_queue);
+#endif
 	drm_ht_create(&master->magiclist, DRM_MAGIC_HASH_ORDER);
 	INIT_LIST_HEAD(&master->magicfree);
 	master->minor = minor;
@@ -204,6 +225,11 @@ static void drm_master_destroy(struct kref *kref)
 	}
 
 	drm_ht_remove(&master->magiclist);
+
+#ifdef __NetBSD__
+	spin_lock_destroy(&master->lock.spinlock);
+	DRM_DESTROY_WAITQUEUE(&master->lock.lock_queue);
+#endif
 
 	kfree(master);
 }
@@ -279,10 +305,21 @@ int drm_fill_in_dev(struct drm_device *dev,
 
 	spin_lock_init(&dev->count_lock);
 	spin_lock_init(&dev->event_lock);
+#ifdef __NetBSD__
+	linux_mutex_init(&dev->struct_mutex);
+	linux_mutex_init(&dev->ctxlist_mutex);
+#else
 	mutex_init(&dev->struct_mutex);
 	mutex_init(&dev->ctxlist_mutex);
+#endif
 
 	if (drm_ht_create(&dev->map_hash, 12)) {
+#ifdef __NetBSD__
+		spin_lock_destroy(&dev->count_lock);
+		spin_lock_destroy(&dev->event_lock);
+		linux_mutex_destroy(&dev->struct_mutex);
+		linux_mutex_destroy(&dev->ctxlist_mutex);
+#endif
 		return -ENOMEM;
 	}
 
@@ -329,6 +366,7 @@ int drm_fill_in_dev(struct drm_device *dev,
 EXPORT_SYMBOL(drm_fill_in_dev);
 
 
+#ifndef __NetBSD__
 /**
  * Get a secondary minor number.
  *
@@ -522,3 +560,5 @@ void drm_unplug_dev(struct drm_device *dev)
 	mutex_unlock(&drm_global_mutex);
 }
 EXPORT_SYMBOL(drm_unplug_dev);
+
+#endif	/* !defined(__NetBSD__) */

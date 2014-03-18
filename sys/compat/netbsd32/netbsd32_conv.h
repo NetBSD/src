@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_conv.h,v 1.27 2013/07/20 13:13:33 njoly Exp $	*/
+/*	$NetBSD: netbsd32_conv.h,v 1.28 2014/03/18 18:20:41 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green

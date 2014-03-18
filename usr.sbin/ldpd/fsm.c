@@ -1,4 +1,4 @@
-/* $NetBSD: fsm.c,v 1.14 2013/07/20 05:16:08 kefren Exp $ */
+/* $NetBSD: fsm.c,v 1.15 2014/03/18 18:20:47 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.

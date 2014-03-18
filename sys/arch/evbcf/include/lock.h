@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.1 2013/07/18 22:08:59 matt Exp $	*/
+/*	$NetBSD: lock.h,v 1.2 2014/03/18 18:20:41 riastradh Exp $	*/
 
 /* Just use the common m68k definition */
 #include <m68k/lock.h>

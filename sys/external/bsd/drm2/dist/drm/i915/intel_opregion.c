@@ -29,6 +29,7 @@
 
 #include <linux/acpi.h>
 #include <linux/acpi_io.h>
+#include <linux/err.h>
 #include <acpi/video.h>
 
 #include <drm/drmP.h>
@@ -51,6 +52,27 @@
 #define MBOX_ACPI      (1<<0)
 #define MBOX_SWSCI     (1<<1)
 #define MBOX_ASLE      (1<<2)
+
+#ifdef __NetBSD__		/* XXX acpi iomem */
+#  define	__iomem	__acpi_iomem
+
+static inline uint32_t
+ioread32(const uint32_t __acpi_iomem *ptr)
+{
+	const uint32_t value = *ptr;
+
+	__insn_barrier();
+	return value;
+}
+
+static inline void
+iowrite32(uint32_t value, uint32_t __acpi_iomem *ptr)
+{
+
+	__insn_barrier();
+	*ptr = value;
+}
+#endif
 
 struct opregion_header {
 	u8 signature[16];
@@ -529,28 +551,52 @@ int intel_opregion_setup(struct drm_device *dev)
 		goto err_out;
 	}
 	opregion->header = base;
+#ifdef __NetBSD__
+	opregion->vbt = (char *)base + OPREGION_VBT_OFFSET;
+#else
 	opregion->vbt = base + OPREGION_VBT_OFFSET;
+#endif
 
+#ifdef __NetBSD__
+	opregion->lid_state = (void *)((char *)base + ACPI_CLID);
+#else
 	opregion->lid_state = base + ACPI_CLID;
+#endif
 
 	mboxes = ioread32(&opregion->header->mboxes);
 	if (mboxes & MBOX_ACPI) {
 		DRM_DEBUG_DRIVER("Public ACPI methods supported\n");
+#ifdef __NetBSD__
+		opregion->acpi = (void *)((char *)base + OPREGION_ACPI_OFFSET);
+#else
 		opregion->acpi = base + OPREGION_ACPI_OFFSET;
+#endif
 	}
 
 	if (mboxes & MBOX_SWSCI) {
 		DRM_DEBUG_DRIVER("SWSCI supported\n");
+#ifdef __NetBSD__
+		opregion->swsci = (void *)((char *)base + OPREGION_SWSCI_OFFSET);
+#else
 		opregion->swsci = base + OPREGION_SWSCI_OFFSET;
+#endif
 	}
 	if (mboxes & MBOX_ASLE) {
 		DRM_DEBUG_DRIVER("ASLE supported\n");
+#ifdef __NetBSD__
+		opregion->asle = (void *)((char *)base + OPREGION_ASLE_OFFSET);
+#else
 		opregion->asle = base + OPREGION_ASLE_OFFSET;
+#endif
 	}
 
 	return 0;
 
 err_out:
+#ifdef __NetBSD__
+	acpi_os_iounmap(base, OPREGION_SIZE);
+#else
 	iounmap(base);
+#endif
 	return err;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: timekeeper.h,v 1.3 2013/07/19 16:42:30 tsutsui Exp $ */
+/* $NetBSD: timekeeper.h,v 1.4 2014/03/18 18:20:41 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.1 2013/07/18 22:08:59 matt Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.2 2014/03/18 18:20:41 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles D. Cranor

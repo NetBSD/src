@@ -29,6 +29,7 @@
 #include <linux/i2c.h>
 #include <linux/i2c-algo-bit.h>
 #include <linux/export.h>
+#include <linux/module.h>
 #include <drm/drmP.h>
 #include "intel_drv.h"
 #include <drm/i915_drm.h>
@@ -468,7 +469,11 @@ int intel_setup_gmbus(struct drm_device *dev)
 	else
 		dev_priv->gpio_mmio_base = 0;
 
+#ifdef __NetBSD__
+	linux_mutex_init(&dev_priv->gmbus_mutex);
+#else
 	mutex_init(&dev_priv->gmbus_mutex);
+#endif
 
 	for (i = 0; i < GMBUS_NUM_PORTS; i++) {
 		struct intel_gmbus *bus = &dev_priv->gmbus[i];
@@ -547,4 +552,8 @@ void intel_teardown_gmbus(struct drm_device *dev)
 		struct intel_gmbus *bus = &dev_priv->gmbus[i];
 		i2c_del_adapter(&bus->adapter);
 	}
+
+#ifdef __NetBSD__
+	linux_mutex_destroy(&dev_priv->gmbus_mutex);
+#endif
 }
