@@ -168,9 +168,16 @@ get_lvds_dvo_timing(const struct bdb_lvds_lfp_data *lvds_lfp_data,
 	int dvo_timing_offset =
 		lvds_lfp_data_ptrs->ptr[0].dvo_timing_offset -
 		lvds_lfp_data_ptrs->ptr[0].fp_timing_offset;
+#ifdef __NetBSD__
+	const char *entry = (const char *)lvds_lfp_data->data +
+	    lfp_data_size * index;
+
+	return (const struct lvds_dvo_timing *)(entry + dvo_timing_offset);
+#else
 	char *entry = (char *)lvds_lfp_data->data + lfp_data_size * index;
 
 	return (struct lvds_dvo_timing *)(entry + dvo_timing_offset);
+#endif
 }
 
 /* get lvds_fp_timing entry
@@ -655,6 +662,7 @@ init_vbt_defaults(struct drm_i915_private *dev_priv)
 	DRM_DEBUG_KMS("Set default to SSC at %dMHz\n", dev_priv->lvds_ssc_freq);
 }
 
+#ifndef __NetBSD__		/* XXX dmi hack */
 static int __init intel_no_opregion_vbt_callback(const struct dmi_system_id *id)
 {
 	DRM_DEBUG_KMS("Falling back to manually reading VBT from "
@@ -674,6 +682,7 @@ static const struct dmi_system_id intel_no_opregion_vbt[] = {
 	},
 	{ }
 };
+#endif
 
 /**
  * intel_parse_bios - find VBT and initialize settings from the BIOS
@@ -684,6 +693,9 @@ static const struct dmi_system_id intel_no_opregion_vbt[] = {
  *
  * Returns 0 on success, nonzero on failure.
  */
+#ifdef __NetBSD__
+#  define	__iomem	__pci_rom_iomem
+#endif
 int
 intel_parse_bios(struct drm_device *dev)
 {
@@ -694,6 +706,7 @@ intel_parse_bios(struct drm_device *dev)
 
 	init_vbt_defaults(dev_priv);
 
+#ifndef __NetBSD__		/* XXX dmi hack */
 	/* XXX Should this validation be moved to intel_opregion.c? */
 	if (!dmi_check_system(intel_no_opregion_vbt) && dev_priv->opregion.vbt) {
 		struct vbt_header *vbt = dev_priv->opregion.vbt;
@@ -704,6 +717,7 @@ intel_parse_bios(struct drm_device *dev)
 		} else
 			dev_priv->opregion.vbt = NULL;
 	}
+#endif
 
 	if (bdb == NULL) {
 		struct vbt_header *vbt = NULL;
@@ -746,6 +760,9 @@ intel_parse_bios(struct drm_device *dev)
 
 	return 0;
 }
+#ifdef __NetBSD__
+#  undef	__iomem
+#endif
 
 /* Ensure that vital registers have been initialised, even if the BIOS
  * is absent or just failing to do its job.

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.8 2013/07/17 23:25:12 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.9 2014/03/18 18:20:41 riastradh Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8 2013/07/17 23:25:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.9 2014/03/18 18:20:41 riastradh Exp $");
 
 #define __INTR_PRIVATE
 

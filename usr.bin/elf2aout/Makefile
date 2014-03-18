@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2013/07/18 21:11:47 matt Exp $
+#	$NetBSD: Makefile,v 1.10 2014/03/18 18:20:44 riastradh Exp $
 #	from: @(#)Makefile	5.4 (Berkeley) 5/11/90
 
 .include <bsd.own.mk>	# for MACHINE_CPU

@@ -1,4 +1,4 @@
-/*	$NetBSD: scanc.S,v 1.9 2013/07/18 22:14:48 matt Exp $	*/
+/*	$NetBSD: scanc.S,v 1.10 2014/03/18 18:20:43 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.

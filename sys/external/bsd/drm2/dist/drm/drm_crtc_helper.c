@@ -31,12 +31,16 @@
 
 #include <linux/export.h>
 #include <linux/moduleparam.h>
+#include <asm/param.h>
+#include <asm/bug.h>
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
 #include <drm/drm_fourcc.h>
 #include <drm/drm_crtc_helper.h>
+#ifndef __NetBSD__
 #include <drm/drm_fb_helper.h>
+#endif
 #include <drm/drm_edid.h>
 
 /**
@@ -962,7 +966,9 @@ EXPORT_SYMBOL(drm_helper_resume_force_mode);
 void drm_kms_helper_hotplug_event(struct drm_device *dev)
 {
 	/* send a uevent + call fbdev */
+#ifndef __NetBSD__		/* XXX pmf event or something?  */
 	drm_sysfs_hotplug_event(dev);
+#endif
 	if (dev->mode_config.funcs->output_poll_changed)
 		dev->mode_config.funcs->output_poll_changed(dev);
 }
