@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.92.2.2 2012/12/13 23:47:57 riz Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.92.2.3 2014/03/18 08:09:46 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -381,6 +381,16 @@ typedef netbsd32_pointer_t netbsd32_rlimitp_t;
 struct netbsd32_loadavg {
 	fixpt_t	ldavg[3];
 	netbsd32_long	fscale;
+};
+
+/* from <sys/swap.h> */
+struct netbsd32_swapent {
+	netbsd32_dev_t	se_dev;		/* device id */
+	int	se_flags;		/* flags */
+	int	se_nblks;		/* total blocks */
+	int	se_inuse;		/* blocks in use */
+	int	se_priority;		/* priority of this device */
+	char	se_path[PATH_MAX+1];	/* path	name */
 };
 
 /* from <sys/ipc.h> */
