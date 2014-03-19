@@ -1,4 +1,4 @@
-/*	$NetBSD: fbt.c,v 1.14 2014/03/15 08:00:19 ozaki-r Exp $	*/
+/*	$NetBSD: fbt.c,v 1.15 2014/03/19 11:14:12 ozaki-r Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -756,12 +756,13 @@ fbt_provide_module_cb(const char *name, int symindx, void *value,
 	    || strncmp(name, "kauth_", 5) == 0 /* CRED XXX for now */
 	    /* Sensitive functions on ARM */
 	    || strncmp(name, "_spl", 4) == 0
-	    || strncmp(name, "dmt_", 4) == 0
 	    || strcmp(name, "binuptime") == 0
 	    || strcmp(name, "dosoftints") == 0
 	    || strcmp(name, "fbt_emulate") == 0
 	    || strcmp(name, "nanouptime") == 0
 	    || strcmp(name, "undefinedinstruction") == 0
+	    || strncmp(name, "dmt_", 4) == 0 /* omap */
+	    || strncmp(name, "mvsoctmr_", 9) == 0 /* marvell */
 	    ) {
 		return 0;
 	}
