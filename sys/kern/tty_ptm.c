@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.29 2014/03/16 05:20:30 dholland Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.30 2014/03/19 18:11:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.29 2014/03/16 05:20:30 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.30 2014/03/19 18:11:17 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ptm.h"
@@ -381,7 +381,9 @@ ptmioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			goto bad;
 
 		/* now, put the indices and names into struct ptmget */
-		return pty_fill_ptmget(l, newdev, cfd, sfd, data);
+		if ((error = pty_fill_ptmget(l, newdev, cfd, sfd, data)) != 0)
+			goto bad2;
+		return 0;
 	default:
 #ifdef COMPAT_60
 		error = compat_60_ptmioctl(dev, cmd, data, flag, l);
@@ -390,6 +392,11 @@ ptmioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 #endif /* COMPAT_60 */
 		DPRINTF(("ptmioctl EINVAL\n"));
 		return EINVAL;
+	}
+bad2:
+	fp = fd_getfile(sfd);
+	if (fp != NULL) {
+		fd_close(sfd);
 	}
  bad:
 	fp = fd_getfile(cfd);
