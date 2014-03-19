@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.98 2014/03/19 08:27:21 liamjfoy Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.99 2014/03/19 10:54:20 liamjfoy Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -47,6 +47,23 @@ struct ipovly {
 	struct	  in_addr ih_src;	/* source internet address */
 	struct	  in_addr ih_dst;	/* destination internet address */
 } __packed;
+
+/*
+ * IP Flow structure
+ */
+struct ipflow {
+	LIST_ENTRY(ipflow) ipf_list;	/* next in active list */
+	LIST_ENTRY(ipflow) ipf_hash;	/* next ipflow in bucket */
+	struct in_addr ipf_dst;		/* destination address */
+	struct in_addr ipf_src;		/* source address */
+	uint8_t ipf_tos;		/* type-of-service */
+	struct route ipf_ro;		/* associated route entry */
+	u_long ipf_uses;		/* number of uses in this period */
+	u_long ipf_last_uses;		/* number of uses in last period */
+	u_long ipf_dropped;		/* ENOBUFS retured by if_output */
+	u_long ipf_errors;		/* other errors returned by if_output */
+	u_int ipf_timer;		/* lifetime timer */
+};
 
 /*
  * IP sequence queue structure.
@@ -222,7 +239,7 @@ int	 rip_usrreq(struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);
 int	ipflow_init(int);
 void	ipflow_poolinit(void);
-void	ipflow_reap(bool);
+struct ipflow *ipflow_reap(bool);
 void	ipflow_create(const struct route *, struct mbuf *);
 void	ipflow_slowtimo(void);
 int	ipflow_invalidate_all(int);
