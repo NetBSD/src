@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1464 2014/03/16 09:28:58 martin Exp $
+# $NetBSD: mi,v 1.1465 2014/03/19 15:26:41 nonaka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1564,6 +1564,7 @@
 ./usr/share/man/cat4/rtii.0			man-sys-catman		.cat
 ./usr/share/man/cat4/rtk.0			man-sys-catman		.cat
 ./usr/share/man/cat4/rtpphy.0			man-obsolete		obsolete
+./usr/share/man/cat4/rtsx.0			man-sys-catman		.cat
 ./usr/share/man/cat4/rtw.0			man-sys-catman		.cat
 ./usr/share/man/cat4/rum.0			man-sys-catman		.cat
 ./usr/share/man/cat4/rumpfs.0			man-sys-catman		.cat,rump
@@ -4530,6 +4531,7 @@
 ./usr/share/man/html4/rtfps.html		man-sys-htmlman		html
 ./usr/share/man/html4/rtii.html			man-sys-htmlman		html
 ./usr/share/man/html4/rtk.html			man-sys-htmlman		html
+./usr/share/man/html4/rtsx.html			man-sys-htmlman		html
 ./usr/share/man/html4/rtw.html			man-sys-htmlman		html
 ./usr/share/man/html4/rum.html			man-sys-htmlman		html
 ./usr/share/man/html4/rumpfs.html			man-sys-htmlman		html,rump
@@ -7400,6 +7402,7 @@
 ./usr/share/man/man4/rtii.4			man-sys-man		.man
 ./usr/share/man/man4/rtk.4			man-sys-man		.man
 ./usr/share/man/man4/rtpphy.4			man-obsolete		obsolete
+./usr/share/man/man4/rtsx.4			man-sys-man		.man
 ./usr/share/man/man4/rtw.4			man-sys-man		.man
 ./usr/share/man/man4/rum.4			man-sys-man		.man
 ./usr/share/man/man4/rumpfs.4			man-sys-man		.man,rump
