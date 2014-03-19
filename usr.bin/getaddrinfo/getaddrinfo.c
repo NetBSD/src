@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.2 2014/03/14 13:17:18 ginsbach Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.3 2014/03/19 01:24:32 ginsbach Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getaddrinfo.c,v 1.2 2014/03/14 13:17:18 ginsbach Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.3 2014/03/19 01:24:32 ginsbach Exp $");
+
+#include <sys/types.h>
+#include <sys/socket.h>
 
 #include <assert.h>
 #include <err.h>
@@ -40,6 +43,7 @@ __RCSID("$NetBSD: getaddrinfo.c,v 1.2 2014/03/14 13:17:18 ginsbach Exp $");
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
