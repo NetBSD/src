@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.45 2014/02/25 18:30:10 pooka Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.46 2014/03/19 18:09:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.45 2014/02/25 18:30:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.46 2014/03/19 18:09:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,14 +109,16 @@ ptyfs__getpath(struct lwp *l, const struct mount *mp)
 	buf = malloc(MAXBUF, M_TEMP, M_WAITOK);
 	bp = buf + MAXBUF;
 	*--bp = '\0';
-	error = getcwd_common(cwdi->cwdi_rdir, rootvnode, &bp,
+	error = getcwd_common(mp->mnt_vnodecovered, cwdi->cwdi_rdir, &bp,
 	    buf, MAXBUF / 2, 0, l);
-	if (error)	/* XXX */
+	if (error) {	/* Mount point is out of rdir */
+		rv = NULL;
 		goto out;
+	}
 
 	len = strlen(bp);
 	if (len < sizeof(mp->mnt_stat.f_mntonname))	/* XXX */
-		rv += len;
+		rv += strlen(rv) - len;
 out:
 	free(buf, M_TEMP);
 	return rv;
@@ -128,6 +130,7 @@ ptyfs__makename(struct ptm_pty *pt, struct lwp *l, char *tbuf, size_t bufsiz,
 {
 	struct mount *mp = pt->arg;
 	size_t len;
+	const char *np;
 
 	switch (ms) {
 	case 'p':
@@ -135,8 +138,11 @@ ptyfs__makename(struct ptm_pty *pt, struct lwp *l, char *tbuf, size_t bufsiz,
 		len = snprintf(tbuf, bufsiz, "/dev/null");
 		break;
 	case 't':
-		len = snprintf(tbuf, bufsiz, "%s/%llu", ptyfs__getpath(l, mp),
-		    (unsigned long long)minor(dev));
+		np = ptyfs__getpath(l, mp);
+		if (np == NULL)
+			return EOPNOTSUPP;
+		len = snprintf(tbuf, bufsiz, "%s/%llu", np,
+			(unsigned long long)minor(dev));
 		break;
 	default:
 		return EINVAL;
