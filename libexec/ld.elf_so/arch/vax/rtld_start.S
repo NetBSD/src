@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.17 2014/03/18 23:43:38 matt Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.18 2014/03/19 02:39:22 matt Exp $	*/
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -64,31 +64,95 @@ END(_rtld_start)
  * hence the `optimization' to avoid the callg opportunistically.
  */
 ALTENTRY(_rtld_bind_start)
-	.cfi_startproc
-	.cfi_def_cfa 13, 60
-	.cfi_offset 16, -56
-	.cfi_offset 12, -52
-	.cfi_offset 13, -48
-	.cfi_offset 15, -44
-	.cfi_offset 2, -40
-	.cfi_offset 3, -36
-	.cfi_offset 4, -32
-	.cfi_offset 5, -28
-	.cfi_offset 6, -24
-	.cfi_offset 7, -20
-	.cfi_offset 8, -16
-	.cfi_offset 9, -12
-	.cfi_offset 10, -8
-	.cfi_offset 11, -4
+	movab	-64(%sp),%sp	/* reserve some space */
 	pushr	$0x3f		/* save R0-R5 */
-	movq	24(%sp),%r0	/* get addresses of plt.got & reloc index */
+	movq	-8(%fp),%r0	/* get addresses of plt.got & reloc index */
 	pushl	(%r1)		/* push relocation index */
 	pushl	%r0		/* push address of obj entry */
 	calls	$2,_rtld_bind
-	movl	%r0,28(%sp)	/* save return address onto stack */
+
+	movl	%r0,%r3		/* save routine address */
+	extzv	$0,$12,(%r0),%r1	/* get entry mask */
+	extzv	$0,$12,6(%fp),%r2	/* get saved mask */
+	cmpw	%r1,%r2		/* compare them */
+	bneq	12f		/* if they are different, rebuild */
+	movl	%r0,-4(%fp)	/* save routine address */
+	popr	$0x3f		/* pop registers */
+	movab	68(%sp),%sp	/* restore sp */
+	rsb			/* and jump to it */
+
+	/*
+	 * We need to rebuild the callframe.  Save the current one in case
+	 * we might overwrite it.
+	 */
+12:	movq	4(%fp),-(%sp)	/* save PSW and AP */
+	movq	12(%fp),-(%sp)	/* save FP and return address */
+	/*
+	 * Find out where this this call frame ends.
+	 */
+	movl	%ap,%r0		/* get past callframe and registers */
+	bbs	$29,4(%fp),22f	/* calls is easy, it's where AP is */
+	/*
+	 * Callg not so much
+	 */
+	movab	20(%fp),%r0	/* past fixed callframe */
+	tstw	%r2		/* no saved registers? */
+	beql	22f		/*    none, so we are done. */
+	movl	$11,%r4		/* start with register 11 */
+20:	bbc	%r4,%r2,21f	/* save this register? */
+	addl2	$4,%r0		/*   yes, adjust for saved register */
+21:	sobgeq	%r4,20b		/* try next register */
+
+22:
+	/*
+	 * First "push" the caller saved registers (if there any that
+	 * need to saved.)
+	 */
+	tstw	%r1		/* if there are no registers to save */
+	beql	1f		/* just push the callframe */
+	cmpw	%r1,$63		/* if there are no caller-saved registers */
+	blequ	5f		/* skip them */
+	bbc	$11,%r1,10f	/* does it need to be saved? */
+	movl	%r11,-(%r0)
+10:	bbc	$10,%r1,9f	/* does it need to be saved? */
+	movl	%r10,-(%r0)
+9:	bbc	$9,%r1,8f	/* does it need to be saved? */
+	movl	%r9,-(%r0)
+8:	bbc	$8,%r1,7f	/* does it need to be saved? */
+	movl	%r8,-(%r0)
+7:	bbc	$7,%r1,6f	/* does it need to be saved? */
+	movl	%r7,-(%r0)
+6:	bbc	$6,%r1,5f	/* does it need to be saved? */
+	movl	%r6,-(%r0)
+5:	
+	/*
+	 * r0-r5 are not normally preserved so we should be done.
+	 */
+	cmpw	%r1,$63
+	bgtru	1f
+	/*
+	 * For some reason, we have to preserve these.
+	 */
+	movab	16(%sp),%r2
+	bbc	$5,%r1,4f	/* does it need to be saved? */
+	movl	20(%r2),-(%r0)
+4:	bbc	$4,%r1,3f	/* does it need to be saved? */
+	movl	16(%r2),-(%r0)
+3:	bbc	$3,%r1,2f	/* does it need to be saved? */
+	movl	12(%r2),-(%r0)
+2:	bbc	$2,%r1,1f	/* does it need to be saved? */
+	movl	8(%r2),-(%r0)
+
+	/*
+	 * Now we save the fixed part of the callframe.
+	 */
+1:	clrl	%r4		/* clear condition handler slot */
+	movq	(%sp)+,-(%r0)	/* move FP and PC into place */
+	movq	(%sp)+,-(%r0)	/* move PSW/save-mask/etc + AP into place */
+	movq	%r3,-(%r0)	/* move routine address + cond handle slot */
+	addl3	$4,%r0,%fp	/* get start of new callframe */
+	insv	$0,$12,%r1,6(%fp) /* insert new saved mask */
 	popr	$0x3f		/* restore R0-R5 (cond flags not modified) */
-	addl2	$4,%sp
-	callg	(%ap),*(%sp)+	/* return value from _rtld_bind() == actual */
-	ret
-	.cfi_endproc
+	subl3	$4,%fp,%sp	/* sp needs to be equal to fp */
+	rsb			/* and jmp to the routine */
 END(_rtld_bind_start)
