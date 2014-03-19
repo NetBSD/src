@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.317 2014/03/16 05:20:29 dholland Exp $	*/
+/*	$NetBSD: cd.c,v 1.318 2014/03/19 15:48:23 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.317 2014/03/16 05:20:29 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.318 2014/03/19 15:48:23 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1823,6 +1823,7 @@ read_cd_capacity(struct scsipi_periph *periph, u_int *blksize, u_long *last_lba)
 	/* issue the cd capacity request */
 	flags = XS_CTL_DATA_IN;
 	memset(&cap_cmd, 0, sizeof(cap_cmd));
+	memset(&cap, 0, sizeof(cap));
 	cap_cmd.opcode = READ_CD_CAPACITY;
 
 	error = scsipi_command(periph,
@@ -1837,8 +1838,14 @@ read_cd_capacity(struct scsipi_periph *periph, u_int *blksize, u_long *last_lba)
 	*last_lba = _4btol(cap.addr);
 
 	/* blksize is 2048 for CD, but some drives give gibberish */
-	if ((*blksize < 512) || ((*blksize & 511) != 0))
+	if ((*blksize < 512) || ((*blksize & 511) != 0)
+	    || (*blksize > 16*1024)) {
+		if (*blksize > 16*1024)
+			aprint_error("read_cd_capacity: extra large block "
+			    "size %u found - limiting to 2kByte\n",
+			    *blksize);
 		*blksize = 2048;	/* some drives lie ! */
+	}
 
 	/* recordables have READ_DISCINFO implemented */
 	flags = XS_CTL_DATA_IN | XS_CTL_SILENT;
@@ -1889,8 +1896,8 @@ read_cd_capacity(struct scsipi_periph *periph, u_int *blksize, u_long *last_lba)
 static u_long
 cd_size(struct cd_softc *cd, int flags)
 {
-	u_int blksize;
-	u_long last_lba, size;
+	u_int blksize = 2048;
+	u_long last_lba = 0, size;
 	int error;
 
 	error = read_cd_capacity(cd->sc_periph, &blksize, &last_lba);
@@ -2993,7 +3000,7 @@ mmc_getdiscinfo(struct scsipi_periph *periph,
 	struct scsipi_read_discinfo_data  di;
 	const uint32_t buffer_size = 1024;
 	uint32_t feat_tbl_len, pos;
-	u_long   last_lba;
+	u_long   last_lba = 0;
 	uint8_t  *buffer, *fpos;
 	int feature, last_feature, features_len, feature_cur, feature_len;
 	int lsb, msb, error, flags;
