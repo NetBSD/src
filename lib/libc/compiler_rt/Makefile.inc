@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.16 2014/03/02 03:04:52 matt Exp $
+# $NetBSD: Makefile.inc,v 1.17 2014/03/19 20:30:53 uwe Exp $
 
 COMPILER_RT_SRCDIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
 
@@ -127,10 +127,17 @@ GENERIC_SRCS+= \
 	ucmpti2.c \
 	udivmodsi4.c \
 	udivmodti4.c \
-	udivsi3.c \
 	udivti3.c \
 	umodsi3.c \
 	umodti3.c
+
+.if ${MACHINE_CPU} != "sh3"
+# On sh3 __udivsi3 is gcc "millicode" with special calling convention
+# (less registers clobbered than usual).  Each DSO that needs it gets
+# its own hidden copy from libgcc.a.
+GENERIC_SRCS+= \
+	udivsi3.c
+.endif
 
 GENERIC_SRCS+= \
 	absvdi2.c \
