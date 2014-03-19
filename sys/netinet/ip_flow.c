@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.60 2012/01/19 13:13:48 liamjfoy Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.61 2014/03/19 08:27:21 liamjfoy Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.60 2012/01/19 13:13:48 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.61 2014/03/19 08:27:21 liamjfoy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -393,13 +393,6 @@ ipflow_reap(bool just_one)
 		ipflow_inuse--;
 	}
 	return NULL;
-}
-
-void
-ipflow_prune(void)
-{
-
-	(void) ipflow_reap(false);
 }
 
 void
