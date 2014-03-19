@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.18 2014/03/19 02:39:22 matt Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.19 2014/03/19 15:34:30 matt Exp $	*/
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -71,7 +71,7 @@ ALTENTRY(_rtld_bind_start)
 	pushl	%r0		/* push address of obj entry */
 	calls	$2,_rtld_bind
 
-	movl	%r0,%r3		/* save routine address */
+	addl3	$2,%r0,%r3		/* save routine address */
 	extzv	$0,$12,(%r0),%r1	/* get entry mask */
 	extzv	$0,$12,6(%fp),%r2	/* get saved mask */
 	cmpw	%r1,%r2		/* compare them */
@@ -151,7 +151,7 @@ ALTENTRY(_rtld_bind_start)
 	movq	(%sp)+,-(%r0)	/* move PSW/save-mask/etc + AP into place */
 	movq	%r3,-(%r0)	/* move routine address + cond handle slot */
 	addl3	$4,%r0,%fp	/* get start of new callframe */
-	insv	$0,$12,%r1,6(%fp) /* insert new saved mask */
+	insv	%r1,$0,$12,6(%fp) /* insert new saved mask */
 	popr	$0x3f		/* restore R0-R5 (cond flags not modified) */
 	subl3	$4,%fp,%sp	/* sp needs to be equal to fp */
 	rsb			/* and jmp to the routine */
