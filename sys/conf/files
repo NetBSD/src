@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1086 2014/03/18 18:20:41 riastradh Exp $
+#	$NetBSD: files,v 1.1087 2014/03/19 15:26:42 nonaka Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -1221,13 +1221,17 @@ define	hid
 file	dev/usb/hid.c			hid
 
 # SD Host controller
-device sdhc: sdmmcbus
+device	sdhc: sdmmcbus
 file	dev/sdmmc/sdhc.c		sdhc			needs-flag
 
 # Winbond Integrated Media Reader
 device	wb: sdmmcbus
 file	dev/ic/w83l518d.c		wb
 file	dev/ic/w83l518d_sdmmc.c		wb
+
+# Realtek RTS5209/RTS5229 Card Reader
+device	rtsx: sdmmcbus
+file	dev/ic/rtsx.c			rtsx
 
 # Myson MTD803 3-in-1 Fast Ethernet Controller
 device	mtd: arp, ether, ifnet, mii
