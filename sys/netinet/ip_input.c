@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.309 2014/02/25 18:30:12 pooka Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.310 2014/03/19 08:27:21 liamjfoy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.309 2014/02/25 18:30:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.310 2014/03/19 08:27:21 liamjfoy Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -1525,7 +1525,7 @@ sysctl_net_inet_ip_maxflows(SYSCTLFN_ARGS)
 	mutex_enter(softnet_lock);
 	KERNEL_LOCK(1, NULL);
 
-	ipflow_prune();
+	ipflow_reap(false);
 
 	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
