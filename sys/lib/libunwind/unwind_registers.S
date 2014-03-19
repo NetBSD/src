@@ -307,8 +307,7 @@ ENTRY(_ZN7_Unwind13Registers_vaxC1Ev, R0)
 	movl	%r11, 44(%r0)
 	movl	8(%fp), 48(%r0)
 	movl	12(%fp), 52(%r0)
-	/* XXX correct argument handling */
-	addl3	$36, %r14, 56(%r0)
+	addl3	$36, %sp, 56(%r0)
 	/* Return PC */
 	movl	16(%fp), 60(%r0)
 	/* Load saved value of r0 as r1 */
