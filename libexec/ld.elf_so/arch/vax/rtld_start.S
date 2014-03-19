@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.19 2014/03/19 15:34:30 matt Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.20 2014/03/19 21:52:00 joerg Exp $	*/
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -76,7 +76,7 @@ ALTENTRY(_rtld_bind_start)
 	extzv	$0,$12,6(%fp),%r2	/* get saved mask */
 	cmpw	%r1,%r2		/* compare them */
 	bneq	12f		/* if they are different, rebuild */
-	movl	%r0,-4(%fp)	/* save routine address */
+	movl	%r3,-4(%fp)	/* save routine address */
 	popr	$0x3f		/* pop registers */
 	movab	68(%sp),%sp	/* restore sp */
 	rsb			/* and jump to it */
