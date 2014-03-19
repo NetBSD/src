@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.61 2014/03/19 08:27:21 liamjfoy Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.62 2014/03/19 10:54:20 liamjfoy Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.61 2014/03/19 08:27:21 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.62 2014/03/19 10:54:20 liamjfoy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,20 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.61 2014/03/19 08:27:21 liamjfoy Exp $"
 /*
  * Similar code is very well commented in netinet6/ip6_flow.c
  */ 
-
-struct ipflow {
-	LIST_ENTRY(ipflow) ipf_list;	/* next in active list */
-	LIST_ENTRY(ipflow) ipf_hash;	/* next ipflow in bucket */
-	struct in_addr ipf_dst;		/* destination address */
-	struct in_addr ipf_src;		/* source address */
-	uint8_t ipf_tos;		/* type-of-service */
-	struct route ipf_ro;		/* associated route entry */
-	u_long ipf_uses;		/* number of uses in this period */
-	u_long ipf_last_uses;		/* number of uses in last period */
-	u_long ipf_dropped;		/* ENOBUFS retured by if_output */
-	u_long ipf_errors;		/* other errors returned by if_output */
-	u_int ipf_timer;		/* lifetime timer */
-};
 
 #define	IPFLOW_HASHBITS		6	/* should not be a multiple of 8 */
 
@@ -348,7 +334,7 @@ ipflow_free(struct ipflow *ipf)
 	splx(s);
 }
 
-static struct ipflow *
+struct ipflow *
 ipflow_reap(bool just_one)
 {
 	while (just_one || ipflow_inuse > ip_maxflows) {
