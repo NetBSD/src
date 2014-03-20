@@ -1,4 +1,4 @@
-/*	$NetBSD: oboe.c,v 1.40 2014/03/20 20:41:11 christos Exp $	*/
+/*	$NetBSD: oboe.c,v 1.41 2014/03/20 21:30:52 christos Exp $	*/
 
 /*	XXXXFVDL THIS DRIVER IS BROKEN FOR NON-i386 -- vtophys() usage	*/
 
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.40 2014/03/20 20:41:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.41 2014/03/20 21:30:52 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -298,9 +298,9 @@ oboe_read(void *h, struct uio *uio, int flag)
 	int s;
 	int slot;
 
-	DPRINTF(("%s: resid=%zu, iovcnt=%d, offset=%td\n",
+	DPRINTF(("%s: resid=%zu, iovcnt=%d, offset=%jd\n",
 		 __func__, uio->uio_resid, uio->uio_iovcnt,
-		 uio->uio_offset));
+		 (intmax_t)uio->uio_offset));
 
 	s = splir();
 	while (sc->sc_saved == 0) {
