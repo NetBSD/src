@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.59 2014/03/13 01:42:59 pooka Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.60 2014/03/20 20:42:08 christos Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.59 2014/03/13 01:42:59 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.60 2014/03/20 20:42:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -170,7 +170,7 @@ allocif(int unit, struct shmif_sc **scp)
 
 	ifp = &sc->sc_ec.ec_if;
 
-	sprintf(ifp->if_xname, "shmif%d", unit);
+	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "shmif%d", unit);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_MULTICAST;
 	ifp->if_init = shmif_init;
