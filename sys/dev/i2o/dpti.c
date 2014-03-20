@@ -1,4 +1,4 @@
-/*	$NetBSD: dpti.c,v 1.46 2014/03/16 05:20:27 dholland Exp $	*/
+/*	$NetBSD: dpti.c,v 1.47 2014/03/20 20:40:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.46 2014/03/16 05:20:27 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.47 2014/03/20 20:40:42 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,40 +90,40 @@ __KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.46 2014/03/16 05:20:27 dholland Exp $");
 #endif
 
 static struct dpt_sig dpti_sig = {
-	{ 'd', 'P', 't', 'S', 'i', 'G'},
-	SIG_VERSION,
+	.dsSignature = { 'd', 'P', 't', 'S', 'i', 'G'},
+	.dsSigVersion = SIG_VERSION,
 #if defined(__i386__)
-	PROC_INTEL,
+	.dsProcessorFamily = PROC_INTEL,
 #elif defined(__powerpc__)
-	PROC_POWERPC,
+	.dsProcessorFamily = PROC_POWERPC,
 #elif defined(__alpha__)
-	PROC_ALPHA,
+	.dsProcessorFamily = PROC_ALPHA,
 #elif defined(__mips__)
-	PROC_MIPS,
+	.dsProcessorFamily = PROC_MIPS,
 #elif defined(__sparc64__)
-	PROC_ULTRASPARC,
+	.dsProcessorFamily = PROC_ULTRASPARC,
 #endif
 #if defined(__i386__)
-	PROC_386 | PROC_486 | PROC_PENTIUM | PROC_SEXIUM,
+	.dsProcessor = PROC_386 | PROC_486 | PROC_PENTIUM | PROC_SEXIUM,
 #else
-	0,
+	.dsProcessor = 0,
 #endif
-	FT_HBADRVR,
-	0,
-	OEM_DPT,
-	OS_FREE_BSD,	/* XXX */
-	CAP_ABOVE16MB,
-	DEV_ALL,
-	ADF_ALL_SC5,
-	0,
-	0,
-	DPTI_VERSION,
-	DPTI_REVISION,
-	DPTI_SUBREVISION,
-	DPTI_MONTH,
-	DPTI_DAY,
-	DPTI_YEAR,
-	""		/* Will be filled later */
+	.dsFiletype = FT_HBADRVR,
+	.dsFiletypeFlags = 0,
+	.dsOEM = OEM_DPT,
+	.dsOS = (uint32_t)OS_FREE_BSD,	/* XXX */
+	.dsCapabilities = CAP_ABOVE16MB,
+	.dsDeviceSupp = DEV_ALL,
+	.dsAdapterSupp = ADF_ALL_SC5,
+	.dsApplication =  0,
+	.dsRequirements = 0,
+	.dsVersion = DPTI_VERSION,
+	.dsRevision = DPTI_REVISION,
+	.dsSubRevision = DPTI_SUBREVISION,
+	.dsMonth = DPTI_MONTH,
+	.dsDay = DPTI_DAY,
+	.dsYear = DPTI_YEAR,
+	.dsDescription = { '\0' },		/* Will be filled later */
 };
 
 void	dpti_attach(device_t, device_t, void *);
@@ -583,7 +583,8 @@ dpti_passthrough(struct dpti_softc *sc, void *data, struct proc *proc)
 					goto bad;
 				}
 
-				bufs[nbuf].db_ptr = (void *)p[1];
+				// XXX: 32 bits 
+				bufs[nbuf].db_ptr = (void *)(intptr_t)p[1];
 				bufs[nbuf].db_proc = proc;
 				bufs[nbuf].db_size = p[0] & 0x00ffffff;
 
@@ -608,8 +609,9 @@ dpti_passthrough(struct dpti_softc *sc, void *data, struct proc *proc)
 
 				bufs[nbuf].db_frags[nfrag].iov_len =
 				    p[0] & 0x00ffffff;
+				// XXX: 32 bits 
 				bufs[nbuf].db_frags[nfrag].iov_base =
-				    (void *)p[1];
+				    (void *)(intptr_t)p[1];
 
 				sz += p[0] & 0x00ffffff;
 				nfrag++;
