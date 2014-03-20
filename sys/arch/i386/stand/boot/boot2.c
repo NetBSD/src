@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.60 2013/08/30 16:42:17 jmcneill Exp $	*/
+/*	$NetBSD: boot2.c,v 1.61 2014/03/20 01:15:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -115,7 +115,9 @@ void print_banner(void);
 void boot2(int, uint64_t);
 
 void	command_help(char *);
+#if LIBSA_ENABLE_LS_OP
 void	command_ls(char *);
+#endif
 void	command_quit(char *);
 void	command_boot(char *);
 void	command_dev(char *);
@@ -129,7 +131,9 @@ void	command_multiboot(char *);
 const struct bootblk_command commands[] = {
 	{ "help",	command_help },
 	{ "?",		command_help },
+#if LIBSA_ENABLE_LS_OP
 	{ "ls",		command_ls },
+#endif
 	{ "quit",	command_quit },
 	{ "boot",	command_boot },
 	{ "dev",	command_dev },
@@ -397,7 +401,9 @@ command_help(char *arg)
 	printf("commands are:\n"
 	       "boot [xdNx:][filename] [-12acdqsvxz]\n"
 	       "     (ex. \"hd0a:netbsd.old -s\"\n"
+#if LIBSA_ENABLE_LS_OP
 	       "ls [path]\n"
+#endif
 	       "dev xd[N[x]]:\n"
 	       "consdev {pc|com[0123]|com[0123]kbd|auto}\n"
 	       "vesa {modenum|on|off|enabled|disabled|list}\n"
@@ -413,6 +419,7 @@ command_help(char *arg)
 	       "quit\n");
 }
 
+#if LIBSA_ENABLE_LS_OP
 void
 command_ls(char *arg)
 {
@@ -422,6 +429,7 @@ command_ls(char *arg)
 	ls(arg);
 	default_filename = save;
 }
+#endif
 
 /* ARGSUSED */
 void
