@@ -1009,13 +1009,13 @@
 
 
 /* Define 0/1 if your assembler supports CFI directives. */
-#define HAVE_GAS_CFI_DIRECTIVE 0
+#define HAVE_GAS_CFI_DIRECTIVE 1
 
 /* Define 0/1 if your assembler supports .cfi_personality. */
-#define HAVE_GAS_CFI_PERSONALITY_DIRECTIVE 0
+#define HAVE_GAS_CFI_PERSONALITY_DIRECTIVE 1
 
 /* Define 0/1 if your assembler supports .cfi_sections. */
-#define HAVE_GAS_CFI_SECTIONS_DIRECTIVE 0
+#define HAVE_GAS_CFI_SECTIONS_DIRECTIVE 1
 
 /* Define if your assembler supports the .loc discriminator sub-directive. */
 #ifndef USED_FOR_TARGET
