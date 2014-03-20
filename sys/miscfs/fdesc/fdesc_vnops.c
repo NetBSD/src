@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.118 2014/02/27 16:51:38 hannken Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.119 2014/03/20 18:04:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.118 2014/02/27 16:51:38 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.119 2014/03/20 18:04:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -755,7 +755,8 @@ fdesc_readdir(void *v)
 				    dt->dt_ff[j]->ff_file == NULL)
 					continue;
 				d.d_fileno = j + FD_STDIN;
-				d.d_namlen = sprintf(d.d_name, "%d", j);
+				d.d_namlen = snprintf(d.d_name,
+				    sizeof(d.d_name), "%d", j);
 				d.d_type = DT_UNKNOWN;
 				break;
 			}
