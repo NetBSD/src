@@ -188,9 +188,7 @@ along with GCC; see the file COPYING3.  If not see
 #undef WINT_TYPE
 #define WINT_TYPE "int"
 
-#if defined(HAVE_LD_EH_FRAME_HDR)
-#define LINK_EH_SPEC "%{!static:--eh-frame-hdr} "
-#endif
+#define LINK_EH_SPEC "--eh-frame-hdr "
 
 /* Use --as-needed -lgcc_s for eh support.  */
 #ifdef HAVE_LD_AS_NEEDED
