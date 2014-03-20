@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.129 2013/11/04 16:57:32 christos Exp $ */
+/* $NetBSD: trap.c,v 1.130 2014/03/20 20:51:40 christos Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.129 2013/11/04 16:57:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.130 2014/03/20 20:51:40 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,7 +174,7 @@ printtrap(const u_long a0, const u_long a1, const u_long a2,
 		entryname = "system call";
 		break;
 	default:
-		sprintf(ubuf, "type %lx", entry);
+		snprintf(ubuf, sizeof(ubuf), "type %lx", entry);
 		entryname = (const char *) ubuf;
 		break;
 	}
