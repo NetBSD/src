@@ -40,6 +40,7 @@
    (VAX_FP_REGNUM 13)	    ; Register 13 contains the frame pointer
    (VAX_SP_REGNUM 14)	    ; Register 14 contains the stack pointer
    (VAX_PC_REGNUM 15)	    ; Register 15 contains the program counter
+   (VAX_PSW_REGNUM 16)	    ; Program Status Word
   ]
 )
 
