@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.108 2013/06/05 23:14:13 mrg Exp $
+#	$NetBSD: bsd.x11.mk,v 1.109 2014/03/20 22:24:32 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -255,8 +255,8 @@ ${_pkg}.pc: ${PKGDIST.${_pkg}}/configure
 # The sed script is very, very ugly.  What we actually need is a
 # mknative-xorg script that will generate all the .pc files from
 # running the autoconfigure script.
-# And yes, it has to be splitted in two otherwise it's too long
-# for sed to handle.
+# And yes, it has to be split in multiple parts otherwise it's
+# too long for sed to handle.
 
 # hacky transforms:
 #   @XCBPROTO_VERSION@
@@ -297,6 +297,8 @@ ${_pkg}.pc: ${PKGDIST.${_pkg}}/configure
 		s,@xcbincludedir@,\\$$\{prefix\}/share/xcb,; \
 		s,@fontrootdir@,\\$$\{libdir\}/X11/fonts,; \
 		s,@LIBXML2_LIBS@,,; \
+		s,@LIBXML2_CFLAGS@,,; \
+		s,@ICONV_CFLAGS@,,; \
 		s,@ICONV_LIBS@,,; \
 		s,@NEEDED@,,; \
 		s,@FT2_EXTRA_LIBS@,," \
@@ -342,6 +344,14 @@ ${_pkg}.pc: ${PKGDIST.${_pkg}}/configure
 		s,@abi_font@,0.6,; \
 		s,@fchown_define@,-DHAS_FCHOWN,; \
 		s,@sticky_bit_define@,-DHAS_STICKY_DIR_BIT," \
+		-e "s,@PKG_CONFIG_LIBS@,xx,; \
+		s,@PACKAGE@,${PKGDIST},; \
+		s,@PKGCONFIG_REQUIRES@,xx,; \
+		s,@PKGCONFIG_REQUIRES_PRIVATELY@,xx,; \
+		s,@ERRORDBDIR@,${X11LIBDIR},; \
+		s,@EXPAT_CFLAGS@,,; \
+		s,@FREETYPE_CFLAGS@,-I${X11ROOTDIR}/include/freetype2 -I${X11ROOTDIR}/include,; \
+		s,@SDK_REQUIRED_MODULES@,xproto >= 7.0.17 randrproto >= 1.2.99.3 renderproto >= 0.11 xextproto >= 7.1.99 inputproto >= 1.9.99.902 kbproto >= 1.0.3 fontsproto," \
 		-e '/^Libs:/ s%-L\([^ 	]*\)%-Wl,-rpath,\1 &%g' \
 		< ${.IMPSRC} > ${.TARGET}.tmp && \
 	mv -f ${.TARGET}.tmp ${.TARGET}
