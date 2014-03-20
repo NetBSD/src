@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.147 2014/01/15 10:25:04 roy Exp $	*/
+/*	$NetBSD: nd6.c,v 1.148 2014/03/20 13:34:35 roy Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.147 2014/01/15 10:25:04 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.148 2014/03/20 13:34:35 roy Exp $");
 
 #include "opt_ipsec.h"
 
@@ -1647,6 +1647,59 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 			ND_IFINFO(ifp)->chlim = ND.chlim;
 		/* FALLTHROUGH */
 	case SIOCSIFINFO_FLAGS:
+	{
+		struct ifaddr *ifa;
+		struct in6_ifaddr *ia;
+
+		if ((ND_IFINFO(ifp)->flags & ND6_IFF_IFDISABLED) &&
+		    !(ND.flags & ND6_IFF_IFDISABLED))
+		{
+			/*
+			 * If the interface is marked as ND6_IFF_IFDISABLED and
+			 * has a link-local address with IN6_IFF_DUPLICATED,
+			 * do not clear ND6_IFF_IFDISABLED.
+			 * See RFC 4862, section 5.4.5.
+			 */
+			int duplicated_linklocal = 0;
+
+			IFADDR_FOREACH(ifa, ifp) {
+				if (ifa->ifa_addr->sa_family != AF_INET6)
+					continue;
+				ia = (struct in6_ifaddr *)ifa;
+				if ((ia->ia6_flags & IN6_IFF_DUPLICATED) &&
+				    IN6_IS_ADDR_LINKLOCAL(IA6_IN6(ia)))
+				{
+					duplicated_linklocal = 1;
+					break;
+				}
+			}
+
+			if (duplicated_linklocal) {
+				ND.flags |= ND6_IFF_IFDISABLED;
+				log(LOG_ERR, "Cannot enable an interface"
+				    " with a link-local address marked"
+				    " duplicate.\n");
+			} else {
+				ND_IFINFO(ifp)->flags &= ~ND6_IFF_IFDISABLED;
+				if (ifp->if_flags & IFF_UP)
+					in6_if_up(ifp);
+			}
+		} else if (!(ND_IFINFO(ifp)->flags & ND6_IFF_IFDISABLED) &&
+		    (ND.flags & ND6_IFF_IFDISABLED))
+		{
+			/* Mark all IPv6 addresses as tentative. */
+
+			ND_IFINFO(ifp)->flags |= ND6_IFF_IFDISABLED;
+			IFADDR_FOREACH(ifa, ifp) {
+				if (ifa->ifa_addr->sa_family != AF_INET6)
+					continue;
+				nd6_dad_stop(ifa);
+				ia = (struct in6_ifaddr *)ifa;
+				ia->ia6_flags |= IN6_IFF_TENTATIVE;
+			}
+		}
+	}
+
 		ND_IFINFO(ifp)->flags = ND.flags;
 		break;
 #undef ND
