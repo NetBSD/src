@@ -1,4 +1,4 @@
-/*	$NetBSD: pl310.c,v 1.13 2014/02/23 21:19:06 matt Exp $	*/
+/*	$NetBSD: pl310.c,v 1.14 2014/03/20 22:28:37 matt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pl310.c,v 1.13 2014/02/23 21:19:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pl310.c,v 1.14 2014/03/20 22:28:37 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -265,6 +265,8 @@ arml2cc_init(bus_space_tag_t bst, bus_space_handle_t bsh, bus_size_t o)
 	info->dcache_ways = 8 << __SHIFTOUT(cfg_dsize, CACHE_TYPE_xASSOC);
 	info->dcache_line_size = 32 << __SHIFTOUT(cfg_dsize, CACHE_TYPE_xLINESIZE);
 	info->dcache_size = info->dcache_ways * d_waysize;
+	info->dcache_type = CACHE_TYPE_PIPT;
+	info->icache_type = CACHE_TYPE_PIPT;
 
 	if (info->cache_unified) {
 		info->icache_ways = info->dcache_ways;
