@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2013/05/31 21:40:29 mrg Exp $
+#	$NetBSD: Makefile,v 1.12 2014/03/20 07:13:53 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -37,6 +37,8 @@ SUBDIR=	resize uxterm
 .PATH:	${X11SRCDIR.${PROG}}
 
 COPTS.input.c+=	-Wno-error	# uses XKeycodeToKeysym
+
+# XXXMRG should probably build builtin_icons.h
 
 .include "Makefile.inc"
 
