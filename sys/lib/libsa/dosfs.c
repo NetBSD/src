@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfs.c,v 1.19 2013/10/20 17:15:42 christos Exp $	*/
+/*	$NetBSD: dosfs.c,v 1.20 2014/03/20 03:13:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Robert Nordier
@@ -406,11 +406,11 @@ dosfs_stat(struct open_file *fd, struct stat *sb)
 }
 
 #if defined(LIBSA_ENABLE_LS_OP)
+#include "ls.h"
 __compactcall void
 dosfs_ls(struct open_file *f, const char *pattern)
 {
-	printf("Currently ls command is unsupported by dosfs\n");
-	return;
+	lsunsup("dosfs");
 }
 #endif
 
