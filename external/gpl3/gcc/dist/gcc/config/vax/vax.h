@@ -156,6 +156,9 @@ along with GCC; see the file COPYING3.  If not see
 /* Specify the registers used for certain standard purposes.
    The values of these macros are register numbers.  */
 
+/* VAX PSW for DWARF-2 */
+#define PSW_REGNUM VAX_PSW_REGNUM
+
 /* VAX pc is overloaded on a register.  */
 #define PC_REGNUM VAX_PC_REGNUM
 
