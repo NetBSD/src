@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.64 2013/10/20 17:17:30 christos Exp $	*/
+/*	$NetBSD: ufs.c,v 1.65 2014/03/20 03:13:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -189,36 +189,6 @@ static void ffs_oldfscompat(struct fs *);
 static int ffs_find_superblock(struct open_file *, struct fs *);
 #endif
 
-#if defined(LIBSA_ENABLE_LS_OP)
-
-#define NELEM(x) (sizeof (x) / sizeof(*x))
-
-typedef struct entry_t entry_t;
-struct entry_t {
-	entry_t	*e_next;
-	ino32_t	e_ino;
-	uint8_t	e_type;
-	char	e_name[1];
-};
-
-static const char    *const typestr[] = {
-	"unknown",
-	"FIFO",
-	"CHR",
-	0,
-	"DIR",
-	0,
-	"BLK",
-	0,
-	"REG",
-	0,
-	"LNK",
-	0,
-	"SOCK",
-	0,
-	"WHT"
-};
-#endif /* LIBSA_ENABLE_LS_OP */
 
 #ifdef LIBSA_LFS
 /*
@@ -890,13 +860,34 @@ ufs_stat(struct open_file *f, struct stat *sb)
 }
 
 #if defined(LIBSA_ENABLE_LS_OP)
+
+#include "ls.h"
+
+static const char    *const typestr[] = {
+	"unknown",
+	"FIFO",
+	"CHR",
+	0,
+	"DIR",
+	0,
+	"BLK",
+	0,
+	"REG",
+	0,
+	"LNK",
+	0,
+	"SOCK",
+	0,
+	"WHT"
+};
+
 __compactcall void
 ufs_ls(struct open_file *f, const char *pattern)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
 	char *buf;
 	size_t buf_size;
-	entry_t	*names = 0, *n, **np;
+	lsentry_t *names = NULL;
 
 	fp->f_seekp = 0;
 	while (fp->f_seekp < (off_t)fp->f_di.di_size) {
@@ -931,46 +922,13 @@ ufs_ls(struct open_file *f, const char *pattern)
 				printf("bad dir entry\n");
 				goto out;
 			}
-			if (pattern && !fnmatch(dp->d_name, pattern))
-				continue;
-			n = alloc(sizeof *n + strlen(dp->d_name));
-			if (!n) {
-				printf("%d: %s (%s)\n",
-					dp->d_ino, dp->d_name, t);
-				continue;
-			}
-			n->e_ino = dp->d_ino;
-			n->e_type = dp->d_type;
-			strcpy(n->e_name, dp->d_name);
-			for (np = &names; *np; np = &(*np)->e_next) {
-				if (strcmp(n->e_name, (*np)->e_name) < 0)
-					break;
-			}
-			n->e_next = *np;
-			*np = n;
+			lsadd(&names, pattern, dp->d_name, strlen(dp->d_name),
+			    dp->d_ino, t);
 		}
 		fp->f_seekp += buf_size;
 	}
-
-	if (names) {
-		entry_t *p_names = names;
-		do {
-			n = p_names;
-			printf("%d: %s (%s)\n",
-				n->e_ino, n->e_name, typestr[n->e_type]);
-			p_names = n->e_next;
-		} while (p_names);
-	} else {
-		printf("not found\n");
-	}
-out:
-	if (names) {
-		do {
-			n = names;
-			names = n->e_next;
-			dealloc(n, 0);
-		} while (names);
-	}
+	lsprint(names);
+out:	lsfree(names);
 }
 #endif /* LIBSA_ENABLE_LS_OP */
 
