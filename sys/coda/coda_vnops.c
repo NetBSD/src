@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.95 2014/02/27 16:51:37 hannken Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.96 2014/03/20 06:48:54 skrll Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.95 2014/02/27 16:51:37 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.96 2014/03/20 06:48:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1936,7 +1936,7 @@ coda_getpages(void *v)
 		 * XXX Perhaps we should not fully open the file, but
 		 * simply obtain a container file.
 		 */
-		/* XXX Is it ok to do this while holding the simplelock? */
+		/* XXX Is it ok to do this while holding the mutex? */
 		cerror = VOP_OPEN(vp, FREAD, cred);
 
 		if (cerror) {
