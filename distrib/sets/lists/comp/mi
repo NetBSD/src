@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1882 2014/03/18 10:21:47 hannken Exp $
+#	$NetBSD: mi,v 1.1883 2014/03/20 06:50:54 skrll Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3266,7 +3266,7 @@
 ./usr/include/sys/signal.h			comp-c-include
 ./usr/include/sys/signalvar.h			comp-c-include
 ./usr/include/sys/sigtypes.h			comp-c-include
-./usr/include/sys/simplelock.h			comp-c-include
+./usr/include/sys/simplelock.h			comp-c-include		obsolete
 ./usr/include/sys/sleepq.h			comp-c-include
 ./usr/include/sys/socket.h			comp-c-include
 ./usr/include/sys/socketvar.h			comp-c-include
