@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_htable.c,v 1.5 2014/02/27 01:30:18 joerg Exp $	*/
+/*	$NetBSD: ip_htable.c,v 1.6 2014/03/20 20:43:12 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -60,7 +60,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_htable.c,v 1.5 2014/02/27 01:30:18 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_htable.c,v 1.6 2014/03/20 20:43:12 christos Exp $");
 #else
 static const char rcsid[] = "@(#)Id: ip_htable.c,v 1.1.1.2 2012/07/22 13:45:19 darrenr Exp";
 #endif
@@ -326,11 +326,7 @@ ipf_htable_create(ipf_main_softc_t *softc, void *arg, iplookupop_t *op)
 		i = IPHASH_ANON;
 		do {
 			i++;
-#if defined(SNPRINTF) && defined(_KERNEL)
-			SNPRINTF(name, sizeof(name), "%u", i);
-#else
-			(void)sprintf(name, "%u", i);
-#endif
+			snprintf(name, sizeof(name), "%u", i);
 			for (oiph = softh->ipf_htables[unit + 1]; oiph != NULL;
 			     oiph = oiph->iph_next)
 				if (strncmp(oiph->iph_name, name,
