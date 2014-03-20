@@ -162,9 +162,13 @@ vax_expand_prologue (void)
   HOST_WIDE_INT size;
   rtx insn;
 
+  offset = 20;
   for (regno = 0; regno < FIRST_PSEUDO_REGISTER; regno++)
     if (df_regs_ever_live_p (regno) && !call_used_regs[regno])
-      mask |= 1 << regno;
+      {
+        mask |= 1 << regno;
+        offset += 4;
+      }
 
   insn = emit_insn (gen_procedure_entry_mask (GEN_INT (mask)));
   RTX_FRAME_RELATED_P (insn) = 1;
@@ -186,23 +190,23 @@ vax_expand_prologue (void)
 
      The rest of the prologue will adjust the SP for the local frame.  */
 
-  vax_add_reg_cfa_offset (insn, 4, arg_pointer_rtx);
-  vax_add_reg_cfa_offset (insn, 8, frame_pointer_rtx);
-  vax_add_reg_cfa_offset (insn, 12, pc_rtx);
+  add_reg_note (insn, REG_CFA_DEF_CFA,
+                plus_constant (Pmode, frame_pointer_rtx, offset));
+  insn = emit_insn (gen_blockage ());
+  RTX_FRAME_RELATED_P (insn) = 1;
 
-  offset = 16;
+  vax_add_reg_cfa_offset (insn, 4, gen_rtx_REG (Pmode, PSW_REGNUM));
+  vax_add_reg_cfa_offset (insn, 8, arg_pointer_rtx);
+  vax_add_reg_cfa_offset (insn, 12, frame_pointer_rtx);
+  vax_add_reg_cfa_offset (insn, 16, pc_rtx);
+
+  offset = 20;
   for (regno = 0; regno < FIRST_PSEUDO_REGISTER; regno++)
     if (mask & (1 << regno))
       {
 	vax_add_reg_cfa_offset (insn, offset, gen_rtx_REG (SImode, regno));
 	offset += 4;
       }
-
-  /* Because add_reg_note pushes the notes, adding this last means that
-     it will be processed first.  This is required to allow the other
-     notes be interpreted properly.  */
-  add_reg_note (insn, REG_CFA_DEF_CFA,
-		plus_constant (Pmode, frame_pointer_rtx, offset));
 
   /* Allocate the local stack frame.  */
   size = get_frame_size ();
