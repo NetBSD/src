@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.153 2013/11/14 00:50:36 christos Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.154 2014/03/20 00:29:57 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -171,12 +171,12 @@ struct m_hdr {
  * packets during reassembly.
  */
 struct	pkthdr {
-	struct	ifnet *rcvif;		/* rcv interface */
-	SLIST_HEAD(packet_tags, m_tag) tags; /* list of packet tags */
-	int	len;			/* total packet length */
-	int	csum_flags;		/* checksum flags */
-	uint32_t csum_data;		/* checksum data */
-	u_int	segsz;			/* segment size */
+	struct ifnet	*rcvif;			/* rcv interface */
+	SLIST_HEAD(packet_tags, m_tag) tags;	/* list of packet tags */
+	int		len;			/* total packet length */
+	int		csum_flags;		/* checksum flags */
+	uint32_t	csum_data;		/* checksum data */
+	u_int		segsz;			/* segment size */
 };
 
 /*
