@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile,v 1.15 2013/06/10 17:37:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.16 2014/03/20 08:57:48 mrg Exp $
 
 .include <bsd.own.mk>
 
 SUBDIR=	config
 
-.PATH:	${X11SRCDIR.freetype}/include/freetype
+.PATH:	${X11SRCDIR.freetype}/include
 
-INCSDIR=${X11INCDIR}/freetype2/freetype
+INCSDIR=${X11INCDIR}/freetype2
 
 INCS=	freetype.h ftadvanc.h ftbbox.h ftbdf.h ftbitmap.h ftbzip2.h ftcache.h \
 	ftchapters.h ftcid.h fterrdef.h fterrors.h ftgasp.h ftglyph.h \

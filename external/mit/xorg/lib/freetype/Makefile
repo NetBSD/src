@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2013/06/05 08:42:56 mrg Exp $
+#	$NetBSD: Makefile,v 1.12 2014/03/20 08:57:48 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -87,7 +87,7 @@ CPPFLAGS+=	-DFT_CONFIG_OPTION_SYSTEM_ZLIB \
 		-DFT2_BUILD_LIBRARY \
 		-DFT_CONFIG_MODULES_H="<ftmodule.h>"
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/freetype2 \
-		-I${DESTDIR}${X11INCDIR}/freetype2/freetype/config \
+		-I${DESTDIR}${X11INCDIR}/freetype2/config \
 		-I${X11SRCDIR.${LIB}}/include
 
 .if !defined(MKSUBPIXEL) || ${MKSUBPIXEL} != "no"

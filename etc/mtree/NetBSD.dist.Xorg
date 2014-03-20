@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.Xorg,v 1.13 2014/03/16 23:25:15 mrg Exp $
+#	$NetBSD: NetBSD.dist.Xorg,v 1.14 2014/03/20 09:05:28 mrg Exp $
 ./usr/X11R7
 ./usr/X11R7/bin
 ./usr/X11R7/include
@@ -21,11 +21,11 @@
 ./usr/X11R7/include/X11/pixmaps
 ./usr/X11R7/include/fontconfig
 ./usr/X11R7/include/freetype2
-./usr/X11R7/include/freetype2/freetype
-./usr/X11R7/include/freetype2/freetype/cache
-./usr/X11R7/include/freetype2/freetype/config
-./usr/X11R7/include/freetype2/freetype/internal
-./usr/X11R7/include/freetype2/freetype/internal/services
+./usr/X11R7/include/freetype2
+./usr/X11R7/include/freetype2/cache
+./usr/X11R7/include/freetype2/config
+./usr/X11R7/include/freetype2/internal
+./usr/X11R7/include/freetype2/internal/services
 ./usr/X11R7/include/libdrm
 ./usr/X11R7/include/libkms
 ./usr/X11R7/include/pixman-1
