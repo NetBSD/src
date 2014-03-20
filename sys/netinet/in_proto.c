@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.107 2014/01/02 18:29:01 pooka Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.108 2014/03/20 20:44:15 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,13 +61,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.107 2014/01/02 18:29:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.108 2014/03/20 20:44:15 christos Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_inet.h"
 #include "opt_ipsec.h"
 #include "opt_pim.h"
 #include "opt_gateway.h"
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/socket.h>
