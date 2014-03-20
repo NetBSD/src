@@ -545,12 +545,6 @@ AcpiTbParseRootTable (
     }
 
     /*
-     * It is not possible to map more than one entry in some environments,
-     * so unmap the RSDP here before mapping other tables
-     */
-    AcpiOsUnmapMemory (Rsdp, sizeof (ACPI_TABLE_RSDP));
-
-    /*
      * If it is present and used, validate the XSDT for access/size
      * and ensure that all table entries are at least non-NULL
      */
@@ -568,6 +562,12 @@ AcpiTbParseRootTable (
             TableEntrySize = ACPI_RSDT_ENTRY_SIZE;
         }
     }
+
+    /*
+     * It is not possible to map more than one entry in some environments,
+     * so unmap the RSDP here before mapping other tables
+     */
+    AcpiOsUnmapMemory (Rsdp, sizeof (ACPI_TABLE_RSDP));
 
     /* Map the RSDT/XSDT table header to get the full table length */
 
