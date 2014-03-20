@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.342 2012/09/12 02:00:53 manu Exp $ */
+/* $NetBSD: machdep.c,v 1.343 2014/03/20 20:51:40 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.342 2012/09/12 02:00:53 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.343 2014/03/20 20:51:40 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -928,7 +928,7 @@ alpha_unknown_sysname(void)
 {
 	static char s[128];		/* safe size */
 
-	sprintf(s, "%s family, unknown model variation 0x%lx",
+	snprintf(s, sizeof(s), "%s family, unknown model variation 0x%lx",
 	    platform.family, hwrpb->rpb_variation & SV_ST_MASK);
 	return ((const char *)s);
 }
