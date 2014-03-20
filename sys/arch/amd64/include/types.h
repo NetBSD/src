@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.43 2013/12/01 01:05:16 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.44 2014/03/20 20:45:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -60,6 +60,8 @@ typedef unsigned long	vsize_t;
 #define	PRIuVSIZE	"lu"
 #endif
 
+typedef int             pmc_evid_t; 
+typedef __uint64_t      pmc_ctr_t;
 typedef long int	register_t;
 typedef int		register32_t;
 #define	PRIxREGISTER	"lx"
