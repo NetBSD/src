@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.54 2014/03/16 05:20:28 dholland Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.55 2014/03/20 06:48:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.54 2014/03/16 05:20:28 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.55 2014/03/20 06:48:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,7 +158,7 @@ ed_mca_attach(device_t parent, device_t self, void *aux)
 	edc_add_disk(sc, ed);
 
 	bufq_alloc(&ed->sc_q, "disksort", BUFQ_SORT_RAWBLOCK);
-	simple_lock_init(&ed->sc_q_lock);
+	mutex_init(&ed->sc_q_lock, MUTEX_DEFAULT, IPL_VM);
 
 	if (ed_get_params(ed, &drv_flags)) {
 		printf(": IDENTIFY failed, no disk found\n");
@@ -257,9 +257,9 @@ edmcastrategy(struct buf *bp)
 	bp->b_rawblkno = blkno;
 
 	/* Queue transfer on drive, activate drive and controller if idle. */
-	simple_lock(&ed->sc_q_lock);
+	mutex_enter(&ed->sc_q_lock);
 	bufq_put(ed->sc_q, bp);
-	simple_unlock(&ed->sc_q_lock);
+	mutex_exit(&ed->sc_q_lock);
 
 	/* Ring the worker thread */
 	wakeup(ed->edc_softc);
