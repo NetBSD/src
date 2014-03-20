@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.89 2014/03/11 20:32:05 pooka Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.90 2014/03/20 06:48:22 mlelstv Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.89 2014/03/11 20:32:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.90 2014/03/20 06:48:22 mlelstv Exp $");
 
 #if defined(_KERNEL)
 #include "opt_ddb.h"
@@ -324,7 +324,7 @@ bt_freetrim(vmem_t *vm, int freelimit)
 		LIST_REMOVE(bt, bt_freelist);
 		vm->vm_nfreetags--;
 		if (bt >= static_bts
-		    && bt < static_bts + sizeof(static_bts)) {
+		    && bt < &static_bts[STATIC_BT_COUNT]) {
 			mutex_enter(&vmem_btag_lock);
 			LIST_INSERT_HEAD(&vmem_btag_freelist, bt, bt_freelist);
 			vmem_btag_freelist_count++;
