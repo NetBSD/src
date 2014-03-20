@@ -1,4 +1,4 @@
-/*	$NetBSD: ugenhc.c,v 1.17 2014/03/13 01:38:11 pooka Exp $	*/
+/*	$NetBSD: ugenhc.c,v 1.18 2014/03/20 20:42:08 christos Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.17 2014/03/13 01:38:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.18 2014/03/20 20:42:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -120,11 +120,11 @@ struct rusb_xfer {
 #define UGENDEV_BASESTR "/dev/ugen"
 #define UGENDEV_BUFSIZE 32
 static void
-makeugendevstr(int devnum, int endpoint, char *buf)
+makeugendevstr(int devnum, int endpoint, char *buf, size_t len)
 {
 
 	CTASSERT(UGENDEV_BUFSIZE > sizeof(UGENDEV_BASESTR)+sizeof("0.00")+1);
-	sprintf(buf, "%s%d.%02d", UGENDEV_BASESTR, devnum, endpoint);
+	snprintf(buf, len, "%s%d.%02d", UGENDEV_BASESTR, devnum, endpoint);
 }
 
 /*
@@ -596,7 +596,7 @@ rhscintr(void *arg)
 	usbd_xfer_handle xfer;
 	int fd, error;
 
-	makeugendevstr(sc->sc_devnum, 0, buf);
+	makeugendevstr(sc->sc_devnum, 0, buf, sizeof(buf));
 
 	for (;;) {
 		/*
@@ -969,7 +969,7 @@ ugenhc_open(struct usbd_pipe *pipe)
 				oflags = O_RDWR;
 			}
 
-			makeugendevstr(sc->sc_devnum, endpt, buf);
+			makeugendevstr(sc->sc_devnum, endpt, buf, sizeof(buf));
 			/* XXX: theoretically should convert oflags */
 			error = rumpuser_open(buf, oflags, &fd);
 			if (error != 0) {
@@ -1057,7 +1057,7 @@ ugenhc_probe(device_t parent, cfdata_t match, void *aux)
 {
 	char buf[UGENDEV_BUFSIZE];
 
-	makeugendevstr(match->cf_unit, 0, buf);
+	makeugendevstr(match->cf_unit, 0, buf, sizeof(buf));
 	if (rumpuser_getfileinfo(buf, NULL, NULL) != 0)
 		return 0;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.6 2013/01/09 13:23:20 christos Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.7 2014/03/20 20:43:12 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -235,7 +235,6 @@ struct file;
 #  include <inet/ip_ire.h>
 # endif
 # if SOLARIS2 >= 8
-#  define SNPRINTF	snprintf
 
 #  include <inet/ip_if.h>
 #  define	ipif_local_addr	ipif_lcl_addr
@@ -431,7 +430,6 @@ typedef	struct	ip6_hdr	ip6_t;
 
 # ifdef _KERNEL
 #  define	FASTROUTE_RECURSION	1
-#  define SNPRINTF	sprintf
 #  if (HPUXREV >= 1111)
 #   define	IPL_SELECT
 #   ifdef	IPL_SELECT
@@ -1173,7 +1171,6 @@ typedef	u_int32_t	u_32_t;
 #   include "bpfilter.h"
 #  endif
 #  if (OpenBSD >= 200311)
-#   define SNPRINTF	snprintf
 #   if defined(USE_INET6)
 #    include "netinet6/in6_var.h"
 #    include "netinet6/nd6.h"

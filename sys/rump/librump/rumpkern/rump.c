@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.290 2014/03/15 15:15:27 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.291 2014/03/20 20:42:08 christos Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.290 2014/03/15 15:15:27 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.291 2014/03/20 20:42:08 christos Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -512,7 +512,8 @@ rump_init(void)
 #undef CPFX
 #undef CPFXLEN
 		} else {
-			sprintf(buf, "rumpns_sys_%s", syscallnames[i]);
+			snprintf(buf, sizeof(buf), "rumpns_sys_%s",
+			    syscallnames[i]);
 		}
 		if ((sym = rumpuser_dl_globalsym(buf)) != NULL
 		    && sym != rump_sysent[i].sy_call) {
