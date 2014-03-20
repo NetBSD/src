@@ -288,12 +288,7 @@ void _Unwind_SetIP(struct _Unwind_Context *context, uintptr_t new_value) {
   cursor->setIP(new_value);
   unw_proc_info_t info;
   cursor->getInfo(&info);
-  uint64_t orgArgSize = info.extra_args;
-  uint64_t orgFuncStart = info.start_ip;
   cursor->setInfoBasedOnIPRegister(false);
-  // Adjust REG_SP if there was a DW_CFA_GNU_args_size.
-  if (orgFuncStart == info.start_ip && orgArgSize != 0)
-    cursor->setSP(cursor->getSP() + orgArgSize);
 }
 
 uintptr_t _Unwind_GetRegionStart(struct _Unwind_Context *context) {
