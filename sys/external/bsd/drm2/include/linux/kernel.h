@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.3 2014/03/21 02:25:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -44,7 +44,11 @@
 #define	barrier()	__insn_barrier()
 #define	unlikely(X)	__predict_false(X)
 
-#define	uninitialized_var(x)	x
+/*
+ * XXX Linux kludge to work around GCC uninitialized variable warning.
+ * Linux does `x = x', which is bollocks.
+ */
+#define	uninitialized_var(x)	x = 0
 
 /* XXX These will multiply evaluate their arguments.  */
 #define	max_t(T, X, Y)	MAX(X, Y)
