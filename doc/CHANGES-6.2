@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.98 2014/03/18 09:44:02 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.99 2014/03/21 14:45:54 sborrill Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -1387,3 +1387,10 @@ sys/kern/kern_verifiedexec.c			1.132
 
 	Reorder code to avoid use-after-free on error.
 	[maxv, ticket #1034]
+
+crypto/external/bsd/openssl/lib/libssl/ssl.inc	1.6 via patch
+
+	Add d1_meth.c to build to fix problems with missing symbol
+	DTLSv1_method. Addresses asterisk build problems.
+	[wiz, ticket #1038]
+
