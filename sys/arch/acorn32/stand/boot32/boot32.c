@@ -1,4 +1,4 @@
-/*	$NetBSD: boot32.c,v 1.40 2013/11/04 21:08:14 christos Exp $	*/
+/*	$NetBSD: boot32.c,v 1.41 2014/03/21 16:43:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 Reinoud Zandijk
@@ -1058,7 +1058,7 @@ sprint0(int width, char prefix, char base, int value)
 	*pos++ = base;
 	*pos++ = (char) 0;
 	
-	sprintf(scrap, format, value);
+	snprintf(scrap, sizeof(scrap), format, value);
 	length = strlen(scrap);
 
 	return scrap+length-width;
