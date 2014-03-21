@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.49 2014/03/11 01:38:15 christos Exp $
+# $NetBSD: md.sparc64,v 1.50 2014/03/21 17:00:18 christos Exp $
 ./usr/lib/sparc/i18n/libBIG5_g.a		comp-obsolete		obsolete
 ./usr/lib/sparc/i18n/libDECHanyu_g.a		comp-obsolete		obsolete
 ./usr/lib/sparc/i18n/libEUCTW_g.a		comp-obsolete		obsolete
@@ -305,7 +305,7 @@
 ./usr/libdata/debug/usr/lib/sparc/libsqlite3.so.1.2.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libss.so.6.0.debug			comp-compat-shlib	obsolete
 ./usr/libdata/debug/usr/lib/sparc/libssh.so.22.0.debug			comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/sparc/libssl.so.10.2.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libssl.so.10.3.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libstdc++.so.7.0.debug		comp-compat-shlib	gcc=4,compat,pic,debug,libstdcxx
 ./usr/libdata/debug/usr/lib/sparc/libstdc++.so.7.1.debug		comp-compat-shlib	gcc=45,compat,pic,debug,libstdcxx
 ./usr/libdata/debug/usr/lib/sparc/libstdc++.so.7.2.debug		comp-compat-shlib	gcc=48,compat,pic,debug,libstdcxx
