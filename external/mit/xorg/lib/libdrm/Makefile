@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.9 2014/03/17 08:01:18 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2014/03/21 18:14:20 riastradh Exp $
 
 .include <bsd.own.mk>
 
 LIB=	drm
 .PATH:	${X11SRCDIR.${LIB}}
 
-SRCS=	xf86drm.c xf86drmHash.c xf86drmRandom.c xf86drmSL.c
+SRCS=	xf86drm.c xf86drmHash.c xf86drmMode.c xf86drmRandom.c xf86drmSL.c
 
 INCS=	xf86drm.h xf86drmMode.h
 INCSDIR=${X11INCDIR}
