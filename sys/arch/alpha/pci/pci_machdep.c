@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.c,v 1.20 2014/01/20 15:05:14 tsutsui Exp $ */
+/* $NetBSD: pci_machdep.c,v 1.21 2014/03/21 16:39:29 christos Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.20 2014/01/20 15:05:14 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.21 2014/03/21 16:39:29 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -119,4 +119,11 @@ device_pci_register(device_t dev, void *aux)
 		dict = device_properties(dev);
 		prop_dictionary_set_bool(dict, "is_console", true);
 	}
+}
+
+const char *
+pci_intr_string(pci_chipset_tag_t c, pci_intr_handle_t handle)
+{
+	static char buf[64];
+	return pci_intr_string_internal(c, handle, buf, sizeof(buf));
 }
