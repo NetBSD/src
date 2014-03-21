@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.7 2014/03/17 07:25:34 mrg Exp $
+# $NetBSD: mi,v 1.8 2014/03/21 12:30:00 martin Exp $
 ./etc/mtree/set.xdebug					comp-sys-root
 ./usr/X11R6/lib/libFS_g.a				-unknown-	debuglib,x11
 ./usr/X11R6/lib/libGLU_g.a				-unknown-	debuglib,x11
@@ -105,6 +105,7 @@
 ./usr/X11R7/lib/libmp_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libpciaccess_g.a			-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libpixman-1_g.a				-unknown-	debuglib,xorg
+./usr/X11R7/lib/libpthread-stubs_g.a			-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libre_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libxcb-atom_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libxcb-aux_g.a				-unknown-	debuglib,xorg
