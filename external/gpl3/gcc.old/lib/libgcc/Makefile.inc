@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1.1.2 2014/02/26 10:57:30 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2014/03/21 20:54:13 joerg Exp $
 
 .if ${MKGCC} != "no"
 LIBGCC_MACHINE_ARCH?=${MACHINE_ARCH:S/earmv5/earm/}
@@ -82,7 +82,11 @@ LIB2_DIVMOD_FUNCS:=${LIB2_DIVMOD_FUNCS:N${f}}
 LIB2FUNCS=	${LIB2FUNCS_SHORT:=.c}
 LIB2FUNCS_ST=	${G_LIB2FUNCS_ST:=.c}
 LIB2DIVMOD=	${LIB2_DIVMOD_FUNCS:=.c}
+.if ${HAVE_LIBGCC_EH} == "no"
+LIB2_EH=	${G_LIB2ADDEH:M*.c:T:Nunwind-dw2.c:Nunwind-dw2-fde-dip.c:Nunwind-sjlj.c:Nunwind-c.c}
+.else
 LIB2_EH=	${G_LIB2ADDEH:M*.c:T}
+.endif
 LIB2_EHASM=	${G_LIB2ADDEH:M*.S:T}
 .if !empty(G_LIB1ASMFUNCS)
 LIB1ASMFUNCS=	${G_LIB1ASMFUNCS:=.S}
