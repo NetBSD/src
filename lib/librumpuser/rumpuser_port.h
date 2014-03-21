@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_port.h,v 1.29 2014/02/25 20:58:18 pooka Exp $	*/
+/*	$NetBSD: rumpuser_port.h,v 1.30 2014/03/21 12:28:54 pooka Exp $	*/
 
 /*
  * Portability header for non-NetBSD platforms.
@@ -20,6 +20,9 @@
 #define PLATFORM_HAS_FSYNC_RANGE
 #define PLATFORM_HAS_NBSYSCTL
 #define PLATFORM_HAS_NBFILEHANDLE
+#ifndef HAVE_PTHREAD_SETNAME3
+#define HAVE_PTHREAD_SETNAME3
+#endif
 
 #define PLATFORM_HAS_STRSUFTOLL
 #define PLATFORM_HAS_SETGETPROGNAME
