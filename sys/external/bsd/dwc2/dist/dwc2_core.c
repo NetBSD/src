@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_core.c,v 1.4 2013/10/05 06:51:43 skrll Exp $	*/
+/*	$NetBSD: dwc2_core.c,v 1.5 2014/03/21 09:19:10 skrll Exp $	*/
 
 /*
  * core.c - DesignWare HS OTG Controller common routines
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_core.c,v 1.4 2013/10/05 06:51:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_core.c,v 1.5 2014/03/21 09:19:10 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
@@ -1695,7 +1695,7 @@ void dwc2_read_packet(struct dwc2_hsotg *hsotg, u8 *dest, u16 bytes)
  */
 void dwc2_dump_host_registers(struct dwc2_hsotg *hsotg)
 {
-#ifdef DEBUG
+#ifdef DWC2_DEBUG
 	bus_size_t addr;
 	int i;
 
@@ -1767,7 +1767,7 @@ void dwc2_dump_host_registers(struct dwc2_hsotg *hsotg)
  */
 void dwc2_dump_global_registers(struct dwc2_hsotg *hsotg)
 {
-#ifdef DEBUG
+#ifdef DWC2_DEBUG
 	bus_size_t addr;
 
 	dev_dbg(hsotg->dev, "Core Global Registers\n");
@@ -2585,7 +2585,7 @@ int dwc2_get_hwparams(struct dwc2_hsotg *hsotg)
 {
 	struct dwc2_hw_params *hw = &hsotg->hw_params;
 	unsigned width;
-	u32 hwcfg1, hwcfg2, hwcfg3, hwcfg4;
+	u32 hwcfg2, hwcfg3, hwcfg4;
 	u32 hptxfsiz, grxfsiz, gnptxfsiz;
 	u32 gusbcfg;
 
@@ -2607,14 +2607,13 @@ int dwc2_get_hwparams(struct dwc2_hsotg *hsotg)
 		hw->snpsid >> 12 & 0xf, hw->snpsid >> 8 & 0xf,
 		hw->snpsid >> 4 & 0xf, hw->snpsid & 0xf, hw->snpsid);
 
-	hwcfg1 = DWC2_READ_4(hsotg, GHWCFG1);
 	hwcfg2 = DWC2_READ_4(hsotg, GHWCFG2);
 	hwcfg3 = DWC2_READ_4(hsotg, GHWCFG3);
 	hwcfg4 = DWC2_READ_4(hsotg, GHWCFG4);
 	gnptxfsiz = DWC2_READ_4(hsotg, GNPTXFSIZ);
 	grxfsiz = DWC2_READ_4(hsotg, GRXFSIZ);
 
-	dev_dbg(hsotg->dev, "hwcfg1=%08x\n", hwcfg1);
+	dev_dbg(hsotg->dev, "hwcfg1=%08x\n", DWC2_READ_4(hsotg, GHWCFG1));
 	dev_dbg(hsotg->dev, "hwcfg2=%08x\n", hwcfg2);
 	dev_dbg(hsotg->dev, "hwcfg3=%08x\n", hwcfg3);
 	dev_dbg(hsotg->dev, "hwcfg4=%08x\n", hwcfg4);
