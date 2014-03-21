@@ -1,4 +1,4 @@
-/* $NetBSD: eisa_machdep.c,v 1.10 2013/06/27 21:21:05 christos Exp $ */
+/* $NetBSD: eisa_machdep.c,v 1.11 2014/03/21 16:39:29 christos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.10 2013/06/27 21:21:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.11 2014/03/21 16:39:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -676,4 +676,11 @@ eisa_conf_read_io(eisa_chipset_tag_t ec, int slot, int func, int entry,
 
 	*dp = ecuio->ecuio_io;
 	return (0);
+}
+
+const char *
+eisa_intr_string(eisa_chipset_tag_t c, eisa_intr_handle_t handle)
+{
+	static char buf[64];
+	return eisa_intr_string_internal(c, handle, buf, sizeof(buf));
 }
