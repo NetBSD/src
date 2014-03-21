@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_subr.c,v 1.26 2014/02/27 16:51:38 hannken Exp $	*/
+/*	$NetBSD: ptyfs_subr.c,v 1.27 2014/03/21 17:21:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.26 2014/02/27 16:51:38 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.27 2014/03/21 17:21:53 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,6 @@ static void ptyfs_getinfo(struct ptyfsnode *, struct lwp *);
 static void ptyfs_hashins(struct ptyfsnode *);
 static void ptyfs_hashrem(struct ptyfsnode *);
 
-static struct vnode *ptyfs_used_get(ptyfstype, int, struct mount *, int);
 static struct ptyfsnode *ptyfs_free_get(ptyfstype, int, struct lwp *);
 
 static void ptyfs_rehash(kmutex_t *, struct ptyfs_hashhead **,
@@ -186,7 +185,7 @@ out:
  * allocate a ptyfsnode/vnode pair.  the vnode is
  * referenced, and locked.
  *
- * the pid, ptyfs_type, and mount point uniquely
+ * the pty, ptyfs_type, and mount point uniquely
  * identify a ptyfsnode.  the mount point is needed
  * because someone might mount this filesystem
  * twice.
