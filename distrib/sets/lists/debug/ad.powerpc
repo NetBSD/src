@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.5 2014/03/11 01:38:15 christos Exp $
+# $NetBSD: ad.powerpc,v 1.6 2014/03/21 17:00:18 christos Exp $
 ./usr/lib/powerpc/libamu_g.a			comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/libarchive_g.a		comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/libasn1_g.a			comp-c-debuglib		compat,arch64,debuglib,kerberos
@@ -246,7 +246,7 @@
 ./usr/libdata/debug/usr/lib/powerpc/libsl.so.5.0.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libsqlite3.so.1.2.debug		comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libssh.so.22.0.debug			comp-compat-shlib	compat,arch64,debug,pic
-./usr/libdata/debug/usr/lib/powerpc/libssl.so.10.2.debug			comp-compat-shlib	compat,arch64,debug,pic
+./usr/libdata/debug/usr/lib/powerpc/libssl.so.10.3.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libstdc++.so.7.0.debug		comp-compat-shlib	gcc=4,compat,arch64,debug,pic,libstdcxx
 ./usr/libdata/debug/usr/lib/powerpc/libstdc++.so.7.1.debug		comp-compat-shlib	gcc=45,compat,arch64,debug,pic,libstdcxx
 ./usr/libdata/debug/usr/lib/powerpc/libstdc++.so.7.2.debug		comp-compat-shlib	gcc=48,compat,arch64,debug,pic,libstdcxx
