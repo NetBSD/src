@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.27 2014/03/11 01:38:15 christos Exp $
+# $NetBSD: ad.mips,v 1.28 2014/03/21 17:00:18 christos Exp $
 ./usr/lib/64/libcrypto_g.a			comp-c-debuglib		compat,crypto,debuglib,arch64
 ./usr/lib/64/libcrypto_idea_g.a			comp-obsolete		obsolete
 ./usr/lib/64/libcrypto_mdc2_g.a			comp-obsolete		obsolete
@@ -188,7 +188,7 @@
 ./usr/libdata/debug/usr/lib/64/libsqlite3.so.1.2.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libss.so.6.0.debug		comp-krb5-debug	obsolete
 ./usr/libdata/debug/usr/lib/64/libssh.so.22.0.debug	comp-secsh-debug	crypto,debug,compat,arch64
-./usr/libdata/debug/usr/lib/64/libssl.so.10.2.debug		comp-crypto-debug	crypto,debug,compat,arch64
+./usr/libdata/debug/usr/lib/64/libssl.so.10.3.debug		comp-crypto-debug	crypto,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libstdc++.so.5.0.debug	comp-sys-debug	gcc=3,cxx,debug,compat,libstdcxx,arch64
 ./usr/libdata/debug/usr/lib/64/libstdc++.so.7.0.debug	comp-sys-debug	gcc=4,cxx,debug,compat,libstdcxx,arch64
 ./usr/libdata/debug/usr/lib/64/libstdc++.so.7.1.debug	comp-sys-debug	gcc=45,cxx,debug,compat,libstdcxx,arch64
@@ -364,7 +364,7 @@
 ./usr/libdata/debug/usr/lib/o32/libsqlite3.so.1.2.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libss.so.6.0.debug		comp-krb5-debug	obsolete
 ./usr/libdata/debug/usr/lib/o32/libssh.so.22.0.debug	comp-secsh-debug	crypto,debug,compat,arch64
-./usr/libdata/debug/usr/lib/o32/libssl.so.10.2.debug		comp-crypto-debug	crypto,debug,compat,arch64
+./usr/libdata/debug/usr/lib/o32/libssl.so.10.3.debug		comp-crypto-debug	crypto,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libstdc++.so.5.0.debug	comp-sys-debug	gcc=3,cxx,debug,compat,libstdcxx,arch64
 ./usr/libdata/debug/usr/lib/o32/libstdc++.so.7.0.debug	comp-sys-debug	gcc=4,cxx,debug,compat,libstdcxx,arch64
 ./usr/libdata/debug/usr/lib/o32/libstdc++.so.7.1.debug	comp-sys-debug	gcc=45,cxx,debug,compat,libstdcxx,arch64
