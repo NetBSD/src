@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.31 2014/03/16 05:20:26 dholland Exp $ */
+/*	$NetBSD: ms.c,v 1.32 2014/03/21 16:58:54 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.31 2014/03/16 05:20:26 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.32 2014/03/21 16:58:54 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.31 2014/03/16 05:20:26 dholland Exp $");
 #include <sys/tty.h>
 #include <sys/device.h>
 #include <sys/signalvar.h>
+#include <sys/mutex.h>
 
 #include <dev/ic/z8530reg.h>
 #include <machine/z8530var.h>
@@ -132,6 +133,7 @@ struct ms_softc {
 	 */
 	volatile int ms_ready;		/* event queue is ready */
 	struct	evvar ms_events;	/* event queue state */
+	kmutex_t ms_lock;
 } ms_softc;
 
 static int ms_match(device_t, cfdata_t, void *);
@@ -203,10 +205,11 @@ ms_attach(device_t parent, device_t self, void *aux)
 	struct zsc_softc *zsc = device_private(parent);
 	struct zs_chanstate *cs;
 	cfdata_t cf;
-	int reset, s;
+	int reset;
 
 	ms->ms_dev = self;
 	callout_init(&ms->ms_modem_ch, 0);
+	mutex_init(&ms->ms_lock, MUTEX_DEFAULT, IPL_SERIAL);
 
 	cf = device_cfdata(self);
 	cs = zsc->zsc_cs[1];
@@ -215,7 +218,6 @@ ms_attach(device_t parent, device_t self, void *aux)
 	ms->ms_cs = cs;
 
 	/* Initialize the speed, etc. */
-	s = splzs();
 	/* May need reset... */
 	reset = ZSWR9_B_RESET;
 	zs_write_reg(cs, 9, reset);
@@ -224,7 +226,6 @@ ms_attach(device_t parent, device_t self, void *aux)
 	cs->cs_preg[4] = ZSWR4_CLK_X16 | ZSWR4_TWOSB;
 	(void)zs_set_speed(cs, MS_BPS);
 	zs_loadchannelregs(cs);
-	splx(s);
 
 	/* Initialize translator. */
 	ms->ms_ready = 0;
@@ -250,7 +251,7 @@ msopen(dev_t dev, int flags, int mode, struct lwp *l)
 	if (ms->ms_events.ev_io)
 		return EBUSY;
 	ms->ms_events.ev_io = l->l_proc;
-	ev_init(&ms->ms_events);	/* may cause sleep */
+	ev_init(&ms->ms_events, device_xname(ms->ms_dev), &ms->ms_lock);
 
 	ms->ms_ready = 1;		/* start accepting events */
 	ms->ms_rts = 1;
@@ -464,7 +465,7 @@ out:
 	if (any) {
 		ms->ms_ub = ub;
 		ms->ms_events.ev_put = put;
-		EV_WAKEUP(&ms->ms_events);
+		ev_wakeup(&ms->ms_events);
 	}
 }
 
@@ -557,19 +558,15 @@ static void
 ms_softint(struct zs_chanstate *cs)
 {
 	struct ms_softc *ms;
-	int get, c, s;
+	int get, c;
 	int intr_flags;
 	u_short ring_data;
 
 	ms = cs->cs_private;
 
-	/* Atomically get and clear flags. */
-	s = splzs();
+	mutex_enter(&ms->ms_lock);
 	intr_flags = ms->ms_intr_flags;
 	ms->ms_intr_flags = 0;
-
-	/* Now lower to spltty for the rest. */
-	(void) spltty();
 
 	/*
 	 * Copy data from the receive ring to the event layer.
@@ -577,6 +574,7 @@ ms_softint(struct zs_chanstate *cs)
 	get = ms->ms_rbget;
 	while (get != ms->ms_rbput) {
 		ring_data = ms->ms_rbuf[get];
+		mutex_exit(&ms->ms_lock);
 		get = (get + 1) & MS_RX_RING_MASK;
 
 		/* low byte of ring_data is rr1 */
@@ -592,7 +590,10 @@ ms_softint(struct zs_chanstate *cs)
 
 		/* Pass this up to the "middle" layer. */
 		ms_input(ms, c);
+		mutex_enter(&ms->ms_lock);
 	}
+	mutex_exit(&ms->ms_lock);
+
 	if (intr_flags & INTR_RX_OVERRUN) {
 		log(LOG_ERR, "%s: input overrun\n",
 		    device_xname(ms->ms_dev));
@@ -613,10 +614,10 @@ ms_softint(struct zs_chanstate *cs)
 		 */
 		log(LOG_ERR, "%s: status interrupt?\n",
 		    device_xname(ms->ms_dev));
+		mutex_enter(&ms->ms_lock);
 		cs->cs_rr0_delta = 0;
+		mutex_exit(&ms->ms_lock);
 	}
-
-	splx(s);
 }
 
 
@@ -643,12 +644,11 @@ void
 ms_modem(void *arg)
 {
 	struct ms_softc *ms = arg;
-	int s;
 
 	if (!ms->ms_ready)
 		return;
 
-	s = splzs();
+	mutex_enter(&ms->ms_lock);
 
 	if (ms->ms_nodata++ > 250) { /* XXX */
 		log(LOG_ERR, "%s: no data for 5 secs. resetting.\n",
@@ -670,6 +670,6 @@ ms_modem(void *arg)
 		ms_trigger(ms->ms_cs, ms->ms_rts);
 	}
 
-	(void) splx(s);
+	mutex_exit(&ms->ms_lock);
 	callout_reset(&ms->ms_modem_ch, 2, ms_modem, ms);
 }
