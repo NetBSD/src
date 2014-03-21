@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcdintr.c,v 1.6 2013/11/24 12:25:19 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcdintr.c,v 1.7 2014/03/21 09:19:10 skrll Exp $	*/
 
 /*
  * hcd_intr.c - DesignWare HS OTG Controller host-mode interrupt handling
@@ -40,7 +40,7 @@
  * This file contains the interrupt handlers for Host mode
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdintr.c,v 1.6 2013/11/24 12:25:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdintr.c,v 1.7 2014/03/21 09:19:10 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/pool.h>
@@ -161,7 +161,7 @@ static void dwc2_sof_intr(struct dwc2_hsotg *hsotg)
  */
 static void dwc2_rx_fifo_level_intr(struct dwc2_hsotg *hsotg)
 {
-	u32 grxsts, chnum, bcnt, dpid, pktsts;
+	u32 grxsts, chnum, bcnt, pktsts;
 	struct dwc2_host_chan *chan;
 
 	if (dbg_perio())
@@ -176,14 +176,14 @@ static void dwc2_rx_fifo_level_intr(struct dwc2_hsotg *hsotg)
 	}
 
 	bcnt = (grxsts & GRXSTS_BYTECNT_MASK) >> GRXSTS_BYTECNT_SHIFT;
-	dpid = (grxsts & GRXSTS_DPID_MASK) >> GRXSTS_DPID_SHIFT;
 	pktsts = (grxsts & GRXSTS_PKTSTS_MASK) >> GRXSTS_PKTSTS_SHIFT;
 
 	/* Packet Status */
 	if (dbg_perio()) {
 		dev_vdbg(hsotg->dev, "    Ch num = %d\n", chnum);
 		dev_vdbg(hsotg->dev, "    Count = %d\n", bcnt);
-		dev_vdbg(hsotg->dev, "    DPID = %d, chan.dpid = %d\n", dpid,
+		dev_vdbg(hsotg->dev, "    DPID = %d, chan.dpid = %d\n",
+			 (grxsts & GRXSTS_DPID_MASK) >> GRXSTS_DPID_SHIFT,
 			 chan->data_pid_start);
 		dev_vdbg(hsotg->dev, "    PStatus = %d\n", pktsts);
 	}
@@ -462,7 +462,6 @@ static int dwc2_update_urb_state(struct dwc2_hsotg *hsotg,
 				 struct dwc2_hcd_urb *urb,
 				 struct dwc2_qtd *qtd)
 {
-	u32 hctsiz;
 	int xfer_done = 0;
 	int short_read = 0;
 	int xfer_length = dwc2_get_actual_xfer_length(hsotg, chan, chnum, qtd,
@@ -497,12 +496,11 @@ static int dwc2_update_urb_state(struct dwc2_hsotg *hsotg,
 		urb->status = 0;
 	}
 
-	hctsiz = DWC2_READ_4(hsotg, HCTSIZ(chnum));
 	dev_vdbg(hsotg->dev, "DWC_otg: %s: %s, channel %d\n",
 		 __func__, (chan->ep_is_in ? "IN" : "OUT"), chnum);
 	dev_vdbg(hsotg->dev, "  chan->xfer_len %d\n", chan->xfer_len);
 	dev_vdbg(hsotg->dev, "  hctsiz.xfersize %d\n",
-		 (hctsiz & TSIZ_XFERSIZE_MASK) >> TSIZ_XFERSIZE_SHIFT);
+		 (DWC2_READ_4(hsotg, HCTSIZ(chnum)) & TSIZ_XFERSIZE_MASK) >> TSIZ_XFERSIZE_SHIFT);
 	dev_vdbg(hsotg->dev, "  urb->transfer_buffer_length %d\n", urb->length);
 	dev_vdbg(hsotg->dev, "  urb->actual_length %d\n", urb->actual_length);
 	dev_vdbg(hsotg->dev, "  short_read %d, xfer_done %d\n", short_read,
@@ -1164,7 +1162,6 @@ static void dwc2_update_urb_state_abn(struct dwc2_hsotg *hsotg,
 {
 	u32 xfer_length = dwc2_get_actual_xfer_length(hsotg, chan, chnum,
 						      qtd, halt_status, NULL);
-	u32 hctsiz;
 
 	if (urb->actual_length + xfer_length > urb->length) {
 		dev_warn(hsotg->dev, "%s(): trimming xfer length\n", __func__);
@@ -1182,13 +1179,12 @@ static void dwc2_update_urb_state_abn(struct dwc2_hsotg *hsotg,
 
 	urb->actual_length += xfer_length;
 
-	hctsiz = DWC2_READ_4(hsotg, HCTSIZ(chnum));
 	dev_vdbg(hsotg->dev, "DWC_otg: %s: %s, channel %d\n",
 		 __func__, (chan->ep_is_in ? "IN" : "OUT"), chnum);
 	dev_vdbg(hsotg->dev, "  chan->start_pkt_count %d\n",
 		 chan->start_pkt_count);
 	dev_vdbg(hsotg->dev, "  hctsiz.pktcnt %d\n",
-		 (hctsiz & TSIZ_PKTCNT_MASK) >> TSIZ_PKTCNT_SHIFT);
+		 (DWC2_READ_4(hsotg, HCTSIZ(chnum)) & TSIZ_PKTCNT_MASK) >> TSIZ_PKTCNT_SHIFT);
 	dev_vdbg(hsotg->dev, "  chan->max_packet %d\n", chan->max_packet);
 	dev_vdbg(hsotg->dev, "  bytes_transferred %d\n",
 		 xfer_length);
@@ -1479,11 +1475,6 @@ static void dwc2_hc_ahberr_intr(struct dwc2_hsotg *hsotg,
 				struct dwc2_qtd *qtd)
 {
 	struct dwc2_hcd_urb *urb = qtd->urb;
-	const char *pipetype, *speed;
-	u32 hcchar;
-	u32 hcsplt;
-	u32 hctsiz;
-	u32 hc_dma;
 
 	dev_dbg(hsotg->dev, "--Host Channel %d Interrupt: AHB Error--\n",
 		chnum);
@@ -1493,10 +1484,13 @@ static void dwc2_hc_ahberr_intr(struct dwc2_hsotg *hsotg,
 
 // 	dwc2_hc_handle_tt_clear(hsotg, chan, qtd);
 
-	hcchar = DWC2_READ_4(hsotg, HCCHAR(chnum));
-	hcsplt = DWC2_READ_4(hsotg, HCSPLT(chnum));
-	hctsiz = DWC2_READ_4(hsotg, HCTSIZ(chnum));
-	hc_dma = DWC2_READ_4(hsotg, HCDMA(chnum));
+#ifdef DWC2_DEBUG
+	const char *pipetype, *speed;
+
+	u32 hcchar = DWC2_READ_4(hsotg, HCCHAR(chnum));
+	u32 hcsplt = DWC2_READ_4(hsotg, HCSPLT(chnum));
+	u32 hctsiz = DWC2_READ_4(hsotg, HCTSIZ(chnum));
+	u32 hc_dma = DWC2_READ_4(hsotg, HCDMA(chnum));
 
 	dev_err(hsotg->dev, "AHB ERROR, Channel %d\n", chnum);
 	dev_err(hsotg->dev, "  hcchar 0x%08x, hcsplt 0x%08x\n", hcchar, hcsplt);
@@ -1552,6 +1546,7 @@ static void dwc2_hc_ahberr_intr(struct dwc2_hsotg *hsotg,
 	dev_err(hsotg->dev, "  Setup buffer: %p, Setup DMA: %08lx\n",
 		urb->setup_packet, (unsigned long)urb->setup_dma);
 	dev_err(hsotg->dev, "  Interval: %d\n", urb->interval);
+#endif
 
 	/* Core halts the channel for Descriptor DMA mode */
 	if (hsotg->core_params->dma_desc_enable > 0) {
@@ -1698,7 +1693,7 @@ static bool dwc2_halt_status_ok(struct dwc2_hsotg *hsotg,
 				struct dwc2_host_chan *chan, int chnum,
 				struct dwc2_qtd *qtd)
 {
-#ifdef DEBUG
+#ifdef DWC2_DEBUG
 	u32 hcchar;
 	u32 hctsiz;
 	u32 hcintmsk;

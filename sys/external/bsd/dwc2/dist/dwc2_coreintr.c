@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_coreintr.c,v 1.5 2013/10/05 06:51:43 skrll Exp $	*/
+/*	$NetBSD: dwc2_coreintr.c,v 1.6 2014/03/21 09:19:10 skrll Exp $	*/
 
 /*
  * core_intr.c - DesignWare HS OTG Controller common interrupt handling
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_coreintr.c,v 1.5 2013/10/05 06:51:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_coreintr.c,v 1.6 2014/03/21 09:19:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -379,11 +379,12 @@ static void dwc2_handle_disconnect_intr(struct dwc2_hsotg *hsotg)
  */
 static void dwc2_handle_usb_suspend_intr(struct dwc2_hsotg *hsotg)
 {
-	u32 dsts;
-
 	dev_dbg(hsotg->dev, "USB SUSPEND\n");
 
 	if (dwc2_is_device_mode(hsotg)) {
+#ifdef DWC2_DEBUG
+		u32 dsts;
+
 		/*
 		 * Check the Device status register to determine if the Suspend
 		 * state is active
@@ -394,6 +395,7 @@ static void dwc2_handle_usb_suspend_intr(struct dwc2_hsotg *hsotg)
 			"DSTS.Suspend Status=%d HWCFG4.Power Optimize=%d\n",
 			!!(dsts & DSTS_SUSPSTS),
 			hsotg->hw_params.power_optimized);
+#endif
 	} else {
 		if (hsotg->op_state == OTG_STATE_A_PERIPHERAL) {
 			dev_dbg(hsotg->dev, "a_peripheral->a_host\n");

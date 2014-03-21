@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcd.c,v 1.10 2014/01/02 15:54:10 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcd.c,v 1.11 2014/03/21 09:19:10 skrll Exp $	*/
 
 /*
  * hcd.c - DesignWare HS OTG Controller host-mode routines
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcd.c,v 1.10 2014/01/02 15:54:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcd.c,v 1.11 2014/03/21 09:19:10 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -1795,7 +1795,7 @@ dwc2_hcd_urb_set_pipeinfo(struct dwc2_hsotg *hsotg, struct dwc2_hcd_urb *urb,
  */
 void dwc2_hcd_dump_state(struct dwc2_hsotg *hsotg)
 {
-#ifdef DEBUG
+#ifdef DWC2_DEBUG
 	struct dwc2_host_chan *chan;
 	struct dwc2_hcd_urb *urb;
 	struct dwc2_qtd *qtd;
@@ -1845,18 +1845,16 @@ void dwc2_hcd_dump_state(struct dwc2_hsotg *hsotg)
 		dev_dbg(hsotg->dev, "    qh: %p\n", chan->qh);
 
 		if (chan->xfer_started) {
-			u32 hfnum, hcchar, hctsiz, hcint, hcintmsk;
-
-			hfnum = DWC2_READ_4(hsotg, HFNUM);
-			hcchar = DWC2_READ_4(hsotg, HCCHAR(i));
-			hctsiz = DWC2_READ_4(hsotg, HCTSIZ(i));
-			hcint = DWC2_READ_4(hsotg, HCINT(i));
-			hcintmsk = DWC2_READ_4(hsotg, HCINTMSK(i));
-			dev_dbg(hsotg->dev, "    hfnum: 0x%08x\n", hfnum);
-			dev_dbg(hsotg->dev, "    hcchar: 0x%08x\n", hcchar);
-			dev_dbg(hsotg->dev, "    hctsiz: 0x%08x\n", hctsiz);
-			dev_dbg(hsotg->dev, "    hcint: 0x%08x\n", hcint);
-			dev_dbg(hsotg->dev, "    hcintmsk: 0x%08x\n", hcintmsk);
+			dev_dbg(hsotg->dev, "    hfnum: 0x%08x\n", 
+			    DWC2_READ_4(hsotg, HFNUM));
+			dev_dbg(hsotg->dev, "    hcchar: 0x%08x\n",
+			    DWC2_READ_4(hsotg, HCCHAR(i)));
+			dev_dbg(hsotg->dev, "    hctsiz: 0x%08x\n",
+			    DWC2_READ_4(hsotg, HCTSIZ(i)));
+			dev_dbg(hsotg->dev, "    hcint: 0x%08x\n",
+			    DWC2_READ_4(hsotg, HCINT(i)));
+			dev_dbg(hsotg->dev, "    hcintmsk: 0x%08x\n",
+			    DWC2_READ_4(hsotg, HCINTMSK(i)));
 		}
 
 		if (!(chan->xfer_started && chan->qh))
@@ -2152,7 +2150,6 @@ int dwc2_hcd_init(struct dwc2_hsotg *hsotg,
 		  const struct dwc2_core_params *params)
 {
 	struct dwc2_host_chan *channel;
-	u32 hcfg;
 	int i, num_channels;
 	int err, retval;
 
@@ -2166,8 +2163,7 @@ int dwc2_hcd_init(struct dwc2_hsotg *hsotg,
 
 	retval = -ENOMEM;
 
-	hcfg = DWC2_READ_4(hsotg, HCFG);
-	dev_dbg(hsotg->dev, "hcfg=%08x\n", hcfg);
+	dev_dbg(hsotg->dev, "hcfg=%08x\n", DWC2_READ_4(hsotg, HCFG));
 
 #ifdef CONFIG_USB_DWC2_TRACK_MISSED_SOFS
 	hsotg->frame_num_array = kmem_zalloc(sizeof(*hsotg->frame_num_array) *

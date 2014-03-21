@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcdqueue.c,v 1.7 2014/01/02 15:54:10 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcdqueue.c,v 1.8 2014/03/21 09:19:10 skrll Exp $	*/
 
 /*
  * hcd_queue.c - DesignWare HS OTG Controller host queuing routines
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdqueue.c,v 1.7 2014/01/02 15:54:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdqueue.c,v 1.8 2014/03/21 09:19:10 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -78,7 +78,6 @@ static void dwc2_qh_init(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
 			 struct dwc2_hcd_urb *urb)
 {
 	int dev_speed, hub_addr, hub_port;
-	const char *speed, *type;
 
 	dev_vdbg(hsotg->dev, "%s()\n", __func__);
 
@@ -149,6 +148,8 @@ static void dwc2_qh_init(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
 
 	qh->dev_speed = dev_speed;
 
+#ifdef DWC2_DEBUG
+	const char *speed, *type;
 	switch (dev_speed) {
 	case USB_SPEED_LOW:
 		speed = "low";
@@ -184,6 +185,7 @@ static void dwc2_qh_init(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
 	}
 
 	dev_vdbg(hsotg->dev, "DWC OTG HCD QH - Type = %s\n", type);
+#endif
 
 	if (qh->ep_type == USB_ENDPOINT_XFER_INT) {
 		dev_vdbg(hsotg->dev, "DWC OTG HCD QH - usecs = %d\n",
