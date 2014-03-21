@@ -1,5 +1,5 @@
 /*	Id: trees.c,v 1.306 2012/03/22 18:51:40 plunky Exp 	*/	
-/*	$NetBSD: trees.c,v 1.2 2014/03/14 00:06:52 christos Exp $	*/
+/*	$NetBSD: trees.c,v 1.3 2014/03/21 01:17:40 christos Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -2540,7 +2540,7 @@ rmfldops(NODE *p)
 		foff = UPKFOFF(q->n_rval);
 		t = q->n_left->n_type;
 #if TARGET_ENDIAN == TARGET_BE
-		foff = tsz - fsz - foff;
+		foff = (int)tsize(t, 0, 0) - fsz - foff;
 #endif
 		bt = NULL;
 		if (p->n_right->n_op != ICON && p->n_right->n_op != NAME) {
