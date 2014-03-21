@@ -1,4 +1,4 @@
-/* $NetBSD: fdc_sableio.c,v 1.12 2012/02/02 19:42:57 tls Exp $ */
+/* $NetBSD: fdc_sableio.c,v 1.13 2014/03/21 16:39:29 christos Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: fdc_sableio.c,v 1.12 2012/02/02 19:42:57 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_sableio.c,v 1.13 2014/03/21 16:39:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,6 +84,7 @@ fdc_sableio_attach(device_t parent, device_t self, void *aux)
 	struct fdc_softc *fdc = &sfdc->sc_fdc;
 	struct sableio_attach_args *sa = aux;
 	const char *intrstr;
+	char buf[64];
 
 	aprint_normal("\n");
 
@@ -110,7 +111,8 @@ fdc_sableio_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	intrstr = pci_intr_string(sa->sa_pc, sa->sa_sableirq[0]);
+	intrstr = pci_intr_string_internal(sa->sa_pc, sa->sa_sableirq[0],
+	    buf, sizeof(buf));
 	fdc->sc_ih = pci_intr_establish(sa->sa_pc, sa->sa_sableirq[0],
 	    IPL_BIO, fdcintr, fdc);
 	if (fdc->sc_ih == NULL) {

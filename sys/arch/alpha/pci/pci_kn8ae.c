@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn8ae.c,v 1.28 2013/11/04 16:58:14 christos Exp $ */
+/* $NetBSD: pci_kn8ae.c,v 1.29 2014/03/21 16:39:29 christos Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn8ae.c,v 1.28 2013/11/04 16:58:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn8ae.c,v 1.29 2014/03/21 16:39:29 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_kn8ae.c,v 1.28 2013/11/04 16:58:14 christos Exp 
 
 int	dec_kn8ae_intr_map(const struct pci_attach_args *,
 	    pci_intr_handle_t *);
-const char *dec_kn8ae_intr_string(void *, pci_intr_handle_t);
+const char *dec_kn8ae_intr_string(void *, pci_intr_handle_t, char *, size_t);
 const struct evcnt *dec_kn8ae_intr_evcnt(void *, pci_intr_handle_t);
 void	*dec_kn8ae_intr_establish(void *, pci_intr_handle_t,
 	    int, int (*func)(void *), void *);
@@ -133,13 +133,10 @@ dec_kn8ae_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 }
 
 const char *
-dec_kn8ae_intr_string(void *ccv, pci_intr_handle_t ih)
+dec_kn8ae_intr_string(void *ccv, pci_intr_handle_t ih, char *buf, size_t len)
 {
-	static char irqstr[64];
-
-	sprintf(irqstr, "vector 0x%lx", IH_VEC(ih));
-
-	return (irqstr);
+	snprintf(buf, len, "vector 0x%lx", IH_VEC(ih));
+	return buf;
 }
 
 const struct evcnt *
