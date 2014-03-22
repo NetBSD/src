@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2014/03/01 10:00:49 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2014/03/22 17:57:48 tron Exp $
 
 PROG=		gplusplus
 PROGNAME=	g++
@@ -19,5 +19,7 @@ LDADD+=		-lintl
 DPADD+=		${LIBINTL}
 
 .include "../Makefile.frontend"
+
+COPTS.gcc.c=	-Wno-stack-protector
 
 .PATH: ${DIST}/gcc/cp ${DIST}/gcc ${DIST}/gcc/cp
