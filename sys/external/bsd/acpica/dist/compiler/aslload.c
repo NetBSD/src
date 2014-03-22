@@ -536,7 +536,7 @@ LdNamespace1Begin (
              * Which is used to workaround the fact that the MS interpreter
              * does not allow Scope() forward references.
              */
-            sprintf (MsgBuffer, "%s [%s], changing type to [Scope]",
+            snprintf (MsgBuffer, sizeof(MsgBuffer), "%s [%s], changing type to [Scope]",
                 Op->Asl.ExternalName, AcpiUtGetTypeName (Node->Type));
             AslError (ASL_REMARK, ASL_MSG_SCOPE_TYPE, Op, MsgBuffer);
 
@@ -555,7 +555,7 @@ LdNamespace1Begin (
 
             /* All other types are an error */
 
-            sprintf (MsgBuffer, "%s [%s]", Op->Asl.ExternalName,
+            snprintf (MsgBuffer, sizeof(MsgBuffer), "%s [%s]", Op->Asl.ExternalName,
                 AcpiUtGetTypeName (Node->Type));
             AslError (ASL_ERROR, ASL_MSG_SCOPE_TYPE, Op, MsgBuffer);
 

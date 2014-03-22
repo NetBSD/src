@@ -600,7 +600,7 @@ DtGetFieldLength (
         else
         {   /* At this point, this is a fatal error */
 
-            sprintf (MsgBuffer, "Expected \"%s\"", Info->Name);
+            snprintf (MsgBuffer, sizeof(MsgBuffer), "Expected \"%s\"", Info->Name);
             DtFatal (ASL_MSG_COMPILER_INTERNAL, NULL, MsgBuffer);
             return (0);
         }
@@ -626,7 +626,7 @@ DtGetFieldLength (
         else
         {   /* At this point, this is a fatal error */
 
-            sprintf (MsgBuffer, "Expected \"%s\"", Info->Name);
+            snprintf (MsgBuffer, sizeof(MsgBuffer), "Expected \"%s\"", Info->Name);
             DtFatal (ASL_MSG_COMPILER_INTERNAL, NULL, MsgBuffer);
             return (0);
         }
