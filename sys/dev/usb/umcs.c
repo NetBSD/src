@@ -1,4 +1,4 @@
-/* $NetBSD: umcs.c,v 1.4 2014/03/17 21:21:57 martin Exp $ */
+/* $NetBSD: umcs.c,v 1.5 2014/03/22 20:56:04 martin Exp $ */
 /* $FreeBSD: head/sys/dev/usb/serial/umcs.c 260559 2014-01-12 11:44:28Z hselasky $ */
 
 /*-
@@ -41,7 +41,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.4 2014/03/17 21:21:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.5 2014/03/22 20:56:04 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.4 2014/03/17 21:21:57 martin Exp $");
 #include <sys/tty.h>
 #include <sys/device.h>
 #include <sys/kmem.h>
-#include <sys/workqueue.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -79,7 +78,9 @@ __KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.4 2014/03/17 21:21:57 martin Exp $");
  */
 struct umcs7840_softc_oneport {
 	device_t sc_port_ucom;		/* ucom subdevice */
-	uint32_t sc_port_changed;	/* call ucom_status_change() */
+	volatile uint32_t		/* changes for this port have */
+		sc_port_changed;	/* been signaled,
+					   call ucom_status_change() */
 	unsigned int sc_port_phys;	/* physical port number */
 	uint8_t	sc_port_lcr;		/* local line control register */
 	uint8_t	sc_port_mcr;		/* local modem control register */
@@ -92,8 +93,7 @@ struct umcs7840_softc {
 	usbd_pipe_handle sc_intr_pipe;	/* interrupt pipe */
 	uint8_t *sc_intr_buf;		/* buffer for interrupt xfer */
 	unsigned int sc_intr_buflen;	/* size of buffer */
-	struct workqueue *sc_change_wq;	/* workqueue for status changes */
-	struct work sc_work;		/* work for said workqueue.  */
+	struct usb_task sc_change_task;	/* async status changes */
 	struct umcs7840_softc_oneport sc_ports[UMCS7840_MAX_PORTS];
 					/* data for each port */
 	uint8_t	sc_numports;		/* number of ports (subunits) */
@@ -114,7 +114,7 @@ static int umcs7840_match(device_t, cfdata_t, void *);
 static void umcs7840_attach(device_t, device_t, void *);
 static int umcs7840_detach(device_t, int);
 static void umcs7840_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status);
-static void umcs7840_change_worker(struct work *w, void *arg);
+static void umcs7840_change_task(void *arg);
 static int umcs7840_activate(device_t, enum devact); 
 static void umcs7840_childdet(device_t, device_t);
 
@@ -294,11 +294,8 @@ umcs7840_attach(device_t parent, device_t self, void * aux)
 		return;
 	}
 
-	if (workqueue_create(&sc->sc_change_wq, "umcsq",
-		umcs7840_change_worker, sc, PRI_NONE, IPL_USB, WQ_MPSAFE)) {
-		aprint_error_dev(self, "workqueue creation failed\n");
-		return;
-        }
+	usb_init_task(&sc->sc_change_task, umcs7840_change_task, sc,
+	    USB_TASKQ_MPSAFE);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 	    sc->sc_dev);
@@ -534,8 +531,7 @@ umcs7840_detach(device_t self, int flags)
 		kmem_free(sc->sc_intr_buf, sc->sc_intr_buflen);
 		sc->sc_intr_pipe = NULL;
 	}
-	if (sc->sc_change_wq != NULL)
-		workqueue_destroy(sc->sc_change_wq);
+	usb_rem_task(sc->sc_udev, &sc->sc_change_task);
 
 	/* detach children */
 	for (i = 0; i < sc->sc_numports; i++) {
@@ -856,8 +852,6 @@ umcs7840_port_close(void *self, int portno)
 	int ctrlreg = umcs7840_reg_ctrl(pn);
 	uint8_t data;
 
-	atomic_swap_32(&sc->sc_ports[portno].sc_port_changed, 0);
-
 	if (sc->sc_dying)
 		return;
 
@@ -879,13 +873,12 @@ umcs7840_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
 	struct umcs7840_softc *sc = priv;
 	u_char *buf = sc->sc_intr_buf;
 	int actlen;
-	int subunit, found;
+	int subunit;
 
 	if (status == USBD_NOT_STARTED || status == USBD_CANCELLED
 	    || status == USBD_IOERROR)
 		return;
 
-	found = 0;
 	if (status != USBD_NORMAL_COMPLETION) {
 		aprint_error_dev(sc->sc_dev,
 		    "umcs7840_intr: abnormal status: %s\n",
@@ -896,6 +889,7 @@ umcs7840_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &actlen, NULL);
 	if (actlen == 5 || actlen == 13) {
+		usb_rem_task(sc->sc_udev, &sc->sc_change_task);
 		/* Check status of all ports */
 		for (subunit = 0; subunit < sc->sc_numports; subunit++) {
 			uint8_t pn = sc->sc_ports[subunit].sc_port_phys;
@@ -910,19 +904,17 @@ umcs7840_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
 			case MCS7840_UART_ISR_RXHASDATA:
 			case MCS7840_UART_ISR_RXTIMEOUT:
 			case MCS7840_UART_ISR_MSCHANGE:
-				atomic_swap_32(
-				    &sc->sc_ports[subunit].sc_port_changed,
-				    1);
-				found++;
+				sc->sc_ports[subunit].sc_port_changed = 1;
 				break;
 			default:
 				/* Do nothing */
 				break;
 			}
 		}
-		if (found)
-			workqueue_enqueue(sc->sc_change_wq, &sc->sc_work,
-			    NULL);
+
+		membar_exit();
+		usb_add_task(sc->sc_udev, &sc->sc_change_task,
+		    USB_TASKQ_DRIVER);
 	} else {
 		aprint_error_dev(sc->sc_dev,
 		   "Invalid interrupt data length %d", actlen);
@@ -930,16 +922,17 @@ umcs7840_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
 }
 
 static void
-umcs7840_change_worker(struct work *w, void *arg)
+umcs7840_change_task(void *arg)
 {
 	struct umcs7840_softc *sc = arg;
 	int i;
 
 	for (i = 0; i < sc->sc_numports; i++) {
 		if (sc->sc_ports[i].sc_port_changed) {
+			sc->sc_ports[i].sc_port_changed = 0;
+			membar_exit();
 			ucom_status_change(device_private(
 			    sc->sc_ports[i].sc_port_ucom));
-			atomic_swap_32(&sc->sc_ports[i].sc_port_changed, 0);
 		}
 	}
 }
