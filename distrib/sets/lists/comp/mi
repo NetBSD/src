@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1884 2014/03/21 13:30:39 wiz Exp $
+#	$NetBSD: mi,v 1.1885 2014/03/22 11:24:35 skrll Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -10453,6 +10453,7 @@
 ./usr/share/man/cat9/mstohz.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/mtocl.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/mtod.0			comp-sys-catman		.cat
+./usr/share/man/cat9/mtsleep.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/mutex.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/mutex_destroy.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/mutex_enter.0		comp-sys-catman		.cat
@@ -17144,6 +17145,7 @@
 ./usr/share/man/html9/mstohz.html		comp-sys-htmlman	html
 ./usr/share/man/html9/mtocl.html		comp-sys-htmlman	html
 ./usr/share/man/html9/mtod.html			comp-sys-htmlman	html
+./usr/share/man/html9/mtsleep.html		comp-sys-htmlman	html
 ./usr/share/man/html9/mutex.html		comp-sys-htmlman	html
 ./usr/share/man/html9/mutex_destroy.html	comp-sys-htmlman	html
 ./usr/share/man/html9/mutex_enter.html		comp-sys-htmlman	html
@@ -23996,6 +23998,7 @@
 ./usr/share/man/man9/mstohz.9			comp-sys-man		.man
 ./usr/share/man/man9/mtocl.9			comp-sys-man		.man
 ./usr/share/man/man9/mtod.9			comp-sys-man		.man
+./usr/share/man/man9/mtsleep.9			comp-sys-man		.man
 ./usr/share/man/man9/mutex.9			comp-sys-man		.man
 ./usr/share/man/man9/mutex_destroy.9		comp-sys-man		.man
 ./usr/share/man/man9/mutex_enter.9		comp-sys-man		.man
