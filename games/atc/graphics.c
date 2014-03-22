@@ -1,4 +1,4 @@
-/*	$NetBSD: graphics.c,v 1.17 2014/03/22 22:24:21 dholland Exp $	*/
+/*	$NetBSD: graphics.c,v 1.18 2014/03/22 22:33:35 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)graphics.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: graphics.c,v 1.17 2014/03/22 22:24:21 dholland Exp $");
+__RCSID("$NetBSD: graphics.c,v 1.18 2014/03/22 22:33:35 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -166,10 +166,10 @@ setup_screen(const C_SCREEN *scp)
 	 * through beacons and exit points.
 	 */
 	str[0] = C_LINE;
-	for (i = 0; i < scp->num_lines; i++) {
+	for (iu = 0; iu < scp->num_lines; iu++) {
 		str[1] = ' ';
-		draw_line(radar, scp->line[i].p1.x, scp->line[i].p1.y,
-			scp->line[i].p2.x, scp->line[i].p2.y, str);
+		draw_line(radar, scp->line[iu].p1.x, scp->line[iu].p1.y,
+			scp->line[iu].p2.x, scp->line[iu].p2.y, str);
 	}
 
 	str[0] = C_TOPBOTTOM;
