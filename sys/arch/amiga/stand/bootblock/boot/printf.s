@@ -1,4 +1,4 @@
-/* $NetBSD: printf.s,v 1.8 2008/04/28 20:23:13 martin Exp $ */
+/* $NetBSD: printf.s,v 1.9 2014/03/22 01:52:44 christos Exp $ */
 
 /*-
  * Copyright (c) 1996,2006 The NetBSD Foundation, Inc.
@@ -56,6 +56,7 @@ Lstorech:
 	movb	%d0, %a3@+
 	rts
 
+#ifdef notdef
 ENTRY_NOPROFILE(sprintf)
 	movml	#0x0032,%sp@-
 	movl	%sp@(16),%a3
@@ -66,6 +67,7 @@ ENTRY_NOPROFILE(sprintf)
 	jsr	%a6@(-0x20a)
 	movml	%sp@+, #0x4c00
 	rts
+#endif
 
 /*
  * XXX cheating - at least for now.
