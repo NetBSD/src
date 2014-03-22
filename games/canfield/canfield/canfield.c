@@ -1,4 +1,4 @@
-/*	$NetBSD: canfield.c,v 1.28 2011/05/23 22:46:35 joerg Exp $	*/
+/*	$NetBSD: canfield.c,v 1.29 2014/03/22 23:42:48 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)canfield.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: canfield.c,v 1.28 2011/05/23 22:46:35 joerg Exp $");
+__RCSID("$NetBSD: canfield.c,v 1.29 2014/03/22 23:42:48 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -168,7 +168,7 @@ static bool mtfdone, Cflag = FALSE;
 #define BETTINGBOX	2
 #define NOBOX		3
 static int status = INSTRUCTIONBOX;
-static int uid;
+static uid_t uid;
 
 /*
  * Basic betting costs
@@ -1643,8 +1643,6 @@ initall(void)
 	time(&acctstart);
 	initdeck(deck);
 	uid = getuid();
-	if (uid < 0)
-		uid = 0;
 	dbfd = open(_PATH_SCORE, O_RDWR);
 
 	/* Revoke setgid privileges */
