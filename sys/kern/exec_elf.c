@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.64 2014/03/16 07:57:25 maxv Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.65 2014/03/22 07:27:21 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.64 2014/03/16 07:57:25 maxv Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.65 2014/03/22 07:27:21 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -90,7 +90,7 @@ extern struct emul emul_netbsd;
 
 #define elf_check_header	ELFNAME(check_header)
 #define elf_copyargs		ELFNAME(copyargs)
-#define elf_load_file		ELFNAME(load_file)
+#define elf_load_interp		ELFNAME(load_interp)
 #define elf_load_psection	ELFNAME(load_psection)
 #define exec_elf_makecmds	ELFNAME2(exec,makecmds)
 #define netbsd_elf_signature	ELFNAME2(netbsd,signature)
@@ -99,7 +99,7 @@ extern struct emul emul_netbsd;
 #define	elf_free_emul_arg	ELFNAME(free_emul_arg)
 
 static int
-elf_load_file(struct lwp *, struct exec_package *, char *,
+elf_load_interp(struct lwp *, struct exec_package *, char *,
     struct exec_vmcmd_set *, u_long *, Elf_Addr *);
 static void
 elf_load_psection(struct exec_vmcmd_set *, struct vnode *, const Elf_Phdr *,
@@ -396,14 +396,12 @@ elf_load_psection(struct exec_vmcmd_set *vcset, struct vnode *vp,
 }
 
 /*
- * elf_load_file():
+ * elf_load_interp():
  *
- * Load a file (interpreter/library) pointed to by path
- * [stolen from coff_load_shlib()]. Made slightly generic
- * so it might be used externally.
+ * Load an interpreter pointed to by path.
  */
 static int
-elf_load_file(struct lwp *l, struct exec_package *epp, char *path,
+elf_load_interp(struct lwp *l, struct exec_package *epp, char *path,
     struct exec_vmcmd_set *vcset, u_long *entryoff, Elf_Addr *last)
 {
 	int error, i;
@@ -610,11 +608,6 @@ elf_load_file(struct lwp *l, struct exec_package *epp, char *path,
 			break;
 		}
 
-		case PT_DYNAMIC:
-		case PT_PHDR:
-		case PT_NOTE:
-			break;
-
 		default:
 			break;
 		}
@@ -659,7 +652,7 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 	int error, i;
 	char *interp = NULL;
 	u_long phsize;
-	struct elf_args *ap = NULL;
+	struct elf_args *ap;
 	bool is_dyn = false;
 
 	if (epp->ep_hdrvalid < sizeof(Elf_Ehdr))
@@ -781,7 +774,6 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 		case PT_INTERP:
 			/* Already did this one. */
 		case PT_DYNAMIC:
-			break;
 		case PT_NOTE:
 			break;
 		case PT_PHDR:
@@ -804,11 +796,6 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 		goto bad;
 	}
 
-	if (interp || (epp->ep_flags & EXEC_FORCEAUX) != 0) {
-		ap = kmem_alloc(sizeof(*ap), KM_SLEEP);
-		ap->arg_interp = (vaddr_t)NULL;
-	}
-
 	if (epp->ep_daddr == ELFDEFNNAME(NO_ADDR)) {
 		epp->ep_daddr = round_page(end_text);
 		epp->ep_dsize = 0;
@@ -819,27 +806,32 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 	 * its interpreter
 	 */
 	if (interp) {
-		int nused = epp->ep_vmcmds.evs_used;
+		u_int nused = epp->ep_vmcmds.evs_used;
 		u_long interp_offset = 0;
 
-		if ((error = elf_load_file(l, epp, interp,
+		if ((error = elf_load_interp(l, epp, interp,
 		    &epp->ep_vmcmds, &interp_offset, &pos)) != 0) {
-			kmem_free(ap, sizeof(*ap));
 			goto bad;
 		}
 		if (epp->ep_vmcmds.evs_used == nused) {
-			/* elf_load_file() has not set up any new VMCMD */
-			kmem_free(ap, sizeof(*ap));
+			/* elf_load_interp() has not set up any new VMCMD */
 			error = ENOEXEC;
 			goto bad;
 		}
 
+		ap = kmem_alloc(sizeof(*ap), KM_SLEEP);
 		ap->arg_interp = epp->ep_vmcmds.evs_cmds[nused].ev_addr;
 		epp->ep_entryoffset = interp_offset;
 		epp->ep_entry = ap->arg_interp + interp_offset;
 		PNBUF_PUT(interp);
-	} else
+	} else {
 		epp->ep_entry = eh->e_entry;
+		if (epp->ep_flags & EXEC_FORCEAUX) {
+			ap = kmem_alloc(sizeof(*ap), KM_SLEEP);
+			ap->arg_interp = (vaddr_t)NULL;
+		} else
+			ap = NULL;
+	}
 
 	if (ap) {
 		ap->arg_phaddr = phdr ? phdr : computed_phdr;
