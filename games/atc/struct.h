@@ -1,4 +1,4 @@
-/*	$NetBSD: struct.h,v 1.8 2014/03/22 22:33:35 dholland Exp $	*/
+/*	$NetBSD: struct.h,v 1.9 2014/03/22 22:45:05 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -43,6 +43,8 @@
  * For more info on this and all of my stuff, mail edjames@berkeley.edu.
  */
 
+#include <stdbool.h>
+
 typedef struct {
 	int	x, y;
 	int	dir;	/* used only sometimes */
@@ -86,8 +88,8 @@ typedef struct plane {
 	int		fuel;
 	int		xpos;
 	int		ypos;
-	int		delayd;
-	int		delayd_no;
+	bool delayd;
+	unsigned delayd_no;
 } PLANE;
 
 typedef struct {

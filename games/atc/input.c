@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.25 2014/03/22 22:24:21 dholland Exp $	*/
+/*	$NetBSD: input.c,v 1.26 2014/03/22 22:45:05 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: input.c,v 1.25 2014/03/22 22:24:21 dholland Exp $");
+__RCSID("$NetBSD: input.c,v 1.26 2014/03/22 22:45:05 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -393,7 +393,7 @@ setplane(int c)
 	if (pp == NULL)
 		return ("Unknown Plane");
 	(void)memcpy(&p, pp, sizeof (p));
-	p.delayd = 0;
+	p.delayd = false;
 	return (NULL);
 }
 
@@ -474,7 +474,7 @@ delayb(int ch)
 	ydiff = SGN(ydiff);
 	if (xdiff != displacement[p.dir].dx || ydiff != displacement[p.dir].dy)
 		return ("Beacon is not in flight path");
-	p.delayd = 1;
+	p.delayd = true;
 	p.delayd_no = bn;
 
 	if (dest_type != T_NODEST) {

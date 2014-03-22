@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.23 2014/03/22 22:24:21 dholland Exp $	*/
+/*	$NetBSD: update.c,v 1.24 2014/03/22 22:45:05 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)update.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: update.c,v 1.23 2014/03/22 22:24:21 dholland Exp $");
+__RCSID("$NetBSD: update.c,v 1.24 2014/03/22 22:45:05 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -124,7 +124,7 @@ update(int dummy __unused)
 
 		if (pp->delayd && pp->xpos == sp->beacon[pp->delayd_no].x &&
 		    pp->ypos == sp->beacon[pp->delayd_no].y) {
-			pp->delayd = 0;
+			pp->delayd = false;
 			if (pp->status == S_UNMARKED)
 				pp->status = S_MARKED;
 		}
@@ -249,7 +249,7 @@ command(const PLANE *pp)
 	bp = strchr(buf, '\0');
 	bpsize = buf + sizeof(buf) - bp;
 	if (pp->delayd)
-		(void)snprintf(bp, bpsize, " @ B%d", pp->delayd_no);
+		(void)snprintf(bp, bpsize, " @ B%u", pp->delayd_no);
 
 	bp = strchr(buf, '\0');
 	bpsize = buf + sizeof(buf) - bp;
