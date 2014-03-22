@@ -1,4 +1,4 @@
-/*	$NetBSD: canfield.c,v 1.29 2014/03/22 23:42:48 dholland Exp $	*/
+/*	$NetBSD: canfield.c,v 1.30 2014/03/22 23:47:03 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)canfield.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: canfield.c,v 1.29 2014/03/22 23:42:48 dholland Exp $");
+__RCSID("$NetBSD: canfield.c,v 1.30 2014/03/22 23:47:03 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -1637,9 +1637,9 @@ instruct(void)
 static void
 initall(void)
 {
-	int i;
+	ssize_t i;
 
-	srandom(getpid());
+	srandom(time(NULL));
 	time(&acctstart);
 	initdeck(deck);
 	uid = getuid();
@@ -1652,8 +1652,7 @@ initall(void)
 		return;
 	if (dbfd < 3)
 		exit(1);
-	i = lseek(dbfd, uid * sizeof(struct betinfo), SEEK_SET);
-	if (i < 0) {
+	if (lseek(dbfd, uid * sizeof(struct betinfo), SEEK_SET) < 0) {
 		close(dbfd);
 		dbfd = -1;
 		return;
