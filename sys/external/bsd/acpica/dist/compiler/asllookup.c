@@ -163,7 +163,7 @@ LkIsObjectUsed (
              * Issue a remark even if it is a reserved name (starts
              * with an underscore).
              */
-            sprintf (MsgBuffer, "Name is within method [%4.4s]",
+            snprintf (MsgBuffer, sizeof(MsgBuffer), "Name is within method [%4.4s]",
                 Next->Name.Ascii);
             AslError (ASL_REMARK, ASL_MSG_NOT_REFERENCED,
                 LkGetNameOp (Node->Op), MsgBuffer);

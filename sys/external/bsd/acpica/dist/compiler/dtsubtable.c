@@ -343,7 +343,7 @@ DtGetSubtableLength (
 Error:
     if (!Field)
     {
-        sprintf (MsgBuffer, "Found NULL field - Field name \"%s\" needed",
+        snprintf (MsgBuffer, sizeof(MsgBuffer), "Found NULL field - Field name \"%s\" needed",
             Info->Name);
         DtFatal (ASL_MSG_COMPILER_INTERNAL, NULL, MsgBuffer);
     }
