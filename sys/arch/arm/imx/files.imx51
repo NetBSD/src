@@ -1,4 +1,4 @@
-#	$NetBSD: files.imx51,v 1.7 2014/03/22 05:19:18 hkenken Exp $
+#	$NetBSD: files.imx51,v 1.8 2014/03/22 09:28:08 hkenken Exp $
 #
 # Configuration info for the Freescale i.MX51
 #
@@ -104,9 +104,15 @@ file	arch/arm/imx/imx51_esdhc.c		sdhc_axi
 # attach	imxi2c at aips with imxi2c_aips
 # file	arch/arm/imx/imxi2c_aips.c		imxi2c_aips
 
-# spi bus controlloer
-# device	imxspi: spibus
-# file	arch/arm/imx/imx51_spi.c		imxspi
+# SPI bus controlloer
+# attach of this driver need to be specified in paltform configuration
+# use flags to module version
+device  imxspi : spibus
+file    arch/arm/imx/imxspi.c			imxspi
+defparam opt_imxspi.h                   	IMXSPINSLAVES
+defparam opt_imxspi.h				IMXSPI_DEBUG
+# attach	imxspi at axi with imx51_spi
+# file	arch/arm/imx/imx51_spi.c		imx51_spi
 
 # Smart Direct Memory Access Controller
 # device	imxsdma: dmover_service, bus_dma_generic
