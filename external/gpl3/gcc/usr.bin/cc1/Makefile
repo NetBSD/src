@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2014/03/01 10:00:49 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2014/03/22 17:57:47 tron Exp $
 
 PROG=		cc1
 SRCS=		${G_C_OBJS:S,c-family/,,:S,c/,,:Nlibcpp.a:.o=.c} main.c ${PROG}-checksum.c
@@ -31,7 +31,17 @@ CHECKSUM_OBJS=	${BACKENDOBJ}/libbackend.a \
 # VER_CPPFLAGS from Makefile.inc
 CPPFLAGS.c-cppbuiltin.c=	${VER_CPPFLAGS}
 
-COPTS+=	-Wno-stack-protector
+COPTS.c-ada-spec.c=	-Wno-stack-protector
+COPTS.c-aux-info.c=	-Wno-stack-protector
+COPTS.c-common.c=	-Wno-stack-protector
+COPTS.c-cppbuiltin.c=	-Wno-stack-protector
+COPTS.c-format.c=	-Wno-stack-protector
+COPTS.c-format.h=	-Wno-stack-protector
+COPTS.c-lex.c=		-Wno-stack-protector
+COPTS.c-opts.c=		-Wno-stack-protector
+COPTS.c-ppoutput.c=	-Wno-stack-protector
+COPTS.c-pragma.c=	-Wno-stack-protector
+COPTS.c-typeck.c=	-Wno-stack-protector
 
 CPPFLAGS.default-c.c+=	-I${BACKENDOBJ}
 
@@ -41,3 +51,5 @@ DPADD+=	${LIBMPC} ${LIBMPFR} ${LIBGMP} ${LIBINTL} ${LIBZ} ${LIBM}
 .PATH: ${DIST}/gcc ${DIST}/gcc/c ${DIST}/gcc/c-family ${DIST}/gcc/config
 .PATH: ${G_out_file:H}
 
+gugu:
+	@echo ${COPTS}
