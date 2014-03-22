@@ -114,7 +114,7 @@ ApCheckForPredefinedMethod (
 
         if (MethodInfo->NumArguments != 0)
         {
-            sprintf (MsgBuffer, "%s requires %u", Op->Asl.ExternalName, 0);
+            snprintf (MsgBuffer, sizeof(MsgBuffer), "%s requires %u", Op->Asl.ExternalName, 0);
 
             AslError (ASL_WARNING, ASL_MSG_RESERVED_ARG_COUNT_HI, Op,
                 MsgBuffer);
@@ -136,7 +136,7 @@ ApCheckForPredefinedMethod (
 
         if (MethodInfo->NumArguments != RequiredArgCount)
         {
-            sprintf (MsgBuffer, "%4.4s requires %u",
+            snprintf (MsgBuffer, sizeof(MsgBuffer), "%4.4s requires %u",
                 ThisName->Info.Name, RequiredArgCount);
 
             if (MethodInfo->NumArguments < RequiredArgCount)
@@ -162,7 +162,7 @@ ApCheckForPredefinedMethod (
             AcpiUtGetExpectedReturnTypes (StringBuffer,
                 ThisName->Info.ExpectedBtypes);
 
-            sprintf (MsgBuffer, "%s required for %4.4s",
+            snprintf (MsgBuffer, sizeof(MsgBuffer), "%s required for %4.4s",
                 StringBuffer, ThisName->Info.Name);
 
             AslError (ASL_WARNING, ASL_MSG_RESERVED_RETURN_VALUE, Op,
@@ -693,12 +693,12 @@ TypeErrorExit:
 
     if (PackageIndex == ACPI_NOT_PACKAGE_ELEMENT)
     {
-        sprintf (MsgBuffer, "%4.4s: found %s, %s required",
+        snprintf (MsgBuffer, sizeof(MsgBuffer), "%4.4s: found %s, %s required",
             PredefinedName, TypeName, StringBuffer);
     }
     else
     {
-        sprintf (MsgBuffer, "%4.4s: found %s at index %u, %s required",
+        snprintf (MsgBuffer, sizeof(MsgBuffer), "%4.4s: found %s at index %u, %s required",
             PredefinedName, TypeName, PackageIndex, StringBuffer);
     }
 
