@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.21 2014/03/21 14:03:30 matt Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.22 2014/03/22 15:13:10 matt Exp $	*/
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -61,6 +61,7 @@ END(_rtld_start)
  * SP+0: obj entry points
  */
 ALTENTRY(_rtld_bind_start)
+	pushl	%r1		/* need to preserve r1 */
 	movq	-8(%fp),%r0	/* get addresses of plt.got & reloc index */
 	pushl	(%r1)		/* push relocation offset */
 	pushl	%r0		/* push address of obj entry */
@@ -95,7 +96,8 @@ ALTENTRY(_rtld_bind_start)
 11:	movl	%r1,16(%fp)	/* backup to the calls/callg */
 	jbc	$29,4(%fp),12f	/* skip if this was a callg */
 	clrl	(%ap)		/* clear argument count */
-12:	ret			/* return and redo the call */
+12:	movl	(%sp)+,%r1	/* restore r1 */
+	ret			/* return and redo the call */
 
 #if 1
 20:
@@ -114,11 +116,13 @@ ALTENTRY(_rtld_bind_start)
 	movq	4(%fp),%r2	/* fetch callframe status & saved AP */
 	movq	12(%fp),%r4	/* fetch callframe saved FP & PC */
 	insv	%r1,$16,$12,%r2	/* update save mask */
+	movl	(%sp)+,%fp	/* use fp to keep saved r1 */
 	movl	%ap,%sp		/* reset stack to top of callframe */
 22:	pushr	%r1		/* push registers */
 	movq	%r4,-(%sp)	/* push callframe saved FP & PC */
 	movq	%r2,-(%sp)	/* push callframe status & saved AP */
 	pushl	$0		/* push condition handler */
+	movl	%fp,%r1		/* restore r1 */
 	movl	%sp,%fp		/* sp == fp now */
 #if 1
 	jmp	2(%r0)		/* jump past entry mask */
