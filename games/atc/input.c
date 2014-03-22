@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.26 2014/03/22 22:45:05 dholland Exp $	*/
+/*	$NetBSD: input.c,v 1.27 2014/03/22 22:47:07 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: input.c,v 1.26 2014/03/22 22:45:05 dholland Exp $");
+__RCSID("$NetBSD: input.c,v 1.27 2014/03/22 22:47:07 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -199,7 +199,8 @@ static PLANE p;
 static STACK stack[MAXDEPTH];
 static int level;
 static int tval;
-static int dest_type, dest_no, dir;
+static int dest_type, dir;
+static unsigned dest_no;
 
 static int
 pop(void)
