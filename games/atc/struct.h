@@ -1,4 +1,4 @@
-/*	$NetBSD: struct.h,v 1.9 2014/03/22 22:45:05 dholland Exp $	*/
+/*	$NetBSD: struct.h,v 1.10 2014/03/22 22:58:56 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -72,15 +72,22 @@ typedef struct {
 	AIRPORT	*airport;
 } C_SCREEN;
 
+enum places {
+	T_NODEST = 0,
+	T_BEACON = 1,
+	T_EXIT = 2,
+	T_AIRPORT = 3
+};
+
 typedef struct plane {
 	struct plane	*next, *prev;
 	int		status;
 	int		plane_no;
 	int		plane_type;
-	int		orig_no;
-	int		orig_type;
-	int		dest_no;
-	int		dest_type;
+	unsigned orig_no;
+	enum places orig_type;
+	unsigned dest_no;
+	enum places dest_type;
 	int		altitude;
 	int		new_altitude;
 	int		dir;
