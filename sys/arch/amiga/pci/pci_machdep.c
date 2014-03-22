@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.1 2011/09/19 19:15:29 rkujawa Exp $ */
+/*	$NetBSD: pci_machdep.c,v 1.2 2014/03/22 01:52:44 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@ amiga_pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 {
 	static char str[10];
 
-	sprintf(str, "INT%d", (int) ih);
+	snprintf(str, sizeof(str), "INT%d", (int) ih);
 	return str;
 }
 
