@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.33 2011/08/26 06:18:17 dholland Exp $ */
+/*	$NetBSD: extern.h,v 1.34 2014/03/22 23:16:21 dholland Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,10 +38,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #include <time.h>
 #include <unistd.h>
 
-#define BITS (8 * sizeof (int))
+#define BITS (CHAR_BIT * sizeof (int))
 
 #define OUTSIDE		(position > 68 && position < 246 && position != 218)
 #define rnd(x)		(rand() % (x))
