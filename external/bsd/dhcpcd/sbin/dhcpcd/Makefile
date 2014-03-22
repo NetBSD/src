@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.20 2014/02/25 13:16:04 roy Exp $
+# $NetBSD: Makefile,v 1.21 2014/03/22 00:04:51 roy Exp $
 #
 
 PROG=		dhcpcd
@@ -6,6 +6,9 @@ SRCS=		common.c control.c dhcpcd.c duid.c eloop.c
 SRCS+=		if-options.c if-pref.c net.c script.c
 SRCS+=		dhcp-common.c dhcpcd-embedded.c
 SRCS+=		bpf.c if-bsd.c platform-bsd.c
+
+WARNS?=		5
+USE_FORT?=	yes	# network client (local server)
 
 .include <bsd.own.mk>
 
