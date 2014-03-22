@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.35 2014/03/22 23:23:55 dholland Exp $ */
+/*	$NetBSD: extern.h,v 1.36 2014/03/22 23:33:33 dholland Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -45,7 +45,7 @@
 #define BITS (CHAR_BIT * sizeof (unsigned int))
 
 #define OUTSIDE		(position > 68 && position < 246 && position != 218)
-#define rnd(x)		(rand() % (x))
+#define rnd(x)		(random() % (x))
 #define max(a,b)	((a) < (b) ? (b) : (a))
 #define testbit(array, index)	(array[index/BITS] & (1U << (index % BITS)))
 #define setbit(array, index)	(array[index/BITS] |= (1U << (index % BITS)))
