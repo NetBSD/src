@@ -1,4 +1,4 @@
-#	$NetBSD: files.imx51,v 1.5 2012/04/19 09:53:53 bsh Exp $
+#	$NetBSD: files.imx51,v 1.6 2014/03/22 04:55:00 hkenken Exp $
 #
 # Configuration info for the Freescale i.MX51
 #
@@ -44,6 +44,12 @@ defparam opt_imx51clk.h	IMX51_OSC_FREQ
 # following parameters are used when imxccm is not configured in the kernel.
 defparam opt_imx51clk.h IMX51_AHBCLK_FREQ
 defparam opt_imx51clk.h IMX51_IPGCLK_FREQ
+
+# Watchdog
+device imxwdog: sysmon_wdog
+attach imxwdog at axi
+file   arch/arm/imx/imx51_wdog.c	imxwdog
+file   arch/arm/imx/imxwdog.c		imxwdog
 
 # iMX GPIO
 device	imxgpio: gpiobus
