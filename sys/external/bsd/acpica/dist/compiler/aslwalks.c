@@ -427,7 +427,7 @@ AnOperandTypecheckWalkEnd (
                 AnFormatBtype (StringBuffer, ThisNodeBtype);
                 AnFormatBtype (StringBuffer2, RequiredBtypes);
 
-                sprintf (MsgBuffer, "[%s] found, %s operator requires [%s]",
+                snprintf (MsgBuffer, sizeof(MsgBuffer), "[%s] found, %s operator requires [%s]",
                             StringBuffer, OpInfo->Name, StringBuffer2);
 
                 AslError (ASL_ERROR, ASL_MSG_INVALID_TYPE, ArgOp, MsgBuffer);

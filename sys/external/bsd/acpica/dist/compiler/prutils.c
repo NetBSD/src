@@ -298,7 +298,8 @@ PrOpenIncludeFile (
     /* We could not open the include file after trying very hard */
 
 ErrorExit:
-    sprintf (Gbl_MainTokenBuffer, "%s, %s", Filename, strerror (errno));
+    snprintf (Gbl_MainTokenBuffer, ASL_LINE_BUFFER_SIZE, "%s, %s",
+	Filename, strerror (errno));
     PrError (ASL_ERROR, ASL_MSG_INCLUDE_FILE_OPEN, 0);
 }
 

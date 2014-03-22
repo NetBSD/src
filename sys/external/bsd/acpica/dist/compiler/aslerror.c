@@ -862,7 +862,7 @@ AslCoreSubsystemError (
     BOOLEAN                 Abort)
 {
 
-    sprintf (MsgBuffer, "%s %s", AcpiFormatException (Status), ExtraMessage);
+    snprintf (MsgBuffer, sizeof(MsgBuffer), "%s %s", AcpiFormatException (Status), ExtraMessage);
 
     if (Op)
     {

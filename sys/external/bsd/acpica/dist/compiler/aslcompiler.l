@@ -633,7 +633,7 @@ NamePathTail                [.]{NameSeg}
                                 AslCompilererror ("Parse error, expecting ASL keyword or name");}
 
 .                           { count (1);
-                                sprintf (MsgBuffer,
+                                snprintf (MsgBuffer, sizeof(MsgBuffer),
                                     "Invalid character (0x%2.2X), expecting ASL keyword or name",
                                     *AslCompilertext);
                                 AslCompilererror (MsgBuffer);}

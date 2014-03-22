@@ -211,7 +211,8 @@ DtInitialize (
     Gbl_RootTable = NULL;
     Gbl_SubtableStack = NULL;
 
-    sprintf (VersionString, "%X", (UINT32) ACPI_CA_VERSION);
+    snprintf (VersionString, sizeof(VersionBuffer), "%X",
+	(UINT32) ACPI_CA_VERSION);
     return (AE_OK);
 }
 
@@ -292,7 +293,7 @@ DtCompileDataTable (
     Signature = DtGetFieldValue (*FieldList);
     if (!Signature)
     {
-        sprintf (MsgBuffer, "Expected \"%s\"", "Signature");
+        snprintf (MsgBuffer, sizeof(MsgBuffer), "Expected \"%s\"", "Signature");
         DtNameError (ASL_ERROR, ASL_MSG_INVALID_FIELD_NAME,
             *FieldList, MsgBuffer);
         return (AE_ERROR);
@@ -485,7 +486,7 @@ DtCompileTable (
 
         if (!LocalField)
         {
-            sprintf (MsgBuffer, "Found NULL field - Field name \"%s\" needed",
+            snprintf (MsgBuffer, sizeof(MsgBuffer), "Found NULL field - Field name \"%s\" needed",
                 Info->Name);
             DtFatal (ASL_MSG_COMPILER_INTERNAL, NULL, MsgBuffer);
             Status = AE_BAD_DATA;

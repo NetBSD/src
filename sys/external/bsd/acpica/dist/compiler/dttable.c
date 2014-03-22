@@ -2437,7 +2437,7 @@ DtCompileGeneric (
         Info = DtGetGenericTableInfo ((*PFieldList)->Name);
         if (!Info)
         {
-            sprintf (MsgBuffer, "Generic data type \"%s\" not found",
+            snprintf (MsgBuffer, sizeof(MsgBuffer), "Generic data type \"%s\" not found",
                 (*PFieldList)->Name);
             DtNameError (ASL_ERROR, ASL_MSG_INVALID_FIELD_NAME,
                 (*PFieldList), MsgBuffer);
@@ -2458,7 +2458,7 @@ DtCompileGeneric (
 
             if (Status == AE_NOT_FOUND)
             {
-                sprintf (MsgBuffer, "Generic data type \"%s\" not found",
+                snprintf (MsgBuffer, sizeof(MsgBuffer), "Generic data type \"%s\" not found",
                     (*PFieldList)->Name);
                 DtNameError (ASL_ERROR, ASL_MSG_INVALID_FIELD_NAME,
                     (*PFieldList), MsgBuffer);
