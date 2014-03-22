@@ -1,4 +1,4 @@
-/*	$NetBSD: graphics.c,v 1.16 2009/08/12 04:48:03 dholland Exp $	*/
+/*	$NetBSD: graphics.c,v 1.17 2014/03/22 22:24:21 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)graphics.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: graphics.c,v 1.16 2009/08/12 04:48:03 dholland Exp $");
+__RCSID("$NetBSD: graphics.c,v 1.17 2014/03/22 22:24:21 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -130,6 +130,7 @@ void
 setup_screen(const C_SCREEN *scp)
 {
 	int	i, j;
+	unsigned iu;
 	char	str[3];
 	const char *airstr;
 
@@ -193,22 +194,22 @@ setup_screen(const C_SCREEN *scp)
 	}
 
 	str[0] = C_BEACON;
-	for (i = 0; i < scp->num_beacons; i++) {
-		str[1] = '0' + i;
-		(void)wmove(radar, scp->beacon[i].y, scp->beacon[i].x * 2);
+	for (iu = 0; iu < scp->num_beacons; iu++) {
+		str[1] = '0' + iu;
+		(void)wmove(radar, scp->beacon[iu].y, scp->beacon[iu].x * 2);
 		(void)waddstr(radar, str);
 	}
 
-	for (i = 0; i < scp->num_exits; i++) {
-		(void)wmove(radar, scp->exit[i].y, scp->exit[i].x * 2);
-		(void)waddch(radar, '0' + i);
+	for (iu = 0; iu < scp->num_exits; iu++) {
+		(void)wmove(radar, scp->exit[iu].y, scp->exit[iu].x * 2);
+		(void)waddch(radar, '0' + iu);
 	}
 
 	airstr = "^?>?v?<?";
-	for (i = 0; i < scp->num_airports; i++) {
-		str[0] = airstr[scp->airport[i].dir];
-		str[1] = '0' + i;
-		(void)wmove(radar, scp->airport[i].y, scp->airport[i].x * 2);
+	for (iu = 0; iu < scp->num_airports; iu++) {
+		str[0] = airstr[scp->airport[iu].dir];
+		str[1] = '0' + iu;
+		(void)wmove(radar, scp->airport[iu].y, scp->airport[iu].x * 2);
 		(void)waddstr(radar, str);
 	}
 	

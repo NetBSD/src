@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.22 2011/02/15 08:25:25 is Exp $	*/
+/*	$NetBSD: update.c,v 1.23 2014/03/22 22:24:21 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)update.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: update.c,v 1.22 2011/02/15 08:25:25 is Exp $");
+__RCSID("$NetBSD: update.c,v 1.23 2014/03/22 22:24:21 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,7 +60,8 @@ static int dir_deg(int);
 void
 update(int dummy __unused)
 {
-	int	i, dir_diff, unclean;
+	int dir_diff, unclean;
+	unsigned i;
 	PLANE	*pp, *p1, *p2;
 
 #ifdef SYSV
@@ -311,7 +312,8 @@ int
 addplane(void)
 {
 	PLANE	p, *pp, *p1;
-	int	i, num_starts, isclose, rnd, rnd2, pnum;
+	int	isclose, pnum;
+	unsigned num_starts, rnd, rnd2, i;
 
 	(void)memset(&p, 0, sizeof (p));
 
