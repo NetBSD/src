@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2014/03/22 17:57:47 tron Exp $
+#	$NetBSD: Makefile,v 1.8 2014/03/22 19:52:21 tron Exp $
 
 PROG=		cc1
 SRCS=		${G_C_OBJS:S,c-family/,,:S,c/,,:Nlibcpp.a:.o=.c} main.c ${PROG}-checksum.c
@@ -50,6 +50,3 @@ DPADD+=	${LIBMPC} ${LIBMPFR} ${LIBGMP} ${LIBINTL} ${LIBZ} ${LIBM}
 
 .PATH: ${DIST}/gcc ${DIST}/gcc/c ${DIST}/gcc/c-family ${DIST}/gcc/config
 .PATH: ${G_out_file:H}
-
-gugu:
-	@echo ${COPTS}
