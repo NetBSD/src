@@ -290,6 +290,9 @@ static unsigned HOST_WIDE_INT
 lowpart_bitmask (int n)
 {
   unsigned HOST_WIDE_INT mask = ~(unsigned HOST_WIDE_INT) 0;
+  gcc_assert(n >= 0 && n <= HOST_BITS_PER_WIDE_INT);
+  if (n == 0)
+    return 0;
   return mask >> (HOST_BITS_PER_WIDE_INT - n);
 }
 
