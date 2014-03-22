@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_ccmreg.h,v 1.3 2014/03/22 09:28:08 hkenken Exp $	*/
+/*	$NetBSD: imx51_ccmreg.h,v 1.4 2014/03/22 09:46:33 hkenken Exp $	*/
 /*
  * Copyright (c) 2011, 2012  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -85,9 +85,17 @@
 #define	CCMC_CSCMR1	0x001c
 #define	 CSCMR1_UART_CLK_SEL_SHIFT	24
 #define	 CSCMR1_UART_CLK_SEL_MASK	__BITS(25, CSCMR1_UART_CLK_SEL_SHIFT)
+#define	 CSCMR1_ESDHC1_CLK_SEL		__BITS(22, 21)
+#define	 CSCMR1_ESDHC2_CLK_SEL		__BIT(20)
+#define	 CSCMR1_ESDHC4_CLK_SEL		__BIT(19)
+#define	 CSCMR1_ESDHC3_CLK_SEL		__BITS(18, 16)
 #define	 CSCMR1_CSPI_CLK_SEL		__BITS(5, 4)
 #define	CCMC_CSCMR2	0x0020
 #define	CCMC_CSCDR1	0x0024
+#define	 CSCDR1_ESDHC3_CLK_PRED		__BITS(24, 22)
+#define	 CSCDR1_ESDHC3_CLK_PODF		__BITS(21, 19)
+#define	 CSCDR1_ESDHC1_CLK_PRED		__BITS(18, 16)
+#define	 CSCDR1_ESDHC1_CLK_PODF		__BITS(13, 11)
 #define	 CSCDR1_UART_CLK_PRED_SHIFT	3
 #define	 CSCDR1_UART_CLK_PRED_MASK	__BITS(5, CSCDR1_UART_CLK_PRED_SHIFT)
 #define	 CSCDR1_UART_CLK_PODF_SHIFT	0
