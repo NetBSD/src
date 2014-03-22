@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.128 2014/02/25 18:30:12 pooka Exp $	*/
+/*	$NetBSD: route.c,v 1.129 2014/03/22 07:46:35 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.128 2014/02/25 18:30:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.129 2014/03/22 07:46:35 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -341,7 +341,8 @@ rtalloc1(const struct sockaddr *dst, int report)
 				goto miss;
 			}
 			KASSERT(newrt != NULL);
-			if ((rt = newrt) && (rt->rt_flags & RTF_XRESOLVE)) {
+			rt = newrt;
+			if (rt->rt_flags & RTF_XRESOLVE) {
 				msgtype = RTM_RESOLVE;
 				goto miss;
 			}
