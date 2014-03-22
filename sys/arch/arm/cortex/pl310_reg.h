@@ -1,4 +1,4 @@
-/* $NetBSD: pl310_reg.h,v 1.3 2014/03/22 16:39:20 reinoud Exp $ */
+/* $NetBSD: pl310_reg.h,v 1.4 2014/03/22 17:12:20 reinoud Exp $ */
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -58,6 +58,7 @@
 #define	L2C_CTL			0x100
 #define	 CTL_ENABLE		__BIT(1)
 #define	L2C_AUXCTL		0x104
+#define  AUXCTL_RSVD31		__BIT(31)
 #define	 AUXCTL_EARLY_BRESP_EN	__BIT(30)
 #define	 AUXCTL_I_PREFETCH	__BIT(29)
 #define	 AUXCTL_D_PREFETCH	__BIT(28)
