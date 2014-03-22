@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.149 2014/03/20 09:05:28 mrg Exp $
+#	 $NetBSD: mi,v 1.150 2014/03/22 13:40:55 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9320,12 +9320,15 @@
 ./usr/libdata/lint/llib-loldX.ln			-unknown-	lint,x11
 ./usr/libdata/lint/llib-lpciaccess.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lpsres.ln			-unknown-	lint,x11
+./usr/libdata/lint/llib-lpthread-stubs.ln		-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lre.ln				-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lxcb-composite.ln		-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lxcb-damage.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lxcb-dpms.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lxcb-dri2.ln			-unknown-	lint,xorg
+./usr/libdata/lint/llib-lxcb-dri3.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lxcb-glx.ln			-unknown-	lint,xorg
+./usr/libdata/lint/llib-lxcb-present.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lxcb-randr.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lxcb-record.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lxcb-render.ln			-unknown-	lint,xorg
@@ -9338,6 +9341,7 @@
 ./usr/libdata/lint/llib-lxcb-xf86dri.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lxcb-xfixes.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lxcb-xinerama.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lxcb-xkb.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lxcb-xtest.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lxcb-xv.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lxcb-xvmc.ln			-unknown-	lint,xorg
