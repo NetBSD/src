@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.23 2014/01/05 21:10:50 jakllsch Exp $ */
+/* $NetBSD: main.c,v 1.24 2014/03/22 18:54:28 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -430,8 +430,8 @@ module_add(const char *name)
 
 	bm = alloc(sizeof(struct boot_module) + strlen(name) + 1);
 	if (bm == NULL) {
-		printf("couldn't allocate module %s\n", name); 
-		return; 
+		printf("couldn't allocate module %s\n", name);
+		return;
 	}
 
 	bm->bm_kmod = (char *)(bm + 1);
@@ -451,12 +451,12 @@ module_add(const char *name)
 #define alignpg(x)	(((x)+PAGE_SIZE-1) & ~(PAGE_SIZE-1))
 
 void
-module_load(const char *kernel_path) 
+module_load(const char *kernel_path)
 {
 	struct boot_module *bm;
 	struct bi_modulelist_entry *bi;
 	struct stat st;
-	char *p; 
+	char *p;
 	int size, fd;
 
 	strcpy(module_base, kernel_path);
@@ -496,7 +496,7 @@ module_load(const char *kernel_path)
 		}
 		bm->bm_len = (int)st.st_size;
 		close(fd);
-		size += sizeof(struct bi_modulelist_entry); 
+		size += sizeof(struct bi_modulelist_entry);
 	}
 	if (size == 0)
 		return;
