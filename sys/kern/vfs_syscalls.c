@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.476 2014/02/15 22:32:16 njoly Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.477 2014/03/22 08:15:25 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.476 2014/02/15 22:32:16 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.477 2014/03/22 08:15:25 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -1624,9 +1624,11 @@ do_sys_openat(lwp_t *l, int fdat, const char *path, int flags,
 	int error;
 
 #ifdef COMPAT_10	/* XXX: and perhaps later */
-	if (path == NULL)
+	if (path == NULL) {
 		pb = pathbuf_create(".");
-	else
+		if (pb == NULL)
+			return ENOMEM;
+	} else
 #endif
 	{
 		error = pathbuf_copyin(path, &pb);

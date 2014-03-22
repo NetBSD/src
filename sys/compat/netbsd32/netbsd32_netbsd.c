@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.184 2014/02/03 13:20:20 manu Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.185 2014/03/22 08:15:25 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.184 2014/02/03 13:20:20 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.185 2014/03/22 08:15:25 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -241,8 +241,11 @@ netbsd32_open(struct lwp *l, const struct netbsd32_open_args *uap, register_t *r
 		error = pathbuf_copyin(SCARG(&ua, path), &pb);
 		if (error) 
 			return error; 
-	} else
+	} else {
 		pb = pathbuf_create(".");
+		if (pb == NULL)
+			return ENOMEM;
+	}
                 
         error = do_open(l, NULL, pb, SCARG(&ua, flags), SCARG(&ua, mode), &fd);
         pathbuf_destroy(pb);
