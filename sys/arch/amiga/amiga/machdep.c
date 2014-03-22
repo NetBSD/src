@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.241 2013/01/28 16:36:10 rkujawa Exp $	*/
+/*	$NetBSD: machdep.c,v 1.242 2014/03/22 01:52:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,7 +50,7 @@
 #include "empm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.241 2013/01/28 16:36:10 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.242 2014/03/22 01:52:44 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -308,7 +308,7 @@ identifycpu(void)
 	char machbuf[16];
 
 	if (is_draco()) {
-		sprintf(machbuf, "DraCo rev.%d", is_draco());
+		snprintf(machbuf, sizeof(machbuf), "DraCo rev.%d", is_draco());
 		mach = machbuf;
 	} else
 #endif
@@ -327,7 +327,7 @@ identifycpu(void)
 #ifdef M68060
 	if (machineid & AMIGA_68060) {
 		__asm(".word 0x4e7a,0x0808; movl %%d0,%0" : "=d"(pcr) : : "d0");
-		sprintf(cpubuf, "68%s060 rev.%d",
+		snprintf(cpubuf, sizeof(cpubuf), "68%s060 rev.%d",
 		    pcr & 0x10000 ? "LC/EC" : "", (pcr>>8)&0xff);
 		cpu_type = cpubuf;
 		mmu = "/MMU";
@@ -367,7 +367,8 @@ identifycpu(void)
 			fputype = FPU_NONE;
 		}
 	}
-	sprintf(cpu_model, "%s (%s CPU%s%s)", mach, cpu_type, mmu, fpu);
+	snprintf(cpu_model, sizeof(cpu_model), "%s (%s CPU%s%s)", mach,
+	    cpu_type, mmu, fpu);
 	printf("%s\n", cpu_model);
 }
 
@@ -820,39 +821,35 @@ int	*nofault;
 int
 badaddr(register void *addr)
 {
-	register int i;
+	int i;
 	label_t	faultbuf;
 
-#ifdef lint
-	i = *addr; if (i) return(0);
-#endif
 	nofault = (int *) &faultbuf;
 	if (setjmp((label_t *)nofault)) {
-		nofault = (int *) 0;
-		return(1);
+		nofault = NULL;
+		return 1;
 	}
 	i = *(volatile short *)addr;
-	nofault = (int *) 0;
-	return(0);
+	__USE(i);
+	nofault = NULL;
+	return 0;
 }
 
 int
 badbaddr(register void *addr)
 {
-	register int i;
+	int i;
 	label_t	faultbuf;
 
-#ifdef lint
-	i = *addr; if (i) return(0);
-#endif
 	nofault = (int *) &faultbuf;
 	if (setjmp((label_t *)nofault)) {
-		nofault = (int *) 0;
-		return(1);
+		nofault = NULL;
+		return 1;
 	}
 	i = *(volatile char *)addr;
-	nofault = (int *) 0;
-	return(0);
+	__USE(i);
+	nofault = NULL;
+	return 0;
 }
 
 struct isr *isr_ports;

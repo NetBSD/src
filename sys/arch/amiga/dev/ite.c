@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.96 2014/03/16 05:20:22 dholland Exp $ */
+/*	$NetBSD: ite.c,v 1.97 2014/03/22 01:52:44 christos Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,7 +46,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.96 2014/03/16 05:20:22 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.97 2014/03/22 01:52:44 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1642,7 +1642,8 @@ iteputchar(register int c, struct ite_softc *ip)
 					break;
 				case 6:
 					/* cursor position report */
-					sprintf(ip->argbuf, "\033[%d;%dR",
+					snprintf(ip->argbuf, sizeof(ip->argbuf),
+					    "\033[%d;%dR",
 					    ip->cury + 1, ip->curx + 1);
 					ite_sendstr(ip->argbuf);
 					break;
