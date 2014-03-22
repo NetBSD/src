@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.434 2014/02/02 08:34:39 wiz Exp $
+.\"	$NetBSD: options.4,v 1.435 2014/03/22 07:49:06 skrll Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd October 13, 2013
+.Dd March 22, 2014
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -611,7 +611,7 @@ structures is detected.
 These checks can decrease performance up to 15%.
 .It Cd options LOCKDEBUG
 Adds code to the kernel to detect incorrect use of locking primitives
-(mutex, rwlock, simplelock).
+(mutex, rwlock).
 This code will cause the kernel to check for dead lock conditions.
 It will also check for memory being freed to not contain initialised
 lock primitives.
