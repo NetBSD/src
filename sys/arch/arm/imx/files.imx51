@@ -1,4 +1,4 @@
-#	$NetBSD: files.imx51,v 1.6 2014/03/22 04:55:00 hkenken Exp $
+#	$NetBSD: files.imx51,v 1.7 2014/03/22 05:19:18 hkenken Exp $
 #
 # Configuration info for the Freescale i.MX51
 #
@@ -56,6 +56,7 @@ device	imxgpio: gpiobus
 attach	imxgpio at axi
 file	arch/arm/imx/imxgpio.c		imxgpio		needs-flag
 file	arch/arm/imx/imx51_gpio.c	imxgpio
+defflag opt_imxgpio.h			IMX_GPIO_INTR_SPLIT
 
 # iMX IOMUX
 device	imxiomux : bus_space_generic
