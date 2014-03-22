@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_ccmvar.h,v 1.1 2012/04/17 09:33:31 bsh Exp $	*/
+/*	$NetBSD: imx51_ccmvar.h,v 1.2 2014/03/22 09:46:33 hkenken Exp $	*/
 /*
  * Copyright (c) 2012  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -56,6 +56,7 @@ enum imx51_clock {
 	IMX51CLK_ESDHC1_CLK_ROOT,
 	IMX51CLK_ESDHC2_CLK_ROOT,
 	IMX51CLK_ESDHC3_CLK_ROOT,
+	IMX51CLK_ESDHC4_CLK_ROOT,
 	IMX51CLK_UART_CLK_ROOT,
 	IMX51CLK_SSI1_CLK_ROOT,
 	IMX51CLK_SSI2_CLK_ROOT,
