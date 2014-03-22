@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.187 2013/10/27 02:06:06 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.188 2014/03/22 21:49:18 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.187 2013/10/27 02:06:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.188 2014/03/22 21:49:18 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1218,7 +1218,6 @@ setmemrange(void)
 #endif
 }
 
-volatile int ssir;
 int idepth;
 
 bool
