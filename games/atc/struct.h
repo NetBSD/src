@@ -1,4 +1,4 @@
-/*	$NetBSD: struct.h,v 1.6 2006/06/07 09:36:39 jnemeth Exp $	*/
+/*	$NetBSD: struct.h,v 1.7 2014/03/22 22:24:21 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -60,10 +60,10 @@ typedef struct {
 	int	width, height;
 	int	update_secs;
 	int	newplane_time;
-	int	num_exits;
+	unsigned num_exits;
 	int	num_lines;
-	int	num_beacons;
-	int	num_airports;
+	unsigned num_beacons;
+	unsigned num_airports;
 	EXIT	*exit;
 	LINE	*line;
 	BEACON	*beacon;
