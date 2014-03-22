@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.24 2014/03/22 22:45:05 dholland Exp $	*/
+/*	$NetBSD: update.c,v 1.25 2014/03/22 22:58:56 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)update.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: update.c,v 1.24 2014/03/22 22:45:05 dholland Exp $");
+__RCSID("$NetBSD: update.c,v 1.25 2014/03/22 22:58:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -217,7 +217,7 @@ update(int dummy __unused)
 	 * we don't update props on odd updates.
 	 */
 	if ((rand() % sp->newplane_time) == 0)
-		(void)addplane();
+		addplane();
 
 #ifdef SYSV
 	alarm(sp->update_secs);
@@ -233,14 +233,14 @@ command(const PLANE *pp)
 	buf[0] = '\0';
 	bp = buf;
 	bpsize = sizeof(buf);
-	(void)snprintf(bp, bpsize, "%c%d%c%c%d: ", name(pp), pp->altitude, 
+	(void)snprintf(bp, bpsize, "%c%d%c%c%u: ", name(pp), pp->altitude, 
 		(pp->fuel < LOWFUEL) ? '*' : ' ',
 		(pp->dest_type == T_AIRPORT) ? 'A' : 'E', pp->dest_no);
 
 	comm_start = bp = strchr(buf, '\0');
 	bpsize = buf + sizeof(buf) - bp;
 	if (pp->altitude == 0)
-		(void)snprintf(bp, bpsize, "Holding @ A%d", pp->orig_no);
+		(void)snprintf(bp, bpsize, "Holding @ A%u", pp->orig_no);
 	else if (pp->new_dir >= MAXDIR || pp->new_dir < 0)
 		(void)snprintf(bp, bpsize, "Circle");
 	else if (pp->new_dir != pp->dir)
@@ -308,7 +308,7 @@ next_plane(void)
 	return (last_plane);
 }
 
-int
+void
 addplane(void)
 {
 	PLANE	p, *pp, *p1;
@@ -363,10 +363,10 @@ addplane(void)
 		break;
 	}
 	if (i >= num_starts)
-		return (-1);
+		return;
 	pnum = next_plane();
 	if (pnum < 0)
-		return (-1);
+		return;
 	p.plane_no = pnum;
 
 	pp = newplane();
@@ -378,8 +378,6 @@ addplane(void)
 		append(&ground, pp);
 	else
 		append(&air, pp);
-
-	return (pp->dest_type);
 }
 
 PLANE *
