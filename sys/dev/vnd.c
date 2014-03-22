@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.228 2014/03/16 05:20:26 dholland Exp $	*/
+/*	$NetBSD: vnd.c,v 1.229 2014/03/22 16:08:51 prlw1 Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.228 2014/03/16 05:20:26 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.229 2014/03/22 16:08:51 prlw1 Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -1059,6 +1059,10 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		return ENXIO;
 	vio = (struct vnd_ioctl *)data;
 
+	error = disk_ioctl(&vnd->sc_dkdev, cmd, data, flag, l);
+	if (error != EPASSTHROUGH)
+		return (error);
+
 	/* Must be open for writes for these commands... */
 	switch (cmd) {
 	case VNDIOCSET:
@@ -2022,6 +2026,12 @@ vnd_set_geometry(struct vnd_softc *vnd)
 	dg->dg_ntracks = vnd->sc_geom.vng_ntracks;
 	dg->dg_ncylinders = vnd->sc_geom.vng_ncylinders;
 
+#ifdef DEBUG
+	if (vnddebug & VDB_LABEL) {
+		printf("dg->dg_secperunit: %" PRId64 "\n", dg->dg_secperunit);
+		printf("dg->dg_ncylinders: %u\n", dg->dg_ncylinders);
+	}
+#endif
 	disk_set_info(vnd->sc_dev, &vnd->sc_dkdev, NULL);
 }
 
