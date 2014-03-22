@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2014/03/01 10:00:49 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2014/03/22 17:57:48 tron Exp $
 
 PROG=		gcc
 SRCS=		gccspec.c ${G_GCC_OBJS:.o=.c}
@@ -25,6 +25,8 @@ DPADD+=		${LIBINTL}
 .include "../Makefile.frontend"
 
 .include <bsd.info.mk>
+
+COPTS.gcc.c=	-Wno-stack-protector
 
 .PATH: ${DIST}/gcc ${DIST}/gcc/doc ${DIST}/gcc/c
 
