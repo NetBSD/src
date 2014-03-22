@@ -580,7 +580,7 @@ XfNamespaceLocateBegin (
 
             if (Message)
             {
-                sprintf (MsgBuffer, "Size mismatch, Tag: %u bit%s, Field: %u bit%s",
+                snprintf (MsgBuffer, sizeof(MsgBuffer), "Size mismatch, Tag: %u bit%s, Field: %u bit%s",
                     TagBitLength, (TagBitLength > 1) ? "s" : "",
                     FieldBitLength, (FieldBitLength > 1) ? "s" : "");
 
@@ -646,7 +646,7 @@ XfNamespaceLocateBegin (
          */
         if (Node->Type != ACPI_TYPE_METHOD)
         {
-            sprintf (MsgBuffer, "%s is a %s",
+            snprintf (MsgBuffer, sizeof(MsgBuffer), "%s is a %s",
                     Op->Asl.ExternalName, AcpiUtGetTypeName (Node->Type));
 
             AslError (ASL_ERROR, ASL_MSG_NOT_METHOD, Op, MsgBuffer);
@@ -686,7 +686,7 @@ XfNamespaceLocateBegin (
              */
             if (PassedArgs != Node->Value)
             {
-                sprintf (MsgBuffer, "%s requires %u", Op->Asl.ExternalName,
+                snprintf (MsgBuffer, sizeof(MsgBuffer), "%s requires %u", Op->Asl.ExternalName,
                             Node->Value);
 
                 if (PassedArgs < Node->Value)

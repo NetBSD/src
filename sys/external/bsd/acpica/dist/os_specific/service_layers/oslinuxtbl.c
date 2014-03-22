@@ -1420,11 +1420,13 @@ OslGetCustomizedTable (
 
         if (Instance != 0)
         {
-            sprintf (TableFilename, "%s/%4.4s%d", Pathname, TempName, Instance);
+            snprintf (TableFilename, sizeof(TableFilename), "%s/%4.4s%d",
+		Pathname, TempName, Instance);
         }
         else
         {
-            sprintf (TableFilename, "%s/%4.4s", Pathname, TempName);
+            snprintf (TableFilename, sizeof(TableFilename), "%s/%4.4s",
+		Pathname, TempName);
         }
         break;
     }
