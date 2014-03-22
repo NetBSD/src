@@ -97,7 +97,7 @@ FlFileError (
     UINT8                   ErrorId)
 {
 
-    sprintf (MsgBuffer, "\"%s\" (%s)", Gbl_Files[FileId].Filename,
+    snprintf (MsgBuffer, sizeof(MsgBuffer), "\"%s\" (%s)", Gbl_Files[FileId].Filename,
         strerror (errno));
     AslCommonError (ASL_ERROR, ErrorId, 0, 0, 0, 0, NULL, MsgBuffer);
 }
