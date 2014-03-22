@@ -349,7 +349,7 @@ AslInsertLineBuffer (
              * Warning if we have split a long source line.
              * <Probably overkill>
              */
-            sprintf (MsgBuffer, "Max %u", Gbl_LineBufferSize);
+            snprintf (MsgBuffer, sizeof(MsgBuffer), "Max %u", Gbl_LineBufferSize);
             AslCommonError (ASL_WARNING, ASL_MSG_LONG_LINE,
                             Gbl_CurrentLineNumber, Gbl_LogicalLineNumber,
                             Gbl_CurrentLineOffset, Gbl_CurrentColumn,

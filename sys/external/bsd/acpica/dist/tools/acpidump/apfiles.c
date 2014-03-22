@@ -145,7 +145,7 @@ ApWriteToBinaryFile (
 
     if (Instance > 0)
     {
-        sprintf (InstanceStr, "%u", Instance);
+        snprintf (InstanceStr, sizeof(InstanceStr), "%u", Instance);
         strcat (Filename, InstanceStr);
     }
 

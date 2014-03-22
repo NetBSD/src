@@ -572,7 +572,7 @@ UtCheckIntegerRange (
     if ((Op->Asl.Value.Integer < LowValue) ||
         (Op->Asl.Value.Integer > HighValue))
     {
-        sprintf (MsgBuffer, "0x%X, allowable: 0x%X-0x%X",
+        snprintf (MsgBuffer, sizeof(MsgBuffer), "0x%X, allowable: 0x%X-0x%X",
             (UINT32) Op->Asl.Value.Integer, LowValue, HighValue);
 
         AslError (ASL_ERROR, ASL_MSG_RANGE, Op, MsgBuffer);
@@ -909,7 +909,7 @@ UtDoConstant (
     Status = UtStrtoul64 (String, 0, &Converted);
     if (ACPI_FAILURE (Status))
     {
-        sprintf (ErrBuf, "%s %s\n", "Conversion error:",
+        snprintf (ErrBuf, sizeof(ErrBuf), "%s %s\n", "Conversion error:",
             AcpiFormatException (Status));
         AslCompilererror (ErrBuf);
     }

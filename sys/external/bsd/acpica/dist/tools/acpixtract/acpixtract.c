@@ -587,11 +587,11 @@ AxExtractTables (
 
             if (ThisInstance > 0)
             {
-                sprintf (Filename, "%4.4s%u.dat", ThisSignature, ThisInstance);
+                snprintf (Filename, sizeof(Filename), "%4.4s%u.dat", ThisSignature, ThisInstance);
             }
             else
             {
-                sprintf (Filename, "%4.4s.dat", ThisSignature);
+                snprintf (Filename, sizeof(Filename), "%4.4s.dat", ThisSignature);
             }
 
             AxStrlwr (Filename);

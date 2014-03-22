@@ -416,7 +416,7 @@ FlOpenIncludeFile (
     /* We could not open the include file after trying very hard */
 
 ErrorExit:
-    sprintf (MsgBuffer, "%s, %s", Op->Asl.Value.String, strerror (errno));
+    snprintf (MsgBuffer, sizeof(MsgBuffer), "%s, %s", Op->Asl.Value.String, strerror (errno));
     AslError (ASL_ERROR, ASL_MSG_INCLUDE_FILE_OPEN, Op, MsgBuffer);
 }
 

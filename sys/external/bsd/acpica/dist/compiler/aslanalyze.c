@@ -341,7 +341,7 @@ AnCheckMethodReturnValue (
          */
         if (ThisNodeBtype != 0)
         {
-            sprintf (MsgBuffer,
+            snprintf (MsgBuffer, sizeof(MsgBuffer),
                 "Method returns [%s], %s operator requires [%s]",
                 StringBuffer, OpInfo->Name, StringBuffer2);
 

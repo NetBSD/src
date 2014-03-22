@@ -174,7 +174,7 @@ DtCompileString (
 
     if (Length > ByteLength)
     {
-        sprintf (MsgBuffer, "Maximum %u characters", ByteLength);
+        snprintf (MsgBuffer, sizeof(MsgBuffer), "Maximum %u characters", ByteLength);
         DtError (ASL_ERROR, ASL_MSG_STRING_LENGTH, Field, MsgBuffer);
         Length = ByteLength;
     }
@@ -254,7 +254,7 @@ DtCompileUuid (
     Status = AuValidateUuid (InString);
     if (ACPI_FAILURE (Status))
     {
-        sprintf (MsgBuffer, "%s", Field->Value);
+        snprintf (MsgBuffer, sizeof(MsgBuffer), "%s", Field->Value);
         DtNameError (ASL_ERROR, ASL_MSG_INVALID_UUID, Field, MsgBuffer);
     }
     else
@@ -340,7 +340,7 @@ DtCompileInteger (
 
     if (Value > MaxValue)
     {
-        sprintf (MsgBuffer, "%8.8X%8.8X - max %u bytes",
+        snprintf (MsgBuffer, sizeof(MsgBuffer), "%8.8X%8.8X - max %u bytes",
             ACPI_FORMAT_UINT64 (Value), ByteLength);
         DtError (ASL_ERROR, ASL_MSG_INTEGER_SIZE, Field, MsgBuffer);
     }
@@ -563,7 +563,7 @@ DtCompileFlag (
 
     if (Value >= ((UINT64) 1 << BitLength))
     {
-        sprintf (MsgBuffer, "Maximum %u bit", BitLength);
+        snprintf (MsgBuffer, sizeof(MsgBuffer), "Maximum %u bit", BitLength);
         DtError (ASL_ERROR, ASL_MSG_FLAG_VALUE, Field, MsgBuffer);
         Value = 0;
     }
