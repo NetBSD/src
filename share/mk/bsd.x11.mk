@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.109 2014/03/20 22:24:32 mrg Exp $
+#	$NetBSD: bsd.x11.mk,v 1.110 2014/03/23 19:49:52 tron Exp $
 
 .include <bsd.init.mk>
 
@@ -344,10 +344,10 @@ ${_pkg}.pc: ${PKGDIST.${_pkg}}/configure
 		s,@abi_font@,0.6,; \
 		s,@fchown_define@,-DHAS_FCHOWN,; \
 		s,@sticky_bit_define@,-DHAS_STICKY_DIR_BIT," \
-		-e "s,@PKG_CONFIG_LIBS@,xx,; \
+		-e "s,@PKG_CONFIG_LIBS@,${PKG_CONFIG_LIBS},; \
 		s,@PACKAGE@,${PKGDIST},; \
-		s,@PKGCONFIG_REQUIRES@,xx,; \
-		s,@PKGCONFIG_REQUIRES_PRIVATELY@,xx,; \
+		s,@PKGCONFIG_REQUIRES@,${PKGCONFIG_REQUIRES},; \
+		s,@PKGCONFIG_REQUIRES_PRIVATELY@,${PKGCONFIG_REQUIRES_PRIVATELY},; \
 		s,@ERRORDBDIR@,${X11LIBDIR},; \
 		s,@EXPAT_CFLAGS@,,; \
 		s,@FREETYPE_CFLAGS@,-I${X11ROOTDIR}/include/freetype2 -I${X11ROOTDIR}/include,; \
