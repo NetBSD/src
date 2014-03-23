@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegwr.c,v 1.32 2013/09/15 12:20:28 martin Exp $	*/
+/*	$NetBSD: rf_dagdegwr.c,v 1.33 2014/03/23 03:42:39 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.32 2013/09/15 12:20:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.33 2014/03/23 03:42:39 christos Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -582,7 +582,7 @@ rf_WriteGenerateFailedAccessASMs(
 	int     numDataCol = layoutPtr->numDataCol;
 	int     state;
 	unsigned napdas;
-	RF_SectorNum_t fone_start, fone_end, ftwo_start = 0, ftwo_end;
+	RF_SectorNum_t fone_start, ftwo_start = 0;
 	RF_PhysDiskAddr_t *fone = asmap->failedPDAs[0], *ftwo = asmap->failedPDAs[1];
 	RF_PhysDiskAddr_t *pda_p;
 	RF_RaidAddr_t sosAddr;
@@ -592,7 +592,6 @@ rf_WriteGenerateFailedAccessASMs(
 	 * possibly two, depending whether they overlap. */
 
 	fone_start = rf_StripeUnitOffset(layoutPtr, fone->startSector);
-	fone_end = fone_start + fone->numSector;
 
 	if (asmap->numDataFailed == 1) {
 		PDAPerDisk = 1;
@@ -608,7 +607,6 @@ rf_WriteGenerateFailedAccessASMs(
 		pda_p->type = RF_PDA_TYPE_Q;
 	} else {
 		ftwo_start = rf_StripeUnitOffset(layoutPtr, ftwo->startSector);
-		ftwo_end = ftwo_start + ftwo->numSector;
 		if (fone->numSector + ftwo->numSector > secPerSU) {
 			PDAPerDisk = 1;
 			state = 2;
