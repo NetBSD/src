@@ -1,4 +1,4 @@
-/* $NetBSD: ifpci2.c,v 1.20 2012/10/27 17:18:34 chs Exp $	*/
+/* $NetBSD: ifpci2.c,v 1.21 2014/03/23 02:45:30 christos Exp $	*/
 /*
  *   Copyright (c) 1999 Gary Jennejohn. All rights reserved.
  *
@@ -36,14 +36,14 @@
  *	Fritz!Card PCI driver
  *	------------------------------------------------
  *
- *	$Id: ifpci2.c,v 1.20 2012/10/27 17:18:34 chs Exp $
+ *	$Id: ifpci2.c,v 1.21 2014/03/23 02:45:30 christos Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpci2.c,v 1.20 2012/10/27 17:18:34 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpci2.c,v 1.21 2014/03/23 02:45:30 christos Exp $");
 
 
 #include <sys/param.h>
@@ -249,7 +249,6 @@ ifpci2_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args *pa = aux;
 	struct isic_softc *sc = &psc->sc_isic;
 	struct isdn_l3_driver *drv;
-	u_int v;
 
 	sc->sc_dev = self;
 
@@ -297,7 +296,7 @@ ifpci2_attach(device_t parent, device_t self, void *aux)
 
 	/* init the card */
 
-	v = bus_space_read_4(sc->sc_maps[0].t, sc->sc_maps[0].h, 0);
+	bus_space_read_4(sc->sc_maps[0].t, sc->sc_maps[0].h, 0);
 	bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h, STAT0_OFFSET, 0);
 	DELAY(SEC_DELAY/20); /* 50 ms */
 	bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h, STAT0_OFFSET, ASL_RESET);
@@ -318,7 +317,7 @@ ifpci2_attach(device_t parent, device_t self, void *aux)
 	/* init the ISAC */
 	isic_isacsx_init(sc);
 
-	v = ISAC_READ(I_CIR0); /* Leo: reset generates status change */
+	ISAC_READ(I_CIR0); /* Leo: reset generates status change */
 
 	/* init the "HSCX" */
 	avma1pp2_bchannel_setup(sc, HSCX_CH_A, BPROT_NONE, 0);

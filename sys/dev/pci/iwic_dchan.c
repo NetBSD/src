@@ -1,4 +1,4 @@
-/*	$NetBSD: iwic_dchan.c,v 1.7 2012/10/27 17:18:34 chs Exp $	*/
+/*	$NetBSD: iwic_dchan.c,v 1.8 2014/03/23 02:53:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Dave Boyce. All rights reserved.
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwic_dchan.c,v 1.7 2012/10/27 17:18:34 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwic_dchan.c,v 1.8 2014/03/23 02:53:12 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -352,11 +352,9 @@ dchan_receive(struct iwic_softc *sc, int ista)
 		else
 		{
 			int hi, lo;
-			int total_frame_len;
 
 			lo = IWIC_READ(sc, D_RBCL);
 			hi = IWIC_READ(sc, D_RBCH);
-			total_frame_len = D_RBC(hi, lo);
 			lo = lo & 0x3f;
 
 			if (lo == 0)
