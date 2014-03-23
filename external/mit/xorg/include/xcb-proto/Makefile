@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2014/03/16 23:25:15 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2014/03/23 20:40:18 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -14,6 +14,8 @@ FILES=	bigreq.xml composite.xml damage.xml dpms.xml dri2.xml dri3.xml \
 FILESDIR=${X11SHAREDIR}/xcb
 
 PKGCONFIG=	xcb-proto
+PKGCONFIG_SED_FLAGS= \
+	-e "s,@pythondir@,,"
 
 NOPROG=	# defined
 
