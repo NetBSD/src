@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.32 2014/03/16 05:20:27 dholland Exp $ */
+/*	$NetBSD: rd.c,v 1.33 2014/03/23 03:41:10 christos Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.32 2014/03/16 05:20:27 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.33 2014/03/23 03:41:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -697,7 +697,7 @@ void
 rdstart(struct rd_softc *sc)
 {
 	struct buf *bp = bufq_peek(sc->sc_tab);
-	int part, slave, punit;
+	int slave, punit;
 
 	slave = sc->sc_slave;
 	punit = sc->sc_punit;
@@ -707,7 +707,6 @@ rdstart(struct rd_softc *sc)
 
 again:
 
-	part = RDPART(bp->b_dev);
 	sc->sc_flags |= RDF_SEEK;
 	sc->sc_ioc.c_unit = CS80CMD_SUNIT(punit);
 	sc->sc_ioc.c_volume = CS80CMD_SVOL(0);
