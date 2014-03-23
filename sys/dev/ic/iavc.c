@@ -1,4 +1,4 @@
-/*	$NetBSD: iavc.c,v 1.11 2014/03/23 02:44:00 christos Exp $	*/
+/*	$NetBSD: iavc.c,v 1.12 2014/03/23 02:44:19 christos Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Cubical Solutions Ltd. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iavc.c,v 1.11 2014/03/23 02:44:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iavc.c,v 1.12 2014/03/23 02:44:19 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -738,7 +738,6 @@ static int iavc_receive_debugmsg(iavc_softc_t *sc, u_int8_t *dmabuf)
 	amcc_get_word(dmabuf, &Length);
     } else {
 	Length = iavc_get_slice(sc, sc->sc_recvbuf);
-	sc->sc_recvbuf;
     }
 
     /* XXX could show the message if trace enabled? XXX */
