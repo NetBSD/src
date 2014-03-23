@@ -211,7 +211,7 @@ DtInitialize (
     Gbl_RootTable = NULL;
     Gbl_SubtableStack = NULL;
 
-    snprintf (VersionString, sizeof(VersionBuffer), "%X",
+    snprintf (VersionString, sizeof(VersionString), "%X",
 	(UINT32) ACPI_CA_VERSION);
     return (AE_OK);
 }
