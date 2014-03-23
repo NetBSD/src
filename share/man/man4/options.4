@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.435 2014/03/22 07:49:06 skrll Exp $
+.\"	$NetBSD: options.4,v 1.436 2014/03/23 00:48:08 dholland Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -992,34 +992,25 @@ It also provides better general use performance over regular FFS.
 See also
 .Xr wapbl 4 .
 .It Cd options QUOTA
-Enables kernel support for file system quotas.
-See
-.Xr quotaon 8 ,
-.Xr edquota 8 ,
+Enables kernel support for traditional quotas in FFS.
+Traditional quotas store the quota information in external files and
+require
+.Xr quotacheck 8
 and
-.Xr quota 1
-for details.
-Note that quotas only work on
-.Dq ffs
-file systems, although
-.Xr rpc.rquotad 8
-permits them to be accessed over
-.Em NFS .
+.Xr quotaon 8
+at boot time.
+Traditional quotas are limited to 32-bit sizes and are at this point
+considered a legacy feature.
 .It Cd options QUOTA2
-Enables kernel support for the new file system quotas format.
-See
-.Xr tunefs 8 ,
-.Xr newfs 8 ,
-.Xr mount_mfs 8 ,
-.Xr edquota 8 ,
-and
-.Xr quota 1
-for details.
-Note that quota2 is only supported by
-.Dq ffs
-and
-.Dq mfs
-file systems at this time.
+Enables kernel support for in-volume quotas in FFS.
+The quota information is file system metadata maintained by
+.Xr fsck 8
+and/or WAPBL journaling.
+MFS volumes can also use
+.Dv QUOTA2
+quotas; see
+.Xr mount_mfs 8
+for more information.
 .It Cd options FFS_EI
 Enable
 .Dq Endian-Independent
