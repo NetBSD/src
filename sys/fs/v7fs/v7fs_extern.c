@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_extern.c,v 1.1 2011/06/27 11:52:24 uch Exp $	*/
+/*	$NetBSD: v7fs_extern.c,v 1.2 2014/03/23 15:21:16 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_extern.c,v 1.1 2011/06/27 11:52:24 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_extern.c,v 1.2 2014/03/23 15:21:16 hannken Exp $");
 
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
@@ -219,32 +219,29 @@ const struct genfs_ops v7fs_genfsops = {
 };
 
 struct vfsops v7fs_vfsops = {
-	MOUNT_V7FS,
-	sizeof(struct v7fs_args),
-	v7fs_mount,
-	v7fs_start,
-	v7fs_unmount,
-	v7fs_root,
-	(void *)eopnotsupp,	/* vfs_quotactl */
-	v7fs_statvfs,
-	v7fs_sync,
-	v7fs_vget,
-	v7fs_fhtovp,
-	v7fs_vptofh,
-	v7fs_init,
-	v7fs_reinit,
-	v7fs_done,
-	v7fs_mountroot,
-	(int (*)(struct mount *, struct vnode *, struct timespec *))
-	eopnotsupp,		/* snapshot */
-	vfs_stdextattrctl,
-	(void *)eopnotsupp,	/* vfs_suspendctl */
-	genfs_renamelock_enter,
-	genfs_renamelock_exit,
-	(void *)eopnotsupp,
-	v7fs_vnodeopv_descs,
-	0,
-	{ NULL, NULL }
+	.vfs_name = MOUNT_V7FS,
+	.vfs_min_mount_data = sizeof(struct v7fs_args),
+	.vfs_mount = v7fs_mount,
+	.vfs_start = v7fs_start,
+	.vfs_unmount = v7fs_unmount,
+	.vfs_root = v7fs_root,
+	.vfs_quotactl = (void *)eopnotsupp,
+	.vfs_statvfs = v7fs_statvfs,
+	.vfs_sync = v7fs_sync,
+	.vfs_vget = v7fs_vget,
+	.vfs_fhtovp = v7fs_fhtovp,
+	.vfs_vptofh = v7fs_vptofh,
+	.vfs_init = v7fs_init,
+	.vfs_reinit = v7fs_reinit,
+	.vfs_done = v7fs_done,
+	.vfs_mountroot = v7fs_mountroot,
+	.vfs_snapshot = (void *)eopnotsupp,
+	.vfs_extattrctl = vfs_stdextattrctl,
+	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_renamelock_enter = genfs_renamelock_enter,
+	.vfs_renamelock_exit = genfs_renamelock_exit,
+	.vfs_fsync = (void *)eopnotsupp,
+	.vfs_opv_descs = v7fs_vnodeopv_descs
 };
 
 static int

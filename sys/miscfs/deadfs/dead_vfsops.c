@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vfsops.c,v 1.1 2014/02/27 13:00:06 hannken Exp $	*/
+/*	$NetBSD: dead_vfsops.c,v 1.2 2014/03/23 15:21:16 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dead_vfsops.c,v 1.1 2014/02/27 13:00:06 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dead_vfsops.c,v 1.2 2014/03/23 15:21:16 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,29 +52,27 @@ dead_panic(void)
 }
 
 struct vfsops dead_vfsops = {
-	"dead",
-	0,
-	(void *)dead_panic,			/* vfs_mount */
-	(void *)dead_panic,			/* vfs_start */
-	(void *)dead_panic,			/* vfs_unmount */
-	(void *)dead_panic,			/* vfs_root */
-	(void *)dead_panic,			/* vfs_quotactl */
-	(void *)dead_panic,			/* vfs_statvfs */
-	(void *)dead_panic,			/* vfs_sync */
-	(void *)dead_panic,			/* vfs_vget */
-	(void *)dead_panic,			/* vfs_fhtovp */
-	(void *)dead_panic,			/* vfs_vptofh */
-	(void *)dead_panic,			/* vfs_init */
-	(void *)dead_panic,			/* vfs_reinit */
-	(void *)dead_panic,			/* vfs_done */
-	(void *)dead_panic,			/* vfs_mountroot */
-	(void *)dead_panic,			/* vfs_snapshot */
-	(void *)dead_panic,			/* vfs_extattrctl */
-	(void *)dead_panic,			/* vfs_suspendctl */
-	(void *)dead_panic,			/* vfs_renamelock_enter */
-	(void *)dead_panic,			/* vfs_renamelock_exit */
-	(void *)eopnotsupp,			/* vfs_fsync */
-	dead_vnodeopv_descs,
-	0,
-	{ NULL, NULL }
+	.vfs_name = "dead",
+	.vfs_min_mount_data = 0,
+	.vfs_mount = (void *)dead_panic,
+	.vfs_start = (void *)dead_panic,
+	.vfs_unmount = (void *)dead_panic,
+	.vfs_root = (void *)dead_panic,
+	.vfs_quotactl = (void *)dead_panic,
+	.vfs_statvfs = (void *)dead_panic,
+	.vfs_sync = (void *)dead_panic,
+	.vfs_vget = (void *)dead_panic,
+	.vfs_fhtovp = (void *)dead_panic,
+	.vfs_vptofh = (void *)dead_panic,
+	.vfs_init = (void *)dead_panic,
+	.vfs_reinit = (void *)dead_panic,
+	.vfs_done = (void *)dead_panic,
+	.vfs_mountroot = (void *)dead_panic,
+	.vfs_snapshot = (void *)dead_panic,
+	.vfs_extattrctl = (void *)dead_panic,
+	.vfs_suspendctl = (void *)dead_panic,
+	.vfs_renamelock_enter = (void *)dead_panic,
+	.vfs_renamelock_exit = (void *)dead_panic,
+	.vfs_fsync = (void *)eopnotsupp,
+	.vfs_opv_descs = dead_vnodeopv_descs
 };
