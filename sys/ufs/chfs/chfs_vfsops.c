@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vfsops.c,v 1.9 2013/10/20 17:18:38 christos Exp $	*/
+/*	$NetBSD: chfs_vfsops.c,v 1.10 2014/03/23 15:21:16 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -785,31 +785,28 @@ const struct vnodeopv_desc * const chfs_vnodeopv_descs[] = {
 };
 
 struct vfsops chfs_vfsops = {
-	MOUNT_CHFS,			/* vfs_name */
-	sizeof (struct chfs_args),
-	chfs_mount,			/* vfs_mount */
-	chfs_start,			/* vfs_start */
-	chfs_unmount,		/* vfs_unmount */
-	chfs_root,			/* vfs_root */
-	ufs_quotactl,		/* vfs_quotactl */
-	chfs_statvfs,		/* vfs_statvfs */
-	chfs_sync,			/* vfs_sync */
-	chfs_vget,			/* vfs_vget */
-	chfs_fhtovp,		/* vfs_fhtovp */
-	chfs_vptofh,		/* vfs_vptofh */
-	chfs_init,			/* vfs_init */
-	chfs_reinit,		/* vfs_reinit */
-	chfs_done,			/* vfs_done */
-	NULL,				/* vfs_mountroot */
-	chfs_snapshot,		/* vfs_snapshot */
-	vfs_stdextattrctl,	/* vfs_extattrctl */
-	(void *)eopnotsupp,	/* vfs_suspendctl */
-	genfs_renamelock_enter,
-	genfs_renamelock_exit,
-	(void *)eopnotsupp,
-	chfs_vnodeopv_descs,
-	0,					/* vfs_refcount */
-	{ NULL, NULL },
+	.vfs_name = MOUNT_CHFS,
+	.vfs_min_mount_data = sizeof (struct chfs_args),
+	.vfs_mount = chfs_mount,
+	.vfs_start = chfs_start,
+	.vfs_unmount = chfs_unmount,
+	.vfs_root = chfs_root,
+	.vfs_quotactl = ufs_quotactl,
+	.vfs_statvfs = chfs_statvfs,
+	.vfs_sync = chfs_sync,
+	.vfs_vget = chfs_vget,
+	.vfs_fhtovp = chfs_fhtovp,
+	.vfs_vptofh = chfs_vptofh,
+	.vfs_init = chfs_init,
+	.vfs_reinit = chfs_reinit,
+	.vfs_done = chfs_done,
+	.vfs_snapshot = chfs_snapshot,
+	.vfs_extattrctl = vfs_stdextattrctl,
+	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_renamelock_enter = genfs_renamelock_enter,
+	.vfs_renamelock_exit = genfs_renamelock_exit,
+	.vfs_fsync = (void *)eopnotsupp,
+	.vfs_opv_descs = chfs_vnodeopv_descs
 };
 
 /* For using CHFS as a module. */
