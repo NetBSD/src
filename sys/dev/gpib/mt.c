@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.26 2014/03/16 05:20:27 dholland Exp $ */
+/*	$NetBSD: mt.c,v 1.27 2014/03/23 02:57:20 christos Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.26 2014/03/16 05:20:27 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.27 2014/03/23 02:57:20 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -962,20 +962,12 @@ error:
 int
 mtread(dev_t dev, struct uio *uio, int flags)
 {
-	struct mt_softc *sc;
-
-	sc = device_lookup_private(&mt_cd, MTUNIT(dev));
-
 	return (physio(mtstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
 int
 mtwrite(dev_t dev, struct uio *uio, int flags)
 {
-	struct mt_softc *sc;
-
-	sc = device_lookup_private(&mt_cd, MTUNIT(dev));
-
 	return (physio(mtstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
