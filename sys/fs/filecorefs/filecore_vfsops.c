@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.74 2014/02/25 18:30:10 pooka Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.75 2014/03/23 15:21:15 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.74 2014/02/25 18:30:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.75 2014/03/23 15:21:15 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -107,31 +107,28 @@ const struct vnodeopv_desc * const filecore_vnodeopv_descs[] = {
 };
 
 struct vfsops filecore_vfsops = {
-	MOUNT_FILECORE,
-	sizeof (struct filecore_args),
-	filecore_mount,
-	filecore_start,
-	filecore_unmount,
-	filecore_root,
-	(void *)eopnotsupp,		/* vfs_quotactl */
-	filecore_statvfs,
-	filecore_sync,
-	filecore_vget,
-	filecore_fhtovp,
-	filecore_vptofh,
-	filecore_init,
-	filecore_reinit,
-	filecore_done,
-	NULL,				/* filecore_mountroot */
-	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
-	vfs_stdextattrctl,
-	(void *)eopnotsupp,		/* vfs_suspendctl */
-	genfs_renamelock_enter,
-	genfs_renamelock_exit,
-	(void *)eopnotsupp,
-	filecore_vnodeopv_descs,
-	0,
-	{ NULL, NULL }
+	.vfs_name = MOUNT_FILECORE,
+	.vfs_min_mount_data = sizeof (struct filecore_args),
+	.vfs_mount = filecore_mount,
+	.vfs_start = filecore_start,
+	.vfs_unmount = filecore_unmount,
+	.vfs_root = filecore_root,
+	.vfs_quotactl = (void *)eopnotsupp,
+	.vfs_statvfs = filecore_statvfs,
+	.vfs_sync = filecore_sync,
+	.vfs_vget = filecore_vget,
+	.vfs_fhtovp = filecore_fhtovp,
+	.vfs_vptofh = filecore_vptofh,
+	.vfs_init = filecore_init,
+	.vfs_reinit = filecore_reinit,
+	.vfs_done = filecore_done,
+	.vfs_snapshot = (void *)eopnotsupp,
+	.vfs_extattrctl = vfs_stdextattrctl,
+	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_renamelock_enter = genfs_renamelock_enter,
+	.vfs_renamelock_exit = genfs_renamelock_exit,
+	.vfs_fsync = (void *)eopnotsupp,
+	.vfs_opv_descs = filecore_vnodeopv_descs
 };
 
 static const struct genfs_ops filecore_genfsops = {

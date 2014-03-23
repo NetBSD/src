@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.79 2014/02/25 18:30:08 pooka Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.80 2014/03/23 15:21:15 hannken Exp $	*/
 
 /*
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.79 2014/02/25 18:30:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.80 2014/03/23 15:21:15 hannken Exp $");
 
 #ifndef _KERNEL_OPT
 #define	NVCODA 4
@@ -101,31 +101,29 @@ const struct vnodeopv_desc * const coda_vnodeopv_descs[] = {
 };
 
 struct vfsops coda_vfsops = {
-    MOUNT_CODA,
-    256,		/* This is the pathname, unlike every other fs */
-    coda_mount,
-    coda_start,
-    coda_unmount,
-    coda_root,
-    (void *)eopnotsupp,	/* vfs_quotactl */
-    coda_nb_statvfs,
-    coda_sync,
-    coda_vget,
-    (void *)eopnotsupp,	/* vfs_fhtovp */
-    (void *)eopnotsupp,	/* vfs_vptofh */
-    coda_init,
-    NULL,		/* vfs_reinit */
-    coda_done,
-    (int (*)(void)) eopnotsupp,
-    (int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
-    vfs_stdextattrctl,
-    (void *)eopnotsupp,	/* vfs_suspendctl */
-    genfs_renamelock_enter,
-    genfs_renamelock_exit,
-	(void *)eopnotsupp,
-    coda_vnodeopv_descs,
-    0,			/* vfs_refcount */
-    { NULL, NULL },	/* vfs_list */
+	.vfs_name = MOUNT_CODA,
+	.vfs_min_mount_data = 256,
+			/* This is the pathname, unlike every other fs */
+	.vfs_mount = coda_mount,
+	.vfs_start = coda_start,
+	.vfs_unmount = coda_unmount,
+	.vfs_root = coda_root,
+	.vfs_quotactl = (void *)eopnotsupp,
+	.vfs_statvfs = coda_nb_statvfs,
+	.vfs_sync = coda_sync,
+	.vfs_vget = coda_vget,
+	.vfs_fhtovp = (void *)eopnotsupp,
+	.vfs_vptofh = (void *)eopnotsupp,
+	.vfs_init = coda_init,
+	.vfs_done = coda_done,
+	.vfs_mountroot = (void *)eopnotsupp,
+	.vfs_snapshot = (void *)eopnotsupp,
+	.vfs_extattrctl = vfs_stdextattrctl,
+	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_renamelock_enter = genfs_renamelock_enter,
+	.vfs_renamelock_exit = genfs_renamelock_exit,
+	.vfs_fsync = (void *)eopnotsupp,
+	.vfs_opv_descs = coda_vnodeopv_descs
 };
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.105 2014/02/25 18:30:13 pooka Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.106 2014/03/23 15:21:17 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.105 2014/02/25 18:30:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.106 2014/03/23 15:21:17 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -90,31 +90,28 @@ const struct vnodeopv_desc * const mfs_vnodeopv_descs[] = {
 };
 
 struct vfsops mfs_vfsops = {
-	MOUNT_MFS,
-	sizeof (struct mfs_args),
-	mfs_mount,
-	mfs_start,
-	ffs_unmount,
-	ufs_root,
-	ufs_quotactl,
-	mfs_statvfs,
-	ffs_sync,
-	ffs_vget,
-	ffs_fhtovp,
-	ffs_vptofh,
-	mfs_init,
-	mfs_reinit,
-	mfs_done,
-	NULL,
-	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
-	vfs_stdextattrctl,
-	(void *)eopnotsupp,	/* vfs_suspendctl */
-	genfs_renamelock_enter,
-	genfs_renamelock_exit,
-	(void *)eopnotsupp,
-	mfs_vnodeopv_descs,
-	0,
-	{ NULL, NULL },
+	.vfs_name = MOUNT_MFS,
+	.vfs_min_mount_data = sizeof (struct mfs_args),
+	.vfs_mount = mfs_mount,
+	.vfs_start = mfs_start,
+	.vfs_unmount = ffs_unmount,
+	.vfs_root = ufs_root,
+	.vfs_quotactl = ufs_quotactl,
+	.vfs_statvfs = mfs_statvfs,
+	.vfs_sync = ffs_sync,
+	.vfs_vget = ffs_vget,
+	.vfs_fhtovp = ffs_fhtovp,
+	.vfs_vptofh = ffs_vptofh,
+	.vfs_init = mfs_init,
+	.vfs_reinit = mfs_reinit,
+	.vfs_done = mfs_done,
+	.vfs_snapshot = (void *)eopnotsupp,
+	.vfs_extattrctl = vfs_stdextattrctl,
+	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_renamelock_enter = genfs_renamelock_enter,
+	.vfs_renamelock_exit = genfs_renamelock_exit,
+	.vfs_fsync = (void *)eopnotsupp,
+	.vfs_opv_descs = mfs_vnodeopv_descs
 };
 
 static int

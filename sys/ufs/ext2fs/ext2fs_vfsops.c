@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.178 2014/03/17 09:30:32 hannken Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.179 2014/03/23 15:21:16 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.178 2014/03/17 09:30:32 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.179 2014/03/23 15:21:16 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -121,31 +121,29 @@ const struct vnodeopv_desc * const ext2fs_vnodeopv_descs[] = {
 };
 
 struct vfsops ext2fs_vfsops = {
-	MOUNT_EXT2FS,
-	sizeof (struct ufs_args),
-	ext2fs_mount,
-	ufs_start,
-	ext2fs_unmount,
-	ufs_root,
-	ufs_quotactl,
-	ext2fs_statvfs,
-	ext2fs_sync,
-	ext2fs_vget,
-	ext2fs_fhtovp,
-	ext2fs_vptofh,
-	ext2fs_init,
-	ext2fs_reinit,
-	ext2fs_done,
-	ext2fs_mountroot,
-	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
-	vfs_stdextattrctl,
-	(void *)eopnotsupp,	/* vfs_suspendctl */
-	genfs_renamelock_enter,
-	genfs_renamelock_exit,
-	(void *)eopnotsupp,
-	ext2fs_vnodeopv_descs,
-	0,
-	{ NULL, NULL },
+	.vfs_name = MOUNT_EXT2FS,
+	.vfs_min_mount_data = sizeof (struct ufs_args),
+	.vfs_mount = ext2fs_mount,
+	.vfs_start = ufs_start,
+	.vfs_unmount = ext2fs_unmount,
+	.vfs_root = ufs_root,
+	.vfs_quotactl = ufs_quotactl,
+	.vfs_statvfs = ext2fs_statvfs,
+	.vfs_sync = ext2fs_sync,
+	.vfs_vget = ext2fs_vget,
+	.vfs_fhtovp = ext2fs_fhtovp,
+	.vfs_vptofh = ext2fs_vptofh,
+	.vfs_init = ext2fs_init,
+	.vfs_reinit = ext2fs_reinit,
+	.vfs_done = ext2fs_done,
+	.vfs_mountroot = ext2fs_mountroot,
+	.vfs_snapshot = (void *)eopnotsupp,
+	.vfs_extattrctl = vfs_stdextattrctl,
+	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_renamelock_enter = genfs_renamelock_enter,
+	.vfs_renamelock_exit = genfs_renamelock_exit,
+	.vfs_fsync = (void *)eopnotsupp,
+	.vfs_opv_descs = ext2fs_vnodeopv_descs
 };
 
 static const struct genfs_ops ext2fs_genfsops = {

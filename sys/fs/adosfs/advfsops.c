@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.68 2014/02/25 18:30:10 pooka Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.69 2014/03/23 15:21:15 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.68 2014/02/25 18:30:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.69 2014/03/23 15:21:15 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -785,31 +785,27 @@ const struct vnodeopv_desc *adosfs_vnodeopv_descs[] = {
 };
 
 struct vfsops adosfs_vfsops = {
-	MOUNT_ADOSFS,
-	sizeof (struct adosfs_args),
-	adosfs_mount,
-	adosfs_start,
-	adosfs_unmount,
-	adosfs_root,
-	(void *)eopnotsupp,		/* vfs_quotactl */
-	adosfs_statvfs,
-	adosfs_sync,
-	adosfs_vget,
-	adosfs_fhtovp,
-	adosfs_vptofh,
-	adosfs_init,
-	NULL,
-	adosfs_done,
-	NULL,				/* vfs_mountroot */
-	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
-	vfs_stdextattrctl,
-	(void *)eopnotsupp,		/* vfs_suspendctl */
-	genfs_renamelock_enter,
-	genfs_renamelock_exit,
-	(void *)eopnotsupp,
-	adosfs_vnodeopv_descs,
-	0,
-	{ NULL, NULL },
+	.vfs_name = MOUNT_ADOSFS,
+	.vfs_min_mount_data = sizeof (struct adosfs_args),
+	.vfs_mount = adosfs_mount,
+	.vfs_start = adosfs_start,
+	.vfs_unmount = adosfs_unmount,
+	.vfs_root = adosfs_root,
+	.vfs_quotactl = (void *)eopnotsupp,
+	.vfs_statvfs = adosfs_statvfs,
+	.vfs_sync = adosfs_sync,
+	.vfs_vget = adosfs_vget,
+	.vfs_fhtovp = adosfs_fhtovp,
+	.vfs_vptofh = adosfs_vptofh,
+	.vfs_init = adosfs_init,
+	.vfs_done = adosfs_done,
+	.vfs_snapshot = (void *)eopnotsupp,
+	.vfs_extattrctl = vfs_stdextattrctl,
+	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_renamelock_enter = genfs_renamelock_enter,
+	.vfs_renamelock_exit = genfs_renamelock_exit,
+	.vfs_fsync = (void *)eopnotsupp,
+	.vfs_opv_descs = adosfs_vnodeopv_descs
 };
 
 static int

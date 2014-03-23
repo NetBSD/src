@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.108 2014/03/17 09:36:34 hannken Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.109 2014/03/23 15:21:15 hannken Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.108 2014/03/17 09:36:34 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.109 2014/03/23 15:21:15 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -828,31 +828,27 @@ const struct vnodeopv_desc * const puffs_vnodeopv_descs[] = {
 };
 
 struct vfsops puffs_vfsops = {
-	MOUNT_PUFFS,
-	sizeof (struct puffs_kargs),
-	puffs_vfsop_mount,		/* mount	*/
-	puffs_vfsop_start,		/* start	*/
-	puffs_vfsop_unmount,		/* unmount	*/
-	puffs_vfsop_root,		/* root		*/
-	(void *)eopnotsupp,		/* quotactl	*/
-	puffs_vfsop_statvfs,		/* statvfs	*/
-	puffs_vfsop_sync,		/* sync		*/
-	(void *)eopnotsupp,		/* vget		*/
-	puffs_vfsop_fhtovp,		/* fhtovp	*/
-	puffs_vfsop_vptofh,		/* vptofh	*/
-	puffs_vfsop_init,		/* init		*/
-	NULL,				/* reinit	*/
-	puffs_vfsop_done,		/* done		*/
-	NULL,				/* mountroot	*/
-	puffs_vfsop_snapshot,		/* snapshot	*/
-	puffs_vfsop_extattrctl,		/* extattrctl	*/
-	(void *)eopnotsupp,		/* suspendctl	*/
-	genfs_renamelock_enter,
-	genfs_renamelock_exit,
-	(void *)eopnotsupp,
-	puffs_vnodeopv_descs,		/* vnodeops	*/
-	0,				/* refcount	*/
-	{ NULL, NULL }
+	.vfs_name = MOUNT_PUFFS,
+	.vfs_min_mount_data = sizeof (struct puffs_kargs),
+	.vfs_mount = puffs_vfsop_mount,
+	.vfs_start = puffs_vfsop_start,
+	.vfs_unmount = puffs_vfsop_unmount,
+	.vfs_root = puffs_vfsop_root,
+	.vfs_quotactl = (void *)eopnotsupp,
+	.vfs_statvfs = puffs_vfsop_statvfs,
+	.vfs_sync = puffs_vfsop_sync,
+	.vfs_vget = (void *)eopnotsupp,
+	.vfs_fhtovp = puffs_vfsop_fhtovp,
+	.vfs_vptofh = puffs_vfsop_vptofh,
+	.vfs_init = puffs_vfsop_init,
+	.vfs_done = puffs_vfsop_done,
+	.vfs_snapshot = puffs_vfsop_snapshot,
+	.vfs_extattrctl = puffs_vfsop_extattrctl,
+	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_renamelock_enter = genfs_renamelock_enter,
+	.vfs_renamelock_exit = genfs_renamelock_exit,
+	.vfs_fsync = (void *)eopnotsupp,
+	.vfs_opv_descs = puffs_vnodeopv_descs
 };
 
 static int

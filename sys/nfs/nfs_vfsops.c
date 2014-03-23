@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.225 2014/03/17 09:34:51 hannken Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.226 2014/03/23 15:21:16 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.225 2014/03/17 09:34:51 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.226 2014/03/23 15:21:16 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -104,31 +104,28 @@ const struct vnodeopv_desc * const nfs_vnodeopv_descs[] = {
 };
 
 struct vfsops nfs_vfsops = {
-	MOUNT_NFS,
-	sizeof (struct nfs_args),
-	nfs_mount,
-	nfs_start,
-	nfs_unmount,
-	nfs_root,
-	(void *)eopnotsupp,	/* vfs_quotactl */
-	nfs_statvfs,
-	nfs_sync,
-	nfs_vget,
-	nfs_fhtovp,
-	nfs_vptofh,
-	nfs_vfs_init,
-	NULL,
-	nfs_vfs_done,
-	nfs_mountroot,
-	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
-	vfs_stdextattrctl,
-	(void *)eopnotsupp,	/* vfs_suspendctl */
-	genfs_renamelock_enter,
-	genfs_renamelock_exit,
-	(void *)eopnotsupp,
-	nfs_vnodeopv_descs,
-	0,
-	{ NULL, NULL },
+	.vfs_name = MOUNT_NFS,
+	.vfs_min_mount_data = sizeof (struct nfs_args),
+	.vfs_mount = nfs_mount,
+	.vfs_start = nfs_start,
+	.vfs_unmount = nfs_unmount,
+	.vfs_root = nfs_root,
+	.vfs_quotactl = (void *)eopnotsupp,
+	.vfs_statvfs = nfs_statvfs,
+	.vfs_sync = nfs_sync,
+	.vfs_vget = nfs_vget,
+	.vfs_fhtovp = nfs_fhtovp,
+	.vfs_vptofh = nfs_vptofh,
+	.vfs_init = nfs_vfs_init,
+	.vfs_done = nfs_vfs_done,
+	.vfs_mountroot = nfs_mountroot,
+	.vfs_snapshot = (void *)eopnotsupp,
+	.vfs_extattrctl = vfs_stdextattrctl,
+	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_renamelock_enter = genfs_renamelock_enter,
+	.vfs_renamelock_exit = genfs_renamelock_exit,
+	.vfs_fsync = (void *)eopnotsupp,
+	.vfs_opv_descs = nfs_vnodeopv_descs
 };
 
 extern u_int32_t nfs_procids[NFS_NPROCS];

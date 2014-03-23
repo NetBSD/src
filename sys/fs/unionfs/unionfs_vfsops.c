@@ -519,31 +519,27 @@ const struct vnodeopv_desc * const unionfs_vnodeopv_descs[] = {
 };
 
 struct vfsops unionfs_vfsops = {
-	MOUNT_UNION,
-	sizeof (struct unionfs_args),
-	unionfs_mount,
-	unionfs_start,
-	unionfs_unmount,
-	unionfs_root,
-	(void *)eopnotsupp,		/* vfs_quotactl */
-	unionfs_statvfs,
-	unionfs_sync,
-	unionfs_vget,
-	(void *)eopnotsupp,		/* vfs_fhtovp */
-	(void *)eopnotsupp,		/* vfs_vptofh */
-	unionfs_init,
-	NULL,				/* vfs_reinit */
-	unionfs_done,
-	NULL,				/* vfs_mountroot */
-	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
-	vfs_stdextattrctl,
-	(void *)eopnotsupp,		/* vfs_suspendctl */
-	unionfs_renamelock_enter,
-	unionfs_renamelock_exit,
-	(void *)eopnotsupp,
-	unionfs_vnodeopv_descs,
-	0,				/* vfs_refcount */
-	{ NULL, NULL },
+	.vfs_name = MOUNT_UNION,
+	.vfs_min_mount_data = sizeof (struct unionfs_args),
+	.vfs_mount = unionfs_mount,
+	.vfs_start = unionfs_start,
+	.vfs_unmount = unionfs_unmount,
+	.vfs_root = unionfs_root,
+	.vfs_quotactl = (void *)eopnotsupp,
+	.vfs_statvfs = unionfs_statvfs,
+	.vfs_sync = unionfs_sync,
+	.vfs_vget = unionfs_vget,
+	.vfs_fhtovp = (void *)eopnotsupp,
+	.vfs_vptofh = (void *)eopnotsupp,
+	.vfs_init = unionfs_init,
+	.vfs_done = unionfs_done,
+	.vfs_snapshot = (void *)eopnotsupp,
+	.vfs_extattrctl = vfs_stdextattrctl,
+	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_renamelock_enter = unionfs_renamelock_enter,
+	.vfs_renamelock_exit = unionfs_renamelock_exit,
+	.vfs_fsync = (void *)eopnotsupp,
+	.vfs_opv_descs = unionfs_vnodeopv_descs
 };
 
 static int

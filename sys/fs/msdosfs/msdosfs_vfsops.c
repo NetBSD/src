@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.105 2014/03/17 09:35:59 hannken Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.106 2014/03/23 15:21:15 hannken Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.105 2014/03/17 09:35:59 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.106 2014/03/23 15:21:15 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -119,31 +119,29 @@ const struct vnodeopv_desc * const msdosfs_vnodeopv_descs[] = {
 };
 
 struct vfsops msdosfs_vfsops = {
-	MOUNT_MSDOS,
-	sizeof (struct msdosfs_args),
-	msdosfs_mount,
-	msdosfs_start,
-	msdosfs_unmount,
-	msdosfs_root,
-	(void *)eopnotsupp,		/* vfs_quotactl */
-	msdosfs_statvfs,
-	msdosfs_sync,
-	msdosfs_vget,
-	msdosfs_fhtovp,
-	msdosfs_vptofh,
-	msdosfs_init,
-	msdosfs_reinit,
-	msdosfs_done,
-	msdosfs_mountroot,
-	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
-	vfs_stdextattrctl,
-	msdosfs_suspendctl,
-	genfs_renamelock_enter,
-	genfs_renamelock_exit,
-	(void *)eopnotsupp,
-	msdosfs_vnodeopv_descs,
-	0,
-	{ NULL, NULL },
+	.vfs_name = MOUNT_MSDOS,
+	.vfs_min_mount_data = sizeof (struct msdosfs_args),
+	.vfs_mount = msdosfs_mount,
+	.vfs_start = msdosfs_start,
+	.vfs_unmount = msdosfs_unmount,
+	.vfs_root = msdosfs_root,
+	.vfs_quotactl = (void *)eopnotsupp,
+	.vfs_statvfs = msdosfs_statvfs,
+	.vfs_sync = msdosfs_sync,
+	.vfs_vget = msdosfs_vget,
+	.vfs_fhtovp = msdosfs_fhtovp,
+	.vfs_vptofh = msdosfs_vptofh,
+	.vfs_init = msdosfs_init,
+	.vfs_reinit = msdosfs_reinit,
+	.vfs_done = msdosfs_done,
+	.vfs_mountroot = msdosfs_mountroot,
+	.vfs_snapshot = (void *)eopnotsupp,
+	.vfs_extattrctl = vfs_stdextattrctl,
+	.vfs_suspendctl = msdosfs_suspendctl,
+	.vfs_renamelock_enter = genfs_renamelock_enter,
+	.vfs_renamelock_exit = genfs_renamelock_exit,
+	.vfs_fsync = (void *)eopnotsupp,
+	.vfs_opv_descs = msdosfs_vnodeopv_descs
 };
 
 static int

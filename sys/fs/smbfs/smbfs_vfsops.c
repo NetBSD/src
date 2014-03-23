@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.98 2014/03/17 09:37:09 hannken Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.99 2014/03/23 15:21:15 hannken Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.98 2014/03/17 09:37:09 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.99 2014/03/23 15:21:15 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,31 +78,29 @@ static const struct vnodeopv_desc *smbfs_vnodeopv_descs[] = {
 };
 
 struct vfsops smbfs_vfsops = {
-	MOUNT_SMBFS,
-	sizeof (struct smbfs_args),
-	smbfs_mount,
-	smbfs_start,
-	smbfs_unmount,
-	smbfs_root,
-	(void *)eopnotsupp,	/* vfs_quotactl */
-	smbfs_statvfs,
-	smbfs_sync,
-	smbfs_vget,
-	(void *)eopnotsupp,	/* vfs_fhtovp */
-	(void *)eopnotsupp,	/* vfs_vptofh */
-	smbfs_init,
-	smbfs_reinit,
-	smbfs_done,
-	(int (*) (void)) eopnotsupp, /* mountroot */
-	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
-	vfs_stdextattrctl,
-	(void *)eopnotsupp,	/* vfs_suspendctl */
-	genfs_renamelock_enter,
-	genfs_renamelock_exit,
-	(void *)eopnotsupp,
-	smbfs_vnodeopv_descs,
-	0,			/* vfs_refcount */
-	{ NULL, NULL },
+	.vfs_name = MOUNT_SMBFS,
+	.vfs_min_mount_data = sizeof (struct smbfs_args),
+	.vfs_mount = smbfs_mount,
+	.vfs_start = smbfs_start,
+	.vfs_unmount = smbfs_unmount,
+	.vfs_root = smbfs_root,
+	.vfs_quotactl = (void *)eopnotsupp,
+	.vfs_statvfs = smbfs_statvfs,
+	.vfs_sync = smbfs_sync,
+	.vfs_vget = smbfs_vget,
+	.vfs_fhtovp = (void *)eopnotsupp,
+	.vfs_vptofh = (void *)eopnotsupp,
+	.vfs_init = smbfs_init,
+	.vfs_reinit = smbfs_reinit,
+	.vfs_done = smbfs_done,
+	.vfs_mountroot = (void *)eopnotsupp,
+	.vfs_snapshot = (void *)eopnotsupp,
+	.vfs_extattrctl = vfs_stdextattrctl,
+	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_renamelock_enter = genfs_renamelock_enter,
+	.vfs_renamelock_exit = genfs_renamelock_exit,
+	.vfs_fsync = (void *)eopnotsupp,
+	.vfs_opv_descs = smbfs_vnodeopv_descs
 };
 
 static int
