@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_lfs.c,v 1.8 2014/03/23 05:26:23 dholland Exp $	*/
+/*	$NetBSD: resize_lfs.c,v 1.9 2014/03/23 05:38:14 dholland Exp $	*/
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,13 +146,14 @@ main(int argc, char **argv)
 	 * (XXX make the kernel able to do this instead?)
 	 */
 	for (i = fs->lfs_nseg - 1; i >= newnsegs; --i) {
-		char cmd[80];
+		char cmd[128];
 
 		/* If it's already empty, don't call the cleaner */
 		if (fcntl(rootfd, LFCNINVAL, &i) == 0)
 			continue;
 
-		sprintf(cmd, "/libexec/lfs_cleanerd -q -i %d %s", i, fsname);
+		snprintf(cmd, sizeof(cmd), "/libexec/lfs_cleanerd -q -i %d %s",
+			 i, fsname);
 		if (system(cmd) != 0)
 			err(1, "invalidating segment %d", i);
 	}
