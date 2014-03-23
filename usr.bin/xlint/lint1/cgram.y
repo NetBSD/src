@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.58 2014/02/18 22:01:36 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.59 2014/03/23 04:58:16 dholland Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.58 2014/02/18 22:01:36 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.59 2014/03/23 04:58:16 dholland Exp $");
 #endif
 
 #include <stdlib.h>
@@ -575,7 +575,7 @@ struct_spec:
 		 * a new tag if "a" is not declared at current level
 		 *
 		 * yychar is valid because otherwise the parser would
-		 * not been able to deceide if he must shift or reduce
+		 * not been able to decide if he must shift or reduce
 		 */
 		$$ = mktag($2, $1, 0, yychar == T_SEMI);
 	  }
