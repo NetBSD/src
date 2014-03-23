@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_lfs.c,v 1.7 2013/06/19 01:07:55 christos Exp $	*/
+/*	$NetBSD: resize_lfs.c,v 1.8 2014/03/23 05:26:23 dholland Exp $	*/
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -60,6 +60,7 @@ int
 main(int argc, char **argv)
 {
 	char *rdev, *fsname, buf[LFS_SBPAD];
+	size_t rdevlen;
 	daddr_t newsize, newnsegs;
 	int devfd, rootfd;
 	int ch, i, verbose;
@@ -95,8 +96,9 @@ main(int argc, char **argv)
 	 */
 	if (statvfs(fsname, &vfs) < 0)
 		err(1, "%s", fsname);
-	rdev = (char *)malloc(strlen(vfs.f_mntfromname + 2));
-	sprintf(rdev, "/dev/r%s", vfs.f_mntfromname + 5);
+	rdevlen = strlen(vfs.f_mntfromname) + 2;
+	rdev = malloc(rdevlen);
+	snprintf(rdev, rdevlen, "/dev/r%s", vfs.f_mntfromname + 5);
 	devfd = open(rdev, O_RDONLY);
 	if (devfd < 0)
 		err(1, "open raw device");
