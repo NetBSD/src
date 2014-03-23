@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.92 2014/02/25 18:30:11 pooka Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.93 2014/03/23 15:21:16 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.92 2014/02/25 18:30:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.93 2014/03/23 15:21:16 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -224,31 +224,28 @@ const struct vnodeopv_desc * const kernfs_vnodeopv_descs[] = {
 };
 
 struct vfsops kernfs_vfsops = {
-	MOUNT_KERNFS,
-	0,
-	kernfs_mount,
-	kernfs_start,
-	kernfs_unmount,
-	kernfs_root,
-	(void *)eopnotsupp,		/* vfs_quotactl */
-	genfs_statvfs,
-	kernfs_sync,
-	kernfs_vget,
-	(void *)eopnotsupp,		/* vfs_fhtovp */
-	(void *)eopnotsupp,		/* vfs_vptofh */
-	kernfs_init,
-	kernfs_reinit,
-	kernfs_done,
-	NULL,				/* vfs_mountroot */
-	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
-	vfs_stdextattrctl,
-	(void *)eopnotsupp,		/* vfs_suspendctl */
-	genfs_renamelock_enter,
-	genfs_renamelock_exit,
-	(void *)eopnotsupp,
-	kernfs_vnodeopv_descs,
-	0,
-	{ NULL, NULL },
+	.vfs_name = MOUNT_KERNFS,
+	.vfs_min_mount_data = 0,
+	.vfs_mount = kernfs_mount,
+	.vfs_start = kernfs_start,
+	.vfs_unmount = kernfs_unmount,
+	.vfs_root = kernfs_root,
+	.vfs_quotactl = (void *)eopnotsupp,
+	.vfs_statvfs = genfs_statvfs,
+	.vfs_sync = kernfs_sync,
+	.vfs_vget = kernfs_vget,
+	.vfs_fhtovp = (void *)eopnotsupp,
+	.vfs_vptofh = (void *)eopnotsupp,
+	.vfs_init = kernfs_init,
+	.vfs_reinit = kernfs_reinit,
+	.vfs_done = kernfs_done,
+	.vfs_snapshot = (void *)eopnotsupp,
+	.vfs_extattrctl = vfs_stdextattrctl,
+	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_renamelock_enter = genfs_renamelock_enter,
+	.vfs_renamelock_exit = genfs_renamelock_exit,
+	.vfs_fsync = (void *)eopnotsupp,
+	.vfs_opv_descs = kernfs_vnodeopv_descs
 };
 
 static int

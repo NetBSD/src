@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.46 2014/03/19 18:09:00 christos Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.47 2014/03/23 15:21:15 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.46 2014/03/19 18:09:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.47 2014/03/23 15:21:15 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -358,31 +358,28 @@ const struct vnodeopv_desc * const ptyfs_vnodeopv_descs[] = {
 };
 
 struct vfsops ptyfs_vfsops = {
-	MOUNT_PTYFS,
-	sizeof (struct ptyfs_args),
-	ptyfs_mount,
-	ptyfs_start,
-	ptyfs_unmount,
-	ptyfs_root,
-	(void *)eopnotsupp,		/* vfs_quotactl */
-	genfs_statvfs,
-	ptyfs_sync,
-	ptyfs_vget,
-	(void *)eopnotsupp,		/* vfs_fhtovp */
-	(void *)eopnotsupp,		/* vfs_vptofp */
-	ptyfs_init,
-	ptyfs_reinit,
-	ptyfs_done,
-	NULL,				/* vfs_mountroot */
-	(void *)eopnotsupp,
-	(void *)eopnotsupp,
-	(void *)eopnotsupp,		/* vfs_suspendctl */
-	genfs_renamelock_enter,
-	genfs_renamelock_exit,
-	(void *)eopnotsupp,
-	ptyfs_vnodeopv_descs,
-	0,
-	{ NULL, NULL },
+	.vfs_name = MOUNT_PTYFS,
+	.vfs_min_mount_data = sizeof (struct ptyfs_args),
+	.vfs_mount = ptyfs_mount,
+	.vfs_start = ptyfs_start,
+	.vfs_unmount = ptyfs_unmount,
+	.vfs_root = ptyfs_root,
+	.vfs_quotactl = (void *)eopnotsupp,
+	.vfs_statvfs = genfs_statvfs,
+	.vfs_sync = ptyfs_sync,
+	.vfs_vget = ptyfs_vget,
+	.vfs_fhtovp = (void *)eopnotsupp,
+	.vfs_vptofh = (void *)eopnotsupp,
+	.vfs_init = ptyfs_init,
+	.vfs_reinit = ptyfs_reinit,
+	.vfs_done = ptyfs_done,
+	.vfs_snapshot = (void *)eopnotsupp,
+	.vfs_extattrctl = (void *)eopnotsupp,
+	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_renamelock_enter = genfs_renamelock_enter,
+	.vfs_renamelock_exit = genfs_renamelock_exit,
+	.vfs_fsync = (void *)eopnotsupp,
+	.vfs_opv_descs = ptyfs_vnodeopv_descs
 };
 
 static int
