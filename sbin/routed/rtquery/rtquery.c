@@ -1,4 +1,4 @@
-/*	$NetBSD: rtquery.c,v 1.24 2013/10/19 00:57:41 christos Exp $	*/
+/*	$NetBSD: rtquery.c,v 1.25 2014/03/23 05:36:58 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -63,7 +63,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
  The Regents of the University of California.  All rights reserved.");
 #ifdef __NetBSD__
-__RCSID("$NetBSD: rtquery.c,v 1.24 2013/10/19 00:57:41 christos Exp $");
+__RCSID("$NetBSD: rtquery.c,v 1.25 2014/03/23 05:36:58 dholland Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -552,11 +552,11 @@ static char *
 qstring(u_char *s, int len)
 {
 	static char buf[8*20+1];
-	char *p;
+	size_t bufpos;
 	u_char *s2, c;
 
 
-	for (p = buf; len != 0 && p < &buf[sizeof(buf)-1]; len--) {
+	for (bufpos = 0; len != 0 && bufpos < sizeof(buf) - 1; len--) {
 		c = *s++;
 		if (c == '\0') {
 			for (s2 = s+1; s2 < &s[len]; s2++) {
@@ -568,33 +568,38 @@ qstring(u_char *s, int len)
 		}
 
 		if (c >= ' ' && c < 0x7f && c != '\\') {
-			*p++ = c;
+			buf[bufpos++] = c;
 			continue;
 		}
-		*p++ = '\\';
+		if (bufpos >= sizeof(buf) - 2) {
+			/* too long */
+			break;
+		}
+		buf[bufpos++] = '\\';
 		switch (c) {
 		case '\\':
-			*p++ = '\\';
+			buf[bufpos++] = '\\';
 			break;
 		case '\n':
-			*p++= 'n';
+			buf[bufpos++] = 'n';
 			break;
 		case '\r':
-			*p++= 'r';
+			buf[bufpos++] = 'r';
 			break;
 		case '\t':
-			*p++ = 't';
+			buf[bufpos++] = 't';
 			break;
 		case '\b':
-			*p++ = 'b';
+			buf[bufpos++] = 'b';
 			break;
 		default:
-			p += sprintf(p,"%o",c);
+			bufpos += snprintf(buf + bufpos, sizeof(buf) - bufpos,
+					   "%o", c);
 			break;
 		}
 	}
 exit:
-	*p = '\0';
+	buf[bufpos] = '\0';
 	return buf;
 }
 
@@ -614,7 +619,7 @@ rip_input(struct sockaddr_in *from,
 	MD5_CTX md5_ctx;
 	u_char md5_authed = 0;
 	u_int mask, dmask;
-	char *sp;
+	size_t spos;
 	int i;
 	struct hostent *hp;
 	struct netent *np;
@@ -665,9 +670,11 @@ rip_input(struct sockaddr_in *from,
 			mask = ntohl(n->n_mask);
 			dmask = mask & -mask;
 			if (mask != 0) {
-				sp = &net_buf[strlen(net_buf)];
+				spos = strlen(net_buf);
 				if (IMSG.rip_vers == RIPv1) {
-					(void)sprintf(sp," mask=%#x ? ",mask);
+					(void)snprintf(net_buf + spos,
+						       sizeof(net_buf) - spos,
+						       " mask=%#x ? ", mask);
 					mask = 0;
 				} else if (mask + dmask == 0) {
 					for (i = 0;
@@ -675,9 +682,13 @@ rip_input(struct sockaddr_in *from,
 					      && ((1<<i)&mask) == 0);
 					     i++)
 						continue;
-					(void)sprintf(sp, "/%d",32-i);
+					(void)snprintf(net_buf + spos,
+						      sizeof(net_buf) - spos,
+						      "/%d", 32-i);
 				} else {
-					(void)sprintf(sp," (mask %#x)", mask);
+					(void)snprintf(net_buf + spos,
+						       sizeof(net_buf) - spos,
+						       " (mask %#x)", mask);
 				}
 			}
 
@@ -763,7 +774,8 @@ rip_input(struct sockaddr_in *from,
 			continue;
 
 		} else {
-			(void)sprintf(net_buf, "(af %#x) %d.%d.%d.%d",
+			(void)snprintf(net_buf, sizeof(net_buf),
+				      "(af %#x) %d.%d.%d.%d",
 				      ntohs(n->n_family),
 				      (u_char)(n->n_dst >> 24),
 				      (u_char)(n->n_dst >> 16),
