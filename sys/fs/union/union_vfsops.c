@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.70 2014/02/25 18:30:11 pooka Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.71 2014/03/23 15:21:16 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.70 2014/02/25 18:30:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.71 2014/03/23 15:21:16 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -506,31 +506,28 @@ const struct vnodeopv_desc * const union_vnodeopv_descs[] = {
 };
 
 struct vfsops union_vfsops = {
-	MOUNT_UNION,
-	sizeof (struct union_args),
-	union_mount,
-	union_start,
-	union_unmount,
-	union_root,
-	(void *)eopnotsupp,		/* vfs_quotactl */
-	union_statvfs,
-	union_sync,
-	union_vget,
-	(void *)eopnotsupp,		/* vfs_fhtovp */
-	(void *)eopnotsupp,		/* vfs_vptofh */
-	union_init,
-	union_reinit,
-	union_done,
-	NULL,				/* vfs_mountroot */
-	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
-	vfs_stdextattrctl,
-	(void *)eopnotsupp,		/* vfs_suspendctl */
-	union_renamelock_enter,
-	union_renamelock_exit,
-	(void *)eopnotsupp,
-	union_vnodeopv_descs,
-	0,				/* vfs_refcount */
-	{ NULL, NULL },
+	.vfs_name = MOUNT_UNION,
+	.vfs_min_mount_data = sizeof (struct union_args),
+	.vfs_mount = union_mount,
+	.vfs_start = union_start,
+	.vfs_unmount = union_unmount,
+	.vfs_root = union_root,
+	.vfs_quotactl = (void *)eopnotsupp,
+	.vfs_statvfs = union_statvfs,
+	.vfs_sync = union_sync,
+	.vfs_vget = union_vget,
+	.vfs_fhtovp = (void *)eopnotsupp,
+	.vfs_vptofh = (void *)eopnotsupp,
+	.vfs_init = union_init,
+	.vfs_reinit = union_reinit,
+	.vfs_done = union_done,
+	.vfs_snapshot = (void *)eopnotsupp,
+	.vfs_extattrctl = vfs_stdextattrctl,
+	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_renamelock_enter = union_renamelock_enter,
+	.vfs_renamelock_exit = union_renamelock_exit,
+	.vfs_fsync = (void *)eopnotsupp,
+	.vfs_opv_descs = union_vnodeopv_descs
 };
 
 static int

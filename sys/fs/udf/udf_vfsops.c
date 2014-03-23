@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.65 2014/02/25 18:30:11 pooka Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.66 2014/03/23 15:21:16 hannken Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.65 2014/02/25 18:30:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.66 2014/03/23 15:21:16 hannken Exp $");
 #endif /* not lint */
 
 
@@ -101,31 +101,29 @@ const struct vnodeopv_desc * const udf_vnodeopv_descs[] = {
 
 /* vfsops descriptor linked in as anchor point for the filingsystem */
 struct vfsops udf_vfsops = {
-	MOUNT_UDF,			/* vfs_name */
-	sizeof (struct udf_args),
-	udf_mount,
-	udf_start,
-	udf_unmount,
-	udf_root,
-	(void *)eopnotsupp,		/* vfs_quotactl */
-	udf_statvfs,
-	udf_sync,
-	udf_vget,
-	udf_fhtovp,
-	udf_vptofh,
-	udf_init,
-	udf_reinit,
-	udf_done,
-	udf_mountroot,
-	udf_snapshot,
-	vfs_stdextattrctl,
-	(void *)eopnotsupp,		/* vfs_suspendctl */
-	genfs_renamelock_enter,
-	genfs_renamelock_exit,
-	(void *)eopnotsupp,
-	udf_vnodeopv_descs,
-	0, /* int vfs_refcount   */
-	{ NULL, NULL, }, /* LIST_ENTRY(vfsops) */
+	.vfs_name = MOUNT_UDF,
+	.vfs_min_mount_data = sizeof (struct udf_args),
+	.vfs_mount = udf_mount,
+	.vfs_start = udf_start,
+	.vfs_unmount = udf_unmount,
+	.vfs_root = udf_root,
+	.vfs_quotactl = (void *)eopnotsupp,
+	.vfs_statvfs = udf_statvfs,
+	.vfs_sync = udf_sync,
+	.vfs_vget = udf_vget,
+	.vfs_fhtovp = udf_fhtovp,
+	.vfs_vptofh = udf_vptofh,
+	.vfs_init = udf_init,
+	.vfs_reinit = udf_reinit,
+	.vfs_done = udf_done,
+	.vfs_mountroot = udf_mountroot,
+	.vfs_snapshot = udf_snapshot,
+	.vfs_extattrctl = vfs_stdextattrctl,
+	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_renamelock_enter = genfs_renamelock_enter,
+	.vfs_renamelock_exit = genfs_renamelock_exit,
+	.vfs_fsync = (void *)eopnotsupp,
+	.vfs_opv_descs = udf_vnodeopv_descs
 };
 
 /* --------------------------------------------------------------------- */

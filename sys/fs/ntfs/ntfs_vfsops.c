@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.92 2014/02/25 18:30:10 pooka Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.93 2014/03/23 15:21:15 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.92 2014/02/25 18:30:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.93 2014/03/23 15:21:15 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -858,31 +858,29 @@ const struct vnodeopv_desc * const ntfs_vnodeopv_descs[] = {
 };
 
 struct vfsops ntfs_vfsops = {
-	MOUNT_NTFS,
-	sizeof (struct ntfs_args),
-	ntfs_mount,
-	ntfs_start,
-	ntfs_unmount,
-	ntfs_root,
-	(void *)eopnotsupp,	/* vfs_quotactl */
-	ntfs_statvfs,
-	ntfs_sync,
-	ntfs_vget,
-	ntfs_fhtovp,
-	ntfs_vptofh,
-	ntfs_init,
-	ntfs_reinit,
-	ntfs_done,
-	ntfs_mountroot,
-	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
-	vfs_stdextattrctl,
-	(void *)eopnotsupp,		/* vfs_suspendctl */
-	genfs_renamelock_enter,
-	genfs_renamelock_exit,
-	(void *)eopnotsupp,
-	ntfs_vnodeopv_descs,
-	0,
-	{ NULL, NULL },
+	.vfs_name = MOUNT_NTFS,
+	.vfs_min_mount_data = sizeof (struct ntfs_args),
+	.vfs_mount = ntfs_mount,
+	.vfs_start = ntfs_start,
+	.vfs_unmount = ntfs_unmount,
+	.vfs_root = ntfs_root,
+	.vfs_quotactl = (void *)eopnotsupp,
+	.vfs_statvfs = ntfs_statvfs,
+	.vfs_sync = ntfs_sync,
+	.vfs_vget = ntfs_vget,
+	.vfs_fhtovp = ntfs_fhtovp,
+	.vfs_vptofh = ntfs_vptofh,
+	.vfs_init = ntfs_init,
+	.vfs_reinit = ntfs_reinit,
+	.vfs_done = ntfs_done,
+	.vfs_mountroot = ntfs_mountroot,
+	.vfs_snapshot = (void *)eopnotsupp,
+	.vfs_extattrctl = vfs_stdextattrctl,
+	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_renamelock_enter = genfs_renamelock_enter,
+	.vfs_renamelock_exit = genfs_renamelock_exit,
+	.vfs_fsync = (void *)eopnotsupp,
+	.vfs_opv_descs = ntfs_vnodeopv_descs
 };
 
 static int

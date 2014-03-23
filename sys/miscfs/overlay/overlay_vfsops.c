@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.59 2014/02/25 18:30:11 pooka Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.60 2014/03/23 15:21:16 hannken Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.59 2014/02/25 18:30:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.60 2014/03/23 15:21:16 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -249,31 +249,27 @@ const struct vnodeopv_desc * const ov_vnodeopv_descs[] = {
 };
 
 struct vfsops overlay_vfsops = {
-	MOUNT_OVERLAY,
-	sizeof (struct overlay_args),
-	ov_mount,
-	layerfs_start,
-	ov_unmount,
-	layerfs_root,
-	layerfs_quotactl,
-	layerfs_statvfs,
-	layerfs_sync,
-	layerfs_vget,
-	layerfs_fhtovp,
-	layerfs_vptofh,
-	layerfs_init,
-	NULL,
-	layerfs_done,
-	NULL,				/* vfs_mountroot */
-	layerfs_snapshot,
-	vfs_stdextattrctl,
-	(void *)eopnotsupp,		/* vfs_suspendctl */
-	layerfs_renamelock_enter,
-	layerfs_renamelock_exit,
-	(void *)eopnotsupp,
-	ov_vnodeopv_descs,
-	0,
-	{ NULL, NULL },
+	.vfs_name = MOUNT_OVERLAY,
+	.vfs_min_mount_data = sizeof (struct overlay_args),
+	.vfs_mount = ov_mount,
+	.vfs_start = layerfs_start,
+	.vfs_unmount = ov_unmount,
+	.vfs_root = layerfs_root,
+	.vfs_quotactl = layerfs_quotactl,
+	.vfs_statvfs = layerfs_statvfs,
+	.vfs_sync = layerfs_sync,
+	.vfs_vget = layerfs_vget,
+	.vfs_fhtovp = layerfs_fhtovp,
+	.vfs_vptofh = layerfs_vptofh,
+	.vfs_init = layerfs_init,
+	.vfs_done = layerfs_done,
+	.vfs_snapshot = layerfs_snapshot,
+	.vfs_extattrctl = vfs_stdextattrctl,
+	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_renamelock_enter = layerfs_renamelock_enter,
+	.vfs_renamelock_exit = layerfs_renamelock_exit,
+	.vfs_fsync = (void *)eopnotsupp,
+	.vfs_opv_descs = ov_vnodeopv_descs
 };
 
 static int
