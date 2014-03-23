@@ -25,13 +25,14 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: n_exp2f.c,v 1.1 2014/03/06 10:55:57 martin Exp $");
+__RCSID("$NetBSD: n_exp2f.c,v 1.2 2014/03/23 15:26:47 martin Exp $");
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: src/lib/msun/src/s_exp2f.c,v 1.9 2008/02/22 02:27:34 das Exp $");
 #endif
 
 #include <stdint.h>
 #include <float.h>
+#include <string.h>
 
 #include "math.h"
 
@@ -99,10 +100,10 @@ exp2f(float x)
 	double tv, twopk, u, z;
 	float t;
 	uint32_t hx, ix, i0;
-	int32_t k;
+	int32_t k, temp;
 
 	/* Filter out exceptional cases. */
-	hx = *((uint32_t*)&x);
+	memcpy(&hx, &x, sizeof(hx));
 	ix = hx & 0x7fffffff;		/* high word of |x| */
 	if(ix >= 0x43000000) {			/* |x| >= 128 */
 		if(x >= 0x1.0p7f)
@@ -114,15 +115,16 @@ exp2f(float x)
 	}
 
 	/* Reduce x, computing z, i0, and k. */
-	*((volatile float*)&t) = x + redux;
-	i0 = *((uint32_t*)&t);
+	i0 = x + redux;
+	memcpy(&t, &i0, sizeof(t));
 	i0 += TBLSIZE / 2;
 	k = (i0 >> TBLBITS) << 20;
 	i0 &= TBLSIZE - 1;
 	t -= redux;
 	z = x - t;
-	((uint32_t*)&twopk)[0] = 0x3ff00000+k;
-	((uint32_t*)&twopk)[1] = 0;
+	temp = 0x3ff00000+k;
+	twopk = 0.0;
+	memcpy(&twopk, &temp, sizeof(temp));
 
 	/* Compute r = exp2(y) = exp2ft[i0] * p(z). */
 	tv = exp2ft[i0];
