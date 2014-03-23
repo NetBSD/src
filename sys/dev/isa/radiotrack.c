@@ -1,4 +1,4 @@
-/* $NetBSD: radiotrack.c,v 1.19 2012/10/27 17:18:25 chs Exp $ */
+/* $NetBSD: radiotrack.c,v 1.20 2014/03/23 02:59:19 christos Exp $ */
 /* $OpenBSD: radiotrack.c,v 1.1 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radiotrack.c,v 1.3 2001/10/18 16:51:36 pva Exp $ */
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radiotrack.c,v 1.19 2012/10/27 17:18:25 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radiotrack.c,v 1.20 2014/03/23 02:59:19 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -334,10 +334,9 @@ rt_unconv_vol(u_int8_t vol)
 int
 rt_find(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
+#ifdef notdef
 	struct rt_softc sc;
-#if 0
 	u_int i, scanres = 0;
-#endif
 
 	sc.lm.iot = iot;
 	sc.lm.ioh = ioh;
@@ -359,14 +358,14 @@ rt_find(bus_space_tag_t iot, bus_space_handle_t ioh)
 	 * Scan whole FM range. If there is a card it'll
 	 * respond on some frequency.
 	 */
-	return 0;
-#if 0
 	for (i = MIN_FM_FREQ; !scanres && i < MAX_FM_FREQ; i += 10) {
 		rt_set_freq(&sc, i);
 		scanres += rt_state(iot, ioh);
 	}
 
 	return scanres;
+#else
+	return 0;
 #endif
 }
 
