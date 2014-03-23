@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.57 2014/02/06 16:18:38 hannken Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.58 2014/03/23 15:21:16 hannken Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.57 2014/02/06 16:18:38 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.58 2014/03/23 15:21:16 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -393,31 +393,27 @@ const struct vnodeopv_desc * const tmpfs_vnodeopv_descs[] = {
 };
 
 struct vfsops tmpfs_vfsops = {
-	MOUNT_TMPFS,			/* vfs_name */
-	sizeof (struct tmpfs_args),
-	tmpfs_mount,			/* vfs_mount */
-	tmpfs_start,			/* vfs_start */
-	tmpfs_unmount,			/* vfs_unmount */
-	tmpfs_root,			/* vfs_root */
-	(void *)eopnotsupp,		/* vfs_quotactl */
-	tmpfs_statvfs,			/* vfs_statvfs */
-	tmpfs_sync,			/* vfs_sync */
-	tmpfs_vget,			/* vfs_vget */
-	tmpfs_fhtovp,			/* vfs_fhtovp */
-	tmpfs_vptofh,			/* vfs_vptofh */
-	tmpfs_init,			/* vfs_init */
-	NULL,				/* vfs_reinit */
-	tmpfs_done,			/* vfs_done */
-	NULL,				/* vfs_mountroot */
-	tmpfs_snapshot,			/* vfs_snapshot */
-	vfs_stdextattrctl,		/* vfs_extattrctl */
-	(void *)eopnotsupp,		/* vfs_suspendctl */
-	genfs_renamelock_enter,
-	genfs_renamelock_exit,
-	(void *)eopnotsupp,
-	tmpfs_vnodeopv_descs,
-	0,				/* vfs_refcount */
-	{ NULL, NULL },
+	.vfs_name = MOUNT_TMPFS,
+	.vfs_min_mount_data = sizeof (struct tmpfs_args),
+	.vfs_mount = tmpfs_mount,
+	.vfs_start = tmpfs_start,
+	.vfs_unmount = tmpfs_unmount,
+	.vfs_root = tmpfs_root,
+	.vfs_quotactl = (void *)eopnotsupp,
+	.vfs_statvfs = tmpfs_statvfs,
+	.vfs_sync = tmpfs_sync,
+	.vfs_vget = tmpfs_vget,
+	.vfs_fhtovp = tmpfs_fhtovp,
+	.vfs_vptofh = tmpfs_vptofh,
+	.vfs_init = tmpfs_init,
+	.vfs_done = tmpfs_done,
+	.vfs_snapshot = tmpfs_snapshot,
+	.vfs_extattrctl = vfs_stdextattrctl,
+	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_renamelock_enter = genfs_renamelock_enter,
+	.vfs_renamelock_exit = genfs_renamelock_exit,
+	.vfs_fsync = (void *)eopnotsupp,
+	.vfs_opv_descs = tmpfs_vnodeopv_descs
 };
 
 static int
