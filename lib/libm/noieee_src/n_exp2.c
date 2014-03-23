@@ -25,13 +25,14 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: n_exp2.c,v 1.2 2014/03/12 19:42:18 martin Exp $");
+__RCSID("$NetBSD: n_exp2.c,v 1.3 2014/03/23 15:26:47 martin Exp $");
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: src/lib/msun/src/s_exp2.c,v 1.7 2008/02/22 02:27:34 das Exp $");
 #endif
 
 #include <stdint.h>
 #include <float.h>
+#include <string.h>
 
 #include "math.h"
 
@@ -344,11 +345,11 @@ double
 exp2(double x)
 {
 	double r, t, twopk, z;
-	uint32_t hx, ix, i0;
+	uint32_t hx, ix, i0, temp;
 	int k, big;
 
 	/* Filter out exceptional cases. */
-	hx = ((uint32_t*)&x)[0];
+	memcpy(&hx, &x, sizeof(hx));
 	ix = hx & 0x7fffffff;		/* high word of |x| */
 	if(ix >= 0x40900000) {			/* |x| >= 1024 */
 		if(x >= 0x1.0p10)
@@ -373,11 +374,13 @@ exp2(double x)
 	z -= tbl[i0 + 1];	/* eps[i0]   */
 	big = k >= -1021 << 20;
 	if (big) {
-		((uint32_t*)&twopk)[0] = 0x3ff00000+k;
-		((uint32_t*)&twopk)[1] = 0;
+		temp = 0x3ff00000+k;
+		twopk = 0.0;
+		memcpy(&twopk, &temp, sizeof(temp));
 	} else {
-		((uint32_t*)&twopk)[0] = 0x3ff00000+k + (1000 << 20);
-		((uint32_t*)&twopk)[1] = 0;
+		temp =  0x3ff00000+k + (1000 << 20);
+		twopk = 0.0;
+		memcpy(&twopk, &temp, sizeof(temp));
 	}
 	r = t + t * z * (P1 + z * (P2 + z * (P3 + z * (P4 + z * P5))));
 
