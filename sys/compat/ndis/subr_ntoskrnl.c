@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_ntoskrnl.c,v 1.22 2012/02/03 23:39:59 christos Exp $	*/
+/*	$NetBSD: subr_ntoskrnl.c,v 1.23 2014/03/23 09:31:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ntoskrnl.c,v 1.43.2.5 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_ntoskrnl.c,v 1.22 2012/02/03 23:39:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ntoskrnl.c,v 1.23 2014/03/23 09:31:15 christos Exp $");
 #endif
 
 #ifdef __FreeBSD__
@@ -1001,9 +1001,9 @@ static void
 ntoskrnl_wakeup(void *arg)
 {
 	nt_dispatch_header	*obj;
-	wait_block		*w;
 	list_entry		*e;
 #ifdef __FreeBSD__
+	wait_block		*w;
 	struct thread		*td;
 #endif
 
@@ -1012,9 +1012,9 @@ ntoskrnl_wakeup(void *arg)
 	obj->dh_sigstate = TRUE;
 	e = obj->dh_waitlisthead.nle_flink;
 	while (e != &obj->dh_waitlisthead) {
-		w = (wait_block *)e;
 /* TODO: is this correct? */		
 #ifdef __FreeBSD__
+		w = (wait_block *)e;
 		td = w->wb_kthread;
 		ndis_thresume(td->td_proc);
 #else
