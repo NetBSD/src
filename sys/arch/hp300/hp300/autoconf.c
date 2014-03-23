@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.102 2013/01/11 12:03:04 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.103 2014/03/23 06:03:38 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.102 2013/01/11 12:03:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.103 2014/03/23 06:03:38 dholland Exp $");
 
 #include "dvbox.h"
 #include "gbox.h"
@@ -608,7 +608,7 @@ setbootdev(void)
 	 *	4 == sd
 	 *	6 == le
 	 *
-	 * Allare bdevsw major numbers, except for le, which
+	 * All are bdevsw major numbers, except for le, which
 	 * is just special.
 	 *
 	 * We can't mount root on a tape, so we ignore those.
