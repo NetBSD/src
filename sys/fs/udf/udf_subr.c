@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.123 2014/01/23 10:13:56 hannken Exp $ */
+/* $NetBSD: udf_subr.c,v 1.124 2014/03/23 09:34:42 christos Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.123 2014/01/23 10:13:56 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.124 2014/03/23 09:34:42 christos Exp $");
 #endif /* not lint */
 
 
@@ -2471,6 +2471,7 @@ udf_extattr_insert_internal(struct udf_mount *ump, union dscrptr *dscr,
 
 	/* can't append already written to file descriptors yet */
 	assert(l_ad == 0);
+	__USE(l_ad);
 
 	/* should have a header! */
 	extattrhdr = (struct extattrhdr_desc *) data;
@@ -6512,6 +6513,7 @@ udf_read_internal(struct udf_node *node, uint8_t *blob)
 	addr_type = icbflags & UDF_ICB_TAG_FLAGS_ALLOC_MASK;
 
 	assert(addr_type == UDF_ICB_INTERN_ALLOC);
+	__USE(addr_type);
 	assert(inflen < sector_size);
 
 	/* copy out info */
@@ -6550,7 +6552,9 @@ udf_write_internal(struct udf_node *node, uint8_t *blob)
 	addr_type = icbflags & UDF_ICB_TAG_FLAGS_ALLOC_MASK;
 
 	assert(addr_type == UDF_ICB_INTERN_ALLOC);
+	__USE(addr_type);
 	assert(inflen < sector_size);
+	__USE(sector_size);
 
 	/* copy in blob */
 	/* memset(pos, 0, inflen); */

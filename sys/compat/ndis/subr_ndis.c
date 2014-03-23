@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_ndis.c,v 1.26 2012/02/03 23:38:07 christos Exp $	*/
+/*	$NetBSD: subr_ndis.c,v 1.27 2014/03/23 09:31:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ndis.c,v 1.67.2.7 2005/03/31 21:50:11 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.26 2012/02/03 23:38:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.27 2014/03/23 09:31:15 christos Exp $");
 #endif
 
 /*
@@ -718,7 +718,6 @@ __stdcall static void
 NdisReadConfiguration(ndis_status *status, ndis_config_parm **parm, ndis_handle cfg, ndis_unicode_string *key, ndis_parm_type type)
 {
 	char			*keystr = NULL;
-	uint16_t		*unicode;
 	ndis_miniport_block	*block;
 	struct ndis_softc	*sc;
 #ifdef __FreeBSD__	
@@ -729,7 +728,6 @@ NdisReadConfiguration(ndis_status *status, ndis_config_parm **parm, ndis_handle 
 #ifdef __NetBSD__
 	const struct sysctlnode *pnode = NULL;
 	struct sysctlnode *ndiscld = NULL;
-	int error;
 	int numcld;
 	int mib[1];
 	int i;
@@ -753,7 +751,6 @@ NdisReadConfiguration(ndis_status *status, ndis_config_parm **parm, ndis_handle 
 	ndis_unicode_to_ascii(key->us_buf, key->us_len, &keystr);
 	*parm = &block->nmb_replyparm;
 	memset((char *)&block->nmb_replyparm, 0, sizeof(ndis_config_parm));
-	unicode = (uint16_t *)&block->nmb_dummybuf;
 	
 #ifdef __NetBSD__	
 	if(strlen(keystr) + strlen("ndis_") > MAX_SYSCTL_LEN) {
@@ -796,7 +793,7 @@ NdisReadConfiguration(ndis_status *status, ndis_config_parm **parm, ndis_handle 
 	mib[0] = sc->ndis_sysctl_mib;
 	
 	sysctl_lock(false);
-		error = sysctl_locate(curlwp, &mib[0], 1, &pnode, NULL);
+		sysctl_locate(curlwp, &mib[0], 1, &pnode, NULL);
 	
 		numcld  = pnode->sysctl_csize;
 		ndiscld = pnode->sysctl_child;
@@ -1043,7 +1040,6 @@ NdisReadPciSlotInformation(
 #endif
 
 	/* PN(NdisReadPciSlotInformation) */
-	device_t		dev;
     struct ndis_softc  *sc;
 
 	block = (ndis_miniport_block *)adapter;
@@ -1051,8 +1047,8 @@ NdisReadPciSlotInformation(
 	if (block == NULL)
 		return(0);
 
-	dev = (device_t)block->nmb_physdeviceobj->do_devext;
 #ifdef __FreeBSD__	
+	device_t dev = (device_t)block->nmb_physdeviceobj->do_devext;
     sc = device_get_softc(dev);
 #else /* __NetBSD__ */
 	sc = (struct ndis_softc *)block->nmb_physdeviceobj->pdo_sc;
@@ -1106,7 +1102,6 @@ NdisWritePciSlotInformation(
     pcireg_t    *dest;
 #endif
 
-	device_t		dev;
 
 	/* PN(NdisWritePciSlotInformation) */
 	
@@ -1118,8 +1113,8 @@ NdisWritePciSlotInformation(
 	if (block == NULL)
 		return(0);
 
-	dev = block->nmb_physdeviceobj->do_devext;
 #ifdef __FreeBSD__	
+    device_t dev = block->nmb_physdeviceobj->do_devext;
     sc = device_get_softc(dev);
 #else /* __NetBSD__ */
 	sc = (struct ndis_softc *)block->nmb_physdeviceobj->pdo_sc;
