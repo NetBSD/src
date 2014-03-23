@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.294 2014/03/17 09:29:55 hannken Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.295 2014/03/23 15:21:16 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.294 2014/03/17 09:29:55 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.295 2014/03/23 15:21:16 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -132,31 +132,29 @@ const struct vnodeopv_desc * const ffs_vnodeopv_descs[] = {
 };
 
 struct vfsops ffs_vfsops = {
-	MOUNT_FFS,
-	sizeof (struct ufs_args),
-	ffs_mount,
-	ufs_start,
-	ffs_unmount,
-	ufs_root,
-	ufs_quotactl,
-	ffs_statvfs,
-	ffs_sync,
-	ffs_vget,
-	ffs_fhtovp,
-	ffs_vptofh,
-	ffs_init,
-	ffs_reinit,
-	ffs_done,
-	ffs_mountroot,
-	ffs_snapshot,
-	ffs_extattrctl,
-	ffs_suspendctl,
-	genfs_renamelock_enter,
-	genfs_renamelock_exit,
-	ffs_vfs_fsync,
-	ffs_vnodeopv_descs,
-	0,
-	{ NULL, NULL },
+	.vfs_name = MOUNT_FFS,
+	.vfs_min_mount_data = sizeof (struct ufs_args),
+	.vfs_mount = ffs_mount,
+	.vfs_start = ufs_start,
+	.vfs_unmount = ffs_unmount,
+	.vfs_root = ufs_root,
+	.vfs_quotactl = ufs_quotactl,
+	.vfs_statvfs = ffs_statvfs,
+	.vfs_sync = ffs_sync,
+	.vfs_vget = ffs_vget,
+	.vfs_fhtovp = ffs_fhtovp,
+	.vfs_vptofh = ffs_vptofh,
+	.vfs_init = ffs_init,
+	.vfs_reinit = ffs_reinit,
+	.vfs_done = ffs_done,
+	.vfs_mountroot = ffs_mountroot,
+	.vfs_snapshot = ffs_snapshot,
+	.vfs_extattrctl = ffs_extattrctl,
+	.vfs_suspendctl = ffs_suspendctl,
+	.vfs_renamelock_enter = genfs_renamelock_enter,
+	.vfs_renamelock_exit = genfs_renamelock_exit,
+	.vfs_fsync = ffs_vfs_fsync,
+	.vfs_opv_descs = ffs_vnodeopv_descs
 };
 
 static const struct genfs_ops ffs_genfsops = {
