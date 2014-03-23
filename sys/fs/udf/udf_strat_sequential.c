@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_sequential.c,v 1.12 2013/10/18 19:56:55 christos Exp $ */
+/* $NetBSD: udf_strat_sequential.c,v 1.13 2014/03/23 09:34:42 christos Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_sequential.c,v 1.12 2013/10/18 19:56:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_sequential.c,v 1.13 2014/03/23 09:34:42 christos Exp $");
 #endif /* not lint */
 
 
@@ -525,6 +525,7 @@ udf_doshedule(struct udf_mount *ump)
 					&ump->metadata_track);
 			assert(error == 0);
 			mutex_enter(&priv->discstrat_mutex);
+			__USE(error);
 		}
 	}
 
