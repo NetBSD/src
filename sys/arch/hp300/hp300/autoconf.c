@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.103 2014/03/23 06:03:38 dholland Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.104 2014/03/24 19:42:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.103 2014/03/23 06:03:38 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.104 2014/03/24 19:42:58 christos Exp $");
 
 #include "dvbox.h"
 #include "gbox.h"
@@ -300,7 +300,6 @@ void
 cpu_rootconf(void)
 {
 	struct dev_data *dd;
-	device_t dv;
 	struct vfsops *vops;
 
 	/*
@@ -342,7 +341,6 @@ cpu_rootconf(void)
 			}
 			if (dd == NULL) {
 				printf("no network interface for NFS root");
-				dv = NULL;
 			}
 		}
 		if (vops != NULL)
