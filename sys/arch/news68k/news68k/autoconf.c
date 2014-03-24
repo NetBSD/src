@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.22 2012/10/13 06:18:44 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.23 2014/03/24 19:54:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.22 2012/10/13 06:18:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.23 2014/03/24 19:54:28 christos Exp $");
 
 #include "scsibus.h"
 
@@ -124,14 +124,13 @@ void
 findroot(void)
 {
 #if NSCSIBUS > 0
-	int ctlr, unit, part, type;
+	int ctlr, part, type;
 	device_t dv;
 
 	if (BOOTDEV_MAG(bootdev) != 5)	/* NEWS-OS's B_DEVMAGIC */
 		return;
 
 	ctlr = BOOTDEV_CTLR(bootdev);	/* SCSI ID */
-	unit = BOOTDEV_UNIT(bootdev);
 	part = BOOTDEV_PART(bootdev);	/* LUN */
 	type = BOOTDEV_TYPE(bootdev);
 
