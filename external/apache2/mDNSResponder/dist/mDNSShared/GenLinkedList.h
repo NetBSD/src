@@ -13,24 +13,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-
- 	File:		GenLinkedList.c
-
- 	Contains:	interface to generic linked lists.
-
- 	Version:	1.0
- 	Tabs:		4 spaces
-
-    Change History (most recent first):
-
-Log: GenLinkedList.h,v $
-Revision 1.3  2006/08/14 23:24:56  cheshire
-Re-licensed mDNSResponder daemon source code under Apache License, Version 2.0
-
-Revision 1.2  2004/02/05 07:41:08  cheshire
-Add Log header
-
-*/
+ */
 
 #ifndef __GenLinkedList__
 #define __GenLinkedList__
