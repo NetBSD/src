@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.84 2014/03/16 05:20:24 dholland Exp $	*/
+/*	$NetBSD: dcm.c,v 1.85 2014/03/24 19:42:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.84 2014/03/16 05:20:24 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.85 2014/03/24 19:42:58 christos Exp $");
 
 #include "opt_kgdb.h"
 
@@ -1594,6 +1594,7 @@ dcmcngetc(dev_t dev)
 	c = fifo->data_char;
 	stat = fifo->data_stat;
 	pp->r_head = (head + 2) & RX_MASK;
+	__USE(stat);
 	splx(s);
 	return c;
 }
@@ -1621,7 +1622,7 @@ dcmcnputc(dev_t dev, int c)
 	}
 	tail = pp->t_tail & TX_MASK;
 	while (tail != (pp->t_head & TX_MASK))
-		;
+		continue;
 	dcm_cn->dcm_tfifos[3-DCMCONSPORT][tail].data_char = c;
 	pp->t_tail = tail = (tail + 1) & TX_MASK;
 	SEM_LOCK(dcm_cn);
@@ -1629,7 +1630,7 @@ dcmcnputc(dev_t dev, int c)
 	dcm_cn->dcm_cr |= (1 << DCMCONSPORT);
 	SEM_UNLOCK(dcm_cn);
 	while (tail != (pp->t_head & TX_MASK))
-		;
+		continue;
 	/*
 	 * If board interrupts are enabled, just let our completion
 	 * interrupt through in case some other port on the board
@@ -1640,5 +1641,6 @@ dcmcnputc(dev_t dev, int c)
 		stat = dcm_cn->dcm_iir;
 		SEM_UNLOCK(dcm_cn);
 	}
+	__USE(stat);
 	splx(s);
 }
