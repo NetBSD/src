@@ -1,4 +1,4 @@
-/*      $NetBSD: rtc.c,v 1.16 2014/03/24 19:58:04 christos Exp $        */
+/*      $NetBSD: rtc.c,v 1.17 2014/03/24 20:01:03 christos Exp $        */
 /*
  * Copyright (c) 1998 Darrin Jewell
  * Copyright (c) 1997 Rolf Grossmann 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.16 2014/03/24 19:58:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.17 2014/03/24 20:01:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>          /* for panic */
@@ -272,8 +272,6 @@ gettime_old(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
 	u_char h, y;
 	
-/*###275 [cc] error: variable 'val' set but not used [-Werror=unused-but-set-variable]%%%*/
-	struct clock_ymdhms val;
 	y = FROMBCD(rtc_read(RTC_YR));
 	if (y >= 69) {
 		dt->dt_year = 1900+y;
@@ -293,8 +291,11 @@ gettime_old(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 		} else {  /* am */
 			if (dt->dt_hour == 12) dt->dt_hour = 0;
 		}
+#ifdef notdef
 	} else {	/* time is 24 hour format */
+		struct clock_ymdhms val;
 		val.dt_hour = FROMBCD(h & 0x3f);
+#endif
 	}
 
 	dt->dt_min	= FROMBCD(rtc_read(RTC_MIN)&0x7f);
