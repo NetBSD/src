@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.82 2014/03/23 15:21:15 hannken Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.83 2014/03/24 04:03:25 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.82 2014/03/23 15:21:15 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.83 2014/03/24 04:03:25 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -258,34 +258,36 @@ cd9660_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MOUNT,
 	    KAUTH_REQ_SYSTEM_MOUNT_DEVICE, mp, devvp, KAUTH_ARG(VREAD));
-	VOP_UNLOCK(devvp);
 	if (error) {
-		vrele(devvp);
-		return (error);
+		goto fail;
 	}
 	if ((mp->mnt_flag & MNT_UPDATE) == 0) {
-		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 		error = VOP_OPEN(devvp, FREAD, FSCRED);
-		VOP_UNLOCK(devvp);
 		if (error)
 			goto fail;
+		VOP_UNLOCK(devvp);
 		error = iso_mountfs(devvp, mp, l, args);
+		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 		if (error) {
-			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 			(void)VOP_CLOSE(devvp, FREAD, NOCRED);
-			VOP_UNLOCK(devvp);
 			goto fail;
 		}
+		VOP_UNLOCK(devvp);
+		/* reference to devvp is donated through iso_mountfs */
 	} else {
-		vrele(devvp);
 		if (devvp != imp->im_devvp &&
-		    devvp->v_rdev != imp->im_devvp->v_rdev)
-			return (EINVAL);	/* needs translation */
+		    devvp->v_rdev != imp->im_devvp->v_rdev) {
+			error = EINVAL;		/* needs translation */
+			goto fail;
+		}
+		VOP_UNLOCK(devvp);
+		vrele(devvp);
 	}
 	return set_statvfs_info(path, UIO_USERSPACE, args->fspec, UIO_USERSPACE,
 	    mp->mnt_op->vfs_name, mp, l);
 
 fail:
+	VOP_UNLOCK(devvp);
 	vrele(devvp);
 	return (error);
 }
