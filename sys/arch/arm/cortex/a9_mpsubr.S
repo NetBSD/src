@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.12.2.3 2014/02/20 20:36:29 matt Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.12.2.4 2014/03/24 18:44:13 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -330,15 +330,23 @@ comlock:
 #endif /* MULTIPROCESSOR */
 #endif /* VERBOSE_INIT_ARM */
 
-#ifdef CPU_CORTEXA9
 a9_start:
+cortex_init:
 	mov	r10, lr				@ save lr
 
 	cpsid	if, #PSR_SVC32_MODE
 
 	XPUTC(#64)
+#ifdef KERNEL_BASES_EQUAL
 	bl	_C_LABEL(armv7_icache_inv_all)	@ invalidate i-cache
+#else
+	adr	ip, cortex_init
+	ldr	r0, =armv7_icache_inv_all
+	bfi	ip, r0, #0, #28
+	blx	ip
+#endif
 
+#ifdef CPU_CORTEXA9
 	/*
 	 * Step 1a, invalidate the all cache tags in all ways on the SCU.
 	 */
@@ -352,14 +360,23 @@ a9_start:
 	str	r1, [r3, #SCU_INV_ALL_REG]	@ write scu invalidate all
 	dsb
 	isb
+#endif
 
 	/*
 	 * Step 1b, invalidate the data cache
 	 */
 	XPUTC(#66)
+#ifdef KERNEL_BASES_EQUAL
 	bl	_C_LABEL(armv7_dcache_wbinv_all)	@ writeback/invalidate d-cache
+#else
+	adr	ip, cortex_init
+	ldr	r0, =armv7_dcache_wbinv_all
+	bfi	ip, r0, #0, #28
+	blx	ip
+#endif
 	XPUTC(#67)
 
+#ifdef CPU_CORTEXA9
 	/*
 	 * Step 2, disable the data cache
 	 */
@@ -387,8 +404,8 @@ a9_start:
 	mcr	p15, 0, r2, c1, c0, 0		@ reenable caches
 	isb
 	XPUTC(#51)
+#endif
 
-#ifdef MULTIPROCESSOR
 	/*
 	 * Step 4b, set ACTLR.SMP=1 (and ACTRL.FX=1)
 	 */
@@ -396,6 +413,8 @@ a9_start:
 	orr	r0, r0, #CORTEXA9_AUXCTL_SMP	@ enable SMP
 	mcr	p15, 0, r0, c1, c0, 1		@ write aux ctl
 	isb
+#ifdef CPU_CORTEXA9
+	mrc	p15, 0, r0, c1, c0, 1		@ read aux ctl
 	orr	r0, r0, #CORTEXA9_AUXCTL_FW	@ enable cache/tlb/coherency
 	mcr	p15, 0, r0, c1, c0, 1		@ write aux ctl
 	isb
@@ -526,4 +545,3 @@ ASEND(a9_mpstart)
 .Lbcm53xx_cpu_hatch:
 	.word	_C_LABEL(bcm53xx_cpu_hatch)
 #endif /* MULTIPROCESSOR */
-#endif /* CPU_CORTEXA9 */
