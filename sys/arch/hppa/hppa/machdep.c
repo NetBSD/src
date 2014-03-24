@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 2014/03/06 19:02:58 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 2014/03/24 20:06:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2014/03/06 19:02:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2014/03/24 20:06:32 christos Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -72,6 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2014/03/06 19:02:58 skrll Exp $");
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
+#include <sys/cpu.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
 #include <sys/conf.h>
@@ -221,7 +222,6 @@ u_int	cpu_ticksnum, cpu_ticksdenom, cpu_hzticks;
 
 /* exported info */
 char	machine[] = MACHINE;
-char	cpu_model[128];
 const struct hppa_cpu_info *hppa_cpu_info;
 enum hppa_cpu_type cpu_type;
 int	cpu_modelno;
@@ -831,7 +831,7 @@ cpuid(void)
 	if (hppa_cpu_ispa20_p())
 		curcpu()->ci_psw |= PSW_O;
 
-	snprintf(cpu_model, sizeof(cpu_model), "HP9000/%s", model);
+	cpu_setmodel("HP9000/%s", model);
 
 #define	LDILDO(t,f) ((t)[0] = (f)[0], (t)[1] = (f)[1]);
 	LDILDO(trap_ep_T_TLB_DIRTY , hppa_cpu_info->tlbdh);
@@ -913,7 +913,7 @@ cpu_startup(void)
 	printf("%s%s", copyright, version);
 
 	/* identify system type */
-	printf("%s\n", cpu_model);
+	printf("%s\n", cpu_getmodel());
 
 	/* Display some memory usage information. */
 	format_bytes(pbuf[0], sizeof(pbuf[0]), ptoa(physmem));

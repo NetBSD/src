@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.43 2014/02/25 17:56:03 dsl Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.44 2014/03/24 20:06:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,13 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.43 2014/02/25 17:56:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.44 2014/03/24 20:06:33 christos Exp $");
 
 #include "opt_xen.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -63,11 +64,6 @@ char cpu_brand_string[49];
 int x86_fpu_save = FPU_SAVE_FSAVE;
 unsigned int x86_fpu_save_size = 512;
 uint64_t x86_xsave_features = 0;
-
-/*
- * Info for CTL_HW
- */
-char	cpu_model[120];
 
 /*
  * Note: these are just the ones that may not have a cpuid instruction.
@@ -906,12 +902,12 @@ void
 cpu_identify(struct cpu_info *ci)
 {
 
-	snprintf(cpu_model, sizeof(cpu_model), "%s %d86-class",
+	cpu_setmodel("%s %d86-class",
 	    cpu_vendor_names[cpu_vendor], cpu_class + 3);
 	if (cpu_brand_string[0] != '\0') {
 		aprint_normal(": %s", cpu_brand_string);
 	} else {
-		aprint_normal(": %s", cpu_model);
+		aprint_normal(": %s", cpu_getmodel());
 		if (ci->ci_data.cpu_cc_freq != 0)
 			aprint_normal(", %dMHz",
 			    (int)(ci->ci_data.cpu_cc_freq / 1000000));
@@ -921,7 +917,8 @@ cpu_identify(struct cpu_info *ci)
 	aprint_normal("\n");
 
 	if (cpu_brand_string[0] == '\0') {
-		strlcpy(cpu_brand_string, cpu_model, sizeof(cpu_brand_string));
+		strlcpy(cpu_brand_string, cpu_getmodel(),
+		    sizeof(cpu_brand_string));
 	}
 	if (cpu_class == CPUCLASS_386) {
 		panic("NetBSD requires an 80486DX or later processor");
