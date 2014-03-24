@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.123 2013/06/23 07:28:37 dholland Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.124 2014/03/24 13:42:40 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.123 2013/06/23 07:28:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.124 2014/03/24 13:42:40 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -560,7 +560,7 @@ ffs_reclaim(void *v)
 	/*
 	 * The inode must be freed and updated before being removed
 	 * from its hash chain.  Other threads trying to gain a hold
-	 * on the inode will be stalled because it is locked (VI_XLOCK).
+	 * or lock on the inode will be stalled.
 	 */
 	error = UFS_WAPBL_BEGIN(mp);
 	if (error) {
