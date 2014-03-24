@@ -1,4 +1,4 @@
-/*      $NetBSD: rtc.c,v 1.15 2009/12/12 14:44:09 tsutsui Exp $        */
+/*      $NetBSD: rtc.c,v 1.16 2014/03/24 19:58:04 christos Exp $        */
 /*
  * Copyright (c) 1998 Darrin Jewell
  * Copyright (c) 1997 Rolf Grossmann 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.15 2009/12/12 14:44:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.16 2014/03/24 19:58:04 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>          /* for panic */
@@ -272,6 +272,7 @@ gettime_old(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
 	u_char h, y;
 	
+/*###275 [cc] error: variable 'val' set but not used [-Werror=unused-but-set-variable]%%%*/
 	struct clock_ymdhms val;
 	y = FROMBCD(rtc_read(RTC_YR));
 	if (y >= 69) {

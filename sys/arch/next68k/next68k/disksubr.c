@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.26 2014/03/24 19:57:47 christos Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.27 2014/03/24 19:58:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.26 2014/03/24 19:57:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.27 2014/03/24 19:58:04 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -272,7 +272,7 @@ build_nextstep_label(struct next68k_disklabel *ondisk, struct disklabel *lp)
 				p->cp_minfree = 5; /* set some default */
 			p->cp_cpg = lp->d_partitions[nbp].p_cpg;
 		} else {
-			memset (p, 0, sizeof(*p);
+			memset (p, 0, sizeof(*p));
 			p->cp_size = -1;
 			p->cp_offset = -1;
 			p->cp_bsize = -1;

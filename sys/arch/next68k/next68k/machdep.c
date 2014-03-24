@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.109 2012/08/11 01:21:04 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.110 2014/03/24 19:58:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.109 2012/08/11 01:21:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.110 2014/03/24 19:58:04 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -311,15 +311,12 @@ cpu_startup(void)
 	initcpu();
 }
 
-/*
- * Info for CTL_HW
- */
-char	cpu_model[124];
-
 void
 identifycpu(void)
 {
-	const char *mc;
+/*###317 [cc] error: expected '=', ',', ';', 'asm' or '__attribute__' before '*' token%%%*/
+	const char *mc, *mmu_str *fpu_str, *cache_str;
+/*###318 [cc] error: unused variable 'len' [-Werror=unused-variable]%%%*/
 	int len;
 
 	/*
@@ -340,67 +337,74 @@ identifycpu(void)
 		goto lose;
 	}
 
-	sprintf(cpu_model, "NeXT/MC680%s CPU",mc);
-
 	/*
 	 * ...and the MMU type.
 	 */
 	switch (mmutype) {
 	case MMU_68040:
 	case MMU_68030:
-		strcat(cpu_model, "+MMU");
+/*###344 [cc] error: 'mmu_str' undeclared (first use in this function)%%%*/
+/*###344 [cc] note: each undeclared identifier is reported only once for each function it appears in%%%*/
+		mmu_str = "+MMU";
 		break;
 	case MMU_68851:
-		strcat(cpu_model, ", MC68851 MMU");
+		mmu_str = ", MC68851 MMU";
 		break;
 	case MMU_HP:
-		strcat(cpu_model, ", HP MMU");
+		mmu_str = ", HP MMU";
 		break;
 	default:
-		printf("%s\nunknown MMU type %d\n", cpu_model, mmutype);
+		printf("MC680%s: unknown MMU type %d\n", mc, mmutype);
 		panic("startup");
 	}
-
-	len = strlen(cpu_model);
 
 	/*
 	 * ...and the FPU type.
 	 */
 	switch (fputype) {
 	case FPU_68040:
-		len += sprintf(cpu_model + len, "+FPU");
+/*###362 [cc] error: 'fpu_str' undeclared (first use in this function)%%%*/
+		fpu_str = "+FPU";
 		break;
 	case FPU_68882:
-		len += sprintf(cpu_model + len, ", MC68882 FPU");
+		fpu_str = ", MC68882 FPU";
 		break;
 	case FPU_68881:
-		len += sprintf(cpu_model + len, ", MHz MC68881 FPU");
+		fpu_str = ", MHz MC68881 FPU";
 		break;
 	default:
-		len += sprintf(cpu_model + len, ", unknown FPU");
+		fpu_str = ", unknown FPU";
 	}
 
 	/*
 	 * ...and finally, the cache type.
 	 */
 	if (cputype == CPU_68040)
-		sprintf(cpu_model + len, ", 4k on-chip physical I/D caches");
+/*###378 [cc] error: 'cache_str' undeclared (first use in this function)%%%*/
+		cache_str = ", 4k on-chip physical I/D caches";
 	else {
 #if defined(ENABLE_HP_CODE)
 		switch (ectype) {
 		case EC_VIRT:
-			sprintf(cpu_model + len,
-			    ", virtual-address cache");
+			cache_str = ", virtual-address cache";
 			break;
 		case EC_PHYS:
-			sprintf(cpu_model + len,
-			    ", physical-address cache");
+			cache_str = ", physical-address cache";
+			break;
+		default:
+			cache_str = "";
 			break;
 		}
+#else
+		cache_str = "";
 #endif
 	}
 
-	printf("%s\n", cpu_model);
+/*###397 [cc] error: implicit declaration of function 'cpu_setmodel' [-Werror=implicit-function-declaration]%%%*/
+	cpu_setmodel("NeXT/MC680%s CPU%s%s%s", mc, mmu_str, fpu_str, cache_str);
+/*###398 [cc] error: implicit declaration of function 'cpu_getmodel' [-Werror=implicit-function-declaration]%%%*/
+/*###398 [cc] error: format '%s' expects argument of type 'char *', but argument 2 has type 'int' [-Werror=format=]%%%*/
+	printf("%s\n", cpu_getmodel());
 
 	return;
  lose:
