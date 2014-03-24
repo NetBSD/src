@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.319 2014/03/23 15:21:17 hannken Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.320 2014/03/24 13:42:40 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.319 2014/03/23 15:21:17 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.320 2014/03/24 13:42:40 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -239,7 +239,7 @@ lfs_sysctl_setup(struct sysctllog **clog)
 		{ "write_exceeded", "Number of times writer invoked flush" },
 		{ "flush_invoked",  "Number of times flush was invoked" },
 		{ "vflush_invoked", "Number of time vflush was called" },
-		{ "clean_inlocked", "Number of vnodes skipped for VI_XLOCK" },
+		{ "clean_inlocked", "Number of vnodes skipped for being dead" },
 		{ "clean_vnlocked", "Number of vnodes skipped for vget failure" },
 		{ "segs_reclaimed", "Number of segments reclaimed" },
 	};
@@ -1755,10 +1755,13 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 	 * We must write everything, however, if our vnode is being
 	 * reclaimed.
 	 */
-	if (LFS_STARVED_FOR_SEGS(fs) && !(vp->v_iflag & VI_XLOCK)) {
+	mutex_enter(vp->v_interlock);
+	if (LFS_STARVED_FOR_SEGS(fs) && vdead_check(vp, VDEAD_NOWAIT) == 0) {
+		mutex_exit(vp->v_interlock);
 		failreason = "Starved for segs and not flushing vp";
  		goto tryagain;
 	}
+	mutex_exit(vp->v_interlock);
 
 	/*
 	 * Sometimes things slip past the filters in lfs_putpages,

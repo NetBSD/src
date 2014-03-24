@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1885 2014/03/22 11:24:35 skrll Exp $
+#	$NetBSD: mi,v 1.1886 2014/03/24 13:42:40 hannken Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -10977,6 +10977,7 @@
 ./usr/share/man/cat9/vdevgone.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/veriexec.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vfinddev.0			comp-sys-catman		.cat
+./usr/share/man/cat9/vdead_check.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vflush.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vflushbuf.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vfs.0			comp-sys-catman		.cat
@@ -17630,6 +17631,7 @@
 ./usr/share/man/html9/vdevgone.html		comp-sys-htmlman	html
 ./usr/share/man/html9/veriexec.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vfinddev.html		comp-sys-htmlman	html
+./usr/share/man/html9/vdead_check.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vflush.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vflushbuf.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vfs.html			comp-sys-htmlman	html
@@ -24522,6 +24524,7 @@
 ./usr/share/man/man9/vdevgone.9			comp-sys-man		.man
 ./usr/share/man/man9/veriexec.9			comp-sys-man		.man
 ./usr/share/man/man9/vfinddev.9			comp-sys-man		.man
+./usr/share/man/man9/vdead_check.9		comp-sys-man		.man
 ./usr/share/man/man9/vflush.9			comp-sys-man		.man
 ./usr/share/man/man9/vflushbuf.9		comp-sys-man		.man
 ./usr/share/man/man9/vfs.9			comp-sys-man		.man

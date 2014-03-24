@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.142 2014/02/07 15:29:22 hannken Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.143 2014/03/24 13:42:40 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.142 2014/02/07 15:29:22 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.143 2014/03/24 13:42:40 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -288,7 +288,7 @@ spec_node_lookup_by_dev(enum vtype type, dev_t dev, vnode_t **vpp)
 		if (type == vp->v_type && dev == vp->v_rdev) {
 			mutex_enter(vp->v_interlock);
 			/* If clean or being cleaned, then ignore it. */
-			if ((vp->v_iflag & (VI_CLEAN | VI_XLOCK)) == 0)
+			if (vdead_check(vp, VDEAD_NOWAIT) == 0)
 				break;
 			mutex_exit(vp->v_interlock);
 		}
@@ -392,7 +392,6 @@ spec_node_revoke(vnode_t *vp)
 
 	KASSERT(vp->v_type == VBLK || vp->v_type == VCHR);
 	KASSERT(vp->v_specnode != NULL);
-	KASSERT((vp->v_iflag & VI_XLOCK) != 0);
 	KASSERT(sn->sn_gone == false);
 
 	mutex_enter(&device_lock);
@@ -863,7 +862,7 @@ spec_ioctl(void *v)
 	vp = ap->a_vp;
 	dev = NODEV;
 	mutex_enter(vp->v_interlock);
-	if ((vp->v_iflag & VI_XLOCK) == 0 && vp->v_specnode) {
+	if (vdead_check(vp, VDEAD_NOWAIT) == 0 && vp->v_specnode) {
 		dev = vp->v_rdev;
 	}
 	mutex_exit(vp->v_interlock);
@@ -907,7 +906,7 @@ spec_poll(void *v)
 	vp = ap->a_vp;
 	dev = NODEV;
 	mutex_enter(vp->v_interlock);
-	if ((vp->v_iflag & VI_XLOCK) == 0 && vp->v_specnode) {
+	if (vdead_check(vp, VDEAD_NOWAIT) == 0 && vp->v_specnode) {
 		dev = vp->v_rdev;
 	}
 	mutex_exit(vp->v_interlock);
@@ -1082,13 +1081,21 @@ spec_close(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct session *sess;
 	dev_t dev = vp->v_rdev;
-	int mode, error, flags, flags1, count;
+	int flags = ap->a_fflag;
+	int mode, error, count;
 	specnode_t *sn;
 	specdev_t *sd;
 
-	flags = vp->v_iflag;
+	mutex_enter(vp->v_interlock);
 	sn = vp->v_specnode;
 	sd = sn->sn_dev;
+	/*
+	 * If we're going away soon, make this non-blocking.
+	 * Also ensures that we won't wedge in vn_lock below.
+	 */
+	if (vdead_check(vp, VDEAD_NOWAIT) != 0)
+		flags |= FNONBLOCK;
+	mutex_exit(vp->v_interlock);
 
 	switch (vp->v_type) {
 
@@ -1170,30 +1177,20 @@ spec_close(void *v)
 	if (count != 0)
 		return 0;
 
-	flags1 = ap->a_fflag;
-
-	/*
-	 * if VI_XLOCK is set, then we're going away soon, so make this
-	 * non-blocking. Also ensures that we won't wedge in vn_lock below.
-	 */
-	if (flags & VI_XLOCK)
-		flags1 |= FNONBLOCK;
-
 	/*
 	 * If we're able to block, release the vnode lock & reacquire. We
 	 * might end up sleeping for someone else who wants our queues. They
-	 * won't get them if we hold the vnode locked. Also, if VI_XLOCK is
-	 * set, don't release the lock as we won't be able to regain it.
+	 * won't get them if we hold the vnode locked.
 	 */
-	if (!(flags1 & FNONBLOCK))
+	if (!(flags & FNONBLOCK))
 		VOP_UNLOCK(vp);
 
 	if (vp->v_type == VBLK)
-		error = bdev_close(dev, flags1, mode, curlwp);
+		error = bdev_close(dev, flags, mode, curlwp);
 	else
-		error = cdev_close(dev, flags1, mode, curlwp);
+		error = cdev_close(dev, flags, mode, curlwp);
 
-	if (!(flags1 & FNONBLOCK))
+	if (!(flags & FNONBLOCK))
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
 	return (error);

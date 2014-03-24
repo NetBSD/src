@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.34 2014/03/17 09:27:37 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.35 2014/03/24 13:42:40 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.34 2014/03/17 09:27:37 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.35 2014/03/24 13:42:40 hannken Exp $");
 
 #define _VFS_VNODE_PRIVATE
 
@@ -176,6 +176,7 @@ static void		vdrain_thread(void *);
 static void		vrele_thread(void *);
 static void		vnpanic(vnode_t *, const char *, ...)
     __printflike(2, 3);
+static void		vwait(vnode_t *, int);
 
 /* Routines having to do with the management of the vnode table. */
 extern int		(**dead_vnodeop_p)(void *);
@@ -1140,10 +1141,35 @@ vwakeup(struct buf *bp)
 }
 
 /*
+ * Test a vnode for being or becoming dead.  Returns one of:
+ * EBUSY:  vnode is becoming dead, with "flags == VDEAD_NOWAIT" only.
+ * ENOENT: vnode is dead.
+ * 0:      otherwise.
+ *
+ * Whenever this function returns a non-zero value all future
+ * calls will also return a non-zero value.
+ */
+int
+vdead_check(struct vnode *vp, int flags)
+{
+
+	KASSERT(mutex_owned(vp->v_interlock));
+	if (ISSET(vp->v_iflag, VI_XLOCK)) {
+		if (ISSET(flags, VDEAD_NOWAIT))
+			return EBUSY;
+		vwait(vp, VI_XLOCK);
+		KASSERT(ISSET(vp->v_iflag, VI_CLEAN));
+	}
+	if (ISSET(vp->v_iflag, VI_CLEAN))
+		return ENOENT;
+	return 0;
+}
+
+/*
  * Wait for a vnode (typically with VI_XLOCK set) to be cleaned or
  * recycled.
  */
-void
+static void
 vwait(vnode_t *vp, int flags)
 {
 
