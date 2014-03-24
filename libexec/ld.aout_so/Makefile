@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.45.38.1 2008/11/06 23:51:27 snj Exp $
+#	$NetBSD: Makefile,v 1.45.38.1.4.1 2014/03/24 18:58:00 matt Exp $
 
 .include <bsd.own.mk>			# for OBJECT_FMT definition
 .include <bsd.shlib.mk>			# for SHLINKINSTALLDIR definition
@@ -41,6 +41,7 @@ SYMLINKS+=	${SHLINKINSTALLDIR}/${PROG} /usr/libexec/${PROG}
 
 .elif (${OBJECT_FMT} == "ELF" && \
        (${MACHINE_ARCH} == "arm" || \
+        ${MACHINE_ARCH} == "armv7" || \
         ${MACHINE_ARCH} == "i386" || \
         ${MACHINE_ARCH} == "m68k" || \
         ${MACHINE_ARCH} == "sparc" || \
@@ -49,12 +50,12 @@ SYMLINKS+=	${SHLINKINSTALLDIR}/${PROG} /usr/libexec/${PROG}
 FILES=		ld.so
 FILESDIR=	/usr/libexec
 FILESMODE=	${BINMODE}
-UUDECODE_FILES=	ld.so.${MACHINE_ARCH}
+UUDECODE_FILES=	ld.so.${MACHINE_CPU}
 UUDECODE_FILES_RENAME_${UUDECODE_FILES}= ld.so
 
 all dependall: ${FILES}
 
-ld.so:	ld.so.${MACHINE_ARCH}
+ld.so:	ld.so.${MACHINE_CPU}
 
 .endif
 .endif

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21.40.1 2008/11/06 23:51:27 snj Exp $
+#	$NetBSD: Makefile,v 1.21.40.1.4.1 2014/03/24 18:58:00 matt Exp $
 
 .include <bsd.own.mk>   # For OBJECT_FMT
 .include <bsd.shlib.mk>
@@ -7,6 +7,7 @@
     (${OBJECT_FMT} == "a.out" ||	\
     (${OBJECT_FMT} == "ELF" &&		\
     (${MACHINE_ARCH} == "arm" ||	\
+     ${MACHINE_ARCH} == "armv7" ||	\
      ${MACHINE_ARCH} == "i386" ||	\
      ${MACHINE_ARCH} == "m68k" ||	\
      ${MACHINE_ARCH} == "sparc" ||	\
