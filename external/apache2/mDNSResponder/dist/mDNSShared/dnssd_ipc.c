@@ -24,62 +24,6 @@
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-	Change History (most recent first):
-
-Log: dnssd_ipc.c,v $
-Revision 1.23  2009/04/01 21:10:34  herscher
-<rdar://problem/5925472> Current Bonjour code does not compile on Windows
-
-Revision 1.22  2009/02/12 20:28:31  cheshire
-Added some missing "const" declarations
-
-Revision 1.21  2008/10/23 23:21:31  cheshire
-Moved definition of dnssd_strerror() to be with the definition of dnssd_errno, in dnssd_ipc.h
-
-Revision 1.20  2007/07/23 22:12:53  cheshire
-<rdar://problem/5352299> Make mDNSResponder more defensive against malicious local clients
-
-Revision 1.19  2007/05/16 01:06:52  cheshire
-<rdar://problem/4471320> Improve reliability of kDNSServiceFlagsMoreComing flag on multiprocessor machines
-
-Revision 1.18  2007/03/21 19:01:57  cheshire
-<rdar://problem/5078494> IPC code not 64-bit-savvy: assumes long=32bits, and short=16bits
-
-Revision 1.17  2006/10/27 00:38:22  cheshire
-Strip accidental trailing whitespace from lines
-
-Revision 1.16  2006/08/14 23:05:53  cheshire
-Added "tab-width" emacs header line
-
-Revision 1.15  2005/01/27 22:57:56  cheshire
-Fix compile errors on gcc4
-
-Revision 1.14  2004/10/06 02:22:20  cheshire
-Changed MacRoman copyright symbol (should have been UTF-8 in any case :-) to ASCII-compatible "(c)"
-
-Revision 1.13  2004/10/01 22:15:55  rpantos
-rdar://problem/3824265: Replace APSL in client lib with BSD license.
-
-Revision 1.12  2004/09/16 23:14:24  cheshire
-Changes for Windows compatibility
-
-Revision 1.11  2004/06/18 04:56:09  rpantos
-casting goodness
-
-Revision 1.10  2004/06/12 01:08:14  cheshire
-Changes for Windows compatibility
-
-Revision 1.9  2004/05/18 23:51:27  cheshire
-Tidy up all checkin comments to use consistent "<rdar://problem/xxxxxxx>" format for bug numbers
-
-Revision 1.8  2003/11/05 22:44:57  ksekar
-<rdar://problem/3335230>: No bounds checking when reading data from client
-Reviewed by: Stuart Cheshire
-
-Revision 1.7  2003/08/12 19:56:25  cheshire
-Update to APSL 2.0
-
  */
 
 #include "dnssd_ipc.h"
