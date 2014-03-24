@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.88.10.1 2014/02/15 16:18:36 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.88.10.2 2014/03/24 16:50:56 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -305,8 +305,8 @@ void	pmap_remove_all(struct pmap *);
 bool	pmap_extract(struct pmap *, vaddr_t, paddr_t *);
 
 #define	PMAP_NEED_PROCWR
-#define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
-#define	PMAP_ENABLE_PMAP_KMPAGE	/* enable the PMAP_KMPAGE flag */
+#define PMAP_GROWKERNEL			/* turn on pmap_growkernel interface */
+#define	PMAP_KMPAGE	0x08000000	/* enable the PMAP_KMPAGE flag */
 
 #if (ARM_MMU_V6 + ARM_MMU_V7) > 0
 #define	PMAP_PREFER(hint, vap, sz, td)	pmap_prefer((hint), (vap), (td))
