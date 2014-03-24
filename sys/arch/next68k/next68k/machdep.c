@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.110 2014/03/24 19:58:04 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.111 2014/03/24 20:01:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.110 2014/03/24 19:58:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.111 2014/03/24 20:01:03 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.110 2014/03/24 19:58:04 christos Exp $
 #include <sys/kgdb.h>
 #endif
 #include <sys/boot_flag.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -314,10 +315,7 @@ cpu_startup(void)
 void
 identifycpu(void)
 {
-/*###317 [cc] error: expected '=', ',', ';', 'asm' or '__attribute__' before '*' token%%%*/
-	const char *mc, *mmu_str *fpu_str, *cache_str;
-/*###318 [cc] error: unused variable 'len' [-Werror=unused-variable]%%%*/
-	int len;
+	const char *mc, *mmu_str, *fpu_str, *cache_str;
 
 	/*
 	 * ...and the CPU type.
@@ -343,8 +341,6 @@ identifycpu(void)
 	switch (mmutype) {
 	case MMU_68040:
 	case MMU_68030:
-/*###344 [cc] error: 'mmu_str' undeclared (first use in this function)%%%*/
-/*###344 [cc] note: each undeclared identifier is reported only once for each function it appears in%%%*/
 		mmu_str = "+MMU";
 		break;
 	case MMU_68851:
@@ -363,7 +359,6 @@ identifycpu(void)
 	 */
 	switch (fputype) {
 	case FPU_68040:
-/*###362 [cc] error: 'fpu_str' undeclared (first use in this function)%%%*/
 		fpu_str = "+FPU";
 		break;
 	case FPU_68882:
@@ -380,7 +375,6 @@ identifycpu(void)
 	 * ...and finally, the cache type.
 	 */
 	if (cputype == CPU_68040)
-/*###378 [cc] error: 'cache_str' undeclared (first use in this function)%%%*/
 		cache_str = ", 4k on-chip physical I/D caches";
 	else {
 #if defined(ENABLE_HP_CODE)
@@ -400,10 +394,7 @@ identifycpu(void)
 #endif
 	}
 
-/*###397 [cc] error: implicit declaration of function 'cpu_setmodel' [-Werror=implicit-function-declaration]%%%*/
 	cpu_setmodel("NeXT/MC680%s CPU%s%s%s", mc, mmu_str, fpu_str, cache_str);
-/*###398 [cc] error: implicit declaration of function 'cpu_getmodel' [-Werror=implicit-function-declaration]%%%*/
-/*###398 [cc] error: format '%s' expects argument of type 'char *', but argument 2 has type 'int' [-Werror=format=]%%%*/
 	printf("%s\n", cpu_getmodel());
 
 	return;
