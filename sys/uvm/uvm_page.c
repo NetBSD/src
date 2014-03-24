@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.140.6.3.4.11 2014/02/15 10:19:14 matt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.140.6.3.4.12 2014/03/24 07:37:14 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.140.6.3.4.11 2014/02/15 10:19:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.140.6.3.4.12 2014/03/24 07:37:14 matt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -328,6 +328,7 @@ uvm_page_init_freelist(struct pgfreelist *pgfl, struct uvm_pggroup *pggroups,
 		for (size_t queue = 0; queue < PGFL_NQUEUES; queue++) {
 			LIST_INIT(&pgfl->pgfl_queues[free_list][queue]);
 		}
+		pgfl->pgfl_hint = NULL;
 		pgfl->pgfl_pggroups[free_list] =
 		    &pggroups[free_list * uvmexp.ncolors + color];
 		pgfl->pgfl_pggroups[free_list]->pgrp_free_list = free_list;
