@@ -372,6 +372,75 @@ private:
   uint32_t reg[REGNO_VAX_PSW + 1];
 };
 
+enum {
+  DWARF_M68K_A0 = 0,
+  DWARF_M68K_A7 = 7,
+  DWARF_M68K_D0 = 8,
+  DWARF_M68K_D7 = 15,
+  DWARF_M68K_PC = 24,
+
+  REGNO_M68K_A0 = 0,
+  REGNO_M68K_A7 = 7,
+  REGNO_M68K_D0 = 8,
+  REGNO_M68K_D7 = 15,
+  REGNO_M68K_PC = 16,
+};
+
+class Registers_M68K {
+public:
+  enum {
+    LAST_REGISTER = REGNO_M68K_PC,
+    LAST_RESTORE_REG = REGNO_M68K_PC,
+    RETURN_REG = REGNO_M68K_PC,
+  };
+
+  __dso_hidden Registers_M68K();
+
+  static int dwarf2regno(int num) {
+    if (num >= DWARF_M68K_A0 && num <= DWARF_M68K_A7)
+      return REGNO_M68K_A0 + (num - DWARF_M68K_A0);
+    if (num >= DWARF_M68K_D0 && num <= DWARF_M68K_D7)
+      return REGNO_M68K_D0 + (num - DWARF_M68K_D0);
+    if (num == DWARF_M68K_PC)
+      return REGNO_M68K_PC;
+    return LAST_REGISTER + 1;
+  }
+
+  bool validRegister(int num) const {
+    return num >= 0 && num <= LAST_RESTORE_REG;
+  }
+
+  uint64_t getRegister(int num) const {
+    assert(validRegister(num));
+    return reg[num];
+  }
+
+  void setRegister(int num, uint64_t value) {
+    assert(validRegister(num));
+    reg[num] = value;
+  }
+
+  uint64_t getIP() const { return reg[REGNO_M68K_PC]; }
+
+  void setIP(uint64_t value) { reg[REGNO_M68K_PC] = value; }
+
+  uint64_t getSP() const { return reg[REGNO_M68K_A7]; }
+
+  void setSP(uint64_t value) { reg[REGNO_M68K_A7] = value; }
+
+  bool validFloatVectorRegister(int num) const {
+    return false;
+  }
+
+  void copyFloatVectorRegister(int num, uint64_t addr_) {
+  }
+
+  __dso_hidden void jumpto() const __dead;
+
+private:
+  uint32_t reg[REGNO_M68K_PC + 1];
+};
+
 } // namespace _Unwind
 
 #endif // __REGISTERS_HPP__

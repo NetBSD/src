@@ -339,6 +339,26 @@ ENTRY(_ZNK7_Unwind13Registers_vax6jumptoEv, 0)
 	movl	0(%r0), %r0
 	/* XXX restore PSW */
 	rsb
-
 END(_ZNK7_Unwind13Registers_vax6jumptoEv)
+#endif
+
+#if defined(__m68k__)
+ENTRY(_ZN7_Unwind14Registers_M68KC1Ev)
+	move.l	4(%sp), %a0
+	movem.l	%d0-%d7/%a0-%a7, (%a0)
+	move.l	0(%sp), %a1
+	move.l	%a1, 64(%a0)
+	addq.l	#4, 60(%a0)
+	rts
+END(_ZN7_Unwind14Registers_M68KC1Ev)
+
+ENTRY(_ZNK7_Unwind14Registers_M68K6jumptoEv)
+	move.l	4(%sp), %a0
+	subq.l	#4, 60(%a0)
+	move.l	64(%a0), %a1
+	move.l	60(%a0), %a2
+	move.l	%a1, (%a2)
+	movem.l	(%a0), %d0-%d7/%a0-%a7
+	rts
+END(_ZNK7_Unwind14Registers_M68K6jumptoEv)
 #endif
