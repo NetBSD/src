@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.924.4.1.4.4 2014/02/14 18:35:15 matt Exp $
+#	$NetBSD: files,v 1.924.4.1.4.5 2014/03/24 18:50:51 matt Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20080610
@@ -930,7 +930,7 @@ file	dev/ic/lpt_upc.c		lpt_upc
 # AHCI-compatible SATA controllers
 define ahcisata_core
 file dev/ic/ahcisata_core.c ahcisata_core
-device ahcisata: ata, ata_dma, ata_udma, sata, ahcisata_core
+device ahcisata: ata, ata_dma, ata_udma, sata, sata_fis, ahcisata_core
 
 # Silicon Image SteelVine SATA-II controllers
 define	siisata
