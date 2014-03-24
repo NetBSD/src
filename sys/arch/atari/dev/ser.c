@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.53 2014/03/16 05:20:23 dholland Exp $	*/
+/*	$NetBSD: ser.c,v 1.54 2014/03/24 18:39:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.53 2014/03/16 05:20:23 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.54 2014/03/24 18:39:57 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -820,6 +820,7 @@ ser_iflush(struct ser_softc *sc)
 	/* flush any pending I/O */
 	while (ISSET(MFP->mf_rsr, RSR_CIP|RSR_BFULL))
 		tmp = MFP->mf_udr;
+	__USE(tmp);
 }
 
 void
