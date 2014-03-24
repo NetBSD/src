@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.73 2014/03/16 05:20:23 dholland Exp $	*/
+/*	$NetBSD: ite.c,v 1.74 2014/03/24 18:39:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.73 2014/03/16 05:20:23 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.74 2014/03/24 18:39:57 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -593,11 +593,8 @@ void
 itestart(struct tty *tp)
 {
 	struct clist *rbp;
-	struct ite_softc *sc;
 	u_char buf[ITEBURST];
 	int s, len;
-
-	sc = getitesp(tp->t_dev);
 
 	KDASSERT(tp);
 
@@ -629,9 +626,6 @@ void
 ite_on(dev_t dev, int flag)
 {
 	struct ite_softc *sc;
-	int unit;
-
-	unit = ITEUNIT(dev);
 	sc = getitesp(dev); 
 
 	/* force ite active, overriding graphics mode */
@@ -758,13 +752,12 @@ ite_cnfilter(u_int c, enum caller caller)
 {
 	struct key	key;
 	struct kbdmap	*kbdmap;
-	u_char		code, up, mask;
+	u_char		code, up;
 	int		s;
 
 	up   = KBD_RELEASED(c);
 	c    = KBD_SCANCODE(c);
 	code = 0;
-	mask = 0;
 	kbdmap = (kbd_ite == NULL) ? &ascii_kbdmap : kbd_ite->kbdmap;
 
 	s = spltty();
@@ -858,7 +851,7 @@ ite_filter(u_int c, enum caller caller)
 {
 	struct tty	*kbd_tty;
 	struct kbdmap	*kbdmap;
-	u_char		code, *str, up, mask;
+	u_char		code, *str, up;
 	struct key	key;
 	int		s, i;
 	static bool	again;
@@ -878,7 +871,6 @@ ite_filter(u_int c, enum caller caller)
 	up   = KBD_RELEASED(c);
 	c    = KBD_SCANCODE(c);
 	code = 0;
-	mask = 0;
 
 	/* have to make sure we're at spltty in here */
 	s = spltty();
