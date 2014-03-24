@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.22.4.3.4.2 2011/02/05 06:00:14 cliff Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.22.4.3.4.3 2014/03/24 18:51:45 matt Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.22.4.3.4.2 2011/02/05 06:00:14 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.22.4.3.4.3 2014/03/24 18:51:45 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -145,7 +145,6 @@ sched_cpuattach(struct cpu_info *ci)
 	runqueue_t *ci_rq;
 	void *rq_ptr;
 	u_int i, size;
-	char *cpuname;
 
 	if (ci->ci_schedstate.spc_lwplock == NULL) {
 		ci->ci_schedstate.spc_lwplock =
@@ -178,17 +177,14 @@ sched_cpuattach(struct cpu_info *ci)
 
 	ci->ci_schedstate.spc_sched_info = ci_rq;
 
-	cpuname = kmem_alloc(8, KM_SLEEP);
-	snprintf(cpuname, 8, "cpu%d", cpu_index(ci));
-
 	evcnt_attach_dynamic(&ci_rq->r_ev_pull, EVCNT_TYPE_MISC, NULL,
-	   cpuname, "runqueue pull");
+	    ci->ci_data.cpu_name, "runqueue pull");
 	evcnt_attach_dynamic(&ci_rq->r_ev_push, EVCNT_TYPE_MISC, NULL,
-	   cpuname, "runqueue push");
+	    ci->ci_data.cpu_name, "runqueue push");
 	evcnt_attach_dynamic(&ci_rq->r_ev_stay, EVCNT_TYPE_MISC, NULL,
-	   cpuname, "runqueue stay");
+	    ci->ci_data.cpu_name, "runqueue stay");
 	evcnt_attach_dynamic(&ci_rq->r_ev_localize, EVCNT_TYPE_MISC, NULL,
-	   cpuname, "runqueue localize");
+	    ci->ci_data.cpu_name, "runqueue localize");
 }
 
 /*
