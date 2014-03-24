@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.97 2014/01/11 16:34:05 tsutsui Exp $ */
+/* $NetBSD: machdep.c,v 1.98 2014/03/24 19:46:24 christos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.97 2014/01/11 16:34:05 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98 2014/03/24 19:46:24 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.97 2014/01/11 16:34:05 tsutsui Exp $")
 #include <sys/boot_flag.h>
 #define ELFSIZE 32
 #include <sys/exec_elf.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -98,7 +99,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.97 2014/01/11 16:34:05 tsutsui Exp $")
  * Info for CTL_HW
  */
 char	machine[] = MACHINE;
-char	cpu_model[120];
 
 /* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
@@ -360,7 +360,6 @@ identifycpu(void)
 	extern int cputype;
 	const char *model, *fpu;
 
-	memset(cpu_model, 0, sizeof(cpu_model));
 	switch (cputype) {
 	case CPU_68030:
 		model ="LUNA-I";
@@ -378,8 +377,7 @@ identifycpu(void)
 			fpu = "unknown";
 			break;
 		}
-		snprintf(cpu_model, sizeof(cpu_model),
-		    "%s (MC68030 CPU+MMU, %s FPU)", model, fpu);
+		cpu_setmodel("%s (MC68030 CPU+MMU, %s FPU)", model, fpu);
 		machtype = LUNA_I;
 		/* 20MHz 68030 */
 		cpuspeed = 20;
@@ -389,7 +387,7 @@ identifycpu(void)
 #if defined(M68040)
 	case CPU_68040:
 		model ="LUNA-II";
-		snprintf(cpu_model, sizeof(cpu_model),
+		cpu_setmodel(
 		    "%s (MC68040 CPU+MMU+FPU, 4k on-chip physical I/D caches)",
 		    model);
 		machtype = LUNA_II;
@@ -402,7 +400,7 @@ identifycpu(void)
 	default:
 		panic("unknown CPU type");
 	}
-	printf("%s\n", cpu_model);
+	printf("%s\n", cpu_getmodel());
 }
 
 /*
@@ -742,12 +740,8 @@ int	*nofault;
 int
 badaddr(register void *addr, int nbytes)
 {
-	register int i;
+	int i;
 	label_t faultbuf;
-
-#ifdef lint
-	i = *addr; if (i) return (0);
-#endif
 
 	nofault = (int *)&faultbuf;
 	if (setjmp((label_t *)nofault)) {
@@ -771,6 +765,7 @@ badaddr(register void *addr, int nbytes)
 	default:
 		panic("badaddr: bad request");
 	}
+	__USE(i);
 	nofault = (int *)0;
 	return 0;
 }
