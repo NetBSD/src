@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.23.12.1 2014/02/15 16:18:36 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.23.12.2 2014/03/24 18:42:50 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -112,8 +112,12 @@ extern vaddr_t virtual_end;
 	(VM_NFREELIST == 1 \
 	    ? VM_PGCOLOR_BUCKET(pg) : (*arm_page_to_pggroup)((pg), (ncolors)))
 
+#ifdef PMAP_NEED_ALLOC_POOLPAGE
 #define VM_FREELIST_NORMALOK_P(lcv) \
 	((lcv) == VM_FREELIST_DEFAULT || (lcv) != arm_poolpage_vmfreelist)
+#else
+#define VM_FREELIST_NORMALOK_P(lcv)	true
+#endif
 
 struct vm_page;
 extern size_t	(*arm_page_to_pggroup)(struct vm_page *, size_t);
