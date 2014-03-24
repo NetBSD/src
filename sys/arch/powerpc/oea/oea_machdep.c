@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.70 2014/03/03 15:36:36 macallan Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.71 2014/03/24 19:29:59 christos Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.70 2014/03/03 15:36:36 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.71 2014/03/24 19:29:59 christos Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.70 2014/03/03 15:36:36 macallan Ex
 #include <sys/syscallargs.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -936,7 +937,7 @@ oea_startup(const char *model)
 	uintptr_t sz;
 	void *v;
 	vaddr_t minaddr, maxaddr;
-	char pbuf[9];
+	char pbuf[9], mstr[128];
 
 	KASSERT(curcpu() != NULL);
 	KASSERT(lwp0.l_cpu != NULL);
@@ -973,7 +974,8 @@ oea_startup(const char *model)
 	printf("%s%s", copyright, version);
 	if (model != NULL)
 		printf("Model: %s\n", model);
-	cpu_identify(NULL, 0);
+	cpu_identify(mstr, sizeof(mstr));
+	cpu_setmodel("%s", mstr);
 
 	format_bytes(pbuf, sizeof(pbuf), ctob((u_int)physmem));
 	printf("total memory = %s\n", pbuf);
