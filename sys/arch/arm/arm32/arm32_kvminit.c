@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.22.2.2 2014/02/15 16:18:36 matt Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.22.2.3 2014/03/24 07:37:39 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.22.2.2 2014/02/15 16:18:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.22.2.3 2014/03/24 07:37:39 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -182,7 +182,7 @@ arm32_bootmem_init(paddr_t memstart, psize_t memsize, vsize_t kernelstart)
 	/*
 	 * Let's record where the kernel lives.
 	 */
-	bmi->bmi_kernelstart = kernelstart;
+	bmi->bmi_kernelstart = trunc_page(kernelstart);
 	bmi->bmi_kernelend = KERN_VTOPHYS(bmi, round_page((vaddr_t)_end));
 
 #ifdef VERBOSE_INIT_ARM
