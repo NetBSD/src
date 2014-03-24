@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.188 2014/03/22 21:49:18 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.189 2014/03/24 20:06:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.188 2014/03/22 21:49:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.189 2014/03/24 20:06:33 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -308,10 +308,6 @@ cpu_startup(void)
 	callout_init(&candbtimer_ch, 0);
 }
 
-/*
- * Info for CTL_HW
- */
-char	cpu_model[96];		/* max 85 chars */
 static const char *fpu_descr[] = {
 #ifdef	FPU_EMULATE
 	", emulator FPU",	/* 0 */
@@ -397,10 +393,10 @@ identifycpu(void)
 		fpu = fpu_descr[fputype];
 	else
 		fpu = ", unknown FPU";
-	sprintf(cpu_model, "X68%s (%s CPU%s%s, %s clock)%s%s",
+	cpu_setmodel("X68%s (%s CPU%s%s, %s clock)%s%s",
 	    mach, cpu_type, mmu, fpu, clock,
 		emubuf[0] ? " on " : "", emubuf);
-	printf("%s\n", cpu_model);
+	printf("%s\n", cpu_getmodel());
 }
 
 /*

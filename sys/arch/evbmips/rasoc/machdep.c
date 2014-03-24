@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 2012/03/11 00:02:04 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9 2014/03/24 20:06:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
@@ -28,11 +28,12 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8 2012/03/11 00:02:04 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9 2014/03/24 20:06:32 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/boot_flag.h>
 #include <sys/buf.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/mount.h>
 #include <sys/kcore.h>
@@ -113,12 +114,14 @@ mach_init(void)
 #endif
 
 	/* set CPU model info for sysctl_hw */
-	uint32_t tmp;
-	tmp = sysctl_read(RA_SYSCTL_ID0);
-	memcpy(&cpu_model[0], &tmp, 4);
-	tmp = sysctl_read(RA_SYSCTL_ID1);
-	memcpy(&cpu_model[4], &tmp, 4);
-	cpu_model[9] = 0;
+	uint32_t tmp1, tmp2;
+	char id1[5], id2[5];
+	tmp1 = sysctl_read(RA_SYSCTL_ID0);
+	memcpy(id1, &tmp1, sizeof(tmp1));
+	tmp2 = sysctl_read(RA_SYSCTL_ID1);
+	memcpy(id2, &tmp2, sizeof(tmp2));
+	id2[4] = id1[4] = '\0';
+	cpu_setmodel("%s%s", id1, id2);
 
 	/*
 	 * Set up the exception vectors and CPU-specific function

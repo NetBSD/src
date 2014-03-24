@@ -1,4 +1,4 @@
-/*	$NetBSD: ka88.c,v 1.16 2011/06/05 16:59:21 matt Exp $	*/
+/*	$NetBSD: ka88.c,v 1.17 2014/03/24 20:06:33 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka88.c,v 1.16 2011/06/05 16:59:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka88.c,v 1.17 2014/03/24 20:06:33 christos Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -327,27 +327,28 @@ ka88_settime(volatile struct timeval *tvp)
 void
 ka88_steal_pages(void)
 {
+	char c = '0', d = '0';
 	mtpr(1, PR_COR); /* Cache on */
-	strcpy(cpu_model, "VAX 8800");
 	tocons(KA88_COMM|KA88_GETCONF);
 	ka88_confdata = fromcons(KA88_CONFDATA);
 	ka88_confdata = mfpr(PR_RXDB);
 	mastercpu = 20;
 	if (vax_cputype == VAX_TYP_8NN) {
 		if (ka88_confdata & KA88_SMALL) {
-			cpu_model[5] = '5';
+			c = '5';
 			if (ka88_confdata & KA88_SLOW) {
 				vax_boardtype = VAX_BTYP_8500;
-				cpu_model[6] = '3';
+				d = '3';
 			} else {
 				vax_boardtype = VAX_BTYP_8550;
-				cpu_model[6] = '5';
+				d = '5';
 			}
 		} else if (ka88_confdata & KA88_SINGLE) {
 			vax_boardtype = VAX_BTYP_8700;
-			cpu_model[5] = '7';
+			c = '7';
 		}
 	}
+	cpu_setmodel("VAX 88%c%c", c, d);
 }
 	
 

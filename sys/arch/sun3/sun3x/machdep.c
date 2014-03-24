@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.134 2013/09/06 17:43:19 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.135 2014/03/24 20:06:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.134 2013/09/06 17:43:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.135 2014/03/24 20:06:33 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.134 2013/09/06 17:43:19 tsutsui Exp $"
 #include <sys/syscallargs.h>
 #include <sys/ksyms.h>
 #include <sys/module.h>
+#include <sys/cpu.h>
 #ifdef	KGDB
 #include <sys/kgdb.h>
 #endif
@@ -247,7 +248,6 @@ cpu_startup(void)
  */
 char	machine[16] = MACHINE;		/* from <machine/param.h> */
 char	kernel_arch[16] = "sun3x";	/* XXX needs a sysctl node */
-char	cpu_model[120];
 
 /*
  * XXX - Should empirically estimate the divisor...
@@ -289,9 +289,9 @@ identifycpu(void)
 
 	/* Other stuff? (VAC, mc6888x version, etc.) */
 	/* Note: miniroot cares about the kernel_arch part. */
-	sprintf(cpu_model, "%s %s", kernel_arch, cpu_string);
+	cpu_setmodel("%s %s", kernel_arch, cpu_string);
 
-	printf("Model: %s\n", cpu_model);
+	printf("Model: %s\n", cpu_getmodel());
 }
 
 /*
