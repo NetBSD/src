@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.102 2014/03/20 22:19:38 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.103 2014/03/24 20:06:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.102 2014/03/20 22:19:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.103 2014/03/24 20:06:31 christos Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -60,7 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.102 2014/03/20 22:19:38 matt Exp $");
 #include <arm/locore.h>
 #include <arm/undefined.h>
 
-char cpu_model[256];
 extern const char *cpu_arch;
 
 #ifdef MULTIPROCESSOR
@@ -164,8 +163,8 @@ cpu_attach(device_t dv, cpuid_t id)
 	 * and we are done if this is a secondary processor.
 	 */
 	if (!CPU_IS_PRIMARY(ci)) {
-		aprint_naive(": %s\n", cpu_model);
-		aprint_normal(": %s\n", cpu_model);
+		aprint_naive(": %s\n", cpu_getmodel());
+		aprint_normal(": %s\n", cpu_getmodel());
 		mi_cpu_attach(ci);
 		return;
 	}
@@ -606,8 +605,8 @@ identify_arm_cpu(device_t dv, struct cpu_info *ci)
 			cpu_arch = cpuids[i].cpu_arch;
 			steppingstr = cpuids[i].cpu_steppings[cpuid &
 			    CPU_ID_REVISION_MASK];
-			snprintf(cpu_model, sizeof(cpu_model),
-			    "%s%s%s (%s V%s core)", cpuids[i].cpu_classname,
+			cpu_setmodel("%s%s%s (%s V%s core)",
+			    cpuids[i].cpu_classname,
 			    steppingstr[0] == '*' ? "" : " ",
 			    &steppingstr[steppingstr[0] == '*'],
 			    cpu_classes[cpu_class].class_name,
@@ -616,19 +615,18 @@ identify_arm_cpu(device_t dv, struct cpu_info *ci)
 		}
 
 	if (cpuids[i].cpuid == 0)
-		snprintf(cpu_model, sizeof(cpu_model),
-		    "unknown CPU (ID = 0x%x)", cpuid);
+		cpu_setmodel("unknown CPU (ID = 0x%x)", cpuid);
 
 	if (ci->ci_data.cpu_cc_freq != 0) {
 		char freqbuf[8];
 		humanize_number(freqbuf, sizeof(freqbuf), ci->ci_data.cpu_cc_freq,
 		    "Hz", 1000);
 
-		aprint_naive(": %s %s\n", freqbuf, cpu_model);
-		aprint_normal(": %s %s\n", freqbuf, cpu_model);
+		aprint_naive(": %s %s\n", freqbuf, cpu_getmodel());
+		aprint_normal(": %s %s\n", freqbuf, cpu_getmodel());
 	} else {
-		aprint_naive(": %s\n", cpu_model);
-		aprint_normal(": %s\n", cpu_model);
+		aprint_naive(": %s\n", cpu_getmodel());
+		aprint_normal(": %s\n", cpu_getmodel());
 	}
 
 	aprint_normal("%s:", xname);

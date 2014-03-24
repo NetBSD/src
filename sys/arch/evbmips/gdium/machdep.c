@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.16 2011/08/24 19:03:02 macallan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.17 2014/03/24 20:06:31 christos Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2011/08/24 19:03:02 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2014/03/24 20:06:31 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -125,7 +125,6 @@ struct gdium_config gdium_configuration = {
 };
 
 /* For sysctl_hw. */
-extern char cpu_model[];
 
 /* Maps for VM objects. */
 struct vm_map *phys_map = NULL;
@@ -309,7 +308,7 @@ mach_init(int argc, char **argv, char **envp32, void *callvec)
 	mem_clusters[0].size = ctob(physmem);
 	mem_cluster_cnt = 1;
 
-	strcpy(cpu_model, "Gdium Liberty 1000");
+	cpu_setmodel("Gdium Liberty 1000");
 
 	/*
 	 * XXX: check argv[0] - do something if "gdb"???
