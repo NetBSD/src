@@ -131,8 +131,8 @@ _Unwind_SetIP (struct _Unwind_Context *c, _Unwind_Ptr val)
   c->ra = val;
 }
 
-void *
-_Unwind_GetLanguageSpecificData (struct _Unwind_Context *c)
+_Unwind_Ptr 
+_Unwind_GetLanguageSpecificData (struct _Unwind_Context *c
 {
   return c->disp->HandlerData;
 }

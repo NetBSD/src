@@ -347,7 +347,7 @@ _Unwind_SetIP (struct _Unwind_Context *context, _Unwind_Ptr val)
   context->ra = (void *) val;
 }
 
-void *
+_Unwind_Ptr
 _Unwind_GetLanguageSpecificData (struct _Unwind_Context *context)
 {
   return context->lsda;
