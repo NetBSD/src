@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.139 2013/12/16 15:45:29 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.140 2014/03/24 19:10:34 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.139 2013/12/16 15:45:29 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.140 2014/03/24 19:10:34 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.139 2013/12/16 15:45:29 mrg Exp $");
 #include <sys/kcore.h>
 #include <sys/boot_flag.h>
 #include <sys/ksyms.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -285,7 +286,7 @@ mach_init(int argc, int32_t argv32[], uintptr_t magic, int32_t bip32)
 #endif
 	}
 
-	strcpy(cpu_model, arcbios_system_identifier);
+	cpu_setmodel("%s", arcbios_system_identifier);
 
 	uvm_setpagesize();
 

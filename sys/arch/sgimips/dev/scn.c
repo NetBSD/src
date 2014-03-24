@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.5 2014/03/16 05:20:25 dholland Exp $ */
+/*	$NetBSD: scn.c,v 1.6 2014/03/24 19:10:34 christos Exp $ */
 
 /*
  * Resurrected from the old pc532 port 1/18/2009.
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.5 2014/03/16 05:20:25 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.6 2014/03/24 19:10:34 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -517,6 +517,7 @@ scn_setchip(struct scn_softc *sc)
 				u_char temp;
 				/* start C/T running */
 				temp = dp->base[DU_CSTRT];
+				__USE(temp);
 			}
 			dp->ocounter = dp->counter;
 		}
@@ -806,7 +807,7 @@ scn_attach(device_t parent, device_t self, void *aux)
 	int channel;
 	int speed;
 	int s;
-	int maj;
+	int maj __diagused;
 	u_char unit;
 	u_char duartno;
 	u_char delim = ':';
@@ -1080,7 +1081,6 @@ scnopen(dev_t dev, int flags, int mode, struct lwp *l)
 	int unit = DEV_UNIT(dev);
 	struct scn_softc *sc;
 	int error = 0;
-	int hwset = 0;
 
 	if (unit >= scn_cd.cd_ndevs)
 		return ENXIO;
@@ -1130,7 +1130,6 @@ scnopen(dev_t dev, int flags, int mode, struct lwp *l)
 
 		/* enable receiver interrupts */
 		scn_rxenable(sc);
-		hwset = 1;
 
 		/* set carrier state; */
 		if ((sc->sc_swflags & SCN_SW_SOFTCAR) || /* check ttyflags */
@@ -1670,15 +1669,10 @@ scnioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 
 	case TIOCMGET: {
 			int     bits;
-			unsigned char ip, op;
+			unsigned char ip;
 
 			/* s = spltty(); */
 			ip = sc->sc_duart->base[DU_IP];
-			/*
-			 * XXX sigh; cannot get op current state!! even if
-			 * maintained in private, RTS is done in h/w!!
-			 */
-			op = 0;
 			/* splx(s); */
 
 			bits = 0;
@@ -1688,6 +1682,11 @@ scnioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 				bits |= TIOCM_CTS;
 
 #if 0
+			/*
+			 * XXX sigh; cannot get op current state!! even if
+			 * maintained in private, RTS is done in h/w!!
+			 */
+			unsigned char op = 0;
 			if (op & sc->sc_op_dtr)
 				bits |= TIOCM_DTR;
 			if (op & sc->sc_op_rts)
