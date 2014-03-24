@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.23 2008/10/30 12:52:46 nakayama Exp $
+#	$NetBSD: files.i2c,v 1.23.10.1 2014/03/24 18:48:52 matt Exp $
 
 defflag	opt_i2cbus.h				I2C_SCAN
 define	i2cbus { }
@@ -12,6 +12,12 @@ file	dev/i2c/i2c_exec.c			iic | i2cbus | i2cexec
 # Common module for bit-bang'ing an I2C bus
 define	i2c_bitbang
 file	dev/i2c/i2c_bitbang.c			i2c_bitbang
+
+#
+# I2C master devices
+#
+define	mvi2c
+file	dev/i2c/gttwsi_core.c			mvi2c
 
 #
 # I2C client devices
