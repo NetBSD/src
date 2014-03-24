@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.16.18.1 2014/02/15 16:18:36 matt Exp $	*/
+/*	$NetBSD: exception.S,v 1.16.18.2 2014/03/24 18:45:16 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -51,7 +51,7 @@
 
 #include <arm/locore.h>
 
-	RCSID("$NetBSD: exception.S,v 1.16.18.1 2014/02/15 16:18:36 matt Exp $")
+	RCSID("$NetBSD: exception.S,v 1.16.18.2 2014/03/24 18:45:16 matt Exp $")
 
 	.text	
 	.align	0
@@ -218,13 +218,11 @@ ASEND(address_exception_entry)
  *	look like direct entry from the vector.
  */
 ASENTRY_NP(undefined_entry)
-	stmfd	sp!, {r0, r1}
+	str	r0, [sp, #-8]!
 	GET_CURCPU(r0)
-	ldr	r1, [sp], #0x0004
-	str	r1, [r0, #CI_UNDEFSAVE]!
-	ldr	r1, [sp], #0x0004
-	str	r1, [r0, #0x0004]
-	ldmia	r0, {r0, r1, pc}
+	ldr	r0, [r0, #CI_UNDEFSAVE+8]
+	str	r0, [sp, #4]
+	pop	{r0, pc}
 ASEND(undefined_entry)
 
 /*
