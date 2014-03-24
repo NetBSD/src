@@ -36,18 +36,7 @@
  * OF THE APPLE SOFTWARE, HOWEVER CAUSED AND WHETHER UNDER THEORY OF CONTRACT, TORT
  * (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF APPLE HAS BEEN
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-    Change History (most recent first):
-
-Log: ClientCommon.c,v $
-Revision 1.2  2008/05/08 00:42:03  cheshire
-Removed some unnecessary header files
-
-Revision 1.1  2008/05/08 00:25:48  cheshire
-<rdar://problem/5919272> GetNextLabel insufficiently defensive
-
-
-*/
+ */
 
 #include <ctype.h>
 #include <stdio.h>			// For stdout, stderr
