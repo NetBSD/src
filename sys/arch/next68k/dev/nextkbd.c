@@ -1,4 +1,4 @@
-/* $NetBSD: nextkbd.c,v 1.14 2012/10/27 17:18:07 chs Exp $ */
+/* $NetBSD: nextkbd.c,v 1.15 2014/03/24 20:01:03 christos Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextkbd.c,v 1.14 2012/10/27 17:18:07 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextkbd.c,v 1.15 2014/03/24 20:01:03 christos Exp $");
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
@@ -331,7 +331,7 @@ static int
 nextkbd_read_data(struct nextkbd_internal *id)
 {
 	unsigned char device;
-	struct mon_regs stat;
+	struct mon_regs stat = { 0 };
 				
 	bus_space_read_region_4(id->iot, id->ioh, 0, &stat, 3);
 	if ((stat.mon_csr & CSR_INT) && (stat.mon_csr & CSR_DATA)) {
