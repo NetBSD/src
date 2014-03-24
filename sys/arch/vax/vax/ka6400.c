@@ -1,4 +1,4 @@
-/*	$NetBSD: ka6400.c,v 1.16 2011/06/05 16:59:21 matt Exp $	*/
+/*	$NetBSD: ka6400.c,v 1.17 2014/03/24 20:06:33 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka6400.c,v 1.16 2011/06/05 16:59:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka6400.c,v 1.17 2014/03/24 20:06:33 christos Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -314,7 +314,7 @@ ka6400_steal_pages(void)
 	for (i = ncpus = 0; i < cca->cca_maxcpu; i++)
 		if (cca->cca_console & (1 << i))
 			ncpus++;
-	sprintf(cpu_model, "VAX 6000/4%x0", ncpus + 1);
+	cpu_setmodel("VAX 6000/4%x0", ncpus + 1);
 }
 	
 

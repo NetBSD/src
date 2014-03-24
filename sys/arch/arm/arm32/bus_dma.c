@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.82 2014/02/26 07:57:09 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.83 2014/03/24 20:06:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_arm_bus_space.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.82 2014/02/26 07:57:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.83 2014/03/24 20:06:31 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1389,7 +1389,7 @@ _bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 	printf("dmamem_unmap: t=%p kva=%p size=%zx\n", t, kva, size);
 #endif	/* DEBUG_DMA */
 	KASSERTMSG(((uintptr_t)kva & PAGE_MASK) == 0,
-	    "kva %p (%#"PRIxPTR")", kva, (uintptr_t)kva & PAGE_MASK);
+	    "kva %p (%#"PRIxPTR")", kva, ((uintptr_t)kva & PAGE_MASK));
 
 	size = round_page(size);
 	pmap_kremove((vaddr_t)kva, size);

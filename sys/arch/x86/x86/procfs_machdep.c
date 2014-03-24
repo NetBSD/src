@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.3 2014/02/12 23:24:09 dsl Exp $ */
+/*	$NetBSD: procfs_machdep.c,v 1.4 2014/03/24 20:06:33 christos Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.3 2014/02/12 23:24:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.4 2014/03/24 20:06:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,8 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.3 2014/02/12 23:24:09 dsl Exp $
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/specialreg.h>
-
-extern char	cpu_model[];
 
 static const char * const x86_features[] = {
 	/* Intel-defined */
