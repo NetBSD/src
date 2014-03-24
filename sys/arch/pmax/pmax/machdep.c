@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.247 2013/11/10 20:18:51 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.248 2014/03/24 19:31:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.247 2013/11/10 20:18:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.248 2014/03/24 19:31:40 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.247 2013/11/10 20:18:51 christos Exp $
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -386,7 +387,7 @@ cpu_startup(void)
 	 * Good {morning,afternoon,evening,night}.
 	 */
 	printf("%s%s", copyright, version);
-	printf("%s\n", cpu_model);
+	printf("%s\n", cpu_getmodel());
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
 

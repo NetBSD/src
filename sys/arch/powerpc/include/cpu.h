@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.99 2014/03/03 15:36:36 macallan Exp $	*/
+/*	$NetBSD: cpu.h,v 1.100 2014/03/24 19:29:59 christos Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -361,7 +361,6 @@ extern char *booted_kernel;
 extern int powersave;
 extern int cpu_timebase;
 extern int cpu_printfataltraps;
-extern char cpu_model[];
 
 struct cpu_info *
 	cpu_attach_common(device_t, int);
