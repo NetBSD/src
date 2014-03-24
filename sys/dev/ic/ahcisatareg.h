@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisatareg.h,v 1.4 2008/01/25 21:41:48 xtraeme Exp $	*/
+/*	$NetBSD: ahcisatareg.h,v 1.4.28.1 2014/03/24 18:47:17 matt Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -11,11 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Manuel Bouyer.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -39,23 +34,22 @@
 /* in-memory structures used by the controller */
 /* physical region descriptor: points to a region of data (max 4MB) */
 struct ahci_dma_prd {
-	u_int32_t prd_dba; /* data base address (64 bits) */
-	u_int32_t prd_dbau;
-	u_int32_t prd_res; /* reserved */
-	u_int32_t prd_dbc; /* data byte count */
+	uint64_t prd_dba; /* data base address */
+	uint32_t prd_res; /* reserved */
+	uint32_t prd_dbc; /* data byte count */
 #define AHCI_PRD_DBC_MASK 0x003fffff
 #define AHCI_PRD_DBC_IPC  0x80000000 /* interrupt on completion */
-} __packed;
+} __packed __aligned(8);
 
 #define AHCI_NPRD ((MAXPHYS/PAGE_SIZE) + 1)
 
 /* command table: describe a command to send to drive */
 struct ahci_cmd_tbl {
-	u_int8_t cmdt_cfis[64]; /* command FIS */
-	u_int8_t cmdt_acmd[16]; /* ATAPI command */
-	u_int8_t cmdt_res[48]; /* reserved */
+	uint8_t cmdt_cfis[64]; /* command FIS */
+	uint8_t cmdt_acmd[16]; /* ATAPI command */
+	uint8_t cmdt_res[48]; /* reserved */
 	struct ahci_dma_prd cmdt_prd[1]; /* extended to AHCI_NPRD */
-} __packed;
+} __packed __aligned(8);
 
 #define AHCI_CMDTBL_ALIGN 0x7f
 
@@ -68,7 +62,7 @@ struct ahci_cmd_tbl {
  * of theses.
  */
 struct ahci_cmd_header {
-	u_int16_t cmdh_flags;
+	uint16_t cmdh_flags;
 #define AHCI_CMDH_F_PMP_MASK	0xf000 /* port multiplier port */
 #define AHCI_CMDH_F_PMP_SHIFT	12
 #define AHCI_CMDH_F_CBSY	0x0400 /* clear BSY on R_OK */
@@ -79,24 +73,23 @@ struct ahci_cmd_header {
 #define AHCI_CMDH_F_A		0x0020 /* ATAPI */
 #define AHCI_CMDH_F_CFL_MASK	0x001f /* command FIS length (in dw) */
 #define AHCI_CMDH_F_CFL_SHIFT	0
-	u_int16_t cmdh_prdtl;	/* number of cmdt_prd */
-	u_int32_t cmdh_prdbc;	/* physical region descriptor byte count */
-	u_int32_t cmdh_cmdtba;	/* phys. addr. of cmd_tbl */
-	u_int32_t cmdh_cmdtbau;	/* (64bits, 128bytes aligned) */
-	u_int32_t cmdh_res[4];	/* reserved */
-} __packed;
+	uint16_t cmdh_prdtl;	/* number of cmdt_prd */
+	uint32_t cmdh_prdbc;	/* physical region descriptor byte count */
+	uint64_t cmdh_cmdtba;	/* phys. addr. of cmd_tbl, 128bytes aligned */
+	uint32_t cmdh_res[4];	/* reserved */
+} __packed __aligned(8);
 
 #define AHCI_CMDH_SIZE (sizeof(struct ahci_cmd_header) * AHCI_MAX_CMDS)
 
 /* received FIS: where the HBA stores various type of FIS it receives */
 struct ahci_r_fis {
-	u_int8_t rfis_dsfis[32]; /* DMA setup FIS */
-	u_int8_t rfis_psfis[32]; /* PIO setup FIS */
-	u_int8_t rfis_rfis[24]; /* D2H register FIS */
-	u_int8_t rfis_sdbfis[8]; /* set device bit FIS */
-	u_int8_t rfis_ukfis[64]; /* unknown FIS */
-	u_int8_t rfis_res[96];
-} __packed;
+	uint8_t rfis_dsfis[32];	/* DMA setup FIS */
+	uint8_t rfis_psfis[32]; /* PIO setup FIS */
+	uint8_t rfis_rfis[24];  /* D2H register FIS */
+	uint8_t rfis_sdbfis[8]; /* set device bit FIS */
+	uint8_t rfis_ukfis[64]; /* unknown FIS */
+	uint8_t rfis_res[96];   /* reserved */
+} __packed __aligned(8);
 
 #define AHCI_RFIS_SIZE (sizeof(struct ahci_r_fis))
 
@@ -122,8 +115,9 @@ struct ahci_r_fis {
 #define		AHCI_CAP_SAM	0x00040000 /* AHCI-only */
 #define		AHCI_CAP_NZO	0x00080000 /* Non-zero DMA offset (reserved) */
 #define		AHCI_CAP_IS	0x00f00000 /* Interface speed */
-#define		AHCI_CAP_IS_GEN1	0x00100000 /* 1.5 GB/s */
-#define		AHCI_CAP_IS_GEN2	0x00200000 /* 1.5 and 3 GB/s */
+#define		AHCI_CAP_IS_GEN1	0x00100000 /* 1.5 Gb/s */
+#define		AHCI_CAP_IS_GEN2	0x00200000 /* 3.0 Gb/s */
+#define		AHCI_CAP_IS_GEN3	0x00300000 /* 6.0 Gb/s */
 #define		AHCI_CAP_CLO	0x01000000 /* Command list override */
 #define		AHCI_CAP_AL	0x02000000 /* Single Activitly LED */
 #define		AHCI_CAP_ALP	0x04000000 /* Agressive link power management */
@@ -144,9 +138,13 @@ struct ahci_r_fis {
 #define AHCI_PI		0x0c /* Port implemented: one bit per port */
 
 #define AHCI_VS		0x10 /* AHCI version */
-#define 	AHCI_VS_10	0x00010000 /* AHCI spec 1.0 */
-#define 	AHCI_VS_11	0x00010100 /* AHCI spec 1.1 */
-#define 	AHCI_VS_12	0x00010200 /* AHCI spec 1.2 */
+#define		AHCI_VS_095	0x00000905 /* AHCI spec 0.95 */
+#define		AHCI_VS_100	0x00010000 /* AHCI spec 1.0 */
+#define		AHCI_VS_110	0x00010100 /* AHCI spec 1.1 */
+#define		AHCI_VS_120	0x00010200 /* AHCI spec 1.2 */
+#define		AHCI_VS_130	0x00010300 /* AHCI spec 1.3 */
+#define AHCI_VS_MJR(v) ((unsigned int)__SHIFTOUT(v, __BITS(31, 16)))
+#define AHCI_VS_MNR(v) ((unsigned int)__SHIFTOUT(v, __BITS(15, 8)) * 10 + (unsigned int)__SHIFTOUT(v, __BITS(7, 0) * 1))
 
 #define AHCI_CC_CTL	0x14 /* command completion coalescing control */
 #define 	AHCI_CC_TV_MASK	0xffff0000 /* timeout value */
@@ -177,6 +175,18 @@ struct ahci_r_fis {
 #define		AHCI_EMC_RST	0x00000200 /* Reset */
 #define		AHCI_EMC_TM	0x00000100 /* Transmit message */
 #define		AHCI_EMC_MR	0x00000001 /* Message received */
+
+#define AHCI_CAP2	0x24 /* HBA Capabilities Extended */
+#define		AHCI_CAP2_APST	0x00000004
+#define		AHCI_CAP2_NVMP	0x00000002
+#define		AHCI_CAP2_BOH	0x00000001
+
+#define AHCI_BOHC	0x28 /* BIOS/OS Handoff Control and Status */
+#define		AHCI_BOHC_BB	0x00000010
+#define		AHCI_BOHC_OOC	0x00000008
+#define		AHCI_BOHC_SOOE	0x00000004
+#define		AHCI_BOHC_OOS	0x00000002
+#define		AHCI_BOHC_BOS	0x00000001
 
 /* Per-port registers */
 #define AHCI_P_OFFSET(port) (0x80 * (port))
@@ -246,7 +256,7 @@ struct ahci_r_fis {
 #define		AHCI_P_SIG_LBAL_MASK	0x0000ff00
 #define		AHCI_P_SIG_LBAL_SHIFT	8
 #define		AHCI_P_SIG_SC_MASK	0x000000ff
-#define		AHCI_P_SIG_SC_SHIFT	8
+#define		AHCI_P_SIG_SC_SHIFT	0
 
 #define AHCI_P_SSTS(p)	(0x128 + AHCI_P_OFFSET(p)) /* Serial ATA status */
 
