@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.75 2014/03/16 05:20:23 dholland Exp $	*/
+/*	$NetBSD: zs.c,v 1.76 2014/03/24 18:39:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.75 2014/03/16 05:20:23 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.76 2014/03/24 18:39:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1334,5 +1334,6 @@ zs_loadchannelregs(struct zschan *zc, uint8_t *reg)
 	ZS_WRITE(zc, 15, reg[15]);
 	ZS_WRITE(zc,  3, reg[3]);
 	ZS_WRITE(zc,  5, reg[5]);
+	__USE(i);
 }
 #endif /* NZS > 1 */

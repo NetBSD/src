@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.43 2014/03/16 05:20:23 dholland Exp $	*/
+/*	$NetBSD: kbd.c,v 1.44 2014/03/24 18:39:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.43 2014/03/16 05:20:23 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.44 2014/03/24 18:39:57 christos Exp $");
 
 #include "mouse.h"
 #include "ite.h"
@@ -265,6 +265,7 @@ kbdenable(void)
 	 */
 	while (KBD->ac_cs & (A_IRQ|A_RXRDY))
 		code = KBD->ac_da;
+	__USE(code);
 	/*
 	 * Enable interrupts from MFP
 	 */
@@ -401,6 +402,7 @@ kbdintr(int sr)
 		}
 		kbd_ring[kbd_rbput++ & KBD_RING_MASK] = KBD->ac_da;
 	}
+	__USE(code);
 
 	/*
 	 * If characters are waiting for transmit, send them.

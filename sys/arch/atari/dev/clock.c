@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.56 2014/03/16 05:20:23 dholland Exp $	*/
+/*	$NetBSD: clock.c,v 1.57 2014/03/24 18:39:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.56 2014/03/16 05:20:23 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.57 2014/03/24 18:39:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -511,12 +511,9 @@ rtcclose(dev_t dev, int flag, int mode, struct lwp *l)
 int
 rtcread(dev_t dev, struct uio *uio, int flags)
 {
-	struct clock_softc	*sc;
 	mc_todregs		clkregs;
 	int			s, length;
 	char			buffer[16 + 1];
-
-	sc = device_lookup_private(&clock_cd, minor(dev));
 
 	s = splhigh();
 	MC146818_GETTOD(RTC, &clkregs);
