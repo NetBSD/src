@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.170 2013/12/16 20:17:34 palle Exp $
+# $NetBSD: GENERIC,v 1.171 2014/03/24 14:15:38 szptvlfn Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.170 $"
+#ident 		"GENERIC-$Revision: 1.171 $"
 
 maxusers	64
 
@@ -86,7 +86,7 @@ options 	NFS_BOOT_DHCP
 options 	DDB			# kernel dynamic debugger
 options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 options 	DDB_VERBOSE_HELP	# enable verbose online help
-#options 	DDB_ONPANIC=1		# see also sysctl(8): `ddb.onpanic'
+#options 	DDB_ONPANIC=1		# see also sysctl(7): `ddb.onpanic'
 
 ## You may also use gdb, on another computer connected to this machine over
 ## a serial port.

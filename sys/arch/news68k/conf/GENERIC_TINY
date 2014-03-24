@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC_TINY,v 1.78 2013/06/30 21:38:58 rmind Exp $
+# 	$NetBSD: GENERIC_TINY,v 1.79 2014/03/24 14:15:38 szptvlfn Exp $
 
 #	news68k GENERIC config file for low memory machines;
 #
@@ -6,7 +6,7 @@ include		"arch/news68k/conf/std.news68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC_TINY-$Revision: 1.78 $"
+#ident 		"GENERIC_TINY-$Revision: 1.79 $"
 
 maxusers	4
 
@@ -36,7 +36,7 @@ options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	KMEMSTATS		# kernel memory statistics (vmstat -m)
 #options 	DDB			# kernel dynamic debugger
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
-#options 	DDB_ONPANIC=1		# see also sysctl(8): `ddb.onpanic'
+#options 	DDB_ONPANIC=1		# see also sysctl(7): `ddb.onpanic'
 #options 	SCSIVERBOSE		# Verbose SCSI errors
 #options 	SCSIDEBUG		# extra SCSI debugging support
 #makeoptions	DEBUG="-g"		# compile full symbol table

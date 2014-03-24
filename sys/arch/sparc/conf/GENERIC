@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.242 2013/06/30 21:38:58 rmind Exp $
+# $NetBSD: GENERIC,v 1.243 2014/03/24 14:15:38 szptvlfn Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.242 $"
+#ident 		"GENERIC-$Revision: 1.243 $"
 
 maxusers	32
 
@@ -114,7 +114,7 @@ options 	NFS_BOOT_DHCP
 ## intercept.  DDB_HISTORY_SIZE adds up/down arrow command history.
 options 	DDB			# kernel dynamic debugger
 options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
-#options 	DDB_ONPANIC=1		# see also sysctl(8): `ddb.onpanic'
+#options 	DDB_ONPANIC=1		# see also sysctl(7): `ddb.onpanic'
 
 ## You may also use gdb, on another computer connected to this machine over
 ## a serial port.  Both KGDB_DEV and KGDB_DEVRATE should be specified;
