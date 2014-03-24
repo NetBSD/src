@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.260 2014/02/01 09:04:57 matt Exp $	*/
+/*	$NetBSD: systm.h,v 1.261 2014/03/24 20:07:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -67,7 +67,6 @@ extern const char *panicstr;	/* panic message */
 extern int doing_shutdown;	/* shutting down */
 
 extern const char copyright[];	/* system copyright */
-extern char cpu_model[];	/* machine/cpu model name */
 extern char machine[];		/* machine type */
 extern char machine_arch[];	/* machine architecture */
 extern const char osrelease[];	/* short system version */
