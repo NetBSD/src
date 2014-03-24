@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3100.c,v 1.53 2012/10/13 06:51:22 tsutsui Exp $ */
+/* $NetBSD: dec_3100.c,v 1.54 2014/03/24 19:31:39 christos Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -69,7 +69,7 @@
 
 #define __INTR_PRIVATE
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.53 2012/10/13 06:51:22 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.54 2014/03/24 19:31:39 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -141,7 +141,7 @@ dec_3100_init(void)
 		submodel = "2100 (PMIN)";
 	else
 		submodel = "3100 (PMAX)";
-	sprintf(cpu_model, "DECstation %s", submodel);
+	cpu_setmodel("DECstation %s", submodel);
 }
 
 /*
