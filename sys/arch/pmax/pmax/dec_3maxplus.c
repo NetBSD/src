@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3maxplus.c,v 1.69 2012/10/13 06:51:22 tsutsui Exp $ */
+/* $NetBSD: dec_3maxplus.c,v 1.70 2014/03/24 19:31:40 christos Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -70,7 +70,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.69 2012/10/13 06:51:22 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.70 2014/03/24 19:31:40 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -180,10 +180,10 @@ dec_3maxplus_init(void)
 	prodtype &= KN03_INTR_PROD_JUMPER;
 	/* the bit persists even if INTR register is assigned value 0 */
 	if (prodtype)
-		sprintf(cpu_model, "DECstation 5000/%s (3MAXPLUS)",
+		cpu_setmodel("DECstation 5000/%s (3MAXPLUS)",
 		    (CPUISMIPS3) ? "260" : "240");
 	else
-		sprintf(cpu_model, "DECsystem 5900%s (3MAXPLUS)",
+		cpu_setmodel("DECsystem 5900%s (3MAXPLUS)",
 		    (CPUISMIPS3) ? "-260" : "");
 }
 
