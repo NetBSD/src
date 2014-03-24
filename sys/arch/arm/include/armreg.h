@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.41.12.1 2014/02/15 16:18:36 matt Exp $	*/
+/*	$NetBSD: armreg.h,v 1.41.12.2 2014/03/24 18:43:40 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -597,6 +597,10 @@
 #define CORTEX_CNTENC_C __BIT(31)	/* Disables the cycle counter */
 #define CORTEX_CNTOFL_C __BIT(31)	/* Cycle counter overflow flag */
 
+/* Defines for ARM Cortex A7/A15 L2CTRL */
+#define L2CTRL_NUMCPU	__BITS(25,24)	// numcpus - 1
+#define L2CTRL_ICPRES	__BIT(23)	// Interrupt Controller is present
+
 /* Translate Table Base Control Register */
 #define TTBCR_S_EAE	__BIT(31)	// Extended Address Extension
 #define TTBCR_S_PD1	__BIT(5)	// Don't use TTBR1
@@ -765,6 +769,8 @@ ARMREG_WRITE_INLINE(tlbimva, "p15,0,%0,c8,c7,1") /* Invalidate unified TLB by MV
 ARMREG_WRITE_INLINE(tlbiasid, "p15,0,%0,c8,c7,2") /* Invalidate unified TLB by ASID */
 ARMREG_WRITE_INLINE(tlbimvaa, "p15,0,%0,c8,c7,3") /* Invalidate unified TLB by MVA, all ASID */
 /* cp15 c9 registers */
+ARMREG_READ_INLINE(l2ctrl, "p15,1,%0,c9,c0,2") /* A7/A15 L2 Control Register */
+ARMREG_WRITE_INLINE(l2ctrl, "p15,1,%0,c9,c0,2") /* A7/A15 L2 Control Register */
 ARMREG_READ_INLINE(pmcr, "p15,0,%0,c9,c12,0") /* PMC Control Register */
 ARMREG_WRITE_INLINE(pmcr, "p15,0,%0,c9,c12,0") /* PMC Control Register */
 ARMREG_READ_INLINE(pmcntenset, "p15,0,%0,c9,c12,1") /* PMC Count Enable Set */
