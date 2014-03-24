@@ -137,10 +137,10 @@ _Unwind_GetIPInfo (struct _Unwind_Context *context, int *ip_before_insn)
   return __libunwind_Unwind_GetIP (context);
 }
 
-extern void *__libunwind_Unwind_GetLanguageSpecificData
+extern _Unwind_Ptr __libunwind_Unwind_GetLanguageSpecificData
   (struct _Unwind_Context *);
 
-void *
+_Unwind_Ptr
 _Unwind_GetLanguageSpecificData (struct _Unwind_Context *context)
 {
   return __libunwind_Unwind_GetLanguageSpecificData (context);
