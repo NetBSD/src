@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.258 2013/11/10 18:27:15 christos Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.259 2014/03/24 20:06:32 christos Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.258 2013/11/10 18:27:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.259 2014/03/24 20:06:32 christos Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -265,7 +265,6 @@ void *	msgbufaddr;
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
-char	cpu_model[128];
 
 
 /*
