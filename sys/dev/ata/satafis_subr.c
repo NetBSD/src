@@ -1,4 +1,4 @@
-/* $NetBSD: satafis_subr.c,v 1.5.2.2 2010/04/21 00:27:34 matt Exp $ */
+/* $NetBSD: satafis_subr.c,v 1.5.2.3 2014/03/24 18:49:53 matt Exp $ */
 
 /*-
  * Copyright (c) 2009 Jonathan A. Kollasch.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satafis_subr.c,v 1.5.2.2 2010/04/21 00:27:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satafis_subr.c,v 1.5.2.3 2014/03/24 18:49:53 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,8 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: satafis_subr.c,v 1.5.2.2 2010/04/21 00:27:34 matt Ex
 #include <dev/ata/satafisreg.h>
 #include <dev/ata/satafisvar.h>
 
-#include <dev/ic/wdcreg.h> /* for WDCTL_4BIT */
-
 #include "atapibus.h"
 
 void
@@ -79,7 +77,7 @@ satafis_rhd_construct_cmd(struct ata_command *ata_c, uint8_t *fis)
 	memset(fis, 0, RHD_FISLEN);
 
 	fis[fis_type] = RHD_FISTYPE;
-	fis[rhd_cdpmp] = 0x80; /* xxx magic */
+	fis[rhd_c] = RHD_C;
 	fis[rhd_command] = ata_c->r_command;
 	fis[rhd_features] = ata_c->r_features;
 	fis[rhd_sector] = ata_c->r_sector;
@@ -87,9 +85,6 @@ satafis_rhd_construct_cmd(struct ata_command *ata_c, uint8_t *fis)
 	fis[rhd_cyl_hi] = (ata_c->r_cyl >> 8) & 0xff;
 	fis[rhd_dh] = ata_c->r_head & 0x0f;
 	fis[rhd_seccnt] = ata_c->r_count;
-	fis[rhd_control] = WDCTL_4BIT;
-
-	return;
 }
 
 void
@@ -103,7 +98,7 @@ satafis_rhd_construct_bio(struct ata_xfer *xfer, uint8_t *fis)
 	memset(fis, 0, RHD_FISLEN);
 
 	fis[fis_type] = RHD_FISTYPE;
-	fis[rhd_cdpmp] = 0x80; /* xxx magic */
+	fis[rhd_c] = RHD_C;
 	if (ata_bio->flags & ATA_LBA48) {
 		fis[rhd_command] = (ata_bio->flags & ATA_READ) ?
 		    WDCC_READDMA_EXT : WDCC_WRITEDMA_EXT;
@@ -125,8 +120,6 @@ satafis_rhd_construct_bio(struct ata_xfer *xfer, uint8_t *fis)
 	fis[rhd_seccnt] = nblks & 0xff;
 	fis[rhd_seccnt_exp] = (ata_bio->flags & ATA_LBA48) ?
 	    ((nblks >> 8) & 0xff) : 0;
-	fis[rhd_control] = WDCTL_4BIT;
-	return;
 }
 
 #if NATAPIBUS > 0
@@ -136,26 +129,30 @@ satafis_rhd_construct_atapi(struct ata_xfer *xfer, uint8_t *fis)
 	memset(fis, 0, RHD_FISLEN);
 
 	fis[fis_type] = RHD_FISTYPE;
-	fis[rhd_cdpmp] = 0x80; /* xxx magic */
+	fis[rhd_c] = RHD_C;
 	fis[rhd_command] = ATAPI_PKT_CMD;
 	fis[rhd_features] = (xfer->c_flags & C_DMA) ?
 	    ATAPI_PKT_CMD_FTRE_DMA : 0;
-	fis[rhd_dh] = WDSD_IBM; /* XXX or WDSD_LBA? */
-	fis[rhd_control] = WDCTL_4BIT;
 
 	return;
 }
 #endif /* NATAPIBUS */
 
 void
-satafis_rdh_parse(struct ata_channel *chp, uint8_t *fis)
+satafis_rdh_parse(struct ata_channel *chp, const uint8_t *fis)
 {
-#if 0
-	/* siisata doesn't do enough for this to work */
-	KASSERT(fis[fis_type] == RDH_FISTYPE);
-#endif
 	chp->ch_status = fis[rdh_status];
 	chp->ch_error = fis[rdh_error];
+}
 
-	return;
+void
+satafis_rdh_cmd_readreg(struct ata_command *ata_c, const uint8_t *fis)
+{
+	ata_c->r_command = fis[rdh_status];
+	ata_c->r_features = fis[rdh_error];
+	ata_c->r_error = fis[rdh_error];
+	ata_c->r_sector = fis[rdh_sector];
+	ata_c->r_cyl = fis[rdh_cyl_hi] << 8 | fis[rdh_cyl_lo];
+	ata_c->r_head = fis[rdh_dh];
+	ata_c->r_count = fis[rdh_seccnt];
 }
