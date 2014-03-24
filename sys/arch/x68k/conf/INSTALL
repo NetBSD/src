@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.104 2014/03/05 16:02:29 isaki Exp $
+#	$NetBSD: INSTALL,v 1.105 2014/03/24 14:15:38 szptvlfn Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -8,7 +8,7 @@ include "arch/x68k/conf/std.x68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.104 $"
+#ident 		"INSTALL-$Revision: 1.105 $"
 
 makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 
@@ -90,7 +90,7 @@ options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 ## intercept.  DDB_HISTORY_SIZE adds up/down arrow command history.
 #options 	DDB			# kernel dynamic debugger
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
-#options 	DDB_ONPANIC=1		# see also sysctl(8): `ddb.onpanic'
+#options 	DDB_ONPANIC=1		# see also sysctl(7): `ddb.onpanic'
 #options 	PANICBUTTON		# interrupt switch invokes DDB
 
 ## You may also use gdb, on another computer connected to this machine over
