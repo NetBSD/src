@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_swap.S,v 1.2 2008/08/16 07:12:40 matt Exp $	*/
+/*	$NetBSD: atomic_swap.S,v 1.2.12.1 2014/03/24 18:53:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -39,7 +39,15 @@
 #include "atomic_op_asm.h"
 
 ENTRY_NP(_atomic_swap_32)
+#ifdef _ARM_ARCH_6
+	mov	ip, r0
+1:	ldrex	r0, [ip]
+	strex	r2, r1, ip
+	cmp	r2, #0
+	bne	1b
+#else
 	swp	r0, r1, [r0]
+#endif
 	RET
 	END(_atomic_swap_32)
 ATOMIC_OP_ALIAS(atomic_swap_32,_atomic_swap_32)
@@ -51,7 +59,15 @@ STRONG_ALIAS(_atomic_swap_ulong,_atomic_swap_32)
 STRONG_ALIAS(_atomic_swap_ptr,_atomic_swap_32)
 
 ENTRY_NP(_atomic_swap_8)
+#ifdef _ARM_ARCH_6
+	mov	ip, r0
+1:	ldrexb	r0, [ip]
+	strexb	r2, r1, ip
+	cmp	r2, #0
+	bne	1b
+#else
 	swpb	r0, r1, [r0]
+#endif
 	RET
 	END(_atomic_swap_8)
 ATOMIC_OP_ALIAS(atomic_swap_8,_atomic_swap_8)
