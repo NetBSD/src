@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.63 2014/03/16 05:20:30 dholland Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.64 2014/03/24 20:07:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.63 2014/03/16 05:20:30 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.64 2014/03/24 20:07:41 christos Exp $");
 
 #include "opt_cpu_ucode.h"
 #include "opt_compat_netbsd.h"
@@ -126,6 +126,9 @@ struct cpu_info **cpu_infos		__read_mostly;
 /* Note: set on mi_cpu_attach() and idle_loop(). */
 kcpuset_t *	kcpuset_attached	__read_mostly	= NULL;
 kcpuset_t *	kcpuset_running		__read_mostly	= NULL;
+
+
+static char cpu_model[128];
 
 /*
  * mi_cpu_init: early initialisation of MI CPU related structures.
@@ -473,6 +476,24 @@ cpu_setstate(struct cpu_info *ci, bool online)
 
 	spc->spc_lastmod = time_second;
 	return 0;
+}
+
+int
+cpu_setmodel(const char *fmt, ...)
+{
+	int len;
+	va_list ap;
+
+	va_start(ap, fmt);
+	len = snprintf(cpu_model, sizeof(cpu_model), fmt, ap);
+	va_end(ap);
+	return len;
+}
+
+const char *
+cpu_getmodel(void)
+{
+	return cpu_model;
 }
 
 #ifdef __HAVE_INTR_CONTROL

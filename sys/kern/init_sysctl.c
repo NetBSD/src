@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.201 2014/02/25 18:30:11 pooka Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.202 2014/03/24 20:07:41 christos Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.201 2014/02/25 18:30:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.202 2014/03/24 20:07:41 christos Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
@@ -635,6 +635,7 @@ SYSCTL_SETUP(sysctl_hw_setup, "sysctl hw subtree setup")
 {
 	u_int u;
 	u_quad_t q;
+	const char *model = cpu_getmodel();
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
@@ -646,7 +647,7 @@ SYSCTL_SETUP(sysctl_hw_setup, "sysctl hw subtree setup")
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "model",
 		       SYSCTL_DESCR("Machine model"),
-		       NULL, 0, cpu_model, 0,
+		       NULL, 0, __UNCONST(model), 0,
 		       CTL_HW, HW_MODEL, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
