@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.94 2014/03/16 05:20:24 dholland Exp $	*/
+/*	$NetBSD: rd.c,v 1.95 2014/03/24 19:42:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.94 2014/03/16 05:20:24 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.95 2014/03/24 19:42:58 christos Exp $");
 
 #include "opt_useleds.h"
 
@@ -768,7 +768,7 @@ rdstart(void *arg)
 {
 	struct rd_softc *sc = arg;
 	struct buf *bp = bufq_peek(sc->sc_tab);
-	int part, ctlr, slave;
+	int ctlr, slave;
 
 	ctlr = device_unit(device_parent(sc->sc_dev));
 	slave = sc->sc_slave;
@@ -779,7 +779,6 @@ again:
 		printf("rdstart(%s): bp %p, %c\n", device_xname(sc->sc_dev), bp,
 		    (bp->b_flags & B_READ) ? 'R' : 'W');
 #endif
-	part = rdpart(bp->b_dev);
 	sc->sc_flags |= RDF_SEEK;
 	sc->sc_ioc.c_unit = C_SUNIT(sc->sc_punit);
 	sc->sc_ioc.c_volume = C_SVOL(0);
@@ -1257,7 +1256,7 @@ rddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	int sectoff;		/* sector offset of partition */
 	int totwrt;		/* total number of sectors left to write */
 	int nwrt;		/* current number of sectors to write */
-	int unit, part;
+	int part;
 	int ctlr, slave;
 	struct rd_softc *sc;
 	struct disklabel *lp;
@@ -1269,7 +1268,6 @@ rddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	rddoingadump = 1;
 
 	/* Decompose unit and partition. */
-	unit = rdunit(dev);
 	part = rdpart(dev);
 
 	/* Make sure dump device is ok. */

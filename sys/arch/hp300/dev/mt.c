@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.51 2014/03/16 05:20:24 dholland Exp $	*/
+/*	$NetBSD: mt.c,v 1.52 2014/03/24 19:42:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.51 2014/03/16 05:20:24 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.52 2014/03/24 19:42:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,7 +189,7 @@ mtattach(device_t parent, device_t self, void *aux)
 {
 	struct mt_softc *sc = device_private(self);
 	struct hpibbus_attach_args *ha = aux;
-	int unit, hpibno, slave;
+	int hpibno, slave;
 
 	sc->sc_dev = self;
 	if (mtident(sc, ha) == 0) {
@@ -197,7 +197,6 @@ mtattach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	unit = device_unit(self);
 	hpibno = device_unit(parent);
 	slave = ha->ha_slave;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.58 2014/03/16 05:20:24 dholland Exp $	*/
+/*	$NetBSD: ct.c,v 1.59 2014/03/24 19:42:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.58 2014/03/16 05:20:24 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.59 2014/03/24 19:42:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -732,11 +732,10 @@ ctintr(void *arg)
 	struct ct_softc *sc = arg;
 	struct buf *bp;
 	uint8_t stat;
-	int ctlr, slave, unit;
+	int ctlr, slave;
 
 	ctlr = device_unit(device_parent(sc->sc_dev));
 	slave = sc->sc_slave;
-	unit = device_unit(sc->sc_dev);
 
 	bp = bufq_peek(sc->sc_tab);
 	if (bp == NULL) {
