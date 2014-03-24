@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.114 2012/07/28 23:08:56 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.115 2014/03/24 20:06:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 Izumi Tsutsui.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.114 2012/07/28 23:08:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.115 2014/03/24 20:06:31 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -219,10 +219,10 @@ mach_init(int32_t memsize32, u_int bim, int32_t bip32)
 
 	cobalt_id = read_board_id();
 	if (cobalt_id >= COBALT_MODELS || cobalt_model[cobalt_id] == NULL)
-		sprintf(cpu_model, "Cobalt unknown model (board ID %u)",
+		cpu_setmodel("Cobalt unknown model (board ID %u)",
 		    cobalt_id);
 	else
-		strcpy(cpu_model, cobalt_model[cobalt_id]);
+		cpu_setmodel("%s", cobalt_model[cobalt_id]);
 
 	switch (cobalt_id) {
 	case COBALT_ID_QUBE2700:
@@ -319,7 +319,7 @@ cpu_startup(void)
 	 * Good {morning,afternoon,evening,night}.
 	 */
 	printf("%s%s", copyright, version);
-	printf("%s\n", cpu_model);
+	printf("%s\n", cpu_getmodel());
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
 

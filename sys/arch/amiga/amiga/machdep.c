@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.242 2014/03/22 01:52:44 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.243 2014/03/24 20:06:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,7 +50,7 @@
 #include "empm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.242 2014/03/22 01:52:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.243 2014/03/24 20:06:31 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -286,8 +286,6 @@ cpu_startup(void)
 /*
  * Info for CTL_HW
  */
-char cpu_model[120];
-
 #if defined(M68060)
 int m68060_pcr_init = 0x21;	/* make this patchable */
 #endif
@@ -367,9 +365,8 @@ identifycpu(void)
 			fputype = FPU_NONE;
 		}
 	}
-	snprintf(cpu_model, sizeof(cpu_model), "%s (%s CPU%s%s)", mach,
-	    cpu_type, mmu, fpu);
-	printf("%s\n", cpu_model);
+	cpu_setmodel("%s (%s CPU%s%s)", mach, cpu_type, mmu, fpu);
+	printf("%s\n", cpu_getmodel());
 }
 
 /*

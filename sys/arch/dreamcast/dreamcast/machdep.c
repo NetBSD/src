@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.44 2014/03/14 08:51:06 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.45 2014/03/24 20:06:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.44 2014/03/14 08:51:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.45 2014/03/24 20:06:31 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.44 2014/03/14 08:51:06 martin Exp $");
 #include <sys/ksyms.h>
 #include <sys/device.h>
 #include <sys/module.h>
+#include <sys/cpu.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -174,7 +175,7 @@ void
 cpu_startup(void)
 {
 
-	strcpy(cpu_model, "SEGA Dreamcast\n");
+	cpu_setmodel("SEGA Dreamcast");
 
 	sh_startup();
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.37 2012/08/16 17:35:01 matt Exp $ */
+/* $NetBSD: machdep.c,v 1.38 2014/03/24 20:06:31 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37 2012/08/16 17:35:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38 2014/03/24 20:06:31 christos Exp $");
 
 #include <sys/buf.h>
 #include <sys/kernel.h>
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37 2012/08/16 17:35:01 matt Exp $");
 #include <machine/machdep.h>
 #include <machine/memcreg.h>
 
-char cpu_model[] = "Archimedes";
 
 struct vm_map *phys_map = NULL;
 
@@ -147,6 +146,7 @@ cpu_startup(void)
 	/* Stuff to do here: */
 	/* initmsgbuf() is called from start() */
 
+	cpu_setmodel("Archimedes");
 	printf("%s%s", copyright, version);
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);

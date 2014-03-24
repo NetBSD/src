@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.116 2012/07/28 23:08:56 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.117 2014/03/24 20:06:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.116 2012/07/28 23:08:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.117 2014/03/24 20:06:32 christos Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -478,8 +478,8 @@ cpu_startup(void)
 	 * Good {morning,afternoon,evening,night}.
 	 */
 	printf("%s%s", copyright, version);
-	sprintf(cpu_model, "%s (%s)", platid_name(&platid), hpcmips_cpuname);
-	printf("%s\n", cpu_model);
+	cpu_setmodel("%s (%s)", platid_name(&platid), hpcmips_cpuname);
+	printf("%s\n", cpu_getmodel());
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
 	if (bootverbose) {

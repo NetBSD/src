@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.108 2014/01/09 20:13:54 palle Exp $ */
+/*	$NetBSD: cpu.c,v 1.109 2014/03/24 20:06:32 christos Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.108 2014/01/09 20:13:54 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.109 2014/03/24 20:06:32 christos Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.108 2014/01/09 20:13:54 palle Exp $");
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/reboot.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm.h>
 
@@ -94,7 +95,6 @@ static struct cpu_info *alloc_cpuinfo(u_int);
 /* The following are used externally (sysctl_hw). */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
-char	cpu_model[100];			/* machine model (primary CPU) */
 
 /* These are used in locore.s, and are maximums */
 int	dcache_line_size;
@@ -312,7 +312,7 @@ cpu_attach(device_t parent, device_t dev, void *aux)
 
 	snprintf(buf, sizeof buf, "%s @ %s MHz",
 		prom_getpropstring(node, "name"), clockfreq(clk));
-	snprintf(cpu_model, sizeof cpu_model, "%s (%s)", machine_model, buf);
+	cpu_setmodel("%s (%s)", machine_model, buf);
 
 	aprint_normal(": %s, UPA id %d\n", buf, ci->ci_cpuid);
 	aprint_naive("\n");

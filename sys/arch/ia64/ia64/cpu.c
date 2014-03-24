@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.12 2014/03/10 13:47:45 martin Exp $	*/
+/*	$NetBSD: cpu.c,v 1.13 2014/03/24 20:06:32 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.12 2014/03/10 13:47:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.13 2014/03/24 20:06:32 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -51,8 +51,6 @@ struct cpu_softc {
 	device_t sc_dev;		/* device tree glue */
 	struct cpu_info *sc_info;	/* pointer to CPU info */
 };
-
-char cpu_model[64];
 
 static int cpu_match(device_t, cfdata_t, void *);
 static void cpu_attach(device_t, device_t, void *);
@@ -167,7 +165,7 @@ identifycpu(struct cpu_softc *sc)
 		}
 		break;
 	}
-	snprintf(cpu_model, sizeof(cpu_model), "%s", model_name);
+	cpu_setmodel("%s", model_name);
 
 	features = ia64_get_cpuid(4);
 

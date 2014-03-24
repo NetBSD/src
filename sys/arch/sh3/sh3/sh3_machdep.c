@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.101 2012/09/21 09:05:08 ryo Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.102 2014/03/24 20:06:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.101 2012/09/21 09:05:08 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.102 2014/03/24 20:06:32 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -112,7 +112,6 @@ const char kgdb_devname[] = KGDB_DEVNAME;
 struct cpu_info cpu_info_store;
 int cpu_arch;
 int cpu_product;
-char cpu_model[120];
 
 struct vm_map *phys_map;
 
@@ -274,10 +273,11 @@ sh_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
+	const char *model = cpu_getmodel();
 
 	printf("%s%s", copyright, version);
-	if (*cpu_model != '\0')
-		printf("%s", cpu_model);
+	if (*model != '\0')
+		printf("%s", model);
 #ifdef DEBUG
 	printf("general exception handler:\t%d byte\n",
 	    sh_vector_generic_end - sh_vector_generic);
