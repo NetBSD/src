@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.10 2014/01/11 15:51:02 tsutsui Exp $	*/
+/*	$NetBSD: locore.S,v 1.11 2014/03/24 10:46:58 martin Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -762,7 +762,7 @@ ENTRY(spl7)
 	.data
 
 /*
- * Memory Infomation Field for secondary booter memory allocator
+ * Memory Information Field for secondary booter memory allocator
  */
 
 GLOBAL(prgcore)

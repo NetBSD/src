@@ -1,4 +1,4 @@
-/*	$NetBSD: preset.h,v 1.2 2014/01/11 15:51:02 tsutsui Exp $	*/
+/*	$NetBSD: preset.h,v 1.3 2014/03/24 10:46:58 martin Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -71,7 +71,7 @@
  */
 
 /*
- * preset.h -- preset infomation
+ * preset.h -- preset information
  *   by A.Fujita, Dec-12-1992
  */
 

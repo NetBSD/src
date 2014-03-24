@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.4 2014/01/11 15:51:02 tsutsui Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.5 2014/03/24 10:46:58 martin Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -129,12 +129,12 @@ disklabel(int argc, char *argv[])
 		printf("\thelp:\t\tthis command\n");
 		printf("\tread:\t\tread disklabel from scsi_device\n");
 		printf("\twrite:\t\twrite disklabel to scsi_device\n");
-		printf("\tomron:\t\tshow OMRON disklabel infomation\n");
-		printf("\tbsd:\t\tshow BSD disklabel infomation\n");
-		printf("\tcopy:\t\tcopy disklabel infomation from OMRON"
+		printf("\tomron:\t\tshow OMRON disklabel information\n");
+		printf("\tbsd:\t\tshow BSD disklabel information\n");
+		printf("\tcopy:\t\tcopy disklabel information from OMRON"
 		    " to BSD\n");
 		printf("\tchecksum:\tdoing checksum\n");
-		printf("\tset:\t\tchange BSD disklabel infomation\n");
+		printf("\tset:\t\tchange BSD disklabel information\n");
 		printf("\n\n");
 	} else if (!strcmp(argv[1], "read")) {
 		if (scsi_read( 0, lbl_buff, LABEL_SIZE)) {
