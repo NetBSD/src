@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.191 2014/03/12 09:38:51 hannken Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.192 2014/03/24 13:42:40 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.191 2014/03/12 09:38:51 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.192 2014/03/24 13:42:40 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -297,12 +297,9 @@ genfs_deadlock(void *v)
 		if (! rw_tryenter(&vp->v_lock, op))
 			return EBUSY;
 		if (mutex_tryenter(vp->v_interlock)) {
-			if (ISSET(vp->v_iflag, VI_XLOCK))
-				error = EBUSY;
-			else {
-				KASSERT(ISSET(vp->v_iflag, VI_CLEAN));
-				error = (ISSET(flags, LK_RETRY) ? 0 : ENOENT);
-			}
+			error = vdead_check(vp, VDEAD_NOWAIT);
+			if (error == ENOENT && ISSET(flags, LK_RETRY))
+				error = 0;
 			mutex_exit(vp->v_interlock);
 		} else
 			error = EBUSY;
@@ -313,14 +310,16 @@ genfs_deadlock(void *v)
 
 	rw_enter(&vp->v_lock, op);
 	mutex_enter(vp->v_interlock);
-	if (ISSET(vp->v_iflag, VI_XLOCK)) {
+	error = vdead_check(vp, VDEAD_NOWAIT);
+	if (error == EBUSY) {
 		rw_exit(&vp->v_lock);
-		vwait(vp, VI_XLOCK);
+		error = vdead_check(vp, 0);
+		KASSERT(error == ENOENT);
 		mutex_exit(vp->v_interlock);
 		rw_enter(&vp->v_lock, op);
 		mutex_enter(vp->v_interlock);
 	}
-	KASSERT(ISSET(vp->v_iflag, VI_CLEAN));
+	KASSERT(error == ENOENT);
 	mutex_exit(vp->v_interlock);
 	if (! ISSET(flags, LK_RETRY)) {
 		rw_exit(&vp->v_lock);
@@ -370,12 +369,7 @@ genfs_lock(void *v)
 			return EBUSY;
 		}
 		if (mutex_tryenter(vp->v_interlock)) {
-			if (ISSET(vp->v_iflag, VI_XLOCK))
-				error = EBUSY;
-			else if (ISSET(vp->v_iflag, VI_CLEAN))
-				error = ENOENT;
-			else
-				error = 0;
+			error = vdead_check(vp, VDEAD_NOWAIT);
 			mutex_exit(vp->v_interlock);
 		} else
 			error = EBUSY;
@@ -389,16 +383,15 @@ genfs_lock(void *v)
 	fstrans_start(mp, FSTRANS_SHARED);
 	rw_enter(&vp->v_lock, op);
 	mutex_enter(vp->v_interlock);
-	if (ISSET(vp->v_iflag, VI_XLOCK) || ISSET(vp->v_iflag, VI_CLEAN)) {
+	error = vdead_check(vp, VDEAD_NOWAIT);
+	if (error) {
 		rw_exit(&vp->v_lock);
 		fstrans_done(mp);
-		vwait(vp, VI_XLOCK);
-		KASSERT(ISSET(vp->v_iflag, VI_CLEAN));
-		mutex_exit(vp->v_interlock);
-		return ENOENT;
+		error = vdead_check(vp, 0);
+		KASSERT(error == ENOENT);
 	}
 	mutex_exit(vp->v_interlock);
-	return 0;
+	return error;
 }
 
 /*
