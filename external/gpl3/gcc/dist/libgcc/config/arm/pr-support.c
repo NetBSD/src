@@ -352,7 +352,7 @@ _Unwind_GetRegionStart (_Unwind_Context * context)
 
 /* Find the Language specific exception data.  */
 
-void *
+_Unwind_Ptr
 _Unwind_GetLanguageSpecificData (_Unwind_Context * context)
 {
   _Unwind_Control_Block *ucbp;

@@ -183,7 +183,7 @@ extern "C" {
 #define _Unwind_Exception _Unwind_Control_Block
   typedef char _Unwind_Exception_Class[8];
 
-  void * _Unwind_GetLanguageSpecificData (_Unwind_Context *);
+  _Unwind_Ptr _Unwind_GetLanguageSpecificData (_Unwind_Context *);
   _Unwind_Ptr _Unwind_GetRegionStart (_Unwind_Context *);
 
   _Unwind_Ptr _Unwind_GetDataRelBase (_Unwind_Context *);
@@ -234,7 +234,7 @@ extern "C" {
     }
 
   _Unwind_Ptr _Unwind_GetRegionStart (_Unwind_Context *);
-  void * _Unwind_GetLanguageSpecificData (_Unwind_Context *);
+  _Unwind_Ptr _Unwind_GetLanguageSpecificData (_Unwind_Context *);
 
 /* leb128 type numbers have a potentially unlimited size.
    The target of the following definitions of _sleb128_t and _uleb128_t
