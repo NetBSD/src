@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.343 2014/03/20 20:51:40 christos Exp $ */
+/* $NetBSD: machdep.c,v 1.344 2014/03/24 20:06:31 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.343 2014/03/20 20:51:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.344 2014/03/24 20:06:31 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,7 +160,6 @@ uint32_t no_optimize;
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
-char	cpu_model[128];
 
 /* Number of machine cycles per microsecond */
 uint64_t	cycles_per_usec;
@@ -391,7 +390,7 @@ nobootinfo:
 		/* NOTREACHED */
 	}
 	(*c->init)();
-	strcpy(cpu_model, platform.model);
+	cpu_setmodel("%s", platform.model);
 
 	/*
 	 * Initialize the real console, so that the bootstrap console is
@@ -936,14 +935,14 @@ alpha_unknown_sysname(void)
 void
 identifycpu(void)
 {
-	char *s;
+	const char *s;
 	int i;
 
 	/*
 	 * print out CPU identification information.
 	 */
-	printf("%s", cpu_model);
-	for(s = cpu_model; *s; ++s)
+	printf("%s", cpu_getmodel());
+	for(s = cpu_getmodel(); *s; ++s)
 		if(strncasecmp(s, "MHz", 3) == 0)
 			goto skipMHz;
 	printf(", %ldMHz", hwrpb->rpb_cc_freq / 1000000);

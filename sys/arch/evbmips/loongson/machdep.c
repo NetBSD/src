@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 2012/10/13 17:58:55 jdc Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6 2014/03/24 20:06:31 christos Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2012/10/13 17:58:55 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 2014/03/24 20:06:31 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -109,6 +109,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2012/10/13 17:58:55 jdc Exp $");
 #include <sys/termios.h>
 #include <sys/ksyms.h>
 #include <sys/device.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -216,9 +217,6 @@ const struct bonito_flavour bonito_flavours[] = {
 	{ "LM9001",	&lynloong_platform },
 	{ NULL }
 };
-
-/* For sysctl_hw. */
-extern char cpu_model[];
 
 /* Maps for VM objects. */
 struct vm_map *phys_map = NULL;
@@ -432,9 +430,8 @@ mach_init(int32_t argc, int32_t argva, int32_t enva, int32_t callvec,
 		}
 	}
 
-	sprintf(cpu_model, "%s %s", sys_platform->vendor, 
-	    sys_platform->product);
-	DPRINTF(("Found %s, setting up.\n", cpu_model));
+	cpu_setmodel("%s %s", sys_platform->vendor, sys_platform->product);
+	DPRINTF(("Found %s, setting up.\n", cpu_getmodel()));
 
 	/*
 	 * Figure out memory information.

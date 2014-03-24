@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.240 2013/11/16 23:54:01 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.241 2014/03/24 20:06:32 christos Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.240 2013/11/16 23:54:01 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.241 2014/03/24 20:06:32 christos Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -110,7 +110,6 @@ struct cpu_softc {
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 int	cpu_arch;			/* sparc architecture version */
-char	cpu_model[100];			/* machine model (primary CPU) */
 extern char machine_model[];
 
 int	sparc_ncpus;			/* # of CPUs detected by PROM */
@@ -438,8 +437,7 @@ cpu_attach(struct cpu_softc *sc, int node, int mid)
 	cpu_setup();
 	snprintf(buf, sizeof buf, "%s @ %s MHz, %s FPU",
 		cpi->cpu_longname, clockfreq(cpi->hz), cpi->fpu_name);
-	snprintf(cpu_model, sizeof cpu_model, "%s (%s)",
-		machine_model, buf);
+	cpu_setmodel("%s (%s)", machine_model, buf);
 	printf(": %s\n", buf);
 	cache_print(sc);
 
