@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.86 2014/03/24 19:58:04 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.87 2014/03/24 20:01:03 christos Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/trap.c
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.86 2014/03/24 19:58:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.87 2014/03/24 20:01:03 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -270,8 +270,7 @@ trap(struct frame *fp, int type, unsigned code, unsigned v)
 	int s;
 	int rv;
 	u_quad_t sticks = 0 /* XXX initialiser works around compiler bug */;
-/*###273 [cc] error: variable 'panicking' set but not used [-Werror=unused-but-set-variable]%%%*/
-	static int panicking = 0;
+	static int panicking __diagused;
 
 	curcpu()->ci_data.cpu_ntrap++;
 	l = curlwp;
