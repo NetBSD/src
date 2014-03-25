@@ -3599,9 +3599,10 @@ tc_vax_regname_to_dw2regnum (char *regname)
 }
 
 void
-vax_cfi_emit_pcrel_expr (expressionS *exp, unsigned int nbytes)
+vax_cfi_emit_pcrel_expr (expressionS *expP, unsigned int nbytes)
 {
   vax_cons_special_reloc = "pcrel";
-  emit_expr (exp, nbytes);
+  expP->X_add_number += nbytes;
+  emit_expr (expP, nbytes);
   vax_cons_special_reloc = NULL;
 }
