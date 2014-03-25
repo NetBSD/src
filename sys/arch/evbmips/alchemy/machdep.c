@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.53 2014/03/24 20:06:31 christos Exp $ */
+/* $NetBSD: machdep.c,v 1.54 2014/03/25 10:44:12 martin Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.53 2014/03/24 20:06:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.54 2014/03/25 10:44:12 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -356,7 +356,7 @@ cpu_startup(void)
 	 * Good {morning,afternoon,evening,night}.
 	 */
 	printf("%s%s", copyright, version);
-	printf("%s\n", gpu_getmodel());
+	printf("%s\n", cpu_getmodel());
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
 
