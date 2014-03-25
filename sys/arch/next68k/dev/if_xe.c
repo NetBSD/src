@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xe.c,v 1.22 2012/10/27 17:18:05 chs Exp $	*/
+/*	$NetBSD: if_xe.c,v 1.23 2014/03/25 19:41:32 christos Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xe.c,v 1.22 2012/10/27 17:18:05 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xe.c,v 1.23 2014/03/25 19:41:32 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -70,13 +70,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_xe.c,v 1.22 2012/10/27 17:18:05 chs Exp $");
 #ifdef XE_DEBUG
 int xe_debug = 0;
 #define DPRINTF(x) if (xe_debug) printf x;
-extern char *ndtracep;
-extern char ndtrace[];
-extern int ndtraceshow;
-#define NDTRACEIF(x) if (10 && ndtracep < (ndtrace + 8192)) do {x;} while (0)
 #else
 #define DPRINTF(x)
-#define NDTRACEIF(x)
 #endif
 #define PRINTF(x) printf x;
 
