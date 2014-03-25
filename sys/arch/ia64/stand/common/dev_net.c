@@ -1,5 +1,5 @@
 /*	
- * $NetBSD: dev_net.c,v 1.8 2011/07/17 20:54:42 joerg Exp $
+ * $NetBSD: dev_net.c,v 1.9 2014/03/25 18:35:32 christos Exp $
  */
 
 /*-
@@ -279,7 +279,7 @@ net_getparams(int sock)
     printf("net_open: server path: %s\n", rootpath);	    
 
     d = socktodesc(sock);
-    sprintf(temp, "%6D", d->myea, ":");
+    snprintf(temp, sizeof(temp), "%6D", d->myea, ":");
     setenv("boot.netif.ip", inet_ntoa(myip), 1);
     setenv("boot.netif.netmask", intoa(netmask), 1);
     setenv("boot.netif.gateway", inet_ntoa(gateip), 1);
