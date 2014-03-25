@@ -1022,7 +1022,7 @@ extern UWtype __MPN(udiv_qrnnd) _PROTO ((UWtype *, UWtype, UWtype, UWtype));
 #endif /* __m88000__ */
 
 #if defined (__mips) && W_TYPE_SIZE == 32
-#if __GMP_GNUC_PREREQ (4,4)
+#if __GMP_GNUC_PREREQ (4,4) || defined(__clang__)
 #define umul_ppmm(w1, w0, u, v) \
   do {									\
     UDItype __ll = (UDItype)(u) * (v);					\
@@ -1044,7 +1044,7 @@ extern UWtype __MPN(udiv_qrnnd) _PROTO ((UWtype *, UWtype, UWtype, UWtype));
 #endif /* __mips */
 
 #if (defined (__mips) && __mips >= 3) && W_TYPE_SIZE == 64
-#if __GMP_GNUC_PREREQ (4,4)
+#if __GMP_GNUC_PREREQ (4,4) || defined(__clang__)
 #define umul_ppmm(w1, w0, u, v) \
   do {									\
     typedef unsigned int __ll_UTItype __attribute__((mode(TI)));	\
@@ -1160,7 +1160,7 @@ extern UWtype __MPN(udiv_qrnnd) _PROTO ((UWtype *, UWtype, UWtype, UWtype));
   __asm__ ("{cntlz|cntlzw} %0,%1" : "=r" (count) : "r" (x))
 #define COUNT_LEADING_ZEROS_0 32
 #if HAVE_HOST_CPU_FAMILY_powerpc
-#if __GMP_GNUC_PREREQ (4,4)
+#if __GMP_GNUC_PREREQ (4,4) || defined(__clang__)
 #define umul_ppmm(w1, w0, u, v) \
   do {									\
     UDItype __ll = (UDItype)(u) * (v);					\
@@ -1259,7 +1259,7 @@ extern UWtype __MPN(udiv_qrnnd) _PROTO ((UWtype *, UWtype, UWtype, UWtype));
 #define count_leading_zeros(count, x) \
   __asm__ ("cntlzd %0,%1" : "=r" (count) : "r" (x))
 #define COUNT_LEADING_ZEROS_0 64
-#if __GMP_GNUC_PREREQ (4,4)
+#if __GMP_GNUC_PREREQ (4,4) || defined(__clang__)
 #define umul_ppmm(w1, w0, u, v) \
   do {									\
     typedef unsigned int __ll_UTItype __attribute__((mode(TI)));	\
