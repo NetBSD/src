@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsold.c,v 1.40 2014/03/18 20:39:55 dsl Exp $	*/
+/*	$NetBSD: rtsold.c,v 1.41 2014/03/25 17:17:44 joerg Exp $	*/
 /*	$KAME: rtsold.c,v 1.77 2004/01/03 01:35:13 itojun Exp $	*/
 
 /*
@@ -587,7 +587,7 @@ rtsol_timer_update(struct ifinfo *ifinfo)
 			ifinfo->timer = tm_max;	/* stop timer(valid?) */
 		break;
 	case IFS_DELAY:
-		interval = (time_t) (arc4random() % (MAX_RTR_SOLICITATION_DELAY * MILLION));
+		interval = arc4random() % (MAX_RTR_SOLICITATION_DELAY * MILLION);
 		ifinfo->timer.tv_sec = interval / MILLION;
 		ifinfo->timer.tv_usec = (suseconds_t)(interval % MILLION);
 		break;
