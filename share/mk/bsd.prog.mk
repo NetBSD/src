@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.289 2014/03/09 18:00:51 christos Exp $
+#	$NetBSD: bsd.prog.mk,v 1.290 2014/03/25 09:52:55 ozaki-r Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -62,7 +62,7 @@ OBJCFLAGS+=	${OBJCOPTS}
 MKDEP_SUFFIXES?=	.o .ln
 
 # CTF preserve debug symbols
-.if defined(MKDTRACE) && (${MKDTRACE} != "no") && (${CFLAGS:M-g} != "")
+.if (${MKCTF:Uno} != "no") && (${CFLAGS:M-g} != "")
 CTFFLAGS+= -g
 CTFMFLAGS+= -g
 .if defined(HAVE_GCC) && ${HAVE_GCC} >= 48

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.328 2014/02/24 07:23:41 skrll Exp $
+#	$NetBSD: bsd.README,v 1.329 2014/03/25 09:52:55 ozaki-r Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -144,6 +144,11 @@ MKCRYPTO	If "no", no cryptography support will be built into the system,
 		Default: yes
 
 MKCRYPTO_RC5	If not "no", RC5 support will be built into libcrypto_rc5
+		Default: no
+
+MKCTF		If "no", do not build and install CTF tools, and also
+		don't generate and manipulate CTF data of ELF binaries
+		during build.
 		Default: no
 
 MKCVS		If "no", don't build or install cvs(1).
