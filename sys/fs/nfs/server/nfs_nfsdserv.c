@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nfsdserv.c,v 1.1.1.1 2013/09/30 07:19:55 dholland Exp $	*/
+/*	$NetBSD: nfs_nfsdserv.c,v 1.2 2014/03/25 16:30:28 christos Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfsserver/nfs_nfsdserv.c 245613 2013-01-18 19:42:08Z delphij "); */
-__RCSID("$NetBSD: nfs_nfsdserv.c,v 1.1.1.1 2013/09/30 07:19:55 dholland Exp $");
+__RCSID("$NetBSD: nfs_nfsdserv.c,v 1.2 2014/03/25 16:30:28 christos Exp $");
 
 /*
  * nfs version 2, 3 and 4 server calls to vnode ops
@@ -3346,8 +3346,8 @@ nfsrvd_setclientid(struct nfsrv_descript *nd, __unused int isdgram,
 		rad = NFSSOCKADDR(clp->lc_req.nr_nam, struct sockaddr_in *);
 		ucp = (u_char *)&rad->sin_addr.s_addr;
 		ucp2 = (u_char *)&rad->sin_port;
-		sprintf(addrbuf, "%d.%d.%d.%d.%d.%d", ucp[0] & 0xff,
-		    ucp[1] & 0xff, ucp[2] & 0xff, ucp[3] & 0xff,
+		snprintf(addrbuf, sizeof(addrbuf), "%d.%d.%d.%d.%d.%d",
+		    ucp[0] & 0xff, ucp[1] & 0xff, ucp[2] & 0xff, ucp[3] & 0xff,
 		    ucp2[0] & 0xff, ucp2[1] & 0xff);
 		(void) nfsm_strtom(nd, addrbuf, strlen(addrbuf));
 	}

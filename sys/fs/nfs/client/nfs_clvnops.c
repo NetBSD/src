@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_clvnops.c,v 1.1.1.1 2013/09/30 07:19:20 dholland Exp $	*/
+/*	$NetBSD: nfs_clvnops.c,v 1.2 2014/03/25 16:30:28 christos Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfsclient/nfs_clvnops.c 252072 2013-06-21 22:26:18Z rmacklem "); */
-__RCSID("$NetBSD: nfs_clvnops.c,v 1.1.1.1 2013/09/30 07:19:20 dholland Exp $");
+__RCSID("$NetBSD: nfs_clvnops.c,v 1.2 2014/03/25 16:30:28 christos Exp $");
 
 /*
  * vnode op calls for Sun NFS version 2, 3 and 4
@@ -2428,7 +2428,7 @@ nfs_sillyrename(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 	pid = cnp->cn_thread->td_proc->p_pid;
 	lticks = (unsigned int)ticks;
 	for ( ; ; ) {
-		sp->s_namlen = sprintf(sp->s_name, 
+		sp->s_namlen = snprintf(sp->s_name, sizeof(sp->s_name),
 				       ".nfs.%08x.%04x4.4", lticks, 
 				       pid);
 		if (nfs_lookitup(dvp, sp->s_name, sp->s_namlen, sp->s_cred,
