@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.67 2013/06/02 11:02:40 mbalmer Exp $
+.\"	$NetBSD: mk.conf.5,v 1.68 2014/03/25 09:52:55 ozaki-r Exp $
 .\"
 .\"  Copyright (c) 1999-2003 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -324,6 +324,13 @@ Indicates whether the
 is compiled with support for
 .In complex.h .
 .DFLTy
+.
+.It Sy MKCTF
+.YorN
+Indicates whether CTF tools are to be built and installed.
+If yes, the tools will be used to generate and manipulate
+CTF data of ELF binaries during build.
+.DFLTn
 .
 .It Sy MKCRYPTO
 .YorN
