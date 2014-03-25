@@ -130,7 +130,7 @@ static void getclients(int fd)
     printf("    a   pid   uid      magic     ioctls   prog\n");
 
     for (i = 0; !drmGetClient(fd, i, &auth, &pid, &uid, &magic, &iocs); i++) {
-	sprintf(buf, "/proc/%d/cmdline", pid);
+	snprintf(buf, sizeof(buf), "/proc/%d/cmdline", pid);
 	memset(cmd, 0, sizeof(cmd));
 	if ((procfd = open(buf, O_RDONLY, 0)) >= 0) {
 	    read(procfd, cmd, sizeof(cmd)-1);
@@ -262,7 +262,7 @@ int main(int argc, char **argv)
 	}
 
     for (i = 0; i < 16; i++) if (!minor || i == minor) {
-	sprintf(buf, DRM_DEV_NAME, DRM_DIR_NAME, i);
+	snprintf(buf, sizeof(buf), DRM_DEV_NAME, DRM_DIR_NAME, i);
 	fd = drmOpenMinor(i, 1, DRM_NODE_RENDER);
 	if (fd >= 0) {
 	    printf("%s\n", buf);
