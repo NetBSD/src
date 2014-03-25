@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nfsdkrpc.c,v 1.1.1.1 2013/09/30 07:19:53 dholland Exp $	*/
+/*	$NetBSD: nfs_nfsdkrpc.c,v 1.2 2014/03/25 16:30:28 christos Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfsserver/nfs_nfsdkrpc.c 249596 2013-04-17 22:42:43Z ken "); */
-__RCSID("$NetBSD: nfs_nfsdkrpc.c,v 1.1.1.1 2013/09/30 07:19:53 dholland Exp $");
+__RCSID("$NetBSD: nfs_nfsdkrpc.c,v 1.2 2014/03/25 16:30:28 christos Exp $");
 
 #include "opt_inet6.h"
 #include "opt_kgssapi.h"
@@ -179,7 +179,7 @@ nfssvc_program(struct svc_req *rqst, SVCXPRT *xprt)
 #if defined(KLD_MODULE)
 			/* Do not use ip6_sprintf: the nfs module should work without INET6. */
 #define	ip6_sprintf(buf, a)						\
-			(sprintf((buf), "%x:%x:%x:%x:%x:%x:%x:%x",	\
+			(snprintf((buf), sizeof(buf), "%x:%x:%x:%x:%x:%x:%x:%x",	\
 			    (a)->s6_addr16[0], (a)->s6_addr16[1],	\
 			    (a)->s6_addr16[2], (a)->s6_addr16[3],	\
 			    (a)->s6_addr16[4], (a)->s6_addr16[5],	\
