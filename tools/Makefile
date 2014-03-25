@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.171 2014/02/24 07:23:44 skrll Exp $
+#	$NetBSD: Makefile,v 1.172 2014/03/25 09:52:56 ozaki-r Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -69,6 +69,8 @@ DTRACE_BITS=
 DTRACE_BITS+= .WAIT libelf
 DTRACE_BITS+= .WAIT libdwarf
 DTRACE_BITS+= .WAIT libctf
+.endif
+.if ${MKCTF} != "no"
 DTRACE_BITS+= .WAIT ctfconvert ctfmerge
 .endif
 

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1465 2014/03/19 15:26:41 nonaka Exp $
+# $NetBSD: mi,v 1.1466 2014/03/25 09:52:55 ozaki-r Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -125,9 +125,9 @@
 ./usr/share/man/cat1/csh.0			man-util-catman		.cat
 ./usr/share/man/cat1/csplit.0			man-util-catman		.cat
 ./usr/share/man/cat1/ctags.0			man-c-catman		.cat
-./usr/share/man/cat1/ctfconvert.0		man-util-catman		.cat,dtrace
-./usr/share/man/cat1/ctfdump.0			man-util-catman		.cat,dtrace
-./usr/share/man/cat1/ctfmerge.0			man-util-catman		.cat,dtrace
+./usr/share/man/cat1/ctfconvert.0		man-util-catman		.cat,ctf
+./usr/share/man/cat1/ctfdump.0			man-util-catman		.cat,ctf
+./usr/share/man/cat1/ctfmerge.0			man-util-catman		.cat,ctf
 ./usr/share/man/cat1/cu.0			man-util-catman		.cat
 ./usr/share/man/cat1/cut.0			man-util-catman		.cat
 ./usr/share/man/cat1/daicctl.0			man-sysutil-catman	.cat
@@ -3240,9 +3240,9 @@
 ./usr/share/man/html1/csh.html			man-util-htmlman	html
 ./usr/share/man/html1/csplit.html		man-util-htmlman	html
 ./usr/share/man/html1/ctags.html		man-c-htmlman		html
-./usr/share/man/html1/ctfconvert.html		man-util-htmlman	html,dtrace
-./usr/share/man/html1/ctfdump.html		man-util-htmlman	html,dtrace
-./usr/share/man/html1/ctfmerge.html		man-util-htmlman	html,dtrace
+./usr/share/man/html1/ctfconvert.html		man-util-htmlman	html,ctf
+./usr/share/man/html1/ctfdump.html		man-util-htmlman	html,ctf
+./usr/share/man/html1/ctfmerge.html		man-util-htmlman	html,ctf
 ./usr/share/man/html1/cu.html			man-util-htmlman	html
 ./usr/share/man/html1/cut.html			man-util-htmlman	html
 ./usr/share/man/html1/daicctl.html		man-sysutil-htmlman	html
@@ -5963,9 +5963,9 @@
 ./usr/share/man/man1/csh.1			man-util-man		.man
 ./usr/share/man/man1/csplit.1			man-util-man		.man
 ./usr/share/man/man1/ctags.1			man-c-man		.man
-./usr/share/man/man1/ctfconvert.1		man-util-man		.man,dtrace
-./usr/share/man/man1/ctfdump.1			man-util-man		.man,dtrace
-./usr/share/man/man1/ctfmerge.1			man-util-man		.man,dtrace
+./usr/share/man/man1/ctfconvert.1		man-util-man		.man,ctf
+./usr/share/man/man1/ctfdump.1			man-util-man		.man,ctf
+./usr/share/man/man1/ctfmerge.1			man-util-man		.man,ctf
 ./usr/share/man/man1/cu.1			man-util-man		.man
 ./usr/share/man/man1/cut.1			man-util-man		.man
 ./usr/share/man/man1/daicctl.1			man-sysutil-man		.man
