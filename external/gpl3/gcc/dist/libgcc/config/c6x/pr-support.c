@@ -531,5 +531,5 @@ _Unwind_GetLanguageSpecificData (_Unwind_Context *context)
   /* Skip the unwind opcodes.  */
   ptr += (((*ptr) >> 24) & 0xff) + 1;
 
-  return ptr;
+  return (_Unwind_Ptr) ptr;
 }
