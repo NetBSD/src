@@ -147,16 +147,15 @@ static int drm_platform_set_busid(struct drm_device *dev, struct drm_master *mas
 		goto err;
 	}
 
-	dev->devname =
-		kmalloc(strlen(dev->platformdev->name) +
-			master->unique_len + 2, GFP_KERNEL);
+	size_t devlen = strlen(dev->platformdev->name) + master->unique_len + 2;
+	dev->devname = kmalloc(devlen, GFP_KERNEL);
 
 	if (dev->devname == NULL) {
 		ret = -ENOMEM;
 		goto err;
 	}
 
-	sprintf(dev->devname, "%s@%s", dev->platformdev->name,
+	snprintf(dev->devname, devlen, "%s@%s", dev->platformdev->name,
 		master->unique);
 	return 0;
 err:

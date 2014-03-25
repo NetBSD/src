@@ -150,7 +150,7 @@ int drm_debugfs_init(struct drm_minor *minor, int minor_id,
 
 	INIT_LIST_HEAD(&minor->debugfs_list);
 	mutex_init(&minor->debugfs_lock);
-	sprintf(name, "%d", minor_id);
+	snprintf(name, sizeof(name), "%d", minor_id);
 	minor->debugfs_root = debugfs_create_dir(name, root);
 	if (!minor->debugfs_root) {
 		DRM_ERROR("Cannot create /sys/kernel/debug/dri/%s\n", name);
