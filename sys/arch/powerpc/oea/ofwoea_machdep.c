@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.37 2014/03/03 15:36:36 macallan Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.38 2014/03/25 16:41:37 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.37 2014/03/03 15:36:36 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.38 2014/03/25 16:41:37 matt Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -191,7 +191,7 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 
 #if defined(MULTIPROCESSOR) && defined(ofppc)
 	for (i=1; i < CPU_MAXNUM; i++) {
-		sprintf(cpupath, "/cpus/@%x", i);
+		snprintf(cpupath, sizeof(cpupath), "/cpus/@%x", i);
 		node = OF_finddevice(cpupath);
 		if (node <= 0)
 			continue;
