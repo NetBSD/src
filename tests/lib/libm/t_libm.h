@@ -1,4 +1,4 @@
-/* $NetBSD: t_libm.h,v 1.5 2014/03/16 22:49:27 dsl Exp $ */
+/* $NetBSD: t_libm.h,v 1.6 2014/03/25 17:30:14 joerg Exp $ */
 
 /*
  * Check result of fn(arg) is correct within the bounds.
@@ -7,12 +7,15 @@
  * be out of range for the function - so save and print as 'long double'.
  * (otherwise you can get 'inf != inf' reported!)
  */
-#define T_LIBM_CHECK(subtest, fn, arg, expect, epsilon) do { \
+#define T_LIBM_CHECK(subtest, fn, arg, expect_, epsilon_) do { \
+	long double epsilon = epsilon_; \
+	long double expect = expect_; \
 	long double r = fn(arg); \
-	double e = fabs(r - expect); \
+	long double e = fabsl(r - expect); \
 	if (r != expect && e > epsilon) \
 		atf_tc_fail_nonfatal( \
-		    "subtest %u: " #fn "(%g) is %Lg (%.14La) not %g (%.13a), error %g (%.6a) > %g", \
+		    "subtest %u: " #fn "(%g) is %Lg (%.14La) " \
+		    "not %Lg (%.13La), error %Lg (%.6La) > %Lg", \
 		    subtest, arg, r, r, expect, expect, e, e, epsilon); \
     } while (0)
 
