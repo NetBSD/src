@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.64 2014/03/24 20:07:41 christos Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.65 2014/03/25 12:50:53 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.64 2014/03/24 20:07:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.65 2014/03/25 12:50:53 macallan Exp $");
 
 #include "opt_cpu_ucode.h"
 #include "opt_compat_netbsd.h"
@@ -485,7 +485,7 @@ cpu_setmodel(const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	len = snprintf(cpu_model, sizeof(cpu_model), fmt, ap);
+	len = vsnprintf(cpu_model, sizeof(cpu_model), fmt, ap);
 	va_end(ap);
 	return len;
 }
