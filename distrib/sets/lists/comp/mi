@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1886 2014/03/24 13:42:40 hannken Exp $
+#	$NetBSD: mi,v 1.1887 2014/03/25 09:52:55 ozaki-r Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -20,9 +20,9 @@
 ./usr/bin/config				comp-util-bin
 ./usr/bin/crunchgen				comp-c-bin
 ./usr/bin/crunchide				comp-c-bin
-./usr/bin/ctfconvert				comp-util-bin		dtrace
-./usr/bin/ctfdump				comp-util-bin		dtrace
-./usr/bin/ctfmerge				comp-util-bin		dtrace
+./usr/bin/ctfconvert				comp-util-bin		ctf
+./usr/bin/ctfdump				comp-util-bin		ctf
+./usr/bin/ctfmerge				comp-util-bin		ctf
 ./usr/bin/cvs					comp-cvs-bin		cvs
 ./usr/bin/cvsbug				comp-cvs-bin		cvs
 ./usr/bin/elfedit				comp-util-bin		binutils
