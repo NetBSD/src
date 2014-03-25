@@ -1,4 +1,4 @@
-/*	$NetBSD: firmload.c,v 1.18 2014/02/25 18:30:09 pooka Exp $	*/
+/*	$NetBSD: firmload.c,v 1.19 2014/03/25 16:19:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firmload.c,v 1.18 2014/02/25 18:30:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firmload.c,v 1.19 2014/03/25 16:19:13 christos Exp $");
 
 /*
  * The firmload API provides an interface for device drivers to access
@@ -185,11 +185,8 @@ firmware_path_next(const char *drvname, const char *imgname, char *pnbuf,
 		prefix++;
 	*prefixp = prefix;
 
-	/*
-	 * This sprintf() is safe because of the maxprefix calculation
-	 * performed above.
-	 */
-	sprintf(&pnbuf[i], "/%s/%s", drvname, imgname);
+	KASSERT(MAXPATHLEN >= i);
+	snprintf(pnbuf + i, MAXPATHLEN - i, "/%s/%s", drvname, imgname);
 
 	return (pnbuf);
 }
