@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep_common.c,v 1.18 2013/04/28 00:45:45 macallan Exp $ */
+/* $NetBSD: pci_machdep_common.c,v 1.19 2014/03/25 16:40:28 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.18 2013/04/28 00:45:45 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.19 2014/03/25 16:40:28 matt Exp $");
 
 #define _POWERPC_BUS_DMA_PRIVATE
 
@@ -99,7 +99,7 @@ genppc_pci_intr_string(void *v, pci_intr_handle_t ih)
 		panic("pci_intr_string: bogus handle 0x%x", ih);
 #endif
 
-	sprintf(irqstr, "irq %d", ih);
+	snprintf(irqstr, sizeof(irqstr), "irq %d", ih);
 	return (irqstr);
 	
 }
