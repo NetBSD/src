@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ndis.c,v 1.25 2014/03/23 02:55:26 christos Exp $	*/
+/*	$NetBSD: kern_ndis.c,v 1.26 2014/03/25 16:23:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/kern_ndis.c,v 1.60.2.5 2005/04/01 17:14:20 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.25 2014/03/23 02:55:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.26 2014/03/25 16:23:58 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -920,17 +920,18 @@ ndis_create_sysctls(void *arg)
 	    "NDIS API Version", "0x00050001", CTLFLAG_RD);
 
 	/* Bus type (PCI, PCMCIA, etc...) */
-	sprintf(buf, "%d", (int)sc->ndis_iftype);
+	snprintf(buf, sizeof(buf), "%d", (int)sc->ndis_iftype);
 	ndis_add_sysctl(sc, "BusType", "Bus Type", buf, CTLFLAG_RD);
 
 	if (sc->ndis_res_io != NULL) {
-		sprintf(buf, "0x%lx", rman_get_start(sc->ndis_res_io));
+		snprintf(buf, sizeof(buf), "0x%lx",
+		    rman_get_start(sc->ndis_res_io));
 		ndis_add_sysctl(sc, "IOBaseAddress",
 		    "Base I/O Address", buf, CTLFLAG_RD);
 	}
 
 	if (sc->ndis_irq != NULL) {
-		sprintf(buf, "%lu", rman_get_start(sc->ndis_irq));
+		snprintf(buf, sizeof(buf), "%lu", rman_get_start(sc->ndis_irq));
 		ndis_add_sysctl(sc, "InterruptNumber",
 		    "Interrupt Number", buf, CTLFLAG_RD);
 	}
@@ -1015,17 +1016,18 @@ ndis_create_sysctls(void *arg)
 						/*"NDIS API Version"*/ "Version", "0x00050001", CTLFLAG_RD);
 		
 		/* Bus type (PCI, PCMCIA, etc...) */
-		sprintf(buf, "%d", (int)sc->ndis_iftype);
+		snprintf(buf, sizeof(buf), "%d", (int)sc->ndis_iftype);
 		ndis_add_sysctl(sc, "BusType", "Bus Type", buf, CTLFLAG_RD);
 
 		if (sc->ndis_res_io != NULL) {
-			sprintf(buf, "0x%lx", (long unsigned int)rman_get_start(sc->ndis_res_io));
+			snprintf(buf, sizeof(buf), "0x%lx",
+			    (long unsigned int)rman_get_start(sc->ndis_res_io));
 			ndis_add_sysctl(sc, "IOBaseAddress",
 							/*"Base I/O Address"*/ "Base I/O", buf, CTLFLAG_RD);
 		}
 
 		if (sc->ndis_irq != NULL) {
-			sprintf(buf, "%lu", (long unsigned int)rman_get_start(sc->ndis_irq));
+			snprintf(buf, sizeof(buf), "%lu", (long unsigned int)rman_get_start(sc->ndis_irq));
 			ndis_add_sysctl(sc, "InterruptNumber",
 							"Interrupt Number", buf, CTLFLAG_RD);
 		}
