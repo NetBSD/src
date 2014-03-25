@@ -1,7 +1,7 @@
-/*	$NetBSD: radixtree.c,v 1.17.2.4 2012/08/01 21:09:27 yamt Exp $	*/
+/*	$NetBSD: radixtree.c,v 1.17.2.5 2014/03/25 16:21:08 yamt Exp $	*/
 
 /*-
- * Copyright (c)2011,2012 YAMAMOTO Takashi,
+ * Copyright (c)2011,2012,2013 YAMAMOTO Takashi,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -44,22 +44,49 @@
  * Intermediate nodes are automatically allocated and freed internally and
  * basically users don't need to care about them.  The allocation is done via
  * pool_cache_get(9) for _KERNEL, malloc(3) for userland, and alloc() for
- * _STANDALONE environment.  Only radix_tree_insert_node function can allocatei
+ * _STANDALONE environment.  Only radix_tree_insert_node function can allocate
  * memory for intermediate nodes and thus can fail for ENOMEM.
  *
- * Efficiency:
+ * Memory Efficiency:
  *
  * It's designed to work efficiently with dense index distribution.
  * The memory consumption (number of necessary intermediate nodes) heavily
  * depends on the index distribution.  Basically, more dense index distribution
  * consumes less nodes per item.  Approximately,
- *  - the best case: about RADIX_TREE_PTR_PER_NODE items per intermediate node.
- *  - the worst case: RADIX_TREE_MAX_HEIGHT intermediate nodes per item.
  *
- * The height of tree is dynamic.  It's smaller if only small index values are
- * used.  As an extreme case, if only index 0 is used, the corresponding value
- * is directly stored in the root of the tree (struct radix_tree) without
- * allocating any intermediate nodes.
+ *  - the best case: about RADIX_TREE_PTR_PER_NODE items per intermediate node.
+ *    it would look like the following.
+ *
+ *     root (t_height=1)
+ *      |
+ *      v
+ *      [ | | | ]   (intermediate node.  RADIX_TREE_PTR_PER_NODE=4 in this fig)
+ *       | | | |
+ *       v v v v
+ *       p p p p    (items)
+ *
+ *  - the worst case: RADIX_TREE_MAX_HEIGHT intermediate nodes per item.
+ *    it would look like the following if RADIX_TREE_MAX_HEIGHT=3.
+ *
+ *     root (t_height=3)
+ *      |
+ *      v
+ *      [ | | | ]
+ *           |
+ *           v
+ *           [ | | | ]
+ *                |
+ *                v
+ *                [ | | | ]
+ *                   |
+ *                   v
+ *                   p
+ *
+ * The height of tree (t_height) is dynamic.  It's smaller if only small
+ * index values are used.  As an extreme case, if only index 0 is used,
+ * the corresponding value is directly stored in the root of the tree
+ * (struct radix_tree) without allocating any intermediate nodes.  In that
+ * case, t_height=0.
  *
  * Gang lookup:
  *
@@ -85,7 +112,7 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.17.2.4 2012/08/01 21:09:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.17.2.5 2014/03/25 16:21:08 yamt Exp $");
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/pool.h>
@@ -95,7 +122,7 @@ __KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.17.2.4 2012/08/01 21:09:27 yamt Exp 
 #include <lib/libsa/stand.h>
 #endif /* defined(_STANDALONE) */
 #else /* defined(_KERNEL) || defined(_STANDALONE) */
-__RCSID("$NetBSD: radixtree.c,v 1.17.2.4 2012/08/01 21:09:27 yamt Exp $");
+__RCSID("$NetBSD: radixtree.c,v 1.17.2.5 2014/03/25 16:21:08 yamt Exp $");
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
