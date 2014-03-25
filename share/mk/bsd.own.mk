@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.791 2014/03/24 21:25:03 joerg Exp $
+#	$NetBSD: bsd.own.mk,v 1.792 2014/03/25 09:52:55 ozaki-r Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -505,7 +505,7 @@ FC=		${TOOL_FC.${ACTIVE_FC}}
 OBJC=		${TOOL_OBJC.${ACTIVE_OBJC}}
 
 # Override with tools versions if needed
-.if exists(${TOOL_CTFCONVERT}) && exists(${TOOL_CTFMERGE})
+.if ${MKCTF:Uno} != "no" && exists(${TOOL_CTFCONVERT}) && exists(${TOOL_CTFMERGE})
 CTFCONVERT=	${TOOL_CTFCONVERT}
 CTFMERGE=	${TOOL_CTFMERGE}
 .endif
@@ -972,7 +972,7 @@ MKGCCCMDS?=	${MKGCC}
 #
 _MKVARS.no= \
 	MKBSDGREP MKBSDTAR \
-	MKCATPAGES MKCRYPTO_RC5 MKDEBUG \
+	MKCATPAGES MKCRYPTO_RC5 MKCTF MKDEBUG \
 	MKDEBUGLIB MKDTRACE MKEXTSRC \
 	MKKYUA MKLLD MKLLDB MKLINT \
 	MKMANZ MKMCLINKER MKOBJDIRS \
