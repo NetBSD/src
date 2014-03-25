@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.47 2014/03/16 05:20:27 dholland Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.48 2014/03/25 15:51:58 christos Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.47 2014/03/16 05:20:27 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.48 2014/03/25 15:51:58 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -329,8 +329,8 @@ clmpcc_attach(struct clmpcc_softc *sc)
 static int
 clmpcc_init(struct clmpcc_softc *sc)
 {
-	u_int tcor, tbpr;
-	u_int rcor, rbpr;
+	u_int tcor = 0, tbpr = 0;
+	u_int rcor = 0, rbpr = 0;
 	u_int msvr_rts, msvr_dtr;
 	u_int ccr;
 	int is_console;
@@ -1201,7 +1201,6 @@ clmpcc_txintr(void *arg)
 {
 	struct clmpcc_softc *sc = (struct clmpcc_softc *)arg;
 	struct clmpcc_chan *ch;
-	struct tty *tp;
 	u_char ftc, oftc;
 	u_char tir, teoir;
 	int etcmode = 0;
@@ -1218,7 +1217,6 @@ clmpcc_txintr(void *arg)
 
 	/* Get pointer to interrupting channel's data structure */
 	ch = &sc->sc_chans[tir & CLMPCC_TIR_TCN_MASK];
-	tp = ch->ch_tty;
 
 	/* Dummy read of the interrupt status register */
 	(void) clmpcc_rdreg(sc, CLMPCC_REG_TISR);
