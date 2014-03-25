@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.117 2014/03/24 20:06:32 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.118 2014/03/25 13:38:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.117 2014/03/24 20:06:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.118 2014/03/25 13:38:25 christos Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -97,6 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.117 2014/03/24 20:06:32 christos Exp $
 #include <sys/ksyms.h>
 #include <sys/device.h>
 #include <sys/lwp.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
