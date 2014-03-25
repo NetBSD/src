@@ -1,4 +1,4 @@
-/*	$NetBSD: efifs.c,v 1.5 2011/07/17 20:54:42 joerg Exp $	*/
+/*	$NetBSD: efifs.c,v 1.6 2014/03/25 18:35:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 Doug Rabson
@@ -340,7 +340,7 @@ efifs_dev_print(int verbose)
 	char		line[80];
 
 	for (i = 0; i < fs_handle_count; i++) {
-		sprintf(line, "    fs%d:   EFI filesystem", i);
+		snprintf(line, sizeof(line), "    fs%d:   EFI filesystem", i);
 		pager_output(line);
 		/* XXX more detail? */
 		pager_output("\n");
