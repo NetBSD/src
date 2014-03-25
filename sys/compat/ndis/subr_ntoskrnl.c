@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_ntoskrnl.c,v 1.23 2014/03/23 09:31:15 christos Exp $	*/
+/*	$NetBSD: subr_ntoskrnl.c,v 1.24 2014/03/25 16:23:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ntoskrnl.c,v 1.43.2.5 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_ntoskrnl.c,v 1.23 2014/03/23 09:31:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ntoskrnl.c,v 1.24 2014/03/25 16:23:58 christos Exp $");
 #endif
 
 #ifdef __FreeBSD__
@@ -2384,7 +2384,7 @@ PsCreateSystemThread(
 	tc->tc_thrctx = thrctx;
 	tc->tc_thrfunc = thrfunc;
 
-	sprintf(tname, "windows kthread %d", ntoskrnl_kth);
+	snprintf(tname, sizeof(tname), "windows kthread %d", ntoskrnl_kth);
 #ifdef __FreeBSD__
 	error = kthread_create(ntoskrnl_thrfunc, tc, &p,
 	    RFHIGHPID, NDIS_KSTACK_PAGES, tname);

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_ndis.c,v 1.27 2014/03/23 09:31:15 christos Exp $	*/
+/*	$NetBSD: subr_ndis.c,v 1.28 2014/03/25 16:23:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ndis.c,v 1.67.2.7 2005/03/31 21:50:11 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.27 2014/03/23 09:31:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.28 2014/03/25 16:23:58 christos Exp $");
 #endif
 
 /*
@@ -160,7 +160,7 @@ __stdcall static void NdisOpenConfigurationKeyByName(ndis_status *,
 static ndis_status ndis_encode_parm(ndis_miniport_block *,
 	struct sysctl_oid *, ndis_parm_type, ndis_config_parm **);
 static ndis_status ndis_decode_parm(ndis_miniport_block *,
-	ndis_config_parm *, char *);
+	ndis_config_parm *, char *, size_t);
 #else /* __NetBSD__ */
 static ndis_status ndis_encode_parm(ndis_miniport_block *,
 	void *, ndis_parm_type, ndis_config_parm **);
@@ -853,7 +853,8 @@ NdisReadConfiguration(ndis_status *status, ndis_config_parm **parm, ndis_handle 
 
 #ifdef __FreeBSD__
 static ndis_status
-ndis_decode_parm(ndis_miniport_block *block, ndis_config_parm *parm, char *val)
+ndis_decode_parm(ndis_miniport_block *block, ndis_config_parm *parm, char *val,
+    size_t len)
 {
 	ndis_unicode_string	*ustr;
 	char			*astr = NULL;
@@ -868,10 +869,10 @@ ndis_decode_parm(ndis_miniport_block *block, ndis_config_parm *parm, char *val)
 		free(astr, M_DEVBUF);
 		break;
 	case ndis_parm_int:
-		sprintf(val, "%d", parm->ncp_parmdata.ncp_intdata);
+		snprintf(val, len, "%d", parm->ncp_parmdata.ncp_intdata);
 		break;
 	case ndis_parm_hexint:
-		sprintf(val, "%xu", parm->ncp_parmdata.ncp_intdata);
+		snprintf(val, len, "%xu", parm->ncp_parmdata.ncp_intdata);
 		break;
 	default:
 		return(NDIS_STATUS_FAILURE);
@@ -910,7 +911,7 @@ NdisWriteConfiguration(
 
 	/* Decode the parameter into a string. */
 	memset(val, 0, sizeof(val));
-	*status = ndis_decode_parm(block, parm, val);
+	*status = ndis_decode_parm(block, parm, val, sizeof(val));
 	if (*status != NDIS_STATUS_SUCCESS) {
 		free(keystr, M_DEVBUF);
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.266 2014/01/07 13:14:39 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.267 2014/03/25 16:19:13 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.266 2014/01/07 13:14:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.267 2014/03/25 16:19:13 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2094,7 +2094,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 	    NULL, xname, "txtsopain");
 
 	for (i = 0; i < WM_NTXSEGS; i++) {
-		sprintf(wm_txseg_evcnt_names[i], "txseg%d", i);
+		snprintf(wm_txseg_evcnt_names[i],
+		    sizeof(wm_txseg_evcnt_names[i]), "txseg%d", i);
 		evcnt_attach_dynamic(&sc->sc_ev_txseg[i], EVCNT_TYPE_MISC,
 		    NULL, xname, wm_txseg_evcnt_names[i]);
 	}

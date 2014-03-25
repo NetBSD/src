@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.18 2013/10/16 18:13:00 christos Exp $ */
+/* $NetBSD: hdafg.c,v 1.19 2014/03/25 16:19:14 christos Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.18 2013/10/16 18:13:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.19 2014/03/25 16:19:14 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -2944,7 +2944,8 @@ hdafg_build_mixers(struct hdafg_softc *sc)
 			if (sc->sc_assocs[i].as_dir != HDAUDIO_PINDIR_OUT)
 				continue;
 			mx[index].mx_di.un.s.member[j].mask = 1 << i;
-			sprintf(mx[index].mx_di.un.s.member[j].label.name,
+			snprintf(mx[index].mx_di.un.s.member[j].label.name,
+			    sizeof(mx[index].mx_di.un.s.member[j].label.name),
 			    "%s%02X",
 			    hdafg_assoc_type_string(&sc->sc_assocs[i]), i);
 			++j;
@@ -2967,7 +2968,8 @@ hdafg_build_mixers(struct hdafg_softc *sc)
 			if (sc->sc_assocs[i].as_dir != HDAUDIO_PINDIR_IN)
 				continue;
 			mx[index].mx_di.un.s.member[j].mask = 1 << i;
-			sprintf(mx[index].mx_di.un.s.member[j].label.name,
+			snprintf(mx[index].mx_di.un.s.member[j].label.name,
+			    sizeof(mx[index].mx_di.un.s.member[j].label.name),
 			    "%s%02X",
 			    hdafg_assoc_type_string(&sc->sc_assocs[i]), i);
 			++j;
