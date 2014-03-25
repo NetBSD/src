@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid_via.c,v 1.6 2008/09/19 16:49:27 christos Exp $	*/
+/*	$NetBSD: ata_raid_via.c,v 1.7 2014/03/25 16:19:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001,2002 Søren Schmidt <sos@FreeBSD.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid_via.c,v 1.6 2008/09/19 16:49:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid_via.c,v 1.7 2014/03/25 16:19:13 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -71,13 +71,13 @@ ata_raid_via_type(int type)
 	static char buffer[16];
 
 	switch (type) {
-	    case VIA_T_RAID0:   return "RAID0";
-	    case VIA_T_RAID1:   return "RAID1";
-	    case VIA_T_RAID5:   return "RAID5";
-	    case VIA_T_RAID01:  return "RAID0+1";
-	    case VIA_T_SPAN:    return "SPAN";
-	    default:
-		sprintf(buffer, "UNKNOWN 0x%02x", type);
+	case VIA_T_RAID0:   return "RAID0";
+	case VIA_T_RAID1:   return "RAID1";
+	case VIA_T_RAID5:   return "RAID5";
+	case VIA_T_RAID01:  return "RAID0+1";
+	case VIA_T_SPAN:    return "SPAN";
+	default:
+		snprintf(buffer, sizeof(buffer), "UNKNOWN 0x%02x", type);
 		return buffer;
 	}
 }

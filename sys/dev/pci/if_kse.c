@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.25 2013/11/08 06:20:48 nisimura Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.26 2014/03/25 16:19:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.25 2013/11/08 06:20:48 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.26 2014/03/25 16:19:13 christos Exp $");
 
 
 #include <sys/param.h>
@@ -530,7 +530,8 @@ kse_attach(device_t parent, device_t self, void *aux)
 	int p = (sc->sc_chip == 0x8842) ? 3 : 1;
 	for (i = 0; i < p; i++) {
 		struct ksext *ee = &sc->sc_ext;
-		sprintf(ee->evcntname[i], "%s.%d", device_xname(sc->sc_dev), i+1);
+		snprintf(ee->evcntname[i], sizeof(ee->evcntname[i]),
+		    "%s.%d", device_xname(sc->sc_dev), i+1);
 		evcnt_attach_dynamic(&ee->pev[i][0], EVCNT_TYPE_MISC,
 		    NULL, ee->evcntname[i], "RxLoPriotyByte");
 		evcnt_attach_dynamic(&ee->pev[i][1], EVCNT_TYPE_MISC,
