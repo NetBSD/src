@@ -1,4 +1,4 @@
-/*	$NetBSD: ed.h,v 1.36 2014/03/23 05:06:42 dholland Exp $	*/
+/*	$NetBSD: ed.h,v 1.37 2014/03/25 17:23:37 joerg Exp $	*/
 
 /* ed.h: type and constant definitions for the ed editor. */
 /*
@@ -257,7 +257,7 @@ void unmark_line_node(line_t *);
 void unset_active_nodes(line_t *, line_t *);
 long write_file(const char *, const char *, long, long);
 long write_stream(FILE *, long, long);
-void seterrmsg(const char *, ...);
+void seterrmsg(const char *, ...) __printflike(1, 2);
 
 /* global buffers */
 extern char stdinbuf[];
