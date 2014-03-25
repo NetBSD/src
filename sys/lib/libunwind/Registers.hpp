@@ -377,6 +377,8 @@ enum {
   DWARF_M68K_A7 = 7,
   DWARF_M68K_D0 = 8,
   DWARF_M68K_D7 = 15,
+  DWARF_M68K_FP0 = 16,
+  DWARF_M68K_FP7 = 23,
   DWARF_M68K_PC = 24,
 
   REGNO_M68K_A0 = 0,
@@ -384,13 +386,15 @@ enum {
   REGNO_M68K_D0 = 8,
   REGNO_M68K_D7 = 15,
   REGNO_M68K_PC = 16,
+  REGNO_M68K_FP0 = 17,
+  REGNO_M68K_FP7 = 24,
 };
 
 class Registers_M68K {
 public:
   enum {
-    LAST_REGISTER = REGNO_M68K_PC,
-    LAST_RESTORE_REG = REGNO_M68K_PC,
+    LAST_REGISTER = REGNO_M68K_FP7,
+    LAST_RESTORE_REG = REGNO_M68K_FP7,
     RETURN_REG = REGNO_M68K_PC,
   };
 
@@ -401,13 +405,15 @@ public:
       return REGNO_M68K_A0 + (num - DWARF_M68K_A0);
     if (num >= DWARF_M68K_D0 && num <= DWARF_M68K_D7)
       return REGNO_M68K_D0 + (num - DWARF_M68K_D0);
+    if (num >= DWARF_M68K_FP0 && num <= DWARF_M68K_FP7)
+      return REGNO_M68K_FP0 + (num - DWARF_M68K_FP0);
     if (num == DWARF_M68K_PC)
       return REGNO_M68K_PC;
     return LAST_REGISTER + 1;
   }
 
   bool validRegister(int num) const {
-    return num >= 0 && num <= LAST_RESTORE_REG;
+    return num >= 0 && num <= REGNO_M68K_PC;
   }
 
   uint64_t getRegister(int num) const {
@@ -429,16 +435,23 @@ public:
   void setSP(uint64_t value) { reg[REGNO_M68K_A7] = value; }
 
   bool validFloatVectorRegister(int num) const {
-    return false;
+    return num >= REGNO_M68K_FP0 && num <= REGNO_M68K_FP7;
   }
 
   void copyFloatVectorRegister(int num, uint64_t addr_) {
+    assert(validFloatVectorRegister(num));
+    const void *addr = reinterpret_cast<const void *>(addr_);
+    memcpy(fpreg + (num - REGNO_M68K_FP0), addr, sizeof(fpreg[0]));
   }
 
   __dso_hidden void jumpto() const __dead;
 
 private:
+  typedef uint32_t fpreg_t[3];
+
   uint32_t reg[REGNO_M68K_PC + 1];
+  uint32_t dummy;
+  fpreg_t fpreg[8];
 };
 
 } // namespace _Unwind
