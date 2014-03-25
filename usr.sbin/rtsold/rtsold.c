@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsold.c,v 1.41 2014/03/25 17:17:44 joerg Exp $	*/
+/*	$NetBSD: rtsold.c,v 1.42 2014/03/25 21:07:59 joerg Exp $	*/
 /*	$KAME: rtsold.c,v 1.77 2004/01/03 01:35:13 itojun Exp $	*/
 
 /*
@@ -661,9 +661,10 @@ warnmsg(int priority, const char *func, const char *msg, ...)
 		if (priority <= log_upto)
 			vwarnx(msg, ap);
 	} else {
-		char buf[BUFSIZ];
-		snprintf(buf, sizeof(buf), "<%s> %s", func, msg);
-		vsyslog(priority, buf, ap);
+		char *buf;
+		evasprintf(&buf, msg, ap);
+		syslog(priority, "<%s> %s", func, buf);
+		free(buf);
 	}
 	va_end(ap);
 }
