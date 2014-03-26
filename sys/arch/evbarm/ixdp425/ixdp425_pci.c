@@ -1,4 +1,4 @@
-/*      $NetBSD: ixdp425_pci.c,v 1.9 2012/11/12 18:00:39 skrll Exp $ */
+/*      $NetBSD: ixdp425_pci.c,v 1.10 2014/03/26 17:40:03 christos Exp $ */
 #define PCI_DEBUG
 /*
  * Copyright (c) 2003
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixdp425_pci.c,v 1.9 2012/11/12 18:00:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixdp425_pci.c,v 1.10 2014/03/26 17:40:03 christos Exp $");
 
 /*
  * IXDP425 PCI interrupt support.
@@ -219,7 +219,7 @@ ixdp425_pci_intr_string(void *v, pci_intr_handle_t ih)
 {
 	static char irqstr[IRQNAMESIZE];
 
-	sprintf(irqstr, "ixp425 irq %ld", ih);
+	snprintf(irqstr, sizeof(irqstr), "ixp425 irq %ld", ih);
 	return (irqstr);
 }
 

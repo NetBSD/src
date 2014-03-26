@@ -1,4 +1,4 @@
-/*	$NetBSD: nappi_nppb.c,v 1.11 2012/11/12 18:00:39 skrll Exp $ */
+/*	$NetBSD: nappi_nppb.c,v 1.12 2014/03/26 17:40:03 christos Exp $ */
 /*
  * Copyright (c) 2002, 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nappi_nppb.c,v 1.11 2012/11/12 18:00:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nappi_nppb.c,v 1.12 2014/03/26 17:40:03 christos Exp $");
 
 #include "pci.h"
 #include "opt_pci.h"
@@ -126,7 +126,7 @@ nppbattach(device_t parent, device_t self, void *aux)
 	psc->psc_pc = pc;
 	psc->psc_tag = pa->pa_tag;
 
-	sprintf(devinfo, "21555 Non-Transparent PCI-PCI Bridge");
+	snprintf(devinfo, sizeof(devinfo), "21555 Non-Transparent PCI-PCI Bridge");
 	aprint_normal(": %s, rev %d\n", devinfo, PCI_REVISION(pa->pa_class));
 
 	/* Make sure bus-mastering is enabled. */
