@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irqhandler.c,v 1.19 2014/03/26 08:52:00 christos Exp $	*/
+/*	$NetBSD: iomd_irqhandler.c,v 1.20 2014/03/26 19:44:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iomd_irqhandler.c,v 1.19 2014/03/26 08:52:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iomd_irqhandler.c,v 1.20 2014/03/26 19:44:51 christos Exp $");
 
 #include "opt_irqstats.h"
 
@@ -180,7 +180,7 @@ irq_claim(int irq, irqhandler_t *handler)
 	/* Get the interrupt name from the head of the list */
 	char *iptr = _intrnames + (irq * 14);
 	if (handler->ih_name) {
-		strlcpy(iptr, handler->ih_name, 14)
+		strlcpy(iptr, handler->ih_name, 14);
 	} else {
 		snprintf(iptr, 14, "irq %2d     ", irq);
 	}
