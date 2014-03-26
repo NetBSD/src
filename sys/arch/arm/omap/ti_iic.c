@@ -1,4 +1,4 @@
-/* $NetBSD: ti_iic.c,v 1.6 2014/03/26 08:52:00 christos Exp $ */
+/* $NetBSD: ti_iic.c,v 1.7 2014/03/26 11:59:05 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.6 2014/03/26 08:52:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.7 2014/03/26 11:59:05 ozaki-r Exp $");
 
 #include "opt_omap.h"
 #include "locators.h"
@@ -238,7 +238,7 @@ ti_iic_attach(device_t parent, device_t self, void *opaque)
 		}
 	}
 	KASSERT(i < __arraycount(am335x_iic));
-	snprintf(buf, "%s_SDA", am335x_iic[i].as_name);
+	snprintf(buf, sizeof(buf), "%s_SDA", am335x_iic[i].as_name);
 	if (sitara_cm_padconf_get(buf, &mode, &state) == 0) {
 		aprint_debug(": SDA mode %s state %d ", mode, state);
 	}
