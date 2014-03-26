@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_mace.c,v 1.15 2012/10/27 17:18:10 chs Exp $	*/
+/*	$NetBSD: pci_mace.c,v 1.16 2014/03/26 16:16:06 christos Exp $	*/
 
 /*
  * Copyright (c) 2001,2003 Christopher Sekiya
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.15 2012/10/27 17:18:10 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.16 2014/03/26 16:16:06 christos Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -252,7 +252,7 @@ macepci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 {
 	static char irqstr[32];
 
-	sprintf(irqstr, "crime interrupt %d", ih);
+	snprintf(irqstr, sizeof(irqstr), "crime interrupt %d", ih);
 	return irqstr;
 }
 

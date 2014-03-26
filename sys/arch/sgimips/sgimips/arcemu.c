@@ -1,4 +1,4 @@
-/*	$NetBSD: arcemu.c,v 1.21 2011/07/01 18:54:32 dyoung Exp $	*/
+/*	$NetBSD: arcemu.c,v 1.22 2014/03/26 16:16:06 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.21 2011/07/01 18:54:32 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.22 2014/03/26 16:16:06 christos Exp $");
 
 #ifndef _LP64
 
@@ -298,7 +298,7 @@ arcemu_eeprom_read(void)
 	}
 
 	/* cache enaddr string */
-	sprintf(enaddr, "%02x:%02x:%02x:%02x:%02x:%02x",
+	snprintf(enaddr, sizeof(enaddr), "%02x:%02x:%02x:%02x:%02x:%02x",
 	    nvram.enaddr[0],
 	    nvram.enaddr[1],
 	    nvram.enaddr[2],
