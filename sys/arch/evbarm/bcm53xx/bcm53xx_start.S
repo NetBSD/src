@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_start.S,v 1.10.2.2 2014/02/15 16:18:37 matt Exp $	*/
+/*	$NetBSD: bcm53xx_start.S,v 1.10.2.3 2014/03/26 02:16:05 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,7 +45,7 @@
 #define	CONADDR		0x18000300
 #endif
 
-RCSID("$NetBSD: bcm53xx_start.S,v 1.10.2.2 2014/02/15 16:18:37 matt Exp $")
+RCSID("$NetBSD: bcm53xx_start.S,v 1.10.2.3 2014/03/26 02:16:05 matt Exp $")
 
 #undef VERBOSE_INIT_ARM
 #define VERBOSE_INIT_ARM
@@ -74,10 +74,14 @@ _C_LABEL(bcm53xx_start):
 	/*
 	 * Save any arguments u-boot passed us.
 	 */
-	ldr	r4, .Luboot_args_pic0
-	add	r4, r4, pc
+#ifdef KERNEL_BASES_EQUAL
+	ldr	r4, .Luboot_args
+#else
+	adr	r4, bcm53xx_start
+	ldr	r5, .Luboot_args
+	bfi	r4, r5, #0, #28
+#endif
 	stmia	r4, {r0-r3}
-.LPIC0:
 
 	/*
 	 * Let's turn on the CCA watchdog in case something goes horribly wrong.
@@ -121,15 +125,6 @@ _C_LABEL(bcm53xx_start):
 
 	XPUTC(#89)
 
-	ldr	r0, .Luboot_args
-	ldr	r2, [r0]
-	ldr	r1, .Luboot_args_pic1
-	add	r1, r1, pc
-	ldr	r1, [r1]
-.LPIC1:
-	cmp	r1, r2
-1:	bne	1b
-
 	XPUTC(#90)
 
 	/*
@@ -153,10 +148,6 @@ _C_LABEL(bcm53xx_start):
 	nop
 
 	/* NOTREACHED */
-.Luboot_args_pic0:
-	.word	uboot_args - .LPIC0
-.Luboot_args_pic1:
-	.word	uboot_args - .LPIC0
 .Luboot_args:
 	.word	uboot_args
 .Lstart:
