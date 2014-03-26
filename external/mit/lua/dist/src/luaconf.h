@@ -1,4 +1,4 @@
-/*	$NetBSD: luaconf.h,v 1.6 2013/12/16 23:25:56 lneto Exp $	*/
+/*	$NetBSD: luaconf.h,v 1.7 2014/03/26 22:03:26 christos Exp $	*/
 
 /*
 ** Id: luaconf.h,v 1.82.1.7 2008/02/11 16:25:08 roberto Exp $
@@ -545,7 +545,7 @@
 #define lua_str2number(s,p)	strtod((s), (p))
 #endif
 
-#define lua_number2str(s,n)	sprintf((s), LUA_NUMBER_FMT, (n))
+#define lua_number2str(s,l,n)	snprintf((s), (l), LUA_NUMBER_FMT, (n))
 #define LUAI_MAXNUMBER2STR	32 /* 16 digits, sign, point, and \0 */
 
 /*
