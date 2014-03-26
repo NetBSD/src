@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.5.2.2 2014/02/15 16:18:36 matt Exp $	*/
+/*	$NetBSD: gic.c,v 1.5.2.3 2014/03/26 01:59:08 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,7 +31,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.5.2.2 2014/02/15 16:18:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.5.2.3 2014/03/26 01:59:08 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -109,28 +109,24 @@ __CTASSERT(NIPL == 8);
 static inline uint32_t
 gicc_read(struct armgic_softc *sc, bus_size_t o)
 {
-	uint32_t v = bus_space_read_4(sc->sc_memt, sc->sc_gicch, o);
-	return le32toh(v);
+	return bus_space_read_4(sc->sc_memt, sc->sc_gicch, o);
 }
 
 static inline void
 gicc_write(struct armgic_softc *sc, bus_size_t o, uint32_t v)
 {
-	v = htole32(v);
 	bus_space_write_4(sc->sc_memt, sc->sc_gicch, o, v);
 }
 
 static inline uint32_t
 gicd_read(struct armgic_softc *sc, bus_size_t o)
 {
-	uint32_t v = bus_space_read_4(sc->sc_memt, sc->sc_gicdh, o);
-	return le32toh(v);
+	return bus_space_read_4(sc->sc_memt, sc->sc_gicdh, o);
 }
 
 static inline void
 gicd_write(struct armgic_softc *sc, bus_size_t o, uint32_t v)
 {
-	v = htole32(v);
 	bus_space_write_4(sc->sc_memt, sc->sc_gicdh, o, v);
 }
 
