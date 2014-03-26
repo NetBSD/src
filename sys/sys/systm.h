@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.261 2014/03/24 20:07:40 christos Exp $	*/
+/*	$NetBSD: systm.h,v 1.262 2014/03/26 18:03:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -214,13 +214,9 @@ void	printf_nolog(const char *, ...) __printflike(1, 2);
 
 void	printf(const char *, ...) __printflike(1, 2);
 
-int	sprintf(char *, const char *, ...) __printflike(2, 3);
-
 int	snprintf(char *, size_t, const char *, ...) __printflike(3, 4);
 
 void	vprintf(const char *, va_list) __printflike(1, 0);
-
-int	vsprintf(char *, const char *, va_list) __printflike(2, 0);
 
 int	vsnprintf(char *, size_t, const char *, va_list) __printflike(3, 0);
 
