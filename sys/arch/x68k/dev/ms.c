@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.32 2014/03/21 16:58:54 tsutsui Exp $ */
+/*	$NetBSD: ms.c,v 1.33 2014/03/26 08:17:59 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.32 2014/03/21 16:58:54 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.33 2014/03/26 08:17:59 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -204,14 +204,12 @@ ms_attach(device_t parent, device_t self, void *aux)
 	struct ms_softc *ms = device_private(self);
 	struct zsc_softc *zsc = device_private(parent);
 	struct zs_chanstate *cs;
-	cfdata_t cf;
 	int reset;
 
 	ms->ms_dev = self;
 	callout_init(&ms->ms_modem_ch, 0);
 	mutex_init(&ms->ms_lock, MUTEX_DEFAULT, IPL_SERIAL);
 
-	cf = device_cfdata(self);
 	cs = zsc->zsc_cs[1];
 	cs->cs_private = ms;
 	cs->cs_ops = &zsops_ms;
