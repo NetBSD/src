@@ -315,7 +315,8 @@ MALLOC_DECLARE(M_VCHI);
  */
 #if 1
 /* emulate jiffies */
-static inline unsigned long _jiffies(void)
+static inline unsigned long
+_jiffies(void)
 {
 	struct timeval tv;
 
@@ -323,7 +324,8 @@ static inline unsigned long _jiffies(void)
 	return tvtohz(&tv);
 }
 
-static inline unsigned long msecs_to_jiffies(unsigned long msecs)
+static inline unsigned long
+msecs_to_jiffies(unsigned long msecs)
 {
 	struct timeval tv;
 
