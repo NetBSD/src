@@ -1,4 +1,4 @@
-/*	$NetBSD: mlcd.c,v 1.16 2014/03/16 05:20:23 dholland Exp $	*/
+/*	$NetBSD: mlcd.c,v 1.17 2014/03/26 16:08:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlcd.c,v 1.16 2014/03/16 05:20:23 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlcd.c,v 1.17 2014/03/26 16:08:45 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -275,7 +275,8 @@ mlcdattach(device_t parent, device_t self, void *aux)
 	    M_WAITOK|M_ZERO);
 
 	for (i = 0; i < sc->sc_npt; i++) {
-		sprintf(sc->sc_pt[i].pt_name, "%s.%d", device_xname(self), i);
+		snprintf(sc->sc_pt[i].pt_name, sizeof(sc->sc_pt[i].pt_name),
+		    "%s.%d", device_xname(self), i);
 	}
 
 	maple_set_callback(parent, sc->sc_unit, MAPLE_FN_LCD,
