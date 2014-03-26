@@ -87,6 +87,7 @@
 
 /* Chip Common B */
 #define CCB_BASE		0x000000
+#ifdef BCM5301X
 #define CCB_SIZE		0x030000
 #define PWM_BASE		0x002000
 #define MII_BASE		0x003000
@@ -94,9 +95,28 @@
 #define TIMER0_BASE		0x005000
 #define TIMER1_BASE		0x006000
 #define SRAB_BASE		0x007000
+#define UART2_BASE		0x008000
+#define SMBUS1_BASE		0x009000
 
 #define CRU_BASE		0x00b000
 #define DMU_BASE		0x00c000
+#elif defined(BCM563XX)
+#define CCB_SIZE		0x040000
+#define GPIO_BASE		0x030000
+#define PWM_BASE		0x031000
+#define MII_BASE		0x032000
+#define RNG_BASE		0x033000
+#define TIMER0_BASE		0x034000
+#define TIMER1_BASE		0x035000
+#define UART2_BASE		0x037000
+#define SMBUS0_BASE		0x038000
+#define WDT_BASE		0x039000
+#define PKA_BASE		0x03a000
+#define SMBUS1_BASE		0x03b000
+
+#define CRU_BASE		0x03e000
+#define DMU_BASE		0x03f000
+#endif
 
 #define DDR_BASE		0x010000
 
@@ -104,8 +124,6 @@
 #define PCIE1_BASE		0x013000
 
 #ifdef BCM5301X
-#define UART2_BASE		0x008000
-#define SMBUS1_BASE		0x009000
 #define PCIE2_BASE		0x014000
 #define SDIO_BASE		0x020000
 #define EHCI_BASE		0x021000
@@ -121,11 +139,6 @@
 #endif
 
 #ifdef BCM563XX
-#define UART2_BASE		0x007000
-#define SMBUS1_BASE		0x008000
-#define WDT_BASE		0x009000
-#define PKA_BASE		0x00a000
-#define SMBUS2_BASE		0x00b000
 #define DMAC_BASE		0x020000
 #define GMAC0_BASE		0x022000
 #define GMAC1_BASE		0x023000
@@ -378,6 +391,10 @@
 #define LCPLL_CONTROL2_CH1_MDIV	__BITS(23,16)	// = (n ? n : 256), clk_sdio
 #define LCPLL_CONTROL2_CH2_MDIV	__BITS(15,8)	// = (n ? n : 256), clk_ddr 
 #define LCPLL_CONTROL2_CH3_MDIV	__BITS(7,0)	// = (n ? n : 256), clf_dft
+
+#define DMU_CRU_RESET		0x200
+#define DMU_CRU_RESET_IPROC	__BIT(1)
+#define DMU_CRU_RESET_CMICD	__BIT(0)
 
 #endif /* DMU_PRIVATE */
 
@@ -657,8 +674,14 @@
 #define IDM_SDIO_BASE			0x16000
 #define IDM_I2S_M0_BASE			0x17000
 #define IDM_A9JTAG_M0_BASE		0x18000
+#ifdef BCM5301X
 #define IDM_NAND_BASE			0x1a000
 #define IDM_QSPI_BASE			0x1b000
+#endif
+#ifdef BCM563XX
+#define IDM_NAND_BASE			0x1b000
+#define IDM_QSPI_BASE			0x1c000
+#endif
 #define IDM_APBX_BASE			0x21000
 
 #define IDM_IO_CONTROL_DIRECT		0x0408
@@ -933,6 +956,7 @@ struct gmac_rxdb {
 #define NAND_CMD_ADDR	0x000c	// Nand Flash Command Address
 #define NAND_CMD_END_ADDR	0x0010	// Nand Flash Command End Address
 #define NAND_INTFC_STATUS	0x0014	// Nand Flash Interface Status
+#define NAND_CS_NAND_SELECT	0x0018	// Nand Flash CS
 #define NAND_CS_NAND_XOR	0x001c	// Nand Flash EBI
 #define NAND_LL_OP		0x0020	// Nand Flash Low Level Operation
 #define NAND_MPLANE_BASE_EXT_ADDR	0x0024	// Nand Flash Multiplane base address
@@ -1015,6 +1039,9 @@ struct gmac_rxdb {
 #define  NAND_CMD_START_OPCODE_BLOCK_ERASE_MULTI	21
 #define NAND_CMD_START_CSEL	__BITS(18,16)
 #define NAND_CMD_EXT_ADDRESS	__BITS(15,0)
+
+#define BCM_NAND_IDM_IO_CONTROL_APB_LE_MODE_BIT		__BIT(24)
+
 
 #endif /* NAND_PRIVATE */
 
