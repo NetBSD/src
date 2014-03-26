@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.57 2014/03/24 18:39:57 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.58 2014/03/26 18:04:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.57 2014/03/24 18:39:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.58 2014/03/26 18:04:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -519,7 +519,7 @@ rtcread(dev_t dev, struct uio *uio, int flags)
 	MC146818_GETTOD(RTC, &clkregs);
 	splx(s);
 
-	sprintf(buffer, "%4d%02d%02d%02d%02d.%02d\n",
+	snprintf(buffer, sizeof(buffer), "%4d%02d%02d%02d%02d.%02d\n",
 	    clkregs[MC_YEAR] + GEMSTARTOFTIME,
 	    clkregs[MC_MONTH], clkregs[MC_DOM],
 	    clkregs[MC_HOUR], clkregs[MC_MIN], clkregs[MC_SEC]);
