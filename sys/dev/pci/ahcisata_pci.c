@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.12.4.2.4.1 2013/11/05 18:32:45 matt Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.12.4.2.4.2 2014/03/26 01:57:03 matt Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.12.4.2.4.1 2013/11/05 18:32:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.12.4.2.4.2 2014/03/26 01:57:03 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -211,10 +211,7 @@ ahci_pci_resume(device_t dv PMF_FN_ARGS)
 	int s;
 
 	s = splbio();
-	ahci_reset(sc);
-	ahci_setup_ports(sc);
-	ahci_reprobe_drives(sc);
-	ahci_enable_intrs(sc);
+	ahci_resume(sc);
 	splx(s);
 
 	return true;
