@@ -1,4 +1,4 @@
-/*	$NetBSD: unixcons.c,v 1.2 2013/12/01 02:54:53 joerg Exp $	*/
+/*	$NetBSD: unixcons.c,v 1.3 2014/03/26 08:02:38 christos Exp $	*/
 
 /*
  * Copyright (c) 2009 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -170,8 +170,7 @@ awaitkey(int timeout, int tell)
 			char numbuf[20];
 			int len, j;
 
-			sprintf(numbuf, "%d ", i);
-			len = strlen(numbuf);
+			len = snprintf(numbuf, sizeof(numbuf), "%d ", i);
 			for (j = 0; j < len; j++)
 				numbuf[len + j] = '\b';
 			numbuf[len + j] = '\0';
