@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.2 2014/02/24 07:46:33 martin Exp $	*/
+/*	$NetBSD: boot.c,v 1.3 2014/03/26 16:10:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -320,7 +320,7 @@ devcanon(char *fname)
 
 	/* Copy kernel name before we overwrite, then do it */
 	strcpy(file_name, (*cp) ? cp : kernelnames[0]);
-	sprintf(fname,"%c/%s(%c,%c)/%s",
+	snprintf(fname, PATH_MAX, "%c/%s(%c,%c)/%s",
 	        ctlr + '0', device_name, unit + '0', part + '0', file_name);
 
 	//printf("devcanon -> %s\n",fname);
