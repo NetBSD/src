@@ -1,4 +1,4 @@
-/* $NetBSD: ti_iic.c,v 1.5 2013/12/18 12:54:35 skrll Exp $ */
+/* $NetBSD: ti_iic.c,v 1.6 2014/03/26 08:52:00 christos Exp $ */
 
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.5 2013/12/18 12:54:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.6 2014/03/26 08:52:00 christos Exp $");
 
 #include "opt_omap.h"
 #include "locators.h"
@@ -238,7 +238,7 @@ ti_iic_attach(device_t parent, device_t self, void *opaque)
 		}
 	}
 	KASSERT(i < __arraycount(am335x_iic));
-	sprintf(buf, "%s_SDA", am335x_iic[i].as_name);
+	snprintf(buf, "%s_SDA", am335x_iic[i].as_name);
 	if (sitara_cm_padconf_get(buf, &mode, &state) == 0) {
 		aprint_debug(": SDA mode %s state %d ", mode, state);
 	}
@@ -247,7 +247,7 @@ ti_iic_attach(device_t parent, device_t self, void *opaque)
 		aprint_error(": can't switch %s pad\n", buf);
 		return;
 	}
-	sprintf(buf, "%s_SCL", am335x_iic[i].as_name);
+	snprintf(buf, sizeof(buf), "%s_SCL", am335x_iic[i].as_name);
 	if (sitara_cm_padconf_get(buf, &mode, &state) == 0) {
 		aprint_debug(": SCL mode %s state %d ", mode, state);
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: ixp12x0_intr.c,v 1.28 2014/03/20 06:48:54 skrll Exp $ */
+/* $NetBSD: ixp12x0_intr.c,v 1.29 2014/03/26 08:52:00 christos Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.28 2014/03/20 06:48:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.29 2014/03/26 08:52:00 christos Exp $");
 
 /*
  * Interrupt support for the Intel ixp12x0
@@ -312,7 +312,7 @@ ixp12x0_intr_init(void)
 		iq = &intrq[i];
 		TAILQ_INIT(&iq->iq_list);
 
-		sprintf(iq->iq_name, "ipl %d", i);
+		snprintf(iq->iq_name, sizeof(iq->iq_name), "ipl %d", i);
 		evcnt_attach_dynamic(&iq->iq_ev, EVCNT_TYPE_INTR,
 				     NULL, "ixpintr", iq->iq_name);
 	}

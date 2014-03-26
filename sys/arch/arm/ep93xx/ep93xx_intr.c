@@ -1,4 +1,4 @@
-/* $NetBSD: ep93xx_intr.c,v 1.21 2014/03/02 13:22:32 joerg Exp $ */
+/* $NetBSD: ep93xx_intr.c,v 1.22 2014/03/26 08:51:59 christos Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.21 2014/03/02 13:22:32 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.22 2014/03/26 08:51:59 christos Exp $");
 
 /*
  * Interrupt support for the Cirrus Logic EP93XX
@@ -255,7 +255,7 @@ ep93xx_intr_init(void)
 		iq = &intrq[i];
 		TAILQ_INIT(&iq->iq_list);
 
-		sprintf(iq->iq_name, "irq %d", i);
+		snprintf(iq->iq_name, sizeof(iq->iq_name), "irq %d", i);
 		evcnt_attach_dynamic(&iq->iq_ev, EVCNT_TYPE_INTR,
 				     NULL, (i < VIC_NIRQ ? "vic1" : "vic2"),
 		                     iq->iq_name);
