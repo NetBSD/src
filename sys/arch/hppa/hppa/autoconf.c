@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1 2014/02/24 07:23:43 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2 2014/03/26 17:57:17 christos Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1 2014/02/24 07:23:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2 2014/03/26 17:57:17 christos Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_useleds.h"
@@ -654,7 +654,7 @@ hppa_mod_info(int type, int sv)
 	}
 
 	if (i == __arraycount(hppa_knownmods)) {
-		sprintf(fakeid, "type %x, sv %x", type, sv);
+		snprintf(fakeid, sizeof(fakeid), "type %x, sv %x", type, sv);
 		return fakeid;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mongoose.c,v 1.1 2014/02/24 07:23:42 skrll Exp $	*/
+/*	$NetBSD: mongoose.c,v 1.2 2014/03/26 17:57:17 christos Exp $	*/
 
 /*	$OpenBSD: mongoose.c,v 1.19 2010/01/01 20:28:42 kettenis Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mongoose.c,v 1.1 2014/02/24 07:23:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mongoose.c,v 1.2 2014/03/26 17:57:17 christos Exp $");
 
 #define MONGOOSE_DEBUG 9
 
@@ -259,7 +259,7 @@ mg_intr_string(void *v, int irq)
 {
 	static char buf[16];
 
-	sprintf (buf, "isa irq %d", irq);
+	snprintf (buf, sizeof(buf), "isa irq %d", irq);
 	return buf;
 }
 

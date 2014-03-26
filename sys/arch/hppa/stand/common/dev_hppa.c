@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_hppa.c,v 1.1 2014/02/24 07:23:43 skrll Exp $	*/
+/*	$NetBSD: dev_hppa.c,v 1.2 2014/03/26 17:57:17 christos Exp $	*/
 
 /*	$OpenBSD: dev_hppa.c,v 1.5 1999/04/20 20:01:01 mickey Exp $	*/
 
@@ -250,7 +250,8 @@ char ttyname_buf[8];
 char *
 ttyname(int fd)
 {
-	sprintf(ttyname_buf, "%s%d", cdevs[major(cn_tab->cn_dev)],
+	snprintf(ttyname_buf, sizeof(ttyname_buf), "%s%d",
+	    cdevs[major(cn_tab->cn_dev)],
 	    minor(cn_tab->cn_dev));
 	return (ttyname_buf);
 }
