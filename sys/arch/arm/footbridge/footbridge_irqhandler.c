@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_irqhandler.c,v 1.23 2010/12/20 00:25:27 matt Exp $	*/
+/*	$NetBSD: footbridge_irqhandler.c,v 1.24 2014/03/26 08:51:59 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0,"$NetBSD: footbridge_irqhandler.c,v 1.23 2010/12/20 00:25:27 matt Exp $");
+__KERNEL_RCSID(0,"$NetBSD: footbridge_irqhandler.c,v 1.24 2014/03/26 08:51:59 christos Exp $");
 
 #include "opt_irqstats.h"
 
@@ -196,7 +196,7 @@ footbridge_intr_init(void)
 	for (i = 0, iq = footbridge_intrq; i < NIRQ; i++, iq++) {
 		TAILQ_INIT(&iq->iq_list);
 
-		sprintf(iq->iq_name, "irq %d", i);
+		snprintf(iq->iq_name, sizeof(iq->iq_name), "irq %d", i);
 		evcnt_attach_dynamic(&iq->iq_ev, EVCNT_TYPE_INTR,
 		    NULL, "footbridge", iq->iq_name);
 	}

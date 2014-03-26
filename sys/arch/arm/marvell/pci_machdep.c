@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.5 2013/05/01 12:38:06 rkujawa Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.6 2014/03/26 08:52:00 christos Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.5 2013/05/01 12:38:06 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.6 2014/03/26 08:52:00 christos Exp $");
 
 #include "opt_mvsoc.h"
 #include "gtpci.h"
@@ -321,7 +321,8 @@ gtpci_gpp_intr_string(void *v, pci_intr_handle_t pin)
 
 	int2gpp = prop_dictionary_get(device_properties(sc->sc_dev), "int2gpp");
 	gpp = prop_array_get(int2gpp, pin);
-	sprintf(intrstr, "gpp %d", (int)prop_number_integer_value(gpp));
+	snprintf(intrstr, sizeof(intrstr), "gpp %d",
+	    (int)prop_number_integer_value(gpp));
 
 	return intrstr;
 }

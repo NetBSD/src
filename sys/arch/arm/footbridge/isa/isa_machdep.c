@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.20 2013/11/17 08:32:55 skrll Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.21 2014/03/26 08:52:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.20 2013/11/17 08:32:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.21 2014/03/26 08:52:00 christos Exp $");
 
 #include "opt_irqstats.h"
 
@@ -440,7 +440,7 @@ isa_intr_init(void)
  		iq = &isa_intrq[i];
  		TAILQ_INIT(&iq->iq_list);
   
- 		sprintf(iq->iq_name, "irq %d", i);
+ 		snprintf(iq->iq_name, sizeof(iq->iq_name), "irq %d", i);
  		evcnt_attach_dynamic(&iq->iq_ev, EVCNT_TYPE_INTR,
  		    NULL, "isa", iq->iq_name);
  	}
