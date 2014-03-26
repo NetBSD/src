@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_intr.c,v 1.33 2014/01/28 12:01:31 martin Exp $	*/
+/*	$NetBSD: iq80310_intr.c,v 1.34 2014/03/26 17:40:03 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80310_intr.c,v 1.33 2014/01/28 12:01:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80310_intr.c,v 1.34 2014/03/26 17:40:03 christos Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -337,7 +337,7 @@ iq80310_intr_init(void)
 		iq = &intrq[i];
 		TAILQ_INIT(&iq->iq_list);
 
-		sprintf(iq->iq_name, "irq %d", i);
+		snprintf(iq->iq_name, sizeof(iq->iq_name), "irq %d", i);
 	}
 
 	iq80310_intr_calculate_masks();
