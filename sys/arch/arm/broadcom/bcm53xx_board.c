@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_board.c,v 1.17.2.3 2014/02/19 23:19:57 matt Exp $	*/
+/*	$NetBSD: bcm53xx_board.c,v 1.17.2.4 2014/03/26 03:19:32 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.17.2.3 2014/02/19 23:19:57 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.17.2.4 2014/03/26 03:19:32 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -640,6 +640,7 @@ bcm53xx_device_register(device_t self, void *aux)
 	}
 }
 
+#ifdef SRAB_BASE
 static kmutex_t srab_lock __cacheline_aligned;
 
 void
@@ -742,3 +743,4 @@ bcm53xx_srab_write_8(u_int pageoffset, uint64_t val)
 	bcm53xx_srab_busywait(bst, bsh);
 	mutex_spin_exit(&srab_lock);
 }
+#endif /* SRAB_BASE */
