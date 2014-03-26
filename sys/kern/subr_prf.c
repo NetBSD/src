@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.152 2014/01/12 00:29:15 joerg Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.153 2014/03/26 18:03:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.152 2014/01/12 00:29:15 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.153 2014/03/26 18:03:47 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -992,38 +992,6 @@ vprintf(const char *fmt, va_list ap)
 
 	if (!panicstr)
 		logwakeup();
-}
-
-/*
- * sprintf: print a message to a buffer
- */
-int
-sprintf(char *bf, const char *fmt, ...)
-{
-	int retval;
-	va_list ap;
-
-	va_start(ap, fmt);
-	retval = kprintf(fmt, TOBUFONLY, NULL, bf, ap);
-	va_end(ap);
-	if (bf)
-		bf[retval] = '\0';	/* nul terminate */
-	return retval;
-}
-
-/*
- * vsprintf: print a message to a buffer [already have va_list]
- */
-
-int
-vsprintf(char *bf, const char *fmt, va_list ap)
-{
-	int retval;
-
-	retval = kprintf(fmt, TOBUFONLY, NULL, bf, ap);
-	if (bf)
-		bf[retval] = '\0';	/* nul terminate */
-	return retval;
 }
 
 /*
