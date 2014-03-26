@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.16 2012/10/27 17:17:51 chs Exp $	*/
+/*	$NetBSD: pcib.c,v 1.17 2014/03/26 17:41:15 christos Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.16 2012/10/27 17:17:51 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.17 2014/03/26 17:41:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -306,7 +306,7 @@ pcib_attach(device_t parent, device_t self, void *aux)
 #if 0
 		char irqstr[8];		/* 4 + 2 + NULL + sanity */
 
-		sprintf(irqstr, "irq %d", i);
+		snprintf(irqstr, sizeof(irqstr), "irq %d", i);
 		evcnt_attach_dynamic(&sc->sc_intrtab[i].intr_count,
 		    EVCNT_TYPE_INTR, NULL, "pcib", irqstr);
 #else
@@ -469,7 +469,7 @@ pcib_isa_intr_string(void *v, int irq)
 	if (irq == 0 || irq >= ICU_LEN || irq == 2)
 		panic("pcib_isa_intr_string: bogus isa irq 0x%x", irq);
 
-	sprintf(irqstr, "isa irq %d", irq);
+	snprintf(irqstr, sizeof(irqstr), "isa irq %d", irq);
 	return (irqstr);
 }
 
