@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.3.38.1 2013/12/19 01:17:06 matt Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.3.38.2 2014/03/26 22:44:41 matt Exp $	*/
 
 #ifndef	_ARM_CDEFS_H_
 #define	_ARM_CDEFS_H_
@@ -40,8 +40,8 @@
 #define	_ARM_ARCH_DWORD_OK
 #endif
 
-#ifdef __ARM_EABI__
-#define __ALIGNBYTES		(8 - 1)
+#if defined(__ARM_EABI__) || defined(_ARM_ARCH_DWORD_OK)
+#define __ALIGNBYTES		(sizeof(long long) - 1)
 #else
 #define __ALIGNBYTES		(sizeof(int) - 1)
 #endif
