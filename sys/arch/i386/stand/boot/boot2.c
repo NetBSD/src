@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.61 2014/03/20 01:15:29 christos Exp $	*/
+/*	$NetBSD: boot2.c,v 1.62 2014/03/26 17:58:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -228,7 +228,8 @@ sprint_bootsel(const char *filename)
 
 	if (parsebootfile(filename, &fsname, &devname, &unit,
 			  &partition, &file) == 0) {
-		sprintf(buf, "%s%d%c:%s", devname, unit, 'a' + partition, file);
+		snprintf(buf, sizeof(buf), "%s%d%c:%s", devname, unit,
+		    'a' + partition, file);
 		return buf;
 	}
 	return "(invalid)";
