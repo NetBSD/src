@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.12.2.4 2014/03/24 18:44:13 matt Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.12.2.5 2014/03/26 02:13:54 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -397,13 +397,23 @@ cortex_init:
 	isb
 	XPUTC(#50)
 
+#ifdef KERNEL_BASES_EQUAL
+	bl	_C_LABEL(armv7_icache_inv_all)	@ invalidate i-cache
+#else
+	adr	ip, cortex_init
+	ldr	r0, =armv7_icache_inv_all
+	bfi	ip, r0, #0, #28
+	blx	ip
+#endif
+	XPUTC(#51)
+
 	/*
 	 * Step 4a, enable the data cache
 	 */
 	orr	r2, r2, #CPU_CONTROL_DC_ENABLE	@ set data cache enable
 	mcr	p15, 0, r2, c1, c0, 0		@ reenable caches
 	isb
-	XPUTC(#51)
+	XPUTC(#52)
 #endif
 
 	/*
