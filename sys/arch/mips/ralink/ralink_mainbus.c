@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_mainbus.c,v 1.2 2011/07/28 15:38:49 matt Exp $	*/
+/*	$NetBSD: ralink_mainbus.c,v 1.3 2014/03/26 17:42:00 christos Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_mainbus.c,v 1.2 2011/07/28 15:38:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_mainbus.c,v 1.3 2014/03/26 17:42:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ mainbus_find(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	struct mainbus_attach_args * const ma = aux;
 	char devname[16];
 
-	sprintf(devname, "%s%d", cf->cf_name, cf->cf_unit);
+	snprintf(devname, sizeof(devname), "%s%d", cf->cf_name, cf->cf_unit);
 	if (strcmp(ma->ma_name, devname) != 0)
 		return 0;
 
