@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.118 2014/03/25 13:38:25 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.119 2014/03/26 17:53:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.118 2014/03/25 13:38:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.119 2014/03/26 17:53:36 christos Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -152,7 +152,7 @@ static int __bicons_enable;
 #endif
 
 /* the following is used externally (sysctl_hw) */
-char	hpcmips_cpuname[40];		/* set CPU depend xx_init() */
+static char	hpcmips_cpuname[40];		/* set CPU depend xx_init() */
 
 int	cpuspeed = 1;			/* approx # instr per usec. */
 
@@ -456,6 +456,19 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	 * Initialize lwp0's uarea.
 	 */
 	mips_init_lwp0_uarea();
+}
+
+int
+cpuname_printf(const char *fmt, ...)
+{
+	int len;
+	va_list ap;
+
+	va_start(ap, fmt);
+	len = vsnprintf(hpcmips_cpuname, sizeof(hpcmips_cpuname), fmt, ap);
+	va_end(ap);
+
+	return len;
 }
 
 /*
