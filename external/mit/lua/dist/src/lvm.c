@@ -1,7 +1,7 @@
-/*	$NetBSD: lvm.c,v 1.1.1.2 2012/03/15 00:08:05 alnsn Exp $	*/
+/*	$NetBSD: lvm.c,v 1.2 2014/03/26 22:03:26 christos Exp $	*/
 
 /*
-** $Id: lvm.c,v 1.1.1.2 2012/03/15 00:08:05 alnsn Exp $
+** $Id: lvm.c,v 1.2 2014/03/26 22:03:26 christos Exp $
 ** Lua virtual machine
 ** See Copyright Notice in lua.h
 */
@@ -52,7 +52,7 @@ int luaV_tostring (lua_State *L, StkId obj) {
   else {
     char s[LUAI_MAXNUMBER2STR];
     lua_Number n = nvalue(obj);
-    lua_number2str(s, n);
+    lua_number2str(s, sizeof(s), n);
     setsvalue2s(L, obj, luaS_new(L, s));
     return 1;
   }
