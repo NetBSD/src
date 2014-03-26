@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.193 2014/02/21 18:00:09 palle Exp $ */
+/*	$NetBSD: autoconf.c,v 1.194 2014/03/26 08:40:58 christos Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.193 2014/02/21 18:00:09 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.194 2014/03/26 08:40:58 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -512,14 +512,14 @@ clockfreq(long freq)
 {
 	char *p;
 	static char sbuf[10];
+	size_t len;
 
 	freq /= 1000;
-	sprintf(sbuf, "%ld", freq / 1000);
+	len = snprintf(sbuf, sizeof(sbuf), "%ld", freq / 1000);
 	freq %= 1000;
 	if (freq) {
 		freq += 1000;	/* now in 1000..1999 */
-		p = sbuf + strlen(sbuf);
-		sprintf(p, "%ld", freq);
+		snprintf(sbuf + len, sizeof(sbuf) - len, "%ld", freq);
 		*p = '.';	/* now sbuf = %d.%3d */
 	}
 	return (sbuf);
@@ -807,10 +807,11 @@ dev_path_drive_match(device_t dev, int ctrlnode, int target,
 		 * what we realy do here is to match "target" and "lun".
 		 */
 		if (wwn)
-			sprintf(buf, "%s@w%016" PRIx64 ",%d", name, wwn,
-			    lun);
+			snprintf(buf, sizeof(buf), "%s@w%016" PRIx64 ",%d",
+			    name, wwn, lun);
 		else
-			sprintf(buf, "%s@%d,%d", name, target, lun);
+			snprintf(buf, sizeof(buf), "%s@%d,%d",
+			    name, target, lun);
 		if (ofboottarget && strcmp(buf, ofboottarget) == 0) {
 			booted_device = dev;
 			if (ofbootpartition)
