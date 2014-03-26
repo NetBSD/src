@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_intr.c,v 1.10 2014/02/04 18:51:16 matt Exp $	*/
+/*	$NetBSD: omap_intr.c,v 1.11 2014/03/26 08:52:00 christos Exp $	*/
 
 /*
  * Based on arch/arm/xscale/pxa2x0_intr.c
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap_intr.c,v 1.10 2014/02/04 18:51:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap_intr.c,v 1.11 2014/03/26 08:52:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,7 +174,8 @@ omapintc_attach(device_t parent, device_t self, void *args)
 		handler[i].func = stray_interrupt;
 		handler[i].cookie = (void *)(intptr_t) i;
 		extirq_level[i] = IPL_SERIAL;
-		sprintf(handler[i].irq_num_str, "#%d", i);
+		snprintf(handler[i].irq_num_str,
+		    sizeof(handler[i].irq_num_str), "#%d", i);
 		if (handler[i].name == NULL)
 			omapintc_set_name(i, handler[i].irq_num_str, false);
 	}
