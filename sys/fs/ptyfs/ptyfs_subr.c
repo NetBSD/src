@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_subr.c,v 1.27 2014/03/21 17:21:53 christos Exp $	*/
+/*	$NetBSD: ptyfs_subr.c,v 1.28 2014/03/26 21:28:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.27 2014/03/21 17:21:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.28 2014/03/26 21:28:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ static void ptyfs_rehash(kmutex_t *, struct ptyfs_hashhead **,
 static void
 ptyfs_getinfo(struct ptyfsnode *ptyfs, struct lwp *l)
 {
-	extern struct ptm_pty *ptyfs_save_ptm, ptm_ptyfspty;
+	extern struct ptm_pty *ptyfs_save_ptm;
 
 	if (ptyfs->ptyfs_type == PTYFSroot) {
 		ptyfs->ptyfs_mode = S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|
@@ -126,7 +126,7 @@ ptyfs_getinfo(struct ptyfsnode *ptyfs, struct lwp *l)
 		ptyfs->ptyfs_mode = S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|
 		    S_IROTH|S_IWOTH;
 
-	if (ptyfs_save_ptm != NULL && ptyfs_save_ptm != &ptm_ptyfspty) {
+	if (ptyfs_save_ptm != NULL) {
 		int error;
 		struct pathbuf *pb;
 		struct nameidata nd;
