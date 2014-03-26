@@ -100,7 +100,7 @@ vchiq_platform_init(VCHIQ_STATE_T *state)
 	dma_nsegs = __arraycount(dma_segs);
 	err = bus_dmamem_alloc(&bcm2835_bus_dma_tag,
 	    g_slot_mem_size + frag_mem_size, PAGE_SIZE, 0,
-	    dma_segs, dma_nsegs, &dma_nsegs, BUS_DMA_COHERENT | BUS_DMA_WAITOK);
+	    dma_segs, dma_nsegs, &dma_nsegs, BUS_DMA_WAITOK);
 	if (err) {
 		vchiq_log_error(vchiq_core_log_level, "Unable to allocate channel memory");
 		err = -ENOMEM;
@@ -289,7 +289,7 @@ vchiq_prepare_bulk_data(VCHIQ_BULK_T *bulk, VCHI_MEM_HANDLE_T memhandle,
 		goto fail1;
 
 	ret = bus_dmamem_map(&bcm2835_bus_dma_tag, bi->pagelist_sgs, nsegs,
-	    bi->pagelist_size, &bi->pagelist, BUS_DMA_WAITOK);
+	    bi->pagelist_size, &bi->pagelist, BUS_DMA_COHERENT | BUS_DMA_WAITOK);
 	if (ret != 0)
 		goto fail2;
 
@@ -378,7 +378,7 @@ vchiq_prepare_bulk_data(VCHIQ_BULK_T *bulk, VCHI_MEM_HANDLE_T memhandle,
 	bulk->remote_data = bi;
 
 	bus_dmamap_sync(&bcm2835_bus_dma_tag, bi->pagelist_map, 0,
-	    bi->pagelist_size, BUS_DMASYNC_PREREAD);
+	    bi->pagelist_size, BUS_DMASYNC_PREWRITE);
 
 	bus_dmamap_sync(&bcm2835_bus_dma_tag, bi->dmamap, 0, bi->size,
 	    pagelist->type == PAGELIST_WRITE ?
@@ -419,6 +419,13 @@ vchiq_complete_bulk(VCHIQ_BULK_T *bulk)
 	if (bulk && bulk->remote_data && bulk->actual) {
 		BULKINFO_T *bi = bulk->remote_data;
 		PAGELIST_T *pagelist = bi->pagelist;
+
+		bus_dmamap_sync(&bcm2835_bus_dma_tag, bi->pagelist_map, 0,
+		    bi->pagelist_size, BUS_DMASYNC_POSTWRITE);
+
+		bus_dmamap_sync(&bcm2835_bus_dma_tag, bi->dmamap, 0, bi->size,
+		    pagelist->type == PAGELIST_WRITE ?
+		    BUS_DMASYNC_POSTWRITE : BUS_DMASYNC_POSTREAD);
 
 		/* Deal with any partial cache lines (fragments) */
 		if (pagelist->type >= PAGELIST_READ_WITH_FRAGMENTS) {
@@ -469,13 +476,6 @@ vchiq_complete_bulk(VCHIQ_BULK_T *bulk)
 			up(&g_free_fragments_mutex);
 			up(&g_free_fragments_sema);
 		}
-		bus_dmamap_sync(&bcm2835_bus_dma_tag, bi->pagelist_map, 0,
-		    bi->pagelist_size, BUS_DMASYNC_POSTREAD);
-
-		bus_dmamap_sync(&bcm2835_bus_dma_tag, bi->dmamap, 0, bi->size,
-		    pagelist->type == PAGELIST_WRITE ?
-		    BUS_DMASYNC_POSTWRITE : BUS_DMASYNC_POSTREAD);
-
 		bus_dmamap_unload(&bcm2835_bus_dma_tag, bi->dmamap);
 		bus_dmamap_destroy(&bcm2835_bus_dma_tag, bi->dmamap);
 		if (IS_USER_ADDRESS(bi->buf))
