@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_pci.c,v 1.11 2011/07/01 20:41:16 dyoung Exp $	*/
+/*	$NetBSD: iq80310_pci.c,v 1.12 2014/03/26 17:40:03 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80310_pci.c,v 1.11 2011/07/01 20:41:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80310_pci.c,v 1.12 2014/03/26 17:40:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,7 +234,7 @@ iq80310_pci_intr_string(void *v, pci_intr_handle_t ih)
 {
 	static char irqstr[IRQNAMESIZE];
 
-	sprintf(irqstr, "iq80310 irq %ld", ih);
+	snprintf(irqstr, sizeof(irqstr), "iq80310 irq %ld", ih);
 	return (irqstr);
 }
 
