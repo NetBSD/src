@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_ccb.c,v 1.5.2.2 2014/02/15 16:18:36 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_ccb.c,v 1.5.2.3 2014/03/26 03:19:32 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -99,7 +99,9 @@ static const struct bcm_locators bcmccb_locators[] = {
 	{ "bcmrng", RNG_BASE, 0x1000, BCMCCBCF_PORT_DEFAULT, 1, { IRQ_RNG } },
 	{ "bcmtmr", TIMER0_BASE, 0x1000, BCMCCBCF_PORT_DEFAULT, 2, { IRQ_TIMER0_1, IRQ_TIMER0_2 } },
 	{ "bcmtmr", TIMER1_BASE, 0x1000, BCMCCBCF_PORT_DEFAULT, 2, { IRQ_TIMER1_1, IRQ_TIMER1_2 } },
+#ifdef SRAB_BASE
 	{ "bcmsw", SRAB_BASE, 0x1000, BCMCCBCF_PORT_DEFAULT, },
+#endif
 	{ "bcmcom", UART2_BASE, 0x1000, BCMCCBCF_PORT_DEFAULT, 1, { IRQ_UART2 } },
 #ifdef BCM5301X
 	{ "bcmi2c", SMBUS1_BASE, 0x1000, BCMCCBCF_PORT_DEFAULT, 1, { IRQ_SMBUS1 } },
