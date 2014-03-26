@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.52 2011/07/01 20:34:06 dyoung Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.53 2014/03/26 18:04:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.52 2011/07/01 20:34:06 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.53 2014/03/26 18:04:33 christos Exp $");
 
 #include "opt_mbtype.h"
 
@@ -680,7 +680,7 @@ pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 	if (ih == -1)
 		panic("pci_intr_string: bogus handle 0x%x", ih);
 
-	sprintf(irqstr, "irq %d", ih);
+	snprintf(irqstr, sizeof(irqstr), "irq %d", ih);
 	return irqstr;
 	
 }
