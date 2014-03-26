@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_ucode_intel.c,v 1.4 2013/11/15 08:47:55 msaitoh Exp $ */
+/* $NetBSD: cpu_ucode_intel.c,v 1.5 2014/03/26 08:04:19 christos Exp $ */
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_intel.c,v 1.4 2013/11/15 08:47:55 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_intel.c,v 1.5 2014/03/26 08:04:19 christos Exp $");
 
 #include "opt_xen.h"
 #include "opt_cpu_ucode.h"
@@ -102,7 +102,8 @@ cpu_ucode_intel_firmware_open(firmware_handle_t *fwh, const char *fwname)
 		return EOPNOTSUPP;
 
 	intel_getcurrentucode(&ucodeversion, &platformid);
-	sprintf(cpuspec, "%08x-%d", cpu_signature, platformid);
+	snprintf(cpuspec, sizeof(cpuspec), "%08x-%d", cpu_signature,
+	    platformid);
 
 	return firmware_open(fw_path, cpuspec, fwh);
 }
