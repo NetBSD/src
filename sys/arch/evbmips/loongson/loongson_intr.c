@@ -1,4 +1,4 @@
-/*      $NetBSD: loongson_intr.c,v 1.2 2012/10/27 17:17:50 chs Exp $      */
+/*      $NetBSD: loongson_intr.c,v 1.3 2014/03/26 17:41:15 christos Exp $      */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: loongson_intr.c,v 1.2 2012/10/27 17:17:50 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: loongson_intr.c,v 1.3 2014/03/26 17:41:15 christos Exp $");
 
 #define __INTR_PRIVATE
 
@@ -126,7 +126,7 @@ evbmips_intr_init(void)
 		static char irqstr[8];
 		for (irq = 0; irq < BONITO_NISA; irq++) {
 			i = BONITO_ISA_IRQ(irq);
-			sprintf(irqstr, "irq %d", irq);
+			snprintf(irqstr, sizeof(irqstr), "irq %d", irq);
 			DPRINTF(("attach %d %d %s\n", i, irq, irqstr));
 			evcnt_attach_dynamic(&bonito_intrhead[i].intr_count,
 			    EVCNT_TYPE_INTR, NULL, "isa", irqstr);
@@ -334,7 +334,8 @@ loongson_intr_string(const struct bonito_config *bc, int irq)
 {
 	static char irqstr[12]; /* 8 + 2 + NULL + sanity */
 	if (BONITO_IRQ_IS_ISA(irq)) {
-		sprintf(irqstr, "isa irq %d", BONITO_IRQ_TO_ISA(irq));
+		snprintf(irqstr, sizeof(irqstr), "isa irq %d",
+		    BONITO_IRQ_TO_ISA(irq));
 		return irqstr;
 	}
 	return sys_platform->irq_map[irq].name;

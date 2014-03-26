@@ -1,4 +1,4 @@
-/*	$NetBSD: shpcic_machdep.c,v 1.5 2012/10/27 17:17:58 chs Exp $	*/
+/*	$NetBSD: shpcic_machdep.c,v 1.6 2014/03/26 17:47:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shpcic_machdep.c,v 1.5 2012/10/27 17:17:58 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shpcic_machdep.c,v 1.6 2014/03/26 17:47:10 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -125,7 +125,7 @@ landisk_pci_intr_string(void *v, pci_intr_handle_t ih)
 	if (ih == 0)
 		panic("pci_intr_string: bogus handle 0x%x", ih);
 
-	sprintf(irqstr, "irq %d", ih);
+	snprintf(irqstr, sizeof(irqstr), "irq %d", ih);
 
 	return (irqstr);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: aupci.c,v 1.13 2012/01/27 18:52:58 para Exp $ */
+/* $NetBSD: aupci.c,v 1.14 2014/03/26 17:42:00 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -35,7 +35,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aupci.c,v 1.13 2012/01/27 18:52:58 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aupci.c,v 1.14 2014/03/26 17:42:00 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -400,7 +400,7 @@ aupci_intr_string(void *v, pci_intr_handle_t ih)
 {
 	static char	name[16];
 
-	sprintf(name, "irq %u", (unsigned)ih);
+	snprintf(name, sizeof(name), "irq %u", (unsigned)ih);
 	return (name);
 }
 
