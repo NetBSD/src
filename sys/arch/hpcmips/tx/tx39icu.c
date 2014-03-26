@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39icu.c,v 1.32 2012/10/27 17:17:54 chs Exp $ */
+/*	$NetBSD: tx39icu.c,v 1.33 2014/03/26 17:53:36 christos Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39icu.c,v 1.32 2012/10/27 17:17:54 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39icu.c,v 1.33 2014/03/26 17:53:36 christos Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -746,13 +746,13 @@ tx39_intr_dump(struct tx39icu_softc *sc)
 				reg |= (1 << j);
 			}
 		}
-		sprintf(msg, "%d high", i);
+		snprintf(msg, sizeof(msg), "%d high", i);
 		dbg_bit_print_msg(reg, msg);
-		sprintf(msg, "%d status", i);
+		snprintf(msg, sizeof(msg), "%d status", i);
 		dbg_bit_print_msg(sc->sc_regs[i], msg);
 		ofs = TX39_INTRENABLE_REG(i);
 		reg = tx_conf_read(tc, ofs);
-		sprintf(msg, "%d enable", i);
+		snprintf(msg, sizeof(msg), "%d enable", i);
 		dbg_bit_print_msg(reg, msg);
 	}
 	reg = sc->sc_regs[0];
