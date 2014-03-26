@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.61 2014/03/16 05:20:26 dholland Exp $	*/
+/*	$NetBSD: ite.c,v 1.62 2014/03/26 08:17:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.61 2014/03/16 05:20:26 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.62 2014/03/26 08:17:59 christos Exp $");
 
 #include "ite.h"
 #if NITE > 0
@@ -508,11 +508,10 @@ void
 itestart(struct tty *tp)
 {
 	struct clist *rbp;
-	struct ite_softc *ip;
 	u_char buf[ITEBURST];
 	int s, len;
 
-	ip = getitesp(tp->t_dev);
+	getitesp(tp->t_dev);
 	/*
 	 * (Potentially) lower priority.  We only need to protect ourselves
 	 * from keyboard interrupts since that is all that can affect the
@@ -1577,8 +1576,9 @@ iteputchar(int c, struct ite_softc *ip)
 					break;
 				case 6:
 					/* cursor position report */
-					sprintf(ip->argbuf, "\033[%d;%dR",
-						 ip->cury + 1, ip->curx + 1);
+					snprintf(ip->argbuf, sizeof(ip->argbuf),
+					    "\033[%d;%dR",
+					     ip->cury + 1, ip->curx + 1);
 					ite_sendstr(ip, ip->argbuf);
 					break;
 				}

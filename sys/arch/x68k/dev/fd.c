@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.107 2014/03/16 05:20:26 dholland Exp $	*/
+/*	$NetBSD: fd.c,v 1.108 2014/03/26 08:17:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.107 2014/03/16 05:20:26 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.108 2014/03/26 08:17:59 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m68k_arch.h"
@@ -523,12 +523,12 @@ fdcreset(struct fdc_softc *fdc)
 static int
 fdcpoll(struct fdc_softc *fdc)
 {
-	int i = 25000, n;
+	int i = 25000;
 
 	while (--i > 0) {
 		if ((intio_get_sicilian_intr() & SICILIAN_STAT_FDC) != 0) {
 			out_fdc(fdc->sc_iot, fdc->sc_ioh, NE7CMD_SENSEI);
-			n = fdcresult(fdc);
+			fdcresult(fdc);
 			break;
 		}
 		DELAY(100);

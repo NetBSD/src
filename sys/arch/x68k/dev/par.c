@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.40 2014/03/16 05:20:26 dholland Exp $	*/
+/*	$NetBSD: par.c,v 1.41 2014/03/26 08:17:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.40 2014/03/16 05:20:26 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.41 2014/03/26 08:17:59 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -167,7 +167,7 @@ parattach(device_t parent, device_t self, void *aux)
 {
 	struct par_softc *sc = device_private(self);
 	struct intio_attach_args *ia = aux;
-	int r;
+	int r __diagused;
 	
 	par_attached = 1;
 

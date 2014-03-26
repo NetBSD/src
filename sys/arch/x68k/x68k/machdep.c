@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.189 2014/03/24 20:06:33 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.190 2014/03/26 08:17:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.189 2014/03/24 20:06:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.190 2014/03/26 08:17:59 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -362,19 +362,19 @@ identifycpu(void)
 	check_emulator(emubuf, sizeof(emubuf));
 
 	cpuspeed = 2048 / delay_divisor;
-	sprintf(clock, "%dMHz", cpuspeed);
+	snprintf(clock, sizeof(clock), "%dMHz", cpuspeed);
 	switch (cputype) {
 	case CPU_68060:
 		cpu_type = "m68060";
 		mmu = "/MMU";
 		cpuspeed = 128 / delay_divisor;
-		sprintf(clock, "%d/%dMHz", cpuspeed*2, cpuspeed);
+		snprintf(clock, sizeof(clock), "%d/%dMHz", cpuspeed*2, cpuspeed);
 		break;
 	case CPU_68040:
 		cpu_type = "m68040";
 		mmu = "/MMU";
 		cpuspeed = 759 / delay_divisor;
-		sprintf(clock, "%d/%dMHz", cpuspeed*2, cpuspeed);
+		snprintf(clock, sizeof(clock), "%d/%dMHz", cpuspeed*2, cpuspeed);
 		break;
 	case CPU_68030:
 		cpu_type = "m68030";
@@ -874,6 +874,7 @@ badaddr(volatile void* addr)
 		return 1;
 	}
 	i = *(volatile short *)addr;
+	__USE(i);
 	nofault = NULL;
 	return 0;
 }
@@ -890,6 +891,7 @@ badbaddr(volatile void *addr)
 		return 1;
 	}
 	i = *(volatile char *)addr;
+	__USE(i);
 	nofault = NULL;
 	return 0;
 }
