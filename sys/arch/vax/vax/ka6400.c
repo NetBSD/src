@@ -1,4 +1,4 @@
-/*	$NetBSD: ka6400.c,v 1.17 2014/03/24 20:06:33 christos Exp $	*/
+/*	$NetBSD: ka6400.c,v 1.18 2014/03/26 08:01:21 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka6400.c,v 1.17 2014/03/24 20:06:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka6400.c,v 1.18 2014/03/26 08:01:21 christos Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -92,7 +92,7 @@ const struct cpu_dep ka6400_calls = {
 
 #if defined(MULTIPROCESSOR)
 static void ka6400_startslave(struct cpu_info *);
-static void ka6400_txrx(int, const char *, int);
+static void ka6400_txrx(int, const char *, ...) __printflike(2, 3);
 static void ka6400_sendstr(int, const char *);
 static void ka6400_sergeant(int);
 static int rxchar(void);
@@ -345,8 +345,8 @@ ka6400_startslave(struct cpu_info *ci)
 	for (i = 0; i < 10000; i++)
 		if (rxchar())
 			i = 0;
-	ka6400_txrx(id, "\020", 0);		/* Send ^P to get attention */
-	ka6400_txrx(id, "I\r", 0);			/* Init other end */
+	ka6400_txrx(id, "\020");		/* Send ^P to get attention */
+	ka6400_txrx(id, "I\r");			/* Init other end */
 	ka6400_txrx(id, "D/I 4 %x\r", ci->ci_istack);	/* Interrupt stack */
 	ka6400_txrx(id, "D/I C %x\r", mfpr(PR_SBR));	/* SBR */
 	ka6400_txrx(id, "D/I D %x\r", mfpr(PR_SLR));	/* SLR */
@@ -363,11 +363,15 @@ ka6400_startslave(struct cpu_info *ci)
 }
 
 void
-ka6400_txrx(int id, const char *fmt, int arg)
+ka6400_txrx(int id, const char *fmt, ...)
 {
 	char buf[20];
+	va_list ap;
+	
+	va_start(ap, fmt);
+	vsnprintf(buf, sizeof(buf), fmt, ap);
+	va_end(ap);
 
-	sprintf(buf, fmt, arg);
 	ka6400_sendstr(id, buf);
 	ka6400_sergeant(id);
 }

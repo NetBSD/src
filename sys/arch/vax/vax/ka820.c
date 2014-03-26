@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.55 2014/03/24 20:06:33 christos Exp $	*/
+/*	$NetBSD: ka820.c,v 1.56 2014/03/26 08:01:21 christos Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka820.c,v 1.55 2014/03/24 20:06:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka820.c,v 1.56 2014/03/26 08:01:21 christos Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -98,7 +98,7 @@ const struct cpu_dep ka820_calls = {
 #if defined(MULTIPROCESSOR)
 static void ka820_startslave(struct cpu_info *);
 static void ka820_send_ipi(struct cpu_info *);
-static void ka820_txrx(int, const char *, int);
+static void ka820_txrx(int, const char *, ...) __printflike(2, 3);
 static void ka820_sendstr(int, const char *);
 static void ka820_sergeant(int);
 static int rxchar(void);
@@ -539,12 +539,12 @@ ka820_startslave(struct cpu_info *ci)
 	for (i = 0; i < 10000; i++)
 		if (rxchar())
 			i = 0;
-	ka820_txrx(id, "\020", 0);		/* Send ^P to get attention */
-	ka820_txrx(id, "I\r", 0);			/* Init other end */
-	ka820_txrx(id, "D/I 4 %x\r", ci->ci_istack);	/* Interrupt stack */
+	ka820_txrx(id, "\020");		/* Send ^P to get attention */
+	ka820_txrx(id, "I\r");			/* Init other end */
+	ka820_txrx(id, "D/I 4 %x\r", (int)ci->ci_istack);	/* Interrupt stack */
 	ka820_txrx(id, "D/I C %x\r", mfpr(PR_SBR));	/* SBR */
 	ka820_txrx(id, "D/I D %x\r", mfpr(PR_SLR));	/* SLR */
-	ka820_txrx(id, "D/I 10 %x\r", pcb->pcb_paddr);	/* PCB for idle proc */
+	ka820_txrx(id, "D/I 10 %x\r", (int)pcb->pcb_paddr);	/* PCB for idle proc */
 	ka820_txrx(id, "D/I 11 %x\r", mfpr(PR_SCBB));	/* SCB */
 	ka820_txrx(id, "D/I 38 %x\r", mfpr(PR_MAPEN));	/* Enable MM */
 	ka820_txrx(id, "S %x\r", (int)&vax_mp_tramp);	/* Start! */
@@ -557,11 +557,14 @@ ka820_startslave(struct cpu_info *ci)
 }
 
 void
-ka820_txrx(int id, const char *fmt, int arg)
+ka820_txrx(int id, const char *fmt, ...)
 {
 	char buf[20];
+	va_list ap;
 
-	sprintf(buf, fmt, arg);
+	va_start(ap, fmt);
+	vsnprintf(buf, sizeof(buf), fmt, ap);
+	va_end(ap);
 	ka820_sendstr(id, buf);
 	ka820_sergeant(id);
 }
