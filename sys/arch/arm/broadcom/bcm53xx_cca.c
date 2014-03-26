@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_cca.c,v 1.1.16.3 2014/03/26 02:02:29 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_cca.c,v 1.1.16.4 2014/03/26 23:43:45 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -177,7 +177,7 @@ bcmcca_mainbus_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(sc->sc_dev, "interrupting at irq %d\n", IRQ_CCA);
 
 	bcmcca_uart_attach(sc);
-#if NGPIO > 0
+#if NGPIO > 0 && defined(BCM5301X)
 	bcmcca_gpio_attach(sc);
 #endif
 }
