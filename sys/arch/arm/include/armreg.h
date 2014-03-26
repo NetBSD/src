@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.93 2014/03/07 05:30:08 matt Exp $	*/
+/*	$NetBSD: armreg.h,v 1.94 2014/03/26 01:14:52 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -386,6 +386,13 @@
 #define	CPACR_PRIVED		1 /* Privileged mode access */
 #define	CPACR_RESERVED		2
 #define	CPACR_ALL		3 /* Privileged and User mode access */
+
+/* ARMv6/ARMv7 Non-Secure Access Control Register (CP15, 0, c1, c1, 2) */
+#define NSACR_SMP		0x00040000 /* ACTRL.SMP is writeable (!A8) */
+#define NSACR_L2ERR		0x00020000 /* L2ECTRL is writeable (!A8) */
+#define NSACR_ASEDIS		0x00008000 /* Deny Advanced SIMD Ext. */
+#define NSACR_D32DIS		0x00004000 /* Deny VFP regs 15-31 */
+#define NSACR_CPn(n)		(1 << (n)) /* NonSecure access allowed */
 
 /* ARM11x6 Auxiliary Control Register (CP15 register 1, opcode2 1) */
 #define	ARM11X6_AUXCTL_RS	0x00000001 /* return stack */
@@ -895,6 +902,7 @@ ARMREG_READ_INLINE(auxctl, "p15,0,%0,c1,c0,1") /* Auxiliary Control Register */
 ARMREG_WRITE_INLINE(auxctl, "p15,0,%0,c1,c0,1") /* Auxiliary Control Register */
 ARMREG_READ_INLINE(cpacr, "p15,0,%0,c1,c0,2") /* Co-Processor Access Control Register */
 ARMREG_WRITE_INLINE(cpacr, "p15,0,%0,c1,c0,2") /* Co-Processor Access Control Register */
+ARMREG_READ_INLINE(nsacr, "p15,0,%0,c1,c1,2") /* Non-Secure Access Control Register */
 /* cp15 c2 registers */
 ARMREG_READ_INLINE(ttbr, "p15,0,%0,c2,c0,0") /* Translation Table Base Register 0 */
 ARMREG_WRITE_INLINE(ttbr, "p15,0,%0,c2,c0,0") /* Translation Table Base Register 0 */
