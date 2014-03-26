@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_cca.c,v 1.1.16.2 2014/02/15 16:18:36 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_cca.c,v 1.1.16.3 2014/03/26 02:02:29 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -279,7 +279,13 @@ com_cca_attach(device_t parent, device_t self, void *aux)
 	bus_space_handle_t bsh;
 
 	sc->sc_dev = self;
+
+#ifdef BCM5301X
 	sc->sc_frequency = BCM53XX_REF_CLK;
+#else
+	const struct cpu_softc * const cpu = curcpu()->ci_softc;
+	sc->sc_frequency = cpu->cpu_clk.clk_apb / 4; 
+#endif                  
 	sc->sc_type = COM_TYPE_NORMAL;
 
 	if (com_is_console(ccaaa->ccaaa_bst, addr, &bsh) == 0 &&
