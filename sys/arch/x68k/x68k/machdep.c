@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.190 2014/03/26 08:17:59 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.191 2014/03/26 16:21:39 isaki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.190 2014/03/26 08:17:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.191 2014/03/26 16:21:39 isaki Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -513,16 +513,23 @@ cpu_reboot(int howto, char *bootstr)
 	 *	Power cannot be removed; simply halt the system (b)
 	 *	Power switch state is checked in shutdown hook
 	 *  a2: the power switch is off
-	 *	Remove the power; the simplest way is go back to ROM eg. reboot
+	 *	Remove the power
 	 * b) RB_HALT
 	 *	call cngetc
 	 * c) otherwise
 	 *	Reboot
 	 */
-	if (((howto & RB_POWERDOWN) == RB_POWERDOWN) && power_switch_is_off)
-		doboot();
-	else if (/*((howto & RB_POWERDOWN) == RB_POWERDOWN) ||*/
-		 ((howto & RB_HALT) == RB_HALT)) {
+	if (((howto & RB_POWERDOWN) == RB_POWERDOWN) && power_switch_is_off) {
+		printf("powering off...\n");
+		delay(1000000);
+		intio_set_sysport_powoff(0x00);
+		intio_set_sysport_powoff(0x0f);
+		intio_set_sysport_powoff(0x0f);
+		delay(1000000);
+		printf("WARNING: powerdown failed\n");
+		delay(1000000);
+		/* PASSTHROUGH even if came back */
+	} else if ((howto & RB_HALT) == RB_HALT) {
 		printf("System halted.  Hit any key to reboot.\n\n");
 		(void)cngetc();
 	}
