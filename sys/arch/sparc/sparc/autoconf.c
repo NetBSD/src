@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.252 2014/03/26 15:55:31 christos Exp $ */
+/*	$NetBSD: autoconf.c,v 1.253 2014/03/26 17:17:22 christos Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.252 2014/03/26 15:55:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.253 2014/03/26 17:17:22 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1039,11 +1039,9 @@ clockfreq(int freq)
 	freq /= 1000;
 	len = snprintf(buf, sizeof(buf), "%d", freq / 1000);
 	freq %= 1000;
-	if (freq) {
-		freq += 1000;	/* now in 1000..1999 */
-		snprintf(buf + len, sizeof(buf) - len, ".%d", freq);
-	}
-	return (buf);
+	if (freq)
+		snprintf(buf + len, sizeof(buf) - len, ".%03d", freq);
+	return buf;
 }
 
 /* ARGSUSED */
