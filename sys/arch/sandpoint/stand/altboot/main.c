@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.24 2014/03/22 18:54:28 jakllsch Exp $ */
+/* $NetBSD: main.c,v 1.25 2014/03/26 17:35:08 christos Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -287,16 +287,17 @@ main(int argc, char *argv[], char *bootargs_start, char *bootargs_end)
 	 * which have valid disklabels.
 	 */
 	if (n >= argc) {
+		static const size_t blen = sizeof("wdN:");
 		n = 0;
 		argc = 0;
-		argv = alloc(MAX_UNITS * (sizeof(char *) + sizeof("wdN:")));
+		argv = alloc(MAX_UNITS * (sizeof(char *) + blen));
 		bname = (char *)(argv + MAX_UNITS);
 		for (i = 0; i < MAX_UNITS; i++) {
 			if (!dlabel_valid(i))
 				continue;
-			sprintf(bname, "wd%d:", i);
+			snprintf(bname, blen, "wd%d:", i);
 			argv[argc++] = bname;
-			bname += sizeof("wdN:");
+			bname += blen;
 		}
 		/* use default drive if no valid disklabel is found */
 		if (argc == 0) {
