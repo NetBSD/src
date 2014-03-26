@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_ntoskrnl.c,v 1.24 2014/03/25 16:23:58 christos Exp $	*/
+/*	$NetBSD: subr_ntoskrnl.c,v 1.25 2014/03/26 18:11:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ntoskrnl.c,v 1.43.2.5 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_ntoskrnl.c,v 1.24 2014/03/25 16:23:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ntoskrnl.c,v 1.25 2014/03/26 18:11:26 christos Exp $");
 #endif
 
 #ifdef __FreeBSD__
@@ -2693,8 +2693,6 @@ image_patch_table ntoskrnl_functbl[] = {
 	IMPORT_FUNC(RtlFreeAnsiString),
 	IMPORT_FUNC(RtlFreeUnicodeString),
 	IMPORT_FUNC(RtlUnicodeStringToInteger),
-	IMPORT_FUNC(sprintf),
-	IMPORT_FUNC(vsprintf),
 	IMPORT_FUNC_MAP(_snprintf, snprintf),
 	IMPORT_FUNC_MAP(_vsnprintf, vsnprintf),
 	IMPORT_FUNC(DbgPrint),
