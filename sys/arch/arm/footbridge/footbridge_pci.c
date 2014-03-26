@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_pci.c,v 1.24 2012/10/27 17:17:37 chs Exp $	*/
+/*	$NetBSD: footbridge_pci.c,v 1.25 2014/03/26 08:51:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.24 2012/10/27 17:17:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.25 2014/03/26 08:51:59 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -318,11 +318,11 @@ footbridge_pci_intr_string(void *pcv, pci_intr_handle_t ih)
 
 #if NISA > 0
 	if (ih >= 0x80 && ih <= 0x8f) {
-		sprintf(irqstr, "isairq %ld", (ih & 0x0f));
+		snprintf(irqstr, sizeof(irqstr), "isairq %ld", (ih & 0x0f));
 		return(irqstr);
 	}
 #endif
-	sprintf(irqstr, "irq %ld", ih);
+	snprintf(irqstr, sizeof(irqstr), "irq %ld", ih);
 	return(irqstr);	
 }
 
