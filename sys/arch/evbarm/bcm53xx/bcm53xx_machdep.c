@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_machdep.c,v 1.7.4.2 2014/02/15 16:18:37 matt Exp $	*/
+/*	$NetBSD: bcm53xx_machdep.c,v 1.7.4.3 2014/03/26 02:15:02 matt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define IDM_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.7.4.2 2014/02/15 16:18:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.7.4.3 2014/03/26 02:15:02 matt Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_broadcom.h"
@@ -330,14 +330,20 @@ consinit(void)
 	/*
 	 * Switch to the reference clock
 	 */
+#ifdef BCM5301X
+	const int comfreq = BCM53XX_REF_CLK;
 	v = bus_space_read_4(bcm53xx_ioreg_bst, bcm53xx_ioreg_bsh,
 	    CCA_MISC_BASE + MISC_CORECTL);
 	v &= ~CORECTL_UART_CLK_OVERRIDE;
 	bus_space_write_4(bcm53xx_ioreg_bst, bcm53xx_ioreg_bsh,
 	    CCA_MISC_BASE + MISC_CORECTL, v);
+#else
+	const struct cpu_softc * const cpu = curcpu()->ci_softc;
+	const int comfreq = cpu->cpu_clk.clk_apb / 4;
+#endif
 
         if (comcnattach(bcm53xx_ioreg_bst, comcnaddr, comcnspeed,
-                        BCM53XX_REF_CLK, COM_TYPE_NORMAL, comcnmode))
+                        comfreq, COM_TYPE_NORMAL, comcnmode))
                 panic("Serial console can not be initialized.");
 }
 
