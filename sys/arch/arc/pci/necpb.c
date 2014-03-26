@@ -1,4 +1,4 @@
-/*	$NetBSD: necpb.c,v 1.39 2012/10/27 17:17:36 chs Exp $	*/
+/*	$NetBSD: necpb.c,v 1.40 2014/03/26 08:20:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.39 2012/10/27 17:17:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.40 2014/03/26 08:20:29 christos Exp $");
 
 #include "opt_pci.h"
 
@@ -386,7 +386,7 @@ necpb_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 
 	if (ih >= 4)
 		panic("%s: bogus handle %ld", __func__, ih);
-	sprintf(str, "int %c", 'A' + (int)ih);
+	snprintf(str, sizeof(str), "int %c", 'A' + (int)ih);
 	return str;
 }
 
