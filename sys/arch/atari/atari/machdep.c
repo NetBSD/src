@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.176 2014/03/24 18:39:57 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.177 2014/03/26 18:04:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.176 2014/03/24 18:39:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.177 2014/03/26 18:04:33 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -268,7 +268,7 @@ identifycpu(void)
 
 			__asm(".word 0x4e7a,0x0808;"
 			    "movl %%d0,%0" : "=d"(pcr) : : "d0");
-			sprintf(cputxt, "68%s060 rev.%d",
+			snprintf(cputxt, sizeof(cputxt), "68%s060 rev.%d",
 			    pcr & 0x10000 ? "LC/EC" : "", (pcr >> 8) & 0xff);
 			cpu = cputxt;
 			mmu = "/MMU";
