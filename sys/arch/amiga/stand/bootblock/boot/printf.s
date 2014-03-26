@@ -1,4 +1,4 @@
-/* $NetBSD: printf.s,v 1.9 2014/03/22 01:52:44 christos Exp $ */
+/* $NetBSD: printf.s,v 1.10 2014/03/26 08:19:44 christos Exp $ */
 
 /*-
  * Copyright (c) 1996,2006 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@ Lstorech:
 	rts
 
 #ifdef notdef
-ENTRY_NOPROFILE(sprintf)
+ENTRY_NOPROFILE(unused_sprintf)
 	movml	#0x0032,%sp@-
 	movl	%sp@(16),%a3
 	lea	%pc@(Lstorech:w),%a2
