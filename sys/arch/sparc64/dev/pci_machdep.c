@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.75 2012/10/27 17:18:12 chs Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.76 2014/03/26 08:40:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.75 2012/10/27 17:18:12 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.76 2014/03/26 08:40:58 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -371,7 +371,7 @@ pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 {
 	static char str[16];
 
-	sprintf(str, "ivec %x", ih);
+	snprintf(str, sizeof(str), "ivec %x", ih);
 	DPRINTF(SPDB_INTR, ("pci_intr_string: returning %s\n", str));
 
 	return (str);
