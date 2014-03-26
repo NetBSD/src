@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.38 2011/10/13 19:51:17 matt Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.39 2014/03/26 16:01:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.38 2011/10/13 19:51:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.39 2014/03/26 16:01:43 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -208,11 +208,11 @@ prep_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		goto bad;
 	}
 
-	sprintf(key, "devfunc-%d", dev);
+	snprintf(key, sizeof(key), "devfunc-%d", dev);
 	devsub = prop_dictionary_get(dict, key);
 	if (devsub == NULL)
 		goto bad;
-	sprintf(key, "pin-%c", 'A' + (pin-1));
+	snprintf(key, sizeof(key), "pin-%c", 'A' + (pin-1));
 	pinsub = prop_dictionary_get(devsub, key);
 	if (pinsub == NULL)
 		goto bad;

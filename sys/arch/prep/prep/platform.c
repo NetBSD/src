@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.c,v 1.26 2011/06/20 07:18:07 matt Exp $	*/
+/*	$NetBSD: platform.c,v 1.27 2014/03/26 16:01:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.26 2011/06/20 07:18:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.27 2014/03/26 16:01:43 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -266,11 +266,11 @@ create_intr_map(void *v, prop_dictionary_t dict)
 			else
 				intr_num = prop_number_create_integer(
 				    (line & 0x7fff) + offset);
-			sprintf(key, "pin-%c", 'A' + j);
+			snprintf(key, sizeof(key), "pin-%c", 'A' + j);
 			prop_dictionary_set(sub, key, intr_num);
 			prop_object_release(intr_num);
 		}
-		sprintf(key, "devfunc-%d", dev);
+		snprintf(key, sizeof(key), "devfunc-%d", dev);
 		prop_dictionary_set(dict, key, sub);
 		prop_object_release(sub);
 	}

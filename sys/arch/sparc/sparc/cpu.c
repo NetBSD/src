@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.241 2014/03/24 20:06:32 christos Exp $ */
+/*	$NetBSD: cpu.c,v 1.242 2014/03/26 15:55:43 christos Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.241 2014/03/24 20:06:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.242 2014/03/26 15:55:43 christos Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -954,7 +954,8 @@ fpu_init(struct cpu_info *sc)
 	sc->fpupresent = 1;
 	sc->fpu_name = fsrtoname(sc->cpu_impl, sc->cpu_vers, fpuvers);
 	if (sc->fpu_name == NULL) {
-		sprintf(sc->fpu_namebuf, "version 0x%x", fpuvers);
+		snprintf(sc->fpu_namebuf, sizeof(sc->fpu_namebuf),
+		    "version 0x%x", fpuvers);
 		sc->fpu_name = sc->fpu_namebuf;
 	}
 }

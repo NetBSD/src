@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.18 2013/04/16 06:57:06 jdc Exp $ */
+/*	$NetBSD: pci_machdep.c,v 1.19 2014/03/26 15:55:43 christos Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.18 2013/04/16 06:57:06 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.19 2014/03/26 15:55:43 christos Exp $");
 
 #if defined(DEBUG) && !defined(SPARC_PCI_DEBUG)
 #define SPARC_PCI_DEBUG
@@ -496,7 +496,7 @@ pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 	int pil;
 
 	pil = mspcic_assigned_interrupt(ih);
-	sprintf(str, "line %d (pil %d)", ih, pil);
+	snprintf(str, sizeof(str), "line %d (pil %d)", ih, pil);
 	return str;
 }
 
