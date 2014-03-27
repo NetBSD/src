@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.30 2014/03/19 18:11:17 christos Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.31 2014/03/27 17:31:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.30 2014/03/19 18:11:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.31 2014/03/27 17:31:56 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ptm.h"
@@ -84,10 +84,38 @@ static struct ptm_pty *ptm;
 int pts_major, ptc_major;
 
 static dev_t pty_getfree(void);
-static int pty_alloc_master(struct lwp *, int *, dev_t *);
-static int pty_alloc_slave(struct lwp *, int *, dev_t);
+static int pty_alloc_master(struct lwp *, int *, dev_t *, struct mount *);
+static int pty_alloc_slave(struct lwp *, int *, dev_t, struct mount *);
 
 void ptmattach(int);
+
+int
+ptyfs_getmp(struct lwp *l, struct mount **mpp) {
+	struct cwdinfo *cwdi = l->l_proc->p_cwdi;
+	struct mount *mp;
+
+	if (ptm == NULL)
+		return EOPNOTSUPP;
+
+	if (ptm->arg == NULL) { /* BSDPTY */
+		*mpp = NULL;
+		return 0;
+	}
+
+	mp = ptm->arg;	/* PTYFS */
+
+	if (cwdi->cwdi_rdir == NULL)
+		goto ok;
+
+	if (vn_isunder(mp->mnt_vnodecovered, cwdi->cwdi_rdir, l))
+		goto ok;
+
+	*mpp = NULL;
+	return EOPNOTSUPP;
+ok:
+	*mpp = mp;
+	return 0;
+}
 
 dev_t
 pty_makedev(char ms, int minor)
@@ -140,7 +168,7 @@ pty_vn_open(struct vnode *vp, struct lwp *l)
 }
 
 static int
-pty_alloc_master(struct lwp *l, int *fd, dev_t *dev)
+pty_alloc_master(struct lwp *l, int *fd, dev_t *dev, struct mount *mp)
 {
 	int error;
 	struct file *fp;
@@ -164,7 +192,7 @@ retry:
 		error = EOPNOTSUPP;
 		goto bad;
 	}
-	if ((error = (*ptm->allocvp)(ptm, l, &vp, *dev, 'p')) != 0) {
+	if ((error = (*ptm->allocvp)(mp, l, &vp, *dev, 'p')) != 0) {
 		DPRINTF(("pty_allocvp %d\n", error));
 		goto bad;
 	}
@@ -197,7 +225,7 @@ bad:
 }
 
 int
-pty_grant_slave(struct lwp *l, dev_t dev)
+pty_grant_slave(struct lwp *l, dev_t dev, struct mount *mp)
 {
 	int error;
 	struct vnode *vp;
@@ -213,12 +241,12 @@ pty_grant_slave(struct lwp *l, dev_t dev)
 	 */
 	if (ptm == NULL)
 		return EOPNOTSUPP;
-	if ((error = (*ptm->allocvp)(ptm, l, &vp, dev, 't')) != 0)
+	if ((error = (*ptm->allocvp)(mp, l, &vp, dev, 't')) != 0)
 		return error;
 
 	if ((vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
 		struct vattr vattr;
-		(*ptm->getvattr)(ptm, l, &vattr);
+		(*ptm->getvattr)(mp, l, &vattr);
 		/* Do the VOP_SETATTR() as root. */
 		error = VOP_SETATTR(vp, &vattr, lwp0.l_cred);
 		if (error) {
@@ -239,7 +267,7 @@ pty_grant_slave(struct lwp *l, dev_t dev)
 }
 
 static int
-pty_alloc_slave(struct lwp *l, int *fd, dev_t dev)
+pty_alloc_slave(struct lwp *l, int *fd, dev_t dev, struct mount *mp)
 {
 	int error;
 	struct file *fp;
@@ -256,7 +284,7 @@ pty_alloc_slave(struct lwp *l, int *fd, dev_t dev)
 		goto bad;
 	}
 
-	if ((error = (*ptm->allocvp)(ptm, l, &vp, dev, 't')) != 0)
+	if ((error = (*ptm->allocvp)(mp, l, &vp, dev, 't')) != 0)
 		goto bad;
 	if ((error = pty_vn_open(vp, l)) != 0)
 		goto bad;
@@ -282,7 +310,7 @@ pty_sethandler(struct ptm_pty *nptm)
 }
 
 int
-pty_fill_ptmget(struct lwp *l, dev_t dev, int cfd, int sfd, void *data)
+pty_fill_ptmget(struct lwp *l, dev_t dev, int cfd, int sfd, void *data, struct mount *mp)
 {
 	struct ptmget *ptmg = data;
 	int error;
@@ -293,11 +321,11 @@ pty_fill_ptmget(struct lwp *l, dev_t dev, int cfd, int sfd, void *data)
 	ptmg->cfd = cfd == -1 ? minor(dev) : cfd;
 	ptmg->sfd = sfd == -1 ? minor(dev) : sfd;
 
-	error = (*ptm->makename)(ptm, l, ptmg->cn, sizeof(ptmg->cn), dev, 'p');
+	error = (*ptm->makename)(mp, l, ptmg->cn, sizeof(ptmg->cn), dev, 'p');
 	if (error)
 		return error;
 
-	return (*ptm->makename)(ptm, l, ptmg->sn, sizeof(ptmg->sn), dev, 't');
+	return (*ptm->makename)(mp, l, ptmg->sn, sizeof(ptmg->sn), dev, 't');
 }
 
 void
@@ -322,11 +350,14 @@ ptmopen(dev_t dev, int flag, int mode, struct lwp *l)
 	int error;
 	int fd;
 	dev_t ttydev;
+	struct mount *mp;
 
 	switch(minor(dev)) {
 	case 0:		/* /dev/ptmx */
 	case 2:		/* /emul/linux/dev/ptmx */
-		if ((error = pty_alloc_master(l, &fd, &ttydev)) != 0)
+		if ((error = ptyfs_getmp(l, &mp)) != 0)
+			return error;
+		if ((error = pty_alloc_master(l, &fd, &ttydev, mp)) != 0)
 			return error;
 		if (minor(dev) == 2) {
 			/*
@@ -334,7 +365,7 @@ ptmopen(dev_t dev, int flag, int mode, struct lwp *l)
 			 * Handle this case here, instead of writing
 			 * a new linux module.
 			 */
-			if ((error = pty_grant_slave(l, ttydev)) != 0) {
+			if ((error = pty_grant_slave(l, ttydev, mp)) != 0) {
 				file_t *fp = fd_getfile(fd);
 				if (fp != NULL) {
 					fd_close(fd);
@@ -367,21 +398,25 @@ ptmioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	dev_t newdev;
 	int cfd, sfd;
 	file_t *fp;
+	struct mount *mp;
 
 	error = 0;
 	switch (cmd) {
 	case TIOCPTMGET:
-		if ((error = pty_alloc_master(l, &cfd, &newdev)) != 0)
+		if ((error = ptyfs_getmp(l, &mp)) != 0)
 			return error;
 
-		if ((error = pty_grant_slave(l, newdev)) != 0)
+		if ((error = pty_alloc_master(l, &cfd, &newdev, mp)) != 0)
+			return error;
+
+		if ((error = pty_grant_slave(l, newdev, mp)) != 0)
 			goto bad;
 
-		if ((error = pty_alloc_slave(l, &sfd, newdev)) != 0)
+		if ((error = pty_alloc_slave(l, &sfd, newdev, mp)) != 0)
 			goto bad;
 
 		/* now, put the indices and names into struct ptmget */
-		if ((error = pty_fill_ptmget(l, newdev, cfd, sfd, data)) != 0)
+		if ((error = pty_fill_ptmget(l, newdev, cfd, sfd, data, mp)) != 0)
 			goto bad2;
 		return 0;
 	default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.47 2014/03/23 15:21:15 hannken Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.48 2014/03/27 17:31:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.47 2014/03/23 15:21:15 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.48 2014/03/27 17:31:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,11 +72,11 @@ VFS_PROTOS(ptyfs);
 
 static struct sysctllog *ptyfs_sysctl_log;
 
-static int ptyfs__allocvp(struct ptm_pty *, struct lwp *, struct vnode **,
+static int ptyfs__allocvp(struct mount *, struct lwp *, struct vnode **,
     dev_t, char);
-static int ptyfs__makename(struct ptm_pty *, struct lwp *, char *, size_t,
+static int ptyfs__makename(struct mount *, struct lwp *, char *, size_t,
     dev_t, char);
-static void ptyfs__getvattr(struct ptm_pty *, struct lwp *, struct vattr *);
+static void ptyfs__getvattr(struct mount *, struct lwp *, struct vattr *);
 
 /*
  * ptm glue: When we mount, we make ptm point to us.
@@ -125,10 +125,9 @@ out:
 }
 
 static int
-ptyfs__makename(struct ptm_pty *pt, struct lwp *l, char *tbuf, size_t bufsiz,
+ptyfs__makename(struct mount *mp, struct lwp *l, char *tbuf, size_t bufsiz,
     dev_t dev, char ms)
 {
-	struct mount *mp = pt->arg;
 	size_t len;
 	const char *np;
 
@@ -154,10 +153,9 @@ ptyfs__makename(struct ptm_pty *pt, struct lwp *l, char *tbuf, size_t bufsiz,
 
 static int
 /*ARGSUSED*/
-ptyfs__allocvp(struct ptm_pty *pt, struct lwp *l, struct vnode **vpp,
+ptyfs__allocvp(struct mount *mp, struct lwp *l, struct vnode **vpp,
     dev_t dev, char ms)
 {
-	struct mount *mp = pt->arg;
 	ptyfstype type;
 
 	switch (ms) {
@@ -176,9 +174,8 @@ ptyfs__allocvp(struct ptm_pty *pt, struct lwp *l, struct vnode **vpp,
 
 
 static void
-ptyfs__getvattr(struct ptm_pty *pt, struct lwp *l, struct vattr *vattr)
+ptyfs__getvattr(struct mount *mp, struct lwp *l, struct vattr *vattr)
 {
-	struct mount *mp = pt->arg;
 	struct ptyfsmount *pmnt = VFSTOPTY(mp);
 	vattr_null(vattr);
 	/* get real uid */
