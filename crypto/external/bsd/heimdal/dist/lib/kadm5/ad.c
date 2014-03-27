@@ -1,4 +1,4 @@
-/*	$NetBSD: ad.c,v 1.1.1.1 2011/04/13 18:15:29 elric Exp $	*/
+/*	$NetBSD: ad.c,v 1.2 2014/03/27 16:10:46 apb Exp $	*/
 
 /*
  * Copyright (c) 2004 Kungliga Tekniska Högskolan
@@ -49,7 +49,7 @@
 #include <krb5/base64.h>
 #endif
 
-__RCSID("$NetBSD: ad.c,v 1.1.1.1 2011/04/13 18:15:29 elric Exp $");
+__RCSID("$NetBSD: ad.c,v 1.2 2014/03/27 16:10:46 apb Exp $");
 
 #ifdef OPENLDAP
 
@@ -1289,7 +1289,7 @@ kadm5_ad_randkey_principal(void *server_handle,
 				 password,
 				 principal,
 				 &(*keys)[0]);
-	memset(password, 0, sizeof(password));
+	memset(password, 0, plen);
 	if (ret) {
 	    free(*keys);
 	    *keys = NULL;
