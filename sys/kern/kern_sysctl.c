@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.248 2014/03/01 17:27:48 dsl Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.249 2014/03/27 21:09:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.248 2014/03/01 17:27:48 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.249 2014/03/27 21:09:33 christos Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -2105,6 +2105,11 @@ sysctl_createv(struct sysctllog **log, int cflags,
 	pnode = root;
 	error = sysctl_locate(NULL, &name[0], namelen - 1, &pnode, &ni);
 	if (error) {
+		/*
+		 * XXX: If you are seeing this printf in early bringup
+		 * stages, perhaps your setfault is not functioning and
+		 * thus kcopy() is mis-behaving.
+		 */
 		printf("sysctl_createv: sysctl_locate(%s) returned %d\n",
 		       nnode.sysctl_name, error);
 		sysctl_unlock();
