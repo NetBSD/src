@@ -1496,7 +1496,8 @@ process_obj(dtrace_hdl_t *dtp, const char *obj, int *eprobesp)
 				(void) gelf_update_sym(data_sym, isym, &dsym);
 
 				r = (char *)data_str->d_buf + istr;
-				istr += 1 + sprintf(r, dt_symfmt,
+				istr += 1 + snprintf(r, data_str->d_size - 
+					(istr - (char *)data_str->d_buf), dt_symfmt,
 				    dt_symprefix, objkey, s);
 				isym++;
 				assert(isym <= nsym);
