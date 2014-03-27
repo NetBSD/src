@@ -1,4 +1,4 @@
-/*	$NetBSD: test_pknistkdf.c,v 1.1.1.1 2011/04/13 18:15:38 elric Exp $	*/
+/*	$NetBSD: test_pknistkdf.c,v 1.2 2014/03/27 16:10:46 apb Exp $	*/
 
 /*
  * Copyright (c) 2008 Kungliga Tekniska Högskolan
@@ -143,7 +143,7 @@ test_dh2key(krb5_context context, int i, struct testcase *c)
     AlgorithmIdentifier ai;
     size_t size;
 
-    memset(&ticket, 0, sizeof(&ticket));
+    memset(&ticket, 0, sizeof(ticket));
 
     ai.algorithm = *c->oid;
     ai.parameters = NULL;
