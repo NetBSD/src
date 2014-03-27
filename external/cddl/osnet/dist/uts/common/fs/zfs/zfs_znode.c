@@ -1683,7 +1683,8 @@ zfs_obj_to_path(objset_t *osp, uint64_t obj, char *buf, int len)
 
 		component[0] = '/';
 		if (is_xattrdir) {
-			(void) sprintf(component + 1, "<xattrdir>");
+			(void) snprintf(component + 1, sizeof(component) - 1,
+			    "<xattrdir>");
 		} else {
 			error = zap_value_search(osp, pobj, obj,
 			    ZFS_DIRENT_OBJ(-1ULL), component + 1);
