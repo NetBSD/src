@@ -57,7 +57,7 @@ struct vchiq_instance_struct {
 
 static VCHIQ_STATUS_T
 vchiq_blocking_bulk_transfer(VCHIQ_SERVICE_HANDLE_T handle, void *data,
-	int size, VCHIQ_BULK_DIR_T dir);
+	unsigned int size, VCHIQ_BULK_DIR_T dir);
 
 /****************************************************************************
 *
@@ -242,7 +242,8 @@ VCHIQ_STATUS_T vchiq_add_service(
 		state,
 		params,
 		srvstate,
-		instance);
+		instance,
+		NULL);
 
 	if (service) {
 		*phandle = service->handle;
@@ -283,7 +284,8 @@ VCHIQ_STATUS_T vchiq_open_service(
 	service = vchiq_add_service_internal(state,
 		params,
 		VCHIQ_SRVSTATE_OPENING,
-		instance);
+		instance,
+		NULL);
 
 	if (service) {
 		status = vchiq_open_service_internal(service,
@@ -304,7 +306,7 @@ EXPORT_SYMBOL(vchiq_open_service);
 
 VCHIQ_STATUS_T
 vchiq_queue_bulk_transmit(VCHIQ_SERVICE_HANDLE_T handle,
-	void *data, int size, void *userdata)
+	void *data, unsigned int size, void *userdata)
 {
 	return vchiq_bulk_transfer(handle,
 		VCHI_MEM_HANDLE_INVALID, data, size, userdata,
@@ -313,8 +315,8 @@ vchiq_queue_bulk_transmit(VCHIQ_SERVICE_HANDLE_T handle,
 EXPORT_SYMBOL(vchiq_queue_bulk_transmit);
 
 VCHIQ_STATUS_T
-vchiq_queue_bulk_receive(VCHIQ_SERVICE_HANDLE_T handle, void *data, int size,
-	void *userdata)
+vchiq_queue_bulk_receive(VCHIQ_SERVICE_HANDLE_T handle, void *data,
+	unsigned int size, void *userdata)
 {
 	return vchiq_bulk_transfer(handle,
 		VCHI_MEM_HANDLE_INVALID, data, size, userdata,
@@ -323,8 +325,8 @@ vchiq_queue_bulk_receive(VCHIQ_SERVICE_HANDLE_T handle, void *data, int size,
 EXPORT_SYMBOL(vchiq_queue_bulk_receive);
 
 VCHIQ_STATUS_T
-vchiq_bulk_transmit(VCHIQ_SERVICE_HANDLE_T handle, void *data, int size,
-	void *userdata, VCHIQ_BULK_MODE_T mode)
+vchiq_bulk_transmit(VCHIQ_SERVICE_HANDLE_T handle, void *data,
+	unsigned int size, void *userdata, VCHIQ_BULK_MODE_T mode)
 {
 	VCHIQ_STATUS_T status;
 
@@ -348,8 +350,8 @@ vchiq_bulk_transmit(VCHIQ_SERVICE_HANDLE_T handle, void *data, int size,
 EXPORT_SYMBOL(vchiq_bulk_transmit);
 
 VCHIQ_STATUS_T
-vchiq_bulk_receive(VCHIQ_SERVICE_HANDLE_T handle, void *data, int size,
-	void *userdata, VCHIQ_BULK_MODE_T mode)
+vchiq_bulk_receive(VCHIQ_SERVICE_HANDLE_T handle, void *data,
+	unsigned int size, void *userdata, VCHIQ_BULK_MODE_T mode)
 {
 	VCHIQ_STATUS_T status;
 
@@ -374,7 +376,7 @@ EXPORT_SYMBOL(vchiq_bulk_receive);
 
 static VCHIQ_STATUS_T
 vchiq_blocking_bulk_transfer(VCHIQ_SERVICE_HANDLE_T handle, void *data,
-	int size, VCHIQ_BULK_DIR_T dir)
+	unsigned int size, VCHIQ_BULK_DIR_T dir)
 {
 	VCHIQ_INSTANCE_T instance;
 	VCHIQ_SERVICE_T *service;
