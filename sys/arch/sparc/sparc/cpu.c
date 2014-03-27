@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.242 2014/03/26 15:55:43 christos Exp $ */
+/*	$NetBSD: cpu.c,v 1.243 2014/03/27 18:22:56 christos Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.242 2014/03/26 15:55:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.243 2014/03/27 18:22:56 christos Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -744,6 +744,8 @@ xcall(xcall_func_t func, xcall_trap_t trap, int arg0, int arg1, int arg2,
 			    "xcall(cpu%d,%p) from %p: couldn't ping cpus:",
 			    cpu_number(), fasttrap ? trap : func,
 			    __builtin_return_address(0));
+			if (wrsz > bufsz)
+				break;
 			bufsz -= wrsz;
 			bufp += wrsz;
 		}
@@ -757,11 +759,10 @@ xcall(xcall_func_t func, xcall_trap_t trap, int arg0, int arg1, int arg2,
 				if (i < 0) {
 					wrsz = snprintf(bufp, bufsz,
 							" cpu%d", cpi->ci_cpuid);
+					if (wrsz > bufsz)
+						break;
 					bufsz -= wrsz;
 					bufp += wrsz;
-					/* insanity */
-					if (bufsz < 0)
-						break;
 				} else {
 					done = 0;
 					break;

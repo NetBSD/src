@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.4 2014/03/24 20:06:33 christos Exp $ */
+/*	$NetBSD: procfs_machdep.c,v 1.5 2014/03/27 18:22:56 christos Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.4 2014/03/24 20:06:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.5 2014/03/27 18:22:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,10 +151,10 @@ procfs_getonecpu(int xcpu, struct cpu_info *ci, char *bf, int *len)
 	for (i = 0; i < 32; i++) {
 		if ((ci->ci_feat_val[0] & (1 << i)) && x86_features[i]) {
 			l = snprintf(p, left, "%s ", x86_features[i]);
+			if (l > left)
+				return 0;
 			left -= l;
 			p += l;
-			if (left <= 0)
-				break;
 		}
 	}
 
@@ -174,20 +174,20 @@ procfs_getonecpu(int xcpu, struct cpu_info *ci, char *bf, int *len)
 	    cpu_brand_string
 	);
 
+	if (l > left)
+		return 0;
 	left -= l;
 	p += l;
-	if (left <= 0)
-		return 0;
 
 	if (cpuid_level >= 0)
 		l = snprintf(p, left, "%d\n", ci->ci_signature & 15);
 	else
 		l = snprintf(p, left, "unknown\n");
 
+	if (l > left)
+		return 0;
 	left -= l;
 	p += l;
-	if (left <= 0)
-		return 0;
 
 	if (ci->ci_data.cpu_cc_freq != 0) {
 		uint64_t freq, fraq;
@@ -199,10 +199,10 @@ procfs_getonecpu(int xcpu, struct cpu_info *ci, char *bf, int *len)
 	} else
 		l = snprintf(p, left, "cpu MHz\t\t: unknown\n");
 
+	if (l > left)
+		return 0;
 	left -= l;
 	p += l;
-	if (left <= 0)
-		return 0;
 
 	l = snprintf(p, left,
 	    "fdiv_bug\t: %s\n"

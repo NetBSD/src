@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.49 2014/03/26 16:08:45 christos Exp $	*/
+/*	$NetBSD: maple.c,v 1.50 2014/03/27 18:22:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.49 2014/03/26 16:08:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.50 2014/03/27 18:22:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -353,7 +353,9 @@ maple_run_polling(device_t dev)
 static char *
 maple_unit_name(char *buf, size_t len, int port, int subunit)
 {
-	int l = snprintf(buf, len, "maple%c", port + 'A');
+	size_t l = snprintf(buf, len, "maple%c", port + 'A');
+	if (l > len)
+		l = len;
 	if (subunit)
 		snprintf(buf + l, len - l, "%d", subunit);
 

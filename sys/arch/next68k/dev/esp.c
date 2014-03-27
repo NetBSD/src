@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.61 2014/03/25 19:41:32 christos Exp $	*/
+/*	$NetBSD: esp.c,v 1.62 2014/03/27 18:22:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.61 2014/03/25 19:41:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.62 2014/03/27 18:22:56 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1155,8 +1155,12 @@ esp_dma_store(struct ncr53c9x_softc *sc)
 	
 	l += snprintf(p + l, len - l, "%s: sc_datain=%d\n",
 	    device_xname(sc->sc_dev), esc->sc_datain);
+	if (l > len)
+		return;
 	l += snprintf(p + l, len - l, "%s: sc_loaded=0x%08x\n",
 	    device_xname(sc->sc_dev), esc->sc_loaded);
+	if (l > len)
+		return;
 
 	if (esc->sc_dmaaddr) {
 		l += snprintf(p + l, len - l, "%s: sc_dmaaddr=%p\n",
@@ -1165,6 +1169,8 @@ esp_dma_store(struct ncr53c9x_softc *sc)
 		l += snprintf(p + l, len - l, "%s: sc_dmaaddr=NULL\n",
 		    device_xname(sc->sc_dev));
 	}
+	if (l > len)
+		return;
 	if (esc->sc_dmalen) {
 		l += snprintf(p + l, len - l, "%s: sc_dmalen=0x%08x\n", 
 		    device_xname(sc->sc_dev), *esc->sc_dmalen);
@@ -1172,19 +1178,29 @@ esp_dma_store(struct ncr53c9x_softc *sc)
 		l += snprintf(p + l, len - l, "%s: sc_dmalen=NULL\n",
 		    device_xname(sc->sc_dev));
 	}
+	if (l > len)
+		return;
 	l += snprintf(p + l, len - l, "%s: sc_dmasize=0x%08x\n",
 	    device_xname(sc->sc_dev), esc->sc_dmasize);
+	if (l > len)
+		return;
 
 	l += snprintf(p + l, len - l, "%s: sc_begin = %p, sc_begin_size = 0x%08x\n",
+	if (l > len)
+		return;
 	    device_xname(sc->sc_dev), esc->sc_begin, esc->sc_begin_size);
 	l += snprintf(p + l, len - l, "%s: sc_main = %p, sc_main_size = 0x%08x\n",
 	    device_xname(sc->sc_dev), esc->sc_main, esc->sc_main_size);
+	if (l > len)
+		return;
 	/* if (esc->sc_main) */ {
 		int i;
 		bus_dmamap_t map = esc->sc_main_dmamap;
 		l += snprintf(p + l, len - l, "%s: sc_main_dmamap."
 		    " mapsize = 0x%08lx, nsegs = %d\n",
 		    device_xname(sc->sc_dev), map->dm_mapsize, map->dm_nsegs);
+		if (l > len)
+			return;
 		for(i = 0; i < map->dm_nsegs; i++) {
 			l += snprintf(p + l, len - l, "%s:"
 			    " map->dm_segs[%d].ds_addr = 0x%08lx,"
@@ -1192,16 +1208,22 @@ esp_dma_store(struct ncr53c9x_softc *sc)
 			    device_xname(sc->sc_dev),
 			    i, map->dm_segs[i].ds_addr,
 			    map->dm_segs[i].ds_len);
+			    if (l > len)
+				    return;
 		}
 	}
 	l += snprintf(p + l, len - l, "%s: sc_tail = %p, sc_tail_size = 0x%08x\n",
 	    device_xname(sc->sc_dev), esc->sc_tail, esc->sc_tail_size);
+	if (l > len)
+		return;
 	/* if (esc->sc_tail) */ {
 		int i;
 		bus_dmamap_t map = esc->sc_tail_dmamap;
 		l += snprintf(p + l, len - l, "%s: sc_tail_dmamap."
 		    " mapsize = 0x%08lx, nsegs = %d\n",
 		    device_xname(sc->sc_dev), map->dm_mapsize, map->dm_nsegs);
+		if (l > len)
+			return;
 		for (i = 0; i < map->dm_nsegs; i++) {
 			l += snprintf(p + l, len - l, "%s:"
 			    " map->dm_segs[%d].ds_addr = 0x%08lx,"
@@ -1209,6 +1231,8 @@ esp_dma_store(struct ncr53c9x_softc *sc)
 			    device_xname(sc->sc_dev),
 			    i, map->dm_segs[i].ds_addr,
 			     map->dm_segs[i].ds_len);
+			if (l > len)
+				return;
 		}
 	}
 }

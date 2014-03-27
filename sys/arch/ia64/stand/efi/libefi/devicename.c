@@ -1,4 +1,4 @@
-/*	$NetBSD: devicename.c,v 1.6 2014/03/25 18:35:33 christos Exp $	*/
+/*	$NetBSD: devicename.c,v 1.7 2014/03/27 18:22:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -208,7 +208,7 @@ efi_fmtdev(void *vdev)
 {
 	struct efi_devdesc *dev = (struct efi_devdesc *)vdev;
 	static char	buf[128];	/* XXX device length constant? */
-	size_t		len;
+	size_t		len, buflen = sizeof(buf);
     
 	switch(dev->d_type) {
 	case DEVT_NONE:
@@ -216,16 +216,24 @@ efi_fmtdev(void *vdev)
 		break;
 
 	case DEVT_DISK:
-		len = snprintf(buf, sizeof(buf), "%s%d", dev->d_dev->dv_name, dev->d_kind.efidisk.unit);
-		if (dev->d_kind.efidisk.slice > 0)
-			len += snprintf(buf + len, sizeof(buf) - len, "s%d", dev->d_kind.efidisk.slice);
-		if (dev->d_kind.efidisk.partition >= 0)
-			len += snprintf(buf + len, sizeof(buf) - len, "%c", dev->d_kind.efidisk.partition + 'a');
+		len = snprintf(buf, buflen, "%s%d", dev->d_dev->dv_name, dev->d_kind.efidisk.unit);
+		if (len > buflen)
+			len = buflen;
+		if (dev->d_kind.efidisk.slice > 0) {
+			len += snprintf(buf + len, buflen - len, "s%d", dev->d_kind.efidisk.slice);
+			if (len > buflen)
+				len = buflen;
+		}
+		if (dev->d_kind.efidisk.partition >= 0) {
+			len += snprintf(buf + len, buflen - len, "%c", dev->d_kind.efidisk.partition + 'a');
+			if (len > buflen)
+		}
+				len = buflen;
 		strlcat(buf, ":", sizeof(buf) - len);
 		break;
 
 	case DEVT_NET:
-		snprintf(buf, sizeof(buf), "%s%d:", dev->d_dev->dv_name, dev->d_kind.netif.unit);
+		snprintf(buf, buflen, "%s%d:", dev->d_dev->dv_name, dev->d_kind.netif.unit);
 		break;
 	}
 	return(buf);
