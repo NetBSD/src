@@ -72,15 +72,6 @@ struct semaphore g_free_fragments_sema;
 
 static DEFINE_SEMAPHORE(g_free_fragments_mutex);
 
-#if 0
-static int
-create_pagelist(char __user *buf, size_t count, unsigned short type,
-                lwp_t *l, PAGELIST_T ** ppagelist);
-
-static void
-free_pagelist(PAGELIST_T *pagelist, int actual);
-#endif
-
 int __init
 vchiq_platform_init(VCHIQ_STATE_T *state)
 {
