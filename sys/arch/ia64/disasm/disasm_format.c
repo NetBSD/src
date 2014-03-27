@@ -1,4 +1,4 @@
-/*	$NetBSD: disasm_format.c,v 1.2 2014/03/25 18:35:32 christos Exp $	*/
+/*	$NetBSD: disasm_format.c,v 1.3 2014/03/27 18:22:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 Marcel Moolenaar
@@ -277,6 +277,8 @@ asm_operand(const struct asm_oper *o, char *buf, size_t buflen, uint64_t ip)
 	}
 	if (n[0] != '\0') {
 		l = snprintf(buf, buflen, "%s[", n);
+		if (l > buflen)
+			l = buflen;
 		buf += l;
 		buflen -= l;
 	}
@@ -284,7 +286,11 @@ asm_operand(const struct asm_oper *o, char *buf, size_t buflen, uint64_t ip)
 	case 1:	l = strlcpy(buf, "gp", buflen); break;
 	case 12: l = strlcpy(buf, "sp", buflen); break;
 	case 13: l = strlcpy(buf, "tp", buflen); break;
-	default: l += snprintf(buf, buflen, "r%d", (int)o->o_value); break;
+	default:
+	    l += snprintf(buf, buflen, "r%d", (int)o->o_value);
+	    if (l > buflen)
+		l = buflen;
+	    break;
 	}
 	buf += l;
 	buflen -= l;

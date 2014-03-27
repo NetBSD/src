@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.26 2013/06/28 14:42:31 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.27 2014/03/27 18:22:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.26 2013/06/28 14:42:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.27 2014/03/27 18:22:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,11 +167,15 @@ device_register(device_t dev, void *aux)
 		n = snprintf(devpath, sizeof(devpath), "%s@",
 		    pna->pna_devid);
 		io = SIMPLEQ_FIRST(&pna->pna_res.io);
+		if (n > sizeof(devpath))
+			n = sizeof(devpath);
 		if (io != NULL)
 			n += snprintf(devpath + n, sizeof(devpath) - n, "%x",
 			    io->minbase);
 	}
 
+	if (n > sizeof(devpath))
+		n = sizeof(devpath);
 	/* we can't trust the device tag on the ethernet, because
 	 * the spec lies about how it is formed.  Therefore we will leave it
 	 * blank, and trim the end off any ethernet stuff. */
@@ -190,8 +194,12 @@ device_register(device_t dev, void *aux)
 		struct scsipibus_attach_args *sa = aux;
 
 		/* periph_target is target for scsi, drive # for atapi */
+		if (n > sizeof(devpath))
+			n = sizeof(devpath);
 		n += snprintf(devpath + n, sizeof(devpath) - n, "%d",
 		    sa->sa_periph->periph_target);
+		if (n > sizeof(devpath))
+			n = sizeof(devpath);
 		if (device_is_a(parent, "scsibus"))
 			n += snprintf(devpath + n, sizeof(devpath) - n, ",%d",
 			    sa->sa_periph->periph_lun);
@@ -199,9 +207,13 @@ device_register(device_t dev, void *aux)
 	    device_is_a(parent, "pciide")) {
 		struct ata_device *adev = aux;
 
+		if (n > sizeof(devpath))
+			n = sizeof(devpath);
 		n += snprintf(devpath + n, sizeof(devpath) - n, "%d",
 		    adev->adev_drv_data->drive);
 	} else if (device_is_a(dev, "fd")) {
+		if (n > sizeof(devpath))
+			n = sizeof(devpath);
 		/* XXX device_unit() abuse */
 		n += snprintf(devpath + n, sizeof(devpath) - n, "%d",
 		    device_unit(dev));
