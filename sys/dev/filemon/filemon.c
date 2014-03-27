@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.6 2014/03/16 05:20:27 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.7 2014/03/27 18:27:34 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -121,16 +121,26 @@ filemon_output(struct filemon * filemon, char *msg, size_t len)
 	    &auio, curlwp->l_cred, FOF_UPDATE_OFFSET);
 }
 
+void
+filemon_printf(struct filemon *filemon, const char *fmt, ...)
+{
+	size_t len;
+	va_list ap;
+
+	va_start(ap, fmt);
+	len = vsnprintf(filemon->fm_msgbufr, sizeof(filemon->fm_msgbufr),
+	    fmt, ap);
+	va_end(ap);
+	if (len > sizeof(filemon->fm_msgbufr))
+		len = sizeof(filemon->fm_msgbufr);
+	filemon_output(filemon, filemon->fm_msgbufr, len);
+}
+
 static void
 filemon_comment(struct filemon * filemon)
 {
-	int len;
-
-	len = snprintf(filemon->fm_msgbufr, sizeof(filemon->fm_msgbufr),
-	    "# filemon version %d\n# Target pid %d\nV %d\n",
-		       FILEMON_VERSION, curproc->p_pid, FILEMON_VERSION);
-
-	filemon_output(filemon, filemon->fm_msgbufr, len);
+	filemon_printf(filemon, "# filemon version %d\n# Target pid %d\nV %d\n",
+	   FILEMON_VERSION, curproc->p_pid, FILEMON_VERSION);
 }
 
 
