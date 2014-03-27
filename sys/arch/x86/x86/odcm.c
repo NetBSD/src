@@ -1,4 +1,4 @@
-/*	$NetBSD: odcm.c,v 1.3 2013/11/15 08:47:55 msaitoh Exp $ */
+/*	$NetBSD: odcm.c,v 1.4 2014/03/27 18:22:56 christos Exp $ */
 /*      $OpenBSD: p4tcc.c,v 1.13 2006/12/20 17:50:40 gwk Exp $ */
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: odcm.c,v 1.3 2013/11/15 08:47:55 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: odcm.c,v 1.4 2014/03/27 18:22:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -208,6 +208,8 @@ odcm_init(device_t self)
 		len += snprintf(sc->sc_names + len,
 		    sc->sc_names_len - len, "%d%s", state[i].level,
 		    i < __arraycount(state) ? " " : "");
+		if (len > sc->sc_names_len)
+			break;
 	}
 
 	/*
