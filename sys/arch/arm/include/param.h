@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.12.12.2 2014/02/15 16:30:23 matt Exp $	*/
+/*	$NetBSD: param.h,v 1.12.12.3 2014/03/27 01:04:39 matt Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -148,7 +148,7 @@
 #define	MID_MACHINE	MID_ARM6
 
 /* ARM-specific macro to align a stack pointer (downwards). */
-#define ALIGNBYTES		3
+#define ALIGNBYTES		(__ALIGNBYTES + 1)
 #define ALIGN(p)		(((uintptr_t)(p) + ALIGNBYTES) & ~ALIGNBYTES)
 #define ALIGNED_POINTER(p,t)	(((uintptr_t)(p) % sizeof(t)) == 0)
 #define STACKALIGNBYTES		(8 - 1)
