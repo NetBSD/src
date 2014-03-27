@@ -1,4 +1,4 @@
-/*      $NetBSD: residual.c,v 1.17 2014/03/26 16:01:43 christos Exp $     */
+/*      $NetBSD: residual.c,v 1.18 2014/03/27 18:22:56 christos Exp $     */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: residual.c,v 1.17 2014/03/26 16:01:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: residual.c,v 1.18 2014/03/27 18:22:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -965,6 +965,8 @@ large_vendor_pcibridge_subr(struct _L4_PPCPack *p, void *v, int size)
 				l += snprintf(tmpstr + l, sizeof(tmpstr) - l, 
 				    "%s%d(%c)", l == 0 ? "/" : "",
 				    line & 0x7fff, line & 0x8000 ? 'E' : 'L');
+				if (l > sizeof(tmpstr))
+					break;
 			}
 		}
 		printf("%s\n", tmpstr);
