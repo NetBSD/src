@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: vchi_bsd.c,v 1.4 2014/03/27 07:54:43 skrll Exp $
+ * $Id: vchi_bsd.c,v 1.5 2014/03/27 07:56:56 skrll Exp $
  */
 
 #include <sys/types.h>
@@ -296,14 +296,14 @@ down_interruptible(struct semaphore *s)
 
 		if (ret == EINTR || ret == ERESTART) {
 			mutex_exit(&s->mtx);
-			return (-EINTR);
+			return -EINTR;
 		}
 	}
 
 	s->value--;
 	mutex_exit(&s->mtx);
 
-	return (0);
+	return 0;
 }
 
 int
@@ -325,7 +325,7 @@ down_trylock(struct semaphore *s)
 
 	mutex_exit(&s->mtx);
 
-	return (ret);
+	return ret;
 }
 
 void
@@ -385,7 +385,7 @@ int
 fatal_signal_pending(VCHIQ_THREAD_T thr)
 {
 	printf("Implement ME: %s\n", __func__);
-	return (0);
+	return 0;
 }
 
 /*
@@ -426,7 +426,7 @@ vchiq_thread_create(int (*threadfn)(void *data),
 
 	if (thread_data_slot >= MAX_THREAD_DATA_SLOTS) {
 		printf("kthread_create: out of thread data slots\n");
-		return (NULL);
+		return NULL;
 	}
 
 	slot = &thread_slots[thread_data_slot];
