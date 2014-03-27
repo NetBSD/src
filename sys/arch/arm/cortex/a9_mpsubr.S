@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.12.2.5 2014/03/26 02:13:54 matt Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.12.2.6 2014/03/27 23:21:36 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -341,7 +341,7 @@ cortex_init:
 	bl	_C_LABEL(armv7_icache_inv_all)	@ invalidate i-cache
 #else
 	adr	ip, cortex_init
-	ldr	r0, =armv7_icache_inv_all
+	ldr	r0, .Larmv7_icache_inv_all
 	bfi	ip, r0, #0, #28
 	blx	ip
 #endif
@@ -370,7 +370,7 @@ cortex_init:
 	bl	_C_LABEL(armv7_dcache_wbinv_all)	@ writeback/invalidate d-cache
 #else
 	adr	ip, cortex_init
-	ldr	r0, =armv7_dcache_wbinv_all
+	ldr	r0, .Larmv7_dcache_wbinv_all
 	bfi	ip, r0, #0, #28
 	blx	ip
 #endif
@@ -401,7 +401,7 @@ cortex_init:
 	bl	_C_LABEL(armv7_icache_inv_all)	@ invalidate i-cache
 #else
 	adr	ip, cortex_init
-	ldr	r0, =armv7_icache_inv_all
+	ldr	r0, .Larmv7_icache_inv_all
 	bfi	ip, r0, #0, #28
 	blx	ip
 #endif
@@ -432,6 +432,13 @@ cortex_init:
 #endif
 
 	bx	r10
+
+#ifndef KERNEL_BASES_EQUAL
+.Larmv7_icache_inv_all:
+	.word	armv7_icache_inv_all
+.Larmv7_dcache_wbinv_all:
+	.word	armv7_dcache_wbinv_all
+#endif
 ASEND(a9_start)
 
 /*
