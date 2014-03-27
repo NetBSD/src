@@ -77,7 +77,7 @@ int vchiq_sync_log_level = VCHIQ_LOG_DEFAULT;
 
 static atomic_t pause_bulks_count = ATOMIC_INIT(0);
 
-DEFINE_SPINLOCK(service_spinlock);
+static DEFINE_SPINLOCK(service_spinlock);
 DEFINE_SPINLOCK(bulk_waiter_spinlock);
 DEFINE_SPINLOCK(quota_spinlock);
 
@@ -284,6 +284,9 @@ unlock_service(VCHIQ_SERVICE_T *service)
 			service = NULL;
 	}
 	spin_unlock(&service_spinlock);
+
+	if (service && service->userdata_term)
+		service->userdata_term(service->base.userdata);
 
 	kfree(service);
 }
@@ -1456,7 +1459,7 @@ resume_bulks(VCHIQ_STATE_T *state)
 	}
 	state->deferred_bulks = 0;
 }
-  
+
 static int
 parse_open(VCHIQ_STATE_T *state, VCHIQ_HEADER_T *header)
 {
@@ -1565,7 +1568,8 @@ fail_open:
 	return 1;
 
 bail_not_ready:
-	unlock_service(service);
+	if (service)
+		unlock_service(service);
 
 	return 0;
 }
@@ -2487,7 +2491,7 @@ vchiq_init_state(VCHIQ_STATE_T *state, VCHIQ_SLOT_ZERO_T *slot_zero,
 VCHIQ_SERVICE_T *
 vchiq_add_service_internal(VCHIQ_STATE_T *state,
 	const VCHIQ_SERVICE_PARAMS_T *params, int srvstate,
-	VCHIQ_INSTANCE_T instance)
+	VCHIQ_INSTANCE_T instance, VCHIQ_USERDATA_TERM_T userdata_term)
 {
 	VCHIQ_SERVICE_T *service;
 
@@ -2499,6 +2503,7 @@ vchiq_add_service_internal(VCHIQ_STATE_T *state,
 		service->handle        = VCHIQ_SERVICE_HANDLE_INVALID;
 		service->ref_count     = 1;
 		service->srvstate      = VCHIQ_SRVSTATE_FREE;
+		service->userdata_term = userdata_term;
 		service->localport     = VCHIQ_PORT_FREE;
 		service->remoteport    = VCHIQ_PORT_FREE;
 
@@ -3255,8 +3260,7 @@ vchiq_bulk_transfer(VCHIQ_SERVICE_HANDLE_T handle,
 	bulk->size = size;
 	bulk->actual = VCHIQ_BULK_ACTUAL_ABORTED;
 
-	if (vchiq_prepare_bulk_data(bulk, memhandle,
-		(void*)offset, size, dir) !=
+	if (vchiq_prepare_bulk_data(bulk, memhandle, offset, size, dir) !=
 		VCHIQ_SUCCESS)
 		goto unlock_error_exit;
 
@@ -3323,7 +3327,7 @@ error_exit:
 
 VCHIQ_STATUS_T
 vchiq_queue_message(VCHIQ_SERVICE_HANDLE_T handle,
-	const VCHIQ_ELEMENT_T *elements, int count)
+	const VCHIQ_ELEMENT_T *elements, unsigned int count)
 {
 	VCHIQ_SERVICE_T *service = find_service_by_handle(handle);
 	VCHIQ_STATUS_T status = VCHIQ_ERROR;

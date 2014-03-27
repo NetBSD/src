@@ -391,6 +391,10 @@ typedef	off_t	loff_t;
 #define wmb	membar_producer
 #define dsb	membar_producer
 
+#define smp_mb	membar_producer
+#define smp_rmb	membar_consumer
+#define smp_wmb	membar_producer
+
 #define device_print_prettyname(dev)	device_printf((dev), "")
 
 #endif /* __VCHI_NETBSD_H__ */
