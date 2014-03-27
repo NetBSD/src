@@ -5641,7 +5641,7 @@ dtrace_action_breakpoint(dtrace_ecb_t *ecb)
 	ASSERT(probe != NULL);
 
 	/*
-	 * This is a poor man's (destitute man's?) sprintf():  we want to
+	 * This is a poor man's (destitute man's?) snprintf():  we want to
 	 * print the provider name, module name, function name and name of
 	 * the probe, along with the hex address of the ECB with the breakpoint
 	 * action -- all of which we must place in the character buffer by

@@ -132,12 +132,14 @@ zio_init(void)
 
 		if (align != 0) {
 			char name[36];
-			(void) sprintf(name, "zio_buf_%lu", (ulong_t)size);
+			(void) snprintf(name, sizeof(name), "zio_buf_%lu",
+			    (ulong_t)size);
 			zio_buf_cache[c] = kmem_cache_create(name, size,
 			    align, NULL, NULL, NULL, NULL, NULL,
 			    size > zio_buf_debug_limit ? KMC_NODEBUG : 0);
 
-			(void) sprintf(name, "zio_data_buf_%lu", (ulong_t)size);
+			(void) snprintf(name, sizeof(name), "zio_data_buf_%lu",
+			    (ulong_t)size);
 			zio_data_buf_cache[c] = kmem_cache_create(name, size,
 			    align, NULL, NULL, NULL, NULL, data_alloc_arena,
 			    size > zio_buf_debug_limit ? KMC_NODEBUG : 0);
