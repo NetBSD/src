@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.2 2014/03/18 18:20:42 riastradh Exp $
+#	$NetBSD: files.drmkms,v 1.3 2014/03/27 21:21:47 christos Exp $
 
 define	drmkmsbus	{ }
 
@@ -11,7 +11,7 @@ include "external/bsd/drm2/linux/files.drmkms_linux"
 define	drmkms_i2c
 
 define	drmkms
-device	drmkms: drmkms_linux, drmkms_i2c
+device	drmkms: drmkms_linux, drmkms_i2c, i2cexec, i2c_bitbang
 attach	drmkms at drmkmsbus
 
 defflag		opt_drmkms.h	DRMKMS_DEBUG
