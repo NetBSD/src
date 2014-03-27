@@ -384,6 +384,22 @@ service_callback(VCHIQ_REASON_T reason, VCHIQ_HEADER_T *header,
 
 /****************************************************************************
 *
+*   user_service_free
+*
+***************************************************************************/
+static void
+user_service_free(void *userdata)
+{
+	USER_SERVICE_T *user_service = userdata;
+	
+	_sema_destroy(&user_service->insert_event);
+	_sema_destroy(&user_service->remove_event);
+
+	kfree(user_service);
+}
+
+/****************************************************************************
+*
 *   vchiq_ioctl
 *
 ***************************************************************************/
@@ -465,7 +481,7 @@ vchiq_ioctl(struct file *fp, u_long cmd, void *arg)
 		void *userdata;
 		int srvstate;
 
-		user_service = kmalloc(sizeof(USER_SERVICE_T), GFP_KERNEL);
+		user_service = kzalloc(sizeof(USER_SERVICE_T), GFP_KERNEL);
 		if (!user_service) {
 			ret = -ENOMEM;
 			break;
@@ -491,7 +507,7 @@ vchiq_ioctl(struct file *fp, u_long cmd, void *arg)
 		service = vchiq_add_service_internal(
 				instance->state,
 				&pargs->params, srvstate,
-				instance);
+				instance, user_service_free);
 
 		if (service != NULL) {
 			user_service->service = service;
@@ -514,8 +530,6 @@ vchiq_ioctl(struct file *fp, u_long cmd, void *arg)
 					service = NULL;
 					ret = (status == VCHIQ_RETRY) ?
 						-EINTR : -EIO;
-					user_service->service = NULL;
-					user_service->instance = NULL;
 					break;
 				}
 			}
@@ -655,14 +669,14 @@ vchiq_ioctl(struct file *fp, u_long cmd, void *arg)
 			lmutex_unlock(&instance->bulk_waiter_list_mutex);
 			if (!waiter) {
 				vchiq_log_error(vchiq_arm_log_level,
-					"no bulk_waiter found for pid %d",
-					current->l_proc->p_pid);
+					"no bulk_waiter found for lwp %p",
+					current);
 				ret = -ESRCH;
 				break;
 			}
 			vchiq_log_info(vchiq_arm_log_level,
-				"found bulk_waiter %x for pid %d",
-				(unsigned int)waiter, current->l_proc->p_pid);
+				"found bulk_waiter %x for lwp %p",
+				(unsigned int)waiter, current);
 			pargs->userdata = &waiter->bulk_waiter;
 		}
 		status = vchiq_bulk_transfer
@@ -692,8 +706,8 @@ vchiq_ioctl(struct file *fp, u_long cmd, void *arg)
 			list_add(&waiter->list, &instance->bulk_waiter_list);
 			lmutex_unlock(&instance->bulk_waiter_list_mutex);
 			vchiq_log_info(vchiq_arm_log_level,
-				"saved bulk_waiter %x for pid %d",
-				(unsigned int)waiter, current->l_proc->p_pid);
+				"saved bulk_waiter %x for lwp %p",
+				(unsigned int)waiter, current);
 
 			pargs->mode = mode_waiting;
 		}
@@ -701,6 +715,7 @@ vchiq_ioctl(struct file *fp, u_long cmd, void *arg)
 
 	case VCHIQ_IOC_AWAIT_COMPLETION: {
 		VCHIQ_AWAIT_COMPLETION_T *pargs = arg;
+		int count = 0;
 
 		DEBUG_TRACE(AWAIT_COMPLETION_LINE);
 		if (!instance->connected) {
@@ -735,7 +750,6 @@ vchiq_ioctl(struct file *fp, u_long cmd, void *arg)
 
 		if (ret == 0) {
 			int msgbufcount = pargs->msgbufcount;
-			int count = 0;
 			for (count = 0; count < pargs->count; count++) {
 				VCHIQ_COMPLETION_DATA_T *completion;
 				VCHIQ_SERVICE_T *service1;
@@ -809,12 +823,8 @@ vchiq_ioctl(struct file *fp, u_long cmd, void *arg)
 				}
 
 				if (completion->reason ==
-					VCHIQ_SERVICE_CLOSED) {
+					VCHIQ_SERVICE_CLOSED)
 					unlock_service(service1);
-					_sema_destroy(&user_service->insert_event);
-					_sema_destroy(&user_service->remove_event);
-					kfree(user_service);
-				}
 
 				if (copy_to_user((void __user *)(
 					(size_t)pargs->buf +
@@ -833,7 +843,7 @@ vchiq_ioctl(struct file *fp, u_long cmd, void *arg)
 			pargs->count = count;
 		}
 
-		if (ret != 0)
+		if ((ret == 0 && count > 0) || ret != 0)
 			up(&instance->remove_event);
 		lmutex_unlock(&instance->completion_mutex);
 		DEBUG_TRACE(AWAIT_COMPLETION_LINE);
@@ -1039,7 +1049,7 @@ vchiq_open(dev_t dev, int flags, int mode, lwp_t *l)
 			return -ENOTCONN;
 		}
 
-		instance = kmalloc(sizeof(*instance), GFP_KERNEL);
+		instance = kzalloc(sizeof(*instance), GFP_KERNEL);
 		if (!instance)
 			return -ENOMEM;
 
@@ -1161,9 +1171,6 @@ vchiq_close(struct file *fp)
 			spin_unlock(&msg_queue_spinlock);
 
 			unlock_service(service);
-			_sema_destroy(&user_service->insert_event);
-			_sema_destroy(&user_service->remove_event);
-			kfree(user_service);
 		}
 
 		/* Release any closed services */
