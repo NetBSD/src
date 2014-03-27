@@ -553,9 +553,9 @@ dt_write(dtrace_hdl_t *dtp, int fd, const void *buf, size_t n)
 /*
  * This function handles all output from libdtrace, as well as the
  * dtrace_sprintf() case.  If we're here due to dtrace_sprintf(), then
- * dt_sprintf_buflen will be non-zero; in this case, we sprintf into the
+ * dt_sprintf_buflen will be non-zero; in this case, we snprintf into the
  * specified buffer and return.  Otherwise, if output is buffered (denoted by
- * a NULL fp), we sprintf the desired output into the buffered buffer
+ * a NULL fp), we snprintf the desired output into the buffered buffer
  * (expanding the buffer if required).  If we don't satisfy either of these
  * conditions (that is, if we are to actually generate output), then we call
  * fprintf with the specified fp.  In this case, we need to deal with one of
