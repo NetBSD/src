@@ -1,4 +1,4 @@
-/*	$NetBSD: engine.c,v 1.1.1.1 2011/04/13 18:14:49 elric Exp $	*/
+/*	$NetBSD: engine.c,v 1.2 2014/03/27 16:10:45 apb Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -90,7 +90,7 @@ ENGINE_finish(ENGINE *engine)
     if(engine->destroy)
 	(*engine->destroy)(engine);
 
-    memset(engine, 0, sizeof(engine));
+    memset(engine, 0, sizeof(*engine));
     engine->references = -1;
 
 
