@@ -192,13 +192,13 @@ dt_handle_err(dtrace_hdl_t *dtp, dtrace_probedata_t *data)
 	str = (char *)alloca(len);
 
 	if (err.dteda_action == 0) {
-		(void) sprintf(where, "predicate");
+		(void) snprintf(where, sizeof(where), "predicate");
 	} else {
-		(void) sprintf(where, "action #%d", err.dteda_action);
+		(void) snprintf(where, sizeof(where), "action #%d", err.dteda_action);
 	}
 
 	if (err.dteda_offset != -1) {
-		(void) sprintf(offinfo, " at DIF offset %d", err.dteda_offset);
+		(void) snprintf(offinfo, sizeof(offinfo), " at DIF offset %d", err.dteda_offset);
 	} else {
 		offinfo[0] = 0;
 	}
@@ -207,7 +207,7 @@ dt_handle_err(dtrace_hdl_t *dtp, dtrace_probedata_t *data)
 	case DTRACEFLT_BADADDR:
 	case DTRACEFLT_BADALIGN:
 	case DTRACEFLT_BADSTACK:
-		(void) sprintf(details, " (0x%" PRIx64 ")", err.dteda_addr);
+		(void) snprintf(details, sizeof(details), " (0x%" PRIx64 ")", err.dteda_addr);
 		break;
 
 	default:
