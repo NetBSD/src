@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.44 2014/03/21 17:21:53 christos Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.45 2014/03/27 21:13:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.44 2014/03/21 17:21:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.45 2014/03/27 21:13:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -616,7 +616,8 @@ ptyfs_lookup(void *v)
 
 		pty = atoi(pname, cnp->cn_namelen);
 
-		if (pty < 0 || pty >= npty || pty_isfree(pty, 1))
+		if (pty < 0 || pty >= npty || pty_isfree(pty, 1) ||
+		    ptyfs_used_get(PTYFSptc, pty, dvp->v_mount, 0) == NULL)
 			break;
 
 		error = ptyfs_allocvp(dvp->v_mount, vpp, PTYFSpts, pty,
@@ -711,7 +712,8 @@ ptyfs_readdir(void *v)
 	}
 	for (; uio->uio_resid >= UIO_MX && i < npty; i++) {
 		/* check for used ptys */
-		if (ptyfs_used_get(PTYFSptc, i - 2, vp->v_mount, 0) == NULL)
+		if (pty_isfree(i - 2, 1) ||
+		    ptyfs_used_get(PTYFSptc, i - 2, vp->v_mount, 0) == NULL)
 			continue;
 
 		dp->d_fileno = PTYFS_FILENO(i - 2, PTYFSpts);
