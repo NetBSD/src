@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: vchi_bsd.c,v 1.5 2014/03/27 07:56:56 skrll Exp $
+ * $Id: vchi_bsd.c,v 1.6 2014/03/27 07:59:17 skrll Exp $
  */
 
 #include <sys/types.h>
@@ -283,15 +283,12 @@ down(struct semaphore *s)
 int
 down_interruptible(struct semaphore *s)
 {
-	int ret ;
-
-	ret = 0;
 
 	mutex_enter(&s->mtx);
 
 	while (s->value == 0) {
 		s->waiters++;
-		ret = cv_wait_sig(&s->cv, &s->mtx);
+		int ret = cv_wait_sig(&s->cv, &s->mtx);
 		s->waiters--;
 
 		if (ret == EINTR || ret == ERESTART) {
@@ -309,9 +306,7 @@ down_interruptible(struct semaphore *s)
 int
 down_trylock(struct semaphore *s)
 {
-	int ret;
-
-	ret = 0;
+	int ret = 1;
 
 	mutex_enter(&s->mtx);
 
@@ -319,8 +314,6 @@ down_trylock(struct semaphore *s)
 		/* Success. */
 		s->value--;
 		ret = 0;
-	} else {
-		ret = -EAGAIN;
 	}
 
 	mutex_exit(&s->mtx);
@@ -333,7 +326,7 @@ up(struct semaphore *s)
 {
 	mutex_enter(&s->mtx);
 	s->value++;
-	if (s->waiters && s->value > 0)
+	if (s->value > 0 && s->waiters)
 		cv_signal(&s->cv);
 
 	mutex_exit(&s->mtx);
