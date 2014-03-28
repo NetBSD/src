@@ -1,4 +1,4 @@
-/*	$NetBSD: get_names.c,v 1.10 2009/07/04 04:29:55 dholland Exp $	*/
+/*	$NetBSD: get_names.c,v 1.11 2014/03/28 17:49:11 apb Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: get_names.c,v 1.10 2009/07/04 04:29:55 dholland Exp $");
+__RCSID("$NetBSD: get_names.c,v 1.11 2014/03/28 17:49:11 apb Exp $");
 #endif /* not lint */
 
 #include "bsd.h"
@@ -146,7 +146,7 @@ get_remote_name(char *his_address)
 	if (memcmp(&his_machine_name, &my_machine_name,
 						sizeof(his_machine_name)) == 0)
 		memcpy(&his_machine_addr, &my_machine_addr,
-						sizeof(his_machine_name));
+						sizeof(his_machine_addr));
 	else {
 		/* look up the address of the recipient's machine */
 		hp = gethostbyname(his_machine_name);
