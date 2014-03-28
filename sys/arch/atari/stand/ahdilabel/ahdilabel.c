@@ -1,4 +1,4 @@
-/* $NetBSD: ahdilabel.c,v 1.9 2014/03/26 18:04:33 christos Exp $ */
+/* $NetBSD: ahdilabel.c,v 1.10 2014/03/28 13:35:13 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -402,7 +402,7 @@ change_part (struct ahdi_ptable *ptable, int part, int units)
 	}
 
 	printf ("size [%8u (%s) (%4uM)] ", ptable->parts[part].size,
-	    sec_to_cts (ptable, ptable->parts[part].size, cts[0], sizeof(cts)),
+	    sec_to_cts (ptable, ptable->parts[part].size, cts, sizeof(cts)),
 	    (ptable->parts[part].size + (BLPM >> 1)) / BLPM);
 	if (get_input (&buf[0], BUFLEN)) {
 		sector = read_sector (ptable, buf, part, PART_END);
