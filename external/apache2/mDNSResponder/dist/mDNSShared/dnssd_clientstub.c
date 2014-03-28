@@ -165,14 +165,14 @@ static int write_all(dnssd_sock_t sd, char *buf, size_t len)
 			if (getsockopt(sd, SOL_SOCKET, SO_ISDEFUNCT, &defunct, &dlen) < 0)
 				syslog(LOG_WARNING, "dnssd_clientstub write_all: SO_ISDEFUNCT failed %d %s", dnssd_errno, dnssd_strerror(dnssd_errno));
 			if (!defunct)
-				syslog(LOG_WARNING, "dnssd_clientstub write_all(%d) failed %ld/%ld %d %s", sd,
+				syslog(LOG_WARNING, "dnssd_clientstub write_all(%d) failed %zd/%ld %d %s", sd,
 					(long)num_written, (long)len,
 					(num_written < 0) ? dnssd_errno                 : 0,
 					(num_written < 0) ? dnssd_strerror(dnssd_errno) : "");
 			else
 				syslog(LOG_INFO, "dnssd_clientstub write_all(%d) DEFUNCT", sd);
 			#else
-			syslog(LOG_WARNING, "dnssd_clientstub write_all(%d) failed %ld/%ld %d %s", sd,
+			syslog(LOG_WARNING, "dnssd_clientstub write_all(%d) failed %zd/%ld %d %s", sd,
 				(long)num_written, (long)len,
 				(num_written < 0) ? dnssd_errno                 : 0,
 				(num_written < 0) ? dnssd_strerror(dnssd_errno) : "");
