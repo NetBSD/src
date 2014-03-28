@@ -1427,7 +1427,7 @@ dump_dir(objset_t *os)
 		len = snprintf(blkbuf, blklen, ", rootbp ");
 		if (len > blklen)
 			len = blklen;
-		printf_blkptr(blkbuf + len, blklen - len, os->os_rootbp);
+		snprintf_blkptr(blkbuf + len, blklen - len, os->os_rootbp);
 	} else {
 		blkbuf[0] = '\0';
 	}
