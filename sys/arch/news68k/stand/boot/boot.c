@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.19 2014/03/28 11:49:40 ozaki-r Exp $	*/
+/*	$NetBSD: boot.c,v 1.20 2014/03/28 15:02:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 Izumi Tsutsui.  All rights reserved.
@@ -114,7 +114,8 @@ boot(uint32_t d4, uint32_t d5, uint32_t d6, uint32_t d7)
 		return;
 	}
 
-	snprintf(devname, sizeof(devname), "%s(%d,%d,%d)", devs[type], ctlr, unit, part);
+	snprintf(devname, sizeof(devname),
+	    "%s(%d,%d,%d)", devs[type], ctlr, unit, part);
 	printf("Booting %s%s\n", devname, netbsd);
 
 	/* use user specified kernel name if exists */
