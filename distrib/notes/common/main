@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.508 2014/03/13 03:34:00 nat Exp $
+.\"	$NetBSD: main,v 1.509 2014/03/28 08:24:06 hsuenaga Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1387,6 +1387,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Bill Squier Ta Mt groo@NetBSD.org
 .It Ta Adrian Steinmann Ta Mt ast@NetBSD.org
 .It Ta Bill Studenmund Ta Mt wrstuden@NetBSD.org
+.It Ta Hiroki Suenaga Ta Mt hsuenaga@NetBSD.org
 .It Ta Kevin Sullivan Ta Mt sullivan@NetBSD.org
 .It Ta Kimmo Suominen Ta Mt kim@NetBSD.org
 .It Ta Gr\('egoire Sutre Ta Mt gsutre@NetBSD.org
