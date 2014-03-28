@@ -166,7 +166,11 @@ struct cpu_info {
 	struct pmap *ci_pmap_lastuser;
 	struct pmap *ci_pmap_cur;
 	tlb_asid_t ci_pmap_asid_cur;
+	struct trapframe *ci_ddb_regs;
 	struct evcnt ci_abt_evs[16];
+	struct evcnt ci_und_ev;
+	struct evcnt ci_und_cp15_ev;
+	struct evcnt ci_vfp_evs[3];
 #if defined(MP_CPU_INFO_MEMBERS)
 	MP_CPU_INFO_MEMBERS
 #endif
