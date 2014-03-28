@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_kmap.c,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: linux_kmap.c,v 1.3 2014/03/28 23:19:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_kmap.c,v 1.2 2014/03/18 18:20:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_kmap.c,v 1.3 2014/03/28 23:19:41 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -194,15 +194,11 @@ kmap(struct page *page)
 	KASSERT(collision == lke);
 	mutex_spin_exit(&linux_kmap_lock);
 
-	const int s = splvm();
-
 	KASSERT(!pmap_extract(pmap_kernel(), vaddr, NULL));
 	const int prot = (VM_PROT_READ | VM_PROT_WRITE);
 	const int flags = 0;
 	pmap_kenter_pa(vaddr, paddr, prot, flags);
 	pmap_update(pmap_kernel());
-
-	splx(s);
 
 	return (void *)vaddr;
 }
@@ -222,12 +218,8 @@ kunmap(struct page *page)
 	const vaddr_t vaddr = lke->lke_vaddr;
 	kmem_free(lke, sizeof(*lke));
 
-	const int s = splvm();
-
 	KASSERT(pmap_extract(pmap_kernel(), vaddr, NULL));
 
 	pmap_kremove(vaddr, PAGE_SIZE);
 	pmap_update(pmap_kernel());
-
-	splx(s);
 }
