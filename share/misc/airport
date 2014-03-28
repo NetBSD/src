@@ -1,4 +1,4 @@
-#	$NetBSD: airport,v 1.51 2013/04/25 13:34:10 mbalmer Exp $
+#	$NetBSD: airport,v 1.52 2014/03/28 10:16:28 apb Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information is from http://www.mapping.com/airportcodes.html.
@@ -3143,6 +3143,7 @@ ICA:Icabaru, Venezuela
 ICI:Cicia, Fiji
 ICK:Nieuw Nickerie (New Nickerie), Suriname
 ICL:Clarinda (Schenck Field), IA, USA
+ICN:Incheon, South Korea
 ICR:Nicaro, Cuba
 ICT:Wichita Mid-Continent, Kansas, USA
 ICY:Icy Bay Airport, AK, USA
@@ -3404,7 +3405,7 @@ JCI:Kansas City (Johnson County Airport), MO, USA
 JCJ:Cheju, South Korea
 JCK:Julia Creek, Queensland, Australia
 JCM:Jacobina, BA, Brazil
-JCN:Inchon (Heliport), South Korea
+JCN:Incheon (Heliport), South Korea
 JCR:Jacareacanga, PR, Brazil
 JCT:Junction (Kimble County Airport), TX, USA
 JCX:Los Angeles (Citicorp Heliport), CA, USA
