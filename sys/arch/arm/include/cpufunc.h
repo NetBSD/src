@@ -60,7 +60,11 @@ struct cpu_functions {
 
 	u_int	(*cf_control)		(u_int, u_int);
 	void	(*cf_domains)		(u_int);
+#if defined(ARM_MMU_EXTENDED)
+	void	(*cf_setttb)		(u_int, tlb_asid_t);
+#else
 	void	(*cf_setttb)		(u_int, bool);
+#endif
 	u_int	(*cf_faultstatus)	(void);
 	u_int	(*cf_faultaddress)	(void);
 
@@ -152,7 +156,11 @@ struct cpu_functions {
 	int	(*cf_dataabt_fixup)	(void *);
 	int	(*cf_prefetchabt_fixup)	(void *);
 
+#if defined(ARM_MMU_EXTENDED)
+	void	(*cf_context_switch)	(u_int, tlb_asid_t);
+#else
 	void	(*cf_context_switch)	(u_int);
+#endif
 
 	void	(*cf_setup)		(char *);
 };
@@ -424,10 +432,14 @@ extern unsigned armv5_dcache_index_inc;
 void	arm11mpcore_setup		(char *);
 #endif
 
-#if defined(CPU_ARM11) || defined(CPU_CORTEX)
+#if defined(CPU_ARM11)
+#if defined(ARM_MMU_EXTENDED)
+void	arm11_setttb		(u_int, tlb_asid_t);
+void	arm11_context_switch	(u_int, tlb_asid_t);
+#else
 void	arm11_setttb		(u_int, bool);
-
 void	arm11_context_switch	(u_int);
+#endif
 
 void	arm11_cpu_sleep		(int);
 void	arm11_setup		(char *string);
@@ -459,7 +471,13 @@ void	armv6_idcache_wbinv_range (vaddr_t, vsize_t);
 #endif
 
 #if defined(CPU_CORTEX)
+#if defined(ARM_MMU_EXTENDED)
+void	armv7_setttb(u_int, tlb_asid_t);
+void	armv7_context_switch(u_int, tlb_asid_t);
+#else
 void	armv7_setttb(u_int, bool);
+void	armv7_context_switch(u_int);
+#endif
 
 void	armv7_icache_sync_range(vaddr_t, vsize_t);
 void	armv7_dcache_wb_range(vaddr_t, vsize_t);
@@ -478,7 +496,6 @@ void	armv7_tlb_flushI_SE(vaddr_t);
 void	armv7_tlb_flushD_SE(vaddr_t);
 
 void	armv7_cpu_sleep(int);
-void	armv7_context_switch(u_int);
 void	armv7_drain_writebuf(void);
 void	armv7_setup(char *string);
 #endif
@@ -489,7 +506,13 @@ void	armv7_idcache_wbinv_all(void);
 #endif
 
 #if defined(CPU_PJ4B)
+#if defined(ARM_MMU_EXTENDED)
+void	pj4b_setttb(u_int, tlb_asid_t);
+void	pj4b_context_switch(u_int, tlb_asid_t);
+#else
 void	pj4b_setttb(u_int, bool);
+void	pj4b_context_switch(u_int);
+#endif
 void	pj4b_tlb_flushID(void);
 void	pj4b_tlb_flushID_SE(vaddr_t);
 
@@ -503,7 +526,6 @@ void	pj4b_drain_writebuf(void);
 void	pj4b_drain_readbuf(void);
 void	pj4b_flush_brnchtgt_all(void);
 void	pj4b_flush_brnchtgt_va(u_int);
-void	pj4b_context_switch(u_int);
 void	pj4b_sleep(int);
 
 void	pj4bv7_setup(char *string);
@@ -653,16 +675,32 @@ disable_interrupts(uint32_t mask)
 static __inline uint32_t
 enable_interrupts(uint32_t mask)
 {
-	uint32_t	ret, tmp;
+	uint32_t	ret;
 	mask &= (I32_bit | F32_bit);
 
-	__asm volatile(
-		"mrs     %0, cpsr\n"	/* Get the CPSR */
-		"bic	 %1, %0, %2\n"	/* Clear bits */
-		"msr     cpsr_c, %1\n"	/* Set the control field of CPSR */
-	: "=&r" (ret), "=&r" (tmp)
-	: "r" (mask)
-	: "memory");
+	/* Get the CPSR */
+	__asm __volatile("mrs\t%0, cpsr\n" : "=r"(ret));
+#ifdef _ARM_ARCH_6
+	if (__builtin_constant_p(mask)) {
+		switch (mask) {
+		case I32_bit | F32_bit:
+			__asm __volatile("cpsie\tif");
+			break;
+		case I32_bit:
+			__asm __volatile("cpsie\ti");
+			break;
+		case F32_bit:
+			__asm __volatile("cpsie\tf");
+			break;
+		default:
+			break;
+		}
+		return ret;
+	}
+#endif /* _ARM_ARCH_6 */
+
+	/* Set the control field of CPSR */
+	__asm volatile("msr\tcpsr_c, %0" :: "r"(ret & ~mask));
 
 	return ret;
 }
@@ -764,7 +802,7 @@ struct arm_cache_info {
 	u_int dcache_way_size;
 	u_int dcache_sets;
 
-	u_int cache_type;
+	uint8_t cache_type;
 	bool cache_unified;
 	uint8_t icache_type;
 	uint8_t dcache_type;
