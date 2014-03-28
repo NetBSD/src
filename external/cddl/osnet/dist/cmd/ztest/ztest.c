@@ -2239,7 +2239,7 @@ ztest_vdev_aux_add_remove(ztest_ds_t *zd, uint64_t id)
 		for (;;) {
 			char path[MAXPATHLEN];
 			int c;
-			(void) snprintf(path, sizeof(pathbuf), ztest_aux_template, zopt_dir,
+			(void) snprintf(path, sizeof(path), ztest_aux_template, zopt_dir,
 			    zopt_pool, aux, zs->zs_vdev_aux);
 			for (c = 0; c < sav->sav_count; c++)
 				if (strcmp(sav->sav_vdevs[c]->vdev_path,

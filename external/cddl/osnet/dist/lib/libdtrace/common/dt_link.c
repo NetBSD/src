@@ -1497,7 +1497,7 @@ process_obj(dtrace_hdl_t *dtp, const char *obj, int *eprobesp)
 
 				r = (char *)data_str->d_buf + istr;
 				istr += 1 + snprintf(r, data_str->d_size - 
-					(istr - (char *)data_str->d_buf), dt_symfmt,
+				    (istr - (size_t)data_str->d_buf), dt_symfmt,
 				    dt_symprefix, objkey, s);
 				isym++;
 				assert(isym <= nsym);
