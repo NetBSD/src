@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.18 2014/03/01 05:41:39 matt Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.19 2014/03/28 21:54:12 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -28,10 +28,13 @@
  * rights to redistribute these changes.
  */
 
+#include "opt_multiprocessor.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.18 2014/03/01 05:41:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.19 2014/03/28 21:54:12 matt Exp $");
 
 #include <sys/param.h>
+#include <sys/cpu.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/systm.h>
@@ -44,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.18 2014/03/01 05:41:39 matt Exp $")
 #include <ddb/db_output.h>
 #include <ddb/db_variables.h>
 #include <ddb/db_command.h>
+#include <ddb/db_run.h>
 
 #ifdef _KERNEL
 static long nil;
@@ -53,32 +57,48 @@ int db_access_abt_sp(const struct db_variable *, db_expr_t *, int);
 int db_access_irq_sp(const struct db_variable *, db_expr_t *, int);
 #endif
 
+static int
+ddb_reg_var(const struct db_variable *v, db_expr_t *ep, int op)
+{
+	KASSERT(curcpu()->ci_ddb_regs != NULL);
+	register_t * const rp = (register_t *)(curcpu()->ci_ddb_regs);
+	if (op == DB_VAR_SET) {
+		rp[(uintptr_t)v->valuep] = *ep;
+	} else {
+		*ep = rp[(uintptr_t)v->valuep];
+	}
+	return 0;
+}
+
+
+#define XO(f) ((long *)(offsetof(db_regs_t, f) / sizeof(register_t)))
 const struct db_variable db_regs[] = {
-	{ "spsr", (long *)&DDB_REGS->tf_spsr, FCN_NULL, NULL },
-	{ "r0", (long *)&DDB_REGS->tf_r0, FCN_NULL, NULL },
-	{ "r1", (long *)&DDB_REGS->tf_r1, FCN_NULL, NULL },
-	{ "r2", (long *)&DDB_REGS->tf_r2, FCN_NULL, NULL },
-	{ "r3", (long *)&DDB_REGS->tf_r3, FCN_NULL, NULL },
-	{ "r4", (long *)&DDB_REGS->tf_r4, FCN_NULL, NULL },
-	{ "r5", (long *)&DDB_REGS->tf_r5, FCN_NULL, NULL },
-	{ "r6", (long *)&DDB_REGS->tf_r6, FCN_NULL, NULL },
-	{ "r7", (long *)&DDB_REGS->tf_r7, FCN_NULL, NULL },
-	{ "r8", (long *)&DDB_REGS->tf_r8, FCN_NULL, NULL },
-	{ "r9", (long *)&DDB_REGS->tf_r9, FCN_NULL, NULL },
-	{ "r10", (long *)&DDB_REGS->tf_r10, FCN_NULL, NULL },
-	{ "r11", (long *)&DDB_REGS->tf_r11, FCN_NULL, NULL },
-	{ "r12", (long *)&DDB_REGS->tf_r12, FCN_NULL, NULL },
-	{ "usr_sp", (long *)&DDB_REGS->tf_usr_sp, FCN_NULL, NULL },
-	{ "usr_lr", (long *)&DDB_REGS->tf_usr_lr, FCN_NULL, NULL },
-	{ "svc_sp", (long *)&DDB_REGS->tf_svc_sp, FCN_NULL, NULL },
-	{ "svc_lr", (long *)&DDB_REGS->tf_svc_lr, FCN_NULL, NULL },
-	{ "pc", (long *)&DDB_REGS->tf_pc, FCN_NULL, NULL },
+	{ "spsr", XO(tf_spsr), ddb_reg_var, NULL },
+	{ "r0", XO(tf_r0), ddb_reg_var, NULL },
+	{ "r1", XO(tf_r1), ddb_reg_var, NULL },
+	{ "r2", XO(tf_r2), ddb_reg_var, NULL },
+	{ "r3", XO(tf_r3), ddb_reg_var, NULL },
+	{ "r4", XO(tf_r4), ddb_reg_var, NULL },
+	{ "r5", XO(tf_r5), ddb_reg_var, NULL },
+	{ "r6", XO(tf_r6), ddb_reg_var, NULL },
+	{ "r7", XO(tf_r7), ddb_reg_var, NULL },
+	{ "r8", XO(tf_r8), ddb_reg_var, NULL },
+	{ "r9", XO(tf_r9), ddb_reg_var, NULL },
+	{ "r10", XO(tf_r10), ddb_reg_var, NULL },
+	{ "r11", XO(tf_r11), ddb_reg_var, NULL },
+	{ "r12", XO(tf_r12), ddb_reg_var, NULL },
+	{ "usr_sp", XO(tf_usr_sp), ddb_reg_var, NULL },
+	{ "usr_lr", XO(tf_usr_lr), ddb_reg_var, NULL },
+	{ "svc_sp", XO(tf_svc_sp), ddb_reg_var, NULL },
+	{ "svc_lr", XO(tf_svc_lr), ddb_reg_var, NULL },
+	{ "pc", XO(tf_pc), ddb_reg_var, NULL },
 #ifdef _KERNEL
 	{ "und_sp", &nil, db_access_und_sp, NULL },
 	{ "abt_sp", &nil, db_access_abt_sp, NULL },
 	{ "irq_sp", &nil, db_access_irq_sp, NULL },
 #endif
 };
+#undef XO
 
 const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
@@ -97,6 +117,12 @@ const struct db_command db_machine_command_table[] = {
 			"Displays the TLB",
 		     	NULL,NULL) },
 #endif
+#if defined(_KERNEL) && defined(MULTIPROCESSOR)
+	{ DDB_ADD_CMD("cpu",	db_switch_cpu_cmd,	0,
+			"switch to a different cpu",
+		     	NULL,NULL) },
+#endif
+
 #ifdef ARM32_DB_COMMANDS
 	ARM32_DB_COMMANDS,
 #endif
@@ -418,3 +444,26 @@ db_show_frame_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *m
 	    frame->tf_r12, frame->tf_usr_sp, frame->tf_usr_lr, frame->tf_pc);
 	db_printf("slr=%08x\n", frame->tf_svc_lr);
 }
+
+#if defined(_KERNEL) && defined(MULTIPROCESSOR)
+void
+db_switch_cpu_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
+{
+	if (addr >= maxcpus) {
+		db_printf("cpu %"DDB_EXPR_FMT"d out of range", addr);
+		return;
+	}
+	struct cpu_info *new_ci = cpu_lookup(addr);
+	if (new_ci == NULL) {
+		db_printf("cpu %"DDB_EXPR_FMT"d does not exist", addr);
+		return;
+	}
+	if (DDB_REGS->tf_spsr & PSR_T_bit) {
+		DDB_REGS->tf_pc -= 2; /* XXX */
+	} else {
+		DDB_REGS->tf_pc -= 4;
+	}
+	db_newcpu = new_ci;
+	db_continue_cmd(0, false, 0, "");
+}
+#endif
