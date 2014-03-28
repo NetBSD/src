@@ -623,7 +623,7 @@ dump_ddt(ddt_t *ddt, enum ddt_type type, enum ddt_class class)
 
 	ASSERT(count != 0);	/* we should have destroyed it */
 
-	ddt_object_name(ddt, type, class, name);
+	ddt_object_name(ddt, type, class, name, sizeof(name));
 
 	(void) printf("%s: %llu entries, size %llu on disk, %llu in core\n",
 	    name,
