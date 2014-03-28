@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.136 2014/03/27 17:31:56 christos Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.137 2014/03/28 11:55:09 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.136 2014/03/27 17:31:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.137 2014/03/28 11:55:09 ozaki-r Exp $");
 
 #include "opt_ptm.h"
 
@@ -1041,7 +1041,9 @@ ptyioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	const struct cdevsw *cdev;
 	u_char *cc = tp->t_cc;
 	int stop, error, sig;
+#ifndef NO_DEV_PTM
 	struct mount *mp;
+#endif
 
 	/*
 	 * IF CONTROLLER STTY THEN MUST FLUSH TO PREVENT A HANG.
