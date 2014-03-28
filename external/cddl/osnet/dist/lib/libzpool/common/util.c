@@ -96,7 +96,7 @@ show_vdev_stats(const char *desc, const char *ctype, nvlist_t *nv, int indent)
 
 		sec = MAX(1, vs->vs_timestamp / NANOSEC);
 
-		nicenum(vs->vs_alloc, used, size(used));
+		nicenum(vs->vs_alloc, used, sizeof(used));
 		nicenum(vs->vs_space - vs->vs_alloc, avail, sizeof(avail));
 		nicenum(vs->vs_ops[ZIO_TYPE_READ] / sec, rops, sizeof(rops));
 		nicenum(vs->vs_ops[ZIO_TYPE_WRITE] / sec, wops, sizeof(wops));
