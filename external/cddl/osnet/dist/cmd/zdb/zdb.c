@@ -1305,7 +1305,7 @@ dump_object(objset_t *os, uint64_t object, int verbosity, int *print_header)
 	nicenum(doi.doi_max_offset, lsize, sizeof(lsize));
 	nicenum(doi.doi_physical_blocks_512 << 9, asize, sizeof(asize));
 	nicenum(doi.doi_bonus_size, bonus_size, sizeof(bonus_size));
-	(void) snprintf(fill, "%6.2f", 100.0 * doi.doi_fill_count *
+	(void) snprintf(fill, sizeof(fill), "%6.2f", 100.0 * doi.doi_fill_count *
 	    doi.doi_data_block_size / (object == 0 ? DNODES_PER_BLOCK : 1) /
 	    doi.doi_max_offset);
 
@@ -1423,6 +1423,7 @@ dump_dir(objset_t *os)
 	nicenum(refdbytes, numbuf, sizeof(numbuf));
 
 	if (verbosity >= 4) {
+		size_t blklen = sizeof(blkbuf);
 		len = snprintf(blkbuf, blklen, ", rootbp ");
 		if (len > blklen)
 			len = blklen;
