@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.82 2014/02/26 02:07:58 matt Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.83 2014/03/28 21:52:53 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -87,7 +87,7 @@
 #include <arm/asm.h>
 #include <arm/locore.h>
 
-	RCSID("$NetBSD: cpuswitch.S,v 1.82 2014/02/26 02:07:58 matt Exp $")
+	RCSID("$NetBSD: cpuswitch.S,v 1.83 2014/03/28 21:52:53 matt Exp $")
 
 /* LINTSTUB: include <sys/param.h> */
 	
@@ -279,7 +279,9 @@ ENTRY(cpu_switchto)
 #endif
 
 	/* Record the old lwp for pmap_activate()'s benefit */
+#ifndef ARM_MMU_EXTENDED
 	str	r4, [r3, #CI_LASTLWP]
+#endif
 
 	/* rem: r4 = old lwp */
 	/* rem: r5 = new lwp's proc */
