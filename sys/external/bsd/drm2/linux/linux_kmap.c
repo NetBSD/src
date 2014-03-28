@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_kmap.c,v 1.3 2014/03/28 23:19:41 riastradh Exp $	*/
+/*	$NetBSD: linux_kmap.c,v 1.4 2014/03/28 23:22:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_kmap.c,v 1.3 2014/03/28 23:19:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_kmap.c,v 1.4 2014/03/28 23:22:27 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -222,4 +222,6 @@ kunmap(struct page *page)
 
 	pmap_kremove(vaddr, PAGE_SIZE);
 	pmap_update(pmap_kernel());
+
+	uvm_km_free(kernel_map, vaddr, PAGE_SIZE, UVM_KMF_VAONLY);
 }
