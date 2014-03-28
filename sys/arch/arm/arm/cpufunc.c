@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.140 2014/02/21 06:28:25 matt Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.141 2014/03/28 21:49:22 matt Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.140 2014/02/21 06:28:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.141 2014/03/28 21:49:22 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -1506,19 +1506,21 @@ static void
 get_cacheinfo_clidr(struct arm_cache_info *info, u_int level, u_int clidr)
 {
 	u_int csid;
-	u_int nsets;
 
 	if (clidr & 6) {
 		csid = get_cachesize_cp15(level << 1); /* select dcache values */
-		nsets = CPU_CSID_NUMSETS(csid) + 1;
+		info->dcache_sets = CPU_CSID_NUMSETS(csid) + 1;
 		info->dcache_ways = CPU_CSID_ASSOC(csid) + 1;
 		info->dcache_line_size = 1U << (CPU_CSID_LEN(csid) + 4);
-		info->dcache_size = info->dcache_line_size * info->dcache_ways * nsets;
+		info->dcache_way_size =
+		    info->dcache_line_size * info->dcache_sets;
+		info->dcache_size = info->dcache_way_size * info->dcache_ways;
 
 		if (level == 0) {
 			arm_dcache_log2_assoc = CPU_CSID_ASSOC(csid) + 1;
 			arm_dcache_log2_linesize = CPU_CSID_LEN(csid) + 4;
-			arm_dcache_log2_nsets = 31 - __builtin_clz(nsets*2-1);
+			arm_dcache_log2_nsets =
+			    31 - __builtin_clz(info->dcache_sets*2-1);
 		}
 	}
 
@@ -1532,17 +1534,19 @@ get_cacheinfo_clidr(struct arm_cache_info *info, u_int level, u_int clidr)
 	if (info->cache_unified) {
 		info->icache_ways = info->dcache_ways;
 		info->icache_line_size = info->dcache_line_size;
+		info->icache_way_size = info->dcache_way_size;
 		info->icache_size = info->dcache_size;
 	} else {
 		csid = get_cachesize_cp15((level << 1)|CPU_CSSR_InD); /* select icache values */
-		nsets = CPU_CSID_NUMSETS(csid) + 1;
+		info->icache_sets = CPU_CSID_NUMSETS(csid) + 1;
 		info->icache_ways = CPU_CSID_ASSOC(csid) + 1;
 		info->icache_line_size = 1U << (CPU_CSID_LEN(csid) + 4);
-		info->icache_size = info->icache_line_size * info->icache_ways * nsets;
+		info->icache_way_size = info->icache_line_size * info->icache_sets;
+		info->icache_size = info->icache_way_size * info->icache_ways;
 	}
 	if (level == 0
-	    && info->dcache_size / info->dcache_ways <= PAGE_SIZE
-	    && info->icache_size / info->icache_ways <= PAGE_SIZE) {
+	    && info->dcache_way_size <= PAGE_SIZE
+	    && info->icache_way_size <= PAGE_SIZE) {
 		arm_cache_prefer_mask = 0;
 	}
 }
@@ -1595,8 +1599,11 @@ get_cachetype_cp15(void)
 			if (arm_scache.dcache_line_size < arm_dcache_align)
 				arm_dcache_align = arm_scache.dcache_line_size;
 		}
-		if (arm_pcache.dcache_type == CACHE_TYPE_PIPT
-		    && arm_pcache.icache_type == CACHE_TYPE_PIPT) {
+		/*
+		 * The pmap cleans an entire way for an exec page so
+		 * we don't care that it's VIPT anymore.
+		 */
+		if (arm_pcache.dcache_type == CACHE_TYPE_PIPT) {
 			arm_cache_prefer_mask = 0;
 		}
 		goto out;
@@ -1634,6 +1641,8 @@ get_cachetype_cp15(void)
 #endif
 		}
 		arm_pcache.icache_size = multiplier << (CPU_CT_xSIZE_SIZE(isize) + 8);
+		arm_pcache.icache_way_size =
+		    __BIT(9 + CPU_CT_xSIZE_SIZE(isize) - CPU_CT_xSIZE_ASSOC(isize));
 	}
 
 	dsize = CPU_CT_DSIZE(ctype);
@@ -1658,6 +1667,8 @@ get_cachetype_cp15(void)
 #endif
 	}
 	arm_pcache.dcache_size = multiplier << (CPU_CT_xSIZE_SIZE(dsize) + 8);
+	arm_pcache.dcache_way_size =
+	    __BIT(9 + CPU_CT_xSIZE_SIZE(dsize) - CPU_CT_xSIZE_ASSOC(dsize));
 
 	arm_dcache_align = arm_pcache.dcache_line_size;
 
@@ -1724,10 +1735,20 @@ get_cachetype_table(void)
 			arm_pcache.dcache_line_size =
 			    cachetab[i].ct_pdcache_line_size;
 			arm_pcache.dcache_ways = cachetab[i].ct_pdcache_ways;
+			if (arm_pcache.dcache_ways) {
+				arm_pcache.dcache_way_size = 
+				    arm_pcache.dcache_line_size
+				    / arm_pcache.dcache_ways;
+			}
 			arm_pcache.icache_size = cachetab[i].ct_picache_size;
 			arm_pcache.icache_line_size =
 			    cachetab[i].ct_picache_line_size;
 			arm_pcache.icache_ways = cachetab[i].ct_picache_ways;
+			if (arm_pcache.icache_ways) {
+				arm_pcache.icache_way_size = 
+				    arm_pcache.icache_line_size
+				    / arm_pcache.icache_ways;
+			}
 		}
 	}
 
