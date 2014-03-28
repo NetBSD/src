@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_mainbus.c,v 1.13 2012/08/29 23:16:35 matt Exp $	*/
+/*	$NetBSD: cpu_mainbus.c,v 1.14 2014/03/28 21:43:01 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -44,7 +44,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_mainbus.c,v 1.13 2012/08/29 23:16:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_mainbus.c,v 1.14 2014/03/28 21:43:01 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ static void cpu_mainbus_attach(device_t, device_t, void *);
 #ifdef MULTIPROCESSOR
 extern u_int arm_cpu_max;
 #else
-#define	arm_cpu_max		0
+#define	arm_cpu_max		1
 #endif
  
 static int
@@ -79,14 +79,14 @@ cpu_mainbus_match(device_t parent, cfdata_t cf, void *aux)
 	int id = mb->mb_core;
 
 	if (id != MAINBUSCF_CORE_DEFAULT) {
-		if (id > arm_cpu_max || kcpuset_isset(kcpuset_attached, id))
+		if (id >= arm_cpu_max || kcpuset_isset(kcpuset_attached, id))
 			return 0;
 		if (id == 0 && cpu_info_store.ci_dev != NULL)
 			return 0;
 		return 1;
 	}
 
-	for (id = 0; id <= arm_cpu_max; id++) {
+	for (id = 0; id < arm_cpu_max; id++) {
 #ifdef MULTIPROCESSOR
 		if (cpu_info[id] != NULL && cpu_info[id]->ci_dev != NULL)
 			continue;
