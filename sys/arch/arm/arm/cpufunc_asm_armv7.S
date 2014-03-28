@@ -50,9 +50,10 @@ ENTRY(armv7_context_switch)
 	cmp	ip, #0
 	orrlt	r0, r0, #0x5b		@ MP, cachable (Normal WB)
 	orrge	r0, r0, #0x1b		@ Non-MP, cacheable, normal WB
-	mcr	p15, 0, r0, c2, c0, 0 	@ set the new TTB
-#ifdef MULTIPROCESSOR
-	mcr	p15, 0, r0, c8, c3, 0	@ flush the I+D
+	mcr	p15, 0, r0, c2, c0, 0 	@ set the new TTBR 0
+#ifdef ARM_MMU_EXTENDED
+	cmp	r1, #0
+	mcreq	p15, 0, r0, c2, c0, 1   @ set the new TTBR 1
 #else
 	mcr	p15, 0, r0, c8, c7, 0	@ flush the I+D
 #endif
@@ -61,7 +62,7 @@ ENTRY(armv7_context_switch)
 	bx	lr
 END(armv7_context_switch)
 
-#ifdef ARM_MMU_EXTENDED
+#ifdef ARM_MMU_EXTENDED_XXX
 ENTRY(armv7_tlb_flushID_ASID)
 #ifdef MULTIPROCESSOR
 	mcr	p15, 0, r0, c8, c3, 2	@ flush I+D tlb all ASID
@@ -77,14 +78,23 @@ END(armv7_tlb_flushID_ASID)
 STRONG_ALIAS(armv7_tlb_flushD_SE, armv7_tlb_flushID_SE)
 STRONG_ALIAS(armv7_tlb_flushI_SE, armv7_tlb_flushID_SE)
 ENTRY(armv7_tlb_flushID_SE)
-#ifdef ARM_MMU_EXTENDED
+	bfc	r0, #0, #12		@ clear ASID
+#ifdef ARM_MMU_EXTENDED_XXX
 	bfi	r0, r1, #0, #8		@ insert ASID into MVA
 #endif
 #ifdef MULTIPROCESSOR
 	mcr	p15, 0, r0, c8, c3, 1	@ flush I+D tlb single entry
-#else
+#if PAGE_SIZE == 2*L2_S_SIZE
+	add	r0, r0, #L2_S_SIZE
+	mcr	p15, 0, r0, c8, c3, 1	@ flush I+D tlb single entry
+#endif
+#else /* !MULTIPROCESSOR */
+	mcr	p15, 0, r0, c8, c7, 1	@ flush I+D tlb single entry
+#if PAGE_SIZE == 2*L2_S_SIZE
+	add	r0, r0, #L2_S_SIZE
 	mcr	p15, 0, r0, c8, c7, 1	@ flush I+D tlb single entry
 #endif
+#endif /* !MULTIPROCESSOR */
 	dsb				@ data synchronization barrier
 	isb
 	bx	lr
@@ -113,12 +123,12 @@ ENTRY_NP(armv7_setttb)
 	cmp	ip, #0
 	orrlt	r0, r0, #0x5b		@ MP, cachable (Normal WB)
 	orrge	r0, r0, #0x1b		@ Non-MP, cacheable, normal WB
-	mcr	p15, 0, r0, c2, c0, 0   @ load new TTB
+	mcr	p15, 0, r0, c2, c0, 0   @ load new TTBR 0
+#ifdef ARM_MMU_EXTENDED
 	cmp	r1, #0
-#ifdef MULTIPROCESSOR
-	mcrne	p15, 0, r0, c8, c3, 0	@ invalidate all I+D TLBs
+	mcreq	p15, 0, r0, c2, c0, 1   @ load new TTBR 1
 #else
-	mcrne	p15, 0, r0, c8, c7, 0   @ invalidate all I+D TLBs
+	mcr	p15, 0, r0, c8, c7, 0   @ invalidate all I+D TLBs
 #endif
 	dsb				@ data synchronization barrier
 	isb
@@ -136,8 +146,16 @@ END(armv7_drain_writebuf)
 
 /* LINTSTUB: void armv7_icache_sync_range(vaddr_t, vsize_t); */
 ENTRY_NP(armv7_icache_sync_range)
+	mov	ip, #CPU_CSSR_InD
+	mcr	p15, 2, ip, c0, c0, 0	@ set cache level to L1-I
 	mrc	p15, 1, r2, c0, c0, 0	@ read CCSIDR
+	mov	ip, #0
+	mcr	p15, 2, ip, c0, c0, 0	@ set cache level to L1-D
+	mrc	p15, 1, r3, c0, c0, 0	@ read CCSIDR
 	and	r2, r2, #7		@ get line size (log2(size)-4, 0=16)
+	and	r3, r3, #7		@ get line size (log2(size)-4, 0=16)
+	cmp	r2, r3			@ compare ilinesize to dlinesize
+	movgt	r2, r3			@ pick lesser of the two
 	mov	ip, #16			@ make a bit mask
 	lsl	r2, ip, r2		@ and shift into position
 	sub	ip, r2, #1		@ make into a mask
@@ -172,6 +190,8 @@ ENTRY_NP(armv7_icache_sync_all)
 END(armv7_icache_sync_all)
 
 ENTRY(armv7_dcache_wb_range)
+	mov	ip, #0
+	mcr	p15, 2, ip, c0, c0, 0	@ set cache level to L1
 	mrc	p15, 1, r2, c0, c0, 0	@ read CCSIDR
 	and	r2, r2, #7		@ get line size (log2(size)-4, 0=16)
 	mov	ip, #16			@ make a bit mask
@@ -192,6 +212,8 @@ END(armv7_dcache_wb_range)
 
 /* LINTSTUB: void armv7_dcache_wbinv_range(vaddr_t, vsize_t); */
 ENTRY(armv7_dcache_wbinv_range)
+	mov	ip, #0
+	mcr	p15, 2, ip, c0, c0, 0	@ set cache level to L1
 	mrc	p15, 1, r2, c0, c0, 0	@ read CCSIDR
 	and	r2, r2, #7		@ get line size (log2(size)-4, 0=16)
 	mov	ip, #16			@ make a bit mask
@@ -202,7 +224,7 @@ ENTRY(armv7_dcache_wbinv_range)
 	bic	r0, r0, ip		@ clear offset from start.
 	dsb
 1:
-	mcr	p15, 0, r0, c7, c14, 1	@ wb and inv the D-Cache line
+	mcr	p15, 0, r0, c7, c14, 1	@ wb and inv the D-Cache line to PoC
 	add	r0, r0, r2
 	subs	r1, r1, r2
 	bhi	1b
@@ -212,6 +234,8 @@ END(armv7_dcache_wbinv_range)
 
 /* * LINTSTUB: void armv7_dcache_inv_range(vaddr_t, vsize_t); */
 ENTRY(armv7_dcache_inv_range)
+	mov	ip, #0
+	mcr	p15, 2, ip, c0, c0, 0	@ set cache level to L1
 	mrc	p15, 1, r2, c0, c0, 0	@ read CCSIDR
 	and	r2, r2, #7		@ get line size (log2(size)-4, 0=16)
 	mov	ip, #16			@ make a bit mask
@@ -233,6 +257,8 @@ END(armv7_dcache_inv_range)
 
 /* * LINTSTUB: void armv7_idcache_wbinv_range(vaddr_t, vsize_t); */
 ENTRY(armv7_idcache_wbinv_range)
+	mov	ip, #0
+	mcr	p15, 2, ip, c0, c0, 0	@ set cache level to L1
 	mrc	p15, 1, r2, c0, c0, 0	@ read CCSIDR
 	and	r2, r2, #7		@ get line size (log2(size)-4, 0=16)
 	mov	ip, #16			@ make a bit mask
@@ -382,7 +408,7 @@ ENTRY_NP(armv7_dcache_wbinv_all)
 .Lstart_wbinv:
 	add	r2, r3, r3, lsr #1	@ r2 = level * 3 / 2
 	mov	r1, r0, lsr r2		@ r1 = cache type
-	bfc	r1, #3, #28
+	bfc	r1, #3, #29
 	cmp	r1, #2			@ is it data or i&d?
 	blt	.Lnext_level_wbinv	@ nope, skip level
 
