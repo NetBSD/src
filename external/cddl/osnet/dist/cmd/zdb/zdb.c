@@ -462,7 +462,7 @@ dump_metaslab_stats(metaslab_t *msp)
 	avl_tree_t *t = sm->sm_pp_root;
 	int free_pct = sm->sm_space * 100 / sm->sm_size;
 
-	nicenum(space_map_maxsize(sm), maxbuf);
+	nicenum(space_map_maxsize(sm), maxbuf, sizeof(maxbuf));
 
 	(void) printf("\t %25s %10lu   %7s  %6s   %4s %4d%%\n",
 	    "segments", avl_numnodes(t), "maxsize", maxbuf,
@@ -478,7 +478,7 @@ dump_metaslab(metaslab_t *msp)
 	space_map_obj_t *smo = &msp->ms_smo;
 	char freebuf[5];
 
-	nicenum(sm->sm_size - smo->smo_alloc, freebuf);
+	nicenum(sm->sm_size - smo->smo_alloc, freebuf, sizeof(freebuf));
 
 	(void) printf(
 	    "\tmetaslab %6llu   offset %12llx   spacemap %6llu   free    %5s\n",
@@ -969,15 +969,15 @@ dump_dsl_dir(objset_t *os, uint64_t object, void *data, size_t size)
 	    (u_longlong_t)dd->dd_origin_obj);
 	(void) printf("\t\tchild_dir_zapobj = %llu\n",
 	    (u_longlong_t)dd->dd_child_dir_zapobj);
-	nicenum(dd->dd_used_bytes, nice);
+	nicenum(dd->dd_used_bytes, nice, sizeof(nice));
 	(void) printf("\t\tused_bytes = %s\n", nice);
-	nicenum(dd->dd_compressed_bytes, nice);
+	nicenum(dd->dd_compressed_bytes, nice, sizeof(nice));
 	(void) printf("\t\tcompressed_bytes = %s\n", nice);
-	nicenum(dd->dd_uncompressed_bytes, nice);
+	nicenum(dd->dd_uncompressed_bytes, nice, sizeof(nice));
 	(void) printf("\t\tuncompressed_bytes = %s\n", nice);
-	nicenum(dd->dd_quota, nice);
+	nicenum(dd->dd_quota, nice, sizeof(nice));
 	(void) printf("\t\tquota = %s\n", nice);
-	nicenum(dd->dd_reserved, nice);
+	nicenum(dd->dd_reserved, nice, sizeof(nice));
 	(void) printf("\t\treserved = %s\n", nice);
 	(void) printf("\t\tprops_zapobj = %llu\n",
 	    (u_longlong_t)dd->dd_props_zapobj);
@@ -987,7 +987,7 @@ dump_dsl_dir(objset_t *os, uint64_t object, void *data, size_t size)
 	    (u_longlong_t)dd->dd_flags);
 
 #define	DO(which) \
-	nicenum(dd->dd_used_breakdown[DD_USED_ ## which], nice); \
+	nicenum(dd->dd_used_breakdown[DD_USED_ ## which], nice, sizeof(nice)); \
 	(void) printf("\t\tused_breakdown[" #which "] = %s\n", nice)
 	DO(HEAD);
 	DO(SNAP);
@@ -1011,10 +1011,10 @@ dump_dsl_dataset(objset_t *os, uint64_t object, void *data, size_t size)
 
 	ASSERT(size == sizeof (*ds));
 	crtime = ds->ds_creation_time;
-	nicenum(ds->ds_used_bytes, used);
-	nicenum(ds->ds_compressed_bytes, compressed);
-	nicenum(ds->ds_uncompressed_bytes, uncompressed);
-	nicenum(ds->ds_unique_bytes, unique);
+	nicenum(ds->ds_used_bytes, used, sizeof(used));
+	nicenum(ds->ds_compressed_bytes, compressed, sizeof(compressed));
+	nicenum(ds->ds_uncompressed_bytes, uncompressed, sizeof(uncompressed));
+	nicenum(ds->ds_unique_bytes, unique, sizeof(unique));
 	snprintf_blkptr(blkbuf, sizeof(blkbuf), &ds->ds_bp);
 
 	(void) printf("\t\tdir_obj = %llu\n",
@@ -1074,10 +1074,10 @@ dump_bplist(objset_t *mos, uint64_t object, char *name)
 		return;
 	}
 
-	nicenum(bpl.bpl_phys->bpl_bytes, bytes);
+	nicenum(bpl.bpl_phys->bpl_bytes, bytes, sizeof(bytes));
 	if (bpl.bpl_dbuf->db_size == sizeof (bplist_phys_t)) {
-		nicenum(bpl.bpl_phys->bpl_comp, comp);
-		nicenum(bpl.bpl_phys->bpl_uncomp, uncomp);
+		nicenum(bpl.bpl_phys->bpl_comp, comp, sizeof(comp));
+		nicenum(bpl.bpl_phys->bpl_uncomp, uncomp, sizeof(uncomp));
 		(void) printf("\n    %s: %llu entries, %s (%s/%s comp)\n",
 		    name, (u_longlong_t)bpl.bpl_phys->bpl_entries,
 		    bytes, comp, uncomp);
@@ -1300,11 +1300,11 @@ dump_object(objset_t *os, uint64_t object, int verbosity, int *print_header)
 	}
 	dmu_object_info_from_dnode(dn, &doi);
 
-	nicenum(doi.doi_metadata_block_size, iblk);
-	nicenum(doi.doi_data_block_size, dblk);
-	nicenum(doi.doi_max_offset, lsize);
-	nicenum(doi.doi_physical_blocks_512 << 9, asize);
-	nicenum(doi.doi_bonus_size, bonus_size);
+	nicenum(doi.doi_metadata_block_size, iblk, sizeof(iblk));
+	nicenum(doi.doi_data_block_size, dblk, sizeof(dblk));
+	nicenum(doi.doi_max_offset, lsize, sizeof(lsize));
+	nicenum(doi.doi_physical_blocks_512 << 9, asize, sizeof(asize));
+	nicenum(doi.doi_bonus_size, bonus_size, sizeof(bonus_size));
 	(void) snprintf(fill, "%6.2f", 100.0 * doi.doi_fill_count *
 	    doi.doi_data_block_size / (object == 0 ? DNODES_PER_BLOCK : 1) /
 	    doi.doi_max_offset);
@@ -1372,7 +1372,7 @@ dump_object(objset_t *os, uint64_t object, int verbosity, int *print_header)
 			end = start;
 			error = dnode_next_offset(dn,
 			    DNODE_FIND_HOLE, &end, minlvl, blkfill, 0);
-			nicenum(end - start, segsize);
+			nicenum(end - start, segsize, sizeof(segsize));
 			(void) printf("\t\tsegment [%016llx, %016llx)"
 			    " size %5s\n", (u_longlong_t)start,
 			    (u_longlong_t)end, segsize);
@@ -1420,7 +1420,7 @@ dump_dir(objset_t *os)
 
 	ASSERT3U(usedobjs, ==, os->os_rootbp->blk_fill);
 
-	nicenum(refdbytes, numbuf);
+	nicenum(refdbytes, numbuf, sizeof(numbuf));
 
 	if (verbosity >= 4) {
 		len = snprintf(blkbuf, blklen, ", rootbp ");
@@ -2108,11 +2108,11 @@ dump_block_stats(spa_t *spa)
 				    zcb.zcb_type[ZB_TOTAL][t].zb_asize)
 					continue;
 
-				nicenum(zb->zb_count, csize);
-				nicenum(zb->zb_lsize, lsize);
-				nicenum(zb->zb_psize, psize);
-				nicenum(zb->zb_asize, asize);
-				nicenum(zb->zb_asize / zb->zb_count, avg);
+				nicenum(zb->zb_count, csize, sizeof(csize));
+				nicenum(zb->zb_lsize, lsize, sizeof(lsize));
+				nicenum(zb->zb_psize, psize, sizeof(psize));
+				nicenum(zb->zb_asize, asize, sizeof(asize));
+				nicenum(zb->zb_asize / zb->zb_count, avg, sizeof(avg));
 
 				(void) printf("%6s\t%5s\t%5s\t%5s\t%5s"
 				    "\t%5.2f\t%6.2f\t",
