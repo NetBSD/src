@@ -1,4 +1,4 @@
-/*	$NetBSD: zfs_context.h,v 1.15 2013/06/21 16:22:46 christos Exp $	*/
+/*	$NetBSD: zfs_context.h,v 1.16 2014/03/28 02:50:18 ozaki-r Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -431,7 +431,7 @@ extern void kernel_init(int);
 extern void kernel_fini(void);
 
 struct spa;
-extern void nicenum(uint64_t num, char *buf);
+extern void nicenum(uint64_t, char *, size_t);
 extern void show_pool_stats(struct spa *);
 
 typedef struct callb_cpr {
