@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1101 2014/03/14 11:32:34 roy Exp $
+#	$NetBSD: 3RDPARTY,v 1.1102 2014/03/28 08:15:48 apb Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1403,6 +1403,18 @@ Mailing List:	http://gmplib.org/mailman/listinfo/gmp-announce
 Responsible:	mrg
 License:	LGPL3
 Location:	external/lgpl3/gmp/dist
+Notes:
+
+Package:	osnet
+Version:	osnet-20100224
+Current Vers:	?
+Maintainer:	?
+Archive Site:	?
+Home Page:	?
+Mailing List:	?
+Responsible:	?
+License:	CDDL
+Location:	external/cddl/osnet
 Notes:
 
 Package:	sljit
