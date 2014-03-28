@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.19 2014/03/05 16:33:33 matt Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.20 2014/03/28 21:54:12 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K Stevens
@@ -48,8 +48,7 @@ typedef	long		db_expr_t;	/* expression - signed */
 
 typedef trapframe_t db_regs_t;
 
-extern db_regs_t	ddb_regs;	/* register state */
-#define	DDB_REGS	(&ddb_regs)
+#define	DDB_REGS	(curcpu()->ci_ddb_regs)
 
 #ifdef __PROG26
 #define	PC_REGS(regs)	((regs)->tf_r15 & R15_PC)
@@ -127,4 +126,9 @@ typedef register_t	kgdb_reg_t;
 #define KGDB_REGNUM_SPSR	16 + 8*3 + 1
 #define KGDB_BUFLEN		1024
 
+/*
+ * MP stuff
+ */
+extern volatile struct cpu_info *db_onproc;
+extern volatile struct cpu_info *db_newcpu;
 #endif	/* _ARM_DB_MACHDEP_H_ */
