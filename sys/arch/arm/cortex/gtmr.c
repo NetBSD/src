@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.5 2013/12/17 13:11:18 joerg Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.6 2014/03/28 21:41:46 matt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.5 2013/12/17 13:11:18 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.6 2014/03/28 21:41:46 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.5 2013/12/17 13:11:18 joerg Exp $");
 static int gtmr_match(device_t, cfdata_t, void *);
 static void gtmr_attach(device_t, device_t, void *);
 
-static int clockhandler(void *);
+static int gtmr_intr(void *);
 
 static u_int gtmr_get_timecount(struct timecounter *);
 
@@ -125,7 +125,7 @@ gtmr_attach(device_t parent, device_t self, void *aux)
 	    device_xname(self), "missing interrupts");
 
 	sc->sc_global_ih = intr_establish(IRQ_GTMR_PPI_VTIMER, IPL_CLOCK,
-	    IST_EDGE, clockhandler, NULL);
+	    IST_EDGE | IST_MPSAFE, gtmr_intr, NULL);
 	if (sc->sc_global_ih == NULL)
 		panic("%s: unable to register timer interrupt", __func__);
 	aprint_normal_dev(self, "interrupting on irq %d\n",
@@ -241,13 +241,30 @@ gtmr_delay(unsigned int n)
 	}
 }
 
+void
+gtmr_bootdelay(unsigned int ticks)
+{
+	const uint32_t ctl = armreg_cntv_ctl_read();
+	armreg_cntv_ctl_write(ctl | ARM_CNTCTL_ENABLE | ARM_CNTCTL_IMASK);
+
+	/* Write Timer/Value to set new compare time */
+	armreg_cntv_tval_write(ticks);
+
+	/* Spin until compare time is hit */
+	while ((armreg_cntv_ctl_read() & ARM_CNTCTL_ISTATUS) == 0) {
+		/* spin */
+	}
+
+	armreg_cntv_ctl_write(ctl);
+}
+
 /*
- * clockhandler:
+ * gtmr_intr:
  *
  *	Handle the hardclock interrupt.
  */
 static int
-clockhandler(void *arg)
+gtmr_intr(void *arg)
 {
 	const uint64_t now = armreg_cntv_ct_read();
 	struct cpu_info * const ci = curcpu();
