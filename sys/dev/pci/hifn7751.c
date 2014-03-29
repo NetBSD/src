@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.53 2014/01/03 16:09:22 pgoyette Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.54 2014/03/29 19:28:24 christos Exp $	*/
 /*	$FreeBSD: hifn7751.c,v 1.5.2.7 2003/10/08 23:52:00 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.53 2014/01/03 16:09:22 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.54 2014/03/29 19:28:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -260,6 +260,7 @@ hifn_attach(device_t parent, device_t self, void *aux)
 	bus_dmamap_t dmamap;
 	int rseg;
 	void *kva;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	hp = hifn_lookup(pa);
 	if (hp == NULL) {
@@ -365,7 +366,7 @@ hifn_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(sc->sc_dv, "couldn't map interrupt\n");
 		goto fail_mem;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 #ifdef	__OpenBSD__
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, hifn_intr, sc,
 	    device_xname(self));

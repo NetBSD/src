@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.34 2013/12/28 11:15:43 msaitoh Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.35 2014/03/29 19:28:24 christos Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.18 2007/05/03 09:36:26 dlg Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.34 2013/12/28 11:15:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.35 2014/03/29 19:28:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -132,6 +132,7 @@ ichsmb_attach(device_t parent, device_t self, void *aux)
 	bus_size_t iosize;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 
@@ -160,7 +161,7 @@ ichsmb_attach(device_t parent, device_t self, void *aux)
 	} else {
 		/* Install interrupt handler */
 		if (pci_intr_map(pa, &ih) == 0) {
-			intrstr = pci_intr_string(pa->pa_pc, ih);
+			intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
 			sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO,
 			    ichsmb_intr, sc);
 			if (sc->sc_ih != NULL) {

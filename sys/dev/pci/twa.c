@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.48 2014/03/16 05:20:28 dholland Exp $ */
+/*	$NetBSD: twa.c,v 1.49 2014/03/29 19:28:25 christos Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.48 2014/03/16 05:20:28 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.49 2014/03/29 19:28:25 christos Exp $");
 
 //#define TWA_DEBUG
 
@@ -1505,6 +1505,7 @@ twa_attach(device_t parent, device_t self, void *aux)
 	const struct twa_pci_identity *entry;
 	int i;
 	bool use_64bit;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc = device_private(self);
 
@@ -1584,7 +1585,7 @@ twa_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(sc->twa_dv, "can't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 
 	sc->twa_ih = pci_intr_establish(pc, ih, IPL_BIO, twa_intr, sc);
 	if (sc->twa_ih == NULL) {

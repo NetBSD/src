@@ -1,4 +1,4 @@
-/* $NetBSD: ifpci2.c,v 1.21 2014/03/23 02:45:30 christos Exp $	*/
+/* $NetBSD: ifpci2.c,v 1.22 2014/03/29 19:28:25 christos Exp $	*/
 /*
  *   Copyright (c) 1999 Gary Jennejohn. All rights reserved.
  *
@@ -36,14 +36,14 @@
  *	Fritz!Card PCI driver
  *	------------------------------------------------
  *
- *	$Id: ifpci2.c,v 1.21 2014/03/23 02:45:30 christos Exp $
+ *	$Id: ifpci2.c,v 1.22 2014/03/29 19:28:25 christos Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpci2.c,v 1.21 2014/03/23 02:45:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpci2.c,v 1.22 2014/03/29 19:28:25 christos Exp $");
 
 
 #include <sys/param.h>
@@ -944,6 +944,7 @@ avma1pp2_map_int(struct ifpci_softc *psc, struct pci_attach_args *pa)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
 	const char *intrstr;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
@@ -952,7 +953,7 @@ avma1pp2_map_int(struct ifpci_softc *psc, struct pci_attach_args *pa)
 		return;
 	}
 	psc->sc_pc = pc;
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, avma1pp2_intr, sc);
 	if (psc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt");

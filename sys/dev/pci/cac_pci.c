@@ -1,4 +1,4 @@
-/*	$NetBSD: cac_pci.c,v 1.33 2012/10/27 17:18:28 chs Exp $	*/
+/*	$NetBSD: cac_pci.c,v 1.34 2014/03/29 19:28:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac_pci.c,v 1.33 2012/10/27 17:18:28 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac_pci.c,v 1.34 2014/03/29 19:28:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,6 +147,7 @@ cac_pci_attach(device_t parent, device_t self, void *aux)
 	const char *intrstr;
 	pcireg_t reg;
 	int memr, ior, i;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	aprint_naive(": RAID controller\n");
 
@@ -202,7 +203,7 @@ cac_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error("can't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_BIO, cac_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error("can't establish interrupt");

@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.47 2014/03/16 05:20:28 dholland Exp $	*/
+/*	$NetBSD: mly.c,v 1.48 2014/03/29 19:28:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.47 2014/03/16 05:20:28 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.48 2014/03/29 19:28:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -289,6 +289,7 @@ mly_attach(device_t parent, device_t self, void *aux)
 	int ior, memr, i, rv, state;
 	struct scsipi_adapter *adapt;
 	struct scsipi_channel *chan;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	mly = device_private(self);
 	mly->mly_dv = self;
@@ -354,7 +355,7 @@ mly_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "can't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	mly->mly_ih = pci_intr_establish(pc, ih, IPL_BIO, mly_intr, mly);
 	if (mly->mly_ih == NULL) {
 		aprint_error_dev(self, "can't establish interrupt");

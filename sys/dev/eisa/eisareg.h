@@ -1,4 +1,4 @@
-/*	$NetBSD: eisareg.h,v 1.7 2005/12/11 12:21:20 christos Exp $	*/
+/*	$NetBSD: eisareg.h,v 1.8 2014/03/29 19:28:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -96,4 +96,8 @@
 #define	EISA_PRODID_3(pid)						\
 	    (HEXDIGITS[(((pid)[1] >> 0) & 0xf)])
 
+/*
+ * Local defines
+ */
+#define EISA_INTRSTR_LEN	64
 #endif /* !__DEV_EISA_EISAREG_H__ */
