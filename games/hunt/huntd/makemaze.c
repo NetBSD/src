@@ -1,4 +1,4 @@
-/*	$NetBSD: makemaze.c,v 1.8 2011/05/23 22:58:44 joerg Exp $	*/
+/*	$NetBSD: makemaze.c,v 1.9 2014/03/29 19:41:11 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: makemaze.c,v 1.8 2011/05/23 22:58:44 joerg Exp $");
+__RCSID("$NetBSD: makemaze.c,v 1.9 2014/03/29 19:41:11 dholland Exp $");
 #endif /* not lint */
 
 #include "hunt.h"
@@ -41,7 +41,7 @@ __RCSID("$NetBSD: makemaze.c,v 1.8 2011/05/23 22:58:44 joerg Exp $");
 #define ODD(n)		((n) & 01)
 
 #if 0
-static int candig(int, int);
+static bool candig(int, int);
 static void dig(int, int);
 #endif
 static void dig_maze(int, int);
@@ -108,34 +108,34 @@ dig(int y, int x)
  * candig:
  *	Is it legal to clear this spot?
  */
-static int
+static bool
 candig(int y, int x)
 {
 	int i;
 
 	if (ODD(x) && ODD(y))
-		return FALSE;		/* can't touch ODD spots */
+		return false;		/* can't touch ODD spots */
 
 	if (y < UBOUND || y >= DBOUND)
-		return FALSE;		/* Beyond vertical bounds, NO */
+		return false;		/* Beyond vertical bounds, NO */
 	if (x < LBOUND || x >= RBOUND)
-		return FALSE;		/* Beyond horizontal bounds, NO */
+		return false;		/* Beyond horizontal bounds, NO */
 
 	if (ISCLEAR(y, x))
-		return FALSE;		/* Already clear, NO */
+		return false;		/* Already clear, NO */
 
 	i = ISCLEAR(y, x + 1);
 	i += ISCLEAR(y, x - 1);
 	if (i > 1)
-		return FALSE;		/* Introduces cycle, NO */
+		return false;		/* Introduces cycle, NO */
 	i += ISCLEAR(y + 1, x);
 	if (i > 1)
-		return FALSE;		/* Introduces cycle, NO */
+		return false;		/* Introduces cycle, NO */
 	i += ISCLEAR(y - 1, x);
 	if (i > 1)
-		return FALSE;		/* Introduces cycle, NO */
+		return false;		/* Introduces cycle, NO */
 
-	return TRUE;			/* OK */
+	return true;			/* OK */
 }
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.23 2014/03/29 19:33:03 dholland Exp $	*/
+/*	$NetBSD: driver.c,v 1.24 2014/03/29 19:41:10 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: driver.c,v 1.23 2014/03/29 19:33:03 dholland Exp $");
+__RCSID("$NetBSD: driver.c,v 1.24 2014/03/29 19:41:10 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -52,8 +52,8 @@ static char *Last_arg;			/* pointer to end of argv/environ */
 
 #ifdef INTERNET
 static int Test_socket;			/* test socket to answer datagrams */
-static FLAG inetd_spawned;		/* invoked via inetd */
-static FLAG standard_port = TRUE;	/* true if listening on standard port */
+static bool inetd_spawned;		/* invoked via inetd */
+static bool standard_port = true;	/* true if listening on standard port */
 static u_short	sock_port;		/* port # of tcp listen socket */
 static u_short	stat_port;		/* port # of statistics tcp socket */
 #define DAEMON_SIZE	(sizeof Daemon)
@@ -62,12 +62,12 @@ static u_short	stat_port;		/* port # of statistics tcp socket */
 #endif
 
 static void clear_scores(void);
-static int havechar(PLAYER *, int);
+static bool havechar(PLAYER *, int);
 static void init(void);
 int main(int, char *[], char *[]);
 static void makeboots(void);
 static void send_stats(void);
-static void zap(PLAYER *, FLAG, int);
+static void zap(PLAYER *, bool, int);
 
 
 /*
@@ -84,8 +84,8 @@ main(int ac, char **av, char **ep)
 	socklen_t namelen;
 	SOCKET test;
 #endif
-	static FLAG first = TRUE;
-	static FLAG server = FALSE;
+	static bool first = true;
+	static bool server = false;
 	int c, i;
 	const int linger = 90 * 1000;
 
@@ -99,11 +99,11 @@ main(int ac, char **av, char **ep)
 	while ((c = getopt(ac, av, "sp:")) != -1) {
 		switch (c) {
 		  case 's':
-			server = TRUE;
+			server = true;
 			break;
 #ifdef INTERNET
 		  case 'p':
-			standard_port = FALSE;
+			standard_port = false;
 			Test_port = atoi(optarg);
 			break;
 #endif
@@ -180,13 +180,13 @@ again:
 			moveshots();
 			for (pp = Player, i = 0; pp < End_player; )
 				if (pp->p_death[0] != '\0')
-					zap(pp, TRUE, i + 3);
+					zap(pp, true, i + 3);
 				else
 					pp++, i++;
 #ifdef MONITOR
 			for (pp = Monitor, i = 0; pp < End_monitor; )
 				if (pp->p_death[0] != '\0')
-					zap(pp, FALSE, i + MAXPL + 3);
+					zap(pp, false, i + MAXPL + 3);
 				else
 					pp++, i++;
 #endif
@@ -197,7 +197,7 @@ again:
 				if (first && standard_port)
 					faketalk();
 #endif
-				first = FALSE;
+				first = false;
 			}
 		if (fdset[1].revents & POLLIN)
 			send_stats();
@@ -227,13 +227,13 @@ again:
 #ifdef BOOTS
 		makeboots();
 #endif
-		first = TRUE;
+		first = true;
 		goto again;
 	}
 
 #ifdef MONITOR
 	for (pp = Monitor, i = 0; pp < End_monitor; i++)
-		zap(pp, FALSE, i + MAXPL + 3);
+		zap(pp, false, i + MAXPL + 3);
 #endif
 	cleanup(0);
 	/* NOTREACHED */
@@ -374,10 +374,10 @@ init(void)
 	len = sizeof (SOCKET);
 	if (getsockname(0, (struct sockaddr *) &test_port, &len) >= 0
 	&& test_port.sin_family == AF_INET) {
-		inetd_spawned = TRUE;
+		inetd_spawned = true;
 		Test_socket = 0;
 		if (test_port.sin_port != htons((u_short) Test_port)) {
-			standard_port = FALSE;
+			standard_port = false;
 			Test_port = ntohs(test_port.sin_port);
 		}
 	} else {
@@ -410,14 +410,14 @@ init(void)
 #endif
 
 	for (i = 0; i < NASCII; i++)
-		See_over[i] = TRUE;
-	See_over[DOOR] = FALSE;
-	See_over[WALL1] = FALSE;
-	See_over[WALL2] = FALSE;
-	See_over[WALL3] = FALSE;
+		See_over[i] = true;
+	See_over[DOOR] = false;
+	See_over[WALL1] = false;
+	See_over[WALL2] = false;
+	See_over[WALL3] = false;
 #ifdef REFLECT
-	See_over[WALL4] = FALSE;
-	See_over[WALL5] = FALSE;
+	See_over[WALL4] = false;
+	See_over[WALL5] = false;
 #endif
 
 }
@@ -584,7 +584,7 @@ checkdam(PLAYER *ouch, PLAYER *gotcha, IDENT *credit, int amt,
  *	Kill off a player and take him out of the game.
  */
 static void
-zap(PLAYER *pp, FLAG was_player, int i)
+zap(PLAYER *pp, bool was_player, int i)
 {
 	int n, len;
 	BULLET *bp;
@@ -594,7 +594,7 @@ zap(PLAYER *pp, FLAG was_player, int i)
 	if (was_player) {
 		if (pp->p_undershot)
 			fixshots(pp->p_y, pp->p_x, pp->p_over);
-		drawplayer(pp, FALSE);
+		drawplayer(pp, false);
 		Nplayer--;
 	}
 
@@ -650,7 +650,7 @@ zap(PLAYER *pp, FLAG was_player, int i)
 		}
 		if (x > 0) {
 			(void) add_shot(len, pp->p_y, pp->p_x, pp->p_face, x,
-				NULL, TRUE, SPACE);
+				NULL, true, SPACE);
 			(void) snprintf(Buf, sizeof(Buf), "%s detonated.",
 				pp->p_ident->i_name);
 			for (np = Player; np < End_player; np++)
@@ -666,7 +666,7 @@ zap(PLAYER *pp, FLAG was_player, int i)
 						break;
 				if (np >= &Boot[NBOOTS])
 					err(1, "Too many boots");
-				np->p_undershot = FALSE;
+				np->p_undershot = false;
 				np->p_x = pp->p_x;
 				np->p_y = pp->p_y;
 				np->p_flying = rand_num(20);
@@ -698,7 +698,7 @@ zap(PLAYER *pp, FLAG was_player, int i)
 				y = rand_num(HEIGHT / 2) + HEIGHT / 4;
 			} while (Maze[y][x] != SPACE);
 			(void) add_shot(LAVA, y, x, LEFTS, volcano,
-				NULL, TRUE, SPACE);
+				NULL, true, SPACE);
 			for (np = Player; np < End_player; np++)
 				message(np, "Volcano eruption.");
 			volcano = 0;
@@ -714,7 +714,7 @@ zap(PLAYER *pp, FLAG was_player, int i)
 			add_shot(DSHOT, y, x, rand_dir(),
 				shot_req[MINDSHOT +
 				rand_num(MAXBOMB - MINDSHOT)],
-				NULL, FALSE, SPACE);
+				NULL, false, SPACE);
 		}
 #endif
 
@@ -808,17 +808,17 @@ rand_num(int range)
 /*
  * havechar:
  *	Check to see if we have any characters in the input queue; if
- *	we do, read them, stash them away, and return TRUE; else return
- *	FALSE.
+ *	we do, read them, stash them away, and return true; else return
+ *	false.
  */
-static int
+static bool
 havechar(PLAYER *pp, int i)
 {
 
 	if (pp->p_ncount < pp->p_nchar)
-		return TRUE;
+		return true;
 	if (!(fdset[i].revents & POLLIN))
-		return FALSE;
+		return false;
 check_again:
 	errno = 0;
 	if ((pp->p_nchar = read(pp->p_fd, pp->p_cbuf, sizeof pp->p_cbuf)) <= 0)
@@ -828,7 +828,7 @@ check_again:
 		pp->p_cbuf[0] = 'q';
 	}
 	pp->p_ncount = 0;
-	return TRUE;
+	return true;
 }
 
 /*

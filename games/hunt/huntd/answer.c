@@ -1,4 +1,4 @@
-/*	$NetBSD: answer.c,v 1.16 2009/08/27 00:36:32 dholland Exp $	*/
+/*	$NetBSD: answer.c,v 1.17 2014/03/29 19:41:10 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: answer.c,v 1.16 2009/08/27 00:36:32 dholland Exp $");
+__RCSID("$NetBSD: answer.c,v 1.17 2014/03/29 19:41:10 dholland Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -78,7 +78,7 @@ answer(void)
 	if (newsock < 0)
 	{
 		if (errno == EINTR)
-			return FALSE;
+			return false;
 #ifdef LOG
 		syslog(LOG_ERR, "accept: %m");
 #else
@@ -154,7 +154,7 @@ answer(void)
 			(void) fflush(pp->p_output);
 		}
 		(void) close(newsock);
-		return FALSE;
+		return false;
 	}
 	else
 #endif
@@ -168,7 +168,7 @@ answer(void)
 			(void) write(newsock, &socklen,
 				sizeof socklen);
 			(void) close(newsock);
-			return FALSE;
+			return false;
 		}
 	else
 #endif
@@ -180,7 +180,7 @@ answer(void)
 			(void) write(newsock, &socklen,
 				sizeof socklen);
 			(void) close(newsock);
-			return FALSE;
+			return false;
 		}
 
 #ifdef MONITOR
@@ -203,7 +203,7 @@ answer(void)
 	else
 #endif
 		stplayer(pp, enter_status);
-	return TRUE;
+	return true;
 }
 
 #ifdef MONITOR
@@ -266,7 +266,7 @@ stplayer(PLAYER *newpp, int enter_status)
 	newpp->p_over = SPACE;
 	newpp->p_x = x;
 	newpp->p_y = y;
-	newpp->p_undershot = FALSE;
+	newpp->p_undershot = false;
 
 #ifdef FLY
 	if (enter_status == Q_FLY) {
@@ -347,7 +347,7 @@ stplayer(PLAYER *newpp, int enter_status)
 #endif
 
 	drawmaze(newpp);
-	drawplayer(newpp, TRUE);
+	drawplayer(newpp, true);
 	look(newpp);
 #ifdef FLY
 	if (enter_status == Q_FLY)
