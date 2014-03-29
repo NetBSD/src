@@ -1,4 +1,4 @@
-/*	$NetBSD: faketalk.c,v 1.18 2009/08/27 00:36:33 dholland Exp $	*/
+/*	$NetBSD: faketalk.c,v 1.19 2014/03/29 19:03:21 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: faketalk.c,v 1.18 2009/08/27 00:36:33 dholland Exp $");
+__RCSID("$NetBSD: faketalk.c,v 1.19 2014/03/29 19:03:21 dholland Exp $");
 #endif /* not lint */
 
 #include "bsd.h"
@@ -127,7 +127,7 @@ faketalk(void)
 #ifdef LOG
 		syslog(LOG_ERR, "faketalk: smtp protocol not supported\n");
 #else
-		warn("faketalk: stmp protocol not supported");
+		warn("faketalk: smtp protocol not supported");
 #endif
 		_exit(1);
 	}
