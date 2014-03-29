@@ -1,7 +1,7 @@
-/*	$NetBSD: procfs_machdep.c,v 1.5 2006/07/22 06:58:17 tsutsui Exp $ */
+/*	$NetBSD: procfs_machdep.c,v 1.6 2014/03/29 11:34:13 apb Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.5 2006/07/22 06:58:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.6 2014/03/29 11:34:13 apb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -19,8 +19,7 @@ int
 procfs_getcpuinfstr(char *buf, int *len)
 {
 	const char *cpu, *mmu, *fpu;
-
-	*len = 0;
+	int maxlen = *len;
 
 	switch (cputype) {
 	case CPU_68020:
@@ -79,7 +78,7 @@ procfs_getcpuinfstr(char *buf, int *len)
 		break;
 	}
 
-	*len = snprintf(buf, sizeof(buf),
+	*len = snprintf(buf, maxlen,
 	    /* as seen in Linux 2.4.27 */
 	    "CPU:\t\t%s\n"
 	    "MMU:\t\t%s\n"
