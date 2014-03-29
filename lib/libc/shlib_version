@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.249 2014/01/31 20:45:48 christos Exp $
+#	$NetBSD: shlib_version,v 1.250 2014/03/29 19:30:12 dholland Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -39,5 +39,6 @@
 # - switch to DT_INIT_ARRAY on all platforms
 # - consolidate ownership with crt0.o and avoid common symbols
 # - redo stdin/stdout/stderr to not require copy relocations
+# - move gethostbyname to a compat library
 major=12
 minor=190
