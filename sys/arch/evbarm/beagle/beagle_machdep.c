@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.55 2013/08/29 15:46:17 riz Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.56 2014/03/29 14:47:30 matt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.55 2013/08/29 15:46:17 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.56 2014/03/29 14:47:30 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -140,6 +140,7 @@ __KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.55 2013/08/29 15:46:17 riz Exp 
 #include "prcm.h"
 #include "sdhc.h"
 #include "ukbd.h"
+#include "arml2cc.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,7 +197,14 @@ __KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.55 2013/08/29 15:46:17 riz Exp 
 
 #ifdef CPU_CORTEXA9
 #include <arm/cortex/pl310_reg.h>
+#include <arm/cortex/scu_reg.h>
+
+#include <arm/cortex/a9tmr_var.h>
 #include <arm/cortex/pl310_var.h>
+#endif
+
+#if defined(CPU_CORTEXA7) || defined(CPU_CORTEXA15)
+#include <arm/cortex/gtmr_var.h>
 #endif
 
 #include <evbarm/include/autoconf.h>
@@ -481,14 +489,29 @@ initarm(void *arg)
 	/* The console is going to try to map things.  Give pmap a devmap. */
 	pmap_devmap_register(devmap);
 	consinit();
+#ifdef CPU_CORTEXA15
+#ifdef MULTIPROCESSOR
+	arm_cpu_max = 1 + __SHIFTOUT(armreg_l2ctrl_read(), L2CTRL_NUMCPU);
+#endif
+#endif
 #if defined(OMAP_4XXX)
+#if NARML2CC > 0
 	/*
 	 * Probe the PL310 L2CC
 	 */
-	const bus_space_handle_t pl310_bh = OMAP4_L2CC_BASE +
-	    OMAP_L4_PERIPHERAL_VBASE - OMAP_L4_PERIPHERAL_BASE;
+	const bus_space_handle_t pl310_bh = OMAP4_L2CC_BASE
+	    + OMAP_L4_PERIPHERAL_VBASE - OMAP_L4_PERIPHERAL_BASE;
 	arml2cc_init(&omap_bs_tag, pl310_bh, 0);
+	beagle_putchar('l');
 #endif
+#ifdef MULTIPROCESSOR
+	const bus_space_handle_t scu_bh = OMAP4_SCU_BASE
+	    + OMAP_L4_PERIPHERAL_VBASE - OMAP_L4_PERIPHERAL_BASE;
+	uint32_t scu_cfg = bus_space_read_4(&omap_bs_tag, scu_bh, SCU_CFG);
+	arm_cpu_max = 1 + (scu_cfg & SCU_CFG_CPUMAX);
+	beagle_putchar('s');
+#endif
+#endif /* OMAP_4XXX */
 #if defined(TI_AM335X) && defined(VERBOSE_INIT_ARM)
 	am335x_cpu_clk();		// find our CPU speed.
 #endif
@@ -497,6 +520,7 @@ initarm(void *arg)
 #endif
 	printf("\nuboot arg = %#x, %#x, %#x, %#x\n",
 	    uboot_args[0], uboot_args[1], uboot_args[2], uboot_args[3]);
+
 
 #ifdef KGDB
 	kgdb_port_init();
@@ -518,7 +542,7 @@ initarm(void *arg)
 	printf("initarm: Configuring system ...\n");
 #endif
 
-#if defined(CPU_CORTEXA7) || defined(CPU_CORTEXA9) || defined(CPU_CORTEXA15)
+#if !defined(CPU_CORTEXA8)
 	printf("initarm: cbar=%#x\n", armreg_cbar_read());
 #endif
 
@@ -531,6 +555,15 @@ initarm(void *arg)
 #endif
 #if defined(OMAP_4XXX) || defined(OMAP_5XXX) || defined(TI_AM335X)
 	ram_size = emif_memprobe();
+#endif
+
+#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+	if (ram_size > KERNEL_VM_BASE - KERNEL_BASE) {
+		printf("%s: dropping RAM size from %luMB to %uMB\n",
+		    __func__, (unsigned long) (ram_size >> 20),     
+		    (KERNEL_VM_BASE - KERNEL_BASE) >> 20);
+		ram_size = KERNEL_VM_BASE - KERNEL_BASE;
+	}
 #endif
 
 	/*
@@ -998,24 +1031,23 @@ beagle_device_register(device_t self, void *aux)
 #endif
 #if defined(OMAP_4430)
 		prop_dictionary_set_uint16(dict, "nports", 2);
-#if 0
-		prop_dictionary_set_bool(dict, "phy-reset", true);
-#else
 		prop_dictionary_set_bool(dict, "phy-reset", false);
-#endif
 		prop_dictionary_set_cstring(dict, "port0-mode", "none");
 		prop_dictionary_set_int16(dict, "port0-gpio", -1);
-#if 0
 		prop_dictionary_set_cstring(dict, "port1-mode", "phy");
-#else
-		prop_dictionary_set_cstring(dict, "port1-mode", "none");
-#endif
 		prop_dictionary_set_int16(dict, "port1-gpio", 62);
 		prop_dictionary_set_bool(dict, "port1-gpioval", true);
-#if 0
 		omap2_gpio_ctl(1, GPIO_PIN_OUTPUT);
-		omap2_gpio_write(1, 1);		// Enable Hub
+		omap2_gpio_write(1, 1);		// Power Hub
 #endif
+#if defined(OMAP_5430)
+		prop_dictionary_set_uint16(dict, "nports", 3);
+		prop_dictionary_set_cstring(dict, "port0-mode", "none");
+		prop_dictionary_set_int16(dict, "port0-gpio", -1);
+		prop_dictionary_set_cstring(dict, "port1-mode", "hsic");
+		prop_dictionary_set_int16(dict, "port1-gpio", -1);
+		prop_dictionary_set_cstring(dict, "port2-mode", "hsic");
+		prop_dictionary_set_int16(dict, "port2-gpio", -1);
 #endif
 		return;
 	}
