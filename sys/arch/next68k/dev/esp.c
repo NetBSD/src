@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.62 2014/03/27 18:22:56 christos Exp $	*/
+/*	$NetBSD: esp.c,v 1.63 2014/03/29 19:20:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.62 2014/03/27 18:22:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.63 2014/03/29 19:20:14 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1186,9 +1186,9 @@ esp_dma_store(struct ncr53c9x_softc *sc)
 		return;
 
 	l += snprintf(p + l, len - l, "%s: sc_begin = %p, sc_begin_size = 0x%08x\n",
+	    device_xname(sc->sc_dev), esc->sc_begin, esc->sc_begin_size);
 	if (l > len)
 		return;
-	    device_xname(sc->sc_dev), esc->sc_begin, esc->sc_begin_size);
 	l += snprintf(p + l, len - l, "%s: sc_main = %p, sc_main_size = 0x%08x\n",
 	    device_xname(sc->sc_dev), esc->sc_main, esc->sc_main_size);
 	if (l > len)
