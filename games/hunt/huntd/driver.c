@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.22 2013/10/19 17:23:08 christos Exp $	*/
+/*	$NetBSD: driver.c,v 1.23 2014/03/29 19:33:03 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: driver.c,v 1.22 2013/10/19 17:23:08 christos Exp $");
+__RCSID("$NetBSD: driver.c,v 1.23 2014/03/29 19:33:03 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -44,14 +44,6 @@ __RCSID("$NetBSD: driver.c,v 1.22 2013/10/19 17:23:08 christos Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 #include"hunt.h"
-
-#ifndef pdp11
-#define RN	(((Seed = Seed * 11109 + 13849) >> 16) & 0xffff)
-#else
-#define RN	((Seed = Seed * 11109 + 13849) & 0x7fff)
-#endif
-
-static int Seed = 0;
 
 
 static SOCKET Daemon;
@@ -411,7 +403,7 @@ init(void)
 	fdset[2].fd = -1;
 #endif
 
-	Seed = getpid() + time(NULL);
+	srandom(time(NULL));
 	makemaze();
 #ifdef BOOTS
 	makeboots();
@@ -810,7 +802,7 @@ zap(PLAYER *pp, FLAG was_player, int i)
 int
 rand_num(int range)
 {
-	return (range == 0 ? 0 : RN % range);
+	return (range == 0 ? 0 : random() % range);
 }
 
 /*
