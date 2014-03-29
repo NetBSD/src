@@ -1,4 +1,4 @@
-/*	$NetBSD: playit.c,v 1.16 2009/08/27 00:36:32 dholland Exp $	*/
+/*	$NetBSD: playit.c,v 1.17 2014/03/29 20:52:13 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: playit.c,v 1.16 2009/08/27 00:36:32 dholland Exp $");
+__RCSID("$NetBSD: playit.c,v 1.17 2014/03/29 20:52:13 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/file.h>
@@ -146,7 +146,7 @@ playit(void)
 		  case ENDWIN:
 			refresh();
 			if ((ch = GETCHR()) == LAST_PLAYER)
-				Last_player = TRUE;
+				Last_player = true;
 			ch = EOF;
 			goto out;
 		  case BELL:
@@ -281,7 +281,8 @@ send_stuff(void)
 int
 quit(int old_status)
 {
-	int explain, ch;
+	bool explain;
+	int ch;
 
 	if (Last_player)
 		return Q_QUIT;
@@ -292,7 +293,7 @@ quit(int old_status)
 	move(HEIGHT, 0);
 	put_str("Re-enter game [ynwo]? ");
 	clear_eol();
-	explain = FALSE;
+	explain = false;
 	for (;;) {
 		refresh();
 		if (isupper(ch = getchar()))
@@ -369,7 +370,7 @@ get_message:
 		beep();
 		if (!explain) {
 			put_str("(Yes, No, Write message, or Options) ");
-			explain = TRUE;
+			explain = true;
 		}
 	}
 
@@ -381,7 +382,7 @@ get_message:
 #endif
 	clear_eol();
 	refresh();
-	explain = FALSE;
+	explain = false;
 	for (;;) {
 		if (isupper(ch = getchar()))
 			ch = tolower(ch);
@@ -402,7 +403,7 @@ get_message:
 #else
 			put_str("[SCQ] ");
 #endif
-			explain = TRUE;
+			explain = true;
 		}
 		refresh();
 	}
