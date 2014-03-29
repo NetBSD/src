@@ -1,4 +1,4 @@
-/*	$NetBSD: execute.c,v 1.11 2014/03/29 19:41:10 dholland Exp $	*/
+/*	$NetBSD: execute.c,v 1.12 2014/03/29 21:38:54 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: execute.c,v 1.11 2014/03/29 19:41:10 dholland Exp $");
+__RCSID("$NetBSD: execute.c,v 1.12 2014/03/29 21:38:54 dholland Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -550,7 +550,7 @@ scan(PLAYER *pp)
  * pickup:
  *	check whether the object blew up or whether he picked it up
  */
-void
+static void
 pickup(PLAYER *pp, int y, int x, int prob, int obj)
 {
 	int req;
