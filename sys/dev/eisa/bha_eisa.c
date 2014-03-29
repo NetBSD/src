@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_eisa.c,v 1.35 2012/10/27 17:18:16 chs Exp $	*/
+/*	$NetBSD: bha_eisa.c,v 1.36 2014/03/29 19:28:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha_eisa.c,v 1.35 2012/10/27 17:18:16 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha_eisa.c,v 1.36 2014/03/29 19:28:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,6 +146,7 @@ bha_eisa_attach(device_t parent, device_t self, void *aux)
 	eisa_chipset_tag_t ec = ea->ea_ec;
 	eisa_intr_handle_t ih;
 	const char *model, *intrstr;
+	char intrbuf[EISA_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 
@@ -179,7 +180,7 @@ bha_eisa_attach(device_t parent, device_t self, void *aux)
 		    bpd.sc_irq);
 		return;
 	}
-	intrstr = eisa_intr_string(ec, ih);
+	intrstr = eisa_intr_string(ec, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = eisa_intr_establish(ec, ih, IST_LEVEL, IPL_BIO,
 	    bha_intr, sc);
 	if (sc->sc_ih == NULL) {
