@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.31 2014/03/29 22:11:19 dholland Exp $	*/
+/*	$NetBSD: driver.c,v 1.32 2014/03/29 22:29:55 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: driver.c,v 1.31 2014/03/29 22:11:19 dholland Exp $");
+__RCSID("$NetBSD: driver.c,v 1.32 2014/03/29 22:29:55 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -130,11 +130,7 @@ again:
 		while (poll(fdset, 3+MAXPL+MAXMON, INFTIM) < 0)
 		{
 			if (errno != EINTR)
-#ifdef LOG
-				syslog(LOG_WARNING, "poll: %m");
-#else
-				warn("poll");
-#endif
+				complain(LOG_WARNING, "poll");
 			errno = 0;
 		}
 #ifdef INTERNET
@@ -294,11 +290,7 @@ init(void)
 		if (errno == EADDRINUSE)
 			exit(0);
 		else {
-#ifdef LOG
-			syslog(LOG_ERR, "bind: %m");
-#else
-			warn("bind");
-#endif
+			complain(LOG_ERR, "bind");
 			cleanup(1);
 		}
 	}
@@ -307,11 +299,7 @@ init(void)
 #ifdef INTERNET
 	len = sizeof (SOCKET);
 	if (getsockname(Status, (struct sockaddr *) &Daemon, &len) < 0)  {
-#ifdef LOG
-		syslog(LOG_ERR, "getsockname: %m");
-#else
-		warn("getsockname");
-#endif
+		complain(LOG_ERR, "getsockname");
 		exit(1);
 	}
 	stat_port = ntohs(Daemon.sin_port);
@@ -333,21 +321,13 @@ init(void)
 #if defined(INTERNET)
 	msg = 1;
 	if (setsockopt(Socket, SOL_SOCKET, SO_USELOOPBACK, &msg, sizeof msg)<0)
-#ifdef LOG
-		syslog(LOG_WARNING, "setsockopt loopback %m");
-#else
-		warn("setsockopt loopback");
-#endif
+		complain(LOG_WARNING, "setsockopt loopback");
 #endif
 	if (bind(Socket, (struct sockaddr *) &Daemon, DAEMON_SIZE) < 0) {
 		if (errno == EADDRINUSE)
 			exit(0);
 		else {
-#ifdef LOG
-			syslog(LOG_ERR, "bind: %m");
-#else
-			warn("bind");
-#endif
+			complain(LOG_ERR, "bind");
 			cleanup(1);
 		}
 	}
@@ -356,11 +336,7 @@ init(void)
 #ifdef INTERNET
 	len = sizeof (SOCKET);
 	if (getsockname(Socket, (struct sockaddr *) &Daemon, &len) < 0)  {
-#ifdef LOG
-		syslog(LOG_ERR, "getsockname: %m");
-#else
-		warn("getsockname");
-#endif
+		complain(LOG_ERR, "getsockname");
 		exit(1);
 	}
 	sock_port = ntohs(Daemon.sin_port);
@@ -391,11 +367,7 @@ init(void)
 		Test_socket = socket(SOCK_FAMILY, SOCK_DGRAM, 0);
 		if (bind(Test_socket, (struct sockaddr *) &test_port,
 		    DAEMON_SIZE) < 0) {
-#ifdef LOG
-			syslog(LOG_ERR, "bind: %m");
-#else
-			warn("bind");
-#endif
+			complain(LOG_ERR, "bind");
 			exit(1);
 		}
 		(void) listen(Test_socket, 5);
@@ -891,20 +863,12 @@ send_stats(void)
 	if (s < 0) {
 		if (errno == EINTR)
 			return;
-#ifdef LOG
-		syslog(LOG_WARNING, "accept: %m");
-#else
-		warn("accept");
-#endif
+		complain(LOG_WARNING, "accept");
 		return;
 	}
 	fp = fdopen(s, "w");
 	if (fp == NULL) {
-#ifdef LOG
-		syslog(LOG_WARNING, "fdopen: %m");
-#else
-		warn("fdopen");
-#endif
+		complain(LOG_WARNING, "fdopen");
 		(void) close(s);
 		return;
 	}
