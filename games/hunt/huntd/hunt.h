@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.h,v 1.26 2014/03/29 21:55:59 dholland Exp $	*/
+/*	$NetBSD: hunt.h,v 1.27 2014/03/29 22:29:55 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -34,10 +34,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
-
-#ifdef LOG
 #include <syslog.h>
-#endif
 
 #include <sys/ioctl.h>
 #include <sys/types.h>
@@ -208,6 +205,9 @@ PLAYER *play_at(int, int);
 bool opposite(int, char);
 BULLET *is_bullet(int, int);
 void fixshots(int, int, char);
+
+/* in support.c */
+__printflike(2, 3) void complain(int level, const char *fmt, ...);
 
 /* in terminal.c */
 void cgoto(PLAYER *, int, int);
