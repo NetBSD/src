@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl_transact.c,v 1.10 2014/03/29 20:10:10 dholland Exp $	*/
+/*	$NetBSD: ctl_transact.c,v 1.11 2014/03/29 20:16:09 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -30,8 +30,6 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "bsd.h"
-
 #if defined(TALK_43) || defined(TALK_42)
 
 #include <sys/cdefs.h>
@@ -39,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)ctl_transact.c	5.2 (Berkeley) 3/13/86";
 #else
-__RCSID("$NetBSD: ctl_transact.c,v 1.10 2014/03/29 20:10:10 dholland Exp $");
+__RCSID("$NetBSD: ctl_transact.c,v 1.11 2014/03/29 20:16:09 dholland Exp $");
 #endif
 #endif /* not lint */
 
