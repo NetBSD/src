@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt_common.h,v 1.2 2014/03/29 21:25:35 dholland Exp $	*/
+/*	$NetBSD: hunt_common.h,v 1.3 2014/03/29 21:55:59 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -206,7 +206,6 @@
 #define SLIME3REQ	20
 #define MAXSLIME	4
 #define SLIMESPEED	5
-extern int slime_req[];
 #endif
 #ifdef VOLCANO
 #define LAVASPEED	1

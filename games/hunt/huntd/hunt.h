@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.h,v 1.25 2014/03/29 21:43:46 dholland Exp $	*/
+/*	$NetBSD: hunt.h,v 1.26 2014/03/29 21:55:59 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -55,8 +55,11 @@
 
 #include "hunt_common.h"
 
-extern int shot_req[];
-extern int shot_type[];
+extern const int shot_req[];
+extern const int shot_type[];
+#ifdef OOZE
+extern const int slime_req[];
+#endif
 
 typedef struct bullet_def	BULLET;
 typedef struct expl_def		EXPL;

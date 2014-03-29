@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.29 2014/03/29 21:33:41 dholland Exp $	*/
+/*	$NetBSD: driver.c,v 1.30 2014/03/29 21:55:59 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: driver.c,v 1.29 2014/03/29 21:33:41 dholland Exp $");
+__RCSID("$NetBSD: driver.c,v 1.30 2014/03/29 21:55:59 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: driver.c,v 1.29 2014/03/29 21:33:41 dholland Exp $");
 
 
 #ifdef INTERNET
-static u_short Test_port = TEST_PORT;
+static uint16_t Test_port = TEST_PORT;
 #else
 static const char Sock_name[] = "/tmp/hunt";
 static const char Stat_name[] = "/tmp/hunt.stats";
@@ -822,11 +822,11 @@ havechar(PLAYER *pp, int i)
 	if (!(fdset[i].revents & POLLIN))
 		return false;
 check_again:
-	errno = 0;
-	if ((pp->p_nchar = read(pp->p_fd, pp->p_cbuf, sizeof pp->p_cbuf)) <= 0)
-	{
+	pp->p_nchar = read(pp->p_fd, pp->p_cbuf, sizeof pp->p_cbuf);
+	if (pp->p_nchar < 0 && errno == EINTR) {
+		goto check_again;
+	} else if (pp->p_nchar <= 0) {
 		if (errno == EINTR)
-			goto check_again;
 		pp->p_cbuf[0] = 'q';
 	}
 	pp->p_ncount = 0;
@@ -838,7 +838,7 @@ check_again:
  *	Exit with the given value, cleaning up any droppings lying around
  */
 void
-cleanup(int eval)
+cleanup(int exitval)
 {
 	PLAYER *pp;
 
@@ -861,7 +861,7 @@ cleanup(int eval)
 	(void) unlink(Sock_name);
 #endif
 
-	exit(eval);
+	exit(exitval);
 }
 
 /*
