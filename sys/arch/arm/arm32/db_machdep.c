@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.19 2014/03/28 21:54:12 matt Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.20 2014/03/29 09:27:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -28,10 +28,12 @@
  * rights to redistribute these changes.
  */
 
+#ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
+#endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.19 2014/03/28 21:54:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.20 2014/03/29 09:27:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -48,6 +50,10 @@ __KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.19 2014/03/28 21:54:12 matt Exp $")
 #include <ddb/db_variables.h>
 #include <ddb/db_command.h>
 #include <ddb/db_run.h>
+
+#ifndef _KERNEL
+#include <stddef.h>
+#endif
 
 #ifdef _KERNEL
 static long nil;
