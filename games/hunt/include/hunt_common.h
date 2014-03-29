@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt_common.h,v 1.1 2014/03/29 21:24:27 dholland Exp $	*/
+/*	$NetBSD: hunt_common.h,v 1.2 2014/03/29 21:25:35 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -31,6 +31,12 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+
+/*
+ * There is no particular significance to the numbers assigned
+ * to Test_port.  They're just random numbers greater than the
+ * range reserved for privileged sockets.
+ */
 
 #ifdef INTERNET
 #define SOCK_FAMILY	AF_INET
