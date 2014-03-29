@@ -1,4 +1,4 @@
-/*	$NetBSD: trm.c,v 1.35 2013/11/24 18:02:08 bouyer Exp $	*/
+/*	$NetBSD: trm.c,v 1.36 2014/03/29 19:28:25 christos Exp $	*/
 /*-
  * Copyright (c) 2002 Izumi Tsutsui.  All rights reserved.
  *
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.35 2013/11/24 18:02:08 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.36 2014/03/29 19:28:25 christos Exp $");
 
 /* #define TRM_DEBUG */
 #ifdef TRM_DEBUG
@@ -413,6 +413,7 @@ trm_attach(device_t parent, device_t self, void *aux)
 	pcireg_t command;
 	const char *intrstr;
 	int fl = 0;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 
@@ -474,7 +475,7 @@ trm_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, ih);
+	intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
 
 	if (pci_intr_establish(pa->pa_pc, ih, IPL_BIO, trm_intr, sc) == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");

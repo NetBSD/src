@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.h,v 1.1 2014/02/24 07:23:43 skrll Exp $	*/
+/*	$NetBSD: eisa_machdep.h,v 1.2 2014/03/29 19:28:28 christos Exp $	*/
 
 /*	$OpenBSD: eisa_machdep.h,v 1.2 2000/04/18 20:55:02 mickey Exp $	*/
 
@@ -60,8 +60,8 @@ struct hppa_eisa_chipset {
 #define	eisa_maxslots(c)	8
 #define	eisa_intr_map(c, i, hp)						\
     (*(c)->ec_intr_map)((c)->ec_v, (i), (hp))
-#define	eisa_intr_string(c, h)						\
-    (*(c)->ec_intr_string)((c)->ec_v, (h))
+#define	eisa_intr_string(c, h, buf, len)				\
+    (*(c)->ec_intr_string)((c)->ec_v, (h), (buf), (len))
 #define	eisa_intr_establish(c, h, t, l, f, a)			\
     (*(c)->ec_intr_establish)((c)->ec_v, (h), (t), (l), (f), (a))
 #define	eisa_intr_disestablish(c, h)					\

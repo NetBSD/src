@@ -657,6 +657,7 @@ alc_attach(device_t parent, device_t self, void *aux)
 	uint16_t burst;
 	int base, mii_flags, state, error = 0;
 	uint32_t cap, ctl, val;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->alc_ident = alc_find_ident(pa);
 
@@ -696,7 +697,7 @@ alc_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Allocate IRQ
 	 */
-	intrstr = pci_intr_string(sc->sc_pct, ih);
+	intrstr = pci_intr_string(sc->sc_pct, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_irq_handle = pci_intr_establish(pc, ih, IPL_NET, alc_intr, sc);
 	if (sc->sc_irq_handle == NULL) {
 		printf(": could not establish interrupt");

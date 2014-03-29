@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.56 2014/03/16 05:20:28 dholland Exp $	*/
+/*	$NetBSD: amr.c,v 1.57 2014/03/29 19:28:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.56 2014/03/16 05:20:28 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.57 2014/03/29 19:28:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -275,6 +275,7 @@ amr_attach(device_t parent, device_t self, void *aux)
 	int rseg, i, j, size, rv, memreg, ioreg;
 	struct amr_ccb *ac;
 	int locs[AMRCF_NLOCS];
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	aprint_naive(": RAID controller\n");
 
@@ -332,7 +333,7 @@ amr_attach(device_t parent, device_t self, void *aux)
 		amr_teardown(amr);
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	amr->amr_ih = pci_intr_establish(pc, ih, IPL_BIO, amr_intr, amr);
 	if (amr->amr_ih == NULL) {
 		aprint_error("can't establish interrupt");

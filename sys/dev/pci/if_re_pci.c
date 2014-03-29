@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.42 2013/03/30 03:21:07 christos Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.43 2014/03/29 19:28:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_re_pci.c,v 1.42 2013/03/30 03:21:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_re_pci.c,v 1.43 2014/03/29 19:28:25 christos Exp $");
 
 #include <sys/types.h>
 
@@ -183,6 +183,7 @@ re_pci_attach(device_t parent, device_t self, void *aux)
 	bus_space_tag_t iot, memt;
 	bus_space_handle_t ioh, memh;
 	bus_size_t iosize, memsize;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 	psc->sc_pc = pa->pa_pc;
@@ -252,7 +253,7 @@ re_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, re_intr, sc);
 	if (psc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");

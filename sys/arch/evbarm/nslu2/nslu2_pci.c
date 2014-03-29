@@ -1,4 +1,4 @@
-/*      $NetBSD: nslu2_pci.c,v 1.5 2012/11/12 18:00:39 skrll Exp $	*/
+/*      $NetBSD: nslu2_pci.c,v 1.6 2014/03/29 19:28:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslu2_pci.c,v 1.5 2012/11/12 18:00:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslu2_pci.c,v 1.6 2014/03/29 19:28:28 christos Exp $");
 
 /*
  * Linksys NSLU2 PCI support.
@@ -100,21 +100,27 @@ nslu2_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 }
 
 static const char *
-nslu2_pci_intr_string(void *v, pci_intr_handle_t ih)
+nslu2_pci_intr_string(void *v, pci_intr_handle_t ih, char *buf, size_t len)
 {
-
+	char c;
 	switch (ih) {
 	case PCI_INT_A:
-		return ("INTA");
+		c = 'A';
+		break;
 
 	case PCI_INT_B:
-		return ("INTB");
+		c = 'B';
+		break;
 
 	case PCI_INT_C:
-		return ("INTC");
+		c = 'C';
+		break;
+	default:
+		c = '?';
 	}
+	snprintf(buf, len, "PCI%c", c);
 
-	return (NULL);
+	return return buf;
 }
 
 static const struct evcnt *

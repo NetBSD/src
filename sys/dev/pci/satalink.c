@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.51 2013/10/07 19:51:55 jakllsch Exp $	*/
+/*	$NetBSD: satalink.c,v 1.52 2014/03/29 19:28:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.51 2013/10/07 19:51:55 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.52 2014/03/29 19:28:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -674,6 +674,7 @@ sii3114_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 	pci_intr_handle_t intrhandle;
 	const char *intrstr;
 	int channel;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	if (pciide_chipen(sc, pa) == 0)
 		return;
@@ -760,7 +761,7 @@ sii3114_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 		    "couldn't map native-PCI interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, intrhandle);
+	intrstr = pci_intr_string(pa->pa_pc, intrhandle, intrbuf, sizeof(intrbuf));
 	sc->sc_pci_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_BIO,
 					   /* XXX */
 					   pciide_pci_intr, sc);

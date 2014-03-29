@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.19 2014/03/26 15:55:43 christos Exp $ */
+/*	$NetBSD: pci_machdep.c,v 1.20 2014/03/29 19:28:30 christos Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.19 2014/03/26 15:55:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.20 2014/03/29 19:28:30 christos Exp $");
 
 #if defined(DEBUG) && !defined(SPARC_PCI_DEBUG)
 #define SPARC_PCI_DEBUG
@@ -490,14 +490,14 @@ pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 
 
 const char *
-pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
+pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih, char *buf,
+    size_t len)
 {
-	static char str[16];
 	int pil;
 
 	pil = mspcic_assigned_interrupt(ih);
-	snprintf(str, sizeof(str), "line %d (pil %d)", ih, pil);
-	return str;
+	snprintf(buf, len, "line %d (pil %d)", ih, pil);
+	return buf;
 }
 
 

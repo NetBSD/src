@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.205 2013/10/17 21:06:15 christos Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.206 2014/03/29 19:28:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.205 2013/10/17 21:06:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.206 2014/03/29 19:28:25 christos Exp $");
 
 /*
 #define CBB_DEBUG
@@ -916,13 +916,14 @@ pccbb_intrinit(struct pccbb_softc *sc)
 	pci_chipset_tag_t pc = sc->sc_pc;
 	bus_space_tag_t bmt = sc->sc_base_memt;
 	bus_space_handle_t bmh = sc->sc_base_memh;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(&sc->sc_pa, &ih)) {
 		aprint_error_dev(sc->sc_dev, "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 
 	/*
 	 * XXX pccbbintr should be called under the priority lower
