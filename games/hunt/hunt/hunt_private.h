@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt_private.h,v 1.1 2014/03/29 21:24:26 dholland Exp $	*/
+/*	$NetBSD: hunt_private.h,v 1.2 2014/03/29 22:05:44 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -60,16 +60,8 @@
 
 extern bool Last_player;
 
-extern const char *Driver;
-
 extern char Buf[BUFSIZ];
 extern int Socket;
-
-#ifdef INTERNET
-extern u_short Test_port;
-#else
-extern char *Sock_name;
-#endif
 
 #ifdef INTERNET
 extern char *Send_message;
