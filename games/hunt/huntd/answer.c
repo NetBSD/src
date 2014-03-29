@@ -1,4 +1,4 @@
-/*	$NetBSD: answer.c,v 1.17 2014/03/29 19:41:10 dholland Exp $	*/
+/*	$NetBSD: answer.c,v 1.18 2014/03/29 22:29:55 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: answer.c,v 1.17 2014/03/29 19:41:10 dholland Exp $");
+__RCSID("$NetBSD: answer.c,v 1.18 2014/03/29 22:29:55 dholland Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -79,11 +79,7 @@ answer(void)
 	{
 		if (errno == EINTR)
 			return false;
-#ifdef LOG
-		syslog(LOG_ERR, "accept: %m");
-#else
-		perror("accept");
-#endif
+		complain(LOG_ERR, "accept");
 		cleanup(1);
 	}
 
