@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.45 2014/03/29 22:05:44 dholland Exp $	*/
+/*	$NetBSD: hunt.c,v 1.46 2014/03/29 22:11:19 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.45 2014/03/29 22:05:44 dholland Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.46 2014/03/29 22:11:19 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -50,22 +50,23 @@ __RCSID("$NetBSD: hunt.c,v 1.45 2014/03/29 22:05:44 dholland Exp $");
 #include <ifaddrs.h>
 
 #include "hunt_common.h"
+#include "pathnames.h"
 #include "hunt_private.h"
 
 #define clear_eol()	clrtoeol()
 #define put_ch		addch
 #define put_str		addstr
 
-#ifdef DEBUG
-static const char Driver[] = "/home/socr/a/conrad/games/src/hunt/huntd.dbg";
+#ifdef OVERRIDE_PATH_HUNTD
+static const char Driver[] = OVERRIDE_PATH_HUNTD;
 #else
-static const char Driver[] = HUNTD;
+static const char Driver[] = PATH_HUNTD;
 #endif
 
 #ifdef INTERNET
 static uint16_t Test_port = TEST_PORT;
 #else
-static const char Sock_name[] = "/tmp/hunt";
+static const char Sock_name[] = PATH_HUNTSOCKET;
 #endif
 
 
