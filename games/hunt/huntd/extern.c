@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.c,v 1.6 2009/08/12 07:42:11 dholland Exp $	*/
+/*	$NetBSD: extern.c,v 1.7 2014/03/29 19:41:10 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,13 +32,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: extern.c,v 1.6 2009/08/12 07:42:11 dholland Exp $");
+__RCSID("$NetBSD: extern.c,v 1.7 2014/03/29 19:41:10 dholland Exp $");
 #endif /* not lint */
 
 #include "hunt.h"
 
 #if 0 /*def MONITOR*/ /* apparently unused (XXX?) */
-FLAG Am_monitor = FALSE;		/* current process is a monitor */
+bool Am_monitor = false;		/* current process is a monitor */
 #endif
 
 char Buf[BUFSIZ];			/* general scribbling buffer */
