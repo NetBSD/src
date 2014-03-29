@@ -1,4 +1,4 @@
-/* $NetBSD: com_sableio.c,v 1.12 2014/03/21 16:39:29 christos Exp $ */
+/* $NetBSD: com_sableio.c,v 1.13 2014/03/29 19:28:25 christos Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: com_sableio.c,v 1.12 2014/03/21 16:39:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_sableio.c,v 1.13 2014/03/29 19:28:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ com_sableio_attach(device_t parent, device_t self, void *aux)
 	struct com_softc *sc = &ssc->sc_com;
 	struct sableio_attach_args *sa = aux;
 	const char *intrstr;
-	char buf[64];
+	char buf[PCI_INTRSTR_LEN];
 	bus_space_handle_t ioh;
 
 	sc->sc_dev = self;
@@ -106,7 +106,7 @@ com_sableio_attach(device_t parent, device_t self, void *aux)
 
 	com_attach_subr(sc);
 
-	intrstr = pci_intr_string_internal(sa->sa_pc, sa->sa_sableirq[0],
+	intrstr = pci_intr_string(sa->sa_pc, sa->sa_sableirq[0],
 	    buf, sizeof(buf));
 	ssc->sc_ih = pci_intr_establish(sa->sa_pc, sa->sa_sableirq[0],
 	    IPL_SERIAL, comintr, sc);

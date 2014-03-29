@@ -1,4 +1,4 @@
-/* $NetBSD: if_mtd_pci.c,v 1.18 2012/10/27 17:18:33 chs Exp $ */
+/* $NetBSD: if_mtd_pci.c,v 1.19 2014/03/29 19:28:25 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 /* TODO: Check why in IO space, the MII won't work. Memory mapped works */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mtd_pci.c,v 1.18 2012/10/27 17:18:33 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mtd_pci.c,v 1.19 2014/03/29 19:28:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -97,6 +97,7 @@ mtd_pci_attach(device_t parent, device_t self, void *aux)
 	bus_space_tag_t iot, memt;
 	bus_space_handle_t ioh, memh;
 	int io_valid, mem_valid;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->dev = self;
 	pci_aprint_devinfo(pa, NULL);
@@ -126,7 +127,7 @@ mtd_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(sc->dev, "could not map interrupt\n");
 		return;
 	}
-	intrstring = pci_intr_string(pa->pa_pc, ih);
+	intrstring = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
 
 	if (pci_intr_establish(pa->pa_pc, ih, IPL_NET, mtd_irq_h, sc) == NULL) {
 		aprint_error_dev(sc->dev, "could not establish interrupt");

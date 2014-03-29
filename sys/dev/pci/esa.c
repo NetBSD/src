@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.59 2013/10/16 17:39:09 christos Exp $ */
+/* $NetBSD: esa.c,v 1.60 2014/03/29 19:28:24 christos Exp $ */
 
 /*
  * Copyright (c) 2001-2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.59 2013/10/16 17:39:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.60 2014/03/29 19:28:24 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -1009,6 +1009,7 @@ esa_attach(device_t parent, device_t self, void *aux)
 	const char *intrstr;
 	uint32_t data;
 	int revision, i, error;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc = device_private(self);
 	pa = (struct pci_attach_args *)aux;
@@ -1056,7 +1057,7 @@ esa_attach(device_t parent, device_t self, void *aux)
 		mutex_destroy(&sc->sc_intr_lock);
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, esa_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "can't establish interrupt");

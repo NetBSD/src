@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.64 2013/10/16 18:20:16 christos Exp $	*/
+/*	$NetBSD: eso.c,v 1.65 2014/03/29 19:28:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.64 2013/10/16 18:20:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.65 2014/03/29 19:28:24 christos Exp $");
 
 #include "mpu.h"
 
@@ -259,6 +259,7 @@ eso_attach(device_t parent, device_t self, void *aux)
 	const char *intrstring;
 	int idx, error;
 	uint8_t a2mode, mvctl;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc = device_private(self);
 	sc->sc_dev = self;
@@ -390,7 +391,7 @@ eso_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	intrstring = pci_intr_string(pa->pa_pc, ih);
+	intrstring = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih  = pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO, eso_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt");

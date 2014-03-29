@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.55 2013/09/13 21:14:58 martin Exp $ */
+/* $NetBSD: if_vge.c,v 1.56 2014/03/29 19:28:25 christos Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.55 2013/09/13 21:14:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.56 2014/03/29 19:28:25 christos Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -941,6 +941,7 @@ vge_attach(device_t parent, device_t self, void *aux)
 	const char *intrstr;
 	pci_intr_handle_t ih;
 	uint16_t val;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 
@@ -967,7 +968,7 @@ vge_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "unable to map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_intrhand = pci_intr_establish(pc, ih, IPL_NET, vge_intr, sc);
 	if (sc->sc_intrhand == NULL) {
 		aprint_error_dev(self, "unable to establish interrupt");

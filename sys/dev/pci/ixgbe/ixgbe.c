@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: src/sys/dev/ixgbe/ixgbe.c,v 1.51 2011/04/25 23:34:21 jfv Exp $*/
-/*$NetBSD: ixgbe.c,v 1.7 2014/02/25 18:30:10 pooka Exp $*/
+/*$NetBSD: ixgbe.c,v 1.8 2014/03/29 19:28:25 christos Exp $*/
 
 #include "opt_inet.h"
 
@@ -2262,6 +2262,7 @@ ixgbe_allocate_legacy(struct adapter *adapter, const struct pci_attach_args *pa)
 	device_t dev = adapter->dev;
 	struct		ix_queue *que = adapter->queues;
 	int rid = 0;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	/* MSI RID at 1 */
 	if (adapter->msix == 1)
@@ -2273,7 +2274,7 @@ ixgbe_allocate_legacy(struct adapter *adapter, const struct pci_attach_args *pa)
 		return ENXIO;
 	} else {
 		aprint_normal_dev(dev, "interrupting at %s\n",
-		    pci_intr_string(adapter->osdep.pc, adapter->osdep.ih));
+		    pci_intr_string(adapter->osdep.pc, adapter->osdep.ih), intrbuf, sizeof(intrbuf));
 	}
 
 	/*

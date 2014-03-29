@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.76 2014/03/26 08:40:58 christos Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.77 2014/03/29 19:28:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.76 2014/03/26 08:40:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.77 2014/03/29 19:28:30 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -367,14 +367,13 @@ sparc64_pci_enumerate_bus(struct pci_softc *sc, const int *locators,
 }
 
 const char *
-pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
+pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih, char *buf,
+    size_t len)
 {
-	static char str[16];
+	snprintf(buf, len, "ivec %x", ih);
+	DPRINTF(SPDB_INTR, ("pci_intr_string: returning %s\n", buf));
 
-	snprintf(str, sizeof(str), "ivec %x", ih);
-	DPRINTF(SPDB_INTR, ("pci_intr_string: returning %s\n", str));
-
-	return (str);
+	return buf;
 }
 
 const struct evcnt *

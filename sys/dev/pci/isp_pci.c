@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.116 2013/09/14 12:44:17 martin Exp $ */
+/* $NetBSD: isp_pci.c,v 1.117 2014/03/29 19:28:25 christos Exp $ */
 /*
  * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.116 2013/09/14 12:44:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.117 2014/03/29 19:28:25 christos Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/pci/pcireg.h>
@@ -493,6 +493,7 @@ isp_pci_attach(device_t parent, device_t self, void *aux)
 	const char *intrstr;
 	int ioh_valid, memh_valid;
 	size_t mamt;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	isp->isp_osinfo.dev = self;
 
@@ -762,7 +763,7 @@ isp_pci_attach(device_t parent, device_t self, void *aux)
 		free(isp->isp_osinfo.chan, M_DEVBUF);
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, ih);
+	intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
 	if (intrstr == NULL)
 		intrstr = "<I dunno>";
 	pcs->pci_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO,

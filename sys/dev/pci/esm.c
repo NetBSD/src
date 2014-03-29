@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.57 2013/09/14 13:12:41 joerg Exp $      */
+/*      $NetBSD: esm.c,v 1.58 2014/03/29 19:28:24 christos Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.57 2013/09/14 13:12:41 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.58 2014/03/29 19:28:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1581,6 +1581,7 @@ esm_attach(device_t parent, device_t self, void *aux)
 	uint16_t codec_data;
 	uint16_t pcmbar;
 	int error;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	ess = device_private(self);
 	ess->sc_dev = self;
@@ -1627,7 +1628,7 @@ esm_attach(device_t parent, device_t self, void *aux)
 		mutex_destroy(&ess->sc_intr_lock);
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	ess->ih = pci_intr_establish(pc, ih, IPL_AUDIO, esm_intr, self);
 	if (ess->ih == NULL) {
 		aprint_error_dev(ess->sc_dev, "can't establish interrupt");
