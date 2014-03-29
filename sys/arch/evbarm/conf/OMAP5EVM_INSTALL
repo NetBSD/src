@@ -1,0 +1,11 @@
+#	$NetBSD: OMAP5EVM_INSTALL,v 1.1 2014/03/29 14:05:58 matt Exp $
+#
+#	OMAP5EVM_INSTALL -- OMAP5EVM kernel with installation-sized
+#	ramdisk
+#
+
+include "arch/evbarm/conf/OMAP5EVM"
+include "arch/evbarm/conf/INSTALL"
+
+options BOOTHOWTO=RB_SINGLE
+options VERBOSE_INIT_ARM
