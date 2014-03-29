@@ -1,4 +1,4 @@
-/*      $NetBSD: pciback.c,v 1.8 2014/03/27 18:22:56 christos Exp $      */
+/*      $NetBSD: pciback.c,v 1.9 2014/03/29 19:28:30 christos Exp $      */
 
 /*
  * Copyright (c) 2009 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciback.c,v 1.8 2014/03/27 18:22:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciback.c,v 1.9 2014/03/29 19:28:30 christos Exp $");
 
 #include "opt_xen.h"
 
@@ -222,6 +222,7 @@ pciback_pci_attach(device_t parent, device_t self, void *aux)
 	kernfs_entry_t *dkt;
 	kfstype kfst;
 	pcireg_t reg;
+	char buf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 	sc->sc_pb = pciback_pci_lookup(pa->pa_bus, pa->pa_device, pa->pa_function);
@@ -263,9 +264,9 @@ pciback_pci_attach(device_t parent, device_t self, void *aux)
 	if (pci_intr_map(pa, &sc->sc_intrhandle) != 0) {
 		aprint_error_dev(self, "couldn't map interrupt\n");
 	} else {
-		intrstr = pci_intr_string(pa->pa_pc, sc->sc_intrhandle);
-		aprint_normal_dev(self, "interrupting at %s\n",
-		    intrstr ? intrstr : "unknown interrupt");
+		intrstr = pci_intr_string(pa->pa_pc, sc->sc_intrhandle,
+		    buf, sizeof(buf));
+		aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 	}
 	unbind_pirq_from_evtch(APIC_IRQ_LEGACY_IRQ(sc->sc_intrhandle.pirq));
 	sc->sc_irq = APIC_IRQ_LEGACY_IRQ(sc->sc_intrhandle.pirq);

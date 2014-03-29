@@ -1,4 +1,4 @@
-/*	$NetBSD: adv_pci.c,v 1.27 2012/10/27 17:18:28 chs Exp $	*/
+/*	$NetBSD: adv_pci.c,v 1.28 2014/03/29 19:28:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc. All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adv_pci.c,v 1.27 2012/10/27 17:18:28 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adv_pci.c,v 1.28 2014/03/29 19:28:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,6 +116,7 @@ adv_pci_attach(device_t parent, device_t self, void *aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	u_int32_t       command;
 	const char     *intrstr;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	aprint_naive(": SCSI controller\n");
 
@@ -218,7 +219,7 @@ adv_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(sc->sc_dev, "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 
 	/*
 	 * Establish Interrupt handler

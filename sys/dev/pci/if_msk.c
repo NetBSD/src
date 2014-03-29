@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.44 2014/02/25 18:30:10 pooka Exp $ */
+/* $NetBSD: if_msk.c,v 1.45 2014/03/29 19:28:25 christos Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.44 2014/02/25 18:30:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.45 2014/03/29 19:28:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1167,6 +1167,7 @@ mskc_attach(device_t parent, device_t self, void *aux)
 	void *kva;
 	bus_dma_segment_t seg;
 	int rseg;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	DPRINTFN(2, ("begin mskc_attach\n"));
 
@@ -1241,7 +1242,7 @@ mskc_attach(device_t parent, device_t self, void *aux)
 		goto fail_1;
 	}
 
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sk_intrhand = pci_intr_establish(pc, ih, IPL_NET, msk_intr, sc);
 	if (sc->sk_intrhand == NULL) {
 		aprint_error(": couldn't establish interrupt");

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsx_pci.c,v 1.1 2014/03/19 15:26:41 nonaka Exp $	*/
+/*	$NetBSD: rtsx_pci.c,v 1.2 2014/03/29 19:28:25 christos Exp $	*/
 /*	$OpenBSD: rtsx_pci.c,v 1.4 2013/11/06 13:51:02 stsp Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsx_pci.c,v 1.1 2014/03/19 15:26:41 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsx_pci.c,v 1.2 2014/03/29 19:28:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -92,6 +92,7 @@ rtsx_pci_attach(device_t parent, device_t self, void *aux)
 	bus_space_handle_t ioh;
 	bus_size_t size;
 	uint32_t flags;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc.sc_dev = self;
 	sc->sc_pc = pc;
@@ -113,7 +114,7 @@ rtsx_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_SDMMC, rtsx_intr, &sc->sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt\n");

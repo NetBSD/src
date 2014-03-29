@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.56 2014/02/25 18:30:10 pooka Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.57 2014/03/29 19:28:24 christos Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.56 2014/02/25 18:30:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.57 2014/03/29 19:28:24 christos Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -185,6 +185,7 @@ ipw_attach(device_t parent, device_t self, void *aux)
 	uint32_t data;
 	uint16_t val;
 	int i, error;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 	sc->sc_pct = pa->pa_pc;
@@ -218,7 +219,7 @@ ipw_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	intrstr = pci_intr_string(sc->sc_pct, ih);
+	intrstr = pci_intr_string(sc->sc_pct, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(sc->sc_pct, ih, IPL_NET, ipw_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "could not establish interrupt");

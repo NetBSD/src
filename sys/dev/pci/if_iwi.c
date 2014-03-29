@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.96 2014/02/25 18:30:10 pooka Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.97 2014/03/29 19:28:24 christos Exp $  */
 /*	$OpenBSD: if_iwi.c,v 1.111 2010/11/15 19:11:57 damien Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.96 2014/02/25 18:30:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.97 2014/03/29 19:28:24 christos Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -209,6 +209,7 @@ iwi_attach(device_t parent, device_t self, void *aux)
 	pcireg_t data;
 	uint16_t val;
 	int error, i;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 	sc->sc_pct = pa->pa_pc;
@@ -257,7 +258,7 @@ iwi_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	intrstr = pci_intr_string(sc->sc_pct, ih);
+	intrstr = pci_intr_string(sc->sc_pct, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(sc->sc_pct, ih, IPL_NET, iwi_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "could not establish interrupt");

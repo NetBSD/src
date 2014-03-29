@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.17 2014/03/21 16:39:29 christos Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.18 2014/03/29 19:28:25 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -91,7 +91,7 @@ struct alpha_pci_chipset {
     (*(c)->pc_conf_write)((c)->pc_conf_v, (t), (r), (v))
 #define	pci_intr_map(pa, ihp)						\
     (*(pa)->pa_pc->pc_intr_map)((pa), (ihp))
-#define	pci_intr_string_internal(c, ih, buf, len)			\
+#define	pci_intr_string(c, ih, buf, len)				\
     (*(c)->pc_intr_string)((c)->pc_intr_v, (ih), (buf), (len))
 #define	pci_intr_evcnt(c, ih)						\
     (*(c)->pc_intr_evcnt)((c)->pc_intr_v, (ih))
@@ -104,7 +104,6 @@ struct alpha_pci_chipset {
  * alpha-specific PCI functions.
  * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
  */
-const char    *pci_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
 void	pci_display_console(bus_space_tag_t, bus_space_tag_t,
 	    pci_chipset_tag_t, int, int, int);
 #define	alpha_pciide_compat_intr_establish(c, d, p, ch, f, a)		\

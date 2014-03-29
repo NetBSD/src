@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_puc.c,v 1.16 2013/07/31 14:31:01 soren Exp $	*/
+/*	$NetBSD: lpt_puc.c,v 1.17 2014/03/29 19:28:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_puc.c,v 1.16 2013/07/31 14:31:01 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_puc.c,v 1.17 2014/03/29 19:28:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,6 +70,7 @@ lpt_puc_attach(device_t parent, device_t self, void *aux)
 	struct lpt_softc *sc = device_private(self);
 	struct puc_attach_args *aa = aux;
 	const char *intrstr;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 	sc->sc_iot = aa->t;
@@ -78,7 +79,7 @@ lpt_puc_attach(device_t parent, device_t self, void *aux)
 	aprint_naive(": Parallel port");
 	aprint_normal(": ");
 
-	intrstr = pci_intr_string(aa->pc, aa->intrhandle);
+	intrstr = pci_intr_string(aa->pc, aa->intrhandle, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(aa->pc, aa->intrhandle, IPL_TTY,
 	    lptintr, sc);
 	if (sc->sc_ih == NULL) {

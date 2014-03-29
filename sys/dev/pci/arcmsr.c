@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsr.c,v 1.30 2011/06/20 22:03:16 pgoyette Exp $ */
+/*	$NetBSD: arcmsr.c,v 1.31 2014/03/29 19:28:24 christos Exp $ */
 /*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -21,7 +21,7 @@
 #include "bio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.30 2011/06/20 22:03:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.31 2014/03/29 19:28:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -548,6 +548,7 @@ arc_map_pci_resources(device_t self, struct pci_attach_args *pa)
 	struct arc_softc		*sc = device_private(self);
 	pcireg_t			memtype;
 	pci_intr_handle_t		ih;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
@@ -574,7 +575,7 @@ arc_map_pci_resources(device_t self, struct pci_attach_args *pa)
 	
 	aprint_normal("\n");
 	aprint_normal_dev(self, "interrupting at %s\n",
-	    pci_intr_string(pa->pa_pc, ih));
+	    pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf)));
 
 	return 0;
 
