@@ -1,11 +1,11 @@
 #
-#	$NetBSD: mk.armadaxp,v 1.3 2014/03/18 06:23:45 matt Exp $
+#	$NetBSD: mk.armadaxp,v 1.4 2014/03/29 15:02:00 matt Exp $
 #
 
 SYSTEM_FIRST_OBJ=	armadaxp_start.o
 SYSTEM_FIRST_SFILE=	${THISARM}/armadaxp/armadaxp_start.S
 
-KERNEL_BASE_PHYS=0x00200000
-KERNEL_BASE_VIRT=0xc0200000
+KERNEL_BASE_PHYS?=0x00200000
+KERNEL_BASE_VIRT?=0x80200000
 
 .include "${THISARM}/conf/mk.marvell"
