@@ -1,4 +1,4 @@
-#	$NetBSD: NETWALKER,v 1.24 2014/03/24 14:15:37 szptvlfn Exp $
+#	$NetBSD: NETWALKER,v 1.25 2014/03/29 12:00:27 hkenken Exp $
 #
 #	NETWALKER -- http://www.sharp.co.jp/netwalker/
 #
@@ -128,7 +128,7 @@ options 	NO_POWERSAVE	# uncomment this to run under ICE
 
 # Development and Debugging options
 #options 	PERFCTRS	# performance counters
-options 	DIAGNOSTIC	# internally consistency checks
+#options 	DIAGNOSTIC	# internally consistency checks
 #options 	DEBUG
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
@@ -151,6 +151,7 @@ makeoptions	DEBUG="-g"	# compile full symbol table
 
 # Kernel root file system and dump configuration.
 config		netbsd		root on ? type ?
+config		netbsd-ld0	root on ld0 type ffs
 
 # The main bus device
 mainbus0	at root
@@ -175,6 +176,7 @@ imxuart0	at axi? addr 0x73fbc000 irq 31		# UART1
 # Clock Control
 imxccm0		at axi? addr 0x73fd4000
 options		IMX51_CKIL_FREQ=32768
+#options	IMXCCMDEBUG
 
 # Enhanced Periodic Interrupt Timer
 imxclock0	at axi? addr 0x73fac000 size 0x4000 irq 40
@@ -183,11 +185,46 @@ imxclock1	at axi? addr 0x73fb0000 size 0x4000 irq 41
 # IOMUX
 imxiomux0	at axi? addr 0x73fa8000
 
+# WatchDog
+imxwdog0	at axi? addr 0x73f98000 irq 58 flags 0
+
 # GPIO
-imxgpio0	at axi? addr 0x73f84000
-imxgpio1	at axi? addr 0x73f88000
-imxgpio2	at axi? addr 0x73f8c000
-imxgpio3	at axi? addr 0x73f90000
+imxgpio0	at axi? addr 0x73f84000 irqbase 128 irq 50
+imxgpio1	at axi? addr 0x73f88000 irqbase 160 irq 52
+imxgpio2	at axi? addr 0x73f8c000 irqbase 192 irq 54
+imxgpio3	at axi? addr 0x73f90000 irqbase 224 irq 56
+gpio*		at imxgpio?
+options		IMX_GPIO_INTR_SPLIT
+
+# I2C
+#imxi2c0	at axi? addr 0x83fc8000 irq 62
+#imxi2c1	at axi? addr 0x83fc4000 irq 63
+
+# IIC
+#iic*	   at imxi2c?
+
+# SPI bus
+imxspi0		at axi? addr 0x70010000 irq 36 flags 1
+#imxspi1	at axi? addr 0x83fac000 irq 37 flags 1
+#imxspi2	at axi? addr 0x83fc0000 irq 38 flags 0
+spi0		at imxspi0 # eCSPI1
+#spi1		at imxspi1 # eCSPI2
+#spi2		at imxspi2 # CSPI1
+options		IMXSPINSLAVES=3
+#options	IMXSPI_DEBUG=10
+
+# Optical Joystick
+mousebtn0	at gpio1 offset 22 mask 0x03 # intr 182, 183
+#options	MOUSEBTN_POLLING
+oj6sh0		at spi0 slave 2
+#options	OJ6SH_DEBUG=4
+options		OJ6SH_UP_X_LEFT_Y
+wsmouse*	at oj6sh? mux 0
+wsmouse*	at mousebtn? mux 0
+
+# SPI NOR-Flash
+#spiflash0	at spiflashbus?
+#m25p0		at spi0 slave 1
 
 # SD/MMC
 sdhc0    	at axi? addr 0x70004000 irq 1	     # eSDHC1
@@ -238,9 +275,9 @@ pseudo-device	swcrypto		# software crypto implementation
 
 # disk/mass storage pseudo-devices
 #pseudo-device	md			# memory disk device (ramdisk)
-#pseudo-device	vnd			# disk-like interface to files
+pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	fss			# file system snapshot device
-#pseudo-device	putter			# for puffs and pud
+pseudo-device	putter			# for puffs and pud
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
@@ -250,12 +287,20 @@ pseudo-device	loop			# network loopback
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	clockctl		# NTP clockctl
+pseudo-device	ksyms			# /dev/ksyms
+pseudo-device	lockstat		# lock profiling
 
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
+
+# data mover pseudo-devices
+#pseudo-device	swdmover		# software dmover(9) back-end
+#pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
+
+# userland interface to drivers, including autoconf and properties retrieval
+pseudo-device 	drvctl
 
 # local configuration
 cinclude "arch/evbarm/conf/NETWALKER.local"

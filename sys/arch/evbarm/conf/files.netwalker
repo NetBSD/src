@@ -1,6 +1,6 @@
-#	$NetBSD: files.netwalker,v 1.4 2014/01/24 02:06:03 hkenken Exp $
+#	$NetBSD: files.netwalker,v 1.5 2014/03/29 12:00:27 hkenken Exp $
 #
-# Sharp Netwalker
+# Sharp Netwalker configuration info
 #
 
 file   arch/arm/arm32/arm32_boot.c
@@ -23,3 +23,23 @@ file   arch/evbarm/netwalker/netwalker_usb.c	imxusbc_axi
 attach	ipu at axi with lcd_netwalker
 file	arch/evbarm/netwalker/netwalker_lcd.c	lcd_netwalker
 defflag	opt_netwalker_lcd.h			LCD_DEBUG
+
+# CSPI & eCSPI Controller
+attach	imxspi at axi with spi_netwalker
+file	arch/evbarm/netwalker/netwalker_spi.c	spi_netwalker
+
+# Mouse button
+device	mousebtn: wsmousedev
+attach	mousebtn at gpio with btn_netwalker
+file	arch/evbarm/netwalker/netwalker_btn.c	btn_netwalker
+defflag	opt_mousebtn.h				MOUSEBTN_POLLING
+
+# OJ6SH-T25 Optical Joystick
+device  oj6sh: wsmousedev
+attach  oj6sh at spi
+file    dev/spi/oj6sh.c				oj6sh
+defflag	opt_oj6sh.h				OJ6SH_UP_Y_RIGHT_X
+						OJ6SH_DOWN_Y_LEFT_X
+						OJ6SH_UP_X_LEFT_Y
+						OJ6SH_DOWN_X_RIGHT_Y
+
