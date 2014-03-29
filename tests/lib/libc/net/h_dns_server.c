@@ -1,4 +1,4 @@
-/*	$NetBSD: h_dns_server.c,v 1.3 2014/01/09 02:18:10 christos Exp $	*/
+/*	$NetBSD: h_dns_server.c,v 1.4 2014/03/29 16:10:54 gson Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,14 +35,13 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: h_dns_server.c,v 1.3 2014/01/09 02:18:10 christos Exp $");
+__RCSID("$NetBSD: h_dns_server.c,v 1.4 2014/03/29 16:10:54 gson Exp $");
 
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <memory.h>
-#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -165,104 +164,6 @@ name2str(const void *v, char *buf, size_t buflen) {
 }
 #endif
 
-/* XXX the daemon2_* functions should be in a library */
-
-int __daemon2_detach_pipe[2];
-
-static int
-daemon2_fork(void)
-{
-	int r;
-	int fd;
-	int i;
-
-	/*
-	 * Set up the pipe, making sure the write end does not
-	 * get allocated one of the file descriptors that will
-	 * be closed in daemon2_detach().
-	 */
-	for (i = 0; i < 3; i++) {
-	    r = pipe(__daemon2_detach_pipe);
-	    if (r < 0)
-		    return -1;
-	    if (__daemon2_detach_pipe[1] <= STDERR_FILENO &&
-		(fd = open(_PATH_DEVNULL, O_RDWR, 0)) != -1) {
-		    (void)dup2(fd, __daemon2_detach_pipe[0]);
-		    (void)dup2(fd, __daemon2_detach_pipe[1]);
-		    if (fd > STDERR_FILENO)
-			    (void)close(fd);
-		    continue;
-	    }
-	    break;
-	}
-
-	r = fork();
-	if (r < 0) {
-		return -1;
-	} else if (r == 0) {
-		/* child */
-		close(__daemon2_detach_pipe[0]);
-		return 0;
-       }
-       /* Parent */
-
-       (void) close(__daemon2_detach_pipe[1]);
-
-       for (;;) {
-	       char dummy;
-	       r = read(__daemon2_detach_pipe[0], &dummy, 1);
-	       if (r < 0) {
-		       if (errno == EINTR)
-			       continue;
-		       _exit(1);
-	       } else if (r == 0) {
-		       _exit(1);
-	       } else { /* r > 0 */
-		       _exit(0);
-	       }
-       }
-}
-
-static int
-daemon2_detach(int nochdir, int noclose)
-{
-	int r;
-	int fd;
-
-	if (setsid() == -1)
-		return -1;
-
-	if (!nochdir)
-		(void)chdir("/");
-
-	if (!noclose && (fd = open(_PATH_DEVNULL, O_RDWR, 0)) != -1) {
-		(void)dup2(fd, STDIN_FILENO);
-		(void)dup2(fd, STDOUT_FILENO);
-		(void)dup2(fd, STDERR_FILENO);
-		if (fd > STDERR_FILENO)
-			(void)close(fd);
-	}
-
-	while (1) {
-		r = write(__daemon2_detach_pipe[1], "", 1);
-		if (r < 0) {
-			if (errno == EINTR)
-				continue;
-			/* May get "broken pipe" here if parent is killed */
-			return -1;
-		} else if (r == 0) {
-			/* Should not happen */
-			return -1;
-		} else {
-			break;
-		}
-	}
-
-	(void) close(__daemon2_detach_pipe[1]);
-
-	return 0;
-}
-
 int main(int argc, char **argv) {
 	int s, r, protocol;
 	union sockaddr_either saddr;
@@ -274,8 +175,6 @@ int main(int argc, char **argv) {
 #ifdef DEBUG
 	char buf1[1024], buf2[1024];
 #endif
-
-	daemon2_fork();
 
 	if (argc < 2 || ((protocol = argv[1][0]) != '4' && protocol != '6'))
 		errx(1, "usage: dns_server 4 | 6");
@@ -314,9 +213,9 @@ int main(int argc, char **argv) {
 	fprintf(f, "%d", getpid());
 	fclose(f);
 #ifdef DEBUG
-	daemon2_detach(0, 1);
+	daemon(0, 1);
 #else
-	daemon2_detach(0, 0);
+	daemon(0, 0);
 #endif
 
 	for (;;) {
