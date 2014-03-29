@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.32 2014/03/29 22:29:55 dholland Exp $	*/
+/*	$NetBSD: driver.c,v 1.33 2014/03/29 23:44:38 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,10 +32,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: driver.c,v 1.32 2014/03/29 22:29:55 dholland Exp $");
+__RCSID("$NetBSD: driver.c,v 1.33 2014/03/29 23:44:38 dholland Exp $");
 #endif /* not lint */
 
-#include <sys/ioctl.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <err.h>
@@ -46,7 +47,6 @@ __RCSID("$NetBSD: driver.c,v 1.32 2014/03/29 22:29:55 dholland Exp $");
 
 #include "hunt.h"
 #include "pathnames.h"
-
 
 #ifdef INTERNET
 static uint16_t Test_port = TEST_PORT;
