@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.evbarm.inc,v 1.28 2014/02/21 22:33:08 matt Exp $
+#	$NetBSD: Makefile.evbarm.inc,v 1.29 2014/03/29 14:04:31 matt Exp $
 
 #
 # If this is a install kernel and the ramdisk image exists in the object
@@ -18,6 +18,11 @@ SYSTEM_LD_TAIL_EXTRA+=; \
 
 .if defined(BOARDMKFRAG)	# Must be a full pathname.
 .include "${BOARDMKFRAG}"
+.endif
+
+.if defined(KERNEL_BASE_PHYS) && defined(KERNEL_BASE_VIRT) \
+    && ${KERNEL_BASE_PHYS} == ${KERNEL_BASE_VIRT}
+CPPFLAGS+=-DKERNEL_BASES_EQUAL
 .endif
 
 EXTRA_CLEAN+= ldscript tmp ${KERNELS:=.map}
