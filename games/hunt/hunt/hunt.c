@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.46 2014/03/29 22:11:19 dholland Exp $	*/
+/*	$NetBSD: hunt.c,v 1.47 2014/03/29 22:15:13 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.46 2014/03/29 22:11:19 dholland Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.47 2014/03/29 22:15:13 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -380,7 +380,7 @@ broadcast_vec(int s /*socket*/, struct sockaddr_in **vector)
 	return vec_cnt;
 }
 
-SOCKET *
+static SOCKET *
 list_drivers(void)
 {
 	int option;
@@ -772,7 +772,7 @@ fincurs(void)
  *	Leave the game somewhat gracefully, restoring all current
  *	tty stats, and print errno.
  */
-void
+static void
 leave(int eval, const char *mesg)
 {
 	int serrno = errno;
@@ -786,7 +786,7 @@ leave(int eval, const char *mesg)
  *	Leave the game somewhat gracefully, restoring all current
  *	tty stats.
  */
-void
+static void
 leavex(int eval, const char *mesg)
 {
 	fincurs();
