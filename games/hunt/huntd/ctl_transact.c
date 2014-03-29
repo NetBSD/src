@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl_transact.c,v 1.9 2009/07/04 04:29:54 dholland Exp $	*/
+/*	$NetBSD: ctl_transact.c,v 1.10 2014/03/29 20:10:10 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)ctl_transact.c	5.2 (Berkeley) 3/13/86";
 #else
-__RCSID("$NetBSD: ctl_transact.c,v 1.9 2009/07/04 04:29:54 dholland Exp $");
+__RCSID("$NetBSD: ctl_transact.c,v 1.10 2014/03/29 20:10:10 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,13 +57,14 @@ __RCSID("$NetBSD: ctl_transact.c,v 1.9 2009/07/04 04:29:54 dholland Exp $");
  * of time
  */
 void
-ctl_transact(struct in_addr target, CTL_MSG msg, int type, CTL_RESPONSE *rp)
+ctl_transact(struct in_addr target, CTL_MSG tmsg, int type, CTL_RESPONSE *rp)
 {
 	struct pollfd set[1];
 	int nready, cc, retries;
 
 	nready = 0;
-	msg.type = type;
+	tmsg.type = type;
+	daemon_addr.sin_family = AF_INET;
 	daemon_addr.sin_addr = target;
 	daemon_addr.sin_port = daemon_port;
 	set[0].fd = ctl_sockt;
@@ -76,9 +77,10 @@ ctl_transact(struct in_addr target, CTL_MSG msg, int type, CTL_RESPONSE *rp)
 	do {
 		/* resend message until a response is obtained */
 		for (retries = MAX_RETRY; retries > 0; retries -= 1) {
-			cc = sendto(ctl_sockt, &msg, sizeof (msg), 0,
-				&daemon_addr, sizeof (daemon_addr));
-			if (cc != sizeof (msg)) {
+			cc = sendto(ctl_sockt, &tmsg, sizeof (tmsg), 0,
+				(struct sockaddr *) &daemon_addr,
+				    sizeof(daemon_addr));
+			if (cc != sizeof (tmsg)) {
 				if (errno == EINTR)
 					continue;
 				p_error("Error on write to talk daemon");

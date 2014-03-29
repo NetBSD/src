@@ -1,4 +1,4 @@
-/*	$NetBSD: faketalk.c,v 1.20 2014/03/29 19:41:10 dholland Exp $	*/
+/*	$NetBSD: faketalk.c,v 1.21 2014/03/29 20:10:10 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: faketalk.c,v 1.20 2014/03/29 19:41:10 dholland Exp $");
+__RCSID("$NetBSD: faketalk.c,v 1.21 2014/03/29 20:10:10 dholland Exp $");
 #endif /* not lint */
 
 #include "bsd.h"
@@ -89,7 +89,8 @@ faketalk(void)
 	FILE *f;
 	int service;		/* socket of service */
 	struct sockaddr_in des;	/* address of destination */
-	char *a, *b;
+	char *a;
+	const char *b;
 
 	(void) signal(SIGCHLD, exorcise);
 
@@ -182,11 +183,11 @@ faketalk(void)
 			else
 				t -= 1;
 		}
-		while (isspace(*s))
+		while (isspace((unsigned char)*s))
 			s += 1;
 		if (*s == '\\')
 			s += 1;
-		while (isspace(*t))
+		while (isspace((unsigned char)*t))
 			t -= 1;
 		*(t + 1) = '\0';
 		do_announce(s);		/* construct and send talk request */
@@ -211,7 +212,8 @@ do_announce(char *s)
 	get_remote_name(s);	/* setup his_machine_addr, msg.r_name */
 
 #ifdef TALK_43
-	msg.ctl_addr = *(struct osockaddr *) &ctl_addr;
+	/* XXX this is nothing like a safe cast */
+	msg.ctl_addr = *(struct talkd_sockaddr *) &ctl_addr;
 	msg.ctl_addr.sa_family = htons(msg.ctl_addr.sa_family);
 #else
 	msg.ctl_addr = ctl_addr;
