@@ -1,4 +1,5 @@
-/*	$NetBSD: pathname.c,v 1.6 2014/03/29 21:24:26 dholland Exp $	*/
+/*	$NetBSD: hunt_private.h,v 1.1 2014/03/29 21:24:26 dholland Exp $	*/
+
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -30,37 +31,67 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: pathname.c,v 1.6 2014/03/29 21:24:26 dholland Exp $");
-#endif /* not lint */
+#include <stdbool.h>
+#include <stdio.h> /* for BUFSIZ */
+
+#ifdef INTERNET
+#include <netinet/in.h>
+#include <netdb.h>
+#include <arpa/inet.h>
+#include <net/if.h>
+#else
+#include <sys/un.h>
+#endif
+
+#ifdef MONITOR
+#define C_TESTMSG()	(Query_driver ? C_MESSAGE :\
+			(Show_scores ? C_SCORES :\
+			(Am_monitor ? C_MONITOR :\
+			C_PLAYER)))
+#else
+#define	C_TESTMSG()	(Show_scores ? C_SCORES :\
+			(Query_driver ? C_MESSAGE :\
+			C_PLAYER))
+#endif
 
 /*
- * There is no particular significance to the numbers assigned
- * to Test_port.  They're just random numbers greater than the
- * range reserved for privileged sockets.
+ * external variables
  */
 
-#include <sys/types.h>
+extern bool Last_player;
 
-#include "hunt_common.h"
+extern const char *Driver;
 
-#ifdef DEBUG
-
-#ifdef INTERNET
-u_short Test_port = TEST_PORT;
-#else
-char *Sock_name = "/tmp/hunt";
-char *Stat_name = "/tmp/hunt.stats";
-#endif
-
-#else
+extern char Buf[BUFSIZ];
+extern int Socket;
 
 #ifdef INTERNET
-u_short Test_port = TEST_PORT;
+extern u_short Test_port;
 #else
-char *Sock_name = "/tmp/hunt";
-char *Stat_name = "/tmp/hunt.stats";
+extern char *Sock_name;
 #endif
 
+#ifdef INTERNET
+extern char *Send_message;
 #endif
+
+#ifdef MONITOR
+extern bool Am_monitor;
+#endif
+
+extern char map_key[256];
+extern bool no_beep;
+
+/*
+ * function types
+ */
+
+void bad_con(void) __dead;
+void bad_ver(void) __dead;
+void clear_the_screen(void);
+void do_connect(char *, char, long);
+void do_message(void);
+void otto(int, int, char);
+void playit(void);
+int quit(int);
+void intr(int);

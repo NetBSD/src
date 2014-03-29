@@ -1,4 +1,4 @@
-/*	$NetBSD: connect.c,v 1.8 2009/07/04 05:01:16 dholland Exp $	*/
+/*	$NetBSD: connect.c,v 1.9 2014/03/29 21:24:26 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,12 +32,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: connect.c,v 1.8 2009/07/04 05:01:16 dholland Exp $");
+__RCSID("$NetBSD: connect.c,v 1.9 2014/03/29 21:24:26 dholland Exp $");
 #endif /* not lint */
 
-#include "hunt.h"
+#include <string.h>
 #include <signal.h>
 #include <unistd.h>
+
+#include "hunt_common.h"
+#include "hunt_private.h"
 
 void
 do_connect(char *name, char team, long enter_status)
