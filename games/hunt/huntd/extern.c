@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.c,v 1.7 2014/03/29 19:41:10 dholland Exp $	*/
+/*	$NetBSD: extern.c,v 1.8 2014/03/29 21:33:41 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: extern.c,v 1.7 2014/03/29 19:41:10 dholland Exp $");
+__RCSID("$NetBSD: extern.c,v 1.8 2014/03/29 21:33:41 dholland Exp $");
 #endif /* not lint */
 
 #include "hunt.h"
@@ -48,15 +48,11 @@ char Orig_maze[HEIGHT][WIDTH2];		/* the original maze */
 struct pollfd fdset[3+MAXPL+MAXMON];
 int Nplayer = 0;			/* number of players */
 int Socket;				/* main socket */
-int Status;				/* stat socket */
 int See_over[NASCII];			/* lookup table for determining whether
 					 * character represents "transparent"
 					 * item */
 
 BULLET *Bullets = NULL;			/* linked list of bullets */
-
-EXPL *Expl[EXPLEN];			/* explosion lists */
-EXPL *Last_expl;			/* last explosion on Expl[0] */
 
 PLAYER Player[MAXPL];			/* all the players */
 PLAYER *End_player = Player;		/* last active player slot */
@@ -67,10 +63,6 @@ IDENT *Scores;				/* score cache */
 #ifdef MONITOR
 PLAYER Monitor[MAXMON];			/* all the monitors */
 PLAYER *End_monitor = Monitor;		/* last active monitor slot */
-#endif
-
-#ifdef VOLCANO
-int volcano = 0;			/* Explosion size */
 #endif
 
 int shot_req[MAXBOMB] = {
