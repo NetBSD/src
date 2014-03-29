@@ -1,4 +1,4 @@
-/*	$NetBSD: otto.c,v 1.16 2014/03/29 20:52:13 dholland Exp $	*/
+/*	$NetBSD: otto.c,v 1.17 2014/03/29 21:24:26 dholland Exp $	*/
 #ifdef OTTO
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: otto.c,v 1.16 2014/03/29 20:52:13 dholland Exp $");
+__RCSID("$NetBSD: otto.c,v 1.17 2014/03/29 21:24:26 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/time.h>
@@ -53,8 +53,11 @@ __RCSID("$NetBSD: otto.c,v 1.16 2014/03/29 20:52:13 dholland Exp $");
 #include <ctype.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
-#include "hunt.h"
+
+#include "hunt_common.h"
+#include "hunt_private.h"
 
 #undef WALL
 #undef NORTH
