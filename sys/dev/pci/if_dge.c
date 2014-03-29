@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.36 2013/10/17 21:06:15 christos Exp $ */
+/*	$NetBSD: if_dge.c,v 1.37 2014/03/29 19:28:24 christos Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.36 2013/10/17 21:06:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.37 2014/03/29 19:28:24 christos Exp $");
 
 
 
@@ -669,6 +669,7 @@ dge_attach(device_t parent, device_t self, void *aux)
 	uint8_t enaddr[ETHER_ADDR_LEN];
 	pcireg_t preg, memtype;
 	uint32_t reg;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 	sc->sc_dmat = pa->pa_dmat;
@@ -697,7 +698,7 @@ dge_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(sc->sc_dev, "unable to map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, dge_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "unable to establish interrupt");

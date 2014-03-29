@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.83 2012/07/31 15:50:37 bouyer Exp $	*/
+/*	$NetBSD: viaide.c,v 1.84 2014/03/29 19:28:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.83 2012/07/31 15:50:37 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.84 2014/03/29 19:28:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1093,6 +1093,7 @@ via_sata_chip_map_new(struct pciide_softc *sc,
 	pci_intr_handle_t intrhandle;
 	const char *intrstr;
 	int i;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	if (pciide_chipen(sc, pa) == 0)
 		return;
@@ -1131,7 +1132,7 @@ via_sata_chip_map_new(struct pciide_softc *sc,
 		    "couldn't map native-PCI interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, intrhandle);
+	intrstr = pci_intr_string(pa->pa_pc, intrhandle, intrbuf, sizeof(intrbuf));
 	sc->sc_pci_ih = pci_intr_establish(pa->pa_pc,
 	    intrhandle, IPL_BIO, pciide_pci_intr, sc);
 	if (sc->sc_pci_ih == NULL) {

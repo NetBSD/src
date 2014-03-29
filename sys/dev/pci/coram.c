@@ -1,4 +1,4 @@
-/* $NetBSD: coram.c,v 1.12 2013/10/16 18:20:16 christos Exp $ */
+/* $NetBSD: coram.c,v 1.13 2014/03/29 19:28:24 christos Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coram.c,v 1.12 2013/10/16 18:20:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coram.c,v 1.13 2014/03/29 19:28:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,6 +170,7 @@ coram_attach(device_t parent, device_t self, void *aux)
 #ifdef CORAM_ATTACH_I2C
 	struct i2cbus_attach_args iba;
 #endif
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 
@@ -192,7 +193,7 @@ coram_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, ih);
+	intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_VM, coram_intr, self);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.265 2014/02/25 18:30:10 pooka Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.266 2014/03/29 19:28:24 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.265 2014/02/25 18:30:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.266 2014/03/29 19:28:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3304,6 +3304,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	uint32_t		pm_ctl;
 	bool			no_seeprom;
 	int			capmask;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	bp = bge_lookup(pa);
 	KASSERT(bp != NULL);
@@ -3355,7 +3356,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	}
 
 	DPRINTFN(5, ("pci_intr_string\n"));
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 
 	DPRINTFN(5, ("pci_intr_establish\n"));
 	sc->bge_intrhand = pci_intr_establish(pc, ih, IPL_NET, bge_intr, sc);

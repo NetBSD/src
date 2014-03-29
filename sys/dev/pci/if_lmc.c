@@ -1,4 +1,4 @@
-/* $NetBSD: if_lmc.c,v 1.53 2013/03/30 03:21:06 christos Exp $ */
+/* $NetBSD: if_lmc.c,v 1.54 2014/03/29 19:28:25 christos Exp $ */
 
 /*-
  * Copyright (c) 2002-2006 David Boggs. <boggs@boggs.palo-alto.ca.us>
@@ -74,7 +74,7 @@
  */
 
 # include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.53 2013/03/30 03:21:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.54 2014/03/29 19:28:25 christos Exp $");
 # include <sys/param.h>	/* OS version */
 # include "opt_inet.h"	/* INET6, INET */
 # include "opt_altq_enabled.h" /* ALTQ */
@@ -5411,6 +5411,7 @@ nbsd_attach(device_t parent, device_t self, void *aux)
   const char *intrstr;
   bus_addr_t csr_addr;
   int error;
+  char intrbuf[PCI_INTRSTR_LEN];
 
   /* for READ/WRITE_PCI_CFG() */
   sc->sc_dev = self;
@@ -5471,7 +5472,7 @@ nbsd_attach(device_t parent, device_t self, void *aux)
     nbsd_detach(self, 0);
     return;
     }
-  intrstr = pci_intr_string(pa->pa_pc, sc->intr_handle);
+  intrstr = pci_intr_string(pa->pa_pc, sc->intr_handle, intrbuf, sizeof(intrbuf));
   aprint_normal(" %s: %s\n", intrstr, sc->dev_desc);
   aprint_naive(": %s\n", sc->dev_desc);
 

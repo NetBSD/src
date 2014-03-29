@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.6 2011/06/21 04:19:22 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.7 2014/03/29 19:28:29 christos Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -87,7 +87,7 @@ void	intr_cpu_attach(struct cpu_info *);
 void	intr_cpu_hatch(struct cpu_info *);
 void	intr_init(void);
 const char *
-	intr_string(int, int);
+	intr_string(int, int, char *, size_t);
 const char *
 	intr_typename(int);
 
@@ -130,7 +130,7 @@ struct intrsw {
 	int (*intrsw_splraise)(int);
 	void (*intrsw_spl0)(void);
 	void (*intrsw_splx)(int);
-	const char *(*intrsw_string)(int, int);
+	const char *(*intrsw_string)(int, int, char *, size_t);
 	const char *(*intrsw_typename)(int);
 #ifdef __HAVE_FAST_SOFTINTS
 	void (*intrsw_softint_init_md)(struct lwp *, u_int, uintptr_t *);

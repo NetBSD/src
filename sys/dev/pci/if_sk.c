@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.76 2014/02/25 18:30:10 pooka Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.77 2014/03/29 19:28:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.76 2014/02/25 18:30:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.77 2014/03/29 19:28:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1513,6 +1513,7 @@ skc_attach(device_t parent, device_t self, void *aux)
 	u_int32_t command;
 	const char *revstr;
 	const struct sysctlnode *node;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sk_dev = self;
 	aprint_naive("\n");
@@ -1626,7 +1627,7 @@ skc_attach(device_t parent, device_t self, void *aux)
 		goto fail;
 	}
 
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sk_intrhand = pci_intr_establish(pc, ih, IPL_NET, sk_intr, sc);
 	if (sc->sk_intrhand == NULL) {
 		aprint_error(": couldn't establish interrupt");

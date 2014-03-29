@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.32 2014/03/26 17:35:08 christos Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.33 2014/03/29 19:28:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.32 2014/03/26 17:35:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.33 2014/03/29 19:28:30 christos Exp $");
 
 #include "opt_pci.h"
 
@@ -386,15 +386,14 @@ pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 }
 
 const char *
-pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
+pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih, char *buf,
+    size_t len)
 {
-	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
-
 	if (ih < 0 || ih >= OPENPIC_ICU)
 		panic("pci_intr_string: bogus handle 0x%x", ih);
 
-	snprintf(irqstr, sizeof(irqstr), "irq %d", ih + I8259_ICU);
-	return irqstr;
+	snprintf(buf, len, "irq %d", ih + I8259_ICU);
+	return buf;
 	
 }
 

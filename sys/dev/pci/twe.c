@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.101 2014/03/16 05:20:28 dholland Exp $	*/
+/*	$NetBSD: twe.c,v 1.102 2014/03/29 19:28:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.101 2014/03/16 05:20:28 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.102 2014/03/29 19:28:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -318,6 +318,7 @@ twe_attach(device_t parent, device_t self, void *aux)
 	const struct sysctlnode *node;
 	struct twe_cmd *tc;
 	struct twe_ccb *ccb;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc = device_private(self);
 	sc->sc_dev = self;
@@ -348,7 +349,7 @@ twe_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_BIO, twe_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "can't establish interrupt%s%s\n",

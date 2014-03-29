@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.84 2013/11/04 16:54:12 christos Exp $ */
+/* $NetBSD: tga.c,v 1.85 2014/03/29 19:28:25 christos Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.84 2013/11/04 16:54:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.85 2014/03/29 19:28:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -394,6 +394,7 @@ tgaattach(device_t parent, device_t self, void *aux)
 	const char *intrstr;
 	uint8_t rev;
 	int console;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 
@@ -422,7 +423,7 @@ tgaattach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't map interrupt");
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, intrh);
+	intrstr = pci_intr_string(pa->pa_pc, intrh, intrbuf, sizeof(intrbuf));
 	sc->sc_intr = pci_intr_establish(pa->pa_pc, intrh, IPL_TTY, tga_intr,
 	    sc->sc_dc);
 	if (sc->sc_intr == NULL) {

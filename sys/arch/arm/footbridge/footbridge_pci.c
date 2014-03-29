@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_pci.c,v 1.25 2014/03/26 08:51:59 christos Exp $	*/
+/*	$NetBSD: footbridge_pci.c,v 1.26 2014/03/29 19:28:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.25 2014/03/26 08:51:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.26 2014/03/29 19:28:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ void		footbridge_pci_conf_write(void *, pcitag_t, int,
 		    pcireg_t);
 int		footbridge_pci_intr_map(const struct pci_attach_args *,
 		    pci_intr_handle_t *);
-const char	*footbridge_pci_intr_string(void *, pci_intr_handle_t);
+const char	*footbridge_pci_intr_string(void *, pci_intr_handle_t, char *, size_t);
 void		*footbridge_pci_intr_establish(void *, pci_intr_handle_t,
 		    int, int (*)(void *), void *);
 void		footbridge_pci_intr_disestablish(void *, void *);
@@ -306,10 +306,8 @@ footbridge_pci_intr_map(const struct pci_attach_args *pa,
 }
 
 const char *
-footbridge_pci_intr_string(void *pcv, pci_intr_handle_t ih)
+footbridge_pci_intr_string(void *pcv, pci_intr_handle_t ih, char *buf, size_t len)
 {
-	static char irqstr[7+2+3]; /* "isairq dd" + NULL + sanity */
-
 #ifdef PCI_DEBUG
 	printf("footbridge_pci_intr_string(pcv=%p, ih=0x%lx)\n", pcv, ih);
 #endif
@@ -318,12 +316,12 @@ footbridge_pci_intr_string(void *pcv, pci_intr_handle_t ih)
 
 #if NISA > 0
 	if (ih >= 0x80 && ih <= 0x8f) {
-		snprintf(irqstr, sizeof(irqstr), "isairq %ld", (ih & 0x0f));
-		return(irqstr);
+		snprintf(buf, len, "isairq %ld", (ih & 0x0f));
+		return buf;
 	}
 #endif
-	snprintf(irqstr, sizeof(irqstr), "irq %ld", ih);
-	return(irqstr);	
+	snprintf(buf, len, "irq %ld", ih);
+	return buf;	
 }
 
 void *
@@ -335,8 +333,8 @@ footbridge_pci_intr_establish(
 	void *arg)
 {
 	void *intr;
-	int length;
-	char *string;
+	char buf[PCI_INTRSTR_LEN];
+	const char *intrstr;
 
 #ifdef PCI_DEBUG
 	printf("footbridge_pci_intr_establish(pcv=%p, ih=0x%lx, level=%d, func=%p, arg=%p)\n",
@@ -344,9 +342,7 @@ footbridge_pci_intr_establish(
 #endif
 
 	/* Copy the interrupt string to a private buffer */
-	length = strlen(footbridge_pci_intr_string(pcv, ih));
-	string = malloc(length + 1, M_DEVBUF, M_WAITOK);
-	strcpy(string, footbridge_pci_intr_string(pcv, ih));
+	intrstr = footbridge_pci_intr_string(pcv, ih, buf, sizeof(buf));
 #if NISA > 0
 	/*
 	 * XXX the IDE driver will attach the interrupts in compat mode and
@@ -360,7 +356,7 @@ footbridge_pci_intr_establish(
 		    level, func, arg);
 	} else
 #endif
-	intr = footbridge_intr_claim(ih, level, string, func, arg);
+	intr = footbridge_intr_claim(ih, level, intrstr, func, arg);
 
 	return(intr);
 }

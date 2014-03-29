@@ -51,7 +51,8 @@ struct hppa_pci_chipset_tag {
 
 	int		(*pc_intr_map)(const struct pci_attach_args *,
 			    pci_intr_handle_t *);
-	const char	*(*pc_intr_string)(void *, pci_intr_handle_t);
+	const char	*(*pc_intr_string)(void *, pci_intr_handle_t,
+			    char *, size_t);
 	void		*(*pc_intr_establish)(void *, pci_intr_handle_t,
 			    int, int (*)(void *), void *);
 	void		(*pc_intr_disestablish)(void *, void *);
@@ -78,8 +79,8 @@ struct hppa_pci_chipset_tag {
 #define	pci_intr_map(p, ihp)						\
     (*(p)->pa_pc->pc_intr_map)((p), (ihp))
 #define	pci_intr_line(ih)	(ih)
-#define	pci_intr_string(c, ih)						\
-    (*(c)->pc_intr_string)((c)->_cookie, (ih))
+#define	pci_intr_string(c, ih, buf, len)				\
+    (*(c)->pc_intr_string)((c)->_cookie, (ih), (buf), (len))
 #define	pci_intr_establish(c, ih, l, h, a)				\
     (*(c)->pc_intr_establish)((c)->_cookie, (ih), (l), (h), (a))
 #define	pci_intr_disestablish(c, iv)					\

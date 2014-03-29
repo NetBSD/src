@@ -1,4 +1,4 @@
-/*	$NetBSD: if_esh_pci.c,v 1.30 2012/10/27 17:18:32 chs Exp $	*/
+/*	$NetBSD: if_esh_pci.c,v 1.31 2014/03/29 19:28:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_esh_pci.c,v 1.30 2012/10/27 17:18:32 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_esh_pci.c,v 1.31 2014/03/29 19:28:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,6 +109,7 @@ esh_pci_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	const char *model;
 	const char *intrstr = NULL;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	aprint_naive(": HIPPI controller\n");
 
@@ -151,7 +152,7 @@ esh_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(sc->sc_dev, "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, eshintr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt");

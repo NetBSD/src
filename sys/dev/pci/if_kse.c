@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.26 2014/03/25 16:19:13 christos Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.27 2014/03/29 19:28:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.26 2014/03/25 16:19:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.27 2014/03/29 19:28:24 christos Exp $");
 
 
 #include <sys/param.h>
@@ -353,6 +353,7 @@ kse_attach(device_t parent, device_t self, void *aux)
 	int i, error, nseg;
 	pcireg_t pmode;
 	int pmreg;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	if (pci_mapreg_map(pa, 0x10,
 	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
@@ -418,7 +419,7 @@ kse_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(sc->sc_dev, "unable to map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, kse_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "unable to establish interrupt");

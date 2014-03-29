@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpci.c,v 1.46 2012/10/27 17:18:28 chs Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.47 2014/03/29 19:28:24 christos Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.46 2012/10/27 17:18:28 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.47 2014/03/29 19:28:24 christos Exp $");
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) if (cmpcidebug) printf x
@@ -382,6 +382,7 @@ cmpci_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	char const *strintr;
 	int i, v;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc = device_private(self);
 	sc->sc_dev = self;
@@ -418,7 +419,7 @@ cmpci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(sc->sc_dev, "failed to map interrupt\n");
 		return;
 	}
-	strintr = pci_intr_string(pa->pa_pc, ih);
+	strintr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO, cmpci_intr,
 	    sc);
 	if (sc->sc_ih == NULL) {

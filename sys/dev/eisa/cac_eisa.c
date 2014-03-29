@@ -1,4 +1,4 @@
-/*	$NetBSD: cac_eisa.c,v 1.22 2012/10/27 17:18:16 chs Exp $	*/
+/*	$NetBSD: cac_eisa.c,v 1.23 2014/03/29 19:28:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac_eisa.c,v 1.22 2012/10/27 17:18:16 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac_eisa.c,v 1.23 2014/03/29 19:28:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,6 +139,7 @@ cac_eisa_attach(device_t parent, device_t self, void *aux)
 	bus_space_tag_t iot;
 	const char *intrstr;
 	int irq, i;
+	char intrbuf[EISA_INTRSTR_LEN];
 
 	ea = aux;
 	sc = device_private(self);
@@ -182,7 +183,7 @@ cac_eisa_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	intrstr = eisa_intr_string(ec, ih);
+	intrstr = eisa_intr_string(ec, ih, intrbuf, sizeof(intrbuf));
 	if ((sc->sc_ih = eisa_intr_establish(ec, ih, IST_LEVEL, IPL_BIO,
 	    cac_intr, sc)) == NULL) {
 		printf("can't establish interrupt");

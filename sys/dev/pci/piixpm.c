@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.43 2014/03/18 18:20:41 riastradh Exp $ */
+/* $NetBSD: piixpm.c,v 1.44 2014/03/29 19:28:25 christos Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.43 2014/03/18 18:20:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.44 2014/03/29 19:28:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,6 +156,7 @@ piixpm_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
 	int i, numbusses = 1;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 	sc->sc_iot = pa->pa_iot;
@@ -233,7 +234,7 @@ nopowermanagement:
 	} else if ((conf & PIIX_SMB_HOSTC_INTMASK) == PIIX_SMB_HOSTC_IRQ) {
 		/* Install interrupt handler */
 		if (pci_intr_map(pa, &ih) == 0) {
-			intrstr = pci_intr_string(pa->pa_pc, ih);
+			intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
 			sc->sc_smb_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO,
 			    piixpm_intr, sc);
 			if (sc->sc_smb_ih != NULL) {

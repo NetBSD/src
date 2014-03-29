@@ -1,6 +1,7 @@
-/*	$NetBSD: iavc_pci.c,v 1.15 2013/09/25 18:54:48 martin Exp $	*/
+/*	$NetBSD: iavc_pci.c,v 1.16 2014/03/29 19:28:24 christos Exp $	*/
 
 /*
+	char intrbuf[PCI_INTRSTR_LEN];
  * Copyright (c) 2001-2003 Cubical Solutions Ltd.
  * All rights reserved.
  *
@@ -32,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iavc_pci.c,v 1.15 2013/09/25 18:54:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iavc_pci.c,v 1.16 2014/03/29 19:28:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -129,6 +130,7 @@ iavc_pci_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	const char *intrstr;
 	int ret;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	pp = find_cardname(pa);
 	if (pp == NULL)
@@ -207,7 +209,7 @@ iavc_pci_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, iavc_pci_intr, psc);
 	if (psc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt");

@@ -1,4 +1,4 @@
-/*	$NetBSD: oboe.c,v 1.41 2014/03/20 21:30:52 christos Exp $	*/
+/*	$NetBSD: oboe.c,v 1.42 2014/03/29 19:28:25 christos Exp $	*/
 
 /*	XXXXFVDL THIS DRIVER IS BROKEN FOR NON-i386 -- vtophys() usage	*/
 
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.41 2014/03/20 21:30:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.42 2014/03/29 19:28:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,6 +177,7 @@ oboe_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	struct ir_attach_args ia;
 	const char *intrstring;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_revision = PCI_REVISION(pa->pa_class);
 	printf(": Toshiba Fast Infrared Type O, revision %d\n",
@@ -213,7 +214,7 @@ oboe_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
-	intrstring = pci_intr_string(pa->pa_pc, ih);
+	intrstring = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih  = pci_intr_establish(pa->pa_pc, ih, IPL_IR, oboe_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");

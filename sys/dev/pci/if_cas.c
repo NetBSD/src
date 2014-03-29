@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.20 2013/09/13 20:56:17 martin Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.21 2014/03/29 19:28:24 christos Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.20 2013/09/13 20:56:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.21 2014/03/29 19:28:24 christos Exp $");
 
 #ifndef _MODULE
 #include "opt_inet.h"
@@ -1819,10 +1819,11 @@ cas_estintr(struct cas_softc *sc, int what)
 	bus_space_tag_t t = sc->sc_memt;
 	bus_space_handle_t h = sc->sc_memh;
 	const char *intrstr = NULL;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	/* PCI interrupts */
 	if (what & CAS_INTR_PCI) {
-		intrstr = pci_intr_string(sc->sc_pc, sc->sc_handle);
+		intrstr = pci_intr_string(sc->sc_pc, sc->sc_handle, intrbuf, sizeof(intrbuf));
 		sc->sc_ih = pci_intr_establish(sc->sc_pc, sc->sc_handle,
 		    IPL_NET, cas_intr, sc);
 		if (sc->sc_ih == NULL) {

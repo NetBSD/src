@@ -1,4 +1,4 @@
-/* $NetBSD: eisa_machdep.h,v 1.11 2014/03/21 16:39:29 christos Exp $ */
+/* $NetBSD: eisa_machdep.h,v 1.12 2014/03/29 19:28:25 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -57,7 +57,7 @@ struct alpha_eisa_chipset {
     (*(c)->ec_maxslots)((c)->ec_v)
 #define	eisa_intr_map(c, i, hp)						\
     (*(c)->ec_intr_map)((c)->ec_v, (i), (hp))
-#define	eisa_intr_string_internal(c, h, buf, len)			\
+#define	eisa_intr_string(c, h, buf, len)				\
     (*(c)->ec_intr_string)((c)->ec_v, (h), (buf), (len))
 #define	eisa_intr_evcnt(c, h)						\
     (*(c)->ec_intr_evcnt)((c)->ec_v, (h))
@@ -80,7 +80,6 @@ int	eisa_conf_read_io(eisa_chipset_tag_t, int, int, int,
  */
 
 void	eisa_init(eisa_chipset_tag_t);
-const char *eisa_intr_string(eisa_chipset_tag_t, eisa_intr_handle_t);
 
 extern bus_size_t eisa_config_stride;
 extern paddr_t eisa_config_addr;

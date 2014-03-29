@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.h,v 1.12 2009/11/17 23:46:27 dyoung Exp $	*/
+/*	$NetBSD: eisa_machdep.h,v 1.13 2014/03/29 19:28:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -62,7 +62,8 @@ void		eisa_attach_hook(device_t, device_t,
 int		eisa_maxslots(eisa_chipset_tag_t);
 int		eisa_intr_map(eisa_chipset_tag_t, u_int,
 		    eisa_intr_handle_t *);
-const char	*eisa_intr_string(eisa_chipset_tag_t, eisa_intr_handle_t);
+const char	*eisa_intr_string(eisa_chipset_tag_t, eisa_intr_handle_t,
+		    char *, size_t);
 const struct evcnt *eisa_intr_evcnt(eisa_chipset_tag_t, eisa_intr_handle_t);
 void		*eisa_intr_establish(eisa_chipset_tag_t,
 		    eisa_intr_handle_t, int, int, int (*)(void *), void *);

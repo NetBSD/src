@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.75 2013/03/25 01:34:59 chs Exp $	*/
+/*	$NetBSD: intr.c,v 1.76 2014/03/29 19:28:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.75 2013/03/25 01:34:59 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.76 2014/03/29 19:28:30 christos Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -912,9 +912,8 @@ intr_disestablish(struct intrhand *ih)
 }
 
 const char *
-intr_string(int ih)
+intr_string(int ih, char *buf, size_t len)
 {
-	static char irqstr[64];
 #if NIOAPIC > 0
 	struct ioapic_softc *pic;
 #endif
@@ -927,22 +926,22 @@ intr_string(int ih)
 	if (ih & APIC_INT_VIA_APIC) {
 		pic = ioapic_find(APIC_IRQ_APIC(ih));
 		if (pic != NULL) {
-			snprintf(irqstr, sizeof(irqstr), "%s pin %d",
+			snprintf(buf, len, "%s pin %d",
 			    device_xname(pic->sc_dev), APIC_IRQ_PIN(ih));
 		} else {
-			snprintf(irqstr, sizeof(irqstr),
+			snprintf(buf, len,
 			    "apic %d int %d (irq %d)",
 			    APIC_IRQ_APIC(ih),
 			    APIC_IRQ_PIN(ih),
 			    ih&0xff);
 		}
 	} else
-		snprintf(irqstr, sizeof(irqstr), "irq %d", ih&0xff);
+		snprintf(buf, len, "irq %d", ih&0xff);
 #else
 
-	snprintf(irqstr, sizeof(irqstr), "irq %d", ih&0xff);
+	snprintf(buf, len, "irq %d", ih&0xff);
 #endif
-	return (irqstr);
+	return buf;
 
 }
 

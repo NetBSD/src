@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_puc.c,v 1.13 2012/10/27 17:18:28 chs Exp $ */
+/* $NetBSD: atppc_puc.c,v 1.14 2014/03/29 19:28:24 christos Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "opt_atppc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_puc.c,v 1.13 2012/10/27 17:18:28 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_puc.c,v 1.14 2014/03/29 19:28:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,6 +97,7 @@ atppc_puc_attach(device_t parent, device_t self, void *aux)
 	struct atppc_puc_softc *psc = device_private(self);
 	struct puc_attach_args *aa = aux;
 	const char *intrstr;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev_ok = ATPPC_NOATTACH;
 
@@ -109,7 +110,8 @@ atppc_puc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmat = aa->dmat;
 	sc->sc_has = 0;
 
-	intrstr = pci_intr_string(aa->pc, aa->intrhandle);
+	intrstr = pci_intr_string(aa->pc, aa->intrhandle, intrbuf,
+	    sizeof(intrbuf));
 	sc->sc_ieh = pci_intr_establish(aa->pc, aa->intrhandle, IPL_TTY,
 	    atppcintr, sc);
 	if (sc->sc_ieh == NULL) {

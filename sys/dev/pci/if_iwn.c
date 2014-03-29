@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.70 2013/10/17 21:06:15 christos Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.71 2014/03/29 19:28:24 christos Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.119 2013/05/29 23:16:52 yuo Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.70 2013/10/17 21:06:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.71 2014/03/29 19:28:24 christos Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -351,6 +351,7 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	pcireg_t memtype, reg;
 	int i, error;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 	sc->sc_pct = pa->pa_pc;
@@ -402,7 +403,7 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 		aprint_error(": can't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(sc->sc_pct, ih);
+	intrstr = pci_intr_string(sc->sc_pct, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(sc->sc_pct, ih, IPL_NET, iwn_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error(": can't establish interrupt");

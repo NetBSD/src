@@ -1,4 +1,4 @@
-/*	$NetBSD: ssio.c,v 1.1 2014/02/24 07:23:43 skrll Exp $	*/
+/*	$NetBSD: ssio.c,v 1.2 2014/03/29 19:28:28 christos Exp $	*/
 
 /*	$OpenBSD: ssio.c,v 1.7 2009/03/08 22:19:04 miod Exp $	*/
 
@@ -179,6 +179,7 @@ ssio_attach(device_t parent, device_t self, void *aux)
 	pcitag_t tag;
 	int pagezero_cookie;
 #endif
+	char buf[PCI_INTRSTR_LEN];
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof devinfo);
 	revision = PCI_REVISION(pa->pa_class);
@@ -198,7 +199,7 @@ ssio_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "unable to map interrupt\n");
 		goto unmap_ic2;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, ih);
+	intrstr = pci_intr_string(pa->pa_pc, ih, buf, sizeof(buf));
 	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_TTY, ssio_intr,
 	    sc);
 	if (sc->sc_ih == NULL) {

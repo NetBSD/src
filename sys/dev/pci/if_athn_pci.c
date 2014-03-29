@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_pci.c,v 1.9 2013/12/08 11:32:51 martin Exp $	*/
+/*	$NetBSD: if_athn_pci.c,v 1.10 2014/03/29 19:28:24 christos Exp $	*/
 /*	$OpenBSD: if_athn_pci.c,v 1.11 2011/01/08 10:02:32 damien Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_pci.c,v 1.9 2013/12/08 11:32:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_pci.c,v 1.10 2014/03/29 19:28:24 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -135,6 +135,7 @@ athn_pci_attach(device_t parent, device_t self, void *aux)
 	pcireg_t memtype, reg;
 	pci_product_id_t subsysid;
 	int error;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 	sc->sc_dmat = pa->pa_dmat;
@@ -204,7 +205,7 @@ athn_pci_attach(device_t parent, device_t self, void *aux)
 		goto fail1;
 	}
 
-	intrstr = pci_intr_string(psc->psc_pc, psc->psc_pih);
+	intrstr = pci_intr_string(psc->psc_pc, psc->psc_pih, intrbuf, sizeof(intrbuf));
 	psc->psc_ih = pci_intr_establish(psc->psc_pc, psc->psc_pih, IPL_NET,
 	    athn_intr, sc);
 	if (psc->psc_ih == NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.2 2014/03/22 01:52:44 christos Exp $ */
+/*	$NetBSD: pci_machdep.c,v 1.3 2014/03/29 19:28:26 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -97,12 +97,12 @@ amiga_pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
 }
 
 const char *
-amiga_pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih) 
+amiga_pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih, char *buf,
+    size_t len) 
 {
-	static char str[10];
 
-	snprintf(str, sizeof(str), "INT%d", (int) ih);
-	return str;
+	snprintf(buf, len, "INT%d", (int) ih);
+	return buf;
 }
 
 int

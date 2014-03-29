@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.76 2013/10/16 18:20:16 christos Exp $	*/
+/*	$NetBSD: auvia.c,v 1.77 2014/03/29 19:28:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.76 2013/10/16 18:20:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.77 2014/03/29 19:28:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -345,6 +345,7 @@ auvia_attach(device_t parent, device_t self, void *aux)
 	pcireg_t pr;
 	int r;
 	const char *revnum;	/* VT823xx revision number */
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	pa = aux;
 	sc = device_private(self);
@@ -423,7 +424,7 @@ auvia_attach(device_t parent, device_t self, void *aux)
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_iosize);
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);

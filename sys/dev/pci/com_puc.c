@@ -1,4 +1,4 @@
-/*	$NetBSD: com_puc.c,v 1.21 2013/07/31 14:31:01 soren Exp $	*/
+/*	$NetBSD: com_puc.c,v 1.22 2014/03/29 19:28:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_puc.c,v 1.21 2013/07/31 14:31:01 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_puc.c,v 1.22 2014/03/29 19:28:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,6 +81,7 @@ com_puc_attach(device_t parent, device_t self, void *aux)
 	struct com_softc *sc = &psc->sc_com;
 	struct puc_attach_args *aa = aux;
 	const char *intrstr;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 
@@ -90,7 +91,7 @@ com_puc_attach(device_t parent, device_t self, void *aux)
 	COM_INIT_REGS(sc->sc_regs, aa->t, aa->h, aa->a);
 	sc->sc_frequency = aa->flags & PUC_COM_CLOCKMASK;
 
-	intrstr = pci_intr_string(aa->pc, aa->intrhandle);
+	intrstr = pci_intr_string(aa->pc, aa->intrhandle, intrbuf, sizeof(intrbuf));
 	psc->sc_ih = pci_intr_establish(aa->pc, aa->intrhandle, IPL_SERIAL,
 	    comintr, sc);
 	if (psc->sc_ih == NULL) {

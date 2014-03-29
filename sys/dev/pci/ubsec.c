@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.37 2014/02/25 18:30:10 pooka Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.38 2014/03/29 19:28:25 christos Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.127 2003/06/04 14:04:58 jason Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.37 2014/02/25 18:30:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.38 2014/03/29 19:28:25 christos Exp $");
 
 #undef UBSEC_DEBUG
 
@@ -366,6 +366,7 @@ ubsec_attach(device_t parent, device_t self, void *aux)
 	pcireg_t memtype;
 	struct ubsec_dma *dmap;
 	u_int32_t cmd, i;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 	sc->sc_pct = pc;
@@ -407,7 +408,7 @@ ubsec_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, ubsec_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");

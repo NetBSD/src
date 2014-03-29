@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.57 2014/02/25 18:30:10 pooka Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.58 2014/03/29 19:28:25 christos Exp $    */
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.57 2014/02/25 18:30:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.58 2014/03/29 19:28:25 christos Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -218,6 +218,7 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	pcireg_t data;
 	int error, ac;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	RUN_ONCE(&wpi_firmware_init, wpi_attach_once);
 	sc->fw_used = false;
@@ -253,7 +254,7 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
 		return;
 	}
 
-	intrstr = pci_intr_string(sc->sc_pct, ih);
+	intrstr = pci_intr_string(sc->sc_pct, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(sc->sc_pct, ih, IPL_NET, wpi_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "could not establish interrupt");

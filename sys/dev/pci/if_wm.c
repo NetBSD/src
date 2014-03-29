@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.267 2014/03/25 16:19:13 christos Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.268 2014/03/29 19:28:25 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.267 2014/03/25 16:19:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.268 2014/03/29 19:28:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1181,6 +1181,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	pcireg_t preg, memtype;
 	uint16_t eeprom_data, apme_mask;
 	uint32_t reg;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 	callout_init(&sc->sc_tick_ch, 0);
@@ -1313,7 +1314,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(sc->sc_dev, "unable to map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, wm_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "unable to establish interrupt");

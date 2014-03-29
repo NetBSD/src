@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.50 2014/03/13 16:33:52 hannken Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.51 2014/03/29 19:28:24 christos Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.85 2009/11/09 14:32:41 dlg Exp $ */
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.50 2014/03/13 16:33:52 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.51 2014/03/29 19:28:24 christos Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -470,6 +470,7 @@ bnx_attach(device_t parent, device_t self, void *aux)
 	u_int32_t		val;
 	int			mii_flags = MIIF_FORCEANEG;
 	pcireg_t		memtype;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	if (bnx_tx_pool == NULL) {
 		bnx_tx_pool = malloc(sizeof(*bnx_tx_pool), M_DEVBUF, M_NOWAIT);
@@ -519,7 +520,7 @@ bnx_attach(device_t parent, device_t self, void *aux)
 		goto bnx_attach_fail;
 	}
 
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 
 	/*
 	 * Configure byte swap and enable indirect register access.

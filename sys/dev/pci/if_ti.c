@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.92 2014/02/27 01:30:42 joerg Exp $ */
+/* $NetBSD: if_ti.c,v 1.93 2014/03/29 19:28:25 christos Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.92 2014/02/27 01:30:42 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.93 2014/03/29 19:28:25 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -1616,6 +1616,7 @@ ti_attach(device_t parent, device_t self, void *aux)
 	bus_dma_segment_t dmaseg;
 	int error, dmanseg, nolinear;
 	const struct ti_type		*t;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	t = ti_type_match(pa);
 	if (t == NULL) {
@@ -1658,7 +1659,7 @@ ti_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(sc->sc_dev, "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, ti_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt");

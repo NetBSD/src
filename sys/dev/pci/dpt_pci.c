@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt_pci.c,v 1.26 2012/10/27 17:18:31 chs Exp $	*/
+/*	$NetBSD: dpt_pci.c,v 1.27 2014/03/29 19:28:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@NetBSD.org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt_pci.c,v 1.26 2012/10/27 17:18:31 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt_pci.c,v 1.27 2014/03/29 19:28:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,6 +86,7 @@ dpt_pci_attach(device_t parent, device_t self, void *aux)
 	bus_space_handle_t ioh;
 	const char *intrstr;
 	pcireg_t csr;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	aprint_naive(": Storage controller\n");
 
@@ -119,7 +120,7 @@ dpt_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error("can't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_BIO, dpt_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error("can't establish interrupt");

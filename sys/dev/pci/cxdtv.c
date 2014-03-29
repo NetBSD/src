@@ -1,4 +1,4 @@
-/* $NetBSD: cxdtv.c,v 1.13 2013/10/16 18:20:16 christos Exp $ */
+/* $NetBSD: cxdtv.c,v 1.14 2014/03/29 19:28:24 christos Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.13 2013/10/16 18:20:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.14 2014/03/29 19:28:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -187,6 +187,7 @@ cxdtv_attach(device_t parent, device_t self, void *aux)
 	pcireg_t reg;
 	const char *intrstr;
 	struct i2cbus_attach_args iba;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc = device_private(self);
 
@@ -215,7 +216,7 @@ cxdtv_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, ih);
+	intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_VM, cxdtv_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");

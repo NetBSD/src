@@ -1,4 +1,4 @@
-/*	$NetBSD: gdium_intr.c,v 1.6 2014/03/11 08:19:45 mrg Exp $	*/
+/*	$NetBSD: gdium_intr.c,v 1.7 2014/03/29 19:28:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdium_intr.c,v 1.6 2014/03/11 08:19:45 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdium_intr.c,v 1.7 2014/03/29 19:28:28 christos Exp $");
 
 #define __INTR_PRIVATE
 
@@ -165,7 +165,7 @@ static const struct ipl_sr_map gdium_ipl_sr_map = {
 };
 
 int	gdium_pci_intr_map(const struct pci_attach_args *, pci_intr_handle_t *);
-const char *gdium_pci_intr_string(void *, pci_intr_handle_t);
+const char *gdium_pci_intr_string(void *, pci_intr_handle_t, char *, size_t);
 const struct evcnt *gdium_pci_intr_evcnt(void *, pci_intr_handle_t);
 void	*gdium_pci_intr_establish(void *, pci_intr_handle_t, int,
 	    int (*)(void *), void *);
@@ -365,13 +365,14 @@ gdium_pci_intr_map(const struct pci_attach_args *pa,
 }
 
 const char *
-gdium_pci_intr_string(void *v, pci_intr_handle_t ih)
+gdium_pci_intr_string(void *v, pci_intr_handle_t ih, char *buf, size_t len)
 {
 
 	if (ih >= __arraycount(gdium_irqmap))
 		panic("gdium_intr_string: bogus IRQ %ld", ih);
 
-	return gdium_irqmap[ih].name;
+	strlcpy(buf, gdium_irqmap[ih].name, len);
+	return buf;
 }
 
 const struct evcnt *

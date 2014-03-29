@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.84 2013/04/21 23:46:06 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.85 2014/03/29 19:28:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -1025,5 +1025,10 @@ struct pci_rom {
 #define	PCI_EXTCAPLIST_CAP(ecr)		((ecr) & 0xffff)
 #define	PCI_EXTCAPLIST_VERSION(ecr)	(((ecr) >> 16) & 0xf)
 #define	PCI_EXTCAPLIST_NEXT(ecr)	(((ecr) >> 20) & 0xfff)
+
+/*
+ * Local constants
+ */
+#define PCI_INTRSTR_LEN			64
 
 #endif /* _DEV_PCI_PCIREG_H_ */

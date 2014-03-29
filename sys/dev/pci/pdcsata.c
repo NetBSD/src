@@ -1,4 +1,4 @@
-/*	$NetBSD: pdcsata.c,v 1.26 2013/10/07 19:51:55 jakllsch Exp $	*/
+/*	$NetBSD: pdcsata.c,v 1.27 2014/03/29 19:28:25 christos Exp $	*/
 
 /*
  * Copyright (c) 2004, Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdcsata.c,v 1.26 2013/10/07 19:51:55 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdcsata.c,v 1.27 2014/03/29 19:28:25 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -229,6 +229,7 @@ pdcsata_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 	int channel, i;
 	pci_intr_handle_t intrhandle;
 	const char *intrstr;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	/*
 	 * Promise SATA controllers have 3 or 4 channels,
@@ -239,7 +240,7 @@ pdcsata_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 		    "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, intrhandle);
+	intrstr = pci_intr_string(pa->pa_pc, intrhandle, intrbuf, sizeof(intrbuf));
 	sc->sc_pci_ih = pci_intr_establish(pa->pa_pc,
 	    intrhandle, IPL_BIO, pdcsata_pci_intr, sc);
 

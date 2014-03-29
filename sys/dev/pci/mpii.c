@@ -1,4 +1,4 @@
-/* $NetBSD: mpii.c,v 1.4 2013/10/17 21:06:15 christos Exp $ */
+/* $NetBSD: mpii.c,v 1.5 2014/03/29 19:28:25 christos Exp $ */
 /*	OpenBSD: mpii.c,v 1.51 2012/04/11 13:29:14 naddy Exp 	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.4 2013/10/17 21:06:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.5 2014/03/29 19:28:25 christos Exp $");
 
 #include "bio.h"
 
@@ -2134,6 +2134,7 @@ mpii_attach(device_t parent, device_t self, void *aux)
 	struct scsipi_adapter *adapt = &sc->sc_adapt;
 	struct scsipi_channel *chan = &sc->sc_chan;
 	char wkname[15];
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	pci_aprint_devinfo(pa, NULL);
 
@@ -2195,7 +2196,7 @@ mpii_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "unable to map interrupt\n");
 		goto unmap;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, ih);
+	intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
 
 	if (mpii_init(sc) != 0) {
 		aprint_error_dev(self, "unable to initialize ioc\n");

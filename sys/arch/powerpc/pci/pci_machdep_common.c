@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep_common.c,v 1.19 2014/03/25 16:40:28 matt Exp $ */
+/* $NetBSD: pci_machdep_common.c,v 1.20 2014/03/29 19:28:29 christos Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.19 2014/03/25 16:40:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.20 2014/03/29 19:28:29 christos Exp $");
 
 #define _POWERPC_BUS_DMA_PRIVATE
 
@@ -85,10 +85,8 @@ genppc_pci_bus_maxdevs(void *v, int busno)
 }
 
 const char *
-genppc_pci_intr_string(void *v, pci_intr_handle_t ih)
+genppc_pci_intr_string(void *v, pci_intr_handle_t ih, char *buf, size_t len)
 {
-	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
-
 #ifdef ICU_LEN
 	if (ih == 0 || ih >= ICU_LEN
 /* XXX on macppc it's completely legal to have PCI interrupts on a slave PIC */
@@ -99,8 +97,8 @@ genppc_pci_intr_string(void *v, pci_intr_handle_t ih)
 		panic("pci_intr_string: bogus handle 0x%x", ih);
 #endif
 
-	snprintf(irqstr, sizeof(irqstr), "irq %d", ih);
-	return (irqstr);
+	snprintf(buf, len, "irq %d", ih);
+	return buf;
 	
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.24 2014/02/25 18:30:10 pooka Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.25 2014/03/29 19:28:24 christos Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.24 2014/02/25 18:30:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.25 2014/03/29 19:28:24 christos Exp $");
 
 
 #include <sys/param.h>
@@ -278,6 +278,7 @@ jme_pci_attach(device_t parent, device_t self, void *aux)
 	int nsegs, i;
 	const struct sysctlnode *node;
 	int jme_nodenum;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->jme_dev = self;
 	aprint_normal("\n");
@@ -392,7 +393,7 @@ jme_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, intrhandle);
+	intrstr = pci_intr_string(pa->pa_pc, intrhandle, intrbuf, sizeof(intrbuf));
 	sc->jme_if.if_softc = sc;
 	sc->jme_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_NET,
 	    jme_intr, sc);

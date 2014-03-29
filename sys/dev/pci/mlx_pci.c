@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_pci.c,v 1.24 2012/10/27 17:18:35 chs Exp $	*/
+/*	$NetBSD: mlx_pci.c,v 1.25 2014/03/29 19:28:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx_pci.c,v 1.24 2012/10/27 17:18:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx_pci.c,v 1.25 2014/03/29 19:28:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,6 +200,7 @@ mlx_pci_attach(device_t parent, device_t self, void *aux)
 	const char *intrstr;
 	int ior, memr, i;
 	const struct mlx_pci_ident *mpi;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	mlx = device_private(self);
 	pa = aux;
@@ -260,7 +261,7 @@ mlx_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "can't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	mlx->mlx_ih = pci_intr_establish(pc, ih, IPL_BIO, mlx_intr, mlx);
 	if (mlx->mlx_ih == NULL) {
 		aprint_error_dev(self, "can't establish interrupt");

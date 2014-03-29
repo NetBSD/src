@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_mace.c,v 1.16 2014/03/26 16:16:06 christos Exp $	*/
+/*	$NetBSD: pci_mace.c,v 1.17 2014/03/29 19:28:30 christos Exp $	*/
 
 /*
  * Copyright (c) 2001,2003 Christopher Sekiya
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.16 2014/03/26 16:16:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.17 2014/03/29 19:28:30 christos Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -77,7 +77,8 @@ static void	macepci_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
 static int	macepci_intr_map(const struct pci_attach_args *,
 		    pci_intr_handle_t *);
 static const char *
-		macepci_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
+		macepci_intr_string(pci_chipset_tag_t, pci_intr_handle_t,
+		    char *, size_t);
 static int	macepci_intr(void *);
 
 CFATTACH_DECL_NEW(macepci, sizeof(struct macepci_softc),
@@ -248,12 +249,11 @@ macepci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 }
 
 const char *
-macepci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
+macepci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih, char *buf,
+    size_t len)
 {
-	static char irqstr[32];
-
-	snprintf(irqstr, sizeof(irqstr), "crime interrupt %d", ih);
-	return irqstr;
+	snprintf(buf, len, "crime interrupt %d", ih);
+	return buf;
 }
 
 

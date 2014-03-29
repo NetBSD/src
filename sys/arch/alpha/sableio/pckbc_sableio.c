@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_sableio.c,v 1.11 2014/03/21 16:39:29 christos Exp $ */
+/* $NetBSD: pckbc_sableio.c,v 1.12 2014/03/29 19:28:25 christos Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pckbc_sableio.c,v 1.11 2014/03/21 16:39:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_sableio.c,v 1.12 2014/03/29 19:28:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,9 +135,9 @@ pckbc_sableio_intr_establish(struct pckbc_softc *sc, pckbc_slot_t slot)
 {
 	struct pckbc_sableio_softc *ssc = (void *) sc;
 	const char *intrstr;
-	char buf[64];
+	char buf[PCI_INTRSTR_LEN];
 
-	intrstr = pci_intr_string_internal(ssc->sc_pc, ssc->sc_irq[slot], buf,
+	intrstr = pci_intr_string(ssc->sc_pc, ssc->sc_irq[slot], buf,
 	    sizeof(buf));
 	ssc->sc_ih[slot] = pci_intr_establish(ssc->sc_pc, ssc->sc_irq[slot],
 	    IPL_TTY, pckbcintr, sc);

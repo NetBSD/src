@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4173bcu.c,v 1.22 2012/10/27 17:17:55 chs Exp $	*/
+/*	$NetBSD: vrc4173bcu.c,v 1.23 2014/03/29 19:28:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002 Enami Tsugutomo.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrc4173bcu.c,v 1.22 2012/10/27 17:17:55 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrc4173bcu.c,v 1.23 2014/03/29 19:28:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,6 +254,7 @@ vrc4173bcu_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	const char *intrstr;
 	int bus, device, function;
+	char ibuf[PCI_INTRSTR_LEN];
 #ifdef DEBUG
 	char buf[80];
 #endif
@@ -384,7 +385,7 @@ vrc4173bcu_attach(device_t parent, device_t self, void *aux)
 		printf("%s: couldn't map interrupt\n", device_xname(self));
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, ibuf, sizeof(ibuf));
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, vrc4173bcu_intr, sc);
 	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt",
