@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.141 2014/03/28 21:49:22 matt Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.142 2014/03/29 23:44:37 matt Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.141 2014/03/28 21:49:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.142 2014/03/29 23:44:37 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -792,7 +792,7 @@ struct cpu_functions arm1136_cpufuncs = {
 
 	.cf_control		= cpufunc_control,
 	.cf_domains		= cpufunc_domains,
-	.cf_setttb		= arm11x6_setttb,
+	.cf_setttb		= arm11_setttb,
 	.cf_faultstatus		= cpufunc_faultstatus,
 	.cf_faultaddress	= cpufunc_faultaddress,
 
@@ -3138,8 +3138,7 @@ void
 arm11x6_setup(char *args)
 {
 	int cpuctrl, cpuctrl_wax;
-	uint32_t auxctrl, auxctrl_wax;
-	uint32_t tmp, tmp2;
+	uint32_t auxctrl;
 	uint32_t sbz=0;
 	uint32_t cpuid;
 
@@ -3183,8 +3182,7 @@ arm11x6_setup(char *args)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
 #endif
 
-	auxctrl = 0;
-	auxctrl_wax = ~0;
+	auxctrl = armreg_auxctl_read();
 	/*
 	 * This options enables the workaround for the 364296 ARM1136
 	 * r0pX errata (possible cache data corruption with
@@ -3196,16 +3194,14 @@ arm11x6_setup(char *args)
 	 */
 	if ((cpuid & CPU_ID_CPU_MASK) == CPU_ID_ARM1136JS) { /* ARM1136JSr0pX */
 		cpuctrl |= CPU_CONTROL_FI_ENABLE;
-		auxctrl = ARM1136_AUXCTL_PFI;
-		auxctrl_wax = ~ARM1136_AUXCTL_PFI;
+		auxctrl |= ARM1136_AUXCTL_PFI;
 	}
 
 	/*
 	 * Enable an errata workaround
 	 */
 	if ((cpuid & CPU_ID_CPU_MASK) == CPU_ID_ARM1176JZS) { /* ARM1176JZSr0 */
-		auxctrl = ARM1176_AUXCTL_PHD;
-		auxctrl_wax = ~ARM1176_AUXCTL_PHD;
+		auxctrl |= ARM1176_AUXCTL_PHD;
 	}
 
 	/* Clear out the cache */
@@ -3221,13 +3217,8 @@ arm11x6_setup(char *args)
 	curcpu()->ci_ctrl = cpuctrl;
 	cpu_control(~cpuctrl_wax, cpuctrl);
 
-	__asm volatile ("mrc	p15, 0, %0, c1, c0, 1\n\t"
-			"and	%1, %0, %2\n\t"
-			"orr	%1, %1, %3\n\t"
-			"teq	%0, %1\n\t"
-			"mcrne	p15, 0, %1, c1, c0, 1\n\t"
-			: "=r"(tmp), "=r"(tmp2) :
-			  "r"(auxctrl_wax), "r"(auxctrl));
+	/* Update auxctlr */
+	armreg_auxctl_write(auxctrl);
 
 	/* And again. */
 	cpu_idcache_wbinv_all();
@@ -3468,7 +3459,7 @@ ixp12x0_setup(char *args)
 #endif /* CPU_IXP12X0 */
 
 #if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
-    defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425) || defined(CPU_CORTEX)
+    defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425)
 struct cpu_option xscale_options[] = {
 #ifdef COMPAT_12
 	{ "branchpredict", 	BIC, OR,  CPU_CONTROL_BPRD_ENABLE },
