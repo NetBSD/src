@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.c,v 1.8 2014/03/29 21:33:41 dholland Exp $	*/
+/*	$NetBSD: extern.c,v 1.9 2014/03/29 21:55:59 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: extern.c,v 1.8 2014/03/29 21:33:41 dholland Exp $");
+__RCSID("$NetBSD: extern.c,v 1.9 2014/03/29 21:55:59 dholland Exp $");
 #endif /* not lint */
 
 #include "hunt.h"
@@ -65,20 +65,22 @@ PLAYER Monitor[MAXMON];			/* all the monitors */
 PLAYER *End_monitor = Monitor;		/* last active monitor slot */
 #endif
 
-int shot_req[MAXBOMB] = {
+const int shot_req[MAXBOMB] = {
 	BULREQ, GRENREQ, SATREQ,
 	BOMB7REQ, BOMB9REQ, BOMB11REQ,
 	BOMB13REQ, BOMB15REQ, BOMB17REQ,
 	BOMB19REQ, BOMB21REQ,
 };
 
-int shot_type[MAXBOMB] = {
+const int shot_type[MAXBOMB] = {
 	SHOT, GRENADE, SATCHEL,
 	BOMB, BOMB, BOMB,
 	BOMB, BOMB, BOMB,
 	BOMB, BOMB,
 };
 
-int slime_req[MAXSLIME] = {
+#ifdef OOZE
+const int slime_req[MAXSLIME] = {
 	SLIMEREQ, SSLIMEREQ, SLIME2REQ, SLIME3REQ,
 };
+#endif
