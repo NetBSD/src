@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.94 2014/03/26 01:14:52 matt Exp $	*/
+/*	$NetBSD: armreg.h,v 1.95 2014/03/29 23:33:20 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -902,6 +902,7 @@ ARMREG_READ_INLINE(auxctl, "p15,0,%0,c1,c0,1") /* Auxiliary Control Register */
 ARMREG_WRITE_INLINE(auxctl, "p15,0,%0,c1,c0,1") /* Auxiliary Control Register */
 ARMREG_READ_INLINE(cpacr, "p15,0,%0,c1,c0,2") /* Co-Processor Access Control Register */
 ARMREG_WRITE_INLINE(cpacr, "p15,0,%0,c1,c0,2") /* Co-Processor Access Control Register */
+ARMREG_READ_INLINE(scr, "p15,0,%0,c1,c1,0") /* Secure Configuration Register */
 ARMREG_READ_INLINE(nsacr, "p15,0,%0,c1,c1,2") /* Non-Secure Access Control Register */
 /* cp15 c2 registers */
 ARMREG_READ_INLINE(ttbr, "p15,0,%0,c2,c0,0") /* Translation Table Base Register 0 */
