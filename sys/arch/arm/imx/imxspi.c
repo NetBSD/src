@@ -1,4 +1,4 @@
-/*	$NetBSD: imxspi.c,v 1.1 2014/03/22 09:28:08 hkenken Exp $	*/
+/*	$NetBSD: imxspi.c,v 1.2 2014/03/29 12:00:27 hkenken Exp $	*/
 
 /*-
  * Copyright (c) 2014  Genetec Corporation.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxspi.c,v 1.1 2014/03/22 09:28:08 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxspi.c,v 1.2 2014/03/29 12:00:27 hkenken Exp $");
 
 #include "opt_imx.h"
 #include "opt_imxspi.h"
@@ -391,7 +391,7 @@ imxspi_intr(void *arg)
 	/* RXFIFO ready */
 	if (sr & IMXSPI(INTR_RR_EN)) {
 		imxspi_recv(sc);
-		if(sc->sc_wchunk == NULL &&sc->sc_rchunk == NULL)
+		if (sc->sc_wchunk == NULL && sc->sc_rchunk == NULL)
 			imxspi_done(sc, err);
 	}
 
@@ -408,7 +408,7 @@ imxspi_transfer(void *arg, struct spi_transfer *st)
 	int s;
 
 	/* make sure we select the right chip */
-	s = splserial();
+	s = splbio();
 	spi_transq_enqueue(&sc->sc_q, st);
 	if (sc->sc_running == FALSE)
 		imxspi_sched(sc);

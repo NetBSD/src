@@ -1,4 +1,4 @@
-/*	$NetBSD: netwalker_machdep.c,v 1.13 2014/01/24 02:06:03 hkenken Exp $	*/
+/*	$NetBSD: netwalker_machdep.c,v 1.14 2014/03/29 12:00:27 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005, 2010  Genetec Corporation.
@@ -102,8 +102,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.13 2014/01/24 02:06:03 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.14 2014/03/29 12:00:27 hkenken Exp $");
 
+#include "opt_evbarm_boardtype.h"
+#include "opt_cputypes.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_md.h"
@@ -467,6 +469,8 @@ const struct iomux_setup iomux_setup_data[] = {
 	IOMUX_MP(EIM_D27, ALT3, KEEPER | PU_100K | DSEHIGH | SRE), /* RTS */
 	IOMUX_M(NANDF_D15, ALT3),	/* GPIO3_25 */
 	IOMUX_MP(NANDF_D14, ALT3, HYS | PULL | PU_100K ),	/* GPIO3_26 */
+
+	/* OJ6SH-T25 */
 	IOMUX_M(CSI1_D9, ALT3),			/* GPIO3_13 */
 	IOMUX_M(CSI1_VSYNC, ALT3),		/* GPIO3_14 */
 	IOMUX_M(CSI1_HSYNC, ALT3),		/* GPIO3_15 */
@@ -488,13 +492,15 @@ const struct iomux_setup iomux_setup_data[] = {
 	/* XXX more audio pins ? */
 
 	/* CSPI */
-	/* ??? doesn't work ??? */
-	IOMUX_P(CSPI1_MOSI, HYS | PULL | PD_100K | DSEHIGH | SRE),
-	IOMUX_P(CSPI1_MISO, HYS | PULL | PD_100K | DSEHIGH | SRE),
-	IOMUX_M(CSPI1_SS0, ALT3),
-	IOMUX_MP(CSPI1_SS1, ALT0, HYS | KEEPER | DSEHIGH | SRE),
-	IOMUX_MP(DI1_PIN11, ALT7, HYS | PULL | DSEHIGH | SRE),
-	IOMUX_P(CSPI1_SCLK, HYS | KEEPER | DSEHIGH | SRE),
+	IOMUX_MP(CSPI1_MOSI, ALT0, HYS | PULL | PD_100K | DSEHIGH | SRE),
+	IOMUX_MP(CSPI1_MISO, ALT0, HYS | PULL | PD_100K | DSEHIGH | SRE),
+	IOMUX_MP(CSPI1_SCLK, ALT0, HYS | PULL | PD_100K | DSEHIGH | SRE),
+
+	/* SPI CS */
+	IOMUX_MP(CSPI1_SS0, ALT3, HYS | KEEPER | DSEHIGH | SRE), /* GPIO4[24] */
+	IOMUX_MP(CSPI1_SS1, ALT3, HYS | KEEPER | DSEHIGH | SRE), /* GPIO4[25] */
+	IOMUX_MP(DI1_PIN11, ALT4, HYS | PULL | DSEHIGH | SRE),   /* GPIO3[0] */
+
 	/* 26M Osc */
 	IOMUX_MP(DI1_PIN12, ALT4, KEEPER | DSEHIGH | SRE), /* GPIO3_1 */
 
@@ -504,7 +510,7 @@ const struct iomux_setup iomux_setup_data[] = {
 	IOMUX_MP(KEY_COL5, SION | ALT3, HYS | ODE | DSEHIGH | SRE),
 	IOMUX_DATA(IOMUXC_I2C2_IPP_SDA_IN_SELECT_INPUT, INPUT_DAISY_1),
 	IOMUX_DATA(IOMUXC_UART3_IPP_UART_RTS_B_SELECT_INPUT, INPUT_DAISY_3),
-#if 1
+
 	/* NAND */
 	IOMUX_MP(NANDF_WE_B, ALT0, HVE | DSEHIGH | PULL | PU_47K),
 	IOMUX_MP(NANDF_RE_B, ALT0, HVE | DSEHIGH | PULL | PU_47K),
@@ -521,7 +527,6 @@ const struct iomux_setup iomux_setup_data[] = {
 	IOMUX_MP(NANDF_D2, ALT0, HVE | DSEHIGH | KEEPER | PU_100K),
 	IOMUX_MP(NANDF_D1, ALT0, HVE | DSEHIGH | KEEPER | PU_100K),
 	IOMUX_MP(NANDF_D0, ALT0, HVE | DSEHIGH | KEEPER | PU_100K),
-#endif
 
 	/* Batttery pins */
 	IOMUX_MP(NANDF_D13, ALT3, HYS | DSEHIGH),
