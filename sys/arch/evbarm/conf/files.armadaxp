@@ -1,4 +1,4 @@
-#	$NetBSD: files.armadaxp,v 1.2 2013/08/25 07:08:37 kiyohara Exp $
+#	$NetBSD: files.armadaxp,v 1.3 2014/03/29 14:13:17 matt Exp $
 #
 # Marvell Armada XP configuration info
 #
@@ -15,4 +15,3 @@ defflag	opt_cputypes.h			AURORA_IO_CACHE_COHERENCY AURORA_L2_PT_WALK
 
 # CPU support and integrated peripherals
 include	"arch/arm/marvell/files.marvell"
-
