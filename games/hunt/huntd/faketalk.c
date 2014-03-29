@@ -1,4 +1,4 @@
-/*	$NetBSD: faketalk.c,v 1.22 2014/03/29 20:12:12 dholland Exp $	*/
+/*	$NetBSD: faketalk.c,v 1.23 2014/03/29 20:16:09 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,10 +32,9 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: faketalk.c,v 1.22 2014/03/29 20:12:12 dholland Exp $");
+__RCSID("$NetBSD: faketalk.c,v 1.23 2014/03/29 20:16:09 dholland Exp $");
 #endif /* not lint */
 
-#include "bsd.h"
 #include "hunt.h"
 
 #if defined(TALK_43) || defined(TALK_42)

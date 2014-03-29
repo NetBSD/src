@@ -1,4 +1,4 @@
-/*	$NetBSD: get_names.c,v 1.15 2014/03/29 20:10:10 dholland Exp $	*/
+/*	$NetBSD: get_names.c,v 1.16 2014/03/29 20:16:09 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,10 +32,8 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: get_names.c,v 1.15 2014/03/29 20:10:10 dholland Exp $");
+__RCSID("$NetBSD: get_names.c,v 1.16 2014/03/29 20:16:09 dholland Exp $");
 #endif /* not lint */
-
-#include "bsd.h"
 
 #if defined(TALK_43) || defined(TALK_42)
 
