@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.216 2014/02/18 22:03:52 dsl Exp $
+# $NetBSD: md.amd64,v 1.217 2014/03/29 20:22:16 adam Exp $
 
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
@@ -203,9 +203,9 @@
 ./usr/include/clang-3.5/xmmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.5/xopintrin.h		comp-c-include		llvm
 ./usr/include/emmintrin.h			comp-obsolete		obsolete
-./usr/include/g++/bits/i386			comp-c-include
+./usr/include/g++/bits/i386			comp-c-include		gcccmds,compat
 ./usr/include/g++/bits/i386/c++config.h		comp-c-include		gcccmds,gcc=48,compat
-./usr/include/g++/bits/x86_64			comp-c-include
+./usr/include/g++/bits/x86_64			comp-c-include		gcccmds,compat
 ./usr/include/g++/bits/x86_64/c++config.h	comp-c-include		gcccmds,gcc=48,compat
 ./usr/include/gcc-4.1/emmintrin.h		comp-c-include		gcccmds,gcc=4
 ./usr/include/gcc-4.1/emmintrin.h		comp-obsolete		gcc=45,obsolete
