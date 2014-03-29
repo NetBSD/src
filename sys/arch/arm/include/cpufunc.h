@@ -501,7 +501,7 @@ void	armv7_setup(char *string);
 #endif
 
 #if defined(CPU_CORTEX) || defined(CPU_PJ4B)
-void 	armv7_dcache_wbinv_all (void);
+void 	armv7_dcache_wbinv_all(void);
 void	armv7_idcache_wbinv_all(void);
 #endif
 
@@ -534,7 +534,6 @@ void	pj4b_config(void);
 #endif /* CPU_PJ4B */
 
 #if defined(CPU_ARM1136) || defined(CPU_ARM1176)
-void	arm11x6_setttb			(u_int, bool);
 void	arm11x6_idcache_wbinv_all	(void);
 void	arm11x6_dcache_wbinv_all	(void);
 void	arm11x6_icache_sync_all		(void);
@@ -554,7 +553,7 @@ void	arm1136_sleep_rev0		(int);	/* for errata 336501 */
     defined(CPU_FA526) || \
     defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
     defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425) || \
-    defined(CPU_CORTEX) || defined(CPU_SHEEVA)
+    defined(CPU_SHEEVA)
 
 void	armv4_tlb_flushID	(void);
 void	armv4_tlb_flushI	(void);
@@ -571,8 +570,7 @@ void	ixp12x0_setup		(char *);
 #endif
 
 #if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
-    defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425) || \
-    defined(CPU_CORTEX)
+    defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425)
 
 void	xscale_cpwait		(void);
 #define	cpu_cpwait()		cpufuncs.cf_cpwait()
@@ -612,7 +610,7 @@ void	xscale_cache_flushD_rng	(vaddr_t, vsize_t);
 void	xscale_context_switch	(u_int);
 
 void	xscale_setup		(char *);
-#endif	/* CPU_XSCALE_80200 || CPU_XSCALE_80321 || __CPU_XSCALE_PXA2XX || CPU_XSCALE_IXP425 || CPU_CORTEX */
+#endif	/* CPU_XSCALE_80200 || CPU_XSCALE_80321 || __CPU_XSCALE_PXA2XX || CPU_XSCALE_IXP425 */
 
 #if defined(CPU_SHEEVA)
 void	sheeva_dcache_wbinv_range (vaddr_t, vsize_t);
