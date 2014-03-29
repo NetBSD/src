@@ -1,4 +1,4 @@
-/*	$NetBSD: support.c,v 1.1 2014/03/29 22:29:55 dholland Exp $	*/
+/*	$NetBSD: support.c,v 1.2 2014/03/29 22:30:27 dholland Exp $	*/
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 #include "hunt.h"
 
-__RCSID("$NetBSD: support.c,v 1.1 2014/03/29 22:29:55 dholland Exp $");
+__RCSID("$NetBSD: support.c,v 1.2 2014/03/29 22:30:27 dholland Exp $");
 
 void
 complain(int level, const char *fmt, ...)
@@ -54,7 +54,7 @@ complain(int level, const char *fmt, ...)
 	syslog(level, "%s", buf);
 #else
 	(void)level;
-	vwarn("accept");
+	vwarn(fmt, ap);
 #endif
 	va_end(ap);
 }
