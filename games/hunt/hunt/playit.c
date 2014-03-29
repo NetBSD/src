@@ -1,4 +1,4 @@
-/*	$NetBSD: playit.c,v 1.17 2014/03/29 20:52:13 dholland Exp $	*/
+/*	$NetBSD: playit.c,v 1.18 2014/03/29 21:24:26 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: playit.c,v 1.17 2014/03/29 20:52:13 dholland Exp $");
+__RCSID("$NetBSD: playit.c,v 1.18 2014/03/29 21:24:26 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/file.h>
@@ -42,9 +42,12 @@ __RCSID("$NetBSD: playit.c,v 1.17 2014/03/29 20:52:13 dholland Exp $");
 #include <curses.h>
 #include <ctype.h>
 #include <signal.h>
+#include <string.h>
 #include <termios.h>
 #include <unistd.h>
-#include "hunt.h"
+
+#include "hunt_common.h"
+#include "hunt_private.h"
 
 #ifndef FREAD
 #define FREAD	1
