@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.27 2014/03/29 20:35:30 dholland Exp $	*/
+/*	$NetBSD: driver.c,v 1.28 2014/03/29 21:27:08 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: driver.c,v 1.27 2014/03/29 20:35:30 dholland Exp $");
+__RCSID("$NetBSD: driver.c,v 1.28 2014/03/29 21:27:08 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -45,6 +45,13 @@ __RCSID("$NetBSD: driver.c,v 1.27 2014/03/29 20:35:30 dholland Exp $");
 #include <unistd.h>
 #include"hunt.h"
 
+
+#ifdef INTERNET
+u_short Test_port = TEST_PORT;
+#else
+char *Sock_name = "/tmp/hunt";
+char *Stat_name = "/tmp/hunt.stats";
+#endif
 
 static SOCKET Daemon;
 
