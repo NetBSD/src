@@ -1,4 +1,4 @@
-/*	$NetBSD: makemaze.c,v 1.10 2014/03/29 20:41:57 dholland Exp $	*/
+/*	$NetBSD: makemaze.c,v 1.11 2014/03/29 20:44:20 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: makemaze.c,v 1.10 2014/03/29 20:41:57 dholland Exp $");
+__RCSID("$NetBSD: makemaze.c,v 1.11 2014/03/29 20:44:20 dholland Exp $");
 #endif /* not lint */
 
 #include "hunt.h"
@@ -41,35 +41,10 @@ __RCSID("$NetBSD: makemaze.c,v 1.10 2014/03/29 20:41:57 dholland Exp $");
 #define ODD(n)		((n) & 01)
 
 #if 0
-static bool candig(int, int);
-static void dig(int, int);
-#endif
-static void dig_maze(int, int);
-static void remap(void);
-
-void
-makemaze(void)
-{
-	char *sp;
-	int y, x;
-
-	/*
-	 * fill maze with walls
-	 */
-	sp = &Maze[0][0];
-	while (sp < &Maze[HEIGHT - 1][WIDTH])
-		*sp++ = DOOR;
-
-	x = rand_num(WIDTH / 2) * 2 + 1;
-	y = rand_num(HEIGHT / 2) * 2 + 1;
-	dig_maze(x, y);
-	remap();
-}
 
 #define NPERM	24
 #define NDIR	4
 
-#if 0
 static const int dirs[NPERM][NDIR] = {
 	{0,1,2,3},	{3,0,1,2},	{0,2,3,1},	{0,3,2,1},
 	{1,0,2,3},	{2,3,0,1},	{0,2,1,3},	{2,3,1,0},
@@ -83,26 +58,6 @@ static const int incr[NDIR][2] = {
 	{0, 1}, {1, 0}, {0, -1}, {-1, 0}
 };
 
-
-static void
-dig(int y, int x)
-{
-	const int *dp;
-	const int *ip;
-	int ny, nx;
-	const int *endp;
-
-	Maze[y][x] = SPACE;			/* Clear this spot */
-	dp = dirs[rand_num(NPERM)];
-	endp = &dp[NDIR];
-	while (dp < endp) {
-		ip = &incr[*dp++][0];
-		ny = y + *ip++;
-		nx = x + *ip;
-		if (candig(ny, nx))
-			dig(ny, nx);
-	}
-}
 
 /*
  * candig:
@@ -137,9 +92,29 @@ candig(int y, int x)
 
 	return true;			/* OK */
 }
+
+static void
+dig(int y, int x)
+{
+	const int *dp;
+	const int *ip;
+	int ny, nx;
+	const int *endp;
+
+	Maze[y][x] = SPACE;			/* Clear this spot */
+	dp = dirs[rand_num(NPERM)];
+	endp = &dp[NDIR];
+	while (dp < endp) {
+		ip = &incr[*dp++][0];
+		ny = y + *ip++;
+		nx = x + *ip;
+		if (candig(ny, nx))
+			dig(ny, nx);
+	}
+}
 #endif
 
-void
+static void
 dig_maze(int x, int y)
 {
 	int tx, ty;
@@ -186,7 +161,7 @@ dig_maze(int x, int y)
 	}
 }
 
-void
+static void
 remap(void)
 {
 	int y, x;
@@ -232,4 +207,23 @@ remap(void)
 			}
 		}
 	memcpy(Orig_maze, Maze, sizeof Maze);
+}
+
+void
+makemaze(void)
+{
+	char *sp;
+	int y, x;
+
+	/*
+	 * fill maze with walls
+	 */
+	sp = &Maze[0][0];
+	while (sp < &Maze[HEIGHT - 1][WIDTH])
+		*sp++ = DOOR;
+
+	x = rand_num(WIDTH / 2) * 2 + 1;
+	y = rand_num(HEIGHT / 2) * 2 + 1;
+	dig_maze(x, y);
+	remap();
 }
