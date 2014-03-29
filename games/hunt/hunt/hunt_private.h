@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt_private.h,v 1.2 2014/03/29 22:05:44 dholland Exp $	*/
+/*	$NetBSD: hunt_private.h,v 1.3 2014/03/29 22:15:26 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -78,12 +78,19 @@ extern bool no_beep;
  * function types
  */
 
-void bad_con(void) __dead;
-void bad_ver(void) __dead;
-void clear_the_screen(void);
+/* in connect.c */
 void do_connect(char *, char, long);
-void do_message(void);
+
+/* in hunt.c */
+__dead void bad_con(void);
+__dead void bad_ver(void);
+void intr(int);
+
+/* in otto.c */
 void otto(int, int, char);
+
+/* in playit.c */
 void playit(void);
 int quit(int);
-void intr(int);
+void clear_the_screen(void);
+void do_message(void);
