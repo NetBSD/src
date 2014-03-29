@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.25 2014/03/29 20:10:10 dholland Exp $	*/
+/*	$NetBSD: driver.c,v 1.26 2014/03/29 20:12:12 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: driver.c,v 1.25 2014/03/29 20:10:10 dholland Exp $");
+__RCSID("$NetBSD: driver.c,v 1.26 2014/03/29 20:12:12 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -47,8 +47,6 @@ __RCSID("$NetBSD: driver.c,v 1.25 2014/03/29 20:10:10 dholland Exp $");
 
 
 static SOCKET Daemon;
-char *First_arg;			/* pointer to argv[0] */
-char *Last_arg;			/* pointer to end of argv/environ */
 
 #ifdef INTERNET
 static int Test_socket;			/* test socket to answer datagrams */
@@ -64,7 +62,6 @@ static u_short	stat_port;		/* port # of statistics tcp socket */
 static void clear_scores(void);
 static bool havechar(PLAYER *, int);
 static void init(void);
-int main(int, char *[], char *[]);
 static void makeboots(void);
 static void send_stats(void);
 static void zap(PLAYER *, bool, int);
@@ -75,7 +72,7 @@ static void zap(PLAYER *, bool, int);
  *	The main program.
  */
 int
-main(int ac, char **av, char **ep)
+main(int ac, char **av)
 {
 	PLAYER *pp;
 #ifdef INTERNET
@@ -88,13 +85,6 @@ main(int ac, char **av, char **ep)
 	static bool server = false;
 	int c, i;
 	const int linger = 90 * 1000;
-
-	First_arg = av[0];
-	if (ep == NULL || *ep == NULL)
-		ep = av + ac;
-	while (*ep)
-		ep++;
-	Last_arg = ep[-1] + strlen(ep[-1]);
 
 	while ((c = getopt(ac, av, "sp:")) != -1) {
 		switch (c) {

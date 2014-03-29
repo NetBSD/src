@@ -1,4 +1,4 @@
-/*	$NetBSD: faketalk.c,v 1.21 2014/03/29 20:10:10 dholland Exp $	*/
+/*	$NetBSD: faketalk.c,v 1.22 2014/03/29 20:12:12 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: faketalk.c,v 1.21 2014/03/29 20:10:10 dholland Exp $");
+__RCSID("$NetBSD: faketalk.c,v 1.22 2014/03/29 20:12:12 dholland Exp $");
 #endif /* not lint */
 
 #include "bsd.h"
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: faketalk.c,v 1.21 2014/03/29 20:10:10 dholland Exp $");
 #include <netdb.h>
 #include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include "talk_ctl.h"
@@ -60,8 +61,6 @@ __RCSID("$NetBSD: faketalk.c,v 1.21 2014/03/29 20:10:10 dholland Exp $");
 #define ARGV0		"HUNT-ANNOUNCE"
 
 extern char *my_machine_name;
-extern char *First_arg, *Last_arg;
-extern char **environ;
 
 static void do_announce(char *);
 void exorcise(int);
@@ -89,8 +88,6 @@ faketalk(void)
 	FILE *f;
 	int service;		/* socket of service */
 	struct sockaddr_in des;	/* address of destination */
-	char *a;
-	const char *b;
 
 	(void) signal(SIGCHLD, exorcise);
 
@@ -103,13 +100,7 @@ faketalk(void)
 	/*
 	 * change argv so that a ps shows ARGV0
 	 */
-	*environ = NULL;
-	for (a = First_arg, b = ARGV0; a < Last_arg; a++) {
-		if (*b)
-			*a = *b++;
-		else
-			*a = ' ';
-	}
+	setproctitle("%s", ARGV0);
 
 	/*
 	 *	initialize "talk"
