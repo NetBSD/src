@@ -1,4 +1,4 @@
-/*	$NetBSD: shots.c,v 1.13 2014/03/29 19:41:11 dholland Exp $	*/
+/*	$NetBSD: shots.c,v 1.14 2014/03/29 21:43:19 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: shots.c,v 1.13 2014/03/29 19:41:11 dholland Exp $");
+__RCSID("$NetBSD: shots.c,v 1.14 2014/03/29 21:43:19 dholland Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -791,7 +791,7 @@ chkslime(BULLET *bp, BULLET *next)
  *	move the given slime shot speed times and add it back if
  *	it hasn't fizzled yet
  */
-void
+static void
 move_slime(BULLET *bp, int speed, BULLET *next)
 {
 	int i, j, dirmask, count;
@@ -1004,7 +1004,7 @@ zapshot(BULLET *blist, BULLET *obp)
  * explshot -
  *	Make all shots at this location blow up
  */
-void
+static void
 explshot(BULLET *blist, int y, int x)
 {
 	BULLET *bp;
