@@ -40,7 +40,7 @@
 #include <arm/allwinner/awin_reg.h>
 #include <evbarm/cubie/platform.h>  
 
-RCSID("$NetBSD: cubie_start.S,v 1.6 2014/02/21 22:22:48 matt Exp $")
+RCSID("$NetBSD: cubie_start.S,v 1.7 2014/03/29 14:00:30 matt Exp $")
 
 #if defined(VERBOSE_INIT_ARM)
 #define	XPUTC(n)	mov r0, n; bl xputc
@@ -70,6 +70,7 @@ _C_LABEL(cubie_start):
 #ifdef __ARMEB__
 	setend	be			/* force big endian */
 #endif
+	mov	r9, #0
 
 	/* Move into supervisor mode and disable IRQs/FIQs. */
 	cpsid	if, #PSR_SVC32_MODE
@@ -88,25 +89,11 @@ _C_LABEL(cubie_start):
 	bfi	r4, r5, #0, #28
 
 	stmia	r4, {r0-r3}		// Save the arguments
+
 	/*
 	 * Turn on the SMP bit
 	 */
 	bl	cortex_init
-	XPUTC(#67)
-
-#if defined(MULTIPROCESSOR) && 0
-	movw	r0, #:lower16:(AWIN_CORE_PBASE+AWIN_CPUCFG_OFFSET)
-	movt	r0, #:upper16:(AWIN_CORE_PBASE+AWIN_CPUCFG_OFFSET)
-
-	/* Set where the other CPU(s) are going to execute */
-	adr	r1, cortex_mpstart
-	str	r1, [r0, #AWIN_CPUCFG_PRIVATE_REG]
-
-	/* Bring CPU1 out of reset */
-	ldr	r1, [r0, #AWIN_CPUCFG_CPU1_RST_CTRL_REG]
-	orr	r1, r1, #(AWIN_CPUCFG_CPU_RST_CTRL_CORE_RESET|AWIN_CPUCFG_CPU_RST_CTRL_RESET)
-	str	r1, [r0, #AWIN_CPUCFG_CPU1_RST_CTRL_REG]
-#endif /* MULTIPROCESSOR */
 
 	/*
 	 * Set up a preliminary mapping in the MMU to allow us to run
@@ -114,9 +101,9 @@ _C_LABEL(cubie_start):
 	 */
 	movw	r0, #:lower16:TEMP_L1_TABLE
 	movt	r0, #:upper16:TEMP_L1_TABLE
-	adr	r1, .Lmmu_init_table
+	movw	r1, #:lower16:.Lmmu_init_table
+	movt	r1, #:upper16:.Lmmu_init_table
 	bl	arm_boot_l1pt_init
-
 	XPUTC(#68)
 
 	/*
@@ -127,6 +114,17 @@ _C_LABEL(cubie_start):
 	bl	arm_cpuinit
 
 	XPUTC(#90)
+
+#if defined(MULTIPROCESSOR)
+	// Now spin up the second processors into the same state we are now.
+	XPUTC(#77)
+	XPUTC(#80)
+	XPUTC(#60)
+	// Make sure the cache is flushed out to RAM for the other CPUs
+	bl	_C_LABEL(armv7_dcache_wbinv_all)
+	bl	a20_mpinit
+	XPUTC(#62)
+#endif /* MULTIPROCESSOR */
 	XPUTC(#13)
 	XPUTC(#10)
 
@@ -141,26 +139,101 @@ _C_LABEL(cubie_start):
 
 #include <arm/cortex/a9_mpsubr.S>
 
+#if defined(MULTIPROCESSOR)
+a20_mpinit:
+	mov	r4, lr			// because we call gtmr_bootdelay
+	movw	r5, #:lower16:(AWIN_CORE_PBASE+AWIN_CPUCFG_OFFSET)
+	movt	r5, #:upper16:(AWIN_CORE_PBASE+AWIN_CPUCFG_OFFSET)
+
+	/* Set where the other CPU(s) are going to execute */
+	movw	r1, #:lower16:cortex_mpstart
+	movt	r1, #:upper16:cortex_mpstart
+	str	r1, [r5, #AWIN_CPUCFG_PRIVATE_REG]
+	dsb
+
+	/* Assert CPU core reset */
+	mov	r1, #0
+	str	r1, [r5, #AWIN_CPUCFG_CPU1_RST_CTRL_REG]
+	dsb
+
+	/* Ensure CPU1 reset also invalidates its L1 caches */
+	ldr	r1, [r5, #AWIN_CPUCFG_GENCTRL_REG] 
+	bic	r1, r1, #(1 << 1)
+	str	r1, [r5, #AWIN_CPUCFG_GENCTRL_REG]
+	dsb
+
+	/* Hold DBGPWRDUP signal low */
+	ldr	r1, [r5, #AWIN_CPUCFG_DBGCTRL1_REG] 
+	bic	r1, r1, #(1 << 1)
+	str	r1, [r5, #AWIN_CPUCFG_DBGCTRL1_REG]
+	dsb
+
+	/* Ramp up power to CPU1 */
+	movw	r1, #0xff
+1:	str	r1, [r5, #AWIN_CPUCFG_CPU1_PWRCLAMP_REG]
+	dsb
+	lsrs	r1, r1, #1
+	bne	1b
+
+	/* We need to wait (at least) 10ms */
+	mov	r0, #0x3b000			// 10.06ms
+	bl	_C_LABEL(gtmr_bootdelay)
+
+	/* Clear power-off gating */
+	ldr	r1, [r5, #AWIN_CPUCFG_CPU1_PWROFF_REG] 
+	bic	r1, r1, #(1 << 1)
+	str	r1, [r5, #AWIN_CPUCFG_CPU1_PWROFF_REG]
+	dsb
+
+	/* Bring CPU1 out of reset */
+	ldr	r1, [r5, #AWIN_CPUCFG_CPU1_RST_CTRL_REG]
+	orr	r1, r1, #(AWIN_CPUCFG_CPU_RST_CTRL_CORE_RESET|AWIN_CPUCFG_CPU_RST_CTRL_RESET)
+	str	r1, [r5, #AWIN_CPUCFG_CPU1_RST_CTRL_REG]
+	dsb
+
+	/* Reassert DBGPWRDUP signal */
+	ldr	r1, [r5, #AWIN_CPUCFG_DBGCTRL1_REG] 
+	orr	r1, r1, #(1 << 1)
+	str	r1, [r5, #AWIN_CPUCFG_DBGCTRL1_REG]
+	dsb
+
+	//
+	// Wait up a second for CPU1 to hatch. 
+	//
+	movw	r6, #:lower16:arm_cpu_hatched
+	movt	r6, #:upper16:arm_cpu_hatched
+	mov	r5, #200			// 200 x 5ms
+
+1:	dmb					// memory barrier
+	ldr	r0, [r6]			// load hatched
+	tst	r0, #2				// our bit set yet?
+	bxne	r4				//   yes, return
+	subs	r5, r5, #1			// decrement count
+	bxeq	r4				//   0? return
+	mov	r0, #0x1d800			// 5.03ms
+	bl	_C_LABEL(gtmr_bootdelay)
+	b	1b
+ASEND(a20_mpinit)
+#endif /* MULTIPROCESSOR */
+
 .Lmmu_init_table:
 	/* Map KERNEL_BASE VA to SDRAM PA, write-back cacheable, shareable */
-	MMU_INIT(KERNEL_BASE, AWIN_SDRAM_PBASE,
-		(INIT_MEMSIZE * L1_S_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
-		L1_S_PROTO | L1_S_APv7_KRW | L1_S_B | L1_S_C | L1_S_V6_S)
+	MMU_INIT(KERNEL_BASE, AWIN_SDRAM_PBASE, INIT_MEMSIZE,
+		L1_S_PROTO_armv7 | L1_S_APv7_KRW | L1_S_CACHEABLE)
 
 	/* Map memory 1:1 VA to PA, write-back cacheable, shareable */
-	MMU_INIT(AWIN_SDRAM_PBASE, AWIN_SDRAM_PBASE,
-		(INIT_MEMSIZE * L1_S_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
-		L1_S_PROTO | L1_S_APv7_KRW | L1_S_B | L1_S_C | L1_S_V6_S)
+	MMU_INIT(AWIN_SDRAM_PBASE, AWIN_SDRAM_PBASE, INIT_MEMSIZE,
+		L1_S_PROTO_armv7 | L1_S_APv7_KRW | L1_S_CACHEABLE)
 
 	/* Map AWIN CORE (so console will work) */
 	MMU_INIT(AWIN_CORE_VBASE, AWIN_CORE_PBASE,
 		(AWIN_CORE_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
-		L1_S_PROTO | L1_S_APv7_KRW)
+		L1_S_PROTO_armv7 | L1_S_APv7_KRW | L1_S_V6_XN)
 
 	/* Map AWIN CORE (so console will work) */
 	MMU_INIT(AWIN_CORE_PBASE, AWIN_CORE_PBASE,
 		(AWIN_CORE_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
-		L1_S_PROTO | L1_S_APv7_KRW)
+		L1_S_PROTO_armv7 | L1_S_APv7_KRW | L1_S_V6_XN)
 
 	/* end of table */
 	MMU_INIT(0, 0, 0, 0)
