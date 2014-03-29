@@ -1,4 +1,4 @@
-/*	$NetBSD: makemaze.c,v 1.9 2014/03/29 19:41:11 dholland Exp $	*/
+/*	$NetBSD: makemaze.c,v 1.10 2014/03/29 20:41:57 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: makemaze.c,v 1.9 2014/03/29 19:41:11 dholland Exp $");
+__RCSID("$NetBSD: makemaze.c,v 1.10 2014/03/29 20:41:57 dholland Exp $");
 #endif /* not lint */
 
 #include "hunt.h"
@@ -70,7 +70,7 @@ makemaze(void)
 #define NDIR	4
 
 #if 0
-static int dirs[NPERM][NDIR] = {
+static const int dirs[NPERM][NDIR] = {
 	{0,1,2,3},	{3,0,1,2},	{0,2,3,1},	{0,3,2,1},
 	{1,0,2,3},	{2,3,0,1},	{0,2,1,3},	{2,3,1,0},
 	{1,0,3,2},	{1,2,0,3},	{3,1,2,0},	{2,0,3,1},
@@ -79,7 +79,7 @@ static int dirs[NPERM][NDIR] = {
 	{2,1,3,0},	{3,0,2,1},	{3,2,0,1},	{3,2,1,0}
 };
 
-static int incr[NDIR][2] = {
+static const int incr[NDIR][2] = {
 	{0, 1}, {1, 0}, {0, -1}, {-1, 0}
 };
 
@@ -87,10 +87,10 @@ static int incr[NDIR][2] = {
 static void
 dig(int y, int x)
 {
-	int *dp;
-	int *ip;
+	const int *dp;
+	const int *ip;
 	int ny, nx;
-	int *endp;
+	const int *endp;
 
 	Maze[y][x] = SPACE;			/* Clear this spot */
 	dp = dirs[rand_num(NPERM)];
