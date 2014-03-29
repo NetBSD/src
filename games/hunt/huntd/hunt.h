@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.h,v 1.24 2014/03/29 21:33:41 dholland Exp $	*/
+/*	$NetBSD: hunt.h,v 1.25 2014/03/29 21:43:46 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -167,41 +167,49 @@ extern PLAYER Monitor[MAXMON], *End_monitor;
  * function types
  */
 
-void add_shot(int, int, int, char, int, PLAYER *, int, char);
+/* in answer.c */
 int answer(void);
-void ce(PLAYER *);
-void cgoto(PLAYER *, int, int);
+int rand_dir(void);
+
+/* in draw.c */
+void drawmaze(PLAYER *);
+void look(PLAYER *);
 void check(PLAYER *, int, int);
+void showstat(PLAYER *);
+void drawplayer(PLAYER *, bool);
+void message(PLAYER *, const char *);
+
+/* in driver.c */
 void checkdam(PLAYER *, PLAYER *, IDENT *, int, char);
-void clearwalls(void);
-void clear_eol(void);
-void clrscr(PLAYER *);
+int rand_num(int);
+__dead void cleanup(int);
+
+/* in execute.c */
+void mon_execute(PLAYER *);	/* ifdef MONITOR only */
+void execute(PLAYER *);
+void add_shot(int, int, int, char, int, PLAYER *, int, char);
 BULLET *create_shot(int, int, int, char, int, int, PLAYER *,
 		    IDENT *, int, char);
-void drawmaze(PLAYER *);
-void drawplayer(PLAYER *, bool);
-void execute(PLAYER *);
-void faketalk(void);
-void fixshots(int, int, char);
-void get_local_name(const char *);
-int get_remote_name(char *);
-BULLET *is_bullet(int, int);
-void look(PLAYER *);
+
+/* in expl.c */
+void showexpl(int, int, char);
+void rollexpl(void);
+void clearwalls(void);
+
+/* in makemaze.c */
 void makemaze(void);
-void message(PLAYER *, const char *);
-void mon_execute(PLAYER *);
+
+/* in shots.c */
 void moveshots(void);
-void open_ctl(void);
+PLAYER *play_at(int, int);
 bool opposite(int, char);
+BULLET *is_bullet(int, int);
+void fixshots(int, int, char);
+
+/* in terminal.c */
+void cgoto(PLAYER *, int, int);
 void outch(PLAYER *, int);
 void outstr(PLAYER *, const char *, int);
-PLAYER *play_at(int, int);
-void put_ch(char);
-void put_str(char *);
-int rand_dir(void);
-int rand_num(int);
-void rollexpl(void);
+void clrscr(PLAYER *);
+void ce(PLAYER *);
 void sendcom(PLAYER *, int, ...);
-void showexpl(int, int, char);
-void showstat(PLAYER *);
-void cleanup(int) __dead;
