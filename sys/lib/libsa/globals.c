@@ -1,4 +1,4 @@
-/*	$NetBSD: globals.c,v 1.10 2014/01/05 21:38:25 jakllsch Exp $	*/
+/*	$NetBSD: globals.c,v 1.11 2014/03/29 14:30:16 jakllsch Exp $	*/
 
 /*
  *	globals.c:
@@ -8,13 +8,14 @@
  */
 
 #include <sys/param.h>
+#include <net/if_ether.h>		/* for ETHER_ADDR_LEN */
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 
 #include "stand.h"
 #include "net.h"
 
-u_char	bcea[6] = BA;			/* broadcast ethernet address */
+u_char	bcea[ETHER_ADDR_LEN] = BA;	/* broadcast ethernet address */
 
 char	rootpath[FNAME_SIZE];		/* root mount path */
 char	bootfile[FNAME_SIZE];		/* bootp says to boot this */
