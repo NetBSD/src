@@ -37,6 +37,12 @@ along with GCC; see the file COPYING3.  If not see
 # include <stddef.h>
 #endif
 
+#ifndef GENERATOR_FILE
+#ifdef __cplusplus
+# include <cstdio>
+#endif
+#endif
+
 #include <stdio.h>
 
 /* Define a generic NULL if one hasn't already been defined.  */
