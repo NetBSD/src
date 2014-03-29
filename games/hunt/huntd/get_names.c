@@ -1,4 +1,4 @@
-/*	$NetBSD: get_names.c,v 1.13 2014/03/29 19:02:12 dholland Exp $	*/
+/*	$NetBSD: get_names.c,v 1.14 2014/03/29 19:26:28 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: get_names.c,v 1.13 2014/03/29 19:02:12 dholland Exp $");
+__RCSID("$NetBSD: get_names.c,v 1.14 2014/03/29 19:26:28 dholland Exp $");
 #endif /* not lint */
 
 #include "bsd.h"
@@ -139,13 +139,29 @@ get_remote_name(char *his_address)
 		}
 		*ptr = '\0';
 
-		/* look up the address of the recipient's machine */
-		hp = gethostbyname(his_machine_name);
-		if (hp == NULL) {
-			/* unknown host */
+		/*
+		 * Look up the address of the recipient's machine.
+		 * Since this is used for sending udp talk packets,
+		 * it has to be AF_INET.
+		 */
+		ai.ai_flags = 0;
+		ai.family = AF_INET;
+		ai.socktype = SOCK_DGRAM;
+		ai.protocol = IPPROTO_UDP;
+		ai.ai_addrlen = 0;
+		ai.ai_addr = NULL;
+		ai.ai_canonname = NULL;
+		ai.ai_neext = NULL;
+		aierror = getaddrinfo(his_machine_name, NULL, ai, &ai);
+		if (aierror != 0) {
 			return 0;
 		}
-		memcpy(&his_machine_addr, hp->h_addr, hp->h_length);
+		assert(ai.family == AF_INET);
+		assert(ai.socktype == SOCK_DGRAM);
+		assert(ai.protocol == IPPROTO_UDP);
+		assert(ai.ai_addrln == sizeof(his_machine_addr));
+		assert(ai.ai_addr != NULL);
+		his_machine_addr = *ai->ai_addr;
 	}
 	/* Load these useful values into the standard message header */
 	(void) strncpy(msg.r_name, his_name, NAME_SIZE);
