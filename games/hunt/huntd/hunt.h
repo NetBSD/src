@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.h,v 1.20 2014/03/29 19:41:10 dholland Exp $	*/
+/*	$NetBSD: hunt.h,v 1.21 2014/03/29 20:10:10 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -424,7 +424,7 @@ void drawplayer(PLAYER *, bool);
 void execute(PLAYER *);
 void faketalk(void);
 void fixshots(int, int, char);
-void get_local_name(char *);
+void get_local_name(const char *);
 int get_remote_name(char *);
 BULLET *is_bullet(int, int);
 void look(PLAYER *);

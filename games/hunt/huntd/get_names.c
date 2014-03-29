@@ -1,4 +1,4 @@
-/*	$NetBSD: get_names.c,v 1.14 2014/03/29 19:26:28 dholland Exp $	*/
+/*	$NetBSD: get_names.c,v 1.15 2014/03/29 20:10:10 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: get_names.c,v 1.14 2014/03/29 19:26:28 dholland Exp $");
+__RCSID("$NetBSD: get_names.c,v 1.15 2014/03/29 20:10:10 dholland Exp $");
 #endif /* not lint */
 
 #include "bsd.h"
@@ -45,6 +45,8 @@ __RCSID("$NetBSD: get_names.c,v 1.14 2014/03/29 19:26:28 dholland Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <assert.h>
+
 #include "hunt.h"
 #include "talk_ctl.h"
 
@@ -55,7 +57,7 @@ char *my_machine_name;
  * Determine the local user and machine
  */
 void
-get_local_name(char *my_name)
+get_local_name(const char *my_name)
 {
 	struct hostent *hp;
 	struct servent *sp;
@@ -116,7 +118,8 @@ get_remote_name(char *his_address)
 	const char *his_name;
 	const char *his_machine_name;
 	char *ptr;
-	struct hostent *hp;
+	struct addrinfo ai0, *ai;
+	struct sockaddr_in *sin;
 
 	/* check for, and strip out, the machine name of the target */
 	for (ptr = his_address; *ptr != '\0' && *ptr != '@' && *ptr != ':'
@@ -144,24 +147,25 @@ get_remote_name(char *his_address)
 		 * Since this is used for sending udp talk packets,
 		 * it has to be AF_INET.
 		 */
-		ai.ai_flags = 0;
-		ai.family = AF_INET;
-		ai.socktype = SOCK_DGRAM;
-		ai.protocol = IPPROTO_UDP;
-		ai.ai_addrlen = 0;
-		ai.ai_addr = NULL;
-		ai.ai_canonname = NULL;
-		ai.ai_neext = NULL;
-		aierror = getaddrinfo(his_machine_name, NULL, ai, &ai);
-		if (aierror != 0) {
+		ai0.ai_flags = 0;
+		ai0.ai_family = AF_INET;
+		ai0.ai_socktype = SOCK_DGRAM;
+		ai0.ai_protocol = IPPROTO_UDP;
+		ai0.ai_addrlen = 0;
+		ai0.ai_addr = NULL;
+		ai0.ai_canonname = NULL;
+		ai0.ai_next = NULL;
+		if (getaddrinfo(his_machine_name, NULL, &ai0, &ai) != 0) {
 			return 0;
 		}
-		assert(ai.family == AF_INET);
-		assert(ai.socktype == SOCK_DGRAM);
-		assert(ai.protocol == IPPROTO_UDP);
-		assert(ai.ai_addrln == sizeof(his_machine_addr));
-		assert(ai.ai_addr != NULL);
-		his_machine_addr = *ai->ai_addr;
+		assert(ai->ai_family == AF_INET);
+		assert(ai->ai_socktype == SOCK_DGRAM);
+		assert(ai->ai_protocol == IPPROTO_UDP);
+		assert(ai->ai_addrlen == sizeof(his_machine_addr));
+		assert(ai->ai_addr != NULL);
+		sin = (struct sockaddr_in *)ai->ai_addr;
+		his_machine_addr = sin->sin_addr;
+		freeaddrinfo(ai);
 	}
 	/* Load these useful values into the standard message header */
 	(void) strncpy(msg.r_name, his_name, NAME_SIZE);
