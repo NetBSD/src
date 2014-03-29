@@ -1,4 +1,4 @@
-/*	$NetBSD: pathname.c,v 1.8 2014/03/29 21:25:35 dholland Exp $	*/
+/*	$NetBSD: pathname.c,v 1.9 2014/03/29 21:27:08 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,16 +32,9 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pathname.c,v 1.8 2014/03/29 21:25:35 dholland Exp $");
+__RCSID("$NetBSD: pathname.c,v 1.9 2014/03/29 21:27:08 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 
 #include "hunt_common.h"
-
-#ifdef INTERNET
-u_short Test_port = TEST_PORT;
-#else
-char *Sock_name = "/tmp/hunt";
-char *Stat_name = "/tmp/hunt.stats";
-#endif
