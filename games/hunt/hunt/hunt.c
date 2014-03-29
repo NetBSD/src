@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.44 2014/03/29 21:24:26 dholland Exp $	*/
+/*	$NetBSD: hunt.c,v 1.45 2014/03/29 22:05:44 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.44 2014/03/29 21:24:26 dholland Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.45 2014/03/29 22:05:44 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -57,14 +57,17 @@ __RCSID("$NetBSD: hunt.c,v 1.44 2014/03/29 21:24:26 dholland Exp $");
 #define put_str		addstr
 
 #ifdef DEBUG
-char *Driver = "/home/socr/a/conrad/games/src/hunt/huntd.dbg";
+static const char Driver[] = "/home/socr/a/conrad/games/src/hunt/huntd.dbg";
 #else
-const char *Driver = HUNTD;
+static const char Driver[] = HUNTD;
 #endif
 
 #ifdef INTERNET
-u_short Test_port = TEST_PORT;
+static uint16_t Test_port = TEST_PORT;
+#else
+static const char Sock_name[] = "/tmp/hunt";
 #endif
+
 
 bool Last_player = false;
 #ifdef MONITOR
