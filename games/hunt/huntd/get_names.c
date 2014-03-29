@@ -1,4 +1,4 @@
-/*	$NetBSD: get_names.c,v 1.11 2014/03/28 17:49:11 apb Exp $	*/
+/*	$NetBSD: get_names.c,v 1.12 2014/03/29 19:01:00 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: get_names.c,v 1.11 2014/03/28 17:49:11 apb Exp $");
+__RCSID("$NetBSD: get_names.c,v 1.12 2014/03/29 19:01:00 dholland Exp $");
 #endif /* not lint */
 
 #include "bsd.h"
@@ -126,6 +126,7 @@ get_remote_name(char *his_address)
 		/* this is a local to local talk */
 		his_name = his_address;
 		his_machine_name = my_machine_name;
+		his_machine_addr = my_machine_addr;
 	} else {
 		if (*ptr == '@') {
 			/* user@host */
@@ -137,23 +138,19 @@ get_remote_name(char *his_address)
 			his_machine_name = his_address;
 		}
 		*ptr = '\0';
+
+		/* look up the address of the recipient's machine */
+		hp = gethostbyname(his_machine_name);
+		if (hp == NULL) {
+			/* unknown host */
+			return 0;
+		}
+		memcpy(&his_machine_addr, hp->h_addr, hp->h_length);
 	}
 	/* Load these useful values into the standard message header */
 	(void) strncpy(msg.r_name, his_name, NAME_SIZE);
 	msg.r_name[NAME_SIZE - 1] = '\0';
 
-	/* if he is on the same machine, then simply copy */
-	if (memcmp(&his_machine_name, &my_machine_name,
-						sizeof(his_machine_name)) == 0)
-		memcpy(&his_machine_addr, &my_machine_addr,
-						sizeof(his_machine_addr));
-	else {
-		/* look up the address of the recipient's machine */
-		hp = gethostbyname(his_machine_name);
-		if (hp == (struct hostent *) 0)
-			return 0;			/* unknown host */
-		memcpy(&his_machine_addr, hp->h_addr, hp->h_length);
-	}
 	return 1;
 }
 #endif
