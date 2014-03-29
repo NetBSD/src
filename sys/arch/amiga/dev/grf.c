@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.60 2014/03/16 05:20:22 dholland Exp $ */
+/*	$NetBSD: grf.c,v 1.61 2014/03/29 12:54:27 mlelstv Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.60 2014/03/16 05:20:22 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.61 2014/03/29 12:54:27 mlelstv Exp $");
 
 /*
  * Graphics display driver for the Amiga
@@ -502,7 +502,7 @@ grf_init_screen(void *cookie, struct vcons_screen *scr, int existing,
     long *defattr)
 {
 	struct grf_softc *gp;
-	struct rasops_info *ri;
+	struct rasops_info *ri __unused;
 
 	gp = cookie;
 	ri = grf_setup_rasops(gp, scr);
@@ -620,7 +620,7 @@ grf_wsaogetcmap(void *c, void *data)
 {
 	u_int index, count;
 	struct grf_softc *gp;
-	struct wsdisplay_cmap *cm;
+	struct wsdisplay_cmap *cm __unused;
 
 	cm = (struct wsdisplay_cmap*) data;
 	gp = c;
@@ -713,7 +713,7 @@ grf_wsaogvideo(void *c, void *data)
 int
 grf_wsaogtype(void *c, void *data)
 {
-	struct grf_softc *gp;
+	struct grf_softc *gp __unused;
 
 	gp = c;
 
