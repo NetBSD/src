@@ -22,7 +22,7 @@ SOFTWARE.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootpd.c,v 1.25 2014/03/29 18:23:00 apb Exp $");
+__RCSID("$NetBSD: bootpd.c,v 1.26 2014/03/29 22:45:31 joerg Exp $");
 #endif
 
 /*
@@ -816,7 +816,7 @@ HW addr type is IEEE 802.  convert to %s and check again\n",
 	} else {
 		lrealpath[0] = '\0';
 		clntpath = lrealpath;
-		clntpathmaxlen = sizeof(lrealpath)
+		clntpathmaxlen = sizeof(lrealpath);
 	}
 
 	/*
