@@ -1,4 +1,4 @@
-/*	$NetBSD: faketalk.c,v 1.19 2014/03/29 19:03:21 dholland Exp $	*/
+/*	$NetBSD: faketalk.c,v 1.20 2014/03/29 19:41:10 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: faketalk.c,v 1.19 2014/03/29 19:03:21 dholland Exp $");
+__RCSID("$NetBSD: faketalk.c,v 1.20 2014/03/29 19:41:10 dholland Exp $");
 #endif /* not lint */
 
 #include "bsd.h"
@@ -49,9 +49,6 @@ __RCSID("$NetBSD: faketalk.c,v 1.19 2014/03/29 19:03:21 dholland Exp $");
 #include <string.h>
 #include <unistd.h>
 #include "talk_ctl.h"
-
-#define TRUE		1
-#define FALSE		0
 
 /* defines for fake talk message to announce start of game */
 #ifdef TALK_43
