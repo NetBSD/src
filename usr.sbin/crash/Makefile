@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2014/02/24 07:23:44 skrll Exp $
+#	$NetBSD: Makefile,v 1.26 2014/03/29 09:36:18 skrll Exp $
 
 PROG=		crash
 MAN=		crash.8
@@ -50,9 +50,6 @@ CPPFLAGS+=	-I${S}/arch
 . if    ${MACHINE} == "amd64" \
      || ${MACHINE} == "i386"
 MACHINE_FAMILY = x86
-. elif  ${MACHINE_ARCH} == "m68k" \
-     || ${MACHINE_ARCH} == "arm"
-MACHINE_FAMILY = ${MACHINE_ARCH}
 . elif    ${MACHINE} == "sparc64" \
      || ${MACHINE} == "sparc64"
 MACHINE_FAMILY = sparc
