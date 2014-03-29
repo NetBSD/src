@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.41 2011/09/01 07:18:50 plunky Exp $	*/
+/*	$NetBSD: hunt.c,v 1.42 2014/03/29 20:52:13 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.41 2011/09/01 07:18:50 plunky Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.42 2014/03/29 20:52:13 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -55,9 +55,9 @@ __RCSID("$NetBSD: hunt.c,v 1.41 2011/09/01 07:18:50 plunky Exp $");
 #define put_ch		addch
 #define put_str		addstr
 
-FLAG Last_player = FALSE;
+bool Last_player = false;
 #ifdef MONITOR
-FLAG Am_monitor = FALSE;
+bool Am_monitor = false;
 #endif
 
 char Buf[BUFSIZ];
@@ -66,9 +66,9 @@ char Buf[BUFSIZ];
 #ifdef INTERNET
 static char *Sock_host;
 static char *use_port;
-static FLAG Query_driver = FALSE;
+static bool Query_driver = false;
 char *Send_message = NULL;
-static FLAG Show_scores = FALSE;
+static bool Show_scores = false;
 #endif
 
 static SOCKET Daemon;
@@ -79,7 +79,7 @@ static SOCKET Daemon;
 #endif
 
 char map_key[256];			/* what to map keys to */
-FLAG no_beep;
+bool no_beep;
 
 static char name[NAMELEN];
 static char team = ' ';
@@ -97,7 +97,7 @@ static void fincurs(void);
 static void rmnl(char *);
 static void sigterm(int) __dead;
 static void sigusr1(int) __dead;
-static void find_driver(FLAG);
+static void find_driver(bool);
 static void start_driver(void);
 static int broadcast_vec(int, struct sockaddr **);
 #ifdef INTERNET
@@ -135,22 +135,22 @@ main(int ac, char **av)
 			warnx("The -o flag is reserved for future use.");
 			goto usage;
 #else
-			Otto_mode = TRUE;
+			Otto_mode = true;
 			break;
 #endif
 		case 'm':
 #ifdef MONITOR
-			Am_monitor = TRUE;
+			Am_monitor = true;
 #else
 			warnx("The monitor was not compiled in.");
 #endif
 			break;
 #ifdef INTERNET
 		case 'S':
-			Show_scores = TRUE;
+			Show_scores = true;
 			break;
 		case 'q':	/* query whether hunt is running */
-			Query_driver = TRUE;
+			Query_driver = true;
 			break;
 		case 'w':
 			Send_message = optarg;
@@ -245,7 +245,7 @@ main(int ac, char **av)
 		errx(0, "couldn't initialize screen");
 	(void) noecho();
 	(void) cbreak();
-	in_visual = TRUE;
+	in_visual = true;
 	if (LINES < SCREEN_HEIGHT || COLS < SCREEN_WIDTH)
 		leavex(1, "Need a larger window");
 	clear_the_screen();
@@ -256,7 +256,7 @@ main(int ac, char **av)
 
 	for (;;) {
 #ifdef INTERNET
-		find_driver(TRUE);
+		find_driver(true);
 
 		if (Daemon.sin_port == 0)
 			leavex(1, "Game not found, try again");
@@ -376,7 +376,7 @@ list_drivers(void)
 	int test_socket;
 	socklen_t namelen;
 	char local_name[MAXHOSTNAMELEN + 1];
-	static int initial = TRUE;
+	static bool initial = true;
 	static struct in_addr local_address;
 	struct hostent *hp;
 	static int brdc;
@@ -505,7 +505,7 @@ get_response:
 		listv[listc].sin_port = htons(0);
 
 		(void) close(test_socket);
-		initial = FALSE;
+		initial = false;
 		return listv;
 	}
 
@@ -517,7 +517,7 @@ test_one_host:
 }
 
 static void
-find_driver(FLAG do_startup)
+find_driver(bool do_startup)
 {
 	SOCKET *hosts;
 
@@ -563,7 +563,7 @@ find_driver(FLAG do_startup)
 
 	start_driver();
 	sleep(2);
-	find_driver(FALSE);
+	find_driver(false);
 }
 
 static void
@@ -706,7 +706,7 @@ void
 intr(int dummy __unused)
 {
 	int ch;
-	int explained;
+	bool explained;
 	int y, x;
 
 	(void) signal(SIGINT, SIG_IGN);
@@ -715,7 +715,7 @@ intr(int dummy __unused)
 	put_str("Really quit? ");
 	clear_eol();
 	refresh();
-	explained = FALSE;
+	explained = false;
 	for (;;) {
 		ch = getchar();
 		if (isupper(ch))
@@ -736,7 +736,7 @@ intr(int dummy __unused)
 		if (!explained) {
 			put_str("(Yes or No) ");
 			refresh();
-			explained = TRUE;
+			explained = true;
 		}
 		beep();
 		refresh();
@@ -804,7 +804,7 @@ env_init(long enter_status)
 				envp = s + 1;
 			}
 			else if (strncmp(envp, "nobeep,", s - envp + 1) == 0) {
-				no_beep = TRUE;
+				no_beep = true;
 				envp = s + 1;
 			}
 			else if (strncmp(envp, "name=", s - envp + 1) == 0) {
