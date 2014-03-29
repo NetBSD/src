@@ -1,4 +1,4 @@
-/*	$NetBSD: pathname.c,v 1.7 2014/03/29 21:24:56 dholland Exp $	*/
+/*	$NetBSD: pathname.c,v 1.8 2014/03/29 21:25:35 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,14 +32,8 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pathname.c,v 1.7 2014/03/29 21:24:56 dholland Exp $");
+__RCSID("$NetBSD: pathname.c,v 1.8 2014/03/29 21:25:35 dholland Exp $");
 #endif /* not lint */
-
-/*
- * There is no particular significance to the numbers assigned
- * to Test_port.  They're just random numbers greater than the
- * range reserved for privileged sockets.
- */
 
 #include <sys/types.h>
 
