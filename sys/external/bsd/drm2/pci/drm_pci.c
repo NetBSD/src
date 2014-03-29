@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci.c,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: drm_pci.c,v 1.3 2014/03/29 19:54:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.2 2014/03/18 18:20:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.3 2014/03/29 19:54:46 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -197,11 +197,12 @@ drm_pci_irq_install(struct drm_device *dev, irqreturn_t (*handler)(void *),
 	pci_intr_handle_t ih;
 	const char *intrstr;
 	void *ih_cookie;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	if (pci_intr_map(pa, &ih))
 		return -ENOENT;
 
-	intrstr = pci_intr_string(pa->pa_pc, ih);
+	intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
 	ih_cookie = pci_intr_establish(pa->pa_pc, ih, IPL_DRM, handler, arg);
 	if (ih_cookie == NULL) {
 		aprint_error_dev(dev->dev,
