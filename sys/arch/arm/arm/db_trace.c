@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.28 2013/01/18 07:34:39 skrll Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.29 2014/03/29 15:47:40 skrll Exp $	*/
 
 /* 
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.28 2013/01/18 07:34:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.29 2014/03/29 15:47:40 skrll Exp $");
 
 #include <sys/proc.h>
 #include <arm/armreg.h>
@@ -109,9 +109,12 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 			trace_full = true;
 	}
 
+#ifdef _KERNEL
 	if (!have_addr)
 		frame = (uint32_t *)(DDB_REGS->tf_r11);
-	else {
+	else
+#endif
+	{
 		if (trace_thread) {
 			struct pcb *pcb;
 			proc_t p;
