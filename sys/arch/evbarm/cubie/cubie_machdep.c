@@ -1,4 +1,4 @@
-/*	$NetBSD: cubie_machdep.c,v 1.14 2014/02/26 02:01:29 jmcneill Exp $ */
+/*	$NetBSD: cubie_machdep.c,v 1.15 2014/03/29 14:00:30 matt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cubie_machdep.c,v 1.14 2014/02/26 02:01:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cubie_machdep.c,v 1.15 2014/03/29 14:00:30 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -202,10 +202,6 @@ uintptr_t uboot_args[4] = { 0 };
 
 extern char KERNEL_BASE_phys[];	/* physical start of kernel */
 extern char _end[];		/* physical end of kernel */
-
-#ifdef MULTIPROCESSOR
-extern uintptr_t cortex_mpfault[4];
-#endif
 
 #if NAWIN_FB > 0
 #if NCOM > 0
@@ -312,11 +308,6 @@ initarm(void *arg)
 #ifdef VERBOSE_INIT_ARM
 	printf("\nuboot arg = %#"PRIxPTR", %#"PRIxPTR", %#"PRIxPTR", %#"PRIxPTR"\n",
 	    uboot_args[0], uboot_args[1], uboot_args[2], uboot_args[3]);
-#ifdef MULTIPROCESSOR
-	printf("mpfault = %#"PRIxPTR", %#"PRIxPTR", %#"PRIxPTR", %#"PRIxPTR"\n",
-	    cortex_mpfault[0], cortex_mpfault[1], cortex_mpfault[2],
-	    cortex_mpfault[3]);
-#endif
 #endif
 
 #ifdef KGDB
