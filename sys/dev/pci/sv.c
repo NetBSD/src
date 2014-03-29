@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.49 2014/03/18 18:20:42 riastradh Exp $ */
+/*      $NetBSD: sv.c,v 1.50 2014/03/29 19:28:25 christos Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.49 2014/03/18 18:20:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.50 2014/03/29 19:28:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -344,6 +344,7 @@ sv_attach(device_t parent, device_t self, void *aux)
 	char const *intrstr;
 	uint8_t reg;
 	struct audio_attach_args arg;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc = device_private(self);
 	pa = aux;
@@ -426,7 +427,7 @@ sv_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
 
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, sv_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");

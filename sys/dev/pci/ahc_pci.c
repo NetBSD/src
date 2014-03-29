@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.69 2014/02/18 12:32:12 macallan Exp $
+ * $Id: ahc_pci.c,v 1.70 2014/03/29 19:28:24 christos Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.69 2014/02/18 12:32:12 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.70 2014/03/29 19:28:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -780,6 +780,7 @@ ahc_pci_attach(device_t parent, device_t self, void *aux)
 	const char        *intrstr;
 	struct ahc_pci_busdata *bd;
 	bool               override_ultra;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	ahc->sc_dev = self;
 	ahc_set_name(ahc, device_xname(ahc->sc_dev));
@@ -953,7 +954,7 @@ ahc_pci_attach(device_t parent, device_t self, void *aux)
 		ahc_free(ahc);
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, ih);
+	intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
 	ahc->ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, ahc_intr, ahc);
 	if (ahc->ih == NULL) {
 		aprint_error_dev(ahc->sc_dev,

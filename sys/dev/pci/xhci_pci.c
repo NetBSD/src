@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci_pci.c,v 1.2 2014/03/10 13:10:41 skrll Exp $	*/
+/*	$NetBSD: xhci_pci.c,v 1.3 2014/03/29 19:28:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.2 2014/03/10 13:10:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.3 2014/03/29 19:28:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,6 +85,7 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 	int err;
 	//const char *vendor;
 	uint32_t hccparams;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 	sc->sc_bus.hci_private = sc;
@@ -142,7 +143,7 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Allocate IRQ
 	 */
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_USB, xhci_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");

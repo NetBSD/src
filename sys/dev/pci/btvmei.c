@@ -1,4 +1,4 @@
-/* $NetBSD: btvmei.c,v 1.29 2012/10/27 17:18:28 chs Exp $ */
+/* $NetBSD: btvmei.c,v 1.30 2014/03/29 19:28:24 christos Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.29 2012/10/27 17:18:28 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.30 2014/03/29 19:28:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,6 +93,7 @@ b3_617_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	const char *intrstr;
 	struct vmebus_attach_args vaa;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 	sc->sc_pc = pc;
@@ -135,7 +136,7 @@ b3_617_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(sc->sc_dev, "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	/*
 	 * Use a low interrupt level (the lowest?).
 	 * We will raise before calling a subdevice's handler.

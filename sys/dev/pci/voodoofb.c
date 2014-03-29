@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.47 2013/11/19 06:37:42 macallan Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.48 2014/03/29 19:28:25 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2012 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.47 2013/11/19 06:37:42 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.48 2014/03/29 19:28:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -514,13 +514,14 @@ voodoofb_attach(device_t parent, device_t self, void *aux)
 	}
 
 #ifdef VOODOOFB_ENABLE_INTR
+	char intrbuf[PCI_INTRSTR_LEN];
 	/* Interrupt. We don't use it for anything yet */
 	if (pci_intr_map(pa, &ih)) {
 		aprint_error_dev(self, "failed to map interrupt\n");
 		return;
 	}
 
-	intrstr = pci_intr_string(sc->sc_pc, ih);
+	intrstr = pci_intr_string(sc->sc_pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_NET, voodoofb_intr, 
 	    sc);
 	if (sc->sc_ih == NULL) {

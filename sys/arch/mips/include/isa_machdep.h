@@ -1,4 +1,4 @@
-/* $NetBSD: isa_machdep.h,v 1.5 2009/12/14 00:46:04 matt Exp $ */
+/* $NetBSD: isa_machdep.h,v 1.6 2014/03/29 19:28:29 christos Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -150,8 +150,8 @@ struct mips_isa_chipset {
  * mips-specific ISA functions.
  * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
  */ 
-#define	isa_intr_string(c, i)						\
-    (*(c)->ic_intr_string)((c)->ic_v, (i))
+#define	isa_intr_string(c, i, buf, len)					\
+    (*(c)->ic_intr_string)((c)->ic_v, (i), buf, len)
 
 #ifdef _MIPS_BUS_DMA_PRIVATE
 int	isadma_bounce_dmamap_create(bus_dma_tag_t, bus_size_t, int,

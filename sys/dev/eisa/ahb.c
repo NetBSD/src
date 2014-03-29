@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.60 2012/10/27 17:18:16 chs Exp $	*/
+/*	$NetBSD: ahb.c,v 1.61 2014/03/29 19:28:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.60 2012/10/27 17:18:16 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.61 2014/03/29 19:28:24 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -191,6 +191,7 @@ ahbattach(device_t parent, device_t self, void *aux)
 	struct ahb_probe_data apd;
 	struct scsipi_adapter *adapt = &sc->sc_adapter;
 	struct scsipi_channel *chan = &sc->sc_channel;
+	char intrbuf[EISA_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 
@@ -251,7 +252,7 @@ ahbattach(device_t parent, device_t self, void *aux)
 		    apd.sc_irq);
 		return;
 	}
-	intrstr = eisa_intr_string(ec, ih);
+	intrstr = eisa_intr_string(ec, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = eisa_intr_establish(ec, ih, IST_LEVEL, IPL_BIO,
 	    ahbintr, sc);
 	if (sc->sc_ih == NULL) {

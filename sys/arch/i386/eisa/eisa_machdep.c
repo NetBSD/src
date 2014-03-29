@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.c,v 1.38 2013/06/18 08:48:54 uebayasi Exp $	*/
+/*	$NetBSD: eisa_machdep.c,v 1.39 2014/03/29 19:28:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.38 2013/06/18 08:48:54 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.39 2014/03/29 19:28:28 christos Exp $");
 
 #include "ioapic.h"
 
@@ -157,25 +157,24 @@ eisa_intr_map(eisa_chipset_tag_t ec, u_int irq,
 }
 
 const char *
-eisa_intr_string(eisa_chipset_tag_t ec, eisa_intr_handle_t ih)
+eisa_intr_string(eisa_chipset_tag_t ec, eisa_intr_handle_t ih, char *buf,
+    size_t len)
 {
-	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
-
 	if (ih == 0 || (ih & 0xff) >= NUM_LEGACY_IRQS || ih == 2)
 		panic("eisa_intr_string: bogus handle 0x%x", ih);
 
 #if NIOAPIC > 0
 	if (ih & APIC_INT_VIA_APIC)
-		snprintf(irqstr, sizeof(irqstr), "apic %d int %d (irq %d)",
+		snprintf(buf, len, "apic %d int %d (irq %d)",
 		    APIC_IRQ_APIC(ih),
 		    APIC_IRQ_PIN(ih),
 		    ih&0xff);
 	else
-		snprintf(irqstr, sizeof(irqstr), "irq %d", ih&0xff);
+		snprintf(buf, len, "irq %d", ih&0xff);
 #else
-	snprintf(irqstr, sizeof(irqstr), "irq %d", ih);
+	snprintf(buf, len, "irq %d", ih);
 #endif
-	return (irqstr);
+	return buf;
 }
 
 const struct evcnt *

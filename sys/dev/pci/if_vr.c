@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.112 2012/12/27 16:23:48 jmcneill Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.113 2014/03/29 19:28:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.112 2012/12/27 16:23:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.113 2014/03/29 19:28:25 christos Exp $");
 
 
 
@@ -1490,6 +1490,7 @@ vr_attach(device_t parent, device_t self, void *aux)
 	struct ifnet *ifp;
 	uint8_t eaddr[ETHER_ADDR_LEN], mac;
 	int i, rseg, error;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 #define	PCI_CONF_WRITE(r, v)	pci_conf_write(sc->vr_pc, sc->vr_tag, (r), (v))
 #define	PCI_CONF_READ(r)	pci_conf_read(sc->vr_pc, sc->vr_tag, (r))
@@ -1570,7 +1571,7 @@ vr_attach(device_t parent, device_t self, void *aux)
 			aprint_error_dev(self, "couldn't map interrupt\n");
 			return;
 		}
-		intrstr = pci_intr_string(pa->pa_pc, intrhandle);
+		intrstr = pci_intr_string(pa->pa_pc, intrhandle, intrbuf, sizeof(intrbuf));
 		sc->vr_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_NET,
 						vr_intr, sc);
 		if (sc->vr_ih == NULL) {
