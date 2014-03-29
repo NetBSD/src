@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl.c,v 1.5 2009/07/04 04:29:54 dholland Exp $	*/
+/*	$NetBSD: ctl.c,v 1.6 2014/03/29 20:10:10 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)ctl.c	5.2 (Berkeley) 3/13/86";
 #else
-__RCSID("$NetBSD: ctl.c,v 1.5 2009/07/04 04:29:54 dholland Exp $");
+__RCSID("$NetBSD: ctl.c,v 1.6 2014/03/29 20:10:10 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,8 +52,8 @@ __RCSID("$NetBSD: ctl.c,v 1.5 2009/07/04 04:29:54 dholland Exp $");
 #include "hunt.h"
 #include "talk_ctl.h"
 
-struct sockaddr_in daemon_addr = { AF_INET };
-struct sockaddr_in ctl_addr = { AF_INET };
+struct sockaddr_in daemon_addr;
+struct sockaddr_in ctl_addr;
 
 /* inet addresses of the two machines */
 struct in_addr my_machine_addr;
@@ -69,14 +69,16 @@ CTL_MSG msg;
 void
 open_ctl(void)
 {
-	int length;
+	socklen_t length;
 
+	ctl_addr.sin_family = AF_INET;
 	ctl_addr.sin_port = 0;
 	ctl_addr.sin_addr = my_machine_addr;
 	ctl_sockt = socket(AF_INET, SOCK_DGRAM, 0);
 	if (ctl_sockt <= 0)
 		p_error("Bad socket");
-	if (bind(ctl_sockt, &ctl_addr, sizeof(ctl_addr)) != 0)
+	if (bind(ctl_sockt, (struct sockaddr *)&ctl_addr,
+		 sizeof(ctl_addr)) != 0)
 		p_error("Couldn't bind to control socket");
 	length = sizeof(ctl_addr);
 	if (getsockname(ctl_sockt, (struct sockaddr *) &ctl_addr, &length) < 0)
