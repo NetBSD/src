@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.26 2014/03/26 18:04:33 christos Exp $	*/
+/*	$NetBSD: installboot.c,v 1.27 2014/03/29 05:03:43 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -228,7 +228,7 @@ install_fd(char *devnm, struct disklabel *label)
 		machpath = milanpath;
 	else
 		machpath = stdpath;
-	size_t xxboolen = strlen(mdecpath) + strlen(machpath) + 8);
+	size_t xxboolen = strlen(mdecpath) + strlen(machpath) + 8;
 	xxboot = alloca(xxbootlen);
 	snprintf(xxboot, xxbootlen, "%s%sfdboot", mdecpath, machpath);
 	bootxx = alloca(xxbootlen);
@@ -369,7 +369,7 @@ install_wd(char *devnm, struct disklabel *label)
 		size_t xxb00tlen = strlen(mdecpath) + strlen(machpath) + 14;
 		xxb00t = alloca(xxb00tlen);
 		snprintf(xxb00t, xxb00tlen, "%s%swdb00t.ahdi", mdecpath, machpath);
-		xnxboot = alloca(xxb00tlen);
+		xxboot = alloca(xxb00tlen);
 		snprintf(xxboot, xxb00tlen, "%s%sxxboot.ahdi", mdecpath, machpath);
 		magic = AHDIMAGIC;
 	} else {
