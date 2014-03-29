@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.42 2014/03/29 20:52:13 dholland Exp $	*/
+/*	$NetBSD: hunt.c,v 1.43 2014/03/29 20:53:55 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.42 2014/03/29 20:52:13 dholland Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.43 2014/03/29 20:53:55 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -99,7 +99,7 @@ static void sigterm(int) __dead;
 static void sigusr1(int) __dead;
 static void find_driver(bool);
 static void start_driver(void);
-static int broadcast_vec(int, struct sockaddr **);
+static int broadcast_vec(int, struct sockaddr_in **);
 #ifdef INTERNET
 static SOCKET *list_drivers(void);
 #endif
@@ -337,7 +337,7 @@ main(int ac, char **av)
 
 #ifdef INTERNET
 static int
-broadcast_vec(int s /*socket*/, struct sockaddr **vector)
+broadcast_vec(int s /*socket*/, struct sockaddr_in **vector)
 {
 	int vec_cnt;
 	struct ifaddrs *ifp, *ip;
@@ -352,8 +352,7 @@ broadcast_vec(int s /*socket*/, struct sockaddr **vector)
 		    (ip->ifa_flags & IFF_BROADCAST))
 			vec_cnt++;
 
-	*vector = (struct sockaddr *)
-		malloc(vec_cnt * sizeof(struct sockaddr_in));
+	*vector = malloc(vec_cnt * sizeof(struct sockaddr_in));
 
 	vec_cnt = 0;
 	for (ip = ifp; ip; ip = ip->ifa_next)
@@ -432,7 +431,7 @@ list_drivers(void)
 	}
 
 	if (initial)
-		brdc = broadcast_vec(test_socket, (void *) &brdv);
+		brdc = broadcast_vec(test_socket, &brdv);
 
 #ifdef SO_BROADCAST
 	/* Sun's will broadcast even though this option can't be set */
