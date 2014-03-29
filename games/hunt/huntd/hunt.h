@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.h,v 1.21 2014/03/29 20:10:10 dholland Exp $	*/
+/*	$NetBSD: hunt.h,v 1.22 2014/03/29 20:16:09 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -30,8 +30,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE 
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include "bsd.h"
 
 #include <stdbool.h>
 #include <stdio.h>
