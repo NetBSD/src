@@ -1,4 +1,4 @@
-/*	$NetBSD: omap3_sdhc.c,v 1.13 2013/08/05 21:55:47 jmcneill Exp $	*/
+/*	$NetBSD: omap3_sdhc.c,v 1.14 2014/03/29 23:32:41 matt Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.13 2013/08/05 21:55:47 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.14 2014/03/29 23:32:41 matt Exp $");
 
 #include "opt_omap.h"
 
@@ -119,7 +119,7 @@ obiosdhc_match(device_t parent, cfdata_t cf, void *aux)
 	    || oa->obio_addr == SDMMC2_BASE_3530
 	    || oa->obio_addr == SDMMC3_BASE_3530)
                 return 1;
-#elif defined(OMAP4)
+#elif defined(OMAP4) || defined(OMAP5)
 	if (oa->obio_addr == SDMMC1_BASE_4430
 	    || oa->obio_addr == SDMMC2_BASE_4430
 	    || oa->obio_addr == SDMMC3_BASE_4430
