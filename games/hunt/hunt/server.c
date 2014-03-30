@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.2 2014/03/30 02:46:57 dholland Exp $	*/
+/*	$NetBSD: server.c,v 1.3 2014/03/30 02:53:11 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: server.c,v 1.2 2014/03/30 02:46:57 dholland Exp $");
+__RCSID("$NetBSD: server.c,v 1.3 2014/03/30 02:53:11 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -60,10 +60,8 @@ __RCSID("$NetBSD: server.c,v 1.2 2014/03/30 02:46:57 dholland Exp $");
 static SOCKET *listv;
 static unsigned int listmax;
 
-static SOCKET test;
 static bool initial = true;
 static struct in_addr local_address;
-struct hostent *hp;
 static int brdc;
 static SOCKET *brdv;
 
@@ -71,6 +69,7 @@ static void
 serverlist_setup(void)
 {
 	char local_name[MAXHOSTNAMELEN + 1];
+	struct hostent *hp;
 
 	if (gethostname(local_name, sizeof(local_name)) < 0) {
 		leavex(1, "Sorry, I have no hostname.");
@@ -124,10 +123,10 @@ get_responses(int contactsock)
 	unsigned j;
 	unsigned int listc;
 	struct pollfd set[1];
-	socklen_t namelen;
+	socklen_t addrlen;
 
 	listc = 0;
-	namelen = sizeof(test);
+	addrlen = sizeof(listv[0]);
 	errno = 0;
 	set[0].fd = contactsock;
 	set[0].events = POLLIN;
@@ -144,7 +143,7 @@ get_responses(int contactsock)
 
 		if (poll(set, 1, 1000) == 1 &&
 		    recvfrom(contactsock, &port_num, sizeof(port_num),
-		    0, (struct sockaddr *) &listv[listc], &namelen) > 0) {
+		    0, (struct sockaddr *) &listv[listc], &addrlen) > 0) {
 			/*
 			 * Note that we do *not* convert from network to host
 			 * order since the port number *should* be in network
@@ -177,6 +176,8 @@ get_responses(int contactsock)
 SOCKET *
 list_drivers(void)
 {
+	struct hostent *hp;
+	struct sockaddr_in contactaddr;
 	int option;
 	u_short msg;
 	int contactsock;
@@ -192,28 +193,30 @@ list_drivers(void)
 	if (contactsock < 0) {
 		leave(1, "socket system call failed");
 	}
-	test.sin_family = SOCK_FAMILY;
-	test.sin_port = htons(Test_port);
+	contactaddr.sin_family = SOCK_FAMILY;
+	contactaddr.sin_port = htons(Test_port);
 
 	if (Sock_host != NULL) {	/* explicit host given */
 		if ((hp = gethostbyname(Sock_host)) == NULL) {
 			leavex(1, "Unknown host");
 			/* NOTREACHED */
 		}
-		test.sin_addr = *((struct in_addr *) hp->h_addr);
+		memcpy(&contactaddr.sin_addr, hp->h_addr,
+		       sizeof(contactaddr.sin_addr));
 		msg = htons(C_TESTMSG());
 		(void) sendto(contactsock, &msg, sizeof msg, 0,
-			      (struct sockaddr *) &test, sizeof(test));
+			      (struct sockaddr *)&contactaddr,
+			      sizeof(contactaddr));
 		get_responses(contactsock);
 		return listv;
 	}
 
 	if (!initial) {
 		/* favor host of previous session by broadcasting to it first */
-		test.sin_addr = Daemon.sin_addr;
+		contactaddr.sin_addr = Daemon.sin_addr;
 		msg = htons(C_PLAYER);		/* Must be playing! */
 		(void) sendto(contactsock, &msg, sizeof msg, 0,
-		    (struct sockaddr *) &test, sizeof(test));
+		    (struct sockaddr *)&contactaddr, sizeof(contactaddr));
 	}
 
 	if (initial)
@@ -232,15 +235,16 @@ list_drivers(void)
 	/* send broadcast packets on all interfaces */
 	msg = htons(C_TESTMSG());
 	for (i = 0; i < brdc; i++) {
-		test.sin_addr = brdv[i].sin_addr;
+		contactaddr.sin_addr = brdv[i].sin_addr;
 		if (sendto(contactsock, &msg, sizeof msg, 0,
-		    (struct sockaddr *) &test, sizeof(test)) < 0) {
+		    (struct sockaddr *)&contactaddr,
+		    sizeof(contactaddr)) < 0) {
 			leave(1, "sendto");
 		}
 	}
-	test.sin_addr = local_address;
+	contactaddr.sin_addr = local_address;
 	if (sendto(contactsock, &msg, sizeof msg, 0,
-	    (struct sockaddr *) &test, sizeof(test)) < 0) {
+	    (struct sockaddr *)&contactaddr, sizeof(contactaddr)) < 0) {
 		leave(1, "sendto");
 	}
 
