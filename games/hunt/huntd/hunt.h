@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.h,v 1.30 2014/03/30 05:30:28 dholland Exp $	*/
+/*	$NetBSD: hunt.h,v 1.31 2014/03/30 05:53:12 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -160,7 +160,7 @@ extern PLAYER Monitor[MAXMON], *End_monitor;
  */
 
 /* in answer.c */
-int answer(void);
+bool answer(void);
 int rand_dir(void);
 
 /* in draw.c */
