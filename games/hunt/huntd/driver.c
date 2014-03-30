@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.34 2014/03/30 00:26:58 dholland Exp $	*/
+/*	$NetBSD: driver.c,v 1.35 2014/03/30 01:44:37 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,18 +32,25 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: driver.c,v 1.34 2014/03/30 00:26:58 dholland Exp $");
+__RCSID("$NetBSD: driver.c,v 1.35 2014/03/30 01:44:37 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <err.h>
-#include <errno.h>
-#include <signal.h>
+#include <sys/un.h>
+
+#include <netinet/in.h>
+#include <netdb.h>
+#include <arpa/inet.h>
+#include <net/if.h>
+
 #include <stdlib.h>
 #include <unistd.h>
+#include <signal.h>
+#include <errno.h>
+#include <err.h>
 
 #include "hunt.h"
 #include "pathnames.h"
@@ -94,31 +101,25 @@ __RCSID("$NetBSD: driver.c,v 1.34 2014/03/30 00:26:58 dholland Exp $");
  *      ".stats")
  */
 
-#ifdef INTERNET
-static struct sockaddr_in huntaddr;
-static struct sockaddr_in stataddr;
-static uint16_t contactport = TEST_PORT;
-static uint16_t	huntport;		/* port # of tcp listen socket */
-static uint16_t	statport;		/* port # of statistics tcp socket */
-static int contactsock;			/* socket to answer datagrams */
-#define STATSOCKADDR_SIZE	(sizeof statsockaddr)
-#else
-static struct sockaddr_un huntaddr;
-static struct sockaddr_un stataddr;
-static const char huntsockpath[] = PATH_HUNTSOCKET;
-static const char statsockpath[] = PATH_STATSOCKET;
-#define STATSOCKADDR_SIZE	(sizeof statsockaddr - 1)
-#endif
+static bool localmode;			/* true -> AF_UNIX; false -> AF_INET */
+static bool inetd_spawned;		/* invoked via inetd? */
+static bool standard_port = true;	/* listening on standard port? */
 
-int huntsock;				/* main socket */
-static int statsock;			/* stat socket */
+static struct sockaddr_storage huntaddr;
+static struct sockaddr_storage stataddr;
 static socklen_t huntaddrlen;
 static socklen_t stataddrlen;
 
-#ifdef INTERNET
-static bool inetd_spawned;		/* invoked via inetd */
-static bool standard_port = true;	/* true if listening on standard port */
-#endif
+static uint16_t contactport = TEST_PORT;
+static uint16_t	huntport;		/* port # of tcp listen socket */
+static uint16_t	statport;		/* port # of statistics tcp socket */
+
+static const char *huntsockpath = PATH_HUNTSOCKET;
+static char *statsockpath;
+
+static int contactsock;			/* socket to answer datagrams */
+int huntsock;				/* main socket */
+static int statsock;			/* stat socket */
 
 #ifdef VOLCANO
 static int volcano = 0;			/* Explosion size */
@@ -131,6 +132,68 @@ static void makeboots(void);
 static void send_stats(void);
 static void zap(PLAYER *, bool, int);
 
+static int
+getnum(const char *s, unsigned long *ret)
+{
+	char *t;
+
+	errno = 0;
+	*ret = strtoul(s, &t, 0);
+	if (errno || *t != '\0') {
+		return -1;
+	}
+	return 0;
+}
+
+static __dead void
+usage(const char *av0)
+{
+	fprintf(stderr, "Usage: %s [-s] [-p portnumber|socketpath]\n", av0);
+	exit(1);
+}
+
+static void
+makeaddr(const char *path, uint16_t port,
+	 struct sockaddr_storage *ss, socklen_t *len)
+{
+	struct sockaddr_in *sin;
+	struct sockaddr_un *sun;
+
+	if (path == NULL) {
+		sin = (struct sockaddr_in *)ss;
+		sin->sin_family = AF_INET;
+		sin->sin_addr.s_addr = INADDR_ANY;
+		sin->sin_port = htons(port);
+		*len = sizeof(*sin);
+	} else {
+		sun = (struct sockaddr_un *)ss;
+		sun->sun_family = AF_UNIX;
+		strlcpy(sun->sun_path, path, sizeof(sun->sun_path));
+		*len = SUN_LEN(sun);
+	}
+}
+
+static uint16_t
+getsockport(int sock)
+{
+	struct sockaddr_storage addr;
+	socklen_t len;
+
+	len = sizeof(addr);
+	if (getsockname(sock, (struct sockaddr *)&addr, &len) < 0)  {
+		complain(LOG_ERR, "getsockname");
+		exit(1);
+	}
+	switch (addr.ss_family) {
+	    case AF_INET:
+		return ntohs(((struct sockaddr_in *)&addr)->sin_port);
+	    case AF_INET6:
+		return ntohs(((struct sockaddr_in6 *)&addr)->sin6_port);
+	    default:
+		break;
+	}
+	return 0;
+}
 
 /*
  * main:
@@ -140,12 +203,10 @@ int
 main(int ac, char **av)
 {
 	PLAYER *pp;
-#ifdef INTERNET
-	u_short msg;
-	short reply;
-	socklen_t namelen;
-	SOCKET test;
-#endif
+	unsigned long optargnum;
+	uint16_t msg, reply;
+	struct sockaddr_storage msgaddr;
+	socklen_t msgaddrlen;
 	static bool first = true;
 	static bool server = false;
 	int c, i;
@@ -156,21 +217,26 @@ main(int ac, char **av)
 		  case 's':
 			server = true;
 			break;
-#ifdef INTERNET
 		  case 'p':
 			standard_port = false;
-			contactport = atoi(optarg);
+			if (getnum(optarg, &optargnum) < 0) {
+				localmode = true;
+				huntsockpath = optarg;
+			} else if (optargnum < 0xffff) {
+				localmode = false;
+				contactport = optargnum;
+			} else {
+				usage(av[0]);
+			}
 			break;
-#endif
 		  default:
-erred:
-			fprintf(stderr, "Usage: %s [-s] [-p port]\n", av[0]);
-			exit(1);
+			usage(av[0]);
 		}
 	}
 	if (optind < ac)
-		goto erred;
+		usage(av[0]);
 
+	asprintf(&statsockpath, "%s.stats", huntsockpath);
 	init();
 
 
@@ -183,11 +249,10 @@ again:
 				complain(LOG_WARNING, "poll");
 			errno = 0;
 		}
-#ifdef INTERNET
-		if (fdset[2].revents & POLLIN) {
-			namelen = sizeof(test);
+		if (!localmode && fdset[2].revents & POLLIN) {
+			msgaddrlen = sizeof(msgaddr);
 			(void) recvfrom(contactsock, &msg, sizeof msg,
-				0, (struct sockaddr *) &test, &namelen);
+				0, (struct sockaddr *)&msgaddr, &msgaddrlen);
 			switch (ntohs(msg)) {
 			  case C_MESSAGE:
 				if (Nplayer <= 0)
@@ -195,13 +260,15 @@ again:
 				reply = htons((u_short) Nplayer);
 				(void) sendto(contactsock, &reply,
 					sizeof reply, 0,
-					(struct sockaddr *) &test, sizeof(test));
+					(struct sockaddr *)&msgaddr,
+					msgaddrlen);
 				break;
 			  case C_SCORES:
 				reply = htons(statport);
 				(void) sendto(contactsock, &reply,
 					sizeof reply, 0,
-					(struct sockaddr *) &test, sizeof(test));
+					(struct sockaddr *)&msgaddr,
+					msgaddrlen);
 				break;
 			  case C_PLAYER:
 			  case C_MONITOR:
@@ -210,11 +277,12 @@ again:
 				reply = htons(huntport);
 				(void) sendto(contactsock, &reply,
 					sizeof reply, 0,
-					(struct sockaddr *) &test, sizeof(test));
+					(struct sockaddr *)&msgaddr,
+					msgaddrlen);
 				break;
 			}
 		}
-#endif
+
 		{
 			for (pp = Player, i = 0; pp < End_player; pp++, i++)
 				if (havechar(pp, i + 3)) {
@@ -298,11 +366,10 @@ static void
 init(void)
 {
 	int i;
-#ifdef INTERNET
-	struct sockaddr_in contactaddr;
-	int msg;
+	struct sockaddr_storage stdinaddr;
+	struct sockaddr_storage contactaddr;
+	socklen_t contactaddrlen;
 	socklen_t len;
-#endif
 
 #ifndef DEBUG
 #ifdef TIOCNOTTY
@@ -324,21 +391,68 @@ init(void)
 #endif
 
 	/*
+	 * check for inetd
+	 */
+	len = sizeof(stdinaddr);
+	if (getsockname(STDIN_FILENO, (struct sockaddr *)&stdinaddr,
+			&len) >= 0) {
+		inetd_spawned = true;
+		/* force localmode, assimilate stdin as appropriate */
+		if (stdinaddr.ss_family == AF_UNIX) {
+			localmode = true;
+			contactsock = -1;
+			huntsock = STDIN_FILENO;
+		}
+		else {
+			localmode = false;
+			contactsock = STDIN_FILENO;
+			huntsock = -1;
+		}
+	} else {
+		/* keep value of localmode; no sockets yet */
+		contactsock = -1;
+		huntsock = -1;
+	}
+
+	/*
+	 * initialize contact socket
+	 */
+	if (!localmode && contactsock < 0) {
+		makeaddr(NULL, contactport, &contactaddr, &contactaddrlen);
+		contactsock = socket(AF_INET, SOCK_DGRAM, 0);
+		if (bind(contactsock, (struct sockaddr *) &contactaddr,
+			 contactaddrlen) < 0) {
+			complain(LOG_ERR, "bind");
+			exit(1);
+		}
+		(void) listen(contactsock, 5);
+	}
+
+	/*
+	 * Initialize main socket
+	 */
+	if (huntsock < 0) {
+		makeaddr(localmode ? huntsockpath : NULL, 0, &huntaddr,
+			 &huntaddrlen);
+		huntsock = socket(huntaddr.ss_family, SOCK_STREAM, 0);
+		if (bind(huntsock, (struct sockaddr *)&huntaddr,
+			 huntaddrlen) < 0) {
+			if (errno == EADDRINUSE)
+				exit(0);
+			else {
+				complain(LOG_ERR, "bind");
+				cleanup(1);
+			}
+		}
+		(void) listen(huntsock, 5);
+	}
+
+	/*
 	 * Initialize statistics socket
 	 */
-#ifdef INTERNET
-	stataddr.sin_family = AF_INET;
-	stataddr.sin_addr.s_addr = INADDR_ANY;
-	stataddr.sin_port = 0;
-	stataddrlen = sizeof(stataddr);
-#else
-	stataddr.sun_family = AF_UNIX;
-	(void) strcpy(stataddr.sun_path, statsockpath);
-	stataddrlen = SUN_LEN(&stataddr);
-#endif
-
-	statsock = socket(SOCK_FAMILY, SOCK_STREAM, 0);
-	if (bind(statsock, (struct sockaddr *) &stataddr, stataddrlen) < 0) {
+	makeaddr(localmode ? statsockpath : NULL, 0, &stataddr, &stataddrlen);
+	statsock = socket(stataddr.ss_family, SOCK_STREAM, 0);
+	if (bind(statsock, (struct sockaddr *)&stataddr, stataddrlen) < 0) {
 		if (errno == EADDRINUSE)
 			exit(0);
 		else {
@@ -348,53 +462,14 @@ init(void)
 	}
 	(void) listen(statsock, 5);
 
-#ifdef INTERNET
-	len = sizeof(stataddr);
-	if (getsockname(statsock, (struct sockaddr *) &stataddr, &len) < 0)  {
-		complain(LOG_ERR, "getsockname");
-		exit(1);
-	}
-	statport = ntohs(stataddr.sin_port);
-#endif
-
-	/*
-	 * Initialize main socket
-	 */
-#ifdef INTERNET
-	huntaddr.sin_family = AF_INET;
-	huntaddr.sin_addr.s_addr = INADDR_ANY;
-	huntaddr.sin_port = 0;
-	huntaddrlen = sizeof(huntaddr);
-#else
-	huntaddr.sun_family = AF_UNIX;
-	(void) strcpy(huntaddr.sun_path, huntsockpath);
-	huntaddrlen = SUN_LEN(&huntaddr);
-#endif
-
-	huntsock = socket(SOCK_FAMILY, SOCK_STREAM, 0);
-#if defined(INTERNET)
-	msg = 1;
-	if (setsockopt(huntsock, SOL_SOCKET, SO_USELOOPBACK, &msg, sizeof msg)<0)
-		complain(LOG_WARNING, "setsockopt loopback");
-#endif
-	if (bind(huntsock, (struct sockaddr *) &huntaddr, huntaddrlen) < 0) {
-		if (errno == EADDRINUSE)
-			exit(0);
-		else {
-			complain(LOG_ERR, "bind");
-			cleanup(1);
+	if (!localmode) {
+		contactport = getsockport(contactsock);
+		statport = getsockport(statsock);
+		huntport = getsockport(huntsock);
+		if (contactport != TEST_PORT) {
+			standard_port = false;
 		}
 	}
-	(void) listen(huntsock, 5);
-
-#ifdef INTERNET
-	len = sizeof(huntaddr);
-	if (getsockname(huntsock, (struct sockaddr *) &huntaddr, &len) < 0)  {
-		complain(LOG_ERR, "getsockname");
-		exit(1);
-	}
-	huntport = ntohs(huntaddr.sin_port);
-#endif
 
 	/*
 	 * Initialize minimal poll mask
@@ -403,35 +478,13 @@ init(void)
 	fdset[0].events = POLLIN;
 	fdset[1].fd = statsock;
 	fdset[1].events = POLLIN;
-
-#ifdef INTERNET
-	len = sizeof(contactaddr);
-	if (getsockname(STDIN_FILENO, (struct sockaddr *) &contactaddr, &len) >= 0
-	&& contactaddr.sin_family == AF_INET) {
-		inetd_spawned = true;
-		contactsock = STDIN_FILENO;
-		if (ntohs(contactaddr.sin_port) != contactport) {
-			standard_port = false;
-			contactport = ntohs(contactaddr.sin_port);
-		}
+	if (localmode) {
+		fdset[2].fd = -1;
+		fdset[2].events = 0;
 	} else {
-		contactaddr = huntaddr;
-		contactaddr.sin_port = htons(contactport);
-
-		contactsock = socket(AF_INET, SOCK_DGRAM, 0);
-		if (bind(contactsock, (struct sockaddr *) &contactaddr,
-		    sizeof(contactaddr)) < 0) {
-			complain(LOG_ERR, "bind");
-			exit(1);
-		}
-		(void) listen(contactsock, 5);
+		fdset[2].fd = contactsock;
+		fdset[2].events = POLLIN;
 	}
-
-	fdset[2].fd = contactsock;
-	fdset[2].events = POLLIN;
-#else
-	fdset[2].fd = -1;
-#endif
 
 	srandom(time(NULL));
 	makemaze();
@@ -902,18 +955,14 @@ send_stats(void)
 	IDENT *ip;
 	FILE *fp;
 	int s;
-	SOCKET sockstruct;
+	struct sockaddr_storage newaddr;
 	socklen_t socklen;
 
 	/*
 	 * Get the output stream ready
 	 */
-#ifdef INTERNET
-	socklen = sizeof sockstruct;
-#else
-	socklen = sizeof sockstruct - 1;
-#endif
-	s = accept(statsock, (struct sockaddr *) &sockstruct, &socklen);
+	socklen = sizeof(newaddr);
+	s = accept(statsock, (struct sockaddr *)&newaddr, &socklen);
 	if (s < 0) {
 		if (errno == EINTR)
 			return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.h,v 1.28 2014/03/30 00:26:58 dholland Exp $	*/
+/*	$NetBSD: hunt.h,v 1.29 2014/03/30 01:44:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -40,15 +40,6 @@
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <sys/poll.h>
-
-#ifdef INTERNET
-#include <netinet/in.h>
-#include <netdb.h>
-#include <arpa/inet.h>
-#include <net/if.h>
-#else
-#include <sys/un.h>
-#endif
 
 #include "hunt_common.h"
 

@@ -1,4 +1,4 @@
-.\"	$NetBSD: huntd.6,v 1.11 2014/03/29 20:32:04 dholland Exp $
+.\"	$NetBSD: huntd.6,v 1.12 2014/03/30 01:44:37 dholland Exp $
 .\"
 .\" huntd
 .\"
@@ -40,7 +40,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl s
-.Op Fl p Ar port
+.Op Fl p Ar address
 .Sh DESCRIPTION
 .Nm
 controls the multi-player
@@ -58,8 +58,10 @@ This is similar to running it under the control of
 .Pp
 The
 .Fl p
-option changes the UDP port number used to rendezvous with the player
-process and thus allows for private games of hunt.
+option can be either a pathname, in which case a local socket by that
+name is used for the game, or a number, in which case it selects an
+alternate port number for the internet socket used for the game.
+This allows for private games of hunt.
 .Ss INETD
 To run
 .Nm
