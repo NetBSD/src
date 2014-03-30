@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.8 2014/03/29 21:24:26 dholland Exp $
+#	$NetBSD: Makefile,v 1.9 2014/03/30 02:26:09 dholland Exp $
 
 PROG=	hunt
-SRCS=	connect.c hunt.c otto.c playit.c
+SRCS=	connect.c hunt.c otto.c playit.c server.c
 MAN=	hunt.6
 LDADD=	-lcurses -lterminfo
 DPADD=	${LIBCURSES} ${LIBTERMINFO}

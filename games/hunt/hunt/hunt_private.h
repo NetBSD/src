@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt_private.h,v 1.3 2014/03/29 22:15:26 dholland Exp $	*/
+/*	$NetBSD: hunt_private.h,v 1.4 2014/03/30 02:26:09 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -74,6 +74,15 @@ extern bool Am_monitor;
 extern char map_key[256];
 extern bool no_beep;
 
+#ifdef INTERNET
+/* XXX this pile had to be made public to split off server.c; fix them up */
+extern SOCKET Daemon;
+extern uint16_t Test_port;
+extern char *Sock_host;
+extern bool Query_driver;
+extern bool Show_scores;
+#endif
+
 /*
  * function types
  */
@@ -84,6 +93,8 @@ void do_connect(char *, char, long);
 /* in hunt.c */
 __dead void bad_con(void);
 __dead void bad_ver(void);
+__dead void leave(int, const char *);
+__dead void leavex(int, const char *);
 void intr(int);
 
 /* in otto.c */
@@ -94,3 +105,8 @@ void playit(void);
 int quit(int);
 void clear_the_screen(void);
 void do_message(void);
+
+/* in server.c */
+#ifdef INTERNET
+SOCKET *list_drivers(void);
+#endif
