@@ -1,4 +1,4 @@
-/*	$NetBSD: playit.c,v 1.23 2014/03/30 05:41:50 dholland Exp $	*/
+/*	$NetBSD: playit.c,v 1.24 2014/03/30 05:44:55 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: playit.c,v 1.23 2014/03/30 05:41:50 dholland Exp $");
+__RCSID("$NetBSD: playit.c,v 1.24 2014/03/30 05:44:55 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/file.h>
@@ -53,9 +53,6 @@ __RCSID("$NetBSD: playit.c,v 1.23 2014/03/30 05:41:50 dholland Exp $");
 #define FREAD	1
 #endif
 
-#define clear_eol()	clrtoeol()
-#define put_ch		addch
-#define put_str		addstr
 
 static int nchar_send;
 #ifdef OTTO
@@ -132,10 +129,10 @@ playit(void)
 				break;
 			}
 #endif
-			put_ch(ch);
+			addch(ch);
 			break;
 		  case CLRTOEOL:
-			clear_eol();
+			clrtoeol();
 			break;
 		  case CLEAR:
 			clear_the_screen();
@@ -187,7 +184,7 @@ playit(void)
 				break;
 			}
 #endif
-			put_ch(ch);
+			addch(ch);
 			break;
 		}
 	}
@@ -295,8 +292,8 @@ quit(int old_status)
 		return Q_CLOAK;
 #endif
 	move(HEIGHT, 0);
-	put_str("Re-enter game [ynwo]? ");
-	clear_eol();
+	addstr("Re-enter game [ynwo]? ");
+	clrtoeol();
 	explain = false;
 	for (;;) {
 		refresh();
@@ -311,8 +308,8 @@ quit(int old_status)
 			return Q_QUIT;
 #else
 			move(HEIGHT, 0);
-			put_str("Write a parting message [yn]? ");
-			clear_eol();
+			addstr("Write a parting message [yn]? ");
+			clrtoeol();
 			refresh();
 			for (;;) {
 				if (isupper(ch = getchar()))
@@ -332,8 +329,8 @@ quit(int old_status)
 get_message:
 			c = ch;		/* save how we got here */
 			move(HEIGHT, 0);
-			put_str("Message: ");
-			clear_eol();
+			addstr("Message: ");
+			clrtoeol();
 			refresh();
 			cp = buf;
 			for (;;) {
@@ -346,7 +343,7 @@ get_message:
 						getyx(stdscr, y, x);
 						move(y, x - 1);
 						cp -= 1;
-						clear_eol();
+						clrtoeol();
 					}
 					continue;
 				}
@@ -355,13 +352,13 @@ get_message:
 					getyx(stdscr, y, x);
 					move(y, x - (cp - buf));
 					cp = buf;
-					clear_eol();
+					clrtoeol();
 					continue;
 				} else if (!isprint(ch)) {
 					beep();
 					continue;
 				}
-				put_ch(ch);
+				addch(ch);
 				*cp++ = ch;
 				if (cp + 1 >= buf + sizeof buf)
 					break;
@@ -373,18 +370,18 @@ get_message:
 #endif
 		beep();
 		if (!explain) {
-			put_str("(Yes, No, Write message, or Options) ");
+			addstr("(Yes, No, Write message, or Options) ");
 			explain = true;
 		}
 	}
 
 	move(HEIGHT, 0);
 #ifdef FLY
-	put_str("Scan, Cloak, Flying, or Quit? ");
+	addstr("Scan, Cloak, Flying, or Quit? ");
 #else
-	put_str("Scan, Cloak, or Quit? ");
+	addstr("Scan, Cloak, or Quit? ");
 #endif
-	clear_eol();
+	clrtoeol();
 	refresh();
 	explain = false;
 	for (;;) {
@@ -403,9 +400,9 @@ get_message:
 		beep();
 		if (!explain) {
 #ifdef FLY
-			put_str("[SCFQ] ");
+			addstr("[SCFQ] ");
 #else
-			put_str("[SCQ] ");
+			addstr("[SCQ] ");
 #endif
 			explain = true;
 		}
