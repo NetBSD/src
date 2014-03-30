@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.7 2014/03/30 04:39:40 dholland Exp $	*/
+/*	$NetBSD: server.c,v 1.8 2014/03/30 04:57:37 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: server.c,v 1.7 2014/03/30 04:39:40 dholland Exp $");
+__RCSID("$NetBSD: server.c,v 1.8 2014/03/30 04:57:37 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -97,13 +97,15 @@ serverlist_setup(const char *explicit_host_arg, uint16_t port_arg)
 }
 
 static void
-add_daemon_addr(const struct sockaddr_storage *addr, uint16_t port_num)
+add_daemon_addr(const struct sockaddr_storage *addr, socklen_t addrlen,
+		uint16_t port_num)
 {
 	const struct sockaddr_in *sin;
 
 	if (addr->ss_family != AF_INET) {
 		return;
 	}
+	assert(addrlen == sizeof(struct sockaddr_in));
 	sin = (const struct sockaddr_in *)addr;
 
 	assert(numdaemons <= maxdaemons);
@@ -139,7 +141,7 @@ add_daemon_addr(const struct sockaddr_storage *addr, uint16_t port_num)
 }
 
 static bool
-have_daemon_addr(const struct sockaddr_storage *addr)
+have_daemon_addr(const struct sockaddr_storage *addr, socklen_t addrlen)
 {
 	unsigned j;
 	const struct sockaddr_in *sin;
@@ -147,6 +149,7 @@ have_daemon_addr(const struct sockaddr_storage *addr)
 	if (addr->ss_family != AF_INET) {
 		return false;
 	}
+	assert(addrlen == sizeof(struct sockaddr_in));
 	sin = (const struct sockaddr_in *)addr;
 
 	for (j = 0; j < numdaemons; j++) {
@@ -207,6 +210,7 @@ send_messages(int contactsock, unsigned short msg)
 	int option;
 	int i;
 
+	memset(&contactaddr, 0, sizeof(contactaddr));
 	contactaddr.sin_family = SOCK_FAMILY;
 	contactaddr.sin_port = htons(port);
 
@@ -311,12 +315,12 @@ get_responses(int contactsock)
 			/* trash, ignore it */
 			continue;
 		}
-		if (have_daemon_addr(&addr)) {
+		if (have_daemon_addr(&addr, addrlen)) {
 			/* this shouldn't happen */
 			continue;
 		}
 
-		add_daemon_addr(&addr, port_num);
+		add_daemon_addr(&addr, addrlen, port_num);
 	}
 
 	initial = false;
