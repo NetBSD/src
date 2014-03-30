@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.143 2014/03/30 08:36:21 skrll Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.144 2014/03/30 23:20:14 matt Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.143 2014/03/30 08:36:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.144 2014/03/30 23:20:14 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -2962,10 +2962,12 @@ arm11_setup(char *args)
 {
 
 	int cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_SYST_ENABLE
+#ifdef ARM_MMU_EXTENDED
+	    | CPU_CONTROL_XP_ENABLE
+#endif
 	    | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE
 	    /* | CPU_CONTROL_BPRD_ENABLE */;
-	int cpuctrlmask = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_SYST_ENABLE
-	    | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE
+	int cpuctrlmask = cpuctrl
 	    | CPU_CONTROL_ROM_ENABLE | CPU_CONTROL_BPRD_ENABLE
 	    | CPU_CONTROL_BEND_ENABLE | CPU_CONTROL_AFLT_ENABLE
 	    | CPU_CONTROL_ROUNDROBIN | CPU_CONTROL_CPCLK;
@@ -3011,10 +3013,11 @@ arm11mpcore_setup(char *args)
 
 	int cpuctrl = CPU_CONTROL_IC_ENABLE
 	    | CPU_CONTROL_DC_ENABLE
+#ifdef ARM_MMU_EXTENDED
+	    | CPU_CONTROL_XP_ENABLE
+#endif
 	    | CPU_CONTROL_BPRD_ENABLE ;
-	int cpuctrlmask = CPU_CONTROL_IC_ENABLE
-	    | CPU_CONTROL_DC_ENABLE
-	    | CPU_CONTROL_BPRD_ENABLE
+	int cpuctrlmask = cpuctrl
 	    | CPU_CONTROL_AFLT_ENABLE
 	    | CPU_CONTROL_VECRELOC;
 
@@ -3153,6 +3156,9 @@ arm11x6_setup(char *args)
 		CPU_CONTROL_LABT_ENABLE |
 		CPU_CONTROL_SYST_ENABLE |
 		CPU_CONTROL_UNAL_ENABLE |
+#ifdef ARM_MMU_EXTENDED
+		CPU_CONTROL_XP_ENABLE   |
+#endif
 		CPU_CONTROL_IC_ENABLE;
 
 	/*
