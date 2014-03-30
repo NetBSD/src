@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2014/03/29 09:36:18 skrll Exp $
+#	$NetBSD: Makefile,v 1.27 2014/03/30 07:29:22 skrll Exp $
 
 PROG=		crash
 MAN=		crash.8
@@ -9,13 +9,15 @@ CWARNFLAGS.clang+=	-Wno-format
 LDADD+=	-lutil -lkvm -ledit -lterminfo
 DPADD+=	${LIBUTIL} ${LIBKVM} ${LIBEDIT} ${LIBTERMINFO}
 
+.include <bsd.own.mk>
+
 # some ddb kernel components need limited modifications.  for now,
 # punt if not noted as implemented here.
 .if    ${MACHINE} == "amd64" \
     || ${MACHINE} == "hppa" \
     || ${MACHINE} == "i386" \
     || ${MACHINE} == "sparc64" \
-    || (${MACHINE_ARCH} == "arm" && ${MACHINE} != "acorn26") \
+    || (${MACHINE_CPU} == "arm" && ${MACHINE} != "acorn26") \
     || ${MACHINE_ARCH} == "m68k"
 SRCS+=	db_trace.c
 .if ${MACHINE_ARCH} != "m68k"
@@ -54,10 +56,10 @@ MACHINE_FAMILY = x86
      || ${MACHINE} == "sparc64"
 MACHINE_FAMILY = sparc
 . else
-MACHINE_FAMILY = ${MACHINE}
+MACHINE_FAMILY = ${MACHINE_CPU}
 . endif
 
-.if ${MACHINE_ARCH} == "arm"
+.if ${MACHINE_CPU} == "arm"
 .PATH:	${S}/arch/arm/arm32
 SRCS+=disassem.c cpufunc_asm.S
 .endif
