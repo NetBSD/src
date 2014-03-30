@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.56 2014/03/30 05:44:55 dholland Exp $	*/
+/*	$NetBSD: hunt.c,v 1.57 2014/03/30 05:46:54 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.56 2014/03/30 05:44:55 dholland Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.57 2014/03/30 05:46:54 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -376,7 +376,6 @@ find_driver(void)
 	socklen_t hostlen;
 	unsigned num;
 	int i, c;
-	char buf[128];
 
 	msg = C_PLAYER;
 #ifdef MONITOR
@@ -408,10 +407,8 @@ find_driver(void)
 		for (i = 0; i < HEIGHT - 4 && i < (int)num; i++) {
 			move(3 + i, 0);
 			host = serverlist_gethost(i, &hostlen);
-			(void) snprintf(buf, sizeof(buf),
-					"%8c    %.64s", 'a' + i,
-					lookuphost(host, hostlen));
-			addstr(buf);
+			printw("%8c    %.64s", 'a' + i,
+			       lookuphost(host, hostlen));
 		}
 		move(4 + i, 0);
 		addstr("Enter letter: ");
