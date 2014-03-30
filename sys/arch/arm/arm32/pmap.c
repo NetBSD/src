@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.271 2014/03/30 15:50:51 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.272 2014/03/30 15:55:08 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -216,7 +216,7 @@
 #include <arm/locore.h>
 //#include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.271 2014/03/30 15:50:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.272 2014/03/30 15:55:08 matt Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -4572,13 +4572,16 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 #endif
 #endif
 #ifdef DDB
-		//extern int kernel_debug;
+		extern int kernel_debug;
 
-		//if (kernel_debug & 2)
-		pmap_release_pmap_lock(pm);
-		KERNHIST_DUMP(maphist);
+		if (kernel_debug & 2) {
+			pmap_release_pmap_lock(pm);
+#ifdef UVMHIST
+			KERNHIST_DUMP(maphist);
+#endif
 			cpu_Debugger();
-		pmap_acquire_pmap_lock(pm);
+			pmap_acquire_pmap_lock(pm);
+		}
 #endif
 	}
 #endif
