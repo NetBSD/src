@@ -1,4 +1,4 @@
-/*	$NetBSD: playit.c,v 1.21 2014/03/30 05:30:28 dholland Exp $	*/
+/*	$NetBSD: playit.c,v 1.22 2014/03/30 05:38:13 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: playit.c,v 1.21 2014/03/30 05:30:28 dholland Exp $");
+__RCSID("$NetBSD: playit.c,v 1.22 2014/03/30 05:38:13 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/file.h>
@@ -66,7 +66,6 @@ static char otto_face;
 #endif
 
 #define MAX_SEND	5
-#define STDIN		0
 
 /*
  * ibuf is the input buffer used for the stream from the driver.
@@ -160,7 +159,7 @@ playit(void)
 		  case READY:
 			refresh();
 			if (nchar_send < 0)
-				tcflush(STDIN, TCIFLUSH);
+				tcflush(STDIN_FILENO, TCIFLUSH);
 			nchar_send = MAX_SEND;
 #ifndef OTTO
 			(void) GETCHR();
@@ -211,7 +210,7 @@ getchr(void)
 
 	set[0].fd = huntsocket;
 	set[0].events = POLLIN;
-	set[1].fd = STDIN;
+	set[1].fd = STDIN_FILENO;
 	set[1].events = POLLIN;
 
 one_more_time:
@@ -247,7 +246,7 @@ send_stuff(void)
 	char *sp, *nsp;
 	static char inp[sizeof Buf];
 
-	count = read(STDIN, Buf, sizeof Buf);
+	count = read(STDIN_FILENO, Buf, sizeof Buf);
 	if (count <= 0)
 		return;
 	if (nchar_send <= 0 && !no_beep) {
