@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.50 2014/03/30 03:35:26 dholland Exp $	*/
+/*	$NetBSD: hunt.c,v 1.51 2014/03/30 04:31:21 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.50 2014/03/30 03:35:26 dholland Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.51 2014/03/30 04:31:21 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: hunt.c,v 1.50 2014/03/30 03:35:26 dholland Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <ifaddrs.h>
+#include <assert.h>
 
 #include "hunt_common.h"
 #include "pathnames.h"
@@ -64,7 +64,7 @@ static const char Driver[] = PATH_HUNTD;
 #endif
 
 #ifdef INTERNET
-uint16_t Test_port = TEST_PORT;
+static uint16_t Test_port = TEST_PORT;
 #else
 static const char Sock_name[] = PATH_HUNTSOCKET;
 #endif
@@ -79,7 +79,7 @@ char Buf[BUFSIZ];
 
 /*static*/ int Socket;
 #ifdef INTERNET
-char *Sock_host;
+static char *Sock_host;
 static char *use_port;
 char *Send_message = NULL;
 #endif
@@ -101,17 +101,34 @@ static int in_visual;
 
 extern int cur_row, cur_col;
 
-static void dump_scores(SOCKET);
+static void dump_scores(const struct sockaddr_storage *, socklen_t);
 static long env_init(long);
 static void fill_in_blanks(void);
 static void fincurs(void);
 static void rmnl(char *);
 static void sigterm(int) __dead;
 static void sigusr1(int) __dead;
-static void find_driver(bool);
+static void find_driver(void);
 static void start_driver(void);
 
 extern int Otto_mode;
+
+static const char *
+lookuphost(const struct sockaddr_storage *host, socklen_t hostlen)
+{
+	static char buf[NI_MAXHOST];
+	int flags, result;
+
+	flags = NI_NOFQDN;
+
+	result = getnameinfo((const struct sockaddr *)host, hostlen,
+			     buf, sizeof(buf), NULL, 0, NI_NOFQDN);
+	if (result) {
+		leavex(1, "getnameinfo: %s", gai_strerror(result));
+	}
+	return buf;
+}
+
 /*
  * main:
  *	Main program for local process
@@ -215,29 +232,36 @@ main(int ac, char **av)
 #endif
 
 #ifdef INTERNET
-	if (Show_scores) {
-		SOCKET *hosts;
-		u_short msg = C_SCORES;
+	serverlist_setup(Sock_host, Test_port);
 
-		for (hosts = list_drivers(msg); hosts->sin_port != 0; hosts += 1)
-			dump_scores(*hosts);
+	if (Show_scores) {
+		const struct sockaddr_storage *host;
+		socklen_t hostlen;
+		u_short msg = C_SCORES;
+		unsigned i;
+
+		serverlist_query(msg);
+		for (i = 0; i < serverlist_num(); i++) {
+			host = serverlist_gethost(i, &hostlen);
+			dump_scores(host, hostlen);
+		}
 		exit(0);
 	}
 	if (Query_driver) {
-		SOCKET *hosts;
+		const struct sockaddr_storage *host;
+		socklen_t hostlen;
 		u_short msg = C_MESSAGE;
+		u_short num_players;
+		unsigned i;
 
-		for (hosts = list_drivers(msg); hosts->sin_port != 0; hosts += 1) {
-			struct hostent *hp;
-			int num_players;
+		serverlist_query(msg);
+		for (i = 0; i < serverlist_num(); i++) {
+			host = serverlist_gethost(i, &hostlen);
+			num_players = ntohs(serverlist_getresponse(i));
 
-			hp = gethostbyaddr((char *) &hosts->sin_addr,
-					sizeof hosts->sin_addr, AF_INET);
-			num_players = ntohs(hosts->sin_port);
 			printf("%d player%s hunting on %s!\n",
 				num_players, (num_players == 1) ? "" : "s",
-				hp != NULL ? hp->h_name :
-				inet_ntoa(hosts->sin_addr));
+				lookuphost(host, hostlen));
 		}
 		exit(0);
 	}
@@ -267,7 +291,7 @@ main(int ac, char **av)
 
 	for (;;) {
 #ifdef INTERNET
-		find_driver(true);
+		find_driver();
 
 		if (Daemon.sin_port == 0)
 			leavex(1, "Game not found, try again");
@@ -348,73 +372,81 @@ main(int ac, char **av)
 
 #ifdef INTERNET
 static void
-find_driver(bool do_startup)
+find_driver(void)
 {
-	SOCKET *hosts;
-	u_short msg = C_PLAYER;
+	u_short msg;
+	const struct sockaddr_storage *host;
+	socklen_t hostlen;
+	unsigned num;
+	int i, c;
+	char buf[128];
 
+	msg = C_PLAYER;
 #ifdef MONITOR
 	if (Am_monitor) {
 		msg = C_MONITOR;
 	}
 #endif
 
-	hosts = list_drivers(msg);
-	if (hosts[0].sin_port != htons(0)) {
-		int i, c;
-
-		if (hosts[1].sin_port == htons(0)) {
-			Daemon = hosts[0];
+	serverlist_query(msg);
+	num = serverlist_num();
+	if (num == 0) {
+		start_driver();
+		sleep(2);
+		/* try again */
+		serverlist_query(msg);
+		num = serverlist_num();
+		if (num == 0) {
+			/* give up */
 			return;
 		}
-		/* go thru list and return host that matches daemon */
+	}
+
+	if (num == 1) {
+		host = serverlist_gethost(0, &hostlen);
+	} else {
 		clear_the_screen();
 		move(1, 0);
 		put_str("Pick one:");
-		for (i = 0; i < HEIGHT - 4 && hosts[i].sin_port != htons(0);
-								i += 1) {
-			struct hostent *hp;
-			char buf[80];
-
+		for (i = 0; i < HEIGHT - 4 && i < (int)num; i++) {
 			move(3 + i, 0);
-			hp = gethostbyaddr((char *) &hosts[i].sin_addr,
-					sizeof hosts[i].sin_addr, AF_INET);
+			host = serverlist_gethost(i, &hostlen);
 			(void) snprintf(buf, sizeof(buf),
-				"%8c    %.64s", 'a' + i,
-				hp != NULL ? hp->h_name
-				: inet_ntoa(hosts->sin_addr));
+					"%8c    %.64s", 'a' + i,
+					lookuphost(host, hostlen));
 			put_str(buf);
 		}
 		move(4 + i, 0);
 		put_str("Enter letter: ");
 		refresh();
-		while (!islower(c = getchar()) || (c -= 'a') >= i) {
+		while (1) {
+			c = getchar();
+			if (c == EOF) {
+				leavex(1, "EOF on stdin");
+			}
+			if (islower((unsigned char)c) && c - 'a' < i) {
+				break;
+			}
 			beep();
 			refresh();
 		}
-		Daemon = hosts[c];
 		clear_the_screen();
-		return;
+		host = serverlist_gethost(c - 'a', &hostlen);
 	}
-	if (!do_startup)
-		return;
 
-	start_driver();
-	sleep(2);
-	find_driver(false);
+	/* XXX fix this (won't work in ipv6) */
+	assert(hostlen == sizeof(Daemon));
+	memcpy(&Daemon, host, sizeof(Daemon));
 }
 
 static void
-dump_scores(SOCKET host)
+dump_scores(const struct sockaddr_storage *host, socklen_t hostlen)
 {
-	struct hostent *hp;
 	int s;
 	char buf[BUFSIZ];
-	int cnt;
+	ssize_t cnt;
 
-	hp = gethostbyaddr((char *) &host.sin_addr, sizeof host.sin_addr,
-								AF_INET);
-	printf("\n%s:\n", hp != NULL ? hp->h_name : inet_ntoa(host.sin_addr));
+	printf("\n%s:\n", lookuphost(host, hostlen));
 	fflush(stdout);
 
 	s = socket(SOCK_FAMILY, SOCK_STREAM, 0);
@@ -597,12 +629,16 @@ fincurs(void)
  *	tty stats, and print errno.
  */
 void
-leave(int eval, const char *mesg)
+leave(int exitval, const char *fmt, ...)
 {
 	int serrno = errno;
+	va_list ap;
+
 	fincurs();
+	va_start(ap, fmt);
 	errno = serrno;
-	err(eval, "%s", mesg ? mesg : "");
+	verr(exitval, fmt, ap);
+	va_end(ap);
 }
 
 /*
@@ -611,10 +647,14 @@ leave(int eval, const char *mesg)
  *	tty stats.
  */
 void
-leavex(int eval, const char *mesg)
+leavex(int exitval, const char *fmt, ...)
 {
+	va_list ap;
+
 	fincurs();
-	errx(eval, "%s", mesg ? mesg : "");
+	va_start(ap, fmt);
+	verrx(exitval, fmt, ap);
+	va_end(ap);
 }
 
 static long

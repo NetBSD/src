@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.5 2014/03/30 03:26:19 dholland Exp $	*/
+/*	$NetBSD: server.c,v 1.6 2014/03/30 04:31:21 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: server.c,v 1.5 2014/03/30 03:26:19 dholland Exp $");
+__RCSID("$NetBSD: server.c,v 1.6 2014/03/30 04:31:21 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -60,13 +60,16 @@ __RCSID("$NetBSD: server.c,v 1.5 2014/03/30 03:26:19 dholland Exp $");
 static SOCKET *daemons;
 static unsigned int numdaemons, maxdaemons;
 
+static SOCKET *brdv;
+static int brdc;
+
 static bool initial = true;
 static struct in_addr local_address;
-static int brdc;
-static SOCKET *brdv;
+static const char *explicit_host;
+static uint16_t port;
 
-static void
-serverlist_setup(void)
+void
+serverlist_setup(const char *explicit_host_arg, uint16_t port_arg)
 {
 	char local_name[MAXHOSTNAMELEN + 1];
 	struct hostent *hp;
@@ -86,6 +89,11 @@ serverlist_setup(void)
 	if (daemons == NULL) {
 		leavex(1, "Out of memory.");
 	}
+
+	if (explicit_host_arg) {
+		explicit_host = explicit_host_arg;
+	}
+	port = port_arg;
 }
 
 static void
@@ -111,6 +119,19 @@ add_daemon_addr(const struct sockaddr_storage *addr, uint16_t port_num)
 	 * Note that we do *not* convert from network to host
 	 * order since the port number we were sent *should*
 	 * already be in network order.
+	 *
+	 * The result may be either the port number for the hunt
+	 * socket or the port number for the stats socket... or the
+	 * number of players connected and not a port number at all,
+	 * depending on the packet type.
+	 *
+	 * For now at least it is ok to stuff it in here, because the
+	 * usage of the various different packet types and the
+	 * persistence of the results vs. the program exiting does not
+	 * cause us to get confused. If the game is made more
+	 * self-contained in the future we'll need to be more careful
+	 * about this, especially if we make the caching of results
+	 * less scattershot.
 	 */
 	daemons[numdaemons] = *sin;
 	daemons[numdaemons].sin_port = port_num;
@@ -166,6 +187,74 @@ getbroadcastaddrs(struct sockaddr_in **vector)
 }
 
 static void
+send_messages(int contactsock, unsigned short msg)
+{
+	struct sockaddr_in contactaddr;
+	struct hostent *hp;
+	uint16_t wiremsg;
+	int option;
+	int i;
+
+	contactaddr.sin_family = SOCK_FAMILY;
+	contactaddr.sin_port = htons(port);
+
+	if (explicit_host != NULL) {	/* explicit host given */
+		hp = gethostbyname(explicit_host);
+		if (hp == NULL) {
+			leavex(1, "%s: Unknown host", explicit_host);
+		}
+		memcpy(&contactaddr.sin_addr, hp->h_addr,
+		       sizeof(contactaddr.sin_addr));
+		wiremsg = htons(msg);
+		(void) sendto(contactsock, &wiremsg, sizeof(wiremsg), 0,
+			      (struct sockaddr *)&contactaddr,
+			      sizeof(contactaddr));
+		return;
+	}
+
+	if (!initial) {
+		/* favor host of previous session by contacting it first */
+		contactaddr.sin_addr = Daemon.sin_addr;
+
+		/* Must be playing! */
+		assert(msg == C_PLAYER);
+		wiremsg = htons(msg);
+
+		(void) sendto(contactsock, &wiremsg, sizeof(wiremsg), 0,
+		    (struct sockaddr *)&contactaddr, sizeof(contactaddr));
+	}
+
+	if (initial)
+		brdc = getbroadcastaddrs(&brdv);
+
+#ifdef SO_BROADCAST
+	/* Sun's will broadcast even though this option can't be set */
+	option = 1;
+	if (setsockopt(contactsock, SOL_SOCKET, SO_BROADCAST,
+	    &option, sizeof option) < 0) {
+		leave(1, "setsockopt broadcast");
+		/* NOTREACHED */
+	}
+#endif
+
+	/* send broadcast packets on all interfaces */
+	wiremsg = htons(msg);
+	for (i = 0; i < brdc; i++) {
+		contactaddr.sin_addr = brdv[i].sin_addr;
+		if (sendto(contactsock, &wiremsg, sizeof(wiremsg), 0,
+		    (struct sockaddr *)&contactaddr,
+		    sizeof(contactaddr)) < 0) {
+			leave(1, "sendto");
+		}
+	}
+	contactaddr.sin_addr = local_address;
+	if (sendto(contactsock, &wiremsg, sizeof(wiremsg), 0,
+	    (struct sockaddr *)&contactaddr, sizeof(contactaddr)) < 0) {
+		leave(1, "sendto");
+	}
+}
+
+static void
 get_responses(int contactsock)
 {
 	struct pollfd set[1];
@@ -217,102 +306,52 @@ get_responses(int contactsock)
 		add_daemon_addr(&addr, port_num);
 	}
 
-	/* terminate list with local address */
-	{
-		struct sockaddr_in sin;
-
-		sin.sin_family = SOCK_FAMILY;
-		sin.sin_addr = local_address;
-		sin.sin_port = htons(0);
-		add_daemon_addr((struct sockaddr_storage *)&sin, htons(0));
-	}
-
 	initial = false;
 }
 
-SOCKET *
-list_drivers(unsigned short msg)
+void
+serverlist_query(unsigned short msg)
 {
-	struct hostent *hp;
-	struct sockaddr_in contactaddr;
-	int option;
-	uint16_t wiremsg;
 	int contactsock;
-	int i;
 
-	if (initial) {
-		/* do one time initialization */
-		serverlist_setup();
-	}
-
-	if (!initial && Sock_host != NULL) {
-		/* address already valid */
-		return daemons;
+	if (!initial && explicit_host != NULL) {
+		/* already did the work, no point doing it again */
+		return;
 	}
 
 	contactsock = socket(SOCK_FAMILY, SOCK_DGRAM, 0);
 	if (contactsock < 0) {
 		leave(1, "socket system call failed");
 	}
-	contactaddr.sin_family = SOCK_FAMILY;
-	contactaddr.sin_port = htons(Test_port);
 
-	if (Sock_host != NULL) {	/* explicit host given */
-		if ((hp = gethostbyname(Sock_host)) == NULL) {
-			leavex(1, "Unknown host");
-			/* NOTREACHED */
-		}
-		memcpy(&contactaddr.sin_addr, hp->h_addr,
-		       sizeof(contactaddr.sin_addr));
-		wiremsg = htons(msg);
-		(void) sendto(contactsock, &wiremsg, sizeof(wiremsg), 0,
-			      (struct sockaddr *)&contactaddr,
-			      sizeof(contactaddr));
-		get_responses(contactsock);
-		(void) close(contactsock);
-		return daemons;
-	}
-
-	if (!initial) {
-		/* favor host of previous session by contacting it first */
-		contactaddr.sin_addr = Daemon.sin_addr;
-		wiremsg = htons(C_PLAYER);		/* Must be playing! */
-		(void) sendto(contactsock, &wiremsg, sizeof(wiremsg), 0,
-		    (struct sockaddr *)&contactaddr, sizeof(contactaddr));
-	}
-
-	if (initial)
-		brdc = getbroadcastaddrs(&brdv);
-
-#ifdef SO_BROADCAST
-	/* Sun's will broadcast even though this option can't be set */
-	option = 1;
-	if (setsockopt(contactsock, SOL_SOCKET, SO_BROADCAST,
-	    &option, sizeof option) < 0) {
-		leave(1, "setsockopt broadcast");
-		/* NOTREACHED */
-	}
-#endif
-
-	/* send broadcast packets on all interfaces */
-	wiremsg = htons(msg);
-	for (i = 0; i < brdc; i++) {
-		contactaddr.sin_addr = brdv[i].sin_addr;
-		if (sendto(contactsock, &wiremsg, sizeof(wiremsg), 0,
-		    (struct sockaddr *)&contactaddr,
-		    sizeof(contactaddr)) < 0) {
-			leave(1, "sendto");
-		}
-	}
-	contactaddr.sin_addr = local_address;
-	if (sendto(contactsock, &wiremsg, sizeof(wiremsg), 0,
-	    (struct sockaddr *)&contactaddr, sizeof(contactaddr)) < 0) {
-		leave(1, "sendto");
-	}
-
+	send_messages(contactsock, msg);
 	get_responses(contactsock);
+
 	(void) close(contactsock);
-	return daemons;
+}
+
+unsigned
+serverlist_num(void)
+{
+	return numdaemons;
+}
+
+const struct sockaddr_storage *
+serverlist_gethost(unsigned i, socklen_t *len_ret)
+{
+	struct sockaddr_in *ret;
+
+	assert(i < numdaemons);
+	ret = &daemons[i];
+	*len_ret = sizeof(*ret);
+	return (struct sockaddr_storage *)ret;
+}
+
+unsigned short
+serverlist_getresponse(unsigned i)
+{
+	assert(i < numdaemons);
+	return daemons[i].sin_port;
 }
 
 #endif /* INTERNET */

@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt_private.h,v 1.6 2014/03/30 03:35:26 dholland Exp $	*/
+/*	$NetBSD: hunt_private.h,v 1.7 2014/03/30 04:31:21 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -66,8 +66,6 @@ extern bool no_beep;
 #ifdef INTERNET
 /* XXX this pile had to be made public to split off server.c; fix them up */
 extern SOCKET Daemon;
-extern uint16_t Test_port;
-extern char *Sock_host;
 #endif
 
 /*
@@ -80,8 +78,8 @@ void do_connect(char *, char, long);
 /* in hunt.c */
 __dead void bad_con(void);
 __dead void bad_ver(void);
-__dead void leave(int, const char *);
-__dead void leavex(int, const char *);
+__dead __printflike(2, 3) void leave(int, const char *, ...);
+__dead __printflike(2, 3) void leavex(int, const char *, ...);
 void intr(int);
 
 /* in otto.c */
@@ -95,5 +93,9 @@ void do_message(void);
 
 /* in server.c */
 #ifdef INTERNET
-SOCKET *list_drivers(unsigned short msg);
+void serverlist_setup(const char *, uint16_t);
+void serverlist_query(unsigned short msg);
+unsigned serverlist_num(void);
+const struct sockaddr_storage *serverlist_gethost(unsigned, socklen_t *);
+unsigned short serverlist_getresponse(unsigned);
 #endif
