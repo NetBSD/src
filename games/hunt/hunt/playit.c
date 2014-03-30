@@ -1,4 +1,4 @@
-/*	$NetBSD: playit.c,v 1.18 2014/03/29 21:24:26 dholland Exp $	*/
+/*	$NetBSD: playit.c,v 1.19 2014/03/30 02:11:25 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: playit.c,v 1.18 2014/03/29 21:24:26 dholland Exp $");
+__RCSID("$NetBSD: playit.c,v 1.19 2014/03/30 02:11:25 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/file.h>
@@ -261,7 +261,7 @@ send_stuff(void)
 	Buf[count] = '\0';
 	nsp = inp;
 	for (sp = Buf; *sp != '\0'; sp++)
-		if ((*nsp = map_key[(int)*sp]) == 'q')
+		if ((*nsp = map_key[(unsigned char)*sp]) == 'q')
 			intr(0);
 		else
 			nsp++;
