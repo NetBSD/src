@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.6 2014/03/30 04:31:21 dholland Exp $	*/
+/*	$NetBSD: server.c,v 1.7 2014/03/30 04:39:40 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: server.c,v 1.6 2014/03/30 04:31:21 dholland Exp $");
+__RCSID("$NetBSD: server.c,v 1.7 2014/03/30 04:39:40 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -57,11 +57,11 @@ __RCSID("$NetBSD: server.c,v 1.6 2014/03/30 04:31:21 dholland Exp $");
  * Code for finding and talking to hunt daemons.
  */
 
-static SOCKET *daemons;
+static struct sockaddr_in *daemons;
 static unsigned int numdaemons, maxdaemons;
 
-static SOCKET *brdv;
-static int brdc;
+static struct sockaddr_in *broadcastaddrs;
+static int numbroadcastaddrs;
 
 static bool initial = true;
 static struct in_addr local_address;
@@ -157,33 +157,45 @@ have_daemon_addr(const struct sockaddr_storage *addr)
 	return false;
 }
 
-static int
-getbroadcastaddrs(struct sockaddr_in **vector)
+static void
+getbroadcastaddrs(void)
 {
-	int vec_cnt;
+	unsigned num, i;
 	struct ifaddrs *ifp, *ip;
 
-	*vector = NULL;
-	if (getifaddrs(&ifp) < 0)
-		return 0;
+	broadcastaddrs = NULL;
+	numbroadcastaddrs = 0;
 
-	vec_cnt = 0;
-	for (ip = ifp; ip; ip = ip->ifa_next)
+	if (getifaddrs(&ifp) < 0) {
+		return;
+	}
+
+	num = 0;
+	for (ip = ifp; ip; ip = ip->ifa_next) {
 		if ((ip->ifa_addr->sa_family == AF_INET) &&
-		    (ip->ifa_flags & IFF_BROADCAST))
-			vec_cnt++;
+		    (ip->ifa_flags & IFF_BROADCAST)) {
+			num++;
+		}
+	}
 
-	*vector = malloc(vec_cnt * sizeof(struct sockaddr_in));
+	broadcastaddrs = malloc(num * sizeof(broadcastaddrs[0]));
+	if (broadcastaddrs == NULL) {
+		leavex(1, "Out of memory");
+	}
 
-	vec_cnt = 0;
-	for (ip = ifp; ip; ip = ip->ifa_next)
+	i = 0;
+	for (ip = ifp; ip; ip = ip->ifa_next) {
 		if ((ip->ifa_addr->sa_family == AF_INET) &&
-		    (ip->ifa_flags & IFF_BROADCAST))
-			memcpy(&(*vector)[vec_cnt++], ip->ifa_broadaddr,
-			       sizeof(struct sockaddr_in));
+		    (ip->ifa_flags & IFF_BROADCAST)) {
+			memcpy(&broadcastaddrs[i], ip->ifa_broadaddr,
+			       sizeof(broadcastaddrs[i]));
+			i++;
+		}
+	}
+	assert(i == num);
+	numbroadcastaddrs = num;
 
 	freeifaddrs(ifp);
-	return vec_cnt;
 }
 
 static void
@@ -224,8 +236,9 @@ send_messages(int contactsock, unsigned short msg)
 		    (struct sockaddr *)&contactaddr, sizeof(contactaddr));
 	}
 
-	if (initial)
-		brdc = getbroadcastaddrs(&brdv);
+	if (initial) {
+		getbroadcastaddrs();
+	}
 
 #ifdef SO_BROADCAST
 	/* Sun's will broadcast even though this option can't be set */
@@ -239,8 +252,8 @@ send_messages(int contactsock, unsigned short msg)
 
 	/* send broadcast packets on all interfaces */
 	wiremsg = htons(msg);
-	for (i = 0; i < brdc; i++) {
-		contactaddr.sin_addr = brdv[i].sin_addr;
+	for (i = 0; i < numbroadcastaddrs; i++) {
+		contactaddr.sin_addr = broadcastaddrs[i].sin_addr;
 		if (sendto(contactsock, &wiremsg, sizeof(wiremsg), 0,
 		    (struct sockaddr *)&contactaddr,
 		    sizeof(contactaddr)) < 0) {
