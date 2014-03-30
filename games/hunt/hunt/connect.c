@@ -1,4 +1,4 @@
-/*	$NetBSD: connect.c,v 1.10 2014/03/30 05:14:47 dholland Exp $	*/
+/*	$NetBSD: connect.c,v 1.11 2014/03/30 05:30:28 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,31 +32,33 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: connect.c,v 1.10 2014/03/30 05:14:47 dholland Exp $");
+__RCSID("$NetBSD: connect.c,v 1.11 2014/03/30 05:30:28 dholland Exp $");
 #endif /* not lint */
 
 #include <string.h>
 #include <signal.h>
 #include <unistd.h>
+#include <assert.h>
 
 #include "hunt_common.h"
 #include "hunt_private.h"
 
 void
-do_connect(char *name, char team, long enter_status)
+do_connect(const char *name, size_t namelen, char team, int enter_status)
 {
 	static int32_t uid;
-	static int32_t mode;
+	int32_t mode;
+	int32_t wire_status = htonl(enter_status);
 
 	if (uid == 0)
 		uid = htonl(getuid());
-	(void) write(huntsocket, &uid, LONGLEN);
-	(void) write(huntsocket, name, NAMELEN);
+	(void) write(huntsocket, &uid, sizeof(uid));
+	assert(namelen == WIRE_NAMELEN);
+	(void) write(huntsocket, name, namelen);
 	(void) write(huntsocket, &team, 1);
-	enter_status = htonl(enter_status);
-	(void) write(huntsocket, &enter_status, LONGLEN);
+	(void) write(huntsocket, &wire_status, sizeof(wire_status));
 	(void) strcpy(Buf, ttyname(fileno(stderr)));
-	(void) write(huntsocket, Buf, NAMELEN);
+	(void) write(huntsocket, Buf, WIRE_NAMELEN);
 #ifdef INTERNET
 	if (Send_message != NULL)
 		mode = C_MESSAGE;

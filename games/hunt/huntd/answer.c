@@ -1,4 +1,4 @@
-/*	$NetBSD: answer.c,v 1.21 2014/03/30 01:44:37 dholland Exp $	*/
+/*	$NetBSD: answer.c,v 1.22 2014/03/30 05:30:28 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: answer.c,v 1.21 2014/03/30 01:44:37 dholland Exp $");
+__RCSID("$NetBSD: answer.c,v 1.22 2014/03/30 05:30:28 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -48,9 +48,9 @@ __RCSID("$NetBSD: answer.c,v 1.21 2014/03/30 01:44:37 dholland Exp $");
 
 #define SCOREDECAY	15
 
-static char Ttyname[NAMELEN];
+static char Ttyname[WIRE_NAMELEN];
 
-static IDENT *get_ident(uint32_t, uint32_t, char *, char);
+static IDENT *get_ident(uint32_t, uint32_t, const char *, char);
 static void stmonitor(PLAYER *);
 static void stplayer(PLAYER *, int);
 
@@ -59,10 +59,10 @@ answer(void)
 {
 	PLAYER *pp;
 	int newsock;
-	static u_long mode;
-	static char name[NAMELEN];
+	static uint32_t mode;
+	static char name[WIRE_NAMELEN];
 	static char team;
-	static int enter_status;
+	static int32_t enter_status;
 	static socklen_t socklen;
 	static uint32_t machine;
 	static uint32_t uid;
@@ -109,15 +109,15 @@ answer(void)
 	}
 
 	version = htonl((uint32_t) HUNT_VERSION);
-	(void) write(newsock, &version, LONGLEN);
-	(void) read(newsock, &uid, LONGLEN);
+	(void) write(newsock, &version, sizeof(version));
+	(void) read(newsock, &uid, sizeof(uid));
 	uid = ntohl(uid);
-	(void) read(newsock, name, NAMELEN);
+	(void) read(newsock, name, sizeof(name));
 	(void) read(newsock, &team, 1);
-	(void) read(newsock, &enter_status, LONGLEN);
-	enter_status = ntohl((unsigned long) enter_status);
-	(void) read(newsock, Ttyname, NAMELEN);
-	(void) read(newsock, &mode, sizeof mode);
+	(void) read(newsock, &enter_status, sizeof(enter_status));
+	enter_status = ntohl(enter_status);
+	(void) read(newsock, Ttyname, sizeof(Ttyname));
+	(void) read(newsock, &mode, sizeof(mode));
 	mode = ntohl(mode);
 
 	/*
@@ -398,7 +398,7 @@ rand_dir(void)
  *	Get the score structure of a player
  */
 static IDENT *
-get_ident(uint32_t machine, uint32_t uid, char *name, char team)
+get_ident(uint32_t machine, uint32_t uid, const char *name, char team)
 {
 	IDENT *ip;
 	static IDENT punt;
@@ -407,7 +407,7 @@ get_ident(uint32_t machine, uint32_t uid, char *name, char team)
 		if (ip->i_machine == machine
 		&&  ip->i_uid == uid
 		&&  ip->i_team == team
-		&&  strncmp(ip->i_name, name, NAMELEN) == 0)
+		&&  strncmp(ip->i_name, name, WIRE_NAMELEN) == 0)
 			break;
 
 	if (ip != NULL) {
@@ -427,7 +427,7 @@ get_ident(uint32_t machine, uint32_t uid, char *name, char team)
 		ip->i_machine = machine;
 		ip->i_team = team;
 		ip->i_uid = uid;
-		strncpy(ip->i_name, name, NAMELEN);
+		strncpy(ip->i_name, name, sizeof(ip->i_name));
 		ip->i_kills = 0;
 		ip->i_entries = 1;
 		ip->i_score = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt_private.h,v 1.8 2014/03/30 05:14:47 dholland Exp $	*/
+/*	$NetBSD: hunt_private.h,v 1.9 2014/03/30 05:30:28 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -73,7 +73,7 @@ extern SOCKET Daemon;
  */
 
 /* in connect.c */
-void do_connect(char *, char, long);
+void do_connect(const char *, size_t, char, int32_t);
 
 /* in hunt.c */
 __dead void bad_con(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt_common.h,v 1.3 2014/03/29 21:55:59 dholland Exp $	*/
+/*	$NetBSD: hunt_common.h,v 1.4 2014/03/30 05:30:28 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -85,9 +85,7 @@
 #define MAXPL		17
 #define MAXMON		0
 #endif
-#define SHORTLEN	2		/* sizeof (network short) */
-#define LONGLEN		4		/* sizeof (network long) */
-#define NAMELEN		20
+#define WIRE_NAMELEN	20
 #define MSGLEN		SCREEN_WIDTH
 #define DECAY		50.0
 
