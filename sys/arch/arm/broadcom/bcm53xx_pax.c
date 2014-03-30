@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_pax.c,v 1.12 2014/02/23 21:19:06 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_pax.c,v 1.13 2014/03/30 01:12:18 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -92,7 +92,6 @@ struct bcmpax_softc {
 	struct bcmpax_ihqh sc_intrs;
 	void *sc_ih[6];
 	int sc_port;
-	char sc_intrstring[4][32];
 };
 
 static inline uint32_t
@@ -115,7 +114,7 @@ static pcireg_t bcmpax_conf_read(void *, pcitag_t, int);
 static void bcmpax_conf_write(void *, pcitag_t, int, pcireg_t);
 
 static int bcmpax_intr_map(const struct pci_attach_args *, pci_intr_handle_t *);
-static const char *bcmpax_intr_string(void *, pci_intr_handle_t);
+static const char *bcmpax_intr_string(void *, pci_intr_handle_t, char *, size_t);
 static const struct evcnt *bcmpax_intr_evcnt(void *, pci_intr_handle_t);
 static void *bcmpax_intr_establish(void *, pci_intr_handle_t, int,
 	   int (*)(void *), void *);
@@ -201,7 +200,6 @@ bcmpax_ccb_attach(device_t parent, device_t self, void *aux)
 	struct bcmpax_softc * const sc = device_private(self);
 	struct bcmccb_attach_args * const ccbaa = aux;
 	const struct bcm_locators * const loc = &ccbaa->ccbaa_loc;
-	const char * const xname = device_xname(self);
 	cfdata_t cf = device_cfdata(self);
 
 	sc->sc_dev = self;
@@ -211,11 +209,6 @@ bcmpax_ccb_attach(device_t parent, device_t self, void *aux)
 		sc->sc_dmat = &bcm53xx_bounce_dma_tag;
 	}
 #endif
-
-	for (u_int i = 0; i < 4; i++) {
-		snprintf(sc->sc_intrstring[i], sizeof(sc->sc_intrstring[i]),
-		    "%s int%c", xname, 'a' + i);
-	}
 
 	sc->sc_bst = ccbaa->ccbaa_ccb_bst;
 	bus_space_subregion(sc->sc_bst, ccbaa->ccbaa_ccb_bsh,
@@ -549,12 +542,16 @@ bcmpax_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *pihp)
 }
 
 static const char *
-bcmpax_intr_string(void *v, pci_intr_handle_t pih)
+bcmpax_intr_string(void *v, pci_intr_handle_t pih, char *buf, size_t len)
 {
 	struct bcmpax_softc * const sc = v;
 
-	if (pih)
-		return sc->sc_intrstring[pih - PCI_INTERRUPT_PIN_A];
+	if (pih) {
+		snprintf(buf, len, "%s int%c",
+		    device_xname(sc->sc_dev),
+		    (char) ('a' + pih - PCI_INTERRUPT_PIN_A));
+		return buf;
+	}
 
 	return NULL;
 }
