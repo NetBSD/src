@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.52 2014/03/30 04:40:50 dholland Exp $	*/
+/*	$NetBSD: hunt.c,v 1.53 2014/03/30 04:57:37 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.52 2014/03/30 04:40:50 dholland Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.53 2014/03/30 04:57:37 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -449,10 +449,10 @@ dump_scores(const struct sockaddr_storage *host, socklen_t hostlen)
 	printf("\n%s:\n", lookuphost(host, hostlen));
 	fflush(stdout);
 
-	s = socket(SOCK_FAMILY, SOCK_STREAM, 0);
+	s = socket(host->ss_family, SOCK_STREAM, 0);
 	if (s < 0)
 		err(1, "socket");
-	if (connect(s, (struct sockaddr *) &host, sizeof host) < 0)
+	if (connect(s, (const struct sockaddr *)host, hostlen) < 0)
 		err(1, "connect");
 	while ((cnt = read(s, buf, BUFSIZ)) > 0)
 		write(fileno(stdout), buf, cnt);
