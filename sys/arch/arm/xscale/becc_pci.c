@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_pci.c,v 1.16 2014/03/30 01:19:20 christos Exp $	*/
+/*	$NetBSD: becc_pci.c,v 1.17 2014/03/30 21:52:09 htodd Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc_pci.c,v 1.16 2014/03/30 01:19:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc_pci.c,v 1.17 2014/03/30 21:52:09 htodd Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -377,7 +377,7 @@ const char *
 becc_pci_intr_string(void *v, pci_intr_handle_t ih, char *buf, size_t len)
 {
 
-	strlcpy(buf, becc_irqnames[ih]), len);
+	strlcpy(buf, becc_irqnames[ih], len);
 	return buf;
 }
 
