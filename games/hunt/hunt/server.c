@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.3 2014/03/30 02:53:11 dholland Exp $	*/
+/*	$NetBSD: server.c,v 1.4 2014/03/30 02:58:25 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: server.c,v 1.3 2014/03/30 02:53:11 dholland Exp $");
+__RCSID("$NetBSD: server.c,v 1.4 2014/03/30 02:58:25 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -174,12 +174,12 @@ get_responses(int contactsock)
 }
 
 SOCKET *
-list_drivers(void)
+list_drivers(unsigned short msg)
 {
 	struct hostent *hp;
 	struct sockaddr_in contactaddr;
 	int option;
-	u_short msg;
+	uint16_t wiremsg;
 	int contactsock;
 	int i;
 
@@ -203,8 +203,8 @@ list_drivers(void)
 		}
 		memcpy(&contactaddr.sin_addr, hp->h_addr,
 		       sizeof(contactaddr.sin_addr));
-		msg = htons(C_TESTMSG());
-		(void) sendto(contactsock, &msg, sizeof msg, 0,
+		wiremsg = htons(msg);
+		(void) sendto(contactsock, &wiremsg, sizeof(wiremsg), 0,
 			      (struct sockaddr *)&contactaddr,
 			      sizeof(contactaddr));
 		get_responses(contactsock);
@@ -214,8 +214,8 @@ list_drivers(void)
 	if (!initial) {
 		/* favor host of previous session by broadcasting to it first */
 		contactaddr.sin_addr = Daemon.sin_addr;
-		msg = htons(C_PLAYER);		/* Must be playing! */
-		(void) sendto(contactsock, &msg, sizeof msg, 0,
+		wiremsg = htons(C_PLAYER);		/* Must be playing! */
+		(void) sendto(contactsock, &wiremsg, sizeof(wiremsg), 0,
 		    (struct sockaddr *)&contactaddr, sizeof(contactaddr));
 	}
 
@@ -233,7 +233,7 @@ list_drivers(void)
 #endif
 
 	/* send broadcast packets on all interfaces */
-	msg = htons(C_TESTMSG());
+	wiremsg = htons(msg);
 	for (i = 0; i < brdc; i++) {
 		contactaddr.sin_addr = brdv[i].sin_addr;
 		if (sendto(contactsock, &msg, sizeof msg, 0,
