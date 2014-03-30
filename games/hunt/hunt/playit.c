@@ -1,4 +1,4 @@
-/*	$NetBSD: playit.c,v 1.22 2014/03/30 05:38:13 dholland Exp $	*/
+/*	$NetBSD: playit.c,v 1.23 2014/03/30 05:41:50 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: playit.c,v 1.22 2014/03/30 05:38:13 dholland Exp $");
+__RCSID("$NetBSD: playit.c,v 1.23 2014/03/30 05:41:50 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/file.h>
@@ -246,7 +246,7 @@ send_stuff(void)
 	char *sp, *nsp;
 	static char inp[sizeof Buf];
 
-	count = read(STDIN_FILENO, Buf, sizeof Buf);
+	count = read(STDIN_FILENO, Buf, sizeof(Buf) - 1);
 	if (count <= 0)
 		return;
 	if (nchar_send <= 0 && !no_beep) {
