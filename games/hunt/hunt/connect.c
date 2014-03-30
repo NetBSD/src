@@ -1,4 +1,4 @@
-/*	$NetBSD: connect.c,v 1.9 2014/03/29 21:24:26 dholland Exp $	*/
+/*	$NetBSD: connect.c,v 1.10 2014/03/30 05:14:47 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: connect.c,v 1.9 2014/03/29 21:24:26 dholland Exp $");
+__RCSID("$NetBSD: connect.c,v 1.10 2014/03/30 05:14:47 dholland Exp $");
 #endif /* not lint */
 
 #include <string.h>
@@ -50,13 +50,13 @@ do_connect(char *name, char team, long enter_status)
 
 	if (uid == 0)
 		uid = htonl(getuid());
-	(void) write(Socket, &uid, LONGLEN);
-	(void) write(Socket, name, NAMELEN);
-	(void) write(Socket, &team, 1);
+	(void) write(huntsocket, &uid, LONGLEN);
+	(void) write(huntsocket, name, NAMELEN);
+	(void) write(huntsocket, &team, 1);
 	enter_status = htonl(enter_status);
-	(void) write(Socket, &enter_status, LONGLEN);
+	(void) write(huntsocket, &enter_status, LONGLEN);
 	(void) strcpy(Buf, ttyname(fileno(stderr)));
-	(void) write(Socket, Buf, NAMELEN);
+	(void) write(huntsocket, Buf, NAMELEN);
 #ifdef INTERNET
 	if (Send_message != NULL)
 		mode = C_MESSAGE;
@@ -69,5 +69,5 @@ do_connect(char *name, char team, long enter_status)
 #endif
 		mode = C_PLAYER;
 	mode = htonl(mode);
-	(void) write(Socket, &mode, sizeof mode);
+	(void) write(huntsocket, &mode, sizeof mode);
 }
