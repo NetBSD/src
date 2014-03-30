@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: src/sys/dev/ixgbe/ixgbe.c,v 1.51 2011/04/25 23:34:21 jfv Exp $*/
-/*$NetBSD: ixgbe.c,v 1.8 2014/03/29 19:28:25 christos Exp $*/
+/*$NetBSD: ixgbe.c,v 1.9 2014/03/30 13:14:40 skrll Exp $*/
 
 #include "opt_inet.h"
 
@@ -1764,7 +1764,7 @@ ixgbe_xmit(struct tx_ring *txr, struct mbuf *m_head)
 	int             i, j, error;
 	int		first, last = 0;
 	bus_dmamap_t	map;
-	struct ixgbe_tx_buf *txbuf, *txbuf_mapped;
+	struct ixgbe_tx_buf *txbuf;
 	union ixgbe_adv_tx_desc *txd = NULL;
 
 	/* Basic descriptor defines */
@@ -1781,7 +1781,6 @@ ixgbe_xmit(struct tx_ring *txr, struct mbuf *m_head)
          */
         first = txr->next_avail_desc;
 	txbuf = &txr->tx_buffers[first];
-	txbuf_mapped = txbuf;
 	map = txbuf->map;
 
 	/*
@@ -2261,12 +2260,14 @@ ixgbe_allocate_legacy(struct adapter *adapter, const struct pci_attach_args *pa)
 {
 	device_t dev = adapter->dev;
 	struct		ix_queue *que = adapter->queues;
-	int rid = 0;
 	char intrbuf[PCI_INTRSTR_LEN];
+#if 0
+	int rid = 0;
 
 	/* MSI RID at 1 */
 	if (adapter->msix == 1)
 		rid = 1;
+#endif
  
 	/* We allocate a single interrupt resource */
  	if (pci_intr_map(pa, &adapter->osdep.ih) != 0) {
@@ -2274,7 +2275,7 @@ ixgbe_allocate_legacy(struct adapter *adapter, const struct pci_attach_args *pa)
 		return ENXIO;
 	} else {
 		aprint_normal_dev(dev, "interrupting at %s\n",
-		    pci_intr_string(adapter->osdep.pc, adapter->osdep.ih), intrbuf, sizeof(intrbuf));
+		    pci_intr_string(adapter->osdep.pc, adapter->osdep.ih, intrbuf, sizeof(intrbuf)));
 	}
 
 	/*
@@ -2550,14 +2551,15 @@ ixgbe_free_pci_resources(struct adapter * adapter)
 	struct 		ix_queue *que = adapter->queues;
 #endif
 	device_t	dev = adapter->dev;
-	int		rid, memrid;
+	int		rid;
 
+#if defined(NETBSD_MSI_OR_MSIX)
+	int		 memrid;
 	if (adapter->hw.mac.type == ixgbe_mac_82598EB)
 		memrid = PCI_BAR(MSIX_82598_BAR);
 	else
 		memrid = PCI_BAR(MSIX_82599_BAR);
 
-#if defined(NETBSD_MSI_OR_MSIX)
 	/*
 	** There is a slight possibility of a failure mode
 	** in attach that will result in entering this function
@@ -3910,7 +3912,6 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 {
 	struct	adapter 	*adapter;
 	struct ifnet		*ifp;
-	device_t		dev;
 	struct ixgbe_rx_buf	*rxbuf;
 #ifdef LRO
 	struct lro_ctrl		*lro = &rxr->lro;
@@ -3919,7 +3920,6 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 
 	adapter = rxr->adapter;
 	ifp = adapter->ifp;
-	dev = adapter->dev;
 
 	/* Clear the ring contents */
 	IXGBE_RX_LOCK(rxr);
@@ -4018,6 +4018,7 @@ skip_head:
 		ixgbe_setup_hw_rsc(rxr);
 #ifdef LRO
 	else if (ifp->if_capenable & IFCAP_LRO) {
+		device_t dev = adapter->dev;
 		int err = tcp_lro_init(lro);
 		if (err) {
 			device_printf(dev, "LRO Initialization failed!\n");
@@ -4290,13 +4291,12 @@ ixgbe_free_receive_buffers(struct rx_ring *rxr)
 static __inline void
 ixgbe_rx_input(struct rx_ring *rxr, struct ifnet *ifp, struct mbuf *m, u32 ptype)
 {
-	struct ethercom *ec;
-	struct adapter	*adapter = ifp->if_softc;
 	int s;
 
-	ec = &adapter->osdep.ec;
-
 #ifdef LRO
+	struct adapter	*adapter = ifp->if_softc;
+	struct ethercom *ec = &adapter->osdep.ec;
+
         /*
          * ATM LRO is only for IPv4/TCP packets and TCP checksum of the packet
          * should be computed by hardware. Also it should not have VLAN tag in
@@ -4669,11 +4669,13 @@ ixgbe_rx_checksum(u32 staterr, struct mbuf * mp, u32 ptype,
 {
 	u16	status = (u16) staterr;
 	u8	errors = (u8) (staterr >> 24);
+#if 0
 	bool	sctp = FALSE;
 
 	if ((ptype & IXGBE_RXDADV_PKTTYPE_ETQF) == 0 &&
 	    (ptype & IXGBE_RXDADV_PKTTYPE_SCTP) != 0)
 		sctp = TRUE;
+#endif
 
 	if (status & IXGBE_RXD_STAT_IPCS) {
 		stats->ipcs.ev_count++;
