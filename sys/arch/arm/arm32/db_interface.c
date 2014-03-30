@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.51 2014/03/28 21:54:12 matt Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.52 2014/03/30 08:00:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K. Stevens
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.51 2014/03/28 21:54:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.52 2014/03/30 08:00:34 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -71,6 +71,9 @@ u_int db_fetch_reg(int, db_regs_t *);
 int db_trapper(u_int, u_int, trapframe_t *, int);
 
 int	db_active = 0;
+db_regs_t ddb_regs;	/* register state */
+db_regs_t *ddb_regp;
+
 #ifdef MULTIPROCESSOR
 volatile struct cpu_info *db_onproc;
 volatile struct cpu_info *db_newcpu;
@@ -87,6 +90,7 @@ int
 kdb_trap(int type, db_regs_t *regs)
 {
 	struct cpu_info * const ci = curcpu();
+	db_regs_t dbreg;
 	int s;
 
 	switch (type) {
@@ -148,13 +152,19 @@ kdb_trap(int type, db_regs_t *regs)
 #endif
 
 		s = splhigh();
-		ci->ci_ddb_regs = regs;
+		ci->ci_ddb_regs = &dbreg;
+		ddb_regp = &dbreg;
+		ddb_regs = *regs;
+
 		atomic_inc_32(&db_active);
 		cnpollc(true);
 		db_trap(type, 0/*code*/);
 		cnpollc(false);
 		atomic_dec_32(&db_active);
+
 		ci->ci_ddb_regs = NULL;
+		ddb_regp = &dbreg;
+		*regs = ddb_regs;
 		splx(s);
 
 #ifdef MULTIPROCESSOR
