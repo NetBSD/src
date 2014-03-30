@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.125 2014/02/26 01:51:51 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.126 2014/03/30 15:50:51 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -83,6 +83,10 @@
 #ifdef ARM_MMU_EXTENDED
 #define PMAP_TLB_MAX			1
 #define PMAP_TLB_HWPAGEWALKER		1
+#if PMAP_TLB_MAX > 1
+#define PMAP_TLB_NEED_SHOOTDOWN		1
+#endif
+#define PMAP_TLB_FLUSH_ASID_ON_RESET	(arm_has_tlbiasid_p)
 #define PMAP_TLB_NUM_PIDS		256
 #define cpu_set_tlb_info(ci, ti)        ((void)((ci)->ci_tlb_info = (ti)))
 #if PMAP_TLB_MAX > 1
@@ -227,10 +231,11 @@ struct pmap {
 #ifdef MULTIPROCESSOR
 	kcpuset_t		*pm_onproc;
 	kcpuset_t		*pm_active;
-	struct pmap_asid_info	pm_pai[2];
-#else
-	struct pmap_asid_info	pm_pai[1];
+#if PMAP_TLB_MAX > 1
+	u_int			pm_shootdown_pending;
 #endif
+#endif
+	struct pmap_asid_info	pm_pai[PMAP_TLB_MAX];
 #else
 	struct l1_ttable	*pm_l1;
 	union pmap_cache_state	pm_cstate;
@@ -268,6 +273,10 @@ extern pv_addr_t undstack;
 extern pv_addr_t idlestack;
 extern pv_addr_t systempage;
 extern pv_addr_t kernel_l1pt;
+
+#ifdef ARM_MMU_EXTENDED
+extern bool arm_has_tlbiasid_p;	/* also in <arm/locore.h> */
+#endif
 
 /*
  * Determine various modes for PTEs (user vs. kernel, cacheable
