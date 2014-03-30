@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.20 2013/05/29 23:29:44 rkujawa Exp $	*/
+/*	$NetBSD: param.h,v 1.21 2014/03/30 15:50:51 matt Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -36,7 +36,10 @@
 #define	_ARM_ARM32_PARAM_H_
 
 #ifdef _KERNEL
-#  include <machine/cpu.h>
+# include <machine/cpu.h>
+#endif
+#ifdef _KERNEL_OPT
+# include "opt_arm32_pmap.h"
 #endif
 
 /*
@@ -45,16 +48,22 @@
 /* These are defined in the Port File before it includes
  * this file. */
 
+#ifndef PGSHIFT
+#if defined(_ARM_ARCH_6)
+#define	PGSHIFT		13		/* LOG2(NBPG) */
+#else
 #define	PGSHIFT		12		/* LOG2(NBPG) */
+#endif
+#endif
 #define	NBPG		(1 << PGSHIFT)	/* bytes/page */
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
 #define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
 
 
-#define SSIZE           1               /* initial stack size/NBPG */
-#define SINCR           1               /* increment of stack/NBPG */
-#define UPAGES          2               /* pages of u-area */
-#define USPACE          (UPAGES * NBPG) /* total size of u-area */
+#define SSIZE		1		/* initial stack size/NBPG */
+#define SINCR		1		/* increment of stack/NBPG */
+#define USPACE		8192		/* total size of u-area */
+#define UPAGES		(USPACE / NBPG)	/* pages of u-area */
 
 #ifndef MSGBUFSIZE
 #define MSGBUFSIZE	16384	 	/* default message buffer size */
