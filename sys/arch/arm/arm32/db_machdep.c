@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.20 2014/03/29 09:27:57 skrll Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.21 2014/03/30 08:00:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.20 2014/03/29 09:27:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.21 2014/03/30 08:00:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -66,8 +66,7 @@ int db_access_irq_sp(const struct db_variable *, db_expr_t *, int);
 static int
 ddb_reg_var(const struct db_variable *v, db_expr_t *ep, int op)
 {
-	KASSERT(curcpu()->ci_ddb_regs != NULL);
-	register_t * const rp = (register_t *)(curcpu()->ci_ddb_regs);
+	register_t * const rp = (register_t *)DDB_REGS;
 	if (op == DB_VAR_SET) {
 		rp[(uintptr_t)v->valuep] = *ep;
 	} else {

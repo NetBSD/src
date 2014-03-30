@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.20 2014/03/28 21:54:12 matt Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.21 2014/03/30 08:00:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K Stevens
@@ -48,7 +48,14 @@ typedef	long		db_expr_t;	/* expression - signed */
 
 typedef trapframe_t db_regs_t;
 
-#define	DDB_REGS	(curcpu()->ci_ddb_regs)
+#ifndef MULTIPROCESSOR
+extern db_regs_t ddb_regs;	/* register state */
+#define	DDB_REGS	(&ddb_regs)
+#else
+extern db_regs_t *ddb_regp;
+#define DDB_REGS	(ddb_regp)
+#define ddb_regs	(*ddb_regp)
+#endif
 
 #ifdef __PROG26
 #define	PC_REGS(regs)	((regs)->tf_r15 & R15_PC)
