@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_pci.c,v 1.16 2014/03/29 19:28:26 christos Exp $	*/
+/*	$NetBSD: gemini_pci.c,v 1.17 2014/03/30 01:19:20 christos Exp $	*/
 
 /* adapted from:
  *	NetBSD: i80312_pci.c,v 1.9 2005/12/11 12:16:51 christos Exp
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_pci.c,v 1.16 2014/03/29 19:28:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_pci.c,v 1.17 2014/03/30 01:19:20 christos Exp $");
 
 #include "opt_gemini.h"
 #include "opt_pci.h"
@@ -85,7 +85,8 @@ void		gemini_pci_conf_interrupt(void *, int, int, int, int, int *);
 
 int		gemini_pci_intr_map(const struct pci_attach_args *,
 		    pci_intr_handle_t *);
-const char	*gemini_pci_intr_string(void *, pci_intr_handle_t, char *, size_t);
+const char	*gemini_pci_intr_string(void *, pci_intr_handle_t,
+		    char *, size_t);
 const struct evcnt *gemini_pci_intr_evcnt(void *, pci_intr_handle_t);
 void		*gemini_pci_intr_establish(void *, pci_intr_handle_t,
 		    int, int (*)(void *), void *);

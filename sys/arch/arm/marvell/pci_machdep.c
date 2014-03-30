@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.7 2014/03/29 19:28:26 christos Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.8 2014/03/30 01:19:20 christos Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.7 2014/03/29 19:28:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.8 2014/03/30 01:19:20 christos Exp $");
 
 #include "opt_mvsoc.h"
 #include "gtpci.h"
@@ -70,7 +70,8 @@ static void gtpci_mbus_conf_write(void *, pcitag_t, int, pcireg_t);
 #endif
 static int gtpci_gpp_intr_map(const struct pci_attach_args *,
     pci_intr_handle_t *);
-static const char *gtpci_gpp_intr_string(void *, pci_intr_handle_t, char *, size_t);
+static const char *gtpci_gpp_intr_string(void *, pci_intr_handle_t,
+    char *, size_t);
 static const struct evcnt *gtpci_gpp_intr_evcnt(void *, pci_intr_handle_t);
 static void *gtpci_gpp_intr_establish(void *, pci_intr_handle_t, int, int (*)(void *), void *);
 static void gtpci_gpp_intr_disestablish(void *, void *);

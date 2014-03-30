@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_pci.c,v 1.26 2014/03/29 19:28:26 christos Exp $	*/
+/*	$NetBSD: footbridge_pci.c,v 1.27 2014/03/30 01:19:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.26 2014/03/29 19:28:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.27 2014/03/30 01:19:20 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,8 @@ void		footbridge_pci_conf_write(void *, pcitag_t, int,
 		    pcireg_t);
 int		footbridge_pci_intr_map(const struct pci_attach_args *,
 		    pci_intr_handle_t *);
-const char	*footbridge_pci_intr_string(void *, pci_intr_handle_t, char *, size_t);
+const char	*footbridge_pci_intr_string(void *, pci_intr_handle_t,
+		    char *, size_t);
 void		*footbridge_pci_intr_establish(void *, pci_intr_handle_t,
 		    int, int (*)(void *), void *);
 void		footbridge_pci_intr_disestablish(void *, void *);
