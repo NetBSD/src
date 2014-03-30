@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.h,v 1.29 2014/03/30 01:44:37 dholland Exp $	*/
+/*	$NetBSD: hunt.h,v 1.30 2014/03/30 05:30:28 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -56,7 +56,7 @@ typedef struct ident_def	IDENT;
 typedef struct regen_def	REGEN;
 
 struct ident_def {
-	char i_name[NAMELEN];
+	char i_name[WIRE_NAMELEN];
 	char i_team;
 	uint32_t i_machine;
 	uint32_t i_uid;
