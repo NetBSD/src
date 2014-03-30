@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.125 2014/03/18 07:05:46 matt Exp $
+#	$NetBSD: files.arm,v 1.126 2014/03/30 15:50:51 matt Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -8,29 +8,36 @@ defflag	opt_cpuoptions.h	ARM32_DISABLE_ALIGNMENT_FAULTS
 
 # CPU types.  Make sure to update <arm/cpuconf.h> if you change this list.
 defflag	opt_cputypes.h		CPU_PRE_ARMV6
+defflag	opt_cputypes.h		CPU_ARMV2: CPU_PRE_ARMV6
+defflag	opt_cputypes.h		CPU_ARMV3: CPU_ARMV2
+defflag	opt_cputypes.h		CPU_ARMV4: CPU_ARMV3
+defflag	opt_cputypes.h		CPU_ARMV4T: CPU_ARMV4
+defflag	opt_cputypes.h		CPU_ARMV5T: CPU_ARMV4T
+defflag	opt_cputypes.h		CPU_ARMV5TE: CPU_ARMV5T
+defflag	opt_cputypes.h		CPU_XSCALE: CPU_ARMV5TE
 defflag	opt_cputypes.h		CPU_ARMV6: ARM32_DISABLE_ALIGNMENT_FAULTS
 defflag	opt_cputypes.h		CPU_ARMV7: ARM32_DISABLE_ALIGNMENT_FAULTS
-defflag	opt_cputypes.h		CPU_ARM2: CPU_PRE_ARMV6
-defflag	opt_cputypes.h		CPU_ARM250: CPU_PRE_ARMV6
-defflag	opt_cputypes.h		CPU_ARM3: CPU_PRE_ARMV6
-defflag	opt_cputypes.h		CPU_ARM6: CPU_PRE_ARMV6
-defflag	opt_cputypes.h		CPU_ARM7: CPU_PRE_ARMV6
-defflag	opt_cputypes.h		CPU_ARM7TDMI: CPU_PRE_ARMV6
-defflag	opt_cputypes.h		CPU_ARM8: CPU_PRE_ARMV6
-defflag	opt_cputypes.h		CPU_ARM9: CPU_PRE_ARMV6
-defflag	opt_cputypes.h		CPU_ARM9E: CPU_PRE_ARMV6
-defflag	opt_cputypes.h		CPU_ARM10: CPU_PRE_ARMV6
-defflag	opt_cputypes.h		CPU_SA110: CPU_PRE_ARMV6
-defflag	opt_cputypes.h		CPU_SA1100: CPU_PRE_ARMV6
-defflag	opt_cputypes.h		CPU_SA1110: CPU_PRE_ARMV6
-defflag	opt_cputypes.h		CPU_IXP12X0: CPU_PRE_ARMV6
-defflag	opt_cputypes.h		CPU_FA526: CPU_PRE_ARMV6
-defflag	opt_cputypes.h		CPU_XSCALE_80200: CPU_PRE_ARMV6
-defflag	opt_cputypes.h		CPU_XSCALE_80321: CPU_PRE_ARMV6
-defflag	opt_cputypes.h		CPU_XSCALE_PXA250: CPU_PRE_ARMV6
-defflag	opt_cputypes.h		CPU_XSCALE_PXA270: CPU_PRE_ARMV6
-defflag	opt_cputypes.h		CPU_XSCALE_IXP425: CPU_PRE_ARMV6 
-defflag	opt_cputypes.h		CPU_SHEEVA: CPU_PRE_ARMV6
+defflag	opt_cputypes.h		CPU_ARM2: CPU_ARMV2
+defflag	opt_cputypes.h		CPU_ARM250: CPU_ARMV2
+defflag	opt_cputypes.h		CPU_ARM3: CPU_ARMV2
+defflag	opt_cputypes.h		CPU_ARM6: CPU_ARMV3
+defflag	opt_cputypes.h		CPU_ARM7: CPU_ARMV3
+defflag	opt_cputypes.h		CPU_ARM8: CPU_ARMV4
+defflag	opt_cputypes.h		CPU_SA110: CPU_ARMV4
+defflag	opt_cputypes.h		CPU_SA1100: CPU_ARMV4
+defflag	opt_cputypes.h		CPU_SA1110: CPU_ARMV4
+defflag	opt_cputypes.h		CPU_FA526: CPU_ARMV4
+defflag	opt_cputypes.h		CPU_IXP12X0: CPU_ARMV4
+defflag	opt_cputypes.h		CPU_ARM7TDMI: CPU_ARMV4T
+defflag	opt_cputypes.h		CPU_ARM9: CPU_ARMV4T
+defflag	opt_cputypes.h		CPU_ARM10: CPU_ARMV5T
+defflag	opt_cputypes.h		CPU_ARM9E: CPU_ARMV5TE
+defflag	opt_cputypes.h		CPU_XSCALE_80200: CPU_XSCALE
+defflag	opt_cputypes.h		CPU_XSCALE_80321: CPU_XSCALE
+defflag	opt_cputypes.h		CPU_XSCALE_PXA250: CPU_XSCALE
+defflag	opt_cputypes.h		CPU_XSCALE_PXA270: CPU_XSCALE
+defflag	opt_cputypes.h		CPU_XSCALE_IXP425: CPU_XSCALE
+defflag	opt_cputypes.h		CPU_SHEEVA: CPU_ARMV5TE
 defflag	opt_cputypes.h		CPU_ARM11: CPU_ARMV6
 defflag	opt_cputypes.h		CPU_ARM1136: CPU_ARM11
 defflag	opt_cputypes.h		CPU_ARM1176: CPU_ARM11
@@ -84,6 +91,8 @@ defflag				PMAP_DEBUG
 # New PMAP options
 defflag	opt_arm32_pmap.h	ARM32_NEW_VM_LAYOUT PMAPCOUNTERS
 				PMAP_STEAL_MEMORY PMAP_NEED_ALLOC_POOLPAGE
+				PMAP_TLB
+defparam opt_arm32_pmap.h	PGSHIFT
 
 # MI console support
 file	dev/cons.c
@@ -147,17 +156,12 @@ file	arch/arm/arm/cpufunc_asm_armv4.S	cpu_arm9 | cpu_arm9e |
 							cpu_sa1100 |
 							cpu_sa1110 |
 							cpu_ixp12x0 |
-							cpu_xscale_80200 |
-							cpu_xscale_80321 |
-							cpu_xscale_ixp425 |
-							cpu_xscale_pxa250 |
-							cpu_xscale_pxa270 |
-							cpu_cortex |
+							cpu_xscale |
 							cpu_sheeva
 file	arch/arm/arm/cpufunc_asm_armv5.S	cpu_arm10 | cpu_arm11mpcore
 file	arch/arm/arm/cpufunc_asm_armv5_ec.S	cpu_arm9e | cpu_arm10 |
 							cpu_sheeva
-file	arch/arm/arm/cpufunc_asm_armv6.S	cpu_arm11 | cpu_cortex
+file	arch/arm/arm/cpufunc_asm_armv6.S	cpu_arm11
 file	arch/arm/arm/cpufunc_asm_armv7.S	cpu_cortex | cpu_pj4b
 file	arch/arm/arm/cpufunc_asm_pj4b.S		cpu_pj4b
 file	arch/arm/arm/cpufunc_asm_sa1.S		cpu_sa110 | cpu_sa1100 |
@@ -165,12 +169,7 @@ file	arch/arm/arm/cpufunc_asm_sa1.S		cpu_sa110 | cpu_sa1100 |
 							cpu_ixp12x0
 file	arch/arm/arm/cpufunc_asm_sa11x0.S	cpu_sa1100 | cpu_sa1110
 file	arch/arm/arm/cpufunc_asm_fa526.S	cpu_fa526
-file	arch/arm/arm/cpufunc_asm_xscale.S	cpu_xscale_80200 |
-						    cpu_xscale_80321 |
-						    cpu_xscale_ixp425 |
-						    cpu_xscale_pxa250 |
-						    cpu_xscale_pxa270 |
-						    cpu_cortex
+file	arch/arm/arm/cpufunc_asm_xscale.S	cpu_xscale
 file	arch/arm/arm/cpufunc_asm_ixp12x0.S	cpu_ixp12x0
 file	arch/arm/arm/cpufunc_asm_sheeva.S	cpu_sheeva
 file	arch/arm/arm/cpu_exec.c
@@ -206,6 +205,8 @@ file	arch/arm/arm32/vm_machdep.c		arm32
 file	kern/kern_cctr.c			arm11
 file	arch/arm/arm32/arm11_pmc.c		arm11_pmc
 file	arch/arm/arm32/cortex_pmc.c		cortex_pmc
+file	arch/arm/arm32/arm32_tlb.c		(cpu_armv7 | cpu_arm11) & (!arm11_compat_mmu & !cpu_pre_armv6)
+file	uvm/pmap/pmap_tlb.c			(cpu_armv7 | cpu_arm11) & (!arm11_compat_mmu & !cpu_pre_armv6)
 
 # arm32 library functions
 file	arch/arm/arm32/bcopy_page.S		arm32
