@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_pci.c,v 1.15 2014/03/29 19:28:26 christos Exp $	*/
+/*	$NetBSD: becc_pci.c,v 1.16 2014/03/30 01:19:20 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc_pci.c,v 1.15 2014/03/29 19:28:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc_pci.c,v 1.16 2014/03/30 01:19:20 christos Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -76,7 +76,8 @@ void		becc_pci_conf_interrupt(void *, int, int, int, int, int *);
 
 int		becc_pci_intr_map(const struct pci_attach_args *,
 		    pci_intr_handle_t *);
-const char	*becc_pci_intr_string(void *, pci_intr_handle_t, char *, size_t);
+const char	*becc_pci_intr_string(void *, pci_intr_handle_t,
+		    char *, size_t);
 const struct evcnt *becc_pci_intr_evcnt(void *, pci_intr_handle_t);
 void		*becc_pci_intr_establish(void *, pci_intr_handle_t,
 		    int, int (*)(void *), void *);
