@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.54 2014/03/30 05:14:47 dholland Exp $	*/
+/*	$NetBSD: hunt.c,v 1.55 2014/03/30 05:30:28 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.54 2014/03/30 05:14:47 dholland Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.55 2014/03/30 05:30:28 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -94,7 +94,7 @@ SOCKET Daemon;
 char map_key[256];			/* what to map keys to */
 bool no_beep;
 
-static char name[NAMELEN];
+static char name[WIRE_NAMELEN];
 static char team = ' ';
 
 static int in_visual;
@@ -102,7 +102,7 @@ static int in_visual;
 extern int cur_row, cur_col;
 
 static void dump_scores(const struct sockaddr_storage *, socklen_t);
-static long env_init(long);
+static int env_init(int);
 static void fill_in_blanks(void);
 static void fincurs(void);
 static void rmnl(char *);
@@ -138,16 +138,16 @@ main(int ac, char **av)
 {
 	char *term;
 	int c;
-	long enter_status;
+	int enter_status;
 	bool Query_driver = false;
 	bool Show_scores = false;
 
-	enter_status = env_init((long) Q_CLOAK);
+	enter_status = env_init(Q_CLOAK);
 	while ((c = getopt(ac, av, "Sbcfh:l:mn:op:qst:w:")) != -1) {
 		switch (c) {
 		case 'l':	/* rsh compatibility */
 		case 'n':
-			(void) strncpy(name, optarg, NAMELEN);
+			(void) strncpy(name, optarg, sizeof(name));
 			break;
 		case 't':
 			team = *optarg;
@@ -268,7 +268,7 @@ main(int ac, char **av)
 #endif
 #ifdef OTTO
 	if (Otto_mode)
-		(void) strncpy(name, "otto", NAMELEN);
+		(void) strncpy(name, "otto", sizeof(name));
 	else
 #endif
 	fill_in_blanks();
@@ -350,7 +350,7 @@ main(int ac, char **av)
 		}
 #endif
 
-		do_connect(name, team, enter_status);
+		do_connect(name, sizeof(name), team, enter_status);
 #ifdef INTERNET
 		if (Send_message != NULL) {
 			do_message();
@@ -658,8 +658,8 @@ leavex(int exitval, const char *fmt, ...)
 	va_end(ap);
 }
 
-static long
-env_init(long enter_status)
+static int
+env_init(int enter_status)
 {
 	int i;
 	char *envp, *envname, *s;
@@ -690,11 +690,11 @@ env_init(long enter_status)
 				envname = s + 1;
 				if ((s = strchr(envp, ',')) == NULL) {
 					*envp = '\0';
-					strncpy(name, envname, NAMELEN);
+					strncpy(name, envname, sizeof(name));
 					break;
 				}
 				*s = '\0';
-				strncpy(name, envname, NAMELEN);
+				strncpy(name, envname, sizeof(name));
 				envp = s + 1;
 			}
 #ifdef INTERNET
@@ -759,7 +759,7 @@ env_init(long enter_status)
 		}
 		if (*envp != '\0') {
 			if (envname == NULL)
-				strncpy(name, envp, NAMELEN);
+				strncpy(name, envp, sizeof(name));
 			else
 				printf("unknown option %s\n", envp);
 		}
@@ -782,7 +782,7 @@ again:
 			putchar('\n');
 	} else {
 		printf("Enter your code name: ");
-		if (fgets(name, NAMELEN, stdin) == NULL)
+		if (fgets(name, sizeof(name), stdin) == NULL)
 			exit(1);
 	}
 	rmnl(name);
