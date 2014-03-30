@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm10.S,v 1.10 2013/08/18 06:28:18 matt Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm10.S,v 1.11 2014/03/30 01:15:03 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 ARM Limited
@@ -33,6 +33,7 @@
  
 #include <machine/asm.h>
 #include <arm/locore.h>
+#include "assym.h"
 
 /*
  * TLB functions
@@ -40,12 +41,23 @@
 ENTRY(arm10_tlb_flushID_SE)
 	mcr	p15, 0, r0, c8, c6, 1	/* flush D tlb single entry */
 	mcr	p15, 0, r0, c8, c5, 1	/* flush I tlb single entry */
+#if PAGE_SIZE == 2 * L2_S_SIZE
+	add	r0, r0, #L2_S_SIZE
+	mcr	p15, 0, r0, c8, c6, 1	/* flush D tlb single entry */
+	mcr	p15, 0, r0, c8, c5, 1	/* flush I tlb single entry */
+#endif
 	RET
+END(arm10_tlb_flushID_SE)
 
 ENTRY(arm10_tlb_flushI_SE)
 	mcr	p15, 0, r0, c8, c5, 1	/* flush I tlb single entry */
+#if PAGE_SIZE == 2 * L2_S_SIZE
+	add	r0, r0, #L2_S_SIZE
+	mcr	p15, 0, r0, c8, c5, 1	/* flush I tlb single entry */
+#endif
 	RET
-	
+END(arm10_tlb_flushI_SE)
+
 
 /*
  * Context switch.
@@ -67,3 +79,4 @@ ENTRY(arm10_context_switch)
 	nop
 	nop
 	RET
+END(arm10_context_switch)

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_sa11x0.S,v 1.5 2013/12/02 18:36:10 joerg Exp $	*/
+/*	$NetBSD: cpufunc_asm_sa11x0.S,v 1.6 2014/03/30 01:15:03 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -35,6 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "assym.h"
 #include <arm/asm.h>
 #include <arm/locore.h>
 

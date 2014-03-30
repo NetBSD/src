@@ -29,10 +29,9 @@
  * SUCH DAMAGE.
  */
 
+#include "assym.h"
 #include <arm/asm.h>
 #include <arm/locore.h>
-
-#include "assym.h"
 
 .Lsheeva_cache_line_size:
 	.word	_C_LABEL(arm_pcache) + DCACHE_LINE_SIZE

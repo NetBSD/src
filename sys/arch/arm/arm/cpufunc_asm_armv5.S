@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_armv5.S,v 1.6 2013/08/18 06:28:18 matt Exp $	*/
+/*	$NetBSD: cpufunc_asm_armv5.S,v 1.7 2014/03/30 01:15:03 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2005 ARM Limited
@@ -33,10 +33,9 @@
  * operations.
  */
  
+#include "assym.h"
 #include <machine/asm.h>
 #include <arm/locore.h>
-
-#include "assym.h"
 
 /*
  * Functions to set the MMU Translation Table Base register
