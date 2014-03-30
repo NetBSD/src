@@ -1,4 +1,4 @@
-/*	$NetBSD: answer.c,v 1.22 2014/03/30 05:30:28 dholland Exp $	*/
+/*	$NetBSD: answer.c,v 1.23 2014/03/30 05:53:12 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: answer.c,v 1.22 2014/03/30 05:30:28 dholland Exp $");
+__RCSID("$NetBSD: answer.c,v 1.23 2014/03/30 05:53:12 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -54,7 +54,7 @@ static IDENT *get_ident(uint32_t, uint32_t, const char *, char);
 static void stmonitor(PLAYER *);
 static void stplayer(PLAYER *, int);
 
-int
+bool
 answer(void)
 {
 	PLAYER *pp;
