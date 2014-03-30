@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt_private.h,v 1.4 2014/03/30 02:26:09 dholland Exp $	*/
+/*	$NetBSD: hunt_private.h,v 1.5 2014/03/30 02:58:25 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -79,8 +79,6 @@ extern bool no_beep;
 extern SOCKET Daemon;
 extern uint16_t Test_port;
 extern char *Sock_host;
-extern bool Query_driver;
-extern bool Show_scores;
 #endif
 
 /*
@@ -108,5 +106,5 @@ void do_message(void);
 
 /* in server.c */
 #ifdef INTERNET
-SOCKET *list_drivers(void);
+SOCKET *list_drivers(unsigned short msg);
 #endif
