@@ -1,4 +1,4 @@
-/*	$NetBSD: kernhist.h,v 1.8 2014/03/05 05:32:41 matt Exp $	*/
+/*	$NetBSD: kernhist.h,v 1.9 2014/03/30 15:53:37 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,6 +32,7 @@
 #define _SYS_KERNHIST_H_
 
 #if defined(_KERNEL_OPT)
+#include "opt_ddb.h"
 #include "opt_kernhist.h"
 #endif
 
@@ -100,7 +101,7 @@ LIST_HEAD(kern_history_head, kern_history);
 #define KERNHIST_CALLARGS(NAME,FMT,A,B,C,D)
 #define KERNHIST_CALLED(NAME)
 #define KERNHIST_FUNC(FNAME)
-#define kernhist_dump(NAME)
+#define KERNHIST_DUMP(NAME)
 #else
 #include <sys/kernel.h>		/* for "cold" variable */
 #include <sys/atomic.h>
@@ -208,6 +209,13 @@ do { \
 	static const char *const _kernhist_name = FNAME; \
 	unsigned int _kernhist_call = 0;
 
+#ifdef DDB
+#define KERNHIST_DUMP(NAME)	kernhist_dump(&NAME)
+#else
+#define KERNHIST_DUMP(NAME)
+#endif
+
+
 static inline void kernhist_entry_print(const struct kern_history_ent *);
 
 static inline void
@@ -220,6 +228,7 @@ kernhist_entry_print(const struct kern_history_ent *e)
 }
 
 #if defined(DDB)
+void	kernhist_dump(struct kern_history *);
 void	kernhist_print(void (*)(const char *, ...) __printflike(1, 2));
 #endif /* DDB */
 
