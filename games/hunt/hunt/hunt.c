@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.55 2014/03/30 05:30:28 dholland Exp $	*/
+/*	$NetBSD: hunt.c,v 1.56 2014/03/30 05:44:55 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.55 2014/03/30 05:30:28 dholland Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.56 2014/03/30 05:44:55 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -53,9 +53,6 @@ __RCSID("$NetBSD: hunt.c,v 1.55 2014/03/30 05:30:28 dholland Exp $");
 #include "pathnames.h"
 #include "hunt_private.h"
 
-#define clear_eol()	clrtoeol()
-#define put_ch		addch
-#define put_str		addstr
 
 #ifdef OVERRIDE_PATH_HUNTD
 static const char Driver[] = OVERRIDE_PATH_HUNTD;
@@ -407,17 +404,17 @@ find_driver(void)
 	} else {
 		clear_the_screen();
 		move(1, 0);
-		put_str("Pick one:");
+		addstr("Pick one:");
 		for (i = 0; i < HEIGHT - 4 && i < (int)num; i++) {
 			move(3 + i, 0);
 			host = serverlist_gethost(i, &hostlen);
 			(void) snprintf(buf, sizeof(buf),
 					"%8c    %.64s", 'a' + i,
 					lookuphost(host, hostlen));
-			put_str(buf);
+			addstr(buf);
 		}
 		move(4 + i, 0);
-		put_str("Enter letter: ");
+		addstr("Enter letter: ");
 		refresh();
 		while (1) {
 			c = getchar();
@@ -481,7 +478,7 @@ start_driver(void)
 #endif
 
 	move(HEIGHT, 0);
-	put_str("Starting...");
+	addstr("Starting...");
 	refresh();
 	procid = fork();
 	if (procid == -1) {
@@ -505,7 +502,7 @@ start_driver(void)
 		_exit(1);
 	}
 	move(HEIGHT, 0);
-	put_str("Connecting...");
+	addstr("Connecting...");
 	refresh();
 }
 
@@ -583,8 +580,8 @@ intr(int dummy __unused)
 	(void) signal(SIGINT, SIG_IGN);
 	getyx(stdscr, y, x);
 	move(HEIGHT, 0);
-	put_str("Really quit? ");
-	clear_eol();
+	addstr("Really quit? ");
+	clrtoeol();
 	refresh();
 	explained = false;
 	for (;;) {
@@ -605,7 +602,7 @@ intr(int dummy __unused)
 			return;
 		}
 		if (!explained) {
-			put_str("(Yes or No) ");
+			addstr("(Yes or No) ");
 			refresh();
 			explained = true;
 		}
