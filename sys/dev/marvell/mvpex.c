@@ -1,4 +1,4 @@
-/*	$NetBSD: mvpex.c,v 1.9 2014/03/15 13:33:48 kiyohara Exp $	*/
+/*	$NetBSD: mvpex.c,v 1.10 2014/03/30 01:17:51 christos Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvpex.c,v 1.9 2014/03/15 13:33:48 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvpex.c,v 1.10 2014/03/30 01:17:51 christos Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -620,10 +620,8 @@ mvpex_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 
 /* ARGSUSED */
 const char *
-mvpex_intr_string(void *v, pci_intr_handle_t pin)
+mvpex_intr_string(void *v, pci_intr_handle_t pin, char *buf size_t len)
 {
-	static char intrstr[32];
-
 	switch (pin) {
 	case PCI_INTERRUPT_PIN_A:
 	case PCI_INTERRUPT_PIN_B:
@@ -634,10 +632,9 @@ mvpex_intr_string(void *v, pci_intr_handle_t pin)
 	default:
 		return NULL;
 	}
-	snprintf(intrstr, sizeof(intrstr), "interrupt pin INT%c#",
-	    (char)('A' - 1 + pin));
+	snprintf(buf, len, "interrupt pin INT%c#", (char)('A' - 1 + pin));
 
-	return intrstr;
+	return buf;
 }
 
 /* ARGSUSED */
