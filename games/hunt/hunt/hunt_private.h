@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt_private.h,v 1.5 2014/03/30 02:58:25 dholland Exp $	*/
+/*	$NetBSD: hunt_private.h,v 1.6 2014/03/30 03:35:26 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -41,17 +41,6 @@
 #include <net/if.h>
 #else
 #include <sys/un.h>
-#endif
-
-#ifdef MONITOR
-#define C_TESTMSG()	(Query_driver ? C_MESSAGE :\
-			(Show_scores ? C_SCORES :\
-			(Am_monitor ? C_MONITOR :\
-			C_PLAYER)))
-#else
-#define	C_TESTMSG()	(Show_scores ? C_SCORES :\
-			(Query_driver ? C_MESSAGE :\
-			C_PLAYER))
 #endif
 
 /*

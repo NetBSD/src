@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.49 2014/03/30 02:58:25 dholland Exp $	*/
+/*	$NetBSD: hunt.c,v 1.50 2014/03/30 03:35:26 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.49 2014/03/30 02:58:25 dholland Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.50 2014/03/30 03:35:26 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -81,9 +81,7 @@ char Buf[BUFSIZ];
 #ifdef INTERNET
 char *Sock_host;
 static char *use_port;
-static bool Query_driver = false;
 char *Send_message = NULL;
-static bool Show_scores = false;
 #endif
 
 SOCKET Daemon;
@@ -124,6 +122,8 @@ main(int ac, char **av)
 	char *term;
 	int c;
 	long enter_status;
+	bool Query_driver = false;
+	bool Show_scores = false;
 
 	enter_status = env_init((long) Q_CLOAK);
 	while ((c = getopt(ac, av, "Sbcfh:l:mn:op:qst:w:")) != -1) {
@@ -217,7 +217,7 @@ main(int ac, char **av)
 #ifdef INTERNET
 	if (Show_scores) {
 		SOCKET *hosts;
-		u_short msg = C_TESTMSG();
+		u_short msg = C_SCORES;
 
 		for (hosts = list_drivers(msg); hosts->sin_port != 0; hosts += 1)
 			dump_scores(*hosts);
@@ -225,7 +225,7 @@ main(int ac, char **av)
 	}
 	if (Query_driver) {
 		SOCKET *hosts;
-		u_short msg = C_TESTMSG();
+		u_short msg = C_MESSAGE;
 
 		for (hosts = list_drivers(msg); hosts->sin_port != 0; hosts += 1) {
 			struct hostent *hp;
@@ -351,7 +351,13 @@ static void
 find_driver(bool do_startup)
 {
 	SOCKET *hosts;
-	u_short msg = C_TESTMSG();
+	u_short msg = C_PLAYER;
+
+#ifdef MONITOR
+	if (Am_monitor) {
+		msg = C_MONITOR;
+	}
+#endif
 
 	hosts = list_drivers(msg);
 	if (hosts[0].sin_port != htons(0)) {
