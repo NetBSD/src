@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.51 2014/03/30 04:31:21 dholland Exp $	*/
+/*	$NetBSD: hunt.c,v 1.52 2014/03/30 04:40:50 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.51 2014/03/30 04:31:21 dholland Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.52 2014/03/30 04:40:50 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -227,7 +227,7 @@ main(int ac, char **av)
 	else if (optind + 1 == ac)
 		Sock_host = av[ac - 1];
 #else
-	if (optind > ac)
+	if (optind < ac)
 		goto usage;
 #endif
 
