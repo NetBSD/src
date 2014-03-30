@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_armv4.S,v 1.4 2014/01/28 16:45:25 martin Exp $	*/
+/*	$NetBSD: cpufunc_asm_armv4.S,v 1.5 2014/03/30 01:15:03 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 ARM Limited
@@ -33,9 +33,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * ARM9 assembly functions for CPU / MMU / TLB specific operations
+ * ARMv4 assembly functions for CPU / MMU / TLB specific operations
  */
  
+#include "assym.h"
 #include <machine/asm.h>
 #include <arm/locore.h>
 
@@ -61,6 +62,10 @@ END(armv4_tlb_flushD)
 
 ENTRY(armv4_tlb_flushD_SE)
 	mcr	p15, 0, r0, c8, c6, 1	/* flush D tlb single entry */
+#if PAGE_SIZE == 2 * L2_S_SIZE
+	add	r0, r0, #L2_S_SIZE
+	mcr	p15, 0, r0, c8, c6, 1	/* flush D tlb single entry */
+#endif
 	mov	pc, lr
 END(armv4_tlb_flushD_SE)
 
