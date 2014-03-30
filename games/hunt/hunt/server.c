@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.4 2014/03/30 02:58:25 dholland Exp $	*/
+/*	$NetBSD: server.c,v 1.5 2014/03/30 03:26:19 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: server.c,v 1.4 2014/03/30 02:58:25 dholland Exp $");
+__RCSID("$NetBSD: server.c,v 1.5 2014/03/30 03:26:19 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -40,11 +40,11 @@ __RCSID("$NetBSD: server.c,v 1.4 2014/03/30 02:58:25 dholland Exp $");
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
-#include <curses.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <assert.h>
 #include <ifaddrs.h>
 
 #include "hunt_common.h"
@@ -57,8 +57,8 @@ __RCSID("$NetBSD: server.c,v 1.4 2014/03/30 02:58:25 dholland Exp $");
  * Code for finding and talking to hunt daemons.
  */
 
-static SOCKET *listv;
-static unsigned int listmax;
+static SOCKET *daemons;
+static unsigned int numdaemons, maxdaemons;
 
 static bool initial = true;
 static struct in_addr local_address;
@@ -80,15 +80,64 @@ serverlist_setup(void)
 	}
 	memcpy(&local_address, hp->h_addr, sizeof(local_address));
 
-	listmax = 20;
-	listv = malloc(listmax * sizeof(listv[0]));
-	if (listv == NULL) {
+	numdaemons = 0;
+	maxdaemons = 20;
+	daemons = malloc(maxdaemons * sizeof(daemons[0]));
+	if (daemons == NULL) {
 		leavex(1, "Out of memory.");
 	}
 }
 
+static void
+add_daemon_addr(const struct sockaddr_storage *addr, uint16_t port_num)
+{
+	const struct sockaddr_in *sin;
+
+	if (addr->ss_family != AF_INET) {
+		return;
+	}
+	sin = (const struct sockaddr_in *)addr;
+
+	assert(numdaemons <= maxdaemons);
+	if (numdaemons == maxdaemons) {
+		maxdaemons += 20;
+		daemons = realloc(daemons, maxdaemons * sizeof(daemons[0]));
+		if (daemons == NULL) {
+			leave(1, "realloc");
+		}
+	}
+
+	/*
+	 * Note that we do *not* convert from network to host
+	 * order since the port number we were sent *should*
+	 * already be in network order.
+	 */
+	daemons[numdaemons] = *sin;
+	daemons[numdaemons].sin_port = port_num;
+	numdaemons++;
+}
+
+static bool
+have_daemon_addr(const struct sockaddr_storage *addr)
+{
+	unsigned j;
+	const struct sockaddr_in *sin;
+
+	if (addr->ss_family != AF_INET) {
+		return false;
+	}
+	sin = (const struct sockaddr_in *)addr;
+
+	for (j = 0; j < numdaemons; j++) {
+		if (sin->sin_addr.s_addr == daemons[j].sin_addr.s_addr) {
+			return true;
+		}
+	}
+	return false;
+}
+
 static int
-getbroadcastaddrs(int s /*socket*/, struct sockaddr_in **vector)
+getbroadcastaddrs(struct sockaddr_in **vector)
 {
 	int vec_cnt;
 	struct ifaddrs *ifp, *ip;
@@ -119,58 +168,66 @@ getbroadcastaddrs(int s /*socket*/, struct sockaddr_in **vector)
 static void
 get_responses(int contactsock)
 {
-	u_short port_num;
-	unsigned j;
-	unsigned int listc;
 	struct pollfd set[1];
+	struct sockaddr_storage addr;
 	socklen_t addrlen;
+	int r;
+	uint16_t port_num;
+	ssize_t portlen;
 
-	listc = 0;
-	addrlen = sizeof(listv[0]);
+	/* forget all old responses */
+	numdaemons = 0;
+
 	errno = 0;
 	set[0].fd = contactsock;
 	set[0].events = POLLIN;
 	for (;;) {
-		if (listc + 1 >= listmax) {
-			SOCKET *newlistv;
-
-			listmax += 20;
-			newlistv = realloc(listv, listmax * sizeof(*listv));
-			if (newlistv == NULL)
-				leave(1, "realloc");
-			listv = newlistv;
+		r = poll(set, 1, 1000);
+		if (r < 0) {
+			if (errno == EINTR) {
+				continue;
+			}
+			leave(1, "poll");
+		}
+		if (r == 0) {
+			break;
 		}
 
-		if (poll(set, 1, 1000) == 1 &&
-		    recvfrom(contactsock, &port_num, sizeof(port_num),
-		    0, (struct sockaddr *) &listv[listc], &addrlen) > 0) {
-			/*
-			 * Note that we do *not* convert from network to host
-			 * order since the port number *should* be in network
-			 * order:
-			 */
-			for (j = 0; j < listc; j += 1)
-				if (listv[listc].sin_addr.s_addr
-				== listv[j].sin_addr.s_addr)
-					break;
-			if (j == listc)
-				listv[listc++].sin_port = port_num;
+		addrlen = sizeof(addr);
+		portlen = recvfrom(contactsock, &port_num, sizeof(port_num), 0,
+				   (struct sockaddr *)&addr, &addrlen);
+		if (portlen < 0) {
+			if (errno == EINTR) {
+				continue;
+			}
+			leave(1, "recvfrom");
+		}
+		if (portlen == 0) {
+			leavex(1, "recvfrom: Unexpected EOF");
+		}
+		if ((size_t)portlen != sizeof(port_num)) {
+			/* trash, ignore it */
+			continue;
+		}
+		if (have_daemon_addr(&addr)) {
+			/* this shouldn't happen */
 			continue;
 		}
 
-		if (errno != 0 && errno != EINTR) {
-			leave(1, "poll/recvfrom");
-		}
-
-		/* terminate list with local address */
-		listv[listc].sin_family = SOCK_FAMILY;
-		listv[listc].sin_addr = local_address;
-		listv[listc].sin_port = htons(0);
-
-		(void) close(contactsock);
-		initial = false;
-		break;
+		add_daemon_addr(&addr, port_num);
 	}
+
+	/* terminate list with local address */
+	{
+		struct sockaddr_in sin;
+
+		sin.sin_family = SOCK_FAMILY;
+		sin.sin_addr = local_address;
+		sin.sin_port = htons(0);
+		add_daemon_addr((struct sockaddr_storage *)&sin, htons(0));
+	}
+
+	initial = false;
 }
 
 SOCKET *
@@ -186,8 +243,12 @@ list_drivers(unsigned short msg)
 	if (initial) {
 		/* do one time initialization */
 		serverlist_setup();
-	} else if (Sock_host != NULL)
-		return listv;		/* address already valid */
+	}
+
+	if (!initial && Sock_host != NULL) {
+		/* address already valid */
+		return daemons;
+	}
 
 	contactsock = socket(SOCK_FAMILY, SOCK_DGRAM, 0);
 	if (contactsock < 0) {
@@ -208,11 +269,12 @@ list_drivers(unsigned short msg)
 			      (struct sockaddr *)&contactaddr,
 			      sizeof(contactaddr));
 		get_responses(contactsock);
-		return listv;
+		(void) close(contactsock);
+		return daemons;
 	}
 
 	if (!initial) {
-		/* favor host of previous session by broadcasting to it first */
+		/* favor host of previous session by contacting it first */
 		contactaddr.sin_addr = Daemon.sin_addr;
 		wiremsg = htons(C_PLAYER);		/* Must be playing! */
 		(void) sendto(contactsock, &wiremsg, sizeof(wiremsg), 0,
@@ -220,7 +282,7 @@ list_drivers(unsigned short msg)
 	}
 
 	if (initial)
-		brdc = getbroadcastaddrs(contactsock, &brdv);
+		brdc = getbroadcastaddrs(&brdv);
 
 #ifdef SO_BROADCAST
 	/* Sun's will broadcast even though this option can't be set */
@@ -236,20 +298,21 @@ list_drivers(unsigned short msg)
 	wiremsg = htons(msg);
 	for (i = 0; i < brdc; i++) {
 		contactaddr.sin_addr = brdv[i].sin_addr;
-		if (sendto(contactsock, &msg, sizeof msg, 0,
+		if (sendto(contactsock, &wiremsg, sizeof(wiremsg), 0,
 		    (struct sockaddr *)&contactaddr,
 		    sizeof(contactaddr)) < 0) {
 			leave(1, "sendto");
 		}
 	}
 	contactaddr.sin_addr = local_address;
-	if (sendto(contactsock, &msg, sizeof msg, 0,
+	if (sendto(contactsock, &wiremsg, sizeof(wiremsg), 0,
 	    (struct sockaddr *)&contactaddr, sizeof(contactaddr)) < 0) {
 		leave(1, "sendto");
 	}
 
 	get_responses(contactsock);
-	return listv;
+	(void) close(contactsock);
+	return daemons;
 }
 
 #endif /* INTERNET */
