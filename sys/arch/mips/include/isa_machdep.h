@@ -1,4 +1,4 @@
-/* $NetBSD: isa_machdep.h,v 1.6 2014/03/29 19:28:29 christos Exp $ */
+/* $NetBSD: isa_machdep.h,v 1.7 2014/03/30 20:06:50 macallan Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ struct mips_isa_chipset {
 	void	(*ic_intr_disestablish)(void *, void *);
 	int	(*ic_intr_alloc)(void *, int, int, int *);
 
-	const char *(*ic_intr_string)(void *, int);
+	const char *(*ic_intr_string)(void *, int, char *, size_t);
 	void    (*ic_detach_hook)(isa_chipset_tag_t, device_t);
 };
 
