@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.57 2014/03/30 05:46:54 dholland Exp $	*/
+/*	$NetBSD: hunt.c,v 1.58 2014/03/30 09:11:50 skrll Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.57 2014/03/30 05:46:54 dholland Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.58 2014/03/30 09:11:50 skrll Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -114,9 +114,7 @@ static const char *
 lookuphost(const struct sockaddr_storage *host, socklen_t hostlen)
 {
 	static char buf[NI_MAXHOST];
-	int flags, result;
-
-	flags = NI_NOFQDN;
+	int result;
 
 	result = getnameinfo((const struct sockaddr *)host, hostlen,
 			     buf, sizeof(buf), NULL, 0, NI_NOFQDN);
