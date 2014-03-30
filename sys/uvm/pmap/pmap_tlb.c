@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.4 2014/03/18 18:20:44 riastradh Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.5 2014/03/30 15:26:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.4 2014/03/18 18:20:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.5 2014/03/30 15:26:15 matt Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -136,7 +136,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.4 2014/03/18 18:20:44 riastradh Exp $
 
 #include <uvm/uvm.h>
 
-static kmutex_t pmap_tlb0_mutex __cacheline_aligned;
+static kmutex_t pmap_tlb0_lock __cacheline_aligned;
 
 #define	IFCONSTANT(x)	(__builtin_constant_p((x)) ? (x) : 0)
 
@@ -145,13 +145,13 @@ struct pmap_tlb_info pmap_tlb0_info = {
 	.ti_asid_hint = KERNEL_PID + 1,
 #ifdef PMAP_TLB_NUM_PIDS
 	.ti_asid_max = IFCONSTANT(PMAP_TLB_NUM_PIDS - 1),
-	.ti_asids_free = IFCONSTANT(PMAP_TLB_NUM_PIDS - (KERNEL_PID + 1)),
+	.ti_asids_free = IFCONSTANT(PMAP_TLB_NUM_PIDS - (1 + KERNEL_PID)),
 #endif
 	.ti_asid_bitmap[0] = (2 << KERNEL_PID) - 1,
 #ifdef PMAP_TLB_WIRED_UPAGES
 	.ti_wired = PMAP_TLB_WIRED_UPAGES,
 #endif
-	.ti_lock = &pmap_tlb0_mutex,
+	.ti_lock = &pmap_tlb0_lock,
 	.ti_pais = LIST_HEAD_INITIALIZER(pmap_tlb0_info.ti_pais),
 #if defined(MULTIPROCESSOR) && PMAP_TLB_MAX > 1
 	.ti_tlbinvop = TLBINV_NOBODY,
@@ -174,6 +174,8 @@ u_int pmap_ntlbs = 1;
 #define	__BITMAP_ISSET_P(bm, n) \
 	(((bm)[(n) / (8*sizeof(bm[0]))] & (1LU << ((n) % (8*sizeof(bm[0]))))) != 0)
 
+#define	TLBINFO_ASID_MARK_UNUSED(ti, asid) \
+	__BITMAP_CLR((ti)->ti_asid_bitmap, (asid))
 #define	TLBINFO_ASID_MARK_USED(ti, asid) \
 	__BITMAP_SET((ti)->ti_asid_bitmap, (asid))
 #define	TLBINFO_ASID_INUSE_P(ti, asid) \
@@ -230,6 +232,25 @@ pmap_pai_reset(struct pmap_tlb_info *ti, struct pmap_asid_info *pai,
 #ifdef DIAGNOSTIC
 	pai->pai_link.le_prev = NULL;	/* tagged as unlinked */
 #endif
+	/*
+	 * If the platform has a cheap way to flush ASIDs then free the ASID
+	 * back into the pool.  On multiprocessor systems, we will flush the
+	 * ASID from the TLB when it's allocated.  That way we know the flush
+	 * was always done in the correct TLB space.  On uniprocessor systems,
+	 * just do the flush now since we know that it has been used.  This has
+	 * a bit less overhead.  Either way, this will mean that we will only
+	 * need to flush all ASIDs if all ASIDs are in use and we need to
+	 * allocate a new one.
+	 */
+	if (PMAP_TLB_FLUSH_ASID_ON_RESET) {
+#ifndef MULTIPROCESSOR
+		tlb_invalidate_asids(pai->pai_asid, pai->pai_asid);
+#endif
+		if (TLBINFO_ASID_INUSE_P(ti, pai->pai_asid)) {
+			TLBINFO_ASID_MARK_UNUSED(ti, pai->pai_asid);
+			ti->ti_asids_free++;
+		}
+	}
 	/*
 	 * Note that we don't mark the ASID as not in use in the TLB's ASID
 	 * bitmap (thus it can't be allocated until the ASID space is exhausted
@@ -312,14 +333,17 @@ pmap_tlb_info_init(struct pmap_tlb_info *ti)
 #endif
 #endif /* MULTIPROCESSOR */
 	KASSERT(ti == &pmap_tlb0_info);
+	KASSERT(ti->ti_lock == &pmap_tlb0_lock);
+	//printf("ti_lock %p ", ti->ti_lock);
 	mutex_init(ti->ti_lock, MUTEX_DEFAULT, IPL_SCHED);
 #if defined(MULTIPROCESSOR) && PMAP_TLB_MAX > 1
 	kcpuset_create(&ti->ti_kcpuset, true);
-	kcpuset_set(&ti->ti_kcpuset, cpu_index(curcpu()));
+	kcpuset_set(ti->ti_kcpuset, cpu_index(curcpu()));
 #endif
+	//printf("asid ");
 	if (ti->ti_asid_max == 0) {
 		ti->ti_asid_max = pmap_md_tlb_asid_max();
-		ti->ti_asids_free = ti->ti_asid_max - (KERNEL_PID + 1);
+		ti->ti_asids_free = ti->ti_asid_max - KERNEL_PID;
 	}
 
 	KASSERT(ti->ti_asid_max < sizeof(ti->ti_asid_bitmap)*8);
@@ -336,8 +360,8 @@ pmap_tlb_info_attach(struct pmap_tlb_info *ti, struct cpu_info *ci)
 	TLBINFO_LOCK(ti);
 #if PMAP_TLB_MAX > 1
 	kcpuset_set(ti->ti_kcpuset, cpu_index(ci));
-#endif
 	cpu_set_tlb_info(ci, ti);
+#endif
 
 	/*
 	 * Do any MD tlb info init.
@@ -371,6 +395,8 @@ pmap_tlb_asid_reinitialize(struct pmap_tlb_info *ti, enum tlb_invalidate_op op)
 	    ti->ti_asid_max / (8 * sizeof(ti->ti_asid_bitmap[0]));
 
 	pmap_pai_check(ti);
+
+	ti->ti_evcnt_asid_reinits.ev_count++;
 
 	/*
 	 * First, clear the ASID bitmap (except for ASID 0 which belongs
@@ -427,11 +453,14 @@ pmap_tlb_asid_reinitialize(struct pmap_tlb_info *ti, enum tlb_invalidate_op op)
 			     word++) {
 				ti->ti_asid_bitmap[word] = 0;
 			}
+			ti->ti_asids_free = ti->ti_asid_max - KERNEL_PID;
 #if !defined(MULTIPROCESSOR) || defined(PMAP_NEED_TLB_SHOOTDOWN)
 		} else {
 			ti->ti_asids_free -= asids_found;
 		}
 #endif /* !MULTIPROCESSOR || PMAP_NEED_TLB_SHOOTDOWN */
+		KASSERTMSG(ti->ti_asids_free <= ti->ti_asid_max, "%u",
+		    ti->ti_asids_free);
 		break;
 	}
 	default:
@@ -465,10 +494,9 @@ pmap_tlb_asid_reinitialize(struct pmap_tlb_info *ti, enum tlb_invalidate_op op)
 		}
 	}
 #ifdef DIAGNOSTIC
-	size_t free_count = ti->ti_asid_max - pmap_tlb_asid_count(ti);
-	if (free_count != ti->ti_asids_free)
-		panic("%s: bitmap error: %zu != %u",
-		    __func__, free_count, ti->ti_asids_free);
+	size_t free_count __diagused = ti->ti_asid_max - pmap_tlb_asid_count(ti);
+	KASSERTMSG(free_count == ti->ti_asids_free,
+	    "bitmap error: %zu != %u", free_count, ti->ti_asids_free);
 #endif
 }
 
@@ -697,11 +725,18 @@ pmap_tlb_invalidate_addr(pmap_t pm, vaddr_t va)
 	struct pmap_tlb_info * const ti = cpu_tlb_info(curcpu());
 	struct pmap_asid_info * const pai = PMAP_PAI(pm, ti);
 
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
+
 	KASSERT(kpreempt_disabled());
+
+	UVMHIST_LOG(maphist, " (pm=%#x va=%#x) ti=%#x asid=%#x",
+	    pm, va, ti, pai->pai_asid);
 
 	TLBINFO_LOCK(ti);
 	if (pm == pmap_kernel() || PMAP_PAI_ASIDVALID_P(pai, ti)) {
 		pmap_tlb_asid_check();
+		UVMHIST_LOG(maphist, " invalidating %#x asid %#x", 
+		    va, pai->pai_asid, 0, 0);
 		tlb_invalidate_addr(va, pai->pai_asid);
 		pmap_tlb_asid_check();
 	}
@@ -709,6 +744,7 @@ pmap_tlb_invalidate_addr(pmap_t pm, vaddr_t va)
 	pm->pm_shootdown_pending = 1;
 #endif
 	TLBINFO_UNLOCK(ti);
+	UVMHIST_LOG(maphist, " <-- done", 0, 0, 0, 0);
 }
 
 static inline void
@@ -723,55 +759,69 @@ pmap_tlb_asid_alloc(struct pmap_tlb_info *ti, pmap_t pm,
 	KASSERT(pai->pai_asid == 0);
 	KASSERT(pai->pai_link.le_prev == NULL);
 #if defined(MULTIPROCESSOR)
-	KASSERT(pmap_tlb_intersecting_onproc_p(pm, ti));
-	KASSERT(pmap_tlb_intersecting_active_p(pm, ti));
+	KASSERT(!pmap_tlb_intersecting_onproc_p(pm, ti));
+	KASSERT(!pmap_tlb_intersecting_active_p(pm, ti));
 #endif
 	KASSERT(ti->ti_asids_free > 0);
-	KASSERT(ti->ti_asid_hint <= ti->ti_asid_max);
+	KASSERT(ti->ti_asid_hint > KERNEL_PID);
+
+	/*
+	 * If the last ASID allocated was the maximum ASID, then the
+	 * hint will be out of range.  Reset the hint to first
+	 * available ASID.
+	 */
+	if (PMAP_TLB_FLUSH_ASID_ON_RESET
+	    && ti->ti_asid_hint > ti->ti_asid_max) {
+		ti->ti_asid_hint = KERNEL_PID + 1;
+	}
+	KASSERTMSG(ti->ti_asid_hint <= ti->ti_asid_max, "hint %u",
+	    ti->ti_asid_hint);
 
 	/*
 	 * Let's see if the hinted ASID is free.  If not search for
 	 * a new one.
 	 */
-	if (__predict_false(TLBINFO_ASID_INUSE_P(ti, ti->ti_asid_hint))) {
-#ifdef DIAGNOSTIC
-		const size_t words = __arraycount(ti->ti_asid_bitmap);
-#endif
-		const size_t nbpw = 8 * sizeof(ti->ti_asid_bitmap[0]);
-		for (size_t i = 0; i < ti->ti_asid_hint / nbpw; i++) {
-			KASSERT(~ti->ti_asid_bitmap[i] == 0);
+	if (__predict_true(TLBINFO_ASID_INUSE_P(ti, ti->ti_asid_hint))) {
+		const size_t nbpw __diagused = 8*sizeof(ti->ti_asid_bitmap[0]);
+		size_t i;
+		u_long bits;
+		for (i = 0; (bits = ~ti->ti_asid_bitmap[i]) == 0; i++) {
+			KASSERT(i < __arraycount(ti->ti_asid_bitmap) - 1);
 		}
-		for (size_t i = ti->ti_asid_hint / nbpw;; i++) {
-			KASSERT(i < words);
-			/*
-			 * ffs wants to find the first bit set while we want
-			 * to find the first bit cleared.
-			 */
-			u_long bits = ~ti->ti_asid_bitmap[i];
-			if (__predict_true(bits)) {
-				u_int n = 0;
-				if ((bits & 0xffffffff) == 0)  {
-					bits = (bits >> 31) >> 1;
-					KASSERT(bits);
-					n += 32;
-				}
-				n += ffs(bits) - 1;
-				KASSERT(n < nbpw);
-				ti->ti_asid_hint = n + i * nbpw;
-				break;
-			}
-		}
-		KASSERT(ti->ti_asid_hint > KERNEL_PID);
-		KASSERT(TLBINFO_ASID_INUSE_P(ti, ti->ti_asid_hint-1));
-		KASSERT(!TLBINFO_ASID_INUSE_P(ti, ti->ti_asid_hint));
+		/*
+		 * ffs wants to find the first bit set while we want
+		 * to find the first bit cleared.
+		 */
+		const u_int n = __builtin_ffsl(bits) - 1;
+		KASSERTMSG((bits << (nbpw - (n+1))) == (1ul << (nbpw-1)),
+		    "n %u bits %#lx", n, bits);
+		KASSERT(n < nbpw);
+		ti->ti_asid_hint = n + i * nbpw;
 	}
+
+	KASSERT(ti->ti_asid_hint > KERNEL_PID);
+	KASSERT(ti->ti_asid_hint <= ti->ti_asid_max);
+	KASSERTMSG(PMAP_TLB_FLUSH_ASID_ON_RESET
+	    || TLBINFO_ASID_INUSE_P(ti, ti->ti_asid_hint - 1),
+	    "hint %u bitmap %p", ti->ti_asid_hint, ti->ti_asid_bitmap);
+	KASSERTMSG(!TLBINFO_ASID_INUSE_P(ti, ti->ti_asid_hint),
+	    "hint %u bitmap %p", ti->ti_asid_hint, ti->ti_asid_bitmap);
 
 	/*
 	 * The hint contains our next ASID so take it and advance the hint.
 	 * Mark it as used and insert the pai into the list of active asids.
 	 * There is also one less asid free in this TLB.
 	 */
+	KASSERT(ti->ti_asid_hint > KERNEL_PID);
 	pai->pai_asid = ti->ti_asid_hint++;
+#ifdef MULTIPROCESSOR
+	if (PMAP_TLB_FLUSH_ASID_ON_RESET) {
+		/*
+		 * Clean the new ASID from the TLB.
+		 */
+		tlb_invalidate_asids(pai->pai_asid, pai->pai_asid);
+	}
+#endif
 	TLBINFO_ASID_MARK_USED(ti, pai->pai_asid);
 	LIST_INSERT_HEAD(&ti->ti_pais, pai, pai_link);
 	ti->ti_asids_free--;
@@ -803,12 +853,17 @@ pmap_tlb_asid_acquire(pmap_t pm, struct lwp *l)
 
 	KASSERT(kpreempt_disabled());
 
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
+
 	/*
 	 * Kernels use a fixed ASID and thus doesn't need to acquire one.
 	 */
-	if (pm == pmap_kernel())
+	if (pm == pmap_kernel()) {
+		UVMHIST_LOG(maphist, " <-- done (kernel)", 0, 0, 0, 0);
 		return;
+	}
 
+	UVMHIST_LOG(maphist, " (pm=%#x, l=%#x, ti=%#x)", pm, l, ti, 0);
 	TLBINFO_LOCK(ti);
 	KASSERT(pai->pai_asid <= KERNEL_PID || pai->pai_link.le_prev != NULL);
 	KASSERT(pai->pai_asid > KERNEL_PID || pai->pai_link.le_prev == NULL);
@@ -819,13 +874,16 @@ pmap_tlb_asid_acquire(pmap_t pm, struct lwp *l)
 		 */
 		if (__predict_false(tlbinfo_noasids_p(ti))) {
 			KASSERT(l == curlwp);
+			UVMHIST_LOG(maphist, " asid reinit", 0, 0, 0, 0);
 			pmap_tlb_asid_reinitialize(ti, TLBINV_NOBODY);
+			KASSERT(!tlbinfo_noasids_p(ti));
 		}
 
 		/*
 		 * Get an ASID.
 		 */
 		pmap_tlb_asid_alloc(ti, pm, pai);
+		UVMHIST_LOG(maphist, "allocated asid %#x", pai->pai_asid, 0, 0, 0);
 	}
 
 	if (l == curlwp) {
@@ -835,20 +893,24 @@ pmap_tlb_asid_acquire(pmap_t pm, struct lwp *l)
 		 * be changed while this TLBs lock is held unless atomic
 		 * operations are used.
 		 */
+		KASSERT(pm != pmap_kernel());
 		kcpuset_atomic_set(pm->pm_onproc, cpu_index(ci));
 #endif
 		ci->ci_pmap_asid_cur = pai->pai_asid;
+		UVMHIST_LOG(maphist, "setting asid to %#x", pai->pai_asid, 0, 0, 0);
 		tlb_set_asid(pai->pai_asid);
 		pmap_tlb_asid_check();
 	} else {
 		printf("%s: l (%p) != curlwp %p\n", __func__, l, curlwp);
 	}
 	TLBINFO_UNLOCK(ti);
+	UVMHIST_LOG(maphist, " <-- done", 0, 0, 0, 0);
 }
 
 void
 pmap_tlb_asid_deactivate(pmap_t pm)
 {
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 	KASSERT(kpreempt_disabled());
 #if defined(MULTIPROCESSOR)
 	/*
@@ -857,7 +919,7 @@ pmap_tlb_asid_deactivate(pmap_t pm)
 	 * deactivated the pmap and thusly onproc will be 0 so there's nothing
 	 * to do.
 	 */
-	if (pm != pmap_kernel() && pm->pm_onproc != 0) {
+	if (pm != pmap_kernel() && !kcpuset_iszero(pm->pm_onproc)) {
 		struct cpu_info * const ci = curcpu();
 		KASSERT(!cpu_intr_p());
 		KASSERTMSG(kcpuset_isset(pm->pm_onproc, cpu_index(ci)),
@@ -870,9 +932,11 @@ pmap_tlb_asid_deactivate(pmap_t pm)
 		 */
 		kcpuset_atomic_clear(pm->pm_onproc, cpu_index(ci));
 	}
-#elif defined(DEBUG)
+#endif
 	curcpu()->ci_pmap_asid_cur = 0;
+	UVMHIST_LOG(maphist, " <-- done (pm=%#x)", pm, 0, 0, 0);
 	tlb_set_asid(0);
+#if defined(DEBUG)
 	pmap_tlb_asid_check();
 #endif
 }
@@ -882,21 +946,41 @@ pmap_tlb_asid_release_all(struct pmap *pm)
 {
 	KASSERT(pm != pmap_kernel());
 #if defined(MULTIPROCESSOR)
-	KASSERT(kcpuset_iszero(pm->pm_onproc));
+	//KASSERT(!kcpuset_iszero(pm->pm_onproc)); // XXX
 #if PMAP_TLB_MAX > 1
+	struct cpu_info * const ci = curcpu();
 	for (u_int i = 0; !kcpuset_iszero(pm->pm_active); i++) {
 		KASSERT(i < pmap_ntlbs);
 		struct pmap_tlb_info * const ti = pmap_tlbs[i];
 #else
 		struct pmap_tlb_info * const ti = &pmap_tlb0_info;
 #endif
-		if (!pmap_tlb_intersecting_onproc_p(pm, ti)) {
-			struct pmap_asid_info * const pai = PMAP_PAI(pm, ti);
-			TLBINFO_LOCK(ti);
-			KASSERT(ti->ti_victim != pm);
-			pmap_pai_reset(ti, pai, pm);
-			TLBINFO_UNLOCK(ti);
+		struct pmap_asid_info * const pai = PMAP_PAI(pm, ti);
+		TLBINFO_LOCK(ti);
+		if (PMAP_PAI_ASIDVALID_P(pai, ti)) {
+			/*
+			 * If this pmap isn't onproc on any of the cpus
+			 * belonging to this tlb domain, we can just reset
+			 * the ASID and be done.
+			 */
+			if (!pmap_tlb_intersecting_onproc_p(pm, ti)) {
+				KASSERT(ti->ti_victim != pm);
+				pmap_pai_reset(ti, pai, pm);
+#if PMAP_TLB_MAX == 1
+			} else {
+				KASSERT(cpu_tlb_info(ci) == ti);
+				tlb_invalidate_asids(pai->pai_asid,
+				    pai->pai_asid);
+#else
+			} else if (cpu_tlb_info(ci) == ti) {
+				tlb_invalidate_asids(pai->pai_asid,
+				    pai->pai_asid);
+			} else {
+				pm->pm_shootdown_needed = 1;
+#endif
+			}
 		}
+		TLBINFO_UNLOCK(ti);
 #if PMAP_TLB_MAX > 1
 	}
 #endif
@@ -909,7 +993,11 @@ pmap_tlb_asid_release_all(struct pmap *pm)
 	struct pmap_asid_info * const pai = PMAP_PAI(pm, ti);
 	TLBINFO_LOCK(ti);
 	if (pai->pai_asid > KERNEL_PID) {
-		pmap_pai_reset(ti, pai, pm);
+		if (curcpu()->ci_pmap_cur == pm) {
+			tlb_invalidate_asids(pai->pai_asid, pai->pai_asid);
+		} else {
+			pmap_pai_reset(ti, pai, pm);
+		}
 	}
 	TLBINFO_UNLOCK(ti);
 #endif /* MULTIPROCESSOR */
@@ -920,7 +1008,7 @@ pmap_tlb_asid_check(void)
 {
 #ifdef DEBUG
 	kpreempt_disable();
-	const tlb_asid_t asid = tlb_get_asid();
+	const tlb_asid_t asid __debugused = tlb_get_asid();
 	KDASSERTMSG(asid == curcpu()->ci_pmap_asid_cur,
 	   "%s: asid (%#x) != current asid (%#x)",
 	    __func__, asid, curcpu()->ci_pmap_asid_cur);
