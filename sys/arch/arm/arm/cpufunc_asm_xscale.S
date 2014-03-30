@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_xscale.S,v 1.22 2013/12/02 18:36:10 joerg Exp $	*/
+/*	$NetBSD: cpufunc_asm_xscale.S,v 1.23 2014/03/30 01:15:03 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -71,6 +71,7 @@
  * XScale assembly functions for CPU / MMU / TLB specific operations
  */
  
+#include "assym.h"
 #include <arm/asm.h>
 #include <arm/locore.h>
 
@@ -185,6 +186,11 @@ END(xscale_setttb)
 ENTRY(xscale_tlb_flushID_SE)
 	mcr	p15, 0, r0, c8, c6, 1	/* flush D tlb single entry */
 	mcr	p15, 0, r0, c8, c5, 1	/* flush I tlb single entry */
+#if PAGE_SIZE == 2 * L2_S_SIZE
+	add	r0, r0, #L2_S_SIZE
+	mcr	p15, 0, r0, c8, c6, 1	/* flush D tlb single entry */
+	mcr	p15, 0, r0, c8, c5, 1	/* flush I tlb single entry */
+#endif
 	RET
 END(xscale_tlb_flushID_SE)
 

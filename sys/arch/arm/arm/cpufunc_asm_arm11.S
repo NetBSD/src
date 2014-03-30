@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm11.S,v 1.11 2014/02/20 17:27:46 matt Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm11.S,v 1.12 2014/03/30 01:15:03 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2005 ARM Limited
@@ -49,14 +49,16 @@ ENTRY(arm11_setttb)
 #error arm11 does not have a VIVT cache.
 #endif
 
-	mcr	p15, 0, r0, c2, c0, 0	/* load new TTB */
-
 	cmp	r1, #0
+	mcr	p15, 0, r0, c2, c0, 0	/* TTBR0 set */
+#ifdef ARM_MMU_EXTENDED
+	mcreq	p15, 0, r0, c2, c0, 1	/* TTBR1 set */
+#else
 	mcrne	p15, 0, r0, c8, c7, 0	/* invalidate I+D TLBs */
 	mcrne	p15, 0, r0, c7, c10, 4	/* drain write buffer */
+#endif
 	RET
 END(arm11_setttb)
-
 
 /*
  * Context switch.
@@ -69,9 +71,16 @@ ENTRY(arm11_context_switch)
 	 * We can assume that the caches will only contain kernel addresses
 	 * at this point.  So no need to flush them again.
 	 */
+#ifdef ARM_MMU_EXTENDED
+	cmp	r1, #0
+#endif
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
-	mcr	p15, 0, r0, c2, c0, 0	/* set the new TTB */
+	mcr	p15, 0, r0, c2, c0, 0	/* TTBR0 set */
+#ifdef ARM_MMU_EXTENDED
+	mcreq	p15, 0, r0, c2, c0, 1	/* TTBR1 set is asid 0 */
+#else
 	mcr	p15, 0, r0, c8, c7, 0	/* and flush the I+D tlbs */
+#endif
 
 	/* Paranoia -- make sure the pipeline is empty. */
 	nop
@@ -96,6 +105,11 @@ ENTRY(arm11_tlb_flushI_SE)
 	orr	r0, r0, r1		/* insert ASID into MVA */
 #endif
 	mcr	p15, 0, r0, c8, c5, 1	/* flush I tlb single entry */
+#if PAGE_SIZE == 2 * L2_S_SIZE
+	add	r0, r0, #L2_S_SIZE
+	mcr	p15, 0, r0, c8, c5, 1	/* flush I tlb single entry */
+#endif
+
 	mov	r0, #0
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	RET
@@ -113,6 +127,10 @@ ENTRY(arm11_tlb_flushD_SE)
 	orr	r0, r0, r1		/* insert ASID into MVA */
 #endif
 	mcr	p15, 0, r0, c8, c6, 1	/* flush D tlb single entry */
+#if PAGE_SIZE == 2 * L2_S_SIZE
+	add	r0, r0, #L2_S_SIZE
+	mcr	p15, 0, r0, c8, c6, 1	/* flush D tlb single entry */
+#endif
 	mov	r0, #0
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	RET
@@ -130,6 +148,10 @@ ENTRY(arm11_tlb_flushID_SE)
 	orr	r0, r0, r1		/* insert ASID into MVA */
 #endif
 	mcr	p15, 0, r0, c8, c7, 1	/* flush I+D tlb single entry */
+#if PAGE_SIZE == 2 * L2_S_SIZE
+	add	r0, r0, #L2_S_SIZE
+	mcr	p15, 0, r0, c8, c7, 1	/* flush I+D tlb single entry */
+#endif
 	mov	r0, #0
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	RET

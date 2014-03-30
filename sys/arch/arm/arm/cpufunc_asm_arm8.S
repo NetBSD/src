@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm8.S,v 1.9 2013/12/02 18:36:10 joerg Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm8.S,v 1.10 2014/03/30 01:15:03 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 ARM Limited
@@ -35,6 +35,7 @@
  * ARM8 assembly functions for CPU / MMU / TLB specific operations
  */
  
+#include "assym.h"
 #include <machine/asm.h>
 #include <arm/locore.h>
 
@@ -57,6 +58,7 @@ ENTRY(arm8_clock_config)
 	mcr	p15, 0, r2, c15, c0, 0 	/* Write clock register */
 	mov	r0, r3			/* Return old value */
 	mov	pc, lr
+END(arm8_clock_config)
 
 /*
  * Functions to set the MMU Translation Table Base register
@@ -92,6 +94,7 @@ ENTRY(arm8_setttb)
 	msr	cpsr_all, r3
 
 	mov	pc, lr
+END(arm8_setttb)
 
 /*
  * TLB functions
@@ -99,10 +102,16 @@ ENTRY(arm8_setttb)
 ENTRY(arm8_tlb_flushID)
 	mcr	p15, 0, r0, c8, c7, 0	/* flush I+D tlb */
 	mov	pc, lr
+END(arm8_tlb_flushID)
 
 ENTRY(arm8_tlb_flushID_SE)
 	mcr	p15, 0, r0, c8, c7, 1	/* flush I+D tlb single entry */
+#if PAGE_SIZE == 2 * L2_S_SIZE
+	add	r0, r0, #L2_S_SIZE
+	mcr	p15, 0, r0, c8, c7, 1	/* flush I+D tlb single entry */
+#endif
 	mov	pc, lr
+END(arm8_tlb_flushID_SE)
 
 /*
  * Cache functions
@@ -110,10 +119,12 @@ ENTRY(arm8_tlb_flushID_SE)
 ENTRY(arm8_cache_flushID)
 	mcr	p15, 0, r0, c7, c7, 0	/* flush I+D cache */
 	mov	pc, lr
+END(arm8_cache_flushID)
 
 ENTRY(arm8_cache_flushID_E)
 	mcr	p15, 0, r0, c7, c7, 1	/* flush I+D single entry */
 	mov	pc, lr
+END(arm8_cache_flushID_E)
 
 ENTRY(arm8_cache_cleanID)
 	mov	r0, #0x00000000
@@ -155,10 +166,12 @@ ENTRY(arm8_cache_cleanID)
 	bne	1b
 
 	mov	pc, lr
+END(arm8_cache_cleanID)
 
 ENTRY(arm8_cache_cleanID_E)
 	mcr	p15, 0, r0, c7, c11, 1	/* clean I+D single entry */
 	mov	pc, lr
+END(arm8_cache_cleanID_E)
 
 ENTRY(arm8_cache_purgeID)
 	/*
@@ -234,6 +247,7 @@ ENTRY(arm8_cache_purgeID)
 
 	msr	cpsr_all, r3
 	mov	pc, lr
+END(arm8_cache_purgeID)
 
 ENTRY(arm8_cache_purgeID_E)
 	/*
@@ -255,6 +269,7 @@ ENTRY(arm8_cache_purgeID_E)
 	mcr	p15, 0, r0, c7, c7, 1	/* flush I+D single entry */
 	msr	cpsr_all, r3
 	mov	pc, lr
+END(arm8_cache_purgeID_E)
 
 /*
  * Context switch.
@@ -281,3 +296,4 @@ ENTRY(arm8_context_switch)
 	mov	r0, r0
 	mov	r0, r0
 	mov	pc, lr
+END(arm8_context_switch)
