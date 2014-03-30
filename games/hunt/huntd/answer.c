@@ -1,4 +1,4 @@
-/*	$NetBSD: answer.c,v 1.20 2014/03/30 00:26:58 dholland Exp $	*/
+/*	$NetBSD: answer.c,v 1.21 2014/03/30 01:44:37 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,16 +32,18 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: answer.c,v 1.20 2014/03/30 00:26:58 dholland Exp $");
+__RCSID("$NetBSD: answer.c,v 1.21 2014/03/30 01:44:37 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <assert.h>
 #include "hunt.h"
 
 #define SCOREDECAY	15
@@ -64,33 +66,48 @@ answer(void)
 	static socklen_t socklen;
 	static uint32_t machine;
 	static uint32_t uid;
-	static SOCKET sockstruct;
+	static struct sockaddr_storage newaddr;
 	char *cp1, *cp2;
 	int flags;
 	uint32_t version;
 	int i;
 
-#ifdef INTERNET
-	socklen = sizeof sockstruct;
-#else
-	socklen = sizeof sockstruct - 1;
-#endif
-	errno = 0;
-	newsock = accept(huntsock, (struct sockaddr *) &sockstruct, &socklen);
-	if (newsock < 0)
-	{
+	socklen = sizeof(newaddr);
+	newsock = accept(huntsock, (struct sockaddr *)&newaddr, &socklen);
+	if (newsock < 0) {
 		if (errno == EINTR)
 			return false;
 		complain(LOG_ERR, "accept");
 		cleanup(1);
 	}
 
-#ifdef INTERNET
-	machine = ntohl(((struct sockaddr_in *) &sockstruct)->sin_addr.s_addr);
-#else
-	if (machine == 0)
+	/*
+	 * XXX this is pretty bollocks
+	 */
+	switch (newaddr.ss_family) {
+	    case AF_INET:
+		machine = ((struct sockaddr_in *)&newaddr)->sin_addr.s_addr;
+		machine = ntohl(machine);
+		break;
+	    case AF_INET6: 
+		{
+			struct sockaddr_in6 *sin6;
+
+			sin6 = (struct sockaddr_in6 *)&newaddr;
+			assert(sizeof(sin6->sin6_addr.s6_addr) >
+			       sizeof(machine));
+			memcpy(&machine, sin6->sin6_addr.s6_addr,
+			       sizeof(machine));
+		}
+		break;
+	    case AF_UNIX:
 		machine = gethostid();
-#endif
+		break;
+	    default:
+		machine = 0; /* ? */
+		break;
+	}
+
 	version = htonl((uint32_t) HUNT_VERSION);
 	(void) write(newsock, &version, LONGLEN);
 	(void) read(newsock, &uid, LONGLEN);
@@ -127,7 +144,6 @@ answer(void)
 			*cp2++ = *cp1;
 	*cp2 = '\0';
 
-#ifdef INTERNET
 	if (mode == C_MESSAGE) {
 		char	buf[BUFSIZ + 1];
 		int	n;
@@ -155,7 +171,6 @@ answer(void)
 		return false;
 	}
 	else
-#endif
 #ifdef MONITOR
 	if (mode == C_MONITOR)
 		if (End_monitor < &Monitor[MAXMON]) {
