@@ -1,4 +1,4 @@
-/*	$NetBSD: otto.c,v 1.17 2014/03/29 21:24:26 dholland Exp $	*/
+/*	$NetBSD: otto.c,v 1.18 2014/03/30 05:14:47 dholland Exp $	*/
 #ifdef OTTO
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: otto.c,v 1.17 2014/03/29 21:24:26 dholland Exp $");
+__RCSID("$NetBSD: otto.c,v 1.18 2014/03/30 05:14:47 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/time.h>
@@ -217,7 +217,7 @@ otto(int y, int x, char face)
 		wander();
 
 done:
-	(void) write(Socket, command, comlen);
+	(void) write(huntsocket, command, comlen);
 	Otto_count += comlen;
 #ifdef	DEBUG
 	(void) fwrite(command, 1, comlen, debug);

@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt_private.h,v 1.7 2014/03/30 04:31:21 dholland Exp $	*/
+/*	$NetBSD: hunt_private.h,v 1.8 2014/03/30 05:14:47 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -50,7 +50,7 @@
 extern bool Last_player;
 
 extern char Buf[BUFSIZ];
-extern int Socket;
+extern int huntsocket;
 
 #ifdef INTERNET
 extern char *Send_message;
@@ -64,7 +64,7 @@ extern char map_key[256];
 extern bool no_beep;
 
 #ifdef INTERNET
-/* XXX this pile had to be made public to split off server.c; fix them up */
+/* XXX this had to be made public to split off server.c; fix it up */
 extern SOCKET Daemon;
 #endif
 

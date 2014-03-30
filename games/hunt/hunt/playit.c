@@ -1,4 +1,4 @@
-/*	$NetBSD: playit.c,v 1.19 2014/03/30 02:11:25 dholland Exp $	*/
+/*	$NetBSD: playit.c,v 1.20 2014/03/30 05:14:47 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: playit.c,v 1.19 2014/03/30 02:11:25 dholland Exp $");
+__RCSID("$NetBSD: playit.c,v 1.20 2014/03/30 05:14:47 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/file.h>
@@ -94,7 +94,7 @@ playit(void)
 	int y, x;
 	uint32_t version;
 
-	if (read(Socket, &version, LONGLEN) != LONGLEN) {
+	if (read(huntsocket, &version, LONGLEN) != LONGLEN) {
 		bad_con();
 		/* NOTREACHED */
 	}
@@ -191,7 +191,7 @@ playit(void)
 		}
 	}
 out:
-	(void) close(Socket);
+	(void) close(huntsocket);
 }
 
 /*
@@ -207,7 +207,7 @@ getchr(void)
 	struct pollfd set[2];
 	int nfds;
 
-	set[0].fd = Socket;
+	set[0].fd = huntsocket;
 	set[0].events = POLLIN;
 	set[1].fd = STDIN;
 	set[1].events = POLLIN;
@@ -222,7 +222,7 @@ one_more_time:
 		send_stuff();
 	if (! (set[0].revents & POLLIN))
 		goto one_more_time;
-	icnt = read(Socket, ibuf, sizeof ibuf);
+	icnt = read(huntsocket, ibuf, sizeof ibuf);
 	if (icnt < 0) {
 		bad_con();
 		/* NOTREACHED */
@@ -273,7 +273,7 @@ send_stuff(void)
 		nchar_send -= count;
 		if (nchar_send < 0)
 			count += nchar_send;
-		(void) write(Socket, inp, count);
+		(void) write(huntsocket, inp, count);
 	}
 }
 
@@ -436,7 +436,7 @@ do_message(void)
 {
 	uint32_t version;
 
-	if (read(Socket, &version, LONGLEN) != LONGLEN) {
+	if (read(huntsocket, &version, LONGLEN) != LONGLEN) {
 		bad_con();
 		/* NOTREACHED */
 	}
@@ -445,10 +445,10 @@ do_message(void)
 		/* NOTREACHED */
 	}
 #ifdef INTERNET
-	if (write(Socket, Send_message, strlen(Send_message)) < 0) {
+	if (write(huntsocket, Send_message, strlen(Send_message)) < 0) {
 		bad_con();
 		/* NOTREACHED */
 	}
 #endif
-	(void) close(Socket);
+	(void) close(huntsocket);
 }

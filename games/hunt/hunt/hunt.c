@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.53 2014/03/30 04:57:37 dholland Exp $	*/
+/*	$NetBSD: hunt.c,v 1.54 2014/03/30 05:14:47 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.53 2014/03/30 04:57:37 dholland Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.54 2014/03/30 05:14:47 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -64,9 +64,11 @@ static const char Driver[] = PATH_HUNTD;
 #endif
 
 #ifdef INTERNET
-static uint16_t Test_port = TEST_PORT;
+static const char *contactportstr;
+static uint16_t contactport = TEST_PORT;
+static const char *contacthost;
 #else
-static const char Sock_name[] = PATH_HUNTSOCKET;
+static const char huntsockpath[] = PATH_HUNTSOCKET;
 #endif
 
 
@@ -77,10 +79,8 @@ bool Am_monitor = false;
 
 char Buf[BUFSIZ];
 
-/*static*/ int Socket;
+/*static*/ int huntsocket;
 #ifdef INTERNET
-static char *Sock_host;
-static char *use_port;
 char *Send_message = NULL;
 #endif
 
@@ -182,11 +182,11 @@ main(int ac, char **av)
 			Send_message = optarg;
 			break;
 		case 'h':
-			Sock_host = optarg;
+			contacthost = optarg;
 			break;
 		case 'p':
-			use_port = optarg;
-			Test_port = atoi(use_port);
+			contactportstr = optarg;
+			contactport = atoi(contactportstr);
 			break;
 #else
 		case 'S':
@@ -225,14 +225,14 @@ main(int ac, char **av)
 	if (optind + 1 < ac)
 		goto usage;
 	else if (optind + 1 == ac)
-		Sock_host = av[ac - 1];
+		contacthost = av[ac - 1];
 #else
 	if (optind < ac)
 		goto usage;
 #endif
 
 #ifdef INTERNET
-	serverlist_setup(Sock_host, Test_port);
+	serverlist_setup(contacthost, contactport);
 
 	if (Show_scores) {
 		const struct sockaddr_storage *host;
@@ -300,15 +300,15 @@ main(int ac, char **av)
 		do {
 			int option;
 
-			Socket = socket(SOCK_FAMILY, SOCK_STREAM, 0);
-			if (Socket < 0)
+			huntsocket = socket(SOCK_FAMILY, SOCK_STREAM, 0);
+			if (huntsocket < 0)
 				err(1, "socket");
 			option = 1;
-			if (setsockopt(Socket, SOL_SOCKET, SO_USELOOPBACK,
+			if (setsockopt(huntsocket, SOL_SOCKET, SO_USELOOPBACK,
 			    &option, sizeof option) < 0)
 				warn("setsockopt loopback");
 			errno = 0;
-			if (connect(Socket, (struct sockaddr *) &Daemon,
+			if (connect(huntsocket, (struct sockaddr *) &Daemon,
 			    DAEMON_SIZE) < 0) {
 				if (errno != ECONNREFUSED) {
 					leave(1, "connect");
@@ -317,13 +317,13 @@ main(int ac, char **av)
 			else
 				break;
 			sleep(1);
-		} while (close(Socket) == 0);
+		} while (close(huntsocket) == 0);
 #else /* !INTERNET */
 		/*
 		 * set up a socket
 		 */
 
-		if ((Socket = socket(SOCK_FAMILY, SOCK_STREAM, 0)) < 0)
+		if ((huntsocket = socket(SOCK_FAMILY, SOCK_STREAM, 0)) < 0)
 			err(1, "socket");
 
 		/*
@@ -333,20 +333,20 @@ main(int ac, char **av)
 		 */
 
 		Daemon.sun_family = SOCK_FAMILY;
-		(void) strcpy(Daemon.sun_path, Sock_name);
-		if (connect(Socket, &Daemon, DAEMON_SIZE) < 0) {
+		(void) strcpy(Daemon.sun_path, huntsockpath);
+		if (connect(huntsocket, &Daemon, DAEMON_SIZE) < 0) {
 			if (errno != ENOENT) {
 				leavex(1, "connect2");
 			}
 			start_driver();
 
 			do {
-				(void) close(Socket);
-				if ((Socket = socket(SOCK_FAMILY, SOCK_STREAM,
+				(void) close(huntsocket);
+				if ((huntsocket = socket(SOCK_FAMILY, SOCK_STREAM,
 				    0)) < 0)
 					err(1, "socket");
 				sleep(2);
-			} while (connect(Socket, &Daemon, DAEMON_SIZE) < 0);
+			} while (connect(huntsocket, &Daemon, DAEMON_SIZE) < 0);
 		}
 #endif
 
@@ -474,7 +474,7 @@ start_driver(void)
 #endif
 
 #ifdef INTERNET
-	if (Sock_host != NULL) {
+	if (contacthost != NULL) {
 		sleep(3);
 		return;
 	}
@@ -490,14 +490,15 @@ start_driver(void)
 	if (procid == 0) {
 		(void) signal(SIGINT, SIG_IGN);
 #ifndef INTERNET
-		(void) close(Socket);
+		(void) close(huntsocket);
 #else
-		if (use_port == NULL)
+		if (contactportstr == NULL)
 #endif
 			execl(Driver, "HUNT", (char *) NULL);
 #ifdef INTERNET
 		else
-			execl(Driver, "HUNT", "-p", use_port, (char *) NULL);
+			execl(Driver, "HUNT", "-p", contactportstr,
+			      (char *) NULL);
 #endif
 		/* only get here if exec failed */
 		(void) kill(getppid(), SIGUSR1);	/* tell mom */
@@ -591,9 +592,9 @@ intr(int dummy __unused)
 		if (isupper(ch))
 			ch = tolower(ch);
 		if (ch == 'y') {
-			if (Socket != 0) {
-				(void) write(Socket, "q", 1);
-				(void) close(Socket);
+			if (huntsocket != 0) {
+				(void) write(huntsocket, "q", 1);
+				(void) close(huntsocket);
 			}
 			leavex(0, NULL);
 		}
@@ -698,8 +699,8 @@ env_init(long enter_status)
 			}
 #ifdef INTERNET
 			else if (strncmp(envp, "port=", s - envp + 1) == 0) {
-				use_port = s + 1;
-				Test_port = atoi(use_port);
+				contactportstr = s + 1;
+				contactport = atoi(contactportstr);
 				if ((s = strchr(envp, ',')) == NULL) {
 					*envp = '\0';
 					break;
@@ -708,7 +709,7 @@ env_init(long enter_status)
 				envp = s + 1;
 			}
 			else if (strncmp(envp, "host=", s - envp + 1) == 0) {
-				Sock_host = s + 1;
+				contacthost = s + 1;
 				if ((s = strchr(envp, ',')) == NULL) {
 					*envp = '\0';
 					break;
