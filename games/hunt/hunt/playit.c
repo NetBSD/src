@@ -1,4 +1,4 @@
-/*	$NetBSD: playit.c,v 1.24 2014/03/30 05:44:55 dholland Exp $	*/
+/*	$NetBSD: playit.c,v 1.25 2014/03/30 05:48:35 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: playit.c,v 1.24 2014/03/30 05:44:55 dholland Exp $");
+__RCSID("$NetBSD: playit.c,v 1.25 2014/03/30 05:48:35 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/file.h>
@@ -247,7 +247,7 @@ send_stuff(void)
 	if (count <= 0)
 		return;
 	if (nchar_send <= 0 && !no_beep) {
-		(void) write(1, "\7", 1);	/* CTRL('G') */
+		(void) beep();
 		return;
 	}
 
