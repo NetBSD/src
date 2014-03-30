@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.h,v 1.27 2014/03/29 22:29:55 dholland Exp $	*/
+/*	$NetBSD: hunt.h,v 1.28 2014/03/30 00:26:58 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -145,7 +145,8 @@ struct regen_def {
 
 extern char Buf[BUFSIZ], Maze[HEIGHT][WIDTH2], Orig_maze[HEIGHT][WIDTH2];
 
-extern int Nplayer, Socket;
+extern int Nplayer;
+extern int huntsock;
 extern struct pollfd fdset[];
 
 extern int See_over[NASCII];

@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.33 2014/03/29 23:44:38 dholland Exp $	*/
+/*	$NetBSD: driver.c,v 1.34 2014/03/30 00:26:58 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: driver.c,v 1.33 2014/03/29 23:44:38 dholland Exp $");
+__RCSID("$NetBSD: driver.c,v 1.34 2014/03/30 00:26:58 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -48,31 +48,81 @@ __RCSID("$NetBSD: driver.c,v 1.33 2014/03/29 23:44:38 dholland Exp $");
 #include "hunt.h"
 #include "pathnames.h"
 
+/*
+ * There are three listening sockets in this daemon:
+ *    - a datagram socket that listens on a well known port
+ *    - a stream socket for general player connections
+ *    - a second stream socket that prints the stats/scores
+ *
+ * These are (now) named as follows:
+ *    - contact (contactsock, contactaddr, etc.)
+ *    - hunt (huntsock, huntaddr, etc.)
+ *    - stat (statsock, stataddr, etc.)
+ *
+ * Until being cleaned up in 2014 the code used an assortment of
+ * inconsistent and confusing names to refer to the pieces of these:
+ *
+ *    test_port -> contactaddr
+ *    Test_port -> contactport
+ *    Test_socket -> contactsock
+ *
+ *    sock_port -> huntport
+ *    Socket -> huntsock
+ *
+ *    Daemon -> both stataddr and huntaddr
+ *    stat_port -> statport
+ *    status -> statsock
+ *
+ * It isn't clear to me what purpose contactsocket is supposed to
+ * serve; maybe it was supposed to avoid asking inetd to support
+ * tcp/wait sockets? Anyway, we can't really change the protocol at
+ * this point. (To complicate matters, contactsocket doesn't exist if
+ * using AF_UNIX sockets; you just connect to the game socket.)
+ *
+ * When using internet sockets:
+ *    - the contact socket listens on INADDR_ANY using the game port
+ *      (either specified or the default: CONTACT_PORT, currently
+ *      spelled TEST_PORT)
+ *    - the hunt socket listens on INADDR_ANY using whatever port
+ *    - the stat socket listens on INADDR_ANY using whatever port
+ *
+ * When using AF_UNIX sockets:
+ *    - the contact socket isn't used
+ *    - the hunt socket listens on the game socket (either a specified path
+ *      or /tmp/hunt)
+ *    - the stat socket listens on its own socket (huntsocket's path +
+ *      ".stats")
+ */
+
 #ifdef INTERNET
-static uint16_t Test_port = TEST_PORT;
+static struct sockaddr_in huntaddr;
+static struct sockaddr_in stataddr;
+static uint16_t contactport = TEST_PORT;
+static uint16_t	huntport;		/* port # of tcp listen socket */
+static uint16_t	statport;		/* port # of statistics tcp socket */
+static int contactsock;			/* socket to answer datagrams */
+#define STATSOCKADDR_SIZE	(sizeof statsockaddr)
 #else
-static const char Sock_name[] = PATH_HUNTSOCKET;
-static const char Stat_name[] = PATH_STATSOCKET;
+static struct sockaddr_un huntaddr;
+static struct sockaddr_un stataddr;
+static const char huntsockpath[] = PATH_HUNTSOCKET;
+static const char statsockpath[] = PATH_STATSOCKET;
+#define STATSOCKADDR_SIZE	(sizeof statsockaddr - 1)
 #endif
 
-static SOCKET Daemon;
+int huntsock;				/* main socket */
+static int statsock;			/* stat socket */
+static socklen_t huntaddrlen;
+static socklen_t stataddrlen;
 
 #ifdef INTERNET
-static int Test_socket;			/* test socket to answer datagrams */
 static bool inetd_spawned;		/* invoked via inetd */
 static bool standard_port = true;	/* true if listening on standard port */
-static u_short	sock_port;		/* port # of tcp listen socket */
-static u_short	stat_port;		/* port # of statistics tcp socket */
-#define DAEMON_SIZE	(sizeof Daemon)
-#else
-#define DAEMON_SIZE	(sizeof Daemon - 1)
 #endif
 
 #ifdef VOLCANO
 static int volcano = 0;			/* Explosion size */
 #endif
-
-static int Status;			/* stat socket */
 
 static void clear_scores(void);
 static bool havechar(PLAYER *, int);
@@ -109,7 +159,7 @@ main(int ac, char **av)
 #ifdef INTERNET
 		  case 'p':
 			standard_port = false;
-			Test_port = atoi(optarg);
+			contactport = atoi(optarg);
 			break;
 #endif
 		  default:
@@ -135,32 +185,32 @@ again:
 		}
 #ifdef INTERNET
 		if (fdset[2].revents & POLLIN) {
-			namelen = DAEMON_SIZE;
-			(void) recvfrom(Test_socket, &msg, sizeof msg,
+			namelen = sizeof(test);
+			(void) recvfrom(contactsock, &msg, sizeof msg,
 				0, (struct sockaddr *) &test, &namelen);
 			switch (ntohs(msg)) {
 			  case C_MESSAGE:
 				if (Nplayer <= 0)
 					break;
 				reply = htons((u_short) Nplayer);
-				(void) sendto(Test_socket, &reply,
+				(void) sendto(contactsock, &reply,
 					sizeof reply, 0,
-					(struct sockaddr *) &test, DAEMON_SIZE);
+					(struct sockaddr *) &test, sizeof(test));
 				break;
 			  case C_SCORES:
-				reply = htons(stat_port);
-				(void) sendto(Test_socket, &reply,
+				reply = htons(statport);
+				(void) sendto(contactsock, &reply,
 					sizeof reply, 0,
-					(struct sockaddr *) &test, DAEMON_SIZE);
+					(struct sockaddr *) &test, sizeof(test));
 				break;
 			  case C_PLAYER:
 			  case C_MONITOR:
 				if (msg == C_MONITOR && Nplayer <= 0)
 					break;
-				reply = htons(sock_port);
-				(void) sendto(Test_socket, &reply,
+				reply = htons(huntport);
+				(void) sendto(contactsock, &reply,
 					sizeof reply, 0,
-					(struct sockaddr *) &test, DAEMON_SIZE);
+					(struct sockaddr *) &test, sizeof(test));
 				break;
 			}
 		}
@@ -249,7 +299,7 @@ init(void)
 {
 	int i;
 #ifdef INTERNET
-	SOCKET test_port;
+	struct sockaddr_in contactaddr;
 	int msg;
 	socklen_t len;
 #endif
@@ -277,16 +327,18 @@ init(void)
 	 * Initialize statistics socket
 	 */
 #ifdef INTERNET
-	Daemon.sin_family = SOCK_FAMILY;
-	Daemon.sin_addr.s_addr = INADDR_ANY;
-	Daemon.sin_port = 0;
+	stataddr.sin_family = AF_INET;
+	stataddr.sin_addr.s_addr = INADDR_ANY;
+	stataddr.sin_port = 0;
+	stataddrlen = sizeof(stataddr);
 #else
-	Daemon.sun_family = SOCK_FAMILY;
-	(void) strcpy(Daemon.sun_path, Stat_name);
+	stataddr.sun_family = AF_UNIX;
+	(void) strcpy(stataddr.sun_path, statsockpath);
+	stataddrlen = SUN_LEN(&stataddr);
 #endif
 
-	Status = socket(SOCK_FAMILY, SOCK_STREAM, 0);
-	if (bind(Status, (struct sockaddr *) &Daemon, DAEMON_SIZE) < 0) {
+	statsock = socket(SOCK_FAMILY, SOCK_STREAM, 0);
+	if (bind(statsock, (struct sockaddr *) &stataddr, stataddrlen) < 0) {
 		if (errno == EADDRINUSE)
 			exit(0);
 		else {
@@ -294,36 +346,38 @@ init(void)
 			cleanup(1);
 		}
 	}
-	(void) listen(Status, 5);
+	(void) listen(statsock, 5);
 
 #ifdef INTERNET
-	len = sizeof (SOCKET);
-	if (getsockname(Status, (struct sockaddr *) &Daemon, &len) < 0)  {
+	len = sizeof(stataddr);
+	if (getsockname(statsock, (struct sockaddr *) &stataddr, &len) < 0)  {
 		complain(LOG_ERR, "getsockname");
 		exit(1);
 	}
-	stat_port = ntohs(Daemon.sin_port);
+	statport = ntohs(stataddr.sin_port);
 #endif
 
 	/*
 	 * Initialize main socket
 	 */
 #ifdef INTERNET
-	Daemon.sin_family = SOCK_FAMILY;
-	Daemon.sin_addr.s_addr = INADDR_ANY;
-	Daemon.sin_port = 0;
+	huntaddr.sin_family = AF_INET;
+	huntaddr.sin_addr.s_addr = INADDR_ANY;
+	huntaddr.sin_port = 0;
+	huntaddrlen = sizeof(huntaddr);
 #else
-	Daemon.sun_family = SOCK_FAMILY;
-	(void) strcpy(Daemon.sun_path, Sock_name);
+	huntaddr.sun_family = AF_UNIX;
+	(void) strcpy(huntaddr.sun_path, huntsockpath);
+	huntaddrlen = SUN_LEN(&huntaddr);
 #endif
 
-	Socket = socket(SOCK_FAMILY, SOCK_STREAM, 0);
+	huntsock = socket(SOCK_FAMILY, SOCK_STREAM, 0);
 #if defined(INTERNET)
 	msg = 1;
-	if (setsockopt(Socket, SOL_SOCKET, SO_USELOOPBACK, &msg, sizeof msg)<0)
+	if (setsockopt(huntsock, SOL_SOCKET, SO_USELOOPBACK, &msg, sizeof msg)<0)
 		complain(LOG_WARNING, "setsockopt loopback");
 #endif
-	if (bind(Socket, (struct sockaddr *) &Daemon, DAEMON_SIZE) < 0) {
+	if (bind(huntsock, (struct sockaddr *) &huntaddr, huntaddrlen) < 0) {
 		if (errno == EADDRINUSE)
 			exit(0);
 		else {
@@ -331,49 +385,49 @@ init(void)
 			cleanup(1);
 		}
 	}
-	(void) listen(Socket, 5);
+	(void) listen(huntsock, 5);
 
 #ifdef INTERNET
-	len = sizeof (SOCKET);
-	if (getsockname(Socket, (struct sockaddr *) &Daemon, &len) < 0)  {
+	len = sizeof(huntaddr);
+	if (getsockname(huntsock, (struct sockaddr *) &huntaddr, &len) < 0)  {
 		complain(LOG_ERR, "getsockname");
 		exit(1);
 	}
-	sock_port = ntohs(Daemon.sin_port);
+	huntport = ntohs(huntaddr.sin_port);
 #endif
 
 	/*
 	 * Initialize minimal poll mask
 	 */
-	fdset[0].fd = Socket;
+	fdset[0].fd = huntsock;
 	fdset[0].events = POLLIN;
-	fdset[1].fd = Status;
+	fdset[1].fd = statsock;
 	fdset[1].events = POLLIN;
 
 #ifdef INTERNET
-	len = sizeof (SOCKET);
-	if (getsockname(0, (struct sockaddr *) &test_port, &len) >= 0
-	&& test_port.sin_family == AF_INET) {
+	len = sizeof(contactaddr);
+	if (getsockname(STDIN_FILENO, (struct sockaddr *) &contactaddr, &len) >= 0
+	&& contactaddr.sin_family == AF_INET) {
 		inetd_spawned = true;
-		Test_socket = 0;
-		if (test_port.sin_port != htons((u_short) Test_port)) {
+		contactsock = STDIN_FILENO;
+		if (ntohs(contactaddr.sin_port) != contactport) {
 			standard_port = false;
-			Test_port = ntohs(test_port.sin_port);
+			contactport = ntohs(contactaddr.sin_port);
 		}
 	} else {
-		test_port = Daemon;
-		test_port.sin_port = htons((u_short) Test_port);
+		contactaddr = huntaddr;
+		contactaddr.sin_port = htons(contactport);
 
-		Test_socket = socket(SOCK_FAMILY, SOCK_DGRAM, 0);
-		if (bind(Test_socket, (struct sockaddr *) &test_port,
-		    DAEMON_SIZE) < 0) {
+		contactsock = socket(AF_INET, SOCK_DGRAM, 0);
+		if (bind(contactsock, (struct sockaddr *) &contactaddr,
+		    sizeof(contactaddr)) < 0) {
 			complain(LOG_ERR, "bind");
 			exit(1);
 		}
-		(void) listen(Test_socket, 5);
+		(void) listen(contactsock, 5);
 	}
 
-	fdset[2].fd = Test_socket;
+	fdset[2].fd = contactsock;
 	fdset[2].events = POLLIN;
 #else
 	fdset[2].fd = -1;
@@ -830,9 +884,9 @@ cleanup(int exitval)
 		(void) fclose(pp->p_output);
 	}
 #endif
-	(void) close(Socket);
+	(void) close(huntsock);
 #ifdef AF_UNIX_HACK
-	(void) unlink(Sock_name);
+	(void) unlink(huntsockpath);
 #endif
 
 	exit(exitval);
@@ -859,7 +913,7 @@ send_stats(void)
 #else
 	socklen = sizeof sockstruct - 1;
 #endif
-	s = accept(Status, (struct sockaddr *) &sockstruct, &socklen);
+	s = accept(statsock, (struct sockaddr *) &sockstruct, &socklen);
 	if (s < 0) {
 		if (errno == EINTR)
 			return;

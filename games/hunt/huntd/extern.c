@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.c,v 1.9 2014/03/29 21:55:59 dholland Exp $	*/
+/*	$NetBSD: extern.c,v 1.10 2014/03/30 00:26:58 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: extern.c,v 1.9 2014/03/29 21:55:59 dholland Exp $");
+__RCSID("$NetBSD: extern.c,v 1.10 2014/03/30 00:26:58 dholland Exp $");
 #endif /* not lint */
 
 #include "hunt.h"
@@ -47,7 +47,6 @@ char Orig_maze[HEIGHT][WIDTH2];		/* the original maze */
 
 struct pollfd fdset[3+MAXPL+MAXMON];
 int Nplayer = 0;			/* number of players */
-int Socket;				/* main socket */
 int See_over[NASCII];			/* lookup table for determining whether
 					 * character represents "transparent"
 					 * item */
