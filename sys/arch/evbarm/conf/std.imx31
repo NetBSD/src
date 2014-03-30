@@ -1,4 +1,4 @@
-#	$NetBSD: std.imx31,v 1.8 2013/11/01 18:41:06 skrll Exp $
+#	$NetBSD: std.imx31,v 1.9 2014/03/30 23:14:15 matt Exp $
 #
 # standard NetBSD/evbarm options for FreeScale I.MX31
 
@@ -13,6 +13,13 @@ makeoptions	CPUFLAGS="-march=armv6k -mtune=arm1136j-s -mfpu=vfp"
 
 options 	ARM11_PMC
 options 	ARM11_CACHE_WRITE_THROUGH
+options 	ARM_HAS_VBAR
+options 	FPU_VFP
+options 	__HAVE_CPU_COUNTER
+options 	__HAVE_FAST_SOFTINTS            # should be in types.h
+options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
+options 	TPIDRPRW_IS_CURCPU
+
 
 makeoptions	LOADADDRESS="0x80100000"
 makeoptions	BOARDTYPE="imx31"
