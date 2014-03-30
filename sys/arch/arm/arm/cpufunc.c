@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.142 2014/03/29 23:44:37 matt Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.143 2014/03/30 08:36:21 skrll Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.142 2014/03/29 23:44:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.143 2014/03/30 08:36:21 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -854,7 +854,7 @@ struct cpu_functions arm1176_cpufuncs = {
 
 	.cf_control		= cpufunc_control,
 	.cf_domains		= cpufunc_domains,
-	.cf_setttb		= arm11x6_setttb,
+	.cf_setttb		= arm11_setttb,
 	.cf_faultstatus		= cpufunc_faultstatus,
 	.cf_faultaddress	= cpufunc_faultaddress,
 
