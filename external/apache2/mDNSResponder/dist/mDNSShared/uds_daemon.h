@@ -60,6 +60,7 @@ extern int CountPeerRegistrations(mDNS *const m, ServiceRecordSet *const srs);
 extern void machserver_automatic_browse_domain_changed(const domainname *d, mDNSBool add);
 extern void machserver_automatic_registration_domain_changed(const domainname *d, mDNSBool add);
 // External support
+extern void mDNSInitPacketFilter(void);
 extern void external_start_browsing_for_service(mDNS *const m, const domainname *const type, DNS_TypeValues qtype);
 extern void external_stop_browsing_for_service(mDNS *const m, const domainname *const type, DNS_TypeValues qtype);
 extern void external_start_advertising_service(const ResourceRecord *const resourceRecord);
