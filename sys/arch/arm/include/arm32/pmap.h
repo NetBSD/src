@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.126 2014/03/30 15:50:51 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.127 2014/03/31 01:35:05 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -104,7 +104,7 @@
  * user and kernel address spaces.
  */      
 #if KERNEL_BASE != 0x80000000
-#error ARMv6 or later systems must have a KERNEL_BASE of 0x8000000
+#error ARMv6 or later systems must have a KERNEL_BASE of 0x80000000
 #endif  
 #endif  /* ARM_MMU_EXTENDED */
 
