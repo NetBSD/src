@@ -1,4 +1,4 @@
-#	$NetBSD: files.playstation2,v 1.20 2014/03/31 11:25:49 martin Exp $
+#	$NetBSD: files.playstation2,v 1.21 2014/03/31 11:43:53 martin Exp $
 
 maxpartitions 8
 
@@ -25,7 +25,7 @@ file arch/playstation2/playstation2/machdep.c
 file arch/playstation2/playstation2/sifbios.c
 file arch/mips/mips/mips3_clock.c
 
-file common/bus_dma/bus_dmamem_common.c
+file dev/bus_dma/bus_dmamem_common.c
 
 file dev/kloader.c					kloader
 file arch/playstation2/playstation2/kloader_machdep.c	kloader

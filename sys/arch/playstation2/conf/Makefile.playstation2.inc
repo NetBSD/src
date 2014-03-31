@@ -1,20 +1,25 @@
-#	$NetBSD: Makefile.playstation2.inc,v 1.4 2014/03/31 11:25:49 martin Exp $
+#	$NetBSD: Makefile.playstation2.inc,v 1.5 2014/03/31 11:43:53 martin Exp $
 
-EETOOLDIR	=	/usr/pkg/cross-ps2
-TARGET	=	mipsEEel-netbsd
+.if !defined(TOOLCHAIN_MISSING) || ${TOOLCHAIN_MISSING}=="no"
+.error please do not run "make" directly, use sh ../../conf/build.playstation2.sh instead
+.endif
 
-CC	=	${EETOOLDIR}/bin/${TARGET}-gcc
-LD	=	${EETOOLDIR}/bin/${TARGET}-ld
-CXX	=	${EETOOLDIR}/bin/${TARGET}-g++
-AS	=	${EETOOLDIR}/bin/${TARGET}-as
-CPP	=	${EETOOLDIR}/bin/${TARGET}-cpp
-RANLIB	=	${EETOOLDIR}/bin/${TARGET}-ranlib
-AR	=	${EETOOLDIR}/bin/${TARGET}-ar
-NM	=	${EETOOLDIR}/bin/${TARGET}-nm
-SIZE	=	${EETOOLDIR}/bin/${TARGET}-size
-STRIP	=	${EETOOLDIR}/bin/${TARGET}-strip
+# working around makesystem bugs: redefine CC and friends here or it does
+# not properly get picked up by mkdep in sub-makes for "make depend" of
+# libkern and friends - XXX fix this
+PREFIX=/usr/pkg
+PLATFORM=mips--netbsdelf
 
-CFLAGS+= -mcpu=r5900 -mips1 -fno-pic \
-		-D__NetBSD__ -Ulinux -U__linux__ -U__linux
-AFLAGS+= -mcpu=r5900 -mips1 -fno-pic \
-		-D__NetBSD__ -Ulinux -U__linux__ -U__linux
+CC=${PREFIX}/bin/${PLATFORM}-gcc
+CPP=${PREFIX}/bin/${PLATFORM}-cpp
+AS=${PREFIX}/bin/${PLATFORM}-as
+AR=${PREFIX}/bin/${PLATFORM}-ar
+LD=${PREFIX}/bin/${PLATFORM}-ld
+RANLIB=${PREFIX}/bin/${PLATFORM}-ranlib
+NM=${PREFIX}/bin/${PLATFORM}-nm
+SIZE=${PREFIX}/bin/${PLATFORM}-size
+STRIP=${PREFIX}/bin/${PLATFORM}-strip
+
+# Playstation2 uses 128 bit access, which currently requires n32 ABI
+CFLAGS+= -mabi=n32 -march=r5900 -fno-pic
+AFLAGS+= -mabi=n32 -march=r5900 -fno-pic
