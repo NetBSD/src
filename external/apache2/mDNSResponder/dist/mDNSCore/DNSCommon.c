@@ -989,8 +989,31 @@ mDNSexport void IncrementLabelSuffix(domainlabel *name, mDNSBool RichText)
 // Set up a AuthRecord with sensible default values.
 // These defaults may be overwritten with new values before mDNS_Register is called
 mDNSexport void mDNS_SetupResourceRecord(AuthRecord *rr, RData *RDataStorage, mDNSInterfaceID InterfaceID,
-	mDNSu16 rrtype, mDNSu32 ttl, mDNSu8 RecordType, mDNSRecordCallback Callback, void *Context)
+	mDNSu16 rrtype, mDNSu32 ttl, mDNSu8 RecordType, AuthRecType artype, mDNSRecordCallback Callback, void *Context)
 	{
+	//
+	// LocalOnly auth record can be created with LocalOnly InterfaceID or a valid InterfaceID.
+	// Most of the applications normally create with LocalOnly InterfaceID and we store them as
+	// such, so that we can deliver the response to questions that specify LocalOnly InterfaceID.
+	// LocalOnly resource records can also be created with valid InterfaceID which happens today
+	// when we create LocalOnly records for /etc/hosts.
+
+	if (InterfaceID == mDNSInterface_LocalOnly && artype != AuthRecordLocalOnly)
+		{
+		LogMsg("mDNS_SetupResourceRecord: ERROR!! Mismatch LocalOnly record InterfaceID %p called with artype %d", InterfaceID, artype);
+		return;
+		}
+	else if (InterfaceID == mDNSInterface_P2P && artype != AuthRecordP2P)
+		{
+		LogMsg("mDNS_SetupResourceRecord: ERROR!! Mismatch P2P record InterfaceID %p called with artype %d", InterfaceID, artype);
+		return;
+		}
+	else if (!InterfaceID && (artype == AuthRecordP2P || artype == AuthRecordLocalOnly))
+		{
+		LogMsg("mDNS_SetupResourceRecord: ERROR!! Mismatch InterfaceAny record InterfaceID %p called with artype %d", InterfaceID, artype);
+		return;
+		}
+
 	// Don't try to store a TTL bigger than we can represent in platform time units
 	if (ttl > 0x7FFFFFFFUL / mDNSPlatformOneSecond)
 		ttl = 0x7FFFFFFFUL / mDNSPlatformOneSecond;
@@ -1033,6 +1056,7 @@ mDNSexport void mDNS_SetupResourceRecord(AuthRecord *rr, RData *RDataStorage, mD
 	rr->AddressProxy      = zeroAddr;
 	rr->TimeRcvd          = 0;
 	rr->TimeExpire        = 0;
+	rr->ARType            = artype;
 
 	// Field Group 3: Transient state for Authoritative Records (set in mDNS_Register_internal)
 	// Field Group 4: Transient uDNS state for Authoritative Records (set in mDNS_Register_internal)
@@ -1074,6 +1098,12 @@ mDNSexport void mDNS_SetupQuestion(DNSQuestion *const q, const mDNSInterfaceID I
 	q->ForceMCast          = mDNSfalse;
 	q->ReturnIntermed      = mDNSfalse;
 	q->SuppressUnusable    = mDNSfalse;
+	q->SearchListIndex     = 0;
+	q->AppendSearchDomains = 0;
+	q->RetryWithSearchDomains = mDNSfalse;
+	q->TimeoutQuestion     = 0;
+	q->WakeOnResolve       = 0;
+	q->qnameOrig           = mDNSNULL;
 	q->QuestionCallback    = callback;
 	q->QuestionContext     = context;
 	}
@@ -1186,6 +1216,13 @@ mDNSexport mDNSBool SameRDataBody(const ResourceRecord *const r1, const RDataBod
 
 mDNSexport mDNSBool SameNameRecordAnswersQuestion(const ResourceRecord *const rr, const DNSQuestion *const q)
 	{
+	// LocalOnly/P2P questions can be answered with AuthRecordAny in this function. LocalOnly/P2P records
+	// are handled in LocalOnlyRecordAnswersQuestion
+	if ((rr->InterfaceID == mDNSInterface_LocalOnly) || (rr->InterfaceID == mDNSInterface_P2P))
+		{
+		LogMsg("SameNameRecordAnswersQuestion: ERROR!! called with LocalOnly ResourceRecord %p, Question %p", rr->InterfaceID, q->InterfaceID);
+		return mDNSfalse;
+		}
 	if (rr->InterfaceID &&
 		q ->InterfaceID && q->InterfaceID != mDNSInterface_LocalOnly &&
 		rr->InterfaceID != q->InterfaceID) return(mDNSfalse);
@@ -1205,6 +1242,14 @@ mDNSexport mDNSBool SameNameRecordAnswersQuestion(const ResourceRecord *const rr
 
 mDNSexport mDNSBool ResourceRecordAnswersQuestion(const ResourceRecord *const rr, const DNSQuestion *const q)
 	{
+	// LocalOnly/P2P questions can be answered with AuthRecordAny in this function. LocalOnly/P2P records
+	// are handled in LocalOnlyRecordAnswersQuestion
+	if ((rr->InterfaceID == mDNSInterface_LocalOnly) || (rr->InterfaceID == mDNSInterface_P2P))
+		{
+		LogMsg("ResourceRecordAnswersQuestion: ERROR!! called with LocalOnly/P2P ResourceRecord %p, Question %p", rr->InterfaceID, q->InterfaceID);
+		return mDNSfalse;
+		}
+
 	if (rr->InterfaceID &&
 		q ->InterfaceID && q->InterfaceID != mDNSInterface_LocalOnly &&
 		rr->InterfaceID != q->InterfaceID) return(mDNSfalse);
@@ -1213,11 +1258,83 @@ mDNSexport mDNSBool ResourceRecordAnswersQuestion(const ResourceRecord *const rr
 	if (!rr->InterfaceID && rr->rDNSServer != q->qDNSServer) return(mDNSfalse);
 
 	// If ResourceRecord received via multicast, but question was unicast, then shouldn't use record to answer this question.
-	// This also covers the case where the ResourceRecord is mDNSInterface_LocalOnly and the question is expecting a unicast
-	// DNS response. We don't want a local process to be able to create a fake LocalOnly address record for "www.bigbank.com"
-	// which would then cause other applications (e.g. Safari) to connect to the wrong address. If we decide to support this later,
-	// the restrictions need to be at least as strict as the restrictions on who can edit /etc/hosts and put fake addresses there.
 	if (rr->InterfaceID && !mDNSOpaque16IsZero(q->TargetQID)) return(mDNSfalse);
+
+	// RR type CNAME matches any query type. QTYPE ANY matches any RR type. QCLASS ANY matches any RR class.
+	if (!RRTypeAnswersQuestionType(rr,q->qtype)) return(mDNSfalse);
+	if (rr->rrclass != q->qclass && q->qclass != kDNSQClass_ANY) return(mDNSfalse);
+
+	return(rr->namehash == q->qnamehash && SameDomainName(rr->name, &q->qname));
+	}
+
+// We have a separate function to handle LocalOnly AuthRecords because they can be created with
+// a valid InterfaceID (e.g., scoped /etc/hosts) and can be used to answer unicast questions unlike
+// multicast resource records (which has a valid InterfaceID) which can't be used to answer
+// unicast questions. ResourceRecordAnswersQuestion/SameNameRecordAnswersQuestion can't tell whether
+// a resource record is multicast or LocalOnly by just looking at the ResourceRecord because
+// LocalOnly records are truly identified by ARType in the AuthRecord.  As P2P and LocalOnly record
+// are kept in the same hash table, we use the same function to make it easy for the callers when
+// they walk the hash table to answer LocalOnly/P2P questions
+//
+mDNSexport mDNSBool LocalOnlyRecordAnswersQuestion(AuthRecord *const ar, const DNSQuestion *const q)
+	{
+	ResourceRecord *rr = &ar->resrec;
+	
+	// mDNSInterface_Any questions can be answered with LocalOnly/P2P records in this function. AuthRecord_Any
+	// records are handled in ResourceRecordAnswersQuestion/SameNameRecordAnswersQuestion
+	if (RRAny(ar))
+		{
+		LogMsg("LocalOnlyRecordAnswersQuestion: ERROR!! called with regular AuthRecordAny %##s", rr->name->c);
+		return mDNSfalse;
+		}
+		
+	// Questions with mDNSInterface_LocalOnly InterfaceID should be answered with all resource records that are
+	// *local* to the machine. These include resource records that have InterfaceID set to mDNSInterface_LocalOnly,
+	// mDNSInterface_Any and any other real InterfaceID. Hence, LocalOnly questions should not be checked against
+	// the InterfaceID in the resource record.
+	//
+	// mDNSInterface_Unicast does not indicate any scope and hence treat them like mDNSInterface_Any.
+
+	if (rr->InterfaceID && 
+		q->InterfaceID && q->InterfaceID != mDNSInterface_LocalOnly && q->InterfaceID != mDNSInterface_Unicast &&
+		rr->InterfaceID != q->InterfaceID) return(mDNSfalse);
+
+	// Entries in /etc/hosts are added as LocalOnly resource records. The LocalOnly resource records
+	// may have a scope e.g., fe80::1%en0. The question may be scoped or not: the InterfaceID may be set
+	// to mDNSInterface_Any, mDNSInterface_LocalOnly or a real InterfaceID (scoped). 
+	//
+	// 1) Question: Any, LocalOnly Record: no scope. This question should be answered with this record.
+	//
+	// 2) Question: Any, LocalOnly Record: scoped.  This question should be answered with the record because
+	//    traditionally applications never specify scope e.g., getaddrinfo, but need to be able
+	//    to get to /etc/hosts entries.
+	//
+	// 3) Question: Scoped (LocalOnly or InterfaceID), LocalOnly Record: no scope. This is the inverse of (2).
+	//    If we register a LocalOnly record, we need to answer a LocalOnly question. If the /etc/hosts has a
+	//    non scoped entry, it may not make sense to answer a scoped question. But we can't tell these two
+	//    cases apart. As we currently answer LocalOnly question with LocalOnly record, we continue to do so.
+	//
+	// 4) Question: Scoped (LocalOnly or InterfaceID), LocalOnly Record: scoped. LocalOnly questions should be
+	//    answered with any resource record where as if it has a valid InterfaceID, the scope should match.
+	//
+	// (1) and (2) is bypassed because we check for a non-NULL InterfaceID above. For (3), the InterfaceID is NULL
+	// and hence bypassed above. For (4) we bypassed LocalOnly questions and checked the scope of the record
+	// against the question.
+	//
+	// For P2P, InterfaceIDs of the question and the record should match.
+
+	// If ResourceRecord received via multicast, but question was unicast, then shouldn't use record to answer this question.
+	// LocalOnly authoritative answers are exempt. LocalOnly authoritative answers are used for /etc/host entries.
+	// We don't want a local process to be able to create a fake LocalOnly address record for "www.bigbank.com" which would then
+	// cause other applications (e.g. Safari) to connect to the wrong address. The rpc to register records filters out records
+	// with names that don't end in local and have mDNSInterface_LocalOnly set.
+	//
+	// Note: The check is bypassed for LocalOnly and for P2P it is not needed as only .local records are registered and for
+	// a question to match its names, it also has to end in .local and that question can't be a unicast question (See
+	// Question_uDNS macro and its usage). As P2P does not enforce .local only registrations we still make this check
+	// and also makes it future proof.
+
+	if (ar->ARType != AuthRecordLocalOnly && rr->InterfaceID && !mDNSOpaque16IsZero(q->TargetQID)) return(mDNSfalse);
 
 	// RR type CNAME matches any query type. QTYPE ANY matches any RR type. QCLASS ANY matches any RR class.
 	if (!RRTypeAnswersQuestionType(rr,q->qtype)) return(mDNSfalse);
@@ -1228,6 +1345,13 @@ mDNSexport mDNSBool ResourceRecordAnswersQuestion(const ResourceRecord *const rr
 
 mDNSexport mDNSBool AnyTypeRecordAnswersQuestion(const ResourceRecord *const rr, const DNSQuestion *const q)
 	{
+	// LocalOnly/P2P questions can be answered with AuthRecordAny in this function. LocalOnly/P2P records
+	// are handled in LocalOnlyRecordAnswersQuestion
+	if ((rr->InterfaceID == mDNSInterface_LocalOnly) || (rr->InterfaceID == mDNSInterface_P2P))
+		{
+		LogMsg("AnyTypeRecordAnswersQuestion: ERROR!! called with LocalOnly ResourceRecord %p, Question %p", rr->InterfaceID, q->InterfaceID);
+		return mDNSfalse;
+		}
 	if (rr->InterfaceID &&
 		q ->InterfaceID && q->InterfaceID != mDNSInterface_LocalOnly &&
 		rr->InterfaceID != q->InterfaceID) return(mDNSfalse);
@@ -1245,12 +1369,20 @@ mDNSexport mDNSBool AnyTypeRecordAnswersQuestion(const ResourceRecord *const rr,
 	return(rr->namehash == q->qnamehash && SameDomainName(rr->name, &q->qname));
 	}
 
-// This is called only when the caller knows that it is a Unicast Resource Record and it is a Unicast Question
-// and hence we don't need InterfaceID checks like above. Though this may not be a big optimization, the main
-// reason we need this is that we can't compare DNSServers between the question and the resource record because
-// the resource record may not be completely initialized e.g., mDNSCoreReceiveResponse
-mDNSexport mDNSBool UnicastResourceRecordAnswersQuestion(const ResourceRecord *const rr, const DNSQuestion *const q)
+// This is called with both unicast resource record and multicast resource record. The question that
+// received the unicast response could be the regular unicast response from a DNS server or a response
+// to a mDNS QU query. The main reason we need this function is that we can't compare DNSServers between the
+// question and the resource record because the resource record is not completely initialized in
+// mDNSCoreReceiveResponse when this function is called.
+mDNSexport mDNSBool ResourceRecordAnswersUnicastResponse(const ResourceRecord *const rr, const DNSQuestion *const q)
 	{
+	// For resource records created using multicast, the InterfaceIDs have to match
+	if (rr->InterfaceID &&
+		q->InterfaceID && rr->InterfaceID != q->InterfaceID) return(mDNSfalse);
+
+	// If ResourceRecord received via multicast, but question was unicast, then shouldn't use record to answer this question.
+	if (rr->InterfaceID && !mDNSOpaque16IsZero(q->TargetQID)) return(mDNSfalse);
+
 	// RR type CNAME matches any query type. QTYPE ANY matches any RR type. QCLASS ANY matches any RR class.
 	if (!RRTypeAnswersQuestionType(rr,q->qtype)) return(mDNSfalse);
 
@@ -1746,7 +1878,7 @@ mDNSexport mDNSu8 *putZone(DNSMessage *const msg, mDNSu8 *ptr, mDNSu8 *limit, co
 mDNSexport mDNSu8 *putPrereqNameNotInUse(const domainname *const name, DNSMessage *const msg, mDNSu8 *const ptr, mDNSu8 *const end)
 	{
 	AuthRecord prereq;
-	mDNS_SetupResourceRecord(&prereq, mDNSNULL, mDNSInterface_Any, kDNSQType_ANY, kStandardTTL, 0, mDNSNULL, mDNSNULL);
+	mDNS_SetupResourceRecord(&prereq, mDNSNULL, mDNSInterface_Any, kDNSQType_ANY, kStandardTTL, 0, AuthRecordAny, mDNSNULL, mDNSNULL);
 	AssignDomainName(&prereq.namestorage, name);
 	prereq.resrec.rrtype = kDNSQType_ANY;
 	prereq.resrec.rrclass = kDNSClass_NONE;
@@ -1816,7 +1948,7 @@ mDNSexport mDNSu8 *putDeleteAllRRSets(DNSMessage *msg, mDNSu8 *ptr, const domain
 mDNSexport mDNSu8 *putUpdateLease(DNSMessage *msg, mDNSu8 *end, mDNSu32 lease)
 	{
 	AuthRecord rr;
-	mDNS_SetupResourceRecord(&rr, mDNSNULL, mDNSInterface_Any, kDNSType_OPT, kStandardTTL, kDNSRecordTypeKnownUnique, mDNSNULL, mDNSNULL);
+	mDNS_SetupResourceRecord(&rr, mDNSNULL, mDNSInterface_Any, kDNSType_OPT, kStandardTTL, kDNSRecordTypeKnownUnique, AuthRecordAny, mDNSNULL, mDNSNULL);
 	rr.resrec.rrclass    = NormalMaxDNSMessageData;
 	rr.resrec.rdlength   = sizeof(rdataOPT);	// One option in this OPT record
 	rr.resrec.rdestimate = sizeof(rdataOPT);
@@ -1831,7 +1963,7 @@ mDNSexport mDNSu8 *putUpdateLease(DNSMessage *msg, mDNSu8 *end, mDNSu32 lease)
 mDNSexport mDNSu8 *putUpdateLeaseWithLimit(DNSMessage *msg, mDNSu8 *end, mDNSu32 lease, mDNSu8 *limit)
 	{
 	AuthRecord rr;
-	mDNS_SetupResourceRecord(&rr, mDNSNULL, mDNSInterface_Any, kDNSType_OPT, kStandardTTL, kDNSRecordTypeKnownUnique, mDNSNULL, mDNSNULL);
+	mDNS_SetupResourceRecord(&rr, mDNSNULL, mDNSInterface_Any, kDNSType_OPT, kStandardTTL, kDNSRecordTypeKnownUnique, AuthRecordAny, mDNSNULL, mDNSNULL);
 	rr.resrec.rrclass    = NormalMaxDNSMessageData;
 	rr.resrec.rdlength   = sizeof(rdataOPT);	// One option in this OPT record
 	rr.resrec.rdestimate = sizeof(rdataOPT);
@@ -1850,7 +1982,7 @@ mDNSexport mDNSu8 *putHINFO(const mDNS *const m, DNSMessage *const msg, mDNSu8 *
 		mDNSu8 *h = hinfo.rdatastorage.u.data;
 		mDNSu16 len = 2 + m->HIHardware.c[0] + m->HISoftware.c[0];
 		mDNSu8 *newptr;
-		mDNS_SetupResourceRecord(&hinfo, mDNSNULL, mDNSInterface_Any, kDNSType_HINFO, 0, kDNSRecordTypeUnique, mDNSNULL, mDNSNULL);
+		mDNS_SetupResourceRecord(&hinfo, mDNSNULL, mDNSInterface_Any, kDNSType_HINFO, 0, kDNSRecordTypeUnique, AuthRecordAny, mDNSNULL, mDNSNULL);
 		AppendDomainLabel(&hinfo.namestorage, &m->hostlabel);
 		AppendDomainName (&hinfo.namestorage, &authInfo->domain);
 		hinfo.resrec.rroriginalttl = 0;
@@ -2593,6 +2725,7 @@ mDNSlocal mDNSs32 GetNextScheduledEvent(const mDNS *const m)
 		}
 	if (m->NewLocalOnlyQuestions)                     return(m->timenow);
 	if (m->NewLocalRecords && AnyLocalRecordReady(m)) return(m->timenow);
+	if (m->NewLocalOnlyRecords)                       return(m->timenow);
 	if (m->SPSProxyListChanged)                       return(m->timenow);
 	if (m->LocalRemoveEvents)                         return(m->timenow);
 
@@ -2618,12 +2751,13 @@ mDNSlocal mDNSs32 GetNextScheduledEvent(const mDNS *const m)
 		if (e - m->NextScheduledProbe    > 0) e = m->NextScheduledProbe;
 		if (e - m->NextScheduledResponse > 0) e = m->NextScheduledResponse;
 		}
-
+	if (e - m->NextScheduledStopTime > 0) e = m->NextScheduledStopTime;
 	return(e);
 	}
 
 mDNSexport void ShowTaskSchedulingError(mDNS *const m)
 	{
+	AuthRecord *rr;
 	mDNS_Lock(m);
 
 	LogMsg("Task Scheduling Error: Continuously busy for more than a second");
@@ -2640,9 +2774,11 @@ mDNSexport void ShowTaskSchedulingError(mDNS *const m)
 
 	if (m->NewLocalRecords)
 		{
-		AuthRecord *rr = AnyLocalRecordReady(m);
+		rr = AnyLocalRecordReady(m);
 		if (rr) LogMsg("Task Scheduling Error: NewLocalRecords %s", ARDisplayString(m, rr));
 		}
+	
+	if (m->NewLocalOnlyRecords) LogMsg("Task Scheduling Error: NewLocalOnlyRecords");
 
 	if (m->SPSProxyListChanged) LogMsg("Task Scheduling Error: SPSProxyListChanged");
 	if (m->LocalRemoveEvents)   LogMsg("Task Scheduling Error: LocalRemoveEvents");
