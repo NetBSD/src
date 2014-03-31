@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.21 2014/03/31 11:25:49 martin Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.22 2014/03/31 11:42:17 martin Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.21 2014/03/31 11:25:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22 2014/03/31 11:42:17 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.21 2014/03/31 11:25:49 martin Exp $");
 #define _PLAYSTATION2_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 
-#include <common/bus_dma/bus_dmamem_common.h>
+#include <dev/bus_dma/bus_dmamem_common.h>
 
 #include <uvm/uvm_extern.h>
 
