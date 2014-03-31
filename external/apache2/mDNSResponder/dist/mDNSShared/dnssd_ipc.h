@@ -40,6 +40,7 @@
 #	define dnssd_SocketValid(s) ((s) != INVALID_SOCKET)
 #	define dnssd_EWOULDBLOCK	WSAEWOULDBLOCK
 #	define dnssd_EINTR			WSAEINTR
+#	define dnssd_ECONNRESET		WSAECONNRESET
 #	define dnssd_sock_t			SOCKET
 #	define dnssd_socklen_t		int
 #	define dnssd_close(sock)	closesocket(sock)
@@ -63,6 +64,7 @@ extern char *win32_strerror(int inErrorCode);
 #	define dnssd_SocketValid(s) ((s) >= 0)
 #	define dnssd_EWOULDBLOCK	EWOULDBLOCK
 #	define dnssd_EINTR			EINTR
+#	define dnssd_ECONNRESET		ECONNRESET
 #	define dnssd_EPIPE			EPIPE
 #	define dnssd_sock_t			int
 #	define dnssd_socklen_t		unsigned int
@@ -104,7 +106,10 @@ extern char *win32_strerror(int inErrorCode);
 // structures correctly anyway, so a plain "struct" is usually fine. In the event that structures are not packed
 // correctly, our compile-time assertion checks will catch it and prevent inadvertent generation of non-working code.
 #ifndef packedstruct
- #if ((__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ >= 9)))
+ #ifdef __packed
+  #define packedstruct struct __packed
+  #define packedunion  union  __packed
+ #elif ((__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ >= 9)))
   #define packedstruct struct __attribute__((__packed__))
   #define packedunion  union  __attribute__((__packed__))
  #else
@@ -116,7 +121,7 @@ extern char *win32_strerror(int inErrorCode);
 typedef enum
     {
     request_op_none = 0,	// No request yet received on this connection
-    connection_request = 1,	// connected socket via DNSServiceCreateConnection()
+    connection_request = 1,	// connected socket via DNSServiceConnect()
     reg_record_request,		// reg/remove record only valid for connected sockets
     remove_record_request,
     enumeration_request,

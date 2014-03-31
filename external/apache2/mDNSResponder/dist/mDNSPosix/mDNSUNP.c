@@ -55,7 +55,7 @@
 #endif
 
 #if defined(AF_INET6) && HAVE_IPV6 && !HAVE_LINUX && !defined(sun)
-#if !defined(__NetBSD__)
+#if defined(__FreeBSD__) || defined(__DragonFly__)
 #include <net/if_var.h>
 #endif
 #include <netinet/in_var.h>
@@ -277,6 +277,24 @@ struct ifi_info *get_ifi_info(int family, int doaliases)
         flags = ifrcopy.ifr_flags;
         if ((flags & IFF_UP) == 0)
             continue;   /* ignore if interface not up */
+
+	/* Skip addresses we can't use */
+#ifdef SIOCGIFAFLAG_IN6
+        if (ifr->ifr_addr.sa_family == AF_INET6) {
+		struct in6_ifreq ifr6;
+
+		if (sockf6 == -1)
+			sockf6 = socket(AF_INET6, SOCK_DGRAM, 0);
+		memset(&ifr6, 0, sizeof(ifr6));
+		memcpy(&ifr6.ifr_name, &ifr->ifr_name, sizeof(ifr6.ifr_name));
+		memcpy(&ifr6.ifr_addr, &ifr->ifr_addr, sizeof(ifr6.ifr_addr));
+		if (ioctl(sockf6, SIOCGIFAFLAG_IN6, &ifr6) < 0)
+			goto gotError;
+		if (ifr6.ifr_ifru.ifru_flags6 &
+		    (IN6_IFF_NOTREADY | IN6_IFF_DETACHED))
+			continue;
+	}
+#endif
 
         ifi = (struct ifi_info*)calloc(1, sizeof(struct ifi_info));
         if (ifi == NULL) {

@@ -47,7 +47,12 @@ extern int daemon(int, int);
 #include "mDNSPosix.h"
 #include "mDNSUNP.h"		// For daemon()
 #include "uds_daemon.h"
+#include "DNSCommon.h"
 #include "PlatformCommon.h"
+
+#ifndef MDNSD_USER
+#define MDNSD_USER "nobody"
+#endif
 
 #define CONFIG_FILE "/etc/mdnsd.conf"
 static domainname DynDNSZone;                // Default wide-area zone for service registration
@@ -89,8 +94,10 @@ static void Reconfigure(mDNS *m)
 	mDNSAddr DynDNSIP;
 	const mDNSAddr dummy = { mDNSAddrType_IPv4, { { { 1, 1, 1, 1 } } } };;
 	mDNS_SetPrimaryInterfaceInfo(m, NULL, NULL, NULL);
+        mDNS_Lock(m);
 	if (ParseDNSServers(m, uDNS_SERVERS_FILE) < 0)
 		LogMsg("Unable to parse DNS server list. Unicast DNS-SD unavailable");
+        mDNS_Unlock(m);
 	ReadDDNSSettingsFromConfFile(m, CONFIG_FILE, &DynDNSHostname, &DynDNSZone, NULL);
 	mDNSPlatformSourceAddrForDest(&DynDNSIP, &dummy);
 	if (DynDNSHostname.c[0]) mDNS_AddDynDNSHostName(m, &DynDNSHostname, NULL, NULL);
@@ -121,8 +128,40 @@ mDNSlocal void ParseCmdLinArgs(int argc, char **argv)
 mDNSlocal void DumpStateLog(mDNS *const m)
 // Dump a little log of what we've been up to.
 	{
+	DNSServer *s;
+        PosixNetworkInterface *i;
+
 	LogMsg("---- BEGIN STATE LOG ----");
 	udsserver_info(m);
+
+        LogMsgNoIdent("----- Network Interfaces -------");
+        for (i = (PosixNetworkInterface*)(m->HostInterfaces);
+        i; i = (PosixNetworkInterface *)(i->coreIntf.next)) {
+            LogMsg("%p %p %d %s%s%s%s%s %-8s %#a", i,
+            (void *)(i->coreIntf.InterfaceID), i->index,
+            i->coreIntf.InterfaceActive ? "-" : "D",
+            i->coreIntf.IPv4Available ? "4" : "-",
+            i->coreIntf.IPv6Available ? "6" : "-",
+            i->coreIntf.Advertise ? "A" : "-",
+            i->coreIntf.McastTxRx ? "M" : "-",
+            i->intfName, &(i->coreIntf.ip));
+        }
+        
+        LogMsgNoIdent("--------- DNS Servers ----------");
+        if (!mDNSStorage.DNSServers) LogMsgNoIdent("<None>");
+        else
+                {               
+                for (s = m->DNSServers; s; s = s->next)
+                        {
+                        LogMsgNoIdent("DNS Server %##s %#a:%d %s",
+                                s->domain.c, &s->addr, mDNSVal16(s->port),
+                                s->teststate == DNSServer_Untested ? "(Untested)" :
+                                s->teststate == DNSServer_Passed   ? ""           :
+                                s->teststate == DNSServer_Failed   ? "(Failed)"   :
+                                s->teststate == DNSServer_Disabled ? "(Disabled)" : "(Unknown state)");
+                        }
+                }               
+
 	LogMsg("----  END STATE LOG  ----");
 	}
 
@@ -134,6 +173,10 @@ mDNSlocal mStatus MainLoop(mDNS *m) // Loop until we quit.
 	mDNSPosixListenForSignalInEventLoop(SIGINT);
 	mDNSPosixListenForSignalInEventLoop(SIGTERM);
 	mDNSPosixListenForSignalInEventLoop(SIGUSR1);
+#ifdef HAVE_SIGINFO
+	mDNSPosixListenForSignalInEventLoop(SIGUSR2);
+	mDNSPosixListenForSignalInEventLoop(SIGINFO);
+#endif
 	mDNSPosixListenForSignalInEventLoop(SIGPIPE);
 	mDNSPosixListenForSignalInEventLoop(SIGHUP) ;
 
@@ -160,7 +203,22 @@ mDNSlocal mStatus MainLoop(mDNS *m) // Loop until we quit.
 		(void) mDNSPosixRunEventLoopOnce(m, &timeout, &signals, &gotData);
 
 		if (sigismember(&signals, SIGHUP )) Reconfigure(m);
+#ifdef HAVE_SIGINFO
+                /* use OSX-compatible signals since we can, and gain enhanced debugging */
+		if (sigismember(&signals, SIGINFO)) DumpStateLog(m);
+		if (sigismember(&signals, SIGUSR1))
+			{
+		        mDNS_LoggingEnabled = mDNS_LoggingEnabled ? 0 : 1;
+		        LogMsg("SIGUSR1: Logging %s", mDNS_LoggingEnabled ? "Enabled" : "Disabled");
+			}
+		if (sigismember(&signals, SIGUSR2))
+			{
+			mDNS_PacketLoggingEnabled = mDNS_PacketLoggingEnabled ? 0 : 1;
+			LogMsg("SIGUSR2: Packet Logging %s", mDNS_PacketLoggingEnabled ? "Enabled" : "Disabled");
+			}
+#else
 		if (sigismember(&signals, SIGUSR1)) DumpStateLog(m);
+#endif
 		// SIGPIPE happens when we try to write to a dead client; death should be detected soon in request_callback() and cleaned up.
 		if (sigismember(&signals, SIGPIPE)) LogMsg("Received SIGPIPE - ignoring");
 		if (sigismember(&signals, SIGINT) || sigismember(&signals, SIGTERM)) break;
@@ -187,11 +245,21 @@ int main(int argc, char **argv)
 	// Now that we're finished with anything privileged, switch over to running as "nobody"
 	if (mStatus_NoError == err)
 		{
-		const struct passwd *pw = getpwnam("nobody");
+		const struct passwd *pw = getpwnam(MDNSD_USER);
 		if (pw != NULL)
+		        {
+			setgid(pw->pw_gid);
 			setuid(pw->pw_uid);
+		        }
 		else
-			LogMsg("WARNING: mdnsd continuing as root because user \"nobody\" does not exist");
+#ifdef MDNSD_NOROOT
+                        {
+    			LogMsg("WARNING: mdnsd exiting because user \""MDNSD_USER"\" does not exist");
+                        err = mStatus_Invalid;
+                        }
+#else
+    			LogMsg("WARNING: mdnsd continuing as root because user \""MDNSD_USER"\" does not exist");
+#endif
 		}
 
 	if (mStatus_NoError == err)
@@ -250,9 +318,9 @@ asm(".desc ___crashreporter_info__, 0x10");
 
 // For convenience when using the "strings" command, this is the last thing in the file
 #if mDNSResponderVersion > 1
-mDNSexport const char mDNSResponderVersionString_SCCS[] = "@(#) mDNSResponder-" STRINGIFY(mDNSResponderVersion) " (" __DATE__ " " __TIME__ ")";
+mDNSexport const char mDNSResponderVersionString_SCCS[] = "@(#) mDNSResponder-" STRINGIFY(mDNSResponderVersion);
 #elif MDNS_VERSIONSTR_NODTS
 mDNSexport const char mDNSResponderVersionString_SCCS[] = "@(#) mDNSResponder (Engineering Build)";
 #else
-mDNSexport const char mDNSResponderVersionString_SCCS[] = "@(#) mDNSResponder (Engineering Build) (" __DATE__ " " __TIME__ ")";
+mDNSexport const char mDNSResponderVersionString_SCCS[] = "@(#) mDNSResponder (Engineering Build)";
 #endif
