@@ -1,4 +1,4 @@
-/*	$NetBSD: apic.c,v 1.1 2014/02/24 07:23:42 skrll Exp $	*/
+/*	$NetBSD: apic.c,v 1.2 2014/03/31 20:51:20 christos Exp $	*/
 
 /*	$OpenBSD: apic.c,v 1.14 2011/05/01 21:59:39 kettenis Exp $	*/
 
@@ -146,11 +146,9 @@ apic_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 }
 
 const char *
-apic_intr_string(void *v, pci_intr_handle_t ih)
+apic_intr_string(void *v, pci_intr_handle_t ih, char *buf, size_t len)
 {
-	static char buf[32];
-
-	snprintf(buf, sizeof(buf), "line %ld irq %ld",
+	snprintf(buf, len, "line %ld irq %ld",
 	    APIC_INT_LINE(ih), APIC_INT_IRQ(ih));
 
 	return buf;
