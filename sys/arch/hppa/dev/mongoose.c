@@ -1,4 +1,4 @@
-/*	$NetBSD: mongoose.c,v 1.2 2014/03/26 17:57:17 christos Exp $	*/
+/*	$NetBSD: mongoose.c,v 1.3 2014/03/31 20:51:20 christos Exp $	*/
 
 /*	$OpenBSD: mongoose.c,v 1.19 2010/01/01 20:28:42 kettenis Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mongoose.c,v 1.2 2014/03/26 17:57:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mongoose.c,v 1.3 2014/03/31 20:51:20 christos Exp $");
 
 #define MONGOOSE_DEBUG 9
 
@@ -205,7 +205,7 @@ union mongoose_attach_args {
 
 void mg_eisa_attach_hook(device_t, device_t, struct eisabus_attach_args *);
 int mg_intr_map(void *, u_int, eisa_intr_handle_t *);
-const char *mg_intr_string(void *, int);
+const char *mg_intr_string(void *, int, char *, size_t);
 void mg_isa_attach_hook(device_t, device_t, struct isabus_attach_args *);
 void mg_isa_detach_hook(isa_chipset_tag_t, device_t);
 void *mg_intr_establish(void *, int, int, int, int (*)(void *), void *);
@@ -255,11 +255,9 @@ mg_intr_map(void *v, u_int irq, eisa_intr_handle_t *ehp)
 }
 
 const char *
-mg_intr_string(void *v, int irq)
+mg_intr_string(void *v, int irq, char *buf, size_t len)
 {
-	static char buf[16];
-
-	snprintf (buf, sizeof(buf), "isa irq %d", irq);
+	snprintf (buf, len, "isa irq %d", irq);
 	return buf;
 }
 

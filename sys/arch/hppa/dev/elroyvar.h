@@ -1,4 +1,4 @@
-/*	$NetBSD: elroyvar.h,v 1.1 2014/02/24 07:23:42 skrll Exp $	*/
+/*	$NetBSD: elroyvar.h,v 1.2 2014/03/31 20:51:20 christos Exp $	*/
 
 /*	$OpenBSD: elroyvar.h,v 1.3 2007/06/17 14:51:21 kettenis Exp $	*/
 
@@ -50,7 +50,7 @@ struct elroy_softc {
 void apic_attach(struct elroy_softc *);
 int apic_intr(void *);
 int apic_intr_map(const struct pci_attach_args *, pci_intr_handle_t *);
-const char *apic_intr_string(void *, pci_intr_handle_t);
+const char *apic_intr_string(void *, pci_intr_handle_t, char *, size_t);
 void *apic_intr_establish(void *, pci_intr_handle_t, int,
     int (*)(void *), void *);
 void apic_intr_disestablish(void *, void *);
