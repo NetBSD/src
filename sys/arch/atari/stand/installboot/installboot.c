@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.27 2014/03/29 05:03:43 ozaki-r Exp $	*/
+/*	$NetBSD: installboot.c,v 1.28 2014/03/31 06:32:31 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -228,7 +228,7 @@ install_fd(char *devnm, struct disklabel *label)
 		machpath = milanpath;
 	else
 		machpath = stdpath;
-	size_t xxboolen = strlen(mdecpath) + strlen(machpath) + 8;
+	size_t xxbootlen = strlen(mdecpath) + strlen(machpath) + 8;
 	xxboot = alloca(xxbootlen);
 	snprintf(xxboot, xxbootlen, "%s%sfdboot", mdecpath, machpath);
 	bootxx = alloca(xxbootlen);
