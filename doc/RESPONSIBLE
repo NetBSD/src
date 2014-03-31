@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.107 2014/02/24 07:23:40 skrll Exp $
+#	$NetBSD: RESPONSIBLE,v 1.108 2014/03/31 11:25:48 martin Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -294,6 +294,7 @@ news68k		tsutsui
 newsmips	core
 next68k		core
 ofppc		garbled
+playstation2	martin
 pmax		simonb
 pmax		simonb
 pmppc		core
