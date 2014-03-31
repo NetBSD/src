@@ -129,7 +129,7 @@ mDNSexport void ReadDDNSSettingsFromConfFile(mDNS *const m, const char *const fi
 		{
 		DomainAuthInfo *info = (DomainAuthInfo*)mDNSPlatformMemAllocate(sizeof(*info));
 		// for now we assume keyname = service reg domain and we use same key for service and hostname registration
-		err = mDNS_SetSecretForDomain(m, info, domain, domain, buf, mDNSfalse);
+		err = mDNS_SetSecretForDomain(m, info, domain, domain, buf, NULL, 0, NULL);
 		if (err) LogMsg("ERROR: mDNS_SetSecretForDomain returned %d for domain %##s", err, domain->c);
 		}
 

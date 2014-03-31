@@ -164,7 +164,8 @@ extern mDNSBool SameRDataBody(const ResourceRecord *const r1, const RDataBody *c
 extern mDNSBool SameNameRecordAnswersQuestion(const ResourceRecord *const rr, const DNSQuestion *const q);
 extern mDNSBool ResourceRecordAnswersQuestion(const ResourceRecord *const rr, const DNSQuestion *const q);
 extern mDNSBool AnyTypeRecordAnswersQuestion (const ResourceRecord *const rr, const DNSQuestion *const q);
-extern mDNSBool UnicastResourceRecordAnswersQuestion(const ResourceRecord *const rr, const DNSQuestion *const q);
+extern mDNSBool ResourceRecordAnswersUnicastResponse(const ResourceRecord *const rr, const DNSQuestion *const q);
+extern mDNSBool LocalOnlyRecordAnswersQuestion(AuthRecord *const rr, const DNSQuestion *const q);
 extern mDNSu16 GetRDLength(const ResourceRecord *const rr, mDNSBool estimate);
 extern mDNSBool ValidateRData(const mDNSu16 rrtype, const mDNSu16 rdlength, const RData *const rd);
 
@@ -226,6 +227,7 @@ extern mDNSu8 *putHINFO(const mDNS *const m, DNSMessage *const msg, mDNSu8 *ptr,
 #pragma mark - DNS Message Parsing Functions
 #endif
 
+#define AuthHashSlot(X) (DomainNameHashValue(X) % AUTH_HASH_SLOTS)
 #define HashSlot(X) (DomainNameHashValue(X) % CACHE_HASH_SLOTS)
 extern mDNSu32 DomainNameHashValue(const domainname *const name);
 extern void SetNewRData(ResourceRecord *const rr, RData *NewRData, mDNSu16 rdlength);

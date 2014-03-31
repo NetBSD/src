@@ -53,6 +53,11 @@
 // 5 minutes
 #define MAX_UPDATE_REFRESH_COUNT	5
 #define MIN_UPDATE_REFRESH_TIME		(5 * 60 * mDNSPlatformOneSecond)
+
+// For questions that use kDNSServiceFlagsTimeout and we don't have a matching resolver e.g., no dns servers,
+// then use the default value of 30 seconds
+#define DEFAULT_UDNS_TIMEOUT	30 // in seconds
+
 // Entry points into unicast-specific routines
 
 extern void LLQGotZoneData(mDNS *const m, mStatus err, const ZoneData *zoneInfo);
@@ -91,7 +96,16 @@ extern void UpdateAllSRVRecords(mDNS *m);
 extern void CheckNATMappings(mDNS *m);
 
 extern mStatus         uDNS_SetupDNSConfig(mDNS *const m);
-extern mStatus         uDNS_RegisterSearchDomains(mDNS *const m);
+
+// uDNS_SetupSearchDomains by default adds search domains. It also can be called with one or
+// more values for "action" which does the following:
+//
+// -UDNS_START_WAB_QUERY - start Wide Area Bonjour (domain enumeration) queries
+
+#define UDNS_START_WAB_QUERY    0x00000001
+
+extern mStatus         uDNS_SetupSearchDomains(mDNS *const m, int action);
+extern domainname      *uDNS_GetNextSearchDomain(mDNS *const m, mDNSInterfaceID InterfaceID, mDNSs8 *searchIndex, mDNSBool ignoreDotLocal);
 
 typedef enum
 	{
