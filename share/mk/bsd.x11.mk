@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.111 2014/03/23 20:40:18 mrg Exp $
+#	$NetBSD: bsd.x11.mk,v 1.112 2014/03/31 01:59:36 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -246,7 +246,7 @@ pkgconfig-install: ${_PKGDEST.${_pkg}}
 # Add a dependancy on the configure file if it exists; this way we
 # will rebuild the .pc file if the version in configure changes.
 .if exists(${PKGDIST.${_pkg}}/configure)
-${_pkg}.pc: ${PKGDIST.${_pkg}}/configure
+${_pkg}.pc: ${PKGDIST.${_pkg}}/configure Makefile
 .endif
 
 .endfor				# }
@@ -357,7 +357,7 @@ ${_pkg}.pc: ${PKGDIST.${_pkg}}/configure
 		< ${.IMPSRC} > ${.TARGET}.tmp && \
 	mv -f ${.TARGET}.tmp ${.TARGET}
 
-CLEANDIRFILES+= ${_PKGCONFIG_FILES} ${_PKGCONFIG_FILES:C/$/.tmp/}
+CLEANFILES+= ${_PKGCONFIG_FILES} ${_PKGCONFIG_FILES:C/$/.tmp/}
 .endif
 
 #
