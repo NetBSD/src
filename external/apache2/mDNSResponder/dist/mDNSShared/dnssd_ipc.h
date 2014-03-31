@@ -40,6 +40,7 @@
 #	define dnssd_SocketValid(s) ((s) != INVALID_SOCKET)
 #	define dnssd_EWOULDBLOCK	WSAEWOULDBLOCK
 #	define dnssd_EINTR			WSAEINTR
+#	define dnssd_ECONNRESET		WSAECONNRESET
 #	define dnssd_sock_t			SOCKET
 #	define dnssd_socklen_t		int
 #	define dnssd_close(sock)	closesocket(sock)
@@ -63,6 +64,7 @@ extern char *win32_strerror(int inErrorCode);
 #	define dnssd_SocketValid(s) ((s) >= 0)
 #	define dnssd_EWOULDBLOCK	EWOULDBLOCK
 #	define dnssd_EINTR			EINTR
+#	define dnssd_ECONNRESET		ECONNRESET
 #	define dnssd_EPIPE			EPIPE
 #	define dnssd_sock_t			int
 #	define dnssd_socklen_t		unsigned int
@@ -119,7 +121,7 @@ extern char *win32_strerror(int inErrorCode);
 typedef enum
     {
     request_op_none = 0,	// No request yet received on this connection
-    connection_request = 1,	// connected socket via DNSServiceCreateConnection()
+    connection_request = 1,	// connected socket via DNSServiceConnect()
     reg_record_request,		// reg/remove record only valid for connected sockets
     remove_record_request,
     enumeration_request,
