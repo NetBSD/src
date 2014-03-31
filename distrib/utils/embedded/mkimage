@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.46 2014/03/31 17:05:03 christos Exp $
+# $NetBSD: mkimage,v 1.47 2014/03/31 18:18:29 christos Exp $
 #
 # Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -72,6 +72,7 @@ usage() {
 Usage: $PROG -h <host-arch> [-bdmx] [-K <kerneldir>] [-S <srcdir>] [-D <destdir>] [-c <custom-files-dir>] [-s <Mb size>] [<image>]
 
 -b	Boot only, no sets loaded
+-r	root device kind (sd, wd, ld)
 -d	Add the debug sets
 -m	Optimize the OS installation to mimimize disk writes for SSDs
 -x	Load the x sets too, not just the base ones
@@ -80,7 +81,7 @@ EOF
 }
 
 # First pass for options to get the host and src directories
-OPTS="K:D:S:bc:dh:ms:x"
+OPTS="K:D:S:bc:dh:mr:s:x"
 while getopts "$OPTS" f
 do
 	case $f in
@@ -108,6 +109,7 @@ selected_sets="$sets"
 dsets=false
 xsets=false
 minwrites=false
+rootdev=ld
 
 OPTIND=1
 while getopts "$OPTS" f
@@ -126,6 +128,7 @@ do
 	c)	custom="$OPTARG";;
 	h)	;;
 	m)	minwrites=true;;
+	r)	rootdev="$OPTARG";;
 	s)	size="$OPTARG";;
 	x)	xsets=true
 		selected_sets="$selected_sets $xsets"
