@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.272 2014/03/30 15:55:08 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.273 2014/03/31 01:49:04 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -216,7 +216,7 @@
 #include <arm/locore.h>
 //#include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.272 2014/03/30 15:55:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.273 2014/03/31 01:49:04 matt Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -1607,7 +1607,7 @@ pmap_free_l2_bucket(pmap_t pm, struct l2_bucket *l2b, u_int count)
 	l2b->l2b_kva = NULL;
 
 	pd_entry_t * const pdep = pmap_l1_kva(pm) + l1slot;
-	pd_entry_t pde = *pdep;
+	pd_entry_t pde __diagused = *pdep;
 
 #ifdef ARM_MMU_EXTENDED
 	/*
