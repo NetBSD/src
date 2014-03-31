@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2014/02/24 07:23:39 skrll Exp $
+#	$NetBSD: Makefile,v 1.18 2014/03/31 11:25:48 martin Exp $
 #
 # sysinst is usually built when the crunched install binary is built,
 # but can be built here as a normal program for testing.
@@ -36,6 +36,7 @@ SUBDIR += arch/mvme68k
 SUBDIR += arch/news68k
 SUBDIR += arch/newsmips
 SUBDIR += arch/ofppc
+SUBDIR += arch/playstation2
 SUBDIR += arch/pmax
 SUBDIR += arch/prep
 SUBDIR += arch/sandpoint

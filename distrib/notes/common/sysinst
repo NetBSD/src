@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.103 2014/02/24 07:23:39 skrll Exp $
+.\"	$NetBSD: sysinst,v 1.104 2014/03/31 11:25:47 martin Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,7 +49,7 @@
 .\}
 .if \n[amiga]:\n[amigappc]:\n[arc]:\n[atari]:\n[cobalt]:\n[evbmips]:\
 \n[evbppc]:\n[hppa]:\n[hpcmips]:\n[i386]:\n[macppc]:\n[ofppc]:\
-\n[sandpoint]:\n[sbmips]:\n[sgimips]:\n[x86_64] \{\
+\n[playstation2]:\n[sandpoint]:\n[sbmips]:\n[sgimips]:\n[x86_64] \{\
 .  ds part_max p
 .\}
 .if \n[acorn26]:\n[acorn32]:\n[cats]:\n[evbarm]:\n[evbppc]:\n[ews4800mips]:\
