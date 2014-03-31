@@ -1,4 +1,4 @@
-/*	$NetBSD: malta_intr.c,v 1.23 2014/03/29 19:28:28 christos Exp $	*/
+/*	$NetBSD: malta_intr.c,v 1.24 2014/03/31 20:44:19 christos Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.23 2014/03/29 19:28:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.24 2014/03/31 20:44:19 christos Exp $");
 
 #define	__INTR_PRIVATE
 
@@ -387,7 +387,7 @@ malta_pciide_compat_intr_establish(void *v, device_t dev,
 	pci_chipset_tag_t pc = pa->pa_pc; 
 	void *cookie;
 	int bus, irq;
-	char buf[PCI_IRQSTR_LEN];
+	char buf[PCI_INTRSTR_LEN];
 
 	pci_decompose_tag(pc, pa->pa_tag, &bus, NULL, NULL);
 
