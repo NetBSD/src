@@ -736,7 +736,12 @@ static void DNSSD_API qr_reply(DNSServiceRef sdref, const DNSServiceFlags flags,
 	if (errorCode)
 		{
 		if (errorCode == kDNSServiceErr_NoSuchRecord) printf("No Such Record");
-		else                                          printf("Error code %d", errorCode);
+		else if (errorCode == kDNSServiceErr_Timeout)
+			{
+			printf("No Such Record\n");
+			printf("Query Timed Out\n");
+			exit(1);
+			}
 		}
 	printf("\n");
 
@@ -947,7 +952,7 @@ static void getip(const char *const name, struct sockaddr_storage *result)
 	if (addrs) freeaddrinfo(addrs);
 	}
 
-static DNSServiceErrorType RegisterProxyAddressRecord(DNSServiceRef sdref, const char *host, const char *ip)
+static DNSServiceErrorType RegisterProxyAddressRecord(DNSServiceRef sdref, const char *host, const char *ip, DNSServiceFlags flags)
 	{
 	// Call getip() after the call DNSServiceCreateConnection().
 	// On the Win32 platform, WinSock must be initialized for getip() to succeed.
@@ -955,11 +960,12 @@ static DNSServiceErrorType RegisterProxyAddressRecord(DNSServiceRef sdref, const
 	// DNSServiceCreateConnection() is called before getip() is.
 	struct sockaddr_storage hostaddr;
 	getip(ip, &hostaddr);
+	flags |= kDNSServiceFlagsUnique;
 	if (hostaddr.ss_family == AF_INET)
-		return(DNSServiceRegisterRecord(sdref, &record, kDNSServiceFlagsUnique, opinterface, host,
+		return(DNSServiceRegisterRecord(sdref, &record, flags, opinterface, host,
 			kDNSServiceType_A,    kDNSServiceClass_IN,  4, &((struct sockaddr_in *)&hostaddr)->sin_addr,  240, MyRegisterRecordCallback, (void*)host));
 	else if (hostaddr.ss_family == AF_INET6)
-		return(DNSServiceRegisterRecord(sdref, &record, kDNSServiceFlagsUnique, opinterface, host,
+		return(DNSServiceRegisterRecord(sdref, &record, flags, opinterface, host,
 			kDNSServiceType_AAAA, kDNSServiceClass_IN, 16, &((struct sockaddr_in6*)&hostaddr)->sin6_addr, 240, MyRegisterRecordCallback, (void*)host));
 	else return(kDNSServiceErr_BadParam);
 	}
@@ -971,9 +977,8 @@ static DNSServiceErrorType RegisterProxyAddressRecord(DNSServiceRef sdref, const
 #define HexPair(P) ((HexVal((P)[0]) << 4) | HexVal((P)[1]))
 
 static DNSServiceErrorType RegisterService(DNSServiceRef *sdref,
-	const char *nam, const char *typ, const char *dom, const char *host, const char *port, int argc, char **argv)
+	const char *nam, const char *typ, const char *dom, const char *host, const char *port, int argc, char **argv, DNSServiceFlags flags)
 	{
-	DNSServiceFlags flags = 0;
 	uint16_t PortAsNumber = atoi(port);
 	Opaque16 registerPort = { { PortAsNumber >> 8, PortAsNumber & 0xFF } };
 	unsigned char txt[2048] = "";
@@ -1008,7 +1013,7 @@ static DNSServiceErrorType RegisterService(DNSServiceRef *sdref,
 	
 	//flags |= kDNSServiceFlagsAllowRemoteQuery;
 	//flags |= kDNSServiceFlagsNoAutoRename;
-	
+
 	return(DNSServiceRegister(sdref, flags, opinterface, nam, typ, dom, host, registerPort.NotAnInteger, (uint16_t) (ptr-txt), txt, reg_reply, NULL));
 	}
 
@@ -1025,6 +1030,7 @@ int main(int argc, char **argv)
 	DNSServiceErrorType err;
 	char buffer[TypeBufferSize], *typ, *dom;
 	int opi;
+	DNSServiceFlags flags = 0;
 
 	// Extract the program name from argv[0], which by convention contains the path to this executable.
 	// Note that this is just a voluntary convention, not enforced by the kernel --
@@ -1063,6 +1069,14 @@ int main(int argc, char **argv)
 		printf("Using P2P\n");
 		}
 
+	if (argc > 1 && !strcasecmp(argv[1], "-includep2p"))
+		{
+		argc--;
+		argv++;
+		flags |= kDNSServiceFlagsIncludeP2P;
+		printf("Including P2P\n");
+		}
+
 	if (argc > 2 && !strcmp(argv[1], "-i"))
 		{
 		opinterface = if_nametoindex(argv[2]);
@@ -1073,7 +1087,7 @@ int main(int argc, char **argv)
 		}
 
 	if (argc < 2) goto Fail;        // Minimum command line is the command name and one argument
-	operation = getfirstoption(argc, argv, "EFBZLRPQqCAUNTMISV"
+	operation = getfirstoption(argc, argv, "EFBZLlRPQqtCAUNTMISV"
 								#if HAS_NAT_PMP_API
 									"X"
 								#endif
@@ -1104,7 +1118,7 @@ int main(int argc, char **argv)
 					typ = gettype(buffer, typ);
 					if (dom[0] == '.' && dom[1] == 0) dom[0] = 0;   // We allow '.' on the command line as a synonym for empty string
 					printf("Browsing for %s%s%s\n", typ, dom[0] ? "." : "", dom);
-					err = DNSServiceBrowse(&client, 0, opinterface, typ, dom, browse_reply, NULL);
+					err = DNSServiceBrowse(&client, flags, opinterface, typ, dom, browse_reply, NULL);
 					break;
 
 		case 'Z':	typ = (argc < opi+1) ? "" : argv[opi+0];
@@ -1117,40 +1131,44 @@ int main(int argc, char **argv)
 					err = DNSServiceBrowse(&sc1, kDNSServiceFlagsShareConnection, opinterface, typ, dom, zonedata_browse, NULL);
 					break;
 
-		case 'L':	if (argc < opi+2) goto Fail;
-					typ = (argc < opi+2) ? ""      : argv[opi+1];
-					dom = (argc < opi+3) ? "local" : argv[opi+2];
-					typ = gettype(buffer, typ);
-					if (dom[0] == '.' && dom[1] == 0) dom = "local";   // We allow '.' on the command line as a synonym for "local"
-					printf("Lookup %s.%s.%s\n", argv[opi+0], typ, dom);
-					err = DNSServiceResolve(&client, 0, opinterface, argv[opi+0], typ, dom, resolve_reply, NULL);
-					break;
+		case 'l':
+		case 'L':	{
+					DNSServiceFlags rflags = 0;
+					if (argc < opi+2) goto Fail;
+ 					typ = (argc < opi+2) ? ""      : argv[opi+1];
+ 					dom = (argc < opi+3) ? "local" : argv[opi+2];
+ 					typ = gettype(buffer, typ);
+ 					if (dom[0] == '.' && dom[1] == 0) dom = "local";   // We allow '.' on the command line as a synonym for "local"
+ 					printf("Lookup %s.%s.%s\n", argv[opi+0], typ, dom);
+					if (operation == 'l') rflags |= kDNSServiceFlagsWakeOnResolve;
+					err = DNSServiceResolve(&client, rflags, opinterface, argv[opi+0], typ, dom, resolve_reply, NULL);
+ 					break;
+					}
 
 		case 'R':	if (argc < opi+4) goto Fail;
 					typ = (argc < opi+2) ? "" : argv[opi+1];
 					dom = (argc < opi+3) ? "" : argv[opi+2];
 					typ = gettype(buffer, typ);
 					if (dom[0] == '.' && dom[1] == 0) dom[0] = 0;   // We allow '.' on the command line as a synonym for empty string
-					err = RegisterService(&client, argv[opi+0], typ, dom, NULL, argv[opi+3], argc-(opi+4), argv+(opi+4));
+					err = RegisterService(&client, argv[opi+0], typ, dom, NULL, argv[opi+3], argc-(opi+4), argv+(opi+4), flags);
 					break;
 
 		case 'P':	if (argc < opi+6) goto Fail;
 					err = DNSServiceCreateConnection(&client_pa);
 					if (err) { fprintf(stderr, "DNSServiceCreateConnection returned %d\n", err); return(err); }
-					err = RegisterProxyAddressRecord(client_pa, argv[opi+4], argv[opi+5]);
-					//err = RegisterProxyAddressRecord(client_pa, "two", argv[opi+5]);
+					err = RegisterProxyAddressRecord(client_pa, argv[opi+4], argv[opi+5], flags);
 					if (err) break;
-					err = RegisterService(&client, argv[opi+0], gettype(buffer, argv[opi+1]), argv[opi+2], argv[opi+4], argv[opi+3], argc-(opi+6), argv+(opi+6));
-					//DNSServiceRemoveRecord(client_pa, record, 0);
-					//DNSServiceRemoveRecord(client_pa, record, 0);
+					err = RegisterService(&client, argv[opi+0], gettype(buffer, argv[opi+1]), argv[opi+2], argv[opi+4], argv[opi+3], argc-(opi+6), argv+(opi+6), flags);
 					break;
 
+		case 't':
 		case 'q':
 		case 'Q':
 		case 'C':	{
 					uint16_t rrtype, rrclass;
-					DNSServiceFlags flags = kDNSServiceFlagsReturnIntermediates;
+					flags |= kDNSServiceFlagsReturnIntermediates;
 					if (operation == 'q') flags |= kDNSServiceFlagsSuppressUnusable;
+					if (operation == 't') flags |= (kDNSServiceFlagsSuppressUnusable | kDNSServiceFlagsTimeout);
 					if (argc < opi+1) goto Fail;
 					rrtype = (argc <= opi+1) ? kDNSServiceType_A  : GetRRType(argv[opi+1]);
 					rrclass = (argc <= opi+2) ? kDNSServiceClass_IN : atoi(argv[opi+2]);
@@ -1186,8 +1204,8 @@ int main(int argc, char **argv)
 					static const char TXT1[] = "\xC" "First String"  "\xD" "Second String" "\xC" "Third String";
 					static const char TXT2[] = "\xD" "Fourth String" "\xC" "Fifth String"  "\xC" "Sixth String";
 					printf("Registering Service Test._testdualtxt._tcp.local.\n");
-					err = DNSServiceRegister(&client, 0, opinterface, "Test", "_testdualtxt._tcp.", "", NULL, registerPort.NotAnInteger, sizeof(TXT1)-1, TXT1, reg_reply, NULL);
-					if (!err) err = DNSServiceAddRecord(client, &record, 0, kDNSServiceType_TXT, sizeof(TXT2)-1, TXT2, 0);
+					err = DNSServiceRegister(&client, flags, opinterface, "Test", "_testdualtxt._tcp.", "", NULL, registerPort.NotAnInteger, sizeof(TXT1)-1, TXT1, reg_reply, NULL);
+					if (!err) err = DNSServiceAddRecord(client, &record, flags, kDNSServiceType_TXT, sizeof(TXT2)-1, TXT2, 0);
 					break;
 					}
 
