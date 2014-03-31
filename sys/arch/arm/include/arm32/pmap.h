@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.128 2014/03/31 01:48:37 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.129 2014/03/31 18:33:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -545,14 +545,20 @@ l1pte_set(pt_entry_t *pdep, pt_entry_t pde)
 static inline void
 l2pte_set(pt_entry_t *ptep, pt_entry_t pte, pt_entry_t opte)
 {
-	for (size_t k = 0; k < PAGE_SIZE / L2_S_SIZE; k++) {
-		KASSERTMSG(*ptep == opte, "%#x [*%p] != %#x", *ptep, ptep, opte);
-		*ptep++ = pte;
-		pte += L2_S_SIZE;
-		if (opte)
-			opte += L2_S_SIZE;
+	if (l1pte_lpage_p(pte)) {
+		for (size_t k = 0; k < L2_L_SIZE / L2_S_SIZE; k++) {
+			*ptep++ = pte;
+		}
+	} else {
+		for (size_t k = 0; k < PAGE_SIZE / L2_S_SIZE; k++) {
+			KASSERTMSG(*ptep == opte, "%#x [*%p] != %#x", *ptep, ptep, opte);
+			*ptep++ = pte;
+			pte += L2_S_SIZE;
+			if (opte)
+				opte += L2_S_SIZE;
+		}
 	}
-}       
+}
 
 static inline void
 l2pte_reset(pt_entry_t *ptep)
