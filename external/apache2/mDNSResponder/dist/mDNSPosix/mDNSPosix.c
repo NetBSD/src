@@ -411,6 +411,26 @@ mDNSexport void mDNSPlatformTLSTearDownCerts(void)
 	{
 	}
 
+mDNSexport void mDNSPlatformSetAllowSleep(mDNS *const m, mDNSBool allowSleep, const char *reason)
+	{
+	(void) m;
+	(void) allowSleep;
+	(void) reason;
+	}
+
+#if COMPILER_LIKES_PRAGMA_MARK
+#pragma mark -
+#pragma mark - /etc/hosts support
+#endif
+
+mDNSexport void FreeEtcHosts(mDNS *const m, AuthRecord *const rr, mStatus result)
+    {
+    (void)m;  // unused
+	(void)rr;
+	(void)result;
+	}
+
+
 #if COMPILER_LIKES_PRAGMA_MARK
 #pragma mark ***** DDNS Config Platform Functions
 #endif
@@ -482,7 +502,7 @@ mDNSexport int ParseDNSServers(mDNS *m, const char *filePath)
 			mDNSAddr DNSAddr;
 			DNSAddr.type = mDNSAddrType_IPv4;
 			DNSAddr.ip.v4.NotAnInteger = ina.s_addr;
-			mDNS_AddDNSServer(m, NULL, mDNSInterface_Any, &DNSAddr, UnicastDNSPort, mDNSfalse);
+			mDNS_AddDNSServer(m, NULL, mDNSInterface_Any, &DNSAddr, UnicastDNSPort, mDNSfalse, 0);
 			numOfServers++;
 			}
 		}  
@@ -523,9 +543,10 @@ mDNSexport mDNSInterfaceID mDNSPlatformInterfaceIDfromInterfaceIndex(mDNS *const
 	return (mDNSInterfaceID) intf;
 	}
 	
-mDNSexport mDNSu32 mDNSPlatformInterfaceIndexfromInterfaceID(mDNS *const m, mDNSInterfaceID id)
+mDNSexport mDNSu32 mDNSPlatformInterfaceIndexfromInterfaceID(mDNS *const m, mDNSInterfaceID id, mDNSBool suppressNetworkChange)
 	{
 	PosixNetworkInterface *intf;
+	(void) suppressNetworkChange; // Unused
 
 	assert(m != NULL);
 
@@ -1404,6 +1425,23 @@ mDNSexport mDNSs32  mDNSPlatformRawTime()
 mDNSexport mDNSs32 mDNSPlatformUTC(void)
 	{
 	return time(NULL);
+	}
+
+mDNSexport void mDNSPlatformSendWakeupPacket(mDNS *const m, mDNSInterfaceID InterfaceID, char *EthAddr, char *IPAddr, int iteration)
+	{
+	(void) m;
+	(void) InterfaceID;
+	(void) EthAddr;
+	(void) IPAddr;
+	(void) iteration;
+	}
+
+mDNSexport mDNSBool mDNSPlatformValidRecordForInterface(AuthRecord *rr, const NetworkInterfaceInfo *intf)
+	{
+	(void) rr;
+	(void) intf;
+
+	return 1;
 	}
 
 mDNSlocal void mDNSPosixAddToFDSet(int *nfds, fd_set *readfds, int s)

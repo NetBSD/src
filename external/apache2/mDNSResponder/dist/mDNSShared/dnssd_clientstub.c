@@ -31,6 +31,8 @@
 
 #include "dnssd_ipc.h"
 
+static int gDaemonErr = kDNSServiceErr_NoError;
+
 #if defined(_WIN32)
 
 	#define _SSIZE_T
@@ -56,6 +58,7 @@
 	
 	static int g_initWinsock = 0;
 	#define LOG_WARNING kDebugLevelWarning
+	#define LOG_INFO kDebugLevelInfo
 	static void syslog( int priority, const char * message, ...)
 		{
 		va_list args;
@@ -87,6 +90,8 @@
 
 // Uncomment the line below to use the old error return mechanism of creating a temporary named socket (e.g. in /var/tmp)
 //#define USE_NAMED_ERROR_RETURN_SOCKET 1
+
+#define DNSSD_CLIENT_TIMEOUT 10  // In seconds
 
 #ifndef CTL_PATH_PREFIX
 #define CTL_PATH_PREFIX "/var/tmp/dnssd_result_socket."
@@ -196,6 +201,9 @@ static int read_all(dnssd_sock_t sd, char *buf, int len)
 	while (len)
 		{
 		ssize_t num_read = recv(sd, buf, len, 0);
+		// It is valid to get an interrupted system call error e.g., somebody attaching
+		// in a debugger, retry without failing
+		if ((num_read < 0) && (errno == EINTR)) { syslog(LOG_INFO, "dnssd_clientstub read_all: EINTR continue"); continue; }
 		if ((num_read == 0) || (num_read < 0) || (num_read > len))
 			{
 			int printWarn = 0;
@@ -260,6 +268,39 @@ static int more_bytes(dnssd_sock_t sd)
 	ret = select((int)sd+1, fs, (fd_set*)NULL, (fd_set*)NULL, &tv);
 	if (fs != &readfds) free(fs);
 	return (ret > 0);
+	}
+
+// Wait for daemon to write to socket
+static int wait_for_daemon(dnssd_sock_t sock, int timeout)
+	{
+#ifndef WIN32
+	// At this point the next operation (accept() or read()) on this socket may block for a few milliseconds waiting
+	// for the daemon to respond, but that's okay -- the daemon is a trusted service and we know if won't take more
+	// than a few milliseconds to respond.  So we'll forego checking for readability of the socket.
+	(void) sock;
+	(void) timeout;
+#else
+	// Windows on the other hand suffers from 3rd party software (primarily 3rd party firewall software) that
+	// interferes with proper functioning of the TCP protocol stack. Because of this and because we depend on TCP
+	// to communicate with the system service, we want to make sure that the next operation on this socket (accept() or
+	// read()) doesn't block indefinitely.
+	if (!gDaemonErr)
+		{
+		struct timeval tv;
+		fd_set set;
+
+		FD_ZERO(&set);
+		FD_SET(sock, &set);
+		tv.tv_sec = timeout;
+		tv.tv_usec = 0;
+		if (!select((int)(sock + 1), &set, NULL, NULL, &tv))
+			{
+				syslog(LOG_WARNING, "dnssd_clientstub wait_for_daemon timed out");
+				gDaemonErr = kDNSServiceErr_Timeout;
+			}
+		}
+#endif
+	return gDaemonErr;
 	}
 
 /* create_hdr
@@ -353,7 +394,6 @@ static void FreeDNSServiceOp(DNSServiceOp *x)
 		x->ProcessReply = NULL;
 		x->AppCallback  = NULL;
 		x->AppContext   = NULL;
-		x->rec          = NULL;
 #if _DNS_SD_LIBDISPATCH
 		if (x->disp_source)	dispatch_release(x->disp_source);
 		x->disp_source  = NULL;
@@ -612,7 +652,10 @@ static DNSServiceErrorType deliver_request(ipc_msg_hdr *hdr, DNSServiceOp *sdr)
 #else
 	if (write_all(sdr->sockfd, (char *)hdr, datalen + sizeof(ipc_msg_hdr)) < 0)
 		{
-		syslog(LOG_WARNING, "dnssd_clientstub deliver_request ERROR: write_all(%d, %lu bytes) failed",
+		// write_all already prints an error message if there is an error writing to
+		// the socket except for DEFUNCT. Logging here is unnecessary and also wrong
+		// in the case of DEFUNCT sockets
+		syslog(LOG_INFO, "dnssd_clientstub deliver_request ERROR: write_all(%d, %lu bytes) failed",
 			sdr->sockfd, (unsigned long)(datalen + sizeof(ipc_msg_hdr)));
 		goto cleanup;
 		}
@@ -626,6 +669,7 @@ static DNSServiceErrorType deliver_request(ipc_msg_hdr *hdr, DNSServiceOp *sdr)
 		// but that's okay -- the daemon is a trusted service and we know if won't take more than a few milliseconds to respond.
 		dnssd_sockaddr_t daddr;
 		dnssd_socklen_t len = sizeof(daddr);
+		if ((err = wait_for_daemon(listenfd, DNSSD_CLIENT_TIMEOUT)) != kDNSServiceErr_NoError) goto cleanup;
 		errsd = accept(listenfd, (struct sockaddr *)&daddr, &len);
 		if (!dnssd_SocketValid(errsd)) deliver_request_bailout("accept");
 #else
@@ -711,10 +755,13 @@ static DNSServiceErrorType deliver_request(ipc_msg_hdr *hdr, DNSServiceOp *sdr)
 	// but that's okay -- the daemon is a trusted service and we know if won't take more than a few milliseconds to respond.
 	if (sdr->op == send_bpf)	// Okay to use sdr->op when checking for op == send_bpf
 		err = kDNSServiceErr_NoError;
-	else if (read_all(errsd, (char*)&err, (int)sizeof(err)) < 0)
-		err = kDNSServiceErr_ServiceNotRunning;	// On failure read_all will have written a message to syslog for us
-	else
-		err = ntohl(err);
+	else if ((err = wait_for_daemon(errsd, DNSSD_CLIENT_TIMEOUT)) == kDNSServiceErr_NoError)
+		{
+		if (read_all(errsd, (char*)&err, (int)sizeof(err)) < 0)
+			err = kDNSServiceErr_ServiceNotRunning; // On failure read_all will have written a message to syslog for us
+		else
+			err = ntohl(err);
+		}
 
 	//syslog(LOG_WARNING, "dnssd_clientstub deliver_request: retrieved error code %d", err);
 
@@ -1094,6 +1141,16 @@ DNSServiceErrorType DNSSD_API DNSServiceResolve
 
 	if (!name || !regtype || !domain || !callBack) return kDNSServiceErr_BadParam;
 
+	// Need a real InterfaceID for WakeOnResolve
+	if ((flags & kDNSServiceFlagsWakeOnResolve) != 0 &&
+		((interfaceIndex == kDNSServiceInterfaceIndexAny) ||
+		(interfaceIndex == kDNSServiceInterfaceIndexLocalOnly) ||
+		(interfaceIndex == kDNSServiceInterfaceIndexUnicast) ||
+		(interfaceIndex == kDNSServiceInterfaceIndexP2P)))
+		{
+		return kDNSServiceErr_BadParam;
+		}
+		
 	err = ConnectToServer(sdRef, flags, resolve_request, handle_resolve_response, callBack, context);
 	if (err) return err;	// On error ConnectToServer leaves *sdRef set to NULL
 
