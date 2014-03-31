@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.3 2014/03/27 21:21:47 christos Exp $
+#	$NetBSD: files.drmkms,v 1.4 2014/03/31 13:38:44 riastradh Exp $
 
 define	drmkmsbus	{ }
 
@@ -8,10 +8,10 @@ include "external/bsd/drm2/linux/files.drmkms_linux"
 # if we wanted.  Not clear that this provides as much advantage as
 # separating out PCI code, which will be necessary for, e.g., PCIless
 # ARM SoC graphics drivers.
-define	drmkms_i2c
+define	drmkms_i2c: drmkms_linux
 
 define	drmkms
-device	drmkms: drmkms_linux, drmkms_i2c, i2cexec, i2c_bitbang
+device	drmkms: drmkms_linux, drmkms_i2c
 attach	drmkms at drmkmsbus
 
 defflag		opt_drmkms.h	DRMKMS_DEBUG
