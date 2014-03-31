@@ -20,6 +20,9 @@
  * Any dynamic run-time requirements should be handled by the platform layer below or client layer above
  */
 
+#if APPLE_OSX_mDNSResponder
+#include <TargetConditionals.h>
+#endif
 #include "uDNS.h"
 
 #if(defined(_MSC_VER))
@@ -98,7 +101,7 @@ mDNSlocal void SetRecordRetry(mDNS *const m, AuthRecord *rr, mDNSu32 random)
 #pragma mark - Name Server List Management
 #endif
 
-mDNSexport DNSServer *mDNS_AddDNSServer(mDNS *const m, const domainname *d, const mDNSInterfaceID interface, const mDNSAddr *addr, const mDNSIPPort port, mDNSBool scoped)
+mDNSexport DNSServer *mDNS_AddDNSServer(mDNS *const m, const domainname *d, const mDNSInterfaceID interface, const mDNSAddr *addr, const mDNSIPPort port, mDNSBool scoped, mDNSu32 timeout)
 	{
 	DNSServer **p = &m->DNSServers;
 	DNSServer *tmp = mDNSNULL;
@@ -146,6 +149,7 @@ mDNSexport DNSServer *mDNS_AddDNSServer(mDNS *const m, const domainname *d, cons
 			(*p)->flags     = DNSServer_FlagNew;
 			(*p)->teststate = /* DNSServer_Untested */ DNSServer_Passed;
 			(*p)->lasttest  = m->timenow - INIT_UCAST_POLL_INTERVAL;
+			(*p)->timeout   = timeout;
 			AssignDomainName(&(*p)->domain, d);
 			(*p)->next = mDNSNULL;
 			}
@@ -345,17 +349,25 @@ mDNSexport DomainAuthInfo *GetAuthInfoForName(mDNS *m, const domainname *const n
 
 // MUST be called with the lock held
 mDNSexport mStatus mDNS_SetSecretForDomain(mDNS *m, DomainAuthInfo *info,
-	const domainname *domain, const domainname *keyname, const char *b64keydata, mDNSBool AutoTunnel)
+	const domainname *domain, const domainname *keyname, const char *b64keydata, const domainname *hostname, mDNSIPPort *port, const char *autoTunnelPrefix)
 	{
 	DNSQuestion *q;
 	DomainAuthInfo **p = &m->AuthInfoList;
 	if (!info || !b64keydata) { LogMsg("mDNS_SetSecretForDomain: ERROR: info %p b64keydata %p", info, b64keydata); return(mStatus_BadParamErr); }
 
-	LogInfo("mDNS_SetSecretForDomain: domain %##s key %##s%s", domain->c, keyname->c, AutoTunnel ? " AutoTunnel" : "");
+	LogInfo("mDNS_SetSecretForDomain: domain %##s key %##s%s%s", domain->c, keyname->c, autoTunnelPrefix ? " prefix " : "", autoTunnelPrefix ? autoTunnelPrefix : "");
 
-	info->AutoTunnel = AutoTunnel;
+	info->AutoTunnel = autoTunnelPrefix;
 	AssignDomainName(&info->domain,  domain);
 	AssignDomainName(&info->keyname, keyname);
+	if (hostname)
+		AssignDomainName(&info->hostname, hostname);
+	else
+		info->hostname.c[0] = 0;
+	if (port)
+		info->port = *port;
+	else
+		info->port = zeroIPPort;
 	mDNS_snprintf(info->b64keydata, sizeof(info->b64keydata), "%s", b64keydata);
 
 	if (DNSDigest_ConstructHMACKeyfromBase64(info, b64keydata) < 0)
@@ -372,12 +384,13 @@ mDNSexport mStatus mDNS_SetSecretForDomain(mDNS *m, DomainAuthInfo *info,
 
 	// Caution: Only zero AutoTunnelHostRecord.namestorage and AutoTunnelNAT.clientContext AFTER we've determined that this is a NEW DomainAuthInfo
 	// being added to the list. Otherwise we risk smashing our AutoTunnel host records and NATOperation that are already active and in use.
-	info->AutoTunnelHostRecord.resrec.RecordType = kDNSRecordTypeUnregistered;
-	info->AutoTunnelHostRecord.namestorage.c[0] = 0;
-	info->AutoTunnelTarget    .resrec.RecordType = kDNSRecordTypeUnregistered;
-	info->AutoTunnelDeviceInfo.resrec.RecordType = kDNSRecordTypeUnregistered;
-	info->AutoTunnelService   .resrec.RecordType = kDNSRecordTypeUnregistered;
-	info->AutoTunnel6Record   .resrec.RecordType = kDNSRecordTypeUnregistered;
+	info->AutoTunnelHostRecord .resrec.RecordType = kDNSRecordTypeUnregistered;
+	info->AutoTunnelHostRecord .namestorage.c[0] = 0;
+	info->AutoTunnelTarget     .resrec.RecordType = kDNSRecordTypeUnregistered;
+	info->AutoTunnelDeviceInfo .resrec.RecordType = kDNSRecordTypeUnregistered;
+	info->AutoTunnelService    .resrec.RecordType = kDNSRecordTypeUnregistered;
+	info->AutoTunnel6Record    .resrec.RecordType = kDNSRecordTypeUnregistered;
+	info->AutoTunnel6MetaRecord.resrec.RecordType = kDNSRecordTypeUnregistered;
 	info->AutoTunnelNAT.clientContext = mDNSNULL;
 	info->next = mDNSNULL;
 	*p = info;
@@ -553,6 +566,9 @@ mDNSexport mStatus mDNS_StartNATOperation_internal(mDNS *const m, NATTraversalIn
 			{
 			LogMsg("Error! Tried to add a NAT traversal that's already in the active list: request %p Prot %d Int %d TTL %d",
 				traversal, traversal->Protocol, mDNSVal16(traversal->IntPort), traversal->NATLease);
+			#if ForceAlerts
+				*(long*)0 = 0;
+			#endif
 			return(mStatus_AlreadyRegistered);
 			}
 		if (traversal->Protocol && traversal->Protocol == (*n)->Protocol && mDNSSameIPPort(traversal->IntPort, (*n)->IntPort) &&
@@ -698,7 +714,7 @@ mDNSlocal mDNSu8 *putLLQ(DNSMessage *const msg, mDNSu8 *ptr, const DNSQuestion *
 	// !!!KRS implement me
 
 	// format opt rr (fields not specified are zero-valued)
-	mDNS_SetupResourceRecord(&rr, mDNSNULL, mDNSInterface_Any, kDNSType_OPT, kStandardTTL, kDNSRecordTypeKnownUnique, mDNSNULL, mDNSNULL);
+	mDNS_SetupResourceRecord(&rr, mDNSNULL, mDNSInterface_Any, kDNSType_OPT, kStandardTTL, kDNSRecordTypeKnownUnique, AuthRecordAny, mDNSNULL, mDNSNULL);
 	opt->rrclass    = NormalMaxDNSMessageData;
 	opt->rdlength   = sizeof(rdataOPT);	// One option in this OPT record
 	opt->rdestimate = sizeof(rdataOPT);
@@ -1572,6 +1588,12 @@ mDNSlocal mStatus GetZoneData_StartQuery(mDNS *const m, ZoneData *zd, mDNSu16 qt
 	zd->question.ForceMCast          = mDNSfalse;
 	zd->question.ReturnIntermed      = mDNStrue;
 	zd->question.SuppressUnusable    = mDNSfalse;
+	zd->question.SearchListIndex     = 0;
+	zd->question.AppendSearchDomains = 0;
+	zd->question.RetryWithSearchDomains = mDNSfalse;
+	zd->question.TimeoutQuestion     = 0;
+	zd->question.WakeOnResolve       = 0;
+	zd->question.qnameOrig           = mDNSNULL;
 	zd->question.QuestionCallback    = GetZoneData_QuestionCallback;
 	zd->question.QuestionContext     = zd;
 
@@ -1600,13 +1622,44 @@ mDNSexport ZoneData *StartGetZoneData(mDNS *const m, const domainname *const nam
 	zd->ZoneDataContext  = ZoneDataContext;
 
 	zd->question.QuestionContext = zd;
-	AssignDomainName(&zd->question.qname, zd->CurrentSOA);
 
 	mDNS_DropLockBeforeCallback();		// GetZoneData_StartQuery expects to be called from a normal callback, so we emulate that here
-	GetZoneData_StartQuery(m, zd, kDNSType_SOA);
+	if (AuthInfo && AuthInfo->AutoTunnel && !mDNSIPPortIsZero(AuthInfo->port))
+		{
+		LogInfo("StartGetZoneData: Bypassing SOA, SRV query for %##s", AuthInfo->domain.c);
+		// We bypass SOA and SRV queries if we know the hostname and port already from the configuration.
+		// Today this is only true for AutoTunnel. As we bypass, we need to infer a few things:
+		//
+		// 1. Zone name is the same as the AuthInfo domain 
+		// 2. ZoneClass is kDNSClass_IN which should be a safe assumption
+		//
+		// If we want to make this bypass mechanism work for non-AutoTunnels also, (1) has to hold
+		// good. Otherwise, it has to be configured also.
+
+		AssignDomainName(&zd->ZoneName, &AuthInfo->domain);
+		zd->ZoneClass = kDNSClass_IN;
+		AssignDomainName(&zd->Host, &AuthInfo->hostname);
+		zd->Port = AuthInfo->port;
+		AssignDomainName(&zd->question.qname, &zd->Host);
+		GetZoneData_StartQuery(m, zd, kDNSType_A);
+		}
+	else
+		{
+		if (AuthInfo && AuthInfo->AutoTunnel) LogInfo("StartGetZoneData: Not Bypassing SOA, SRV query for %##s", AuthInfo->domain.c);
+		AssignDomainName(&zd->question.qname, zd->CurrentSOA);
+		GetZoneData_StartQuery(m, zd, kDNSType_SOA);
+		}
 	mDNS_ReclaimLockAfterCallback();
 
 	return zd;
+	}
+
+// Returns if the question is a GetZoneData question. These questions are special in
+// that they are created internally while resolving a private query or LLQs.
+mDNSexport mDNSBool IsGetZoneDataQuestion(DNSQuestion *q)
+	{
+	if (q->QuestionCallback == GetZoneData_QuestionCallback) return(mDNStrue);
+	else return(mDNSfalse);
 	}
 
 // GetZoneData queries are a special case -- even if we have a key for them, we don't do them privately,
@@ -1664,7 +1717,7 @@ mDNSlocal void UpdateAllServiceRecords(mDNS *const m, AuthRecord *rr, mDNSBool r
 				}
 			else 
 				{
-				// Clearing SRVchanged is a safety measure. If our pewvious dereg never
+				// Clearing SRVchanged is a safety measure. If our pevious dereg never
 				// came back and we had a target change, we are starting fresh
 				r->SRVChanged = mDNSfalse;
 				// if it is already registered or in the process of registering, then don't
@@ -1709,7 +1762,7 @@ mDNSlocal void CompleteRecordNatMap(mDNS *m, NATTraversalInfo *n)
 	if (!rr->nta || mDNSIPv4AddressIsZero(rr->nta->Addr.ip.v4))
 		{
 		LogInfo("CompleteRecordNatMap called for %s but no zone information!", ARDisplayString(m, rr));
-		// We need to clear out the NATinfo state so that it will result in re-acuqiring the mapping
+		// We need to clear out the NATinfo state so that it will result in re-acquiring the mapping
 		// and hence this callback called again.
 		if (rr->NATinfo.clientContext)
 			{
@@ -1802,8 +1855,13 @@ mDNSlocal void StartRecordNatMap(mDNS *m, AuthRecord *rr)
 	else if (SameDomainLabel(p, (mDNSu8 *)"\x4" "_udp")) protocol = NATOp_MapUDP;
 	else { LogMsg("StartRecordNatMap: could not determine transport protocol of service %##s", rr->resrec.name->c); return; }
 	
+	//LogMsg("StartRecordNatMap: clientContext %p IntPort %d srv.port %d %s",
+	//	rr->NATinfo.clientContext, mDNSVal16(rr->NATinfo.IntPort), mDNSVal16(rr->resrec.rdata->u.srv.port), ARDisplayString(m, rr));
 	if (rr->NATinfo.clientContext) mDNS_StopNATOperation_internal(m, &rr->NATinfo);
 	rr->NATinfo.Protocol       = protocol;
+
+	// Shouldn't be trying to set IntPort here --
+	// BuildUpdateMessage overwrites srs->RR_SRV.resrec.rdata->u.srv.port with external (mapped) port number
 	rr->NATinfo.IntPort        = rr->resrec.rdata->u.srv.port;
 	rr->NATinfo.RequestedPort  = rr->resrec.rdata->u.srv.port;
 	rr->NATinfo.NATLease       = 0;		// Request default lease
@@ -1818,6 +1876,19 @@ mDNSlocal void StartRecordNatMap(mDNS *m, AuthRecord *rr)
 // record is temporarily left in the ResourceRecords list so that we can initialize later
 // when the target is resolvable. Similarly, when host name changes, we enter regState_NoTarget
 // and we do the same.
+
+// This UnlinkResourceRecord routine is very worrying. It bypasses all the normal cleanup performed
+// by mDNS_Deregister_internal and just unceremoniously cuts the record from the active list.
+// This is why re-regsitering this record was producing syslog messages like this:
+// "Error! Tried to add a NAT traversal that's already in the active list"
+// Right now UnlinkResourceRecord is fortunately only called by RegisterAllServiceRecords,
+// which then immediately calls mDNS_Register_internal to re-register the record, which probably
+// masked more serious problems. Any other use of UnlinkResourceRecord is likely to lead to crashes.
+// For now we'll workaround that specific problem by explicitly calling mDNS_StopNATOperation_internal,
+// but long-term we should either stop cancelling the record registration and then re-registering it,
+// or if we really do need to do this for some reason it should be done via the usual
+// mDNS_Deregister_internal path instead of just cutting the record from the list.
+
 mDNSlocal mStatus UnlinkResourceRecord(mDNS *const m, AuthRecord *const rr)
 	{
 	AuthRecord **list = &m->ResourceRecords;
@@ -1826,6 +1897,15 @@ mDNSlocal mStatus UnlinkResourceRecord(mDNS *const m, AuthRecord *const rr)
 		{
 		*list = rr->next;
 		rr->next = mDNSNULL;
+
+		// Temporary workaround to cancel any active NAT mapping operation
+		if (rr->NATinfo.clientContext)
+			{
+			mDNS_StopNATOperation_internal(m, &rr->NATinfo);
+			rr->NATinfo.clientContext = mDNSNULL;
+			if (rr->resrec.rrtype == kDNSType_SRV) rr->resrec.rdata->u.srv.port = rr->NATinfo.IntPort;
+			}
+
 		return(mStatus_NoError);
 		}
 	LogMsg("UnlinkResourceRecord:ERROR!! - no such active record %##s", rr->resrec.name->c);
@@ -2022,7 +2102,7 @@ mDNSlocal void AdvertiseHostname(mDNS *m, HostnameInfo *h)
 	{
 	if (!mDNSIPv4AddressIsZero(m->AdvertisedV4.ip.v4) && h->arv4.resrec.RecordType == kDNSRecordTypeUnregistered)
 		{
-		mDNS_SetupResourceRecord(&h->arv4, mDNSNULL, mDNSInterface_Any, kDNSType_A, kHostNameTTL, kDNSRecordTypeUnregistered, HostnameCallback, h);
+		mDNS_SetupResourceRecord(&h->arv4, mDNSNULL, mDNSInterface_Any, kDNSType_A, kHostNameTTL, kDNSRecordTypeUnregistered, AuthRecordAny, HostnameCallback, h);
 		AssignDomainName(&h->arv4.namestorage, &h->fqdn);
 		h->arv4.resrec.rdata->u.ipv4 = m->AdvertisedV4.ip.v4;
 		h->arv4.state = regState_Unregistered;
@@ -2048,7 +2128,7 @@ mDNSlocal void AdvertiseHostname(mDNS *m, HostnameInfo *h)
 
 	if (!mDNSIPv6AddressIsZero(m->AdvertisedV6.ip.v6) && h->arv6.resrec.RecordType == kDNSRecordTypeUnregistered)
 		{
-		mDNS_SetupResourceRecord(&h->arv6, mDNSNULL, mDNSInterface_Any, kDNSType_AAAA, kHostNameTTL, kDNSRecordTypeKnownUnique, HostnameCallback, h);
+		mDNS_SetupResourceRecord(&h->arv6, mDNSNULL, mDNSInterface_Any, kDNSType_AAAA, kHostNameTTL, kDNSRecordTypeKnownUnique, AuthRecordAny, HostnameCallback, h);
 		AssignDomainName(&h->arv6.namestorage, &h->fqdn);
 		h->arv6.resrec.rdata->u.ipv6 = m->AdvertisedV6.ip.v6;
 		h->arv6.state = regState_Unregistered;
@@ -2189,6 +2269,12 @@ mDNSlocal void GetStaticHostname(mDNS *m)
 	q->ForceMCast       = mDNSfalse;
 	q->ReturnIntermed   = mDNStrue;
 	q->SuppressUnusable = mDNSfalse;
+	q->SearchListIndex  = 0;
+	q->AppendSearchDomains = 0;
+	q->RetryWithSearchDomains = mDNSfalse;
+	q->TimeoutQuestion  = 0;
+	q->WakeOnResolve    = 0;
+	q->qnameOrig        = mDNSNULL;
 	q->QuestionCallback = FoundStaticHostname;
 	q->QuestionContext  = mDNSNULL;
 
@@ -2927,7 +3013,7 @@ mDNSlocal mDNSBool SendGroupUpdates(mDNS *const m)
 				}
 			spaceleft -= rrSize;
 			oldnext = next;
-			LogInfo("SendGroupUpdates: Building a message with resource record %s, next %p, state %d", ARDisplayString(m, rr), next, rr->state);
+			LogInfo("SendGroupUpdates: Building a message with resource record %s, next %p, state %d, ttl %d", ARDisplayString(m, rr), next, rr->state, rr->resrec.rroriginalttl);
 			if (!(next = BuildUpdateMessage(m, next, rr, limit)))
 				{
 				// We calculated the space and if we can't fit in, we had some bug in the calculation,
@@ -3071,7 +3157,7 @@ mDNSlocal void hndlRecordUpdateReply(mDNS *m, AuthRecord *rr, mStatus err, mDNSu
 
 	rr->updateError = err;
 #if APPLE_OSX_mDNSResponder
-	if (err == mStatus_BadSig) UpdateAutoTunnelDomainStatuses(m);
+	if (err == mStatus_BadSig || err == mStatus_BadKey) UpdateAutoTunnelDomainStatuses(m);
 #endif
 
 	SetRecordRetry(m, rr, random);
@@ -4030,7 +4116,6 @@ mDNSlocal const mDNSu8 *mDNS_WABLabels[] =
 	(const mDNSu8 *)"\002lb",
 	(const mDNSu8 *)"\001r",
 	(const mDNSu8 *)"\002dr",
-	(const mDNSu8 *)"\002cf",
 	(const mDNSu8 *)mDNSNULL,
 	};
 
@@ -4569,123 +4654,47 @@ mDNSexport void SleepRecordRegistrations(mDNS *m)
 		}
 	}
 
-mDNSexport void mDNS_AddSearchDomain(const domainname *const domain)
+mDNSexport void mDNS_AddSearchDomain(const domainname *const domain, mDNSInterfaceID InterfaceID)
 	{
 	SearchListElem **p;
+	SearchListElem *tmp = mDNSNULL;
 
 	// Check to see if we already have this domain in our list
 	for (p = &SearchList; *p; p = &(*p)->next)
-		if (SameDomainName(&(*p)->domain, domain))
+		if (((*p)->InterfaceID == InterfaceID) && SameDomainName(&(*p)->domain, domain))
 			{
-			// If domain is already in list, and marked for deletion, change it to "leave alone"
-			if ((*p)->flag == -1) (*p)->flag = 0;
+			// If domain is already in list, and marked for deletion, unmark the delete
+			// Be careful not to touch the other flags that may be present
 			LogInfo("mDNS_AddSearchDomain already in list %##s", domain->c);
-			return;
+			if ((*p)->flag & SLE_DELETE) (*p)->flag &= ~SLE_DELETE;
+			tmp = *p;
+			*p = tmp->next;
+			tmp->next = mDNSNULL;
+			break;
 			}
 
-	// if domain not in list, add to list, mark as add (1)
-	*p = mDNSPlatformMemAllocate(sizeof(SearchListElem));
-	if (!*p) { LogMsg("ERROR: mDNS_AddSearchDomain - malloc"); return; }
-	mDNSPlatformMemZero(*p, sizeof(SearchListElem));
-	AssignDomainName(&(*p)->domain, domain);
-	(*p)->flag = 1;	// add
-	(*p)->next = mDNSNULL;
-	LogInfo("mDNS_AddSearchDomain created new %##s", domain->c);
+	
+	// move to end of list so that we maintain the same order
+	while (*p) p = &(*p)->next;
+	
+	if (tmp) *p = tmp; 
+	else
+		{
+		// if domain not in list, add to list, mark as add (1)
+		*p = mDNSPlatformMemAllocate(sizeof(SearchListElem));
+		if (!*p) { LogMsg("ERROR: mDNS_AddSearchDomain - malloc"); return; }
+		mDNSPlatformMemZero(*p, sizeof(SearchListElem));
+		AssignDomainName(&(*p)->domain, domain);
+		(*p)->next = mDNSNULL;
+		(*p)->InterfaceID = InterfaceID;
+		LogInfo("mDNS_AddSearchDomain created new %##s, InterfaceID %p", domain->c, InterfaceID);
+		}
 	}
 
 mDNSlocal void FreeARElemCallback(mDNS *const m, AuthRecord *const rr, mStatus result)
 	{
 	(void)m;	// unused
 	if (result == mStatus_MemFree) mDNSPlatformMemFree(rr->RecordContext);
-	}
-
-#if APPLE_OSX_mDNSResponder
-mDNSlocal void CheckAutoTunnel6Registration(mDNS *const m, mDNSBool RegisterAutoTunnel6)
-	{
-	LogInfo("CheckAutoTunnel6Registration: Current value RegisterAutoTunnel6 %d, New value %d", m->RegisterAutoTunnel6, RegisterAutoTunnel6);
-	if (!RegisterAutoTunnel6)
-		{
-		// We are not supposed to register autotunnel6. If we had previously registered
-		// autotunnel6, deregister it now.
-		if (m->RegisterAutoTunnel6)
-			{
-			m->RegisterAutoTunnel6 = mDNSfalse;
-			LogInfo("CheckAutoTunnel6Registration: Removing AutoTunnel6");
-			RemoveAutoTunnel6Record(m);
-			}
-		else LogInfo("CheckAutoTunnel6Registration: Already Removed AutoTunnel6");
-		}
-	else 
-		{
-		// We are supposed to register autotunnel6. If we had previously  de-registered
-		// autotunnel6, re-register it now.
-		if (!m->RegisterAutoTunnel6)
-			{
-			m->RegisterAutoTunnel6 = mDNStrue;
-			LogInfo("CheckAutoTunnel6Registration: Adding AutoTunnel6");
-			SetupConndConfigChanges(m);
-			}
-		else LogInfo("CheckAutoTunnel6Registration: already Added AutoTunnel6");
-		}
-	}
-#endif
-
-mDNSlocal void FoundDirDomain(mDNS *const m, DNSQuestion *question, const ResourceRecord *const answer, QC_result AddRecord)
-	{
-	SearchListElem *slElem = question->QuestionContext;
-	mDNSBool RegisterAutoTunnel6 = mDNStrue;
-	char *res = "DisableInboundRelay";
-	
-	LogInfo("FoundDirDomain: InterfaceID %p %s Question %##s Answer %s", answer->InterfaceID, AddRecord ? "Add" : "Rmv", question->qname.c, RRDisplayString(m, answer));
-	if (answer->rrtype != kDNSType_TXT)
-		{
-		LogMsg("FoundDirDomain: answer type is not TXT %s for question %##s", DNSTypeName(answer->rrtype), question->qname.c);
-		return;
-		}
-	if (answer->RecordType == kDNSRecordTypePacketNegative)
-		{
-		LogInfo("FoundDirDomain: Negative answer for %##s", question->qname.c);
-		return;
-		}
-	if (answer->InterfaceID == mDNSInterface_LocalOnly)
-		{
-		LogInfo("FoundDirDomain: LocalOnly interfaceID for %##s", question->qname.c);
-		return;
-		}
-
-	// TXT record is encoded as <len><data>
-	if (answer->rdlength != mDNSPlatformStrLen(res) + 1)
-		{
-		LogInfo("FoundDirDomain: Invalid TXT record to disable %##s, length %d", question->qname.c, answer->rdlength);
-		return;
-		}
-
-	// Compare the data (excluding the len byte)
-	if (!mDNSPlatformMemSame(&answer->rdata->u.txt.c[1], res, answer->rdlength - 1))
-		{
-		LogInfo("FoundDirDomain: Invalid TXT record to disable %##s", question->qname.c);
-		return;
-		}
-
-	// It is sufficient for one answer to disable registration of autotunnel6. But we should
-	// have zero answers across all domains to register autotunnel6.
-	if (AddRecord)
-		{
-		slElem->numDirAnswers++;
-		RegisterAutoTunnel6 = mDNSfalse;
-		}
-	else
-		{
-		const SearchListElem *s;
-		slElem->numDirAnswers--;
-		if (slElem->numDirAnswers < 0) LogMsg("FoundDirDomain: numDirAnswers less than zero %d", slElem->numDirAnswers);
-		// See if any domain (including the slElem) has any answers
- 		for (s=SearchList; s; s=s->next)
-			if (s->numDirAnswers) { RegisterAutoTunnel6 = mDNSfalse; break; }
-		}
-#if APPLE_OSX_mDNSResponder
-	CheckAutoTunnel6Registration(m, RegisterAutoTunnel6);
-#endif
 	}
 
 mDNSlocal void FoundDomain(mDNS *const m, DNSQuestion *question, const ResourceRecord *const answer, QC_result AddRecord)
@@ -4711,7 +4720,7 @@ mDNSlocal void FoundDomain(mDNS *const m, DNSQuestion *question, const ResourceR
 		{
 		ARListElem *arElem = mDNSPlatformMemAllocate(sizeof(ARListElem));
 		if (!arElem) { LogMsg("ERROR: FoundDomain out of memory"); return; }
-		mDNS_SetupResourceRecord(&arElem->ar, mDNSNULL, mDNSInterface_LocalOnly, kDNSType_PTR, 7200, kDNSRecordTypeShared, FreeARElemCallback, arElem);
+		mDNS_SetupResourceRecord(&arElem->ar, mDNSNULL, mDNSInterface_LocalOnly, kDNSType_PTR, 7200, kDNSRecordTypeShared, AuthRecordLocalOnly, FreeARElemCallback, arElem);
 		MakeDomainNameFromDNSNameString(&arElem->ar.namestorage, name);
 		AppendDNSNameString            (&arElem->ar.namestorage, "local");
 		AssignDomainName(&arElem->ar.resrec.rdata->u.name, &answer->rdata->u.name);
@@ -4758,7 +4767,7 @@ mDNSexport void udns_validatelists(void *const v)
 
 	DomainAuthInfo *info;
 	for (info = m->AuthInfoList; info; info = info->next)
-		if (info->next == (DomainAuthInfo *)~0 || info->AutoTunnel == (mDNSBool)~0)
+		if (info->next == (DomainAuthInfo *)~0 || info->AutoTunnel == (const char*)~0)
 			LogMemCorruption("m->AuthInfoList: %p is garbage (%X)", info, info->AutoTunnel);
 
 	HostnameInfo *hi;
@@ -4773,68 +4782,50 @@ mDNSexport void udns_validatelists(void *const v)
 	}
 #endif
 
-mDNSlocal void mDNS_StartDirQuestion(mDNS *const m, DNSQuestion *question, domainname *domain, void *context)
-	{
-	AssignDomainName (&question->qname, (const domainname*)"\002cf" "\007_dns-sd" "\x04_udp");
-	AppendDomainName (&question->qname, domain);
-	question->InterfaceID      = mDNSInterface_Any;
-	question->Target           = zeroAddr;
-	question->qtype            = kDNSType_TXT;
-	question->qclass           = kDNSClass_IN;
-	question->LongLived        = mDNSfalse;
-	question->ExpectUnique     = mDNStrue;
-	question->ForceMCast       = mDNSfalse;
-	question->ReturnIntermed   = mDNSfalse;
-	question->SuppressUnusable = mDNSfalse;
-	question->QuestionCallback = FoundDirDomain;
-	question->QuestionContext  = context;
-	LogInfo("mDNS_StartDirQuestion: Start DIR domain question %##s", question->qname.c);
-	if (mDNS_StartQuery(m, question))
-		LogMsg("mDNS_StartDirQuestion: ERROR!! cannot start _dir._dns-sd query");
-	}
-
 // This should probably move to the UDS daemon -- the concept of legacy clients and automatic registration / automatic browsing
 // is really a UDS API issue, not something intrinsic to uDNS
-mDNSexport mStatus uDNS_RegisterSearchDomains(mDNS *const m)
+
+mDNSexport mStatus uDNS_SetupSearchDomains(mDNS *const m, int action)
 	{
 	SearchListElem **p = &SearchList, *ptr;
-	const SearchListElem *s;
-	mDNSBool RegisterAutoTunnel6 = mDNStrue;
 	mStatus err;
 
-	// step 1: mark each element for removal (-1)
-	for (ptr = SearchList; ptr; ptr = ptr->next) ptr->flag = -1;
+	// step 1: mark each element for removal
+	for (ptr = SearchList; ptr; ptr = ptr->next) ptr->flag |= SLE_DELETE;
 
-	// Client has requested domain enumeration or automatic browse -- time to make sure we have the search domains from the platform layer
+	// Make sure we have the search domains from the platform layer so that if we start the WAB
+	// queries below, we have the latest information
 	mDNS_Lock(m);
-	m->RegisterSearchDomains = mDNStrue;
-	mDNSPlatformSetDNSConfig(m, mDNSfalse, m->RegisterSearchDomains, mDNSNULL, mDNSNULL, mDNSNULL);
+	mDNSPlatformSetDNSConfig(m, mDNSfalse, mDNStrue, mDNSNULL, mDNSNULL, mDNSNULL);
 	mDNS_Unlock(m);
+
+	if (action & UDNS_START_WAB_QUERY)
+		m->StartWABQueries = mDNStrue;
 
 	// delete elems marked for removal, do queries for elems marked add
 	while (*p)
 		{
 		ptr = *p;
-		LogInfo("RegisterSearchDomains %d %p %##s", ptr->flag, ptr->AuthRecs, ptr->domain.c);
-		if (ptr->flag == -1)	// remove
+		LogInfo("uDNS_SetupSearchDomains:action %d: Flags %d,  AuthRecs %p, InterfaceID %p %##s", action, ptr->flag, ptr->AuthRecs, ptr->InterfaceID, ptr->domain.c);
+		if (ptr->flag & SLE_DELETE)
 			{
 			ARListElem *arList = ptr->AuthRecs;
 			ptr->AuthRecs = mDNSNULL;
 			*p = ptr->next;
 
 			// If the user has "local" in their DNS searchlist, we ignore that for the purposes of domain enumeration queries
-			// Note: Stopping a question will not generate the RMV events for the question (handled in FoundDirDomain)
-			// and hence we need to recheck all the domains to see if we need to register/deregister _autotunnel6.
-			// This is done at the end.
-			if (!SameDomainName(&ptr->domain, &localdomain))
+			// We suppressed the domain enumeration for scoped search domains below. When we enable that
+			// enable this.
+			if ((ptr->flag & SLE_WAB_QUERY_STARTED) && 
+				!SameDomainName(&ptr->domain, &localdomain) && (ptr->InterfaceID == mDNSInterface_Any))
 				{
 				mDNS_StopGetDomains(m, &ptr->BrowseQ);
 				mDNS_StopGetDomains(m, &ptr->RegisterQ);
 				mDNS_StopGetDomains(m, &ptr->DefBrowseQ);
 				mDNS_StopGetDomains(m, &ptr->DefRegisterQ);
 				mDNS_StopGetDomains(m, &ptr->AutomaticBrowseQ);
-				mDNS_StopGetDomains(m, &ptr->DirQ);
 				}
+
 			mDNSPlatformMemFree(ptr);
 
 	        // deregister records generated from answers to the query
@@ -4844,47 +4835,119 @@ mDNSexport mStatus uDNS_RegisterSearchDomains(mDNS *const m)
 				arList = arList->next;
 				debugf("Deregistering PTR %##s -> %##s", dereg->ar.resrec.name->c, dereg->ar.resrec.rdata->u.name.c);
 				err = mDNS_Deregister(m, &dereg->ar);
-				if (err) LogMsg("uDNS_RegisterSearchDomains ERROR!! mDNS_Deregister returned %d", err);
+				if (err) LogMsg("uDNS_SetupSearchDomains:: ERROR!! mDNS_Deregister returned %d", err);
 				// Memory will be freed in the FreeARElemCallback
 				}
 			continue;
 			}
 
-		if (ptr->flag == 1)	// add
+		if ((action & UDNS_START_WAB_QUERY) && !(ptr->flag & SLE_WAB_QUERY_STARTED))
 			{
-			// If the user has "local" in their DNS searchlist, we ignore that for the purposes of domain enumeration queries
-			if (!SameDomainName(&ptr->domain, &localdomain))
+			// If the user has "local" in their DNS searchlist, we ignore that for the purposes of domain enumeration queries.
+			// Also, suppress the domain enumeration for scoped search domains for now until there is a need.
+			if (!SameDomainName(&ptr->domain, &localdomain) && (ptr->InterfaceID == mDNSInterface_Any))
 				{
 				mStatus err1, err2, err3, err4, err5;
-				err1 = mDNS_GetDomains(m, &ptr->BrowseQ,          mDNS_DomainTypeBrowse,              &ptr->domain, mDNSInterface_Any, FoundDomain, ptr);
-				err2 = mDNS_GetDomains(m, &ptr->DefBrowseQ,       mDNS_DomainTypeBrowseDefault,       &ptr->domain, mDNSInterface_Any, FoundDomain, ptr);
-				err3 = mDNS_GetDomains(m, &ptr->RegisterQ,        mDNS_DomainTypeRegistration,        &ptr->domain, mDNSInterface_Any, FoundDomain, ptr);
-				err4 = mDNS_GetDomains(m, &ptr->DefRegisterQ,     mDNS_DomainTypeRegistrationDefault, &ptr->domain, mDNSInterface_Any, FoundDomain, ptr);
-				err5 = mDNS_GetDomains(m, &ptr->AutomaticBrowseQ, mDNS_DomainTypeBrowseAutomatic,     &ptr->domain, mDNSInterface_Any, FoundDomain, ptr);
+				err1 = mDNS_GetDomains(m, &ptr->BrowseQ,          mDNS_DomainTypeBrowse,              &ptr->domain, ptr->InterfaceID, FoundDomain, ptr);
+				err2 = mDNS_GetDomains(m, &ptr->DefBrowseQ,       mDNS_DomainTypeBrowseDefault,       &ptr->domain, ptr->InterfaceID, FoundDomain, ptr);
+				err3 = mDNS_GetDomains(m, &ptr->RegisterQ,        mDNS_DomainTypeRegistration,        &ptr->domain, ptr->InterfaceID, FoundDomain, ptr);
+				err4 = mDNS_GetDomains(m, &ptr->DefRegisterQ,     mDNS_DomainTypeRegistrationDefault, &ptr->domain, ptr->InterfaceID, FoundDomain, ptr);
+				err5 = mDNS_GetDomains(m, &ptr->AutomaticBrowseQ, mDNS_DomainTypeBrowseAutomatic,     &ptr->domain, ptr->InterfaceID, FoundDomain, ptr);
 				if (err1 || err2 || err3 || err4 || err5)
-					LogMsg("uDNS_RegisterSearchDomains: GetDomains for domain %##s returned error(s):\n"
+					LogMsg("uDNS_SetupSearchDomains: GetDomains for domain %##s returned error(s):\n"
 						   "%d (mDNS_DomainTypeBrowse)\n"
 						   "%d (mDNS_DomainTypeBrowseDefault)\n"
 						   "%d (mDNS_DomainTypeRegistration)\n"
 						   "%d (mDNS_DomainTypeRegistrationDefault)"
 						   "%d (mDNS_DomainTypeBrowseAutomatic)\n",
 						   ptr->domain.c, err1, err2, err3, err4, err5);
-				mDNS_StartDirQuestion(m, &ptr->DirQ, &ptr->domain, ptr);
+				ptr->flag |= SLE_WAB_QUERY_STARTED;
 				}
-			ptr->flag = 0;
 			}
-
-		if (ptr->flag) { LogMsg("uDNS_RegisterSearchDomains - unknown flag %d. Skipping.", ptr->flag); }
 
 		p = &ptr->next;
 		}
-	// if there is any domain has answers, need to deregister autotunnel6
- 	for (s=SearchList; s; s=s->next)
-		if (s->numDirAnswers) { RegisterAutoTunnel6 = mDNSfalse; break; }
-#if APPLE_OSX_mDNSResponder
-	CheckAutoTunnel6Registration(m, RegisterAutoTunnel6);
-#endif
 	return mStatus_NoError;
+	}
+
+mDNSexport domainname  *uDNS_GetNextSearchDomain(mDNS *const m, mDNSInterfaceID InterfaceID, mDNSs8 *searchIndex, mDNSBool ignoreDotLocal)
+	{
+	SearchListElem *p = SearchList;
+	int count = *searchIndex;
+	(void) m; // unused
+
+	if (count < 0) { LogMsg("uDNS_GetNextSearchDomain: count %d less than zero", count); return mDNSNULL; }
+
+	// skip the  domains that we already looked at before
+	for (; count; count--) p = p->next;
+
+	while (p)
+		{
+		int labels = CountLabels(&p->domain);
+		if (labels > 0)
+			{
+			const domainname *d = SkipLeadingLabels(&p->domain, labels - 1);
+			if (SameDomainLabel(d->c, (const mDNSu8 *)"\x4""arpa"))
+				{
+				LogInfo("uDNS_GetNextSearchDomain: skipping search domain %##s, InterfaceID %p", p->domain.c, p->InterfaceID);
+				(*searchIndex)++;
+				p = p->next;
+				continue;
+				}
+			if (ignoreDotLocal && SameDomainLabel(d->c, (const mDNSu8 *)"\x5""local"))
+				{
+				LogInfo("uDNS_GetNextSearchDomain: skipping local domain %##s, InterfaceID %p", p->domain.c, p->InterfaceID);
+				(*searchIndex)++;
+				p = p->next;
+				continue;
+				}
+			}
+		// Point to the next one in the list which we will look at next time.
+		(*searchIndex)++;
+		// When we are appending search domains in a ActiveDirectory domain, the question's InterfaceID
+		// set to mDNSInterface_Unicast. Match the unscoped entries in that case.
+		if (((InterfaceID == mDNSInterface_Unicast) && (p->InterfaceID == mDNSInterface_Any)) ||
+			p->InterfaceID == InterfaceID)
+			{
+			LogInfo("uDNS_GetNextSearchDomain returning domain %##s, InterfaceID %p", p->domain.c, p->InterfaceID);
+			return &p->domain;
+			}
+		LogInfo("uDNS_GetNextSearchDomain skipping domain %##s, InterfaceID %p", p->domain.c, p->InterfaceID);
+		p = p->next;
+		}
+	return mDNSNULL;
+	}
+
+mDNSlocal void FlushAddressCacheRecords(mDNS *const m)
+	{
+	mDNSu32 slot;
+	CacheGroup *cg;
+	CacheRecord *cr;
+	FORALL_CACHERECORDS(slot, cg, cr)
+		{
+		if (cr->resrec.InterfaceID) continue;
+
+		// If a resource record can answer A or AAAA, they need to be flushed so that we will
+		// never used to deliver an ADD or RMV
+		if (RRTypeAnswersQuestionType(&cr->resrec, kDNSType_A) ||
+			RRTypeAnswersQuestionType(&cr->resrec, kDNSType_AAAA))
+			{
+			LogInfo("FlushAddressCacheRecords: Purging Resourcerecord %s", CRDisplayString(m, cr));
+			mDNS_PurgeCacheResourceRecord(m, cr);
+			}
+		}
+	}
+
+// Retry questions which has seach domains appended
+mDNSexport void RetrySearchDomainQuestions(mDNS *const m)
+	{
+	// Purge all the A/AAAA cache records and restart the queries. mDNSCoreRestartAddressQueries
+	// does this. When we restart the question,  we first want to try the new search domains rather
+	// than use the entries that is already in the cache. When we appended search domains, we might
+	// have created cache entries which is no longer valid as there are new search domains now
+
+	LogInfo("RetrySearchDomainQuestions: Calling mDNSCoreRestartAddressQueries");
+	mDNSCoreRestartAddressQueries(m, mDNStrue, FlushAddressCacheRecords, mDNSNULL, mDNSNULL);
 	}
 
 // Construction of Default Browse domain list (i.e. when clients pass NULL) is as follows:
@@ -4903,5 +4966,5 @@ struct CompileTimeAssertionChecks_uDNS
 	// other overly-large structures instead of having a pointer to them, can inadvertently
 	// cause structure sizes (and therefore memory usage) to balloon unreasonably.
 	char sizecheck_tcpInfo_t     [(sizeof(tcpInfo_t)      <=  9056) ? 1 : -1];
-	char sizecheck_SearchListElem[(sizeof(SearchListElem) <=  4800) ? 1 : -1];
+	char sizecheck_SearchListElem[(sizeof(SearchListElem) <=  5000) ? 1 : -1];
 	};
