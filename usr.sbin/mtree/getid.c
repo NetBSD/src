@@ -1,4 +1,4 @@
-/*	$NetBSD: getid.c,v 1.8 2013/10/16 17:27:42 christos Exp $	*/
+/*	$NetBSD: getid.c,v 1.9 2014/03/31 00:00:22 christos Exp $	*/
 /*	from: NetBSD: getpwent.c,v 1.48 2000/10/03 03:22:26 enami Exp */
 /*	from: NetBSD: getgrent.c,v 1.41 2002/01/12 23:51:30 lukem Exp */
 
@@ -65,7 +65,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getid.c,v 1.8 2013/10/16 17:27:42 christos Exp $");
+__RCSID("$NetBSD: getid.c,v 1.9 2014/03/31 00:00:22 christos Exp $");
 
 #include <sys/param.h>
 
@@ -206,7 +206,12 @@ grstart(void)
 	}
 	if (grfile[0] == '\0')			/* sanity check */
 		return 0;
-	return (_gr_fp = fopen(grfile, "r")) ? 1 : 0;
+
+	_gr_fp = fopen(grfile, "r");
+	if (_gr_fp != NULL)
+		return 1;
+	warn("Can't open `%s'", grfile);
+	return 0;
 }
 
 
@@ -350,7 +355,11 @@ pwstart(void)
 	}
 	if (pwfile[0] == '\0')			/* sanity check */
 		return 0;
-	return (_pw_fp = fopen(pwfile, "r")) ? 1 : 0;
+	_pw_fp = fopen(pwfile, "r");
+	if (_pw_fp != NULL)
+		return 1;
+	warn("Can't open `%s'", pwfile);
+	return 0;
 }
 
 
