@@ -1,4 +1,4 @@
-/*	$NetBSD: gapspci_pci.c,v 1.13 2011/07/19 15:52:30 dyoung Exp $	*/
+/*	$NetBSD: gapspci_pci.c,v 1.14 2014/03/31 12:38:40 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gapspci_pci.c,v 1.13 2011/07/19 15:52:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gapspci_pci.c,v 1.14 2014/03/31 12:38:40 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,8 @@ pcireg_t	gaps_conf_read(void *, pcitag_t, int);
 void		gaps_conf_write(void *, pcitag_t, int, pcireg_t);
 
 int		gaps_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
-const char	*gaps_intr_string(void *, pci_intr_handle_t);
+const char	*gaps_intr_string(void *, pci_intr_handle_t,
+		    char *buf, size_t len);
 void		*gaps_intr_establish(void *, pci_intr_handle_t,
 		    int, int (*)(void *), void *);
 void		gaps_intr_disestablish(void *, void *);
@@ -196,7 +197,8 @@ gaps_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 }
 
 const char *
-gaps_intr_string(void *v, pci_intr_handle_t ih)
+gaps_intr_string(void *v, pci_intr_handle_t ih,
+    char *buf, size_t len)
 {
 
 	return sysasic_intr_string(SYSASIC_IRL11);
