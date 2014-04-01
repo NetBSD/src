@@ -1,4 +1,4 @@
-/*	$NetBSD: completion.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: completion.h,v 1.3 2014/04/01 14:55:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -146,6 +146,17 @@ INIT_COMPLETION_blorp(struct completion *completion)
 	mutex_exit(&completion->c_lock);
 }
 
+static inline void
+_completion_claim(struct completion *completion)
+{
+
+	KASSERT(mutex_owned(&completion->c_lock));
+	if (completion->c_done > 0)
+		completion->c_done--;
+	else
+		KASSERT(completion->c_done == -1);
+}
+
 /*
  * Wait interruptibly with a timeout for someone to call complete or
  * complete_all.
@@ -175,13 +186,8 @@ wait_for_completion_interruptible_timeout(struct completion *completion,
 		start = now;
 	}
 
-	/* Claim a completion if it's not open season.  */
-	if (completion->c_done > 0)
-		completion->c_done--;
-	else
-		KASSERT(completion->c_done == -1);
-
 	/* Success!  */
+	_completion_claim(completion);
 	error = 0;
 
 out:	mutex_exit(&completion->c_lock);
@@ -193,6 +199,68 @@ out:	mutex_exit(&completion->c_lock);
 		KASSERTMSG((error == 0), "error = %d", error);
 		return ticks;
 	}
+}
+
+/*
+ * Wait interruptibly for someone to call complete or complete_all.
+ */
+static inline int
+wait_for_completion_interruptible(struct completion *completion)
+{
+	int error;
+
+	mutex_enter(&completion->c_lock);
+
+	/* Wait until c_done is nonzero.  */
+	while (completion->c_done == 0) {
+		error = cv_wait_sig(&completion->c_cv, &completion->c_lock);
+		if (error)
+			goto out;
+	}
+
+	/* Success!  */
+	_completion_claim(completion);
+	error = 0;
+
+out:	mutex_exit(&completion->c_lock);
+	if ((error == EINTR) || (error == ERESTART))
+		error = -ERESTARTSYS;
+	return error;
+}
+
+/*
+ * Wait uninterruptibly, except by SIGKILL, for someone to call
+ * complete or complete_all.
+ *
+ * XXX In this implementation, any signal will actually wake us, not
+ * just SIGKILL.
+ */
+static inline int
+wait_for_completion_killable(struct completion *completion)
+{
+
+	return wait_for_completion_interruptible(completion);
+}
+
+/*
+ * Try to claim a completion immediately.  Return true on success, false
+ * if it would block.
+ */
+static inline bool
+try_wait_for_completion(struct completion *completion)
+{
+	bool ok;
+
+	mutex_enter(&completion->c_lock);
+	if (completion->c_done == 0) {
+		ok = false;
+	} else {
+		_completion_claim(completion);
+		ok = true;
+	}
+	mutex_exit(&completion->c_lock);
+
+	return ok;
 }
 
 #endif	/* _LINUX_COMPLETION_H_ */
