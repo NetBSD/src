@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.25 2014/03/28 21:56:45 matt Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.26 2014/04/01 05:37:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.25 2014/03/28 21:56:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.26 2014/04/01 05:37:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -681,14 +681,13 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 
 #ifdef VERBOSE_INIT_ARM
 	printf("Listing Chunks\n");
-	{
-		pv_addr_t *pv;
-		SLIST_FOREACH(pv, &bmi->bmi_chunks, pv_list) {
-			printf("%s: pv %p: chunk VA %#lx..%#lx "
-			    "(PA %#lx, prot %d, cache %d)\n",
-			    __func__, pv, pv->pv_va, pv->pv_va + pv->pv_size - 1,
-			    pv->pv_pa, pv->pv_prot, pv->pv_cache);
-		}
+
+	pv_addr_t *lpv;
+	SLIST_FOREACH(lpv, &bmi->bmi_chunks, pv_list) {
+		printf("%s: pv %p: chunk VA %#lx..%#lx "
+		    "(PA %#lx, prot %d, cache %d)\n",
+		    __func__, lpv, lpv->pv_va, lpv->pv_va + lpv->pv_size - 1,
+		    lpv->pv_pa, lpv->pv_prot, lpv->pv_cache);
 	}
 	printf("\nMapping Chunks\n");
 #endif
