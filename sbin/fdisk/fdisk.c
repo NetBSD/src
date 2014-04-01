@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.147 2014/03/30 22:18:13 christos Exp $ */
+/*	$NetBSD: fdisk.c,v 1.148 2014/04/01 19:08:48 christos Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.147 2014/03/30 22:18:13 christos Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.148 2014/04/01 19:08:48 christos Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -1817,7 +1817,7 @@ check_overlap(int part, int sysid, daddr_t start, daddr_t size, int fix)
 			/* This is just a convention, not a requirement */
 			return "Track zero is reserved for the BIOS";
 #endif
-		if (start + size > disksectors) 
+		if (start + size > disksectors)
 			return "Partition exceeds size of disk";
 		for (p = 0; p < MBR_PART_COUNT; p++) {
 			if (p == part || mboot.mbr_parts[p].mbrp_type == 0)
@@ -2036,10 +2036,16 @@ change_part(int extended, int part, int sysid, daddr_t start, daddr_t size,
 		} else {
 			if (sysid == -1)
 				sysid = partp->mbrp_type;
-			if (start == (daddr_t)0xffffffff)
+			if (start == (daddr_t)0xffffffff) {
 				start = offset + le32toh(partp->mbrp_start);
-			if (size == (daddr_t)0xffffffff)
+				if (start == 0)
+					start = offset = ptn_0_offset;
+			}
+			if (size == (daddr_t)0xffffffff) {
 				size = le32toh(partp->mbrp_size);
+				if (size == 0) 
+					size = disksectors - start;
+			}
 		}
 	}
 
