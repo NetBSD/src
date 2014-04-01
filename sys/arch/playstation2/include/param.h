@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.9 2014/03/31 11:41:01 martin Exp $	*/
+/*	$NetBSD: param.h,v 1.10 2014/04/01 14:08:50 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -71,10 +71,10 @@
 #ifndef	_PLAYSTATION2_PARAM_H_
 #define	_PLAYSTATION2_PARAM_H_
 
-#include <mips/mips_param.h>
-
 #define	_MACHINE	playstation2
 #define	MACHINE		"playstation2"
+
+#include <mips/mips_param.h>
 
 #define	DEV_BSIZE	512
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
