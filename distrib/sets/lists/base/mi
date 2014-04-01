@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1064 2014/03/31 11:25:48 martin Exp $
+# $NetBSD: mi,v 1.1065 2014/04/01 21:40:46 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -536,6 +536,7 @@
 ./usr/bin/krb5-config				base-krb5-bin		kerberos
 ./usr/bin/ktrace				base-debug-bin
 ./usr/bin/ktruss				base-debug-bin
+./usr/bin/kvno					base-krb5-bin		kerberos
 ./usr/bin/kyua					base-kyua-bin		kyua
 ./usr/bin/lam					base-util-bin
 ./usr/bin/last					base-util-bin

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1466 2014/03/25 09:52:55 ozaki-r Exp $
+# $NetBSD: mi,v 1.1467 2014/04/01 21:40:46 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -242,6 +242,7 @@
 ./usr/share/man/cat1/ksh.0			man-util-catman		.cat
 ./usr/share/man/cat1/ktrace.0			man-debug-catman	.cat
 ./usr/share/man/cat1/ktruss.0			man-debug-catman	.cat
+./usr/share/man/cat1/kvno.0			man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat1/kyua-about.0		man-kyua-catman		kyua,.cat
 ./usr/share/man/cat1/kyua-atf-tester.0		man-kyua-catman		kyua,.cat
 ./usr/share/man/cat1/kyua-config.0		man-kyua-catman		kyua,.cat
@@ -3342,6 +3343,7 @@
 ./usr/share/man/html1/ksh.html			man-util-htmlman	html
 ./usr/share/man/html1/ktrace.html		man-debug-htmlman	html
 ./usr/share/man/html1/ktruss.html		man-debug-htmlman	html
+./usr/share/man/html1/kvno.html			man-krb5-htmlman	kerberos,html
 ./usr/share/man/html1/kyua-about.html		man-kyua-htmlman	kyua,html
 ./usr/share/man/html1/kyua-atf-tester.html	man-kyua-htmlman	kyua,html
 ./usr/share/man/html1/kyua-config.html		man-kyua-htmlman	kyua,html
@@ -6080,6 +6082,7 @@
 ./usr/share/man/man1/ksh.1			man-util-man		.man
 ./usr/share/man/man1/ktrace.1			man-debug-man		.man
 ./usr/share/man/man1/ktruss.1			man-debug-man		.man
+./usr/share/man/man1/kvno.1			man-krb5-man		kerberos,.man
 ./usr/share/man/man1/kyua-about.1		man-kyua-man		kyua,.man
 ./usr/share/man/man1/kyua-atf-tester.1		man-kyua-man		kyua,.man
 ./usr/share/man/man1/kyua-config.1		man-kyua-man		kyua,.man
