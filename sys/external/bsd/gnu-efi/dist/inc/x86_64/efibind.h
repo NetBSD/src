@@ -1,4 +1,4 @@
-/*	$NetBSD: efibind.h,v 1.1.1.1 2014/04/01 16:16:07 jakllsch Exp $	*/
+/*	$NetBSD: efibind.h,v 1.2 2014/04/01 16:22:45 jakllsch Exp $	*/
 
 /*++
 
@@ -86,6 +86,8 @@ Revision History
        typedef unsigned char       uint8_t;
        typedef char                int8_t;
     #endif
+#elif defined(__NetBSD__)
+    #include <sys/stdint.h>
 #elif defined(__GNUC__)
     #include <stdint.h>
 #endif
