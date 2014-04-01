@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.39 2013/12/10 16:30:36 joerg Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.40 2014/04/01 06:55:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.39 2013/12/10 16:30:36 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.40 2014/04/01 06:55:29 skrll Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
@@ -380,20 +380,20 @@ rpi_bootparams(void)
 
 	bcm2835_mbox_write(iot, ioh, BCMMBOX_CHANPM, (
 #if (NSDHC > 0)
-	    (1 << VCPM_POWER_SDCARD) | 
+	    (1 << VCPM_POWER_SDCARD) |
 #endif
 #if (NPLCOM > 0)
 	    (1 << VCPM_POWER_UART0) |
 #endif
 #if (NBCMDWCTWO > 0)
-	    (1 << VCPM_POWER_USB) | 
+	    (1 << VCPM_POWER_USB) |
 #endif
 #if (NBSCIIC > 0)
-	    (1 << VCPM_POWER_I2C0) | (1 << VCPM_POWER_I2C1) | 
+	    (1 << VCPM_POWER_I2C0) | (1 << VCPM_POWER_I2C1) |
 	/*  (1 << VCPM_POWER_I2C2) | */
 #endif
 #if (NBCMSPI > 0)
-	    (1 << VCPM_POWER_SPI) | 
+	    (1 << VCPM_POWER_SPI) |
 #endif
 	    0) << 4);
 
@@ -645,7 +645,7 @@ rpi_fb_get_edid_mode(uint32_t *pwidth, uint32_t *pheight)
 	uint8_t edid_data[1024];
 	uint32_t res;
 	int error;
-	
+
 	error = bcmmbox_request(BCMMBOX_CHANARM2VC, &vb_edid,
 	    sizeof(vb_edid), &res);
 	if (error) {
@@ -688,7 +688,7 @@ rpi_fb_init(prop_dictionary_t dict)
 	uint32_t width = 0, height = 0;
 	uint32_t res;
 	char *ptr;
-	int integer; 
+	int integer;
 	int error;
 
 	if (get_bootconf_option(boot_args, "fb",
