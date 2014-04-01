@@ -1,4 +1,4 @@
-/*	$NetBSD: apple_smc.c,v 1.4 2014/04/01 17:49:05 riastradh Exp $	*/
+/*	$NetBSD: apple_smc.c,v 1.5 2014/04/01 17:49:17 riastradh Exp $	*/
 
 /*
  * Apple System Management Controller
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_smc.c,v 1.4 2014/04/01 17:49:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_smc.c,v 1.5 2014/04/01 17:49:17 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -607,7 +607,7 @@ apple_smc_write_key_4(struct apple_smc_tag *smc,
     const struct apple_smc_key *key, uint32_t v)
 {
 	/* Convert the quantity from host to big-endian byte order.  */
-	const uint16_t v_be = htobe32(v);
+	const uint32_t v_be = htobe32(v);
 
 	/* Write the big-endian quantity to the hardware.  */
 	return apple_smc_write_key(smc, key, &v_be, 4);
