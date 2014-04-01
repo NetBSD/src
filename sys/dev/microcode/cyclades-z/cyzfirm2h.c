@@ -1,4 +1,4 @@
-/*	$NetBSD: cyzfirm2h.c,v 1.12 2014/04/01 15:33:22 christos Exp $	*/
+/*	$NetBSD: cyzfirm2h.c,v 1.13 2014/04/01 15:35:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cyzfirm2h.c,v 1.12 2014/04/01 15:33:22 christos Exp $");
+__RCSID("$NetBSD: cyzfirm2h.c,v 1.13 2014/04/01 15:35:41 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -52,6 +52,11 @@ __RCSID("$NetBSD: cyzfirm2h.c,v 1.12 2014/04/01 15:33:22 christos Exp $");
 #include <unistd.h>
 
 static void	usage(void) __dead;
+#ifdef DEBUG
+#define MAXLINE 8
+#else
+#define MAXLINE 10
+#endif
 
 int
 main(int argc, char *argv[])
@@ -123,7 +128,7 @@ main(int argc, char *argv[])
 		in_ptr++;
 		in_len--;
 		i++;
-		if (i == 8) {
+		if (i == MAXLINE) {
 #ifdef DEBUG
 			size_t j;
 			fprintf(out_file, "\t/* ");
