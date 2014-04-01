@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.273 2014/03/31 01:49:04 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.274 2014/04/01 18:01:45 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -216,7 +216,7 @@
 #include <arm/locore.h>
 //#include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.273 2014/03/31 01:49:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.274 2014/04/01 18:01:45 matt Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -422,9 +422,9 @@ EVCNT_ATTACH_STATIC(pmap_ev_exec_cached);
 
 static struct evcnt pmap_ev_exec_synced =
    PMAP_EVCNT_INITIALIZER("exec pages synced");
-#ifndef ARM_MMU_EXTENDED
 static struct evcnt pmap_ev_exec_synced_map =
    PMAP_EVCNT_INITIALIZER("exec pages synced (MP)");
+#ifndef ARM_MMU_EXTENDED
 static struct evcnt pmap_ev_exec_synced_unmap =
    PMAP_EVCNT_INITIALIZER("exec pages synced (UM)");
 static struct evcnt pmap_ev_exec_synced_remap =
@@ -436,8 +436,8 @@ static struct evcnt pmap_ev_exec_synced_kremove =
 #endif
 
 EVCNT_ATTACH_STATIC(pmap_ev_exec_synced);
-#ifndef ARM_MMU_EXTENDED
 EVCNT_ATTACH_STATIC(pmap_ev_exec_synced_map);
+#ifndef ARM_MMU_EXTENDED
 EVCNT_ATTACH_STATIC(pmap_ev_exec_synced_unmap);
 EVCNT_ATTACH_STATIC(pmap_ev_exec_synced_remap);
 EVCNT_ATTACH_STATIC(pmap_ev_exec_synced_clearbit);
@@ -3283,6 +3283,18 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 
 	UVMHIST_LOG(maphist, " opte %#x npte %#x", opte, npte, 0, 0);
 
+#if defined(ARM_MMU_EXTENDED)
+	/*
+	 * If exec protection was requested but the page hasn't been synced,
+	 * sync it now and allow execution from it.
+	 */
+	if ((nflags & PVF_EXEC) && (npte & L2_XS_XN)) {
+		struct vm_page_md *md = VM_PAGE_TO_MD(pg);
+		npte &= ~L2_XS_XN;
+		pmap_syncicache_page(md, pa);
+		PMAPCOUNT(exec_synced_map);
+	}
+#endif
 	/*
 	 * If this is just a wiring change, the two PTEs will be
 	 * identical, so there's no need to update the page table.
@@ -3322,7 +3334,6 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 #ifndef ARM_MMU_EXTENDED
 		UVMHIST_LOG(maphist, "  is_cached %d cs 0x%08x\n",
 		    is_cached, pm->pm_cstate.cs_all, 0, 0);
-#endif
 
 		if (pg != NULL) {
 			struct vm_page_md *md = VM_PAGE_TO_MD(pg);
@@ -3331,6 +3342,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			pmap_vac_me_harder(md, pa, pm, va);
 			pmap_release_page_lock(md);
 		}
+#endif
 	}
 #if defined(PMAP_CACHE_VIPT) && defined(DIAGNOSTIC)
 	if (pg) {
