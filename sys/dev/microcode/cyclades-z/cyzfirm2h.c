@@ -1,4 +1,4 @@
-/*	$NetBSD: cyzfirm2h.c,v 1.11 2012/03/08 16:45:10 jakllsch Exp $	*/
+/*	$NetBSD: cyzfirm2h.c,v 1.12 2014/04/01 15:33:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cyzfirm2h.c,v 1.11 2012/03/08 16:45:10 jakllsch Exp $");
+__RCSID("$NetBSD: cyzfirm2h.c,v 1.12 2014/04/01 15:33:22 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -51,7 +51,6 @@ __RCSID("$NetBSD: cyzfirm2h.c,v 1.11 2012/03/08 16:45:10 jakllsch Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 
-int	main(int argc, char *argv[]);
 static void	usage(void) __dead;
 
 int
@@ -116,11 +115,24 @@ main(int argc, char *argv[])
 	while (in_len != 0) {
 		if (i == 0)
 			fprintf(out_file, "\t");
-		fprintf(out_file, "0x%02x,", *in_ptr);
+		if (*in_ptr == '@' && in_len > 4 &&
+		    memcmp(in_ptr, "@(#)", 4) == 0)
+			fprintf(out_file, "0x%02x,", '_');
+		else
+			fprintf(out_file, "0x%02x,", *in_ptr);
 		in_ptr++;
 		in_len--;
 		i++;
-		if (i == 10) {
+		if (i == 8) {
+#ifdef DEBUG
+			size_t j;
+			fprintf(out_file, "\t/* ");
+			for (j = 0; j < 8; j++) {
+				unsigned char c = (in_ptr - 8)[j];
+				fputc(isprint(c) ? c : '.', out_file);
+			}
+			fprintf(out_file, " */");
+#endif
 			fprintf(out_file, "\n");
 			i = 0;
 		} else if (in_len != 0) {
@@ -130,6 +142,7 @@ main(int argc, char *argv[])
 	fprintf(out_file, "\n};\n\n");
 
 	fprintf(out_file, "#endif /* _%s_ */\n", include_name);
+	return 0;
 }
 
 __dead static void
