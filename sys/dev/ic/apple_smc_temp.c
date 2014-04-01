@@ -1,4 +1,4 @@
-/*	$NetBSD: apple_smc_temp.c,v 1.1 2014/04/01 17:47:36 riastradh Exp $	*/
+/*	$NetBSD: apple_smc_temp.c,v 1.2 2014/04/01 17:48:39 riastradh Exp $	*/
 
 /*
  * Apple System Management Controller: Temperature Sensors
@@ -34,17 +34,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_smc_temp.c,v 1.1 2014/04/01 17:47:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_smc_temp.c,v 1.2 2014/04/01 17:48:39 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kmem.h>
+#include <sys/module.h>
 #include <sys/systm.h>
 
 #include <dev/ic/apple_smc.h>
 
 #include <dev/sysmon/sysmonvar.h>
+
+#define APPLE_SMC_DEVICE	"applesmctemp"
 
 struct apple_smc_temp_softc {
 	device_t		sc_dev;
@@ -89,6 +92,9 @@ apple_smc_temp_match(device_t parent, cfdata_t match, void *aux)
 	const struct apple_smc_attach_args *asa = aux;
 	uint32_t nsensors;
 	int error;
+
+	if (strcmp(asa->asa_device, APPLE_SMC_DEVICE) != 0)
+		return 0;
 
 	error = apple_smc_temp_count_sensors(asa->asa_smc, &nsensors);
 	if (error)
@@ -358,4 +364,47 @@ apple_smc_bound_temp_sensors(struct apple_smc_tag *smc, uint32_t *tstart,
 		return EIO;
 
 	return 0;
+}
+
+MODULE(MODULE_CLASS_DRIVER, apple_smc_temp, "apple_smc");
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+apple_smc_temp_modcmd(modcmd_t cmd, void *arg __unused)
+{
+	int error;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		error = apple_smc_register_device(APPLE_SMC_DEVICE);
+		if (error)
+			return error;
+#ifdef _MODULE
+		error = config_init_component(cfdriver_ioconf_apple_smc_temp,
+		    cfattach_ioconf_apple_smc_temp,
+		    cfdata_ioconf_apple_smc_temp);
+		if (error) {
+			apple_smc_unregister_device(APPLE_SMC_DEVICE);
+			return error;
+		}
+#endif
+		return 0;
+
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		error = config_fini_component(cfdriver_ioconf_apple_smc_temp,
+		    cfattach_ioconf_apple_smc_temp,
+		    cfdata_ioconf_apple_smc_temp);
+		if (error)
+			return error;
+#endif
+		apple_smc_unregister_device(APPLE_SMC_DEVICE);
+		return 0;
+
+	default:
+		return ENOTTY;
+	}
 }
