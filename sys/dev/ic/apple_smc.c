@@ -1,4 +1,4 @@
-/*	$NetBSD: apple_smc.c,v 1.3 2014/04/01 17:48:52 riastradh Exp $	*/
+/*	$NetBSD: apple_smc.c,v 1.4 2014/04/01 17:49:05 riastradh Exp $	*/
 
 /*
  * Apple System Management Controller
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_smc.c,v 1.3 2014/04/01 17:48:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_smc.c,v 1.4 2014/04/01 17:49:05 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -75,12 +75,12 @@ void
 apple_smc_attach(struct apple_smc_tag *smc)
 {
 
-	mutex_init(&smc->smc_lock, MUTEX_DEFAULT, IPL_NONE);
-
+	mutex_init(&smc->smc_io_lock, MUTEX_DEFAULT, IPL_NONE);
 #if 0				/* XXX sysctl */
 	apple_smc_sysctl_setup(smc);
 #endif
 
+	/* Attach any children.  */
         (void)apple_smc_rescan(smc, APPLE_SMC_BUS, NULL);
 }
 
@@ -89,6 +89,7 @@ apple_smc_detach(struct apple_smc_tag *smc, int flags)
 {
 	int error;
 
+	/* Fail if we can't detach all our children.  */
 	error = config_detach_children(smc->smc_dev, flags);
 	if (error)
 		return error;
@@ -96,6 +97,7 @@ apple_smc_detach(struct apple_smc_tag *smc, int flags)
 #if 0				/* XXX sysctl */
 	sysctl_teardown(&smc->smc_log);
 #endif
+	mutex_destroy(&smc->smc_io_lock);
 
 	return 0;
 }
@@ -105,6 +107,7 @@ apple_smc_rescan(struct apple_smc_tag *smc, const char *ifattr,
     const int *locators)
 {
 
+	/* Let autoconf(9) do the work of finding new children.  */
 	(void)config_search_loc(&apple_smc_search, smc->smc_dev, APPLE_SMC_BUS,
 	    locators, smc);
 	return 0;
@@ -154,6 +157,7 @@ void
 apple_smc_child_detached(struct apple_smc_tag *smc __unused,
     device_t child __unused)
 {
+	/* We keep no books about our children.  */
 }
 
 static uint8_t
@@ -181,8 +185,12 @@ apple_smc_read_data(struct apple_smc_tag *smc, uint8_t *byte)
 	uint8_t status;
 	unsigned int i;
 
-	KASSERT(mutex_owned(&smc->smc_lock));
+	KASSERT(mutex_owned(&smc->smc_io_lock));
 
+	/*
+	 * Wait until the status register says there's data to read and
+	 * read it.
+	 */
 	for (i = 0; i < 100; i++) {
 		status = apple_smc_bus_read_1(smc, APPLE_SMC_CSR);
 		if (status & APPLE_SMC_STATUS_READ_READY) {
@@ -201,14 +209,20 @@ apple_smc_write(struct apple_smc_tag *smc, bus_size_t reg, uint8_t byte)
 	uint8_t status;
 	unsigned int i;
 
-	KASSERT(mutex_owned(&smc->smc_lock));
+	KASSERT(mutex_owned(&smc->smc_io_lock));
 
+	/*
+	 * Write the byte and then wait until the status register says
+	 * it has been accepted.
+	 */
 	apple_smc_bus_write_1(smc, reg, byte);
 	for (i = 0; i < 100; i++) {
 		status = apple_smc_bus_read_1(smc, APPLE_SMC_CSR);
 		if (status & APPLE_SMC_STATUS_WRITE_ACCEPTED)
 			return 0;
 		DELAY(100);
+
+		/* Write again if it hasn't been acknowledged at all.  */
 		if (!(status & APPLE_SMC_STATUS_WRITE_PENDING))
 			apple_smc_bus_write_1(smc, reg, byte);
 	}
@@ -237,18 +251,21 @@ apple_smc_begin(struct apple_smc_tag *smc, uint8_t cmd, const char *key,
 	unsigned int i;
 	int error;
 
-	KASSERT(mutex_owned(&smc->smc_lock));
+	KASSERT(mutex_owned(&smc->smc_io_lock));
 
+	/* Write the command first.  */
 	error = apple_smc_write_cmd(smc, cmd);
 	if (error)
 		return error;
 
+	/* Write the key next.  */
 	for (i = 0; i < 4; i++) {
 		error = apple_smc_write_data(smc, key[i]);
 		if (error)
 			return error;
 	}
 
+	/* Finally, report how many bytes of data we want to send/receive.  */
 	error = apple_smc_write_data(smc, size);
 	if (error)
 		return error;
@@ -264,11 +281,15 @@ apple_smc_input(struct apple_smc_tag *smc, uint8_t cmd, const char *key,
 	uint8_t i;
 	int error;
 
-	mutex_enter(&smc->smc_lock);
+	/* Grab the SMC I/O lock.  */
+	mutex_enter(&smc->smc_io_lock);
+
+	/* Initiate the command with this key.  */
 	error = apple_smc_begin(smc, cmd, key, size);
 	if (error)
 		goto out;
 
+	/* Read each byte of data in sequence.  */
 	for (i = 0; i < size; i++) {
 		error = apple_smc_read_data(smc, &bytes[i]);
 		if (error)
@@ -278,8 +299,7 @@ apple_smc_input(struct apple_smc_tag *smc, uint8_t cmd, const char *key,
 	/* Success!  */
 	error = 0;
 
-out:
-	mutex_exit(&smc->smc_lock);
+out:	mutex_exit(&smc->smc_io_lock);
 	return error;
 }
 
@@ -291,19 +311,25 @@ apple_smc_output(struct apple_smc_tag *smc, uint8_t cmd, const char *key,
 	uint8_t i;
 	int error;
 
-	mutex_enter(&smc->smc_lock);
+	/* Grab the SMC I/O lock.  */
+	mutex_enter(&smc->smc_io_lock);
+
+	/* Initiate the command with this key.  */
 	error = apple_smc_begin(smc, cmd, key, size);
 	if (error)
 		goto out;
 
+	/* Write each byte of data in sequence.  */
 	for (i = 0; i < size; i++) {
 		error = apple_smc_write_data(smc, bytes[i]);
 		if (error)
 			goto out;
 	}
 
-out:
-	mutex_exit(&smc->smc_lock);
+	/* Success!  */
+	error = 0;
+
+out:	mutex_exit(&smc->smc_io_lock);
 	return error;
 }
 
@@ -344,27 +370,34 @@ apple_smc_nth_key(struct apple_smc_tag *smc, uint32_t index,
 	struct apple_smc_key *key;
 	int error;
 
+	/* Paranoia: type must be NULL or 4 non-null characters long.  */
 	if ((type != NULL) && (strlen(type) != 4))
 		return EINVAL;
 
+	/* Create a new key.  XXX Consider caching these.  */
 	key = kmem_alloc(sizeof(*key), KM_SLEEP);
 #ifdef DIAGNOSTIC
 	key->ask_smc = smc;
 #endif
 
+	/* Ask the SMC what the name of the key by this number is.  */
 	index_be.u32 = htobe32(index);
 	error = apple_smc_input(smc, APPLE_SMC_CMD_NTH_KEY, index_be.name,
 	    key->ask_name, 4);
 	if (error)
 		goto fail;
+
+	/* Null-terminate the name. */
 	key->ask_name[4] = '\0';
 
+	/* Ask the SMC for a description of this key by name.  */
 	CTASSERT(sizeof(key->ask_desc) == 6);
 	error = apple_smc_input(smc, APPLE_SMC_CMD_KEY_DESC, key->ask_name,
 	    &key->ask_desc, 6);
 	if (error)
 		goto fail;
 
+	/* Fail with EINVAL if the types don't match.  */
 	if ((type != NULL) && (0 != memcmp(key->ask_desc.asd_type, type, 4))) {
 		error = EINVAL;
 		goto fail;
@@ -374,8 +407,7 @@ apple_smc_nth_key(struct apple_smc_tag *smc, uint32_t index,
 	*keyp = key;
 	return 0;
 
-fail:
-	kmem_free(key, sizeof(*key));
+fail:	kmem_free(key, sizeof(*key));
 	return error;
 }
 
@@ -386,36 +418,43 @@ apple_smc_named_key(struct apple_smc_tag *smc, const char name[4 + 1],
 	struct apple_smc_key *key;
 	int error;
 
+	/* Paranoia: name must be 4 non-null characters long.  */
 	KASSERT(name != NULL);
 	if (strlen(name) != 4)
 		return EINVAL;
 
+	/* Paranoia: type must be NULL or 4 non-null characters long.  */
 	if ((type != NULL) && (strlen(type) != 4))
 		return EINVAL;
 
+	/* Create a new key.  XXX Consider caching these.  */
 	key = kmem_alloc(sizeof(*key), KM_SLEEP);
 #ifdef DIAGNOSTIC
 	key->ask_smc = smc;
 #endif
+
+	/* Use the specified name, and make sure it's null-terminated.  */
 	(void)memcpy(key->ask_name, name, 4);
 	key->ask_name[4] = '\0';
 
+	/* Ask the SMC for a description of this key by name.  */
 	CTASSERT(sizeof(key->ask_desc) == 6);
 	error = apple_smc_input(smc, APPLE_SMC_CMD_KEY_DESC, key->ask_name,
 	    &key->ask_desc, 6);
 	if (error)
 		goto fail;
 
+	/* Fail with EINVAL if the types don't match.  */
 	if ((type != NULL) && (0 != memcmp(key->ask_desc.asd_type, type, 4))) {
 		error = EINVAL;
 		goto fail;
 	}
 
+	/* Success!  */
 	*keyp = key;
 	return 0;
 
-fail:
-	kmem_free(key, sizeof(*key));
+fail:	kmem_free(key, sizeof(*key));
 	return error;
 }
 
@@ -424,11 +463,14 @@ apple_smc_release_key(struct apple_smc_tag *smc, struct apple_smc_key *key)
 {
 
 #ifdef DIAGNOSTIC
+	/* Make sure the caller didn't mix up SMC tags.  */
 	if (key->ask_smc != smc)
 		aprint_error_dev(smc->smc_dev,
 		    "releasing key with wrong tag: %p != %p",
 		    smc, key->ask_smc);
 #endif
+
+	/* Nothing to do but free the key's memory.  */
 	kmem_free(key, sizeof(*key));
 }
 
@@ -440,6 +482,7 @@ apple_smc_key_search(struct apple_smc_tag *smc, const char *name,
 	uint32_t start = 0, end = apple_smc_nkeys(smc), median;
 	int error;
 
+	/* Do a binary search on the SMC's key space.  */
 	while (start < end) {
 		median = (start + ((end - start) / 2));
 		error = apple_smc_nth_key(smc, median, NULL, &key);
@@ -453,6 +496,7 @@ apple_smc_key_search(struct apple_smc_tag *smc, const char *name,
 		apple_smc_release_key(smc, key);
 	}
 
+	/* Success!  */
 	*result = start;
 	return 0;
 }
@@ -462,11 +506,15 @@ apple_smc_read_key(struct apple_smc_tag *smc, const struct apple_smc_key *key,
     void *buffer, uint8_t size)
 {
 
+	/* Refuse if software and hardware disagree on the key's size.  */
 	if (key->ask_desc.asd_size != size)
 		return EINVAL;
+
+	/* Refuse if the hardware doesn't want us to read it.  */
 	if (!(key->ask_desc.asd_flags & APPLE_SMC_FLAG_READ))
 		return EACCES;
 
+	/* Looks good.  Try reading it from the hardware.  */
 	return apple_smc_input(smc, APPLE_SMC_CMD_READ_KEY, key->ask_name,
 	    buffer, size);
 }
@@ -486,11 +534,15 @@ apple_smc_read_key_2(struct apple_smc_tag *smc,
 	uint16_t be;
 	int error;
 
+	/* Read a big-endian quantity from the hardware.  */
 	error = apple_smc_read_key(smc, key, &be, 2);
 	if (error)
 		return error;
 
+	/* Convert it to host order.  */
 	*p = be16toh(be);
+
+	/* Success!  */
 	return 0;
 }
 
@@ -501,11 +553,15 @@ apple_smc_read_key_4(struct apple_smc_tag *smc,
 	uint32_t be;
 	int error;
 
+	/* Read a big-endian quantity from the hardware.  */
 	error = apple_smc_read_key(smc, key, &be, 4);
 	if (error)
 		return error;
 
+	/* Convert it to host order.  */
 	*p = be32toh(be);
+
+	/* Success!  */
 	return 0;
 }
 
@@ -514,11 +570,15 @@ apple_smc_write_key(struct apple_smc_tag *smc, const struct apple_smc_key *key,
     const void *buffer, uint8_t size)
 {
 
+	/* Refuse if software and hardware disagree on the key's size.  */
 	if (key->ask_desc.asd_size != size)
 		return EINVAL;
+
+	/* Refuse if the hardware doesn't want us to write it.  */
 	if (!(key->ask_desc.asd_flags & APPLE_SMC_FLAG_WRITE))
 		return EACCES;
 
+	/* Looks good.  Try writing it to the hardware.  */
 	return apple_smc_output(smc, APPLE_SMC_CMD_WRITE_KEY, key->ask_name,
 	    buffer, size);
 }
@@ -535,8 +595,10 @@ int
 apple_smc_write_key_2(struct apple_smc_tag *smc,
     const struct apple_smc_key *key, uint16_t v)
 {
+	/* Convert the quantity from host to big-endian byte order.  */
 	const uint16_t v_be = htobe16(v);
 
+	/* Write the big-endian quantity to the hardware.  */
 	return apple_smc_write_key(smc, key, &v_be, 2);
 }
 
@@ -544,8 +606,10 @@ int
 apple_smc_write_key_4(struct apple_smc_tag *smc,
     const struct apple_smc_key *key, uint32_t v)
 {
+	/* Convert the quantity from host to big-endian byte order.  */
 	const uint16_t v_be = htobe32(v);
 
+	/* Write the big-endian quantity to the hardware.  */
 	return apple_smc_write_key(smc, key, &v_be, 4);
 }
 
@@ -555,6 +619,7 @@ static int
 apple_smc_modcmd(modcmd_t cmd, void *data __unused)
 {
 
+	/* Nothing to do for now to set up or tear down the module.  */
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		return 0;
