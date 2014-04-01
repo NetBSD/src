@@ -1,4 +1,4 @@
-/*	$NetBSD: apple_smc.h,v 1.1 2014/04/01 17:47:36 riastradh Exp $	*/
+/*	$NetBSD: apple_smc.h,v 1.2 2014/04/01 17:48:39 riastradh Exp $	*/
 
 /*
  * Apple System Management Controller Interface
@@ -42,6 +42,7 @@ struct apple_smc_tag;
 
 struct apple_smc_attach_args {
 	struct apple_smc_tag	*asa_smc;
+	const char		*asa_device;
 };
 
 struct apple_smc_key;
@@ -105,5 +106,10 @@ int	apple_smc_write_key_2(struct apple_smc_tag *,
 	    const struct apple_smc_key *, uint16_t);
 int	apple_smc_write_key_4(struct apple_smc_tag *,
 	    const struct apple_smc_key *, uint32_t);
+
+#define	APPLE_SMC_DEVICE_NAME_SIZE	0x20
+
+int	apple_smc_register_device(const char[APPLE_SMC_DEVICE_NAME_SIZE]);
+void	apple_smc_unregister_device(const char[APPLE_SMC_DEVICE_NAME_SIZE]);
 
 #endif  /* _DEV_IC_APPLE_SMC_H_ */
