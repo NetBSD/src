@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.9 2014/03/31 11:25:49 martin Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.10 2014/04/01 14:09:14 martin Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -33,6 +33,7 @@
 #ifndef _PLAYSTATION2_DISKLABEL_H_
 #define	_PLAYSTATION2_DISKLABEL_H_
 
+#define LABELUSESMBR		1	/* use MBR partitionning */
 #define	LABELSECTOR	1		/* sector containing label */
 #define	LABELOFFSET	0		/* offset of label in sector */
 #define	MAXPARTITIONS	16		/* number of partitions */
