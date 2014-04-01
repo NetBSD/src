@@ -1,4 +1,4 @@
-/*	$NetBSD: apple_smc.c,v 1.2 2014/04/01 17:48:39 riastradh Exp $	*/
+/*	$NetBSD: apple_smc.c,v 1.3 2014/04/01 17:48:52 riastradh Exp $	*/
 
 /*
  * Apple System Management Controller
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_smc.c,v 1.2 2014/04/01 17:48:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_smc.c,v 1.3 2014/04/01 17:48:52 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: apple_smc.c,v 1.2 2014/04/01 17:48:39 riastradh Exp 
 #include <sys/kmem.h>
 #include <sys/module.h>
 #include <sys/mutex.h>
-#include <sys/rbtree.h>
 #include <sys/rwlock.h>
 #if 0                           /* XXX sysctl */
 #include <sys/sysctl.h>
@@ -54,13 +53,10 @@ __KERNEL_RCSID(0, "$NetBSD: apple_smc.c,v 1.2 2014/04/01 17:48:39 riastradh Exp 
 #include <dev/ic/apple_smcreg.h>
 #include <dev/ic/apple_smcvar.h>
 
+/* Must match the config(5) name.  */
 #define	APPLE_SMC_BUS	"applesmcbus"
 
-static int	apple_smc_dev_compare_nodes(void *, const void *,
-		    const void *);
-static int	apple_smc_dev_compare_key(void *, const void *, const void *);
-static int	apple_smc_init(void);
-static int	apple_smc_fini(void);
+static int	apple_smc_search(device_t, cfdata_t, const int *, void *);
 static uint8_t	apple_smc_bus_read_1(struct apple_smc_tag *, bus_size_t);
 static void	apple_smc_bus_write_1(struct apple_smc_tag *, bus_size_t,
 		    uint8_t);
@@ -75,156 +71,17 @@ static int	apple_smc_input(struct apple_smc_tag *, uint8_t,
 static int	apple_smc_output(struct apple_smc_tag *, uint8_t,
 		    const char *, const void *, uint8_t);
 
-struct apple_smc_dev {
-	char		asd_name[APPLE_SMC_DEVICE_NAME_SIZE];
-	rb_node_t	asd_node;
-	device_t	asd_dev[];
-};
-
-static int
-apple_smc_dev_compare_nodes(void *context __unused, const void *va,
-    const void *vb)
-{
-	const struct apple_smc_dev *const a = va;
-	const struct apple_smc_dev *const b = vb;
-
-	return strncmp(a->asd_name, b->asd_name, APPLE_SMC_DEVICE_NAME_SIZE);
-}
-
-static int
-apple_smc_dev_compare_key(void *context __unused, const void *vn,
-    const void *vk)
-{
-	const struct apple_smc_dev *const dev = vn;
-	const char *const key = vk;
-
-	return strncmp(dev->asd_name, key, APPLE_SMC_DEVICE_NAME_SIZE);
-}
-
-static krwlock_t apple_smc_registered_devices_lock;
-static rb_tree_t apple_smc_registered_devices;
-static unsigned int apple_smc_n_registered_devices;
-
-static const rb_tree_ops_t apple_smc_dev_tree_ops = {
-	.rbto_compare_nodes	= &apple_smc_dev_compare_nodes,
-	.rbto_compare_key	= &apple_smc_dev_compare_key,
-	.rbto_node_offset	= offsetof(struct apple_smc_dev, asd_node),
-};
-
-static int
-apple_smc_init(void)
-{
-
-	rw_init(&apple_smc_registered_devices_lock);
-	rb_tree_init(&apple_smc_registered_devices, &apple_smc_dev_tree_ops);
-	apple_smc_n_registered_devices = 0;
-
-	/* Success!  */
-	return 0;
-}
-
-static int
-apple_smc_fini(void)
-{
-
-	/* Refuse to unload if there remain any registered devices.  */
-	if (apple_smc_n_registered_devices)
-		return EBUSY;
-
-	/* The tree should be empty in this case.  */
-	KASSERT(rb_tree_iterate(&apple_smc_registered_devices, NULL,
-		RB_DIR_RIGHT) == NULL);
-
-#if 0				/* XXX no rb_tree_destroy */
-	rb_tree_destroy(&apple_smc_registered_devices);
-#endif
-	rw_destroy(&apple_smc_registered_devices_lock);
-
-	/* Success!  */
-	return 0;
-}
-
-int
-apple_smc_register_device(const char name[APPLE_SMC_DEVICE_NAME_SIZE])
-{
-	int error;
-
-	/* Paranoia about null termination.  */
-	KASSERT(name[strnlen(name, (sizeof(name) - 1))] == '\0');
-
-	/* Make a new record for the registration.  */
-	struct apple_smc_dev *const dev =
-	    kmem_alloc(offsetof(struct apple_smc_dev, asd_dev[0]), KM_SLEEP);
-	(void)strlcpy(dev->asd_name, name, sizeof(dev->asd_name));
-
-	rw_enter(&apple_smc_registered_devices_lock, RW_WRITER);
-
-	/* Fail if there are too many.  We really oughtn't get here.  */
-	if (apple_smc_n_registered_devices == UINT_MAX) {
-		error = ENOMEM;
-		goto out;
-	}
-
-	/* Fail if the name is already registered.  */
-	struct apple_smc_dev *const collision =
-	    rb_tree_insert_node(&apple_smc_registered_devices, dev);
-	if (collision != dev) {
-		kmem_free(dev, offsetof(struct apple_smc_dev, asd_dev[0]));
-		error = EEXIST;
-		goto out;
-	}
-
-	/* Success!  */
-	apple_smc_n_registered_devices++;
-	error = 0;
-
-out:
-	rw_exit(&apple_smc_registered_devices_lock);
-	return error;
-}
-
-void
-apple_smc_unregister_device(const char name[APPLE_SMC_DEVICE_NAME_SIZE])
-{
-
-	KASSERT(name[strnlen(name, (sizeof(name) - 1))] == '\0');
-
-	rw_enter(&apple_smc_registered_devices_lock, RW_WRITER);
-
-	/* Find the node.  */
-	struct apple_smc_dev *const dev =
-	    rb_tree_find_node(&apple_smc_registered_devices, name);
-	if (dev == NULL) {
-		printf("%s: device was never registered: %s\n", __func__,
-		    name);
-		goto out;
-	}
-
-	/* If we found one, this ought to be at least 1.  */
-	KASSERT(apple_smc_n_registered_devices > 0);
-
-	/* Remove it, but wait until unlocked to free it (paranoia).  */
-	rb_tree_remove_node(&apple_smc_registered_devices, dev);
-	apple_smc_n_registered_devices--;
-
-out:
-	rw_exit(&apple_smc_registered_devices_lock);
-	if (dev != NULL)
-		kmem_free(dev, offsetof(struct apple_smc_dev, asd_dev[0]));
-}
-
 void
 apple_smc_attach(struct apple_smc_tag *smc)
 {
 
 	mutex_init(&smc->smc_lock, MUTEX_DEFAULT, IPL_NONE);
-	rb_tree_init(&smc->smc_devices, &apple_smc_dev_tree_ops);
 
 #if 0				/* XXX sysctl */
 	apple_smc_sysctl_setup(smc);
 #endif
 
-        (void)apple_smc_rescan(smc, NULL, NULL);
+        (void)apple_smc_rescan(smc, APPLE_SMC_BUS, NULL);
 }
 
 int
@@ -245,105 +102,58 @@ apple_smc_detach(struct apple_smc_tag *smc, int flags)
 
 int
 apple_smc_rescan(struct apple_smc_tag *smc, const char *ifattr,
-    const int *locators __unused)
+    const int *locators)
 {
-	struct apple_smc_attach_args asa;
-	struct apple_smc_dev *registered, *attached;
-	device_t child;
 
-	if (!ifattr_match(ifattr, APPLE_SMC_BUS))
-		return 0;
+	(void)config_search_loc(&apple_smc_search, smc->smc_dev, APPLE_SMC_BUS,
+	    locators, smc);
+	return 0;
+}
 
-	(void)memset(&asa, 0, sizeof asa);
-	asa.asa_smc = smc;
-#if 0				/* XXX sysctl */
-	asa.asa_sysctlnode = smc->smc_sysctlnode;
-#endif
+static int
+apple_smc_search(device_t parent, cfdata_t cf, const int *locators, void *aux)
+{
+	struct apple_smc_tag *const smc = aux;
+	static const struct apple_smc_attach_args zero_asa;
+	struct apple_smc_attach_args asa = zero_asa;
+	device_t dev;
+	deviter_t di;
+	bool attached = false;
 
 	/*
-	 * Go through all the registered SMC devices and try to attach
-	 * them.
+	 * If this device has already attached, don't attach it again.
 	 *
-	 * XXX Horrible quadratic-time loop to avoid holding the rwlock
-	 * during allocation.  Fortunately, there are not likely to be
-	 * many of these devices.
+	 * XXX This is a pretty silly way to query the children, but
+	 * struct device doesn't seem to list its children.
 	 */
-restart:
-	registered = NULL;
-	rw_enter(&apple_smc_registered_devices_lock, RW_READER);
-	while ((registered = rb_tree_iterate(&apple_smc_registered_devices,
-		    registered, RB_DIR_RIGHT)) != NULL) {
-		char name[APPLE_SMC_DEVICE_NAME_SIZE];
-		CTASSERT(sizeof(name) == sizeof(registered->asd_name));
-
-		/* Paranoia about null termination.  */
-		KASSERT(registered->asd_name[strnlen(registered->asd_name,
-				(sizeof(registered->asd_name) - 1))] == '\0');
-
-		/* Skip it if we already have it attached.  */
-		attached = rb_tree_find_node(&smc->smc_devices,
-		    registered->asd_name);
-		if (attached != NULL)
+	for (dev = deviter_first(&di, DEVITER_F_LEAVES_FIRST);
+	     dev != NULL;
+	     dev = deviter_next(&di)) {
+		if (device_parent(dev) != parent)
 			continue;
-
-		/* Try to match it autoconfily.  */
-		asa.asa_device = registered->asd_name;
-		child = config_found_ia(smc->smc_dev, APPLE_SMC_BUS, &asa,
-		    NULL);
-		if (child == NULL)
+		if (!device_is_a(dev, cf->cf_name))
 			continue;
-
-		/* Save the name while we drop the lock.  */
-		(void)strlcpy(name, registered->asd_name, sizeof(name));
-
-		/* Drop the lock so we can allocate.  */
-		rw_exit(&apple_smc_registered_devices_lock);
-
-		/* Create a new record for the attachment.  */
-		attached = kmem_alloc(offsetof(struct apple_smc_dev,
-			asd_dev[1]), KM_SLEEP);
-		(void)strlcpy(attached->asd_name, name, sizeof(name));
-		attached->asd_dev[0] = child;
-
-		/* Store it in the tree.  */
-		struct apple_smc_dev *const collision __unused =
-		    rb_tree_insert_node(&smc->smc_devices, attached);
-		KASSERT(collision == attached);
-
-		/* Start back at the beginning since we dropped the lock.  */
-		goto restart;
+		attached = true;
+		break;
 	}
-	rw_exit(&apple_smc_registered_devices_lock);
+	deviter_release(&di);
+	if (attached)
+		return 0;
 
-	/* Success!  */
-        return 0;
+	/* If this device doesn't match, don't attach it.  */
+	if (!config_match(parent, cf, aux))
+		return 0;
+
+	/* Looks hunky-dory.  Attach.  */
+	asa.asa_smc = smc;
+	(void)config_attach_loc(parent, cf, locators, &asa, NULL);
+	return 0;
 }
 
 void
-apple_smc_child_detached(struct apple_smc_tag *smc, device_t child)
+apple_smc_child_detached(struct apple_smc_tag *smc __unused,
+    device_t child __unused)
 {
-	struct apple_smc_dev *dev, *next;
-	bool done = false;
-
-	/*
-	 * Go through the list of attached devices safely with respect
-	 * to removal and remove any matching entries.  There should be
-	 * only one, but paranoia.
-	 */
-	for (dev = rb_tree_iterate(&smc->smc_devices, NULL, RB_DIR_RIGHT);
-	     (dev != NULL?
-		 (next = rb_tree_iterate(&smc->smc_devices, dev,
-		     RB_DIR_RIGHT), true)
-		 : false);
-	     dev = next) {
-		if (dev->asd_dev[0] != child)
-			continue;
-		if (done)
-			printf("apple smc child doubly attached: %s\n",
-			    dev->asd_name);
-		rb_tree_remove_node(&smc->smc_devices, dev);
-		kmem_free(dev, offsetof(struct apple_smc_dev, asd_dev[1]));
-	}
 }
 
 static uint8_t
@@ -747,10 +557,10 @@ apple_smc_modcmd(modcmd_t cmd, void *data __unused)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		return apple_smc_init();
+		return 0;
 
 	case MODULE_CMD_FINI:
-		return apple_smc_fini();
+		return 0;
 
 	default:
 		return ENOTTY;
