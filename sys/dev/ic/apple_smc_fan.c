@@ -1,4 +1,4 @@
-/*	$NetBSD: apple_smc_fan.c,v 1.3 2014/04/01 17:48:52 riastradh Exp $	*/
+/*	$NetBSD: apple_smc_fan.c,v 1.4 2014/04/01 17:49:05 riastradh Exp $	*/
 
 /*
  * Apple System Management Controller: Fans
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_smc_fan.c,v 1.3 2014/04/01 17:48:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_smc_fan.c,v 1.4 2014/04/01 17:49:05 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -116,15 +116,18 @@ apple_smc_fan_match(device_t parent, cfdata_t match, void *aux)
 	int rv = 0;
 	int error;
 
+	/* Find how to find how many fans there are.  */
 	error = apple_smc_named_key(asa->asa_smc, APPLE_SMC_NFANS_KEY,
 	    APPLE_SMC_TYPE_UINT8, &nfans_key);
 	if (error)
 		goto out0;
 
+	/* Find how many fans there are.  */
 	error = apple_smc_read_key_1(asa->asa_smc, nfans_key, &nfans);
 	if (error)
 		goto out1;
 
+	/* Attach only if there's at least one fan.  */
 	if (nfans > 0)
 		rv = 1;
 
@@ -140,26 +143,37 @@ apple_smc_fan_attach(device_t parent, device_t self, void *aux)
 	struct apple_smc_key *nfans_key;
 	int error;
 
+	/* Identify ourselves.  */
 	aprint_normal(": Apple SMC fan sensors\n");
 
+	/* Initialize the softc.  */
 	sc->sc_dev = self;
 	sc->sc_smc = asa->asa_smc;
 
+	/* Find how to find how many fans there are.  */
 	error = apple_smc_named_key(sc->sc_smc, APPLE_SMC_NFANS_KEY,
 	    APPLE_SMC_TYPE_UINT8, &nfans_key);
 	if (error)
 		goto out0;
 
+	/* Find how many fans there are.  */
 	error = apple_smc_read_key_1(sc->sc_smc, nfans_key, &sc->sc_nfans);
 	if (error)
 		goto out1;
 
-	if (sc->sc_nfans == 0) {	/* XXX */
+	/*
+	 * There should be at least one, but just in case the hardware
+	 * changed its mind in the interim...
+	 */
+	if (sc->sc_nfans == 0) {
 		aprint_error_dev(self, "no fans\n");
 		goto out1;
 	}
 
-	/* Must fit in a single decimal digit.  */
+	/*
+	 * The number of fans must fit in a single decimal digit for
+	 * the names of the fan keys; see the fan_sensor table above.
+	 */
 	if (sc->sc_nfans >= 10) {
 		aprint_error_dev(self, "too many fans: %"PRIu8"\n",
 		    sc->sc_nfans);
@@ -167,15 +181,18 @@ apple_smc_fan_attach(device_t parent, device_t self, void *aux)
 	}
 
 #if 0				/* XXX sysctl */
+	/* Set up the sysctl tree for controlling the fans.  */
 	error = apple_smc_fan_sysctl_setup(sc);
 	if (error)
 		goto fail0;
 #endif
 
+	/* Attach the sensors to sysmon_envsys.  */
 	error = apple_smc_fan_attach_sensors(sc);
 	if (error)
 		goto fail1;
 
+	/* Success!  */
 	goto out1;
 
 #if 0
@@ -198,6 +215,7 @@ apple_smc_fan_detach(device_t self, int flags)
 {
 	struct apple_smc_fan_softc *sc = device_private(self);
 
+	/* If we registered with sysmon_envsys, unregister.  */
 	if (sc->sc_sme != NULL) {
 		sysmon_envsys_unregister(sc->sc_sme);
 		sc->sc_sme = NULL;
@@ -206,6 +224,7 @@ apple_smc_fan_detach(device_t self, int flags)
 		KASSERT(sc->sc_nfans > 0);
 		KASSERT(sc->sc_nfans < 10);
 
+		/* Release the keys and free the memory for fan records. */
 		apple_smc_fan_release_keys(sc);
 		kmem_free(sc->sc_fans,
 		    (sizeof(sc->sc_fans[0]) * sc->sc_nfans));
@@ -214,6 +233,7 @@ apple_smc_fan_detach(device_t self, int flags)
 	}
 
 #if 0				/* XXX sysctl */
+	/* Tear down all the sysctl knobs we set up.  */
 	sysctl_teardown(&sc->sc_sysctl_log);
 #endif
 
@@ -230,20 +250,26 @@ apple_smc_fan_attach_sensors(struct apple_smc_fan_softc *sc)
 	char name[sizeof(fan_desc.fd_name) + 1];
 	int error;
 
+	/* Create a sysmon_envsys record, but don't register it yet.  */
 	sc->sc_sme = sysmon_envsys_create();
 	sc->sc_sme->sme_name = device_xname(sc->sc_dev);
 	sc->sc_sme->sme_cookie = sc;
 	sc->sc_sme->sme_refresh = apple_smc_fan_refresh;
 
+	/* Create an array of fan sensor records.  */
 	CTASSERT(10 <= (SIZE_MAX / sizeof(sc->sc_fans[0])));
 	sc->sc_fans = kmem_zalloc((sizeof(sc->sc_fans[0]) * sc->sc_nfans),
 	    KM_SLEEP);
 
+	/* Find all the fans.  */
 	for (fan = 0; fan < sc->sc_nfans; fan++) {
-		(void)snprintf(fan_desc_key_name, sizeof fan_desc_key_name,
+
+		/* Format the name of the key for the fan's description.  */
+		(void)snprintf(fan_desc_key_name, sizeof(fan_desc_key_name),
 		    "F%"PRIu8"ID", fan);
 		KASSERT(4 == strlen(fan_desc_key_name));
 
+		/* Look up the key for this fan's description.  */
 		error = apple_smc_named_key(sc->sc_smc, fan_desc_key_name,
 		    APPLE_SMC_TYPE_FANDESC, &fan_desc_key);
 		if (error) {
@@ -253,8 +279,9 @@ apple_smc_fan_attach_sensors(struct apple_smc_fan_softc *sc)
 			continue;
 		}
 
+		/* Read the description of this fan.  */
 		error = apple_smc_read_key(sc->sc_smc, fan_desc_key, &fan_desc,
-		    sizeof fan_desc);
+		    sizeof(fan_desc));
 		if (error) {
 			aprint_error_dev(sc->sc_dev,
 			    "error identifying fan %"PRIu8": %d\n",
@@ -266,21 +293,26 @@ apple_smc_fan_attach_sensors(struct apple_smc_fan_softc *sc)
 		 * XXX Do more with the fan description...
 		 */
 
+		/* Make a null-terminated copy of this fan's description.  */
 		(void)memcpy(name, fan_desc.fd_name, sizeof(fan_desc.fd_name));
-		name[sizeof(fan_desc.fd_name)] = 0;
+		name[sizeof(fan_desc.fd_name)] = '\0';
 
+		/* Attach all the sensors for this fan.  */
 		for (sensor = 0; sensor < __arraycount(fan_sensors); sensor++)
 			apple_smc_fan_attach_sensor(sc, fan, name, sensor);
 
 #if 0				/* XXX sysctl */
+		/* Attach sysctl knobs to control this fan.  */
 		apple_smc_fan_sysctl_setup_1(sc, fan);
 #endif
 	}
 
+	/* Fan sensors are all attached.  Register with sysmon_envsys now.  */
 	error = sysmon_envsys_register(sc->sc_sme);
 	if (error)
 		goto fail;
 
+	/* Success!  */
 	error = 0;
 	goto out;
 
@@ -301,15 +333,19 @@ apple_smc_fan_attach_sensor(struct apple_smc_fan_softc *sc, uint8_t fan,
 	KASSERT(fan < sc->sc_nfans);
 	KASSERT(sensor < __arraycount(fan_sensors));
 
-	keyp = &sc->sc_fans[fan].sensors[sensor].sensor_key;
-	(void)snprintf(key_name, sizeof key_name, "F%d%s",
+	/* Format the name of the key for this fan sensor.   */
+	(void)snprintf(key_name, sizeof(key_name), "F%d%s",
 	    (int)sensor, fan_sensors[sensor].fs_key_suffix);
 	KASSERT(strlen(key_name) == 4);
+
+	/* Look up the key for this fan sensor. */
+	keyp = &sc->sc_fans[fan].sensors[sensor].sensor_key;
 	error = apple_smc_named_key(sc->sc_smc, key_name, APPLE_SMC_TYPE_FPE2,
 	    keyp);
 	if (error)
 		goto fail0;
 
+	/* Initialize the envsys_data record for this fan sensor.  */
 	edata = &sc->sc_fans[fan].sensors[sensor].sensor_data;
 	edata->units = ENVSYS_SFANRPM;
 	edata->state = ENVSYS_SINVALID;
@@ -317,10 +353,12 @@ apple_smc_fan_attach_sensor(struct apple_smc_fan_softc *sc, uint8_t fan,
 	(void)snprintf(edata->desc, sizeof(edata->desc), "fan %s %s speed",
 	    name, fan_sensors[sensor].fs_name);
 
+	/* Attach this fan sensor to sysmon_envsys.  */
 	error = sysmon_envsys_sensor_attach(sc->sc_sme, edata);
 	if (error)
 		goto fail1;
 
+	/* Success!  */
 	return;
 
 fail1:	apple_smc_release_key(sc->sc_smc, *keyp);
@@ -339,6 +377,7 @@ apple_smc_fan_refresh(struct sysmon_envsys *sme, struct envsys_data *edata)
 	uint16_t rpm;
 	int error;
 
+	/* Sanity-check the sensor number out of paranoia.  */
 	CTASSERT(10 <= (SIZE_MAX / __arraycount(fan_sensors)));
 	KASSERT(sc->sc_nfans < 10);
 	if (edata->sensor >= (sc->sc_nfans * __arraycount(fan_sensors))) {
@@ -347,6 +386,7 @@ apple_smc_fan_refresh(struct sysmon_envsys *sme, struct envsys_data *edata)
 		return;
 	}
 
+	/* Pick apart the fan number and its sensor number.  */
 	fan = (edata->sensor / __arraycount(fan_sensors));
 	sensor = (edata->sensor % __arraycount(fan_sensors));
 
@@ -356,11 +396,12 @@ apple_smc_fan_refresh(struct sysmon_envsys *sme, struct envsys_data *edata)
 
 	/*
 	 * If we're refreshing, this sensor got attached, so we ought
-	 * to have a sensor key.
+	 * to have a sensor key.  Grab it.
 	 */
 	key = sc->sc_fans[fan].sensors[sensor].sensor_key;
 	KASSERT(key != NULL);
 
+	/* Read the fan sensor value, in rpm.  */
 	error = apple_smc_read_key_2(sc->sc_smc, key, &rpm);
 	if (error) {
 		aprint_error_dev(sc->sc_dev,
@@ -370,6 +411,7 @@ apple_smc_fan_refresh(struct sysmon_envsys *sme, struct envsys_data *edata)
 		return;
 	}
 
+	/* Success!  */
 	edata->value_cur = rpm;
 	edata->state = ENVSYS_SVALID;
 }
@@ -415,7 +457,9 @@ MODULE(MODULE_CLASS_DRIVER, apple_smc_fan, "apple_smc");
 static int
 apple_smc_fan_modcmd(modcmd_t cmd, void *arg __unused)
 {
+#ifdef _MODULE
 	int error;
+#endif
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:

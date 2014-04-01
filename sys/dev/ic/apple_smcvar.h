@@ -1,4 +1,4 @@
-/*	$NetBSD: apple_smcvar.h,v 1.3 2014/04/01 17:48:52 riastradh Exp $	*/
+/*	$NetBSD: apple_smcvar.h,v 1.4 2014/04/01 17:49:05 riastradh Exp $	*/
 
 /*
  * Apple System Management Controller State
@@ -47,8 +47,8 @@ struct apple_smc_tag {
 	bus_space_tag_t		smc_bst;
 	bus_space_handle_t	smc_bsh;
 	bus_size_t		smc_size;
-	uint32_t		smc_nkeys;
-	kmutex_t		smc_lock;
+	uint32_t		smc_nkeys;	/* number of keys in the SMC */
+	kmutex_t		smc_io_lock;	/* excludes I/O with the SMC */
 
 #if 0				/* XXX sysctl */
 	struct sysctllog	*smc_sysctllog;
