@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_start.S,v 1.8 2013/11/12 17:14:39 skrll Exp $	*/
+/*	$NetBSD: rpi_start.S,v 1.9 2014/04/01 06:55:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -87,11 +87,11 @@
 #include <arm/armreg.h>
 #include "assym.h"
 
-RCSID("$NetBSD: rpi_start.S,v 1.8 2013/11/12 17:14:39 skrll Exp $")
+RCSID("$NetBSD: rpi_start.S,v 1.9 2014/04/01 06:55:29 skrll Exp $")
 
 /*
- * Workaround Erratum 411920 
- * 
+ * Workaround Erratum 411920
+ *
  *	- value of arg 'reg' Should Be Zero
  */
 #define Invalidate_I_cache(reg) \
@@ -230,12 +230,12 @@ _C_LABEL(rpi_start):
 	ldr     r1, Lcontrol_set
 	orr	r0, r0, r1
 	ldr	lr, Lstart
-	
+
 	.align 5
 	@ turn mmu on!
 	mov	r0, r0
 	mcr	p15, 0, r0, c1, c0, 0
-	
+
 	/*
 	 * Ensure that the coprocessor has finished turning on the MMU.
 	 */
@@ -258,7 +258,7 @@ Ll1_s_frame:
 Ltemp_l1_table:
 	/* Put the temporary L1 translation table just below the kernel. */
 	.word	0x4000
-	
+
 Lstart:
 	.word	start
 /*
