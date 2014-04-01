@@ -1,4 +1,4 @@
-/*	$NetBSD: apple_smc_temp.c,v 1.2 2014/04/01 17:48:39 riastradh Exp $	*/
+/*	$NetBSD: apple_smc_temp.c,v 1.3 2014/04/01 17:48:52 riastradh Exp $	*/
 
 /*
  * Apple System Management Controller: Temperature Sensors
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_smc_temp.c,v 1.2 2014/04/01 17:48:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_smc_temp.c,v 1.3 2014/04/01 17:48:52 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -46,8 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: apple_smc_temp.c,v 1.2 2014/04/01 17:48:39 riastradh
 #include <dev/ic/apple_smc.h>
 
 #include <dev/sysmon/sysmonvar.h>
-
-#define APPLE_SMC_DEVICE	"applesmctemp"
 
 struct apple_smc_temp_softc {
 	device_t		sc_dev;
@@ -92,9 +90,6 @@ apple_smc_temp_match(device_t parent, cfdata_t match, void *aux)
 	const struct apple_smc_attach_args *asa = aux;
 	uint32_t nsensors;
 	int error;
-
-	if (strcmp(asa->asa_device, APPLE_SMC_DEVICE) != 0)
-		return 0;
 
 	error = apple_smc_temp_count_sensors(asa->asa_smc, &nsensors);
 	if (error)
@@ -379,17 +374,12 @@ apple_smc_temp_modcmd(modcmd_t cmd, void *arg __unused)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		error = apple_smc_register_device(APPLE_SMC_DEVICE);
-		if (error)
-			return error;
 #ifdef _MODULE
 		error = config_init_component(cfdriver_ioconf_apple_smc_temp,
 		    cfattach_ioconf_apple_smc_temp,
 		    cfdata_ioconf_apple_smc_temp);
-		if (error) {
-			apple_smc_unregister_device(APPLE_SMC_DEVICE);
+		if (error)
 			return error;
-		}
 #endif
 		return 0;
 
@@ -401,7 +391,6 @@ apple_smc_temp_modcmd(modcmd_t cmd, void *arg __unused)
 		if (error)
 			return error;
 #endif
-		apple_smc_unregister_device(APPLE_SMC_DEVICE);
 		return 0;
 
 	default:
