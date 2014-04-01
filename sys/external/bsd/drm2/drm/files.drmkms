@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.4 2014/03/31 13:38:44 riastradh Exp $
+#	$NetBSD: files.drmkms,v 1.5 2014/04/01 15:08:58 riastradh Exp $
 
 define	drmkmsbus	{ }
 
@@ -18,6 +18,7 @@ defflag		opt_drmkms.h	DRMKMS_DEBUG
 makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/include"
 makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/dist/uapi"
 makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/dist/include"
+makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/common/include"
 
 makeoptions 	drmkms 	"CWARNFLAGS.drm_crtc.c"+="-Wno-shadow"
 makeoptions 	drmkms 	"CWARNFLAGS.drm_edid.c"+="-Wno-shadow"
