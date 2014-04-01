@@ -1,4 +1,4 @@
-/*	$NetBSD: apple_smc_fan.c,v 1.2 2014/04/01 17:48:39 riastradh Exp $	*/
+/*	$NetBSD: apple_smc_fan.c,v 1.3 2014/04/01 17:48:52 riastradh Exp $	*/
 
 /*
  * Apple System Management Controller: Fans
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_smc_fan.c,v 1.2 2014/04/01 17:48:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_smc_fan.c,v 1.3 2014/04/01 17:48:52 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -49,8 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: apple_smc_fan.c,v 1.2 2014/04/01 17:48:39 riastradh 
 #include <dev/ic/apple_smc.h>
 
 #include <dev/sysmon/sysmonvar.h>
-
-#define APPLE_SMC_DEVICE	"applesmcfan"
 
 #define	APPLE_SMC_NFANS_KEY		"FNum"
 
@@ -117,9 +115,6 @@ apple_smc_fan_match(device_t parent, cfdata_t match, void *aux)
 	uint8_t nfans;
 	int rv = 0;
 	int error;
-
-	if (strcmp(asa->asa_device, APPLE_SMC_DEVICE) != 0)
-		goto out0;
 
 	error = apple_smc_named_key(asa->asa_smc, APPLE_SMC_NFANS_KEY,
 	    APPLE_SMC_TYPE_UINT8, &nfans_key);
@@ -424,17 +419,12 @@ apple_smc_fan_modcmd(modcmd_t cmd, void *arg __unused)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		error = apple_smc_register_device(APPLE_SMC_DEVICE);
-		if (error)
-			return error;
 #ifdef _MODULE
 		error = config_init_component(cfdriver_ioconf_apple_smc_fan,
 		    cfattach_ioconf_apple_smc_fan,
 		    cfdata_ioconf_apple_smc_fan);
-		if (error) {
-			apple_smc_unregister_device(APPLE_SMC_DEVICE);
+		if (error)
 			return error;
-		}
 #endif
 		return 0;
 
@@ -446,7 +436,6 @@ apple_smc_fan_modcmd(modcmd_t cmd, void *arg __unused)
 		if (error)
 			return error;
 #endif
-		apple_smc_unregister_device(APPLE_SMC_DEVICE);
 		return 0;
 
 	default:

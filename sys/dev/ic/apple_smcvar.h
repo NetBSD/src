@@ -1,4 +1,4 @@
-/*	$NetBSD: apple_smcvar.h,v 1.2 2014/04/01 17:48:39 riastradh Exp $	*/
+/*	$NetBSD: apple_smcvar.h,v 1.3 2014/04/01 17:48:52 riastradh Exp $	*/
 
 /*
  * Apple System Management Controller State
@@ -41,7 +41,6 @@
 #include <sys/bus.h>
 #include <sys/device_if.h>
 #include <sys/mutex.h>
-#include <sys/rbtree.h>
 
 struct apple_smc_tag {
 	device_t		smc_dev;
@@ -55,8 +54,6 @@ struct apple_smc_tag {
 	struct sysctllog	*smc_sysctllog;
 	const struct sysctlnode	*smc_sysctlnode;
 #endif
-
-	rb_tree_t		smc_devices;
 };
 
 void	apple_smc_attach(struct apple_smc_tag *);
