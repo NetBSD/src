@@ -1,4 +1,4 @@
-/*	$NetBSD: apple_smc_temp.c,v 1.3 2014/04/01 17:48:52 riastradh Exp $	*/
+/*	$NetBSD: apple_smc_temp.c,v 1.4 2014/04/01 17:49:05 riastradh Exp $	*/
 
 /*
  * Apple System Management Controller: Temperature Sensors
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_smc_temp.c,v 1.3 2014/04/01 17:48:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_smc_temp.c,v 1.4 2014/04/01 17:49:05 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -87,14 +87,16 @@ CFATTACH_DECL_NEW(apple_smc_temp, sizeof(struct apple_smc_temp_softc),
 static int
 apple_smc_temp_match(device_t parent, cfdata_t match, void *aux)
 {
-	const struct apple_smc_attach_args *asa = aux;
+	const struct apple_smc_attach_args *const asa = aux;
 	uint32_t nsensors;
 	int error;
 
+	/* Find how many temperature sensors we have. */
 	error = apple_smc_temp_count_sensors(asa->asa_smc, &nsensors);
 	if (error)
 		return 0;
 
+	/* If there aren't any, don't bother attaching.  */
 	if (nsensors == 0)
 		return 0;
 
@@ -104,30 +106,59 @@ apple_smc_temp_match(device_t parent, cfdata_t match, void *aux)
 static void
 apple_smc_temp_attach(device_t parent, device_t self, void *aux)
 {
-	struct apple_smc_temp_softc *sc = device_private(self);
-	const struct apple_smc_attach_args *asa = aux;
+	struct apple_smc_temp_softc *const sc = device_private(self);
+	const struct apple_smc_attach_args *const asa = aux;
+	int error;
 
+	/* Identify ourselves.  */
+	aprint_normal(": Apple SMC temperature sensors\n");
+
+	/* Initialize the softc. */
 	sc->sc_dev = self;
 	sc->sc_smc = asa->asa_smc;
+
+	/* Create a sysmon_envsys record, but don't register it yet.  */
 	sc->sc_sme = sysmon_envsys_create();
 	sc->sc_sme->sme_name = device_xname(self);
 	sc->sc_sme->sme_cookie = sc;
 	sc->sc_sme->sme_refresh = apple_smc_temp_refresh;
 
-	(void)apple_smc_temp_find_sensors(sc);
+	/* Find and attach all the sensors.  */
+	error = apple_smc_temp_find_sensors(sc);
+	if (error) {
+		aprint_error_dev(self, "failed to find sensors: %d\n", error);
+		goto fail;
+	}
+
+	/* Sensors are all attached.  Register with sysmon_envsys now.  */
+	error = sysmon_envsys_register(sc->sc_sme);
+	if (error) {
+		aprint_error_dev(self, "failed to register with sysmon_envsys:"
+		    " %d\n", error);
+		goto fail;
+	}
+
+	/* Success!  */
+	return;
+
+fail:	sysmon_envsys_destroy(sc->sc_sme);
+	sc->sc_sme = NULL;
 }
 
 static int
 apple_smc_temp_detach(device_t self, int flags)
 {
-	struct apple_smc_temp_softc *sc = device_private(self);
+	struct apple_smc_temp_softc *const sc = device_private(self);
 
-	KASSERT(sc->sc_sme != NULL);
-	sysmon_envsys_unregister(sc->sc_sme);
-	sc->sc_sme = NULL;
+	/* If we registered with sysmon_envsys, unregister.  */
+	if (sc->sc_sme != NULL) {
+		sysmon_envsys_unregister(sc->sc_sme);
+		sc->sc_sme = NULL;
 
-	if (sc->sc_sensors != NULL) {
+		KASSERT(sc->sc_sensors != NULL);
 		KASSERT(sc->sc_nsensors > 0);
+
+		/* Release the keys and free the memory for sensor records.  */
 		apple_smc_temp_release_keys(sc);
 		kmem_free(sc->sc_sensors,
 		    (sizeof(sc->sc_sensors[0]) * sc->sc_nsensors));
@@ -135,25 +166,29 @@ apple_smc_temp_detach(device_t self, int flags)
 		sc->sc_nsensors = 0;
 	}
 
+	/* Success!  */
 	return 0;
 }
 
 static void
 apple_smc_temp_refresh(struct sysmon_envsys *sme, struct envsys_data *edata)
 {
-	struct apple_smc_temp_softc *sc = sme->sme_cookie;
+	struct apple_smc_temp_softc *const sc = sme->sme_cookie;
 	const struct apple_smc_key *key;
 	uint16_t utemp16;
 	int32_t temp;
 	int error;
 
+	/* Sanity-check the sensor number out of paranoia.  */
 	if (edata->sensor >= sc->sc_nsensors) {
 		aprint_error_dev(sc->sc_dev, "unknown sensor %"PRIu32"\n",
 		    edata->sensor);
 		return;
 	}
 
+	/* Read the raw temperature sensor value.  */
 	key = sc->sc_sensors[edata->sensor].sensor_key;
+	KASSERT(key != NULL);
 	error = apple_smc_read_key_2(sc->sc_smc, key, &utemp16);
 	if (error) {
 		aprint_error_dev(sc->sc_dev,
@@ -176,6 +211,7 @@ apple_smc_temp_refresh(struct sysmon_envsys *sme, struct envsys_data *edata)
 	/* Finally, convert to microkelvins as sysmon_envsys wants.  */
 	temp *= 1000;
 
+	/* Success!  */
 	edata->value_cur = temp;
 	edata->state = ENVSYS_SVALID;
 }
@@ -184,8 +220,10 @@ static int
 apple_smc_temp_count_sensors(struct apple_smc_tag *smc, uint32_t *nsensors)
 {
 
+	/* Start with zero sensors.  */
 	*nsensors = 0;
 
+	/* Count 'em.  */
 	return apple_smc_scan_temp_sensors(smc, nsensors,
 	    NULL,
 	    &apple_smc_temp_count_sensors_scanner);
@@ -195,15 +233,15 @@ static void
 apple_smc_temp_count_sensors_scanner(struct apple_smc_tag *smc, void *arg,
     struct apple_smc_key *key)
 {
-	uint32_t *nsensors = arg;
+	uint32_t *const nsensors = arg;
 
 	(*nsensors)++;
 	apple_smc_release_key(smc, key);
 }
 
 struct fss {			/* Find Sensors State */
-	struct apple_smc_temp_softc *fss_sc;
-	size_t fss_sensor;
+	struct apple_smc_temp_softc	*fss_sc;
+	unsigned int			fss_sensor;
 };
 
 static int
@@ -212,26 +250,45 @@ apple_smc_temp_find_sensors(struct apple_smc_temp_softc *sc)
 	struct fss fss;
 	int error;
 
+	/* Start with zero sensors.  */
 	fss.fss_sc = sc;
 	fss.fss_sensor = 0;
 
+	/* Find 'em.  */
 	error = apple_smc_scan_temp_sensors(sc->sc_smc, &fss,
 	    &apple_smc_temp_find_sensors_init,
 	    &apple_smc_temp_find_sensors_scanner);
 	if (error)
 		return error;
 
+	/*
+	 * Success guarantees that sc->sc_nsensors will be nonzero and
+	 * sc->sc_sensors will be allocated.
+	 */
+	KASSERT(sc->sc_sensors != NULL);
+	KASSERT(sc->sc_nsensors > 0);
+
+	/* If we didn't find any sensors, bail.  */
+	if (fss.fss_sensor == 0) {
+		kmem_free(sc->sc_sensors, sc->sc_nsensors);
+		sc->sc_sensors = NULL;
+		sc->sc_nsensors = 0;
+		return EIO;
+	}
+
 	/* Shrink the array if we overshot.  */
 	if (fss.fss_sensor < sc->sc_nsensors) {
-		void *sensors = kmem_alloc((fss.fss_sensor *
+		void *const sensors = kmem_alloc((fss.fss_sensor *
 			sizeof(sc->sc_sensors[0])), KM_SLEEP);
+
 		(void)memcpy(sensors, sc->sc_sensors,
 		    (fss.fss_sensor * sizeof(sc->sc_sensors[0])));
 		kmem_free(sc->sc_sensors, sc->sc_nsensors);
-		sc->sc_nsensors = fss.fss_sensor;
 		sc->sc_sensors = sensors;
+		sc->sc_nsensors = fss.fss_sensor;
 	}
 
+	/* Success!  */
 	return 0;
 }
 
@@ -239,15 +296,25 @@ static int
 apple_smc_temp_find_sensors_init(struct apple_smc_tag *smc, void *arg,
     uint32_t nsensors)
 {
-	struct fss *fss = arg;
+	struct fss *const fss = arg;
 
+	/* Record the maximum number of sensors we may have.  */
 	fss->fss_sc->sc_nsensors = nsensors;
-	if (nsensors == 0)
-		fss->fss_sc->sc_sensors = NULL;
-	else
-		fss->fss_sc->sc_sensors = kmem_alloc((nsensors *
-			sizeof(fss->fss_sc->sc_sensors[0])), KM_SLEEP);
 
+	/* If we found a maximum of zero sensors, bail.  */
+	if (nsensors == 0) {
+		fss->fss_sc->sc_sensors = NULL;
+		return EIO;
+	}
+
+	/*
+	 * If there may be any sensors, optimistically allocate as many
+	 * records for them as we may possibly need.
+	 */
+	fss->fss_sc->sc_sensors = kmem_alloc((nsensors *
+		sizeof(fss->fss_sc->sc_sensors[0])), KM_SLEEP);
+
+	/* Success!  */
 	return 0;
 }
 
@@ -255,23 +322,27 @@ static void
 apple_smc_temp_find_sensors_scanner(struct apple_smc_tag *smc, void *arg,
     struct apple_smc_key *key)
 {
-	struct fss *fss = arg;
+	struct fss *const fss = arg;
 	const uint32_t sensor = fss->fss_sensor;
-	struct envsys_data *edata =
+	struct envsys_data *const edata =
 	    &fss->fss_sc->sc_sensors[sensor].sensor_data;
 	int error;
 
+	/* Initialize the envsys_data record for this temperature sensor.  */
 	edata->units = ENVSYS_STEMP;
 	edata->state = ENVSYS_SINVALID;
 	edata->flags = ENVSYS_FHAS_ENTROPY;
 
 	/*
-	 * XXX Use a more meaningful name based on a table of known
-	 * temperature sensors.
+	 * Use the SMC key name as the temperature sensor's name.
+	 *
+	 * XXX We ought to use a more meaningful name based on a table
+	 * of known temperature sensors.
 	 */
 	CTASSERT(sizeof(edata->desc) >= 4);
 	(void)strlcpy(edata->desc, apple_smc_key_name(key), 4);
 
+	/* Attach this temperature sensor to sysmon_envsys.  */
 	error = sysmon_envsys_sensor_attach(fss->fss_sc->sc_sme, edata);
 	if (error) {
 		aprint_error_dev(fss->fss_sc->sc_dev,
@@ -280,8 +351,8 @@ apple_smc_temp_find_sensors_scanner(struct apple_smc_tag *smc, void *arg,
 		return;
 	}
 
+	/* Success!  */
 	fss->fss_sc->sc_sensors[sensor].sensor_key = key;
-
 	fss->fss_sensor++;
 }
 
@@ -306,30 +377,36 @@ apple_smc_scan_temp_sensors(struct apple_smc_tag *smc, void *arg,
 	struct apple_smc_key *key;
 	int error;
 
+	/* Find [start, end) bounds on the temperature sensor key indices.  */
 	error = apple_smc_bound_temp_sensors(smc, &tstart, &ustart);
 	if (error)
 		return error;
 	KASSERT(tstart <= ustart);
 
+	/* Inform the caller of the number of candidates.  */
 	if (init != NULL) {
 		error = (*init)(smc, arg, (ustart - tstart));
 		if (error)
 			return error;
 	}
 
+	/* Take a closer look at all the candidates.  */
 	for (i = tstart; i < ustart; i++) {
 		error = apple_smc_nth_key(smc, i, NULL, &key);
 		if (error)
 			continue;
 
+		/* Skip it if it's not a temperature sensor.  */
 		if (!apple_smc_temp_sensor_p(key)) {
 			apple_smc_release_key(smc, key);
 			continue;
 		}
 
+		/* Scan it if it is one.  */
 		(*scanner)(smc, arg, key);
 	}
 
+	/* Success!  */
 	return 0;
 }
 
@@ -337,6 +414,7 @@ static bool
 apple_smc_temp_sensor_p(const struct apple_smc_key *key)
 {
 
+	/* It's a temperature sensor iff its type is sp78.  */
 	return (0 == memcmp(apple_smc_key_desc(key)->asd_type,
 		APPLE_SMC_TYPE_SP78, 4));
 }
@@ -347,17 +425,21 @@ apple_smc_bound_temp_sensors(struct apple_smc_tag *smc, uint32_t *tstart,
 {
 	int error;
 
+	/* Find the first `T...' key.  */
 	error = apple_smc_key_search(smc, "T", tstart);
 	if (error)
 		return error;
 
+	/* Find the first `U...' key.  */
 	error = apple_smc_key_search(smc, "U", ustart);
 	if (error)
 		return error;
 
+	/* Sanity check: `T...' keys had better precede `U...' keys.  */
 	if (!(*tstart <= *ustart))
 		return EIO;
 
+	/* Success!  */
 	return 0;
 }
 
@@ -370,7 +452,9 @@ MODULE(MODULE_CLASS_DRIVER, apple_smc_temp, "apple_smc");
 static int
 apple_smc_temp_modcmd(modcmd_t cmd, void *arg __unused)
 {
+#ifdef _MODULE
 	int error;
+#endif
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
