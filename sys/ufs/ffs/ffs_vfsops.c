@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.295 2014/03/23 15:21:16 hannken Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.296 2014/04/01 14:28:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.295 2014/03/23 15:21:16 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.296 2014/04/01 14:28:17 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1125,14 +1125,14 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	 */
 
 	if (!ronly) {
-		error = bread(devvp, FFS_FSBTODB(fs, fs->fs_size - 1), fs->fs_fsize,
-		    cred, 0, &bp);
-		if (bp->b_bcount != fs->fs_fsize)
-			error = EINVAL;
+		error = bread(devvp, FFS_FSBTODB(fs, fs->fs_size - 1),
+		    fs->fs_fsize, cred, 0, &bp);
 		if (error) {
 			bset = BC_INVAL;
 			goto out;
 		}
+		if (bp->b_bcount != fs->fs_fsize)
+			error = EINVAL;
 		brelse(bp, BC_INVAL);
 		bp = NULL;
 	}
