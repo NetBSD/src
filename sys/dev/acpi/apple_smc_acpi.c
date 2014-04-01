@@ -1,4 +1,4 @@
-/*	$NetBSD: apple_smc_acpi.c,v 1.2 2014/04/01 17:48:39 riastradh Exp $	*/
+/*	$NetBSD: apple_smc_acpi.c,v 1.3 2014/04/01 17:49:40 riastradh Exp $	*/
 
 /*
  * Apple System Management Controller: ACPI Attachment
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_smc_acpi.c,v 1.2 2014/04/01 17:48:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_smc_acpi.c,v 1.3 2014/04/01 17:49:40 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -178,7 +178,9 @@ MODULE(MODULE_CLASS_DRIVER, apple_smc_acpi, "apple_smc");
 static int
 apple_smc_acpi_modcmd(modcmd_t cmd, void *arg __unused)
 {
+#ifdef _MODULE
 	int error;
+#endif
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
