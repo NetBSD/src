@@ -1,4 +1,4 @@
-/*	$NetBSD: atouint.c,v 1.3 2013/12/28 03:20:13 christos Exp $	*/
+/*	$NetBSD: atouint.c,v 1.4 2014/04/01 17:34:44 kardel Exp $	*/
 
 #include <config.h>
 #include <sys/types.h>
@@ -29,7 +29,6 @@ atouint(
 		return 0;
 
 	u = 0;
-		    return 0;
 	while ('\0' != *cp) {
 		if (!isdigit((unsigned char)*cp))
 			return 0;
