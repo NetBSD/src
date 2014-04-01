@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.98 2014/03/05 06:27:41 matt Exp $	*/
+/*	$NetBSD: fault.c,v 1.99 2014/04/01 18:00:42 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.98 2014/03/05 06:27:41 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.99 2014/04/01 18:00:42 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -864,7 +864,7 @@ prefetch_abort_handler(trapframe_t *tf)
 #endif
 
 	KASSERT(pcb->pcb_onfault == NULL);
-	error = uvm_fault(map, va, VM_PROT_READ);
+	error = uvm_fault(map, va, VM_PROT_READ|VM_PROT_EXECUTE);
 
 	if (__predict_true(error == 0)) {
 		UVMHIST_LOG (maphist, " <- uvm", 0, 0, 0, 0);
