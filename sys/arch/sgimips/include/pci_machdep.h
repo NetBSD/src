@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.12 2014/03/29 19:28:30 christos Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.13 2014/04/01 12:57:46 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -93,7 +93,7 @@ void		pci_conf_write(pci_chipset_tag_t, pcitag_t, int,
 int		pci_conf_hook(pci_chipset_tag_t, int, int, int, pcireg_t);
 int		pci_intr_map(const struct pci_attach_args *,
 			pci_intr_handle_t *);
-const char	*pci_intr_string(pci_chipset_tag_t, pci_intr_handle_t, char *
+const char	*pci_intr_string(pci_chipset_tag_t, pci_intr_handle_t, char *,
 			size_t);
 const struct evcnt *pci_intr_evcnt(pci_chipset_tag_t, pci_intr_handle_t);
 void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
