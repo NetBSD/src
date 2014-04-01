@@ -1,4 +1,4 @@
-/*	$NetBSD: completion.h,v 1.1 2014/04/01 15:12:38 riastradh Exp $	*/
+/*	$NetBSD: completion.h,v 1.2 2014/04/01 15:19:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -151,6 +151,7 @@ _completion_claim(struct completion *completion)
 {
 
 	KASSERT(mutex_owned(&completion->c_lock));
+	KASSERT(completion->c_done != 0);
 	if (completion->c_done > 0)
 		completion->c_done--;
 	else
