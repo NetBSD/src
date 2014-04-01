@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.155 2014/03/06 11:01:16 martin Exp $
+#  $NetBSD: Makefile,v 1.156 2014/04/01 19:12:37 christos Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -46,6 +46,9 @@ USE_SHLIBDIR=	yes
 
 # require this for the value of I387_LIBM from mk.conf, if set.
 .include <bsd.own.mk>
+
+# compiler_rt uses typeof() and __extension__
+LINTFLAGS += -g
 
 .if (${MACHINE_ARCH} == "alpha")
 .PATH: ${.CURDIR}/arch/alpha
