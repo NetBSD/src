@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.62 2014/03/19 10:54:20 liamjfoy Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.63 2014/04/01 13:11:44 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.62 2014/03/19 10:54:20 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.63 2014/04/01 13:11:44 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -423,6 +423,9 @@ ipflow_create(const struct route *ro, struct mbuf *m)
 	 */
 	if (ip_maxflows == 0 || ip->ip_p == IPPROTO_ICMP)
 		return;
+
+	KERNEL_LOCK(1, NULL);
+
 	/*
 	 * See if an existing flow struct exists.  If so remove it from it's
 	 * list and free the old route.  If not, try to malloc a new one
@@ -437,7 +440,7 @@ ipflow_create(const struct route *ro, struct mbuf *m)
 			ipf = pool_get(&ipflow_pool, PR_NOWAIT);
 			splx(s);
 			if (ipf == NULL)
-				return;
+				goto out;
 			ipflow_inuse++;
 		}
 		memset(ipf, 0, sizeof(*ipf));
@@ -467,6 +470,9 @@ ipflow_create(const struct route *ro, struct mbuf *m)
 	s = splnet();
 	IPFLOW_INSERT(&ipflowtable[hash], ipf);
 	splx(s);
+
+ out:
+	KERNEL_UNLOCK_ONE(NULL);
 }
 
 int
