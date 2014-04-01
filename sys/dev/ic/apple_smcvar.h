@@ -1,4 +1,4 @@
-/*	$NetBSD: apple_smcvar.h,v 1.1 2014/04/01 17:47:36 riastradh Exp $	*/
+/*	$NetBSD: apple_smcvar.h,v 1.2 2014/04/01 17:48:39 riastradh Exp $	*/
 
 /*
  * Apple System Management Controller State
@@ -39,8 +39,9 @@
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/bus.h>
-#include <sys/device.h>
+#include <sys/device_if.h>
 #include <sys/mutex.h>
+#include <sys/rbtree.h>
 
 struct apple_smc_tag {
 	device_t		smc_dev;
@@ -55,16 +56,12 @@ struct apple_smc_tag {
 	const struct sysctlnode	*smc_sysctlnode;
 #endif
 
-	device_t		smc_fan;
-	device_t		smc_temp;
-#if 0				/* XXX accelerometer */
-	device_t		smc_accel;
-#endif
+	rb_tree_t		smc_devices;
 };
 
-void		apple_smc_attach(struct apple_smc_tag *);
-int		apple_smc_rescan(struct apple_smc_tag *, const char *,
-		    const int *);
-int		apple_smc_detach(struct apple_smc_tag *, int);
+void	apple_smc_attach(struct apple_smc_tag *);
+int	apple_smc_detach(struct apple_smc_tag *, int);
+int	apple_smc_rescan(struct apple_smc_tag *, const char *, const int *);
+void	apple_smc_child_detached(struct apple_smc_tag *, device_t);
 
 #endif  /* _DEV_IC_APPLE_SMCVAR_H_ */

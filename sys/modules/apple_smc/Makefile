@@ -1,13 +1,11 @@
-# $NetBSD: Makefile,v 1.1 2014/04/01 17:47:36 riastradh Exp $
+# $NetBSD: Makefile,v 1.2 2014/04/01 17:48:39 riastradh Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	${S}/dev/ic
-.PATH:	${S}/dev/acpi
 
 KMOD=	apple_smc
-IOCONF=	apple_smc.ioconf
-SRCS=	apple_smc.c apple_smc_acpi.c apple_smc_fan.c apple_smc_temp.c
+SRCS=	apple_smc.c
 
 WARNS=	4
 
