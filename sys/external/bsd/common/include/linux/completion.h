@@ -1,4 +1,4 @@
-/*	$NetBSD: completion.h,v 1.3 2014/04/01 14:55:20 riastradh Exp $	*/
+/*	$NetBSD: completion.h,v 1.1 2014/04/01 15:12:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
