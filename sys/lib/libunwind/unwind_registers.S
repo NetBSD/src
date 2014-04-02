@@ -364,3 +364,60 @@ ENTRY(_ZNK7_Unwind14Registers_M68K6jumptoEv)
 	rts
 END(_ZNK7_Unwind14Registers_M68K6jumptoEv)
 #endif
+
+#if defined(__sh3__)
+	.hidden _ZN7_Unwind13Registers_SH3C1Ev
+ENTRY(_ZN7_Unwind13Registers_SH3C1Ev)
+	add	#64, r4
+	mov.l	r8, @-r15
+	sts.l	pr, @-r15
+	mov.l	@r15+, r8
+	mov.l	r8, @r4
+	mov.l	@r15+, r8
+
+	mov.l   r15, @-r4
+	mov.l	r14, @-r4
+	mov.l	r13, @-r4
+	mov.l	r12, @-r4
+	mov.l	r11, @-r4
+	mov.l	r10, @-r4
+	mov.l	r9, @-r4
+	mov.l	r8, @-r4
+	mov.l	r7, @-r4
+	mov.l	r6, @-r4
+	mov.l	r5, @-r4
+	add	#-4, r4
+	mov.l	r3, @-r4
+	mov.l	r2, @-r4
+	mov.l	r1, @-r4
+	mov.l	r0, @-r4
+	rts
+	  mov.l	r4, @(16,r4)
+SET_ENTRY_SIZE(_ZN7_Unwind13Registers_SH3C1Ev)
+
+	.hidden _ZNK7_Unwind13Registers_SH36jumptoEv
+ENTRY(_ZNK7_Unwind13Registers_SH36jumptoEv)
+	mov	r4, r0
+	add	#4, r0
+	mov.l	@r0+, r1
+	mov.l	@r0+, r2
+	mov.l	@r0+, r3
+	mov.l	@r0+, r4
+	mov.l	@r0+, r5
+	mov.l	@r0+, r6
+	mov.l	@r0+, r7
+	mov.l	@r0+, r8
+	mov.l	@r0+, r9
+	mov.l	@r0+, r10
+	mov.l	@r0+, r11
+	mov.l	@r0+, r12
+	mov.l	@r0+, r13
+	mov.l	@(12, r0), r14
+	lds	r14, pr
+	mov.l	@r0+, r14
+	mov.l	@r0+, r15
+	mov.l	@r0, r0
+	jmp	@r0
+	  nop
+SET_ENTRY_SIZE(_ZNK7_Unwind13Registers_SH36jumptoEv)
+#endif
