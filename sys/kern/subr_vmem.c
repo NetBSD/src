@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.90 2014/03/20 06:48:22 mlelstv Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.91 2014/04/02 16:14:50 para Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.90 2014/03/20 06:48:22 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.91 2014/04/02 16:14:50 para Exp $");
 
 #if defined(_KERNEL)
 #include "opt_ddb.h"
@@ -230,6 +230,8 @@ bt_refill(vmem_t *vm, vm_flag_t flags)
 {
 	bt_t *bt;
 
+	KASSERT(flags & VM_NOSLEEP);
+
 	VMEM_LOCK(vm);
 	if (vm->vm_nfreetags > BT_MINRESERVE) {
 		VMEM_UNLOCK(vm);
@@ -251,22 +253,21 @@ bt_refill(vmem_t *vm, vm_flag_t flags)
 	while (vm->vm_nfreetags <= BT_MINRESERVE) {
 		VMEM_UNLOCK(vm);
 		mutex_enter(&vmem_btag_refill_lock);
-		bt = pool_get(&vmem_btag_pool,
-		    (flags & VM_SLEEP) ? PR_WAITOK: PR_NOWAIT);
+		bt = pool_get(&vmem_btag_pool, PR_NOWAIT);
 		mutex_exit(&vmem_btag_refill_lock);
 		VMEM_LOCK(vm);
-		if (bt == NULL && (flags & VM_SLEEP) == 0)
+		if (bt == NULL)
 			break;
 		LIST_INSERT_HEAD(&vm->vm_freetags, bt, bt_freelist);
 		vm->vm_nfreetags++;
 	}
 
-	VMEM_UNLOCK(vm);
-
 	if (vm->vm_nfreetags == 0) {
+		VMEM_UNLOCK(vm);
 		return ENOMEM;
 	}
 
+	VMEM_UNLOCK(vm);
 
 	if (kmem_meta_arena != NULL) {
 		bt_refill(kmem_arena, (flags & ~VM_FITMASK)
