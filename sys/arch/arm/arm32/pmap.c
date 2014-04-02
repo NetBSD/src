@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.276 2014/04/02 12:36:05 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.277 2014/04/02 13:26:22 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -216,7 +216,7 @@
 #include <arm/locore.h>
 //#include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.276 2014/04/02 12:36:05 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.277 2014/04/02 13:26:22 matt Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -3204,20 +3204,23 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 					    oflags);
 				}
 #endif
-			} else
-			pmap_release_page_lock(md);
-			if ((pv = pool_get(&pmap_pv_pool, PR_NOWAIT)) == NULL){
-				pmap_release_pmap_lock(pm);
-				if ((flags & PMAP_CANFAIL) == 0)
-					panic("pmap_enter: no pv entries");
+			} else {
+				pmap_release_page_lock(md);
+				pv = pool_get(&pmap_pv_pool, PR_NOWAIT);
+				if (pv == NULL) {
+					pmap_release_pmap_lock(pm);
+					if ((flags & PMAP_CANFAIL) == 0)
+						panic("pmap_enter: "
+						    "no pv entries");
 
-				if (pm != pmap_kernel())
-					pmap_free_l2_bucket(pm, l2b, 0);
-				UVMHIST_LOG(maphist, "  <-- done (ENOMEM)",
-				    0, 0, 0, 0);
-				return (ENOMEM);
+					if (pm != pmap_kernel())
+						pmap_free_l2_bucket(pm, l2b, 0);
+					UVMHIST_LOG(maphist, "  <-- done (ENOMEM)",
+					    0, 0, 0, 0);
+					return (ENOMEM);
+				}
+				pmap_acquire_page_lock(md);
 			}
-			pmap_acquire_page_lock(md);
 
 			pmap_enter_pv(md, pa, pv, pm, va, nflags);
 		}
@@ -3630,7 +3633,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	struct pv_entry *pv = NULL;
 #endif
 #endif
-	struct vm_page_md *md = VM_PAGE_TO_MD(pg);
+	struct vm_page_md *md = pg != NULL ? VM_PAGE_TO_MD(pg) : NULL;
 
 	UVMHIST_FUNC(__func__);
 
@@ -3672,9 +3675,9 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			KASSERT((omd->pvh_attrs & PVF_KMPAGE) == 0);
 			KASSERT((flags & PMAP_KMPAGE) == 0);
 #ifndef ARM_MMU_EXTENDED
-			pmap_acquire_page_lock(md);
+			pmap_acquire_page_lock(omd);
 			pv = pmap_kremove_pg(opg, va);
-			pmap_release_page_lock(md);
+			pmap_release_page_lock(omd);
 #endif
 		}
 #endif
@@ -3756,11 +3759,12 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			pool_put(&pmap_pv_pool, pv);
 #endif
 	}
-
+	KASSERT(md == NULL || !pmap_page_locked_p(md));
 	if (pmap_initialized) {
 		UVMHIST_LOG(maphist, "  <-- done (ptep %p: %#x -> %#x)",
 		    ptep, opte, npte, 0);
 	}
+
 }
 
 void
