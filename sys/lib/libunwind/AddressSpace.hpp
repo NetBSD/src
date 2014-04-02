@@ -69,13 +69,29 @@ public:
     pthread_rwlock_init(&fdeTreeLock, NULL);
   }
 
-  uint8_t get8(pint_t addr) { return *((uint8_t *)addr); }
+  uint8_t get8(pint_t addr) {
+    uint8_t val;
+    memcpy(&val, (void *)addr, sizeof(val));
+    return val;
+  }
 
-  uint16_t get16(pint_t addr) { return *((uint16_t *)addr); }
+  uint16_t get16(pint_t addr) {
+    uint16_t val;
+    memcpy(&val, (void *)addr, sizeof(val));
+    return val;
+  }
 
-  uint32_t get32(pint_t addr) { return *((uint32_t *)addr); }
+  uint32_t get32(pint_t addr) {
+    uint32_t val;
+    memcpy(&val, (void *)addr, sizeof(val));
+    return val;
+  }
 
-  uint64_t get64(pint_t addr) { return *((uint64_t *)addr); }
+  uint64_t get64(pint_t addr) {
+    uint64_t val;
+    memcpy(&val, (void *)addr, sizeof(val));
+    return val;
+  }
 
   uintptr_t getP(pint_t addr) {
     if (sizeof(uintptr_t) == sizeof(uint32_t))
