@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.32.16.2 2009/08/23 03:38:19 matt Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.32.16.3 2014/04/02 17:34:51 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.32.16.2 2009/08/23 03:38:19 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.32.16.3 2014/04/02 17:34:51 matt Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_coredump.h"
+#endif
 
 /* If not included by core_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -98,7 +102,8 @@ ELFNAMEEND(coredump)(struct lwp *l, void *cookie)
 {
 	struct proc *p;
 	Elf_Ehdr ehdr;
-	Elf_Phdr phdr, *psections;
+	Elf_Shdr shdr;
+	Elf_Phdr *psections;
 	struct countsegs_state cs;
 	struct writesegs_state ws;
 	off_t notestart, secstart, offset;
@@ -151,14 +156,22 @@ ELFNAMEEND(coredump)(struct lwp *l, void *cookie)
 	ehdr.e_machine = ELFDEFNNAME(MACHDEP_ID);
 	ehdr.e_version = EV_CURRENT;
 	ehdr.e_entry = 0;
-	ehdr.e_phoff = sizeof(ehdr);
-	ehdr.e_shoff = 0;
 	ehdr.e_flags = 0;
 	ehdr.e_ehsize = sizeof(ehdr);
 	ehdr.e_phentsize = sizeof(Elf_Phdr);
-	ehdr.e_phnum = cs.npsections;
-	ehdr.e_shentsize = 0;
-	ehdr.e_shnum = 0;
+	if (cs.npsections < PN_XNUM) {
+		ehdr.e_phnum = cs.npsections;
+		ehdr.e_shentsize = 0;
+		ehdr.e_shnum = 0;
+		ehdr.e_shoff = 0;
+		ehdr.e_phoff = sizeof(ehdr);
+	} else {
+		ehdr.e_phnum = PN_XNUM;
+		ehdr.e_shentsize = sizeof(Elf_Shdr);
+		ehdr.e_shnum = 1;
+		ehdr.e_shoff = sizeof(ehdr);
+		ehdr.e_phoff = sizeof(ehdr) + sizeof(shdr);
+	}
 	ehdr.e_shstrndx = 0;
 
 #ifdef ELF_MD_COREDUMP_SETUP
@@ -170,9 +183,20 @@ ELFNAMEEND(coredump)(struct lwp *l, void *cookie)
 	if (error)
 		goto out;
 
-	offset = sizeof(ehdr);
+	/* Write out sections, if needed */
+	if (cs.npsections >= PN_XNUM) {
+		memset(&shdr, 0, sizeof(shdr));
+		shdr.sh_type = SHT_NULL;
+		shdr.sh_info = cs.npsections;
+		error = coredump_write(cookie, UIO_SYSSPACE, &shdr,
+		    sizeof(shdr));
+		if (error)
+			goto out;
+	}
 
-	notestart = offset + sizeof(phdr) * cs.npsections;
+	offset = ehdr.e_phoff;
+
+	notestart = offset + sizeof(Elf_Phdr) * cs.npsections;
 	secstart = notestart + notesize;
 
 	psections = malloc(cs.npsections * sizeof(Elf_Phdr),
