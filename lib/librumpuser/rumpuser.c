@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.58 2014/03/16 10:23:59 njoly Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.59 2014/04/02 13:54:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.58 2014/03/16 10:23:59 njoly Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.59 2014/04/02 13:54:42 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/ioctl.h>
@@ -536,32 +536,9 @@ rumpuser_clock_sleep(int enum_rumpclock, int64_t sec, long nsec)
 static int
 gethostncpu(void)
 {
-	int ncpu = 1;
+	int ncpu = 1; /* unknown, really */
 
-#if defined(__BSD__)
-	size_t sz = sizeof(ncpu);
-
-	sysctlbyname("hw.ncpu", &ncpu, &sz, NULL, 0);
-#elif defined(__linux__) || defined(__CYGWIN__)
-	FILE *fp;
-	char *line = NULL;
-	size_t n = 0;
-
-	/* If anyone knows a better way, I'm all ears */
-	if ((fp = fopen("/proc/cpuinfo", "r")) != NULL) {
-		ncpu = 0;
-		while (getline(&line, &n, fp) != -1) {
-			if (strncmp(line,
-			    "processor", sizeof("processor")-1) == 0)
-			    	ncpu++;
-		}
-		if (ncpu == 0)
-			ncpu = 1;
-		free(line);
-		fclose(fp);
-	}
-#elif __sun__
-	/* XXX: this is just a rough estimate ... */
+#ifdef _SC_NPROCESSORS_ONLN
 	ncpu = sysconf(_SC_NPROCESSORS_ONLN);
 #endif
 	
