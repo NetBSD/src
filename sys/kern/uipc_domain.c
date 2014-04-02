@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.90 2014/02/25 18:30:11 pooka Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.91 2014/04/02 15:35:45 seanb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.90 2014/02/25 18:30:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.91 2014/04/02 15:35:45 seanb Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -424,10 +424,13 @@ sysctl_dounpcb(struct kinfo_pcb *pcb, const struct socket *so)
 	 * endpoint.  bleah!
 	 */
 	if (unp->unp_addr != NULL) {
-		un->sun_len = unp->unp_addr->sun_len;
-		un->sun_family = unp->unp_addr->sun_family;
-		strlcpy(un->sun_path, unp->unp_addr->sun_path,
-		    sizeof(pcb->ki_s));
+		/*
+		 * We've added one to sun_len when allocating to
+		 * hold terminating NUL which we want here.  See
+		 * makeun().
+		 */
+		memcpy(un, unp->unp_addr,
+		    min(sizeof(pcb->ki_s), unp->unp_addr->sun_len + 1));
 	}
 	else {
 		un->sun_len = offsetof(struct sockaddr_un, sun_path);
@@ -436,11 +439,8 @@ sysctl_dounpcb(struct kinfo_pcb *pcb, const struct socket *so)
 	if (unp->unp_conn != NULL) {
 		un = (struct sockaddr_un *)&pcb->ki_dst;
 		if (unp->unp_conn->unp_addr != NULL) {
-			un->sun_len = unp->unp_conn->unp_addr->sun_len;
-			un->sun_family = unp->unp_conn->unp_addr->sun_family;
-			un->sun_family = unp->unp_conn->unp_addr->sun_family;
-			strlcpy(un->sun_path, unp->unp_conn->unp_addr->sun_path,
-				sizeof(pcb->ki_d));
+			memcpy(un, unp->unp_conn->unp_addr,
+			    min(sizeof(pcb->ki_s), unp->unp_conn->unp_addr->sun_len + 1));
 		}
 		else {
 			un->sun_len = offsetof(struct sockaddr_un, sun_path);
