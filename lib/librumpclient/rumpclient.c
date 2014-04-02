@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.57 2014/02/26 02:03:40 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.58 2014/04/02 14:48:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -38,17 +38,19 @@
  * notifications but defer their handling to a stage where we do not
  * hold the communication lock.  Taking a signal while holding on to
  * that lock may cause a deadlock.  Therefore, block signals throughout
- * the RPC when using poll.  This unfortunately means that the normal
- * SIGINT way of stopping a process while it is undergoing rump kernel
- * RPC will not work.  If anyone know which Linux system call handles
- * the above scenario correctly, I'm all ears.
+ * the RPC when using poll.  On Linux, we use signalfd in the same role
+ * as kqueue on NetBSD to be able to take signals while waiting for a
+ * response from the server.
  */
 
 #ifdef __NetBSD__
 #define USE_KQUEUE
 #endif
+#ifdef __linux__
+#define USE_SIGNALFD
+#endif
 
-__RCSID("$NetBSD: rumpclient.c,v 1.57 2014/02/26 02:03:40 pooka Exp $");
+__RCSID("$NetBSD: rumpclient.c,v 1.58 2014/04/02 14:48:03 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -96,6 +98,12 @@ int	(*host_kevent)(int, const struct kevent *, size_t,
 		       struct kevent *, size_t, const struct timespec *);
 #endif
 
+#ifdef USE_SIGNALFD
+#include <sys/signalfd.h>
+
+int	(*host_signalfd)(int, const sigset_t *, int);
+#endif
+
 int	(*host_execve)(const char *, char *const[], char *const[]);
 
 #include "sp_common.c"
@@ -105,7 +113,7 @@ static struct spclient clispc = {
 	.spc_fd = -1,
 };
 
-static int kq = -1;
+static int holyfd;
 static sigset_t fullset;
 
 static int doconnect(void);
@@ -237,7 +245,7 @@ cliwaitresp(struct spclient *spc, struct respwait *rw, sigset_t *mask,
 				 * typically we don't have a frame waiting
 				 * when we come in here, so call kevent now
 				 */
-				rv = host_kevent(kq, NULL, 0,
+				rv = host_kevent(holyfd, NULL, 0,
 				    kev, __arraycount(kev), NULL);
 
 				if (__predict_false(rv == -1)) {
@@ -267,13 +275,19 @@ cliwaitresp(struct spclient *spc, struct respwait *rw, sigset_t *mask,
 				 * determine what happens next.
 				 */
  activity:
-#else /* USE_KQUEUE */
-				struct pollfd pfd;
+#else /* !USE_KQUEUE */
+				struct pollfd pfd[2];
 
-				pfd.fd = clispc.spc_fd;
-				pfd.events = POLLIN;
+				pfd[0].fd = clispc.spc_fd;
+				pfd[0].events = POLLIN;
+				pfd[1].fd = holyfd;
+				pfd[1].events = POLLIN;
 
-				rv = host_poll(&pfd, 1, -1);
+				rv = host_poll(pfd, 2, -1);
+				if (pfd[1].revents & POLLIN) {
+					dosig = 1;
+					goto cleanup;
+				}
 #endif /* !USE_KQUEUE */
 
 				switch (readframe(spc)) {
@@ -677,6 +691,52 @@ dupgood(int myfd, int mustchange)
 	return myfd;
 }
 
+#if defined(USE_KQUEUE)
+
+static int
+makeholyfd(void)
+{
+	struct kevent kev[NSIG+1];
+	int i, fd;
+
+	/* setup kqueue, we want all signals and the fd */
+	if ((fd = dupgood(host_kqueue(), 0)) == -1) {
+		ERRLOG(("rump_sp: cannot setup kqueue"));
+		return -1;
+	}
+
+	for (i = 0; i < NSIG; i++) {
+		EV_SET(&kev[i], i+1, EVFILT_SIGNAL, EV_ADD|EV_ENABLE, 0, 0, 0);
+	}
+	EV_SET(&kev[NSIG], clispc.spc_fd,
+	    EVFILT_READ, EV_ADD|EV_ENABLE, 0, 0, 0);
+	if (host_kevent(fd, kev, NSIG+1, NULL, 0, NULL) == -1) {
+		ERRLOG(("rump_sp: kevent() failed"));
+		return -1;
+
+	return fd;
+}
+
+#elif defined(USE_SIGNALFD) /* !USE_KQUEUE */
+
+static int
+makeholyfd(void)
+{
+
+	return host_signalfd(-1, &fullset, 0);
+}
+
+#else /* !USE_KQUEUE && !USE_SIGNALFD */
+
+static int
+makeholyfd(void)
+{
+
+	return -1;
+}
+
+#endif
+
 static int
 doconnect(void)
 {
@@ -686,9 +746,9 @@ doconnect(void)
 	int s, error, flags;
 	ssize_t n;
 
-	if (kq != -1)
-		host_close(kq);
-	kq = -1;
+	if (holyfd != -1)
+		host_close(holyfd);
+	holyfd = -1;
 	s = -1;
 
 	if (clispc.spc_fd != -1)
@@ -759,29 +819,7 @@ doconnect(void)
 	clispc.spc_fd = s;
 	clispc.spc_state = SPCSTATE_RUNNING;
 	clispc.spc_reconnecting = 0;
-
-#ifdef USE_KQUEUE
-{
-	struct kevent kev[NSIG+1];
-	int i;
-
-	/* setup kqueue, we want all signals and the fd */
-	if ((kq = dupgood(host_kqueue(), 0)) == -1) {
-		ERRLOG(("rump_sp: cannot setup kqueue"));
-		return -1;
-	}
-
-	for (i = 0; i < NSIG; i++) {
-		EV_SET(&kev[i], i+1, EVFILT_SIGNAL, EV_ADD|EV_ENABLE, 0, 0, 0);
-	}
-	EV_SET(&kev[NSIG], clispc.spc_fd,
-	    EVFILT_READ, EV_ADD|EV_ENABLE, 0, 0, 0);
-	if (host_kevent(kq, kev, NSIG+1, NULL, 0, NULL) == -1) {
-		ERRLOG(("rump_sp: kevent() failed"));
-		return -1;
-	}
-}
-#endif /* USE_KQUEUE */
+	holyfd = makeholyfd();
 
 	return 0;
 }
@@ -831,8 +869,10 @@ rumpclient_init(void)
 		return 0;
 
 	/* kq does not traverse fork() */
+#ifdef USE_KQUEUE
 	if (init_done != 0)
-		kq = -1;
+		holyfd = -1;
+#endif
 	init_done = mypid;
 
 	sigfillset(&fullset);
@@ -883,6 +923,10 @@ rumpclient_init(void)
 #endif
 #endif /* USE_KQUEUE */
 
+#ifdef USE_SIGNALFD
+	FINDSYM(signalfd)
+#endif
+
 #undef	FINDSYM
 #undef	FINDSY2
 
@@ -903,7 +947,7 @@ rumpclient_init(void)
 		goto out;
 
 	if ((p = getenv("RUMPCLIENT__EXECFD")) != NULL) {
-		sscanf(p, "%d,%d", &clispc.spc_fd, &kq);
+		sscanf(p, "%d,%d", &clispc.spc_fd, &holyfd);
 		unsetenv("RUMPCLIENT__EXECFD");
 		hstype = HANDSHAKE_EXEC;
 	} else {
@@ -932,7 +976,7 @@ rumpclient_init(void)
 struct rumpclient_fork {
 	uint32_t fork_auth[AUTHLEN];
 	struct spclient fork_spc;
-	int fork_kq;
+	int fork_holyfd;
 };
 
 struct rumpclient_fork *
@@ -959,7 +1003,7 @@ rumpclient_prefork(void)
 	free(resp);
 
 	rpf->fork_spc = clispc;
-	rpf->fork_kq = kq;
+	rpf->fork_holyfd = holyfd;
 
  out:
 	pthread_sigmask(SIG_SETMASK, &omask, NULL);
@@ -976,7 +1020,14 @@ rumpclient_fork_init(struct rumpclient_fork *rpf)
 	memset(&clispc, 0, sizeof(clispc));
 	clispc.spc_fd = osock;
 
-	kq = -1; /* kqueue descriptor is not copied over fork() */
+#ifdef USE_KQUEUE
+	holyfd = -1; /* kqueue descriptor is not copied over fork() */
+#else
+	if (holyfd != -1) {
+		host_close(holyfd);
+		holyfd = -1;
+	}
+#endif
 
 	if (doinit() == -1)
 		return -1;
@@ -1008,7 +1059,7 @@ rumpclient_fork_vparent(struct rumpclient_fork *rpf)
 {
 
 	clispc = rpf->fork_spc;
-	kq = rpf->fork_kq;
+	holyfd = rpf->fork_holyfd;
 }
 
 void
@@ -1030,9 +1081,9 @@ rumpclient__closenotify(int *fdp, enum rumpclient_closevariant variant)
 
 	switch (variant) {
 	case RUMPCLIENT_CLOSE_FCLOSEM:
-		untilfd = MAX(clispc.spc_fd, kq);
+		untilfd = MAX(clispc.spc_fd, holyfd);
 		for (; fd <= untilfd; fd++) {
-			if (fd == clispc.spc_fd || fd == kq)
+			if (fd == clispc.spc_fd || fd == holyfd)
 				continue;
 			rv = host_close(fd);
 			if (rv == -1)
@@ -1061,23 +1112,20 @@ rumpclient__closenotify(int *fdp, enum rumpclient_closevariant variant)
 			    EVFILT_READ, EV_DELETE, 0, 0, 0);
 			EV_SET(&kev[1], newfd,
 			    EVFILT_READ, EV_ADD|EV_ENABLE, 0, 0, 0);
-			if (host_kevent(kq, kev, 2, NULL, 0, NULL) == -1) {
+			if (host_kevent(holyfd, kev, 2, NULL, 0, NULL) == -1) {
 				int sverrno = errno;
 				host_close(newfd);
 				errno = sverrno;
 				return -1;
-			}
+			}}
+#endif /* !USE_KQUEUE */
 			clispc.spc_fd = newfd;
-			}
 		}
-		if (fd == kq) {
-			newfd = dupgood(kq, 1);
+		if (holyfd != -1 && fd == holyfd) {
+			newfd = dupgood(holyfd, 1);
 			if (newfd == -1)
 				return -1;
-			kq = newfd;
-#else /* USE_KQUEUE */
-			clispc.spc_fd = newfd;
-#endif /* !USE_KQUEUE */
+			holyfd = newfd;
 		}
 		break;
 	}
@@ -1108,7 +1156,7 @@ rumpclient_exec(const char *path, char *const argv[], char *const envp[])
 	int rv, sverrno;
 
 	snprintf(buf, sizeof(buf), "RUMPCLIENT__EXECFD=%d,%d",
-	    clispc.spc_fd, kq);
+	    clispc.spc_fd, holyfd);
 	envstr = malloc(strlen(buf)+1);
 	if (envstr == NULL) {
 		return ENOMEM;
