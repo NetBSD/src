@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.73 2014/02/22 13:08:13 mlelstv Exp $	*/
+/*	$NetBSD: ls.c,v 1.74 2014/04/02 10:55:47 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.73 2014/02/22 13:08:13 mlelstv Exp $");
+__RCSID("$NetBSD: ls.c,v 1.74 2014/04/02 10:55:47 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -207,6 +207,9 @@ ls_main(int argc, char *argv[])
 		case 'R':
 			f_recursive = 1;
 			break;
+		case 'f':
+			f_nosort = 1;
+			/* FALLTHROUGH */
 		case 'a':
 			fts_options |= FTS_SEEDOT;
 			/* FALLTHROUGH */
@@ -229,9 +232,6 @@ ls_main(int argc, char *argv[])
 		case 'd':
 			f_listdir = 1;
 			f_recursive = 0;
-			break;
-		case 'f':
-			f_nosort = 1;
 			break;
 		case 'i':
 			f_inode = 1;
