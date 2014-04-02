@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.95 2008/04/28 20:24:10 martin Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.95.14.1 2014/04/02 17:34:51 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -342,6 +342,9 @@ typedef struct {
 
 #define	PF_MASKOS	0x0ff00000	/* Operating system specific values */
 #define	PF_MASKPROC	0xf0000000	/* Processor-specific values */
+
+/* Extended program header index. */
+#define	PN_XNUM		0xffff
 
 /*
  * Section Headers
