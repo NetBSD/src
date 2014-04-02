@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.58 2014/04/02 14:48:03 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.59 2014/04/02 15:04:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -50,7 +50,7 @@
 #define USE_SIGNALFD
 #endif
 
-__RCSID("$NetBSD: rumpclient.c,v 1.58 2014/04/02 14:48:03 pooka Exp $");
+__RCSID("$NetBSD: rumpclient.c,v 1.59 2014/04/02 15:04:19 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -712,7 +712,9 @@ makeholyfd(void)
 	    EVFILT_READ, EV_ADD|EV_ENABLE, 0, 0, 0);
 	if (host_kevent(fd, kev, NSIG+1, NULL, 0, NULL) == -1) {
 		ERRLOG(("rump_sp: kevent() failed"));
+		host_close(fd);
 		return -1;
+	}
 
 	return fd;
 }
