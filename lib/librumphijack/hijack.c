@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.106 2013/09/10 16:53:06 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.107 2014/04/02 17:09:23 justin Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include <rump/rumpuser_port.h>
 
 #if !defined(lint)
-__RCSID("$NetBSD: hijack.c,v 1.106 2013/09/10 16:53:06 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.107 2014/04/02 17:09:23 justin Exp $");
 #endif
 
 #include <sys/param.h>
@@ -38,9 +38,12 @@ __RCSID("$NetBSD: hijack.c,v 1.106 2013/09/10 16:53:06 pooka Exp $");
 #include <sys/mount.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
-#include <sys/statvfs.h>
 #include <sys/time.h>
 #include <sys/uio.h>
+
+#ifdef PLATFORM_HAS_NBVFSSTAT
+#include <sys/statvfs.h>
+#endif
 
 #ifdef PLATFORM_HAS_KQUEUE
 #include <sys/event.h>
