@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.305 2014/03/16 05:20:29 dholland Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.306 2014/04/02 02:17:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.305 2014/03/16 05:20:29 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.306 2014/04/02 02:17:01 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -447,14 +447,30 @@ rf_autoconfig(device_t self)
 	return 1;
 }
 
+static int
+rf_containsboot(RF_Raid_t *r, device_t dv) {
+	const char *bootname = device_xname(dv);
+	size_t len = strlen(bootname);
+
+	for (int col = 0; col < r->numCol; col++) {
+		char *devname = r->Disks[col].devname;
+		devname += sizeof("/dev/") - 1;
+		if (strncmp(devname, bootname, len) == 0) {
+			struct raid_softc *sc = r->softc;
+			aprint_debug("raid%d includes boot device %s\n",
+			    sc->sc_unit, devname);
+			return 1;
+		}
+	}
+	return 0;
+}
+
 void
 rf_buildroothack(RF_ConfigSet_t *config_sets)
 {
 	RF_ConfigSet_t *cset;
 	RF_ConfigSet_t *next_cset;
-	int col;
 	int num_root;
-	char *devname;
 	struct raid_softc *sc, *rsc;
 
 	sc = rsc = NULL;
@@ -496,14 +512,22 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 	/* we found something bootable... */
 
 	if (num_root == 1) {
+		device_t candidate_root;
 		if (rsc->sc_dkdev.dk_nwedges != 0) {
 			/* XXX: How do we find the real root partition? */
 			char cname[sizeof(cset->ac->devname)];
 			snprintf(cname, sizeof(cname), "%s%c",
 			    device_xname(rsc->sc_dev), 'a');
-			booted_device = dkwedge_find_by_wname(cname);
+			candidate_root = dkwedge_find_by_wname(cname);
 		} else
-			booted_device = rsc->sc_dev;
+			candidate_root = rsc->sc_dev;
+#ifndef RAIDFRAME_FORCE_ROOT
+		if (booted_device == NULL)
+			cpu_rootconf();
+		if (booted_device == NULL
+		    || rf_containsboot(&rsc->sc_r, booted_device))
+#endif
+		booted_device = candidate_root;
 	} else if (num_root > 1) {
 
 		/* 
@@ -528,14 +552,7 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 			if (r->root_partition == 0)
 				continue;
 
-			for (col = 0; col < r->numCol; col++) {
-				devname = r->Disks[col].devname;
-				devname += sizeof("/dev/") - 1;
-				if (strncmp(devname, device_xname(booted_device), 
-					    strlen(device_xname(booted_device))) != 0)
-					continue;
-				aprint_debug("raid%d includes boot device %s\n",
-				       sc->sc_unit, devname);
+			if (rf_containsboot(r, booted_device)) {
 				num_root++;
 				rsc = sc;
 			}
