@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.277 2014/04/02 13:26:22 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.278 2014/04/02 14:05:54 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -216,7 +216,7 @@
 #include <arm/locore.h>
 //#include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.277 2014/04/02 13:26:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.278 2014/04/02 14:05:54 matt Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -3725,16 +3725,17 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 				PMAPCOUNT(vac_flush_lots2);
 				pmap_flush_page(md, pa, PMAP_FLUSH_SECONDARY);
 			}
-			pmap_acquire_page_lock(md);
+			/*
+			 * Since this is a KMPAGE, there can be no contention
+			 * for this page so don't lock it.
+			 */
 			md->pvh_attrs &= PAGE_SIZE - 1;
 			md->pvh_attrs |= PVF_KMPAGE | PVF_COLORED | PVF_DIRTY
 			    | (va & arm_cache_prefer_mask);
 #else /* !PMAP_CACHE_VIPT || ARM_MMU_EXTENDED */
-			pmap_acquire_page_lock(md);
 			md->pvh_attrs |= PVF_KMPAGE;
 #endif
-			pmap_kmpages++;
-			pmap_release_page_lock(md);
+			atomic_inc_32(&pmap_kmpages);
 #if defined(PMAP_CACHE_VIPT) && !defined(ARM_MMU_EXTENDED)
 		} else if (arm_cache_prefer_mask != 0) {
 			if (pv == NULL) {
@@ -3800,7 +3801,6 @@ pmap_kremove(vaddr_t va, vsize_t len)
 			if (opg != NULL) {
 				struct vm_page_md *omd = VM_PAGE_TO_MD(opg);
 
-				pmap_acquire_page_lock(omd);
 				if (omd->pvh_attrs & PVF_KMPAGE) {
 					KASSERT(omd->urw_mappings == 0);
 					KASSERT(omd->uro_mappings == 0);
@@ -3812,14 +3812,15 @@ pmap_kremove(vaddr_t va, vsize_t len)
 						omd->pvh_attrs &= ~PVF_WRITE;
 					}
 #endif
-					pmap_kmpages--;
+					atomic_dec_32(&pmap_kmpages);
 #if defined(PMAP_CACHE_VIPT) && !defined(ARM_MMU_EXTENDED)
 				} else if (arm_cache_prefer_mask != 0) {
+					pmap_acquire_page_lock(omd);
 					pool_put(&pmap_pv_pool,
 					    pmap_kremove_pg(opg, va));
+					pmap_release_page_lock(omd);
 #endif
 				}
-				pmap_release_page_lock(omd);
 			}
 			if (l2pte_valid_p(opte)) {
 #ifdef PMAP_CACHE_VIVT
@@ -5948,7 +5949,15 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 #ifdef VERBOSE_INIT_ARM
 	printf("locks ");
 #endif
-	mutex_init(&pmap_lock, MUTEX_DEFAULT, IPL_NONE);
+#if defined(PMAP_CACHE_VIPT) && !defined(ARM_MMU_EXTENDED)
+	if (arm_cache_prefer_mask != 0) {
+		mutex_init(&pmap_lock, MUTEX_DEFAULT, IPL_VM);
+	} else {
+#endif
+		mutex_init(&pmap_lock, MUTEX_DEFAULT, IPL_NONE);
+#if defined(PMAP_CACHE_VIPT) && !defined(ARM_MMU_EXTENDED)
+	}
+#endif
 	mutex_init(&pm->pm_obj_lock, MUTEX_DEFAULT, IPL_NONE);
 	uvm_obj_init(&pm->pm_obj, NULL, false, 1);
 	uvm_obj_setlock(&pm->pm_obj, &pm->pm_obj_lock);
