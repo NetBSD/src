@@ -29,6 +29,8 @@ typedef Registers_arm32 ThisUnwindRegisters;
 typedef Registers_vax ThisUnwindRegisters;
 #elif __m68k__
 typedef Registers_M68K ThisUnwindRegisters;
+#elif __sh3__
+typedef Registers_SH3 ThisUnwindRegisters;
 #else
 #error Unsupported architecture
 #endif

@@ -454,6 +454,70 @@ private:
   fpreg_t fpreg[8];
 };
 
+enum {
+  DWARF_SH3_R0 = 0,
+  DWARF_SH3_R15 = 15,
+  DWARF_SH3_PC = 16,
+  DWARF_SH3_PR = 17,
+
+  REGNO_SH3_R0 = 0,
+  REGNO_SH3_R15 = 15,
+  REGNO_SH3_PC = 16,
+  REGNO_SH3_PR = 17,
+};
+
+class Registers_SH3 {
+public:
+  enum {
+    LAST_REGISTER = REGNO_SH3_PR,
+    LAST_RESTORE_REG = REGNO_SH3_PR,
+    RETURN_REG = REGNO_SH3_PR,
+  };
+
+  __dso_hidden Registers_SH3();
+
+  static int dwarf2regno(int num) {
+    if (num >= DWARF_SH3_R0 && num <= DWARF_SH3_R15)
+      return REGNO_SH3_R0 + (num - DWARF_SH3_R0);
+    if (num == DWARF_SH3_PC)
+      return REGNO_SH3_PC;
+    if (num == DWARF_SH3_PR)
+      return REGNO_SH3_PR;
+    return LAST_REGISTER + 1;
+  }
+
+  bool validRegister(int num) const {
+    return num >= 0 && num <= REGNO_SH3_PR;
+  }
+
+  uint64_t getRegister(int num) const {
+    assert(validRegister(num));
+    return reg[num];
+  }
+
+  void setRegister(int num, uint64_t value) {
+    assert(validRegister(num));
+    reg[num] = value;
+  }
+
+  uint64_t getIP() const { return reg[REGNO_SH3_PC]; }
+
+  void setIP(uint64_t value) { reg[REGNO_SH3_PC] = value; }
+
+  uint64_t getSP() const { return reg[REGNO_SH3_R15]; }
+
+  void setSP(uint64_t value) { reg[REGNO_SH3_R15] = value; }
+
+  bool validFloatVectorRegister(int num) const { return false; }
+
+  void copyFloatVectorRegister(int num, uint64_t addr_) {}
+
+  __dso_hidden void jumpto() const __dead;
+
+private:
+  uint32_t reg[REGNO_SH3_PR + 1];
+};
+
 } // namespace _Unwind
 
 #endif // __REGISTERS_HPP__
