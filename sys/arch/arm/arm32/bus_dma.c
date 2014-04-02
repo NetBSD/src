@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.83 2014/03/24 20:06:31 christos Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.84 2014/04/02 12:28:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -35,13 +35,15 @@
 #include "opt_arm_bus_space.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.83 2014/03/24 20:06:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.84 2014/04/02 12:28:54 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
 #include <sys/file.h>
@@ -52,10 +54,11 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.83 2014/03/24 20:06:31 christos Exp $"
 
 #include <uvm/uvm.h>
 
-#include <sys/bus.h>
-#include <machine/cpu.h>
-
 #include <arm/cpufunc.h>
+
+#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+#include <dev/mm.h>
+#endif
 
 #ifdef BUSDMA_COUNTERS
 static struct evcnt bus_dma_creates =
@@ -1390,6 +1393,19 @@ _bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 #endif	/* DEBUG_DMA */
 	KASSERTMSG(((uintptr_t)kva & PAGE_MASK) == 0,
 	    "kva %p (%#"PRIxPTR")", kva, ((uintptr_t)kva & PAGE_MASK));
+
+#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+	/*
+	 * Check to see if this used direct mapped memory.  Get it's physical
+	 * address and try to map it.  If the resultant matches the kva, then
+	 * it was and so we can just return since we have notice to free up.
+	 */
+	paddr_t pa;
+	vaddr_t va;
+	(void)pmap_extract(pmap_kernel(), (vaddr_t)kva, &pa);
+	if (mm_md_direct_mapped_phys(pa, &va) && va == (vaddr_t)kva)
+		return;
+#endif
 
 	size = round_page(size);
 	pmap_kremove((vaddr_t)kva, size);
