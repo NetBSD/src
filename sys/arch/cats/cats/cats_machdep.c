@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.77 2013/08/18 06:50:31 matt Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.78 2014/04/02 11:36:50 matt Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.77 2013/08/18 06:50:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.78 2014/04/02 11:36:50 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -622,8 +622,10 @@ initarm(void *arm_bootargs)
 #endif
 
 	/* Map the boot arguments page */
-	pmap_map_entry(l1pagetable, ebsabootinfo.bt_vargp,
-	    ebsabootinfo.bt_pargp, VM_PROT_READ, PTE_CACHE);
+	if (ebsabootinfo.bt_vargp != vector_page) {
+		pmap_map_entry(l1pagetable, ebsabootinfo.bt_vargp,
+		    ebsabootinfo.bt_pargp, VM_PROT_READ, PTE_CACHE);
+	}
 
 	/* Map the stack pages */
 	pmap_map_chunk(l1pagetable, irqstack.pv_va, irqstack.pv_pa,
