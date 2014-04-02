@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.150 2014/03/22 13:40:55 njoly Exp $
+#	 $NetBSD: mi,v 1.151 2014/04/02 01:22:11 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5880,6 +5880,7 @@
 ./usr/X11R7/include/xorg/colormap.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/colormapst.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/compiler.h			-unknown-	xorg
+./usr/X11R7/include/xorg/compositeext.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/cursor.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/cursorstr.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/damage.h			-unknown-	xorg
@@ -5973,6 +5974,7 @@
 ./usr/X11R7/include/xorg/set.h				-unknown-	xorg
 ./usr/X11R7/include/xorg/shadow.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/shadowfb.h			-unknown-	xorg
+./usr/X11R7/include/xorg/shmint.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/site.h				-unknown-	xorg
 ./usr/X11R7/include/xorg/swaprep.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/swapreq.h			-unknown-	xorg
