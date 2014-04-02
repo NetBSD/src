@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_gio.c,v 1.12 2014/03/29 19:28:30 christos Exp $	*/
+/*	$NetBSD: pci_gio.c,v 1.13 2014/04/02 00:46:11 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_gio.c,v 1.12 2014/03/29 19:28:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_gio.c,v 1.13 2014/04/02 00:46:11 ozaki-r Exp $");
 
 /*
  * Glue for PCI devices that are connected to the GIO bus by various little
@@ -302,7 +302,7 @@ giopci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 
 static const char *
 giopci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih, char * buf,
-    size_t, len)
+    size_t len)
 {
 	snprintf(buf, len, "slot %s", (ih == GIO_SLOT_EXP0) ? "EXP0" :
 	    (ih == GIO_SLOT_EXP1) ? "EXP1" : "GFX");
