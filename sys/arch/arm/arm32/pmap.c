@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.274 2014/04/01 18:01:45 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.275 2014/04/02 12:04:09 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -216,7 +216,7 @@
 #include <arm/locore.h>
 //#include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.274 2014/04/01 18:01:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.275 2014/04/02 12:04:09 matt Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -1572,6 +1572,7 @@ pmap_alloc_l2_bucket(pmap_t pm, vaddr_t va)
 static void
 pmap_free_l2_bucket(pmap_t pm, struct l2_bucket *l2b, u_int count)
 {
+	KASSERT(pm != pmap_kernel());
 	KDASSERT(count <= l2b->l2b_occupancy);
 
 	/*
@@ -2904,7 +2905,9 @@ pmap_page_remove(struct vm_page_md *md, paddr_t pa)
 		 */
 		l2pte_reset(ptep);
 		PTE_SYNC_CURRENT(pm, ptep);
-		pmap_free_l2_bucket(pm, l2b, PAGE_SIZE / L2_S_SIZE);
+		if (pm != pmap_kernel()) {
+			pmap_free_l2_bucket(pm, l2b, PAGE_SIZE / L2_S_SIZE);
+		}
 		pmap_release_pmap_lock(pm);
 
 		pool_put(&pmap_pv_pool, pv);
@@ -3202,18 +3205,18 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 				}
 #endif
 			} else
+			pmap_release_pmap_lock(pm);
 			if ((pv = pool_get(&pmap_pv_pool, PR_NOWAIT)) == NULL){
-				pmap_release_page_lock(md);
 				if ((flags & PMAP_CANFAIL) == 0)
 					panic("pmap_enter: no pv entries");
 
 				if (pm != pmap_kernel())
 					pmap_free_l2_bucket(pm, l2b, 0);
-				pmap_release_pmap_lock(pm);
 				UVMHIST_LOG(maphist, "  <-- done (ENOMEM)",
 				    0, 0, 0, 0);
 				return (ENOMEM);
 			}
+			pmap_acquire_page_lock(md);
 
 			pmap_enter_pv(md, pa, pv, pm, va, nflags);
 		}
@@ -3561,7 +3564,8 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 			}
 		}
 
-		pmap_free_l2_bucket(pm, l2b, mappings);
+		if (pm != pmap_kernel())
+			pmap_free_l2_bucket(pm, l2b, mappings);
 		pm->pm_stats.resident_count -= mappings;
 	}
 
@@ -5554,18 +5558,14 @@ pmap_grow_map(vaddr_t va, paddr_t *pap)
 		if (pg == NULL)
 			return (1);
 		pa = VM_PAGE_TO_PHYS(pg);
-#ifdef PMAP_CACHE_VIPT
-#ifdef DIAGNOSTIC
-		struct vm_page_md *md = VM_PAGE_TO_MD(pg);
-#endif
 		/*
 		 * This new page must not have any mappings.  Enter it via
 		 * pmap_kenter_pa and let that routine do the hard work.
 		 */
+		struct vm_page_md *md __diagused = VM_PAGE_TO_MD(pg);
 		KASSERT(SLIST_EMPTY(&md->pvh_list));
 		pmap_kenter_pa(va, pa,
 		    VM_PROT_READ|VM_PROT_WRITE, PMAP_KMPAGE|PMAP_PTE);
-#endif
 	}
 
 	if (pap)
@@ -5955,7 +5955,8 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 	 * Scan the L1 translation table created by initarm() and create
 	 * the required metadata for all valid mappings found in it.
 	 */
-	for (size_t l1slot = 0; l1slot < L1_TABLE_SIZE / sizeof(pd_entry_t);
+	for (size_t l1slot = 0;
+	     l1slot < L1_TABLE_SIZE / sizeof(pd_entry_t);
 	     l1slot++) {
 		pd_entry_t pde = l1pt[l1slot];
 
@@ -6079,8 +6080,11 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 	pmap_alloc_specials(&virtual_avail, nptes, &cdstp, &cdst_pte);
 	pmap_set_pt_cache_mode(l1pt, (vaddr_t)cdst_pte, nptes);
 	pmap_alloc_specials(&virtual_avail, nptes, &memhook, NULL);
-	pmap_alloc_specials(&virtual_avail, round_page(MSGBUFSIZE) / PAGE_SIZE,
-	    (void *)&msgbufaddr, NULL);
+	if (msgbufaddr == NULL) {
+		pmap_alloc_specials(&virtual_avail,
+		    round_page(MSGBUFSIZE) / PAGE_SIZE,
+		    (void *)&msgbufaddr, NULL);
+	}
 
 	/*
 	 * Allocate a range of kernel virtual address space to be used
@@ -6488,7 +6492,7 @@ pmap_map_entry(vaddr_t l1pt, vaddr_t va, paddr_t pa, int prot, int cache)
 	if ((pdep[l1slot] & L1_TYPE_MASK) != L1_TYPE_C)
 		panic("pmap_map_entry: no L2 table for VA 0x%08lx", va);
 
-	ptep = (pt_entry_t *) kernel_pt_lookup(l1pte_pa(pdep[l1pte_index(va)]));
+	ptep = (pt_entry_t *) kernel_pt_lookup(l1pte_pa(pdep[l1slot]));
 	if (ptep == NULL)
 		panic("pmap_map_entry: can't find L2 table for VA 0x%08lx", va);
 
