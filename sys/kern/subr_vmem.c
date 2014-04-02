@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.91 2014/04/02 16:14:50 para Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.92 2014/04/02 18:09:10 para Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.91 2014/04/02 16:14:50 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.92 2014/04/02 18:09:10 para Exp $");
 
 #if defined(_KERNEL)
 #include "opt_ddb.h"
@@ -262,7 +262,7 @@ bt_refill(vmem_t *vm, vm_flag_t flags)
 		vm->vm_nfreetags++;
 	}
 
-	if (vm->vm_nfreetags == 0) {
+	if (vm->vm_nfreetags <= BT_MINRESERVE) {
 		VMEM_UNLOCK(vm);
 		return ENOMEM;
 	}
