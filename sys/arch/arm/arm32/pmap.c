@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.275 2014/04/02 12:04:09 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.276 2014/04/02 12:36:05 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -216,7 +216,7 @@
 #include <arm/locore.h>
 //#include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.275 2014/04/02 12:04:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.276 2014/04/02 12:36:05 matt Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -3205,8 +3205,9 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 				}
 #endif
 			} else
-			pmap_release_pmap_lock(pm);
+			pmap_release_page_lock(md);
 			if ((pv = pool_get(&pmap_pv_pool, PR_NOWAIT)) == NULL){
+				pmap_release_pmap_lock(pm);
 				if ((flags & PMAP_CANFAIL) == 0)
 					panic("pmap_enter: no pv entries");
 
