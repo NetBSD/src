@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_port.h,v 1.31 2014/03/21 16:03:35 pooka Exp $	*/
+/*	$NetBSD: rumpuser_port.h,v 1.32 2014/04/02 17:09:23 justin Exp $	*/
 
 /*
  * Portability header for non-NetBSD platforms.
@@ -42,8 +42,15 @@
 #define PLATFORM_HAS_NBVFSSTAT
 #endif /* __NetBSD__ */
 
+#ifndef MIN
+#define MIN(a,b)        ((/*CONSTCOND*/(a)<(b))?(a):(b))
+#endif
+#ifndef MAX
+#define MAX(a,b)        ((/*CONSTCOND*/(a)>(b))?(a):(b))
+#endif
+
 /* might not be 100% accurate, maybe need to revisit later */
-#if defined(__linux__) || defined(__sun__)
+#if (defined(__linux__) && !defined(__ANDROID__)) || defined(__sun__)
 #define HAVE_CLOCK_NANOSLEEP
 #endif
 
@@ -52,6 +59,22 @@
 #define _BSD_SOURCE
 #define _GNU_SOURCE
 #include <features.h>
+#endif
+
+#ifdef __ANDROID__
+#include <stdint.h>
+typedef uint16_t in_port_t;
+#include <sys/select.h>
+#define atomic_inc_uint(x)  __sync_fetch_and_add(x, 1)
+#define atomic_dec_uint(x)  __sync_fetch_and_sub(x, 1)
+static inline int getsubopt(char **optionp, char * const *tokens, char **valuep);
+static inline int
+getsubopt(char **optionp, char * const *tokens, char **valuep)
+{
+
+	/* TODO make a definition */
+	return -1;
+}
 #endif
 
 #if defined(__sun__)
@@ -226,7 +249,7 @@ posix_memalign(void **ptr, size_t align, size_t size)
 #define MSG_NOSIGNAL 0
 #endif
 
-#if defined(__sun__) && !defined(RUMP_REGISTER_T)
+#if (defined(__sun__) || defined(__ANDROID__)) && !defined(RUMP_REGISTER_T)
 #define RUMP_REGISTER_T long
 typedef RUMP_REGISTER_T register_t;
 #endif
