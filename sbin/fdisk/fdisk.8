@@ -1,6 +1,6 @@
-.\"	$NetBSD: fdisk.8,v 1.82 2014/03/31 11:25:48 martin Exp $
+.\"	$NetBSD: fdisk.8,v 1.83 2014/04/03 21:56:19 wiz Exp $
 .\"
-.Dd October 6, 2013
+.Dd April 3, 2014
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -11,7 +11,7 @@
 .Op Fl aBFfIiSuv
 .Oo
 .Fl 0 | 1 | 2 | 3 | E Ar number
-.Op Fl s Ar id/start/size Ns Bq Ar /bootmenu
+.Op Fl s Ar Oo Ar id Oc Ns Oo / Ns Oo Ar start Oc Ns Oo / Ns Oo Ar size Oc Ns Oo / Ns Oo Ar bootmenu Oc Oc Oc Oc
 .Oc
 .Op Fl r Ar file | Fl w Ar file
 .Op Fl A Ar ptn_alignment Ns Bq Ar /ptn_0_offset
