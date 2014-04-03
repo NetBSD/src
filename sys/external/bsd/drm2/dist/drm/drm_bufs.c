@@ -496,7 +496,7 @@ int drm_rmmap_locked(struct drm_device *dev, struct drm_local_map *map)
 		}
 		break;
 	case _DRM_SHM:
-		if (master) {
+		if (master && (map->flags & _DRM_CONTAINS_LOCK)) {
 			spin_lock(&master->lock.spinlock);
 			/*
 			 * If we successfully removed this mapping,
