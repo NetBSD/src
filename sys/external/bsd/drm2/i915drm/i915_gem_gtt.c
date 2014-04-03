@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_gtt.c,v 1.2 2014/03/18 18:20:42 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_gtt.c,v 1.3 2014/04/03 19:18:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.2 2014/03/18 18:20:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.3 2014/04/03 19:18:29 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -91,9 +91,11 @@ i915_gem_gtt_init(struct drm_device *dev)
 	 * XXX pci_set_dma_mask?  pci_set_consistent_dma_mask?
 	 */
 	if (INTEL_INFO(dev)->gen < 4)
-		drm_limit_dma_space(dev, 0, 0x00000000ffffffffULL);
+		drm_limit_dma_space(dev, 0,
+		    MIN(__type_max(resource_size_t), 0x00000000ffffffffULL));
 	else
-		drm_limit_dma_space(dev, 0, 0x0000000fffffffffULL);
+		drm_limit_dma_space(dev, 0,
+		    MIN(__type_max(resource_size_t), 0x0000000fffffffffULL));
 
 	/* Success!  */
 	DRM_INFO("Memory usable by graphics device = %dM\n",
@@ -507,7 +509,15 @@ typedef uint32_t gtt_pte_t;
 static uint32_t
 gen6_pte_addr_encode(bus_addr_t addr)
 {
+	/*
+	 * XXX `#ifdef __x86_64__' is a horrible way to work around a
+	 * completely stupid GCC warning that encourages unsafe,
+	 * nonportable code and has no obvious way to be selectively
+	 * suppressed.
+	 */
+#if __x86_64__
 	KASSERT(addr <= __BITS(39, 0));
+#endif
 	return (addr | ((addr >> 28) & 0xff0));
 }
 
@@ -585,8 +595,8 @@ gen6_gtt_init(struct drm_device *dev)
 		sizeof(gtt_pte_t))) {
 		DRM_ERROR("BAR0 too small for GTT: 0x%"PRIxMAX" < 0x%"PRIxMAX
 		    "\n",
-		    dev->bus_maps[0].bm_size,
-		    (gtt->gtt_total_entries * sizeof(gtt_pte_t)));
+		    (uintmax_t)dev->bus_maps[0].bm_size,
+		    (uintmax_t)(gtt->gtt_total_entries * sizeof(gtt_pte_t)));
 		ret = -ENODEV;
 		goto fail0;
 	}
