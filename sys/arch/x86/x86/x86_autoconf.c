@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.69 2014/04/02 02:14:08 christos Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.70 2014/04/03 15:21:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.69 2014/04/02 02:14:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.70 2014/04/03 15:21:52 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,6 +101,8 @@ matchbiosdisks(void)
 	int dklist_size;
 	int numbig;
 
+	if (x86_ndisks)
+		return;
 	big = lookup_bootinfo(BTINFO_BIOSGEOM);
 
 	numbig = big ? big->num : 0;
@@ -257,7 +259,7 @@ match_bootdisk(device_t dv, struct btinfo_bootdisk *bid)
 	int found = 0;
 
 	if (device_is_a(dv, "dk")) {
-		DPRINTF(("%s: not dk %s\n", __func__, device_xname(dv)));
+		DPRINTF(("%s: dk %s\n", __func__, device_xname(dv)));
 		return 0;
 	}
 
@@ -509,11 +511,16 @@ findroot(void)
 }
 
 void
-cpu_rootconf(void)
+cpu_bootconf(void)
 {
-
 	findroot();
 	matchbiosdisks();
+}
+
+void
+cpu_rootconf(void)
+{
+	cpu_bootconf();
 
 	aprint_normal("boot device: %s\n",
 	    booted_device ? device_xname(booted_device) : "<unknown>");
