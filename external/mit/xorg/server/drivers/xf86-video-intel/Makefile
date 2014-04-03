@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2014/04/03 02:51:20 riastradh Exp $
+#	$NetBSD: Makefile,v 1.13 2014/04/03 18:17:52 riastradh Exp $
 
 .include <bsd.own.mk>
 
@@ -23,6 +23,9 @@ SRCS+=		i810_xaa.c
 SRCS+=		i810_dga.c
 SRCS+=		i810_dri.c
 SRCS+=		i810_hwmc.c
+
+# SNA is amd64-only for now -- triggers ICEs on i386.
+.if ${MACHINE_ARCH} != "i386"
 
 # sna
 .PATH:	${X11SRCDIR.${DRIVER}}/src/sna
@@ -93,6 +96,8 @@ SRCS+=		fbstipple.c
 SRCS+=		fbtile.c
 SRCS+=		fbutil.c
 
+.endif
+
 # uxa
 .PATH:	${X11SRCDIR.${DRIVER}}/src/uxa
 SRCS+=		intel_batchbuffer.c
@@ -134,9 +139,13 @@ CPPFLAGS+=	-I${X11SRCDIR.${DRIVER}}/xvmc
 CPPFLAGS+=	-DHAVE_ATOMIC_PRIMITIVES
 
 CPPFLAGS+=	-DENABLE_XVMC
-CPPFLAGS+=	-DUSE_SNA
 CPPFLAGS+=	-DUSE_UXA
+.if ${MACHINE_ARCH} == "i386"
+CPPFLAGS+=	-DDEFAULT_ACCEL_METHOD=UXA
+.else
+CPPFLAGS+=	-DUSE_SNA
 CPPFLAGS+=	-DDEFAULT_ACCEL_METHOD=SNA
+.endif
 
 CPPFLAGS+=	-DHAVE_DRI1
 CPPFLAGS+=	-DHAVE_DRI2_H
