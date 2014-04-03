@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.262 2014/03/26 18:03:47 christos Exp $	*/
+/*	$NetBSD: systm.h,v 1.263 2014/04/03 15:22:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -403,6 +403,7 @@ void	consinit(void);
 
 void	cpu_startup(void);
 void	cpu_configure(void);
+void	cpu_bootconf(void);
 void	cpu_rootconf(void);
 void	cpu_dumpconf(void);
 
