@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma_hacks.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: bus_dma_hacks.h,v 1.3 2014/04/03 19:18:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -52,7 +52,16 @@ bus_dmamem_wire_uvm_object(bus_dma_tag_t tag, struct uvm_object *uobj,
 	unsigned int i;
 	int error;
 
+	/*
+	 * XXX `#ifdef __x86_64__' is a horrible way to work around a
+	 * completely stupid GCC warning that encourages unsafe,
+	 * nonportable code and has no obvious way to be selectively
+	 * suppressed.
+	 */
+#if __x86_64__
 	KASSERT(size <= __type_max(off_t));
+#endif
+
 	KASSERT(start <= (__type_max(off_t) - size));
 	KASSERT(alignment == PAGE_SIZE); /* XXX */
 	KASSERT(0 < nsegs);
