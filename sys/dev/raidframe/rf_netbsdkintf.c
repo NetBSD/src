@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.307 2014/04/03 15:30:52 christos Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.308 2014/04/03 18:55:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.307 2014/04/03 15:30:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.308 2014/04/03 18:55:26 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -537,11 +537,10 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 			candidate_root = dkwedge_find_by_wname(cname);
 		} else
 			candidate_root = rsc->sc_dev;
-#ifndef RAIDFRAME_FORCE_ROOT
-		if (booted_device == NULL
-		    || rf_containsboot(&rsc->sc_r, booted_device))
-#endif
-		booted_device = candidate_root;
+		if (booted_device == NULL ||
+		    rsc->sc_r.root_partition == 1 ||
+		    rf_containsboot(&rsc->sc_r, booted_device))
+			booted_device = candidate_root;
 	} else if (num_root > 1) {
 
 		/* 
@@ -3327,6 +3326,10 @@ void
 rf_print_component_label(RF_ComponentLabel_t *clabel)
 {
 	uint64_t numBlocks;
+	static const char *rp[] = {
+	    "No", "Force", "Soft", "*invalid*"
+	};
+
 
 	numBlocks = rf_component_label_numblocks(clabel);
 
@@ -3343,8 +3346,7 @@ rf_print_component_label(RF_ComponentLabel_t *clabel)
 	printf("   RAID Level: %c  blocksize: %d numBlocks: %"PRIu64"\n",
 	       (char) clabel->parityConfig, clabel->blockSize, numBlocks);
 	printf("   Autoconfig: %s\n", clabel->autoconfigure ? "Yes" : "No");
-	printf("   Contains root partition: %s\n",
-	       clabel->root_partition ? "Yes" : "No");
+	printf("   Root partition: %s\n", rp[clabel->root_partition & 3]);
 	printf("   Last configured as: raid%d\n", clabel->last_unit);
 #if 0
 	   printf("   Config order: %d\n", clabel->config_order);
@@ -3790,12 +3792,20 @@ rf_auto_config_set(RF_ConfigSet_t *cset)
 
 		rf_markalldirty(raidPtr);
 		raidPtr->autoconfigure = 1; /* XXX do this here? */
-		if (cset->ac->clabel->root_partition==1) {
-			/* everything configured just fine.  Make a note
-			   that this set is eligible to be root. */
-			cset->rootable = 1;
+		switch (cset->ac->clabel->root_partition) {
+		case 1:	/* Force Root */
+		case 2:	/* Soft Root: root when boot partition part of raid */
+			/*
+			 * everything configured just fine.  Make a note
+			 * that this set is eligible to be root,
+			 * or forced to be root
+			 */
+			cset->rootable = cset->ac->clabel->root_partition;
 			/* XXX do this here? */
-			raidPtr->root_partition = 1;
+			raidPtr->root_partition = cset->rootable;
+			break;
+		default:
+			break;
 		}
 	} else {
 		raidput(sc);
