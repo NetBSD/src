@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_core.h,v 1.4 2013/10/05 06:51:43 skrll Exp $	*/
+/*	$NetBSD: dwc2_core.h,v 1.5 2014/04/03 06:34:58 skrll Exp $	*/
 
 /*
  * core.h - DesignWare HS OTG Controller common declarations
@@ -545,7 +545,7 @@ extern void dwc2_enable_host_interrupts(struct dwc2_hsotg *hsotg);
 extern void dwc2_disable_host_interrupts(struct dwc2_hsotg *hsotg);
 
 extern u32 dwc2_calc_frame_interval(struct dwc2_hsotg *hsotg);
-extern int dwc2_check_core_status(struct dwc2_hsotg *hsotg);
+extern bool dwc2_is_controller_alive(struct dwc2_hsotg *hsotg);
 
 /*
  * Common core Functions.
@@ -572,7 +572,7 @@ extern irqreturn_t dwc2_handle_common_intr(void *dev);
  * 1 - SRP Only capable
  * 2 - No HNP/SRP capable
  */
-extern int dwc2_set_param_otg_cap(struct dwc2_hsotg *hsotg, int val);
+extern void dwc2_set_param_otg_cap(struct dwc2_hsotg *hsotg, int val);
 #define DWC2_CAP_PARAM_HNP_SRP_CAPABLE		0
 #define DWC2_CAP_PARAM_SRP_ONLY_CAPABLE		1
 #define DWC2_CAP_PARAM_NO_HNP_SRP_CAPABLE	2
@@ -584,7 +584,7 @@ extern int dwc2_set_param_otg_cap(struct dwc2_hsotg *hsotg, int val);
  * 0 - Slave
  * 1 - DMA (default, if available)
  */
-extern int dwc2_set_param_dma_enable(struct dwc2_hsotg *hsotg, int val);
+extern void dwc2_set_param_dma_enable(struct dwc2_hsotg *hsotg, int val);
 
 /*
  * When DMA mode is enabled specifies whether to use
@@ -594,7 +594,7 @@ extern int dwc2_set_param_dma_enable(struct dwc2_hsotg *hsotg, int val);
  * 0 - address DMA
  * 1 - DMA Descriptor(default, if available)
  */
-extern int dwc2_set_param_dma_desc_enable(struct dwc2_hsotg *hsotg, int val);
+extern void dwc2_set_param_dma_desc_enable(struct dwc2_hsotg *hsotg, int val);
 
 /*
  * Specifies the maximum speed of operation in host and device mode.
@@ -604,7 +604,7 @@ extern int dwc2_set_param_dma_desc_enable(struct dwc2_hsotg *hsotg, int val);
  * 0 - High Speed (default)
  * 1 - Full Speed
  */
-extern int dwc2_set_param_speed(struct dwc2_hsotg *hsotg, int val);
+extern void dwc2_set_param_speed(struct dwc2_hsotg *hsotg, int val);
 #define DWC2_SPEED_PARAM_HIGH	0
 #define DWC2_SPEED_PARAM_FULL	1
 
@@ -615,8 +615,8 @@ extern int dwc2_set_param_speed(struct dwc2_hsotg *hsotg, int val);
  * 0 - Don't support low power mode (default)
  * 1 - Support low power mode
  */
-extern int dwc2_set_param_host_support_fs_ls_low_power(struct dwc2_hsotg *hsotg,
-						       int val);
+extern void dwc2_set_param_host_support_fs_ls_low_power(
+		struct dwc2_hsotg *hsotg, int val);
 
 /*
  * Specifies the PHY clock rate in low power mode when connected to a
@@ -627,8 +627,8 @@ extern int dwc2_set_param_host_support_fs_ls_low_power(struct dwc2_hsotg *hsotg,
  * 0 - 48 MHz
  * 1 - 6 MHz
  */
-extern int dwc2_set_param_host_ls_low_power_phy_clk(struct dwc2_hsotg *hsotg,
-						    int val);
+extern void dwc2_set_param_host_ls_low_power_phy_clk(struct dwc2_hsotg *hsotg,
+						     int val);
 #define DWC2_HOST_LS_LOW_POWER_PHY_CLK_PARAM_48MHZ	0
 #define DWC2_HOST_LS_LOW_POWER_PHY_CLK_PARAM_6MHZ	1
 
@@ -636,50 +636,50 @@ extern int dwc2_set_param_host_ls_low_power_phy_clk(struct dwc2_hsotg *hsotg,
  * 0 - Use cC FIFO size parameters
  * 1 - Allow dynamic FIFO sizing (default)
  */
-extern int dwc2_set_param_enable_dynamic_fifo(struct dwc2_hsotg *hsotg,
-					      int val);
+extern void dwc2_set_param_enable_dynamic_fifo(struct dwc2_hsotg *hsotg,
+					       int val);
 
 /*
  * Number of 4-byte words in the Rx FIFO in host mode when dynamic
  * FIFO sizing is enabled.
  * 16 to 32768 (default 1024)
  */
-extern int dwc2_set_param_host_rx_fifo_size(struct dwc2_hsotg *hsotg, int val);
+extern void dwc2_set_param_host_rx_fifo_size(struct dwc2_hsotg *hsotg, int val);
 
 /*
  * Number of 4-byte words in the non-periodic Tx FIFO in host mode
  * when Dynamic FIFO sizing is enabled in the core.
  * 16 to 32768 (default 256)
  */
-extern int dwc2_set_param_host_nperio_tx_fifo_size(struct dwc2_hsotg *hsotg,
-						   int val);
+extern void dwc2_set_param_host_nperio_tx_fifo_size(struct dwc2_hsotg *hsotg,
+						    int val);
 
 /*
  * Number of 4-byte words in the host periodic Tx FIFO when dynamic
  * FIFO sizing is enabled.
  * 16 to 32768 (default 256)
  */
-extern int dwc2_set_param_host_perio_tx_fifo_size(struct dwc2_hsotg *hsotg,
-						  int val);
+extern void dwc2_set_param_host_perio_tx_fifo_size(struct dwc2_hsotg *hsotg,
+						   int val);
 
 /*
  * The maximum transfer size supported in bytes.
  * 2047 to 65,535  (default 65,535)
  */
-extern int dwc2_set_param_max_transfer_size(struct dwc2_hsotg *hsotg, int val);
+extern void dwc2_set_param_max_transfer_size(struct dwc2_hsotg *hsotg, int val);
 
 /*
  * The maximum number of packets in a transfer.
  * 15 to 511  (default 511)
  */
-extern int dwc2_set_param_max_packet_count(struct dwc2_hsotg *hsotg, int val);
+extern void dwc2_set_param_max_packet_count(struct dwc2_hsotg *hsotg, int val);
 
 /*
  * The number of host channel registers to use.
  * 1 to 16 (default 11)
  * Note: The FPGA configuration supports a maximum of 11 host channels.
  */
-extern int dwc2_set_param_host_channels(struct dwc2_hsotg *hsotg, int val);
+extern void dwc2_set_param_host_channels(struct dwc2_hsotg *hsotg, int val);
 
 /*
  * Specifies the type of PHY interface to use. By default, the driver
@@ -689,7 +689,7 @@ extern int dwc2_set_param_host_channels(struct dwc2_hsotg *hsotg, int val);
  * 1 - UTMI+ (default)
  * 2 - ULPI
  */
-extern int dwc2_set_param_phy_type(struct dwc2_hsotg *hsotg, int val);
+extern void dwc2_set_param_phy_type(struct dwc2_hsotg *hsotg, int val);
 #define DWC2_PHY_TYPE_PARAM_FS		0
 #define DWC2_PHY_TYPE_PARAM_UTMI	1
 #define DWC2_PHY_TYPE_PARAM_ULPI	2
@@ -705,7 +705,7 @@ extern int dwc2_set_param_phy_type(struct dwc2_hsotg *hsotg, int val);
  *
  * 8 or 16 bits (default 16)
  */
-extern int dwc2_set_param_phy_utmi_width(struct dwc2_hsotg *hsotg, int val);
+extern void dwc2_set_param_phy_utmi_width(struct dwc2_hsotg *hsotg, int val);
 
 /*
  * Specifies whether the ULPI operates at double or single
@@ -717,13 +717,13 @@ extern int dwc2_set_param_phy_utmi_width(struct dwc2_hsotg *hsotg, int val);
  * 1 - double data rate ULPI interface with 4 bit wide data
  * bus
  */
-extern int dwc2_set_param_phy_ulpi_ddr(struct dwc2_hsotg *hsotg, int val);
+extern void dwc2_set_param_phy_ulpi_ddr(struct dwc2_hsotg *hsotg, int val);
 
 /*
  * Specifies whether to use the internal or external supply to
  * drive the vbus with a ULPI phy.
  */
-extern int dwc2_set_param_phy_ulpi_ext_vbus(struct dwc2_hsotg *hsotg, int val);
+extern void dwc2_set_param_phy_ulpi_ext_vbus(struct dwc2_hsotg *hsotg, int val);
 #define DWC2_PHY_ULPI_INTERNAL_VBUS	0
 #define DWC2_PHY_ULPI_EXTERNAL_VBUS	1
 
@@ -733,11 +733,11 @@ extern int dwc2_set_param_phy_ulpi_ext_vbus(struct dwc2_hsotg *hsotg, int val);
  * 0 - No (default)
  * 1 - Yes
  */
-extern int dwc2_set_param_i2c_enable(struct dwc2_hsotg *hsotg, int val);
+extern void dwc2_set_param_i2c_enable(struct dwc2_hsotg *hsotg, int val);
 
-extern int dwc2_set_param_ulpi_fs_ls(struct dwc2_hsotg *hsotg, int val);
+extern void dwc2_set_param_ulpi_fs_ls(struct dwc2_hsotg *hsotg, int val);
 
-extern int dwc2_set_param_ts_dline(struct dwc2_hsotg *hsotg, int val);
+extern void dwc2_set_param_ts_dline(struct dwc2_hsotg *hsotg, int val);
 
 /*
  * Specifies whether dedicated transmit FIFOs are
@@ -745,16 +745,14 @@ extern int dwc2_set_param_ts_dline(struct dwc2_hsotg *hsotg, int val);
  * 0 - No
  * 1 - Yes
  */
-extern int dwc2_set_param_en_multiple_tx_fifo(struct dwc2_hsotg *hsotg,
-					      int val);
+extern void dwc2_set_param_en_multiple_tx_fifo(struct dwc2_hsotg *hsotg,
+					       int val);
 
-extern int dwc2_set_param_reload_ctl(struct dwc2_hsotg *hsotg, int val);
+extern void dwc2_set_param_reload_ctl(struct dwc2_hsotg *hsotg, int val);
 
-extern int dwc2_set_param_ahbcfg(struct dwc2_hsotg *hsotg, int val);
+extern void dwc2_set_param_ahbcfg(struct dwc2_hsotg *hsotg, int val);
 
-extern int dwc2_set_param_otg_ver(struct dwc2_hsotg *hsotg, int val);
-
-extern int dwc2_set_param_uframe_sched(struct dwc2_hsotg *hsotg, int val);
+extern void dwc2_set_param_otg_ver(struct dwc2_hsotg *hsotg, int val);
 
 /*
  * Dump core registers and SPRAM

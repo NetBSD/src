@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcd.c,v 1.11 2014/03/21 09:19:10 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcd.c,v 1.12 2014/04/03 06:34:58 skrll Exp $	*/
 
 /*
  * hcd.c - DesignWare HS OTG Controller host-mode routines
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcd.c,v 1.11 2014/03/21 09:19:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcd.c,v 1.12 2014/04/03 06:34:58 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -400,7 +400,7 @@ dwc2_hcd_urb_enqueue(struct dwc2_hsotg *hsotg, struct dwc2_hcd_urb *urb,
 	dwc2_hcd_qtd_init(qtd, urb);
 	retval = dwc2_hcd_qtd_add(hsotg, qtd, (struct dwc2_qh **)ep_handle,
 				  mem_flags);
-	if (retval < 0) {
+	if (retval) {
 		dev_err(hsotg->dev,
 			"DWC OTG HCD URB Enqueue failed adding QTD. Error status %d\n",
 			retval);
@@ -409,7 +409,7 @@ dwc2_hcd_urb_enqueue(struct dwc2_hsotg *hsotg, struct dwc2_hcd_urb *urb,
 	}
 
 	intr_mask = DWC2_READ_4(hsotg, GINTMSK);
-	if (!(intr_mask & GINTSTS_SOF) && retval == 0) {
+	if (!(intr_mask & GINTSTS_SOF)) {
 		enum dwc2_transaction_type tr_type;
 
 		if (qtd->qh->ep_type == USB_ENDPOINT_XFER_BULK &&
@@ -425,7 +425,7 @@ dwc2_hcd_urb_enqueue(struct dwc2_hsotg *hsotg, struct dwc2_hcd_urb *urb,
 			dwc2_hcd_queue_transactions(hsotg, tr_type);
 	}
 
-	return retval;
+	return 0;
 }
 
 /* Must be called with interrupt disabled and spinlock held */
@@ -1745,7 +1745,7 @@ int dwc2_hcd_get_frame_number(struct dwc2_hsotg *hsotg)
 
 int dwc2_hcd_is_b_host(struct dwc2_hsotg *hsotg)
 {
-	return (hsotg->op_state == OTG_STATE_B_HOST);
+	return hsotg->op_state == OTG_STATE_B_HOST;
 }
 
 struct dwc2_hcd_urb *
