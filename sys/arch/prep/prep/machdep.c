@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.74 2013/04/21 15:42:11 kiyohara Exp $	*/
+/*	$NetBSD: machdep.c,v 1.75 2014/04/03 23:49:47 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.74 2013/04/21 15:42:11 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.75 2014/04/03 23:49:47 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_openpic.h"
@@ -313,7 +313,6 @@ prep_setup_openpic(PPC_DEVICE *dev)
 {
 	uint32_t l;
 	uint8_t *p;
-	void *v;
 	int tag, size, item, i;
 	unsigned char *baseaddr = NULL;
 
@@ -329,7 +328,6 @@ prep_setup_openpic(PPC_DEVICE *dev)
 		struct _L4_PPCPack *pa = &pack->L4_Data.L4_PPCPack;
 
 		tag = *p;
-		v = p;
 		if (tag_type(p[0]) == PNP_SMALL) {
 			size = tag_small_count(tag) + 1;
 			continue;
@@ -383,7 +381,6 @@ setup_ivr(PPC_DEVICE *dev)
 {
 	uint32_t l, addr;
 	uint8_t *p;
-	void *v;
 	int tag, size, item;
 
 	l = be32toh(dev->AllocatedOffset);
@@ -395,7 +392,6 @@ setup_ivr(PPC_DEVICE *dev)
 		struct _L4_PPCPack *pa = &pack->L4_Data.L4_PPCPack;
 
 		tag = *p;
-		v = p;
 		if (tag_type(p[0]) == PNP_SMALL) {
 			size = tag_small_count(tag) + 1;
 			continue;
