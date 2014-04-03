@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_pci.c,v 1.3 2014/04/03 14:45:44 riastradh Exp $	*/
+/*	$NetBSD: i915_pci.c,v 1.4 2014/04/03 19:18:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.3 2014/04/03 14:45:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.4 2014/04/03 19:18:29 riastradh Exp $");
 
 #include <sys/types.h>
 #ifndef _MODULE
@@ -422,8 +422,9 @@ i915drm_fb_probe(struct drm_fb_helper *fb_helper,
 	prop_dictionary_set_uint8(dict, "depth", sizes->surface_bpp);
 	prop_dictionary_set_uint16(dict, "linebytes", mode_cmd.pitches[0]);
 	prop_dictionary_set_uint32(dict, "address", 0); /* XXX >32-bit */
+	CTASSERT(sizeof(uintptr_t) <= sizeof(uint64_t));
 	prop_dictionary_set_uint64(dict, "virtual_address",
-	    (uint64_t)bus_space_vaddr(dev->bst, sc->sc_fb_bsh));
+	    (uint64_t)(uintptr_t)bus_space_vaddr(dev->bst, sc->sc_fb_bsh));
 	sc->sc_genfb.sc_dev = sc->sc_dev;
 	genfb_init(&sc->sc_genfb);
 

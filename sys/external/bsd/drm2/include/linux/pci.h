@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.3 2014/04/03 19:18:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
 
 #include <sys/types.h>
 #include <sys/bus.h>
+#include <sys/cdefs.h>
 #include <sys/kmem.h>
 #include <sys/systm.h>
 
@@ -251,7 +252,7 @@ pci_bus_alloc_resource(struct pci_bus *bus, struct resource *resource,
 	}
 
 	resource->r_bst = bst;
-	error = bus_space_alloc(bst, start, 0xffffffffffffffffULL /* XXX */,
+	error = bus_space_alloc(bst, start, __type_max(bus_addr_t),
 	    size, align, 0, 0, &resource->start, &resource->r_bsh);
 	if (error)
 		return error;

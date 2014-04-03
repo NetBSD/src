@@ -2110,11 +2110,26 @@ DRM_READ32(struct drm_local_map *map, bus_size_t offset)
 static inline uint64_t
 DRM_READ64(struct drm_local_map *map, bus_size_t offset)
 {
-	if (DRM_IS_BUS_SPACE(map))
+	if (DRM_IS_BUS_SPACE(map)) {
+#if _LP64			/* XXX How to detect bus_space_read_8?  */
 		return bus_space_read_8(map->lm_data.bus_space.bst,
 		    map->lm_data.bus_space.bsh, offset);
-	else
+#elif _BYTE_ORDER == _LITTLE_ENDIAN
+		/* XXX Yes, this is sketchy.  */
+		return bus_space_read_4(map->lm_data.bus_space.bst,
+		    map->lm_data.bus_space.bsh, offset) |
+		    ((uint64_t)bus_space_read_4(map->lm_data.bus_space.bst,
+			map->lm_data.bus_space.bsh, (offset + 4)) << 32);
+#else
+		/* XXX Yes, this is sketchy.  */
+		return bus_space_read_4(map->lm_data.bus_space.bst,
+		    map->lm_data.bus_space.bsh, (offset + 4)) |
+		    ((uint64_t)bus_space_read_4(map->lm_data.bus_space.bst,
+			map->lm_data.bus_space.bsh, offset) << 32);
+#endif
+	} else {
 		return *(volatile uint64_t *)((vaddr_t)map->handle + offset);
+	}
 }
 
 static inline void
@@ -2150,11 +2165,25 @@ DRM_WRITE32(struct drm_local_map *map, bus_size_t offset, uint32_t value)
 static inline void
 DRM_WRITE64(struct drm_local_map *map, bus_size_t offset, uint64_t value)
 {
-	if (DRM_IS_BUS_SPACE(map))
+	if (DRM_IS_BUS_SPACE(map)) {
+#if _LP64			/* XXX How to detect bus_space_write_8?  */
 		bus_space_write_8(map->lm_data.bus_space.bst,
 		    map->lm_data.bus_space.bsh, offset, value);
-	else
+#elif _BYTE_ORDER == _LITTLE_ENDIAN
+		bus_space_write_4(map->lm_data.bus_space.bst,
+		    map->lm_data.bus_space.bsh, offset, (value & 0xffffffffU));
+		bus_space_write_4(map->lm_data.bus_space.bst,
+		    map->lm_data.bus_space.bsh, (offset + 4), (value >> 32));
+#else
+		bus_space_write_4(map->lm_data.bus_space.bst,
+		    map->lm_data.bus_space.bsh, offset, (value >> 32));
+		bus_space_write_4(map->lm_data.bus_space.bst,
+		    map->lm_data.bus_space.bsh, (offset + 4),
+		    (value & 0xffffffffU));
+#endif
+	} else {
 		*(volatile uint64_t *)((vaddr_t)map->handle + offset) = value;
+	}
 }
 #endif	/* defined(__NetBSD__) */
 
