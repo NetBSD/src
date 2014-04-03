@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.56 2014/03/29 14:47:30 matt Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.57 2014/04/03 17:14:41 matt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.56 2014/03/29 14:47:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.57 2014/04/03 17:14:41 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -1048,6 +1048,29 @@ beagle_device_register(device_t self, void *aux)
 		prop_dictionary_set_int16(dict, "port1-gpio", -1);
 		prop_dictionary_set_cstring(dict, "port2-mode", "hsic");
 		prop_dictionary_set_int16(dict, "port2-gpio", -1);
+#endif
+#if defined(OMAP_5430)
+		bus_space_tag_t iot = &omap_bs_tag;
+		bus_space_handle_t ioh;
+		omap2_gpio_ctl(80, GPIO_PIN_OUTPUT);
+		omap2_gpio_write(80, 0);
+		prop_dictionary_set_uint16(dict, "nports", 1);
+		prop_dictionary_set_cstring(dict, "port0-mode", "hsi");
+#if 0
+		prop_dictionary_set_bool(dict, "phy-reset", true);
+		prop_dictionary_set_int16(dict, "port0-gpio", 80);
+		prop_dictionary_set_bool(dict, "port0-gpioval", true);
+#endif
+		int rv = bus_space_map(iot, OMAP5_CM_CTL_WKUP_REF_CLK0_OUT_REF_CLK1_OUT, 4, 0, &ioh);
+		KASSERT(rv == 0);
+		uint32_t v = bus_space_read_4(iot, ioh, 0);
+		v &= 0xffff;
+		v |= __SHIFTIN(OMAP5_CM_CTL_WKUP_MUXMODE1_REF_CLK1_OUT,
+		    OMAP5_CM_CTL_WKUP_MUXMODE1);
+		bus_space_write_4(iot, ioh, 0, v);
+		bus_space_unmap(iot, ioh, 4);
+
+		omap2_gpio_write(80, 1);
 #endif
 		return;
 	}
