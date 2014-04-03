@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_coreintr.c,v 1.6 2014/03/21 09:19:10 skrll Exp $	*/
+/*	$NetBSD: dwc2_coreintr.c,v 1.7 2014/04/03 06:34:58 skrll Exp $	*/
 
 /*
  * core_intr.c - DesignWare HS OTG Controller common interrupt handling
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_coreintr.c,v 1.6 2014/03/21 09:19:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_coreintr.c,v 1.7 2014/04/03 06:34:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -67,7 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: dwc2_coreintr.c,v 1.6 2014/03/21 09:19:10 skrll Exp 
 #ifdef DWC2_DEBUG
 static const char *dwc2_op_state_str(struct dwc2_hsotg *hsotg)
 {
-#ifdef DEBUG
 	switch (hsotg->op_state) {
 	case OTG_STATE_A_HOST:
 		return "a_host";
@@ -82,9 +81,26 @@ static const char *dwc2_op_state_str(struct dwc2_hsotg *hsotg)
 	default:
 		return "unknown";
 	}
-#else
-	return "";
-#endif
+}
+
+/**
+ * dwc2_handle_usb_port_intr - handles OTG PRTINT interrupts.
+ * When the PRTINT interrupt fires, there are certain status bits in the Host
+ * Port that needs to get cleared.
+ *
+ * @hsotg: Programming view of DWC_otg controller
+ */
+static void dwc2_handle_usb_port_intr(struct dwc2_hsotg *hsotg)
+{
+	u32 hprt0 = DWC2_READ_4(hsotg, HPRT0);
+
+	if (hprt0 & HPRT0_ENACHG) {
+		hprt0 &= ~HPRT0_ENA;
+		DWC2_WRITE_4(hsotg, HPRT0, hprt0);
+	}
+
+	/* Clear interrupt */
+	DWC2_WRITE_4(hsotg, GINTSTS, GINTSTS_PRTINT);
 }
 #endif
 
@@ -434,12 +450,10 @@ static u32 dwc2_read_common_intr(struct dwc2_hsotg *hsotg)
 	gintmsk = DWC2_READ_4(hsotg, GINTMSK);
 	gahbcfg = DWC2_READ_4(hsotg, GAHBCFG);
 
-#ifdef DEBUG
 	/* If any common interrupts set */
 	if (gintsts & gintmsk_common)
 		dev_dbg(hsotg->dev, "gintsts=%08x  gintmsk=%08x\n",
 			gintsts, gintmsk);
-#endif
 
 	if (gahbcfg & GAHBCFG_GLBL_INTR_EN)
 		return gintsts & gintmsk & gintmsk_common;
@@ -466,8 +480,8 @@ irqreturn_t dwc2_handle_common_intr(void *dev)
 	u32 gintsts;
 	irqreturn_t retval = IRQ_NONE;
 
-	if (dwc2_check_core_status(hsotg) < 0) {
-		dev_warn(hsotg->dev, "Controller is disconnected\n");
+	if (!dwc2_is_controller_alive(hsotg)) {
+		dev_warn(hsotg->dev, "Controller is dead\n");
 		goto out;
 	}
 
@@ -500,8 +514,7 @@ irqreturn_t dwc2_handle_common_intr(void *dev)
 		if (dwc2_is_device_mode(hsotg)) {
 			dev_dbg(hsotg->dev,
 				" --Port interrupt received in Device mode--\n");
-			gintsts = GINTSTS_PRTINT;
-			DWC2_WRITE_4(hsotg, GINTSTS, gintsts);
+			dwc2_handle_usb_port_intr(hsotg);
 			retval = IRQ_HANDLED;
 		}
 	}
