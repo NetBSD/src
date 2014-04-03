@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.6 2014/04/03 13:54:59 matt Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.7 2014/04/03 14:23:38 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.6 2014/04/03 13:54:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.7 2014/04/03 14:23:38 matt Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -993,7 +993,7 @@ pmap_tlb_asid_release_all(struct pmap *pm)
 	struct pmap_asid_info * const pai = PMAP_PAI(pm, ti);
 	TLBINFO_LOCK(ti);
 	if (pai->pai_asid > KERNEL_PID) {
-		if (curcpu()->ci_pmap_cur == pm) {
+		if (curcpu()->ci_pmap_asid_cur == pai->pai_asid) {
 			tlb_invalidate_asids(pai->pai_asid, pai->pai_asid);
 		} else {
 			pmap_pai_reset(ti, pai, pm);
