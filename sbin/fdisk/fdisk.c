@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.148 2014/04/01 19:08:48 christos Exp $ */
+/*	$NetBSD: fdisk.c,v 1.149 2014/04/03 17:07:11 christos Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.148 2014/04/01 19:08:48 christos Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.149 2014/04/03 17:07:11 christos Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -321,6 +321,66 @@ initvar_disk(const char **diskp)
 #endif /* HAVE_NBTOOL_CONFIG_H */
 }
 
+static int
+getnum(const char *str, int *num)
+{
+	char *e;
+	long l;
+
+	errno = 0;
+	l = strtol(str, &e, 0);
+	if (str[0] == '\0' || *e != '\0')
+		return -1;
+	if (errno == ERANGE && (l == LONG_MAX || l == LONG_MIN))
+		return -1;
+	/* XXX: truncation */
+	*num = (int)l;
+	return 0;
+}
+
+/* [<sysid>][/[<start>][/[<size>][/[<bootmenu>]]]] */
+static int
+parse_s(char *arg, int *csysid, unsigned *cstart, unsigned *csize,
+    char **cbootmenu)
+{
+	char *ptr;
+	int num;
+
+	if ((ptr = strchr(arg, '/')) != NULL)
+		*ptr++ = '\0';
+
+	if (*arg) {
+		if (getnum(arg, &num) == -1)
+			return -1;
+		*csysid = num;
+	}
+	if (ptr == NULL)
+		return 0;
+
+	arg = ptr;
+	if ((ptr = strchr(arg, '/')) != NULL)
+		*ptr++ = '\0';
+	if (*arg) {
+		if (getnum(arg, &num) == -1)
+			return -1;
+		*cstart = num;
+	}
+	if (ptr == NULL)
+		return 0;
+
+	arg = ptr;
+	if ((ptr = strchr(arg, '/')) != NULL)
+		*ptr++ = '\0';
+	if (*arg) {
+		if (getnum(arg, &num) == -1)
+			return -1;
+		*csize = num;
+	}
+	if (ptr != NULL && *ptr)
+		*cbootmenu = ptr;
+	return 0;
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -331,8 +391,8 @@ main(int argc, char *argv[])
 	int n;
 #ifdef BOOTSEL
 	daddr_t default_ptn;		/* start sector of default ptn */
-	char *cbootmenu = 0;
 #endif
+	char *cbootmenu = 0;
 
 	int csysid;	/* For the s_flag. */
 	unsigned int cstart, csize;
@@ -340,7 +400,8 @@ main(int argc, char *argv[])
 	i_flag = B_flag = 0;
 	v_flag = 0;
 	E_flag = 0;
-	csysid = cstart = csize = 0;
+	csysid = -1;
+	cstart = csize = ~0;
 	while ((ch = getopt(argc, argv, OPTIONS)) != -1) {
 		switch (ch) {
 		case '0':
@@ -397,18 +458,12 @@ main(int argc, char *argv[])
 			break;
 		case 's':	/* Partition details */
 			s_flag = 1;
-			if (sscanf(optarg, "%d/%u/%u%n", &csysid, &cstart,
-			    &csize, &n) == 3) {
-				if (optarg[n] == 0)
-					break;
-#ifdef BOOTSEL
-				if (optarg[n] == '/') {
-					cbootmenu = optarg + n + 1;
-					break;
-				}
-#endif
-			}
-			errx(1, "Bad argument to the -s flag.");
+
+			if (parse_s(optarg, &csysid, &cstart, &csize,
+			    &cbootmenu) == -1)
+				errx(1, "Bad argument to the -s flag.");
+			printf("%d %d %d %s\n", csysid, cstart, csize, cbootmenu);
+			exit(0);
 			break;
 		case 'b':	/* BIOS geometry */
 			b_flag = 1;
@@ -621,7 +676,7 @@ usage(void)
 		"[-A ptn_alignment[/ptn_0_offset]] \\\n"
 		"%*s[-b cylinders/heads/sectors] \\\n"
 		"%*s[-0123 | -E num "
-		"[-s id/start/size[/bootmenu]]] \\\n"
+		"[-s [id][/[start][/[size][/bootmenu]]]] \\\n"
 		"%*s[-t disktab] [-T disktype] \\\n"
 		"%*s[-c bootcode] "
 		"[-r|-w file] [device]\n"
