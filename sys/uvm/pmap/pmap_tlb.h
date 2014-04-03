@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.h,v 1.5 2014/03/30 15:26:15 matt Exp $	*/
+/*	$NetBSD: pmap_tlb.h,v 1.6 2014/04/03 14:46:25 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,8 +76,12 @@
 
 #include <sys/kcpuset.h>
 
-#if defined(MULTIPROCESSOR) && !defined(PMAP_TLB_MAX)
-#define PMAP_TLB_MAX		MAXCPUS
+#if !defined(PMAP_TLB_MAX)
+# if defined(MULTIPROCESSOR)
+#  define PMAP_TLB_MAX		MAXCPUS
+# else
+#  define PMAP_TLB_MAX		1
+# endif
 #endif
 
 /*
@@ -145,14 +149,14 @@ extern u_int pmap_ntlbs;
 #endif
 
 #ifndef cpu_set_tlb_info
-#define	cpu_set_tlb_info(ci, ti)	((void)((ci)->ci_tlb_info = (ti)))
+# define cpu_set_tlb_info(ci, ti)	((void)((ci)->ci_tlb_info = (ti)))
 #endif
 #ifndef cpu_tlb_info
-#ifdef MULTIPROCESSOR
-#define	cpu_tlb_info(ci)		((ci)->ci_tlb_info)
-#else
-#define	cpu_tlb_info(ci)		(&pmap_tlb0_info)
-#endif
+# if PMAP_TLB_MAX > 1
+#  define cpu_tlb_info(ci)		((ci)->ci_tlb_info)
+# else
+#  define cpu_tlb_info(ci)		(&pmap_tlb0_info)
+# endif
 #endif
 
 #ifdef MULTIPROCESSOR
