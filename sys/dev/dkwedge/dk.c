@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.68 2014/03/16 05:20:27 dholland Exp $	*/
+/*	$NetBSD: dk.c,v 1.69 2014/04/03 15:24:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.68 2014/03/16 05:20:27 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.69 2014/04/03 15:24:20 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -1461,3 +1461,16 @@ dkwedge_find_partition(device_t parent, daddr_t startblk, uint64_t nblks)
 	return wedge;
 }
 
+const char *
+dkwedge_get_parent_name(dev_t dev)
+{
+	/* XXX: perhaps do this in lookup? */
+	int bmaj = bdevsw_lookup_major(&dk_bdevsw);
+	int cmaj = cdevsw_lookup_major(&dk_cdevsw);
+	if (major(dev) != bmaj && major(dev) != cmaj)
+		return NULL;
+	struct dkwedge_softc *sc = dkwedge_lookup(dev);
+	if (sc == NULL)
+		return NULL;
+	return sc->sc_parent->dk_name;
+}
