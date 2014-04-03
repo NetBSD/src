@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_module.c,v 1.2 2014/03/18 18:20:42 riastradh Exp $	*/
+/*	$NetBSD: drm_module.c,v 1.3 2014/04/03 14:15:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.2 2014/03/18 18:20:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.3 2014/04/03 14:15:05 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -85,6 +85,8 @@ drmkms_modcmd(modcmd_t cmd, void *arg __unused)
 			goto init_fail1;
 		}
 #endif
+		if (ISSET(boothowto, AB_DEBUG))
+			drm_debug = ~(unsigned int)0;
 		return 0;
 
 #ifdef _MODULE
