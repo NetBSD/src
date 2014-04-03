@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.5 2014/03/30 15:26:15 matt Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.6 2014/04/03 13:54:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.5 2014/03/30 15:26:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.6 2014/04/03 13:54:59 matt Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -947,8 +947,8 @@ pmap_tlb_asid_release_all(struct pmap *pm)
 	KASSERT(pm != pmap_kernel());
 #if defined(MULTIPROCESSOR)
 	//KASSERT(!kcpuset_iszero(pm->pm_onproc)); // XXX
+	struct cpu_info * const ci __diagused = curcpu();
 #if PMAP_TLB_MAX > 1
-	struct cpu_info * const ci = curcpu();
 	for (u_int i = 0; !kcpuset_iszero(pm->pm_active); i++) {
 		KASSERT(i < pmap_ntlbs);
 		struct pmap_tlb_info * const ti = pmap_tlbs[i];
