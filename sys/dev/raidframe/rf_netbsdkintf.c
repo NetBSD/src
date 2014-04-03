@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.306 2014/04/02 02:17:01 christos Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.307 2014/04/03 15:30:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.306 2014/04/02 02:17:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.307 2014/04/03 15:30:52 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -431,6 +431,16 @@ rf_autoconfig(device_t self)
 	/* XXX This code can only be run once. */
 	raidautoconfigdone = true;
 
+#ifdef __HAVE_CPU_BOOTCONF
+	/*
+	 * 0. find the boot device if needed first so we can use it later
+	 * this needs to be done before we autoconfigure any raid sets,
+	 * because if we use wedges we are not going to be able to open
+	 * the boot device later
+	 */
+	if (booted_device == NULL)
+		cpu_bootconf();
+#endif
 	/* 1. locate all RAID components on the system */
 	aprint_debug("Searching for RAID components...\n");
 	ac_list = rf_find_raid_components();
@@ -448,13 +458,19 @@ rf_autoconfig(device_t self)
 }
 
 static int
-rf_containsboot(RF_Raid_t *r, device_t dv) {
-	const char *bootname = device_xname(dv);
+rf_containsboot(RF_Raid_t *r, device_t bdv) {
+	const char *bootname = device_xname(bdv);
 	size_t len = strlen(bootname);
 
 	for (int col = 0; col < r->numCol; col++) {
-		char *devname = r->Disks[col].devname;
+		const char *devname = r->Disks[col].devname;
 		devname += sizeof("/dev/") - 1;
+		if (strncmp(devname, "dk", 2) == 0) {
+			const char *parent =
+			    dkwedge_get_parent_name(r->Disks[col].dev);
+			if (parent != NULL)
+				devname = parent;
+		}
 		if (strncmp(devname, bootname, len) == 0) {
 			struct raid_softc *sc = r->softc;
 			aprint_debug("raid%d includes boot device %s\n",
@@ -522,8 +538,6 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 		} else
 			candidate_root = rsc->sc_dev;
 #ifndef RAIDFRAME_FORCE_ROOT
-		if (booted_device == NULL)
-			cpu_rootconf();
 		if (booted_device == NULL
 		    || rf_containsboot(&rsc->sc_r, booted_device))
 #endif
@@ -536,9 +550,6 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 		 * booted_device and will ask the user if nothing was
 		 * hardwired in the kernel config file 
 		 */
-
-		if (booted_device == NULL)
-			cpu_rootconf();
 		if (booted_device == NULL) 
 			return;
 
