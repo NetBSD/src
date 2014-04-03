@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcdqueue.c,v 1.1.1.4 2013/11/24 12:21:10 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcdqueue.c,v 1.1.1.5 2014/04/03 06:10:59 skrll Exp $	*/
 
 /*
  * hcd_queue.c - DesignWare HS OTG Controller host queuing routines
@@ -356,7 +356,7 @@ static int dwc2_find_single_uframe(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 			return i;
 		}
 	}
-	return -1;
+	return -ENOSPC;
 }
 
 /*
@@ -415,7 +415,7 @@ static int dwc2_find_multi_uframe(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 				continue;
 		}
 	}
-	return -1;
+	return -ENOSPC;
 }
 
 static int dwc2_find_uframe(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
@@ -489,12 +489,12 @@ static int dwc2_schedule_periodic(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 			frame = status - 1;
 
 		/* Set the new frame up */
-		if (frame > -1) {
+		if (frame >= 0) {
 			qh->sched_frame &= ~0x7;
 			qh->sched_frame |= (frame & 7);
 		}
 
-		if (status != -1)
+		if (status > 0)
 			status = 0;
 	} else {
 		status = dwc2_periodic_channel_available(hsotg);
@@ -581,7 +581,7 @@ static void dwc2_deschedule_periodic(struct dwc2_hsotg *hsotg,
  */
 int dwc2_hcd_qh_add(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 {
-	int status = 0;
+	int status;
 	u32 intr_mask;
 
 	if (dbg_qh(qh))
@@ -589,26 +589,27 @@ int dwc2_hcd_qh_add(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 
 	if (!list_empty(&qh->qh_list_entry))
 		/* QH already in a schedule */
-		return status;
+		return 0;
 
 	/* Add the new QH to the appropriate schedule */
 	if (dwc2_qh_is_non_per(qh)) {
 		/* Always start in inactive schedule */
 		list_add_tail(&qh->qh_list_entry,
 			      &hsotg->non_periodic_sched_inactive);
-	} else {
-		status = dwc2_schedule_periodic(hsotg, qh);
-		if (status == 0) {
-			if (!hsotg->periodic_qh_count) {
-				intr_mask = readl(hsotg->regs + GINTMSK);
-				intr_mask |= GINTSTS_SOF;
-				writel(intr_mask, hsotg->regs + GINTMSK);
-			}
-			hsotg->periodic_qh_count++;
-		}
+		return 0;
 	}
 
-	return status;
+	status = dwc2_schedule_periodic(hsotg, qh);
+	if (status)
+		return status;
+	if (!hsotg->periodic_qh_count) {
+		intr_mask = readl(hsotg->regs + GINTMSK);
+		intr_mask |= GINTSTS_SOF;
+		writel(intr_mask, hsotg->regs + GINTMSK);
+	}
+	hsotg->periodic_qh_count++;
+
+	return 0;
 }
 
 /**
@@ -633,14 +634,15 @@ void dwc2_hcd_qh_unlink(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 			hsotg->non_periodic_qh_ptr =
 					hsotg->non_periodic_qh_ptr->next;
 		list_del_init(&qh->qh_list_entry);
-	} else {
-		dwc2_deschedule_periodic(hsotg, qh);
-		hsotg->periodic_qh_count--;
-		if (!hsotg->periodic_qh_count) {
-			intr_mask = readl(hsotg->regs + GINTMSK);
-			intr_mask &= ~GINTSTS_SOF;
-			writel(intr_mask, hsotg->regs + GINTMSK);
-		}
+		return;
+	}
+
+	dwc2_deschedule_periodic(hsotg, qh);
+	hsotg->periodic_qh_count--;
+	if (!hsotg->periodic_qh_count) {
+		intr_mask = readl(hsotg->regs + GINTMSK);
+		intr_mask &= ~GINTSTS_SOF;
+		writel(intr_mask, hsotg->regs + GINTMSK);
 	}
 }
 
@@ -695,6 +697,8 @@ static void dwc2_sched_periodic_split(struct dwc2_hsotg *hsotg,
 void dwc2_hcd_qh_deactivate(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
 			    int sched_next_periodic_split)
 {
+	u16 frame_number;
+
 	if (dbg_qh(qh))
 		dev_vdbg(hsotg->dev, "%s()\n", __func__);
 
@@ -703,37 +707,36 @@ void dwc2_hcd_qh_deactivate(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
 		if (!list_empty(&qh->qtd_list))
 			/* Add back to inactive non-periodic schedule */
 			dwc2_hcd_qh_add(hsotg, qh);
-	} else {
-		u16 frame_number = dwc2_hcd_get_frame_number(hsotg);
-
-		if (qh->do_split) {
-			dwc2_sched_periodic_split(hsotg, qh, frame_number,
-						  sched_next_periodic_split);
-		} else {
-			qh->sched_frame = dwc2_frame_num_inc(qh->sched_frame,
-							     qh->interval);
-			if (dwc2_frame_num_le(qh->sched_frame, frame_number))
-				qh->sched_frame = frame_number;
-		}
-
-		if (list_empty(&qh->qtd_list)) {
-			dwc2_hcd_qh_unlink(hsotg, qh);
-		} else {
-			/*
-			 * Remove from periodic_sched_queued and move to
-			 * appropriate queue
-			 */
-			if ((hsotg->core_params->uframe_sched > 0 &&
-			     dwc2_frame_num_le(qh->sched_frame, frame_number))
-			 || (hsotg->core_params->uframe_sched <= 0 &&
-			     qh->sched_frame == frame_number))
-				list_move(&qh->qh_list_entry,
-					  &hsotg->periodic_sched_ready);
-			else
-				list_move(&qh->qh_list_entry,
-					  &hsotg->periodic_sched_inactive);
-		}
+		return;
 	}
+
+	frame_number = dwc2_hcd_get_frame_number(hsotg);
+
+	if (qh->do_split) {
+		dwc2_sched_periodic_split(hsotg, qh, frame_number,
+					  sched_next_periodic_split);
+	} else {
+		qh->sched_frame = dwc2_frame_num_inc(qh->sched_frame,
+						     qh->interval);
+		if (dwc2_frame_num_le(qh->sched_frame, frame_number))
+			qh->sched_frame = frame_number;
+	}
+
+	if (list_empty(&qh->qtd_list)) {
+		dwc2_hcd_qh_unlink(hsotg, qh);
+		return;
+	}
+	/*
+	 * Remove from periodic_sched_queued and move to
+	 * appropriate queue
+	 */
+	if ((hsotg->core_params->uframe_sched > 0 &&
+	     dwc2_frame_num_le(qh->sched_frame, frame_number)) ||
+	    (hsotg->core_params->uframe_sched <= 0 &&
+	     qh->sched_frame == frame_number))
+		list_move(&qh->qh_list_entry, &hsotg->periodic_sched_ready);
+	else
+		list_move(&qh->qh_list_entry, &hsotg->periodic_sched_inactive);
 }
 
 /**

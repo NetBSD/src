@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_coreintr.c,v 1.1.1.2 2013/09/25 05:41:13 skrll Exp $	*/
+/*	$NetBSD: dwc2_coreintr.c,v 1.1.1.3 2014/04/03 06:10:46 skrll Exp $	*/
 
 /*
  * core_intr.c - DesignWare HS OTG Controller common interrupt handling
@@ -57,7 +57,6 @@
 
 static const char *dwc2_op_state_str(struct dwc2_hsotg *hsotg)
 {
-#ifdef DEBUG
 	switch (hsotg->op_state) {
 	case OTG_STATE_A_HOST:
 		return "a_host";
@@ -72,9 +71,26 @@ static const char *dwc2_op_state_str(struct dwc2_hsotg *hsotg)
 	default:
 		return "unknown";
 	}
-#else
-	return "";
-#endif
+}
+
+/**
+ * dwc2_handle_usb_port_intr - handles OTG PRTINT interrupts.
+ * When the PRTINT interrupt fires, there are certain status bits in the Host
+ * Port that needs to get cleared.
+ *
+ * @hsotg: Programming view of DWC_otg controller
+ */
+static void dwc2_handle_usb_port_intr(struct dwc2_hsotg *hsotg)
+{
+	u32 hprt0 = readl(hsotg->regs + HPRT0);
+
+	if (hprt0 & HPRT0_ENACHG) {
+		hprt0 &= ~HPRT0_ENA;
+		writel(hprt0, hsotg->regs + HPRT0);
+	}
+
+	/* Clear interrupt */
+	writel(GINTSTS_PRTINT, hsotg->regs + GINTSTS);
 }
 
 /**
@@ -421,12 +437,10 @@ static u32 dwc2_read_common_intr(struct dwc2_hsotg *hsotg)
 	gintmsk = readl(hsotg->regs + GINTMSK);
 	gahbcfg = readl(hsotg->regs + GAHBCFG);
 
-#ifdef DEBUG
 	/* If any common interrupts set */
 	if (gintsts & gintmsk_common)
 		dev_dbg(hsotg->dev, "gintsts=%08x  gintmsk=%08x\n",
 			gintsts, gintmsk);
-#endif
 
 	if (gahbcfg & GAHBCFG_GLBL_INTR_EN)
 		return gintsts & gintmsk & gintmsk_common;
@@ -453,8 +467,8 @@ irqreturn_t dwc2_handle_common_intr(int irq, void *dev)
 	u32 gintsts;
 	irqreturn_t retval = IRQ_NONE;
 
-	if (dwc2_check_core_status(hsotg) < 0) {
-		dev_warn(hsotg->dev, "Controller is disconnected\n");
+	if (!dwc2_is_controller_alive(hsotg)) {
+		dev_warn(hsotg->dev, "Controller is dead\n");
 		goto out;
 	}
 
@@ -487,9 +501,8 @@ irqreturn_t dwc2_handle_common_intr(int irq, void *dev)
 		if (dwc2_is_device_mode(hsotg)) {
 			dev_dbg(hsotg->dev,
 				" --Port interrupt received in Device mode--\n");
-			gintsts = GINTSTS_PRTINT;
-			writel(gintsts, hsotg->regs + GINTSTS);
-			retval = 1;
+			dwc2_handle_usb_port_intr(hsotg);
+			retval = IRQ_HANDLED;
 		}
 	}
 

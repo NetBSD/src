@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcdintr.c,v 1.1.1.4 2013/11/24 12:21:09 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcdintr.c,v 1.1.1.5 2014/04/03 06:10:56 skrll Exp $	*/
 
 /*
  * hcd_intr.c - DesignWare HS OTG Controller host-mode interrupt handling
@@ -937,7 +937,7 @@ static int dwc2_xfercomp_isoc_split_in(struct dwc2_hsotg *hsotg,
 
 	frame_desc->actual_length += len;
 
-	if (chan->align_buf && len) {
+	if (chan->align_buf) {
 		dev_vdbg(hsotg->dev, "%s(): non-aligned buffer\n", __func__);
 		dma_sync_single_for_cpu(hsotg->dev, qtd->urb->dma,
 					qtd->urb->length, DMA_FROM_DEVICE);
@@ -977,14 +977,19 @@ static void dwc2_hc_xfercomp_intr(struct dwc2_hsotg *hsotg,
 				  struct dwc2_qtd *qtd)
 {
 	struct dwc2_hcd_urb *urb = qtd->urb;
-	int pipe_type = dwc2_hcd_get_pipe_type(&urb->pipe_info);
 	enum dwc2_halt_status halt_status = DWC2_HC_XFER_COMPLETE;
+	int pipe_type;
 	int urb_xfer_done;
 
 	if (dbg_hc(chan))
 		dev_vdbg(hsotg->dev,
 			 "--Host Channel %d Interrupt: Transfer Complete--\n",
 			 chnum);
+
+	if (!urb)
+		goto handle_xfercomp_done;
+
+	pipe_type = dwc2_hcd_get_pipe_type(&urb->pipe_info);
 
 	if (hsotg->core_params->dma_desc_enable > 0) {
 		dwc2_hcd_complete_xfer_ddma(hsotg, chan, chnum, halt_status);
@@ -1006,9 +1011,6 @@ static void dwc2_hc_xfercomp_intr(struct dwc2_hsotg *hsotg,
 			qtd->complete_split = 0;
 		}
 	}
-
-	if (!urb)
-		goto handle_xfercomp_done;
 
 	/* Update the QTD and URB states */
 	switch (pipe_type) {
@@ -1107,7 +1109,7 @@ static void dwc2_hc_stall_intr(struct dwc2_hsotg *hsotg,
 			       struct dwc2_qtd *qtd)
 {
 	struct dwc2_hcd_urb *urb = qtd->urb;
-	int pipe_type = dwc2_hcd_get_pipe_type(&urb->pipe_info);
+	int pipe_type;
 
 	dev_dbg(hsotg->dev, "--Host Channel %d Interrupt: STALL Received--\n",
 		chnum);
@@ -1120,6 +1122,8 @@ static void dwc2_hc_stall_intr(struct dwc2_hsotg *hsotg,
 
 	if (!urb)
 		goto handle_stall_halt;
+
+	pipe_type = dwc2_hcd_get_pipe_type(&urb->pipe_info);
 
 	if (pipe_type == USB_ENDPOINT_XFER_CONTROL)
 		dwc2_host_complete(hsotg, qtd, -EPIPE);
@@ -2061,8 +2065,8 @@ irqreturn_t dwc2_handle_hcd_intr(struct dwc2_hsotg *hsotg)
 	u32 gintsts, dbg_gintsts;
 	irqreturn_t retval = IRQ_NONE;
 
-	if (dwc2_check_core_status(hsotg) < 0) {
-		dev_warn(hsotg->dev, "Controller is disconnected\n");
+	if (!dwc2_is_controller_alive(hsotg)) {
+		dev_warn(hsotg->dev, "Controller is dead\n");
 		return retval;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcd.c,v 1.1.1.4 2013/11/24 12:21:08 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcd.c,v 1.1.1.5 2014/04/03 06:10:49 skrll Exp $	*/
 
 /*
  * hcd.c - DesignWare HS OTG Controller host-mode routines
@@ -357,11 +357,25 @@ static int dwc2_hcd_urb_enqueue(struct dwc2_hsotg *hsotg,
 	unsigned long flags;
 	u32 intr_mask;
 	int retval;
+	int dev_speed;
 
 	if (!hsotg->flags.b.port_connect_status) {
 		/* No longer connected */
 		dev_err(hsotg->dev, "Not connected\n");
 		return -ENODEV;
+	}
+
+	dev_speed = dwc2_host_get_speed(hsotg, urb->priv);
+
+	/* Some configurations cannot support LS traffic on a FS root port */
+	if ((dev_speed == USB_SPEED_LOW) &&
+	    (hsotg->hw_params.fs_phy_type == GHWCFG2_FS_PHY_TYPE_DEDICATED) &&
+	    (hsotg->hw_params.hs_phy_type == GHWCFG2_HS_PHY_TYPE_UTMI)) {
+		u32 hprt0 = readl(hsotg->regs + HPRT0);
+		u32 prtspd = (hprt0 & HPRT0_SPD_MASK) >> HPRT0_SPD_SHIFT;
+
+		if (prtspd == HPRT0_SPD_FULL_SPEED)
+			return -ENODEV;
 	}
 
 	qtd = kzalloc(sizeof(*qtd), mem_flags);
@@ -371,7 +385,7 @@ static int dwc2_hcd_urb_enqueue(struct dwc2_hsotg *hsotg,
 	dwc2_hcd_qtd_init(qtd, urb);
 	retval = dwc2_hcd_qtd_add(hsotg, qtd, (struct dwc2_qh **)ep_handle,
 				  mem_flags);
-	if (retval < 0) {
+	if (retval) {
 		dev_err(hsotg->dev,
 			"DWC OTG HCD URB Enqueue failed adding QTD. Error status %d\n",
 			retval);
@@ -380,7 +394,7 @@ static int dwc2_hcd_urb_enqueue(struct dwc2_hsotg *hsotg,
 	}
 
 	intr_mask = readl(hsotg->regs + GINTMSK);
-	if (!(intr_mask & GINTSTS_SOF) && retval == 0) {
+	if (!(intr_mask & GINTSTS_SOF)) {
 		enum dwc2_transaction_type tr_type;
 
 		if (qtd->qh->ep_type == USB_ENDPOINT_XFER_BULK &&
@@ -398,7 +412,7 @@ static int dwc2_hcd_urb_enqueue(struct dwc2_hsotg *hsotg,
 		spin_unlock_irqrestore(&hsotg->lock, flags);
 	}
 
-	return retval;
+	return 0;
 }
 
 /* Must be called with interrupt disabled and spinlock held */
@@ -1797,7 +1811,7 @@ int dwc2_hcd_get_frame_number(struct dwc2_hsotg *hsotg)
 
 int dwc2_hcd_is_b_host(struct dwc2_hsotg *hsotg)
 {
-	return (hsotg->op_state == OTG_STATE_B_HOST);
+	return hsotg->op_state == OTG_STATE_B_HOST;
 }
 
 static struct dwc2_hcd_urb *dwc2_hcd_urb_alloc(struct dwc2_hsotg *hsotg,
@@ -2553,25 +2567,14 @@ static void _dwc2_hcd_endpoint_reset(struct usb_hcd *hcd,
 				     struct usb_host_endpoint *ep)
 {
 	struct dwc2_hsotg *hsotg = dwc2_hcd_to_hsotg(hcd);
-	int is_control = usb_endpoint_xfer_control(&ep->desc);
-	int is_out = usb_endpoint_dir_out(&ep->desc);
-	int epnum = usb_endpoint_num(&ep->desc);
-	struct usb_device *udev;
 	unsigned long flags;
 
 	dev_dbg(hsotg->dev,
 		"DWC OTG HCD EP RESET: bEndpointAddress=0x%02x\n",
 		ep->desc.bEndpointAddress);
 
-	udev = to_usb_device(hsotg->dev);
-
 	spin_lock_irqsave(&hsotg->lock, flags);
-
-	usb_settoggle(udev, epnum, is_out, 0);
-	if (is_control)
-		usb_settoggle(udev, epnum, !is_out, 0);
 	dwc2_hcd_endpoint_reset(hsotg, ep);
-
 	spin_unlock_irqrestore(&hsotg->lock, flags);
 }
 
@@ -2922,6 +2925,8 @@ int dwc2_hcd_init(struct dwc2_hsotg *hsotg, int irq,
 	retval = usb_add_hcd(hcd, irq, IRQF_SHARED);
 	if (retval < 0)
 		goto error3;
+
+	device_wakeup_enable(hcd->self.controller);
 
 	dwc2_hcd_dump_state(hsotg);
 

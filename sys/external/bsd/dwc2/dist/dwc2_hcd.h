@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcd.h,v 1.1.1.3 2013/10/05 06:47:08 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcd.h,v 1.1.1.4 2014/04/03 06:10:51 skrll Exp $	*/
 
 /*
  * hcd.h - DesignWare HS OTG Controller host-mode declarations
@@ -454,8 +454,8 @@ static inline u8 dwc2_hcd_is_pipe_out(struct dwc2_hcd_pipe_info *pipe)
 extern int dwc2_hcd_init(struct dwc2_hsotg *hsotg, int irq,
 			 const struct dwc2_core_params *params);
 extern void dwc2_hcd_remove(struct dwc2_hsotg *hsotg);
-extern int dwc2_set_parameters(struct dwc2_hsotg *hsotg,
-			       const struct dwc2_core_params *params);
+extern void dwc2_set_parameters(struct dwc2_hsotg *hsotg,
+				const struct dwc2_core_params *params);
 extern void dwc2_set_all_params(struct dwc2_core_params *params, int value);
 extern int dwc2_get_hwparams(struct dwc2_hsotg *hsotg);
 

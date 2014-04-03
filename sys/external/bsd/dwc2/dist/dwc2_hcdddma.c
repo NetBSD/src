@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcdddma.c,v 1.1.1.3 2013/10/05 06:47:08 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcdddma.c,v 1.1.1.4 2014/04/03 06:10:53 skrll Exp $	*/
 
 /*
  * hcd_ddma.c - DesignWare HS OTG Controller descriptor DMA routines
@@ -623,8 +623,8 @@ static void dwc2_fill_host_dma_desc(struct dwc2_hsotg *hsotg,
 	struct dwc2_hcd_dma_desc *dma_desc = &qh->desc_list[n_desc];
 	int len = chan->xfer_len;
 
-	if (len > MAX_DMA_DESC_SIZE)
-		len = MAX_DMA_DESC_SIZE - chan->max_packet + 1;
+	if (len > MAX_DMA_DESC_SIZE - (chan->max_packet - 1))
+		len = MAX_DMA_DESC_SIZE - (chan->max_packet - 1);
 
 	if (chan->ep_is_in) {
 		int num_packets;
@@ -1105,8 +1105,10 @@ static void dwc2_complete_non_isoc_xfer_ddma(struct dwc2_hsotg *hsotg,
 		for (i = 0; i < qtd->n_desc; i++) {
 			if (dwc2_process_non_isoc_desc(hsotg, chan, chnum, qtd,
 						       desc_num, halt_status,
-						       &xfer_done))
+						       &xfer_done)) {
+				qtd = NULL;
 				break;
+			}
 			desc_num++;
 		}
 	}
