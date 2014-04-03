@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.c,v 1.27 2014/03/26 16:01:43 christos Exp $	*/
+/*	$NetBSD: platform.c,v 1.28 2014/04/03 23:49:47 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.27 2014/03/26 16:01:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.28 2014/04/03 23:49:47 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,12 +85,12 @@ find_platform_quirk(const char *model)
 void
 cpu_setup_prep_generic(device_t dev)
 {
-	u_int8_t l2ctrl, cpuinf;
+	u_int8_t l2ctrl;
 
 	/* system control register */
 	l2ctrl = inb(PREP_BUS_SPACE_IO + 0x81c);
 	/* device status register */
-	cpuinf = inb(PREP_BUS_SPACE_IO + 0x80c);
+	(void)inb(PREP_BUS_SPACE_IO + 0x80c);
 
 	/* Enable L2 cache */
 	outb(PREP_BUS_SPACE_IO + 0x81c, l2ctrl | 0xc0);
@@ -222,7 +222,7 @@ static int
 create_intr_map(void *v, prop_dictionary_t dict)
 {
 	prop_dictionary_t sub;
-	int item, size, i, j, bus, numslots;
+	int item, size, i, j, numslots;
 	int tag = *(unsigned char *)v;
 	unsigned char *q = v;
 	PCIInfoPack *pi = v;
@@ -238,7 +238,6 @@ create_intr_map(void *v, prop_dictionary_t dict)
 		return size;
 
 	numslots = (le16dec(&pi->count0)-21)/sizeof(IntrMap);
-	bus = pi->busnum;
 
 	for (i = 0; i < numslots; i++) {
 		int lines[MAX_PCI_INTRS] = { 0, 0, 0, 0 };
