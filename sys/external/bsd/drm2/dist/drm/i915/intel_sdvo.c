@@ -419,11 +419,7 @@ static void intel_sdvo_debug_write(struct intel_sdvo *intel_sdvo, u8 cmd,
 	DRM_DEBUG_KMS("%s: W: %02X ",
 				SDVO_NAME(intel_sdvo), cmd);
 	for (i = 0; i < args_len; i++)
-#ifdef __NetBSD__		/* XXX const */
 		DRM_LOG_KMS("%02X ", ((const u8 *)args)[i]);
-#else
-		DRM_LOG_KMS("%02X ", ((u8 *)args)[i]);
-#endif
 	for (; i < 8; i++)
 		DRM_LOG_KMS("   ");
 	for (i = 0; i < ARRAY_SIZE(sdvo_cmd_names); i++) {
@@ -473,11 +469,7 @@ static bool intel_sdvo_write_cmd(struct intel_sdvo *intel_sdvo, u8 cmd,
 		msgs[i].len = 2;
 		msgs[i].buf = buf + 2 *i;
 		buf[2*i + 0] = SDVO_I2C_ARG_0 - i;
-#ifdef __NetBSD__		/* XXX const */
 		buf[2*i + 1] = ((const u8*)args)[i];
-#else
-		buf[2*i + 1] = ((u8*)args)[i];
-#endif
 	}
 	msgs[i].addr = intel_sdvo->slave_addr;
 	msgs[i].flags = 0;
