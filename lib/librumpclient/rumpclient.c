@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.60 2014/04/02 17:09:23 justin Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.61 2014/04/03 17:11:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -50,7 +50,7 @@
 #define USE_SIGNALFD
 #endif
 
-__RCSID("$NetBSD: rumpclient.c,v 1.60 2014/04/02 17:09:23 justin Exp $");
+__RCSID("$NetBSD: rumpclient.c,v 1.61 2014/04/03 17:11:35 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -121,7 +121,7 @@ static struct spclient clispc = {
 	.spc_fd = -1,
 };
 
-static int holyfd;
+static int holyfd = -1;
 static sigset_t fullset;
 
 static int doconnect(void);
@@ -878,10 +878,9 @@ rumpclient_init(void)
 	if (init_done == (mypid = getpid()))
 		return 0;
 
-	/* kq does not traverse fork() */
 #ifdef USE_KQUEUE
-	if (init_done != 0)
-		holyfd = -1;
+	/* kq does not traverse fork() */
+	holyfd = -1;
 #endif
 	init_done = mypid;
 
