@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2012/10/03 21:50:14 gsutre Exp $
+#	$NetBSD: Makefile,v 1.6 2014/04/03 02:40:45 riastradh Exp $
 
 .include <bsd.own.mk>
 
@@ -75,6 +75,12 @@ DPADD+=	${LIBX86_64}
 .elif ${MACHINE_ARCH} == "alpha"
 LDADD+=	-lalpha
 DPADD+=	${LIBALPHA}
+.endif
+
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+# Needed by current xf86-video-intel for SNA.
+LDADD+=	-lpthread
+DPADD+=	${LIBPTHREAD}
 .endif
 
 LDADD+=	-lm
