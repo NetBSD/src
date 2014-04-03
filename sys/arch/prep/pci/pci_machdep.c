@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.39 2014/03/26 16:01:43 christos Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.40 2014/04/03 23:49:47 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.39 2014/03/26 16:01:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.40 2014/04/03 23:49:47 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -153,13 +153,12 @@ prep_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	prop_dictionary_t dict, devsub;
 	prop_object_t pinsub;
 	prop_number_t pbus;
-	int busno, bus, pin, line, swiz, dev, origdev, i;
+	int busno, pin, line, dev, origdev, i;
 	char key[20];
 
 	pin = pa->pa_intrpin;
 	line = pa->pa_intrline;
-	bus = busno = pa->pa_bus;
-	swiz = pa->pa_intrswiz;
+	busno = pa->pa_bus;
 	origdev = dev = pa->pa_device;
 	i = 0;
 
