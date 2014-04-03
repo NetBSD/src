@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.47 2014/03/31 18:18:29 christos Exp $
+# $NetBSD: mkimage,v 1.48 2014/04/03 22:51:38 christos Exp $
 #
 # Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -202,7 +202,7 @@ if [ -n "${msdosid}" ]; then
 elif [ -n "${netbsdid}" ]; then
 	echo ${bar} Running fdisk ${bar}
 	${FDISK} -f -i ${image}
-	${FDISK} -f -a -u -0 -s 169/-1/-1/ ${image}
+	${FDISK} -f -a -u -0 -s 169 ${image}
 	${INSTALLBOOT} -f -v ${image} ${release}/usr/mdec/bootxx_ffsv1
 fi
 
