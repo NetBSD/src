@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.66 2013/10/07 10:50:37 jdc Exp $
+.\"     $NetBSD: raidctl.8,v 1.67 2014/04/03 18:54:10 christos Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@
 .\" any improvements or extensions that they make and grant Carnegie the
 .\" rights to redistribute these changes.
 .\"
-.Dd October 7, 2013
+.Dd April 3, 2014
 .Dt RAIDCTL 8
 .Os
 .Sh NAME
@@ -65,7 +65,7 @@
 .Fl a Ar component Ar dev
 .Nm
 .Op Fl v
-.Fl A Op yes | no | root
+.Fl A Op yes | no | forceroot | softroot
 .Ar dev
 .Nm
 .Op Fl v
@@ -163,7 +163,7 @@ Note that all components of the set must be of type
 in the disklabel.
 .It Fl A Ic no Ar dev
 Turn off auto-configuration for the RAID set.
-.It Fl A Ic root Ar dev
+.It Fl A Ic forceroot Ar dev
 Make the RAID set auto-configurable, and also mark the set as being
 eligible to be the root partition.
 A RAID set configured this way will
@@ -175,6 +175,10 @@ in the disklabel.
 Note that only certain architectures
 .Pq currently alpha, amd64, i386, pmax, sandpoint, sparc, sparc64, and vax
 support booting a kernel directly from a RAID set.
+.It Fl A Ic softroot Ar dev
+Like
+.Ic forceroot ,
+but only change the root device if the boot device is part of the RAID set.
 .It Fl B Ar dev
 Initiate a copyback of reconstructed data from a spare disk to
 its original disk.
