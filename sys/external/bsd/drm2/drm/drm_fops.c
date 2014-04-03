@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_fops.c,v 1.2 2014/03/18 18:20:42 riastradh Exp $	*/
+/*	$NetBSD: drm_fops.c,v 1.3 2014/04/03 05:48:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_fops.c,v 1.2 2014/03/18 18:20:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_fops.c,v 1.3 2014/04/03 05:48:02 riastradh Exp $");
 
 #include <drm/drmP.h>
 
@@ -315,7 +315,6 @@ drm_close_file_master(struct drm_file *file)
 	mutex_lock(&dev->struct_mutex);
 
 	if (file->is_master) {
-		struct drm_master *const master = file->master;
 		struct drm_file *other_file;
 
 		list_for_each_entry(other_file, &dev->filelist, lhead) {
@@ -327,18 +326,6 @@ drm_close_file_master(struct drm_file *file)
 
 			other_file->authenticated = 0;
 		}
-
-		spin_lock(&master->lock.spinlock);
-		if (master->lock.hw_lock) {
-			/* XXX There is copypasta of this in drm_bufs.c.  */
-			if (dev->sigdata.lock == master->lock.hw_lock)
-				dev->sigdata.lock = NULL;
-			master->lock.hw_lock = NULL;
-			master->lock.file_priv = NULL;
-			DRM_SPIN_WAKEUP_ALL(&master->lock.lock_queue,
-			    &master->lock.spinlock);
-		}
-		spin_unlock(&master->lock.spinlock);
 
 		if (file->minor->master == file->master) {
 			if (dev->driver->master_drop)
