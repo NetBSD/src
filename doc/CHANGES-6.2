@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.99 2014/03/21 14:45:54 sborrill Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.100 2014/04/03 19:02:27 bouyer Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -1393,4 +1393,15 @@ crypto/external/bsd/openssl/lib/libssl/ssl.inc	1.6 via patch
 	Add d1_meth.c to build to fix problems with missing symbol
 	DTLSv1_method. Addresses asterisk build problems.
 	[wiz, ticket #1038]
+
+crypto/external/bsd/openssl/dist/crypto/bn/bn.h	1.2
+crypto/external/bsd/openssl/dist/crypto/bn/bn_lib.c 1.2
+crypto/external/bsd/openssl/dist/crypto/ec/ec2_mult.c 1.2
+
+	Add fix for CVE-2014-0076 taken from OpenSSL GIT repository:
+	Fix for the attack described in the paper "Recovering OpenSSL
+	ECDSA Nonces Using the FLUSH+RELOAD Cache Side-channel Attack"
+	by Yuval Yarom and Naomi Benger. Details can be obtained from:
+	http://eprint.iacr.org/2014/140
+	[tron, ticket #1041]
 
