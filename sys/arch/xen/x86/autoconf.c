@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.16 2012/10/03 18:58:33 dsl Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.17 2014/04/03 15:53:05 christos Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.16 2012/10/03 18:58:33 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17 2014/04/03 15:53:05 christos Exp $");
 
 #include "opt_xen.h"
 #include "opt_compat_oldboot.h"
@@ -86,7 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.16 2012/10/03 18:58:33 dsl Exp $");
 #include <machine/pcb.h>
 #include <machine/bootinfo.h>
 
-static void findroot(void);
 static int is_valid_disk(device_t);
 
 struct disklist *x86_alldisks;
@@ -143,7 +142,7 @@ cpu_configure(void)
 void
 cpu_rootconf(void)
 {
-	findroot();
+	cpu_bootconf();
 
 	printf("boot device: %s\n",
 	    booted_device ? device_xname(booted_device) : "<unknown>");
@@ -153,11 +152,9 @@ cpu_rootconf(void)
 
 /*
  * Attempt to find the device from which we were booted.
- * If we can do so, and not instructed not to do so,
- * change rootdev to correspond to the load device.
  */
 void
-findroot(void)
+cpu_bootconf(void)
 {
 	device_t dv;
 	deviter_t di;
