@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.793 2014/04/02 22:34:29 joerg Exp $
+#	$NetBSD: bsd.own.mk,v 1.794 2014/04/03 18:29:11 riastradh Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -507,7 +507,7 @@ FC=		${TOOL_FC.${ACTIVE_FC}}
 OBJC=		${TOOL_OBJC.${ACTIVE_OBJC}}
 
 # Override with tools versions if needed
-.if ${MKCTF:Uno} != "no" && exists(${TOOL_CTFCONVERT}) && exists(${TOOL_CTFMERGE})
+.if ${MKCTF:Uno} != "no"
 CTFCONVERT=	${TOOL_CTFCONVERT}
 CTFMERGE=	${TOOL_CTFMERGE}
 .endif
