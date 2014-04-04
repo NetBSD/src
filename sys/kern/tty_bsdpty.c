@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_bsdpty.c,v 1.19 2014/03/27 17:31:56 christos Exp $	*/
+/*	$NetBSD: tty_bsdpty.c,v 1.20 2014/04/04 18:11:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_bsdpty.c,v 1.19 2014/03/27 17:31:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_bsdpty.c,v 1.20 2014/04/04 18:11:58 christos Exp $");
 
 #include "opt_ptm.h"
 
@@ -74,12 +74,13 @@ static int pty_makename(struct mount *, struct lwp *, char *, size_t, dev_t,
 static int pty_allocvp(struct mount *, struct lwp *, struct vnode **,
     dev_t, char);
 static void pty_getvattr(struct mount *, struct lwp *, struct vattr *);
+static int pty__getmp(struct lwp *, struct mount **);
 
 struct ptm_pty ptm_bsdpty = {
 	pty_allocvp,
 	pty_makename,
 	pty_getvattr,
-	NULL
+	pty__getmp,
 };
 
 static int
@@ -152,5 +153,13 @@ pty_getvattr(struct mount *mp, struct lwp *l, struct vattr *vattr)
 	vattr->va_gid = TTY_GID;
 	vattr->va_mode = TTY_PERM;
 }
+
+static int
+pty__getmp(struct lwp *l __unused, struct mount **mpp)
+{
+	*mpp = 0;
+	return 0;
+}
+
 #endif /* COMPAT_BSDPTY */
 #endif /* NO_DEV_PTM */

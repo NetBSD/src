@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.137 2014/03/28 11:55:09 ozaki-r Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.138 2014/04/04 18:11:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.137 2014/03/28 11:55:09 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.138 2014/04/04 18:11:58 christos Exp $");
 
 #include "opt_ptm.h"
 
@@ -1075,7 +1075,7 @@ ptyioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 #ifndef NO_DEV_PTM
 	/* Allow getting the name from either the master or the slave */
 	if (cmd == TIOCPTSNAME) {
-		if ((error = ptyfs_getmp(l, &mp)) != 0)
+		if ((error = pty_getmp(l, &mp)) != 0)
 			return error;
 		return pty_fill_ptmget(l, dev, -1, -1, data, mp);
 	}
@@ -1086,7 +1086,7 @@ ptyioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		switch (cmd) {
 #ifndef NO_DEV_PTM
 		case TIOCGRANTPT:
-			if ((error = ptyfs_getmp(l, &mp)) != 0)
+			if ((error = pty_getmp(l, &mp)) != 0)
 				return error;
 			return pty_grant_slave(l, dev, mp);
 #endif
