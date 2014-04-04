@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_dev.c,v 1.24 2013/09/20 16:49:00 pooka Exp $	*/
+/*	$NetBSD: rump_dev.c,v 1.25 2014/04/04 01:35:11 christos Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_dev.c,v 1.24 2013/09/20 16:49:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_dev.c,v 1.25 2014/04/04 01:35:11 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -79,6 +79,11 @@ cpu_rootconf(void)
 {
 
 	panic("%s: unimplemented", __func__);
+}
+
+void
+cpu_bootconf(void)
+{
 }
 
 void
