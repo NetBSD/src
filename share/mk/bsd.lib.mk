@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.348 2014/03/09 18:00:51 christos Exp $
+#	$NetBSD: bsd.lib.mk,v 1.349 2014/04/04 05:10:15 matt Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -442,7 +442,7 @@ ${_LIB}_combine.o: ${COMBINESRCS}
 	${_MKTARGET_COMPILE}
 	${COMPILE.c} -MD --combine ${.ALLSRC} -o ${.TARGET}
 .if defined(LIBSTRIPOBJS)
-	${OBJCOPY} -x ${.TARGET}
+	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
 
 CLEANFILES+=	${_LIB}_combine.d
@@ -618,10 +618,11 @@ ${_LIB.so.full}: ${SOLIB} ${DPADD} ${DPLIBC} \
     ${SHLIB_LDSTARTFILE} ${SHLIB_LDENDFILE}
 	${_MKTARGET_BUILD}
 	rm -f ${.TARGET}
-	${LIBCC} ${LDLIBC} -Wl,-x -shared ${SHLIB_SHFLAGS} \
+	${LIBCC} ${LDLIBC} -shared ${SHLIB_SHFLAGS} \
 	    ${_LDFLAGS.${_LIB}} -o ${.TARGET} ${_LIBLDOPTS} \
 	    -Wl,--whole-archive ${SOLIB} \
 	    -Wl,--no-whole-archive ${_LDADD.${_LIB}}
+	${OBJCOPY} -x ${.TARGET}
 #  We don't use INSTALL_SYMLINK here because this is just
 #  happening inside the build directory/objdir. XXX Why does
 #  this spend so much effort on libraries that aren't live??? XXX
