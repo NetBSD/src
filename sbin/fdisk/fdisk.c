@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.149 2014/04/03 17:07:11 christos Exp $ */
+/*	$NetBSD: fdisk.c,v 1.150 2014/04/04 16:15:30 christos Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.149 2014/04/03 17:07:11 christos Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.150 2014/04/04 16:15:30 christos Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -462,8 +462,6 @@ main(int argc, char *argv[])
 			if (parse_s(optarg, &csysid, &cstart, &csize,
 			    &cbootmenu) == -1)
 				errx(1, "Bad argument to the -s flag.");
-			printf("%d %d %d %s\n", csysid, cstart, csize, cbootmenu);
-			exit(0);
 			break;
 		case 'b':	/* BIOS geometry */
 			b_flag = 1;
