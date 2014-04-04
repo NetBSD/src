@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile.backend,v 1.4 2014/03/01 10:00:49 mrg Exp $
+#	$NetBSD: Makefile.backend,v 1.5 2014/04/04 01:19:14 christos Exp $
 
 .ifndef _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_BACKEND_
 _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_BACKEND_=1
 
 NOMAN=		# defined
+NOCTF=		# defined
 BINDIR=		/usr/libexec
 
 CPPFLAGS+=	-I${GCCARCH} -I${BACKENDOBJ} \
