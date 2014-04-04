@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.2 2014/03/18 18:20:42 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.3 2014/04/04 15:16:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.2 2014/03/18 18:20:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.3 2014/04/04 15:16:59 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -45,6 +45,9 @@ __KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.2 2014/03/18 18:20:42 riastradh Exp $"
 #include <sys/once.h>
 #endif
 #include <sys/poll.h>
+#ifndef _MODULE
+#include <sys/reboot.h>		/* XXX drm_init kludge */
+#endif
 #include <sys/select.h>
 
 #include <uvm/uvm_extern.h>
@@ -454,6 +457,9 @@ drm_init(void)
 
 	linux_suppress_init = 1;
 	linux_mutex_init(&drm_global_mutex);
+
+	if (ISSET(boothowto, AB_DEBUG))
+		drm_debug = ~(unsigned int)0;
 
 	return 0;
 
