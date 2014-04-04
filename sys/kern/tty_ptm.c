@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.31 2014/03/27 17:31:56 christos Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.32 2014/04/04 18:11:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.31 2014/03/27 17:31:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.32 2014/04/04 18:11:58 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ptm.h"
@@ -90,31 +90,12 @@ static int pty_alloc_slave(struct lwp *, int *, dev_t, struct mount *);
 void ptmattach(int);
 
 int
-ptyfs_getmp(struct lwp *l, struct mount **mpp) {
-	struct cwdinfo *cwdi = l->l_proc->p_cwdi;
-	struct mount *mp;
-
+pty_getmp(struct lwp *l, struct mount **mpp)
+{
 	if (ptm == NULL)
 		return EOPNOTSUPP;
 
-	if (ptm->arg == NULL) { /* BSDPTY */
-		*mpp = NULL;
-		return 0;
-	}
-
-	mp = ptm->arg;	/* PTYFS */
-
-	if (cwdi->cwdi_rdir == NULL)
-		goto ok;
-
-	if (vn_isunder(mp->mnt_vnodecovered, cwdi->cwdi_rdir, l))
-		goto ok;
-
-	*mpp = NULL;
-	return EOPNOTSUPP;
-ok:
-	*mpp = mp;
-	return 0;
+	return (*ptm->getmp)(l, mpp);
 }
 
 dev_t
@@ -192,6 +173,22 @@ retry:
 		error = EOPNOTSUPP;
 		goto bad;
 	}
+	/*
+	 * XXX Since PTYFS has now multiple instance support, if we mounted
+	 * more than one PTYFS we must check here the ptyfs_used_tbl, to find
+	 * out if the ptyfsnode is under the appropriate mount and skip the
+	 * node if not, because the pty could has been released, but
+	 * ptyfs_reclaim didn't get a chance to release the corresponding
+	 * node other mount point yet.
+	 *
+	 * It's important to have only one mount point's ptyfsnode for each
+	 * appropriate device in ptyfs_used_tbl, else we will have a security 
+	 * problem, because every entry will have access to this device.
+	 *
+	 * Also we will not have not efficient vnode and memory usage.
+	 * You can test this by changing a_recycle from true to false
+	 * in ptyfs_inactive.
+	 */
 	if ((error = (*ptm->allocvp)(mp, l, &vp, *dev, 'p')) != 0) {
 		DPRINTF(("pty_allocvp %d\n", error));
 		goto bad;
@@ -355,7 +352,7 @@ ptmopen(dev_t dev, int flag, int mode, struct lwp *l)
 	switch(minor(dev)) {
 	case 0:		/* /dev/ptmx */
 	case 2:		/* /emul/linux/dev/ptmx */
-		if ((error = ptyfs_getmp(l, &mp)) != 0)
+		if ((error = pty_getmp(l, &mp)) != 0)
 			return error;
 		if ((error = pty_alloc_master(l, &fd, &ttydev, mp)) != 0)
 			return error;
@@ -403,7 +400,7 @@ ptmioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	error = 0;
 	switch (cmd) {
 	case TIOCPTMGET:
-		if ((error = ptyfs_getmp(l, &mp)) != 0)
+		if ((error = pty_getmp(l, &mp)) != 0)
 			return error;
 
 		if ((error = pty_alloc_master(l, &cfd, &newdev, mp)) != 0)
