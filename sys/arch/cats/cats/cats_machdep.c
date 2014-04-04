@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.80 2014/04/04 06:04:54 skrll Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.81 2014/04/04 06:25:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.80 2014/04/04 06:04:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.81 2014/04/04 06:25:00 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -359,7 +359,7 @@ initarm(void *arm_bootargs)
 	 * and not have to worry about things moving.
 	 */
 #ifdef FCOM_INIT_ARM
-	 fcomcnattach(DC21285_ARMCSR_BASE, comcnspeed, comcnmode);
+	fcomcnattach(DC21285_ARMCSR_BASE, comcnspeed, comcnmode);
 #endif
 
 	/* Talk to the user */
