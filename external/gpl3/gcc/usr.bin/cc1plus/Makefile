@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2014/03/05 21:37:02 tron Exp $
+#	$NetBSD: Makefile,v 1.8 2014/04/04 01:19:57 christos Exp $
 
 PROG=		cc1plus
 SRCS=		${G_CXX_OBJS:S,c-family/,,:S,cp/,,:Nlibcpp.a:.o=.c} main.c ${PROG}-checksum.c
@@ -8,8 +8,6 @@ NOMAN=	1
 
 CPPFLAGS+=	-I${DIST}/gcc/cp
 CPPFLAGS.prefix.c+=     -DPREFIX=\"/usr\"
-
-.include <bsd.own.mk>
 
 .include "../Makefile.backend"
 .include "../Makefile.backtrace"
