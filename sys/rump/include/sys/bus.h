@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.3 2013/09/23 17:57:59 pooka Exp $	*/
+/*	$NetBSD: bus.h,v 1.4 2014/04/04 12:25:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -37,8 +37,8 @@
 /* bus space defs */
 typedef unsigned long bus_addr_t;
 typedef unsigned long bus_size_t;
-typedef int bus_space_tag_t;
-typedef int bus_space_handle_t;
+typedef unsigned long bus_space_tag_t;
+typedef unsigned long bus_space_handle_t;
 
 /* bus dma defs */
 typedef void *bus_dma_tag_t;
