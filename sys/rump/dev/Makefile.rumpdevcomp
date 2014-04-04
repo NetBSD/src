@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpdevcomp,v 1.7 2014/01/14 17:17:52 pgoyette Exp $
+#	$NetBSD: Makefile.rumpdevcomp,v 1.8 2014/04/04 14:49:40 pooka Exp $
 #
 
 RUMPDEVCOMP=	audio bpf cgd disk dm drvctl fss md netsmb pad pud	\
@@ -6,6 +6,10 @@ RUMPDEVCOMP=	audio bpf cgd disk dm drvctl fss md netsmb pad pud	\
 		opencrypto
 
 RUMPUSBDEVS=	ubt ucom ugenhc ulpt umass usb
+
+RUMPPCIDEVS=	pci pci_if_wm
+# Not really a PCI device, but ....
+RUMPPCIDEVS=	miiphy
 
 .for var in ${RUMPDEVCOMP}
 RUMPDEVLIBS+=lib${var}
@@ -15,3 +19,8 @@ RUMPDEVLDADD+=-lrumpdev_${var}
 .for var in ${RUMPUSBDEVS}
 RUMPDEVLIBS+=lib${var}
 .endfor
+
+# Currently no NetBSD host support.
+#.for var in ${RUMPPCIDEVS}
+#RUMPDEVLIBS+=lib${var}
+#.endfor
