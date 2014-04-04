@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.144 2014/03/24 23:03:21 tron Exp $
+# $NetBSD: HACKS,v 1.145 2014/04/04 01:23:34 christos Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -279,6 +279,17 @@ descr
 	code does not conform.  For now we use -Wno-pointer-sign and
 	-fno-strict-aliasing.
 kcah
+
+hack	disable ctf for gcc-4.8 build
+mdate	April 3 2014
+who	chritos
+file	external/gpl3/gcc/usr.bin/Makefile.frontend	: 1.4
+file	external/gpl3/gcc/usr.bin/Makefile.backend	: 1.5
+descr
+	nbctfconvert -g -L VERSION -g fold-const.o
+	ERROR: fold-const.c: failed to get mapping for tid 79154 \
+		((null)) <13532>
+kcak
 
 hack	emacs aborting on exit (libgcc issue)
 mdate	7 November 2011
