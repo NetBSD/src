@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.53 2014/03/16 05:20:27 dholland Exp $ */
+/* $NetBSD: gpio.c,v 1.54 2014/04/04 14:47:26 christos Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.53 2014/03/16 05:20:27 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.54 2014/04/04 14:47:26 christos Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -276,10 +276,10 @@ gpio_print(void *aux, const char *pnp)
 	struct gpio_attach_args *ga = aux;
 	int i;
 
-	printf(" pins");
+	aprint_normal(" pins");
 	for (i = 0; i < 32; i++)
 		if (ga->ga_mask & (1 << i))
-			printf(" %d", ga->ga_offset + i);
+			aprint_normal(" %d", ga->ga_offset + i);
 
 	return UNCONF;
 }
