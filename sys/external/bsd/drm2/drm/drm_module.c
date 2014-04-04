@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_module.c,v 1.4 2014/04/03 15:16:18 riastradh Exp $	*/
+/*	$NetBSD: drm_module.c,v 1.5 2014/04/04 15:16:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.4 2014/04/03 15:16:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.5 2014/04/04 15:16:59 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -49,10 +49,12 @@ MODULE(MODULE_CLASS_DRIVER, drmkms, "iic,drmkms_linux");
 #include "ioconf.c"
 #endif
 
-#ifndef _MODULE
 /*
  * XXX Mega-kludge.  See drm_init in drm_drv.c for details.
  */
+#ifdef _MODULE
+static const int linux_suppress_init = 1;
+#else
 extern int linux_suppress_init;
 #endif
 
@@ -66,10 +68,11 @@ drmkms_modcmd(modcmd_t cmd, void *arg __unused)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-#ifndef _MODULE
-		if (!linux_suppress_init)
-#endif
-		linux_mutex_init(&drm_global_mutex);
+		if (!linux_suppress_init) {
+			linux_mutex_init(&drm_global_mutex);
+			if (ISSET(boothowto, AB_DEBUG))
+				drm_debug = ~(unsigned int)0;
+		}
 #ifdef _MODULE
 		error = config_init_component(cfdriver_ioconf_drmkms,
 		    cfattach_ioconf_drmkms, cfdata_ioconf_drmkms);
@@ -86,8 +89,6 @@ drmkms_modcmd(modcmd_t cmd, void *arg __unused)
 			goto init_fail1;
 		}
 #endif
-		if (ISSET(boothowto, AB_DEBUG))
-			drm_debug = ~(unsigned int)0;
 		return 0;
 
 #ifdef _MODULE
