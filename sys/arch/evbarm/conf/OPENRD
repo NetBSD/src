@@ -1,4 +1,4 @@
-#	$NetBSD: OPENRD,v 1.4 2012/12/03 23:41:35 msaitoh Exp $
+#	$NetBSD: OPENRD,v 1.5 2014/04/04 07:55:25 msaitoh Exp $
 #
 # This is a working config file for OpenRD(.org) Client.  Note that the
 # default boot address will not work and the kernel has to load at 8MB
@@ -17,7 +17,6 @@ makeoptions	LOADADDRESS="0xc0800000"
 
 #options 	FPU_VFP
 
-options 	COMPAT_NETBSD32
 no options 	COMPAT_LINUX
 
 # On-board PCI vga
