@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile,v 1.12 2014/03/13 02:07:24 pooka Exp $
+#	$NetBSD: Makefile,v 1.13 2014/04/04 13:57:33 njoly Exp $
 #
 # Public Domain.
 #
+
+NOLINT=		# defined
 
 .PATH:	${.CURDIR}/../../../../net/npf
 
