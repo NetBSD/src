@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.289.2.2.2.1.2.2 2013/12/18 18:39:05 matt Exp $
+#	$NetBSD: bsd.lib.mk,v 1.289.2.2.2.1.2.3 2014/04/04 05:07:14 matt Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -506,15 +506,16 @@ lib${LIB}.so.${SHLIB_FULLVERSION}: ${SOLIB} ${DPADD} ${DPLIBC} \
 .if defined(DESTDIR)
 	${LIBCC} ${LDLIBC} -Wl,-nostdlib -B${_GCC_CRTDIR}/ -B${DESTDIR}${SHLIBDIR}/ \
 	    ${_LIBLDOPTS} \
-	    -Wl,-x -shared ${SHLIB_SHFLAGS} ${LDFLAGS} -o ${.TARGET} \
+	    -shared ${SHLIB_SHFLAGS} ${LDFLAGS} -o ${.TARGET} \
 	    -Wl,--whole-archive ${SOLIB} \
 	    -Wl,--no-whole-archive ${LDADD} \
 	    -L${_GCC_LIBGCCDIR}
 .else
-	${LIBCC} ${LDLIBC} -Wl,-x -shared ${SHLIB_SHFLAGS} ${LDFLAGS} \
+	${LIBCC} ${LDLIBC} -shared ${SHLIB_SHFLAGS} ${LDFLAGS} \
 	    -o ${.TARGET} ${_LIBLDOPTS} \
 	    -Wl,--whole-archive ${SOLIB} -Wl,--no-whole-archive ${LDADD}
 .endif
+	${OBJCOPY} -x ${.TARGET}
 .if ${OBJECT_FMT} == "ELF"
 #  We don't use INSTALL_SYMLINK here because this is just
 #  happening inside the build directory/objdir. XXX Why does
