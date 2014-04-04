@@ -1,4 +1,4 @@
-.\"	$NetBSD: fdisk.8,v 1.84 2014/04/04 09:32:56 wiz Exp $
+.\"	$NetBSD: fdisk.8,v 1.85 2014/04/04 13:07:30 wiz Exp $
 .\"
 .Dd April 3, 2014
 .Dt FDISK 8
@@ -299,6 +299,8 @@ Specify the partition
 .Ar size ,
 and
 .Ar bootmenu .
+If the optional arguments are not provided, they stay as before or
+use the same defaults as the interactive mode, if new.
 This flag requires the use of a partition selection flag
 .Pq Fl 0 , 1 , 2 , 3 , No or Fl E Ar number .
 .It Fl T Ar disktype
