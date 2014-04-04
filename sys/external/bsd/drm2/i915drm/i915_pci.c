@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_pci.c,v 1.4 2014/04/03 19:18:29 riastradh Exp $	*/
+/*	$NetBSD: i915_pci.c,v 1.5 2014/04/04 16:02:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.4 2014/04/03 19:18:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.5 2014/04/04 16:02:34 riastradh Exp $");
 
 #include <sys/types.h>
 #ifndef _MODULE
@@ -248,6 +248,7 @@ i915drm_attach_framebuffer(device_t self)
 
 	INIT_LIST_HEAD(&sc->sc_fb_list);
 
+	KASSERT(dev_priv->fbdev == NULL);
 	dev_priv->fbdev = kmem_zalloc(sizeof(*dev_priv->fbdev), KM_SLEEP);
 
 	struct drm_fb_helper *const fb_helper = &dev_priv->fbdev->helper;
@@ -267,6 +268,8 @@ i915drm_attach_framebuffer(device_t self)
 	/* Success!  */
 	return;
 
+fail1: __unused
+	drm_fb_helper_fini(fb_helper);
 fail0:	kmem_free(dev_priv->fbdev, sizeof(*dev_priv->fbdev));
 	dev_priv->fbdev = NULL;
 }
@@ -282,21 +285,9 @@ i915drm_detach_framebuffer(device_t self, int flags)
 	if (fbdev != NULL) {
 		struct drm_fb_helper *const fb_helper = &fbdev->helper;
 
-		if (fb_helper->fb != NULL) {
-			struct drm_i915_gem_object *const obj = sc->sc_fb_obj;
-
-			/*
-			 * genfb children have already been detached,
-			 * so all we need do is unmap the space and
-			 * clean up the drm structures.
-			 */
-			bus_space_unmap(dev->bst, sc->sc_fb_bsh,
-			    obj->base.size);
-			drm_framebuffer_unreference(fb_helper->fb);
-			fb_helper->fb = NULL;
-			drm_gem_object_unreference_unlocked(&obj->base);
-			sc->sc_fb_obj = NULL;
-		}
+		if (fb_helper->fb != NULL)
+			i915drm_fb_detach(fb_helper);
+		KASSERT(fb_helper->fb == NULL);
 
 		KASSERT(sc->sc_fb_obj == NULL);
 		drm_fb_helper_fini(fb_helper);
@@ -336,9 +327,13 @@ i915drm_fb_probe(struct drm_fb_helper *fb_helper,
 	    sizes->surface_depth);
 
 	if (fb_helper->fb != NULL) {
+#if notyet			/* XXX genfb detach */
+		i915drm_fb_detach(fb_helper);
+#else
 		aprint_debug_dev(sc->sc_dev, "already have a framebuffer"
 		    ": %p\n", fb_helper->fb);
 		return 0;
+#endif
 	}
 
 	/*
@@ -450,6 +445,22 @@ fail1:	drm_gem_object_unreference_unlocked(&sc->sc_fb_obj->base);
 	mutex_unlock(&dev->struct_mutex);
 fail0:	KASSERT(ret < 0);
 	return ret;
+}
+
+static void
+i915drm_fb_detach(struct drm_fb_helper *fb_helper)
+{
+	struct drm_device *const dev = fb_helper->dev;
+	struct i915drm_softc *const sc = container_of(dev,
+	    struct i915drm_softc, sc_drm_dev);
+	struct drm_i915_gem_object *const obj = sc->sc_fb_obj;
+
+	/* XXX How to detach genfb?  */
+	bus_space_unmap(dev->bst, sc->sc_fb_bsh, obj->base.size);
+	drm_framebuffer_unreference(fb_helper->fb);
+	fb_helper->fb = NULL;
+	drm_gem_object_unreference_unlocked(&obj->base);
+	sc->sc_fb_obj = NULL;
 }
 
 static void
