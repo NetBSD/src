@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_coreintr.c,v 1.7 2014/04/03 06:34:58 skrll Exp $	*/
+/*	$NetBSD: dwc2_coreintr.c,v 1.8 2014/04/04 05:40:57 skrll Exp $	*/
 
 /*
  * core_intr.c - DesignWare HS OTG Controller common interrupt handling
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_coreintr.c,v 1.7 2014/04/03 06:34:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_coreintr.c,v 1.8 2014/04/04 05:40:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -82,6 +82,7 @@ static const char *dwc2_op_state_str(struct dwc2_hsotg *hsotg)
 		return "unknown";
 	}
 }
+#endif
 
 /**
  * dwc2_handle_usb_port_intr - handles OTG PRTINT interrupts.
@@ -102,7 +103,6 @@ static void dwc2_handle_usb_port_intr(struct dwc2_hsotg *hsotg)
 	/* Clear interrupt */
 	DWC2_WRITE_4(hsotg, GINTSTS, GINTSTS_PRTINT);
 }
-#endif
 
 /**
  * dwc2_handle_mode_mismatch_intr() - Logs a mode mismatch warning message
