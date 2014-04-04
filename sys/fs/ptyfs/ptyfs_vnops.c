@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.45 2014/03/27 21:13:06 christos Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.46 2014/04/04 18:10:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.45 2014/03/27 21:13:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.46 2014/04/04 18:10:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,6 +141,7 @@ int	ptyfs_readdir	(void *);
 #define	ptyfs_readlink	genfs_eopnotsupp
 #define	ptyfs_abortop	genfs_abortop
 int	ptyfs_reclaim	(void *);
+int	ptyfs_inactive	(void *);
 #define	ptyfs_lock	genfs_lock
 #define	ptyfs_unlock	genfs_unlock
 #define	ptyfs_bmap	genfs_badop
@@ -192,7 +193,7 @@ const struct vnodeopv_entry_desc ptyfs_vnodeop_entries[] = {
 	{ &vop_readdir_desc, ptyfs_readdir },		/* readdir */
 	{ &vop_readlink_desc, ptyfs_readlink },		/* readlink */
 	{ &vop_abortop_desc, ptyfs_abortop },		/* abortop */
-	{ &vop_inactive_desc, spec_inactive },		/* inactive */
+	{ &vop_inactive_desc, ptyfs_inactive },		/* inactive */
 	{ &vop_reclaim_desc, ptyfs_reclaim },		/* reclaim */
 	{ &vop_lock_desc, ptyfs_lock },			/* lock */
 	{ &vop_unlock_desc, ptyfs_unlock },		/* unlock */
@@ -223,6 +224,28 @@ ptyfs_reclaim(void *v)
 		struct vnode *a_vp;
 	} */ *ap = v;
 	return ptyfs_freevp(ap->a_vp);
+}
+
+int
+ptyfs_inactive(void *v)
+{
+	struct vop_inactive_args /* {
+		struct vnode *a_vp;
+		bool *a_recycle;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct ptyfsnode *ptyfs = VTOPTYFS(vp);
+
+	switch (ptyfs->ptyfs_type) {
+	case PTYFSpts:
+	case PTYFSptc:
+		/* Emulate file deletion for call reclaim(). */
+		*ap->a_recycle = true;
+		break;
+	default:
+		break;
+	}
+	return spec_inactive(v);
 }
 
 /*
