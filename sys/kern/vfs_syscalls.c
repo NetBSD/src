@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.477 2014/03/22 08:15:25 maxv Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.478 2014/04/04 06:47:02 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.477 2014/03/22 08:15:25 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.478 2014/04/04 06:47:02 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -485,10 +485,7 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 		if (data_len == 0) {
 			/* No length supplied, use default for filesystem */
 			data_len = vfsops->vfs_min_mount_data;
-			if (data_len > VFS_MAX_MOUNT_DATA) {
-				error = EINVAL;
-				goto done;
-			}
+
 			/*
 			 * Hopefully a longer buffer won't make copyin() fail.
 			 * For compatibility with 3.0 and earlier.
@@ -496,6 +493,10 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 			if (flags & MNT_UPDATE
 			    && data_len < sizeof (struct mnt_export_args30))
 				data_len = sizeof (struct mnt_export_args30);
+		}
+		if (data_len > VFS_MAX_MOUNT_DATA) {
+			error = EINVAL;
+			goto done;
 		}
 		data_buf = kmem_alloc(data_len, KM_SLEEP);
 
