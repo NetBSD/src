@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.129 2014/03/31 18:33:21 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.130 2014/04/04 16:12:28 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -916,7 +916,7 @@ extern void (*pmap_zero_page_func)(paddr_t);
 #define	L2_L_CACHE_MASK		L2_L_CACHE_MASK_generic
 #define	L2_S_CACHE_MASK		L2_S_CACHE_MASK_generic
 
-#define	L1_SS_PROTO		L1_SS_PROTO_generic
+#define	L1_SS_PROTO		L1_SS_PROTO_armv6
 #define	L1_S_PROTO		L1_S_PROTO_generic
 #define	L1_C_PROTO		L1_C_PROTO_generic
 #define	L2_S_PROTO		L2_S_PROTO_generic
