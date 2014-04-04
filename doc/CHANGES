@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1908 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1909 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -379,3 +379,5 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 		[pettai 20140324]
 	arm: add support for ARMv6+ MMU features ASIDS, XN, split TTBR.
 	     add support for SMP. [matt 20140330]
+	ptyfs: Allow multiple mounts and support proper device visibility
+	     in chroots (Ilya Zykov) [christos 20140404]
