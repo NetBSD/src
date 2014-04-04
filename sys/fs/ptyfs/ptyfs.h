@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs.h,v 1.11 2014/03/21 17:21:53 christos Exp $	*/
+/*	$NetBSD: ptyfs.h,v 1.12 2014/04/04 18:10:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -106,6 +106,8 @@ struct ptyfsnode {
 };
 
 struct ptyfsmount {
+	TAILQ_ENTRY(ptyfsmount) pmnt_le;
+	struct mount *pmnt_mp;
 	gid_t pmnt_gid;
 	mode_t pmnt_mode;
 	int pmnt_flags;
