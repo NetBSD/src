@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.146 2014/04/04 07:21:40 wiz Exp $
+# $NetBSD: HACKS,v 1.147 2014/04/05 17:06:44 tron Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -363,6 +363,22 @@ descr
 	If "makeinfo" is compiled with "-D_FORTIFY_SOURCE=2" using GCC 4.8.3
 	it fails to process certain texinfo files, e.g. "cl.texi"
 	included in the Emacs 24.3 distribution.
+kcah
+
+hack	Disable Stack Smash Protection for /usr/X11R7/bin/xauth
+cdata	05 Apr 2014
+who	tron
+file	src/external/mit/xorg/bin/xauth/Makefile	: 1.4
+pr	N/A
+descr
+	If "xauth" is compile with "USE_SSP" set to "yes" it fails
+	mysteriously with an error message like this:
+
+	/usr/X11R7/bin/xauth:  file /foo/bar/.Xauthority does not exist
+	/usr/X11R7/bin/xauth:  unable to link authority file /foo/bar/.Xauthority, use /foo/bar/.Xauthority
+
+	The compiler seems to get confused about the two filename variables
+	used in the link(2) system call.
 kcah
 
 port	vax
