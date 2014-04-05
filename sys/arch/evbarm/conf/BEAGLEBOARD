@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBOARD,v 1.51 2013/06/30 21:38:56 rmind Exp $
+#	$NetBSD: BEAGLEBOARD,v 1.52 2014/04/05 23:45:11 khorben Exp $
 #
 #	BEAGLEBOARD -- TI OMAP 3530 Eval Board Kernel
 #
@@ -220,7 +220,7 @@ omapiic1	at obio0 addr 0x48072000 size 0x80
 omapiic2	at obio0 addr 0x48060000 size 0x80
 iic*		at omapiic?
 
-# Power Managent and System Companion Device
+# Power Management and System Companion Device
 tps65950pm0	at iic0 addr 0x48
 tps65950pm1	at iic0 addr 0x49
 tps65950pm2	at iic0 addr 0x4a
