@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.120 2013/06/23 22:03:34 dholland Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.121 2014/04/05 12:32:27 justin Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.120 2013/06/23 22:03:34 dholland Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.121 2014/04/05 12:32:27 justin Exp $");
 #endif
 #endif /* not lint */
 
@@ -1372,8 +1372,10 @@ iput(union dinode *ip, ino_t ino)
 		if (needswap) {
 			ffs_dinode1_swap(&ip->dp1, dp1);
 			/* ffs_dinode1_swap() doesn't swap blocks addrs */
-			for (i=0; i<UFS_NDADDR + UFS_NIADDR; i++)
+			for (i=0; i<UFS_NDADDR; i++)
 			    dp1->di_db[i] = bswap32(ip->dp1.di_db[i]);
+			for (i=0; i<UFS_NIADDR; i++)
+			    dp1->di_ib[i] = bswap32(ip->dp1.di_ib[i]);
 		} else
 			*dp1 = ip->dp1;
 		dp1->di_gen = arc4random() & INT32_MAX;
@@ -1382,8 +1384,10 @@ iput(union dinode *ip, ino_t ino)
 		dp2 += ino_to_fsbo(&sblock, ino);
 		if (needswap) {
 			ffs_dinode2_swap(&ip->dp2, dp2);
-			for (i=0; i<UFS_NDADDR + UFS_NIADDR; i++)
+			for (i=0; i<UFS_NDADDR; i++)
 			    dp2->di_db[i] = bswap64(ip->dp2.di_db[i]);
+			for (i=0; i<UFS_NIADDR; i++)
+			    dp2->di_ib[i] = bswap64(ip->dp2.di_ib[i]);
 		} else
 			*dp2 = ip->dp2;
 		dp2->di_gen = arc4random() & INT32_MAX;
