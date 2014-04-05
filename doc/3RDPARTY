@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1104 2014/04/03 15:35:55 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1105 2014/04/05 11:18:03 apb Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -376,9 +376,19 @@ Home Page:	http://www.gnu.org/software/gcc/
 Mailing List:	gcc-bugs@gnu.org
 Responsible:	thorpej, mrg
 License:	GPLv3, LGPLv3.1
+Location:	gnu/dist/gcc4
+Location:	external/gpl3/gcc.old/dist
 Location:	external/gpl3/gcc/dist
 Notes:
-before importing:
+As of April 2014, there are three versions of gcc in the NetBSD tree.
+In the long term, we expect that there will often be two versions,
+in the "gcc" and "gcc.old" directories.  Having two versions allows
+migration from one version of gcc to another to happen for one port
+at a time, instead of for all ports simultaneously.
+When importing a new version of external/gpl3/gcc.old:
+	- copy the current version of external/gpl3/gcc
+	- import it to a "NETBSD" vendor branch in externalgpl3/gcc.old
+Before importing a new version of external/gpl3/gcc:
 	- delete all .cvsignore and .gitignore files
 	- delete java ada fortran their libraries and testsuites
 	- delete libffi zlib boehm-gc 
