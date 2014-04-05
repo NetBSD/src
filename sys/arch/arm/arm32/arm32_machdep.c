@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.102 2014/03/28 21:39:09 matt Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.103 2014/04/05 22:36:18 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.102 2014/03/28 21:39:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.103 2014/04/05 22:36:18 matt Exp $");
 
 #include "opt_modular.h"
 #include "opt_md.h"
@@ -257,7 +257,6 @@ cpu_startup(void)
 {
 	vaddr_t minaddr;
 	vaddr_t maxaddr;
-	u_int loop;
 	char pbuf[9];
 
 	/*
@@ -284,10 +283,13 @@ cpu_startup(void)
 	 */
 
 	/* msgbufphys was setup during the secondary boot strap */
-	for (loop = 0; loop < btoc(MSGBUFSIZE); ++loop)
-		pmap_kenter_pa((vaddr_t)msgbufaddr + loop * PAGE_SIZE,
-		    msgbufphys + loop * PAGE_SIZE,
-		    VM_PROT_READ|VM_PROT_WRITE, 0);
+	if (!pmap_extract(pmap_kernel(), (vaddr_t)msgbufaddr, NULL)) {
+		for (u_int loop = 0; loop < btoc(MSGBUFSIZE); ++loop) {
+			pmap_kenter_pa((vaddr_t)msgbufaddr + loop * PAGE_SIZE,
+			    msgbufphys + loop * PAGE_SIZE,
+			    VM_PROT_READ|VM_PROT_WRITE, 0);
+		}
+	}
 	pmap_update(pmap_kernel());
 	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
 
