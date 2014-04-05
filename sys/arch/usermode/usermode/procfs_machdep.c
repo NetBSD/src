@@ -1,4 +1,4 @@
-/* $NetBSD: procfs_machdep.c,v 1.3 2011/12/15 01:30:04 jmcneill Exp $ */
+/* $NetBSD: procfs_machdep.c,v 1.4 2014/04/05 18:44:32 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: procfs_machdep.c,v 1.3 2011/12/15 01:30:04 jmcneill Exp $");
+__RCSID("$NetBSD: procfs_machdep.c,v 1.4 2014/04/05 18:44:32 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,7 +38,7 @@ __RCSID("$NetBSD: procfs_machdep.c,v 1.3 2011/12/15 01:30:04 jmcneill Exp $");
 #include <machine/thunk.h>
 
 int
-procfs_getcpuinfstr(char *bf, int *len)
+procfs_getcpuinfstr(char *bf, size_t *len)
 {
 	return thunk_getcpuinfo(bf, len);
 }

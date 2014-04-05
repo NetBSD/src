@@ -1,7 +1,7 @@
-/*	$NetBSD: procfs_machdep.c,v 1.6 2014/03/29 11:34:13 apb Exp $ */
+/*	$NetBSD: procfs_machdep.c,v 1.7 2014/04/05 18:44:32 christos Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.6 2014/03/29 11:34:13 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.7 2014/04/05 18:44:32 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -16,10 +16,10 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.6 2014/03/29 11:34:13 apb Exp $
  * Only used when procfs is mounted with -o linux.
  */
 int
-procfs_getcpuinfstr(char *buf, int *len)
+procfs_getcpuinfstr(char *buf, size_t *len)
 {
 	const char *cpu, *mmu, *fpu;
-	int maxlen = *len;
+	size_t size = *len;
 
 	switch (cputype) {
 	case CPU_68020:
@@ -78,7 +78,7 @@ procfs_getcpuinfstr(char *buf, int *len)
 		break;
 	}
 
-	*len = snprintf(buf, maxlen,
+	*len = snprintf(buf, size,
 	    /* as seen in Linux 2.4.27 */
 	    "CPU:\t\t%s\n"
 	    "MMU:\t\t%s\n"
@@ -88,6 +88,5 @@ procfs_getcpuinfstr(char *buf, int *len)
 	     * "BogoMips" and "Calibration".
 	     */
 	    cpu, mmu, fpu);
-
-	return 0;
+	return size < *len ? -1 : 0;
 }
