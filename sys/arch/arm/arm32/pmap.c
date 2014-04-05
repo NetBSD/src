@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.280 2014/04/02 15:45:51 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.281 2014/04/05 22:05:12 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -216,7 +216,7 @@
 #include <arm/locore.h>
 //#include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.280 2014/04/02 15:45:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.281 2014/04/05 22:05:12 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -4405,6 +4405,7 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 			 * Is this a mapping of an executable page?
 			 */
 			if ((pv->pv_flags & PVF_EXEC) == 0) {
+				pmap_release_page_lock(md);
 				UVMHIST_LOG(maphist, " <-- done (ref emul: no exec)",
 				    0, 0, 0, 0);
 				goto out;
