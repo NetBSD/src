@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.21 2014/03/30 15:50:51 matt Exp $	*/
+/*	$NetBSD: param.h,v 1.22 2014/04/05 10:28:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -49,7 +49,7 @@
  * this file. */
 
 #ifndef PGSHIFT
-#if defined(_ARM_ARCH_6)
+#if 0 && defined(_ARM_ARCH_6)
 #define	PGSHIFT		13		/* LOG2(NBPG) */
 #else
 #define	PGSHIFT		12		/* LOG2(NBPG) */
