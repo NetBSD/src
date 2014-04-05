@@ -3,10 +3,9 @@
 # This assumes the compiler comes from pkgsrc/cross/gcc-mips-current
 # (as R5900 support is not available on other branches of gcc yet)
 root=/usr/pkg
-target=mips--netbsdelf
+target=mipsel--netbsdelf
 
-TOOLCHAIN_MISSING=yes;			export TOOLCHAIN_MISSING
-
+EXTERNAL_TOOLCHAIN=${root};		export EXTERNAL_TOOLCHAIN
 LD=${root}/bin/${target}-ld;		export LD
 CC=${root}/bin/${target}-gcc;		export CC
 CXX=${root}/bin/${target}-g++;		export CXX
