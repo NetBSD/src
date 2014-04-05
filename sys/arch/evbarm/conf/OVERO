@@ -1,5 +1,5 @@
 #
-#	$NetBSD: OVERO,v 1.33 2013/10/01 11:24:49 kiyohara Exp $
+#	$NetBSD: OVERO,v 1.34 2014/04/05 23:45:11 khorben Exp $
 #
 #	OVERO -- Gumstix. Inc. Overo COMS platforms kernel
 #
@@ -188,7 +188,7 @@ omapiic0	at obio0 addr 0x48070000 size 0x1000 intr 56	# I2C1
 omapiic1	at obio0 addr 0x48060000 size 0x1000 intr 61	# I2C3
 iic*		at omapiic?
 
-# Power Managent and System Companion Device
+# Power Management and System Companion Device
 tps65950pm0	at iic0 addr 0x48
 tps65950pm1	at iic0 addr 0x49
 tps65950pm2	at iic0 addr 0x4a
