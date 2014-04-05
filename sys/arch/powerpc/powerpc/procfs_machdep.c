@@ -1,7 +1,7 @@
-/*	$NetBSD: procfs_machdep.c,v 1.7 2007/10/17 19:56:48 garbled Exp $	*/
+/*	$NetBSD: procfs_machdep.c,v 1.8 2014/04/05 18:44:32 christos Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.7 2007/10/17 19:56:48 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.8 2014/04/05 18:44:32 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -20,9 +20,9 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.7 2007/10/17 19:56:48 garbled E
  * Only used when procfs is mounted with -o linux.
  */
 int
-procfs_getcpuinfstr(char *buf, int *len)
+procfs_getcpuinfstr(char *buf, size_t *len)
 {
-	*len = 0;
+	*size_t = 0;
 
 	return 0;
 }
