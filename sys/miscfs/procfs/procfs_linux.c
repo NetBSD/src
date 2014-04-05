@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.66 2013/11/27 17:24:44 christos Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.67 2014/04/05 18:42:32 christos Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.66 2013/11/27 17:24:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.67 2014/04/05 18:42:32 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -510,14 +510,15 @@ int
 procfs_docpuinfo(struct lwp *curl, struct proc *p,
     struct pfsnode *pfs, struct uio *uio)
 {
-	int len = LBFSZ;
-	char *bf = malloc(len, M_TEMP, M_WAITOK);
+	size_t len = LBFSZ;
+	char *bf = NULL;
 	int error;
 
-	if (procfs_getcpuinfstr(bf, &len) < 0) {
-		error = ENOSPC;
-		goto done;
-	}
+	do {
+		if (bf)
+			free(bf, M_TEMP);
+		bf = malloc(len, M_TEMP, M_WAITOK);
+	} while (procfs_getcpuinfstr(bf, &len) < 0);
 
 	if (len == 0) {
 		error = 0;
