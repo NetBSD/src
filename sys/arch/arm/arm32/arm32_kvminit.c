@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.26 2014/04/01 05:37:35 skrll Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.27 2014/04/05 22:36:18 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.26 2014/04/01 05:37:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.27 2014/04/05 22:36:18 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -144,6 +144,7 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.26 2014/04/01 05:37:35 skrll Exp
 
 struct bootmem_info bootmem_info;
 
+extern void *msgbufaddr;
 paddr_t msgbufphys;
 paddr_t physical_start;
 paddr_t physical_end;
@@ -549,6 +550,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE, false);
 	add_pages(bmi, &msgbuf);
 	msgbufphys = msgbuf.pv_pa;
+	msgbufaddr = (void *)msgbuf.pv_va;
 
 	if (map_vectors_p) {
 		/*
