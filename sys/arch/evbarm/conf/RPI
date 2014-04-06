@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.42 2014/01/31 08:18:03 skrll Exp $
+#	$NetBSD: RPI,v 1.43 2014/04/06 17:59:39 kardel Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -224,6 +224,15 @@ iic* at i2cbus?
 # SPI controller
 bcmspi* at obio?
 spi* at spibus?
+
+# PIFace or other boards using that chip (needs gpio)
+#mcp23s17gpio0 at spi? slave 0 flags 0
+#mcp23s17gpio1 at spi? slave 0 flags 1 
+#mcp23s17gpio2 at spi? slave 0 flags 2
+#mcp23s17gpio3 at spi? slave 0 flags 3
+
+# gpio support (e. g. mcp23s17gpio)
+#gpio*		at gpiobus?
 
 # various options for wscons - we try to look as much like a standard
 # sun console as possible
