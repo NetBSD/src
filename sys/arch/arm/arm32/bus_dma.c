@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.84 2014/04/02 12:28:54 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.85 2014/04/06 09:53:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_arm_bus_space.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.84 2014/04/02 12:28:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.85 2014/04/06 09:53:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1362,15 +1362,6 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 
 			pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE,
 			    PMAP_WIRED | (uncached ? PMAP_NOCACHE : 0));
-
-			/*
-			 * If the memory must remain coherent with the
-			 * cache then we must make the memory uncacheable
-			 * in order to maintain virtual cache coherency.
-			 * We must also guarantee the cache does not already
-			 * contain the virtal addresses we are making
-			 * uncacheable.
-			 */
 		}
 	}
 	pmap_update(pmap_kernel());
