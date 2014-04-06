@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.665 2014/02/28 11:52:09 martin Exp $
+$NetBSD: usbdevs,v 1.666 2014/04/06 09:14:29 nonaka Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1990,6 +1990,7 @@ product LOGITEC RT2870_2	0x0163	RT2870
 product LOGITEC RT2870_3	0x0164	RT2870
 product LOGITEC LANW300NU2	0x0166	LAN-W300N/U2
 product LOGITEC RT3020		0x0168	RT3020
+product LOGITEC LAN_W450ANU2E	0x016b	LAN-W450ANU2E
 
 /* Logitech products */
 product LOGITECH M2452		0x0203	M2452 keyboard
