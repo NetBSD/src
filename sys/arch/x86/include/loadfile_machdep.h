@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.h,v 1.4 2009/03/21 15:01:56 ad Exp $	 */
+/*	$NetBSD: loadfile_machdep.h,v 1.5 2014/04/06 18:48:06 joerg Exp $	 */
 
 /*-
  * Copyright (c) 1998, 2007, 2009 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
 #define DEALLOC(a, b)		dealloc(a, b)
 #define OKMAGIC(a)		((a) == ZMAGIC)
 
-void x86_progress(const char *, ...);
+void x86_progress(const char *, ...) __printflike(1, 2);
 void vpbcopy(const void *, void *, size_t);
 void pbzero(void *, size_t);
 ssize_t pread(int, void *, size_t);
