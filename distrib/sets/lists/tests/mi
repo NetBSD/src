@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.563 2014/02/08 19:17:43 jmmv Exp $
+# $NetBSD: mi,v 1.564 2014/04/06 19:51:40 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2109,6 +2109,8 @@
 ./usr/tests/lib/libc/ssp/h_readlink		tests-lib-tests		atf,ssp
 ./usr/tests/lib/libc/ssp/h_snprintf		tests-lib-tests		atf,ssp
 ./usr/tests/lib/libc/ssp/h_sprintf		tests-lib-tests		atf,ssp
+./usr/tests/lib/libc/ssp/h_stpcpy		tests-lib-tests		atf,ssp
+./usr/tests/lib/libc/ssp/h_stpncpy		tests-lib-tests		atf,ssp
 ./usr/tests/lib/libc/ssp/h_strcat		tests-lib-tests		atf,ssp
 ./usr/tests/lib/libc/ssp/h_strcpy		tests-lib-tests		atf,ssp
 ./usr/tests/lib/libc/ssp/h_strncat		tests-lib-tests		atf,ssp

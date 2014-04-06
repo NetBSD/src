@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.54 2014/04/01 21:40:46 christos Exp $
+# $NetBSD: mi,v 1.55 2014/04/06 19:51:39 christos Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -1881,6 +1881,8 @@
 ./usr/libdata/debug/usr/tests/lib/libc/ssp/h_readlink.debug		tests-lib-debug		debug,atf,ssp
 ./usr/libdata/debug/usr/tests/lib/libc/ssp/h_snprintf.debug		tests-lib-debug		debug,atf,ssp
 ./usr/libdata/debug/usr/tests/lib/libc/ssp/h_sprintf.debug		tests-lib-debug		debug,atf,ssp
+./usr/libdata/debug/usr/tests/lib/libc/ssp/h_stpcpy.debug		tests-lib-debug		debug,atf,ssp
+./usr/libdata/debug/usr/tests/lib/libc/ssp/h_stpncpy.debug		tests-lib-debug		debug,atf,ssp
 ./usr/libdata/debug/usr/tests/lib/libc/ssp/h_strcat.debug		tests-lib-debug		debug,atf,ssp
 ./usr/libdata/debug/usr/tests/lib/libc/ssp/h_strcpy.debug		tests-lib-debug		debug,atf,ssp
 ./usr/libdata/debug/usr/tests/lib/libc/ssp/h_strncat.debug		tests-lib-debug		debug,atf,ssp
