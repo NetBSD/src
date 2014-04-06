@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_pci.c,v 1.6 2014/04/06 16:38:34 riastradh Exp $	*/
+/*	$NetBSD: i915_pci.c,v 1.7 2014/04/06 16:42:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.6 2014/04/06 16:38:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.7 2014/04/06 16:42:00 riastradh Exp $");
 
 #include <sys/types.h>
 #ifndef _MODULE
@@ -412,7 +412,7 @@ i915drm_fb_probe(struct drm_fb_helper *fb_helper,
 		goto fail3;
 	}
 
-	prop_dictionary_set_bool(dict, "is_console", 0); /* XXX */
+	prop_dictionary_set_bool(dict, "is_console", 1); /* XXX */
 	prop_dictionary_set_uint32(dict, "width", mode_cmd.width);
 	prop_dictionary_set_uint32(dict, "height", mode_cmd.height);
 	prop_dictionary_set_uint8(dict, "depth", sizes->surface_bpp);
