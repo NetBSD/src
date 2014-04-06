@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.40 2014/04/01 06:55:29 skrll Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.41 2014/04/06 12:43:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.40 2014/04/01 06:55:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.41 2014/04/06 12:43:19 skrll Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
@@ -537,11 +537,41 @@ initarm(void *arg)
 #ifdef VERBOSE_INIT_ARM
 	printf("initarm: Configuring system ...\n");
 #endif
-	arm32_bootmem_init(bootconfig.dram[0].address,
-	    bootconfig.dram[0].pages * PAGE_SIZE, (uintptr_t)KERNEL_BASE_phys);
+
+	psize_t ram_size = bootconfig.dram[0].pages * PAGE_SIZE;
+
+#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+	if (ram_size > KERNEL_VM_BASE - KERNEL_BASE) {
+		printf("%s: dropping RAM size from %luMB to %uMB\n",
+		    __func__, (unsigned long) (ram_size >> 20),
+		    (KERNEL_VM_BASE - KERNEL_BASE) >> 20);
+		ram_size = KERNEL_VM_BASE - KERNEL_BASE;
+	}
+#endif
+
+	/*
+	 * If MEMSIZE specified less than what we really have, limit ourselves
+	 * to that.
+	 */
+#ifdef MEMSIZE
+	if (ram_size == 0 || ram_size > (unsigned)MEMSIZE * 1024 * 1024)
+		ram_size = (unsigned)MEMSIZE * 1024 * 1024;
+#else
+	KASSERTMSG(ram_size > 0, "RAM size unknown and MEMSIZE undefined");
+#endif
+
+	arm32_bootmem_init(bootconfig.dram[0].address, ram_size,
+	    (uintptr_t)KERNEL_BASE_phys);
+
+#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+	const bool mapallmem_p = true;
+	KASSERT(ram_size <= KERNEL_VM_BASE - KERNEL_BASE);
+#else
+	const bool mapallmem_p = false;
+#endif
 
 	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_HIGH, 0, rpi_devmap,
-	    false);
+	    mapallmem_p);
 
 	cpu_reset_address = bcm2835_system_reset;
 
