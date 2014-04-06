@@ -1,4 +1,4 @@
-/*	$NetBSD: menuutils.c,v 1.3 2008/12/14 18:46:33 christos Exp $	*/
+/*	$NetBSD: menuutils.c,v 1.4 2014/04/06 19:11:26 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997
@@ -61,7 +61,7 @@ docommand(char *arg)
 	command_help(NULL);
 }
 
-void
+__dead void
 bootmenu(void)
 {
 	char input[80];
