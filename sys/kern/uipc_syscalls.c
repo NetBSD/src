@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.165 2013/10/09 20:15:39 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.166 2014/04/07 15:35:23 seanb Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.165 2013/10/09 20:15:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.166 2014/04/07 15:35:23 seanb Exp $");
 
 #include "opt_pipe.h"
 
@@ -1058,8 +1058,11 @@ sys_recvmmsg(struct lwp *l, const struct sys_recvmmsg_args *uap,
 
 		error = do_sys_recvmsg_so(l, s, so, msg, &from,
 		    msg->msg_control != NULL ? &control : NULL, retval);
-		if (error)
+		if (error) {
+			if (error == EAGAIN && dg > 0)
+				error = 0;
 			break;
+		}
 
 		if (msg->msg_control != NULL)
 			error = copyout_msg_control(l, msg, control);
