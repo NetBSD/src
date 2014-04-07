@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.142 2014/03/29 19:28:24 christos Exp $	*/
+/*	$NetBSD: if_de.c,v 1.142.2.1 2014/04/07 03:37:33 tls Exp $	*/
 	char intrbuf[PCI_INTRSTR_LEN];
 
 /*-
@@ -38,7 +38,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.142 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.142.2.1 2014/04/07 03:37:33 tls Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -5144,7 +5144,7 @@ tulip_attach(
 
 #if defined(__NetBSD__)
     rnd_attach_source(&sc->tulip_rndsource, device_xname(sc->tulip_dev),
-		      RND_TYPE_NET, 0);
+		      RND_TYPE_NET, RND_FLAG_DEFAULT);
 #endif
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.223 2014/03/16 05:20:29 dholland Exp $ */
+/*	$NetBSD: st.c,v 1.223.2.1 2014/04/07 03:37:33 tls Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.223 2014/03/16 05:20:29 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.223.2.1 2014/04/07 03:37:33 tls Exp $");
 
 #include "opt_scsi.h"
 
@@ -420,7 +420,7 @@ stattach(device_t parent, device_t self, void *aux)
 	    device_xname(st->sc_dev));
 
 	rnd_attach_source(&st->rnd_source, device_xname(st->sc_dev),
-	    RND_TYPE_TAPE, 0);
+	    RND_TYPE_TAPE, RND_FLAG_DEFAULT);
 }
 
 int

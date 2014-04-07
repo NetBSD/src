@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.59 2013/12/26 15:32:48 christos Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.59.2.1 2014/04/07 03:37:33 tls Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.59 2013/12/26 15:32:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.59.2.1 2014/04/07 03:37:33 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -358,7 +358,8 @@ nomem:
 #endif
 				rnd_attach_source(&csc->rnd_source,
 						  device_xname(dev),
-						  RND_TYPE_TTY, 0);
+						  RND_TYPE_TTY,
+						  RND_FLAG_DEFAULT);
 			}
 		}
 	}

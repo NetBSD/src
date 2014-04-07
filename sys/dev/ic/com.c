@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.323 2014/03/16 05:20:27 dholland Exp $ */
+/* $NetBSD: com.c,v 1.323.2.1 2014/04/07 03:37:32 tls Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.323 2014/03/16 05:20:27 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.323.2.1 2014/04/07 03:37:32 tls Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -627,7 +627,7 @@ fifodone:
 
 #ifdef RND_COM
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
-			  RND_TYPE_TTY, 0);
+			  RND_TYPE_TTY, RND_FLAG_DEFAULT);
 #endif
 
 	/* if there are no enable/disable functions, assume the device

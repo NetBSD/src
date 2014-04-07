@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.33 2014/03/23 03:41:10 christos Exp $ */
+/*	$NetBSD: rd.c,v 1.33.2.1 2014/04/07 03:37:31 tls Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.33 2014/03/23 03:41:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.33.2.1 2014/04/07 03:37:31 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -426,7 +426,7 @@ rdattach(device_t parent, device_t self, void *aux)
 	 * attach the device into the random source list
 	 */
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
-			  RND_TYPE_DISK, 0);
+			  RND_TYPE_DISK, RND_FLAG_DEFAULT);
 }
 
 /*

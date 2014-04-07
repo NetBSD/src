@@ -1,4 +1,4 @@
-/* $NetBSD: sbscn.c,v 1.38 2014/03/16 05:20:25 dholland Exp $ */
+/* $NetBSD: sbscn.c,v 1.38.2.1 2014/04/07 03:37:31 tls Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.38 2014/03/16 05:20:25 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.38.2.1 2014/04/07 03:37:31 tls Exp $");
 
 #define	SBSCN_DEBUG
 
@@ -393,7 +393,8 @@ sbscn_attach_channel(struct sbscn_softc *sc, int chan, int intr)
 
 #ifdef RND_SBSCN
 	rnd_attach_source(&ch->ch_rnd_source, device_xname(sc->sc_dev),
-			  RND_TYPE_TTY, 0);
+			  RND_TYPE_TTY, RND_FLAG_COLLECT_TIME|
+					RND_FLAG_ESTIMATE_TIME);
 #endif
 
 	sbscn_config(ch);
