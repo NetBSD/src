@@ -1,4 +1,4 @@
-/*      $NetBSD: kern_rndpool.c,v 1.5 2013/08/29 01:04:49 tls Exp $        */
+/*      $NetBSD: kern_rndpool.c,v 1.5.2.1 2014/04/07 02:00:00 tls Exp $        */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndpool.c,v 1.5 2013/08/29 01:04:49 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndpool.c,v 1.5.2.1 2014/04/07 02:00:00 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,6 +83,12 @@ rndpool_get_entropy_count(rndpool_t *rp)
 {
 
 	return (rp->stats.curentropy);
+}
+
+void
+rndpool_set_entropy_count(rndpool_t *rp, u_int32_t count)
+{
+	rp->stats.curentropy = count;
 }
 
 void rndpool_get_stats(rndpool_t *rp, void *rsp, int size)
