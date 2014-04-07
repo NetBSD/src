@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.268 2014/03/29 19:28:25 christos Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.268.2.1 2014/04/07 03:37:33 tls Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.268 2014/03/29 19:28:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.268.2.1 2014/04/07 03:37:33 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2057,7 +2057,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
 	ether_set_ifflags_cb(&sc->sc_ethercom, wm_ifflags_cb);
-	rnd_attach_source(&sc->rnd_source, xname, RND_TYPE_NET, 0);
+	rnd_attach_source(&sc->rnd_source, xname, RND_TYPE_NET,
+			  RND_FLAG_DEFAULT);
 
 #ifdef WM_EVENT_COUNTERS
 	/* Attach event counters. */

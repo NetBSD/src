@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.89 2012/07/22 14:32:57 matt Exp $	*/
+/*	$NetBSD: hme.c,v 1.89.12.1 2014/04/07 03:37:32 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.89 2012/07/22 14:32:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.89.12.1 2014/04/07 03:37:32 tls Exp $");
 
 /* #define HMEDEBUG */
 
@@ -315,7 +315,7 @@ hme_config(struct hme_softc *sc)
 		    "couldn't establish power handler\n");
 
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
-			  RND_TYPE_NET, 0);
+			  RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	callout_init(&sc->sc_tick_ch, 0);
 }

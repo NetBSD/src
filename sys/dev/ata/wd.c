@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.407 2014/03/16 05:20:27 dholland Exp $ */
+/*	$NetBSD: wd.c,v 1.407.2.1 2014/04/07 03:37:31 tls Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.407 2014/03/16 05:20:27 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.407.2.1 2014/04/07 03:37:31 tls Exp $");
 
 #include "opt_ata.h"
 
@@ -406,7 +406,7 @@ out:
 	disk_attach(&wd->sc_dk);
 	wd->sc_wdc_bio.lp = wd->sc_dk.dk_label;
 	rnd_attach_source(&wd->rnd_source, device_xname(wd->sc_dev),
-			  RND_TYPE_DISK, 0);
+			  RND_TYPE_DISK, RND_FLAG_DEFAULT);
 
 	/* Discover wedges on this disk. */
 	dkwedge_discover(&wd->sc_dk);

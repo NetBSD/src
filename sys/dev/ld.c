@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.72 2014/03/16 05:20:26 dholland Exp $	*/
+/*	$NetBSD: ld.c,v 1.72.2.1 2014/04/07 03:37:31 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.72 2014/03/16 05:20:26 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.72.2.1 2014/04/07 03:37:31 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,7 @@ ldattach(struct ld_softc *sc)
 
 	/* Attach the device into the rnd source list. */
 	rnd_attach_source(&sc->sc_rnd_source, device_xname(sc->sc_dv),
-	    RND_TYPE_DISK, 0);
+	    RND_TYPE_DISK, RND_FLAG_DEFAULT);
 
 	/* Register with PMF */
 	if (!pmf_device_register1(sc->sc_dv, ld_suspend, NULL, ld_shutdown))

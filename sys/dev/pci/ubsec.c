@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.38 2014/03/29 19:28:25 christos Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.38.2.1 2014/04/07 03:37:33 tls Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.127 2003/06/04 14:04:58 jason Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.38 2014/03/29 19:28:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.38.2.1 2014/04/07 03:37:33 tls Exp $");
 
 #undef UBSEC_DEBUG
 
@@ -506,7 +506,7 @@ ubsec_attach(device_t parent, device_t self, void *aux)
 		rndsource_setcb(&sc->sc_rnd_source, ubsec_rng_get, sc);
 		rnd_attach_source(&sc->sc_rnd_source, device_xname(sc->sc_dev),
 				  RND_TYPE_RNG,
-				  RND_FLAG_NO_ESTIMATE|RND_FLAG_HASCB);
+				  RND_FLAG_COLLECT_VALUE|RND_FLAG_HASCB);
 		if (hz >= 100)
 			sc->sc_rnghz = hz / 100;
 		else
