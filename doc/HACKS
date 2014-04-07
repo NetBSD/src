@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.147 2014/04/05 17:06:44 tron Exp $
+# $NetBSD: HACKS,v 1.148 2014/04/07 21:20:17 christos Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -814,6 +814,18 @@ port	i386
 		gcc-4 does subsequent operations on "float" values within
 		the i387 FPU without rounding the intermediate results
 	kcah
+
+port	x86
+	hack	turn off optimization for biosdisk_ll.c because otherwise
+		we are pass the wrong arguments to biosdisk_read(). 
+		$ cd /usr/src/sys/arch/i386/floppies/bootflopp-com
+		$ qemu-system-i386 -nographic -fda boot-com1.fs -boot a
+	who	christos
+	file	src/sys/arch/i386/stand/lib/Makefile : 1.38
+	descr
+		Turning on DISK_DEBUG shows the problem. We should find
+		out which option is causing this.
+	hcah
 
 port	powerpc
 
