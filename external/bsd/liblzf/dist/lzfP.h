@@ -37,22 +37,21 @@
 #ifndef LZFP_h
 #define LZFP_h
 
-#define STANDALONE 1 /* at the moment, this is ok. */
-
-#ifndef STANDALONE
-# include "lzf.h"
+#if !defined(_KERNEL) && !defined(_STANDALONE)
+#include <sys/types.h>
+#include <inttypes.h>
 #endif
 
 /*
- * Size of hashtable is (1 << HLOG) * sizeof (char *)
+ * Size of hashtable is (1 << LZF_HLOG) * sizeof (char *)
  * decompression is independent of the hash table size
  * the difference between 15 and 14 is very small
  * for small blocks (and 14 is usually a bit faster).
- * For a low-memory/faster configuration, use HLOG == 13;
+ * For a low-memory/faster configuration, use LZF_HLOG == 13;
  * For best compression, use 15 or 16 (or more, up to 23).
  */
-#ifndef HLOG
-# define HLOG 16
+#ifndef LZF_HLOG
+# define LZF_HLOG 16
 #endif
 
 /*
@@ -77,9 +76,12 @@
 
 /*
  * Unconditionally aligning does not cost very much, so do it if unsure
+ *
+ * In fact, on modern x86 processors, strict alignment is faster whether
+ * in 32 or 64 bit mode.
  */
-#ifndef STRICT_ALIGN
-# define STRICT_ALIGN !(defined(__i386) || defined (__amd64))
+#ifndef STRICT_ALIGN	
+# define STRICT_ALIGN 1 /* !(defined(__i386) || defined (__amd64)) */
 #endif
 
 /*
@@ -124,21 +126,11 @@
 /*****************************************************************************/
 /* nothing should be changed below */
 
-typedef unsigned char u8;
+typedef uint8_t u8;
+typedef uint16_t u16;
 
-typedef const u8 *LZF_STATE[1 << (HLOG)];
-
-#if !STRICT_ALIGN
-/* for unaligned accesses we need a 16 bit datatype. */
-# include <limits.h>
-# if USHRT_MAX == 65535
-    typedef unsigned short u16;
-# elif UINT_MAX == 65535
-    typedef unsigned int u16;
-# else
-#  undef STRICT_ALIGN
-#  define STRICT_ALIGN 1
-# endif
+#if !defined(_KERNEL) && !defined(STANDALONE)
+typedef const u8 *LZF_STATE[1 << (LZF_HLOG)];
 #endif
 
 #if ULTRA_FAST

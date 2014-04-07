@@ -34,13 +34,23 @@
  * either the BSD or the GPL.
  */
 
-#include "lzf.h"
-
-#if AVOID_ERRNO
-# define SET_ERRNO(n)
+#if defined(_KERNEL) || defined (_STANDALONE)
+#include <lib/libkern/libkern.h>
+#include <sys/systm.h>
+#include "lzfP.h"
 #else
-# include <errno.h>
-# define SET_ERRNO(n) errno = (n)
+#include "lzf.h"
+#endif
+
+#ifdef _KERNEL
+# define SET_ERRNO(n) panic("lzf decompression failure: %s", #n)
+#else
+# ifdef AVOID_ERRNO
+#  define SET_ERRNO(n)
+# else
+#  include <errno.h>
+#  define SET_ERRNO(n) errno = (n)
+# endif
 #endif
 
 #if (__i386 || __amd64) && __GNUC__ >= 3
