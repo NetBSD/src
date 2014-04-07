@@ -1,4 +1,4 @@
-/* $NetBSD: h_stpncpy.c,v 1.1 2014/04/06 19:28:59 christos Exp $ */
+/* $NetBSD: h_stpncpy.c,v 1.2 2014/04/07 15:09:20 christos Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: h_stpncpy.c,v 1.1 2014/04/06 19:28:59 christos Exp $");
+__RCSID("$NetBSD: h_stpncpy.c,v 1.2 2014/04/07 15:09:20 christos Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -41,10 +41,15 @@ main(int argc, char *argv[])
 {
 	char b[10];
 	int len = atoi(argv[1]);
+#if __GNUC_PREREQ__(4, 8)
 	char *q = stpncpy(b, "1020202020202", len);
 
 	if (q - b != len)
 		abort();
+#else
+	// gcc-4.5 lacks __builtin___stpncpy_chk, lose.
+	(void)strncpy(b, "1020202020202", len);
+#endif
 
 	(void)printf("%*.*s\n", len, len, b);
 	return 0;
