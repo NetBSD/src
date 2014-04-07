@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.139 2014/03/07 01:34:29 christos Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.140 2014/04/07 17:02:15 rjs Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_elf32.c,v 1.139 2014/03/07 01:34:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_elf32.c,v 1.140 2014/04/07 17:02:15 rjs Exp $");
 
 #define	ELFSIZE	32
 
@@ -64,7 +64,7 @@ static struct execsw exec_elf32_execsw[] = {
 		.es_copyargs = elf32_copyargs,
 		.es_setregs = NULL,
 		.es_coredump = coredump_elf32,
-		.es_setup_stack =exec_setup_stack,
+		.es_setup_stack = exec_setup_stack,
 	},
 #if EXEC_ELF_NOTELESS
 	{
