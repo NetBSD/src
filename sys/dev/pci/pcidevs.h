@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1177 2014/03/15 10:32:36 kiyohara Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1178 2014/04/07 21:38:28 njoly Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1184 2014/03/15 10:30:41 kiyohara Exp
+ *	NetBSD: pcidevs,v 1.1185 2014/04/07 21:37:42 njoly Exp
  */
 
 /*
@@ -2551,6 +2551,7 @@
 #define	PCI_PRODUCT_INTEL_SANDYBRIDGE_S_HB	0x0108		/* Sandy Bridge Host Bridge */
 #define	PCI_PRODUCT_INTEL_SANDYBRIDGE_S_IGD	0x010A		/* Sandy Bridge Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_IVYBRIDGE_HB	0x0150		/* Ivy Bridge Host Bridge */
+#define	PCI_PRODUCT_INTEL_IVYBRIDGE_PCIE	0x0151		/* Ivy Bridge PCI Express Root Port */
 #define	PCI_PRODUCT_INTEL_IVYBRIDGE_IGD	0x0152		/* Ivy Bridge Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_IVYBRIDGE_IGD_1	0x0162		/* Ivy Bridge Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_IVYBRIDGE_M_HB	0x0154		/* Ivy Bridge Host Bridge */
