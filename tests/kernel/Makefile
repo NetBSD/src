@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.33 2013/04/16 22:05:44 mlelstv Exp $
+# $NetBSD: Makefile,v 1.33.4.1 2014/04/07 19:32:15 tls Exp $
 
 NOMAN=		# defined
 
@@ -47,6 +47,7 @@ CPPFLAGS.subr_extent.c=	-D_EXTENT_TESTING -D__POOL_EXPOSE
 
 t_subr_prf.c: gen_t_subr_prf ${NETBSDSRCDIR}/sys/kern/subr_prf.c
 	${HOST_SH} ${.ALLSRC} ${.TARGET}
+CPPFLAGS.t_subr_prf.c=	-Wno-pointer-sign	# XXX platform vs kernel SHA2
 
 CLEANFILES+=	t_subr_prf.c
 
