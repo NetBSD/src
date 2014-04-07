@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.23.2.1 2014/04/07 02:00:00 tls Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.23.2.2 2014/04/07 02:20:00 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.23.2.1 2014/04/07 02:00:00 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.23.2.2 2014/04/07 02:20:00 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -155,6 +155,8 @@ static krndsource_t rnd_source_anonymous = {
 	.test_cnt = 0,
 	.test = NULL
 };
+
+krndsource_t rnd_printf_source, rnd_autoconf_source;
 
 void *rnd_process, *rnd_wakeup;
 struct callout skew_callout;
@@ -608,6 +610,11 @@ rnd_init(void)
 			  RND_TYPE_UNKNOWN,
 			  RND_FLAG_COLLECT_TIME|RND_FLAG_COLLECT_VALUE|
 			  RND_FLAG_ESTIMATE_TIME);
+	rnd_attach_source(&rnd_printf_source, "printf", RND_TYPE_UNKNOWN,
+			  RND_FLAG_NO_ESTIMATE);
+	rnd_attach_source(&rnd_autoconf_source, "autoconf",
+			  RND_TYPE_UNKNOWN,
+			  RND_FLAG_COLLECT_TIME|RND_FLAG_ESTIMATE_TIME);
 	rnd_ready = 1;
 }
 
