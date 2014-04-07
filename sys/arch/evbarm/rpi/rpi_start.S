@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_start.S,v 1.9 2014/04/01 06:55:29 skrll Exp $	*/
+/*	$NetBSD: rpi_start.S,v 1.10 2014/04/07 14:40:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -87,7 +87,7 @@
 #include <arm/armreg.h>
 #include "assym.h"
 
-RCSID("$NetBSD: rpi_start.S,v 1.9 2014/04/01 06:55:29 skrll Exp $")
+RCSID("$NetBSD: rpi_start.S,v 1.10 2014/04/07 14:40:17 skrll Exp $")
 
 /*
  * Workaround Erratum 411920
@@ -201,7 +201,7 @@ _C_LABEL(rpi_start):
 
 	mcr	p15, 0, r0, c7, c14, 0	/* Clean and Invalidate Entire Data Cache */
 
-        ldr     r2, Lctl_ID_dis		/* Disable I+D caches */
+	ldr     r2, Lctl_ID_dis		/* Disable I+D caches */
 	mrc	p15, 0, r1, c1, c0, 0	/*  "       "   "     */
 	and	r1, r1, r2		/*  "       "   "     */
 	mcr	p15, 0, r1, c1, c0, 0	/*  "       "   "     */
