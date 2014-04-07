@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1184 2014/03/15 10:30:41 kiyohara Exp $
+$NetBSD: pcidevs,v 1.1185 2014/04/07 21:37:42 njoly Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2544,6 +2544,7 @@ product INTEL SANDYBRIDGE_M_IGD_2	0x0126	Sandy Bridge Integrated Graphics Device
 product INTEL SANDYBRIDGE_S_HB	0x0108	Sandy Bridge Host Bridge
 product INTEL SANDYBRIDGE_S_IGD	0x010A	Sandy Bridge Integrated Graphics Device
 product INTEL IVYBRIDGE_HB	0x0150	Ivy Bridge Host Bridge
+product INTEL IVYBRIDGE_PCIE	0x0151	Ivy Bridge PCI Express Root Port
 product INTEL IVYBRIDGE_IGD	0x0152	Ivy Bridge Integrated Graphics Device
 product INTEL IVYBRIDGE_IGD_1	0x0162	Ivy Bridge Integrated Graphics Device
 product INTEL IVYBRIDGE_M_HB	0x0154	Ivy Bridge Host Bridge
