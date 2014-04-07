@@ -470,7 +470,7 @@ void	armv6_idcache_wbinv_all	(void);
 void	armv6_idcache_wbinv_range (vaddr_t, vsize_t);
 #endif
 
-#if defined(CPU_CORTEX)
+#if defined(CPU_ARMV7)
 #if defined(ARM_MMU_EXTENDED)
 void	armv7_setttb(u_int, tlb_asid_t);
 void	armv7_context_switch(u_int, tlb_asid_t);
@@ -480,12 +480,15 @@ void	armv7_context_switch(u_int);
 #endif
 
 void	armv7_icache_sync_range(vaddr_t, vsize_t);
+void	armv7_icache_sync_all(void);
+
+void	armv7_dcache_inv_range(vaddr_t, vsize_t);
 void	armv7_dcache_wb_range(vaddr_t, vsize_t);
 void	armv7_dcache_wbinv_range(vaddr_t, vsize_t);
-void	armv7_dcache_inv_range(vaddr_t, vsize_t);
-void	armv7_idcache_wbinv_range(vaddr_t, vsize_t);
+void 	armv7_dcache_wbinv_all(void);
 
-void	armv7_icache_sync_all(void);
+void	armv7_idcache_wbinv_range(vaddr_t, vsize_t);
+void	armv7_idcache_wbinv_all(void);
 
 void	armv7_tlb_flushID(void);
 void	armv7_tlb_flushI(void);
@@ -498,12 +501,7 @@ void	armv7_tlb_flushD_SE(vaddr_t);
 void	armv7_cpu_sleep(int);
 void	armv7_drain_writebuf(void);
 void	armv7_setup(char *string);
-#endif
-
-#if defined(CPU_CORTEX) || defined(CPU_PJ4B)
-void 	armv7_dcache_wbinv_all(void);
-void	armv7_idcache_wbinv_all(void);
-#endif
+#endif /* CPU_ARMV7 */
 
 #if defined(CPU_PJ4B)
 #if defined(ARM_MMU_EXTENDED)
