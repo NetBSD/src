@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_subr.c,v 1.26 2014/02/27 16:51:38 hannken Exp $	*/
+/*	$NetBSD: kernfs_subr.c,v 1.27 2014/04/08 17:56:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.26 2014/02/27 16:51:38 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.27 2014/04/08 17:56:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.26 2014/02/27 16:51:38 hannken Exp
 #include <sys/mount.h>
 
 #include <miscfs/kernfs/kernfs.h>
+#include <miscfs/specfs/specdev.h>
 
 void kernfs_hashins(struct kernfs_node *);
 void kernfs_hashrem(struct kernfs_node *);
@@ -147,32 +148,6 @@ kernfs_allocvp(struct mount *mp, struct vnode **vpp, kfstype kfs_type,
 		return (0);
 	}
 
-	if (kfs_type == KFSdevice) {
-			/* /kern/rootdev = look for device and obey */
-			/* /kern/rrootdev = look for device and obey */
-		dev_t *dp;
-		struct vnode *fvp;
-
-#ifdef DIAGNOSTIC
-		if (!kt)
-			panic("kernfs: kt == NULL for KFSdevice");
-#endif
-		dp = kt->kt_data;
-	loop:
-		if (*dp == NODEV || !vfinddev(*dp, kt->kt_vtype, &fvp)) {
-			mutex_exit(&kfs_hashlock);
-			return (ENOENT);
-		}
-		vp = fvp;
-		if (vn_lock(fvp, LK_EXCLUSIVE)) {
-			vrele(fvp);
-			goto loop;
-		}
-		*vpp = vp;
-		mutex_exit(&kfs_hashlock);
-		return (0);
-	}
-
 	error = getnewvnode(VT_KERNFS, mp, kernfs_vnodeop_p, NULL, &vp);
 	if (error) {
 		*vpp = NULL;
@@ -219,6 +194,10 @@ again:
 
 	if (kfs_type == KFSkern)
 		vp->v_vflag = VV_ROOT;
+
+	if (kfs_type == KFSdevice) {
+		spec_node_init(vp, *(dev_t *)kt->kt_data);
+	}
 
 	kernfs_hashins(kfs);
 	uvm_vnp_setsize(vp, 0);
