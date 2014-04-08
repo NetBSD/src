@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.83 2014/01/13 10:33:03 njoly Exp $
+	$NetBSD: syscalls.master,v 1.84 2014/04/08 16:48:01 njoly Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -84,8 +84,9 @@
 0	NOARGS		{ int|linux_sys||nosys(void); } syscall
 1	STD		{ int|linux_sys||exit(int rval); }
 2	NOARGS		{ int|sys||fork(void); }
-3	NOARGS		{ int|sys||read(int fd, void *buf, size_t nbyte); }
-4	NOARGS		{ int|sys||write(int fd, const void *buf, size_t nbyte); }
+3	NOARGS		{ ssize_t|sys||read(int fd, void *buf, size_t nbyte); }
+4	NOARGS		{ ssize_t|sys||write(int fd, const void *buf, \
+			    size_t nbyte); }
 5	UNIMPL
 6	NOARGS		{ int|sys||close(int fd); }
 7	NODEF		{ int|osf1_sys||wait4(int pid, int *status, \

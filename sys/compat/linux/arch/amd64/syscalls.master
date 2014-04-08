@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.46 2013/12/08 15:55:10 njoly Exp $
+	$NetBSD: syscalls.master,v 1.47 2014/04/08 16:48:01 njoly Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -64,8 +64,9 @@
 
 %%
 
-0	NOARGS		{ int|sys||read(int fd, char *buf, u_int nbyte); }
-1	NOARGS		{ int|sys||write(int fd, char *buf, u_int nbyte); }
+0	NOARGS		{ ssize_t|sys||read(int fd, void *buf, size_t nbyte); }
+1	NOARGS		{ ssize_t|sys||write(int fd, const void *buf, \
+			    int nbyte); }
 2	STD		{ int|linux_sys||open(const char *path, int flags, \
 			    linux_umode_t mode); }
 3	NOARGS		{ int|sys||close(int fd); }
@@ -101,10 +102,10 @@
 			    size_t nbyte, linux_off_t offset); }
 18	STD		{ int|linux_sys||pwrite(int fd, char *buf, \
 			    size_t nbyte, linux_off_t offset); }
-19	NOARGS		{ int|sys||readv(int fd, struct iovec *iovp, \
-				u_int iovcnt); }
-20	NOARGS		{ int|sys||writev(int fd, struct iovec *iovp, \
-				u_int iovcnt); }
+19	NOARGS		{ ssize_t|sys||readv(int fd, \
+			    const struct iovec *iovp, int iovcnt); }
+20	NOARGS		{ ssize_t|sys||writev(int fd, \
+			    const struct iovec *iovp, int iovcnt); }
 21	NOARGS		{ int|sys||access(const char *path, int flags); }
 22	STD		{ int|linux_sys||pipe(int *pfds); }
 23	STD		{ int|linux_sys||select(int nfds, fd_set *readfds, \

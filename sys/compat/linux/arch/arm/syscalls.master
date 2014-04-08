@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.54 2013/12/08 15:55:10 njoly Exp $
+	$NetBSD: syscalls.master,v 1.55 2014/04/08 16:48:01 njoly Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -56,8 +56,9 @@
 0	NOARGS		{ int|linux_sys||nosys(void); }
 1	STD		{ int|linux_sys||exit(int rval); }
 2	NOARGS		{ int|sys||fork(void); }
-3	NOARGS		{ int|sys||read(int fd, char *buf, u_int nbyte); }
-4	NOARGS		{ int|sys||write(int fd, char *buf, u_int nbyte); }
+3	NOARGS		{ ssize_t|sys||read(int fd, void *buf, size_t nbyte); }
+4	NOARGS		{ ssize_t|sys||write(int fd, const void *buf, \
+			    size_t nbyte); }
 5	STD		{ int|linux_sys||open(const char *path, int flags, \
 			    linux_umode_t mode); }
 6	NOARGS		{ int|sys||close(int fd); }
@@ -251,10 +252,10 @@
 			    struct timeval50 *timeout); }
 143	NOARGS		{ int|sys||flock(int fd, int how); }
 144	NOARGS		{ int|sys|13|msync(void *addr, size_t len, int flags); }
-145	NOARGS		{ int|sys||readv(int fd, struct iovec *iovp, \
-				u_int iovcnt); }
-146	NOARGS		{ int|sys||writev(int fd, struct iovec *iovp, \
-				u_int iovcnt); }
+145	NOARGS		{ ssize_t|sys||readv(int fd, \
+			    const struct iovec *iovp, int iovcnt); }
+146	NOARGS		{ ssize_t|sys||writev(int fd, \
+			    const struct iovec *iovp, int iovcnt); }
 147	NOARGS		{ pid_t|sys||getsid(pid_t pid); }
 148	STD		{ int|linux_sys||fdatasync(int fd); }
 149	STD		{ int|linux_sys||__sysctl(struct linux___sysctl *lsp); }
