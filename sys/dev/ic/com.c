@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.324 2014/04/06 23:29:58 christos Exp $ */
+/* $NetBSD: com.c,v 1.325 2014/04/08 00:09:15 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.324 2014/04/06 23:29:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.325 2014/04/08 00:09:15 christos Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -1424,12 +1424,10 @@ comparam(struct tty *tp, struct termios *t)
 	}
 	sc->sc_msr_mask = sc->sc_msr_cts | sc->sc_msr_dcd;
 
-	if (ospeed == 0)
+	if (t->c_ospeed == 0 && tp->t_ospeed != 0)
 		CLR(sc->sc_mcr, sc->sc_mcr_dtr);
-#if 0
-	else
+	else if (t->c_ospeed != 0 && tp->t_ospeed == 0)
 		SET(sc->sc_mcr, sc->sc_mcr_dtr);
-#endif
 
 	sc->sc_dlbl = ospeed;
 	sc->sc_dlbh = ospeed >> 8;
