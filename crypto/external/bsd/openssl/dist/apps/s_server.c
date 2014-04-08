@@ -556,7 +556,9 @@ static void sv_usage(void)
 # ifndef OPENSSL_NO_NEXTPROTONEG
 	BIO_printf(bio_err," -nextprotoneg arg - set the advertised protocols for the NPN extension (comma-separated list)\n");
 # endif
+# ifndef OPENSSL_NO_SRTP
         BIO_printf(bio_err," -use_srtp profiles - Offer SRTP key management with a colon-separated profile list\n");
+#endif
 #endif
 	BIO_printf(bio_err," -keymatexport label   - Export keying material using label\n");
 	BIO_printf(bio_err," -keymatexportlen len  - Export len bytes of keying material (default 20)\n");
@@ -923,7 +925,9 @@ static char *jpake_secret = NULL;
 #ifndef OPENSSL_NO_SRP
 	static srpsrvparm srp_callback_parm;
 #endif
+#ifndef OPENSSL_NO_SRTP
 static char *srtp_profiles = NULL;
+#endif
 
 int MAIN(int argc, char *argv[])
 	{
@@ -1319,11 +1323,13 @@ int MAIN(int argc, char *argv[])
 			jpake_secret = *(++argv);
 			}
 #endif
+#ifndef OPENSSL_NO_SRTP
 		else if (strcmp(*argv,"-use_srtp") == 0)
 			{
 			if (--argc < 1) goto bad;
 			srtp_profiles = *(++argv);
 			}
+#endif
 		else if (strcmp(*argv,"-keymatexport") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -1431,13 +1437,14 @@ bad:
 				goto end;
 				}
 			}
+#endif
+		}
 
-# ifndef OPENSSL_NO_NEXTPROTONEG
+#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG) 
 		if (next_proto_neg_in)
 			{
 			unsigned short len;
-			next_proto.data = next_protos_parse(&len,
-				next_proto_neg_in);
+		next_proto.data = next_protos_parse(&len, next_proto_neg_in);
 			if (next_proto.data == NULL)
 				goto end;
 			next_proto.len = len;
@@ -1447,8 +1454,6 @@ bad:
 			next_proto.data = NULL;
 			}
 # endif
-#endif
-		}
 
 
 	if (s_dcert_file)
@@ -1550,8 +1555,10 @@ bad:
 	else
 		SSL_CTX_sess_set_cache_size(ctx,128);
 
+#ifndef OPENSSL_NO_SRTP
 	if (srtp_profiles != NULL)
 		SSL_CTX_set_tlsext_use_srtp(ctx, srtp_profiles);
+#endif
 
 #if 0
 	if (cipher == NULL) cipher=getenv("SSL_CIPHER");
@@ -1893,7 +1900,15 @@ end:
 		OPENSSL_free(pass);
 	if (dpass)
 		OPENSSL_free(dpass);
+	if (vpm)
+		X509_VERIFY_PARAM_free(vpm);
 #ifndef OPENSSL_NO_TLSEXT
+	if (tlscstatp.host)
+		OPENSSL_free(tlscstatp.host);
+	if (tlscstatp.port)
+		OPENSSL_free(tlscstatp.port);
+	if (tlscstatp.path)
+		OPENSSL_free(tlscstatp.path);
 	if (ctx2 != NULL) SSL_CTX_free(ctx2);
 	if (s_cert2)
 		X509_free(s_cert2);
@@ -2439,6 +2454,7 @@ static int init_ssl_connection(SSL *con)
 		BIO_printf(bio_s_out,"Shared ciphers:%s\n",buf);
 	str=SSL_CIPHER_get_name(SSL_get_current_cipher(con));
 	BIO_printf(bio_s_out,"CIPHER is %s\n",(str != NULL)?str:"(NONE)");
+
 #if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
 	SSL_get0_next_proto_negotiated(con, &next_proto_neg, &next_proto_neg_len);
 	if (next_proto_neg)
@@ -2448,6 +2464,7 @@ static int init_ssl_connection(SSL *con)
 		BIO_printf(bio_s_out, "\n");
 		}
 #endif
+#ifndef OPENSSL_NO_SRTP
 	{
 	SRTP_PROTECTION_PROFILE *srtp_profile
 	  = SSL_get_selected_srtp_profile(con);
@@ -2456,6 +2473,7 @@ static int init_ssl_connection(SSL *con)
 		BIO_printf(bio_s_out,"SRTP Extension negotiated, profile=%s\n",
 			   srtp_profile->name);
 	}
+#endif
 	if (SSL_cache_hit(con)) BIO_printf(bio_s_out,"Reused session-id\n");
 	if (SSL_ctrl(con,SSL_CTRL_GET_FLAGS,0,NULL) &
 		TLS1_FLAGS_TLS_PADDING_BUG)
@@ -2706,6 +2724,11 @@ static int www_body(char *hostname, int s, unsigned char *context)
 				BIO_write(io," ",1);
 				}
 			BIO_puts(io,"\n");
+
+			BIO_printf(io,
+				"Secure Renegotiation IS%s supported\n",
+		      		SSL_get_secure_renegotiation_support(con) ?
+							"" : " NOT");
 
 			/* The following is evil and should not really
 			 * be done */
