@@ -1,4 +1,6 @@
-# $NetBSD: pkgconfig.mk,v 1.5.4.2 2014/04/08 11:44:22 msaitoh Exp $
+# $NetBSD: pkgconfig.mk,v 1.5.4.3 2014/04/08 20:23:11 bouyer Exp $
+
+.include <bsd.own.mk>
 
 FILESDIR=/usr/lib/pkgconfig
 .for pkg in ${PKGCONFIG}
@@ -6,5 +8,5 @@ FILES+=${pkg}.pc
 FILESBUILD_${pkg}.pc=yes
 
 ${pkg}.pc: ${.CURDIR}/../../mkpc
-	${.ALLSRC} ${OPENSSLSRC}/crypto ${.TARGET} > ${.TARGET}
+	${HOST_SH} ${.ALLSRC} ${OPENSSLSRC}/crypto ${.TARGET} > ${.TARGET}
 .endfor
