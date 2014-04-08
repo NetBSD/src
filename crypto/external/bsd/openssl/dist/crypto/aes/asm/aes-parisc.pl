@@ -1016,6 +1016,7 @@ foreach (split("\n",$code)) {
 		:            sprintf("extrd,u%s,%d,8,",$1,63-$2)/e;
 
 	s/,\*/,/ if ($SIZE_T==4);
+	s/\bbv\b(.*\(%r2\))/bve$1/      if ($SIZE_T==8);
 	print $_,"\n";
 }
 close STDOUT;
