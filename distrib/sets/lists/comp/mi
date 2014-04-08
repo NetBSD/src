@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1738.2.7 2012/09/17 19:00:28 riz Exp $
+#	$NetBSD: mi,v 1.1738.2.7.2.1 2014/04/08 11:58:57 msaitoh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3355,6 +3355,9 @@
 ./usr/lib/pkgconfig/atf-sh.pc			comp-atf-lib		atf,share
 ./usr/lib/pkgconfig/atf.pc			comp-obsolete		obsolete
 ./usr/lib/pkgconfig/sqlite3.pc			comp-c-lib
+./usr/lib/pkgconfig/libcrypto.pc		comp-c-lib		crypto
+./usr/lib/pkgconfig/libssl.pc			comp-c-lib		crypto
+./usr/lib/pkgconfig/openssl.pc			comp-c-lib		crypto
 ./usr/libdata/debug/bin/cat.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/chio.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/chmod.debug		comp-util-debug		debug
@@ -5052,6 +5055,7 @@
 ./usr/share/man/cat3/EVP_EncryptInit.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/EVP_OpenInit.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/EVP_PKEY_new.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/EVP_PKEY_set1_RSA.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/EVP_PKEY_set1_RSA.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/EVP_SealInit.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/EVP_SignInit.0		comp-c-catman		crypto,.cat
@@ -11411,6 +11415,7 @@
 ./usr/share/man/html3/EVP_OpenInit.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/EVP_PKEY_new.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/EVP_PKEY_set1_RSA.html	comp-c-htmlman		crypto,html
+./usr/share/man/html3/EVP_PKEY_verify_recover.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/EVP_SealInit.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/EVP_SignInit.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/EVP_VerifyInit.html	comp-c-htmlman		crypto,html
@@ -17568,6 +17573,7 @@
 ./usr/share/man/man3/EVP_OpenInit.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/EVP_PKEY_new.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/EVP_PKEY_set1_RSA.3	comp-c-man		crypto,.man
+./usr/share/man/man3/EVP_PKEY_verify_recover.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/EVP_SealInit.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/EVP_SignInit.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/EVP_VerifyInit.3		comp-c-man		crypto,.man

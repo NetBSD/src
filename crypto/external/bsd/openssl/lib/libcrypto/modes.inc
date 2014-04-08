@@ -1,4 +1,4 @@
-#	$NetBSD: modes.inc,v 1.1.8.1 2012/08/14 07:57:03 riz Exp $
+#	$NetBSD: modes.inc,v 1.1.8.1.4.1 2014/04/08 11:58:54 msaitoh Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -14,6 +14,6 @@ MODES_SRCS += cbc128.c ctr128.c cts128.c cfb128.c ofb128.c gcm128.c \
 SRCS += ${MODES_SRCS}
 
 .for cryptosrc in ${MODES_SRCS}
-CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/modes
+CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/modes ${MODESCPPFLAGS}
 .endfor
 CPPFLAGS.e_aes.c = -I${OPENSSLSRC}/crypto/modes
