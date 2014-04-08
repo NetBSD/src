@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.62.2.1 2014/04/07 03:37:31 tls Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.62.2.2 2014/04/08 23:54:23 tls Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.62.2.1 2014/04/07 03:37:31 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.62.2.2 2014/04/08 23:54:23 tls Exp $");
 
 #include "opt_xen.h"
 
@@ -315,8 +315,8 @@ xbd_xenbus_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	nnd_attach_source(&sc->sc_rnd_source, device_xname(self),
-	    RND_TYPE_DISK);
+	rnd_attach_source(&sc->sc_rnd_source, device_xname(self),
+	    RND_TYPE_DISK, RND_FLAG_DEFAULT);
 
 	if (!pmf_device_register(self, xbd_xenbus_suspend, xbd_xenbus_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
