@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.150 2014/02/07 15:29:22 hannken Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.151 2014/04/08 17:56:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.150 2014/02/07 15:29:22 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.151 2014/04/08 17:56:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.150 2014/02/07 15:29:22 hannken E
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/kernfs/kernfs.h>
+#include <miscfs/specfs/specdev.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -653,6 +654,11 @@ kernfs_getattr(void *v)
 		vap->va_bytes = vap->va_size = DEV_BSIZE;
 		break;
 
+	case KFSdevice:
+		vap->va_nlink = 1;
+		vap->va_rdev = ap->a_vp->v_rdev;
+		break;
+
 	case KFSroot:
 		vap->va_nlink = 1;
 		vap->va_bytes = vap->va_size = DEV_BSIZE;
@@ -670,7 +676,6 @@ kernfs_getattr(void *v)
 	case KFSstring:
 	case KFShostname:
 	case KFSavenrun:
-	case KFSdevice:
 	case KFSmsgbuf:
 		vap->va_nlink = 1;
 		total = 0;
@@ -832,18 +837,8 @@ kernfs_setdirentfileno_kt(struct dirent *d, const struct kern_target *kt,
 	if ((error = kernfs_allocvp(ap->a_vp->v_mount, &vp, kt->kt_tag, kt,
 	    value)) != 0)
 		return error;
-	if (kt->kt_tag == KFSdevice) {
-		struct vattr va;
-
-		error = VOP_GETATTR(vp, &va, ap->a_cred);
-		if (error != 0) {
-			return error;
-		}
-		d->d_fileno = va.va_fileid;
-	} else {
-		kfs = VTOKERN(vp);
-		d->d_fileno = kfs->kfs_fileno;
-	}
+	kfs = VTOKERN(vp);
+	d->d_fileno = kfs->kfs_fileno;
 	vput(vp);
 	return 0;
 }
