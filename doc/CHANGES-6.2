@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.101 2014/04/08 11:34:14 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.102 2014/04/08 20:24:07 bouyer Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -2079,3 +2079,9 @@ distrib/sets/lists/comp/shl.mi			patch
 
 	Update openssl to 1.0.1g. It includes CVE-2014-0076 and CVE-2014-0160.
 	[spz, ticket #1044]
+crypto/external/bsd/openssl/pkgconfig.mk	1.5
+
+	Run the mkpc script using ${HOST_SH}. Fixes build when
+	src/crypto/external/bsd/openssl/mkpc is not executable.
+	[tron, ticket #1045]
+
