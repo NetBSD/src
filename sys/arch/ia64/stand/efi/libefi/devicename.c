@@ -1,4 +1,4 @@
-/*	$NetBSD: devicename.c,v 1.7 2014/03/27 18:22:56 christos Exp $	*/
+/*	$NetBSD: devicename.c,v 1.8 2014/04/08 21:51:06 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -227,8 +227,8 @@ efi_fmtdev(void *vdev)
 		if (dev->d_kind.efidisk.partition >= 0) {
 			len += snprintf(buf + len, buflen - len, "%c", dev->d_kind.efidisk.partition + 'a');
 			if (len > buflen)
-		}
 				len = buflen;
+		}
 		strlcat(buf, ":", sizeof(buf) - len);
 		break;
 

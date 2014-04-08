@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.4 2014/03/25 18:35:32 christos Exp $	*/
+/*	$NetBSD: commands.c,v 1.5 2014/04/08 21:51:06 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -42,7 +42,7 @@ command_seterr(const char *fmt, ...)
 {
 	int len;
 	va_list ap;
-	va_start(fmt, ap);
+	va_start(ap, fmt);
 	len = vsnprintf(command_errbuf, sizeof(command_errbuf), fmt, ap);
 	va_end(ap);
 	return len;
