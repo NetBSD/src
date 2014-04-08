@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39 2014/04/08 13:56:04 joerg Exp $
+#	$NetBSD: Makefile,v 1.40 2014/04/08 15:34:18 christos Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -57,6 +57,6 @@ lib${LIB}.o:: ${OBJS}
 .if ${HAVE_GCC:U} == 45
 COPTS.biosdisk.c+=	-fno-strict-aliasing
 .endif
-.if ${HAVE_GCC:U} == 48
-COPTS.biosdisk_ll.c+=	${${ACTIVE_CC} == "gcc":?-O0:}
+.if ${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U} == 48
+COPTS.biosdisk_ll.c+=	-O0
 .endif
