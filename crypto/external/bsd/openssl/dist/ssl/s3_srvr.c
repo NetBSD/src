@@ -191,7 +191,8 @@ static int ssl_check_srp_ext_ClientHello(SSL *s, int *al)
 		{
 		if(s->srp_ctx.login == NULL)
 			{
-			/* There isn't any srp login extension !!! */
+			/* RFC 5054 says SHOULD reject, 
+			   we do so if There is no srp login name */
 			ret = SSL3_AL_FATAL;
 			*al = SSL_AD_UNKNOWN_PSK_IDENTITY;
 			}
@@ -378,6 +379,7 @@ int ssl3_accept(SSL *s)
 				}
 			}
 #endif		
+			
 			s->renegotiate = 2;
 			s->state=SSL3_ST_SW_SRVR_HELLO_A;
 			s->init_num=0;
@@ -966,7 +968,8 @@ int ssl3_get_client_hello(SSL *s)
 	    (s->version != DTLS1_VERSION && s->client_version < s->version))
 		{
 		SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_WRONG_VERSION_NUMBER);
-		if ((s->client_version>>8) == SSL3_VERSION_MAJOR)
+		if ((s->client_version>>8) == SSL3_VERSION_MAJOR && 
+			!s->enc_write_ctx && !s->write_hash)
 			{
 			/* similar to ssl3_get_record, send alert using remote version number */
 			s->version = s->client_version;
@@ -1191,7 +1194,7 @@ int ssl3_get_client_hello(SSL *s)
 			goto f_err;
 			}
 		}
-		if (ssl_check_clienthello_tlsext(s) <= 0) {
+		if (ssl_check_clienthello_tlsext_early(s) <= 0) {
 			SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,SSL_R_CLIENTHELLO_TLSEXT);
 			goto err;
 		}
@@ -1201,12 +1204,9 @@ int ssl3_get_client_hello(SSL *s)
 	 * server_random before calling tls_session_secret_cb in order to allow
 	 * SessionTicket processing to use it in key derivation. */
 	{
-		unsigned long Time;
 		unsigned char *pos;
-		Time=(unsigned long)time(NULL);			/* Time */
 		pos=s->s3->server_random;
-		l2n(Time,pos);
-		if (RAND_pseudo_bytes(pos,SSL3_RANDOM_SIZE-4) <= 0)
+		if (ssl_fill_hello_random(s, 1, pos, SSL3_RANDOM_SIZE) <= 0)
 			{
 			al=SSL_AD_INTERNAL_ERROR;
 			goto f_err;
@@ -1399,7 +1399,10 @@ int ssl3_get_client_hello(SSL *s)
 	if (TLS1_get_version(s) < TLS1_2_VERSION || !(s->verify_mode & SSL_VERIFY_PEER))
 		{
 		if (!ssl3_digest_cached_records(s))
+			{
+			al = SSL_AD_INTERNAL_ERROR;
 			goto f_err;
+		}
 		}
 	
 	/* we now have the following setup. 
@@ -1412,6 +1415,16 @@ int ssl3_get_client_hello(SSL *s)
 	 * s->hit		- session reuse flag
 	 * s->tmp.new_cipher	- the new cipher to use.
 	 */
+
+	/* Handles TLS extensions that we couldn't check earlier */
+	if (s->version >= SSL3_VERSION)
+		{
+		if (ssl_check_clienthello_tlsext_late(s) <= 0)
+			{
+			SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_CLIENTHELLO_TLSEXT);
+			goto err;
+			}
+		}
 
 	if (ret < 0) ret=1;
 	if (0)
@@ -1430,19 +1443,13 @@ int ssl3_send_server_hello(SSL *s)
 	unsigned char *p,*d;
 	int i,sl;
 	unsigned long l;
-#ifdef OPENSSL_NO_TLSEXT
-	unsigned long Time;
-#endif
 
 	if (s->state == SSL3_ST_SW_SRVR_HELLO_A)
 		{
 		buf=(unsigned char *)s->init_buf->data;
 #ifdef OPENSSL_NO_TLSEXT
 		p=s->s3->server_random;
-		/* Generate server_random if it was not needed previously */
-		Time=(unsigned long)time(NULL);			/* Time */
-		l2n(Time,p);
-		if (RAND_pseudo_bytes(p,SSL3_RANDOM_SIZE-4) <= 0)
+		if (ssl_fill_hello_random(s, 1, p, SSL3_RANDOM_SIZE) <= 0)
 			return -1;
 #endif
 		/* Do the message type and length last */
@@ -1833,7 +1840,7 @@ int ssl3_send_server_key_exchange(SSL *s)
 			SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,SSL_R_UNKNOWN_KEY_EXCHANGE_TYPE);
 			goto f_err;
 			}
-		for (i=0; r[i] != NULL && i<4; i++)
+		for (i=0; i < 4 && r[i] != NULL; i++)
 			{
 			nr[i]=BN_num_bytes(r[i]);
 #ifndef OPENSSL_NO_SRP
@@ -1869,7 +1876,7 @@ int ssl3_send_server_key_exchange(SSL *s)
 		d=(unsigned char *)s->init_buf->data;
 		p= &(d[4]);
 
-		for (i=0; r[i] != NULL && i<4; i++)
+		for (i=0; i < 4 && r[i] != NULL; i++)
 			{
 #ifndef OPENSSL_NO_SRP
 			if ((i == 2) && (type & SSL_kSRP))
