@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3.6.1 2012/08/14 07:57:27 riz Exp $
+#	$NetBSD: Makefile,v 1.3.6.1.6.1 2014/04/08 11:44:29 msaitoh Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -52,5 +52,8 @@ update_inc:
 	find ${OPENSSLSRC}/ssl -name Makefile | \
 		perl ${OPENSSLSRC}/extsrcs.pl 2> srcs.inc; \
 	patch -s ssl.inc < ssl.diff )
+
+PKGCONFIG=libssl openssl
+.include "${.CURDIR}/../../pkgconfig.mk"
 
 .include <bsd.lib.mk>
