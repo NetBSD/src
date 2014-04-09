@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.139 2013/12/09 21:12:45 pooka Exp $
+#	$NetBSD: makesyscalls.sh,v 1.140 2014/04/09 23:50:45 pooka Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -637,11 +637,12 @@ function printproto(wrap) {
 	for (i = 1; i <= varargc; i++) {
 		type=uncompattype(argtype[i])
 		sub("const ", "", type)
-		if (!typeseen[type] && \
+		ntype=type
+		sub(" *\\*.*", "", ntype);
+		if (!typeseen[ntype] && \
 		    match(type, "struct") && match(type, "\\*")) {
-			typeseen[type] = 1
-			sub(" *\\*", "", type);
-			printf("%s;\n", type) > rumptypes
+			typeseen[ntype] = 1
+			printf("%s;\n", ntype) > rumptypes
 		}
 	}
 }
