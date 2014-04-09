@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.267 2014/03/14 00:52:08 pooka Exp $
+	$NetBSD: syscalls.master,v 1.268 2014/04/09 23:55:37 pooka Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -765,16 +765,16 @@
 			    size_t fh_size, struct stat30 *sb); }
 
 ; Asynchronous I/O system calls
-399	STD MODULAR 	{ int|sys||aio_cancel(int fildes, struct aiocb *aiocbp); }
-400	STD MODULAR 	{ int|sys||aio_error(const struct aiocb *aiocbp); }
-401	STD MODULAR 	{ int|sys||aio_fsync(int op, struct aiocb *aiocbp); }
-402	STD MODULAR 	{ int|sys||aio_read(struct aiocb *aiocbp); }
-403	STD MODULAR 	{ int|sys||aio_return(struct aiocb *aiocbp); }
+399	STD MODULAR RUMP	{ int|sys||aio_cancel(int fildes, struct aiocb *aiocbp); }
+400	STD MODULAR RUMP	{ int|sys||aio_error(const struct aiocb *aiocbp); }
+401	STD MODULAR RUMP	{ int|sys||aio_fsync(int op, struct aiocb *aiocbp); }
+402	STD MODULAR RUMP	{ int|sys||aio_read(struct aiocb *aiocbp); }
+403	STD MODULAR RUMP	{ int|sys||aio_return(struct aiocb *aiocbp); }
 404	COMPAT_50 MODULAR { int|sys||aio_suspend(const struct aiocb *const *list, \
 			    int nent, const struct timespec50 *timeout); }
-405	STD MODULAR 	{ int|sys||aio_write(struct aiocb *aiocbp); }
-406	STD MODULAR 	{ int|sys||lio_listio(int mode, struct aiocb *const *list, \
-			    int nent, struct sigevent *sig); }
+405	STD MODULAR RUMP	{ int|sys||aio_write(struct aiocb *aiocbp); }
+406	STD MODULAR RUMP	{ int|sys||lio_listio(int mode, struct aiocb *const *list, \
+				    int nent, struct sigevent *sig); }
 
 407	UNIMPL
 408	UNIMPL
@@ -846,7 +846,7 @@
 			    const sigset_t *mask); }
 437	STD 	RUMP	{ int|sys|50|pollts(struct pollfd *fds, u_int nfds, \
 			    const struct timespec *ts, const sigset_t *mask); }
-438	STD MODULAR	{ int|sys|50|aio_suspend( \
+438	STD MODULAR RUMP { int|sys|50|aio_suspend( \
 			    const struct aiocb *const *list, \
 			    int nent, const struct timespec *timeout); }
 439	STD  RUMP	{ int|sys|50|stat(const char *path, struct stat *ub); }
