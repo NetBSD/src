@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.292 2014/04/02 19:37:17 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.293 2014/04/09 23:49:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.292 2014/04/02 19:37:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.293 2014/04/09 23:49:27 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -354,6 +354,9 @@ rump_init(void)
 
 	ts = boottime;
 	tc_setclock(&ts);
+
+	extern krwlock_t exec_lock;
+	rw_init(&exec_lock);
 
 	/* we are mostly go.  do per-cpu subsystem init */
 	for (i = 0; i < numcpu; i++) {
