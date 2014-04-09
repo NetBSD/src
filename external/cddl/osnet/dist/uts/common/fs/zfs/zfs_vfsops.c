@@ -1959,6 +1959,9 @@ zfs_umount(vfs_t *vfsp, int fflag)
 		}
 	}
 #endif
+	ret = vflush(vfsp, NULL, (ISSET(fflag, MS_FORCE)? FORCECLOSE : 0));
+	if (ret != 0)
+		return ret;
 	vfsp->vfs_flag |= VFS_UNMOUNTED;
 
 	VERIFY(zfsvfs_teardown(zfsvfs, B_TRUE) == 0);
@@ -1988,13 +1991,6 @@ zfs_umount(vfs_t *vfsp, int fflag)
 	if (zfsvfs->z_ctldir != NULL)
 		zfsctl_destroy(zfsvfs);
 
-	if (fflag & MS_FORCE)
-		flags |= FORCECLOSE;
-	
-	ret = vflush(vfsp, NULL, 0);
-	if (ret != 0)
-		return ret;
-	
 	return (0);
 }
 
