@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.23.2.2 2014/04/07 02:20:00 tls Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.23.2.3 2014/04/09 03:39:44 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.23.2.2 2014/04/07 02:20:00 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.23.2.3 2014/04/09 03:39:44 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -221,7 +221,7 @@ rnd_counter(void)
 	uint64_t ret;
 
 #if defined(__HAVE_CPU_COUNTER)
-	if (cpu_hascounter() && sizeof(cpu_counter() == sizeof(uint64_t))) {
+	if (cpu_hascounter() && (sizeof(cpu_counter()) == sizeof(uint64_t))) {
 		return (cpu_counter());
 	}
 #endif
