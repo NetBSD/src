@@ -1,4 +1,4 @@
-/*      $NetBSD: scheduler.c,v 1.36 2014/03/15 15:15:27 pooka Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.37 2014/04/09 23:53:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.36 2014/03/15 15:15:27 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.37 2014/04/09 23:53:36 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -538,4 +538,20 @@ sched_nice(struct proc *p, int level)
 {
 
 	/* nothing to do for now */
+}
+
+void
+sched_enqueue(struct lwp *l, bool swtch)
+{
+
+	if (swtch)
+		panic("sched_enqueue with switcheroo");
+	rump_thread_allow(l);
+}
+
+void
+sched_dequeue(struct lwp *l)
+{
+
+	panic("sched_dequeue not implemented");
 }
