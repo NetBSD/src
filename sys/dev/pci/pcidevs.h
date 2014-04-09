@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1179 2014/04/09 08:34:55 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1180 2014/04/09 10:21:35 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1186 2014/04/09 08:34:32 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1187 2014/04/09 10:21:10 msaitoh Exp
  */
 
 /*
@@ -2836,6 +2836,7 @@
 #define	PCI_PRODUCT_INTEL_I211_COPPER	0x1539		/* I211 Ethernet (COPPER) */
 #define	PCI_PRODUCT_INTEL_I217_LM	0x153a		/* I217-LM Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I217_V	0x153b		/* I217-V Ethernet Connection */
+#define	PCI_PRODUCT_INTEL_82599_SFP_SF2	0x154d		/* 82599 (SFP+) 10 GbE Controller */
 #define	PCI_PRODUCT_INTEL_I218_V	0x1559		/* I218-V Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I218_LM	0x155a		/* I218-LM Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_80960_RP	0x1960		/* ROB-in i960RP Microprocessor */
