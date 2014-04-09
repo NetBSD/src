@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.1177 2014/04/07 21:38:28 njoly Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.1178 2014/04/09 08:34:56 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1185 2014/04/07 21:37:42 njoly Exp
+ *	NetBSD: pcidevs,v 1.1186 2014/04/09 08:34:32 msaitoh Exp
  */
 
 /*
@@ -3861,17 +3861,23 @@ static const uint16_t pci_products[] = {
 	    17081, 6347, 615, 4329, 7835, 7901, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IVYBRIDGE_IGD, 
 	    17081, 6347, 692, 1716, 2427, 0,
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IVYBRIDGE_IGD_1, 
-	    17081, 6347, 692, 1716, 2427, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IVYBRIDGE_M_HB, 
 	    17081, 6347, 6743, 6347, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IVYBRIDGE_PCIE_1, 
+	    17081, 6347, 615, 4329, 7835, 7901, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IVYBRIDGE_M_IGD, 
-	    17081, 6347, 692, 1716, 2427, 0,
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IVYBRIDGE_M_IGD_1, 
 	    17081, 6347, 692, 1716, 2427, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IVYBRIDGE_S_HB, 
 	    17081, 6347, 6743, 6347, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IVYBRIDGE_PCIE_2, 
+	    17081, 6347, 615, 4329, 7835, 7901, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IVYBRIDGE_S_IGD, 
+	    17081, 6347, 692, 1716, 2427, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IVYBRIDGE_PCIE_3, 
+	    17081, 6347, 615, 4329, 7835, 7901, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IVYBRIDGE_IGD_1, 
+	    17081, 6347, 692, 1716, 2427, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IVYBRIDGE_M_IGD_1, 
 	    17081, 6347, 692, 1716, 2427, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IVYBRIDGE_S_IGD_1, 
 	    17081, 6347, 692, 1716, 2427, 0,
@@ -9576,7 +9582,7 @@ static const char pci_words[] = { "."
 	    "TMC\0" /* 1 refs @ 601 */
 	    "Miro\0" /* 1 refs @ 605 */
 	    "(2nd\0" /* 14 refs @ 610 */
-	    "PCI\0" /* 323 refs @ 615 */
+	    "PCI\0" /* 326 refs @ 615 */
 	    "Vendor\0" /* 16 refs @ 619 */
 	    "ID)\0" /* 19 refs @ 626 */
 	    "NEC\0" /* 2 refs @ 630 */
@@ -10072,7 +10078,7 @@ static const char pci_words[] = { "."
 	    "Transmeta\0" /* 1 refs @ 4302 */
 	    "Rockwell\0" /* 1 refs @ 4312 */
 	    "Davicom\0" /* 1 refs @ 4321 */
-	    "Express\0" /* 104 refs @ 4329 */
+	    "Express\0" /* 107 refs @ 4329 */
 	    "TriTech\0" /* 1 refs @ 4337 */
 	    "Kofax\0" /* 1 refs @ 4345 */
 	    "Image\0" /* 1 refs @ 4351 */
@@ -10338,7 +10344,7 @@ static const char pci_words[] = { "."
 	    "ACCM\0" /* 1 refs @ 6330 */
 	    "2188\0" /* 1 refs @ 6335 */
 	    "VL-PCI\0" /* 3 refs @ 6340 */
-	    "Bridge\0" /* 609 refs @ 6347 */
+	    "Bridge\0" /* 612 refs @ 6347 */
 	    "2051\0" /* 2 refs @ 6354 */
 	    "Single\0" /* 7 refs @ 6359 */
 	    "Solution\0" /* 2 refs @ 6366 */
@@ -10531,7 +10537,7 @@ static const char pci_words[] = { "."
 	    "Link\0" /* 19 refs @ 7810 */
 	    "Family11h\0" /* 5 refs @ 7815 */
 	    "Family14h\0" /* 1 refs @ 7825 */
-	    "Root\0" /* 19 refs @ 7835 */
+	    "Root\0" /* 22 refs @ 7835 */
 	    "Complex\0" /* 2 refs @ 7840 */
 	    "Family15h\0" /* 6 refs @ 7848 */
 	    "North\0" /* 11 refs @ 7858 */
@@ -10539,7 +10545,7 @@ static const char pci_words[] = { "."
 	    "C-state\0" /* 1 refs @ 7878 */
 	    "Family12h\0" /* 2 refs @ 7886 */
 	    "GPP0\0" /* 1 refs @ 7896 */
-	    "Port\0" /* 132 refs @ 7901 */
+	    "Port\0" /* 135 refs @ 7901 */
 	    "Misc.\0" /* 1 refs @ 7906 */
 	    "PCnet-PCI\0" /* 1 refs @ 7912 */
 	    "PCnet-Home\0" /* 1 refs @ 7922 */
@@ -11855,7 +11861,7 @@ static const char pci_words[] = { "."
 	    "1030\0" /* 2 refs @ 17065 */
 	    "6230\0" /* 2 refs @ 17070 */
 	    "Sandy\0" /* 10 refs @ 17075 */
-	    "Ivy\0" /* 10 refs @ 17081 */
+	    "Ivy\0" /* 13 refs @ 17081 */
 	    "80312\0" /* 1 refs @ 17085 */
 	    "80321\0" /* 1 refs @ 17091 */
 	    "6700PXH\0" /* 2 refs @ 17097 */
