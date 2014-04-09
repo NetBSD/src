@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1178 2014/04/07 21:38:28 njoly Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1179 2014/04/09 08:34:55 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1185 2014/04/07 21:37:42 njoly Exp
+ *	NetBSD: pcidevs,v 1.1186 2014/04/09 08:34:32 msaitoh Exp
  */
 
 /*
@@ -2553,12 +2553,15 @@
 #define	PCI_PRODUCT_INTEL_IVYBRIDGE_HB	0x0150		/* Ivy Bridge Host Bridge */
 #define	PCI_PRODUCT_INTEL_IVYBRIDGE_PCIE	0x0151		/* Ivy Bridge PCI Express Root Port */
 #define	PCI_PRODUCT_INTEL_IVYBRIDGE_IGD	0x0152		/* Ivy Bridge Integrated Graphics Device */
-#define	PCI_PRODUCT_INTEL_IVYBRIDGE_IGD_1	0x0162		/* Ivy Bridge Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_IVYBRIDGE_M_HB	0x0154		/* Ivy Bridge Host Bridge */
+#define	PCI_PRODUCT_INTEL_IVYBRIDGE_PCIE_1	0x0155		/* Ivy Bridge PCI Express Root Port */
 #define	PCI_PRODUCT_INTEL_IVYBRIDGE_M_IGD	0x0156		/* Ivy Bridge Integrated Graphics Device */
-#define	PCI_PRODUCT_INTEL_IVYBRIDGE_M_IGD_1	0x0166		/* Ivy Bridge Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_IVYBRIDGE_S_HB	0x0158		/* Ivy Bridge Host Bridge */
+#define	PCI_PRODUCT_INTEL_IVYBRIDGE_PCIE_2	0x0159		/* Ivy Bridge PCI Express Root Port */
 #define	PCI_PRODUCT_INTEL_IVYBRIDGE_S_IGD	0x015a		/* Ivy Bridge Integrated Graphics Device */
+#define	PCI_PRODUCT_INTEL_IVYBRIDGE_PCIE_3	0x015d		/* Ivy Bridge PCI Express Root Port */
+#define	PCI_PRODUCT_INTEL_IVYBRIDGE_IGD_1	0x0162		/* Ivy Bridge Integrated Graphics Device */
+#define	PCI_PRODUCT_INTEL_IVYBRIDGE_M_IGD_1	0x0166		/* Ivy Bridge Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_IVYBRIDGE_S_IGD_1	0x016a		/* Ivy Bridge Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_80312	0x030d		/* 80312 I/O Companion Chip */
 #define	PCI_PRODUCT_INTEL_80321	0x0319		/* 80321 I/O Processor */
