@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.152 2014/03/11 20:32:05 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.153 2014/04/09 23:53:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.152 2014/03/11 20:32:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.153 2014/04/09 23:53:36 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -909,6 +909,21 @@ uvm_vm_page_to_phys(const struct vm_page *pg)
 {
 
 	return 0;
+}
+
+vaddr_t
+uvm_uarea_alloc(void)
+{
+
+	/* non-zero */
+	return (vaddr_t)11;
+}
+
+void
+uvm_uarea_free(vaddr_t uarea)
+{
+
+	/* nata, so creamy */
 }
 
 /*
