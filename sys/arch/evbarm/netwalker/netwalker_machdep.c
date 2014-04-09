@@ -1,4 +1,4 @@
-/*	$NetBSD: netwalker_machdep.c,v 1.14 2014/03/29 12:00:27 hkenken Exp $	*/
+/*	$NetBSD: netwalker_machdep.c,v 1.15 2014/04/09 04:00:50 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005, 2010  Genetec Corporation.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.14 2014/03/29 12:00:27 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.15 2014/04/09 04:00:50 hkenken Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_cputypes.h"
@@ -137,7 +137,9 @@ __KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.14 2014/03/29 12:00:27 hkenk
 #include <arm/imx/imxuartreg.h>
 #include <arm/imx/imxuartvar.h>
 #include <arm/imx/imx51_iomuxreg.h>
+
 #include <evbarm/netwalker/netwalker_reg.h>
+#include <evbarm/netwalker/netwalker.h>
 
 #include "ukbd.h"
 #if (NUKBD > 0)
@@ -146,20 +148,12 @@ __KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.14 2014/03/29 12:00:27 hkenk
 
 /* Kernel text starts 1MB in from the bottom of the kernel address space. */
 #define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0x00100000)
-#define	KERNEL_VM_BASE		(KERNEL_BASE + 0x01000000)
-
-/*
- * The range 0xc1000000 - 0xccffffff is available for kernel VM space
- * Core-logic registers and I/O mappings occupy 0xfd000000 - 0xffffffff
- */
-#define KERNEL_VM_SIZE		0x0C000000
 
 BootConfig bootconfig;		/* Boot config storage */
 static char bootargs[MAX_BOOT_STRING];
 char *boot_args = NULL;
 
 extern char KERNEL_BASE_phys[];
-extern char KERNEL_BASE_virt[];
 
 extern int cpu_do_powersave;
 
@@ -167,12 +161,7 @@ extern int cpu_do_powersave;
  * Macros to translate between physical and virtual for a subset of the
  * kernel address space.  *Not* for general use.
  */
-#define KERNEL_BASE_PHYS ((paddr_t)&KERNEL_BASE_phys)
-#define KERNEL_BASE_VIRT ((vaddr_t)&KERNEL_BASE_virt)
-#define KERN_VTOPHYS(va) \
-	((paddr_t)((vaddr_t)va - KERNEL_BASE_VIRT + KERNEL_BASE_PHYS))
-#define KERN_PHYSTOV(pa) \
-	((vaddr_t)((paddr_t)pa - KERNEL_BASE_PHYS + KERNEL_BASE_VIRT))
+#define KERNEL_BASE_PHYS ((paddr_t)KERNEL_BASE_phys)
 
 
 /* Prototypes */
@@ -212,13 +201,17 @@ int comcnmode = CONMODE;
 static const struct pmap_devmap netwalker_devmap[] = {
 	{
 		/* for UART1, IOMUXC */
-		NETWALKER_IO_VBASE0,
-		_A(NETWALKER_IO_PBASE0),
-		L1_S_SIZE * 4,
-		VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE
+		.pd_va = _A(NETWALKER_IO_VBASE0),
+		.pd_pa = _A(NETWALKER_IO_PBASE0),
+		.pd_size = _S(L1_S_SIZE * 4),
+		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
+		.pd_cache = PTE_NOCACHE
 	},
-	{0, 0, 0, 0, 0 }
+	{0}
 };
+
+#undef	_A
+#undef	_S
 
 #ifndef MEMSTART
 #define MEMSTART	0x90000000
@@ -274,6 +267,10 @@ initarm(void *arg)
 	/* Talk to the user */
 	printf("\nNetBSD/evbarm (" ___STRING(EVBARM_BOARDTYPE) ") booting ...\n");
 
+#ifdef BOOT_ARGS
+	char mi_bootargs[] = BOOT_ARGS;
+	parse_mi_bootargs(mi_bootargs);
+#endif
 	bootargs[0] = '\0';
 
 #if defined(VERBOSE_INIT_ARM) || 1
@@ -288,7 +285,7 @@ initarm(void *arg)
 	 * Physical Address Range     Description
 	 * -----------------------    ----------------------------------
 	 *
-	 * 0x90000000 - 0x97FFFFFF    DDR SDRAM (128MByte)
+	 * 0x90000000 - 0xAFFFFFFF    DDR SDRAM (512MByte)
 	 *
 	 * The initarm() has the responsibility for creating the kernel
 	 * page tables.
@@ -305,11 +302,29 @@ initarm(void *arg)
 	bootconfig.dram[0].address = MEMSTART;
 	bootconfig.dram[0].pages = (MEMSIZE * 1024 * 1024) / PAGE_SIZE;
 
-	arm32_bootmem_init(bootconfig.dram[0].address,
-	    bootconfig.dram[0].pages * PAGE_SIZE, (uintptr_t)KERNEL_BASE_PHYS);
+	psize_t ram_size = bootconfig.dram[0].pages * PAGE_SIZE;
+
+#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+	if (ram_size > KERNEL_VM_BASE - KERNEL_BASE) {
+		printf("%s: dropping RAM size from %luMB to %uMB\n",
+		    __func__, (unsigned long) (ram_size >> 20),
+		    (KERNEL_VM_BASE - KERNEL_BASE) >> 20);
+		ram_size = KERNEL_VM_BASE - KERNEL_BASE;
+	}
+#endif
+
+	arm32_bootmem_init(bootconfig.dram[0].address, ram_size,
+	    KERNEL_BASE_PHYS);
+
+#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+	const bool mapallmem_p = true;
+	KASSERT(ram_size <= KERNEL_VM_BASE - KERNEL_BASE);
+#else
+	const bool mapallmem_p = false;
+#endif
 
 	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_HIGH, 0,
-	    netwalker_devmap, false);
+	    netwalker_devmap, mapallmem_p);
 
 	/* disable power down counter in watch dog,
 	   This must be done within 16 seconds of start-up. */
@@ -609,22 +624,6 @@ setup_ioports(void)
 		ioreg_write(NETWALKER_IOMUXC_VBASE + p->reg,
 			    p->val);
 	}
-
-
-#if 0	/* already done by bootloader */
-	/* GPIO2[22,23]: input (left/right button)
-	   GPIO2[21]: input (power button) */
-	ioreg_write(NETWALKER_GPIO_VBASE(2) + GPIO_DIR,
-		    ~__BITS(21,23) &
-		    ioreg_read(NETWALKER_GPIO_VBASE(2) + GPIO_DIR));
-#endif
-
-#if 0	/* already done by bootloader */
-	/* GPIO4[12]: input  (cover switch) */
-	ioreg_write(NETWALKER_GPIO_VBASE(4) + GPIO_DIR,
-		    ~__BIT(12) &
-		    ioreg_read(NETWALKER_GPIO_VBASE(4) + GPIO_DIR));
-#endif
 }
 
 
