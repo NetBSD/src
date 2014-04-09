@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: rc,v 1.167 2014/04/09 12:38:09 apb Exp $
+# $NetBSD: rc,v 1.168 2014/04/09 12:45:05 apb Exp $
 #
 # rc --
 #	Run the scripts in /etc/rc.d with rcorder, and log output
@@ -117,6 +117,20 @@ rc_real_work()
 	#
 	RC_PID=$(/bin/sh -c 'ps -p $$ -o ppid=') || RC_PID=$$
 	kill -0 $RC_PID >/dev/null 2>&1 || RC_PID=$$
+
+	#
+	# As long as process $RC_PID is still running, send a "nop"
+	# metadata message to the postprocessor every few seconds.
+	# This should help flush partial lines that may appear when
+	# rc.d scripts that are NOT marked with "KEYWORD: interactive"
+	# nevertheless attempt to print prompts and wait for input.
+	#
+	(
+	    while kill -0 $RC_PID ; do
+		print_rc_metadata "nop"
+		sleep 3
+	    done
+	) &
 
 	#
 	# Get a list of all rc.d scripts, and use rcorder to choose
