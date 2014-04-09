@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.349 2014/04/04 05:10:15 matt Exp $
+#	$NetBSD: bsd.lib.mk,v 1.350 2014/04/09 16:29:08 christos Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -622,7 +622,7 @@ ${_LIB.so.full}: ${SOLIB} ${DPADD} ${DPLIBC} \
 	    ${_LDFLAGS.${_LIB}} -o ${.TARGET} ${_LIBLDOPTS} \
 	    -Wl,--whole-archive ${SOLIB} \
 	    -Wl,--no-whole-archive ${_LDADD.${_LIB}}
-	${OBJCOPY} -x ${.TARGET}
+	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 #  We don't use INSTALL_SYMLINK here because this is just
 #  happening inside the build directory/objdir. XXX Why does
 #  this spend so much effort on libraries that aren't live??? XXX
