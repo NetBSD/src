@@ -1,4 +1,4 @@
-/*	$NetBSD: netwalker_start.S,v 1.3 2014/04/09 04:00:50 hkenken Exp $	*/
+/*	$NetBSD: netwalker_start.S,v 1.4 2014/04/09 12:35:34 hkenken Exp $	*/
 
 /*-
  * Copyright (c) 2009 SHIMIZU Ryo <ryo@nerv.org>
@@ -66,7 +66,7 @@
 #include <arm/imx/imxuartreg.h>
 #include <evbarm/netwalker/netwalker_reg.h>
 
-RCSID("$NetBSD: netwalker_start.S,v 1.3 2014/04/09 04:00:50 hkenken Exp $")
+RCSID("$NetBSD: netwalker_start.S,v 1.4 2014/04/09 12:35:34 hkenken Exp $")
 
 #if defined(VERBOSE_INIT_ARM)
 #define DEBUG_STARTUP
@@ -93,7 +93,7 @@ RCSID("$NetBSD: netwalker_start.S,v 1.3 2014/04/09 04:00:50 hkenken Exp $")
 #define	CHECKPOINT(n)		/* nothing to do */
 #define	CHECKPOINT2(n,ra,rb)	/* nothing to do */
 #endif
-	
+
 	.section .start,"ax",%progbits
 
 	.text
@@ -109,11 +109,11 @@ _C_LABEL(netwalker_start):
 	ldr	r0, =0xdeadb01f
 	bl	_C_LABEL(debugprintx)
 	bl	newline
-	
+
 	mov	r0, pc
 	bl	_C_LABEL(debugprintx)
 	bl	newline
-	
+
 	mrc	p15, 0, r0, c0, c0, 3	/* read TLB type register */
 	bl	_C_LABEL(debugprintx)
 	bl	newline
@@ -146,13 +146,13 @@ _C_LABEL(netwalker_start):
 	bl	_C_LABEL(debugprintx)
 	bl	newline
 #endif	/* DEBUG_STARTUP */
-	
+
 	/* Are we running on right place ? */
 	ldr	r2, =KERNEL_TEXT_ADDR
 	adr	r0, _C_LABEL(netwalker_start)
 	cmp	r0, r2
 	beq	relocated
-	
+
 	/*
 	 * move me to RAM
 	 */
@@ -179,8 +179,8 @@ _C_LABEL(netwalker_start):
 	subs r1,r1,#1
 	bhi 5b
 
-7:	
-	
+7:
+
 
 	/*
 	 * Okay, we are finished relocating the text segment.  Now
@@ -315,7 +315,7 @@ _C_LABEL(debugputc):
 
 	ldmfd	sp!, {r0, r1, r2, pc}
 
-newline:	
+newline:
 	mov	r1, lr
 	mov	r0, #0x0d
 	bl	_C_LABEL(debugputc)
