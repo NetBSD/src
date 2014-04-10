@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1887 2014/03/25 09:52:55 ozaki-r Exp $
+#	$NetBSD: mi,v 1.1888 2014/04/10 00:09:08 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3883,6 +3883,8 @@
 ./usr/lib/librumpuser.a				comp-c-lib		rump
 ./usr/lib/librumpuser_p.a			comp-c-proflib		profile,rump
 ./usr/lib/librumpvfs.a				comp-c-lib		rump
+./usr/lib/librumpvfs_aio.a			comp-c-lib		rump
+./usr/lib/librumpvfs_aio_p.a			comp-c-proflib		profile,rump
 ./usr/lib/librumpvfs_fifofs.a			comp-c-lib		rump
 ./usr/lib/librumpvfs_fifofs_p.a			comp-c-proflib		profile,rump
 ./usr/lib/librumpvfs_layerfs.a			comp-c-lib		rump
