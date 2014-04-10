@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.85 2014/04/06 09:53:59 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.86 2014/04/10 02:44:05 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_arm_bus_space.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.85 2014/04/06 09:53:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.86 2014/04/10 02:44:05 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -766,7 +766,8 @@ _bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 static void
 _bus_dmamap_sync_segment(vaddr_t va, paddr_t pa, vsize_t len, int ops, bool readonly_p)
 {
-	KASSERT((va & PAGE_MASK) == (pa & PAGE_MASK));
+	KASSERTMSG((va & PAGE_MASK) == (pa & PAGE_MASK),
+	    "va %#lx pa %#lx", va, pa);
 #if 0
 	printf("sync_segment: va=%#lx pa=%#lx len=%#lx ops=%#x ro=%d\n",
 	    va, pa, len, ops, readonly_p);
@@ -1502,8 +1503,8 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 					    (vaddr & L2_L_OFFSET);
 					coherent = (pte & L2_L_CACHE_MASK) == 0;
 				} else {
-					curaddr = (pte & L2_S_FRAME) |
-					    (vaddr & L2_S_OFFSET);
+					curaddr = (pte & ~PAGE_MASK) |
+					    (vaddr & PAGE_MASK);
 					coherent = (pte & L2_S_CACHE_MASK) == 0;
 				}
 			}
@@ -1511,6 +1512,8 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 			(void) pmap_extract(pmap, vaddr, &curaddr);
 			coherent = false;
 		}
+		KASSERTMSG((vaddr & PAGE_MASK) == (curaddr & PAGE_MASK),
+		    "va %#lx curaddr %#lx", vaddr, curaddr);
 
 		/*
 		 * Compute the segment size, and adjust counts.
