@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.144 2014/03/30 23:20:14 matt Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.145 2014/04/10 02:49:42 matt Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.144 2014/03/30 23:20:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.145 2014/04/10 02:49:42 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -1275,8 +1275,8 @@ struct cpu_functions xscale_cpufuncs = {
 #endif
 /* CPU_XSCALE_80200 || CPU_XSCALE_80321 || __CPU_XSCALE_PXA2XX || CPU_XSCALE_IXP425 */
 
-#if defined(CPU_CORTEX)
-struct cpu_functions cortex_cpufuncs = {
+#if defined(CPU_ARMV7)
+struct cpu_functions armv7_cpufuncs = {
 	/* CPU functions */
 
 	.cf_id			= cpufunc_id,
@@ -1337,7 +1337,7 @@ struct cpu_functions cortex_cpufuncs = {
 	.cf_setup		= armv7_setup
 
 };
-#endif /* CPU_CORTEX */
+#endif /* CPU_ARMV7 */
 
 #ifdef CPU_PJ4B
 struct cpu_functions pj4bv7_cpufuncs = {
@@ -1470,11 +1470,11 @@ struct cpu_functions cpufuncs;
 u_int cputype;
 
 #if defined(CPU_ARM7TDMI) || defined(CPU_ARM8) || defined(CPU_ARM9) || \
-    defined(CPU_ARM9E) || defined(CPU_ARM10) || defined(CPU_ARM11) || \
-    defined(CPU_FA526) || \
+    defined(CPU_ARM9E) || defined(CPU_ARM10) || defined(CPU_FA526) || \
+    defined(CPU_SHEEVA) || \
     defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
     defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425) || \
-    defined(CPU_CORTEX) || defined(CPU_PJ4B) || defined(CPU_SHEEVA)
+    defined(CPU_ARMV6) || defined(CPU_ARMV7)
 static void get_cachetype_cp15(void);
 
 /* Additional cache information local to this file.  Log2 of some of the
@@ -1489,7 +1489,7 @@ get_cachesize_cp15(int cssr)
 {
 	u_int csid;
 
-#if ((CPU_CORTEX) > 0) || defined(CPU_PJ4B)
+#if defined(CPU_ARMV7)
 	__asm volatile(".arch\tarmv7a");
 	__asm volatile("mcr p15, 2, %0, c0, c0, 0" :: "r" (cssr));
 	__asm volatile("isb");	/* sync to the new cssr */
@@ -2128,7 +2128,7 @@ set_cpufuncs(void)
 #endif /* CPU_XSCALE_IXP425 */
 #if defined(CPU_CORTEX)
 	if (CPU_ID_CORTEX_P(cputype)) {
-		cpufuncs = cortex_cpufuncs;
+		cpufuncs = armv7_cpufuncs;
 		cpu_do_powersave = 1;			/* Enable powersave */
 #if defined(CPU_ARMV6) || defined(CPU_PRE_ARMV6)
 		cpu_armv7_p = true;
@@ -2546,10 +2546,11 @@ late_abort_fixup(void *arg)
 #if defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM7TDMI) || \
 	defined(CPU_ARM8) || defined (CPU_ARM9) || defined (CPU_ARM9E) || \
 	defined(CPU_SA110) || defined(CPU_SA1100) || defined(CPU_SA1110) || \
+	defined(CPU_FA526) || \
 	defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
 	defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425) || \
-	defined(CPU_ARM10) || defined(CPU_ARM11) || \
-	defined(CPU_FA526) || defined(CPU_CORTEX) || defined(CPU_SHEEVA)
+	defined(CPU_ARM10) || defined(CPU_SHEEVA) || \
+	defined(CPU_ARMV6) || defined(CPU_ARMV7)
 
 #define IGN	0
 #define OR	1
@@ -3092,7 +3093,7 @@ pj4bv7_setup(char *args)
 }
 #endif /* CPU_PJ4B */
 
-#if defined(CPU_CORTEX)
+#if defined(CPU_ARMV7)
 struct cpu_option armv7_options[] = {
     { "cpu.cache",      BIC, OR,  (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
     { "cpu.nocache",    OR,  BIC, (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
@@ -3133,7 +3134,7 @@ armv7_setup(char *args)
 	curcpu()->ci_ctrl = cpuctrl;
 	cpu_control(cpuctrlmask, cpuctrl);
 }
-#endif /* CPU_CORTEX */
+#endif /* CPU_ARMV7 */
 
 
 #if defined(CPU_ARM1136) || defined(CPU_ARM1176) 
