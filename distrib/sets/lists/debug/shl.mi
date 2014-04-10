@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.58 2014/03/21 17:00:18 christos Exp $
+# $NetBSD: shl.mi,v 1.59 2014/04/10 00:09:09 pooka Exp $
 ./usr/libdata/debug/lib/libc.so.12.190.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypt.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypto.so.8.2.debug		comp-sys-debug	debug
@@ -238,6 +238,7 @@
 ./usr/libdata/debug/usr/lib/librumpnet_virtif.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpuser.so.0.1.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpvfs.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpvfs_aio.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpvfs_fifofs.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpvfs_layerfs.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/libsaslc.so.0.0.debug	comp-sys-debug	crypto,debug
