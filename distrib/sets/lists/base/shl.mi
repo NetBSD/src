@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.697 2014/03/21 17:00:18 christos Exp $
+# $NetBSD: shl.mi,v 1.698 2014/04/10 00:09:08 pooka Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -706,6 +706,9 @@
 ./usr/lib/librumpvfs.so				base-rump-shlib	rump
 ./usr/lib/librumpvfs.so.0			base-rump-shlib	rump
 ./usr/lib/librumpvfs.so.0.0			base-rump-shlib	rump
+./usr/lib/librumpvfs_aio.so			base-rump-shlib	rump
+./usr/lib/librumpvfs_aio.so.0		base-rump-shlib	rump
+./usr/lib/librumpvfs_aio.so.0.0		base-rump-shlib	rump
 ./usr/lib/librumpvfs_fifofs.so			base-rump-shlib	rump
 ./usr/lib/librumpvfs_fifofs.so.0		base-rump-shlib	rump
 ./usr/lib/librumpvfs_fifofs.so.0.0		base-rump-shlib	rump
