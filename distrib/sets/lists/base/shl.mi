@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.698 2014/04/10 00:09:08 pooka Exp $
+# $NetBSD: shl.mi,v 1.699 2014/04/10 22:11:57 asau Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -49,9 +49,9 @@
 ./lib/libm.so					base-sys-shlib		dynamicroot
 ./lib/libm.so.0					base-sys-shlib		dynamicroot
 ./lib/libm.so.0.10				base-sys-shlib		dynamicroot
-./lib/libnpf.so					base-sys-shlib		dynamicroot
-./lib/libnpf.so.0				base-sys-shlib		dynamicroot
-./lib/libnpf.so.0.0				base-sys-shlib		dynamicroot
+./lib/libnpf.so					base-npf-shlib		npf,dynamicroot
+./lib/libnpf.so.0				base-npf-shlib		npf,dynamicroot
+./lib/libnpf.so.0.0				base-npf-shlib		npf,dynamicroot
 ./lib/libpcap.so				base-sys-shlib		dynamicroot
 ./lib/libpcap.so.5				base-sys-shlib		dynamicroot
 ./lib/libpcap.so.5.0				base-sys-shlib		dynamicroot
