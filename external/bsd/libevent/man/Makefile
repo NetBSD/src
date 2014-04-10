@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2013/04/11 17:49:12 christos Exp $
+# $NetBSD: Makefile,v 1.3 2014/04/10 23:28:11 christos Exp $
 
 # Try to undo the doxygen lossage in the man pages.
 
@@ -20,7 +20,7 @@ HMAN1=${HSRCS1:S/^/ev/g:S/.h.3/.3/g}
 
 .for i in ${HSRCS1}
 ev${i:S/.h.3/.3/g}: $i
-	${.CURDIR}/fixman ${TOOL_SED} ${.ALLSRC} ${.TARGET}
+	${HOST_SH} ${.CURDIR}/fixman ${TOOL_SED} ${.ALLSRC} ${.TARGET}
 .endfor
 
 HSRCS2= \
