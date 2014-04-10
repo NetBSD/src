@@ -1,4 +1,4 @@
-/*	$NetBSD: apci.c,v 1.11 2011/02/08 20:20:14 rmind Exp $	*/
+/*	$NetBSD: apci.c,v 1.12 2014/04/10 18:10:09 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -85,7 +85,8 @@ void
 apciprobe(struct consdev *cp)
 {
 
-	apcicnaddr = (void *)IIOV(FRODO_BASE + FRODO_APCI_OFFSET(1));
+	apcicnaddr =
+	    (void *)IIOV(INTIOBASE + FRODO_BASE + FRODO_APCI_OFFSET(1));
 
 	cp->cn_pri = CN_DEAD;
 
