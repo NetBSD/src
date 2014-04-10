@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.282 2014/04/10 02:45:02 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.283 2014/04/10 02:45:55 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -216,7 +216,7 @@
 #include <arm/locore.h>
 //#include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.282 2014/04/10 02:45:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.283 2014/04/10 02:45:55 matt Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -3888,8 +3888,7 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 			return false;
 		}
 
-		ptep = &ptep[l2pte_index(va)];
-		pte = *ptep;
+		pte = ptep[l2pte_index(va)];
 		pmap_release_pmap_lock(pm);
 
 		if (pte == 0)
@@ -3901,7 +3900,7 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 			break;
 
 		default:
-			pa = (pte & ~PAGE_MASK) | (va & ~PAGE_MASK);
+			pa = (pte & ~PAGE_MASK) | (va & PAGE_MASK);
 			break;
 		}
 	}
