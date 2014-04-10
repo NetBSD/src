@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.14 2014/03/30 15:20:54 matt Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.15 2014/04/10 16:07:50 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -135,7 +135,7 @@ arm_boot_l1pt_init:
 #define CPU_CONTROL_AFLT_ENABLE_CLR	CPU_CONTROL_AFLT_ENABLE
 #define CPU_CONTROL_AFLT_ENABLE_SET	0
 #else
-#deifne CPU_CONTROL_AFLT_ENABLE_CLR	0
+#define CPU_CONTROL_AFLT_ENABLE_CLR	0
 #define CPU_CONTROL_AFLT_ENABLE_SET	CPU_CONTROL_AFLT_ENABLE
 #endif
 
@@ -259,7 +259,7 @@ arm_cpuinit:
 
 	.p2align 2
 
-#if defined(VERBOSE_INIT_ARM) && XPUTC_COM
+#if defined(VERBOSE_INIT_ARM) && defined(XPUTC_COM)
 #define TIMO		0x25000
 #ifndef COM_MULT
 #define COM_MULT	1
