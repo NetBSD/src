@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.377 2014/02/19 15:23:20 maxv Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.378 2014/04/11 02:27:20 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.377 2014/02/19 15:23:20 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.378 2014/04/11 02:27:20 uebayasi Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -583,6 +583,7 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	char * const *envs, execve_fetch_element_t fetch_element,
 	struct execve_data * restrict data)
 {
+	struct exec_package	* const epp = &data->ed_pack;
 	int			error;
 	struct proc		*p;
 	char			*dp, *sp;
@@ -650,29 +651,28 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	/*
 	 * initialize the fields of the exec package.
 	 */
-	data->ed_pack.ep_name = path;
-	data->ed_pack.ep_kname = data->ed_pathstring;
-	data->ed_pack.ep_resolvedname = data->ed_resolvedpathbuf;
-	data->ed_pack.ep_hdr = kmem_alloc(exec_maxhdrsz, KM_SLEEP);
-	data->ed_pack.ep_hdrlen = exec_maxhdrsz;
-	data->ed_pack.ep_hdrvalid = 0;
-	data->ed_pack.ep_emul_arg = NULL;
-	data->ed_pack.ep_emul_arg_free = NULL;
-	memset(&data->ed_pack.ep_vmcmds, 0, sizeof(data->ed_pack.ep_vmcmds));
-	data->ed_pack.ep_vap = &data->ed_attr;
-	data->ed_pack.ep_flags = 0;
-	MD_TOPDOWN_INIT(&data->ed_pack);
-	data->ed_pack.ep_emul_root = NULL;
-	data->ed_pack.ep_interp = NULL;
-	data->ed_pack.ep_esch = NULL;
-	data->ed_pack.ep_pax_flags = 0;
-	memset(data->ed_pack.ep_machine_arch, 0,
-	    sizeof(data->ed_pack.ep_machine_arch));
+	epp->ep_name = path;
+	epp->ep_kname = data->ed_pathstring;
+	epp->ep_resolvedname = data->ed_resolvedpathbuf;
+	epp->ep_hdr = kmem_alloc(exec_maxhdrsz, KM_SLEEP);
+	epp->ep_hdrlen = exec_maxhdrsz;
+	epp->ep_hdrvalid = 0;
+	epp->ep_emul_arg = NULL;
+	epp->ep_emul_arg_free = NULL;
+	memset(&epp->ep_vmcmds, 0, sizeof(epp->ep_vmcmds));
+	epp->ep_vap = &data->ed_attr;
+	epp->ep_flags = 0;
+	MD_TOPDOWN_INIT(epp);
+	epp->ep_emul_root = NULL;
+	epp->ep_interp = NULL;
+	epp->ep_esch = NULL;
+	epp->ep_pax_flags = 0;
+	memset(epp->ep_machine_arch, 0, sizeof(epp->ep_machine_arch));
 
 	rw_enter(&exec_lock, RW_READER);
 
 	/* see if we can run it. */
-	if ((error = check_exec(l, &data->ed_pack, data->ed_pathbuf)) != 0) {
+	if ((error = check_exec(l, epp, data->ed_pathbuf)) != 0) {
 		if (error != ENOENT) {
 			DPRINTF(("%s: check exec failed %d\n",
 			    __func__, error));
@@ -689,8 +689,8 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	data->ed_argc = 0;
 
 	/* copy the fake args list, if there's one, freeing it as we go */
-	if (data->ed_pack.ep_flags & EXEC_HASARGL) {
-		tmpfap = data->ed_pack.ep_fa;
+	if (epp->ep_flags & EXEC_HASARGL) {
+		tmpfap = epp->ep_fa;
 		while (tmpfap->fa_arg != NULL) {
 			const char *cp;
 
@@ -703,8 +703,8 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 			kmem_free(tmpfap->fa_arg, tmpfap->fa_len);
 			tmpfap++; data->ed_argc++;
 		}
-		kmem_free(data->ed_pack.ep_fa, data->ed_pack.ep_fa_len);
-		data->ed_pack.ep_flags &= ~EXEC_HASARGL;
+		kmem_free(epp->ep_fa, epp->ep_fa_len);
+		epp->ep_flags &= ~EXEC_HASARGL;
 	}
 
 	/* Now get argv & environment */
@@ -715,7 +715,7 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	}
 	/* 'i' will index the argp/envp element to be retrieved */
 	i = 0;
-	if (data->ed_pack.ep_flags & EXEC_SKIPARG)
+	if (epp->ep_flags & EXEC_SKIPARG)
 		i++;
 
 	while (1) {
@@ -769,8 +769,8 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 
 	dp = (char *) ALIGN(dp);
 
-	data->ed_szsigcode = data->ed_pack.ep_esch->es_emul->e_esigcode -
-	    data->ed_pack.ep_esch->es_emul->e_sigcode;
+	data->ed_szsigcode = epp->ep_esch->es_emul->e_esigcode -
+	    epp->ep_esch->es_emul->e_sigcode;
 
 #ifdef __MACHINE_STACK_GROWS_UP
 /* See big comment lower down */
@@ -780,17 +780,17 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 #endif
 
 	/* Now check if args & environ fit into new stack */
-	if (data->ed_pack.ep_flags & EXEC_32) {
+	if (epp->ep_flags & EXEC_32) {
 		data->ed_ps_strings_sz = sizeof(struct ps_strings32);
 		len = ((data->ed_argc + data->ed_envc + 2 +
-		    data->ed_pack.ep_esch->es_arglen) *
+		    epp->ep_esch->es_arglen) *
 		    sizeof(int) + sizeof(int) + dp + RTLD_GAP +
 		    data->ed_szsigcode + data->ed_ps_strings_sz + STACK_PTHREADSPACE)
 		    - data->ed_argp;
 	} else {
 		data->ed_ps_strings_sz = sizeof(struct ps_strings);
 		len = ((data->ed_argc + data->ed_envc + 2 +
-		    data->ed_pack.ep_esch->es_arglen) *
+		    epp->ep_esch->es_arglen) *
 		    sizeof(char *) + sizeof(int) + dp + RTLD_GAP +
 		    data->ed_szsigcode + data->ed_ps_strings_sz + STACK_PTHREADSPACE)
 		    - data->ed_argp;
@@ -804,36 +804,36 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	/* make the stack "safely" aligned */
 	len = STACK_LEN_ALIGN(len, STACK_ALIGNBYTES);
 
-	if (len > data->ed_pack.ep_ssize) {
+	if (len > epp->ep_ssize) {
 		/* in effect, compare to initial limit */
 		DPRINTF(("%s: stack limit exceeded %zu\n", __func__, len));
 		goto bad;
 	}
 	/* adjust "active stack depth" for process VSZ */
-	data->ed_pack.ep_ssize = len;
+	epp->ep_ssize = len;
 
 	return 0;
 
  bad:
 	/* free the vmspace-creation commands, and release their references */
-	kill_vmcmds(&data->ed_pack.ep_vmcmds);
+	kill_vmcmds(&epp->ep_vmcmds);
 	/* kill any opened file descriptor, if necessary */
-	if (data->ed_pack.ep_flags & EXEC_HASFD) {
-		data->ed_pack.ep_flags &= ~EXEC_HASFD;
-		fd_close(data->ed_pack.ep_fd);
+	if (epp->ep_flags & EXEC_HASFD) {
+		epp->ep_flags &= ~EXEC_HASFD;
+		fd_close(epp->ep_fd);
 	}
 	/* close and put the exec'd file */
-	vn_lock(data->ed_pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
-	VOP_CLOSE(data->ed_pack.ep_vp, FREAD, l->l_cred);
-	vput(data->ed_pack.ep_vp);
+	vn_lock(epp->ep_vp, LK_EXCLUSIVE | LK_RETRY);
+	VOP_CLOSE(epp->ep_vp, FREAD, l->l_cred);
+	vput(epp->ep_vp);
 	pool_put(&exec_pool, data->ed_argp);
 
  freehdr:
-	kmem_free(data->ed_pack.ep_hdr, data->ed_pack.ep_hdrlen);
-	if (data->ed_pack.ep_emul_root != NULL)
-		vrele(data->ed_pack.ep_emul_root);
-	if (data->ed_pack.ep_interp != NULL)
-		vrele(data->ed_pack.ep_interp);
+	kmem_free(epp->ep_hdr, epp->ep_hdrlen);
+	if (epp->ep_emul_root != NULL)
+		vrele(epp->ep_emul_root);
+	if (epp->ep_interp != NULL)
+		vrele(epp->ep_interp);
 
 	rw_exit(&exec_lock);
 
@@ -857,26 +857,27 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 static void
 execve_free_data(struct execve_data *data)
 {
+	struct exec_package	* const epp = &data->ed_pack;
 
 	/* free the vmspace-creation commands, and release their references */
-	kill_vmcmds(&data->ed_pack.ep_vmcmds);
+	kill_vmcmds(&epp->ep_vmcmds);
 	/* kill any opened file descriptor, if necessary */
-	if (data->ed_pack.ep_flags & EXEC_HASFD) {
-		data->ed_pack.ep_flags &= ~EXEC_HASFD;
-		fd_close(data->ed_pack.ep_fd);
+	if (epp->ep_flags & EXEC_HASFD) {
+		epp->ep_flags &= ~EXEC_HASFD;
+		fd_close(epp->ep_fd);
 	}
 
 	/* close and put the exec'd file */
-	vn_lock(data->ed_pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
-	VOP_CLOSE(data->ed_pack.ep_vp, FREAD, curlwp->l_cred);
-	vput(data->ed_pack.ep_vp);
+	vn_lock(epp->ep_vp, LK_EXCLUSIVE | LK_RETRY);
+	VOP_CLOSE(epp->ep_vp, FREAD, curlwp->l_cred);
+	vput(epp->ep_vp);
 	pool_put(&exec_pool, data->ed_argp);
 
-	kmem_free(data->ed_pack.ep_hdr, data->ed_pack.ep_hdrlen);
-	if (data->ed_pack.ep_emul_root != NULL)
-		vrele(data->ed_pack.ep_emul_root);
-	if (data->ed_pack.ep_interp != NULL)
-		vrele(data->ed_pack.ep_interp);
+	kmem_free(epp->ep_hdr, epp->ep_hdrlen);
+	if (epp->ep_emul_root != NULL)
+		vrele(epp->ep_emul_root);
+	if (epp->ep_interp != NULL)
+		vrele(epp->ep_interp);
 
 	pathbuf_stringcopy_put(data->ed_pathbuf, data->ed_pathstring);
 	pathbuf_destroy(data->ed_pathbuf);
@@ -887,6 +888,7 @@ static int
 execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	bool no_local_exec_lock, bool is_spawn)
 {
+	struct exec_package	* const epp = &data->ed_pack;
 	int error = 0;
 	struct proc		*p;
 	size_t			i;
@@ -915,7 +917,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 
 	base_vcp = NULL;
 
-	if (data->ed_pack.ep_flags & EXEC_32) 
+	if (epp->ep_flags & EXEC_32) 
 		aip = &arginfo32;
 	else
 		aip = &data->ed_arginfo;
@@ -941,30 +943,30 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	 * vmspace with another!
 	 */
 	if (is_spawn)
-		uvmspace_spawn(l, data->ed_pack.ep_vm_minaddr,
-		    data->ed_pack.ep_vm_maxaddr,
-		    data->ed_pack.ep_flags & EXEC_TOPDOWN_VM);
+		uvmspace_spawn(l, epp->ep_vm_minaddr,
+		    epp->ep_vm_maxaddr,
+		    epp->ep_flags & EXEC_TOPDOWN_VM);
 	else
-		uvmspace_exec(l, data->ed_pack.ep_vm_minaddr,
-		    data->ed_pack.ep_vm_maxaddr,
-		    data->ed_pack.ep_flags & EXEC_TOPDOWN_VM);
+		uvmspace_exec(l, epp->ep_vm_minaddr,
+		    epp->ep_vm_maxaddr,
+		    epp->ep_flags & EXEC_TOPDOWN_VM);
 
 	/* record proc's vnode, for use by procfs and others */
 	if (p->p_textvp)
 		vrele(p->p_textvp);
-	vref(data->ed_pack.ep_vp);
-	p->p_textvp = data->ed_pack.ep_vp;
+	vref(epp->ep_vp);
+	p->p_textvp = epp->ep_vp;
 
 	/* Now map address space */
 	vm = p->p_vmspace;
-	vm->vm_taddr = (void *)data->ed_pack.ep_taddr;
-	vm->vm_tsize = btoc(data->ed_pack.ep_tsize);
-	vm->vm_daddr = (void*)data->ed_pack.ep_daddr;
-	vm->vm_dsize = btoc(data->ed_pack.ep_dsize);
-	vm->vm_ssize = btoc(data->ed_pack.ep_ssize);
+	vm->vm_taddr = (void *)epp->ep_taddr;
+	vm->vm_tsize = btoc(epp->ep_tsize);
+	vm->vm_daddr = (void*)epp->ep_daddr;
+	vm->vm_dsize = btoc(epp->ep_dsize);
+	vm->vm_ssize = btoc(epp->ep_ssize);
 	vm->vm_issize = 0;
-	vm->vm_maxsaddr = (void *)data->ed_pack.ep_maxsaddr;
-	vm->vm_minsaddr = (void *)data->ed_pack.ep_minsaddr;
+	vm->vm_maxsaddr = (void *)epp->ep_maxsaddr;
+	vm->vm_minsaddr = (void *)epp->ep_minsaddr;
 
 #ifdef PAX_ASLR
 	pax_aslr_init(l, vm);
@@ -972,16 +974,16 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 
 	/* create the new process's VM space by running the vmcmds */
 #ifdef DIAGNOSTIC
-	if (data->ed_pack.ep_vmcmds.evs_used == 0)
+	if (epp->ep_vmcmds.evs_used == 0)
 		panic("%s: no vmcmds", __func__);
 #endif
 
 #ifdef DEBUG_EXEC
 	{
 		size_t j;
-		struct exec_vmcmd *vp = &data->ed_pack.ep_vmcmds.evs_cmds[0];
-		DPRINTF(("vmcmds %u\n", data->ed_pack.ep_vmcmds.evs_used));
-		for (j = 0; j < data->ed_pack.ep_vmcmds.evs_used; j++) {
+		struct exec_vmcmd *vp = &epp->ep_vmcmds.evs_cmds[0];
+		DPRINTF(("vmcmds %u\n", epp->ep_vmcmds.evs_used));
+		for (j = 0; j < epp->ep_vmcmds.evs_used; j++) {
 			DPRINTF(("vmcmd[%zu] = vmcmd_map_%s %#"
 			    PRIxVADDR"/%#"PRIxVSIZE" fd@%#"
 			    PRIxVSIZE" prot=0%o flags=%d\n", j,
@@ -998,10 +1000,10 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	}
 #endif	/* DEBUG_EXEC */
 
-	for (i = 0; i < data->ed_pack.ep_vmcmds.evs_used && !error; i++) {
+	for (i = 0; i < epp->ep_vmcmds.evs_used && !error; i++) {
 		struct exec_vmcmd *vcp;
 
-		vcp = &data->ed_pack.ep_vmcmds.evs_cmds[i];
+		vcp = &epp->ep_vmcmds.evs_cmds[i];
 		if (vcp->ev_flags & VMCMD_RELATIVE) {
 #ifdef DIAGNOSTIC
 			if (base_vcp == NULL)
@@ -1018,10 +1020,10 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 		if (error) {
 			size_t j;
 			struct exec_vmcmd *vp =
-			    &data->ed_pack.ep_vmcmds.evs_cmds[0];
+			    &epp->ep_vmcmds.evs_cmds[0];
 			DPRINTF(("vmcmds %zu/%u, error %d\n", i, 
-			    data->ed_pack.ep_vmcmds.evs_used, error));
-			for (j = 0; j < data->ed_pack.ep_vmcmds.evs_used; j++) {
+			    epp->ep_vmcmds.evs_used, error));
+			for (j = 0; j < epp->ep_vmcmds.evs_used; j++) {
 				DPRINTF(("vmcmd[%zu] = vmcmd_map_%s %#"
 				    PRIxVADDR"/%#"PRIxVSIZE" fd@%#"
 				    PRIxVSIZE" prot=0%o flags=%d\n", j,
@@ -1044,11 +1046,11 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	}
 
 	/* free the vmspace-creation commands, and release their references */
-	kill_vmcmds(&data->ed_pack.ep_vmcmds);
+	kill_vmcmds(&epp->ep_vmcmds);
 
-	vn_lock(data->ed_pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
-	VOP_CLOSE(data->ed_pack.ep_vp, FREAD, l->l_cred);
-	vput(data->ed_pack.ep_vp);
+	vn_lock(epp->ep_vp, LK_EXCLUSIVE | LK_RETRY);
+	VOP_CLOSE(epp->ep_vp, FREAD, l->l_cred);
+	vput(epp->ep_vp);
 
 	/* if an error happened, deallocate and punt */
 	if (error) {
@@ -1061,11 +1063,11 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	data->ed_arginfo.ps_nenvstr = data->ed_envc;
 
 	/* set command name & other accounting info */
-	commandname = strrchr(data->ed_pack.ep_resolvedname, '/');
+	commandname = strrchr(epp->ep_resolvedname, '/');
 	if (commandname != NULL) {
 		commandname++;
 	} else {
-		commandname = data->ed_pack.ep_resolvedname;
+		commandname = epp->ep_resolvedname;
 	}
 	i = min(strlen(commandname), MAXCOMLEN);
 	(void)memcpy(p->p_comm, commandname, i);
@@ -1078,7 +1080,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	 * In the future perhaps we could canonicalize it?
 	 */
 	if (data->ed_pathstring[0] == '/')
-		(void)strlcpy(data->ed_pack.ep_path = dp, data->ed_pathstring,
+		(void)strlcpy(epp->ep_path = dp, data->ed_pathstring,
 		    MAXPATHLEN);
 #ifdef notyet
 	/*
@@ -1090,20 +1092,20 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	 * this can be changed to use the appropriate function.
 	 */
 	else if (!(error = vnode_to_path(dp, MAXPATHLEN, p->p_textvp, l, p)))
-		data->ed_pack.ep_path = dp;
+		epp->ep_path = dp;
 #endif
 	else {
 #ifdef notyet
 		printf("Cannot get path for pid %d [%s] (error %d)\n",
 		    (int)p->p_pid, p->p_comm, error);
 #endif
-		data->ed_pack.ep_path = NULL;
+		epp->ep_path = NULL;
 		PNBUF_PUT(dp);
 	}
 
 	stack = (char *)STACK_ALLOC(STACK_GROW(vm->vm_minsaddr,
 		STACK_PTHREADSPACE + data->ed_ps_strings_sz + data->ed_szsigcode),
-		data->ed_pack.ep_ssize - (data->ed_ps_strings_sz + data->ed_szsigcode));
+		epp->ep_ssize - (data->ed_ps_strings_sz + data->ed_szsigcode));
 
 #ifdef __MACHINE_STACK_GROWS_UP
 	/*
@@ -1132,25 +1134,25 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 #endif /* __MACHINE_STACK_GROWS_UP */
 	
 	/* Now copy argc, args & environ to new stack */
-	error = (*data->ed_pack.ep_esch->es_copyargs)(l, &data->ed_pack,
+	error = (*epp->ep_esch->es_copyargs)(l, epp,
 	    &data->ed_arginfo, &stack, data->ed_argp);
 
-	if (data->ed_pack.ep_path) {
-		PNBUF_PUT(data->ed_pack.ep_path);
-		data->ed_pack.ep_path = NULL;
+	if (epp->ep_path) {
+		PNBUF_PUT(epp->ep_path);
+		epp->ep_path = NULL;
 	}
 	if (error) {
 		DPRINTF(("%s: copyargs failed %d\n", __func__, error));
 		goto exec_abort;
 	}
 	/* Move the stack back to original point */
-	stack = (char *)STACK_GROW(vm->vm_minsaddr, data->ed_pack.ep_ssize);
+	stack = (char *)STACK_GROW(vm->vm_minsaddr, epp->ep_ssize);
 
 	/* fill process ps_strings info */
 	p->p_psstrp = (vaddr_t)STACK_ALLOC(STACK_GROW(vm->vm_minsaddr,
 	    STACK_PTHREADSPACE), data->ed_ps_strings_sz);
 
-	if (data->ed_pack.ep_flags & EXEC_32) {
+	if (epp->ep_flags & EXEC_32) {
 		arginfo32.ps_argvstr = (vaddr_t)data->ed_arginfo.ps_argvstr;
 		arginfo32.ps_nargvstr = data->ed_arginfo.ps_nargvstr;
 		arginfo32.ps_envstr = (vaddr_t)data->ed_arginfo.ps_envstr;
@@ -1305,10 +1307,10 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	doexechooks(p);
 
 	/* setup new registers and do misc. setup. */
-	(*data->ed_pack.ep_esch->es_emul->e_setregs)(l, &data->ed_pack,
+	(*epp->ep_esch->es_emul->e_setregs)(l, epp,
 	     (vaddr_t)stack);
-	if (data->ed_pack.ep_esch->es_setregs)
-		(*data->ed_pack.ep_esch->es_setregs)(l, &data->ed_pack,
+	if (epp->ep_esch->es_setregs)
+		(*epp->ep_esch->es_setregs)(l, epp,
 		    (vaddr_t)stack);
 
 	/* Provide a consistent LWP private setting */
@@ -1318,7 +1320,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	pcu_discard_all(l);
 
 	/* map the process's signal trampoline code */
-	if ((error = exec_sigcode_map(p, data->ed_pack.ep_esch->es_emul)) != 0) {
+	if ((error = exec_sigcode_map(p, epp->ep_esch->es_emul)) != 0) {
 		DPRINTF(("%s: map sigcode failed %d\n", __func__, error));
 		goto exec_abort;
 	}
@@ -1328,23 +1330,23 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	/* notify others that we exec'd */
 	KNOTE(&p->p_klist, NOTE_EXEC);
 
-	kmem_free(data->ed_pack.ep_hdr, data->ed_pack.ep_hdrlen);
+	kmem_free(epp->ep_hdr, epp->ep_hdrlen);
 
-	SDT_PROBE(proc,,,exec_success, data->ed_pack.ep_name, 0, 0, 0, 0);
+	SDT_PROBE(proc,,,exec_success, epp->ep_name, 0, 0, 0, 0);
 
 	/* The emulation root will usually have been found when we looked
 	 * for the elf interpreter (or similar), if not look now. */
-	if (data->ed_pack.ep_esch->es_emul->e_path != NULL &&
-	    data->ed_pack.ep_emul_root == NULL)
-		emul_find_root(l, &data->ed_pack);
+	if (epp->ep_esch->es_emul->e_path != NULL &&
+	    epp->ep_emul_root == NULL)
+		emul_find_root(l, epp);
 
 	/* Any old emulation root got removed by fdcloseexec */
 	rw_enter(&p->p_cwdi->cwdi_lock, RW_WRITER);
-	p->p_cwdi->cwdi_edir = data->ed_pack.ep_emul_root;
+	p->p_cwdi->cwdi_edir = epp->ep_emul_root;
 	rw_exit(&p->p_cwdi->cwdi_lock);
-	data->ed_pack.ep_emul_root = NULL;
-	if (data->ed_pack.ep_interp != NULL)
-		vrele(data->ed_pack.ep_interp);
+	epp->ep_emul_root = NULL;
+	if (epp->ep_interp != NULL)
+		vrele(epp->ep_interp);
 
 	/*
 	 * Call emulation specific exec hook. This can setup per-process
@@ -1357,7 +1359,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	 * resources held previously by this process.
 	 */
 	if (p->p_emul && p->p_emul->e_proc_exit
-	    && p->p_emul != data->ed_pack.ep_esch->es_emul)
+	    && p->p_emul != epp->ep_esch->es_emul)
 		(*p->p_emul->e_proc_exit)(p);
 
 	/*
@@ -1372,14 +1374,14 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	 * Call exec hook. Emulation code may NOT store reference to anything
 	 * from &pack.
 	 */
-	if (data->ed_pack.ep_esch->es_emul->e_proc_exec)
-		(*data->ed_pack.ep_esch->es_emul->e_proc_exec)(p, &data->ed_pack);
+	if (epp->ep_esch->es_emul->e_proc_exec)
+		(*epp->ep_esch->es_emul->e_proc_exec)(p, epp);
 
 	/* update p_emul, the old value is no longer needed */
-	p->p_emul = data->ed_pack.ep_esch->es_emul;
+	p->p_emul = epp->ep_esch->es_emul;
 
 	/* ...and the same for p_execsw */
-	p->p_execsw = data->ed_pack.ep_esch;
+	p->p_execsw = epp->ep_esch;
 
 #ifdef __HAVE_SYSCALL_INTERN
 	(*p->p_emul->e_syscall_intern)(p);
@@ -1446,13 +1448,13 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	uvm_deallocate(&vm->vm_map, VM_MIN_ADDRESS,
 		VM_MAXUSER_ADDRESS - VM_MIN_ADDRESS);
 
-	exec_free_emul_arg(&data->ed_pack);
+	exec_free_emul_arg(epp);
 	pool_put(&exec_pool, data->ed_argp);
-	kmem_free(data->ed_pack.ep_hdr, data->ed_pack.ep_hdrlen);
-	if (data->ed_pack.ep_emul_root != NULL)
-		vrele(data->ed_pack.ep_emul_root);
-	if (data->ed_pack.ep_interp != NULL)
-		vrele(data->ed_pack.ep_interp);
+	kmem_free(epp->ep_hdr, epp->ep_hdrlen);
+	if (epp->ep_emul_root != NULL)
+		vrele(epp->ep_emul_root);
+	if (epp->ep_interp != NULL)
+		vrele(epp->ep_interp);
 
 	/* Acquire the sched-state mutex (exit1() will release it). */
 	if (!is_spawn) {
