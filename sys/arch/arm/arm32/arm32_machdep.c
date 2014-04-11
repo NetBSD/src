@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.103 2014/04/05 22:36:18 matt Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.104 2014/04/11 04:19:47 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.103 2014/04/05 22:36:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.104 2014/04/11 04:19:47 matt Exp $");
 
 #include "opt_modular.h"
 #include "opt_md.h"
@@ -712,11 +712,11 @@ xc_send_ipi(struct cpu_info *ci)
 bool
 mm_md_direct_mapped_phys(paddr_t pa, vaddr_t *vap)
 {
-	if (physical_start <= pa && pa < physical_end) {
-		*vap = KERNEL_BASE + (pa - physical_start);
-		return true;
+	bool rv;
+	vaddr_t va = pmap_direct_mapped_phys(pa, &rv, 0);
+	if (rv) {
+		*vap = va;
 	}
-
-	return false;
+	return rv;
 }
 #endif

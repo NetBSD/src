@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.27 2014/04/05 22:36:18 matt Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.28 2014/04/11 04:19:47 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.27 2014/04/05 22:36:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.28 2014/04/11 04:19:47 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -161,10 +161,22 @@ extern char _end[];
  * Macros to translate between physical and virtual for a subset of the
  * kernel address space.  *Not* for general use.
  */
+#if defined(KERNEL_BASE_VOFFSET)
+#define KERN_VTOPHYS(bmi, va) \
+	((paddr_t)((vaddr_t)(va) - KERNEL_BASE_VOFFSET))
+#define KERN_PHYSTOV(bmi, pa) \
+	((vaddr_t)((paddr_t)(pa) + KERNEL_BASE_VOFFSET))
+#elif defined(ARM_MMU_EXTENDED) && defined(__HAVE_MM_MD_DIRECT_MAPPED_PHYS)
+#define KERN_VTOPHYS(bmi, va) \
+	((paddr_t)((vaddr_t)(va) - pmap_directbase + (bmi)->bmi_start))
+#define KERN_PHYSTOV(bmi, pa) \
+	((vaddr_t)((paddr_t)(pa) - (bmi)->bmi_start + pmap_directbase))
+#else
 #define KERN_VTOPHYS(bmi, va) \
 	((paddr_t)((vaddr_t)(va) - KERNEL_BASE + (bmi)->bmi_start))
 #define KERN_PHYSTOV(bmi, pa) \
 	((vaddr_t)((paddr_t)(pa) - (bmi)->bmi_start + KERNEL_BASE))
+#endif
 
 void
 arm32_bootmem_init(paddr_t memstart, psize_t memsize, vsize_t kernelstart)
@@ -210,7 +222,11 @@ arm32_bootmem_init(paddr_t memstart, psize_t memsize, vsize_t kernelstart)
 	 */
 	if (bmi->bmi_start < bmi->bmi_kernelstart) {
 		pv->pv_pa = bmi->bmi_start;
+#if defined(ARM_MMU_EXTENDED) && defined(__HAVE_MM_MD_DIRECT_MAPPED_PHYS)
+		pv->pv_va = pmap_directbase;
+#else
 		pv->pv_va = KERNEL_BASE;
+#endif
 		pv->pv_size = bmi->bmi_kernelstart - bmi->bmi_start;
 		bmi->bmi_freepages += pv->pv_size / PAGE_SIZE;
 #ifdef VERBOSE_INIT_ARM
@@ -387,7 +403,27 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
 	KASSERT(mapallmem_p);
-#endif
+#ifdef ARM_MMU_EXTENDED
+	/*
+	 * We can only use address beneath kernel_vm_base to map physical
+	 * memory.
+	 */
+	KASSERT(kernel_vm_base >= physical_end - physical_start);
+	/*
+	 * If we don't have enough memory via TTBR1, we have use addresses
+	 * from TTBR0 to map some of the physical memory.  But try to use as
+	 * much high memory space as possible.
+	 */
+	if (kernel_vm_base - KERNEL_BASE < physical_end - physical_start) {
+		pmap_directbase = kernel_vm_base
+		    - (physical_end - physical_start);
+		printf("%s: changing pmap_directbase to %#lx\n", __func__,
+		    pmap_directbase);
+	}
+#else
+	KASSERT(kernel_vm_base - KERNEL_BASE >= physical_end - physical_start);
+#endif /* ARM_MMU_EXTENDED */
+#endif /* __HAVE_MM_MD_DIRECT_MAPPED_PHYS */
 
 	/*
 	 * Calculate the number of L2 pages needed for mapping the
@@ -700,7 +736,11 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 		cur_pv = *pv;
 		pv = SLIST_NEXT(pv, pv_list);
 	} else {
+#if defined(ARM_MMU_EXTENDED) && defined(__HAVE_MM_MD_DIRECT_MAPPED_PHYS)
+		cur_pv.pv_va = pmap_directbase;
+#else
 		cur_pv.pv_va = KERNEL_BASE;
+#endif
 		cur_pv.pv_pa = bmi->bmi_start;
 		cur_pv.pv_size = pv->pv_pa - bmi->bmi_start;
 		cur_pv.pv_prot = VM_PROT_READ | VM_PROT_WRITE;

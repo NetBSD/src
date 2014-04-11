@@ -1,4 +1,4 @@
-/*	$NetBSD: cubie_machdep.c,v 1.15 2014/03/29 14:00:30 matt Exp $ */
+/*	$NetBSD: cubie_machdep.c,v 1.16 2014/04/11 04:19:48 matt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cubie_machdep.c,v 1.15 2014/03/29 14:00:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cubie_machdep.c,v 1.16 2014/04/11 04:19:48 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -216,7 +216,11 @@ int use_fb_console = true;
  * kernel address space.  *Not* for general use.
  */
 #define KERNEL_BASE_PHYS	((paddr_t)KERNEL_BASE_phys)
+#ifdef KERNEL_BASES_EQUAL
+#define KERNEL_PHYS_VOFFSET	0
+#else
 #define KERNEL_PHYS_VOFFSET	(KERNEL_BASE - AWIN_SDRAM_PBASE)
+#endif
 #define AWIN_CORE_VOFFSET	(AWIN_CORE_VBASE - AWIN_CORE_PBASE)
 
 /* Prototypes */
@@ -278,6 +282,15 @@ static const struct pmap_devmap devmap[] = {
 
 #undef	_A
 #undef	_S
+
+#ifdef PMAP_NEED_ALLOC_POOLPAGE
+static struct boot_physmem bp_highgig = {
+	.bp_start = AWIN_SDRAM_PBASE / NBPG,
+	.bp_pages = (KERNEL_VM_BASE - KERNEL_BASE) / NBPG,
+	.bp_freelist = VM_FREELIST_ISADMA,
+	.bp_flags = 0,
+};
+#endif
 
 /*
  * u_int initarm(...)
@@ -366,12 +379,14 @@ initarm(void *arg)
 
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
 	const bool mapallmem_p = true;
+#ifndef PMAP_NEED_ALLOC_POOLPAGE
 	if (ram_size > KERNEL_VM_BASE - KERNEL_BASE) {
 		printf("%s: dropping RAM size from %luMB to %uMB\n",
 		   __func__, (unsigned long) (ram_size >> 20),
 		   (KERNEL_VM_BASE - KERNEL_BASE) >> 20);
 		ram_size = KERNEL_VM_BASE - KERNEL_BASE;
 	}
+#endif
 #else
 	const bool mapallmem_p = false;
 #endif
@@ -408,7 +423,19 @@ initarm(void *arg)
 		use_fb_console = true;
 	}
 #endif
-	
+	/*
+	 * If we couldn't map all of memory via TTBR1, limit the memory the
+	 * kernel can allocate from to be from the highest available 1GB.
+	 */
+#ifdef PMAP_NEED_ALLOC_POOLPAGE
+	if (atop(ram_size) > bp_highgig.bp_pages) {
+		bp_highgig.bp_start += atop(ram_size) - bp_highgig.bp_pages;
+		arm_poolpage_vmfreelist = bp_highgig.bp_freelist;
+		return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE,
+		    &bp_highgig, 1);
+	}
+#endif
+
 	return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
 
 }

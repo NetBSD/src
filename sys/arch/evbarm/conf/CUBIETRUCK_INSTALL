@@ -1,0 +1,10 @@
+#	$NetBSD: CUBIETRUCK_INSTALL,v 1.1 2014/04/11 04:19:47 matt Exp $
+#
+#	CUBIETRUCK_INSTALL -- CUBIETRUCK kernel with installation-sized
+#	ramdisk
+#
+
+include "arch/evbarm/conf/CUBIETRUCK"
+include "arch/evbarm/conf/INSTALL"
+
+options BOOTHOWTO=RB_SINGLE
