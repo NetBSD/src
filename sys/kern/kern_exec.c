@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.380 2014/04/11 11:21:29 uebayasi Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.381 2014/04/11 11:32:14 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.380 2014/04/11 11:21:29 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.381 2014/04/11 11:32:14 uebayasi Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -925,13 +925,10 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	 * will do this instead.
 	 */
 	KASSERT(no_local_exec_lock || rw_lock_held(&exec_lock));
+	KASSERT(!no_local_exec_lock || is_spawn);
 	KASSERT(data != NULL);
-	if (data == NULL)
-		return EINVAL;
 
 	p = l->l_proc;
-	if (no_local_exec_lock)
-		KASSERT(is_spawn);
 
 	base_vcp = NULL;
 
@@ -991,10 +988,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 #endif /* PAX_ASLR */
 
 	/* create the new process's VM space by running the vmcmds */
-#ifdef DIAGNOSTIC
-	if (epp->ep_vmcmds.evs_used == 0)
-		panic("%s: no vmcmds", __func__);
-#endif
+	KASSERTMSG(epp->ep_vmcmds.evs_used != 0, "%s: no vmcmds", __func__);
 
 #ifdef DEBUG_EXEC
 	{
@@ -1023,14 +1017,10 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 
 		vcp = &epp->ep_vmcmds.evs_cmds[i];
 		if (vcp->ev_flags & VMCMD_RELATIVE) {
-#ifdef DIAGNOSTIC
-			if (base_vcp == NULL)
-				panic("%s: relative vmcmd with no base",
-				    __func__);
-			if (vcp->ev_flags & VMCMD_BASE)
-				panic("%s: illegal base & relative vmcmd",
-				    __func__);
-#endif
+			KASSERTMSG(base_vcp != NULL,
+			    "%s: relative vmcmd with no base", __func__);
+			KASSERTMSG((vcp->ev_flags & VMCMD_BASE) == 0,
+			    "%s: illegal base & relative vmcmd", __func__);
 			vcp->ev_addr += base_vcp->ev_addr;
 		}
 		error = (*vcp->ev_proc)(l, vcp);
