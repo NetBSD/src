@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: src/sys/dev/ixgbe/ixgbe.c,v 1.51 2011/04/25 23:34:21 jfv Exp $*/
-/*$NetBSD: ixgbe.c,v 1.10 2014/04/08 19:39:06 christos Exp $*/
+/*$NetBSD: ixgbe.c,v 1.11 2014/04/11 06:50:26 joerg Exp $*/
 
 #include "opt_inet.h"
 
@@ -1394,7 +1394,7 @@ ixgbe_enable_queue(struct adapter *adapter, u32 vector)
 	}
 }
 
-static inline void
+__unused static inline void
 ixgbe_disable_queue(struct adapter *adapter, u32 vector)
 {
 	struct ixgbe_hw *hw = &adapter->hw;
