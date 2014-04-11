@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.378 2014/04/11 02:27:20 uebayasi Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.379 2014/04/11 11:11:06 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.378 2014/04/11 02:27:20 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.379 2014/04/11 11:11:06 uebayasi Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -587,7 +587,7 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	int			error;
 	struct proc		*p;
 	char			*dp, *sp;
-	size_t			i, len;
+	size_t			i;
 	struct exec_fakearg	*tmpfap;
 	u_int			modgen;
 
@@ -694,6 +694,7 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 		while (tmpfap->fa_arg != NULL) {
 			const char *cp;
 
+			/* XXX boudary check */
 			cp = tmpfap->fa_arg;
 			while (*cp)
 				*dp++ = *cp++;
@@ -701,7 +702,8 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 			ktrexecarg(tmpfap->fa_arg, cp - tmpfap->fa_arg);
 
 			kmem_free(tmpfap->fa_arg, tmpfap->fa_len);
-			tmpfap++; data->ed_argc++;
+			tmpfap++;
+			data->ed_argc++;
 		}
 		kmem_free(epp->ep_fa, epp->ep_fa_len);
 		epp->ep_flags &= ~EXEC_HASARGL;
@@ -719,7 +721,9 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 		i++;
 
 	while (1) {
-		len = data->ed_argp + ARG_MAX - dp;
+		const size_t maxlen = data->ed_argp + ARG_MAX - dp;
+		size_t len;
+
 		if ((error = (*fetch_element)(args, i, &sp)) != 0) {
 			DPRINTF(("%s: fetch_element args %d\n",
 			    __func__, error));
@@ -727,7 +731,7 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 		}
 		if (!sp)
 			break;
-		if ((error = copyinstr(sp, dp, len, &len)) != 0) {
+		if ((error = copyinstr(sp, dp, maxlen, &len)) != 0) {
 			DPRINTF(("%s: copyinstr args %d\n", __func__, error));
 			if (error == ENAMETOOLONG)
 				error = E2BIG;
@@ -744,7 +748,9 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	if (envs != NULL) {
 		i = 0;
 		while (1) {
-			len = data->ed_argp + ARG_MAX - dp;
+			const size_t maxlen = data->ed_argp + ARG_MAX - dp;
+			size_t len;
+
 			if ((error = (*fetch_element)(envs, i, &sp)) != 0) {
 				DPRINTF(("%s: fetch_element env %d\n",
 				    __func__, error));
@@ -752,7 +758,7 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 			}
 			if (!sp)
 				break;
-			if ((error = copyinstr(sp, dp, len, &len)) != 0) {
+			if ((error = copyinstr(sp, dp, maxlen, &len)) != 0) {
 				DPRINTF(("%s: copyinstr env %d\n",
 				    __func__, error));
 				if (error == ENAMETOOLONG)
@@ -767,10 +773,34 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 		}
 	}
 
-	dp = (char *) ALIGN(dp);
+	/*
+	 * Calculate the new stack size.
+	 */
+
+	const size_t psstrauxlen =
+	    data->ed_argc +		/* char *argv[] */
+	    1 +				/* \0 */
+	    data->ed_envc +		/* char *env[] */
+	    1 +				/* \0 */
+	    epp->ep_esch->es_arglen;	/* auxinfo */
+
+	const size_t ptrsz = (epp->ep_flags & EXEC_32) ?
+	    sizeof(int) : sizeof(char *);
+
+	const size_t argenvstrlen = (char *)ALIGN(dp) - data->ed_argp;
 
 	data->ed_szsigcode = epp->ep_esch->es_emul->e_esigcode -
 	    epp->ep_esch->es_emul->e_sigcode;
+
+	data->ed_ps_strings_sz = (epp->ep_flags & EXEC_32) ?
+	    sizeof(struct ps_strings32) : sizeof(struct ps_strings);
+
+	const size_t aslrgap =
+#ifdef PAX_ASLR
+	    pax_aslr_active(l) ? (cprng_fast32() % PAGE_SIZE) : 0;
+#else
+	    0;
+#endif
 
 #ifdef __MACHINE_STACK_GROWS_UP
 /* See big comment lower down */
@@ -779,38 +809,26 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 #define	RTLD_GAP	0
 #endif
 
-	/* Now check if args & environ fit into new stack */
-	if (epp->ep_flags & EXEC_32) {
-		data->ed_ps_strings_sz = sizeof(struct ps_strings32);
-		len = ((data->ed_argc + data->ed_envc + 2 +
-		    epp->ep_esch->es_arglen) *
-		    sizeof(int) + sizeof(int) + dp + RTLD_GAP +
-		    data->ed_szsigcode + data->ed_ps_strings_sz + STACK_PTHREADSPACE)
-		    - data->ed_argp;
-	} else {
-		data->ed_ps_strings_sz = sizeof(struct ps_strings);
-		len = ((data->ed_argc + data->ed_envc + 2 +
-		    epp->ep_esch->es_arglen) *
-		    sizeof(char *) + sizeof(int) + dp + RTLD_GAP +
-		    data->ed_szsigcode + data->ed_ps_strings_sz + STACK_PTHREADSPACE)
-		    - data->ed_argp;
-	}
-
-#ifdef PAX_ASLR
-	if (pax_aslr_active(l))
-		len += (cprng_fast32() % PAGE_SIZE);
-#endif /* PAX_ASLR */
+	const size_t stacklen =
+	    sizeof(int) +		/* XXX argc in stack is long, not int */
+	    (psstrauxlen * ptrsz) +	/* XXX auxinfo multiplied by ptr size? */
+	    argenvstrlen +
+	    aslrgap +
+	    RTLD_GAP +
+	    data->ed_szsigcode +
+	    data->ed_ps_strings_sz +
+	    STACK_PTHREADSPACE;
 
 	/* make the stack "safely" aligned */
-	len = STACK_LEN_ALIGN(len, STACK_ALIGNBYTES);
+	const size_t aligned_stacklen = STACK_LEN_ALIGN(stacklen, STACK_ALIGNBYTES);
 
-	if (len > epp->ep_ssize) {
+	if (aligned_stacklen > epp->ep_ssize) {
 		/* in effect, compare to initial limit */
-		DPRINTF(("%s: stack limit exceeded %zu\n", __func__, len));
+		DPRINTF(("%s: stack limit exceeded %zu\n", __func__, aligned_stacklen));
 		goto bad;
 	}
 	/* adjust "active stack depth" for process VSZ */
-	epp->ep_ssize = len;
+	epp->ep_ssize = aligned_stacklen;
 
 	return 0;
 
@@ -1498,7 +1516,7 @@ copyargs(struct lwp *l, struct exec_package *pack, struct ps_strings *arginfo,
 		return error;
 	}
 
-	dp = (char *) (cpp + argc + envc + 2 + pack->ep_esch->es_arglen);
+	dp = (char *)(cpp + argc + envc + 2 + pack->ep_esch->es_arglen);
 	sp = argp;
 
 	/* XXX don't copy them out, remap them! */
