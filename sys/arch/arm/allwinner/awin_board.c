@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_board.c,v 1.12 2014/03/13 23:45:02 matt Exp $	*/
+/*	$NetBSD: awin_board.c,v 1.13 2014/04/11 03:10:13 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.12 2014/03/13 23:45:02 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.13 2014/04/11 03:10:13 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -191,10 +191,10 @@ awin_bootstrap(vaddr_t iobase, vaddr_t uartbase)
 	printf("%s: cpu status: 0=%#x 1=%#x\n", __func__, s0, s1);
 #endif
 
-#if !defined(MULTIPROCESSOR) && defined(VERBOSE_ARM_INIT)
+#if !defined(MULTIPROCESSOR) && defined(VERBOSE_INIT_ARM)
 	u_int arm_cpu_max;
 #endif
-#if defined(MULTIPROCESSOR) || defined(VERBOSE_ARM_INIT)
+#if defined(MULTIPROCESSOR) || defined(VERBOSE_INIT_ARM)
 	arm_cpu_max = 1 + __SHIFTOUT(armreg_l2ctrl_read(), L2CTRL_NUMCPU);
 #endif
 #ifdef VERBOSE_INIT_ARM
