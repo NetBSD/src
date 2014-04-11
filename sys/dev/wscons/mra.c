@@ -1,4 +1,4 @@
-/*	$NetBSD: mra.c,v 1.4 2006/10/09 10:43:01 peter Exp $	*/
+/*	$NetBSD: mra.c,v 1.4.94.1 2014/04/11 08:38:07 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mra.c,v 1.4 2006/10/09 10:43:01 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mra.c,v 1.4.94.1 2014/04/11 08:38:07 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,7 @@ mra_Y_AX1_BX2_C(const int *y, int ys,
 	int64_t S11, S22, S12;
 	int64_t SYY, S1Y, S2Y;
 	int64_t A, B, C, M;
-#define AA(p, s, i)	(*((const long *)(((const char *)(p)) + (s) * (i))))
+#define AA(p, s, i)	(*((const int *)(((const char *)(p)) + (s) * (i))))
 #define X1(i)		AA(x1, x1s, i)
 #define X2(i)		AA(x2, x2s, i)
 #define Y(i)		AA(y, ys, i)
