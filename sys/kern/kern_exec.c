@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.383 2014/04/11 17:06:02 uebayasi Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.384 2014/04/11 17:28:24 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.383 2014/04/11 17:06:02 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.384 2014/04/11 17:28:24 uebayasi Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -909,7 +909,6 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	struct exec_package	* const epp = &data->ed_pack;
 	int error = 0;
 	struct proc		*p;
-	char			*stack;
 	struct vmspace		*vm;
 
 	/*
@@ -1116,6 +1115,9 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	}
     }
 
+    {
+	char			*stack;
+
 	stack = (char *)STACK_ALLOC(STACK_GROW(vm->vm_minsaddr,
 		STACK_PTHREADSPACE + data->ed_ps_strings_sz + data->ed_szsigcode),
 		epp->ep_ssize - (data->ed_ps_strings_sz + data->ed_szsigcode));
@@ -1158,8 +1160,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 		DPRINTF(("%s: copyargs failed %d\n", __func__, error));
 		goto exec_abort;
 	}
-	/* Move the stack back to original point */
-	stack = (char *)STACK_GROW(vm->vm_minsaddr, epp->ep_ssize);
+    }
 
 	/* fill process ps_strings info */
 	p->p_psstrp = (vaddr_t)STACK_ALLOC(STACK_GROW(vm->vm_minsaddr,
@@ -1324,12 +1325,17 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 
 	doexechooks(p);
 
+    {
+	char * const stack = (char *)STACK_GROW(
+	    (void *)epp->ep_minsaddr, epp->ep_ssize);
+
 	/* setup new registers and do misc. setup. */
 	(*epp->ep_esch->es_emul->e_setregs)(l, epp,
 	     (vaddr_t)stack);
 	if (epp->ep_esch->es_setregs)
 		(*epp->ep_esch->es_setregs)(l, epp,
 		    (vaddr_t)stack);
+    }
 
 	/* Provide a consistent LWP private setting */
 	(void)lwp_setprivate(l, NULL);
