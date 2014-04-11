@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.102 2014/04/08 20:24:07 bouyer Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.103 2014/04/11 11:02:16 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -2085,3 +2085,35 @@ crypto/external/bsd/openssl/pkgconfig.mk	1.5
 	src/crypto/external/bsd/openssl/mkpc is not executable.
 	[tron, ticket #1045]
 
+distrib/evbppc/md-kernel/Makefile		1.4
+sys/arch/evbppc/compile/walnut-mkimg.sh		1.5
+sys/arch/evbppc/conf/Makefile.ev64260.inc	1.6-1.7
+sys/arch/evbppc/conf/Makefile.obs405.inc	1.10-1.11
+sys/arch/evbppc/conf/Makefile.walnut.inc	1.7-1.8
+
+	Use TOOL_* for cross compiling. Fixes buiild break on linux.
+	[joerg, ticket #1035]
+
+sys/dev/wscons/mra.c				1.6
+
+	Fixes calibration in wscons through the MRA sub-system on
+	architectures where sizeof(int) != sizeof(long). This code
+	is typically used by drivers for touchscreen devices,
+	like uts(4).
+	[khorben, ticket #1037]
+
+sys/dev/acpi/thinkpad_acpi.c			1.42
+
+	Match LEN0068 in thinkpad(4) too, as newer Thinkpads report.
+	[riastradh, ticket #1039]
+
+sys/netinet/ip_carp.c				1.53
+
+	Proper MBUFTRACE handling.
+	[bouyer, ticket #1043]
+
+distrib/sets/lists/comp/md.amd64		patch
+distrib/sets/lists/comp/shl.mi			patch
+
+	Fix MKDEBUG=yes build problem.
+	[htodd, ticket #1046]
