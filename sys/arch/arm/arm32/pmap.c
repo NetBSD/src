@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.283 2014/04/10 02:45:55 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.284 2014/04/11 04:19:47 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -216,7 +216,7 @@
 #include <arm/locore.h>
 //#include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.283 2014/04/10 02:45:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.284 2014/04/11 04:19:47 matt Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -511,6 +511,13 @@ int pmap_kmpages;
  * Flag to indicate if pmap_init() has done its thing
  */
 bool pmap_initialized;
+
+#if defined(ARM_MMU_EXTENDED) && defined(__HAVE_MM_MD_DIRECT_MAPPED_PHYS)
+/*
+ * Start of direct-mapped memory
+ */
+vaddr_t pmap_directbase = KERNEL_BASE;
+#endif
 
 /*
  * Misc. locking data structures
@@ -1294,9 +1301,12 @@ pmap_alloc_l1(pmap_t pm)
 #else
 	struct vm_page *pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO);
 #endif
+	bool ok __diagused;
 	KASSERT(pg != NULL);
 	pm->pm_l1_pa = VM_PAGE_TO_PHYS(pg);
-	vaddr_t va = KERNEL_BASE + (pm->pm_l1_pa - physical_start);
+	vaddr_t va = pmap_direct_mapped_phys(pm->pm_l1_pa, &ok, 0xdeadbeef);
+	KASSERT(ok);
+	KASSERT(va >= KERNEL_BASE);
 
 #else
 	KASSERTMSG(kernel_map != NULL, "pm %p", pm);
@@ -2632,11 +2642,16 @@ pmap_syncicache_page(struct vm_page_md *md, paddr_t pa)
 	KASSERT(arm_cache_prefer_mask == 0 || md->pvh_attrs & PVF_COLORED);
 #endif
 
+	pt_entry_t * const ptep = cpu_cdst_pte(0);
+	const vaddr_t dstp = cpu_cdstp(0);
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
-	if (way_size == PAGE_SIZE) {
-		vaddr_t vdstp = KERNEL_BASE + (pa - physical_start);
-		cpu_icache_sync_range(vdstp, way_size);
-		return;
+	if (way_size <= PAGE_SIZE) {
+		bool ok = false;
+		vaddr_t vdstp = pmap_direct_mapped_phys(pa, &ok, dstp);
+		if (ok) {
+			cpu_icache_sync_range(vdstp, way_size);
+			return;
+		}
 	}
 #endif
 
@@ -2645,8 +2660,6 @@ pmap_syncicache_page(struct vm_page_md *md, paddr_t pa)
 	 * same page to pages in the way and then do the icache_sync on
 	 * the entire way making sure we are cleaned.
 	 */
-	pt_entry_t * const ptep = cpu_cdst_pte(0);
-	const vaddr_t dstp = cpu_cdstp(0);
 	const pt_entry_t npte = L2_S_PROTO | pa | pte_l2_s_cache_mode
 	    | L2_S_PROT(PTE_KERNEL, VM_PROT_READ|VM_PROT_WRITE);
 
@@ -5112,10 +5125,10 @@ pmap_zero_page_generic(paddr_t pa)
 	 * Is this page mapped at its natural color?
 	 * If we have all of memory mapped, then just convert PA to VA.
 	 */
-	const bool okcolor = arm_pcache.dcache_type == CACHE_TYPE_PIPT
+	bool okcolor = arm_pcache.dcache_type == CACHE_TYPE_PIPT
 	   || va_offset == (pa & arm_cache_prefer_mask);
 	const vaddr_t vdstp = okcolor
-	    ? KERNEL_BASE + (pa - physical_start)
+	    ? pmap_direct_mapped_phys(pa, &okcolor, cpu_cdstp(va_offset))
 	    : cpu_cdstp(va_offset);
 #else
 	const bool okcolor = false;
@@ -5142,7 +5155,8 @@ pmap_zero_page_generic(paddr_t pa)
 		PTE_SYNC(ptep);
 		cpu_tlb_flushD_SE(vdstp);
 		cpu_cpwait();
-#if defined(__HAVE_MM_MD_DIRECT_MAPPED_PHYS) && defined(PMAP_CACHE_VIPT)
+#if defined(__HAVE_MM_MD_DIRECT_MAPPED_PHYS) && defined(PMAP_CACHE_VIPT) \
+    && !defined(ARM_MMU_EXTENDED)
 		/*
 		 * If we are direct-mapped and our color isn't ok, then before
 		 * we bzero the page invalidate its contents from the cache and
@@ -5239,10 +5253,10 @@ pmap_pageidlezero(paddr_t pa)
 	const vsize_t va_offset = 0;
 #endif
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
-	const bool okcolor = arm_pcache.dcache_type == CACHE_TYPE_PIPT
+	bool okcolor = arm_pcache.dcache_type == CACHE_TYPE_PIPT
 	   || va_offset == (pa & arm_cache_prefer_mask);
 	const vaddr_t vdstp = okcolor
-	    ? KERNEL_BASE + (pa - physical_start)
+	    ? pmap_direct_mapped_phys(pa, &okcolor, cpu_cdstp(va_offset))
 	    : cpu_cdstp(va_offset);
 #else
 	const bool okcolor = false;
@@ -5350,14 +5364,16 @@ pmap_copy_page_generic(paddr_t src, paddr_t dst)
 	 * Is this page mapped at its natural color?
 	 * If we have all of memory mapped, then just convert PA to VA.
 	 */
-	const bool src_okcolor = arm_pcache.dcache_type == CACHE_TYPE_PIPT
+	bool src_okcolor = arm_pcache.dcache_type == CACHE_TYPE_PIPT
 	    || src_va_offset == (src & arm_cache_prefer_mask);
-	const bool dst_okcolor = arm_pcache.dcache_type == CACHE_TYPE_PIPT
+	bool dst_okcolor = arm_pcache.dcache_type == CACHE_TYPE_PIPT
 	    || dst_va_offset == (dst & arm_cache_prefer_mask);
 	const vaddr_t vsrcp = src_okcolor
-	    ? KERNEL_BASE + (src - physical_start)
+	    ? pmap_direct_mapped_phys(src, &src_okcolor,
+		cpu_csrcp(src_va_offset))
 	    : cpu_csrcp(src_va_offset);
-	const vaddr_t vdstp = KERNEL_BASE + (dst - physical_start);
+	const vaddr_t vdstp = pmap_direct_mapped_phys(dst, &dst_okcolor,
+	    cpu_cdstp(dst_va_offset));
 #else
 	const bool src_okcolor = false;
 	const bool dst_okcolor = false;
@@ -6602,6 +6618,9 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
 #ifdef ARM_MMU_EXTENDED_XXX
 			    | ((prot & VM_PROT_EXECUTE) ? 0 : L1_S_V6_XN)
 #endif
+#ifdef ARM_MMU_EXTENDED
+			    | (va & 0x80000000 ? 0 : L1_S_V6_nG)
+#endif
 			    | L1_S_PROT(PTE_KERNEL, prot) | f1;
 #ifdef VERBOSE_INIT_ARM
 			printf("sS");
@@ -6619,6 +6638,9 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
 			const pd_entry_t npde = L1_S_PROTO | pa
 #ifdef ARM_MMU_EXTENDED_XXX
 			    | ((prot & VM_PROT_EXECUTE) ? 0 : L1_S_V6_XN)
+#endif
+#ifdef ARM_MMU_EXTENDED
+			    | (va & 0x80000000 ? 0 : L1_S_V6_nG)
 #endif
 			    | L1_S_PROT(PTE_KERNEL, prot) | f1
 			    | L1_S_DOM(PMAP_DOMAIN_KERNEL);
@@ -6654,6 +6676,9 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
 #ifdef ARM_MMU_EXTENDED_XXX
 			    | ((prot & VM_PROT_EXECUTE) ? 0 : L2_XS_L_XN)
 #endif
+#ifdef ARM_MMU_EXTENDED
+			    | (va & 0x80000000 ? 0 : L2_XS_nG)
+#endif
 			    | L2_L_PROT(PTE_KERNEL, prot) | f2l;
 #ifdef VERBOSE_INIT_ARM
 			printf("L");
@@ -6673,6 +6698,9 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
 		const pt_entry_t npte = L2_S_PROTO | pa
 #ifdef ARM_MMU_EXTENDED_XXX
 		    | ((prot & VM_PROT_EXECUTE) ? 0 : L2_XS_XN)
+#endif
+#ifdef ARM_MMU_EXTENDED
+		    | (va & 0x80000000 ? 0 : L2_XS_nG)
 #endif
 		    | L2_S_PROT(PTE_KERNEL, prot) | f2s;
 		l2pte_set(ptep, npte, 0);
@@ -7331,14 +7359,15 @@ pmap_pte_init_armv7(void)
 		pte_l1_s_cache_mode |= L1_S_V6_S;
 		pte_l2_l_cache_mode |= L2_XS_S;
 		pte_l2_s_cache_mode |= L2_XS_S;
-
-		/*
-		 * write-back, no write-allocate, shareable for page tables.
-		 */
-		pte_l1_s_cache_mode_pt = pte_l1_s_cache_mode;
-		pte_l2_l_cache_mode_pt = pte_l2_l_cache_mode;
-		pte_l2_s_cache_mode_pt = pte_l2_s_cache_mode;
 	}
+
+	/*
+	 * Page tables are just all other memory.  We can use write-back since
+	 * pmap_needs_pte_sync is 1 (or the MMU can read out of cache).
+	 */
+	pte_l1_s_cache_mode_pt = pte_l1_s_cache_mode;
+	pte_l2_l_cache_mode_pt = pte_l2_l_cache_mode;
+	pte_l2_s_cache_mode_pt = pte_l2_s_cache_mode;
 
 	/*
 	 * Check the Memory Model Features to see if this CPU supports
@@ -7714,11 +7743,21 @@ arm_pmap_alloc_poolpage(int flags)
 	/*
 	 * On some systems, only some pages may be "coherent" for dma and we
 	 * want to prefer those for pool pages (think mbufs) but fallback to
-	 * any page if none is available.
+	 * any page if none is available.  But we can only fallback if we
+	 * aren't direct mapping memory or all of memory can be direct-mapped.
+	 * If that isn't true, pool changes can only come from direct-mapped
+	 * memory.
 	 */
 	if (arm_poolpage_vmfreelist != VM_FREELIST_DEFAULT) {
 		return uvm_pagealloc_strat(NULL, 0, NULL, flags,
-		    UVM_PGA_STRAT_FALLBACK, arm_poolpage_vmfreelist);
+#if defined(__HAVE_MM_MD_DIRECT_MAPPED_PHYS) && defined(ARM_MMU_EXTENDED)
+		    (pmap_directbase < KERNEL_BASE
+			? UVM_PGA_STRAT_ONLY
+			: UVM_PGA_STRAT_FALLBACK),
+#else
+		    UVM_PGA_STRAT_FALLBACK,
+#endif
+		    arm_poolpage_vmfreelist);
 	}
 
 	return uvm_pagealloc(NULL, 0, NULL, flags);
@@ -7741,3 +7780,59 @@ pic_ipi_shootdown(void *arg)
 	return 1;
 }
 #endif /* ARM_MMU_EXTENDED && MULTIPROCESSOR */
+
+
+#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+vaddr_t
+pmap_direct_mapped_phys(paddr_t pa, bool *ok_p, vaddr_t va)
+{
+	bool ok = false;
+	if (physical_start <= pa && pa < physical_end) {
+#ifdef ARM_MMU_EXTENDED
+		const vaddr_t newva = pmap_directbase + pa - physical_start;
+		if (newva >= KERNEL_BASE) {
+			va = newva;
+			ok = true;
+		}
+#else
+		va = KERNEL_BASE + pa - physical_start;
+		ok = true;
+#endif
+	}
+	KASSERT(ok_p);
+	*ok_p = ok;
+	return va;
+}
+
+vaddr_t
+pmap_map_poolpage(paddr_t pa)
+{
+	bool ok __diagused;
+	vaddr_t va = pmap_direct_mapped_phys(pa, &ok, 0);
+	KASSERT(ok);
+#if defined(PMAP_CACHE_VIPT) && !defined(ARM_MMU_EXTENDED)
+	if (arm_cache_prefer_mask != 0) {
+		struct vm_page * const pg = PHYS_TO_VM_PAGE(pa);
+		struct vn_page_md * const md = VM_PAGE_TO_MD(pg);
+		pmap_acquire_page_lock(md);
+		pmap_vac_me_harder(md, pa, pmap_kernel(), va);
+		pmap_release_page_lock(md);
+	}
+#endif
+	return va;
+}
+
+paddr_t
+pmap_unmap_poolpage(vaddr_t va)
+{
+	KASSERT(va >= KERNEL_BASE);
+#if defined(ARM_MMU_EXTENDED)
+	return va - pmap_directbase + physical_start;
+#else
+#ifdef PMAP_CACHE_VIVT
+	cpu_idcache_wbinv_range(va, PAGE_SIZE);
+#endif
+        return va - KERNEL_BASE + physical_start;
+#endif
+}
+#endif /* __HAVE_MM_MD_DIRECT_MAPPED_PHYS */
