@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.39 2011/06/20 15:00:04 pgoyette Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.39.8.1 2014/04/11 08:45:18 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.39 2011/06/20 15:00:04 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.39.8.1 2014/04/11 08:45:18 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -132,6 +132,7 @@ CFATTACH_DECL_NEW(thinkpad, sizeof(thinkpad_softc_t),
 
 static const char * const thinkpad_ids[] = {
 	"IBM0068",
+	"LEN0068",
 	NULL
 };
 
