@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.381 2014/04/11 11:32:14 uebayasi Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.382 2014/04/11 11:49:38 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.381 2014/04/11 11:32:14 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.382 2014/04/11 11:49:38 uebayasi Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -1485,6 +1485,10 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	return error;
 }
 
+/*
+ * Copy argv and env strings from kernel buffer (argp) to the new stack.
+ * Those strings are located just after auxinfo.
+ */
 int
 copyargs(struct lwp *l, struct exec_package *pack, struct ps_strings *arginfo,
     char **stackp, void *argp)
@@ -1499,13 +1503,23 @@ copyargs(struct lwp *l, struct exec_package *pack, struct ps_strings *arginfo,
 	nullp = NULL;
 	argc = arginfo->ps_nargvstr;
 	envc = arginfo->ps_nenvstr;
+
+	/* argc on stack is long */
+	CTASSERT(sizeof(*cpp) == sizeof(argc));
+
+	dp = (char *)(cpp +
+	    1 +				/* argc */
+	    argc +			/* *argv[] */
+	    1 +				/* \0 */
+	    envc +			/* *env[] */
+	    1 +				/* \0 */
+	    pack->ep_esch->es_arglen);	/* auxinfo */
+	sp = argp;
+
 	if ((error = copyout(&argc, cpp++, sizeof(argc))) != 0) {
 		COPYPRINTF("", cpp - 1, sizeof(argc));
 		return error;
 	}
-
-	dp = (char *)(cpp + argc + envc + 2 + pack->ep_esch->es_arglen);
-	sp = argp;
 
 	/* XXX don't copy them out, remap them! */
 	arginfo->ps_argvstr = cpp; /* remember location of argv for later */
