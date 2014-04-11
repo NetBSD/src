@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.384 2014/04/11 17:28:24 uebayasi Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.385 2014/04/11 18:02:33 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.384 2014/04/11 17:28:24 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.385 2014/04/11 18:02:33 uebayasi Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -681,6 +681,7 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	}
 
 	/* XXX -- THE FOLLOWING SECTION NEEDS MAJOR CLEANUP */
+ 	/* XXX rename this as copyinargs() */
 
 	/* allocate an argument buffer */
 	data->ed_argp = pool_get(&exec_pool, PR_WAITOK);
@@ -909,7 +910,6 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	struct exec_package	* const epp = &data->ed_pack;
 	int error = 0;
 	struct proc		*p;
-	struct vmspace		*vm;
 
 	/*
 	 * In case of a posix_spawn operation, the child doing the exec
@@ -958,6 +958,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	p->p_textvp = epp->ep_vp;
 
 	/* Now map address space */
+	struct vmspace		*vm;
 	vm = p->p_vmspace;
 	vm->vm_taddr = (void *)epp->ep_taddr;
 	vm->vm_tsize = btoc(epp->ep_tsize);
@@ -1058,10 +1059,6 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	}
     }
 
-	/* remember information about the process */
-	data->ed_arginfo.ps_nargvstr = data->ed_argc;
-	data->ed_arginfo.ps_nenvstr = data->ed_envc;
-
     {
 	const char		*commandname;
 	size_t			commandlen;
@@ -1114,6 +1111,10 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 		PNBUF_PUT(path);
 	}
     }
+
+	/* remember information about the process */
+	data->ed_arginfo.ps_nargvstr = data->ed_argc;
+	data->ed_arginfo.ps_nenvstr = data->ed_envc;
 
     {
 	char			*stack;
@@ -1510,6 +1511,8 @@ execve1(struct lwp *l, const char *path, char * const *args,
 /*
  * Copy argv and env strings from kernel buffer (argp) to the new stack.
  * Those strings are located just after auxinfo.
+ *
+ * XXX rename this as copyoutargs()
  */
 int
 copyargs(struct lwp *l, struct exec_package *pack, struct ps_strings *arginfo,
@@ -1535,6 +1538,7 @@ copyargs(struct lwp *l, struct exec_package *pack, struct ps_strings *arginfo,
 	    1 +				/* \0 */
 	    envc +			/* *env[] */
 	    1 +				/* \0 */
+	    /* XXX auxinfo multiplied by ptr size? */
 	    pack->ep_esch->es_arglen);	/* auxinfo */
 	sp = argp;
 
