@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_board.c,v 1.13 2014/04/11 03:10:13 matt Exp $	*/
+/*	$NetBSD: awin_board.c,v 1.14 2014/04/11 16:32:38 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.13 2014/04/11 03:10:13 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.14 2014/04/11 16:32:38 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -224,7 +224,7 @@ awin_cpu_hatch(struct cpu_info *ci)
 }
 #endif
 
-psize_t 
+psize_t
 awin_memprobe(void)
 {
 	const uint32_t dcr = bus_space_read_4(&awin_bs_tag, awin_core_bsh,
