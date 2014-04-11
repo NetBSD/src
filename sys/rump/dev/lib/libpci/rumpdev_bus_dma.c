@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpdev_bus_dma.c,v 1.1 2014/04/04 12:53:59 pooka Exp $	*/
+/*	$NetBSD: rumpdev_bus_dma.c,v 1.2 2014/04/11 01:03:08 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2013 Antti Kantee
@@ -85,11 +85,6 @@
 
 int	_bus_dmamap_load_buffer (bus_dma_tag_t, bus_dmamap_t, void *,
 	    bus_size_t, struct vmspace *, int, paddr_t *, int *, int);
-
-#undef PHYS_TO_BUS_MEM
-#define PHYS_TO_BUS_MEM(_t_, _a_) rumpcomp_pci_virt_to_mach((void *)_a_)
-#undef BUS_MEM_TO_PHYS
-#define BUS_MEM_TO_PHYS(_t_, _a_) rumpcomp_pci_mach_to_virt(_a_)
 
 /*
  * Common function for DMA map creation.  May be called by bus-specific
@@ -212,7 +207,8 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map,
 		 * the previous segment if possible.
 		 */
 		if (first) {
-			map->dm_segs[seg].ds_addr = PHYS_TO_BUS_MEM(t, curaddr);
+			map->dm_segs[seg].ds_addr
+			    = rumpcomp_pci_virt_to_mach((void *)curaddr);
 			map->dm_segs[seg].ds_len = sgsize;
 			first = 0;
 		} else {
@@ -221,13 +217,13 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map,
 			     map->dm_maxsegsz &&
 			    (map->_dm_boundary == 0 ||
 			     (map->dm_segs[seg].ds_addr & bmask) ==
-			     (PHYS_TO_BUS_MEM(t, curaddr) & bmask)))
+			     (rumpcomp_pci_virt_to_mach((void*)curaddr)&bmask)))
 				map->dm_segs[seg].ds_len += sgsize;
 			else {
 				if (++seg >= map->_dm_segcnt)
 					break;
 				map->dm_segs[seg].ds_addr =
-					PHYS_TO_BUS_MEM(t, curaddr);
+				    rumpcomp_pci_virt_to_mach((void *)curaddr);
 				map->dm_segs[seg].ds_len = sgsize;
 			}
 		}
@@ -334,7 +330,7 @@ bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map,
 				continue;
 			}
 			map->dm_segs[seg].ds_addr =
-			    PHYS_TO_BUS_MEM(t, lastaddr);
+			    rumpcomp_pci_virt_to_mach((void *)lastaddr);
 			map->dm_segs[seg].ds_len = m->m_len;
 			lastaddr += m->m_len;
 			continue;
