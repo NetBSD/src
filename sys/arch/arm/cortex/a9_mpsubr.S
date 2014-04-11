@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.16 2014/04/11 02:37:45 matt Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.17 2014/04/11 16:32:12 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -103,7 +103,7 @@ arm_boot_l1pt_init:
 	// Do we need add sharing for this?
 	tst	pa, #(L1_S_C|L1_S_B)	// is this entry cacheable?
 	orrne	pa, pa, attr		// add sharing
-	
+
 4:	cmp	n_sec, #0
 	bne	2b
 	bx	lr			// return
@@ -135,7 +135,7 @@ arm_boot_l1pt_init:
 #define CPU_CONTROL_AFLT_ENABLE_SET	CPU_CONTROL_AFLT_ENABLE
 #endif
 
-// bits to set in the Control Register 
+// bits to set in the Control Register
 //
 #define CPU_CONTROL_SET \
 	(CPU_CONTROL_MMU_ENABLE		|	\
@@ -147,7 +147,7 @@ arm_boot_l1pt_init:
 	 CPU_CONTROL_EX_BEND_SET	|	\
 	 CPU_CONTROL_UNAL_ENABLE)
 
-// bits to clear in the Control Register 
+// bits to clear in the Control Register
 //
 #define CPU_CONTROL_CLR \
 	(CPU_CONTROL_AFLT_ENABLE_CLR)
@@ -156,7 +156,7 @@ arm_cpuinit:
 	// Because the MMU may already be on do a typical sequence to set
 	// the Translation Table Base(s).
 	mov	ip, lr
-	mov	r10, r0			// save TTBR 
+	mov	r10, r0			// save TTBR
 	mov	r1, #0
 
 	mcr     p15, 0, r1, c7, c5, 0	// invalidate I cache
@@ -199,7 +199,7 @@ arm_cpuinit:
 
 	XPUTC(#72)
 #if defined(ARM_MMU_EXTENDED)
-	XPUTC(#49)            
+	XPUTC(#49)
 	mov	r1, #TTBCR_S_N_1	// make sure TTBCR_S_N is 1
 #else
 	XPUTC(#48)
@@ -301,7 +301,7 @@ xputc:
 #endif
 
 	mov	r2, #TIMO
-3:	
+3:
 #if COM_MULT == 1
 	ldrb	r1, [r3, #(COM_LSR*COM_MULT)]
 #else
