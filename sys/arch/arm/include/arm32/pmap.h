@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.130 2014/04/04 16:12:28 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.131 2014/04/11 04:19:47 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -406,6 +406,15 @@ void	pmap_devmap_register(const struct pmap_devmap *);
 bool	pmap_pageidlezero(paddr_t);
 #define PMAP_PAGEIDLEZERO(pa)	pmap_pageidlezero((pa))
 
+#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+/*
+ * For the pmap, this is a more useful way to map a direct mapped page.
+ * It returns either the direct-mapped VA or the VA supplied if it can't
+ * be direct mapped.
+ */
+vaddr_t	pmap_direct_mapped_phys(paddr_t, bool *, vaddr_t);
+#endif
+
 /*
  * used by dumpsys to record the PA of the L1 table
  */
@@ -414,6 +423,13 @@ uint32_t pmap_kernel_L1_addr(void);
  * The current top of kernel VM
  */
 extern vaddr_t	pmap_curmaxkvaddr;
+
+#if defined(ARM_MMU_EXTENDED) && defined(__HAVE_MM_MD_DIRECT_MAPPED_PHYS)
+/*
+ * Starting VA of direct mapped memory (usually KERNEL_BASE).
+ */
+extern vaddr_t pmap_directbase;
+#endif
 
 /*
  * Useful macros and constants 
@@ -1030,10 +1046,10 @@ struct vm_page *arm_pmap_alloc_poolpage(int);
 #define	PMAP_ALLOC_POOLPAGE	arm_pmap_alloc_poolpage
 #endif
 #if defined(PMAP_NEED_ALLOC_POOLPAGE) || defined(__HAVE_MM_MD_DIRECT_MAPPED_PHYS)
-#define	PMAP_MAP_POOLPAGE(pa) \
-        ((vaddr_t)((paddr_t)(pa) - physical_start + KERNEL_BASE))
-#define PMAP_UNMAP_POOLPAGE(va) \
-        ((paddr_t)((vaddr_t)(va) - KERNEL_BASE + physical_start))
+vaddr_t	pmap_map_poolpage(paddr_t);
+paddr_t	pmap_unmap_poolpage(vaddr_t);
+#define	PMAP_MAP_POOLPAGE(pa)	pmap_map_poolpage(pa)
+#define PMAP_UNMAP_POOLPAGE(va)	pmap_unmap_poolpage(va)
 #endif
 
 /*
