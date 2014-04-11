@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.351 2014/04/09 19:23:09 christos Exp $
+#	$NetBSD: bsd.lib.mk,v 1.352 2014/04/11 15:56:09 christos Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -622,7 +622,11 @@ ${_LIB.so.full}: ${SOLIB} ${DPADD} ${DPLIBC} \
 	    ${_LDFLAGS.${_LIB}} -o ${.TARGET} ${_LIBLDOPTS} \
 	    -Wl,--whole-archive ${SOLIB} \
 	    -Wl,--no-whole-archive ${_LDADD.${_LIB}}
-.if !defined(_LIB.so.debug)
+# XXX[1]: When the arm linker bug where -Wl,-x eats $a,$d,$t from shared
+# libraries remove the following conditional and put this back in the linker
+# line. For now we delay stripping symbols until the debug split step or skip
+# it alltogether if we are using -g
+.if !defined(_LIB.so.debug) && !empty(CFLAGS:M*-g*)
 	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
 #  We don't use INSTALL_SYMLINK here because this is just
@@ -642,6 +646,8 @@ ${_LIB.so.full}: ${SOLIB} ${DPADD} ${DPLIBC} \
 .if defined(_LIB.so.debug)
 ${_LIB.so.debug}: ${_LIB.so.full}
 	${_MKTARGET_CREATE}
+# XXX[2]: OBJCOPYLIBFLAGS is used to strip the symbols because it was not
+# done above.
 	(  ${OBJCOPY} --only-keep-debug ${_LIB.so.full} ${_LIB.so.debug} \
 	&& ${OBJCOPY} ${OBJCOPYLIBFLAGS} --strip-debug -p -R .gnu_debuglink \
 		--add-gnu-debuglink=${_LIB.so.debug} ${_LIB.so.full} \
