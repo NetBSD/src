@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.5,v 1.1.2.8 2014/04/08 20:24:03 bouyer Exp $
+# $NetBSD: CHANGES-6.0.5,v 1.1.2.9 2014/04/11 19:52:38 snj Exp $
 
 A complete list of changes from the NetBSD 6.0.4 release to the NetBSD 6.0.5
 release:
@@ -39,6 +39,7 @@ sys/kern/kern_verifiedexec.c			1.132
 
 	Reorder code to avoid use-after-free on error.
 	[maxv, ticket #1034]
+
 crypto/external/bsd/openssl/dist/crypto/bn/bn.h	1.2
 crypto/external/bsd/openssl/dist/crypto/bn/bn_lib.c 1.2
 crypto/external/bsd/openssl/dist/crypto/ec/ec2_mult.c 1.2
@@ -724,6 +725,7 @@ distrib/sets/lists/comp/shl.mi			patch
 
 	Update openssl to 1.0.1g. It includes CVE-2014-0076 and CVE-2014-0160.
 	[spz, ticket #1044]
+
 crypto/external/bsd/openssl/pkgconfig.mk	1.5
 
 	Run the mkpc script using ${HOST_SH}. Fixes build when
