@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_netbsd.c,v 1.20 2014/04/01 23:57:54 buhrow Exp $	*/
+/*	$NetBSD: mpt_netbsd.c,v 1.21 2014/04/11 18:01:12 buhrow Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.20 2014/04/01 23:57:54 buhrow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.21 2014/04/11 18:01:12 buhrow Exp $");
 
 #include <dev/ic/mpt.h>			/* pulls in all headers */
 #include <sys/scsiio.h>
@@ -315,7 +315,7 @@ mpt_intr(void *arg)
 	if ((mpt_read(mpt, MPT_OFFSET_INTR_STATUS) & MPT_INTR_REPLY_READY) == 0)
 		return (0);
 
-nrepl = mpt_drain_queue(mpt);
+	nrepl = mpt_drain_queue(mpt);
 	return (nrepl != 0);
 }
 
@@ -356,13 +356,13 @@ mpt_timeout(void *arg)
  	uint32_t oseq;
 	int s, nrepl = 0;
  
-if (req->xfer  == NULL) {
+	if (req->xfer  == NULL) {
 		printf("mpt_timeout: NULL xfer for request index 0x%x, sequenc 0x%x\n",
 		req->index, req->sequence);
 		return;
 	}
 	xs = req->xfer;
-		periph = xs->xs_periph;
+	periph = xs->xs_periph;
 	mpt = (void *) periph->periph_channel->chan_adapter->adapt_dev;
 	scsipi_printaddr(periph);
 	printf("command timeout\n");
@@ -555,8 +555,8 @@ mpt_done(mpt_softc_t *mpt, uint32_t reply)
 	if (__predict_false(mpt_req->Function == MPI_FUNCTION_SCSI_TASK_MGMT)) {
 		if (mpt->verbose > 1)
 			mpt_prt(mpt, "mpt_done: TASK MGMT");
-			KASSERT(req == mpt->mngt_req);
-			mpt->mngt_req = NULL;
+		KASSERT(req == mpt->mngt_req);
+		mpt->mngt_req = NULL;
 		goto done;
 	}
 
@@ -726,7 +726,7 @@ mpt_done(mpt_softc_t *mpt, uint32_t reply)
 		restart = 1;
 		break;
 
-		case MPI_IOCSTATUS_SCSI_PROTOCOL_ERROR:
+	case MPI_IOCSTATUS_SCSI_PROTOCOL_ERROR:
 		/*
 		 *FreeBSD and Linux indicate this is a phase error between
 		 *the IOC and the drive itself. 
@@ -1507,7 +1507,6 @@ mpt_bus_reset(mpt_softc_t *mpt)
 	mngt_req->TaskMsgContext = 0;
 	s = splbio();
 	mpt_send_handshake_cmd(mpt, sizeof(*mngt_req), mngt_req);
-	/*mpt_enable_ints(mpt);*/
 	splx(s);
 }
 
