@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.382 2014/04/11 11:49:38 uebayasi Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.383 2014/04/11 17:06:02 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.382 2014/04/11 11:49:38 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.383 2014/04/11 17:06:02 uebayasi Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -909,15 +909,8 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	struct exec_package	* const epp = &data->ed_pack;
 	int error = 0;
 	struct proc		*p;
-	size_t			i;
-	char			*stack, *dp;
-	const char		*commandname;
-	struct ps_strings32	arginfo32;
-	struct exec_vmcmd	*base_vcp;
-	void			*aip;
+	char			*stack;
 	struct vmspace		*vm;
-	ksiginfo_t		ksi;
-	ksiginfoq_t		kq;
 
 	/*
 	 * In case of a posix_spawn operation, the child doing the exec
@@ -929,13 +922,6 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	KASSERT(data != NULL);
 
 	p = l->l_proc;
-
-	base_vcp = NULL;
-
-	if (epp->ep_flags & EXEC_32) 
-		aip = &arginfo32;
-	else
-		aip = &data->ed_arginfo;
 
 	/* Get rid of other LWPs. */
 	if (p->p_nlwps > 1) {
@@ -1012,6 +998,12 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	}
 #endif	/* DEBUG_EXEC */
 
+    {
+	size_t			i;
+	struct exec_vmcmd	*base_vcp;
+
+	base_vcp = NULL;
+
 	for (i = 0; i < epp->ep_vmcmds.evs_used && !error; i++) {
 		struct exec_vmcmd *vcp;
 
@@ -1065,10 +1057,15 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 		DPRINTF(("%s: vmcmd %zu failed: %d\n", __func__, i - 1, error));
 		goto exec_abort;
 	}
+    }
 
 	/* remember information about the process */
 	data->ed_arginfo.ps_nargvstr = data->ed_argc;
 	data->ed_arginfo.ps_nenvstr = data->ed_envc;
+
+    {
+	const char		*commandname;
+	size_t			commandlen;
 
 	/* set command name & other accounting info */
 	commandname = strrchr(epp->ep_resolvedname, '/');
@@ -1077,19 +1074,26 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	} else {
 		commandname = epp->ep_resolvedname;
 	}
-	i = min(strlen(commandname), MAXCOMLEN);
-	(void)memcpy(p->p_comm, commandname, i);
-	p->p_comm[i] = '\0';
+	commandlen = min(strlen(commandname), MAXCOMLEN);
+	(void)memcpy(p->p_comm, commandname, commandlen);
+	p->p_comm[commandlen] = '\0';
+    }
 
-	dp = PNBUF_GET();
+    {
+	char			*path;
+
+	path = PNBUF_GET();
+
 	/*
 	 * If the path starts with /, we don't need to do any work.
 	 * This handles the majority of the cases.
 	 * In the future perhaps we could canonicalize it?
 	 */
-	if (data->ed_pathstring[0] == '/')
-		(void)strlcpy(epp->ep_path = dp, data->ed_pathstring,
+	if (data->ed_pathstring[0] == '/') {
+		(void)strlcpy(path, data->ed_pathstring,
 		    MAXPATHLEN);
+		epp->ep_path = path;
+	}
 #ifdef notyet
 	/*
 	 * Although this works most of the time [since the entry was just
@@ -1099,8 +1103,8 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	 * because there could be races. When the namei cache is re-written,
 	 * this can be changed to use the appropriate function.
 	 */
-	else if (!(error = vnode_to_path(dp, MAXPATHLEN, p->p_textvp, l, p)))
-		epp->ep_path = dp;
+	else if (!(error = vnode_to_path(path, MAXPATHLEN, p->p_textvp, l, p)))
+		epp->ep_path = path;
 #endif
 	else {
 #ifdef notyet
@@ -1108,8 +1112,9 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 		    (int)p->p_pid, p->p_comm, error);
 #endif
 		epp->ep_path = NULL;
-		PNBUF_PUT(dp);
+		PNBUF_PUT(path);
 	}
+    }
 
 	stack = (char *)STACK_ALLOC(STACK_GROW(vm->vm_minsaddr,
 		STACK_PTHREADSPACE + data->ed_ps_strings_sz + data->ed_szsigcode),
@@ -1160,12 +1165,18 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	p->p_psstrp = (vaddr_t)STACK_ALLOC(STACK_GROW(vm->vm_minsaddr,
 	    STACK_PTHREADSPACE), data->ed_ps_strings_sz);
 
+    {
+	struct ps_strings32	arginfo32;
+	void			*aip;
+
 	if (epp->ep_flags & EXEC_32) {
+		aip = &arginfo32;
 		arginfo32.ps_argvstr = (vaddr_t)data->ed_arginfo.ps_argvstr;
 		arginfo32.ps_nargvstr = data->ed_arginfo.ps_nargvstr;
 		arginfo32.ps_envstr = (vaddr_t)data->ed_arginfo.ps_envstr;
 		arginfo32.ps_nenvstr = data->ed_arginfo.ps_nenvstr;
-	}
+	} else
+		aip = &data->ed_arginfo;
 
 	/* copy out the process's ps_strings structure */
 	if ((error = copyout(aip, (void *)p->p_psstrp, data->ed_ps_strings_sz))
@@ -1174,6 +1185,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 		    __func__, aip, (void *)p->p_psstrp, data->ed_ps_strings_sz));
 		goto exec_abort;
 	}
+    }
 
 	cwdexec(p);
 	fd_closeexec();		/* handle close on exec */
@@ -1402,6 +1414,8 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	mutex_enter(proc_lock);
 
 	if ((p->p_slflag & (PSL_TRACED|PSL_SYSCALL)) == PSL_TRACED) {
+		ksiginfo_t ksi;
+
 		KSI_INIT_EMPTY(&ksi);
 		ksi.ksi_signo = SIGTRAP;
 		ksi.ksi_lid = l->l_lid;
@@ -1409,6 +1423,8 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	}
 
 	if (p->p_sflag & PS_STOPEXEC) {
+		ksiginfoq_t kq;
+
 		KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
 		p->p_pptr->p_nstopchild++;
 		p->p_pptr->p_waited = 0;
