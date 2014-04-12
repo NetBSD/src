@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.155 2014/02/25 18:30:12 pooka Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.156 2014/04/12 12:24:50 gdt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.155 2014/02/25 18:30:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.156 2014/04/12 12:24:50 gdt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -1473,8 +1473,10 @@ revarprequest(struct ifnet *ifp)
 
 	memcpy(ar_sha(ah), CLLADDR(ifp->if_sadl), ah->ar_hln);
 	tha = ar_tha(ah);
-	if (tha == NULL)
+	if (tha == NULL) {
+		m_free(m);
 		return;
+	}
 	memcpy(tha, CLLADDR(ifp->if_sadl), ah->ar_hln);
 
 	sa.sa_family = AF_ARP;
