@@ -38,6 +38,8 @@
 #include <sys/bus.h>
 #include <sys/kmem.h>
 
+#include <linux/completion.h>
+
 #include <uvm/uvm_extern.h>
 
 #include <arch/arm/broadcom/bcm2835_mbox.h>
