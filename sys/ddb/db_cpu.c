@@ -1,4 +1,4 @@
-/*	$NetBSD: db_cpu.c,v 1.6 2014/04/12 19:01:49 jakllsch Exp $	*/
+/*	$NetBSD: db_cpu.c,v 1.7 2014/04/12 19:25:48 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_cpu.c,v 1.6 2014/04/12 19:01:49 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_cpu.c,v 1.7 2014/04/12 19:25:48 jakllsch Exp $");
 
 #ifndef _KERNEL
 #include <stdbool.h>
@@ -81,7 +81,7 @@ db_cpu_next(struct cpu_info *ci)
 	u_int idx;
 
 	db_read_bytes((db_addr_t)&ci->ci_index, sizeof(idx), (char *)&idx);
-	if ((idx + 1) >= ncpu)
+	if ((idx + 1) >= (u_int)db_ncpu)
 		return NULL;
 	return db_cpu_by_index(idx + 1);
 }
