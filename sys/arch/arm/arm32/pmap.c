@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.286 2014/04/12 09:09:47 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.287 2014/04/12 16:03:59 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -216,7 +216,7 @@
 #include <arm/locore.h>
 //#include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.286 2014/04/12 09:09:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.287 2014/04/12 16:03:59 matt Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -3848,7 +3848,8 @@ pmap_kremove(vaddr_t va, vsize_t len)
 			va += PAGE_SIZE;
 			ptep += PAGE_SIZE / L2_S_SIZE;
 		}
-		KDASSERT(mappings <= l2b->l2b_occupancy);
+		KDASSERTMSG(mappings <= l2b->l2b_occupancy, "%u %u",
+		    mappings, l2b->l2b_occupancy);
 		l2b->l2b_occupancy -= mappings;
 		PTE_SYNC_RANGE(sptep, (u_int)(ptep - sptep));
 #ifdef UVMHIST
