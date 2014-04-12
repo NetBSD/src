@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.387 2014/04/12 06:31:27 uebayasi Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.388 2014/04/12 07:33:51 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.387 2014/04/12 06:31:27 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.388 2014/04/12 07:33:51 uebayasi Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -122,13 +122,17 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.387 2014/04/12 06:31:27 uebayasi Exp
 
 static int exec_sigcode_map(struct proc *, const struct emul *);
 
+#define DEBUG_EXEC
 #ifdef DEBUG_EXEC
 #define DPRINTF(a) printf a
 #define COPYPRINTF(s, a, b) printf("%s, %d: copyout%s @%p %zu\n", __func__, \
     __LINE__, (s), (a), (b))
+static void dump_vmcmds(const struct exec_package * const, size_t, int);
+#define DUMPVMCMDS(p, x, e) do { dump_vmcmds((p), (x), (e)); } while (0)
 #else
 #define DPRINTF(a)
 #define COPYPRINTF(s, a, b)
+#define DUMPVMCMDS(p, x, e) do {} while (0)
 #endif /* DEBUG_EXEC */
 
 /*
@@ -1075,27 +1079,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	/* create the new process's VM space by running the vmcmds */
 	KASSERTMSG(epp->ep_vmcmds.evs_used != 0, "%s: no vmcmds", __func__);
 
-#ifdef DEBUG_EXEC
-	{
-		size_t j;
-		struct exec_vmcmd *vp = &epp->ep_vmcmds.evs_cmds[0];
-		DPRINTF(("vmcmds %u\n", epp->ep_vmcmds.evs_used));
-		for (j = 0; j < epp->ep_vmcmds.evs_used; j++) {
-			DPRINTF(("vmcmd[%zu] = vmcmd_map_%s %#"
-			    PRIxVADDR"/%#"PRIxVSIZE" fd@%#"
-			    PRIxVSIZE" prot=0%o flags=%d\n", j,
-			    vp[j].ev_proc == vmcmd_map_pagedvn ?
-			    "pagedvn" :
-			    vp[j].ev_proc == vmcmd_map_readvn ?
-			    "readvn" :
-			    vp[j].ev_proc == vmcmd_map_zero ?
-			    "zero" : "*unknown*",
-			    vp[j].ev_addr, vp[j].ev_len,
-			    vp[j].ev_offset, vp[j].ev_prot,
-			    vp[j].ev_flags));
-		}
-	}
-#endif	/* DEBUG_EXEC */
+	DUMPVMCMDS(epp, 0, 0);
 
     {
 	size_t			i;
@@ -1115,31 +1099,8 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 			vcp->ev_addr += base_vcp->ev_addr;
 		}
 		error = (*vcp->ev_proc)(l, vcp);
-#ifdef DEBUG_EXEC
-		if (error) {
-			size_t j;
-			struct exec_vmcmd *vp =
-			    &epp->ep_vmcmds.evs_cmds[0];
-			DPRINTF(("vmcmds %zu/%u, error %d\n", i, 
-			    epp->ep_vmcmds.evs_used, error));
-			for (j = 0; j < epp->ep_vmcmds.evs_used; j++) {
-				DPRINTF(("vmcmd[%zu] = vmcmd_map_%s %#"
-				    PRIxVADDR"/%#"PRIxVSIZE" fd@%#"
-				    PRIxVSIZE" prot=0%o flags=%d\n", j,
-				    vp[j].ev_proc == vmcmd_map_pagedvn ?
-				    "pagedvn" :
-				    vp[j].ev_proc == vmcmd_map_readvn ?
-				    "readvn" :
-				    vp[j].ev_proc == vmcmd_map_zero ?
-				    "zero" : "*unknown*",
-				    vp[j].ev_addr, vp[j].ev_len,
-				    vp[j].ev_offset, vp[j].ev_prot,
-				    vp[j].ev_flags));
-				if (j == i)
-					DPRINTF(("     ^--- failed\n"));
-			}
-		}
-#endif /* DEBUG_EXEC */
+		if (error)
+			DUMPVMCMDS(epp, i, error);
 		if (vcp->ev_flags & VMCMD_BASE)
 			base_vcp = vcp;
 	}
@@ -2582,3 +2543,35 @@ exec_free_emul_arg(struct exec_package *epp)
 		KASSERT(epp->ep_emul_arg == NULL);
 	}
 }
+
+#ifdef DEBUG_EXEC
+static void
+dump_vmcmds(const struct exec_package * const epp, size_t x, int error)
+{
+	struct exec_vmcmd *vp = &epp->ep_vmcmds.evs_cmds[0];
+	size_t j;
+
+	if (error == 0)
+		DPRINTF(("vmcmds %u\n", epp->ep_vmcmds.evs_used));
+	else
+		DPRINTF(("vmcmds %zu/%u, error %d\n", x, 
+		    epp->ep_vmcmds.evs_used, error));
+
+	for (j = 0; j < epp->ep_vmcmds.evs_used; j++) {
+		DPRINTF(("vmcmd[%zu] = vmcmd_map_%s %#"
+		    PRIxVADDR"/%#"PRIxVSIZE" fd@%#"
+		    PRIxVSIZE" prot=0%o flags=%d\n", j,
+		    vp[j].ev_proc == vmcmd_map_pagedvn ?
+		    "pagedvn" :
+		    vp[j].ev_proc == vmcmd_map_readvn ?
+		    "readvn" :
+		    vp[j].ev_proc == vmcmd_map_zero ?
+		    "zero" : "*unknown*",
+		    vp[j].ev_addr, vp[j].ev_len,
+		    vp[j].ev_offset, vp[j].ev_prot,
+		    vp[j].ev_flags));
+		if (error != 0 && j == x)
+			DPRINTF(("     ^--- failed\n"));
+	}
+}
+#endif
