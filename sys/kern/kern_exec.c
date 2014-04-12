@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.386 2014/04/12 05:25:23 uebayasi Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.387 2014/04/12 06:31:27 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.386 2014/04/12 05:25:23 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.387 2014/04/12 06:31:27 uebayasi Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -914,6 +914,94 @@ execve_free_data(struct execve_data *data)
 	PNBUF_PUT(data->ed_resolvedpathbuf);
 }
 
+/* XXX elsewhere */
+static int
+credexec(struct lwp *l, struct vattr *attr)
+{
+	struct proc *p = l->l_proc;
+	int error;
+
+	/*
+	 * Deal with set[ug]id.  MNT_NOSUID has already been used to disable
+	 * s[ug]id.  It's OK to check for PSL_TRACED here as we have blocked
+	 * out additional references on the process for the moment.
+	 */
+	if ((p->p_slflag & PSL_TRACED) == 0 &&
+
+	    (((attr->va_mode & S_ISUID) != 0 &&
+	      kauth_cred_geteuid(l->l_cred) != attr->va_uid) ||
+
+	     ((attr->va_mode & S_ISGID) != 0 &&
+	      kauth_cred_getegid(l->l_cred) != attr->va_gid))) {
+		/*
+		 * Mark the process as SUGID before we do
+		 * anything that might block.
+		 */
+		proc_crmod_enter();
+		proc_crmod_leave(NULL, NULL, true);
+
+		/* Make sure file descriptors 0..2 are in use. */
+		if ((error = fd_checkstd()) != 0) {
+			DPRINTF(("%s: fdcheckstd failed %d\n",
+			    __func__, error));
+			return error;
+		}
+
+		/*
+		 * Copy the credential so other references don't see our
+		 * changes.
+		 */
+		l->l_cred = kauth_cred_copy(l->l_cred);
+#ifdef KTRACE
+		/*
+		 * If the persistent trace flag isn't set, turn off.
+		 */
+		if (p->p_tracep) {
+			mutex_enter(&ktrace_lock);
+			if (!(p->p_traceflag & KTRFAC_PERSISTENT))
+				ktrderef(p);
+			mutex_exit(&ktrace_lock);
+		}
+#endif
+		if (attr->va_mode & S_ISUID)
+			kauth_cred_seteuid(l->l_cred, attr->va_uid);
+		if (attr->va_mode & S_ISGID)
+			kauth_cred_setegid(l->l_cred, attr->va_gid);
+	} else {
+		if (kauth_cred_geteuid(l->l_cred) ==
+		    kauth_cred_getuid(l->l_cred) &&
+		    kauth_cred_getegid(l->l_cred) ==
+		    kauth_cred_getgid(l->l_cred))
+			p->p_flag &= ~PK_SUGID;
+	}
+
+	/*
+	 * Copy the credential so other references don't see our changes.
+	 * Test to see if this is necessary first, since in the common case
+	 * we won't need a private reference.
+	 */
+	if (kauth_cred_geteuid(l->l_cred) != kauth_cred_getsvuid(l->l_cred) ||
+	    kauth_cred_getegid(l->l_cred) != kauth_cred_getsvgid(l->l_cred)) {
+		l->l_cred = kauth_cred_copy(l->l_cred);
+		kauth_cred_setsvuid(l->l_cred, kauth_cred_geteuid(l->l_cred));
+		kauth_cred_setsvgid(l->l_cred, kauth_cred_getegid(l->l_cred));
+	}
+
+	/* Update the master credentials. */
+	if (l->l_cred != p->p_cred) {
+		kauth_cred_t ocred;
+
+		kauth_cred_hold(l->l_cred);
+		mutex_enter(p->p_lock);
+		ocred = p->p_cred;
+		p->p_cred = l->l_cred;
+		mutex_exit(p->p_lock);
+		kauth_cred_free(ocred);
+	}
+
+	return 0;
+}
+
 static int
 execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	bool no_local_exec_lock, bool is_spawn)
@@ -1247,83 +1335,9 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 #endif
 	}
 
-	/*
-	 * Deal with set[ug]id.  MNT_NOSUID has already been used to disable
-	 * s[ug]id.  It's OK to check for PSL_TRACED here as we have blocked
-	 * out additional references on the process for the moment.
-	 */
-	if ((p->p_slflag & PSL_TRACED) == 0 &&
-
-	    (((data->ed_attr.va_mode & S_ISUID) != 0 &&
-	      kauth_cred_geteuid(l->l_cred) != data->ed_attr.va_uid) ||
-
-	     ((data->ed_attr.va_mode & S_ISGID) != 0 &&
-	      kauth_cred_getegid(l->l_cred) != data->ed_attr.va_gid))) {
-		/*
-		 * Mark the process as SUGID before we do
-		 * anything that might block.
-		 */
-		proc_crmod_enter();
-		proc_crmod_leave(NULL, NULL, true);
-
-		/* Make sure file descriptors 0..2 are in use. */
-		if ((error = fd_checkstd()) != 0) {
-			DPRINTF(("%s: fdcheckstd failed %d\n",
-			    __func__, error));
-			goto exec_abort;
-		}
-
-		/*
-		 * Copy the credential so other references don't see our
-		 * changes.
-		 */
-		l->l_cred = kauth_cred_copy(l->l_cred);
-#ifdef KTRACE
-		/*
-		 * If the persistent trace flag isn't set, turn off.
-		 */
-		if (p->p_tracep) {
-			mutex_enter(&ktrace_lock);
-			if (!(p->p_traceflag & KTRFAC_PERSISTENT))
-				ktrderef(p);
-			mutex_exit(&ktrace_lock);
-		}
-#endif
-		if (data->ed_attr.va_mode & S_ISUID)
-			kauth_cred_seteuid(l->l_cred, data->ed_attr.va_uid);
-		if (data->ed_attr.va_mode & S_ISGID)
-			kauth_cred_setegid(l->l_cred, data->ed_attr.va_gid);
-	} else {
-		if (kauth_cred_geteuid(l->l_cred) ==
-		    kauth_cred_getuid(l->l_cred) &&
-		    kauth_cred_getegid(l->l_cred) ==
-		    kauth_cred_getgid(l->l_cred))
-			p->p_flag &= ~PK_SUGID;
-	}
-
-	/*
-	 * Copy the credential so other references don't see our changes.
-	 * Test to see if this is necessary first, since in the common case
-	 * we won't need a private reference.
-	 */
-	if (kauth_cred_geteuid(l->l_cred) != kauth_cred_getsvuid(l->l_cred) ||
-	    kauth_cred_getegid(l->l_cred) != kauth_cred_getsvgid(l->l_cred)) {
-		l->l_cred = kauth_cred_copy(l->l_cred);
-		kauth_cred_setsvuid(l->l_cred, kauth_cred_geteuid(l->l_cred));
-		kauth_cred_setsvgid(l->l_cred, kauth_cred_getegid(l->l_cred));
-	}
-
-	/* Update the master credentials. */
-	if (l->l_cred != p->p_cred) {
-		kauth_cred_t ocred;
-
-		kauth_cred_hold(l->l_cred);
-		mutex_enter(p->p_lock);
-		ocred = p->p_cred;
-		p->p_cred = l->l_cred;
-		mutex_exit(p->p_lock);
-		kauth_cred_free(ocred);
-	}
+	error = credexec(l, &data->ed_attr);
+	if (error)
+		goto exec_abort;
 
 #if defined(__HAVE_RAS)
 	/*
