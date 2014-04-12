@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.154 2014/04/10 22:14:03 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.155 2014/04/12 20:24:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.154 2014/04/10 22:14:03 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.155 2014/04/12 20:24:46 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -402,6 +402,9 @@ void
 uvm_init_limits(struct proc *p)
 {
 
+#ifndef DFLSSIZ
+#define DFLSSIZ (16*1024*1024)
+#endif
 	p->p_rlimit[RLIMIT_STACK].rlim_cur = DFLSSIZ;
 	p->p_rlimit[RLIMIT_STACK].rlim_max = MAXSSIZ;
 	PUNLIMIT(RLIMIT_DATA);
