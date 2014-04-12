@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.284 2014/04/11 04:19:47 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.285 2014/04/12 08:39:58 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -216,7 +216,7 @@
 #include <arm/locore.h>
 //#include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.284 2014/04/11 04:19:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.285 2014/04/12 08:39:58 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -7813,7 +7813,7 @@ pmap_map_poolpage(paddr_t pa)
 #if defined(PMAP_CACHE_VIPT) && !defined(ARM_MMU_EXTENDED)
 	if (arm_cache_prefer_mask != 0) {
 		struct vm_page * const pg = PHYS_TO_VM_PAGE(pa);
-		struct vn_page_md * const md = VM_PAGE_TO_MD(pg);
+		struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
 		pmap_acquire_page_lock(md);
 		pmap_vac_me_harder(md, pa, pmap_kernel(), va);
 		pmap_release_page_lock(md);
