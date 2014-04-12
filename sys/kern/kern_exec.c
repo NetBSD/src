@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.389 2014/04/12 07:38:32 uebayasi Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.390 2014/04/12 15:08:56 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.389 2014/04/12 07:38:32 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.390 2014/04/12 15:08:56 uebayasi Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -246,7 +246,6 @@ struct execve_data {
 	int			ed_szsigcode;
 	long			ed_argc;
 	long			ed_envc;
-	vaddr_t			ed_newstack;
 };
 
 /*
@@ -1202,9 +1201,6 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	/* Skip a few words reserved for _rtld(). */
 	stack = STACK_GROW(stack, RTLD_GAP);
 
-	/* Remember the new stack address for setregs(). */
-	data->ed_newstack = (vaddr_t)stack;
-
 	/* Now copy argc, args & environ to the new stack. */
 	error = (*epp->ep_esch->es_copyargs)(l, epp,
 	    &data->ed_arginfo, &stack, data->ed_argp);
@@ -1308,10 +1304,21 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 
 	doexechooks(p);
 
-	/* setup new registers and do misc. setup. */
-	(*epp->ep_esch->es_emul->e_setregs)(l, epp, data->ed_newstack);
+    {
+	/*
+	 * Set initial SP at the top of the stack.
+	 *
+	 * Note that on machines where stack grows up (e.g. hppa), SP points to
+	 * the end of arg/env strings.  Userland guesses the address of argc
+	 * via ps_strings::ps_argvstr.
+	 */
+	const vaddr_t newstack = (vaddr_t)STACK_GROW(vm->vm_minsaddr, epp->ep_ssize);
+
+	/* Setup new registers and do misc. setup. */
+	(*epp->ep_esch->es_emul->e_setregs)(l, epp, newstack);
 	if (epp->ep_esch->es_setregs)
-		(*epp->ep_esch->es_setregs)(l, epp, data->ed_newstack);
+		(*epp->ep_esch->es_setregs)(l, epp, newstack);
+    }
 
 	/* Provide a consistent LWP private setting */
 	(void)lwp_setprivate(l, NULL);
