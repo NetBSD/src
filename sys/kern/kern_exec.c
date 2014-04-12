@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.385 2014/04/11 18:02:33 uebayasi Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.386 2014/04/12 05:25:23 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.385 2014/04/11 18:02:33 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.386 2014/04/12 05:25:23 uebayasi Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -243,6 +243,7 @@ struct execve_data {
 	int			ed_szsigcode;
 	long			ed_argc;
 	long			ed_envc;
+	vaddr_t			ed_newstack;
 };
 
 /*
@@ -778,7 +779,7 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	 * Calculate the new stack size.
 	 */
 
-	const size_t psstrauxlen =
+	const size_t nargenvptrs =
 	    data->ed_argc +		/* char *argv[] */
 	    1 +				/* \0 */
 	    data->ed_envc +		/* char *env[] */
@@ -804,21 +805,31 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 #endif
 
 #ifdef __MACHINE_STACK_GROWS_UP
-/* See big comment lower down */
+/*
+ * copyargs() fills argc/argv/envp from the lower address even on
+ * __MACHINE_STACK_GROWS_UP machines.  Reserve a few words just below the SP
+ * so that _rtld() use it.
+ */
 #define	RTLD_GAP	32
 #else
 #define	RTLD_GAP	0
 #endif
 
-	const size_t stacklen =
+	const size_t argenvlen =
+	    RTLD_GAP +			/* reserved for _rtld() */
 	    sizeof(int) +		/* XXX argc in stack is long, not int */
-	    (psstrauxlen * ptrsz) +	/* XXX auxinfo multiplied by ptr size? */
+	    (nargenvptrs * ptrsz);	/* XXX auxinfo multiplied by ptr size? */
+
+	const size_t sigcode_psstr_sz =
+	    data->ed_szsigcode +	/* sigcode */
+	    data->ed_ps_strings_sz +	/* ps_strings */
+	    STACK_PTHREADSPACE;		/* pthread space */
+
+	const size_t stacklen =
+	    argenvlen +
 	    argenvstrlen +
 	    aslrgap +
-	    RTLD_GAP +
-	    data->ed_szsigcode +
-	    data->ed_ps_strings_sz +
-	    STACK_PTHREADSPACE;
+	    sigcode_psstr_sz;
 
 	/* make the stack "safely" aligned */
 	const size_t aligned_stacklen = STACK_LEN_ALIGN(stacklen, STACK_ALIGNBYTES);
@@ -1117,39 +1128,36 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	data->ed_arginfo.ps_nenvstr = data->ed_envc;
 
     {
+	/*
+	 * Allocate the stack address passed to the newly execve()'ed process.
+	 *
+	 * The new stack address will be set to the SP (stack pointer) register
+	 * in setregs().
+	 */
+
+	const size_t sigcode_psstr_sz =
+	    data->ed_szsigcode +	/* sigcode */
+	    data->ed_ps_strings_sz +	/* ps_strings */
+	    STACK_PTHREADSPACE;		/* pthread space */
+
 	char			*stack;
 
-	stack = (char *)STACK_ALLOC(STACK_GROW(vm->vm_minsaddr,
-		STACK_PTHREADSPACE + data->ed_ps_strings_sz + data->ed_szsigcode),
-		epp->ep_ssize - (data->ed_ps_strings_sz + data->ed_szsigcode));
+	/* Top of the stack address space. */
+	stack = vm->vm_minsaddr;
 
-#ifdef __MACHINE_STACK_GROWS_UP
-	/*
-	 * The copyargs call always copies into lower addresses
-	 * first, moving towards higher addresses, starting with
-	 * the stack pointer that we give.  When the stack grows
-	 * down, this puts argc/argv/envp very shallow on the
-	 * stack, right at the first user stack pointer.
-	 * When the stack grows up, the situation is reversed.
-	 *
-	 * Normally, this is no big deal.  But the ld_elf.so _rtld()
-	 * function expects to be called with a single pointer to
-	 * a region that has a few words it can stash values into,
-	 * followed by argc/argv/envp.  When the stack grows down,
-	 * it's easy to decrement the stack pointer a little bit to
-	 * allocate the space for these few words and pass the new
-	 * stack pointer to _rtld.  When the stack grows up, however,
-	 * a few words before argc is part of the signal trampoline, XXX
-	 * so we have a problem.
-	 *
-	 * Instead of changing how _rtld works, we take the easy way
-	 * out and steal 32 bytes before we call copyargs.
-	 * This extra space was allowed for when 'pack.ep_ssize' was calculated.
-	 */
-	stack += RTLD_GAP;
-#endif /* __MACHINE_STACK_GROWS_UP */
-	
-	/* Now copy argc, args & environ to new stack */
+	/* Skip pthread space, ps_strings, and sigcode. */
+	stack = STACK_GROW(stack, sigcode_psstr_sz);
+
+	/* Allocate the gap for _rtld() and arguments to be filled by copyargs(). */
+	stack = STACK_ALLOC(stack, epp->ep_ssize - sigcode_psstr_sz);
+
+	/* Skip a few words reserved for _rtld(). */
+	stack = STACK_GROW(stack, RTLD_GAP);
+
+	/* Remember the new stack address for setregs(). */
+	data->ed_newstack = (vaddr_t)stack;
+
+	/* Now copy argc, args & environ to the new stack. */
 	error = (*epp->ep_esch->es_copyargs)(l, epp,
 	    &data->ed_arginfo, &stack, data->ed_argp);
 
@@ -1326,17 +1334,10 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 
 	doexechooks(p);
 
-    {
-	char * const stack = (char *)STACK_GROW(
-	    (void *)epp->ep_minsaddr, epp->ep_ssize);
-
 	/* setup new registers and do misc. setup. */
-	(*epp->ep_esch->es_emul->e_setregs)(l, epp,
-	     (vaddr_t)stack);
+	(*epp->ep_esch->es_emul->e_setregs)(l, epp, data->ed_newstack);
 	if (epp->ep_esch->es_setregs)
-		(*epp->ep_esch->es_setregs)(l, epp,
-		    (vaddr_t)stack);
-    }
+		(*epp->ep_esch->es_setregs)(l, epp, data->ed_newstack);
 
 	/* Provide a consistent LWP private setting */
 	(void)lwp_setprivate(l, NULL);
