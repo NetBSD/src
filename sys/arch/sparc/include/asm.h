@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.19 2013/09/12 15:36:17 joerg Exp $ */
+/*	$NetBSD: asm.h,v 1.20 2014/04/12 21:26:45 joerg Exp $ */
 
 /*
  * Copyright (c) 1994 Allen Briggs
@@ -152,7 +152,7 @@
 #define	FUNC(name)		ASENTRY(name)
 #define RODATA(name)		.align 4; .text; .globl _C_LABEL(name); \
 				OTYPE(_C_LABEL(name)); _C_LABEL(name):
-
+#define	END(y)		.size y, . - y
 
 #define ASMSTR			.asciz
 
