@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.484.2.4.2.8 2014/01/18 11:23:50 bouyer Exp $
+.\"	$NetBSD: main,v 1.484.2.4.2.9 2014/04/12 20:12:38 snj Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,7 +50,7 @@
 .as MACHINE_LIST " sgimips shark sparc sparc64 sun2 sun3 vax x68k xen zaurus .
 .so \*[.CURDIR]/../common/macros
 .
-.Dd January 18, 2014
+.Dd April 12, 2014
 .Dt INSTALL 8
 .Os NetBSD
 .Sh NAME
@@ -458,89 +458,43 @@ possible, it's likely that
 wouldn't exist.
 .
 .if \n[FOR_RELEASE] \{\
-.Ss Changes Between The NetBSD 6.0.3 and 6.0.4 Releases
+.Ss Changes Between The NetBSD 6.0.4 and 6.0.5 Releases
 .Pp
 The complete list of changes can be found in the
-CHANGES-6.0.4:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-6.0.4/CHANGES-6.0.4
-file in the top level directory of the NetBSD 6.0.4 release tree. An abbreviated list is as follows:
+CHANGES-6.0.5:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-6.0.5/CHANGES-6.0.5
+file in the top level directory of the NetBSD 6.0.5 release tree.
+An abbreviated list is as follows:
 .Ss2 Security Advisory Fixes
 .(bullet
-NetBSD-SA2013-010:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2013-010.txt.asc
-Use after free in Xserver handling of ImageText requests (CVE-2013-4396)
+NetBSD-SA2014-003:
+.Lk http://ftp.netbsd.org/pub/NetBSD/security/advisories/NetBSD-SA2014-003.txt.asc
+posix_spawn unbounded kernel memory allocation
 .It
-NetBSD-SA2013-011:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2013-011.txt.asc
-embryonic TCP sockets local DoS
-.It
-NetBSD-SA2013-012:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2013-012.txt.asc
-Router Advertisement sysctl local Denial of Service
-.It
-NetBSD-SA2013-013:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2013-013.txt.asc
-Memory leak when trying to execute bogus ELF binaries
-.It
-NetBSD-SA2014-001:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2014-001.txt.asc
-Stack buffer overflow in libXfont (CVE-2013-6462)
-.It
-NetBSD-SA2014-002:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2014-002.txt.asc
-ntpd used as DDoS amplifier
+NetBSD-SA2014-004:
+.Lk http://ftp.netbsd.org/pub/NetBSD/security/advisories/NetBSD-SA2014-004.txt.asc
+OpenSSL information disclosure ("heartbleed")
 .bullet)
 .
 .Pp
-Advisories prior to NetBSD-SA2013-009 do not affect
-NetBSD 6.0.4:
-.Lk http://www.NetBSD.org/support/security/patches-6.0.4.html .
+Advisories prior to NetBSD-SA2014-003 do not affect
+NetBSD 6.0.5:
+.Lk http://www.NetBSD.org/support/security/patches-6.0.5.html .
 .Ss2 Other Security Fixes
 .(bullet
-bind: Fix CVE-2014-0591.
-.bullet)
-.
-.Ss2 Kernel
-.(bullet
-.Xr pci 4 :
-Work around a QEMU bug preventing NetBSD from booting on some versions of QEMU and KVM.  (PR#45671):
-.Lk http://gnats.netbsd.org/45671
-.It
-Xen: fix dom0 crash with some domUs
-.It
-Xen: remove a bogus diagostic message spamming the console.  (PR#46313):
-.Lk http://gnats.netbsd.org/46313
-.bullet)
-.
-.Ss2 Networking
-.(bullet
-NPF: fix byteorder for port range comparison.
-.bullet)
-.
-.Ss2 File Systems
-.(bullet
-ffs: Fixed a fsck_ffs internal error on UFS1.
+OpenSSL: CVE-2014-0076
 .bullet)
 .
 .Ss2 Miscellaneous
 .(bullet
-.Xr Xserver 1 :
-Fixed crash on i810e.  (PR#48315):
-.Lk http://gnats.netbsd.org/48315
+Fix memory leak on bogus ELF binary.
 .It
-.Xr sysinst 8 :
-Fixed wrong MBR partiton offset on small disks.  (PR#48304):
-.Lk http://gnats.netbsd.org/48304
-.Xr ld.elf_so 1 :
-Fixed memory corruption.  (PR#48324):
-.Lk http://gnats.netbsd.org/48324
+veriexec: Avoid a use-after-free error.
 .It
-sparc64: fix a kernel diagnostic panic.
-.It
-sparc64: fixed gcc to not generate invalid asm.
+atari: Fix a kernel crash when a user tries to switch to a nonexistent terminal. Fixes
+PR#48599:
+.Lk http://gnats.NetBSD.org/48599 .
 .bullet)
-.
-.
 .
 .Ss "The NetBSD Foundation"
 .Pp
@@ -590,6 +544,8 @@ Changes between the 6.0.1 and 6.0.2 releases.
 Changes between the 6.0.2 and 6.0.3 releases.
 .It Li CHANGES-6.0.4
 Changes between the 6.0.3 and 6.0.4 releases.
+.It Li CHANGES-6.0.5
+Changes between the 6.0.4 and 6.0.5 releases.
 .It Li CHANGES.prev
 Changes in previous
 .Nx
