@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: vchi_bsd.c,v 1.6 2014/03/27 07:59:17 skrll Exp $
+ * $Id: vchi_bsd.c,v 1.7 2014/04/12 13:28:41 skrll Exp $
  */
 
 #include <sys/types.h>
@@ -118,123 +118,6 @@ del_timer(struct timer_list *t)
 {
 	del_timer_sync(t);
 	return 0;
-}
-
-/*
- * Completion API
- */
-void
-init_completion(struct completion *c)
-{
-	cv_init(&c->cv, "VCHI completion cv");
-	mutex_init(&c->lock, MUTEX_DEFAULT, IPL_NONE);
-	c->done = 0;
-}
-
-void
-destroy_completion(struct completion *c)
-{
-	cv_destroy(&c->cv);
-	mutex_destroy(&c->lock);
-}
-
-void
-wait_for_completion(struct completion *c)
-{
-	mutex_enter(&c->lock);
-	if (!c->done)
-		cv_wait(&c->cv, &c->lock);
-	c->done--;
-	mutex_exit(&c->lock);
-}
-
-int
-try_wait_for_completion(struct completion *c)
-{
-	int res = 0;
-
-	mutex_enter(&c->lock);
-	if (!c->done)
-		c->done--;
-	else
-		res = 1;
-	mutex_exit(&c->lock);
-	return res != 0;
-}
-
-int
-wait_for_completion_timeout(struct completion *c, unsigned long timeout)
-{
-	int res = 0;
-
-	mutex_enter(&c->lock);
-	if (!c->done)
-		res = cv_timedwait(&c->cv, &c->lock, timeout);
-	if (res == 0)
-		c->done--;
-	mutex_exit(&c->lock);
-	return res != 0;
-}
-
-int
-wait_for_completion_interruptible_timeout(struct completion *c, unsigned long timeout)
-{
-	int res = 0;
-
-	mutex_enter(&c->lock);
-	if (!c->done)
-		res = cv_timedwait_sig(&c->cv, &c->lock, timeout);
-	if (res == 0)
-		c->done--;
-	mutex_exit(&c->lock);
-	return res != 0;
-}
-
-int
-wait_for_completion_interruptible(struct completion *c)
-{
-	int res = 0;
-
-	mutex_enter(&c->lock);
-	if (!c->done)
-		res = cv_wait_sig(&c->cv, &c->lock);
-	if (res == 0)
-		c->done--;
-	mutex_exit(&c->lock);
-	return res != 0;
-}
-
-int
-wait_for_completion_killable(struct completion *c)
-{
-	int res = 0;
-
-	mutex_enter(&c->lock);
-	if (!c->done)
-		res = cv_wait_sig(&c->cv, &c->lock);
-	/* TODO: check actual signals here ? */
-	if (res == 0)
-		c->done--;
-	mutex_exit(&c->lock);
-	return res != 0;
-}
-
-void
-complete(struct completion *c)
-{
-	mutex_enter(&c->lock);
-	c->done++;
-	cv_signal(&c->cv);
-	mutex_exit(&c->lock);
-}
-
-void
-complete_all(struct completion *c)
-{
-	mutex_enter(&c->lock);
-	c->done++;
-	cv_broadcast(&c->cv);
-	mutex_exit(&c->lock);
 }
 
 /*
