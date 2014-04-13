@@ -1057,7 +1057,8 @@ start:
 				s->rstate=SSL_ST_READ_HEADER;
 				rr->off=0;
 				if (s->mode & SSL_MODE_RELEASE_BUFFERS)
-					ssl3_release_read_buffer(s);
+					if (s->s3->rbuf.left == 0) /* no read-ahead left? */
+						ssl3_release_read_buffer(s);
 				}
 			}
 		return(n);
