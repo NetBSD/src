@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.390 2014/04/12 15:08:56 uebayasi Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.391 2014/04/13 06:03:49 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.390 2014/04/12 15:08:56 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.391 2014/04/13 06:03:49 uebayasi Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -120,6 +120,10 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.390 2014/04/12 15:08:56 uebayasi Exp
 #endif
 #endif
 
+struct execve_data;
+
+static int copyinargs(struct execve_data * restrict, char * const *,
+    char * const *, execve_fetch_element_t, char **);
 static int exec_sigcode_map(struct proc *, const struct emul *);
 
 #ifdef DEBUG_EXEC
@@ -589,9 +593,7 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	struct exec_package	* const epp = &data->ed_pack;
 	int			error;
 	struct proc		*p;
-	char			*dp, *sp;
-	size_t			i;
-	struct exec_fakearg	*tmpfap;
+	char			*dp;
 	u_int			modgen;
 
 	KASSERT(data != NULL);
@@ -683,98 +685,13 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 		goto freehdr;
 	}
 
-	/* XXX -- THE FOLLOWING SECTION NEEDS MAJOR CLEANUP */
- 	/* XXX rename this as copyinargs() */
-
 	/* allocate an argument buffer */
 	data->ed_argp = pool_get(&exec_pool, PR_WAITOK);
 	KASSERT(data->ed_argp != NULL);
 	dp = data->ed_argp;
-	data->ed_argc = 0;
 
-	/* copy the fake args list, if there's one, freeing it as we go */
-	if (epp->ep_flags & EXEC_HASARGL) {
-		tmpfap = epp->ep_fa;
-		while (tmpfap->fa_arg != NULL) {
-			const char *cp;
-
-			/* XXX boudary check */
-			cp = tmpfap->fa_arg;
-			while (*cp)
-				*dp++ = *cp++;
-			*dp++ = '\0';
-			ktrexecarg(tmpfap->fa_arg, cp - tmpfap->fa_arg);
-
-			kmem_free(tmpfap->fa_arg, tmpfap->fa_len);
-			tmpfap++;
-			data->ed_argc++;
-		}
-		kmem_free(epp->ep_fa, epp->ep_fa_len);
-		epp->ep_flags &= ~EXEC_HASARGL;
-	}
-
-	/* Now get argv & environment */
-	if (args == NULL) {
-		DPRINTF(("%s: null args\n", __func__));
-		error = EINVAL;
+	if ((error = copyinargs(data, args, envs, fetch_element, &dp)) != 0) {
 		goto bad;
-	}
-	/* 'i' will index the argp/envp element to be retrieved */
-	i = 0;
-	if (epp->ep_flags & EXEC_SKIPARG)
-		i++;
-
-	while (1) {
-		const size_t maxlen = data->ed_argp + ARG_MAX - dp;
-		size_t len;
-
-		if ((error = (*fetch_element)(args, i, &sp)) != 0) {
-			DPRINTF(("%s: fetch_element args %d\n",
-			    __func__, error));
-			goto bad;
-		}
-		if (!sp)
-			break;
-		if ((error = copyinstr(sp, dp, maxlen, &len)) != 0) {
-			DPRINTF(("%s: copyinstr args %d\n", __func__, error));
-			if (error == ENAMETOOLONG)
-				error = E2BIG;
-			goto bad;
-		}
-		ktrexecarg(dp, len - 1);
-		dp += len;
-		i++;
-		data->ed_argc++;
-	}
-
-	data->ed_envc = 0;
-	/* environment need not be there */
-	if (envs != NULL) {
-		i = 0;
-		while (1) {
-			const size_t maxlen = data->ed_argp + ARG_MAX - dp;
-			size_t len;
-
-			if ((error = (*fetch_element)(envs, i, &sp)) != 0) {
-				DPRINTF(("%s: fetch_element env %d\n",
-				    __func__, error));
-				goto bad;
-			}
-			if (!sp)
-				break;
-			if ((error = copyinstr(sp, dp, maxlen, &len)) != 0) {
-				DPRINTF(("%s: copyinstr env %d\n",
-				    __func__, error));
-				if (error == ENAMETOOLONG)
-					error = E2BIG;
-				goto bad;
-			}
-
-			ktrexecenv(dp, len - 1);
-			dp += len;
-			i++;
-			data->ed_envc++;
-		}
 	}
 
 	/*
@@ -1488,6 +1405,111 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		return error;
 	error = execve_runproc(l, &data, false, false);
 	return error;
+}
+
+static int
+copyinargs(struct execve_data * restrict data, char * const *args,
+    char * const *envs, execve_fetch_element_t fetch_element, char **dpp)
+{
+	struct exec_package	* const epp = &data->ed_pack;
+	char			*dp, *sp;
+	size_t			i;
+	int			error;
+
+	dp = *dpp;
+
+	/* XXX -- THE FOLLOWING SECTION NEEDS MAJOR CLEANUP */
+
+	data->ed_argc = 0;
+
+	/* copy the fake args list, if there's one, freeing it as we go */
+	if (epp->ep_flags & EXEC_HASARGL) {
+		struct exec_fakearg	*tmpfap = epp->ep_fa;
+
+		while (tmpfap->fa_arg != NULL) {
+			const char *cp;
+
+			/* XXX boudary check */
+			cp = tmpfap->fa_arg;
+			while (*cp)
+				*dp++ = *cp++;
+			*dp++ = '\0';
+			ktrexecarg(tmpfap->fa_arg, cp - tmpfap->fa_arg);
+
+			kmem_free(tmpfap->fa_arg, tmpfap->fa_len);
+			tmpfap++;
+			data->ed_argc++;
+		}
+		kmem_free(epp->ep_fa, epp->ep_fa_len);
+		epp->ep_flags &= ~EXEC_HASARGL;
+	}
+
+	/* Now get argv & environment */
+	if (args == NULL) {
+		DPRINTF(("%s: null args\n", __func__));
+		return EINVAL;
+	}
+	/* 'i' will index the argp/envp element to be retrieved */
+	i = 0;
+	if (epp->ep_flags & EXEC_SKIPARG)
+		i++;
+
+	while (1) {
+		const size_t maxlen = data->ed_argp + ARG_MAX - dp;
+		size_t len;
+
+		if ((error = (*fetch_element)(args, i, &sp)) != 0) {
+			DPRINTF(("%s: fetch_element args %d\n",
+			    __func__, error));
+			return error;
+		}
+		if (!sp)
+			break;
+		if ((error = copyinstr(sp, dp, maxlen, &len)) != 0) {
+			DPRINTF(("%s: copyinstr args %d\n", __func__, error));
+			if (error == ENAMETOOLONG)
+				error = E2BIG;
+			return error;
+		}
+		ktrexecarg(dp, len - 1);
+		dp += len;
+		i++;
+		data->ed_argc++;
+	}
+
+	data->ed_envc = 0;
+	/* environment need not be there */
+	if (envs != NULL) {
+		i = 0;
+		while (1) {
+			const size_t maxlen = data->ed_argp + ARG_MAX - dp;
+			size_t len;
+
+			if ((error = (*fetch_element)(envs, i, &sp)) != 0) {
+				DPRINTF(("%s: fetch_element env %d\n",
+				    __func__, error));
+				return error;
+			}
+			if (!sp)
+				break;
+			if ((error = copyinstr(sp, dp, maxlen, &len)) != 0) {
+				DPRINTF(("%s: copyinstr env %d\n",
+				    __func__, error));
+				if (error == ENAMETOOLONG)
+					error = E2BIG;
+				return error;
+			}
+
+			ktrexecenv(dp, len - 1);
+			dp += len;
+			i++;
+			data->ed_envc++;
+		}
+	}
+
+	*dpp = dp;
+
+	return 0;
 }
 
 /*
