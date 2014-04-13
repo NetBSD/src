@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.95 2014/03/29 23:33:20 matt Exp $	*/
+/*	$NetBSD: armreg.h,v 1.96 2014/04/13 02:23:00 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -978,6 +978,10 @@ ARMREG_WRITE_INLINE(nrrr, "p15,0,%0,c10,c2,1") /* Normal Region Remap Register *
 /* cp15 c13 registers */
 ARMREG_READ_INLINE(contextidr, "p15,0,%0,c13,c0,1") /* Context ID Register */
 ARMREG_WRITE_INLINE(contextidr, "p15,0,%0,c13,c0,1") /* Context ID Register */
+ARMREG_READ_INLINE(tpidrurw, "p15,0,%0,c13,c0,2") /* User read-write Thread ID Register */
+ARMREG_WRITE_INLINE(tpidrurw, "p15,0,%0,c13,c0,2") /* User read-write Thread ID Register */
+ARMREG_READ_INLINE(tpidruro, "p15,0,%0,c13,c0,3") /* User read-only Thread ID Register */
+ARMREG_WRITE_INLINE(tpidruro, "p15,0,%0,c13,c0,3") /* User read-only Thread ID Register */
 ARMREG_READ_INLINE(tpidrprw, "p15,0,%0,c13,c0,4") /* PL1 only Thread ID Register */
 ARMREG_WRITE_INLINE(tpidrprw, "p15,0,%0,c13,c0,4") /* PL1 only Thread ID Register */
 /* cp14 c12 registers */
