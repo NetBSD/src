@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_var.h,v 1.2 2014/04/13 17:06:02 reinoud Exp $ */
+/* $NetBSD: exynos_var.h,v 1.3 2014/04/13 20:45:25 reinoud Exp $ */
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -102,9 +102,17 @@ extern struct bus_space exynos_bs_tag;
 extern struct bus_space exynos_a4x_bs_tag;
 extern bus_space_handle_t exynos_core_bsh;
 
-void exynos_bootstrap(vaddr_t, vaddr_t);
-void exynos_device_register(device_t self, void *aux);
-void exyo_device_register(device_t self, void *aux);
-void exynos_wdt_reset(void);
+extern void exynos_bootstrap(vaddr_t, vaddr_t);
+extern void exynos_device_register(device_t self, void *aux);
+extern void exyo_device_register(device_t self, void *aux);
+extern void exynos_wdt_reset(void);
+
+#ifdef ARM_TRUSTZONE_FIRMWARE
+/* trustzone calls */
+extern int exynos_do_idle(void);
+extern int exynos_set_cpu_boot_addr(int cpu, vaddr_t boot_addr);
+extern int exynos_cpu_boot(int cpu);
+extern int exynos_l2cc_init(void);
+#endif
 
 #endif	/* _ARM_SAMSUNG_EXYNOS_VAR_H_ */

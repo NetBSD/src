@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_soc.c,v 1.1 2014/04/13 02:26:26 matt Exp $	*/
+/*	$NetBSD: exynos_soc.c,v 1.2 2014/04/13 20:45:25 reinoud Exp $	*/
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #define	_ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.1 2014/04/13 02:26:26 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.2 2014/04/13 20:45:25 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -112,7 +112,7 @@ static struct consdev exynos_earlycons = {
 
 
 #ifdef ARM_TRUSTZONE_FIRMWARE
-static int
+int
 exynos_do_idle(void)
 {
         exynos_smc(SMC_CMD_SLEEP, 0, 0, 0);
@@ -121,10 +121,11 @@ exynos_do_idle(void)
 }
 
 
-static int
+int
 exynos_set_cpu_boot_addr(int cpu, vaddr_t boot_addr)
 {
 #if 0
+	/* XXX we need to map in iRAM space for this XXX */
         void __iomem *boot_reg = S5P_VA_SYSRAM_NS + 0x1c;
 
         if (!soc_is_exynos5420())
@@ -137,7 +138,7 @@ exynos_set_cpu_boot_addr(int cpu, vaddr_t boot_addr)
 }
 
 
-static int
+int
 exynos_cpu_boot(int cpu)
 {
 	exynos_smc(SMC_CMD_CPU1BOOT, cpu, 0, 0);
@@ -155,11 +156,11 @@ exynos_cpu_boot(int cpu)
  * Exynos4412, but why?
  */
 
-static int
+int
 exynos_l2cc_init(void)
 {
 	const uint32_t tag_latency  = 0x110;
-	const uint32_t data_latency = IS_EXYNOS4410 ? 0x110 : 0x120;
+	const uint32_t data_latency = IS_EXYNOS4410_P() ? 0x110 : 0x120;
 	const uint32_t prefetch4412   = /* 0111 0001 0000 0000 0000 0000 0000 0111 */
 				PREFETCHCTL_DBLLINEF_EN  |
 				PREFETCHCTL_INSTRPREF_EN |
@@ -198,7 +199,7 @@ exynos_l2cc_init(void)
 	KASSERT(aux_val         == 0x7C470001);
 	KASSERT(aux_keepmask    == 0xC200FFFF);
 
-	if (IS_EXYNOS4412_R0)
+	if (IS_EXYNOS4412_R0_P())
 		prefetch = prefetch4412_r0;
 	else
 		prefetch = prefetch4412;	/* newer than >= r1_0 */
@@ -213,14 +214,8 @@ exynos_l2cc_init(void)
 
 	return 0;
 }
-
-static struct trustzone_firmware_handlers exynos_firmware_handlers = {
-	.do_idle           = exynos_do_idle,
-	.set_cpu_boot_addr = exynos_set_cpu_boot_addr,
-	.cpu_boot          = exynos_cpu_boot,
-	.l2cc_init         = exynos_l2cc_init
-};
 #endif /* ARM_TRUSTZONE_FIRMWARE */
+
 
 void
 exynos_bootstrap(vaddr_t iobase, vaddr_t uartbase)
@@ -241,10 +236,6 @@ exynos_bootstrap(vaddr_t iobase, vaddr_t uartbase)
 		panic("%s: failed to map in Exynos io registers: %d",
 			__func__, error);
 	KASSERT(exynos_core_bsh == iobase);
-#endif
-#ifdef ARM_TRUSTZONE_FIRMWARE
-	/* setup trustzone handlers */
-	trustzone_firmware_handlers = &exynos_firmware_handlers;
 #endif
 }
 

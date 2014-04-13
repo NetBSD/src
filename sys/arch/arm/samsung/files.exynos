@@ -1,4 +1,4 @@
-#	$NetBSD: files.exynos,v 1.1 2014/04/13 02:26:26 matt Exp $
+#	$NetBSD: files.exynos,v 1.2 2014/04/13 20:45:25 reinoud Exp $
 #
 # Configuration info for Samsung Exynos SoC ARM Peripherals
 #
@@ -17,7 +17,6 @@ file	arch/arm/samsung/exynos_soc.c
 file	arch/arm/samsung/exynos_space.c
 #file	arch/arm/samsung/primecell.c
 file	arch/arm/samsung/exynos_smc.S		arm_trustzone_firmware
-file	arch/arm/trustzone/firmware.c		arm_trustzone_firmware
 
 file	arch/arm/arm/bus_space_a4x.S		exyo
 
