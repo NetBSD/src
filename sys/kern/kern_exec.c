@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.391 2014/04/13 06:03:49 uebayasi Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.392 2014/04/13 09:19:42 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.391 2014/04/13 06:03:49 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.392 2014/04/13 09:19:42 uebayasi Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -124,6 +124,8 @@ struct execve_data;
 
 static int copyinargs(struct execve_data * restrict, char * const *,
     char * const *, execve_fetch_element_t, char **);
+static int copyinargstrs(struct execve_data * restrict, char * const *,
+    execve_fetch_element_t, char **, size_t *, void (*)(const void *, size_t));
 static int exec_sigcode_map(struct proc *, const struct emul *);
 
 #ifdef DEBUG_EXEC
@@ -1412,7 +1414,7 @@ copyinargs(struct execve_data * restrict data, char * const *args,
     char * const *envs, execve_fetch_element_t fetch_element, char **dpp)
 {
 	struct exec_package	* const epp = &data->ed_pack;
-	char			*dp, *sp;
+	char			*dp;
 	size_t			i;
 	int			error;
 
@@ -1444,70 +1446,80 @@ copyinargs(struct execve_data * restrict data, char * const *args,
 		epp->ep_flags &= ~EXEC_HASARGL;
 	}
 
-	/* Now get argv & environment */
+	/*
+	 * Read and count argument strings from user.
+	 */
+
 	if (args == NULL) {
 		DPRINTF(("%s: null args\n", __func__));
 		return EINVAL;
 	}
-	/* 'i' will index the argp/envp element to be retrieved */
-	i = 0;
 	if (epp->ep_flags & EXEC_SKIPARG)
-		i++;
+		args++;
+	i = 0;
+	error = copyinargstrs(data, args, fetch_element, &dp, &i, ktr_execarg);
+	if (error != 0) {
+		DPRINTF(("%s: copyin arg %d\n", __func__, error));
+		return error;
+	}
+	data->ed_argc += i;
 
+	/*
+	 * Read and count environment strings from user.
+	 */
+
+	data->ed_envc = 0;
+	/* environment need not be there */
+	if (envs == NULL)
+		goto done;
+	i = 0;
+	error = copyinargstrs(data, envs, fetch_element, &dp, &i, ktr_execenv);
+	if (error != 0) {
+		DPRINTF(("%s: copyin env %d\n", __func__, error));
+		return error;
+	}
+	data->ed_envc += i;
+
+done:
+	*dpp = dp;
+
+	return 0;
+}
+
+static int
+copyinargstrs(struct execve_data * restrict data, char * const *strs,
+    execve_fetch_element_t fetch_element, char **dpp, size_t *ip,
+    void (*ktr)(const void *, size_t))
+{
+	char			*dp, *sp;
+	size_t			i;
+	int			error;
+
+	dp = *dpp;
+
+	i = 0;
 	while (1) {
 		const size_t maxlen = data->ed_argp + ARG_MAX - dp;
 		size_t len;
 
-		if ((error = (*fetch_element)(args, i, &sp)) != 0) {
-			DPRINTF(("%s: fetch_element args %d\n",
-			    __func__, error));
+		if ((error = (*fetch_element)(strs, i, &sp)) != 0) {
 			return error;
 		}
 		if (!sp)
 			break;
 		if ((error = copyinstr(sp, dp, maxlen, &len)) != 0) {
-			DPRINTF(("%s: copyinstr args %d\n", __func__, error));
 			if (error == ENAMETOOLONG)
 				error = E2BIG;
 			return error;
 		}
-		ktrexecarg(dp, len - 1);
+		if (__predict_false(ktrace_on))
+			(*ktr)(dp, len - 1);
 		dp += len;
 		i++;
-		data->ed_argc++;
-	}
-
-	data->ed_envc = 0;
-	/* environment need not be there */
-	if (envs != NULL) {
-		i = 0;
-		while (1) {
-			const size_t maxlen = data->ed_argp + ARG_MAX - dp;
-			size_t len;
-
-			if ((error = (*fetch_element)(envs, i, &sp)) != 0) {
-				DPRINTF(("%s: fetch_element env %d\n",
-				    __func__, error));
-				return error;
-			}
-			if (!sp)
-				break;
-			if ((error = copyinstr(sp, dp, maxlen, &len)) != 0) {
-				DPRINTF(("%s: copyinstr env %d\n",
-				    __func__, error));
-				if (error == ENAMETOOLONG)
-					error = E2BIG;
-				return error;
-			}
-
-			ktrexecenv(dp, len - 1);
-			dp += len;
-			i++;
-			data->ed_envc++;
-		}
 	}
 
 	*dpp = dp;
+	*ip = i;
 
 	return 0;
 }
