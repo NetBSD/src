@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.28 2014/04/11 04:19:47 matt Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.29 2014/04/13 02:24:16 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.28 2014/04/11 04:19:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.29 2014/04/13 02:24:16 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -408,15 +408,16 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	 * We can only use address beneath kernel_vm_base to map physical
 	 * memory.
 	 */
-	KASSERT(kernel_vm_base >= physical_end - physical_start);
+	const psize_t physical_size =
+	    roundup(physical_end - physical_start, L1_SS_SIZE);
+	KASSERT(kernel_vm_base >= physical_size);
 	/*
 	 * If we don't have enough memory via TTBR1, we have use addresses
 	 * from TTBR0 to map some of the physical memory.  But try to use as
 	 * much high memory space as possible.
 	 */
-	if (kernel_vm_base - KERNEL_BASE < physical_end - physical_start) {
-		pmap_directbase = kernel_vm_base
-		    - (physical_end - physical_start);
+	if (kernel_vm_base - KERNEL_BASE < physical_size) {
+		pmap_directbase = kernel_vm_base - physical_size;
 		printf("%s: changing pmap_directbase to %#lx\n", __func__,
 		    pmap_directbase);
 	}
