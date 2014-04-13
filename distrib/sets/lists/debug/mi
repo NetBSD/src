@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.56 2014/04/10 00:09:09 pooka Exp $
+# $NetBSD: mi,v 1.57 2014/04/13 17:13:27 skrll Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -469,9 +469,9 @@
 ./usr/libdata/debug/usr/bin/crunchide.debug	comp-c-debug		debug
 ./usr/libdata/debug/usr/bin/csplit.debug	comp-c-debug		debug
 ./usr/libdata/debug/usr/bin/ctags.debug		comp-c-debug		debug
-./usr/libdata/debug/usr/bin/ctfconvert.debug	comp-util-debug		dtrace,debug
-./usr/libdata/debug/usr/bin/ctfdump.debug	comp-util-debug		dtrace,debug
-./usr/libdata/debug/usr/bin/ctfmerge.debug	comp-util-debug		dtrace,debug
+./usr/libdata/debug/usr/bin/ctfconvert.debug	comp-util-debug		ctf,debug
+./usr/libdata/debug/usr/bin/ctfdump.debug	comp-util-debug		ctf,debug
+./usr/libdata/debug/usr/bin/ctfmerge.debug	comp-util-debug		ctf,debug
 ./usr/libdata/debug/usr/bin/cut.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/cvs.debug		comp-cvs-debug		cvs,debug
 ./usr/libdata/debug/usr/bin/db.debug		comp-util-debug		debug
