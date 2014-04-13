@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_soc.c,v 1.2 2014/04/13 20:45:25 reinoud Exp $	*/
+/*	$NetBSD: exynos_soc.c,v 1.3 2014/04/13 20:49:36 reinoud Exp $	*/
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #define	_ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.2 2014/04/13 20:45:25 reinoud Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.3 2014/04/13 20:49:36 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -49,9 +49,6 @@ __KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.2 2014/04/13 20:45:25 reinoud Exp $
 
 #include <arm/mainbus/mainbus.h>
 #include <arm/cortex/mpcore_var.h>
-#ifdef ARM_TRUSTZONE_FIRMWARE
-#include <arm/trustzone/firmware.h>
-#endif
 
 #include <arm/samsung/exynos_reg.h>
 #include <arm/samsung/exynos_var.h>
