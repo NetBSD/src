@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.6 2014/03/28 21:41:46 matt Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.7 2014/04/13 02:22:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.6 2014/03/28 21:41:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.7 2014/04/13 02:22:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -103,6 +103,7 @@ gtmr_attach(device_t parent, device_t self, void *aux)
 	 * This runs at a fixed frequency of 1 to 50MHz.
 	 */
 	prop_dictionary_get_uint32(dict, "frequency", &sc->sc_freq);            
+	KASSERT(sc->sc_freq != 0);
 
 	humanize_number(freqbuf, sizeof(freqbuf), sc->sc_freq, "Hz", 1000);
 
