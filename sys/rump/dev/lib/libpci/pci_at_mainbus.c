@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_at_mainbus.c,v 1.1 2014/04/04 12:53:59 pooka Exp $	*/
+/*	$NetBSD: pci_at_mainbus.c,v 1.2 2014/04/13 12:40:00 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_at_mainbus.c,v 1.1 2014/04/04 12:53:59 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_at_mainbus.c,v 1.2 2014/04/13 12:40:00 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -41,12 +41,27 @@ __KERNEL_RCSID(0, "$NetBSD: pci_at_mainbus.c,v 1.1 2014/04/04 12:53:59 pooka Exp
 #include "ioconf.c"
 
 #include "rump_private.h"
+#include "rump_vfs_private.h"
 
 RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 {
+	extern const struct cdevsw pci_cdevsw;
+	devmajor_t cmaj, bmaj;
+	int error;
 
 	config_init_component(cfdriver_ioconf_pci,
 	    cfattach_ioconf_pci, cfdata_ioconf_pci);
+
+	bmaj = cmaj = -1;
+	if ((error = devsw_attach("pci", NULL, &bmaj,
+	    &pci_cdevsw, &cmaj)) != 0) {
+		printf("pci: devsw_attach failed: %d\n", error);
+		return;
+	}
+
+	if ((error = rump_vfs_makedevnodes(S_IFCHR, "/dev/pci", '0',
+	    cmaj, 0, 4)) != 0)
+		printf("pci: failed to create /dev/pci nodes: %d", error);
 }
 
 RUMP_COMPONENT(RUMP_COMPONENT_DEV_AFTERMAINBUS)
