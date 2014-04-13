@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_soc.c,v 1.3 2014/04/13 20:49:36 reinoud Exp $	*/
+/*	$NetBSD: exynos_soc.c,v 1.4 2014/04/13 20:52:29 reinoud Exp $	*/
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #define	_ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.3 2014/04/13 20:49:36 reinoud Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.4 2014/04/13 20:52:29 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -121,16 +121,7 @@ exynos_do_idle(void)
 int
 exynos_set_cpu_boot_addr(int cpu, vaddr_t boot_addr)
 {
-#if 0
 	/* XXX we need to map in iRAM space for this XXX */
-        void __iomem *boot_reg = S5P_VA_SYSRAM_NS + 0x1c;
-
-        if (!soc_is_exynos5420())
-                boot_reg += 4 * cpu;
-
-        writel_relaxed(boot_addr, boot_reg);
-        return 0;
-#endif
 	return 0;
 }
 
