@@ -518,6 +518,21 @@ private:
   uint32_t reg[REGNO_SH3_PR + 1];
 };
 
+#if __i386__
+typedef Registers_x86 NativeUnwindRegisters;
+#elif __x86_64__
+typedef Registers_x86_64 NativeUnwindRegisters;
+#elif __powerpc__
+typedef Registers_ppc32 NativeUnwindRegisters;
+#elif __arm__ && !defined(__ARM_EABI__)
+typedef Registers_arm32 NativeUnwindRegisters;
+#elif __vax__
+typedef Registers_vax NativeUnwindRegisters;
+#elif __m68k__
+typedef Registers_M68K NativeUnwindRegisters;
+#elif __sh3__
+typedef Registers_SH3 NativeUnwindRegisters;
+#endif
 } // namespace _Unwind
 
 #endif // __REGISTERS_HPP__
