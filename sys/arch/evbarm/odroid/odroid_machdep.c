@@ -1,4 +1,4 @@
-/*	$NetBSD: odroid_machdep.c,v 1.2 2014/04/13 06:18:51 skrll Exp $ */
+/*	$NetBSD: odroid_machdep.c,v 1.3 2014/04/13 20:45:25 reinoud Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.2 2014/04/13 06:18:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.3 2014/04/13 20:45:25 reinoud Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_exynos.h"
@@ -160,7 +160,7 @@ static const struct sscom_uart_info exynos_uarts[] = {
 // __CTASSERT(EXYNOS_CORE_PBASE + EXYNOS_UART0_OFFSET <= CONADDR);
 // __CTASSERT(CONADDR <= EXYNOS_CORE_PBASE + EXYNOS_UART4_OFFSET);
 // __CTASSERT(CONADDR % EXYNOS_BLOCK_SIZE == 0);
-static const bus_addr_t conaddr = CONADDR;
+//static const bus_addr_t conaddr = CONADDR;
 static const int conspeed = CONSPEED;
 static const int conmode = CONMODE;
 #endif /*defined(KGDB) || defined(SSCOM0CONSOLE) || defined(SSCOM1CONSOLE) */
@@ -325,7 +325,7 @@ curcpu()->ci_data.cpu_cc_freq = 1*1000*1000*1000;	/* XXX hack XXX */
 			EXYNOS_IOPHYSTOVIRT(armreg_cbar_read());
 
 #ifdef ARM_TRUSTZONE_FIRMWARE
-		trustzone_firmware_handlers->l2cc_init();
+		exynos_l2cc_init();
 #endif
 		arml2cc_init(&exynos_bs_tag, pl310_bh, 0x2000);
 	}
