@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.392 2014/04/13 09:19:42 uebayasi Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.393 2014/04/13 12:11:01 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.392 2014/04/13 09:19:42 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.393 2014/04/13 12:11:01 uebayasi Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -998,7 +998,6 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 
 	DUMPVMCMDS(epp, 0, 0);
 
-    {
 	size_t			i;
 	struct exec_vmcmd	*base_vcp;
 
@@ -1034,9 +1033,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 		DPRINTF(("%s: vmcmd %zu failed: %d\n", __func__, i - 1, error));
 		goto exec_abort;
 	}
-    }
 
-    {
 	const char		*commandname;
 	size_t			commandlen;
 
@@ -1050,9 +1047,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	commandlen = min(strlen(commandname), MAXCOMLEN);
 	(void)memcpy(p->p_comm, commandname, commandlen);
 	p->p_comm[commandlen] = '\0';
-    }
 
-    {
 	char			*path;
 
 	path = PNBUF_GET();
@@ -1087,13 +1082,11 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 		epp->ep_path = NULL;
 		PNBUF_PUT(path);
 	}
-    }
 
 	/* remember information about the process */
 	data->ed_arginfo.ps_nargvstr = data->ed_argc;
 	data->ed_arginfo.ps_nenvstr = data->ed_envc;
 
-    {
 	/*
 	 * Allocate the stack address passed to the newly execve()'ed process.
 	 *
@@ -1132,13 +1125,11 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 		DPRINTF(("%s: copyargs failed %d\n", __func__, error));
 		goto exec_abort;
 	}
-    }
 
 	/* fill process ps_strings info */
 	p->p_psstrp = (vaddr_t)STACK_ALLOC(STACK_GROW(vm->vm_minsaddr,
 	    STACK_PTHREADSPACE), data->ed_ps_strings_sz);
 
-    {
 	struct ps_strings32	arginfo32;
 	void			*aip;
 
@@ -1158,7 +1149,6 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 		    __func__, aip, (void *)p->p_psstrp, data->ed_ps_strings_sz));
 		goto exec_abort;
 	}
-    }
 
 	cwdexec(p);
 	fd_closeexec();		/* handle close on exec */
@@ -1223,7 +1213,6 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 
 	doexechooks(p);
 
-    {
 	/*
 	 * Set initial SP at the top of the stack.
 	 *
@@ -1237,7 +1226,6 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	(*epp->ep_esch->es_emul->e_setregs)(l, epp, newstack);
 	if (epp->ep_esch->es_setregs)
 		(*epp->ep_esch->es_setregs)(l, epp, newstack);
-    }
 
 	/* Provide a consistent LWP private setting */
 	(void)lwp_setprivate(l, NULL);
