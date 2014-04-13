@@ -1,4 +1,4 @@
-/*	$NetBSD: odroid_machdep.c,v 1.3 2014/04/13 20:45:25 reinoud Exp $ */
+/*	$NetBSD: odroid_machdep.c,v 1.4 2014/04/13 20:53:35 reinoud Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.3 2014/04/13 20:45:25 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.4 2014/04/13 20:53:35 reinoud Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_exynos.h"
@@ -76,9 +76,6 @@ __KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.3 2014/04/13 20:45:25 reinoud E
 #include <machine/bootconfig.h>
 #include <arm/armreg.h>
 #include <arm/undefined.h>
-#ifdef ARM_TRUSTZONE_FIRMWARE
-#include <arm/trustzone/firmware.h>
-#endif
 #include <arm/cortex/pl310_var.h>
 
 #include <arm/arm32/machdep.h>
