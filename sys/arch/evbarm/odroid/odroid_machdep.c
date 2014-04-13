@@ -1,4 +1,4 @@
-/*	$NetBSD: odroid_machdep.c,v 1.1 2014/04/13 02:26:26 matt Exp $ */
+/*	$NetBSD: odroid_machdep.c,v 1.2 2014/04/13 06:18:51 skrll Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.1 2014/04/13 02:26:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.2 2014/04/13 06:18:51 skrll Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_exynos.h"
@@ -388,8 +388,6 @@ curcpu()->ci_data.cpu_cc_freq = 1*1000*1000*1000;	/* XXX hack XXX */
 	    KERNEL_BASE_PHYS);
 	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_LOW, 0, devmap,
 	    mapallmem_p);
-
-printf("did we?\n");
 
 	/* forget about passed bootargs for now */
 	/* TODO translate `uboot_args' phys->virt to bootargs */
