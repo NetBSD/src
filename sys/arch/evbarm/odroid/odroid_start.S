@@ -1,4 +1,4 @@
-/*	$NetBSD: odroid_start.S,v 1.1 2014/04/13 02:26:26 matt Exp $	*/
+/*	$NetBSD: odroid_start.S,v 1.2 2014/04/14 19:45:40 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 
 #include <evbarm/odroid/platform.h>
 
-RCSID("$NetBSD: odroid_start.S,v 1.1 2014/04/13 02:26:26 matt Exp $")
+RCSID("$NetBSD: odroid_start.S,v 1.2 2014/04/14 19:45:40 reinoud Exp $")
 
 
 #if defined(VERBOSE_INIT_ARM)
@@ -110,10 +110,20 @@ _C_LABEL(odroid_start):
 	movt	r4, #:upper16:exynos_soc_id
 	sub	r4, r4, #KERNEL_BASE_VOFFSET
 	str	r0, [r4]				// save soc_id
+	mov	r5, r0					// save soc_id
+
+#ifdef EXYNOS4
+	ldr	r0, [r6, #EXYNOS_PACKAGE_ID_OFFSET]		// load pop_id
+
+	movw	r4, #:lower16:exynos_pop_id
+	movt	r4, #:upper16:exynos_pop_id
+	sub	r4, r4, #KERNEL_BASE_VOFFSET
+	str	r0, [r4]				// save pop_id
+#endif
 
 	/* Pick uart address and initial MMU table for the SoC */
 	mov	r2, #0
-	ubfx	r1, r0, #24, #8
+	ubfx	r1, r5, #24, #8
 	cmp	r1, #0xe5
 	movteq	r2, #:upper16:(EXYNOS_CORE_PBASE + EXYNOS5_UART2_OFFSET)
 	cmp	r1, #0xe4
