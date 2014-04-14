@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_at_mainbus.c,v 1.2 2014/04/13 12:40:00 pooka Exp $	*/
+/*	$NetBSD: pci_at_mainbus.c,v 1.3 2014/04/14 21:34:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_at_mainbus.c,v 1.2 2014/04/13 12:40:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_at_mainbus.c,v 1.3 2014/04/14 21:34:08 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -71,6 +71,7 @@ RUMP_COMPONENT(RUMP_COMPONENT_DEV_AFTERMAINBUS)
 
 	/* XXX: attach args should come from elsewhere */
 	memset(&pba, 0, sizeof(pba));
+	pba.pba_bus = 0;
 	pba.pba_iot = (bus_space_tag_t)0;
 	pba.pba_memt = (bus_space_tag_t)1;
 	pba.pba_dmat = (void *)0x20;
