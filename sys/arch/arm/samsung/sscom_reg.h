@@ -1,4 +1,4 @@
-/* $NetBSD: sscom_reg.h,v 1.1 2014/04/13 02:26:26 matt Exp $ */
+/* $NetBSD: sscom_reg.h,v 1.2 2014/04/14 21:16:15 reinoud Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -139,10 +139,6 @@
 #define   UINT_TXD		__BIT(2)
 #define   UINT_ERROR		__BIT(1)
 #define   UINT_RXD		__BIT(0)
-
-//#define	INTCTL_SRCPND	0x00	/* Interrupt request status */
-//#define	INTCTL_INTMOD	0x04	/* Interrupt mode (FIQ/IRQ) */
-//#define	INTCTL_INTMSK	0x08	/* Interrupt mask */
 
 #define	SSCOM_SIZE  0x3C
 
