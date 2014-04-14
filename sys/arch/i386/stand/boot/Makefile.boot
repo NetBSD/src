@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.65 2014/04/14 13:04:44 uebayasi Exp $
+# $NetBSD: Makefile.boot,v 1.66 2014/04/14 15:05:19 uebayasi Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -114,6 +114,7 @@ Z_AS= library
 .include "${S}/lib/libz/Makefile.inc"
 LIBZ= ${ZLIB}
 
+LDSCRIPT ?= $S/arch/i386/conf/stand.ldscript
 
 cleandir distclean: .WAIT cleanlibdir
 
@@ -149,7 +150,7 @@ ${PROG}: ${OBJS} ${LIBLIST} ${.CURDIR}/../Makefile.boot
 		do :; \
 		done; \
 	) )"; \
-	${CC} -o ${PROG}.sym ${LDFLAGS} -Wl,-Ttext,0 \
+	${CC} -o ${PROG}.sym ${LDFLAGS} -Wl,-Ttext,0 -T ${LDSCRIPT} \
 		-Wl,-Map,${PROG}.map -Wl,-cref ${OBJS} $$bb ${LIBLIST}
 	${OBJCOPY} -O binary ${PROG}.sym ${PROG}
 
