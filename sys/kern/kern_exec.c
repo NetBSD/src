@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.393 2014/04/13 12:11:01 uebayasi Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.394 2014/04/14 05:39:19 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.393 2014/04/13 12:11:01 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.394 2014/04/14 05:39:19 uebayasi Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -1408,8 +1408,6 @@ copyinargs(struct execve_data * restrict data, char * const *args,
 
 	dp = *dpp;
 
-	/* XXX -- THE FOLLOWING SECTION NEEDS MAJOR CLEANUP */
-
 	data->ed_argc = 0;
 
 	/* copy the fake args list, if there's one, freeing it as we go */
@@ -1417,14 +1415,17 @@ copyinargs(struct execve_data * restrict data, char * const *args,
 		struct exec_fakearg	*tmpfap = epp->ep_fa;
 
 		while (tmpfap->fa_arg != NULL) {
-			const char *cp;
+			const size_t maxlen = ARG_MAX - (dp - data->ed_argp);
+			size_t len;
 
-			/* XXX boudary check */
-			cp = tmpfap->fa_arg;
-			while (*cp)
-				*dp++ = *cp++;
-			*dp++ = '\0';
-			ktrexecarg(tmpfap->fa_arg, cp - tmpfap->fa_arg);
+			len = strlcpy(dp, tmpfap->fa_arg, maxlen);
+			/* Count NUL into len. */
+			if (len < maxlen)
+				len++;
+			else
+				len = maxlen;
+			ktrexecarg(tmpfap->fa_arg, len - 1);
+			dp += len;
 
 			kmem_free(tmpfap->fa_arg, tmpfap->fa_len);
 			tmpfap++;
@@ -1487,7 +1488,7 @@ copyinargstrs(struct execve_data * restrict data, char * const *strs,
 
 	i = 0;
 	while (1) {
-		const size_t maxlen = data->ed_argp + ARG_MAX - dp;
+		const size_t maxlen = ARG_MAX - (dp - data->ed_argp);
 		size_t len;
 
 		if ((error = (*fetch_element)(strs, i, &sp)) != 0) {
