@@ -1,4 +1,4 @@
-/*	$NetBSD: odroid_machdep.c,v 1.4 2014/04/13 20:53:35 reinoud Exp $ */
+/*	$NetBSD: odroid_machdep.c,v 1.5 2014/04/14 19:45:40 reinoud Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.4 2014/04/13 20:53:35 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.5 2014/04/14 19:45:40 reinoud Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_exynos.h"
@@ -265,6 +265,7 @@ initarm(void *arg)
 	const struct pmap_devmap const *devmap;
 	bus_addr_t rambase;
 	const psize_t ram_reserve = 0x200000;
+	psize_t ram_size;
 
 	/* allocate/map our basic memory mapping */
     	switch (EXYNOS_PRODUCT_FAMILY(exynos_soc_id)) {
@@ -344,20 +345,25 @@ curcpu()->ci_data.cpu_cc_freq = 1*1000*1000*1000;	/* XXX hack XXX */
 	bootconfig.dram[0].address = rambase;
 
 	/*
-	 * Determine physical memory by looking at the PoP package
+	 * Determine physical memory by looking at the PoP package. This PoP
+	 * package ID seems to be only available on Exynos4
+	 *
+	 * First assume the default 2Gb of memory, dictated by mapping too
 	 */
+	ram_size = (psize_t) 0xC0000000 - 0x40000000;
 
-	psize_t ram_size = (psize_t) 0xC0000000 - 0x40000000;
-#if 0
+#if defined(EXYNOS4)
 	switch (exynos_pop_id) {
 	case EXYNOS_PACKAGE_ID_2_GIG:
-		ram_size = (psize_t) 2*1024*1024*1024;
+		KASSERT(ram_size <= 2UL*1024*1024*1024);
 		break;
 	default:
-		printf("Unknown PoP package id 0x%08x\n", exynos_pop_id);
+		printf("Unknown PoP package id 0x%08x, assuming 1Gb\n",
+			exynos_pop_id);
 		ram_size = (psize_t) 0x10000000;
 	}
 #endif
+
 	/*
 	 * Configure DMA tags
 	 */
