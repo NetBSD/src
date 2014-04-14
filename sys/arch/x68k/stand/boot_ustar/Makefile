@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2011/10/11 13:07:06 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.20 2014/04/14 14:24:27 isaki Exp $
 
 NOMAN=		# defined
 
@@ -37,7 +37,6 @@ CPPFLAGS+= -DBOOT=\"$(BOOT)\" -DBOOT_VERS=\"$(VERSION)\"
 CPPFLAGS+= -I${COMMONDIR} -I${LIBIOCS} -I${S} -I. -D_STANDALONE
 CFLAGS+=   -m68020-60
 AFLAGS=	   ${CFLAGS:M-[ID]*}
-AFLAGS+=   -Wa,-mc68000
 LINKFLAGS=   -n -Bstatic -T ${.CURDIR}/${BOOT}.ldscript -M
 LINKFLAGS+=  -noinhibit-exec	# XXX
 
