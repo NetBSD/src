@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.145 2014/04/10 02:49:42 matt Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.146 2014/04/14 20:50:46 matt Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.145 2014/04/10 02:49:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.146 2014/04/14 20:50:46 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -66,8 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.145 2014/04/10 02:49:42 matt Exp $");
 #include <uvm/uvm.h>
 
 #include <arm/cpuconf.h>
-#include <arm/cpufunc.h>
 #include <arm/locore.h>
+#include <arm/cpufunc_proto.h>
 
 #ifdef CPU_XSCALE_80200
 #include <arm/xscale/i80200reg.h>
@@ -1212,8 +1212,7 @@ struct cpu_functions ixp12x0_cpufuncs = {
 };
 #endif	/* CPU_IXP12X0 */
 
-#if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
-    defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425)
+#if defined(CPU_XSCALE)
 struct cpu_functions xscale_cpufuncs = {
 	/* CPU functions */
 
@@ -1272,8 +1271,7 @@ struct cpu_functions xscale_cpufuncs = {
 
 	.cf_setup		= xscale_setup
 };
-#endif
-/* CPU_XSCALE_80200 || CPU_XSCALE_80321 || __CPU_XSCALE_PXA2XX || CPU_XSCALE_IXP425 */
+#endif /* CPU_XSCALE */
 
 #if defined(CPU_ARMV7)
 struct cpu_functions armv7_cpufuncs = {
@@ -3465,8 +3463,7 @@ ixp12x0_setup(char *args)
 }
 #endif /* CPU_IXP12X0 */
 
-#if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
-    defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425)
+#if defined(CPU_XSCALE)
 struct cpu_option xscale_options[] = {
 #ifdef COMPAT_12
 	{ "branchpredict", 	BIC, OR,  CPU_CONTROL_BPRD_ENABLE },
@@ -3547,7 +3544,7 @@ xscale_setup(char *args)
 	__asm volatile("mcr p15, 0, %0, c1, c0, 1"
 		: : "r" (auxctl));
 }
-#endif	/* CPU_XSCALE_80200 || CPU_XSCALE_80321 || __CPU_XSCALE_PXA2XX || CPU_XSCALE_IXP425 */
+#endif	/* CPU_XSCALE */
 
 #if defined(CPU_SHEEVA)
 struct cpu_option sheeva_options[] = {
@@ -3565,8 +3562,6 @@ struct cpu_option sheeva_options[] = {
 void
 sheeva_setup(char *args)
 {
-	uint32_t sheeva_ext;
-
 	int cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_SYST_ENABLE
 	    | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE
 	    | CPU_CONTROL_WBUF_ENABLE | CPU_CONTROL_BPRD_ENABLE;
@@ -3586,18 +3581,36 @@ sheeva_setup(char *args)
 	cpuctrl = parse_cpu_options(args, sheeva_options, cpuctrl);
 
 	/* Enable DCache Streaming Switch and Write Allocate */
-	__asm volatile("mrc p15, 1, %0, c15, c1, 0"
-	    : "=r" (sheeva_ext));
+	uint32_t sheeva_ext = armreg_sheeva_xctrl_read();
 
 	sheeva_ext |= FC_DCACHE_STREAM_EN | FC_WR_ALLOC_EN;
+#ifdef SHEEVA_L2_CACHE
+	sheeva_ext |= FC_L2CACHE_EN;
+	sheeva_ext &= ~FC_L2_PREF_DIS;
+#endif
 
-	__asm volatile("mcr p15, 1, %0, c15, c1, 0"
-	    :: "r" (sheeva_ext));
+	armreg_sheeva_xctrl_write(sheeva_ext);
 
-	/*
-	 * Sheeva has L2 Cache.  Enable/Disable it here.
-	 * Really not support yet...
-	 */
+#ifdef SHEEVA_L2_CACHE
+#ifndef SHEEVA_L2_CACHE_WT
+	arm_scache.cache_type = CPU_CT_CTYPE_WB2;
+#elif CPU_CT_CTYPE_WT != 0
+	arm_scache.cache_type = CPU_CT_CTYPE_WT;
+#endif
+	arm_scache.cache_unified = 1;
+	arm_scache.dcache_type = arm_scache.icache_type = CACHE_TYPE_PIPT;
+	arm_scache.dcache_size = arm_scache.icache_size = 256*1024;
+	arm_scache.dcache_ways = arm_scache.icache_ways = 4;
+	arm_scache.dcache_way_size = arm_scache.icache_way_size =
+	    arm_scache.dcache_size / arm_scache.dcache_ways;
+	arm_scache.dcache_line_size = arm_scache.icache_line_size = 32;
+	arm_scache.dcache_sets = arm_scache.icache_sets =
+	    arm_scache.dcache_way_size / arm_scache.dcache_line_size;
+
+	cpufuncs.cf_sdcache_wb_range = sheeva_sdcache_wb_range;
+	cpufuncs.cf_sdcache_inv_range = sheeva_sdcache_inv_range;
+	cpufuncs.cf_sdcache_wbinv_range = sheeva_sdcache_wbinv_range;
+#endif /* SHEEVA_L2_CACHE */
 
 #ifdef __ARMEB__
 	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
@@ -3620,5 +3633,8 @@ sheeva_setup(char *args)
 
 	/* And again. */
 	cpu_idcache_wbinv_all();
+#ifdef SHEEVA_L2_CACHE
+	sheeva_sdcache_wbinv_all();
+#endif
 }
 #endif	/* CPU_SHEEVA */
