@@ -35,6 +35,7 @@ public:
     LAST_REGISTER = REGNO_X86_EIP,
     LAST_RESTORE_REG = REGNO_X86_EIP,
     RETURN_REG = REGNO_X86_EIP,
+    RETURN_OFFSET = 0,
   };
 
   __dso_hidden Registers_x86();
@@ -100,6 +101,7 @@ public:
     LAST_REGISTER = REGNO_X86_64_RIP,
     LAST_RESTORE_REG = REGNO_X86_64_RIP,
     RETURN_REG = REGNO_X86_64_RIP,
+    RETURN_OFFSET = 0,
   };
 
   __dso_hidden Registers_x86_64();
@@ -168,6 +170,7 @@ public:
     LAST_REGISTER = REGNO_PPC32_V31,
     LAST_RESTORE_REG = REGNO_PPC32_V31,
     RETURN_REG = REGNO_PPC32_LR,
+    RETURN_OFFSET = 0,
   };
 
   __dso_hidden Registers_ppc32();
@@ -256,6 +259,7 @@ public:
     LAST_REGISTER = REGNO_ARM32_D31,
     LAST_RESTORE_REG = REGNO_ARM32_SPSR,
     RETURN_REG = REGNO_ARM32_SPSR,
+    RETURN_OFFSET = 0,
   };
 
   __dso_hidden Registers_arm32();
@@ -325,6 +329,7 @@ public:
     LAST_REGISTER = REGNO_VAX_PSW,
     LAST_RESTORE_REG = REGNO_VAX_PSW,
     RETURN_REG = REGNO_VAX_R15,
+    RETURN_OFFSET = 0,
   };
 
   __dso_hidden Registers_vax();
@@ -396,6 +401,7 @@ public:
     LAST_REGISTER = REGNO_M68K_FP7,
     LAST_RESTORE_REG = REGNO_M68K_FP7,
     RETURN_REG = REGNO_M68K_PC,
+    RETURN_OFFSET = 0,
   };
 
   __dso_hidden Registers_M68K();
@@ -472,6 +478,7 @@ public:
     LAST_REGISTER = REGNO_SH3_PR,
     LAST_RESTORE_REG = REGNO_SH3_PR,
     RETURN_REG = REGNO_SH3_PR,
+    RETURN_OFFSET = 0,
   };
 
   __dso_hidden Registers_SH3();
