@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.96 2014/04/13 02:23:00 matt Exp $	*/
+/*	$NetBSD: armreg.h,v 1.97 2014/04/14 20:50:47 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -1020,6 +1020,9 @@ ARMREG_READ_INLINE(tlbdata0, "p15,3,%0,c15,c0,0") /* TLB Data Register 0 (cortex
 ARMREG_READ_INLINE(tlbdata1, "p15,3,%0,c15,c0,1") /* TLB Data Register 1 (cortex) */
 ARMREG_READ_INLINE(tlbdata2, "p15,3,%0,c15,c0,2") /* TLB Data Register 2 (cortex) */
 ARMREG_WRITE_INLINE(tlbdataop, "p15,3,%0,c15,c4,2") /* TLB Data Read Operation (cortex) */
+
+ARMREG_READ_INLINE(sheeva_xctrl, "p15,1,%0,c15,c1,0") /* Sheeva eXtra Control register */
+ARMREG_WRITE_INLINE(sheeva_xctrl, "p15,1,%0,c15,c1,0") /* Sheeva eXtra Control register */
 
 #endif /* !__ASSEMBLER__ */
 
