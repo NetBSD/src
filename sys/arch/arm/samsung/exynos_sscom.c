@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_sscom.c,v 1.1 2014/04/13 02:26:26 matt Exp $ */
+/*	$NetBSD: exynos_sscom.c,v 1.2 2014/04/14 21:16:15 reinoud Exp $ */
 
 /*
  * Copyright (c) 2014 Reinoud Zandijk
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_sscom.c,v 1.1 2014/04/13 02:26:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_sscom.c,v 1.2 2014/04/14 21:16:15 reinoud Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -69,11 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: exynos_sscom.c,v 1.1 2014/04/13 02:26:26 matt Exp $"
 static int sscom_match(device_t, cfdata_t, void *);
 static void sscom_attach(device_t, device_t, void *);
 
-/* XXX cludge for not-existing interrupt code XXX */
-#define exynos_unmask_interrupts(intbits) 
-#define exynos_mask_interrupts(intbits) 
-
-
 CFATTACH_DECL_NEW(exynos_sscom, sizeof(struct sscom_softc), sscom_match,
     sscom_attach, NULL, NULL);
 
@@ -87,6 +82,32 @@ sscom_match(device_t parent, cfdata_t cf, void *aux)
 }
 
 static void
+exynos_unmask_interrupts(struct sscom_softc *sc, int intbits)
+{
+	int psw = disable_interrupts(IF32_bits);
+	uint32_t val;
+
+	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSCOM_UINTM);
+	val &= ~intbits;
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SSCOM_UINTM, val);
+
+	restore_interrupts(psw);
+}
+
+static void
+exynos_mask_interrupts(struct sscom_softc *sc, int intbits)
+{
+	int psw = disable_interrupts(IF32_bits);
+	uint32_t val;
+
+	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSCOM_UINTM);
+	val |= intbits;
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SSCOM_UINTM, val);
+
+	restore_interrupts(psw);
+}
+
+static void
 exynos_change_txrx_interrupts(struct sscom_softc *sc, bool unmask_p,
     u_int flags)
 {
@@ -96,10 +117,22 @@ exynos_change_txrx_interrupts(struct sscom_softc *sc, bool unmask_p,
 	if (flags & SSCOM_HW_TXINT)
 		intbits |= 1 << sc->sc_tx_irqno;
 	if (unmask_p) {
-		exynos_unmask_interrupts(intbits);
+		exynos_unmask_interrupts(sc, intbits);
 	} else {
-		exynos_mask_interrupts(intbits);
+		exynos_mask_interrupts(sc, intbits);
 	}
+}
+
+static void
+exynos_clear_interrupts(struct sscom_softc *sc, u_int flags)
+{
+	uint32_t val = 0;
+
+	if (flags & SSCOM_HW_RXINT)
+		val |= sc->sc_rx_irqno;
+	if (flags & SSCOM_HW_TXINT)
+		val |= sc->sc_tx_irqno;
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SSCOM_UINTP, val);
 }
 
 static void
@@ -118,9 +151,10 @@ sscom_attach(device_t parent, device_t self, void *aux)
 	sc->sc_frequency = EXYNOS_UART_FREQ;
 
 	sc->sc_change_txrx_interrupts = exynos_change_txrx_interrupts;
+	sc->sc_clear_interrupts = exynos_clear_interrupts;
 
-	sc->sc_rx_irqno = 0; // S3C2800_INT_RXD0 + sa->sa_index;
-	sc->sc_tx_irqno = 0; // S3C2800_INT_TXD0 + sa->sa_index;
+	sc->sc_rx_irqno = UINT_RXD;
+	sc->sc_tx_irqno = UINT_TXD;
 
 	if (!sscom_is_console(sc->sc_iot, unit, &sc->sc_ioh)
 	    && bus_space_map(sc->sc_iot, iobase, SSCOM_SIZE, 0, &sc->sc_ioh)) {
