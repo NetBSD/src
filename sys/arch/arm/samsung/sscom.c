@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.1 2014/04/13 02:26:26 matt Exp $ */
+/*	$NetBSD: sscom.c,v 1.2 2014/04/14 21:16:15 reinoud Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.1 2014/04/13 02:26:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.2 2014/04/14 21:16:15 reinoud Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -424,6 +424,7 @@ sscom_attach_subr(struct sscom_softc *sc)
 
 	/* Disable interrupts before configuring the device. */
 	KASSERT(sc->sc_change_txrx_interrupts != NULL);
+	KASSERT(sc->sc_clear_interrupts != NULL);
 	sscom_disable_txrxint(sc);
 
 #ifdef KGDB
@@ -1818,7 +1819,18 @@ sscomtxintr(void *arg)
 int
 sscomintr(void *v)
 {
-	return sscomrxintr(v) + sscomtxintr(v);
+	struct sscom_softc *sc = v;
+	int clear = 0;
+
+	if (sscomrxintr(v))
+		clear |= SSCOM_HW_RXINT;
+	if (sscomtxintr(v))
+		clear |= SSCOM_HW_TXINT;
+
+	if (clear)
+		sc->sc_clear_interrupts(sc, clear);
+
+	return clear? 1: 0;
 }
 
 
