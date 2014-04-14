@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpdev_pci.c,v 1.1 2014/04/04 12:53:59 pooka Exp $	*/
+/*      $NetBSD: rumpdev_pci.c,v 1.2 2014/04/14 21:43:00 pooka Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -26,10 +26,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpdev_pci.c,v 1.1 2014/04/04 12:53:59 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpdev_pci.c,v 1.2 2014/04/14 21:43:00 pooka Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
+#include <sys/atomic.h>
 
 #include <dev/pci/pcivar.h>
 
@@ -108,11 +109,24 @@ pci_decompose_tag(pci_chipset_tag_t pc, pcitag_t tag,
 	*fp = (*t >> 0)  & 0xff;
 }
 
+/*
+ * Well, yay, deal with the wonders of weird_t.  We'll just
+ * assume it's an integral type (which, btw, isn't universally true).
+ * The hypercall will map "cookie" to its internal structure.
+ * Dial _t for a good time.
+ */
 int
 pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ih)
 {
+	static unsigned int intrhandle;
+	unsigned cookie;
+	int rv;
 
-	*ih = pa->pa_intrline;
+	cookie = atomic_inc_uint_nv(&intrhandle);
+	rv = rumpcomp_pci_irq_map(pa->pa_bus,
+	    pa->pa_device, pa->pa_function, pa->pa_intrline, cookie);
+	if (rv == 0)
+		*ih = cookie;
 	return 0;
 }
 
@@ -132,7 +146,7 @@ pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
 }
 
 void
-pci_intr_disestablish(pci_chipset_tag_t pc, void *ih)
+pci_intr_disestablish(pci_chipset_tag_t pc, void *not_your_above_ih)
 {
 
 	panic("%s: unimplemented", __func__);
