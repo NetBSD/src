@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2014/04/14 21:36:22 pooka Exp $
+#	$NetBSD: Makefile,v 1.3 2014/04/14 23:53:42 pooka Exp $
 #
 
 RUMPTOP= ${TOPRUMP}
@@ -23,7 +23,11 @@ SRCS+=	pci_at_mainbus.c
 CPPFLAGS+= -I${.CURDIR}/opt -I${RUMPTOP}/librump/rumpkern
 CPPFLAGS+= -I${RUMPTOP}/librump/rumpvfs
 
-#RUMPCOMP_USER_SRCS=	pci_user.c
+.if defined(RUMP_PCI_USER)
+RUMPCOMP_USER_SRCS=	${RUMP_PCI_USER}
+RUMPCOMP_INCS_DIR:=	${.PARSEDIR}
+RUMPCOMP_USER_CPPFLAGS=-I${RUMPCOMP_INCS_DIR}
+.endif
 
 .include "${RUMPTOP}/Makefile.rump"
 .include <bsd.lib.mk>
