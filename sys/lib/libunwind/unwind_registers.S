@@ -421,3 +421,171 @@ ENTRY(_ZNK7_Unwind13Registers_SH36jumptoEv)
 	  nop
 SET_ENTRY_SIZE(_ZNK7_Unwind13Registers_SH36jumptoEv)
 #endif
+
+#if defined(__sparc64__)
+#include <machine/trap.h>
+	.register %g2, #ignore
+	.register %g3, #ignore
+	.register %g6, #ignore
+	.register %g7, #ignore
+	.hidden _ZN7_Unwind17Registers_SPARC64C1Ev
+ENTRY(_ZN7_Unwind17Registers_SPARC64C1Ev)
+	t	ST_FLUSHWIN
+	stx	%g0, [%o0 + 0]
+	stx	%g1, [%o0 + 8]
+	stx	%g2, [%o0 + 16]
+	stx	%g3, [%o0 + 24]
+	stx	%g4, [%o0 + 32]
+	stx	%g5, [%o0 + 40]
+	stx	%g6, [%o0 + 48]
+	stx	%g7, [%o0 + 56]
+	stx	%o0, [%o0 + 64]
+	stx	%o1, [%o0 + 72]
+	stx	%o2, [%o0 + 80]
+	stx	%o3, [%o0 + 88]
+	stx	%o4, [%o0 + 96]
+	stx	%o5, [%o0 + 104]
+	stx	%o6, [%o0 + 112]
+	stx	%o7, [%o0 + 120]
+	stx	%l0, [%o0 + 128]
+	stx	%l1, [%o0 + 136]
+	stx	%l2, [%o0 + 144]
+	stx	%l3, [%o0 + 152]
+	stx	%l4, [%o0 + 160]
+	stx	%l5, [%o0 + 168]
+	stx	%l6, [%o0 + 176]
+	stx	%l7, [%o0 + 184]
+	stx	%i0, [%o0 + 192]
+	stx	%i1, [%o0 + 200]
+	stx	%i2, [%o0 + 208]
+	stx	%i3, [%o0 + 216]
+	stx	%i4, [%o0 + 224]
+	stx	%i5, [%o0 + 232]
+	stx	%i6, [%o0 + 240]
+	stx	%i7, [%o0 + 248]
+	add	%o7, 8, %g1
+	retl
+	 stx	%g1, [%o0 + 256]
+END(_ZN7_Unwind17Registers_SPARC64C1Ev)
+
+	.hidden _ZNK7_Unwind17Registers_SPARC646jumptoEv
+ENTRY(_ZNK7_Unwind17Registers_SPARC646jumptoEv)
+	t	ST_FLUSHWIN
+	ldx	[%o0 + 0], %g0
+	ldx	[%o0 + 8], %g1
+	ldx	[%o0 + 16], %g2
+	ldx	[%o0 + 24], %g3
+	ldx	[%o0 + 32], %g4
+	ldx	[%o0 + 40], %g5
+	ldx	[%o0 + 48], %g6
+	ldx	[%o0 + 56], %g7
+	ldx	[%o0 + 72], %o1
+	ldx	[%o0 + 80], %o2
+	ldx	[%o0 + 88], %o3
+	ldx	[%o0 + 96], %o4
+	ldx	[%o0 + 104], %o5
+	ldx	[%o0 + 112], %g1
+	sub	%g1, 2047, %o6
+	ldx	[%o0 + 120], %o7
+	ldx	[%o0 + 128], %l0
+	ldx	[%o0 + 136], %l1
+	ldx	[%o0 + 144], %l2
+	ldx	[%o0 + 152], %l3
+	ldx	[%o0 + 160], %l4
+	ldx	[%o0 + 168], %l5
+	ldx	[%o0 + 176], %l6
+	ldx	[%o0 + 184], %l7
+	ldx	[%o0 + 192], %i0
+	ldx	[%o0 + 200], %i1
+	ldx	[%o0 + 208], %i2
+	ldx	[%o0 + 216], %i3
+	ldx	[%o0 + 224], %i4
+	ldx	[%o0 + 232], %i5
+	ldx	[%o0 + 240], %i6
+	ldx	[%o0 + 248], %i7
+	ldx	[%o0 + 256], %g1
+	jmpl	%g1, %g0
+	  ldx	[%o0 + 64], %o0
+END(_ZNK7_Unwind17Registers_SPARC646jumptoEv)
+#elif defined(__sparc__)
+#include <machine/trap.h>
+
+	.hidden _ZN7_Unwind15Registers_SPARCC1Ev
+ENTRY(_ZN7_Unwind15Registers_SPARCC1Ev)
+	t	ST_FLUSHWIN
+	st	%g0, [%o0 + 0]
+	st	%g1, [%o0 + 4]
+	st	%g2, [%o0 + 8]
+	st	%g3, [%o0 + 12]
+	st	%g4, [%o0 + 16]
+	st	%g5, [%o0 + 20]
+	st	%g6, [%o0 + 24]
+	st	%g7, [%o0 + 28]
+	st	%o0, [%o0 + 32]
+	st	%o1, [%o0 + 36]
+	st	%o2, [%o0 + 40]
+	st	%o3, [%o0 + 44]
+	st	%o4, [%o0 + 48]
+	st	%o5, [%o0 + 52]
+	st	%o6, [%o0 + 56]
+	st	%o7, [%o0 + 60]
+	st	%l0, [%o0 + 64]
+	st	%l1, [%o0 + 68]
+	st	%l2, [%o0 + 72]
+	st	%l3, [%o0 + 76]
+	st	%l4, [%o0 + 80]
+	st	%l5, [%o0 + 84]
+	st	%l6, [%o0 + 88]
+	st	%l7, [%o0 + 92]
+	st	%i0, [%o0 + 96]
+	st	%i1, [%o0 + 100]
+	st	%i2, [%o0 + 104]
+	st	%i3, [%o0 + 108]
+	st	%i4, [%o0 + 112]
+	st	%i5, [%o0 + 116]
+	st	%i6, [%o0 + 120]
+	st	%i7, [%o0 + 124 ]
+	add	%o7, 8, %g1
+	retl
+	 st	%g1, [%o0 + 128]
+END(_ZN7_Unwind15Registers_SPARCC1Ev)
+
+	.hidden _ZNK7_Unwind15Registers_SPARC6jumptoEv
+ENTRY(_ZNK7_Unwind15Registers_SPARC6jumptoEv)
+	t	ST_FLUSHWIN
+	ld	[%o0 + 0], %g0
+	ld	[%o0 + 4], %g1
+	ld	[%o0 + 8], %g2
+	ld	[%o0 + 12], %g3
+	ld	[%o0 + 16], %g4
+	ld	[%o0 + 20], %g5
+	ld	[%o0 + 24], %g6
+	ld	[%o0 + 28], %g7
+	ld	[%o0 + 36], %o1
+	ld	[%o0 + 40], %o2
+	ld	[%o0 + 44], %o3
+	ld	[%o0 + 48], %o4
+	ld	[%o0 + 52], %o5
+	ld	[%o0 + 56], %o6
+	ld	[%o0 + 60], %o7
+	ld	[%o0 + 64], %l0
+	ld	[%o0 + 68], %l1
+	ld	[%o0 + 72], %l2
+	ld	[%o0 + 76], %l3
+	ld	[%o0 + 80], %l4
+	ld	[%o0 + 84], %l5
+	ld	[%o0 + 88], %l6
+	ld	[%o0 + 92], %l7
+	ld	[%o0 + 96], %i0
+	ld	[%o0 + 100], %i1
+	ld	[%o0 + 104], %i2
+	ld	[%o0 + 108], %i3
+	ld	[%o0 + 112], %i4
+	ld	[%o0 + 116], %i5
+	ld	[%o0 + 120], %i6
+	ld	[%o0 + 124], %i7
+	ld	[%o0 + 128], %g1
+	jmpl	%g1, %g0
+	  ld	[%o0 + 32], %o0
+END(_ZNK7_Unwind15Registers_SPARC6jumptoEv)
+#endif
