@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.395 2014/04/14 13:14:38 uebayasi Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.396 2014/04/15 15:50:16 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.395 2014/04/14 13:14:38 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.396 2014/04/15 15:50:16 uebayasi Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -122,6 +122,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.395 2014/04/14 13:14:38 uebayasi Exp
 
 struct execve_data;
 
+static size_t calcargs(struct execve_data * restrict, const size_t);
+static size_t calcstack(struct execve_data * restrict, const size_t);
 static int copyinargs(struct execve_data * restrict, char * const *,
     char * const *, execve_fetch_element_t, char **);
 static int copyinargstrs(struct execve_data * restrict, char * const *,
@@ -250,6 +252,7 @@ struct execve_data {
 	char			*ed_resolvedpathbuf;
 	size_t			ed_ps_strings_sz;
 	int			ed_szsigcode;
+	size_t			ed_argslen;
 	long			ed_argc;
 	long			ed_envc;
 };
@@ -700,29 +703,10 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	 * Calculate the new stack size.
 	 */
 
-	const size_t nargenvptrs =
-	    data->ed_argc +		/* char *argv[] */
-	    1 +				/* \0 */
-	    data->ed_envc +		/* char *env[] */
-	    1 +				/* \0 */
-	    epp->ep_esch->es_arglen;	/* auxinfo */
-
-	const size_t ptrsz = (epp->ep_flags & EXEC_32) ?
-	    sizeof(int) : sizeof(char *);
-
-	const size_t argenvstrlen = (char *)ALIGN(dp) - data->ed_argp;
-
-	data->ed_szsigcode = epp->ep_esch->es_emul->e_esigcode -
-	    epp->ep_esch->es_emul->e_sigcode;
-
-	data->ed_ps_strings_sz = (epp->ep_flags & EXEC_32) ?
-	    sizeof(struct ps_strings32) : sizeof(struct ps_strings);
-
-	const size_t aslrgap =
 #ifdef PAX_ASLR
-	    pax_aslr_active(l) ? (cprng_fast32() % PAGE_SIZE) : 0;
+#define	ASLR_GAP(l)	(pax_aslr_active(l) ? (cprng_fast32() % PAGE_SIZE) : 0)
 #else
-	    0;
+#define	ASLR_GAP(l)	0
 #endif
 
 #ifdef __MACHINE_STACK_GROWS_UP
@@ -736,32 +720,19 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 #define	RTLD_GAP	0
 #endif
 
-	const size_t argenvlen =
-	    RTLD_GAP +			/* reserved for _rtld() */
-	    sizeof(int) +		/* XXX argc in stack is long, not int */
-	    (nargenvptrs * ptrsz);	/* XXX auxinfo multiplied by ptr size? */
+	const size_t argenvstrlen = (char *)ALIGN(dp) - data->ed_argp;
 
-	const size_t sigcode_psstr_sz =
-	    data->ed_szsigcode +	/* sigcode */
-	    data->ed_ps_strings_sz +	/* ps_strings */
-	    STACK_PTHREADSPACE;		/* pthread space */
+	data->ed_argslen = calcargs(data, argenvstrlen);
 
-	const size_t stacklen =
-	    argenvlen +
-	    argenvstrlen +
-	    aslrgap +
-	    sigcode_psstr_sz;
+	const size_t len = calcstack(data, ASLR_GAP(l) + RTLD_GAP);
 
-	/* make the stack "safely" aligned */
-	const size_t aligned_stacklen = STACK_LEN_ALIGN(stacklen, STACK_ALIGNBYTES);
-
-	if (aligned_stacklen > epp->ep_ssize) {
+	if (len > epp->ep_ssize) {
 		/* in effect, compare to initial limit */
-		DPRINTF(("%s: stack limit exceeded %zu\n", __func__, aligned_stacklen));
+		DPRINTF(("%s: stack limit exceeded %zu\n", __func__, len));
 		goto bad;
 	}
 	/* adjust "active stack depth" for process VSZ */
-	epp->ep_ssize = aligned_stacklen;
+	epp->ep_ssize = len;
 
 	return 0;
 
@@ -1395,6 +1366,53 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		return error;
 	error = execve_runproc(l, &data, false, false);
 	return error;
+}
+
+static size_t
+calcargs(struct execve_data * restrict data, const size_t argenvstrlen)
+{
+	struct exec_package	* const epp = &data->ed_pack;
+
+	const size_t nargenvptrs =
+	    data->ed_argc +		/* char *argv[] */
+	    1 +				/* \0 */
+	    data->ed_envc +		/* char *env[] */
+	    1 +				/* \0 */
+	    epp->ep_esch->es_arglen;	/* auxinfo */
+
+	const size_t ptrsz = (epp->ep_flags & EXEC_32) ?
+	    sizeof(int) : sizeof(char *);
+
+	const size_t argenvlen =
+	    sizeof(int) +		/* XXX argc in stack is long, not int */
+	    (nargenvptrs * ptrsz);	/* XXX auxinfo multiplied by ptr size? */
+
+	return argenvlen + argenvstrlen;
+}
+
+static size_t
+calcstack(struct execve_data * restrict data, const size_t gaplen)
+{
+	struct exec_package	* const epp = &data->ed_pack;
+
+	data->ed_szsigcode = epp->ep_esch->es_emul->e_esigcode -
+	    epp->ep_esch->es_emul->e_sigcode;
+
+	data->ed_ps_strings_sz = (epp->ep_flags & EXEC_32) ?
+	    sizeof(struct ps_strings32) : sizeof(struct ps_strings);
+
+	const size_t sigcode_psstr_sz =
+	    data->ed_szsigcode +	/* sigcode */
+	    data->ed_ps_strings_sz +	/* ps_strings */
+	    STACK_PTHREADSPACE;		/* pthread space */
+
+	const size_t stacklen =
+	    data->ed_argslen +
+	    gaplen +
+	    sigcode_psstr_sz;
+
+	/* make the stack "safely" aligned */
+	return STACK_LEN_ALIGN(stacklen, STACK_ALIGNBYTES);
 }
 
 static int
