@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.396 2014/04/15 15:50:16 uebayasi Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.397 2014/04/15 16:13:04 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.396 2014/04/15 15:50:16 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.397 2014/04/15 16:13:04 uebayasi Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -1065,28 +1065,13 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	 * in setregs().
 	 */
 
-	const size_t sigcode_psstr_sz =
-	    data->ed_szsigcode +	/* sigcode */
-	    data->ed_ps_strings_sz +	/* ps_strings */
-	    STACK_PTHREADSPACE;		/* pthread space */
+	char * const newstack = STACK_GROW(vm->vm_minsaddr, epp->ep_ssize);
 
-	char			*stack;
+	char *newargs = STACK_ALLOC(
+	    STACK_SHRINK(newstack, data->ed_argslen), data->ed_argslen);
 
-	/* Top of the stack address space. */
-	stack = vm->vm_minsaddr;
-
-	/* Skip pthread space, ps_strings, and sigcode. */
-	stack = STACK_GROW(stack, sigcode_psstr_sz);
-
-	/* Allocate the gap for _rtld() and arguments to be filled by copyargs(). */
-	stack = STACK_ALLOC(stack, epp->ep_ssize - sigcode_psstr_sz);
-
-	/* Skip a few words reserved for _rtld(). */
-	stack = STACK_GROW(stack, RTLD_GAP);
-
-	/* Now copy argc, args & environ to the new stack. */
 	error = (*epp->ep_esch->es_copyargs)(l, epp,
-	    &data->ed_arginfo, &stack, data->ed_argp);
+	    &data->ed_arginfo, &newargs, data->ed_argp);
 
 	if (epp->ep_path) {
 		PNBUF_PUT(epp->ep_path);
@@ -1191,12 +1176,11 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	 * the end of arg/env strings.  Userland guesses the address of argc
 	 * via ps_strings::ps_argvstr.
 	 */
-	const vaddr_t newstack = (vaddr_t)STACK_GROW(vm->vm_minsaddr, epp->ep_ssize);
 
 	/* Setup new registers and do misc. setup. */
-	(*epp->ep_esch->es_emul->e_setregs)(l, epp, newstack);
+	(*epp->ep_esch->es_emul->e_setregs)(l, epp, (vaddr_t)newstack);
 	if (epp->ep_esch->es_setregs)
-		(*epp->ep_esch->es_setregs)(l, epp, newstack);
+		(*epp->ep_esch->es_setregs)(l, epp, (vaddr_t)newstack);
 
 	/* Provide a consistent LWP private setting */
 	(void)lwp_setprivate(l, NULL);
