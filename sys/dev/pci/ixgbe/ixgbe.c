@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: src/sys/dev/ixgbe/ixgbe.c,v 1.51 2011/04/25 23:34:21 jfv Exp $*/
-/*$NetBSD: ixgbe.c,v 1.11 2014/04/11 06:50:26 joerg Exp $*/
+/*$NetBSD: ixgbe.c,v 1.12 2014/04/15 12:37:59 hannken Exp $*/
 
 #include "opt_inet.h"
 
@@ -3257,7 +3257,7 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp)
 	struct ip6_hdr ip6;
 	int  ehdrlen, ip_hlen = 0;
 	u16	etype;
-	u8	ipproto = 0;
+	u8	ipproto __diagused = 0;
 	bool	offload;
 	int ctxd = txr->next_avail_desc;
 	u16 vtag = 0;
