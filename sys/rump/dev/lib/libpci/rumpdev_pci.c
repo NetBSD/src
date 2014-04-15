@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpdev_pci.c,v 1.2 2014/04/14 21:43:00 pooka Exp $	*/
+/*      $NetBSD: rumpdev_pci.c,v 1.3 2014/04/15 13:47:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpdev_pci.c,v 1.2 2014/04/14 21:43:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpdev_pci.c,v 1.3 2014/04/15 13:47:06 pooka Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
@@ -131,10 +131,12 @@ pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ih)
 }
 
 const char *
-pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
+pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih,
+	char *buf, size_t buflen)
 {
 
-	return "pausebreak";
+	snprintf(buf, buflen, "pausebreak");
+	return buf;
 }
 
 void *
