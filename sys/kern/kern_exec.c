@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.398 2014/04/15 16:44:57 uebayasi Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.399 2014/04/15 17:06:21 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.398 2014/04/15 16:44:57 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.399 2014/04/15 17:06:21 uebayasi Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -124,6 +124,8 @@ struct execve_data;
 
 static size_t calcargs(struct execve_data * restrict, const size_t);
 static size_t calcstack(struct execve_data * restrict, const size_t);
+static int copyoutargs(struct execve_data * restrict, struct lwp *,
+    char * const);
 static int copyoutpsstrs(struct execve_data * restrict, struct proc *);
 static int copyinargs(struct execve_data * restrict, char * const *,
     char * const *, execve_fetch_element_t, char **);
@@ -1055,35 +1057,9 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 		PNBUF_PUT(path);
 	}
 
-	/* remember information about the process */
-	data->ed_arginfo.ps_nargvstr = data->ed_argc;
-	data->ed_arginfo.ps_nenvstr = data->ed_envc;
-
-	/*
-	 * Allocate the stack address passed to the newly execve()'ed process.
-	 *
-	 * The new stack address will be set to the SP (stack pointer) register
-	 * in setregs().
-	 */
-
 	char * const newstack = STACK_GROW(vm->vm_minsaddr, epp->ep_ssize);
 
-	char *newargs = STACK_ALLOC(
-	    STACK_SHRINK(newstack, data->ed_argslen), data->ed_argslen);
-
-	error = (*epp->ep_esch->es_copyargs)(l, epp,
-	    &data->ed_arginfo, &newargs, data->ed_argp);
-
-	if (epp->ep_path) {
-		PNBUF_PUT(epp->ep_path);
-		epp->ep_path = NULL;
-	}
-	if (error) {
-		DPRINTF(("%s: copyargs failed %d\n", __func__, error));
-		goto exec_abort;
-	}
-
-	error = copyoutpsstrs(data, p);
+	error = copyoutargs(data, l, newstack);
 	if (error != 0)
 		goto exec_abort;
 
@@ -1381,6 +1357,47 @@ calcstack(struct execve_data * restrict data, const size_t gaplen)
 }
 
 static int
+copyoutargs(struct execve_data * restrict data, struct lwp *l,
+    char * const newstack)
+{
+	struct exec_package	* const epp = &data->ed_pack;
+	struct proc		*p = l->l_proc;
+	int			error;
+
+	/* remember information about the process */
+	data->ed_arginfo.ps_nargvstr = data->ed_argc;
+	data->ed_arginfo.ps_nenvstr = data->ed_envc;
+
+	/*
+	 * Allocate the stack address passed to the newly execve()'ed process.
+	 *
+	 * The new stack address will be set to the SP (stack pointer) register
+	 * in setregs().
+	 */
+
+	char *newargs = STACK_ALLOC(
+	    STACK_SHRINK(newstack, data->ed_argslen), data->ed_argslen);
+
+	error = (*epp->ep_esch->es_copyargs)(l, epp,
+	    &data->ed_arginfo, &newargs, data->ed_argp);
+
+	if (epp->ep_path) {
+		PNBUF_PUT(epp->ep_path);
+		epp->ep_path = NULL;
+	}
+	if (error) {
+		DPRINTF(("%s: copyargs failed %d\n", __func__, error));
+		return error;
+	}
+
+	error = copyoutpsstrs(data, p);
+	if (error != 0)
+		return error;
+
+	return 0;
+}
+
+static int
 copyoutpsstrs(struct execve_data * restrict data, struct proc *p)
 {
 	struct exec_package	* const epp = &data->ed_pack;
@@ -1531,8 +1548,6 @@ copyinargstrs(struct execve_data * restrict data, char * const *strs,
 /*
  * Copy argv and env strings from kernel buffer (argp) to the new stack.
  * Those strings are located just after auxinfo.
- *
- * XXX rename this as copyoutargs()
  */
 int
 copyargs(struct lwp *l, struct exec_package *pack, struct ps_strings *arginfo,
