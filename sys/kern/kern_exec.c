@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.397 2014/04/15 16:13:04 uebayasi Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.398 2014/04/15 16:44:57 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.397 2014/04/15 16:13:04 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.398 2014/04/15 16:44:57 uebayasi Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -124,6 +124,7 @@ struct execve_data;
 
 static size_t calcargs(struct execve_data * restrict, const size_t);
 static size_t calcstack(struct execve_data * restrict, const size_t);
+static int copyoutpsstrs(struct execve_data * restrict, struct proc *);
 static int copyinargs(struct execve_data * restrict, char * const *,
     char * const *, execve_fetch_element_t, char **);
 static int copyinargstrs(struct execve_data * restrict, char * const *,
@@ -1082,29 +1083,9 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 		goto exec_abort;
 	}
 
-	/* fill process ps_strings info */
-	p->p_psstrp = (vaddr_t)STACK_ALLOC(STACK_GROW(vm->vm_minsaddr,
-	    STACK_PTHREADSPACE), data->ed_ps_strings_sz);
-
-	struct ps_strings32	arginfo32;
-	void			*aip;
-
-	if (epp->ep_flags & EXEC_32) {
-		aip = &arginfo32;
-		arginfo32.ps_argvstr = (vaddr_t)data->ed_arginfo.ps_argvstr;
-		arginfo32.ps_nargvstr = data->ed_arginfo.ps_nargvstr;
-		arginfo32.ps_envstr = (vaddr_t)data->ed_arginfo.ps_envstr;
-		arginfo32.ps_nenvstr = data->ed_arginfo.ps_nenvstr;
-	} else
-		aip = &data->ed_arginfo;
-
-	/* copy out the process's ps_strings structure */
-	if ((error = copyout(aip, (void *)p->p_psstrp, data->ed_ps_strings_sz))
-	    != 0) {
-		DPRINTF(("%s: ps_strings copyout %p->%p size %zu failed\n",
-		    __func__, aip, (void *)p->p_psstrp, data->ed_ps_strings_sz));
+	error = copyoutpsstrs(data, p);
+	if (error != 0)
 		goto exec_abort;
-	}
 
 	cwdexec(p);
 	fd_closeexec();		/* handle close on exec */
@@ -1397,6 +1378,38 @@ calcstack(struct execve_data * restrict data, const size_t gaplen)
 
 	/* make the stack "safely" aligned */
 	return STACK_LEN_ALIGN(stacklen, STACK_ALIGNBYTES);
+}
+
+static int
+copyoutpsstrs(struct execve_data * restrict data, struct proc *p)
+{
+	struct exec_package	* const epp = &data->ed_pack;
+	struct ps_strings32	arginfo32;
+	void			*aip;
+	int			error;
+
+	/* fill process ps_strings info */
+	p->p_psstrp = (vaddr_t)STACK_ALLOC(STACK_GROW(epp->ep_minsaddr,
+	    STACK_PTHREADSPACE), data->ed_ps_strings_sz);
+
+	if (epp->ep_flags & EXEC_32) {
+		aip = &arginfo32;
+		arginfo32.ps_argvstr = (vaddr_t)data->ed_arginfo.ps_argvstr;
+		arginfo32.ps_nargvstr = data->ed_arginfo.ps_nargvstr;
+		arginfo32.ps_envstr = (vaddr_t)data->ed_arginfo.ps_envstr;
+		arginfo32.ps_nenvstr = data->ed_arginfo.ps_nenvstr;
+	} else
+		aip = &data->ed_arginfo;
+
+	/* copy out the process's ps_strings structure */
+	if ((error = copyout(aip, (void *)p->p_psstrp, data->ed_ps_strings_sz))
+	    != 0) {
+		DPRINTF(("%s: ps_strings copyout %p->%p size %zu failed\n",
+		    __func__, aip, (void *)p->p_psstrp, data->ed_ps_strings_sz));
+		return error;
+	}
+
+	return 0;
 }
 
 static int
