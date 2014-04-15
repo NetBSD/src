@@ -1,4 +1,4 @@
-#	$NetBSD: sha.inc,v 1.2 2014/03/02 08:58:02 nakayama Exp $
+#	$NetBSD: sha.inc,v 1.3 2014/04/15 10:02:21 joerg Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -16,5 +16,5 @@ SHA_SRCS+= libc-sha512.c libc-sha256.c
 SRCS += ${SHA_SRCS}
 
 .for cryptosrc in ${SHA_SRCS}
-CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/sha ${SHACPPFLAGS}
+CPPFLAGS.${cryptosrc} += -I${OPENSSLSRC}/crypto/sha ${SHACPPFLAGS}
 .endfor
