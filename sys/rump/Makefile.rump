@@ -1,5 +1,8 @@
-#	$NetBSD: Makefile.rump,v 1.94 2014/03/16 15:31:03 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.95 2014/04/15 13:41:46 pooka Exp $
 #
+
+.if !defined(_RUMP_MK)
+_RUMP_MK= #defined
 
 WARNS?=		3	# XXX: src/sys won't compile with -Wsign-compare yet
 NOLINT=		# kernel code
@@ -220,3 +223,5 @@ _BSD_IOCONF_MK_USER_=1
 
 .-include "${NETBSDSRCDIR}/sys/arch/${MACHINE_CPU}/include/Makefile.inc"
 .-include "${NETBSDSRCDIR}/sys/arch/${MACHINE}/include/Makefile.inc"
+
+.endif # _RUMP_MK
