@@ -1,4 +1,4 @@
-/*	$NetBSD: odroid_machdep.c,v 1.5 2014/04/14 19:45:40 reinoud Exp $ */
+/*	$NetBSD: odroid_machdep.c,v 1.6 2014/04/15 20:36:07 reinoud Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.5 2014/04/14 19:45:40 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.6 2014/04/15 20:36:07 reinoud Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_exynos.h"
@@ -353,14 +353,16 @@ curcpu()->ci_data.cpu_cc_freq = 1*1000*1000*1000;	/* XXX hack XXX */
 	ram_size = (psize_t) 0xC0000000 - 0x40000000;
 
 #if defined(EXYNOS4)
-	switch (exynos_pop_id) {
-	case EXYNOS_PACKAGE_ID_2_GIG:
-		KASSERT(ram_size <= 2UL*1024*1024*1024);
-		break;
-	default:
-		printf("Unknown PoP package id 0x%08x, assuming 1Gb\n",
-			exynos_pop_id);
-		ram_size = (psize_t) 0x10000000;
+	if (IS_EXYNOS4_P()) {
+		switch (exynos_pop_id) {
+		case EXYNOS_PACKAGE_ID_2_GIG:
+			KASSERT(ram_size <= 2UL*1024*1024*1024);
+			break;
+		default:
+			printf("Unknown PoP package id 0x%08x, assuming 1Gb\n",
+				exynos_pop_id);
+			ram_size = (psize_t) 0x10000000;
+		}
 	}
 #endif
 
