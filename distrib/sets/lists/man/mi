@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1468 2014/04/06 17:59:39 kardel Exp $
+# $NetBSD: mi,v 1.1469 2014/04/15 22:09:27 ginsbach Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -178,6 +178,7 @@
 ./usr/share/man/cat1/g711conv.0			man-obsolete		obsolete
 ./usr/share/man/cat1/gcpp.0			man-util-catman		gcccmds,.cat
 ./usr/share/man/cat1/gencat.0			man-locale-catman	.cat
+./usr/share/man/cat1/getaddrinfo.0		man-netutil-catman	.cat
 ./usr/share/man/cat1/getcap.0			man-util-catman		.cat
 ./usr/share/man/cat1/getconf.0			man-util-catman		.cat
 ./usr/share/man/cat1/getent.0			man-util-catman		.cat
@@ -3292,6 +3293,7 @@
 ./usr/share/man/html1/ftp.html			man-netutil-htmlman	html
 ./usr/share/man/html1/gcpp.html			man-util-htmlman	gcccmds,html
 ./usr/share/man/html1/gencat.html		man-locale-htmlman	html
+./usr/share/man/html1/getaddrinfo.html		man-netutil-htmlman	html
 ./usr/share/man/html1/getcap.html		man-util-htmlman	html
 ./usr/share/man/html1/getconf.html		man-util-htmlman	html
 ./usr/share/man/html1/getent.html		man-util-htmlman	html
@@ -6020,6 +6022,7 @@
 ./usr/share/man/man1/g711conv.1			man-obsolete		obsolete
 ./usr/share/man/man1/gcpp.1			man-util-man		gcccmds,.man
 ./usr/share/man/man1/gencat.1			man-locale-man		.man
+./usr/share/man/man1/getaddrinfo.1		man-netutil-man		.man
 ./usr/share/man/man1/getcap.1			man-util-man		.man
 ./usr/share/man/man1/getconf.1			man-util-man		.man
 ./usr/share/man/man1/getent.1			man-util-man		.man
