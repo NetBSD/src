@@ -481,6 +481,20 @@ CFI_Parser<A, R>::parseInstructions(A &addressSpace, pint_t instructions,
       length = addressSpace.getULEB128(p, instructionsEnd);
       p += length;
       break;
+    case DW_CFA_GNU_window_save:
+#if defined(__sparc__)
+      for (reg = 8; reg < 16; ++reg) {
+        results->savedRegisters[reg].location = kRegisterInRegister;
+        results->savedRegisters[reg].value = reg + 16;
+      }
+      for (reg = 16; reg < 32; ++reg) {
+        results->savedRegisters[reg].location = kRegisterInCFA;
+        results->savedRegisters[reg].value = (reg - 16) * sizeof(typename R::reg_t);
+      }
+      break;
+#else
+      return false;
+#endif
     case DW_CFA_GNU_args_size:
       offset = addressSpace.getULEB128(p, instructionsEnd);
       results->spExtraArgSize = offset;
