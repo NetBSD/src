@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.48 2014/02/20 13:54:42 sborrill Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.49 2014/04/16 06:57:34 msaitoh Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -716,3 +716,7 @@ lib/libpthread/pthread_mutex.c			1.57, 1.59
 	named. Also address PR/44756.
 	[prlw1, ticket #1898]
 
+sys/kern/kern_verifiedexec.c			1.132
+
+	Reorder code to avoid use-after-free on error. From Maxime Villard.
+	[maxv, ticket #1899]
