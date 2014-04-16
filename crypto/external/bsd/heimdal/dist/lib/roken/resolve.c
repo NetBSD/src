@@ -1,4 +1,4 @@
-/*	$NetBSD: resolve.c,v 1.1.1.1 2011/04/13 18:15:42 elric Exp $	*/
+/*	$NetBSD: resolve.c,v 1.1.1.1.20.1 2014/04/16 05:46:51 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995 - 2006 Kungliga Tekniska Högskolan
@@ -590,6 +590,7 @@ dns_lookup_int(const char *domain, int rr_class, int rr_type)
 
     len = min(len, size);
     r = parse_reply(reply, len);
+    resolve_free_handle(handle);
     free(reply);
     return r;
 }
