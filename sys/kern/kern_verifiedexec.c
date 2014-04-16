@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.111.4.1 2008/12/18 00:56:27 snj Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.111.4.2 2014/04/16 06:56:27 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.111.4.1 2008/12/18 00:56:27 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.111.4.2 2014/04/16 06:56:27 msaitoh Exp $");
 
 #include "opt_veriexec.h"
 
@@ -1295,18 +1295,6 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 	vfe->last_page_size = 0;
 	rw_init(&vfe->lock);
 
-	vte = veriexec_table_lookup(nid.ni_vp->v_mount);
-	if (vte == NULL)
-		vte = veriexec_table_add(l, nid.ni_vp->v_mount);
-
-	/* XXX if we bail below this, we might want to gc newly created vtes. */
-
-	error = fileassoc_add(nid.ni_vp, veriexec_hook, vfe);
-	if (error)
-		goto unlock_out;
-
-	vte->vte_count++;
-
 	if (prop_bool_true(prop_dictionary_get(dict, "eval-on-load")) ||
 	    (vfe->type & VERIEXEC_UNTRUSTED)) {
 		u_char *digest;
@@ -1327,6 +1315,18 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 
 		kmem_free(digest, vfe->ops->hash_len);
 	}
+
+	vte = veriexec_table_lookup(nid.ni_vp->v_mount);
+	if (vte == NULL)
+		vte = veriexec_table_add(l, nid.ni_vp->v_mount);
+
+	/* XXX if we bail below this, we might want to gc newly created vtes. */
+
+	error = fileassoc_add(nid.ni_vp, veriexec_hook, vfe);
+	if (error)
+		goto unlock_out;
+
+	vte->vte_count++;
 
 	veriexec_file_report(NULL, "New entry.", file, NULL, REPORT_DEBUG);
 	veriexec_bypass = 0;
