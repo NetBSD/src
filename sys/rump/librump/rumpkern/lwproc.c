@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.29 2014/04/09 23:53:36 pooka Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.30 2014/04/16 22:34:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #define RUMP__CURLWP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.29 2014/04/09 23:53:36 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.30 2014/04/16 22:34:02 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -83,6 +83,7 @@ static void
 lwproc_proc_free(struct proc *p)
 {
 	kauth_cred_t cred;
+	struct proc *child;
 
 	KASSERT(p->p_stat == SDYING || p->p_stat == SDEAD);
 
@@ -95,6 +96,14 @@ lwproc_proc_free(struct proc *p)
 #endif
 
 	mutex_enter(proc_lock);
+
+	/* childranee eunt initus */
+	while ((child = LIST_FIRST(&p->p_children)) != NULL) {
+		LIST_REMOVE(child, p_sibling);
+		child->p_pptr = initproc;
+		child->p_ppid = 1;
+		LIST_INSERT_HEAD(&initproc->p_children, child, p_sibling);
+	}
 
 	KASSERT(p->p_nlwps == 0);
 	KASSERT(LIST_EMPTY(&p->p_lwps));
