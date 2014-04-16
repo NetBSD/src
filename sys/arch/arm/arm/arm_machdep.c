@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.40 2014/01/10 18:03:26 matt Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.41 2014/04/16 22:33:07 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.40 2014/01/10 18:03:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.41 2014/04/16 22:33:07 matt Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -112,6 +112,9 @@ struct cpu_info cpu_info_store = {
 	.ci_curlwp = &lwp0,
 #ifdef __PROG32
 	.ci_undefsave[2] = (register_t) undefinedinstruction_bounce,
+#if defined(ARM_MMU_EXTENDED) && KERNEL_PID != 0
+	.ci_pmap_asid_cur = KERNEL_PID,
+#endif
 #endif
 };
 
