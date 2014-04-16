@@ -1,4 +1,4 @@
-/*	$NetBSD: samachdep.h,v 1.17 2014/01/11 17:00:37 tsutsui Exp $	*/
+/*	$NetBSD: samachdep.h,v 1.18 2014/04/16 13:43:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -103,6 +103,7 @@ extern int hz;
 extern int nplane;
 extern int machtype;
 extern char default_file[];
+extern int default_unit;
 
 /* kbd.c */
 int kbd_decode(u_char);

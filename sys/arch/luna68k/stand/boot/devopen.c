@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.6 2014/01/11 08:08:23 tsutsui Exp $	*/
+/*	$NetBSD: devopen.c,v 1.7 2014/04/16 13:43:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -123,9 +123,12 @@ make_device(const char *str, int *devp, int *unitp, int *partp, char **fname)
 {
 	const char *cp;
 	struct devsw *dp;
-	int dev, unit = 0, part = 0;
+	int dev, unit, part;
 	int i;
 	char devname[MAXDEVNAME + 1];
+
+	unit = default_unit;
+	part = 0;
 
 	/*
 	 * parse path strings
