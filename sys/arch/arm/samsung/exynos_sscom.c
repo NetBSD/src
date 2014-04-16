@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_sscom.c,v 1.2 2014/04/14 21:16:15 reinoud Exp $ */
+/*	$NetBSD: exynos_sscom.c,v 1.3 2014/04/16 21:28:51 reinoud Exp $ */
 
 /*
  * Copyright (c) 2014 Reinoud Zandijk
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_sscom.c,v 1.2 2014/04/14 21:16:15 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_sscom.c,v 1.3 2014/04/16 21:28:51 reinoud Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -141,9 +141,10 @@ sscom_attach(device_t parent, device_t self, void *aux)
 	struct sscom_softc *sc = device_private(self);
 	struct exyo_attach_args *exyo = aux;
 	int unit = exyo->exyo_loc.loc_port;
-	bus_addr_t iobase = exyo->exyo_loc.loc_offset;
 
-	aprint_normal( ": UART%d addr=%lx", unit, iobase );
+	/* debug */
+//	bus_addr_t iobase = exyo->exyo_loc.loc_offset;
+//	aprint_normal( ": UART%d addr=%lx", unit, iobase );
 
 	sc->sc_dev = self;
 	sc->sc_iot = exyo->exyo_core_bst;
@@ -157,7 +158,8 @@ sscom_attach(device_t parent, device_t self, void *aux)
 	sc->sc_tx_irqno = UINT_TXD;
 
 	if (!sscom_is_console(sc->sc_iot, unit, &sc->sc_ioh)
-	    && bus_space_map(sc->sc_iot, iobase, SSCOM_SIZE, 0, &sc->sc_ioh)) {
+	    && bus_space_subregion(sc->sc_iot, exyo->exyo_core_bsh,
+		    exyo->exyo_loc.loc_offset, SSCOM_SIZE, &sc->sc_ioh)) {
 		printf( ": failed to map registers\n" );
 		return;
 	}
