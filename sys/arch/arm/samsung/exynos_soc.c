@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_soc.c,v 1.4 2014/04/13 20:52:29 reinoud Exp $	*/
+/*	$NetBSD: exynos_soc.c,v 1.5 2014/04/16 21:28:51 reinoud Exp $	*/
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #define	_ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.4 2014/04/13 20:52:29 reinoud Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.5 2014/04/16 21:28:51 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -205,10 +205,18 @@ exynos_l2cc_init(void)
 #endif /* ARM_TRUSTZONE_FIRMWARE */
 
 
+#ifndef EXYNOS4
+#	define EXYNOS4_CORE_SIZE 0
+#endif
+#ifndef EXYNOS5
+#	define EXYNOS5_CORE_SIZE 0
+#endif
 void
 exynos_bootstrap(vaddr_t iobase, vaddr_t uartbase)
 {
-// 	int error;
+	int error;
+	size_t core_size = IS_EXYNOS4_P() ?
+		EXYNOS4_CORE_SIZE : EXYNOS5_CORE_SIZE;
 
 	/* set up early console so we can use printf() and friends */
 #ifdef EXYNOS_CONSOLE_EARLY
@@ -216,15 +224,13 @@ exynos_bootstrap(vaddr_t iobase, vaddr_t uartbase)
 	cn_tab = &exynos_earlycons;
 	printf("Exynos early console operational\n\n");
 #endif
-#if 0
 	/* map in the exynos io registers */
 	error = bus_space_map(&exynos_bs_tag, EXYNOS_CORE_PBASE,
-	    0x04000000 /*EXYNOS_CORE_SIZE*/, 0, &exynos_core_bsh);
+		core_size, 0, &exynos_core_bsh);
 	if (error)
 		panic("%s: failed to map in Exynos io registers: %d",
 			__func__, error);
 	KASSERT(exynos_core_bsh == iobase);
-#endif
 }
 
 
