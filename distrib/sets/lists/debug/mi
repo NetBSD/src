@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.57 2014/04/13 17:13:27 skrll Exp $
+# $NetBSD: mi,v 1.58 2014/04/16 00:41:07 htodd Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -512,6 +512,7 @@
 ./usr/libdata/debug/usr/bin/gdb.debug		comp-debug-debug	gdb,debug
 ./usr/libdata/debug/usr/bin/gdbtui.debug	comp-debug-debug	gdb,debug
 ./usr/libdata/debug/usr/bin/gencat.debug	comp-locale-debug	debug
+./usr/libdata/debug/usr/bin/getaddrinfo.debug	comp-util-debug	debug
 ./usr/libdata/debug/usr/bin/getconf.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/getent.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/getextattr.debug	comp-util-debug		debug
