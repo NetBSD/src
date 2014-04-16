@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.49 2014/04/16 06:57:34 msaitoh Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.50 2014/04/16 08:10:57 msaitoh Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -720,3 +720,11 @@ sys/kern/kern_verifiedexec.c			1.132
 
 	Reorder code to avoid use-after-free on error. From Maxime Villard.
 	[maxv, ticket #1899]
+
+sys/dev/wscons/mra.c				1.6
+
+	Fixes calibration in wscons through the MRA sub-system on
+	architectures where sizeof(int) != sizeof(long). This code
+	is typically used by drivers for touchscreen devices,
+	like uts(4).
+	[khorben, ticket #1900]
