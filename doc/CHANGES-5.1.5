@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1.5,v 1.1.2.1 2014/01/27 21:18:45 bouyer Exp $
+# $NetBSD: CHANGES-5.1.5,v 1.1.2.2 2014/04/16 06:57:55 msaitoh Exp $
 
 A complete list of changes from the NetBSD 5.1.4 release to the NetBSD 5.1.5
 release:
@@ -10,3 +10,7 @@ sys/sys/param.h					patched by hand
 	Welcome to 5.1.4_PATCH.
 	[bouyer]
 
+sys/kern/kern_verifiedexec.c			1.132
+
+	Reorder code to avoid use-after-free on error. From Maxime Villard.
+	[maxv, ticket #1899]
