@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.399 2014/04/15 17:06:21 uebayasi Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.400 2014/04/16 01:30:33 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.399 2014/04/15 17:06:21 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.400 2014/04/16 01:30:33 uebayasi Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -809,6 +809,58 @@ execve_free_data(struct execve_data *data)
 	PNBUF_PUT(data->ed_resolvedpathbuf);
 }
 
+static void
+pathexec(struct exec_package *epp, struct proc *p, const char *pathstring)
+{
+	const char		*commandname;
+	size_t			commandlen;
+	char			*path;
+
+	/* set command name & other accounting info */
+	commandname = strrchr(epp->ep_resolvedname, '/');
+	if (commandname != NULL) {
+		commandname++;
+	} else {
+		commandname = epp->ep_resolvedname;
+	}
+	commandlen = min(strlen(commandname), MAXCOMLEN);
+	(void)memcpy(p->p_comm, commandname, commandlen);
+	p->p_comm[commandlen] = '\0';
+
+	path = PNBUF_GET();
+
+	/*
+	 * If the path starts with /, we don't need to do any work.
+	 * This handles the majority of the cases.
+	 * In the future perhaps we could canonicalize it?
+	 */
+	if (pathstring[0] == '/') {
+		(void)strlcpy(path, pathstring,
+		    MAXPATHLEN);
+		epp->ep_path = path;
+	}
+#ifdef notyet
+	/*
+	 * Although this works most of the time [since the entry was just
+	 * entered in the cache] we don't use it because it will fail for
+	 * entries that are not placed in the cache because their name is
+	 * longer than NCHNAMLEN and it is not the cleanest interface,
+	 * because there could be races. When the namei cache is re-written,
+	 * this can be changed to use the appropriate function.
+	 */
+	else if (!(error = vnode_to_path(path, MAXPATHLEN, p->p_textvp, l, p)))
+		epp->ep_path = path;
+#endif
+	else {
+#ifdef notyet
+		printf("Cannot get path for pid %d [%s] (error %d)\n",
+		    (int)p->p_pid, p->p_comm, error);
+#endif
+		epp->ep_path = NULL;
+		PNBUF_PUT(path);
+	}
+}
+
 /* XXX elsewhere */
 static int
 credexec(struct lwp *l, struct vattr *attr)
@@ -1008,54 +1060,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 		goto exec_abort;
 	}
 
-	const char		*commandname;
-	size_t			commandlen;
-
-	/* set command name & other accounting info */
-	commandname = strrchr(epp->ep_resolvedname, '/');
-	if (commandname != NULL) {
-		commandname++;
-	} else {
-		commandname = epp->ep_resolvedname;
-	}
-	commandlen = min(strlen(commandname), MAXCOMLEN);
-	(void)memcpy(p->p_comm, commandname, commandlen);
-	p->p_comm[commandlen] = '\0';
-
-	char			*path;
-
-	path = PNBUF_GET();
-
-	/*
-	 * If the path starts with /, we don't need to do any work.
-	 * This handles the majority of the cases.
-	 * In the future perhaps we could canonicalize it?
-	 */
-	if (data->ed_pathstring[0] == '/') {
-		(void)strlcpy(path, data->ed_pathstring,
-		    MAXPATHLEN);
-		epp->ep_path = path;
-	}
-#ifdef notyet
-	/*
-	 * Although this works most of the time [since the entry was just
-	 * entered in the cache] we don't use it because it will fail for
-	 * entries that are not placed in the cache because their name is
-	 * longer than NCHNAMLEN and it is not the cleanest interface,
-	 * because there could be races. When the namei cache is re-written,
-	 * this can be changed to use the appropriate function.
-	 */
-	else if (!(error = vnode_to_path(path, MAXPATHLEN, p->p_textvp, l, p)))
-		epp->ep_path = path;
-#endif
-	else {
-#ifdef notyet
-		printf("Cannot get path for pid %d [%s] (error %d)\n",
-		    (int)p->p_pid, p->p_comm, error);
-#endif
-		epp->ep_path = NULL;
-		PNBUF_PUT(path);
-	}
+	pathexec(epp, p, data->ed_pathstring);
 
 	char * const newstack = STACK_GROW(vm->vm_minsaddr, epp->ep_ssize);
 
