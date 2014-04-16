@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.6,v 1.1.2.1 2014/04/16 03:32:53 snj Exp $
+# $NetBSD: CHANGES-6.0.6,v 1.1.2.2 2014/04/16 05:48:40 msaitoh Exp $
 
 A complete list of changes from the NetBSD 6.0.5 release to the NetBSD 6.0.6
 release:
@@ -11,3 +11,13 @@ sys/sys/param.h					patched by hand
 	Welcome to 6.0.5_PATCH.
 	[snj]
 
+distrib/sets/lists/comp/shl.mi			patch
+
+	Fix MKDEBUG=yes build problem.
+	[htodd, ticket #1046]
+
+crypto/external/bsd/heimdal/dist/lib/roken/resolve.c	1.2
+
+	Fix file descriptor leak in Heimdal. Fixes PR#48718
+	reported by Juergen Hannken-Illjes.
+	[hannken, ticket #1047]
