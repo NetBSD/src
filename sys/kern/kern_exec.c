@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.400 2014/04/16 01:30:33 uebayasi Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.401 2014/04/16 02:22:38 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.400 2014/04/16 01:30:33 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.401 2014/04/16 02:22:38 uebayasi Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -779,6 +779,60 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	return error;
 }
 
+static int
+execve_dovmcmds(struct lwp *l, struct execve_data * restrict data)
+{
+	struct exec_package	* const epp = &data->ed_pack;
+	struct proc		*p = l->l_proc;
+	struct exec_vmcmd	*base_vcp;
+	int			error = 0;
+	int			i;
+
+	/* record proc's vnode, for use by procfs and others */
+	if (p->p_textvp)
+		vrele(p->p_textvp);
+	vref(epp->ep_vp);
+	p->p_textvp = epp->ep_vp;
+
+	/* create the new process's VM space by running the vmcmds */
+	KASSERTMSG(epp->ep_vmcmds.evs_used != 0, "%s: no vmcmds", __func__);
+
+	DUMPVMCMDS(epp, 0, 0);
+
+	base_vcp = NULL;
+
+	for (i = 0; i < epp->ep_vmcmds.evs_used && !error; i++) {
+		struct exec_vmcmd *vcp;
+
+		vcp = &epp->ep_vmcmds.evs_cmds[i];
+		if (vcp->ev_flags & VMCMD_RELATIVE) {
+			KASSERTMSG(base_vcp != NULL,
+			    "%s: relative vmcmd with no base", __func__);
+			KASSERTMSG((vcp->ev_flags & VMCMD_BASE) == 0,
+			    "%s: illegal base & relative vmcmd", __func__);
+			vcp->ev_addr += base_vcp->ev_addr;
+		}
+		error = (*vcp->ev_proc)(l, vcp);
+		if (error)
+			DUMPVMCMDS(epp, i, error);
+		if (vcp->ev_flags & VMCMD_BASE)
+			base_vcp = vcp;
+	}
+
+	/* free the vmspace-creation commands, and release their references */
+	kill_vmcmds(&epp->ep_vmcmds);
+
+	vn_lock(epp->ep_vp, LK_EXCLUSIVE | LK_RETRY);
+	VOP_CLOSE(epp->ep_vp, FREAD, l->l_cred);
+	vput(epp->ep_vp);
+
+	/* if an error happened, deallocate and punt */
+	if (error != 0) {
+		DPRINTF(("%s: vmcmd %zu failed: %d\n", __func__, i - 1, error));
+	}
+	return error;
+}
+
 static void
 execve_free_data(struct execve_data *data)
 {
@@ -997,13 +1051,6 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 		    epp->ep_vm_maxaddr,
 		    epp->ep_flags & EXEC_TOPDOWN_VM);
 
-	/* record proc's vnode, for use by procfs and others */
-	if (p->p_textvp)
-		vrele(p->p_textvp);
-	vref(epp->ep_vp);
-	p->p_textvp = epp->ep_vp;
-
-	/* Now map address space */
 	struct vmspace		*vm;
 	vm = p->p_vmspace;
 	vm->vm_taddr = (void *)epp->ep_taddr;
@@ -1019,46 +1066,10 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	pax_aslr_init(l, vm);
 #endif /* PAX_ASLR */
 
-	/* create the new process's VM space by running the vmcmds */
-	KASSERTMSG(epp->ep_vmcmds.evs_used != 0, "%s: no vmcmds", __func__);
-
-	DUMPVMCMDS(epp, 0, 0);
-
-	size_t			i;
-	struct exec_vmcmd	*base_vcp;
-
-	base_vcp = NULL;
-
-	for (i = 0; i < epp->ep_vmcmds.evs_used && !error; i++) {
-		struct exec_vmcmd *vcp;
-
-		vcp = &epp->ep_vmcmds.evs_cmds[i];
-		if (vcp->ev_flags & VMCMD_RELATIVE) {
-			KASSERTMSG(base_vcp != NULL,
-			    "%s: relative vmcmd with no base", __func__);
-			KASSERTMSG((vcp->ev_flags & VMCMD_BASE) == 0,
-			    "%s: illegal base & relative vmcmd", __func__);
-			vcp->ev_addr += base_vcp->ev_addr;
-		}
-		error = (*vcp->ev_proc)(l, vcp);
-		if (error)
-			DUMPVMCMDS(epp, i, error);
-		if (vcp->ev_flags & VMCMD_BASE)
-			base_vcp = vcp;
-	}
-
-	/* free the vmspace-creation commands, and release their references */
-	kill_vmcmds(&epp->ep_vmcmds);
-
-	vn_lock(epp->ep_vp, LK_EXCLUSIVE | LK_RETRY);
-	VOP_CLOSE(epp->ep_vp, FREAD, l->l_cred);
-	vput(epp->ep_vp);
-
-	/* if an error happened, deallocate and punt */
-	if (error) {
-		DPRINTF(("%s: vmcmd %zu failed: %d\n", __func__, i - 1, error));
+	/* Now map address space. */
+	error = execve_dovmcmds(l, data);
+	if (error != 0)
 		goto exec_abort;
-	}
 
 	pathexec(epp, p, data->ed_pathstring);
 
