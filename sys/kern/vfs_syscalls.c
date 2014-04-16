@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.478 2014/04/04 06:47:02 maxv Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.479 2014/04/16 18:55:18 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.478 2014/04/04 06:47:02 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.479 2014/04/16 18:55:18 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -481,6 +481,10 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 		}
 	}
 
+	/*
+	 * We allow data to be NULL, even for userspace. Some fs's don't need
+	 * it. The others will handle NULL.
+	 */
 	if (data != NULL && data_seg == UIO_USERSPACE) {
 		if (data_len == 0) {
 			/* No length supplied, use default for filesystem */

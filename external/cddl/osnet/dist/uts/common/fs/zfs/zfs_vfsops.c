@@ -1596,6 +1596,9 @@ zfs_mount(vfs_t *vfsp, const char *path, void *data, size_t *data_len)
 	if (mvp->v_type != VDIR)
 		return (ENOTDIR);
 
+	if (uap == NULL)
+		return (EINVAL);
+
 	mutex_enter(mvp->v_interlock);
 	if ((uap->flags & MS_REMOUNT) == 0 &&
 	    (uap->flags & MS_OVERLAY) == 0 &&

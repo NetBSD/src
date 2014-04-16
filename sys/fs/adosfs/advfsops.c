@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.69 2014/03/23 15:21:15 hannken Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.70 2014/04/16 18:55:18 maxv Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.69 2014/03/23 15:21:15 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.70 2014/04/16 18:55:18 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -92,6 +92,8 @@ adosfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	int error;
 	mode_t accessmode;
 
+	if (args == NULL)
+		return EINVAL;
 	if (*data_len < sizeof *args)
 		return EINVAL;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.179 2014/03/23 15:21:16 hannken Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.180 2014/04/16 18:55:19 maxv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.179 2014/03/23 15:21:16 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.180 2014/04/16 18:55:19 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -305,6 +305,8 @@ ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	int error = 0, flags, update;
 	mode_t accessmode;
 
+	if (args == NULL)
+		return EINVAL;
 	if (*data_len < sizeof *args)
 		return EINVAL;
 

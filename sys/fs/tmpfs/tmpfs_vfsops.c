@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.58 2014/03/23 15:21:16 hannken Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.59 2014/04/16 18:55:19 maxv Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.58 2014/03/23 15:21:16 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.59 2014/04/16 18:55:19 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -102,6 +102,9 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	uint64_t memlimit;
 	ino_t nodes;
 	int error;
+
+	if (args == NULL)
+		return EINVAL;
 
 	/* Validate the version. */
 	if (*data_len < sizeof(*args) ||
