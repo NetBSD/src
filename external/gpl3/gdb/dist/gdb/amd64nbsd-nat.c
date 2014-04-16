@@ -120,8 +120,6 @@ amd64nbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
   regcache_raw_supply (regcache, AMD64_RBP_REGNUM, &pcb->pcb_rbp);
   regcache_raw_supply (regcache, AMD64_FS_REGNUM, &pcb->pcb_fs);
   regcache_raw_supply (regcache, AMD64_GS_REGNUM, &pcb->pcb_gs);
-  /* fake it to 0 so SEL_UPL is not set (our sniffer looks at CS) */
-  regcache_raw_supply (regcache, AMD64_CS_REGNUM, &zero);
 
   return 1;
 }

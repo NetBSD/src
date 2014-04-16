@@ -230,12 +230,16 @@ amd64nbsd_trapframe_sniffer (const struct frame_unwind *self,
 {
   ULONGEST cs;
   const char *name;
+  volatile struct gdb_exception ex;
 
-  /* Check Current Privilege Level and bail out if we're not executing
-     in kernel space.  */
-  cs = get_frame_register_unsigned (this_frame, AMD64_CS_REGNUM);
-  if ((cs & I386_SEL_RPL) == I386_SEL_UPL)
-    return 0;
+  TRY_CATCH (ex, RETURN_MASK_ERROR)
+    {
+      cs = get_frame_register_unsigned (this_frame, AMD64_CS_REGNUM);
+      if ((cs & I386_SEL_RPL) == I386_SEL_UPL)
+	return 0;
+    }
+  if (ex.reason < 0 && ex.error != NOT_AVAILABLE_ERROR)
+    throw_exception (ex);
 
   find_pc_partial_function (get_frame_pc (this_frame), &name, NULL, NULL);
   return (name && ((strcmp (name, "alltraps") == 0)
