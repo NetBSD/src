@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.226 2014/03/23 15:21:16 hannken Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.227 2014/04/16 18:55:17 maxv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.226 2014/03/23 15:21:16 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.227 2014/04/16 18:55:17 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -594,6 +594,8 @@ nfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	size_t len;
 	u_char *nfh;
 
+	if (args == NULL)
+		return EINVAL;
 	if (*data_len < sizeof *args)
 		return EINVAL;
 

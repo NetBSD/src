@@ -89,6 +89,8 @@ unionfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	const char	*cp;
 	char		*xp;
 
+	if (args == NULL)
+		return EINVAL;
 	if (*data_len < sizeof *args)
 		return EINVAL;
 
