@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.91 2014/03/23 15:21:16 hannken Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.92 2014/04/16 18:55:19 maxv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.91 2014/03/23 15:21:16 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.92 2014/04/16 18:55:19 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,6 +81,8 @@ umapfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	int i;
 #endif
 
+	if (args == NULL)
+		return EINVAL;
 	if (*data_len < sizeof *args)
 		return EINVAL;
 
