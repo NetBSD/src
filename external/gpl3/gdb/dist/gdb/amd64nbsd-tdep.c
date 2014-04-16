@@ -157,19 +157,14 @@ amd64nbsd_trapframe_cache(struct frame_info *this_frame, void **this_cache)
     addr = sp;
 
   for (i = 0; i < ARRAY_SIZE (amd64nbsd_tf_reg_offset); i++)
-    {
-      if (amd64nbsd_tf_reg_offset[i] != -1)
-        trad_frame_set_reg_addr (cache, i, addr + amd64nbsd_tf_reg_offset[i]);
+    if (amd64nbsd_tf_reg_offset[i] != -1)
+      trad_frame_set_reg_addr (cache, i, addr + amd64nbsd_tf_reg_offset[i]);
 
-      /* Read %cs and %rip when we have the addresses to hand */
-      if (i == AMD64_CS_REGNUM)
-        cs = read_memory_unsigned_integer (addr + amd64nbsd_tf_reg_offset[i], 8,
-	  byte_order);
-      if (i == AMD64_RIP_REGNUM)
-        rip = read_memory_unsigned_integer (addr + amd64nbsd_tf_reg_offset[i],
-	  8, byte_order);
-    }
-
+  /* Read %cs and %rip when we have the addresses to hand */
+  cs = read_memory_unsigned_integer (addr
+    + amd64nbsd_tf_reg_offset[AMD64_CS_REGNUM], 8, byte_order);
+  rip = read_memory_unsigned_integer (addr
+    + amd64nbsd_tf_reg_offset[AMD64_RIP_REGNUM], 8, byte_order);
   if (cs == 0 || rip == 0)
      abort();
 
