@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.479 2014/04/16 18:55:18 maxv Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.480 2014/04/16 19:25:28 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.479 2014/04/16 18:55:18 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.480 2014/04/16 19:25:28 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -498,7 +498,7 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 			    && data_len < sizeof (struct mnt_export_args30))
 				data_len = sizeof (struct mnt_export_args30);
 		}
-		if (data_len > VFS_MAX_MOUNT_DATA) {
+		if ((data_len == 0) || (data_len > VFS_MAX_MOUNT_DATA)) {
 			error = EINVAL;
 			goto done;
 		}
