@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.c,v 1.10 2014/04/14 18:18:58 joerg Exp $	*/
+/*	$NetBSD: bcopy.c,v 1.11 2014/04/16 20:39:55 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)bcopy.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: bcopy.c,v 1.10 2014/04/14 18:18:58 joerg Exp $");
+__RCSID("$NetBSD: bcopy.c,v 1.11 2014/04/16 20:39:55 joerg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: bcopy.c,v 1.10 2014/04/14 18:18:58 joerg Exp $");
 #endif
 #endif
 
-#ifdef _FORTIFY_SOURCE
+#if defined(_FORTIFY_SOURCE) || defined(_STANDALONE) || defined(_KERNEL)
 #undef bcopy
 #undef memcpy
 #undef memmove
