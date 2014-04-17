@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_netbsd.c,v 1.23 2014/04/17 15:55:53 christos Exp $	*/
+/*	$NetBSD: mpt_netbsd.c,v 1.24 2014/04/17 16:08:42 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.23 2014/04/17 15:55:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.24 2014/04/17 16:08:42 christos Exp $");
 
 #include <dev/ic/mpt.h>			/* pulls in all headers */
 #include <sys/scsiio.h>
@@ -516,19 +516,22 @@ mpt_done(mpt_softc_t *mpt, uint32_t reply)
 
 		/* XXX BUS_DMASYNC_POSTREAD XXX */
 		mpt_reply = MPT_REPLY_PTOV(mpt, reply);
-		if (mpt->verbose > 1) {
-			uint32_t *pReply = (uint32_t *) mpt_reply;
+		if (mpt_reply != NULL) {
+			if (mpt->verbose > 1) {
+				uint32_t *pReply = (uint32_t *) mpt_reply;
 
-			mpt_prt(mpt, "Address Reply (index %u):",
-			    le32toh(mpt_reply->MsgContext) & 0xffff);
-			mpt_prt(mpt, "%08x %08x %08x %08x",
-			    pReply[0], pReply[1], pReply[2], pReply[3]);
-			mpt_prt(mpt, "%08x %08x %08x %08x",
-			    pReply[4], pReply[5], pReply[6], pReply[7]);
-			mpt_prt(mpt, "%08x %08x %08x %08x",
-			    pReply[8], pReply[9], pReply[10], pReply[11]);
-		}
-		index = le32toh(mpt_reply->MsgContext);
+				mpt_prt(mpt, "Address Reply (index %u):",
+				    le32toh(mpt_reply->MsgContext) & 0xffff);
+				mpt_prt(mpt, "%08x %08x %08x %08x", pReply[0],
+				    pReply[1], pReply[2], pReply[3]);
+				mpt_prt(mpt, "%08x %08x %08x %08x", pReply[4],
+				    pReply[5], pReply[6], pReply[7]);
+				mpt_prt(mpt, "%08x %08x %08x %08x", pReply[8],
+				    pReply[9], pReply[10], pReply[11]);
+			}
+			index = le32toh(mpt_reply->MsgContext);
+		} else
+			index = reply & MPT_CONTEXT_MASK;
 	}
 
 	/*
@@ -763,16 +766,19 @@ mpt_done(mpt_softc_t *mpt, uint32_t reply)
 		break;
 	}
 
-	if (mpt_reply->SCSIState & MPI_SCSI_STATE_AUTOSENSE_VALID) {
-		memcpy(&xs->sense.scsi_sense, req->sense_vbuf,
-		    sizeof(xs->sense.scsi_sense));
-	} else if (mpt_reply->SCSIState & MPI_SCSI_STATE_AUTOSENSE_FAILED) {
-		/*
-		 * This will cause the scsipi layer to issue
-		 * a REQUEST SENSE.
-		 */
-		if (xs->status == SCSI_CHECK)
-			xs->error = XS_BUSY;
+	if (mpt_reply != NULL) {
+		if (mpt_reply->SCSIState & MPI_SCSI_STATE_AUTOSENSE_VALID) {
+			memcpy(&xs->sense.scsi_sense, req->sense_vbuf,
+			    sizeof(xs->sense.scsi_sense));
+		} else if (mpt_reply->SCSIState &
+		    MPI_SCSI_STATE_AUTOSENSE_FAILED) {
+			/*
+			 * This will cause the scsipi layer to issue
+			 * a REQUEST SENSE.
+			 */
+			if (xs->status == SCSI_CHECK)
+				xs->error = XS_BUSY;
+		}
 	}
 
  done:
