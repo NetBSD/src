@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.564 2014/04/06 19:51:40 christos Exp $
+# $NetBSD: mi,v 1.565 2014/04/17 18:37:07 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3138,6 +3138,7 @@
 ./usr/tests/usr.bin/xlint/lint1/Kyuafile	tests-usr.bin-tests	atf,kyua
 ./usr/tests/usr.bin/xlint/lint1/d_alignof.c			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/xlint/lint1/d_c99_complex_num.c		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/d_c99_complex_split.c		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/xlint/lint1/d_c99_decls_after_stmt.c	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/xlint/lint1/d_c99_decls_after_stmt2.c	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/xlint/lint1/d_c99_decls_after_stmt3.c	tests-usr.bin-tests	atf
@@ -3158,10 +3159,12 @@
 ./usr/tests/usr.bin/xlint/lint1/d_constant_conv1.c		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/xlint/lint1/d_constant_conv2.c		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/xlint/lint1/d_cvt_in_ternary.c		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/d_cvt_in_constant.c		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/xlint/lint1/d_ellipsis_in_switch.c		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/xlint/lint1/d_gcc_compound_statements1.c	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/xlint/lint1/d_gcc_compound_statements2.c	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/xlint/lint1/d_gcc_compound_statements3.c	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/d_gcc_extension.c		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/xlint/lint1/d_gcc_func.c			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/xlint/lint1/d_gcc_variable_array_init.c	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/xlint/lint1/d_incorrect_array_size.c	tests-usr.bin-tests	atf
