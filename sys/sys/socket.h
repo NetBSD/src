@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.108 2013/01/31 14:30:47 joerg Exp $	*/
+/*	$NetBSD: socket.h,v 1.109 2014/04/17 16:14:22 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -428,6 +428,8 @@ struct kinfo_pcb {
 
 #define ki_src ki_s._kis_src
 #define ki_dst ki_d._kid_dst
+#define ki_spad ki_s._kis_pad
+#define ki_dpad ki_d._kid_pad
 
 #define PCB_SLOP		20
 #define PCB_ALL			0
