@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.48 2014/04/17 16:04:47 christos Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.49 2014/04/17 18:17:09 christos Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.48 2014/04/17 16:04:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.49 2014/04/17 18:17:09 christos Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -8609,7 +8609,7 @@ ahd_print_register(ahd_reg_parse_entry_t *table, u_int num_entries,
 	if (table == NULL) {
 		if (printed < sizeof(line))
 		    printed += snprintf(&line[printed],
-			(sizeof line) - printed,
+			(sizeof line) - printed, " ");
 		printf("%s", line);
 		if (cur_column != NULL)
 			*cur_column += printed;
