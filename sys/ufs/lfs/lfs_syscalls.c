@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.153 2014/04/09 22:44:15 riastradh Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.154 2014/04/17 15:57:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.153 2014/04/09 22:44:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.154 2014/04/17 15:57:41 christos Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -754,7 +754,8 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 				}
 				numrefed++;
 			} else {
-				mutex_exit(vp->v_interlock);
+				if (vp != null)
+					mutex_exit(vp->v_interlock);
 				mutex_exit(&ulfs_ihash_lock);
 				/*
 				 * Don't VFS_VGET if we're being unmounted,
