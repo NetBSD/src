@@ -1,4 +1,4 @@
-/*	$NetBSD: apci.c,v 1.12 2014/04/10 18:10:09 tsutsui Exp $	*/
+/*	$NetBSD: apci.c,v 1.13 2014/04/17 12:35:24 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -84,9 +84,7 @@ struct apciregs *apcicnaddr = 0;
 void
 apciprobe(struct consdev *cp)
 {
-
-	apcicnaddr =
-	    (void *)IIOV(INTIOBASE + FRODO_BASE + FRODO_APCI_OFFSET(1));
+	volatile uint8_t *frodoregs;
 
 	cp->cn_pri = CN_DEAD;
 
@@ -97,12 +95,26 @@ apciprobe(struct consdev *cp)
 	if (machineid != HP_425 || mmuid != MMUID_425_E)
 		return;
 
+	/*
+	 * Check the service switch. On the 425e, this is a physical
+	 * switch, unlike other frodo-based machines, so we can use it
+	 * as a serial vs internal video selector, since the PROM can not
+	 * be configured for serial console.
+	 */
+	frodoregs = (volatile u_int8_t *)IIOV(INTIOBASE + FRODO_BASE);
+	if (badaddr((char *)frodoregs) == 0 &&
+	    (frodoregs[FRODO_IISR] & FRODO_IISR_SERVICE) == 0)
+		cp->cn_pri = CN_REMOTE;
+	else
+		cp->cn_pri = CN_NORMAL;
+
 #ifdef FORCEAPCICONSOLE
 	cp->cn_pri = CN_REMOTE;
-#else
-	cp->cn_pri = CN_NORMAL;
 #endif
 	curcons_scode = -2;
+
+	apcicnaddr =
+	    (void *)IIOV(INTIOBASE + FRODO_BASE + FRODO_APCI_OFFSET(1));
 }
 
 void
