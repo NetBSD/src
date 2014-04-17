@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.59 2014/03/23 04:58:16 dholland Exp $ */
+/* $NetBSD: cgram.y,v 1.60 2014/04/17 17:29:24 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.59 2014/03/23 04:58:16 dholland Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.60 2014/04/17 17:29:24 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -107,7 +107,7 @@ static inline void RESTORE(const char *file, size_t line)
 #endif
 %}
 
-%expect 5
+%expect 12
 
 %union {
 	int	y_int;
@@ -555,8 +555,8 @@ notype_typespec:
 	  T_TYPE {
 		$$ = gettyp($1);
 	  }
-	| T_TYPEOF T_LPARN term T_RPARN {
-		$$ = $3->tn_type;
+	| T_TYPEOF term {
+		$$ = $2->tn_type;
 	  }
 	| struct_spec {
 		popdecl();
@@ -1731,14 +1731,14 @@ term:
 	| T_IMAG term {
 		$$ = build(IMAG, $2, NULL);
 	  }
+	| T_EXTENSION term {
+		$$ = $2;
+	  }
 	| T_REAL T_LPARN term T_RPARN {
 		$$ = build(REAL, $3, NULL);
 	  }
 	| T_IMAG T_LPARN term T_RPARN {
 		$$ = build(IMAG, $3, NULL);
-	  }
-	| T_EXTENSION T_LPARN term T_RPARN {
-		$$ = $3;
 	  }
 	| T_SIZEOF term					%prec T_SIZEOF {
 		if (($$ = $2 == NULL ? NULL : bldszof($2->tn_type)) != NULL)
