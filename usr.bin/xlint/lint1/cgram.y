@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.60 2014/04/17 17:29:24 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.61 2014/04/18 00:23:46 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.60 2014/04/17 17:29:24 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.61 2014/04/18 00:23:46 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -189,11 +189,17 @@ static inline void RESTORE(const char *file, size_t line)
 %token <y_type>		T_ATTRIBUTE
 %token <y_type>		T_AT_ALIGNED
 %token <y_type>		T_AT_DEPRECATED
+%token <y_type>		T_AT_NORETURN
 %token <y_type>		T_AT_MAY_ALIAS
 %token <y_type>		T_AT_PACKED
+%token <y_type>		T_AT_PURE
 %token <y_type>		T_AT_TUINION
 %token <y_type>		T_AT_TUNION
 %token <y_type>		T_AT_UNUSED
+%token <y_type>		T_AT_FORMAT
+%token <y_type>		T_AT_FORMAT_PRINTF
+%token <y_type>		T_AT_FORMAT_SCANF
+%token <y_type>		T_AT_FORMAT_STRFTIME
 
 
 
@@ -470,19 +476,33 @@ declaration:
 	| error T_SEMI
 	;
 
+type_attribute_format_type:
+	  T_AT_FORMAT_PRINTF
+	| T_AT_FORMAT_SCANF
+	| T_AT_FORMAT_STRFTIME
+	;
+
 type_attribute_spec:
 	  T_AT_DEPRECATED
 	| T_AT_ALIGNED T_LPARN constant T_RPARN
 	| T_AT_MAY_ALIAS
+	| T_AT_NORETURN
 	| T_AT_PACKED {
 		addpacked();
 	}
+	| T_AT_PURE
 	| T_AT_TUNION
+	| T_AT_FORMAT T_LPARN type_attribute_format_type T_COMMA
+	    constant T_COMMA constant T_RPARN
 	| T_AT_UNUSED
 	;
 
 type_attribute:
-	  T_ATTRIBUTE T_LPARN T_LPARN type_attribute_spec T_RPARN T_RPARN
+	  T_ATTRIBUTE T_LPARN T_LPARN {
+	    attron = 1;
+	} type_attribute_spec {
+	    attron = 0;
+	} T_RPARN T_RPARN
 	| T_PACKED {
 		addpacked();
 	}
