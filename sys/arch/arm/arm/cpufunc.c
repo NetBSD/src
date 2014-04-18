@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.146 2014/04/14 20:50:46 matt Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.147 2014/04/18 23:50:59 christos Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.146 2014/04/14 20:50:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.147 2014/04/18 23:50:59 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -65,9 +65,9 @@ __KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.146 2014/04/14 20:50:46 matt Exp $");
 
 #include <uvm/uvm.h>
 
+#include <arm/cpufunc_proto.h>
 #include <arm/cpuconf.h>
 #include <arm/locore.h>
-#include <arm/cpufunc_proto.h>
 
 #ifdef CPU_XSCALE_80200
 #include <arm/xscale/i80200reg.h>
