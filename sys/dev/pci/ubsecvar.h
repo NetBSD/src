@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsecvar.h,v 1.7 2013/11/17 23:20:18 bad Exp $	*/
+/*	$NetBSD: ubsecvar.h,v 1.8 2014/04/18 22:25:58 bad Exp $	*/
 /*	$OpenBSD: ubsecvar.h,v 1.36 2003/06/04 16:02:41 jason Exp $	*/
 
 /*
@@ -146,11 +146,12 @@ struct ubsec_q {
 	struct mbuf			*q_src_m, *q_dst_m;
 	struct uio			*q_src_io, *q_dst_io;
 
-	bus_dmamap_t			q_src_map;
-	bus_dmamap_t			q_dst_map;
-
 	int				q_sesn;
 	int				q_flags;
+
+	bus_dmamap_t			q_dst_map;
+	bus_dmamap_t			q_src_map;	  /* cached src_map */
+	bus_dmamap_t			q_cached_dst_map; /* cached dst_map */
 };
 
 struct ubsec_softc {
