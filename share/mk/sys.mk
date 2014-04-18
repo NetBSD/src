@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.123 2014/04/03 18:27:37 riastradh Exp $
+#	$NetBSD: sys.mk,v 1.124 2014/04/18 00:37:46 christos Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 #
 # This file contains the basic rules for make(1) and is read first
@@ -91,7 +91,7 @@ LFLAGS?=
 LEX.l?=		${LEX} ${LFLAGS}
 
 LINT?=		lint
-LINTFLAGS?=	-chapbxzFS
+LINTFLAGS?=	-chapbxzgFS
 
 LORDER?=	lorder
 
