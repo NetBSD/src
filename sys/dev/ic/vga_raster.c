@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_raster.c,v 1.37 2013/04/14 16:37:32 christos Exp $	*/
+/*	$NetBSD: vga_raster.c,v 1.38 2014/04/18 21:44:43 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Bang Jun-Young
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.37 2013/04/14 16:37:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.38 2014/04/18 21:44:43 mlelstv Exp $");
 
 #include "opt_wsmsgattrs.h" /* for WSDISPLAY_CUSTOM_OUTPUT */
 
@@ -1045,8 +1045,6 @@ static void
 vga_raster_cursor_init(struct vgascreen *scr, int existing)
 {
 	struct vga_handle *vh = scr->hdl;
-	bus_space_tag_t memt;
-	bus_space_handle_t memh;
 	int off;
 
 	if (existing) {
@@ -1054,8 +1052,6 @@ vga_raster_cursor_init(struct vgascreen *scr, int existing)
 		 * This is the first screen. At this point, scr->active is
 		 * false, so we can't use vga_raster_cursor() to do this.
 		 */
-		memt = vh->vh_memt;
-		memh = vh->vh_memh;
 		off = (scr->cursorrow * scr->type->ncols + scr->cursorcol) +
 		    scr->dispoffset / 8;
 
@@ -1199,7 +1195,7 @@ _vga_raster_putchar(void *id, int row, int col, u_int c, long attr,
 	int i;
 	int rasoff, rasoff2;
 	int fheight = scr->type->fontheight;
-	volatile u_int8_t dummy, pattern;
+	volatile u_int8_t dummy __used, pattern;
 	u_int8_t fgcolor, bgcolor;
 
 	rasoff = scr->dispoffset + row * scr->type->ncols * fheight + col;
