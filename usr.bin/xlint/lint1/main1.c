@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.22 2014/04/18 01:15:07 christos Exp $	*/
+/*	$NetBSD: main1.c,v 1.23 2014/04/18 01:18:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: main1.c,v 1.22 2014/04/18 01:15:07 christos Exp $");
+__RCSID("$NetBSD: main1.c,v 1.23 2014/04/18 01:18:54 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -128,11 +128,13 @@ sig_atomic_t fpe;
 
 static	void	usage(void);
 
+#ifdef __NetBSD__
 static const char builtins[] =
     "int __builtin_isinf(long double);\n"
     "int __builtin_isnan(long double);\n"
     "int __builtin_copysign(long double, long double);\n"
 ;
+#endif
 
 /*ARGSUSED*/
 static void
@@ -220,10 +222,12 @@ main(int argc, char *argv[])
 	initscan();
 	initmtab();
 
+#ifdef __NetBSD__
 	if ((yyin = fmemopen(__UNCONST(builtins), sizeof(builtins) - 1, "r"))
 	    == NULL)
 		err(1, "cannot open builtins");
 	yyparse();
+#endif
 	/* open the input file */
 	if ((yyin = fopen(argv[0], "r")) == NULL)
 		err(1, "cannot open '%s'", argv[0]);
