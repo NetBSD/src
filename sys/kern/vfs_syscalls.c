@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.480 2014/04/16 19:25:28 maxv Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.481 2014/04/18 05:22:13 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.480 2014/04/16 19:25:28 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.481 2014/04/18 05:22:13 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -1981,6 +1981,7 @@ dofhopen(struct lwp *l, const void *ufhp, size_t fhsize, int oflags,
 		goto bad;
 	}
 	error = vfs_fhtovp(fh, &vp);
+	vfs_copyinfh_free(fh);
 	if (error != 0) {
 		goto bad;
 	}
@@ -2018,14 +2019,12 @@ dofhopen(struct lwp *l, const void *ufhp, size_t fhsize, int oflags,
 	VOP_UNLOCK(vp);
 	*retval = indx;
 	fd_affix(p, fp, indx);
-	vfs_copyinfh_free(fh);
 	return (0);
 
 bad:
 	fd_abort(p, fp, indx);
 	if (vp != NULL)
 		vput(vp);
-	vfs_copyinfh_free(fh);
 	return (error);
 }
 
