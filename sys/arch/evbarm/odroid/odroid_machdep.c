@@ -1,4 +1,4 @@
-/*	$NetBSD: odroid_machdep.c,v 1.6 2014/04/15 20:36:07 reinoud Exp $ */
+/*	$NetBSD: odroid_machdep.c,v 1.7 2014/04/18 14:17:11 reinoud Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.6 2014/04/15 20:36:07 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.7 2014/04/18 14:17:11 reinoud Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_exynos.h"
@@ -111,37 +111,37 @@ static const struct sscom_uart_info exynos_uarts[] = {
 #ifdef EXYNOS5
 	{
 		.unit    = 0,
-		.iobase = EXYNOS5_CORE_PBASE + EXYNOS5_UART0_OFFSET
+		.iobase = EXYNOS5_UART0_OFFSET
 	},
 	{
 		.unit    = 1,
-		.iobase = EXYNOS5_CORE_PBASE + EXYNOS5_UART1_OFFSET
+		.iobase = EXYNOS5_UART1_OFFSET
 	},
 	{
 		.unit    = 2,
-		.iobase = EXYNOS5_CORE_PBASE + EXYNOS5_UART2_OFFSET
+		.iobase = EXYNOS5_UART2_OFFSET
 	},
 	{
 		.unit    = 3,
-		.iobase = EXYNOS5_CORE_PBASE + EXYNOS5_UART3_OFFSET
+		.iobase = EXYNOS5_UART3_OFFSET
 	},
 #endif
 #ifdef EXYNOS4
 	{
 		.unit    = 0,
-		.iobase = EXYNOS5_CORE_PBASE + EXYNOS4_UART0_OFFSET
+		.iobase = EXYNOS4_UART0_OFFSET
 	},
 	{
 		.unit    = 1,
-		.iobase = EXYNOS5_CORE_PBASE + EXYNOS4_UART1_OFFSET
+		.iobase = EXYNOS4_UART1_OFFSET
 	},
 	{
 		.unit    = 2,
-		.iobase = EXYNOS5_CORE_PBASE + EXYNOS4_UART2_OFFSET
+		.iobase = EXYNOS4_UART2_OFFSET
 	},
 	{
 		.unit    = 3,
-		.iobase = EXYNOS5_CORE_PBASE + EXYNOS4_UART3_OFFSET
+		.iobase = EXYNOS4_UART3_OFFSET
 	},
 #endif
 };
@@ -427,21 +427,24 @@ void
 consinit(void)
 {
 	static bool consinit_called;
+
 	if (consinit_called)
 		return;
 	consinit_called = true;
 
 #if NSSCOM > 0
-	bus_space_tag_t iot = &exynos_bs_tag;
 	bus_addr_t iobase = armreg_tpidruro_read();
 	size_t i;
+
 	for (i = 0; i < __arraycount(exynos_uarts); i++) {
 		/* attach console */
-		if (exynos_uarts[i].iobase == iobase)
+		if (exynos_uarts[i].iobase + EXYNOS_CORE_PBASE == iobase)
 			break;
 	}
 	KASSERT(i < __arraycount(exynos_uarts));
-	if (sscom_cnattach(iot, &exynos_uarts[i], conspeed, EXYNOS_UART_FREQ,
+
+	if (sscom_cnattach(&exynos_bs_tag, exynos_core_bsh,
+			&exynos_uarts[i], conspeed, EXYNOS_UART_FREQ,
 			conmode))
 		panic("Serial console can not be initialized");
 #else
