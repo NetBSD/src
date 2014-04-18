@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.38 2014/03/29 19:28:25 christos Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.39 2014/04/18 22:25:58 bad Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.127 2003/06/04 14:04:58 jason Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.38 2014/03/29 19:28:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.39 2014/04/18 22:25:58 bad Exp $");
 
 #undef UBSEC_DEBUG
 
@@ -435,7 +435,7 @@ ubsec_attach(device_t parent, device_t self, void *aux)
 		struct ubsec_q *q;
 
 		q = (struct ubsec_q *)malloc(sizeof(struct ubsec_q),
-		    M_DEVBUF, M_NOWAIT);
+		    M_DEVBUF, M_ZERO|M_NOWAIT);
 		if (q == NULL) {
 			aprint_error_dev(self, "can't allocate queue buffers\n");
 			break;
@@ -575,6 +575,10 @@ ubsec_detach(device_t self, int flags)
 
 	SIMPLEQ_FOREACH_SAFE(q, &sc->sc_freequeue, q_next, qtmp) {
 		ubsec_dma_free(sc, &q->q_dma->d_alloc);
+		if (q->q_src_map != NULL)
+			bus_dmamap_destroy(sc->sc_dmat, q->q_src_map);
+		if (q->q_cached_dst_map != NULL)
+			bus_dmamap_destroy(sc->sc_dmat, q->q_cached_dst_map);
 		free(q, M_DEVBUF);
 	}
 
@@ -1198,7 +1202,8 @@ ubsec_process(void *arg, struct cryptop *crp, int hint)
 	mutex_spin_exit(&sc->sc_mtx);
 
 	dmap = q->q_dma; /* Save dma pointer */
-	memset(q, 0, sizeof(struct ubsec_q));
+	/* don't lose the cached dmamaps q_src_map and q_cached_dst_map */
+	memset(q, 0, offsetof(struct ubsec_q, q_src_map));
 	memset(&ctx, 0, sizeof(ctx));
 
 	q->q_sesn = UBSEC_SESSION(crp->crp_sid);
@@ -1378,17 +1383,17 @@ ubsec_process(void *arg, struct cryptop *crp, int hint)
 	}
 	ctx.pc_offset = htole16(coffset >> 2);
 
-	/* XXX FIXME: jonathan asks, what the heck's that 0xfff0?  */
-	if (bus_dmamap_create(sc->sc_dmat, 0xfff0, UBS_MAX_SCATTER,
-		0xfff0, 0, BUS_DMA_NOWAIT, &q->q_src_map) != 0) {
-		err = ENOMEM;
-		goto errout;
+	if (q->q_src_map == NULL) {
+		/* XXX FIXME: jonathan asks, what the heck's that 0xfff0?  */
+		if (bus_dmamap_create(sc->sc_dmat, 0xfff0, UBS_MAX_SCATTER,
+			0xfff0, 0, BUS_DMA_NOWAIT, &q->q_src_map) != 0) {
+			err = ENOMEM;
+			goto errout;
+		}
 	}
 	if (crp->crp_flags & CRYPTO_F_IMBUF) {
 		if (bus_dmamap_load_mbuf(sc->sc_dmat, q->q_src_map,
 		    q->q_src_m, BUS_DMA_NOWAIT) != 0) {
-			bus_dmamap_destroy(sc->sc_dmat, q->q_src_map);
-			q->q_src_map = NULL;
 			ubsecstats.hst_noload++;
 			err = ENOMEM;
 			goto errout;
@@ -1396,8 +1401,6 @@ ubsec_process(void *arg, struct cryptop *crp, int hint)
 	} else if (crp->crp_flags & CRYPTO_F_IOV) {
 		if (bus_dmamap_load_uio(sc->sc_dmat, q->q_src_map,
 		    q->q_src_io, BUS_DMA_NOWAIT) != 0) {
-			bus_dmamap_destroy(sc->sc_dmat, q->q_src_map);
-			q->q_src_map = NULL;
 			ubsecstats.hst_noload++;
 			err = ENOMEM;
 			goto errout;
@@ -1476,18 +1479,21 @@ ubsec_process(void *arg, struct cryptop *crp, int hint)
 				err = EINVAL;
 				goto errout;
 			}
-			/* XXX: ``what the heck's that'' 0xfff0? */
-			if (bus_dmamap_create(sc->sc_dmat, 0xfff0,
-			    UBS_MAX_SCATTER, 0xfff0, 0, BUS_DMA_NOWAIT,
-			    &q->q_dst_map) != 0) {
-				ubsecstats.hst_nomap++;
-				err = ENOMEM;
-				goto errout;
+			if (q->q_dst_map == NULL) {
+				if (q->q_cached_dst_map == NULL) {
+					/* XXX: ``what the heck's that'' 0xfff0? */
+					if (bus_dmamap_create(sc->sc_dmat, 0xfff0,
+					    UBS_MAX_SCATTER, 0xfff0, 0, BUS_DMA_NOWAIT,
+					    &q->q_cached_dst_map) != 0) {
+						ubsecstats.hst_nomap++;
+						err = ENOMEM;
+						goto errout;
+					}
+				}
+				q->q_dst_map = q->q_cached_dst_map;
 			}
 			if (bus_dmamap_load_uio(sc->sc_dmat, q->q_dst_map,
 			    q->q_dst_io, BUS_DMA_NOWAIT) != 0) {
-				bus_dmamap_destroy(sc->sc_dmat, q->q_dst_map);
-				q->q_dst_map = NULL;
 				ubsecstats.hst_noload++;
 				err = ENOMEM;
 				goto errout;
@@ -1566,20 +1572,22 @@ ubsec_process(void *arg, struct cryptop *crp, int hint)
 				q->q_dst_m = top;
 				ubsec_mcopy(q->q_src_m, q->q_dst_m,
 				    cpskip, cpoffset);
-				/* XXX again, what the heck is that 0xfff0? */
-				if (bus_dmamap_create(sc->sc_dmat, 0xfff0,
-				    UBS_MAX_SCATTER, 0xfff0, 0, BUS_DMA_NOWAIT,
-				    &q->q_dst_map) != 0) {
-					ubsecstats.hst_nomap++;
-					err = ENOMEM;
-					goto errout;
+				if (q->q_dst_map == NULL) {
+					if (q->q_cached_dst_map == NULL) {
+						/* XXX again, what the heck is that 0xfff0? */
+						if (bus_dmamap_create(sc->sc_dmat, 0xfff0,
+						    UBS_MAX_SCATTER, 0xfff0, 0, BUS_DMA_NOWAIT,
+						    &q->q_cached_dst_map) != 0) {
+							ubsecstats.hst_nomap++;
+							err = ENOMEM;
+							goto errout;
+						}
+					}
+					q->q_dst_map = q->q_cached_dst_map;
 				}
 				if (bus_dmamap_load_mbuf(sc->sc_dmat,
 				    q->q_dst_map, q->q_dst_m,
 				    BUS_DMA_NOWAIT) != 0) {
-					bus_dmamap_destroy(sc->sc_dmat,
-					q->q_dst_map);
-					q->q_dst_map = NULL;
 					ubsecstats.hst_noload++;
 					err = ENOMEM;
 					goto errout;
@@ -1689,11 +1697,9 @@ errout:
 
 		if (q->q_dst_map != NULL && q->q_dst_map != q->q_src_map) {
 			bus_dmamap_unload(sc->sc_dmat, q->q_dst_map);
-			bus_dmamap_destroy(sc->sc_dmat, q->q_dst_map);
 		}
 		if (q->q_src_map != NULL) {
 			bus_dmamap_unload(sc->sc_dmat, q->q_src_map);
-			bus_dmamap_destroy(sc->sc_dmat, q->q_src_map);
 		}
 
 		mutex_spin_enter(&sc->sc_mtx);
@@ -1732,12 +1738,10 @@ ubsec_callback(struct ubsec_softc *sc, struct ubsec_q *q)
 		bus_dmamap_sync(sc->sc_dmat, q->q_dst_map,
 		    0, q->q_dst_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
 		bus_dmamap_unload(sc->sc_dmat, q->q_dst_map);
-		bus_dmamap_destroy(sc->sc_dmat, q->q_dst_map);
 	}
 	bus_dmamap_sync(sc->sc_dmat, q->q_src_map,
 	    0, q->q_src_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_unload(sc->sc_dmat, q->q_src_map);
-	bus_dmamap_destroy(sc->sc_dmat, q->q_src_map);
 
 	if ((crp->crp_flags & CRYPTO_F_IMBUF) && (q->q_src_m != q->q_dst_m)) {
 		m_freem(q->q_src_m);
