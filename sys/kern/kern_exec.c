@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.401 2014/04/16 02:22:38 uebayasi Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.402 2014/04/18 06:59:32 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.401 2014/04/16 02:22:38 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.402 2014/04/18 06:59:32 uebayasi Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -1331,6 +1331,7 @@ calcargs(struct execve_data * restrict data, const size_t argenvstrlen)
 	struct exec_package	* const epp = &data->ed_pack;
 
 	const size_t nargenvptrs =
+	    1 +				/* long argc */
 	    data->ed_argc +		/* char *argv[] */
 	    1 +				/* \0 */
 	    data->ed_envc +		/* char *env[] */
@@ -1340,11 +1341,7 @@ calcargs(struct execve_data * restrict data, const size_t argenvstrlen)
 	const size_t ptrsz = (epp->ep_flags & EXEC_32) ?
 	    sizeof(int) : sizeof(char *);
 
-	const size_t argenvlen =
-	    sizeof(int) +		/* XXX argc in stack is long, not int */
-	    (nargenvptrs * ptrsz);	/* XXX auxinfo multiplied by ptr size? */
-
-	return argenvlen + argenvstrlen;
+	return (nargenvptrs * ptrsz) + argenvstrlen;
 }
 
 static size_t
@@ -1584,10 +1581,10 @@ copyargs(struct lwp *l, struct exec_package *pack, struct ps_strings *arginfo,
 	CTASSERT(sizeof(*cpp) == sizeof(argc));
 
 	dp = (char *)(cpp +
-	    1 +				/* argc */
-	    argc +			/* *argv[] */
+	    1 +				/* long argc */
+	    argc +			/* char *argv[] */
 	    1 +				/* \0 */
-	    envc +			/* *env[] */
+	    envc +			/* char *env[] */
 	    1 +				/* \0 */
 	    /* XXX auxinfo multiplied by ptr size? */
 	    pack->ep_esch->es_arglen);	/* auxinfo */
