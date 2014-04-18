@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.16 2014/04/17 16:30:05 christos Exp $	*/
+/*	$NetBSD: mem1.c,v 1.17 2014/04/18 00:21:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem1.c,v 1.16 2014/04/17 16:30:05 christos Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.17 2014/04/18 00:21:14 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -200,9 +200,11 @@ xgetblk(mbl_t **mbp, size_t s)
 				mblklen = s;
 			}
 			mb = xnewblk();
+#ifndef BLKDEBUG
+			(void)memset(mb->blk, 0, mb->size);
+#endif
 			if (t)
 				mblklen = t;
-			(void)memset(mb->blk, 0, mb->size);
 		} else {
 			frmblks = mb->nxt;
 		}
@@ -214,6 +216,9 @@ xgetblk(mbl_t **mbp, size_t s)
 	p = mb->ffree;
 	mb->ffree = (char *)mb->ffree + s;
 	mb->nfree -= s;
+#ifdef BLKDEBUG
+	(void)memset(p, 0, s);
+#endif
 	return (p);
 }
 
@@ -230,7 +235,7 @@ xfreeblk(mbl_t **fmbp)
 		*fmbp = mb->nxt;
 		mb->nxt = frmblks;
 		frmblks = mb;
-		(void)memset(mb->blk, 0xa5, mb->size - mb->nfree);
+		(void)memset(mb->blk, ZERO, mb->size - mb->nfree);
 	}
 }
 
