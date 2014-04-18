@@ -1,4 +1,4 @@
-/*	$NetBSD: cubie_machdep.c,v 1.16 2014/04/11 04:19:48 matt Exp $ */
+/*	$NetBSD: cubie_machdep.c,v 1.17 2014/04/18 06:53:13 matt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cubie_machdep.c,v 1.16 2014/04/11 04:19:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cubie_machdep.c,v 1.17 2014/04/18 06:53:13 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -194,7 +194,7 @@ char *boot_file = NULL;
 bool cubietruck_p;
 /*
  * uboot_args are filled in by cubie_start.S and must be in .data
- * and not .bbs since .bss is cleared after uboot_args are filled in.
+ * and not .bss since .bss is cleared after uboot_args are filled in.
  */
 uintptr_t uboot_args[4] = { 0 };
 
@@ -216,11 +216,6 @@ int use_fb_console = true;
  * kernel address space.  *Not* for general use.
  */
 #define KERNEL_BASE_PHYS	((paddr_t)KERNEL_BASE_phys)
-#ifdef KERNEL_BASES_EQUAL
-#define KERNEL_PHYS_VOFFSET	0
-#else
-#define KERNEL_PHYS_VOFFSET	(KERNEL_BASE - AWIN_SDRAM_PBASE)
-#endif
 #define AWIN_CORE_VOFFSET	(AWIN_CORE_VBASE - AWIN_CORE_PBASE)
 
 /* Prototypes */
@@ -405,7 +400,7 @@ initarm(void *arg)
 		 */
 		if (uboot_args[3] - AWIN_SDRAM_PBASE < ram_size) {
 			const char * const args = (const char *)
-			     (uboot_args[3] + KERNEL_PHYS_VOFFSET);
+			     (uboot_args[3] + KERNEL_BASE_VOFFSET);
 			strlcpy(bootargs, args, sizeof(bootargs));
 		}
 	}

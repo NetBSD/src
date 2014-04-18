@@ -40,11 +40,11 @@
 #include <arm/allwinner/awin_reg.h>
 #include <evbarm/cubie/platform.h>  
 
-RCSID("$NetBSD: cubie_start.S,v 1.8 2014/04/11 04:19:48 matt Exp $")
+RCSID("$NetBSD: cubie_start.S,v 1.9 2014/04/18 06:53:13 matt Exp $")
 
 #if defined(VERBOSE_INIT_ARM)
 #define	XPUTC(n)	mov r0, n; bl xputc
-#ifdef KERNEL_BASES_EQUAL
+#if KERNEL_BASE_VOFFSET == 0
 #define	XPUTC2(n)	mov r0, n; bl xputc
 #else
 #define XPUTC2(n)	mov r0, n; blx r11
@@ -60,7 +60,7 @@ RCSID("$NetBSD: cubie_start.S,v 1.8 2014/04/11 04:19:48 matt Exp $")
 #endif
 
 #define INIT_MEMSIZE	128
-#define	TEMP_L1_TABLE	(AWIN_SDRAM_PBASE + INIT_MEMSIZE * 0x100000 - L1_TABLE_SIZE)
+#define	TEMP_L1_TABLE	(KERNEL_BASE - KERNEL_BASE_VOFFSET + INIT_MEMSIZE * L1_S_SIZE - L1_TABLE_SIZE)
 
 #define	MD_CPU_HATCH	_C_LABEL(awin_cpu_hatch)
 
@@ -90,7 +90,7 @@ _C_LABEL(cubie_start):
 	 */
 	movw	r4, #:lower16:uboot_args
 	movt	r4, #:upper16:uboot_args
-#ifndef KERNEL_BASES_EQUAL
+#if KERNEL_BASE_VOFFSET != 0
 	/*
 	 * But since .start is at 0x40000000 and .text is at 0x8000000, we
 	 * can't directly use the address that the linker gave us directly.
@@ -123,7 +123,7 @@ _C_LABEL(cubie_start):
 	 */
 	movw	r0, #:lower16:TEMP_L1_TABLE
 	movt	r0, #:upper16:TEMP_L1_TABLE
-#ifdef KERNEL_BASES_EQUAL
+#if KERNEL_BASE_VOFFSET == 0
 	bl	arm_cpuinit
 #else
 	/*
@@ -131,7 +131,7 @@ _C_LABEL(cubie_start):
 	 * so setup the lr to be in .text.  Cache the address for xputc
 	 * before we go.
 	 */
-#ifdef VERBOSE_INIT_ARM
+#if defined(VERBOSE_INIT_ARM)
 	adr	r11, xputc		@ for XPUTC2
 #endif
 	movw	lr, #:lower16:1f
@@ -252,19 +252,11 @@ ASEND(a20_mpinit)
 #endif /* MULTIPROCESSOR */
 
 .Lmmu_init_table:
-#ifdef KERNEL_BASES_EQUAL
-	/* Map memory 1:1 VA to PA, write-back cacheable, shareable */
-	MMU_INIT(KERNEL_BASE, KERNEL_BASE, INIT_MEMSIZE,
-		L1_S_PROTO_armv7 | L1_S_APv7_KRW | L1_S_CACHEABLE)
-
-	/* Map temp L1 table 1:1 VA to PA, write-back cacheable, shareable */
-	MMU_INIT(TEMP_L1_TABLE, TEMP_L1_TABLE, INIT_MEMSIZE,
-		L1_S_PROTO_armv7 | L1_S_APv7_KRW | L1_S_CACHEABLE)
-#else
 	/* Map KERNEL_BASE VA to SDRAM PA, write-back cacheable, shareable */
 	MMU_INIT(KERNEL_BASE, KERNEL_BASE - KERNEL_BASE_VOFFSET, INIT_MEMSIZE,
 		L1_S_PROTO_armv7 | L1_S_APv7_KRW | L1_S_CACHEABLE)
 
+#if KERNEL_BASE_VOFFSET != 0
 	/* Map memory 1:1 VA to PA, write-back cacheable, shareable */
 	MMU_INIT(KERNEL_BASE - KERNEL_BASE_VOFFSET,
 		KERNEL_BASE - KERNEL_BASE_VOFFSET, INIT_MEMSIZE,
