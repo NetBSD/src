@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_wdt.c,v 1.1 2014/04/13 02:26:26 matt Exp $	*/
+/*	$NetBSD: exynos_wdt.c,v 1.2 2014/04/18 14:32:49 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "exynos_wdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_wdt.c,v 1.1 2014/04/13 02:26:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_wdt.c,v 1.2 2014/04/18 14:32:49 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: exynos_wdt.c,v 1.1 2014/04/13 02:26:26 matt Exp $");
 
 #include <arm/samsung/exynos_reg.h>
 #include <arm/samsung/exynos_var.h>
+#include <arm/samsung/exynos_wdt_reg.h>
 
 #if NEXYNOS_WDT > 0
 static int exynos_wdt_match(device_t, cfdata_t, void *);
@@ -177,8 +178,8 @@ exynos_wdt_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_bst = exyo->exyo_core_bst;
 
-	if (bus_space_map(sc->sc_bst, exyo->exyo_loc.loc_offset,
-	    exyo->exyo_loc.loc_size, 0, &sc->sc_wdog_bsh)) {
+	if (bus_space_subregion(sc->sc_bst, exyo->exyo_core_bsh,
+	    exyo->exyo_loc.loc_offset, exyo->exyo_loc.loc_size, &sc->sc_wdog_bsh)) {
 		aprint_error(": failed to map registers\n");
 		return;
 	}
