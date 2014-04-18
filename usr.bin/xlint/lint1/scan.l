@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.55 2014/04/18 00:23:46 christos Exp $ */
+/* $NetBSD: scan.l,v 1.56 2014/04/18 01:39:57 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.55 2014/04/18 00:23:46 christos Exp $");
+__RCSID("$NetBSD: scan.l,v 1.56 2014/04/18 01:39:57 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -444,11 +444,8 @@ name(void)
 	sb->sb_len = yyleng;
 	sb->sb_hash = hash(yytext);
 	if ((sym = search(sb)) != NULL && sym->s_keyw) {
-		struct kwtab *kw = sym->s_keyw;
-		if (!kw->kw_attr || attron) {
-			freesb(sb);
-			return (keyw(sym));
-		}
+		freesb(sb);
+		return (keyw(sym));
 	}
 
 	sb->sb_sym = sym;
@@ -478,8 +475,12 @@ search(sbuf_t *sb)
 
 	for (sym = symtab[sb->sb_hash]; sym != NULL; sym = sym->s_link) {
 		if (strcmp(sym->s_name, sb->sb_name) == 0) {
-			if (sym->s_keyw || sym->s_kind == symtyp)
-				return (sym);
+			if (sym->s_keyw) {
+				struct kwtab *kw = sym->s_keyw;
+				if (!kw->kw_attr || attron)
+					return (sym);
+			} else if (sym->s_kind == symtyp)
+				return sym;
 		}
 	}
 
@@ -1387,7 +1388,7 @@ getsym(sbuf_t *sb)
 
 	if (sym != NULL) {
 		if (sym->s_kind != symtyp)
-			LERROR("storesym()");
+			LERROR("storesym(%d, %d)", sym->s_kind, symtyp);
 		symtyp = FVFT;
 		freesb(sb);
 		return (sym);
