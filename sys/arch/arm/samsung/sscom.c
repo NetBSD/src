@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.3 2014/04/16 21:28:51 reinoud Exp $ */
+/*	$NetBSD: sscom.c,v 1.4 2014/04/18 11:37:17 reinoud Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.3 2014/04/16 21:28:51 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.4 2014/04/18 11:37:17 reinoud Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -339,8 +339,8 @@ void
 sscomstatus(struct sscom_softc *sc, const char *str)
 {
 	struct tty *tp = sc->sc_tty;
-	int umstat = bus_space_read_1(sc->sc_iot, sc->sc_iot, SSCOM_UMSTAT);
-	int umcon = bus_space_read_4(sc->sc_iot, sc->sc_iot, SSCOM_UMCON);
+	int umstat = bus_space_read_1(sc->sc_iot, sc->sc_ioh, SSCOM_UMSTAT);
+	int umcon = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSCOM_UMCON);
 
 	printf("%s: %s %sclocal  %sdcd %sts_carr_on %sdtr %stx_stopped\n",
 	    device_xname(sc->sc_dev), str,
