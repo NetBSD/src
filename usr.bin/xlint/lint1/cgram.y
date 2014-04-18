@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.62 2014/04/18 02:41:17 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.63 2014/04/18 21:54:52 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.62 2014/04/18 02:41:17 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.63 2014/04/18 21:54:52 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -107,7 +107,7 @@ static inline void RESTORE(const char *file, size_t line)
 #endif
 %}
 
-%expect 12
+%expect 71
 
 %union {
 	int	y_int;
@@ -531,6 +531,7 @@ declspecs:
 	| declmods typespec {
 		addtype($2);
 	  }
+	| type_attribute declspecs
 	| declspecs type_attribute
 	| declspecs declmod
 	| declspecs notype_typespec {
@@ -710,6 +711,7 @@ noclass_declspecs:
 	  clrtyp_typespec {
 		addtype($1);
 	  }
+	| type_attribute noclass_declspecs
 	| noclass_declmods typespec {
 		addtype($2);
 	  }
@@ -921,6 +923,9 @@ notype_direct_decl:
 	| T_LPARN type_decl T_RPARN {
 		$$ = $2;
 	  }
+	| type_attribute notype_direct_decl {
+		$$ = $2;
+	}
 	| notype_direct_decl T_LBRACK T_RBRACK {
 		$$ = addarray($1, 0, 0);
 	  }
@@ -951,6 +956,9 @@ type_direct_decl:
 	| T_LPARN type_decl T_RPARN {
 		$$ = $2;
 	  }
+	| type_attribute type_direct_decl {
+		$$ = $2;
+	}
 	| type_direct_decl T_LBRACK T_RBRACK {
 		$$ = addarray($1, 0, 0);
 	  }
@@ -1301,6 +1309,9 @@ direct_abs_decl:
 	| T_LBRACK constant T_RBRACK {
 		$$ = addarray(aname(), 1, toicon($2, 0));
 	  }
+	| type_attribute direct_abs_decl {
+		$$ = $2;
+	}
 	| direct_abs_decl T_LBRACK T_RBRACK {
 		$$ = addarray($1, 0, 0);
 	  }
