@@ -233,6 +233,11 @@ u_int	cpufunc_faultaddress	(void);
 #define setttb		cpu_setttb
 #define drain_writebuf	cpu_drain_writebuf
 
+
+#if defined(CPU_XSCALE)
+#define	cpu_cpwait()		cpufuncs.cf_cpwait()
+#endif
+
 #ifndef cpu_cpwait
 #define	cpu_cpwait()
 #endif

@@ -385,7 +385,6 @@ void	ixp12x0_setup		(char *);
 
 #if defined(CPU_XSCALE)
 void	xscale_cpwait		(void);
-#define	cpu_cpwait()		cpufuncs.cf_cpwait()
 
 void	xscale_cpu_sleep	(int);
 
