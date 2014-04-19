@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1915 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1916 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -390,3 +390,5 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	hp300: Add sti(4) at sgc screen console support to bootloader.
 		[tsutsui 20140413]
 	hp300: Add HP9000/425e RTC support. [tsutsui 20140419]
+	ubsec(4): Add support for AES-CBC modes and BCM586x chips.
+		[bad 20140419]

@@ -1,5 +1,5 @@
-/*	$NetBSD: ubsecvar.h,v 1.8 2014/04/18 22:25:58 bad Exp $	*/
-/*	$OpenBSD: ubsecvar.h,v 1.36 2003/06/04 16:02:41 jason Exp $	*/
+/*	$NetBSD: ubsecvar.h,v 1.9 2014/04/19 12:29:24 bad Exp $	*/
+/*	$OpenBSD: ubsecvar.h,v 1.38 2009/03/27 13:31:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
@@ -116,7 +116,10 @@ struct ubsec_dmachunk {
 	struct ubsec_pktbuf	d_dbuf[UBS_MAX_SCATTER-1];
 	u_int32_t		d_macbuf[5];
 	union {
-		struct ubsec_pktctx_long	ctxl;
+		struct ubsec_pktctx_aes256	ctx_aes256;
+		struct ubsec_pktctx_aes192	ctx_aes192;
+		struct ubsec_pktctx_aes128	ctx_aes128;
+		struct ubsec_pktctx_3des	ctx_3des;
 		struct ubsec_pktctx		ctx;
 	} d_ctx;
 };
@@ -196,10 +199,10 @@ struct ubsec_softc {
 
 struct ubsec_session {
 	u_int32_t	ses_used;
-	u_int32_t	ses_deskey[6];		/* 3DES key */
+	u_int32_t	ses_key[8];		/* 3DES/AES key */
 	u_int32_t	ses_hminner[5];		/* hmac inner state */
 	u_int32_t	ses_hmouter[5];		/* hmac outer state */
-	u_int32_t	ses_iv[2];		/* [3]DES iv */
+	u_int32_t	ses_iv[4];		/* [3]DES iv or AES iv/icv */
 };
 
 struct ubsec_stats {
