@@ -335,7 +335,8 @@ vchiq_prepare_bulk_data(VCHIQ_BULK_T *bulk, VCHI_MEM_HANDLE_T memhandle,
 
 	bulk->handle = memhandle;
 
-	pagelist->type = (dir == VCHIQ_BULK_RECEIVE) ? PAGELIST_READ : PAGELIST_WRITE;
+	pagelist->type = (dir == VCHIQ_BULK_RECEIVE) ?
+	    PAGELIST_READ : PAGELIST_WRITE;
 	pagelist->length = size;
 	pagelist->offset = va & PAGE_MASK;
 
