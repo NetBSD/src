@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2014/04/11 13:18:35 christos Exp $
+# $NetBSD: Makefile,v 1.5 2014/04/19 08:03:21 wiz Exp $
 
 # Try to undo the doxygen lossage in the man pages.
 
@@ -58,5 +58,7 @@ evutil_addrinfo.3
 MAN+= ${HMAN1} ${HMAN2} ${MAN1}
 
 CLEANFILES+=${HMAN1} ${HMAN2} ${MAN1}
+
+USETBL=	yes
 
 .include <bsd.man.mk>
