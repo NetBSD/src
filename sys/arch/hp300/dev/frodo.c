@@ -1,4 +1,4 @@
-/*	$NetBSD: frodo.c,v 1.30 2011/02/12 22:48:04 tsutsui Exp $	*/
+/*	$NetBSD: frodo.c,v 1.31 2014/04/19 05:37:54 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frodo.c,v 1.30 2011/02/12 22:48:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frodo.c,v 1.31 2014/04/19 05:37:54 tsutsui Exp $");
 
 #define	_HP300_INTR_H_PRIVATE
 
@@ -117,6 +117,7 @@ static const struct frodo_device frodo_subdevs[] = {
 	{ "com",	FRODO_APCI_OFFSET(1),	FRODO_INTR_APCI1 },
 	{ "com",	FRODO_APCI_OFFSET(2),	FRODO_INTR_APCI2 },
 	{ "com",	FRODO_APCI_OFFSET(3),	FRODO_INTR_APCI3 },
+	{ "mcclock",	FRODO_CALENDAR,		FRODO_INTR_CALENDAR },
 	{ NULL,		0,			0 }
 };
 
