@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.404 2014/04/19 22:59:08 uebayasi Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.405 2014/04/19 23:00:27 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.404 2014/04/19 22:59:08 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.405 2014/04/19 23:00:27 uebayasi Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -1458,31 +1458,30 @@ copyinargs(struct execve_data * restrict data, char * const *args,
 
 	/* copy the fake args list, if there's one, freeing it as we go */
 	if (epp->ep_flags & EXEC_HASARGL) {
-		struct exec_fakearg	*tmpfap = epp->ep_fa;
+		struct exec_fakearg	*fa = epp->ep_fa;
 
-		while (tmpfap->fa_arg != NULL) {
+		while (fa->fa_arg != NULL) {
 			const size_t maxlen = ARG_MAX - (dp - data->ed_argp);
 			size_t len;
 
-			len = strlcpy(dp, tmpfap->fa_arg, maxlen);
+			len = strlcpy(dp, fa->fa_arg, maxlen);
 			/* Count NUL into len. */
 			if (len < maxlen)
 				len++;
 			else {
-				while (tmpfap->fa_arg != NULL) {
-					kmem_free(tmpfap->fa_arg,
-					    tmpfap->fa_len);
-					tmpfap++;
+				while (fa->fa_arg != NULL) {
+					kmem_free(fa->fa_arg, fa->fa_len);
+					fa++;
 				}
 				kmem_free(epp->ep_fa, epp->ep_fa_len);
 				epp->ep_flags &= ~EXEC_HASARGL;
 				return E2BIG;
 			}
-			ktrexecarg(tmpfap->fa_arg, len - 1);
+			ktrexecarg(fa->fa_arg, len - 1);
 			dp += len;
 
-			kmem_free(tmpfap->fa_arg, tmpfap->fa_len);
-			tmpfap++;
+			kmem_free(fa->fa_arg, fa->fa_len);
+			fa++;
 			data->ed_argc++;
 		}
 		kmem_free(epp->ep_fa, epp->ep_fa_len);
