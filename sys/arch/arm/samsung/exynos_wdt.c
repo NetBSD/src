@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_wdt.c,v 1.3 2014/04/19 15:30:41 reinoud Exp $	*/
+/*	$NetBSD: exynos_wdt.c,v 1.4 2014/04/19 16:43:08 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "exynos_wdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_wdt.c,v 1.3 2014/04/19 15:30:41 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_wdt.c,v 1.4 2014/04/19 16:43:08 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -46,24 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: exynos_wdt.c,v 1.3 2014/04/19 15:30:41 reinoud Exp $
 
 #include <arm/samsung/exynos_reg.h>
 #include <arm/samsung/exynos_var.h>
-
-
-/* Watchdog register definitions */
-#define EXYNOS_WDT_WTCON		0x0000
-#define  WTCON_PRESCALER		__BITS(15,8)
-#define  WTCON_ENABLE			__BIT(5)
-#define  WTCON_CLOCK_SELECT		__BITS(4,3)
-#define  WTCON_CLOCK_SELECT_16		__SHIFTIN(0, WTCON_CLOCK_SELECT)
-#define  WTCON_CLOCK_SELECT_32		__SHIFTIN(1, WTCON_CLOCK_SELECT)
-#define  WTCON_CLOCK_SELECT_64		__SHIFTIN(2, WTCON_CLOCK_SELECT)
-#define  WTCON_CLOCK_SELECT_128		__SHIFTIN(3, WTCON_CLOCK_SELECT)
-#define  WTCON_INT_ENABLE		__BIT(2)
-#define  WTCON_RESET_ENABLE		__BIT(0)
-#define EXYNOS_WDT_WTDAT		0x0004
-#define  WTDAT_RELOAD			__BITS(15,0)
-#define EXYNOS_WDT_WTCNT		0x0008
-#define  WTCNT_COUNT			__BITS(15,0)
-#define EXYNOS_WDT_WTCLRINT		0x000C
 
 
 #if NEXYNOS_WDT > 0
@@ -306,3 +288,4 @@ exynos_wdt_reset(void)
 	bus_space_write_4(bst, bsh, wdt_offset + EXYNOS_WDT_WTCON,
 	   WTCON_ENABLE | WTCON_RESET_ENABLE);
 }
+
