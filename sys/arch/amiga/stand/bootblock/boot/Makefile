@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.51 2014/04/19 00:04:12 christos Exp $
+#	$NetBSD: Makefile,v 1.52 2014/04/19 00:55:37 tsutsui Exp $
 
 .include <bsd.own.mk>
 .include <bsd.sys.mk>		# for HOST_SH
@@ -81,16 +81,11 @@ INCPATH += -I${.CURDIR}
 INCPATH += -I${.CURDIR}/../../.. -I${.OBJDIR}
 INCPATH += -I${.CURDIR}/../elf2bb
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} >= 48
-AFLAGS += -mcpu=68030 -l
-CAFLAGS += -Wa,-l -Wa,-mcpu=68030 ${INCPATH}
-.else
-AFLAGS += -m68030 -l
-CAFLAGS += -Wa,-l -Wa,-m68030 ${INCPATH}
-.endif
+AFLAGS += -march=68030 -mcpu=68030 -l
+CAFLAGS += -Wa,-l -Wa,-march=68030 -Wa,-mcpu=68030 ${INCPATH}
 
 COPTIM= -Os -fomit-frame-pointer -fcse-follow-jumps -fcse-skip-blocks
-COPTIM+= -m68060 ${CAFLAGS} -fno-unwind-tables
+COPTIM+= -Wa,-l -m68060 -Wa,-march=68030 -Wa,-mcpu=68030 -fno-unwind-tables
 CFLAGS= -ffreestanding ${COPTIM} ${INCPATH} ${DEFS}
 CFLAGS+= -Werror
 CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
