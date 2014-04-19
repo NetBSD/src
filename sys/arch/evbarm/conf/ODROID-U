@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ODROID-U,v 1.1 2014/04/13 20:47:20 reinoud Exp $
+#	$NetBSD: ODROID-U,v 1.2 2014/04/19 15:32:18 reinoud Exp $
 #
 #	ODROID-U -- ODROID-U series Exynos Kernel
 #
@@ -140,7 +140,7 @@ options 	DIAGNOSTIC	# internally consistency checks
 options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
-options 	VERBOSE_INIT_ARM # verbose bootstraping messages
+#options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 options 	DDB		# in-kernel debugger
 options		DDB_ONPANIC=1
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
@@ -189,7 +189,7 @@ sscom0		at exyo0  port 0		# UART0
 sscom1		at exyo0  port 1		# UART1
 
 # Exynos Watchdog Timer
-#exywdt0 	at exyo0			# watchdog
+exywdt0 	at exyo0 flags 1		# watchdog
 
 # On-board USB
 #exyousb0	at exyo0 port 0
