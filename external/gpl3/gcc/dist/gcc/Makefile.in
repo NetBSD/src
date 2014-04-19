@@ -1804,7 +1804,7 @@ gcc-cross$(exeext): xgcc$(exeext)
 
 checksum-options:
 	echo "$(LINKER) $(ALL_LINKERFLAGS) $(LDFLAGS)" > checksum-options.tmp \
-	&& $(srcdir)/../move-if-change checksum-options.tmp checksum-options
+	&& $(SHELL) $(srcdir)/../move-if-change checksum-options.tmp checksum-options
 
 #
 # Build libgcc.a.
