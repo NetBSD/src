@@ -1,4 +1,4 @@
-/*	$NetBSD: odroid_machdep.c,v 1.7 2014/04/18 14:17:11 reinoud Exp $ */
+/*	$NetBSD: odroid_machdep.c,v 1.8 2014/04/19 19:47:55 matt Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.7 2014/04/18 14:17:11 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.8 2014/04/19 19:47:55 matt Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_exynos.h"
@@ -433,8 +433,18 @@ consinit(void)
 	consinit_called = true;
 
 #if NSSCOM > 0
+	bus_space_tag_t bst = &exynos_bs_tag;
 	bus_addr_t iobase = armreg_tpidruro_read();
-	size_t i;
+	bus_space_handle_t bsh = EXYNOS_IOPHYSTOVIRT(iobase);
+	u_int i;
+	/*	
+	 * No need to guess at the UART frequency since we can caclulate it.
+	 */
+	uint32_t freq = conspeed
+	   * (16 * (bus_space_read_4(bst, bsh, SSCOM_UBRDIV) + 1)
+		 + bus_space_read_4(bst, bsh, SSCOM_UFRACVAL));
+	freq = (freq + conspeed / 2) / 1000;
+	freq *= 1000;
 
 	for (i = 0; i < __arraycount(exynos_uarts); i++) {
 		/* attach console */
@@ -442,11 +452,14 @@ consinit(void)
 			break;
 	}
 	KASSERT(i < __arraycount(exynos_uarts));
-
-	if (sscom_cnattach(&exynos_bs_tag, exynos_core_bsh,
-			&exynos_uarts[i], conspeed, EXYNOS_UART_FREQ,
-			conmode))
+	printf("%s: attaching console @ %#"PRIxPTR" (%u HZ, %u bps)\n",
+	    __func__, iobase, freq, conspeed);
+	if (sscom_cnattach(bst, exynos_core_bsh, &exynos_uarts[i],
+			   conspeed, freq, conmode))
 		panic("Serial console can not be initialized");
+#ifdef VERBOSE_INIT_ARM
+	printf("Console initialized\n");
+#endif
 #else
 #error only serial console is supported
 #if NUKBD > 0
