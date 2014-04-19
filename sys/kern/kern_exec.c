@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.403 2014/04/18 11:44:31 maxv Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.404 2014/04/19 22:59:08 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.403 2014/04/18 11:44:31 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.404 2014/04/19 22:59:08 uebayasi Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -1468,8 +1468,16 @@ copyinargs(struct execve_data * restrict data, char * const *args,
 			/* Count NUL into len. */
 			if (len < maxlen)
 				len++;
-			else
+			else {
+				while (tmpfap->fa_arg != NULL) {
+					kmem_free(tmpfap->fa_arg,
+					    tmpfap->fa_len);
+					tmpfap++;
+				}
+				kmem_free(epp->ep_fa, epp->ep_fa_len);
+				epp->ep_flags &= ~EXEC_HASARGL;
 				return E2BIG;
+			}
 			ktrexecarg(tmpfap->fa_arg, len - 1);
 			dp += len;
 
