@@ -307,7 +307,7 @@ vchiq_prepare_bulk_data(VCHIQ_BULK_T *bulk, VCHI_MEM_HANDLE_T memhandle,
 	/*
 	 * We've now got the bus_addr_t for the pagelist we want the transfer
 	 * to use.
-	 * */
+	 */
 	bulk->data = (void *)bi->pagelist_map->dm_segs[0].ds_addr;
 
 	/*
