@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.180 2013/08/16 13:39:47 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.181 2014/04/19 05:37:54 tsutsui Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.180 $"
+#ident 		"GENERIC-$Revision: 1.181 $"
 
 maxusers	32		# estimated number of users
 
@@ -212,6 +212,9 @@ dnkbd0		at frodo? offset 0x0	# Domain keyboard flavor
 wskbd*		at dnkbd? mux 1
 wsmouse*	at dnkbd? mux 0
 com*		at frodo? offset ?	# tty flavor
+
+# mc146818-like real time clock found on 425e
+mcclock0	at frodo? offset 0x80
 
 dvbox*		at intio?		# Davinci framebuffer
 dvbox*		at dio? scode ?
