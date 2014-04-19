@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1106 2014/04/08 02:19:54 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1107 2014/04/19 16:05:45 apb Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -191,6 +191,9 @@ Responsible:
 License:	BSD (2-clause) (see http://www.freebsd.org/cgi/cvsweb.cgi/src/COPYRIGHT)
 Location:	share/misc/bsd-family-tree
 Notes:
+Please send all updates upstream.  Eitan Adler <lists@eitanadler.com>
+is a FreeBSD committer who has been helpful with incorporating changes
+in the past.
 
 Package:	byacc
 Version:	20130304
