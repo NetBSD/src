@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.55 2013/06/30 21:38:57 rmind Exp $
+# $NetBSD: INSTALL,v 1.56 2014/04/19 05:37:54 tsutsui Exp $
 #
 # INSTALL machine description file
 #
@@ -156,6 +156,9 @@ frodo*		at intio?
 #dnkbd0		at frodo? offset 0x0	# Domain keyboard flavor
 #wskbd*		at dnkbd? mux 1
 com*		at frodo? offset ?	# tty flavor
+
+# mc146818-like real time clock found on 425e
+mcclock0	at frodo? offset 0x80
 
 # Davinci framebuffer
 dvbox*		at intio?
