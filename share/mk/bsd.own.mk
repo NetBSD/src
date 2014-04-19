@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.798 2014/04/15 18:40:34 joerg Exp $
+#	$NetBSD: bsd.own.mk,v 1.799 2014/04/19 21:21:24 joerg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -100,6 +100,7 @@ HAVE_LIBGCC?=	yes
 .endif
 
 _LIBC_UNWIND_SUPPORT.alpha=	yes
+_LIBC_UNWIND_SUPPORT.hppa=	yes
 _LIBC_UNWIND_SUPPORT.i386=	yes
 _LIBC_UNWIND_SUPPORT.m68k=	yes
 _LIBC_UNWIND_SUPPORT.powerpc=	yes

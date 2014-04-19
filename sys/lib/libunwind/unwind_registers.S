@@ -732,3 +732,137 @@ LEAF_NOPROFILE(_ZNK7_Unwind15Registers_Alpha6jumptoEv, 1)
 	ret $31, ($26), 1
 END(_ZNK7_Unwind15Registers_Alpha6jumptoEv)
 #endif
+
+#if defined(__hppa__)
+LEAF_ENTRY_NOPROFILE(_ZN7_Unwind14Registers_HPPAC1Ev)
+	stw %r2, 0(%r26)
+	stw %r1, 4(%r26)
+	stw %r2, 8(%r26)
+	stw %r3, 12(%r26)
+	stw %r4, 16(%r26)
+	stw %r5, 20(%r26)
+	stw %r6, 24(%r26)
+	stw %r7, 28(%r26)
+	stw %r8, 32(%r26)
+	stw %r9, 36(%r26)
+	stw %r10, 40(%r26)
+	stw %r11, 44(%r26)
+	stw %r12, 48(%r26)
+	stw %r13, 52(%r26)
+	stw %r14, 56(%r26)
+	stw %r15, 60(%r26)
+	stw %r16, 64(%r26)
+	stw %r17, 68(%r26)
+	stw %r18, 72(%r26)
+	stw %r19, 76(%r26)
+	stw %r20, 80(%r26)
+	stw %r21, 84(%r26)
+	stw %r22, 88(%r26)
+	stw %r23, 92(%r26)
+	stw %r24, 96(%r26)
+	stw %r25, 100(%r26)
+	stw %r26, 104(%r26)
+	stw %r27, 108(%r26)
+	stw %r28, 112(%r26)
+	stw %r29, 116(%r26)
+	stw %r30, 120(%r26)
+	stw %r31, 124(%r26)
+	ldi 128, %r19
+	addl %r19, %r26, %r19
+	fstds,ma %fr4, 8(%r19)
+	fstds,ma %fr5, 8(%r19)
+	fstds,ma %fr6, 8(%r19)
+	fstds,ma %fr7, 8(%r19)
+	fstds,ma %fr8, 8(%r19)
+	fstds,ma %fr9, 8(%r19)
+	fstds,ma %fr10, 8(%r19)
+	fstds,ma %fr11, 8(%r19)
+	fstds,ma %fr12, 8(%r19)
+	fstds,ma %fr13, 8(%r19)
+	fstds,ma %fr14, 8(%r19)
+	fstds,ma %fr15, 8(%r19)
+	fstds,ma %fr16, 8(%r19)
+	fstds,ma %fr17, 8(%r19)
+	fstds,ma %fr18, 8(%r19)
+	fstds,ma %fr19, 8(%r19)
+	fstds,ma %fr20, 8(%r19)
+	fstds,ma %fr21, 8(%r19)
+	fstds,ma %fr22, 8(%r19)
+	fstds,ma %fr23, 8(%r19)
+	fstds,ma %fr24, 8(%r19)
+	fstds,ma %fr25, 8(%r19)
+	fstds,ma %fr19, 8(%r19)
+	fstds,ma %fr27, 8(%r19)
+	fstds,ma %fr28, 8(%r19)
+	fstds,ma %fr29, 8(%r19)
+	fstds,ma %fr30, 8(%r19)
+	fstds,ma %fr31, 8(%r19)
+	ldw 76(%r26), %r19
+	bv,n %r0(%r2)
+EXIT(_ZN7_Unwind14Registers_HPPAC1Ev)
+
+LEAF_ENTRY_NOPROFILE(_ZNK7_Unwind14Registers_HPPA6jumptoEv)
+	ldi 128, %r19
+	addl %r19, %r26, %r19
+	fldds,ma 8(%r19), %fr4
+	fldds,ma 8(%r19), %fr5
+	fldds,ma 8(%r19), %fr6
+	fldds,ma 8(%r19), %fr7
+	fldds,ma 8(%r19), %fr8
+	fldds,ma 8(%r19), %fr9
+	fldds,ma 8(%r19), %fr10
+	fldds,ma 8(%r19), %fr11
+	fldds,ma 8(%r19), %fr12
+	fldds,ma 8(%r19), %fr13
+	fldds,ma 8(%r19), %fr14
+	fldds,ma 8(%r19), %fr15
+	fldds,ma 8(%r19), %fr16
+	fldds,ma 8(%r19), %fr17
+	fldds,ma 8(%r19), %fr18
+	fldds,ma 8(%r19), %fr19
+	fldds,ma 8(%r19), %fr20
+	fldds,ma 8(%r19), %fr21
+	fldds,ma 8(%r19), %fr22
+	fldds,ma 8(%r19), %fr23
+	fldds,ma 8(%r19), %fr24
+	fldds,ma 8(%r19), %fr25
+	fldds,ma 8(%r19), %fr26
+	fldds,ma 8(%r19), %fr27
+	fldds,ma 8(%r19), %fr28
+	fldds,ma 8(%r19), %fr29
+	fldds,ma 8(%r19), %fr30
+	fldds,ma 8(%r19), %fr31
+	ldw 0(%r26), %r2
+	ldw 4(%r26), %r1
+	ldw 12(%r26), %r3
+	ldw 16(%r26), %r4
+	ldw 20(%r26), %r5
+	ldw 24(%r26), %r6
+	ldw 28(%r26), %r7
+	ldw 32(%r26), %r8
+	ldw 36(%r26), %r9
+	ldw 40(%r26), %r10
+	ldw 44(%r26), %r11
+	ldw 48(%r26), %r12
+	ldw 52(%r26), %r13
+	ldw 56(%r26), %r14
+	ldw 60(%r26), %r15
+	ldw 64(%r26), %r16
+	ldw 68(%r26), %r17
+	ldw 72(%r26), %r18
+	ldw 76(%r26), %r19
+	ldw 80(%r26), %r20
+	ldw 84(%r26), %r21
+	ldw 88(%r26), %r22
+	ldw 92(%r26), %r23
+	ldw 96(%r26), %r24
+	ldw 100(%r26), %r25
+	ldw 108(%r26), %r27
+	ldw 112(%r26), %r28
+	ldw 116(%r26), %r29
+	ldw 120(%r26), %r30
+	ldw 124(%r26), %r31
+	ldw 104(%r26), %r26
+	bv,n %r0(%r2)
+EXIT(_ZNK7_Unwind14Registers_HPPA6jumptoEv)
+#endif
