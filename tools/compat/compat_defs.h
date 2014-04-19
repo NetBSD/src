@@ -1,32 +1,34 @@
-/*	$NetBSD: compat_defs.h,v 1.95 2014/01/09 16:08:46 apb Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.96 2014/04/19 19:01:08 apb Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
 
-
-/* Work around some complete brain damage. */
 /*
- * Linux: <features.h> turns on _POSIX_SOURCE by default, even though the
- * program (not the OS) should do that.  Preload <features.h> to keep any
- * of this crap from being pulled in, and undefine _POSIX_SOURCE.
+ * On NetBSD, ensure that _NETBSD_SOURCE does not get defined, so that
+ * accidental attempts to use NetBSD-specific features instead of more
+ * portable features is likely to be noticed when the tools are built
+ * on NetBSD.  Define enough other feature test macros to expose the
+ * features we need.
  */
-
-#if defined(__linux__) && HAVE_FEATURES_H
-#include <features.h>
-#define __USE_ISOC99 1
-#endif
-
-/* So _NETBSD_SOURCE doesn't end up defined. Define enough to pull in standard
-   defs. Other platforms may need similiar defines. */
 #ifdef __NetBSD__
 #define	_ISOC99_SOURCE
 #define _POSIX_SOURCE	1
 #define _POSIX_C_SOURCE	200112L
 #define _XOPEN_SOURCE 600
-#else
+#endif /* __NetBSD__ */
+
+/*
+ * Linux: <features.h> turns on _POSIX_SOURCE by default, even though the
+ * program (not the OS) should do that.  Preload <features.h> and
+ * then override some of the feature test macros.
+ */
+
+#if defined(__linux__) && HAVE_FEATURES_H
+#include <features.h>
 #undef _POSIX_SOURCE
 #undef _POSIX_C_SOURCE
-#endif
+#define __USE_ISOC99 1
+#endif	/* __linux__ && HAVE_FEATURES_H */
 
 /* System headers needed for (re)definitions below. */
 
