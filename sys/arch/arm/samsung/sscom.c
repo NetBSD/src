@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.4 2014/04/18 11:37:17 reinoud Exp $ */
+/*	$NetBSD: sscom.c,v 1.5 2014/04/20 22:45:27 matt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.4 2014/04/18 11:37:17 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.5 2014/04/20 22:45:27 matt Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -1866,11 +1866,9 @@ sscom_init(bus_space_tag_t iot, bus_space_handle_t base_ioh,
 	    UFCON_RXFIFO_RESET);
 	/* tx/rx fifo reset are auto-cleared */
 
-#if 0
 	rate = sscomspeed(rate, frequency);
-	bus_space_write_2(iot, ioh, SSCOM_UBRDIV, rate);
-#endif
-	bus_space_write_1(iot, ioh, SSCOM_ULCON, cflag2lcr(cflag));
+	bus_space_write_4(iot, ioh, SSCOM_UBRDIV, rate);
+	bus_space_write_4(iot, ioh, SSCOM_ULCON, cflag2lcr(cflag));
 
 	/* enable UART */
 	bus_space_write_4(iot, ioh, SSCOM_UCON, 
@@ -1900,8 +1898,8 @@ sscom_cnattach(bus_space_tag_t iot, bus_space_handle_t ioh,
 {
 	int res;
 
-	res = sscom_init(iot, ioh, config,
-		rate, frequency, cflag, &sscomconsioh);
+	res = sscom_init(iot, ioh, config, rate, frequency, cflag,
+	    &sscomconsioh);
 	if (res)
 		return res;
 
