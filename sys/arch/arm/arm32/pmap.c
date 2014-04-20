@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.287 2014/04/12 16:03:59 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.288 2014/04/20 22:31:34 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -216,7 +216,7 @@
 #include <arm/locore.h>
 //#include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.287 2014/04/12 16:03:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.288 2014/04/20 22:31:34 matt Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -3583,7 +3583,7 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 
 		if (pm != pmap_kernel())
 			pmap_free_l2_bucket(pm, l2b, mappings);
-		pm->pm_stats.resident_count -= mappings;
+		pm->pm_stats.resident_count -= mappings / (PAGE_SIZE/L2_S_SIZE);
 	}
 
 	pmap_release_pmap_lock(pm);
