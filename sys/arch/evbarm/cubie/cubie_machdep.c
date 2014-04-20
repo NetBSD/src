@@ -1,4 +1,4 @@
-/*	$NetBSD: cubie_machdep.c,v 1.17 2014/04/18 06:53:13 matt Exp $ */
+/*	$NetBSD: cubie_machdep.c,v 1.18 2014/04/20 10:06:08 martin Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cubie_machdep.c,v 1.17 2014/04/18 06:53:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cubie_machdep.c,v 1.18 2014/04/20 10:06:08 martin Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -185,11 +185,13 @@ __KERNEL_RCSID(0, "$NetBSD: cubie_machdep.c,v 1.17 2014/04/18 06:53:13 matt Exp 
 #include <dev/i2c/ddcreg.h>
 
 #include <dev/usb/ukbdvar.h>
+#include <net/if_ether.h>
 
 BootConfig bootconfig;		/* Boot config storage */
 static char bootargs[MAX_BOOT_STRING];
 char *boot_args = NULL;
 char *boot_file = NULL;
+static uint8_t uboot_enaddr[ETHER_ADDR_LEN];
 
 bool cubietruck_p;
 /*
@@ -329,6 +331,8 @@ initarm(void *arg)
 	printf("\nNetBSD/evbarm (cubie) booting ...\n");
 #endif
 
+	const uint8_t *uboot_bootinfo = (void*)uboot_args[0];
+
 #ifdef BOOT_ARGS
 	char mi_bootargs[] = BOOT_ARGS;
 	parse_mi_bootargs(mi_bootargs);
@@ -403,7 +407,15 @@ initarm(void *arg)
 			     (uboot_args[3] + KERNEL_BASE_VOFFSET);
 			strlcpy(bootargs, args, sizeof(bootargs));
 		}
+		if (uboot_args[0]
+		   && uboot_args[0] - AWIN_SDRAM_PBASE < ram_size) {
+			uboot_bootinfo =
+			    (void*)(uboot_args[0] + KERNEL_BASE_VOFFSET);
+		}
 	}
+
+	/* copy u-boot bootinfo ethernet address */
+	memcpy(uboot_enaddr, uboot_bootinfo + 0x250, sizeof(uboot_enaddr));
 
 	boot_args = bootargs;
 	parse_mi_bootargs(boot_args);
@@ -601,6 +613,12 @@ cubie_device_register(device_t self, void *aux)
 		prop_dictionary_set_uint32(dict, "nc-h", 0x03c53f04);
 		prop_dictionary_set_uint32(dict, "nc-i", 0x003fc03f);
 		return;
+	}
+	if (device_is_a(self, "awge") || device_is_a(self, "awe")) {
+		prop_data_t blob =
+		    prop_data_create_data(uboot_enaddr, ETHER_ADDR_LEN);
+		prop_dictionary_set(dict, "mac-address", blob);
+		prop_object_release(blob);
 	}
 
 	if (device_is_a(self, "ehci")) {
