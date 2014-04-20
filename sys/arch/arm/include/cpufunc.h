@@ -48,6 +48,7 @@
 #include <arm/armreg.h>
 #include <arm/cpuconf.h>
 #include <arm/armreg.h>
+#include <arm/cpufunc_proto.h>
 
 struct cpu_functions {
 
