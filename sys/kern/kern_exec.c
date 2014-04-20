@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.405 2014/04/19 23:00:27 uebayasi Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.406 2014/04/20 00:20:01 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.405 2014/04/19 23:00:27 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.406 2014/04/20 00:20:01 uebayasi Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -1004,6 +1004,67 @@ credexec(struct lwp *l, struct vattr *attr)
 	return 0;
 }
 
+static void
+emulexec(struct lwp *l, struct exec_package *epp)
+{
+	struct proc		*p = l->l_proc;
+
+	/* The emulation root will usually have been found when we looked
+	 * for the elf interpreter (or similar), if not look now. */
+	if (epp->ep_esch->es_emul->e_path != NULL &&
+	    epp->ep_emul_root == NULL)
+		emul_find_root(l, epp);
+
+	/* Any old emulation root got removed by fdcloseexec */
+	rw_enter(&p->p_cwdi->cwdi_lock, RW_WRITER);
+	p->p_cwdi->cwdi_edir = epp->ep_emul_root;
+	rw_exit(&p->p_cwdi->cwdi_lock);
+	epp->ep_emul_root = NULL;
+	if (epp->ep_interp != NULL)
+		vrele(epp->ep_interp);
+
+	/*
+	 * Call emulation specific exec hook. This can setup per-process
+	 * p->p_emuldata or do any other per-process stuff an emulation needs.
+	 *
+	 * If we are executing process of different emulation than the
+	 * original forked process, call e_proc_exit() of the old emulation
+	 * first, then e_proc_exec() of new emulation. If the emulation is
+	 * same, the exec hook code should deallocate any old emulation
+	 * resources held previously by this process.
+	 */
+	if (p->p_emul && p->p_emul->e_proc_exit
+	    && p->p_emul != epp->ep_esch->es_emul)
+		(*p->p_emul->e_proc_exit)(p);
+
+	/*
+	 * This is now LWP 1.
+	 */
+	/* XXX elsewhere */
+	mutex_enter(p->p_lock);
+	p->p_nlwpid = 1;
+	l->l_lid = 1;
+	mutex_exit(p->p_lock);
+
+	/*
+	 * Call exec hook. Emulation code may NOT store reference to anything
+	 * from &pack.
+	 */
+	if (epp->ep_esch->es_emul->e_proc_exec)
+		(*epp->ep_esch->es_emul->e_proc_exec)(p, epp);
+
+	/* update p_emul, the old value is no longer needed */
+	p->p_emul = epp->ep_esch->es_emul;
+
+	/* ...and the same for p_execsw */
+	p->p_execsw = epp->ep_esch;
+
+#ifdef __HAVE_SYSCALL_INTERN
+	(*p->p_emul->e_syscall_intern)(p);
+#endif
+	ktremul();
+}
+
 static int
 execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	bool no_local_exec_lock, bool is_spawn)
@@ -1177,59 +1238,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 
 	SDT_PROBE(proc,,,exec_success, epp->ep_name, 0, 0, 0, 0);
 
-	/* The emulation root will usually have been found when we looked
-	 * for the elf interpreter (or similar), if not look now. */
-	if (epp->ep_esch->es_emul->e_path != NULL &&
-	    epp->ep_emul_root == NULL)
-		emul_find_root(l, epp);
-
-	/* Any old emulation root got removed by fdcloseexec */
-	rw_enter(&p->p_cwdi->cwdi_lock, RW_WRITER);
-	p->p_cwdi->cwdi_edir = epp->ep_emul_root;
-	rw_exit(&p->p_cwdi->cwdi_lock);
-	epp->ep_emul_root = NULL;
-	if (epp->ep_interp != NULL)
-		vrele(epp->ep_interp);
-
-	/*
-	 * Call emulation specific exec hook. This can setup per-process
-	 * p->p_emuldata or do any other per-process stuff an emulation needs.
-	 *
-	 * If we are executing process of different emulation than the
-	 * original forked process, call e_proc_exit() of the old emulation
-	 * first, then e_proc_exec() of new emulation. If the emulation is
-	 * same, the exec hook code should deallocate any old emulation
-	 * resources held previously by this process.
-	 */
-	if (p->p_emul && p->p_emul->e_proc_exit
-	    && p->p_emul != epp->ep_esch->es_emul)
-		(*p->p_emul->e_proc_exit)(p);
-
-	/*
-	 * This is now LWP 1.
-	 */
-	mutex_enter(p->p_lock);
-	p->p_nlwpid = 1;
-	l->l_lid = 1;
-	mutex_exit(p->p_lock);
-
-	/*
-	 * Call exec hook. Emulation code may NOT store reference to anything
-	 * from &pack.
-	 */
-	if (epp->ep_esch->es_emul->e_proc_exec)
-		(*epp->ep_esch->es_emul->e_proc_exec)(p, epp);
-
-	/* update p_emul, the old value is no longer needed */
-	p->p_emul = epp->ep_esch->es_emul;
-
-	/* ...and the same for p_execsw */
-	p->p_execsw = epp->ep_esch;
-
-#ifdef __HAVE_SYSCALL_INTERN
-	(*p->p_emul->e_syscall_intern)(p);
-#endif
-	ktremul();
+	emulexec(l, epp);
 
 	/* Allow new references from the debugger/procfs. */
 	rw_exit(&p->p_reflock);
