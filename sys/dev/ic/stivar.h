@@ -1,4 +1,4 @@
-/*	$NetBSD: stivar.h,v 1.7 2011/07/11 02:30:49 matt Exp $	*/
+/*	$NetBSD: stivar.h,v 1.8 2014/04/20 04:12:54 tsutsui Exp $	*/
 
 /*	$OpenBSD: stivar.h,v 1.24 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -130,5 +130,8 @@ int	sti_cnattach(struct sti_rom *, struct sti_screen *, bus_space_tag_t,
 void	sti_describe(struct sti_softc *);
 void	sti_end_attach(struct sti_softc *);
 u_int	sti_rom_size(bus_space_tag_t, bus_space_handle_t);
+
+int	sti_cnattach(struct sti_rom *, struct sti_screen *, bus_space_tag_t,
+	    bus_addr_t *, u_int);
 
 #endif /* _IC_STIVAR_H_ */
