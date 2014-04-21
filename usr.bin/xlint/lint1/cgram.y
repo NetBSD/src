@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.63 2014/04/18 21:54:52 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.64 2014/04/21 18:57:20 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.63 2014/04/18 21:54:52 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.64 2014/04/21 18:57:20 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -107,7 +107,7 @@ static inline void RESTORE(const char *file, size_t line)
 #endif
 %}
 
-%expect 71
+%expect 75
 
 %union {
 	int	y_int;
@@ -932,7 +932,7 @@ notype_direct_decl:
 	| notype_direct_decl T_LBRACK constant T_RBRACK {
 		$$ = addarray($1, 1, toicon($3, 0));
 	  }
-	| notype_direct_decl param_list {
+	| notype_direct_decl param_list opt_asm_or_symbolrename {
 		$$ = addfunc($1, $2);
 		popdecl();
 		blklev--;
@@ -965,7 +965,7 @@ type_direct_decl:
 	| type_direct_decl T_LBRACK constant T_RBRACK {
 		$$ = addarray($1, 1, toicon($3, 0));
 	  }
-	| type_direct_decl param_list {
+	| type_direct_decl param_list opt_asm_or_symbolrename {
 		$$ = addfunc($1, $2);
 		popdecl();
 		blklev--;
@@ -1002,7 +1002,7 @@ direct_param_decl:
 	| direct_param_decl T_LBRACK constant T_RBRACK {
 		$$ = addarray($1, 1, toicon($3, 0));
 	  }
-	| direct_param_decl param_list {
+	| direct_param_decl param_list opt_asm_or_symbolrename {
 		$$ = addfunc($1, $2);
 		popdecl();
 		blklev--;
@@ -1031,7 +1031,7 @@ direct_notype_param_decl:
 	| direct_notype_param_decl T_LBRACK constant T_RBRACK {
 		$$ = addarray($1, 1, toicon($3, 0));
 	  }
-	| direct_notype_param_decl param_list {
+	| direct_notype_param_decl param_list opt_asm_or_symbolrename {
 		$$ = addfunc($1, $2);
 		popdecl();
 		blklev--;
@@ -1318,12 +1318,12 @@ direct_abs_decl:
 	| direct_abs_decl T_LBRACK constant T_RBRACK {
 		$$ = addarray($1, 1, toicon($3, 0));
 	  }
-	| abs_decl_param_list {
+	| abs_decl_param_list opt_asm_or_symbolrename {
 		$$ = addfunc(aname(), $1);
 		popdecl();
 		blklev--;
 	  }
-	| direct_abs_decl abs_decl_param_list {
+	| direct_abs_decl abs_decl_param_list opt_asm_or_symbolrename {
 		$$ = addfunc($1, $2);
 		popdecl();
 		blklev--;
