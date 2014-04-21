@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.372 2014/04/08 22:04:15 riastradh Exp $
+# $NetBSD: ALL,v 1.373 2014/04/21 16:35:38 chs Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.372 $"
+#ident 		"ALL-$Revision: 1.373 $"
 
 maxusers	64		# estimated number of users
 
@@ -1073,6 +1073,7 @@ awi*	at pcmcia? function ?		# BayStack 650/660 (802.11FH/DS)
 cnw*	at pcmcia? function ?		# Xircom/Netwave AirSurfer
 cs*	at pcmcia? function ?		# CS89xx Ethernet
 ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
+malo*	at pcmcia? function ?		# Marvell Libertas
 mbe*	at pcmcia? function ?		# MB8696x based Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 ray*	at pcmcia? function ?		# Raytheon Raylink (802.11)
