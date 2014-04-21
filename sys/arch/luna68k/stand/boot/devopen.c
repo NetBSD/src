@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.7 2014/04/16 13:43:02 tsutsui Exp $	*/
+/*	$NetBSD: devopen.c,v 1.8 2014/04/21 11:06:55 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -126,8 +126,9 @@ make_device(const char *str, int *devp, int *unitp, int *partp, char **fname)
 	int dev, unit, part;
 	int i;
 	char devname[MAXDEVNAME + 1];
+	bool haveunit;
 
-	unit = default_unit;
+	unit = 0;
 	part = 0;
 
 	/*
@@ -150,11 +151,14 @@ make_device(const char *str, int *devp, int *unitp, int *partp, char **fname)
 	}
 	dev = dp - devsw;
 	/* get mixed controller and unit number */
+	haveunit = false;
 	for (; *cp != ',' && *cp != ')'; cp++) {
 		if (*cp == '\0')
 			return -1;
-		if (*cp >= '0' && *cp <= '9')
+		if (*cp >= '0' && *cp <= '9') {
 			unit = unit * 10 + *cp - '0';
+			haveunit = true;
+		}
 	}
 	if (unit < 0 || CTLR(unit) >= 2 || TARGET(unit) > 7) {
 #ifdef DEBUG
@@ -162,6 +166,8 @@ make_device(const char *str, int *devp, int *unitp, int *partp, char **fname)
 #endif
 		return (-1);
 	}
+	if (!haveunit && strcmp(devname, default_bootdev) == 0)
+		unit = default_unit;
 	/* get optional partition number */
 	if (*cp == ',')
 		cp++;
