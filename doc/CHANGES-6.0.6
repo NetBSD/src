@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.6,v 1.1.2.2 2014/04/16 05:48:40 msaitoh Exp $
+# $NetBSD: CHANGES-6.0.6,v 1.1.2.3 2014/04/21 10:18:29 bouyer Exp $
 
 A complete list of changes from the NetBSD 6.0.5 release to the NetBSD 6.0.6
 release:
@@ -21,3 +21,46 @@ crypto/external/bsd/heimdal/dist/lib/roken/resolve.c	1.2
 	Fix file descriptor leak in Heimdal. Fixes PR#48718
 	reported by Juergen Hannken-Illjes.
 	[hannken, ticket #1047]
+sys/kern/kern_exec.c				1.403 via patch
+
+	Avoid use-after-free on failure.
+	[maxv, ticket #1048]
+
+external/cddl/osnet/dist/uts/common/fs/zfs/zfs_vfsops.c 1.12 via patch
+sys/coda/coda_vfsops.c				1.81 via patch
+sys/fs/adosfs/advfsops.c			1.70 via patch
+sys/fs/cd9660/cd9660_vfsops.c			1.84 via patch
+sys/fs/efs/efs_vfsops.c				1.25 via patch
+sys/fs/filecorefs/filecore_vfsops.c		1.76 via patch
+sys/fs/hfs/hfs_vfsops.c				1.31 via patch
+sys/fs/msdosfs/msdosfs_vfsops.c			1.107 via patch
+sys/fs/nilfs/nilfs_vfsops.c			1.16 via patch
+sys/fs/ntfs/ntfs_vfsops.c			1.94 via patch
+sys/fs/ptyfs/ptyfs_vfsops.c			1.50 via patch
+sys/fs/puffs/puffs_vfsops.c			1.110 via patch
+sys/fs/smbfs/smbfs_vfsops.c			1.100 via patch
+sys/fs/sysvbfs/sysvbfs_vfsops.c			1.43 via patch
+sys/fs/tmpfs/tmpfs_vfsops.c			1.59 via patch
+sys/fs/udf/udf_vfsops.c				1.67 via patch
+sys/fs/union/union_vfsops.c			1.72 via patch
+sys/fs/unionfs/unionfs_vfsops.c			1.13 via patch
+sys/fs/v7fs/v7fs_vfsops.c			1.10 via patch
+sys/kern/vfs_syscalls.c				1.478 via patch
+sys/kern/vfs_syscalls.c				1.479 via patch
+sys/kern/vfs_syscalls.c				1.480 via patch
+sys/kern/vfs_syscalls.c				1.482 via patch
+sys/miscfs/nullfs/null_vfsops.c			1.88 via patch
+sys/miscfs/overlay/overlay_vfsops.c		1.61 via patch
+sys/miscfs/procfs/procfs_vfsops.c		1.91 via patch
+sys/miscfs/umapfs/umap_vfsops.c			1.92 via patch
+sys/nfs/nfs_vfsops.c				1.227 via patch
+sys/ufs/chfs/chfs_vfsops.c			1.11 via patch
+sys/ufs/ext2fs/ext2fs_vfsops.c			1.180 via patch
+sys/ufs/ffs/ffs_vfsops.c			1.297 via patch
+sys/ufs/lfs/lfs_vfsops.c			1.321 via patch
+sys/ufs/mfs/mfs_vfsops.c			1.107 via patch
+
+	Fix various issues in the mount syscall, which could be used
+	by a local user to panic the system.
+	[maxv, ticket #1050]
+
