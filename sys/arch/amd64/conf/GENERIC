@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.385 2014/04/08 21:08:36 riastradh Exp $
+# $NetBSD: GENERIC,v 1.386 2014/04/21 16:35:38 chs Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.385 $"
+#ident 		"GENERIC-$Revision: 1.386 $"
 
 maxusers	64		# estimated number of users
 
@@ -752,6 +752,7 @@ awi*	at pcmcia? function ?		# BayStack 650/660 (802.11FH/DS)
 cnw*	at pcmcia? function ?		# Xircom/Netwave AirSurfer
 cs*	at pcmcia? function ?		# CS89xx Ethernet
 ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
+malo*	at pcmcia? function ?		# Marvell Libertas
 mbe*	at pcmcia? function ?		# MB8696x based Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 ray*	at pcmcia? function ?		# Raytheon Raylink (802.11)
