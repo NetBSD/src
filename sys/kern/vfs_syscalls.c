@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.449.2.2 2012/05/19 15:01:35 riz Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.449.2.2.4.1 2014/04/21 10:15:36 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.449.2.2 2012/05/19 15:01:35 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.449.2.2.4.1 2014/04/21 10:15:36 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -393,6 +393,7 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 	struct vnode *vp;
 	void *data_buf = data;
 	bool vfsopsrele = false;
+	size_t alloc_sz = 0;
 	int error;
 
 	/* XXX: The calling convention of this routine is totally bizarre */
@@ -420,14 +421,15 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 		}
 	}
 
+	/*
+	 * We allow data to be NULL, even for userspace. Some fs's don't need
+	 * it. The others will handle NULL.
+	 */
 	if (data != NULL && data_seg == UIO_USERSPACE) {
 		if (data_len == 0) {
 			/* No length supplied, use default for filesystem */
 			data_len = vfsops->vfs_min_mount_data;
-			if (data_len > VFS_MAX_MOUNT_DATA) {
-				error = EINVAL;
-				goto done;
-			}
+
 			/*
 			 * Hopefully a longer buffer won't make copyin() fail.
 			 * For compatibility with 3.0 and earlier.
@@ -436,7 +438,12 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 			    && data_len < sizeof (struct mnt_export_args30))
 				data_len = sizeof (struct mnt_export_args30);
 		}
-		data_buf = kmem_alloc(data_len, KM_SLEEP);
+		if ((data_len == 0) || (data_len > VFS_MAX_MOUNT_DATA)) {
+			error = EINVAL;
+			goto done;
+		}
+		alloc_sz = data_len;
+		data_buf = kmem_alloc(alloc_sz, KM_SLEEP);
 
 		/* NFS needs the buffer even for mnt_getargs .... */
 		error = copyin(data, data_buf, data_len);
@@ -472,7 +479,7 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 	    	vrele(vp);
 	}
 	if (data_buf != data)
-		kmem_free(data_buf, data_len);
+		kmem_free(data_buf, alloc_sz);
 	return (error);
 }
 
