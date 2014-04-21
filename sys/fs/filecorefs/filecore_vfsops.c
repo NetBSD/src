@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.68 2011/11/14 18:35:13 hannken Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.68.10.1 2014/04/21 10:15:37 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.68 2011/11/14 18:35:13 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.68.10.1 2014/04/21 10:15:37 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -239,6 +239,8 @@ filecore_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	int error;
 	struct filecore_mnt *fcmp = NULL;
 
+	if (args == NULL)
+		return EINVAL;
 	if (*data_len < sizeof *args)
 		return EINVAL;
 

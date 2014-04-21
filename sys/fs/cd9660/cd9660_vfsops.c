@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.74 2011/11/14 18:35:12 hannken Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.74.10.1 2014/04/21 10:15:36 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.74 2011/11/14 18:35:12 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.74.10.1 2014/04/21 10:15:36 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -224,6 +224,8 @@ cd9660_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	int error;
 	struct iso_mnt *imp = VFSTOISOFS(mp);
 
+	if (args == NULL)
+		return EINVAL;
 	if (*data_len < sizeof *args)
 		return EINVAL;
 
