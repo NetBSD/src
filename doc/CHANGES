@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1916 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1917 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -53,6 +53,9 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	kernel: Add support for 256 CPUs on amd64. [rmind 20120420]
 	OpenSSH: Imported 6.0 [christos 20120501]
 	bzip2: Imported 1.0.6 [wiz 20120507]
+	kernel: Add a genfs_rename abstraction to help file systems correctly
+		implement rename, and use it for tmpfs, ffs, and ext2fs.
+		[riastradh 20120508]
 	amiga: Rework X-Surf driver as xsurf(4). Add support for clockport(4)
 		on top of xsurf(4). [rkujawa 20120515]
 	backtrace(3): Add <execinfo.h> and the backtrace family of functions
@@ -98,6 +101,7 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 		can be loaded. [jnemeth 20120803]
 	modstat(8): Add -A, -a, and -e options for testing module loadability.
 		[jnemeth 20120803]
+	uatp(4): Add driver for USB Apple trackpads. [riastradh 20120804]
 	libc: Update to tzcode2012e. [christos 20120809]
 	arm: Add support for BEAGLEBOARDXM (TI DM37XX cpus) boards.
 		[matt 20120822]
@@ -153,6 +157,8 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	arm: enable direct-mapped poolpage support.  [matt 20121211]
 	arm: enable VFP-based pmap page zero/copy ops.  [matt 20121211]
 	openssh: Import 6.1. [christos 20121212]
+	arm: Add support for the Beaglebone (TI AM335x-based board).
+        	[riastradh 20121213]
 	ptcd(4): Add a driver for the Protech PS3100 cash drawer port.
 		[mbalmer 20121216]
 	ibmcd(4): Add a driver for the IBM 4810 BSP cash drawer port.
@@ -170,6 +176,8 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 		ported from FreeBSD. [skrll 20130109]
 	kernel: Add usmsc(4), a driver for SMSC LAN95xx USB LAN devices, 
 		ported from OpenBSD. [skrll 20130109]
+	atactl(8): Add support for ATA SECURITY commands including setting
+		firmware passwords and erasing disks. [riastradh 20130109]
 	hp300: Add support for sti(4) framebuffer at sgc bus on some 425t.
 		Ported by kiyohara@ from OpenBSD. [tsutsui 20130111]
 	arm: kill userland FPA support, replace with VFP. [matt 20130111]
@@ -240,6 +248,8 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 		userspace.  All sets are the same except for etc.tgz.
 		[matt 20130501]
 	disklabel: this is now a MI tool like installboot.  [matt 20130503]
+	vndcompress(1): Add support for restarting after interrupt.
+		[riastradh 20130503]
 	mcp980x(4): Add driver for Microchip MCP9800/1/2/3 I2C temperature
 		sensor. [rkujawa 20130507]
 	zoneinfo: Import tzdata2013c. [apb 20130508]
@@ -277,6 +287,8 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	xsh(4): Add driver for Individual Computers X-Surf 100 network interface
 		card. [rkujawa 20130808]
 	postfix(1): Import version 2.9.7 [tron 20130821]
+	libc: Add consttime_memequal and explicit_memset for crypto
+		applications. [riastradh 20130828]
 	kernel: Add BPF coprocessor support (BPF_COP/BPF_COPX instructions).
 		[rmind 20130829]
 	npf: Convert NPF to use BPF byte-code by default.  Many other
@@ -289,6 +301,8 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 		PR port-alpha/48148 by nullnilaki. [tsutsui 20130923]
 	postfix(1): Import version 2.10.2 [tron 20130925]
 	binutils: updated to FSF binutils 2.23.2.  [christos 20130929]
+	getaddrinfo(1): Add utility for querying the system's name resolver.
+		[riastradh 20130929]
 	gdb(1): Updated to 7.6.1.  [christos 20131003]
 	httpd(8): Added Lua scripting for content creation. [mbalmer 20131012]
 	lutok: Update to 0.3.  [jmmv 20131018]
@@ -343,6 +357,9 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	postfix(1): Import version 2.10.3 [tron 20140118]
 	igmafb(4): Added framebuffer driver for Intel Graphics
 		[mlelstv 20140121]
+	vndcompress(1): Add support for constant memory, so 32-bit systems
+		should in theory now be able to compress or uncompress
+		multi-terabyte disks. [riastradh 20140122]
 	ohci(4): Support the National Semiconductor PC87560 as found in
 		many hppa machines. [skrll 20140128]
 	ews4800mips: Switch to X11FLAVOUR=Xorg. Untested. [tsutsui 20140131]
@@ -379,6 +396,8 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 		[pettai 20140324]
 	arm: add support for ARMv6+ MMU features ASIDS, XN, split TTBR.
 	     add support for SMP. [matt 20140330]
+	applesmc(4): Add drivers for the Apple System Management Controller.
+		[riastradh 20140401]
 	ptyfs: Allow multiple mounts and support proper device visibility
 	     in chroots (Ilya Zykov) [christos 20140404]
 	i386: Switched to GCC 4.8.  [christos 20140404]
