@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: src/sys/dev/ixgbe/ixgbe.c,v 1.51 2011/04/25 23:34:21 jfv Exp $*/
-/*$NetBSD: ixgbe.c,v 1.13 2014/04/17 16:22:48 christos Exp $*/
+/*$NetBSD: ixgbe.c,v 1.14 2014/04/21 16:35:06 chs Exp $*/
 
 #include "opt_inet.h"
 
@@ -805,7 +805,6 @@ ixgbe_detach(device_t dev, int flags)
 	evcnt_detach(&stats->roc);
 	evcnt_detach(&stats->rjc);
 	evcnt_detach(&stats->mngprc);
-	evcnt_detach(&stats->mngptc);
 	evcnt_detach(&stats->xec);
 
 	/* Packet Transmission Stats */
@@ -2276,7 +2275,8 @@ ixgbe_allocate_legacy(struct adapter *adapter, const struct pci_attach_args *pa)
 		return ENXIO;
 	} else {
 		aprint_normal_dev(dev, "interrupting at %s\n",
-		    pci_intr_string(adapter->osdep.pc, adapter->osdep.ih, intrbuf, sizeof(intrbuf)));
+		    pci_intr_string(adapter->osdep.pc, adapter->osdep.ih,
+			intrbuf, sizeof(intrbuf)));
 	}
 
 	/*
@@ -2550,8 +2550,8 @@ ixgbe_free_pci_resources(struct adapter * adapter)
 {
 #if defined(NETBSD_MSI_OR_MSIX)
 	struct 		ix_queue *que = adapter->queues;
-#endif
 	device_t	dev = adapter->dev;
+#endif
 	int		rid;
 
 #if defined(NETBSD_MSI_OR_MSIX)
@@ -2592,7 +2592,6 @@ ixgbe_free_pci_resources(struct adapter * adapter)
 	else
 		(adapter->msix != 0) ? (rid = 1):(rid = 0);
 
-	printf("%s: disestablishing interrupt handler\n", device_xname(dev));
 	pci_intr_disestablish(adapter->osdep.pc, adapter->osdep.intr);
 	adapter->osdep.intr = NULL;
 
@@ -5634,8 +5633,6 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 	    stats->namebuf, "Received Jabber");
 	evcnt_attach_dynamic(&stats->mngprc, EVCNT_TYPE_MISC, NULL,
 	    stats->namebuf, "Management Packets Received");
-	evcnt_attach_dynamic(&stats->mngptc, EVCNT_TYPE_MISC, NULL,
-	    stats->namebuf, "Management Packets Dropped");
 	evcnt_attach_dynamic(&stats->xec, EVCNT_TYPE_MISC, NULL,
 	    stats->namebuf, "Checksum Errors");
 
