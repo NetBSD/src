@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.339.2.6.2.1 2014/02/03 11:57:24 sborrill Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.339.2.6.2.2 2014/04/21 10:00:33 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.339.2.6.2.1 2014/02/03 11:57:24 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.339.2.6.2.2 2014/04/21 10:00:33 bouyer Exp $");
 
 #include "opt_exec.h"
 #include "opt_ktrace.h"
@@ -820,6 +820,7 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	if (len > data->ed_pack.ep_ssize) {
 		/* in effect, compare to initial limit */
 		DPRINTF(("%s: stack limit exceeded %zu\n", __func__, len));
+		error = ENOMEM;
 		goto bad;
 	}
 	/* adjust "active stack depth" for process VSZ */
