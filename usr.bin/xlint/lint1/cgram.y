@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.64 2014/04/21 18:57:20 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.65 2014/04/21 21:52:24 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.64 2014/04/21 18:57:20 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.65 2014/04/21 21:52:24 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -200,8 +200,10 @@ static inline void RESTORE(const char *file, size_t line)
 %token <y_type>		T_AT_FORMAT_PRINTF
 %token <y_type>		T_AT_FORMAT_SCANF
 %token <y_type>		T_AT_FORMAT_STRFTIME
-
-
+%token <y_type>		T_AT_FORMAT_ARG
+%token <y_type>		T_AT_SENTINEL
+%token <y_type>		T_AT_RETURNS_TWICE
+%token <y_type>		T_AT_COLD
 
 %left	T_COMMA
 %right	T_ASSIGN T_OPASS
@@ -485,8 +487,12 @@ type_attribute_format_type:
 type_attribute_spec:
 	  T_AT_DEPRECATED
 	| T_AT_ALIGNED T_LPARN constant T_RPARN
+	| T_AT_SENTINEL T_LPARN constant T_RPARN
+	| T_AT_FORMAT_ARG T_LPARN constant T_RPARN
 	| T_AT_MAY_ALIAS
 	| T_AT_NORETURN
+	| T_AT_COLD
+	| T_AT_RETURNS_TWICE
 	| T_AT_PACKED {
 		addpacked();
 	}
