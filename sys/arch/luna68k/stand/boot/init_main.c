@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.14 2014/04/16 13:43:02 tsutsui Exp $	*/
+/*	$NetBSD: init_main.c,v 1.15 2014/04/21 11:06:55 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -88,6 +88,7 @@ int cpuspeed;	/* for DELAY() macro */
 int hz = 60;
 int machtype;
 char default_file[64];
+const char *default_bootdev;
 int default_unit;
 
 #define	VERS_LOCAL	"Phase-31"
@@ -287,6 +288,7 @@ main(void)
 
 	snprintf(default_file, sizeof(default_file),
 	    "%s(%d,%d)%s", bootdev, unit, part, "netbsd");
+	default_bootdev = bootdev;
 	default_unit = unit;
 
 	howto = reorder_dipsw(dipsw2);
