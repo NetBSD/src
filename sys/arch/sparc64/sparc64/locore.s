@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.356 2014/02/21 18:00:09 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.357 2014/04/21 17:34:38 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -2606,7 +2606,7 @@ sun4v_tl0_dtsb_miss:
 	casxa	[%g6] ASI_PHYS_CACHED, %g4, %g7	!  and write it out
 	cmp	%g4, %g7
 	bne,pn	%xcc, 1b
-	 or	%g4, A_SUN4V_TLB_ACCESS, %g4	! Update the modified bit
+	 or	%g4, A_SUN4V_TLB_ACCESS, %g4	! Update the access bit
 2:
 	GET_TSB_DMMU %g2
 
@@ -2631,14 +2631,14 @@ sun4v_tl0_dtsb_miss:
 	
 	STPTR	%g4, [%g2 + 8]		! store TTE data
 	STPTR	%g1, [%g2]		! store TTE tag
-	
+
 	retry
 	NOTREACHED
 
 sun4v_datatrap:
 	/* XXX missing implementaion */
 	sir
-	
+
 /*
  * End of traps for sun4v.
  */
@@ -4402,12 +4402,12 @@ ENTRY_NOPROFILE(cpu_initialize)	/* for cosmetic reasons - nicer backtrace */
 	wrpr	%g0, 0, %tl
 #endif
 
-#ifdef DEBUG
-	set	_C_LABEL(pmapdebug), %o1
-	ld	[%o1], %o1
-	sethi	%hi(0x40000), %o2
-	btst	%o2, %o1
-	bz	0f
+#if 1
+!	set	_C_LABEL(pmapdebug), %o1
+!	ld	[%o1], %o1
+!	sethi	%hi(0x40000), %o2
+!	btst	%o2, %o1
+!	bz	0f
 
 	LDPTR	[%l7 + CI_SPINUP], %o1
 	set	1f, %o0		! Debug printf
