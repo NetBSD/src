@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.100.8.2 2012/08/12 13:13:21 martin Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.100.8.3 2014/04/21 10:14:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.100.8.2 2012/08/12 13:13:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.100.8.3 2014/04/21 10:14:17 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -102,6 +102,8 @@ puffs_vfsop_mount(struct mount *mp, const char *path, void *data,
 	int error = 0, i;
 	pid_t mntpid = curlwp->l_proc->p_pid;
 
+	if (data == NULL)
+		return EINVAL;
 	if (*data_len < sizeof *args)
 		return EINVAL;
 
@@ -115,12 +117,6 @@ puffs_vfsop_mount(struct mount *mp, const char *path, void *data,
 	/* update is not supported currently */
 	if (mp->mnt_flag & MNT_UPDATE)
 		return EOPNOTSUPP;
-
-	/*
-	 * We need the file system name
-	 */
-	if (!data)
-		return EINVAL;
 
 	args = (struct puffs_kargs *)data;
 
