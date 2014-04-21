@@ -228,18 +228,18 @@ amd64nbsd_trapframe_sniffer (const struct frame_unwind *self,
 			     struct frame_info *this_frame,
 			     void **this_prologue_cache)
 {
-  ULONGEST cs;
+  ULONGEST cs = 0;
   const char *name;
   volatile struct gdb_exception ex;
 
   TRY_CATCH (ex, RETURN_MASK_ERROR)
     {
       cs = get_frame_register_unsigned (this_frame, AMD64_CS_REGNUM);
-      if ((cs & I386_SEL_RPL) == I386_SEL_UPL)
-	return 0;
     }
   if (ex.reason < 0 && ex.error != NOT_AVAILABLE_ERROR)
     throw_exception (ex);
+  if ((cs & I386_SEL_RPL) == I386_SEL_UPL)
+    return 0;
 
   find_pc_partial_function (get_frame_pc (this_frame), &name, NULL, NULL);
   return (name && ((strcmp (name, "alltraps") == 0)
