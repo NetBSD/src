@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.5,v 1.1.2.3 2014/04/21 10:18:39 bouyer Exp $
+# $NetBSD: CHANGES-6.1.5,v 1.1.2.4 2014/04/21 21:04:25 bouyer Exp $
 
 A complete list of changes from the NetBSD 6.1.4 release to the NetBSD 6.1.5
 release:
@@ -63,4 +63,13 @@ sys/ufs/mfs/mfs_vfsops.c			1.107 via patch
 	Fix various issues in the mount syscall, which could be used
 	by a local user to panic the system.
 	[maxv, ticket #1050]
+
+sys/compat/linux/common/linux_exec_elf32.c	1.91 via patch
+
+	A specially-crafted linux binary could easily control a kernel array
+	index.
+	Add some checks to ensure that nothing will be read outside the
+	allocated area.
+	Rewrite the code so that we don't need to allocate the whole section.
+	[maxv, ticket #1051]
 
