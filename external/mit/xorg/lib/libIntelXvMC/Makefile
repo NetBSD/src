@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.3 2014/04/03 02:51:20 riastradh Exp $
+#	$NetBSD: Makefile,v 1.4 2014/04/21 21:57:03 christos Exp $
 
 .include <bsd.own.mk>
 
 LIB=	IntelXvMC
-#MKLINT=	no
+MKLINT=	no
 .PATH:	${X11SRCDIR.xf86-video-intel}/xvmc
 
 SRCS+=		intel_xvmc.c
