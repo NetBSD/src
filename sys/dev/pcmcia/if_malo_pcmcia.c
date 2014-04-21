@@ -1,4 +1,4 @@
-/*	$NetBSD: if_malo_pcmcia.c,v 1.4 2014/02/21 02:10:40 christos Exp $	*/
+/*	$NetBSD: if_malo_pcmcia.c,v 1.5 2014/04/21 20:24:21 pgoyette Exp $	*/
 /*      $OpenBSD: if_malo.c,v 1.65 2009/03/29 21:53:53 sthen Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.4 2014/02/21 02:10:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.5 2014/04/21 20:24:21 pgoyette Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -1859,9 +1859,10 @@ cmalo_cmd_rsp_assoc(struct malo_softc *sc)
 		DPRINTF(1, "%s: association failed (status %d)\n",
 		    device_xname(sc->sc_dev), body->status);
 		sc->sc_flags |= MALO_ASSOC_FAILED;
-	} else
+	} else {
 		DPRINTF(1, "%s: association successful\n",
 		    device_xname(sc->sc_dev));
+	}
 
 	return 0;
 }
