@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vfsops.c,v 1.22 2011/06/12 03:35:52 rmind Exp $	*/
+/*	$NetBSD: efs_vfsops.c,v 1.22.14.1 2014/04/21 10:17:48 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.22 2011/06/12 03:35:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.22.14.1 2014/04/21 10:17:48 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,6 +182,8 @@ efs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	struct vnode *devvp;
 	int err, mode;
 
+	if (args == NULL)
+		return EINVAL;
 	if (*data_len < sizeof *args)
 		return EINVAL;
 
