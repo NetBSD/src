@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.70 2011/09/27 00:54:47 christos Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.70.12.1 2014/04/21 10:15:37 bouyer Exp $	*/
 
 /*
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.70 2011/09/27 00:54:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.70.12.1 2014/04/21 10:15:37 bouyer Exp $");
 
 #ifndef _KERNEL_OPT
 #define	NVCODA 4
@@ -185,6 +185,8 @@ coda_mount(struct mount *vfsp,	/* Allocated and initialized by mount(2) */
     CodaFid ctlfid = CTL_FID;
     int error;
 
+    if (data == NULL)
+	return EINVAL;
     if (vfsp->mnt_flag & MNT_GETARGS)
 	return EINVAL;
     ENTRY;
