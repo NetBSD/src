@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.289 2014/04/22 12:13:09 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.290 2014/04/22 14:00:45 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -216,7 +216,7 @@
 #include <arm/locore.h>
 //#include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.289 2014/04/22 12:13:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.290 2014/04/22 14:00:45 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -1582,7 +1582,6 @@ pmap_alloc_l2_bucket(pmap_t pm, vaddr_t va)
 static void
 pmap_free_l2_bucket(pmap_t pm, struct l2_bucket *l2b, u_int count)
 {
-	KASSERT(pm != pmap_kernel());
 	KDASSERT(count <= l2b->l2b_occupancy);
 
 	/*
@@ -2918,9 +2917,7 @@ pmap_page_remove(struct vm_page_md *md, paddr_t pa)
 		 */
 		l2pte_reset(ptep);
 		PTE_SYNC_CURRENT(pm, ptep);
-		if (pm != pmap_kernel()) {
-			pmap_free_l2_bucket(pm, l2b, PAGE_SIZE / L2_S_SIZE);
-		}
+		pmap_free_l2_bucket(pm, l2b, PAGE_SIZE / L2_S_SIZE);
 		pmap_release_pmap_lock(pm);
 
 		pool_put(&pmap_pv_pool, pv);
@@ -3226,8 +3223,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 						panic("pmap_enter: "
 						    "no pv entries");
 
-					if (pm != pmap_kernel())
-						pmap_free_l2_bucket(pm, l2b, 0);
+					pmap_free_l2_bucket(pm, l2b, 0);	/* XXX Why? */
 					UVMHIST_LOG(maphist, "  <-- done (ENOMEM)",
 					    0, 0, 0, 0);
 					return (ENOMEM);
@@ -3581,8 +3577,8 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 			}
 		}
 
-		if (pm != pmap_kernel())
-			pmap_free_l2_bucket(pm, l2b, mappings);
+
+		pmap_free_l2_bucket(pm, l2b, mappings);
 		pm->pm_stats.resident_count -= mappings / (PAGE_SIZE/L2_S_SIZE);
 	}
 
