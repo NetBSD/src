@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.43 2014/04/06 17:59:39 kardel Exp $
+#	$NetBSD: RPI,v 1.44 2014/04/22 18:51:35 kardel Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -202,6 +202,10 @@ bcmpm0		at obio?
 # Random number generator
 bcmrng0 	at obio?
 
+# GPIO
+bcmgpio0	at obio?	# pins  0 ... 31
+bcmgpio1	at obio?	# pins 32 ... 53
+
 # Arasan SD/MMC Interface
 sdhc* at obio?
 sdmmc*  at sdhc?
@@ -231,8 +235,8 @@ spi* at spibus?
 #mcp23s17gpio2 at spi? slave 0 flags 2
 #mcp23s17gpio3 at spi? slave 0 flags 3
 
-# gpio support (e. g. mcp23s17gpio)
-#gpio*		at gpiobus?
+# gpio support (e. g. mcp23s17gpio, bcmgpio)
+gpio*		at gpiobus?
 
 # various options for wscons - we try to look as much like a standard
 # sun console as possible
