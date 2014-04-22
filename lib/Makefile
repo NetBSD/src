@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.212 2014/03/09 17:09:20 christos Exp $
+#	$NetBSD: Makefile,v 1.213 2014/04/22 13:20:58 joerg Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -7,14 +7,8 @@ SUBDIR=		csu .WAIT
 
 .if (${MKGCC} != "no")
 . if ${HAVE_GCC} == 4
-.  if (${USE_COMPILERCRTSTUFF} == "yes")
-SUBDIR+=	../gnu/lib/crtstuff4 .WAIT
-.  endif
 SUBDIR+=	../gnu/lib/libgcc4 .WAIT
 . else
-.  if (${USE_COMPILERCRTSTUFF} == "yes")
-SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/crtstuff .WAIT
-.  endif
 SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libgcc .WAIT
 . endif
 .endif
