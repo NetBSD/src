@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.290 2014/04/22 14:00:45 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.291 2014/04/22 14:20:03 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -216,7 +216,7 @@
 #include <arm/locore.h>
 //#include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.290 2014/04/22 14:00:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.291 2014/04/22 14:20:03 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -3223,7 +3223,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 						panic("pmap_enter: "
 						    "no pv entries");
 
-					pmap_free_l2_bucket(pm, l2b, 0);	/* XXX Why? */
+					pmap_free_l2_bucket(pm, l2b, 0);
 					UVMHIST_LOG(maphist, "  <-- done (ENOMEM)",
 					    0, 0, 0, 0);
 					return (ENOMEM);
