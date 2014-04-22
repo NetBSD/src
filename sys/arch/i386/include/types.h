@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.77 2014/04/03 15:22:19 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.78 2014/04/22 14:09:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -109,7 +109,13 @@ typedef	volatile unsigned char		__cpu_simple_lock_t;
 #define	__HAVE_SYSCALL_INTERN
 #define	__HAVE_MINIMAL_EMUL
 #define	__HAVE_OLD_DISKLABEL
+#if 0
+/*
+ * < i586 does not have cmpxchg8b, and we compile for i486 by default.
+ * Atomic64 ops are not currently used in the kernel.
+ */
 #define __HAVE_ATOMIC64_OPS
+#endif
 #define	__HAVE_ATOMIC_AS_MEMBAR
 #define	__HAVE_CPU_LWP_SETPRIVATE
 #define	__HAVE_INTR_CONTROL
