@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1469 2014/04/15 22:09:27 ginsbach Exp $
+# $NetBSD: mi,v 1.1470 2014/04/22 18:51:35 kardel Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -901,6 +901,7 @@
 ./usr/share/man/cat4/battery_pmu.0		man-sys-catman		.cat
 ./usr/share/man/cat4/bba.0			man-sys-catman		.cat
 ./usr/share/man/cat4/bce.0			man-sys-catman		.cat
+./usr/share/man/cat4/bcmgpio.0			man-sys-catman		.cat
 ./usr/share/man/cat4/bcsp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/be.0			man-sys-catman		.cat
 ./usr/share/man/cat4/bge.0			man-sys-catman		.cat
@@ -3941,6 +3942,7 @@
 ./usr/share/man/html4/battery_pmu.html		man-sys-htmlman		html
 ./usr/share/man/html4/bba.html			man-sys-htmlman		html
 ./usr/share/man/html4/bce.html			man-sys-htmlman		html
+./usr/share/man/html4/bcmgpio.html		man-sys-htmlman		html
 ./usr/share/man/html4/bcsp.html			man-sys-htmlman		html
 ./usr/share/man/html4/be.html			man-sys-htmlman		html
 ./usr/share/man/html4/bge.html			man-sys-htmlman		html
@@ -6745,6 +6747,7 @@
 ./usr/share/man/man4/battery_pmu.4		man-sys-man		.man
 ./usr/share/man/man4/bba.4			man-sys-man		.man
 ./usr/share/man/man4/bce.4			man-sys-man		.man
+./usr/share/man/man4/bcmgpio.4			man-sys-man		.man
 ./usr/share/man/man4/bcsp.4			man-sys-man		.man
 ./usr/share/man/man4/be.4			man-sys-man		.man
 ./usr/share/man/man4/bge.4			man-sys-man		.man
