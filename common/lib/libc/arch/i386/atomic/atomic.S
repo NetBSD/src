@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.20 2014/02/18 10:16:55 martin Exp $	*/
+/*	$NetBSD: atomic.S,v 1.21 2014/04/22 19:27:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,11 @@
 
 #include <sys/param.h>
 #include <machine/asm.h>
-
+/*
+ * __HAVE_ constants should not be in <machine/types.h>
+ * because we can't use them from assembly. OTOH we
+ * only need __HAVE_ATOMIC64_OPS here, and we don't.
+ */
 #ifdef _KERNEL
 #define	ALIAS(f, t)	STRONG_ALIAS(f,t)
 #else
@@ -175,10 +179,12 @@ ENTRY(_membar_sync)
 	ret
 ENDLABEL(membar_sync_end)
 
-#ifdef _HARDKERNEL
+#if defined(__HAVE_ATOMIC64_OPS) || defined(_KERNEL)
 ENTRY(_atomic_cas_64)
+#ifdef _HARDKERNEL
 	pushf
 	cli
+#endif /* _HARDKERNEL */
 	pushl	%edi
 	pushl	%ebx
 	movl	12(%esp), %edi
@@ -195,7 +201,9 @@ ENTRY(_atomic_cas_64)
 1:
 	popl	%ebx
 	popl	%edi
+#ifdef _HARDKERNEL
 	popf
+#endif /* _HARDKERNEL */
 	ret
 2:
 	movl	0(%edi), %eax
@@ -216,13 +224,17 @@ ENTRY(_atomic_cas_cx8)
 	popl	%ebx
 	popl	%edi
 	ret
+#ifdef _HARDKERNEL
 #ifdef GPROF
 	.space	16, 0x90
 #else
 	.space	32, 0x90
 #endif
+#endif /* _HARDKERNEL */
 ENDLABEL(_atomic_cas_cx8_end)
+#endif /* __HAVE_ATOMIC64_OPS || _KERNEL */
 
+#ifdef _HARDKERNEL
 ENTRY(sse2_lfence)
 	lfence
 	ret
@@ -238,20 +250,6 @@ atomic_lockpatch:
 	.long	.Lpatch1, .Lpatch2, .Lpatch3, .Lpatch4, .Lpatch5
 	.long	.Lpatch6, .Lpatch7, .Lpatch8, .Lpatch9, .Lpatch10
 	.long	.Lpatch12, .Lpatch13, .Lpatch14, .Lpatch15, 0
-#else
-ENTRY(_atomic_cas_64)
-	pushl	%edi
-	pushl	%ebx
-	movl	12(%esp), %edi
-	movl	16(%esp), %eax
-	movl	20(%esp), %edx
-	movl	24(%esp), %ebx
-	movl	28(%esp), %ecx
-	lock
-	cmpxchg8b (%edi)
-	popl	%ebx
-	popl	%edi
-	ret
 #endif	/* _HARDKERNEL */
 
 ALIAS(atomic_add_32,_atomic_add_32)
@@ -319,9 +317,11 @@ ALIAS(atomic_cas_uint_ni,_atomic_cas_32_ni)
 ALIAS(atomic_cas_ulong_ni,_atomic_cas_32_ni)
 ALIAS(atomic_cas_ptr_ni,_atomic_cas_32_ni)
 
+#if defined(__HAVE_ATOMIC64_OPS) || defined(_KERNEL)
 ALIAS(atomic_cas_64,_atomic_cas_64)
 ALIAS(atomic_cas_64_ni,_atomic_cas_64)
 ALIAS(__sync_val_compare_and_swap_8,_atomic_cas_64)
+#endif /* __HAVE_ATOMIC64_OPS || _KERNEL */
 
 ALIAS(membar_consumer,_membar_consumer)
 ALIAS(membar_producer,_membar_producer)
