@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1918 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1919 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -401,7 +401,7 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	ptyfs: Allow multiple mounts and support proper device visibility
 		in chroots (Ilya Zykov) [christos 20140404]
 	i386: Switched to GCC 4.8.  [christos 20140404]
-	mcp23s17gpio: Add Microchip MCP23S17 16-bit GPIO chip driver.
+	mcp23s17gpio(4): Add Microchip MCP23S17 16-bit GPIO chip driver.
 		e.g. Raspberry Pi interface boards [kardel 20140406]
 	OpenSSL: Imported 1.0.1g [christos 20140407]
 	sparc64: Switched to TOPDOWN_VM [martin 20140414]
@@ -411,3 +411,5 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	hp300: Add HP9000/425e RTC support. [tsutsui 20140419]
 	ubsec(4): Add support for AES-CBC modes and BCM586x chips.
 		[bad 20140419]
+	bcmgpio(4): Add BCM2835 GPIO obio driver.
+		[kardel 20140422]
