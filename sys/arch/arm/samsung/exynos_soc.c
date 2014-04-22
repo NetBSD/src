@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_soc.c,v 1.5 2014/04/16 21:28:51 reinoud Exp $	*/
+/*	$NetBSD: exynos_soc.c,v 1.6 2014/04/22 16:10:48 reinoud Exp $	*/
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #define	_ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.5 2014/04/16 21:28:51 reinoud Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.6 2014/04/22 16:10:48 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -255,11 +255,15 @@ exynos_device_register(device_t self, void *aux)
 		 * The Exynos4420 armgic is located at a different location!
 		 */
 
+		struct mpcore_attach_args * const mpcaa = aux;
 		extern uint32_t exynos_soc_id;
+
 		switch (EXYNOS_PRODUCT_ID(exynos_soc_id)) {
 #if defined(EXYNOS5)
 		case 0xe5410:
+			/* offsets not changed on matt's request */
 #if 0
+			mpcaa->mpcaa_memh = EXYNOS_CORE_VBASE;
 			mpcaa->mpcaa_off1 = EXYNOS5_GIC_IOP_DISTRIBUTOR_OFFSET;
 			mpcaa->mpcaa_off2 = EXYNOS5_GIC_IOP_CONTROLLER_OFFSET;
 #endif
@@ -267,13 +271,11 @@ exynos_device_register(device_t self, void *aux)
 #endif
 #if defined(EXYNOS4)
 		case 0xe4410:
-		case 0xe4412: {
-			struct mpcore_attach_args * const mpcaa = aux;
+		case 0xe4412:
 			mpcaa->mpcaa_memh = EXYNOS_CORE_VBASE;
 			mpcaa->mpcaa_off1 = EXYNOS4_GIC_DISTRIBUTOR_OFFSET;
 			mpcaa->mpcaa_off2 = EXYNOS4_GIC_CNTR_OFFSET;
 			break;
-		}
 #endif
 		default:
 			panic("%s: unknown SoC product id %#x", __func__,
