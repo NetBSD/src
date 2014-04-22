@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2013/09/11 23:04:10 joerg Exp $
+#	$NetBSD: Makefile,v 1.9 2014/04/22 15:02:38 christos Exp $
 
 .include "${.CURDIR}/../../dist/uts/common/Makefile.files"
 .include "../../Makefile.zfs"
@@ -21,10 +21,7 @@ CPPFLAGS+=	-std=c99
 #CPPFLAGS+=-Wall -Wno-unknown-pragmas
 
 # Local stuff
-SRCS=		kernel.c kernel2.c
-.if ${MACHINE_ARCH} == "arm"
-SRCS+=		atomic.c
-.endif
+SRCS=		kernel.c kernel2.c atomic.c
 
 # Sun stuff
 SRCS+=		${ZFS_COMMON_OBJS:C/.o$/.c/}
