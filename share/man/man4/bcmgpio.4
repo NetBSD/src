@@ -1,4 +1,4 @@
-.\"	$NetBSD: bcmgpio.4,v 1.1 2014/04/22 18:51:35 kardel Exp $
+.\"	$NetBSD: bcmgpio.4,v 1.2 2014/04/22 22:23:43 wiz Exp $
 .\"
 .\"Copyright (c) 2014 Frank Kardel
 .\"All rights reserved.
@@ -29,7 +29,7 @@
 .Os
 .Sh NAME
 .Nm bcmgpio
-.Nd Driver for BCM2835 onboard gpio 
+.Nd driver for BCM2835 onboard gpio
 .Sh SYNOPSIS
 .Cd "bcmgpio0 at obio?"
 .Cd "bcmgpio1 at obio?"
@@ -44,9 +44,11 @@ interface.
 The
 .Nm
 .Ar unitnumber
-argument selects the pin range. Unit 0 covers GPIO pins 0 through 31 and
-unit 1 covers pins 32 through 53. GPIO pins being used in alternate configurations
-are not available for GPIO operations.
+argument selects the pin range.
+Unit 0 covers GPIO pins 0 through 31 and unit 1 covers pins 32
+through 53.
+GPIO pins being used in alternate configurations are not available
+for GPIO operations.
 .Sh SEE ALSO
 .Xr gpio 4 ,
 .Xr intro 4
