@@ -1,5 +1,4 @@
 
-#include <inttypes.h>
 #include <sys/types.h>
 #include <sys/atomic.h>
 
