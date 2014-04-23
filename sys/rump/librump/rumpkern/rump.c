@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.295 2014/04/23 16:17:55 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.296 2014/04/23 23:25:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.295 2014/04/23 16:17:55 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.296 2014/04/23 23:25:45 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -107,7 +107,6 @@ static void rump_hyp_lwpexit(void);
 static void rump_hyp_execnotify(const char *);
 
 static void rump_component_addlocal(void);
-static void rump_component_load(const struct rump_component *);
 static struct lwp *bootlwp;
 
 static char rump_msgbuf[16*1024]; /* 16k should be enough for std rump needs */
@@ -217,6 +216,7 @@ rump_daemonize_done(int error)
 	return rumpuser_daemonize_done(error);
 }
 
+#ifndef RUMP_USE_CTOR
 RUMP_COMPONENT(RUMP_COMPONENT_POSTINIT)
 {
 	__link_set_decl(rump_components, struct rump_component);
@@ -228,6 +228,7 @@ RUMP_COMPONENT(RUMP_COMPONENT_POSTINIT)
 	asm("" :: "r"(__start_link_set_rump_components));
 	asm("" :: "r"(__stop_link_set_rump_components));
 }
+#endif
 
 int
 rump_init(void)
@@ -694,9 +695,23 @@ static int compinited[RUMP_COMPONENT_MAX];
  */
 static LIST_HEAD(, rump_component) rchead = LIST_HEAD_INITIALIZER(rchead);
 
-/*
- * add components which are visible from the current object.
- */
+#ifdef RUMP_USE_CTOR
+struct modinfo_boot_chain modinfo_boot_chain \
+    = LIST_HEAD_INITIALIZER(modinfo_boot_chain);
+
+static void
+rump_component_addlocal(void)
+{
+	struct modinfo_chain *mc;
+	
+	while ((mc = LIST_FIRST(&modinfo_boot_chain)) != NULL) {
+		LIST_REMOVE(mc, mc_entries);
+		module_builtin_add(&mc->mc_info, 1, false);
+	}
+}
+
+#else /* RUMP_USE_CTOR */
+
 static void
 rump_component_addlocal(void)
 {
@@ -707,8 +722,9 @@ rump_component_addlocal(void)
 		rump_component_load(*rc);
 	}
 }
+#endif /* RUMP_USE_CTOR */
 
-static void
+void
 rump_component_load(const struct rump_component *rc_const)
 {
 	struct rump_component *rc, *rc_iter;
@@ -746,13 +762,15 @@ rump_component_count(enum rump_component_type type)
 void
 rump_component_init(enum rump_component_type type)
 {
-	const struct rump_component *rc;
+	const struct rump_component *rc, *rc_safe;
 
 	KASSERT(curlwp == bootlwp);
 	KASSERT(!compinited[type]);
-	LIST_FOREACH(rc, &rchead, rc_entries) {
-		if (rc->rc_type == type)
+	LIST_FOREACH_SAFE(rc, &rchead, rc_entries, rc_safe) {
+		if (rc->rc_type == type) {
 			rc->rc_init();
+			LIST_REMOVE(rc, rc_entries);
+		}
 	}
 	compinited[type] = 1;
 }
@@ -760,6 +778,10 @@ rump_component_init(enum rump_component_type type)
 /*
  * Initialize a module which has already been loaded and linked
  * with dlopen(). This is fundamentally the same as a builtin module.
+ *
+ * XXX: this interface does not really work in the RUMP_USE_CTOR case,
+ * but I'm not sure it's anything to cry about.  In feeling blue,
+ * things could somehow be handled via modinfo_boot_chain.
  */
 int
 rump_module_init(const struct modinfo * const *mip, size_t nmodinfo)
