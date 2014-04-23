@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1470 2014/04/22 18:51:35 kardel Exp $
+# $NetBSD: mi,v 1.1471 2014/04/23 07:04:01 kardel Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -901,7 +901,6 @@
 ./usr/share/man/cat4/battery_pmu.0		man-sys-catman		.cat
 ./usr/share/man/cat4/bba.0			man-sys-catman		.cat
 ./usr/share/man/cat4/bce.0			man-sys-catman		.cat
-./usr/share/man/cat4/bcmgpio.0			man-sys-catman		.cat
 ./usr/share/man/cat4/bcsp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/be.0			man-sys-catman		.cat
 ./usr/share/man/cat4/bge.0			man-sys-catman		.cat
@@ -1041,6 +1040,7 @@
 ./usr/share/man/cat4/et.0			man-sys-catman		.cat
 ./usr/share/man/cat4/etherip.0			man-sys-catman		.cat
 ./usr/share/man/cat4/etphy.0			man-sys-catman		.cat
+./usr/share/man/cat4/evbarm/bcmgpio.0		man-sys-catman		.cat
 ./usr/share/man/cat4/evbarm/cpsw.0		man-sys-catman		.cat
 ./usr/share/man/cat4/evbarm/epgpio.0		man-sys-catman		.cat
 ./usr/share/man/cat4/evbarm/intro.0		man-sys-catman		.cat
@@ -3942,7 +3942,6 @@
 ./usr/share/man/html4/battery_pmu.html		man-sys-htmlman		html
 ./usr/share/man/html4/bba.html			man-sys-htmlman		html
 ./usr/share/man/html4/bce.html			man-sys-htmlman		html
-./usr/share/man/html4/bcmgpio.html		man-sys-htmlman		html
 ./usr/share/man/html4/bcsp.html			man-sys-htmlman		html
 ./usr/share/man/html4/be.html			man-sys-htmlman		html
 ./usr/share/man/html4/bge.html			man-sys-htmlman		html
@@ -4079,6 +4078,7 @@
 ./usr/share/man/html4/et.html			man-sys-htmlman		html
 ./usr/share/man/html4/etherip.html		man-sys-htmlman		html
 ./usr/share/man/html4/etphy.html		man-sys-htmlman		html
+./usr/share/man/html4/evbarm/bcmgpio.html	man-sys-htmlman		html
 ./usr/share/man/html4/evbarm/cpsw.html		man-sys-htmlman		html
 ./usr/share/man/html4/evbarm/epgpio.html	man-sys-htmlman		html
 ./usr/share/man/html4/evbarm/intro.html		man-sys-htmlman		html
@@ -6747,7 +6747,6 @@
 ./usr/share/man/man4/battery_pmu.4		man-sys-man		.man
 ./usr/share/man/man4/bba.4			man-sys-man		.man
 ./usr/share/man/man4/bce.4			man-sys-man		.man
-./usr/share/man/man4/bcmgpio.4			man-sys-man		.man
 ./usr/share/man/man4/bcsp.4			man-sys-man		.man
 ./usr/share/man/man4/be.4			man-sys-man		.man
 ./usr/share/man/man4/bge.4			man-sys-man		.man
@@ -6887,6 +6886,7 @@
 ./usr/share/man/man4/et.4			man-sys-man		.man
 ./usr/share/man/man4/etherip.4			man-sys-man		.man
 ./usr/share/man/man4/etphy.4			man-sys-man		.man
+./usr/share/man/man4/evbarm/bcmgpio.4		man-sys-man		.man
 ./usr/share/man/man4/evbarm/cpsw.4		man-sys-man		.man
 ./usr/share/man/man4/evbarm/epgpio.4		man-sys-man		.man
 ./usr/share/man/man4/evbarm/intro.4		man-sys-man		.man
