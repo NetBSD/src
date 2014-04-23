@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.209 2013/11/10 18:27:15 christos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.210 2014/04/23 20:57:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.209 2013/11/10 18:27:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.210 2014/04/23 20:57:15 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -454,16 +454,18 @@ pmap_unmap_ephemeral_page(struct vm_page *pg, vaddr_t va,
 	pv_entry_t pv = &md->pvh_first;
 	
 	(void)PG_MD_PVLIST_LOCK(md, false);
-	if (MIPS_CACHE_VIRTUAL_ALIAS
-	    && (PG_MD_UNCACHED_P(md)
-		|| (pv->pv_pmap != NULL
-		    && mips_cache_badalias(pv->pv_va, va)))) {
-		/*
-		 * If this page was previously uncached or we had to use an
-		 * incompatible alias and it has a valid mapping, flush it
-		 * from the cache.
-		 */
-		mips_dcache_wbinv_range(va, PAGE_SIZE);
+	if (MIPS_CACHE_VIRTUAL_ALIAS) {
+		if (PG_MD_CACHED_P(md)
+		    || (pv->pv_pmap != NULL
+			&& mips_cache_badalias(pv->pv_va, va))) {
+
+			/*
+			 * If this page was previously cached or we had to use an
+			 * incompatible alias and it has a valid mapping, flush it
+			 * from the cache.
+			 */
+			mips_dcache_wbinv_range(va, PAGE_SIZE);
+		}
 	}
 	PG_MD_PVLIST_UNLOCK(md);
 #ifndef _LP64
