@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.61 2012/10/31 10:17:34 msaitoh Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.62 2014/04/23 23:17:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -186,6 +186,7 @@ struct ethercom {
 #define	ETHERCAP_VLAN_MTU	0x00000001	/* VLAN-compatible MTU */
 #define	ETHERCAP_VLAN_HWTAGGING	0x00000002	/* hardware VLAN tag support */
 #define	ETHERCAP_JUMBO_MTU	0x00000004	/* 9000 byte MTU supported */
+#define	ETHERCAP_MASK		0x00000007
 
 #define	ECCAPBITS		\
 	"\020"			\
