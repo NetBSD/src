@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.95 2014/04/15 13:41:46 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.96 2014/04/23 23:25:45 pooka Exp $
 #
 
 .if !defined(_RUMP_MK)
@@ -51,6 +51,8 @@ SRCS+=		linksyms_sun.c
 .PATH:		${RUMPTOP}
 .elif ${RUMP_LDSCRIPT} == "GNU"
 LDFLAGS+=	-Wl,-T,${RUMPTOP}/ldscript.rump
+.elif ${RUMP_LDSCRIPT} == "ctor"
+CPPFLAGS+=	-DRUMP_USE_CTOR
 .else
 .error Unknown ldscript ${RUMP_LDSCRIPT}
 .endif
