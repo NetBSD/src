@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.255 2014/03/26 17:31:13 christos Exp $ */
+/*	$NetBSD: autoconf.c,v 1.256 2014/04/23 09:06:57 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.255 2014/03/26 17:31:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.256 2014/04/23 09:06:57 macallan Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1311,8 +1311,10 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		if (prom_getprop_address1(node, &ma.ma_promvaddr) != 0)
 			continue;
 
-		if (config_found(dev, (void *)&ma, mbprint) == NULL)
+		if (config_found(dev, (void *)&ma, mbprint) == NULL) {
+			if (ssp->flags & BS_OPTIONAL) continue;
 			panic(sp);
+		}
 	}
 
 	/*
