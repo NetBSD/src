@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.294 2014/04/09 23:53:36 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.295 2014/04/23 16:17:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.294 2014/04/09 23:53:36 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.295 2014/04/23 16:17:55 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -691,13 +691,8 @@ static int compinited[RUMP_COMPONENT_MAX];
 /*
  * Yea, this is O(n^2), but we're only looking at a handful of components.
  * Components are always initialized from the thread that called rump_init().
- * Could also free these when done with them, but prolly not worth it.
  */
-struct compstore {
-	const struct rump_component *cs_rc;
-	LIST_ENTRY(compstore) cs_entries;
-};
-static LIST_HEAD(, compstore) cshead = LIST_HEAD_INITIALIZER(cshead);
+static LIST_HEAD(, rump_component) rchead = LIST_HEAD_INITIALIZER(rchead);
 
 /*
  * add components which are visible from the current object.
@@ -714,20 +709,27 @@ rump_component_addlocal(void)
 }
 
 static void
-rump_component_load(const struct rump_component *rc)
+rump_component_load(const struct rump_component *rc_const)
 {
-	struct compstore *cs;
+	struct rump_component *rc, *rc_iter;
+
+	/*
+	 * XXX: this is ok since the "const" was removed from the
+	 * definition of RUMP_COMPONENT().
+	 *
+	 * However, to preserve the hypercall interface, the const
+	 * remains here.  This can be fixed in the next hypercall revision.
+	 */
+	rc = __UNCONST(rc_const);
 
 	KASSERT(curlwp == bootlwp);
 
-	LIST_FOREACH(cs, &cshead, cs_entries) {
-		if (rc == cs->cs_rc)
+	LIST_FOREACH(rc_iter, &rchead, rc_entries) {
+		if (rc_iter == rc)
 			return;
 	}
 
-	cs = kmem_alloc(sizeof(*cs), KM_SLEEP);
-	cs->cs_rc = rc;
-	LIST_INSERT_HEAD(&cshead, cs, cs_entries);
+	LIST_INSERT_HEAD(&rchead, rc, rc_entries);
 	KASSERT(rc->rc_type < RUMP_COMPONENT_MAX);
 	compcounter[rc->rc_type]++;
 }
@@ -744,13 +746,11 @@ rump_component_count(enum rump_component_type type)
 void
 rump_component_init(enum rump_component_type type)
 {
-	struct compstore *cs;
 	const struct rump_component *rc;
 
 	KASSERT(curlwp == bootlwp);
 	KASSERT(!compinited[type]);
-	LIST_FOREACH(cs, &cshead, cs_entries) {
-		rc = cs->cs_rc;
+	LIST_FOREACH(rc, &rchead, rc_entries) {
 		if (rc->rc_type == type)
 			rc->rc_init();
 	}
