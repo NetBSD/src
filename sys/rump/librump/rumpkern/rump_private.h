@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.82 2014/04/23 16:17:55 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.83 2014/04/23 23:25:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -75,13 +75,35 @@ struct rump_component {
 	void (*rc_init)(void);
 	LIST_ENTRY(rump_component) rc_entries;
 };
+
+/*
+ * If RUMP_USE_CTOR is defined, we use __attribute__((constructor)) to
+ * determine which components are present when rump_init() is called.
+ * Otherwise, we use link sets and the __start/__stop symbols generated
+ * by the toolchain.
+ */
+
+#ifdef RUMP_USE_CTOR
+#define _RUMP_COMPONENT_REGISTER(type)					\
+static void rumpcomp_ctor##type(void) __attribute__((constructor));	\
+static void rumpcomp_ctor##type(void)					\
+{									\
+	rump_component_load(&rumpcomp##type);				\
+}
+
+#else /* RUMP_USE_CTOR */
+
+#define _RUMP_COMPONENT_REGISTER(type)					\
+__link_set_add_rodata(rump_components, rumpcomp##type);
+#endif /* RUMP_USE_CTOR */
+
 #define RUMP_COMPONENT(type)				\
 static void rumpcompinit##type(void);			\
 static struct rump_component rumpcomp##type = {	\
 	.rc_type = type,				\
 	.rc_init = rumpcompinit##type,			\
 };							\
-__link_set_add_rodata(rump_components, rumpcomp##type);	\
+_RUMP_COMPONENT_REGISTER(type)				\
 static void rumpcompinit##type(void)
 
 #define FLAWLESSCALL(call)						\
@@ -96,6 +118,7 @@ extern unsigned long rump_physmemlimit;
 
 #define RUMP_LOCALPROC_P(p) (p->p_vmspace == vmspace_kernel())
 
+void		rump_component_load(const struct rump_component *);
 void		rump_component_init(enum rump_component_type);
 int		rump_component_count(enum rump_component_type);
 
