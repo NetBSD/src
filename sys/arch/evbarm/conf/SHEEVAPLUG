@@ -1,4 +1,4 @@
-#	$NetBSD: SHEEVAPLUG,v 1.35 2013/10/05 02:39:06 kiyohara Exp $
+#	$NetBSD: SHEEVAPLUG,v 1.36 2014/04/23 07:34:30 msaitoh Exp $
 #
 #  This configuration supports for generically Marvell SheevaPlug
 #
@@ -464,7 +464,7 @@ options 	VND_COMPRESSION		# compressed vnd(4)
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	carp			# Common Address Redundancy Protocol
-#pseudo-device	ipfilter		# IP filter (firewall) and NAT
+pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 #pseudo-device	ppp			# Point-to-Point Protocol
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
