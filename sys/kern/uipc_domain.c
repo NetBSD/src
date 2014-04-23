@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.92 2014/04/17 16:14:22 christos Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.93 2014/04/23 17:05:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.92 2014/04/17 16:14:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.93 2014/04/23 17:05:18 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -77,6 +77,10 @@ u_int	pffasttimo_now;
 static struct sysctllog *domain_sysctllog;
 static void sysctl_net_setup(void);
 
+/* ensure successful linkage even without any domains in link sets */
+static struct domain domain_dummy;
+__link_set_add_rodata(domains,domain_dummy);
+
 void
 domaininit(bool addroute)
 {
@@ -91,6 +95,8 @@ domaininit(bool addroute)
 	 * domain is added last.
 	 */
 	__link_set_foreach(dpp, domains) {
+		if (*dpp == &domain_dummy)
+			continue;
 		if ((*dpp)->dom_family == PF_ROUTE)
 			rt_domain = *dpp;
 		else
