@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.81 2014/04/09 23:53:36 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.82 2014/04/23 16:17:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -73,10 +73,11 @@ enum rump_component_type {
 struct rump_component {
 	enum rump_component_type rc_type;
 	void (*rc_init)(void);
+	LIST_ENTRY(rump_component) rc_entries;
 };
 #define RUMP_COMPONENT(type)				\
 static void rumpcompinit##type(void);			\
-static const struct rump_component rumpcomp##type = {	\
+static struct rump_component rumpcomp##type = {	\
 	.rc_type = type,				\
 	.rc_init = rumpcompinit##type,			\
 };							\
