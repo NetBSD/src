@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.263 2014/04/10 00:09:09 pooka Exp $
+# $NetBSD: shl.mi,v 1.264 2014/04/24 21:46:44 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -164,7 +164,7 @@
 ./usr/lib/librumpdev_raidframe_pic.a		comp-c-piclib		rump,picinstall
 ./usr/lib/librumpdev_rnd_pic.a			comp-c-piclib		rump,picinstall
 ./usr/lib/librumpdev_scsipi_pic.a		comp-c-piclib		rump,picinstall
-./usr/lib/librumpdev_scsitest_pic.a		comp-c-piclib		rump,picinstall
+./usr/lib/librumpdev_scsitest_pic.a		comp-obsolete obsolete
 ./usr/lib/librumpdev_sysmon_pic.a		comp-c-piclib		rump,picinstall
 ./usr/lib/librumpdev_ubt_pic.a			comp-c-piclib		rump,picinstall
 ./usr/lib/librumpdev_ucom_pic.a			comp-c-piclib		rump,picinstall
