@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.78 2014/04/22 14:09:19 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.79 2014/04/24 19:23:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -109,10 +109,12 @@ typedef	volatile unsigned char		__cpu_simple_lock_t;
 #define	__HAVE_SYSCALL_INTERN
 #define	__HAVE_MINIMAL_EMUL
 #define	__HAVE_OLD_DISKLABEL
-#if 0
+#if defined(_KERNEL) && !defined(_RUMPKERNEL) && !defined(_RUMP_NATIVE_ABI)
 /*
- * < i586 does not have cmpxchg8b, and we compile for i486 by default.
- * Atomic64 ops are not currently used in the kernel.
+ * Processors < i586 do not have cmpxchg8b, and we compile for i486
+ * by default in userland. The kernel tsc driver uses them though,
+ * and handles < i586 * by patching. We don't want to expose them in
+ * userland, that is why we exclude rump.
  */
 #define __HAVE_ATOMIC64_OPS
 #endif
