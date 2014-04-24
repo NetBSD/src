@@ -1,4 +1,4 @@
-/*	$NetBSD: dnkbd.c,v 1.5 2011/02/18 19:15:43 tsutsui Exp $	*/
+/*	$NetBSD: dnkbd.c,v 1.6 2014/04/24 11:58:04 tsutsui Exp $	*/
 /*	$OpenBSD: dnkbd.c,v 1.17 2009/07/23 21:05:56 blambert Exp $	*/
 
 /*
@@ -210,6 +210,8 @@ static struct wskbd_mapdata dnkbd_keymapdata = {
 
 typedef enum { EVENT_NONE, EVENT_KEYBOARD, EVENT_MOUSE } dnevent;
 
+#define APCIBRD(x)	(500000 / (x))
+
 static void	dnevent_kbd(struct dnkbd_softc *, int);
 static void	dnevent_kbd_internal(struct dnkbd_softc *, int);
 static void	dnevent_mouse(struct dnkbd_softc *, uint8_t *);
@@ -225,8 +227,6 @@ static int	dnkbd_probe(struct dnkbd_softc *);
 static void	dnkbd_rawrepeat(void *);
 #endif
 static int	dnkbd_send(struct dnkbd_softc *, const uint8_t *, size_t);
-static int	dnsubmatch_kbd(device_t, cfdata_t, const int *, void *);
-static int	dnsubmatch_mouse(device_t, cfdata_t, const int *, void *);
 
 int
 dnkbd_match(device_t parent, cfdata_t cf, void *aux)
@@ -287,13 +287,15 @@ dnkbd_init(struct dnkbd_softc *sc, uint16_t rate, uint16_t lctl)
 {
 	bus_space_tag_t bst;
 	bus_space_handle_t bsh;
+	u_int divisor;
 
 	bst = sc->sc_bst;
 	bsh = sc->sc_bsh;
 
+	divisor = APCIBRD(rate);
 	bus_space_write_1(bst, bsh, com_lctl, LCR_DLAB);
-	bus_space_write_1(bst, bsh, com_dlbl, rate & 0xff);
-	bus_space_write_1(bst, bsh, com_dlbh, (rate >> 8) & 0xff);
+	bus_space_write_1(bst, bsh, com_dlbl, divisor & 0xff);
+	bus_space_write_1(bst, bsh, com_dlbh, (divisor >> 8) & 0xff);
 	bus_space_write_1(bst, bsh, com_lctl, lctl);
 	bus_space_write_1(bst, bsh, com_ier, IER_ERXRDY | IER_ETXRDY);
 	bus_space_write_1(bst, bsh, com_fifo,
@@ -301,6 +303,7 @@ dnkbd_init(struct dnkbd_softc *sc, uint16_t rate, uint16_t lctl)
 	bus_space_write_1(bst, bsh, com_mcr, MCR_DTR | MCR_RTS);
 
 	delay(100);
+	(void)bus_space_read_1(bst, bsh, com_iir);
 }
 
 void
@@ -347,41 +350,19 @@ dnkbd_attach_subdevices(struct dnkbd_softc *sc)
 		sc->sc_flags = SF_PLUGGED;
 	}
 
-	sc->sc_wskbddev = config_found_sm_loc(sc->sc_dev, "dnkbd", NULL, &ka,
-	    wskbddevprint, dnsubmatch_kbd);
+	sc->sc_wskbddev =
+	    config_found_ia(sc->sc_dev, "wskbddev", &ka, wskbddevprint);
 
 #if NWSMOUSE > 0
 	ma.accessops = &dnmouse_accessops;
 	ma.accesscookie = sc;
 
-	sc->sc_wsmousedev = config_found_sm_loc(sc->sc_dev, "dnkbd", NULL, &ma,
-	    wsmousedevprint, dnsubmatch_mouse);
+	sc->sc_wsmousedev =
+	    config_found_ia(sc->sc_dev, "wsmousedev", &ma, wsmousedevprint);
 #endif
 
 	SET(sc->sc_flags, SF_ATTACHED);
 }
-
-int
-dnsubmatch_kbd(device_t parent, cfdata_t cf, const int *locs, void *aux)
-{
-
-	if (strcmp(cf->cf_name, wskbd_cd.cd_name) != 0)
-		return 0;
-
-	return config_match(parent, cf, aux);
-}
-
-#if NWSMOUSE > 0
-int
-dnsubmatch_mouse(device_t parent, cfdata_t cf, const int *locs, void *aux)
-{
-
-	if (strcmp(cf->cf_name, wsmouse_cd.cd_name) != 0)
-		return 0;
-
-	return config_match(parent, cf, aux);
-}
-#endif
 
 int
 dnkbd_probe(struct dnkbd_softc *sc)
