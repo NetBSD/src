@@ -1,4 +1,4 @@
-/*	$NetBSD: get.c,v 1.1.1.1 2011/04/13 18:14:35 elric Exp $	*/
+/*	$NetBSD: get.c,v 1.1.1.2 2014/04/24 12:45:27 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997-2006 Kungliga Tekniska Högskolan
@@ -112,9 +112,9 @@ add_column(struct get_entry_data *data, struct field_name *ff, const char *heade
 static int
 cmp_salt (const krb5_salt *salt, const krb5_key_data *k)
 {
-    if (salt->salttype != k->key_data_type[1])
+    if (salt->salttype != (size_t)k->key_data_type[1])
 	return 1;
-    if (salt->saltvalue.length != k->key_data_length[1])
+    if (salt->saltvalue.length != (size_t)k->key_data_length[1])
 	return 1;
     return memcmp (salt->saltvalue.data, k->key_data_contents[1],
 		   salt->saltvalue.length);
@@ -173,23 +173,23 @@ format_field(kadm5_principal_ent_t princ, unsigned int field,
     case KADM5_PRINC_EXPIRE_TIME:
 	time_t2str(princ->princ_expire_time, buf, buf_len, !condensed);
 	break;
-	
+
     case KADM5_PW_EXPIRATION:
 	time_t2str(princ->pw_expiration, buf, buf_len, !condensed);
 	break;
-	
+
     case KADM5_LAST_PWD_CHANGE:
 	time_t2str(princ->last_pwd_change, buf, buf_len, !condensed);
 	break;
-	
+
     case KADM5_MAX_LIFE:
 	deltat2str(princ->max_life, buf, buf_len);
 	break;
-	
+
     case KADM5_MAX_RLIFE:
 	deltat2str(princ->max_renewable_life, buf, buf_len);
 	break;
-	
+
     case KADM5_MOD_TIME:
 	time_t2str(princ->mod_date, buf, buf_len, !condensed);
 	break;
@@ -247,7 +247,7 @@ format_field(kadm5_principal_ent_t princ, unsigned int field,
 	krb5_tl_data *tl;
 
 	for (tl = princ->tl_data; tl != NULL; tl = tl->tl_data_next)
-	    if (tl->tl_data_type == subfield)
+	    if ((unsigned)tl->tl_data_type == subfield)
 		break;
 	if (tl == NULL) {
 	    strlcpy(buf, "", buf_len);
@@ -263,7 +263,8 @@ format_field(kadm5_principal_ent_t princ, unsigned int field,
 	case KRB5_TL_PKINIT_ACL: {
 	    HDB_Ext_PKINIT_acl acl;
 	    size_t size;
-	    int i, ret;
+	    int ret;
+	    size_t i;
 
 	    ret = decode_HDB_Ext_PKINIT_acl(tl->tl_data_contents,
 					    tl->tl_data_length,
@@ -295,7 +296,8 @@ format_field(kadm5_principal_ent_t princ, unsigned int field,
 	case KRB5_TL_ALIASES: {
 	    HDB_Ext_Aliases alias;
 	    size_t size;
-	    int i, ret;
+	    int ret;
+	    size_t i;
 
 	    ret = decode_HDB_Ext_Aliases(tl->tl_data_contents,
 					 tl->tl_data_length,
@@ -311,7 +313,7 @@ format_field(kadm5_principal_ent_t princ, unsigned int field,
 		ret = krb5_unparse_name(context, &alias.aliases.val[i], &p);
 		if (ret)
 		    break;
-		if (i < 0)
+		if (i > 0)
 		    strlcat(buf, " ", buf_len);
 		strlcat(buf, p, buf_len);
 		free(p);
@@ -489,7 +491,7 @@ getit(struct get_options *opt, const char *name, int argc, char **argv)
 	    ret = setup_columns(&data, DEFAULT_COLUMNS_SHORT);
     } else
 	ret = setup_columns(&data, opt->column_info_string);
-	
+
     if(ret != 0) {
 	if(data.table != NULL)
 	    rtbl_destroy(data.table);

@@ -1,4 +1,4 @@
-/*	$NetBSD: salt.c,v 1.1.1.1 2011/04/13 18:15:37 elric Exp $	*/
+/*	$NetBSD: salt.c,v 1.1.1.2 2014/04/24 12:45:51 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -35,6 +35,7 @@
 
 #include "krb5_locl.h"
 
+/* coverity[+alloc : arg-*3] */
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_salttype_to_string (krb5_context context,
 			 krb5_enctype etype,
@@ -100,7 +101,7 @@ krb5_get_pw_salt(krb5_context context,
 		 krb5_salt *salt)
 {
     size_t len;
-    int i;
+    size_t i;
     krb5_error_code ret;
     char *p;
 

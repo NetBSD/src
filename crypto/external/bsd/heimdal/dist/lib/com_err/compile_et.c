@@ -1,4 +1,4 @@
-/*	$NetBSD: compile_et.c,v 1.1.1.1 2011/04/13 18:14:43 elric Exp $	*/
+/*	$NetBSD: compile_et.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Kungliga Tekniska Högskolan
@@ -47,7 +47,7 @@
 int numerror;
 extern FILE *yyin;
 
-extern void yyparse(void);
+int yyparse(void);
 
 long base_id;
 int number;
@@ -95,7 +95,7 @@ generate_c(void)
 	    fprintf(c_file, "\t/* %03d */ \"Reserved %s error (%d)\",\n",
 		    n, name, n);
 	    n++;
-	
+
 	}
 	fprintf(c_file, "\t/* %03d */ N_(\"%s\"),\n",
 		ec->number, ec->string);
@@ -222,7 +222,7 @@ main(int argc, char **argv)
     yyin = fopen(filename, "r");
     if(yyin == NULL)
 	err(1, "%s", filename);
-	
+
 
     p = strrchr(filename, rk_PATH_DELIM);
     if(p)
