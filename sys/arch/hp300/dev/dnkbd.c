@@ -1,4 +1,4 @@
-/*	$NetBSD: dnkbd.c,v 1.6 2014/04/24 11:58:04 tsutsui Exp $	*/
+/*	$NetBSD: dnkbd.c,v 1.7 2014/04/24 12:10:27 tsutsui Exp $	*/
 /*	$OpenBSD: dnkbd.c,v 1.17 2009/07/23 21:05:56 blambert Exp $	*/
 
 /*
@@ -29,6 +29,42 @@
 
 /*
  * Driver for the Apollo Domain keyboard and mouse.
+ *
+ * Random notes on the Apollo keyboard :
+ *
+ * - Powers up in 'cooked' mode, where the alpha keys generate ascii rather
+ *   than make/break codes.  Other keys seem to behave OK though.
+ *
+ * - Alt L/R keys generate two-byte sequence :
+ *             make     break
+ *       L    0xfe,2   0xfe,3
+ *       R    0xfe,0   0xfe,1
+ *
+ * - Mouse activity shows up inline in 4-byte packets introduced with 0xdf.
+ *   Byte 1 is   1MRL0000    where M, R, L are the mouse buttons, and 0 is
+ *                           down, 1 is up.
+ *   Byte 2 is 2's complement X movement, +ve to the right.
+ *   Byte 3 is 2's complement Y movement, +ve is up.
+ *
+ * - Keyboard recognises commands sent to it, all preceded by 0xff.  Commands
+ *   are echoed once sent completely.
+ *
+ *   0x00	go to cooked mode.
+ *   0x01	go to 'raw' (scancode) mode.
+ *   0x12,0x21	status report as <id1>\r<id2>\r<model>\r followed by 0xff 
+ *		and then the cooked/raw status.
+ *   0x21,0x81	beep on
+ *   0x21,0x82	beep off
+ *
+ * Some version examples :
+ *
+ * <3-@> <1-0> <SD-03687-MS>	Apollo p/n 007121 REV 00 ('old-style' US layout)
+ * <3-@> <2-0> <SD-03683-MS>	Apollo p/n 007121 REV 01 ('old-style' US layout)
+ * <3-@> <2-0> <SD-03980-MS>	Apollo 3500? keyboard.
+ * <3-@> <X-X> <RX-60857-HW>	HP p/n A1630-82001 R2
+ *				    ('new-style' off 425t, US layout),
+ *				also Apollo p/n 014555-002
+ *				    ('new-style' off DN5500, US layout).
  */
 
 #include "opt_wsdisplay_compat.h"
