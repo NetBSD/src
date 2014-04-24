@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.88 2013/11/23 22:01:12 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.89 2014/04/24 14:56:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.88 2013/11/23 22:01:12 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.89 2014/04/24 14:56:29 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -356,6 +356,7 @@ prepare(const char *nf, const char *mf, struct protox *tp)
 #ifndef SMALL
 		   gflag ||
 #endif
+		   (rflag && vflag) ||
 		   (pflag && tp->pr_sindex == N_PIMSTAT) ||
 		   Pflag) {
 		/* These flags are not yet supported via sysctl(3). */
@@ -631,10 +632,10 @@ main(int argc, char *argv[])
 			if (sflag)
 				rt_stats(use_sysctl ? 0 : nl[N_RTSTAT].n_value);
 			else {
-				if (!use_sysctl)
-					err(1, "-r is not supported "
-					    "for post-mortem analysis.");
-				p_rttables(af);
+				if (use_sysctl)
+					p_rttables(af);
+				else
+					routepr(nl[N_RTREE].n_value);
 			}
 			break;
 		}
