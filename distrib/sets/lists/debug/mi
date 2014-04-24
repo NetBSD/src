@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.58 2014/04/16 00:41:07 htodd Exp $
+# $NetBSD: mi,v 1.59 2014/04/24 21:46:44 pooka Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -152,7 +152,7 @@
 ./usr/lib/librumpdev_raidframe_g.a		comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpdev_rnd_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpdev_scsipi_g.a			comp-c-debuglib		debuglib,rump
-./usr/lib/librumpdev_scsitest_g.a		comp-c-debuglib		debuglib,rump
+./usr/lib/librumpdev_scsitest_g.a		comp-obsolete obsolete
 ./usr/lib/librumpdev_sysmon_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpdev_ubt_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpdev_ucom_g.a			comp-c-debuglib		debuglib,rump
