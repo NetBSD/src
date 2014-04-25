@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: makerumpif.sh,v 1.7 2014/04/25 13:07:31 pooka Exp $
+#	$NetBSD: makerumpif.sh,v 1.8 2014/04/25 17:50:01 pooka Exp $
 #
 # Copyright (c) 2009 Antti Kantee.  All rights reserved.
 #
@@ -78,9 +78,9 @@ sed -e '
 ' ${1} | awk -F\| -v topdir=${TOPDIR} '
 function fileheaders(file, srcstr)
 {
-	printf("/*\t$NetBSD: makerumpif.sh,v 1.7 2014/04/25 13:07:31 pooka Exp $\t*/\n\n") > file
+	printf("/*\t$NetBSD: makerumpif.sh,v 1.8 2014/04/25 17:50:01 pooka Exp $\t*/\n\n") > file
 	printf("/*\n * Automatically generated.  DO NOT EDIT.\n") > file
-	genstr = "$NetBSD: makerumpif.sh,v 1.7 2014/04/25 13:07:31 pooka Exp $"
+	genstr = "$NetBSD: makerumpif.sh,v 1.8 2014/04/25 17:50:01 pooka Exp $"
 	gsub("\\$", "", genstr)
 	printf(" * from: %s\n", srcstr) > file
 	printf(" * by:   %s\n", genstr) > file
@@ -143,6 +143,10 @@ $1 == "WRAPPERS"{gencalls = topdir "/" $2;print gencalls;next}
 		sub(".*/", "", privfile)
 
 		printf("\n") > pubhdr
+		printf("\n") > privhdr
+
+		printf("#ifndef _RUMP_PRIF_%s_H_\n", toupper(myname)) > privhdr
+		printf("#define _RUMP_PRIF_%s_H_\n", toupper(myname)) > privhdr
 		printf("\n") > privhdr
 
 		printf("\n#include <sys/cdefs.h>\n") > gencalls
@@ -217,4 +221,6 @@ $1 == "WRAPPERS"{gencalls = topdir "/" $2;print gencalls;next}
 	if (isweak)
 		printf("__weak_alias(rump_%s,rump_%s_unavailable);\n", \
 		    funname, myname) > gencalls
-}'
+}
+
+END { printf("\n#endif /* _RUMP_PRIF_%s_H_ */\n", toupper(myname)) > privhdr }'
