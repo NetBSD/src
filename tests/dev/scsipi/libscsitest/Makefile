@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2014/04/24 21:46:44 pooka Exp $
+#	$NetBSD: Makefile,v 1.2 2014/04/25 00:17:48 pooka Exp $
 #
 
 RUMPTOP= ${NETBSDSRCDIR}/sys/rump
@@ -9,6 +9,8 @@ LIBISPRIVATE= #defined
 
 SRCS=	scsitest.c
 SRCS+=	scsitest_component.c
+
+CPPFLAGS+= -I${.CURDIR} -I${RUMPTOP}/librump/rumpkern
 
 .include "${RUMPTOP}/Makefile.rump"
 .include <bsd.lib.mk>
