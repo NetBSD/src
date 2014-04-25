@@ -1,4 +1,4 @@
-/*	$NetBSD: scsitest.h,v 1.1 2010/08/24 13:19:04 pooka Exp $	*/
+/*	$NetBSD: scsitest.h,v 1.1 2014/04/25 00:24:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
