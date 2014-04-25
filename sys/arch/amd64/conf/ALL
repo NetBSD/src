@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.6 2014/04/21 16:35:38 chs Exp $
+# $NetBSD: ALL,v 1.7 2014/04/25 18:25:52 riastradh Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.6 $"
+#ident 		"ALL-$Revision: 1.7 $"
 
 maxusers	64		# estimated number of users
 
@@ -372,6 +372,7 @@ acpiwmi*	at acpi?		# ACPI WMI Mapper
 
 # Mainboard devices
 aibs*		at acpi?		# ASUSTeK AI Booster hardware monitor
+applesmc*	at acpi?		# Apple System Management Controller
 asus*		at acpi?		# ASUS hotkeys
 attimer*	at acpi?		# AT Timer
 com*		at acpi?		# Serial communications interface
@@ -408,6 +409,10 @@ sony*		at acpi?		# Sony Miscellaneous Controller
 
 # Toshiba Libretto devices
 vald* at acpi?
+
+# Apple System Management Controller devices
+applesmcfan*	at applesmcbus?
+applesmctemp*	at applesmcbus?
 
 # PCI bus support
 pci*	at mainbus? bus ?
