@@ -1,4 +1,4 @@
-/*	$NetBSD: scsitest.c,v 1.1 2014/04/24 21:46:44 pooka Exp $	*/
+/*	$NetBSD: scsitest.c,v 1.2 2014/04/25 00:24:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsitest.c,v 1.1 2014/04/24 21:46:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsitest.c,v 1.2 2014/04/25 00:24:39 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -51,7 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: scsitest.c,v 1.1 2014/04/24 21:46:44 pooka Exp $");
 #include <dev/scsipi/scsipi_all.h>
 
 #include <rump/rumpuser.h>
-#include <rump/scsitest.h>
+
+#include "scsitest.h"
 
 int	scsitest_match(device_t, cfdata_t, void *);
 void	scsitest_attach(device_t, device_t, void *);
