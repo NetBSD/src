@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: makerumpif.sh,v 1.6 2013/02/14 10:54:54 pooka Exp $
+#	$NetBSD: makerumpif.sh,v 1.7 2014/04/25 13:07:31 pooka Exp $
 #
 # Copyright (c) 2009 Antti Kantee.  All rights reserved.
 #
@@ -78,9 +78,9 @@ sed -e '
 ' ${1} | awk -F\| -v topdir=${TOPDIR} '
 function fileheaders(file, srcstr)
 {
-	printf("/*\t$NetBSD: makerumpif.sh,v 1.6 2013/02/14 10:54:54 pooka Exp $\t*/\n\n") > file
+	printf("/*\t$NetBSD: makerumpif.sh,v 1.7 2014/04/25 13:07:31 pooka Exp $\t*/\n\n") > file
 	printf("/*\n * Automatically generated.  DO NOT EDIT.\n") > file
-	genstr = "$NetBSD: makerumpif.sh,v 1.6 2013/02/14 10:54:54 pooka Exp $"
+	genstr = "$NetBSD: makerumpif.sh,v 1.7 2014/04/25 13:07:31 pooka Exp $"
 	gsub("\\$", "", genstr)
 	printf(" * from: %s\n", srcstr) > file
 	printf(" * by:   %s\n", genstr) > file
@@ -168,6 +168,8 @@ $1 == "WRAPPERS"{gencalls = topdir "/" $2;print gencalls;next}
 
 	printf("%s rump_pub_%s(%s);\n", funtype, funname, funargs) > pubhdr
 	printf("%s rump_%s(%s);\n", funtype, funname, funargs) > privhdr
+	printf("typedef %s (*rump_%s_fn)(%s);\n",	\
+	    funtype, funname, funargs) > privhdr
 
 	if (funtype == "void")
 		voidret = 1
