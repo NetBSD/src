@@ -40,6 +40,7 @@
 #include <linux/notifier.h>
 #include <linux/printk.h>
 #include <linux/sysrq.h>
+#include <asm/bug.h>
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
 #include <drm/drm_fb_helper.h>
@@ -1331,6 +1332,7 @@ static void drm_setup_crtcs(struct drm_fb_helper *fb_helper)
 	for (i = 0; i < fb_helper->crtc_count; i++) {
 		modeset = &fb_helper->crtc_info[i].mode_set;
 		modeset->num_connectors = 0;
+		modeset->fb = NULL;
 	}
 
 	for (i = 0; i < fb_helper->connector_count; i++) {
@@ -1350,6 +1352,18 @@ static void drm_setup_crtcs(struct drm_fb_helper *fb_helper)
 		}
 	}
 
+	/* Clear out any old modes if there are no more connected outputs. */
+	for (i = 0; i < fb_helper->crtc_count; i++) {
+		modeset = &fb_helper->crtc_info[i].mode_set;
+		if (modeset->num_connectors == 0) {
+			BUG_ON(modeset->fb);
+			BUG_ON(modeset->num_connectors);
+			if (modeset->mode)
+				drm_mode_destroy(dev, modeset->mode);
+			modeset->mode = NULL;
+			fb_helper->crtc_info[i].desired_mode = NULL;
+		}
+	}
 out:
 	kfree(crtcs);
 	kfree(modes);
