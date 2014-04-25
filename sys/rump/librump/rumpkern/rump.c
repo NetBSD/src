@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.298 2014/04/25 13:13:26 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.299 2014/04/25 13:20:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.298 2014/04/25 13:13:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.299 2014/04/25 13:20:45 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -129,8 +129,8 @@ rump_aiodone_worker(struct work *wk, void *dummy)
 
 static int rump_inited;
 
-void (*rump_vfs_drainbufs)(int);
-void (*rump_vfs_fini)(void);
+void (*rump_vfs_drainbufs)(int) = (void *)nullop;
+void (*rump_vfs_fini)(void) = (void *)nullop;
 int  (*rump_vfs_makeonedevnode)(dev_t, const char *,
 				devmajor_t, devminor_t) = (void *)nullop;
 int  (*rump_vfs_makedevnodes)(dev_t, const char *, char,
@@ -142,8 +142,8 @@ int rump__unavailable() {return EOPNOTSUPP;}
 __weak_alias(biodone,rump__unavailable);
 __weak_alias(sopoll,rump__unavailable);
 
-rump_proc_vfs_init_fn rump_proc_vfs_init;
-rump_proc_vfs_release_fn rump_proc_vfs_release;
+rump_proc_vfs_init_fn rump_proc_vfs_init = (void *)nullop;
+rump_proc_vfs_release_fn rump_proc_vfs_release = (void *)nullop;
 
 static void add_linkedin_modules(const struct modinfo *const *, size_t);
 
@@ -569,8 +569,7 @@ cpu_reboot(int howto, char *bootstr)
 
 	/* try to sync */
 	if (!((howto & RB_NOSYNC) || panicstr)) {
-		if (rump_vfs_fini)
-			rump_vfs_fini();
+		rump_vfs_fini();
 	}
 
 	doshutdownhooks();
