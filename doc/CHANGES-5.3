@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.50 2014/04/16 08:10:57 msaitoh Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.51 2014/04/25 15:50:39 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -718,7 +718,7 @@ lib/libpthread/pthread_mutex.c			1.57, 1.59
 
 sys/kern/kern_verifiedexec.c			1.132
 
-	Reorder code to avoid use-after-free on error. From Maxime Villard.
+	Reorder code to avoid use-after-free on error.
 	[maxv, ticket #1899]
 
 sys/dev/wscons/mra.c				1.6
@@ -728,3 +728,38 @@ sys/dev/wscons/mra.c				1.6
 	is typically used by drivers for touchscreen devices,
 	like uts(4).
 	[khorben, ticket #1900]
+
+sys/kern/vfs_syscalls.c				1.478, 1.480 via patch
+sys/coda/coda_vfsops.c				1.81
+sys/fs/adosfs/advfsops.c			1.70
+sys/fs/cd9660/cd9660_vfsops.c			1.84
+sys/fs/efs/efs_vfsops.c				1.25
+sys/fs/filecorefs/filecore_vfsops.c		1.76
+sys/fs/hfs/hfs_vfsops.c				1.31
+sys/fs/msdosfs/msdosfs_vfsops.c			1.107
+sys/fs/ntfs/ntfs_vfsops.c			1.94
+sys/fs/ptyfs/ptyfs_vfsops.c			1.50 via patch
+sys/fs/puffs/puffs_vfsops.c			1.110 via patch
+sys/fs/smbfs/smbfs_vfsops.c			1.100
+sys/fs/sysvbfs/sysvbfs_vfsops.c			1.43
+sys/fs/tmpfs/tmpfs_vfsops.c			1.59 via patch
+sys/fs/udf/udf_vfsops.c				1.67
+sys/fs/union/union_vfsops.c			1.72
+sys/fs/unionfs/unionfs_vfsops.c			1.13
+sys/kern/vfs_syscalls.c				1.479
+sys/miscfs/nullfs/null_vfsops.c			1.88 via patch
+sys/miscfs/overlay/overlay_vfsops.c		1.61
+sys/miscfs/procfs/procfs_vfsops.c		1.91
+sys/miscfs/umapfs/umap_vfsops.c			1.92
+sys/nfs/nfs_vfsops.c				1.227
+sys/ufs/ext2fs/ext2fs_vfsops.c			1.180
+sys/ufs/ffs/ffs_vfsops.c			1.297
+sys/ufs/lfs/lfs_vfsops.c			1.321
+sys/ufs/mfs/mfs_vfsops.c			1.107
+
+	Due to missing checks in the mount syscall, and a wrong
+	assumption on the file systems side, the kernel could allocate
+	an unbounded or zero-sized memory buffer, and could dereference
+	a NULL pointer when particular arguments are given by a user.
+	[maxv, ticket #1901]
+
