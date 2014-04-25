@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.30 2014/04/16 22:34:02 pooka Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.31 2014/04/25 13:20:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #define RUMP__CURLWP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.30 2014/04/16 22:34:02 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.31 2014/04/25 13:20:45 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -115,8 +115,7 @@ lwproc_proc_free(struct proc *p)
 
 	cred = p->p_cred;
 	chgproccnt(kauth_cred_getuid(cred), -1);
-	if (rump_proc_vfs_release)
-		rump_proc_vfs_release(p);
+	rump_proc_vfs_release(p);
 
 	doexithooks(p);
 	lim_free(p->p_limit);
@@ -216,8 +215,7 @@ lwproc_newproc(struct proc *parent, int flags)
 	kauth_proc_fork(parent, p);
 
 	/* initialize cwd in rump kernels with vfs */
-	if (rump_proc_vfs_init)
-		rump_proc_vfs_init(p);
+	rump_proc_vfs_init(p);
 
 	chgproccnt(uid, 1); /* not enforced */
 

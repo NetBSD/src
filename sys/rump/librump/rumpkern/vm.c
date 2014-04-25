@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.155 2014/04/12 20:24:46 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.156 2014/04/25 13:20:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.155 2014/04/12 20:24:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.156 2014/04/25 13:20:45 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1124,8 +1124,7 @@ uvm_pageout(void *arg)
 		 * And then drain the pools.  Wipe them out ... all of them.
 		 */
 		for (pp_first = NULL;;) {
-			if (rump_vfs_drainbufs)
-				rump_vfs_drainbufs(10 /* XXX: estimate! */);
+			rump_vfs_drainbufs(10 /* XXX: estimate! */);
 
 			succ = pool_drain(&pp);
 			if (succ || pp == pp_first)
