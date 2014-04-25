@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.301 2014/04/25 18:25:38 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.302 2014/04/25 19:56:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.301 2014/04/25 18:25:38 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.302 2014/04/25 19:56:01 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -125,7 +125,6 @@ rump_aiodone_worker(struct work *wk, void *dummy)
 static int rump_inited;
 
 void (*rump_vfs_drainbufs)(int) = (void *)nullop;
-void (*rump_vfs_fini)(void) = (void *)nullop;
 int  (*rump_vfs_makeonedevnode)(dev_t, const char *,
 				devmajor_t, devminor_t) = (void *)nullop;
 int  (*rump_vfs_makedevnodes)(dev_t, const char *, char,
@@ -541,48 +540,6 @@ rump_init_server(const char *url)
 {
 
 	return rumpuser_sp_init(url, ostype, osrelease, MACHINE);
-}
-
-void
-cpu_reboot(int howto, char *bootstr)
-{
-	int ruhow = 0;
-	void *finiarg;
-
-	printf("rump kernel halting...\n");
-
-	if (!RUMP_LOCALPROC_P(curproc))
-		finiarg = curproc->p_vmspace->vm_map.pmap;
-	else
-		finiarg = NULL;
-
-	/* dump means we really take the dive here */
-	if ((howto & RB_DUMP) || panicstr) {
-		ruhow = RUMPUSER_PANIC;
-		goto out;
-	}
-
-	/* try to sync */
-	if (!((howto & RB_NOSYNC) || panicstr)) {
-		rump_vfs_fini();
-	}
-
-	doshutdownhooks();
-
-	/* your wish is my command */
-	if (howto & RB_HALT) {
-		printf("rump kernel halted\n");
-		rumpuser_sp_fini(finiarg);
-		for (;;) {
-			rumpuser_clock_sleep(RUMPUSER_CLOCK_RELWALL, 10, 0);
-		}
-	}
-
-	/* this function is __dead, we must exit */
- out:
-	printf("halted\n");
-	rumpuser_sp_fini(finiarg);
-	rumpuser_exit(ruhow);
 }
 
 static int compcounter[RUMP_COMPONENT_MAX];
