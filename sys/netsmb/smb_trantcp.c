@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.c,v 1.45 2014/04/25 15:52:45 pooka Exp $	*/
+/*	$NetBSD: smb_trantcp.c,v 1.46 2014/04/25 15:54:12 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.45 2014/04/25 15:52:45 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.46 2014/04/25 15:54:12 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,7 +244,6 @@ nbssn_rq_request(struct nbpcb *nbp, struct lwp *l)
 	error = nbssn_recv(nbp, &m0, &rplen, &rpcode, true, l);
 	if (error) {
 		if (error == EWOULDBLOCK) {	/* Timeout */
-			printf("would blockn\n");
 			NBDEBUG(("initial request timeout\n"));
 			return ETIMEDOUT;
 		}
