@@ -1,10 +1,13 @@
-/*	$NetBSD: rumpvfs_if_priv.h,v 1.11 2014/04/25 13:11:47 pooka Exp $	*/
+/*	$NetBSD: rumpvfs_if_priv.h,v 1.12 2014/04/25 17:50:28 pooka Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
  * from: NetBSD: rumpvfs.ifspec,v 1.9 2014/04/25 13:10:42 pooka Exp 
- * by:   NetBSD: makerumpif.sh,v 1.7 2014/04/25 13:07:31 pooka Exp 
+ * by:   NetBSD: makerumpif.sh,v 1.8 2014/04/25 17:50:01 pooka Exp 
  */
+
+#ifndef _RUMP_PRIF_VFS_H_
+#define _RUMP_PRIF_VFS_H_
 
 void rump_getvninfo(struct vnode *, enum rump_vtype *, off_t *, dev_t *);
 typedef void (*rump_getvninfo_fn)(struct vnode *, enum rump_vtype *, off_t *, dev_t *);
@@ -62,3 +65,5 @@ void rump_vattr50_to_vattr(const struct vattr *, struct vattr *);
 typedef void (*rump_vattr50_to_vattr_fn)(const struct vattr *, struct vattr *);
 void rump_vattr_to_vattr50(const struct vattr *, struct vattr *);
 typedef void (*rump_vattr_to_vattr50_fn)(const struct vattr *, struct vattr *);
+
+#endif /* _RUMP_PRIF_VFS_H_ */

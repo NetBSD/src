@@ -1,10 +1,13 @@
-/*	$NetBSD: rumpkern_if_priv.h,v 1.15 2014/04/25 13:11:47 pooka Exp $	*/
+/*	$NetBSD: rumpkern_if_priv.h,v 1.16 2014/04/25 17:50:28 pooka Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
  * from: NetBSD: rumpkern.ifspec,v 1.13 2014/04/25 13:10:42 pooka Exp 
- * by:   NetBSD: makerumpif.sh,v 1.7 2014/04/25 13:07:31 pooka Exp 
+ * by:   NetBSD: makerumpif.sh,v 1.8 2014/04/25 17:50:01 pooka Exp 
  */
+
+#ifndef _RUMP_PRIF_KERN_H_
+#define _RUMP_PRIF_KERN_H_
 
 int rump_module_init(const struct modinfo * const *, size_t);
 typedef int (*rump_module_init_fn)(const struct modinfo * const *, size_t);
@@ -44,3 +47,5 @@ int rump_etfs_register_withsize(const char *, const char *, enum rump_etfs_type,
 typedef int (*rump_etfs_register_withsize_fn)(const char *, const char *, enum rump_etfs_type, uint64_t, uint64_t);
 int rump_etfs_remove(const char *);
 typedef int (*rump_etfs_remove_fn)(const char *);
+
+#endif /* _RUMP_PRIF_KERN_H_ */
