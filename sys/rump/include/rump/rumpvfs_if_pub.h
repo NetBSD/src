@@ -1,9 +1,9 @@
-/*	$NetBSD: rumpvfs_if_pub.h,v 1.11 2014/04/25 13:11:47 pooka Exp $	*/
+/*	$NetBSD: rumpvfs_if_pub.h,v 1.12 2014/04/25 17:50:28 pooka Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
  * from: NetBSD: rumpvfs.ifspec,v 1.9 2014/04/25 13:10:42 pooka Exp 
- * by:   NetBSD: makerumpif.sh,v 1.7 2014/04/25 13:07:31 pooka Exp 
+ * by:   NetBSD: makerumpif.sh,v 1.8 2014/04/25 17:50:01 pooka Exp 
  */
 
 void rump_pub_getvninfo(struct vnode *, enum rump_vtype *, off_t *, dev_t *);
