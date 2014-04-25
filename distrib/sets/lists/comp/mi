@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1890 2014/04/24 21:46:44 pooka Exp $
+#	$NetBSD: mi,v 1.1891 2014/04/25 00:24:39 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3058,7 +3058,7 @@
 ./usr/include/rump/rumpuser_port.h			comp-c-include	rump
 ./usr/include/rump/rumpvfs_if_pub.h		comp-c-include	rump
 ./usr/include/rump/rumpvnode_if.h		comp-c-include	rump
-./usr/include/rump/scsitest.h			comp-c-include	rump
+./usr/include/rump/scsitest.h			comp-obsolete obsolete
 ./usr/include/rump/ukfs.h			comp-c-include	rump
 ./usr/include/sa.h				comp-obsolete		obsolete
 ./usr/include/saslc.h				comp-c-include		crypto
