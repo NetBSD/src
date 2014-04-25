@@ -1,4 +1,4 @@
-/*	$NetBSD: uatp.c,v 1.5 2014/02/25 18:30:10 pooka Exp $	*/
+/*	$NetBSD: uatp.c,v 1.6 2014/04/25 18:07:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2011, 2012 Taylor R. Campbell
@@ -143,21 +143,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.5 2014/02/25 18:30:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.6 2014/04/25 18:07:29 riastradh Exp $");
 
+#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/atomic.h>
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
-#include <sys/param.h>
+#include <sys/kernel.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/time.h>
-#include <sys/types.h>
 #include <sys/workqueue.h>
-
-/* WTF?  */
-extern int hz;
 
 /* Order is important here...sigh...  */
 #include <dev/usb/usb.h>
