@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_pci.c,v 1.7 2014/04/06 16:42:00 riastradh Exp $	*/
+/*	$NetBSD: i915_pci.c,v 1.8 2014/04/25 19:02:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.7 2014/04/06 16:42:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.8 2014/04/25 19:02:51 riastradh Exp $");
+
+#ifdef _KERNEL_OPT
+#include "vga.h"
+#endif
 
 #include <sys/types.h>
 #ifndef _MODULE
@@ -46,6 +50,18 @@ __KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.7 2014/04/06 16:42:00 riastradh Exp $
 #include <dev/pci/wsdisplay_pci.h>
 #include <dev/wsfb/genfbvar.h>
 
+#if NVGA > 0
+/*
+ * XXX All we really need is vga_is_console from vgavar.h, but the
+ * header files are missing their own dependencies, so we need to
+ * explicitly drag in the other crap.
+ */
+#include <dev/ic/mc6845reg.h>
+#include <dev/ic/pcdisplayvar.h>
+#include <dev/ic/vgareg.h>
+#include <dev/ic/vgavar.h>
+#endif
+
 #include <drm/drmP.h>
 
 #include "i915_drv.h"
@@ -58,6 +74,7 @@ struct i915drm_softc {
 	bus_space_handle_t		sc_fb_bsh;
 	struct genfb_softc		sc_genfb;
 	struct list_head		sc_fb_list; /* XXX Kludge!  */
+	bool				sc_console;
 };
 
 static int	i915drm_match(device_t, cfdata_t, void *);
@@ -168,6 +185,35 @@ i915drm_attach(device_t parent, device_t self, void *aux)
 		i915_drm_driver->driver_features &=~ DRIVER_USE_AGP;
 	}
 
+	/*
+	 * Figure out whether to grab the console.
+	 *
+	 * XXX This is much too hairy!  Can we simplify it and
+	 * x86/consinit.c?
+	 */
+#if NVGA > 0
+	if (vga_is_console(pa->pa_iot, -1) ||
+	    vga_is_console(pa->pa_memt, -1)) {
+		sc->sc_console = true;
+		/*
+		 * There is a window from here until genfb attaches in
+		 * which kernel messages will go into a black hole,
+		 * until genfb replays the console.  Whattakludge.
+		 *
+		 * wsdisplay_cndetach must come first, to clear cn_tab,
+		 * so that nothing will use it; then vga_cndetach
+		 * unmaps the bus space that it would have used.
+		 */
+		wsdisplay_cndetach();
+		vga_cndetach();
+	} else
+#endif
+	if (genfb_is_console() && genfb_is_enabled()) {
+		sc->sc_console = true;
+	} else {
+		sc->sc_console = false;
+	}
+
 	/* Initialize the drm pci driver state.  */
 	sc->sc_drm_dev.driver = i915_drm_driver;
 	drm_pci_attach(self, pa, &sc->sc_pci_dev, &sc->sc_drm_dev);
@@ -180,8 +226,8 @@ i915drm_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	/* Attach a framebuffer, but not until interrupts work.  */
-	config_interrupts(self, &i915drm_attach_framebuffer);
+	/* Attach a framebuffer.  */
+	i915drm_attach_framebuffer(self);
 }
 
 static int
@@ -412,7 +458,7 @@ i915drm_fb_probe(struct drm_fb_helper *fb_helper,
 		goto fail3;
 	}
 
-	prop_dictionary_set_bool(dict, "is_console", 1); /* XXX */
+	prop_dictionary_set_bool(dict, "is_console", sc->sc_console);
 	prop_dictionary_set_uint32(dict, "width", mode_cmd.width);
 	prop_dictionary_set_uint32(dict, "height", mode_cmd.height);
 	prop_dictionary_set_uint8(dict, "depth", sizes->surface_bpp);
