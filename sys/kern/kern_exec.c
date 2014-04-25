@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.406 2014/04/20 00:20:01 uebayasi Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.407 2014/04/25 18:04:45 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.406 2014/04/20 00:20:01 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.407 2014/04/25 18:04:45 riastradh Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -787,7 +787,7 @@ execve_dovmcmds(struct lwp *l, struct execve_data * restrict data)
 	struct proc		*p = l->l_proc;
 	struct exec_vmcmd	*base_vcp;
 	int			error = 0;
-	int			i;
+	size_t			i;
 
 	/* record proc's vnode, for use by procfs and others */
 	if (p->p_textvp)
