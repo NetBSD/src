@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.96 2014/04/23 23:25:45 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.97 2014/04/25 11:49:16 pooka Exp $
 #
 
 .if !defined(_RUMP_MK)
@@ -45,7 +45,7 @@ CPPFLAGS+=	-I${RUMPTOP}/..
 RUMP_LDSCRIPT?=	GNU
 .if ${RUMP_LDSCRIPT} != "no"
 # my ld or yours?
-.if ${RUMP_LDSCRIPT} == "sun" || defined(HAVE_SUN_LD)
+.if ${RUMP_LDSCRIPT} == "sun"
 LDFLAGS+=	-Wl,-M ${RUMPTOP}/ldscript_sun.rump
 SRCS+=		linksyms_sun.c
 .PATH:		${RUMPTOP}
