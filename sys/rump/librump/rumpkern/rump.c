@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.299 2014/04/25 13:20:45 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.300 2014/04/25 18:13:59 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.299 2014/04/25 13:20:45 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.300 2014/04/25 18:13:59 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -111,11 +111,6 @@ static struct lwp *bootlwp;
 
 static char rump_msgbuf[16*1024]; /* 16k should be enough for std rump needs */
 
-#ifdef LOCKDEBUG
-const int rump_lockdebug = 1;
-#else
-const int rump_lockdebug = 0;
-#endif
 bool rump_ttycomponent = false;
 
 static void
