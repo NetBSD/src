@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.44 2008/07/29 09:10:09 pooka Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.44.4.1 2014/04/25 15:43:50 sborrill Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.44 2008/07/29 09:10:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.44.4.1 2014/04/25 15:43:50 sborrill Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -89,6 +89,8 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	struct tmpfs_node *root;
 	struct tmpfs_args *args = data;
 
+	if (args == NULL)
+		return EINVAL;
 	if (*data_len < sizeof *args)
 		return EINVAL;
 

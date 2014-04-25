@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.53 2008/06/28 01:34:06 rumble Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.53.6.1 2014/04/25 15:43:50 sborrill Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.53 2008/06/28 01:34:06 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.53.6.1 2014/04/25 15:43:50 sborrill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,6 +114,8 @@ ov_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	printf("ov_mount(mp = %p)\n", mp);
 #endif
 
+	if (args == NULL)
+		return EINVAL;
 	if (*data_len < sizeof *args)
 		return EINVAL;
 
