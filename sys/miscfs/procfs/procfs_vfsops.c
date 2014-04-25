@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.81 2008/06/28 01:34:06 rumble Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.81.6.1 2014/04/25 15:43:50 sborrill Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.81 2008/06/28 01:34:06 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.81.6.1 2014/04/25 15:43:50 sborrill Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -127,6 +127,9 @@ procfs_mount(
 	struct procfsmount *pmnt;
 	struct procfs_args *args = data;
 	int error;
+
+	if (args == NULL)
+		return EINVAL;
 
 	if (UIO_MX & (UIO_MX-1)) {
 		log(LOG_ERR, "procfs: invalid directory entry size");

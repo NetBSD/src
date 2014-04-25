@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.52.2.3 2009/07/09 19:44:34 snj Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.52.2.4 2014/04/25 15:43:50 sborrill Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.52.2.3 2009/07/09 19:44:34 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.52.2.4 2014/04/25 15:43:50 sborrill Exp $");
 #endif /* not lint */
 
 
@@ -324,6 +324,8 @@ udf_mount(struct mount *mp, const char *path,
 
 	DPRINTF(CALL, ("udf_mount called\n"));
 
+	if (args == NULL)
+		return EINVAL;
 	if (*data_len < sizeof *args)
 		return EINVAL;
 
