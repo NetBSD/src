@@ -1,9 +1,9 @@
-/*	$NetBSD: rumpkern_if_pub.h,v 1.16 2014/04/25 13:11:47 pooka Exp $	*/
+/*	$NetBSD: rumpkern_if_pub.h,v 1.17 2014/04/25 17:50:28 pooka Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
  * from: NetBSD: rumpkern.ifspec,v 1.13 2014/04/25 13:10:42 pooka Exp 
- * by:   NetBSD: makerumpif.sh,v 1.7 2014/04/25 13:07:31 pooka Exp 
+ * by:   NetBSD: makerumpif.sh,v 1.8 2014/04/25 17:50:01 pooka Exp 
  */
 
 int rump_pub_module_init(const struct modinfo * const *, size_t);
