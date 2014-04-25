@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.11 2014/04/24 20:12:56 pooka Exp $	*/
+/*	$NetBSD: string.h,v 1.12 2014/04/25 18:37:38 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@ __END_DECLS
 #define memmove(dst, src, len) __ssp_bos_check3(memmove, dst, src, len)
 #define memset(dst, val, len) __ssp_bos_check3(memset, dst, val, len)
 #define stpcpy(dst, src) __ssp_bos_check2(stpcpy, dst, src)
-#if __GNUC_PREREQ__(4,8)
+#if __GNUC_PREREQ__(4,8) || defined(__clang__)
 #define stpncpy(dst, src, len) __ssp_bos_check3(stpncpy, dst, src, len)
 #endif
 #define strcpy(dst, src) __ssp_bos_check2(strcpy, dst, src)
