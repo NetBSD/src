@@ -34,7 +34,6 @@ public:
   enum {
     LAST_REGISTER = REGNO_X86_EIP,
     LAST_RESTORE_REG = REGNO_X86_EIP,
-    RETURN_REG = REGNO_X86_EIP,
     RETURN_OFFSET = 0,
   };
 
@@ -100,7 +99,6 @@ public:
   enum {
     LAST_REGISTER = REGNO_X86_64_RIP,
     LAST_RESTORE_REG = REGNO_X86_64_RIP,
-    RETURN_REG = REGNO_X86_64_RIP,
     RETURN_OFFSET = 0,
   };
 
@@ -169,7 +167,6 @@ public:
   enum {
     LAST_REGISTER = REGNO_PPC32_V31,
     LAST_RESTORE_REG = REGNO_PPC32_V31,
-    RETURN_REG = REGNO_PPC32_LR,
     RETURN_OFFSET = 0,
   };
 
@@ -258,7 +255,6 @@ public:
   enum {
     LAST_REGISTER = REGNO_ARM32_D31,
     LAST_RESTORE_REG = REGNO_ARM32_SPSR,
-    RETURN_REG = REGNO_ARM32_SPSR,
     RETURN_OFFSET = 0,
   };
 
@@ -328,7 +324,6 @@ public:
   enum {
     LAST_REGISTER = REGNO_VAX_PSW,
     LAST_RESTORE_REG = REGNO_VAX_PSW,
-    RETURN_REG = REGNO_VAX_R15,
     RETURN_OFFSET = 0,
   };
 
@@ -400,7 +395,6 @@ public:
   enum {
     LAST_REGISTER = REGNO_M68K_FP7,
     LAST_RESTORE_REG = REGNO_M68K_FP7,
-    RETURN_REG = REGNO_M68K_PC,
     RETURN_OFFSET = 0,
   };
 
@@ -477,7 +471,6 @@ public:
   enum {
     LAST_REGISTER = REGNO_SH3_PR,
     LAST_RESTORE_REG = REGNO_SH3_PR,
-    RETURN_REG = REGNO_SH3_PR,
     RETURN_OFFSET = 0,
   };
 
@@ -542,7 +535,6 @@ public:
   enum {
     LAST_REGISTER = REGNO_SPARC64_PC,
     LAST_RESTORE_REG = REGNO_SPARC64_PC,
-    RETURN_REG = REGNO_SPARC64_R15,
     RETURN_OFFSET = 8,
   };
   typedef uint64_t reg_t;
@@ -606,7 +598,6 @@ public:
   enum {
     LAST_REGISTER = REGNO_SPARC_PC,
     LAST_RESTORE_REG = REGNO_SPARC_PC,
-    RETURN_REG = REGNO_SPARC_R15,
     RETURN_OFFSET = 8,
   };
   typedef uint32_t reg_t;
@@ -672,7 +663,6 @@ public:
   enum {
     LAST_REGISTER = REGNO_ALPHA_F30,
     LAST_RESTORE_REG = REGNO_ALPHA_F30,
-    RETURN_REG = REGNO_ALPHA_R26,
     RETURN_OFFSET = 0,
   };
   typedef uint32_t reg_t;
@@ -740,7 +730,6 @@ public:
   enum {
     LAST_REGISTER = REGNO_HPPA_FR31H,
     LAST_RESTORE_REG = REGNO_HPPA_FR31H,
-    RETURN_REG = REGNO_HPPA_R2,
     RETURN_OFFSET = -3, // strictly speaking, this is a mask
   };
 
@@ -812,7 +801,6 @@ public:
   enum {
     LAST_REGISTER = REGNO_MIPS_F31,
     LAST_RESTORE_REG = REGNO_MIPS_F31,
-    RETURN_REG = REGNO_MIPS_R31,
     RETURN_OFFSET = 0,
   };
 
@@ -884,7 +872,6 @@ public:
   enum {
     LAST_REGISTER = REGNO_MIPS64_F31,
     LAST_RESTORE_REG = REGNO_MIPS64_F31,
-    RETURN_REG = REGNO_MIPS64_R31,
     RETURN_OFFSET = 0,
   };
 
