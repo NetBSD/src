@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1180 2014/04/09 10:21:35 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1181 2014/04/26 07:32:56 mrg Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1187 2014/04/09 10:21:10 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1188 2014/04/26 07:32:26 mrg Exp
  */
 
 /*
@@ -1182,6 +1182,10 @@
 #define	PCI_PRODUCT_ATTANSIC_AR8131	0x1063		/* AR8131 Gigabit Ethernet Adapter */
 #define	PCI_PRODUCT_ATTANSIC_AR8151	0x1073		/* AR8151 v1.0 Gigabit Ethernet Adapter */
 #define	PCI_PRODUCT_ATTANSIC_AR8151_V2	0x1083		/* AR8151 v2.0 Gigabit Ethernet Adapter */
+#define	PCI_PRODUCT_ATTANSIC_AR8162	0x1090		/* AR8162 */
+#define	PCI_PRODUCT_ATTANSIC_AR8161	0x1091		/* AR8161 */
+#define	PCI_PRODUCT_ATTANSIC_AR8172	0x10a0		/* AR8172 */
+#define	PCI_PRODUCT_ATTANSIC_AR8171	0x10a1		/* AR8171 */
 #define	PCI_PRODUCT_ATTANSIC_ETHERNET_100	0x2048		/* L2 100 Mbit Ethernet Adapter */
 #define	PCI_PRODUCT_ATTANSIC_AR8152_B	0x2060		/* AR8152 v1.1 Fast Ethernet Adapter */
 #define	PCI_PRODUCT_ATTANSIC_AR8152_B2	0x2062		/* AR8152 v2.0 Fast Ethernet Adapter */
