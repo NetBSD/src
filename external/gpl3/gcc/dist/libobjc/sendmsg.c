@@ -105,7 +105,6 @@ struct objc_method * search_for_method_in_list (struct objc_method_list * list, 
 id nil_method (id, SEL);
 
 /* Given a selector, return the proper forwarding implementation.  */
-inline
 IMP
 __objc_get_forward_imp (id rcv, SEL sel)
 {
@@ -320,7 +319,6 @@ get_implementation (id receiver, Class class, SEL sel)
   return res;
 }
 
-inline
 IMP
 get_imp (Class class, SEL sel)
 {
@@ -364,7 +362,6 @@ method_get_imp (struct objc_method * method)
    method can be forwarded.  Since this requires the dispatch table to
    installed, this function will implicitly invoke +initialize for the
    class of OBJECT if it hasn't been invoked yet.  */
-inline
 BOOL
 __objc_responds_to (id object, SEL sel)
 {
