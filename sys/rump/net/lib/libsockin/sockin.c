@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.36 2014/03/13 01:40:30 pooka Exp $	*/
+/*	$NetBSD: sockin.c,v 1.37 2014/04/26 11:23:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.36 2014/03/13 01:40:30 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.37 2014/04/26 11:23:03 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -560,3 +560,14 @@ sockin_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 	return rumpcomp_sockin_setsockopt(SO2S(so), sopt->sopt_level,
 	    sopt->sopt_name, sopt->sopt_data, sopt->sopt_size);
 }
+
+int sockin_unavailable(void);
+int
+sockin_unavailable(void)
+{
+
+        panic("interface not available in with sockin");
+}
+__strong_alias(rtrequest,sockin_unavailable);
+__strong_alias(ifunit,sockin_unavailable);
+__strong_alias(ifreq_setaddr,sockin_unavailable);
