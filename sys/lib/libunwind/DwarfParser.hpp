@@ -43,6 +43,7 @@ public:
     uint8_t personalityOffsetInCIE;
     bool isSignalFrame;
     bool fdesHaveAugmentationData;
+    uint8_t returnAddressRegister;
   };
 
   /// Information about an FDE (Frame Description Entry)
@@ -238,7 +239,7 @@ bool CFI_Parser<A, R>::parseCIE(A &addressSpace, pint_t cie,
   // Parse data alignment factor
   cieInfo->dataAlignFactor = addressSpace.getSLEB128(p, cieContentEnd);
   // Parse return address register
-  addressSpace.getULEB128(p, cieContentEnd);
+  cieInfo->returnAddressRegister = (uint8_t)addressSpace.getULEB128(p, cieContentEnd);
   // Parse augmentation data based on augmentation string.
   if (addressSpace.get8(strStart) == 'z') {
     // parse augmentation data length
