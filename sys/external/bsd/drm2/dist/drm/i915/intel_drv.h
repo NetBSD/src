@@ -56,7 +56,7 @@
 			if ((W) && drm_can_sleep())  {			\
 				msleep(W);				\
 			} else {					\
-				cpu_relax();				\
+				DELAY(1000);				\
 			}						\
 		}							\
 	}								\
@@ -81,7 +81,7 @@
 				ret__ = -ETIMEDOUT;			\
 				break;					\
 			}						\
-			cpu_relax();					\
+			DELAY(1);					\
 		}							\
 	}								\
 	ret__;								\
