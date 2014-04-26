@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.272 2014/02/25 18:30:12 pooka Exp $	*/
+/*	$NetBSD: if.c,v 1.273 2014/04/26 11:16:22 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.272 2014/02/25 18:30:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.273 2014/04/26 11:16:22 pooka Exp $");
 
 #include "opt_inet.h"
 
@@ -168,6 +168,7 @@ pfil_head_t *	if_pfil;
 
 static kauth_listener_t if_listener;
 
+static int doifioctl(struct socket *, u_long, void *, struct lwp *);
 static int ifioctl_attach(struct ifnet *);
 static void ifioctl_detach(struct ifnet *);
 static void ifnet_lock_enter(struct ifnet_lock *);
@@ -226,6 +227,9 @@ ifinit(void)
 
 	if_listener = kauth_listen_scope(KAUTH_SCOPE_NETWORK,
 	    if_listener_cb, NULL);
+
+	/* interfaces are available, inform socket code */
+	ifioctl = doifioctl;
 }
 
 /*
@@ -1788,8 +1792,8 @@ ifnet_lock_exit(struct ifnet_lock *il)
 /*
  * Interface ioctls.
  */
-int
-ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
+static int
+doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 {
 	struct ifnet *ifp;
 	struct ifreq *ifr;

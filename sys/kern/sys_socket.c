@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.66 2014/04/26 11:10:10 pooka Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.67 2014/04/26 11:16:22 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.66 2014/04/26 11:10:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.67 2014/04/26 11:16:22 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,6 +91,8 @@ const struct fileops socketops = {
 	.fo_kqfilter = soo_kqfilter,
 	.fo_restart = soo_restart,
 };
+
+int (*ifioctl)(struct socket *, u_long, void *, struct lwp *) = (void *)eopnotsupp;
 
 /* ARGSUSED */
 int
