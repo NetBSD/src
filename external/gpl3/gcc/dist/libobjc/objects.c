@@ -36,7 +36,6 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #endif
 
 /* FIXME: The semantics of extraBytes are not really clear.  */
-inline
 id
 class_createInstance (Class class, size_t extraBytes)
 {
