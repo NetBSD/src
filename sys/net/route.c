@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.129 2014/03/22 07:46:35 maxv Exp $	*/
+/*	$NetBSD: route.c,v 1.130 2014/04/26 11:10:10 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.129 2014/03/22 07:46:35 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.130 2014/04/26 11:10:10 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -566,15 +566,6 @@ rtflushclone(sa_family_t family, struct rtentry *parent)
 		panic("rtflushclone: called with a non-cloning route");
 #endif
 	rt_walktree(family, rtflushclone1, (void *)parent);
-}
-
-/*
- * Routing table ioctl interface.
- */
-int
-rtioctl(u_long req, void *data, struct lwp *l)
-{
-	return EOPNOTSUPP;
 }
 
 struct ifaddr *
