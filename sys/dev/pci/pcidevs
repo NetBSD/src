@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1187 2014/04/09 10:21:10 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1188 2014/04/26 07:32:26 mrg Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1175,6 +1175,10 @@ product ATTANSIC AR8132		0x1062	AR8132 Fast Ethernet Adapter
 product ATTANSIC AR8131		0x1063	AR8131 Gigabit Ethernet Adapter
 product ATTANSIC AR8151		0x1073	AR8151 v1.0 Gigabit Ethernet Adapter
 product ATTANSIC AR8151_V2	0x1083	AR8151 v2.0 Gigabit Ethernet Adapter
+product ATTANSIC AR8162		0x1090	AR8162
+product ATTANSIC AR8161		0x1091	AR8161
+product ATTANSIC AR8172		0x10a0	AR8172
+product ATTANSIC AR8171		0x10a1	AR8171
 product ATTANSIC ETHERNET_100	0x2048	L2 100 Mbit Ethernet Adapter
 product ATTANSIC AR8152_B	0x2060	AR8152 v1.1 Fast Ethernet Adapter
 product ATTANSIC AR8152_B2	0x2062	AR8152 v2.0 Fast Ethernet Adapter
