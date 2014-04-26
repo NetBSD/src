@@ -648,7 +648,6 @@ objc_promoted_size (const char *type)
   occurring in method prototype encodings.
 */
 
-inline
 const char *
 objc_skip_type_qualifiers (const char *type)
 {
@@ -666,7 +665,6 @@ objc_skip_type_qualifiers (const char *type)
   return type;
 }
 
-inline
 const char *
 objc_skip_typespec (const char *type)
 {
@@ -801,7 +799,6 @@ objc_skip_typespec (const char *type)
   Skip an offset as part of a method encoding.  This is prepended by a
   '+' if the argument is passed in registers.
 */
-inline
 const char *
 objc_skip_offset (const char *type)
 {
