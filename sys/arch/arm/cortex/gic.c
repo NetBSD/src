@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.8 2014/04/13 02:21:47 matt Exp $	*/
+/*	$NetBSD: gic.c,v 1.9 2014/04/27 16:22:13 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.8 2014/04/13 02:21:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.9 2014/04/27 16:22:13 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -139,18 +139,21 @@ gicd_write(struct armgic_softc *sc, bus_size_t o, uint32_t v)
 
 /*
  * In the GIC prioritization scheme, lower numbers have higher priority.
+ * Only write priorities that could be non-secure.
  */
 static inline uint32_t
 armgic_ipl_to_priority(int ipl)
 {
-	return (IPL_HIGH - ipl) * GICC_PMR_PRIORITIES / NIPL;
+	return GICC_PMR_NONSECURE
+	    | ((IPL_HIGH - ipl) * GICC_PMR_NS_PRIORITIES / NIPL);
 }
 
 #if 0
 static inline int
 armgic_priority_to_ipl(uint32_t priority)
 {
-	return IPL_HIGH - priority * NIPL / GICC_PMR_PRIORITIES;
+	return IPL_HIGH
+	    - (priority & ~GICC_PMR_NONSECURE) * NIPL / GICC_PMR_NS_PRIORITIES;
 }
 #endif
 
