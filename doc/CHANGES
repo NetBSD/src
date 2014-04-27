@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1922 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1923 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -414,4 +414,4 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	bcmgpio(4): Add BCM2835 GPIO obio driver.
 		[kardel 20140422]
 	kerberos(8): Update to latest Heimdal-1-5-branch.
-		[pettai & elric 20140424]
+		[pettai 20140424]
