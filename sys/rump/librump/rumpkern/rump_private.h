@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.84 2014/04/27 15:08:52 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.85 2014/04/27 16:28:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -150,7 +150,7 @@ int	rump_syscall(int, void *, size_t, register_t *);
 
 struct rump_onesyscall {
 	int ros_num;
-	const sy_call_t *ros_handler;
+	sy_call_t *ros_handler;
 };
 void	rump_syscall_boot_establish(const struct rump_onesyscall *, size_t);
 
