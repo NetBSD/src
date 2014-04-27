@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.83 2014/04/23 23:25:45 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.84 2014/04/27 15:08:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -63,6 +63,7 @@ enum rump_component_type {
 	RUMP_COMPONENT_KERN,
 		RUMP_COMPONENT_KERN_VFS,
 	RUMP_COMPONENT_POSTINIT,
+	RUMP_COMPONENT_SYSCALL,
 
 	RUMP__FACTION_DEV,
 	RUMP__FACTION_VFS,
@@ -146,6 +147,12 @@ void	rump_unschedule_cpu(struct lwp *);
 void	rump_unschedule_cpu_interlock(struct lwp *, void *);
 void	rump_unschedule_cpu1(struct lwp *, void *);
 int	rump_syscall(int, void *, size_t, register_t *);
+
+struct rump_onesyscall {
+	int ros_num;
+	const sy_call_t *ros_handler;
+};
+void	rump_syscall_boot_establish(const struct rump_onesyscall *, size_t);
 
 void	rump_schedlock_cv_wait(struct rumpuser_cv *);
 int	rump_schedlock_cv_timedwait(struct rumpuser_cv *,
