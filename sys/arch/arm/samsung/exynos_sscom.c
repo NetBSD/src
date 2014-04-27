@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_sscom.c,v 1.4 2014/04/18 14:18:33 reinoud Exp $ */
+/*	$NetBSD: exynos_sscom.c,v 1.5 2014/04/27 20:22:46 reinoud Exp $ */
 
 /*
  * Copyright (c) 2014 Reinoud Zandijk
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_sscom.c,v 1.4 2014/04/18 14:18:33 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_sscom.c,v 1.5 2014/04/27 20:22:46 reinoud Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -167,7 +167,7 @@ sscom_attach(device_t parent, device_t self, void *aux)
 
 	printf("\n");
 
-	void *ih = intr_establish(exyo->exyo_loc.loc_intr, IPL_SERIAL,
+	void *ih = intr_establish(exyo->exyo_loc.loc_intr, IPL_SCHED,
 	    IST_LEVEL, sscomintr, sc);
 	if (ih != NULL) {
 		aprint_normal_dev(self, "interrupting at irq %d\n",
