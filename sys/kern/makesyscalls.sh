@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.141 2014/04/27 14:29:53 pooka Exp $
+#	$NetBSD: makesyscalls.sh,v 1.142 2014/04/27 14:50:23 pooka Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -63,6 +63,7 @@ sys_nosys="sys_nosys"	# default is sys_nosys(), if not specified otherwise
 maxsysargs=8		# default limit is 8 (32bit) arguments
 rumpcalls="/dev/null"
 rumpcallshdr="/dev/null"
+rumpsysmap="/dev/null"
 rumpsysent="rumpsysent.tmp"
 . ./$1
 
@@ -139,6 +140,7 @@ BEGIN {
 	rumpcalls = \"$rumpcalls\"
 	rumpcallshdr = \"$rumpcallshdr\"
 	rumpsysent = \"$rumpsysent\"
+	rumpsysmap = \"$rumpsysmap\"
 	switchname = \"$switchname\"
 	namesname = \"$namesname\"
 	constprefix = \"$constprefix\"
@@ -690,6 +692,11 @@ function uncompattype(type) {
 	return type
 }
 
+function printrumpsysmap(syscall, wfn, funcalias, rumpentry) {
+	printf("%-4d %-22s %-18s %s\n",
+	    syscall, wfn, funcalias, rumpentry) > rumpsysmap
+}
+
 function putent(type, compatwrap) {
 	# output syscall declaration for switch table.
 	if (compatwrap == "")
@@ -766,10 +773,13 @@ function putent(type, compatwrap) {
 	}
 
 	if (!rumpable) {
-		if (funcname == "sys_pipe" && rumphaspipe == 1)
+		if (funcname == "sys_pipe" && rumphaspipe == 1) {
 			insysent = 1
-		else
+			printrumpsysmap(syscall,
+			    funcname, funcalias, "rump_sys_pipe")
+		} else {
 			insysent = 0
+		}
 	} else {
 		insysent = 1
 	}
@@ -779,6 +789,8 @@ function putent(type, compatwrap) {
 	if (!rumpable) {
 		return
 	}
+
+	printrumpsysmap(syscall, wfn, funcalias, "rump___sysimpl_" rumpfname)
 
 	# need a local prototype, we export the re-re-named one in .h
 	printf("\n%s rump___sysimpl_%s(", returntype, rumpfname) \
@@ -988,4 +1000,4 @@ cat $rumpprotos >> $rumpcallshdr
 #chmod 444 $sysnames $sysnumhdr $syssw
 
 echo Generated following files:
-echo $sysarghdr $sysnumhdr $syssw $sysnames $rumpcalls $rumpcallshdr
+echo $sysarghdr $sysnumhdr $syssw $sysnames $rumpcalls $rumpcallshdr $rumpsysmap
