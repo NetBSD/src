@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_dl.c,v 1.28 2014/04/02 17:09:23 justin Exp $	*/
+/*      $NetBSD: rumpuser_dl.c,v 1.29 2014/04/27 15:19:00 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -40,7 +40,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_dl.c,v 1.28 2014/04/02 17:09:23 justin Exp $");
+__RCSID("$NetBSD: rumpuser_dl.c,v 1.29 2014/04/27 15:19:00 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -487,10 +487,3 @@ rumpuser_dl_bootstrap(rump_modinit_fn domodinit,
 	return;
 }
 #endif
-
-void *
-rumpuser_dl_globalsym(const char *symname)
-{
-
-	return dlsym(RTLD_DEFAULT, symname);
-}
