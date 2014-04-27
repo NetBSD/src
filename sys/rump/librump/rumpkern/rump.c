@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.303 2014/04/26 11:17:55 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.304 2014/04/27 15:08:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.303 2014/04/26 11:17:55 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.304 2014/04/27 15:08:52 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -455,67 +455,10 @@ rump_init(void)
 	if (initproc == NULL)
 		panic("where in the world is initproc?");
 
-	/*
-	 * Adjust syscall vector in case factions were dlopen()'d
-	 * before calling rump_init().
-	 * (modules will handle dynamic syscalls the usual way)
-	 *
-	 * Note: this will adjust the function vectors of
-	 * syscalls which use a funcalias (getpid etc.), but
-	 * it makes no difference.
-	 */
-	for (i = 0; i < SYS_NSYSENT; i++) {
-		void *sym;
-
-		if (rump_sysent[i].sy_flags & SYCALL_NOSYS ||
-		    *syscallnames[i] == '#' ||
-		    rump_sysent[i].sy_call == sys_nomodule)
-			continue;
-
-		/*
-		 * deal with compat wrappers.  makesyscalls.sh should
-		 * generate the necessary info instead of this hack,
-		 * though.  ugly, fix it later.
-		 */ 
-#define CPFX "compat_"
-#define CPFXLEN (sizeof(CPFX)-1)
-		if (strncmp(syscallnames[i], CPFX, CPFXLEN) == 0) {
-			const char *p = syscallnames[i] + CPFXLEN;
-			size_t namelen;
-
-			/* skip version number */
-			while (*p >= '0' && *p <= '9')
-				p++;
-			if (p == syscallnames[i] + CPFXLEN || *p != '_')
-				panic("invalid syscall name %s\n",
-				    syscallnames[i]);
-
-			/* skip over the next underscore */
-			p++;
-			namelen = p + (sizeof("rumpns_")-1) - syscallnames[i];
-
-			strcpy(buf, "rumpns_");
-			strcat(buf, syscallnames[i]);
-			/* XXX: no strncat in the kernel */
-			strcpy(buf+namelen, "sys_");
-			strcat(buf, p);
-#undef CPFX
-#undef CPFXLEN
-		} else {
-			snprintf(buf, sizeof(buf), "rumpns_sys_%s",
-			    syscallnames[i]);
-		}
-		if ((sym = rumpuser_dl_globalsym(buf)) != NULL
-		    && sym != rump_sysent[i].sy_call) {
-#if 0
-			rumpuser_dprintf("adjusting %s: %p (old %p)\n",
-			    syscallnames[i], sym, rump_sysent[i].sy_call);
-#endif
-			rump_sysent[i].sy_call = sym;
-		}
-	}
-
 	rump_component_init(RUMP_COMPONENT_POSTINIT);
+
+	/* load syscalls */
+	rump_component_init(RUMP_COMPONENT_SYSCALL);
 
 	/* component inits done */
 	bootlwp = NULL;
@@ -931,6 +874,20 @@ rump_syscall(int num, void *data, size_t dlen, register_t *retval)
 	rump_unschedule();
 
 	return rv;
+}
+
+void
+rump_syscall_boot_establish(const struct rump_onesyscall *calls, size_t ncall)
+{
+	struct sysent *callp;
+	size_t i;
+
+	for (i = 0; i < ncall; i++) {
+		callp = rump_sysent + calls[i].ros_num;
+		KASSERT(bootlwp != NULL
+		    && callp->sy_call == (sy_call_t *)enosys);
+		callp->sy_call = calls[i].ros_handler;
+	}
 }
 
 /*
