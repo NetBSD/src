@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.21 2014/03/03 12:15:27 martin Exp $
+# $NetBSD: Makefile,v 1.22 2014/04/28 08:46:35 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -8,6 +8,10 @@ TESTSDIR=	${TESTSBASE}/lib/libm
 	|| ${MACHINE} == "amd64" || ${MACHINE_CPU} == "arm"	\
 	|| ${MACHINE} == "sparc64"
 CPPFLAGS+=	-DHAVE_FENV_H
+.endif
+
+.if ${MACHINE} == "alpha"
+COPTS+=	-mfloat-ieee -mieee-with-inexact -mfp-trap-mode=sui -mtrap-precision=i
 .endif
 
 TESTS_C+=	t_acos
