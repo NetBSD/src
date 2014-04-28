@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.37 2008/10/26 23:06:41 joerg Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.37.18.1 2014/04/28 16:05:35 sborrill Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.37 2008/10/26 23:06:41 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.37.18.1 2014/04/28 16:05:35 sborrill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,6 +186,8 @@ ptyfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	struct ptyfsmount *pmnt;
 	struct ptyfs_args *args = data;
 
+	if (args == NULL)
+		return EINVAL;
 	if (*data_len < sizeof *args)
 		return EINVAL;
 

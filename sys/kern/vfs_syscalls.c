@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.376.4.7 2011/09/17 18:47:46 bouyer Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.376.4.7.2.1 2014/04/28 16:05:36 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.376.4.7 2011/09/17 18:47:46 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.376.4.7.2.1 2014/04/28 16:05:36 sborrill Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -519,15 +519,15 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 		recurse = vn_setrecurse(vp);
 	}
 
+	/*
+	 * We allow data to be NULL, even for userspace. Some fs's don't need
+	 * it. The others will handle NULL.
+	 */
 	if (data != NULL && data_seg == UIO_USERSPACE) {
 		if (data_len == 0) {
 			/* No length supplied, use default for filesystem */
 			data_len = vfsops->vfs_min_mount_data;
-			if (data_len > VFS_MAX_MOUNT_DATA) {
-				/* maybe a force loaded old LKM */
-				error = EINVAL;
-				goto done;
-			}
+
 #ifdef COMPAT_30
 			/* Hopefully a longer buffer won't make copyin() fail */
 			if (flags & MNT_UPDATE
@@ -535,6 +535,11 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 				data_len = sizeof (struct mnt_export_args30);
 #endif
 		}
+		if ((data_len == 0) || (data_len > VFS_MAX_MOUNT_DATA)) {
+			error = EINVAL;
+			goto done;
+		}
+
 		data_buf = malloc(data_len, M_TEMP, M_WAITOK);
 
 		/* NFS needs the buffer even for mnt_getargs .... */

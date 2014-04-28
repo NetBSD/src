@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.68.6.2 2009/02/08 19:10:44 snj Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.68.6.2.10.1 2014/04/28 16:05:35 sborrill Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.68.6.2 2009/02/08 19:10:44 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.68.6.2.10.1 2014/04/28 16:05:35 sborrill Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -300,6 +300,8 @@ msdosfs_mount(mp, path, data, data_len)
 	int error, flags;
 	mode_t accessmode;
 
+	if (args == NULL)
+		return EINVAL;
 	if (*data_len < sizeof *args)
 		return EINVAL;
 
