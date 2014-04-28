@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.6 2014/03/09 22:01:31 christos Exp $
+#	$NetBSD: Makefile,v 1.7 2014/04/28 21:56:20 christos Exp $
 
 # $FreeBSD: src/cddl/usr.bin/ctfdump/Makefile,v 1.1.4.1 2009/08/03 08:13:06 kensmith Exp $
+
+.include <bsd.own.mk>
 
 .include	"../../Makefile.inc"
 .include	"../../Makefile.ctf"
