@@ -41,7 +41,6 @@ struct unw_proc_info_t {
   uintptr_t lsda;            // Address of Language Specific Data Area
   uintptr_t handler;         // Personality routine
   uintptr_t extra_args;      // Extra stack space for frameless routines
-  uint32_t unwind_info_size; // Size of DWARF unwind info
   uintptr_t unwind_info;     // Address of DWARF unwind info
 };
 
