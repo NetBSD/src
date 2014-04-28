@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.h,v 1.49 2014/04/24 14:54:51 christos Exp $	*/
+/*	$NetBSD: netstat.h,v 1.50 2014/04/28 15:41:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -116,6 +116,8 @@ void	impstats(u_long, u_long);
 
 void	pr_rthdr(int, int);
 void	pr_family(int);
+struct rt_metrics;
+void	pr_rtrmx(struct rt_metrics *);
 void	rt_stats(u_long);
 char	*ns_phost(struct sockaddr *);
 
