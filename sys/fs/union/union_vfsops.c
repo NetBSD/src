@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.57.6.1 2009/04/04 18:12:55 snj Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.57.6.1.6.1 2014/04/28 16:03:15 sborrill Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.57.6.1 2009/04/04 18:12:55 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.57.6.1.6.1 2014/04/28 16:03:15 sborrill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,6 +120,8 @@ union_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	int len;
 	size_t size;
 
+	if (args == NULL)
+		return EINVAL;
 	if (*data_len < sizeof *args)
 		return EINVAL;
 
