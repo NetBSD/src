@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.156 2014/04/01 19:12:37 christos Exp $
+#  $NetBSD: Makefile,v 1.157 2014/04/28 08:47:43 martin Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -53,6 +53,7 @@ LINTFLAGS += -g
 .if (${MACHINE_ARCH} == "alpha")
 .PATH: ${.CURDIR}/arch/alpha
 ARCH_SRCS = s_copysign.S s_copysignf.S lrint.S
+COPTS+=	-mfloat-ieee -mieee-with-inexact -mfp-trap-mode=sui -mtrap-precision=i
 .elif (${MACHINE_CPU} == "arm")
 .PATH: ${.CURDIR}/arch/arm
 COMMON_SRCS+= fenv.c s_nexttowardf.c \
