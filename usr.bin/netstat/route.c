@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.81 2014/04/24 14:56:29 christos Exp $	*/
+/*	$NetBSD: route.c,v 1.82 2014/04/28 15:41:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.81 2014/04/24 14:56:29 christos Exp $");
+__RCSID("$NetBSD: route.c,v 1.82 2014/04/28 15:41:15 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -286,27 +286,26 @@ p_krtentry(struct rtentry *rt)
 			rt->rt_nodes[0].rn_dupedkey ? " =>" : "");
 	}
 	putchar('\n');
- 	if (vflag) {
- 		printf("\texpire   %10"PRId64"%c  recvpipe %10"PRIu64"%c  "
-		       "sendpipe %10"PRIu64"%c\n",
- 			(int64_t)rt->rt_rmx.rmx_expire, 
- 			(rt->rt_rmx.rmx_locks & RTV_EXPIRE) ? 'L' : ' ',
- 			rt->rt_rmx.rmx_recvpipe,
- 			(rt->rt_rmx.rmx_locks & RTV_RPIPE) ? 'L' : ' ',
- 			rt->rt_rmx.rmx_sendpipe,
- 			(rt->rt_rmx.rmx_locks & RTV_SPIPE) ? 'L' : ' ');
- 		printf("\tssthresh %10"PRIu64"%c  rtt      %10"PRIu64"%c  "
-		       "rttvar   %10"PRIu64"%c\n",
- 			rt->rt_rmx.rmx_ssthresh, 
- 			(rt->rt_rmx.rmx_locks & RTV_SSTHRESH) ? 'L' : ' ',
- 			rt->rt_rmx.rmx_rtt, 
- 			(rt->rt_rmx.rmx_locks & RTV_RTT) ? 'L' : ' ',
- 			rt->rt_rmx.rmx_rttvar, 
-			(rt->rt_rmx.rmx_locks & RTV_RTTVAR) ? 'L' : ' ');
- 		printf("\thopcount %10"PRIu64"%c\n",
- 			rt->rt_rmx.rmx_hopcount, 
-			(rt->rt_rmx.rmx_locks & RTV_HOPCOUNT) ? 'L' : ' ');
- 	}
+	if (vflag)
+		pr_rtrmx(&rt->rt_rmx);
+}
+
+void
+pr_rtrmx(struct rt_metrics *rmx)
+{
+	printf("\texpire   %10"PRId64"%c  recvpipe %10"PRIu64"%c  "
+	    "sendpipe %10"PRIu64"%c\n",
+	    (int64_t)rmx->rmx_expire, 
+	    (rmx->rmx_locks & RTV_EXPIRE) ? 'L' : ' ', rmx->rmx_recvpipe,
+	    (rmx->rmx_locks & RTV_RPIPE) ? 'L' : ' ', rmx->rmx_sendpipe,
+	    (rmx->rmx_locks & RTV_SPIPE) ? 'L' : ' ');
+	printf("\tssthresh %10"PRIu64"%c  rtt      %10"PRIu64"%c  "
+	    "rttvar   %10"PRIu64"%c\n", rmx->rmx_ssthresh, 
+	    (rmx->rmx_locks & RTV_SSTHRESH) ? 'L' : ' ',
+	    rmx->rmx_rtt, (rmx->rmx_locks & RTV_RTT) ? 'L' : ' ',
+	    rmx->rmx_rttvar, (rmx->rmx_locks & RTV_RTTVAR) ? 'L' : ' ');
+	printf("\thopcount %10"PRIu64"%c\n",
+	    rmx->rmx_hopcount, (rmx->rmx_locks & RTV_HOPCOUNT) ? 'L' : ' ');
 }
 
 /*
