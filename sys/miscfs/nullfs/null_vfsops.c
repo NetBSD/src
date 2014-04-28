@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.77 2008/06/24 11:25:05 ad Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.77.12.1 2014/04/28 16:03:15 sborrill Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.77 2008/06/24 11:25:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.77.12.1 2014/04/28 16:03:15 sborrill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,6 +118,8 @@ nullfs_mount(mp, path, data, data_len)
 	printf("nullfs_mount(mp = %p)\n", mp);
 #endif
 
+	if (args == NULL)
+		return EINVAL;
 	if (*data_len < sizeof *args)
 		return EINVAL;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.26 2008/09/04 12:28:14 pooka Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.26.14.1 2014/04/28 16:03:15 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.26 2008/09/04 12:28:14 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.26.14.1 2014/04/28 16:03:15 sborrill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -79,6 +79,8 @@ sysvbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 
 	DPRINTF("%s: mnt_flag=%x\n", __func__, mp->mnt_flag);
 
+	if (args == NULL)
+		return EINVAL;
 	if (*data_len < sizeof *args)
 		return EINVAL;
 
