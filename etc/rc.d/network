@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.64 2014/04/29 09:42:51 uebayasi Exp $
+# $NetBSD: network,v 1.65 2014/04/29 09:56:16 uebayasi Exp $
 #
 
 # PROVIDE: network
@@ -16,16 +16,21 @@ stop_cmd="network_stop"
 nl='
 ' # a newline
 
-intmissing() {
+intmissing()
+{
 	local int="$1"
 	shift
-	for i
-	do
+	for i; do
 		if [ "$int" = "$i" ]; then
 			return 1
 		fi
 	done
 	return 0
+}
+
+have_inet6()
+{
+	/sbin/ifconfig lo0 inet6 >/dev/null 2>&1
 }
 
 network_start()
@@ -37,11 +42,14 @@ network_start()
 	network_start_hostname
 	network_start_domainname
 	network_start_loopback
+	have_inet6 &&
 	network_start_ipv6_route
+	[ "$net_interfaces" != NO ] &&
 	network_start_interfaces
 	network_start_aliases
 	network_start_defaultroute
 	network_start_defaultroute6
+	have_inet6 &&
 	network_start_ipv6_autoconf
 	network_start_local
 }
@@ -108,7 +116,6 @@ network_start_ipv6_route()
 {
 	# IPv6 routing setups, and host/router mode selection.
 	#
-	if /sbin/ifconfig lo0 inet6 >/dev/null 2>&1; then
 		# We have IPv6 support in kernel.
 
 		# disallow link-local unicast dest without outgoing scope
@@ -190,7 +197,6 @@ network_start_ipv6_route()
 			;;
 
 		esac
-	fi
 }
 
 network_start_interfaces()
@@ -227,7 +233,6 @@ network_start_interfaces()
 	# You can put shell script fragment into /etc/ifconfig.xxN by
 	# starting a line with "!".  Refer to ifconfig.if(5) for details.
 	#
-	if [ "$net_interfaces" != NO ]; then
 		ifaces="$(/sbin/ifconfig -l)"
 		if checkyesno auto_ifconfig; then
 			tmp="$ifaces"
@@ -334,7 +339,6 @@ network_start_interfaces()
 			configured_interfaces="$configured_interfaces $int"
 		done
 		echo "."
-	fi
 }
 
 network_start_aliases()
@@ -429,7 +433,6 @@ network_start_ipv6_autoconf()
 {
 	# IPv6 interface autoconfiguration.
 	#
-	if /sbin/ifconfig lo0 inet6 >/dev/null 2>&1; then
 		# wait till DAD is completed. always invoke it in case
 		# if are configured manually by ifconfig
 		#
@@ -457,7 +460,6 @@ network_start_ipv6_autoconf()
 			sleep $dadcount
 			sleep 1
 		fi
-	fi
 }
 
 network_start_local()
@@ -474,6 +476,7 @@ network_stop()
 
 	network_stop_local
 	network_stop_aliases
+	[ "$net_interfaces" != NO ] &&
 	network_stop_interfaces
 	network_stop_route
 }
@@ -512,7 +515,6 @@ network_stop_interfaces()
 	# down interfaces
 	#
 	echo -n 'Downing network interfaces:'
-	if [ "$net_interfaces" != NO ]; then
 		if checkyesno auto_ifconfig; then
 			tmp=$(/sbin/ifconfig -l)
 		else
@@ -534,7 +536,6 @@ network_stop_interfaces()
 			fi
 		done
 		echo "."
-	fi
 }
 
 network_stop_route()
