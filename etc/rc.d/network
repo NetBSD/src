@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.63 2013/04/20 18:24:18 christos Exp $
+# $NetBSD: network,v 1.64 2014/04/29 09:42:51 uebayasi Exp $
 #
 
 # PROVIDE: network
@@ -34,6 +34,20 @@ network_start()
 	#
 	echo "Starting network."
 
+	network_start_hostname
+	network_start_domainname
+	network_start_loopback
+	network_start_ipv6_route
+	network_start_interfaces
+	network_start_aliases
+	network_start_defaultroute
+	network_start_defaultroute6
+	network_start_ipv6_autoconf
+	network_start_local
+}
+
+network_start_hostname()
+{
 	# If $hostname is set, use it for my Internet name,
 	# otherwise use /etc/myname
 	#
@@ -54,7 +68,10 @@ network_start()
 			warn "\$hostname not set."
 		fi
 	fi
+}
 
+network_start_domainname()
+{
 	# Check $domainname first, then /etc/defaultdomain,
 	# for NIS/YP domain name
 	#
@@ -70,7 +87,10 @@ network_start()
 	if checkyesno flushroutes; then
 		/sbin/route -qn flush
 	fi
+}
 
+network_start_loopback()
+{
 	# Set the address for the first loopback interface, so that the
 	# auto-route from a newly configured interface's address to lo0
 	# works correctly.
@@ -82,7 +102,10 @@ network_start()
 	# According to RFC1122, 127.0.0.0/8 must not leave the node.
 	#
 	/sbin/route -q add -inet 127.0.0.0 -netmask 0xff000000 127.0.0.1 -reject
+}
 
+network_start_ipv6_route()
+{
 	# IPv6 routing setups, and host/router mode selection.
 	#
 	if /sbin/ifconfig lo0 inet6 >/dev/null 2>&1; then
@@ -168,7 +191,10 @@ network_start()
 
 		esac
 	fi
+}
 
+network_start_interfaces()
+{
 	# Configure all of the network interfaces listed in $net_interfaces;
 	# if $auto_ifconfig is YES, grab all interfaces from ifconfig.
 	# In the following, "xxN" stands in for interface names, like "le0".
@@ -309,7 +335,10 @@ network_start()
 		done
 		echo "."
 	fi
+}
 
+network_start_aliases()
+{
 	echo -n "Adding interface aliases:"
 
 	# Check if each configured interface xxN has an $ifaliases_xxN variable
@@ -360,7 +389,10 @@ network_start()
 	fi
 
 	echo "." # for "Adding interface aliases:"
+}
 
+network_start_defaultroute()
+{
 	# Check $defaultroute, then /etc/mygate, for the name or address
 	# of my IPv4 gateway host. If using a name, that name must be in
 	# /etc/hosts.
@@ -371,7 +403,10 @@ network_start()
 	if [ -n "$defaultroute" ]; then
 		/sbin/route add default $defaultroute
 	fi
+}
 
+network_start_defaultroute6()
+{
 	# Check $defaultroute6, then /etc/mygate6, for the name or address
 	# of my IPv6 gateway host. If using a name, that name must be in
 	# /etc/hosts.  Note that the gateway host address must be a link-local
@@ -388,7 +423,10 @@ network_start()
 		fi
 		/sbin/route add -inet6 default $defaultroute6
 	fi
+}
 
+network_start_ipv6_autoconf()
+{
 	# IPv6 interface autoconfiguration.
 	#
 	if /sbin/ifconfig lo0 inet6 >/dev/null 2>&1; then
@@ -420,7 +458,10 @@ network_start()
 			sleep 1
 		fi
 	fi
+}
 
+network_start_local()
+{
 	# XXX this must die
 	if [ -s /etc/netstart.local ]; then
 		sh /etc/netstart.local start
@@ -431,11 +472,22 @@ network_stop()
 {
 	echo "Stopping network."
 
+	network_stop_local
+	network_stop_aliases
+	network_stop_interfaces
+	network_stop_route
+}
+
+network_stop_local()
+{
 	# XXX this must die
 	if [ -s /etc/netstart.local ]; then
 		sh /etc/netstart.local stop
 	fi
+}
 
+network_stop_aliases()
+{
 	echo "Deleting aliases."
 	if [ -f /etc/ifaliases ]; then
 		while read addr int net; do
@@ -453,7 +505,10 @@ network_stop()
 			done
 		fi
 	done
+}
 
+network_stop_interfaces()
+{
 	# down interfaces
 	#
 	echo -n 'Downing network interfaces:'
@@ -480,7 +535,10 @@ network_stop()
 		done
 		echo "."
 	fi
+}
 
+network_stop_route()
+{
 	# flush routes
 	#
 	/sbin/route -qn flush
