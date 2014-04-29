@@ -34,7 +34,7 @@
 #include "opt_exynos.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_io.c,v 1.1 2014/04/13 02:26:26 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_io.c,v 1.2 2014/04/29 16:47:10 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -58,12 +58,12 @@ static int  exyo_match(device_t, cfdata_t, void *);
 static void exyo_attach(device_t, device_t, void *);
 
 static struct exyo_softc {
-	device_t sc_dev;
-	bus_space_tag_t sc_bst;
-	bus_space_tag_t sc_a4x_bst;
-	bus_space_handle_t sc_bsh;
-	bus_dma_tag_t sc_dmat;
-	bus_dma_tag_t sc_coherent_dmat;
+	device_t		sc_dev;
+	bus_space_tag_t		sc_bst;
+	bus_space_tag_t		sc_a4x_bst;
+	bus_space_handle_t	sc_bsh;
+	bus_dma_tag_t		sc_dmat;
+	bus_dma_tag_t		sc_coherent_dmat;
 } exyo_sc;
 
 CFATTACH_DECL_NEW(exyo_io, 0, exyo_match, exyo_attach, NULL, NULL);
@@ -119,26 +119,28 @@ exyo_find(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	return config_match(parent, cf, aux);
 }
 
+
+#if !defined(EXYNOS4) && !defined(EXYNOS5)
+#error Must define a SoC
+#endif
 static void
 exyo_attach(device_t parent, device_t self, void *aux)
 {
+	const struct exyo_locators *l = NULL;
 	struct exyo_softc * const sc = &exyo_sc;
 	prop_dictionary_t dict = device_properties(self);
+	size_t nl = 0;
 
 	sc->sc_dev = self;
-
 	sc->sc_bst = &exynos_bs_tag;
 	sc->sc_a4x_bst = &exynos_a4x_bs_tag;
 	sc->sc_bsh = exynos_core_bsh;
-//	sc->sc_dmat = &exynos_dma_tag;
-//	sc->sc_coherent_dmat = &exynos_coherent_dma_tag;
+	sc->sc_dmat = &exynos_bus_dma_tag;
+	sc->sc_coherent_dmat = &exynos_coherent_bus_dma_tag;
 
 	const uint16_t product_id = EXYNOS_PRODUCT_ID(exynos_soc_id);
 	aprint_naive(": Exynos %x\n", product_id);
 	aprint_normal(": Exynos %x\n", product_id);
-
-	const struct exyo_locators *l = NULL;
-	size_t nl = 0;
 
 #if defined(EXYNOS4)
 	if (IS_EXYNOS4_P()) {
@@ -152,9 +154,6 @@ exyo_attach(device_t parent, device_t self, void *aux)
 		nl = exynos5_locinfo.nlocators;
 	}	
 #endif 
-#if !defined(EXYNOS4) && !defined(EXYNOS5)
-#error Must define a SoC
-#endif
 	KASSERT(l != NULL);
 	KASSERT(nl > 0);
 
