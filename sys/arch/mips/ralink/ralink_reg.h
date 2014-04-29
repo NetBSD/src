@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_reg.h,v 1.5 2014/04/19 12:48:03 matt Exp $	*/
+/*	$NetBSD: ralink_reg.h,v 1.6 2014/04/29 17:09:17 matt Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -32,6 +32,10 @@
 
 #ifndef _RALINK_REG_H_
 #define _RALINK_REG_H_
+
+#ifdef _KERNEL_OPT
+#include "opt_rasoc.h"
+#endif
 
 #include <mips/cpuregs.h>
 
@@ -103,6 +107,9 @@
 #define RA_USB_OTG_BASE		0x101C0000
 #if defined(RT3883) || defined(MT7620)
 #define RA_USB_HOST_BASE	0x101C0000
+#define RA_USB_BLOCK_SIZE	0x1000
+#define RA_USB_EHCI_BASE	(RA_USB_HOST_BASE + 0x0000)
+#define RA_USB_OHCI_BASE	(RA_USB_EHCI_BASE + RA_USB_BLOCK_SIZE)
 #endif
 #if defined(RT3052) || defined(RT3050)
 #define RA_FLASH_BASE		0x1F000000
@@ -164,6 +171,71 @@
 #endif
 
 #if defined(RT3883) || defined(MT7620)
+#define SYSCTL_CFG1_GE2_MODE		__BITS(15,14)
+#define SYSCTL_CFG1_GE1_MODE		__BITS(13,12)
+#define GE_MODE_RGMII			0	// RGMII mode (10/100/1000)
+#define GE_MODE_MII			1	// MII mode (10/100)
+#define GE_MODE_RMII			2	// Reverse MMI (10/100)
+#define SYSCTL_CFG1_USB0_HOST_MODE	__BIT(10)
+#define SYSCTL_CFG1_PCIE_RC_MODE	__BIT(8)
+#endif
+#if defined(RT3883)
+#define SYSCTL_CFG1_PCI_HOST_MODE	__BIT(7)
+#define SYSCTL_CFG1_PCI_66M_MODE	__BIT(6)
+#endif
+
+#if defined(RT3883) || defined(MT7620)
+#define SYSCTL_CLKCFG0_REFCLK0_RATE	__BITS(11,9)
+#endif
+#if defined(RT3883)
+#define SYSCTL_CLKCFG0_OSC_1US_DIV_3883	__BITS(21,16)
+#define SYSCTL_CLKCFG0_REFCLK1_RATE	__BITS(15,13)
+#define SYSCTL_CLKCFG0_REFCLK0_IS_OUT	__BIT(8)
+#define SYSCTL_CLKCFG0_CPU_FREQ_ADJ	__BITS(3,0)
+#endif
+#if defined(MT7620)
+#define SYSCTL_CLKCFG0_OSC_1US_DIV_7620	__BITS(29,24)
+#define SYSCTL_CLKCFG0_INT_CLK_FDIV	__BITS(22,18)
+#define SYSCTL_CLKCFG0_INT_CLK_FFRAC	__BITS(16,12)
+#define SYSCTL_CLKCFG0_PERI_CLK_SEL	__BIT(4)
+#define SYSCTL_CLKCFG0_EPHY_USE_25M	__BIT(3)
+#endif 
+
+#if defined(RT3883)
+#define SYSCTL_CLKCFG1_PBUS_DIV2	__BIT(30)
+#define SYSCTL_CLKCFG1_SYS_TCK_EN	__BIT(29)
+#define SYSCTL_CLKCFG1_FE_GDMA_PCLK_EN	__BIT(22)
+#define SYSCTL_CLKCFG1_PCIE_CLK_EN_3883	__BIT(21)
+#define SYSCTL_CLKCFG1_UPHY1_CLK_EN	__BIT(20)
+#define SYSCTL_CLKCFG1_PCIE_CLK_EN	__BIT(19)
+#define SYSCTL_CLKCFG1_UPHY0_CLK_EN_3883 __BIT(18)
+#define SYSCTL_CLKCFG1_GE2_CLK_EN_3883	__BIT(17)
+#define SYSCTL_CLKCFG1_GE1_CLK_EN_3883	__BIT(16)
+#endif
+#if defined(MT7620)
+#define SYSCTL_CLKCFG1_SDHC_CLK_EN	__BIT(30)
+#define SYSCTL_CLKCFG1_AUX_SYS_TCK_EN	__BIT(28)
+#define SYSCTL_CLKCFG1_PCIE_CLK_EN_7620 __BIT(26)
+#define SYSCTL_CLKCFG1_UPHY0_CLK_EN_7620 __BIT(25)
+#define SYSCTL_CLKCFG1_ESW_CLK_EN	__BIT(23)
+#define SYSCTL_CLKCFG1_FE_CLK_EN	__BIT(21)
+#define SYSCTL_CLKCFG1_UART_CLK_EN	__BIT(19)
+#define SYSCTL_CLKCFG1_SPI_CLK_EN	__BIT(18)
+#define SYSCTL_CLKCFG1_I2S_CLK_EN	__BIT(17)
+#define SYSCTL_CLKCFG1_I2C_CLK_EN	__BIT(16)
+#define SYSCTL_CLKCFG1_NAND_CLK_EN	__BIT(15)
+#define SYSCTL_CLKCFG1_GDMA_CLK_EN	__BIT(14)
+#define SYSCTL_CLKCFG1_GPIO_CLK_EN	__BIT(13)
+#define SYSCTL_CLKCFG1_UART_CLK_EN	__BIT(12)
+#define SYSCTL_CLKCFG1_PCM_CLK_EN	__BIT(11)
+#define SYSCTL_CLKCFG1_MC_CLK_EN	__BIT(10)
+#define SYSCTL_CLKCFG1_INTC_CLK_EN	__BIT(9)
+#define SYSCTL_CLKCFG1_TIMER_CLK_EN	__BIT(8)
+#define SYSCTL_CLKCFG1_GE2_CLK_EN_7620	__BIT(7)
+#define SYSCTL_CLKCFG1_GE1_CLK_EN_7620	__BIT(6)
+#endif
+
+#if defined(RT3883) || defined(MT7620)
 /* 3883 doesn't have memo regs, use teststat instead */
 #define RA_SYSCTL_MEMO0	0x18
 #define RA_SYSCTL_MEMO1	0x1C
@@ -172,14 +244,19 @@
 #define RA_SYSCTL_MEMO1	0x6C
 #endif
 
-#define  RST_PPE		__BIT(31)
-#define  RST_SDHC		__BIT(30)
-#define  RST_MIPS_CNT		__BIT(28)
-#define  RST_PCIE0		__BIT(26)
-#define  RST_UHST0		__BIT(25)
-#define  RST_EPHY		__BIT(24)
-#define  RST_SW			__BIT(23)
-#define  RST_OTG		__BIT(22)
+#define  RST_PPE_7620		__BIT(31)
+#define  RST_SDHC_7620		__BIT(30)
+#define  RST_MIPS_CNT_7620	__BIT(28)
+#define  RST_PCIPCIE_3883	__BIT(27)
+#define  RST_FLASH_3883		__BIT(26)
+#define  RST_PCIE0_7620		__BIT(26)
+#define  RST_UDEV_3883		__BIT(25)
+#define  RST_UHST0_7620		__BIT(25)
+#define  RST_PCI_3883		__BIT(24)
+#define  RST_EPHY_7620		__BIT(24)
+#define  RST_PCIE_3883		__BIT(23)
+#define  RST_ESW_7620		__BIT(23)
+#define  RST_UHST_3883		__BIT(22)
 #define  RST_FE			__BIT(21)
 #define  RST_WLAN		__BIT(20)
 #define  RST_UARTL		__BIT(19)
@@ -197,6 +274,7 @@
 #define  RST_GE2		__BIT(7)
 #define  RST_GE1		__BIT(6)
 #define  RST_SYS		__BIT(0)
+
 #define  GPIOMODE_RGMII		__BIT(9)
 #define  GPIOMODE_SDRAM		__BIT(8)
 #define  GPIOMODE_MDIO		__BIT(7)
