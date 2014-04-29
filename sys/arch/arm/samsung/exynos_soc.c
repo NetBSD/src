@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_soc.c,v 1.6 2014/04/22 16:10:48 reinoud Exp $	*/
+/*	$NetBSD: exynos_soc.c,v 1.7 2014/04/29 16:47:10 reinoud Exp $	*/
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #define	_ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.6 2014/04/22 16:10:48 reinoud Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.7 2014/04/29 16:47:10 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -231,6 +231,9 @@ exynos_bootstrap(vaddr_t iobase, vaddr_t uartbase)
 		panic("%s: failed to map in Exynos io registers: %d",
 			__func__, error);
 	KASSERT(exynos_core_bsh == iobase);
+
+	/* init bus dma tags */
+	exynos_dma_bootstrap(physmem * PAGE_SIZE);
 }
 
 

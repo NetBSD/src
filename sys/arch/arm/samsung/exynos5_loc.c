@@ -209,7 +209,8 @@
 #define IRQ_TZASC_CBXR			EXYNOS_COMBINERIRQ(0, 0)
 
 
-#define	OFFANDSIZE(p,n) EXYNOS5##p##_##n##_OFFSET, 0x10000
+#define	OFFANDSIZE(p,n) \
+	EXYNOS5##p##_##n##_OFFSET, 0x10000
 
 static const struct exyo_locators exynos5_locators[] = {
 	{ "exywdt", OFFANDSIZE(,WDT), NOPORT, IRQ_WDT, 0 },

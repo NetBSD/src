@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_var.h,v 1.3 2014/04/13 20:45:25 reinoud Exp $ */
+/* $NetBSD: exynos_var.h,v 1.4 2014/04/29 16:47:10 reinoud Exp $ */
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -75,8 +75,6 @@ struct exyo_locators {
 	int loc_flags;
 };
 
-#define EXYO_INTR_DEFAULT 0
-
 #if 0
 #define EXYO_E4410	__BIT(0)
 #define EXYO_E4412	__BIT(1)
@@ -100,12 +98,17 @@ struct exyo_attach_args {
 
 extern struct bus_space exynos_bs_tag;
 extern struct bus_space exynos_a4x_bs_tag;
+extern struct arm32_bus_dma_tag exynos_bus_dma_tag;
+extern struct arm32_bus_dma_tag exynos_coherent_bus_dma_tag;
+
 extern bus_space_handle_t exynos_core_bsh;
 
 extern void exynos_bootstrap(vaddr_t, vaddr_t);
 extern void exynos_device_register(device_t self, void *aux);
 extern void exyo_device_register(device_t self, void *aux);
 extern void exynos_wdt_reset(void);
+extern void exynos_dma_bootstrap(psize_t memsize);
+
 
 #ifdef ARM_TRUSTZONE_FIRMWARE
 /* trustzone calls */
