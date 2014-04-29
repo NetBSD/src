@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_ehci.c,v 1.3 2012/07/20 02:14:02 matt Exp $	*/
+/*	$NetBSD: ralink_ehci.c,v 1.4 2014/04/29 17:10:07 matt Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ralink_ehci.c -- Ralink EHCI USB Driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_ehci.c,v 1.3 2012/07/20 02:14:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_ehci.c,v 1.4 2014/04/29 17:10:07 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -46,9 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: ralink_ehci.c,v 1.3 2012/07/20 02:14:02 matt Exp $")
 
 #include <mips/ralink/ralink_var.h>
 #include <mips/ralink/ralink_reg.h>
-
-#define RT3XXX_EHCI_BASE 	0x101c0000
-#define RT3XXX_BLOCK_SIZE	0x1000
 
 struct ralink_ehci_softc {
 	struct ehci_softc	sc_ehci;
@@ -122,14 +119,14 @@ ralink_ehci_attach(device_t parent, device_t self, void *aux)
 	bus_space_unmap(ma->ma_memt, sysctl_memh, 0x10000);
 
 	/* Map EHCI registers */
-	if ((error = bus_space_map(sc->sc_ehci.iot, RT3XXX_EHCI_BASE,
-	    RT3XXX_BLOCK_SIZE, 0, &sc->sc_ehci.ioh)) != 0) {
+	if ((error = bus_space_map(sc->sc_ehci.iot, RA_USB_EHCI_BASE,
+	    RA_USB_BLOCK_SIZE, 0, &sc->sc_ehci.ioh)) != 0) {
 		aprint_error_dev(self, "can't map EHCI registers, "
 			"error=%d\n", error);
 		return;
 	}
 
-	sc->sc_ehci.sc_size = RT3XXX_BLOCK_SIZE;
+	sc->sc_ehci.sc_size = RA_USB_BLOCK_SIZE;
 	sc->sc_ehci.sc_bus.usbrev = USBREV_2_0;
 
 #ifdef RALINK_EHCI_DEBUG
