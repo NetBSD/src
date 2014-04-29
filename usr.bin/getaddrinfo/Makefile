@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2013/09/30 06:19:22 riastradh Exp $
+#	$NetBSD: Makefile,v 1.2 2014/04/29 01:21:02 christos Exp $
+
+.include <bsd.own.mk>
 
 PROG=	getaddrinfo
 
