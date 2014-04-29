@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.45 2014/03/16 05:20:29 dholland Exp $ */
+/*	$NetBSD: tcx.c,v 1.46 2014/04/29 11:16:25 macallan Exp $ */
 
 /*
  *  Copyright (c) 1996, 1998, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.45 2014/03/16 05:20:29 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.46 2014/04/29 11:16:25 macallan Exp $");
 
 /*
  * define for cg8 emulation on S24 (24-bit version of tcx) for the SS5;
@@ -226,7 +226,9 @@ tcxmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
-	return (strcmp(sa->sa_name, OBPNAME) == 0);
+	if (strcmp(sa->sa_name, OBPNAME) == 0)
+		return 100;	/* beat genfb */
+	return 0;
 }
 
 /*
