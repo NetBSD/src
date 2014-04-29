@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.566 2014/04/17 23:15:27 pgoyette Exp $
+# $NetBSD: mi,v 1.567 2014/04/29 06:29:02 uebayasi Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -85,6 +85,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/c063				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/db				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/gen				tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libc/gen/execve			tests-kernel-tests
 ./usr/libdata/debug/usr/tests/lib/libc/gen/posix_spawn			tests-kernel-tests
 ./usr/libdata/debug/usr/tests/lib/libc/getaddrinfo			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/getaddrinfo/data			tests-obsolete		obsolete
@@ -1910,6 +1911,10 @@
 ./usr/tests/lib/libc/gen			tests-lib-tests
 ./usr/tests/lib/libc/gen/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/Kyuafile		tests-lib-tests		atf,kyua
+./usr/tests/lib/libc/gen/execve			tests-kernel-tests
+./usr/tests/lib/libc/gen/execve/Atffile		tests-kernel-tests	atf
+./usr/tests/lib/libc/gen/execve/Kyuafile	tests-kernel-tests	atf,kyua
+./usr/tests/lib/libc/gen/execve/t_execve	tests-kernel-tests	atf
 ./usr/tests/lib/libc/gen/posix_spawn			tests-kernel-tests
 ./usr/tests/lib/libc/gen/posix_spawn/Atffile		tests-kernel-tests	atf
 ./usr/tests/lib/libc/gen/posix_spawn/Kyuafile		tests-kernel-tests	atf,kyua
