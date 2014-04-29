@@ -1532,7 +1532,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* #undef TM_IN_SYS_TIME */
 
 /* Version number of package */
-#define VERSION "1.5pre1"
+#define VERSION "1.5.3"
 
 /* Define if signal handlers return void. */
 #define VOID_RETSIGTYPE 1
