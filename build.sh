@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.278 2014/03/31 19:29:21 martin Exp $
+#	$NetBSD: build.sh,v 1.279 2014/04/29 06:51:57 uebayasi Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -889,6 +889,7 @@ resolvepath()
 		val="${TOP}/${val%/}"
 		;;
 	esac
+	val="$( /bin/mkdir -p ${val} && cd ${val} && /bin/pwd )"
 	eval ${var}=\"\${val}\"
 }
 
@@ -1746,7 +1747,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.278 2014/03/31 19:29:21 martin Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.279 2014/04/29 06:51:57 uebayasi Exp $
 # with these arguments: ${_args}
 #
 
