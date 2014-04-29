@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.56 2014/04/19 05:37:54 tsutsui Exp $
+# $NetBSD: INSTALL,v 1.57 2014/04/29 18:38:27 tsutsui Exp $
 #
 # INSTALL machine description file
 #
@@ -248,3 +248,4 @@ pseudo-device	loop			# loopback network interface
 #pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 #pseudo-device	vlan			# IEEE 802.1q encapsulation
 #pseudo-device	bridge			# simple inter-network bridging
+pseudo-device	wsmux			# mouse & keyboard multiplexor
