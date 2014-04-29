@@ -1,4 +1,4 @@
-#	$NetBSD: files.exynos,v 1.3 2014/04/22 16:08:24 reinoud Exp $
+#	$NetBSD: files.exynos,v 1.4 2014/04/29 16:47:10 reinoud Exp $
 #
 # Configuration info for Samsung Exynos SoC ARM Peripherals
 #
@@ -15,7 +15,7 @@ file	arch/arm/arm32/irq_dispatch.S
 
 file	arch/arm/samsung/exynos_soc.c
 file	arch/arm/samsung/exynos_space.c
-#file	arch/arm/samsung/primecell.c
+file	arch/arm/samsung/exynos_dma.c
 file	arch/arm/samsung/exynos_smc.S		arm_trustzone_firmware
 
 file	arch/arm/arm/bus_space_a4x.S		exyo
@@ -56,19 +56,23 @@ device	mct { } : bus_space_generic
 attach	mct at exyo with exyo_mct
 file	arch/arm/samsung/mct.c		exyo_mct
 
-# watchdog
+# Watchdog
 device	exywdt : sysmon_wdog
 attach	exywdt at exyo with exynos_wdt
 file	arch/arm/samsung/exynos_wdt.c	exynos_wdt | exyo_io needs-flag
 
 # UARTs
-#
-# built-in UART
-#
-device	sscom
+device	sscom { } : bus_space_generic
 attach	sscom at exyo with exynos_sscom
 file	arch/arm/samsung/sscom.c	sscom needs-flag
 file	arch/arm/samsung/exynos_sscom.c	exynos_sscom 
 defflag opt_sscom.h     SSCOM0CONSOLE SSCOM1CONSOLE
 defparam opt_sscom.h    SSCOM_FREQ 
+
+# USB2 Host Controller (EHCI/OHCI)
+device	exyousb { }
+attach	exyousb at exyo with exyo_usb
+attach	ohci at exyousb with ohci_exyousb
+attach	ehci at exyousb with ehci_exyousb
+file	arch/arm/samsung/exynos_usb.c		exyo_usb
 
