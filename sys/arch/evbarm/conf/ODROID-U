@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ODROID-U,v 1.2 2014/04/19 15:32:18 reinoud Exp $
+#	$NetBSD: ODROID-U,v 1.3 2014/04/29 16:47:10 reinoud Exp $
 #
 #	ODROID-U -- ODROID-U series Exynos Kernel
 #
@@ -138,6 +138,7 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 #options 	PERFCTRS	# performance counters
 options 	DIAGNOSTIC	# internally consistency checks
 options 	DEBUG
+options		LOCKDEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages
@@ -192,12 +193,11 @@ sscom1		at exyo0  port 1		# UART1
 exywdt0 	at exyo0 flags 1		# watchdog
 
 # On-board USB
-#exyousb0	at exyo0 port 0
-#exyousb1	at exyo0 port 1
-#ohci*		at exyousb?
-#ehci*		at exyousb?
-#usb*		at ohci?
-#usb*		at ehci?
+exyousb*	at exyo0
+ohci*		at exyousb?
+ehci*		at exyousb?
+usb*		at ohci?
+usb*		at ehci?
 
 
 # Odroid-U connectivity
@@ -207,7 +207,7 @@ exywdt0 	at exyo0 flags 1		# watchdog
 options		SSCOM1CONSOLE, CONSPEED=115200
 
 # include all USB devices
-#include "dev/usb/usbdevices.config"
+include "dev/usb/usbdevices.config"
 
 
 # Pseudo-Devices

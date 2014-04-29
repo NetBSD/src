@@ -260,8 +260,8 @@
 #define IRQ_MDNIE_LCD0_1		EXYNOS_COMBINERIRQ(0, 1)
 #define IRQ_MDNIE_LCD0_0		EXYNOS_COMBINERIRQ(0, 0)
 
-#define	OFFANDSIZE(p,n) EXYNOS4##p##_##n##_OFFSET, 0x10000
-
+#define	OFFANDSIZE(p,n) \
+	EXYNOS4##p##_##n##_OFFSET, 0x10000
 
 static const struct exyo_locators exynos4_locators[] = {
 	{ "mct", OFFANDSIZE(,MCT), NOPORT, IRQ_G0_IRQ, 0 },
@@ -270,6 +270,7 @@ static const struct exyo_locators exynos4_locators[] = {
 	{ "sscom", OFFANDSIZE(,UART1), 1, IRQ_UART1, 0 },
 	{ "sscom", OFFANDSIZE(,UART2), 2, IRQ_UART2, 0 },
 	{ "sscom", OFFANDSIZE(,UART3), 3, IRQ_UART3, 0 },
+	{ "exyousb", OFFANDSIZE(,USBHOST0), 0, IRQ_UHOST, 0},	/* ehci+ohci */
 };
 
 const struct exyo_locinfo exynos4_locinfo = {
