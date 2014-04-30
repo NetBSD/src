@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.60 2014/04/30 01:33:51 christos Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.61 2014/04/30 01:59:30 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.60 2014/04/30 01:33:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.61 2014/04/30 01:59:30 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -158,7 +158,7 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		if ((error = tmpfs_mntmem_set(tmp, memlimit)) != 0)
 			return error;
 		tmp->tm_nodes_max = nodes;
-		root = tmp->tm_rooto
+		root = tmp->tm_root;
 		root->tn_uid = args->ta_root_uid;
 		root->tn_gid = args->ta_root_gid;
 		root->tn_mode = args->ta_root_mode;
