@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.291 2014/04/22 14:20:03 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.292 2014/04/30 21:15:06 joerg Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -216,7 +216,7 @@
 #include <arm/locore.h>
 //#include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.291 2014/04/22 14:20:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.292 2014/04/30 21:15:06 joerg Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -722,7 +722,7 @@ struct pv_entry {
 static bool		pmap_set_pt_cache_mode(pd_entry_t *, vaddr_t, size_t);
 static void		pmap_alloc_specials(vaddr_t *, int, vaddr_t *,
 			    pt_entry_t **);
-static bool		pmap_is_current(pmap_t);
+static bool		pmap_is_current(pmap_t) __unused;
 static bool		pmap_is_cached(pmap_t);
 static void		pmap_enter_pv(struct vm_page_md *, paddr_t, struct pv_entry *,
 			    pmap_t, vaddr_t, u_int);
