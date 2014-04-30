@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.185 2014/03/22 08:15:25 maxv Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.186 2014/04/30 17:23:45 njoly Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.185 2014/03/22 08:15:25 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.186 2014/04/30 17:23:45 njoly Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -1363,7 +1363,7 @@ netbsd32_pread(struct lwp *l, const struct netbsd32_pread_args *uap, register_t 
 		syscallarg(netbsd32_voidp) buf;
 		syscallarg(netbsd32_size_t) nbyte;
 		syscallarg(int) PAD;
-		syscallarg(off_t) offset;
+		syscallarg(netbsd32_off_t) offset;
 	} */
 	struct sys_pread_args ua;
 
@@ -1383,7 +1383,7 @@ netbsd32_pwrite(struct lwp *l, const struct netbsd32_pwrite_args *uap, register_
 		syscallarg(const netbsd32_voidp) buf;
 		syscallarg(netbsd32_size_t) nbyte;
 		syscallarg(int) PAD;
-		syscallarg(off_t) offset;
+		syscallarg(netbsd32_off_t) offset;
 	} */
 	struct sys_pwrite_args ua;
 
@@ -1519,7 +1519,7 @@ netbsd32_mmap(struct lwp *l, const struct netbsd32_mmap_args *uap, register_t *r
 		syscallarg(int) flags;
 		syscallarg(int) fd;
 		syscallarg(netbsd32_long) PAD;
-		syscallarg(off_t) pos;
+		syscallarg(netbsd32_off_t) pos;
 	} */
 	struct sys_mmap_args ua;
 	int error;
@@ -1582,7 +1582,7 @@ netbsd32_lseek(struct lwp *l, const struct netbsd32_lseek_args *uap, register_t 
 	/* {
 		syscallarg(int) fd;
 		syscallarg(int) PAD;
-		syscallarg(off_t) offset;
+		syscallarg(netbsd32_off_t) offset;
 		syscallarg(int) whence;
 	} */
 	struct sys_lseek_args ua;
@@ -1617,7 +1617,7 @@ netbsd32_truncate(struct lwp *l, const struct netbsd32_truncate_args *uap, regis
 	/* {
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(int) PAD;
-		syscallarg(off_t) length;
+		syscallarg(netbsd32_off_t) length;
 	} */
 	struct sys_truncate_args ua;
 
@@ -1633,7 +1633,7 @@ netbsd32_ftruncate(struct lwp *l, const struct netbsd32_ftruncate_args *uap, reg
 	/* {
 		syscallarg(int) fd;
 		syscallarg(int) PAD;
-		syscallarg(off_t) length;
+		syscallarg(netbsd32_off_t) length;
 	} */
 	struct sys_ftruncate_args ua;
 
@@ -2611,8 +2611,8 @@ netbsd32___posix_fadvise50(struct lwp *l,
 	/* {
 		syscallarg(int) fd;
 		syscallarg(int) PAD;
-		syscallarg(off_t) offset;
-		syscallarg(off_t) len;
+		syscallarg(netbsd32_off_t) offset;
+		syscallarg(netbsd32_off_t) len;
 		syscallarg(int) advice;
 	} */
 
