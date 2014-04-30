@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_mem.c,v 1.4 2011/05/24 01:09:47 rmind Exp $	*/
+/*	$NetBSD: tmpfs_mem.c,v 1.5 2014/04/30 01:33:51 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_mem.c,v 1.4 2011/05/24 01:09:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_mem.c,v 1.5 2014/04/30 01:33:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -64,6 +64,24 @@ tmpfs_mntmem_destroy(struct tmpfs_mount *mp)
 	KASSERT(mp->tm_bytes_used == 0);
 	mutex_destroy(&mp->tm_acc_lock);
 }
+
+int
+tmpfs_mntmem_set(struct tmpfs_mount *mp, uint64_t memlimit)
+{
+	int error;
+
+	mutex_enter(&mp->tm_acc_lock);
+	if (round_page(mp->tm_bytes_used) >= memlimit)
+		error = EBUSY;
+	else {
+		error = 0;
+		mp->tm_mem_limit = memlimit;
+	}
+	mutex_exit(&mp->tm_acc_lock);
+	return error;
+}
+
+	
 
 /*
  * tmpfs_mem_info: return the number of available memory pages.
