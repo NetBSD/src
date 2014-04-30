@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.99 2014/02/03 17:03:16 manu Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.100 2014/04/30 17:23:45 njoly Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -166,6 +166,7 @@ typedef netbsd32_pointer_t netbsd32_fd_setp_t;
 typedef netbsd32_intptr_t netbsd32_semid_t;
 typedef netbsd32_pointer_t netbsd32_semidp_t;
 typedef netbsd32_uint64 netbsd32_dev_t;
+typedef netbsd32_int64 netbsd32_off_t;
 
 /* from <sys/uio.h> */
 typedef netbsd32_pointer_t netbsd32_iovecp_t;
