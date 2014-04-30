@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_reg.h,v 1.6 2014/04/29 17:09:17 matt Exp $	*/
+/*	$NetBSD: ralink_reg.h,v 1.7 2014/04/30 00:53:31 matt Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -54,6 +54,10 @@
 #define RA_CLOCK_RATE		500000000
 #endif
 #define RA_BUS_FREQ		166000000 /* DDR speed */
+#define RA_UART_FREQ		40000000
+#elif defined(MT7620)
+#define RA_CLOCK_RATE		580000000
+#define RA_BUS_FREQ		(RA_CLOCK_RATE / 3)
 #define RA_UART_FREQ		40000000
 #else
 /* Ralink dev board */
@@ -114,7 +118,7 @@
 #if defined(RT3052) || defined(RT3050)
 #define RA_FLASH_BASE		0x1F000000
 #define RA_FLASH_END		0x1F7FFFFF
-#elif defined(RT3883) 
+#elif defined(RT3883) || defined(MT7620)
 #define RA_FLASH_BASE		0x1C000000
 #define RA_FLASH_END		0x1DFFFFFF
 #endif
@@ -207,7 +211,7 @@
 #define SYSCTL_CLKCFG1_FE_GDMA_PCLK_EN	__BIT(22)
 #define SYSCTL_CLKCFG1_PCIE_CLK_EN_3883	__BIT(21)
 #define SYSCTL_CLKCFG1_UPHY1_CLK_EN	__BIT(20)
-#define SYSCTL_CLKCFG1_PCIE_CLK_EN	__BIT(19)
+#define SYSCTL_CLKCFG1_PCI_CLK_EN	__BIT(19)
 #define SYSCTL_CLKCFG1_UPHY0_CLK_EN_3883 __BIT(18)
 #define SYSCTL_CLKCFG1_GE2_CLK_EN_3883	__BIT(17)
 #define SYSCTL_CLKCFG1_GE1_CLK_EN_3883	__BIT(16)
@@ -219,7 +223,7 @@
 #define SYSCTL_CLKCFG1_UPHY0_CLK_EN_7620 __BIT(25)
 #define SYSCTL_CLKCFG1_ESW_CLK_EN	__BIT(23)
 #define SYSCTL_CLKCFG1_FE_CLK_EN	__BIT(21)
-#define SYSCTL_CLKCFG1_UART_CLK_EN	__BIT(19)
+#define SYSCTL_CLKCFG1_UARTL_CLK_EN	__BIT(19)
 #define SYSCTL_CLKCFG1_SPI_CLK_EN	__BIT(18)
 #define SYSCTL_CLKCFG1_I2S_CLK_EN	__BIT(17)
 #define SYSCTL_CLKCFG1_I2C_CLK_EN	__BIT(16)
@@ -256,7 +260,7 @@
 #define  RST_EPHY_7620		__BIT(24)
 #define  RST_PCIE_3883		__BIT(23)
 #define  RST_ESW_7620		__BIT(23)
-#define  RST_UHST_3883		__BIT(22)
+#define  RST_UHST		__BIT(22)
 #define  RST_FE			__BIT(21)
 #define  RST_WLAN		__BIT(20)
 #define  RST_UARTL		__BIT(19)
