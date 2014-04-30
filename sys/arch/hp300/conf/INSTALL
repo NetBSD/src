@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.57 2014/04/29 18:38:27 tsutsui Exp $
+# $NetBSD: INSTALL,v 1.58 2014/04/30 17:51:53 tsutsui Exp $
 #
 # INSTALL machine description file
 #
@@ -136,7 +136,7 @@ mainbus0	at root		# root "bus"
 
 intio0		at mainbus0	# internal i/o space
 dio0		at mainbus0	# DIO/DIO-II bus
-#sgc0		at mainbus0	# SGC bus
+sgc0		at mainbus0	# SGC bus
 
 # Real-time clock (not optional)
 rtc*		at intio?
@@ -190,6 +190,9 @@ wsdisplay*	at tvrx?
 
 gendiofb*	at dio? scode ?
 wsdisplay*	at gendiofb?
+
+sti*		at sgc?	slot ?		# SGC EVRX framebuffers
+wsdisplay*	at sti?
 
 com*		at dio0 scode 9		# DCA serial interfaces
 com*		at dio? scode ?
