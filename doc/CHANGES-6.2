@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.107 2014/04/22 03:28:56 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.108 2014/04/30 05:38:31 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -242,6 +242,7 @@ usr.sbin/installboot/arch/vax.c			1.16-1.17
 	Don't include host's disklabel.h. Fixes cross compile error on
 	some environment.
 	[martin, ticket #865]
+
 sys/netinet6/ip6_flow.c				1.21
 
 	Clear mbuf's csum_flags in ip6flow_fastforward(). Fixes PR#47849.
@@ -2079,6 +2080,7 @@ distrib/sets/lists/comp/shl.mi			patch
 
 	Update openssl to 1.0.1g. It includes CVE-2014-0076 and CVE-2014-0160.
 	[spz, ticket #1044]
+
 crypto/external/bsd/openssl/pkgconfig.mk	1.5
 
 	Run the mkpc script using ${HOST_SH}. Fixes build when
@@ -2123,6 +2125,7 @@ crypto/external/bsd/heimdal/dist/lib/roken/resolve.c	1.2
 	Fix file descriptor leak in Heimdal. Fixes PR#48718
 	reported by Juergen Hannken-Illjes.
 	[hannken, ticket #1047]
+
 sys/kern/kern_exec.c				1.403 via patch
 
 	Avoid use-after-free on failure.
