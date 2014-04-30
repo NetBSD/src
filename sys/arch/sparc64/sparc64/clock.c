@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.114 2013/12/07 11:17:25 nakayama Exp $ */
+/*	$NetBSD: clock.c,v 1.115 2014/04/30 00:09:29 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.114 2013/12/07 11:17:25 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.115 2014/04/30 00:09:29 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -556,7 +556,10 @@ cpu_initclocks(void)
 	 * Establish scheduler softint.
 	 */
 	schedint = sparc_softintr_establish(PIL_SCHED, schedintr, NULL);
-	schedhz = 16;	/* 16Hz is best according to kern/kern_clock.c */
+	if (stathz > 60)
+		schedhz = 16;	/* 16Hz is best according to kern/kern_clock.c */
+	else
+		schedhz = stathz / 2 + 1;
 	statscheddiv = stathz / schedhz;
 	if (statscheddiv <= 0)
 		panic("statscheddiv");
