@@ -1,4 +1,4 @@
-#	$NetBSD: BEAGLEBONE_INSTALL,v 1.1 2012/12/11 19:29:29 riastradh Exp $
+#	$NetBSD: BEAGLEBONE_INSTALL,v 1.2 2014/05/01 18:43:45 martin Exp $
 #
 #	BEAGLEBONE_INSTALL -- BEAGLEBONE kernel with installation-sized
 #	ramdisk
@@ -8,3 +8,4 @@ include "arch/evbarm/conf/BEAGLEBONE"
 include "arch/evbarm/conf/INSTALL"
 
 options BOOTHOWTO=RB_SINGLE
+no makeoptions	DEBUG

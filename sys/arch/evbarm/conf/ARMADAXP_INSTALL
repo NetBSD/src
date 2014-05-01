@@ -1,4 +1,4 @@
-#	$NetBSD: ARMADAXP_INSTALL,v 1.1 2013/08/09 05:57:13 matt Exp $
+#	$NetBSD: ARMADAXP_INSTALL,v 1.2 2014/05/01 18:43:45 martin Exp $
 #
 #	ARMADAXP_INSTALL -- ARMADAXP kernel with installation-sized
 #	ramdisk
@@ -8,3 +8,4 @@ include "arch/evbarm/conf/ARMADAXP"
 include "arch/evbarm/conf/INSTALL"
 
 options BOOTHOWTO=RB_SINGLE
+no makeoptions	DEBUG
