@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_gem_vm.c,v 1.2 2014/03/18 18:20:42 riastradh Exp $	*/
+/*	$NetBSD: drm_gem_vm.c,v 1.3 2014/05/01 15:19:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_gem_vm.c,v 1.2 2014/03/18 18:20:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_gem_vm.c,v 1.3 2014/05/01 15:19:16 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: drm_gem_vm.c,v 1.2 2014/03/18 18:20:42 riastradh Exp
 #include <drm/drmP.h>
 
 static int	drm_gem_mmap_object_locked(struct drm_device *, off_t, size_t,
-		    int, struct uvm_object **);
+		    int, struct uvm_object **, voff_t *);
 
 void
 drm_gem_pager_reference(struct uvm_object *uobj)
@@ -61,13 +61,13 @@ drm_gem_pager_detach(struct uvm_object *uobj)
 
 int
 drm_gem_mmap_object(struct drm_device *dev, off_t byte_offset, size_t nbytes,
-    int prot, struct uvm_object **uobjp)
+    int prot, struct uvm_object **uobjp, voff_t *uoffsetp)
 {
 	int ret;
 
 	mutex_lock(&dev->struct_mutex);
 	ret = drm_gem_mmap_object_locked(dev, byte_offset, nbytes, prot,
-	    uobjp);
+	    uobjp, uoffsetp);
 	mutex_unlock(&dev->struct_mutex);
 
 	return ret;
@@ -75,7 +75,8 @@ drm_gem_mmap_object(struct drm_device *dev, off_t byte_offset, size_t nbytes,
 
 static int
 drm_gem_mmap_object_locked(struct drm_device *dev, off_t byte_offset,
-    size_t nbytes, int prot __unused, struct uvm_object **uobjp)
+    size_t nbytes, int prot __unused, struct uvm_object **uobjp,
+    voff_t *uoffsetp)
 {
 	struct drm_gem_mm *const mm = dev->mm_private;
 	const off_t page_offset = (byte_offset >> PAGE_SHIFT);
@@ -85,13 +86,12 @@ drm_gem_mmap_object_locked(struct drm_device *dev, off_t byte_offset,
 	KASSERT(drm_core_check_feature(dev, DRIVER_GEM));
 	KASSERT(dev->driver->gem_uvm_ops != NULL);
 	KASSERT(prot == (prot & (PROT_READ | PROT_WRITE)));
-
-	if (byte_offset != (byte_offset & ~(PAGE_SIZE-1))) /* XXX kassert?  */
-		return -EINVAL;
+	KASSERT(byte_offset == (byte_offset & ~(PAGE_SIZE-1)));
 
 	if (drm_ht_find_item(&mm->offset_hash, page_offset, &hash) != 0) {
 		/* Fall back to vanilla device mappings.  */
 		*uobjp = NULL;
+		*uoffsetp = (voff_t)-1;
 		return 0;
 	}
 
@@ -109,5 +109,6 @@ drm_gem_mmap_object_locked(struct drm_device *dev, off_t byte_offset,
 	/* Success!  */
 	drm_gem_object_reference(obj);
 	*uobjp = &obj->gemo_uvmobj;
+	*uoffsetp = 0;
 	return 0;
 }

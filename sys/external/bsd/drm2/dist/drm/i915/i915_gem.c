@@ -1521,12 +1521,14 @@ i915_gem_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 	struct drm_i915_gem_object *obj = to_intel_bo(gem_obj);
 	struct drm_device *dev = obj->base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
+	voff_t byte_offset;
 	pgoff_t page_offset;
 	int ret = 0;
 	bool write = ISSET(access_type, VM_PROT_WRITE)? 1 : 0;
 
-	page_offset = (ufi->entry->offset + (vaddr - ufi->entry->start)) >>
-	    PAGE_SHIFT;
+	byte_offset = (ufi->entry->offset + (vaddr - ufi->entry->start));
+	KASSERT(byte_offset <= obj->base.size);
+	page_offset = (byte_offset >> PAGE_SHIFT);
 
 	ret = i915_mutex_lock_interruptible(dev);
 	if (ret)
