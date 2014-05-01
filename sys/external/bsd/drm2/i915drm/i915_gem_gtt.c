@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_gtt.c,v 1.3 2014/04/03 19:18:29 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_gtt.c,v 1.4 2014/05/01 14:37:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.3 2014/04/03 19:18:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.4 2014/05/01 14:37:36 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -518,6 +518,7 @@ gen6_pte_addr_encode(bus_addr_t addr)
 #if __x86_64__
 	KASSERT(addr <= __BITS(39, 0));
 #endif
+	KASSERT((addr & 0xfff) == 0);
 	return (addr | ((addr >> 28) & 0xff0));
 }
 
@@ -548,6 +549,14 @@ gen6_pte_encode(struct drm_device *dev, bus_addr_t addr,
 	}
 
 	return (gen6_pte_addr_encode(addr) | flags);
+}
+
+static bus_addr_t __diagused
+gen6_pte_decode(gtt_pte_t pte)
+{
+	const uint32_t addr = (pte & ~(uint32_t)0xf);
+
+	return ((addr & 0xff0) << 28) | (addr & ~(uint32_t)0xff0);
 }
 
 static int
@@ -653,6 +662,9 @@ gen6_ggtt_bind_object(struct drm_i915_gem_object *obj,
 		do {
 			KASSERT(PAGE_SIZE <= len);
 			KASSERT(0 == (len % PAGE_SIZE));
+			KASSERT(addr ==
+			    gen6_pte_decode(gen6_pte_encode(dev, addr,
+				    cache_level)));
 			bus_space_write_4(bst, bsh, 4*(first_entry + i),
 			    gen6_pte_encode(dev, addr, cache_level));
 			addr += PAGE_SIZE;
@@ -677,6 +689,8 @@ gen6_ggtt_bind_object(struct drm_i915_gem_object *obj,
 			aprint_error_dev(dev->dev, "mismatched PTE"
 			    ": 0x%"PRIxMAX" != 0x%"PRIxMAX"\n",
 			    (uintmax_t)actual, (uintmax_t)expected);
+		KASSERTMSG((seg == obj->igo_dmamap->dm_nsegs),
+		    "seg = %u, nsegs = %u", seg, obj->igo_dmamap->dm_nsegs);
 	}
 
 	I915_WRITE(GFX_FLSH_CNTL_GEN6, GFX_FLSH_CNTL_EN);
@@ -690,13 +704,17 @@ gen6_ggtt_clear_range(struct drm_device *dev, unsigned start_page,
 	struct drm_i915_private *const dev_priv = dev->dev_private;
 	const bus_space_tag_t bst = dev->bst;
 	const bus_space_handle_t bsh = dev_priv->mm.gtt->gtt_bsh;
-	const unsigned n = (dev_priv->mm.gtt->gtt_total_entries - start_page);
 	const gtt_pte_t scratch_pte = gen6_pte_encode(dev,
 	    dev_priv->mm.gtt->gtt_scratch_map->dm_segs[0].ds_addr,
 	    I915_CACHE_LLC);
 	unsigned int i;
 
-	for (i = 0; i < n; i++)
+	KASSERT(start_page < dev_priv->mm.gtt->gtt_total_entries);
+	KASSERT(npages <= (dev_priv->mm.gtt->gtt_total_entries - start_page));
+	KASSERT(dev_priv->mm.gtt->gtt_scratch_map->dm_segs[0].ds_addr ==
+	    gen6_pte_decode(scratch_pte));
+
+	for (i = 0; i < npages; i++)
 		bus_space_write_4(bst, bsh, 4*(start_page + i), scratch_pte);
 	bus_space_read_4(bst, bsh, 4*start_page);
 }
