@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_gtt.c,v 1.4 2014/05/01 14:37:36 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_gtt.c,v 1.5 2014/05/02 14:36:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.4 2014/05/01 14:37:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.5 2014/05/02 14:36:10 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -556,7 +556,7 @@ gen6_pte_decode(gtt_pte_t pte)
 {
 	const uint32_t addr = (pte & ~(uint32_t)0xf);
 
-	return ((addr & 0xff0) << 28) | (addr & ~(uint32_t)0xff0);
+	return ((bus_addr_t)(addr & 0xff0) << 28) | (addr & ~(uint32_t)0xff0);
 }
 
 static int
