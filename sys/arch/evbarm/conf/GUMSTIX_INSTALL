@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX_INSTALL,v 1.4 2014/05/01 18:43:45 martin Exp $
+#	$NetBSD: GUMSTIX_INSTALL,v 1.5 2014/05/02 23:49:10 dogcow Exp $
 #
 #	GUMSTIX_INSTALL -- GUMSTIX kernel with installation-sized
 #	ramdisk
@@ -9,3 +9,5 @@ include "arch/evbarm/conf/INSTALL"
 
 options BOOTHOWTO=RB_SINGLE
 no makeoptions	DEBUG
+no config netbsd-sm0
+no config netbsd-smsh0
