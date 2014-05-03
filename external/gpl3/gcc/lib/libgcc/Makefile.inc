@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.25 2014/03/21 20:54:13 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.26 2014/05/03 16:43:10 martin Exp $
 
 LIBGCC_MACHINE_ARCH?=${MACHINE_ARCH:S/earmv5/earm/}
 
@@ -40,7 +40,7 @@ CPPFLAGS+=	-I${DIST}/gcc/config/rs6000
 # Old style libgcc build procedure.
 #
 
-# This is copied from gcc/mklibgcc.in:$lib2funcs
+# This is copied from dist/libgcc/Makefile.in:$lib2funcs
 LIB2FUNCS_ALL= \
 	_muldi3 _negdi2 _lshrdi3 _ashldi3 _ashrdi3 _cmpdi2 _ucmpdi2    \
 	_clear_cache _trampoline __main \
@@ -52,7 +52,7 @@ LIB2FUNCS_ALL= \
 	_popcount_tab _popcountsi2 _popcountdi2 _paritysi2 _paritydi2 \
 	_powisf2 _powidf2 _powixf2 _powitf2 \
 	_mulsc3 _muldc3 _mulxc3 _multc3 _divsc3 _divdc3 _divxc3 _divtc3 \
-	_bswapsi2 _bswapdi2
+	_bswapsi2 _bswapdi2 _clrsbsi2 _clrsbdi2
 
 .if ${LIBGCC_MACHINE_ARCH} != "coldfire" && empty(LIBGCC_MACHINE_ARCH:Mearm*)
 
