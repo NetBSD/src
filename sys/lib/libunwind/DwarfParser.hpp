@@ -461,6 +461,8 @@ CFI_Parser<A, R>::parseInstructions(A &addressSpace, pint_t instructions,
       reg = R::dwarf2regno(addressSpace.getULEB128(p, instructionsEnd));
       offset =
           addressSpace.getULEB128(p, instructionsEnd) * cieInfo.dataAlignFactor;
+      if (reg > kMaxRegisterNumber)
+        return false;
       results->savedRegisters[reg].location = kRegisterOffsetFromCFA;
       results->savedRegisters[reg].value = offset;
       break;
