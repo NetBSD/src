@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.212 2014/05/03 07:06:31 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.213 2014/05/03 12:50:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.212 2014/05/03 07:06:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.213 2014/05/03 12:50:01 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1025,15 +1025,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	if (eva > VM_MAXUSER_ADDRESS)
 		panic("pmap_remove: uva not in range");
 	if (PMAP_IS_ACTIVE(pmap)) {
-		struct pmap_asid_info * const pai = PMAP_PAI(pmap, curcpu());
-		uint32_t asid;
-
-		__asm volatile("mfc0 %0,$10; nop" : "=r"(asid));
-		asid = (MIPS_HAS_R4K_MMU) ? (asid & 0xff) : (asid & 0xfc0) >> 6;
-		if (asid != pai->pai_asid) {
-			panic("inconsistency for active TLB flush: %d <-> %d",
-			    asid, pai->pai_asid);
-		}
+		pmap_tlb_asid_check();
 	}
 #endif
 #ifdef PMAP_FAULTINFO
@@ -1216,15 +1208,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	if (eva > VM_MAXUSER_ADDRESS)
 		panic("pmap_protect: uva not in range");
 	if (PMAP_IS_ACTIVE(pmap)) {
-		struct pmap_asid_info * const pai = PMAP_PAI(pmap, curcpu());
-		uint32_t asid;
-
-		__asm volatile("mfc0 %0,$10; nop" : "=r"(asid));
-		asid = (MIPS_HAS_R4K_MMU) ? (asid & 0xff) : (asid & 0xfc0) >> 6;
-		if (asid != pai->pai_asid) {
-			panic("inconsistency for active TLB update: %d <-> %d",
-			    asid, pai->pai_asid);
-		}
+		pmap_tlb_asid_check();
 	}
 #endif
 
