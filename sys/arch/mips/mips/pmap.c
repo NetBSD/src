@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.210 2014/04/23 20:57:15 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.211 2014/05/03 06:55:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.210 2014/04/23 20:57:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211 2014/05/03 06:55:04 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -453,8 +453,8 @@ pmap_unmap_ephemeral_page(struct vm_page *pg, vaddr_t va,
 	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
 	pv_entry_t pv = &md->pvh_first;
 	
-	(void)PG_MD_PVLIST_LOCK(md, false);
 	if (MIPS_CACHE_VIRTUAL_ALIAS) {
+		(void)PG_MD_PVLIST_LOCK(md, false);
 		if (PG_MD_CACHED_P(md)
 		    || (pv->pv_pmap != NULL
 			&& mips_cache_badalias(pv->pv_va, va))) {
@@ -466,8 +466,8 @@ pmap_unmap_ephemeral_page(struct vm_page *pg, vaddr_t va,
 			 */
 			mips_dcache_wbinv_range(va, PAGE_SIZE);
 		}
+		PG_MD_PVLIST_UNLOCK(md);
 	}
-	PG_MD_PVLIST_UNLOCK(md);
 #ifndef _LP64
 	/*
 	 * If we had to map using a page table entry, unmap it now.
