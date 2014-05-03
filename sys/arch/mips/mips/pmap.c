@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.211 2014/05/03 06:55:04 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.212 2014/05/03 07:06:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211 2014/05/03 06:55:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.212 2014/05/03 07:06:31 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -577,7 +577,7 @@ pmap_bootstrap(void)
 
 	/*
 	 * Now actually allocate the kernel PTE array (must be done
-	 * after virtual_end is initialized).
+	 * after mips_virtual_end is initialized).
 	 */
 	Sysmap = (pt_entry_t *)
 	    uvm_pageboot_alloc(sizeof(pt_entry_t) * Sysmapsize);
@@ -1588,6 +1588,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 
 #ifdef PARANOIADIAG
 	if (PMAP_IS_ACTIVE(pmap)) {
+		struct pmap_asid_info * const pai = PMAP_PAI(pmap, curcpu());
 		uint32_t asid;
 
 		__asm volatile("mfc0 %0,$10; nop" : "=r"(asid));
@@ -1776,7 +1777,7 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 	if (pmap == pmap_kernel()) {
 		/* change entries in kernel pmap */
 #ifdef PARANOIADIAG
-		if (va < VM_MIN_KERNEL_ADDRESS || va >= virtual_end)
+		if (va < VM_MIN_KERNEL_ADDRESS || va >= mips_virtual_end)
 			panic("pmap_unwire");
 #endif
 		pte = kvtopte(va);
@@ -2090,7 +2091,7 @@ static void
 pmap_check_pvlist(struct vm_page_md *md)
 {
 #ifdef PARANOIADIAG
-	pt_entry_t pv = &md->pvh_first;
+	pv_entry_t pv = &md->pvh_first;
 	if (pv->pv_pmap != NULL) {
 		for (; pv != NULL; pv = pv->pv_next) {
 			KASSERT(!MIPS_KSEG0_P(pv->pv_va));
