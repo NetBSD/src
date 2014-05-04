@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.103 2014/03/16 05:20:29 dholland Exp $	*/
+/*	$NetBSD: ucom.c,v 1.104 2014/05/04 22:18:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.103 2014/03/16 05:20:29 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.104 2014/05/04 22:18:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -367,10 +367,6 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 	struct tty *tp;
 	int s, i;
 	int error;
-
-	/* XXX This is a hopefully temporary stopgap for kern/42848. */
-	if ((flag & (FREAD|FWRITE)) != (FREAD|FWRITE))
-		return (EINVAL);
 
 	if (sc == NULL)
 		return (ENXIO);
