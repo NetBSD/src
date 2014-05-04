@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.55 2014/04/08 16:48:01 njoly Exp $
+	$NetBSD: syscalls.master,v 1.56 2014/05/04 10:08:53 njoly Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -316,9 +316,9 @@
 179	STD		{ int|linux_sys||rt_sigsuspend(linux_sigset_t *unewset, \
 			    size_t sigsetsize); }
 180	STD		{ int|linux_sys||pread(int fd, char *buf, \
-			    size_t nbyte, linux_off_t offset); }
+			    size_t nbyte, off_t offset); }
 181	STD		{ int|linux_sys||pwrite(int fd, char *buf, \
-			    size_t nbyte, linux_off_t offset); }
+			    size_t nbyte, off_t offset); }
 182	STD		{ int|linux_sys||chown16(const char *path, \
 			    linux_uid16_t uid, linux_gid16_t gid); }
 183	NOARGS		{ int|sys||__getcwd(char *bufp, size_t length); }
