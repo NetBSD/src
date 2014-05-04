@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_segtab.c,v 1.5 2012/07/05 17:21:02 matt Exp $	*/
+/*	$NetBSD: pmap_segtab.c,v 1.6 2014/05/04 17:06:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.5 2012/07/05 17:21:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.6 2014/05/04 17:06:23 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -305,9 +305,9 @@ pmap_segtab_alloc(void)
 	}
 
 #ifdef PARANOIADIAG
-	for (i = 0; i < PMAP_SEGTABSIZE; i++) {
+	for (size_t i = 0; i < PMAP_SEGTABSIZE; i++) {
 		if (stp->seg_tab[i] != 0)
-			panic("pmap_create: pm_segtab.seg_tab[%zu] != 0");
+			panic("%s: pm_segtab.seg_tab[%zu] != 0", __func__, i);
 	}
 #endif
 	return stp;
@@ -463,13 +463,13 @@ pmap_pte_reserve(pmap_t pmap, vaddr_t va, int flags)
 #endif
 		KASSERT(pte == stp->seg_tab[(va >> SEGSHIFT) & (PMAP_SEGTABSIZE - 1)]);
 
-		pte += (va >> PGSHIFT) & (NPTEPG - 1);
 #ifdef PARANOIADIAG
 		for (size_t i = 0; i < NPTEPG; i++) {
 			if ((pte+i)->pt_entry)
 				panic("pmap_enter: new segmap not empty");
 		}
 #endif
+		pte += (va >> PGSHIFT) & (NPTEPG - 1);
 	}
 
 	return pte;
