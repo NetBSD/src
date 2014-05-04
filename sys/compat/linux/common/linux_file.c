@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.108 2013/12/08 15:55:10 njoly Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.109 2014/05/04 10:08:53 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.108 2013/12/08 15:55:10 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.109 2014/05/04 10:08:53 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -739,13 +739,14 @@ linux_sys_pread(struct lwp *l, const struct linux_sys_pread_args *uap, register_
 		syscallarg(int) fd;
 		syscallarg(void *) buf;
 		syscallarg(size_t) nbyte;
-		syscallarg(linux_off_t) offset;
+		syscallarg(off_t) offset;
 	} */
 	struct sys_pread_args pra;
 
 	SCARG(&pra, fd) = SCARG(uap, fd);
 	SCARG(&pra, buf) = SCARG(uap, buf);
 	SCARG(&pra, nbyte) = SCARG(uap, nbyte);
+	SCARG(&pra, PAD) = 0;
 	SCARG(&pra, offset) = SCARG(uap, offset);
 
 	return sys_pread(l, &pra, retval);
@@ -768,6 +769,7 @@ linux_sys_pwrite(struct lwp *l, const struct linux_sys_pwrite_args *uap, registe
 	SCARG(&pra, fd) = SCARG(uap, fd);
 	SCARG(&pra, buf) = SCARG(uap, buf);
 	SCARG(&pra, nbyte) = SCARG(uap, nbyte);
+	SCARG(&pra, PAD) = 0;
 	SCARG(&pra, offset) = SCARG(uap, offset);
 
 	return sys_pwrite(l, &pra, retval);
