@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.47 2014/04/08 16:48:01 njoly Exp $
+	$NetBSD: syscalls.master,v 1.48 2014/05/04 10:08:53 njoly Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -99,9 +99,9 @@
 16	STD		{ int|linux_sys||ioctl(int fd, u_long com, \
 			    void *data); }
 17	STD		{ int|linux_sys||pread(int fd, char *buf, \
-			    size_t nbyte, linux_off_t offset); }
+			    size_t nbyte, off_t offset); }
 18	STD		{ int|linux_sys||pwrite(int fd, char *buf, \
-			    size_t nbyte, linux_off_t offset); }
+			    size_t nbyte, off_t offset); }
 19	NOARGS		{ ssize_t|sys||readv(int fd, \
 			    const struct iovec *iovp, int iovcnt); }
 20	NOARGS		{ ssize_t|sys||writev(int fd, \
