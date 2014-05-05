@@ -213,7 +213,7 @@
 	EXYNOS5##p##_##n##_OFFSET, 0x10000
 
 static const struct exyo_locators exynos5_locators[] = {
-	{ "exywdt", OFFANDSIZE(,WDT), NOPORT, IRQ_WDT, 0 },
+	{ "exyowdt", OFFANDSIZE(,WDT), NOPORT, IRQ_WDT, 0 },
 	{ "sscom", OFFANDSIZE(,UART0), 0, IRQ_UART0, 0 },
 	{ "sscom", OFFANDSIZE(,UART1), 1, IRQ_UART1, 0 },
 	{ "sscom", OFFANDSIZE(,UART2), 2, IRQ_UART2, 0 },
