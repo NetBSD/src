@@ -1,4 +1,4 @@
-/*	$NetBSD: completion.h,v 1.2 2014/04/01 15:19:37 riastradh Exp $	*/
+/*	$NetBSD: completion.h,v 1.3 2014/05/05 15:59:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@ static inline void
 init_completion(struct completion *completion)
 {
 
-	mutex_init(&completion->c_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&completion->c_lock, MUTEX_DEFAULT, IPL_VM);
 	cv_init(&completion->c_cv, "lnxcmplt");
 	completion->c_done = 0;
 }
