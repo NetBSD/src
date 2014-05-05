@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_segtab.c,v 1.6 2014/05/04 17:06:23 skrll Exp $	*/
+/*	$NetBSD: pmap_segtab.c,v 1.7 2014/05/05 05:55:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.6 2014/05/04 17:06:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.7 2014/05/05 05:55:21 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -455,6 +455,7 @@ pmap_pte_reserve(pmap_t pmap, vaddr_t va, int flags)
 		 * free the page we just allocated.
 		 */
 		if (__predict_false(opte != NULL)) {
+			mips_pmap_unmap_poolpage(pa);
 			uvm_pagefree(pg);
 			pte = opte;
 		}
