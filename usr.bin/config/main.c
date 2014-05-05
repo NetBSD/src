@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.52 2014/05/05 19:08:13 martin Exp $	*/
+/*	$NetBSD: main.c,v 1.53 2014/05/05 21:04:09 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -486,8 +486,8 @@ main(int argc, char **argv)
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "Usage: %s [-Ppv] [-s srcdir] [-b builddir] "
-	    "[-D var=value] [-U var] "
+	(void)fprintf(stderr, "Usage: %s [-Ppv] [-b builddir] [-D var=value] "
+	    "[-s srcdir] [-U var] "
 	    "[config-file]\n\t%s -x [kernel-file]\n"
 	    "\t%s -L [-v] [-s srcdir] [config-file]\n", 
 	    getprogname(), getprogname(), getprogname());
