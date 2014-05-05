@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.357 2014/04/21 17:34:38 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.358 2014/05/05 19:04:47 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -4372,10 +4372,10 @@ ENTRY_NOPROFILE(cpu_initialize)	/* for cosmetic reasons - nicer backtrace */
 	bne,pt	%icc, 6f
 	 nop
 	/* sun4v */
-	set	_C_LABEL(trapbase_sun4v), %o0
+	set	_C_LABEL(trapbase_sun4v), %l1
 	GET_MMFSA %o1
 	call	_C_LABEL(prom_set_trap_table_sun4v)	! Now we should be running 100% from our handlers
-	 nop
+	 mov	%l1, %o0
 	
 	ba	7f
 	 nop
