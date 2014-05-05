@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ODROID,v 1.1 2014/04/13 02:26:26 matt Exp $
+#	$NetBSD: ODROID,v 1.2 2014/05/05 20:31:03 reinoud Exp $
 #
 #	ODROID -- ODROID series Exynos Kernel
 #
@@ -202,7 +202,7 @@ endif
 sscom2		at exyo0  port 2		# UART2
 
 # Exynos Watchdog Timer
-#exywdt0 	at exyo0			# watchdog
+#exyowdt0 	at exyo0			# watchdog
 
 # Odroid-U connectivity
 
