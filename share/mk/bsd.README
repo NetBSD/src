@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.330 2014/04/18 00:37:46 christos Exp $
+#	$NetBSD: bsd.README,v 1.331 2014/05/05 19:06:29 martin Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -233,6 +233,10 @@ MKIPFILTER	If "no", don't build or install the IP Filter programs and LKM.
 MKISCSI		If "no", don't build or install iSCSI library or applications
 		(depends on libpthread.)
 		Default: yes
+
+MKKDEBUG	If "yes", force building of kernel symbol info and creation
+		of netbsd.gdb in all kernel builds, independently of the
+		settings for "makeoptions DEBUG" in the kernel config file.
 
 MKKERBEROS	If "no", disables building of Kerberos v5
 		infrastructure (libraries and support programs).
