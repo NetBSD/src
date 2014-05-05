@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.167 2014/03/10 02:36:50 ozaki-r Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.168 2014/05/05 19:06:29 martin Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -16,6 +16,11 @@
 #	makeoptions DEBUGLIST="uvm* trap if_*"
 #
 # all ports are expected to include bsd.own.mk for toolchain settings
+
+# Default DEBUG to -g if kernel debug info is requested by MKKDEBUG=yes
+.if defined(MKKDEBUG) && ${MKKDEBUG} == "yes"
+DEBUG?=-g
+.endif
 
 ##
 ## (0) toolchain settings for things that aren't part of the standard
