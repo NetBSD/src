@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_usb.c,v 1.1 2014/04/29 16:47:10 reinoud Exp $	*/
+/*	$NetBSD: exynos_usb.c,v 1.2 2014/05/05 20:24:35 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: exynos_usb.c,v 1.1 2014/04/29 16:47:10 reinoud Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_usb.c,v 1.2 2014/05/05 20:24:35 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,6 +131,7 @@ exynos_usb_attach(device_t parent, device_t self, void *aux)
 	/* get our bushandles */
 	sc->sc_bst  = exyoaa->exyo_core_bst;
 	sc->sc_dmat = exyoaa->exyo_dmat;
+//	sc->sc_dmat = exyoaa->exyo_coherent_dmat;
 
 	bus_space_subregion(sc->sc_bst, exyoaa->exyo_core_bsh,
 		exyoaa->exyo_loc.loc_offset, exyoaa->exyo_loc.loc_size,
@@ -157,8 +158,9 @@ exynos_usb_attach(device_t parent, device_t self, void *aux)
 	    caplength + EHCI_USBINTR, 0);
 #endif
 
-	/* TBD enable USB phy  */
+	/* TBD Init USB subsystem */
 	/* TBD program USB hub */
+	/* TBD power cycle USB ethernet chip */
 
 	/* claim shared interrupt for OHCI/EHCI */
 	sc->sc_intrh = intr_establish(sc->sc_irq, IPL_USB, IST_LEVEL,
