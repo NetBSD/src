@@ -1,4 +1,4 @@
-/*	$NetBSD: compile.c,v 1.39 2013/06/28 15:04:35 joerg Exp $	*/
+/*	$NetBSD: compile.c,v 1.40 2014/05/05 17:12:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "@(#)compile.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: compile.c,v 1.39 2013/06/28 15:04:35 joerg Exp $");
+__RCSID("$NetBSD: compile.c,v 1.40 2014/05/05 17:12:11 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -281,14 +281,19 @@ nonsel:		/* Now parse the command */
 		case EMPTY:		/* d D g G h H l n N p P q x = \0 */
 			p++;
 			EATSPACE();
-			if (*p == ';') {
+			switch (*p) {
+			case ';':
 				p++;
 				link = &cmd->next;
 				goto semicolon;
-			}
-			if (*p)
+			case '}':
+				goto semicolon;
+			case '\0':
+				break;
+			default:
 				err(COMPILE,
 "extra characters at the end of %c command", cmd->code);
+			}
 			break;
 		case TEXT:			/* a c i */
 			p++;
@@ -365,14 +370,19 @@ nonsel:		/* Now parse the command */
 			p++;
 			p = compile_tr(p, (char **)(void *)&cmd->u.y);
 			EATSPACE();
-			if (*p == ';') {
+			switch (*p) {
+			case ';':
 				p++;
 				link = &cmd->next;
 				goto semicolon;
-			}
-			if (*p)
+			case '}':
+				goto semicolon;
+			case '\0':
+				break;
+			default:
 				err(COMPILE,
 "extra text at the end of a transform command");
+			}
 			break;
 		}
 	}
