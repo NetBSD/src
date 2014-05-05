@@ -1,4 +1,4 @@
-#	$NetBSD: files.exynos,v 1.4 2014/04/29 16:47:10 reinoud Exp $
+#	$NetBSD: files.exynos,v 1.5 2014/05/05 20:31:03 reinoud Exp $
 #
 # Configuration info for Samsung Exynos SoC ARM Peripherals
 #
@@ -57,8 +57,8 @@ attach	mct at exyo with exyo_mct
 file	arch/arm/samsung/mct.c		exyo_mct
 
 # Watchdog
-device	exywdt : sysmon_wdog
-attach	exywdt at exyo with exynos_wdt
+device	exyowdt : sysmon_wdog
+attach	exyowdt at exyo with exynos_wdt
 file	arch/arm/samsung/exynos_wdt.c	exynos_wdt | exyo_io needs-flag
 
 # UARTs
