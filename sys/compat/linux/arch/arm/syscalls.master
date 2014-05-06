@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.56 2014/05/04 10:08:53 njoly Exp $
+	$NetBSD: syscalls.master,v 1.57 2014/05/06 17:33:35 njoly Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -72,7 +72,7 @@
 12	NOARGS		{ int|sys||chdir(const char *path); }
 13	STD		{ int|linux_sys||time(linux_time_t *t); }
 14	STD		{ int|linux_sys||mknod(const char *path, linux_umode_t mode, \
-			    int dev); }
+			    unsigned dev); }
 15	NOARGS		{ int|sys||chmod(const char *path, int mode); }
 16	STD		{ int|linux_sys||lchown16(const char *path, \
 			    linux_uid16_t uid, linux_gid16_t gid); }
