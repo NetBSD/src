@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.66 2014/05/06 09:01:26 sborrill Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.67 2014/05/06 18:54:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.66 2014/05/06 09:01:26 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.67 2014/05/06 18:54:34 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -526,7 +526,6 @@ pci_mode_detect(void)
 	int i;
 	pcireg_t idreg;
 	extern char cpu_brand_string[];
-	const char *system_vendor, *system_product;
 
 	if (pci_mode != -1)
 		return pci_mode;
@@ -550,22 +549,28 @@ pci_mode_detect(void)
 		idreg = pci_conf_read(NULL, t, PCI_ID_REG); /* needs "pci_mode" */
 		if (idreg == pcim1_quirk_tbl[i].id) {
 #ifdef DEBUG
-			printf("known mode 1 PCI chipset (%08x)\n",
-			       idreg);
+			printf("%s: known mode 1 PCI chipset (%08x)\n",
+			    __func__, idreg);
 #endif
 			return (pci_mode);
 		}
 	}
 
-	system_vendor = pmf_get_platform("system-vendor");
-	system_product = pmf_get_platform("system-product");
-        if (memcmp(cpu_brand_string, "QEMU", 4) == 0 ||
-	    (system_vendor != NULL && system_product != NULL &&
-	     !strcmp(system_vendor, "Xen") &&
-	     !strcmp(system_product, "HVM domU"))) {
+	const char *reason, *system_vendor, *system_product;
+	if (memcmp(cpu_brand_string, "QEMU", 4) == 0)
 		/* PR 45671, https://bugs.launchpad.net/qemu/+bug/897771 */
+		reason = "QEMU";
+	else if ((system_vendor = pmf_get_platform("system-vendor")) != NULL &&
+	    strcmp(system_vendor, "Xen") == 0 &&
+	    (system_product = pmf_get_platform("system-product")) != NULL &&
+	    strcmp(system_product, "HVM domU") == 0)
+		reason = "Xen";
+	else
+		reason = NULL;
+
+	if (reason) {
 #ifdef DEBUG
-		printf("forcing PCI mode 1 for QEMU\n");
+		printf("%s: forcing PCI mode 1 for %s\n", __func__, reason);
 #endif
 		return (pci_mode);
 	}
@@ -581,8 +586,7 @@ pci_mode_detect(void)
 	val = inl(PCI_MODE1_ADDRESS_REG);
 	if ((val & 0x80fffffc) != PCI_MODE1_ENABLE) {
 #ifdef DEBUG
-		printf("pci_mode_detect: mode 1 enable failed (%x)\n",
-		       val);
+		printf("%s: mode 1 enable failed (%x)\n", __func__, val);
 #endif
 		goto not1;
 	}
