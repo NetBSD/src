@@ -1,4 +1,4 @@
-/*	$NetBSD: netwalker_start.S,v 1.4 2014/04/09 12:35:34 hkenken Exp $	*/
+/*	$NetBSD: netwalker_start.S,v 1.5 2014/05/06 11:22:53 hkenken Exp $	*/
 
 /*-
  * Copyright (c) 2009 SHIMIZU Ryo <ryo@nerv.org>
@@ -66,7 +66,7 @@
 #include <arm/imx/imxuartreg.h>
 #include <evbarm/netwalker/netwalker_reg.h>
 
-RCSID("$NetBSD: netwalker_start.S,v 1.4 2014/04/09 12:35:34 hkenken Exp $")
+RCSID("$NetBSD: netwalker_start.S,v 1.5 2014/05/06 11:22:53 hkenken Exp $")
 
 #if defined(VERBOSE_INIT_ARM)
 #define DEBUG_STARTUP
@@ -197,6 +197,8 @@ relocated:
 
 	/* Move into supervisor mode and disable IRQs/FIQs. */
 	cpsid   if, #PSR_SVC32_MODE
+
+	bl	cortex_init
 
 	movw	r0, #:lower16:TEMP_L1_TABLE
 	movt	r0, #:upper16:TEMP_L1_TABLE
