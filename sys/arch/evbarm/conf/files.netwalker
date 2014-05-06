@@ -1,4 +1,4 @@
-#	$NetBSD: files.netwalker,v 1.7 2014/05/06 11:22:53 hkenken Exp $
+#	$NetBSD: files.netwalker,v 1.8 2014/05/06 12:02:52 hkenken Exp $
 #
 # Sharp Netwalker configuration info
 #
@@ -46,7 +46,7 @@ file	arch/evbarm/netwalker/netwalker_lid.c	netwalker_lid
 
 # LCD BackLight
 attach	imxpwm at axi with netwalker_backlight
-file	arch/evbarm/netwalker/netwalker_backlight.c	netwalker_backlight
+file	arch/evbarm/netwalker/netwalker_backlight.c	netwalker_backlight needs-flag
 
 # OJ6SH-T25 Optical Joystick
 device  oj6sh: wsmousedev
