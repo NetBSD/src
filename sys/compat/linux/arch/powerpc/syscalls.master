@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.60 2014/05/04 10:08:53 njoly Exp $  
+	$NetBSD: syscalls.master,v 1.61 2014/05/06 17:33:35 njoly Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -98,7 +98,7 @@
 12	NOARGS		{ int|sys||chdir(const char *path); }
 13	STD		{ int|linux_sys||time(linux_time_t *t); }
 14	STD		{ int|linux_sys||mknod(const char *path, linux_umode_t mode, \
-			    int dev); }
+			    unsigned dev); }
 15	NOARGS		{ int|sys||chmod(const char *path, int mode); }
 16	NOARGS		{ int|sys||__posix_lchown(const char *path, int uid, \
 			    int gid); }
