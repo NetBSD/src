@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.181 2013/11/06 20:19:03 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.182 2014/05/06 04:26:23 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.181 2013/11/06 20:19:03 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.182 2014/05/06 04:26:23 cherry Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -3011,8 +3011,10 @@ pmap_virtual_space(vaddr_t *startp, vaddr_t *endp)
 void
 pmap_zero_page(paddr_t pa)
 {
-#ifdef __HAVE_DIRECT_MAP
+#if defined(__HAVE_DIRECT_MAP)
 	pagezero(PMAP_DIRECT_MAP(pa));
+#elif defined(XEN)
+	xen_pagezero(pa);
 #else
 	pt_entry_t *zpte;
 	void *zerova;
@@ -3089,11 +3091,13 @@ pmap_pageidlezero(paddr_t pa)
 void
 pmap_copy_page(paddr_t srcpa, paddr_t dstpa)
 {
-#ifdef __HAVE_DIRECT_MAP
+#if defined(__HAVE_DIRECT_MAP)
 	vaddr_t srcva = PMAP_DIRECT_MAP(srcpa);
 	vaddr_t dstva = PMAP_DIRECT_MAP(dstpa);
 
 	memcpy((void *)dstva, (void *)srcva, PAGE_SIZE);
+#elif defined(XEN)
+	xen_copy_page(srcpa, dstpa);
 #else
 	pt_entry_t *spte;
 	pt_entry_t *dpte;
@@ -4103,6 +4107,8 @@ pmap_get_physpage(vaddr_t va, int level, paddr_t *paddrp)
 			panic("pmap_get_physpage: out of memory");
 #ifdef __HAVE_DIRECT_MAP
 		pagezero(PMAP_DIRECT_MAP(*paddrp));
+#elif defined(XEN)
+		xen_pagezero(*paddrp);
 #else
 		kpreempt_disable();
 		pmap_pte_set(early_zero_pte,
@@ -4110,7 +4116,7 @@ pmap_get_physpage(vaddr_t va, int level, paddr_t *paddrp)
 		pmap_pte_flush();
 		pmap_update_pg((vaddr_t)early_zerop);
 		memset(early_zerop, 0, PAGE_SIZE);
-#if defined(DIAGNOSTIC) || defined (XEN)
+#if defined(DIAGNOSTIC)
 		pmap_pte_set(early_zero_pte, 0);
 		pmap_pte_flush();
 #endif /* defined(DIAGNOSTIC) */
