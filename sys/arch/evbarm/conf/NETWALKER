@@ -1,4 +1,4 @@
-#	$NetBSD: NETWALKER,v 1.26 2014/05/06 11:08:51 hkenken Exp $
+#	$NetBSD: NETWALKER,v 1.27 2014/05/06 11:22:53 hkenken Exp $
 #
 #	NETWALKER -- http://www.sharp.co.jp/netwalker/
 #
@@ -236,6 +236,7 @@ wsmouse*	at mousebtn? mux 0
 
 pwrbtn0		at gpio1 offset 21 mask 0x01 # intr 181
 lidsw0		at gpio3 offset 12 mask 0x01 # intr 236
+imxpwm0		at axi? addr 0x73FB4000 irq 61
 
 # SPI NOR-Flash
 #spiflash0	at spiflashbus?
