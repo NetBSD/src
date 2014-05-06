@@ -1,5 +1,5 @@
 # Country Code : City Code : City : Country
-#	$NetBSD: inter.phone,v 1.27 2012/03/06 17:11:15 mbalmer Exp $
+#	$NetBSD: inter.phone,v 1.28 2014/05/06 10:16:52 gson Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 20:2:Cairo:Egypt, Arab Rep. of
 20:3:Alexandria:Egypt, Arab Rep. of
@@ -389,6 +389,9 @@
 358:18:Ahvenanmaa:Finland
 358:19:Uusimaa:Finland
 359:2:Sofia:Bulgaria
+370:::Lithuania
+371:::Latvia
+372:::Estonia
 420:2:Prague:Czech Republic
 421:2:Bratislava:Slovak Republic
 421:31:Dunajska Streda:Slovak Republic
