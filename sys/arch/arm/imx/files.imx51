@@ -1,4 +1,4 @@
-#	$NetBSD: files.imx51,v 1.8 2014/03/22 09:28:08 hkenken Exp $
+#	$NetBSD: files.imx51,v 1.9 2014/05/06 11:22:53 hkenken Exp $
 #
 # Configuration info for the Freescale i.MX51
 #
@@ -123,3 +123,8 @@ defparam opt_imxspi.h				IMXSPI_DEBUG
 # iis sound Controller (SSI module)
 # device	imxi2s {} : bus_dma_generic
 # file	arch/arm/imx/imx51_i2s.c		imxi2s needs-flag
+
+# PWM controlloer
+device	imxpwm
+file	arch/arm/imx/imxpwm.c			imxpwm
+file	arch/arm/imx/imx51_pwm.c		imxpwm
