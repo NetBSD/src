@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.109 2014/05/04 10:08:53 njoly Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.110 2014/05/06 13:21:50 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.109 2014/05/04 10:08:53 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.110 2014/05/06 13:21:50 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -762,7 +762,7 @@ linux_sys_pwrite(struct lwp *l, const struct linux_sys_pwrite_args *uap, registe
 		syscallarg(int) fd;
 		syscallarg(void *) buf;
 		syscallarg(size_t) nbyte;
-		syscallarg(linux_off_t) offset;
+		syscallarg(off_t) offset;
 	} */
 	struct sys_pwrite_args pra;
 
