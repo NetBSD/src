@@ -1,4 +1,4 @@
-/*	$NetBSD: netwalker.h,v 1.1 2014/04/09 04:00:50 hkenken Exp $	*/
+/*	$NetBSD: netwalker.h,v 1.2 2014/05/06 11:08:51 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2014  Genetec Corporation.  All rights reserved.
@@ -34,5 +34,10 @@
  */
 #define KERNEL_VM_BASE		0xc0000000
 #define KERNEL_VM_SIZE		0x20000000
+
+#define GPIO0_IRQBASE		128
+#define GPIO1_IRQBASE		160
+#define GPIO2_IRQBASE		192
+#define GPIO3_IRQBASE		224
 
 #endif /* _EVBARM_NETWALKER_NETWALKER_H */
