@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.75 2014/04/20 22:39:51 aymeric Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.76 2014/05/07 22:53:34 cube Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.75 2014/04/20 22:39:51 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.76 2014/05/07 22:53:34 cube Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -1182,7 +1182,6 @@ tap_dev_poll(int unit, int events, struct lwp *l)
 
 		s = splnet();
 		IFQ_POLL(&ifp->if_snd, m);
-		splx(s);
 
 		if (m != NULL)
 			revents |= events & (POLLIN|POLLRDNORM);
@@ -1191,6 +1190,7 @@ tap_dev_poll(int unit, int events, struct lwp *l)
 			selrecord(l, &sc->sc_rsel);
 			mutex_spin_exit(&sc->sc_kqlock);
 		}
+		splx(s);
 	}
 	revents |= events & (POLLOUT|POLLWRNORM);
 
