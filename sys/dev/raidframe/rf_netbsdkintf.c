@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.308 2014/04/03 18:55:26 christos Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.309 2014/05/08 20:36:15 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.308 2014/04/03 18:55:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.309 2014/05/08 20:36:15 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -343,7 +343,7 @@ raidcreate(int unit) {
 		return NULL;
 	}
 	sc->sc_unit = unit;
-	bufq_alloc(&sc->buf_queue, BUFQ_DISK_DEFAULT_STRAT, BUFQ_SORT_RAWBLOCK);
+	bufq_alloc(&sc->buf_queue, "fcfs", BUFQ_SORT_RAWBLOCK);
 	return sc;
 }
 
