@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.29 2014/02/16 16:13:37 christos Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.30 2014/05/08 05:59:09 mrg Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.20 2011/11/26 06:39:33 ckuethe Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.29 2014/02/16 16:13:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.30 2014/05/08 05:59:09 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -410,6 +410,9 @@ urtwn_attach(device_t parent, device_t self, void *aux)
 	ieee80211_announce(ic);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	SET(sc->sc_flags, URTWN_FLAG_ATTACHED);
 	return;
