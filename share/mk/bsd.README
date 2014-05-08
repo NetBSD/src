@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.331 2014/05/05 19:06:29 martin Exp $
+#	$NetBSD: bsd.README,v 1.332 2014/05/08 13:58:34 phx Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -843,6 +843,8 @@ TOOL_MKTEMP		Make (unique) temporary file name.  [mktemp]
 TOOL_MSGC		Simple message list compiler.  [msgc]
 
 TOOL_MTREE		Map a directory hierarchy.  [mtree]
+
+TOOL_NCDCS		Turn ELF kernel into a NCD firmware image. [ncdcs]
 
 TOOL_PAX		Manipulate file archives and copy directories.  [pax]
 
