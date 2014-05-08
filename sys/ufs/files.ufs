@@ -1,4 +1,4 @@
-#	$NetBSD: files.ufs,v 1.34 2014/03/18 18:20:44 riastradh Exp $
+#	$NetBSD: files.ufs,v 1.35 2014/05/08 08:21:53 hannken Exp $
 
 deffs					FFS
 deffs					EXT2FS
@@ -94,7 +94,6 @@ file	ufs/mfs/mfs_miniroot.c
 file	ufs/ufs/ufs_bmap.c		ffs | mfs | ext2fs | chfs
 file	ufs/ufs/ufs_dirhash.c		(ffs | mfs | ext2fs | chfs) & ufs_dirhash
 file	ufs/ufs/ufs_extattr.c		(ffs | mfs) & ufs_extattr
-file	ufs/ufs/ufs_ihash.c		ffs | mfs | ext2fs
 file	ufs/ufs/ufs_inode.c		ffs | mfs | ext2fs
 file	ufs/ufs/ufs_lookup.c		ffs | mfs | ext2fs | chfs
 file	ufs/ufs/ufs_quota.c		(quota | quota2) & (ffs | mfs | ext2fs | chfs)

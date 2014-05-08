@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.191 2014/02/19 20:42:14 dsl Exp $ */
+/* $NetBSD: vmstat.c,v 1.192 2014/05/08 08:21:53 hannken Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.191 2014/02/19 20:42:14 dsl Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.192 2014/05/08 08:21:53 hannken Exp $");
 #endif
 #endif /* not lint */
 
@@ -1469,10 +1469,6 @@ struct kernel_hash {
 		"buffer hash",
 		X_BUFHASH, X_BUFHASHTBL,
 		HASH_LIST, offsetof(struct buf, b_hash)
-	}, {
-		"inode cache (ihash)",
-		X_IHASH, X_IHASHTBL,
-		HASH_LIST, offsetof(struct inode, i_hash)
 	}, {
 		"ipv4 address -> interface hash",
 		X_IFADDRHASH, X_IFADDRHASHTBL,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.74 2014/02/07 15:29:23 hannken Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.75 2014/05/08 08:21:53 hannken Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.74 2014/02/07 15:29:23 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.75 2014/05/08 08:21:53 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -279,8 +279,7 @@ ext2fs_lookup(void *v)
 	int numdirpasses;		/* strategy for directory search */
 	doff_t endsearch;		/* offset to end directory search */
 	doff_t prevoff;			/* prev entry dp->i_offset */
-	struct vnode *pdp;		/* saved dp during symlink work */
-	struct vnode *tdp;		/* returned by VFS_VGET */
+	struct vnode *tdp;		/* returned by vcache_get */
 	doff_t enduseful;		/* pointer past last used dir slot */
 	u_long bmask;			/* block offset mask */
 	int namlen, error;
@@ -594,11 +593,8 @@ found:
 			vref(vdp);
 			tdp = vdp;
 		} else {
-			if (flags & ISDOTDOT)
-				VOP_UNLOCK(vdp); /* race to get the inode */
-			error = VFS_VGET(vdp->v_mount, foundino, &tdp);
-			if (flags & ISDOTDOT)
-				vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY);
+			error = vcache_get(vdp->v_mount,
+			    &foundino, sizeof(foundino), &tdp);
 			if (error)
 				return (error);
 		}
@@ -606,10 +602,7 @@ found:
 		 * Write access to directory required to delete files.
 		 */
 		if ((error = VOP_ACCESS(vdp, VWRITE, cred)) != 0) {
-			if (dp->i_number == foundino)
-				vrele(tdp);
-			else
-				vput(tdp);
+			vrele(tdp);
 			return (error);
 		}
 		/*
@@ -623,15 +616,10 @@ found:
 			    tdp, vdp, genfs_can_sticky(cred, dp->i_uid,
 			    VTOI(tdp)->i_uid));
 			if (error) {
-				if (dp->i_number == foundino)
-					vrele(tdp);
-				else
-					vput(tdp);
+				vrele(tdp);
 				return (EPERM);
 			}
 		}
-		if (tdp != vdp)
-			VOP_UNLOCK(tdp);
 		*vpp = tdp;
 		return (0);
 	}
@@ -652,52 +640,20 @@ found:
 		 */
 		if (dp->i_number == foundino)
 			return (EISDIR);
-		if (flags & ISDOTDOT)
-			VOP_UNLOCK(vdp); /* race to get the inode */
-		error = VFS_VGET(vdp->v_mount, foundino, &tdp);
-		if (flags & ISDOTDOT)
-			vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY);
+		error = vcache_get(vdp->v_mount,
+		    &foundino, sizeof(foundino), &tdp);
 		if (error)
 			return (error);
-		if (tdp != vdp)
-			VOP_UNLOCK(tdp);
 		*vpp = tdp;
 		return (0);
 	}
 
-	/*
-	 * Step through the translation in the name.  We do not `vput' the
-	 * directory because we may need it again if a symbolic link
-	 * is relative to the current directory.  Instead we save it
-	 * unlocked as "pdp".  We must get the target inode before unlocking
-	 * the directory to insure that the inode will not be removed
-	 * before we get it.  We prevent deadlock by always fetching
-	 * inodes from the root, moving down the directory tree. Thus
-	 * when following backward pointers ".." we must unlock the
-	 * parent directory before getting the requested directory.
-	 * There is a potential race condition here if both the current
-	 * and parent directories are removed before the VFS_VGET for the
-	 * inode associated with ".." returns.  We hope that this occurs
-	 * infrequently since we cannot avoid this race condition without
-	 * implementing a sophisticated deadlock detection algorithm.
-	 * Note also that this simple deadlock detection scheme will not
-	 * work if the file system has any hard links other than ".."
-	 * that point backwards in the directory structure.
-	 */
-	pdp = vdp;
-	if (flags & ISDOTDOT) {
-		VOP_UNLOCK(pdp);	/* race to get the inode */
-		error = VFS_VGET(vdp->v_mount, foundino, &tdp);
-		vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY);
-		if (error) {
-			return (error);
-		}
-		*vpp = tdp;
-	} else if (dp->i_number == foundino) {
+	if (dp->i_number == foundino) {
 		vref(vdp);	/* we want ourself, ie "." */
 		*vpp = vdp;
 	} else {
-		error = VFS_VGET(vdp->v_mount, foundino, &tdp);
+		error = vcache_get(vdp->v_mount,
+		    &foundino, sizeof(foundino), &tdp);
 		if (error)
 			return (error);
 		*vpp = tdp;
@@ -707,8 +663,6 @@ found:
 	 * Insert name into cache if appropriate.
 	 */
 	cache_enter(vdp, *vpp, cnp->cn_nameptr, cnp->cn_namelen, cnp->cn_flags);
-	if (*vpp != vdp)
-		VOP_UNLOCK(*vpp);
 	return 0;
 }
 

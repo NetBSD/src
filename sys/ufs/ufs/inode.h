@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.65 2013/06/09 17:55:46 dholland Exp $	*/
+/*	$NetBSD: inode.h,v 1.66 2014/05/08 08:21:53 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -93,7 +93,6 @@ struct lfs_inode_ext;
  */
 struct inode {
 	struct genfs_node i_gnode;
-	LIST_ENTRY(inode) i_hash;/* Hash chain. */
 	TAILQ_ENTRY(inode) i_nextsnap; /* snapshot file list. */
 	struct	vnode *i_vnode;	/* Vnode associated with this inode. */
 	struct  ufsmount *i_ump; /* Mount point associated with this inode. */
