@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.202 2014/03/24 20:07:41 christos Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.203 2014/05/08 08:21:53 hannken Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.202 2014/03/24 20:07:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.203 2014/05/08 08:21:53 hannken Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
@@ -854,12 +854,10 @@ sysctl_kern_maxvnodes(SYSCTLFN_ARGS)
 
 	old_vnodes = desiredvnodes;
 	desiredvnodes = new_vnodes;
-	if (new_vnodes < old_vnodes) {
-		error = vfs_drainvnodes(new_vnodes);
-		if (error) {
-			desiredvnodes = old_vnodes;
-			return (error);
-		}
+	error = vfs_drainvnodes(new_vnodes);
+	if (error) {
+		desiredvnodes = old_vnodes;
+		return (error);
 	}
 	vfs_reinit();
 	nchreinit();
