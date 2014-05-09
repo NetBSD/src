@@ -107,7 +107,7 @@
 /* standard frequency settings */
 #define EXYNOS_ACLK_REF_FREQ		(200*1000*1000)	/* 200 Mhz */
 #define EXYNOS_UART_FREQ		(109*1000*1000) /* should be EXYNOS_ACLK_REF_FREQ! */
-
+#define EXYNOS_USB_FREQ			(24*1000*1000)	/* 24 Mhz */
 
 /* Watchdog register definitions */
 #define EXYNOS_WDT_WTCON		0x0000
@@ -125,6 +125,26 @@
 #define EXYNOS_WDT_WTCNT		0x0008
 #define  WTCNT_COUNT			__BITS(15,0)
 #define EXYNOS_WDT_WTCLRINT		0x000C
+
+
+/* GPIO register definitions */
+#define EXYNOS_GPIO_GRP_SIZE		0x20
+#define EXYNOS_GPIO_CON			0x00
+#define EXYNOS_GPIO_DAT			0x04
+#define EXYNOS_GPIO_PUD			0x08
+#define EXYNOS_GPIO_DRV			0x0C
+#define EXYNOS_GPIO_CONPWD		0x10
+#define EXYNOS_GPIO_PUDPWD		0x14
+/* rest of space is not used */
+
+#define EXYNOS_GPIO_FUNC_INPUT		0x0
+#define EXYNOS_GPIO_FUNC_OUTPUT		0x1
+/* intermediate values are devices, defintions dependent on pin */
+#define EXYNOS_GPIO_FUNC_EXTINT		0xF
+
+#define EXYNOS_GPIO_PIN_FLOAT		0
+#define EXYNOS_GPIO_PIN_PULL_DOWN	1
+#define EXYNOS_GPIO_PIN_PULL_UP		3
 
 
 #endif /* _ARM_SAMSUNG_EXYNOS_REG_H_ */
