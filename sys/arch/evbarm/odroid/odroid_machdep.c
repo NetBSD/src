@@ -1,4 +1,4 @@
-/*	$NetBSD: odroid_machdep.c,v 1.9 2014/05/09 21:49:43 reinoud Exp $ */
+/*	$NetBSD: odroid_machdep.c,v 1.10 2014/05/09 22:02:10 reinoud Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.9 2014/05/09 21:49:43 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.10 2014/05/09 22:02:10 reinoud Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_exynos.h"
@@ -551,7 +551,7 @@ odroid_device_register(device_t self, void *aux)
 	}
 
 	if (device_is_a(self, "mct"))
-		prop_dictionary_set_cstring(dict, "blinkled", "led0");
+		prop_dictionary_set_cstring(dict, "blinkled", "led1");
 
 	if (device_is_a(self, "exyogpio")) {
 #ifdef EXYNOS4
@@ -559,7 +559,7 @@ odroid_device_register(device_t self, void *aux)
 			/* unused bits */
 			odroid_exynos4_gpio_ncs(self, dict);
 			/* explicit pin settings */
-			prop_dictionary_set_cstring(dict, "led0", ">GPC1[0]");
+			prop_dictionary_set_cstring(dict, "led1", ">GPC1[0]");
 		}
 #endif
 #ifdef EXYNOS5
