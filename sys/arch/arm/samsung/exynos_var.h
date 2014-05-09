@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_var.h,v 1.4 2014/04/29 16:47:10 reinoud Exp $ */
+/* $NetBSD: exynos_var.h,v 1.5 2014/05/09 21:49:43 reinoud Exp $ */
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,9 +37,8 @@
 #include <sys/types.h>
 #include <sys/bus.h>
 #include <sys/gpio.h>
+#include <dev/gpio/gpiovar.h>
 #include <arm/samsung/exynos_reg.h>
-
-//#include <dev/gpio/gpiovar.h>
 
 extern uint32_t exynos_soc_id;
 extern uint32_t exynos_pop_id;
@@ -95,6 +94,17 @@ struct exyo_attach_args {
 	bus_dma_tag_t exyo_coherent_dmat;
 };
 
+struct exynos_gpio_pinset {
+	char pinset_group[10];
+	uint8_t pinset_func;
+	uint32_t pinset_mask;
+};
+
+struct exynos_gpio_pindata {
+	gpio_chipset_tag_t pd_gc;
+	int pd_pin;
+};
+
 
 extern struct bus_space exynos_bs_tag;
 extern struct bus_space exynos_a4x_bs_tag;
@@ -104,10 +114,29 @@ extern struct arm32_bus_dma_tag exynos_coherent_bus_dma_tag;
 extern bus_space_handle_t exynos_core_bsh;
 
 extern void exynos_bootstrap(vaddr_t, vaddr_t);
+extern void exynos_dma_bootstrap(psize_t memsize);
+extern void exynos_gpio_bootstrap(void);
+
 extern void exynos_device_register(device_t self, void *aux);
 extern void exyo_device_register(device_t self, void *aux);
 extern void exynos_wdt_reset(void);
-extern void exynos_dma_bootstrap(psize_t memsize);
+
+extern bool exynos_gpio_pinset_available(const struct exynos_gpio_pinset *);
+extern void exynos_gpio_pinset_acquire(const struct exynos_gpio_pinset *);
+extern void exynos_gpio_pinset_release(const struct exynos_gpio_pinset *);
+extern bool exynos_gpio_pin_reserve(const char *, struct exynos_gpio_pindata *);
+
+static inline void
+exynos_gpio_pindata_write(const struct exynos_gpio_pindata *pd, int value)
+{
+        gpiobus_pin_write(pd->pd_gc, pd->pd_pin, value);
+}
+
+static inline int
+exynos_gpio_pindata_read(const struct exynos_gpio_pindata *pd)
+{
+        return gpiobus_pin_read(pd->pd_gc, pd->pd_pin);
+}
 
 
 #ifdef ARM_TRUSTZONE_FIRMWARE

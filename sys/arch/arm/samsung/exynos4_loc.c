@@ -264,6 +264,7 @@
 	EXYNOS4##p##_##n##_OFFSET, 0x10000
 
 static const struct exyo_locators exynos4_locators[] = {
+	{ "exyogpio", 0, 0, NOPORT, NOINTR, 0 },
 	{ "mct", OFFANDSIZE(,MCT), NOPORT, IRQ_G0_IRQ, 0 },
 	{ "exyowdt", OFFANDSIZE(,WDT), NOPORT, IRQ_WDT, 0 },
 	{ "sscom", OFFANDSIZE(,UART0), 0, IRQ_UART0, 0 },
