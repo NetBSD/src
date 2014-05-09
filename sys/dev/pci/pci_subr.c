@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.106 2013/08/05 07:53:31 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.107 2014/05/09 14:51:26 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.106 2013/08/05 07:53:31 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.107 2014/05/09 14:51:26 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1245,6 +1245,8 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 			printf("      SERR on Fatal Error Enable\n");
 		if ((reg & PCIE_RCR_PME_IE) != 0)
 			printf("      PME Interrupt Enable\n");
+		if ((reg & PCIE_RCR_CRS_SVE) != 0)
+			printf("      CRS Software Visibility Enable\n");
 
 		/* Root Capability Register */
 		printf("    Root Capability Register: %04x\n",
@@ -1357,6 +1359,8 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 			if (((val >> i) & 0x01) != 0)
 				printf(" %sGT/s", linkspeeds[i]);
 		}
+		printf("      Crosslink Supported: %s\n",
+		    (reg & PCIE_LCAP2_CROSSLNK) != 0 ? "yes" : "no");
 		printf("\n");
 
 		/* Link Control 2 */
