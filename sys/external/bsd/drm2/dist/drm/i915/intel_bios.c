@@ -679,7 +679,7 @@ static const struct dmi_system_id intel_no_opregion_vbt[] = {
 			DMI_MATCH(DMI_PRODUCT_NAME, "97027RG"),
 		},
 	},
-	{ 0, }
+	{ 	.callback = NULL, }
 };
 
 /**
