@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.213 2014/04/22 13:20:58 joerg Exp $
+#	$NetBSD: Makefile,v 1.214 2014/05/09 08:36:09 plunky Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -61,6 +61,11 @@ SUBDIR+=	../external/bsd/tre/lib
 SUBDIR+=	../external/bsd/elftoolchain/lib/libelf
 SUBDIR+=	../external/bsd/liblzf/lib
 SUBDIR+=	../external/bsd/libpcap/lib
+
+.if ${MKSLJIT} != "no"
+SUBDIR+=	../external/bsd/sljit/lib
+SUBDIR+=	libbpfjit
+.endif
 
 SUBDIR+=	../external/mit/expat/lib
 
@@ -207,12 +212,6 @@ SUBDIR+=	libpam		# depends on heimdal
 
 .if (${MKCRYPTO} != "no")
 SUBDIR+=	../crypto/external/bsd/libsaslc	# depends on heimdal, openssl
-.endif
-
-.if ${MKSLJIT} != "no"
-SUBDIR+=	../external/bsd/sljit/lib
-SUBDIR+=	.WAIT
-SUBDIR+=	libbpfjit
 .endif
 
 SUBDIR+=	../external/bsd/mdocml/lib
