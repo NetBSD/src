@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ODROID-U,v 1.4 2014/05/05 20:31:03 reinoud Exp $
+#	$NetBSD: ODROID-U,v 1.5 2014/05/09 21:49:43 reinoud Exp $
 #
 #	ODROID-U -- ODROID-U series Exynos Kernel
 #
@@ -191,6 +191,10 @@ sscom1		at exyo0  port 1		# UART1
 
 # Exynos Watchdog Timer
 exyowdt0 	at exyo0 flags 1		# watchdog
+
+# GPIO
+exyogpio0	at exyo0
+gpio*		at exyogpio?
 
 # On-board USB
 exyousb*	at exyo0
