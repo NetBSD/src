@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.37 2014/04/26 11:23:03 pooka Exp $	*/
+/*	$NetBSD: sockin.c,v 1.38 2014/05/09 06:12:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.37 2014/04/26 11:23:03 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.38 2014/05/09 06:12:48 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -58,8 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.37 2014/04/26 11:23:03 pooka Exp $");
 
 /*
  * An inet communication domain which uses the socket interface.
- * Currently supports only IPv4 UDP, but could easily be extended to
- * support IPv6 and TCP by adding more stuff to the protosw.
+ * Supports IPv4 & IPv6 UDP/TCP.
  */
 
 DOMAIN_DEFINE(sockindomain);
