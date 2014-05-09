@@ -1,4 +1,4 @@
-/*	$NetBSD: mct.c,v 1.1 2014/04/13 02:26:26 matt Exp $	*/
+/*	$NetBSD: mct.c,v 1.2 2014/05/09 22:21:46 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: mct.c,v 1.1 2014/04/13 02:26:26 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: mct.c,v 1.2 2014/05/09 22:21:46 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -155,6 +155,7 @@ mct_attach(device_t parent, device_t self, void *aux)
 	struct mct_softc * const sc = &mct_sc;
 	prop_dictionary_t dict = device_properties(self);
 	char freqbuf[sizeof("XXX SHz")];
+	const char *pin_name;
 
 	self->dv_private = sc;
 	sc->sc_dev = self;
@@ -186,6 +187,19 @@ mct_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_global_ih == NULL)
 		panic("%s: unable to register timer interrupt", __func__);
 	aprint_normal_dev(sc->sc_dev, "interrupting on irq %d\n", sc->sc_irq);
+
+	/* blink led */
+	if (prop_dictionary_get_cstring_nocopy(dict, "heartbeat", &pin_name)) {
+		if (!exynos_gpio_pin_reserve(pin_name, &sc->sc_gpio_led)) {
+			aprint_error_dev(self,
+				"failed to reserve GPIO \"%s\" "
+				"for heartbeat led\n", pin_name);
+		} else {
+			sc->sc_has_blink_led = true;
+			sc->sc_led_state = false;
+			sc->sc_led_timer = hz;
+		}
+	}
 }
 
 
@@ -217,16 +231,28 @@ clockhandler(void *arg)
 	struct mct_softc * const sc = &mct_sc;
 	const uint64_t now = mct_gettime(sc);
 	uint64_t delta = now - sc->sc_lastintr;
+	uint64_t missed = delta / sc->sc_autoinc;
 
 	/* ack the interrupt */
 	mct_write_global(sc, MCT_G_INT_CSTAT, G_INT_CSTAT_CLEAR);
 
 	/* check if we missed clock interrupts */
 	if (delta > sc->sc_autoinc)
-		sc->sc_ev_missing_ticks.ev_count += delta / sc->sc_autoinc;
+		sc->sc_ev_missing_ticks.ev_count += missed;
 
 	sc->sc_lastintr = now;
 	hardclock(cf);
+
+	if (sc->sc_has_blink_led) {
+		sc->sc_led_timer = sc->sc_led_timer - 1 - missed;
+		if (sc->sc_led_timer <= 0) {
+			sc->sc_led_state = !sc->sc_led_state;
+			exynos_gpio_pindata_write(&sc->sc_gpio_led,
+				sc->sc_led_state);
+			while (sc->sc_led_timer <= 0)
+				sc->sc_led_timer += hz;
+		}
+	}
 
 	/* handled */
 	return 1;
