@@ -107,7 +107,10 @@
 /* standard frequency settings */
 #define EXYNOS_ACLK_REF_FREQ		(200*1000*1000)	/* 200 Mhz */
 #define EXYNOS_UART_FREQ		(109*1000*1000) /* should be EXYNOS_ACLK_REF_FREQ! */
-#define EXYNOS_USB_FREQ			(24*1000*1000)	/* 24 Mhz */
+
+#define EXYNOS_F_IN_FREQ		(24*1000*1000)	/* 24 Mhz */
+#define EXYNOS_USB_FREQ			EXYNOS_F_IN_FREQ/* 24 Mhz */
+
 
 /* Watchdog register definitions */
 #define EXYNOS_WDT_WTCON		0x0000
