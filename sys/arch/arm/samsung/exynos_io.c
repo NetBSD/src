@@ -34,7 +34,7 @@
 #include "opt_exynos.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_io.c,v 1.2 2014/04/29 16:47:10 reinoud Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_io.c,v 1.3 2014/05/09 22:19:22 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -95,12 +95,8 @@ exyo_device_register(device_t self, void *aux)
 	prop_dictionary_t dict = device_properties(self);
 
 	if (device_is_a(self, "mct")) {
-		/*
-		 * This clock always runs at (arm_clk div 2) and only goes
-		 * to timers that are part of the A9 MP core subsystem.
-		 */
-		prop_dictionary_set_uint32(dict, "frequency",
-		    curcpu()->ci_data.cpu_cc_freq / 2);
+		/* This clock always runs at F_in / xusbxti of 24 Mhz */
+		prop_dictionary_set_uint32(dict, "frequency", EXYNOS_F_IN_FREQ);
 		return;
 	}
 }
