@@ -47,6 +47,12 @@ static struct mct_softc {
 	uint64_t		 sc_lastintr;
 	uint32_t		 sc_autoinc;
 	struct evcnt		 sc_ev_missing_ticks;
+
+	/* blinking led */
+	bool			 sc_has_blink_led;
+	struct exynos_gpio_pindata sc_gpio_led;
+	bool			 sc_led_state;
+	int			 sc_led_timer;
 } mct_sc;
 
 void mct_init_cpu_clock(struct cpu_info *ci);
