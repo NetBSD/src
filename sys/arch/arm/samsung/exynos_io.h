@@ -45,7 +45,7 @@ extern const struct exyo_locinfo exynos5_locinfo;
 
 /* XXXNH needed? */
 #define	NOPORT	EXYOCF_PORT_DEFAULT
-#define	NOINTR	EXYO_INTR_DEFAULT
+#define	NOINTR	EXYOCF_INTR_DEFAULT
 #define	EANY	EXYO_ALL
 #define	REQ	EXYO_REQUIRED
 
