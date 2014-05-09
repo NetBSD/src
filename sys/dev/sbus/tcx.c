@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.46 2014/04/29 11:16:25 macallan Exp $ */
+/*	$NetBSD: tcx.c,v 1.47 2014/05/09 11:51:49 jdc Exp $ */
 
 /*
  *  Copyright (c) 1996, 1998, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.46 2014/04/29 11:16:25 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.47 2014/05/09 11:51:49 jdc Exp $");
 
 /*
  * define for cg8 emulation on S24 (24-bit version of tcx) for the SS5;
@@ -271,7 +271,7 @@ tcxattach(device_t parent, device_t self, void *args)
 	fb_setsize_obp(fb, fb->fb_type.fb_depth, 1152, 900, node);
 
 	if (sc->sc_8bit) {
-		printf(" (8bit only TCX)");
+		printf(" (8-bit only TCX)\n");
 		ramsize = 1024 * 1024;
 		/* XXX - fix THC and TEC offsets */
 		sc->sc_physaddr[TCX_REG_TEC].oa_base += 0x1000;
