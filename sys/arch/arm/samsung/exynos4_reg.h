@@ -237,7 +237,7 @@
 #define EXYNOS4_UART2_OFFSET		0x03820000	/* serial port 2 */
 #define EXYNOS4_UART3_OFFSET		0x03830000	/* serial port 3 */
 #define EXYNOS4_UART4_OFFSET		0x03840000	/* serial port 4 */
-#define EXYNOS4_I2C0_OFFSET		0x03860000	/* Inter Integrated Circuit (I2C) */
+#define EXYNOS4_GPIO_I2C0_OFFSET	0x03860000	/* Inter Integrated Circuit (I2C) */
 #define EXYNOS4_I2C1_OFFSET		0x03870000	/* Inter Integrated Circuit (I2C) */
 #define EXYNOS4_I2C2_OFFSET		0x03880000	/* Inter Integrated Circuit (I2C) */
 #define EXYNOS4_I2C3_OFFSET		0x03890000	/* Inter Integrated Circuit (I2C) */
