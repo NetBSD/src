@@ -1,4 +1,4 @@
-/*	$NetBSD: odroid_machdep.c,v 1.14 2014/05/10 20:24:06 reinoud Exp $ */
+/*	$NetBSD: odroid_machdep.c,v 1.15 2014/05/10 22:24:32 reinoud Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.14 2014/05/10 20:24:06 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.15 2014/05/10 22:24:32 reinoud Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_exynos.h"
@@ -518,7 +518,8 @@ odroid_exynos4_gpio_ncs(device_t self, prop_dictionary_t dict) {
 	prop_dictionary_set_uint32(dict, "nc-GPX0", 0xff - 0x00);
 	prop_dictionary_set_uint32(dict, "nc-GPX1", 0xff - 0x00);
 	prop_dictionary_set_uint32(dict, "nc-GPX2", 0xff - 0x00);
-	prop_dictionary_set_uint32(dict, "nc-GPX3", 0xff - 0x00);
+	/* hub communication at pin 0, 4, 5: */
+	prop_dictionary_set_uint32(dict, "nc-GPX3", 0xff - 0x31);
 	prop_dictionary_set_uint32(dict, "nc-GPZ",  0xff - 0x00);
 	prop_dictionary_set_uint32(dict, "nc-GPV0", 0xff - 0x00);
 	prop_dictionary_set_uint32(dict, "nc-GPV1", 0xff - 0x00);
@@ -559,6 +560,12 @@ odroid_device_register(device_t self, void *aux)
 	if (device_is_a(self, "mct"))
 		prop_dictionary_set_cstring(dict, "heartbeat", "led1");
 
+	if (device_is_a(self, "exyousb")) {
+		prop_dictionary_set_cstring(dict, "nreset", "hub_nreset");
+		prop_dictionary_set_cstring(dict, "hubconnect", "hub_connect");
+		prop_dictionary_set_cstring(dict, "nint", "hub_nint");
+	}
+
 #ifdef EXYNOS4
 	if (device_is_a(self, "exyogpio") && (IS_EXYNOS4_P())) {
 		/* unused bits */
@@ -566,6 +573,10 @@ odroid_device_register(device_t self, void *aux)
 
 		/* explicit pin settings */
 		prop_dictionary_set_cstring(dict, "led1", ">GPC1[0]");
+
+		prop_dictionary_set_cstring(dict, "hub_nreset", ">GPX3[5]");
+		prop_dictionary_set_cstring(dict, "hub_connect", ">GPX3[4]");
+		prop_dictionary_set_cstring(dict, "hub_nint", "<GPX3[0]");
 	}
 #endif
 #ifdef EXYNOS5
@@ -579,9 +590,73 @@ odroid_device_register(device_t self, void *aux)
 }
 
 
+static void
+exynos_usb_init_usb3503_hub(device_t self)
+{
+	prop_dictionary_t dict = device_properties(self);
+	const char *pin_nreset, *pin_hubconnect, *pin_nint;
+	struct exynos_gpio_pindata nreset_pin, hubconnect_pin, nint_pin;
+	int ok1, ok2, ok3;
+
+	prop_dictionary_get_cstring_nocopy(dict, "nreset", &pin_nreset);
+	prop_dictionary_get_cstring_nocopy(dict, "hubconnect", &pin_hubconnect);
+	prop_dictionary_get_cstring_nocopy(dict, "nint", &pin_nint);
+	if (pin_nreset && pin_hubconnect && pin_nint) {
+		ok1 = exynos_gpio_pin_reserve(pin_nreset, &nreset_pin);
+		ok2 = exynos_gpio_pin_reserve(pin_hubconnect, &hubconnect_pin);
+		ok3 = exynos_gpio_pin_reserve(pin_nint, &nint_pin);
+		if (!ok1)
+			aprint_error_dev(self,
+			    "can't reserve GPIO pin %s\n", pin_nreset);
+		if (!ok2)
+			aprint_error_dev(self,
+			    "can't reserve GPIO pin %s\n", pin_hubconnect);
+		if (!ok3)
+			aprint_error_dev(self,
+			    "can't reserve GPIO pin %s\n", pin_nint);
+		if (!(ok1 && ok2 && ok3))
+			return;
+
+		/* reset pin to zero */
+		exynos_gpio_pindata_write(&nreset_pin, 0);
+		DELAY(10000);
+
+		/* pull intn low */
+		exynos_gpio_pindata_ctl(&nint_pin, GPIO_PIN_PULLDOWN);
+		DELAY(10000);
+
+		/* set hubconnect low */
+		exynos_gpio_pindata_write(&hubconnect_pin, 0);
+		DELAY(10000);
+
+		/* reset pin up again, hub enters RefClk stage */
+		exynos_gpio_pindata_write(&nreset_pin, 1);
+		DELAY(10000);
+
+		/* set hubconnect high */
+		exynos_gpio_pindata_write(&hubconnect_pin, 1);
+		DELAY(10000);
+
+		/* release intn */
+		exynos_gpio_pindata_ctl(&nint_pin, GPIO_PIN_TRISTATE);
+		DELAY(10000);
+
+		/* DONE! */
+	} else {
+		aprint_error_dev(self, "failed to lookup GPIO pins");
+	}
+	/* XXX leaving pins claimed! */
+}
+
+
 void
 odroid_device_register_post_config(device_t self, void *aux)
 {
 	exynos_device_register_post_config(self, aux);
+
+	if (device_is_a(self, "exyousb")) {
+		exynos_usb_init_usb3503_hub(self);
+		/* TBD power cycle USB ethernet chip */
+	}
 }
 
