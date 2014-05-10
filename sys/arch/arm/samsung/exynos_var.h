@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_var.h,v 1.6 2014/05/10 10:46:25 reinoud Exp $ */
+/* $NetBSD: exynos_var.h,v 1.7 2014/05/10 10:47:17 reinoud Exp $ */
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -138,7 +138,7 @@ exynos_gpio_pindata_read(const struct exynos_gpio_pindata *pd)
         return gpiobus_pin_read(pd->pd_gc, pd->pd_pin);
 }
 
-static inline int
+static inline void
 exynos_gpio_pindata_ctl(const struct exynos_gpio_pindata *pd, int flags)
 {
         gpiobus_pin_ctl(pd->pd_gc, pd->pd_pin, flags);
