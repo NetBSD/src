@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_soc.c,v 1.8 2014/05/09 21:49:43 reinoud Exp $	*/
+/*	$NetBSD: exynos_soc.c,v 1.9 2014/05/10 20:24:06 reinoud Exp $	*/
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #define	_ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.8 2014/05/09 21:49:43 reinoud Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.9 2014/05/10 20:24:06 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -302,5 +302,12 @@ exynos_device_register(device_t self, void *aux)
 #endif
 
 	exyo_device_register(self, aux);
+}
+
+
+void
+exynos_device_register_post_config(device_t self, void *aux)
+{
+	exyo_device_register_post_config(self, aux);
 }
 
