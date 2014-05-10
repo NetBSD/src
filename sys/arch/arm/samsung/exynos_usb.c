@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_usb.c,v 1.2 2014/05/05 20:24:35 reinoud Exp $	*/
+/*	$NetBSD: exynos_usb.c,v 1.3 2014/05/10 21:10:27 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: exynos_usb.c,v 1.2 2014/05/05 20:24:35 reinoud Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_usb.c,v 1.3 2014/05/10 21:10:27 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,8 +159,6 @@ exynos_usb_attach(device_t parent, device_t self, void *aux)
 #endif
 
 	/* TBD Init USB subsystem */
-	/* TBD program USB hub */
-	/* TBD power cycle USB ethernet chip */
 
 	/* claim shared interrupt for OHCI/EHCI */
 	sc->sc_intrh = intr_establish(sc->sc_irq, IPL_USB, IST_LEVEL,
