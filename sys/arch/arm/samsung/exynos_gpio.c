@@ -32,7 +32,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.1 2014/05/09 21:49:43 reinoud Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.2 2014/05/10 19:31:00 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -167,7 +167,8 @@ static struct exynos_gpio_pin_group exynos4_pin_groups[] = {
 	GPIO_GRP(4, RIGHT, 0x01A0, GPY4, 8),
 	GPIO_GRP(4, RIGHT, 0x01C0, GPY5, 8),
 	GPIO_GRP(4, RIGHT, 0x01E0, GPY6, 8),
-	/* ETC0, ETC6 skipped */
+	GPIO_GRP(4, RIGHT, 0x0200, ETC0, 6),
+	GPIO_GRP(4, RIGHT, 0x0220, ETC6, 7),
 	GPIO_GRP(4, RIGHT, 0x0260, GPM0, 8),
 	GPIO_GRP(4, RIGHT, 0x0280, GPM1, 7),
 	GPIO_GRP(4, RIGHT, 0x02A0, GPM2, 5),
@@ -185,10 +186,10 @@ static struct exynos_gpio_pin_group exynos4_pin_groups[] = {
 
 	GPIO_GRP(4, C2C,   0x0000, GPV0, 8),
 	GPIO_GRP(4, C2C,   0x0020, GPV1, 8),
-	/* ETC7 skipped */
+	GPIO_GRP(4, C2C,   0x0040, ETC7, 2),
 	GPIO_GRP(4, C2C,   0x0060, GPV2, 8),
 	GPIO_GRP(4, C2C,   0x0080, GPV3, 8),
-	/* ETC8 skipped */
+	GPIO_GRP(4, C2C,   0x00A0, ETC8, 2),
 	GPIO_GRP(4, C2C,   0x00C0, GPV4, 2),
 	/* EXTINT skipped */
 };
