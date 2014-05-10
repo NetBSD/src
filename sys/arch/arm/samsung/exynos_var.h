@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_var.h,v 1.7 2014/05/10 10:47:17 reinoud Exp $ */
+/* $NetBSD: exynos_var.h,v 1.8 2014/05/10 20:24:06 reinoud Exp $ */
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -118,7 +118,9 @@ extern void exynos_dma_bootstrap(psize_t memsize);
 extern void exynos_gpio_bootstrap(void);
 
 extern void exynos_device_register(device_t self, void *aux);
+extern void exynos_device_register_post_config(device_t self, void *aux);
 extern void exyo_device_register(device_t self, void *aux);
+extern void exyo_device_register_post_config(device_t self, void *aux);
 extern void exynos_wdt_reset(void);
 
 extern bool exynos_gpio_pinset_available(const struct exynos_gpio_pinset *);
