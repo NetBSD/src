@@ -34,7 +34,7 @@
 #include "opt_exynos.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_io.c,v 1.3 2014/05/09 22:19:22 reinoud Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_io.c,v 1.4 2014/05/10 20:24:06 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -99,6 +99,11 @@ exyo_device_register(device_t self, void *aux)
 		prop_dictionary_set_uint32(dict, "frequency", EXYNOS_F_IN_FREQ);
 		return;
 	}
+}
+
+void
+exyo_device_register_post_config(device_t self, void *aux)
+{
 }
 
 static int
