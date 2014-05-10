@@ -1,4 +1,4 @@
-/*	$NetBSD: odroid_machdep.c,v 1.13 2014/05/10 19:31:00 reinoud Exp $ */
+/*	$NetBSD: odroid_machdep.c,v 1.14 2014/05/10 20:24:06 reinoud Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.13 2014/05/10 19:31:00 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.14 2014/05/10 20:24:06 reinoud Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_exynos.h"
@@ -203,6 +203,7 @@ void consinit(void);
 static void kgdb_port_init(void);
 #endif
 void odroid_device_register(device_t self, void *aux);
+void odroid_device_register_post_config(device_t self, void *aux);
 
 
 /*
@@ -403,6 +404,7 @@ strcpy(tmp, "-v");
 
 	/* we've a specific device_register routine */
 	evbarm_device_register = odroid_device_register;
+	evbarm_device_register_post_config = odroid_device_register_post_config;
 
 	/*
 	 * If we couldn't map all of memory via TTBR1, limit the memory the
@@ -574,5 +576,12 @@ odroid_device_register(device_t self, void *aux)
 		/* explicit pin settings */
 	}
 #endif
+}
+
+
+void
+odroid_device_register_post_config(device_t self, void *aux)
+{
+	exynos_device_register_post_config(self, aux);
 }
 
