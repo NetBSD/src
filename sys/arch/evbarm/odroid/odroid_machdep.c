@@ -1,4 +1,4 @@
-/*	$NetBSD: odroid_machdep.c,v 1.12 2014/05/10 11:03:45 reinoud Exp $ */
+/*	$NetBSD: odroid_machdep.c,v 1.13 2014/05/10 19:31:00 reinoud Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.12 2014/05/10 11:03:45 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.13 2014/05/10 19:31:00 reinoud Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_exynos.h"
@@ -506,6 +506,8 @@ odroid_exynos4_gpio_ncs(device_t self, prop_dictionary_t dict) {
 	prop_dictionary_set_uint32(dict, "nc-GPY4", 0xff - 0x00);
 	prop_dictionary_set_uint32(dict, "nc-GPY5", 0xff - 0x00);
 	prop_dictionary_set_uint32(dict, "nc-GPY6", 0xff - 0x00);
+	prop_dictionary_set_uint32(dict, "nc-ETC0", 0x3f - 0x00);
+	prop_dictionary_set_uint32(dict, "nc-ETC6", 0x7f - 0x00);
 	prop_dictionary_set_uint32(dict, "nc-GPM0", 0xff - 0x00);
 	prop_dictionary_set_uint32(dict, "nc-GPM1", 0x7f - 0x00);
 	prop_dictionary_set_uint32(dict, "nc-GPM2", 0x1f - 0x00);
@@ -518,8 +520,10 @@ odroid_exynos4_gpio_ncs(device_t self, prop_dictionary_t dict) {
 	prop_dictionary_set_uint32(dict, "nc-GPZ",  0xff - 0x00);
 	prop_dictionary_set_uint32(dict, "nc-GPV0", 0xff - 0x00);
 	prop_dictionary_set_uint32(dict, "nc-GPV1", 0xff - 0x00);
+	prop_dictionary_set_uint32(dict, "nc-ETC7", 0x03 - 0x00);
 	prop_dictionary_set_uint32(dict, "nc-GPV2", 0xff - 0x00);
 	prop_dictionary_set_uint32(dict, "nc-GPV3", 0xff - 0x00);
+	prop_dictionary_set_uint32(dict, "nc-ETC8", 0x03 - 0x00);
 	prop_dictionary_set_uint32(dict, "nc-GPV4", 0x03 - 0x00);
 }
 #endif
