@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_soc.c,v 1.9 2014/05/10 20:24:06 reinoud Exp $	*/
+/*	$NetBSD: exynos_soc.c,v 1.10 2014/05/10 20:38:15 reinoud Exp $	*/
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #define	_ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.9 2014/05/10 20:24:06 reinoud Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.10 2014/05/10 20:38:15 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -289,17 +289,15 @@ exynos_device_register(device_t self, void *aux)
 		}
 		return;
 	}
-#if defined(CPU_CORTEXA7) || defined(CPU_CORTEXA15)
-	if (device_is_a(self, "armgtmr")) {
+	if (device_is_a(self, "armgtmr") || device_is_a(self, "mct")) {
 		/*
-		 * The frequency of the generic timer is the reference
+		 * The frequencies of the timers are the reference
 		 * frequency.
 		 */
 		prop_dictionary_set_uint32(device_properties(self),
-		    "frequency", 24000000);
+		    "frequency", EXYNOS_F_IN_FREQ);
 		return;
 	}
-#endif
 
 	exyo_device_register(self, aux);
 }
