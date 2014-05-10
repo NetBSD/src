@@ -32,7 +32,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.2 2014/05/10 19:31:00 reinoud Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.3 2014/05/10 21:46:15 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -603,7 +603,7 @@ exynos_gpio_pin_reserve(const char *name, struct exynos_gpio_pindata *pd)
 		return false;
 
 	KASSERT(strlen(pin_data) < 10);
-	if (!(pin_data[0] == '>' || pin_data[1] == '<')) {
+	if (!(pin_data[0] == '>' || pin_data[0] == '<')) {
 		printf("%s: malformed pin data in '%s', missing direction\n",
 			__func__, pin_data);
 		return false;
