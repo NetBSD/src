@@ -269,20 +269,44 @@ ENTRY(_ZNK7_Unwind15Registers_ppc326jumptoEv)
 	bctr
 #endif
 
-#if defined(__arm__) && !defined(__ARM_EABI__)
+#if defined(__arm__)
+	.fpu vfpv3
 	.hidden _ZN7_Unwind15Registers_arm32C1Ev
 ENTRY(_ZN7_Unwind15Registers_arm32C1Ev)
 	stmia	r0, {r0-r14}
-
 	str	lr, [r0, #60]	/* PC */
 	mrs	r1, cpsr
 	str	r1, [r0, #64]	/* CPSR */
-
+	mov	r1, #0
+	str	r1, [r0, #68]
 	RET
 END(_ZN7_Unwind15Registers_arm32C1Ev)
 
+	.hidden _ZN7_Unwind15Registers_arm328lazyVFP1Ev
+ENTRY(_ZN7_Unwind15Registers_arm328lazyVFP1Ev)
+	add	r0, #72
+	vstmia	r0, {d0-d15}
+END(_ZN7_Unwind15Registers_arm328lazyVFP1Ev)
+
+	.hidden _ZN7_Unwind15Registers_arm328lazyVFP3Ev
+ENTRY(_ZN7_Unwind15Registers_arm328lazyVFP3Ev)
+	add	r0, #200
+	vstmia	r0, {d16-d31}
+END(_ZN7_Unwind15Registers_arm328lazyVFP3Ev)
+
 	.hidden _ZNK7_Unwind15Registers_arm326jumptoEv
 ENTRY(_ZNK7_Unwind15Registers_arm326jumptoEv)
+	ldrb	r1, [r0, #68]
+	tst	r1, #1
+	beq	.Lnovfp1
+	add	r2, r0, #72
+	vldmia	r2, {d0-d15}
+.Lnovfp1:
+	tst	r1, #2
+	beq	.Lnovfp3
+	add	r2, r0, #200
+	vldmia	r2, {d16-d31}
+.Lnovfp3:
 	ldr	r1, [r0, #64]
 	msr	cpsr_sxc, r1
 	ldmia	r0, {r0-r15}

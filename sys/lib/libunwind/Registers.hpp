@@ -240,21 +240,24 @@ enum {
   DWARF_ARM32_R0 = 0,
   DWARF_ARM32_R15 = 15,
   DWARF_ARM32_SPSR = 128,
-  DWARF_ARM32_D0 = 256,		// VFP-v3/Neon
+  DWARF_ARM32_OLD_S0 = 64,
+  DWARF_ARM32_OLD_S31 = 91,
+  DWARF_ARM32_D0 = 256,
   DWARF_ARM32_D31 = 287,
   REGNO_ARM32_R0 = 0,
   REGNO_ARM32_SP = 13,
   REGNO_ARM32_R15 = 15,
   REGNO_ARM32_SPSR = 16,
-  REGNO_ARM32_D0 = 0,
-  REGNO_ARM32_D31 = 31,
+  REGNO_ARM32_D0 = 17,
+  REGNO_ARM32_D15 = 32,
+  REGNO_ARM32_D31 = 48,
 };
 
 class Registers_arm32 {
 public:
   enum {
     LAST_REGISTER = REGNO_ARM32_D31,
-    LAST_RESTORE_REG = REGNO_ARM32_SPSR,
+    LAST_RESTORE_REG = REGNO_ARM32_D31,
     RETURN_OFFSET = 0,
   };
 
@@ -263,15 +266,19 @@ public:
   static int dwarf2regno(int num) {
     if (num >= DWARF_ARM32_R0 && num <= DWARF_ARM32_R15)
       return REGNO_ARM32_R0 + (num - DWARF_ARM32_R0);
-    if (num >= DWARF_ARM32_D0 && num <= DWARF_ARM32_D31)
-      return REGNO_ARM32_D0 + (num - DWARF_ARM32_D0);
     if (num == DWARF_ARM32_SPSR)
       return REGNO_ARM32_SPSR;
+    if (num >= DWARF_ARM32_D0 && num <= DWARF_ARM32_D31)
+      return REGNO_ARM32_D0 + (num - DWARF_ARM32_D0);
+    if (num >= DWARF_ARM32_OLD_S0 && num <= DWARF_ARM32_OLD_S31) {
+      assert(num % 2 == 0);
+      return REGNO_ARM32_D0 + (num - DWARF_ARM32_OLD_S0) / 2;
+    }
     return LAST_REGISTER + 1;
   }
 
   bool validRegister(int num) const {
-    return num >= 0 && num <= LAST_RESTORE_REG;
+    return num >= 0 && num <= REGNO_ARM32_SPSR;
   }
 
   uint64_t getRegister(int num) const {
@@ -297,14 +304,28 @@ public:
   }
 
   void copyFloatVectorRegister(int num, uint64_t addr_) {
+    if (num <= REGNO_ARM32_D15) {
+      if ((flags & 1) == 0) {
+        lazyVFP1();
+        flags |= 1;
+      }
+    } else {
+      if ((flags & 2) == 0) {
+        lazyVFP3();
+        flags |= 2;
+      }
+    }
     const void *addr = reinterpret_cast<const void *>(addr_);
     memcpy(fpreg + (num - REGNO_ARM32_D0), addr, sizeof(fpreg[0]));
   }
 
+  __dso_hidden void lazyVFP1();
+  __dso_hidden void lazyVFP3();
   __dso_hidden void jumpto() const __dead;
 
 private:
   uint32_t reg[REGNO_ARM32_SPSR + 1];
+  uint32_t flags;
   uint64_t fpreg[32];
 };
 
@@ -930,7 +951,7 @@ typedef Registers_x86 NativeUnwindRegisters;
 typedef Registers_x86_64 NativeUnwindRegisters;
 #elif __powerpc__
 typedef Registers_ppc32 NativeUnwindRegisters;
-#elif __arm__ && !defined(__ARM_EABI__)
+#elif __arm__
 typedef Registers_arm32 NativeUnwindRegisters;
 #elif __vax__
 typedef Registers_vax NativeUnwindRegisters;
