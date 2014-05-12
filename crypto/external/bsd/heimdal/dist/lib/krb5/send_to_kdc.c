@@ -1,4 +1,4 @@
-/*	$NetBSD: send_to_kdc.c,v 1.2 2014/05/12 15:20:41 christos Exp $	*/
+/*	$NetBSD: send_to_kdc.c,v 1.3 2014/05/12 18:46:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
@@ -62,7 +62,7 @@ timed_connect(int s, struct addrinfo *addr, time_t tmout)
     if (flags == -1)
 	return -1;
 
-    if (fcntl(s, F_SETFL, flags | O_NONBLOCK)) == -1)
+    if (fcntl(s, F_SETFL, flags | O_NONBLOCK) == -1)
 	return -1;
     ret = connect(s, addr->ai_addr, addr->ai_addrlen);
     if (ret == -1 && errno != EINPROGRESS)
