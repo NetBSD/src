@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.207 2014/02/23 12:56:40 dsl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.208 2014/05/12 09:01:34 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.207 2014/02/23 12:56:40 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.208 2014/05/12 09:01:34 uebayasi Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1888,7 +1888,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 
 	*flags |= _UC_CPU;
 
-	mcp->_mc_tlsbase = (uintptr_t)l->l_private;;
+	mcp->_mc_tlsbase = (uintptr_t)l->l_private;
 	*flags |= _UC_TLSBASE;
 
 	process_read_fpregs_xmm(l, (struct fxsave *)&mcp->__fpregs);
