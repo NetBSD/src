@@ -1,4 +1,4 @@
-.\"	$NetBSD: pcu.9,v 1.4 2014/01/23 16:35:20 skrll Exp $
+.\"	$NetBSD: pcu.9,v 1.5 2014/05/12 08:47:49 martin Exp $
 .\"
 .\" Copyright (c) 2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,10 +58,21 @@ Members of
 are
 .Bd -literal
         u_int	pcu_id;
-        void	(*pcu_state_save)(lwp_t *l);
-        void	(*pcu_state_load)(lwp_t *l, bool used);
-        void	(*pcu_state_release)(lwp_t *l);
+        void	(*pcu_state_save)(lwp_t *l, u_int flags);
+        void	(*pcu_state_load)(lwp_t *l, u_int flags);
+        void	(*pcu_state_release)(lwp_t *l, u_int flags);
 .Ed
+.Pp
+The PCU operations take a
+.Ar flags
+parameter which is a bitmask that always can have one of the general
+bits set:
+.Bl -tag -width PCU_KERNEL
+.It PCU_USER
+PCU state is for the user
+.It PCU_KERNEL
+PCU state is for the kernel
+.El
 .Pp
 .Bl -tag -width compact
 .It Fn pcu_state_save
@@ -69,8 +80,17 @@ save the current CPU's state into the given LWP's MD storage.
 .It Fn pcu_state_load
 load PCU state from the given LWP's MD storage to the current CPU.
 The
-.Ar used
-argument is true if it is not the first time the LWP uses the PCU.
+.Ar flags
+is a combination of the above general flags and one or more of
+the following:
+.Bl -tag -width PCU_LOADED
+.It PCU_RELOAD
+Load registers into the PCU
+.It PCU_ENABLE
+Enable the PCU
+.It PCU_LOADED
+the current LWP has used this PCU before
+.El
 .It Fn pcu_state_release
 indicate to MD code that the PCU ownership by the LWP was released,
 therefore the next use of PCU on the LWP shall be detected and
