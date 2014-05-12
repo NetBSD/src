@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.c,v 1.1.1.2 2014/04/24 12:45:27 pettai Exp $	*/
+/*	$NetBSD: rpc.c,v 1.2 2014/05/12 15:34:23 christos Exp $	*/
 
 /*
  * Copyright (c) 2008 Kungliga Tekniska Högskolan
@@ -465,7 +465,7 @@ ret_principal_ent(krb5_context contextp,
     ent->max_life = flag;
     CHECK(krb5_ret_uint32(sp, &flag));
     if (flag == 0)
-	ret_principal_xdr(contextp, sp, &ent->mod_name);
+	CHECK(ret_principal_xdr(contextp, sp, &ent->mod_name));
     CHECK(krb5_ret_uint32(sp, &flag));
     ent->mod_date = flag;
     CHECK(krb5_ret_uint32(sp, &flag));
