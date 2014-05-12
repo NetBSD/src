@@ -1,4 +1,4 @@
-/*	$NetBSD: verify_mic.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
+/*	$NetBSD: verify_mic.c,v 1.2 2014/05/12 15:25:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
@@ -256,7 +256,8 @@ retry:
   krb5_crypto_destroy (context, crypto);
   ret = krb5_crypto_init(context, key,
 			 ETYPE_DES3_CBC_SHA1, &crypto);
-  if (ret){
+  if (ret) {
+      free (tmp);
       *minor_status = ret;
       return GSS_S_FAILURE;
   }
