@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.107 2014/05/09 14:51:26 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.108 2014/05/12 11:27:31 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.107 2014/05/09 14:51:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.108 2014/05/12 11:27:31 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1359,9 +1359,9 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 			if (((val >> i) & 0x01) != 0)
 				printf(" %sGT/s", linkspeeds[i]);
 		}
+		printf("\n");
 		printf("      Crosslink Supported: %s\n",
 		    (reg & PCIE_LCAP2_CROSSLNK) != 0 ? "yes" : "no");
-		printf("\n");
 
 		/* Link Control 2 */
 		reg = regs[o2i(capoff + PCIE_LCSR2)];
