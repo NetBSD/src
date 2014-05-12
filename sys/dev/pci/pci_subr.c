@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.109 2014/05/12 11:51:35 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.110 2014/05/12 23:01:40 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.109 2014/05/12 11:51:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.110 2014/05/12 23:01:40 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1653,6 +1653,10 @@ pci_conf_print_type1(
 {
 	int off, width;
 	pcireg_t rval;
+	uint32_t base, limit;
+	uint32_t base_h, limit_h;
+	uint64_t pbase, plimit;
+	int use_upper;
 
 	/*
 	 * XXX these need to be printed in more detail, need to be
@@ -1684,35 +1688,83 @@ pci_conf_print_type1(
 	rval = regs[o2i(PCI_BRIDGE_STATIO_REG)];
 	pci_conf_print_ssr(__SHIFTOUT(rval, __BITS(31, 16)));
 
-	/* XXX Print more prettily */
+	/* I/O region */
 	printf("    I/O region:\n");
 	printf("      base register:  0x%02x\n", (rval >> 0) & 0xff);
 	printf("      limit register: 0x%02x\n", (rval >> 8) & 0xff);
-	rval = regs[o2i(PCI_BRIDGE_IOHIGH_REG)];
-	printf("      base upper 16 bits register:  0x%04x\n",
-	    (rval >> 0) & 0xffff);
-	printf("      limit upper 16 bits register: 0x%04x\n",
-	    (rval >> 16) & 0xffff);
+	if (PCI_BRIDGE_IO_32BITS(rval))
+		use_upper = 1;
+	else
+		use_upper = 0;
+	base = (rval & PCI_BRIDGE_STATIO_IOBASE_MASK) << 8;
+	limit = ((rval >> PCI_BRIDGE_STATIO_IOLIMIT_SHIFT)
+	    & PCI_BRIDGE_STATIO_IOLIMIT_MASK) << 8;
+	limit |= 0x00000fff;
 
-	/* XXX Print more prettily */
+	rval = regs[o2i(PCI_BRIDGE_IOHIGH_REG)];
+	base_h = (rval >> 0) & 0xffff;
+	limit_h = (rval >> 16) & 0xffff;
+	printf("      base upper 16 bits register:  0x%04x\n", base_h);
+	printf("      limit upper 16 bits register: 0x%04x\n", limit_h);
+
+	if (use_upper == 1) {
+		base |= base_h << 16;
+		limit |= limit_h << 16;
+	}
+	if (base < limit) {
+		if (use_upper == 1)
+			printf("      range:  0x%08x-0x%08x\n", base, limit);
+		else
+			printf("      range:  0x%04x-0x%04x\n", base, limit);
+	}
+
+	/* Non-prefetchable memory region */
 	rval = regs[o2i(PCI_BRIDGE_MEMORY_REG)];
 	printf("    Memory region:\n");
 	printf("      base register:  0x%04x\n",
 	    (rval >> 0) & 0xffff);
 	printf("      limit register: 0x%04x\n",
 	    (rval >> 16) & 0xffff);
+	base = ((rval >> PCI_BRIDGE_MEMORY_BASE_SHIFT)
+	    & PCI_BRIDGE_MEMORY_BASE_MASK) << 20;
+	limit = (((rval >> PCI_BRIDGE_MEMORY_LIMIT_SHIFT)
+		& PCI_BRIDGE_MEMORY_LIMIT_MASK) << 20) | 0x000fffff;
+	if (base < limit)
+		printf("      range:  0x%08x-0x%08x\n", base, limit);
 
-	/* XXX Print more prettily */
+	/* Prefetchable memory region */
 	rval = regs[o2i(PCI_BRIDGE_PREFETCHMEM_REG)];
 	printf("    Prefetchable memory region:\n");
 	printf("      base register:  0x%04x\n",
 	    (rval >> 0) & 0xffff);
 	printf("      limit register: 0x%04x\n",
 	    (rval >> 16) & 0xffff);
+	base_h = regs[o2i(PCI_BRIDGE_PREFETCHBASE32_REG)];
+	limit_h = regs[o2i(PCI_BRIDGE_PREFETCHLIMIT32_REG)];
 	printf("      base upper 32 bits register:  0x%08x\n",
-	    regs[o2i(PCI_BRIDGE_PREFETCHBASE32_REG)]);
+	    base_h);
 	printf("      limit upper 32 bits register: 0x%08x\n",
-	    regs[o2i(PCI_BRIDGE_PREFETCHLIMIT32_REG)]);
+	    limit_h);
+	if (PCI_BRIDGE_PREFETCHMEM_64BITS(rval))
+		use_upper = 1;
+	else
+		use_upper = 0;
+	pbase = ((rval >> PCI_BRIDGE_PREFETCHMEM_BASE_SHIFT)
+	    & PCI_BRIDGE_PREFETCHMEM_BASE_MASK) << 20;
+	plimit = (((rval >> PCI_BRIDGE_PREFETCHMEM_LIMIT_SHIFT)
+		& PCI_BRIDGE_PREFETCHMEM_LIMIT_MASK) << 20) | 0x000fffff;
+	if (use_upper == 1) {
+		pbase |= (uint64_t)base_h << 32;
+		plimit |= (uint64_t)limit_h << 32;
+	}
+	if (pbase < plimit) {
+		if (use_upper == 1)
+			printf("      range:  0x%016" PRIx64 "-0x%016" PRIx64 "\n",
+			    pbase, plimit);
+		else
+			printf("      range:  0x%08x-0x%08x\n",
+			    (uint32_t)pbase, (uint32_t)plimit);
+	}
 
 	if (regs[o2i(PCI_COMMAND_STATUS_REG)] & PCI_STATUS_CAPLIST_SUPPORT)
 		printf("    Capability list pointer: 0x%02x\n",
