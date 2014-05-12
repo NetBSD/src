@@ -1,4 +1,4 @@
-/*	$NetBSD: if_malo_pcmcia.c,v 1.6 2014/04/21 22:40:00 pgoyette Exp $	*/
+/*	$NetBSD: if_malo_pcmcia.c,v 1.7 2014/05/12 02:26:19 christos Exp $	*/
 /*      $OpenBSD: if_malo.c,v 1.65 2009/03/29 21:53:53 sthen Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.6 2014/04/21 22:40:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.7 2014/05/12 02:26:19 christos Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -1033,7 +1033,7 @@ cmalo_tx(struct malo_softc *sc, struct mbuf *m)
 	/* prepare TX descriptor */
 	txdesc->pkgoffset = htole32(sizeof(*txdesc));
 	txdesc->pkglen = htole16(m->m_pkthdr.len);
-	memcpy(txdesc->dstaddrhigh, data, ETHER_ADDR_LEN);
+	memcpy(txdesc->dstaddr, data, ETHER_ADDR_LEN);
 
 	/* copy mbuf data to the buffer */
 	m_copydata(m, 0, m->m_pkthdr.len, sc->sc_data + sizeof(*txdesc));
