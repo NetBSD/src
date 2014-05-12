@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.108 2014/05/12 11:27:31 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.109 2014/05/12 11:51:35 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.108 2014/05/12 11:27:31 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.109 2014/05/12 11:51:35 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1671,41 +1671,48 @@ pci_conf_print_type1(
 #endif
 	}
 
+	rval = regs[o2i(PCI_BRIDGE_BUS_REG)];
 	printf("    Primary bus number: 0x%02x\n",
-	    (regs[o2i(0x18)] >> 0) & 0xff);
+	    (rval >> 0) & 0xff);
 	printf("    Secondary bus number: 0x%02x\n",
-	    (regs[o2i(0x18)] >> 8) & 0xff);
+	    (rval >> 8) & 0xff);
 	printf("    Subordinate bus number: 0x%02x\n",
-	    (regs[o2i(0x18)] >> 16) & 0xff);
+	    (rval >> 16) & 0xff);
 	printf("    Secondary bus latency timer: 0x%02x\n",
-	    (regs[o2i(0x18)] >> 24) & 0xff);
+	    (rval >> 24) & 0xff);
 
-	pci_conf_print_ssr(__SHIFTOUT(regs[o2i(0x1c)], __BITS(31, 16)));
+	rval = regs[o2i(PCI_BRIDGE_STATIO_REG)];
+	pci_conf_print_ssr(__SHIFTOUT(rval, __BITS(31, 16)));
 
 	/* XXX Print more prettily */
 	printf("    I/O region:\n");
-	printf("      base register:  0x%02x\n", (regs[o2i(0x1c)] >> 0) & 0xff);
-	printf("      limit register: 0x%02x\n", (regs[o2i(0x1c)] >> 8) & 0xff);
+	printf("      base register:  0x%02x\n", (rval >> 0) & 0xff);
+	printf("      limit register: 0x%02x\n", (rval >> 8) & 0xff);
+	rval = regs[o2i(PCI_BRIDGE_IOHIGH_REG)];
 	printf("      base upper 16 bits register:  0x%04x\n",
-	    (regs[o2i(0x30)] >> 0) & 0xffff);
+	    (rval >> 0) & 0xffff);
 	printf("      limit upper 16 bits register: 0x%04x\n",
-	    (regs[o2i(0x30)] >> 16) & 0xffff);
+	    (rval >> 16) & 0xffff);
 
 	/* XXX Print more prettily */
+	rval = regs[o2i(PCI_BRIDGE_MEMORY_REG)];
 	printf("    Memory region:\n");
 	printf("      base register:  0x%04x\n",
-	    (regs[o2i(0x20)] >> 0) & 0xffff);
+	    (rval >> 0) & 0xffff);
 	printf("      limit register: 0x%04x\n",
-	    (regs[o2i(0x20)] >> 16) & 0xffff);
+	    (rval >> 16) & 0xffff);
 
 	/* XXX Print more prettily */
+	rval = regs[o2i(PCI_BRIDGE_PREFETCHMEM_REG)];
 	printf("    Prefetchable memory region:\n");
 	printf("      base register:  0x%04x\n",
-	    (regs[o2i(0x24)] >> 0) & 0xffff);
+	    (rval >> 0) & 0xffff);
 	printf("      limit register: 0x%04x\n",
-	    (regs[o2i(0x24)] >> 16) & 0xffff);
-	printf("      base upper 32 bits register:  0x%08x\n", regs[o2i(0x28)]);
-	printf("      limit upper 32 bits register: 0x%08x\n", regs[o2i(0x2c)]);
+	    (rval >> 16) & 0xffff);
+	printf("      base upper 32 bits register:  0x%08x\n",
+	    regs[o2i(PCI_BRIDGE_PREFETCHBASE32_REG)]);
+	printf("      limit upper 32 bits register: 0x%08x\n",
+	    regs[o2i(PCI_BRIDGE_PREFETCHLIMIT32_REG)]);
 
 	if (regs[o2i(PCI_COMMAND_STATUS_REG)] & PCI_STATUS_CAPLIST_SUPPORT)
 		printf("    Capability list pointer: 0x%02x\n",
@@ -1716,11 +1723,12 @@ pci_conf_print_type1(
 	/* XXX */
 	printf("    Expansion ROM Base Address: 0x%08x\n", regs[o2i(0x38)]);
 
+	rval = regs[o2i(PCI_INTERRUPT_REG)];
 	printf("    Interrupt line: 0x%02x\n",
-	    (regs[o2i(0x3c)] >> 0) & 0xff);
+	    (rval >> 0) & 0xff);
 	printf("    Interrupt pin: 0x%02x ",
-	    (regs[o2i(0x3c)] >> 8) & 0xff);
-	switch ((regs[o2i(0x3c)] >> 8) & 0xff) {
+	    (rval >> 8) & 0xff);
+	switch ((rval >> 8) & 0xff) {
 	case PCI_INTERRUPT_PIN_NONE:
 		printf("(none)");
 		break;
@@ -1741,7 +1749,8 @@ pci_conf_print_type1(
 		break;
 	}
 	printf("\n");
-	rval = (regs[o2i(0x3c)] >> 16) & 0xffff;
+	rval = (regs[o2i(PCI_BRIDGE_CONTROL_REG)] >> PCI_BRIDGE_CONTROL_SHIFT)
+	    & PCI_BRIDGE_CONTROL_MASK;
 	printf("    Bridge control register: 0x%04x\n", rval); /* XXX bits */
 	onoff("Parity error response", 0x0001);
 	onoff("Secondary SERR forwarding", 0x0002);
@@ -1781,22 +1790,25 @@ pci_conf_print_type2(
 	pci_conf_print_bar(regs, 0x10, "CardBus socket/ExCA registers");
 #endif
 
+	/* Capability list pointer and secondary status register */
+	rval = regs[o2i(PCI_CARDBUS_CAPLISTPTR_REG)];
 	if (regs[o2i(PCI_COMMAND_STATUS_REG)] & PCI_STATUS_CAPLIST_SUPPORT)
 		printf("    Capability list pointer: 0x%02x\n",
-		    PCI_CAPLIST_PTR(regs[o2i(PCI_CARDBUS_CAPLISTPTR_REG)]));
+		    PCI_CAPLIST_PTR(rval));
 	else
 		printf("    Reserved @ 0x14: 0x%04" PRIxMAX "\n",
-		       __SHIFTOUT(regs[o2i(0x14)], __BITS(15, 0)));
-	pci_conf_print_ssr(__SHIFTOUT(regs[o2i(0x14)], __BITS(31, 16)));
+		       __SHIFTOUT(rval, __BITS(15, 0)));
+	pci_conf_print_ssr(__SHIFTOUT(rval, __BITS(31, 16)));
 
+	rval = regs[o2i(PCI_BRIDGE_BUS_REG)];
 	printf("    PCI bus number: 0x%02x\n",
-	    (regs[o2i(0x18)] >> 0) & 0xff);
+	    (rval >> 0) & 0xff);
 	printf("    CardBus bus number: 0x%02x\n",
-	    (regs[o2i(0x18)] >> 8) & 0xff);
+	    (rval >> 8) & 0xff);
 	printf("    Subordinate bus number: 0x%02x\n",
-	    (regs[o2i(0x18)] >> 16) & 0xff);
+	    (rval >> 16) & 0xff);
 	printf("    CardBus latency timer: 0x%02x\n",
-	    (regs[o2i(0x18)] >> 24) & 0xff);
+	    (rval >> 24) & 0xff);
 
 	/* XXX Print more prettily */
 	printf("    CardBus memory region 0:\n");
@@ -1812,11 +1824,12 @@ pci_conf_print_type2(
 	printf("      base register:  0x%08x\n", regs[o2i(0x34)]);
 	printf("      limit register: 0x%08x\n", regs[o2i(0x38)]);
 
+	rval = regs[o2i(PCI_INTERRUPT_REG)];
 	printf("    Interrupt line: 0x%02x\n",
-	    (regs[o2i(0x3c)] >> 0) & 0xff);
+	    (rval >> 0) & 0xff);
 	printf("    Interrupt pin: 0x%02x ",
-	    (regs[o2i(0x3c)] >> 8) & 0xff);
-	switch ((regs[o2i(0x3c)] >> 8) & 0xff) {
+	    (rval >> 8) & 0xff);
+	switch ((rval >> 8) & 0xff) {
 	case PCI_INTERRUPT_PIN_NONE:
 		printf("(none)");
 		break;
