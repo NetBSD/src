@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.209 2014/05/12 13:49:24 uebayasi Exp $	*/
+/*	$NetBSD: machdep.c,v 1.210 2014/05/12 17:27:23 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.209 2014/05/12 13:49:24 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.210 2014/05/12 17:27:23 jakllsch Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -563,7 +563,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	if (onstack)
 		sp = ((char *)l->l_sigstk.ss_sp + l->l_sigstk.ss_size);
 	else
-		sp = (char *)tf->tf_rsp;
+		sp = (char *)tf->tf_rsp - 128;
 
 	sp -= sizeof(struct sigframe_siginfo);
 	/* Round down the stackpointer to a multiple of 16 for the ABI. */
