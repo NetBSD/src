@@ -1,4 +1,4 @@
-/*	$NetBSD: pac.c,v 1.1.1.2 2014/04/24 12:45:50 pettai Exp $	*/
+/*	$NetBSD: pac.c,v 1.2 2014/05/12 15:21:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2007 Kungliga Tekniska Högskolan
@@ -756,7 +756,7 @@ build_logon_name(krb5_context context,
 
 	s2_len = (ucs2_len + 1) * 2;
 	s2 = malloc(s2_len);
-	if (ucs2 == NULL) {
+	if (s2 == NULL) {
 	    free(ucs2);
 	    return krb5_enomem(context);
 	}
