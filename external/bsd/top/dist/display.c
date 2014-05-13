@@ -723,8 +723,9 @@ display_resize()
 
     /* adjust total lines on screen to lines available for procs */
     if (top_lines < y_procs)
-	return -1;
-    top_lines -= y_procs;
+	top_lines = 0;
+    else
+	top_lines -= y_procs;
 
     /* return number of lines available */
     return top_lines;
