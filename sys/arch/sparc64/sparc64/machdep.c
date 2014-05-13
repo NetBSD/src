@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.276 2014/05/13 19:14:05 palle Exp $ */
+/*	$NetBSD: machdep.c,v 1.277 2014/05/13 19:39:40 palle Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.276 2014/05/13 19:14:05 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.277 2014/05/13 19:39:40 palle Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -460,7 +460,7 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 	sysctl_createv(clog, 0, NULL, NULL,
 	               CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 	               CTLTYPE_INT, "vis",
-	               "Supported version of VIS instruction set",
+	               SYSCTL_DESCR("supported version of VIS instruction set"),
 	               NULL, get_vis(), NULL, 0,
 	               CTL_MACHDEP, CPU_VIS, CTL_EOL);
 }
