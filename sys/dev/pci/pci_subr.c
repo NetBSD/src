@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.110 2014/05/12 23:01:40 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.111 2014/05/13 18:07:24 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.110 2014/05/12 23:01:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.111 2014/05/13 18:07:24 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1696,6 +1696,7 @@ pci_conf_print_type1(
 		use_upper = 1;
 	else
 		use_upper = 0;
+	onoff("32bit I/O", use_upper);
 	base = (rval & PCI_BRIDGE_STATIO_IOBASE_MASK) << 8;
 	limit = ((rval >> PCI_BRIDGE_STATIO_IOLIMIT_SHIFT)
 	    & PCI_BRIDGE_STATIO_IOLIMIT_MASK) << 8;
@@ -1749,6 +1750,7 @@ pci_conf_print_type1(
 		use_upper = 1;
 	else
 		use_upper = 0;
+	onoff("64bit memory address", use_upper);
 	pbase = ((rval >> PCI_BRIDGE_PREFETCHMEM_BASE_SHIFT)
 	    & PCI_BRIDGE_PREFETCHMEM_BASE_MASK) << 20;
 	plimit = (((rval >> PCI_BRIDGE_PREFETCHMEM_LIMIT_SHIFT)
