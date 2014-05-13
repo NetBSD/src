@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.84 2014/04/16 18:55:18 maxv Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.85 2014/05/13 17:05:26 martin Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.84 2014/04/16 18:55:18 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.85 2014/05/13 17:05:26 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -641,8 +641,10 @@ cd9660_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 struct ifid {
 	ushort	ifid_len;
 	ushort	ifid_pad;
-	int	ifid_ino;
-	long	ifid_start;
+	ino_t	ifid_ino;
+#ifdef	ISOFS_DBG
+	u_long	ifid_start;
+#endif
 };
 
 /* ARGSUSED */
@@ -659,7 +661,7 @@ cd9660_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 
 	memcpy(&ifh, fhp, sizeof(ifh));
 #ifdef	ISOFS_DBG
-	printf("fhtovp: ino %d, start %ld\n",
+	printf("fhtovp: ino %"PRIu64", start %lu\n",
 	    ifh.ifid_ino, ifh.ifid_start);
 #endif
 
@@ -914,11 +916,13 @@ cd9660_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
 	memset(&ifh, 0, sizeof(ifh));
 	ifh.ifid_len = sizeof(struct ifid);
 	ifh.ifid_ino = ip->i_number;
+#ifdef	ISOFS_DBG
 	ifh.ifid_start = ip->iso_start;
+#endif
 	memcpy(fhp, &ifh, sizeof(ifh));
 
 #ifdef	ISOFS_DBG
-	printf("vptofh: ino %d, start %ld\n",
+	printf("vptofh: ino %"PRIu64", start %lu\n",
 	    ifh.ifid_ino,ifh.ifid_start);
 #endif
 	return 0;
