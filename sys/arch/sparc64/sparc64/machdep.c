@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.275 2014/01/25 19:42:25 christos Exp $ */
+/*	$NetBSD: machdep.c,v 1.276 2014/05/13 19:14:05 palle Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.275 2014/01/25 19:42:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.276 2014/05/13 19:14:05 palle Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -401,19 +401,29 @@ get_vis(void)
 {
 	int vis = 0;
 
-	if (GETVER_CPU_MANUF() == MANUF_FUJITSU) {
-		/* as far as I can tell SPARC64-III and up have VIS 1.0 */
-		if (GETVER_CPU_IMPL() >= IMPL_SPARC64_III) {
-			vis = 1;
+	if ( CPU_ISSUN4V ) {
+		/*
+		 * UA2005 and UA2007 supports VIS 1 and VIS 2.
+		 * Oracle SPARC Architecture 2011 supports VIS 3.
+		 *
+		 * XXX Settle with VIS 2 until we can determite the
+		 *     actual sun4v implementation.
+		 */
+		vis = 2;
+	} else {
+		if (GETVER_CPU_MANUF() == MANUF_FUJITSU) {
+			/* as far as I can tell SPARC64-III and up have VIS 1.0 */
+			if (GETVER_CPU_IMPL() >= IMPL_SPARC64_III) {
+				vis = 1;
+			}
+			/* XXX - which, if any, SPARC64 support VIS 2.0? */
+		} else { 
+			/* this better be Sun */
+			vis = 1;	/* all UltraSPARCs support at least VIS 1.0 */
+			if (CPU_IS_USIII_UP()) {
+				vis = 2;
+			}
 		}
-		/* XXX - which, if any, SPARC64 support VIS 2.0? */
-	} else { 
-		/* this better be Sun */
-		vis = 1;	/* all UltraSPARCs support at least VIS 1.0 */
-		if (CPU_IS_USIII_UP()) {
-			vis = 2;
-		}
-		/* UltraSPARC T4 supports VIS 3.0 */
 	}
 	return vis;
 }
@@ -448,10 +458,11 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       NULL, 9, NULL, 0,
 		       CTL_MACHDEP, CPU_ARCH, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
-		       CTLTYPE_INT, "vis", NULL,
-		       NULL, get_vis(), NULL, 0,
-		       CTL_MACHDEP, CPU_VIS, CTL_EOL);
+	               CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+	               CTLTYPE_INT, "vis",
+	               "Supported version of VIS instruction set",
+	               NULL, get_vis(), NULL, 0,
+	               CTL_MACHDEP, CPU_VIS, CTL_EOL);
 }
 
 void *
