@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.52 2014/04/30 05:41:30 msaitoh Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.53 2014/05/14 05:15:06 msaitoh Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -765,3 +765,12 @@ sys/ufs/mfs/mfs_vfsops.c			1.107
 	a NULL pointer when particular arguments are given by a user.
 	[maxv, ticket #1901]
 
+src/sys/compat/linux/common/linux_exec_elf32.c	1.91 via patch
+
+	A specially-crafted binary could easily control a kernel array index.
+	Add some checks to ensure that nothing will be read outside the
+	allocated area. Rewrite the code so that we don't need to allocate
+	the whole section. Spotted by several developers, patch from
+	chs@/enami@
+
+	[maxv, ticket #1902]
