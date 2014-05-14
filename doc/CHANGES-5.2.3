@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2.3,v 1.1.2.4 2014/05/14 05:16:02 msaitoh Exp $
+# $NetBSD: CHANGES-5.2.3,v 1.1.2.5 2014/05/14 05:27:47 msaitoh Exp $
 
 A complete list of changes from the NetBSD 5.2.2 release to the NetBSD 5.2.3
 release:
@@ -58,3 +58,19 @@ src/sys/compat/linux/common/linux_exec_elf32.c	1.91 via patch
 	chs@/enami@
 
 	[maxv, ticket #1902]
+
+xsrc/external/mit/libXfont/dist/src/fc/fsconvert.c	1.2
+xsrc/external/mit/libXfont/dist/src/fc/fserve.c		1.2
+xsrc/external/mit/libXfont/dist/src/fontfile/dirfile.c	1.2
+xsrc/xfree/xc/lib/font/fc/fsconvert.c			1.5
+xsrc/xfree/xc/lib/font/fc/fserve.c			1.5
+xsrc/xfree/xc/lib/font/fontfile/dirfile.c		1.5
+
+	Fix multiple vulnerabilities in libXfont:
+	- CVE-2014-0209: integer overflow of allocations in font metadata
+	  file parsing
+	- CVE-2014-0210: unvalidated length fields when parsing xfs protocol
+	  replies
+	- CVE-2014-0211: integer overflows calculating memory needs for xfs
+	  replies
+	[spz, ticket #1905]
