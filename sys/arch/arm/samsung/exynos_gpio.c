@@ -32,7 +32,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.3 2014/05/10 21:46:15 reinoud Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.4 2014/05/14 09:03:09 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -76,11 +76,11 @@ struct exynos_gpio_pin_group {
 };
 
 
-#define GPIO_OFFSET(v,s,o) (EXYNOS##v##_GPIO_##s##_OFFSET + (o))
+#define GPIO_REG(v,s,o) (EXYNOS##v##_GPIO_##s##_OFFSET + (o))
 #define GPIO_GRP(v, s, o, n, b) \
 	{ \
 		.grp_name = #n, \
-		.grp_core_offset = GPIO_OFFSET(v,s,o), \
+		.grp_core_offset = GPIO_REG(v,s,o), \
 		.grp_bits = b,\
 	}
 
@@ -181,7 +181,7 @@ static struct exynos_gpio_pin_group exynos4_pin_groups[] = {
 	GPIO_GRP(4, RIGHT, 0x0C60, GPX3, 8),
 	/* EXTINT skipped */
 
-	GPIO_GRP(4, I2C0,  0x0000, GPZ,  8),
+	GPIO_GRP(4, I2S0,  0x0000, GPZ,  8),
 	/* EXTINT skipped */
 
 	GPIO_GRP(4, C2C,   0x0000, GPV0, 8),
@@ -249,6 +249,9 @@ exynos_gpio_config_pins(device_t self)
 	size_t pin_count = 0;
 	int i, bit, mask, pincaps, data;
 
+	if (exynos_n_pin_groups == 0)
+		return;
+
 	/* find out how many pins we can offer */
 	pin_count = 0;
 	for (i = 0; i < exynos_n_pin_groups; i++) {
@@ -306,15 +309,21 @@ exynos_gpio_attach(device_t parent, device_t self, void *aux)
 	char scrap[16];
 	int i;
 
-	KASSERT(exynos_pin_groups);
-	KASSERT(exynos_n_pin_groups);
-
 	/* construct softc */
 	sc->sc_dev = self;
 
 	/* we use the core bushandle here */
 	sc->sc_bst = exyoaa->exyo_core_bst;
 	sc->sc_bsh = exyoaa->exyo_core_bsh;
+
+	exynos_gpio_bootstrap();
+	if (exynos_n_pin_groups == 0) {
+		printf(": disabled, no pins defined\n");
+		return;
+	}
+
+	KASSERT(exynos_pin_groups);
+	KASSERT(exynos_n_pin_groups);
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -466,6 +475,8 @@ exynos_gpio_pinset_available(const struct exynos_gpio_pinset *req)
 	int i, n, inuse;
 
 	KASSERT(req);
+	if (exynos_n_pin_groups == 0)
+		return false;
 
 	/* we need a pinset group */
 	if (strlen(req->pinset_group) == 0)
@@ -598,6 +609,9 @@ exynos_gpio_pin_reserve(const char *name, struct exynos_gpio_pindata *pd)
 	int func, pud, pinnr;
 	int pi, i;
 
+	if (exynos_n_pin_groups == 0)
+		return false;
+
 	/* do we have a named pin description? */
 	if (!prop_dictionary_get_cstring_nocopy(dict, name, &pin_data))
 		return false;
@@ -722,19 +736,9 @@ exynos_gpio_bootstrap(void)
 	}
 #endif
 
-#ifdef VERBOSE_INIT_ARM
-	printf("gpio");
-#endif
-	if (exynos_n_pin_groups == 0) {
-#ifdef VERBOSE_INIT_ARM
-		printf("  (disabled)\n");
-#endif
+	if (exynos_n_pin_groups == 0)
 		return;
-	}
 
-#ifdef VERBOSE_INIT_ARM
-	printf(" free");
-#endif
 	/* init groups */
 	for (i = 0; i < exynos_n_pin_groups; i++) {
 		grp = &exynos_pin_groups[i];
@@ -743,6 +747,8 @@ exynos_gpio_bootstrap(void)
 		bus_space_subregion(&exynos_bs_tag, exynos_core_bsh,
 			grp->grp_core_offset, EXYNOS_GPIO_GRP_SIZE,
 			&grp->grp_bsh);
+		KASSERT(&grp->grp_bsh);
+
 		grp->grp_pin_mask = __BIT(grp->grp_bits) - 1;
 		grp->grp_pin_inuse_mask = 0;
 
@@ -772,21 +778,17 @@ exynos_gpio_bootstrap(void)
 				grp->grp_pin_inuse_mask |= mask;
 			}
 		}
-#ifdef VERBOSE_INIT_ARM
-		printf(" P%s = %d", grp->grp_name,
-			popcount32(grp->grp_pin_mask & ~grp->grp_pin_inuse_mask));
-#endif
 	}
-#ifdef VERBOSE_INIT_ARM
-	printf("\n");
 #if 0
+	printf("\n");
+	printf("default NC pin list generated: \n");
 	/* enable this for default NC pins list generation */
 	for (i = 0; i < exynos_n_pin_groups; i++) {
 		grp = &exynos_pin_groups[i];
-		printf("prop_dictionary_set_uint32(dict, \"nc-%s\", 0x%02x - 0x00);\n",
+		printf("prop_dictionary_set_uint32(dict, \"nc-%s\", "
+			"0x%02x - 0b00000000);\n",
 			grp->grp_name, grp->grp_pin_mask);
 	}
-#endif
 #endif
 }
 
