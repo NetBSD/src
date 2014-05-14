@@ -1,4 +1,4 @@
-/*	$NetBSD: odroid_machdep.c,v 1.15 2014/05/10 22:24:32 reinoud Exp $ */
+/*	$NetBSD: odroid_machdep.c,v 1.16 2014/05/14 09:03:09 reinoud Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.15 2014/05/10 22:24:32 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.16 2014/05/14 09:03:09 reinoud Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_exynos.h"
@@ -226,6 +226,14 @@ static const struct pmap_devmap e4_devmap[] = {
 		.pd_prot  = VM_PROT_READ | VM_PROT_WRITE,
 		.pd_cache = PTE_NOCACHE
 	},
+	{
+		/* map in audiocore IO space */
+		.pd_va    = _A(EXYNOS4_AUDIOCORE_VBASE),
+		.pd_pa    = _A(EXYNOS4_AUDIOCORE_PBASE),
+		.pd_size  = _S(EXYNOS4_AUDIOCORE_SIZE),
+		.pd_prot  = VM_PROT_READ | VM_PROT_WRITE,
+		.pd_cache = PTE_NOCACHE
+	},
 	{0}
 };
 
@@ -235,6 +243,14 @@ static const struct pmap_devmap e5_devmap[] = {
 		.pd_va    = _A(EXYNOS_CORE_VBASE),
 		.pd_pa    = _A(EXYNOS_CORE_PBASE),
 		.pd_size  = _S(EXYNOS5_CORE_SIZE),
+		.pd_prot  = VM_PROT_READ | VM_PROT_WRITE,
+		.pd_cache = PTE_NOCACHE
+	},
+	{
+		/* map in audiocore IO space */
+		.pd_va    = _A(EXYNOS5_AUDIOCORE_VBASE),
+		.pd_pa    = _A(EXYNOS5_AUDIOCORE_PBASE),
+		.pd_size  = _S(EXYNOS5_AUDIOCORE_SIZE),
 		.pd_prot  = VM_PROT_READ | VM_PROT_WRITE,
 		.pd_cache = PTE_NOCACHE
 	},
@@ -577,6 +593,16 @@ odroid_device_register(device_t self, void *aux)
 		prop_dictionary_set_cstring(dict, "hub_nreset", ">GPX3[5]");
 		prop_dictionary_set_cstring(dict, "hub_connect", ">GPX3[4]");
 		prop_dictionary_set_cstring(dict, "hub_nint", "<GPX3[0]");
+
+		prop_dictionary_set_cstring(dict, "iic0_enable", "gpio");
+		prop_dictionary_set_cstring(dict, "iic1_enable", "gpio");
+		prop_dictionary_set_cstring(dict, "iic2_enable", "gpio");
+		/* IIC3 not used (NC) */
+		/* IIC4 not used (NC) */
+		/* IIC5 not used (NC) */
+		/* IIC6 used differently (SCLK used as led1) */
+		/* IIC7 used differently (PWM, though NC)    */
+		/* IIC8 HDMI, not possible trough GPIO */
 	}
 #endif
 #ifdef EXYNOS5
