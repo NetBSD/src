@@ -286,12 +286,14 @@ END(_ZN7_Unwind15Registers_arm32C1Ev)
 ENTRY(_ZN7_Unwind15Registers_arm328lazyVFP1Ev)
 	add	r0, #72
 	vstmia	r0, {d0-d15}
+	RET
 END(_ZN7_Unwind15Registers_arm328lazyVFP1Ev)
 
 	.hidden _ZN7_Unwind15Registers_arm328lazyVFP3Ev
 ENTRY(_ZN7_Unwind15Registers_arm328lazyVFP3Ev)
 	add	r0, #200
 	vstmia	r0, {d16-d31}
+	RET
 END(_ZN7_Unwind15Registers_arm328lazyVFP3Ev)
 
 	.hidden _ZNK7_Unwind15Registers_arm326jumptoEv
