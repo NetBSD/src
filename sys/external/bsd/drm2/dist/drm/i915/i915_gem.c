@@ -2215,6 +2215,7 @@ i915_gem_object_get_pages_gtt(struct drm_i915_gem_object *obj)
 			DRM_ERROR("GEM physical address exceeds 40 bits"
 			    ": %"PRIxMAX"\n",
 			    (uintmax_t)VM_PAGE_TO_PHYS(page));
+			error = -EIO;
 			goto fail2;
 		}
 	}
@@ -2236,7 +2237,8 @@ fail2:	bus_dmamem_unwire_uvm_object(dev->dmat, obj->base.gemo_shm_uao, 0,
 	    obj->base.size, obj->pages, (obj->base.size / PAGE_SIZE));
 fail1:	kfree(obj->pages);
 	obj->pages = NULL;
-fail0:	return error;
+fail0:	KASSERT(error);
+	return error;
 }
 #else
 static int
