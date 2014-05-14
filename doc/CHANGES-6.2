@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.108 2014/04/30 05:38:31 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.109 2014/05/14 03:52:21 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -2192,3 +2192,19 @@ lib/libc/net/sethostent.c			1.20
 
 	Fix memory leak. This bug was introduced after releasing NetBSD 6.1.
 	[christos, ticket #1036]
+
+xsrc/external/mit/libXfont/dist/src/fc/fsconvert.c	1.2
+xsrc/external/mit/libXfont/dist/src/fc/fserve.c		1.2
+xsrc/external/mit/libXfont/dist/src/fontfile/dirfile.c	1.2
+xsrc/xfree/xc/lib/font/fc/fsconvert.c			1.5
+xsrc/xfree/xc/lib/font/fc/fserve.c			1.5
+xsrc/xfree/xc/lib/font/fontfile/dirfile.c		1.5
+
+	Fix multiple vulnerabilities in libXfont:
+	- CVE-2014-0209: integer overflow of allocations in font metadata
+	  file parsing
+	- CVE-2014-0210: unvalidated length fields when parsing xfs protocol
+	  replies
+	- CVE-2014-0211: integer overflows calculating memory needs for xfs
+	  replies
+	[spz, ticket #1063]
