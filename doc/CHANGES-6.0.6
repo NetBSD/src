@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.6,v 1.1.2.4 2014/04/21 21:04:27 bouyer Exp $
+# $NetBSD: CHANGES-6.0.6,v 1.1.2.5 2014/05/14 03:56:31 msaitoh Exp $
 
 A complete list of changes from the NetBSD 6.0.5 release to the NetBSD 6.0.6
 release:
@@ -73,3 +73,18 @@ sys/compat/linux/common/linux_exec_elf32.c	1.91 via patch
 	Rewrite the code so that we don't need to allocate the whole section.
 	[maxv, ticket #1051]
 
+xsrc/external/mit/libXfont/dist/src/fc/fsconvert.c	1.2
+xsrc/external/mit/libXfont/dist/src/fc/fserve.c		1.2
+xsrc/external/mit/libXfont/dist/src/fontfile/dirfile.c	1.2
+xsrc/xfree/xc/lib/font/fc/fsconvert.c			1.5
+xsrc/xfree/xc/lib/font/fc/fserve.c			1.5
+xsrc/xfree/xc/lib/font/fontfile/dirfile.c		1.5
+
+	Fix multiple vulnerabilities in libXfont:
+	- CVE-2014-0209: integer overflow of allocations in font metadata
+	  file parsing
+	- CVE-2014-0210: unvalidated length fields when parsing xfs protocol
+	  replies
+	- CVE-2014-0211: integer overflows calculating memory needs for xfs
+	  replies
+	[spz, ticket #1063]
