@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_gtt.c,v 1.5 2014/05/02 14:36:10 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_gtt.c,v 1.6 2014/05/14 15:58:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.5 2014/05/02 14:36:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.6 2014/05/14 15:58:24 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -565,12 +565,12 @@ gen6_gtt_init(struct drm_device *dev)
 	struct drm_i915_private *const dev_priv = dev->dev_private;
 	struct pci_attach_args *const pa = &dev->pdev->pd_pa;
 	struct intel_gtt *gtt = dev_priv->mm.gtt;
+	bus_addr_t gtt_addr;
+	bus_size_t gtt_size;
 	uint16_t snb_gmch_ctl, ggms, gms;
 	int ret;
 
 	gtt->do_idle_maps = false;
-
-	gtt->gma_bus_addr = dev->bus_maps[2].bm_base;
 
 	snb_gmch_ctl = pci_conf_read(pa->pa_pc, pa->pa_tag, SNB_GMCH_CTRL);
 
@@ -586,36 +586,45 @@ gen6_gtt_init(struct drm_device *dev)
 		gtt->stolen_size = sizes[gms] << 20;
 	}
 
-	/* GGMS: GTT Graphics Memory Size.  */
+	/* GGMS: GTT Graphics Memory Size, in megabytes.  */
 	ggms = __SHIFTOUT(snb_gmch_ctl, SNB_GMCH_GGMS);
+	CTASSERT(SNB_GMCH_GGMS_MASK <= (INT_MAX >> 20));
 	gtt->gtt_total_entries = (ggms << 20) / sizeof(gtt_pte_t);
 
+	/* Linux sez:  For GEN6+ the PTEs for the ggtt live at 2MB + BAR0 */
+	gtt_addr = (2<<20);
+	gtt_size = (gtt->gtt_total_entries * sizeof(gtt_pte_t));
+	if ((gtt_addr > (__type_max(bus_addr_t) - dev->bus_maps[0].bm_base)) ||
+	    (gtt_size > (__type_max(bus_addr_t) -
+		(dev->bus_maps[0].bm_base + gtt_addr)))) {
+		DRM_ERROR("GTT doesn't fit in BAR0:"
+		    " base 0x%"PRIxMAX
+		    " size 0x%"PRIxMAX","
+		    " gtt_addr 0x%"PRIxMAX""
+		    " gtt_total_entries 0x%"PRIxMAX"\n",
+		    (uintmax_t)dev->bus_maps[0].bm_base,
+		    (uintmax_t)dev->bus_maps[0].bm_size,
+		    (uintmax_t)gtt_addr,
+		    (uintmax_t)gtt->gtt_total_entries);
+		ret = -ENODEV;
+		goto fail0;
+	}
+
+	if (bus_space_map(dev->bst, (dev->bus_maps[0].bm_base + gtt_addr),
+		gtt_size, 0, &gtt->gtt_bsh)) {
+		DRM_ERROR("unable to map GTT\n");
+		ret = -ENODEV;
+		goto fail0;
+	}
+
+	gtt->gma_bus_addr = dev->bus_maps[2].bm_base;
 	gtt->gtt_mappable_entries = (dev->bus_maps[2].bm_size >> PAGE_SHIFT);
 	if (((gtt->gtt_mappable_entries >> 8) < 64) ||
 	    (gtt->gtt_total_entries < gtt->gtt_mappable_entries)) {
 		DRM_ERROR("unknown GMADR entries: %d\n",
 		    gtt->gtt_mappable_entries);
 		ret = -ENXIO;
-		goto fail0;
-	}
-
-	/* Linux sez:  For GEN6+ the PTEs for the ggtt live at 2MB + BAR0 */
-	if (dev->bus_maps[0].bm_size < (gtt->gtt_total_entries *
-		sizeof(gtt_pte_t))) {
-		DRM_ERROR("BAR0 too small for GTT: 0x%"PRIxMAX" < 0x%"PRIxMAX
-		    "\n",
-		    (uintmax_t)dev->bus_maps[0].bm_size,
-		    (uintmax_t)(gtt->gtt_total_entries * sizeof(gtt_pte_t)));
-		ret = -ENODEV;
-		goto fail0;
-	}
-	if (bus_space_map(dev->bst, (dev->bus_maps[0].bm_base + (2<<20)),
-		(gtt->gtt_total_entries * sizeof(gtt_pte_t)),
-		0,
-		&gtt->gtt_bsh)) {
-		DRM_ERROR("unable to map GTT\n");
-		ret = -ENODEV;
-		goto fail0;
+		goto fail1;
 	}
 
 	ret = i915_gem_gtt_init_scratch_page(gtt, dev->dmat);
@@ -627,8 +636,7 @@ gen6_gtt_init(struct drm_device *dev)
 
 fail2: __unused
 	i915_gem_gtt_fini_scratch_page(gtt, dev->dmat);
-fail1:	bus_space_unmap(dev->bst, gtt->gtt_bsh,
-	    (gtt->gtt_total_entries * sizeof(gtt_pte_t)));
+fail1:	bus_space_unmap(dev->bst, gtt->gtt_bsh, gtt_size);
 fail0:	return ret;
 }
 
