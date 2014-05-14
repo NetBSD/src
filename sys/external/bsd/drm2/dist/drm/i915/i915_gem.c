@@ -2214,7 +2214,7 @@ i915_gem_object_get_pages_gtt(struct drm_i915_gem_object *obj)
 		const uint64_t mask =
 		    (IS_BROADWATER(dev) || IS_CRESTLINE(dev)?
 			0xffffffffULL : 0xffffffffffULL);
-		if (VM_PAGE_TO_PHYS(page) & mask) {
+		if (VM_PAGE_TO_PHYS(page) & ~mask) {
 			DRM_ERROR("GEM physical address exceeds %u bits"
 			    ": %"PRIxMAX"\n",
 			    popcount64(mask),
