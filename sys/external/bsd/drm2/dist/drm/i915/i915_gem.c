@@ -2205,15 +2205,19 @@ i915_gem_object_get_pages_gtt(struct drm_i915_gem_object *obj)
 	KASSERT(obj->igo_nsegs <= (obj->base.size / PAGE_SIZE));
 
 	/*
-	 * Check that the paddrs will fit in 40 bits.
+	 * Check that the paddrs will fit in 40 bits, or 32 bits on i965.
 	 *
 	 * XXX This is wrong; we ought to pass this constraint to
 	 * bus_dmamem_wire_uvm_object instead.
 	 */
 	TAILQ_FOREACH(page, &obj->igo_pageq, pageq.queue) {
-		if (VM_PAGE_TO_PHYS(page) & ~0xffffffffffULL) {
-			DRM_ERROR("GEM physical address exceeds 40 bits"
+		const uint64_t mask =
+		    (IS_BROADWATER(dev) || IS_CRESTLINE(dev)?
+			0xffffffffULL : 0xffffffffffULL);
+		if (VM_PAGE_TO_PHYS(page) & mask) {
+			DRM_ERROR("GEM physical address exceeds %u bits"
 			    ": %"PRIxMAX"\n",
+			    popcount64(mask),
 			    (uintmax_t)VM_PAGE_TO_PHYS(page));
 			error = -EIO;
 			goto fail2;
