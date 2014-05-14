@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.81 2008/04/28 20:23:43 martin Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.81.20.1 2014/05/14 05:15:39 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.81 2008/04/28 20:23:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.81.20.1 2014/05/14 05:15:39 msaitoh Exp $");
 
 #ifndef ELFSIZE
 /* XXX should die */
@@ -89,50 +89,43 @@ ELFNAME2(linux,atexit_signature)(l, epp, eh)
 	struct exec_package *epp;
 	Elf_Ehdr *eh;
 {
+	Elf_Shdr *sh;
 	size_t shsize;
-	int strndx;
+	u_int shstrndx;
 	size_t i;
 	static const char signature[] = "__libc_atexit";
-	char *strtable = NULL;
-	Elf_Shdr *sh;
-
+	const size_t sigsz = sizeof(signature);
+	char tbuf[sizeof(signature)];
 	int error;
 
-	/*
-	 * load the section header table
-	 */
+	/* Load the section header table. */
 	shsize = eh->e_shnum * sizeof(Elf_Shdr);
 	sh = (Elf_Shdr *) malloc(shsize, M_TEMP, M_WAITOK);
 	error = exec_read_from(l, epp->ep_vp, eh->e_shoff, sh, shsize);
 	if (error)
 		goto out;
 
-	/*
-	 * Now let's find the string table. If it does not exists, give up.
-	 */
-	strndx = (int)(eh->e_shstrndx);
-	if (strndx == SHN_UNDEF) {
+	/* Now let's find the string table. If it does not exist, give up. */
+	shstrndx = eh->e_shstrndx;
+	if (shstrndx == SHN_UNDEF || shstrndx >= eh->e_shnum) {
 		error = ENOEXEC;
 		goto out;
 	}
 
-	/*
-	 * strndx is the index in section header table of the string table
-	 * section get the whole string table in strtable, and then we get access to the names
-	 * s->sh_name is the offset of the section name in strtable.
-	 */
-	strtable = malloc(sh[strndx].sh_size, M_TEMP, M_WAITOK);
-	error = exec_read_from(l, epp->ep_vp, sh[strndx].sh_offset, strtable,
-	    sh[strndx].sh_size);
-	if (error)
-		goto out;
-
+	/* Check if any section has the name we're looking for. */
+	const off_t stroff = sh[shstrndx].sh_offset;
 	for (i = 0; i < eh->e_shnum; i++) {
 		Elf_Shdr *s = &sh[i];
-		if (!memcmp((void*)(&(strtable[s->sh_name])), signature,
-				sizeof(signature))) {
-			DPRINTF(("linux_atexit_sig=%s\n",
-			    &(strtable[s->sh_name])));
+
+		if (s->sh_name + sigsz > sh[shstrndx].sh_size)
+			continue;
+
+		error = exec_read_from(l, epp->ep_vp, stroff + s->sh_name, tbuf,
+		    sigsz);
+		if (error)
+			goto out;
+		if (!memcmp(tbuf, signature, sigsz)) {
+			DPRINTF(("linux_atexit_sig=%s\n", tbuf));
 			error = 0;
 			goto out;
 		}
@@ -141,8 +134,6 @@ ELFNAME2(linux,atexit_signature)(l, epp, eh)
 
 out:
 	free(sh, M_TEMP);
-	if (strtable)
-		free(strtable, M_TEMP);
 	return (error);
 }
 #endif
@@ -216,59 +207,48 @@ out:
 
 #ifdef LINUX_DEBUGLINK_SIGNATURE
 /*
- * Look for a .gnu_debuglink, specific to x86_64 interpeter
+ * Look for a .gnu_debuglink, specific to x86_64 interpreter
  */
 int
-ELFNAME2(linux,debuglink_signature)(l, epp, eh)
-	struct lwp *l;
-	struct exec_package *epp;
-	Elf_Ehdr *eh;
+ELFNAME2(linux,debuglink_signature)(struct lwp *l, struct exec_package *epp, Elf_Ehdr *eh)
 {
+	Elf_Shdr *sh;
 	size_t shsize;
-	int strndx;
+	u_int shstrndx;
 	size_t i;
 	static const char signature[] = ".gnu_debuglink";
-	char *strtable = NULL;
-	Elf_Shdr *sh;
-
+	const size_t sigsz = sizeof(signature);
+	char tbuf[sizeof(signature)];
 	int error;
 
-	/*
-	 * load the section header table
-	 */
+	/* Load the section header table. */
 	shsize = eh->e_shnum * sizeof(Elf_Shdr);
 	sh = (Elf_Shdr *) malloc(shsize, M_TEMP, M_WAITOK);
 	error = exec_read_from(l, epp->ep_vp, eh->e_shoff, sh, shsize);
 	if (error)
 		goto out;
 
-	/*
-	 * Now let's find the string table. If it does not exists, give up.
-	 */
-	strndx = (int)(eh->e_shstrndx);
-	if (strndx == SHN_UNDEF) {
+	/* Now let's find the string table. If it does not exist, give up. */
+	shstrndx = eh->e_shstrndx;
+	if (shstrndx == SHN_UNDEF || shstrndx >= eh->e_shnum) {
 		error = ENOEXEC;
 		goto out;
 	}
 
-	/*
-	 * strndx is the index in section header table of the string table
-	 * section get the whole string table in strtable, and then we get access to the names
-	 * s->sh_name is the offset of the section name in strtable.
-	 */
-	strtable = malloc(sh[strndx].sh_size, M_TEMP, M_WAITOK);
-	error = exec_read_from(l, epp->ep_vp, sh[strndx].sh_offset, strtable,
-	    sh[strndx].sh_size);
-	if (error)
-		goto out;
-
+	/* Check if any section has the name we're looking for. */
+	const off_t stroff = sh[shstrndx].sh_offset;
 	for (i = 0; i < eh->e_shnum; i++) {
 		Elf_Shdr *s = &sh[i];
 
-		if (!memcmp((void*)(&(strtable[s->sh_name])), signature,
-				sizeof(signature))) {
-			DPRINTF(("linux_debuglink_sig=%s\n",
-			    &(strtable[s->sh_name])));
+		if (s->sh_name + sigsz > sh[shstrndx].sh_size)
+			continue;
+
+		error = exec_read_from(l, epp->ep_vp, stroff + s->sh_name, tbuf,
+		    sigsz);
+		if (error)
+			goto out;
+		if (!memcmp(tbuf, signature, sigsz)) {
+			DPRINTF(("linux_debuglink_sig=%s\n", tbuf));
 			error = 0;
 			goto out;
 		}
@@ -277,8 +257,6 @@ ELFNAME2(linux,debuglink_signature)(l, epp, eh)
 
 out:
 	free(sh, M_TEMP);
-	if (strtable)
-		free(strtable, M_TEMP);
 	return (error);
 }
 #endif
@@ -344,7 +322,7 @@ ELFNAME2(linux,signature)(l, epp, eh, itp)
 		continue;
 	}
 
-	/* Check for certain intepreter names. */
+	/* Check for certain interpreter names. */
 	if (itp) {
 		if (!strncmp(itp, "/lib/ld-linux", 13) ||
 #if (ELFSIZE == 64)
