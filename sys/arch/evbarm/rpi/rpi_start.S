@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_start.S,v 1.10 2014/04/07 14:40:17 skrll Exp $	*/
+/*	$NetBSD: rpi_start.S,v 1.11 2014/05/14 14:38:54 joerg Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -87,7 +87,7 @@
 #include <arm/armreg.h>
 #include "assym.h"
 
-RCSID("$NetBSD: rpi_start.S,v 1.10 2014/04/07 14:40:17 skrll Exp $")
+RCSID("$NetBSD: rpi_start.S,v 1.11 2014/05/14 14:38:54 joerg Exp $")
 
 /*
  * Workaround Erratum 411920
@@ -268,7 +268,6 @@ Lstart:
 	/* bits to set in the Control Register */
 Lcontrol_set:
 	.word CPU_CONTROL_MMU_ENABLE  | \
-	      CPU_CONTROL_AFLT_ENABLE | \
 	      CPU_CONTROL_DC_ENABLE   | \
 	      CPU_CONTROL_WBUF_ENABLE |    /* not defined in 1176 */   \
 	      CPU_CONTROL_32BP_ENABLE | \
