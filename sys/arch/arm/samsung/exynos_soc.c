@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_soc.c,v 1.10 2014/05/10 20:38:15 reinoud Exp $	*/
+/*	$NetBSD: exynos_soc.c,v 1.11 2014/05/14 09:03:09 reinoud Exp $	*/
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #define	_ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.10 2014/05/10 20:38:15 reinoud Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.11 2014/05/14 09:03:09 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -61,6 +61,7 @@ __KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.10 2014/05/10 20:38:15 reinoud Exp 
 #include <evbarm/odroid/platform.h>
 
 bus_space_handle_t exynos_core_bsh;
+bus_space_handle_t exynos_audiocore_bsh;
 
 /* these variables are retrieved in start.S and stored in .data */
 uint32_t  exynos_soc_id = 0;
@@ -205,18 +206,28 @@ exynos_l2cc_init(void)
 #endif /* ARM_TRUSTZONE_FIRMWARE */
 
 
-#ifndef EXYNOS4
-#	define EXYNOS4_CORE_SIZE 0
-#endif
-#ifndef EXYNOS5
-#	define EXYNOS5_CORE_SIZE 0
-#endif
 void
 exynos_bootstrap(vaddr_t iobase, vaddr_t uartbase)
 {
 	int error;
-	size_t core_size = IS_EXYNOS4_P() ?
-		EXYNOS4_CORE_SIZE : EXYNOS5_CORE_SIZE;
+	size_t core_size, audiocore_size;
+	size_t audiocore_pbase;
+
+#ifdef EXYNOS4
+	if (IS_EXYNOS4_P()) {
+		core_size = EXYNOS4_CORE_SIZE;
+		audiocore_size = EXYNOS4_AUDIOCORE_SIZE;
+		audiocore_pbase = EXYNOS4_AUDIOCORE_PBASE;
+	}
+#endif
+
+#ifdef EXYNOS5
+	if (IS_EXYNOS5_P()) {
+		core_size = EXYNOS5_CORE_SIZE;
+		audiocore_size = EXYNOS5_AUDIOCORE_SIZE;
+		audiocore_pbase = EXYNOS5_AUDIOCORE_PBASE;
+	}
+#endif
 
 	/* set up early console so we can use printf() and friends */
 #ifdef EXYNOS_CONSOLE_EARLY
@@ -228,15 +239,21 @@ exynos_bootstrap(vaddr_t iobase, vaddr_t uartbase)
 	error = bus_space_map(&exynos_bs_tag, EXYNOS_CORE_PBASE,
 		core_size, 0, &exynos_core_bsh);
 	if (error)
-		panic("%s: failed to map in Exynos io registers: %d",
+		panic("%s: failed to map in Exynos SFR registers: %d",
 			__func__, error);
 	KASSERT(exynos_core_bsh == iobase);
+
+	error = bus_space_map(&exynos_bs_tag, audiocore_pbase,
+		audiocore_size, 0, &exynos_audiocore_bsh);
+	if (error)
+		panic("%s: failed to map in Exynos audio SFR registers: %d",
+			__func__, error);
+	KASSERT(exynos_audiocore_bsh == EXYNOS4_AUDIOCORE_VBASE);
 
 	/* init bus dma tags */
 	exynos_dma_bootstrap(physmem * PAGE_SIZE);
 
-	/* init gpio structures */
-	exynos_gpio_bootstrap();
+	/* gpio bootstrapping delayed */
 }
 
 
