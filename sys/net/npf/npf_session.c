@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_session.c,v 1.31 2014/03/14 11:29:44 rmind Exp $	*/
+/*	$NetBSD: npf_session.c,v 1.32 2014/05/14 20:35:27 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2013 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.31 2014/03/14 11:29:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.32 2014/05/14 20:35:27 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -590,10 +590,9 @@ npf_session_inspect(npf_cache_t *npc, nbuf_t *nbuf, const int di, int *error)
 
 	/* Inspect the protocol data and handle state changes. */
 	if (!npf_state_inspect(npc, nbuf, &se->s_state, forw)) {
-		/* Silently block invalid packets. */
+		/* Invalid: let the rules deal with it. */
 		npf_session_release(se);
 		npf_stats_inc(NPF_STAT_INVALID_STATE);
-		*error = ENETUNREACH;
 		se = NULL;
 	}
 	return se;
