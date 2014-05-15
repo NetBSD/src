@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dmc.c,v 1.21 2012/10/27 17:18:37 chs Exp $	*/
+/*	$NetBSD: if_dmc.c,v 1.22 2014/05/15 09:23:52 msaitoh Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.21 2012/10/27 17:18:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.22 2014/05/15 09:23:52 msaitoh Exp $");
 
 #undef DMCDEBUG	/* for base table dump on fatal error */
 
@@ -560,6 +560,7 @@ dmcxint(void *a)
 	struct ifxmt *ifxp;
 	struct dmc_header *dh;
 	char buf[64];
+	int isr = 0;
 
 	ifp = &sc->sc_if;
 
@@ -627,7 +628,7 @@ dmcxint(void *a)
 
 #ifdef INET
 			case DMC_IPTYPE:
-				schednetisr(NETISR_IP);
+				isr = NETISR_IP;
 				inq = &ipintrq;
 				break;
 #endif
@@ -640,8 +641,10 @@ dmcxint(void *a)
 			if (IF_QFULL(inq)) {
 				IF_DROP(inq);
 				m_freem(m);
-			} else
+			} else {
 				IF_ENQUEUE(inq, m);
+				schednetisr(isr);
+			}
 			splx(s);
 
 	setup:
