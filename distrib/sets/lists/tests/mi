@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.568 2014/05/10 14:15:25 martin Exp $
+# $NetBSD: mi,v 1.569 2014/05/15 16:32:28 apb Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -958,8 +958,8 @@
 ./usr/tests/fs/cd9660				tests-fs-tests
 ./usr/tests/fs/cd9660/Atffile			tests-fs-tests		atf,rump
 ./usr/tests/fs/cd9660/Kyuafile			tests-fs-tests		atf,rump,kyua
-./usr/tests/fs/cd9660/t_high_ino_big_file	tests-fs-tests		atf,rump
 ./usr/tests/fs/cd9660/pr_48787.image.bz2	tests-fs-tests		atf,rump
+./usr/tests/fs/cd9660/t_high_ino_big_file	tests-fs-tests		atf,rump
 ./usr/tests/fs/ffs				tests-fs-tests
 ./usr/tests/fs/ffs/Atffile			tests-fs-tests		atf,rump
 ./usr/tests/fs/ffs/Kyuafile			tests-fs-tests		atf,rump,kyua
@@ -3168,8 +3168,8 @@
 ./usr/tests/usr.bin/xlint/lint1/d_compound_literals2.c		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/xlint/lint1/d_constant_conv1.c		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/xlint/lint1/d_constant_conv2.c		tests-usr.bin-tests	atf
-./usr/tests/usr.bin/xlint/lint1/d_cvt_in_ternary.c		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/xlint/lint1/d_cvt_constant.c		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/d_cvt_in_ternary.c		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/xlint/lint1/d_ellipsis_in_switch.c		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/xlint/lint1/d_gcc_compound_statements1.c	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/xlint/lint1/d_gcc_compound_statements2.c	tests-usr.bin-tests	atf

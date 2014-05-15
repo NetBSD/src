@@ -1,5 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.6 2014/03/21 17:00:18 christos Exp $
-./usr/bin/fdformat				base-util-bin
+# $NetBSD: ad.powerpc,v 1.7 2014/05/15 16:32:28 apb Exp $
 ./lib/powerpc					base-npf-shlib		compat,arch64
 ./lib/powerpc/npf				base-npf-shlib		compat,arch64
 ./lib/powerpc/npf/ext_log.so			base-npf-shlib		compat,arch64,pic
@@ -12,6 +11,7 @@
 ./lib/powerpc/npf/ext_rndblock.so.0		base-npf-shlib		compat,arch64,pic
 ./lib/powerpc/npf/ext_rndblock.so.0.0		base-npf-shlib		compat,arch64,pic
 ./libexec/ld.elf_so-powerpc			base-sysutil-bin	compat,arch64,pic
+./usr/bin/fdformat				base-util-bin
 ./usr/lib/powerpc				base-compat-lib		compat,arch64
 ./usr/lib/powerpc/i18n				base-compat-lib		compat,arch64
 ./usr/lib/powerpc/i18n/libBIG5.so.5		base-i18n-shlib		compat,arch64,pic
@@ -129,8 +129,8 @@
 ./usr/lib/powerpc/libgnumalloc.so.1		base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libgnumalloc.so.1.0		base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libgomp.so.1			base-compat-shlib	compat,arch64,pic,gcc=45
-./usr/lib/powerpc/libgomp.so.1.0		base-compat-shlib	compat,arch64,pic,gcc=45
 ./usr/lib/powerpc/libgomp.so.1			base-compat-shlib	compat,arch64,pic,gcc=48
+./usr/lib/powerpc/libgomp.so.1.0		base-compat-shlib	compat,arch64,pic,gcc=45
 ./usr/lib/powerpc/libgomp.so.1.1		base-compat-shlib	compat,arch64,pic,gcc=48
 ./usr/lib/powerpc/libgssapi.so.10		base-compat-shlib	compat,arch64,pic,kerberos
 ./usr/lib/powerpc/libgssapi.so.10.0		base-compat-shlib	compat,arch64,pic,kerberos
@@ -201,8 +201,8 @@
 ./usr/lib/powerpc/libnpf.so.0			base-compat-shlib	compat,arch64,pic,npf
 ./usr/lib/powerpc/libnpf.so.0.0			base-compat-shlib	compat,arch64,pic,npf
 ./usr/lib/powerpc/libobjc.so.3			base-compat-shlib	compat,arch64,pic,gcc=4,gcccmds
-./usr/lib/powerpc/libobjc.so.3.0		base-compat-shlib	compat,arch64,pic,gcc=4,gcccmds
 ./usr/lib/powerpc/libobjc.so.3			base-compat-shlib	compat,arch64,pic,gcc=45,gcccmds
+./usr/lib/powerpc/libobjc.so.3.0		base-compat-shlib	compat,arch64,pic,gcc=4,gcccmds
 ./usr/lib/powerpc/libobjc.so.3.0		base-compat-shlib	compat,arch64,pic,gcc=45,gcccmds
 ./usr/lib/powerpc/libobjc.so.4			base-compat-shlib	compat,arch64,pic,gcc=48,gcccmds
 ./usr/lib/powerpc/libobjc.so.4.0		base-compat-shlib	compat,arch64,pic,gcc=48,gcccmds
