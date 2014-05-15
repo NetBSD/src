@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.44 2013/01/05 01:30:16 christos Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.45 2014/05/15 09:23:52 msaitoh Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.44 2013/01/05 01:30:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.45 2014/05/15 09:23:52 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1038,7 +1038,6 @@ upl_input(struct ifnet *ifp, struct mbuf *m)
 
 	/* XXX Assume all traffic is IP */
 
-	schednetisr(NETISR_IP);
 	inq = &ipintrq;
 
 	s = splnet();
@@ -1053,6 +1052,7 @@ upl_input(struct ifnet *ifp, struct mbuf *m)
 		return;
 	}
 	IF_ENQUEUE(inq, m);
+	schednetisr(NETISR_IP);
 	splx(s);
 #endif
 	ifp->if_ipackets++;
