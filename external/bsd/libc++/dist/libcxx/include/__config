@@ -203,6 +203,11 @@
 
 #if defined(__clang__)
 
+#if defined(__APPLE__) && !defined(__i386__) && !defined(__x86_64__) &&        \
+    !defined(__arm__)
+#define _LIBCPP_ALTERNATE_STRING_LAYOUT
+#endif
+
 #if __has_feature(cxx_alignas)
 #  define _ALIGNAS_TYPE(x) alignas(x)
 #  define _ALIGNAS(x) alignas(x)
@@ -215,7 +220,7 @@
 #define _LIBCPP_HAS_NO_TEMPLATE_ALIASES
 #endif
 
-#ifndef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus < 201103L
 #ifdef __linux__
 #define _LIBCPP_HAS_NO_UNICODE_CHARS
 #else
@@ -347,6 +352,10 @@ namespace std {
   }
 }
 
+#if !defined(_LIBCPP_HAS_NO_ASAN) && !__has_feature(address_sanitizer)
+#define _LIBCPP_HAS_NO_ASAN
+#endif
+
 #elif defined(__GNUC__)
 
 #define _ALIGNAS(x) __attribute__((__aligned__(x)))
@@ -421,6 +430,10 @@ namespace _LIBCPP_NAMESPACE {
 using namespace _LIBCPP_NAMESPACE __attribute__((__strong__));
 }
 
+#if !defined(_LIBCPP_HAS_NO_ASAN) && !defined(__SANITIZE_ADDRESS__)
+#define _LIBCPP_HAS_NO_ASAN
+#endif
+
 #elif defined(_LIBCPP_MSVC)
 
 #define _LIBCPP_HAS_NO_TEMPLATE_ALIASES
@@ -434,7 +447,7 @@ using namespace _LIBCPP_NAMESPACE __attribute__((__strong__));
 #define _ALIGNAS(x) __declspec(align(x))
 #define _LIBCPP_HAS_NO_VARIADICS
 
-#define _NOEXCEPT throw()
+#define _NOEXCEPT throw ()
 #define _NOEXCEPT_(x)
 #define _NOEXCEPT_OR_FALSE(x) false
 
@@ -445,6 +458,8 @@ using namespace _LIBCPP_NAMESPACE __attribute__((__strong__));
 #  define _LIBCPP_WEAK
 namespace std {
 }
+
+#define _LIBCPP_HAS_NO_ASAN
 
 #elif defined(__IBMCPP__)
 
@@ -478,12 +493,18 @@ namespace std {
   }
 }
 
+#define _LIBCPP_HAS_NO_ASAN
+
 #endif // __clang__ || __GNUC__ || _MSC_VER || __IBMCPP__
 
 #ifdef _LIBCPP_HAS_NO_UNICODE_CHARS
 typedef unsigned short char16_t;
 typedef unsigned int   char32_t;
 #endif  // _LIBCPP_HAS_NO_UNICODE_CHARS
+
+#ifndef __SIZEOF_INT128__
+#define _LIBCPP_HAS_NO_INT128
+#endif
 
 #ifdef _LIBCPP_HAS_NO_STATIC_ASSERT
 
@@ -560,6 +581,10 @@ template <unsigned> struct __static_assert_check {};
 #define _LIBCPP_EXTERN_TEMPLATE2(...) extern template __VA_ARGS__;
 #endif
 
+#if defined(__APPLE__) && defined(__LP64__) && !defined(__x86_64__)
+#define _LIBCPP_NONUNIQUE_RTTI_BIT (1ULL << 63)
+#endif
+
 #if defined(__APPLE__) || defined(__FreeBSD__) || defined(_WIN32) || defined(__sun__) || defined(__NetBSD__)
 #define _LIBCPP_LOCALE__L_EXTENSIONS 1
 #endif
@@ -602,6 +627,11 @@ template <unsigned> struct __static_assert_check {};
 #define _LIBCPP_CONSTEXPR_AFTER_CXX11 constexpr
 #define _LIBCPP_EXPLICIT_AFTER_CXX11 explicit
 #define _LIBCPP_DEPRECATED_AFTER_CXX11 [[deprecated]]
+#endif
+
+#ifndef _LIBCPP_HAS_NO_ASAN
+extern "C" void __sanitizer_annotate_contiguous_container(
+  const void *, const void *, const void *, const void *);
 #endif
 
 // Try to find out if RTTI is disabled.
