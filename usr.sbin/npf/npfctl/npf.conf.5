@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.40 2014/05/15 02:34:29 rmind Exp $
+.\"    $NetBSD: npf.conf.5,v 1.41 2014/05/15 23:52:32 wiz Exp $
 .\"
 .\" Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -168,10 +168,10 @@ precaution.
 In both cases, a full TCP state tracking is performed for TCP connections
 and a limited tracking for message-based protocols (UDP and ICMP).
 .Pp
-By default, stateful rule implies SYN-only flag check ("flags S/SAFR")
+By default, a stateful rule implies SYN-only flag check ("flags S/SAFR")
 for the TCP packets.
-It is not advisable to change this behavior, however,
-it can be overriden with
+It is not advisable to change this behavior; however,
+it can be overridden with the
 .Cd flags
 keyword.
 .Ss Map
