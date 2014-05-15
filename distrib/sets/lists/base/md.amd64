@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.231 2014/03/21 17:00:18 christos Exp $
+# $NetBSD: md.amd64,v 1.232 2014/05/15 16:32:28 apb Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./lib/i386					base-compat-shlib		compat
@@ -139,8 +139,8 @@
 ./usr/lib/i386/libgnumalloc.so.1		base-compat-shlib	compat,pic
 ./usr/lib/i386/libgnumalloc.so.1.0		base-compat-shlib	compat,pic
 ./usr/lib/i386/libgomp.so.1			base-compat-shlib	compat,pic,gcc=45
-./usr/lib/i386/libgomp.so.1.0			base-compat-shlib	compat,pic,gcc=45
 ./usr/lib/i386/libgomp.so.1			base-compat-shlib	compat,pic,gcc=48
+./usr/lib/i386/libgomp.so.1.0			base-compat-shlib	compat,pic,gcc=45
 ./usr/lib/i386/libgomp.so.1.1			base-compat-shlib	compat,pic,gcc=48
 ./usr/lib/i386/libgssapi.so.10			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/i386/libgssapi.so.10.0		base-compat-shlib	compat,pic,kerberos
@@ -220,9 +220,9 @@
 ./usr/lib/i386/libnpf.so.0.0			base-compat-shlib	compat,pic,npf
 ./usr/lib/i386/libobjc.so.3			base-compat-shlib	compat,pic,gcccmds,gcc=4
 ./usr/lib/i386/libobjc.so.3			base-compat-shlib	compat,pic,gcccmds,gcc=45
-./usr/lib/i386/libobjc.so.4			base-compat-shlib	compat,pic,gcccmds,gcc=48
 ./usr/lib/i386/libobjc.so.3.0			base-compat-shlib	compat,pic,gcccmds,gcc=4
 ./usr/lib/i386/libobjc.so.3.0			base-compat-shlib	compat,pic,gcccmds,gcc=45
+./usr/lib/i386/libobjc.so.4			base-compat-shlib	compat,pic,gcccmds,gcc=48
 ./usr/lib/i386/libobjc.so.4.0			base-compat-shlib	compat,pic,gcccmds,gcc=48
 ./usr/lib/i386/libopcodes.so.6			base-compat-shlib	compat,pic,binutils
 ./usr/lib/i386/libopcodes.so.6.0		base-compat-shlib	compat,pic,binutils

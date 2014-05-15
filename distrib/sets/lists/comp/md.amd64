@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.218 2014/04/21 00:17:50 joerg Exp $
+# $NetBSD: md.amd64,v 1.219 2014/05/15 16:32:28 apb Exp $
 
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
@@ -284,7 +284,6 @@
 ./usr/include/gcc-4.8/xsaveintrin.h		comp-c-include		gcccmds,gcc=48
 ./usr/include/gcc-4.8/xsaveoptintrin.h		comp-c-include		gcccmds,gcc=48
 ./usr/include/gcc-4.8/xtestintrin.h		comp-c-include		gcccmds,gcc=48
-
 ./usr/include/i386				comp-c-include
 ./usr/include/i386/ansi.h			comp-c-include
 ./usr/include/i386/aout_machdep.h		comp-c-include
@@ -717,12 +716,12 @@
 ./usr/lib/i386/libgnumalloc_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/libgnumalloc_pic.a		comp-c-piclib		compat,pic,picinstall
 ./usr/lib/i386/libgomp.a			comp-sys-shlib		compat,gcc=45
-./usr/lib/i386/libgomp.so			comp-sys-shlib		compat,pic,gcc=45
-./usr/lib/i386/libgomp_p.a			comp-c-proflib		compat,profile,gcc=45
-./usr/lib/i386/libgomp_pic.a			comp-c-piclib		compat,pic,gcc=45,picinstall
 ./usr/lib/i386/libgomp.a			comp-sys-shlib		compat,gcc=48
+./usr/lib/i386/libgomp.so			comp-sys-shlib		compat,pic,gcc=45
 ./usr/lib/i386/libgomp.so			comp-sys-shlib		compat,pic,gcc=48
+./usr/lib/i386/libgomp_p.a			comp-c-proflib		compat,profile,gcc=45
 ./usr/lib/i386/libgomp_p.a			comp-c-proflib		compat,profile,gcc=48
+./usr/lib/i386/libgomp_pic.a			comp-c-piclib		compat,pic,gcc=45,picinstall
 ./usr/lib/i386/libgomp_pic.a			comp-c-piclib		compat,pic,gcc=48,picinstall
 ./usr/lib/i386/libgssapi.a			comp-c-lib		compat,kerberos
 ./usr/lib/i386/libgssapi.so			comp-sys-shlib		compat,pic,kerberos

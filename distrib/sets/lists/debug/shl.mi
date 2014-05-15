@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.60 2014/04/24 21:46:44 pooka Exp $
+# $NetBSD: shl.mi,v 1.61 2014/05/15 16:32:28 apb Exp $
 ./usr/libdata/debug/lib/libc.so.12.190.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypt.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypto.so.8.2.debug		comp-sys-debug	debug
@@ -24,7 +24,6 @@
 ./usr/libdata/debug/lib/npf/ext_normalize.so.0.0.debug	comp-sys-debug	debug,npf
 ./usr/libdata/debug/lib/npf/ext_rndblock.so.0.0.debug	comp-sys-debug	debug,npf
 ./usr/libdata/debug/libexec/ld.elf_so.debug		comp-sys-debug	debug
-./usr/libdata/debug/usr/libexec/liblto_plugin.so.0.0.debug	comp-sys-debug debug,gcc=48
 ./usr/libdata/debug/usr/lib/i18n/libBIG5.so.5.0.debug	comp-i18n-debug	debug
 ./usr/libdata/debug/usr/lib/i18n/libDECHanyu.so.5.0.debug	comp-i18n-debug	debug
 ./usr/libdata/debug/usr/lib/i18n/libEUC.so.5.0.debug	comp-i18n-debug	debug
@@ -60,8 +59,8 @@
 ./usr/libdata/debug/usr/lib/libbluetooth.so.4.2.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libbz2.so.1.1.debug		comp-sys-debug	debug
-./usr/libdata/debug/usr/lib/libc.so.12.190.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libc++.so.1.0.debug		comp-sys-debug	debug,libcxx
+./usr/libdata/debug/usr/lib/libc.so.12.190.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libcom_err.so.7.0.debug	comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/libcrypt.so.1.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libcrypto.so.8.2.debug	comp-crypto-debug	crypto,debug
@@ -272,6 +271,7 @@
 ./usr/libdata/debug/usr/lib/npf/libext_normalise.so.0.0.debug	comp-obsolete	debug,npf,obsolete
 ./usr/libdata/debug/usr/lib/npf/libext_rndblock.so.0.0.debug	comp-obsolete	debug,npf,obsolete
 ./usr/libdata/debug/usr/libexec/ld.elf_so.debug		comp-sys-debug	debug
+./usr/libdata/debug/usr/libexec/liblto_plugin.so.0.0.debug	comp-sys-debug debug,gcc=48
 ./usr/libdata/debug/usr/tests/lib/csu/h_initfini3_dso.so.1.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/csu/libh_initfini3_dso.so.1.debug	tests-obsolete		debug,atf,obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/tls/h_tls_dlopen.so.1.debug	tests-lib-debug		debug,atf
