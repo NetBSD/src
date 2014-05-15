@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.94 2014/01/27 21:37:17 apb Exp $
+#	$NetBSD: Makefile,v 1.95 2014/05/15 16:32:07 apb Exp $
 
 # Experimental RCS METALOG versioning
 # (Needs host's rcs(1) commands)
@@ -306,12 +306,13 @@ makedeps: .PHONY
 
 # Sort the lists files
 sortlists: .PHONY
-	find ${.CURDIR}/lists \! \( -name CVS -prune \) -type f -print \
+	find ${.CURDIR}/lists \! \( -name CVS -prune \) \! -name .#\* \
+	    -type f -print \
 	| while read f ; do \
 	    ${_MKSHMSG} "sorting $${f#${.CURDIR}/}" ; \
 	    { grep '^#' "$$f" ; \
 	      grep -v '^#' "$$f" | sort ; \
-	    } >"$$f".tmp; \
+	    } | cat -s >"$$f".tmp; \
 	    if cmp "$$f" "$$f".tmp >/dev/null; then \
 	      : "$$f is unchanged" ; \
 	      rm "$$f".tmp ; \
