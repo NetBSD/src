@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.6 2014/03/21 17:00:18 christos Exp $
+# $NetBSD: ad.powerpc,v 1.7 2014/05/15 16:32:28 apb Exp $
 ./usr/lib/powerpc/libamu_g.a			comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/libarchive_g.a		comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/libasn1_g.a			comp-c-debuglib		compat,arch64,debuglib,kerberos
@@ -113,13 +113,13 @@
 ./usr/lib/powerpc/libwrap_g.a			comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/liby_g.a			comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/libz_g.a			comp-c-debuglib		compat,arch64,debuglib
-./usr/libdata/debug/usr/bin/elf2aout.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
-./usr/libdata/debug/usr/bin/psim.debug		comp-debug-debug	debug,gdb
 ./usr/libdata/debug/lib/powerpc/npf/ext_log.so.0.0.debug	comp-npf-debug		compat,arch64,debug
 ./usr/libdata/debug/lib/powerpc/npf/ext_normalize.so.0.0.debug	comp-npf-debug		compat,arch64,debug
 ./usr/libdata/debug/lib/powerpc/npf/ext_rndblock.so.0.0.debug	comp-npf-debug		compat,arch64,debug
 ./usr/libdata/debug/libexec/ld.elf_so-powerpc.debug	comp-sys-debug		compat,arch64,debug
+./usr/libdata/debug/usr/bin/elf2aout.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/bin/psim.debug		comp-debug-debug	debug,gdb
 ./usr/libdata/debug/usr/lib/powerpc/i18n/libBIG5.so.5.0.debug		comp-i18n-shlib		compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/i18n/libDECHanyu.so.5.0.debug		comp-i18n-shlib		compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/i18n/libEUC.so.5.0.debug		comp-i18n-shlib		compat,arch64,debug,pic

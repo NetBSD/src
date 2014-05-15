@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.67 2014/01/01 16:27:10 pgoyette Exp $
+# $NetBSD: mi,v 1.68 2014/05/15 16:32:28 apb Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -24,14 +24,14 @@
 ./@MODULEDIR@/camellia/camellia.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/cast128				base-kernel-modules	kmod
 ./@MODULEDIR@/cast128/cast128.kmod		base-kernel-modules	kmod
-./@MODULEDIR@/cd9660				base-kernel-modules	kmod
-./@MODULEDIR@/cd9660/cd9660.kmod		base-kernel-modules	kmod
-./@MODULEDIR@/chfs				base-kernel-modules	kmod
-./@MODULEDIR@/chfs/chfs.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/ccd				base-kernel-modules	kmod
 ./@MODULEDIR@/ccd/ccd.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/cd9660				base-kernel-modules	kmod
+./@MODULEDIR@/cd9660/cd9660.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/cgd				base-kernel-modules	kmod
 ./@MODULEDIR@/cgd/cgd.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/chfs				base-kernel-modules	kmod
+./@MODULEDIR@/chfs/chfs.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/coda				base-kernel-modules	kmod
 ./@MODULEDIR@/coda/coda.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/coda5				base-kernel-modules	kmod

@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.700 2014/04/24 21:46:44 pooka Exp $
+# $NetBSD: shl.mi,v 1.701 2014/05/15 16:32:28 apb Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -280,10 +280,10 @@
 ./usr/lib/libgnumalloc.so.1			base-sys-shlib
 ./usr/lib/libgnumalloc.so.1.0			base-sys-shlib
 ./usr/lib/libgomp.so				base-sys-shlib		gcc=45
-./usr/lib/libgomp.so.1				base-sys-shlib		gcc=45
-./usr/lib/libgomp.so.1.0			base-sys-shlib		gcc=45
 ./usr/lib/libgomp.so				base-sys-shlib		gcc=48
+./usr/lib/libgomp.so.1				base-sys-shlib		gcc=45
 ./usr/lib/libgomp.so.1				base-sys-shlib		gcc=48
+./usr/lib/libgomp.so.1.0			base-sys-shlib		gcc=45
 ./usr/lib/libgomp.so.1.1			base-sys-shlib		gcc=48
 ./usr/lib/libgssapi.so				base-krb5-shlib		kerberos
 ./usr/lib/libgssapi.so.10			base-krb5-shlib		kerberos
@@ -396,9 +396,9 @@
 ./usr/lib/libobjc.so				base-sys-shlib		gcc
 ./usr/lib/libobjc.so.3				base-sys-shlib		gcc=4
 ./usr/lib/libobjc.so.3				base-sys-shlib		gcc=45
-./usr/lib/libobjc.so.4				base-sys-shlib		gcc=48
 ./usr/lib/libobjc.so.3.0			base-sys-shlib		gcc=4
 ./usr/lib/libobjc.so.3.0			base-sys-shlib		gcc=45
+./usr/lib/libobjc.so.4				base-sys-shlib		gcc=48
 ./usr/lib/libobjc.so.4.0			base-sys-shlib		gcc=48
 ./usr/lib/libopenpgpsdk.so			base-obsolete		obsolete
 ./usr/lib/libopenpgpsdk.so.0			base-obsolete		obsolete

@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.183 2014/04/21 00:17:50 joerg Exp $
+# $NetBSD: md.sparc64,v 1.184 2014/05/15 16:32:28 apb Exp $
 ./usr/include/g++/bits/sparc			comp-c-include		compat
 ./usr/include/g++/bits/sparc/c++config.h	comp-c-include		gcc=48,compat
 ./usr/include/g++/bits/sparc64			comp-c-include		compat
@@ -144,9 +144,6 @@
 ./usr/include/sparc64/vuid_event.h		comp-c-include
 ./usr/include/sparc64/wchar_limits.h		comp-c-include
 ./usr/include/sparc64/z8530var.h		comp-c-include
-./usr/lib/sparc_mcmedany.o			comp-c-lib
-./usr/lib/sparc_mcmedlow.o			comp-c-lib
-./usr/lib/sparc_mcmedmid.o			comp-c-lib
 ./usr/lib/sparc/crt0.o				comp-c-lib		compat
 ./usr/lib/sparc/crtbegin.o			comp-c-lib		compat
 ./usr/lib/sparc/crtbeginS.o			comp-c-lib		compat,pic
@@ -407,12 +404,12 @@
 ./usr/lib/sparc/libgnumalloc_p.a		comp-c-proflib		compat,profile
 ./usr/lib/sparc/libgnumalloc_pic.a		comp-c-piclib		compat,pic,picinstall
 ./usr/lib/sparc/libgomp.a			comp-c-lib		compat,gcc=45
-./usr/lib/sparc/libgomp.so			base-sys-shlib		compat,pic,gcc=45
-./usr/lib/sparc/libgomp_p.a			comp-c-proflib		compat,profile,gcc=45
-./usr/lib/sparc/libgomp_pic.a			comp-c-piclib		compat,pic,gcc=45,picinstall
 ./usr/lib/sparc/libgomp.a			comp-c-lib		compat,gcc=48
+./usr/lib/sparc/libgomp.so			base-sys-shlib		compat,pic,gcc=45
 ./usr/lib/sparc/libgomp.so			base-sys-shlib		compat,pic,gcc=48
+./usr/lib/sparc/libgomp_p.a			comp-c-proflib		compat,profile,gcc=45
 ./usr/lib/sparc/libgomp_p.a			comp-c-proflib		compat,profile,gcc=48
+./usr/lib/sparc/libgomp_pic.a			comp-c-piclib		compat,pic,gcc=45,picinstall
 ./usr/lib/sparc/libgomp_pic.a			comp-c-piclib		compat,pic,gcc=48,picinstall
 ./usr/lib/sparc/libgssapi.a			comp-c-lib		compat,kerberos
 ./usr/lib/sparc/libgssapi.so			base-sys-shlib		compat,pic,kerberos
@@ -760,6 +757,9 @@
 ./usr/lib/sparc/libz.so				base-sys-shlib		compat,pic
 ./usr/lib/sparc/libz_p.a			comp-c-proflib		compat,profile
 ./usr/lib/sparc/libz_pic.a			comp-c-piclib		compat,pic,picinstall
+./usr/lib/sparc_mcmedany.o			comp-c-lib
+./usr/lib/sparc_mcmedlow.o			comp-c-lib
+./usr/lib/sparc_mcmedmid.o			comp-c-lib
 ./usr/libdata/ldscripts/elf32_sparc.x		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf32_sparc.xbn		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf32_sparc.xc		comp-util-bin		binutils

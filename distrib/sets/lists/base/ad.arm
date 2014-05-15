@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.41 2014/03/21 17:00:18 christos Exp $
+# $NetBSD: ad.arm,v 1.42 2014/05/15 16:32:28 apb Exp $
 ./lib/oabi					base-compat-shlib	compat
 ./lib/oabi/npf					base-npf-shlib		compat
 ./lib/oabi/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -146,8 +146,8 @@
 ./usr/lib/oabi/libgnumalloc.so.1		base-compat-shlib	compat,pic
 ./usr/lib/oabi/libgnumalloc.so.1.0		base-compat-shlib	compat,pic
 ./usr/lib/oabi/libgomp.so.1			base-compat-shlib	compat,pic,gcc=45
-./usr/lib/oabi/libgomp.so.1.0			base-compat-shlib	compat,pic,gcc=45
 ./usr/lib/oabi/libgomp.so.1			base-compat-shlib	compat,pic,gcc=48
+./usr/lib/oabi/libgomp.so.1.0			base-compat-shlib	compat,pic,gcc=45
 ./usr/lib/oabi/libgomp.so.1.1			base-compat-shlib	compat,pic,gcc=48
 ./usr/lib/oabi/libgssapi.so.10			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/oabi/libgssapi.so.10.0		base-compat-shlib	compat,pic,kerberos
@@ -223,9 +223,9 @@
 ./usr/lib/oabi/libnpf.so.0.0			base-compat-shlib	compat,pic,npf
 ./usr/lib/oabi/libobjc.so.3			base-compat-shlib	compat,pic,gcccmds,gcc=4
 ./usr/lib/oabi/libobjc.so.3			base-compat-shlib	compat,pic,gcccmds,gcc=45
-./usr/lib/oabi/libobjc.so.4			base-compat-shlib	compat,pic,gcccmds,gcc=48
 ./usr/lib/oabi/libobjc.so.3.0			base-compat-shlib	compat,pic,gcccmds,gcc=4
 ./usr/lib/oabi/libobjc.so.3.0			base-compat-shlib	compat,pic,gcccmds,gcc=45
+./usr/lib/oabi/libobjc.so.4			base-compat-shlib	compat,pic,gcccmds,gcc=48
 ./usr/lib/oabi/libobjc.so.4.0			base-compat-shlib	compat,pic,gcccmds,gcc=48
 ./usr/lib/oabi/libopcodes.so.6			base-compat-shlib	compat,pic,binutils
 ./usr/lib/oabi/libopcodes.so.6.0		base-compat-shlib	compat,pic,binutils
