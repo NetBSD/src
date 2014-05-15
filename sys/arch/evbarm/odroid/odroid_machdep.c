@@ -1,4 +1,4 @@
-/*	$NetBSD: odroid_machdep.c,v 1.17 2014/05/15 15:28:26 reinoud Exp $ */
+/*	$NetBSD: odroid_machdep.c,v 1.18 2014/05/15 15:31:10 reinoud Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.17 2014/05/15 15:28:26 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.18 2014/05/15 15:31:10 reinoud Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_exynos.h"
@@ -381,13 +381,6 @@ curcpu()->ci_data.cpu_cc_freq = 1*1000*1000*1000;	/* XXX hack XXX */
 		}
 	}
 #endif
-
-	/*
-	 * Configure DMA tags
-	 */
-	/* XXX dma not implemented yet */
-	// exynos_dma_bootstrap(ram_size);
-
 	bootconfig.dram[0].pages = ram_size / PAGE_SIZE;
 
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
