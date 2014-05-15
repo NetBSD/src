@@ -1,4 +1,4 @@
-/*	$NetBSD: odroid_machdep.c,v 1.16 2014/05/14 09:03:09 reinoud Exp $ */
+/*	$NetBSD: odroid_machdep.c,v 1.17 2014/05/15 15:28:26 reinoud Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.16 2014/05/14 09:03:09 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.17 2014/05/15 15:28:26 reinoud Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_exynos.h"
@@ -296,7 +296,6 @@ initarm(void *arg)
 	case EXYNOS5_PRODUCT_FAMILY:
 		devmap = e5_devmap;
 		rambase = EXYNOS5_SDRAM_PBASE;
-		rambase = EXYNOS4_SDRAM_PBASE;
 		break;
 #endif
 	default:
