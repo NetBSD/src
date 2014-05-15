@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.99 2014/04/30 17:23:45 njoly Exp $
+	$NetBSD: syscalls.master,v 1.100 2014/05/15 09:54:06 njoly Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -630,8 +630,7 @@
 306	STD		{ int|netbsd32||utrace(netbsd32_charp label, \
 			    netbsd32_voidp addr, netbsd32_size_t len); }
 307	STD		{ int|netbsd32||getcontext(netbsd32_ucontextp ucp); }
-308	STD		{ int|netbsd32||setcontext(netbsd32_ucontextp ucp, \
-			    uint32_t flags, netbsd32_lwpidp new_lwp); }
+308	STD		{ int|netbsd32||setcontext(netbsd32_ucontextp ucp); }
 309	STD		{ int|netbsd32||_lwp_create(netbsd32_ucontextp ucp, \
 			    netbsd32_u_long flags, netbsd32_lwpidp new_lwp); }
 310	NOARGS		{ int|sys||_lwp_exit(void); }
