@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.45 2013/09/14 13:09:18 joerg Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.46 2014/05/15 09:23:52 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.45 2013/09/14 13:09:18 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.46 2014/05/15 09:23:52 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -1536,6 +1536,7 @@ sca_frame_process(sca_port_t *scp)
 	u_int8_t *bufp;
 	u_int16_t len;
 	u_int32_t t;
+	int isr = 0;
 
 	t = time_uptime * 1000;
 	desc = &scp->sp_rxdesc[scp->sp_rxstart];
@@ -1587,7 +1588,7 @@ sca_frame_process(sca_port_t *scp)
 		m->m_data += sizeof(struct hdlc_header);
 		m->m_len -= sizeof(struct hdlc_header);
 		ifq = &ipintrq;
-		schednetisr(NETISR_IP);
+		isr = NETISR_IP;
 		break;
 #endif	/* INET */
 #ifdef INET6
@@ -1598,7 +1599,7 @@ sca_frame_process(sca_port_t *scp)
 		m->m_data += sizeof(struct hdlc_header);
 		m->m_len -= sizeof(struct hdlc_header);
 		ifq = &ip6intrq;
-		schednetisr(NETISR_IPV6);
+		isr = NETISR_IPV6;
 		break;
 #endif	/* INET6 */
 	case CISCO_KEEPALIVE:
@@ -1691,6 +1692,7 @@ sca_frame_process(sca_port_t *scp)
 	/* queue the packet */
 	if (!IF_QFULL(ifq)) {
 		IF_ENQUEUE(ifq, m);
+		schednetisr(isr);
 	} else {
 		IF_DROP(ifq);
 		scp->sp_if.if_iqdrops++;

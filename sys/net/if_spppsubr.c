@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.127 2013/06/29 21:06:58 rmind Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.128 2014/05/15 09:23:03 msaitoh Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.127 2013/06/29 21:06:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.128 2014/05/15 09:23:03 msaitoh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -471,6 +471,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 	int s;
 	struct sppp *sp = (struct sppp *)ifp;
 	int debug = ifp->if_flags & IFF_DEBUG;
+	int isr = 0;
 
 	if (ifp->if_flags & IFF_UP) {
 		/* Count received bytes, add hardware framing */
@@ -538,19 +539,19 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 				return;
 #ifdef INET
 			case ETHERTYPE_IP:
-				schednetisr(NETISR_IP);
+				isr = NETISR_IP;
 				inq = &ipintrq;
 				break;
 #endif
 #ifdef INET6
 			case ETHERTYPE_IPV6:
-				schednetisr(NETISR_IPV6);
+				isr = NETISR_IPV6;
 				inq = &ip6intrq;
 				break;
 #endif
 #ifdef IPX
 			case ETHERTYPE_IPX:
-				schednetisr(NETISR_IPX);
+				isr = NETISR_IPX;
 				inq = &ipxintrq;
 				break;
 #endif
@@ -605,7 +606,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		return;
 	case PPP_IP:
 		if (sp->state[IDX_IPCP] == STATE_OPENED) {
-			schednetisr(NETISR_IP);
+			isr = NETISR_IP;
 			inq = &ipintrq;
 			sp->pp_last_activity = time_uptime;
 		}
@@ -620,7 +621,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 
 	case PPP_IPV6:
 		if (sp->state[IDX_IPV6CP] == STATE_OPENED) {
-			schednetisr(NETISR_IPV6);
+			isr = NETISR_IPV6;
 			inq = &ip6intrq;
 			sp->pp_last_activity = time_uptime;
 		}
@@ -630,7 +631,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 	case PPP_IPX:
 		/* IPX IPXCP not implemented yet */
 		if (sp->pp_phase == SPPP_PHASE_NETWORK) {
-			schednetisr(NETISR_IPX);
+			isr = NETISR_IPX;
 			inq = &ipxintrq;
 		}
 		break;
@@ -653,6 +654,7 @@ queue_pkt:
 		goto drop;
 	}
 	IF_ENQUEUE(inq, m);
+	schednetisr(isr);
 	splx(s);
 }
 
