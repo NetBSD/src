@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.65 2014/03/22 07:27:21 maxv Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.66 2014/05/15 19:37:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.65 2014/03/22 07:27:21 maxv Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.66 2014/05/15 19:37:22 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -870,6 +870,12 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 	int error;
 	int isnetbsd = 0;
 	char *ndata, *ndesc;
+#ifdef DIAGNOSTIC
+	const char *badnote;
+#define BADNOTE(n) badnote = (n)
+#else
+#define BADNOTE(n)
+#endif
 
 	epp->ep_pax_flags = 0;
 	if (eh->e_shnum > MAXSHNUM || eh->e_shnum == 0)
@@ -905,12 +911,16 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 		 * Ensure this size is consistent with what is indicated
 		 * in sh_size. The first check avoids integer overflows.
 		 */
-		if (np->n_namesz > shp->sh_size || np->n_descsz > shp->sh_size)
+		if (np->n_namesz > shp->sh_size || np->n_descsz > shp->sh_size) {
+			BADNOTE("note size limit");
 			goto bad;
+		}
 		nsize = sizeof(*np) + roundup(np->n_namesz, 4) +
 		    roundup(np->n_descsz, 4);
-		if (nsize != shp->sh_size)
+		if (nsize != shp->sh_size) {
+			BADNOTE("note size");
 			goto bad;
+		}
 		ndesc = ndata + roundup(np->n_namesz, 4);
 
 		switch (np->n_type) {
@@ -934,7 +944,7 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 			    memcmp(ndata, ELF_NOTE_SUSE_NAME,
 			    ELF_NOTE_SUSE_NAMESZ) == 0)
 				break;
-
+			BADNOTE("NetBSD tag");
 			goto bad;
 
 		case ELF_NOTE_TYPE_PAX_TAG:
@@ -946,6 +956,7 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 				    sizeof(epp->ep_pax_flags));
 				break;
 			}
+			BADNOTE("PaX tag");
 			goto bad;
 
 		case ELF_NOTE_TYPE_MARCH_TAG:
@@ -954,19 +965,24 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 			    && memcmp(ndata, ELF_NOTE_MARCH_NAME,
 				    ELF_NOTE_MARCH_NAMESZ) == 0) {
 				/* Do not truncate the buffer */
-				if (np->n_descsz > sizeof(epp->ep_machine_arch))
+				if (np->n_descsz > sizeof(epp->ep_machine_arch)) {
+					BADNOTE("description size limit");
 					goto bad;
+				}
 				/*
 				 * Ensure ndesc is NUL-terminated and of the
 				 * expected length.
 				 */
 				if (strnlen(ndesc, np->n_descsz) + 1 !=
-				    np->n_descsz)
+				    np->n_descsz) {
+					BADNOTE("description size");
 					goto bad;
+				}
 				strlcpy(epp->ep_machine_arch, ndesc,
 				    sizeof(epp->ep_machine_arch));
 				break;
 			}
+			BADNOTE("march tag");
 			goto bad;
 
 		case ELF_NOTE_TYPE_MCMODEL_TAG:
@@ -978,6 +994,7 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 				ELF_MD_MCMODEL_CHECK(epp, ndesc, np->n_descsz);
 				break;
 			}
+			BADNOTE("mcmodel tag");
 			goto bad;
 #endif
 			break;
@@ -986,6 +1003,7 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 			break;
 
 		default:
+			BADNOTE("unknown tag");
 bad:
 #ifdef DIAGNOSTIC
 			/* Ignore GNU tags */
@@ -995,9 +1013,9 @@ bad:
 			    break;
 
 			int ns = MIN(np->n_namesz, shp->sh_size - sizeof(*np));
-			printf("%s: Unknown elf note type %d: "
-			    "[namesz=%d, descsz=%d name=%*.*s]\n",
-			    epp->ep_kname, np->n_type, np->n_namesz,
+			printf("%s: Unknown elf note type %d (%s): "
+			    "[namesz=%d, descsz=%d name=%-*.*s]\n",
+			    epp->ep_kname, np->n_type, badnote, np->n_namesz,
 			    np->n_descsz, ns, ns, ndata);
 #endif
 			break;
