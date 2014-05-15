@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2014/03/01 10:00:48 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2014/05/15 14:37:08 joerg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -26,6 +26,10 @@ SRCS=		${LIBSUPCXXSRCS} xmalloc.c
 CXXFLAGS+=	${G_SECTION_FLAGS}
 
 COPTS.cp-demangle.c = -Wno-stack-protector
+
+.if ${HAVE_LIBGCC_EH} == "no"
+G_CONFIGLINKS:= ${G_CONFIGLINKS:S,libgcc/config/arm/unwind-arm.h,libgcc/unwind-generic.h,}
+.endif
 
 .if ${MKGCC} != "no"
 .if defined(G_CONFIGLINKS) && !empty(G_CONFIGLINKS)
