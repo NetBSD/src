@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mpls.c,v 1.11 2013/10/25 09:25:32 kefren Exp $ */
+/*	$NetBSD: if_mpls.c,v 1.12 2014/05/15 07:48:41 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.11 2013/10/25 09:25:32 kefren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.12 2014/05/15 07:48:41 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_mpls.h"
@@ -540,8 +540,8 @@ mpls_unlabel_inet(struct mbuf *m)
 		return ENOBUFS;
 	}
 	IF_ENQUEUE(inq, m);
-	splx(s);
 	schednetisr(NETISR_IP);
+	splx(s);
 
 	return 0;
 }
