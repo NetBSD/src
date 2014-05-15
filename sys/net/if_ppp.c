@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.141 2013/09/18 23:34:55 rmind Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.142 2014/05/15 09:23:03 msaitoh Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.141 2013/09/18 23:34:55 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.142 2014/05/15 09:23:03 msaitoh Exp $");
 
 #include "ppp.h"
 
@@ -1395,6 +1395,7 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
     int s, ilen, proto, rv;
     u_char *cp, adrs, ctrl;
     struct mbuf *mp, *dmp = NULL;
+    int isr = 0;
 #ifdef VJC
     int xlen;
     u_char *iphdr;
@@ -1625,7 +1626,7 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
 	if (ipflow_fastforward(m))
 		return;
 #endif
-	schednetisr(NETISR_IP);
+	isr = NETISR_IP;
 	inq = &ipintrq;
 	break;
 #endif
@@ -1648,7 +1649,7 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
 	if (ip6flow_fastforward(&m))
 		return;
 #endif
-	schednetisr(NETISR_IPV6);
+	isr = NETISR_IPV6;
 	inq = &ip6intrq;
 	break;
 #endif
@@ -1675,6 +1676,7 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
 	goto bad;
     }
     IF_ENQUEUE(inq, m);
+    schednetisr(isr);
     splx(s);
     ifp->if_ipackets++;
     ifp->if_ibytes += ilen;
