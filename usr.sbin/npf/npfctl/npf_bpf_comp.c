@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_bpf_comp.c,v 1.4 2014/03/15 08:46:01 rmind Exp $	*/
+/*	$NetBSD: npf_bpf_comp.c,v 1.5 2014/05/15 02:34:29 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2010-2013 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010-2014 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_bpf_comp.c,v 1.4 2014/03/15 08:46:01 rmind Exp $");
+__RCSID("$NetBSD: npf_bpf_comp.c,v 1.5 2014/05/15 02:34:29 rmind Exp $");
 
 #include <stdlib.h>
 #include <stdbool.h>
@@ -513,12 +513,23 @@ npfctl_bpf_ports(npf_bpf_t *ctx, u_int opts, in_port_t from, in_port_t to)
  * npfctl_bpf_tcpfl: code block to match TCP flags.
  */
 void
-npfctl_bpf_tcpfl(npf_bpf_t *ctx, uint8_t tf, uint8_t tf_mask)
+npfctl_bpf_tcpfl(npf_bpf_t *ctx, uint8_t tf, uint8_t tf_mask, bool checktcp)
 {
 	const u_int tcpfl_off = offsetof(struct tcphdr, th_flags);
 
 	/* X <- IP header length */
 	fetch_l3(ctx, AF_UNSPEC, X_EQ_L4OFF);
+	if (checktcp) {
+		const u_int jf = (tf_mask != tf) ? 3 : 2;
+		assert(ctx->ingroup == false);
+
+		/* A <- L4 protocol; A == TCP?  If not, jump out. */
+		struct bpf_insn insns_tcp[] = {
+			BPF_STMT(BPF_LD+BPF_W+BPF_MEM, BPF_MW_L4PROTO),
+			BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, IPPROTO_TCP, 0, jf),
+		};
+		add_insns(ctx, insns_tcp, __arraycount(insns_tcp));
+	}
 
 	struct bpf_insn insns_tf[] = {
 		/* A <- TCP flags */
@@ -540,8 +551,10 @@ npfctl_bpf_tcpfl(npf_bpf_t *ctx, uint8_t tf, uint8_t tf_mask)
 	};
 	add_insns(ctx, insns_cmp, __arraycount(insns_cmp));
 
-	uint32_t mwords[] = { BM_TCPFL, 2, tf, tf_mask};
-	done_block(ctx, mwords, sizeof(mwords));
+	if (!checktcp) {
+		uint32_t mwords[] = { BM_TCPFL, 2, tf, tf_mask};
+		done_block(ctx, mwords, sizeof(mwords));
+	}
 }
 
 /*
