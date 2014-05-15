@@ -1,6 +1,6 @@
-.\"	$NetBSD: pcu.9,v 1.5 2014/05/12 08:47:49 martin Exp $
+.\"	$NetBSD: pcu.9,v 1.6 2014/05/15 23:59:05 wiz Exp $
 .\"
-.\" Copyright (c) 2012 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2012-2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 22, 2014
+.Dd May 12, 2014
 .Dt PCU 9
 .Os
 .Sh NAME
@@ -67,14 +67,14 @@ The PCU operations take a
 .Ar flags
 parameter which is a bitmask that always can have one of the general
 bits set:
-.Bl -tag -width PCU_KERNEL
-.It PCU_USER
+.Bl -tag -width PCU_KERNELXXX
+.It Dv PCU_USER
 PCU state is for the user
-.It PCU_KERNEL
+.It Dv PCU_KERNEL
 PCU state is for the kernel
 .El
 .Pp
-.Bl -tag -width compact
+.Bl -tag -width pcu_state_saveXXX
 .It Fn pcu_state_save
 save the current CPU's state into the given LWP's MD storage.
 .It Fn pcu_state_load
@@ -83,12 +83,12 @@ The
 .Ar flags
 is a combination of the above general flags and one or more of
 the following:
-.Bl -tag -width PCU_LOADED
-.It PCU_RELOAD
+.Bl -tag -width PCU_LOADEDXXX
+.It Dv PCU_RELOAD
 Load registers into the PCU
-.It PCU_ENABLE
+.It Dv PCU_ENABLE
 Enable the PCU
-.It PCU_LOADED
+.It Dv PCU_LOADED
 the current LWP has used this PCU before
 .El
 .It Fn pcu_state_release
@@ -100,7 +100,7 @@ For example, this would often be the changing of a bit for a CPU to
 trap on the execution of one of the PCU's instructions.
 .El
 .Sh FUNCTIONS
-.Bl -tag -width compact
+.Bl -tag -width pcu_save_allXXX
 .It Fn pcu_load
 Load (initialize) the PCU state of the current LWP on the current CPU.
 .It Fn pcu_save
@@ -108,7 +108,7 @@ Save the specified PCU state to the given LWP.
 .It Fn pcu_discard
 Discard the specified PCU state of the current LWP.
 .It Fn pcu_used_p
-Return true if PCU was used (i.e.
+Return true if PCU was used (i.e.,
 .Fn pcu_load
 was called) by the LWP.
 Otherwise, return false.
