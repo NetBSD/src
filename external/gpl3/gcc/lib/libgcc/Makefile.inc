@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.26 2014/05/03 16:43:10 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.27 2014/05/15 14:37:08 joerg Exp $
 
 LIBGCC_MACHINE_ARCH?=${MACHINE_ARCH:S/earmv5/earm/}
 
@@ -92,11 +92,13 @@ LIB2FUNCS=	${LIB2FUNCS_SHORT:=.c}
 LIB2FUNCS_ST=	${G_LIB2FUNCS_ST:=.c}
 LIB2DIVMOD=	${LIB2_DIVMOD_FUNCS:=.c}
 .if ${HAVE_LIBGCC_EH} == "no"
-LIB2_EH=	${G_LIB2ADDEH:M*.c:T:Nunwind-dw2.c:Nunwind-dw2-fde-dip.c:Nunwind-sjlj.c:Nunwind-c.c}
+LIB2_EH=	${G_LIB2ADDEH:M*.c:T:Nunwind-dw2.c:Nunwind-dw2-fde-dip.c:Nunwind-sjlj.c:Nunwind-c.c:Nunwind-arm.c:Npr-support.c}
+LIB2_EHASM=	${G_LIB2ADDEH:M*.S:T:Nlibunwind.S}
+G_CONFIGLINKS:= ${G_CONFIGLINKS:S,libgcc/config/arm/unwind-arm.h,libgcc/unwind-generic.h,}
 .else
 LIB2_EH=	${G_LIB2ADDEH:M*.c:T}
-.endif
 LIB2_EHASM=	${G_LIB2ADDEH:M*.S:T}
+.endif
 
 # We have to weed out any existing func.S file that may exist
 # from the list of files we create.
