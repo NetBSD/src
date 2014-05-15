@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.84 2013/03/01 18:25:56 joerg Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.85 2014/05/15 09:04:03 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.84 2013/03/01 18:25:56 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.85 2014/05/15 09:04:03 msaitoh Exp $");
 
 #include "opt_gateway.h"
 #include "opt_inet.h"
@@ -465,6 +465,7 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 #endif
 	struct llc *l;
 	struct fddi_header *fh;
+	int isr = 0;
 
 	MCLAIM(m, &((struct ethercom *)ifp)->ec_rx_mowner);
 	if ((ifp->if_flags & IFF_UP) == 0) {
@@ -517,7 +518,7 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 		 	ntohs(l->llc_snap_ether_type) == ETHERTYPE_ATALK) {
 		    inq = &atintrq2;
 		    m_adj( m, sizeof( struct llc ));
-		    schednetisr(NETISR_ATALK);
+		    isr = NETISR_ATALK;
 		    break;
 		}
 
@@ -547,13 +548,13 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 			if (ipflow_fastforward(m))
 				return;
 #endif
-			schednetisr(NETISR_IP);
+			isr = NETISR_IP;
 			inq = &ipintrq;
 			break;
 
 		case ETHERTYPE_ARP:
 #if !defined(__bsdi__) || _BSDI_VERSION >= 199401
-			schednetisr(NETISR_ARP);
+			isr = NETISR_ARP;
 			inq = &arpintrq;
 			break;
 #else
@@ -563,7 +564,7 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 #endif
 #ifdef IPX
 		case ETHERTYPE_IPX:
-			schednetisr(NETISR_IPX);
+			isr = NETISR_IPX;
 			inq = &ipxintrq;
 			break;
 #endif
@@ -573,20 +574,20 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 			if (ip6flow_fastforward(&m))
 				return;
 #endif
-			schednetisr(NETISR_IPV6);
+			isr = NETISR_IPV6;
 			inq = &ip6intrq;
 			break;
 
 #endif
 #ifdef DECNET
 		case ETHERTYPE_DECNET:
-			schednetisr(NETISR_DECNET);
+			isr = NETISR_DECNET;
 			inq = &decnetintrq;
 			break;
 #endif
 #ifdef NETATALK
 		case ETHERTYPE_ATALK:
-	                schednetisr(NETISR_ATALK);
+	                isr = NETISR_ATALK;
 			inq = &atintrq1;
 			break;
 	        case ETHERTYPE_AARP:
@@ -616,8 +617,10 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 	if (IF_QFULL(inq)) {
 		IF_DROP(inq);
 		m_freem(m);
-	} else
+	} else {
 		IF_ENQUEUE(inq, m);
+		schednetisr(isr);
+	}
 	splx(s);
 #endif
 }
