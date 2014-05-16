@@ -1,4 +1,4 @@
-/* $NetBSD: fp_complete.c,v 1.15 2012/12/26 19:13:19 matt Exp $ */
+/* $NetBSD: fp_complete.c,v 1.16 2014/05/16 00:48:41 rmind Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.15 2012/12/26 19:13:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.16 2014/05/16 00:48:41 rmind Exp $");
 
 #include "opt_compat_osf1.h"
 
@@ -731,7 +731,7 @@ fpu_state_load(struct lwp *l, u_int flags)
 	 * If a process has used FP, count a "used FP, and took
 	 * a trap to use it again" event.
 	 */
-	if (!fpu_used_p(l)) {
+	if ((flags & PCU_VALID) == 0) {
 		atomic_inc_ulong(&fpevent_use.ev_count);
 		fpu_mark_used(l);
 	} else
@@ -749,7 +749,7 @@ fpu_state_load(struct lwp *l, u_int flags)
  */
 
 void
-fpu_state_save(struct lwp *l, u_int flags)
+fpu_state_save(struct lwp *l)
 {
 	struct pcb * const pcb = lwp_getpcb(l);
 
@@ -762,7 +762,7 @@ fpu_state_save(struct lwp *l, u_int flags)
  * Release the FPU.
  */
 void
-fpu_state_release(struct lwp *l, u_int flags)
+fpu_state_release(struct lwp *l)
 {
 	l->l_md.md_flags &= ~MDLWP_FPACTIVE;
 }

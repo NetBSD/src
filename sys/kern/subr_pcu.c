@@ -1,7 +1,7 @@
-/*	$NetBSD: subr_pcu.c,v 1.17 2014/01/23 17:32:03 skrll Exp $	*/
+/*	$NetBSD: subr_pcu.c,v 1.18 2014/05/16 00:48:41 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2011, 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,26 +38,21 @@
  *	PCU state may be loaded only by the current LWP, that is, curlwp.
  *	Therefore, only LWP itself can set a CPU for lwp_t::l_pcu_cpu[id].
  *
- *	Request for a PCU release can be from owner LWP (whether PCU state
- *	is on current CPU or remote CPU) or any other LWP running on that
- *	CPU (in such case, owner LWP is on a remote CPU or sleeping).
+ *	There are some important rules about operation calls.  The request
+ *	for a PCU release can be from a) the owner LWP (regardless whether
+ *	the PCU state is on the current CPU or remote CPU) b) any other LWP
+ *	running on that CPU (in such case, the owner LWP is on a remote CPU
+ *	or sleeping).
  *
- *	In any case, PCU state can only be changed from the running CPU.
- *	If said PCU state is on the remote CPU, a cross-call will be sent
- *	by the owner LWP.  Therefore struct cpu_info::ci_pcu_curlwp[id]
- *	may only be changed by current CPU, and lwp_t::l_pcu_cpu[id] may
- *	only be unset by the CPU which has PCU state loaded.
- *
- *	There is a race condition: LWP may have a PCU state on a remote CPU,
- *	which it requests to be released via cross-call.  At the same time,
- *	other LWP on remote CPU might release existing PCU state and load
- *	its own one.  Cross-call may arrive after this and release different
- *	PCU state than intended.  In such case, such LWP would re-load its
- *	PCU state again.
+ *	In any case, the PCU state can *only* be changed from the current
+ *	CPU.  If said PCU state is on the remote CPU, a cross-call will be
+ *	sent by the owner LWP.  Therefore struct cpu_info::ci_pcu_curlwp[id]
+ *	may only be changed by the current CPU and lwp_t::l_pcu_cpu[id] may
+ *	only be cleared by the CPU which has the PCU state loaded.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.17 2014/01/23 17:32:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.18 2014/05/16 00:48:41 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -68,17 +63,25 @@ __KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.17 2014/01/23 17:32:03 skrll Exp $");
 #if PCU_UNIT_COUNT > 0
 
 static inline void pcu_do_op(const pcu_ops_t *, lwp_t * const, const int);
-static void pcu_cpu_op(const pcu_ops_t *, const int);
 static void pcu_lwp_op(const pcu_ops_t *, lwp_t *, const int);
 
-__CTASSERT(PCU_KERNEL == 1);
+/*
+ * Internal PCU commands for the pcu_do_op() function.
+ */
+#define	PCU_CMD_SAVE		0x01	/* save PCU state to the LWP */
+#define	PCU_CMD_RELEASE		0x02	/* release PCU state on the CPU */
 
-#define	PCU_SAVE	(PCU_LOADED << 1) /* Save PCU state to the LWP. */
-#define	PCU_RELEASE	(PCU_SAVE << 1)	/* Release PCU state on the CPU. */
-#define	PCU_CLAIM	(PCU_RELEASE << 1)	/* CLAIM a PCU for a LWP. */
+/*
+ * Message structure for another CPU passed via xcall(9).
+ */
+typedef struct {
+	const pcu_ops_t *pcu;
+	lwp_t *		owner;
+	const int	flags;
+} pcu_xcall_msg_t;
 
-/* XXX */
-extern const pcu_ops_t * const	pcu_ops_md_defs[];
+/* PCU operations structure provided by the MD code. */
+extern const pcu_ops_t * const pcu_ops_md_defs[];
 
 /*
  * pcu_switchpoint: release PCU state if the LWP is being run on another CPU.
@@ -86,44 +89,22 @@ extern const pcu_ops_t * const	pcu_ops_md_defs[];
  * On each context switches, called by mi_switch() with IPL_SCHED.
  * 'l' is an LWP which is just we switched to.  (the new curlwp)
  */
-
 void
 pcu_switchpoint(lwp_t *l)
 {
-	const uint32_t pcu_kernel_inuse = l->l_pcu_used[PCU_KERNEL];
-	uint32_t pcu_user_inuse = l->l_pcu_used[PCU_USER];
+	const uint32_t pcu_valid = l->l_pcu_valid;
 	/* int s; */
 
 	KASSERTMSG(l == curlwp, "l %p != curlwp %p", l, curlwp);
 
-	if (__predict_false(pcu_kernel_inuse != 0)) {
-		for (u_int id = 0; id < PCU_UNIT_COUNT; id++) {
-			if ((pcu_kernel_inuse & (1 << id)) == 0) {
-				continue;
-			}
-			struct cpu_info * const pcu_ci = l->l_pcu_cpu[id];
-			if (pcu_ci == NULL || pcu_ci == l->l_cpu) {
-				continue;
-			}
-			const pcu_ops_t * const pcu = pcu_ops_md_defs[id];
-			/*
-			 * Steal the PCU away from the current owner and
-			 * take ownership of it.
-			 */
-			pcu_cpu_op(pcu, PCU_SAVE | PCU_RELEASE);
-			pcu_do_op(pcu, l, PCU_KERNEL | PCU_CLAIM | PCU_RELOAD);
-			pcu_user_inuse &= ~(1 << id);
-		}
-	}
-
-	if (__predict_true(pcu_user_inuse == 0)) {
+	if (__predict_true(pcu_valid == 0)) {
 		/* PCUs are not in use. */
 		return;
 	}
 	/* commented out as we know we are already at IPL_SCHED */
 	/* s = splsoftserial(); */
 	for (u_int id = 0; id < PCU_UNIT_COUNT; id++) {
-		if ((pcu_user_inuse & (1 << id)) == 0) {
+		if ((pcu_valid & (1U << id)) == 0) {
 			continue;
 		}
 		struct cpu_info * const pcu_ci = l->l_pcu_cpu[id];
@@ -131,7 +112,7 @@ pcu_switchpoint(lwp_t *l)
 			continue;
 		}
 		const pcu_ops_t * const pcu = pcu_ops_md_defs[id];
-		pcu->pcu_state_release(l, 0);
+		pcu->pcu_state_release(l);
 	}
 	/* splx(s); */
 }
@@ -141,35 +122,29 @@ pcu_switchpoint(lwp_t *l)
  *
  * Used by exec and LWP exit.
  */
-
 void
 pcu_discard_all(lwp_t *l)
 {
-	const uint32_t pcu_inuse = l->l_pcu_used[PCU_USER];
+	const uint32_t pcu_valid = l->l_pcu_valid;
 
-	KASSERT(l == curlwp || ((l->l_flag & LW_SYSTEM) && pcu_inuse == 0));
-	KASSERT(l->l_pcu_used[PCU_KERNEL] == 0);
+	KASSERT(l == curlwp || ((l->l_flag & LW_SYSTEM) && pcu_valid == 0));
 
-	if (__predict_true(pcu_inuse == 0)) {
+	if (__predict_true(pcu_valid == 0)) {
 		/* PCUs are not in use. */
 		return;
 	}
 	const int s = splsoftserial();
 	for (u_int id = 0; id < PCU_UNIT_COUNT; id++) {
-		if ((pcu_inuse & (1 << id)) == 0) {
+		if ((pcu_valid & (1U << id)) == 0) {
 			continue;
 		}
 		if (__predict_true(l->l_pcu_cpu[id] == NULL)) {
 			continue;
 		}
 		const pcu_ops_t * const pcu = pcu_ops_md_defs[id];
-		/*
-		 * We aren't releasing since this LWP isn't giving up PCU,
-		 * just saving it.
-		 */
-		pcu_lwp_op(pcu, l, PCU_RELEASE);
+		pcu_lwp_op(pcu, l, PCU_CMD_RELEASE);
 	}
-	l->l_pcu_used[PCU_USER] = 0;
+	l->l_pcu_valid = 0;
 	splx(s);
 }
 
@@ -177,35 +152,33 @@ pcu_discard_all(lwp_t *l)
  * pcu_save_all: save PCU state of the given LWP so that eg. coredump can
  * examine it.
  */
-
 void
 pcu_save_all(lwp_t *l)
 {
-	const uint32_t pcu_inuse = l->l_pcu_used[PCU_USER];
-	/*
-	 * Unless LW_WCORE, we aren't releasing since this LWP isn't giving
-	 * up PCU, just saving it.
-	 */
-	const int flags = PCU_SAVE | (l->l_flag & LW_WCORE ? PCU_RELEASE : 0);
+	const uint32_t pcu_valid = l->l_pcu_valid;
+	int flags = PCU_CMD_SAVE;
+
+	/* If LW_WCORE, we are also releasing the state. */
+	if (__predict_false(l->l_flag & LW_WCORE)) {
+		flags |= PCU_CMD_RELEASE;
+	}
 
 	/*
 	 * Normally we save for the current LWP, but sometimes we get called
 	 * with a different LWP (forking a system LWP or doing a coredump of
 	 * a process with multiple threads) and we need to deal with that.
 	 */
-	KASSERT(l == curlwp
-	    || (((l->l_flag & LW_SYSTEM)
-		 || (curlwp->l_proc == l->l_proc && l->l_stat == LSSUSPENDED))
-	        && pcu_inuse == 0));
-	KASSERT(l->l_pcu_used[PCU_KERNEL] == 0);
+	KASSERT(l == curlwp || (((l->l_flag & LW_SYSTEM) ||
+	    (curlwp->l_proc == l->l_proc && l->l_stat == LSSUSPENDED)) &&
+	    pcu_valid == 0));
 
-	if (__predict_true(pcu_inuse == 0)) {
+	if (__predict_true(pcu_valid == 0)) {
 		/* PCUs are not in use. */
 		return;
 	}
 	const int s = splsoftserial();
 	for (u_int id = 0; id < PCU_UNIT_COUNT; id++) {
-		if ((pcu_inuse & (1 << id)) == 0) {
+		if ((pcu_valid & (1U << id)) == 0) {
 			continue;
 		}
 		if (__predict_true(l->l_pcu_cpu[id] == NULL)) {
@@ -227,55 +200,42 @@ pcu_do_op(const pcu_ops_t *pcu, lwp_t * const l, const int flags)
 {
 	struct cpu_info * const ci = curcpu();
 	const u_int id = pcu->pcu_id;
-	u_int state_flags = flags & (PCU_KERNEL|PCU_RELOAD|PCU_ENABLE);
-	uint32_t id_mask = 1 << id;
-	const bool kernel_p = (l->l_pcu_used[PCU_KERNEL] & id_mask) != 0;
 
-	KASSERT(l->l_pcu_cpu[id] == (flags & PCU_CLAIM ? NULL : ci));
+	KASSERT(l->l_pcu_cpu[id] == ci);
 
-	if (flags & PCU_SAVE) {
-		pcu->pcu_state_save(l, (kernel_p ? PCU_KERNEL : 0));
+	if (flags & PCU_CMD_SAVE) {
+		pcu->pcu_state_save(l);
 	}
-	if (flags & PCU_RELEASE) {
-		pcu->pcu_state_release(l, state_flags);
-		if (flags & PCU_KERNEL) {
-			l->l_pcu_used[PCU_KERNEL] &= ~id_mask;
-		}
+	if (flags & PCU_CMD_RELEASE) {
+		pcu->pcu_state_release(l);
 		ci->ci_pcu_curlwp[id] = NULL;
 		l->l_pcu_cpu[id] = NULL;
-	}
-	if (flags & PCU_CLAIM) {
-		if (l->l_pcu_used[(flags & PCU_KERNEL)] & id_mask)
-			state_flags |= PCU_LOADED;
-		pcu->pcu_state_load(l, state_flags);
-		l->l_pcu_cpu[id] = ci;
-		ci->ci_pcu_curlwp[id] = l;
-		l->l_pcu_used[flags & PCU_KERNEL] |= id_mask;
-	}
-	if (flags == PCU_KERNEL) {
-		KASSERT(ci->ci_pcu_curlwp[id] == l);
-		pcu->pcu_state_save(l, 0);
-		l->l_pcu_used[PCU_KERNEL] |= id_mask;
 	}
 }
 
 /*
- * pcu_cpu_op: helper routine to call pcu_do_op() via xcall(9) or
- * by pcu_load.
+ * pcu_cpu_xcall: helper routine to call pcu_do_op() via xcall(9).
  */
 static void
-pcu_cpu_op(const pcu_ops_t *pcu, const int flags)
+pcu_cpu_xcall(void *arg1, void *arg2 __unused)
 {
+	const pcu_xcall_msg_t *pcu_msg = arg1;
+	const pcu_ops_t *pcu = pcu_msg->pcu;
 	const u_int id = pcu->pcu_id;
-	lwp_t * const l = curcpu()->ci_pcu_curlwp[id];
+	lwp_t *l = pcu_msg->owner;
 
-	//KASSERT(cpu_softintr_p());
+	KASSERT(cpu_softintr_p());
+	KASSERT(pcu_msg->owner != NULL);
 
-	/* If no state - nothing to do. */
-	if (l == NULL) {
+	if (curcpu()->ci_pcu_curlwp[id] != l) {
+		/*
+		 * Different ownership: another LWP raced with us and
+		 * perform save and release.  There is nothing to do.
+		 */
+		KASSERT(l->l_pcu_cpu[id] == NULL);
 		return;
 	}
-	pcu_do_op(pcu, l, flags);
+	pcu_do_op(pcu, l, pcu_msg->flags);
 }
 
 /*
@@ -300,7 +260,6 @@ pcu_lwp_op(const pcu_ops_t *pcu, lwp_t *l, const int flags)
 		/*
 		 * State is on the current CPU - just perform the operations.
 		 */
-		KASSERT((flags & PCU_CLAIM) == 0);
 		KASSERTMSG(ci->ci_pcu_curlwp[id] == l,
 		    "%s: cpu%u: pcu_curlwp[%u] (%p) != l (%p)",
 		     __func__, cpu_index(ci), id, ci->ci_pcu_curlwp[id], l);
@@ -308,27 +267,21 @@ pcu_lwp_op(const pcu_ops_t *pcu, lwp_t *l, const int flags)
 		splx(s);
 		return;
 	}
+	splx(s);
 
 	if (__predict_false(ci == NULL)) {
-		if (flags & PCU_CLAIM) {
-			pcu_do_op(pcu, l, flags);
-		}
 		/* Cross-call has won the race - no state to manage. */
-		splx(s);
 		return;
 	}
 
-	splx(s);
-
 	/*
-	 * State is on the remote CPU - perform the operations there.
-	 * Note: there is a race condition; see description in the top.
+	 * The state is on the remote CPU: perform the operation(s) there.
 	 */
-	where = xc_unicast(XC_HIGHPRI, (xcfunc_t)pcu_cpu_op,
-	    __UNCONST(pcu), (void *)(uintptr_t)flags, ci);
+	pcu_xcall_msg_t pcu_msg = { .pcu = pcu, .owner = l, .flags = flags };
+	where = xc_unicast(XC_HIGHPRI, pcu_cpu_xcall, &pcu_msg, NULL, ci);
 	xc_wait(where);
 
-	KASSERT((flags & PCU_RELEASE) == 0 || l->l_pcu_cpu[id] == NULL);
+	KASSERT((flags & PCU_CMD_RELEASE) == 0 || l->l_pcu_cpu[id] == NULL);
 }
 
 /*
@@ -337,9 +290,9 @@ pcu_lwp_op(const pcu_ops_t *pcu, lwp_t *l, const int flags)
 void
 pcu_load(const pcu_ops_t *pcu)
 {
+	lwp_t *oncpu_lwp, * const l = curlwp;
 	const u_int id = pcu->pcu_id;
 	struct cpu_info *ci, *curci;
-	lwp_t * const l = curlwp;
 	uint64_t where;
 	int s;
 
@@ -351,11 +304,10 @@ pcu_load(const pcu_ops_t *pcu)
 
 	/* Does this CPU already have our PCU state loaded? */
 	if (ci == curci) {
+		/* Fault happen: indicate re-enable. */
 		KASSERT(curci->ci_pcu_curlwp[id] == l);
-		KASSERT(pcu_used_p(pcu));
-
-		/* Re-enable */
-		pcu->pcu_state_load(l, PCU_LOADED | PCU_ENABLE);
+		KASSERT(pcu_valid_p(pcu));
+		pcu->pcu_state_load(l, PCU_VALID | PCU_REENABLE);
 		splx(s);
 		return;
 	}
@@ -363,9 +315,11 @@ pcu_load(const pcu_ops_t *pcu)
 	/* If PCU state of this LWP is on the remote CPU - save it there. */
 	if (ci) {
 		splx(s);
-		/* Note: there is a race; see description in the top. */
-		where = xc_unicast(XC_HIGHPRI, (xcfunc_t)pcu_cpu_op,
-		    __UNCONST(pcu), (void *)(PCU_SAVE | PCU_RELEASE), ci);
+
+		pcu_xcall_msg_t pcu_msg = { .pcu = pcu, .owner = l,
+		    .flags = PCU_CMD_SAVE | PCU_CMD_RELEASE };
+		where = xc_unicast(XC_HIGHPRI, pcu_cpu_xcall,
+		    &pcu_msg, NULL, ci);
 		xc_wait(where);
 
 		/* Enter IPL_SOFTSERIAL and re-fetch the current CPU. */
@@ -375,38 +329,44 @@ pcu_load(const pcu_ops_t *pcu)
 	KASSERT(l->l_pcu_cpu[id] == NULL);
 
 	/* Save the PCU state on the current CPU, if there is any. */
-	pcu_cpu_op(pcu, PCU_SAVE | PCU_RELEASE);
-	KASSERT(curci->ci_pcu_curlwp[id] == NULL);
+	if ((oncpu_lwp = curci->ci_pcu_curlwp[id]) != NULL) {
+		pcu_do_op(pcu, oncpu_lwp, PCU_CMD_SAVE | PCU_CMD_RELEASE);
+		KASSERT(curci->ci_pcu_curlwp[id] == NULL);
+	}
 
 	/*
 	 * Finally, load the state for this LWP on this CPU.  Indicate to
-	 * load function whether PCU was used before.  Note the usage.
+	 * the load function whether PCU state was valid before this call.
 	 */
-	pcu_do_op(pcu, l, PCU_CLAIM | PCU_ENABLE | PCU_RELOAD);
+	const bool valid = ((1U << id) & l->l_pcu_valid) != 0;
+	pcu->pcu_state_load(l, valid ? PCU_VALID : 0);
+	curci->ci_pcu_curlwp[id] = l;
+	l->l_pcu_cpu[id] = curci;
+	l->l_pcu_valid |= (1U << id);
 	splx(s);
 }
 
 /*
- * pcu_discard: discard the PCU state of current LWP.
- * If the "usesw" flag is set, pcu_used_p() will return "true".
+ * pcu_discard: discard the PCU state of current LWP.  If "valid"
+ * parameter is true, then keep considering the PCU state as valid.
  */
 void
-pcu_discard(const pcu_ops_t *pcu, bool usesw)
+pcu_discard(const pcu_ops_t *pcu, bool valid)
 {
 	const u_int id = pcu->pcu_id;
 	lwp_t * const l = curlwp;
 
 	KASSERT(!cpu_intr_p() && !cpu_softintr_p());
 
-	if (usesw)
-		l->l_pcu_used[PCU_USER] |= (1 << id);
-	else
-		l->l_pcu_used[PCU_USER] &= ~(1 << id);
-
+	if (__predict_false(valid)) {
+		l->l_pcu_valid |= (1U << id);
+	} else {
+		l->l_pcu_valid &= ~(1U << id);
+	}
 	if (__predict_true(l->l_pcu_cpu[id] == NULL)) {
 		return;
 	}
-	pcu_lwp_op(pcu, l, PCU_RELEASE);
+	pcu_lwp_op(pcu, l, PCU_CMD_RELEASE);
 }
 
 /*
@@ -423,71 +383,40 @@ pcu_save(const pcu_ops_t *pcu)
 	if (__predict_true(l->l_pcu_cpu[id] == NULL)) {
 		return;
 	}
-	pcu_lwp_op(pcu, l, PCU_SAVE | PCU_RELEASE);
+	pcu_lwp_op(pcu, l, PCU_CMD_SAVE | PCU_CMD_RELEASE);
 }
 
 /*
- * pcu_save_all_on_cpu: save all PCU state on current CPU
+ * pcu_save_all_on_cpu: save all PCU states on the current CPU.
  */
 void
 pcu_save_all_on_cpu(void)
 {
+	int s;
 
+	s = splsoftserial();
 	for (u_int id = 0; id < PCU_UNIT_COUNT; id++) {
-		pcu_cpu_op(pcu_ops_md_defs[id], PCU_SAVE | PCU_RELEASE);
+		const pcu_ops_t * const pcu = pcu_ops_md_defs[id];
+		lwp_t *l;
+
+		if ((l = curcpu()->ci_pcu_curlwp[id]) != NULL) {
+			pcu_do_op(pcu, l, PCU_CMD_SAVE | PCU_CMD_RELEASE);
+		}
 	}
+	splx(s);
 }
 
 /*
- * pcu_used: return true if PCU was used (pcu_load() case) by the LWP.
+ * pcu_valid_p: return true if PCU state is considered valid.  Generally,
+ * it always becomes "valid" when pcu_load() is called.
  */
 bool
-pcu_used_p(const pcu_ops_t *pcu)
+pcu_valid_p(const pcu_ops_t *pcu)
 {
 	const u_int id = pcu->pcu_id;
 	lwp_t * const l = curlwp;
 
-	return l->l_pcu_used[PCU_USER] & (1 << id);
-}
-
-void
-pcu_kernel_acquire(const pcu_ops_t *pcu)
-{
-	struct cpu_info * const ci = curcpu();
-	lwp_t * const l = curlwp;
-	const u_int id = pcu->pcu_id;
-
-	/*
-	 * If we own the PCU, save our user state.
-	 */
-	if (ci == l->l_pcu_cpu[id]) {
-		pcu_lwp_op(pcu, l, PCU_KERNEL);
-		return;
-	}
-	if (ci->ci_data.cpu_pcu_curlwp[id] != NULL) {
-		/*
-		 * The PCU is owned by another LWP so save its state.
-		 */
-		pcu_cpu_op(pcu, PCU_SAVE | PCU_RELEASE);
-	}
-	/*
-	 * Mark the PCU as hijacked and take ownership of it.
-	 */
-	pcu_lwp_op(pcu, l, PCU_KERNEL | PCU_CLAIM | PCU_ENABLE | PCU_RELOAD);
-}
-
-void
-pcu_kernel_release(const pcu_ops_t *pcu)
-{
-	lwp_t * const l = curlwp;
-
-	KASSERT(l->l_pcu_used[PCU_KERNEL] & (1 << pcu->pcu_id));
-
-	/*
-	 * Release the PCU, if the curlwp wants to use it, it will have incur
-	 * a trap to reenable it.
-	 */
-	pcu_lwp_op(pcu, l, PCU_KERNEL | PCU_RELEASE);
+	return (l->l_pcu_valid & (1U << id)) != 0;
 }
 
 #endif /* PCU_UNIT_COUNT > 0 */
