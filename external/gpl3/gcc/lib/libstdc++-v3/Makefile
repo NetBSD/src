@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2014/05/15 14:37:08 joerg Exp $
+#	$NetBSD: Makefile,v 1.11 2014/05/16 09:36:51 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -40,18 +40,7 @@ CONF=		${DIST}/libstdc++-v3/config
 
 GLIBCPP_INCLUDE_DIR=	${DESTDIR}/usr/include/g++
 
-.if ${HAVE_GCC} >= 48
-# Template instantiation bug workaround for -Os
-.if (${MACHINE_ARCH} == "coldfire" || \
-     ${MACHINE_ARCH} == "sh3eb" || \
-     ${MACHINE_ARCH} == "sh3el" || \
-     ${MACHINE_ARCH} == "m68k" || \
-     ${MACHINE_ARCH} == "m68000" || \
-     ${MACHINE_ARCH} == "vax")
-COPTS.hashtable_c++0x.cc = -O2
-COPTS.bitmap_allocator.cc = -O2
-.endif
-.endif
+# Template instantiation bug workaround for -O<2/s
 COPTS.cp-demangle.c = -Wno-stack-protector
 COPTS.cp-demangle.c = -Wno-stack-protector
 COPTS.fstream-inst.cc = -Wno-stack-protector
@@ -60,7 +49,9 @@ COPTS.misc-inst.cc = -Wno-stack-protector
 COPTS.ostream-inst.cc = -Wno-stack-protector
 COPTS.valarray-inst.cc = -Wno-stack-protector
 COPTS.wlocale-inst.cc = -Wno-stack-protector
-COPTS.concept-inst.cc=	-D_GLIBCPP_CONCEPT_CHECKS -fimplicit-templates
+COPTS.concept-inst.cc=	-fimplicit-templates
+COPTS.hashtable_c++0x.cc=  -fimplicit-templates
+COPTS.bitmap_allocator.cc = -fimplicit-templates
 CPPFLAGS.strstream.cc=	-I$(GLIBCPP_INCLUDE_DIR)/backward -Wno-deprecated
 
 # For GCC 4.5
