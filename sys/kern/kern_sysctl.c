@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.249 2014/03/27 21:09:33 christos Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.250 2014/05/16 12:22:32 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.249 2014/03/27 21:09:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.250 2014/05/16 12:22:32 martin Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -123,13 +123,7 @@ struct sysctlnode sysctl_root = {
 	    CTLFLAG_ROOT|CTLFLAG_READWRITE|
 	    CTLTYPE_NODE,
 	.sysctl_num = 0,
-	/*
-	 * XXX once all ports are on gcc3, we can get rid of this
-	 * ugliness and simply make it into
-	 *
-	 *	.sysctl_size = sizeof(struct sysctlnode),
-	 */
-	sysc_init_field(_sysctl_size, sizeof(struct sysctlnode)),
+	.sysctl_size = sizeof(struct sysctlnode),
 	.sysctl_name = "(root)",
 };
 
