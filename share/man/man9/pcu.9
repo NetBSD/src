@@ -1,4 +1,4 @@
-.\"	$NetBSD: pcu.9,v 1.7 2014/05/16 00:48:41 rmind Exp $
+.\"	$NetBSD: pcu.9,v 1.8 2014/05/16 06:15:28 martin Exp $
 .\"
 .\" Copyright (c) 2012-2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -63,6 +63,7 @@ are
         void	(*pcu_state_release)(lwp_t *l);
 .Ed
 .Pp
+.Bl -tag
 .It Fn pcu_state_save
 indicate to MD code that the PCU state on the current CPU should be
 saved into the given LWP's MD storage.
