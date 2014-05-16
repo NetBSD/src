@@ -32,7 +32,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.4 2014/05/14 09:03:09 reinoud Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.5 2014/05/16 10:02:24 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -334,8 +334,13 @@ exynos_gpio_attach(device_t parent, device_t self, void *aux)
 		snprintf(scrap, sizeof(scrap), "nc-%s", grp->grp_name);
 		if (prop_dictionary_get_uint32(dict, scrap, &nc)) {
 			KASSERT((~grp->grp_pin_mask & nc) == 0);
-			KASSERT((grp->grp_pin_inuse_mask & ~nc) == 0);
+			/* switch off the pins we have signalled NC */
 			grp->grp_pin_mask &= ~nc;
+#if 0
+			printf("%s: %-4s inuse_mask %02x, pin_mask %02x\n",
+			    __func__, grp->grp_name,
+			    grp->grp_pin_inuse_mask, grp->grp_pin_mask);
+#endif
 		}
 	}
 
@@ -349,7 +354,7 @@ exynos_gpio_attach(device_t parent, device_t self, void *aux)
 static u_int
 exynos_gpio_get_pin_func(const struct exynos_gpio_pin_cfg *cfg, int pin)
 {
-	const u_int shift = (pin & 7) << 4;
+	const u_int shift = (pin & 7) << 2;
 
 	return (cfg->cfg >> shift) & 0x0f;
 }
@@ -359,7 +364,7 @@ static void
 exynos_gpio_set_pin_func(struct exynos_gpio_pin_cfg *cfg,
 	int pin, int func)
 {
-	const u_int shift = (pin & 7) << 4;
+	const u_int shift = (pin & 7) << 2;
 
 	cfg->cfg &= ~(0x0f << shift);
 	cfg->cfg |= func << shift;
@@ -564,6 +569,32 @@ exynos_gpio_pinset_acquire(const struct exynos_gpio_pinset *req)
 }
 
 
+/* get a pindata structure from a pinset structure */
+void
+exynos_gpio_pinset_to_pindata(const struct exynos_gpio_pinset *req, int pinnr,
+	struct exynos_gpio_pindata *pd)
+{
+	struct exynos_gpio_pin_group *grp;
+	int i;
+
+	KASSERT(req);
+	KASSERT(pd);
+	KASSERT(req->pinset_mask & __BIT(pinnr));
+
+	/* determine which group is requested */
+	grp = NULL;
+	for (i = 0; i < exynos_n_pin_groups; i++) {
+		grp = &exynos_pin_groups[i];
+		if (strcmp(req->pinset_group, grp->grp_name) == 0)
+			break;
+	}
+	KASSERT(grp);
+
+	pd->pd_gc = &grp->grp_gc_tag;
+	pd->pd_pin = pinnr;
+}
+
+
 /* XXXRPZ This release doesn't grock multiple usages! */
 void
 exynos_gpio_pinset_release(const struct exynos_gpio_pinset *req)
@@ -704,7 +735,8 @@ exynos_gpio_pin_reserve(const char *name, struct exynos_gpio_pindata *pd)
 	exynos_gpio_set_pin_pull(&ncfg, pinnr, pud);
 	exynos_gpio_update_cfg_regs(grp, &ncfg);
 
-	grp->grp_pin_inuse_mask &= ~__BIT(pinnr);
+	grp->grp_pin_inuse_mask |= __BIT(pinnr);
+	grp->grp_pin_mask &= ~__BIT(pinnr);
 
 	pd->pd_gc = &grp->grp_gc_tag;
 	pd->pd_pin = pinnr;
@@ -720,7 +752,7 @@ exynos_gpio_bootstrap(void)
 	bus_space_tag_t bst = &exynos_bs_tag;
 	struct exynos_gpio_pin_group *grp;
 	struct gpio_chipset_tag *gc_tag;
-	int i, j, func, mask;
+	int i;
 
 	/* determine what we're running on */
 #ifdef EXYNOS4
@@ -769,15 +801,24 @@ exynos_gpio_bootstrap(void)
 		grp->grp_cfg.pudpwd = bus_space_read_4(bst, grp->grp_bsh,
 			EXYNOS_GPIO_PUDPWD);
 
-		/* count number of busy pins */
-		for (j = 0, mask = 1;
+		/*
+		 * Normally we would count the busy pins.
+		 *
+		 * We can't check inuse here since uboot has used pins for its
+		 * own use and left them configured forbidding us to use pins
+		 * for our own sake.
+		 */
+#if 0
+		for (int j = 0, int mask = 1;
 		     (mask & grp->grp_pin_mask) != 0;
 		     j++, mask <<= 1) {
-			func = exynos_gpio_get_pin_func(&grp->grp_cfg, j);
+			int func = exynos_gpio_get_pin_func(&grp->grp_cfg, j);
 			if (func > EXYNOS_GPIO_FUNC_INPUT) {
-				grp->grp_pin_inuse_mask |= mask;
+				printf("%s: %s[%d] func %d\n", __func__,
+				    grp->grp_name, j, func);
 			}
 		}
+#endif
 	}
 #if 0
 	printf("\n");
