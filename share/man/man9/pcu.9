@@ -1,4 +1,4 @@
-.\"	$NetBSD: pcu.9,v 1.8 2014/05/16 06:15:28 martin Exp $
+.\"	$NetBSD: pcu.9,v 1.9 2014/05/16 08:29:18 wiz Exp $
 .\"
 .\" Copyright (c) 2012-2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -65,25 +65,25 @@ are
 .Pp
 .Bl -tag
 .It Fn pcu_state_save
-indicate to MD code that the PCU state on the current CPU should be
+Indicate to MD code that the PCU state on the current CPU should be
 saved into the given LWP's MD storage.
 .It Fn pcu_state_load
-load PCU state from the given LWP's MD storage to the current CPU.
+Load PCU state from the given LWP's MD storage to the current CPU.
 The
 .Ar flags
-is a combination of one or more of the following:
+argument is a combination of one or more of the following:
 .Bl -tag -width PCU_VALIDXXX
 .It Dv PCU_VALID
-Indicates that the PCU state is considered valid and need not be initialized
-This is a case if the PCU state was already used (and thus loaded) by the LWP
+Indicate that the PCU state is considered valid and need not be initialized.
+This is the case if the PCU state was already used (and thus loaded) by the LWP
 and has not been discarded since.
 .It Dv PCU_REENABLE
-Indicates that a fault reoccurred while the PCU state is loaded,
+Indicate that a fault reoccurred while the PCU state is loaded,
 therefore PCU should be re-enabled.
 This is applicable only in some cases, e.g. ARM NEON extensions.
 .El
 .It Fn pcu_state_release
-indicate to MD code that the PCU ownership by the LWP was released,
+Indicate to MD code that the PCU ownership by the LWP was released,
 therefore the next use of PCU on the LWP shall be detected and
 .Fn pcu_load
 be called to reacquire the ownership.
