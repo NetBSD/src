@@ -1,4 +1,4 @@
-#	$NetBSD: files.ufs,v 1.35 2014/05/08 08:21:53 hannken Exp $
+#	$NetBSD: files.ufs,v 1.36 2014/05/16 09:34:03 dholland Exp $
 
 deffs					FFS
 deffs					EXT2FS
@@ -65,6 +65,7 @@ file	ufs/lfs/lfs_cksum.c		lfs
 file	ufs/lfs/lfs_debug.c		lfs
 file	ufs/lfs/lfs_inode.c		lfs
 file	ufs/lfs/lfs_itimes.c		lfs
+file	ufs/lfs/lfs_pages.c		lfs
 file	ufs/lfs/lfs_rename.c		lfs
 file	ufs/lfs/lfs_rfw.c		lfs & lfs_kernel_rfw
 file	ufs/lfs/lfs_segment.c		lfs
