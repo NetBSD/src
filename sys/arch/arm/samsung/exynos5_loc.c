@@ -224,3 +224,15 @@ const struct exyo_locinfo exynos5_locinfo = {
 	.locators = exynos5_locators,
 	.nlocators = __arraycount(exynos5_locators)
 };
+
+
+/* flag signal the use of gpio */
+static const struct exyo_locators exynos5_i2c_locators[] = {
+};
+
+
+const struct exyo_locinfo exynos5_i2c_locinfo = {
+	.locators = exynos5_i2c_locators,
+	.nlocators = __arraycount(exynos5_i2c_locators)
+};
+
