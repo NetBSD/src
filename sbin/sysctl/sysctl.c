@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.152 2014/05/16 08:59:24 martin Exp $ */
+/*	$NetBSD: sysctl.c,v 1.153 2014/05/16 12:22:32 martin Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.152 2014/05/16 08:59:24 martin Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.153 2014/05/16 12:22:32 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -242,7 +242,7 @@ static const struct handlespec {
 
 struct sysctlnode my_root = {
 	.sysctl_flags = SYSCTL_VERSION|CTLFLAG_ROOT|CTLTYPE_NODE,
-	sysc_init_field(_sysctl_size, sizeof(struct sysctlnode)),
+	.sysctl_size = sizeof(struct sysctlnode),
 	.sysctl_num = 0,
 	.sysctl_name = "(prog_root)",
 };
