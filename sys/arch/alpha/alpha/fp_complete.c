@@ -1,4 +1,4 @@
-/* $NetBSD: fp_complete.c,v 1.16 2014/05/16 00:48:41 rmind Exp $ */
+/* $NetBSD: fp_complete.c,v 1.17 2014/05/16 19:18:21 matt Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.16 2014/05/16 00:48:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.17 2014/05/16 19:18:21 matt Exp $");
 
 #include "opt_compat_osf1.h"
 
@@ -408,10 +408,11 @@ alpha_write_fp_c(struct lwp *l, uint64_t fp_c)
 	if ((md_flags & MDLWP_FP_C) == fp_c)
 		return;
 	l->l_md.md_flags = (md_flags & ~MDLWP_FP_C) | fp_c;
-	fpu_load();
-	alpha_pal_wrfen(1);
-	fp_c_to_fpcr(l);
-	alpha_pal_wrfen(0);
+	if (md_flags & MDLWP_FPACTIVE) {
+		alpha_pal_wrfen(1);
+		fp_c_to_fpcr(l);
+		alpha_pal_wrfen(0);
+	}
 }
 
 uint64_t
@@ -733,9 +734,9 @@ fpu_state_load(struct lwp *l, u_int flags)
 	 */
 	if ((flags & PCU_VALID) == 0) {
 		atomic_inc_ulong(&fpevent_use.ev_count);
-		fpu_mark_used(l);
-	} else
+	} else {
 		atomic_inc_ulong(&fpevent_reuse.ev_count);
+	}
 
 	alpha_pal_wrfen(1);
 	restorefpstate(&pcb->pcb_fp);
