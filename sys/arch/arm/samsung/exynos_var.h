@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_var.h,v 1.8 2014/05/10 20:24:06 reinoud Exp $ */
+/* $NetBSD: exynos_var.h,v 1.9 2014/05/16 10:04:58 reinoud Exp $ */
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -72,6 +72,10 @@ struct exyo_locators {
 	int loc_port;
 	int loc_intr;
 	int loc_flags;
+
+	/* for i2c: */
+	const char *loc_gpio_bus;
+	uint8_t loc_sda, loc_slc, loc_func;
 };
 
 #if 0
@@ -97,13 +101,18 @@ struct exyo_attach_args {
 struct exynos_gpio_pinset {
 	char pinset_group[10];
 	uint8_t pinset_func;
-	uint32_t pinset_mask;
+	uint8_t pinset_mask;
 };
 
 struct exynos_gpio_pindata {
 	gpio_chipset_tag_t pd_gc;
 	int pd_pin;
 };
+
+
+#define EXYNOS_MAX_IIC_BUSSES 9
+struct i2c_controller;
+extern struct i2c_controller *exynos_i2cbus[EXYNOS_MAX_IIC_BUSSES];
 
 
 extern struct bus_space exynos_bs_tag;
@@ -126,6 +135,8 @@ extern void exynos_wdt_reset(void);
 extern bool exynos_gpio_pinset_available(const struct exynos_gpio_pinset *);
 extern void exynos_gpio_pinset_acquire(const struct exynos_gpio_pinset *);
 extern void exynos_gpio_pinset_release(const struct exynos_gpio_pinset *);
+extern void exynos_gpio_pinset_to_pindata(const struct exynos_gpio_pinset *,
+	int pinnr, struct exynos_gpio_pindata *);
 extern bool exynos_gpio_pin_reserve(const char *, struct exynos_gpio_pindata *);
 
 static inline void
