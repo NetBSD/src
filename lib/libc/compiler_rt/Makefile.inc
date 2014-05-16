@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.17 2014/03/19 20:30:53 uwe Exp $
+# $NetBSD: Makefile.inc,v 1.18 2014/05/16 00:10:57 joerg Exp $
 
 COMPILER_RT_SRCDIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
 
@@ -171,7 +171,10 @@ GENERIC_SRCS+= \
 
 GENERIC_SRCS+= \
 	GCDAProfiling.c \
-	PGOProfiling.c
+	InstrProfiling.c \
+	InstrProfilingBuffer.c \
+	InstrProfilingFile.c \
+	InstrProfilingPlatformOther.c
 
 .if ${LIBC_MACHINE_ARCH} == "powerpc"
 GENERIC_SRCS+= \
