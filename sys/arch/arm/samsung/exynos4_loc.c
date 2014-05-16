@@ -265,6 +265,7 @@
 
 static const struct exyo_locators exynos4_locators[] = {
 	{ "exyogpio", 0, 0, NOPORT, NOINTR, 0 },
+	{ "exyoiic", 0, 0, NOPORT, NOINTR, 0 },
 	{ "mct", OFFANDSIZE(,MCT), NOPORT, IRQ_G0_IRQ, 0 },
 	{ "exyowdt", OFFANDSIZE(,WDT), NOPORT, IRQ_WDT, 0 },
 	{ "sscom", OFFANDSIZE(,UART0), 0, IRQ_UART0, 0 },
@@ -278,3 +279,25 @@ const struct exyo_locinfo exynos4_locinfo = {
 	.locators = exynos4_locators,
 	.nlocators = __arraycount(exynos4_locators)
 };
+
+
+/* flag signal the use of gpio */
+static const struct exyo_locators exynos4_i2c_locators[] = {
+					/* busname, sdabit, slcbit, func */
+	{ "iic0", OFFANDSIZE(,I2C0), 0, IRQ_I2C0, 1 , "GPD1", 0, 1, 2 },
+	{ "iic1", OFFANDSIZE(,I2C1), 1, IRQ_I2C1, 1 , "GPD1", 2, 3, 2 },
+	{ "iic2", OFFANDSIZE(,I2C2), 2, IRQ_I2C2, 1 , "GPA0", 6, 7, 2 },
+	{ "iic3", OFFANDSIZE(,I2C3), 3, IRQ_I2C3, 1 , "GPA1", 2, 3, 3 },
+	{ "iic4", OFFANDSIZE(,I2C4), 4, IRQ_I2C4, 1 , "GPB",  0, 1, 3 },
+	{ "iic5", OFFANDSIZE(,I2C5), 5, IRQ_I2C5, 1 , "GPB",  2, 3, 3 },
+	{ "iic6", OFFANDSIZE(,I2C6), 6, IRQ_I2C6, 1 , "GPC1", 3, 4, 4 },
+	{ "iic7", OFFANDSIZE(,I2C7), 7, IRQ_I2C7, 1 , "GPD0", 2, 3, 3 },
+	{ "iic8", OFFANDSIZE(,I2CHDMI), 8, IRQ_HDMI_I2C, 0 , "", 0, 0, 0 },
+};
+
+
+const struct exyo_locinfo exynos4_i2c_locinfo = {
+	.locators = exynos4_i2c_locators,
+	.nlocators = __arraycount(exynos4_i2c_locators)
+};
+
