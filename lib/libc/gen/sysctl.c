@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.32 2012/03/20 16:36:05 matt Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.33 2014/05/16 09:41:42 martin Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.2 (Berkeley) 1/4/94";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.32 2012/03/20 16:36:05 matt Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.33 2014/05/16 09:41:42 martin Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -324,6 +324,7 @@ user_sysctl(const int *name, unsigned int namelen,
 			if (d2 != NULL)
 				memcpy(d2, d1, d);
 			sz += d;
+			d2 = (struct sysctldesc *)((char *)d2 + d);
 			if (node != NULL)
 				break;
 		}
