@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.52 2014/05/06 17:33:35 njoly Exp $  
+	$NetBSD: syscalls.master,v 1.53 2014/05/17 09:23:51 njoly Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -432,8 +432,8 @@
 251	UNIMPL		remap_file_pages
 252	STD		{ int|linux_sys||set_tid_address(int *tid); }
 253	UNIMPL		restart_syscall
-254	STD		{ int|linux_sys||fadvise64(int fd, \
-			    linux_off_t offset, size_t len, int advice); }
+254	STD		{ int|linux_sys||fadvise64(int fd, off_t offset, \
+			    size_t len, int advice); }
 255	STD		{ int|linux_sys||statfs64(const char *path, \
 			    size_t sz, struct linux_statfs64 *sp); }
 256	STD		{ int|linux_sys||fstatfs64(int fd, \
