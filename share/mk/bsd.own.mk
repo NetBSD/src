@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.804 2014/05/16 00:19:00 joerg Exp $
+#	$NetBSD: bsd.own.mk,v 1.805 2014/05/17 23:31:57 joerg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -87,14 +87,17 @@ EXTERNAL_GCC_SUBDIR=	/does/not/exist
 
 .endif
 
-.if ${MKLLVM:Uno} == "yes" && (${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64")
+.if !empty(MACHINE_ARCH:Mearm*)
+_LIBC_UNWIND_SUPPORT.${MACHINE_ARCH}=	yes
+.endif
+
+_LIBC_COMPILER_RT.i386=		yes
+_LIBC_COMPILER_RT.x86_64=	yes
+
+.if ${MKLLVM:Uno} == "yes" && ${_LIBC_COMPILER_RT.${MACHINE_ARCH}:Uno} == "yes"
 HAVE_LIBGCC?=	no
 .else
 HAVE_LIBGCC?=	yes
-.endif
-
-.if !empty(MACHINE_ARCH:Mearm*)
-_LIBC_UNWIND_SUPPORT.${MACHINE_ARCH}=	yes
 .endif
 
 _LIBC_UNWIND_SUPPORT.alpha=	yes
