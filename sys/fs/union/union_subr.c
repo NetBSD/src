@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.64 2014/05/17 04:03:49 dholland Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.65 2014/05/17 04:07:15 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.64 2014/05/17 04:03:49 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.65 2014/05/17 04:07:15 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -811,6 +811,7 @@ union_mkshadow(struct union_mount *um, struct vnode *dvp,
 	va.va_type = VDIR;
 	va.va_mode = um->um_cmode;
 
+	KASSERT(*vpp == NULL);
 	error = VOP_MKDIR(dvp, vpp, &cn, &va);
 	VOP_UNLOCK(dvp);
 	PNBUF_PUT(pnbuf);
