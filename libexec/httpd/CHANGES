@@ -1,6 +1,7 @@
 $eterna: CHANGES,v 1.78 2011/11/18 01:25:11 mrg Exp $
 
 changes in bozohttpd 20140201:
+	o  support .svg files
 	o  fix a core dump when requests timeout
 
 changes in bozohttpd 20140102:
