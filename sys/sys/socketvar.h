@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.132 2014/05/17 22:52:36 rmind Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.133 2014/05/17 23:27:59 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -295,7 +295,7 @@ int	soconnect(struct socket *, struct mbuf *, struct lwp *);
 int	soconnect2(struct socket *, struct socket *);
 int	socreate(int, struct socket **, int, int, struct lwp *,
 		 struct socket *);
-int	fsocreate(int, struct socket **, int, int, struct lwp *, int *);
+int	fsocreate(int, struct socket **, int, int, int *);
 int	sodisconnect(struct socket *);
 void	sofree(struct socket *);
 int	sogetopt(struct socket *, struct sockopt *);

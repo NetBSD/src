@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.168 2014/05/17 21:48:48 rmind Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.169 2014/05/17 23:27:59 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.168 2014/05/17 21:48:48 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.169 2014/05/17 23:27:59 rmind Exp $");
 
 #include "opt_pipe.h"
 
@@ -103,7 +103,7 @@ sys___socket30(struct lwp *l, const struct sys___socket30_args *uap,
 	int fd, error;
 
 	error = fsocreate(SCARG(uap, domain), NULL, SCARG(uap, type),
-	    SCARG(uap, protocol), l, &fd);
+	    SCARG(uap, protocol), &fd);
 	if (error == 0) {
 		*retval = fd;
 	}

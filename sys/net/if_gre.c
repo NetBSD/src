@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.153 2013/11/07 21:44:48 christos Exp $ */
+/*	$NetBSD: if_gre.c,v 1.154 2014/05/17 23:27:59 rmind Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.153 2013/11/07 21:44:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.154 2014/05/17 23:27:59 rmind Exp $");
 
 #include "opt_atalk.h"
 #include "opt_gre.h"
@@ -422,7 +422,7 @@ gre_socreate(struct gre_softc *sc, const struct gre_soparm *sp, int *fdout)
 	GRE_DPRINTF(sc, "enter\n");
 
 	af = sp->sp_src.ss_family;
-	rc = fsocreate(af, NULL, sp->sp_type, sp->sp_proto, curlwp, &fd);
+	rc = fsocreate(af, NULL, sp->sp_type, sp->sp_proto, &fd);
 	if (rc != 0) {
 		GRE_DPRINTF(sc, "fsocreate failed\n");
 		return rc;
