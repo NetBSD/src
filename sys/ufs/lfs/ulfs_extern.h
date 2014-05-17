@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_extern.h,v 1.10 2013/07/28 01:22:55 dholland Exp $	*/
+/*	$NetBSD: ulfs_extern.h,v 1.11 2014/05/17 07:09:36 dholland Exp $	*/
 /*  from NetBSD: ufs_extern.h,v 1.72 2012/05/09 00:21:18 riastradh Exp  */
 
 /*-
@@ -90,7 +90,6 @@ int	ulfs_rmdir(void *);
 #define	ulfs_poll	genfs_poll
 int	ulfs_setattr(void *);
 int	ulfs_strategy(void *);
-int	ulfs_symlink(void *);
 #define	ulfs_unlock	genfs_unlock
 int	ulfs_whiteout(void *);
 int	ulfsspec_close(void *);
