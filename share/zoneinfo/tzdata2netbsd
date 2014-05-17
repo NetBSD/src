@@ -1,0 +1,204 @@
+# $NetBSD: tzdata2netbsd,v 1.1 2014/05/17 19:53:22 apb Exp $
+#
+# For use by NetBSD developers when updating to new versions of tzdata.
+#
+
+OLDVER=2013i
+NEWVER=2014c
+
+# Uppercase variants of OLDVER and NEWVER
+OLDVER_UC="$( echo "${OLDVER}" | tr '[a-z]' '[A-Z]' )"
+NEWVER_UC="$( echo "${NEWVER}" | tr '[a-z]' '[A-Z]' )"
+
+# Tags for use with version control systems
+CVSOLDTAG="TZDATA${OLDVER_UC}"
+CVSNEWTAG="TZDATA${NEWVER_UC}"
+CVSBRANCHTAG="TZDATA"
+GITHUBTAG="${NEWVER}"
+
+# URLs for fetching distribution files, etc.
+DISTURL="ftp://ftp.iana.org/tz/releases/tzdata${NEWVER}.tar.gz"
+SIGURL="${DISTURL}.asc"
+NEWSURL="https://github.com/eggert/tz/raw/${GITHUBTAG}/NEWS"
+
+# Directories
+REPODIR="src/share/zoneinfo"	# relative to the NetSBD CVS repository
+WORKDIR="$(pwd)/update-work"
+EXTRACTDIR="${WORKDIR}/extract/${NEWVER}"
+
+# Files in the work directory
+DISTFILE="${WORKDIR}/${DISTURL##*/}"
+SIGFILE="${DISTFILE}.sig"
+NEWSFILE="${WORKDIR}/NEWS"
+NEWSTRIMFILE="${WORKDIR}/NEWS.trimmed"
+IMPORTMSGFILE="${WORKDIR}/import.msg"
+MERGSMSGFILE="${WORKDIR}/merge.msg"
+
+DOIT()
+{
+	really_do_it=false
+
+	if $really_do_it; then
+		"$@"
+	else
+		echo "NOT REALLY DOING:" "$@"
+	fi
+}
+
+mkworkdir()
+{
+	mkdir -p "${WORKDIR}"
+}
+
+fetch()
+{
+	[ -f "${DISTFILE}" ] || ftp -o "${DISTFILE}" "${DISTURL}"
+	[ -f "${SIGFILE}" ] || ftp -o "${SIGFILE}" "${SIGURL}"
+	[ -f "${NEWSFILE}" ] || ftp -o "${NEWSFILE}" "${NEWSURL}"
+}
+
+checksig()
+{
+	gpg --verify "${SIGFILE}" "${DISTFILE}"
+}
+
+extract()
+{
+	mkdir -p "${EXTRACTDIR}"
+	tar -z -xf "${DISTFILE}" -C "${EXTRACTDIR}"
+}
+
+# Each release has a heading in the NEWS file, like
+# "Release <version> - <date>".
+# Find the relevant part of the NEWS file for all release between
+# OLDVAR and NEWVER, and save them to NEWSTRIMFILE.
+#
+trimnews()
+{
+	awk -v oldver="${OLDVER}" -v newver="${NEWVER}" \
+	    '
+		BEGIN {inrange = 0}
+		/^Release [0-9]+[a-z]+ - .*/ {
+			inrange = ($2 > oldver && $2 <= newver)
+		}
+		// { if (inrange) print; }
+		' \
+		<"${NEWSFILE}" >"${NEWSTRIMFILE}"
+}
+
+# Create IMPORTMSGFILE from NEWSTRIMFILE, by ignoring some sections,
+# keeping only the first sentence from paragraphs in other sections,
+# and changing the format.  The result should be edited by hand before
+# performing a cvs commit.
+#
+mkimportmsg()
+{
+	[ -s "${IMPORTMSGFILE}" ] && return
+	awk -v oldver="${OLDVER}" -v newver="${NEWVER}" \
+	    -v disturl="${DISTURL}" \
+	    '
+		BEGIN {
+			bullet = "  * ";
+			indent = "    ";
+			blankline = 0;
+			goodsection = 0;
+			havesentence = 0;
+			print "Import tzdata"newver" from "disturl;
+		}
+		/^Release/ {
+			ver = $2;
+			date = gensub(".* - ", "", 1, $0);
+			print "";
+			print "Summary of changes in tzdata"ver \
+				" ("date"):";
+		}
+		/^$/ { blankline = 1; havesentence = 0; }
+		/^  Changes affecting/ { goodsection = 0; }
+		/^  Changes affecting.*time/ { goodsection = 1; }
+		/^  Changes affecting.*documentation/ || \
+		/^  Changes affecting.*commentary/ {
+			t = gensub("^ *", "", 1, $0);
+			t = gensub("\\.*$", ".", 1, t);
+			print bullet t;
+			goodsection = 0;
+		}
+		/^    .*/ && goodsection {
+			# In a paragraph in a "good" section.
+			# Ignore leading spaces, and ignore anything
+			# after the first sentence.
+			# First line of paragraph gets a bullet.
+			t = gensub("^ *", "", 1, $0);
+			t = gensub("\\. .*", ".", 1, t);
+			if (blankline) print bullet t;
+			else if (! havesentence) print indent t;
+			havesentence = (havesentence || (t ~ "\\.$"));
+		}
+		/./ { blankline = 0; }
+		' \
+		<"${NEWSTRIMFILE}" >"${IMPORTMSGFILE}"
+}
+
+editimportmsg()
+{
+	cat <<EOF
+Edit ${IMPORTMSGFILE##%/}, which will be used as a log message
+for "cvs import".  A template has been prepared from the NEWS file.
+EOF
+	vi "${IMPORTMSGFILE}" "${NEWSFILE}"
+}
+
+cvsimport()
+{
+	DOIT cvs import -F "${IMPORTMSGFILE}" \
+		"${REPODIR}" "${CVSBRANCHTAG}" "${CVSNEWTAG}"
+}
+
+cvsmerge()
+{
+	DOIT cvs update -j"${CVSOLDTAG}" -j"${CVSNEWTAG}"
+}
+
+resolveconflicts()
+{
+	cat <<EOF
+Resolve conflicts resulting from the cvs merge.
+exit 0 when done.  exit 1 to abort.
+EOF
+	nl='
+'
+	PS1="[inside ${0##*/}]${nl}${PS1}" sh -i
+}
+
+cvscommitmerge()
+{
+	DOIT cvs commit -m "Merge tzdata${NEWVER}"
+}
+
+extra()
+{
+	cat <<EOF
+Also do the following:
+ * Edit src/doc/3RDPARTY
+ * Edit src/doc/CHANGES
+ * Submit pullup requests for all active release branches.
+ * rm -rf ${WORKDIR}
+EOF
+}
+
+main()
+{
+	mkworkdir || exit $?
+	fetch || exit $?
+	checksig || exit $?
+	extract || exit $?
+	trimnews || exit $?
+	mkimportmsg || exit $?
+	editimportmsg || exit $?
+	cvsimport || exit $?
+	cvsmerge || exit $?
+	resolveconflicts || exit $?
+	cvscommitmerge || exit $?
+	extra || exit $?
+}
+
+main "$@"
