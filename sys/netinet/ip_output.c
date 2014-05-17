@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.224 2013/06/29 21:06:58 rmind Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.225 2014/05/17 21:26:20 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.224 2013/06/29 21:06:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.225 2014/05/17 21:26:20 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1315,9 +1315,7 @@ ip_multicast_if(struct in_addr *a, int *ifindexp)
 		*ifindexp = 0;
 	if (ntohl(a->s_addr) >> 24 == 0) {
 		ifindex = ntohl(a->s_addr) & 0xffffff;
-		if (ifindex < 0 || if_indexlim <= ifindex)
-			return NULL;
-		ifp = ifindex2ifnet[ifindex];
+		ifp = if_byindex(ifindex);
 		if (!ifp)
 			return NULL;
 		if (ifindexp)

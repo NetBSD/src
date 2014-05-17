@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.117 2014/01/27 19:19:15 njoly Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.118 2014/05/17 21:26:20 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.117 2014/01/27 19:19:15 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.118 2014/05/17 21:26:20 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1105,10 +1105,7 @@ linux_getifname(struct lwp *l, register_t *retval, void *data)
 	if (error)
 		return error;
 
-	if (ifr.ifr_ifru.ifru_ifindex >= if_indexlim)
-		return ENODEV;
-	
-	ifp = ifindex2ifnet[ifr.ifr_ifru.ifru_ifindex];
+	ifp = if_byindex(ifr.ifr_ifru.ifru_ifindex);
 	if (ifp == NULL)
 		return ENODEV;
 
