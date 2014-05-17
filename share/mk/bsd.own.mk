@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.805 2014/05/17 23:31:57 joerg Exp $
+#	$NetBSD: bsd.own.mk,v 1.806 2014/05/17 23:32:32 joerg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -88,6 +88,7 @@ EXTERNAL_GCC_SUBDIR=	/does/not/exist
 .endif
 
 .if !empty(MACHINE_ARCH:Mearm*)
+_LIBC_COMPILER_RT.${MACHINE_ARCH}=	yes
 _LIBC_UNWIND_SUPPORT.${MACHINE_ARCH}=	yes
 .endif
 
