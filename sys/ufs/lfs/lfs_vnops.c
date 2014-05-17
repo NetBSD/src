@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.263 2014/05/16 09:34:03 dholland Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.264 2014/05/17 07:08:35 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.263 2014/05/16 09:34:03 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.264 2014/05/17 07:08:35 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -473,38 +473,27 @@ lfs_set_dirop(struct vnode *dvp, struct vnode *vp)
 }
 
 /*
- * Get a new vnode *before* adjusting the dirop count, to avoid a deadlock
- * in getnewvnode(), if we have a stacked filesystem mounted on top
- * of us.
- *
- * NB: this means we have to clear the new vnodes on error.  Fortunately
- * SET_ENDOP is there to do that for us.
+ * Opposite of lfs_set_dirop... mostly. For now at least must call
+ * UNMARK_VNODE(dvp) explicitly first. (XXX: clean that up)
  */
-int
-lfs_set_dirop_create(struct vnode *dvp, struct vnode **vpp)
+void
+lfs_unset_dirop(struct lfs *fs, struct vnode *dvp, const char *str)
 {
-	int error;
-	struct lfs *fs;
-
-	fs = VFSTOULFS(dvp->v_mount)->um_lfs;
-	ASSERT_NO_SEGLOCK(fs);
-	if (fs->lfs_ronly)
-		return EROFS;
-	if (vpp == NULL) {
-		return lfs_set_dirop(dvp, NULL);
+	mutex_enter(&lfs_lock);
+	--fs->lfs_dirops;
+	if (!fs->lfs_dirops) {
+		if (fs->lfs_nadirop) {
+			panic("lfs_unset_dirop: %s: no dirops but "
+			      " nadirop=%d", str,
+			      fs->lfs_nadirop);
+		}
+		wakeup(&fs->lfs_writer);
+		mutex_exit(&lfs_lock);
+		lfs_check(dvp, LFS_UNUSED_LBN, 0);
+	} else {
+		mutex_exit(&lfs_lock);
 	}
-	error = getnewvnode(VT_LFS, dvp->v_mount, lfs_vnodeop_p, NULL, vpp);
-	if (error) {
-		DLOG((DLOG_ALLOC, "lfs_set_dirop_create: dvp %p error %d\n",
-		      dvp, error));
-		return error;
-	}
-	if ((error = lfs_set_dirop(dvp, NULL)) != 0) {
-		ungetnewvnode(*vpp);
-		*vpp = NULL;
-		return error;
-	}
-	return 0;
+	lfs_reserve(fs, dvp, NULL, -LFS_NRESERVE(fs));
 }
 
 void
@@ -558,13 +547,60 @@ lfs_symlink(void *v)
 		struct vattr *a_vap;
 		char *a_target;
 	} */ *ap = v;
+	struct lfs *fs;
+	struct vnode *dvp, **vpp;
 	int error;
 
-	if ((error = SET_DIROP_CREATE(ap->a_dvp, ap->a_vpp)) != 0) {
+	dvp = ap->a_dvp;
+	vpp = ap->a_vpp;
+
+	KASSERT(vpp != NULL);
+	KASSERT(*vpp == NULL);
+
+	fs = VFSTOULFS(dvp->v_mount)->um_lfs;
+	ASSERT_NO_SEGLOCK(fs);
+	if (fs->lfs_ronly) {
+		return EROFS;
+	}
+
+	/*
+	 * Get a new vnode *before* adjusting the dirop count, to
+	 * avoid a deadlock in getnewvnode(), if we have a stacked
+	 * filesystem mounted on top of us.
+	 *
+	 * NB: this means we have to destroy the new vnode on error.
+	 */
+
+	error = getnewvnode(VT_LFS, dvp->v_mount, lfs_vnodeop_p, NULL, vpp);
+	if (error) {
+		DLOG((DLOG_ALLOC, "lfs_mkdir: dvp %p error %d\n", dvp, error));
 		return error;
 	}
+	KASSERT(*vpp != NULL);
+
+	error = lfs_set_dirop(dvp, NULL);
+	if (error) {
+		ungetnewvnode(*vpp);
+		*vpp = NULL;
+		return error;
+	}
+
 	error = ulfs_symlink(ap);
-	SET_ENDOP_CREATE_AP(ap, "symlink");
+
+	UNMARK_VNODE(dvp);
+	/* XXX: is it even possible for the symlink to get MARK'd? */
+	UNMARK_VNODE(*vpp);
+	if (!((*vpp)->v_uflag & VU_DIROP)) {
+		KASSERT(error != 0);
+		ungetnewvnode(*vpp);
+		*vpp = NULL;
+	}
+	else {
+		KASSERT(error == 0);
+	}
+	lfs_unset_dirop(fs, dvp, "symlink");
+
+	vrele(dvp);
 	return (error);
 }
 
@@ -577,31 +613,76 @@ lfs_mknod(void *v)
 		struct componentname *a_cnp;
 		struct vattr *a_vap;
 	} */ *ap = v;
+	struct lfs *fs;
+	struct vnode *dvp, **vpp;
 	struct vattr *vap;
-	struct vnode **vpp;
 	struct inode *ip;
 	int error;
 	struct mount	*mp;
 	ino_t		ino;
 	struct ulfs_lookup_results *ulr;
 
-	vap = ap->a_vap;
+	dvp = ap->a_dvp;
 	vpp = ap->a_vpp;
+	vap = ap->a_vap;
 
+	KASSERT(vpp != NULL);
+	KASSERT(*vpp == NULL);
+	
 	/* XXX should handle this material another way */
-	ulr = &VTOI(ap->a_dvp)->i_crap;
-	ULFS_CHECK_CRAPCOUNTER(VTOI(ap->a_dvp));
+	ulr = &VTOI(dvp)->i_crap;
+	ULFS_CHECK_CRAPCOUNTER(VTOI(dvp));
 
-	if ((error = SET_DIROP_CREATE(ap->a_dvp, ap->a_vpp)) != 0) {
+	fs = VFSTOULFS(dvp->v_mount)->um_lfs;
+	ASSERT_NO_SEGLOCK(fs);
+	if (fs->lfs_ronly) {
+		return EROFS;
+	}
+
+	/*
+	 * Get a new vnode *before* adjusting the dirop count, to
+	 * avoid a deadlock in getnewvnode(), if we have a stacked
+	 * filesystem mounted on top of us.
+	 *
+	 * NB: this means we have to destroy the new vnode on error.
+	 */
+
+	error = getnewvnode(VT_LFS, dvp->v_mount, lfs_vnodeop_p, NULL, vpp);
+	if (error) {
+		DLOG((DLOG_ALLOC, "lfs_mknod: dvp %p error %d\n", dvp, error));
+		return error;
+	}
+	KASSERT(*vpp != NULL);
+
+	error = lfs_set_dirop(dvp, NULL);
+	if (error) {
+		ungetnewvnode(*vpp);
+		*vpp = NULL;
 		return error;
 	}
 
 	fstrans_start(ap->a_dvp->v_mount, FSTRANS_SHARED);
 	error = ulfs_makeinode(MAKEIMODE(vap->va_type, vap->va_mode),
-			      ap->a_dvp, ulr, vpp, ap->a_cnp);
+			      dvp, ulr, vpp, ap->a_cnp);
 
 	/* Either way we're done with the dirop at this point */
-	SET_ENDOP_CREATE_AP(ap, "mknod");
+	UNMARK_VNODE(dvp);
+	UNMARK_VNODE(*vpp);
+	if (!((*vpp)->v_uflag & VU_DIROP)) {
+		KASSERT(error != 0);
+		ungetnewvnode(*vpp);
+		*vpp = NULL;
+	}
+	else {
+		KASSERT(error == 0);
+	}
+	lfs_unset_dirop(fs, dvp, "mknod");
+	/*
+	 * XXX this is where this used to be (though inside some evil
+	 * macros) but it clearly should be moved further down.
+	 * - dholland 20140515
+	 */
+	vrele(dvp);
 
 	if (error) {
 		fstrans_done(ap->a_dvp->v_mount);
@@ -609,14 +690,14 @@ lfs_mknod(void *v)
 		return (error);
 	}
 
-	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
+	VN_KNOTE(dvp, NOTE_WRITE);
 	ip = VTOI(*vpp);
 	mp  = (*vpp)->v_mount;
 	ino = ip->i_number;
 	ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
 	if (vap->va_rdev != VNOVAL) {
 		struct ulfsmount *ump = ip->i_ump;
-		struct lfs *fs = ip->i_lfs;
+		KASSERT(fs == ip->i_lfs);
 		/*
 		 * Want to be able to use this to make badblock
 		 * inodes, so don't truncate the dev number.
@@ -672,13 +753,57 @@ lfs_create(void *v)
 		struct componentname *a_cnp;
 		struct vattr *a_vap;
 	} */ *ap = v;
+	struct lfs *fs;
+	struct vnode *dvp, **vpp;
 	int error;
 
-	if ((error = SET_DIROP_CREATE(ap->a_dvp, ap->a_vpp)) != 0) {
+	dvp = ap->a_dvp;
+	vpp = ap->a_vpp;
+
+	KASSERT(vpp != NULL);
+	KASSERT(*vpp == NULL);
+
+	fs = VFSTOULFS(dvp->v_mount)->um_lfs;
+	ASSERT_NO_SEGLOCK(fs);
+	if (fs->lfs_ronly) {
+		return EROFS;
+	}
+
+	/*
+	 * Get a new vnode *before* adjusting the dirop count, to
+	 * avoid a deadlock in getnewvnode(), if we have a stacked
+	 * filesystem mounted on top of us.
+	 *
+	 * NB: this means we have to destroy the new vnode on error.
+	 */
+
+	error = getnewvnode(VT_LFS, dvp->v_mount, lfs_vnodeop_p, NULL, vpp);
+	if (error) {
+		DLOG((DLOG_ALLOC, "lfs_create: dvp %p error %d\n", dvp,error));
 		return error;
 	}
+	error = lfs_set_dirop(dvp, NULL);
+	if (error) {
+		ungetnewvnode(*vpp);
+		*vpp = NULL;
+		return error;
+	}
+
 	error = ulfs_create(ap);
-	SET_ENDOP_CREATE_AP(ap, "create");
+
+	UNMARK_VNODE(dvp);
+	UNMARK_VNODE(*vpp);
+	if (!((*vpp)->v_uflag & VU_DIROP)) {
+		KASSERT(error != 0);
+		ungetnewvnode(*vpp);
+		*vpp = NULL;
+	}
+	else {
+		KASSERT(error == 0);
+	}
+	lfs_unset_dirop(fs, dvp, "create");
+
+	vrele(dvp);
 	return (error);
 }
 
@@ -691,13 +816,57 @@ lfs_mkdir(void *v)
 		struct componentname *a_cnp;
 		struct vattr *a_vap;
 	} */ *ap = v;
+	struct lfs *fs;
+	struct vnode *dvp, **vpp;
 	int error;
 
-	if ((error = SET_DIROP_CREATE(ap->a_dvp, ap->a_vpp)) != 0) {
+	dvp = ap->a_dvp;
+	vpp = ap->a_vpp;
+
+	KASSERT(vpp != NULL);
+	KASSERT(*vpp == NULL);
+
+	fs = VFSTOULFS(dvp->v_mount)->um_lfs;
+	ASSERT_NO_SEGLOCK(fs);
+	if (fs->lfs_ronly) {
+		return EROFS;
+	}
+
+	/*
+	 * Get a new vnode *before* adjusting the dirop count, to
+	 * avoid a deadlock in getnewvnode(), if we have a stacked
+	 * filesystem mounted on top of us.
+	 *
+	 * NB: this means we have to destroy the new vnode on error.
+	 */
+
+	error = getnewvnode(VT_LFS, dvp->v_mount, lfs_vnodeop_p, NULL, vpp);
+	if (error) {
+		DLOG((DLOG_ALLOC, "lfs_mkdir: dvp %p error %d\n", dvp, error));
 		return error;
 	}
+	error = lfs_set_dirop(dvp, NULL);
+	if (error) {
+		ungetnewvnode(*vpp);
+		*vpp = NULL;
+		return error;
+	}
+
 	error = ulfs_mkdir(ap);
-	SET_ENDOP_CREATE_AP(ap, "mkdir");
+
+	UNMARK_VNODE(dvp);
+	UNMARK_VNODE(*vpp);
+	if (!((*vpp)->v_uflag & VU_DIROP)) {
+		KASSERT(error != 0);
+		ungetnewvnode(*vpp);
+		*vpp = NULL;
+	}
+	else {
+		KASSERT(error == 0);
+	}
+	lfs_unset_dirop(fs, dvp, "mkdir");
+
+	vrele(dvp);
 	return (error);
 }
 
@@ -716,7 +885,7 @@ lfs_remove(void *v)
 	dvp = ap->a_dvp;
 	vp = ap->a_vp;
 	ip = VTOI(vp);
-	if ((error = SET_DIROP_REMOVE(dvp, vp)) != 0) {
+	if ((error = lfs_set_dirop(dvp, vp)) != 0) {
 		if (dvp == vp)
 			vrele(vp);
 		else
@@ -727,7 +896,17 @@ lfs_remove(void *v)
 	error = ulfs_remove(ap);
 	if (ip->i_nlink == 0)
 		lfs_orphan(ip->i_lfs, ip->i_number);
-	SET_ENDOP_REMOVE(ip->i_lfs, dvp, ap->a_vp, "remove");
+
+	UNMARK_VNODE(dvp);
+	if (ap->a_vp) {
+		UNMARK_VNODE(ap->a_vp);
+	}
+	lfs_unset_dirop(ip->i_lfs, dvp, "remove");
+	vrele(dvp);
+	if (ap->a_vp) {
+		vrele(ap->a_vp);
+	}
+
 	return (error);
 }
 
@@ -746,7 +925,7 @@ lfs_rmdir(void *v)
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);
-	if ((error = SET_DIROP_REMOVE(ap->a_dvp, ap->a_vp)) != 0) {
+	if ((error = lfs_set_dirop(ap->a_dvp, ap->a_vp)) != 0) {
 		if (ap->a_dvp == vp)
 			vrele(ap->a_dvp);
 		else
@@ -757,7 +936,17 @@ lfs_rmdir(void *v)
 	error = ulfs_rmdir(ap);
 	if (ip->i_nlink == 0)
 		lfs_orphan(ip->i_lfs, ip->i_number);
-	SET_ENDOP_REMOVE(ip->i_lfs, ap->a_dvp, ap->a_vp, "rmdir");
+
+	UNMARK_VNODE(ap->a_dvp);
+	if (ap->a_vp) {
+		UNMARK_VNODE(ap->a_vp);
+	}
+	lfs_unset_dirop(ip->i_lfs, ap->a_dvp, "rmdir");
+	vrele(ap->a_dvp);
+	if (ap->a_vp) {
+		vrele(ap->a_vp);
+	}
+
 	return (error);
 }
 
@@ -769,15 +958,36 @@ lfs_link(void *v)
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
+	struct lfs *fs;
+	struct vnode *dvp, **vpp;
 	int error;
-	struct vnode **vpp = NULL;
 
-	if ((error = SET_DIROP_CREATE(ap->a_dvp, vpp)) != 0) {
-		vput(ap->a_dvp);
+	dvp = ap->a_dvp;
+	vpp = NULL;
+
+	fs = VFSTOULFS(dvp->v_mount)->um_lfs;
+	ASSERT_NO_SEGLOCK(fs);
+	if (fs->lfs_ronly) {
+		return EROFS;
+	}
+
+	error = lfs_set_dirop(dvp, NULL);
+	if (error) {
+		/*
+		 * XXX dholland 20140515 this was here before but must
+		 * be wrong.
+		 */
+		vput(dvp);
+
 		return error;
 	}
+
 	error = ulfs_link(ap);
-	SET_ENDOP_CREATE(VTOI(ap->a_dvp)->i_lfs, ap->a_dvp, vpp, "link");
+
+	UNMARK_VNODE(dvp);
+	lfs_unset_dirop(fs, dvp, "link");
+	vrele(dvp);
+
 	return (error);
 }
 
