@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.116 2014/05/17 22:52:36 rmind Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.117 2014/05/17 23:55:24 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.116 2014/05/17 22:52:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.117 2014/05/17 23:55:24 rmind Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -302,13 +302,11 @@ sonewconn(struct socket *head, bool soready)
 	 */
 	mutex_obj_hold(head->so_lock);
 	so->so_lock = head->so_lock;
-	soqinsque(head, so, soqueue);
 
 	error = (*so->so_proto->pr_usrreq)(so, PRU_ATTACH, NULL, NULL,
 	    NULL, NULL);
 	KASSERT(solocked(so));
 	if (error) {
-		(void) soqremque(so, soqueue);
 out:
 		KASSERT(so->so_accf == NULL);
 		soput(so);
@@ -319,9 +317,10 @@ out:
 	}
 
 	/*
-	 * Update the connection status and wake up any waiters,
-	 * e.g. processes blocking on accept().
+	 * Insert into the queue.  If ready, update the connection status
+	 * and wake up any waiters, e.g. processes blocking on accept().
 	 */
+	soqinsque(head, so, soqueue);
 	if (soready) {
 		so->so_state |= SS_ISCONNECTED;
 		sorwakeup(head);
