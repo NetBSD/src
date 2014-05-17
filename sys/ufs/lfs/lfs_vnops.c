@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.267 2014/05/17 07:09:59 dholland Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.268 2014/05/17 07:10:27 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.267 2014/05/17 07:09:59 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.268 2014/05/17 07:10:27 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -858,37 +858,6 @@ lfs_mknod(void *v)
  * Create a regular file
  */
 int
-ulfs_create(void *v)
-{
-	struct vop_create_v3_args /* {
-		struct vnode		*a_dvp;
-		struct vnode		**a_vpp;
-		struct componentname	*a_cnp;
-		struct vattr		*a_vap;
-	} */ *ap = v;
-	int	error;
-	struct vnode *dvp = ap->a_dvp;
-	struct ulfs_lookup_results *ulr;
-
-	/* XXX should handle this material another way */
-	ulr = &VTOI(dvp)->i_crap;
-	ULFS_CHECK_CRAPCOUNTER(VTOI(dvp));
-
-	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
-	error =
-	    ulfs_makeinode(MAKEIMODE(ap->a_vap->va_type, ap->a_vap->va_mode),
-			  dvp, ulr, ap->a_vpp, ap->a_cnp);
-	if (error) {
-		fstrans_done(dvp->v_mount);
-		return (error);
-	}
-	fstrans_done(dvp->v_mount);
-	VN_KNOTE(dvp, NOTE_WRITE);
-	VOP_UNLOCK(*ap->a_vpp);
-	return (0);
-}
-
-int
 lfs_create(void *v)
 {
 	struct vop_create_v3_args	/* {
@@ -899,13 +868,20 @@ lfs_create(void *v)
 	} */ *ap = v;
 	struct lfs *fs;
 	struct vnode *dvp, **vpp;
+	struct vattr *vap;
+	struct ulfs_lookup_results *ulr;
 	int error;
 
 	dvp = ap->a_dvp;
 	vpp = ap->a_vpp;
+	vap = ap->a_vap;
 
 	KASSERT(vpp != NULL);
 	KASSERT(*vpp == NULL);
+
+	/* XXX should handle this material another way */
+	ulr = &VTOI(dvp)->i_crap;
+	ULFS_CHECK_CRAPCOUNTER(VTOI(dvp));
 
 	fs = VFSTOULFS(dvp->v_mount)->um_lfs;
 	ASSERT_NO_SEGLOCK(fs);
@@ -933,7 +909,18 @@ lfs_create(void *v)
 		return error;
 	}
 
-	error = ulfs_create(ap);
+	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
+	error = ulfs_makeinode(MAKEIMODE(vap->va_type, vap->va_mode),
+			  dvp, ulr, vpp, ap->a_cnp);
+	if (error) {
+		fstrans_done(dvp->v_mount);
+		goto out;
+	}
+	fstrans_done(dvp->v_mount);
+	VN_KNOTE(dvp, NOTE_WRITE);
+	VOP_UNLOCK(*vpp);
+
+out:
 
 	UNMARK_VNODE(dvp);
 	UNMARK_VNODE(*vpp);
