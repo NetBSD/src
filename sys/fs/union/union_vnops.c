@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.60 2014/05/17 04:03:49 dholland Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.61 2014/05/17 04:07:15 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.60 2014/05/17 04:03:49 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.61 2014/05/17 04:07:15 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1385,6 +1385,7 @@ union_mkdir(void *v)
 		int error;
 		struct vnode *vp;
 
+		vp = NULL;
 		error = VOP_MKDIR(dvp, &vp, cnp, ap->a_vap);
 		if (error) {
 			vrele(ap->a_dvp);
