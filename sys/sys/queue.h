@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.66 2014/05/17 20:34:49 rmind Exp $	*/
+/*	$NetBSD: queue.h,v 1.67 2014/05/17 21:22:56 rmind Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -211,10 +211,11 @@ struct {								\
 	    ((tvar) = LIST_NEXT((var), field), 1);			\
 	    (var) = (tvar))
 
-#define	LIST_CONCAT(head1, head2) do {					\
-	if (!LIST_EMPTY((head2))) {					\
-		(head1)->lh_first = (head2)->lh_first;			\
-		LIST_INIT((head2));					\
+#define	LIST_MOVE(head1, head2) do {					\
+	LIST_INIT((head2));						\
+	if (!LIST_EMPTY((head1))) {					\
+		(head2)->lh_first = (head1)->lh_first;			\
+		LIST_INIT((head1));					\
 	}								\
 } while (/*CONSTCOND*/0)
 
