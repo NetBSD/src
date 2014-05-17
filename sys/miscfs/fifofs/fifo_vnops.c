@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.74 2014/02/07 15:29:22 hannken Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.75 2014/05/17 23:30:24 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.74 2014/02/07 15:29:22 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.75 2014/05/17 23:30:24 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,6 @@ fifo_lookup(void *v)
  * Open called to set up a new instance of a fifo or
  * to find an active instance of a fifo.
  */
-/* ARGSUSED */
 static int
 fifo_open(void *v)
 {
@@ -132,14 +131,13 @@ fifo_open(void *v)
 	int		error;
 
 	vp = ap->a_vp;
+	KASSERT(VOP_ISLOCKED(vp));
 
 	if ((fip = vp->v_fifoinfo) == NULL) {
 		fip = kmem_alloc(sizeof(*fip), KM_SLEEP);
-		vp->v_fifoinfo = fip;
 		error = socreate(AF_LOCAL, &rso, SOCK_STREAM, 0, l, NULL);
 		if (error != 0) {
 			kmem_free(fip, sizeof(*fip));
-			vp->v_fifoinfo = NULL;
 			return (error);
 		}
 		fip->fi_readsock = rso;
@@ -147,7 +145,6 @@ fifo_open(void *v)
 		if (error != 0) {
 			(void)soclose(rso);
 			kmem_free(fip, sizeof(*fip));
-			vp->v_fifoinfo = NULL;
 			return (error);
 		}
 		fip->fi_writesock = wso;
@@ -157,7 +154,6 @@ fifo_open(void *v)
 			(void)soclose(wso);
 			(void)soclose(rso);
 			kmem_free(fip, sizeof(*fip));
-			vp->v_fifoinfo = NULL;
 			return (error);
 		}
 		fip->fi_readers = 0;
@@ -166,6 +162,7 @@ fifo_open(void *v)
 		rso->so_state |= SS_CANTSENDMORE;
 		cv_init(&fip->fi_rcv, "fiford");
 		cv_init(&fip->fi_wcv, "fifowr");
+		vp->v_fifoinfo = fip;
 	} else {
 		wso = fip->fi_writesock;
 		rso = fip->fi_readsock;
