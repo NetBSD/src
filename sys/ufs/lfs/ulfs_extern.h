@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_extern.h,v 1.11 2014/05/17 07:09:36 dholland Exp $	*/
+/*	$NetBSD: ulfs_extern.h,v 1.12 2014/05/17 07:09:59 dholland Exp $	*/
 /*  from NetBSD: ufs_extern.h,v 1.72 2012/05/09 00:21:18 riastradh Exp  */
 
 /*-
@@ -75,8 +75,6 @@ int	ulfs_inactive(void *);
 int	ulfs_link(void *);
 #define	ulfs_lock	genfs_lock
 int	ulfs_lookup(void *);
-int	ulfs_mkdir(void *);
-int	ulfs_mknod(void *);
 #define	ulfs_mmap	genfs_mmap
 #define	ulfs_revoke	genfs_revoke
 int	ulfs_open(void *);

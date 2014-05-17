@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.266 2014/05/17 07:09:36 dholland Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.267 2014/05/17 07:09:59 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.266 2014/05/17 07:09:36 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.267 2014/05/17 07:09:59 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -952,37 +952,77 @@ lfs_create(void *v)
 }
 
 int
-ulfs_mkdir(void *v)
+lfs_mkdir(void *v)
 {
-	struct vop_mkdir_v3_args /* {
-		struct vnode		*a_dvp;
-		struct vnode		**a_vpp;
-		struct componentname	*a_cnp;
-		struct vattr		*a_vap;
+	struct vop_mkdir_v3_args	/* {
+		struct vnode *a_dvp;
+		struct vnode **a_vpp;
+		struct componentname *a_cnp;
+		struct vattr *a_vap;
 	} */ *ap = v;
-	struct vnode		*dvp = ap->a_dvp, *tvp;
-	struct vattr		*vap = ap->a_vap;
-	struct componentname	*cnp = ap->a_cnp;
-	struct inode		*ip, *dp = VTOI(dvp);
-	struct buf		*bp;
-	struct lfs_dirtemplate	dirtemplate;
-	struct lfs_direct		*newdir;
-	int			error, dmode;
-	struct ulfsmount	*ump = dp->i_ump;
-	struct lfs *fs = ump->um_lfs;
-	int dirblksiz = fs->um_dirblksiz;
+	struct lfs *fs;
+	struct vnode *dvp, *tvp, **vpp;
+	struct inode *dp, *ip;
+	struct componentname *cnp;
+	struct vattr *vap;
 	struct ulfs_lookup_results *ulr;
+	struct buf *bp;
+	struct lfs_dirtemplate dirtemplate;
+	struct lfs_direct *newdir;
+	int dirblksiz;
+	int dmode;
+	int error;
 
-	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
+	dvp = ap->a_dvp;
+	tvp = NULL;
+	vpp = ap->a_vpp;
+	cnp = ap->a_cnp;
+	vap = ap->a_vap;
+
+	dp = VTOI(dvp);
+	ip = NULL;
+
+	KASSERT(vpp != NULL);
+	KASSERT(*vpp == NULL);
 
 	/* XXX should handle this material another way */
 	ulr = &dp->i_crap;
 	ULFS_CHECK_CRAPCOUNTER(dp);
 
+	fs = VFSTOULFS(dvp->v_mount)->um_lfs;
+	ASSERT_NO_SEGLOCK(fs);
+	if (fs->lfs_ronly) {
+		return EROFS;
+	}
+	dirblksiz = fs->um_dirblksiz;
+
+	/*
+	 * Get a new vnode *before* adjusting the dirop count, to
+	 * avoid a deadlock in getnewvnode(), if we have a stacked
+	 * filesystem mounted on top of us.
+	 *
+	 * NB: this means we have to destroy the new vnode on error.
+	 */
+
+	error = getnewvnode(VT_LFS, dvp->v_mount, lfs_vnodeop_p, NULL, vpp);
+	if (error) {
+		DLOG((DLOG_ALLOC, "lfs_mkdir: dvp %p error %d\n", dvp, error));
+		return error;
+	}
+	error = lfs_set_dirop(dvp, NULL);
+	if (error) {
+		ungetnewvnode(*vpp);
+		*vpp = NULL;
+		return error;
+	}
+
+	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
+
 	if ((nlink_t)dp->i_nlink >= LINK_MAX) {
 		error = EMLINK;
 		goto out;
 	}
+
 	dmode = vap->va_mode & ACCESSPERMS;
 	dmode |= LFS_IFDIR;
 	/*
@@ -990,10 +1030,10 @@ ulfs_mkdir(void *v)
 	 * but not have it entered in the parent directory. The entry is
 	 * made later after writing "." and ".." entries.
 	 */
-	if ((error = lfs_valloc(dvp, dmode, cnp->cn_cred, ap->a_vpp)) != 0)
+	if ((error = lfs_valloc(dvp, dmode, cnp->cn_cred, vpp)) != 0)
 		goto out;
 
-	tvp = *ap->a_vpp;
+	tvp = *vpp;
 	ip = VTOI(tvp);
 
 	ip->i_uid = kauth_cred_geteuid(cnp->cn_cred);
@@ -1005,7 +1045,7 @@ ulfs_mkdir(void *v)
 		lfs_vfree(tvp, ip->i_number, dmode);
 		fstrans_done(dvp->v_mount);
 		vput(tvp);
-		return (error);
+		goto out2;
 	}
 #endif
 	ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
@@ -1021,8 +1061,6 @@ ulfs_mkdir(void *v)
 
 	/*
 	 * Bump link count in parent directory to reflect work done below.
-	 * Should be done before reference is created so cleanup is
-	 * possible if we crash.
 	 */
 	dp->i_nlink++;
 	DIP_ASSIGN(dp, nlink, dp->i_nlink);
@@ -1064,9 +1102,7 @@ ulfs_mkdir(void *v)
 	memcpy((void *)bp->b_data, (void *)&dirtemplate, sizeof dirtemplate);
 
 	/*
-	 * Directory set up, now install it's entry in the parent directory.
-	 * We must write out the buffer containing the new directory body
-	 * before entering the new name in the parent.
+	 * Directory set up; now install its entry in the parent directory.
 	 */
 	if ((error = VOP_BWRITE(bp->b_vp, bp)) != 0)
 		goto bad;
@@ -1096,57 +1132,12 @@ ulfs_mkdir(void *v)
 		lfs_unmark_vnode(tvp);
 		vput(tvp);
 	}
- out:
+
+out:
 	fstrans_done(dvp->v_mount);
-	return (error);
-}
-
-int
-lfs_mkdir(void *v)
-{
-	struct vop_mkdir_v3_args	/* {
-		struct vnode *a_dvp;
-		struct vnode **a_vpp;
-		struct componentname *a_cnp;
-		struct vattr *a_vap;
-	} */ *ap = v;
-	struct lfs *fs;
-	struct vnode *dvp, **vpp;
-	int error;
-
-	dvp = ap->a_dvp;
-	vpp = ap->a_vpp;
-
-	KASSERT(vpp != NULL);
-	KASSERT(*vpp == NULL);
-
-	fs = VFSTOULFS(dvp->v_mount)->um_lfs;
-	ASSERT_NO_SEGLOCK(fs);
-	if (fs->lfs_ronly) {
-		return EROFS;
-	}
-
-	/*
-	 * Get a new vnode *before* adjusting the dirop count, to
-	 * avoid a deadlock in getnewvnode(), if we have a stacked
-	 * filesystem mounted on top of us.
-	 *
-	 * NB: this means we have to destroy the new vnode on error.
-	 */
-
-	error = getnewvnode(VT_LFS, dvp->v_mount, lfs_vnodeop_p, NULL, vpp);
-	if (error) {
-		DLOG((DLOG_ALLOC, "lfs_mkdir: dvp %p error %d\n", dvp, error));
-		return error;
-	}
-	error = lfs_set_dirop(dvp, NULL);
-	if (error) {
-		ungetnewvnode(*vpp);
-		*vpp = NULL;
-		return error;
-	}
-
-	error = ulfs_mkdir(ap);
+#if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
+out2:
+#endif
 
 	UNMARK_VNODE(dvp);
 	UNMARK_VNODE(*vpp);
