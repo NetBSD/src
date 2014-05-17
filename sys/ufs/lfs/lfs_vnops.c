@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.264 2014/05/17 07:08:35 dholland Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.265 2014/05/17 07:09:09 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -59,8 +59,73 @@
  *	@(#)lfs_vnops.c	8.13 (Berkeley) 6/10/95
  */
 
+/*  from NetBSD: ufs_vnops.c,v 1.213 2013/06/08 05:47:02 kardel Exp  */
+/*-
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Wasabi Systems, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+/*
+ * Copyright (c) 1982, 1986, 1989, 1993, 1995
+ *	The Regents of the University of California.  All rights reserved.
+ * (c) UNIX System Laboratories, Inc.
+ * All or some portions of this file are derived from material licensed
+ * to the University of California by American Telephone and Telegraph
+ * Co. or Unix System Laboratories, Inc. and are reproduced herein with
+ * the permission of UNIX System Laboratories, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)ufs_vnops.c	8.28 (Berkeley) 7/31/95
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.264 2014/05/17 07:08:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.265 2014/05/17 07:09:09 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -111,6 +176,14 @@ static int lfs_getextattr(void *v);
 static int lfs_setextattr(void *v);
 static int lfs_listextattr(void *v);
 static int lfs_deleteextattr(void *v);
+
+/*
+ * A virgin directory (no blushing please).
+ */
+static const struct lfs_dirtemplate mastertemplate = {
+	0,	12,			LFS_DT_DIR,	1,	".",
+	0,	LFS_DIRBLKSIZ - 12,	LFS_DT_DIR,	2,	".."
+};
 
 /* Global vfs data structures for lfs. */
 int (**lfs_vnodeop_p)(void *);
@@ -537,6 +610,59 @@ lfs_unmark_vnode(struct vnode *vp)
 	mutex_exit(&lfs_lock);
 }
 
+/*
+ * symlink -- make a symbolic link
+ */
+int
+ulfs_symlink(void *v)
+{
+	struct vop_symlink_v3_args /* {
+		struct vnode		*a_dvp;
+		struct vnode		**a_vpp;
+		struct componentname	*a_cnp;
+		struct vattr		*a_vap;
+		char			*a_target;
+	} */ *ap = v;
+	struct vnode	*vp, **vpp;
+	struct inode	*ip;
+	int		len, error;
+	struct ulfs_lookup_results *ulr;
+
+	vpp = ap->a_vpp;
+
+	/* XXX should handle this material another way */
+	ulr = &VTOI(ap->a_dvp)->i_crap;
+	ULFS_CHECK_CRAPCOUNTER(VTOI(ap->a_dvp));
+
+	fstrans_start(ap->a_dvp->v_mount, FSTRANS_SHARED);
+	error = ulfs_makeinode(LFS_IFLNK | ap->a_vap->va_mode, ap->a_dvp, ulr,
+			      vpp, ap->a_cnp);
+	if (error)
+		goto out;
+	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
+	vp = *vpp;
+	len = strlen(ap->a_target);
+	ip = VTOI(vp);
+	if (len < ip->i_lfs->um_maxsymlinklen) {
+		memcpy((char *)SHORTLINK(ip), ap->a_target, len);
+		ip->i_size = len;
+		DIP_ASSIGN(ip, size, len);
+		uvm_vnp_setsize(vp, ip->i_size);
+		ip->i_flag |= IN_CHANGE | IN_UPDATE;
+		if (vp->v_mount->mnt_flag & MNT_RELATIME)
+			ip->i_flag |= IN_ACCESS;
+	} else
+		error = vn_rdwr(UIO_WRITE, vp, ap->a_target, len, (off_t)0,
+		    UIO_SYSSPACE, IO_NODELOCKED | IO_JOURNALLOCKED,
+		    ap->a_cnp->cn_cred, NULL, NULL);
+	VOP_UNLOCK(vp);
+	if (error)
+		vrele(vp);
+out:
+	fstrans_done(ap->a_dvp->v_mount);
+	return (error);
+}
+
 int
 lfs_symlink(void *v)
 {
@@ -744,6 +870,40 @@ lfs_mknod(void *v)
 	return (0);
 }
 
+/*
+ * Create a regular file
+ */
+int
+ulfs_create(void *v)
+{
+	struct vop_create_v3_args /* {
+		struct vnode		*a_dvp;
+		struct vnode		**a_vpp;
+		struct componentname	*a_cnp;
+		struct vattr		*a_vap;
+	} */ *ap = v;
+	int	error;
+	struct vnode *dvp = ap->a_dvp;
+	struct ulfs_lookup_results *ulr;
+
+	/* XXX should handle this material another way */
+	ulr = &VTOI(dvp)->i_crap;
+	ULFS_CHECK_CRAPCOUNTER(VTOI(dvp));
+
+	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
+	error =
+	    ulfs_makeinode(MAKEIMODE(ap->a_vap->va_type, ap->a_vap->va_mode),
+			  dvp, ulr, ap->a_vpp, ap->a_cnp);
+	if (error) {
+		fstrans_done(dvp->v_mount);
+		return (error);
+	}
+	fstrans_done(dvp->v_mount);
+	VN_KNOTE(dvp, NOTE_WRITE);
+	VOP_UNLOCK(*ap->a_vpp);
+	return (0);
+}
+
 int
 lfs_create(void *v)
 {
@@ -804,6 +964,156 @@ lfs_create(void *v)
 	lfs_unset_dirop(fs, dvp, "create");
 
 	vrele(dvp);
+	return (error);
+}
+
+int
+ulfs_mkdir(void *v)
+{
+	struct vop_mkdir_v3_args /* {
+		struct vnode		*a_dvp;
+		struct vnode		**a_vpp;
+		struct componentname	*a_cnp;
+		struct vattr		*a_vap;
+	} */ *ap = v;
+	struct vnode		*dvp = ap->a_dvp, *tvp;
+	struct vattr		*vap = ap->a_vap;
+	struct componentname	*cnp = ap->a_cnp;
+	struct inode		*ip, *dp = VTOI(dvp);
+	struct buf		*bp;
+	struct lfs_dirtemplate	dirtemplate;
+	struct lfs_direct		*newdir;
+	int			error, dmode;
+	struct ulfsmount	*ump = dp->i_ump;
+	struct lfs *fs = ump->um_lfs;
+	int dirblksiz = fs->um_dirblksiz;
+	struct ulfs_lookup_results *ulr;
+
+	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
+
+	/* XXX should handle this material another way */
+	ulr = &dp->i_crap;
+	ULFS_CHECK_CRAPCOUNTER(dp);
+
+	if ((nlink_t)dp->i_nlink >= LINK_MAX) {
+		error = EMLINK;
+		goto out;
+	}
+	dmode = vap->va_mode & ACCESSPERMS;
+	dmode |= LFS_IFDIR;
+	/*
+	 * Must simulate part of ulfs_makeinode here to acquire the inode,
+	 * but not have it entered in the parent directory. The entry is
+	 * made later after writing "." and ".." entries.
+	 */
+	if ((error = lfs_valloc(dvp, dmode, cnp->cn_cred, ap->a_vpp)) != 0)
+		goto out;
+
+	tvp = *ap->a_vpp;
+	ip = VTOI(tvp);
+
+	ip->i_uid = kauth_cred_geteuid(cnp->cn_cred);
+	DIP_ASSIGN(ip, uid, ip->i_uid);
+	ip->i_gid = dp->i_gid;
+	DIP_ASSIGN(ip, gid, ip->i_gid);
+#if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
+	if ((error = lfs_chkiq(ip, 1, cnp->cn_cred, 0))) {
+		lfs_vfree(tvp, ip->i_number, dmode);
+		fstrans_done(dvp->v_mount);
+		vput(tvp);
+		return (error);
+	}
+#endif
+	ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
+	ip->i_mode = dmode;
+	DIP_ASSIGN(ip, mode, dmode);
+	tvp->v_type = VDIR;	/* Rest init'd in getnewvnode(). */
+	ip->i_nlink = 2;
+	DIP_ASSIGN(ip, nlink, 2);
+	if (cnp->cn_flags & ISWHITEOUT) {
+		ip->i_flags |= UF_OPAQUE;
+		DIP_ASSIGN(ip, flags, ip->i_flags);
+	}
+
+	/*
+	 * Bump link count in parent directory to reflect work done below.
+	 * Should be done before reference is created so cleanup is
+	 * possible if we crash.
+	 */
+	dp->i_nlink++;
+	DIP_ASSIGN(dp, nlink, dp->i_nlink);
+	dp->i_flag |= IN_CHANGE;
+	if ((error = lfs_update(dvp, NULL, NULL, UPDATE_DIROP)) != 0)
+		goto bad;
+
+	/*
+	 * Initialize directory with "." and ".." from static template.
+	 */
+	dirtemplate = mastertemplate;
+	dirtemplate.dotdot_reclen = dirblksiz - dirtemplate.dot_reclen;
+	dirtemplate.dot_ino = ulfs_rw32(ip->i_number, ULFS_MPNEEDSWAP(fs));
+	dirtemplate.dotdot_ino = ulfs_rw32(dp->i_number, ULFS_MPNEEDSWAP(fs));
+	dirtemplate.dot_reclen = ulfs_rw16(dirtemplate.dot_reclen,
+	    ULFS_MPNEEDSWAP(fs));
+	dirtemplate.dotdot_reclen = ulfs_rw16(dirtemplate.dotdot_reclen,
+	    ULFS_MPNEEDSWAP(fs));
+	if (fs->um_maxsymlinklen <= 0) {
+#if BYTE_ORDER == LITTLE_ENDIAN
+		if (ULFS_MPNEEDSWAP(fs) == 0)
+#else
+		if (ULFS_MPNEEDSWAP(fs) != 0)
+#endif
+		{
+			dirtemplate.dot_type = dirtemplate.dot_namlen;
+			dirtemplate.dotdot_type = dirtemplate.dotdot_namlen;
+			dirtemplate.dot_namlen = dirtemplate.dotdot_namlen = 0;
+		} else
+			dirtemplate.dot_type = dirtemplate.dotdot_type = 0;
+	}
+	if ((error = lfs_balloc(tvp, (off_t)0, dirblksiz, cnp->cn_cred,
+	    B_CLRBUF, &bp)) != 0)
+		goto bad;
+	ip->i_size = dirblksiz;
+	DIP_ASSIGN(ip, size, dirblksiz);
+	ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
+	uvm_vnp_setsize(tvp, ip->i_size);
+	memcpy((void *)bp->b_data, (void *)&dirtemplate, sizeof dirtemplate);
+
+	/*
+	 * Directory set up, now install it's entry in the parent directory.
+	 * We must write out the buffer containing the new directory body
+	 * before entering the new name in the parent.
+	 */
+	if ((error = VOP_BWRITE(bp->b_vp, bp)) != 0)
+		goto bad;
+	if ((error = lfs_update(tvp, NULL, NULL, UPDATE_DIROP)) != 0) {
+		goto bad;
+	}
+	newdir = pool_cache_get(ulfs_direct_cache, PR_WAITOK);
+	ulfs_makedirentry(ip, cnp, newdir);
+	error = ulfs_direnter(dvp, ulr, tvp, newdir, cnp, bp);
+	pool_cache_put(ulfs_direct_cache, newdir);
+ bad:
+	if (error == 0) {
+		VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
+		VOP_UNLOCK(tvp);
+	} else {
+		dp->i_nlink--;
+		DIP_ASSIGN(dp, nlink, dp->i_nlink);
+		dp->i_flag |= IN_CHANGE;
+		/*
+		 * No need to do an explicit lfs_truncate here, vrele will
+		 * do this for us because we set the link count to 0.
+		 */
+		ip->i_nlink = 0;
+		DIP_ASSIGN(ip, nlink, 0);
+		ip->i_flag |= IN_CHANGE;
+		/* If IN_ADIROP, account for it */
+		lfs_unmark_vnode(tvp);
+		vput(tvp);
+	}
+ out:
+	fstrans_done(dvp->v_mount);
 	return (error);
 }
 
@@ -959,11 +1269,10 @@ lfs_link(void *v)
 		struct componentname *a_cnp;
 	} */ *ap = v;
 	struct lfs *fs;
-	struct vnode *dvp, **vpp;
+	struct vnode *dvp;
 	int error;
 
 	dvp = ap->a_dvp;
-	vpp = NULL;
 
 	fs = VFSTOULFS(dvp->v_mount)->um_lfs;
 	ASSERT_NO_SEGLOCK(fs);
