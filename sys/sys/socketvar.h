@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.131 2013/08/29 17:49:21 rmind Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.132 2014/05/17 22:52:36 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -308,7 +308,7 @@ int	solisten(struct socket *, int, struct lwp *);
 struct socket *
 	sonewconn(struct socket *, bool);
 void	soqinsque(struct socket *, struct socket *, int);
-int	soqremque(struct socket *, int);
+bool	soqremque(struct socket *, int);
 int	soreceive(struct socket *, struct mbuf **, struct uio *,
 	    struct mbuf **, struct mbuf **, int *);
 int	soreserve(struct socket *, u_long, u_long);
