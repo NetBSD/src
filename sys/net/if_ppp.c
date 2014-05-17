@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.142 2014/05/15 09:23:03 msaitoh Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.143 2014/05/17 14:51:09 rmind Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.142 2014/05/15 09:23:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.143 2014/05/17 14:51:09 rmind Exp $");
 
 #include "ppp.h"
 
@@ -1676,7 +1676,9 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
 	goto bad;
     }
     IF_ENQUEUE(inq, m);
-    schednetisr(isr);
+    if (__predict_true(isr)) {
+        schednetisr(isr);
+    }
     splx(s);
     ifp->if_ipackets++;
     ifp->if_ibytes += ilen;
