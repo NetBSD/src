@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.67 2014/05/14 13:46:19 martin Exp $	*/
+/*	$NetBSD: inode.h,v 1.68 2014/05/17 19:11:40 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -295,8 +295,8 @@ struct indir {
 struct ufid {
 	u_int16_t ufid_len;	/* Length of structure. */
 	u_int16_t ufid_pad;	/* Force 32-bit alignment. */
-	ino_t     ufid_ino;	/* File number (ino). */
 	int32_t	  ufid_gen;	/* Generation number. */
+	ino_t     ufid_ino;	/* File number (ino). */
 };
 #endif /* _KERNEL */
 
