@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.166 2014/04/07 15:35:23 seanb Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.167 2014/05/17 21:45:02 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.166 2014/04/07 15:35:23 seanb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.167 2014/05/17 21:45:02 rmind Exp $");
 
 #include "opt_pipe.h"
 
@@ -92,23 +92,24 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.166 2014/04/07 15:35:23 seanb Ex
 extern const struct fileops socketops;
 
 int
-sys___socket30(struct lwp *l, const struct sys___socket30_args *uap, register_t *retval)
+sys___socket30(struct lwp *l, const struct sys___socket30_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int)	domain;
 		syscallarg(int)	type;
 		syscallarg(int)	protocol;
 	} */
-	int		fd, error;
+	int fd, error;
 
 	error = fsocreate(SCARG(uap, domain), NULL, SCARG(uap, type),
-			 SCARG(uap, protocol), l, &fd);
-	if (error == 0)
+	    SCARG(uap, protocol), l, &fd);
+	if (error == 0) {
 		*retval = fd;
+	}
 	return error;
 }
 
-/* ARGSUSED */
 int
 sys_bind(struct lwp *l, const struct sys_bind_args *uap, register_t *retval)
 {
@@ -145,7 +146,6 @@ do_sys_bind(struct lwp *l, int fd, struct mbuf *nam)
 	return error;
 }
 
-/* ARGSUSED */
 int
 sys_listen(struct lwp *l, const struct sys_listen_args *uap, register_t *retval)
 {
@@ -164,8 +164,8 @@ sys_listen(struct lwp *l, const struct sys_listen_args *uap, register_t *retval)
 }
 
 int
-do_sys_accept(struct lwp *l, int sock, struct mbuf **name, register_t *new_sock,
-    const sigset_t *mask, int flags, int clrflags)
+do_sys_accept(struct lwp *l, int sock, struct mbuf **name,
+    register_t *new_sock, const sigset_t *mask, int flags, int clrflags)
 {
 	file_t		*fp, *fp2;
 	struct mbuf	*nam;
@@ -174,14 +174,14 @@ do_sys_accept(struct lwp *l, int sock, struct mbuf **name, register_t *new_sock,
 	short		wakeup_state = 0;
 
 	if ((fp = fd_getfile(sock)) == NULL)
-		return (EBADF);
+		return EBADF;
 	if (fp->f_type != DTYPE_SOCKET) {
 		fd_putfile(sock);
-		return (ENOTSOCK);
+		return ENOTSOCK;
 	}
 	if ((error = fd_allocfile(&fp2, &fd)) != 0) {
 		fd_putfile(sock);
-		return (error);
+		return error;
 	}
 	nam = m_get(M_WAIT, MT_SONAME);
 	*new_sock = fd;
@@ -257,15 +257,15 @@ do_sys_accept(struct lwp *l, int sock, struct mbuf **name, register_t *new_sock,
 	fd_putfile(sock);
 	if (__predict_false(mask))
 		sigsuspendteardown(l);
-	return (error);
+	return error;
  bad:
- 	sounlock(so);
- 	m_freem(nam);
+	sounlock(so);
+	m_freem(nam);
 	fd_putfile(sock);
- 	fd_abort(curproc, fp2, fd);
+	fd_abort(curproc, fp2, fd);
 	if (__predict_false(mask))
 		sigsuspendteardown(l);
- 	return (error);
+	return error;
 }
 
 int
@@ -333,9 +333,9 @@ sys_paccept(struct lwp *l, const struct sys_paccept_args *uap,
 	return error;
 }
 
-/* ARGSUSED */
 int
-sys_connect(struct lwp *l, const struct sys_connect_args *uap, register_t *retval)
+sys_connect(struct lwp *l, const struct sys_connect_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int)				s;
@@ -401,21 +401,22 @@ do_sys_connect(struct lwp *l, int fd, struct mbuf *nam)
 	if (error == ERESTART)
 		error = EINTR;
  out:
- 	sounlock(so);
- 	fd_putfile(fd);
+	sounlock(so);
+	fd_putfile(fd);
 	m_freem(nam);
-	return (error);
+	return error;
 }
 
 static int
 makesocket(struct lwp *l, file_t **fp, int *fd, int flags, int type,
     int domain, int proto, struct socket *soo)
 {
-	int error;
 	struct socket *so;
+	int error;
 
-	if ((error = socreate(domain, &so, type, proto, l, soo)) != 0)
+	if ((error = socreate(domain, &so, type, proto, l, soo)) != 0) {
 		return error;
+	}
 
 	if ((error = fd_allocfile(fp, fd)) != 0) {
 		soclose(so);
@@ -446,13 +447,11 @@ sys_socketpair(struct lwp *l, const struct sys_socketpair_args *uap,
 	file_t		*fp1, *fp2;
 	struct socket	*so1, *so2;
 	int		fd, error, sv[2];
-	proc_t		*p;
+	proc_t		*p = curproc;
 	int		flags = SCARG(uap, type) & SOCK_FLAGS_MASK;
 	int		type = SCARG(uap, type) & ~SOCK_FLAGS_MASK;
 	int		domain = SCARG(uap, domain);
 	int		proto = SCARG(uap, protocol);
-
-	p = curproc;
 
 	error = makesocket(l, &fp1, &fd, flags, type, domain, proto, NULL);
 	if (error)
@@ -492,7 +491,8 @@ out:
 }
 
 int
-sys_sendto(struct lwp *l, const struct sys_sendto_args *uap, register_t *retval)
+sys_sendto(struct lwp *l, const struct sys_sendto_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int)				s;
@@ -517,7 +517,8 @@ sys_sendto(struct lwp *l, const struct sys_sendto_args *uap, register_t *retval)
 }
 
 int
-sys_sendmsg(struct lwp *l, const struct sys_sendmsg_args *uap, register_t *retval)
+sys_sendmsg(struct lwp *l, const struct sys_sendmsg_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int)				s;
@@ -645,14 +646,14 @@ bad:
 		kmem_free(ktriov, iovsz);
 	}
 
- 	if (iov != aiov)
- 		kmem_free(iov, iovsz);
+	if (iov != aiov)
+		kmem_free(iov, iovsz);
 	if (to)
 		m_freem(to);
 	if (control)
 		m_freem(control);
 
-	return (error);
+	return error;
 }
 
 int
@@ -671,7 +672,8 @@ do_sys_sendmsg(struct lwp *l, int s, struct msghdr *mp, int flags,
 }
 
 int
-sys_recvfrom(struct lwp *l, const struct sys_recvfrom_args *uap, register_t *retval)
+sys_recvfrom(struct lwp *l, const struct sys_recvfrom_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int)			s;
@@ -706,7 +708,8 @@ sys_recvfrom(struct lwp *l, const struct sys_recvfrom_args *uap, register_t *ret
 }
 
 int
-sys_recvmsg(struct lwp *l, const struct sys_recvmsg_args *uap, register_t *retval)
+sys_recvmsg(struct lwp *l, const struct sys_recvmsg_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int)			s;
@@ -719,7 +722,7 @@ sys_recvmsg(struct lwp *l, const struct sys_recvmsg_args *uap, register_t *retva
 
 	error = copyin(SCARG(uap, msg), &msg, sizeof(msg));
 	if (error)
-		return (error);
+		return error;
 
 	msg.msg_flags = (SCARG(uap, flags) & MSG_USERFLAGS) | MSG_IOVUSRSPACE;
 
@@ -741,7 +744,7 @@ sys_recvmsg(struct lwp *l, const struct sys_recvmsg_args *uap, register_t *retva
 		error = copyout(&msg, SCARG(uap, msg), sizeof(msg));
 	}
 
-	return (error);
+	return error;
 }
 
 int
@@ -989,7 +992,7 @@ do_sys_recvmsg_so(struct lwp *l, int s, struct socket *so, struct msghdr *mp,
  out:
 	if (iov != aiov)
 		kmem_free(iov, iovsz);
-	return (error);
+	return error;
 }
 
 
@@ -1116,9 +1119,9 @@ sys_recvmmsg(struct lwp *l, const struct sys_recvmmsg_args *uap,
 	return error;
 }
 
-/* ARGSUSED */
 int
-sys_shutdown(struct lwp *l, const struct sys_shutdown_args *uap, register_t *retval)
+sys_shutdown(struct lwp *l, const struct sys_shutdown_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int)	s;
@@ -1128,17 +1131,17 @@ sys_shutdown(struct lwp *l, const struct sys_shutdown_args *uap, register_t *ret
 	int		error;
 
 	if ((error = fd_getsock(SCARG(uap, s), &so)) != 0)
-		return (error);
+		return error;
 	solock(so);
 	error = soshutdown(so, SCARG(uap, how));
 	sounlock(so);
 	fd_putfile(SCARG(uap, s));
-	return (error);
+	return error;
 }
 
-/* ARGSUSED */
 int
-sys_setsockopt(struct lwp *l, const struct sys_setsockopt_args *uap, register_t *retval)
+sys_setsockopt(struct lwp *l, const struct sys_setsockopt_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int)			s;
@@ -1155,10 +1158,10 @@ sys_setsockopt(struct lwp *l, const struct sys_setsockopt_args *uap, register_t 
 
 	len = SCARG(uap, valsize);
 	if (len > 0 && SCARG(uap, val) == NULL)
-		return (EINVAL);
+		return EINVAL;
 
 	if (len > MCLBYTES)
-		return (EINVAL);
+		return EINVAL;
 
 	if ((error = fd_getsock1(SCARG(uap, s), &so, &fp)) != 0)
 		return (error);
@@ -1179,13 +1182,13 @@ sys_setsockopt(struct lwp *l, const struct sys_setsockopt_args *uap, register_t 
 
  out:
 	sockopt_destroy(&sopt);
- 	fd_putfile(SCARG(uap, s));
-	return (error);
+	fd_putfile(SCARG(uap, s));
+	return error;
 }
 
-/* ARGSUSED */
 int
-sys_getsockopt(struct lwp *l, const struct sys_getsockopt_args *uap, register_t *retval)
+sys_getsockopt(struct lwp *l, const struct sys_getsockopt_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int)			s;
@@ -1203,7 +1206,7 @@ sys_getsockopt(struct lwp *l, const struct sys_getsockopt_args *uap, register_t 
 	if (SCARG(uap, val) != NULL) {
 		error = copyin(SCARG(uap, avalsize), &valsize, sizeof(valsize));
 		if (error)
-			return (error);
+			return error;
 	} else
 		valsize = 0;
 
@@ -1233,12 +1236,12 @@ sys_getsockopt(struct lwp *l, const struct sys_getsockopt_args *uap, register_t 
 
  out:
 	sockopt_destroy(&sopt);
- 	fd_putfile(SCARG(uap, s));
-	return (error);
+	fd_putfile(SCARG(uap, s));
+	return error;
 }
 
 #ifdef PIPE_SOCKETPAIR
-/* ARGSUSED */
+
 int
 pipe1(struct lwp *l, register_t *retval, int flags)
 {
@@ -1251,7 +1254,7 @@ pipe1(struct lwp *l, register_t *retval, int flags)
 		return EINVAL;
 	p = curproc;
 	if ((error = socreate(AF_LOCAL, &rso, SOCK_STREAM, 0, l, NULL)) != 0)
-		return (error);
+		return error;
 	if ((error = socreate(AF_LOCAL, &wso, SOCK_STREAM, 0, l, rso)) != 0)
 		goto free1;
 	/* remember this socket pair implements a pipe */
@@ -1287,7 +1290,7 @@ pipe1(struct lwp *l, register_t *retval, int flags)
 	(void)soclose(wso);
  free1:
 	(void)soclose(rso);
-	return (error);
+	return error;
 }
 #endif /* PIPE_SOCKETPAIR */
 
@@ -1315,10 +1318,10 @@ do_sys_getsockname(struct lwp *l, int fd, int which, struct mbuf **nam)
 		error = (*so->so_proto->pr_usrreq)(so, which, NULL, m, NULL,
 		    NULL);
 	}
- 	sounlock(so);
+	sounlock(so);
 	if (error != 0)
 		m_free(m);
- 	fd_putfile(fd);
+	fd_putfile(fd);
 	return error;
 }
 
@@ -1366,9 +1369,9 @@ copyout_sockname(struct sockaddr *asa, unsigned int *alen, int flags,
 /*
  * Get socket name.
  */
-/* ARGSUSED */
 int
-sys_getsockname(struct lwp *l, const struct sys_getsockname_args *uap, register_t *retval)
+sys_getsockname(struct lwp *l, const struct sys_getsockname_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int)			fdes;
@@ -1392,9 +1395,9 @@ sys_getsockname(struct lwp *l, const struct sys_getsockname_args *uap, register_
 /*
  * Get name of peer for connected socket.
  */
-/* ARGSUSED */
 int
-sys_getpeername(struct lwp *l, const struct sys_getpeername_args *uap, register_t *retval)
+sys_getpeername(struct lwp *l, const struct sys_getpeername_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int)			fdes;
@@ -1432,7 +1435,7 @@ sockargs(struct mbuf **mp, const void *bf, size_t buflen, int type)
 	 * length is just too much.
 	 */
 	if (buflen > (type == MT_SONAME ? UCHAR_MAX : PAGE_SIZE))
-		return (EINVAL);
+		return EINVAL;
 
 	/* Allocate an mbuf to hold the arguments. */
 	m = m_get(M_WAIT, type);
@@ -1447,8 +1450,8 @@ sockargs(struct mbuf **mp, const void *bf, size_t buflen, int type)
 	m->m_len = buflen;
 	error = copyin(bf, mtod(m, void *), buflen);
 	if (error) {
-		(void) m_free(m);
-		return (error);
+		(void)m_free(m);
+		return error;
 	}
 	ktrkuser(mbuftypes[type], mtod(m, void *), buflen);
 	*mp = m;
@@ -1464,5 +1467,5 @@ sockargs(struct mbuf **mp, const void *bf, size_t buflen, int type)
 #endif
 		sa->sa_len = buflen;
 	}
-	return (0);
+	return 0;
 }
