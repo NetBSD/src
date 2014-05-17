@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.148 2014/03/20 13:34:35 roy Exp $	*/
+/*	$NetBSD: nd6.c,v 1.149 2014/05/17 20:44:24 rmind Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.148 2014/03/20 13:34:35 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.149 2014/05/17 20:44:24 rmind Exp $");
 
 #include "opt_ipsec.h"
 
@@ -2047,7 +2047,7 @@ nd6_slowtimo(void *ignored_arg)
 	KERNEL_LOCK(1, NULL);
       	callout_reset(&nd6_slowtimo_ch, ND6_SLOWTIMER_INTERVAL * hz,
 	    nd6_slowtimo, NULL);
-	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+	IFNET_FOREACH(ifp) {
 		nd6if = ND_IFINFO(ifp);
 		if (nd6if->basereachable && /* already initialized */
 		    (nd6if->recalctm -= ND6_SLOWTIMER_INTERVAL) <= 0) {
