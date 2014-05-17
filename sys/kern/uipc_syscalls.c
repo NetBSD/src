@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.167 2014/05/17 21:45:02 rmind Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.168 2014/05/17 21:48:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.167 2014/05/17 21:45:02 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.168 2014/05/17 21:48:48 rmind Exp $");
 
 #include "opt_pipe.h"
 
@@ -417,6 +417,9 @@ makesocket(struct lwp *l, file_t **fp, int *fd, int flags, int type,
 	if ((error = socreate(domain, &so, type, proto, l, soo)) != 0) {
 		return error;
 	}
+	if (flags & SOCK_NONBLOCK) {
+		so->so_state |= SS_NBIO;
+	}
 
 	if ((error = fd_allocfile(fp, fd)) != 0) {
 		soclose(so);
@@ -429,8 +432,6 @@ makesocket(struct lwp *l, file_t **fp, int *fd, int flags, int type,
 	(*fp)->f_type = DTYPE_SOCKET;
 	(*fp)->f_ops = &socketops;
 	(*fp)->f_data = so;
-	if (flags & SOCK_NONBLOCK)
-		so->so_state |= SS_NBIO;
 	return 0;
 }
 
