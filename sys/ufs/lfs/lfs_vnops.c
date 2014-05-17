@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.265 2014/05/17 07:09:09 dholland Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.266 2014/05/17 07:09:36 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.265 2014/05/17 07:09:09 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.266 2014/05/17 07:09:36 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -610,59 +610,6 @@ lfs_unmark_vnode(struct vnode *vp)
 	mutex_exit(&lfs_lock);
 }
 
-/*
- * symlink -- make a symbolic link
- */
-int
-ulfs_symlink(void *v)
-{
-	struct vop_symlink_v3_args /* {
-		struct vnode		*a_dvp;
-		struct vnode		**a_vpp;
-		struct componentname	*a_cnp;
-		struct vattr		*a_vap;
-		char			*a_target;
-	} */ *ap = v;
-	struct vnode	*vp, **vpp;
-	struct inode	*ip;
-	int		len, error;
-	struct ulfs_lookup_results *ulr;
-
-	vpp = ap->a_vpp;
-
-	/* XXX should handle this material another way */
-	ulr = &VTOI(ap->a_dvp)->i_crap;
-	ULFS_CHECK_CRAPCOUNTER(VTOI(ap->a_dvp));
-
-	fstrans_start(ap->a_dvp->v_mount, FSTRANS_SHARED);
-	error = ulfs_makeinode(LFS_IFLNK | ap->a_vap->va_mode, ap->a_dvp, ulr,
-			      vpp, ap->a_cnp);
-	if (error)
-		goto out;
-	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
-	vp = *vpp;
-	len = strlen(ap->a_target);
-	ip = VTOI(vp);
-	if (len < ip->i_lfs->um_maxsymlinklen) {
-		memcpy((char *)SHORTLINK(ip), ap->a_target, len);
-		ip->i_size = len;
-		DIP_ASSIGN(ip, size, len);
-		uvm_vnp_setsize(vp, ip->i_size);
-		ip->i_flag |= IN_CHANGE | IN_UPDATE;
-		if (vp->v_mount->mnt_flag & MNT_RELATIME)
-			ip->i_flag |= IN_ACCESS;
-	} else
-		error = vn_rdwr(UIO_WRITE, vp, ap->a_target, len, (off_t)0,
-		    UIO_SYSSPACE, IO_NODELOCKED | IO_JOURNALLOCKED,
-		    ap->a_cnp->cn_cred, NULL, NULL);
-	VOP_UNLOCK(vp);
-	if (error)
-		vrele(vp);
-out:
-	fstrans_done(ap->a_dvp->v_mount);
-	return (error);
-}
-
 int
 lfs_symlink(void *v)
 {
@@ -675,6 +622,9 @@ lfs_symlink(void *v)
 	} */ *ap = v;
 	struct lfs *fs;
 	struct vnode *dvp, **vpp;
+	struct inode *ip;
+	struct ulfs_lookup_results *ulr;
+	ssize_t len; /* XXX should be size_t */
 	int error;
 
 	dvp = ap->a_dvp;
@@ -682,6 +632,10 @@ lfs_symlink(void *v)
 
 	KASSERT(vpp != NULL);
 	KASSERT(*vpp == NULL);
+
+	/* XXX should handle this material another way */
+	ulr = &VTOI(ap->a_dvp)->i_crap;
+	ULFS_CHECK_CRAPCOUNTER(VTOI(ap->a_dvp));
 
 	fs = VFSTOULFS(dvp->v_mount)->um_lfs;
 	ASSERT_NO_SEGLOCK(fs);
@@ -711,7 +665,37 @@ lfs_symlink(void *v)
 		return error;
 	}
 
-	error = ulfs_symlink(ap);
+	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
+	error = ulfs_makeinode(LFS_IFLNK | ap->a_vap->va_mode, dvp, ulr,
+			      vpp, ap->a_cnp);
+	if (error) {
+		goto out;
+	}
+
+	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
+	ip = VTOI(*vpp);
+
+	len = strlen(ap->a_target);
+	if (len < ip->i_lfs->um_maxsymlinklen) {
+		memcpy((char *)SHORTLINK(ip), ap->a_target, len);
+		ip->i_size = len;
+		DIP_ASSIGN(ip, size, len);
+		uvm_vnp_setsize(*vpp, ip->i_size);
+		ip->i_flag |= IN_CHANGE | IN_UPDATE;
+		if ((*vpp)->v_mount->mnt_flag & MNT_RELATIME)
+			ip->i_flag |= IN_ACCESS;
+	} else {
+		error = vn_rdwr(UIO_WRITE, *vpp, ap->a_target, len, (off_t)0,
+		    UIO_SYSSPACE, IO_NODELOCKED | IO_JOURNALLOCKED,
+		    ap->a_cnp->cn_cred, NULL, NULL);
+	}
+
+	VOP_UNLOCK(*vpp);
+	if (error)
+		vrele(*vpp);
+
+out:
+	fstrans_done(dvp->v_mount);
 
 	UNMARK_VNODE(dvp);
 	/* XXX: is it even possible for the symlink to get MARK'd? */
