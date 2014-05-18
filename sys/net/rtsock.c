@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.143 2014/02/25 18:30:12 pooka Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.144 2014/05/18 14:46:16 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.143 2014/02/25 18:30:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.144 2014/05/18 14:46:16 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1311,6 +1311,10 @@ PR_WRAP_USRREQ(route_usrreq);
 PR_WRAP_USRREQ(compat_50_route_usrreq);
 #endif
 
+static const struct pr_usrreqs route_usrreqs = {
+	.pr_generic	= COMPATNAME(route_usrreq_wrapper),
+};
+
 static const struct protosw COMPATNAME(route_protosw)[] = {
 	{
 		.pr_type = SOCK_RAW,
@@ -1319,7 +1323,7 @@ static const struct protosw COMPATNAME(route_protosw)[] = {
 		.pr_input = raw_input,
 		.pr_output = COMPATNAME(route_output),
 		.pr_ctlinput = raw_ctlinput,
-		.pr_usrreq = COMPATNAME(route_usrreq_wrapper),
+		.pr_usrreqs = &route_usrreqs,
 		.pr_init = raw_init,
 	},
 };

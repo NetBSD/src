@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.172 2014/01/02 18:29:01 pooka Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.173 2014/05/18 14:46:16 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -790,7 +790,10 @@ struct syn_cache_head {
 }
 
 #ifdef _KERNEL
+
 extern	struct inpcbtable tcbtable;	/* head of queue of active tcpcb's */
+extern	const struct pr_usrreqs tcp_usrreqs;
+
 extern	u_int32_t tcp_now;	/* for RFC 1323 timestamps */
 extern	int tcp_do_rfc1323;	/* enabled/disabled? */
 extern	int tcp_do_sack;	/* SACK enabled/disabled? */
@@ -961,8 +964,6 @@ void	 tcp_trace(short, short, struct tcpcb *, struct mbuf *, int);
 struct tcpcb *
 	 tcp_usrclosed(struct tcpcb *);
 void	 tcp_usrreq_init(void);
-int	 tcp_usrreq(struct socket *,
-	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);
 void	 tcp_xmit_timer(struct tcpcb *, uint32_t);
 tcp_seq	 tcp_new_iss(struct tcpcb *, tcp_seq);
 tcp_seq  tcp_new_iss1(void *, void *, u_int16_t, u_int16_t, size_t,

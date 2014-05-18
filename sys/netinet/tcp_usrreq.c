@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.171 2014/02/25 18:30:12 pooka Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.172 2014/05/18 14:46:16 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.171 2014/02/25 18:30:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.172 2014/05/18 14:46:16 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -162,10 +162,9 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.171 2014/02/25 18:30:12 pooka Exp $
  * then m is the mbuf chain of send data.  If this is a timer expiration
  * (called from the software clock routine), then timertype tells which timer.
  */
-/*ARGSUSED*/
-int
-tcp_usrreq(struct socket *so, int req,
-    struct mbuf *m, struct mbuf *nam, struct mbuf *control, struct lwp *l)
+static int
+tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
+    struct mbuf *control, struct lwp *l)
 {
 	struct inpcb *inp;
 #ifdef INET6
@@ -2152,3 +2151,11 @@ tcp_usrreq_init(void)
 	sysctl_net_inet_tcp_setup2(NULL, PF_INET6, "inet6", "tcp6");
 #endif
 }
+
+PR_WRAP_USRREQ(tcp_usrreq)
+
+#define	tcp_usrreq	tcp_usrreq_wrapper
+
+const struct pr_usrreqs tcp_usrreqs = {
+	.pr_generic	= tcp_usrreq,
+};
