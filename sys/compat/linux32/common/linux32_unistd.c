@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_unistd.c,v 1.37 2014/05/04 10:08:53 njoly Exp $ */
+/*	$NetBSD: linux32_unistd.c,v 1.38 2014/05/18 09:30:00 njoly Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.37 2014/05/04 10:08:53 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.38 2014/05/18 09:30:00 njoly Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -293,19 +293,13 @@ linux32_sys_dup3(struct lwp *l, const struct linux32_sys_dup3_args *uap,
 		syscallarg(int) to;
 		syscallarg(int) flags;
 	} */
-	struct sys_dup2_args ua;
-	int error;
+	struct linux_sys_dup3_args ua;
 
 	NETBSD32TO64_UAP(from);
 	NETBSD32TO64_UAP(to);
+	NETBSD32TO64_UAP(flags);
 
-	if ((error = sys_dup2(l, &ua, retval)))
-		return error;
-
-	if (SCARG(uap, flags) & LINUX_O_CLOEXEC)
-		fd_set_exclose(l, SCARG(uap, to), true);
-
-	return 0;
+	return linux_sys_dup3(l, &ua, retval);
 }
 
 
