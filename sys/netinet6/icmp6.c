@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.165 2014/02/25 18:30:12 pooka Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.166 2014/05/18 00:10:11 rmind Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.165 2014/02/25 18:30:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.166 2014/05/18 00:10:11 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1717,7 +1717,7 @@ ni6_store_addrs(struct icmp6_nodeinfo *ni6,
 	struct icmp6_nodeinfo *nni6, struct ifnet *ifp0,
 	int resid)
 {
-	struct ifnet *ifp = ifp0 ? ifp0 : TAILQ_FIRST(&ifnet);
+	struct ifnet *ifp = ifp0 ? ifp0 : IFNET_FIRST();
 	struct in6_ifaddr *ifa6;
 	struct ifaddr *ifa;
 	struct ifnet *ifp_dep = NULL;
