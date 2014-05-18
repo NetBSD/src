@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.169 2014/05/17 23:27:59 rmind Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.170 2014/05/18 14:46:15 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.169 2014/05/17 23:27:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.170 2014/05/18 14:46:15 rmind Exp $");
 
 #include "opt_pipe.h"
 
@@ -1316,8 +1316,8 @@ do_sys_getsockname(struct lwp *l, int fd, int which, struct mbuf **nam)
 		error = ENOTCONN;
 	} else {
 		*nam = m;
-		error = (*so->so_proto->pr_usrreq)(so, which, NULL, m, NULL,
-		    NULL);
+		error = (*so->so_proto->pr_usrreqs->pr_generic)(so,
+		    which, NULL, m, NULL, NULL);
 	}
 	sounlock(so);
 	if (error != 0)

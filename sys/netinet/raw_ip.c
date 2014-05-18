@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.119 2014/05/18 00:10:11 rmind Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.120 2014/05/18 14:46:16 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.119 2014/05/18 00:10:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.120 2014/05/18 14:46:16 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -686,6 +686,14 @@ release:
 	splx(s);
 	return (error);
 }
+
+PR_WRAP_USRREQ(rip_usrreq)
+
+#define	rip_usrreq	rip_usrreq_wrapper
+
+const struct pr_usrreqs rip_usrreqs = {
+	.pr_generic	= rip_usrreq,
+};
 
 static void
 sysctl_net_inet_raw_setup(struct sysctllog **clog)

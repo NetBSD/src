@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.21 2011/07/17 20:54:54 joerg Exp $	*/
+/*	$NetBSD: keysock.c,v 1.22 2014/05/18 14:46:16 rmind Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.21 2011/07/17 20:54:54 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.22 2014/05/18 14:46:16 rmind Exp $");
 
 #include "opt_ipsec.h"
 
@@ -627,9 +627,9 @@ key_sockaddr(struct socket *so, struct sockaddr **nam)
  * key_usrreq()
  * derived from net/rtsock.c:route_usrreq()
  */
-int
-key_usrreq(struct socket *so, int req,struct mbuf *m, struct mbuf *nam, 
-	   struct mbuf *control, struct lwp *l)
+static int
+key_usrreq(struct socket *so, int req,struct mbuf *m, struct mbuf *nam,
+    struct mbuf *control, struct lwp *l)
 {
 	int error = 0;
 	struct keycb *kp = (struct keycb *)sotorawcb(so);
@@ -728,6 +728,14 @@ DOMAIN_SET(key);
 
 DOMAIN_DEFINE(keydomain);
 
+PR_WRAP_USRREQ(key_usrreq)
+
+#define	key_usrreq	key_usrreq_wrapper
+
+const struct pr_usrreqs key_usrreqs = {
+	.pr_generic	= key_usrreq,
+};
+
 const struct protosw keysw[] = {
     {
 	.pr_type = SOCK_RAW,
@@ -736,7 +744,7 @@ const struct protosw keysw[] = {
 	.pr_flags = PR_ATOMIC|PR_ADDR,
 	.pr_output = key_output,
 	.pr_ctlinput = raw_ctlinput,
-	.pr_usrreq = key_usrreq,
+	.pr_usrreqs = &key_usrreqs,
 	.pr_init = raw_init,
     }
 };

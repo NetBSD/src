@@ -1,4 +1,4 @@
-/*	$NetBSD: sco_socket.c,v 1.12 2013/08/29 17:49:21 rmind Exp $	*/
+/*	$NetBSD: sco_socket.c,v 1.13 2014/05/18 14:46:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.12 2013/08/29 17:49:21 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.13 2014/05/18 14:46:16 rmind Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -94,7 +94,7 @@ int sco_recvspace = 4096;
  * we are responsible for disposing of m and ctl if
  * they are mbuf chains
  */
-int
+static int
 sco_usrreq(struct socket *up, int req, struct mbuf *m,
     struct mbuf *nam, struct mbuf *ctl, struct lwp *l)
 {
@@ -365,3 +365,11 @@ sco_input(void *arg, struct mbuf *m)
 	sbappendrecord(&so->so_rcv, m);
 	sorwakeup(so);
 }
+
+PR_WRAP_USRREQ(sco_usrreq)
+
+#define	sco_usrreq		sco_usrreq_wrapper
+
+const struct pr_usrreqs sco_usrreqs = {
+	.pr_generic	= sco_usrreq,
+};

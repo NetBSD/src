@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_socket.c,v 1.11 2013/08/29 17:49:21 rmind Exp $	*/
+/*	$NetBSD: rfcomm_socket.c,v 1.12 2014/05/18 14:46:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.11 2013/08/29 17:49:21 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.12 2014/05/18 14:46:16 rmind Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -100,7 +100,7 @@ int rfcomm_recvspace = 4096;
  * we are responsible for disposing of m and ctl if
  * they are mbuf chains
  */
-int
+static int
 rfcomm_usrreq(struct socket *up, int req, struct mbuf *m,
 		struct mbuf *nam, struct mbuf *ctl, struct lwp *l)
 {
@@ -411,3 +411,11 @@ rfcomm_input(void *arg, struct mbuf *m)
 	sbappendstream(&so->so_rcv, m);
 	sorwakeup(so);
 }
+
+PR_WRAP_USRREQ(rfcomm_usrreq)
+
+#define	rfcomm_usrreq		rfcomm_usrreq_wrapper
+
+const struct pr_usrreqs rfcomm_usrreqs = {
+	.pr_generic	= rfcomm_usrreq,
+};
