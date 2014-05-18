@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.13.18.1 2013/08/28 23:59:17 rmind Exp $	*/
+/*	$NetBSD: asm.h,v 1.13.18.2 2014/05/18 17:45:11 rmind Exp $	*/
 
 /*	$OpenBSD: asm.h,v 1.12 2001/03/29 02:15:57 mickey Exp $	*/
 
@@ -122,7 +122,7 @@
 	bv,n	%r0(tmp)				!\
 	nop
 
-#ifdef PIC
+#ifdef __PIC__
 #define PIC_CALL(func)					!\
 	addil	LT%func, %r19				!\
 	ldw	RT%func(%r1), %r1			!\

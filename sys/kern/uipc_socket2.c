@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.112.2.3 2013/10/17 23:52:18 rmind Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.112.2.4 2014/05/18 17:46:08 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.112.2.3 2013/10/17 23:52:18 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.112.2.4 2014/05/18 17:46:08 rmind Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -175,7 +175,7 @@ soisconnected(struct socket *so)
 	KASSERT(solocked(so));
 	KASSERT(head == NULL || solocked2(so, head));
 
-	so->so_state &= ~(SS_ISCONNECTING|SS_ISDISCONNECTING|SS_ISCONFIRMING);
+	so->so_state &= ~(SS_ISCONNECTING | SS_ISDISCONNECTING);
 	so->so_state |= SS_ISCONNECTED;
 	if (head && so->so_onq == &head->so_q0) {
 		if ((so->so_options & SO_ACCEPTFILTER) == 0) {
@@ -245,30 +245,28 @@ soinit2(void)
  * (subject to space constraints, etc) then we allocate a new structure,
  * properly linked into the data structure of the original socket.
  *
- * => Connection status may be 0, SS_ISCONFIRMING, or SS_ISCONNECTED.
+ * => If 'soready' is true, then socket will become ready for accept() i.e.
+ *    inserted into the so_q queue, SS_ISCONNECTED set and waiters awoken.
  * => May be called from soft-interrupt context.
  * => Listening socket should be locked.
  * => Returns the new socket locked.
  */
 struct socket *
-sonewconn(struct socket *head, int connstatus)
+sonewconn(struct socket *head, bool soready)
 {
 	struct socket *so;
 	int soqueue, error;
 
-	KASSERT(connstatus == 0 || connstatus == SS_ISCONFIRMING ||
-	    connstatus == SS_ISCONNECTED);
 	KASSERT(solocked(head));
 
 	if (head->so_qlen + head->so_q0len > 3 * head->so_qlimit / 2) {
 		/* Listen queue overflow. */
 		return NULL;
 	}
-
 	if ((head->so_options & SO_ACCEPTFILTER) != 0) {
-		connstatus = 0;
+		soready = false;
 	}
-	soqueue = connstatus ? 1 : 0;
+	soqueue = soready ? 1 : 0;
 
 	if ((so = soget(false)) == NULL) {
 		return NULL;
@@ -312,26 +310,21 @@ sonewconn(struct socket *head, int connstatus)
 
 	if (error) {
 out:
-		/*
-		 * Remove accept filter if one is present.
-		 * XXX Is this really needed?
-		 */
-		if (so->so_accf != NULL)
-			(void)accept_filt_clear(so);
+		KASSERT(so->so_accf == NULL);
 		soput(so);
 
-		/* Note: listening socket shall stay locked. */
+		/* Note: the listening socket shall stay locked. */
 		KASSERT(solocked(head));
 		return NULL;
 	}
 
 	/*
-	 * Update the connection status and wake up any waiters,
-	 * e.g. processes blocking on accept().
+	 * Insert into the queue.  If ready, update the connection status
+	 * and wake up any waiters, e.g. processes blocking on accept().
 	 */
 	soqinsque(head, so, soqueue);
-	if (connstatus) {
-		so->so_state |= connstatus;
+	if (soready) {
+		so->so_state |= SS_ISCONNECTED;
 		sorwakeup(head);
 		cv_broadcast(&head->so_cv);
 	}
@@ -435,7 +428,7 @@ soqremque(struct socket *so, int q)
 }
 
 /*
- * socantsendmore(): indicates that no more data will be sent on the
+ * socantsendmore: indicates that no more data will be sent on the
  * socket; it would normally be applied to a socket when the user
  * informs the system that no more data is to be sent, by the protocol
  * code (in case PRU_SHUTDOWN).
@@ -765,7 +758,7 @@ sbappend(struct sockbuf *sb, struct mbuf *m)
 
 	KASSERT(solocked(sb->sb_so));
 
-	if (m == 0)
+	if (m == NULL)
 		return;
 
 #ifdef MBUFTRACE
@@ -862,7 +855,7 @@ sbappendrecord(struct sockbuf *sb, struct mbuf *m0)
 
 	KASSERT(solocked(sb->sb_so));
 
-	if (m0 == 0)
+	if (m0 == NULL)
 		return;
 
 #ifdef MBUFTRACE
@@ -897,7 +890,7 @@ sbinsertoob(struct sockbuf *sb, struct mbuf *m0)
 
 	KASSERT(solocked(sb->sb_so));
 
-	if (m0 == 0)
+	if (m0 == NULL)
 		return;
 
 	SBLASTRECORDCHK(sb, "sbinsertoob 1");
@@ -964,13 +957,13 @@ sbappendaddr(struct sockbuf *sb, const struct sockaddr *asa, struct mbuf *m0,
 	for (n = control; n; n = n->m_next) {
 		space += n->m_len;
 		MCLAIM(n, sb->sb_mowner);
-		if (n->m_next == 0)	/* keep pointer to last control buf */
+		if (n->m_next == NULL)	/* keep pointer to last control buf */
 			break;
 	}
 	if (space > sbspace(sb))
 		return (0);
-	MGET(m, M_DONTWAIT, MT_SONAME);
-	if (m == 0)
+	m = m_get(M_DONTWAIT, MT_SONAME);
+	if (m == NULL)
 		return (0);
 	MCLAIM(m, sb->sb_mowner);
 	/*
@@ -1022,16 +1015,16 @@ m_prepend_sockaddr(struct sockbuf *sb, struct mbuf *m0,
 	KASSERT(solocked(sb->sb_so));
 
 	/* only the first in each chain need be a pkthdr */
-	MGETHDR(m, M_DONTWAIT, MT_SONAME);
-	if (m == 0)
-		return (0);
+	m = m_gethdr(M_DONTWAIT, MT_SONAME);
+	if (m == NULL)
+		return NULL;
 	MCLAIM(m, sb->sb_mowner);
 #ifdef notyet
 	if (salen > MHLEN) {
 		MEXTMALLOC(m, salen, M_NOWAIT);
 		if ((m->m_flags & M_EXT) == 0) {
 			m_free(m);
-			return (0);
+			return NULL;
 		}
 	}
 #else
@@ -1049,7 +1042,6 @@ int
 sbappendaddrchain(struct sockbuf *sb, const struct sockaddr *asa,
 		  struct mbuf *m0, int sbprio)
 {
-	int space;
 	struct mbuf *m, *n, *n0, *nlast;
 	int error;
 
@@ -1073,9 +1065,9 @@ sbappendaddrchain(struct sockbuf *sb, const struct sockaddr *asa,
 	if (m0 && (m0->m_flags & M_PKTHDR) == 0)
 		panic("sbappendaddrchain");
 
+#ifdef notyet
 	space = sbspace(sb);
 
-#ifdef notyet
 	/*
 	 * Enforce SB_PRIO_* limits as described above.
 	 */
@@ -1140,7 +1132,7 @@ bad:
 		n0 = n->m_nextpkt;	/* iterate at next prepended address */
 		MFREE(n, np);		/* free prepended address (not data) */
 	}
-	return 0;
+	return error;
 }
 
 
@@ -1153,12 +1145,12 @@ sbappendcontrol(struct sockbuf *sb, struct mbuf *m0, struct mbuf *control)
 	KASSERT(solocked(sb->sb_so));
 
 	space = 0;
-	if (control == 0)
+	if (control == NULL)
 		panic("sbappendcontrol");
 	for (m = control; ; m = m->m_next) {
 		space += m->m_len;
 		MCLAIM(m, sb->sb_mowner);
-		if (m->m_next == 0)
+		if (m->m_next == NULL)
 			break;
 	}
 	n = m;			/* save pointer to last control buffer */
@@ -1272,10 +1264,10 @@ sbdrop(struct sockbuf *sb, int len)
 
 	KASSERT(solocked(sb->sb_so));
 
-	next = (m = sb->sb_mb) ? m->m_nextpkt : 0;
+	next = (m = sb->sb_mb) ? m->m_nextpkt : NULL;
 	while (len > 0) {
-		if (m == 0) {
-			if (next == 0)
+		if (m == NULL) {
+			if (next == NULL)
 				panic("sbdrop(%p,%d): cc=%lu",
 				    sb, len, sb->sb_cc);
 			m = next;

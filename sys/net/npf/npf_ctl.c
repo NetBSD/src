@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_ctl.c,v 1.26 2013/06/02 02:20:04 rmind Exp $	*/
+/*	$NetBSD: npf_ctl.c,v 1.26.2.1 2014/05/18 17:46:13 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.26 2013/06/02 02:20:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.26.2.1 2014/05/18 17:46:13 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.26 2013/06/02 02:20:04 rmind Exp $");
 
 #include <prop/proplib.h>
 
-#include "npf_ncode.h"
 #include "npf_impl.h"
 
 #if defined(DEBUG) || defined(DIAGNOSTIC)
@@ -68,12 +67,40 @@ npfctl_switch(void *data)
 
 	if (onoff) {
 		/* Enable: add pfil hooks. */
-		error = npf_pfil_register();
+		error = npf_pfil_register(false);
 	} else {
 		/* Disable: remove pfil hooks. */
-		npf_pfil_unregister();
+		npf_pfil_unregister(false);
 		error = 0;
 	}
+	return error;
+}
+
+static int __noinline
+npf_mk_table_entries(npf_table_t *t, prop_array_t entries)
+{
+	prop_object_iterator_t eit;
+	prop_dictionary_t ent;
+	int error = 0;
+
+	/* Fill all the entries. */
+	eit = prop_array_iterator(entries);
+	while ((ent = prop_object_iterator_next(eit)) != NULL) {
+		const npf_addr_t *addr;
+		npf_netmask_t mask;
+		int alen;
+
+		/* Get address and mask.  Add a table entry. */
+		prop_object_t obj = prop_dictionary_get(ent, "addr");
+		addr = (const npf_addr_t *)prop_data_data_nocopy(obj);
+		prop_dictionary_get_uint8(ent, "mask", &mask);
+		alen = prop_data_size(obj);
+
+		error = npf_table_insert(t, alen, addr, mask);
+		if (error)
+			break;
+	}
+	prop_object_iterator_release(eit);
 	return error;
 }
 
@@ -93,9 +120,7 @@ npf_mk_tables(npf_tableset_t *tblset, prop_array_t tables,
 
 	it = prop_array_iterator(tables);
 	while ((tbldict = prop_object_iterator_next(it)) != NULL) {
-		prop_dictionary_t ent;
-		prop_object_iterator_t eit;
-		prop_array_t entries;
+		const char *name;
 		npf_table_t *t;
 		u_int tid;
 		int type;
@@ -107,17 +132,39 @@ npf_mk_tables(npf_tableset_t *tblset, prop_array_t tables,
 			break;
 		}
 
-		/* Table ID and type. */
+		/* Table name, ID and type.  Validate them. */
+		if (!prop_dictionary_get_cstring_nocopy(tbldict, "name", &name)) {
+			NPF_ERR_DEBUG(errdict);
+			error = EINVAL;
+			break;
+		}
 		prop_dictionary_get_uint32(tbldict, "id", &tid);
 		prop_dictionary_get_int32(tbldict, "type", &type);
-
-		/* Validate them, check for duplicate IDs. */
-		error = npf_table_check(tblset, tid, type);
-		if (error)
+		error = npf_table_check(tblset, name, tid, type);
+		if (error) {
+			NPF_ERR_DEBUG(errdict);
 			break;
+		}
+
+		/* Get the entries or binary data. */
+		prop_array_t entries = prop_dictionary_get(tbldict, "entries");
+		if (prop_object_type(entries) != PROP_TYPE_ARRAY) {
+			NPF_ERR_DEBUG(errdict);
+			error = EINVAL;
+			break;
+		}
+		prop_object_t obj = prop_dictionary_get(tbldict, "data");
+		void *blob = prop_data_data(obj);
+		size_t size = prop_data_size(obj);
+
+		if (type == NPF_TABLE_CDB && (blob == NULL || size == 0)) {
+			NPF_ERR_DEBUG(errdict);
+			error = EINVAL;
+			break;
+		}
 
 		/* Create and insert the table. */
-		t = npf_table_create(tid, type, 1024);	/* XXX */
+		t = npf_table_create(name, tid, type, blob, size);
 		if (t == NULL) {
 			NPF_ERR_DEBUG(errdict);
 			error = ENOMEM;
@@ -126,32 +173,10 @@ npf_mk_tables(npf_tableset_t *tblset, prop_array_t tables,
 		error = npf_tableset_insert(tblset, t);
 		KASSERT(error == 0);
 
-		/* Entries. */
-		entries = prop_dictionary_get(tbldict, "entries");
-		if (prop_object_type(entries) != PROP_TYPE_ARRAY) {
+		if ((error = npf_mk_table_entries(t, entries)) != 0) {
 			NPF_ERR_DEBUG(errdict);
-			error = EINVAL;
 			break;
 		}
-		eit = prop_array_iterator(entries);
-		while ((ent = prop_object_iterator_next(eit)) != NULL) {
-			const npf_addr_t *addr;
-			npf_netmask_t mask;
-			int alen;
-
-			/* Get address and mask.  Add a table entry. */
-			prop_object_t obj = prop_dictionary_get(ent, "addr");
-			addr = (const npf_addr_t *)prop_data_data_nocopy(obj);
-			prop_dictionary_get_uint8(ent, "mask", &mask);
-			alen = prop_data_size(obj);
-
-			error = npf_table_insert(tblset, tid, alen, addr, mask);
-			if (error)
-				break;
-		}
-		prop_object_iterator_release(eit);
-		if (error)
-			break;
 	}
 	prop_object_iterator_release(it);
 	/*
@@ -250,37 +275,21 @@ npf_mk_code(prop_object_t obj, int type, void **code, size_t *csize,
     prop_dictionary_t errdict)
 {
 	const void *cptr;
-	int cerr, errat;
 	size_t clen;
 	void *bc;
 
+	if (type != NPF_CODE_BPF) {
+		return ENOTSUP;
+	}
 	cptr = prop_data_data_nocopy(obj);
 	if (cptr == NULL || (clen = prop_data_size(obj)) == 0) {
 		NPF_ERR_DEBUG(errdict);
 		return EINVAL;
 	}
-
-	switch (type) {
-	case NPF_CODE_NC:
-		if (clen > NPF_NCODE_LIMIT) {
-			NPF_ERR_DEBUG(errdict);
-			return ERANGE;
-		}
-		if ((cerr = npf_ncode_validate(cptr, clen, &errat)) != 0) {
-			prop_dictionary_set_int32(errdict, "code-error", cerr);
-			prop_dictionary_set_int32(errdict, "code-errat", errat);
-			return EINVAL;
-		}
-		break;
-	case NPF_CODE_BPF:
-		if (!bpf_validate(cptr, clen)) {
-			return EINVAL;
-		}
-		break;
-	default:
-		return ENOTSUP;
+	if (!npf_bpf_validate(cptr, clen)) {
+		NPF_ERR_DEBUG(errdict);
+		return EINVAL;
 	}
-
 	bc = kmem_alloc(clen, KM_SLEEP);
 	memcpy(bc, cptr, clen);
 
@@ -484,7 +493,9 @@ npfctl_reload(u_long cmd, void *data)
 
 	/* NAT policies. */
 	natlist = prop_dictionary_get(npf_dict, "translation");
-	nitems = prop_array_count(natlist);
+	if ((nitems = prop_array_count(natlist)) > NPF_MAX_RULES) {
+		goto fail;
+	}
 
 	nset = npf_ruleset_create(nitems);
 	error = npf_mk_natlist(nset, natlist, errdict);
@@ -493,16 +504,22 @@ npfctl_reload(u_long cmd, void *data)
 	}
 
 	/* Tables. */
-	tblset = npf_tableset_create();
 	tables = prop_dictionary_get(npf_dict, "tables");
+	if ((nitems = prop_array_count(tables)) > NPF_MAX_TABLES) {
+		goto fail;
+	}
+	tblset = npf_tableset_create(nitems);
 	error = npf_mk_tables(tblset, tables, errdict);
 	if (error) {
 		goto fail;
 	}
 
 	/* Rule procedures. */
-	rpset = npf_rprocset_create();
 	rprocs = prop_dictionary_get(npf_dict, "rprocs");
+	if ((nitems = prop_array_count(rprocs)) > NPF_MAX_RPROCS) {
+		goto fail;
+	}
+	rpset = npf_rprocset_create();
 	error = npf_mk_rprocs(rpset, rprocs, errdict);
 	if (error) {
 		goto fail;
@@ -510,7 +527,9 @@ npfctl_reload(u_long cmd, void *data)
 
 	/* Rules. */
 	rules = prop_dictionary_get(npf_dict, "rules");
-	nitems = prop_array_count(rules);
+	if ((nitems = prop_array_count(rules)) > NPF_MAX_RULES) {
+		goto fail;
+	}
 
 	rlset = npf_ruleset_create(nitems);
 	error = npf_mk_rules(rlset, rules, rpset, errdict);
@@ -586,14 +605,16 @@ npfctl_rule(u_long cmd, void *data)
 	prop_dictionary_get_uint32(npf_rule, "command", &rcmd);
 	if (!prop_dictionary_get_cstring_nocopy(npf_rule,
 	    "ruleset-name", &ruleset_name)) {
-		return EINVAL;
+		error = EINVAL;
+		goto out;
 	}
 
 	if (rcmd == NPF_CMD_RULE_ADD) {
-		if ((rl = npf_rule_alloc(npf_rule)) == NULL) {
-			return EINVAL;
-		}
 		retdict = prop_dictionary_create();
+		if (npf_mk_singlerule(npf_rule, NULL, &rl, retdict) != 0) {
+			error = EINVAL;
+			goto out;
+		}
 	}
 
 	npf_config_enter();
@@ -654,6 +675,7 @@ npfctl_rule(u_long cmd, void *data)
 	if (rl) {
 		npf_rule_free(rl);
 	}
+out:
 	if (retdict) {
 		prop_object_release(npf_rule);
 		prop_dictionary_copyout_ioctl(pref, cmd, retdict);
@@ -788,39 +810,48 @@ int
 npfctl_table(void *data)
 {
 	const npf_ioctl_table_t *nct = data;
-	npf_tableset_t *tblset;
-	int error;
+	char tname[NPF_TABLE_MAXNAMELEN];
+	npf_tableset_t *ts;
+	npf_table_t *t;
+	int s, error;
 
-	//npf_config_ref();
-	tblset = npf_config_tableset();
+	error = copyinstr(nct->nct_name, tname, sizeof(tname), NULL);
+	if (error) {
+		return error;
+	}
+
+	s = npf_config_read_enter(); /* XXX */
+	ts = npf_config_tableset();
+	if ((t = npf_tableset_getbyname(ts, tname)) == NULL) {
+		npf_config_read_exit(s);
+		return EINVAL;
+	}
 
 	switch (nct->nct_cmd) {
 	case NPF_CMD_TABLE_LOOKUP:
-		error = npf_table_lookup(tblset, nct->nct_tid,
-		    nct->nct_data.ent.alen, &nct->nct_data.ent.addr);
+		error = npf_table_lookup(t, nct->nct_data.ent.alen,
+		    &nct->nct_data.ent.addr);
 		break;
 	case NPF_CMD_TABLE_ADD:
-		error = npf_table_insert(tblset, nct->nct_tid,
-		    nct->nct_data.ent.alen, &nct->nct_data.ent.addr,
-		    nct->nct_data.ent.mask);
+		error = npf_table_insert(t, nct->nct_data.ent.alen,
+		    &nct->nct_data.ent.addr, nct->nct_data.ent.mask);
 		break;
 	case NPF_CMD_TABLE_REMOVE:
-		error = npf_table_remove(tblset, nct->nct_tid,
-		    nct->nct_data.ent.alen, &nct->nct_data.ent.addr,
-		    nct->nct_data.ent.mask);
+		error = npf_table_remove(t, nct->nct_data.ent.alen,
+		    &nct->nct_data.ent.addr, nct->nct_data.ent.mask);
 		break;
 	case NPF_CMD_TABLE_LIST:
-		error = npf_table_list(tblset, nct->nct_tid,
-		    nct->nct_data.buf.buf, nct->nct_data.buf.len);
+		error = npf_table_list(t, nct->nct_data.buf.buf,
+		    nct->nct_data.buf.len);
 		break;
 	case NPF_CMD_TABLE_FLUSH:
-		error = npf_table_flush(tblset, nct->nct_tid);
+		error = npf_table_flush(t);
 		break;
 	default:
 		error = EINVAL;
 		break;
 	}
-	//npf_config_unref();
+	npf_config_read_exit(s);
 
 	return error;
 }

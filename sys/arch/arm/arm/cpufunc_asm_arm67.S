@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm67.S,v 1.5.2.1 2013/08/28 23:59:11 rmind Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm67.S,v 1.5.2.2 2014/05/18 17:44:56 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,6 +35,7 @@
  * ARM6/ARM7 assembly functions for CPU / MMU / TLB specific operations
  */
  
+#include "assym.h"
 #include <machine/asm.h>
 #include <arm/locore.h>
 

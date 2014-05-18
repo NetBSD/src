@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.142.2.1 2013/08/28 23:59:36 rmind Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.142.2.2 2014/05/18 17:46:13 rmind Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.142.2.1 2013/08/28 23:59:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.142.2.2 2014/05/18 17:46:13 rmind Exp $");
 
 #include "opt_gateway.h"
 #include "opt_inet.h"
@@ -806,17 +806,21 @@ static struct m_tag *
 ip6_setdstifaddr(struct mbuf *m, const struct in6_ifaddr *ia)
 {
 	struct m_tag *mtag;
+	struct ip6aux *ip6a;
 
 	mtag = ip6_addaux(m);
-	if (mtag != NULL) {
-		struct ip6aux *ip6a;
+	if (mtag == NULL)
+		return NULL;
 
-		ip6a = (struct ip6aux *)(mtag + 1);
-		in6_setscope(&ip6a->ip6a_src, ia->ia_ifp, &ip6a->ip6a_scope_id);
-		ip6a->ip6a_src = ia->ia_addr.sin6_addr;
-		ip6a->ip6a_flags = ia->ia6_flags;
+	ip6a = (struct ip6aux *)(mtag + 1);
+	if (in6_setscope(&ip6a->ip6a_src, ia->ia_ifp, &ip6a->ip6a_scope_id)) {
+		IP6_STATINC(IP6_STAT_BADSCOPE);
+		return NULL;
 	}
-	return mtag;	/* NULL if failed to set */
+
+	ip6a->ip6a_src = ia->ia_addr.sin6_addr;
+	ip6a->ip6a_flags = ia->ia6_flags;
+	return mtag;
 }
 
 const struct ip6aux *
@@ -1651,11 +1655,6 @@ sysctl_net_inet6_ip6_setup(struct sysctllog **clog)
 #define IS2292(x, y)	(y)
 #endif
 
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "net", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "inet6",

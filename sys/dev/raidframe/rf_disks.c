@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.83 2012/07/19 22:47:52 pooka Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.83.4.1 2014/05/18 17:45:46 rmind Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -60,7 +60,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.83 2012/07/19 22:47:52 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.83.4.1 2014/05/18 17:45:46 rmind Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -594,7 +594,8 @@ rf_ConfigureDisk(RF_Raid_t *raidPtr, char *bf, RF_RaidDisk_t *diskPtr,
 
 	if (!strcmp("absent", diskPtr->devname)) {
 		printf("Ignoring missing component at column %d\n", col);
-		sprintf(diskPtr->devname, "component%d", col);
+		snprintf(diskPtr->devname, sizeof(diskPtr->devname),
+		    "component%d", col);
 		diskPtr->status = rf_ds_failed;
 		return (0);
 	}
@@ -1090,18 +1091,19 @@ fail:
 int
 rf_remove_hot_spare(RF_Raid_t *raidPtr, RF_SingleComponent_t *sparePtr)
 {
+#if 0
 	int spare_number;
-
+#endif
 
 	if (raidPtr->numSpare==0) {
 		printf("No spares to remove!\n");
 		return(EINVAL);
 	}
 
-	spare_number = sparePtr->column;
-
 	return(EINVAL); /* XXX not implemented yet */
 #if 0
+	spare_number = sparePtr->column;
+
 	if (spare_number < 0 || spare_number > raidPtr->numSpare) {
 		return(EINVAL);
 	}
@@ -1123,14 +1125,18 @@ rf_remove_hot_spare(RF_Raid_t *raidPtr, RF_SingleComponent_t *sparePtr)
 int
 rf_delete_component(RF_Raid_t *raidPtr, RF_SingleComponent_t *component)
 {
+#if 0
 	RF_RaidDisk_t *disks;
+#endif
 
 	if ((component->column < 0) ||
 	    (component->column >= raidPtr->numCol)) {
 		return(EINVAL);
 	}
 
+#if 0
 	disks = &raidPtr->Disks[component->column];
+#endif
 
 	/* 1. This component must be marked as 'failed' */
 

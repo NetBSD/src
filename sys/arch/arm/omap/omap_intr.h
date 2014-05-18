@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_intr.h,v 1.8.4.1 2013/08/28 23:59:12 rmind Exp $ */
+/*	$NetBSD: omap_intr.h,v 1.8.4.2 2014/05/18 17:44:59 rmind Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -168,9 +168,6 @@ omap_spllower(int ipl)
 int	_splraise(int);
 int	_spllower(int);
 void	splx(int);
-#ifdef __HAVE_FAST_SOFTINTS
-void	_setsoftintr(int);
-#endif
 
 #if !defined(EVBARM_SPL_NOINLINE)
 #define splx(new)		omap_splx(new)

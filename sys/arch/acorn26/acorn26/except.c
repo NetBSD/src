@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.29.4.1 2013/08/28 23:59:09 rmind Exp $ */
+/* $NetBSD: except.c,v 1.29.4.2 2014/05/18 17:44:52 rmind Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.29.4.1 2013/08/28 23:59:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.29.4.2 2014/05/18 17:44:52 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -141,7 +141,7 @@ data_abort_handler(struct trapframe *tf)
 	vm_prot_t atype;
 	bool usrmode, twopages;
 	struct vm_map *map;
-	vaddr_t pc, va;
+	vaddr_t va;
 	vsize_t asize;
 
 	/*
@@ -163,7 +163,6 @@ data_abort_handler(struct trapframe *tf)
 		lwp_settrapframe(l, tf);
 		LWP_CACHE_CREDS(l, p);
 	}
-	pc = tf->tf_r15 & R15_PC;
 	data_abort_fixup(tf);
 	va = data_abort_address(tf, &asize);
 	atype = data_abort_atype(tf);

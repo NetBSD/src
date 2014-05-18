@@ -1,7 +1,7 @@
-/*	$NetBSD: npf.h,v 1.30 2013/03/11 17:20:02 christos Exp $	*/
+/*	$NetBSD: npf.h,v 1.30.6.1 2014/05/18 17:46:13 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -45,7 +45,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
 
-#define	NPF_VERSION		9
+#define	NPF_VERSION		13
 
 /*
  * Public declarations and definitions.
@@ -57,6 +57,16 @@ typedef uint8_t			npf_netmask_t;
 
 #define	NPF_MAX_NETMASK		(128)
 #define	NPF_NO_NETMASK		((npf_netmask_t)~0)
+
+/* BPF coprocessor. */
+#if defined(NPF_BPFCOP)
+#define	NPF_COP_L3		0
+#define	NPF_COP_TABLE		1
+
+#define	BPF_MW_IPVER		0
+#define	BPF_MW_L4OFF		1
+#define	BPF_MW_L4PROTO		2
+#endif
 
 #if defined(_KERNEL)
 
@@ -77,7 +87,7 @@ typedef uint8_t			npf_netmask_t;
 #include <netinet/ip_icmp.h>
 #include <netinet/icmp6.h>
 
-#define	NPC_IP4		0x01	/* Indicates fetched IPv4 header. */
+#define	NPC_IP4		0x01	/* Indicates IPv4 header. */
 #define	NPC_IP6		0x02	/* Indicates IPv6 header. */
 #define	NPC_IPFRAG	0x04	/* IPv4/IPv6 fragment. */
 #define	NPC_LAYER4	0x08	/* Layer 4 has been fetched. */
@@ -94,18 +104,24 @@ typedef uint8_t			npf_netmask_t;
 typedef struct {
 	/* Information flags. */
 	uint32_t		npc_info;
-	/* Pointers to the IP v4/v6 addresses. */
-	npf_addr_t *		npc_srcip;
-	npf_addr_t *		npc_dstip;
-	/* Size (v4 or v6) of IP addresses. */
+
+	/*
+	 * Pointers to the IP source and destination addresses,
+	 * and the address length (4 for IPv4 or 16 for IPv6).
+	 */
+	npf_addr_t *		npc_ips[2];
 	uint8_t			npc_alen;
+
+	/* IP header length and L4 protocol. */
 	uint8_t			npc_hlen;
 	uint16_t		npc_proto;
+
 	/* IPv4, IPv6. */
 	union {
 		struct ip *		v4;
 		struct ip6_hdr *	v6;
 	} npc_ip;
+
 	/* TCP, UDP, ICMP. */
 	union {
 		struct tcphdr *		tcp;
@@ -122,6 +138,9 @@ npf_iscached(const npf_cache_t *npc, const int inf)
 	return __predict_true((npc->npc_info & inf) != 0);
 }
 
+#define	NPF_SRC		0
+#define	NPF_DST		1
+
 /*
  * Network buffer interface.
  */
@@ -133,6 +152,7 @@ typedef struct {
 	struct mbuf *	nb_mbuf;
 	void *		nb_nptr;
 	const ifnet_t *	nb_ifp;
+	unsigned	nb_ifid;
 	int		nb_flags;
 } nbuf_t;
 
@@ -190,6 +210,7 @@ bool		npf_autounload_p(void);
 #define	NPF_RULE_RETRST			0x0010
 #define	NPF_RULE_RETICMP		0x0020
 #define	NPF_RULE_DYNAMIC		0x0040
+#define	NPF_RULE_MULTIENDS		0x0080
 
 #define	NPF_DYNAMIC_GROUP		(NPF_RULE_GROUP | NPF_RULE_DYNAMIC)
 
@@ -215,10 +236,16 @@ bool		npf_autounload_p(void);
 
 #define	NPF_NAT_PORTS			0x01
 #define	NPF_NAT_PORTMAP			0x02
+#define	NPF_NAT_STATIC			0x04
+
+#define	NPF_ALGO_NPT66			1
 
 /* Table types. */
 #define	NPF_TABLE_HASH			1
 #define	NPF_TABLE_TREE			2
+#define	NPF_TABLE_CDB			3
+
+#define	NPF_TABLE_MAXNAMELEN		32
 
 /* Layers. */
 #define	NPF_LAYER_2			2
@@ -261,7 +288,7 @@ typedef struct npf_ioctl_buf {
 
 typedef struct npf_ioctl_table {
 	int			nct_cmd;
-	u_int			nct_tid;
+	const char *		nct_name;
 	union {
 		npf_ioctl_ent_t	ent;
 		npf_ioctl_buf_t	buf;

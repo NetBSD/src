@@ -1,4 +1,4 @@
-#	$NetBSD: EV64260,v 1.58.2.1 2013/08/28 23:59:16 rmind Exp $
+#	$NetBSD: EV64260,v 1.58.2.2 2014/05/18 17:45:06 rmind Exp $
 #
 #	MVP -- Motorola's Multiprocessing Verification Platform
 #
@@ -57,7 +57,7 @@ options 	DIAGNOSTIC	# cheap kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
-options 	SYMTAB_SPACE=330000	# size for embedded symbol table
+options 	SYMTAB_SPACE=340000	# size for embedded symbol table
 
 #makeoptions	DEFCOPTS="-g"	# compile full symbol table
 makeoptions	DEBUG="-g"

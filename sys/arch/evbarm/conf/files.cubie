@@ -1,0 +1,12 @@
+#	$NetBSD: files.cubie,v 1.1.6.2 2014/05/18 17:45:03 rmind Exp $
+#
+# CUBIEBOARD evaluation board configuration info
+#
+
+file	arch/evbarm/cubie/cubie_machdep.c
+
+# Kernel boot arguments
+defparam opt_machdep.h				BOOT_ARGS
+
+# CPU support and integrated peripherals
+include "arch/arm/allwinner/files.awin"

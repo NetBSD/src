@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.89.2.1 2013/07/17 03:16:31 rmind Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.89.2.2 2014/05/18 17:46:13 rmind Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.89.2.1 2013/07/17 03:16:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.89.2.2 2014/05/18 17:46:13 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1064,7 +1064,6 @@ prelist_update(struct nd_prefixctl *new,
 	struct nd_prefix *pr;
 	int s = splsoftnet();
 	int error = 0;
-	int newprefix = 0;
 	int auth;
 	struct in6_addrlifetime lt6_tmp;
 
@@ -1121,8 +1120,6 @@ prelist_update(struct nd_prefixctl *new,
 			pfxrtr_add(pr, dr);
 	} else {
 		struct nd_prefix *newpr = NULL;
-
-		newprefix = 1;
 
 		if (new->ndpr_vltime == 0)
 			goto end;

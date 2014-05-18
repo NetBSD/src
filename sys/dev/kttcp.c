@@ -1,4 +1,4 @@
-/*	$NetBSD: kttcp.c,v 1.30.10.1 2013/08/28 15:21:48 rmind Exp $	*/
+/*	$NetBSD: kttcp.c,v 1.30.10.2 2014/05/18 17:45:35 rmind Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.30.10.1 2013/08/28 15:21:48 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.30.10.2 2014/05/18 17:45:35 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -75,8 +75,17 @@ void	kttcpattach(int);
 dev_type_ioctl(kttcpioctl);
 
 const struct cdevsw kttcp_cdevsw = {
-	nullopen, nullclose, noread, nowrite, kttcpioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
+	.d_open = nullopen,
+	.d_close = nullclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = kttcpioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER
 };
 
 void
@@ -226,10 +235,10 @@ kttcp_sosend(struct socket *so, unsigned long long slen,
 		}
 		if ((so->so_state & SS_ISCONNECTED) == 0) {
 			if (so->so_proto->pr_flags & PR_CONNREQUIRED) {
-				if ((so->so_state & SS_ISCONFIRMING) == 0)
-					snderr(ENOTCONN);
-			} else
+				snderr(ENOTCONN);
+			} else {
 				snderr(EDESTADDRREQ);
+			}
 		}
 		space = sbspace(&so->so_snd);
 		if (flags & MSG_OOB)
@@ -375,10 +384,6 @@ kttcp_soreceive(struct socket *so, unsigned long long slen,
 	if (mp)
 		*mp = NULL;
 	solock(so);
-	if (so->so_state & SS_ISCONFIRMING && resid) {
-		(*pr->pr_usrreqs->pr_generic)(so, PRU_RCVD,
-		    NULL, NULL, NULL, NULL);
-	}
  restart:
 	if ((error = sblock(&so->so_rcv, SBLOCKWAIT(flags))) != 0)
 		return (error);

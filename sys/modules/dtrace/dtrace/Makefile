@@ -3,11 +3,21 @@
 .include "../../Makefile.inc"
 .include "../../Makefile.assym"
 
-ARCHDIR=	${MACHINE}
+.include <bsd.own.mk>
 
-.PATH: ${NETBSDSRCDIR}/external/cddl/osnet/dist/uts/common/dtrace
-.PATH: ${NETBSDSRCDIR}/external/cddl/osnet/dev/dtrace
-.PATH: ${NETBSDSRCDIR}/external/cddl/osnet/dev/dtrace/${ARCHDIR}
+OSNETDIR=${NETBSDSRCDIR}/external/cddl/osnet
+
+.if exists(${OSNETDIR}/dev/dtrace/${MACHINE})
+ARCH=${MACHINE}
+.elif exists(${OSNETDIR}/dev/dtrace/${MACHINE_CPU})
+ARCH=${MACHINE_CPU}
+.else
+.error ${MACHINE} or ${MACHINE_CPU} not supported.
+.endif
+
+.PATH: ${OSNETDIR}/dist/uts/common/dtrace
+.PATH: ${OSNETDIR}/dev/dtrace
+.PATH: ${OSNETDIR}/dev/dtrace/${ARCH}
 
 KMOD=		dtrace
 SRCS=		dtrace.c \
@@ -19,10 +29,10 @@ SRCS+=		dis_tables.c \
 		instr_size.c
 .endif
 
-CPPFLAGS+=	-I${NETBSDSRCDIR}/external/cddl/osnet/sys \
-		-I${NETBSDSRCDIR}/external/cddl/osnet/dev/dtrace \
-		-I${NETBSDSRCDIR}/external/cddl/osnet/dev/dtrace/${ARCHDIR} \
-		-I${NETBSDSRCDIR}/external/cddl/osnet/dist/uts/common \
+CPPFLAGS+=	-I${OSNETDIR}/sys \
+		-I${OSNETDIR}/dev/dtrace \
+		-I${OSNETDIR}/dev/dtrace/${ARCH} \
+		-I${OSNETDIR}/dist/uts/common \
 		-DDIS_MEM
 
 CPPFLAGS+=	-DSMP -DDEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: fiq_subr.S,v 1.4.50.1 2013/08/28 23:59:11 rmind Exp $	*/
+/*	$NetBSD: fiq_subr.S,v 1.4.50.2 2014/05/18 17:44:56 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -57,7 +57,7 @@
 	cps	#PSR_FIQ32_MODE
 #else
 #define	SWITCH_TO_FIQ_MODE						\
-	mrs	r2, cpsr_all					;	\
+	mrs	r2, cpsr					;	\
 	mov	r3, r2						;	\
 	bic	r2, r2, #(PSR_MODE)				;	\
 	orr	r2, r2, #(PSR_FIQ32_MODE)			;	\

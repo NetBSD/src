@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.3 2013/05/01 22:57:37 matt Exp $
+#	$NetBSD: Makefile,v 1.3.6.1 2014/05/18 17:45:02 rmind Exp $
 
 .include <bsd.own.mk>
-.include <bsd.sys.mk>
 .include <bsd.obj.mk>
 .include <bsd.inc.mk>
 
@@ -83,3 +82,5 @@ clean:
 	rm -f $(PROG:.ldd=-s5.ldd) $(PROG:.ldd=-s5mx.ldd)
 	rm -f $(PROG:.ldd=.bas) $(PROG:.ldd=.exp)
 	rm -f arm
+
+.include <bsd.files.mk>

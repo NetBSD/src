@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gzboot,v 1.23.2.1 2013/08/28 23:59:15 rmind Exp $
+#	$NetBSD: Makefile.gzboot,v 1.23.2.2 2014/05/18 17:45:05 rmind Exp $
 
 NOMAN=  # defined
 
@@ -22,6 +22,7 @@ DBG=	-Os
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
+LIBCRTI=
 LIBC=
 LIBCRTBEGIN= 
 LIBCRTEND=      
@@ -36,8 +37,12 @@ STARTFILE= srtbegin.o
 CPPFLAGS+= -nostdinc -I. -I${EVBARM_STAND}/gzboot -I${EVBARM_STAND}/board
 CPPFLAGS+= -I${S} -I${S}/arch -I${S}/lib/libsa
 CPPFLAGS+= -I${S}/../common/dist/zlib
-CPPFLAGS+= -mabi=apcs-gnu -mfloat-abi=soft
-CPPFLAGS+= -mno-thumb -mno-thumb-interwork
+CPPFLAGS+= ${ARM_APCS_FLAGS}
+.if ${HAVE_LLVM:Uno} != "no" || ${HAVE_GCC:U0} >= 48
+CPPFLAGS+=	-marm
+.else
+CPPFLAGS+=	-mno-thumb -mno-thumb-interwork
+.endif
 
 CPPFLAGS+= -D_STANDALONE
 

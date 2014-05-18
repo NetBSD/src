@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_pci.c,v 1.8 2013/04/21 19:59:40 msaitoh Exp $	*/
+/*	$NetBSD: if_athn_pci.c,v 1.8.6.1 2014/05/18 17:45:40 rmind Exp $	*/
 /*	$OpenBSD: if_athn_pci.c,v 1.11 2011/01/08 10:02:32 damien Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_pci.c,v 1.8 2013/04/21 19:59:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_pci.c,v 1.8.6.1 2014/05/18 17:45:40 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -135,6 +135,7 @@ athn_pci_attach(device_t parent, device_t self, void *aux)
 	pcireg_t memtype, reg;
 	pci_product_id_t subsysid;
 	int error;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 	sc->sc_dmat = pa->pa_dmat;
@@ -189,7 +190,7 @@ athn_pci_attach(device_t parent, device_t self, void *aux)
 		    (int)memtype);
 		goto fail;
 	}
-	error = pci_mapreg_map(pa, PCI_MAPREG_START, memtype, 0, &psc->psc_iot,
+	error = pci_mapreg_map(pa, ATHN_PCI_MMBA, memtype, 0, &psc->psc_iot,
 	    &psc->psc_ioh, NULL, &psc->psc_mapsz);
 	if (error != 0) {
 		aprint_error_dev(self, "cannot map register space\n");
@@ -204,7 +205,7 @@ athn_pci_attach(device_t parent, device_t self, void *aux)
 		goto fail1;
 	}
 
-	intrstr = pci_intr_string(psc->psc_pc, psc->psc_pih);
+	intrstr = pci_intr_string(psc->psc_pc, psc->psc_pih, intrbuf, sizeof(intrbuf));
 	psc->psc_ih = pci_intr_establish(psc->psc_pc, psc->psc_pih, IPL_NET,
 	    athn_intr, sc);
 	if (psc->psc_ih == NULL) {

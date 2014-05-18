@@ -1,4 +1,3 @@
-
 /******************************************************************************
  *
  * Module Name: osunixdir - Unix directory access interfaces
@@ -6,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2011, Intel Corp.
+ * Copyright (C) 2000 - 2013, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,6 +41,7 @@
  * POSSIBILITY OF SUCH DAMAGES.
  */
 
+#include <acpi.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,8 +51,6 @@
 #include <ctype.h>
 #include <sys/stat.h>
 
-#include "acpisrc.h"
-
 /*
  * Allocated structure returned from OsOpenDirectory
  */
@@ -60,7 +58,7 @@ typedef struct ExternalFindInfo
 {
     char                        *DirPathname;
     DIR                         *DirPtr;
-    char                        temp_buffer[128];
+    char                        temp_buffer[256];
     char                        *WildcardSpec;
     char                        RequestedFileType;
 
@@ -93,7 +91,7 @@ AcpiOsOpenDirectory (
 
     /* Allocate the info struct that will be returned to the caller */
 
-    ExternalInfo = calloc (sizeof (EXTERNAL_FIND_INFO), 1);
+    ExternalInfo = calloc (1, sizeof (EXTERNAL_FIND_INFO));
     if (!ExternalInfo)
     {
         return (NULL);
@@ -104,6 +102,7 @@ AcpiOsOpenDirectory (
     dir = opendir (DirPathname);
     if (!dir)
     {
+        fprintf (stderr, "Cannot open directory - %s\n", DirPathname);
         free (ExternalInfo);
         return (NULL);
     }
@@ -158,7 +157,8 @@ AcpiOsGetNextFilename (
             temp_str = calloc (str_len, 1);
             if (!temp_str)
             {
-                printf ("Could not allocate buffer for temporary string\n");
+                fprintf (stderr,
+                    "Could not allocate buffer for temporary string\n");
                 return (NULL);
             }
 
@@ -167,12 +167,16 @@ AcpiOsGetNextFilename (
             strcat (temp_str, dir_entry->d_name);
 
             err = stat (temp_str, &temp_stat);
-            free (temp_str);
             if (err == -1)
             {
-                printf ("stat() error - should not happen\n");
+                fprintf (stderr,
+                    "Cannot stat file (should not happen) - %s\n",
+                    temp_str);
+                free (temp_str);
                 return (NULL);
             }
+
+            free (temp_str);
 
             if ((S_ISDIR (temp_stat.st_mode)
                 && (ExternalInfo->RequestedFileType == REQUEST_DIR_ONLY))
@@ -215,37 +219,4 @@ AcpiOsCloseDirectory (
 
     closedir (ExternalInfo->DirPtr);
     free (DirHandle);
-}
-
-
-/* Other functions acpisrc uses but that aren't standard on Unix */
-
-/*******************************************************************************
- *
- * FUNCTION:    strlwr
- *
- * PARAMETERS:  str                 - String to be lowercased.
- *
- * RETURN:      str.
- *
- * DESCRIPTION: Lowercase a string in-place.
- *
- ******************************************************************************/
-
-char *
-strlwr  (
-   char         *str)
-{
-    int         length;
-    int         i;
-
-
-    length = strlen (str);
-
-    for (i = 0; i < length; i++)
-    {
-        str[i] = tolower ((int) str[i]);
-    }
-
-    return (str);
 }

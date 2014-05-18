@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_pci.c,v 1.13.2.1 2013/08/28 23:59:12 rmind Exp $	*/
+/*	$NetBSD: becc_pci.c,v 1.13.2.2 2014/05/18 17:44:59 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc_pci.c,v 1.13.2.1 2013/08/28 23:59:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc_pci.c,v 1.13.2.2 2014/05/18 17:44:59 rmind Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -76,7 +76,8 @@ void		becc_pci_conf_interrupt(void *, int, int, int, int, int *);
 
 int		becc_pci_intr_map(const struct pci_attach_args *,
 		    pci_intr_handle_t *);
-const char	*becc_pci_intr_string(void *, pci_intr_handle_t);
+const char	*becc_pci_intr_string(void *, pci_intr_handle_t,
+		    char *, size_t);
 const struct evcnt *becc_pci_intr_evcnt(void *, pci_intr_handle_t);
 void		*becc_pci_intr_establish(void *, pci_intr_handle_t,
 		    int, int (*)(void *), void *);
@@ -373,10 +374,11 @@ becc_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 }
 
 const char *
-becc_pci_intr_string(void *v, pci_intr_handle_t ih)
+becc_pci_intr_string(void *v, pci_intr_handle_t ih, char *buf, size_t len)
 {
 
-	return (becc_irqnames[ih]);
+	strlcpy(buf, becc_irqnames[ih], len);
+	return buf;
 }
 
 const struct evcnt *

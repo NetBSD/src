@@ -1,4 +1,4 @@
-/*	$NetBSD: tdvfb.c,v 1.5.2.1 2013/08/28 23:59:26 rmind Exp $	*/
+/*	$NetBSD: tdvfb.c,v 1.5.2.2 2014/05/18 17:45:44 rmind Exp $	*/
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.   
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tdvfb.c,v 1.5.2.1 2013/08/28 23:59:26 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tdvfb.c,v 1.5.2.2 2014/05/18 17:45:44 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,7 +211,7 @@ tdvfb_attach(device_t parent, device_t self, void *aux)
 	 */
 	sc->sc_memsize = tdvfb_mem_size(sc);
 
-	aprint_normal_dev(sc->sc_dev, "%d MB framebuffer memory present\n", 
+	aprint_normal_dev(sc->sc_dev, "%zu MB framebuffer memory present\n", 
 	    sc->sc_memsize / 1024 / 1024);
 
 	/* Select video mode, 800x600 32bpp 60Hz by default... */
@@ -347,6 +347,8 @@ tdvfb_videomode_set(struct tdvfb_softc *sc)
 	uint16_t vbackporch, vsyncon, vsyncoff;
 	uint16_t hbackporch, hsyncon, hsyncoff; 
 	uint16_t yheight, xwidth; 
+
+	fbiinit5 = fbiinit6 = 0; /* XXX gcc */
 
 	yheight = sc->sc_videomode->vdisplay;
 	xwidth = sc->sc_videomode->hdisplay;
@@ -746,7 +748,7 @@ tdvfb_gendac_detect(struct tdvfb_softc *sc)
 	    (n_f1 == TDV_GENDAC_DFLT_F1_N) &&
 	    (m_f7 == TDV_GENDAC_DFLT_F7_M) &&
 	    (n_f7 == TDV_GENDAC_DFLT_F7_N) &&
-	    (n_fb == TDV_GENDAC_DFLT_FB_N) &&
+	    (m_fb == TDV_GENDAC_DFLT_FB_M) &&
 	    (n_fb == TDV_GENDAC_DFLT_FB_N) ) {
 		aprint_normal_dev(sc->sc_dev, "ICS 5342 GENDAC\n");
 		return true;

@@ -1,4 +1,4 @@
-/*	$NetBSD: esc.c,v 1.25 2012/10/27 17:17:23 chs Exp $	*/
+/*	$NetBSD: esc.c,v 1.25.2.1 2014/05/18 17:44:53 rmind Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esc.c,v 1.25 2012/10/27 17:17:23 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esc.c,v 1.25.2.1 2014/05/18 17:44:53 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,7 +185,6 @@ esc_init_nexus(struct esc_softc *dev, struct nexus *nexus)
 void
 escinitialize(struct esc_softc *dev)
 {
-	u_int		*pte;
 	int		 i;
 
 	dev->sc_led_status = 0;
@@ -249,9 +248,11 @@ escinitialize(struct esc_softc *dev)
  * Setup pages to noncachable, that way we don't have to flush the cache
  * every time we need "bumped" transfer.
  */
-	pte = vtopte((vaddr_t) dev->sc_bump_va);
-	*pte &= ~L2_C;
-	PTE_SYNC(pte);
+	pt_entry_t * const ptep = vtopte((vaddr_t) dev->sc_bump_va);
+	const pt_entry_t opte = *ptep;
+	const pt_entry_t npte = opte & ~L2_C;
+	l2pte_set(ptep, npte, opte);
+	PTE_SYNC(ptep);
 	cpu_tlb_flushD();
 	cpu_dcache_wbinv_range((vm_offset_t)dev->sc_bump_va, PAGE_SIZE);
 
@@ -1618,11 +1619,9 @@ escintr(struct esc_softc *dev)
 void
 escicmd(struct esc_softc *dev, struct esc_pending *pendp)
 {
-	esc_regmap_p	 rp;
 	struct nexus	*nexus;
 
 	nexus = &dev->sc_nexus[pendp->xs->xs_periph->periph_target];
-	rp = dev->sc_esc;
 
 	if (!escselect(dev, pendp, (char *)pendp->xs->cmd, pendp->xs->cmdlen,
 			(char *)pendp->xs->data, pendp->xs->datalen,

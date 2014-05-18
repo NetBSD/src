@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.h,v 1.5 2008/04/28 20:23:29 martin Exp $	*/
+/*	$NetBSD: loadfile_machdep.h,v 1.5.50.1 2014/05/18 17:45:18 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 #define WARN(a)			warn a
 #define PROGRESS(a)		/* nothing */
 #define ALLOC(a)		malloc(a)
-#define DEALLOC(a, b)		free(a)
+#define DEALLOC(a, b)		free(a), __USE(b)
 #define OKMAGIC(a)		((a) == OMAGIC)
 
 #endif

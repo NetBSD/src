@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ARMADAXP,v 1.4.4.1 2013/08/28 23:59:13 rmind Exp $
+#	$NetBSD: ARMADAXP,v 1.4.4.2 2014/05/18 17:45:03 rmind Exp $
 #
 #	ARMADA XP DEV BOARD
 #
@@ -24,7 +24,8 @@ options 	L2CACHE_ENABLE
 #options 	AURORA_IO_CACHE_COHERENCY
 options 	AURORA_L2_PT_WALK
 
-#options	VERBOSE_INIT_ARM
+#options 	VERBOSE_INIT_ARM
+#options 	MVSOC_CONSOLE_EARLY
 
 # File systems
 file-system	FFS		# UFS
@@ -172,6 +173,7 @@ options 	MEMSIZE=0x80000000
 
 # Marvell SoC Bus
 mvsoc0		at mainbus?
+options 	MVSOC_INTERREGS_PBASE=0xd0000000
 
 # On-chip Timers
 mvsoctmr*	at mvsoc? offset ? irq ?
@@ -196,6 +198,9 @@ m25p0		at spi? slave 0
 
 # TWSI SDRAM Serial Presence Detect
 spdmem0		at iic? addr 0x56
+
+# On-chip Cryptographic Engines and Security Accelerator
+mvcesa* 	at mvsoc? offset ? irq ?
 
 # On-chip USB 2.0 Interface
 ehci*		at mvsoc? offset ? irq ?
@@ -243,6 +248,10 @@ wd*		at atabus? drive ? flags 0x0000
 sd*		at atapibus? drive ? flags 0x0000       # ATAPI disk drives
 uk*		at atapibus? drive ? flags 0x0000       # ATAPI unknown
 
+# On-chip Gigabit Ethernet Controller Interface
+mvgbec* 	at mvsoc? offset ?
+mvgbe*		at mvgbec? port ? irq ?
+
 # On-chip RTC
 mvsocrtc*	at mvsoc? offset ? irq ?
 
@@ -287,6 +296,10 @@ tlphy*		at mii? phy ?		# ThunderLAN internal PHYs
 tqphy*		at mii? phy ?		# TSC Semiconductor 78Q2120 PHYs
 ukphy*		at mii? phy ?		# Generic/unknown PHYs
 urlphy*		at mii? phy ?		# Realtek RTL8150L internal PHYs
+
+# PCI USB devices
+xhci*		at pci? dev ? function ?
+usb*		at xhci?
 
 # Pseudo-Devices
 # disk/mass storage pseudo-devices

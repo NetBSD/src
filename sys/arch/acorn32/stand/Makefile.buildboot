@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.16.4.1 2013/08/28 23:59:10 rmind Exp $
+#	$NetBSD: Makefile.buildboot,v 1.16.4.2 2014/05/18 17:44:53 rmind Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -14,6 +14,7 @@ FILESDIR=/usr/mdec
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
+LIBCRTI=
 LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=
@@ -43,8 +44,12 @@ vers.c: ${.CURDIR}/version
 CPPFLAGS+=	-D_STANDALONE 
 CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
 CPPFLAGS+=	-I${.CURDIR}/../lib
-CPPFLAGS+=	-mabi=apcs-gnu -mfloat-abi=soft -march=armv3m
+CPPFLAGS+=	${ARM_APCS_FLAGS} -march=armv3m
+.if ${HAVE_GCC} < 48
 CPPFLAGS+=	-mno-thumb -mno-thumb-interwork
+.else
+CPPFLAGS+=	-marm
+.endif
 CPUFLAGS=
 CFLAGS=		-O2
 CFLAGS+=	-ffreestanding -fno-unwind-tables

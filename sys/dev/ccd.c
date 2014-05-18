@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.144 2013/04/27 17:13:32 christos Exp $	*/
+/*	$NetBSD: ccd.c,v 1.144.4.1 2014/05/18 17:45:35 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.144 2013/04/27 17:13:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.144.4.1 2014/05/18 17:45:35 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,6 +231,7 @@ ccdcreate(int unit) {
 static void
 ccddestroy(struct ccd_softc *sc) {
 	mutex_obj_free(sc->sc_iolock);
+	mutex_exit(&sc->sc_dvlock);
 	mutex_destroy(&sc->sc_dvlock);
 	cv_destroy(&sc->sc_stop);
 	cv_destroy(&sc->sc_push);
@@ -1271,7 +1272,8 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		disk_detach(&cs->sc_dkdev);
 		bufq_free(cs->sc_bufq);
 		ccdput(cs);
-		break;
+		/* Don't break, otherwise cs is read again. */
+		return 0;
 
 	case DIOCGDINFO:
 		*(struct disklabel *)data = *(cs->sc_dkdev.dk_label);
@@ -1555,14 +1557,16 @@ printiinfo(struct ccdiinfo *ii)
 }
 #endif
 
-MODULE(MODULE_CLASS_DRIVER, ccd, NULL);
+MODULE(MODULE_CLASS_DRIVER, ccd, "dk_subr");
 
 static int
 ccd_modcmd(modcmd_t cmd, void *arg)
 {
-	int bmajor, cmajor, error = 0;
+	int error = 0;
+#ifdef _MODULE
+	int bmajor = -1, cmajor = -1;
+#endif
 
-	bmajor = cmajor = -1;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
@@ -1728,12 +1732,6 @@ SYSCTL_SETUP(sysctl_kern_ccd_setup, "sysctl kern.ccd subtree setup")
 {
 	const struct sysctlnode *node = NULL;
 
-	/* Make sure net.key exists before we register nodes underneath it. */
-	sysctl_createv(clog, 0, NULL, NULL,
-	    CTLFLAG_PERMANENT,
-	    CTLTYPE_NODE, "kern", NULL,
-	    NULL, 0, NULL, 0,
-	    CTL_KERN, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, &node,
 	    CTLFLAG_PERMANENT,
 	    CTLTYPE_NODE, "ccd",

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.243 2013/04/27 20:13:16 christos Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.243.4.1 2014/05/18 17:46:07 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,12 +68,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.243 2013/04/27 20:13:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.243.4.1 2014/05/18 17:46:07 rmind Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
-
-#define SYSCTL_PRIVATE
 
 #include <sys/param.h>
 #define __COMPAT_SYSCTL
@@ -86,7 +84,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.243 2013/04/27 20:13:16 christos E
 #include <sys/syscallargs.h>
 #include <sys/kauth.h>
 #include <sys/ktrace.h>
-#include <sys/cprng.h>
 
 #define	MAXDESCLEN	1024
 MALLOC_DEFINE(M_SYSCTLNODE, "sysctlnode", "sysctl node structures");
@@ -126,13 +123,7 @@ struct sysctlnode sysctl_root = {
 	    CTLFLAG_ROOT|CTLFLAG_READWRITE|
 	    CTLTYPE_NODE,
 	.sysctl_num = 0,
-	/*
-	 * XXX once all ports are on gcc3, we can get rid of this
-	 * ugliness and simply make it into
-	 *
-	 *	.sysctl_size = sizeof(struct sysctlnode),
-	 */
-	sysc_init_field(_sysctl_size, sizeof(struct sysctlnode)),
+	.sysctl_size = sizeof(struct sysctlnode),
 	.sysctl_name = "(root)",
 };
 
@@ -166,8 +157,6 @@ long hostid;
 #define	DEFCORENAME	"%n.core"
 #endif
 char defcorename[MAXPATHLEN] = DEFCORENAME;
-
-cprng_strong_t *sysctl_prng;
 
 /*
  * ********************************************************************
@@ -239,6 +228,7 @@ sysctl_init(void)
 	 * dynamic mib numbers start here
 	 */
 	sysctl_root.sysctl_num = CREATE_BASE;
+	sysctl_basenode_init();
 
         __link_set_foreach(sysctl_setup, sysctl_funcs) {
 		(**sysctl_setup)(NULL);
@@ -260,8 +250,7 @@ sysctl_init(void)
 void
 sysctl_finalize(void)
 {
-        sysctl_prng = cprng_strong_create("sysctl", IPL_NONE,
-					  CPRNG_INIT_ANY|CPRNG_REKEY_ANY);
+
 	sysctl_root.sysctl_flags |= CTLFLAG_PERMANENT;
 }
 
@@ -1434,7 +1423,9 @@ sysctl_lookup(SYSCTLFN_ARGS)
 {
 	int error, rw;
 	size_t sz, len;
-	void *d;
+	void *d, *d_out;
+	uint64_t qval;
+	int ival;
 
 	KASSERT(rw_lock_held(&sysctl_treelock));
 
@@ -1442,6 +1433,9 @@ sysctl_lookup(SYSCTLFN_ARGS)
 		printf("%s: rnode %p wrong version\n", __func__, rnode);
 		return EINVAL;
 	}
+
+	if (newlen == 0)
+		newp = NULL;
 
 	error = 0;
 
@@ -1501,29 +1495,44 @@ sysctl_lookup(SYSCTLFN_ARGS)
 		 * note that we discard const here because we are
 		 * modifying the contents of the node (which is okay
 		 * because it's ours)
+		 *
+		 * It also doesn't matter which field of the union we pick.
 		 */
-		switch (SYSCTL_TYPE(rnode->sysctl_flags)) {
-		case CTLTYPE_BOOL:
-			d = __UNCONST(&rnode->sysctl_bdata);
-			break;
-		case CTLTYPE_INT:
-			d = __UNCONST(&rnode->sysctl_idata);
-			break;
-		case CTLTYPE_QUAD:
-			d = __UNCONST(&rnode->sysctl_qdata);
-			break;
-		default:
-			DPRINTF(("%s: bad type\n", __func__));
-			return EINVAL;
-		}
+		d = __UNCONST(&rnode->sysctl_qdata);
 	} else
 		d = rnode->sysctl_data;
-	if (SYSCTL_TYPE(rnode->sysctl_flags) == CTLTYPE_STRING)
+	d_out = d;
+
+	sz = rnode->sysctl_size;
+	switch (SYSCTL_TYPE(rnode->sysctl_flags)) {
+	case CTLTYPE_INT:
+		/* Allow for 64bit read of 32bit value */
+		if (*oldlenp != sz && *oldlenp == sizeof (uint64_t)) {
+			qval = *(int *)d;
+			d_out = &qval;
+			sz =  sizeof (uint64_t);
+		}
+		break;
+	case CTLTYPE_QUAD:
+		/* Allow for 32bit read of 64bit value */
+		if (*oldlenp != sz && *oldlenp == sizeof (int)) {
+			qval = *(uint64_t *)d;
+			ival = qval;
+			/* Replace out of range values with -1 */
+			if (ival != qval)
+				ival = -1;
+			d_out = &ival;
+			sz =  sizeof (int);
+		}
+		break;
+	case CTLTYPE_STRING:
 		sz = strlen(d) + 1; /* XXX@@@ possible fault here */
-	else
-		sz = rnode->sysctl_size;
+		break;
+	default:
+		break;
+	}
 	if (oldp != NULL) {
-		error = sysctl_copyout(l, d, oldp, MIN(sz, *oldlenp));
+		error = sysctl_copyout(l, d_out, oldp, MIN(sz, *oldlenp));
 		if (error) {
 			DPRINTF(("%s: bad copyout %d\n", __func__, error));
 			return error;
@@ -1534,7 +1543,7 @@ sysctl_lookup(SYSCTLFN_ARGS)
 	/*
 	 * are we done?
 	 */
-	if (newp == NULL || newlen == 0)
+	if (newp == NULL)
 		return 0;
 
 	/*
@@ -1555,29 +1564,45 @@ sysctl_lookup(SYSCTLFN_ARGS)
 			return EINVAL;
 		}
 		error = sysctl_copyin(l, newp, &tmp, sz);
+		if (error)
+			break;
 		if (tmp != true && tmp != false) {
 			DPRINTF(("%s: tmp %d\n", __func__, tmp));
 			return EINVAL;
-		}
-		if (error) {
-			DPRINTF(("%s: copyin %d\n", __func__, error));
-			break;
 		}
 		*(bool *)d = tmp;
 		break;
 	}
 	case CTLTYPE_INT:
 	case CTLTYPE_QUAD:
+		/* Allow 32bit of 64bit integers */
+		if (newlen == sizeof (uint64_t)) {
+			error = sysctl_copyin(l, newp, &qval, sizeof qval);
+		} else if (newlen == sizeof (int)) {
+			error = sysctl_copyin(l, newp, &ival, sizeof ival);
+			qval = ival;
+		} else {
+			goto bad_size;
+		}
+		if (!error) {
+			if (SYSCTL_TYPE(rnode->sysctl_flags) == CTLTYPE_INT) {
+				ival = qval;
+				/* Error out of range values */
+				if (ival != qval)
+					goto bad_size;
+				*(int *)d = ival;
+			} else {
+				*(uint64_t *)d = qval;
+			}
+		}
+		break;
 	case CTLTYPE_STRUCT:
 		/*
 		 * these data must be *exactly* the same size coming
 		 * in.
 		 */
-		if (newlen != sz) {
-			DPRINTF(("%s: bad size %zu != %zu\n", __func__, newlen,
-			    sz));
-			return EINVAL;
-		}
+		if (newlen != sz)
+			goto bad_size;
 		error = sysctl_copyin(l, newp, d, sz);
 		break;
 	case CTLTYPE_STRING: {
@@ -1590,11 +1615,8 @@ sysctl_lookup(SYSCTLFN_ARGS)
 		/*
 		 * too much new string?
 		 */
-		if (newlen > sz) {
-			DPRINTF(("%s: bad size %zu > %zu\n", __func__, newlen,
-			    sz));
-			return EINVAL;
-		}
+		if (newlen > sz)
+			goto bad_size;
 
 		/*
 		 * temporary copy of new inbound string
@@ -1641,6 +1663,10 @@ sysctl_lookup(SYSCTLFN_ARGS)
 	}
 
 	return error;
+
+    bad_size:
+	DPRINTF(("%s: bad size %zu > %zu\n", __func__, newlen, sz));
+	return EINVAL;
 }
 
 /*
@@ -2073,6 +2099,11 @@ sysctl_createv(struct sysctllog **log, int cflags,
 	pnode = root;
 	error = sysctl_locate(NULL, &name[0], namelen - 1, &pnode, &ni);
 	if (error) {
+		/*
+		 * XXX: If you are seeing this printf in early bringup
+		 * stages, perhaps your setfault is not functioning and
+		 * thus kcopy() is mis-behaving.
+		 */
 		printf("sysctl_createv: sysctl_locate(%s) returned %d\n",
 		       nnode.sysctl_name, error);
 		sysctl_unlock();

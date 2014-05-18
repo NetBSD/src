@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.141.6.1 2013/08/28 23:59:22 rmind Exp $
+#	$NetBSD: files.sparc64,v 1.141.6.2 2014/05/18 17:45:26 rmind Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -8,7 +8,7 @@ maxpartitions 8
 
 maxusers 2 8 1024
 
-defflag	opt_sparc_arch.h	SUN4U
+defflag	opt_sparc_arch.h	SUN4U SUN4V
 
 define mainbus {}
 device mainbus: mainbus
@@ -248,6 +248,7 @@ file	arch/sparc64/sparc64/trap.c
 file	arch/sparc64/sparc64/vm_machdep.c
 file	arch/sparc64/sparc64/ipifuncs.c		multiprocessor
 file	arch/sparc64/sparc64/lock_stubs.s
+file	arch/sparc64/sparc64/hvcall.S		sun4v
 
 file	arch/sparc64/sparc64/db_interface.c	ddb | kgdb
 file	arch/sparc64/sparc64/db_machdep.c	ddb
@@ -263,6 +264,9 @@ include "dev/bluetooth/files.bluetooth"
 
 # IEEE1394 Support
 include "dev/ieee1394/files.ieee1394"
+
+# Stack-less Just-In-Time compiler
+include "external/bsd/sljit/conf/files.sljit"
 
 #
 # Compatibility modules

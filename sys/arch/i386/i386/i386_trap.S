@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_trap.S,v 1.1 2013/06/25 00:27:22 uebayasi Exp $	*/
+/*	$NetBSD: i386_trap.S,v 1.1.2.1 2014/05/18 17:45:12 rmind Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
 
 #if 0
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.1 2013/06/25 00:27:22 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.1.2.1 2014/05/18 17:45:12 rmind Exp $");
 #endif
 
 /*
@@ -156,25 +156,16 @@ IDTVEC(trap06)
 IDTVEC_END(trap06)
 #endif
 IDTVEC(trap07)
-#if NNPX > 0
 	pushl	$0			# dummy error code
 	pushl	$T_DNA
 	INTRENTRY
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
 #endif
-	pushl	CPUVAR(SELF)
-	call	*_C_LABEL(npxdna_func)
+	pushl	%esp
+	call	_C_LABEL(fpudna)
 	addl	$4,%esp
-	testl	%eax,%eax
-	jz	calltrap
 	jmp	_C_LABEL(trapreturn)
-#else
-#ifndef XEN
-	sti
-#endif
-	ZTRAP(T_DNA)
-#endif
 IDTVEC_END(trap07)
 IDTVEC(trap08)
 	TRAP(T_DOUBLEFLT)
@@ -234,41 +225,36 @@ IDTVEC_END(trap0f)
 IDTVEC_END(intrspurious)
 
 IDTVEC(trap10)
-#if NNPX > 0
 	/*
 	 * Handle like an interrupt so that we can call npxintr to clear the
 	 * error.  It would be better to handle npx interrupts as traps but
 	 * this is difficult for nested interrupts.
 	 */
 	pushl	$0			# dummy error code
-	pushl	$T_ASTFLT
+	pushl	$T_ARITHTRAP
+.Ldo_fputrap:
 	INTRENTRY
 	movl	CPUVAR(ILEVEL),%ebx
-	pushl	%ebx
 	pushl	%esp
-	pushl	$0			# dummy arg
 	addl	$1,CPUVAR(NTRAP)	# statistical info
 	adcl	$0,CPUVAR(NTRAP)+4
-	call	_C_LABEL(npxintr)
-	addl	$12,%esp
+	call	_C_LABEL(fputrap)
+	addl	$4,%esp
 	jmp	_C_LABEL(trapreturn)
-#else
-	sti
-	ZTRAP(T_ARITHTRAP)
-#endif
 IDTVEC_END(trap10)
 IDTVEC(trap11)
 	TRAP(T_ALIGNFLT)
 IDTVEC_END(trap11)
-#ifdef XEN
-IDTVEC(trap12)
-IDTVEC(trap13)
-#else
+
 IDTVEC(trap12)
 	ZTRAP(T_MCA)
+IDTVEC_END(trap12)
 IDTVEC(trap13)
-	ZTRAP(T_XMM)
-#endif
+	pushl	$0			# dummy error code
+	pushl	$T_XMM
+	jmp	.Ldo_fputrap
+IDTVEC_END(trap13)
+
 IDTVEC(trap14)
 IDTVEC(trap15)
 IDTVEC(trap16)

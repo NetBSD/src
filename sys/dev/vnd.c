@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.225 2013/06/09 13:26:25 christos Exp $	*/
+/*	$NetBSD: vnd.c,v 1.225.2.1 2014/05/18 17:45:35 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.225 2013/06/09 13:26:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.225.2.1 2014/05/18 17:45:35 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -197,12 +197,27 @@ static dev_type_dump(vnddump);
 static dev_type_size(vndsize);
 
 const struct bdevsw vnd_bdevsw = {
-	vndopen, vndclose, vndstrategy, vndioctl, vnddump, vndsize, D_DISK
+	.d_open = vndopen,
+	.d_close = vndclose,
+	.d_strategy = vndstrategy,
+	.d_ioctl = vndioctl,
+	.d_dump = vnddump,
+	.d_psize = vndsize,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw vnd_cdevsw = {
-	vndopen, vndclose, vndread, vndwrite, vndioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = vndopen,
+	.d_close = vndclose,
+	.d_read = vndread,
+	.d_write = vndwrite,
+	.d_ioctl = vndioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_DISK
 };
 
 static int	vnd_match(device_t, cfdata_t, void *);
@@ -601,7 +616,6 @@ vndthread(void *arg)
 	 */
 	while ((vnd->sc_flags & VNF_VUNCONF) == 0) {
 		struct vndxfer *vnx;
-		int flags;
 		struct buf *obp;
 		struct buf *bp;
 
@@ -617,7 +631,6 @@ vndthread(void *arg)
 				wakeup(&vnd->sc_pending);
 		}
 		splx(s);
-		flags = obp->b_flags;
 #ifdef DEBUG
 		if (vnddebug & VDB_FOLLOW)
 			printf("vndthread(%p)\n", obp);
@@ -629,7 +642,7 @@ vndthread(void *arg)
 		}
 #ifdef VND_COMPRESSION
 		/* handle a compressed read */
-		if ((flags & B_READ) != 0 && (vnd->sc_flags & VNF_COMP)) {
+		if ((obp->b_flags & B_READ) != 0 && (vnd->sc_flags & VNF_COMP)) {
 			off_t bn;
 			
 			/* Convert to a byte offset within the file. */
@@ -1045,6 +1058,10 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	    cmd != VNDIOCGET)
 		return ENXIO;
 	vio = (struct vnd_ioctl *)data;
+
+	error = disk_ioctl(&vnd->sc_dkdev, cmd, data, flag, l);
+	if (error != EPASSTHROUGH)
+		return (error);
 
 	/* Must be open for writes for these commands... */
 	switch (cmd) {
@@ -2009,6 +2026,12 @@ vnd_set_geometry(struct vnd_softc *vnd)
 	dg->dg_ntracks = vnd->sc_geom.vng_ntracks;
 	dg->dg_ncylinders = vnd->sc_geom.vng_ncylinders;
 
+#ifdef DEBUG
+	if (vnddebug & VDB_LABEL) {
+		printf("dg->dg_secperunit: %" PRId64 "\n", dg->dg_secperunit);
+		printf("dg->dg_ncylinders: %u\n", dg->dg_ncylinders);
+	}
+#endif
 	disk_set_info(vnd->sc_dev, &vnd->sc_dkdev, NULL);
 }
 
@@ -2016,7 +2039,7 @@ vnd_set_geometry(struct vnd_softc *vnd)
 
 #include <sys/module.h>
 
-MODULE(MODULE_CLASS_DRIVER, vnd, NULL);
+MODULE(MODULE_CLASS_DRIVER, vnd, "zlib");
 CFDRIVER_DECL(vnd, DV_DISK, NULL);
 
 static int

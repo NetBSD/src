@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.98.16.1 2013/08/28 23:59:36 rmind Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.98.16.2 2014/05/18 17:46:12 rmind Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.98.16.1 2013/08/28 23:59:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.98.16.2 2014/05/18 17:46:12 rmind Exp $");
 
 #include "pppoe.h"
 #include "opt_pppoe.h"
@@ -1003,9 +1003,8 @@ pppoe_get_mbuf(size_t len)
 	if (len + sizeof(struct ether_header) > MHLEN) {
 		MCLGET(m, M_DONTWAIT);
 		if ((m->m_flags & M_EXT) == 0) {
-			struct mbuf *n;
-			MFREE(m, n);
-			return 0;
+			m_free(m);
+			return NULL;
 		}
 	}
 	m->m_data += sizeof(struct ether_header);

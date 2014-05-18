@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_conf.c,v 1.2 2013/02/10 23:47:37 rmind Exp $	*/
+/*	$NetBSD: npf_conf.c,v 1.2.4.1 2014/05/18 17:46:13 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conf.c,v 1.2 2013/02/10 23:47:37 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conf.c,v 1.2.4.1 2014/05/18 17:46:13 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -86,7 +86,7 @@ npf_config_init(void)
 
 	/* Load the empty configuration. */
 	dict = prop_dictionary_create();
-	tset = npf_tableset_create();
+	tset = npf_tableset_create(0);
 	rpset = npf_rprocset_create();
 	rlset = npf_ruleset_create(0);
 	nset = npf_ruleset_create(0);
@@ -108,6 +108,11 @@ npf_config_destroy(npf_config_t *nc)
 void
 npf_config_fini(void)
 {
+	mutex_enter(&npf_config_lock);
+	pserialize_perform(npf_config_psz);
+	npf_ifmap_flush();
+	mutex_exit(&npf_config_lock);
+
 	npf_config_destroy(npf_config);
 	pserialize_destroy(npf_config_psz);
 	mutex_destroy(&npf_config_lock);
@@ -151,12 +156,19 @@ npf_config_reload(prop_dictionary_t dict, npf_ruleset_t *rset,
 	npf_config = nc;
 	if (onc == NULL) {
 		/* Initial load, done. */
+		npf_ifmap_flush();
 		mutex_exit(&npf_config_lock);
 		return;
 	}
 
 	/* Synchronise: drain all references. */
 	pserialize_perform(npf_config_psz);
+	if (flush) {
+		npf_ifmap_flush();
+	}
+
+	/* Sync the config proplib data. */
+	npf_tableset_syncdict(tset, dict);
 	mutex_exit(&npf_config_lock);
 
 	/* Finally, it is safe to destroy the old config. */

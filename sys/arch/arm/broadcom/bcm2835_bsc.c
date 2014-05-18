@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_bsc.c,v 1.1 2013/01/05 20:15:17 jakllsch Exp $	*/
+/*	$NetBSD: bcm2835_bsc.c,v 1.1.6.1 2014/05/18 17:44:57 rmind Exp $	*/
 
 /*
  * Copyright (c) 2012 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_bsc.c,v 1.1 2013/01/05 20:15:17 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_bsc.c,v 1.1.6.1 2014/05/18 17:44:57 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -169,7 +169,7 @@ static int
 bsciic_acquire_bus(void *v, int flags)
 {
 	struct bsciic_softc * const sc = v;
-	uint32_t s;
+	uint32_t s __diagused;
 
 	mutex_enter(&sc->sc_buslock);
 

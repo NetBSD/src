@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.73.4.1 2013/08/28 15:21:48 rmind Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.73.4.2 2014/05/18 17:46:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.73.4.1 2013/08/28 15:21:48 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.73.4.2 2014/05/18 17:46:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ struct fifoinfo {
 static int
 fifo_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnode		*a_dvp;
 		struct vnode		**a_vpp;
 		struct componentname	*a_cnp;
@@ -138,7 +138,6 @@ fifo_open(void *v)
 		error = socreate(AF_LOCAL, &rso, SOCK_STREAM, 0, l, NULL);
 		if (error != 0) {
 			kmem_free(fip, sizeof(*fip));
-			vp->v_fifoinfo = NULL;
 			return (error);
 		}
 		fip->fi_readsock = rso;
@@ -146,7 +145,6 @@ fifo_open(void *v)
 		if (error != 0) {
 			(void)soclose(rso);
 			kmem_free(fip, sizeof(*fip));
-			vp->v_fifoinfo = NULL;
 			return (error);
 		}
 		fip->fi_writesock = wso;
@@ -156,7 +154,6 @@ fifo_open(void *v)
 			(void)soclose(wso);
 			(void)soclose(rso);
 			kmem_free(fip, sizeof(*fip));
-			vp->v_fifoinfo = NULL;
 			return (error);
 		}
 		fip->fi_readers = 0;
@@ -165,7 +162,6 @@ fifo_open(void *v)
 		rso->so_state |= SS_CANTSENDMORE;
 		cv_init(&fip->fi_rcv, "fiford");
 		cv_init(&fip->fi_wcv, "fifowr");
-
 		vp->v_fifoinfo = fip;
 	} else {
 		wso = fip->fi_writesock;

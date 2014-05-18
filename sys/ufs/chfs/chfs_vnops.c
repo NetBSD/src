@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnops.c,v 1.17 2013/06/23 07:28:37 dholland Exp $	*/
+/*	$NetBSD: chfs_vnops.c,v 1.17.2.1 2014/05/18 17:46:21 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -53,9 +53,9 @@
 int
 chfs_lookup(void *v)
 {
-	struct vnode *dvp = ((struct vop_lookup_args *) v)->a_dvp;
-	struct vnode **vpp = ((struct vop_lookup_args *) v)->a_vpp;
-	struct componentname *cnp = ((struct vop_lookup_args *) v)->a_cnp;
+	struct vnode *dvp = ((struct vop_lookup_v2_args *) v)->a_dvp;
+	struct vnode **vpp = ((struct vop_lookup_v2_args *) v)->a_vpp;
+	struct componentname *cnp = ((struct vop_lookup_v2_args *) v)->a_cnp;
 
 	int error;
 	struct chfs_inode* ip;
@@ -161,12 +161,15 @@ chfs_lookup(void *v)
 	}
 
 out:
-	/* If there were no errors, *vpp cannot be null and it must be
-	 * locked. */
-	KASSERT(IFF(error == 0, *vpp != NULL && VOP_ISLOCKED(*vpp)));
+	/* If there were no errors, *vpp cannot be NULL. */
+	KASSERT(IFF(error == 0, *vpp != NULL));
 	KASSERT(VOP_ISLOCKED(dvp));
 
-	return error;
+	if (error)
+		return error;
+	if (*vpp != dvp)
+		VOP_UNLOCK(*vpp);
+	return 0;
 }
 
 /* --------------------------------------------------------------------- */
@@ -174,7 +177,7 @@ out:
 int
 chfs_create(void *v)
 {
-	struct vop_create_args /* {
+	struct vop_create_v3_args /* {
 				  struct vnode *a_dvp;
 				  struct vnode **a_vpp;
 				  struct componentname *a_cnp;
@@ -207,17 +210,16 @@ chfs_create(void *v)
 int
 chfs_mknod(void *v)
 {
-	struct vnode *dvp = ((struct vop_mknod_args *) v)->a_dvp;
-	struct vnode **vpp = ((struct vop_mknod_args *) v)->a_vpp;
-	struct componentname *cnp = ((struct vop_mknod_args *) v)->a_cnp;
-	struct vattr *vap = ((struct vop_mknod_args *) v)->a_vap;
+	struct vnode *dvp = ((struct vop_mknod_v3_args *) v)->a_dvp;
+	struct vnode **vpp = ((struct vop_mknod_v3_args *) v)->a_vpp;
+	struct componentname *cnp = ((struct vop_mknod_v3_args *) v)->a_cnp;
+	struct vattr *vap = ((struct vop_mknod_v3_args *) v)->a_vap;
 	int mode, err = 0;
 	struct chfs_inode *ip;
 	struct vnode *vp;
 
 	struct ufsmount *ump;
 	struct chfs_mount *chmp;
-	ino_t ino;
 
 	struct chfs_full_dnode *fd;
 	struct buf *bp;
@@ -255,7 +257,6 @@ chfs_mknod(void *v)
 	err = chfs_makeinode(mode, dvp, &vp, cnp, vap->va_type);
 
 	ip = VTOI(vp);
-	ino = ip->ino;
 	if (vap->va_rdev != VNOVAL)
 		ip->rdev = vap->va_rdev;
 
@@ -1181,10 +1182,10 @@ out_unlocked:
 int
 chfs_mkdir(void *v)
 {
-	struct vnode *dvp = ((struct vop_mkdir_args *) v)->a_dvp;
-	struct vnode **vpp = ((struct vop_mkdir_args *)v)->a_vpp;
-	struct componentname *cnp = ((struct vop_mkdir_args *) v)->a_cnp;
-	struct vattr *vap = ((struct vop_mkdir_args *) v)->a_vap;
+	struct vnode *dvp = ((struct vop_mkdir_v3_args *) v)->a_dvp;
+	struct vnode **vpp = ((struct vop_mkdir_v3_args *)v)->a_vpp;
+	struct componentname *cnp = ((struct vop_mkdir_v3_args *) v)->a_cnp;
+	struct vattr *vap = ((struct vop_mkdir_v3_args *) v)->a_vap;
 	dbg("mkdir()\n");
 
 	int mode;
@@ -1246,11 +1247,11 @@ out:
 int
 chfs_symlink(void *v)
 {
-	struct vnode *dvp = ((struct vop_symlink_args *) v)->a_dvp;
-	struct vnode **vpp = ((struct vop_symlink_args *) v)->a_vpp;
-	struct componentname *cnp = ((struct vop_symlink_args *) v)->a_cnp;
-	struct vattr *vap = ((struct vop_symlink_args *) v)->a_vap;
-	char *target = ((struct vop_symlink_args *) v)->a_target;
+	struct vnode *dvp = ((struct vop_symlink_v3_args *) v)->a_dvp;
+	struct vnode **vpp = ((struct vop_symlink_v3_args *) v)->a_vpp;
+	struct componentname *cnp = ((struct vop_symlink_v3_args *) v)->a_cnp;
+	struct vattr *vap = ((struct vop_symlink_v3_args *) v)->a_vap;
+	char *target = ((struct vop_symlink_v3_args *) v)->a_target;
 
 	struct ufsmount *ump;
 	struct chfs_mount *chmp;
@@ -1317,7 +1318,7 @@ chfs_symlink(void *v)
 
 out:
 	if (err)
-		vput(vp);
+		vrele(vp);
 
 	return (err);
 }

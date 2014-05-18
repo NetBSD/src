@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.44 2012/01/11 16:08:57 macallan Exp $ */
+/*	$NetBSD: tcx.c,v 1.44.10.1 2014/05/18 17:45:46 rmind Exp $ */
 
 /*
  *  Copyright (c) 1996, 1998, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.44 2012/01/11 16:08:57 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.44.10.1 2014/05/18 17:45:46 rmind Exp $");
 
 /*
  * define for cg8 emulation on S24 (24-bit version of tcx) for the SS5;
@@ -158,8 +158,17 @@ dev_type_ioctl(tcxioctl);
 dev_type_mmap(tcxmmap);
 
 const struct cdevsw tcx_cdevsw = {
-	tcxopen, tcxclose, noread, nowrite, tcxioctl,
-	nostop, notty, nopoll, tcxmmap, nokqfilter,
+	.d_open = tcxopen,
+	.d_close = tcxclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = tcxioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = tcxmmap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = 0
 };
 
 /* frame buffer generic driver */
@@ -217,7 +226,9 @@ tcxmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
-	return (strcmp(sa->sa_name, OBPNAME) == 0);
+	if (strcmp(sa->sa_name, OBPNAME) == 0)
+		return 100;	/* beat genfb */
+	return 0;
 }
 
 /*
@@ -260,11 +271,8 @@ tcxattach(device_t parent, device_t self, void *args)
 	fb_setsize_obp(fb, fb->fb_type.fb_depth, 1152, 900, node);
 
 	if (sc->sc_8bit) {
-		printf(" (8bit only TCX)");
+		printf(" (8-bit only TCX)\n");
 		ramsize = 1024 * 1024;
-		/* XXX - fix THC and TEC offsets */
-		sc->sc_physaddr[TCX_REG_TEC].oa_base += 0x1000;
-		sc->sc_physaddr[TCX_REG_THC].oa_base += 0x1000;
 	} else {
 		printf(" (S24)\n");
 		ramsize = 4 * 1024 * 1024;
@@ -278,12 +286,19 @@ tcxattach(device_t parent, device_t self, void *args)
 
 	fb->fb_type.fb_type = FBTYPE_TCXCOLOR;
 
-
 	if (sa->sa_nreg != TCX_NREG) {
-		printf("%s: only %d register sets\n",
-			device_xname(self), sa->sa_nreg);
+		aprint_error("\n");
+		aprint_error_dev(self, "only %d register sets\n",
+			sa->sa_nreg);
 		return;
 	}
+	if (sa->sa_reg[TCX_REG_STIP].oa_size < 0x1000) {
+		aprint_error("\n");
+		aprint_error_dev(self, "STIP register too small (0x%x)\n",
+		    sa->sa_reg[TCX_REG_STIP].oa_size);
+		return;
+	}
+
 	memcpy(sc->sc_physaddr, sa->sa_reg,
 	      sa->sa_nreg * sizeof(struct openprom_addr));
 

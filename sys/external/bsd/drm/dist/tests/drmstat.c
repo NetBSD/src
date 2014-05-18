@@ -218,7 +218,7 @@ int main(int argc, char **argv)
 		       info->list[i].high_mark);
 	    }
 	    printf("===== /proc/dri/0/mem =====\n");
-	    sprintf(buf, "cat /proc/dri/0/mem");
+	    snprintf(buf, sizeof(buf), "cat /proc/dri/0/mem");
 	    system(buf);
 #if 1
 	    if (!(bufs = drmMapBufs(fd))) {
@@ -234,7 +234,7 @@ int main(int argc, char **argv)
 			bufs->list[i].address);
 	    }
 	    printf("===== /proc/dri/0/vma =====\n");
-	    sprintf(buf, "cat /proc/dri/0/vma");
+	    snprintf(buf, sizeof(buf), "cat /proc/dri/0/vma");
 	    system(buf);
 #endif
 	    break;
@@ -249,7 +249,7 @@ int main(int argc, char **argv)
 	    }
 	    printf("0x%08lx:0x%04lx added\n", offset, size);
 	    printf("===== /proc/dri/0/mem =====\n");
-	    sprintf(buf, "cat /proc/dri/0/mem");
+	    snprintf(buf, sizeof(buf), "cat /proc/dri/0/mem");
 	    system(buf);
 	    break;
 	case 'r':
@@ -266,7 +266,7 @@ int main(int argc, char **argv)
 	    }
 	    printf("0x%08lx:0x%04lx added\n", offset, size);
 	    printf("===== /proc/dri/0/mem =====\n");
-	    sprintf(buf, "cat /proc/dri/0/mem");
+	    snprintf(buf, sizeof(buf), "cat /proc/dri/0/mem");
 	    system(buf);
 	    break;
 	case 's':
@@ -279,7 +279,7 @@ int main(int argc, char **argv)
 		return 1;
 	    }
 	    printf("0x%04lx byte shm added at 0x%08lx\n", size, handle);
-	    sprintf(buf, "cat /proc/dri/0/vm");
+	    snprintf(buf, sizeof(buf), "cat /proc/dri/0/vm");
 	    system(buf);
 	    break;
 	case 'P':
@@ -293,11 +293,11 @@ int main(int argc, char **argv)
 	    printf("0x%08lx:0x%04lx mapped at %p for pid %d\n",
 		   offset, size, address, getpid());
 	    printf("===== /proc/dri/0/vma =====\n");
-	    sprintf(buf, "cat /proc/dri/0/vma");
+	    snprintf(buf, sizeof(buf), "cat /proc/dri/0/vma");
 	    system(buf);
 	    mprotect((void *)offset, size, PROT_READ);
 	    printf("===== /proc/dri/0/vma =====\n");
-	    sprintf(buf, "cat /proc/dri/0/vma");
+	    snprintf(buf, sizeof(buf), "cat /proc/dri/0/vma");
 	    system(buf);
 	    break;
 	case 'w':
@@ -312,13 +312,13 @@ int main(int argc, char **argv)
 	    printf("0x%08lx:0x%04lx mapped at %p for pid %d\n",
 		   offset, size, address, getpid());
 	    printf("===== /proc/%d/maps =====\n", getpid());
-	    sprintf(buf, "cat /proc/%d/maps", getpid());
+	    snprintf(buf, sizeof(buf), "cat /proc/%d/maps", getpid());
 	    system(buf);
 	    printf("===== /proc/dri/0/mem =====\n");
-	    sprintf(buf, "cat /proc/dri/0/mem");
+	    snprintf(buf, sizeof(buf), "cat /proc/dri/0/mem");
 	    system(buf);
 	    printf("===== /proc/dri/0/vma =====\n");
-	    sprintf(buf, "cat /proc/dri/0/vma");
+	    snprintf(buf, sizeof(buf), "cat /proc/dri/0/vma");
 	    system(buf);
 	    printf("===== READING =====\n");
 	    for (i = 0; i < 0x10; i++)
@@ -336,7 +336,7 @@ int main(int argc, char **argv)
 		printf("%02x ", (unsigned int)((unsigned char *)address)[i]);
 	    printf("\n");
 	    printf("===== /proc/dri/0/vma =====\n");
-	    sprintf(buf, "cat /proc/dri/0/vma");
+	    snprintf(buf, sizeof(buf), "cat /proc/dri/0/vma");
 	    system(buf);
 	    break;
 	case 'L':

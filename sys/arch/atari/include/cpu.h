@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.69 2012/02/02 16:59:42 tsutsui Exp $	*/
+/*	$NetBSD: cpu.h,v 1.69.10.1 2014/05/18 17:45:00 rmind Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -85,7 +85,11 @@ struct clockframe {
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-#define	cpu_need_resched(ci,flags)	{ci->ci_want_resched = 1; setsoftast();}
+#define	cpu_need_resched(ci,flags)	do {	\
+	__USE(flags); 				\
+	ci->ci_want_resched = 1;		\
+	setsoftast();				\
+} while (/*CONSTCOND*/0)
 
 /*
  * Give a profiling tick to the current process from the softclock

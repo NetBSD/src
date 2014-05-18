@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.16.2.1 2013/08/28 23:59:11 rmind Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.16.2.2 2014/05/18 17:44:57 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995-1997 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.16.2.1 2013/08/28 23:59:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.16.2.2 2014/05/18 17:44:57 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,11 +106,12 @@ arm32_vfp_fpscr(struct lwp *l, const void *uap, register_t *retval)
 
 	retval[0] = pcb->pcb_vfp.vfp_fpscr;
 	if (uap) {
+		extern uint32_t vfp_fpscr_changable;
 		struct arm_vfp_fpscr_args ua;
 		int error;
 		if ((error = copyin(uap, &ua, sizeof(ua))) != 0)
 			return (error);
-		if (((ua.fpscr_clear|ua.fpscr_set) & ~VFP_FPSCR_RMODE) != 0)
+		if ((ua.fpscr_clear|ua.fpscr_set) & ~vfp_fpscr_changable)
 			return EINVAL;
 		pcb->pcb_vfp.vfp_fpscr &= ~ua.fpscr_clear;
 		pcb->pcb_vfp.vfp_fpscr |= ua.fpscr_set;

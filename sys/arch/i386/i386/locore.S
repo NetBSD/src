@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.106 2013/06/23 09:00:36 uebayasi Exp $	*/
+/*	$NetBSD: locore.S,v 1.106.2.1 2014/05/18 17:45:12 rmind Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -129,7 +129,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.106 2013/06/23 09:00:36 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.106.2.1 2014/05/18 17:45:12 rmind Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -139,7 +139,6 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.106 2013/06/23 09:00:36 uebayasi Exp $"
 #include "opt_vm86.h"
 #include "opt_xen.h"
 
-#include "npx.h"
 #include "assym.h"
 #include "lapic.h"
 #include "ioapic.h"
@@ -698,8 +697,8 @@ try586:	/* Use the `cpuid' instruction. */
 	 * 2. Enable paging and the rest of it.
 	 */
 	movl	%cr0,%eax		# get control word
-					# enable paging & NPX emulation
-	orl	$(CR0_PE|CR0_PG|CR0_NE|CR0_TS|CR0_EM|CR0_MP|CR0_WP|CR0_AM),%eax
+					# enable paging & NPX
+	orl	$(CR0_PE|CR0_PG|CR0_NE|CR0_TS|CR0_MP|CR0_WP|CR0_AM),%eax
 	movl	%eax,%cr0		# and page NOW!
 
 	pushl	$begin			# jump to high mem
@@ -728,8 +727,8 @@ begin:
 	/* Set up bootstrap stack. */
 	leal	(PROC0_STK_OFF+KERNBASE)(%esi),%eax
 	movl	%eax,_C_LABEL(lwp0uarea)
-	leal	(KSTACK_SIZE-FRAMESIZE)(%eax),%esp
-	movl	%esi,(KSTACK_SIZE+PCB_CR3)(%eax)	# pcb->pcb_cr3
+	leal	(USPACE-FRAMESIZE)(%eax),%esp
+	movl	%esi,PCB_CR3(%eax)	# pcb->pcb_cr3
 	xorl	%ebp,%ebp		# mark end of frames
 
 #if defined(MULTIBOOT)
@@ -826,7 +825,7 @@ begin:
 	movl	%esi, _C_LABEL(lwp0uarea)
 
 	/* Set up bootstrap stack. */
-	leal	(KSTACK_SIZE-FRAMESIZE)(%eax),%esp
+	leal	(USPACE-FRAMESIZE)(%eax),%esp
 	xorl	%ebp,%ebp		# mark end of frames
 
 	addl	$USPACE, %esi
@@ -881,8 +880,9 @@ END(lgdt_finish)
  *
  * This is a trampoline function pushed onto the stack of a newly created
  * process in order to do some additional setup.  The trampoline is entered by
- * cpu_switch()ing to the process, so we abuse the callee-saved registers used
- * by cpu_switch() to store the information about the stub to call.
+ * cpu_switchto()ing to the process, so we abuse the callee-saved
+ * registers used by cpu_switchto() to store the information about the
+ * stub to call.
  * NOTE: This function does not have a normal calling sequence!
  */
 NENTRY(lwp_trampoline)
@@ -1287,41 +1287,10 @@ IDTVEC(svr4_fasttrap)
 	cli
 	jmp	2b
 
-#if NNPX > 0
-/*
- * Special interrupt handlers.  Someday intr0-intr15 will be used to count
- * interrupts.  We'll still need a special exception 16 handler.  The busy
- * latch stuff in probintr() can be moved to npxprobe().
- */
-
-/*
- * void probeintr(void)
- */
-NENTRY(probeintr)
-	ss
-	incl	_C_LABEL(npx_intrs_while_probing)
-	pushl	%eax
-	movb	$0x20,%al	# EOI (asm in strings loses cpp features)
-	outb	%al,$0xa0	# IO_ICU2
-	outb	%al,$0x20	# IO_ICU1
-	movb	$0,%al
-	outb	%al,$0xf0	# clear BUSY# latch
-	popl	%eax
-	iret
-END(probeintr)
-
-/*
- * void probetrap(void)
- */
-NENTRY(probetrap)
-	ss
-	incl	_C_LABEL(npx_traps_while_probing)
-	fnclex
-	iret
-END(probetrap)
-
 /*
  * int npx586bug1(int a, int b)
+ * Used when checking for the FDIV bug on first generations pentiums.
+ * Anything 120MHz or above is fine.
  */
 NENTRY(npx586bug1)
 	fildl	4(%esp)		# x
@@ -1335,7 +1304,6 @@ NENTRY(npx586bug1)
 	popl	%eax
 	ret
 END(npx586bug1)
-#endif /* NNPX > 0 */
 
 /*
  * void sse2_idlezero_page(void *pg)

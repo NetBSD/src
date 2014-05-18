@@ -1,4 +1,4 @@
-/*	$NetBSD: cuda.c,v 1.17.16.1 2013/08/28 23:59:18 rmind Exp $ */
+/*	$NetBSD: cuda.c,v 1.17.16.2 2014/05/18 17:45:16 rmind Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.17.16.1 2013/08/28 23:59:18 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.17.16.2 2014/05/18 17:45:16 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,7 +270,6 @@ cuda_attach(device_t parent, device_t self, void *aux)
 static void
 cuda_init(struct cuda_softc *sc)
 {
-	volatile int i;
 	uint8_t reg;
 
 	reg = cuda_read_reg(sc, vDirB);
@@ -293,7 +292,7 @@ cuda_init(struct cuda_softc *sc)
 	cuda_idle(sc);	/* set ADB bus state to idle */
 
 	/* sort of a device reset */
-	i = cuda_read_reg(sc, vSR);	/* clear interrupt */
+	(void)cuda_read_reg(sc, vSR);	/* clear interrupt */
 	cuda_write_reg(sc, vIER, 0x04); /* no interrupts while clearing */
 	cuda_idle(sc);	/* reset state to idle */
 	delay(150);
@@ -304,7 +303,7 @@ cuda_init(struct cuda_softc *sc)
 	cuda_clear_tip(sc);
 	delay(150);
 	cuda_idle(sc);	/* back to idle state */
-	i = cuda_read_reg(sc, vSR);	/* clear interrupt */
+	(void)cuda_read_reg(sc, vSR);	/* clear interrupt */
 	cuda_write_reg(sc, vIER, 0x84);	/* ints ok now */
 }
 
@@ -506,7 +505,7 @@ static int
 cuda_intr(void *arg)
 {
 	struct cuda_softc *sc = arg;
-	int i, ending, type;
+	int ending, type;
 	uint8_t reg;
 
 	reg = cuda_read_reg(sc, vIFR);		/* Read the interrupts */
@@ -651,7 +650,7 @@ switch_start:
 		break;
 
 	case CUDA_OUT:
-		i = cuda_read_reg(sc, vSR);	/* reset SR-intr in IFR */
+		(void)cuda_read_reg(sc, vSR);	/* reset SR-intr in IFR */
 
 		sc->sc_sent++;
 		if (cuda_intr_state(sc)) {	/* ADB intr low during write */

@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.66.2.1 2013/08/28 23:59:25 rmind Exp $	*/
+/*	$NetBSD: dk.c,v 1.66.2.2 2014/05/18 17:45:36 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.66.2.1 2013/08/28 23:59:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.66.2.2 2014/05/18 17:45:36 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -110,12 +110,27 @@ static dev_type_dump(dkdump);
 static dev_type_size(dksize);
 
 const struct bdevsw dk_bdevsw = {
-	dkopen, dkclose, dkstrategy, dkioctl, dkdump, dksize, D_DISK
+	.d_open = dkopen,
+	.d_close = dkclose,
+	.d_strategy = dkstrategy,
+	.d_ioctl = dkioctl,
+	.d_dump = dkdump,
+	.d_psize = dksize,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw dk_cdevsw = {
-	dkopen, dkclose, dkread, dkwrite, dkioctl,
-	    nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = dkopen,
+	.d_close = dkclose,
+	.d_read = dkread,
+	.d_write = dkwrite,
+	.d_ioctl = dkioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_DISK
 };
 
 static struct dkwedge_softc **dkwedges;
@@ -1446,3 +1461,16 @@ dkwedge_find_partition(device_t parent, daddr_t startblk, uint64_t nblks)
 	return wedge;
 }
 
+const char *
+dkwedge_get_parent_name(dev_t dev)
+{
+	/* XXX: perhaps do this in lookup? */
+	int bmaj = bdevsw_lookup_major(&dk_bdevsw);
+	int cmaj = cdevsw_lookup_major(&dk_cdevsw);
+	if (major(dev) != bmaj && major(dev) != cmaj)
+		return NULL;
+	struct dkwedge_softc *sc = dkwedge_lookup(dev);
+	if (sc == NULL)
+		return NULL;
+	return sc->sc_parent->dk_name;
+}

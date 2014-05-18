@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.11.2.1 2013/08/28 23:59:20 rmind Exp $	*/
+/*	$NetBSD: pmap.h,v 1.11.2.2 2014/05/18 17:45:22 rmind Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -72,6 +72,7 @@
 #define	PMAP_TLB_NUM_PIDS		256
 #define	PMAP_TLB_MAX			1
 #define	PMAP_INVALID_SEGTAB_ADDRESS	((pmap_segtab_t *)0xfeeddead)
+#define	PMAP_TLB_FLUSH_ASID_ON_RESET	false
 
 #define	pmap_phys_address(x)		(x)
 

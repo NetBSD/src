@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.111.2.2 2013/08/28 15:21:48 rmind Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.111.2.3 2014/05/18 17:46:13 rmind Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.111.2.2 2013/08/28 15:21:48 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.111.2.3 2014/05/18 17:46:13 rmind Exp $");
 
 #include "opt_ipsec.h"
 
@@ -180,7 +180,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 		return IPPROTO_DONE;
 	}
 
-	CIRCLEQ_FOREACH(inph, &raw6cbtable->inpt_queue, inph_queue) {
+	TAILQ_FOREACH(inph, &raw6cbtable->inpt_queue, inph_queue) {
 		in6p = (struct in6pcb *)inph;
 		if (in6p->in6p_af != AF_INET6)
 			continue;
@@ -887,11 +887,6 @@ sysctl_net_inet6_raw6_setup(struct sysctllog **clog)
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "net", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "inet6", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_NET, PF_INET6, CTL_EOL);
@@ -917,3 +912,11 @@ sysctl_net_inet6_raw6_setup(struct sysctllog **clog)
 		       CTL_NET, PF_INET6, IPPROTO_RAW, RAW6CTL_STATS,
 		       CTL_EOL);
 }
+
+PR_WRAP_USRREQ(rip6_usrreq)
+
+#define	rip6_usrreq		rip6_usrreq_wrapper
+
+const struct pr_usrreqs rip6_usrreqs = {
+	.pr_generic	= rip6_usrreq,
+};

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18.16.1 2013/08/28 23:59:10 rmind Exp $
+#	$NetBSD: Makefile,v 1.18.16.2 2014/05/18 17:44:55 rmind Exp $
 
 ### what we need:
 
@@ -53,10 +53,10 @@ INCPATH += -I${.CURDIR}/../boot -I${.CURDIR}/../../..
 INCPATH += -I${.CURDIR}/../elf2bb -I${.OBJDIR}
 
 AFLAGS += -m68030 -l
-CAFLAGS += -Wa,-l -Wa,-m68030 ${INCPATH} -D_PRIMARY_BOOT
+CAFLAGS += -Wa,-l -Wa,-march=68030 -Wa,-mcpu=68030 ${INCPATH} -D_PRIMARY_BOOT
 
 COPTIM= -Os -fomit-frame-pointer -fcse-follow-jumps -fcse-skip-blocks
-COPTIM+= -Wa,-l -m68060 -Wa,-m68030 -fno-unwind-tables
+COPTIM+= -Wa,-l -m68060 -Wa,-mcpu=68030 -fno-unwind-tables
 CFLAGS= -ffreestanding ${COPTIM} ${INCPATH} ${DEFS} -Wall #-Wstrict-prototypes
 
 NETBSD_VERS!=	${HOST_SH} ${.CURDIR}/../../../../../conf/osrelease.sh

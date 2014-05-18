@@ -1,4 +1,4 @@
-/*	$NetBSD: svwsata.c,v 1.17 2013/04/28 00:47:56 macallan Exp $	*/
+/*	$NetBSD: svwsata.c,v 1.17.4.1 2014/05/18 17:45:44 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.17 2013/04/28 00:47:56 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.17.4.1 2014/05/18 17:45:44 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,7 +41,7 @@ static void svwsata_mapreg_dma(struct pciide_softc *,
 static void svwsata_mapchan(struct pciide_channel *);
 
 CFATTACH_DECL_NEW(svwsata, sizeof(struct pciide_softc),
-    svwsata_match, svwsata_attach, NULL, NULL);
+    svwsata_match, svwsata_attach, pciide_detach, NULL);
 
 static const struct pciide_product_desc pciide_svwsata_products[] =  {
 	{ PCI_PRODUCT_SERVERWORKS_K2_SATA,
@@ -109,6 +109,7 @@ svwsata_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 	pcireg_t interface;
 	const char *intrstr;
 	int channel;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	/* The 4-port version has a dummy second function. */
 	if (pci_conf_read(sc->sc_pc, sc->sc_tag,
@@ -158,7 +159,7 @@ svwsata_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 		    "couldn't map native-PCI interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, intrhandle);
+	intrstr = pci_intr_string(pa->pa_pc, intrhandle, intrbuf, sizeof(intrbuf));
 	sc->sc_pci_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_BIO,
 	    pciide_pci_intr, sc);
 	if (sc->sc_pci_ih != NULL) {

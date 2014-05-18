@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.94.2.1 2013/08/28 23:59:11 rmind Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.94.2.2 2014/05/18 17:44:56 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.94.2.1 2013/08/28 23:59:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.94.2.2 2014/05/18 17:44:56 rmind Exp $");
 
 #include "opt_modular.h"
 #include "opt_md.h"
@@ -99,11 +99,14 @@ void *	msgbufaddr;
 extern paddr_t msgbufphys;
 
 int kernel_debug = 0;
+int cpu_printfataltraps = 0;
 int cpu_fpu_present;
+int cpu_hwdiv_present;
 int cpu_neon_present;
 int cpu_simd_present;
 int cpu_simdex_present;
 int cpu_umull_present;
+int cpu_synchprim_present;
 const char *cpu_arch = "";
 
 int cpu_instruction_set_attributes[6];
@@ -254,7 +257,6 @@ cpu_startup(void)
 {
 	vaddr_t minaddr;
 	vaddr_t maxaddr;
-	u_int loop;
 	char pbuf[9];
 
 	/*
@@ -281,10 +283,13 @@ cpu_startup(void)
 	 */
 
 	/* msgbufphys was setup during the secondary boot strap */
-	for (loop = 0; loop < btoc(MSGBUFSIZE); ++loop)
-		pmap_kenter_pa((vaddr_t)msgbufaddr + loop * PAGE_SIZE,
-		    msgbufphys + loop * PAGE_SIZE,
-		    VM_PROT_READ|VM_PROT_WRITE, 0);
+	if (!pmap_extract(pmap_kernel(), (vaddr_t)msgbufaddr, NULL)) {
+		for (u_int loop = 0; loop < btoc(MSGBUFSIZE); ++loop) {
+			pmap_kenter_pa((vaddr_t)msgbufaddr + loop * PAGE_SIZE,
+			    msgbufphys + loop * PAGE_SIZE,
+			    VM_PROT_READ|VM_PROT_WRITE, 0);
+		}
+	}
 	pmap_update(pmap_kernel());
 	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
 
@@ -375,6 +380,15 @@ sysctl_machdep_powersave(SYSCTLFN_ARGS)
 	return (0);
 }
 
+static int
+sysctl_hw_machine_arch(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	node.sysctl_data = l->l_proc->p_md.md_march;
+	node.sysctl_size = strlen(l->l_proc->p_md.md_march) + 1;
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
+}
+
 SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 {
 
@@ -433,6 +447,11 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
+		       CTLTYPE_INT, "hwdiv_present", NULL,
+		       NULL, 0, &cpu_hwdiv_present, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
 		       CTLTYPE_INT, "neon_present", NULL,
 		       NULL, 0, &cpu_neon_present, 0,
 		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
@@ -474,6 +493,28 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTLTYPE_INT, "simdex_present", NULL,
 		       NULL, 0, &cpu_simdex_present, 0,
 		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
+		       CTLTYPE_INT, "synchprim_present", NULL,
+		       NULL, 0, &cpu_synchprim_present, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "printfataltraps", NULL,
+		       NULL, 0, &cpu_printfataltraps, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+
+
+	/*
+	 * We need override the usual CTL_HW HW_MACHINE_ARCH so we
+	 * return the right machine_arch based on the running executable.
+	 */
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
+		       CTLTYPE_STRING, "machine_arch",
+		       SYSCTL_DESCR("Machine CPU class"),
+		       sysctl_hw_machine_arch, 0, NULL, 0,
+		       CTL_HW, HW_MACHINE_ARCH, CTL_EOL);
 }
 
 void
@@ -644,13 +685,17 @@ cpu_uarea_alloc_idlelwp(struct cpu_info *ci)
 void
 cpu_boot_secondary_processors(void)
 {
-	uint32_t mbox;
-	kcpuset_export_u32(kcpuset_attached, &mbox, sizeof(mbox));
-	atomic_swap_32(&arm_cpu_mbox, mbox);
+#ifdef VERBOSE_INIT_ARM
+	printf("%s: writing mbox with %#x\n", __func__, arm_cpu_hatched);
+#endif
+	arm_cpu_mbox = arm_cpu_hatched;
 	membar_producer();
 #ifdef _ARM_ARCH_7
 	__asm __volatile("sev; sev; sev");
 #endif
+	while (arm_cpu_mbox) {
+		__asm("wfe");
+	}
 }
 
 void
@@ -659,23 +704,7 @@ xc_send_ipi(struct cpu_info *ci)
 	KASSERT(kpreempt_disabled());
 	KASSERT(curcpu() != ci);
 
-
-	if (ci) {
-		/* Unicast, remote CPU */
-		printf("%s: -> %s", __func__, ci->ci_data.cpu_name);
-		intr_ipi_send(ci->ci_kcpuset, IPI_XCALL);
-	} else {
-		printf("%s: -> !%s", __func__, ci->ci_data.cpu_name);
-		/* Broadcast to all but ourselves */
-		kcpuset_t *kcp;
-		kcpuset_create(&kcp, (ci != NULL));
-		KASSERT(kcp != NULL);
-		kcpuset_copy(kcp, kcpuset_running);
-		kcpuset_clear(kcp, cpu_index(ci));
-		intr_ipi_send(kcp, IPI_XCALL);
-		kcpuset_destroy(kcp);
-	}
-	printf("\n");
+	intr_ipi_send(ci != NULL ? ci->ci_kcpuset : NULL, IPI_XCALL);
 }
 #endif /* MULTIPROCESSOR */
 
@@ -683,11 +712,11 @@ xc_send_ipi(struct cpu_info *ci)
 bool
 mm_md_direct_mapped_phys(paddr_t pa, vaddr_t *vap)
 {
-	if (physical_start <= pa && pa < physical_end) {
-		*vap = KERNEL_BASE + (pa - physical_start);
-		return true;
+	bool rv;
+	vaddr_t va = pmap_direct_mapped_phys(pa, &rv, 0);
+	if (rv) {
+		*vap = va;
 	}
-
-	return false;
+	return rv;
 }
 #endif

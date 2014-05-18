@@ -1,4 +1,4 @@
-/*	$NetBSD: sdtemp_reg.h,v 1.5.22.1 2013/08/28 23:59:25 rmind Exp $	*/
+/*	$NetBSD: sdtemp_reg.h,v 1.5.22.2 2014/05/18 17:45:37 rmind Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -124,6 +124,12 @@
 #define	STTS_424_MASK			0xFFFF
 #define	STTS_424E_DEVICE_ID		0x0000
 #define	STTS_424E_MASK			0xFFFE
+#define	STTS_3000_DEVICE_ID		0x0200
+#define	STTS_3000_MASK			0xFFFF
+#define	STTS_2002_DEVICE_ID		0x0300
+#define	STTS_2002_MASK			0xFFFF
+#define	STTS_2004_DEVICE_ID		0x2201
+#define	STTS_2004_MASK			0xFFFF
 
 /* According to datasheets, both the CAT6095 and CAT34TS02 have the same ID */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.39 2013/06/04 13:59:16 msaitoh Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.39.2.1 2014/05/18 17:45:30 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.39 2013/06/04 13:59:16 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.39.2.1 2014/05/18 17:45:30 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -233,6 +233,7 @@ static struct lpcib_device {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_QM67_LPC, 1, 0 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_QS67_LPC, 1, 0 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_UM67_LPC, 1, 0 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_Z68_LPC, 1, 0 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_B75_LPC, 1, 0 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_H77_LPC, 1, 0 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_MOBILE_HM70_LPC, 1, 0 },
@@ -261,6 +262,12 @@ static struct lpcib_device {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C226_LPC, 1, 0 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_H81_LPC, 1, 0 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C600_LPC, 1, 0 },
+#if 0
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C2000_PCU_1, 1, 0 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C2000_PCU_2, 1, 0 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C2000_PCU_3, 1, 0 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C2000_PCU_4, 1, 0 },
+#endif
 
 	{ 0, 0, 0, 0 },
 };
@@ -315,7 +322,7 @@ lpcibattach(device_t parent, device_t self, void *aux)
 	 */
 	if (pci_mapreg_map(pa, LPCIB_PCI_PMBASE, PCI_MAPREG_TYPE_IO, 0,
 			   &sc->sc_iot, &sc->sc_ioh, NULL, &sc->sc_iosize)) {
-		aprint_error_dev(self, "can't map power management i/o space");
+		aprint_error_dev(self, "can't map power management i/o space\n");
 		return;
 	}
 
@@ -331,14 +338,14 @@ lpcibattach(device_t parent, device_t self, void *aux)
 		rcba = pci_conf_read(sc->sc_pcib.sc_pc, sc->sc_pcib.sc_tag,
 		     LPCIB_RCBA);
 		if ((rcba & LPCIB_RCBA_EN) == 0) {
-			aprint_error_dev(self, "RCBA is not enabled");
+			aprint_error_dev(self, "RCBA is not enabled\n");
 			return;
 		}
 		rcba &= ~LPCIB_RCBA_EN;
 
 		if (bus_space_map(sc->sc_rcbat, rcba, LPCIB_RCBA_SIZE, 0,
 				  &sc->sc_rcbah)) {
-			aprint_error_dev(self, "RCBA could not be mapped");
+			aprint_error_dev(self, "RCBA could not be mapped\n");
 			return;
 		}
 	}

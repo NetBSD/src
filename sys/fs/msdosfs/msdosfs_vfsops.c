@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.101 2013/04/15 14:10:59 jakllsch Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.101.4.1 2014/05/18 17:46:05 rmind Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.101 2013/04/15 14:10:59 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.101.4.1 2014/05/18 17:46:05 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -119,31 +119,29 @@ const struct vnodeopv_desc * const msdosfs_vnodeopv_descs[] = {
 };
 
 struct vfsops msdosfs_vfsops = {
-	MOUNT_MSDOS,
-	sizeof (struct msdosfs_args),
-	msdosfs_mount,
-	msdosfs_start,
-	msdosfs_unmount,
-	msdosfs_root,
-	(void *)eopnotsupp,		/* vfs_quotactl */
-	msdosfs_statvfs,
-	msdosfs_sync,
-	msdosfs_vget,
-	msdosfs_fhtovp,
-	msdosfs_vptofh,
-	msdosfs_init,
-	msdosfs_reinit,
-	msdosfs_done,
-	msdosfs_mountroot,
-	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
-	vfs_stdextattrctl,
-	msdosfs_suspendctl,
-	genfs_renamelock_enter,
-	genfs_renamelock_exit,
-	(void *)eopnotsupp,
-	msdosfs_vnodeopv_descs,
-	0,
-	{ NULL, NULL },
+	.vfs_name = MOUNT_MSDOS,
+	.vfs_min_mount_data = sizeof (struct msdosfs_args),
+	.vfs_mount = msdosfs_mount,
+	.vfs_start = msdosfs_start,
+	.vfs_unmount = msdosfs_unmount,
+	.vfs_root = msdosfs_root,
+	.vfs_quotactl = (void *)eopnotsupp,
+	.vfs_statvfs = msdosfs_statvfs,
+	.vfs_sync = msdosfs_sync,
+	.vfs_vget = msdosfs_vget,
+	.vfs_fhtovp = msdosfs_fhtovp,
+	.vfs_vptofh = msdosfs_vptofh,
+	.vfs_init = msdosfs_init,
+	.vfs_reinit = msdosfs_reinit,
+	.vfs_done = msdosfs_done,
+	.vfs_mountroot = msdosfs_mountroot,
+	.vfs_snapshot = (void *)eopnotsupp,
+	.vfs_extattrctl = vfs_stdextattrctl,
+	.vfs_suspendctl = msdosfs_suspendctl,
+	.vfs_renamelock_enter = genfs_renamelock_enter,
+	.vfs_renamelock_exit = genfs_renamelock_exit,
+	.vfs_fsync = (void *)eopnotsupp,
+	.vfs_opv_descs = msdosfs_vnodeopv_descs
 };
 
 static int
@@ -156,11 +154,6 @@ msdos_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_attach(&msdosfs_vfsops);
 		if (error != 0)
 			break;
-		sysctl_createv(&msdosfs_sysctl_log, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT,
-			       CTLTYPE_NODE, "vfs", NULL,
-			       NULL, 0, NULL, 0,
-			       CTL_VFS, CTL_EOL);
 		sysctl_createv(&msdosfs_sysctl_log, 0, NULL, NULL,
 			       CTLFLAG_PERMANENT,
 			       CTLTYPE_NODE, "msdosfs",
@@ -269,9 +262,7 @@ msdosfs_mountroot(void)
 		return (error);
 	}
 
-	mutex_enter(&mountlist_lock);
-	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	mutex_exit(&mountlist_lock);
+	mountlist_append(mp);
 	(void)msdosfs_statvfs(mp, &mp->mnt_stat);
 	vfs_unbusy(mp, false, NULL);
 	return (0);
@@ -293,6 +284,8 @@ msdosfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	int error, flags;
 	mode_t accessmode;
 
+	if (args == NULL)
+		return EINVAL;
 	if (*data_len < sizeof *args)
 		return EINVAL;
 
@@ -836,7 +829,7 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 	 * in the directory entry where we could put uid's and gid's.
 	 */
 
-	devvp->v_specmountpoint = mp;
+	spec_node_setmountedfs(devvp, mp);
 
 	return (0);
 
@@ -876,7 +869,7 @@ msdosfs_unmount(struct mount *mp, int mntflags)
 		return (error);
 	pmp = VFSTOMSDOSFS(mp);
 	if (pmp->pm_devvp->v_type != VBAD)
-		pmp->pm_devvp->v_specmountpoint = NULL;
+		spec_node_setmountedfs(pmp->pm_devvp, NULL);
 #ifdef MSDOSFS_DEBUG
 	{
 		struct vnode *vp = pmp->pm_devvp;
@@ -953,7 +946,8 @@ msdosfs_statvfs(struct mount *mp, struct statvfs *sbp)
 int
 msdosfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 {
-	struct vnode *vp, *mvp;
+	struct vnode *vp;
+	struct vnode_iterator *marker;
 	struct denode *dep;
 	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
 	int error, allerror = 0;
@@ -969,46 +963,32 @@ msdosfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 			/* update FATs here */
 		}
 	}
-	/* Allocate a marker vnode. */
-	mvp = vnalloc(mp);
 	fstrans_start(mp, FSTRANS_SHARED);
 	/*
 	 * Write back each (modified) denode.
 	 */
-	mutex_enter(&mntvnode_lock);
-loop:
-	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
-		vmark(mvp, vp);
-		if (vp->v_mount != mp || vismarker(vp))
+	vfs_vnode_iterator_init(mp, &marker);
+	while (vfs_vnode_iterator_next(marker, &vp)) {
+		error = vn_lock(vp, LK_EXCLUSIVE);
+		if (error) {
+			vrele(vp);
 			continue;
-		mutex_enter(vp->v_interlock);
+		}
 		dep = VTODE(vp);
 		if (waitfor == MNT_LAZY || vp->v_type == VNON ||
 		    dep == NULL || (((dep->de_flag &
 		    (DE_ACCESS | DE_CREATE | DE_UPDATE | DE_MODIFIED)) == 0) &&
 		     (LIST_EMPTY(&vp->v_dirtyblkhd) &&
 		      UVM_OBJ_IS_CLEAN(&vp->v_uobj)))) {
-			mutex_exit(vp->v_interlock);
-			continue;
-		}
-		mutex_exit(&mntvnode_lock);
-		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT);
-		if (error) {
-			mutex_enter(&mntvnode_lock);
-			if (error == ENOENT) {
-				(void)vunmark(mvp);
-				goto loop;
-			}
+			vput(vp);
 			continue;
 		}
 		if ((error = VOP_FSYNC(vp, cred,
 		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0)) != 0)
 			allerror = error;
 		vput(vp);
-		mutex_enter(&mntvnode_lock);
 	}
-	mutex_exit(&mntvnode_lock);
-	vnfree(mvp);
+	vfs_vnode_iterator_destroy(marker);
 
 	/*
 	 * Force stale file system control information to be flushed.

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.464.2.1 2013/08/28 23:59:35 rmind Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.464.2.2 2014/05/18 17:46:08 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.464.2.1 2013/08/28 23:59:35 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.464.2.2 2014/05/18 17:46:08 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -117,22 +117,14 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.464.2.1 2013/08/28 23:59:35 rmind
 #include <nfs/nfs_var.h>
 
 static int change_flags(struct vnode *, u_long, struct lwp *);
-static int change_mode(struct vnode *, int, struct lwp *l);
+static int change_mode(struct vnode *, int, struct lwp *);
 static int change_owner(struct vnode *, uid_t, gid_t, struct lwp *, int);
-static int do_open(lwp_t *, struct vnode *, struct pathbuf *, int, int, int *);
 static int do_sys_openat(lwp_t *, int, const char *, int, int, int *);
-static int do_sys_mknodat(struct lwp *, int, const char *, mode_t,
-    dev_t, register_t *, enum uio_seg);
 static int do_sys_mkdirat(struct lwp *l, int, const char *, mode_t,
     enum uio_seg);
 static int do_sys_mkfifoat(struct lwp *, int, const char *, mode_t);
-static int do_sys_chmodat(struct lwp *, int, const char *, int, int);
-static int do_sys_chownat(struct lwp *, int, const char *, uid_t, gid_t, int);
-static int do_sys_accessat(struct lwp *, int, const char *, int ,int);
 static int do_sys_symlinkat(struct lwp *, const char *, int, const char *,
     enum uio_seg);
-static int do_sys_linkat(struct lwp *, int, const char *, int, const char *,
-    int, register_t *);
 static int do_sys_renameat(struct lwp *l, int, const char *, int, const char *,
     enum uio_seg, int);
 static int do_sys_readlinkat(struct lwp *, int, const char *, char *,
@@ -462,6 +454,7 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 	struct vnode *vp;
 	void *data_buf = data;
 	bool vfsopsrele = false;
+	size_t alloc_sz = 0;
 	int error;
 
 	/* XXX: The calling convention of this routine is totally bizarre */
@@ -489,14 +482,15 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 		}
 	}
 
+	/*
+	 * We allow data to be NULL, even for userspace. Some fs's don't need
+	 * it. The others will handle NULL.
+	 */
 	if (data != NULL && data_seg == UIO_USERSPACE) {
 		if (data_len == 0) {
 			/* No length supplied, use default for filesystem */
 			data_len = vfsops->vfs_min_mount_data;
-			if (data_len > VFS_MAX_MOUNT_DATA) {
-				error = EINVAL;
-				goto done;
-			}
+
 			/*
 			 * Hopefully a longer buffer won't make copyin() fail.
 			 * For compatibility with 3.0 and earlier.
@@ -505,7 +499,12 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 			    && data_len < sizeof (struct mnt_export_args30))
 				data_len = sizeof (struct mnt_export_args30);
 		}
-		data_buf = kmem_alloc(data_len, KM_SLEEP);
+		if ((data_len == 0) || (data_len > VFS_MAX_MOUNT_DATA)) {
+			error = EINVAL;
+			goto done;
+		}
+		alloc_sz = data_len;
+		data_buf = kmem_alloc(alloc_sz, KM_SLEEP);
 
 		/* NFS needs the buffer even for mnt_getargs .... */
 		error = copyin(data, data_buf, data_len);
@@ -541,7 +540,7 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 	    	vrele(vp);
 	}
 	if (data_buf != data)
-		kmem_free(data_buf, data_len);
+		kmem_free(data_buf, alloc_sz);
 	return (error);
 }
 
@@ -629,8 +628,7 @@ do_sys_sync(struct lwp *l)
 	int asyncflag;
 
 	mutex_enter(&mountlist_lock);
-	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
-	     mp = nmp) {
+	for (mp = TAILQ_FIRST(&mountlist); mp != NULL; mp = nmp) {
 		if (vfs_busy(mp, &nmp)) {
 			continue;
 		}
@@ -1244,8 +1242,7 @@ do_sys_getvfsstat(struct lwp *l, void *sfsp, size_t bufsize, int flags,
 	maxcount = bufsize / entry_sz;
 	mutex_enter(&mountlist_lock);
 	count = 0;
-	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
-	     mp = nmp) {
+	for (mp = TAILQ_FIRST(&mountlist); mp != NULL; mp = nmp) {
 		if (vfs_busy(mp, &nmp)) {
 			continue;
 		}
@@ -1543,7 +1540,7 @@ chdir_lookup(const char *path, int where, struct vnode **vpp, struct lwp *l)
  * (so we can easily reuse this function from other parts of the kernel,
  * like posix_spawn post-processing).
  */
-static int
+int
 do_open(lwp_t *l, struct vnode *dvp, struct pathbuf *pb, int open_flags, 
 	int open_mode, int *fd)
 {
@@ -1633,9 +1630,18 @@ do_sys_openat(lwp_t *l, int fdat, const char *path, int flags,
 	struct pathbuf *pb;
 	int error;
 
-	error = pathbuf_copyin(path, &pb);
-	if (error)
-		return error;
+#ifdef COMPAT_10	/* XXX: and perhaps later */
+	if (path == NULL) {
+		pb = pathbuf_create(".");
+		if (pb == NULL)
+			return ENOMEM;
+	} else
+#endif
+	{
+		error = pathbuf_copyin(path, &pb);
+		if (error)
+			return error;
+	}
 
 	if (fdat != AT_FDCWD) {
 		/* fd_getvnode() will use the descriptor for us */
@@ -1977,6 +1983,7 @@ dofhopen(struct lwp *l, const void *ufhp, size_t fhsize, int oflags,
 		goto bad;
 	}
 	error = vfs_fhtovp(fh, &vp);
+	vfs_copyinfh_free(fh);
 	if (error != 0) {
 		goto bad;
 	}
@@ -2014,14 +2021,12 @@ dofhopen(struct lwp *l, const void *ufhp, size_t fhsize, int oflags,
 	VOP_UNLOCK(vp);
 	*retval = indx;
 	fd_affix(p, fp, indx);
-	vfs_copyinfh_free(fh);
 	return (0);
 
 bad:
 	fd_abort(p, fp, indx);
 	if (vp != NULL)
 		vput(vp);
-	vfs_copyinfh_free(fh);
 	return (error);
 }
 
@@ -2162,7 +2167,8 @@ sys_mknodat(struct lwp *l, const struct sys_mknodat_args *uap,
 		syscallarg(int) fd;
 		syscallarg(const char *) path;
 		syscallarg(mode_t) mode;
-		syscallarg(uint32_t) dev;
+		syscallarg(int) pad;
+		syscallarg(dev_t) dev;
 	} */
 
 	return do_sys_mknodat(l, SCARG(uap, fd), SCARG(uap, path), 
@@ -2261,14 +2267,16 @@ do_sys_mknodat(struct lwp *l, int fdat, const char *pathname, mode_t mode,
 			error = VOP_MKNOD(nd.ni_dvp, &nd.ni_vp,
 						&nd.ni_cnd, &vattr);
 			if (error == 0)
-				vput(nd.ni_vp);
+				vrele(nd.ni_vp);
+			vput(nd.ni_dvp);
 			break;
 
 		case VOP_CREATE_DESCOFFSET:
 			error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp,
 						&nd.ni_cnd, &vattr);
 			if (error == 0)
-				vput(nd.ni_vp);
+				vrele(nd.ni_vp);
+			vput(nd.ni_dvp);
 			break;
 		}
 	} else {
@@ -2349,7 +2357,8 @@ do_sys_mkfifoat(struct lwp *l, int fdat, const char *path, mode_t mode)
 	vattr.va_mode = (mode & ALLPERMS) &~ p->p_cwdi->cwdi_cmask;
 	error = VOP_MKNOD(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
 	if (error == 0)
-		vput(nd.ni_vp);
+		vrele(nd.ni_vp);
+	vput(nd.ni_dvp);
 	pathbuf_destroy(pb);
 	return (error);
 }
@@ -2358,7 +2367,7 @@ do_sys_mkfifoat(struct lwp *l, int fdat, const char *path, mode_t mode)
  * Make a hard file link.
  */
 /* ARGSUSED */
-static int
+int
 do_sys_linkat(struct lwp *l, int fdpath, const char *path, int fdlink,
     const char *link, int follow, register_t *retval) 
 {
@@ -2506,7 +2515,8 @@ do_sys_symlinkat(struct lwp *l, const char *patharg, int fdat,
 	vattr.va_mode = ACCESSPERMS &~ p->p_cwdi->cwdi_cmask;
 	error = VOP_SYMLINK(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr, path);
 	if (error == 0)
-		vput(nd.ni_vp);
+		vrele(nd.ni_vp);
+	vput(nd.ni_dvp);
 out2:
 	pathbuf_destroy(linkpb);
 out1:
@@ -2932,7 +2942,7 @@ sys_access(struct lwp *l, const struct sys_access_args *uap, register_t *retval)
 	     SCARG(uap, flags), 0);
 }
 
-static int
+int
 do_sys_accessat(struct lwp *l, int fdat, const char *path,
     int mode, int flags)
 {
@@ -3320,7 +3330,7 @@ sys_chmod(struct lwp *l, const struct sys_chmod_args *uap, register_t *retval)
 			      SCARG(uap, mode), 0);
 }
 
-static int
+int
 do_sys_chmodat(struct lwp *l, int fdat, const char *path, int mode, int flags)
 {
 	int error;
@@ -3438,7 +3448,7 @@ sys_chown(struct lwp *l, const struct sys_chown_args *uap, register_t *retval)
 			      SCARG(uap, gid), 0);
 }
 
-static int
+int
 do_sys_chownat(struct lwp *l, int fdat, const char *path, uid_t uid,
    gid_t gid, int flags)
 {
@@ -4565,7 +4575,8 @@ do_sys_mkdirat(struct lwp *l, int fdat, const char *path, mode_t mode,
 	vattr.va_mode = (mode & ACCESSPERMS) &~ p->p_cwdi->cwdi_cmask;
 	error = VOP_MKDIR(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
 	if (!error)
-		vput(nd.ni_vp);
+		vrele(nd.ni_vp);
+	vput(nd.ni_dvp);
 	pathbuf_destroy(pb);
 	return (error);
 }

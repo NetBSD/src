@@ -76,7 +76,7 @@ N8_Status_t N8_SKSGetKeyHandle(const N8_Buffer_t* keyEntryName,
                                N8_SKSKeyHandle_t* keyHandle_p);
 
 N8_Status_t N8_SKSDisplay(N8_SKSKeyHandle_t* keyHandle, 
-                          char string[1024]); 
+                          char *string, size_t stringlength); 
 
 #ifdef __cplusplus
 }

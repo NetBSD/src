@@ -1,4 +1,4 @@
-/*	$NetBSD: voyagerfb.c,v 1.25.6.1 2013/08/28 23:59:26 rmind Exp $	*/
+/*	$NetBSD: voyagerfb.c,v 1.25.6.2 2014/05/18 17:45:45 rmind Exp $	*/
 
 /*
  * Copyright (c) 2009, 2011 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.25.6.1 2013/08/28 23:59:26 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.25.6.2 2014/05/18 17:45:45 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1065,7 +1065,7 @@ voyagerfb_putchar_aa8(void *cookie, int row, int col, u_int c, long attr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct voyagerfb_softc *sc = scr->scr_cookie;
 	uint32_t cmd;
-	int fg, bg;
+	int bg;
 	uint8_t *data;
 	int x, y, wi, he;
 	int i, j, r, g, b, aval, pad;
@@ -1083,7 +1083,6 @@ voyagerfb_putchar_aa8(void *cookie, int row, int col, u_int c, long attr)
 	he = font->fontheight;
 
 	bg = ri->ri_devcmap[(attr >> 16) & 0x0f];
-	fg = ri->ri_devcmap[(attr >> 24) & 0x0f];
 	x = ri->ri_xorigin + col * wi;
 	y = ri->ri_yorigin + row * he;
 	if (c == 0x20) {

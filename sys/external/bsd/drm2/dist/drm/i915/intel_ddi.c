@@ -84,6 +84,9 @@ static enum port intel_ddi_get_encoder_port(struct intel_encoder *intel_encoder)
  * in either FDI or DP modes only, as HDMI connections will work with both
  * of those
  */
+#ifdef __NetBSD__
+static
+#endif
 void intel_prepare_ddi_buffers(struct drm_device *dev, enum port port, bool use_fdi_mode)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
@@ -1354,8 +1357,8 @@ void intel_ddi_prepare_link_retrain(struct drm_encoder *encoder)
 	struct intel_dp *intel_dp = &intel_dig_port->dp;
 	struct drm_i915_private *dev_priv = encoder->dev->dev_private;
 	enum port port = intel_dig_port->port;
-	bool wait;
 	uint32_t val;
+	bool wait = false;
 
 	if (I915_READ(DP_TP_CTL(port)) & DP_TP_CTL_ENABLE) {
 		val = I915_READ(DDI_BUF_CTL(port));

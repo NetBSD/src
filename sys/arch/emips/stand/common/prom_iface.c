@@ -59,11 +59,11 @@ void epmc_halt(void);
 void save_locore(void);
 void restore_locore(void);
 
-
-void *nope(void) {return NULL;}
+static void *nope(void) {return NULL;}
 int getchar(void){return GetChar();}
 
-void real_halt(void *arg)
+static void
+real_halt(void *arg)
 {
     int howto = (int)arg;
     u_int ps = GetPsr();
@@ -99,7 +99,8 @@ void real_halt(void *arg)
     }
 }
 
-void halt(int *unused, int howto)
+static void
+halt(int *unused, int howto)
 {
     /* We must switch to a safe stack! TLB will go down 
      */
@@ -117,10 +118,10 @@ struct callback cb = {
     nope,
     nope,
     nope,
-	getchar,
+    getchar,
     nope,
     nope,
-	printf,
+    printf,
     nope,
     nope,
     nope,
@@ -147,7 +148,7 @@ struct callback cb = {
     nope,
     nope,
     nope,
-	halt
+    halt
 };
 
 typedef char *string_t;
@@ -247,7 +248,7 @@ int init_memory(void)
     /* Make sure we know */
  DoneFirst:
     if ((First == NULL) || (Ours == NULL)) {
-        printf("Bad memory layout (%x,%x), wont work.\n", First, Ours);
+        printf("Bad memory layout (%p, %p), wont work.\n", First, Ours);
         return 0;
     }
 

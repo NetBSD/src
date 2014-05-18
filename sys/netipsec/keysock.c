@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.21.16.1 2013/08/28 15:21:49 rmind Exp $	*/
+/*	$NetBSD: keysock.c,v 1.21.16.2 2014/05/18 17:46:14 rmind Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.21.16.1 2013/08/28 15:21:49 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.21.16.2 2014/05/18 17:46:14 rmind Exp $");
 
 #include "opt_ipsec.h"
 
@@ -754,6 +754,14 @@ const struct pr_usrreqs key_usrreqs = {
 };
 
 DOMAIN_DEFINE(keydomain);
+
+PR_WRAP_USRREQ(key_usrreq)
+
+#define	key_usrreq	key_usrreq_wrapper
+
+const struct pr_usrreqs key_usrreqs = {
+	.pr_generic	= key_usrreq,
+};
 
 const struct protosw keysw[] = {
     {

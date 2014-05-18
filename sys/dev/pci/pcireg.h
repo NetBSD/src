@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.84 2013/04/21 23:46:06 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.84.4.1 2014/05/18 17:45:44 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -751,6 +751,7 @@ struct pci_msix_table_entry {
 #define PCIE_RCR_SERR_NFER	__BIT(1)       /* SERR on Non-Fatal Error En */
 #define PCIE_RCR_SERR_FER	__BIT(2)       /* SERR on Fatal Error Enable */
 #define PCIE_RCR_PME_IE		__BIT(3)       /* PME Interrupt Enable */
+#define PCIE_RCR_CRS_SVE	__BIT(4)       /* CRS Software Visibility En */
 #define PCIE_RSR	0x20	/* Root Status Register */
 #define PCIE_RSR_PME_REQESTER	__BITS(15, 0)  /* PME Requester ID */
 #define PCIE_RSR_PME_STAT	__BIT(16)      /* PME Status */
@@ -1025,5 +1026,10 @@ struct pci_rom {
 #define	PCI_EXTCAPLIST_CAP(ecr)		((ecr) & 0xffff)
 #define	PCI_EXTCAPLIST_VERSION(ecr)	(((ecr) >> 16) & 0xf)
 #define	PCI_EXTCAPLIST_NEXT(ecr)	(((ecr) >> 20) & 0xfff)
+
+/*
+ * Local constants
+ */
+#define PCI_INTRSTR_LEN			64
 
 #endif /* _DEV_PCI_PCIREG_H_ */

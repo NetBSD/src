@@ -1,0 +1,12 @@
+ /* $NetBSD: TODO,v 1.2.4.2 2014/05/18 17:45:26 rmind Exp $ */
+
+Things to be done:
+
+sun4u:
+
+sun4v:
+- 64-bit kernel support
+- 32-bit kernel support
+- libkvm
+- ofwboot: tlb_init_sun4v() hardcodes number of slots to 64
+- sun4v_datatrap: missing implementation

@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.62 2013/06/25 00:27:22 uebayasi Exp $	*/
+/*	$NetBSD: vector.S,v 1.62.2.1 2014/05/18 17:45:12 rmind Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.62 2013/06/25 00:27:22 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.62.2.1 2014/05/18 17:45:12 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -88,7 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.62 2013/06/25 00:27:22 uebayasi Exp $")
 #include "ioapic.h"
 #include "lapic.h"
 
-#include "npx.h"
 #include "assym.h"
 
 /*
@@ -734,6 +733,9 @@ END(xenev_stubs)
 #endif /* XEN */
 
 #include "i386_trap.S"
+#ifdef IPKDB
+#include "i386_trap_ipkdb.S"
+#endif
 
 #ifdef XEN
 

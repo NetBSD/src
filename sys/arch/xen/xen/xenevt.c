@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.39 2011/12/03 22:41:40 bouyer Exp $      */
+/*      $NetBSD: xenevt.c,v 1.39.12.1 2014/05/18 17:45:30 rmind Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.39 2011/12/03 22:41:40 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.39.12.1 2014/05/18 17:45:30 rmind Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -88,8 +88,17 @@ dev_type_open(xenevtopen);
 dev_type_read(xenevtread);
 dev_type_mmap(xenevtmmap);
 const struct cdevsw xenevt_cdevsw = {
-	xenevtopen, nullclose, xenevtread, nowrite, noioctl,
-	nostop, notty, nopoll, xenevtmmap, nokqfilter, D_OTHER
+	.d_open = xenevtopen,
+	.d_close = nullclose,
+	.d_read = xenevtread,
+	.d_write = nowrite,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = xenevtmmap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER
 };
 
 /* minor numbers */

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.52 2012/07/28 23:09:50 matt Exp $ */
+/* $NetBSD: machdep.c,v 1.52.4.1 2014/05/18 17:45:24 rmind Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52 2012/07/28 23:09:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52.4.1 2014/05/18 17:45:24 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -212,7 +212,7 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 	    (u_int)fwhandle, (u_int)magic, (u_int)bootdata, (u_int)reserved);
 #endif
 
-	strcpy(cpu_model, "sb1250");
+	cpu_setmodel("sb1250");
 
 	if (magic == BOOTINFO_MAGIC) {
 		int idx;

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.32.2.1 2013/08/28 23:59:11 rmind Exp $	*/
+/*	$NetBSD: locore.S,v 1.32.2.2 2014/05/18 17:44:56 rmind Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -40,7 +40,7 @@
 /* What size should this really be ? It is only used by init_arm() */
 #define INIT_ARM_STACK_SIZE	2048
 
-	RCSID("$NetBSD: locore.S,v 1.32.2.1 2013/08/28 23:59:11 rmind Exp $")
+	RCSID("$NetBSD: locore.S,v 1.32.2.2 2014/05/18 17:44:56 rmind Exp $")
 
 /*
  * This is for kvm_mkdb, and should be the address of the beginning
@@ -72,7 +72,7 @@ ASENTRY_NP(start)
 #endif
 .L1:
 #ifdef _ARM_ARCH_DWORD_OK
-	strd	r4, [r1], #0x0008	/* Zero the bss */
+	strd	r4, r5, [r1], #0x0008	/* Zero the bss */
 #else
 	str	r4, [r1], #0x0004	/* Zero the bss */
 #endif
@@ -123,8 +123,8 @@ svcstk:
 
 #ifndef OFW
 	/* OFW based systems will used OF_boot() */
-	
-.Lcpufuncs:	
+
+.Lcpufuncs:
 	.word	_C_LABEL(cpufuncs)
 
 ENTRY_NP(cpu_reset)
@@ -218,9 +218,9 @@ ENTRY(dumpsys)
         add     r2, r0, #(PCB_R8)
         stmia   r2, {r8-r13}
 #else
-        strd    r8, [r0, #(PCB_R8)]
-        strd    r10, [r0, #(PCB_R10)]
-        strd    r12, [r0, #(PCB_R12)]
+        strd    r8, r9, [r0, #(PCB_R8)]
+        strd    r10, r11, [r0, #(PCB_R10)]
+        strd    r12, r13, [r0, #(PCB_R12)]
 #endif
 
 	bl	_C_LABEL(dodumpsys)

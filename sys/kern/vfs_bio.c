@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.245 2013/06/28 15:34:21 christos Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.245.2.1 2014/05/18 17:46:08 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.245 2013/06/28 15:34:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.245.2.1 2014/05/18 17:46:08 rmind Exp $");
 
 #include "opt_bufcache.h"
 
@@ -693,7 +693,7 @@ bio_doread(struct vnode *vp, daddr_t blkno, int size, kauth_cred_t cred,
 		brelse(bp, 0);
 
 	if (vp->v_type == VBLK)
-		mp = vp->v_specmountpoint;
+		mp = spec_node_getmountedfs(vp);
 	else
 		mp = vp->v_mount;
 
@@ -800,7 +800,7 @@ bwrite(buf_t *bp)
 	if (vp != NULL) {
 		KASSERT(bp->b_objlock == vp->v_interlock);
 		if (vp->v_type == VBLK)
-			mp = vp->v_specmountpoint;
+			mp = spec_node_getmountedfs(vp);
 		else
 			mp = vp->v_mount;
 	} else {
@@ -1211,7 +1211,7 @@ buf_t *
 geteblk(int size)
 {
 	buf_t *bp;
-	int error;
+	int error __diagused;
 
 	mutex_enter(&bufcache_lock);
 	while ((bp = getnewbuf(0, 0, 0)) == NULL)
@@ -1593,9 +1593,8 @@ int
 buf_syncwait(void)
 {
 	buf_t *bp;
-	int iter, nbusy, nbusy_prev = 0, dcount, ihash;
+	int iter, nbusy, nbusy_prev = 0, ihash;
 
-	dcount = 10000;
 	for (iter = 0; iter < 20;) {
 		mutex_enter(&bufcache_lock);
 		nbusy = 0;
@@ -1807,11 +1806,6 @@ sysctl_kern_buf_setup(void)
 
 	sysctl_createv(&vfsbio_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "kern", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_KERN, CTL_EOL);
-	sysctl_createv(&vfsbio_sysctllog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "buf",
 		       SYSCTL_DESCR("Kernel buffer cache information"),
 		       sysctl_dobuf, 0, NULL, 0,
@@ -1822,11 +1816,6 @@ static void
 sysctl_vm_buf_setup(void)
 {
 
-	sysctl_createv(&vfsbio_sysctllog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "vm", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_VM, CTL_EOL);
 	sysctl_createv(&vfsbio_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "bufcache",

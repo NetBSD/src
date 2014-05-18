@@ -1,4 +1,4 @@
-/*	$NetBSD: ace_ebus.c,v 1.7 2013/06/03 20:26:31 christos Exp $	*/
+/*	$NetBSD: ace_ebus.c,v 1.7.2.1 2014/05/18 17:45:02 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.7 2013/06/03 20:26:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.7.2.1 2014/05/18 17:45:02 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -242,7 +242,7 @@ ace_ebus_attach(device_t parent, device_t self, void *aux)
 	ebus_intr_establish(parent, (void*)ia->ia_cookie, IPL_BIO,
 	    ace_ebus_intr, ace);
 
-	config_pending_incr();
+	config_pending_incr(self);
 
 	error = kthread_create(PRI_NONE, 0, NULL, sysace_thread,
 	    ace, NULL, "%s", device_xname(ace->sc_dev));
@@ -348,7 +348,7 @@ sysace_wedges(void *arg)
 	dkwedge_autodiscover = 1;
 	dkwedge_discover(&sc->sc_dk);
 
-	config_pending_decr();
+	config_pending_decr(sc->sc_dev);
 
 	DBGME(DEBUG_STATUS, printf("Sysace::thread done for %p\n", sc));
 	kthread_exit(0);
@@ -1462,7 +1462,7 @@ sysace_send_config(struct ace_softc *sc, uint32_t *Data, unsigned int nBytes)
  * Rest of code lifted with mods from the dev\ata\wd.c driver
  */
 
-/*	$NetBSD: ace_ebus.c,v 1.7 2013/06/03 20:26:31 christos Exp $ */
+/*	$NetBSD: ace_ebus.c,v 1.7.2.1 2014/05/18 17:45:02 rmind Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -1556,12 +1556,27 @@ dev_type_dump(acedump);
 dev_type_size(acesize);
 
 const struct bdevsw ace_bdevsw = {
-	aceopen, aceclose, acestrategy, aceioctl, acedump, acesize, D_DISK
+	.d_open = aceopen,
+	.d_close = aceclose,
+	.d_strategy = acestrategy,
+	.d_ioctl = aceioctl,
+	.d_dump = acedump,
+	.d_psize = acesize,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw ace_cdevsw = {
-	aceopen, aceclose, aceread, acewrite, aceioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = aceopen,
+	.d_close = aceclose,
+	.d_read = aceread,
+	.d_write = acewrite,
+	.d_ioctl = aceioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_DISK
 };
 
 void  acegetdefaultlabel(struct ace_softc *, struct disklabel *);
@@ -2431,6 +2446,7 @@ acedump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	    va, size, blkno);
 	DELAY(500 * 1000);	/* half a second */
 	err = 0;
+	__USE(err);
 #endif
 
 	acedoingadump = 0;

@@ -142,15 +142,15 @@ typedef struct
    int32_t type;     // Message type (VC_AUDIO_MSG_TYPE)
    union
    {
-	VC_AUDIO_CONFIG_T    config;
-   VC_AUDIO_CONTROL_T   control;
-	VC_AUDIO_OPEN_T  open;
-	VC_AUDIO_CLOSE_T  close;
-	VC_AUDIO_START_T  start;
-	VC_AUDIO_STOP_T  stop;
-	VC_AUDIO_WRITE_T  write;
-	VC_AUDIO_RESULT_T result;
-	VC_AUDIO_COMPLETE_T complete;
+	VC_AUDIO_CONFIG_T	config;
+	VC_AUDIO_CONTROL_T	control;
+	VC_AUDIO_OPEN_T		open;
+	VC_AUDIO_CLOSE_T	close;
+	VC_AUDIO_START_T	start;
+	VC_AUDIO_STOP_T		stop;
+	VC_AUDIO_WRITE_T	write;
+	VC_AUDIO_RESULT_T	result;
+	VC_AUDIO_COMPLETE_T	complete;
    } u;
 } VC_AUDIO_MSG_T;
 

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.58.4.1 2013/08/28 23:59:17 rmind Exp $
+# $NetBSD: Makefile.boot,v 1.58.4.2 2014/05/18 17:45:13 rmind Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -24,6 +24,7 @@ PIE_LDFLAGS=
 STRIPFLAG=	# nothing
 
 LIBCRT0=	# nothing
+LIBCRTI=	# nothing
 LIBCRTBEGIN=	# nothing
 LIBCRTEND=	# nothing
 LIBC=		# nothing
@@ -113,6 +114,7 @@ Z_AS= library
 .include "${S}/lib/libz/Makefile.inc"
 LIBZ= ${ZLIB}
 
+LDSCRIPT ?= $S/arch/i386/conf/stand.ldscript
 
 cleandir distclean: .WAIT cleanlibdir
 
@@ -122,7 +124,7 @@ cleanlibdir:
 LIBLIST= ${LIBI386} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386} ${LIBSA}
 # LIBLIST= ${LIBSA} ${LIBKERN} ${LIBI386} ${LIBSA} ${LIBZ} ${LIBKERN}
 
-CLEANFILES+= ${PROG}.tmp ${PROG}.map ${PROG}.syms vers.c
+CLEANFILES+= ${PROG}.tmp ${PROG}.map ${PROG}.sym vers.c
 
 vers.c: ${VERSIONFILE} ${SOURCES} ${LIBLIST} ${.CURDIR}/../Makefile.boot
 	${HOST_SH} ${S}/conf/newvers_stand.sh ${VERSIONFILE} x86 ${NEWVERSWHAT}
@@ -132,7 +134,7 @@ vers.c: ${VERSIONFILE} ${SOURCES} ${LIBLIST} ${.CURDIR}/../Makefile.boot
 # explicitly pull in the required objects before any other library code.
 ${PROG}: ${OBJS} ${LIBLIST} ${.CURDIR}/../Makefile.boot
 	${_MKTARGET_LINK}
-	bb="$$( ${CC} -o ${PROG}.syms ${LDFLAGS} -Wl,-Ttext,0 -Wl,-cref \
+	bb="$$( ${CC} -o ${PROG}.sym ${LDFLAGS} -Wl,-Ttext,0 -Wl,-cref \
 	    ${OBJS} ${LIBLIST} | ( \
 		while read symbol file; do \
 			[ -z "$$file" ] && continue; \
@@ -148,9 +150,9 @@ ${PROG}: ${OBJS} ${LIBLIST} ${.CURDIR}/../Makefile.boot
 		do :; \
 		done; \
 	) )"; \
-	${CC} -o ${PROG}.syms ${LDFLAGS} -Wl,-Ttext,0 \
+	${CC} -o ${PROG}.sym ${LDFLAGS} -Wl,-Ttext,0 -T ${LDSCRIPT} \
 		-Wl,-Map,${PROG}.map -Wl,-cref ${OBJS} $$bb ${LIBLIST}
-	${OBJCOPY} -O binary ${PROG}.syms ${PROG}
+	${OBJCOPY} -O binary ${PROG}.sym ${PROG}
 
 .include <bsd.prog.mk>
 KLINK_MACHINE=	i386

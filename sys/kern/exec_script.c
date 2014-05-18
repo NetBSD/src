@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.66 2010/11/19 06:44:42 dholland Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.66.22.1 2014/05/18 17:46:07 rmind Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.66 2010/11/19 06:44:42 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.66.22.1 2014/05/18 17:46:07 rmind Exp $");
 
 #if defined(SETUIDSCRIPTS) && !defined(FDSCRIPTS)
 #define FDSCRIPTS		/* Need this for safe set-id scripts. */
@@ -54,19 +54,21 @@ __KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.66 2010/11/19 06:44:42 dholland Ex
 #include <sys/exec_script.h>
 #include <sys/exec_elf.h>
 
-MODULE(MODULE_CLASS_MISC, exec_script, NULL);
+MODULE(MODULE_CLASS_EXEC, exec_script, NULL);
 
-static struct execsw exec_script_execsw[] = {
-	{ SCRIPT_HDR_SIZE,
-	  exec_script_makecmds,
-	  { NULL },
-	  NULL,
-	  EXECSW_PRIO_ANY,
-	  0,
-	  NULL,
-	  NULL,
-	  NULL,
-	  exec_setup_stack },
+static struct execsw exec_script_execsw = {
+	.es_hdrsz = SCRIPT_HDR_SIZE,
+	.es_makecmds = exec_script_makecmds,
+	.u = {
+		.elf_probe_func = NULL,
+	},
+	.es_emul = NULL,
+	.es_prio = EXECSW_PRIO_ANY,
+	.es_arglen = 0,
+	.es_copyargs = NULL,
+	.es_setregs = NULL,
+	.es_coredump = NULL,
+	.es_setup_stack = exec_setup_stack,
 };
 
 static int
@@ -75,12 +77,10 @@ exec_script_modcmd(modcmd_t cmd, void *arg)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		return exec_add(exec_script_execsw,
-		    __arraycount(exec_script_execsw));
+		return exec_add(&exec_script_execsw, 1);
 
 	case MODULE_CMD_FINI:
-		return exec_remove(exec_script_execsw,
-		    __arraycount(exec_script_execsw));
+		return exec_remove(&exec_script_execsw, 1);
 
 	case MODULE_CMD_AUTOUNLOAD:
 		/*
@@ -95,7 +95,7 @@ exec_script_modcmd(modcmd_t cmd, void *arg)
 
 	default:
 		return ENOTTY;
-        }
+	}
 }
 
 /*
@@ -153,13 +153,6 @@ exec_script_makecmds(struct lwp *l, struct exec_package *epp)
 		}
 	}
 	if (cp >= hdrstr + hdrlinelen)
-		return ENOEXEC;
-
-	/*
-	 * If the script has an ELF header, don't exec it.
-	 */
-	if (epp->ep_hdrvalid >= sizeof(ELFMAG)-1 &&
-	    memcmp(hdrstr, ELFMAG, sizeof(ELFMAG)-1) == 0)
 		return ENOEXEC;
 
 	shellname = NULL;
@@ -345,10 +338,10 @@ fail:
 #endif
 
 	/* kill the opened file descriptor, else close the file */
-        if (epp->ep_flags & EXEC_HASFD) {
-                epp->ep_flags &= ~EXEC_HASFD;
-                fd_close(epp->ep_fd);
-        } else if (scriptvp) {
+	if (epp->ep_flags & EXEC_HASFD) {
+		epp->ep_flags &= ~EXEC_HASFD;
+		fd_close(epp->ep_fd);
+	} else if (scriptvp) {
 		vn_lock(scriptvp, LK_EXCLUSIVE | LK_RETRY);
 		VOP_CLOSE(scriptvp, FREAD, l->l_cred);
 		vput(scriptvp);
@@ -363,11 +356,11 @@ fail:
 		kmem_free(shellargp, shellargp_len);
 	}
 
-        /*
-         * free any vmspace-creation commands,
-         * and release their references
-         */
-        kill_vmcmds(&epp->ep_vmcmds);
+	/*
+	 * free any vmspace-creation commands,
+	 * and release their references
+	 */
+	kill_vmcmds(&epp->ep_vmcmds);
 
-        return error;
+	return error;
 }

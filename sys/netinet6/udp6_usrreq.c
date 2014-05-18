@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.91.4.2 2013/08/28 15:21:48 rmind Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.91.4.3 2014/05/18 17:46:13 rmind Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.91.4.2 2013/08/28 15:21:48 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.91.4.3 2014/05/18 17:46:13 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_csum.h"
@@ -147,9 +147,9 @@ void
 udp6_init(void)
 {
 	sysctl_net_inet6_udp6_setup(NULL);
-#ifdef INET6
 	udp6stat_percpu = percpu_alloc(sizeof(uint64_t) * UDP6_NSTATS);
-#endif
+
+	udp_init_common();
 }
 
 /*
@@ -825,11 +825,7 @@ sysctl_net_inet6_udp6_stats(SYSCTLFN_ARGS)
 static void
 sysctl_net_inet6_udp6_setup(struct sysctllog **clog)
 {
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "net", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, CTL_EOL);
+
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "inet6", NULL,
@@ -886,3 +882,11 @@ udp6_statinc(u_int stat)
 	KASSERT(stat < UDP6_NSTATS);
 	UDP6_STATINC(stat);
 }
+
+PR_WRAP_USRREQ(udp6_usrreq)
+
+#define	udp6_usrreq	udp6_usrreq_wrapper
+
+const struct pr_usrreqs udp6_usrreqs = {
+	.pr_generic	= udp6_usrreq,
+};

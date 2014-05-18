@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.obs405.inc,v 1.7 2013/03/20 06:35:49 kiyohara Exp $
+#	$NetBSD: Makefile.obs405.inc,v 1.7.6.1 2014/05/18 17:45:06 rmind Exp $
 
 CFLAGS+=-mcpu=405
 AFLAGS+=-mcpu=405
@@ -15,8 +15,8 @@ SYSTEM_FIRST_SFILE=	${THISPPC}/obs405/obs200_locore.S
 
 SYSTEM_LD_TAIL_EXTRA+=; \
 	echo ${MKIMG} $@ $@.img ; \
-	OBJDUMP=${OBJDUMP}; OBJCOPY=${OBJCOPY}; export OBJDUMP OBJCOPY; \
-		${MKIMG} $@ $@.img
+	OBJDUMP=${OBJDUMP}; OBJCOPY=${OBJCOPY}; STAT=${TOOL_STAT]; \
+		export OBJDUMP OBJCOPY STAT; ${MKIMG} $@ $@.img
 
 
 .elif ${PRDCTTYPE} == "obs266"
@@ -30,8 +30,8 @@ SYSTEM_FIRST_SFILE=	${POWERPC}/${PPCDIR}/openbios/locore.S
 
 SYSTEM_LD_TAIL_EXTRA+=; \
 	echo ${MKIMG} $@ $@.img ; \
-	OBJDUMP=${OBJDUMP}; OBJCOPY=${OBJCOPY}; export OBJDUMP OBJCOPY; \
-		${MKIMG} $@ $@.img
+	OBJDUMP=${OBJDUMP}; OBJCOPY=${OBJCOPY}; STAT=${TOOL_STAT]; \
+		export OBJDUMP OBJCOPY STAT; ${MKIMG} $@ $@.img
 
 
 .elif ${PRDCTTYPE} == "obs600"
@@ -55,8 +55,8 @@ MKUBOOTIMAGEARGS_GZ=    ${MKUBOOTIMAGEARGS} -C gz
 SYSTEM_LD_TAIL_EXTRA+=; \
 	echo ${OBJCOPY} -S -O binary $@ $@.bin; \
 	${OBJCOPY} -S -O binary $@ $@.bin; \
-	echo "gzip -c $@.bin > $@.bin.gz"; \
-	gzip -c $@.bin > $@.bin.gz; \
+	echo "${TOOL_GZIP} -nc $@.bin > $@.bin.gz"; \
+	${TOOL_GZIP} -nc $@.bin > $@.bin.gz; \
 	echo ${MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS_GZ} $@.bin.gz $@.gz.ub; \
 	${MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS_GZ} $@.bin.gz $@.gz.ub; \
 	echo ${MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS_NONE} $@.bin $@.ub; \

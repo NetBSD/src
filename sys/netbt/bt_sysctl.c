@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_sysctl.c,v 1.2 2006/08/27 11:41:58 plunky Exp $	*/
+/*	$NetBSD: bt_sysctl.c,v 1.2.110.1 2014/05/18 17:46:13 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt_sysctl.c,v 1.2 2006/08/27 11:41:58 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt_sysctl.c,v 1.2.110.1 2014/05/18 17:46:13 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -48,13 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: bt_sysctl.c,v 1.2 2006/08/27 11:41:58 plunky Exp $")
 
 SYSCTL_SETUP(sysctl_net_bluetooth_setup, "sysctl net.bluetooth subtree setup")
 {
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		CTLFLAG_PERMANENT,
-		CTLTYPE_NODE, "net", NULL,
-		NULL, 0,
-		NULL, 0,
-		CTL_NET, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		CTLFLAG_PERMANENT,

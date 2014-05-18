@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.102.2.1 2013/08/28 23:59:22 rmind Exp $ */
+/*	$NetBSD: cpu.h,v 1.102.2.2 2014/05/18 17:45:26 rmind Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -174,6 +174,12 @@ struct cpu_info {
 	pte_t			*ci_tsb_dmmu;
 	pte_t			*ci_tsb_immu;
 
+	/* MMU Fault Status Area (sun4v).
+	 * Will be initialized to the physical address of the bottom of
+	 * the interrupt stack.
+	 */
+	paddr_t			ci_mmfsa;
+
 	/* probe fault in PCI config space reads */
 	bool			ci_pci_probe;
 	bool			ci_pci_fault;
@@ -220,9 +226,8 @@ extern struct pool_cache *fpstate_cache;
 #define	cpu_number()	(curcpu()->ci_index)
 #define	CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CPUF_PRIMARY)
 
-#define CPU_INFO_ITERATOR		int
-#define CPU_INFO_FOREACH(cii, ci)	cii = 0, ci = cpus; ci != NULL; \
-					ci = ci->ci_next
+#define CPU_INFO_ITERATOR		int __unused
+#define CPU_INFO_FOREACH(cii, ci)	ci = cpus; ci != NULL; ci = ci->ci_next
 
 #define curlwp		curcpu()->ci_curlwp
 #define fplwp		curcpu()->ci_fplwp
@@ -349,6 +354,9 @@ void	*sparc_softintr_establish(int, int (*)(void *), void *);
 void	sparc_softintr_schedule(void *);
 void	sparc_softintr_disestablish(void *);
 
+/* cpu.c */
+int	cpu_myid(void);
+
 /* disksubr.c */
 struct dkbad;
 int isbad(struct dkbad *bt, int, int, int);
@@ -373,6 +381,7 @@ void	loadfpstate(struct fpstate64 *);
 void	clearfpstate(void);
 uint64_t	probeget(paddr_t, int, int);
 int	probeset(paddr_t, int, int, uint64_t);
+void	setcputyp(int);
 
 #define	 write_all_windows() __asm volatile("flushw" : : )
 #define	 write_user_windows() __asm volatile("flushw" : : )

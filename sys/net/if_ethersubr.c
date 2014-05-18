@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.194.6.1 2013/08/28 23:59:36 rmind Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.194.6.2 2014/05/18 17:46:12 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.194.6.1 2013/08/28 23:59:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.194.6.2 2014/05/18 17:46:12 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -210,6 +210,8 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 #ifdef NETATALK
 	struct at_ifaddr *aa;
 #endif /* NETATALK */
+
+	KASSERT(KERNEL_LOCKED_P());
 
 #ifdef MBUFTRACE
 	m_claimm(m, ifp->if_mowner);
@@ -577,6 +579,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	uint16_t etype;
 	struct ether_header *eh;
 	size_t ehlen;
+	int isr = 0;
 #if defined (LLC) || defined(NETATALK)
 	struct llc *l;
 #endif
@@ -837,12 +840,12 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 			if (ipflow_fastforward(m))
 				return;
 #endif
-			schednetisr(NETISR_IP);
+			isr = NETISR_IP;
 			inq = &ipintrq;
 			break;
 
 		case ETHERTYPE_ARP:
-			schednetisr(NETISR_ARP);
+			isr = NETISR_ARP;
 			inq = &arpintrq;
 			break;
 
@@ -852,23 +855,27 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 #endif
 #ifdef INET6
 		case ETHERTYPE_IPV6:
+			if (__predict_false(!in6_present)) {
+				m_freem(m);
+				return;
+			}
 #ifdef GATEWAY  
 			if (ip6flow_fastforward(&m))
 				return;
 #endif
-			schednetisr(NETISR_IPV6);
+			isr = NETISR_IPV6;
 			inq = &ip6intrq;
 			break;
 #endif
 #ifdef IPX
 		case ETHERTYPE_IPX:
-			schednetisr(NETISR_IPX);
+			isr = NETISR_IPX;
 			inq = &ipxintrq;
 			break;
 #endif
 #ifdef NETATALK
 		case ETHERTYPE_ATALK:
-			schednetisr(NETISR_ATALK);
+			isr = NETISR_ATALK;
 			inq = &atintrq1;
 			break;
 		case ETHERTYPE_AARP:
@@ -878,7 +885,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 #endif /* NETATALK */
 #ifdef MPLS
 		case ETHERTYPE_MPLS:
-			schednetisr(NETISR_MPLS);
+			isr = NETISR_MPLS;
 			inq = &mplsintrq;
 			break;
 #endif
@@ -905,7 +912,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 					inq = &atintrq2;
 					m_adj(m, sizeof(struct ether_header)
 					    + sizeof(struct llc));
-					schednetisr(NETISR_ATALK);
+					isr = NETISR_ATALK;
 					break;
 				}
 
@@ -939,8 +946,10 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	if (IF_QFULL(inq)) {
 		IF_DROP(inq);
 		m_freem(m);
-	} else
+	} else {
 		IF_ENQUEUE(inq, m);
+		schednetisr(isr);
+	}
 }
 
 /*

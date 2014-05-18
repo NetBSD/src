@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.38 2011/01/14 02:06:26 rmind Exp $	*/
+/*	$NetBSD: proc.h,v 1.38.22.1 2014/05/18 17:45:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -52,7 +52,6 @@ struct mdlwp {
 };
 
 /* md_flags */
-#define	MDL_USEDFPU	0x0001	/* has used the FPU */
 #define	MDL_IOPL	0x0002	/* XEN: i/o privilege */
 
 struct mdproc {
@@ -63,11 +62,5 @@ struct mdproc {
 
 /* md_flags */
 #define MDP_USEDMTRR	0x0002	/* has set volatile MTRRs */
-
-/* Kernel stack parameters. */
-#define	UAREA_PCB_OFFSET	(USPACE - ALIGN(sizeof(struct pcb)))
-#define	KSTACK_LOWEST_ADDR(l)	\
-    ((void *)((vaddr_t)(l)->l_addr - UAREA_PCB_OFFSET))
-#define	KSTACK_SIZE		UAREA_PCB_OFFSET
 
 #endif /* _I386_PROC_H_ */

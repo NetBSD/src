@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.115.10.1 2013/07/17 03:16:31 rmind Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.115.10.2 2014/05/18 17:46:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.115.10.1 2013/07/17 03:16:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.115.10.2 2014/05/18 17:46:12 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -94,10 +94,13 @@ int	tundebug = 0;
 
 extern int ifqmaxlen;
 
-void		tunattach(int);
-static int	tun_ioctl(ifnet_t *, u_long, void *);
-static int	tun_output(ifnet_t *, struct mbuf *,
-			const struct sockaddr *, struct rtentry *);
+static LIST_HEAD(, tun_softc) tun_softc_list;
+static LIST_HEAD(, tun_softc) tunz_softc_list;
+static kmutex_t tun_softc_lock;
+
+static int	tun_ioctl(struct ifnet *, u_long, void *);
+static int	tun_output(struct ifnet *, struct mbuf *,
+			const struct sockaddr *, struct rtentry *rt);
 static int	tun_clone_create(struct if_clone *, int);
 static int	tun_clone_destroy(ifnet_t *);
 
@@ -123,8 +126,17 @@ static struct if_clone tun_cloner =
     IF_CLONE_INITIALIZER("tun", tun_clone_create, tun_clone_destroy);
 
 const struct cdevsw tun_cdevsw = {
-	tunopen, tunclose, tunread, tunwrite, tunioctl,
-	nostop, notty, tunpoll, nommap, tunkqfilter, D_OTHER | D_MPSAFE,
+	.d_open = tunopen,
+	.d_close = tunclose,
+	.d_read = tunread,
+	.d_write = tunwrite,
+	.d_ioctl = tunioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = tunpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = tunkqfilter,
+	.d_flag = D_OTHER | D_MPSAFE
 };
 
 void

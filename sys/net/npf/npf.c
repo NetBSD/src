@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.16 2013/06/02 02:20:04 rmind Exp $	*/
+/*	$NetBSD: npf.c,v 1.16.2.1 2014/05/18 17:46:13 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.16 2013/06/02 02:20:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.16.2.1 2014/05/18 17:46:13 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -73,8 +73,17 @@ static percpu_t *		npf_stats_percpu	__read_mostly;
 static struct sysctllog *	npf_sysctl		__read_mostly;
 
 const struct cdevsw npf_cdevsw = {
-	npf_dev_open, npf_dev_close, npf_dev_read, nowrite, npf_dev_ioctl,
-	nostop, notty, npf_dev_poll, nommap, nokqfilter, D_OTHER | D_MPSAFE
+	.d_open = npf_dev_open,
+	.d_close = npf_dev_close,
+	.d_read = npf_dev_read,
+	.d_write = nowrite,
+	.d_ioctl = npf_dev_ioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = npf_dev_poll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER | D_MPSAFE
 };
 
 static int
@@ -88,6 +97,7 @@ npf_init(void)
 	npf_stats_percpu = percpu_alloc(NPF_STATS_SIZE);
 	npf_sysctl = NULL;
 
+	npf_bpf_sysinit();
 	npf_worker_sysinit();
 	npf_tableset_sysinit();
 	npf_session_sysinit();
@@ -96,6 +106,7 @@ npf_init(void)
 	npf_ext_sysinit();
 
 	/* Load empty configuration. */
+	npf_pfil_register(true);
 	npf_config_init();
 
 #ifdef _MODULE
@@ -112,12 +123,11 @@ npf_init(void)
 static int
 npf_fini(void)
 {
-
 	/* At first, detach device and remove pfil hooks. */
 #ifdef _MODULE
 	devsw_detach(NULL, &npf_cdevsw);
 #endif
-	npf_pfil_unregister();
+	npf_pfil_unregister(true);
 
 	/* Flush all sessions, destroy configuration (ruleset, etc). */
 	npf_session_tracking(false);
@@ -129,6 +139,7 @@ npf_fini(void)
 	npf_nat_sysfini();
 	npf_session_sysfini();
 	npf_tableset_sysfini();
+	npf_bpf_sysfini();
 
 	/* Note: worker is the last. */
 	npf_worker_sysfini();

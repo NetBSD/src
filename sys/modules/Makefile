@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.119 2013/03/12 20:49:22 christos Exp $
+#	$NetBSD: Makefile,v 1.119.6.1 2014/05/18 17:46:10 rmind Exp $
 
 .include <bsd.own.mk>
 
@@ -8,15 +8,23 @@ SUBDIR=		accf_dataready
 SUBDIR+=	accf_httpready
 SUBDIR+=	adosfs
 SUBDIR+=	aio
+SUBDIR+=	blowfish
 SUBDIR+=	bpf
+SUBDIR+=	camellia
+SUBDIR+=	cast128
+SUBDIR+=	ccd
 SUBDIR+=	cd9660
+SUBDIR+=	cgd
+SUBDIR+=	chfs
+SUBDIR+=	crypto
 SUBDIR+=	coda
 SUBDIR+=	coda5
 SUBDIR+=	compat
 SUBDIR+=	compat_ossaudio
 SUBDIR+=	coredump
-SUBDIR+=	chfs
 SUBDIR+=	dbcool
+SUBDIR+=	des
+SUBDIR+=	dk_subr
 SUBDIR+=	efs
 SUBDIR+=	ext2fs
 SUBDIR+=	exec_script
@@ -31,12 +39,18 @@ SUBDIR+=	gpioiic
 SUBDIR+=	gpioow
 SUBDIR+=	gpiosim
 SUBDIR+=	hfs
+SUBDIR+=	hythygtemp
 SUBDIR+=	if_axe
+SUBDIR+=	if_axen
 SUBDIR+=	if_npflog
+SUBDIR+=	if_smsc
 SUBDIR+=	iic
 SUBDIR+=	kernfs
 SUBDIR+=	layerfs
 SUBDIR+=	lfs
+SUBDIR+=	lua
+SUBDIR+=	luasystm
+SUBDIR+=	luapmf
 SUBDIR+=	mfs
 SUBDIR+=	miiverbose
 SUBDIR+=	miniroot
@@ -55,6 +69,7 @@ SUBDIR+=	npf_ext_rndblock
 SUBDIR+=	ntfs
 SUBDIR+=	null
 SUBDIR+=	onewire
+SUBDIR+=	opencrypto
 SUBDIR+=	overlay
 SUBDIR+=	pciverbose
 SUBDIR+=	pf
@@ -70,10 +85,12 @@ SUBDIR+=	secmodel_bsd44
 SUBDIR+=	secmodel_extensions
 SUBDIR+=	secmodel_overlay
 SUBDIR+=	securelevel
+SUBDIR+=	skipjack
 SUBDIR+=	smbfs
 SUBDIR+=	spdmem
 SUBDIR+=	sysvbfs
 SUBDIR+=	suser
+SUBDIR+=	swcrypto
 SUBDIR+=	swsensor
 SUBDIR+=	tmpfs
 SUBDIR+=	uatp
@@ -84,8 +101,11 @@ SUBDIR+=	usbverbose
 SUBDIR+=	vcoda
 SUBDIR+=	v7fs
 SUBDIR+=	vnd
+SUBDIR+=	zlib
 SUBDIR+=	tprof
 .if (defined(NOTYET))
+SUBDIR+=	hifn		# Builds on architectures with PCI bus
+SUBDIR+=	ubsec		# Builds on architectures with PCI bus
 SUBDIR+=	unionfs
 .endif
 .if ${MKBINUTILS} != "no"
@@ -123,11 +143,14 @@ SUBDIR+=	tprof_amdpmi
 SUBDIR+=	vmt
 .endif
 
+.if ${MKSLJIT} != "no"
+# No modules for arm, mips and powerpc yet.
 .if ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "x86_64" || \
     ${MACHINE_ARCH} == "sparc"
 SUBDIR+=	bpfjit
 SUBDIR+=	sljit
+.endif
 .endif
 
 #

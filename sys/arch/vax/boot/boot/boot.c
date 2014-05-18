@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.31 2011/01/22 19:19:24 joerg Exp $ */
+/*	$NetBSD: boot.c,v 1.31.18.1 2014/05/18 17:45:28 rmind Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -93,12 +93,10 @@ struct rpb bootrpb;
 void
 Xmain(void)
 {
-	int io;
 	int j, nu;
 	u_long marks[MARK_MAX];
 	extern const char bootprog_rev[];
 
-	io = 0;
 	skip = 1;
 	autoconf();
 

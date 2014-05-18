@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_machdep.c,v 1.6.6.1 2013/08/28 23:59:13 rmind Exp $	*/
+/*	$NetBSD: bcm53xx_machdep.c,v 1.6.6.2 2014/05/18 17:45:03 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define IDM_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.6.6.1 2013/08/28 23:59:13 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.6.6.2 2014/05/18 17:45:03 rmind Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_broadcom.h"
@@ -200,7 +200,7 @@ initarm(void *arg)
 #ifdef MULTIPROCESSOR
 	uint32_t scu_cfg = bus_space_read_4(bcm53xx_armcore_bst, bcm53xx_armcore_bsh,
 	    ARMCORE_SCU_BASE + SCU_CFG);
-	arm_cpu_max = scu_cfg & SCU_CFG_CPUMAX;
+	arm_cpu_max = 1 + (scu_cfg & SCU_CFG_CPUMAX);
 	membar_producer();
 #endif
 	/*

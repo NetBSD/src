@@ -323,6 +323,7 @@ nsp_attach(device_t parent, device_t self, void *aux)
 	u_int32_t cmd;
 	int res;
 	int ind;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc = device_private(self);
 	sc->sc_dev = self;
@@ -400,7 +401,7 @@ nsp_attach(device_t parent, device_t self, void *aux)
 		    sc->unit);
 		goto fail;
 	}
-	intrstr = pci_intr_string(sc->pa_pc, ih);
+	intrstr = pci_intr_string(sc->pa_pc, ih, intrbuf, sizeof(intrbuf));
 	sc->int_handle = pci_intr_establish(sc->pa_pc, ih, IPL_NET,
 					nsp_intr, sc);
 	if (sc->int_handle == NULL) {

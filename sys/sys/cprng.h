@@ -1,4 +1,4 @@
-/*	$NetBSD: cprng.h,v 1.7.2.1 2013/08/28 23:59:37 rmind Exp $ */
+/*	$NetBSD: cprng.h,v 1.7.2.2 2014/05/18 17:46:21 rmind Exp $ */
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -47,7 +47,6 @@
  */
 #define CPRNG_MAX_LEN	524288
 
-#if !defined(_RUMPKERNEL) && !defined(_RUMP_NATIVE_ABI)
 /*
  * We do not want an arc4random() prototype available to anyone.
  */
@@ -74,11 +73,6 @@ cprng_fast64(void)
 	_arc4randbytes(&r, sizeof(r));
 	return r;
 }
-#else
-size_t cprng_fast(void *, size_t);
-uint32_t cprng_fast32(void);
-uint64_t cprng_fast64(void);
-#endif
 
 typedef struct cprng_strong cprng_strong_t;
 

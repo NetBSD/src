@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_lookup.c,v 1.12.4.1 2013/08/28 23:59:38 rmind Exp $	*/
+/*	$NetBSD: ulfs_lookup.c,v 1.12.4.2 2014/05/18 17:46:21 rmind Exp $	*/
 /*  from NetBSD: ufs_lookup.c,v 1.122 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.12.4.1 2013/08/28 23:59:38 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.12.4.2 2014/05/18 17:46:21 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lfs.h"
@@ -113,7 +113,7 @@ int	lfs_dirchk = 0;
 int
 ulfs_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -684,6 +684,8 @@ found:
 	error = 0;
 
 out:
+	if (error == 0 && *vpp != vdp)
+		VOP_UNLOCK(*vpp);
 	fstrans_done(vdp->v_mount);
 	return error;
 }
@@ -814,7 +816,6 @@ ulfs_direnter(struct vnode *dvp, const struct ulfs_lookup_results *ulr,
     struct componentname *cnp, struct buf *newdirbp)
 {
 	kauth_cred_t cr;
-	struct lwp *l;
 	int newentrysize;
 	struct inode *dp;
 	struct buf *bp;
@@ -830,7 +831,6 @@ ulfs_direnter(struct vnode *dvp, const struct ulfs_lookup_results *ulr,
 
 	error = 0;
 	cr = cnp->cn_cred;
-	l = curlwp;
 
 	dp = VTOI(dvp);
 	newentrysize = LFS_DIRSIZ(0, dirp, 0);
@@ -1068,9 +1068,7 @@ ulfs_dirremove(struct vnode *dvp, const struct ulfs_lookup_results *ulr,
 	struct lfs_direct *ep;
 	struct buf *bp;
 	int error;
-#ifdef LFS_EI
 	const int needswap = ULFS_MPNEEDSWAP(dp->i_lfs);
-#endif
 
 	if (flags & DOWHITEOUT) {
 		/*
@@ -1399,7 +1397,7 @@ ulfs_parentcheck(struct vnode *upper, struct vnode *lower, kauth_cred_t cred,
 		int *found_ret, struct vnode **upperchild_ret)
 {
 	const int needswap = ULFS_IPNEEDSWAP(VTOI(lower));
-	ino_t upper_ino, found_ino;
+	ino_t upper_ino, found_ino = -1;	/* XXX gcc 4.8 */
 	struct vnode *current, *next;
 	int error;
 
@@ -1476,7 +1474,7 @@ int
 ulfs_blkatoff(struct vnode *vp, off_t offset, char **res, struct buf **bpp,
     bool modify)
 {
-	struct inode *ip;
+	struct inode *ip __diagused;
 	struct buf *bp;
 	daddr_t lbn;
 	const int dirrablks = ulfs_dirrablks;

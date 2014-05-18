@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_subr.c,v 1.25 2012/10/24 23:36:15 christos Exp $	*/
+/*	$NetBSD: ptyfs_subr.c,v 1.25.2.1 2014/05/18 17:46:06 rmind Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.25 2012/10/24 23:36:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.25.2.1 2014/05/18 17:46:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,6 @@ static void ptyfs_getinfo(struct ptyfsnode *, struct lwp *);
 static void ptyfs_hashins(struct ptyfsnode *);
 static void ptyfs_hashrem(struct ptyfsnode *);
 
-static struct vnode *ptyfs_used_get(ptyfstype, int, struct mount *, int);
 static struct ptyfsnode *ptyfs_free_get(ptyfstype, int, struct lwp *);
 
 static void ptyfs_rehash(kmutex_t *, struct ptyfs_hashhead **,
@@ -117,7 +116,7 @@ static void ptyfs_rehash(kmutex_t *, struct ptyfs_hashhead **,
 static void
 ptyfs_getinfo(struct ptyfsnode *ptyfs, struct lwp *l)
 {
-	extern struct ptm_pty *ptyfs_save_ptm, ptm_ptyfspty;
+	extern struct ptm_pty *ptyfs_save_ptm;
 
 	if (ptyfs->ptyfs_type == PTYFSroot) {
 		ptyfs->ptyfs_mode = S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|
@@ -127,7 +126,7 @@ ptyfs_getinfo(struct ptyfsnode *ptyfs, struct lwp *l)
 		ptyfs->ptyfs_mode = S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|
 		    S_IROTH|S_IWOTH;
 
-	if (ptyfs_save_ptm != NULL && ptyfs_save_ptm != &ptm_ptyfspty) {
+	if (ptyfs_save_ptm != NULL) {
 		int error;
 		struct pathbuf *pb;
 		struct nameidata nd;
@@ -140,7 +139,7 @@ ptyfs_getinfo(struct ptyfsnode *ptyfs, struct lwp *l)
 		 * from the inode
 		 */
 		if ((error = (*ptyfs_save_ptm->makename)(
-			ptyfs_save_ptm, l, ttyname, sizeof(ttyname),
+			NULL, l, ttyname, sizeof(ttyname),
 			ptyfs->ptyfs_pty, ptyfs->ptyfs_type == PTYFSpts ? 't'
 			: 'p')) != 0)
 				goto out;
@@ -186,7 +185,7 @@ out:
  * allocate a ptyfsnode/vnode pair.  the vnode is
  * referenced, and locked.
  *
- * the pid, ptyfs_type, and mount point uniquely
+ * the pty, ptyfs_type, and mount point uniquely
  * identify a ptyfsnode.  the mount point is needed
  * because someone might mount this filesystem
  * twice.
@@ -397,9 +396,11 @@ static void
 ptyfs_hashins(struct ptyfsnode *pp)
 {
 	struct ptyfs_hashhead *ppp;
+	int error __diagused;
 
 	/* lock the ptyfsnode, then put it on the appropriate hash list */
-	VOP_LOCK(PTYFSTOV(pp), LK_EXCLUSIVE);
+	error = VOP_LOCK(PTYFSTOV(pp), LK_EXCLUSIVE);
+	KASSERT(error == 0);
 
 	mutex_enter(&ptyfs_used_slock);
 	ppp = &ptyfs_used_tbl[PTYHASH(pp->ptyfs_type, pp->ptyfs_pty,

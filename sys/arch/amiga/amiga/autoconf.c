@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.114 2012/10/27 17:17:26 chs Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.114.2.1 2014/05/18 17:44:54 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.114 2012/10/27 17:17:26 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.114.2.1 2014/05/18 17:44:54 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,11 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.114 2012/10/27 17:17:26 chs Exp $");
 #ifdef P5PB_CONSOLE
 #include <amiga/pci/p5pbvar.h>
 #endif /* P5PB_CONSOLE */
+
+#include "acafh.h"
+#if NACAFH > 0
+#include <amiga/dev/acafhvar.h>
+#endif /* NACAFH > 0 */
 
 static void findroot(void);
 void mbattach(device_t, device_t, void *);
@@ -299,6 +304,12 @@ mbattach(device_t parent, device_t self, void *aux)
 	if (!is_draco())
 #endif
 		config_found(self, __UNCONST("aucc"), simple_devprint);
+
+#if NACAFH > 0
+	if (!is_a600() && !is_a1200() && !is_a3000() && !is_a4000())
+		if (acafh_mbattach_probe() == true)
+			config_found(self, __UNCONST("acafh"), simple_devprint);
+#endif
 
 	config_found(self, __UNCONST("zbus"), simple_devprint);
 }

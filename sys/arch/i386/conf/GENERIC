@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1095.2.1 2013/08/28 23:59:17 rmind Exp $
+# $NetBSD: GENERIC,v 1.1095.2.2 2014/05/18 17:45:12 rmind Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1095.2.1 $"
+#ident 		"GENERIC-$Revision: 1.1095.2.2 $"
 
 maxusers	64		# estimated number of users
 
@@ -113,7 +113,7 @@ options 	DIAGNOSTIC	# expensive kernel consistency checks
 #options 	LOCKDEBUG	# expensive locking checks/support
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
-#options 	DDB_ONPANIC=1	# see also sysctl(8): `ddb.onpanic'
+#options 	DDB_ONPANIC=1	# see also sysctl(7): `ddb.onpanic'
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	DDB_VERBOSE_HELP
 #options 	KGDB		# remote debugger
@@ -364,7 +364,6 @@ hpet*		at acpinodebus?		# High Precision Event Timer (device)
 joy*		at acpi?		# Joystick/Game port
 #lpt*		at acpi?		# Parallel port
 mpu*		at acpi?		# Roland MPU-401 MIDI UART
-npx*		at acpi?		# Math coprocessor
 pckbc*		at acpi?		# PC keyboard controller
 pcppi*		at acpi?		# AT-style speaker sound
 sony*		at acpi?		# Sony Miscellaneous Controller
@@ -409,7 +408,6 @@ wsmouse*	at spic?
 
 #pckbc*		at pnpbios? index ?	# PC keyboard/mouse controller
 #fdc*		at pnpbios? index ?	# floppy controller
-#npx*		at pnpbios? index ?	# Math coprocessor
 
 # IDE controller on Toshiba Portege 3000 series (crippled PCI device)
 #pciide* 	at pnpbios? index ?
@@ -524,12 +522,6 @@ cardslot*	at cbb?
 # CardBus bus support
 cardbus*	at cardslot?
 pcmcia* 	at cardslot?
-
-# Coprocessor Support
-
-# Math Coprocessor support
-npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
-
 
 # Console Devices
 
@@ -970,6 +962,7 @@ hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
 ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
 iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
 iwn*	at pci? dev ? function ?	# Intel PRO/Wireless 4965AGN
+ixg*	at pci? dev ? function ?	# Intel 8259x 10 gigabit
 jme*	at pci? dev ? function ?	# JMicron JMC2[56]0 Ethernet
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lii*	at pci? dev ? function ?	# Atheros L2 Fast-Ethernet
@@ -1024,6 +1017,7 @@ awi*	at pcmcia? function ?		# BayStack 650/660 (802.11FH/DS)
 cnw*	at pcmcia? function ?		# Xircom/Netwave AirSurfer
 cs*	at pcmcia? function ?		# CS89xx Ethernet
 ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
+malo*	at pcmcia? function ?		# Marvell Libertas
 mbe*	at pcmcia? function ?		# MB8696x based Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 ray*	at pcmcia? function ?		# Raytheon Raylink (802.11)
@@ -1128,6 +1122,7 @@ urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
 # USB Controller and Devices
 
 # PCI USB controllers
+xhci*	at pci?	dev ? function ?	# eXtensible Host Controller
 ehci*	at pci?	dev ? function ?	# Enhanced Host Controller
 gcscehci* at pci? dev ? function ?	# Enhanced Host Controller (Geode CSC)
 ohci*	at pci?	dev ? function ?	# Open Host Controller
@@ -1145,6 +1140,7 @@ uhci*	at cardbus? function ?		# Universal Host Controller (Intel)
 slhci*	at pcmcia? function ?		# ScanLogic SL811HS
 
 # USB bus support
+usb*	at xhci?
 usb*	at ehci?
 usb*	at gcscehci?
 usb*	at ohci?
@@ -1231,6 +1227,7 @@ cir*	at irmce?
 # USB Ethernet adapters
 aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 axe*	at uhub? port ?		# ASIX AX88172 based adapters
+axen*	at uhub? port ?		# ASIX AX88178a/AX88179 based adapters
 cdce*	at uhub? port ?		# CDC, Ethernet Networking Control Model
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
@@ -1345,11 +1342,13 @@ sbp*	at ieee1394if? euihi ? euilo ?	# SCSI over IEEE1394
 
 # PCI SD/MMC controller
 sdhc*	at pci?				# SD Host Controller
+rtsx*	at pci?				# Realtek RTS5209/RTS5229 Card Reader
 
 # CardBus SD/MMC controller
 sdhc*	at cardbus? function ?		# SD Host Controller
 
 sdmmc*	at sdhc?			# SD/MMC bus
+sdmmc*	at rtsx?			# SD/MMC bus
 ld*	at sdmmc?
 
 

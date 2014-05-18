@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.123.2.2 2013/09/23 00:57:53 rmind Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.123.2.3 2014/05/18 17:46:13 rmind Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.123.2.2 2013/09/23 00:57:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.123.2.3 2014/05/18 17:46:13 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -185,7 +185,7 @@ in6_pcballoc(struct socket *so, void *v)
 	}
 #endif /* IPSEC */
 	s = splnet();
-	CIRCLEQ_INSERT_HEAD(&table->inpt_queue, (struct inpcb_hdr*)in6p,
+	TAILQ_INSERT_HEAD(&table->inpt_queue, (struct inpcb_hdr*)in6p,
 	    inph_queue);
 	LIST_INSERT_HEAD(IN6PCBHASH_PORT(table, in6p->in6p_lport),
 	    &in6p->in6p_head, inph_lhash);
@@ -612,7 +612,7 @@ in6_pcbdetach(struct in6pcb *in6p)
 	s = splnet();
 	in6_pcbstate(in6p, IN6P_ATTACHED);
 	LIST_REMOVE(&in6p->in6p_head, inph_lhash);
-	CIRCLEQ_REMOVE(&in6p->in6p_table->inpt_queue, &in6p->in6p_head,
+	TAILQ_REMOVE(&in6p->in6p_table->inpt_queue, &in6p->in6p_head,
 	    inph_queue);
 	pool_put(&in6pcb_pool, in6p);
 	splx(s);
@@ -668,7 +668,7 @@ in6_pcbnotify(struct inpcbtable *table, const struct sockaddr *dst,
     void *cmdarg, void (*notify)(struct in6pcb *, int))
 {
 	struct rtentry *rt;
-	struct in6pcb *in6p, *nin6p;
+	struct inpcb_hdr *inph, *ninph;
 	struct sockaddr_in6 sa6_src;
 	const struct sockaddr_in6 *sa6_dst;
 	u_int16_t fport = fport_arg, lport = lport_arg;
@@ -707,11 +707,8 @@ in6_pcbnotify(struct inpcbtable *table, const struct sockaddr *dst,
 	}
 
 	errno = inet6ctlerrmap[cmd];
-	for (in6p = (struct in6pcb *)CIRCLEQ_FIRST(&table->inpt_queue);
-	    in6p != (void *)&table->inpt_queue;
-	    in6p = nin6p) {
-		nin6p = (struct in6pcb *)CIRCLEQ_NEXT(in6p, in6p_queue);
-
+	TAILQ_FOREACH_SAFE(inph, &table->inpt_queue, inph_queue, ninph) {
+		struct in6pcb *in6p = (struct in6pcb *)inph;
 		if (in6p->in6p_af != AF_INET6)
 			continue;
 
@@ -811,14 +808,12 @@ in6_pcbnotify(struct inpcbtable *table, const struct sockaddr *dst,
 void
 in6_pcbpurgeif0(struct inpcbtable *table, struct ifnet *ifp)
 {
-	struct in6pcb *in6p, *nin6p;
+	struct inpcb_hdr *inph, *ninph;
 	struct ip6_moptions *im6o;
 	struct in6_multi_mship *imm, *nimm;
 
-	for (in6p = (struct in6pcb *)CIRCLEQ_FIRST(&table->inpt_queue);
-	    in6p != (void *)&table->inpt_queue;
-	    in6p = nin6p) {
-		nin6p = (struct in6pcb *)CIRCLEQ_NEXT(in6p, in6p_queue);
+	TAILQ_FOREACH_SAFE(inph, &table->inpt_queue, inph_queue, ninph) {
+		struct in6pcb *in6p = (struct in6pcb *)inph;
 		if (in6p->in6p_af != AF_INET6)
 			continue;
 
@@ -853,12 +848,10 @@ void
 in6_pcbpurgeif(struct inpcbtable *table, struct ifnet *ifp)
 {
 	struct rtentry *rt;
-	struct in6pcb *in6p, *nin6p;
+	struct inpcb_hdr *inph, *ninph;
 
-	for (in6p = (struct in6pcb *)CIRCLEQ_FIRST(&table->inpt_queue);
-	    in6p != (void *)&table->inpt_queue;
-	    in6p = nin6p) {
-		nin6p = (struct in6pcb *)CIRCLEQ_NEXT(in6p, in6p_queue);
+	TAILQ_FOREACH_SAFE(inph, &table->inpt_queue, inph_queue, ninph) {
+		struct in6pcb *in6p = (struct in6pcb *)inph;
 		if (in6p->in6p_af != AF_INET6)
 			continue;
 		if ((rt = rtcache_validate(&in6p->in6p_route)) != NULL &&

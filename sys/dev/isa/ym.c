@@ -1,4 +1,4 @@
-/*	$NetBSD: ym.c,v 1.43 2011/11/24 03:35:58 mrg Exp $	*/
+/*	$NetBSD: ym.c,v 1.43.12.1 2014/05/18 17:45:38 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.43 2011/11/24 03:35:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.43.12.1 2014/05/18 17:45:38 rmind Exp $");
 
 #include "mpu_ym.h"
 #include "opt_ym.h"
@@ -505,6 +505,8 @@ ym_hvol_to_master_gain(struct ym_softc *sc)
 	/* Notify the change to async processes. */
 	if (changed && sc->sc_audiodev)
 		mixer_signal(sc->sc_audiodev);
+#else
+	__USE(changed);
 #endif
 }
 

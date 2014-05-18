@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.41 2013/03/18 19:35:38 plunky Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.41.6.1 2014/05/18 17:46:06 rmind Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.41 2013/03/18 19:35:38 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.41.6.1 2014/05/18 17:46:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,6 +141,7 @@ int	ptyfs_readdir	(void *);
 #define	ptyfs_readlink	genfs_eopnotsupp
 #define	ptyfs_abortop	genfs_abortop
 int	ptyfs_reclaim	(void *);
+int	ptyfs_inactive	(void *);
 #define	ptyfs_lock	genfs_lock
 #define	ptyfs_unlock	genfs_unlock
 #define	ptyfs_bmap	genfs_badop
@@ -148,7 +149,7 @@ int	ptyfs_reclaim	(void *);
 int	ptyfs_print	(void *);
 int	ptyfs_pathconf	(void *);
 #define	ptyfs_islocked	genfs_islocked
-#define	ptyfs_advlock	genfs_einval
+int	ptyfs_advlock	(void *);
 #define	ptyfs_bwrite	genfs_eopnotsupp
 #define ptyfs_putpages	genfs_null_putpages
 
@@ -192,7 +193,7 @@ const struct vnodeopv_entry_desc ptyfs_vnodeop_entries[] = {
 	{ &vop_readdir_desc, ptyfs_readdir },		/* readdir */
 	{ &vop_readlink_desc, ptyfs_readlink },		/* readlink */
 	{ &vop_abortop_desc, ptyfs_abortop },		/* abortop */
-	{ &vop_inactive_desc, spec_inactive },		/* inactive */
+	{ &vop_inactive_desc, ptyfs_inactive },		/* inactive */
 	{ &vop_reclaim_desc, ptyfs_reclaim },		/* reclaim */
 	{ &vop_lock_desc, ptyfs_lock },			/* lock */
 	{ &vop_unlock_desc, ptyfs_unlock },		/* unlock */
@@ -223,6 +224,28 @@ ptyfs_reclaim(void *v)
 		struct vnode *a_vp;
 	} */ *ap = v;
 	return ptyfs_freevp(ap->a_vp);
+}
+
+int
+ptyfs_inactive(void *v)
+{
+	struct vop_inactive_args /* {
+		struct vnode *a_vp;
+		bool *a_recycle;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct ptyfsnode *ptyfs = VTOPTYFS(vp);
+
+	switch (ptyfs->ptyfs_type) {
+	case PTYFSpts:
+	case PTYFSptc:
+		/* Emulate file deletion for call reclaim(). */
+		*ap->a_recycle = true;
+		break;
+	default:
+		break;
+	}
+	return spec_inactive(v);
 }
 
 /*
@@ -283,6 +306,26 @@ ptyfs_print(void *v)
 }
 
 /*
+ * support advisory locking on pty nodes
+ */
+int
+ptyfs_advlock(void *v)
+{
+	struct vop_print_args /* {
+		struct vnode *a_vp;
+	} */ *ap = v;
+	struct ptyfsnode *ptyfs = VTOPTYFS(ap->a_vp);
+
+	switch (ptyfs->ptyfs_type) {
+	case PTYFSpts:
+	case PTYFSptc:
+		return spec_advlock(v);
+	default:
+		return EOPNOTSUPP;
+	}
+}
+
+/*
  * Invent attributes for ptyfsnode (vp) and store
  * them in (vap).
  * Directories lengths are returned as zero since
@@ -313,7 +356,6 @@ ptyfs_getattr(void *v)
 	vap->va_fileid = ptyfs->ptyfs_fileno;
 	vap->va_gen = 0;
 	vap->va_flags = 0;
-	vap->va_nlink = 1;
 	vap->va_blocksize = PAGE_SIZE;
 
 	vap->va_atime = ptyfs->ptyfs_atime;
@@ -332,12 +374,13 @@ ptyfs_getattr(void *v)
 			return ENOENT;
 		vap->va_bytes = vap->va_size = 0;
 		vap->va_rdev = ap->a_vp->v_rdev;
+		vap->va_nlink = 1;
 		break;
 	case PTYFSroot:
 		vap->va_rdev = 0;
 		vap->va_bytes = vap->va_size = DEV_BSIZE;
+		vap->va_nlink = 2;
 		break;
-
 	default:
 		return EOPNOTSUPP;
 	}
@@ -562,7 +605,7 @@ ptyfs_access(void *v)
 int
 ptyfs_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnode * a_dvp;
 		struct vnode ** a_vpp;
 		struct componentname * a_cnp;
@@ -596,12 +639,16 @@ ptyfs_lookup(void *v)
 
 		pty = atoi(pname, cnp->cn_namelen);
 
-		if (pty < 0 || pty >= npty || pty_isfree(pty, 1))
+		if (pty < 0 || pty >= npty || pty_isfree(pty, 1) ||
+		    ptyfs_used_get(PTYFSptc, pty, dvp->v_mount, 0) == NULL)
 			break;
 
 		error = ptyfs_allocvp(dvp->v_mount, vpp, PTYFSpts, pty,
 		    curlwp);
-		return error;
+		if (error)
+			return error;
+		VOP_UNLOCK(*vpp);
+		return 0;
 
 	default:
 		return ENOTDIR;
@@ -688,7 +735,8 @@ ptyfs_readdir(void *v)
 	}
 	for (; uio->uio_resid >= UIO_MX && i < npty; i++) {
 		/* check for used ptys */
-		if (pty_isfree(i - 2, 1))
+		if (pty_isfree(i - 2, 1) ||
+		    ptyfs_used_get(PTYFSptc, i - 2, vp->v_mount, 0) == NULL)
 			continue;
 
 		dp->d_fileno = PTYFS_FILENO(i - 2, PTYFSpts);

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.222 2011/11/19 22:51:30 tls Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.222.12.1 2014/05/18 17:46:14 rmind Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.222 2011/11/19 22:51:30 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.222.12.1 2014/05/18 17:46:14 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -1502,27 +1502,42 @@ nfs_init0(void)
 	return 0;
 }
 
+static volatile uint32_t nfs_mutex;
+static uint32_t nfs_refcount;
+
+#define nfs_p()	while (atomic_cas_32(&nfs_mutex, 0, 1) == 0) continue;
+#define nfs_v()	while (atomic_cas_32(&nfs_mutex, 1, 0) == 1) continue;
+
 /*
  * This is disgusting, but it must support both modular and monolothic
- * configurations.  For monolithic builds NFSSERVER may not imply NFS.
+ * configurations, plus the code is shared between server and client.
+ * For monolithic builds NFSSERVER may not imply NFS. Unfortunately we
+ * can't use regular mutexes here that would require static initialization
+ * and we can get initialized from multiple places, so we improvise.
  *
  * Yuck.
  */
 void
 nfs_init(void)
 {
-	static ONCE_DECL(nfs_init_once);
 
-	RUN_ONCE(&nfs_init_once, nfs_init0);
+	nfs_p();
+	if (nfs_refcount++ == 0)
+		nfs_init0();
+	nfs_v();
 }
 
 void
 nfs_fini(void)
 {
 
-	nfsdreq_fini();
-	nfs_timer_fini();
-	MOWNER_DETACH(&nfs_mowner);
+	nfs_p();
+	if (--nfs_refcount == 0) {
+		MOWNER_DETACH(&nfs_mowner);
+		nfs_timer_fini();
+		nfsdreq_fini();
+	}
+	nfs_v();
 }
 
 /*
@@ -1739,22 +1754,21 @@ void
 nfs_clearcommit(struct mount *mp)
 {
 	struct vnode *vp;
+	struct vnode_iterator *marker;
 	struct nfsnode *np;
 	struct vm_page *pg;
 	struct nfsmount *nmp = VFSTONFS(mp);
 
 	rw_enter(&nmp->nm_writeverflock, RW_WRITER);
-	mutex_enter(&mntvnode_lock);
-	TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
-		KASSERT(vp->v_mount == mp);
-		if (vp->v_type != VREG)
-			continue;
+	vfs_vnode_iterator_init(mp, &marker);
+	while (vfs_vnode_iterator_next(marker, &vp)) {
 		mutex_enter(vp->v_interlock);
-		if (vp->v_iflag & (VI_XLOCK | VI_CLEAN)) {
+		np = VTONFS(vp);
+		if (vp->v_type != VREG || vp->v_mount != mp || np == NULL) {
 			mutex_exit(vp->v_interlock);
+			vrele(vp);
 			continue;
 		}
-		np = VTONFS(vp);
 		np->n_pushlo = np->n_pushhi = np->n_pushedlo =
 		    np->n_pushedhi = 0;
 		np->n_commitflags &=
@@ -1763,8 +1777,9 @@ nfs_clearcommit(struct mount *mp)
 			pg->flags &= ~PG_NEEDCOMMIT;
 		}
 		mutex_exit(vp->v_interlock);
+		vrele(vp);
 	}
-	mutex_exit(&mntvnode_lock);
+	vfs_vnode_iterator_destroy(marker);
 	mutex_enter(&nmp->nm_lock);
 	nmp->nm_iflag &= ~NFSMNT_STALEWRITEVERF;
 	mutex_exit(&nmp->nm_lock);

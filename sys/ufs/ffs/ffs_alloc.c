@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.138 2013/06/23 22:03:34 dholland Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.138.2.1 2014/05/18 17:46:21 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.138 2013/06/23 22:03:34 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.138.2.1 2014/05/18 17:46:21 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -635,8 +635,8 @@ ffs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
 		panic("ffs_valloc: dup alloc");
 	}
 	if (DIP(ip, blocks)) {				/* XXX */
-		printf("free inode %s/%llu had %" PRId64 " blocks\n",
-		    fs->fs_fsmnt, (unsigned long long)ino, DIP(ip, blocks));
+		printf("free inode %llu on %s had %" PRId64 " blocks\n",
+		    (unsigned long long)ino, fs->fs_fsmnt, DIP(ip, blocks));
 		DIP_ASSIGN(ip, blocks, 0);
 	}
 	ip->i_flag &= ~IN_SPACECOUNTED;
@@ -720,14 +720,17 @@ ffs_dirpref(struct inode *pip)
 	/*
 	 * Count various limits which used for
 	 * optimal allocation of a directory inode.
+	 * Try cylinder groups with >75% avgifree and avgbfree.
+	 * Avoid cylinder groups with no free blocks or inodes as that
+	 * triggers an I/O-expensive cylinder group scan.
 	 */
 	maxndir = min(avgndir + fs->fs_ipg / 16, fs->fs_ipg);
-	minifree = avgifree - fs->fs_ipg / 4;
-	if (minifree < 0)
-		minifree = 0;
-	minbfree = avgbfree - ffs_fragstoblks(fs, fs->fs_fpg) / 4;
-	if (minbfree < 0)
-		minbfree = 0;
+	minifree = avgifree - avgifree / 4;
+	if (minifree < 1)
+		minifree = 1;
+	minbfree = avgbfree - avgbfree / 4;
+	if (minbfree < 1)
+		minbfree = 1;
 	cgsize = (int64_t)fs->fs_fsize * fs->fs_fpg;
 	dirsize = (int64_t)fs->fs_avgfilesize * fs->fs_avgfpdir;
 	if (avgndir != 0) {
@@ -736,7 +739,7 @@ ffs_dirpref(struct inode *pip)
 			dirsize = curdsz;
 	}
 	if (cgsize < dirsize * 255)
-		maxcontigdirs = cgsize / dirsize;
+		maxcontigdirs = (avgbfree * fs->fs_bsize) / dirsize;
 	else
 		maxcontigdirs = 255;
 	if (fs->fs_avgfpdir > 0)
@@ -1092,9 +1095,7 @@ ffs_alloccg(struct inode *ip, int cg, daddr_t bpref, int size, int flags)
 	daddr_t blkno;
 	int error, frags, allocsiz, i;
 	u_int8_t *blksfree;
-#ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
-#endif
 
 	ump = ip->i_ump;
 
@@ -1202,20 +1203,15 @@ ffs_alloccg(struct inode *ip, int cg, daddr_t bpref, int size, int flags)
 static daddr_t
 ffs_alloccgblk(struct inode *ip, struct buf *bp, daddr_t bpref, int flags)
 {
-	struct ufsmount *ump;
 	struct fs *fs = ip->i_fs;
 	struct cg *cgp;
 	int cg;
 	daddr_t blkno;
 	int32_t bno;
 	u_int8_t *blksfree;
-#ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
-#endif
 
-	ump = ip->i_ump;
-
-	KASSERT(mutex_owned(&ump->um_lock));
+	KASSERT(mutex_owned(&ip->i_ump->um_lock));
 
 	cgp = (struct cg *)bp->b_data;
 	blksfree = cg_blksfree(cgp, needswap);
@@ -1290,9 +1286,7 @@ ffs_nodealloccg(struct inode *ip, int cg, daddr_t ipref, int mode, int flags)
 	int32_t initediblk;
 	daddr_t nalloc;
 	struct ufs2_dinode *dp2;
-#ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
-#endif
 
 	KASSERT(mutex_owned(&ump->um_lock));
 	UFS_WAPBL_JLOCK_ASSERT(ip->i_ump->um_mountp);
@@ -1562,15 +1556,13 @@ ffs_blkfree_cg(struct fs *fs, struct vnode *devvp, daddr_t bno, long size)
 	int error, cg;
 	dev_t dev;
 	const bool devvp_is_snapshot = (devvp->v_type != VBLK);
-#ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
-#endif
 
 	KASSERT(!devvp_is_snapshot);
 
 	cg = dtog(fs, bno);
 	dev = devvp->v_rdev;
-	ump = VFSTOUFS(devvp->v_specmountpoint);
+	ump = VFSTOUFS(spec_node_getmountedfs(devvp));
 	KASSERT(fs == ump->um_fs);
 	cgblkno = FFS_FSBTODB(fs, cgtod(fs, cg));
 
@@ -1630,11 +1622,16 @@ ffs_discardcb(struct work *wk, void *arg)
 	struct discarddata *ts = arg;
 	struct fs *fs = ts->fs;
 	struct disk_discard_range ta;
+#ifdef TRIMDEBUG
 	int error;
+#endif
 
 	ta.bno = FFS_FSBTODB(fs, td->bno);
 	ta.size = td->size >> DEV_BSHIFT;
-	error = VOP_IOCTL(td->devvp, DIOCDISCARD, &ta, FWRITE, FSCRED);
+#ifdef TRIMDEBUG
+	error =
+#endif
+		VOP_IOCTL(td->devvp, DIOCDISCARD, &ta, FWRITE, FSCRED);
 #ifdef TRIMDEBUG
 	printf("trim(%" PRId64 ",%ld):%d\n", td->bno, td->size, error);
 #endif
@@ -1730,7 +1727,7 @@ ffs_blkfree(struct fs *fs, struct vnode *devvp, daddr_t bno, long size,
 	struct discardopdata *td;
 
 	dev = devvp->v_rdev;
-	ump = VFSTOUFS(devvp->v_specmountpoint);
+	ump = VFSTOUFS(spec_node_getmountedfs(devvp));
 	if (ffs_snapblkfree(fs, devvp, bno, size, inum))
 		return;
 
@@ -1829,9 +1826,7 @@ ffs_blkfree_snap(struct fs *fs, struct vnode *devvp, daddr_t bno, long size,
 	int error, cg;
 	dev_t dev;
 	const bool devvp_is_snapshot = (devvp->v_type != VBLK);
-#ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
-#endif
 
 	KASSERT(devvp_is_snapshot);
 
@@ -1992,9 +1987,7 @@ ffs_freefile(struct mount *mp, ino_t ino, int mode)
 	int error, cg;
 	daddr_t cgbno;
 	dev_t dev;
-#ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
-#endif
 
 	cg = ino_to_cg(fs, ino);
 	devvp = ump->um_devvp;
@@ -2031,9 +2024,7 @@ ffs_freefile_snap(struct fs *fs, struct vnode *devvp, ino_t ino, int mode)
 	int error, cg;
 	daddr_t cgbno;
 	dev_t dev;
-#ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
-#endif
 
 	KASSERT(devvp->v_type != VBLK);
 
@@ -2069,9 +2060,7 @@ ffs_freefile_common(struct ufsmount *ump, struct fs *fs, dev_t dev,
 	int cg;
 	struct cg *cgp;
 	u_int8_t *inosused;
-#ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
-#endif
 
 	cg = ino_to_cg(fs, ino);
 	cgp = (struct cg *)bp->b_data;
@@ -2159,9 +2148,7 @@ ffs_mapsearch(struct fs *fs, struct cg *cgp, daddr_t bpref, int allocsiz)
 	int blk, field, subfield, pos;
 	int ostart, olen;
 	u_int8_t *blksfree;
-#ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
-#endif
 
 	/* KASSERT(mutex_owned(&ump->um_lock)); */
 

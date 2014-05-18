@@ -63,15 +63,9 @@
 #endif
 
 #if defined(_KERNEL) && !defined(SLJIT_CACHE_FLUSH)
-#define SLJIT_CACHE_FLUSH(from, to)
+#error "SLJIT_CACHE_FLUSH must be defined."
 #endif
 
-#if defined(_KERNEL)
-#define SLJIT_UTIL_GLOBAL_LOCK 0
-#define SLJIT_EXECUTABLE_ALLOCATOR 0
-#define SLJIT_MALLOC_EXEC(sz) SLJIT_MALLOC(sz)
-#define SLJIT_FREE_EXEC(ptr) SLJIT_FREE(ptr)
-#endif
 
 #ifdef _KERNEL
 

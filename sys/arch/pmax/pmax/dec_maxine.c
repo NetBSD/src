@@ -1,4 +1,4 @@
-/* $NetBSD: dec_maxine.c,v 1.64 2012/10/13 06:51:23 tsutsui Exp $ */
+/* $NetBSD: dec_maxine.c,v 1.64.2.1 2014/05/18 17:45:21 rmind Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -70,7 +70,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.64 2012/10/13 06:51:23 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.64.2.1 2014/05/18 17:45:21 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -169,7 +169,7 @@ dec_maxine_init(void)
 	*(volatile uint32_t *)(ioasic_base + IOASIC_IMSK) = xine_tc3_imask;
 	kn02ca_wbflush();
 
-	sprintf(cpu_model, "Personal DECstation 5000/%d (MAXINE)", mips_options.mips_cpu_mhz);
+	cpu_setmodel("Personal DECstation 5000/%d (MAXINE)", mips_options.mips_cpu_mhz);
 }
 
 /*

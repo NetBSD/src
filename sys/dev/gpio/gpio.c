@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.52 2013/05/20 15:46:41 mbalmer Exp $ */
+/* $NetBSD: gpio.c,v 1.52.2.1 2014/05/18 17:45:36 rmind Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.52 2013/05/20 15:46:41 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.52.2.1 2014/05/18 17:45:36 rmind Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -100,8 +100,17 @@ dev_type_ioctl(gpioioctl);
 dev_type_ioctl(gpioioctl_locked);
 
 const struct cdevsw gpio_cdevsw = {
-	gpioopen, gpioclose, noread, nowrite, gpioioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER | D_MPSAFE
+	.d_open = gpioopen,
+	.d_close = gpioclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = gpioioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER | D_MPSAFE
 };
 
 extern struct cfdriver gpio_cd;
@@ -267,10 +276,10 @@ gpio_print(void *aux, const char *pnp)
 	struct gpio_attach_args *ga = aux;
 	int i;
 
-	printf(" pins");
+	aprint_normal(" pins");
 	for (i = 0; i < 32; i++)
 		if (ga->ga_mask & (1 << i))
-			printf(" %d", ga->ga_offset + i);
+			aprint_normal(" %d", ga->ga_offset + i);
 
 	return UNCONF;
 }

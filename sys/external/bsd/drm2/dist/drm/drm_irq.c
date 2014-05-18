@@ -42,6 +42,19 @@
 #include <linux/vgaarb.h>
 #include <linux/export.h>
 
+#include <linux/atomic.h>
+#include <linux/ktime.h>
+#include <linux/math64.h>
+#include <linux/preempt.h>
+#include <linux/sched.h>
+
+#include <asm/bug.h>
+
+#ifdef __NetBSD__		/* XXX hurk -- selnotify &c. */
+#include <sys/poll.h>
+#include <sys/select.h>
+#endif
+
 /* Access macro for slots in vblank timestamp ringbuffer. */
 #define vblanktimestamp(dev, crtc, count) ( \
 	(dev)->_vblank_time[(crtc) * DRM_VBLANKTIME_RBSIZE + \
@@ -197,6 +210,14 @@ void drm_vblank_cleanup(struct drm_device *dev)
 
 	vblank_disable_fn((unsigned long)dev);
 
+#ifdef __NetBSD__
+    {
+	unsigned int i;
+	for (i = 0; i < dev->num_crtcs; i++)
+		DRM_DESTROY_WAITQUEUE(&dev->vbl_queue[i]);
+    }
+#endif
+
 	kfree(dev->vbl_queue);
 	kfree(dev->_vblank_count);
 	kfree(dev->vblank_refcount);
@@ -207,6 +228,11 @@ void drm_vblank_cleanup(struct drm_device *dev)
 	kfree(dev->_vblank_time);
 
 	dev->num_crtcs = 0;
+
+#ifdef __NetBSD__
+	spin_lock_destroy(&dev->vblank_time_lock);
+	spin_lock_destroy(&dev->vbl_lock);
+#endif
 }
 EXPORT_SYMBOL(drm_vblank_cleanup);
 
@@ -221,8 +247,13 @@ int drm_vblank_init(struct drm_device *dev, int num_crtcs)
 
 	dev->num_crtcs = num_crtcs;
 
+#ifdef __NetBSD__
+	dev->vbl_queue = kmalloc(sizeof(*dev->vbl_queue) * num_crtcs,
+				 GFP_KERNEL);
+#else
 	dev->vbl_queue = kmalloc(sizeof(wait_queue_head_t) * num_crtcs,
 				 GFP_KERNEL);
+#endif
 	if (!dev->vbl_queue)
 		goto err;
 
@@ -266,7 +297,11 @@ int drm_vblank_init(struct drm_device *dev, int num_crtcs)
 
 	/* Zero per-crtc vblank stuff */
 	for (i = 0; i < num_crtcs; i++) {
+#ifdef __NetBSD__
+		DRM_INIT_WAITQUEUE(&dev->vbl_queue[i], "drmvblkq");
+#else
 		init_waitqueue_head(&dev->vbl_queue[i]);
+#endif
 		atomic_set(&dev->_vblank_count[i], 0);
 		atomic_set(&dev->vblank_refcount[i], 0);
 	}
@@ -316,7 +351,7 @@ int drm_irq_install(struct drm_device *dev)
 {
 	int ret;
 	unsigned long sh_flags = 0;
-	char *irqname;
+	const char *irqname;
 
 	if (!drm_core_check_feature(dev, DRIVER_HAVE_IRQ))
 		return -EINVAL;
@@ -354,8 +389,13 @@ int drm_irq_install(struct drm_device *dev)
 	else
 		irqname = dev->driver->name;
 
+#ifdef __NetBSD__
+	ret = (*dev->driver->bus->irq_install)(dev, dev->driver->irq_handler,
+	    sh_flags, irqname, dev, &dev->irq_cookie);
+#else
 	ret = request_irq(drm_dev_to_irq(dev), dev->driver->irq_handler,
 			  sh_flags, irqname, dev);
+#endif
 
 	if (ret < 0) {
 		mutex_lock(&dev->struct_mutex);
@@ -377,7 +417,11 @@ int drm_irq_install(struct drm_device *dev)
 		mutex_unlock(&dev->struct_mutex);
 		if (!drm_core_check_feature(dev, DRIVER_MODESET))
 			vga_client_register(dev->pdev, NULL, NULL, NULL);
+#ifdef __NetBSD__
+		(*dev->driver->bus->irq_uninstall)(dev, dev->irq_cookie);
+#else
 		free_irq(drm_dev_to_irq(dev), dev);
+#endif
 	}
 
 	return ret;
@@ -410,7 +454,12 @@ int drm_irq_uninstall(struct drm_device *dev)
 	if (dev->num_crtcs) {
 		spin_lock_irqsave(&dev->vbl_lock, irqflags);
 		for (i = 0; i < dev->num_crtcs; i++) {
+#ifdef __NetBSD__
+			DRM_SPIN_WAKEUP_ONE(&dev->vbl_queue[i],
+			    &dev->vbl_lock);
+#else
 			DRM_WAKEUP(&dev->vbl_queue[i]);
+#endif
 			dev->vblank_enabled[i] = 0;
 			dev->last_vblank[i] =
 				dev->driver->get_vblank_counter(dev, i);
@@ -429,7 +478,11 @@ int drm_irq_uninstall(struct drm_device *dev)
 	if (dev->driver->irq_uninstall)
 		dev->driver->irq_uninstall(dev);
 
+#ifdef __NetBSD__
+	(*dev->driver->bus->irq_uninstall)(dev, dev->irq_cookie);
+#else
 	free_irq(drm_dev_to_irq(dev), dev);
+#endif
 
 	return 0;
 }
@@ -837,7 +890,13 @@ static void send_vblank_event(struct drm_device *dev,
 
 	list_add_tail(&e->base.link,
 		      &e->base.file_priv->event_list);
+#ifdef __NetBSD__
+	DRM_SPIN_WAKEUP_ONE(&e->base.file_priv->event_wait, &dev->event_lock);
+	selnotify(&e->base.file_priv->event_selq, (POLLIN | POLLRDNORM),
+	    NOTE_SUBMIT);
+#else
 	wake_up_interruptible(&e->base.file_priv->event_wait);
+#endif
 	trace_drm_vblank_event_delivered(e->base.pid, e->pipe,
 					 e->event.sequence);
 }
@@ -1017,7 +1076,11 @@ void drm_vblank_off(struct drm_device *dev, int crtc)
 
 	spin_lock_irqsave(&dev->vbl_lock, irqflags);
 	vblank_disable_and_save(dev, crtc);
+#ifdef __NetBSD__
+	DRM_SPIN_WAKEUP_ONE(&dev->vbl_queue[crtc], &dev->vbl_lock);
+#else
 	DRM_WAKEUP(&dev->vbl_queue[crtc]);
+#endif
 
 	/* Send any queued vblank events, lest the natives grow disquiet */
 	seq = drm_vblank_count_and_time(dev, crtc, &now);
@@ -1144,7 +1207,11 @@ static int drm_queue_vblank_event(struct drm_device *dev, int pipe,
 	}
 
 	e->pipe = pipe;
+#ifdef __NetBSD__
+	e->base.pid = curproc->p_pid;
+#else
 	e->base.pid = current->pid;
+#endif
 	e->event.base.type = DRM_EVENT_VBLANK;
 	e->event.base.length = sizeof e->event;
 	e->event.user_data = vblwait->request.signal;
@@ -1171,8 +1238,13 @@ static int drm_queue_vblank_event(struct drm_device *dev, int pipe,
 	DRM_DEBUG("event on vblank count %d, current %d, crtc %d\n",
 		  vblwait->request.sequence, seq, pipe);
 
+#ifdef __NetBSD__
+	trace_drm_vblank_event_queued(curproc->p_pid, pipe,
+				      vblwait->request.sequence);
+#else
 	trace_drm_vblank_event_queued(current->pid, pipe,
 				      vblwait->request.sequence);
+#endif
 
 	e->event.sequence = vblwait->request.sequence;
 	if ((seq - vblwait->request.sequence) <= (1 << 23)) {
@@ -1276,10 +1348,29 @@ int drm_wait_vblank(struct drm_device *dev, void *data,
 	DRM_DEBUG("waiting on vblank count %d, crtc %d\n",
 		  vblwait->request.sequence, crtc);
 	dev->last_vblank_wait[crtc] = vblwait->request.sequence;
+#ifdef __NetBSD__
+    {
+	unsigned long irqflags;
+	spin_lock_irqsave(&dev->vbl_lock, irqflags);
+	DRM_SPIN_TIMED_WAIT_UNTIL(ret, &dev->vbl_queue[crtc], &dev->vbl_lock,
+	    (3 * DRM_HZ),
+	    (((drm_vblank_count(dev, crtc) -
+		    vblwait->request.sequence) <= (1 << 23)) ||
+		!dev->irq_enabled));
+	spin_unlock_irqrestore(&dev->vbl_lock, irqflags);
+	if (0 < ret)
+		/*
+		 * ret is ticks remaining on success in this case, but
+		 * caller just wants 0 for success.
+		 */
+		ret = 0;
+    }
+#else
 	DRM_WAIT_ON(ret, dev->vbl_queue[crtc], 3 * DRM_HZ,
 		    (((drm_vblank_count(dev, crtc) -
 		       vblwait->request.sequence) <= (1 << 23)) ||
 		     !dev->irq_enabled));
+#endif
 
 	if (ret != -EINTR) {
 		struct timeval now;
@@ -1343,9 +1434,16 @@ bool drm_handle_vblank(struct drm_device *dev, int crtc)
 	s64 diff_ns;
 	struct timeval tvblank;
 	unsigned long irqflags;
+#ifdef __NetBSD__		/* XXX vblank locking */
+	unsigned long irqflags_vbl_lock;
+#endif
 
 	if (!dev->num_crtcs)
 		return false;
+
+#ifdef __NetBSD__		/* XXX vblank locking */
+	spin_lock_irqsave(&dev->vbl_lock, irqflags_vbl_lock);
+#endif
 
 	/* Need timestamp lock to prevent concurrent execution with
 	 * vblank enable/disable, as this would cause inconsistent
@@ -1356,6 +1454,9 @@ bool drm_handle_vblank(struct drm_device *dev, int crtc)
 	/* Vblank irq handling disabled. Nothing to do. */
 	if (!dev->vblank_enabled[crtc]) {
 		spin_unlock_irqrestore(&dev->vblank_time_lock, irqflags);
+#ifdef __NetBSD__		/* XXX vblank locking */
+		spin_unlock_irqrestore(&dev->vbl_lock, irqflags_vbl_lock);
+#endif
 		return false;
 	}
 
@@ -1395,10 +1496,17 @@ bool drm_handle_vblank(struct drm_device *dev, int crtc)
 			  crtc, (int) diff_ns);
 	}
 
+#ifdef __NetBSD__
+	DRM_SPIN_WAKEUP_ONE(&dev->vbl_queue[crtc], &dev->vbl_lock);
+#else
 	DRM_WAKEUP(&dev->vbl_queue[crtc]);
+#endif
 	drm_handle_vblank_events(dev, crtc);
 
 	spin_unlock_irqrestore(&dev->vblank_time_lock, irqflags);
+#ifdef __NetBSD__		/* XXX vblank locking */
+	spin_unlock_irqrestore(&dev->vbl_lock, irqflags_vbl_lock);
+#endif
 	return true;
 }
 EXPORT_SYMBOL(drm_handle_vblank);

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.102 2012/11/25 01:03:05 christos Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.102.2.1 2014/05/18 17:46:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.102 2012/11/25 01:03:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.102.2.1 2014/05/18 17:46:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,7 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.102 2012/11/25 01:03:05 christos E
 
 void procfs_hashins(struct pfsnode *);
 void procfs_hashrem(struct pfsnode *);
-struct vnode *procfs_hashget(pid_t, pfstype, int, struct mount *, int);
+struct vnode *procfs_hashget(pid_t, pfstype, int, struct mount *);
 
 LIST_HEAD(pfs_hashhead, pfsnode) *pfs_hashtbl;
 u_long	pfs_ihash;	/* size of hash table - 1 */
@@ -165,8 +165,7 @@ procfs_allocvp(struct mount *mp, struct vnode **vpp, pid_t pid,
 	struct vnode *vp;
 	int error;
 
- retry:
-	*vpp = procfs_hashget(pid, pfs_type, fd, mp, LK_EXCLUSIVE);
+	*vpp = procfs_hashget(pid, pfs_type, fd, mp);
 	if (*vpp != NULL)
 		return (0);
 
@@ -178,11 +177,11 @@ procfs_allocvp(struct mount *mp, struct vnode **vpp, pid_t pid,
 	pfs = malloc(sizeof(struct pfsnode), M_TEMP, M_WAITOK);
 
 	mutex_enter(&pfs_hashlock);
-	if ((*vpp = procfs_hashget(pid, pfs_type, fd, mp, 0)) != NULL) {
+	if ((*vpp = procfs_hashget(pid, pfs_type, fd, mp)) != NULL) {
 		mutex_exit(&pfs_hashlock);
 		ungetnewvnode(vp);
 		free(pfs, M_TEMP);
-		goto retry;
+		return 0;
 	}
 
 	vp->v_data = pfs;
@@ -599,7 +598,7 @@ procfs_hashdone(void)
 }
 
 struct vnode *
-procfs_hashget(pid_t pid, pfstype type, int fd, struct mount *mp, int flags)
+procfs_hashget(pid_t pid, pfstype type, int fd, struct mount *mp)
 {
 	struct pfs_hashhead *ppp;
 	struct pfsnode *pp;
@@ -612,14 +611,10 @@ loop:
 		vp = PFSTOV(pp);
 		if (pid == pp->pfs_pid && pp->pfs_type == type &&
 		    pp->pfs_fd == fd && vp->v_mount == mp) {
-		    	if (flags == 0) {
-				mutex_exit(&pfs_ihash_lock);
-			} else {
-				mutex_enter(vp->v_interlock);
-				mutex_exit(&pfs_ihash_lock);
-				if (vget(vp, flags))
-					goto loop;
-			}
+			mutex_enter(vp->v_interlock);
+			mutex_exit(&pfs_ihash_lock);
+			if (vget(vp, 0))
+				goto loop;
 			return (vp);
 		}
 	}
@@ -634,9 +629,6 @@ void
 procfs_hashins(struct pfsnode *pp)
 {
 	struct pfs_hashhead *ppp;
-
-	/* lock the pfsnode, then put it on the appropriate hash list */
-	VOP_LOCK(PFSTOV(pp), LK_EXCLUSIVE);
 
 	mutex_enter(&pfs_ihash_lock);
 	ppp = &pfs_hashtbl[PFSPIDHASH(pp->pfs_pid)];
@@ -671,18 +663,17 @@ procfs_revoke_vnodes(struct proc *p, void *arg)
 	for (pfs = LIST_FIRST(ppp); pfs; pfs = pnext) {
 		vp = PFSTOV(pfs);
 		pnext = LIST_NEXT(pfs, pfs_hash);
+		if (pfs->pfs_pid != p->p_pid || vp->v_mount != mp)
+			continue;
 		mutex_enter(vp->v_interlock);
-		if (vp->v_usecount > 0 && pfs->pfs_pid == p->p_pid &&
-		    vp->v_mount == mp) {
-		    	vp->v_usecount++;
-		    	mutex_exit(vp->v_interlock);
-			mutex_exit(&pfs_ihash_lock);
-			VOP_REVOKE(vp, REVOKEALL);
-			vrele(vp);
+		mutex_exit(&pfs_ihash_lock);
+		if (vget(vp, 0) != 0) {
 			mutex_enter(&pfs_ihash_lock);
-		} else {
-			mutex_exit(vp->v_interlock);
+			continue;
 		}
+		VOP_REVOKE(vp, REVOKEALL);
+		vrele(vp);
+		mutex_enter(&pfs_ihash_lock);
 	}
 	mutex_exit(&pfs_ihash_lock);
 }

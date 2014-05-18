@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.114 2011/10/16 12:26:16 hannken Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.114.16.1 2014/05/18 17:46:09 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.114 2011/10/16 12:26:16 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.114.16.1 2014/05/18 17:46:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -249,7 +249,8 @@ loop:
 	fd->fd_link = 0;
 	fd->fd_ix = ix;
 	uvm_vnp_setsize(*vpp, 0);
-	VOP_LOCK(*vpp, LK_EXCLUSIVE);
+	error = VOP_LOCK(*vpp, LK_EXCLUSIVE);
+	KASSERT(error == 0);
 	LIST_INSERT_HEAD(fc, fd, fd_hash);
 	mutex_exit(&fdcache_lock);
 
@@ -263,7 +264,7 @@ loop:
 int
 fdesc_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnode * a_dvp;
 		struct vnode ** a_vpp;
 		struct componentname * a_cnp;
@@ -397,6 +398,7 @@ bad:
 	return (error);
 
 good:
+	VOP_UNLOCK(*vpp);
 	return (0);
 }
 
@@ -753,7 +755,8 @@ fdesc_readdir(void *v)
 				    dt->dt_ff[j]->ff_file == NULL)
 					continue;
 				d.d_fileno = j + FD_STDIN;
-				d.d_namlen = sprintf(d.d_name, "%d", j);
+				d.d_namlen = snprintf(d.d_name,
+				    sizeof(d.d_name), "%d", j);
 				d.d_type = DT_UNKNOWN;
 				break;
 			}
@@ -1035,7 +1038,7 @@ fdesc_link(void *v)
 int
 fdesc_symlink(void *v)
 {
-	struct vop_symlink_args /* {
+	struct vop_symlink_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -1044,6 +1047,5 @@ fdesc_symlink(void *v)
 	} */ *ap = v;
 
 	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
-	vput(ap->a_dvp);
 	return (EROFS);
 }

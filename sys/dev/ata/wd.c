@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.403.2.1 2013/08/28 23:59:24 rmind Exp $ */
+/*	$NetBSD: wd.c,v 1.403.2.2 2014/05/18 17:45:35 rmind Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.403.2.1 2013/08/28 23:59:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.403.2.2 2014/05/18 17:45:35 rmind Exp $");
 
 #include "opt_ata.h"
 
@@ -142,12 +142,27 @@ dev_type_dump(wddump);
 dev_type_size(wdsize);
 
 const struct bdevsw wd_bdevsw = {
-	wdopen, wdclose, wdstrategy, wdioctl, wddump, wdsize, D_DISK
+	.d_open = wdopen,
+	.d_close = wdclose,
+	.d_strategy = wdstrategy,
+	.d_ioctl = wdioctl,
+	.d_dump = wddump,
+	.d_psize = wdsize,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw wd_cdevsw = {
-	wdopen, wdclose, wdread, wdwrite, wdioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = wdopen,
+	.d_close = wdclose,
+	.d_read = wdread,
+	.d_write = wdwrite,
+	.d_ioctl = wdioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_DISK
 };
 
 /*
@@ -405,8 +420,14 @@ wd_suspend(device_t dv, const pmf_qual_t *qual)
 {
 	struct wd_softc *sc = device_private(dv);
 
+	/* the adapter needs to be enabled */
+	if (sc->atabus->ata_addref(sc->drvp))
+		return true; /* no need to complain */
+
 	wd_flushcache(sc, AT_WAIT);
 	wd_standby(sc, AT_WAIT);
+
+	sc->atabus->ata_delref(sc->drvp);
 	return true;
 }
 

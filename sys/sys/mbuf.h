@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.152.2.1 2013/08/28 15:21:49 rmind Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.152.2.2 2014/05/18 17:46:21 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -171,12 +171,12 @@ struct m_hdr {
  * packets during reassembly.
  */
 struct	pkthdr {
-	struct	ifnet *rcvif;		/* rcv interface */
-	SLIST_HEAD(packet_tags, m_tag) tags; /* list of packet tags */
-	int	len;			/* total packet length */
-	int	csum_flags;		/* checksum flags */
-	uint32_t csum_data;		/* checksum data */
-	u_int	segsz;			/* segment size */
+	struct ifnet	*rcvif;			/* rcv interface */
+	SLIST_HEAD(packet_tags, m_tag) tags;	/* list of packet tags */
+	int		len;			/* total packet length */
+	int		csum_flags;		/* checksum flags */
+	uint32_t	csum_data;		/* checksum data */
+	u_int		segsz;			/* segment size */
 };
 
 /*
@@ -686,7 +686,7 @@ do {									\
 } while (/* CONSTCOND */ 0)
 
 /* length to m_copy to copy all */
-#define	M_COPYALL	1000000000
+#define	M_COPYALL	-1
 
 /* compatibility with 4.3 */
 #define  m_copy(m, o, l)	m_copym((m), (o), (l), M_DONTWAIT)

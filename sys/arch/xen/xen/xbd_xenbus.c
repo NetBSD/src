@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.59 2013/05/29 23:11:56 christos Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.59.2.1 2014/05/18 17:45:30 rmind Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.59 2013/05/29 23:11:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.59.2.1 2014/05/18 17:45:30 rmind Exp $");
 
 #include "opt_xen.h"
 
@@ -191,13 +191,27 @@ dev_type_dump(xbddump);
 dev_type_size(xbdsize);
 
 const struct bdevsw xbd_bdevsw = {
-	xbdopen, xbdclose, xbdstrategy, xbdioctl,
-	xbddump, xbdsize, D_DISK
+	.d_open = xbdopen,
+	.d_close = xbdclose,
+	.d_strategy = xbdstrategy,
+	.d_ioctl = xbdioctl,
+	.d_dump = xbddump,
+	.d_psize = xbdsize,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw xbd_cdevsw = {
-	xbdopen, xbdclose, xbdread, xbdwrite, xbdioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = xbdopen,
+	.d_close = xbdclose,
+	.d_read = xbdread,
+	.d_write = xbdwrite,
+	.d_ioctl = xbdioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_DISK
 };
 
 extern struct cfdriver xbd_cd;
@@ -246,7 +260,7 @@ xbd_xenbus_attach(device_t parent, device_t self, void *aux)
 	int err;
 #endif
 
-	config_pending_incr();
+	config_pending_incr(self);
 	aprint_normal(": Xen Virtual Block Device Interface\n");
 
 	dk_sc_init(&sc->sc_dksc, device_xname(self));
@@ -581,7 +595,7 @@ static void xbd_backend_changed(void *arg, XenbusState new_state)
 		disk_set_info(sc->sc_dksc.sc_dev, &sc->sc_dksc.sc_dkdev, NULL);
 
 		/* the disk should be working now */
-		config_pending_decr();
+		config_pending_decr(sc->sc_dksc.sc_dev);
 		break;
 	default:
 		panic("bad backend state %d", new_state);
@@ -821,7 +835,6 @@ xbdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	    device_lookup_private(&xbd_cd, DISKUNIT(dev));
 	struct	dk_softc *dksc;
 	int	error;
-	struct	disk *dk;
 	int s;
 	struct xbd_req *xbdreq;
 	blkif_request_t *req;
@@ -830,7 +843,6 @@ xbdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	DPRINTF(("xbdioctl(%d, %08lx, %p, %d, %p)\n",
 	    dev, cmd, data, flag, l));
 	dksc = &sc->sc_dksc;
-	dk = &dksc->sc_dkdev;
 
 	error = disk_ioctl(&sc->sc_dksc.sc_dkdev, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)

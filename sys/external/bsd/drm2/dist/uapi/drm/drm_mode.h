@@ -327,7 +327,7 @@ struct drm_mode_fb_cmd2 {
  * allows userspace to tell the kernel and the hardware what
  * regions of the framebuffer have changed.
  *
- * The kernel or hardware is free to update more then just the
+ * The kernel or hardware is free to update more than just the
  * region specified by the clip rects. The kernel or hardware
  * may also delay and/or coalesce several calls to dirty into a
  * single update.

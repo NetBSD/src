@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.5 2005/12/24 20:07:03 perry Exp $ */
+/*	$NetBSD: sscom.c,v 1.5.128.1 2014/05/18 17:45:05 rmind Exp $ */
 
 
 /*
@@ -144,7 +144,7 @@ cons_init(void)
 int
 getchar(void)
 {
-	uint8_t stat;
+	uint8_t stat __unused;
 	int c;
 
 	while (!sscom_rxrdy())

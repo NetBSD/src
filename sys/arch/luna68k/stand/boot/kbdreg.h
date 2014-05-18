@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdreg.h,v 1.1 2013/01/05 17:44:24 tsutsui Exp $	*/
+/*	$NetBSD: kbdreg.h,v 1.1.4.1 2014/05/18 17:45:15 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -82,9 +82,9 @@ struct kbd_keymap {
 
 #define KC_CHAR		0x000000FF
 #define KC_TYPE		0x0000FF00
-#define	KC_CODE		0x00000000
-#define	KC_SHIFT	0x00000100
-#define	KC_IGNORE	0x0000FF00
+#define KC_CODE		0x00000000
+#define KC_SHIFT	0x00000100
+#define KC_IGNORE	0x0000FF00
 
 #define KS_SHIFT	0
 #define KS_CTRL		1

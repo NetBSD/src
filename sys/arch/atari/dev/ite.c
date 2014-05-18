@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.71 2011/06/05 16:25:12 tsutsui Exp $	*/
+/*	$NetBSD: ite.c,v 1.71.16.1 2014/05/18 17:44:59 rmind Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.71 2011/06/05 16:25:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.71.16.1 2014/05/18 17:44:59 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -160,8 +160,17 @@ dev_type_tty(itetty);
 dev_type_poll(itepoll);
 
 const struct cdevsw ite_cdevsw = {
-	iteopen, iteclose, iteread, itewrite, iteioctl,
-	nostop, itetty, itepoll, nommap, ttykqfilter, D_TTY
+	.d_open = iteopen,
+	.d_close = iteclose,
+	.d_read = iteread,
+	.d_write = itewrite,
+	.d_ioctl = iteioctl,
+	.d_stop = nostop,
+	.d_tty = itetty,
+	.d_poll = itepoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_flag = D_TTY
 };
 
 /*
@@ -584,11 +593,8 @@ void
 itestart(struct tty *tp)
 {
 	struct clist *rbp;
-	struct ite_softc *sc;
 	u_char buf[ITEBURST];
 	int s, len;
-
-	sc = getitesp(tp->t_dev);
 
 	KDASSERT(tp);
 
@@ -620,9 +626,6 @@ void
 ite_on(dev_t dev, int flag)
 {
 	struct ite_softc *sc;
-	int unit;
-
-	unit = ITEUNIT(dev);
 	sc = getitesp(dev); 
 
 	/* force ite active, overriding graphics mode */
@@ -665,8 +668,8 @@ ite_switch(int unit)
 	struct ite_softc	*sc;
 	extern const struct cdevsw view_cdevsw;
 
-	sc = getitesp(unit);
-	if ((sc->flags & (ITE_ATTACHED | ITE_INITED)) == 0)
+	sc = device_lookup_private(&ite_cd, unit);
+	if (sc == NULL || (sc->flags & (ITE_ATTACHED | ITE_INITED)) == 0)
 		return;
 
 	/*
@@ -749,13 +752,12 @@ ite_cnfilter(u_int c, enum caller caller)
 {
 	struct key	key;
 	struct kbdmap	*kbdmap;
-	u_char		code, up, mask;
+	u_char		code, up;
 	int		s;
 
 	up   = KBD_RELEASED(c);
 	c    = KBD_SCANCODE(c);
 	code = 0;
-	mask = 0;
 	kbdmap = (kbd_ite == NULL) ? &ascii_kbdmap : kbd_ite->kbdmap;
 
 	s = spltty();
@@ -849,7 +851,7 @@ ite_filter(u_int c, enum caller caller)
 {
 	struct tty	*kbd_tty;
 	struct kbdmap	*kbdmap;
-	u_char		code, *str, up, mask;
+	u_char		code, *str, up;
 	struct key	key;
 	int		s, i;
 	static bool	again;
@@ -869,7 +871,6 @@ ite_filter(u_int c, enum caller caller)
 	up   = KBD_RELEASED(c);
 	c    = KBD_SCANCODE(c);
 	code = 0;
-	mask = 0;
 
 	/* have to make sure we're at spltty in here */
 	s = spltty();
@@ -1680,7 +1681,7 @@ iteputchar(register int c, struct ite_softc *sc)
 			break;
 		      case 6:
 			/* cursor position report */
-		        sprintf (sc->argbuf, "\033[%d;%dR", 
+		        snprintf (sc->argbuf, sizeof(sc->argbuf), "\033[%d;%dR",
 				 sc->cury + 1, sc->curx + 1);
 			ite_sendstr (sc->argbuf);
 			break;

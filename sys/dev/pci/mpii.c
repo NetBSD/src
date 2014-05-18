@@ -1,4 +1,4 @@
-/* $NetBSD: mpii.c,v 1.1.10.1 2013/08/28 23:59:25 rmind Exp $ */
+/* $NetBSD: mpii.c,v 1.1.10.2 2014/05/18 17:45:40 rmind Exp $ */
 /*	OpenBSD: mpii.c,v 1.51 2012/04/11 13:29:14 naddy Exp 	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.1.10.1 2013/08/28 23:59:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.1.10.2 2014/05/18 17:45:40 rmind Exp $");
 
 #include "bio.h"
 
@@ -2134,6 +2134,7 @@ mpii_attach(device_t parent, device_t self, void *aux)
 	struct scsipi_adapter *adapt = &sc->sc_adapt;
 	struct scsipi_channel *chan = &sc->sc_chan;
 	char wkname[15];
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	pci_aprint_devinfo(pa, NULL);
 
@@ -2195,7 +2196,7 @@ mpii_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "unable to map interrupt\n");
 		goto unmap;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, ih);
+	intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
 
 	if (mpii_init(sc) != 0) {
 		aprint_error_dev(self, "unable to initialize ioc\n");
@@ -3258,7 +3259,6 @@ static int
 mpii_portenable(struct mpii_softc *sc)
 {
 	struct mpii_msg_portenable_request	*peq;
-	struct mpii_msg_portenable_repy		*pep;
 	struct mpii_ccb				*ccb;
 
 	DNPRINTF(MPII_D_MISC, "%s: mpii_portenable\n", DEVNAME(sc));
@@ -3287,7 +3287,6 @@ mpii_portenable(struct mpii_softc *sc)
 		    DEVNAME(sc));
 		return (1);
 	}
-	pep = ccb->ccb_rcb->rcb_reply;
 
 	mpii_push_reply(sc, ccb->ccb_rcb);
 	mpii_put_ccb(sc, ccb);

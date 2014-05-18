@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndsink.c,v 1.2 2013/06/24 04:21:20 riastradh Exp $	*/
+/*	$NetBSD: kern_rndsink.c,v 1.2.2.1 2014/05/18 17:46:07 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndsink.c,v 1.2 2013/06/24 04:21:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndsink.c,v 1.2.2.1 2014/05/18 17:46:07 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -118,22 +118,24 @@ rndpool_extract(void *buffer, size_t bytes)
  * and return true.  Otherwise, leave the buffer alone and return
  * false.
  */
+
+CTASSERT(RND_ENTROPY_THRESHOLD <= 0xffffffffUL);
+CTASSERT(RNDSINK_MAX_BYTES <= (0xffffffffUL - RND_ENTROPY_THRESHOLD));
+CTASSERT((RNDSINK_MAX_BYTES + RND_ENTROPY_THRESHOLD) <=
+	    (0xffffffffUL / NBBY));
+
 static bool
 rndpool_maybe_extract(void *buffer, size_t bytes)
 {
 	bool ok;
 
 	KASSERT(bytes <= RNDSINK_MAX_BYTES);
-	CTASSERT(RND_ENTROPY_THRESHOLD <= 0xffffffffUL);
-	CTASSERT(RNDSINK_MAX_BYTES <= (0xffffffffUL - RND_ENTROPY_THRESHOLD));
-	CTASSERT((RNDSINK_MAX_BYTES + RND_ENTROPY_THRESHOLD) <=
-	    (0xffffffffUL / NBBY));
 
 	const uint32_t bits_needed = ((bytes + RND_ENTROPY_THRESHOLD) * NBBY);
 
 	mutex_spin_enter(&rndpool_mtx);
 	if (bits_needed <= rndpool_get_entropy_count(&rnd_pool)) {
-		const uint32_t extracted __unused =
+		const uint32_t extracted __diagused =
 		    rndpool_extract_data(&rnd_pool, buffer, bytes,
 			RND_EXTRACT_GOOD);
 
@@ -208,7 +210,20 @@ rndsinks_enqueue(struct rndsink *rndsink)
 
 	KASSERT(mutex_owned(&rndsinks_lock));
 
-	/* XXX Kick any on-demand entropy sources too.  */
+	/*
+	 * XXX This should request only rndsink->rs_bytes bytes of
+	 * entropy, but that might get buffered up indefinitely because
+	 * kern_rndq has no bound on the duration before it will
+	 * process queued entropy samples.  For now, request refilling
+	 * the pool altogether so that the buffer will fill up and get
+	 * processed.  Later, we ought to (a) bound the duration before
+	 * queued entropy samples get processed, and (b) add a target
+	 * or something -- as soon as we get that much from the entropy
+	 * sources, distribute it.
+	 */
+	mutex_spin_enter(&rndpool_mtx);
+	rnd_getmore(RND_POOLBITS / NBBY);
+	mutex_spin_exit(&rndpool_mtx);
 
 	switch (rndsink->rsink_state) {
 	case RNDSINK_IDLE:

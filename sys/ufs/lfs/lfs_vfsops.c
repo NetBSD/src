@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.307.2.1 2013/08/28 23:59:38 rmind Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.307.2.2 2014/05/18 17:46:21 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.307.2.1 2013/08/28 23:59:38 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.307.2.2 2014/05/18 17:46:21 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -143,31 +143,29 @@ const struct vnodeopv_desc * const lfs_vnodeopv_descs[] = {
 };
 
 struct vfsops lfs_vfsops = {
-	MOUNT_LFS,
-	sizeof (struct ulfs_args),
-	lfs_mount,
-	ulfs_start,
-	lfs_unmount,
-	ulfs_root,
-	ulfs_quotactl,
-	lfs_statvfs,
-	lfs_sync,
-	lfs_vget,
-	lfs_fhtovp,
-	lfs_vptofh,
-	lfs_init,
-	lfs_reinit,
-	lfs_done,
-	lfs_mountroot,
-	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
-	lfs_extattrctl,
-	(void *)eopnotsupp,	/* vfs_suspendctl */
-	genfs_renamelock_enter,
-	genfs_renamelock_exit,
-	(void *)eopnotsupp,
-	lfs_vnodeopv_descs,
-	0,
-	{ NULL, NULL },
+	.vfs_name = MOUNT_LFS,
+	.vfs_min_mount_data = sizeof (struct ulfs_args),
+	.vfs_mount = lfs_mount,
+	.vfs_start = ulfs_start,
+	.vfs_unmount = lfs_unmount,
+	.vfs_root = ulfs_root,
+	.vfs_quotactl = ulfs_quotactl,
+	.vfs_statvfs = lfs_statvfs,
+	.vfs_sync = lfs_sync,
+	.vfs_vget = lfs_vget,
+	.vfs_fhtovp = lfs_fhtovp,
+	.vfs_vptofh = lfs_vptofh,
+	.vfs_init = lfs_init,
+	.vfs_reinit = lfs_reinit,
+	.vfs_done = lfs_done,
+	.vfs_mountroot = lfs_mountroot,
+	.vfs_snapshot = (void *)eopnotsupp,
+	.vfs_extattrctl = lfs_extattrctl,
+	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_renamelock_enter = genfs_renamelock_enter,
+	.vfs_renamelock_exit = genfs_renamelock_exit,
+	.vfs_fsync = (void *)eopnotsupp,
+	.vfs_opv_descs = lfs_vnodeopv_descs
 };
 
 const struct genfs_ops lfs_genfsops = {
@@ -241,16 +239,11 @@ lfs_sysctl_setup(struct sysctllog **clog)
 		{ "write_exceeded", "Number of times writer invoked flush" },
 		{ "flush_invoked",  "Number of times flush was invoked" },
 		{ "vflush_invoked", "Number of time vflush was called" },
-		{ "clean_inlocked", "Number of vnodes skipped for VI_XLOCK" },
+		{ "clean_inlocked", "Number of vnodes skipped for being dead" },
 		{ "clean_vnlocked", "Number of vnodes skipped for vget failure" },
 		{ "segs_reclaimed", "Number of segments reclaimed" },
 	};
 
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "vfs", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "lfs",
@@ -394,7 +387,6 @@ lfs_writerd(void *arg)
  	struct lfs *fs;
 	struct vfsops *vfs = NULL;
  	int fsflags;
- 	int loopcount;
 	int skipc;
 	int lfsc;
 	int wrote_something = 0;
@@ -415,7 +407,6 @@ lfs_writerd(void *arg)
 				&lfs_lock);
 
 		KASSERT(mutex_owned(&lfs_lock));
-		loopcount = 0;
 		wrote_something = 0;
 
 		/*
@@ -456,8 +447,7 @@ lfs_writerd(void *arg)
  		mutex_enter(&mountlist_lock);
 		lfsc = 0;
 		skipc = 0;
- 		for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
- 		     mp = nmp) {
+ 		for (mp = TAILQ_FIRST(&mountlist); mp != NULL; mp = nmp) {
  			if (vfs_busy(mp, &nmp)) {
 				++skipc;
  				continue;
@@ -611,9 +601,7 @@ lfs_mountroot(void)
 		vfs_destroy(mp);
 		return (error);
 	}
-	mutex_enter(&mountlist_lock);
-	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	mutex_exit(&mountlist_lock);
+	mountlist_append(mp);
 	ump = VFSTOULFS(mp);
 	fs = ump->um_lfs;
 	memset(fs->lfs_fsmnt, 0, sizeof(fs->lfs_fsmnt));
@@ -640,6 +628,8 @@ lfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	int error = 0, update;
 	mode_t accessmode;
 
+	if (args == NULL)
+		return EINVAL;
 	if (*data_len < sizeof *args)
 		return EINVAL;
 
@@ -1070,7 +1060,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	ump->um_devvp = devvp;
 	for (i = 0; i < ULFS_MAXQUOTAS; i++)
 		ump->um_quotas[i] = NULLVP;
-	devvp->v_specmountpoint = mp;
+	spec_node_setmountedfs(devvp, mp);
 
 	/* Set up reserved memory for pageout */
 	lfs_setup_resblks(fs);
@@ -1325,7 +1315,7 @@ lfs_unmount(struct mount *mp, int mntflags)
 
 	ronly = !fs->lfs_ronly;
 	if (ump->um_devvp->v_type != VBAD)
-		ump->um_devvp->v_specmountpoint = NULL;
+		spec_node_setmountedfs(ump->um_devvp, NULL);
 	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(ump->um_devvp,
 	    ronly ? FREAD : FREAD|FWRITE, NOCRED);
@@ -1767,10 +1757,13 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 	 * We must write everything, however, if our vnode is being
 	 * reclaimed.
 	 */
-	if (LFS_STARVED_FOR_SEGS(fs) && !(vp->v_iflag & VI_XLOCK)) {
+	mutex_enter(vp->v_interlock);
+	if (LFS_STARVED_FOR_SEGS(fs) && vdead_check(vp, VDEAD_NOWAIT) == 0) {
+		mutex_exit(vp->v_interlock);
 		failreason = "Starved for segs and not flushing vp";
  		goto tryagain;
 	}
+	mutex_exit(vp->v_interlock);
 
 	/*
 	 * Sometimes things slip past the filters in lfs_putpages,

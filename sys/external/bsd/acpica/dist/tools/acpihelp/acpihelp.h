@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2011, Intel Corp.
+ * Copyright (C) 2000 - 2013, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -54,6 +54,7 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <ctype.h>
+#include <string.h>
 #ifdef WIN32
 #include <io.h>
 #include <direct.h>
@@ -67,6 +68,8 @@
 #define     AH_DECODE_PREDEFINED_NAME   3
 #define     AH_DECODE_AML               4
 #define     AH_DECODE_AML_OPCODE        5
+#define     AH_DISPLAY_DEVICE_IDS       6
+#define     AH_DECODE_EXCEPTION         7
 
 #define     AH_MAX_ASL_LINE_LENGTH      70
 #define     AH_MAX_AML_LINE_LENGTH      100
@@ -101,19 +104,17 @@ typedef struct ah_asl_keyword
 
 } AH_ASL_KEYWORD;
 
-typedef struct ah_predefined_name
+typedef struct ah_device_id
 {
     char            *Name;
     char            *Description;
-    char            *Action;
 
-} AH_PREDEFINED_NAME;
+} AH_DEVICE_ID;
 
 
 extern const AH_AML_OPCODE          AmlOpcodeInfo[];
 extern const AH_ASL_OPERATOR        AslOperatorInfo[];
 extern const AH_ASL_KEYWORD         AslKeywordInfo[];
-extern const AH_PREDEFINED_NAME     AslPredefinedInfo[];
 extern BOOLEAN                      AhDisplayAll;
 
 void
@@ -129,6 +130,10 @@ AhDecodeAmlOpcode (
     char                    *Name);
 
 void
+AhDecodeException (
+    char                    *Name);
+
+void
 AhFindPredefinedNames (
     char                    *Name);
 
@@ -139,5 +144,9 @@ AhFindAslOperators (
 void
 AhFindAslKeywords (
     char                    *Name);
+
+void
+AhDisplayDeviceIds (
+    void);
 
 #endif /* __ACPIHELP_H */

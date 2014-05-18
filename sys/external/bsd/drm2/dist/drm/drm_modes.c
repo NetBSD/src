@@ -173,7 +173,7 @@ struct drm_display_mode *drm_cvt_mode(struct drm_device *dev, int hdisplay,
 		/* 3) Nominal HSync width (% of line period) - default 8 */
 #define CVT_HSYNC_PERCENTAGE	8
 		unsigned int hblank_percentage;
-		int vsyncandback_porch, vback_porch, hblank;
+		int vsyncandback_porch, vback_porch __unused, hblank;
 
 		/* estimated the horizontal period */
 		tmp1 = HV_FACTOR * 1000000  -
@@ -321,9 +321,9 @@ drm_gtf_mode_complex(struct drm_device *dev, int hdisplay, int vdisplay,
 	int top_margin, bottom_margin;
 	int interlace;
 	unsigned int hfreq_est;
-	int vsync_plus_bp, vback_porch;
-	unsigned int vtotal_lines, vfieldrate_est, hperiod;
-	unsigned int vfield_rate, vframe_rate;
+	int vsync_plus_bp, vback_porch __unused;
+	unsigned int vtotal_lines, vfieldrate_est __unused, hperiod __unused;
+	unsigned int vfield_rate, vframe_rate __unused;
 	int left_margin, right_margin;
 	unsigned int total_active_pixels, ideal_duty_cycle;
 	unsigned int hblank, total_pixels, pixel_freq;
@@ -829,6 +829,8 @@ void drm_mode_validate_size(struct drm_device *dev,
 }
 EXPORT_SYMBOL(drm_mode_validate_size);
 
+#ifndef __NetBSD__
+
 /**
  * drm_mode_validate_clocks - validate modes against clock limits
  * @dev: DRM device
@@ -865,6 +867,8 @@ void drm_mode_validate_clocks(struct drm_device *dev,
 	}
 }
 EXPORT_SYMBOL(drm_mode_validate_clocks);
+
+#endif	/* !defined(__NetBSD__) */
 
 /**
  * drm_mode_prune_invalid - remove invalid modes from mode list
@@ -987,6 +991,8 @@ void drm_mode_connector_list_update(struct drm_connector *connector)
 	}
 }
 EXPORT_SYMBOL(drm_mode_connector_list_update);
+
+#ifndef __NetBSD__
 
 /**
  * drm_mode_parse_command_line_for_connector - parse command line for connector
@@ -1176,3 +1182,5 @@ drm_mode_create_from_cmdline_mode(struct drm_device *dev,
 	return mode;
 }
 EXPORT_SYMBOL(drm_mode_create_from_cmdline_mode);
+
+#endif

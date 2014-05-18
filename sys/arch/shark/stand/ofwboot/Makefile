@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12.18.1 2013/08/28 23:59:21 rmind Exp $
+#	$NetBSD: Makefile,v 1.12.18.2 2014/05/18 17:45:25 rmind Exp $
 
 NOMAN=		# defined
 
@@ -21,6 +21,7 @@ SRCS+=		byteorder.c
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
+LIBCRTI=
 LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=

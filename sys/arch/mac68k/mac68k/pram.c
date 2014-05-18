@@ -1,4 +1,4 @@
-/*	$NetBSD: pram.c,v 1.22 2006/06/21 00:02:26 rjs Exp $	*/
+/*	$NetBSD: pram.c,v 1.22.112.1 2014/05/18 17:45:16 rmind Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pram.c,v 1.22 2006/06/21 00:02:26 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pram.c,v 1.22.112.1 2014/05/18 17:45:16 rmind Exp $");
 
 #include "opt_adb.h"
 
@@ -121,7 +121,8 @@ static const char *convtime(unsigned long t)
     t=0;
   }
 
-  sprintf(s,"%s %ld, %ld   %ld:%ld:%ld",monstr[month],day,year,hour,minute,seconds);
+  snprintf(s, sizeof(s), "%s %ld, %ld   %ld:%ld:%ld",
+      monstr[month], day, year, hour, minute, seconds);
 
   return s;
 }

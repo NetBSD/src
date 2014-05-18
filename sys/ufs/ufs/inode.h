@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.65 2013/06/09 17:55:46 dholland Exp $	*/
+/*	$NetBSD: inode.h,v 1.65.2.1 2014/05/18 17:46:22 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -93,7 +93,6 @@ struct lfs_inode_ext;
  */
 struct inode {
 	struct genfs_node i_gnode;
-	LIST_ENTRY(inode) i_hash;/* Hash chain. */
 	TAILQ_ENTRY(inode) i_nextsnap; /* snapshot file list. */
 	struct	vnode *i_vnode;	/* Vnode associated with this inode. */
 	struct  ufsmount *i_ump; /* Mount point associated with this inode. */
@@ -296,8 +295,8 @@ struct indir {
 struct ufid {
 	u_int16_t ufid_len;	/* Length of structure. */
 	u_int16_t ufid_pad;	/* Force 32-bit alignment. */
-	u_int32_t ufid_ino;	/* File number (ino). */
 	int32_t	  ufid_gen;	/* Generation number. */
+	ino_t     ufid_ino;	/* File number (ino). */
 };
 #endif /* _KERNEL */
 

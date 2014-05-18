@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2013/04/04 01:48:19 pooka Exp $
+#	$NetBSD: Makefile,v 1.5.4.1 2014/05/18 17:46:16 rmind Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev/putter
@@ -6,7 +6,7 @@
 LIB=	rumpdev_putter
 
 SRCS=	putter.c
-SRCS+=	component.c
+SRCS+=	putter_component.c
 
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpvfs
 

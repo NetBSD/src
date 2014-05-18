@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.44.44.1 2013/08/28 15:21:49 rmind Exp $	*/
+/*	$NetBSD: protosw.h,v 1.44.44.2 2014/05/18 17:46:21 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -82,7 +82,7 @@ struct protosw {
 	int	(*pr_ctloutput)		/* control output (from above) */
 			(int, struct socket *, struct sockopt *);
 
-/* user-protocol hook */
+/* user-protocol hooks */
 	const struct pr_usrreqs *pr_usrreqs;
 
 /* utility hooks */

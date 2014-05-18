@@ -1,4 +1,4 @@
-/*	$NetBSD: union.h,v 1.24 2012/11/05 17:24:11 dholland Exp $	*/
+/*	$NetBSD: union.h,v 1.24.2.1 2014/05/18 17:46:07 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -127,14 +127,12 @@ struct union_node {
 	struct vnode		*un_pvp;	/* v: Parent vnode */
 	char			*un_path;	/* v: saved component name */
 	int			un_openl;	/* v: # of opens on lowervp */
-	unsigned int		un_flags;	/* v: node flags */
 	unsigned int		un_cflags;	/* c: cache flags */
 	struct vnode		**un_dircache;	/* v: cached union stack */
 	off_t			un_uppersz;	/* l: size of upper object */
 	off_t			un_lowersz;	/* l: size of lower object */
 };
 
-#define UN_KLOCK	0x08		/* Keep upper node locked on vput */
 #define UN_CACHED	0x10		/* In union cache */
 
 extern int union_allocvp(struct vnode **, struct mount *,

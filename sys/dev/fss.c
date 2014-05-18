@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.86 2013/02/13 14:03:48 hannken Exp $	*/
+/*	$NetBSD: fss.c,v 1.86.2.1 2014/05/18 17:45:35 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.86 2013/02/13 14:03:48 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.86.2.1 2014/05/18 17:45:35 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.86 2013/02/13 14:03:48 hannken Exp $");
 #include <sys/conf.h>
 #include <sys/kthread.h>
 #include <sys/fstrans.h>
-#include <sys/simplelock.h>
 #include <sys/vfs_syscalls.h>		/* For do_sys_unlink(). */
 
 #include <miscfs/specfs/specdev.h>
@@ -100,13 +99,26 @@ static struct vfs_hooks fss_vfs_hooks = {
 };
 
 const struct bdevsw fss_bdevsw = {
-	fss_open, fss_close, fss_strategy, fss_ioctl,
-	fss_dump, fss_size, D_DISK | D_MPSAFE
+	.d_open = fss_open,
+	.d_close = fss_close,
+	.d_strategy = fss_strategy, fss_ioctl,
+	.d_dump = fss_dump,
+	.d_psize = fss_size,
+	.d_flag = D_DISK | D_MPSAFE
 };
 
 const struct cdevsw fss_cdevsw = {
-	fss_open, fss_close, fss_read, fss_write, fss_ioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK | D_MPSAFE
+	.d_open = fss_open,
+	.d_close = fss_close,
+	.d_read = fss_read,
+	.d_write = fss_write,
+	.d_ioctl = fss_ioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_DISK | D_MPSAFE
 };
 
 static int fss_match(device_t, cfdata_t, void *);

@@ -44,6 +44,8 @@
 #include <sys/rwlock.h>
 #include <sys/callout.h>
 
+#include <linux/completion.h>
+
 /*
  * Copy from/to user API
  */
@@ -96,7 +98,7 @@ test_and_clear_bit(int nr, volatile void *addr)
 typedef volatile unsigned int atomic_t;
 
 #define atomic_set(p, v)	(*(p) = (v))
-#define atomic_read(p)		(*(p))
+#define atomic_read(p)		(*(volatile int *)(p))
 #define atomic_inc(p)		atomic_inc_uint(p)
 #define atomic_dec(p)		atomic_dec_uint(p)
 #define atomic_dec_and_test(p)	(atomic_dec_uint_nv(p) == 0)
@@ -125,15 +127,6 @@ typedef kmutex_t spinlock_t;
 #define spin_lock_destroy(lock)	mutex_destroy(lock)
 #define spin_lock(lock)		mutex_spin_enter(lock)
 #define spin_unlock(lock)	mutex_spin_exit(lock)
-#define spin_lock_bh(lock)	spin_lock(lock)
-#define spin_unlock_bh(lock)	spin_unlock(lock)
-#define spin_lock_irqsave(lock, flags)			\
-	do {						\
-		spin_lock(lock);			\
-		(void) &(flags);			\
-	} while (0)
-#define spin_unlock_irqrestore(lock, flags)		\
-	spin_unlock(lock)
 
 /*
  * Mutex API
@@ -151,25 +144,16 @@ struct mutex {
 /*
  * Rwlock API
  */
-typedef krwlock_t rwlock_t;
+typedef kmutex_t rwlock_t;
 
-/*
- * NB: Need to initialize these at attach time!
- */
-#define DEFINE_RWLOCK(name)	rwlock_t name
-#define rwlock_init(rwlock)	rw_init(rwlock)
-#define read_lock(rwlock)	rw_enter(rwlock, RW_READER)
-#define read_unlock(rwlock)	rw_exit(rwlock)
+#define DEFINE_RWLOCK(name)	kmutex_t name
 
-#define write_lock(rwlock)	rw_enter(rwlock, RW_WRITER)
-#define write_unlock(rwlock)	rw_exit(rwlock)
-#define write_lock_irqsave(rwlock, flags)		\
-	do {						\
-		write_lock(rwlock);			\
-		(void) &(flags);			\
-	} while (0)
-#define write_unlock_irqrestore(rwlock, flags)		\
-	write_unlock(rwlock)
+#define rwlock_init(rwlock)	mutex_init(rwlock, MUTEX_DEFAULT, IPL_VM)
+#define read_lock(rwlock)	mutex_spin_enter(rwlock)
+#define read_unlock(rwlock)	mutex_spin_exit(rwlock)
+
+#define write_lock(rwlock)	mutex_spin_enter(rwlock)
+#define write_unlock(rwlock)	mutex_spin_exit(rwlock)
 
 #define read_lock_bh(rwlock)	read_lock(rwlock)
 #define read_unlock_bh(rwlock)	read_unlock(rwlock)
@@ -194,28 +178,6 @@ void mod_timer(struct timer_list *t, unsigned long expires);
 void add_timer(struct timer_list *t);
 int del_timer(struct timer_list *t);
 int del_timer_sync(struct timer_list *t);
-
-/*
- * Completion API
- */
-struct completion {
-	kcondvar_t cv;
-	kmutex_t lock;
-	int done;
-};
-
-void init_completion(struct completion *c);
-void destroy_completion(struct completion *c);
-int try_wait_for_completion(struct completion *);
-int wait_for_completion_interruptible(struct completion *);
-int wait_for_completion_interruptible_timeout(struct completion *, unsigned long ticks);
-int wait_for_completion_killable(struct completion *);
-void wait_for_completion(struct completion *c);
-int wait_for_completion_timeout(struct completion *c, unsigned long timeout);
-void complete(struct completion *c);
-void complete_all(struct completion *c);
-
-#define	INIT_COMPLETION(x)	do {(x).done = 0;} while(0)
 
 /*
  * Semaphore API
@@ -333,7 +295,8 @@ MALLOC_DECLARE(M_VCHI);
  */
 #if 1
 /* emulate jiffies */
-static inline unsigned long _jiffies(void)
+static inline unsigned long
+_jiffies(void)
 {
 	struct timeval tv;
 
@@ -341,7 +304,8 @@ static inline unsigned long _jiffies(void)
 	return tvtohz(&tv);
 }
 
-static inline unsigned long msecs_to_jiffies(unsigned long msecs)
+static inline unsigned long
+msecs_to_jiffies(unsigned long msecs)
 {
 	struct timeval tv;
 
@@ -371,7 +335,7 @@ static inline unsigned long msecs_to_jiffies(unsigned long msecs)
 #define time_before(a, b)	time_after((b), (a))
 
 /*
- * kthread API (we use proc)
+ * kthread API (we use lwp)
  */
 typedef lwp_t * VCHIQ_THREAD_T;
 
@@ -393,8 +357,6 @@ int fatal_signal_pending(VCHIQ_THREAD_T);
 
 #define __user
 
-#define likely(x)		__builtin_expect(!!(x), 1)
-#define unlikely(x)		__builtin_expect(!!(x), 0)
 #define	current			curlwp
 #define EXPORT_SYMBOL(x) 
 #define PAGE_ALIGN(addr)	round_page(addr)
@@ -408,6 +370,10 @@ typedef	off_t	loff_t;
 #define rmb	membar_consumer
 #define wmb	membar_producer
 #define dsb	membar_producer
+
+#define smp_mb	membar_producer
+#define smp_rmb	membar_consumer
+#define smp_wmb	membar_producer
 
 #define device_print_prettyname(dev)	device_printf((dev), "")
 

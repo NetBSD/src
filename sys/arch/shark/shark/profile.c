@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.c,v 1.14 2009/11/27 03:23:13 rmind Exp $	*/
+/*	$NetBSD: profile.c,v 1.14.26.1 2014/05/18 17:45:25 rmind Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: profile.c,v 1.14 2009/11/27 03:23:13 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: profile.c,v 1.14.26.1 2014/05/18 17:45:25 rmind Exp $");
 
 #include "profiler.h"
 
@@ -116,8 +116,17 @@ dev_type_read(profread);
 dev_type_ioctl(profioctl);
 
 const struct cdevsw prof_cdevsw = {
-	profopen, profclose, profread, nowrite, profioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	.d_open = profopen,
+	.d_close = profclose,
+	.d_read = profread,
+	.d_write = nowrite,
+	.d_ioctl = profioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = 0
 };
 
 void 

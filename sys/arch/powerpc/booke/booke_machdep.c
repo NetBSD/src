@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_machdep.c,v 1.17.2.1 2013/08/28 23:59:20 rmind Exp $	*/
+/*	$NetBSD: booke_machdep.c,v 1.17.2.2 2014/05/18 17:45:21 rmind Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 #define	_POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.17.2.1 2013/08/28 23:59:20 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.17.2.2 2014/05/18 17:45:21 rmind Exp $");
 
 #include "opt_modular.h"
 
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.17.2.1 2013/08/28 23:59:20 rmind
 #include <sys/kernel.h>
 #include <sys/reboot.h>
 #include <sys/bus.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -145,7 +146,6 @@ __CTASSERT(__arraycount(cpu_info) == __arraycount(cpu_softc));
 /*
  * This should probably be in autoconf!				XXX
  */
-char cpu_model[80];
 char machine[] = MACHINE;		/* from <machine/param.h> */
 char machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 
@@ -167,7 +167,7 @@ booke_cpu_startup(const char *model)
 	vaddr_t 	minaddr, maxaddr;
 	char 		pbuf[9];
 
-	strlcpy(cpu_model, model, sizeof(cpu_model));
+	cpu_setmodel("%s", model);
 
 	printf("%s%s", copyright, version);
 

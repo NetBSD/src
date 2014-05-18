@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_ixp12x0.S,v 1.2.168.1 2013/08/28 23:59:11 rmind Exp $	*/
+/*	$NetBSD: cpufunc_asm_ixp12x0.S,v 1.2.168.2 2014/05/18 17:44:56 rmind Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -60,10 +60,12 @@ ENTRY(ixp12x0_context_switch)
 	mov	r0, r0
 	mov	r0, r0
 	mov	pc, lr
+END(ixp12x0_context_switch)
 
 ENTRY(ixp12x0_drain_readbuf)
 	mcr	p15, 0, r0, c9, c0, 0		/* drain read buffer */
 	mov	pc, lr
+END(ixp12x0_drain_readbuf)
 
 /*
  * Information for the IXP12X0 cache clean/purge functions:

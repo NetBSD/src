@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.50.4.1 2013/07/17 03:16:31 rmind Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.50.4.2 2014/05/18 17:46:13 rmind Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -28,9 +28,10 @@
  */
 
 #include "opt_inet.h"
+#include "opt_mbuftrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.50.4.1 2013/07/17 03:16:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.50.4.2 2014/05/18 17:46:13 rmind Exp $");
 
 /*
  * TODO:
@@ -158,6 +159,13 @@ int carp_opts[CARPCTL_MAXID] = { 0, 1, 0, 0, 0 };	/* XXX for now */
 static percpu_t *carpstat_percpu;
 
 #define	CARP_STATINC(x)		_NET_STATINC(carpstat_percpu, x)
+
+#ifdef MBUFTRACE
+static struct mowner carp_proto_mowner_rx = MOWNER_INIT("carp", "rx");
+static struct mowner carp_proto_mowner_tx = MOWNER_INIT("carp", "tx");
+static struct mowner carp_proto6_mowner_rx = MOWNER_INIT("carp6", "rx");
+static struct mowner carp_proto6_mowner_tx = MOWNER_INIT("carp6", "tx");
+#endif
 
 struct carp_if {
 	TAILQ_HEAD(, carp_softc) vhif_vrs;
@@ -347,6 +355,7 @@ carp_setroute(struct carp_softc *sc, int cmd)
 	struct ifaddr *ifa;
 	int s;
 
+	KERNEL_LOCK(1, NULL);
 	s = splsoftnet();
 	IFADDR_FOREACH(ifa, &sc->sc_if) {
 		switch (ifa->ifa_addr->sa_family) {
@@ -444,6 +453,7 @@ carp_setroute(struct carp_softc *sc, int cmd)
 		}
 	}
 	splx(s);
+	KERNEL_UNLOCK_ONE(NULL);
 }
 
 /*
@@ -457,14 +467,14 @@ carp_proto_input(struct mbuf *m, ...)
 	struct ip *ip = mtod(m, struct ip *);
 	struct carp_softc *sc = NULL;
 	struct carp_header *ch;
-	int iplen, len, hlen;
+	int iplen, len;
 	va_list ap;
 
 	va_start(ap, m);
-	hlen = va_arg(ap, int);
 	va_end(ap);
 
 	CARP_STATINC(CARP_STAT_IPACKETS);
+	MCLAIM(m, &carp_proto_mowner_rx);
 
 	if (!carp_opts[CARPCTL_ALLOW]) {
 		m_freem(m);
@@ -534,6 +544,7 @@ carp6_proto_input(struct mbuf **mp, int *offp, int proto)
 	u_int len;
 
 	CARP_STATINC(CARP_STAT_IPACKETS6);
+	MCLAIM(m, &carp_proto6_mowner_rx);
 
 	if (!carp_opts[CARPCTL_ALLOW]) {
 		m_freem(m);
@@ -802,6 +813,19 @@ carp_clone_create(struct if_clone *ifc, int unit)
 	carp_set_enaddr(sc);
 	LIST_INIT(&sc->sc_ac.ec_multiaddrs);
 	bpf_attach(ifp, DLT_EN10MB, ETHER_HDR_LEN);
+#ifdef MBUFTRACE
+	strlcpy(sc->sc_ac.ec_tx_mowner.mo_name, ifp->if_xname,
+	    sizeof(sc->sc_ac.ec_tx_mowner.mo_name));
+	strlcpy(sc->sc_ac.ec_tx_mowner.mo_descr, "tx",
+	    sizeof(sc->sc_ac.ec_tx_mowner.mo_descr));
+	strlcpy(sc->sc_ac.ec_rx_mowner.mo_name, ifp->if_xname,
+	    sizeof(sc->sc_ac.ec_rx_mowner.mo_name));
+	strlcpy(sc->sc_ac.ec_rx_mowner.mo_descr, "rx",
+	    sizeof(sc->sc_ac.ec_rx_mowner.mo_descr));
+	MOWNER_ATTACH(&sc->sc_ac.ec_tx_mowner);
+	MOWNER_ATTACH(&sc->sc_ac.ec_rx_mowner);
+	ifp->if_mowner = &sc->sc_ac.ec_tx_mowner;
+#endif
 	return (0);
 }
 
@@ -844,6 +868,7 @@ carpdetach(struct carp_softc *sc)
 	carp_setrun(sc, 0);
 	carp_multicast_cleanup(sc);
 
+	KERNEL_LOCK(1, NULL);
 	s = splnet();
 	if (sc->sc_carpdev != NULL) {
 		/* XXX linkstatehook removal */
@@ -857,6 +882,7 @@ carpdetach(struct carp_softc *sc)
 	}
 	sc->sc_carpdev = NULL;
 	splx(s);
+	KERNEL_UNLOCK_ONE(NULL);
 }
 
 /* Detach an interface from the carp. */
@@ -923,6 +949,7 @@ carp_send_ad(void *v)
 	struct ifaddr *ifa;
 	struct sockaddr sa;
 
+	KERNEL_LOCK(1, NULL);
 	s = splsoftnet();
 
 	advbase = advskew = 0; /* Sssssh compiler */
@@ -967,6 +994,7 @@ carp_send_ad(void *v)
 			/* XXX maybe less ? */
 			goto retry_later;
 		}
+		MCLAIM(m, &carp_proto_mowner_tx);
 		len = sizeof(*ip) + sizeof(ch);
 		m->m_pkthdr.len = len;
 		m->m_pkthdr.rcvif = NULL;
@@ -1047,6 +1075,7 @@ carp_send_ad(void *v)
 			/* XXX maybe less ? */
 			goto retry_later;
 		}
+		MCLAIM(m, &carp_proto6_mowner_tx);
 		len = sizeof(*ip6) + sizeof(ch);
 		m->m_pkthdr.len = len;
 		m->m_pkthdr.rcvif = NULL;
@@ -1123,6 +1152,7 @@ carp_send_ad(void *v)
 
 retry_later:
 	splx(s);
+	KERNEL_UNLOCK_ONE(NULL);
 	if (advbase != 255 || advskew != 255)
 		callout_schedule(&sc->sc_ad_tmo, tvtohz(&tv));
 }
@@ -1137,8 +1167,10 @@ carp_send_arp(struct carp_softc *sc)
 {
 	struct ifaddr *ifa;
 	struct in_addr *in;
-	int s = splsoftnet();
+	int s;
 
+	KERNEL_LOCK(1, NULL);
+	s = splsoftnet();
 	IFADDR_FOREACH(ifa, &sc->sc_if) {
 
 		if (ifa->ifa_addr->sa_family != AF_INET)
@@ -1148,6 +1180,7 @@ carp_send_arp(struct carp_softc *sc)
 		arprequest(sc->sc_carpdev, in, in, CLLADDR(sc->sc_if.if_sadl));
 	}
 	splx(s);
+	KERNEL_UNLOCK_ONE(NULL);
 }
 
 #ifdef INET6
@@ -1157,7 +1190,10 @@ carp_send_na(struct carp_softc *sc)
 	struct ifaddr *ifa;
 	struct in6_addr *in6;
 	static struct in6_addr mcast = IN6ADDR_LINKLOCAL_ALLNODES_INIT;
-	int s = splsoftnet();
+	int s;
+
+	KERNEL_LOCK(1, NULL);
+	s = splsoftnet();
 
 	IFADDR_FOREACH(ifa, &sc->sc_if) {
 
@@ -1169,6 +1205,7 @@ carp_send_na(struct carp_softc *sc)
 		    ND_NA_FLAG_OVERRIDE, 1, NULL);
 	}
 	splx(s);
+	KERNEL_UNLOCK_ONE(NULL);
 }
 #endif /* INET6 */
 
@@ -1581,10 +1618,12 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp)
 		if (sc->sc_naddrs || sc->sc_naddrs6)
 			sc->sc_if.if_flags |= IFF_UP;
 		carp_set_enaddr(sc);
+		KERNEL_LOCK(1, NULL);
 		s = splnet();
 		/* XXX linkstatehooks establish */
 		carp_carpdev_state(ifp);
 		splx(s);
+		KERNEL_UNLOCK_ONE(NULL);
 	} else {
 		carpdetach(sc);
 		sc->sc_if.if_flags &= ~(IFF_UP|IFF_RUNNING);
@@ -2048,6 +2087,7 @@ carp_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
     struct rtentry *rt)
 {
 	struct carp_softc *sc = ((struct carp_softc *)ifp->if_softc);
+	KASSERT(KERNEL_LOCKED_P());
 
 	if (sc->sc_carpdev != NULL && sc->sc_state == MASTER) {
 		return (sc->sc_carpdev->if_output(ifp, m, sa, rt));
@@ -2251,17 +2291,18 @@ carp_init(void)
 {
 
 	sysctl_net_inet_carp_setup(NULL);
+#ifdef MBUFTRACE
+	MOWNER_ATTACH(&carp_proto_mowner_rx);
+	MOWNER_ATTACH(&carp_proto_mowner_tx);
+	MOWNER_ATTACH(&carp_proto6_mowner_rx);
+	MOWNER_ATTACH(&carp_proto6_mowner_tx);
+#endif
 }
 
 static void
 sysctl_net_inet_carp_setup(struct sysctllog **clog)
 {
 
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "net", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "inet", NULL,

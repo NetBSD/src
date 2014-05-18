@@ -1,4 +1,4 @@
-/*	$NetBSD: a9tmr.c,v 1.6 2013/06/20 05:30:21 matt Exp $	*/
+/*	$NetBSD: a9tmr.c,v 1.6.2.1 2014/05/18 17:44:57 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.6 2013/06/20 05:30:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.6.2.1 2014/05/18 17:44:57 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -146,7 +146,7 @@ a9tmr_attach(device_t parent, device_t self, void *aux)
 	    TMR_WDOG_BASE, TMR_WDOG_SIZE, &sc->sc_wdog_memh);
 
 	sc->sc_global_ih = intr_establish(IRQ_A9TMR_PPI_GTIMER, IPL_CLOCK,
-	    IST_EDGE, clockhandler, NULL);
+	    IST_EDGE | IST_MPSAFE, clockhandler, NULL);
 	if (sc->sc_global_ih == NULL)
 		panic("%s: unable to register timer interrupt", __func__);
 	aprint_normal_dev(sc->sc_dev, "interrupting on irq %d\n",

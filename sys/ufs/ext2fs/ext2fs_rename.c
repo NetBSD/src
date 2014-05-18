@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_rename.c,v 1.5 2013/01/22 09:39:15 dholland Exp $	*/
+/*	$NetBSD: ext2fs_rename.c,v 1.5.2.1 2014/05/18 17:46:21 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_rename.c,v 1.5 2013/01/22 09:39:15 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_rename.c,v 1.5.2.1 2014/05/18 17:46:21 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -793,7 +793,7 @@ ext2fs_gro_genealogy(struct mount *mp, kauth_cred_t cred,
     struct vnode **intermediate_node_ret)
 {
 	struct vnode *vp, *dvp;
-	ino_t dotdot_ino;
+	ino_t dotdot_ino = -1;	/* XXX gcc 4.8.3: maybe-uninitialized */
 	int error;
 
 	KASSERT(mp != NULL);

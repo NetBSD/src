@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.264.2.3 2013/08/28 23:59:36 rmind Exp $	*/
+/*	$NetBSD: if.c,v 1.264.2.4 2014/05/18 17:46:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.264.2.3 2013/08/28 23:59:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.264.2.4 2014/05/18 17:46:12 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -179,6 +179,7 @@ pfil_head_t *	if_pfil;
 
 static kauth_listener_t if_listener;
 
+static int doifioctl(struct socket *, u_long, void *, struct lwp *);
 static int ifioctl_attach(struct ifnet *);
 static void ifioctl_detach(struct ifnet *);
 static void ifnet_lock_enter(struct ifnet_lock *);
@@ -237,6 +238,9 @@ ifinit(void)
 
 	if_listener = kauth_listen_scope(KAUTH_SCOPE_NETWORK,
 	    if_listener_cb, NULL);
+
+	/* interfaces are available, inform socket code */
+	ifioctl = doifioctl;
 }
 
 /*
@@ -494,7 +498,7 @@ if_free_sadl(struct ifnet *ifp)
 static void
 if_getindex(ifnet_t *ifp)
 {
-	int indexlim = 0;
+	bool hitlimit = false;
 
 	mutex_enter(&index_gen_mtx);
 	ifp->if_index_gen = index_gen++;
@@ -523,10 +527,11 @@ if_getindex(ifnet_t *ifp)
 			 * slot in ifindex2ifnet[], then there
 			 * there are too many (>65535) interfaces.
 			 */
-			if (indexlim++)
+			if (hitlimit) {
 				panic("too many interfaces");
-			else
-				if_index = 1;
+			}
+			hitlimit = true;
+			if_index = 1;
 		}
 		ifp->if_index = if_index;
 	}
@@ -575,6 +580,7 @@ skip:
 void
 if_attach(ifnet_t *ifp)
 {
+	KASSERT(if_indexlim > 0);
 	TAILQ_INIT(&ifp->if_addrlist);
 	TAILQ_INSERT_TAIL(&ifnet_list, ifp, if_list);
 
@@ -779,7 +785,7 @@ again:
 		for (pr = dp->dom_protosw;
 		     pr < dp->dom_protoswNPROTOSW; pr++) {
 			so.so_proto = pr;
-			if (pr->pr_usrreqs != NULL) {
+			if (pr->pr_usrreqs) {
 				(void) (*pr->pr_usrreqs->pr_generic)(&so,
 				    PRU_PURGEIF, NULL, NULL,
 				    (struct mbuf *) ifp, curlwp);
@@ -831,7 +837,7 @@ again:
 		 */
 		for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++) {
 			so.so_proto = pr;
-			if (pr->pr_usrreqs != NULL && pr->pr_flags & PR_PURGEIF)
+			if (pr->pr_usrreqs && pr->pr_flags & PR_PURGEIF)
 				(void)(*pr->pr_usrreqs->pr_generic)(&so,
 				    PRU_PURGEIF, NULL, NULL,
 				    (struct mbuf *)ifp, curlwp);
@@ -1326,7 +1332,10 @@ link_rtrequest(int cmd, struct rtentry *rt, const struct rt_addrinfo *info)
 void
 if_link_state_change(struct ifnet *ifp, int link_state)
 {
-	int old_link_state, s;
+	int s;
+#if defined(DEBUG) || defined(INET6)
+	int old_link_state;
+#endif
 
 	s = splnet();
 	if (ifp->if_link_state == link_state) {
@@ -1334,7 +1343,9 @@ if_link_state_change(struct ifnet *ifp, int link_state)
 		return;
 	}
 
+#if defined(DEBUG) || defined(INET6)
 	old_link_state = ifp->if_link_state;
+#endif
 	ifp->if_link_state = link_state;
 #ifdef DEBUG
 	log(LOG_DEBUG, "%s: link state %s (was %s)\n", ifp->if_xname,
@@ -1356,7 +1367,7 @@ if_link_state_change(struct ifnet *ifp, int link_state)
 	 * listeners would have an address and expect it to work right
 	 * away.
 	 */
-	if (link_state == LINK_STATE_UP &&
+	if (in6_present && link_state == LINK_STATE_UP &&
 	    old_link_state == LINK_STATE_UNKNOWN)
 		in6_if_link_down(ifp);
 #endif
@@ -1370,10 +1381,12 @@ if_link_state_change(struct ifnet *ifp, int link_state)
 #endif
 
 #ifdef INET6
-	if (link_state == LINK_STATE_DOWN)
-		in6_if_link_down(ifp);
-	else if (link_state == LINK_STATE_UP)
-		in6_if_link_up(ifp);
+	if (in6_present) {
+		if (link_state == LINK_STATE_DOWN)
+			in6_if_link_down(ifp);
+		else if (link_state == LINK_STATE_UP)
+			in6_if_link_up(ifp);
+	}
 #endif
 
 	splx(s);
@@ -1400,7 +1413,8 @@ if_down(struct ifnet *ifp)
 #endif
 	rt_ifmsg(ifp);
 #ifdef INET6
-	in6_if_down(ifp);
+	if (in6_present)
+		in6_if_down(ifp);
 #endif
 }
 
@@ -1429,7 +1443,8 @@ if_up(struct ifnet *ifp)
 #endif
 	rt_ifmsg(ifp);
 #ifdef INET6
-	in6_if_up(ifp);
+	if (in6_present)
+		in6_if_up(ifp);
 #endif
 }
 
@@ -1532,7 +1547,6 @@ ifunit(const char *name)
 ifnet_t *
 if_byindex(u_int idx)
 {
-
 	return (idx < if_indexlim) ? ifindex2ifnet[idx] : NULL;
 }
 
@@ -1647,6 +1661,11 @@ ifioctl_common(struct ifnet *ifp, u_long cmd, void *data)
 		ifdr->ifdr_data = ifp->if_data;
 		break;
 
+	case SIOCGIFINDEX:
+		ifr = data;
+		ifr->ifr_index = ifp->if_index;
+		break;
+
 	case SIOCZIFDATA:
 		ifdr = data;
 		ifdr->ifdr_data = ifp->if_data;
@@ -1674,7 +1693,8 @@ ifioctl_common(struct ifnet *ifp, u_long cmd, void *data)
 		 * If the link MTU changed, do network layer specific procedure.
 		 */
 #ifdef INET6
-		nd6_setmtu(ifp);
+		if (in6_present)
+			nd6_setmtu(ifp);
 #endif
 		return ENETRESET;
 	default:
@@ -1776,8 +1796,8 @@ ifnet_lock_exit(struct ifnet_lock *il)
 /*
  * Interface ioctls.
  */
-int
-ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
+static int
+doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 {
 	struct ifnet *ifp;
 	struct ifreq *ifr;
@@ -1899,7 +1919,7 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 
 	if (((oif_flags ^ ifp->if_flags) & IFF_UP) != 0) {
 #ifdef INET6
-		if ((ifp->if_flags & IFF_UP) != 0) {
+		if (in6_present && (ifp->if_flags & IFF_UP) != 0) {
 			int s = splnet();
 			in6_if_up(ifp);
 			splx(s);
@@ -2258,17 +2278,10 @@ sysctl_sndq_setup(struct sysctllog **clog, const char *ifname,
 
 	if (sysctl_createv(clog, 0, NULL, &rnode,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "net", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, CTL_EOL) != 0)
-		goto bad;
-
-	if (sysctl_createv(clog, 0, &rnode, &rnode,
-		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "interfaces",
 		       SYSCTL_DESCR("Per-interface controls"),
 		       NULL, 0, NULL, 0,
-		       CTL_CREATE, CTL_EOL) != 0)
+		       CTL_NET, CTL_CREATE, CTL_EOL) != 0)
 		goto bad;
 
 	if (sysctl_createv(clog, 0, &rnode, &rnode,
@@ -2325,11 +2338,6 @@ sysctl_net_ifq_setup(struct sysctllog **clog,
 		     int qid, struct ifqueue *ifq)
 {
 
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "net", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, pfname, NULL,

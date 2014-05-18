@@ -1,0 +1,14 @@
+#	$NetBSD: Makefile.virtif,v 1.4.4.2 2014/05/18 17:46:20 rmind Exp $
+#
+
+.if !defined(VIRTIF)
+.error Define VIRTIF when including ${.PARSEFILE}
+.endif
+
+SRCS=	if_virt.c
+
+VIRTIFDIR:=	${.PARSEDIR}
+.PATH:		${VIRTIFDIR}
+
+CPPFLAGS+=		 -DVIRTIF_BASE=${VIRTIF} -I${VIRTIFDIR}
+RUMPCOMP_USER_CPPFLAGS+= -DVIRTIF_BASE=${VIRTIF} -I${VIRTIFDIR}

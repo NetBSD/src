@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_sysctl.c,v 1.15 2008/11/19 18:36:02 ad Exp $	*/
+/*	$NetBSD: freebsd_sysctl.c,v 1.15.30.1 2014/05/18 17:45:31 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_sysctl.c,v 1.15 2008/11/19 18:36:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sysctl.c,v 1.15.30.1 2014/05/18 17:45:31 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,11 +62,6 @@ void
 freebsd_sysctl_init(void)
 {
 
-	sysctl_createv(&freebsd_clog, 0, NULL, NULL,
-			CTLFLAG_PERMANENT,
-			CTLTYPE_NODE, "kern", NULL,
-			NULL, 0, NULL, 0,
-			CTL_KERN, CTL_EOL);
         sysctl_createv(&freebsd_clog, 0, NULL, NULL,
 			CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 			CTLTYPE_INT, "osreldate",

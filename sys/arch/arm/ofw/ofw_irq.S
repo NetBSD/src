@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_irq.S,v 1.13.4.1 2013/08/28 23:59:12 rmind Exp $	*/
+/*	$NetBSD: ofw_irq.S,v 1.13.4.2 2014/05/18 17:44:59 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -248,7 +248,7 @@ Lfind_highest_ipl:
 	/* Update the irq masks */
 	bl	_C_LABEL(irq_setmasks)
 
-	mrs     r0, cpsr_all		/* Enable IRQ's */
+	mrs     r0, cpsr		/* Enable IRQ's */
 	bic	r0, r0, #I32_bit
 	msr	cpsr_all, r0
 
@@ -318,7 +318,7 @@ nextirq:
 	bl	_C_LABEL(dosoftints)	/* Handle the soft interrupts */
 
 	/* Kill IRQ's in preparation for exit */
-	mrs     r0, cpsr_all
+	mrs     r0, cpsr
 	orr     r0, r0, #(I32_bit)
 	msr     cpsr_all, r0
 
@@ -446,7 +446,7 @@ _C_LABEL(dotickgrovelling):
 	str	r1, [r0, #0]			/* plug spsr */
 
 	/* Sneak into SVC mode to get sp and lr */
-	mrs	r3, cpsr_all
+	mrs	r3, cpsr
 	bic	r3, r3, #(PSR_MODE)
 	orr	r3, r3, #(PSR_SVC32_MODE)
 	msr	cpsr_all, r3

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.186 2012/11/12 11:00:07 hannken Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.186.2.1 2014/05/18 17:46:08 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.186 2012/11/12 11:00:07 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.186.2.1 2014/05/18 17:46:08 rmind Exp $");
 
 #include "veriexec.h"
 
@@ -184,10 +184,12 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 				 va.va_vaflags |= VA_EXCLUSIVE;
 			error = VOP_CREATE(ndp->ni_dvp, &ndp->ni_vp,
 					   &ndp->ni_cnd, &va);
+			vput(ndp->ni_dvp);
 			if (error)
 				goto out;
 			fmode &= ~O_TRUNC;
 			vp = ndp->ni_vp;
+			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		} else {
 			VOP_ABORTOP(ndp->ni_dvp, &ndp->ni_cnd);
 			if (ndp->ni_dvp == ndp->ni_vp)
@@ -790,28 +792,14 @@ vn_lock(struct vnode *vp, int flags)
 		WAPBL_JUNLOCK_ASSERT(wapbl_vptomp(vp));
 #endif
 
-	do {
-		/*
-		 * XXX PR 37706 forced unmount of file systems is unsafe.
-		 * Race between vclean() and this the remaining problem.
-		 */
-		mutex_enter(vp->v_interlock);
-		if (vp->v_iflag & VI_XLOCK) {
-			if (flags & LK_NOWAIT) {
-				mutex_exit(vp->v_interlock);
-				return EBUSY;
-			}
-			vwait(vp, VI_XLOCK);
-			mutex_exit(vp->v_interlock);
-			error = ENOENT;
-		} else {
-			mutex_exit(vp->v_interlock);
-			error = VOP_LOCK(vp, (flags & ~LK_RETRY));
-			if (error == 0 || error == EDEADLK || error == EBUSY)
-				return (error);
-		}
-	} while (flags & LK_RETRY);
-	return (error);
+	error = VOP_LOCK(vp, flags);
+	if ((flags & LK_RETRY) != 0 && error == ENOENT)
+		error = VOP_LOCK(vp, flags);
+
+	KASSERT((flags & LK_RETRY) == 0 || (flags & LK_NOWAIT) != 0 ||
+	    error == 0);
+
+	return error;
 }
 
 /*

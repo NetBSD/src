@@ -1,4 +1,4 @@
-/*	$NetBSD: outstr.c,v 1.3 2008/01/12 09:54:31 tsutsui Exp $	*/
+/*	$NetBSD: outstr.c,v 1.3.60.1 2014/05/18 17:45:18 rmind Exp $	*/
 
 /*
  * bug routines -- assumes that the necessary sections of memory
@@ -13,7 +13,6 @@ void
 mvmeprom_outstr(char *start, char *end)
 {
 
-	MVMEPROM_ARG1(end);
-	MVMEPROM_ARG2(start);
+	MVMEPROM_ARG2(end, start);
 	MVMEPROM_CALL(MVMEPROM_OUTSTR);
 }

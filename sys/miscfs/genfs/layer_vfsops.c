@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vfsops.c,v 1.41 2012/05/31 16:08:14 pgoyette Exp $	*/
+/*	$NetBSD: layer_vfsops.c,v 1.41.4.1 2014/05/18 17:46:09 rmind Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.41 2012/05/31 16:08:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.41.4.1 2014/05/18 17:46:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -214,9 +214,16 @@ layerfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		*vpp = NULL;
 		return error;
 	}
+	VOP_UNLOCK(vp);
 	error = layer_node_create(mp, vp, vpp);
 	if (error) {
-		vput(vp);
+		vrele(vp);
+		*vpp = NULL;
+		return error;
+	}
+	error = vn_lock(*vpp, LK_EXCLUSIVE);
+	if (error) {
+		vrele(*vpp);
 		*vpp = NULL;
 		return error;
 	}
@@ -231,13 +238,21 @@ layerfs_fhtovp(struct mount *mp, struct fid *fidp, struct vnode **vpp)
 
 	error = VFS_FHTOVP(MOUNTTOLAYERMOUNT(mp)->layerm_vfs, fidp, &vp);
 	if (error) {
+		*vpp = NULL;
 		return error;
 	}
+	VOP_UNLOCK(vp);
 	error = layer_node_create(mp, vp, vpp);
 	if (error) {
 		vput(vp);
 		*vpp = NULL;
 		return (error);
+	}
+	error = vn_lock(*vpp, LK_EXCLUSIVE);
+	if (error) {
+		vrele(*vpp);
+		*vpp = NULL;
+		return error;
 	}
 	return 0;
 }
@@ -274,15 +289,6 @@ SYSCTL_SETUP(sysctl_vfs_layerfs_setup, "sysctl vfs.layerfs subtree setup")
 {
 	const struct sysctlnode *layerfs_node = NULL;
 
-	sysctl_createv(clog, 0, NULL, NULL,
-#ifdef _MODULE
-		       0,
-#else
-		       CTLFLAG_PERMANENT,
-#endif
-		       CTLTYPE_NODE, "vfs", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, &layerfs_node,
 #ifdef _MODULE
 		       0,
@@ -292,7 +298,7 @@ SYSCTL_SETUP(sysctl_vfs_layerfs_setup, "sysctl vfs.layerfs subtree setup")
 		       CTLTYPE_NODE, "layerfs",
 		       SYSCTL_DESCR("Generic layered file system"),
 		       NULL, 0, NULL, 0,
-		       CTL_VFS, CTL_CREATE);
+		       CTL_VFS, CTL_CREATE, CTL_EOL);
 
 #ifdef LAYERFS_DIAGNOSTIC
 	sysctl_createv(clog, 0, &layerfs_node, NULL,

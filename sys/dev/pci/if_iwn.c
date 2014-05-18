@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.66.2.1 2013/08/28 23:59:25 rmind Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.66.2.2 2014/05/18 17:45:40 rmind Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.119 2013/05/29 23:16:52 yuo Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.66.2.1 2013/08/28 23:59:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.66.2.2 2014/05/18 17:45:40 rmind Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -351,6 +351,7 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	pcireg_t memtype, reg;
 	int i, error;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 	sc->sc_pct = pa->pa_pc;
@@ -402,7 +403,7 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 		aprint_error(": can't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(sc->sc_pct, ih);
+	intrstr = pci_intr_string(sc->sc_pct, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(sc->sc_pct, ih, IPL_NET, iwn_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error(": can't establish interrupt");
@@ -918,6 +919,7 @@ iwn_mem_write(struct iwn_softc *sc, uint32_t addr, uint32_t data)
 	IWN_WRITE(sc, IWN_MEM_WDATA, data);
 }
 
+#ifndef IEEE80211_NO_HT
 static __inline void
 iwn_mem_write_2(struct iwn_softc *sc, uint32_t addr, uint16_t data)
 {
@@ -930,6 +932,7 @@ iwn_mem_write_2(struct iwn_softc *sc, uint32_t addr, uint16_t data)
 		tmp = (tmp & 0xffff0000) | data;
 	iwn_mem_write(sc, addr & ~3, tmp);
 }
+#endif
 
 static __inline void
 iwn_mem_read_region_4(struct iwn_softc *sc, uint32_t addr, uint32_t *data,
@@ -3113,7 +3116,6 @@ iwn_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct iwn_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifaddr *ifa;
 	const struct sockaddr *sa;
 	int s, error = 0;
 
@@ -3121,9 +3123,9 @@ iwn_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 	case SIOCSIFADDR:
-		ifa = (struct ifaddr *)data;
 		ifp->if_flags |= IFF_UP;
 #ifdef INET
+		struct ifaddr *ifa = (struct ifaddr *)data;
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&ic->ic_ac, ifa);
 #endif

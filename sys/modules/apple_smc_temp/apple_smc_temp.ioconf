@@ -1,0 +1,9 @@
+# $NetBSD: apple_smc_temp.ioconf,v 1.1.4.2 2014/05/18 17:46:10 rmind Exp $
+
+ioconf apple_smc_temp
+
+include "conf/files"
+
+pseudo-root	applesmcbus*
+
+applesmctemp*	at applesmcbus?

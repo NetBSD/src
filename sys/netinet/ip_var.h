@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.97.18.2 2013/08/28 15:21:48 rmind Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.97.18.3 2014/05/18 17:46:13 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993

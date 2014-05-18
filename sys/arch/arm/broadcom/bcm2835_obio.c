@@ -1,7 +1,7 @@
-/*	$NetBSD: bcm2835_obio.c,v 1.18 2013/03/24 19:52:11 jmcneill Exp $	*/
+/*	$NetBSD: bcm2835_obio.c,v 1.18.4.1 2014/05/18 17:44:57 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2012 The NetBSD Foundation, Inc.
+ * Copyright (c) 2012, 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_obio.c,v 1.18 2013/03/24 19:52:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_obio.c,v 1.18.4.1 2014/05/18 17:44:57 rmind Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -134,7 +134,7 @@ static const struct ambadev_locators bcm2835_ambadev_locs[] = {
 	},
 	{
 		/* DesignWare_OTG USB controller */
-		.ad_name = "dotg",
+		.ad_name = "dwctwo",
 		.ad_addr = BCM2835_USB_BASE,
 		.ad_size = BCM2835_USB_SIZE,
 		.ad_intr = BCM2835_INT_USB,
@@ -156,6 +156,20 @@ static const struct ambadev_locators bcm2835_ambadev_locs[] = {
 		.ad_addr = BCM2835_BSC1_BASE,
 		.ad_size = BCM2835_BSC_SIZE,
 		.ad_intr = BCM2835_INT_BSC,
+	},
+	{
+		/* gpio */
+		.ad_name = "bcmgpio",
+		.ad_addr = BCM2835_GPIO_BASE,
+		.ad_size = BCM2835_GPIO_SIZE,
+		.ad_intr = -1,
+	},
+	{
+		/* gpio */
+		.ad_name = "bcmgpio",
+		.ad_addr = BCM2835_GPIO_BASE,
+		.ad_size = BCM2835_GPIO_SIZE,
+		.ad_intr = -1,
 	},
 	{
 		/* Terminator */

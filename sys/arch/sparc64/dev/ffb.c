@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.52.4.1 2013/08/28 23:59:22 rmind Exp $	*/
+/*	$NetBSD: ffb.c,v 1.52.4.2 2014/05/18 17:45:26 rmind Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.52.4.1 2013/08/28 23:59:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.52.4.2 2014/05/18 17:45:26 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -201,7 +201,7 @@ ffb_attach(device_t self)
 	const char *model, *out_dev;
 	int btype;
 	uint32_t dac;
-	int maxrow, maxcol;
+	int maxrow;
 	u_int blank = WSDISPLAYIO_VIDEO_ON;
 	char buf[6+1];
 	int i, try_edid;
@@ -233,10 +233,6 @@ ffb_attach(device_t self)
 	sc->sc_locked = 0;
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
 	
-	maxcol = (prom_getoption("screen-#columns", buf, sizeof buf) == 0)
-		? strtoul(buf, NULL, 10)
-		: 80;
-
 	maxrow = (prom_getoption("screen-#rows", buf, sizeof buf) != 0)
 		? strtoul(buf, NULL, 10)
 		: 34;
@@ -498,6 +494,7 @@ ffb_ioctl(void *v, void *vs, u_long cmd, void *data, int flags, struct lwp *l)
 	case WSDISPLAYIO_GVIDEO:
 		return(ffb_blank(sc, cmd, (u_int *)data));
 		break;
+	
 	case WSDISPLAYIO_GCURPOS:
 	case WSDISPLAYIO_SCURPOS:
 	case WSDISPLAYIO_GCURMAX:
@@ -505,10 +502,17 @@ ffb_ioctl(void *v, void *vs, u_long cmd, void *data, int flags, struct lwp *l)
 	case WSDISPLAYIO_SCURSOR:
 		return EIO; /* not supported yet */
 		break;
+	
 	case WSDISPLAYIO_GET_EDID: {
 		struct wsdisplayio_edid_info *d = data;
 		return wsdisplayio_get_edid(sc->sc_dev, d);
 	}
+	
+	case WSDISPLAYIO_GET_FBINFO: {
+		struct wsdisplayio_fbinfo *fbi = data;
+		return wsdisplayio_get_fbinfo(&ms->scr_ri, fbi);
+	}
+	
 	default:
 		return EPASSTHROUGH;
 	}

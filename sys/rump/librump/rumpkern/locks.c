@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.64.2.1 2013/08/28 23:59:37 rmind Exp $	*/
+/*	$NetBSD: locks.c,v 1.64.2.2 2014/05/18 17:46:18 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.64.2.1 2013/08/28 23:59:37 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.64.2.2 2014/05/18 17:46:18 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -36,6 +36,12 @@ __KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.64.2.1 2013/08/28 23:59:37 rmind Exp $")
 #include <rump/rumpuser.h>
 
 #include "rump_private.h"
+
+#ifdef LOCKDEBUG
+const int rump_lockdebug = 1;
+#else
+const int rump_lockdebug = 0;
+#endif
 
 /*
  * Simple lockdebug.  If it's compiled in, it's always active.

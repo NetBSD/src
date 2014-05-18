@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.33 2012/10/27 17:17:44 chs Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.33.2.1 2014/05/18 17:45:01 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.33 2012/10/27 17:17:44 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.33.2.1 2014/05/18 17:45:01 rmind Exp $");
 
 #define _COBALT_BUS_DMA_PRIVATE
 
@@ -183,16 +183,14 @@ pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 }
 
 const char *
-pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
+pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih, char *buf, size_t len)
 {
-	static char irqstr[8];
-
 	if (ih >= NICU_INT)
-		sprintf(irqstr, "level %d", ih - NICU_INT);
+		snprintf(buf, len, "level %d", ih - NICU_INT);
 	else
-		sprintf(irqstr, "irq %d", ih);
+		snprintf(buf, len, "irq %d", ih);
 
-	return irqstr;
+	return buf;
 }
 
 const struct evcnt *

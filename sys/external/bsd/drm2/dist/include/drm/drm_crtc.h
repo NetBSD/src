@@ -120,7 +120,7 @@ enum drm_mode_status {
 	.htotal = (ht), .hskew = (hsk), .vdisplay = (vd), \
 	.vsync_start = (vss), .vsync_end = (vse), .vtotal = (vt), \
 	.vscan = (vs), .flags = (f), .vrefresh = 0, \
-	.base.type = DRM_MODE_OBJECT_MODE
+	.base = { .type = DRM_MODE_OBJECT_MODE }
 
 #define CRTC_INTERLACE_HALVE_V 0x1 /* halve V values for interlacing */
 
@@ -839,7 +839,7 @@ struct drm_mode_config {
 
 struct drm_prop_enum_list {
 	int type;
-	char *name;
+	const char *name;
 };
 
 extern int drm_crtc_init(struct drm_device *dev,
@@ -872,11 +872,11 @@ extern void drm_plane_cleanup(struct drm_plane *plane);
 extern void drm_encoder_cleanup(struct drm_encoder *encoder);
 
 extern char *drm_get_connector_name(struct drm_connector *connector);
-extern char *drm_get_dpms_name(int val);
-extern char *drm_get_dvi_i_subconnector_name(int val);
-extern char *drm_get_dvi_i_select_name(int val);
-extern char *drm_get_tv_subconnector_name(int val);
-extern char *drm_get_tv_select_name(int val);
+extern const char *drm_get_dpms_name(int val);
+extern const char *drm_get_dvi_i_subconnector_name(int val);
+extern const char *drm_get_dvi_i_select_name(int val);
+extern const char *drm_get_tv_subconnector_name(int val);
+extern const char *drm_get_tv_select_name(int val);
 extern void drm_fb_release(struct drm_file *file_priv);
 extern int drm_mode_group_init_legacy_group(struct drm_device *dev, struct drm_mode_group *group);
 extern bool drm_probe_ddc(struct i2c_adapter *adapter);
@@ -962,7 +962,7 @@ extern int drm_property_add_enum(struct drm_property *property, int index,
 				 uint64_t value, const char *name);
 extern int drm_mode_create_dvi_i_properties(struct drm_device *dev);
 extern int drm_mode_create_tv_properties(struct drm_device *dev, int num_formats,
-				     char *formats[]);
+				     const char *formats[]);
 extern int drm_mode_create_scaling_mode_property(struct drm_device *dev);
 extern int drm_mode_create_dithering_property(struct drm_device *dev);
 extern int drm_mode_create_dirty_info_property(struct drm_device *dev);

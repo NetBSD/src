@@ -1,16 +1,12 @@
-#	$NetBSD: Makefile,v 1.6.6.1 2013/08/28 23:59:37 rmind Exp $
+#	$NetBSD: Makefile,v 1.6.6.2 2014/05/18 17:46:20 rmind Exp $
 #
 
 LIB=	rumpnet_virtif
+VIRTIF=	virt
 
-SRCS=	if_virt.c
-SRCS+=	component.c
+.include "${.CURDIR}/Makefile.virtif"
 
-CPPFLAGS+=	-I${.CURDIR}/../../../librump/rumpkern -I${.CURDIR}
-CPPFLAGS+=	-DVIRTIF_BASE=virt
-
-RUMPCOMP_USER=	#defined
-RUMPCOMP_USER_CPPFLAGS+= -DVIRTIF_BASE=virt
+RUMPCOMP_USER_SRCS=	virtif_user.c
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

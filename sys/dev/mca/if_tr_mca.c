@@ -1,4 +1,4 @@
-/* $NetBSD: if_tr_mca.c,v 1.22 2012/10/27 17:18:26 chs Exp $ */
+/* $NetBSD: if_tr_mca.c,v 1.22.2.1 2014/05/18 17:45:38 rmind Exp $ */
 
 /*_
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_mca.c,v 1.22 2012/10/27 17:18:26 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_mca.c,v 1.22.2.1 2014/05/18 17:45:38 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,6 +117,7 @@ tr_mca_attach(device_t parent, device_t self, void *aux)
 	pos3 = mca_conf_read(ma->ma_mc, ma->ma_slot, 3);
 	pos4 = mca_conf_read(ma->ma_mc, ma->ma_slot, 4);
 	pos5 = mca_conf_read(ma->ma_mc, ma->ma_slot, 5);
+	__USE(pos5);
 
 	/*
 	 * POS register 2: (adf pos0)

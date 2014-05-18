@@ -1,4 +1,4 @@
-/*	$NetBSD: tsarm_machdep.c,v 1.20.2.1 2013/08/28 23:59:15 rmind Exp $ */
+/*	$NetBSD: tsarm_machdep.c,v 1.20.2.2 2014/05/18 17:45:05 rmind Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsarm_machdep.c,v 1.20.2.1 2013/08/28 23:59:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsarm_machdep.c,v 1.20.2.2 2014/05/18 17:45:05 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -378,10 +378,11 @@ initarm(void *arg)
 	int loop;
 	int loop1;
 	u_int l1pagetable;
+
+#ifdef FIXME
 	paddr_t memstart;
 	psize_t memsize;
 
-#ifdef FIXME
 	/* Calibrate the delay loop. */
 	i80321_calibrate_delay();
 #endif
@@ -415,7 +416,7 @@ initarm(void *arg)
 	 */
 	i80321_sdram_bounds(&obio_bs_tag, VERDE_PMMR_BASE + VERDE_MCU_BASE,
 	    &memstart, &memsize);
-#else
+
 	memstart = 0x0;
 	memsize = 0x2000000;
 #endif

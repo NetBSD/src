@@ -1,4 +1,4 @@
-/*	$NetBSD: swwdog.c,v 1.12 2010/11/11 21:55:04 pooka Exp $	*/
+/*	$NetBSD: swwdog.c,v 1.12.22.1 2014/05/18 17:45:47 rmind Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Steven M. Bellovin
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.12 2010/11/11 21:55:04 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.12.22.1 2014/05/18 17:45:47 rmind Exp $");
 
 /*
  *
@@ -162,6 +162,7 @@ swwdog_detach(device_t self, int flags)
 {
 	struct swwdog_softc *sc = device_private(self);
 
+	pmf_device_deregister(self);
 	swwdog_disarm(sc);
 	callout_destroy(&sc->sc_c);
 	sysctl_teardown(&swwdog_sysctllog);

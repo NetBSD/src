@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.29 2013/02/27 17:50:07 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.29.6.1 2014/05/18 17:44:58 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -44,9 +44,6 @@
  * Virtual Memory parameters common to all arm32 platforms.
  */
 
-#ifndef __ASSEMBLER__
-#include <sys/simplelock.h>	/* struct simplelock */ 
-#endif /* __ASSEMBLER__ */
 #include <arm/arm32/pte.h>	/* pt_entry_t */
 
 #define	USRSTACK	VM_MAXUSER_ADDRESS
@@ -80,12 +77,16 @@
 /*
  * Mach derived constants
  */
-#define	VM_MIN_ADDRESS		((vaddr_t) 0x00001000)
-#define	VM_MAXUSER_ADDRESS	((vaddr_t) KERNEL_BASE - 0x1000)
+#define	VM_MIN_ADDRESS		((vaddr_t) PAGE_SIZE)
+#ifdef ARM_MMU_EXTENDED
+#define	VM_MAXUSER_ADDRESS	((vaddr_t) 0x80000000 - PAGE_SIZE)
+#else
+#define	VM_MAXUSER_ADDRESS	((vaddr_t) KERNEL_BASE - PAGE_SIZE)
+#endif
 #define	VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
 
 #define	VM_MIN_KERNEL_ADDRESS	((vaddr_t) KERNEL_BASE)
-#define	VM_MAX_KERNEL_ADDRESS	((vaddr_t) 0xffffefff)
+#define	VM_MAX_KERNEL_ADDRESS	((vaddr_t) -(PAGE_SIZE+1))
 
 #ifndef __ASSEMBLER__
 /* XXX max. amount of KVM to be used by buffers. */
