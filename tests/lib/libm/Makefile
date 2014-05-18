@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.23 2014/05/05 18:08:33 martin Exp $
+# $NetBSD: Makefile,v 1.24 2014/05/18 10:47:38 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,7 @@ CPPFLAGS+=	-DHAVE_FENV_H
 .endif
 
 .if ${MACHINE} == "alpha"
-# COPTS+=	-mfloat-ieee -mieee-with-inexact -mfp-trap-mode=sui -mtrap-precision=i
+COPTS+=	-mfloat-ieee -mieee-with-inexact -mfp-trap-mode=sui -mtrap-precision=i
 .endif
 
 TESTS_C+=	t_acos
