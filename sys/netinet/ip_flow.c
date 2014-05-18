@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.60.10.1 2013/07/17 03:16:31 rmind Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.60.10.2 2014/05/18 17:46:13 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.60.10.1 2013/07/17 03:16:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.60.10.2 2014/05/18 17:46:13 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,7 +137,7 @@ ipflow_reinit(int table_size, bool waitok, struct ipflowhead *gclist)
 		KASSERT(old_table == NULL);
 		LIST_INIT(&ipflowlist);
 	} else {
-		LIST_CONCAT(gclist, &ipflowlist);
+		LIST_MOVE(&ipflowlist, gclist);
 	}
 	mutex_exit(&ipflow_lock);
 
@@ -569,7 +569,7 @@ ipflow_invalidate_all(int new_size)
 		}
 	} else {
 		mutex_enter(&ipflow_lock);
-		LIST_CONCAT(&ipf_gclist, &ipflowlist);
+		LIST_MOVE(&ipflowlist, &ipf_gclist);
 		mutex_exit(&ipflow_lock);
 	}
 

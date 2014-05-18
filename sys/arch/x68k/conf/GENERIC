@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.169.2.1 2013/08/28 23:59:23 rmind Exp $
+# $NetBSD: GENERIC,v 1.169.2.2 2014/05/18 17:45:29 rmind Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.169.2.1 $"
+#ident 		"GENERIC-$Revision: 1.169.2.2 $"
 
 maxusers	8
 
@@ -101,7 +101,7 @@ options 	NFS_BOOT_DHCP
 ## intercept.  DDB_HISTORY_SIZE adds up/down arrow command history.
 options 	DDB			# kernel dynamic debugger
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
-#options 	DDB_ONPANIC=1		# see also sysctl(8): `ddb.onpanic'
+#options 	DDB_ONPANIC=1		# see also sysctl(7): `ddb.onpanic'
 #options 	PANICBUTTON		# interrupt switch invokes DDB
 
 ## You may also use gdb, on another computer connected to this machine over
@@ -173,7 +173,7 @@ options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 file-system	FFS		# Berkeley Fast Filesystem
 file-system	NFS		# Sun NFS-compatible filesystem client
 file-system	KERNFS		# kernel data-structure filesystem
-#file-system	NULLFS		# NULL layered filesystem (buggy)
+#file-system	NULLFS		# NULL layered filesystem
 #file-system 	OVERLAY		# overlay file system
 file-system	MFS		# memory-based filesystem
 #file-system	FDESC		# user file descriptor filesystem

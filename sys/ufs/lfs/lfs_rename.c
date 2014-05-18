@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rename.c,v 1.4.2.2 2013/08/28 23:59:38 rmind Exp $	*/
+/*	$NetBSD: lfs_rename.c,v 1.4.2.3 2014/05/18 17:46:21 rmind Exp $	*/
 /*  from NetBSD: ufs_rename.c,v 1.6 2013/01/22 09:39:18 dholland Exp  */
 
 /*-
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rename.c,v 1.4.2.2 2013/08/28 23:59:38 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rename.c,v 1.4.2.3 2014/05/18 17:46:21 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,6 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_rename.c,v 1.4.2.2 2013/08/28 23:59:38 rmind Exp
 #include <sys/signalvar.h>
 #include <sys/kauth.h>
 #include <sys/syslog.h>
-#include <sys/fstrans.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_pmap.h>
@@ -518,8 +517,6 @@ ulfs_gro_remove(struct mount *mp, kauth_cred_t cred,
 	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
 	KASSERT(cnp->cn_nameiop == DELETE);
 
-	fstrans_start(mp, FSTRANS_SHARED);
-
 	/* XXX ulfs_dirremove decrements vp's link count for us.  */
 	error = ulfs_dirremove(dvp, ulr, VTOI(vp), cnp->cn_flags, 0);
 	if (error)
@@ -529,7 +526,6 @@ ulfs_gro_remove(struct mount *mp, kauth_cred_t cred,
 	VN_KNOTE(vp, (VTOI(vp)->i_nlink? NOTE_LINK : NOTE_DELETE));
 
 out1:
-	fstrans_done(mp);
 	return error;
 }
 
@@ -682,7 +678,7 @@ ulfs_gro_genealogy(struct mount *mp, kauth_cred_t cred,
     struct vnode **intermediate_node_ret)
 {
 	struct vnode *vp, *dvp;
-	ino_t dotdot_ino;
+	ino_t dotdot_ino = -1;	/* XXX  gcc 4.8: maybe-uninitialized */
 	int error;
 
 	KASSERT(mp != NULL);
@@ -831,7 +827,6 @@ ulfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 	 * Commence hacking of the data on disk.
 	 */
 
-	fstrans_start(mp, FSTRANS_SHARED);
 	error = 0;
 
 	/*
@@ -1046,7 +1041,6 @@ whymustithurtsomuch:
 
 arghmybrainhurts:
 /*ihateyou:*/
-	fstrans_done(mp);
 	return error;
 }
 
@@ -1085,7 +1079,7 @@ lfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 	KASSERT(VOP_ISLOCKED(tdvp) == LK_EXCLUSIVE);
 	KASSERT((tvp == NULL) || (VOP_ISLOCKED(tvp) == LK_EXCLUSIVE));
 
-	error = SET_DIROP_REMOVE(tdvp, tvp);
+	error = lfs_set_dirop(tdvp, tvp);
 	if (error != 0)
 		return error;
 
@@ -1098,7 +1092,15 @@ lfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 
 	UNMARK_VNODE(fdvp);
 	UNMARK_VNODE(fvp);
-	SET_ENDOP_REMOVE(VFSTOULFS(mp)->um_lfs, tdvp, tvp, "rename");
+	UNMARK_VNODE(tdvp);
+	if (tvp) {
+		UNMARK_VNODE(tvp);
+	}
+	lfs_unset_dirop(VFSTOULFS(mp)->um_lfs, tdvp, "rename");
+	vrele(tdvp);
+	if (tvp) {
+		vrele(tvp);
+	}
 
 	return error;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.86 2013/03/18 19:35:39 plunky Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.86.6.1 2014/05/18 17:46:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.86 2013/03/18 19:35:39 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.86.6.1 2014/05/18 17:46:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -573,7 +573,7 @@ smbfs_write(void *v)
 int
 smbfs_create(void *v)
 {
-	struct vop_create_args /* {
+	struct vop_create_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -604,13 +604,13 @@ smbfs_create(void *v)
 	error = smbfs_nget(VTOVFS(dvp), dvp, name, nmlen, &fattr, ap->a_vpp);
 	if (error)
 		goto out;
+	VOP_UNLOCK(*ap->a_vpp);
 
 	cache_enter(dvp, *ap->a_vpp, cnp->cn_nameptr, cnp->cn_namelen,
 		    cnp->cn_flags);
 
   out:
 	VN_KNOTE(dvp, NOTE_WRITE);
-	vput(dvp);
 	return (error);
 }
 
@@ -775,7 +775,7 @@ smbfs_symlink(void *v)
 int
 smbfs_mkdir(void *v)
 {
-	struct vop_mkdir_args /* {
+	struct vop_mkdir_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -807,11 +807,11 @@ smbfs_mkdir(void *v)
 	error = smbfs_nget(VTOVFS(dvp), dvp, name, len, &fattr, &vp);
 	if (error)
 		goto out;
+	VOP_UNLOCK(vp);
 	*ap->a_vpp = vp;
 
  out:
 	VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
-	vput(dvp);
 
 	return (error);
 }
@@ -1174,7 +1174,7 @@ smbfs_pathcheck(struct smbmount *smp, const char *name, int nmlen)
 int
 smbfs_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -1228,10 +1228,7 @@ smbfs_lookup(void *v)
 		error = VOP_ACCESS(dvp, VEXEC, cnp->cn_cred);
 		if (error != 0) {
 			if (*vpp != NULLVP) {
-				if (*vpp != dvp)
-					vput(*vpp);
-				else
-					vrele(*vpp);
+				vrele(*vpp);
 			}
 			*vpp = NULLVP;
 			return error;
@@ -1247,7 +1244,11 @@ smbfs_lookup(void *v)
 		}
 
 		newvp = *vpp;
+		if (newvp != dvp)
+			vn_lock(newvp, LK_SHARED | LK_RETRY);
 		error = VOP_GETATTR(newvp, &vattr, cnp->cn_cred);
+		if (newvp != dvp)
+			VOP_UNLOCK(newvp);
 		/*
 		 * If the file type on the server is inconsistent
 		 * with what it was when we created the vnode,
@@ -1351,6 +1352,8 @@ smbfs_lookup(void *v)
 			vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 		if (error)
 			return (error);
+		if (*vpp != dvp)
+			VOP_UNLOCK(*vpp);
 		return (0);
 	}
 
@@ -1394,5 +1397,7 @@ smbfs_lookup(void *v)
 #endif
 	}
 
+	if (*vpp != dvp)
+		VOP_UNLOCK(*vpp);
 	return (0);
 }

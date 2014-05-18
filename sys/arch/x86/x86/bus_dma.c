@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.69.2.1 2013/08/28 23:59:24 rmind Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.69.2.2 2014/05/18 17:45:30 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.69.2.1 2013/08/28 23:59:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.69.2.2 2014/05/18 17:45:30 rmind Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -802,11 +802,11 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 #ifdef DIAGNOSTIC
 	if ((ops & (BUS_DMASYNC_PREWRITE|BUS_DMASYNC_POSTREAD)) != 0) {
 		if (offset >= map->dm_mapsize)
-			panic("_bus_dmamap_sync: bad offset 0x%jx >= 0x%jx",
+			panic("%s: bad offset 0x%jx >= 0x%jx", __func__,
 			(intmax_t)offset, (intmax_t)map->dm_mapsize);
 		if ((offset + len) > map->dm_mapsize)
-			panic("_bus_dmamap_sync: bad length 0x%jx + 0x%jx "
-			    "> 0x%jx", (intmax_t)offset, (intmax_t)len,
+			panic("%s: bad length 0x%jx + 0x%jx > 0x%jx", __func__,
+			    (intmax_t)offset, (intmax_t)len,
 			    (intmax_t)map->dm_mapsize);
 	}
 #endif

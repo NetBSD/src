@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.c,v 1.24.18.1 2013/08/28 15:21:49 rmind Exp $	*/
+/*	$NetBSD: natm.c,v 1.24.18.2 2014/05/18 17:46:14 rmind Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.24.18.1 2013/08/28 15:21:49 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.24.18.2 2014/05/18 17:46:14 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

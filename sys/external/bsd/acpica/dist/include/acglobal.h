@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2011, Intel Corp.
+ * Copyright (C) 2000 - 2013, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -72,7 +72,7 @@
 
 /*
  * Enable "slack" in the AML interpreter?  Default is FALSE, and the
- * interpreter strictly follows the ACPI specification.  Setting to TRUE
+ * interpreter strictly follows the ACPI specification. Setting to TRUE
  * allows the interpreter to ignore certain errors and/or bad AML constructs.
  *
  * Currently, these features are enabled by this flag:
@@ -121,6 +121,25 @@ _Bool     ACPI_INIT_GLOBAL (AcpiGbl_EnableAmlDebugObject, FALSE);
 UINT8       ACPI_INIT_GLOBAL (AcpiGbl_CopyDsdtLocally, FALSE);
 
 /*
+ * Optionally ignore an XSDT if present and use the RSDT instead.
+ * Although the ACPI specification requires that an XSDT be used instead
+ * of the RSDT, the XSDT has been found to be corrupt or ill-formed on
+ * some machines. Default behavior is to use the XSDT if present.
+ */
+UINT8       ACPI_INIT_GLOBAL (AcpiGbl_DoNotUseXsdt, FALSE);
+
+
+/*
+ * Optionally use 32-bit FADT addresses if and when there is a conflict
+ * (address mismatch) between the 32-bit and 64-bit versions of the
+ * address. Although ACPICA adheres to the ACPI specification which
+ * requires the use of the corresponding 64-bit address if it is non-zero,
+ * some machines have been found to have a corrupted non-zero 64-bit
+ * address. Default is FALSE, do not favor the 32-bit addresses.
+ */
+UINT8       ACPI_INIT_GLOBAL (AcpiGbl_Use32BitFadtAddresses, FALSE);
+
+/*
  * Optionally truncate I/O addresses to 16 bits. Provides compatibility
  * with other ACPI implementations. NOTE: During ACPICA initialization,
  * this value is set to TRUE if any Windows OSI strings have been
@@ -134,6 +153,18 @@ UINT8       ACPI_INIT_GLOBAL (AcpiGbl_TruncateIoAddresses, FALSE);
  */
 UINT8       ACPI_INIT_GLOBAL (AcpiGbl_DisableAutoRepair, FALSE);
 
+/*
+ * Optionally do not load any SSDTs from the RSDT/XSDT during initialization.
+ * This can be useful for debugging ACPI problems on some machines.
+ */
+UINT8       ACPI_INIT_GLOBAL (AcpiGbl_DisableSsdtTableLoad, FALSE);
+
+/*
+ * We keep track of the latest version of Windows that has been requested by
+ * the BIOS.
+ */
+UINT8       ACPI_INIT_GLOBAL (AcpiGbl_OsiData, 0);
+
 
 /* AcpiGbl_FADT is a local copy of the FADT, converted to a common format. */
 
@@ -143,7 +174,18 @@ UINT32                      AcpiGbl_TraceFlags;
 ACPI_NAME                   AcpiGbl_TraceMethodName;
 BOOLEAN                     AcpiGbl_SystemAwakeAndRunning;
 
-#endif
+/*
+ * ACPI 5.0 introduces the concept of a "reduced hardware platform", meaning
+ * that the ACPI hardware is no longer required. A flag in the FADT indicates
+ * a reduced HW machine, and that flag is duplicated here for convenience.
+ */
+BOOLEAN                     AcpiGbl_ReducedHardware;
+
+#endif /* DEFINE_ACPI_GLOBALS */
+
+/* Do not disassemble buffers to resource descriptors */
+
+ACPI_EXTERN UINT8       ACPI_INIT_GLOBAL (AcpiGbl_NoResourceDisassembly, FALSE);
 
 /*****************************************************************************
  *
@@ -156,7 +198,11 @@ BOOLEAN                     AcpiGbl_SystemAwakeAndRunning;
  * found in the RSDT/XSDT.
  */
 ACPI_EXTERN ACPI_TABLE_LIST             AcpiGbl_RootTableList;
+
+#if (!ACPI_REDUCED_HARDWARE)
 ACPI_EXTERN ACPI_TABLE_FACS            *AcpiGbl_FACS;
+
+#endif /* !ACPI_REDUCED_HARDWARE */
 
 /* These addresses are calculated from the FADT Event Block addresses */
 
@@ -183,7 +229,7 @@ ACPI_EXTERN UINT8                       AcpiGbl_IntegerNybbleWidth;
 
 /*****************************************************************************
  *
- * Mutual exlusion within ACPICA subsystem
+ * Mutual exclusion within ACPICA subsystem
  *
  ****************************************************************************/
 
@@ -213,6 +259,7 @@ ACPI_EXTERN BOOLEAN                     AcpiGbl_GlobalLockPending;
  */
 ACPI_EXTERN ACPI_SPINLOCK               AcpiGbl_GpeLock;      /* For GPE data structs and registers */
 ACPI_EXTERN ACPI_SPINLOCK               AcpiGbl_HardwareLock; /* For ACPI H/W except GPE registers */
+ACPI_EXTERN ACPI_SPINLOCK               AcpiGbl_ReferenceCountLock;
 
 /* Mutex for _OSI support */
 
@@ -239,14 +286,14 @@ ACPI_EXTERN ACPI_CACHE_T               *AcpiGbl_OperandCache;
 
 /* Global handlers */
 
-ACPI_EXTERN ACPI_OBJECT_NOTIFY_HANDLER  AcpiGbl_DeviceNotify;
-ACPI_EXTERN ACPI_OBJECT_NOTIFY_HANDLER  AcpiGbl_SystemNotify;
+ACPI_EXTERN ACPI_GLOBAL_NOTIFY_HANDLER  AcpiGbl_GlobalNotify[2];
 ACPI_EXTERN ACPI_EXCEPTION_HANDLER      AcpiGbl_ExceptionHandler;
 ACPI_EXTERN ACPI_INIT_HANDLER           AcpiGbl_InitHandler;
 ACPI_EXTERN ACPI_TABLE_HANDLER          AcpiGbl_TableHandler;
 ACPI_EXTERN void                       *AcpiGbl_TableHandlerContext;
 ACPI_EXTERN ACPI_WALK_STATE            *AcpiGbl_BreakpointWalk;
 ACPI_EXTERN ACPI_INTERFACE_HANDLER      AcpiGbl_InterfaceHandler;
+ACPI_EXTERN ACPI_SCI_HANDLER_INFO      *AcpiGbl_SciHandlerList;
 
 /* Owner ID support */
 
@@ -269,19 +316,10 @@ ACPI_EXTERN UINT8                       AcpiGbl_DebuggerConfiguration;
 ACPI_EXTERN BOOLEAN                     AcpiGbl_StepToNextCall;
 ACPI_EXTERN BOOLEAN                     AcpiGbl_AcpiHardwarePresent;
 ACPI_EXTERN BOOLEAN                     AcpiGbl_EventsInitialized;
-ACPI_EXTERN UINT8                       AcpiGbl_OsiData;
 ACPI_EXTERN ACPI_INTERFACE_INFO        *AcpiGbl_SupportedInterfaces;
-
+ACPI_EXTERN ACPI_ADDRESS_RANGE         *AcpiGbl_AddressRangeList[ACPI_ADDRESS_RANGE_MAX];
 
 #ifndef DEFINE_ACPI_GLOBALS
-
-/* Exception codes */
-
-extern char const                       *AcpiGbl_ExceptionNames_Env[];
-extern char const                       *AcpiGbl_ExceptionNames_Pgm[];
-extern char const                       *AcpiGbl_ExceptionNames_Tbl[];
-extern char const                       *AcpiGbl_ExceptionNames_Aml[];
-extern char const                       *AcpiGbl_ExceptionNames_Ctrl[];
 
 /* Other miscellaneous */
 
@@ -343,7 +381,6 @@ ACPI_EXTERN UINT32                      AcpiGbl_DeepestNesting;
  *
  ****************************************************************************/
 
-
 ACPI_EXTERN ACPI_THREAD_STATE          *AcpiGbl_CurrentWalkList;
 
 /* Control method single step flag */
@@ -368,6 +405,8 @@ ACPI_EXTERN UINT8                       AcpiGbl_SleepTypeB;
  *
  ****************************************************************************/
 
+#if (!ACPI_REDUCED_HARDWARE)
+
 ACPI_EXTERN UINT8                       AcpiGbl_AllGpesInitialized;
 ACPI_EXTERN ACPI_GPE_XRUPT_INFO        *AcpiGbl_GpeXruptListHead;
 ACPI_EXTERN ACPI_GPE_BLOCK_INFO        *AcpiGbl_GpeFadtBlocks[ACPI_MAX_GPE_BLOCKS];
@@ -376,6 +415,7 @@ ACPI_EXTERN void                       *AcpiGbl_GlobalEventHandlerContext;
 ACPI_EXTERN ACPI_FIXED_EVENT_HANDLER    AcpiGbl_FixedEventHandlers[ACPI_NUM_FIXED_EVENTS];
 extern      ACPI_FIXED_EVENT_INFO       AcpiGbl_FixedEventInfo[ACPI_NUM_FIXED_EVENTS];
 
+#endif /* !ACPI_REDUCED_HARDWARE */
 
 /*****************************************************************************
  *
@@ -404,7 +444,7 @@ ACPI_EXTERN UINT32                      AcpiGbl_TraceDbgLayer;
 
 /*****************************************************************************
  *
- * Debugger globals
+ * Debugger and Disassembler globals
  *
  ****************************************************************************/
 
@@ -412,8 +452,12 @@ ACPI_EXTERN UINT8                       AcpiGbl_DbOutputFlags;
 
 #ifdef ACPI_DISASSEMBLER
 
+ACPI_EXTERN BOOLEAN                     ACPI_INIT_GLOBAL (AcpiGbl_IgnoreNoopOperator, FALSE);
+
 ACPI_EXTERN BOOLEAN                     AcpiGbl_DbOpt_disasm;
 ACPI_EXTERN BOOLEAN                     AcpiGbl_DbOpt_verbose;
+ACPI_EXTERN BOOLEAN                     AcpiGbl_NumExternalMethods;
+ACPI_EXTERN UINT32                      AcpiGbl_ResolvedExternalMethods;
 ACPI_EXTERN ACPI_EXTERNAL_LIST         *AcpiGbl_ExternalList;
 ACPI_EXTERN ACPI_EXTERNAL_FILE         *AcpiGbl_ExternalFileList;
 #endif
@@ -429,19 +473,22 @@ ACPI_EXTERN BOOLEAN                     AcpiGbl_DbOpt_tables;
 ACPI_EXTERN BOOLEAN                     AcpiGbl_DbOpt_stats;
 ACPI_EXTERN BOOLEAN                     AcpiGbl_DbOpt_ini_methods;
 ACPI_EXTERN BOOLEAN                     AcpiGbl_DbOpt_NoRegionSupport;
-
-ACPI_EXTERN char                       *AcpiGbl_DbArgs[ACPI_DEBUGGER_MAX_ARGS];
-ACPI_EXTERN ACPI_OBJECT_TYPE            AcpiGbl_DbArgTypes[ACPI_DEBUGGER_MAX_ARGS];
-ACPI_EXTERN char                        AcpiGbl_DbLineBuf[ACPI_DB_LINE_BUFFER_SIZE];
-ACPI_EXTERN char                        AcpiGbl_DbParsedBuf[ACPI_DB_LINE_BUFFER_SIZE];
-ACPI_EXTERN char                        AcpiGbl_DbScopeBuf[80];
-ACPI_EXTERN char                        AcpiGbl_DbDebugFilename[80];
 ACPI_EXTERN BOOLEAN                     AcpiGbl_DbOutputToFile;
 ACPI_EXTERN char                       *AcpiGbl_DbBuffer;
 ACPI_EXTERN char                       *AcpiGbl_DbFilename;
 ACPI_EXTERN UINT32                      AcpiGbl_DbDebugLevel;
 ACPI_EXTERN UINT32                      AcpiGbl_DbConsoleDebugLevel;
 ACPI_EXTERN ACPI_NAMESPACE_NODE        *AcpiGbl_DbScopeNode;
+
+ACPI_EXTERN char                       *AcpiGbl_DbArgs[ACPI_DEBUGGER_MAX_ARGS];
+ACPI_EXTERN ACPI_OBJECT_TYPE            AcpiGbl_DbArgTypes[ACPI_DEBUGGER_MAX_ARGS];
+
+/* These buffers should all be the same size */
+
+ACPI_EXTERN char                        AcpiGbl_DbLineBuf[ACPI_DB_LINE_BUFFER_SIZE];
+ACPI_EXTERN char                        AcpiGbl_DbParsedBuf[ACPI_DB_LINE_BUFFER_SIZE];
+ACPI_EXTERN char                        AcpiGbl_DbScopeBuf[ACPI_DB_LINE_BUFFER_SIZE];
+ACPI_EXTERN char                        AcpiGbl_DbDebugFilename[ACPI_DB_LINE_BUFFER_SIZE];
 
 /*
  * Statistic globals
@@ -460,5 +507,28 @@ ACPI_EXTERN UINT32                      AcpiGbl_SizeOfNodeEntries;
 ACPI_EXTERN UINT32                      AcpiGbl_SizeOfAcpiObjects;
 
 #endif /* ACPI_DEBUGGER */
+
+
+/*****************************************************************************
+ *
+ * Application globals
+ *
+ ****************************************************************************/
+
+#ifdef ACPI_APPLICATION
+
+ACPI_FILE   ACPI_INIT_GLOBAL (AcpiGbl_DebugFile, NULL);
+
+#endif /* ACPI_APPLICATION */
+
+
+/*****************************************************************************
+ *
+ * Info/help support
+ *
+ ****************************************************************************/
+
+extern const AH_PREDEFINED_NAME     AslPredefinedInfo[];
+
 
 #endif /* __ACGLOBAL_H__ */

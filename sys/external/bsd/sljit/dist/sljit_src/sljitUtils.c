@@ -108,6 +108,24 @@ SLJIT_API_FUNC_ATTRIBUTE void SLJIT_CALL sljit_release_lock(void)
 
 #if (defined SLJIT_EXECUTABLE_ALLOCATOR && SLJIT_EXECUTABLE_ALLOCATOR)
 
+#ifdef _KERNEL
+
+#include <sys/mutex.h>
+
+/* Defined in sljit_mod.c */
+extern kmutex_t sljit_allocator_mutex;
+
+static SLJIT_INLINE void allocator_grab_lock(void)
+{
+	mutex_enter(&sljit_allocator_mutex);
+}
+
+static SLJIT_INLINE void allocator_release_lock(void)
+{
+	mutex_exit(&sljit_allocator_mutex);
+}
+#else
+
 #include <pthread.h>
 
 static pthread_mutex_t allocator_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -121,10 +139,29 @@ static SLJIT_INLINE void allocator_release_lock(void)
 {
 	pthread_mutex_unlock(&allocator_mutex);
 }
+#endif
 
 #endif /* SLJIT_EXECUTABLE_ALLOCATOR */
 
 #if (defined SLJIT_UTIL_GLOBAL_LOCK && SLJIT_UTIL_GLOBAL_LOCK)
+
+#ifdef _KERNEL
+
+#include <sys/mutex.h>
+
+/* Defined in sljit_mod.c */
+extern kmutex_t sljit_global_mutex;
+
+SLJIT_API_FUNC_ATTRIBUTE void SLJIT_CALL sljit_grab_lock(void)
+{
+	mutex_enter(&sljit_global_mutex);
+}
+
+SLJIT_API_FUNC_ATTRIBUTE void SLJIT_CALL sljit_release_lock(void)
+{
+	mutex_exit(&sljit_global_mutex);
+}
+#else
 
 #include <pthread.h>
 
@@ -139,6 +176,7 @@ SLJIT_API_FUNC_ATTRIBUTE void SLJIT_CALL sljit_release_lock(void)
 {
 	pthread_mutex_unlock(&global_mutex);
 }
+#endif
 
 #endif /* SLJIT_UTIL_GLOBAL_LOCK */
 
@@ -260,14 +298,13 @@ SLJIT_API_FUNC_ATTRIBUTE void SLJIT_CALL sljit_free_stack(struct sljit_stack* st
 
 SLJIT_API_FUNC_ATTRIBUTE sljit_w SLJIT_CALL sljit_stack_resize(struct sljit_stack* stack, sljit_uw new_limit)
 {
-	sljit_uw aligned_old_limit;
-	sljit_uw aligned_new_limit;
-
 	if ((new_limit > stack->max_limit) || (new_limit < stack->base))
 		return -1;
 #ifdef _WIN32
-	aligned_new_limit = (new_limit + sljit_page_align) & ~sljit_page_align;
-	aligned_old_limit = (stack->limit + sljit_page_align) & ~sljit_page_align;
+	sljit_uw aligned_new_limit =
+	    (new_limit + sljit_page_align) & ~sljit_page_align;
+	sljit_uw aligned_old_limit =
+	    (stack->limit + sljit_page_align) & ~sljit_page_align;
 	if (aligned_new_limit != aligned_old_limit) {
 		if (aligned_new_limit > aligned_old_limit) {
 			if (!VirtualAlloc((void*)aligned_old_limit, aligned_new_limit - aligned_old_limit, MEM_COMMIT, PAGE_READWRITE))
@@ -285,15 +322,20 @@ SLJIT_API_FUNC_ATTRIBUTE sljit_w SLJIT_CALL sljit_stack_resize(struct sljit_stac
 		stack->limit = new_limit;
 		return 0;
 	}
-	aligned_new_limit = (new_limit + sljit_page_align) & ~sljit_page_align;
-	aligned_old_limit = (stack->limit + sljit_page_align) & ~sljit_page_align;
-	/* If madvise is available, we release the unnecessary space. */
 #if defined(POSIX_MADV_DONTNEED)
-	if (aligned_new_limit < aligned_old_limit)
-		posix_madvise((void*)aligned_new_limit, aligned_old_limit - aligned_new_limit, POSIX_MADV_DONTNEED);
+# define MADVISE(new, old) posix_madvise((new), (old), POSIX_MADV_DONTNEED)
 #elif defined(MADV_DONTNEED)
+# define MADVISE(new, old) madvise((new), (old), MADV_DONTNEED)
+#endif
+#ifdef MADVISE
+	sljit_uw aligned_new_limit =
+	    (new_limit + sljit_page_align) & ~sljit_page_align;
+	sljit_uw aligned_old_limit =
+	    (stack->limit + sljit_page_align) & ~sljit_page_align;
+	/* If madvise is available, we release the unnecessary space. */
 	if (aligned_new_limit < aligned_old_limit)
-		madvise((void*)aligned_new_limit, aligned_old_limit - aligned_new_limit, MADV_DONTNEED);
+		MADVISE((void*)aligned_new_limit,
+		    aligned_old_limit - aligned_new_limit);
 #endif
 	stack->limit = new_limit;
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.55 2011/07/18 00:05:35 mrg Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.55.16.1 2014/05/18 17:45:25 rmind Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgtwo.c,v 1.55 2011/07/18 00:05:35 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgtwo.c,v 1.55.16.1 2014/05/18 17:45:25 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,8 +104,17 @@ dev_type_ioctl(cgtwoioctl);
 dev_type_mmap(cgtwommap);
 
 const struct cdevsw cgtwo_cdevsw = {
-	cgtwoopen, nullclose, noread, nowrite, cgtwoioctl,
-	nostop, notty, nopoll, cgtwommap, nokqfilter,
+	.d_open = cgtwoopen,
+	.d_close = nullclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = cgtwoioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = cgtwommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = 0
 };
 
 /* frame buffer generic driver */

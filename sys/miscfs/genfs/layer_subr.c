@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_subr.c,v 1.32 2011/06/12 03:35:58 rmind Exp $	*/
+/*	$NetBSD: layer_subr.c,v 1.32.16.1 2014/05/18 17:46:09 rmind Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.32 2011/06/12 03:35:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.32.16.1 2014/05/18 17:46:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ layerfs_done(void)
 /*
  * layer_node_find: find and return alias for lower vnode or NULL.
  *
- * => Return alias vnode locked and referenced. if already exists.
+ * => Return alias vnode referenced. if already exists.
  * => The layermp's hashlock must be held on entry, we will unlock on success.
  */
 struct vnode *
@@ -128,7 +128,7 @@ layer_node_find(struct mount *mp, struct vnode *lowervp)
 	 * Find hash bucket and search the (two-way) linked list looking
 	 * for a layerfs node structure which is referencing the lower vnode.
 	 * If found, the increment the layer_node reference count, but NOT
-	 * the lower vnode's reference counter.  Return vnode locked.
+	 * the lower vnode's reference counter.
 	 */
 	KASSERT(mutex_owned(&lmp->layerm_hashlock));
 	hd = LAYER_NHASH(lmp, lowervp);
@@ -142,29 +142,9 @@ loop:
 			continue;
 		}
 		mutex_enter(vp->v_interlock);
-		/*
-		 * If we find a node being cleaned out, then ignore it and
-		 * continue.  A thread trying to clean out the extant layer
-		 * vnode needs to acquire the shared lock (i.e. the lower
-		 * vnode's lock), which our caller already holds.  To allow
-		 * the cleaning to succeed the current thread must make
-		 * progress.  So, for a brief time more than one vnode in a
-		 * layered file system may refer to a single vnode in the
-		 * lower file system.
-		 */
-		if ((vp->v_iflag & VI_XLOCK) != 0) {
-			mutex_exit(vp->v_interlock);
-			continue;
-		}
 		mutex_exit(&lmp->layerm_hashlock);
-		/*
-		 * We must not let vget() try to lock the layer vp, since
-		 * the lower vp is already locked and locking the layer vp
-		 * will involve locking the lower vp.
-		 */
-		error = vget(vp, LK_NOWAIT);
+		error = vget(vp, 0);
 		if (error) {
-			kpause("layerfs", false, 1, NULL);
 			mutex_enter(&lmp->layerm_hashlock);
 			goto loop;
 		}
@@ -187,7 +167,6 @@ layer_node_alloc(struct mount *mp, struct vnode *lowervp, struct vnode **vpp)
 	struct layer_node *xp;
 	struct vnode *vp, *nvp;
 	int error;
-	extern int (**dead_vnodeop_p)(void *);
 
 	/* Get a new vnode and share its interlock with underlying vnode. */
 	error = getnewvnode(lmp->layerm_tag, mp, lmp->layerm_vnodeop_p,
@@ -209,30 +188,24 @@ layer_node_alloc(struct mount *mp, struct vnode *lowervp, struct vnode **vpp)
 		spec_node_init(vp, lowervp->v_rdev);
 	}
 
-	vp->v_data = xp;
-	vp->v_vflag = (vp->v_vflag & ~VV_MPSAFE) |
-	    (lowervp->v_vflag & VV_MPSAFE);
-	xp->layer_vnode = vp;
-	xp->layer_lowervp = lowervp;
-	xp->layer_flags = 0;
-
 	/*
 	 * Before inserting the node into the hash, check if other thread
 	 * did not race with us.  If so - return that node, destroy ours.
 	 */
 	mutex_enter(&lmp->layerm_hashlock);
 	if ((nvp = layer_node_find(mp, lowervp)) != NULL) {
-		/* Free the structures we have created. */
-		if (vp->v_type == VBLK || vp->v_type == VCHR)
-			spec_node_destroy(vp);
-
-		vp->v_type = VBAD;		/* node is discarded */
-		vp->v_op = dead_vnodeop_p;	/* so ops will still work */
-		vrele(vp);			/* get rid of it. */
+		ungetnewvnode(vp);
 		kmem_free(xp, lmp->layerm_size);
 		*vpp = nvp;
 		return 0;
 	}
+
+	vp->v_data = xp;
+	vp->v_vflag = (vp->v_vflag & ~VV_MPSAFE) |
+	    (lowervp->v_vflag & VV_MPSAFE);
+	xp->layer_vnode = vp;
+	xp->layer_lowervp = lowervp;
+	xp->layer_flags = 0;
 
 	/*
 	 * Insert the new node into the hash.
@@ -259,8 +232,6 @@ layer_node_create(struct mount *mp, struct vnode *lowervp, struct vnode **nvpp)
 {
 	struct vnode *aliasvp;
 	struct layer_mount *lmp = MOUNTTOLAYERMOUNT(mp);
-
-	KASSERT(VOP_ISLOCKED(lowervp));
 
 	mutex_enter(&lmp->layerm_hashlock);
 	aliasvp = layer_node_find(mp, lowervp);

@@ -136,7 +136,7 @@ nouveau_dma_begin(struct nouveau_channel *chan, struct nouveau_grobj *grobj,
 		       dma->push_free, faulty);
 		return;
 	}
-	sprintf(faulty,"%s:%d",file,line);
+	snprintf(faulty, sizeof(faulty), "%s:%d", file, line);
 #endif
 
 	nouveau_dma_space(chan, (size + 1));

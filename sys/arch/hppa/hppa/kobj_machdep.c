@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.7.10.1 2013/08/28 23:59:17 rmind Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.7.10.2 2014/05/18 17:45:11 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.7.10.1 2013/08/28 23:59:17 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.7.10.2 2014/05/18 17:45:11 rmind Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -97,6 +97,35 @@ RR(unsigned int x, unsigned int constant)
         return R(x + RND(constant)) + (constant - RND(constant));
 }
 
+/*
+ * It is possible for the compiler to emit relocations for unaligned data.
+ * We handle this situation with these inlines.
+ */
+#define	RELOC_ALIGNED_P(x) \
+	(((uintptr_t)(x) & (sizeof(void *) - 1)) == 0)
+
+static inline Elf_Addr
+load_ptr(void *where)
+{
+	if (__predict_true(RELOC_ALIGNED_P(where)))
+		return *(Elf_Addr *)where;
+	else {
+		Elf_Addr res;
+
+		(void)memcpy(&res, where, sizeof(res));
+		return res;
+	}
+}
+
+static inline void
+store_ptr(void *where, Elf_Addr val)
+{
+	if (__predict_true(RELOC_ALIGNED_P(where)))
+		*(Elf_Addr *)where = val;
+	else
+		(void)memcpy(where, &val, sizeof(val));
+}
+
 int
 kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
     bool isrela, bool local)
@@ -137,23 +166,17 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		break;
 
 	case R_TYPE(DIR17R):
-		/* RR(symbol, addend) */
-		addr = kobj_sym_lookup(ko, symidx);
-		value = RR(addr, value);
-		value >>= 2;		/* bottom two bits not needed */
-		break;
-
 	case R_TYPE(DIR14R):
 		/* RR(symbol, addend) */
 		addr = kobj_sym_lookup(ko, symidx);
 		value = RR(addr, value);
 		break;
 
+	case R_TYPE(PCREL32):
 	case R_TYPE(PCREL17F):
 		/* symbol - PC - 8 + addend */
 		addr = kobj_sym_lookup(ko, symidx);
 		value += addr - (Elf_Word)where - 8;
-		value >>= 2;		/* bottom two bits not needed */
 		break;
 
 	case R_TYPE(DPREL21L):
@@ -188,9 +211,10 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 
 	switch (rtype) {
 	case R_TYPE(DIR32):
+	case R_TYPE(PCREL32):
 	case R_TYPE(PLABEL32):
 	case R_TYPE(SEGREL32):
-		*where = value;
+		store_ptr(where, value);
 		break;
 
 	case R_TYPE(DIR14R):
@@ -202,6 +226,7 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 
 	case R_TYPE(DIR17R):
 	case R_TYPE(PCREL17F):
+		value >>= 2;		/* bottom two bits not needed */
 		*where |=
 		    (((value & 0x10000) >> 16) << 0) |		/* w */
 		    (((value & 0x0f800) >> 11) << 16) |		/* w1 */

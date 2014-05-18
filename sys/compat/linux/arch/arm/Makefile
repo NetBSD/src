@@ -1,4 +1,3 @@
-#	$NetBSD: Makefile,v 1.1 2002/01/14 23:14:35 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.1.174.1 2014/05/18 17:45:32 rmind Exp $
 
 .include <../../Makefile.inc>
-.include <bsd.kinc.mk>

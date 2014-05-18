@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.48 2013/03/30 03:21:03 christos Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.48.4.1 2014/05/18 17:45:40 rmind Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.85 2009/11/09 14:32:41 dlg Exp $ */
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.48 2013/03/30 03:21:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.48.4.1 2014/05/18 17:45:40 rmind Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -470,6 +470,7 @@ bnx_attach(device_t parent, device_t self, void *aux)
 	u_int32_t		val;
 	int			mii_flags = MIIF_FORCEANEG;
 	pcireg_t		memtype;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	if (bnx_tx_pool == NULL) {
 		bnx_tx_pool = malloc(sizeof(*bnx_tx_pool), M_DEVBUF, M_NOWAIT);
@@ -519,7 +520,7 @@ bnx_attach(device_t parent, device_t self, void *aux)
 		goto bnx_attach_fail;
 	}
 
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 
 	/*
 	 * Configure byte swap and enable indirect register access.
@@ -4334,7 +4335,7 @@ bnx_rx_intr(struct bnx_softc *sc)
 	 */
 	while (sw_cons != hw_cons) {
 		struct mbuf *m;
-		struct rx_bd *rxbd;
+		struct rx_bd *rxbd __diagused;
 		unsigned int len;
 		u_int32_t status;
 
@@ -5006,7 +5007,9 @@ bnx_start(struct ifnet *ifp)
 	struct bnx_softc	*sc = ifp->if_softc;
 	struct mbuf		*m_head = NULL;
 	int			count = 0;
-	u_int16_t		tx_prod, tx_chain_prod;
+#ifdef BNX_DEBUG
+	u_int16_t		tx_chain_prod;
+#endif
 
 	/* If there's no link or the transmit queue is empty then just exit. */
 	if ((ifp->if_flags & (IFF_OACTIVE|IFF_RUNNING)) != IFF_RUNNING) {
@@ -5016,13 +5019,14 @@ bnx_start(struct ifnet *ifp)
 	}
 
 	/* prod points to the next free tx_bd. */
-	tx_prod = sc->tx_prod;
-	tx_chain_prod = TX_CHAIN_IDX(tx_prod);
+#ifdef BNX_DEBUG
+	tx_chain_prod = TX_CHAIN_IDX(sc->tx_prod);
+#endif
 
 	DBPRINT(sc, BNX_INFO_SEND, "%s(): Start: tx_prod = 0x%04X, "
 	    "tx_chain_prod = %04X, tx_prod_bseq = 0x%08X, "
 	    "used_tx %d max_tx %d\n",
-	    __func__, tx_prod, tx_chain_prod, sc->tx_prod_bseq,
+	    __func__, sc->tx_prod, tx_chain_prod, sc->tx_prod_bseq,
 	    sc->used_tx_bd, sc->max_tx_bd);
 
 	/*
@@ -5062,10 +5066,12 @@ bnx_start(struct ifnet *ifp)
 	}
 
 	/* Update the driver's counters. */
+#ifdef BNX_DEBUG
 	tx_chain_prod = TX_CHAIN_IDX(sc->tx_prod);
+#endif
 
 	DBPRINT(sc, BNX_INFO_SEND, "%s(): End: tx_prod = 0x%04X, tx_chain_prod "
-	    "= 0x%04X, tx_prod_bseq = 0x%08X\n", __func__, tx_prod,
+	    "= 0x%04X, tx_prod_bseq = 0x%08X\n", __func__, sc->tx_prod,
 	    tx_chain_prod, sc->tx_prod_bseq);
 
 	/* Start the transmit. */

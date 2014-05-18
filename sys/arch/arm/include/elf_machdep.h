@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.11.4.1 2013/08/28 23:59:12 rmind Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.11.4.2 2014/05/18 17:44:58 rmind Exp $	*/
 
 #ifndef _ARM_ELF_MACHDEP_H_
 #define _ARM_ELF_MACHDEP_H_
@@ -147,12 +147,14 @@
 #ifdef _KERNEL
 #ifdef ELFSIZE
 #define	ELF_MD_PROBE_FUNC	ELFNAME2(arm_netbsd,probe)
+#define	ELF_MD_COREDUMP_SETUP	ELFNAME2(arm_netbsd,coredump_setup)
 #endif
 
 struct exec_package;
 
 int arm_netbsd_elf32_probe(struct lwp *, struct exec_package *, void *, char *,
 	vaddr_t *);
+void arm_netbsd_elf32_coredump_setup(struct lwp *, void *);
 #endif
 
 #endif /* _ARM_ELF_MACHDEP_H_ */

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32.4.1 2013/08/28 23:59:13 rmind Exp $
+#	$NetBSD: Makefile,v 1.32.4.2 2014/05/18 17:45:01 rmind Exp $
 
 NOMAN= # defined
 
@@ -50,6 +50,7 @@ BINMODE= 444
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
+LIBCRTI=
 LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=

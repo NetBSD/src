@@ -215,8 +215,13 @@ int drm_getclient(struct drm_device *dev, void *data,
 	list_for_each_entry(pt, &dev->filelist, lhead) {
 		if (i++ >= idx) {
 			client->auth = pt->authenticated;
+#ifdef __NetBSD__		/* XXX Too scary to contemplate.  */
+			client->pid = -1;
+			client->uid = -1;
+#else
 			client->pid = pid_vnr(pt->pid);
 			client->uid = from_kuid_munged(current_user_ns(), pt->uid);
+#endif
 			client->magic = pt->magic;
 			client->iocs = pt->ioctl_count;
 			mutex_unlock(&dev->struct_mutex);
@@ -248,11 +253,14 @@ int drm_getstats(struct drm_device *dev, void *data,
 	memset(stats, 0, sizeof(*stats));
 
 	for (i = 0; i < dev->counters; i++) {
-		if (dev->types[i] == _DRM_STAT_LOCK)
+		if (dev->types[i] == _DRM_STAT_LOCK) {
+			spin_lock(&file_priv->master->lock.spinlock);
 			stats->data[i].value =
 			    (file_priv->master->lock.hw_lock ? file_priv->master->lock.hw_lock->lock : 0);
-		else
+			spin_unlock(&file_priv->master->lock.spinlock);
+		} else {
 			stats->data[i].value = atomic_read(&dev->counts[i]);
+		}
 		stats->data[i].type = dev->types[i];
 	}
 

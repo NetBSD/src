@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.33 2009/01/17 14:00:36 tsutsui Exp $	*/
+/*	$NetBSD: arp.c,v 1.33.28.1 2014/05/18 17:46:08 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -81,7 +81,7 @@ struct ether_arp {
 
 struct arp_list {
 	struct in_addr	addr;
-	u_char		ea[6];
+	u_char		ea[ETHER_ADDR_LEN];
 } arp_list[ARP_NUM] = {
 	/* XXX - net order `INADDR_BROADCAST' must be a constant */
 	{ {0xffffffff}, BA }

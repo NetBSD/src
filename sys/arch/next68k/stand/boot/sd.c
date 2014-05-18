@@ -1,4 +1,4 @@
-/*      $NetBSD: sd.c,v 1.11 2009/03/18 16:00:13 cegger Exp $        */
+/*      $NetBSD: sd.c,v 1.11.26.1 2014/05/18 17:45:20 rmind Exp $        */
 /*
  * Copyright (c) 1994 Rolf Grossmann
  * All rights reserved.
@@ -31,6 +31,7 @@
 
 #include <sys/param.h>
 #include <sys/disklabel.h>
+#include <sys/bootblock.h>
 #include <dev/scsipi/scsi_spc.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsi_all.h>

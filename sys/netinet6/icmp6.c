@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.162.2.2 2013/08/28 15:21:48 rmind Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.162.2.3 2014/05/18 17:46:13 rmind Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.162.2.2 2013/08/28 15:21:48 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.162.2.3 2014/05/18 17:46:13 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -629,6 +629,8 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 		}
 		IP6_EXTHDR_GET(nicmp6, struct icmp6_hdr *, n, off,
 		    sizeof(*nicmp6));
+		if (nicmp6 == NULL)
+			goto freeit;
 		nicmp6->icmp6_type = ICMP6_ECHO_REPLY;
 		nicmp6->icmp6_code = 0;
 		if (n) {
@@ -1877,7 +1879,7 @@ icmp6_rip6_input(struct mbuf **mp, int off)
 		return (IPPROTO_DONE);
 	}
 
-	CIRCLEQ_FOREACH(inph, &raw6cbtable.inpt_queue, inph_queue) {
+	TAILQ_FOREACH(inph, &raw6cbtable.inpt_queue, inph_queue) {
 		in6p = (struct in6pcb *)inph;
 		if (in6p->in6p_af != AF_INET6)
 			continue;
@@ -2760,11 +2762,6 @@ sysctl_net_inet6_icmp6_setup(struct sysctllog **clog)
 {
 	extern int nd6_maxqueuelen; /* defined in nd6.c */
 
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "net", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "inet6", NULL,

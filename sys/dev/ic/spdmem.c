@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.7.2.1 2013/08/28 23:59:25 rmind Exp $ */
+/* $NetBSD: spdmem.c,v 1.7.2.2 2014/05/18 17:45:38 rmind Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.7.2.1 2013/08/28 23:59:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.7.2.2 2014/05/18 17:45:38 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -46,8 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.7.2.1 2013/08/28 23:59:25 rmind Exp $")
 #include <dev/i2c/i2cvar.h>
 #include <dev/ic/spdmemreg.h>
 #include <dev/ic/spdmemvar.h>
-
-SYSCTL_SETUP_PROTO(sysctl_spdmem_setup);
 
 /* Routines for decoding spd data */
 static void decode_edofpm(const struct sysctlnode *, device_t, struct spdmem *);
@@ -125,9 +123,6 @@ static const uint16_t spdmem_cycle_frac[] = {
 
 /* Format string for timing info */
 #define	LATENCY	"tAA-tRCD-tRP-tRAS: %d-%d-%d-%d\n"
-
-/* sysctl stuff */
-static int hw_node = CTL_EOL;
 
 /* CRC functions used for certain memory types */
 
@@ -263,11 +258,10 @@ spdmem_common_attach(struct spdmem_softc *sc, device_t self)
 	 * Setup our sysctl subtree, hw.spdmemN
 	 */
 	sc->sc_sysctl_log = NULL;
-	if (hw_node != CTL_EOL)
-		sysctl_createv(&sc->sc_sysctl_log, 0, NULL, &node,
-		    0, CTLTYPE_NODE,
-		    device_xname(self), NULL, NULL, 0, NULL, 0,
-		    CTL_HW, CTL_CREATE, CTL_EOL);
+	sysctl_createv(&sc->sc_sysctl_log, 0, NULL, &node,
+	    0, CTLTYPE_NODE,
+	    device_xname(self), NULL, NULL, 0, NULL, 0,
+	    CTL_HW, CTL_CREATE, CTL_EOL);
 	if (node != NULL && spd_len != 0)
                 sysctl_createv(&sc->sc_sysctl_log, 0, NULL, NULL,
                     0,
@@ -388,23 +382,6 @@ spdmem_common_detach(struct spdmem_softc *sc, device_t self)
 	sysctl_teardown(&sc->sc_sysctl_log);
 
 	return 0;
-}
-
-SYSCTL_SETUP(sysctl_spdmem_setup, "sysctl hw.spdmem subtree setup")
-{
-	const struct sysctlnode *node;
-
-	if (sysctl_createv(clog, 0, NULL, &node,
-#ifdef _MODULE
-			       0,
-#else
-			       CTLFLAG_PERMANENT,
-#endif
-			       CTLTYPE_NODE, "hw", NULL, NULL, 0, NULL, 0,
-			       CTL_HW, CTL_EOL) != 0)
-		return;
-
-	hw_node = node->sysctl_num;
 }
 
 static void

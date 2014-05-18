@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.324 2012/11/02 16:43:16 matt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.324.2.1 2014/05/18 17:46:22 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.324 2012/11/02 16:43:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.324.2.1 2014/05/18 17:46:22 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -101,7 +101,8 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.324 2012/11/02 16:43:16 matt Exp $");
 #endif
 
 #ifdef UVMHIST
-UVMHIST_DEFINE(maphist);
+static struct kern_history_ent maphistbuf[100];
+UVMHIST_DEFINE(maphist) = UVMHIST_INITIALIZER(maphist, maphistbuf);
 #endif
 
 #if !defined(UVMMAP_COUNTERS)
@@ -404,7 +405,7 @@ uvm_rb_fixup(struct vm_map *map, struct vm_map_entry *entry)
 static void
 uvm_rb_insert(struct vm_map *map, struct vm_map_entry *entry)
 {
-	struct vm_map_entry *ret;
+	struct vm_map_entry *ret __diagused;
 
 	entry->gap = entry->maxgap = uvm_rb_gap(entry);
 	if (entry->prev != &map->header)
@@ -875,7 +876,6 @@ void
 uvm_map_init(void)
 {
 #if defined(UVMHIST)
-	static struct kern_history_ent maphistbuf[100];
 	static struct kern_history_ent pdhistbuf[100];
 #endif
 
@@ -884,7 +884,7 @@ uvm_map_init(void)
 	 */
 
 	UVMHIST_FUNC("uvm_map_init");
-	UVMHIST_INIT_STATIC(maphist, maphistbuf);
+	UVMHIST_LINK_STATIC(maphist);
 	UVMHIST_INIT_STATIC(pdhist, pdhistbuf);
 	UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist,"<starting uvm map system>", 0, 0, 0, 0);
@@ -1798,7 +1798,7 @@ uvm_map_findspace(struct vm_map *map, vaddr_t hint, vsize_t length,
 {
 	struct vm_map_entry *entry;
 	struct vm_map_entry *child, *prev, *tmp;
-	vaddr_t orig_hint;
+	vaddr_t orig_hint __diagused;
 	const int topdown = map->flags & VM_MAP_TOPDOWN;
 	UVMHIST_FUNC("uvm_map_findspace");
 	UVMHIST_CALLED(maphist);
@@ -2551,7 +2551,7 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 	struct vm_map_entry *chain, *endchain, *entry, *orig_entry, *newentry,
 	    *deadentry, *oldentry;
 	struct vm_map_entry *resentry = NULL; /* a dummy reservation entry */
-	vsize_t elen;
+	vsize_t elen __unused;
 	int nchain, error, copy_ok;
 	vsize_t nsize;
 	UVMHIST_FUNC("uvm_map_extract"); UVMHIST_CALLED(maphist);
@@ -3927,13 +3927,13 @@ uvm_map_checkprot(struct vm_map *map, vaddr_t start, vaddr_t end,
  * - refcnt set to 1, rest must be init'd by caller
  */
 struct vmspace *
-uvmspace_alloc(vaddr_t vmin, vaddr_t vmax)
+uvmspace_alloc(vaddr_t vmin, vaddr_t vmax, bool topdown)
 {
 	struct vmspace *vm;
 	UVMHIST_FUNC("uvmspace_alloc"); UVMHIST_CALLED(maphist);
 
 	vm = pool_cache_get(&uvm_vmspace_cache, PR_WAITOK);
-	uvmspace_init(vm, NULL, vmin, vmax);
+	uvmspace_init(vm, NULL, vmin, vmax, topdown);
 	UVMHIST_LOG(maphist,"<- done (vm=0x%x)", vm,0,0,0);
 	return (vm);
 }
@@ -3945,15 +3945,14 @@ uvmspace_alloc(vaddr_t vmin, vaddr_t vmax)
  * - refcnt set to 1, rest must be init'd by caller
  */
 void
-uvmspace_init(struct vmspace *vm, struct pmap *pmap, vaddr_t vmin, vaddr_t vmax)
+uvmspace_init(struct vmspace *vm, struct pmap *pmap, vaddr_t vmin,
+    vaddr_t vmax, bool topdown)
 {
 	UVMHIST_FUNC("uvmspace_init"); UVMHIST_CALLED(maphist);
 
 	memset(vm, 0, sizeof(*vm));
 	uvm_map_setup(&vm->vm_map, vmin, vmax, VM_MAP_PAGEABLE
-#ifdef __USING_TOPDOWN_VM
-	    | VM_MAP_TOPDOWN
-#endif
+	    | (topdown ? VM_MAP_TOPDOWN : 0)
 	    );
 	if (pmap)
 		pmap_reference(pmap);
@@ -4016,7 +4015,7 @@ uvmspace_unshare(struct lwp *l)
  */
 
 void
-uvmspace_spawn(struct lwp *l, vaddr_t start, vaddr_t end)
+uvmspace_spawn(struct lwp *l, vaddr_t start, vaddr_t end, bool topdown)
 {
 	struct proc *p = l->l_proc;
 	struct vmspace *nvm;
@@ -4025,7 +4024,7 @@ uvmspace_spawn(struct lwp *l, vaddr_t start, vaddr_t end)
 	cpu_vmspace_exec(l, start, end);
 #endif
 
-	nvm = uvmspace_alloc(start, end);
+	nvm = uvmspace_alloc(start, end, topdown);
 	kpreempt_disable();
 	p->p_vmspace = nvm;
 	pmap_activate(l);
@@ -4037,7 +4036,7 @@ uvmspace_spawn(struct lwp *l, vaddr_t start, vaddr_t end)
  */
 
 void
-uvmspace_exec(struct lwp *l, vaddr_t start, vaddr_t end)
+uvmspace_exec(struct lwp *l, vaddr_t start, vaddr_t end, bool topdown)
 {
 	struct proc *p = l->l_proc;
 	struct vmspace *nvm, *ovm = p->p_vmspace;
@@ -4053,11 +4052,14 @@ uvmspace_exec(struct lwp *l, vaddr_t start, vaddr_t end)
 	 * see if more than one process is using this vmspace...
 	 */
 
-	if (ovm->vm_refcnt == 1) {
+	if (ovm->vm_refcnt == 1
+	    && topdown == ((ovm->vm_map.flags & VM_MAP_TOPDOWN) != 0)) {
 
 		/*
 		 * if p is the only process using its vmspace then we can safely
 		 * recycle that vmspace for the program that is being exec'd.
+		 * But only if TOPDOWN matches the requested value for the new
+		 * vm space!
 		 */
 
 #ifdef SYSVSHM
@@ -4099,7 +4101,7 @@ uvmspace_exec(struct lwp *l, vaddr_t start, vaddr_t end)
 		 * for p
 		 */
 
-		nvm = uvmspace_alloc(start, end);
+		nvm = uvmspace_alloc(start, end, topdown);
 
 		/*
 		 * install new vmspace and drop our ref to the old one.
@@ -4203,7 +4205,8 @@ uvmspace_fork(struct vmspace *vm1)
 
 	vm_map_lock(old_map);
 
-	vm2 = uvmspace_alloc(vm_map_min(old_map), vm_map_max(old_map));
+	vm2 = uvmspace_alloc(vm_map_min(old_map), vm_map_max(old_map),
+	    vm1->vm_map.flags & VM_MAP_TOPDOWN);
 	memcpy(&vm2->vm_startcopy, &vm1->vm_startcopy,
 	    (char *) (vm1 + 1) - (char *) &vm1->vm_startcopy);
 	new_map = &vm2->vm_map;		  /* XXX */

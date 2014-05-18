@@ -35,7 +35,9 @@
 #ifndef DRM_HASHTAB_H
 #define DRM_HASHTAB_H
 
+#include <linux/kernel.h>
 #include <linux/list.h>
+#include <linux/types.h>
 
 #define drm_hash_entry(_ptr, _type, _member) container_of(_ptr, _type, _member)
 

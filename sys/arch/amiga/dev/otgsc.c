@@ -1,4 +1,4 @@
-/*	$NetBSD: otgsc.c,v 1.32 2012/10/27 17:17:30 chs Exp $ */
+/*	$NetBSD: otgsc.c,v 1.32.2.1 2014/05/18 17:44:55 rmind Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: otgsc.c,v 1.32 2012/10/27 17:17:30 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: otgsc.c,v 1.32.2.1 2014/05/18 17:44:55 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -285,6 +285,7 @@ otgsc_intr(void *arg)
 	if ((*dev->sci_csr & SCI_CSR_INT) == 0)
 		return (1);
 	stat = *dev->sci_iack;
+	__USE(stat);
 	*dev->sci_mode = 0;
 	return (1);
 }

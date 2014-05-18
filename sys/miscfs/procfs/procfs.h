@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.68 2012/05/28 13:16:10 christos Exp $	*/
+/*	$NetBSD: procfs.h,v 1.68.4.1 2014/05/18 17:46:09 rmind Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -245,7 +245,7 @@ int procfs_validmap(struct lwp *, struct mount *);
 
 int procfs_rw(void *);
 
-int procfs_getcpuinfstr(char *, int *);
+int procfs_getcpuinfstr(char *, size_t *);
 
 #define PROCFS_LOCKED	0x01
 #define PROCFS_WANT	0x02

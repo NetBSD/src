@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2011, Intel Corp.
+ * Copyright (C) 2000 - 2013, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -53,10 +53,6 @@ AeSetupConfiguration (
     void                    *RegionAddr);
 
 static void
-AfInstallGpeBlock (
-    void);
-
-static void
 AeTestBufferArgument (
     void);
 
@@ -77,6 +73,10 @@ ExecuteOSI (
     UINT32                  ExpectedResult);
 
 static void
+AeMutexInterfaces (
+    void);
+
+static void
 AeHardwareInterfaces (
     void);
 
@@ -84,7 +84,15 @@ static void
 AeGenericRegisters (
     void);
 
+#if (!ACPI_REDUCED_HARDWARE)
+static void
+AfInstallGpeBlock (
+    void);
+#endif /* !ACPI_REDUCED_HARDWARE */
+
+extern unsigned char Ssdt2Code[];
 extern unsigned char Ssdt3Code[];
+extern unsigned char Ssdt4Code[];
 
 
 /******************************************************************************
@@ -122,6 +130,7 @@ AeSetupConfiguration (
 }
 
 
+#if (!ACPI_REDUCED_HARDWARE)
 /******************************************************************************
  *
  * FUNCTION:    AfInstallGpeBlock
@@ -193,6 +202,7 @@ AfInstallGpeBlock (
         AE_CHECK_OK (AcpiInstallGpeBlock, Status);
     }
 }
+#endif /* !ACPI_REDUCED_HARDWARE */
 
 
 /* Test using a Buffer object as a method argument */
@@ -334,31 +344,42 @@ ExecuteOSI (
         return (Status);
     }
 
+    Status = AE_ERROR;
+
     if (ReturnValue.Length < sizeof (ACPI_OBJECT))
     {
         AcpiOsPrintf ("Return value from _OSI method too small, %.8X\n",
             ReturnValue.Length);
-        return (AE_ERROR);
+        goto ErrorExit;
     }
 
     Obj = ReturnValue.Pointer;
     if (Obj->Type != ACPI_TYPE_INTEGER)
     {
         AcpiOsPrintf ("Invalid return type from _OSI method, %.2X\n", Obj->Type);
-        return (AE_ERROR);
+        goto ErrorExit;
     }
 
     if (Obj->Integer.Value != ExpectedResult)
     {
         AcpiOsPrintf ("Invalid return value from _OSI, expected %.8X found %.8X\n",
             ExpectedResult, (UINT32) Obj->Integer.Value);
-        return (AE_ERROR);
+        goto ErrorExit;
     }
+
+    Status = AE_OK;
 
     /* Reset the OSI data */
 
     AcpiGbl_OsiData = 0;
-    return (AE_OK);
+
+ErrorExit:
+
+    /* Free a buffer created via ACPI_ALLOCATE_BUFFER */
+
+    AcpiOsFree (ReturnValue.Pointer);
+
+    return (Status);
 }
 
 
@@ -405,6 +426,52 @@ AeGenericRegisters (
 
 /******************************************************************************
  *
+ * FUNCTION:    AeMutexInterfaces
+ *
+ * DESCRIPTION: Exercise the AML mutex access interfaces
+ *
+ *****************************************************************************/
+
+static void
+AeMutexInterfaces (
+    void)
+{
+    ACPI_STATUS             Status;
+    ACPI_HANDLE             MutexHandle;
+
+
+    /* Get a handle to an AML mutex */
+
+    Status = AcpiGetHandle (NULL, "\\MTX1", &MutexHandle);
+    if (Status == AE_NOT_FOUND)
+    {
+        return;
+    }
+
+    AE_CHECK_OK (AcpiGetHandle, Status);
+    if (ACPI_FAILURE (Status))
+    {
+        return;
+    }
+
+    /* Acquire the  mutex */
+
+    Status = AcpiAcquireMutex (NULL, "\\MTX1", 0xFFFF);
+    AE_CHECK_OK (AcpiAcquireMutex, Status);
+    if (ACPI_FAILURE (Status))
+    {
+        return;
+    }
+
+    /* Release mutex with different parameters */
+
+    Status = AcpiReleaseMutex (MutexHandle, NULL);
+    AE_CHECK_OK (AcpiReleaseMutex, Status);
+}
+
+
+/******************************************************************************
+ *
  * FUNCTION:    AeHardwareInterfaces
  *
  * DESCRIPTION: Call various hardware support interfaces
@@ -415,9 +482,18 @@ static void
 AeHardwareInterfaces (
     void)
 {
+#if (!ACPI_REDUCED_HARDWARE)
+
     ACPI_STATUS             Status;
     UINT32                  Value;
 
+
+    /* If Hardware Reduced flag is set, we are all done */
+
+    if (AcpiGbl_ReducedHardware)
+    {
+        return;
+    }
 
     Status = AcpiWriteBitRegister (ACPI_BITREG_WAKE_STATUS, 1);
     AE_CHECK_OK (AcpiWriteBitRegister, Status);
@@ -443,6 +519,8 @@ AeHardwareInterfaces (
 
     Status = AcpiReadBitRegister (ACPI_BITREG_ARB_DISABLE, &Value);
     AE_CHECK_OK (AcpiReadBitRegister, Status);
+
+#endif /* !ACPI_REDUCED_HARDWARE */
 }
 
 
@@ -458,15 +536,68 @@ void
 AeMiscellaneousTests (
     void)
 {
-    ACPI_HANDLE             Handle;
     ACPI_BUFFER             ReturnBuf;
     char                    Buffer[32];
-    ACPI_VENDOR_UUID        Uuid = {0, {ACPI_INIT_UUID (0,0,0,0,0,0,0,0,0,0,0)}};
     ACPI_STATUS             Status;
+    ACPI_STATISTICS         Stats;
+    ACPI_HANDLE             Handle;
+
+#if (!ACPI_REDUCED_HARDWARE)
+    ACPI_VENDOR_UUID        Uuid = {0, {ACPI_INIT_UUID (0,0,0,0,0,0,0,0,0,0,0)}};
     UINT32                  LockHandle1;
     UINT32                  LockHandle2;
-    ACPI_STATISTICS         Stats;
+#endif /* !ACPI_REDUCED_HARDWARE */
 
+
+    Status = AcpiGetHandle (NULL, "\\", &Handle);
+    AE_CHECK_OK (AcpiGetHandle, Status);
+
+    if (AcpiGbl_DoInterfaceTests)
+    {
+        /*
+         * Tests for AcpiLoadTable and AcpiUnloadParentTable
+         */
+
+        /* Attempt unload of DSDT, should fail */
+
+        Status = AcpiGetHandle (NULL, "\\_SB_", &Handle);
+        AE_CHECK_OK (AcpiGetHandle, Status);
+
+        Status = AcpiUnloadParentTable (Handle);
+        AE_CHECK_STATUS (AcpiUnloadParentTable, Status, AE_TYPE);
+
+        /* Load and unload SSDT4 */
+
+        Status = AcpiLoadTable ((ACPI_TABLE_HEADER *) Ssdt4Code);
+        AE_CHECK_OK (AcpiLoadTable, Status);
+
+        Status = AcpiGetHandle (NULL, "\\_T96", &Handle);
+        AE_CHECK_OK (AcpiGetHandle, Status);
+
+        Status = AcpiUnloadParentTable (Handle);
+        AE_CHECK_OK (AcpiUnloadParentTable, Status);
+
+        /* Re-load SSDT4 */
+
+        Status = AcpiLoadTable ((ACPI_TABLE_HEADER *) Ssdt4Code);
+        AE_CHECK_OK (AcpiLoadTable, Status);
+
+        /* Unload and re-load SSDT2 (SSDT2 is in the XSDT) */
+
+        Status = AcpiGetHandle (NULL, "\\_T99", &Handle);
+        AE_CHECK_OK (AcpiGetHandle, Status);
+
+        Status = AcpiUnloadParentTable (Handle);
+        AE_CHECK_OK (AcpiUnloadParentTable, Status);
+
+        Status = AcpiLoadTable ((ACPI_TABLE_HEADER *) Ssdt2Code);
+        AE_CHECK_OK (AcpiLoadTable, Status);
+
+        /* Load OEM9 table (causes table override) */
+
+        Status = AcpiLoadTable ((ACPI_TABLE_HEADER *) Ssdt3Code);
+        AE_CHECK_OK (AcpiLoadTable, Status);
+    }
 
     AeHardwareInterfaces ();
     AeGenericRegisters ();
@@ -474,7 +605,9 @@ AeMiscellaneousTests (
 
     AeTestBufferArgument();
     AeTestPackageArgument ();
+    AeMutexInterfaces ();
 
+    /* Test _OSI install/remove */
 
     Status = AcpiInstallInterface ("");
     AE_CHECK_STATUS (AcpiInstallInterface, Status, AE_BAD_PARAMETER);
@@ -497,6 +630,10 @@ AeMiscellaneousTests (
     Status = AcpiInstallInterface ("AnotherTestString");
     AE_CHECK_OK (AcpiInstallInterface, Status);
 
+    /* Test _OSI execution */
+
+    Status = ExecuteOSI ("Extended Address Space Descriptor", 0xFFFFFFFF);
+    AE_CHECK_OK (ExecuteOSI, Status);
 
     Status = ExecuteOSI ("Windows 2001", 0xFFFFFFFF);
     AE_CHECK_OK (ExecuteOSI, Status);
@@ -508,14 +645,32 @@ AeMiscellaneousTests (
     ReturnBuf.Length = 32;
     ReturnBuf.Pointer = Buffer;
 
-    Status = AcpiGetName (AcpiGbl_RootNode, ACPI_FULL_PATHNAME, &ReturnBuf);
+    Status = AcpiGetName (ACPI_ROOT_OBJECT, ACPI_FULL_PATHNAME, &ReturnBuf);
     AE_CHECK_OK (AcpiGetName, Status);
 
-    Status = AcpiEnableEvent (ACPI_EVENT_GLOBAL, 0);
-    AE_CHECK_OK (AcpiEnableEvent, Status);
+    /* Get Devices */
+
+    Status = AcpiGetDevices (NULL, AeGetDevices, NULL, NULL);
+    AE_CHECK_OK (AcpiGetDevices, Status);
+
+    Status = AcpiGetStatistics (&Stats);
+    AE_CHECK_OK (AcpiGetStatistics, Status);
+
+
+#if (!ACPI_REDUCED_HARDWARE)
 
     Status = AcpiInstallGlobalEventHandler (AeGlobalEventHandler, NULL);
     AE_CHECK_OK (AcpiInstallGlobalEventHandler, Status);
+
+    /* If Hardware Reduced flag is set, we are all done */
+
+    if (AcpiGbl_ReducedHardware)
+    {
+        return;
+    }
+
+    Status = AcpiEnableEvent (ACPI_EVENT_GLOBAL, 0);
+    AE_CHECK_OK (AcpiEnableEvent, Status);
 
     /*
      * GPEs: Handlers, enable/disable, etc.
@@ -572,9 +727,12 @@ AeMiscellaneousTests (
     AE_CHECK_OK (AcpiSetupGpeForWake, Status);
 
     Status = AcpiSetGpeWakeMask (NULL, 5, ACPI_GPE_ENABLE);
-    AE_CHECK_OK (AcpiGpeWakeup, Status);
+    AE_CHECK_OK (AcpiSetGpeWakeMask, Status);
 
     Status = AcpiSetupGpeForWake (Handle, NULL, 6);
+    AE_CHECK_OK (AcpiSetupGpeForWake, Status);
+
+    Status = AcpiSetupGpeForWake (ACPI_ROOT_OBJECT, NULL, 6);
     AE_CHECK_OK (AcpiSetupGpeForWake, Status);
 
     Status = AcpiSetupGpeForWake (Handle, NULL, 9);
@@ -629,12 +787,5 @@ AeMiscellaneousTests (
     Status = AcpiReleaseGlobalLock (LockHandle2);
     AE_CHECK_OK (AcpiReleaseGlobalLock, Status);
 
-    /* Get Devices */
-
-    Status = AcpiGetDevices (NULL, AeGetDevices, NULL, NULL);
-    AE_CHECK_OK (AcpiGetDevices, Status);
-
-    Status = AcpiGetStatistics (&Stats);
-    AE_CHECK_OK (AcpiGetStatistics, Status);
+#endif /* !ACPI_REDUCED_HARDWARE */
 }
-

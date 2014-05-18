@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.64.2.1 2013/08/28 23:59:24 rmind Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.64.2.2 2014/05/18 17:45:33 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.64.2.1 2013/08/28 23:59:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.64.2.2 2014/05/18 17:45:33 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -634,7 +634,7 @@ netbsd32_preadv(struct lwp *l, const struct netbsd32_preadv_args *uap, register_
 		syscallarg(const netbsd32_iovecp_t) iovp;
 		syscallarg(int) iovcnt;
 		syscallarg(int) pad;
-		syscallarg(off_t) offset;
+		syscallarg(netbsd32_off_t) offset;
 	} */
 	file_t *fp;
 	struct vnode *vp;
@@ -680,7 +680,7 @@ netbsd32_pwritev(struct lwp *l, const struct netbsd32_pwritev_args *uap, registe
 		syscallarg(const netbsd32_iovecp_t) iovp;
 		syscallarg(int) iovcnt;
 		syscallarg(int) pad;
-		syscallarg(off_t) offset;
+		syscallarg(netbsd32_off_t) offset;
 	} */
 	file_t *fp;
 	struct vnode *vp;
@@ -1063,13 +1063,15 @@ netbsd32_mknodat(struct lwp *l, const struct netbsd32_mknodat_args *uap,
 		syscallarg(int) fd;
 		syscallarg(netbsd32_charp) path;
 		syscallarg(mode_t) mode;
-		syscallarg(uint32_t) dev;
+		syscallarg(int) pad;
+		syscallarg(netbsd32_dev_t) dev;
 	} */
 	struct sys_mknodat_args ua;
 
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TO64_UAP(mode);
+	NETBSD32TO64_UAP(PAD);
 	NETBSD32TO64_UAP(dev);
 
 	return sys_mknodat(l, &ua, retval);

@@ -1,4 +1,4 @@
-/* $NetBSD: nbfs.c,v 1.10 2013/06/10 02:21:10 mrg Exp $ */
+/* $NetBSD: nbfs.c,v 1.10.2.1 2014/05/18 17:44:53 rmind Exp $ */
 
 /*-
  * Copyright (c) 2006 Ben Harris
@@ -449,7 +449,8 @@ nbfs_func(struct nbfs_reg *r)
 	case 16: /* Shut down */
 		return NULL;
 	default:
-		sprintf(error.errmess, "nbfs_func %d not implemented", reason);
+		snprintf(error.errmess, sizeof(error.errmess),
+		    "nbfs_func %d not implemented", reason);
 		return &error;
 	}
 }

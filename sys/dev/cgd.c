@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.81 2013/05/30 08:28:13 martin Exp $ */
+/* $NetBSD: cgd.c,v 1.81.2.1 2014/05/18 17:45:35 rmind Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.81 2013/05/30 08:28:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.81.2.1 2014/05/18 17:45:35 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -69,13 +69,27 @@ static dev_type_dump(cgddump);
 static dev_type_size(cgdsize);
 
 const struct bdevsw cgd_bdevsw = {
-	cgdopen, cgdclose, cgdstrategy, cgdioctl,
-	cgddump, cgdsize, D_DISK
+	.d_open = cgdopen,
+	.d_close = cgdclose,
+	.d_strategy = cgdstrategy,
+	.d_ioctl = cgdioctl,
+	.d_dump = cgddump,
+	.d_psize = cgdsize,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw cgd_cdevsw = {
-	cgdopen, cgdclose, cgdread, cgdwrite, cgdioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = cgdopen,
+	.d_close = cgdclose,
+	.d_read = cgdread,
+	.d_write = cgdwrite,
+	.d_ioctl = cgdioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_DISK
 };
 
 static int cgd_match(device_t, cfdata_t, void *);
@@ -186,7 +200,7 @@ cgd_attach(device_t parent, device_t self, void *aux)
 {
 	struct cgd_softc *sc = device_private(self);
 
-	simple_lock_init(&sc->sc_slock);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_BIO);
 	dk_sc_init(&sc->sc_dksc, device_xname(self));
 	sc->sc_dksc.sc_dev = self;
 	disk_init(&sc->sc_dksc.sc_dkdev, sc->sc_dksc.sc_xname, &cgddkdriver);
@@ -340,12 +354,12 @@ cgd_getdata(struct dk_softc *dksc, unsigned long size)
 	struct	cgd_softc *cs = (struct cgd_softc *)dksc;
 	void *	data = NULL;
 
-	simple_lock(&cs->sc_slock);
+	mutex_enter(&cs->sc_lock);
 	if (cs->sc_data_used == 0) {
 		cs->sc_data_used = 1;
 		data = cs->sc_data;
 	}
-	simple_unlock(&cs->sc_slock);
+	mutex_exit(&cs->sc_lock);
 
 	if (data)
 		return data;
@@ -359,9 +373,9 @@ cgd_putdata(struct dk_softc *dksc, void *data)
 	struct	cgd_softc *cs = (struct cgd_softc *)dksc;
 
 	if (data == cs->sc_data) {
-		simple_lock(&cs->sc_slock);
+		mutex_enter(&cs->sc_lock);
 		cs->sc_data_used = 0;
-		simple_unlock(&cs->sc_slock);
+		mutex_exit(&cs->sc_lock);
 	} else {
 		free(data, M_DEVBUF);
 	}
@@ -518,7 +532,6 @@ cgdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct	cgd_softc *cs;
 	struct	dk_softc *dksc;
-	struct	disk *dk;
 	int	part = DISKPART(dev);
 	int	pmask = 1 << part;
 
@@ -529,7 +542,6 @@ cgdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case CGDIOCGET: /* don't call cgd_spawn() if the device isn't there */
 		cs = NULL;
 		dksc = NULL;
-		dk = NULL;
 		break;
 	case CGDIOCSET:
 	case CGDIOCCLR:
@@ -539,7 +551,6 @@ cgdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	default:
 		GETCGD_SOFTC(cs, dev);
 		dksc = &cs->sc_dksc;
-		dk = &dksc->sc_dkdev;
 		break;
 	}
 
@@ -976,7 +987,7 @@ hexprint(const char *start, void *buf, int len)
 }
 #endif
 
-MODULE(MODULE_CLASS_DRIVER, cgd, NULL);
+MODULE(MODULE_CLASS_DRIVER, cgd, "dk_subr");
 
 #ifdef _MODULE
 CFDRIVER_DECL(cgd, DV_DISK, NULL);
@@ -985,9 +996,11 @@ CFDRIVER_DECL(cgd, DV_DISK, NULL);
 static int
 cgd_modcmd(modcmd_t cmd, void *arg)
 {
-	int bmajor, cmajor, error = 0;
+	int error = 0;
 
-	bmajor = cmajor = -1;
+#ifdef _MODULE
+	int bmajor = -1, cmajor = -1;
+#endif
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:

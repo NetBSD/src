@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.38.16.1 2013/08/28 23:59:23 rmind Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.38.16.2 2014/05/18 17:45:26 rmind Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -34,7 +34,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.38.16.1 2013/08/28 23:59:23 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.38.16.2 2014/05/18 17:45:26 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -95,10 +95,10 @@ get_memory_handle(void)
 
 
 /* 
- * Point prom to our trap table.  This stops the prom from mapping us.
+ * Point prom to our sun4u trap table.  This stops the prom from mapping us.
  */
 int
-prom_set_trap_table(vaddr_t tba)
+prom_set_trap_table_sun4u(vaddr_t tba)
 {
 	struct {
 		cell_t name;
@@ -113,6 +113,30 @@ prom_set_trap_table(vaddr_t tba)
 	args.tba = ADR2CELL(tba);
 	return openfirmware(&args);
 }
+
+#ifdef SUN4V
+/* 
+ * Point prom to our sun4v trap table.  This stops the prom from mapping us.
+ */
+int
+prom_set_trap_table_sun4v(vaddr_t tba, paddr_t mmfsa)
+{
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t tba;
+		cell_t mmfsa; 
+	} args;
+
+	args.name = ADR2CELL("SUNW,set-trap-table");
+	args.nargs = 2;
+	args.nreturns = 0;
+	args.tba = ADR2CELL(tba);
+	args.mmfsa = ADR2CELL(mmfsa);
+	return openfirmware(&args);
+}
+#endif
 
 /* 
  * Have the prom convert from virtual to physical addresses.
@@ -476,29 +500,14 @@ prom_get_msgbuf(int len, int align)
 		cell_t phys_lo;
 	} args;
 	paddr_t addr;
-	int rooth;
-	int is_e250 = 1;
-
-	/* E250s and E450s tend to have buggy PROMs that break on test-method */
-	/* XXX - need to find the reason why this breaks someday */
-	if ((rooth = OF_finddevice("/")) != -1) {
-		char name[80];
-
-		if ((OF_getprop(rooth, "name", &name, sizeof(name))) != -1) {
-			if (strcmp(name, "SUNW,Ultra-250")
-			    && strcmp(name, "SUNW,Ultra-4")) 
-				is_e250 = 0;
-		} else prom_printf("prom_get_msgbuf: cannot get \"name\"\r\n");
-	} else prom_printf("prom_get_msgbuf: cannot open root device \r\n");
 
 	if (memh == -1 && ((memh = get_memory_handle()) == -1)) {
 		prom_printf("prom_get_msgbuf: cannot get memh\r\n");
 		return -1;
 	}
-	if (is_e250) {
-		prom_printf("prom_get_msgbuf: Cannot recover msgbuf on E250\r\n");
-	} else if (OF_test("test-method") == 0) {
-		if (OF_test_method(memh, "SUNW,retain") != 0) {
+	if (OF_test("test-method") == 0) {
+		if (OF_test_method(OF_instance_to_package(memh),
+		    "SUNW,retain") == 0) {
 			args.name = ADR2CELL(&"call-method");
 			args.nargs = 5;
 			args.nreturns = 3;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.127 2013/06/23 22:03:34 dholland Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.127.2.1 2014/05/18 17:46:21 rmind Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.127 2013/06/23 22:03:34 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.127.2.1 2014/05/18 17:46:21 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -124,7 +124,6 @@ static inline bool is_active_snapshot(struct snap_info *, struct inode *);
 static inline daddr_t db_get(struct inode *, int);
 static inline void db_assign(struct inode *, int, daddr_t);
 static inline daddr_t ib_get(struct inode *, int);
-static inline void ib_assign(struct inode *, int, daddr_t);
 static inline daddr_t idb_get(struct inode *, void *, int);
 static inline void idb_assign(struct inode *, void *, int, daddr_t);
 
@@ -618,7 +617,8 @@ snapshot_expunge(struct mount *mp, struct vnode *vp, struct fs *copy_fs,
 	struct inode *xp;
 	struct lwp *l = curlwp;
 	struct vattr vat;
-	struct vnode *logvp = NULL, *mvp = NULL, *xvp;
+	struct vnode *logvp = NULL, *xvp;
+	struct vnode_iterator *marker;
 
 	*snaplist = NULL;
 	/*
@@ -632,41 +632,18 @@ snapshot_expunge(struct mount *mp, struct vnode *vp, struct fs *copy_fs,
 			goto out;
 	}
 	/*
-	 * Allocate a marker vnode.
-	 */
-	mvp = vnalloc(mp);
-	/*
 	 * We also calculate the needed size for the snapshot list.
 	 */
 	*snaplistsize = fs->fs_ncg + howmany(fs->fs_cssize, fs->fs_bsize) +
 	    FSMAXSNAP + 1 /* superblock */ + 1 /* last block */ + 1 /* size */;
-	mutex_enter(&mntvnode_lock);
-	/*
-	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
-	 * and vclean() can be called indirectly
-	 */
-	for (xvp = TAILQ_FIRST(&mp->mnt_vnodelist); xvp; xvp = vunmark(mvp)) {
-		vmark(mvp, xvp);
-		/*
-		 * Make sure this vnode wasn't reclaimed in getnewvnode().
-		 * Start over if it has (it won't be on the list anymore).
-		 */
-		if (xvp->v_mount != mp || vismarker(xvp))
-			continue;
-		mutex_enter(xvp->v_interlock);
-		if ((xvp->v_iflag & VI_XLOCK) ||
-		    xvp->v_usecount == 0 || xvp->v_type == VNON ||
-		    VTOI(xvp) == NULL ||
+
+	vfs_vnode_iterator_init(mp, &marker);
+	while (vfs_vnode_iterator_next(marker, &xvp)) {
+		if (xvp->v_type == VNON || VTOI(xvp) == NULL ||
 		    (VTOI(xvp)->i_flags & SF_SNAPSHOT)) {
-			mutex_exit(xvp->v_interlock);
+			vrele(xvp);
 			continue;
 		}
-		mutex_exit(&mntvnode_lock);
-		/*
-		 * XXXAD should increase vnode ref count to prevent it
-		 * disappearing or being recycled.
-		 */
-		mutex_exit(xvp->v_interlock);
 #ifdef DEBUG
 		if (snapdebug)
 			vprint("ffs_snapshot: busy vnode", xvp);
@@ -675,11 +652,11 @@ snapshot_expunge(struct mount *mp, struct vnode *vp, struct fs *copy_fs,
 		if (xvp != logvp) {
 			if (VOP_GETATTR(xvp, &vat, l->l_cred) == 0 &&
 			    vat.va_nlink > 0) {
-				mutex_enter(&mntvnode_lock);
+				vrele(xvp);
 				continue;
 			}
 			if (ffs_checkfreefile(copy_fs, vp, xp->i_number)) {
-				mutex_enter(&mntvnode_lock);
+				vrele(xvp);
 				continue;
 			}
 		}
@@ -693,7 +670,8 @@ snapshot_expunge(struct mount *mp, struct vnode *vp, struct fs *copy_fs,
 			if (len > 0 && len < fs->fs_bsize) {
 				error = UFS_WAPBL_BEGIN(mp);
 				if (error) {
-					(void)vunmark(mvp);
+					vrele(xvp);
+					vfs_vnode_iterator_destroy(marker);
 					goto out;
 				}
 				ffs_blkfree_snap(copy_fs, vp, db_get(xp, loc),
@@ -715,13 +693,14 @@ snapshot_expunge(struct mount *mp, struct vnode *vp, struct fs *copy_fs,
 				UFS_WAPBL_END(mp);
 			}
 		}
+		vrele(xvp);
 		if (error) {
-			(void)vunmark(mvp);
+			vfs_vnode_iterator_destroy(marker);
 			goto out;
 		}
-		mutex_enter(&mntvnode_lock);
 	}
-	mutex_exit(&mntvnode_lock);
+	vfs_vnode_iterator_destroy(marker);
+
 	/*
 	 * Create a preliminary list of preallocated snapshot blocks.
 	 */
@@ -742,8 +721,6 @@ snapshot_expunge(struct mount *mp, struct vnode *vp, struct fs *copy_fs,
 	(*snaplist)[0] = blkp - &(*snaplist)[0];
 
 out:
-	if (mvp != NULL)
-		vnfree(mvp);
 	if (logvp != NULL)
 		vput(logvp);
 	if (error && *snaplist != NULL) {
@@ -959,7 +936,7 @@ cgaccount1(int cg, struct vnode *vp, void *data, int passno)
 	struct fs *fs;
 	struct lwp *l = curlwp;
 	daddr_t base, numblks;
-	int error, len, loc, ns, indiroff;
+	int error, len, loc, ns __unused, indiroff;
 
 	ip = VTOI(vp);
 	fs = ip->i_fs;
@@ -1036,7 +1013,7 @@ static int
 expunge(struct vnode *snapvp, struct inode *cancelip, struct fs *fs,
     acctfunc_t acctfunc, int expungetype)
 {
-	int i, error, ns;
+	int i, error, ns __unused;
 	daddr_t lbn, rlbn;
 	daddr_t len, blkno, numblks, blksperindir;
 	struct ufs1_dinode *dip1;
@@ -1375,7 +1352,7 @@ void
 ffs_snapgone(struct vnode *vp)
 {
 	struct inode *xp, *ip = VTOI(vp);
-	struct mount *mp = ip->i_devvp->v_specmountpoint;
+	struct mount *mp = spec_node_getmountedfs(ip->i_devvp);
 	struct fs *fs;
 	struct snap_info *si;
 	int snaploc;
@@ -1426,7 +1403,7 @@ ffs_snapremove(struct vnode *vp)
 	struct inode *ip = VTOI(vp), *xp;
 	struct vnode *devvp = ip->i_devvp;
 	struct fs *fs = ip->i_fs;
-	struct mount *mp = devvp->v_specmountpoint;
+	struct mount *mp = spec_node_getmountedfs(devvp);
 	struct buf *ibp;
 	struct snap_info *si;
 	struct lwp *l = curlwp;
@@ -1542,7 +1519,7 @@ int
 ffs_snapblkfree(struct fs *fs, struct vnode *devvp, daddr_t bno,
     long size, ino_t inum)
 {
-	struct mount *mp = devvp->v_specmountpoint;
+	struct mount *mp = spec_node_getmountedfs(devvp);
 	struct buf *ibp;
 	struct inode *ip;
 	struct vnode *vp = NULL;
@@ -1728,7 +1705,7 @@ ffs_snapshot_mount(struct mount *mp)
 	struct inode *ip, *xp;
 	struct snap_info *si;
 	daddr_t snaplistsize, *snapblklist;
-	int i, error, ns, snaploc, loc;
+	int i, error, ns __unused, snaploc, loc;
 
 	/*
 	 * No persistent snapshots on apple ufs file systems.
@@ -1878,7 +1855,7 @@ ffs_copyonwrite(void *v, struct buf *bp, bool data_valid)
 	struct fs *fs;
 	struct inode *ip;
 	struct vnode *devvp = v, *vp = NULL;
-	struct mount *mp = devvp->v_specmountpoint;
+	struct mount *mp = spec_node_getmountedfs(devvp);
 	struct snap_info *si;
 	void *saved_data = NULL;
 	daddr_t lbn, blkno, *snapblklist;
@@ -2298,22 +2275,13 @@ db_assign(struct inode *ip, int loc, daddr_t val)
 		ip->i_ffs2_db[loc] = ufs_rw64(val, UFS_IPNEEDSWAP(ip));
 }
 
-static inline daddr_t
+__unused static inline daddr_t
 ib_get(struct inode *ip, int loc)
 {
 	if (ip->i_ump->um_fstype == UFS1)
 		return ufs_rw32(ip->i_ffs1_ib[loc], UFS_IPNEEDSWAP(ip));
 	else
 		return ufs_rw64(ip->i_ffs2_ib[loc], UFS_IPNEEDSWAP(ip));
-}
-
-static inline void
-ib_assign(struct inode *ip, int loc, daddr_t val)
-{
-	if (ip->i_ump->um_fstype == UFS1)
-		ip->i_ffs1_ib[loc] = ufs_rw32(val, UFS_IPNEEDSWAP(ip));
-	else
-		ip->i_ffs2_ib[loc] = ufs_rw64(val, UFS_IPNEEDSWAP(ip));
 }
 
 static inline daddr_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.179 2012/11/13 14:07:42 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.179.2.1 2014/05/18 17:45:30 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179 2012/11/13 14:07:42 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.2.1 2014/05/18 17:45:30 rmind Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -505,8 +505,8 @@ extern int mem_cluster_cnt;
 #define PTESLEW(pte, id) ((pte)+(id)*NPTECL)
 #define VASLEW(va,id) ((va)+(id)*NPTECL*PAGE_SIZE)
 #else
-#define PTESLEW(pte, id) (pte)
-#define VASLEW(va,id) (va)
+#define PTESLEW(pte, id) ((void)id, pte)
+#define VASLEW(va,id) ((void)id, va)
 #endif
 
 /*
@@ -3011,8 +3011,10 @@ pmap_virtual_space(vaddr_t *startp, vaddr_t *endp)
 void
 pmap_zero_page(paddr_t pa)
 {
-#ifdef __HAVE_DIRECT_MAP
+#if defined(__HAVE_DIRECT_MAP)
 	pagezero(PMAP_DIRECT_MAP(pa));
+#elif defined(XEN)
+	xen_pagezero(pa);
 #else
 	pt_entry_t *zpte;
 	void *zerova;
@@ -3089,11 +3091,13 @@ pmap_pageidlezero(paddr_t pa)
 void
 pmap_copy_page(paddr_t srcpa, paddr_t dstpa)
 {
-#ifdef __HAVE_DIRECT_MAP
+#if defined(__HAVE_DIRECT_MAP)
 	vaddr_t srcva = PMAP_DIRECT_MAP(srcpa);
 	vaddr_t dstva = PMAP_DIRECT_MAP(dstpa);
 
 	memcpy((void *)dstva, (void *)srcva, PAGE_SIZE);
+#elif defined(XEN)
+	xen_copy_page(srcpa, dstpa);
 #else
 	pt_entry_t *spte;
 	pt_entry_t *dpte;
@@ -3549,12 +3553,10 @@ pmap_page_remove(struct vm_page *pg)
 	struct pv_entry *killlist = NULL;
 	struct vm_page *ptp;
 	pt_entry_t expect;
-	lwp_t *l;
 	int count;
 
 	KASSERT(uvm_page_locked_p(pg));
 
-	l = curlwp;
 	pp = VM_PAGE_TO_PP(pg);
 	expect = pmap_pa2pte(VM_PAGE_TO_PHYS(pg)) | PG_V;
 	count = SPINLOCK_BACKOFF_MIN;
@@ -4105,6 +4107,8 @@ pmap_get_physpage(vaddr_t va, int level, paddr_t *paddrp)
 			panic("pmap_get_physpage: out of memory");
 #ifdef __HAVE_DIRECT_MAP
 		pagezero(PMAP_DIRECT_MAP(*paddrp));
+#elif defined(XEN)
+		xen_pagezero(*paddrp);
 #else
 		kpreempt_disable();
 		pmap_pte_set(early_zero_pte,
@@ -4112,7 +4116,7 @@ pmap_get_physpage(vaddr_t va, int level, paddr_t *paddrp)
 		pmap_pte_flush();
 		pmap_update_pg((vaddr_t)early_zerop);
 		memset(early_zerop, 0, PAGE_SIZE);
-#if defined(DIAGNOSTIC) || defined (XEN)
+#if defined(DIAGNOSTIC)
 		pmap_pte_set(early_zero_pte, 0);
 		pmap_pte_flush();
 #endif /* defined(DIAGNOSTIC) */
@@ -4222,9 +4226,10 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	struct pmap *kpm = pmap_kernel();
 #if !defined(XEN) || !defined(__x86_64__)
 	struct pmap *pm;
+	long old;
 #endif
 	int s, i;
-	long needed_kptp[PTP_LEVELS], target_nptp, old;
+	long needed_kptp[PTP_LEVELS], target_nptp;
 	bool invalidate = false;
 
 	s = splvm();	/* to be safe */
@@ -4237,7 +4242,10 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	}
 
 	maxkvaddr = x86_round_pdr(maxkvaddr);
+#if !defined(XEN) || !defined(__x86_64__)
 	old = nkptp[PTP_LEVELS - 1];
+#endif
+
 	/*
 	 * This loop could be optimized more, but pmap_growkernel()
 	 * is called infrequently.

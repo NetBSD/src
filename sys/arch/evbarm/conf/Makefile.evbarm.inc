@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.evbarm.inc,v 1.24.2.1 2013/08/28 23:59:14 rmind Exp $
+#	$NetBSD: Makefile.evbarm.inc,v 1.24.2.2 2014/05/18 17:45:03 rmind Exp $
 
 #
 # If this is a install kernel and the ramdisk image exists in the object
 # tree, insert it into the kernel *before* we make the u-boot images.
 #
 RAMDISKNAME?=	ramdisk
-.if ${KERNEL_BUILD:T:M*INSTALL} != ""
+.if ${KERNEL_BUILD:T:M*INSTALL*} != ""
 RAMDISKDIR!=	cd ${NETBSDSRCDIR}/distrib/${THISARM:T}/instkernel/${RAMDISKNAME} && ${PRINTOBJDIR}
 
 .if exists(${RAMDISKDIR}/${RAMDISKNAME}.fs)
@@ -18,6 +18,14 @@ SYSTEM_LD_TAIL_EXTRA+=; \
 
 .if defined(BOARDMKFRAG)	# Must be a full pathname.
 .include "${BOARDMKFRAG}"
+.endif
+
+.if defined(KERNEL_BASE_PHYS) && defined(KERNEL_BASE_VIRT)
+. if ${KERNEL_BASE_PHYS} == ${KERNEL_BASE_VIRT}
+CPPFLAGS+=-DKERNEL_BASES_EQUAL -DKERNEL_BASE_VOFFSET=0
+. else
+CPPFLAGS+=-DKERNEL_BASE_VOFFSET="(${KERNEL_BASE_VIRT}-${KERNEL_BASE_PHYS})"
+. endif
 .endif
 
 EXTRA_CLEAN+= ldscript tmp ${KERNELS:=.map}

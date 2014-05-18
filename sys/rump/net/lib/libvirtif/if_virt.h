@@ -1,4 +1,4 @@
-/*	$NetBSD: if_virt.h,v 1.2.4.2 2013/08/28 23:59:37 rmind Exp $	*/
+/*	$NetBSD: if_virt.h,v 1.2.4.3 2014/05/18 17:46:20 rmind Exp $	*/
 
 /*
  * NOTE!  This file is supposed to work on !NetBSD platforms.
@@ -22,4 +22,9 @@
 #define VIFHYPER_DYING VIF_BASENAME3(rumpcomp_,VIRTIF_BASE,_dying)
 #define VIFHYPER_DESTROY VIF_BASENAME3(rumpcomp_,VIRTIF_BASE,_destroy)
 #define VIFHYPER_SEND VIF_BASENAME3(rumpcomp_,VIRTIF_BASE,_send)
-#define VIFHYPER_RECV VIF_BASENAME3(rumpcomp_,VIRTIF_BASE,_recv)
+
+#define VIFHYPER_FLAGS VIF_BASENAME3(rumpcomp_,VIRTIF_BASE,_flags)
+
+#define VIF_DELIVERPKT VIF_BASENAME3(rump_virtif_,VIRTIF_BASE,_deliverpkt)
+
+struct virtif_sc;

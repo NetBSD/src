@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.40.18.1 2013/08/28 15:21:48 rmind Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.40.18.2 2014/05/18 17:46:13 rmind Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.40.18.1 2013/08/28 15:21:48 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.40.18.2 2014/05/18 17:46:13 rmind Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -551,6 +551,7 @@ ddp_init(void)
 }
 
 PR_WRAP_USRREQ(ddp_usrreq)
+
 #define	ddp_usrreq	ddp_usrreq_wrapper
 
 const struct pr_usrreqs ddp_usrreqs = {
@@ -572,11 +573,6 @@ sysctl_net_atalk_ddp_stats(SYSCTLFN_ARGS)
 SYSCTL_SETUP(sysctl_net_atalk_ddp_setup, "sysctl net.atalk.ddp subtree setup")
 {
 
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "net", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "atalk", NULL,

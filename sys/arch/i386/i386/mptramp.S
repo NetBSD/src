@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.25 2013/06/22 13:09:07 uebayasi Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.25.2.1 2014/05/18 17:45:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: mptramp.S,v 1.25 2013/06/22 13:09:07 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mptramp.S,v 1.25.2.1 2014/05/18 17:45:12 rmind Exp $");
 	
 #include "opt_mpbios.h"		/* for MPDEBUG */
 		
@@ -125,7 +125,11 @@ LABEL(cpu_spinup_trampoline)
 	movw    %ax, %ds
 	movw    %ax, %es
 	movw    %ax, %ss
+#ifdef __clang__
+	lgdt    (gdt_desc)      # load flat descriptor table
+#else
 	data32 addr32 lgdt    (gdt_desc)      # load flat descriptor table
+#endif
 	movl    %cr0, %eax      # get cr0
 	orl     $CR0_PE, %eax   # enable protected mode
 	movl    %eax, %cr0      # doit
@@ -174,8 +178,8 @@ _TRMP_LABEL(mp_startup)
         /* Load base of page directory and enable mapping. */
         movl    %ecx,%cr3               # load ptd addr into mmu
         movl    %cr0,%eax               # get control word
-                                        # enable paging & NPX emulation
-        orl     $(CR0_PE|CR0_PG|CR0_NE|CR0_TS|CR0_EM|CR0_MP|CR0_WP|CR0_AM),%eax
+                                        # enable paging & the fpu
+        orl     $(CR0_PE|CR0_PG|CR0_NE|CR0_TS|CR0_MP|CR0_WP|CR0_AM),%eax
         movl    %eax,%cr0               # and page NOW!
 
 #ifdef MPDEBUG

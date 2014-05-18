@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.54 2012/10/27 17:18:00 chs Exp $	*/
+/*	$NetBSD: asc.c,v 1.54.2.1 2014/05/18 17:45:16 rmind Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.54 2012/10/27 17:18:00 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.54.2.1 2014/05/18 17:45:16 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -121,8 +121,17 @@ dev_type_ioctl(ascioctl);
 dev_type_mmap(ascmmap);
 
 const struct cdevsw asc_cdevsw = {
-	ascopen, ascclose, ascread, ascwrite, ascioctl,
-	nostop, notty, nopoll, ascmmap, nokqfilter,
+	.d_open = ascopen,
+	.d_close = ascclose,
+	.d_read = ascread,
+	.d_write = ascwrite,
+	.d_ioctl = ascioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = ascmmap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = 0
 };
 
 static int
@@ -250,11 +259,13 @@ ascwrite(dev_t dev, struct uio *uio, int ioflag)
 int
 ascioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct asc_softc *sc;
 	int error;
+#ifdef not_yet
+	struct asc_softc *sc;
 	int unit = ASCUNIT(dev);
 
 	sc = device_lookup_private(&asc_cd, unit);
+#endif
 	error = 0;
 
 	switch (cmd) {

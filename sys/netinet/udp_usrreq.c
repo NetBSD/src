@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.190.2.4 2013/10/17 23:52:18 rmind Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.190.2.5 2014/05/18 17:46:13 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.190.2.4 2013/10/17 23:52:18 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.190.2.5 2014/05/18 17:46:13 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.190.2.4 2013/10/17 23:52:18 rmind E
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
+#include <sys/once.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
@@ -190,19 +191,34 @@ EVCNT_ATTACH_STATIC(udp_swcsum);
 
 static void sysctl_net_inet_udp_setup(struct sysctllog **);
 
-void
-udp_init(void)
+static int
+do_udpinit(void)
 {
 	udbtable = inpcb_init(udbhashsize, udbhashsize, 0);
-	sysctl_net_inet_udp_setup(NULL);
+	udpstat_percpu = percpu_alloc(sizeof(uint64_t) * UDP_NSTATS);
 
 	MOWNER_ATTACH(&udp_tx_mowner);
 	MOWNER_ATTACH(&udp_rx_mowner);
 	MOWNER_ATTACH(&udp_mowner);
 
-#ifdef INET
-	udpstat_percpu = percpu_alloc(sizeof(uint64_t) * UDP_NSTATS);
-#endif
+	return 0;
+}
+
+void
+udp_init_common(void)
+{
+	static ONCE_DECL(doudpinit);
+
+	RUN_ONCE(&doudpinit, do_udpinit);
+}
+
+void
+udp_init(void)
+{
+
+	sysctl_net_inet_udp_setup(NULL);
+
+	udp_init_common();
 }
 
 /*
@@ -1022,11 +1038,7 @@ sysctl_net_inet_udp_stats(SYSCTLFN_ARGS)
 static void
 sysctl_net_inet_udp_setup(struct sysctllog **clog)
 {
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "net", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, CTL_EOL);
+
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "inet", NULL,

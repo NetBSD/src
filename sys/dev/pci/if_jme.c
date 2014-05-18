@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.22 2013/03/30 03:21:05 christos Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.22.4.1 2014/05/18 17:45:40 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.22 2013/03/30 03:21:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.22.4.1 2014/05/18 17:45:40 rmind Exp $");
 
 
 #include <sys/param.h>
@@ -278,6 +278,7 @@ jme_pci_attach(device_t parent, device_t self, void *aux)
 	int nsegs, i;
 	const struct sysctlnode *node;
 	int jme_nodenum;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->jme_dev = self;
 	aprint_normal("\n");
@@ -392,7 +393,7 @@ jme_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, intrhandle);
+	intrstr = pci_intr_string(pa->pa_pc, intrhandle, intrbuf, sizeof(intrbuf));
 	sc->jme_if.if_softc = sc;
 	sc->jme_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_NET,
 	    jme_intr, sc);
@@ -1345,7 +1346,6 @@ jme_ifioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 static int
 jme_encap(struct jme_softc *sc, struct mbuf **m_head)
 {
-	struct jme_desc *txd;
 	struct jme_desc *desc;
 	struct mbuf *m;
 	struct m_tag *mtag;
@@ -1446,7 +1446,6 @@ jme_encap(struct jme_softc *sc, struct mbuf **m_head)
 	}
 
 	prod = sc->jme_tx_prod;
-	txd = &sc->jme_txring[prod];
 
 	error = bus_dmamap_load_mbuf(sc->jme_dmatag, sc->jme_txmbufm[prod],
 	    *m_head, BUS_DMA_NOWAIT | BUS_DMA_WRITE);
@@ -2055,12 +2054,6 @@ SYSCTL_SETUP(sysctl_jme, "sysctl jme subtree setup")
 {
 	int rc;
 	const struct sysctlnode *node;
-
-	if ((rc = sysctl_createv(clog, 0, NULL, NULL,
-	    0, CTLTYPE_NODE, "hw", NULL,
-	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0) {
-		goto err;
-	}
 
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
 	    0, CTLTYPE_NODE, "jme",

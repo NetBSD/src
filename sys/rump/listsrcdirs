@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: listsrcdirs,v 1.4.6.1 2013/08/28 23:59:36 rmind Exp $
+#	$NetBSD: listsrcdirs,v 1.4.6.2 2014/05/18 17:46:14 rmind Exp $
 #
 
 #
@@ -19,6 +19,9 @@ precho ()
 	for arg in $* ; do echo ${pfx}${arg} ; done
 }
 
+ARCHS="amd64 i386 x86 arm evbarm sparc sparc64 powerpc evbppc mips evbmips"
+ARCHS_EXTRA="arm/arm32 Makefile"
+
 precho src/			build.sh Makefile Makefile.inc
 precho src/			tools common include share/mk
 precho src/etc/			Makefile.params master.passwd group
@@ -28,21 +31,23 @@ precho src/external/bsd/	flex mdocml byacc
 precho src/external/cddl/	osnet
 precho src/external/historical/	nawk
 precho src/usr.bin/		make xinstall config mktemp sed tsort
-precho src/usr.bin/		lorder join cksum m4 mkdep
+precho src/usr.bin/		lorder join cksum m4 mkdep Makefile.inc
+precho src/usr.bin/		rump_server rump_allserver rump_wmd
+precho src/usr.bin/		shmif_dumpbus
 precho src/usr.sbin/		mtree
 
 # If -c is given, use CVS syntax to exclude large subdirectories
 # of sys.  Otherwise just do it wholesale.
 if [ "${1}" = '-c' ]; then
-	echo \!src/sys/arch \!src/sys/dev/microcode	\
-	    \!src/sys/dev/pci src/sys
+	echo \!src/sys/arch src/sys
 
 	# pick a few useful archs, namely those mentioned in buildrump.sh
-	for x in amd64 i386 x86 arm evbarm sparc sparc64 powerpc evbppc; do
-		precho src/sys/arch/${x}/ include ${x} Makefile
+	for arch in ${ARCHS}; do
+		precho src/sys/arch/${arch}/ include ${arch} Makefile
 	done
-	echo src/sys/arch/arm/arm32
-	echo src/sys/arch/Makefile
+	for extra in ${ARCHS_EXTRA}; do
+		echo src/sys/arch/${extra}
+	done
 else
 	echo src/sys
 fi

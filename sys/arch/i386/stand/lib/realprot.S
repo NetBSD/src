@@ -1,4 +1,4 @@
-/*	$NetBSD: realprot.S,v 1.10 2010/12/19 17:18:23 jakllsch Exp $	*/
+/*	$NetBSD: realprot.S,v 1.10.22.1 2014/05/18 17:45:13 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -34,8 +34,7 @@
  */
 
 #include <machine/asm.h>
-
-#define	CR0_PE		1
+#include <x86/specialreg.h>
 
 	.text
 	.align  16

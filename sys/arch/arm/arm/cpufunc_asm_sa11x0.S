@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_sa11x0.S,v 1.3.166.1 2013/08/28 23:59:11 rmind Exp $	*/
+/*	$NetBSD: cpufunc_asm_sa11x0.S,v 1.3.166.2 2014/05/18 17:44:56 rmind Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -35,6 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "assym.h"
 #include <arm/asm.h>
 #include <arm/locore.h>
 
@@ -79,7 +80,7 @@ ENTRY(sa11x0_cpu_sleep)
 	 * re-enable clock switching before servicing interrupts.
 	 */
 
-	mrs	r3, cpsr_all						/* 6 */
+	mrs	r3, cpsr						/* 6 */
 	orr	r2, r3, #(I32_bit|F32_bit)				/* 7 */
 	msr	cpsr_all, r2						/* 8 */
 

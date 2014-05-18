@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.56 2013/03/30 03:21:43 christos Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.56.4.1 2014/05/18 17:45:40 rmind Exp $    */
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.56 2013/03/30 03:21:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.56.4.1 2014/05/18 17:45:40 rmind Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -218,6 +218,7 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	pcireg_t data;
 	int error, ac;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	RUN_ONCE(&wpi_firmware_init, wpi_attach_once);
 	sc->fw_used = false;
@@ -253,7 +254,7 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
 		return;
 	}
 
-	intrstr = pci_intr_string(sc->sc_pct, ih);
+	intrstr = pci_intr_string(sc->sc_pct, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(sc->sc_pct, ih, IPL_NET, wpi_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "could not establish interrupt");
@@ -3290,14 +3291,9 @@ wpi_sysctlattach(struct wpi_softc *sc)
 	struct sysctllog **clog = &sc->sc_sysctllog;
 
 	if ((rc = sysctl_createv(clog, 0, NULL, &rnode,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
-	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0)
-		goto err;
-
-	if ((rc = sysctl_createv(clog, 0, &rnode, &rnode,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, device_xname(sc->sc_dev),
 	    SYSCTL_DESCR("wpi controls and statistics"),
-	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 
 	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,

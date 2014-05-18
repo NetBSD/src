@@ -1,0 +1,9 @@
+# $NetBSD: std.ofppc64,v 1.1.4.2 2014/05/18 17:45:20 rmind Exp $
+
+makeoptions	LP64="yes"
+no options	EXEC_ELF32
+no options	PPC_OEA
+no options	PPC_OEA64_BRIDGE
+options		PPC_OEA64
+options		EXEC_ELF64
+options 	COMPAT_NETBSD32

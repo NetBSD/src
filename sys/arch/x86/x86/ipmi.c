@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.54.6.1 2013/08/28 23:59:24 rmind Exp $ */
+/*	$NetBSD: ipmi.c,v 1.54.6.2 2014/05/18 17:45:30 rmind Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.54.6.1 2013/08/28 23:59:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.54.6.2 2014/05/18 17:45:30 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -788,6 +788,8 @@ kcs_probe(struct ipmi_softc *sc)
 	printf(" C/D: %2x\n", v & KCS_CD);
 	printf(" IBF: %2x\n", v & KCS_IBF);
 	printf(" OBF: %2x\n", v & KCS_OBF);
+#else
+	__USE(v);
 #endif
 	return (0);
 }

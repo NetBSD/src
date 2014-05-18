@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.154.10.1 2013/08/28 15:21:48 rmind Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.154.10.2 2014/05/18 17:46:13 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.154.10.1 2013/08/28 15:21:48 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.154.10.2 2014/05/18 17:46:13 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -1472,8 +1472,10 @@ revarprequest(struct ifnet *ifp)
 
 	memcpy(ar_sha(ah), CLLADDR(ifp->if_sadl), ah->ar_hln);
 	tha = ar_tha(ah);
-	if (tha == NULL)
+	if (tha == NULL) {
+		m_free(m);
 		return;
+	}
 	memcpy(tha, CLLADDR(ifp->if_sadl), ah->ar_hln);
 
 	sa.sa_family = AF_ARP;
@@ -1630,11 +1632,6 @@ sysctl_net_inet_arp_setup(struct sysctllog **clog)
 {
 	const struct sysctlnode *node;
 
-	sysctl_createv(clog, 0, NULL, NULL,
-			CTLFLAG_PERMANENT,
-			CTLTYPE_NODE, "net", NULL,
-			NULL, 0, NULL, 0,
-			CTL_NET, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 			CTLFLAG_PERMANENT,
 			CTLTYPE_NODE, "inet", NULL,

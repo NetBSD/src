@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2410_machdep.c,v 1.32.2.1 2013/08/28 23:59:15 rmind Exp $ */
+/*	$NetBSD: smdk2410_machdep.c,v 1.32.2.2 2014/05/18 17:45:05 rmind Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.32.2.1 2013/08/28 23:59:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.32.2.2 2014/05/18 17:45:05 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -975,26 +975,6 @@ kgdb_port_init(void)
 #endif
 }
 #endif
-
-static inline void
-writeback_dcache_line(vaddr_t va)
-{
-	/* writeback Dcache line */
-	/* we can't use cpu_dcache_wb_range() here, because cpufuncs for ARM9
-	 * assume write-through cache, and always flush Dcache instead of
-	 * cleaning it. Since Boot loader maps page table with write-back
-	 * cached, we really need to clean Dcache. */
-	__asm("mcr	p15, 0, %0, c7, c10, 1"
-	    : :	"r"(va));
-}
-
-static inline void
-clean_dcache_line(vaddr_t va)
-{
-	/* writeback and invalidate Dcache line */
-	__asm("mcr	p15, 0, %0, c7, c14, 1"
-	    : : "r"(va));
-}
 
 static struct arm32_dma_range smdk2410_dma_ranges[1];
 

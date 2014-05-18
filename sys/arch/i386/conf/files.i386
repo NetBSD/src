@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.370.2.1 2013/08/28 23:59:17 rmind Exp $
+#	$NetBSD: files.i386,v 1.370.2.2 2014/05/18 17:45:12 rmind Exp $
 #
 # new style config file for i386 architecture
 #
@@ -79,8 +79,10 @@ file	arch/i386/i386/machdep.c
 file 	arch/i386/i386/longrun.c
 file	arch/i386/i386/mtrr_k6.c	mtrr
 file	arch/i386/i386/process_machdep.c
+file	arch/x86/x86/convert_xmm_s87.c
 file	arch/i386/i386/trap.c
 file	dev/cons.c
+file	arch/x86/x86/fpu.c
 
 file	arch/i386/i386/mptramp.S	multiprocessor
 
@@ -249,13 +251,6 @@ include	"dev/isa/files.isa"
 device	ptcd: gpiobus
 attach	ptcd at isa
 file	dev/isa/ptcd.c			ptcd
-
-# Numeric Processing Extension; Math Co-processor
-device	npx
-file	arch/i386/isa/npx.c		npx needs-flag
-
-attach	npx at isa with npx_isa
-file	arch/i386/isa/npx_isa.c		npx_isa
 
 # PC Mice: Logitech-style and Microsoft-style
 device	lms: wsmousedev
@@ -443,10 +438,6 @@ include	"arch/i386/pnpbios/files.pnpbios"
 
 include "dev/acpi/files.acpi"
 file	arch/i386/acpi/acpi_wakeup_low.S	acpi
-
-# Numeric Processing Extension; Math Co-processor
-attach	npx at acpinodebus with npx_acpi
-file	arch/i386/acpi/npx_acpi.c		npx_acpi
 
 # Obsolete vesabios/vesafb flags
 obsolete	defflag	opt_vesabios.h	VESABIOSVERBOSE

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.10 2013/03/30 14:30:24 christos Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.10.4.1 2014/05/18 17:45:47 rmind Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -60,8 +60,9 @@
  * implemented.
  */
 
-#include "vlan.h"
-#include "opt_usb.h"
+#ifdef _KERNEL_OPT
+#include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -86,10 +87,7 @@
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/in_var.h>
-#include <netinet/ip.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #include <dev/mii/mii.h>
@@ -778,7 +776,9 @@ smsc_chip_init(struct smsc_softc *sc)
 	usbd_delay_ms(sc->sc_udev, 40);
 
 	/* Set the mac address */
-	if ((err = smsc_setmacaddress(sc, sc->sc_enaddr)) != 0) {
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	const char *eaddr = CLLADDR(ifp->if_sadl);
+	if ((err = smsc_setmacaddress(sc, eaddr)) != 0) {
 		smsc_warn_printf(sc, "failed to set the MAC address\n");
 		goto init_failed;
 	}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26.2.1 2013/08/28 23:59:19 rmind Exp $
+#	$NetBSD: Makefile,v 1.26.2.2 2014/05/18 17:45:20 rmind Exp $
 
 NOMAN=	# defined
 
@@ -32,6 +32,7 @@ CFLAGS+=	-Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 AFLAGS+=	${INCLUDES}
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
+LIBCRTI=
 LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=

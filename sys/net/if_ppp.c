@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.138 2012/11/25 09:06:43 mbalmer Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.138.2.1 2014/05/18 17:46:12 rmind Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.138 2012/11/25 09:06:43 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.138.2.1 2014/05/18 17:46:12 rmind Exp $");
 
 #include "ppp.h"
 
@@ -946,8 +946,8 @@ pppoutput(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 	 * but only if it is a data packet.
 	 */
 	if (sc->sc_pass_filt_out.bf_insns != 0
-	    && bpf_filter(sc->sc_pass_filt_out.bf_insns, (u_char *) m0,
-			  len, 0) == 0) {
+	    && bpf_filter(sc->sc_pass_filt_out.bf_insns,
+			  (u_char *)m0, len, 0) == 0) {
 	    error = 0;		/* drop this packet */
 	    goto bad;
 	}
@@ -956,8 +956,8 @@ pppoutput(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 	 * Update the time we sent the most recent packet.
 	 */
 	if (sc->sc_active_filt_out.bf_insns == 0
-	    || bpf_filter(sc->sc_active_filt_out.bf_insns, (u_char *) m0,
-	    		  len, 0))
+	    || bpf_filter(sc->sc_active_filt_out.bf_insns,
+			  (u_char *)m0, len, 0))
 	    sc->sc_last_sent = time_second;
 #else
 	/*
@@ -1395,6 +1395,7 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
     int s, ilen, proto, rv;
     u_char *cp, adrs, ctrl;
     struct mbuf *mp, *dmp = NULL;
+    int isr = 0;
 #ifdef VJC
     int xlen;
     u_char *iphdr;
@@ -1584,15 +1585,15 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
 	 * if it counts as link activity.
 	 */
 	if (sc->sc_pass_filt_in.bf_insns != 0
-	    && bpf_filter(sc->sc_pass_filt_in.bf_insns, (u_char *) m,
-			  ilen, 0) == 0) {
+	    && bpf_filter(sc->sc_pass_filt_in.bf_insns,
+			  (u_char *)m, ilen, 0) == 0) {
 	    /* drop this packet */
 	    m_freem(m);
 	    return;
 	}
 	if (sc->sc_active_filt_in.bf_insns == 0
-	    || bpf_filter(sc->sc_active_filt_in.bf_insns, (u_char *) m,
-	    		  ilen, 0))
+	    || bpf_filter(sc->sc_active_filt_in.bf_insns,
+			  (u_char *)m, ilen, 0))
 	    sc->sc_last_recv = time_second;
 #else
 	/*
@@ -1625,7 +1626,7 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
 	if (ipflow_fastforward(m))
 		return;
 #endif
-	schednetisr(NETISR_IP);
+	isr = NETISR_IP;
 	inq = &ipintrq;
 	break;
 #endif
@@ -1648,7 +1649,7 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
 	if (ip6flow_fastforward(&m))
 		return;
 #endif
-	schednetisr(NETISR_IPV6);
+	isr = NETISR_IPV6;
 	inq = &ip6intrq;
 	break;
 #endif
@@ -1675,6 +1676,9 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
 	goto bad;
     }
     IF_ENQUEUE(inq, m);
+    if (__predict_true(isr)) {
+        schednetisr(isr);
+    }
     splx(s);
     ifp->if_ipackets++;
     ifp->if_ibytes += ilen;

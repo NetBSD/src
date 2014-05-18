@@ -1,4 +1,4 @@
-/*      $NetBSD: ixdp425_pci.c,v 1.9 2012/11/12 18:00:39 skrll Exp $ */
+/*      $NetBSD: ixdp425_pci.c,v 1.9.2.1 2014/05/18 17:45:04 rmind Exp $ */
 #define PCI_DEBUG
 /*
  * Copyright (c) 2003
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixdp425_pci.c,v 1.9 2012/11/12 18:00:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixdp425_pci.c,v 1.9.2.1 2014/05/18 17:45:04 rmind Exp $");
 
 /*
  * IXDP425 PCI interrupt support.
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: ixdp425_pci.c,v 1.9 2012/11/12 18:00:39 skrll Exp $"
 
 static int ixdp425_pci_intr_map(const struct pci_attach_args *,
     pci_intr_handle_t *);
-static const char *ixdp425_pci_intr_string(void *, pci_intr_handle_t);
+static const char *ixdp425_pci_intr_string(void *, pci_intr_handle_t, char *, size_t);
 static const struct evcnt *ixdp425_pci_intr_evcnt(void *, pci_intr_handle_t);
 static void *ixdp425_pci_intr_establish(void *, pci_intr_handle_t, int,
 	int (*func)(void *), void *);
@@ -215,12 +215,10 @@ ixdp425_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 }
 
 static const char *
-ixdp425_pci_intr_string(void *v, pci_intr_handle_t ih)
+ixdp425_pci_intr_string(void *v, pci_intr_handle_t ih, char *buf, size_t len)
 {
-	static char irqstr[IRQNAMESIZE];
-
-	sprintf(irqstr, "ixp425 irq %ld", ih);
-	return (irqstr);
+	snprintf(buf, len, "ixp425 irq %ld", ih);
+	return buf;
 }
 
 static const struct evcnt *

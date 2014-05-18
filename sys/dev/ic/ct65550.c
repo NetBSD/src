@@ -1,4 +1,4 @@
-/*	$NetBSD: ct65550.c,v 1.6.4.1 2013/08/28 23:59:25 rmind Exp $	*/
+/*	$NetBSD: ct65550.c,v 1.6.4.2 2014/05/18 17:45:37 rmind Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct65550.c,v 1.6.4.1 2013/08/28 23:59:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct65550.c,v 1.6.4.2 2014/05/18 17:45:37 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,7 +159,7 @@ chipsfb_read_indexed(struct chipsfb_softc *sc, uint32_t reg, uint8_t index)
 	return chipsfb_read_vga(sc, reg | 0x0001);
 }
 
-static inline void
+__unused static inline void
 chipsfb_write_indexed(struct chipsfb_softc *sc, uint32_t reg, uint8_t index,
     uint8_t val)
 {
@@ -750,6 +750,12 @@ chipsfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		}
 		}
 		return 0;
+	
+	case WSDISPLAYIO_GET_FBINFO: {
+		struct wsdisplayio_fbinfo *fbi = data;
+		return wsdisplayio_get_fbinfo(&ms->scr_ri, fbi);
+	}
+
 	default:
 		if (sc->sc_ioctl != NULL)
 			return sc->sc_ioctl(v, vs, cmd, data, flag, l);

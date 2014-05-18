@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.27 2013/06/22 06:57:30 uebayasi Exp $	*/
+/*	$NetBSD: spl.S,v 1.27.2.1 2014/05/18 17:44:54 rmind Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -212,16 +212,11 @@ ENTRY(spllower)
 2:
 	popf
 	jmp	_C_LABEL(Xspllower)
-	nop
-	nop
+3:
+	.space 16
 	.align	16
-#ifdef GPROF
-	nop
-	.align	16
-#endif
 END(spllower)
 LABEL(spllower_end)
-
 #endif /* !XEN */
 
 /*

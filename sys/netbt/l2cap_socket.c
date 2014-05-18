@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_socket.c,v 1.9.44.1 2013/08/28 15:21:48 rmind Exp $	*/
+/*	$NetBSD: l2cap_socket.c,v 1.9.44.2 2014/05/18 17:46:13 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_socket.c,v 1.9.44.1 2013/08/28 15:21:48 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_socket.c,v 1.9.44.2 2014/05/18 17:46:13 rmind Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -350,7 +350,7 @@ l2cap_newconn(void *arg, struct sockaddr_bt *laddr,
 	struct socket *so = arg;
 
 	DPRINTF("New Connection\n");
-	so = sonewconn(so, 0);
+	so = sonewconn(so, false);
 	if (so == NULL)
 		return NULL;
 
@@ -412,6 +412,7 @@ l2cap_input(void *arg, struct mbuf *m)
 }
 
 PR_WRAP_USRREQ(l2cap_usrreq)
+
 #define	l2cap_usrreq		l2cap_usrreq_wrapper
 
 const struct pr_usrreqs l2cap_usrreqs = {

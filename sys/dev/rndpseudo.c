@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpseudo.c,v 1.13.2.1 2013/08/28 23:59:24 rmind Exp $	*/
+/*	$NetBSD: rndpseudo.c,v 1.13.2.2 2014/05/18 17:45:35 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.13.2.1 2013/08/28 23:59:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.13.2.2 2014/05/18 17:45:35 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.13.2.1 2013/08/28 23:59:24 rmind Exp
 
 #include <dev/rnd_private.h>
 
-#if defined(__HAVE_CPU_COUNTER) && !defined(_RUMPKERNEL) /* XXX: bad pooka */
+#if defined(__HAVE_CPU_COUNTER)
 #include <machine/cpu_counter.h>
 #endif
 
@@ -127,8 +127,17 @@ void	rndattach(int);
 dev_type_open(rndopen);
 
 const struct cdevsw rnd_cdevsw = {
-	rndopen, noclose, noread, nowrite, noioctl, nostop,
-	notty, nopoll, nommap, nokqfilter, D_OTHER|D_MPSAFE
+	.d_open = rndopen,
+	.d_close = noclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER | D_MPSAFE
 };
 
 static int rnd_read(struct file *, off_t *, struct uio *, kauth_cred_t, int);
@@ -165,7 +174,7 @@ rndpseudo_counter(void)
 {
 	struct timeval tv;
 
-#if defined(__HAVE_CPU_COUNTER) && !defined(_RUMPKERNEL) /* XXX: bad pooka */
+#if defined(__HAVE_CPU_COUNTER)
 	if (cpu_hascounter())
 		return (cpu_counter32());
 #endif
@@ -389,18 +398,32 @@ rnd_read(struct file *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
 			goto out;
 
 		/*
-		 * Do at most one iteration for /dev/random and return
-		 * a short read without hanging further.  Hanging
-		 * breaks applications worse than short reads.  Reads
-		 * can't be zero unless nonblocking from /dev/random;
-		 * in that case, ask caller to retry, instead of just
-		 * returning zero bytes, which means EOF.
+		 * For /dev/urandom:  Reads always succeed in full, no
+		 * matter how many iterations that takes.  (XXX But
+		 * this means the computation can't be interrupted,
+		 * wihch seems suboptimal.)
+		 *
+		 * For /dev/random, nonblocking:  Reads succeed with as
+		 * many bytes as a single request can return without
+		 * blocking, or fail with EAGAIN if a request would
+		 * block.  (There is no sense in trying multiple
+		 * requests because if the first one didn't fill the
+		 * buffer, the second one would almost certainly
+		 * block.)
+		 *
+		 * For /dev/random, blocking:  Reads succeed with as
+		 * many bytes as a single request -- which may block --
+		 * can return if uninterrupted, or fail with EINTR if
+		 * the request is interrupted.
 		 */
-		KASSERT((0 < n_read) || (ctx->rc_hard &&
-			ISSET(fp->f_flag, FNONBLOCK)));
+		KASSERT((0 < n_read) || ctx->rc_hard);
 		if (ctx->rc_hard) {
-			if (n_read == 0)
+			if (0 < n_read)
+				error = 0;
+			else if (ISSET(fp->f_flag, FNONBLOCK))
 				error = EAGAIN;
+			else
+				error = EINTR;
 			goto out;
 		}
 	}

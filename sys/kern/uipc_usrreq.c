@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.142.2.2 2013/08/28 23:59:35 rmind Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.142.2.3 2014/05/18 17:46:08 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.142.2.2 2013/08/28 23:59:35 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.142.2.3 2014/05/18 17:46:08 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,7 +165,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.142.2.2 2013/08/28 23:59:35 rmind 
  *   that had referenced it have also been destroyed.
  */
 const struct sockaddr_un sun_noname = {
-	.sun_len = sizeof(sun_noname),
+	.sun_len = offsetof(struct sockaddr_un, sun_path),
 	.sun_family = AF_LOCAL,
 };
 ino_t	unp_ino;			/* prototype for fake inode numbers */
@@ -364,7 +364,7 @@ unp_setaddr(struct socket *so, struct mbuf *nam, bool peeraddr)
 
 static int
 unp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
-	struct mbuf *control, struct lwp *l)
+    struct mbuf *control, struct lwp *l)
 {
 	struct unpcb *unp;
 	struct socket *so2;
@@ -422,8 +422,14 @@ unp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		 * after it's been accepted.  This prevents a client from
 		 * overrunning a server and receiving ECONNREFUSED.
 		 */
-		if (unp->unp_conn == NULL)
+		if (unp->unp_conn == NULL) {
+			/*
+			 * This will use the empty socket and will not
+			 * allocate.
+			 */
+			unp_setaddr(so, nam, true);
 			break;
+		}
 		so2 = unp->unp_conn->unp_socket;
 		if (so2->so_state & SS_ISCONNECTING) {
 			KASSERT(solocked2(so, so->so_head));
@@ -545,6 +551,7 @@ unp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 				m_freem(m);
 				break;
 			}
+			KASSERT(l != NULL);
 			error = unp_output(m, control, unp, l);
 			if (nam)
 				unp_disconnect(unp);
@@ -823,7 +830,8 @@ unp_detach(struct socket *so)
 		/* XXXAD racy */
 		mutex_enter(vp->v_interlock);
 		vp->v_socket = NULL;
-		vrelel(vp, 0);
+		mutex_exit(vp->v_interlock);
+		vrele(vp);
 		solock(so);
 		unp->unp_vnode = NULL;
 	}
@@ -852,6 +860,29 @@ unp_detach(struct socket *so)
 		unp_free(unp);
 }
 
+/*
+ * Allocate the new sockaddr.  We have to allocate one
+ * extra byte so that we can ensure that the pathname
+ * is nul-terminated. Note that unlike linux, we don't
+ * include in the address length the NUL in the path
+ * component, because doing so, would exceed sizeof(sockaddr_un)
+ * for fully occupied pathnames. Linux is also inconsistent,
+ * because it does not include the NUL in the length of
+ * what it calls "abstract" unix sockets.
+ */
+static struct sockaddr_un *
+makeun(struct mbuf *nam, size_t *addrlen) {
+	struct sockaddr_un *sun;
+
+	*addrlen = nam->m_len + 1;
+	sun = malloc(*addrlen, M_SONAME, M_WAITOK);
+	m_copydata(nam, 0, nam->m_len, (void *)sun);
+	*(((char *)sun) + nam->m_len) = '\0';
+	sun->sun_len = strlen(sun->sun_path) +
+	    offsetof(struct sockaddr_un, sun_path);
+	return sun;
+}
+
 int
 unp_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 {
@@ -878,16 +909,8 @@ unp_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 	unp->unp_flags |= UNP_BUSY;
 	sounlock(so);
 
-	/*
-	 * Allocate the new sockaddr.  We have to allocate one
-	 * extra byte so that we can ensure that the pathname
-	 * is nul-terminated.
-	 */
 	p = l->l_proc;
-	addrlen = nam->m_len + 1;
-	sun = malloc(addrlen, M_SONAME, M_WAITOK);
-	m_copydata(nam, 0, nam->m_len, (void *)sun);
-	*(((char *)sun) + nam->m_len) = '\0';
+	sun = makeun(nam, &addrlen);
 
 	pb = pathbuf_create(sun->sun_path);
 	if (pb == NULL) {
@@ -918,10 +941,12 @@ unp_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 	vattr.va_mode = ACCESSPERMS & ~(p->p_cwdi->cwdi_cmask);
 	error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
 	if (error) {
+		vput(nd.ni_dvp);
 		pathbuf_destroy(pb);
 		goto bad;
 	}
 	vp = nd.ni_vp;
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	solock(so);
 	vp->v_socket = unp->unp_socket;
 	unp->unp_vnode = vp;
@@ -932,6 +957,7 @@ unp_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 	unp->unp_connid.unp_egid = kauth_cred_getegid(l->l_cred);
 	unp->unp_flags |= UNP_EIDSBIND;
 	VOP_UNLOCK(vp);
+	vput(nd.ni_dvp);
 	unp->unp_flags &= ~UNP_BUSY;
 	pathbuf_destroy(pb);
 	return (0);
@@ -966,17 +992,7 @@ unp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 	unp->unp_flags |= UNP_BUSY;
 	sounlock(so);
 
-	/*
-	 * Allocate a temporary sockaddr.  We have to allocate one extra
-	 * byte so that we can ensure that the pathname is nul-terminated.
-	 * When we establish the connection, we copy the other PCB's
-	 * sockaddr to our own.
-	 */
-	addrlen = nam->m_len + 1;
-	sun = malloc(addrlen, M_SONAME, M_WAITOK);
-	m_copydata(nam, 0, nam->m_len, (void *)sun);
-	*(((char *)sun) + nam->m_len) = '\0';
-
+	sun = makeun(nam, &addrlen);
 	pb = pathbuf_create(sun->sun_path);
 	if (pb == NULL) {
 		error = ENOMEM;
@@ -1022,7 +1038,7 @@ unp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 		KASSERT((so2->so_options & SO_ACCEPTCONN) == 0 ||
 		    so2->so_lock == uipc_lock);
 		if ((so2->so_options & SO_ACCEPTCONN) == 0 ||
-		    (so3 = sonewconn(so2, 0)) == NULL) {
+		    (so3 = sonewconn(so2, false)) == NULL) {
 			error = ECONNREFUSED;
 			sounlock(so);
 			goto bad;

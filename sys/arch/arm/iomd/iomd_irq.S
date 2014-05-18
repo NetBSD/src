@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irq.S,v 1.14.4.1 2013/08/28 23:59:12 rmind Exp $	*/
+/*	$NetBSD: iomd_irq.S,v 1.14.4.2 2014/05/18 17:44:58 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -208,7 +208,7 @@ Lfind_highest_ipl:
 	/* Update the IOMD irq masks */
 	bl	_C_LABEL(irq_setmasks)
 
-        mrs     r0, cpsr_all		/* Enable IRQ's */
+        mrs     r0, cpsr		/* Enable IRQ's */
 	bic	r0, r0, #I32_bit
 	msr	cpsr_all, r0
 
@@ -331,7 +331,7 @@ exitirq:
 #endif
 
 	/* Kill IRQ's in preparation for exit */
-        mrs     r0, cpsr_all
+        mrs     r0, cpsr
         orr     r0, r0, #(I32_bit)
         msr     cpsr_all, r0
 
@@ -354,7 +354,7 @@ Lcurrent_mask:
 
 ENTRY(irq_setmasks)
 	/* Disable interrupts */
-	mrs	r3, cpsr_all
+	mrs	r3, cpsr
 	orr	r1, r3,  #(I32_bit)
 	msr	cpsr_all, r1
 

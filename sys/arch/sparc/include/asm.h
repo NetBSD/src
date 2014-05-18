@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.18 2010/12/20 21:11:25 joerg Exp $ */
+/*	$NetBSD: asm.h,v 1.18.22.1 2014/05/18 17:45:25 rmind Exp $ */
 
 /*
  * Copyright (c) 1994 Allen Briggs
@@ -61,7 +61,7 @@
 #endif
 #define	_ASM_LABEL(name)	name
 
-#ifdef PIC
+#ifdef __PIC__
 /*
  * PIC_PROLOGUE() is akin to the compiler generated function prologue for
  * PIC code. It leaves the address of the Global Offset Table in DEST,
@@ -152,7 +152,7 @@
 #define	FUNC(name)		ASENTRY(name)
 #define RODATA(name)		.align 4; .text; .globl _C_LABEL(name); \
 				OTYPE(_C_LABEL(name)); _C_LABEL(name):
-
+#define	END(y)		.size y, . - y
 
 #define ASMSTR			.asciz
 

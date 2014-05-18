@@ -12,61 +12,39 @@
 # compile options, and prevents pollution of the source code.
 #
 include ../Makefile.config
-PROG = acpihelp
+FINAL_PROG = ../$(BINDIR)/acpihelp
+PROG = $(OBJDIR)/acpihelp
+
+#
+# Search paths for source files
+#
+vpath %.c \
+    $(ACPIHELP)\
+    $(ACPICA_COMMON)\
+    $(ACPICA_UTILITIES)
+
+HEADERS = \
+    $(wildcard $(ACPIHELP)/*.h)
+
+OBJECTS = \
+	$(OBJDIR)/ahamlops.o\
+	$(OBJDIR)/ahaslkey.o\
+	$(OBJDIR)/ahaslops.o\
+	$(OBJDIR)/ahdecode.o\
+	$(OBJDIR)/ahpredef.o\
+	$(OBJDIR)/ahmain.o\
+	$(OBJDIR)/getopt.o\
+	$(OBJDIR)/utexcep.o\
+	$(OBJDIR)/utpredef.o
 
 #
 # Flags specific to acpihelp
 #
-CFLAGS+= \
-    -DACPI_HELP_APP \
-    -I$(ACPICA_TOOLS)/acpihelp
-
-OBJS = \
-	ahamlops.o \
-	ahaslkey.o \
-	ahaslops.o \
-	ahdecode.o \
-	ahpredef.o \
-	ahmain.o \
-	getopt.o
+CFLAGS += \
+    -DACPI_HELP_APP\
+    -I$(ACPIHELP)
 
 #
-# Root rule
+# Common Rules
 #
-$(PROG) : $(OBJS)
-	$(CC) $(LDFLAGS) $(OBJS) -o $(PROG)
-	$(COPYPROG)
-
-#
-# acpihelp source
-#
-ahamlops.o :        $(ACPICA_TOOLS)/acpihelp/ahamlops.c
-	$(COMPILE)
-
-ahaslkey.o :        $(ACPICA_TOOLS)/acpihelp/ahaslkey.c
-	$(COMPILE)
-
-ahaslops.o :        $(ACPICA_TOOLS)/acpihelp/ahaslops.c
-	$(COMPILE)
-
-ahdecode.o :        $(ACPICA_TOOLS)/acpihelp/ahdecode.c
-	$(COMPILE)
-
-ahpredef.o :        $(ACPICA_TOOLS)/acpihelp/ahpredef.c
-	$(COMPILE)
-
-ahmain.o :          $(ACPICA_TOOLS)/acpihelp/ahmain.c
-	$(COMPILE)
-
-#
-# ACPICA core source - common
-#
-getopt.o :          $(ACPICA_COMMON)/getopt.c
-	$(COMPILE)
-
-
-clean :
-	rm -f $(PROG) $(PROG).exe $(OBJS)
-
-install :
-	$(INSTALLPROG)
+include ../Makefile.rules

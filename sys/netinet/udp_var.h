@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_var.h,v 1.38.4.3 2013/09/23 00:57:53 rmind Exp $	*/
+/*	$NetBSD: udp_var.h,v 1.38.4.4 2014/05/18 17:46:13 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -94,6 +94,7 @@ extern const struct pr_usrreqs udp_usrreqs;
 void	 *udp_ctlinput(int, const struct sockaddr *, void *);
 int	 udp_ctloutput(int, struct socket *, struct sockopt *);
 void	 udp_init(void);
+void	 udp_init_common(void);
 void	 udp_input(struct mbuf *, ...);
 int	 udp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 

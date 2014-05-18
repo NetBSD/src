@@ -1,4 +1,4 @@
-/* $NetBSD: arcpp.c,v 1.12 2011/07/19 16:05:10 dyoung Exp $ */
+/* $NetBSD: arcpp.c,v 1.12.16.1 2014/05/18 17:44:52 rmind Exp $ */
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -52,7 +52,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arcpp.c,v 1.12 2011/07/19 16:05:10 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcpp.c,v 1.12.16.1 2014/05/18 17:44:52 rmind Exp $");
 
 #include <sys/conf.h>
 #include <sys/device.h>
@@ -109,8 +109,17 @@ dev_type_close(arcppclose);
 dev_type_write(arcppwrite);
 
 const struct cdevsw arcpp_cdevsw = {
-	arcppopen, arcppclose, noread, arcppwrite, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	.d_open = arcppopen,
+	.d_close = arcppclose,
+	.d_read = noread,
+	.d_write = arcppwrite,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = 0
 };
 
 #define	ARCPPUNIT(s)	(minor(s) & 0x1f)

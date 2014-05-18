@@ -1,4 +1,4 @@
-/*	$NetBSD: frodoreg.h,v 1.4 2006/07/19 17:21:23 tsutsui Exp $	*/
+/*	$NetBSD: frodoreg.h,v 1.4.112.1 2014/05/18 17:45:07 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Smith.  All rights reserved.
@@ -36,7 +36,7 @@
  * Other items in the Frodo part
  */
 
-/* An mc146818-like calendar, but no battery... lame */
+/* An mc146818-like calendar.  Only 425e has a battery and an oscillator. */
 #define	FRODO_CALENDAR		0x80
 
 #define	FRODO_TIMER		0xa0	/* 8254-like timer */

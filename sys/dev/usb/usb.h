@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.103.4.1 2013/08/28 23:59:27 rmind Exp $	*/
+/*	$NetBSD: usb.h,v 1.103.4.2 2014/05/18 17:45:48 rmind Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -61,7 +61,7 @@ MALLOC_DECLARE(M_USBHC);
 #define AUVITEK_I2C_DEBUG 1
 #define AXE_DEBUG 1
 #define CUE_DEBUG 1
-#define DWC_OTG_DEBUG 1
+#define DWC2_DEBUG 1
 #define EHCI_DEBUG 1
 #define EZLOAD_DEBUG 1
 #define KUE_DEBUG 1
@@ -268,6 +268,8 @@ typedef struct {
 
 #define USB_2_MAX_CTRL_PACKET	64
 #define USB_2_MAX_BULK_PACKET	512
+
+#define USB_3_MAX_CTRL_PACKET	512
 
 typedef struct {
 	uByte		bLength;
@@ -759,6 +761,7 @@ struct usb_device_info {
 #define USB_SPEED_LOW  1
 #define USB_SPEED_FULL 2
 #define USB_SPEED_HIGH 3
+#define USB_SPEED_SUPER 4
 	int		udi_power;	/* power consumption in mA, 0 if selfpowered */
 	int		udi_nports;
 	char		udi_devnames[USB_MAX_DEVNAMES][USB_MAX_DEVNAMELEN];

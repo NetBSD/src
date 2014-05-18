@@ -1,4 +1,4 @@
-/* $NetBSD: siisata_pci.c,v 1.11.2.1 2013/08/28 23:59:26 rmind Exp $ */
+/* $NetBSD: siisata_pci.c,v 1.11.2.2 2014/05/18 17:45:44 rmind Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata_pci.c,v 1.11.2.1 2013/08/28 23:59:26 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata_pci.c,v 1.11.2.2 2014/05/18 17:45:44 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -147,6 +147,7 @@ siisata_pci_attach(device_t parent, device_t self, void *aux)
 	uint32_t gcreg;
 	int memh_valid;
 	bus_size_t grsize, prsize;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_atac.atac_dev = self;
 	
@@ -208,7 +209,7 @@ siisata_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, intrhandle);
+	intrstr = pci_intr_string(pa->pa_pc, intrhandle, intrbuf, sizeof(intrbuf));
 	psc->sc_ih = pci_intr_establish(pa->pa_pc, intrhandle,
 	    IPL_BIO, siisata_intr, sc);
 	if (psc->sc_ih == NULL) {

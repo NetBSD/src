@@ -28,6 +28,8 @@
  */
 
 #include <linux/device.h>
+#include <linux/moduleparam.h>
+#include <linux/time.h>
 #include <drm/drmP.h>
 #include <drm/i915_drm.h>
 #include "i915_drv.h"
@@ -38,11 +40,13 @@
 #include <linux/module.h>
 #include <drm/drm_crtc_helper.h>
 
+#ifndef __NetBSD__		/* XXX Use i915_modeset somewhere.  */
 static int i915_modeset __read_mostly = -1;
 module_param_named(modeset, i915_modeset, int, 0400);
 MODULE_PARM_DESC(modeset,
 		"Use kernel modesetting [KMS] (0=DRM_I915_KMS from .config, "
 		"1=on, -1=force vga console preference [default])");
+#endif
 
 unsigned int i915_fbpercrtc __always_unused = 0;
 module_param_named(fbpercrtc, i915_fbpercrtc, int, 0400);
@@ -127,6 +131,11 @@ MODULE_PARM_DESC(preliminary_hw_support,
 
 static struct drm_driver driver;
 extern int intel_agp_enabled;
+
+#ifdef __NetBSD__
+/* XXX Kludge to expose this to NetBSD driver attachment goop.  */
+struct drm_driver *const i915_drm_driver = &driver;
+#endif
 
 #define INTEL_VGA_DEVICE(id, info) {		\
 	.class = PCI_BASE_CLASS_DISPLAY << 16,	\
@@ -389,11 +398,21 @@ static const struct pci_device_id pciidlist[] = {		/* aka */
 	INTEL_VGA_DEVICE(0x0f30, &intel_valleyview_m_info),
 	INTEL_VGA_DEVICE(0x0157, &intel_valleyview_m_info),
 	INTEL_VGA_DEVICE(0x0155, &intel_valleyview_d_info),
+#ifdef __NetBSD__
+	{0, 0, 0, 0, 0, 0, 0}
+#else
 	{0, 0, 0}
+#endif
 };
 
 #if defined(CONFIG_DRM_I915_KMS)
 MODULE_DEVICE_TABLE(pci, pciidlist);
+#endif
+
+#ifdef __NetBSD__
+/* XXX Kludge to expose this to NetBSD driver attachment goop.  */
+const struct pci_device_id *const i915_device_ids = pciidlist;
+const size_t i915_n_device_ids = __arraycount(pciidlist);
 #endif
 
 void intel_detect_pch(struct drm_device *dev)
@@ -470,14 +489,21 @@ static int i915_drm_freeze(struct drm_device *dev)
 
 	drm_kms_helper_poll_disable(dev);
 
+#ifndef __NetBSD__		/* pmf handles this for us.  */
 	pci_save_state(dev->pdev);
+#endif
 
 	/* If KMS is active, we do the leavevt stuff here */
 	if (drm_core_check_feature(dev, DRIVER_MODESET)) {
 		int error = i915_gem_idle(dev);
 		if (error) {
+#ifdef __NetBSD__
+			dev_err(pci_dev_dev(dev->pdev),
+			    "GEM idle failed, resume might fail\n");
+#else
 			dev_err(&dev->pdev->dev,
 				"GEM idle failed, resume might fail\n");
+#endif
 			return error;
 		}
 
@@ -495,9 +521,11 @@ static int i915_drm_freeze(struct drm_device *dev)
 	/* Modeset on resume, not lid events */
 	dev_priv->modeset_on_lid = 0;
 
+#ifndef __NetBSD__		/* XXX fb */
 	console_lock();
 	intel_fbdev_set_suspend(dev, 1);
 	console_unlock();
+#endif
 
 	return 0;
 }
@@ -523,17 +551,20 @@ int i915_suspend(struct drm_device *dev, pm_message_t state)
 	if (error)
 		return error;
 
+#ifndef __NetBSD__		/* pmf handles this for us.  */
 	if (state.event == PM_EVENT_SUSPEND) {
 		/* Shut down the device */
 		pci_disable_device(dev->pdev);
 		pci_set_power_state(dev->pdev, PCI_D3hot);
 	}
+#endif
 
 	return 0;
 }
 
 void intel_console_resume(struct work_struct *work)
 {
+#ifndef __NetBSD__		/* XXX fb */
 	struct drm_i915_private *dev_priv =
 		container_of(work, struct drm_i915_private,
 			     console_resume_work);
@@ -542,6 +573,7 @@ void intel_console_resume(struct work_struct *work)
 	console_lock();
 	intel_fbdev_set_suspend(dev, 0);
 	console_unlock();
+#endif
 }
 
 static int __i915_drm_thaw(struct drm_device *dev)
@@ -571,6 +603,7 @@ static int __i915_drm_thaw(struct drm_device *dev)
 
 	dev_priv->modeset_on_lid = 0;
 
+#ifndef __NetBSD__		/* XXX fb */
 	/*
 	 * The console lock can be pretty contented on resume due
 	 * to all the printk activity.  Try to keep it out of the hot
@@ -582,10 +615,12 @@ static int __i915_drm_thaw(struct drm_device *dev)
 	} else {
 		schedule_work(&dev_priv->console_resume_work);
 	}
+#endif
 
 	return error;
 }
 
+#ifndef __NetBSD__		/* XXX freeze/thaw */
 static int i915_drm_thaw(struct drm_device *dev)
 {
 	int error = 0;
@@ -602,6 +637,7 @@ static int i915_drm_thaw(struct drm_device *dev)
 
 	return error;
 }
+#endif
 
 int i915_resume(struct drm_device *dev)
 {
@@ -611,8 +647,10 @@ int i915_resume(struct drm_device *dev)
 	if (dev->switch_power_state == DRM_SWITCH_POWER_OFF)
 		return 0;
 
+#ifndef __NetBSD__		/* pmf handles this for us.  */
 	if (pci_enable_device(dev->pdev))
 		return -EIO;
+#endif
 
 	pci_set_master(dev->pdev);
 
@@ -877,6 +915,16 @@ int i915_reset(struct drm_device *dev)
 	return 0;
 }
 
+#ifdef __NetBSD__
+
+static const struct uvm_pagerops i915_gem_uvm_ops = {
+	.pgo_reference = drm_gem_pager_reference,
+	.pgo_detach = drm_gem_pager_detach,
+	.pgo_fault = i915_gem_fault,
+};
+
+#else
+
 static int i915_pci_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 {
 	struct intel_device_info *intel_info =
@@ -1010,6 +1058,8 @@ static const struct file_operations i915_driver_fops = {
 	.llseek = noop_llseek,
 };
 
+#endif	/* defined(__NetBSD__) */
+
 static struct drm_driver driver = {
 	/* Don't use MTRRs here; the Xserver or userspace app should
 	 * deal with them for Intel hardware.
@@ -1037,18 +1087,28 @@ static struct drm_driver driver = {
 #endif
 	.gem_init_object = i915_gem_init_object,
 	.gem_free_object = i915_gem_free_object,
+#ifdef __NetBSD__
+	.gem_uvm_ops = &i915_gem_uvm_ops,
+#else
 	.gem_vm_ops = &i915_gem_vm_ops,
+#endif
 
+#ifndef __NetBSD__		/* XXX drm prime */
 	.prime_handle_to_fd = drm_gem_prime_handle_to_fd,
 	.prime_fd_to_handle = drm_gem_prime_fd_to_handle,
 	.gem_prime_export = i915_gem_prime_export,
 	.gem_prime_import = i915_gem_prime_import,
+#endif
 
 	.dumb_create = i915_gem_dumb_create,
 	.dumb_map_offset = i915_gem_mmap_gtt,
 	.dumb_destroy = i915_gem_dumb_destroy,
 	.ioctls = i915_ioctls,
+#ifdef __NetBSD__
+	.fops = NULL,
+#else
 	.fops = &i915_driver_fops,
+#endif
 	.name = DRIVER_NAME,
 	.desc = DRIVER_DESC,
 	.date = DRIVER_DATE,
@@ -1057,6 +1117,7 @@ static struct drm_driver driver = {
 	.patchlevel = DRIVER_PATCHLEVEL,
 };
 
+#ifndef __NetBSD__
 static struct pci_driver i915_pci_driver = {
 	.name = DRIVER_NAME,
 	.id_table = pciidlist,
@@ -1064,7 +1125,9 @@ static struct pci_driver i915_pci_driver = {
 	.remove = i915_pci_remove,
 	.driver.pm = &i915_pm_ops,
 };
+#endif
 
+#ifndef __NetBSD__
 static int __init i915_init(void)
 {
 	driver.num_ioctls = i915_max_ioctl;
@@ -1103,6 +1166,7 @@ static void __exit i915_exit(void)
 
 module_init(i915_init);
 module_exit(i915_exit);
+#endif
 
 MODULE_AUTHOR(DRIVER_AUTHOR);
 MODULE_DESCRIPTION(DRIVER_DESC);
@@ -1218,6 +1282,30 @@ ilk_dummy_write(struct drm_i915_private *dev_priv)
 	I915_WRITE_NOTRACE(MI_MODE, 0);
 }
 
+#ifdef __NetBSD__
+#define __i915_read(x, y) \
+u##x i915_read##x(struct drm_i915_private *dev_priv, u32 reg) { \
+	u##x val = 0; \
+	if (IS_GEN5(dev_priv->dev)) \
+		ilk_dummy_write(dev_priv); \
+	if (NEEDS_FORCE_WAKE((dev_priv), (reg))) { \
+		unsigned long irqflags; \
+		spin_lock_irqsave(&dev_priv->gt_lock, irqflags); \
+		if (dev_priv->forcewake_count == 0) \
+			dev_priv->gt.force_wake_get(dev_priv); \
+		val = DRM_READ##x(dev_priv->regs_map, reg); \
+		if (dev_priv->forcewake_count == 0) \
+			dev_priv->gt.force_wake_put(dev_priv); \
+		spin_unlock_irqrestore(&dev_priv->gt_lock, irqflags); \
+	} else if (IS_VALLEYVIEW(dev_priv->dev) && IS_DISPLAYREG(reg)) { \
+		val = DRM_READ##x(dev_priv->regs_map, reg + 0x180000);	\
+	} else { \
+		val = DRM_READ##x(dev_priv->regs_map, reg); \
+	} \
+	trace_i915_reg_rw(false, reg, val, sizeof(val)); \
+	return val; \
+}
+#else
 #define __i915_read(x, y) \
 u##x i915_read##x(struct drm_i915_private *dev_priv, u32 reg) { \
 	u##x val = 0; \
@@ -1240,6 +1328,7 @@ u##x i915_read##x(struct drm_i915_private *dev_priv, u32 reg) { \
 	trace_i915_reg_rw(false, reg, val, sizeof(val)); \
 	return val; \
 }
+#endif
 
 __i915_read(8, b)
 __i915_read(16, w)
@@ -1247,6 +1336,34 @@ __i915_read(32, l)
 __i915_read(64, q)
 #undef __i915_read
 
+#ifdef __NetBSD__
+#define __i915_write(x, y) \
+void i915_write##x(struct drm_i915_private *dev_priv, u32 reg, u##x val) { \
+	u32 __fifo_ret = 0; \
+	trace_i915_reg_rw(true, reg, val, sizeof(val)); \
+	if (NEEDS_FORCE_WAKE((dev_priv), (reg))) { \
+		__fifo_ret = __gen6_gt_wait_for_fifo(dev_priv); \
+	} \
+	if (IS_GEN5(dev_priv->dev)) \
+		ilk_dummy_write(dev_priv); \
+	if (IS_HASWELL(dev_priv->dev) && (I915_READ_NOTRACE(GEN7_ERR_INT) & ERR_INT_MMIO_UNCLAIMED)) { \
+		DRM_ERROR("Unknown unclaimed register before writing to %x\n", reg); \
+		I915_WRITE_NOTRACE(GEN7_ERR_INT, ERR_INT_MMIO_UNCLAIMED); \
+	} \
+	if (IS_VALLEYVIEW(dev_priv->dev) && IS_DISPLAYREG(reg)) { \
+		DRM_WRITE##x(dev_priv->regs_map, reg + 0x180000, val);	\
+	} else {							\
+		DRM_WRITE##x(dev_priv->regs_map, reg, val);		\
+	}								\
+	if (unlikely(__fifo_ret)) { \
+		gen6_gt_check_fifodbg(dev_priv); \
+	} \
+	if (IS_HASWELL(dev_priv->dev) && (I915_READ_NOTRACE(GEN7_ERR_INT) & ERR_INT_MMIO_UNCLAIMED)) { \
+		DRM_ERROR("Unclaimed write to %x\n", reg); \
+		DRM_WRITE32(dev_priv->regs_map, GEN7_ERR_INT, ERR_INT_MMIO_UNCLAIMED); \
+	} \
+}
+#else
 #define __i915_write(x, y) \
 void i915_write##x(struct drm_i915_private *dev_priv, u32 reg, u##x val) { \
 	u32 __fifo_ret = 0; \
@@ -1273,6 +1390,8 @@ void i915_write##x(struct drm_i915_private *dev_priv, u32 reg, u##x val) { \
 		writel(ERR_INT_MMIO_UNCLAIMED, dev_priv->regs + GEN7_ERR_INT);	\
 	} \
 }
+#endif
+
 __i915_write(8, b)
 __i915_write(16, w)
 __i915_write(32, l)

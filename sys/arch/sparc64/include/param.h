@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.51 2013/01/03 09:40:55 martin Exp $ */
+/*	$NetBSD: param.h,v 1.51.2.1 2014/05/18 17:45:26 rmind Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -228,11 +228,18 @@ extern void	delay(unsigned int);
 #define mstohz(ms) ((ms + 0UL) * hz / 1000)
 #endif
 
-extern int cputyp;
+/* Keep this a const so compiler optimization is done */
+extern const int cputyp;
 
+#if defined (SUN4US) || defined (SUN4V)
 #define CPU_ISSUN4U     (cputyp == CPU_SUN4U)
 #define CPU_ISSUN4US    (cputyp == CPU_SUN4US)
 #define CPU_ISSUN4V     (cputyp == CPU_SUN4V)
+#else
+#define CPU_ISSUN4U	(1)
+#define CPU_ISSUN4US	(0)
+#define CPU_ISSUN4V	(0)
+#endif
 
 #endif /* _LOCORE */
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pxe_call.S,v 1.3 2003/02/01 14:48:19 dsl Exp $	*/
+/*	$NetBSD: pxe_call.S,v 1.3.158.1 2014/05/18 17:45:13 rmind Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -109,3 +109,10 @@ _C_LABEL(pxenv_seg) = . - 2
 	popl	%ebx
 	popl	%ebp
 	ret
+
+	.globl _C_LABEL(pxe_command_buf)
+	.align 32
+	.type	_C_LABEL(pxe_command_buf), @object
+	.size	_C_LABEL(pxe_command_buf), 256
+_C_LABEL(pxe_command_buf):
+	.zero	256

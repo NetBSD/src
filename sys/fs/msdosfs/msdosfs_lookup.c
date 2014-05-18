@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.29 2013/01/26 16:51:51 christos Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.29.2.1 2014/05/18 17:46:05 rmind Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -52,7 +52,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.29 2013/01/26 16:51:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.29.2.1 2014/05/18 17:46:05 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -94,7 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.29 2013/01/26 16:51:51 christos
 int
 msdosfs_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -300,8 +300,10 @@ msdosfs_lookup(void *v)
 				 * Check for a checksum or name match
 				 */
 				chksum_ok = (chksum == winChksum(dep->deName));
-				if (!chksum_ok
-				    && (!olddos || memcmp(dosfilename, dep->deName, 11))) {
+				if (!chksum_ok && (
+					!olddos ||
+					memcmp(&dosfilename[0],dep->deName,8) ||
+					memcmp(&dosfilename[8],dep->deExtension,3))) {
 					chksum = -1;
 					continue;
 				}
@@ -492,6 +494,7 @@ foundroot:
 		if ((error = deget(pmp, cluster, blkoff, &tdp)) != 0)
 			return (error);
 		*vpp = DETOV(tdp);
+		VOP_UNLOCK(*vpp);
 		return (0);
 	}
 
@@ -523,6 +526,7 @@ foundroot:
 		if ((error = deget(pmp, cluster, blkoff, &tdp)) != 0)
 			return (error);
 		*vpp = DETOV(tdp);
+		VOP_UNLOCK(*vpp);
 		return (0);
 	}
 
@@ -567,6 +571,9 @@ foundroot:
 	 * Insert name into cache if appropriate.
 	 */
 	cache_enter(vdp, *vpp, cnp->cn_nameptr, cnp->cn_namelen, cnp->cn_flags);
+
+	if (*vpp != vdp)
+		VOP_UNLOCK(*vpp);
 
 	return 0;
 }
@@ -709,7 +716,12 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp, struct c
 			else
 				diroffset = 0;
 		}
-		return deget(pmp, dirclust, diroffset, depp);
+		error = deget(pmp, dirclust, diroffset, depp);
+#ifndef MAKEFS
+		if (error == 0)
+			VOP_UNLOCK(DETOV(*depp));
+#endif
+		return error;
 	}
 
 	return 0;

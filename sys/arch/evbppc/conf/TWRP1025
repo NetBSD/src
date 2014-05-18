@@ -1,4 +1,4 @@
-#	$NetBSD: TWRP1025,v 1.11.2.1 2013/08/28 23:59:16 rmind Exp $
+#	$NetBSD: TWRP1025,v 1.11.2.2 2014/05/18 17:45:06 rmind Exp $
 #
 #	TWRP1025 -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"TWRP1025-$Revision: 1.11.2.1 $"
+ident 		"TWRP1025-$Revision: 1.11.2.2 $"
 
 maxusers	32
 
@@ -24,6 +24,7 @@ options 	SYS_CLK=66666667
 #options 	INSECURE	# disable kernel security levels
 #options 	NTP		# NTP phase/frequency locked loop
 options 	KTRACE		# system call tracing via ktrace(1)
+options 	MODULAR		# new style module(7) framework
 
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
@@ -134,6 +135,7 @@ options 	SCSIVERBOSE	# human readable SCSI error messages
 
 # Kernel root file system and dump configuration.
 config		netbsd		root on ? type ?
+config		netbsd-ld0a	root on ld0a type ffs
 config		netbsd-sd0a	root on sd0a type ffs
 config		nfsnetbsd	root on tsec0 type nfs
 

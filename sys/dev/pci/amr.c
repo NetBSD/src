@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.55 2012/07/27 16:25:11 jakllsch Exp $	*/
+/*	$NetBSD: amr.c,v 1.55.4.1 2014/05/18 17:45:39 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.55 2012/07/27 16:25:11 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.55.4.1 2014/05/18 17:45:39 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,8 +116,17 @@ CFATTACH_DECL_NEW(amr, sizeof(struct amr_softc),
     amr_match, amr_attach, NULL, NULL);
 
 const struct cdevsw amr_cdevsw = {
-	amropen, amrclose, noread, nowrite, amrioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
+	.d_open = amropen,
+	.d_close = amrclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = amrioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER
 };      
 
 extern struct   cfdriver amr_cd;
@@ -266,6 +275,7 @@ amr_attach(device_t parent, device_t self, void *aux)
 	int rseg, i, j, size, rv, memreg, ioreg;
 	struct amr_ccb *ac;
 	int locs[AMRCF_NLOCS];
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	aprint_naive(": RAID controller\n");
 
@@ -323,7 +333,7 @@ amr_attach(device_t parent, device_t self, void *aux)
 		amr_teardown(amr);
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	amr->amr_ih = pci_intr_establish(pc, ih, IPL_BIO, amr_intr, amr);
 	if (amr->amr_ih == NULL) {
 		aprint_error("can't establish interrupt");

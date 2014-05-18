@@ -1,4 +1,4 @@
-#	$NetBSD: std.beagle,v 1.10.2.1 2013/08/28 23:59:14 rmind Exp $
+#	$NetBSD: std.beagle,v 1.10.2.2 2014/05/18 17:45:03 rmind Exp $
 #
 # standard NetBSD/evbarm for BEAGLEBOARD options
 
@@ -22,7 +22,6 @@ options 	FPU_VFP
 makeoptions	LOADADDRESS="0x80300000"
 makeoptions	BOARDTYPE="beagle"
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.beagle"
-makeoptions	CPPFLAGS+="-I$S/../../../include"
 
 options 	ARM_INTR_IMPL="<arch/arm/omap/omap2_intr.h>"
 options		ARM_GENERIC_TODR

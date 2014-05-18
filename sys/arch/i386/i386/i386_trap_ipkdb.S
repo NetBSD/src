@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_trap_ipkdb.S,v 1.1 2013/06/25 00:27:22 uebayasi Exp $	*/
+/*	$NetBSD: i386_trap_ipkdb.S,v 1.1.2.1 2014/05/18 17:45:12 rmind Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
 
 #if 0
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: i386_trap_ipkdb.S,v 1.1 2013/06/25 00:27:22 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386_trap_ipkdb.S,v 1.1.2.1 2014/05/18 17:45:12 rmind Exp $");
 #endif
 
 #ifdef IPKDB
@@ -156,6 +156,3 @@ fault:
 	iret
 END(ipkdbsbyte)
 #endif	/* IPKDB */
-
-#ifdef XEN
-

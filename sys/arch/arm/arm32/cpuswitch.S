@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.77.6.1 2013/08/28 23:59:11 rmind Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.77.6.2 2014/05/18 17:44:56 rmind Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -87,7 +87,7 @@
 #include <arm/asm.h>
 #include <arm/locore.h>
 
-	RCSID("$NetBSD: cpuswitch.S,v 1.77.6.1 2013/08/28 23:59:11 rmind Exp $")
+	RCSID("$NetBSD: cpuswitch.S,v 1.77.6.2 2014/05/18 17:44:56 rmind Exp $")
 
 /* LINTSTUB: include <sys/param.h> */
 	
@@ -116,8 +116,6 @@
 #endif
 
 	.text
-.Lpmap_previous_active_lwp:
-	.word	_C_LABEL(pmap_previous_active_lwp)
 
 /*
  * struct lwp *
@@ -177,7 +175,7 @@ ENTRY(cpu_switchto)
 	IRQenable
 #endif
 
-	/* rem: r3 = curlwp */
+	/* rem: r3 = curcpu() */
 	/* rem: r4 = old lwp */
 	/* rem: r6 = new lwp */
 	/* rem: r7 = new pcb */
@@ -192,7 +190,7 @@ ENTRY(cpu_switchto)
 	teq	r4, #0
 	beq	.Ldo_switch
 
-	/* rem: r3 = curlwp */
+	/* rem: r3 = curcpu() */
 	/* rem: r4 = old lwp */
 	/* rem: r6 = new lwp */
 	/* rem: r7 = new pcb */
@@ -205,9 +203,9 @@ ENTRY(cpu_switchto)
 
 	/* Save all the registers in the old lwp's pcb */
 #if defined(_ARM_ARCH_DWORD_OK)
-	strd	r8, [r5, #(PCB_R8)]
-	strd	r10, [r5, #(PCB_R10)]
-	strd	r12, [r5, #(PCB_R12)]
+	strd	r8, r9, [r5, #(PCB_R8)]
+	strd	r10, r11, [r5, #(PCB_R10)]
+	strd	r12, r13, [r5, #(PCB_R12)]
 #else
 	add	r0, r5, #(PCB_R8)
 	stmia	r0, {r8-r13}
@@ -225,7 +223,7 @@ ENTRY(cpu_switchto)
 	 * them for the new process.
 	 */
 
-	/* rem: r3 = curlwp */
+	/* rem: r3 = curcpu() */
 	/* rem: r4 = old lwp */
 	/* rem: r5 = old pcb */
 	/* rem: r6 = new lwp */
@@ -235,7 +233,7 @@ ENTRY(cpu_switchto)
 	/* Restore saved context */
 
 .Ldo_switch:
-	/* rem: r3 = curlwp */
+	/* rem: r3 = curcpu() */
 	/* rem: r4 = old lwp */
 	/* rem: r6 = new lwp */
 	/* rem: r7 = new pcb */
@@ -258,7 +256,7 @@ ENTRY(cpu_switchto)
 	ldr	r0, [r3, #(CI_VFP_ID)]
 	cmp	r0, #0
 	ldrne	r0, [r7, #(PCB_VFP_FPEXC)]
-	mcrne	p10, 7, r0, c8, c0, 0
+	vmsrne	fpexc, r0
 #endif
 
 	ldr	r5, [r6, #(L_PROC)]	/* fetch the proc for below */
@@ -272,17 +270,18 @@ ENTRY(cpu_switchto)
 	ldr	r12, [r7, #(PCB_R12)]
 	ldr	r13, [r7, #(PCB_KSP)]	/* sp */
 #elif defined(_ARM_ARCH_DWORD_OK)
-	ldrd	r8, [r7, #(PCB_R8)]
-	ldrd	r10, [r7, #(PCB_R10)]
-	ldrd	r12, [r7, #(PCB_R12)]	/* sp */
+	ldrd	r8, r9, [r7, #(PCB_R8)]
+	ldrd	r10, r11, [r7, #(PCB_R10)]
+	ldrd	r12, r13, [r7, #(PCB_R12)]	/* sp */
 #else
 	add	r0, r7, #PCB_R8
 	ldmia	r0, {r8-r13}
 #endif
 
 	/* Record the old lwp for pmap_activate()'s benefit */
-	ldr	r1, .Lpmap_previous_active_lwp		/* XXXSMP */
-	str	r4, [r1]
+#ifndef ARM_MMU_EXTENDED
+	str	r4, [r3, #CI_LASTLWP]
+#endif
 
 	/* rem: r4 = old lwp */
 	/* rem: r5 = new lwp's proc */
@@ -390,9 +389,9 @@ ENTRY_NP(softint_switch)
 
 	/* Save all the registers into the old lwp's pcb */
 #if defined(__XSCALE__) || defined(_ARM_ARCH_6)
-	strd	r8, [r2, #(PCB_R8)]
-	strd	r10, [r2, #(PCB_R10)]
-	strd	r12, [r2, #(PCB_R12)]
+	strd	r8, r9, [r2, #(PCB_R8)]
+	strd	r10, r11, [r2, #(PCB_R10)]
+	strd	r12, r13, [r2, #(PCB_R12)]
 #else
 	add	r3, r2, #(PCB_R8)
 	stmia	r3, {r8-r13}

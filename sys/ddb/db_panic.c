@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_panic.c,v 1.2 2013/02/10 14:44:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_panic.c,v 1.2.2.1 2014/05/18 17:45:34 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/cpu.h>
@@ -57,7 +57,7 @@ void db_panic(void)
 			    cpu_index(curcpu()));
 			intrace = 0;
 		} else
-			printf("Faulted in mid-traceback; aborting...");
+			printf("Faulted in mid-traceback; aborting...\n");
 		if (db_onpanic == 2)
 			Debugger();
 	}

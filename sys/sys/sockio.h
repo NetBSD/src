@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.31 2012/10/31 10:17:35 msaitoh Exp $	*/
+/*	$NetBSD: sockio.h,v 1.31.2.1 2014/05/18 17:46:21 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -136,6 +136,7 @@
 /* 138 is SIOCGATHDIAG in athioctl.h */
 
 #define	SIOCGETHERCAP	_IOWR('i', 139, struct eccapreq) /* get ethercap */
+#define SIOCGIFINDEX  _IOWR('i', 140, struct ifreq)   /* get ifnet index */
 
 #define	SIOCSETPFSYNC	_IOW('i', 247, struct ifreq)	
 #define	SIOCGETPFSYNC	_IOWR('i', 248, struct ifreq)

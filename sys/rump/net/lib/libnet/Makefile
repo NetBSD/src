@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17.2.1 2013/08/28 23:59:37 rmind Exp $
+#	$NetBSD: Makefile,v 1.17.2.2 2014/05/18 17:46:19 rmind Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../net ${.CURDIR}/../../../../compat/common
@@ -9,7 +9,7 @@ LIB=	rumpnet_net
 SRCS=	if.c if_loop.c route.c rtsock.c rtsock_50.c raw_usrreq.c	\
 	raw_cb.c if_media.c link_proto.c net_stats.c if_ethersubr.c
 SRCS+=	if_43.c pfil.c uipc_syscalls_50.c
-SRCS+=	component.c
+SRCS+=	net_component.c
 
 CPPFLAGS+=	-I${.CURDIR}/opt -I${.CURDIR}/../libnetinet/opt
 CPPFLAGS+=	-DCOMPAT_OIFREQ -DCOMPAT_OIFDATA

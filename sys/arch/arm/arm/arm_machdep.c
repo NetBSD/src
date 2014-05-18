@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.36.4.1 2013/08/28 23:59:11 rmind Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.36.4.2 2014/05/18 17:44:56 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.36.4.1 2013/08/28 23:59:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.36.4.2 2014/05/18 17:44:56 rmind Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -112,6 +112,9 @@ struct cpu_info cpu_info_store = {
 	.ci_curlwp = &lwp0,
 #ifdef __PROG32
 	.ci_undefsave[2] = (register_t) undefinedinstruction_bounce,
+#if defined(ARM_MMU_EXTENDED) && KERNEL_PID != 0
+	.ci_pmap_asid_cur = KERNEL_PID,
+#endif
 #endif
 };
 
@@ -174,12 +177,21 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	tf->tf_svc_lr = 0x77777777;		/* Something we can see */
 	tf->tf_pc = pack->ep_entry;
 #ifdef __PROG32
+#if defined(__ARMEB__)
+	/*
+	 * If we are running on ARMv7, we need to set the E bit to force
+	 * programs to start as big endian.
+	 */
+	tf->tf_spsr = PSR_USR32_MODE | (CPU_IS_ARMV7_P() ? PSR_E_BIT : 0);
+#else
 	tf->tf_spsr = PSR_USR32_MODE;
+#endif /* __ARMEB__ */ 
+
 #ifdef THUMB_CODE
 	if (pack->ep_entry & 1)
 		tf->tf_spsr |= PSR_T_bit;
 #endif
-#endif
+#endif /* __PROG32 */
 
 	l->l_md.md_flags = 0;
 #ifdef EXEC_AOUT
@@ -201,7 +213,7 @@ startlwp(void *arg)
 {
 	ucontext_t *uc = arg; 
 	lwp_t *l = curlwp;
-	int error;
+	int error __diagused;
 
 	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
 	KASSERT(error == 0);

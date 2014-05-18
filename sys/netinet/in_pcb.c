@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.145.2.3 2013/09/23 00:57:53 rmind Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.145.2.4 2014/05/18 17:46:13 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.145.2.3 2013/09/23 00:57:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.145.2.4 2014/05/18 17:46:13 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -207,7 +207,7 @@ inpcb_init(size_t bindhashsize, size_t connecthashsize, int flags)
 	inpt = kmem_zalloc(sizeof(inpcbtable_t), KM_SLEEP);
 
 	mutex_init(&inpt->inpt_lock, MUTEX_DEFAULT, IPL_SOFTNET);
-	CIRCLEQ_INIT(&inpt->inpt_queue);
+	TAILQ_INIT(&inpt->inpt_queue);
 	inpt->inpt_flags = flags;
 
 	inpt->inpt_porthashtbl = hashinit(bindhashsize, HASH_LIST, true,
@@ -256,7 +256,7 @@ inpcb_create(struct socket *so, inpcbtable_t *inpt)
 
 	mutex_enter(&inpt->inpt_lock);
 	inpcb_set_state1(inp, INP_ATTACHED);
-	CIRCLEQ_INSERT_HEAD(&inpt->inpt_queue, &inp->inp_head, inph_queue);
+	TAILQ_INSERT_HEAD(&inpt->inpt_queue, &inp->inp_head, inph_queue);
 	LIST_INSERT_HEAD(head, &inp->inp_head, inph_lhash);
 	mutex_exit(&inpt->inpt_lock);
 
@@ -675,7 +675,7 @@ inpcb_destroy(inpcb_t *inp)
 	mutex_enter(&inpt->inpt_lock);
 	inpcb_set_state1(inp, INP_ATTACHED);
 	LIST_REMOVE(&inp->inp_head, inph_lhash);
-	CIRCLEQ_REMOVE(&inpt->inpt_queue, &inp->inp_head, inph_queue);
+	TAILQ_REMOVE(&inpt->inpt_queue, &inp->inp_head, inph_queue);
 	mutex_exit(&inpt->inpt_lock);
 
 #if defined(IPSEC)
@@ -783,15 +783,14 @@ void
 inpcb_notifyall(inpcbtable_t *inpt, struct in_addr faddr, int errno,
     void (*notify)(inpcb_t *, int))
 {
-	struct inpcb_hdr *inph;
+	struct inpcb_hdr *inph, *ninph;
 
 	if (in_nullhost(faddr) || notify == NULL)
 		return;
 
 	mutex_enter(&inpt->inpt_lock);
-	CIRCLEQ_FOREACH(inph, &inpt->inpt_queue, inph_queue) {
+	TAILQ_FOREACH_SAFE(inph, &inpt->inpt_queue, inph_queue, ninph) {
 		inpcb_t *inp = (inpcb_t *)inph;
-
 		if (inp->inp_af != AF_INET)
 			continue;
 		if (in_hosteq(inp->inp_faddr, faddr))
@@ -803,10 +802,10 @@ inpcb_notifyall(inpcbtable_t *inpt, struct in_addr faddr, int errno,
 void
 inpcb_purgeif0(inpcbtable_t *inpt, ifnet_t *ifp)
 {
-	struct inpcb_hdr *inph;
+	struct inpcb_hdr *inph, *ninph;
 
 	mutex_enter(&inpt->inpt_lock);
-	CIRCLEQ_FOREACH(inph, &inpt->inpt_queue, inph_queue) {
+	TAILQ_FOREACH_SAFE(inph, &inpt->inpt_queue, inph_queue, ninph) {
 		inpcb_t *inp = (inpcb_t *)inph;
 		struct ip_moptions *imo;
 		int i, gap;
@@ -842,10 +841,10 @@ inpcb_purgeif0(inpcbtable_t *inpt, ifnet_t *ifp)
 void
 inpcb_purgeif(inpcbtable_t *inpt, ifnet_t *ifp)
 {
-	struct inpcb_hdr *inph;
+	struct inpcb_hdr *inph, *ninph;
 
 	mutex_enter(&inpt->inpt_lock);
-	CIRCLEQ_FOREACH(inph, &inpt->inpt_queue, inph_queue) {
+	TAILQ_FOREACH_SAFE(inph, &inpt->inpt_queue, inph_queue, ninph) {
 		inpcb_t *inp = (inpcb_t *)inph;
 		struct rtentry *rt;
 
@@ -862,13 +861,13 @@ inpcb_purgeif(inpcbtable_t *inpt, ifnet_t *ifp)
 int
 inpcb_foreach(inpcbtable_t *inpt, int af, inpcb_func_t func, void *arg)
 {
-	struct inpcb_hdr *inph;
+	struct inpcb_hdr *inph, *ninph;
 	int error = 0;
 
 	KASSERT(func != NULL);
 
 	mutex_enter(&inpt->inpt_lock);
-	CIRCLEQ_FOREACH(inph, &inpt->inpt_queue, inph_queue) {
+	TAILQ_FOREACH_SAFE(inph, &inpt->inpt_queue, inph_queue, ninph) {
 		inpcb_t *inp = (inpcb_t *)inph;
 
 		if (inp->inp_af != af)
@@ -1357,10 +1356,9 @@ int
 sysctl_inpcblist(SYSCTLFN_ARGS)
 {
 	inpcbtable_t *pcbtbl = __UNCONST(rnode->sysctl_data);
-	struct inpcb_hdr *inph;
+	struct inpcb_hdr *inph, *ninph;
 	struct kinfo_pcb pcb;
 	char *dp;
-	u_int op, arg;
 	size_t len, needed, elem_size, out_size;
 	int error, elem_count, pf, proto, pf2;
 
@@ -1380,8 +1378,6 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 	}
 	error = 0;
 	dp = oldp;
-	op = name[0];
-	arg = name[1];
 	out_size = elem_size;
 	needed = 0;
 
@@ -1399,7 +1395,7 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 	if ((pcbtbl->inpt_flags & INPT_MPSAFE) == 0) {
 		mutex_enter(softnet_lock);
 	}
-	CIRCLEQ_FOREACH(inph, &pcbtbl->inpt_queue, inph_queue) {
+	TAILQ_FOREACH_SAFE(inph, &pcbtbl->inpt_queue, inph_queue, ninph) {
 #ifdef INET
 		inpcb_t *inp = (inpcb_t *)inph;
 		struct sockaddr_in *in;

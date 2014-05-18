@@ -1,0 +1,10 @@
+#	$NetBSD: ubsec.ioconf,v 1.1.4.2 2014/05/18 17:46:12 rmind Exp $
+
+ioconf ubsec
+
+include "conf/files"
+include "dev/pci/files.pci"
+
+pseudo-root pci*
+
+ubsec* at pci? dev ? function ?

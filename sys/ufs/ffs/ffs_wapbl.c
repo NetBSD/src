@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.22 2013/06/23 22:03:34 dholland Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.22.2.1 2014/05/18 17:46:21 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.22 2013/06/23 22:03:34 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.22.2.1 2014/05/18 17:46:21 rmind Exp $");
 
 #define WAPBL_INTERNAL
 
@@ -165,7 +165,7 @@ ffs_wapbl_sync_metadata(struct mount *mp, daddr_t *deallocblks,
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct fs *fs = ump->um_fs;
-	int i, error;
+	int i, error __diagused;
 
 #ifdef WAPBL_DEBUG_INODES
 	ufs_wapbl_verify_inodes(mp, "ffs_wapbl_sync_metadata");
@@ -731,9 +731,7 @@ wapbl_find_log_start(struct mount *mp, struct vnode *vp, off_t logsize,
 	daddr_t desired_blks, min_desired_blks;
 	daddr_t freeblks, best_blks;
 	int bpcg, cg, error, fixedsize, indir_blks, n, s;
-#ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
-#endif
 
 	if (logsize == 0) {
 		fixedsize = 0;	/* We can adjust the size if tight */

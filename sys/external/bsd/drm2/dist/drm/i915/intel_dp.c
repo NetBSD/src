@@ -28,6 +28,9 @@
 #include <linux/i2c.h>
 #include <linux/slab.h>
 #include <linux/export.h>
+#include <linux/err.h>
+#include <linux/module.h>
+#include <linux/printk.h>
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
 #include <drm/drm_crtc_helper.h>
@@ -1787,7 +1790,6 @@ intel_dp_start_link_train(struct intel_dp *intel_dp)
 	struct drm_device *dev = encoder->dev;
 	int i;
 	uint8_t voltage;
-	bool clock_recovery = false;
 	int voltage_tries, loop_tries;
 	uint32_t DP = intel_dp->DP;
 
@@ -1805,7 +1807,6 @@ intel_dp_start_link_train(struct intel_dp *intel_dp)
 	voltage = 0xff;
 	voltage_tries = 0;
 	loop_tries = 0;
-	clock_recovery = false;
 	for (;;) {
 		/* Use intel_dp->train_set[0] to set the voltage and pre emphasis values */
 		uint8_t	    link_status[DP_LINK_STATUS_SIZE];
@@ -1842,7 +1843,6 @@ intel_dp_start_link_train(struct intel_dp *intel_dp)
 
 		if (drm_dp_clock_recovery_ok(link_status, intel_dp->lane_count)) {
 			DRM_DEBUG_KMS("clock recovery OK\n");
-			clock_recovery = true;
 			break;
 		}
 
@@ -2711,7 +2711,12 @@ intel_dp_init_connector(struct intel_digital_port *intel_dig_port,
 	struct drm_device *dev = intel_encoder->base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct drm_display_mode *fixed_mode = NULL;
+#ifdef __NetBSD__
+	static const struct edp_power_seq zero_power_seq;
+	struct edp_power_seq power_seq = zero_power_seq;
+#else
 	struct edp_power_seq power_seq = { 0 };
+#endif
 	enum port port = intel_dig_port->port;
 	const char *name = NULL;
 	int type;
@@ -2870,7 +2875,6 @@ intel_dp_init(struct drm_device *dev, int output_reg, enum port port)
 {
 	struct intel_digital_port *intel_dig_port;
 	struct intel_encoder *intel_encoder;
-	struct drm_encoder *encoder;
 	struct intel_connector *intel_connector;
 
 	intel_dig_port = kzalloc(sizeof(struct intel_digital_port), GFP_KERNEL);
@@ -2884,7 +2888,6 @@ intel_dp_init(struct drm_device *dev, int output_reg, enum port port)
 	}
 
 	intel_encoder = &intel_dig_port->base;
-	encoder = &intel_encoder->base;
 
 	drm_encoder_init(dev, &intel_encoder->base, &intel_dp_enc_funcs,
 			 DRM_MODE_ENCODER_TMDS);
