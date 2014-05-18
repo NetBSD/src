@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.42 2014/05/15 16:32:28 apb Exp $
+# $NetBSD: ad.arm,v 1.43 2014/05/18 10:36:34 nat Exp $
 ./lib/oabi					base-compat-shlib	compat
 ./lib/oabi/npf					base-npf-shlib		compat
 ./lib/oabi/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -230,7 +230,7 @@
 ./usr/lib/oabi/libopcodes.so.6			base-compat-shlib	compat,pic,binutils
 ./usr/lib/oabi/libopcodes.so.6.0		base-compat-shlib	compat,pic,binutils
 ./usr/lib/oabi/libossaudio.so.1			base-compat-shlib	compat,pic
-./usr/lib/oabi/libossaudio.so.1.0		base-compat-shlib	compat,pic
+./usr/lib/oabi/libossaudio.so.1.1		base-compat-shlib	compat,pic
 ./usr/lib/oabi/libp2k.so.2			base-compat-shlib	compat,pic,rump
 ./usr/lib/oabi/libp2k.so.2.0			base-compat-shlib	compat,pic,rump
 ./usr/lib/oabi/libpam.so.4			base-compat-shlib	compat,pic,pam
