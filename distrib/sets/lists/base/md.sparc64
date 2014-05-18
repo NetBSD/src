@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.219 2014/05/15 16:32:28 apb Exp $
+# $NetBSD: md.sparc64,v 1.220 2014/05/18 10:36:34 nat Exp $
 ./lib/sparc					base-npf-shlib		compat
 ./lib/sparc/npf					base-npf-shlib		compat
 ./lib/sparc/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -222,7 +222,7 @@
 ./usr/lib/sparc/libopcodes.so.6			base-compat-shlib	compat,pic,binutils
 ./usr/lib/sparc/libopcodes.so.6.0		base-compat-shlib	compat,pic,binutils
 ./usr/lib/sparc/libossaudio.so.1		base-compat-shlib	compat,pic
-./usr/lib/sparc/libossaudio.so.1.0		base-compat-shlib	compat,pic
+./usr/lib/sparc/libossaudio.so.1.1		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libp2k.so.2			base-compat-shlib	compat,pic,rump
 ./usr/lib/sparc/libp2k.so.2.0			base-compat-shlib	compat,pic,rump
 ./usr/lib/sparc/libpam.so.4			base-compat-shlib	compat,pic

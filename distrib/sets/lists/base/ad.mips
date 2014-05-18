@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.38 2014/05/15 16:32:28 apb Exp $
+# $NetBSD: ad.mips,v 1.39 2014/05/18 10:36:34 nat Exp $
 ./lib/64					base-compat-shlib	compat,arch64
 ./lib/64/npf					base-npf-shlib		compat,arch64
 ./lib/64/npf/ext_log.so				base-npf-shlib		compat,pic,arch64
@@ -230,7 +230,7 @@
 ./usr/lib/64/libopcodes.so.6			base-compat-shlib	compat,pic,binutils,arch64
 ./usr/lib/64/libopcodes.so.6.0			base-compat-shlib	compat,pic,binutils,arch64
 ./usr/lib/64/libossaudio.so.1			base-compat-shlib	compat,pic,arch64
-./usr/lib/64/libossaudio.so.1.0			base-compat-shlib	compat,pic,arch64
+./usr/lib/64/libossaudio.so.1.1			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libp2k.so.2			base-compat-shlib	compat,pic,rump,arch64
 ./usr/lib/64/libp2k.so.2.0			base-compat-shlib	compat,pic,rump,arch64
 ./usr/lib/64/libpam.so.4			base-compat-shlib	compat,pic,pam,arch64
@@ -562,7 +562,7 @@
 ./usr/lib/o32/libopcodes.so.6			base-compat-shlib	compat,pic,binutils,arch64
 ./usr/lib/o32/libopcodes.so.6.0			base-compat-shlib	compat,pic,binutils,arch64
 ./usr/lib/o32/libossaudio.so.1			base-compat-shlib	compat,pic,arch64
-./usr/lib/o32/libossaudio.so.1.0		base-compat-shlib	compat,pic,arch64
+./usr/lib/o32/libossaudio.so.1.1		base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libp2k.so.2			base-compat-shlib	compat,pic,rump,arch64
 ./usr/lib/o32/libp2k.so.2.0			base-compat-shlib	compat,pic,rump,arch64
 ./usr/lib/o32/libpam.so.4			base-compat-shlib	compat,pic,pam,arch64
