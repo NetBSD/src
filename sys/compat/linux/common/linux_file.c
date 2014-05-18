@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.110 2014/05/06 13:21:50 njoly Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.111 2014/05/18 09:30:00 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.110 2014/05/06 13:21:50 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.111 2014/05/18 09:30:00 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -784,14 +784,16 @@ linux_sys_dup3(struct lwp *l, const struct linux_sys_dup3_args *uap,
 		syscallarg(int) to;
 		syscallarg(int) flags;
 	} */
-	int error;
-	if ((error = sys_dup2(l, (const struct sys_dup2_args *)uap, retval)))
-		return error;
+	int flags;
 
-	if (SCARG(uap, flags) & LINUX_O_CLOEXEC)
-		fd_set_exclose(l, SCARG(uap, to), true);
+	flags = linux_to_bsd_ioflags(SCARG(uap, flags));
+	if ((flags & ~O_CLOEXEC) != 0)
+		return EINVAL;
 
-	return 0;
+	if (SCARG(uap, from) == SCARG(uap, to))
+		return EINVAL;
+
+	return dodup(l, SCARG(uap, from), SCARG(uap, to), flags, retval);
 }
 
 
