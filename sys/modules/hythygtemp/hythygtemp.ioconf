@@ -1,0 +1,9 @@
+# $NetBSD: hythygtemp.ioconf,v 1.1 2014/05/18 11:46:24 kardel Exp $
+
+ioconf hythygtemp
+
+include "conf/files"
+
+pseudo-root iic*
+
+hythygtemp* at iic? addr 0x28
