@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.150 2014/01/23 10:13:56 hannken Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.151 2014/05/18 14:46:15 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.150 2014/01/23 10:13:56 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.151 2014/05/18 14:46:15 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -362,10 +362,9 @@ unp_setaddr(struct socket *so, struct mbuf *nam, bool peeraddr)
 	}
 }
 
-/*ARGSUSED*/
-int
-uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
-	struct mbuf *control, struct lwp *l)
+static int
+unp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
+    struct mbuf *control, struct lwp *l)
 {
 	struct unpcb *unp = sotounpcb(so);
 	struct socket *so2;
@@ -1829,3 +1828,7 @@ unp_discard_later(file_t *fp)
 	}
 	mutex_exit(&filelist_lock);
 }
+
+const struct pr_usrreqs unp_usrreqs = {
+	.pr_generic	= unp_usrreq,
+};
