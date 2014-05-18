@@ -1,4 +1,4 @@
-/* $NetBSD: fp_complete.c,v 1.17 2014/05/16 19:18:21 matt Exp $ */
+/* $NetBSD: fp_complete.c,v 1.18 2014/05/18 10:43:54 martin Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.17 2014/05/16 19:18:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.18 2014/05/18 10:43:54 martin Exp $");
 
 #include "opt_compat_osf1.h"
 
@@ -723,6 +723,12 @@ void
 fpu_state_load(struct lwp *l, u_int flags)
 {
 	struct pcb * const pcb = lwp_getpcb(l);
+	KASSERT(l == curlwp);
+
+	if (flags & PCU_REENABLE) {
+		l->l_md.md_flags |= MDLWP_FPACTIVE;
+		return;
+	}
 
 	/*
 	 * Instrument FP usage -- if a process had not previously
