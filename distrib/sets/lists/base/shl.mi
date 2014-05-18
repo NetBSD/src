@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.701 2014/05/15 16:32:28 apb Exp $
+# $NetBSD: shl.mi,v 1.702 2014/05/18 10:36:34 nat Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -405,7 +405,7 @@
 ./usr/lib/libopenpgpsdk.so.0.9			base-obsolete		obsolete
 ./usr/lib/libossaudio.so			base-sys-shlib
 ./usr/lib/libossaudio.so.1			base-sys-shlib
-./usr/lib/libossaudio.so.1.0			base-sys-shlib
+./usr/lib/libossaudio.so.1.1			base-sys-shlib
 ./usr/lib/libp2k.so				base-puffs-shlib	rump
 ./usr/lib/libp2k.so.2				base-puffs-shlib	rump
 ./usr/lib/libp2k.so.2.0				base-puffs-shlib	rump

@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.32 2014/03/21 17:00:18 christos Exp $
+# $NetBSD: ad.arm,v 1.33 2014/05/18 10:36:34 nat Exp $
 ./usr/lib/libarm_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libc_vfp_g.a				comp-c-debuglib		debuglib,softfloat
 ./usr/lib/libpmc_g.a				comp-c-debuglib		debuglib
@@ -149,7 +149,7 @@
 ./usr/libdata/debug/usr/lib/oabi/libobjc.so.3.0.debug	comp-sys-debug	gcc=45,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libobjc.so.4.0.debug	comp-sys-debug	gcc=48,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libopcodes.so.6.0.debug	comp-c-debug	binutils,debug,compat
-./usr/libdata/debug/usr/lib/oabi/libossaudio.so.1.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/oabi/libossaudio.so.1.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libp2k.so.2.0.debug		comp-puffs-debug	debug,compat,rump
 ./usr/libdata/debug/usr/lib/oabi/libpam.so.4.0.debug		comp-sys-debug	pam,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libpcap.so.5.0.debug	comp-net-debug	debug,compat
