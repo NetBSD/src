@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.68 2014/05/15 16:32:28 apb Exp $
+# $NetBSD: mi,v 1.69 2014/05/18 18:28:49 jakllsch Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -92,6 +92,8 @@
 ./@MODULEDIR@/gpiosim/gpiosim.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/hfs				base-kernel-modules	kmod
 ./@MODULEDIR@/hfs/hfs.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/hythygtemp			base-kernel-modules	kmod
+./@MODULEDIR@/hythygtemp/hythygtemp.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/if_axe				base-kernel-modules	kmod
 ./@MODULEDIR@/if_axe/if_axe.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/if_axen				base-kernel-modules	kmod
